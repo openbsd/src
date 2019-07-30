@@ -1,5 +1,8 @@
-@import minmax;
+@import Foundation;
 
-#undef MY_MAX
+#undef MAX
 
-extern void public_func();
+@interface MyClass : NSObject {
+};
+-(void)publicMethod;
+@end

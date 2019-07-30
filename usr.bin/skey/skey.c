@@ -1,4 +1,4 @@
-/*	$OpenBSD: skey.c,v 1.35 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: skey.c,v 1.34 2017/05/03 09:51:39 mestre Exp $	*/
 /*
  * OpenBSD S/Key (skey.c)
  *
@@ -7,7 +7,7 @@
  *          Philip R. Karn <karn@chicago.qualcomm.com>
  *          John S. Walden <jsw@thumper.bellcore.com>
  *          Scott Chasin <chasin@crimelab.com>
- *          Todd C. Miller <millert@openbsd.org>
+ *          Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *
  * Stand-alone program for computing responses to S/Key challenges.

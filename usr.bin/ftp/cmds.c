@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.82 2019/05/16 12:44:17 florian Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.80 2018/01/24 13:25:25 tb Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*

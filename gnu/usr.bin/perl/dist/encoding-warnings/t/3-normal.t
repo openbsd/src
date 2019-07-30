@@ -1,10 +1,3 @@
-BEGIN {
-    if ("$]" >= 5.025) {
-      print "1..0 # Skip: encoding::warnings not supported on perl 5.26\n";
-      exit 0;
-    }
-}
-
 use Test;
 BEGIN { plan tests => 2 }
 

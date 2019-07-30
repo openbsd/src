@@ -528,8 +528,7 @@ BEGIN {
 # Debugger for Perl 5.00x; perl5db.pl patch level:
 use vars qw($VERSION $header);
 
-# bump to X.XX in blead, only use X.XX_XX in maint
-$VERSION = '1.53';
+$VERSION = '1.49_05';
 
 $header = "perl5db.pl version $VERSION";
 
@@ -1533,6 +1532,14 @@ We then determine what the console should be on various systems:
         undef $console;
     }
 
+=item * Unix - use F</dev/tty>.
+
+=cut
+
+    elsif ( -e "/dev/tty" ) {
+        $console = "/dev/tty";
+    }
+
 =item * Windows or MSDOS - use C<con>.
 
 =cut
@@ -1555,17 +1562,6 @@ We then determine what the console should be on various systems:
 
     elsif ($^O eq 'VMS') {
         $console = 'sys$command';
-    }
-
-# Keep this penultimate, on the grounds that it satisfies a wide variety of
-# Unix-like systems that would otherwise need to be identified individually.
-
-=item * Unix - use F</dev/tty>.
-
-=cut
-
-    elsif ( -e "/dev/tty" ) {
-        $console = "/dev/tty";
     }
 
 # Keep this last.
@@ -1659,14 +1655,14 @@ and if we can.
             $o = $i unless defined $o;
 
             # read/write on in, or just read, or read on STDIN.
-                 open( IN, '+<', $i )
-              || open( IN, '<',  $i )
+            open( IN,      "+<$i" )
+              || open( IN, "<$i" )
               || open( IN, "<&STDIN" );
 
             # read/write/create/clobber out, or write/create/clobber out,
             # or merge with STDERR, or merge with STDOUT.
-                 open( OUT, '+>', $o )
-              || open( OUT, '>',  $o )
+                 open( OUT, "+>$o" )
+              || open( OUT, ">$o" )
               || open( OUT, ">&STDERR" )
               || open( OUT, ">&STDOUT" );    # so we don't dongle stdout
 
@@ -1871,10 +1867,7 @@ sub _DB__trim_command_and_return_first_component {
     $cmd =~ s/\A\s+//s;    # trim annoying leading whitespace
     $cmd =~ s/\s+\z//s;    # trim annoying trailing whitespace
 
-    # A single-character debugger command can be immediately followed by its
-    # argument if they aren't both alphanumeric; otherwise require space
-    # between commands and arguments:
-    my ($verb, $args) = $cmd =~ m{\A(.\b|\S*)\s*(.*)}s;
+    my ($verb, $args) = $cmd =~ m{\A(\S*)\s*(.*)}s;
 
     $obj->cmd_verb($verb);
     $obj->cmd_args($args);
@@ -6631,15 +6624,19 @@ sub dump_trace {
         $i++
     )
     {
-        # if the sub has args ($h true), make an anonymous array of the
-        # dumped args.
-        my $args = $h ? _dump_trace_calc_save_args($nothard) : undef;
+
+        # Go through the arguments and save them for later.
+        my $save_args = _dump_trace_calc_save_args($nothard);
 
         # If context is true, this is array (@)context.
         # If context is false, this is scalar ($) context.
         # If neither, context isn't defined. (This is apparently a 'can't
         # happen' trap.)
         $context = $context ? '@' : ( defined $context ? "\$" : '.' );
+
+        # if the sub has args ($h true), make an anonymous array of the
+        # dumped args.
+        $args = $h ? $save_args : undef;
 
         # remove trailing newline-whitespace-semicolon-end of line sequence
         # from the eval text, if any.
@@ -6830,8 +6827,8 @@ sub setterm {
         if ($tty) {
             my ( $i, $o ) = split $tty, /,/;
             $o = $i unless defined $o;
-            open( IN,  '<', $i ) or die "Cannot open TTY '$i' for read: $!";
-            open( OUT, '>', $o ) or die "Cannot open TTY '$o' for write: $!";
+            open( IN,  "<$i" ) or die "Cannot open TTY '$i' for read: $!";
+            open( OUT, ">$o" ) or die "Cannot open TTY '$o' for write: $!";
             $IN  = \*IN;
             $OUT = \*OUT;
             _autoflush($OUT);
@@ -7754,8 +7751,8 @@ sub TTY {
         }
 
         # Open file onto the debugger's filehandles, if you can.
-        open IN,  '<', $in or die "cannot open '$in' for read: $!";
-        open OUT, '>', $out or die "cannot open '$out' for write: $!";
+        open IN,  $in     or die "cannot open '$in' for read: $!";
+        open OUT, ">$out" or die "cannot open '$out' for write: $!";
 
         # Swap to the new filehandles.
         reset_IN_OUT( \*IN, \*OUT );

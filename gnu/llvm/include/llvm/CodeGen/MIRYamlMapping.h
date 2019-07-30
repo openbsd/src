@@ -12,18 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_MIRYAMLMAPPING_H
-#define LLVM_CODEGEN_MIRYAMLMAPPING_H
+#ifndef LLVM_LIB_CODEGEN_MIRYAMLMAPPING_H
+#define LLVM_LIB_CODEGEN_MIRYAMLMAPPING_H
 
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
-#include "llvm/Support/SMLoc.h"
 #include "llvm/Support/YAMLTraits.h"
-#include "llvm/Support/raw_ostream.h"
-#include <algorithm>
-#include <cstdint>
-#include <string>
 #include <vector>
 
 namespace llvm {
@@ -35,7 +29,7 @@ struct StringValue {
   std::string Value;
   SMRange SourceRange;
 
-  StringValue() = default;
+  StringValue() {}
   StringValue(std::string Value) : Value(std::move(Value)) {}
 
   bool operator==(const StringValue &Other) const {
@@ -44,7 +38,7 @@ struct StringValue {
 };
 
 template <> struct ScalarTraits<StringValue> {
-  static void output(const StringValue &S, void *, raw_ostream &OS) {
+  static void output(const StringValue &S, void *, llvm::raw_ostream &OS) {
     OS << S.Value;
   }
 
@@ -56,16 +50,16 @@ template <> struct ScalarTraits<StringValue> {
     return "";
   }
 
-  static QuotingType mustQuote(StringRef S) { return needsQuotes(S); }
+  static bool mustQuote(StringRef Scalar) { return needsQuotes(Scalar); }
 };
 
 struct FlowStringValue : StringValue {
-  FlowStringValue() = default;
+  FlowStringValue() {}
   FlowStringValue(std::string Value) : StringValue(std::move(Value)) {}
 };
 
 template <> struct ScalarTraits<FlowStringValue> {
-  static void output(const FlowStringValue &S, void *, raw_ostream &OS) {
+  static void output(const FlowStringValue &S, void *, llvm::raw_ostream &OS) {
     return ScalarTraits<StringValue>::output(S, nullptr, OS);
   }
 
@@ -73,12 +67,11 @@ template <> struct ScalarTraits<FlowStringValue> {
     return ScalarTraits<StringValue>::input(Scalar, Ctx, S);
   }
 
-  static QuotingType mustQuote(StringRef S) { return needsQuotes(S); }
+  static bool mustQuote(StringRef Scalar) { return needsQuotes(Scalar); }
 };
 
 struct BlockStringValue {
   StringValue Value;
-
   bool operator==(const BlockStringValue &Other) const {
     return Value == Other.Value;
   }
@@ -97,10 +90,10 @@ template <> struct BlockScalarTraits<BlockStringValue> {
 /// A wrapper around unsigned which contains a source range that's being set
 /// during parsing.
 struct UnsignedValue {
-  unsigned Value = 0;
+  unsigned Value;
   SMRange SourceRange;
 
-  UnsignedValue() = default;
+  UnsignedValue() : Value(0) {}
   UnsignedValue(unsigned Value) : Value(Value) {}
 
   bool operator==(const UnsignedValue &Other) const {
@@ -120,7 +113,7 @@ template <> struct ScalarTraits<UnsignedValue> {
     return ScalarTraits<unsigned>::input(Scalar, Ctx, Value.Value);
   }
 
-  static QuotingType mustQuote(StringRef Scalar) {
+  static bool mustQuote(StringRef Scalar) {
     return ScalarTraits<unsigned>::mustQuote(Scalar);
   }
 };
@@ -155,9 +148,7 @@ struct VirtualRegisterDefinition {
   UnsignedValue ID;
   StringValue Class;
   StringValue PreferredRegister;
-
   // TODO: Serialize the target specific register hints.
-
   bool operator==(const VirtualRegisterDefinition &Other) const {
     return ID == Other.ID && Class == Other.Class &&
            PreferredRegister == Other.PreferredRegister;
@@ -178,7 +169,6 @@ template <> struct MappingTraits<VirtualRegisterDefinition> {
 struct MachineFunctionLiveIn {
   StringValue Register;
   StringValue VirtualRegister;
-
   bool operator==(const MachineFunctionLiveIn &Other) const {
     return Register == Other.Register &&
            VirtualRegister == Other.VirtualRegister;
@@ -212,21 +202,16 @@ struct MachineStackObject {
   int64_t Offset = 0;
   uint64_t Size = 0;
   unsigned Alignment = 0;
-  uint8_t StackID = 0;
   StringValue CalleeSavedRegister;
-  bool CalleeSavedRestored = true;
   Optional<int64_t> LocalOffset;
   StringValue DebugVar;
   StringValue DebugExpr;
   StringValue DebugLoc;
-
   bool operator==(const MachineStackObject &Other) const {
     return ID == Other.ID && Name == Other.Name && Type == Other.Type &&
            Offset == Other.Offset && Size == Other.Size &&
            Alignment == Other.Alignment &&
-           StackID == Other.StackID &&
            CalleeSavedRegister == Other.CalleeSavedRegister &&
-           CalleeSavedRestored == Other.CalleeSavedRestored &&
            LocalOffset == Other.LocalOffset && DebugVar == Other.DebugVar &&
            DebugExpr == Other.DebugExpr && DebugLoc == Other.DebugLoc;
   }
@@ -252,17 +237,14 @@ template <> struct MappingTraits<MachineStackObject> {
     if (Object.Type != MachineStackObject::VariableSized)
       YamlIO.mapRequired("size", Object.Size);
     YamlIO.mapOptional("alignment", Object.Alignment, (unsigned)0);
-    YamlIO.mapOptional("stack-id", Object.StackID);
     YamlIO.mapOptional("callee-saved-register", Object.CalleeSavedRegister,
                        StringValue()); // Don't print it out when it's empty.
-    YamlIO.mapOptional("callee-saved-restored", Object.CalleeSavedRestored,
-                       true);
     YamlIO.mapOptional("local-offset", Object.LocalOffset, Optional<int64_t>());
-    YamlIO.mapOptional("debug-info-variable", Object.DebugVar,
+    YamlIO.mapOptional("di-variable", Object.DebugVar,
                        StringValue()); // Don't print it out when it's empty.
-    YamlIO.mapOptional("debug-info-expression", Object.DebugExpr,
+    YamlIO.mapOptional("di-expression", Object.DebugExpr,
                        StringValue()); // Don't print it out when it's empty.
-    YamlIO.mapOptional("debug-info-location", Object.DebugLoc,
+    YamlIO.mapOptional("di-location", Object.DebugLoc,
                        StringValue()); // Don't print it out when it's empty.
   }
 
@@ -278,24 +260,14 @@ struct FixedMachineStackObject {
   int64_t Offset = 0;
   uint64_t Size = 0;
   unsigned Alignment = 0;
-  uint8_t StackID = 0;
   bool IsImmutable = false;
   bool IsAliased = false;
   StringValue CalleeSavedRegister;
-  bool CalleeSavedRestored = true;
-  StringValue DebugVar;
-  StringValue DebugExpr;
-  StringValue DebugLoc;
-
   bool operator==(const FixedMachineStackObject &Other) const {
     return ID == Other.ID && Type == Other.Type && Offset == Other.Offset &&
            Size == Other.Size && Alignment == Other.Alignment &&
-           StackID == Other.StackID &&
            IsImmutable == Other.IsImmutable && IsAliased == Other.IsAliased &&
-           CalleeSavedRegister == Other.CalleeSavedRegister &&
-           CalleeSavedRestored == Other.CalleeSavedRestored &&
-           DebugVar == Other.DebugVar && DebugExpr == Other.DebugExpr
-           && DebugLoc == Other.DebugLoc;
+           CalleeSavedRegister == Other.CalleeSavedRegister;
   }
 };
 
@@ -317,20 +289,11 @@ template <> struct MappingTraits<FixedMachineStackObject> {
     YamlIO.mapOptional("offset", Object.Offset, (int64_t)0);
     YamlIO.mapOptional("size", Object.Size, (uint64_t)0);
     YamlIO.mapOptional("alignment", Object.Alignment, (unsigned)0);
-    YamlIO.mapOptional("stack-id", Object.StackID);
     if (Object.Type != FixedMachineStackObject::SpillSlot) {
       YamlIO.mapOptional("isImmutable", Object.IsImmutable, false);
       YamlIO.mapOptional("isAliased", Object.IsAliased, false);
     }
     YamlIO.mapOptional("callee-saved-register", Object.CalleeSavedRegister,
-                       StringValue()); // Don't print it out when it's empty.
-    YamlIO.mapOptional("callee-saved-restored", Object.CalleeSavedRestored,
-                     true);
-    YamlIO.mapOptional("debug-info-variable", Object.DebugVar,
-                       StringValue()); // Don't print it out when it's empty.
-    YamlIO.mapOptional("debug-info-expression", Object.DebugExpr,
-                       StringValue()); // Don't print it out when it's empty.
-    YamlIO.mapOptional("debug-info-location", Object.DebugLoc,
                        StringValue()); // Don't print it out when it's empty.
   }
 
@@ -341,12 +304,9 @@ struct MachineConstantPoolValue {
   UnsignedValue ID;
   StringValue Value;
   unsigned Alignment = 0;
-  bool IsTargetSpecific = false;
-
   bool operator==(const MachineConstantPoolValue &Other) const {
     return ID == Other.ID && Value == Other.Value &&
-           Alignment == Other.Alignment &&
-           IsTargetSpecific == Other.IsTargetSpecific;
+           Alignment == Other.Alignment;
   }
 };
 
@@ -355,7 +315,6 @@ template <> struct MappingTraits<MachineConstantPoolValue> {
     YamlIO.mapRequired("id", Constant.ID);
     YamlIO.mapOptional("value", Constant.Value, StringValue());
     YamlIO.mapOptional("alignment", Constant.Alignment, (unsigned)0);
-    YamlIO.mapOptional("isTargetSpecific", Constant.IsTargetSpecific, false);
   }
 };
 
@@ -363,7 +322,6 @@ struct MachineJumpTable {
   struct Entry {
     UnsignedValue ID;
     std::vector<FlowStringValue> Blocks;
-
     bool operator==(const Entry &Other) const {
       return ID == Other.ID && Blocks == Other.Blocks;
     }
@@ -371,7 +329,6 @@ struct MachineJumpTable {
 
   MachineJumpTableInfo::JTEntryKind Kind = MachineJumpTableInfo::EK_Custom32;
   std::vector<Entry> Entries;
-
   bool operator==(const MachineJumpTable &Other) const {
     return Kind == Other.Kind && Entries == Other.Entries;
   }
@@ -428,10 +385,8 @@ struct MachineFrameInfo {
   bool HasOpaqueSPAdjustment = false;
   bool HasVAStart = false;
   bool HasMustTailInVarArgFunc = false;
-  unsigned LocalFrameSize = 0;
   StringValue SavePoint;
   StringValue RestorePoint;
-
   bool operator==(const MachineFrameInfo &Other) const {
     return IsFrameAddressTaken == Other.IsFrameAddressTaken &&
            IsReturnAddressTaken == Other.IsReturnAddressTaken &&
@@ -446,7 +401,6 @@ struct MachineFrameInfo {
            HasOpaqueSPAdjustment == Other.HasOpaqueSPAdjustment &&
            HasVAStart == Other.HasVAStart &&
            HasMustTailInVarArgFunc == Other.HasMustTailInVarArgFunc &&
-           LocalFrameSize == Other.LocalFrameSize &&
            SavePoint == Other.SavePoint && RestorePoint == Other.RestorePoint;
   }
 };
@@ -470,7 +424,6 @@ template <> struct MappingTraits<MachineFrameInfo> {
     YamlIO.mapOptional("hasVAStart", MFI.HasVAStart, false);
     YamlIO.mapOptional("hasMustTailInVarArgFunc", MFI.HasMustTailInVarArgFunc,
                        false);
-    YamlIO.mapOptional("localFrameSize", MFI.LocalFrameSize, (unsigned)0);
     YamlIO.mapOptional("savePoint", MFI.SavePoint,
                        StringValue()); // Don't print it out when it's empty.
     YamlIO.mapOptional("restorePoint", MFI.RestorePoint,
@@ -486,7 +439,6 @@ struct MachineFunction {
   bool Legalized = false;
   bool RegBankSelected = false;
   bool Selected = false;
-  bool FailedISel = false;
   // Register information
   bool TracksRegLiveness = false;
   std::vector<VirtualRegisterDefinition> VirtualRegisters;
@@ -510,7 +462,6 @@ template <> struct MappingTraits<MachineFunction> {
     YamlIO.mapOptional("legalized", MF.Legalized, false);
     YamlIO.mapOptional("regBankSelected", MF.RegBankSelected, false);
     YamlIO.mapOptional("selected", MF.Selected, false);
-    YamlIO.mapOptional("failedISel", MF.FailedISel, false);
     YamlIO.mapOptional("tracksRegLiveness", MF.TracksRegLiveness, false);
     YamlIO.mapOptional("registers", MF.VirtualRegisters,
                        std::vector<VirtualRegisterDefinition>());
@@ -534,4 +485,4 @@ template <> struct MappingTraits<MachineFunction> {
 } // end namespace yaml
 } // end namespace llvm
 
-#endif // LLVM_CODEGEN_MIRYAMLMAPPING_H
+#endif

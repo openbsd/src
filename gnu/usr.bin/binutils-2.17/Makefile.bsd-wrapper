@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 2019/05/17 14:47:03 schwarze Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.14 2017/06/12 18:49:34 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,6 @@ SUBDIRS=	opcodes bfd
 CONF_SUBDIRS=	opcodes bfd
 
 CFLAGS+=	${PIE_DEFAULT}
-XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDSTATIC}"
 # This allows moving the whole binutils installation around for 
 # testing purposes
 PREFIX=/usr
@@ -36,11 +35,7 @@ MAN+=		binutils/doc/ar.1 binutils/doc/ranlib.1 \
 SUBDIRS+=	ld gas
 CONF_SUBDIRS+=	ld gas
 INST_SUBDIRS+=	ld gas
-MAN+=		gas/doc/as.1	ld/ld.bfd.1
-.if ${LINKER_VERSION:L} == "bfd"
-maninstall:
-		cd ${DESTDIR}${MANDIR}1 && rm -f ld.1 && ln ld.bfd.1 ld.1
-.endif
+MAN+=		gas/doc/as.1	ld/ld.1
 .endif
 
 # Used by the GNU Makefile
@@ -66,7 +61,8 @@ CONFIGTARGET+=--without-gnu-as
 all:	config.status
 	SUBDIRS='${SUBDIRS}' \
 	  CONFIGURE_HOST_MODULES='${CONFIGURE_HOST_MODULES}' \
-	  ${MAKE} ${XCFLAGS} \
+	  ${MAKE} CC="${CC}" \
+	    CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS=${LDSTATIC} \
 	    scriptdir=${PREFIX}/libdata \
 	    tooldir=${PREFIX} \
 	    MAKEINFO='makeinfo --no-split' \
@@ -87,7 +83,6 @@ CF=
 do-config: .USE
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	MAKEINFO='makeinfo --no-split' \
-	${XCFLAGS} \
 	sh ${.CURDIR}/configure --prefix=${PREFIX} \
 	    --infodir='$${prefix}/share/info' \
 	    --disable-nls --disable-gdbtk --disable-install-libbfd ${CF} \
@@ -96,15 +91,13 @@ do-config: .USE
 	    sed -e 's,SUBDIRS *=,SUBDIRS ?=,' <Makefile >Makefile.tmp && \
 	    mv -f Makefile.tmp Makefile
 	cd ${.OBJDIR} && \
-	    ${XCFLAGS} \
 	    ${MAKE} ${CONFIGURE_MODULES}
 
 gas/doc/as.1: config.status
 	cd ${.OBJDIR}/gas/doc && ${MAKE} as.1
 
-ld/ld.bfd.1: config.status
+ld/ld.1: config.status
 	cd ${.OBJDIR}/ld && ${MAKE} ld.1
-	mv ld/ld.1 ld/ld.bfd.1
 
 config: do-config
 .ifndef GLOBAL_AUTOCONF_CACHE
@@ -123,14 +116,10 @@ install: maninstall
 	    tooldir=${PREFIX} \
 	    BSDSRCDIR=${BSDSRCDIR} \
 	    INSTALL_MODULES='${INSTALL_MODULES}' \
-	    INSTALL_PROGRAM='${INSTALL} -c ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}' \
+	    INSTALL_PROGRAM='${INSTALL} -c -S ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}' \
 	    INSTALL_DATA='${INSTALL} -c -o ${DOCOWN} -g ${DOCGRP} -m ${NONBINMODE}' \
 	    INSTALL_INFO_HOST_MODULES='${INSTALL_INFO_HOST_MODULES}' \
 	      install install-info
-.if ${LINKER_VERSION:L} == "bfd"
-	rm -f ${DESTDIR}${PREFIX}/bin/ld
-	ln ${DESTDIR}${PREFIX}/bin/ld.bfd ${DESTDIR}${PREFIX}/bin/ld
-.endif
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi

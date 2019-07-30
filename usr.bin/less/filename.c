@@ -334,25 +334,25 @@ fcomplete(char *s)
 int
 bin_file(int f)
 {
+	int n;
+	int bin_count = 0;
 	char data[256];
-	ssize_t i, n;
-	wchar_t ch;
-	int bin_count, len;
+	char *p;
+	char *pend;
 
 	if (!seekable(f))
 		return (0);
 	if (lseek(f, (off_t)0, SEEK_SET) == (off_t)-1)
 		return (0);
 	n = read(f, data, sizeof (data));
-	bin_count = 0;
-	for (i = 0; i < n; i += len) {
-		len = mbtowc(&ch, data + i, n - i);
-		if (len <= 0) {
-			bin_count++;
-			len = 1;
-		} else if (iswprint(ch) == 0 && iswspace(ch) == 0 &&
-		    data[i] != '\b' &&
-		    (ctldisp != OPT_ONPLUS || data[i] != ESC))
+	pend = &data[n];
+	for (p = data; p < pend; ) {
+		LWCHAR c = step_char(&p, +1, pend);
+		if (ctldisp == OPT_ONPLUS && IS_CSI_START(c)) {
+			do {
+				c = step_char(&p, +1, pend);
+			} while (p < pend && is_ansi_middle(c));
+		} else if (binary_char(c))
 			bin_count++;
 	}
 	/*

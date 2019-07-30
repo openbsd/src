@@ -1,9 +1,0 @@
-#!/bin/ksh
-#
-# $OpenBSD: unwind,v 1.2 2019/02/07 17:54:01 florian Exp $
-
-daemon="/sbin/unwind"
-
-. /etc/rc.d/rc.subr
-
-rc_cmd $1

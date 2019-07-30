@@ -8,7 +8,7 @@
  *
  */
 
-/* *** Update arg_counts[] in scope.c if you modify these */
+/* *** these are ordered by number of of auto-popped args */
 
 /* zero args */
 
@@ -16,6 +16,8 @@
 #define SAVEt_CLEARPADRANGE	1
 #define SAVEt_CLEARSV		2
 #define SAVEt_REGCONTEXT	3
+
+#define SAVEt_ARG0_MAX		3
 
 /* one arg */
 
@@ -38,6 +40,8 @@
 #define SAVEt_STACK_POS		20
 #define SAVEt_READONLY_OFF	21
 #define SAVEt_FREEPADNAME	22
+
+#define SAVEt_ARG1_MAX		22
 
 /* two args */
 
@@ -66,6 +70,8 @@
 #define SAVEt_VPTR		45
 #define SAVEt_ADELETE		46
 #define SAVEt_APTR		47
+
+#define SAVEt_ARG2_MAX		47
 
 /* three args */
 
@@ -167,15 +173,19 @@ Opening bracket on a callback.  See C<L</LEAVE>> and L<perlcall>.
 =for apidoc Ams||LEAVE
 Closing bracket on a callback.  See C<L</ENTER>> and L<perlcall>.
 
-=for apidoc Ams||ENTER_with_name(name)
+=over
 
-Same as C<L</ENTER>>, but when debugging is enabled it also associates the
+=item ENTER_with_name(name)
+
+Same as C<ENTER>, but when debugging is enabled it also associates the
 given literal string with the new scope.
 
-=for apidoc Ams||LEAVE_with_name(name)
+=item LEAVE_with_name(name)
 
-Same as C<L</LEAVE>>, but when debugging is enabled it first checks that the
-scope has the given name. C<name> must be a literal string.
+Same as C<LEAVE>, but when debugging is enabled it first checks that the
+scope has the given name. C<name> must be a C<NUL>-terminated literal string.
+
+=back
 
 =cut
 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.176 2019/02/13 22:57:07 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.169 2017/10/27 08:29:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -911,8 +911,6 @@ varset		: STRING '=' string
 				if (isspace((unsigned char)*s)) {
 					yyerror("macro name cannot contain "
 					    "whitespace");
-					free($1);
-					free($3);
 					YYERROR;
 				}
 			}
@@ -1182,8 +1180,7 @@ top:
 			} else if (c == '\\') {
 				if ((next = lgetc(quotec)) == EOF)
 					return (0);
-				if (next == quotec || next == ' ' ||
-				    next == '\t')
+				if (next == quotec || c == ' ' || c == '\t')
 					c = next;
 				else if (next == '\n') {
 					file->lineno++;
@@ -1205,7 +1202,7 @@ top:
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			err(1, "%s", __func__);
+			err(1, "yylex: strdup");
 		return (STRING);
 	}
 
@@ -1215,7 +1212,7 @@ top:
 	if (c == '-' || isdigit(c)) {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -1254,7 +1251,7 @@ nodigits:
 	if (isalnum(c) || c == ':' || c == '_' || c == '*') {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -1263,7 +1260,7 @@ nodigits:
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
 			if ((yylval.v.string = strdup(buf)) == NULL)
-				err(1, "%s", __func__);
+				err(1, "yylex: strdup");
 		return (token);
 	}
 	if (c == '\n') {
@@ -1301,11 +1298,11 @@ pushfile(const char *name, int secret)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
-		warn("%s", __func__);
+		warn("malloc");
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		warn("%s", __func__);
+		warn("malloc");
 		free(nfile);
 		return (NULL);
 	}
@@ -1313,12 +1310,12 @@ pushfile(const char *name, int secret)
 		nfile->stream = stdin;
 		free(nfile->name);
 		if ((nfile->name = strdup("stdin")) == NULL) {
-			warn("%s", __func__);
+			warn("strdup");
 			free(nfile);
 			return (NULL);
 		}
 	} else if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		warn("%s: %s", __func__, nfile->name);
+		warn("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -1426,13 +1423,17 @@ cmdline_symset(char *s)
 {
 	char	*sym, *val;
 	int	ret;
+	size_t	len;
 
 	if ((val = strrchr(s, '=')) == NULL)
 		return (-1);
 
-	sym = strndup(s, val - s);
-	if (sym == NULL)
-		err(1, "%s", __func__);
+	len = strlen(s) - strlen(val) + 1;
+	if ((sym = malloc(len)) == NULL)
+		err(1, "cmdline_symset: malloc");
+
+	strlcpy(sym, s, len);
+
 	ret = symset(sym, val + 1, 1);
 	free(sym);
 
@@ -1512,12 +1513,12 @@ parsekey(unsigned char *hexkey, size_t len)
 
 	key = calloc(1, sizeof(struct ipsec_key));
 	if (key == NULL)
-		err(1, "%s", __func__);
+		err(1, "parsekey: calloc");
 
 	key->len = len / 2;
 	key->data = calloc(key->len, sizeof(u_int8_t));
 	if (key->data == NULL)
-		err(1, "%s", __func__);
+		err(1, "parsekey: calloc");
 
 	for (i = 0; i < (int)key->len; i++)
 		key->data[i] = x2i(hexkey + 2 * i);
@@ -1540,7 +1541,7 @@ parsekeyfile(char *filename)
 		errx(1, "%s: key too %s", filename, sb.st_size ? "large" :
 		    "small");
 	if ((hex = calloc(sb.st_size, sizeof(unsigned char))) == NULL)
-		err(1, "%s", __func__);
+		err(1, "parsekeyfile: calloc");
 	if (read(fd, hex, sb.st_size) < sb.st_size)
 		err(1, "parsekeyfile: read");
 	close(fd);
@@ -1578,11 +1579,11 @@ host(const char *s)
 		if (errno == ERANGE || !q || *q || mask > 128 || q == (p + 1))
 			errx(1, "host: invalid netmask '%s'", p);
 		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
-			err(1, "%s", __func__);
+			err(1, "host: calloc");
 		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
 	} else {
 		if ((ps = strdup(s)) == NULL)
-			err(1, "%s", __func__);
+			err(1, "host: strdup");
 		mask = -1;
 	}
 
@@ -1628,7 +1629,7 @@ host_v6(const char *s, int prefixlen)
 
 	ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 	if (ipa == NULL)
-		err(1, "%s", __func__);
+		err(1, "host_v6: calloc");
 	ipa->af = res->ai_family;
 	memcpy(&ipa->address.v6,
 	    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
@@ -1647,10 +1648,10 @@ host_v6(const char *s, int prefixlen)
 	if (prefixlen != 128) {
 		ipa->netaddress = 1;
 		if (asprintf(&ipa->name, "%s/%d", hbuf, prefixlen) == -1)
-			err(1, "%s", __func__);
+			err(1, "host_v6: asprintf");
 	} else {
 		if ((ipa->name = strdup(hbuf)) == NULL)
-			err(1, "%s", __func__);
+			err(1, "host_v6: strdup");
 	}
 
 	freeaddrinfo(res);
@@ -1676,12 +1677,12 @@ host_v4(const char *s, int mask)
 
 	ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 	if (ipa == NULL)
-		err(1, "%s", __func__);
+		err(1, "host_v4: calloc");
 
 	ipa->address.v4 = ina;
 	ipa->name = strdup(s);
 	if (ipa->name == NULL)
-		err(1, "%s", __func__);
+		err(1, "host_v4: strdup");
 	ipa->af = AF_INET;
 	ipa->next = NULL;
 	ipa->tail = ipa;
@@ -1714,7 +1715,7 @@ host_dns(const char *s, int mask)
 
 		ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 		if (ipa == NULL)
-			err(1, "%s", __func__);
+			err(1, "host_dns: calloc");
 		switch (res->ai_family) {
 		case AF_INET:
 			memcpy(&ipa->address.v4,
@@ -1738,7 +1739,7 @@ host_dns(const char *s, int mask)
 			err(1, "host_dns: getnameinfo");
 		ipa->name = strdup(hbuf);
 		if (ipa->name == NULL)
-			err(1, "%s", __func__);
+			err(1, "host_dns: strdup");
 		ipa->af = res->ai_family;
 		ipa->next = NULL;
 		ipa->tail = ipa;
@@ -1785,7 +1786,7 @@ host_any(void)
 
 	ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 	if (ipa == NULL)
-		err(1, "%s", __func__);
+		err(1, "host_any: calloc");
 	ipa->af = AF_UNSPEC;
 	ipa->netaddress = 1;
 	ipa->tail = ipa;
@@ -1812,10 +1813,10 @@ ifa_load(void)
 			continue;
 		n = calloc(1, sizeof(struct ipsec_addr_wrap));
 		if (n == NULL)
-			err(1, "%s", __func__);
+			err(1, "ifa_load: calloc");
 		n->af = ifa->ifa_addr->sa_family;
 		if ((n->name = strdup(ifa->ifa_name)) == NULL)
-			err(1, "%s", __func__);
+			err(1, "ifa_load: strdup");
 		if (n->af == AF_INET) {
 			n->af = AF_INET;
 			memcpy(&n->address.v4, &((struct sockaddr_in *)
@@ -1897,7 +1898,7 @@ ifa_grouplookup(const char *ifa_name)
 
 	len = ifgr.ifgr_len;
 	if ((ifgr.ifgr_groups = calloc(1, len)) == NULL)
-		err(1, "%s", __func__);
+		err(1, "calloc");
 	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
 		err(1, "ioctl");
 
@@ -1939,10 +1940,10 @@ ifa_lookup(const char *ifa_name)
 			continue;
 		n = calloc(1, sizeof(struct ipsec_addr_wrap));
 		if (n == NULL)
-			err(1, "%s", __func__);
+			err(1, "ifa_lookup: calloc");
 		memcpy(n, p, sizeof(struct ipsec_addr_wrap));
 		if ((n->name = strdup(p->name)) == NULL)
-			err(1, "%s", __func__);
+			err(1, "ifa_lookup: strdup");
 		switch (n->af) {
 		case AF_INET:
 			set_ipmask(n, 32);
@@ -2039,7 +2040,7 @@ parse_life(const char *value)
 
 	life = calloc(1, sizeof(struct ipsec_lifetime));
 	if (life == NULL)
-		err(1, "%s", __func__);
+		err(1, "calloc");
 
 	life->lt_seconds = seconds;
 	life->lt_bytes = -1;
@@ -2057,7 +2058,7 @@ copytransforms(const struct ipsec_transforms *xfs)
 
 	newxfs = calloc(1, sizeof(struct ipsec_transforms));
 	if (newxfs == NULL)
-		err(1, "%s", __func__);
+		err(1, "copytransforms: calloc");
 
 	memcpy(newxfs, xfs, sizeof(struct ipsec_transforms));
 	return (newxfs);
@@ -2073,7 +2074,7 @@ copylife(const struct ipsec_lifetime *life)
 
 	newlife = calloc(1, sizeof(struct ipsec_lifetime));
 	if (newlife == NULL)
-		err(1, "%s", __func__);
+		err(1, "copylife: calloc");
 
 	memcpy(newlife, life, sizeof(struct ipsec_lifetime));
 	return (newlife);
@@ -2088,13 +2089,13 @@ copyipsecauth(const struct ipsec_auth *auth)
 		return (NULL);
 
 	if ((newauth = calloc(1, sizeof(struct ipsec_auth))) == NULL)
-		err(1, "%s", __func__);
+		err(1, "calloc");
 	if (auth->srcid &&
 	    asprintf(&newauth->srcid, "%s", auth->srcid) == -1)
-		err(1, "%s", __func__);
+		err(1, "asprintf");
 	if (auth->dstid &&
 	    asprintf(&newauth->dstid, "%s", auth->dstid) == -1)
-		err(1, "%s", __func__);
+		err(1, "asprintf");
 
 	newauth->srcid_type = auth->srcid_type;
 	newauth->dstid_type = auth->dstid_type;
@@ -2112,10 +2113,10 @@ copyikeauth(const struct ike_auth *auth)
 		return (NULL);
 
 	if ((newauth = calloc(1, sizeof(struct ike_auth))) == NULL)
-		err(1, "%s", __func__);
+		err(1, "calloc");
 	if (auth->string &&
 	    asprintf(&newauth->string, "%s", auth->string) == -1)
-		err(1, "%s", __func__);
+		err(1, "asprintf");
 
 	newauth->type = auth->type;
 
@@ -2131,9 +2132,9 @@ copykey(struct ipsec_key *key)
 		return (NULL);
 
 	if ((newkey = calloc(1, sizeof(struct ipsec_key))) == NULL)
-		err(1, "%s", __func__);
+		err(1, "calloc");
 	if ((newkey->data = calloc(key->len, sizeof(u_int8_t))) == NULL)
-		err(1, "%s", __func__);
+		err(1, "calloc");
 	memcpy(newkey->data, key->data, key->len);
 	newkey->len = key->len;
 
@@ -2150,12 +2151,12 @@ copyhost(const struct ipsec_addr_wrap *src)
 
 	dst = calloc(1, sizeof(struct ipsec_addr_wrap));
 	if (dst == NULL)
-		err(1, "%s", __func__);
+		err(1, "copyhost: calloc");
 
 	memcpy(dst, src, sizeof(struct ipsec_addr_wrap));
 
 	if (src->name != NULL && (dst->name = strdup(src->name)) == NULL)
-		err(1, "%s", __func__);
+		err(1, "copyhost: strdup");
 
 	return dst;
 }
@@ -2168,7 +2169,7 @@ copytag(const char *src)
 	if (src == NULL)
 		return (NULL);
 	if ((tag = strdup(src)) == NULL)
-		err(1, "%s", __func__);
+		err(1, "copytag: strdup");
 
 	return (tag);
 }
@@ -2179,7 +2180,7 @@ copyrule(struct ipsec_rule *rule)
 	struct ipsec_rule	*r;
 
 	if ((r = calloc(1, sizeof(struct ipsec_rule))) == NULL)
-		err(1, "%s", __func__);
+		err(1, "calloc");
 
 	r->src = copyhost(rule->src);
 	r->dst = copyhost(rule->dst);
@@ -2407,7 +2408,7 @@ create_sa(u_int8_t satype, u_int8_t tmode, struct ipsec_hosts *hosts,
 
 	r = calloc(1, sizeof(struct ipsec_rule));
 	if (r == NULL)
-		err(1, "%s", __func__);
+		err(1, "create_sa: calloc");
 
 	r->type |= RULE_SA;
 	r->satype = satype;
@@ -2434,7 +2435,7 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 
 	reverse = calloc(1, sizeof(struct ipsec_rule));
 	if (reverse == NULL)
-		err(1, "%s", __func__);
+		err(1, "reverse_sa: calloc");
 
 	reverse->type |= RULE_SA;
 	reverse->satype = rule->satype;
@@ -2457,7 +2458,7 @@ create_sabundle(struct ipsec_addr_wrap *dst, u_int8_t proto, u_int32_t spi,
 
 	r = calloc(1, sizeof(struct ipsec_rule));
 	if (r == NULL)
-		err(1, "%s", __func__);
+		err(1, "create_sabundle: calloc");
 
 	r->type |= RULE_BUNDLE;
 
@@ -2480,7 +2481,7 @@ create_flow(u_int8_t dir, u_int8_t proto, struct ipsec_hosts *hosts,
 
 	r = calloc(1, sizeof(struct ipsec_rule));
 	if (r == NULL)
-		err(1, "%s", __func__);
+		err(1, "create_flow: calloc");
 
 	r->type |= RULE_FLOW;
 
@@ -2519,7 +2520,7 @@ create_flow(u_int8_t dir, u_int8_t proto, struct ipsec_hosts *hosts,
 
 	r->auth = calloc(1, sizeof(struct ipsec_auth));
 	if (r->auth == NULL)
-		err(1, "%s", __func__);
+		err(1, "create_flow: calloc");
 	r->auth->srcid = srcid;
 	r->auth->dstid = dstid;
 	r->auth->srcid_type = get_id_type(srcid);
@@ -2553,15 +2554,15 @@ expand_any(struct ipsec_addr_wrap *ipa_in)
 		ipa->af = AF_INET;
 		ipa->netaddress = 1;
 		if ((ipa->name = strdup("0.0.0.0/0")) == NULL)
-			err(1, "%s", __func__);
+			err(1, "expand_any: strdup");
 
 		ipa->next = calloc(1, sizeof(struct ipsec_addr_wrap));
 		if (ipa->next == NULL)
-			err(1, "%s", __func__);
+			err(1, "expand_any: calloc");
 		ipa->next->af = AF_INET6;
 		ipa->next->netaddress = 1;
 		if ((ipa->next->name = strdup("::/0")) == NULL)
-			err(1, "%s", __func__);
+			err(1, "expand_any: strdup");
 
 		ipa->next->next = oldnext;
 	}
@@ -2729,7 +2730,7 @@ reverse_rule(struct ipsec_rule *rule)
 
 	reverse = calloc(1, sizeof(struct ipsec_rule));
 	if (reverse == NULL)
-		err(1, "%s", __func__);
+		err(1, "reverse_rule: calloc");
 
 	reverse->type |= RULE_FLOW;
 
@@ -2754,13 +2755,13 @@ reverse_rule(struct ipsec_rule *rule)
 	if (rule->auth) {
 		reverse->auth = calloc(1, sizeof(struct ipsec_auth));
 		if (reverse->auth == NULL)
-			err(1, "%s", __func__);
+			err(1, "reverse_rule: calloc");
 		if (rule->auth->dstid && (reverse->auth->dstid =
 		    strdup(rule->auth->dstid)) == NULL)
-			err(1, "%s", __func__);
+			err(1, "reverse_rule: strdup");
 		if (rule->auth->srcid && (reverse->auth->srcid =
 		    strdup(rule->auth->srcid)) == NULL)
-			err(1, "%s", __func__);
+			err(1, "reverse_rule: strdup");
 		reverse->auth->srcid_type = rule->auth->srcid_type;
 		reverse->auth->dstid_type = rule->auth->dstid_type;
 		reverse->auth->type = rule->auth->type;
@@ -2779,7 +2780,7 @@ create_ike(u_int8_t proto, struct ipsec_hosts *hosts,
 
 	r = calloc(1, sizeof(struct ipsec_rule));
 	if (r == NULL)
-		err(1, "%s", __func__);
+		err(1, "create_ike: calloc");
 
 	r->type = RULE_IKE;
 
@@ -2821,14 +2822,14 @@ create_ike(u_int8_t proto, struct ipsec_hosts *hosts,
 
 	r->auth = calloc(1, sizeof(struct ipsec_auth));
 	if (r->auth == NULL)
-		err(1, "%s", __func__);
+		err(1, "create_ike: calloc");
 	r->auth->srcid = srcid;
 	r->auth->dstid = dstid;
 	r->auth->srcid_type = get_id_type(srcid);
 	r->auth->dstid_type = get_id_type(dstid);
 	r->ikeauth = calloc(1, sizeof(struct ike_auth));
 	if (r->ikeauth == NULL)
-		err(1, "%s", __func__);
+		err(1, "create_ike: calloc");
 	r->ikeauth->type = authtype->type;
 	r->ikeauth->string = authtype->string;
 	r->tag = tag;

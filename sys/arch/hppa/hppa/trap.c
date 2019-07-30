@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.144 2019/06/01 22:42:20 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.142 2017/07/22 15:20:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -213,12 +213,8 @@ trap(int type, struct trapframe *frame)
 		mtctl(frame->tf_eiem, CR_EIEM);
 	}
 
-	if (type & T_USER) {
+	if (type & T_USER)
 		refreshcreds(p);
-		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p), "sp",
-		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
-			return;
-	}
 
 	switch (type) {
 	case T_NONEXIST:

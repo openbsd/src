@@ -215,7 +215,7 @@ void Sema::checkContainerDecl(const BlockCommandComment *Comment) {
     << Comment->getSourceRange();
 }
 
-/// Turn a string into the corresponding PassDirection or -1 if it's not
+/// \brief Turn a string into the corresponding PassDirection or -1 if it's not
 /// valid.
 static int getParamPassDirection(StringRef Arg) {
   return llvm::StringSwitch<int>(Arg)
@@ -813,7 +813,7 @@ bool Sema::isAnyFunctionDecl() {
 }
 
 bool Sema::isFunctionOrMethodVariadic() {
-  if (!isFunctionDecl() || !ThisDeclInfo->CurrentDecl)
+  if (!isAnyFunctionDecl() && !isObjCMethodDecl() && !isFunctionTemplateDecl())
     return false;
   if (const FunctionDecl *FD =
         dyn_cast<FunctionDecl>(ThisDeclInfo->CurrentDecl))
@@ -824,14 +824,6 @@ bool Sema::isFunctionOrMethodVariadic() {
   if (const ObjCMethodDecl *MD =
         dyn_cast<ObjCMethodDecl>(ThisDeclInfo->CurrentDecl))
     return MD->isVariadic();
-  if (const TypedefNameDecl *TD =
-          dyn_cast<TypedefNameDecl>(ThisDeclInfo->CurrentDecl)) {
-    QualType Type = TD->getUnderlyingType();
-    if (Type->isFunctionPointerType() || Type->isBlockPointerType())
-      Type = Type->getPointeeType();
-    if (const auto *FT = Type->getAs<FunctionProtoType>())
-      return FT->isVariadic();
-  }
   return false;
 }
 

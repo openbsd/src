@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// Provides an action to find all relevant USRs at a point.
+/// \brief Provides an action to find all relevant USRs at a point.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -23,24 +23,10 @@
 
 namespace clang {
 class ASTConsumer;
-class ASTContext;
 class CompilerInstance;
 class NamedDecl;
 
 namespace tooling {
-
-/// Returns the canonical declaration that best represents a symbol that can be
-/// renamed.
-///
-/// The following canonicalization rules are currently used:
-///
-/// - A constructor is canonicalized to its class.
-/// - A destructor is canonicalized to its class.
-const NamedDecl *getCanonicalSymbolDeclaration(const NamedDecl *FoundDecl);
-
-/// Returns the set of USRs that correspond to the given declaration.
-std::vector<std::string> getUSRsForDeclaration(const NamedDecl *ND,
-                                               ASTContext &Context);
 
 struct USRFindingAction {
   USRFindingAction(ArrayRef<unsigned> SymbolOffsets,

@@ -25,8 +25,6 @@ $^W = 0;
 use Storable qw(dclone);
 use Test::More tests => 8;
 
-$Storable::flags = Storable::FLAGS_COMPAT;
-
 $h_fetches = 0;
 
 sub H::TIEHASH { bless \(my $x), "H" }

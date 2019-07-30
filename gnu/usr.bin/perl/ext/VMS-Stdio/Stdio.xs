@@ -4,9 +4,6 @@
  *
  */
 
-/* We now depend on handy.h macros that are not public API. */
-#define PERL_EXT
-
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -18,7 +15,7 @@
 static bool
 constant(char *name, IV *pval)
 {
-    if (! strBEGINs(name, "O_")) return FALSE;
+    if (strnNE(name, "O_", 2)) return FALSE;
 
     if (strEQ(name, "O_APPEND"))
 #ifdef O_APPEND

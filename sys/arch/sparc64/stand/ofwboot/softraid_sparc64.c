@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_sparc64.c,v 1.4 2018/12/31 11:44:57 claudio Exp $	*/
+/*	$OpenBSD: softraid_sparc64.c,v 1.3 2018/03/29 08:12:58 stsp Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -29,7 +29,6 @@
 #include <lib/libsa/softraid.h>
 
 #include "disk.h"
-#include "openfirm.h"
 #include "ofdev.h"
 #include "softraid_sparc64.h"
 

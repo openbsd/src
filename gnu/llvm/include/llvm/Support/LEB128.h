@@ -19,40 +19,34 @@
 
 namespace llvm {
 
-/// Utility function to encode a SLEB128 value to an output stream. Returns
-/// the length in bytes of the encoded value.
-inline unsigned encodeSLEB128(int64_t Value, raw_ostream &OS,
-                              unsigned PadTo = 0) {
+/// Utility function to encode a SLEB128 value to an output stream.
+inline void encodeSLEB128(int64_t Value, raw_ostream &OS,
+                          unsigned Padding = 0) {
   bool More;
-  unsigned Count = 0;
   do {
     uint8_t Byte = Value & 0x7f;
     // NOTE: this assumes that this signed shift is an arithmetic right shift.
     Value >>= 7;
     More = !((((Value == 0 ) && ((Byte & 0x40) == 0)) ||
               ((Value == -1) && ((Byte & 0x40) != 0))));
-    Count++;
-    if (More || Count < PadTo)
+    if (More || Padding != 0)
       Byte |= 0x80; // Mark this byte to show that more bytes will follow.
     OS << char(Byte);
   } while (More);
 
   // Pad with 0x80 and emit a terminating byte at the end.
-  if (Count < PadTo) {
+  if (Padding != 0) {
     uint8_t PadValue = Value < 0 ? 0x7f : 0x00;
-    for (; Count < PadTo - 1; ++Count)
+    for (; Padding != 1; --Padding)
       OS << char(PadValue | 0x80);
     OS << char(PadValue);
-    Count++;
   }
-  return Count;
 }
 
 /// Utility function to encode a SLEB128 value to a buffer. Returns
 /// the length in bytes of the encoded value.
-inline unsigned encodeSLEB128(int64_t Value, uint8_t *p, unsigned PadTo = 0) {
+inline unsigned encodeSLEB128(int64_t Value, uint8_t *p, unsigned Padding = 0) {
   uint8_t *orig_p = p;
-  unsigned Count = 0;
   bool More;
   do {
     uint8_t Byte = Value & 0x7f;
@@ -60,68 +54,59 @@ inline unsigned encodeSLEB128(int64_t Value, uint8_t *p, unsigned PadTo = 0) {
     Value >>= 7;
     More = !((((Value == 0 ) && ((Byte & 0x40) == 0)) ||
               ((Value == -1) && ((Byte & 0x40) != 0))));
-    Count++;
-    if (More || Count < PadTo)
+    if (More || Padding != 0)
       Byte |= 0x80; // Mark this byte to show that more bytes will follow.
     *p++ = Byte;
   } while (More);
 
   // Pad with 0x80 and emit a terminating byte at the end.
-  if (Count < PadTo) {
+  if (Padding != 0) {
     uint8_t PadValue = Value < 0 ? 0x7f : 0x00;
-    for (; Count < PadTo - 1; ++Count)
+    for (; Padding != 1; --Padding)
       *p++ = (PadValue | 0x80);
     *p++ = PadValue;
   }
   return (unsigned)(p - orig_p);
 }
 
-/// Utility function to encode a ULEB128 value to an output stream. Returns
-/// the length in bytes of the encoded value.
-inline unsigned encodeULEB128(uint64_t Value, raw_ostream &OS,
-                              unsigned PadTo = 0) {
-  unsigned Count = 0;
+/// Utility function to encode a ULEB128 value to an output stream.
+inline void encodeULEB128(uint64_t Value, raw_ostream &OS,
+                          unsigned Padding = 0) {
   do {
     uint8_t Byte = Value & 0x7f;
     Value >>= 7;
-    Count++;
-    if (Value != 0 || Count < PadTo)
+    if (Value != 0 || Padding != 0)
       Byte |= 0x80; // Mark this byte to show that more bytes will follow.
     OS << char(Byte);
   } while (Value != 0);
 
   // Pad with 0x80 and emit a null byte at the end.
-  if (Count < PadTo) {
-    for (; Count < PadTo - 1; ++Count)
+  if (Padding != 0) {
+    for (; Padding != 1; --Padding)
       OS << '\x80';
     OS << '\x00';
-    Count++;
   }
-  return Count;
 }
 
 /// Utility function to encode a ULEB128 value to a buffer. Returns
 /// the length in bytes of the encoded value.
 inline unsigned encodeULEB128(uint64_t Value, uint8_t *p,
-                              unsigned PadTo = 0) {
+                              unsigned Padding = 0) {
   uint8_t *orig_p = p;
-  unsigned Count = 0;
   do {
     uint8_t Byte = Value & 0x7f;
     Value >>= 7;
-    Count++;
-    if (Value != 0 || Count < PadTo)
+    if (Value != 0 || Padding != 0)
       Byte |= 0x80; // Mark this byte to show that more bytes will follow.
     *p++ = Byte;
   } while (Value != 0);
 
   // Pad with 0x80 and emit a null byte at the end.
-  if (Count < PadTo) {
-    for (; Count < PadTo - 1; ++Count)
+  if (Padding != 0) {
+    for (; Padding != 1; --Padding)
       *p++ = '\x80';
     *p++ = '\x00';
   }
-
   return (unsigned)(p - orig_p);
 }
 

@@ -11,14 +11,12 @@
 #define LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZREGISTERINFO_H
 
 #include "SystemZ.h"
-#include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 
 #define GET_REGINFO_HEADER
 #include "SystemZGenRegisterInfo.inc"
 
 namespace llvm {
-
-class LiveIntervals;
 
 namespace SystemZ {
 // Return the subreg to use for referring to the even and odd registers
@@ -44,21 +42,6 @@ public:
     return &SystemZ::ADDR64BitRegClass;
   }
 
-  /// getCrossCopyRegClass - Returns a legal register class to copy a register
-  /// in the specified class to or from. Returns NULL if it is possible to copy
-  /// between a two registers of the specified class.
-  const TargetRegisterClass *
-  getCrossCopyRegClass(const TargetRegisterClass *RC) const override;
-
-  bool getRegAllocationHints(unsigned VirtReg,
-                             ArrayRef<MCPhysReg> Order,
-                             SmallVectorImpl<MCPhysReg> &Hints,
-                             const MachineFunction &MF,
-                             const VirtRegMap *VRM,
-                             const LiveRegMatrix *Matrix) const override;
-
-  bool enableMultipleCopyHints() const override { return true; }
-
   // Override TargetRegisterInfo.h.
   bool requiresRegisterScavenging(const MachineFunction &MF) const override {
     return true;
@@ -76,16 +59,6 @@ public:
   void eliminateFrameIndex(MachineBasicBlock::iterator MI,
                            int SPAdj, unsigned FIOperandNum,
                            RegScavenger *RS) const override;
-
-  /// SrcRC and DstRC will be morphed into NewRC if this returns true.
- bool shouldCoalesce(MachineInstr *MI,
-                      const TargetRegisterClass *SrcRC,
-                      unsigned SubReg,
-                      const TargetRegisterClass *DstRC,
-                      unsigned DstSubReg,
-                      const TargetRegisterClass *NewRC,
-                      LiveIntervals &LIS) const override;
-
   unsigned getFrameRegister(const MachineFunction &MF) const override;
 };
 

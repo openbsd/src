@@ -1,7 +1,10 @@
-#	$OpenBSD: Makefile,v 1.2 2019/05/12 17:44:25 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.1 2013/10/07 15:52:18 jsing Exp $
 
 PROG=		sigprof
-LDADD=		-lpthread
-DPADD=		${LIBPTHREAD}
+
+LIBPTHREAD=	/usr/lib/libpthread.a
+
+LDADD+=		-lpthread
+DPADD+=		${LIBPTHREAD}
 
 .include <bsd.regress.mk>

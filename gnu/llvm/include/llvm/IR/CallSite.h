@@ -35,6 +35,7 @@
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Use.h"
 #include "llvm/IR/User.h"
 #include "llvm/IR/Value.h"
@@ -44,10 +45,6 @@
 #include <iterator>
 
 namespace llvm {
-
-namespace Intrinsic {
-enum ID : unsigned;
-}
 
 template <typename FunTy = const Function,
           typename BBTy = const BasicBlock,
@@ -62,7 +59,7 @@ class CallSiteBase {
 protected:
   PointerIntPair<InstrTy*, 1, bool> I;
 
-  CallSiteBase() = default;
+  CallSiteBase() : I(nullptr, false) {}
   CallSiteBase(CallTy *CI) : I(CI, true) { assert(CI); }
   CallSiteBase(InvokeTy *II) : I(II, false) { assert(II); }
   explicit CallSiteBase(ValTy *II) { *this = get(II); }
@@ -110,12 +107,12 @@ public:
 
   /// Return true if the callsite is an indirect call.
   bool isIndirectCall() const {
-    const Value *V = getCalledValue();
+    Value *V = getCalledValue();
     if (!V)
       return false;
     if (isa<FunTy>(V) || isa<Constant>(V))
       return false;
-    if (const CallInst *CI = dyn_cast<CallInst>(getInstruction())) {
+    if (CallInst *CI = dyn_cast<CallInst>(getInstruction())) {
       if (CI->isInlineAsm())
         return false;
     }
@@ -429,11 +426,6 @@ public:
     CALLSITE_DELEGATE_GETTER(isNoBuiltin());
   }
 
-  /// Return true if the call requires strict floating point semantics.
-  bool isStrictFP() const {
-    CALLSITE_DELEGATE_GETTER(isStrictFP());
-  }
-
   /// Return true if the call should not be inlined.
   bool isNoInline() const {
     CALLSITE_DELEGATE_GETTER(isNoInline());
@@ -475,24 +467,6 @@ public:
     CALLSITE_DELEGATE_SETTER(setOnlyAccessesArgMemory());
   }
 
-  /// Determine if the function may only access memory that is
-  /// inaccessible from the IR.
-  bool onlyAccessesInaccessibleMemory() const {
-    CALLSITE_DELEGATE_GETTER(onlyAccessesInaccessibleMemory());
-  }
-  void setOnlyAccessesInaccessibleMemory() {
-    CALLSITE_DELEGATE_SETTER(setOnlyAccessesInaccessibleMemory());
-  }
-
-  /// Determine if the function may only access memory that is
-  /// either inaccessible from the IR or pointed to by its arguments.
-  bool onlyAccessesInaccessibleMemOrArgMem() const {
-    CALLSITE_DELEGATE_GETTER(onlyAccessesInaccessibleMemOrArgMem());
-  }
-  void setOnlyAccessesInaccessibleMemOrArgMem() {
-    CALLSITE_DELEGATE_SETTER(setOnlyAccessesInaccessibleMemOrArgMem());
-  }
-
   /// Determine if the call cannot return.
   bool doesNotReturn() const {
     CALLSITE_DELEGATE_GETTER(doesNotReturn());
@@ -514,7 +488,7 @@ public:
     CALLSITE_DELEGATE_GETTER(cannotDuplicate());
   }
   void setCannotDuplicate() {
-    CALLSITE_DELEGATE_SETTER(setCannotDuplicate());
+    CALLSITE_DELEGATE_GETTER(setCannotDuplicate());
   }
 
   /// Determine if the call is convergent.
@@ -637,8 +611,7 @@ public:
     if (hasRetAttr(Attribute::NonNull))
       return true;
     else if (getDereferenceableBytes(AttributeList::ReturnIndex) > 0 &&
-             !NullPointerIsDefined(getCaller(),
-                                   getType()->getPointerAddressSpace()))
+             getType()->getPointerAddressSpace() == 0)
       return true;
 
     return false;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.62 2019/06/14 05:52:43 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.59 2016/09/16 03:39:25 dlg Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -292,8 +292,6 @@ struct vm_map {
 	struct pmap *		pmap;		/* Physical map */
 	struct rwlock		lock;		/* Lock for map data */
 	struct mutex		mtx;
-	u_long			sserial;	/* counts stack changes */
-	u_long			wserial;	/* counts PROT_WRITE increases */
 
 	struct uvm_map_addr	addr;		/* Entry tree, by addr */
 
@@ -395,8 +393,6 @@ int		uvm_map_inherit(vm_map_t, vaddr_t, vaddr_t, vm_inherit_t);
 int		uvm_map_advice(vm_map_t, vaddr_t, vaddr_t, int);
 void		uvm_map_init(void);
 boolean_t	uvm_map_lookup_entry(vm_map_t, vaddr_t, vm_map_entry_t *);
-boolean_t	uvm_map_is_stack_remappable(vm_map_t, vaddr_t, vsize_t);
-int		uvm_map_remap_as_stack(struct proc *, vaddr_t, vsize_t);
 int		uvm_map_replace(vm_map_t, vaddr_t, vaddr_t,
 		    vm_map_entry_t, int);
 int		uvm_map_reserve(vm_map_t, vsize_t, vaddr_t, vsize_t,
@@ -411,17 +407,6 @@ int		uvm_map_mquery(struct vm_map*, vaddr_t*, vsize_t, voff_t, int);
 void		uvm_unmap_detach(struct uvm_map_deadq*, int);
 void		uvm_unmap_remove(struct vm_map*, vaddr_t, vaddr_t,
 		    struct uvm_map_deadq*, boolean_t, boolean_t);
-
-struct p_inentry;
-
-int		uvm_map_inentry_recheck(u_long serial, vaddr_t,
-		    struct p_inentry *);
-int		uvm_map_inentry_sp(vm_map_entry_t);
-int		uvm_map_inentry_pc(vm_map_entry_t);
-boolean_t	uvm_map_inentry_fix(struct proc *, struct p_inentry *,
-		    vaddr_t addr, int (*fn)(vm_map_entry_t), u_long serial);
-boolean_t	uvm_map_inentry(struct proc *, struct p_inentry *, vaddr_t addr,
-		    const char *fmt, int (*fn)(vm_map_entry_t), u_long serial);
 
 struct kinfo_vmentry;
 

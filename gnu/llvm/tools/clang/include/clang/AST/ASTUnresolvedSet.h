@@ -1,4 +1,4 @@
-//===- ASTUnresolvedSet.h - Unresolved sets of declarations -----*- C++ -*-===//
+//===-- ASTUnresolvedSet.h - Unresolved sets of declarations  ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,22 +16,14 @@
 #define LLVM_CLANG_AST_ASTUNRESOLVEDSET_H
 
 #include "clang/AST/ASTVector.h"
-#include "clang/AST/DeclAccessPair.h"
 #include "clang/AST/UnresolvedSet.h"
-#include "clang/Basic/Specifiers.h"
-#include <cassert>
-#include <cstdint>
 
 namespace clang {
 
-class NamedDecl;
-
-/// An UnresolvedSet-like class which uses the ASTContext's allocator.
+/// \brief An UnresolvedSet-like class which uses the ASTContext's allocator.
 class ASTUnresolvedSet {
-  friend class LazyASTUnresolvedSet;
-
   struct DeclsTy : ASTVector<DeclAccessPair> {
-    DeclsTy() = default;
+    DeclsTy() {}
     DeclsTy(ASTContext &C, unsigned N) : ASTVector<DeclAccessPair>(C, N) {}
 
     bool isLazy() const { return getTag(); }
@@ -40,12 +32,14 @@ class ASTUnresolvedSet {
 
   DeclsTy Decls;
 
+  friend class LazyASTUnresolvedSet;
+
 public:
-  ASTUnresolvedSet() = default;
+  ASTUnresolvedSet() {}
   ASTUnresolvedSet(ASTContext &C, unsigned N) : Decls(C, N) {}
 
-  using iterator = UnresolvedSetIterator;
-  using const_iterator = UnresolvedSetIterator;
+  typedef UnresolvedSetIterator iterator;
+  typedef UnresolvedSetIterator const_iterator;
 
   iterator begin() { return iterator(Decls.begin()); }
   iterator end() { return iterator(Decls.end()); }
@@ -89,7 +83,7 @@ public:
   const DeclAccessPair &operator[](unsigned I) const { return Decls[I]; }
 };
 
-/// An UnresolvedSet-like class that might not have been loaded from the
+/// \brief An UnresolvedSet-like class that might not have been loaded from the
 /// external AST source yet.
 class LazyASTUnresolvedSet {
   mutable ASTUnresolvedSet Impl;
@@ -104,14 +98,13 @@ public:
   }
 
   void reserve(ASTContext &C, unsigned N) { Impl.reserve(C, N); }
-
   void addLazyDecl(ASTContext &C, uintptr_t ID, AccessSpecifier AS) {
     assert(Impl.empty() || Impl.Decls.isLazy());
     Impl.Decls.setLazy(true);
-    Impl.addDecl(C, reinterpret_cast<NamedDecl *>(ID << 2), AS);
+    Impl.addDecl(C, reinterpret_cast<NamedDecl*>(ID << 2), AS);
   }
 };
 
 } // namespace clang
 
-#endif // LLVM_CLANG_AST_ASTUNRESOLVEDSET_H
+#endif

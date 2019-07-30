@@ -15,7 +15,7 @@
 #define LLVM_LIB_TARGET_MIPS_MIPSFRAMELOWERING_H
 
 #include "Mips.h"
-#include "llvm/CodeGen/TargetFrameLowering.h"
+#include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
   class MipsSubtarget;
@@ -35,10 +35,6 @@ public:
   bool hasBP(const MachineFunction &MF) const;
 
   bool isFPCloseToIncomingSP() const override { return false; }
-
-  bool enableShrinkWrapping(const MachineFunction &MF) const override {
-    return true;
-  }
 
   MachineBasicBlock::iterator
   eliminateCallFramePseudoInstr(MachineFunction &MF,

@@ -6,14 +6,15 @@
 
 package IO::Pipe;
 
-use 5.008_001;
+use 5.006_001;
 
 use IO::Handle;
 use strict;
+our($VERSION);
 use Carp;
 use Symbol;
 
-our $VERSION = "1.39";
+$VERSION = "1.15";
 
 sub new {
     my $type = shift;

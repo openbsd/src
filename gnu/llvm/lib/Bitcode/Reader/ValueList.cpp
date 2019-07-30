@@ -1,4 +1,4 @@
-//===- ValueList.cpp - Internal BitcodeReader implementation --------------===//
+//===----- ValueList.cpp - Internal BitcodeReader implementation ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,45 +8,28 @@
 //===----------------------------------------------------------------------===//
 
 #include "ValueList.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/IR/Argument.h"
-#include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
-#include "llvm/IR/GlobalValue.h"
-#include "llvm/IR/Instruction.h"
-#include "llvm/IR/Type.h"
-#include "llvm/IR/User.h"
-#include "llvm/IR/Value.h"
-#include "llvm/IR/ValueHandle.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/ErrorHandling.h"
-#include <algorithm>
-#include <cassert>
-#include <cstddef>
-#include <limits>
-#include <utility>
+#include "llvm/IR/Instructions.h"
 
 using namespace llvm;
 
 namespace llvm {
-
 namespace {
 
-/// A class for maintaining the slot number definition
+/// \brief A class for maintaining the slot number definition
 /// as a placeholder for the actual definition for forward constants defs.
 class ConstantPlaceHolder : public ConstantExpr {
+  void operator=(const ConstantPlaceHolder &) = delete;
+
 public:
+  // allocate space for exactly one operand
+  void *operator new(size_t s) { return User::operator new(s, 1); }
   explicit ConstantPlaceHolder(Type *Ty, LLVMContext &Context)
       : ConstantExpr(Ty, Instruction::UserOp1, &Op<0>(), 1) {
     Op<0>() = UndefValue::get(Type::getInt32Ty(Context));
   }
 
-  ConstantPlaceHolder &operator=(const ConstantPlaceHolder &) = delete;
-
-  // allocate space for exactly one operand
-  void *operator new(size_t s) { return User::operator new(s, 1); }
-
-  /// Methods to support type inquiry through isa, cast, and dyn_cast.
+  /// \brief Methods to support type inquiry through isa, cast, and dyn_cast.
   static bool classof(const Value *V) {
     return isa<ConstantExpr>(V) &&
            cast<ConstantExpr>(V)->getOpcode() == Instruction::UserOp1;
@@ -144,7 +127,7 @@ Value *BitcodeReaderValueList::getValueFwdRef(unsigned Idx, Type *Ty) {
 void BitcodeReaderValueList::resolveConstantForwardRefs() {
   // Sort the values by-pointer so that they are efficient to look up with a
   // binary search.
-  llvm::sort(ResolveConstants.begin(), ResolveConstants.end());
+  std::sort(ResolveConstants.begin(), ResolveConstants.end());
 
   SmallVector<Constant *, 64> NewOps;
 

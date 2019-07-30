@@ -46,8 +46,13 @@ char *malloc (), *realloc ();
    error.  */
 
 int
-getstr (char **lineptr, size_t *n, FILE *stream, char terminator, int offset,
-   int limit)
+getstr (lineptr, n, stream, terminator, offset, limit)
+     char **lineptr;
+     size_t *n;
+     FILE *stream;
+     char terminator;
+     int offset;
+     int limit;
 {
   int nchars_avail;		/* Allocated but unused chars in *LINEPTR.  */
   char *read_pos;		/* Where we're reading into *LINEPTR. */
@@ -149,13 +154,20 @@ getstr (char **lineptr, size_t *n, FILE *stream, char terminator, int offset,
 }
 
 int
-get_line (char **lineptr, size_t *n, FILE *stream)
+get_line (lineptr, n, stream)
+     char **lineptr;
+     size_t *n;
+     FILE *stream;
 {
   return getstr (lineptr, n, stream, '\n', 0, GETLINE_NO_LIMIT);
 }
 
 int
-getline_safe (char **lineptr, size_t *n, FILE *stream, int limit)
+getline_safe (lineptr, n, stream, limit)
+     char **lineptr;
+     size_t *n;
+     FILE *stream;
+     int limit;
 {
   return getstr (lineptr, n, stream, '\n', 0, limit);
 }

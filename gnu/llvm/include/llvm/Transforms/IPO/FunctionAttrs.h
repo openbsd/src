@@ -1,4 +1,4 @@
-//===- FunctionAttrs.h - Compute function attributes ------------*- C++ -*-===//
+//===-- FunctionAttrs.h - Compute function attrs --------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,11 +6,9 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
 /// \file
 /// Provides passes for computing function attributes based on interprocedural
 /// analyses.
-//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TRANSFORMS_IPO_FUNCTIONATTRS_H
@@ -23,9 +21,6 @@
 namespace llvm {
 
 class AAResults;
-class Function;
-class Module;
-class Pass;
 
 /// The three kinds of memory access relevant to 'readonly' and
 /// 'readnone' attributes.
@@ -71,7 +66,6 @@ class ReversePostOrderFunctionAttrsPass
 public:
   PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
 };
-
-} // end namespace llvm
+}
 
 #endif // LLVM_TRANSFORMS_IPO_FUNCTIONATTRS_H

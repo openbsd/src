@@ -1,4 +1,4 @@
-//==- DependentDiagnostic.h - Dependently-generated diagnostics --*- C++ -*-==//
+//===-- DependentDiagnostic.h - Dependently-generated diagnostics -*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -23,9 +23,6 @@
 #include "clang/AST/Type.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/SourceLocation.h"
-#include "clang/Basic/Specifiers.h"
-#include <cassert>
-#include <iterator>
 
 namespace clang {
 
@@ -97,17 +94,16 @@ public:
   }
 
 private:
-  friend class DeclContext::ddiag_iterator;
-  friend class DependentStoredDeclsMap;
-
   DependentDiagnostic(const PartialDiagnostic &PDiag,
-                      PartialDiagnostic::Storage *Storage)
+                      PartialDiagnostic::Storage *Storage) 
     : Diag(PDiag, Storage) {}
-
+  
   static DependentDiagnostic *Create(ASTContext &Context,
                                      DeclContext *Parent,
                                      const PartialDiagnostic &PDiag);
 
+  friend class DependentStoredDeclsMap;
+  friend class DeclContext::ddiag_iterator;
   DependentDiagnostic *NextDiagnostic;
 
   PartialDiagnostic Diag;
@@ -122,17 +118,19 @@ private:
   } AccessData;
 };
 
+/// 
+
 /// An iterator over the dependent diagnostics in a dependent context.
 class DeclContext::ddiag_iterator {
 public:
-  ddiag_iterator() = default;
+  ddiag_iterator() : Ptr(nullptr) {}
   explicit ddiag_iterator(DependentDiagnostic *Ptr) : Ptr(Ptr) {}
 
-  using value_type = DependentDiagnostic *;
-  using reference = DependentDiagnostic *;
-  using pointer = DependentDiagnostic *;
-  using difference_type = int;
-  using iterator_category = std::forward_iterator_tag;
+  typedef DependentDiagnostic *value_type;
+  typedef DependentDiagnostic *reference;
+  typedef DependentDiagnostic *pointer;
+  typedef int difference_type;
+  typedef std::forward_iterator_tag iterator_category;
 
   reference operator*() const { return Ptr; }
 
@@ -170,7 +168,7 @@ public:
   }
 
 private:
-  DependentDiagnostic *Ptr = nullptr;
+  DependentDiagnostic *Ptr;
 };
 
 inline DeclContext::ddiag_range DeclContext::ddiags() const {
@@ -186,6 +184,6 @@ inline DeclContext::ddiag_range DeclContext::ddiags() const {
   return ddiag_range(ddiag_iterator(Map->FirstDiagnostic), ddiag_iterator());
 }
 
-} // namespace clang
+}
 
-#endif // LLVM_CLANG_AST_DEPENDENTDIAGNOSTIC_H
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.91 2018/09/26 14:51:44 visa Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.88 2018/03/28 16:34:28 visa Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -107,8 +107,9 @@ cd9660_mountroot(void)
 		return (error);
 	args.flags = ISOFSMNT_ROOT;
 	if ((error = iso_mountfs(rootvp, mp, p, &args)) != 0) {
+		mp->mnt_vfc->vfc_refcount--;
 		vfs_unbusy(mp);
-		vfs_mount_free(mp);
+                free(mp, M_MOUNT, 0);
                 return (error);
         }
 
@@ -241,9 +242,9 @@ iso_mountfs(devvp, mp, p, argp)
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
-	VOP_UNLOCK(devvp);
+	VOP_UNLOCK(devvp, p);
 	if (error)
 		return (error);
 
@@ -435,9 +436,9 @@ out:
 	if (supbp)
 		brelse(supbp);
 
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-	VOP_UNLOCK(devvp);
+	VOP_UNLOCK(devvp, p);
 
 	if (isomp) {
 		free((caddr_t)isomp, M_ISOFSMNT, 0);
@@ -569,7 +570,7 @@ cd9660_unmount(mp, mntflags, p)
 	isomp = VFSTOISOFS(mp);
 
 	isomp->im_devvp->v_specmountpoint = NULL;
-	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	(void)VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, p);
 	vput(isomp->im_devvp);
 	free((caddr_t)isomp, M_ISOFSMNT, 0);

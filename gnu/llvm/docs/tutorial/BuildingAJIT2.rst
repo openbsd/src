@@ -12,11 +12,6 @@ we welcome any feedback.
 Chapter 2 Introduction
 ======================
 
-**Warning: This text is currently out of date due to ORC API updates.**
-
-**The example code has been updated and can be used. The text will be updated
-once the API churn dies down.**
-
 Welcome to Chapter 2 of the "Building an ORC-based JIT in LLVM" tutorial. In
 `Chapter 1 <BuildingAJIT1.html>`_ of this series we examined a basic JIT
 class, KaleidoscopeJIT, that could take LLVM IR modules as input and produce
@@ -51,7 +46,7 @@ Chapter 1 and compose an ORC *IRTransformLayer* on top. We will look at how the
 IRTransformLayer works in more detail below, but the interface is simple: the
 constructor for this layer takes a reference to the layer below (as all layers
 do) plus an *IR optimization function* that it will apply to each Module that
-is added via addModule:
+is added via addModuleSet:
 
 .. code-block:: c++
 
@@ -59,20 +54,19 @@ is added via addModule:
   private:
     std::unique_ptr<TargetMachine> TM;
     const DataLayout DL;
-    RTDyldObjectLinkingLayer<> ObjectLayer;
+    ObjectLinkingLayer<> ObjectLayer;
     IRCompileLayer<decltype(ObjectLayer)> CompileLayer;
 
-    using OptimizeFunction =
-        std::function<std::shared_ptr<Module>(std::shared_ptr<Module>)>;
+    typedef std::function<std::unique_ptr<Module>(std::unique_ptr<Module>)>
+      OptimizeFunction;
 
     IRTransformLayer<decltype(CompileLayer), OptimizeFunction> OptimizeLayer;
 
   public:
-    using ModuleHandle = decltype(OptimizeLayer)::ModuleHandleT;
+    typedef decltype(OptimizeLayer)::ModuleSetHandleT ModuleHandle;
 
     KaleidoscopeJIT()
         : TM(EngineBuilder().selectTarget()), DL(TM->createDataLayout()),
-          ObjectLayer([]() { return std::make_shared<SectionMemoryManager>(); }),
           CompileLayer(ObjectLayer, SimpleCompiler(*TM)),
           OptimizeLayer(CompileLayer,
                         [this](std::unique_ptr<Module> M) {
@@ -107,8 +101,9 @@ define below.
 .. code-block:: c++
 
   // ...
-  return cantFail(OptimizeLayer.addModule(std::move(M),
-                                          std::move(Resolver)));
+  return OptimizeLayer.addModuleSet(std::move(Ms),
+                                    make_unique<SectionMemoryManager>(),
+                                    std::move(Resolver));
   // ...
 
 .. code-block:: c++
@@ -120,17 +115,17 @@ define below.
 .. code-block:: c++
 
   // ...
-  cantFail(OptimizeLayer.removeModule(H));
+  OptimizeLayer.removeModuleSet(H);
   // ...
 
 Next we need to replace references to 'CompileLayer' with references to
 OptimizeLayer in our key methods: addModule, findSymbol, and removeModule. In
 addModule we need to be careful to replace both references: the findSymbol call
-inside our resolver, and the call through to addModule.
+inside our resolver, and the call through to addModuleSet.
 
 .. code-block:: c++
 
-  std::shared_ptr<Module> optimizeModule(std::shared_ptr<Module> M) {
+  std::unique_ptr<Module> optimizeModule(std::unique_ptr<Module> M) {
     // Create a function pass manager.
     auto FPM = llvm::make_unique<legacy::FunctionPassManager>(M.get());
 
@@ -171,30 +166,37 @@ implementations of the layer concept that can be devised:
   template <typename BaseLayerT, typename TransformFtor>
   class IRTransformLayer {
   public:
-    using ModuleHandleT = typename BaseLayerT::ModuleHandleT;
+    typedef typename BaseLayerT::ModuleSetHandleT ModuleSetHandleT;
 
     IRTransformLayer(BaseLayerT &BaseLayer,
                      TransformFtor Transform = TransformFtor())
       : BaseLayer(BaseLayer), Transform(std::move(Transform)) {}
 
-    Expected<ModuleHandleT>
-    addModule(std::shared_ptr<Module> M,
-              std::shared_ptr<JITSymbolResolver> Resolver) {
-      return BaseLayer.addModule(Transform(std::move(M)), std::move(Resolver));
+    template <typename ModuleSetT, typename MemoryManagerPtrT,
+              typename SymbolResolverPtrT>
+    ModuleSetHandleT addModuleSet(ModuleSetT Ms,
+                                  MemoryManagerPtrT MemMgr,
+                                  SymbolResolverPtrT Resolver) {
+
+      for (auto I = Ms.begin(), E = Ms.end(); I != E; ++I)
+        *I = Transform(std::move(*I));
+
+      return BaseLayer.addModuleSet(std::move(Ms), std::move(MemMgr),
+                                  std::move(Resolver));
     }
 
-    void removeModule(ModuleHandleT H) { BaseLayer.removeModule(H); }
+    void removeModuleSet(ModuleSetHandleT H) { BaseLayer.removeModuleSet(H); }
 
     JITSymbol findSymbol(const std::string &Name, bool ExportedSymbolsOnly) {
       return BaseLayer.findSymbol(Name, ExportedSymbolsOnly);
     }
 
-    JITSymbol findSymbolIn(ModuleHandleT H, const std::string &Name,
+    JITSymbol findSymbolIn(ModuleSetHandleT H, const std::string &Name,
                            bool ExportedSymbolsOnly) {
       return BaseLayer.findSymbolIn(H, Name, ExportedSymbolsOnly);
     }
 
-    void emitAndFinalize(ModuleHandleT H) {
+    void emitAndFinalize(ModuleSetHandleT H) {
       BaseLayer.emitAndFinalize(H);
     }
 
@@ -213,44 +215,44 @@ comments. It is a template class with two template arguments: ``BaesLayerT`` and
 ``TransformFtor`` that provide the type of the base layer and the type of the
 "transform functor" (in our case a std::function) respectively. This class is
 concerned with two very simple jobs: (1) Running every IR Module that is added
-with addModule through the transform functor, and (2) conforming to the ORC
+with addModuleSet through the transform functor, and (2) conforming to the ORC
 layer interface. The interface consists of one typedef and five methods:
 
 +------------------+-----------------------------------------------------------+
 |     Interface    |                         Description                       |
 +==================+===========================================================+
 |                  | Provides a handle that can be used to identify a module   |
-| ModuleHandleT    | set when calling findSymbolIn, removeModule, or           |
+| ModuleSetHandleT | set when calling findSymbolIn, removeModuleSet, or        |
 |                  | emitAndFinalize.                                          |
 +------------------+-----------------------------------------------------------+
 |                  | Takes a given set of Modules and makes them "available    |
-|                  | for execution". This means that symbols in those modules  |
+|                  | for execution. This means that symbols in those modules   |
 |                  | should be searchable via findSymbol and findSymbolIn, and |
 |                  | the address of the symbols should be read/writable (for   |
 |                  | data symbols), or executable (for function symbols) after |
 |                  | JITSymbol::getAddress() is called. Note: This means that  |
-|   addModule      | addModule doesn't have to compile (or do any other        |
+|   addModuleSet   | addModuleSet doesn't have to compile (or do any other     |
 |                  | work) up-front. It *can*, like IRCompileLayer, act        |
 |                  | eagerly, but it can also simply record the module and     |
 |                  | take no further action until somebody calls               |
 |                  | JITSymbol::getAddress(). In IRTransformLayer's case       |
-|                  | addModule eagerly applies the transform functor to        |
+|                  | addModuleSet eagerly applies the transform functor to     |
 |                  | each module in the set, then passes the resulting set     |
 |                  | of mutated modules down to the layer below.               |
 +------------------+-----------------------------------------------------------+
 |                  | Removes a set of modules from the JIT. Code or data       |
-|  removeModule    | defined in these modules will no longer be available, and |
+|  removeModuleSet | defined in these modules will no longer be available, and |
 |                  | the memory holding the JIT'd definitions will be freed.   |
 +------------------+-----------------------------------------------------------+
 |                  | Searches for the named symbol in all modules that have    |
-|                  | previously been added via addModule (and not yet          |
-|    findSymbol    | removed by a call to removeModule). In                    |
+|                  | previously been added via addModuleSet (and not yet       |
+|    findSymbol    | removed by a call to removeModuleSet). In                 |
 |                  | IRTransformLayer we just pass the query on to the layer   |
 |                  | below. In our REPL this is our default way to search for  |
 |                  | function definitions.                                     |
 +------------------+-----------------------------------------------------------+
 |                  | Searches for the named symbol in the module set indicated |
-|                  | by the given ModuleHandleT. This is just an optimized     |
+|                  | by the given ModuleSetHandleT. This is just an optimized  |
 |                  | search, better for lookup-speed when you know exactly     |
 |                  | a symbol definition should be found. In IRTransformLayer  |
 |   findSymbolIn   | we just pass this query on to the layer below. In our     |
@@ -260,7 +262,7 @@ layer interface. The interface consists of one typedef and five methods:
 |                  | we just added.                                            |
 +------------------+-----------------------------------------------------------+
 |                  | Forces all of the actions required to make the code and   |
-|                  | data in a module set (represented by a ModuleHandleT)     |
+|                  | data in a module set (represented by a ModuleSetHandleT)  |
 |                  | accessible. Behaves as if some symbol in the set had been |
 |                  | searched for and JITSymbol::getSymbolAddress called. This |
 | emitAndFinalize  | is rarely needed, but can be useful when dealing with     |
@@ -274,11 +276,11 @@ wrinkles like emitAndFinalize for performance), similar to the basic JIT API
 operations we identified in Chapter 1. Conforming to the layer concept allows
 classes to compose neatly by implementing their behaviors in terms of the these
 same operations, carried out on the layer below. For example, an eager layer
-(like IRTransformLayer) can implement addModule by running each module in the
+(like IRTransformLayer) can implement addModuleSet by running each module in the
 set through its transform up-front and immediately passing the result to the
-layer below. A lazy layer, by contrast, could implement addModule by
+layer below. A lazy layer, by contrast, could implement addModuleSet by
 squirreling away the modules doing no other up-front work, but applying the
-transform (and calling addModule on the layer below) when the client calls
+transform (and calling addModuleSet on the layer below) when the client calls
 findSymbol instead. The JIT'd program behavior will be the same either way, but
 these choices will have different performance characteristics: Doing work
 eagerly means the JIT takes longer up-front, but proceeds smoothly once this is
@@ -317,7 +319,7 @@ IRTransformLayer added to enable optimization. To build this example, use:
 .. code-block:: bash
 
     # Compile
-    clang++ -g toy.cpp `llvm-config --cxxflags --ldflags --system-libs --libs core orcjit native` -O3 -o toy
+    clang++ -g toy.cpp `llvm-config --cxxflags --ldflags --system-libs --libs core orc native` -O3 -o toy
     # Run
     ./toy
 
@@ -327,8 +329,8 @@ Here is the code:
    :language: c++
 
 .. [1] When we add our top-level expression to the JIT, any calls to functions
-       that we defined earlier will appear to the RTDyldObjectLinkingLayer as
-       external symbols. The RTDyldObjectLinkingLayer will call the SymbolResolver
-       that we defined in addModule, which in turn calls findSymbol on the
+       that we defined earlier will appear to the ObjectLinkingLayer as
+       external symbols. The ObjectLinkingLayer will call the SymbolResolver
+       that we defined in addModuleSet, which in turn calls findSymbol on the
        OptimizeLayer, at which point even a lazy transform layer will have to
        do its work.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.39 2018/08/24 11:14:49 mestre Exp $	*/
+/*	$OpenBSD: worm.c,v 1.38 2016/01/07 16:00:33 tb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -89,6 +89,9 @@ main(int argc, char **argv)
 	const char *errstr;
 	struct timespec t, tn, tdiff;
 
+	if (pledge("stdio rpath tty", NULL) == -1)
+		err(1, "pledge");
+
 	timespecclear(&t);
 
 	setvbuf(stdout, outbuf, _IOFBF, sizeof outbuf);
@@ -96,10 +99,6 @@ main(int argc, char **argv)
 	signal(SIGQUIT, leave);
 	signal(SIGTSTP, suspend);	/* process control signal */
 	initscr();
-
-	if (pledge("stdio tty", NULL) == -1)
-		err(1, "pledge");
-
 	cbreak();
 	noecho();
 	keypad(stdscr, TRUE);

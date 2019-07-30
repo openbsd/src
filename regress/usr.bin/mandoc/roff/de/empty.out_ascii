@@ -1,9 +1,0 @@
-DE-EMPTY(1)                 General Commands Manual                DE-EMPTY(1)
-
-NNAAMMEE
-     ddee--eemmppttyy - empty user-defined macro with arguments
-
-DDEESSCCRRIIPPTTIIOONN
-     initial text arg=right arg=right final text
-
-OpenBSD                         April 21, 2019                         OpenBSD

@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.syspatch.mk,v 1.25 2019/05/12 15:30:18 robert Exp $
+#	$OpenBSD: bsd.syspatch.mk,v 1.20 2018/03/19 17:27:03 robert Exp $
 #
 # Copyright (c) 2016-2017 Robert Nagy <robert@openbsd.org>
 #
@@ -50,6 +50,7 @@ PATCH_ARGS=	-d ${SRCDIR} -z .orig --forward --quiet -E ${PATCH_STRIP}
 SYSPATCH_DIR=	${FAKE}/var/syspatch/${SYSPATCH_SHRT}
 FAKE=		${FAKEROOT}/syspatch/${SYSPATCH_SHRT}
 KERNEL=		$$(sysctl -n kern.osversion | cut -d '\#' -f 1)
+SUBDIR?=
 
 _PATCH_COOKIE=	${ERRATA}/.patch_done
 _BUILD_COOKIE=	${ERRATA}/.build_done
@@ -76,10 +77,6 @@ depend:
 cleandir: clean
 
 ${_FAKE_COOKIE}:
-.if !empty(ERRATA:C/[[:digit:]]{3}_[[:alnum:]_]+//) 
-	@{ echo "***>   invalid errata format: ${ERRATA}"; \
-	exit 1; };
-.endif
 .ifndef FAKEROOT
 	@{ echo "***>   setenv FAKEROOT before doing that!"; \
 	exit 1; };
@@ -113,15 +110,14 @@ ${_FAKE_COOKIE}:
 	@su ${BUILDUSER} -c 'touch $@'
 .endif
 
-${ERRATA}/${ERRATA}.patch.sig:
+${ERRATA}/${ERRATA}.patch:
 	@su ${BUILDUSER} -c '${INSTALL} -d -m 755 ${ERRATA}' && \
-	echo '>> Fetching & Verifying ${MIRROR}/${.TARGET:T}'; \
-	su ${BUILDUSER} -c '${FETCH} -o ${ERRATA}/${.TARGET:T} \
-		${MIRROR}/${.TARGET:T}'
-
-${ERRATA}/${ERRATA}.patch: ${ERRATA}/${ERRATA}.patch.sig
-	@su ${BUILDUSER} -c '/usr/bin/signify -Vep ${SIGNIFY_KEY} -x \
-		${ERRATA}/${.TARGET:T}.sig -m ${.TARGET}'
+	echo '>> Fetching & Verifying ${MIRROR}/${.TARGET:T}.sig'; \
+	if su ${BUILDUSER} -c '${FETCH} -o ${ERRATA}/${.TARGET:T}.sig \
+		${MIRROR}/${.TARGET:T}.sig'; then \
+		su ${BUILDUSER} -c '/usr/bin/signify -Vep ${SIGNIFY_KEY} -x \
+			${ERRATA}/${.TARGET:T}.sig -m ${.TARGET}' && exit 0; \
+	fi; exit 1
 
 ${_PATCH_COOKIE}: ${ERRATA}/${ERRATA}.patch
 	@echo '>> Applying ${ERRATA}.patch'; \
@@ -157,7 +153,7 @@ ${_BUILD_COOKIE}: ${_PATCH_COOKIE} ${_FAKE_COOKIE}
 . endfor
 	@cd ${SRCDIR} && make SYSPATCH_PATH=${EPREV_PATH} DESTDIR=${FAKE} includes
 .  for _kern in GENERIC GENERIC.MP
-	@if cd ${SRCDIR}/sys/arch/${MACHINE}/conf; then \
+	@if cd ${SRCDIR}/sys/arch/${MACHINE_ARCH}/conf; then \
 		if config ${_kern}; then \
 			if cd ../compile/${_kern} && make clean && make ; then \
 				exit 0; \
@@ -166,14 +162,14 @@ ${_BUILD_COOKIE}: ${_PATCH_COOKIE} ${_FAKE_COOKIE}
 	fi;
 	@if [ ${_kern} = "GENERIC" ]; then \
 		su ${BUILDUSER} -c 'umask ${WOBJUMASK} && \
-		cd ${SRCDIR}/sys/arch/${MACHINE}/compile/GENERIC/obj && \
+		cd ${SRCDIR}/sys/arch/${MACHINE_ARCH}/compile/GENERIC/obj && \
 		cp -p *.o Makefile ld.script makegap.sh \
 		${FAKE}/usr/share/relink/kernel/GENERIC/' || \
 		{ echo "***>   failed to install ${_kern} object files"; \
 		exit 1; }; \
 	elif [ ${_kern} = "GENERIC.MP" ]; then \
 		su ${BUILDUSER} -c 'umask ${WOBJUMASK} && \
-		cd ${SRCDIR}/sys/arch/${MACHINE}/compile/GENERIC.MP/obj && \
+		cd ${SRCDIR}/sys/arch/${MACHINE_ARCH}/compile/GENERIC.MP/obj && \
 		cp -p *.o Makefile ld.script makegap.sh \
 		${FAKE}/usr/share/relink/kernel/GENERIC.MP/' || \
 		{ echo "***>   failed to install ${_kern} object files"; \
@@ -181,7 +177,7 @@ ${_BUILD_COOKIE}: ${_PATCH_COOKIE} ${_FAKE_COOKIE}
 	fi; exit 0
 .  endfor
 # install newly built kernel on the build machine
-	@cd ${SRCDIR}/sys/arch/${MACHINE}/compile/${KERNEL} && \
+	@cd ${SRCDIR}/sys/arch/${MACHINE_ARCH}/compile/${KERNEL} && \
 		make install
 .endif
 	@su ${BUILDUSER} -c 'touch $@'
@@ -205,6 +201,6 @@ ${ERRATA}/.plist: ${_BUILD_COOKIE}
 		done > ${.TARGET}' || \
 		{ echo "***>   unable to create list of files";	\
 		exit 1; };
-	@su ${BUILDUSER} -c 'sed -i "s,^${FAKEROOT}/syspatch/${OSrev}-[^/]*/,,g" ${.TARGET}'
+	@su ${BUILDUSER} -c 'sed -i "s,^${FAKEROOT}/syspatch/${OSrev}-[^/]*/,,g" ${.TARGET}' 
 
 .include <bsd.obj.mk>

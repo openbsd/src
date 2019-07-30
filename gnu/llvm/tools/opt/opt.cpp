@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "BreakpointPrinter.h"
-#include "Debugify.h"
 #include "NewPMDriver.h"
 #include "PassPrinters.h"
 #include "llvm/ADT/Triple.h"
@@ -24,9 +23,8 @@
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Bitcode/BitcodeWriterPass.h"
-#include "llvm/CodeGen/CommandFlags.inc"
+#include "llvm/CodeGen/CommandFlags.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
-#include "llvm/Config/llvm-config.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/IRPrintingPasses.h"
@@ -43,8 +41,10 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
-#include "llvm/Support/InitLLVM.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PluginLoader.h"
+#include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/Signals.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -123,11 +123,7 @@ StripDebug("strip-debug",
            cl::desc("Strip debugger symbol info from translation unit"));
 
 static cl::opt<bool>
-    StripNamedMetadata("strip-named-metadata",
-                       cl::desc("Strip module-level named metadata"));
-
-static cl::opt<bool> DisableInline("disable-inlining",
-                                   cl::desc("Do not run the inliner pass"));
+DisableInline("disable-inlining", cl::desc("Do not run the inliner pass"));
 
 static cl::opt<bool>
 DisableOptimizations("disable-opt",
@@ -207,21 +203,6 @@ QuietA("quiet", cl::desc("Alias for -q"), cl::aliasopt(Quiet));
 static cl::opt<bool>
 AnalyzeOnly("analyze", cl::desc("Only perform analysis, no optimization"));
 
-static cl::opt<bool> EnableDebugify(
-    "enable-debugify",
-    cl::desc(
-        "Start the pipeline with debugify and end it with check-debugify"));
-
-static cl::opt<bool> DebugifyEach(
-    "debugify-each",
-    cl::desc(
-        "Start each pass with debugify and end it with check-debugify"));
-
-static cl::opt<std::string>
-    DebugifyExport("debugify-export",
-                   cl::desc("Export per-pass debugify statistics to this file"),
-                   cl::value_desc("filename"), cl::init(""));
-
 static cl::opt<bool>
 PrintBreakpoints("print-breakpoints-for-testing",
                  cl::desc("Print select breakpoints location for testing"));
@@ -270,48 +251,6 @@ static cl::opt<std::string>
     RemarksFilename("pass-remarks-output",
                     cl::desc("YAML output filename for pass remarks"),
                     cl::value_desc("filename"));
-
-class OptCustomPassManager : public legacy::PassManager {
-  DebugifyStatsMap DIStatsMap;
-
-public:
-  using super = legacy::PassManager;
-
-  void add(Pass *P) override {
-    // Wrap each pass with (-check)-debugify passes if requested, making
-    // exceptions for passes which shouldn't see -debugify instrumentation.
-    bool WrapWithDebugify = DebugifyEach && !P->getAsImmutablePass() &&
-                            !isIRPrintingPass(P) && !isBitcodeWriterPass(P);
-    if (!WrapWithDebugify) {
-      super::add(P);
-      return;
-    }
-
-    // Apply -debugify/-check-debugify before/after each pass and collect
-    // debug info loss statistics.
-    PassKind Kind = P->getPassKind();
-    StringRef Name = P->getPassName();
-
-    // TODO: Implement Debugify for BasicBlockPass, LoopPass.
-    switch (Kind) {
-      case PT_Function:
-        super::add(createDebugifyFunctionPass());
-        super::add(P);
-        super::add(createCheckDebugifyFunctionPass(true, Name, &DIStatsMap));
-        break;
-      case PT_Module:
-        super::add(createDebugifyModulePass());
-        super::add(P);
-        super::add(createCheckDebugifyModulePass(true, Name, &DIStatsMap));
-        break;
-      default:
-        super::add(P);
-        break;
-    }
-  }
-
-  const DebugifyStatsMap &getDebugifyStatsMap() const { return DIStatsMap; }
-};
 
 static inline void addPass(legacy::PassManagerBase &PM, Pass *P) {
   // Add the pass to the pass manager...
@@ -410,7 +349,7 @@ static TargetMachine* GetTargetMachine(Triple TheTriple, StringRef CPUStr,
 
   return TheTarget->createTargetMachine(TheTriple.getTriple(), CPUStr,
                                         FeaturesStr, Options, getRelocModel(),
-                                        getCodeModel(), GetCodeGenOptLevel());
+                                        CMModel, GetCodeGenOptLevel());
 }
 
 #ifdef LINK_POLLY_INTO_TOOLS
@@ -423,11 +362,13 @@ void initializePollyPasses(llvm::PassRegistry &Registry);
 // main for opt
 //
 int main(int argc, char **argv) {
-  InitLLVM X(argc, argv);
+  sys::PrintStackTraceOnErrorSignal(argv[0]);
+  llvm::PrettyStackTraceProgram X(argc, argv);
 
   // Enable debug stream buffering.
   EnableDebugBuffering = true;
 
+  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   LLVMContext Context;
 
   InitializeAllTargets();
@@ -446,12 +387,10 @@ int main(int argc, char **argv) {
   initializeAnalysis(Registry);
   initializeTransformUtils(Registry);
   initializeInstCombine(Registry);
-  initializeAggressiveInstCombine(Registry);
   initializeInstrumentation(Registry);
   initializeTarget(Registry);
   // For codegen passes, only passes that do IR to IR transformation are
   // supported.
-  initializeExpandMemCmpPassPass(Registry);
   initializeScalarizeMaskedMemIntrinPass(Registry);
   initializeCodeGenPreparePass(Registry);
   initializeAtomicExpandPass(Registry);
@@ -462,14 +401,10 @@ int main(int argc, char **argv) {
   initializeSjLjEHPreparePass(Registry);
   initializePreISelIntrinsicLoweringLegacyPassPass(Registry);
   initializeGlobalMergePass(Registry);
-  initializeIndirectBrExpandPassPass(Registry);
   initializeInterleavedAccessPass(Registry);
-  initializeEntryExitInstrumenterPass(Registry);
-  initializePostInlineEntryExitInstrumenterPass(Registry);
+  initializeCountingFunctionInserterPass(Registry);
   initializeUnreachableBlockElimLegacyPassPass(Registry);
   initializeExpandReductionsPass(Registry);
-  initializeWasmEHPreparePass(Registry);
-  initializeWriteBitcodePassPass(Registry);
 
 #ifdef LINK_POLLY_INTO_TOOLS
   polly::initializePollyPasses(Registry);
@@ -495,22 +430,21 @@ int main(int argc, char **argv) {
   if (PassRemarksHotnessThreshold)
     Context.setDiagnosticsHotnessThreshold(PassRemarksHotnessThreshold);
 
-  std::unique_ptr<ToolOutputFile> OptRemarkFile;
+  std::unique_ptr<tool_output_file> YamlFile;
   if (RemarksFilename != "") {
     std::error_code EC;
-    OptRemarkFile =
-        llvm::make_unique<ToolOutputFile>(RemarksFilename, EC, sys::fs::F_None);
+    YamlFile = llvm::make_unique<tool_output_file>(RemarksFilename, EC,
+                                                   sys::fs::F_None);
     if (EC) {
       errs() << EC.message() << '\n';
       return 1;
     }
     Context.setDiagnosticsOutputFile(
-        llvm::make_unique<yaml::Output>(OptRemarkFile->os()));
+        llvm::make_unique<yaml::Output>(YamlFile->os()));
   }
 
   // Load the input module...
-  std::unique_ptr<Module> M =
-      parseIRFile(InputFilename, Err, Context, !NoVerify, ClDataLayout);
+  std::unique_ptr<Module> M = parseIRFile(InputFilename, Err, Context);
 
   if (!M) {
     Err.print(argv[0], errs());
@@ -521,18 +455,6 @@ int main(int argc, char **argv) {
   if (StripDebug)
     StripDebugInfo(*M);
 
-  // Erase module-level named metadata, if requested.
-  if (StripNamedMetadata) {
-    while (!M->named_metadata_empty()) {
-      NamedMDNode *NMD = &*M->named_metadata_begin();
-      M->eraseNamedMetadata(NMD);
-    }
-  }
-
-  // If we are supposed to override the target triple or data layout, do so now.
-  if (!TargetTriple.empty())
-    M->setTargetTriple(Triple::normalize(TargetTriple));
-
   // Immediately run the verifier to catch any problems before starting up the
   // pass pipelines.  Otherwise we can crash on broken code during
   // doInitialization().
@@ -542,9 +464,15 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  // If we are supposed to override the target triple or data layout, do so now.
+  if (!TargetTriple.empty())
+    M->setTargetTriple(Triple::normalize(TargetTriple));
+  if (!ClDataLayout.empty())
+    M->setDataLayout(ClDataLayout);
+
   // Figure out what stream we are supposed to write to...
-  std::unique_ptr<ToolOutputFile> Out;
-  std::unique_ptr<ToolOutputFile> ThinLinkOut;
+  std::unique_ptr<tool_output_file> Out;
+  std::unique_ptr<tool_output_file> ThinLinkOut;
   if (NoOutput) {
     if (!OutputFilename.empty())
       errs() << "WARNING: The -o (output filename) option is ignored when\n"
@@ -555,7 +483,7 @@ int main(int argc, char **argv) {
       OutputFilename = "-";
 
     std::error_code EC;
-    Out.reset(new ToolOutputFile(OutputFilename, EC, sys::fs::F_None));
+    Out.reset(new tool_output_file(OutputFilename, EC, sys::fs::F_None));
     if (EC) {
       errs() << EC.message() << '\n';
       return 1;
@@ -563,7 +491,7 @@ int main(int argc, char **argv) {
 
     if (!ThinLinkBitcodeFile.empty()) {
       ThinLinkOut.reset(
-          new ToolOutputFile(ThinLinkBitcodeFile, EC, sys::fs::F_None));
+          new tool_output_file(ThinLinkBitcodeFile, EC, sys::fs::F_None));
       if (EC) {
         errs() << EC.message() << '\n';
         return 1;
@@ -612,18 +540,17 @@ int main(int argc, char **argv) {
     // string. Hand off the rest of the functionality to the new code for that
     // layer.
     return runPassPipeline(argv[0], *M, TM.get(), Out.get(), ThinLinkOut.get(),
-                           OptRemarkFile.get(), PassPipeline, OK, VK,
-                           PreserveAssemblyUseListOrder,
+                           PassPipeline, OK, VK, PreserveAssemblyUseListOrder,
                            PreserveBitcodeUseListOrder, EmitSummaryIndex,
-                           EmitModuleHash, EnableDebugify)
+                           EmitModuleHash)
                ? 0
                : 1;
   }
 
   // Create a PassManager to hold and optimize the collection of passes we are
   // about to build.
-  OptCustomPassManager Passes;
-  bool AddOneTimeDebugifyPasses = EnableDebugify && !DebugifyEach;
+  //
+  legacy::PassManager Passes;
 
   // Add an appropriate TargetLibraryInfo pass for the module's triple.
   TargetLibraryInfoImpl TLII(ModuleTriple);
@@ -636,9 +563,6 @@ int main(int argc, char **argv) {
   // Add internal analysis passes from the target machine.
   Passes.add(createTargetTransformInfoWrapperPass(TM ? TM->getTargetIRAnalysis()
                                                      : TargetIRAnalysis()));
-
-  if (AddOneTimeDebugifyPasses)
-    Passes.add(createDebugifyModulePass());
 
   std::unique_ptr<legacy::FunctionPassManager> FPasses;
   if (OptLevelO0 || OptLevelO1 || OptLevelO2 || OptLevelOs || OptLevelOz ||
@@ -655,8 +579,8 @@ int main(int argc, char **argv) {
         OutputFilename = "-";
 
       std::error_code EC;
-      Out = llvm::make_unique<ToolOutputFile>(OutputFilename, EC,
-                                              sys::fs::F_None);
+      Out = llvm::make_unique<tool_output_file>(OutputFilename, EC,
+                                                sys::fs::F_None);
       if (EC) {
         errs() << EC.message() << '\n';
         return 1;
@@ -785,15 +709,12 @@ int main(int argc, char **argv) {
   if (!NoVerify && !VerifyEach)
     Passes.add(createVerifierPass());
 
-  if (AddOneTimeDebugifyPasses)
-    Passes.add(createCheckDebugifyModulePass(false));
-
   // In run twice mode, we want to make sure the output is bit-by-bit
   // equivalent if we run the pass manager again, so setup two buffers and
   // a stream to write to them. Note that llc does something similar and it
   // may be worth to abstract this out in the future.
   SmallVector<char, 0> Buffer;
-  SmallVector<char, 0> FirstRunBuffer;
+  SmallVector<char, 0> CompileTwiceBuffer;
   std::unique_ptr<raw_svector_ostream> BOS;
   raw_ostream *OS = nullptr;
 
@@ -822,48 +743,43 @@ int main(int argc, char **argv) {
   // Before executing passes, print the final values of the LLVM options.
   cl::PrintOptionValues();
 
-  if (!RunTwice) {
-    // Now that we have all of the passes ready, run them.
-    Passes.run(*M);
-  } else {
-    // If requested, run all passes twice with the same pass manager to catch
-    // bugs caused by persistent state in the passes.
-    std::unique_ptr<Module> M2(CloneModule(*M));
-    // Run all passes on the original module first, so the second run processes
-    // the clone to catch CloneModule bugs.
-    Passes.run(*M);
-    FirstRunBuffer = Buffer;
-    Buffer.clear();
+  // If requested, run all passes again with the same pass manager to catch
+  // bugs caused by persistent state in the passes
+  if (RunTwice) {
+      std::unique_ptr<Module> M2(CloneModule(M.get()));
+      Passes.run(*M2);
+      CompileTwiceBuffer = Buffer;
+      Buffer.clear();
+  }
 
-    Passes.run(*M2);
+  // Now that we have all of the passes ready, run them.
+  Passes.run(*M);
 
-    // Compare the two outputs and make sure they're the same
+  // Compare the two outputs and make sure they're the same
+  if (RunTwice) {
     assert(Out);
-    if (Buffer.size() != FirstRunBuffer.size() ||
-        (memcmp(Buffer.data(), FirstRunBuffer.data(), Buffer.size()) != 0)) {
-      errs()
-          << "Running the pass manager twice changed the output.\n"
-             "Writing the result of the second run to the specified output.\n"
-             "To generate the one-run comparison binary, just run without\n"
-             "the compile-twice option\n";
+    if (Buffer.size() != CompileTwiceBuffer.size() ||
+        (memcmp(Buffer.data(), CompileTwiceBuffer.data(), Buffer.size()) !=
+         0)) {
+      errs() << "Running the pass manager twice changed the output.\n"
+                "Writing the result of the second run to the specified output.\n"
+                "To generate the one-run comparison binary, just run without\n"
+                "the compile-twice option\n";
       Out->os() << BOS->str();
       Out->keep();
-      if (OptRemarkFile)
-        OptRemarkFile->keep();
+      if (YamlFile)
+        YamlFile->keep();
       return 1;
     }
     Out->os() << BOS->str();
   }
 
-  if (DebugifyEach && !DebugifyExport.empty())
-    exportDebugifyStats(DebugifyExport, Passes.getDebugifyStatsMap());
-
   // Declare success.
   if (!NoOutput || PrintBreakpoints)
     Out->keep();
 
-  if (OptRemarkFile)
-    OptRemarkFile->keep();
+  if (YamlFile)
+    YamlFile->keep();
 
   if (ThinLinkOut)
     ThinLinkOut->keep();

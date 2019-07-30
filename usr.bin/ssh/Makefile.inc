@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.67 2019/04/18 07:32:56 dtucker Exp $
+#	$OpenBSD: Makefile.inc,v 1.58 2018/02/23 15:58:37 markus Exp $
 
 .include <bsd.own.mk>
 
@@ -49,14 +49,17 @@ SRCS_KEX+=	dh.c
 SRCS_KEX+=	kexdh.c
 SRCS_KEX+=	kexecdh.c
 SRCS_KEX+=	kexgex.c
+SRCS_KEXC+=	kexdhc.c
+SRCS_KEXC+=	kexecdhc.c
 SRCS_KEXC+=	kexgexc.c
+SRCS_KEXS+=	kexdhs.c
+SRCS_KEXS+=	kexecdhs.c
 SRCS_KEXS+=	kexgexs.c
 .endif
 SRCS_KEX+=	kexc25519.c
 SRCS_KEX+=	smult_curve25519_ref.c
-SRCS_KEX+=	kexgen.c
-SRCS_KEX+=	kexsntrup4591761x25519.c
-SRCS_KEX+=	sntrup4591761.c
+SRCS_KEXC+=	kexc25519c.c
+SRCS_KEXS+=	kexc25519s.c
 
 SRCS_KEY+=	sshkey.c
 SRCS_KEY+=	sshbuf-misc.c
@@ -98,13 +101,20 @@ SRCS_PKT+=	packet.c
 SRCS_PKT+=	umac.c
 SRCS_PKT+=	umac128.c
 
+.if (${OPENSSL:L} == "yes")
+SRCS_PROT+=	bufbn.c
+SRCS_PROT+=	bufec.c
+.endif
 SRCS_PROT+=	channels.c
+SRCS_PROT+=	crc32.c
 SRCS_PROT+=	monitor_fdpass.c
 SRCS_PROT+=	nchan.c
+SRCS_PROT+=	opacket.c
 SRCS_PROT+=	ttymodes.c
 
 SRCS_UTL+=	addrmatch.c
 SRCS_UTL+=	match.c
+SRCS_UTL+=	uidswap.c
 
 .if (${OPENSSL:L} == "yes")
 SRCS_PKCS11+=	ssh-pkcs11.c

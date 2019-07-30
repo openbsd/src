@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.52 2018/08/03 17:09:22 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.50 2018/03/19 14:51:45 cheloha Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ void doitfast(void);
 void __dead finish(int);
 void getoffset(char *);
 void __dead loop(void);
-void nolog(time_t);
+void nolog(void);
 void timeout(int);
 void timewarn(time_t);
 void usage(void);
@@ -106,12 +106,13 @@ void usage(void);
 int
 main(int argc, char *argv[])
 {
-	char when[64];
-	char *p, *endp;
-	struct passwd *pw;
-	struct tm *lt;
 	int arglen, ch, len, readstdin = 0;
+	struct passwd *pw;
+	char *p, *endp;
 	pid_t forkpid;
+
+	if (pledge("stdio rpath wpath cpath getpw tty id proc exec", NULL) == -1)
+		err(1, "pledge");
 
 #ifndef DEBUG
 	if (geteuid())
@@ -164,30 +165,6 @@ main(int argc, char *argv[])
 		warnx("incompatible switches -p and -r.");
 		usage();
 	}
-
-	if (unveil(_PATH_CONSOLE, "rw") == -1)
-		err(1, "unveil");
-	if (unveil(_PATH_RC, "r") == -1)
-		err(1, "unveil");
-	if (unveil(_PATH_WALL, "x") == -1)
-		err(1, "unveil");
-	if (unveil(_PATH_FASTBOOT, "wc") == -1)
-		err(1, "unveil");
-	if (unveil(_PATH_NOLOGIN, "wc") == -1)
-		err(1, "unveil");
-	if (dohalt || dopower) {
-		if (unveil(_PATH_HALT, "x") == -1)
-			err(1, "unveil");
-	} else if (doreboot) {
-		if (unveil(_PATH_REBOOT, "x") == -1)
-			err(1, "unveil");
-	} else {
-		if (unveil(_PATH_BSHELL, "x") == -1)
-			err(1, "unveil");
-	}
-	if (pledge("stdio rpath wpath cpath getpw tty id proc exec", NULL) == -1)
-		err(1, "pledge");
-
 	getoffset(*argv++);
 
 	if (*argv) {
@@ -221,16 +198,15 @@ main(int argc, char *argv[])
 	}
 	mbuflen = strlen(mbuf);
 
-	if (offset > 0) {
-		shuttime = time(NULL) + offset;
-		lt = localtime(&shuttime);
-		if (lt != NULL) {
-			strftime(when, sizeof(when), "%a %b %e %T %Z %Y", lt);
-			printf("Shutdown at %s.\n", when);
-		} else
+	if (offset) {
+		char *ct = ctime(&shuttime);
+
+		if (ct)
+			printf("Shutdown at %.24s.\n", ct);
+		else
 			printf("Shutdown soon.\n");
 	} else
-		printf("Shutdown NOW!\n");
+		(void)printf("Shutdown NOW!\n");
 
 	if (!(whom = getlogin()))
 		whom = (pw = getpwuid(getuid())) ? pw->pw_name : "???";
@@ -285,7 +261,7 @@ loop(void)
 		broadcast = 1;
 		if (!logged && tlist[i].timeleft <= NOLOG_TIME) {
 			logged = 1;
-			nolog(tlist[i].timeleft);
+			nolog();
 		}
 		timeout.tv_sec = tlist[i].timetowait;
 		timeout.tv_nsec = 0;
@@ -303,8 +279,6 @@ void
 timewarn(time_t timeleft)
 {
 	static char hostname[HOST_NAME_MAX+1];
-	char when[64];
-	struct tm *lt;
 	static int first;
 	int fd[2];
 	pid_t pid, wpid;
@@ -343,11 +317,11 @@ timewarn(time_t timeleft)
 	    "\007*** %sSystem shutdown message from %s@%s ***\007\n",
 	    timeleft ? "": "FINAL ", whom, hostname);
 
-	if (timeleft > 10 * 60) {
-		shuttime = time(NULL) + timeleft;
-		lt = localtime(&shuttime);
-		strftime(when, sizeof(when), "%H:%M %Z", lt);
-		dprintf(fd[1], "System going down at %s\n\n", when);
+	if (timeleft > 10*60) {
+		struct tm *tm = localtime(&shuttime);
+
+		dprintf(fd[1], "System going down at %d:%02d\n\n",
+		    tm->tm_hour, tm->tm_min);
 	} else if (timeleft > 59) {
 		dprintf(fd[1], "System going down in %lld minute%s\n\n",
 		    (long long)(timeleft / 60), (timeleft > 60) ? "s" : "");
@@ -490,7 +464,6 @@ die_you_gravy_sucking_pig_dog(void)
 void
 getoffset(char *timearg)
 {
-	char when[64];
 	const char *errstr;
 	struct tm *lt;
 	int this_year;
@@ -502,11 +475,13 @@ getoffset(char *timearg)
 		return;
 	}
 
+	(void)time(&now);
 	if (timearg[0] == '+') {			/* +minutes */
 		minutes = strtonum(timearg, 0, INT_MAX, &errstr);
 		if (errstr)
 			errx(1, "relative offset is %s: %s", errstr, timearg);
 		offset = minutes * 60;
+		shuttime = now + offset;
 		return;
 	}
 
@@ -523,7 +498,6 @@ getoffset(char *timearg)
 	}
 
 	unsetenv("TZ");					/* OUR timezone */
-	time(&now);
 	lt = localtime(&now);				/* current time val */
 
 	switch (strlen(timearg)) {
@@ -560,10 +534,8 @@ getoffset(char *timearg)
 		lt->tm_sec = 0;
 		if ((shuttime = mktime(lt)) == -1)
 			badtime();
-		if ((offset = shuttime - now) < 0) {
-			strftime(when, sizeof(when), "%a %b %e %T %Z %Y", lt);
-			errx(1, "time is already past: %s", when);
-		}
+		if ((offset = shuttime - now) < 0)
+			errx(1, "that time is already past.");
 		break;
 	default:
 		badtime();
@@ -583,23 +555,22 @@ doitfast(void)
 }
 
 void
-nolog(time_t timeleft)
+nolog(void)
 {
-	char when[64];
-	struct tm *tm;
 	int logfd;
+	struct tm *tm;
 
 	(void)unlink(_PATH_NOLOGIN);	/* in case linked to another file */
 	(void)signal(SIGINT, finish);
 	(void)signal(SIGHUP, finish);
 	(void)signal(SIGQUIT, finish);
 	(void)signal(SIGTERM, finish);
-	shuttime = time(NULL) + timeleft;
 	tm = localtime(&shuttime);
 	if (tm && (logfd = open(_PATH_NOLOGIN, O_WRONLY|O_CREAT|O_TRUNC,
 	    0664)) >= 0) {
-		strftime(when, sizeof(when), "at %H:%M %Z", tm);
-		dprintf(logfd, "\n\nNO LOGINS: System going down %s\n\n", when);
+		dprintf(logfd,
+		    "\n\nNO LOGINS: System going down at %d:%02d\n\n",
+		    tm->tm_hour, tm->tm_min);
 		close(logfd);
 	}
 }

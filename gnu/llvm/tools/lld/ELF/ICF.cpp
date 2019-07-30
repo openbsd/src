@@ -76,14 +76,10 @@
 #include "ICF.h"
 #include "Config.h"
 #include "SymbolTable.h"
-#include "Symbols.h"
-#include "SyntheticSections.h"
-#include "Writer.h"
-#include "lld/Common/Threads.h"
-#include "llvm/ADT/StringExtras.h"
+#include "Threads.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/Object/ELF.h"
-#include "llvm/Support/xxhash.h"
 #include <algorithm>
 #include <atomic>
 
@@ -115,9 +111,9 @@ private:
   size_t findBoundary(size_t Begin, size_t End);
 
   void forEachClassRange(size_t Begin, size_t End,
-                         llvm::function_ref<void(size_t, size_t)> Fn);
+                         std::function<void(size_t, size_t)> Fn);
 
-  void forEachClass(llvm::function_ref<void(size_t, size_t)> Fn);
+  void forEachClass(std::function<void(size_t, size_t)> Fn);
 
   std::vector<InputSection *> Sections;
 
@@ -156,40 +152,19 @@ private:
 };
 }
 
+// Returns a hash value for S. Note that the information about
+// relocation targets is not included in the hash value.
+template <class ELFT> static uint32_t getHash(InputSection *S) {
+  return hash_combine(S->Flags, S->getSize(), S->NumRelocations);
+}
+
 // Returns true if section S is subject of ICF.
 static bool isEligible(InputSection *S) {
-  if (!S->Live || S->KeepUnique || !(S->Flags & SHF_ALLOC))
-    return false;
-
-  // Don't merge writable sections. .data.rel.ro sections are marked as writable
-  // but are semantically read-only.
-  if ((S->Flags & SHF_WRITE) && S->Name != ".data.rel.ro" &&
-      !S->Name.startswith(".data.rel.ro."))
-    return false;
-
-  // SHF_LINK_ORDER sections are ICF'd as a unit with their dependent sections,
-  // so we don't consider them for ICF individually.
-  if (S->Flags & SHF_LINK_ORDER)
-    return false;
-
-  // Don't merge synthetic sections as their Data member is not valid and empty.
-  // The Data member needs to be valid for ICF as it is used by ICF to determine
-  // the equality of section contents.
-  if (isa<SyntheticSection>(S))
-    return false;
-
-  // .init and .fini contains instructions that must be executed to initialize
-  // and finalize the process. They cannot and should not be merged.
-  if (S->Name == ".init" || S->Name == ".fini")
-    return false;
-
-  // A user program may enumerate sections named with a C identifier using
-  // __start_* and __stop_* symbols. We cannot ICF any such sections because
-  // that could change program semantics.
-  if (isValidCIdentifier(S->Name))
-    return false;
-
-  return true;
+  // .init and .fini contains instructions that must be executed to
+  // initialize and finalize the process. They cannot and should not
+  // be merged.
+  return S->Live && (S->Flags & SHF_ALLOC) && (S->Flags & SHF_EXECINSTR) &&
+         !(S->Flags & SHF_WRITE) && S->Name != ".init" && S->Name != ".fini";
 }
 
 // Split an equivalence class into smaller classes.
@@ -232,46 +207,38 @@ void ICF<ELFT>::segregate(size_t Begin, size_t End, bool Constant) {
 // Compare two lists of relocations.
 template <class ELFT>
 template <class RelTy>
-bool ICF<ELFT>::constantEq(const InputSection *SecA, ArrayRef<RelTy> RA,
-                           const InputSection *SecB, ArrayRef<RelTy> RB) {
-  for (size_t I = 0; I < RA.size(); ++I) {
-    if (RA[I].r_offset != RB[I].r_offset ||
-        RA[I].getType(Config->IsMips64EL) != RB[I].getType(Config->IsMips64EL))
+bool ICF<ELFT>::constantEq(const InputSection *A, ArrayRef<RelTy> RelsA,
+                           const InputSection *B, ArrayRef<RelTy> RelsB) {
+  auto Eq = [&](const RelTy &RA, const RelTy &RB) {
+    if (RA.r_offset != RB.r_offset ||
+        RA.getType(Config->IsMips64EL) != RB.getType(Config->IsMips64EL))
       return false;
+    uint64_t AddA = getAddend<ELFT>(RA);
+    uint64_t AddB = getAddend<ELFT>(RB);
 
-    uint64_t AddA = getAddend<ELFT>(RA[I]);
-    uint64_t AddB = getAddend<ELFT>(RB[I]);
+    SymbolBody &SA = A->template getFile<ELFT>()->getRelocTargetSym(RA);
+    SymbolBody &SB = B->template getFile<ELFT>()->getRelocTargetSym(RB);
+    if (&SA == &SB)
+      return AddA == AddB;
 
-    Symbol &SA = SecA->template getFile<ELFT>()->getRelocTargetSym(RA[I]);
-    Symbol &SB = SecB->template getFile<ELFT>()->getRelocTargetSym(RB[I]);
-    if (&SA == &SB) {
-      if (AddA == AddB)
-        continue;
-      return false;
-    }
-
-    auto *DA = dyn_cast<Defined>(&SA);
-    auto *DB = dyn_cast<Defined>(&SB);
+    auto *DA = dyn_cast<DefinedRegular>(&SA);
+    auto *DB = dyn_cast<DefinedRegular>(&SB);
     if (!DA || !DB)
       return false;
 
     // Relocations referring to absolute symbols are constant-equal if their
     // values are equal.
-    if (!DA->Section && !DB->Section && DA->Value + AddA == DB->Value + AddB)
-      continue;
     if (!DA->Section || !DB->Section)
-      return false;
+      return !DA->Section && !DB->Section &&
+             DA->Value + AddA == DB->Value + AddB;
 
     if (DA->Section->kind() != DB->Section->kind())
       return false;
 
     // Relocations referring to InputSections are constant-equal if their
     // section offsets are equal.
-    if (isa<InputSection>(DA->Section)) {
-      if (DA->Value + AddA == DB->Value + AddB)
-        continue;
-      return false;
-    }
+    if (isa<InputSection>(DA->Section))
+      return DA->Value + AddA == DB->Value + AddB;
 
     // Relocations referring to MergeInputSections are constant-equal if their
     // offsets in the output section are equal.
@@ -286,11 +253,11 @@ bool ICF<ELFT>::constantEq(const InputSection *SecA, ArrayRef<RelTy> RA,
         SA.isSection() ? X->getOffset(AddA) : X->getOffset(DA->Value) + AddA;
     uint64_t OffsetB =
         SB.isSection() ? Y->getOffset(AddB) : Y->getOffset(DB->Value) + AddB;
-    if (OffsetA != OffsetB)
-      return false;
-  }
+    return OffsetA == OffsetB;
+  };
 
-  return true;
+  return RelsA.size() == RelsB.size() &&
+         std::equal(RelsA.begin(), RelsA.end(), RelsB.begin(), Eq);
 }
 
 // Compare "non-moving" part of two InputSections, namely everything
@@ -299,13 +266,6 @@ template <class ELFT>
 bool ICF<ELFT>::equalsConstant(const InputSection *A, const InputSection *B) {
   if (A->NumRelocations != B->NumRelocations || A->Flags != B->Flags ||
       A->getSize() != B->getSize() || A->Data != B->Data)
-    return false;
-
-  // If two sections have different output sections, we cannot merge them.
-  // FIXME: This doesn't do the right thing in the case where there is a linker
-  // script. We probably need to move output section assignment before ICF to
-  // get the correct behaviour here.
-  if (getOutputSectionName(A) != getOutputSectionName(B))
     return false;
 
   if (A->AreRelocsRela)
@@ -318,39 +278,37 @@ bool ICF<ELFT>::equalsConstant(const InputSection *A, const InputSection *B) {
 // relocations point to the same section in terms of ICF.
 template <class ELFT>
 template <class RelTy>
-bool ICF<ELFT>::variableEq(const InputSection *SecA, ArrayRef<RelTy> RA,
-                           const InputSection *SecB, ArrayRef<RelTy> RB) {
-  assert(RA.size() == RB.size());
-
-  for (size_t I = 0; I < RA.size(); ++I) {
+bool ICF<ELFT>::variableEq(const InputSection *A, ArrayRef<RelTy> RelsA,
+                           const InputSection *B, ArrayRef<RelTy> RelsB) {
+  auto Eq = [&](const RelTy &RA, const RelTy &RB) {
     // The two sections must be identical.
-    Symbol &SA = SecA->template getFile<ELFT>()->getRelocTargetSym(RA[I]);
-    Symbol &SB = SecB->template getFile<ELFT>()->getRelocTargetSym(RB[I]);
+    SymbolBody &SA = A->template getFile<ELFT>()->getRelocTargetSym(RA);
+    SymbolBody &SB = B->template getFile<ELFT>()->getRelocTargetSym(RB);
     if (&SA == &SB)
-      continue;
+      return true;
 
-    auto *DA = cast<Defined>(&SA);
-    auto *DB = cast<Defined>(&SB);
+    auto *DA = cast<DefinedRegular>(&SA);
+    auto *DB = cast<DefinedRegular>(&SB);
 
     // We already dealt with absolute and non-InputSection symbols in
     // constantEq, and for InputSections we have already checked everything
     // except the equivalence class.
     if (!DA->Section)
-      continue;
+      return true;
     auto *X = dyn_cast<InputSection>(DA->Section);
     if (!X)
-      continue;
+      return true;
     auto *Y = cast<InputSection>(DB->Section);
 
     // Ineligible sections are in the special equivalence class 0.
     // They can never be the same in terms of the equivalence class.
     if (X->Class[Current] == 0)
       return false;
-    if (X->Class[Current] != Y->Class[Current])
-      return false;
+
+    return X->Class[Current] == Y->Class[Current];
   };
 
-  return true;
+  return std::equal(RelsA.begin(), RelsA.end(), RelsB.begin(), Eq);
 }
 
 // Compare "moving" part of two InputSections, namely relocation targets.
@@ -374,12 +332,17 @@ template <class ELFT> size_t ICF<ELFT>::findBoundary(size_t Begin, size_t End) {
 // vector. Therefore, Sections vector can be considered as contiguous
 // groups of sections, grouped by the class.
 //
-// This function calls Fn on every group within [Begin, End).
+// This function calls Fn on every group that starts within [Begin, End).
+// Note that a group must start in that range but doesn't necessarily
+// have to end before End.
 template <class ELFT>
 void ICF<ELFT>::forEachClassRange(size_t Begin, size_t End,
-                                  llvm::function_ref<void(size_t, size_t)> Fn) {
+                                  std::function<void(size_t, size_t)> Fn) {
+  if (Begin > 0)
+    Begin = findBoundary(Begin - 1, End);
+
   while (Begin < End) {
-    size_t Mid = findBoundary(Begin, End);
+    size_t Mid = findBoundary(Begin, Sections.size());
     Fn(Begin, Mid);
     Begin = Mid;
   }
@@ -387,10 +350,10 @@ void ICF<ELFT>::forEachClassRange(size_t Begin, size_t End,
 
 // Call Fn on each equivalence class.
 template <class ELFT>
-void ICF<ELFT>::forEachClass(llvm::function_ref<void(size_t, size_t)> Fn) {
+void ICF<ELFT>::forEachClass(std::function<void(size_t, size_t)> Fn) {
   // If threading is disabled or the number of sections are
   // too small to use threading, call Fn sequentially.
-  if (!ThreadsEnabled || Sections.size() < 1024) {
+  if (!Config->Threads || Sections.size() < 1024) {
     forEachClassRange(0, Sections.size(), Fn);
     ++Cnt;
     return;
@@ -399,30 +362,14 @@ void ICF<ELFT>::forEachClass(llvm::function_ref<void(size_t, size_t)> Fn) {
   Current = Cnt % 2;
   Next = (Cnt + 1) % 2;
 
-  // Shard into non-overlapping intervals, and call Fn in parallel.
-  // The sharding must be completed before any calls to Fn are made
-  // so that Fn can modify the Chunks in its shard without causing data
-  // races.
-  const size_t NumShards = 256;
+  // Split sections into 256 shards and call Fn in parallel.
+  size_t NumShards = 256;
   size_t Step = Sections.size() / NumShards;
-  size_t Boundaries[NumShards + 1];
-  Boundaries[0] = 0;
-  Boundaries[NumShards] = Sections.size();
-
-  parallelForEachN(1, NumShards, [&](size_t I) {
-    Boundaries[I] = findBoundary((I - 1) * Step, Sections.size());
-  });
-
-  parallelForEachN(1, NumShards + 1, [&](size_t I) {
-    if (Boundaries[I - 1] < Boundaries[I])
-      forEachClassRange(Boundaries[I - 1], Boundaries[I], Fn);
+  parallelForEachN(0, NumShards, [&](size_t I) {
+    size_t End = (I == NumShards - 1) ? Sections.size() : (I + 1) * Step;
+    forEachClassRange(I * Step, End, Fn);
   });
   ++Cnt;
-}
-
-static void print(const Twine &S) {
-  if (Config->PrintIcfSections)
-    message(S);
 }
 
 // The main function of ICF.
@@ -434,10 +381,9 @@ template <class ELFT> void ICF<ELFT>::run() {
         Sections.push_back(S);
 
   // Initially, we use hash values to partition sections.
-  parallelForEach(Sections, [&](InputSection *S) {
+  for (InputSection *S : Sections)
     // Set MSB to 1 to avoid collisions with non-hash IDs.
-    S->Class[0] = xxHash64(S->Data) | (1U << 31);
-  });
+    S->Class[0] = getHash<ELFT>(S) | (1 << 31);
 
   // From now on, sections in Sections vector are ordered so that sections
   // in the same equivalence class are consecutive in the vector.
@@ -459,21 +405,25 @@ template <class ELFT> void ICF<ELFT>::run() {
   log("ICF needed " + Twine(Cnt) + " iterations");
 
   // Merge sections by the equivalence class.
-  forEachClassRange(0, Sections.size(), [&](size_t Begin, size_t End) {
+  forEachClass([&](size_t Begin, size_t End) {
     if (End - Begin == 1)
       return;
-    print("selected section " + toString(Sections[Begin]));
-    for (size_t I = Begin + 1; I < End; ++I) {
-      print("  removing identical section " + toString(Sections[I]));
-      Sections[Begin]->replace(Sections[I]);
 
-      // At this point we know sections merged are fully identical and hence
-      // we want to remove duplicate implicit dependencies such as link order
-      // and relocation sections.
-      for (InputSection *IS : Sections[I]->DependentSections)
-        IS->Live = false;
+    log("selected " + Sections[Begin]->Name);
+    for (size_t I = Begin + 1; I < End; ++I) {
+      log("  removed " + Sections[I]->Name);
+      Sections[Begin]->replace(Sections[I]);
     }
   });
+
+  // Mark ARM Exception Index table sections that refer to folded code
+  // sections as not live. These sections have an implict dependency
+  // via the link order dependency.
+  if (Config->EMachine == EM_ARM)
+    for (InputSectionBase *Sec : InputSections)
+      if (auto *S = dyn_cast<InputSection>(Sec))
+        if (S->Flags & SHF_LINK_ORDER)
+          S->Live = S->getLinkOrderDep()->Live;
 }
 
 // ICF entry point function.

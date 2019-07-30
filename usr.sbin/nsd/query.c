@@ -184,7 +184,7 @@ query_cleanup(void *data)
 
 query_type *
 query_create(region_type *region, uint16_t *compressed_dname_offsets,
-	size_t compressed_dname_size, domain_type **compressed_dnames)
+	size_t compressed_dname_size)
 {
 	query_type *query
 		= (query_type *) region_alloc_zero(region, sizeof(query_type));
@@ -192,7 +192,6 @@ query_create(region_type *region, uint16_t *compressed_dname_offsets,
 	   saves many mallocs in the server */
 	query->region = region_create_custom(xalloc, free, 16384, 16384/8, 32, 0);
 	query->compressed_dname_offsets = compressed_dname_offsets;
-	query->compressed_dnames = compressed_dnames;
 	query->packet = buffer_create(region, QIOBUFSZ);
 	region_add_cleanup(region, query_cleanup, query);
 	query->compressed_dname_offsets_size = compressed_dname_size;
@@ -693,8 +692,7 @@ answer_needs_ns(struct query* query)
 	assert(query);
 	/* Currently, only troublesome for DNSKEY and DS,
          * cuz their RRSETs are quite large. */
-	return (query->qtype != TYPE_DNSKEY && query->qtype != TYPE_DS
-		&& query->qtype != TYPE_ANY);
+	return (query->qtype != TYPE_DNSKEY && query->qtype != TYPE_DS);
 }
 
 static int
@@ -970,11 +968,6 @@ answer_domain(struct nsd* nsd, struct query *q, answer_type *answer,
 			{
 				add_rrset(q, answer, ANSWER_SECTION, domain, rrset);
 				++added;
-#ifdef NOTYET
-				/* minimize response size with one RR,
-				 * according to RFC 8482(4.1). */
-				break;
-#endif
 			}
 		}
 		if (added == 0) {
@@ -1188,10 +1181,8 @@ answer_authoritative(struct nsd   *nsd,
 			 * No match and no wildcard.  Include NSEC
 			 * proving there is no wildcard.
 			 */
-			if(closest_encloser && (nsec_domain =
-				find_covering_nsec(closest_encloser->
-					wildcard_child_closest_match, q->zone,
-					&nsec_rrset)) != NULL) {
+			nsec_domain = find_covering_nsec(closest_encloser->wildcard_child_closest_match, q->zone, &nsec_rrset);
+			if (nsec_domain) {
 				add_rrset(q, answer, AUTHORITY_SECTION, nsec_domain, nsec_rrset);
 			}
 		}
@@ -1224,7 +1215,6 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 			RCODE_SET(q->packet, RCODE_REFUSE);
 		return;
 	}
-	assert(closest_encloser); /* otherwise, no q->zone would be found */
 	if(!q->zone->apex || !q->zone->soa_rrset) {
 		/* zone is configured but not loaded */
 		if(q->cname_count == 0)
@@ -1497,10 +1487,6 @@ query_process(query_type *q, nsd_type *nsd)
 	query_state = answer_axfr_ixfr(nsd, q);
 	if (query_state == QUERY_PROCESSED || query_state == QUERY_IN_AXFR) {
 		return query_state;
-	}
-	if(q->qtype == TYPE_ANY && nsd->options->refuse_any && !q->tcp) {
-		TC_SET(q->packet);
-		return query_error(q, NSD_RC_OK);
 	}
 
 	answer_query(nsd, q);

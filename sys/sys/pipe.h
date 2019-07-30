@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.h,v 1.16 2018/11/12 16:33:08 visa Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.15 2013/03/25 17:21:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -28,8 +28,6 @@
 #include <sys/time.h>			/* for struct timespec */
 #include <sys/selinfo.h>		/* for struct selinfo */
 #endif /* _KERNEL */
-
-#include <sys/sigio.h>			/* for struct sigio_ref */
 
 /*
  * Pipe buffer size, keep moderate in value, pipes take kva space.
@@ -77,7 +75,7 @@ struct pipe {
 	struct	timespec pipe_atime;	/* time of last access */
 	struct	timespec pipe_mtime;	/* time of last modify */
 	struct	timespec pipe_ctime;	/* time of status change */
-	struct	sigio_ref pipe_sigio;	/* async I/O registration */
+	int	pipe_pgid;		/* process/group for async I/O */
 	struct	pipe *pipe_peer;	/* link with other direction */
 	u_int	pipe_state;		/* pipe status info */
 	int	pipe_busy;		/* busy flag, mostly to handle rundown sanely */

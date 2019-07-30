@@ -37,14 +37,15 @@ DWARFDebugPubTable::DWARFDebugPubTable(StringRef Data, bool LittleEndian,
       if (DieRef == 0)
         break;
       uint8_t IndexEntryValue = GnuStyle ? PubNames.getU8(&Offset) : 0;
-      StringRef Name = PubNames.getCStrRef(&Offset);
+      const char *Name = PubNames.getCStr(&Offset);
       SetData.Entries.push_back(
           {DieRef, PubIndexEntryDescriptor(IndexEntryValue), Name});
     }
   }
 }
 
-void DWARFDebugPubTable::dump(raw_ostream &OS) const {
+void DWARFDebugPubTable::dump(StringRef Name, raw_ostream &OS) const {
+  OS << "\n." << Name << " contents:\n";
   for (const Set &S : Sets) {
     OS << "length = " << format("0x%08x", S.Length);
     OS << " version = " << format("0x%04x", S.Version);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcons.c,v 1.17 2018/06/27 11:38:59 kettenis Exp $	*/
+/*	$OpenBSD: vcons.c,v 1.16 2018/02/19 08:59:52 mpi Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -36,10 +36,7 @@
 
 struct vcons_softc {
 	struct device	sc_dv;
-	bus_space_tag_t	sc_bustag;
-
 	void		*sc_ih;
-	uint64_t	sc_sysino;
 	struct tty	*sc_tty;
 	void		*sc_si;
 };
@@ -81,6 +78,7 @@ vcons_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vcons_softc *sc = (struct vcons_softc *)self;
 	struct vbus_attach_args *va = aux;
+	uint64_t sysino;
 	int vcons_is_input, vcons_is_output;
 	int node, maj;
 
@@ -88,12 +86,11 @@ vcons_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_si == NULL)
 		panic(": can't establish soft interrupt");
 
-	if (vbus_intr_map(va->va_node, va->va_intr[0], &sc->sc_sysino))
+	if (vbus_intr_map(va->va_node, va->va_intr[0], &sysino))
 		printf(": can't map interrupt\n");
-	printf(": ivec 0x%llx", sc->sc_sysino);
+	printf(": ivec 0x%llx", sysino);
 
-	sc->sc_bustag = va->va_bustag;
-	sc->sc_ih = bus_intr_establish(sc->sc_bustag, sc->sc_sysino, IPL_TTY,
+	sc->sc_ih = bus_intr_establish(va->va_bustag, sysino, IPL_TTY,
 	    BUS_INTR_ESTABLISH_MPSAFE, vcons_intr, sc, sc->sc_dv.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(", can't establish interrupt\n");
@@ -132,7 +129,6 @@ vcons_intr(void *arg)
 
 	if (sc->sc_tty)
 		softintr_schedule(sc->sc_si);
-
 	return (1);
 }
 
@@ -176,7 +172,6 @@ vconsopen(dev_t dev, int flag, int mode, struct proc *p)
 	struct vcons_softc *sc;
 	struct tty *tp;
 	int unit = minor(dev);
-	int err;
 
 	if (unit >= vcons_cd.cd_ndevs)
 		return (ENXIO);
@@ -204,11 +199,7 @@ vconsopen(dev_t dev, int flag, int mode, struct proc *p)
 		return (EBUSY);
 	tp->t_state |= TS_CARR_ON;
 
-	err = (*linesw[tp->t_line].l_open)(dev, tp, p);
-	if (err == 0)
-		vbus_intr_setenabled(sc->sc_bustag, sc->sc_sysino, INTR_ENABLED);
-
-	return err;
+	return ((*linesw[tp->t_line].l_open)(dev, tp, p));
 }
 
 int
@@ -223,8 +214,6 @@ vconsclose(dev_t dev, int flag, int mode, struct proc *p)
 	sc = vcons_cd.cd_devs[unit];
 	if (sc == NULL)
 		return (ENXIO);
-
-	vbus_intr_setenabled(sc->sc_bustag, sc->sc_sysino, INTR_DISABLED);
 
 	tp = sc->sc_tty;
 	(*linesw[tp->t_line].l_close)(tp, flag, p);
@@ -357,6 +346,4 @@ vcons_softintr(void *arg)
 		if (tp->t_state & TS_ISOPEN)
 			(*linesw[tp->t_line].l_rint)(c, tp);
 	}
-
-	vbus_intr_setstate(sc->sc_bustag, sc->sc_sysino, INTR_IDLE);
 }

@@ -1,4 +1,4 @@
-//===- AttrIterator.h - Classes for attribute iteration ---------*- C++ -*-===//
+//===--- AttrIterator.h - Classes for attribute iteration -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,23 +15,16 @@
 #define LLVM_CLANG_AST_ATTRITERATOR_H
 
 #include "clang/Basic/LLVM.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/Casting.h"
-#include <cassert>
-#include <cstddef>
 #include <iterator>
 
 namespace clang {
-
-class ASTContext;
-class Attr;
-
-} // namespace clang
+  class ASTContext;
+  class Attr;
+}
 
 // Defined in ASTContext.h
 void *operator new(size_t Bytes, const clang::ASTContext &C,
                    size_t Alignment = 8);
-
 // FIXME: Being forced to not have a default argument here due to redeclaration
 //        rules on default arguments sucks
 void *operator new[](size_t Bytes, const clang::ASTContext &C,
@@ -46,13 +39,13 @@ void operator delete[](void *Ptr, const clang::ASTContext &C, size_t);
 namespace clang {
 
 /// AttrVec - A vector of Attr, which is how they are stored on the AST.
-using AttrVec = SmallVector<Attr *, 4>;
+typedef SmallVector<Attr *, 4> AttrVec;
 
 /// specific_attr_iterator - Iterates over a subrange of an AttrVec, only
 /// providing attributes that are of a specific type.
 template <typename SpecificAttr, typename Container = AttrVec>
 class specific_attr_iterator {
-  using Iterator = typename Container::const_iterator;
+  typedef typename Container::const_iterator Iterator;
 
   /// Current - The current, underlying iterator.
   /// In order to ensure we don't dereference an invalid iterator unless
@@ -74,14 +67,14 @@ class specific_attr_iterator {
   }
 
 public:
-  using value_type = SpecificAttr *;
-  using reference = SpecificAttr *;
-  using pointer = SpecificAttr *;
-  using iterator_category = std::forward_iterator_tag;
-  using difference_type = std::ptrdiff_t;
+  typedef SpecificAttr*             value_type;
+  typedef SpecificAttr*             reference;
+  typedef SpecificAttr*             pointer;
+  typedef std::forward_iterator_tag iterator_category;
+  typedef std::ptrdiff_t            difference_type;
 
-  specific_attr_iterator() = default;
-  explicit specific_attr_iterator(Iterator i) : Current(i) {}
+  specific_attr_iterator() : Current() { }
+  explicit specific_attr_iterator(Iterator i) : Current(i) { }
 
   reference operator*() const {
     AdvanceToNext();
@@ -106,7 +99,7 @@ public:
                          specific_attr_iterator Right) {
     assert((Left.Current == nullptr) == (Right.Current == nullptr));
     if (Left.Current < Right.Current)
-      Left.AdvanceToNext(Right.Current);
+      Left.AdvanceToNext(Right.Current); 
     else
       Right.AdvanceToNext(Left.Current);
     return Left.Current == Right.Current;
@@ -143,6 +136,6 @@ inline SpecificAttr *getSpecificAttr(const Container& container) {
     return nullptr;
 }
 
-} // namespace clang
+}  // end namespace clang
 
-#endif // LLVM_CLANG_AST_ATTRITERATOR_H
+#endif

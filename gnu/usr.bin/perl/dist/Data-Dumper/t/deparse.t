@@ -15,7 +15,7 @@ BEGIN {
 use strict;
 
 use Data::Dumper;
-use Test::More tests =>  16;
+use Test::More tests =>  8;
 use lib qw( ./t/lib );
 use Testing qw( _dumptostr );
 
@@ -24,9 +24,7 @@ use Testing qw( _dumptostr );
 
 note("\$Data::Dumper::Deparse and Deparse()");
 
-for my $useperl (0, 1) {
-    local $Data::Dumper::Useperl = $useperl;
-
+{
     my ($obj, %dumps, $deparse, $starting);
     use strict;
     my $struct = { foo => "bar\nbaz", quux => sub { "fleem" } };
@@ -48,11 +46,11 @@ for my $useperl (0, 1) {
     $dumps{'objzero'} = _dumptostr($obj);
 
     is($dumps{'noprev'}, $dumps{'dddzero'},
-        "No previous setting and \$Data::Dumper::Deparse = 0 are equivalent (useperl=$useperl)");
+        "No previous setting and \$Data::Dumper::Deparse = 0 are equivalent");
     is($dumps{'noprev'}, $dumps{'objempty'},
-        "No previous setting and Deparse() are equivalent (useperl=$useperl)");
+        "No previous setting and Deparse() are equivalent");
     is($dumps{'noprev'}, $dumps{'objzero'},
-        "No previous setting and Deparse(0) are equivalent (useperl=$useperl)");
+        "No previous setting and Deparse(0) are equivalent");
 
     local $Data::Dumper::Deparse = 1;
     $obj = Data::Dumper->new( [ $struct ] );
@@ -64,19 +62,19 @@ for my $useperl (0, 1) {
     $dumps{'objone'} = _dumptostr($obj);
 
     is($dumps{'dddtrue'}, $dumps{'objone'},
-        "\$Data::Dumper::Deparse = 1 and Deparse(1) are equivalent (useperl=$useperl)");
+        "\$Data::Dumper::Deparse = 1 and Deparse(1) are equivalent");
 
     isnt($dumps{'dddzero'}, $dumps{'dddtrue'},
-        "\$Data::Dumper::Deparse = 0 differs from \$Data::Dumper::Deparse = 1 (useperl=$useperl)");
+        "\$Data::Dumper::Deparse = 0 differs from \$Data::Dumper::Deparse = 1");
 
     like($dumps{'dddzero'},
         qr/quux.*?sub.*?DUMMY/s,
-        "\$Data::Dumper::Deparse = 0 reports DUMMY instead of deparsing coderef (useperl=$useperl)");
+        "\$Data::Dumper::Deparse = 0 reports DUMMY instead of deparsing coderef");
     unlike($dumps{'dddtrue'},
         qr/quux.*?sub.*?DUMMY/s,
-        "\$Data::Dumper::Deparse = 1 does not report DUMMY (useperl=$useperl)");
+        "\$Data::Dumper::Deparse = 1 does not report DUMMY");
     like($dumps{'dddtrue'},
         qr/quux.*?sub.*?use\sstrict.*?fleem/s,
-        "\$Data::Dumper::Deparse = 1 deparses coderef (useperl=$useperl)");
+        "\$Data::Dumper::Deparse = 1 deparses coderef");
 }
 

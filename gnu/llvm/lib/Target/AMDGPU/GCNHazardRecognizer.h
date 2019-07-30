@@ -14,7 +14,6 @@
 #ifndef LLVM_LIB_TARGET_AMDGPUHAZARDRECOGNIZERS_H
 #define LLVM_LIB_TARGET_AMDGPUHAZARDRECOGNIZERS_H
 
-#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include <list>
@@ -23,12 +22,9 @@ namespace llvm {
 
 class MachineFunction;
 class MachineInstr;
-class MachineOperand;
-class MachineRegisterInfo;
 class ScheduleDAG;
 class SIInstrInfo;
-class SIRegisterInfo;
-class GCNSubtarget;
+class SISubtarget;
 
 class GCNHazardRecognizer final : public ScheduleHazardRecognizer {
   // This variable stores the instruction that has been emitted this cycle. It
@@ -37,22 +33,8 @@ class GCNHazardRecognizer final : public ScheduleHazardRecognizer {
   MachineInstr *CurrCycleInstr;
   std::list<MachineInstr*> EmittedInstrs;
   const MachineFunction &MF;
-  const GCNSubtarget &ST;
+  const SISubtarget &ST;
   const SIInstrInfo &TII;
-  const SIRegisterInfo &TRI;
-
-  /// RegUnits of uses in the current soft memory clause.
-  BitVector ClauseUses;
-
-  /// RegUnits of defs in the current soft memory clause.
-  BitVector ClauseDefs;
-
-  void resetClause() {
-    ClauseUses.reset();
-    ClauseDefs.reset();
-  }
-
-  void addClauseInst(const MachineInstr &MI);
 
   int getWaitStatesSince(function_ref<bool(MachineInstr *)> IsHazard);
   int getWaitStatesSinceDef(unsigned Reg,
@@ -60,7 +42,7 @@ class GCNHazardRecognizer final : public ScheduleHazardRecognizer {
                                 [](MachineInstr *) { return true; });
   int getWaitStatesSinceSetReg(function_ref<bool(MachineInstr *)> IsHazard);
 
-  int checkSoftClauseHazards(MachineInstr *SMEM);
+  int checkSMEMSoftClauseHazards(MachineInstr *SMEM);
   int checkSMRDHazards(MachineInstr *SMRD);
   int checkVMEMHazards(MachineInstr* VMEM);
   int checkDPPHazards(MachineInstr *DPP);
@@ -69,10 +51,8 @@ class GCNHazardRecognizer final : public ScheduleHazardRecognizer {
   int checkSetRegHazards(MachineInstr *SetRegInstr);
   int createsVALUHazard(const MachineInstr &MI);
   int checkVALUHazards(MachineInstr *VALU);
-  int checkVALUHazardsHelper(const MachineOperand &Def, const MachineRegisterInfo &MRI);
   int checkRWLaneHazards(MachineInstr *RWLane);
   int checkRFEHazards(MachineInstr *RFE);
-  int checkInlineAsmHazards(MachineInstr *IA);
   int checkAnyInstHazards(MachineInstr *MI);
   int checkReadM0Hazards(MachineInstr *SMovRel);
 public:

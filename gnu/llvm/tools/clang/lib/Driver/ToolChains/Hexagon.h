@@ -50,10 +50,6 @@ public:
                     const llvm::opt::ArgList &TCArgs,
                     const char *LinkingOutput) const override;
 };
-
-void getHexagonTargetFeatures(const Driver &D, const llvm::opt::ArgList &Args,
-                              std::vector<StringRef> &Features);
-
 } // end namespace hexagon.
 } // end namespace tools
 
@@ -94,7 +90,6 @@ public:
   void getHexagonLibraryPaths(const llvm::opt::ArgList &Args,
       ToolChain::path_list &LibPaths) const;
 
-  static bool isAutoHVXEnabled(const llvm::opt::ArgList &Args);
   static const StringRef GetDefaultCPU();
   static const StringRef GetTargetCPUVersion(const llvm::opt::ArgList &Args);
 

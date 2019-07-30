@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..53\n"; }
+BEGIN { $| = 1; print "1..51\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -47,15 +47,13 @@ ok($objHa->gt("e", "\x{257}"));
 ok($objHa->lt("k", "\x{199}"));
 ok($objHa->gt("l", "\x{199}"));
 ok($objHa->lt("s", "sh"));
-ok($objHa->lt("sz","sh"));
 ok($objHa->gt("t", "sh"));
 ok($objHa->lt("t", "ts"));
-ok($objHa->lt("tz","ts"));
 ok($objHa->gt("u", "ts"));
 ok($objHa->lt("y", "\x{1B4}"));
 ok($objHa->gt("z", "\x{1B4}"));
 
-# 16
+# 14
 
 $objHa->change(level => 2);
 
@@ -76,7 +74,7 @@ ok($objHa->eq("\x{1B3}", "\x{2BC}Y"));
 ok($objHa->eq("\x{2BC}Y","'Y"));
 ok($objHa->eq("'Y",      "\x{1B4}"));
 
-# 31
+# 29
 
 $objHa->change(level => 3);
 
@@ -97,7 +95,7 @@ ok($objHa->lt("\x{1B3}", "\x{2BC}Y"));
 ok($objHa->lt("\x{2BC}Y","'Y"));
 ok($objHa->gt("'Y",      "\x{1B4}"));
 
-# 46
+# 44
 
 $objHa->change(upper_before_lower => 1);
 
@@ -109,4 +107,4 @@ ok($objHa->lt("\x{1B3}", "\x{2BC}Y"));
 ok($objHa->lt("\x{2BC}Y","'Y"));
 ok($objHa->lt("'Y",      "\x{1B4}"));
 
-# 53
+# 51

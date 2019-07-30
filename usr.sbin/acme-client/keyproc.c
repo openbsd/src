@@ -1,4 +1,4 @@
-/*	$Id: keyproc.c,v 1.15 2019/06/15 16:16:31 florian Exp $ */
+/*	$Id: keyproc.c,v 1.9 2017/03/26 18:41:02 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -30,7 +30,7 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
-#include "key.h"
+#include "rsa.h"
 
 /*
  * This was lifted more or less directly from demos/x509/mkreq.c of the
@@ -74,8 +74,8 @@ add_ext(STACK_OF(X509_EXTENSION) *sk, int nid, const char *value)
  * jail and, on success, ship it to "netsock" as an X509 request.
  */
 int
-keyproc(int netsock, const char *keyfile, const char **alts, size_t altsz,
-    enum keytype keytype)
+keyproc(int netsock, const char *keyfile,
+    const char **alts, size_t altsz, int newkey)
 {
 	char		*der64 = NULL, *der = NULL, *dercp;
 	char		*sans = NULL, *san = NULL;
@@ -85,7 +85,7 @@ keyproc(int netsock, const char *keyfile, const char **alts, size_t altsz,
 	EVP_PKEY	*pkey = NULL;
 	X509_REQ	*x = NULL;
 	X509_NAME	*name = NULL;
-	int		 len, rc = 0, cc, nid, newkey = 0;
+	int		 len, rc = 0, cc, nid;
 	mode_t		 prev;
 	STACK_OF(X509_EXTENSION) *exts = NULL;
 
@@ -96,10 +96,7 @@ keyproc(int netsock, const char *keyfile, const char **alts, size_t altsz,
 	 */
 
 	prev = umask((S_IWUSR | S_IXUSR) | S_IRWXG | S_IRWXO);
-	if ((f = fopen(keyfile, "r")) == NULL && errno == ENOENT) {
-		f = fopen(keyfile, "wx");
-		newkey = 1;
-	}
+	f = fopen(keyfile, newkey ? "wx" : "r");
 	umask(prev);
 
 	if (f == NULL) {
@@ -117,23 +114,13 @@ keyproc(int netsock, const char *keyfile, const char **alts, size_t altsz,
 	}
 
 	if (newkey) {
-		switch (keytype) {
-		case KT_ECDSA:
-			if ((pkey = ec_key_create(f, keyfile)) == NULL)
-				goto out;
-			dodbg("%s: generated ECDSA domain key", keyfile);
-			break;
-		case KT_RSA:
-			if ((pkey = rsa_key_create(f, keyfile)) == NULL)
-				goto out;
-			dodbg("%s: generated RSA domain key", keyfile);
-			break;
-		}
-	} else {
-		if ((pkey = key_load(f, keyfile)) == NULL)
+		if ((pkey = rsa_key_create(f, keyfile)) == NULL)
 			goto out;
-		/* XXX check if domain key type equals configured key type */
-		doddbg("%s: loaded domain key", keyfile);
+		dodbg("%s: generated RSA domain key", keyfile);
+	} else {
+		if ((pkey = rsa_key_load(f, keyfile)) == NULL)
+			goto out;
+		doddbg("%s: loaded RSA domain key", keyfile);
 	}
 
 	fclose(f);
@@ -265,10 +252,13 @@ out:
 	free(der64);
 	free(sans);
 	free(san);
-	X509_REQ_free(x);
-	X509_NAME_free(name);
-	EVP_PKEY_free(pkey);
+	if (x != NULL)
+		X509_REQ_free(x);
+	if (name != NULL)
+		X509_NAME_free(name);
+	if (pkey != NULL)
+		EVP_PKEY_free(pkey);
 	ERR_print_errors_fp(stderr);
 	ERR_free_strings();
-	return rc;
+	return (rc);
 }

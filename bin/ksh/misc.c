@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.72 2018/11/20 08:12:26 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.69 2018/03/15 16:51:29 anton Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -16,7 +16,6 @@
 #include "charclass.h"
 
 short ctypes [UCHAR_MAX+1];	/* type bits for unsigned char */
-static int dropped_privileges;
 
 static int	do_gmatch(const unsigned char *, const unsigned char *,
 		    const unsigned char *, const unsigned char *);
@@ -57,10 +56,10 @@ initctypes(void)
 	setctypes(" \n\t\"#$&'()*;<>?[\\`|", C_QUOTE);
 }
 
-/* convert uint64_t to base N string */
+/* convert unsigned long to base N string */
 
 char *
-u64ton(uint64_t n, int base)
+ulton(long unsigned int n, int base)
 {
 	char *p;
 	static char buf [20];
@@ -291,18 +290,12 @@ change_flag(enum sh_flag f,
 		}
 	} else
 	/* Turning off -p? */
-	if (f == FPRIVILEGED && oldval && !newval && issetugid() &&
-	    !dropped_privileges) {
+	if (f == FPRIVILEGED && oldval && !newval) {
 		gid_t gid = getgid();
 
 		setresgid(gid, gid, gid);
 		setgroups(1, &gid);
 		setresuid(ksheuid, ksheuid, ksheuid);
-
-		if (pledge("stdio rpath wpath cpath fattr flock getpw proc "
-		    "exec tty", NULL) == -1)
-			bi_errorf("pledge fail");
-		dropped_privileges = 1;
 	} else if (f == FPOSIX && newval) {
 		Flag(FBRACEEXPAND) = 0;
 	}

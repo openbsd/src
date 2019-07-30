@@ -62,7 +62,7 @@ namespace {
 ///   because LLVM reads from the complete type it can generate incorrect code
 ///   if we do not clip the tail padding off of the bitfield in the complete
 ///   layout.  This introduces a somewhat awkward extra unnecessary clip stage.
-///   The location of the clip is stored internally as a sentinel of type
+///   The location of the clip is stored internally as a sentinal of type
 ///   SCISSOR.  If LLVM were updated to read base types (which it probably
 ///   should because locations of things such as VBases are bogus in the llvm
 ///   type anyway) then we could eliminate the SCISSOR.
@@ -74,7 +74,7 @@ namespace {
 struct CGRecordLowering {
   // MemberInfo is a helper structure that contains information about a record
   // member.  In additional to the standard member types, there exists a
-  // sentinel member type that ensures correct rounding.
+  // sentinal member type that ensures correct rounding.
   struct MemberInfo {
     CharUnits Offset;
     enum InfoKind { VFPtr, VBPtr, Field, Base, VBase, Scissor } Kind;
@@ -95,7 +95,7 @@ struct CGRecordLowering {
   // The constructor.
   CGRecordLowering(CodeGenTypes &Types, const RecordDecl *D, bool Packed);
   // Short helper routines.
-  /// Constructs a MemberInfo instance from an offset and llvm::Type *.
+  /// \brief Constructs a MemberInfo instance from an offset and llvm::Type *.
   MemberInfo StorageInfo(CharUnits Offset, llvm::Type *Data) {
     return MemberInfo(Offset, MemberInfo::Field, Data);
   }
@@ -118,19 +118,19 @@ struct CGRecordLowering {
     return !Context.getTargetInfo().getCXXABI().isMicrosoft();
   }
 
-  /// Wraps llvm::Type::getIntNTy with some implicit arguments.
+  /// \brief Wraps llvm::Type::getIntNTy with some implicit arguments.
   llvm::Type *getIntNType(uint64_t NumBits) {
     return llvm::Type::getIntNTy(Types.getLLVMContext(),
                                  (unsigned)llvm::alignTo(NumBits, 8));
   }
-  /// Gets an llvm type of size NumBytes and alignment 1.
+  /// \brief Gets an llvm type of size NumBytes and alignment 1.
   llvm::Type *getByteArrayType(CharUnits NumBytes) {
     assert(!NumBytes.isZero() && "Empty byte arrays aren't allowed.");
     llvm::Type *Type = llvm::Type::getInt8Ty(Types.getLLVMContext());
     return NumBytes == CharUnits::One() ? Type :
         (llvm::Type *)llvm::ArrayType::get(Type, NumBytes.getQuantity());
   }
-  /// Gets the storage type for a field decl and handles storage
+  /// \brief Gets the storage type for a field decl and handles storage
   /// for itanium bitfields that are smaller than their declared type.
   llvm::Type *getStorageType(const FieldDecl *FD) {
     llvm::Type *Type = Types.ConvertTypeForMem(FD->getType());
@@ -139,7 +139,7 @@ struct CGRecordLowering {
     return getIntNType(std::min(FD->getBitWidthValue(Context),
                              (unsigned)Context.toBits(getSize(Type))));
   }
-  /// Gets the llvm Basesubobject type from a CXXRecordDecl.
+  /// \brief Gets the llvm Basesubobject type from a CXXRecordDecl.
   llvm::Type *getStorageType(const CXXRecordDecl *RD) {
     return Types.getCGRecordLayout(RD).getBaseSubobjectLLVMType();
   }
@@ -166,9 +166,9 @@ struct CGRecordLowering {
     return Layout.getFieldOffset(FD->getFieldIndex());
   }
   // Layout routines.
-  void setBitFieldInfo(const FieldDecl *FD, CharUnits StartOffset,
+  void setBitFieldInfo(const FieldDecl *FD, CharUnits StartOffset, 
                        llvm::Type *StorageType);
-  /// Lowers an ASTRecordLayout to a llvm type.
+  /// \brief Lowers an ASTRecordLayout to a llvm type.
   void lower(bool NonVirtualBaseType);
   void lowerUnion();
   void accumulateFields();
@@ -177,18 +177,18 @@ struct CGRecordLowering {
   void accumulateBases();
   void accumulateVPtrs();
   void accumulateVBases();
-  /// Recursively searches all of the bases to find out if a vbase is
+  /// \brief Recursively searches all of the bases to find out if a vbase is
   /// not the primary vbase of some base class.
   bool hasOwnStorage(const CXXRecordDecl *Decl, const CXXRecordDecl *Query);
   void calculateZeroInit();
-  /// Lowers bitfield storage types to I8 arrays for bitfields with tail
+  /// \brief Lowers bitfield storage types to I8 arrays for bitfields with tail
   /// padding that is or can potentially be used.
   void clipTailPadding();
-  /// Determines if we need a packed llvm struct.
+  /// \brief Determines if we need a packed llvm struct.
   void determinePacked(bool NVBaseType);
-  /// Inserts padding everywhere it's needed.
+  /// \brief Inserts padding everwhere it's needed.
   void insertPadding();
-  /// Fills out the structures that are ultimately consumed.
+  /// \brief Fills out the structures that are ultimately consumed.
   void fillOutputFields();
   // Input memoization fields.
   CodeGenTypes &Types;
@@ -214,13 +214,12 @@ private:
 };
 } // namespace {
 
-CGRecordLowering::CGRecordLowering(CodeGenTypes &Types, const RecordDecl *D,
-                                   bool Packed)
-    : Types(Types), Context(Types.getContext()), D(D),
-      RD(dyn_cast<CXXRecordDecl>(D)),
-      Layout(Types.getContext().getASTRecordLayout(D)),
-      DataLayout(Types.getDataLayout()), IsZeroInitializable(true),
-      IsZeroInitializableAsBase(true), Packed(Packed) {}
+CGRecordLowering::CGRecordLowering(CodeGenTypes &Types, const RecordDecl *D,                                 bool Packed)
+  : Types(Types), Context(Types.getContext()), D(D),
+    RD(dyn_cast<CXXRecordDecl>(D)),
+    Layout(Types.getContext().getASTRecordLayout(D)),
+    DataLayout(Types.getDataLayout()), IsZeroInitializable(true),
+    IsZeroInitializableAsBase(true), Packed(Packed) {}
 
 void CGRecordLowering::setBitFieldInfo(
     const FieldDecl *FD, CharUnits StartOffset, llvm::Type *StorageType) {
@@ -246,7 +245,7 @@ void CGRecordLowering::lower(bool NVBaseType) {
   // 1) Store all members (fields and bases) in a list and sort them by offset.
   // 2) Add a 1-byte capstone member at the Size of the structure.
   // 3) Clip bitfield storages members if their tail padding is or might be
-  //    used by another field or base.  The clipping process uses the capstone
+  //    used by another field or base.  The clipping process uses the capstone 
   //    by treating it as another object that occurs after the record.
   // 4) Determine if the llvm-struct requires packing.  It's important that this
   //    phase occur after clipping, because clipping changes the llvm type.
@@ -295,7 +294,8 @@ void CGRecordLowering::lowerUnion() {
   // been doing and cause lit tests to change.
   for (const auto *Field : D->fields()) {
     if (Field->isBitField()) {
-      if (Field->isZeroLengthBitField(Context))
+      // Skip 0 sized bitfields.
+      if (Field->getBitWidthValue(Context) == 0)
         continue;
       llvm::Type *FieldType = getStorageType(Field);
       if (LayoutSize < getSize(FieldType))
@@ -313,8 +313,9 @@ void CGRecordLowering::lowerUnion() {
     if (!SeenNamedMember) {
       SeenNamedMember = Field->getIdentifier();
       if (!SeenNamedMember)
-        if (const auto *FieldRD = Field->getType()->getAsRecordDecl())
-          SeenNamedMember = FieldRD->findFirstNamedDataMember();
+        if (const auto *FieldRD =
+                dyn_cast_or_null<RecordDecl>(Field->getType()->getAsTagDecl()))
+        SeenNamedMember = FieldRD->findFirstNamedDataMember();
       if (SeenNamedMember && !isZeroInitializable(Field)) {
         IsZeroInitializable = IsZeroInitializableAsBase = false;
         StorageType = FieldType;
@@ -379,7 +380,7 @@ CGRecordLowering::accumulateBitFields(RecordDecl::field_iterator Field,
     for (; Field != FieldEnd; ++Field) {
       uint64_t BitOffset = getFieldBitOffset(*Field);
       // Zero-width bitfields end runs.
-      if (Field->isZeroLengthBitField(Context)) {
+      if (Field->getBitWidthValue(Context) == 0) {
         Run = FieldEnd;
         continue;
       }
@@ -402,28 +403,6 @@ CGRecordLowering::accumulateBitFields(RecordDecl::field_iterator Field,
     }
     return;
   }
-
-  // Check if OffsetInRecord is better as a single field run. When OffsetInRecord
-  // has legal integer width, and its bitfield offset is naturally aligned, it
-  // is better to make the bitfield a separate storage component so as it can be
-  // accessed directly with lower cost.
-  auto IsBetterAsSingleFieldRun = [&](uint64_t OffsetInRecord,
-                                      uint64_t StartBitOffset) {
-    if (!Types.getCodeGenOpts().FineGrainedBitfieldAccesses)
-      return false;
-    if (!DataLayout.isLegalInteger(OffsetInRecord))
-      return false;
-    // Make sure StartBitOffset is natually aligned if it is treated as an
-    // IType integer.
-     if (StartBitOffset %
-            Context.toBits(getAlignment(getIntNType(OffsetInRecord))) !=
-        0)
-      return false;
-    return true;
-  };
-
-  // The start field is better as a single field run.
-  bool StartFieldAsSingleRun = false;
   for (;;) {
     // Check to see if we need to start a new run.
     if (Run == FieldEnd) {
@@ -431,37 +410,21 @@ CGRecordLowering::accumulateBitFields(RecordDecl::field_iterator Field,
       if (Field == FieldEnd)
         break;
       // Any non-zero-length bitfield can start a new run.
-      if (!Field->isZeroLengthBitField(Context)) {
+      if (Field->getBitWidthValue(Context) != 0) {
         Run = Field;
         StartBitOffset = getFieldBitOffset(*Field);
         Tail = StartBitOffset + Field->getBitWidthValue(Context);
-        StartFieldAsSingleRun = IsBetterAsSingleFieldRun(Tail - StartBitOffset,
-                                                         StartBitOffset);
       }
       ++Field;
       continue;
     }
-
-    // If the start field of a new run is better as a single run, or
-    // if current field (or consecutive fields) is better as a single run, or
-    // if current field has zero width bitfield and either
-    // UseZeroLengthBitfieldAlignment or UseBitFieldTypeAlignment is set to
-    // true, or
-    // if the offset of current field is inconsistent with the offset of
-    // previous field plus its offset,
-    // skip the block below and go ahead to emit the storage.
-    // Otherwise, try to add bitfields to the run.
-    if (!StartFieldAsSingleRun && Field != FieldEnd &&
-        !IsBetterAsSingleFieldRun(Tail - StartBitOffset, StartBitOffset) &&
-        (!Field->isZeroLengthBitField(Context) ||
-         (!Context.getTargetInfo().useZeroLengthBitfieldAlignment() &&
-          !Context.getTargetInfo().useBitFieldTypeAlignment())) &&
+    // Add bitfields to the run as long as they qualify.
+    if (Field != FieldEnd && Field->getBitWidthValue(Context) != 0 &&
         Tail == getFieldBitOffset(*Field)) {
       Tail += Field->getBitWidthValue(Context);
       ++Field;
       continue;
     }
-
     // We've hit a break-point in the run and need to emit a storage field.
     llvm::Type *Type = getIntNType(Tail - StartBitOffset);
     // Add the storage member to the record and set the bitfield info for all of
@@ -472,7 +435,6 @@ CGRecordLowering::accumulateBitFields(RecordDecl::field_iterator Field,
       Members.push_back(MemberInfo(bitsToCharUnits(StartBitOffset),
                                    MemberInfo::Field, nullptr, *Run));
     Run = FieldEnd;
-    StartFieldAsSingleRun = false;
   }
 }
 
@@ -631,7 +593,7 @@ void CGRecordLowering::determinePacked(bool NVBaseType) {
   // non-virtual sub-object and an unpacked complete object or vise versa.
   if (NVSize % NVAlignment)
     Packed = true;
-  // Update the alignment of the sentinel.
+  // Update the alignment of the sentinal.
   if (!Packed)
     Members.back().Data = getIntNType(Context.toBits(Alignment));
 }
@@ -686,7 +648,7 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
                                         uint64_t Offset, uint64_t Size,
                                         uint64_t StorageSize,
                                         CharUnits StorageOffset) {
-  // This function is vestigial from CGRecordLayoutBuilder days but is still
+  // This function is vestigial from CGRecordLayoutBuilder days but is still 
   // used in GCObjCRuntime.cpp.  That usage has a "fixme" attached to it that
   // when addressed will allow for the removal of this function.
   llvm::Type *Ty = Types.ConvertTypeForMem(FD->getType());
@@ -781,16 +743,17 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D,
   if (BaseTy) {
     CharUnits NonVirtualSize  = Layout.getNonVirtualSize();
 
-    uint64_t AlignedNonVirtualTypeSizeInBits =
+    uint64_t AlignedNonVirtualTypeSizeInBits = 
       getContext().toBits(NonVirtualSize);
 
-    assert(AlignedNonVirtualTypeSizeInBits ==
+    assert(AlignedNonVirtualTypeSizeInBits == 
            getDataLayout().getTypeAllocSizeInBits(BaseTy) &&
            "Type size mismatch!");
   }
-
+                                     
   // Verify that the LLVM and AST field offsets agree.
-  llvm::StructType *ST = RL->getLLVMType();
+  llvm::StructType *ST =
+    dyn_cast<llvm::StructType>(RL->getLLVMType());
   const llvm::StructLayout *SL = getDataLayout().getStructLayout(ST);
 
   const ASTRecordLayout &AST_RL = getContext().getASTRecordLayout(D);
@@ -806,13 +769,13 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D,
              "Invalid field offset!");
       continue;
     }
-
+    
     // Ignore unnamed bit-fields.
     if (!FD->getDeclName())
       continue;
 
     // Don't inspect zero-length bitfields.
-    if (FD->isZeroLengthBitField(getContext()))
+    if (FD->getBitWidthValue(getContext()) == 0)
       continue;
 
     const CGBitFieldInfo &Info = RL->getBitFieldInfo(FD);
@@ -853,7 +816,7 @@ void CGRecordLayout::print(raw_ostream &OS) const {
   OS << "<CGRecordLayout\n";
   OS << "  LLVMType:" << *CompleteObjectType << "\n";
   if (BaseSubobjectType)
-    OS << "  NonVirtualBaseLLVMType:" << *BaseSubobjectType << "\n";
+    OS << "  NonVirtualBaseLLVMType:" << *BaseSubobjectType << "\n"; 
   OS << "  IsZeroInitializable:" << IsZeroInitializable << "\n";
   OS << "  BitFields:[\n";
 

@@ -1,7 +1,7 @@
-/*	$OpenBSD: pw_dup.c,v 1.9 2019/01/25 00:19:25 millert Exp $	*/
+/*	$OpenBSD: pw_dup.c,v 1.8 2015/09/13 15:33:48 guenther Exp $	*/
 
 /*
- * Copyright (c) 2000, 2002 Todd C. Miller <millert@openbsd.org>
+ * Copyright (c) 2000, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

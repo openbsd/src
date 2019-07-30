@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.64 2019/03/08 16:33:23 jcs Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.58 2017/08/12 17:33:51 jcs Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -110,11 +110,8 @@
 #define	THINKPAD_TABLET_SCREEN_CHANGED	0x60c0
 #define	THINKPAD_SWITCH_WIRELESS	0x7000
 
-#define THINKPAD_NSENSORS 10
+#define THINKPAD_NSENSORS 9
 #define THINKPAD_NTEMPSENSORS 8
-
-#define THINKPAD_SENSOR_FANRPM		THINKPAD_NTEMPSENSORS
-#define THINKPAD_SENSOR_PORTREPL	THINKPAD_NTEMPSENSORS + 1
 
 #define THINKPAD_ECOFFSET_VOLUME	0x30
 #define THINKPAD_ECOFFSET_VOLUME_MUTE_MASK 0x40
@@ -123,11 +120,6 @@
 
 #define	THINKPAD_ADAPTIVE_MODE_HOME	1
 #define	THINKPAD_ADAPTIVE_MODE_FUNCTION	3
-
-#define THINKPAD_MASK_MIC_MUTE		(1 << 14)
-#define THINKPAD_MASK_BRIGHTNESS_UP	(1 << 15)
-#define THINKPAD_MASK_BRIGHTNESS_DOWN	(1 << 16)
-#define THINKPAD_MASK_KBD_BACKLIGHT	(1 << 17)
 
 struct acpithinkpad_softc {
 	struct device		 sc_dev;
@@ -139,8 +131,6 @@ struct acpithinkpad_softc {
 	struct ksensor		 sc_sens[THINKPAD_NSENSORS];
 	struct ksensordev	 sc_sensdev;
 
-	uint64_t		 sc_hkey_version;
-
 	uint64_t		 sc_thinklight;
 	const char		*sc_thinklight_get;
 	const char		*sc_thinklight_set;
@@ -148,7 +138,7 @@ struct acpithinkpad_softc {
 	uint64_t		 sc_brightness;
 };
 
-extern void acpiec_read(struct acpiec_softc *, uint8_t, int, uint8_t *);
+extern void acpiec_read(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
 
 int	thinkpad_match(struct device *, void *, void *);
 void	thinkpad_attach(struct device *, struct device *, void *);
@@ -168,12 +158,12 @@ int	thinkpad_activate(struct device *, int);
 /* wscons hook functions */
 void	thinkpad_get_thinklight(struct acpithinkpad_softc *);
 void	thinkpad_set_thinklight(void *, int);
-int	thinkpad_get_kbd_backlight(struct wskbd_backlight *);
-int	thinkpad_set_kbd_backlight(struct wskbd_backlight *);
+int	thinkpad_get_backlight(struct wskbd_backlight *);
+int	thinkpad_set_backlight(struct wskbd_backlight *);
 extern int (*wskbd_get_backlight)(struct wskbd_backlight *);
 extern int (*wskbd_set_backlight)(struct wskbd_backlight *);
-int	thinkpad_get_brightness(struct acpithinkpad_softc *);
-int	thinkpad_set_brightness(void *, int);
+void	thinkpad_get_brightness(struct acpithinkpad_softc *);
+void	thinkpad_set_brightness(void *, int);
 int	thinkpad_get_param(struct wsdisplay_param *);
 int	thinkpad_set_param(struct wsdisplay_param *);
 extern int (*ws_get_param)(struct wsdisplay_param *);
@@ -202,7 +192,7 @@ const char *acpithinkpad_hids[] = {
 	"IBM0068",
 	"LEN0068",
 	"LEN0268",
-	NULL
+	0
 };
 
 int
@@ -243,15 +233,8 @@ thinkpad_sensor_attach(struct acpithinkpad_softc *sc)
 	}
 
 	/* Add fan probe */
-	sc->sc_sens[THINKPAD_SENSOR_FANRPM].type = SENSOR_FANRPM;
-	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[THINKPAD_SENSOR_FANRPM]);
-
-	/* Add port replicator indicator */
-	sc->sc_sens[THINKPAD_SENSOR_PORTREPL].type = SENSOR_INDICATOR;
-	sc->sc_sens[THINKPAD_SENSOR_PORTREPL].status = SENSOR_S_UNKNOWN;
-	strlcpy(sc->sc_sens[THINKPAD_SENSOR_PORTREPL].desc, "port replicator",
-	        sizeof(sc->sc_sens[THINKPAD_SENSOR_PORTREPL].desc));
-	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[THINKPAD_SENSOR_PORTREPL]);
+	sc->sc_sens[i].type = SENSOR_FANRPM;
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[i]);
 
 	sensordev_install(&sc->sc_sensdev);
 }
@@ -260,7 +243,7 @@ void
 thinkpad_sensor_refresh(void *arg)
 {
 	struct acpithinkpad_softc *sc = arg;
-	uint8_t lo, hi, i;
+	u_int8_t lo, hi, i;
 	int64_t tmp;
 	char sname[5];
 
@@ -277,7 +260,7 @@ thinkpad_sensor_refresh(void *arg)
 	/* Read fan RPM */
 	acpiec_read(sc->sc_ec, THINKPAD_ECOFFSET_FANLO, 1, &lo);
 	acpiec_read(sc->sc_ec, THINKPAD_ECOFFSET_FANHI, 1, &hi);
-	sc->sc_sens[THINKPAD_SENSOR_FANRPM].value = ((hi << 8L) + lo);
+	sc->sc_sens[i].value = ((hi << 8L) + lo);
 }
 
 void
@@ -290,10 +273,6 @@ thinkpad_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_devnode = aa->aaa_node;
 
 	printf("\n");
-
-	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "MHKV", 0, NULL,
-	    &sc->sc_hkey_version))
-		sc->sc_hkey_version = THINKPAD_HKEY_VERSION1;
 
 #if NAUDIO > 0 && NWSKBD > 0
 	/* Defer speaker mute */
@@ -310,14 +289,14 @@ thinkpad_attach(struct device *parent, struct device *self, void *aux)
 	    0, NULL, &sc->sc_thinklight) == 0) {
 		sc->sc_thinklight_get = "KLCG";
 		sc->sc_thinklight_set = "KLCS";
-		wskbd_get_backlight = thinkpad_get_kbd_backlight;
-		wskbd_set_backlight = thinkpad_set_kbd_backlight;
+		wskbd_get_backlight = thinkpad_get_backlight;
+		wskbd_set_backlight = thinkpad_set_backlight;
 	} else if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "MLCG",
 	    0, NULL, &sc->sc_thinklight) == 0) {
 		sc->sc_thinklight_get = "MLCG";
 		sc->sc_thinklight_set = "MLCS";
-		wskbd_get_backlight = thinkpad_get_kbd_backlight;
-		wskbd_set_backlight = thinkpad_set_kbd_backlight;
+		wskbd_get_backlight = thinkpad_get_backlight;
+		wskbd_set_backlight = thinkpad_set_backlight;
 	}
 
 	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "PBLG",
@@ -338,20 +317,12 @@ thinkpad_enable_events(struct acpithinkpad_softc *sc)
 	int64_t	mask;
 	int i;
 
-	/* Get the default event mask */
+	/* Get the supported event mask */
 	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "MHKA",
 	    0, NULL, &mask)) {
 		printf("%s: no MHKA\n", DEVNAME(sc));
 		return (1);
 	}
-
-	/* Enable events we need to know about */
-	mask |= (THINKPAD_MASK_MIC_MUTE	|
-	    THINKPAD_MASK_BRIGHTNESS_UP |
-	    THINKPAD_MASK_BRIGHTNESS_DOWN |
-	    THINKPAD_MASK_KBD_BACKLIGHT);
-
-	DPRINTF(("%s: setting event mask to 0x%llx\n", DEVNAME(sc), mask));
 
 	/* Update hotkey mask */
 	bzero(args, sizeof(args));
@@ -399,8 +370,6 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 		if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "MHKP",
 		    0, NULL, &event))
 			break;
-
-		DPRINTF(("%s: event 0x%03llx\n", DEVNAME(sc), event));
 		if (event == 0)
 			break;
 
@@ -451,16 +420,6 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 			break;
 		case THINKPAD_BACKLIGHT_CHANGED:
 			thinkpad_get_brightness(sc);
-			break;
-		case THINKPAD_PORT_REPL_DOCKED:
-			sc->sc_sens[THINKPAD_SENSOR_PORTREPL].value = 1;
-			sc->sc_sens[THINKPAD_SENSOR_PORTREPL].status = 
-			    SENSOR_S_OK;
-			break;
-		case THINKPAD_PORT_REPL_UNDOCKED:
-			sc->sc_sens[THINKPAD_SENSOR_PORTREPL].value = 0;
-			sc->sc_sens[THINKPAD_SENSOR_PORTREPL].status = 
-			    SENSOR_S_OK;
 			break;
 		default:
 			/* unknown or boring event */
@@ -556,35 +515,13 @@ thinkpad_volume_mute(struct acpithinkpad_softc *sc)
 int
 thinkpad_brightness_up(struct acpithinkpad_softc *sc)
 {
-	int b;
-
-	if (thinkpad_get_brightness(sc) == 0) {
-		b = sc->sc_brightness & 0xff;
-		if (b < ((sc->sc_brightness >> 8) & 0xff)) {
-			sc->sc_brightness = b + 1;
-			thinkpad_set_brightness(sc, 0);
-		}
-
-		return (0);
-	} else
-		return (thinkpad_cmos(sc, THINKPAD_CMOS_BRIGHTNESS_UP));
+	return (thinkpad_cmos(sc, THINKPAD_CMOS_BRIGHTNESS_UP));
 }
 
 int
 thinkpad_brightness_down(struct acpithinkpad_softc *sc)
 {
-	int b;
-
-	if (thinkpad_get_brightness(sc) == 0) {
-		b = sc->sc_brightness & 0xff;
-		if (b > 0) {
-			sc->sc_brightness = b - 1;
-			thinkpad_set_brightness(sc, 0);
-		}
-
-		return (0);
-	} else
-		return (thinkpad_cmos(sc, THINKPAD_CMOS_BRIGHTNESS_DOWN));
+	return (thinkpad_cmos(sc, THINKPAD_CMOS_BRIGHTNESS_DOWN));
 }
 
 int
@@ -663,7 +600,7 @@ thinkpad_set_thinklight(void *arg0, int arg1)
 }
 
 int
-thinkpad_get_kbd_backlight(struct wskbd_backlight *kbl)
+thinkpad_get_backlight(struct wskbd_backlight *kbl)
 {
 	struct acpithinkpad_softc *sc = acpithinkpad_cd.cd_devs[0];
 
@@ -680,7 +617,7 @@ thinkpad_get_kbd_backlight(struct wskbd_backlight *kbl)
 }
 
 int
-thinkpad_set_kbd_backlight(struct wskbd_backlight *kbl)
+thinkpad_set_backlight(struct wskbd_backlight *kbl)
 {
 	struct acpithinkpad_softc *sc = acpithinkpad_cd.cd_devs[0];
 	int maxval;
@@ -702,39 +639,24 @@ thinkpad_set_kbd_backlight(struct wskbd_backlight *kbl)
 	return 0;
 }
 
-int
+void
 thinkpad_get_brightness(struct acpithinkpad_softc *sc)
 {
-	int ret;
-
-	ret = aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "PBLG", 0, NULL,
-	    &sc->sc_brightness);
-
-	DPRINTF(("%s: %s: 0x%llx\n", DEVNAME(sc), __func__, sc->sc_brightness));
-
-	return ret;
+	aml_evalinteger(sc->sc_acpi, sc->sc_devnode,
+	    "PBLG", 0, NULL, &sc->sc_brightness);
 }
 
-int
+void
 thinkpad_set_brightness(void *arg0, int arg1)
 {
 	struct acpithinkpad_softc *sc = arg0;
 	struct aml_value arg;
-	int ret;
-
-	DPRINTF(("%s: %s: 0x%llx\n", DEVNAME(sc), __func__, sc->sc_brightness));
 
 	memset(&arg, 0, sizeof(arg));
 	arg.type = AML_OBJTYPE_INTEGER;
 	arg.v_integer = sc->sc_brightness & 0xff;
-	ret = aml_evalname(sc->sc_acpi, sc->sc_devnode, "PBLS", 1, &arg, NULL);
-
-	if (ret)
-		return ret;
-
-	thinkpad_get_brightness(sc);
-
-	return 0;
+	aml_evalname(sc->sc_acpi, sc->sc_devnode,
+	    "PBLS", 1, &arg, NULL);
 }
 
 int
@@ -775,8 +697,7 @@ thinkpad_set_param(struct wsdisplay_param *dp)
 			dp->curval = maxval;
 		sc->sc_brightness &= ~0xff;
 		sc->sc_brightness |= dp->curval;
-		acpi_addtask(sc->sc_acpi, (void *)thinkpad_set_brightness, sc,
-		    0);
+		acpi_addtask(sc->sc_acpi, thinkpad_set_brightness, sc, 0);
 		acpi_wakeup(sc->sc_acpi);
 		return 0;
 	default:
@@ -794,7 +715,7 @@ thinkpad_attach_deferred(void *v __unused)
 int
 thinkpad_get_volume_mute(struct acpithinkpad_softc *sc)
 {
-	uint8_t vol = 0;
+	u_int8_t vol = 0;
 
 	if (sc->sc_acpi->sc_ec == NULL)
 		return (-1);

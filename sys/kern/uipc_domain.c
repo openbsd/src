@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.56 2018/06/23 14:38:59 denis Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.55 2017/11/23 13:45:46 mpi Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ pffindproto(int family, int protocol, int type)
 	const struct protosw *pr;
 	const struct protosw *maybe = NULL;
 
-	if (family == PF_UNSPEC)
+	if (family == 0)
 		return (NULL);
 
 	dp = pffinddomain(family);
@@ -176,7 +176,7 @@ net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (EISDIR);		/* overloaded */
 	family = name[0];
 
-	if (family == PF_UNSPEC)
+	if (family == 0)
 		return (0);
 #if NBPFILTER > 0
 	if (family == PF_BPF)

@@ -41,7 +41,6 @@
  */
 #include "config.h"
 #include "util/rtt.h"
-#include "iterator/iterator.h"
 
 /* overwritten by config: infra_cache_min_rtt: */
 int RTT_MIN_TIMEOUT = 50;
@@ -62,7 +61,7 @@ void
 rtt_init(struct rtt_info* rtt)
 {
 	rtt->srtt = 0;
-	rtt->rttvar = UNKNOWN_SERVER_NICENESS/4;
+	rtt->rttvar = 94;
 	rtt->rto = calc_rto(rtt);
 	/* default value from the book is 0 + 4*0.75 = 3 seconds */
 	/* first RTO is 0 + 4*0.094 = 0.376 seconds */

@@ -15,23 +15,14 @@
 #ifndef LLVM_EXECUTIONENGINE_ORC_NULLRESOLVER_H
 #define LLVM_EXECUTIONENGINE_ORC_NULLRESOLVER_H
 
-#include "llvm/ExecutionEngine/Orc/Legacy.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 
 namespace llvm {
 namespace orc {
 
-class NullResolver : public SymbolResolver {
-public:
-  SymbolFlagsMap lookupFlags(const SymbolNameSet &Symbols) override;
-
-  SymbolNameSet lookup(std::shared_ptr<AsynchronousSymbolQuery> Query,
-                       SymbolNameSet Symbols) override;
-};
-
 /// SymbolResolver impliementation that rejects all resolution requests.
 /// Useful for clients that have no cross-object fixups.
-class NullLegacyResolver : public LegacyJITSymbolResolver {
+class NullResolver : public JITSymbolResolver {
 public:
   JITSymbol findSymbol(const std::string &Name) final;
 

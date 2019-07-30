@@ -16,8 +16,10 @@ public:
 } // end anonymous namespace
 
 void MainCallChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
+  const ProgramStateRef state = C.getState();
+  const LocationContext *LC = C.getLocationContext();
   const Expr *Callee = CE->getCallee();
-  const FunctionDecl *FD = C.getSVal(Callee).getAsFunctionDecl();
+  const FunctionDecl *FD = state->getSVal(Callee, LC).getAsFunctionDecl();
 
   if (!FD)
     return;

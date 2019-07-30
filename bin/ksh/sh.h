@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.75 2019/02/20 23:59:17 schwarze Exp $	*/
+/*	$OpenBSD: sh.h,v 1.71 2018/01/16 22:52:32 jca Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -44,7 +44,6 @@ extern	int	exstat;		/* exit status */
 extern	int	subst_exstat;	/* exit status of last $(..)/`..` */
 extern	const char *safe_prompt; /* safe prompt if PS1 substitution fails */
 extern	char	username[];	/* username for \u prompt expansion */
-extern	int	disable_subst;	/* disable substitution during evaluation */
 
 /*
  * Area-based allocation built on malloc/free
@@ -383,7 +382,6 @@ int	c_pwd(char **);
 int	c_print(char **);
 int	c_whence(char **);
 int	c_command(char **);
-int	c_type(char **);
 int	c_typeset(char **);
 int	c_alias(char **);
 int	c_unalias(char **);
@@ -442,7 +440,7 @@ int	search_access(const char *, int, int *);
 int	pr_menu(char *const *);
 int	pr_list(char *const *);
 /* expr.c */
-int	evaluate(const char *, int64_t *, int, bool);
+int	evaluate(const char *, long *, int, bool);
 int	v_evaluate(struct tbl *, const char *, volatile int, bool);
 /* history.c */
 void	init_histvec(void);
@@ -450,7 +448,6 @@ void	hist_init(Source *);
 void	hist_finish(void);
 void	histsave(int, const char *, int);
 int	c_fc(char **);
-void	c_fc_reset(void);
 void	sethistcontrol(const char *);
 void	sethistsize(int);
 void	sethistfile(const char *);
@@ -515,7 +512,7 @@ pid_t	j_async(void);
 int	j_stopped_running(void);
 /* mail.c */
 void	mcheck(void);
-void	mcset(int64_t);
+void	mcset(long);
 void	mbset(char *);
 void	mpset(char *);
 /* main.c */
@@ -530,7 +527,7 @@ void	cleanup_proc_env(void);
 /* misc.c */
 void	setctypes(const char *, int);
 void	initctypes(void);
-char *	u64ton(uint64_t, int);
+char *	ulton(unsigned long, int);
 char *	str_save(const char *, Area *);
 char *	str_nsave(const char *, int, Area *);
 int	option(const char *);
@@ -586,11 +583,11 @@ void	initvar(void);
 struct tbl *	global(const char *);
 struct tbl *	local(const char *, bool);
 char *	str_val(struct tbl *);
-int64_t	intval(struct tbl *);
+long	intval(struct tbl *);
 int	setstr(struct tbl *, const char *, int);
 struct tbl *setint_v(struct tbl *, struct tbl *, bool);
-void	setint(struct tbl *, int64_t);
-int	getint(struct tbl *, int64_t *, bool);
+void	setint(struct tbl *, long);
+int	getint(struct tbl *, long *, bool);
 struct tbl *typeset(const char *, int, int, int, int);
 void	unset(struct tbl *, int);
 char  * skip_varname(const char *, int);

@@ -1,4 +1,4 @@
-//===- CFLSteensAliasAnalysis.cpp - Unification-based Alias Analysis ------===//
+//- CFLSteensAliasAnalysis.cpp - Unification-based Alias Analysis ---*- C++-*-//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -36,25 +36,23 @@
 // FunctionPasses to run concurrently.
 
 #include "llvm/Analysis/CFLSteensAliasAnalysis.h"
-#include "AliasAnalysisSummary.h"
 #include "CFLGraph.h"
 #include "StratifiedSets.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/None.h"
 #include "llvm/ADT/Optional.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/Type.h"
-#include "llvm/IR/Value.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cassert>
-#include <limits>
 #include <memory>
-#include <utility>
+#include <tuple>
 
 using namespace llvm;
 using namespace llvm::cflaa;
@@ -65,7 +63,7 @@ CFLSteensAAResult::CFLSteensAAResult(const TargetLibraryInfo &TLI)
     : AAResultBase(), TLI(TLI) {}
 CFLSteensAAResult::CFLSteensAAResult(CFLSteensAAResult &&Arg)
     : AAResultBase(std::move(Arg)), TLI(Arg.TLI) {}
-CFLSteensAAResult::~CFLSteensAAResult() = default;
+CFLSteensAAResult::~CFLSteensAAResult() {}
 
 /// Information we have about a function and would like to keep around.
 class CFLSteensAAResult::FunctionInfo {
@@ -79,7 +77,6 @@ public:
   const StratifiedSets<InstantiatedValue> &getStratifiedSets() const {
     return Sets;
   }
-
   const AliasSummary &getAliasSummary() const { return Summary; }
 };
 
@@ -276,9 +273,8 @@ AliasResult CFLSteensAAResult::query(const MemoryLocation &LocA,
   if (!MaybeFnA && !MaybeFnB) {
     // The only times this is known to happen are when globals + InlineAsm are
     // involved
-    LLVM_DEBUG(
-        dbgs()
-        << "CFLSteensAA: could not extract parent function information.\n");
+    DEBUG(dbgs()
+          << "CFLSteensAA: could not extract parent function information.\n");
     return MayAlias;
   }
 

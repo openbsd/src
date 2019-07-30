@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.102 2019/05/17 19:07:16 guenther Exp $
+#	$OpenBSD: files.amd64,v 1.95 2018/01/25 15:06:29 mpi Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -32,7 +32,6 @@ file	arch/amd64/amd64/cacheinfo.c
 file	arch/amd64/amd64/vector.S
 file	arch/amd64/amd64/copy.S
 file	arch/amd64/amd64/spl.S
-file	arch/amd64/amd64/mds.S
 
 file	arch/amd64/amd64/intr.c
 file	arch/amd64/amd64/bus_space.c
@@ -109,7 +108,7 @@ file	arch/amd64/amd64/ioapic.c		ioapic needs-flag
 #
 # EFI Framebuffer
 #
-device efifb: wsemuldisplaydev, rasops32, rasops24, rasops16, rasops8
+device efifb: wsemuldisplaydev, rasops32, rasops24, rasops16, rasops8, rasops4
 attach efifb at mainbus
 file arch/amd64/amd64/efifb.c			efifb needs-flag
 
@@ -233,13 +232,8 @@ include "dev/gpio/files.gpio"
 # ACPI
 #
 include "dev/acpi/files.acpi"
-attach	acpi at bios
 file	arch/amd64/amd64/acpi_machdep.c		acpi
 file	arch/amd64/amd64/acpi_wakecode.S	acpi & !small_kernel
-
-device	acpipci
-attach	acpipci at acpi
-file	arch/amd64/pci/acpipci.c		acpipci
 
 #
 # VMM

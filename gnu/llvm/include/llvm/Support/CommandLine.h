@@ -30,7 +30,6 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/raw_ostream.h"
 #include <cassert>
 #include <climits>
 #include <cstddef>
@@ -67,15 +66,12 @@ bool ParseCommandLineOptions(int argc, const char *const *argv,
 void ParseEnvironmentOptions(const char *progName, const char *envvar,
                              const char *Overview = "");
 
-// Function pointer type for printing version information.
-using VersionPrinterTy = std::function<void(raw_ostream &)>;
-
 ///===---------------------------------------------------------------------===//
 /// SetVersionPrinter - Override the default (LLVM specific) version printer
 ///                     used to print out the version when --version is given
 ///                     on the command line. This allows other systems using the
 ///                     CommandLine utilities to print their own version string.
-void SetVersionPrinter(VersionPrinterTy func);
+void SetVersionPrinter(void (*func)());
 
 ///===---------------------------------------------------------------------===//
 /// AddExtraVersionPrinter - Add an extra printer to use in addition to the
@@ -84,7 +80,7 @@ void SetVersionPrinter(VersionPrinterTy func);
 ///                          which will be called after the basic LLVM version
 ///                          printing is complete. Each can then add additional
 ///                          information specific to the tool.
-void AddExtraVersionPrinter(VersionPrinterTy func);
+void AddExtraVersionPrinter(void (*func)());
 
 // PrintOptionValues - Print option values.
 // With -print-options print the difference between option values and defaults.
@@ -95,7 +91,7 @@ void PrintOptionValues();
 // Forward declaration - AddLiteralOption needs to be up here to make gcc happy.
 class Option;
 
-/// Adds a new option for parsing and provides the option it refers to.
+/// \brief Adds a new option for parsing and provides the option it refers to.
 ///
 /// \param O pointer to the option
 /// \param Name the string name for the option to handle during parsing
@@ -267,7 +263,7 @@ public:
   StringRef ValueStr; // String describing what the value of this option is
   OptionCategory *Category; // The Category this option belongs to
   SmallPtrSet<SubCommand *, 4> Subs; // The subcommands this option belongs to.
-  bool FullyInitialized = false; // Has addArgument been called?
+  bool FullyInitialized = false; // Has addArguemnt been called?
 
   inline enum NumOccurrencesFlag getNumOccurrencesFlag() const {
     return (enum NumOccurrencesFlag)Occurrences;
@@ -350,8 +346,6 @@ public:
 
   virtual void printOptionValue(size_t GlobalWidth, bool Force) const = 0;
 
-  virtual void setDefault() = 0;
-
   static void printHelpStr(StringRef HelpStr, size_t Indent,
                            size_t FirstLineIndentedBy);
 
@@ -363,10 +357,7 @@ public:
                              bool MultiArg = false);
 
   // Prints option name followed by message.  Always returns true.
-  bool error(const Twine &Message, StringRef ArgName = StringRef(), raw_ostream &Errs = llvm::errs());
-  bool error(const Twine &Message, raw_ostream &Errs) {
-    return error(Message, StringRef(), Errs);
-  }
+  bool error(const Twine &Message, StringRef ArgName = StringRef());
 
   inline int getNumOccurrences() const { return NumOccurrences; }
   inline void reset() { NumOccurrences = 0; }
@@ -1324,20 +1315,6 @@ class opt : public Option,
     }
   }
 
-  template <class T, class = typename std::enable_if<
-            std::is_assignable<T&, T>::value>::type>
-  void setDefaultImpl() {
-    const OptionValue<DataType> &V = this->getDefault();
-    if (V.hasValue())
-      this->setValue(V.getValue());
-  }
-
-  template <class T, class = typename std::enable_if<
-            !std::is_assignable<T&, T>::value>::type>
-  void setDefaultImpl(...) {}
-
-  void setDefault() override { setDefaultImpl<DataType>(); }
-
   void done() {
     addArgument();
     Parser.initialize();
@@ -1513,8 +1490,6 @@ class list : public Option, public list_storage<DataType, StorageClass> {
   void printOptionValue(size_t /*GlobalWidth*/, bool /*Force*/) const override {
   }
 
-  void setDefault() override {}
-
   void done() {
     addArgument();
     Parser.initialize();
@@ -1656,8 +1631,6 @@ class bits : public Option, public bits_storage<DataType, Storage> {
   void printOptionValue(size_t /*GlobalWidth*/, bool /*Force*/) const override {
   }
 
-  void setDefault() override {}
-
   void done() {
     addArgument();
     Parser.initialize();
@@ -1707,8 +1680,6 @@ class alias : public Option {
   // Aliases do not need to print their values.
   void printOptionValue(size_t /*GlobalWidth*/, bool /*Force*/) const override {
   }
-
-  void setDefault() override { AliasFor->setDefault(); }
 
   ValueExpected getValueExpectedFlagDefault() const override {
     return AliasFor->getValueExpectedFlag();
@@ -1766,6 +1737,8 @@ void PrintVersionMessage();
 /// This function just prints the help message, exactly the same way as if the
 /// -help or -help-hidden option had been given on the command line.
 ///
+/// NOTE: THIS FUNCTION TERMINATES THE PROGRAM!
+///
 /// \param Hidden if true will print hidden options
 /// \param Categorized if true print options in categories
 void PrintHelpMessage(bool Hidden = false, bool Categorized = false);
@@ -1774,7 +1747,7 @@ void PrintHelpMessage(bool Hidden = false, bool Categorized = false);
 // Public interface for accessing registered options.
 //
 
-/// Use this to get a StringMap to all registered named options
+/// \brief Use this to get a StringMap to all registered named options
 /// (e.g. -help). Note \p Map Should be an empty StringMap.
 ///
 /// \return A reference to the StringMap used by the cl APIs to parse options.
@@ -1803,7 +1776,7 @@ void PrintHelpMessage(bool Hidden = false, bool Categorized = false);
 /// than just handing around a global list.
 StringMap<Option *> &getRegisteredOptions(SubCommand &Sub = *TopLevelSubCommand);
 
-/// Use this to get all registered SubCommands from the provided parser.
+/// \brief Use this to get all registered SubCommands from the provided parser.
 ///
 /// \return A range of all SubCommand pointers registered with the parser.
 ///
@@ -1829,7 +1802,7 @@ getRegisteredSubcommands();
 // Standalone command line processing utilities.
 //
 
-/// Tokenizes a command line that can contain escapes and quotes.
+/// \brief Tokenizes a command line that can contain escapes and quotes.
 //
 /// The quoting rules match those used by GCC and other tools that use
 /// libiberty's buildargv() or expandargv() utilities, and do not match bash.
@@ -1845,7 +1818,7 @@ void TokenizeGNUCommandLine(StringRef Source, StringSaver &Saver,
                             SmallVectorImpl<const char *> &NewArgv,
                             bool MarkEOLs = false);
 
-/// Tokenizes a Windows command line which may contain quotes and escaped
+/// \brief Tokenizes a Windows command line which may contain quotes and escaped
 /// quotes.
 ///
 /// See MSDN docs for CommandLineToArgvW for information on the quoting rules.
@@ -1860,40 +1833,13 @@ void TokenizeWindowsCommandLine(StringRef Source, StringSaver &Saver,
                                 SmallVectorImpl<const char *> &NewArgv,
                                 bool MarkEOLs = false);
 
-/// String tokenization function type.  Should be compatible with either
+/// \brief String tokenization function type.  Should be compatible with either
 /// Windows or Unix command line tokenizers.
 using TokenizerCallback = void (*)(StringRef Source, StringSaver &Saver,
                                    SmallVectorImpl<const char *> &NewArgv,
                                    bool MarkEOLs);
 
-/// Tokenizes content of configuration file.
-///
-/// \param [in] Source The string representing content of config file.
-/// \param [in] Saver Delegates back to the caller for saving parsed strings.
-/// \param [out] NewArgv All parsed strings are appended to NewArgv.
-/// \param [in] MarkEOLs Added for compatibility with TokenizerCallback.
-///
-/// It works like TokenizeGNUCommandLine with ability to skip comment lines.
-///
-void tokenizeConfigFile(StringRef Source, StringSaver &Saver,
-                        SmallVectorImpl<const char *> &NewArgv,
-                        bool MarkEOLs = false);
-
-/// Reads command line options from the given configuration file.
-///
-/// \param [in] CfgFileName Path to configuration file.
-/// \param [in] Saver  Objects that saves allocated strings.
-/// \param [out] Argv Array to which the read options are added.
-/// \return true if the file was successfully read.
-///
-/// It reads content of the specified file, tokenizes it and expands "@file"
-/// commands resolving file names in them relative to the directory where
-/// CfgFilename resides.
-///
-bool readConfigFile(StringRef CfgFileName, StringSaver &Saver,
-                    SmallVectorImpl<const char *> &Argv);
-
-/// Expand response files on a command line recursively using the given
+/// \brief Expand response files on a command line recursively using the given
 /// StringSaver and tokenization strategy.  Argv should contain the command line
 /// before expansion and will be modified in place. If requested, Argv will
 /// also be populated with nullptrs indicating where each response file line
@@ -1913,7 +1859,7 @@ bool ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
                          SmallVectorImpl<const char *> &Argv,
                          bool MarkEOLs = false, bool RelativeNames = false);
 
-/// Mark all options not part of this category as cl::ReallyHidden.
+/// \brief Mark all options not part of this category as cl::ReallyHidden.
 ///
 /// \param Category the category of options to keep displaying
 ///
@@ -1923,7 +1869,7 @@ bool ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
 void HideUnrelatedOptions(cl::OptionCategory &Category,
                           SubCommand &Sub = *TopLevelSubCommand);
 
-/// Mark all options not part of the categories as cl::ReallyHidden.
+/// \brief Mark all options not part of the categories as cl::ReallyHidden.
 ///
 /// \param Categories the categories of options to keep displaying.
 ///
@@ -1933,12 +1879,12 @@ void HideUnrelatedOptions(cl::OptionCategory &Category,
 void HideUnrelatedOptions(ArrayRef<const cl::OptionCategory *> Categories,
                           SubCommand &Sub = *TopLevelSubCommand);
 
-/// Reset all command line options to a state that looks as if they have
+/// \brief Reset all command line options to a state that looks as if they have
 /// never appeared on the command line.  This is useful for being able to parse
 /// a command line multiple times (especially useful for writing tests).
 void ResetAllOptionOccurrences();
 
-/// Reset the command line parser back to its initial state.  This
+/// \brief Reset the command line parser back to its initial state.  This
 /// removes
 /// all options, categories, and subcommands and returns the parser to a state
 /// where no options are supported.

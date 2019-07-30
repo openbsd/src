@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.8 2019/05/12 11:27:08 denis Exp $ */
+/*	$OpenBSD: printconf.c,v 1.6 2009/07/31 16:04:34 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -40,8 +40,6 @@ print_mainconf(struct ripd_conf *conf)
 		printf("fib-update no\n");
 	else
 		printf("fib-update yes\n");
-
-	printf("fib-priority %hhu\n", conf->fib_priority);
 
 	print_redistribute(conf);
 
@@ -88,7 +86,7 @@ print_redistribute(struct ripd_conf *conf)
 			printf("redistribute default\n");
 			break;
 		case REDIST_ADDR:
-			printf("%sredistribute %s/%d\n",
+			printf("%ssredistribute %s/%d\n",
 			    print_no(r->type), inet_ntoa(r->addr),
 			    mask2prefixlen(r->mask.s_addr));
 			break;

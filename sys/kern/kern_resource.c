@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.64 2019/06/10 03:15:53 visa Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.58 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -46,15 +46,11 @@
 #include <sys/proc.h>
 #include <sys/ktrace.h>
 #include <sys/sched.h>
-#include <sys/signalvar.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
-
-/* SIGXCPU interval in seconds of process runtime */
-#define SIGXCPU_INTERVAL	5
 
 void	tuagg_sub(struct tusage *, struct proc *);
 
@@ -239,7 +235,7 @@ dosetrlimit(struct proc *p, u_int which, struct rlimit *limp)
 	if (limp->rlim_max > alimp->rlim_max)
 		if ((error = suser(p)) != 0)
 			return (error);
-	if (p->p_p->ps_limit->pl_refcnt > 1) {
+	if (p->p_p->ps_limit->p_refcnt > 1) {
 		struct plimit *l = p->p_p->ps_limit;
 
 		/* limcopy() can sleep, so copy before decrementing refcnt */
@@ -270,10 +266,6 @@ dosetrlimit(struct proc *p, u_int which, struct rlimit *limp)
 		limp->rlim_max = maxlim;
 	if (limp->rlim_cur > limp->rlim_max)
 		limp->rlim_cur = limp->rlim_max;
-
-	if (which == RLIMIT_CPU && limp->rlim_cur != RLIM_INFINITY &&
-	    alimp->rlim_cur == RLIM_INFINITY)
-		timeout_add_msec(&p->p_p->ps_rucheck_to, RUCHECK_INTERVAL);
 
 	if (which == RLIMIT_STACK) {
 		/*
@@ -500,61 +492,7 @@ ruadd(struct rusage *ru, struct rusage *ru2)
 		*ip++ += *ip2++;
 }
 
-/*
- * Check if the process exceeds its cpu resource allocation.
- * If over max, kill it.
- */
-void
-rucheck(void *arg)
-{
-	struct process *pr = arg;
-	struct rlimit *rlim;
-	time_t runtime;
-	int s;
-
-	KERNEL_ASSERT_LOCKED();
-
-	SCHED_LOCK(s);
-	runtime = pr->ps_tu.tu_runtime.tv_sec;
-	SCHED_UNLOCK(s);
-
-	rlim = &pr->ps_limit->pl_rlimit[RLIMIT_CPU];
-	if ((rlim_t)runtime >= rlim->rlim_cur) {
-		if ((rlim_t)runtime >= rlim->rlim_max) {
-			prsignal(pr, SIGKILL);
-		} else if (runtime >= pr->ps_nextxcpu) {
-			prsignal(pr, SIGXCPU);
-			pr->ps_nextxcpu = runtime + SIGXCPU_INTERVAL;
-		}
-	}
-
-	timeout_add_msec(&pr->ps_rucheck_to, RUCHECK_INTERVAL);
-}
-
 struct pool plimit_pool;
-
-void
-lim_startup(struct plimit *limit0)
-{
-	rlim_t lim;
-	int i;
-
-	pool_init(&plimit_pool, sizeof(struct plimit), 0, IPL_MPFLOOR,
-	    PR_WAITOK, "plimitpl", NULL);
-
-	for (i = 0; i < nitems(limit0->pl_rlimit); i++)
-		limit0->pl_rlimit[i].rlim_cur =
-		    limit0->pl_rlimit[i].rlim_max = RLIM_INFINITY;
-	limit0->pl_rlimit[RLIMIT_NOFILE].rlim_cur = NOFILE;
-	limit0->pl_rlimit[RLIMIT_NOFILE].rlim_max = MIN(NOFILE_MAX,
-	    (maxfiles - NOFILE > NOFILE) ? maxfiles - NOFILE : NOFILE);
-	limit0->pl_rlimit[RLIMIT_NPROC].rlim_cur = MAXUPRC;
-	lim = ptoa(uvmexp.free);
-	limit0->pl_rlimit[RLIMIT_RSS].rlim_max = lim;
-	limit0->pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
-	limit0->pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
-	limit0->pl_refcnt = 1;
-}
 
 /*
  * Make a copy of the plimit structure.
@@ -565,18 +503,25 @@ struct plimit *
 limcopy(struct plimit *lim)
 {
 	struct plimit *newlim;
+	static int initialized;
+
+	if (!initialized) {
+		pool_init(&plimit_pool, sizeof(struct plimit), 0, IPL_NONE,
+		    PR_WAITOK, "plimitpl", NULL);
+		initialized = 1;
+	}
 
 	newlim = pool_get(&plimit_pool, PR_WAITOK);
 	memcpy(newlim->pl_rlimit, lim->pl_rlimit,
 	    sizeof(struct rlimit) * RLIM_NLIMITS);
-	newlim->pl_refcnt = 1;
+	newlim->p_refcnt = 1;
 	return (newlim);
 }
 
 void
 limfree(struct plimit *lim)
 {
-	if (--lim->pl_refcnt > 0)
+	if (--lim->p_refcnt > 0)
 		return;
 	pool_put(&plimit_pool, lim);
 }

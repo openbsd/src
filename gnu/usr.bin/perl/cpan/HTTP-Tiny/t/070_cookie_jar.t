@@ -4,9 +4,8 @@ use strict;
 use warnings;
 
 use Test::More tests => 4;
-use lib 't';
-use SimpleCookieJar;
-use BrokenCookieJar;
+use t::SimpleCookieJar;
+use t::BrokenCookieJar;
 use HTTP::Tiny;
 
 ### a couple tests to ensure that:
@@ -16,9 +15,9 @@ use HTTP::Tiny;
 
 
 my $default = undef;
-my $jar = SimpleCookieJar->new();
-my $mug = BrokenCookieJar->new();
-my $dog = BrokenCookieJar2->new();
+my $jar = t::SimpleCookieJar->new();
+my $mug = t::BrokenCookieJar->new();
+my $dog = t::BrokenCookieJar2->new();
 
 {
     my $ua = HTTP::Tiny->new();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.24 2019/05/10 21:20:43 mlarkin Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.22 2017/12/18 12:53:33 fcambus Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -47,6 +47,9 @@
 #ifdef SOFTRAID
 #include "softraid_amd64.h"
 #endif
+#ifdef EFIBOOT
+#include "efidev.h"
+#endif
 
 #define MAX_CKSUMLEN MAXBSIZE / DEV_BSIZE	/* Max # of blks to cksum */
 
@@ -65,6 +68,7 @@ extern int debug;
 extern int bios_bootdev;
 extern int bios_cddev;
 
+#ifndef EFIBOOT
 static void
 diskinfo_init(struct diskinfo *dip)
 {
@@ -176,6 +180,77 @@ hardprobe(void)
 		TAILQ_INSERT_TAIL(&disklist, dip, list);
 	}
 }
+#endif
+
+#ifdef EFIBOOT
+static void
+efi_hardprobe(void)
+{
+	int		 n;
+	struct diskinfo	*dip, *dipt;
+	u_int		 bsdunit, type = 0;
+	u_int		 scsi= 0, ide = 0, atapi = 0;
+	extern struct disklist_lh
+			 efi_disklist;
+
+	n = 0;
+	TAILQ_FOREACH_SAFE(dip, &efi_disklist, list, dipt) {
+		TAILQ_REMOVE(&efi_disklist, dip, list);
+		n = scsi + ide;
+
+		/* Try to find the label, to figure out device type */
+		if ((efi_getdisklabel(dip->efi_info, &dip->disklabel))) {
+			type = 0;
+			printf(" hd%d*", n);
+			bsdunit = ide++;
+		} else {
+			/* Best guess */
+			switch (dip->disklabel.d_type) {
+			case DTYPE_SCSI:
+				type = 4;
+				bsdunit = scsi++;
+				dip->bios_info.flags |= BDI_GOODLABEL;
+				break;
+
+			case DTYPE_ESDI:
+			case DTYPE_ST506:
+				type = 0;
+				bsdunit = ide++;
+				dip->bios_info.flags |= BDI_GOODLABEL;
+				break;
+
+			case DTYPE_ATAPI:
+				type = 6;
+				n = atapi;
+				bsdunit = atapi++;
+				dip->bios_info.flags |= BDI_GOODLABEL
+				    | BDI_EL_TORITO;
+				break;
+
+			default:
+				dip->bios_info.flags |= BDI_BADLABEL;
+				type = 0;	/* XXX Suggest IDE */
+				bsdunit = ide++;
+			}
+			printf(" %cd%d", (type == 6)? 'c' : 'h', n);
+		}
+		if (type != 6)
+			dip->bios_info.bios_number = 0x80 | n;
+		else
+			dip->bios_info.bios_number = 0xe0 | n;
+
+		dip->bios_info.checksum = 0; /* just in case */
+		/* Fill out best we can */
+		dip->bsddev = dip->bios_info.bsd_dev =
+		    MAKEBOOTDEV(type, 0, 0, bsdunit, RAW_PART);
+		check_hibernate(dip);
+
+		/* Add to queue of disks */
+		TAILQ_INSERT_TAIL(&disklist, dip, list);
+		n++;
+	}
+}
+#endif
 
 /* Probe for all BIOS supported disks */
 u_int32_t bios_cksumlen;
@@ -191,6 +266,7 @@ diskprobe(void)
 	/* Init stuff */
 	TAILQ_INIT(&disklist);
 
+#ifndef EFIBOOT
 	/* Do probes */
 	floppyprobe();
 #ifdef BIOS_DEBUG
@@ -198,6 +274,9 @@ diskprobe(void)
 		printf(";");
 #endif
 	hardprobe();
+#else
+	efi_hardprobe();
+#endif
 
 #ifdef SOFTRAID
 	srprobe();
@@ -226,6 +305,7 @@ diskprobe(void)
 	    bios_diskinfo);
 }
 
+#ifndef EFIBOOT
 void
 cdprobe(void)
 {
@@ -264,6 +344,10 @@ cdprobe(void)
 	dip->disklabel.d_ncylinders = 1;
 	dip->disklabel.d_secpercyl = dip->disklabel.d_ntracks *
 	    dip->disklabel.d_nsectors;
+	if (dip->disklabel.d_secpercyl == 0) {
+		dip->disklabel.d_secpercyl = 100;
+		/* as long as it's not 0, since readdisklabel divides by it */
+	}
 
 	strncpy(dip->disklabel.d_typename, "ATAPI CD-ROM",
 	    sizeof(dip->disklabel.d_typename));
@@ -295,6 +379,8 @@ cdprobe(void)
 	/* Add to queue of disks */
 	TAILQ_INSERT_TAIL(&disklist, dip, list);
 }
+#endif
+
 
 /* Find info on given BIOS disk */
 struct diskinfo *

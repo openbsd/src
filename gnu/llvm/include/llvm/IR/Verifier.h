@@ -61,13 +61,11 @@ class TBAAVerifier {
   /// \name Helper functions used by \c visitTBAAMetadata.
   /// @{
   MDNode *getFieldNodeFromTBAABaseNode(Instruction &I, const MDNode *BaseNode,
-                                       APInt &Offset, bool IsNewFormat);
+                                       APInt &Offset);
   TBAAVerifier::TBAABaseNodeSummary verifyTBAABaseNode(Instruction &I,
-                                                       const MDNode *BaseNode,
-                                                       bool IsNewFormat);
+                                                       const MDNode *BaseNode);
   TBAABaseNodeSummary verifyTBAABaseNodeImpl(Instruction &I,
-                                             const MDNode *BaseNode,
-                                             bool IsNewFormat);
+                                             const MDNode *BaseNode);
 
   bool isValidScalarTBAANode(const MDNode *MD);
   /// @}
@@ -80,7 +78,7 @@ public:
   bool visitTBAAMetadata(Instruction &I, const MDNode *MD);
 };
 
-/// Check a function for errors, useful for use when debugging a
+/// \brief Check a function for errors, useful for use when debugging a
 /// pass.
 ///
 /// If there are no errors, the function returns false. If an error is found,
@@ -88,7 +86,7 @@ public:
 /// returned.
 bool verifyFunction(const Function &F, raw_ostream *OS = nullptr);
 
-/// Check a module for errors.
+/// \brief Check a module for errors.
 ///
 /// If there are no errors, the function returns false. If an error is
 /// found, a message describing the error is written to OS (if
@@ -124,7 +122,7 @@ public:
 /// "recovered" from by stripping the debug info.
 bool verifyModule(bool &BrokenDebugInfo, const Module &M, raw_ostream *OS);
 
-/// Create a verifier pass.
+/// \brief Create a verifier pass.
 ///
 /// Check a module or function for validity. This is essentially a pass wrapped
 /// around the above verifyFunction and verifyModule routines and

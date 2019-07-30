@@ -19,8 +19,6 @@
 
 #include "CoroInternal.h"
 #include "llvm/ADT/BitVector.h"
-#include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Config/llvm-config.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/IRBuilder.h"
@@ -29,6 +27,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/circular_raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
 
 using namespace llvm;
 
@@ -49,7 +48,7 @@ public:
   BlockToIndexMapping(Function &F) {
     for (BasicBlock &BB : F)
       V.push_back(&BB);
-    llvm::sort(V.begin(), V.end());
+    std::sort(V.begin(), V.end());
   }
 
   size_t blockToIndex(BasicBlock *BB) const {
@@ -106,8 +105,8 @@ struct SuspendCrossingInfo {
 
     assert(Block[UseIndex].Consumes[DefIndex] && "use must consume def");
     bool const Result = Block[UseIndex].Kills[DefIndex];
-    LLVM_DEBUG(dbgs() << UseBB->getName() << " => " << DefBB->getName()
-                      << " answer is " << Result << "\n");
+    DEBUG(dbgs() << UseBB->getName() << " => " << DefBB->getName()
+                 << " answer is " << Result << "\n");
     return Result;
   }
 
@@ -195,8 +194,8 @@ SuspendCrossingInfo::SuspendCrossingInfo(Function &F, coro::Shape &Shape)
 
   bool Changed;
   do {
-    LLVM_DEBUG(dbgs() << "iteration " << ++Iteration);
-    LLVM_DEBUG(dbgs() << "==============\n");
+    DEBUG(dbgs() << "iteration " << ++Iteration);
+    DEBUG(dbgs() << "==============\n");
 
     Changed = false;
     for (size_t I = 0; I < N; ++I) {
@@ -240,20 +239,20 @@ SuspendCrossingInfo::SuspendCrossingInfo(Function &F, coro::Shape &Shape)
         Changed |= (S.Kills != SavedKills) || (S.Consumes != SavedConsumes);
 
         if (S.Kills != SavedKills) {
-          LLVM_DEBUG(dbgs() << "\nblock " << I << " follower " << SI->getName()
-                            << "\n");
-          LLVM_DEBUG(dump("S.Kills", S.Kills));
-          LLVM_DEBUG(dump("SavedKills", SavedKills));
+          DEBUG(dbgs() << "\nblock " << I << " follower " << SI->getName()
+                       << "\n");
+          DEBUG(dump("S.Kills", S.Kills));
+          DEBUG(dump("SavedKills", SavedKills));
         }
         if (S.Consumes != SavedConsumes) {
-          LLVM_DEBUG(dbgs() << "\nblock " << I << " follower " << SI << "\n");
-          LLVM_DEBUG(dump("S.Consume", S.Consumes));
-          LLVM_DEBUG(dump("SavedCons", SavedConsumes));
+          DEBUG(dbgs() << "\nblock " << I << " follower " << SI << "\n");
+          DEBUG(dump("S.Consume", S.Consumes));
+          DEBUG(dump("SavedCons", SavedConsumes));
         }
       }
     }
   } while (Changed);
-  LLVM_DEBUG(dump());
+  DEBUG(dump());
 }
 
 #undef DEBUG_TYPE // "coro-suspend-crossing"
@@ -262,34 +261,21 @@ SuspendCrossingInfo::SuspendCrossingInfo(Function &F, coro::Shape &Shape)
 // We build up the list of spills for every case where a use is separated
 // from the definition by a suspend point.
 
-namespace {
-class Spill {
-  Value *Def = nullptr;
-  Instruction *User = nullptr;
-  unsigned FieldNo = 0;
+struct Spill : std::pair<Value *, Instruction *> {
+  using base = std::pair<Value *, Instruction *>;
 
-public:
-  Spill(Value *Def, llvm::User *U) : Def(Def), User(cast<Instruction>(U)) {}
+  Spill(Value *Def, User *U) : base(Def, cast<Instruction>(U)) {}
 
-  Value *def() const { return Def; }
-  Instruction *user() const { return User; }
-  BasicBlock *userBlock() const { return User->getParent(); }
+  Value *def() const { return first; }
+  Instruction *user() const { return second; }
+  BasicBlock *userBlock() const { return second->getParent(); }
 
-  // Note that field index is stored in the first SpillEntry for a particular
-  // definition. Subsequent mentions of a defintion do not have fieldNo
-  // assigned. This works out fine as the users of Spills capture the info about
-  // the definition the first time they encounter it. Consider refactoring
-  // SpillInfo into two arrays to normalize the spill representation.
-  unsigned fieldIndex() const {
-    assert(FieldNo && "Accessing unassigned field");
-    return FieldNo;
+  std::pair<Value *, BasicBlock *> getKey() const {
+    return {def(), userBlock()};
   }
-  void setFieldIndex(unsigned FieldNumber) {
-    assert(!FieldNo && "Reassigning field number");
-    FieldNo = FieldNumber;
-  }
+
+  bool operator<(Spill const &rhs) const { return getKey() < rhs.getKey(); }
 };
-} // namespace
 
 // Note that there may be more than one record with the same value of Def in
 // the SpillInfo vector.
@@ -310,57 +296,6 @@ static void dump(StringRef Title, SpillInfo const &Spills) {
 }
 #endif
 
-namespace {
-// We cannot rely solely on natural alignment of a type when building a
-// coroutine frame and if the alignment specified on the Alloca instruction
-// differs from the natural alignment of the alloca type we will need to insert
-// padding.
-struct PaddingCalculator {
-  const DataLayout &DL;
-  LLVMContext &Context;
-  unsigned StructSize = 0;
-
-  PaddingCalculator(LLVMContext &Context, DataLayout const &DL)
-      : DL(DL), Context(Context) {}
-
-  // Replicate the logic from IR/DataLayout.cpp to match field offset
-  // computation for LLVM structs.
-  void addType(Type *Ty) {
-    unsigned TyAlign = DL.getABITypeAlignment(Ty);
-    if ((StructSize & (TyAlign - 1)) != 0)
-      StructSize = alignTo(StructSize, TyAlign);
-
-    StructSize += DL.getTypeAllocSize(Ty); // Consume space for this data item.
-  }
-
-  void addTypes(SmallVectorImpl<Type *> const &Types) {
-    for (auto *Ty : Types)
-      addType(Ty);
-  }
-
-  unsigned computePadding(Type *Ty, unsigned ForcedAlignment) {
-    unsigned TyAlign = DL.getABITypeAlignment(Ty);
-    auto Natural = alignTo(StructSize, TyAlign);
-    auto Forced = alignTo(StructSize, ForcedAlignment);
-
-    // Return how many bytes of padding we need to insert.
-    if (Natural != Forced)
-      return std::max(Natural, Forced) - StructSize;
-
-    // Rely on natural alignment.
-    return 0;
-  }
-
-  // If padding required, return the padding field type to insert.
-  ArrayType *getPaddingType(Type *Ty, unsigned ForcedAlignment) {
-    if (auto Padding = computePadding(Ty, ForcedAlignment))
-      return ArrayType::get(Type::getInt8Ty(Context), Padding);
-
-    return nullptr;
-  }
-};
-} // namespace
-
 // Build a struct that will keep state for an active coroutine.
 //   struct f.frame {
 //     ResumeFnTy ResumeFnAddr;
@@ -372,8 +307,6 @@ struct PaddingCalculator {
 static StructType *buildFrameType(Function &F, coro::Shape &Shape,
                                   SpillInfo &Spills) {
   LLVMContext &C = F.getContext();
-  const DataLayout &DL = F.getParent()->getDataLayout();
-  PaddingCalculator Padder(C, DL);
   SmallString<32> Name(F.getName());
   Name.append(".Frame");
   StructType *FrameTy = StructType::create(C, Name);
@@ -391,10 +324,8 @@ static StructType *buildFrameType(Function &F, coro::Shape &Shape,
                                Type::getIntNTy(C, IndexBits)};
   Value *CurrentDef = nullptr;
 
-  Padder.addTypes(Types);
-
   // Create an entry for every spilled value.
-  for (auto &S : Spills) {
+  for (auto const &S : Spills) {
     if (CurrentDef == S.def())
       continue;
 
@@ -404,22 +335,12 @@ static StructType *buildFrameType(Function &F, coro::Shape &Shape,
       continue;
 
     Type *Ty = nullptr;
-    if (auto *AI = dyn_cast<AllocaInst>(CurrentDef)) {
+    if (auto *AI = dyn_cast<AllocaInst>(CurrentDef))
       Ty = AI->getAllocatedType();
-      if (unsigned AllocaAlignment = AI->getAlignment()) {
-        // If alignment is specified in alloca, see if we need to insert extra
-        // padding.
-        if (auto PaddingTy = Padder.getPaddingType(Ty, AllocaAlignment)) {
-          Types.push_back(PaddingTy);
-          Padder.addType(PaddingTy);
-        }
-      }
-    } else {
+    else
       Ty = CurrentDef->getType();
-    }
-    S.setFieldIndex(Types.size());
+
     Types.push_back(Ty);
-    Padder.addType(Ty);
   }
   FrameTy->setBody(Types);
 
@@ -480,7 +401,7 @@ static Instruction *insertSpills(SpillInfo &Spills, coro::Shape &Shape) {
   Value *CurrentValue = nullptr;
   BasicBlock *CurrentBlock = nullptr;
   Value *CurrentReload = nullptr;
-  unsigned Index = 0; // Proper field number will be read from field definition.
+  unsigned Index = coro::Shape::LastKnownField;
 
   // We need to keep track of any allocas that need "spilling"
   // since they will live in the coroutine frame now, all access to them
@@ -495,7 +416,6 @@ static Instruction *insertSpills(SpillInfo &Spills, coro::Shape &Shape) {
   // Create a load instruction to reload the spilled value from the coroutine
   // frame.
   auto CreateReload = [&](Instruction *InsertBefore) {
-    assert(Index && "accessing unassigned field number");
     Builder.SetInsertPoint(InsertBefore);
     auto *G = Builder.CreateConstInBoundsGEP2_32(FrameTy, FramePtr, 0, Index,
                                                  CurrentValue->getName() +
@@ -513,7 +433,7 @@ static Instruction *insertSpills(SpillInfo &Spills, coro::Shape &Shape) {
       CurrentBlock = nullptr;
       CurrentReload = nullptr;
 
-      Index = E.fieldIndex();
+      ++Index;
 
       if (auto *AI = dyn_cast<AllocaInst>(CurrentValue)) {
         // Spilled AllocaInst will be replaced with GEP from the coroutine frame
@@ -753,8 +673,8 @@ static bool materializable(Instruction &V) {
 // Check for structural coroutine intrinsics that should not be spilled into
 // the coroutine frame.
 static bool isCoroutineStructureIntrinsic(Instruction &I) {
-  return isa<CoroIdInst>(&I) || isa<CoroSaveInst>(&I) ||
-         isa<CoroSuspendInst>(&I);
+  return isa<CoroIdInst>(&I) || isa<CoroBeginInst>(&I) ||
+         isa<CoroSaveInst>(&I) || isa<CoroSuspendInst>(&I);
 }
 
 // For every use of the value that is across suspend point, recreate that value
@@ -821,8 +741,6 @@ static void moveSpillUsesAfterCoroBegin(Function &F, SpillInfo const &Spills,
     for (User *U : CurrentValue->users()) {
       Instruction *I = cast<Instruction>(U);
       if (!DT.dominates(CoroBegin, I)) {
-        LLVM_DEBUG(dbgs() << "will move: " << *I << "\n");
-
         // TODO: Make this more robust. Currently if we run into a situation
         // where simple instruction move won't work we panic and
         // report_fatal_error.
@@ -832,6 +750,7 @@ static void moveSpillUsesAfterCoroBegin(Function &F, SpillInfo const &Spills,
                                " dominated by CoroBegin");
         }
 
+        DEBUG(dbgs() << "will move: " << *I << "\n");
         NeedsMoving.push_back(I);
       }
     }
@@ -906,7 +825,7 @@ void coro::buildCoroutineFrame(Function &F, Shape &Shape) {
       break;
 
     // Rewrite materializable instructions to be materialized at the use point.
-    LLVM_DEBUG(dump("Materializations", Spills));
+    DEBUG(dump("Materializations", Spills));
     rewriteMaterializableInstructions(Builder, Spills);
     Spills.clear();
   }
@@ -920,7 +839,7 @@ void coro::buildCoroutineFrame(Function &F, Shape &Shape) {
   for (Instruction &I : instructions(F)) {
     // Values returned from coroutine structure intrinsics should not be part
     // of the Coroutine Frame.
-    if (isCoroutineStructureIntrinsic(I) || &I == Shape.CoroBegin)
+    if (isCoroutineStructureIntrinsic(I))
       continue;
     // The Coroutine Promise always included into coroutine frame, no need to
     // check for suspend crossing.
@@ -936,7 +855,7 @@ void coro::buildCoroutineFrame(Function &F, Shape &Shape) {
         Spills.emplace_back(&I, U);
       }
   }
-  LLVM_DEBUG(dump("Spills", Spills));
+  DEBUG(dump("Spills", Spills));
   moveSpillUsesAfterCoroBegin(F, Spills, Shape.CoroBegin);
   Shape.FrameTy = buildFrameType(F, Shape, Spills);
   Shape.FramePtr = insertSpills(Spills, Shape);

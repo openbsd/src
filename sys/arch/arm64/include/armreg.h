@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.8 2019/05/13 03:13:29 patrick Exp $ */
+/* $OpenBSD: armreg.h,v 1.5 2017/08/06 20:05:24 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -44,25 +44,7 @@
 #define	WRITE_SPECIALREG(reg, val)					\
 	__asm __volatile("msr	" __STRING(reg) ", %0" : : "r"((uint64_t)val))
 
-/* CCSIDR_EL1 - Current Cache Size ID Register */
-#define	CCSIDR_SETS_MASK	0x0fffe000
-#define	CCSIDR_SETS_SHIFT	13
-#define	CCSIDR_SETS(reg)	\
-    ((((reg) & CCSIDR_SETS_MASK) >> CCSIDR_SETS_SHIFT) + 1)
-#define	CCSIDR_WAYS_MASK	0x00001ff8
-#define	CCSIDR_WAYS_SHIFT	3
-#define	CCSIDR_WAYS(reg)	\
-    ((((reg) & CCSIDR_WAYS_MASK) >> CCSIDR_WAYS_SHIFT) + 1)
-#define	CCSIDR_LINE_MASK	0x00000007
-#define	CCSIDR_LINE_SIZE(reg)	(1 << (((reg) & CCSIDR_LINE_MASK) + 4))
-
-/* CLIDR_EL1 - Cache Level ID Register */
-#define	CLIDR_CTYPE_MASK	0x7
-#define	CLIDR_CTYPE_INSN	0x1
-#define	CLIDR_CTYPE_DATA	0x2
-#define	CLIDR_CTYPE_UNIFIED	0x4
-
-/* CNTHCTL_EL2 - Counter-timer Hypervisor Control Register */
+/* CNTHCTL_EL2 - Counter-timer Hypervisor Control register */
 #define	CNTHCTL_EVNTI_MASK	(0xf << 4) /* Bit to trigger event stream */
 #define	CNTHCTL_EVNTDIR		(1 << 3) /* Control transition trigger bit */
 #define	CNTHCTL_EVNTEN		(1 << 2) /* Enable event stream */
@@ -77,19 +59,10 @@
 #define	 CPACR_FPEN_TRAP_NONE	(0x3 << 20) /* No traps */
 #define	CPACR_TTA		(0x1 << 28)
 
-/* CSSELR_EL1 - Cache Size Selection Register */
-#define	CSSELR_IND		(1 << 0)
-#define	CSSELR_LEVEL_SHIFT	1
-
 /* CTR_EL0 - Cache Type Register */
 #define	CTR_DLINE_SHIFT		16
 #define	CTR_DLINE_MASK		(0xf << CTR_DLINE_SHIFT)
 #define	CTR_DLINE_SIZE(reg)	(((reg) & CTR_DLINE_MASK) >> CTR_DLINE_SHIFT)
-#define	CTR_IL1P_SHIFT		14
-#define	CTR_IL1P_MASK		(0x3 << CTR_IL1P_SHIFT)
-#define	CTR_IL1P_AIVIVT		(0x1 << CTR_IL1P_SHIFT)
-#define	CTR_IL1P_VIPT		(0x2 << CTR_IL1P_SHIFT)
-#define	CTR_IL1P_PIPT		(0x3 << CTR_IL1P_SHIFT)
 #define	CTR_ILINE_SHIFT		0
 #define	CTR_ILINE_MASK		(0xf << CTR_ILINE_SHIFT)
 #define	CTR_ILINE_SIZE(reg)	(((reg) & CTR_ILINE_MASK) >> CTR_ILINE_SHIFT)
@@ -174,11 +147,7 @@
 #define	 EXCP_BRK		0x3c	/* Breakpoint */
 
 /* ICC_CTLR_EL1 */
-#define	ICC_CTLR_EL1_EOIMODE		(1U << 1)
-#define	ICC_CTLR_EL1_PRIBITS_SHIFT	8
-#define	ICC_CTLR_EL1_PRIBITS_MASK	(0x7UL << 8)
-#define	ICC_CTLR_EL1_PRIBITS(reg)	\
-    (((reg) & ICC_CTLR_EL1_PRIBITS_MASK) >> ICC_CTLR_EL1_PRIBITS_SHIFT)
+#define	ICC_CTLR_EL1_EOIMODE	(1U << 1)
 
 /* ICC_IAR1_EL1 */
 #define	ICC_IAR1_EL1_SPUR	(0x03ff)
@@ -521,9 +490,11 @@
 #define	TCR_T0SZ(x)	((x) << TCR_T0SZ_SHIFT)
 #define	TCR_TxSZ(x)	(TCR_T1SZ(x) | TCR_T0SZ(x))
 
+/* Saved Program Status Register */
+#define	DBG_SPSR_SS	(0x1 << 21)
+
 /* Monitor Debug System Control Register */
 #define	DBG_MDSCR_SS	(0x1 << 0)
-#define	DBG_MDSCR_TDCC	(0x1 << 12)
 #define	DBG_MDSCR_KDE	(0x1 << 13)
 #define	DBG_MDSCR_MDE	(0x1 << 15)
 

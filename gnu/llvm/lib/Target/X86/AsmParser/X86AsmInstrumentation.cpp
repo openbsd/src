@@ -38,7 +38,7 @@
 // Currently we have only AddressSanitizer instrumentation, but we're
 // planning to implement MemorySanitizer for inline assembly too. If
 // you're not familiar with AddressSanitizer algorithm, please, read
-// https://github.com/google/sanitizers/wiki/AddressSanitizerAlgorithm
+// https://code.google.com/p/address-sanitizer/wiki/AddressSanitizerAlgorithm.
 //
 // When inline assembly is parsed by an instance of X86AsmParser, all
 // instructions are emitted via EmitInstruction method. That's the
@@ -193,10 +193,11 @@ public:
   ~X86AddressSanitizer() override = default;
 
   // X86AsmInstrumentation implementation:
-  void InstrumentAndEmitInstruction(const MCInst &Inst, OperandVector &Operands,
-                                    MCContext &Ctx, const MCInstrInfo &MII,
-                                    MCStreamer &Out,
-                                    /* unused */ bool) override {
+  void InstrumentAndEmitInstruction(const MCInst &Inst,
+                                    OperandVector &Operands,
+                                    MCContext &Ctx,
+                                    const MCInstrInfo &MII,
+                                    MCStreamer &Out) override {
     InstrumentMOVS(Inst, Operands, Ctx, MII, Out);
     if (RepPrefix)
       EmitInstruction(Out, MCInstBuilder(X86::REP_PREFIX));
@@ -610,7 +611,7 @@ private:
     EmitInstruction(Out, MCInstBuilder(X86::CLD));
     EmitInstruction(Out, MCInstBuilder(X86::MMX_EMMS));
 
-    EmitInstruction(Out, MCInstBuilder(X86::AND32ri8)
+    EmitInstruction(Out, MCInstBuilder(X86::AND64ri8)
                              .addReg(X86::ESP)
                              .addReg(X86::ESP)
                              .addImm(-16));
@@ -1044,13 +1045,13 @@ X86AsmInstrumentation::~X86AsmInstrumentation() = default;
 
 void X86AsmInstrumentation::InstrumentAndEmitInstruction(
     const MCInst &Inst, OperandVector &Operands, MCContext &Ctx,
-    const MCInstrInfo &MII, MCStreamer &Out, bool PrintSchedInfoEnabled) {
-  EmitInstruction(Out, Inst, PrintSchedInfoEnabled);
+    const MCInstrInfo &MII, MCStreamer &Out) {
+  EmitInstruction(Out, Inst);
 }
 
-void X86AsmInstrumentation::EmitInstruction(MCStreamer &Out, const MCInst &Inst,
-                                            bool PrintSchedInfoEnabled) {
-  Out.EmitInstruction(Inst, *STI, PrintSchedInfoEnabled);
+void X86AsmInstrumentation::EmitInstruction(MCStreamer &Out,
+                                            const MCInst &Inst) {
+  Out.EmitInstruction(Inst, *STI);
 }
 
 unsigned X86AsmInstrumentation::GetFrameRegGeneric(const MCContext &Ctx,

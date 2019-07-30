@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.74 2018/10/18 15:46:28 cheloha Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.72 2017/11/20 10:35:24 mpi Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -99,7 +99,7 @@
 int *igmpctl_vars[IGMPCTL_MAXID] = IGMPCTL_VARS;
 
 int		igmp_timers_are_running;
-static LIST_HEAD(, router_info) rti_head;
+static struct router_info *rti_head;
 static struct mbuf *router_alert;
 struct cpumem *igmpcounters;
 
@@ -116,7 +116,7 @@ igmp_init(void)
 	struct ipoption *ra;
 
 	igmp_timers_are_running = 0;
-	LIST_INIT(&rti_head);
+	rti_head = 0;
 
 	igmpcounters = counters_alloc(igps_ncounters);
 	router_alert = m_get(M_DONTWAIT, MT_DATA);
@@ -150,7 +150,7 @@ rti_fill(struct in_multi *inm)
 {
 	struct router_info *rti;
 
-	LIST_FOREACH(rti, &rti_head, rti_list) {
+	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
 		if (rti->rti_ifidx == inm->inm_ifidx) {
 			inm->inm_rti = rti;
 			if (rti->rti_type == IGMP_v1_ROUTER)
@@ -160,12 +160,14 @@ rti_fill(struct in_multi *inm)
 		}
 	}
 
-	rti = malloc(sizeof(*rti), M_MRTABLE, M_NOWAIT);
+	rti = (struct router_info *)malloc(sizeof(struct router_info),
+					   M_MRTABLE, M_NOWAIT);
 	if (rti == NULL)
 		return (-1);
 	rti->rti_ifidx = inm->inm_ifidx;
 	rti->rti_type = IGMP_v2_ROUTER;
-	LIST_INSERT_HEAD(&rti_head, rti, rti_list);
+	rti->rti_next = rti_head;
+	rti_head = rti;
 	inm->inm_rti = rti;
 	return (IGMP_v2_HOST_MEMBERSHIP_REPORT);
 }
@@ -176,31 +178,34 @@ rti_find(struct ifnet *ifp)
 	struct router_info *rti;
 
 	KERNEL_ASSERT_LOCKED();
-	LIST_FOREACH(rti, &rti_head, rti_list) {
+	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
 		if (rti->rti_ifidx == ifp->if_index)
 			return (rti);
 	}
 
-	rti = malloc(sizeof(*rti), M_MRTABLE, M_NOWAIT);
+	rti = (struct router_info *)malloc(sizeof(struct router_info),
+					   M_MRTABLE, M_NOWAIT);
 	if (rti == NULL)
 		return (NULL);
 	rti->rti_ifidx = ifp->if_index;
 	rti->rti_type = IGMP_v2_ROUTER;
-	LIST_INSERT_HEAD(&rti_head, rti, rti_list);
+	rti->rti_next = rti_head;
+	rti_head = rti;
 	return (rti);
 }
 
 void
 rti_delete(struct ifnet *ifp)
 {
-	struct router_info *rti, *trti;
+	struct router_info *rti, **prti = &rti_head;
 
-	LIST_FOREACH_SAFE(rti, &rti_head, rti_list, trti) {
+	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
 		if (rti->rti_ifidx == ifp->if_index) {
-			LIST_REMOVE(rti, rti_list);
+			*prti = rti->rti_next;
 			free(rti, M_MRTABLE, sizeof(*rti));
 			break;
 		}
+		prti = &rti->rti_next;
 	}
 }
 
@@ -603,7 +608,7 @@ igmp_slowtimo(void)
 
 	NET_LOCK();
 
-	LIST_FOREACH(rti, &rti_head, rti_list) {
+	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
 		if (rti->rti_type == IGMP_v1_ROUTER &&
 		    ++rti->rti_age >= IGMP_AGE_THRESHOLD) {
 			rti->rti_type = IGMP_v2_ROUTER;

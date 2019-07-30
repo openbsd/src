@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.32 2019/06/08 02:52:20 jsg Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.20 2018/02/06 01:09:17 patrick Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -33,7 +33,6 @@
 #include <dev/cons.h>
 #include <lib/libsa/loadfile.h>
 #include <machine/biosvar.h>
-#include <machine/pte.h>
 #include <machine/specialreg.h>
 #include <stand/boot/bootarg.h>
 
@@ -47,48 +46,25 @@
 #include "softraid_amd64.h"
 #endif
 
-#define BOOT_DEBUG
-
-#ifdef BOOT_DEBUG
-#define DPRINTF(x...)   do { printf(x); } while(0)
-#else
-#define DPRINTF(x...)
-#endif /* BOOT_DEBUG */
-
-#define LEGACY_KERNEL_ENTRY_POINT 0xffffffff81001000ULL
+#ifdef EFIBOOT
+#include "efiboot.h"
+#endif
 
 typedef void (*startfuncp)(int, int, int, int, int, int, int, int)
     __attribute__ ((noreturn));
-
-extern void launch_amd64_kernel_long(caddr_t, caddr_t, caddr_t, uint64_t, int,
-    int, int, uint64_t, int, int, int, uint64_t);
-
-caddr_t boot_alloc(void);
-caddr_t make_kernel_page_tables(uint64_t);
 
 void ucode_load(void);
 extern struct cmd_state cmd;
 
 char *bootmac = NULL;
-extern char end[], _start[];
-
-caddr_t pt_base_addr;
-
-#define PAGE_MASK		(PAGE_SIZE - 1)
-#define LONG_KERN_PML4_ADDR1	0x1000
-#define LONG_KERN_PML4_ADDR2	(((uint64_t)(end) + PAGE_MASK) & ~PAGE_MASK)
-
-/*
- * N.B. - The following must stay in sync with pmap.h (including that here
- * causes compile errors related to RBT_HEAD.
- */
-#define NKL2_KIMG_ENTRIES       64
-#define NPDPG			512
 
 void
-run_loadfile(uint64_t *marks, int howto)
+run_loadfile(u_long *marks, int howto)
 {
-	uint64_t entry;
+	u_long entry;
+#ifdef EXEC_DEBUG
+	extern int debug;
+#endif
 	dev_t bootdev = bootdev_dip->bootdev;
 	size_t ac = BOOTARG_LEN;
 	caddr_t av = (caddr_t)BOOTARG_OFF;
@@ -98,11 +74,19 @@ run_loadfile(uint64_t *marks, int howto)
 	bios_ddb_t ddb;
 	extern int db_console;
 	bios_bootduid_t bootduid;
-	caddr_t pml4, stack, new_av;
 #ifdef SOFTRAID
 	bios_bootsr_t bootsr;
 	struct sr_boot_volume *bv;
-#endif /* SOFTRAID */
+#endif
+#if defined(EFIBOOT)
+	int i;
+	u_long delta;
+	extern u_long efi_loadaddr;
+
+	if ((av = alloc(ac)) == NULL)
+		panic("alloc for bootarg");
+	efi_makebootargs();
+#endif
 	if (sa_cleanup != NULL)
 		(*sa_cleanup)();
 
@@ -138,53 +122,49 @@ run_loadfile(uint64_t *marks, int howto)
 	}
 
 	sr_clear_keys();
-#endif /* SOFTRAID */
-
-	entry = marks[MARK_ENTRY];
-
-	printf("entry point at 0x%llx\n", entry);
-
-	pt_base_addr = (caddr_t)LONG_KERN_PML4_ADDR1;
+#endif
 
 	/* Pass memory map to the kernel */
 	mem_pass();
 
+	/*
+	 * This code may be used both for 64bit and 32bit.  Make sure the
+	 * bootarg is 32bit always on even on amd64.
+	 */
+#ifdef __amd64__
+	makebootargs32(av, &ac);
+#else
 	makebootargs(av, &ac);
+#endif
 
+	entry = marks[MARK_ENTRY] & 0x0fffffff;
+
+	printf("entry point at 0x%lx\n", entry);
+
+#ifndef EFIBOOT
+	/* stack and the gung is ok at this point, so, no need for asm setup */
+	(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER, marks[MARK_END],
+	    extmem, cnvmem, ac, (int)av);
+#else
 	/*
-	 * Legacy kernels have entry set to 0xffffffff81001000.
-	 * Other entry values indicate kernels that have random
-	 * base VA and launch in 64 bit (long) mode.
+	 * Move the loaded kernel image to the usual place after calling
+	 * ExitBootServices().
 	 */
-	if (entry == LEGACY_KERNEL_ENTRY_POINT) {
-		/*
-		 * Legacy boot code expects entry 0x1001000, so mask
-		 * off the high bits.
-		 */
-		entry &= 0xFFFFFFF;
-
-		/*
-		 * Launch a legacy kernel
-		 */
-		(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER,
-		    marks[MARK_END] & 0xfffffff, extmem, cnvmem, ac, (int)av);
-		/* not reached */
-	}
-
-	/*
-	 * Launch a long mode/randomly linked (post-6.5) kernel?
-	 */
-	new_av = boot_alloc(); /* Replaces old heap */
-	memcpy((void *)new_av, av, ac);
-
-	/* Stack grows down, so grab two pages. We'll waste the 2nd */
-	stack = boot_alloc();
-	stack = boot_alloc();
-
-	pml4 = make_kernel_page_tables(entry);
-	launch_amd64_kernel_long((void *)launch_amd64_kernel_long,
-	    pml4, stack, entry, howto, bootdev, BOOTARG_APIVER,
-	    marks[MARK_END], extmem, cnvmem, ac, (uint64_t)new_av);
+	delta = DEFAULT_KERNEL_ADDRESS - efi_loadaddr;
+	efi_cleanup();
+	memcpy((void *)marks[MARK_START] + delta, (void *)marks[MARK_START],
+	    marks[MARK_END] - marks[MARK_START]);
+	for (i = 0; i < MARK_MAX; i++)
+		marks[i] += delta;
+	entry += delta;
+#ifdef __amd64__
+	(*run_i386)((u_long)run_i386, entry, howto, bootdev, BOOTARG_APIVER,
+	    marks[MARK_END], extmem, cnvmem, ac, (intptr_t)av);
+#else
+	(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER, marks[MARK_END],
+	    extmem, cnvmem, ac, (int)av);
+#endif
+#endif
 	/* not reached */
 }
 
@@ -226,133 +206,15 @@ ucode_load(void)
 		return;
 
 	buflen = sb.st_size;
-	if (buflen > 256*1024) {
-		printf("ucode too large\n");
+	if ((buf = alloc(buflen)) == NULL)
 		return;
-	}
-
-	buf = (char *)(1*1024*1024);
 
 	if (read(fd, buf, buflen) != buflen) {
-		close(fd);
+		free(buf, buflen);
 		return;
 	}
 
 	uc.uc_addr = (uint64_t)buf;
 	uc.uc_size = (uint64_t)buflen;
 	addbootarg(BOOTARG_UCODE, sizeof(uc), &uc);
-
-	close(fd);
-}
-
-/*
- * boot_alloc
- *
- * Special allocator for page table pages and kernel stack
- *
- * Allocates 1 page (PAGE_SIZE) of data.
- *
- * We have 2 regions available to us:
- *  0x1000 ... 0xF000 : range 1 (stack is at 0xF000)
- *  end ... 0xA0000 (640KB) : range 2
- *
- * We allocate from range 1 until it is complete, then skip to range 2. If
- * range 2 is exhausted, we panic.
- *
- * Return value:
- *  VA of requested allocation
- */
-caddr_t
-boot_alloc(void)
-{
-	caddr_t ret;
-	static caddr_t cur = 0;
-	static int skipped = 0;
-
-	/* First time? */
-	if (cur == 0)
-		cur = (caddr_t)pt_base_addr;
-
-	ret = cur;
-
-	if (((uint64_t)cur + PAGE_SIZE >= 0xF000) && !skipped) {
-		cur = (caddr_t)LONG_KERN_PML4_ADDR2;
-		skipped = 1;
-	} else
-		cur += PAGE_SIZE;
-
-	if ((uint64_t)cur >= 640 * 1024)
-		panic("out of memory");
-
-	return ret;
-}
-
-/*
- * make_kernel_page_tables
- *
- * Sets up a minimal set of page tables for early use in the kernel. In
- * pre_init_x86_64, the kernel will rebuild its page tables, so the
- * table constructed here only needs the minimal mapping.
- *
- * [entry ... end] => PA 0x1000000 (16MB, the current phys loadaddr)
- *
- * In BIOS boot mode, this function overwrites the heap with the long
- * mode kernel boostrap page tables and thus must be called immediately
- * before switching to long mode and starting the kernel.
- *
- * Parameters:
- *  entry_lo: the low byte (masked) of the kernel entry point
- *
- * Return value:
- *  PML4 PA of the new table
- */
-caddr_t
-make_kernel_page_tables(uint64_t entry)
-{
-	uint64_t *pml4, *pml3, *pml2, *pml1;
-	int i, j, k, kern_pml4, kern_pml3, kern_pml2, kern_pml1;
-
-	kern_pml4 = (entry & L4_MASK) >> L4_SHIFT;
-	kern_pml3 = (entry & L3_MASK) >> L3_SHIFT;
-	kern_pml2 = (entry & L2_MASK) >> L2_SHIFT;
-	kern_pml1 = (entry & L1_MASK) >> L1_SHIFT;
-
-	pml4 = (uint64_t *)boot_alloc();
-
-	/* Map kernel */
-	pml3 = (uint64_t *)boot_alloc();
-	pml4[kern_pml4] = (uint64_t)pml3 | PG_V | PG_RW;
-
-	pml2 = (uint64_t *)boot_alloc();
-	pml3[kern_pml3] = (uint64_t)pml2 | PG_V | PG_RW;
-
-	for (i = 0; i < NKL2_KIMG_ENTRIES; i++) {
-		pml1 = (uint64_t *)boot_alloc();
-		pml2[i + kern_pml2] = (uint64_t)pml1 | PG_V | PG_RW;
-
-		/* The first page of PTEs may start at a different offset */
-		if (i == kern_pml2)
-			k = kern_pml1;
-		else
-			k = 0;
-
-		/*
-		 * Map [k...511] PTEs.
-		 */
-		for (j = k; j < NPDPG; j++)
-			pml1[j] = (uint64_t)(((8 + i) * NBPD_L2) +
-			    (j - kern_pml1) * PAGE_SIZE) | PG_V | PG_RW;
-	}
-
-	/* Map first 4GB phys for kernel page table, stack, and bootstrap */
-	pml3 = (uint64_t *)boot_alloc();
-	pml4[0] = (uint64_t)pml3 | PG_V | PG_RW; /* Covers 0-512GB */
-
-	pml2 = (uint64_t *)boot_alloc();
-	pml3[0] = (uint64_t)pml2 | PG_V | PG_RW; /* Covers 0-1GB */
-
-	for (i = 0; i < NPDPG; i++)
-		pml2[i] = (i << L2_SHIFT) | PG_V | PG_RW | PG_PS;
-
-	return (caddr_t)pml4;
 }

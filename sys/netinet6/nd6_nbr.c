@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.127 2018/12/20 10:28:58 claudio Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.122 2017/11/23 13:32:25 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -406,7 +406,7 @@ nd6_ns_output(struct ifnet *ifp, struct in6_addr *daddr6,
 
 	icmp6len = sizeof(*nd_ns);
 	m->m_pkthdr.len = m->m_len = sizeof(*ip6) + icmp6len;
-	m_align(m, maxlen);
+	m->m_data += max_linkhdr;	/* or MH_ALIGN() equivalent? */
 
 	/* fill neighbor solicitation packet */
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -720,7 +720,9 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
 			/* Notify userland that a new ND entry is reachable. */
+			KERNEL_LOCK();
 			rtm_send(rt, RTM_RESOLVE, 0, ifp->if_rdomain);
+			KERNEL_UNLOCK();
 			if (!ND6_LLINFO_PERMANENT(ln)) {
 				nd6_llinfo_settimer(ln,
 				    ND_IFINFO(ifp)->reachable);
@@ -891,12 +893,6 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	int icmp6len, maxlen;
 	caddr_t mac = NULL;
 
-#if NCARP > 0
-	/* Do not send NAs for carp addresses if we're not the CARP master. */
-	if (ifp->if_type == IFT_CARP && !carp_iamatch(ifp))
-		return;
-#endif
-
 	/* estimate the size of message */
 	maxlen = sizeof(*ip6) + sizeof(*nd_na);
 	maxlen += (sizeof(struct nd_opt_hdr) + ifp->if_addrlen + 7) & ~7;
@@ -919,6 +915,7 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	}
 	if (m == NULL)
 		return;
+	m->m_pkthdr.ph_ifidx = 0;
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 	if (IN6_IS_ADDR_MULTICAST(daddr6)) {
@@ -930,7 +927,7 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 
 	icmp6len = sizeof(*nd_na);
 	m->m_pkthdr.len = m->m_len = sizeof(struct ip6_hdr) + icmp6len;
-	m_align(m, maxlen);
+	m->m_data += max_linkhdr;	/* or MH_ALIGN() equivalent? */
 
 	/* fill neighbor advertisement packet */
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -1015,13 +1012,19 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	} else
 		flags &= ~ND_NA_FLAG_OVERRIDE;
 
+#if NCARP > 0
+	/* Do not send NAs for carp addresses if we're not the CARP master. */
+	if (ifp->if_type == IFT_CARP && !carp_iamatch(ifp))
+		goto bad;
+#endif
+
 	ip6->ip6_plen = htons((u_short)icmp6len);
 	nd_na->nd_na_flags_reserved = flags;
 	nd_na->nd_na_cksum = 0;
 	m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 
 	ip6_output(m, NULL, NULL, 0, &im6o, NULL);
-	icmp6stat_inc(icp6s_outhist + ND_NEIGHBOR_ADVERT);
+	icmp6stat_inc(icp6s_outhist+ ND_NEIGHBOR_ADVERT);
 	return;
 
   bad:
@@ -1059,11 +1062,11 @@ nd6_dad_find(struct ifaddr *ifa)
 }
 
 void
-nd6_dad_starttimer(struct dadq *dp, int msec)
+nd6_dad_starttimer(struct dadq *dp, int ticks)
 {
 
 	timeout_set_proc(&dp->dad_timer_ch, nd6_dad_timer, dp->dad_ifa);
-	timeout_add_msec(&dp->dad_timer_ch, msec);
+	timeout_add(&dp->dad_timer_ch, ticks);
 }
 
 void
@@ -1099,9 +1102,6 @@ nd6_dad_start(struct ifaddr *ifa)
 	KASSERT(ia6->ia6_flags & IN6_IFF_TENTATIVE);
 	if ((ia6->ia6_flags & IN6_IFF_ANYCAST) || (!ip6_dad_count)) {
 		ia6->ia6_flags &= ~IN6_IFF_TENTATIVE;
-
-		rtm_addr(RTM_CHGADDRATTR, ifa);
-
 		return;
 	}
 
@@ -1137,7 +1137,8 @@ nd6_dad_start(struct ifaddr *ifa)
 	dp->dad_ns_icount = dp->dad_na_icount = 0;
 	dp->dad_ns_ocount = dp->dad_ns_tcount = 0;
 	nd6_dad_ns_output(dp, ifa);
-	nd6_dad_starttimer(dp, ND_IFINFO(ifa->ifa_ifp)->retrans);
+	nd6_dad_starttimer(dp,
+	    (long)ND_IFINFO(ifa->ifa_ifp)->retrans * hz / 1000);
 }
 
 /*
@@ -1219,7 +1220,8 @@ nd6_dad_timer(void *xifa)
 		 * We have more NS to go.  Send NS packet for DAD.
 		 */
 		nd6_dad_ns_output(dp, ifa);
-		nd6_dad_starttimer(dp, ND_IFINFO(ifa->ifa_ifp)->retrans);
+		nd6_dad_starttimer(dp,
+		    (long)ND_IFINFO(ifa->ifa_ifp)->retrans * hz / 1000);
 	} else {
 		/*
 		 * We have transmitted sufficient number of DAD packets.
@@ -1247,8 +1249,6 @@ nd6_dad_timer(void *xifa)
 			 * duplicated address found.
 			 */
 			ia6->ia6_flags &= ~IN6_IFF_TENTATIVE;
-
-			rtm_addr(RTM_CHGADDRATTR, ifa);
 
 			nd6log((LOG_DEBUG,
 			    "%s: DAD complete for %s - no duplicates found\n",
@@ -1293,9 +1293,6 @@ nd6_dad_duplicated(struct dadq *dp)
 	    ia6->ia_ifp->if_xname);
 
 	TAILQ_REMOVE(&dadq, dp, dad_list);
-
-	rtm_addr(RTM_CHGADDRATTR, dp->dad_ifa);
-
 	ifafree(dp->dad_ifa);
 	free(dp, M_IP6NDP, sizeof(*dp));
 	ip6_dad_pending--;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.3 2018/10/01 22:49:50 mortimer Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.1 2017/01/11 18:09:24 patrick Exp $	*/
 /*	$NetBSD: SYS.h,v 1.8 2003/08/07 16:42:02 agc Exp $	*/
 
 /*-
@@ -37,6 +37,7 @@
 
 #include "DEFS.h"
 #include <sys/syscall.h>
+#include <arm64/swi.h>
 
 #define SYSENTRY(x)					\
 	.weak _C_LABEL(x);				\
@@ -79,27 +80,16 @@
 
 
 #define PSEUDO_NOERROR(x,y)						\
-	SYSENTRY(x);							\
-	RETGUARD_SETUP(x, x15);						\
-	SYSTRAP(y);							\
-	RETGUARD_CHECK(x, x15);						\
+	_SYSCALL_NOERROR(x,y);						\
 	ret;								\
 	__END(x)
 
 #define PSEUDO(x,y)							\
-	SYSENTRY(x);							\
-	RETGUARD_SETUP(x, x15);						\
-	SYSTRAP(y);							\
-	bcs CERROR;							\
-	RETGUARD_CHECK(x, x15);						\
+	_SYSCALL(x,y);							\
 	ret;								\
 	__END(x)
 #define PSEUDO_HIDDEN(x,y)						\
-	SYSENTRY_HIDDEN(x);						\
-	RETGUARD_SETUP(x, x15);						\
-	SYSTRAP(y);							\
-	bcs CERROR;							\
-	RETGUARD_CHECK(x, x15);						\
+	_SYSCALL_HIDDEN(x,y);						\
 	ret;								\
 	__END_HIDDEN(x)
 

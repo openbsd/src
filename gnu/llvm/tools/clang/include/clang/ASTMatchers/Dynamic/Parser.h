@@ -1,4 +1,4 @@
-//===- Parser.h - Matcher expression parser ---------------------*- C++ -*-===//
+//===--- Parser.h - Matcher expression parser -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,9 +6,9 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
+///
 /// \file
-/// Simple matcher expression parser.
+/// \brief Simple matcher expression parser.
 ///
 /// The parser understands matcher expressions of the form:
 ///   MatcherName(Arg0, Arg1, ..., ArgN)
@@ -30,32 +30,28 @@
 /// <Identifier>        := [a-zA-Z]+
 /// <ArgumentList>      := <Expression> | <Expression>,<ArgumentList>
 /// \endcode
-//
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_ASTMATCHERS_DYNAMIC_PARSER_H
 #define LLVM_CLANG_ASTMATCHERS_DYNAMIC_PARSER_H
 
-#include "clang/ASTMatchers/ASTMatchersInternal.h"
+#include "clang/ASTMatchers/Dynamic/Diagnostics.h"
 #include "clang/ASTMatchers/Dynamic/Registry.h"
 #include "clang/ASTMatchers/Dynamic/VariantValue.h"
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
-#include <utility>
-#include <vector>
 
 namespace clang {
 namespace ast_matchers {
 namespace dynamic {
 
-class Diagnostics;
-
-/// Matcher expression parser.
+/// \brief Matcher expression parser.
 class Parser {
 public:
-  /// Interface to connect the parser with the registry and more.
+  /// \brief Interface to connect the parser with the registry and more.
   ///
   /// The parser uses the Sema instance passed into
   /// parseMatcherExpression() to handle all matcher tokens. The simplest
@@ -69,7 +65,7 @@ public:
   public:
     virtual ~Sema();
 
-    /// Process a matcher expression.
+    /// \brief Process a matcher expression.
     ///
     /// All the arguments passed here have already been processed.
     ///
@@ -92,7 +88,7 @@ public:
                                                   ArrayRef<ParserValue> Args,
                                                   Diagnostics *Error) = 0;
 
-    /// Look up a matcher by name.
+    /// \brief Look up a matcher by name.
     ///
     /// \param MatcherName The matcher name found by the parser.
     ///
@@ -101,7 +97,7 @@ public:
     virtual llvm::Optional<MatcherCtor>
     lookupMatcherCtor(StringRef MatcherName) = 0;
 
-    /// Compute the list of completion types for \p Context.
+    /// \brief Compute the list of completion types for \p Context.
     ///
     /// Each element of \p Context represents a matcher invocation, going from
     /// outermost to innermost. Elements are pairs consisting of a reference to
@@ -112,7 +108,7 @@ public:
     virtual std::vector<ArgKind> getAcceptedCompletionTypes(
         llvm::ArrayRef<std::pair<MatcherCtor, unsigned>> Context);
 
-    /// Compute the list of completions that match any of
+    /// \brief Compute the list of completions that match any of
     /// \p AcceptedTypes.
     ///
     /// \param AcceptedTypes All types accepted for this completion.
@@ -125,11 +121,11 @@ public:
     getMatcherCompletions(llvm::ArrayRef<ArgKind> AcceptedTypes);
   };
 
-  /// Sema implementation that uses the matcher registry to process the
+  /// \brief Sema implementation that uses the matcher registry to process the
   ///   tokens.
   class RegistrySema : public Parser::Sema {
-  public:
-    ~RegistrySema() override;
+   public:
+     ~RegistrySema() override;
 
     llvm::Optional<MatcherCtor>
     lookupMatcherCtor(StringRef MatcherName) override;
@@ -147,9 +143,9 @@ public:
     getMatcherCompletions(llvm::ArrayRef<ArgKind> AcceptedTypes) override;
   };
 
-  using NamedValueMap = llvm::StringMap<VariantValue>;
+  typedef llvm::StringMap<VariantValue> NamedValueMap;
 
-  /// Parse a matcher expression.
+  /// \brief Parse a matcher expression.
   ///
   /// \param MatcherCode The matcher expression to parse.
   ///
@@ -178,7 +174,7 @@ public:
     return parseMatcherExpression(MatcherCode, nullptr, Error);
   }
 
-  /// Parse an expression.
+  /// \brief Parse an expression.
   ///
   /// Parses any expression supported by this parser. In general, the
   /// \c parseMatcherExpression function is a better approach to get a matcher
@@ -202,7 +198,7 @@ public:
     return parseExpression(Code, nullptr, Value, Error);
   }
 
-  /// Complete an expression at the given offset.
+  /// \brief Complete an expression at the given offset.
   ///
   /// \param S The Sema instance that will help the parser
   ///   construct the matchers. If null, it uses the default registry.
@@ -251,14 +247,13 @@ private:
   const NamedValueMap *const NamedValues;
   Diagnostics *const Error;
 
-  using ContextStackTy = std::vector<std::pair<MatcherCtor, unsigned>>;
-
+  typedef std::vector<std::pair<MatcherCtor, unsigned> > ContextStackTy;
   ContextStackTy ContextStack;
   std::vector<MatcherCompletion> Completions;
 };
 
-} // namespace dynamic
-} // namespace ast_matchers
-} // namespace clang
+}  // namespace dynamic
+}  // namespace ast_matchers
+}  // namespace clang
 
-#endif // LLVM_CLANG_AST_MATCHERS_DYNAMIC_PARSER_H
+#endif  // LLVM_CLANG_AST_MATCHERS_DYNAMIC_PARSER_H

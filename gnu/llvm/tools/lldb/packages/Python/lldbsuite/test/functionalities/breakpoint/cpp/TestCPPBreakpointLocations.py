@@ -45,7 +45,7 @@ class TestCPPBreakpointLocations(TestBase):
     def breakpoint_id_tests(self):
 
         # Create a target by the debugger.
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
         bp_dicts = [
@@ -69,7 +69,7 @@ class TestCPPBreakpointLocations(TestBase):
     @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr24764")
     def test_destructors(self):
         self.build()
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         target = self.dbg.CreateTarget(exe)
 
         # Don't skip prologue, so we can check the breakpoint address more

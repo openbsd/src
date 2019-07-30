@@ -82,14 +82,8 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
-#  include <sys/stat.h>
-#endif
 #ifdef HAVE_NETDB_H
-#  include <netdb.h>
-#endif
-#ifdef HAVE_SYS_UN_H
-#  include <sys/un.h>
+#include <netdb.h>
 #endif
 
 /** number of seconds timeout on incoming remote control handshake */
@@ -120,8 +114,6 @@ struct rc_state {
 	enum { rc_none, rc_hs_read, rc_hs_write } shake_state;
 	/** the ssl state */
 	SSL* ssl;
-	/** file descriptor */
-	int fd;
 	/** the rc this is part of */
 	struct daemon_remote* rc;
 	/** stats list next item */
@@ -138,8 +130,6 @@ struct acceptlist {
 	struct acceptlist* next;
 	int event_added;
 	struct event c;
-	char* ident;
-	struct daemon_remote* rc;
 };
 
 /**
@@ -150,8 +140,6 @@ struct daemon_remote {
 	struct xfrd_state* xfrd;
 	/** commpoints for accepting remote control connections */
 	struct acceptlist* accept_list;
-	/* if certificates are used */
-	int use_cert;
 	/** number of active commpoints that are handling remote control */
 	int active;
 	/** max active commpoints */
@@ -166,43 +154,32 @@ struct daemon_remote {
 	SSL_CTX* ctx;
 };
 
-/**
- * Connection to print to, either SSL or plain over fd
- */
-struct remote_stream {
-	/** SSL structure, nonNULL if using SSL */
-	SSL* ssl;
-	/** file descriptor for plain transfer */
-	int fd;
-};
-typedef struct remote_stream RES;
-
 /** 
  * Print fixed line of text over ssl connection in blocking mode
- * @param res: print to
+ * @param ssl: print to
  * @param text: the text.
  * @return false on connection failure.
  */
-static int ssl_print_text(RES* res, const char* text);
+static int ssl_print_text(SSL* ssl, const char* text);
 
 /** 
  * printf style printing to the ssl connection
- * @param res: the RES connection to print to. Blocking.
+ * @param ssl: the SSL connection to print to. Blocking.
  * @param format: printf style format string.
  * @return success or false on a network failure.
  */
-static int ssl_printf(RES* res, const char* format, ...)
+static int ssl_printf(SSL* ssl, const char* format, ...)
         ATTR_FORMAT(printf, 2, 3);
 
 /**
  * Read until \n is encountered
- * If stream signals EOF, the string up to then is returned (without \n).
- * @param res: the RES connection to read from. blocking.
+ * If SSL signals EOF, the string up to then is returned (without \n).
+ * @param ssl: the SSL connection to read from. blocking.
  * @param buf: buffer to read to.
  * @param max: size of buffer.
  * @return false on connection failure.
  */
-static int ssl_read_line(RES* res, char* buf, size_t max);
+static int ssl_read_line(SSL* ssl, char* buf, size_t max);
 
 /** perform the accept of a new remote control connection */
 static void
@@ -249,57 +226,11 @@ timeval_subtract(struct timeval* d, const struct timeval* end,
 }
 #endif /* BIND8_STATS */
 
-static int
-remote_setup_ctx(struct daemon_remote* rc, struct nsd_options* cfg)
-{
-	char* s_cert;
-	char* s_key;
-	rc->ctx = SSL_CTX_new(SSLv23_server_method());
-	if(!rc->ctx) {
-		log_crypto_err("could not SSL_CTX_new");
-		return 0;
-	}
-	/* no SSLv2, SSLv3 because has defects */
-	if((SSL_CTX_set_options(rc->ctx, SSL_OP_NO_SSLv2) & SSL_OP_NO_SSLv2)
-		!= SSL_OP_NO_SSLv2){
-		log_crypto_err("could not set SSL_OP_NO_SSLv2");
-		return 0;
-	}
-	if((SSL_CTX_set_options(rc->ctx, SSL_OP_NO_SSLv3) & SSL_OP_NO_SSLv3)
-		!= SSL_OP_NO_SSLv3){
-		log_crypto_err("could not set SSL_OP_NO_SSLv3");
-		return 0;
-	}
-	s_cert = cfg->server_cert_file;
-	s_key = cfg->server_key_file;
-	VERBOSITY(2, (LOG_INFO, "setup SSL certificates"));
-	if (!SSL_CTX_use_certificate_file(rc->ctx,s_cert,SSL_FILETYPE_PEM)) {
-		log_msg(LOG_ERR, "Error for server-cert-file: %s", s_cert);
-		log_crypto_err("Error in SSL_CTX use_certificate_file");
-		return 0;
-	}
-	if(!SSL_CTX_use_PrivateKey_file(rc->ctx,s_key,SSL_FILETYPE_PEM)) {
-		log_msg(LOG_ERR, "Error for server-key-file: %s", s_key);
-		log_crypto_err("Error in SSL_CTX use_PrivateKey_file");
-		return 0;
-	}
-	if(!SSL_CTX_check_private_key(rc->ctx)) {
-		log_msg(LOG_ERR, "Error for server-key-file: %s", s_key);
-		log_crypto_err("Error in SSL_CTX check_private_key");
-		return 0;
-	}
-	if(!SSL_CTX_load_verify_locations(rc->ctx, s_cert, NULL)) {
-		log_crypto_err("Error setting up SSL_CTX verify locations");
-		return 0;
-	}
-	SSL_CTX_set_client_CA_list(rc->ctx, SSL_load_client_CA_file(s_cert));
-	SSL_CTX_set_verify(rc->ctx, SSL_VERIFY_PEER, NULL);
-	return 1;
-}
-
 struct daemon_remote*
 daemon_remote_create(struct nsd_options* cfg)
 {
+	char* s_cert;
+	char* s_key;
 	struct daemon_remote* rc = (struct daemon_remote*)xalloc_zero(
 		sizeof(*rc));
 	rc->max_active = 10;
@@ -337,27 +268,56 @@ daemon_remote_create(struct nsd_options* cfg)
 		log_msg(LOG_WARNING, "warning: no entropy, seeding openssl PRNG with time");
 	}
 
-	if(options_remote_is_address(cfg)) {
-		if(!remote_setup_ctx(rc, cfg)) {
-			daemon_remote_delete(rc);
-			return NULL;
-		}
-		rc->use_cert = 1;
-	} else {
-		struct ip_address_option* o;
-		rc->ctx = NULL;
-		rc->use_cert = 0;
-		for(o = cfg->control_interface; o; o = o->next) {
-			if(o->address && o->address[0] != '/')
-				log_msg(LOG_WARNING, "control-interface %s is not using TLS, but plain transfer, because first control-interface in config file is a local socket (starts with a /).", o->address);
-		}
+	rc->ctx = SSL_CTX_new(SSLv23_server_method());
+	if(!rc->ctx) {
+		log_crypto_err("could not SSL_CTX_new");
+		free(rc);
+		return NULL;
 	}
+	/* no SSLv2, SSLv3 because has defects */
+	if((SSL_CTX_set_options(rc->ctx, SSL_OP_NO_SSLv2) & SSL_OP_NO_SSLv2)
+		!= SSL_OP_NO_SSLv2){
+		log_crypto_err("could not set SSL_OP_NO_SSLv2");
+		daemon_remote_delete(rc);
+		return NULL;
+	}
+	if((SSL_CTX_set_options(rc->ctx, SSL_OP_NO_SSLv3) & SSL_OP_NO_SSLv3)
+		!= SSL_OP_NO_SSLv3){
+		log_crypto_err("could not set SSL_OP_NO_SSLv3");
+		daemon_remote_delete(rc);
+		return NULL;
+	}
+	s_cert = cfg->server_cert_file;
+	s_key = cfg->server_key_file;
+	VERBOSITY(2, (LOG_INFO, "setup SSL certificates"));
+	if (!SSL_CTX_use_certificate_file(rc->ctx,s_cert,SSL_FILETYPE_PEM)) {
+		log_msg(LOG_ERR, "Error for server-cert-file: %s", s_cert);
+		log_crypto_err("Error in SSL_CTX use_certificate_file");
+		goto setup_error;
+	}
+	if(!SSL_CTX_use_PrivateKey_file(rc->ctx,s_key,SSL_FILETYPE_PEM)) {
+		log_msg(LOG_ERR, "Error for server-key-file: %s", s_key);
+		log_crypto_err("Error in SSL_CTX use_PrivateKey_file");
+		goto setup_error;
+	}
+	if(!SSL_CTX_check_private_key(rc->ctx)) {
+		log_msg(LOG_ERR, "Error for server-key-file: %s", s_key);
+		log_crypto_err("Error in SSL_CTX check_private_key");
+		goto setup_error;
+	}
+	if(!SSL_CTX_load_verify_locations(rc->ctx, s_cert, NULL)) {
+		log_crypto_err("Error setting up SSL_CTX verify locations");
+	setup_error:
+		daemon_remote_delete(rc);
+		return NULL;
+	}
+	SSL_CTX_set_client_CA_list(rc->ctx, SSL_load_client_CA_file(s_cert));
+	SSL_CTX_set_verify(rc->ctx, SSL_VERIFY_PEER, NULL);
 
 	/* and try to open the ports */
 	if(!daemon_remote_open_ports(rc, cfg)) {
 		log_msg(LOG_ERR, "could not open remote control port");
-		daemon_remote_delete(rc);
-		return NULL;
+		goto setup_error;
 	}
 
 	if(gettimeofday(&rc->boot_time, NULL) == -1)
@@ -380,7 +340,6 @@ void daemon_remote_close(struct daemon_remote* rc)
 		if(h->event_added)
 			event_del(&h->c);
 		close(h->c.ev_fd);
-		free(h->ident);
 		free(h);
 		h = nh;
 	}
@@ -473,62 +432,34 @@ create_tcp_accept_sock(struct addrinfo* addr, int* noproto)
  * @return false on failure.
  */
 static int
-add_open(struct daemon_remote* rc, struct nsd_options* cfg, const char* ip,
-	int nr, int noproto_is_err)
+add_open(struct daemon_remote* rc, const char* ip, int nr, int noproto_is_err)
 {
 	struct addrinfo hints;
 	struct addrinfo* res;
 	struct acceptlist* hl;
-	int noproto = 0;
+	int noproto;
 	int fd, r;
 	char port[15];
 	snprintf(port, sizeof(port), "%d", nr);
 	port[sizeof(port)-1]=0;
 	memset(&hints, 0, sizeof(hints));
-	assert(ip);
-
-	if(ip[0] == '/') {
-		/* This looks like a local socket */
-		fd = create_local_accept_sock(ip, &noproto);
-		/*
-		 * Change socket ownership and permissions so users other
-		 * than root can access it provided they are in the same
-		 * group as the user we run as.
-		 */
-		if(fd != -1) {
-#ifdef HAVE_CHOWN
-			if (cfg->username && cfg->username[0] &&
-				nsd.uid != (uid_t)-1) {
-				if(chown(ip, nsd.uid, nsd.gid) == -1)
-					VERBOSITY(2, (LOG_INFO, "cannot chown %u.%u %s: %s",
-					  (unsigned)nsd.uid, (unsigned)nsd.gid,
-					  ip, strerror(errno)));
-			}
-			chmod(ip, (mode_t)(S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP));
-#else
-			(void)cfg;
-#endif
-		}
-	} else {
-		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_flags = AI_PASSIVE | AI_NUMERICHOST;
-		if((r = getaddrinfo(ip, port, &hints, &res)) != 0 || !res) {
-			log_msg(LOG_ERR, "control interface %s:%s getaddrinfo: %s %s",
-				ip?ip:"default", port, gai_strerror(r),
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE | AI_NUMERICHOST;
+	if((r = getaddrinfo(ip, port, &hints, &res)) != 0 || !res) {
+                log_msg(LOG_ERR, "control interface %s:%s getaddrinfo: %s %s",
+			ip?ip:"default", port, gai_strerror(r),
 #ifdef EAI_SYSTEM
-				r==EAI_SYSTEM?(char*)strerror(errno):""
+			r==EAI_SYSTEM?(char*)strerror(errno):""
 #else
-				""
+			""
 #endif
-				);
-			return 0;
-		}
-
-		/* open fd */
-		fd = create_tcp_accept_sock(res, &noproto);
-		freeaddrinfo(res);
+			);
+		return 0;
 	}
 
+	/* open fd */
+	fd = create_tcp_accept_sock(res, &noproto);
+	freeaddrinfo(res);
 	if(fd == -1 && noproto) {
 		if(!noproto_is_err)
 			return 1; /* return success, but do nothing */
@@ -543,14 +474,6 @@ add_open(struct daemon_remote* rc, struct nsd_options* cfg, const char* ip,
 
 	/* alloc */
 	hl = (struct acceptlist*)xalloc_zero(sizeof(*hl));
-	hl->rc = rc;
-	hl->ident = strdup(ip);
-	if(!hl->ident) {
-		log_msg(LOG_ERR, "malloc failure");
-		close(fd);
-		free(hl);
-		return 0;
-	}
 	hl->next = rc->accept_list;
 	rc->accept_list = hl;
 
@@ -566,17 +489,17 @@ daemon_remote_open_ports(struct daemon_remote* rc, struct nsd_options* cfg)
 	if(cfg->control_interface) {
 		ip_address_option_type* p;
 		for(p = cfg->control_interface; p; p = p->next) {
-			if(!add_open(rc, cfg, p->address, cfg->control_port, 1)) {
+			if(!add_open(rc, p->address, cfg->control_port, 1)) {
 				return 0;
 			}
 		}
 	} else {
 		/* defaults */
-		if(cfg->do_ip6 && !add_open(rc, cfg, "::1", cfg->control_port, 0)) {
+		if(cfg->do_ip6 && !add_open(rc, "::1", cfg->control_port, 0)) {
 			return 0;
 		}
 		if(cfg->do_ip4 &&
-			!add_open(rc, cfg, "127.0.0.1", cfg->control_port, 1)) {
+			!add_open(rc, "127.0.0.1", cfg->control_port, 1)) {
 			return 0;
 		}
 	}
@@ -594,7 +517,7 @@ daemon_remote_attach(struct daemon_remote* rc, struct xfrd_state* xfrd)
 		/* add event */
 		fd = p->c.ev_fd;
 		event_set(&p->c, fd, EV_PERSIST|EV_READ, remote_accept_callback,
-			p);
+			rc);
 		if(event_base_set(xfrd->event_base, &p->c) != 0)
 			log_msg(LOG_ERR, "remote: cannot set event_base");
 		if(event_add(&p->c, NULL) != 0)
@@ -606,8 +529,7 @@ daemon_remote_attach(struct daemon_remote* rc, struct xfrd_state* xfrd)
 static void
 remote_accept_callback(int fd, short event, void* arg)
 {
-	struct acceptlist *hl = (struct acceptlist*)arg;
-	struct daemon_remote *rc = hl->rc;
+	struct daemon_remote *rc = (struct daemon_remote*)arg;
 #ifdef INET6
 	struct sockaddr_storage addr;
 #else
@@ -623,11 +545,7 @@ remote_accept_callback(int fd, short event, void* arg)
 
 	/* perform the accept */
 	addrlen = sizeof(addr);
-#ifndef HAVE_ACCEPT4
 	newfd = accept(fd, (struct sockaddr*)&addr, &addrlen);
-#else
-	newfd = accept4(fd, (struct sockaddr*)&addr, &addrlen, SOCK_NONBLOCK);
-#endif
 	if(newfd == -1) {
 		if (    errno != EINTR
 			&& errno != EWOULDBLOCK
@@ -651,13 +569,10 @@ remote_accept_callback(int fd, short event, void* arg)
 		close(newfd);
 		return;
 	}
-
-#ifndef HAVE_ACCEPT4
 	if (fcntl(newfd, F_SETFL, O_NONBLOCK) == -1) {
 		log_msg(LOG_ERR, "fcntl failed: %s", strerror(errno));
 		goto close_exit;
 	}
-#endif
 
 	/* setup state to service the remote control command */
 	n = (struct rc_state*)calloc(1, sizeof(*n));
@@ -668,7 +583,6 @@ remote_accept_callback(int fd, short event, void* arg)
 
 	n->tval.tv_sec = REMOTE_CONTROL_TCP_TIMEOUT; 
 	n->tval.tv_usec = 0L;
-	n->fd = newfd;
 
 	event_set(&n->c, newfd, EV_PERSIST|EV_TIMEOUT|EV_READ,
 		remote_control_callback, n);
@@ -685,35 +599,27 @@ remote_accept_callback(int fd, short event, void* arg)
 	n->event_added = 1;
 
 	if(2 <= verbosity) {
-		if(hl->ident && hl->ident[0] == '/') {
-			VERBOSITY(2, (LOG_INFO, "new control connection from %s", hl->ident));
-		} else {
-			char s[128];
-			addr2str(&addr, s, sizeof(s));
-			VERBOSITY(2, (LOG_INFO, "new control connection from %s", s));
-		}
+		char s[128];
+		addr2str(&addr, s, sizeof(s));
+		VERBOSITY(2, (LOG_INFO, "new control connection from %s", s));
 	}
 
-	if(rc->ctx) {
-		n->shake_state = rc_hs_read;
-		n->ssl = SSL_new(rc->ctx);
-		if(!n->ssl) {
-			log_crypto_err("could not SSL_new");
-			event_del(&n->c);
-			free(n);
-			goto close_exit;
-		}
-		SSL_set_accept_state(n->ssl);
-		(void)SSL_set_mode(n->ssl, SSL_MODE_AUTO_RETRY);
-		if(!SSL_set_fd(n->ssl, newfd)) {
-			log_crypto_err("could not SSL_set_fd");
-			event_del(&n->c);
-			SSL_free(n->ssl);
-			free(n);
-			goto close_exit;
-		}
-	} else {
-		n->ssl = NULL;
+	n->shake_state = rc_hs_read;
+	n->ssl = SSL_new(rc->ctx);
+	if(!n->ssl) {
+		log_crypto_err("could not SSL_new");
+		event_del(&n->c);
+		free(n);
+		goto close_exit;
+	}
+	SSL_set_accept_state(n->ssl);
+        (void)SSL_set_mode(n->ssl, SSL_MODE_AUTO_RETRY);
+	if(!SSL_set_fd(n->ssl, newfd)) {
+		log_crypto_err("could not SSL_set_fd");
+		event_del(&n->c);
+		SSL_free(n->ssl);
+		free(n);
+		goto close_exit;
 	}
 
 	n->rc = rc;
@@ -743,22 +649,12 @@ state_list_remove_elem(struct rc_state** list, struct rc_state* todel)
 static void
 stats_list_remove_elem(struct rc_state** list, struct rc_state* todel)
 {
-	struct rc_state* prev = NULL;
-	struct rc_state* n = *list;
-	while(n) {
-		/* delete this one? */
-		if(n == todel) {
-			if(prev) prev->next = n->next;
-			else	(*list) = n->next;
-			/* go on and delete further elements */
-			/* prev = prev; */
-			n = n->next;
-			continue;
+	while(*list) {
+		if( (*list) == todel) {
+			*list = (*list)->stats_next;
+			return;
 		}
-
-		/* go to the next element */
-		prev = n;
-		n = n->next;
+		list = &(*list)->stats_next;
 	}
 }
 
@@ -781,35 +677,27 @@ clean_point(struct daemon_remote* rc, struct rc_state* s)
 }
 
 static int
-ssl_print_text(RES* res, const char* text)
+ssl_print_text(SSL* ssl, const char* text)
 {
 	int r;
-	if(!res) 
+	if(!ssl) 
 		return 0;
-	if(res->ssl) {
-		ERR_clear_error();
-		if((r=SSL_write(res->ssl, text, (int)strlen(text))) <= 0) {
-			if(SSL_get_error(res->ssl, r) == SSL_ERROR_ZERO_RETURN) {
-				VERBOSITY(2, (LOG_WARNING, "in SSL_write, peer "
-					"closed connection"));
-				return 0;
-			}
-			log_crypto_err("could not SSL_write");
+	ERR_clear_error();
+	if((r=SSL_write(ssl, text, (int)strlen(text))) <= 0) {
+		if(SSL_get_error(ssl, r) == SSL_ERROR_ZERO_RETURN) {
+			VERBOSITY(2, (LOG_WARNING, "in SSL_write, peer "
+				"closed connection"));
 			return 0;
 		}
-	} else {
-		if(write_socket(res->fd, text, strlen(text)) <= 0) {
-			log_msg(LOG_ERR, "could not write: %s",
-				strerror(errno));
-			return 0;
-		}
+		log_crypto_err("could not SSL_write");
+		return 0;
 	}
 	return 1;
 }
 
 /** print text over the ssl connection */
 static int
-ssl_print_vmsg(RES* ssl, const char* format, va_list args)
+ssl_print_vmsg(SSL* ssl, const char* format, va_list args)
 {
 	char msg[1024];
 	vsnprintf(msg, sizeof(msg), format, args);
@@ -818,7 +706,7 @@ ssl_print_vmsg(RES* ssl, const char* format, va_list args)
 
 /** printf style printing to the ssl connection */
 static int
-ssl_printf(RES* ssl, const char* format, ...)
+ssl_printf(SSL* ssl, const char* format, ...)
 {
 	va_list args;
 	int ret;
@@ -829,39 +717,21 @@ ssl_printf(RES* ssl, const char* format, ...)
 }
 
 static int
-ssl_read_line(RES* res, char* buf, size_t max)
+ssl_read_line(SSL* ssl, char* buf, size_t max)
 {
 	int r;
 	size_t len = 0;
-	if(!res)
+	if(!ssl)
 		return 0;
 	while(len < max) {
-		if(res->ssl) {
-			ERR_clear_error();
-			if((r=SSL_read(res->ssl, buf+len, 1)) <= 0) {
-				if(SSL_get_error(res->ssl, r) == SSL_ERROR_ZERO_RETURN) {
-					buf[len] = 0;
-					return 1;
-				}
-				log_crypto_err("could not SSL_read");
-				return 0;
+		ERR_clear_error();
+		if((r=SSL_read(ssl, buf+len, 1)) <= 0) {
+			if(SSL_get_error(ssl, r) == SSL_ERROR_ZERO_RETURN) {
+				buf[len] = 0;
+				return 1;
 			}
-		} else {
-			while(1) {
-				ssize_t rr = read(res->fd, buf+len, 1);
-				if(rr <= 0) {
-					if(rr == 0) {
-						buf[len] = 0;
-						return 1;
-					}
-					if(errno == EINTR || errno == EAGAIN)
-						continue;
-					log_msg(LOG_ERR, "could not read: %s",
-						strerror(errno));
-					return 0;
-				}
-				break;
-			}
+			log_crypto_err("could not SSL_read");
+			return 0;
 		}
 		if(buf[len] == '\n') {
 			/* return string without \n */
@@ -887,14 +757,14 @@ skipwhite(char* str)
 
 /** send the OK to the control client */
 static void
-send_ok(RES* ssl)
+send_ok(SSL* ssl)
 {
 	(void)ssl_printf(ssl, "ok\n");
 }
 
 /** get zone argument (if any) or NULL, false on error */
 static int
-get_zone_arg(RES* ssl, xfrd_state_type* xfrd, char* arg,
+get_zone_arg(SSL* ssl, xfrd_state_type* xfrd, char* arg,
 	struct zone_options** zo)
 {
 	const dname_type* dname;
@@ -920,7 +790,7 @@ get_zone_arg(RES* ssl, xfrd_state_type* xfrd, char* arg,
 
 /** do the stop command */
 static void
-do_stop(RES* ssl, xfrd_state_type* xfrd)
+do_stop(SSL* ssl, xfrd_state_type* xfrd)
 {
 	xfrd->need_to_send_shutdown = 1;
 
@@ -933,7 +803,7 @@ do_stop(RES* ssl, xfrd_state_type* xfrd)
 
 /** do the log_reopen command, it only needs reload_now */
 static void
-do_log_reopen(RES* ssl, xfrd_state_type* xfrd)
+do_log_reopen(SSL* ssl, xfrd_state_type* xfrd)
 {
 	xfrd_set_reload_now(xfrd);
 	send_ok(ssl);
@@ -941,7 +811,7 @@ do_log_reopen(RES* ssl, xfrd_state_type* xfrd)
 
 /** do the reload command */
 static void
-do_reload(RES* ssl, xfrd_state_type* xfrd, char* arg)
+do_reload(SSL* ssl, xfrd_state_type* xfrd, char* arg)
 {
 	struct zone_options* zo;
 	if(!get_zone_arg(ssl, xfrd, arg, &zo))
@@ -954,7 +824,7 @@ do_reload(RES* ssl, xfrd_state_type* xfrd, char* arg)
 
 /** do the write command */
 static void
-do_write(RES* ssl, xfrd_state_type* xfrd, char* arg)
+do_write(SSL* ssl, xfrd_state_type* xfrd, char* arg)
 {
 	struct zone_options* zo;
 	if(!get_zone_arg(ssl, xfrd, arg, &zo))
@@ -967,7 +837,7 @@ do_write(RES* ssl, xfrd_state_type* xfrd, char* arg)
 
 /** do the notify command */
 static void
-do_notify(RES* ssl, xfrd_state_type* xfrd, char* arg)
+do_notify(SSL* ssl, xfrd_state_type* xfrd, char* arg)
 {
 	struct zone_options* zo;
 	if(!get_zone_arg(ssl, xfrd, arg, &zo))
@@ -992,7 +862,7 @@ do_notify(RES* ssl, xfrd_state_type* xfrd, char* arg)
 
 /** do the transfer command */
 static void
-do_transfer(RES* ssl, xfrd_state_type* xfrd, char* arg)
+do_transfer(SSL* ssl, xfrd_state_type* xfrd, char* arg)
 {
 	struct zone_options* zo;
 	xfrd_zone_type* zone;
@@ -1011,7 +881,7 @@ do_transfer(RES* ssl, xfrd_state_type* xfrd, char* arg)
 		RBTREE_FOR(zone, xfrd_zone_type*, xfrd->zones) {
 			xfrd_handle_notify_and_start_xfr(zone, NULL);
 		}
-		ssl_printf(ssl, "ok, %lu zones\n", (unsigned long)xfrd->zones->count);
+		ssl_printf(ssl, "ok, %u zones\n", (unsigned)xfrd->zones->count);
 	}
 }
 
@@ -1033,7 +903,7 @@ force_transfer_zone(xfrd_zone_type* zone)
 
 /** do the force transfer command */
 static void
-do_force_transfer(RES* ssl, xfrd_state_type* xfrd, char* arg)
+do_force_transfer(SSL* ssl, xfrd_state_type* xfrd, char* arg)
 {
 	struct zone_options* zo;
 	xfrd_zone_type* zone;
@@ -1052,12 +922,12 @@ do_force_transfer(RES* ssl, xfrd_state_type* xfrd, char* arg)
 		RBTREE_FOR(zone, xfrd_zone_type*, xfrd->zones) {
 			force_transfer_zone(zone);
 		}
-		ssl_printf(ssl, "ok, %lu zones\n", (unsigned long)xfrd->zones->count);
+		ssl_printf(ssl, "ok, %u zones\n", (unsigned)xfrd->zones->count);
 	}
 }
 
 static int
-print_soa_status(RES* ssl, const char* str, xfrd_soa_type* soa, time_t acq)
+print_soa_status(SSL* ssl, const char* str, xfrd_soa_type* soa, time_t acq)
 {
 	if(acq) {
 		if(!ssl_printf(ssl, "	%s: \"%u since %s\"\n", str,
@@ -1072,7 +942,7 @@ print_soa_status(RES* ssl, const char* str, xfrd_soa_type* soa, time_t acq)
 
 /** print zonestatus for one domain */
 static int
-print_zonestatus(RES* ssl, xfrd_state_type* xfrd, struct zone_options* zo)
+print_zonestatus(SSL* ssl, xfrd_state_type* xfrd, struct zone_options* zo)
 {
 	xfrd_zone_type* xz = (xfrd_zone_type*)rbtree_search(xfrd->zones,
 		(const dname_type*)zo->node.key);
@@ -1123,8 +993,8 @@ print_zonestatus(RES* ssl, xfrd_state_type* xfrd, struct zone_options* zo)
 			xz->soa_notified_acquired))
 			return 0;
 	} else if(xz->event_added) {
-		if(!ssl_printf(ssl, "\twait: \"%lu sec between attempts\"\n",
-			(unsigned long)xz->timeout.tv_sec))
+		if(!ssl_printf(ssl, "\twait: \"%u sec between attempts\"\n",
+			(unsigned)xz->timeout.tv_sec))
 			return 0;
 	}
 
@@ -1153,7 +1023,7 @@ print_zonestatus(RES* ssl, xfrd_state_type* xfrd, struct zone_options* zo)
 
 /** do the zonestatus command */
 static void
-do_zonestatus(RES* ssl, xfrd_state_type* xfrd, char* arg)
+do_zonestatus(SSL* ssl, xfrd_state_type* xfrd, char* arg)
 {
 	struct zone_options* zo;
 	if(!get_zone_arg(ssl, xfrd, arg, &zo))
@@ -1170,7 +1040,7 @@ do_zonestatus(RES* ssl, xfrd_state_type* xfrd, char* arg)
 
 /** do the verbosity command */
 static void
-do_verbosity(RES* ssl, char* str)
+do_verbosity(SSL* ssl, char* str)
 {
 	int val = atoi(str);
 	if(strcmp(str, "") == 0) {
@@ -1190,7 +1060,7 @@ do_verbosity(RES* ssl, char* str)
 
 /** find second argument, modifies string */
 static int
-find_arg2(RES* ssl, char* arg, char** arg2)
+find_arg2(SSL* ssl, char* arg, char** arg2)
 {
 	char* as = strrchr(arg, ' ');
 	if(as) {
@@ -1201,38 +1071,14 @@ find_arg2(RES* ssl, char* arg, char** arg2)
 		as[0]=0;
 		return 1;
 	}
-	*arg2 = NULL;
 	ssl_printf(ssl, "error could not find next argument "
 		"after %s\n", arg);
 	return 0;
 }
 
-/** find second and third arguments, modifies string,
- * does not print error for missing arg3 so that if it does not find an
- * arg3, the caller can use two arguments. */
-static int
-find_arg3(RES* ssl, char* arg, char** arg2, char** arg3)
-{
-	if(find_arg2(ssl, arg, arg2)) {
-		char* as;
-		*arg3 = *arg2;
-		as = strrchr(arg, ' ');
-		if(as) {
-			as[0]=0;
-			*arg2 = as+1;
-			while(isspace((unsigned char)*as) && as > arg)
-				as--;
-			as[0]=0;
-			return 1;
-		}
-	}
-	*arg3 = NULL;
-	return 0;
-}
-
 /** do the status command */
 static void
-do_status(RES* ssl, xfrd_state_type* xfrd)
+do_status(SSL* ssl, xfrd_state_type* xfrd)
 {
 	if(!ssl_printf(ssl, "version: %s\n", PACKAGE_VERSION))
 		return;
@@ -1284,94 +1130,9 @@ zonestat_inc_ifneeded(xfrd_state_type* xfrd)
 #endif /* USE_ZONE_STATS */
 }
 
-/** perform the changezone command for one zone */
-static int
-perform_changezone(RES* ssl, xfrd_state_type* xfrd, char* arg)
-{
-	const dname_type* dname;
-	struct zone_options* zopt;
-	char* arg2 = NULL;
-	if(!find_arg2(ssl, arg, &arg2))
-		return 0;
-
-	/* if we add it to the xfrd now, then xfrd could download AXFR and
-	 * store it and the NSD-reload would see it in the difffile before
-	 * it sees the add-config task.
-	 */
-	/* thus: AXFRs and IXFRs must store the pattern name in the
-	 * difffile, so that it can be added when the AXFR or IXFR is seen.
-	 */
-
-	/* check that the pattern exists */
-	if(!rbtree_search(xfrd->nsd->options->patterns, arg2)) {
-		(void)ssl_printf(ssl, "error pattern %s does not exist\n",
-			arg2);
-		return 0;
-	}
-
-	dname = dname_parse(xfrd->region, arg);
-	if(!dname) {
-		(void)ssl_printf(ssl, "error cannot parse zone name\n");
-		return 0;
-	}
-
-	/* see if zone is a duplicate */
-	if( (zopt=zone_options_find(xfrd->nsd->options, dname)) ) {
-		if(zopt->part_of_config) {
-			(void)ssl_printf(ssl, "error zone defined in nsd.conf, "
-			  "cannot delete it in this manner: remove it from "
-			  "nsd.conf yourself and repattern\n");
-			region_recycle(xfrd->region, (void*)dname, dname_total_size(dname));
-			dname = NULL;
-			return 0;
-		}
-		/* found the zone, now delete it */
-		/* create deletion task */
-		/* this deletion task is processed before the addition task,
-		 * that is created below, in the same reload process, causing
-		 * a seamless change from one to the other, with no downtime
-		 * for the zone. */
-		task_new_del_zone(xfrd->nsd->task[xfrd->nsd->mytask],
-			xfrd->last_task, dname);
-		xfrd_set_reload_now(xfrd);
-		/* delete it in xfrd */
-		if(zone_is_slave(zopt)) {
-			xfrd_del_slave_zone(xfrd, dname);
-		}
-		xfrd_del_notify(xfrd, dname);
-		/* delete from config */
-		zone_list_del(xfrd->nsd->options, zopt);
-	} else {
-		(void)ssl_printf(ssl, "zone %s did not exist, creating", arg);
-	}
-	region_recycle(xfrd->region, (void*)dname, dname_total_size(dname));
-	dname = NULL;
-
-	/* add to zonelist and adds to config in memory */
-	zopt = zone_list_add(xfrd->nsd->options, arg, arg2);
-	if(!zopt) {
-		/* also dname parse error here */
-		(void)ssl_printf(ssl, "error could not add zonelist entry\n");
-		return 0;
-	}
-	/* make addzone task and schedule reload */
-	task_new_add_zone(xfrd->nsd->task[xfrd->nsd->mytask],
-		xfrd->last_task, arg, arg2,
-		getzonestatid(xfrd->nsd->options, zopt));
-	zonestat_inc_ifneeded(xfrd);
-	xfrd_set_reload_now(xfrd);
-	/* add to xfrd - notify (for master and slaves) */
-	init_notify_send(xfrd->notify_zones, xfrd->region, zopt);
-	/* add to xfrd - slave */
-	if(zone_is_slave(zopt)) {
-		xfrd_init_slave_zone(xfrd, zopt);
-	}
-	return 1;
-}
-
 /** perform the addzone command for one zone */
 static int
-perform_addzone(RES* ssl, xfrd_state_type* xfrd, char* arg)
+perform_addzone(SSL* ssl, xfrd_state_type* xfrd, char* arg)
 {
 	const dname_type* dname;
 	struct zone_options* zopt;
@@ -1434,7 +1195,7 @@ perform_addzone(RES* ssl, xfrd_state_type* xfrd, char* arg)
 
 /** perform the delzone command for one zone */
 static int
-perform_delzone(RES* ssl, xfrd_state_type* xfrd, char* arg)
+perform_delzone(SSL* ssl, xfrd_state_type* xfrd, char* arg)
 {
 	const dname_type* dname;
 	struct zone_options* zopt;
@@ -1453,7 +1214,7 @@ perform_delzone(RES* ssl, xfrd_state_type* xfrd, char* arg)
 		/* nothing to do */
 		if(!ssl_printf(ssl, "warning zone %s not present\n", arg))
 			return 0;
-		return 0;
+		return 1;
 	}
 
 	/* see if it can be deleted */
@@ -1484,7 +1245,7 @@ perform_delzone(RES* ssl, xfrd_state_type* xfrd, char* arg)
 
 /** do the addzone command */
 static void
-do_addzone(RES* ssl, xfrd_state_type* xfrd, char* arg)
+do_addzone(SSL* ssl, xfrd_state_type* xfrd, char* arg)
 {
 	if(!perform_addzone(ssl, xfrd, arg))
 		return;
@@ -1493,25 +1254,16 @@ do_addzone(RES* ssl, xfrd_state_type* xfrd, char* arg)
 
 /** do the delzone command */
 static void
-do_delzone(RES* ssl, xfrd_state_type* xfrd, char* arg)
+do_delzone(SSL* ssl, xfrd_state_type* xfrd, char* arg)
 {
 	if(!perform_delzone(ssl, xfrd, arg))
 		return;
 	send_ok(ssl);
 }
 
-/** do the changezone command */
-static void
-do_changezone(RES* ssl, xfrd_state_type* xfrd, char* arg)
-{
-	if(!perform_changezone(ssl, xfrd, arg))
-		return;
-	send_ok(ssl);
-}
-
 /** do the addzones command */
 static void
-do_addzones(RES* ssl, xfrd_state_type* xfrd)
+do_addzones(SSL* ssl, xfrd_state_type* xfrd)
 {
 	char buf[2048];
 	int num = 0;
@@ -1533,7 +1285,7 @@ do_addzones(RES* ssl, xfrd_state_type* xfrd)
 
 /** do the delzones command */
 static void
-do_delzones(RES* ssl, xfrd_state_type* xfrd)
+do_delzones(SSL* ssl, xfrd_state_type* xfrd)
 {
 	char buf[2048];
 	int num = 0;
@@ -1911,7 +1663,7 @@ repat_options(xfrd_state_type* xfrd, struct nsd_options* newopt)
 static void
 print_ssl_cfg_err(void* arg, const char* str)
 {
-	RES** ssl = (RES**)arg;
+	SSL** ssl = (SSL**)arg;
 	if(!*ssl) return;
 	if(!ssl_printf(*ssl, "%s", str))
 		*ssl = NULL; /* failed, stop printing */
@@ -1919,7 +1671,7 @@ print_ssl_cfg_err(void* arg, const char* str)
 
 /** do the repattern command: reread config file and apply keys, patterns */
 static void
-do_repattern(RES* ssl, xfrd_state_type* xfrd)
+do_repattern(SSL* ssl, xfrd_state_type* xfrd)
 {
 	region_type* region = region_create(xalloc, free);
 	struct nsd_options* opt;
@@ -1959,278 +1711,9 @@ do_repattern(RES* ssl, xfrd_state_type* xfrd)
 
 /** do the serverpid command: printout pid of server process */
 static void
-do_serverpid(RES* ssl, xfrd_state_type* xfrd)
+do_serverpid(SSL* ssl, xfrd_state_type* xfrd)
 {
 	(void)ssl_printf(ssl, "%u\n", (unsigned)xfrd->reload_pid);
-}
-
-/** do the print_tsig command: printout tsig info */
-static void
-do_print_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg)
-{
-	if(*arg == '\0') {
-		struct key_options* key;
-		RBTREE_FOR(key, struct key_options*, xfrd->nsd->options->keys) {
-			if(!ssl_printf(ssl, "key: name: \"%s\" secret: \"%s\" algorithm: %s\n", key->name, key->secret, key->algorithm))
-				return;
-		}
-		return;
-	} else {
-		struct key_options* key_opts = key_options_find(xfrd->nsd->options, arg);
-		if(!key_opts) {
-			if(!ssl_printf(ssl, "error: no such key with name: %s\n", arg))
-				return;
-			return;
-		} else {
-			if(!ssl_printf(ssl, "key: name: \"%s\" secret: \"%s\" algorithm: %s\n", arg, key_opts->secret, key_opts->algorithm))
-				return;
-		}
-	}
-}
-
-/** do the update_tsig command: change existing tsig to new secret */
-static void
-do_update_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg)
-{
-	struct region* region = xfrd->nsd->options->region;
-	char* arg2 = NULL;
-	uint8_t data[65536]; /* 64K */
-	struct key_options* key_opt;
-
-	if(*arg == '\0') {
-		if(!ssl_printf(ssl, "error: missing argument (keyname)\n"))
-			return;
-		return;
-	}
-	if(!find_arg2(ssl, arg, &arg2)) {
-		if(!ssl_printf(ssl, "error: missing argument (secret)\n"))
-			return;
-		return;
-	}
-	key_opt = key_options_find(xfrd->nsd->options, arg);
-	if(!key_opt) {
-		if(!ssl_printf(ssl, "error: no such key with name: %s\n", arg))
-			return;
-		memset(arg2, 0xdd, strlen(arg2));
-		return;
-	}
-	if(__b64_pton(arg2, data, sizeof(data)) == -1) {
-		if(!ssl_printf(ssl, "error: the secret: %s is not in b64 format\n", arg2))
-			return;
-		memset(data, 0xdd, sizeof(data)); /* wipe secret */
-		memset(arg2, 0xdd, strlen(arg2));
-		return;
-	}
-	log_msg(LOG_INFO, "changing secret provided with the key: %s with old secret %s and algo: %s\n", arg, key_opt->secret, key_opt->algorithm);
-	if(key_opt->secret) {
-		/* wipe old secret */
-		memset(key_opt->secret, 0xdd, strlen(key_opt->secret));
-		region_recycle(region, key_opt->secret,
-			strlen(key_opt->secret)+1);
-	}
-	key_opt->secret = region_strdup(region, arg2);
-	log_msg(LOG_INFO, "the key: %s has new secret %s and algorithm: %s\n", arg, key_opt->secret, key_opt->algorithm);
-	/* wipe secret from temp parse buffer */
-	memset(arg2, 0xdd, strlen(arg2));
-	memset(data, 0xdd, sizeof(data));
-
-	key_options_desetup(region, key_opt);
-	key_options_setup(region, key_opt);
-	task_new_add_key(xfrd->nsd->task[xfrd->nsd->mytask], xfrd->last_task,
-		key_opt);
-	xfrd_set_reload_now(xfrd);
-
-	send_ok(ssl);
-}
-
-/** do the add tsig command, add new key with name, secret and algo given */
-static void
-do_add_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg)
-{
-	char* arg2 = NULL;
-	char* arg3 = NULL;
-	uint8_t data[65536]; /* 64KB */
-	uint8_t dname[MAXDOMAINLEN+1];
-	char algo[256];
-	region_type* region = xfrd->nsd->options->region;
-	struct key_options* new_key_opt;
-
-	if(*arg == '\0') {
-		if(!ssl_printf(ssl, "error: missing argument (keyname)\n"))
-			return;
-		return;
-	}
-	if(!find_arg3(ssl, arg, &arg2, &arg3)) {
-		strlcpy(algo, "hmac-sha256", sizeof(algo));
-	} else {
-		strlcpy(algo, arg3, sizeof(algo));
-	}
-	if(!arg2) {
-		if(!ssl_printf(ssl, "error: missing argument (secret)\n"))
-			return;
-		return;
-	}
-	if(key_options_find(xfrd->nsd->options, arg)) {
-		if(!ssl_printf(ssl, "error: key %s already exists\n", arg))
-			return;
-		memset(arg2, 0xdd, strlen(arg2));
-		return;
-	}
-	if(__b64_pton(arg2, data, sizeof(data)) == -1) {
-		if(!ssl_printf(ssl, "error: the secret: %s is not in b64 format\n", arg2))
-			return;
-		memset(data, 0xdd, sizeof(data)); /* wipe secret */
-		memset(arg2, 0xdd, strlen(arg2));
-		return;
-	}
-	memset(data, 0xdd, sizeof(data)); /* wipe secret from temp buffer */
-	if(!dname_parse_wire(dname, arg)) {
-		if(!ssl_printf(ssl, "error: could not parse key name: %s\n", arg))
-			return;
-		memset(arg2, 0xdd, strlen(arg2));
-		return;
-	}
-	if(tsig_get_algorithm_by_name(algo) == NULL) {
-		if(!ssl_printf(ssl, "error: unknown algorithm: %s\n", algo))
-			return;
-		memset(arg2, 0xdd, strlen(arg2));
-		return;
-	}
-	log_msg(LOG_INFO, "adding key with name: %s and secret: %s with algo: %s\n", arg, arg2, algo);
-	new_key_opt = key_options_create(region);
-	new_key_opt->name = region_strdup(region, arg);
-	new_key_opt->secret = region_strdup(region, arg2);
-	new_key_opt->algorithm = region_strdup(region, algo);
-	add_key(xfrd, new_key_opt);
-
-	/* wipe secret from temp buffer */
-	memset(arg2, 0xdd, strlen(arg2));
-	send_ok(ssl);
-}
-
-/** set acl entries to use the given TSIG key */
-static void
-zopt_set_acl_to_tsig(struct acl_options* acl, struct region* region,
-	const char* key_name, struct key_options* key_opt)
-{
-	while(acl) {
-		if(acl->blocked) {
-			acl = acl->next;
-			continue;
-		}
-		acl->nokey = 0;
-		if(acl->key_name)
-			region_recycle(region, (void*)acl->key_name,
-				strlen(acl->key_name)+1);
-		acl->key_name = region_strdup(region, key_name);
-		acl->key_options = key_opt;
-		acl = acl->next;
-	}
-}
-
-/** do the assoc_tsig command: associate the zone to use the tsig name */
-static void
-do_assoc_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg)
-{
-	region_type* region = xfrd->nsd->options->region;
-	char* arg2 = NULL;
-	struct zone_options* zone;
-	struct key_options* key_opt;
-
-	if(*arg == '\0') {
-		if(!ssl_printf(ssl, "error: missing argument (zonename)\n"))
-			return;
-		return;
-	}
-	if(!find_arg2(ssl, arg, &arg2)) {
-		if(!ssl_printf(ssl, "error: missing argument (keyname)\n"))
-			return;
-		return;
-	}
-
-	if(!get_zone_arg(ssl, xfrd, arg, &zone))
-		return;
-	if(!zone) {
-		if(!ssl_printf(ssl, "error: missing argument (zone)\n"))
-			return;
-		return;
-	}
-	key_opt = key_options_find(xfrd->nsd->options, arg2);
-	if(!key_opt) {
-		if(!ssl_printf(ssl, "error: key: %s does not exist\n", arg2))
-			return;
-		return;
-	}
-
-	zopt_set_acl_to_tsig(zone->pattern->allow_notify, region, arg2,
-		key_opt);
-	zopt_set_acl_to_tsig(zone->pattern->notify, region, arg2, key_opt);
-	zopt_set_acl_to_tsig(zone->pattern->request_xfr, region, arg2,
-		key_opt);
-	zopt_set_acl_to_tsig(zone->pattern->provide_xfr, region, arg2,
-		key_opt);
-
-	task_new_add_pattern(xfrd->nsd->task[xfrd->nsd->mytask],
-		xfrd->last_task, zone->pattern);
-	xfrd_set_reload_now(xfrd);
-
-	send_ok(ssl);
-}
-
-/** see if TSIG key is used in the acl */
-static int
-acl_contains_tsig_key(struct acl_options* acl, const char* name)
-{
-	while(acl) {
-		if(acl->key_name && strcmp(acl->key_name, name) == 0)
-			return 1;
-		acl = acl->next;
-	}
-	return 0;
-}
-
-/** do the del_tsig command, remove an (unused) tsig */
-static void
-do_del_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg) {
-	int used_key = 0;
-	struct zone_options* zone;
-	struct key_options* key_opt;
-
-	if(*arg == '\0') {
-		if(!ssl_printf(ssl, "error: missing argument (keyname)\n"))
-			return;
-		return;
-	}
-	key_opt = key_options_find(xfrd->nsd->options, arg);
-	if(!key_opt) {
-		if(!ssl_printf(ssl, "key %s does not exist, nothing to be deleted\n", arg))
-			return;
-		return;
-	}
-	RBTREE_FOR(zone, struct zone_options*, xfrd->nsd->options->zone_options)
-	{
-		if(acl_contains_tsig_key(zone->pattern->allow_notify, arg) ||
-		   acl_contains_tsig_key(zone->pattern->notify, arg) ||
-		   acl_contains_tsig_key(zone->pattern->request_xfr, arg) ||
-		   acl_contains_tsig_key(zone->pattern->provide_xfr, arg)) {
-			if(!ssl_printf(ssl, "zone %s uses key %s\n",
-				zone->name, arg))
-				return;
-			used_key = 1;
-			break;
-		}
-	}
-
-	if(used_key) {
-		if(!ssl_printf(ssl, "error: key: %s is in use and cannot be deleted\n", arg))
-			return;
-		return;
-	} else {
-		remove_key(xfrd, arg);
-		log_msg(LOG_INFO, "key: %s is successfully deleted\n", arg);
-	}
-
-	send_ok(ssl);
 }
 
 /** check for name with end-of-string, space or tab after it */
@@ -2242,7 +1725,7 @@ cmdcmp(char* p, const char* cmd, size_t len)
 
 /** execute a remote control command */
 static void
-execute_cmd(struct daemon_remote* rc, RES* ssl, char* cmd, struct rc_state* rs)
+execute_cmd(struct daemon_remote* rc, SSL* ssl, char* cmd, struct rc_state* rs)
 {
 	char* p = skipwhite(cmd);
 	/* compare command */
@@ -2264,8 +1747,6 @@ execute_cmd(struct daemon_remote* rc, RES* ssl, char* cmd, struct rc_state* rs)
 		do_addzone(ssl, rc->xfrd, skipwhite(p+7));
 	} else if(cmdcmp(p, "delzone", 7)) {
 		do_delzone(ssl, rc->xfrd, skipwhite(p+7));
-	} else if(cmdcmp(p, "changezone", 10)) {
-		do_changezone(ssl, rc->xfrd, skipwhite(p+10));
 	} else if(cmdcmp(p, "addzones", 8)) {
 		do_addzones(ssl, rc->xfrd);
 	} else if(cmdcmp(p, "delzones", 8)) {
@@ -2286,16 +1767,6 @@ execute_cmd(struct daemon_remote* rc, RES* ssl, char* cmd, struct rc_state* rs)
 		do_repattern(ssl, rc->xfrd);
 	} else if(cmdcmp(p, "serverpid", 9)) {
 		do_serverpid(ssl, rc->xfrd);
-	} else if(cmdcmp(p, "print_tsig", 10)) {
-		do_print_tsig(ssl, rc->xfrd, skipwhite(p+10));
-	} else if(cmdcmp(p, "update_tsig", 11)) {
-		do_update_tsig(ssl, rc->xfrd, skipwhite(p+11));
-	} else if(cmdcmp(p, "add_tsig", 8)) {
-		do_add_tsig(ssl, rc->xfrd, skipwhite(p+8));
-	} else if(cmdcmp(p, "assoc_tsig", 10)) {
-		do_assoc_tsig(ssl, rc->xfrd, skipwhite(p+10));
-	} else if(cmdcmp(p, "del_tsig", 8)) {
-		do_del_tsig(ssl, rc->xfrd, skipwhite(p+8));
 	} else {
 		(void)ssl_printf(ssl, "error unknown command '%s'\n", p);
 	}
@@ -2303,7 +1774,7 @@ execute_cmd(struct daemon_remote* rc, RES* ssl, char* cmd, struct rc_state* rs)
 
 /** handle remote control request */
 static void
-handle_req(struct daemon_remote* rc, struct rc_state* s, RES* res)
+handle_req(struct daemon_remote* rc, struct rc_state* s, SSL* ssl)
 {
 	int r;
 	char pre[10];
@@ -2314,27 +1785,12 @@ handle_req(struct daemon_remote* rc, struct rc_state* s, RES* res)
 	}
 
 	/* try to read magic UBCT[version]_space_ string */
-	if(res->ssl) {
-		ERR_clear_error();
-		if((r=SSL_read(res->ssl, magic, (int)sizeof(magic)-1)) <= 0) {
-			if(SSL_get_error(res->ssl, r) == SSL_ERROR_ZERO_RETURN)
-				return;
-			log_crypto_err("could not SSL_read");
+	ERR_clear_error();
+	if((r=SSL_read(ssl, magic, (int)sizeof(magic)-1)) <= 0) {
+		if(SSL_get_error(ssl, r) == SSL_ERROR_ZERO_RETURN)
 			return;
-		}
-	} else {
-		while(1) {
-			ssize_t rr = read(res->fd, magic, sizeof(magic)-1);
-			if(rr <= 0) {
-				if(rr == 0) return;
-				if(errno == EINTR || errno == EAGAIN)
-					continue;
-				log_msg(LOG_ERR, "could not read: %s", strerror(errno));
-				return;
-			}
-			r = (int)rr;
-			break;
-		}
+		log_crypto_err("could not SSL_read");
+		return;
 	}
 	magic[7] = 0;
 	if( r != 7 || strncmp(magic, "NSDCT", 5) != 0) {
@@ -2344,67 +1800,25 @@ handle_req(struct daemon_remote* rc, struct rc_state* s, RES* res)
 	}
 
 	/* read the command line */
-	if(!ssl_read_line(res, buf, sizeof(buf))) {
+	if(!ssl_read_line(ssl, buf, sizeof(buf))) {
 		return;
 	}
 	snprintf(pre, sizeof(pre), "NSDCT%d ", NSD_CONTROL_VERSION);
 	if(strcmp(magic, pre) != 0) {
 		VERBOSITY(2, (LOG_INFO, "control connection had bad "
 			"version %s, cmd: %s", magic, buf));
-		ssl_printf(res, "error version mismatch\n");
+		ssl_printf(ssl, "error version mismatch\n");
 		return;
 	}
 	VERBOSITY(2, (LOG_INFO, "control cmd: %s", buf));
 
 	/* figure out what to do */
-	execute_cmd(rc, res, buf, s);
-}
-
-/** handle SSL_do_handshake changes to the file descriptor to wait for later */
-static void
-remote_handshake_later(struct daemon_remote* rc, struct rc_state* s, int fd,
-	int r, int r2)
-{
-	if(r2 == SSL_ERROR_WANT_READ) {
-		if(s->shake_state == rc_hs_read) {
-			/* try again later */
-			return;
-		}
-		s->shake_state = rc_hs_read;
-		event_del(&s->c);
-		event_set(&s->c, fd, EV_PERSIST|EV_TIMEOUT|EV_READ,
-			remote_control_callback, s);
-		if(event_base_set(xfrd->event_base, &s->c) != 0)
-			log_msg(LOG_ERR, "remote_accept: cannot set event_base");
-		if(event_add(&s->c, &s->tval) != 0)
-			log_msg(LOG_ERR, "remote_accept: cannot add event");
-		return;
-	} else if(r2 == SSL_ERROR_WANT_WRITE) {
-		if(s->shake_state == rc_hs_write) {
-			/* try again later */
-			return;
-		}
-		s->shake_state = rc_hs_write;
-		event_del(&s->c);
-		event_set(&s->c, fd, EV_PERSIST|EV_TIMEOUT|EV_WRITE,
-			remote_control_callback, s);
-		if(event_base_set(xfrd->event_base, &s->c) != 0)
-			log_msg(LOG_ERR, "remote_accept: cannot set event_base");
-		if(event_add(&s->c, &s->tval) != 0)
-			log_msg(LOG_ERR, "remote_accept: cannot add event");
-		return;
-	} else {
-		if(r == 0)
-			log_msg(LOG_ERR, "remote control connection closed prematurely");
-		log_crypto_err("remote control failed ssl");
-		clean_point(rc, s);
-	}
+	execute_cmd(rc, ssl, buf, s);
 }
 
 static void
 remote_control_callback(int fd, short event, void* arg)
 {
-	RES res;
 	struct rc_state* s = (struct rc_state*)arg;
 	struct daemon_remote* rc = s->rc;
 	int r;
@@ -2413,22 +1827,51 @@ remote_control_callback(int fd, short event, void* arg)
 		clean_point(rc, s);
 		return;
 	}
-	if(s->ssl) {
-		/* (continue to) setup the SSL connection */
-		ERR_clear_error();
-		r = SSL_do_handshake(s->ssl);
-		if(r != 1) {
-			int r2 = SSL_get_error(s->ssl, r);
-			remote_handshake_later(rc, s, fd, r, r2);
+	/* (continue to) setup the SSL connection */
+	ERR_clear_error();
+	r = SSL_do_handshake(s->ssl);
+	if(r != 1) {
+		int r2 = SSL_get_error(s->ssl, r);
+		if(r2 == SSL_ERROR_WANT_READ) {
+			if(s->shake_state == rc_hs_read) {
+				/* try again later */
+				return;
+			}
+			s->shake_state = rc_hs_read;
+			event_del(&s->c);
+			event_set(&s->c, fd, EV_PERSIST|EV_TIMEOUT|EV_READ,
+				remote_control_callback, s);
+			if(event_base_set(xfrd->event_base, &s->c) != 0)
+				log_msg(LOG_ERR, "remote_accept: cannot set event_base");
+			if(event_add(&s->c, &s->tval) != 0)
+				log_msg(LOG_ERR, "remote_accept: cannot add event");
+			return;
+		} else if(r2 == SSL_ERROR_WANT_WRITE) {
+			if(s->shake_state == rc_hs_write) {
+				/* try again later */
+				return;
+			}
+			s->shake_state = rc_hs_write;
+			event_del(&s->c);
+			event_set(&s->c, fd, EV_PERSIST|EV_TIMEOUT|EV_WRITE,
+				remote_control_callback, s);
+			if(event_base_set(xfrd->event_base, &s->c) != 0)
+				log_msg(LOG_ERR, "remote_accept: cannot set event_base");
+			if(event_add(&s->c, &s->tval) != 0)
+				log_msg(LOG_ERR, "remote_accept: cannot add event");
+			return;
+		} else {
+			if(r == 0)
+				log_msg(LOG_ERR, "remote control connection closed prematurely");
+			log_crypto_err("remote control failed ssl");
+			clean_point(rc, s);
 			return;
 		}
-		s->shake_state = rc_none;
 	}
+	s->shake_state = rc_none;
 
 	/* once handshake has completed, check authentication */
-	if (!rc->use_cert) {
-		VERBOSITY(3, (LOG_INFO, "unauthenticated remote control connection"));
-	} else if(SSL_get_verify_result(s->ssl) == X509_V_OK) {
+	if(SSL_get_verify_result(s->ssl) == X509_V_OK) {
 		X509* x = SSL_get_peer_certificate(s->ssl);
 		if(!x) {
 			VERBOSITY(2, (LOG_INFO, "remote control connection "
@@ -2446,9 +1889,7 @@ remote_control_callback(int fd, short event, void* arg)
 	}
 
 	/* if OK start to actually handle the request */
-	res.ssl = s->ssl;
-	res.fd = fd;
-	handle_req(rc, s, &res);
+	handle_req(rc, s, s->ssl);
 
 	if(!s->in_stats_list) {
 		VERBOSITY(3, (LOG_INFO, "remote control operation completed"));
@@ -2472,22 +1913,22 @@ opcode2str(int o)
 
 /** print long number */
 static int
-print_longnum(RES* ssl, char* desc, uint64_t x)
+print_longnum(SSL* ssl, char* desc, uint64_t x)
 {
 	if(x > (uint64_t)1024*1024*1024) {
 		/* more than a Gb */
 		size_t front = (size_t)(x / (uint64_t)1000000);
 		size_t back = (size_t)(x % (uint64_t)1000000);
-		return ssl_printf(ssl, "%s%lu%6.6lu\n", desc, 
-			(unsigned long)front, (unsigned long)back);
+		return ssl_printf(ssl, "%s%u%6.6u\n", desc, 
+			(unsigned)front, (unsigned)back);
 	} else {
-		return ssl_printf(ssl, "%s%lu\n", desc, (unsigned long)x);
+		return ssl_printf(ssl, "%s%u\n", desc, (unsigned)x);
 	}
 }
 
 /* print one block of statistics.  n is name and d is delimiter */
 static void
-print_stat_block(RES* ssl, char* n, char* d, struct nsdst* st)
+print_stat_block(SSL* ssl, char* n, char* d, struct nsdst* st)
 {
 	const char* rcstr[] = {"NOERROR", "FORMERR", "SERVFAIL", "NXDOMAIN",
 	    "NOTIMP", "REFUSED", "YXDOMAIN", "YXRRSET", "NXRRSET", "NOTAUTH",
@@ -2499,8 +1940,8 @@ print_stat_block(RES* ssl, char* n, char* d, struct nsdst* st)
 		if(inhibit_zero && st->qtype[i] == 0 &&
 			strncmp(rrtype_to_string(i), "TYPE", 4) == 0)
 			continue;
-		if(!ssl_printf(ssl, "%s%snum.type.%s=%lu\n", n, d,
-			rrtype_to_string(i), (unsigned long)st->qtype[i]))
+		if(!ssl_printf(ssl, "%s%snum.type.%s=%u\n", n, d,
+			rrtype_to_string(i), (unsigned)st->qtype[i]))
 			return;
 	}
 
@@ -2508,8 +1949,8 @@ print_stat_block(RES* ssl, char* n, char* d, struct nsdst* st)
 	for(i=0; i<6; i++) {
 		if(inhibit_zero && st->opcode[i] == 0 && i != OPCODE_QUERY)
 			continue;
-		if(!ssl_printf(ssl, "%s%snum.opcode.%s=%lu\n", n, d,
-			opcode2str(i), (unsigned long)st->opcode[i]))
+		if(!ssl_printf(ssl, "%s%snum.opcode.%s=%u\n", n, d,
+			opcode2str(i), (unsigned)st->opcode[i]))
 			return;
 	}
 
@@ -2517,8 +1958,8 @@ print_stat_block(RES* ssl, char* n, char* d, struct nsdst* st)
 	for(i=0; i<4; i++) {
 		if(inhibit_zero && st->qclass[i] == 0 && i != CLASS_IN)
 			continue;
-		if(!ssl_printf(ssl, "%s%snum.class.%s=%lu\n", n, d,
-			rrclass_to_string(i), (unsigned long)st->qclass[i]))
+		if(!ssl_printf(ssl, "%s%snum.class.%s=%u\n", n, d,
+			rrclass_to_string(i), (unsigned)st->qclass[i]))
 			return;
 	}
 
@@ -2527,58 +1968,58 @@ print_stat_block(RES* ssl, char* n, char* d, struct nsdst* st)
 		if(inhibit_zero && st->rcode[i] == 0 &&
 			i > RCODE_YXDOMAIN) /* NSD does not use larger */
 			continue;
-		if(!ssl_printf(ssl, "%s%snum.rcode.%s=%lu\n", n, d, rcstr[i],
-			(unsigned long)st->rcode[i]))
+		if(!ssl_printf(ssl, "%s%snum.rcode.%s=%u\n", n, d, rcstr[i],
+			(unsigned)st->rcode[i]))
 			return;
 	}
 
 	/* edns */
-	if(!ssl_printf(ssl, "%s%snum.edns=%lu\n", n, d, (unsigned long)st->edns))
+	if(!ssl_printf(ssl, "%s%snum.edns=%u\n", n, d, (unsigned)st->edns))
 		return;
 
 	/* ednserr */
-	if(!ssl_printf(ssl, "%s%snum.ednserr=%lu\n", n, d,
-		(unsigned long)st->ednserr))
+	if(!ssl_printf(ssl, "%s%snum.ednserr=%u\n", n, d,
+		(unsigned)st->ednserr))
 		return;
 
 	/* qudp */
-	if(!ssl_printf(ssl, "%s%snum.udp=%lu\n", n, d, (unsigned long)st->qudp))
+	if(!ssl_printf(ssl, "%s%snum.udp=%u\n", n, d, (unsigned)st->qudp))
 		return;
 	/* qudp6 */
-	if(!ssl_printf(ssl, "%s%snum.udp6=%lu\n", n, d, (unsigned long)st->qudp6))
+	if(!ssl_printf(ssl, "%s%snum.udp6=%u\n", n, d, (unsigned)st->qudp6))
 		return;
 	/* ctcp */
-	if(!ssl_printf(ssl, "%s%snum.tcp=%lu\n", n, d, (unsigned long)st->ctcp))
+	if(!ssl_printf(ssl, "%s%snum.tcp=%u\n", n, d, (unsigned)st->ctcp))
 		return;
 	/* ctcp6 */
-	if(!ssl_printf(ssl, "%s%snum.tcp6=%lu\n", n, d, (unsigned long)st->ctcp6))
+	if(!ssl_printf(ssl, "%s%snum.tcp6=%u\n", n, d, (unsigned)st->ctcp6))
 		return;
 
 	/* nona */
-	if(!ssl_printf(ssl, "%s%snum.answer_wo_aa=%lu\n", n, d,
-		(unsigned long)st->nona))
+	if(!ssl_printf(ssl, "%s%snum.answer_wo_aa=%u\n", n, d,
+		(unsigned)st->nona))
 		return;
 
 	/* rxerr */
-	if(!ssl_printf(ssl, "%s%snum.rxerr=%lu\n", n, d, (unsigned long)st->rxerr))
+	if(!ssl_printf(ssl, "%s%snum.rxerr=%u\n", n, d, (unsigned)st->rxerr))
 		return;
 
 	/* txerr */
-	if(!ssl_printf(ssl, "%s%snum.txerr=%lu\n", n, d, (unsigned long)st->txerr))
+	if(!ssl_printf(ssl, "%s%snum.txerr=%u\n", n, d, (unsigned)st->txerr))
 		return;
 
 	/* number of requested-axfr, number of times axfr served to clients */
-	if(!ssl_printf(ssl, "%s%snum.raxfr=%lu\n", n, d, (unsigned long)st->raxfr))
+	if(!ssl_printf(ssl, "%s%snum.raxfr=%u\n", n, d, (unsigned)st->raxfr))
 		return;
 
 	/* truncated */
-	if(!ssl_printf(ssl, "%s%snum.truncated=%lu\n", n, d,
-		(unsigned long)st->truncated))
+	if(!ssl_printf(ssl, "%s%snum.truncated=%u\n", n, d,
+		(unsigned)st->truncated))
 		return;
 
 	/* dropped */
-	if(!ssl_printf(ssl, "%s%snum.dropped=%lu\n", n, d,
-		(unsigned long)st->dropped))
+	if(!ssl_printf(ssl, "%s%snum.dropped=%u\n", n, d,
+		(unsigned)st->dropped))
 		return;
 }
 
@@ -2596,7 +2037,7 @@ resize_zonestat(xfrd_state_type* xfrd, size_t num)
 }
 
 static void
-zonestat_print(RES* ssl, xfrd_state_type* xfrd, int clear)
+zonestat_print(SSL* ssl, xfrd_state_type* xfrd, int clear)
 {
 	struct zonestatname* n;
 	struct nsdst stat0, stat1;
@@ -2638,8 +2079,8 @@ zonestat_print(RES* ssl, xfrd_state_type* xfrd, int clear)
 		}
 
 		/* stat0 contains the details that we want to print */
-		if(!ssl_printf(ssl, "%s%snum.queries=%lu\n", name, ".",
-			(unsigned long)(stat0.qudp + stat0.qudp6 + stat0.ctcp +
+		if(!ssl_printf(ssl, "%s%snum.queries=%u\n", name, ".",
+			(unsigned)(stat0.qudp + stat0.qudp6 + stat0.ctcp +
 				stat0.ctcp6)))
 			return;
 		print_stat_block(ssl, name, ".", &stat0);
@@ -2648,7 +2089,7 @@ zonestat_print(RES* ssl, xfrd_state_type* xfrd, int clear)
 #endif /* USE_ZONE_STATS */
 
 static void
-print_stats(RES* ssl, xfrd_state_type* xfrd, struct timeval* now, int clear)
+print_stats(SSL* ssl, xfrd_state_type* xfrd, struct timeval* now, int clear)
 {
 	size_t i;
 	stc_type total = 0;
@@ -2656,22 +2097,22 @@ print_stats(RES* ssl, xfrd_state_type* xfrd, struct timeval* now, int clear)
 
 	/* per CPU and total */
 	for(i=0; i<xfrd->nsd->child_count; i++) {
-		if(!ssl_printf(ssl, "server%d.queries=%lu\n", (int)i,
-			(unsigned long)xfrd->nsd->children[i].query_count))
+		if(!ssl_printf(ssl, "server%d.queries=%u\n", (int)i,
+			(unsigned)xfrd->nsd->children[i].query_count))
 			return;
 		total += xfrd->nsd->children[i].query_count;
 	}
-	if(!ssl_printf(ssl, "num.queries=%lu\n", (unsigned long)total))
+	if(!ssl_printf(ssl, "num.queries=%u\n", (unsigned)total))
 		return;
 
 	/* time elapsed and uptime (in seconds) */
 	timeval_subtract(&uptime, now, &xfrd->nsd->rc->boot_time);
 	timeval_subtract(&elapsed, now, &xfrd->nsd->rc->stats_time);
-	if(!ssl_printf(ssl, "time.boot=%lu.%6.6lu\n",
-		(unsigned long)uptime.tv_sec, (unsigned long)uptime.tv_usec))
+	if(!ssl_printf(ssl, "time.boot=%u.%6.6u\n",
+		(unsigned)uptime.tv_sec, (unsigned)uptime.tv_usec))
 		return;
-	if(!ssl_printf(ssl, "time.elapsed=%lu.%6.6lu\n",
-		(unsigned long)elapsed.tv_sec, (unsigned long)elapsed.tv_usec))
+	if(!ssl_printf(ssl, "time.elapsed=%u.%6.6u\n",
+		(unsigned)elapsed.tv_sec, (unsigned)elapsed.tv_usec))
 		return;
 
 	/* mem info, database on disksize */
@@ -2690,10 +2131,10 @@ print_stats(RES* ssl, xfrd_state_type* xfrd, struct timeval* now, int clear)
 	print_stat_block(ssl, "", "", &xfrd->nsd->st);
 
 	/* zone statistics */
-	if(!ssl_printf(ssl, "zone.master=%lu\n",
-		(unsigned long)(xfrd->notify_zones->count - xfrd->zones->count)))
+	if(!ssl_printf(ssl, "zone.master=%u\n",
+		(unsigned)(xfrd->notify_zones->count - xfrd->zones->count)))
 		return;
-	if(!ssl_printf(ssl, "zone.slave=%lu\n", (unsigned long)xfrd->zones->count))
+	if(!ssl_printf(ssl, "zone.slave=%u\n", (unsigned)xfrd->zones->count))
 		return;
 #ifdef USE_ZONE_STATS
 	zonestat_print(ssl, xfrd, clear); /* per-zone statistics */
@@ -2722,7 +2163,6 @@ clear_stats(xfrd_state_type* xfrd)
 void
 daemon_remote_process_stats(struct daemon_remote* rc)
 {
-	RES res;
 	struct rc_state* s;
 	struct timeval now;
 	if(!rc) return;
@@ -2731,9 +2171,7 @@ daemon_remote_process_stats(struct daemon_remote* rc)
 	/* pop one and give it stats */
 	while((s = rc->stats_list)) {
 		assert(s->in_stats_list);
-		res.ssl = s->ssl;
-		res.fd = s->fd;
-		print_stats(&res, rc->xfrd, &now, (s->in_stats_list == 1));
+		print_stats(s->ssl, rc->xfrd, &now, (s->in_stats_list == 1));
 		if(s->in_stats_list == 1) {
 			clear_stats(rc->xfrd);
 			rc->stats_time = now;
@@ -2745,66 +2183,5 @@ daemon_remote_process_stats(struct daemon_remote* rc)
 	}
 }
 #endif /* BIND8_STATS */
-
-int
-create_local_accept_sock(const char *path, int* noproto)
-{
-#ifdef HAVE_SYS_UN_H
-	int s;
-	struct sockaddr_un usock;
-
-	VERBOSITY(3, (LOG_INFO, "creating unix socket %s", path));
-#ifdef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
-	/* this member exists on BSDs, not Linux */
-	usock.sun_len = (unsigned)sizeof(usock);
-#endif
-	usock.sun_family = AF_LOCAL;
-	/* length is 92-108, 104 on FreeBSD */
-	(void)strlcpy(usock.sun_path, path, sizeof(usock.sun_path));
-
-	if ((s = socket(AF_LOCAL, SOCK_STREAM, 0)) == -1) {
-		log_msg(LOG_ERR, "Cannot create local socket %s (%s)",
-			path, strerror(errno));
-		return -1;
-	}
-
-	if (unlink(path) && errno != ENOENT) {
-		/* The socket already exists and cannot be removed */
-		log_msg(LOG_ERR, "Cannot remove old local socket %s (%s)",
-			path, strerror(errno));
-		goto err;
-	}
-
-	if (bind(s, (struct sockaddr *)&usock,
-		(socklen_t)sizeof(struct sockaddr_un)) == -1) {
-		log_msg(LOG_ERR, "Cannot bind local socket %s (%s)",
-			path, strerror(errno));
-		goto err;
-	}
-
-	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1) {
-		log_msg(LOG_ERR, "Cannot set non-blocking mode");
-		goto err;
-	}
-
-	if (listen(s, TCP_BACKLOG) == -1) {
-		log_msg(LOG_ERR, "can't listen: %s", strerror(errno));
-		goto err;
-	}
-
-	(void)noproto; /*unused*/
-	return s;
-
-err:
-	close(s);
-	return -1;
-
-#else
-	(void)path;
-	log_msg(LOG_ERR, "Local sockets are not supported");
-	*noproto = 1;
-	return -1;
-#endif
-}
 
 #endif /* HAVE_SSL */

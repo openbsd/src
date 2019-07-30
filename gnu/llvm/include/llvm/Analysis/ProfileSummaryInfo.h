@@ -31,7 +31,7 @@ class BasicBlock;
 class BlockFrequencyInfo;
 class CallSite;
 class ProfileSummary;
-/// Analysis providing profile information.
+/// \brief Analysis providing profile information.
 ///
 /// This is an immutable analysis pass that provides ability to query global
 /// (program-level) profile information. The main APIs are isHotCount and
@@ -49,26 +49,22 @@ private:
   void computeThresholds();
   // Count thresholds to answer isHotCount and isColdCount queries.
   Optional<uint64_t> HotCountThreshold, ColdCountThreshold;
-  // True if the working set size of the code is considered huge,
-  // because the number of profile counts required to reach the hot
-  // percentile is above a huge threshold.
-  Optional<bool> HasHugeWorkingSetSize;
 
 public:
   ProfileSummaryInfo(Module &M) : M(M) {}
   ProfileSummaryInfo(ProfileSummaryInfo &&Arg)
       : M(Arg.M), Summary(std::move(Arg.Summary)) {}
 
-  /// Returns true if profile summary is available.
+  /// \brief Returns true if profile summary is available.
   bool hasProfileSummary() { return computeSummary(); }
 
-  /// Returns true if module \c M has sample profile.
+  /// \brief Returns true if module \c M has sample profile.
   bool hasSampleProfile() {
     return hasProfileSummary() &&
            Summary->getKind() == ProfileSummary::PSK_Sample;
   }
 
-  /// Returns true if module \c M has instrumentation profile.
+  /// \brief Returns true if module \c M has instrumentation profile.
   bool hasInstrumentationProfile() {
     return hasProfileSummary() &&
            Summary->getKind() == ProfileSummary::PSK_Instr;
@@ -88,42 +84,26 @@ public:
   /// Returns the profile count for \p CallInst.
   Optional<uint64_t> getProfileCount(const Instruction *CallInst,
                                      BlockFrequencyInfo *BFI);
-  /// Returns true if the working set size of the code is considered huge.
-  bool hasHugeWorkingSetSize();
-  /// Returns true if \p F has hot function entry.
+  /// \brief Returns true if \p F has hot function entry.
   bool isFunctionEntryHot(const Function *F);
-  /// Returns true if \p F contains hot code.
-  bool isFunctionHotInCallGraph(const Function *F, BlockFrequencyInfo &BFI);
-  /// Returns true if \p F has cold function entry.
+  /// Returns true if \p F has hot function entry or hot call edge.
+  bool isFunctionHotInCallGraph(const Function *F);
+  /// \brief Returns true if \p F has cold function entry.
   bool isFunctionEntryCold(const Function *F);
-  /// Returns true if \p F contains only cold code.
-  bool isFunctionColdInCallGraph(const Function *F, BlockFrequencyInfo &BFI);
-  /// Returns true if \p F is a hot function.
+  /// Returns true if \p F has cold function entry or cold call edge.
+  bool isFunctionColdInCallGraph(const Function *F);
+  /// \brief Returns true if \p F is a hot function.
   bool isHotCount(uint64_t C);
-  /// Returns true if count \p C is considered cold.
+  /// \brief Returns true if count \p C is considered cold.
   bool isColdCount(uint64_t C);
-  /// Returns true if BasicBlock \p B is considered hot.
+  /// \brief Returns true if BasicBlock \p B is considered hot.
   bool isHotBB(const BasicBlock *B, BlockFrequencyInfo *BFI);
-  /// Returns true if BasicBlock \p B is considered cold.
+  /// \brief Returns true if BasicBlock \p B is considered cold.
   bool isColdBB(const BasicBlock *B, BlockFrequencyInfo *BFI);
-  /// Returns true if CallSite \p CS is considered hot.
+  /// \brief Returns true if CallSite \p CS is considered hot.
   bool isHotCallSite(const CallSite &CS, BlockFrequencyInfo *BFI);
-  /// Returns true if Callsite \p CS is considered cold.
+  /// \brief Returns true if Callsite \p CS is considered cold.
   bool isColdCallSite(const CallSite &CS, BlockFrequencyInfo *BFI);
-  /// Returns HotCountThreshold if set. Recompute HotCountThreshold
-  /// if not set.
-  uint64_t getOrCompHotCountThreshold();
-  /// Returns ColdCountThreshold if set. Recompute HotCountThreshold
-  /// if not set.
-  uint64_t getOrCompColdCountThreshold();
-  /// Returns HotCountThreshold if set.
-  uint64_t getHotCountThreshold() {
-    return HotCountThreshold ? HotCountThreshold.getValue() : 0;
-  }
-  /// Returns ColdCountThreshold if set.
-  uint64_t getColdCountThreshold() {
-    return ColdCountThreshold ? ColdCountThreshold.getValue() : 0;
-  }
 };
 
 /// An analysis pass based on legacy pass manager to deliver ProfileSummaryInfo.
@@ -158,7 +138,7 @@ private:
   static AnalysisKey Key;
 };
 
-/// Printer pass that uses \c ProfileSummaryAnalysis.
+/// \brief Printer pass that uses \c ProfileSummaryAnalysis.
 class ProfileSummaryPrinterPass
     : public PassInfoMixin<ProfileSummaryPrinterPass> {
   raw_ostream &OS;

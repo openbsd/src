@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.151 2019/05/13 19:21:31 bluhm Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.142 2017/12/30 23:08:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -132,6 +132,7 @@ extern char *syscallnames[];
 struct emul emul_elf = {
 	"native",
 	NULL,
+	sendsig,
 	SYS_syscall,
 	SYS_MAXSYSCALL,
 	sysent,
@@ -147,7 +148,8 @@ struct emul emul_elf = {
 	coredump_elf,
 	sigcode,
 	esigcode,
-	sigcoderet
+	sigcoderet,
+	EMUL_ENABLED | EMUL_NATIVE,
 };
 
 /*
@@ -332,7 +334,6 @@ elf_load_file(struct proc *p, char *path, struct exec_package *epp,
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, path, p);
 	nd.ni_pledge = PLEDGE_RPATH;
-	nd.ni_unveil = UNVEIL_READ;
 	if ((error = namei(&nd)) != 0) {
 		return (error);
 	}
@@ -365,11 +366,8 @@ elf_load_file(struct proc *p, char *path, struct exec_package *epp,
 
 	for (i = 0; i < eh.e_phnum; i++) {
 		if (ph[i].p_type == PT_LOAD) {
-			if (ph[i].p_filesz > ph[i].p_memsz ||
-			    ph[i].p_memsz == 0) {
-				error = EINVAL;
+			if (ph[i].p_filesz > ph[i].p_memsz)
 				goto bad1;
-			}
 			loadmap[idx].vaddr = trunc_page(ph[i].p_vaddr);
 			loadmap[idx].memsz = round_page (ph[i].p_vaddr +
 			    ph[i].p_memsz - loadmap[idx].vaddr);
@@ -564,8 +562,7 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 			if (interp[pp->p_filesz - 1] != '\0')
 				goto bad;
 		} else if (pp->p_type == PT_LOAD) {
-			if (pp->p_filesz > pp->p_memsz ||
-			    pp->p_memsz == 0) {
+			if (pp->p_filesz > pp->p_memsz) {
 				error = EINVAL;
 				goto bad;
 			}
@@ -852,6 +849,7 @@ int
 elf_os_pt_note(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
     char *os_name, size_t name_size, size_t desc_size)
 {
+	char pathbuf[MAXPATHLEN];
 	Elf_Phdr *hph, *ph;
 	Elf_Note *np = NULL;
 	size_t phsize;
@@ -865,6 +863,18 @@ elf_os_pt_note(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
 
 	for (ph = hph;  ph < &hph[eh->e_phnum]; ph++) {
 		if (ph->p_type == PT_OPENBSD_WXNEEDED) {
+			int wxallowed = (epp->ep_vp->v_mount &&
+			    (epp->ep_vp->v_mount->mnt_flag & MNT_WXALLOWED));
+			
+			if (!wxallowed) {
+				error = copyinstr(epp->ep_name, &pathbuf,
+				    sizeof(pathbuf), NULL);
+				log(LOG_NOTICE,
+				    "%s(%d): W^X binary outside wxallowed mountpoint\n",
+				    error ? "" : pathbuf, p->p_p->ps_pid);
+				error = EACCES;
+				goto out1;
+			}
 			epp->ep_flags |= EXEC_WXNEEDED;
 			break;
 		}
@@ -944,7 +954,7 @@ int	coredump_note_elf(struct proc *, void *, size_t *);
 int	coredump_writenote_elf(struct proc *, void *, Elf_Note *,
 	    const char *, void *);
 
-#define	ELFROUNDSIZE	sizeof(Elf_Word)
+#define	ELFROUNDSIZE	4	/* XXX Should it be sizeof(Elf_Word)? */
 #define	elfround(x)	roundup((x), ELFROUNDSIZE)
 
 int
@@ -1022,36 +1032,6 @@ out:
 }
 
 
-/*
- * Normally we lay out core files like this:
- *	[ELF Header] [Program headers] [Notes] [data for PT_LOAD segments]
- *
- * However, if there's >= 65535 segments then it overflows the field
- * in the ELF header, so the standard specifies putting a magic
- * number there and saving the real count in the .sh_info field of
- * the first *section* header...which requires generating a section
- * header.  To avoid confusing tools, we include an .shstrtab section
- * as well so all the indexes look valid.  So in this case we lay
- * out the core file like this:
- *	[ELF Header] [Section Headers] [.shstrtab] [Program headers] \
- *	[Notes] [data for PT_LOAD segments]
- *
- * The 'shstrtab' structure below is data for the second of the two
- * section headers, plus the .shstrtab itself, in one const buffer.
- */
-static const struct {
-    Elf_Shdr	shdr;
-    char	shstrtab[sizeof(ELF_SHSTRTAB) + 1];
-} shstrtab = {
-    .shdr = {
-	.sh_name = 1,			/* offset in .shstrtab below */
-	.sh_type = SHT_STRTAB,
-	.sh_offset = sizeof(Elf_Ehdr) + 2*sizeof(Elf_Shdr),
-	.sh_size = sizeof(ELF_SHSTRTAB) + 1,
-	.sh_addralign = 1,
-    },
-    .shstrtab = "\0" ELF_SHSTRTAB,
-};
 
 int
 coredump_setup_elf(int segment_count, void *cookie)
@@ -1083,26 +1063,15 @@ coredump_setup_elf(int segment_count, void *cookie)
 	ehdr.e_machine = ELF_TARG_MACH;
 	ehdr.e_version = EV_CURRENT;
 	ehdr.e_entry = 0;
+	ehdr.e_phoff = sizeof(ehdr);
+	ehdr.e_shoff = 0;
 	ehdr.e_flags = 0;
 	ehdr.e_ehsize = sizeof(ehdr);
 	ehdr.e_phentsize = sizeof(Elf_Phdr);
-
-	if (ws->npsections < PN_XNUM) {
-		ehdr.e_phoff = sizeof(ehdr);
-		ehdr.e_shoff = 0;
-		ehdr.e_phnum = ws->npsections;
-		ehdr.e_shentsize = 0;
-		ehdr.e_shnum = 0;
-		ehdr.e_shstrndx = 0;
-	} else {
-		/* too many segments, use extension setup */
-		ehdr.e_shoff = sizeof(ehdr);
-		ehdr.e_phnum = PN_XNUM;
-		ehdr.e_shentsize = sizeof(Elf_Shdr);
-		ehdr.e_shnum = 2;
-		ehdr.e_shstrndx = 1;
-		ehdr.e_phoff = shstrtab.shdr.sh_offset + shstrtab.shdr.sh_size;
-	}
+	ehdr.e_phnum = ws->npsections;
+	ehdr.e_shentsize = 0;
+	ehdr.e_shnum = 0;
+	ehdr.e_shstrndx = 0;
 
 	/* Write out the ELF header. */
 	error = coredump_write(ws->iocookie, UIO_SYSSPACE, &ehdr, sizeof(ehdr));
@@ -1110,32 +1079,14 @@ coredump_setup_elf(int segment_count, void *cookie)
 		return error;
 
 	/*
-	 * If an section header is needed to store extension info, write
-	 * it out after the ELF header and before the program header.
-	 */
-	if (ehdr.e_shnum != 0) {
-		Elf_Shdr shdr = { .sh_info = ws->npsections };
-		error = coredump_write(ws->iocookie, UIO_SYSSPACE, &shdr,
-		    sizeof shdr);
-		if (error)
-			return error;
-		error = coredump_write(ws->iocookie, UIO_SYSSPACE, &shstrtab,
-		    sizeof(shstrtab.shdr) + sizeof(shstrtab.shstrtab));
-		if (error)
-			return error;
-	}
-
-	/*
 	 * Allocate the segment header array and setup to collect
 	 * the section sizes and offsets
 	 */
 	ws->psections = mallocarray(ws->npsections, sizeof(Elf_Phdr),
-	    M_TEMP, M_WAITOK|M_CANFAIL|M_ZERO);
-	if (ws->psections == NULL)
-		return ENOMEM;
+	    M_TEMP, M_WAITOK|M_ZERO);
 	ws->psectionslen = ws->npsections * sizeof(Elf_Phdr);
 
-	ws->notestart = ehdr.e_phoff + ws->psectionslen;
+	ws->notestart = sizeof(ehdr) + ws->psectionslen;
 	ws->secstart = ws->notestart + ws->notesize;
 	ws->secoff = ws->secstart;
 
@@ -1211,7 +1162,7 @@ coredump_notes_elf(struct proc *p, void *iocookie, size_t *sizep)
 		cpi.cpi_signo = p->p_sisig;
 		cpi.cpi_sigcode = p->p_sicode;
 
-		cpi.cpi_sigpend = p->p_siglist | pr->ps_siglist;
+		cpi.cpi_sigpend = p->p_siglist;
 		cpi.cpi_sigmask = p->p_sigmask;
 		cpi.cpi_sigignore = pr->ps_sigacts->ps_sigignore;
 		cpi.cpi_sigcatch = pr->ps_sigacts->ps_sigcatch;

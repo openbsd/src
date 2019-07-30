@@ -4,8 +4,7 @@ use strict;
 use warnings;
 use File::Basename;
 use Test::More 0.88;
-use lib 't';
-use Util qw[
+use t::Util qw[
     tmpfile monkey_patch dir_list clear_socket_source set_socket_source
     $CRLF
 ];

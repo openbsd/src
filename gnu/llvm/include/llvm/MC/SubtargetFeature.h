@@ -115,9 +115,6 @@ public:
                                ArrayRef<SubtargetFeatureKV> CPUTable,
                                ArrayRef<SubtargetFeatureKV> FeatureTable);
 
-  /// Returns the vector of individual subtarget features.
-  const std::vector<std::string> &getFeatures() const { return Features; }
-
   /// Prints feature string.
   void print(raw_ostream &OS) const;
 

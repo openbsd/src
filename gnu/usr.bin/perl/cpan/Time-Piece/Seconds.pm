@@ -1,7 +1,7 @@
 package Time::Seconds;
 use strict;
 
-our $VERSION = '1.3204';
+our $VERSION = '1.31';
 
 use Exporter 5.57 'import';
 
@@ -145,13 +145,6 @@ sub years {
     $s->days / 365.24225;
 }
 
-sub _counted_objects {
-    my ($n, $counted) = @_;
-    my $number = sprintf("%d", $n); # does a "floor"
-    $counted .= 's' if 1 != $number;
-    return ($number, $counted);
-}
-
 sub pretty {
     my $s = shift;
     my $str = "";
@@ -162,19 +155,19 @@ sub pretty {
     if ($s >= ONE_MINUTE) {
         if ($s >= ONE_HOUR) {
             if ($s >= ONE_DAY) {
-                my ($days, $sd) = _counted_objects($s->days, "day");
-                $str .= "$days $sd, ";
+                my $days = sprintf("%d", $s->days); # does a "floor"
+                $str .= $days . " days, ";
                 $s -= ($days * ONE_DAY);
             }
-            my ($hours, $sh) = _counted_objects($s->hours, "hour");
-            $str .= "$hours $sh, ";
+            my $hours = sprintf("%d", $s->hours);
+            $str .= $hours . " hours, ";
             $s -= ($hours * ONE_HOUR);
         }
-        my ($mins, $sm) = _counted_objects($s->minutes, "minute");
-        $str .= "$mins $sm, ";
+        my $mins = sprintf("%d", $s->minutes);
+        $str .= $mins . " minutes, ";
         $s -= ($mins * ONE_MINUTE);
     }
-    $str .= join " ", _counted_objects($s->seconds, "second");
+    $str .= $s->seconds . " seconds";
     return $str;
 }
 

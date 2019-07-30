@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.188 2019/06/01 14:11:18 mpi Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.175 2017/10/12 09:14:16 mpi Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ struct ctlname {
 #define	KERN_HOSTNAME		10	/* string: hostname */
 #define	KERN_HOSTID		11	/* int: host identifier */
 #define	KERN_CLOCKRATE		12	/* struct: struct clockinfo */
-/* was KERN_DNSJACKPORT		13	*/
+#define	KERN_DNSJACKPORT	13	/* hijack dns sockets */
 /* was KERN_PROC		14	*/
 /* was KERN_FILE		15	*/
 #define	KERN_PROF		16	/* node: kernel profiling info */
@@ -153,14 +153,14 @@ struct ctlname {
 #define	KERN_STACKGAPRANDOM	50	/* int: stackgap_random */
 #define	KERN_SYSVIPC_INFO	51	/* struct: SysV sem/shm/msg info */
 #define KERN_ALLOWKMEM		52	/* int: allowkmem */
-#define KERN_WITNESSWATCH	53	/* int: witnesswatch */
+/* was KERN_CRYPTODEVALLOWSOFT	53	*/
 #define KERN_SPLASSERT		54	/* int: splassert */
 #define KERN_PROC_ARGS		55	/* node: proc args and env */
 #define	KERN_NFILES		56	/* int: number of open files */
 #define	KERN_TTYCOUNT		57	/* int: number of tty devices */
 #define KERN_NUMVNODES		58	/* int: number of vnodes in use */
 #define	KERN_MBSTAT		59	/* struct: mbuf statistics */
-#define	KERN_WITNESS		60	/* node: witness */
+/* was KERN_USERASYMCRYPTO	60	*/
 #define	KERN_SEMINFO		61	/* struct: SysV struct seminfo */
 #define	KERN_SHMINFO		62	/* struct: SysV struct shminfo */
 #define KERN_INTRCNT		63	/* node: interrupt counters */
@@ -184,10 +184,7 @@ struct ctlname {
 #define	KERN_GLOBAL_PTRACE	81	/* allow ptrace globally */
 #define	KERN_CONSBUFSIZE	82	/* int: console message buffer size */
 #define	KERN_CONSBUF		83	/* console message buffer */
-#define	KERN_AUDIO		84	/* struct: audio properties */
-#define	KERN_CPUSTATS		85	/* struct: cpu statistics */
-#define	KERN_PFSTATUS		86	/* struct: pf status and stats */
-#define	KERN_MAXID		87	/* number of valid kern ids */
+#define	KERN_MAXID		84	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -203,7 +200,7 @@ struct ctlname {
 	{ "hostname", CTLTYPE_STRING }, \
 	{ "hostid", CTLTYPE_INT }, \
 	{ "clockrate", CTLTYPE_STRUCT }, \
-	{ "gap", 0 }, \
+	{ "dnsjackport", CTLTYPE_INT }, \
 	{ "gap", 0 }, \
 	{ "gap", 0 }, \
 	{ "profiling", CTLTYPE_NODE }, \
@@ -243,14 +240,14 @@ struct ctlname {
 	{ "stackgap_random", CTLTYPE_INT }, \
 	{ "sysvipc_info", CTLTYPE_INT }, \
 	{ "allowkmem", CTLTYPE_INT }, \
-	{ "witnesswatch", CTLTYPE_INT }, \
+	{ "gap", 0 }, \
 	{ "splassert", CTLTYPE_INT }, \
 	{ "procargs", CTLTYPE_NODE }, \
 	{ "nfiles", CTLTYPE_INT }, \
 	{ "ttycount", CTLTYPE_INT }, \
 	{ "numvnodes", CTLTYPE_INT }, \
 	{ "mbstat", CTLTYPE_STRUCT }, \
-	{ "witness", CTLTYPE_NODE }, \
+	{ "gap", 0 }, \
 	{ "seminfo", CTLTYPE_STRUCT }, \
 	{ "shminfo", CTLTYPE_STRUCT }, \
 	{ "intrcnt", CTLTYPE_NODE }, \
@@ -272,11 +269,6 @@ struct ctlname {
 	{ "proc_nobroadcastkill", CTLTYPE_NODE }, \
 	{ "proc_vmmap", CTLTYPE_NODE }, \
 	{ "global_ptrace", CTLTYPE_INT }, \
-	{ "gap", 0 }, \
-	{ "gap", 0 }, \
-	{ "audio", CTLTYPE_STRUCT }, \
-	{ "cpustats", CTLTYPE_STRUCT }, \
-	{ "pfstatus", CTLTYPE_STRUCT }, \
 }
 
 /*
@@ -306,30 +298,6 @@ struct ctlname {
 #define KERN_PROC_NARGV		2
 #define KERN_PROC_ENV		3
 #define KERN_PROC_NENV		4
-
-/*
- * KERN_AUDIO
- */
-#define KERN_AUDIO_RECORD	1
-#define KERN_AUDIO_MAXID	2
-
-#define CTL_KERN_AUDIO_NAMES { \
-	{ 0, 0 }, \
-	{ "record", CTLTYPE_INT }, \
-}
-
-/*
- * KERN_WITNESS
- */
-#define	KERN_WITNESS_WATCH	1	/* int: operating mode */
-#define	KERN_WITNESS_LOCKTRACE	2	/* int: stack trace saving mode */
-#define	KERN_WITNESS_MAXID	3
-
-#define	CTL_KERN_WITNESS_NAMES { \
-	{ 0, 0 }, \
-	{ "watch", CTLTYPE_INT }, \
-	{ "locktrace", CTLTYPE_INT }, \
-}
 
 /*
  * KERN_PROC subtype ops return arrays of relatively fixed size
@@ -595,7 +563,7 @@ do {									\
 		(kp)->p_tracep = PTRTOINT64((pr)->ps_tracevp);		\
 	(kp)->p_traceflag = (pr)->ps_traceflag;				\
 									\
-	(kp)->p_siglist = (p)->p_siglist | (pr)->ps_siglist;		\
+	(kp)->p_siglist = (p)->p_siglist;				\
 	(kp)->p_sigmask = (p)->p_sigmask;				\
 	(kp)->p_sigignore = (sa) ? (sa)->ps_sigignore : 0;		\
 	(kp)->p_sigcatch = (sa) ? (sa)->ps_sigcatch : 0;		\
@@ -859,7 +827,7 @@ struct kinfo_file {
  */
 #define	HW_MACHINE		 1	/* string: machine class */
 #define	HW_MODEL		 2	/* string: specific machine model */
-#define	HW_NCPU			 3	/* int: number of configured cpus */
+#define	HW_NCPU			 3	/* int: number of cpus being used */
 #define	HW_BYTEORDER		 4	/* int: machine byte order */
 #define	HW_PHYSMEM		 5	/* int: total memory */
 #define	HW_USERMEM		 6	/* int: non-kernel memory */
@@ -877,12 +845,10 @@ struct kinfo_file {
 #define	HW_UUID			18	/* string: universal unique id */
 #define	HW_PHYSMEM64		19	/* quad: total memory */
 #define	HW_USERMEM64		20	/* quad: non-kernel memory */
-#define	HW_NCPUFOUND		21	/* int: number of cpus found */
+#define	HW_NCPUFOUND		21	/* int: number of cpus found*/
 #define	HW_ALLOWPOWERDOWN	22	/* allow power button shutdown */
 #define	HW_PERFPOLICY		23	/* set performance policy */
-#define	HW_SMT			24	/* int: enable SMT/HT/CMT */
-#define	HW_NCPUONLINE		25	/* int: number of cpus being used */
-#define	HW_MAXID		26	/* number of valid hw ids */
+#define	HW_MAXID		24	/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -909,8 +875,6 @@ struct kinfo_file {
 	{ "ncpufound", CTLTYPE_INT }, \
 	{ "allowpowerdown", CTLTYPE_INT }, \
 	{ "perfpolicy", CTLTYPE_STRING }, \
-	{ "smt", CTLTYPE_INT }, \
-	{ "ncpuonline", CTLTYPE_INT }, \
 }
 
 /*
@@ -1016,7 +980,6 @@ int bpf_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int pflow_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int pipex_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int mpls_sysctl(int *, u_int, void *, size_t *, void *, size_t);
-int pf_sysctl(void *, size_t *, void *, size_t);
 
 #else	/* !_KERNEL */
 

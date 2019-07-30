@@ -836,7 +836,7 @@ const char* sldns_get_errorstr_parse(int e)
 }
 
 /* Strip whitespace from the start and the end of <line>.  */
-char *
+static char *
 sldns_strip_ws(char *line)
 {
         char *s = line, *e;
@@ -906,7 +906,7 @@ int sldns_fp2wire_rr_buf(FILE* in, uint8_t* rr, size_t* len, size_t* dname_len,
 		*dname_len = 0;
 		return LDNS_WIREPARSE_ERR_INCLUDE;
 	} else {
-		int r = sldns_str2wire_rr_buf(line, rr, len, dname_len,
+		return sldns_str2wire_rr_buf(line, rr, len, dname_len,
 			parse_state?parse_state->default_ttl:0,
 			(parse_state&&parse_state->origin_len)?
 				parse_state->origin:NULL,
@@ -914,13 +914,6 @@ int sldns_fp2wire_rr_buf(FILE* in, uint8_t* rr, size_t* len, size_t* dname_len,
 			(parse_state&&parse_state->prev_rr_len)?
 				parse_state->prev_rr:NULL,
 			parse_state?parse_state->prev_rr_len:0);
-		if(r == LDNS_WIREPARSE_ERR_OK && (*dname_len) != 0 &&
-			parse_state &&
-			(*dname_len) <= sizeof(parse_state->prev_rr)) {
-			memmove(parse_state->prev_rr, rr, *dname_len);
-			parse_state->prev_rr_len = (*dname_len);
-		}
-		return r;
 	}
 	return LDNS_WIREPARSE_ERR_OK;
 }
@@ -1225,17 +1218,6 @@ int sldns_str2wire_b32_ext_buf(const char* str, uint8_t* rd, size_t* len)
 	return LDNS_WIREPARSE_ERR_OK;
 }
 
-/** see if the string ends, or ends in whitespace */
-static int
-sldns_is_last_of_string(const char* str)
-{
-	if(*str == 0) return 1;
-	while(isspace((unsigned char)*str))
-		str++;
-	if(*str == 0) return 1;
-	return 0;
-}
-
 int sldns_str2wire_hex_buf(const char* str, uint8_t* rd, size_t* len)
 {
 	const char* s = str;
@@ -1245,7 +1227,7 @@ int sldns_str2wire_hex_buf(const char* str, uint8_t* rd, size_t* len)
 			s++;
 			continue;
 		}
-		if(dlen == 0 && *s == '0' && sldns_is_last_of_string(s+1)) {
+		if(dlen == 0 && *s == '0' && *(s+1) == 0) {
 			*len = 0;
 			return LDNS_WIREPARSE_ERR_OK;
 		}

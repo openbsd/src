@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.28 2019/04/23 15:37:58 visa Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.27 2017/05/19 00:50:24 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -79,8 +79,7 @@ sigcode:
 	syscall
 	.globl  _C_LABEL(sigcoderet)
 _C_LABEL(sigcoderet):
-	LI	v0, SYS_exit		# just in case sigreturn fails
-	syscall
+	break	0			# just in case sigreturn fails
 	.globl	esigcode
 esigcode:
 

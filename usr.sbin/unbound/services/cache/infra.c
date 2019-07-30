@@ -41,8 +41,6 @@
 #include "config.h"
 #include "sldns/rrdef.h"
 #include "sldns/str2wire.h"
-#include "sldns/sbuffer.h"
-#include "sldns/wire2str.h"
 #include "services/cache/infra.h"
 #include "util/storage/slabhash.h"
 #include "util/storage/lookup3.h"
@@ -217,18 +215,6 @@ static int infra_ratelimit_cfg_insert(struct infra_cache* infra,
 	return 1;
 }
 
-/** setup domain limits tree (0 on failure) */
-static int
-setup_domain_limits(struct infra_cache* infra, struct config_file* cfg)
-{
-	name_tree_init(&infra->domain_limits);
-	if(!infra_ratelimit_cfg_insert(infra, cfg)) {
-		return 0;
-	}
-	name_tree_init_parents(&infra->domain_limits);
-	return 1;
-}
-
 struct infra_cache* 
 infra_create(struct config_file* cfg)
 {
@@ -244,19 +230,23 @@ infra_create(struct config_file* cfg)
 		return NULL;
 	}
 	infra->host_ttl = cfg->host_ttl;
+	name_tree_init(&infra->domain_limits);
 	infra_dp_ratelimit = cfg->ratelimit;
-	infra->domain_rates = slabhash_create(cfg->ratelimit_slabs,
-		INFRA_HOST_STARTSIZE, cfg->ratelimit_size,
-		&rate_sizefunc, &rate_compfunc, &rate_delkeyfunc,
-		&rate_deldatafunc, NULL);
-	if(!infra->domain_rates) {
-		infra_delete(infra);
-		return NULL;
-	}
-	/* insert config data into ratelimits */
-	if(!setup_domain_limits(infra, cfg)) {
-		infra_delete(infra);
-		return NULL;
+	if(cfg->ratelimit != 0) {
+		infra->domain_rates = slabhash_create(cfg->ratelimit_slabs,
+			INFRA_HOST_STARTSIZE, cfg->ratelimit_size,
+			&rate_sizefunc, &rate_compfunc, &rate_delkeyfunc,
+			&rate_deldatafunc, NULL);
+		if(!infra->domain_rates) {
+			infra_delete(infra);
+			return NULL;
+		}
+		/* insert config data into ratelimits */
+		if(!infra_ratelimit_cfg_insert(infra, cfg)) {
+			infra_delete(infra);
+			return NULL;
+		}
+		name_tree_init_parents(&infra->domain_limits);
 	}
 	infra_ip_ratelimit = cfg->ip_ratelimit;
 	infra->client_ip_rates = slabhash_create(cfg->ip_ratelimit_slabs,
@@ -297,28 +287,12 @@ infra_adjust(struct infra_cache* infra, struct config_file* cfg)
 	if(!infra)
 		return infra_create(cfg);
 	infra->host_ttl = cfg->host_ttl;
-	infra_dp_ratelimit = cfg->ratelimit;
-	infra_ip_ratelimit = cfg->ip_ratelimit;
 	maxmem = cfg->infra_cache_numhosts * (sizeof(struct infra_key)+
 		sizeof(struct infra_data)+INFRA_BYTES_NAME);
-	/* divide cachesize by slabs and multiply by slabs, because if the
-	 * cachesize is not an even multiple of slabs, that is the resulting
-	 * size of the slabhash */
-	if(!slabhash_is_size(infra->hosts, maxmem, cfg->infra_cache_slabs) ||
-	   !slabhash_is_size(infra->domain_rates, cfg->ratelimit_size,
-	   	cfg->ratelimit_slabs) ||
-	   !slabhash_is_size(infra->client_ip_rates, cfg->ip_ratelimit_size,
-	   	cfg->ip_ratelimit_slabs)) {
+	if(maxmem != slabhash_get_size(infra->hosts) ||
+		cfg->infra_cache_slabs != infra->hosts->size) {
 		infra_delete(infra);
 		infra = infra_create(cfg);
-	} else {
-		/* reapply domain limits */
-		traverse_postorder(&infra->domain_limits, domain_limit_free,
-			NULL);
-		if(!setup_domain_limits(infra, cfg)) {
-			infra_delete(infra);
-			return NULL;
-		}
 	}
 	return infra;
 }
@@ -810,7 +784,7 @@ static struct lruhash_entry* infra_find_ratedata(struct infra_cache* infra,
 }
 
 /** find data item in array for ip addresses */
-static struct lruhash_entry* infra_find_ip_ratedata(struct infra_cache* infra,
+struct lruhash_entry* infra_find_ip_ratedata(struct infra_cache* infra,
 	struct comm_reply* repinfo, int wr)
 {
 	struct ip_rate_key key;
@@ -909,8 +883,7 @@ int infra_rate_max(void* data, time_t now)
 }
 
 int infra_ratelimit_inc(struct infra_cache* infra, uint8_t* name,
-	size_t namelen, time_t timenow, struct query_info* qinfo,
-	struct comm_reply* replylist)
+	size_t namelen, time_t timenow)
 {
 	int lim, max;
 	struct lruhash_entry* entry;
@@ -933,19 +906,9 @@ int infra_ratelimit_inc(struct infra_cache* infra, uint8_t* name,
 		lock_rw_unlock(&entry->lock);
 
 		if(premax < lim && max >= lim) {
-			char buf[257], qnm[257], ts[12], cs[12], ip[128];
+			char buf[257];
 			dname_str(name, buf);
-			dname_str(qinfo->qname, qnm);
-			sldns_wire2str_type_buf(qinfo->qtype, ts, sizeof(ts));
-			sldns_wire2str_class_buf(qinfo->qclass, cs, sizeof(cs));
-			ip[0]=0;
-			if(replylist) {
-				addr_to_str((struct sockaddr_storage *)&replylist->addr,
-					replylist->addrlen, ip, sizeof(ip));
-				verbose(VERB_OPS, "ratelimit exceeded %s %d query %s %s %s from %s", buf, lim, qnm, cs, ts, ip);
-			} else {
-				verbose(VERB_OPS, "ratelimit exceeded %s %d query %s %s %s", buf, lim, qnm, cs, ts);
-			}
+			verbose(VERB_OPS, "ratelimit exceeded %s %d", buf, lim);
 		}
 		return (max < lim);
 	}
@@ -1004,7 +967,7 @@ infra_get_mem(struct infra_cache* infra)
 }
 
 int infra_ip_ratelimit_inc(struct infra_cache* infra,
-  struct comm_reply* repinfo, time_t timenow, struct sldns_buffer* buffer)
+  struct comm_reply* repinfo, time_t timenow)
 {
 	int max;
 	struct lruhash_entry* entry;
@@ -1023,28 +986,11 @@ int infra_ip_ratelimit_inc(struct infra_cache* infra,
 		lock_rw_unlock(&entry->lock);
 
 		if(premax < infra_ip_ratelimit && max >= infra_ip_ratelimit) {
-			char client_ip[128], qnm[LDNS_MAX_DOMAINLEN+1+12+12];
+			char client_ip[128];
 			addr_to_str((struct sockaddr_storage *)&repinfo->addr,
 				repinfo->addrlen, client_ip, sizeof(client_ip));
-			qnm[0]=0;
-			if(sldns_buffer_limit(buffer)>LDNS_HEADER_SIZE &&
-				LDNS_QDCOUNT(sldns_buffer_begin(buffer))!=0) {
-				(void)sldns_wire2str_rrquestion_buf(
-					sldns_buffer_at(buffer, LDNS_HEADER_SIZE),
-					sldns_buffer_limit(buffer)-LDNS_HEADER_SIZE,
-					qnm, sizeof(qnm));
-				if(strlen(qnm)>0 && qnm[strlen(qnm)-1]=='\n')
-					qnm[strlen(qnm)-1] = 0; /*remove newline*/
-				if(strchr(qnm, '\t'))
-					*strchr(qnm, '\t') = ' ';
-				if(strchr(qnm, '\t'))
-					*strchr(qnm, '\t') = ' ';
-				verbose(VERB_OPS, "ip_ratelimit exceeded %s %d %s",
-					client_ip, infra_ip_ratelimit, qnm);
-			} else {
-				verbose(VERB_OPS, "ip_ratelimit exceeded %s %d (no query name)",
-					client_ip, infra_ip_ratelimit);
-			}
+			verbose(VERB_OPS, "ratelimit exceeded %s %d", client_ip,
+				infra_ip_ratelimit);
 		}
 		return (max <= infra_ip_ratelimit);
 	}

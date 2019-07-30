@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.146 2019/06/01 14:11:17 mpi Exp $	*/
+/*	$OpenBSD: tty.c,v 1.137 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -237,7 +237,7 @@ ttyinput(int c, struct tty *tp)
 	int i, error;
 	int s;
 
-	enqueue_randomness(tp->t_dev << 8 | c);
+	add_tty_randomness(tp->t_dev << 8 | c);
 	/*
 	 * If receiver is not enabled, drop it.
 	 */
@@ -792,13 +792,12 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 			/* ensure user can open the real console */
 			NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console", p);
 			nid.ni_pledge = PLEDGE_RPATH | PLEDGE_WPATH;
-			nid.ni_unveil = UNVEIL_READ | UNVEIL_WRITE;
 			error = namei(&nid);
 			if (error)
 				return (error);
-			vn_lock(nid.ni_vp, LK_EXCLUSIVE | LK_RETRY);
+			vn_lock(nid.ni_vp, LK_EXCLUSIVE | LK_RETRY, p);
 			error = VOP_ACCESS(nid.ni_vp, VREAD, p->p_ucred, p);
-			VOP_UNLOCK(nid.ni_vp);
+			VOP_UNLOCK(nid.ni_vp, p);
 			vrele(nid.ni_vp);
 			if (error)
 				return (error);
@@ -960,6 +959,9 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 			ttstart(tp);
 		}
 		splx(s);
+		break;
+	case TIOCSTI:			/* simulate terminal input */
+		return (EIO);
 		break;
 	case TIOCSTOP:			/* stop output, like ^S */
 		s = spltty();
@@ -1610,10 +1612,10 @@ read:
 		/*
 		 * Give user character.
 		 */
-		error = ureadc(c, uio);
+ 		error = ureadc(c, uio);
 		if (error)
 			break;
-		if (uio->uio_resid == 0)
+ 		if (uio->uio_resid == 0)
 			break;
 		/*
 		 * In canonical mode check for a "break character"
@@ -1676,11 +1678,11 @@ ttycheckoutq(struct tty *tp, int wait)
 
 	hiwat = tp->t_hiwat;
 	s = spltty();
-	oldsig = wait ? SIGPENDING(curproc) : 0;
+	oldsig = wait ? curproc->p_siglist : 0;
 	if (tp->t_outq.c_cc > hiwat + TTHIWATMINSPACE)
 		while (tp->t_outq.c_cc > hiwat) {
 			ttstart(tp);
-			if (wait == 0 || SIGPENDING(curproc) != oldsig) {
+			if (wait == 0 || curproc->p_siglist != oldsig) {
 				splx(s);
 				return (0);
 			}

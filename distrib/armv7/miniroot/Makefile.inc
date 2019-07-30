@@ -1,30 +1,55 @@
-#	$OpenBSD: Makefile.inc,v 1.23 2019/05/03 20:03:58 deraadt Exp $
 
-FS=		miniroot-${BOARD}-${OSrev}.fs
-FSSIZE=		36864	# ffs+msdos, actually
-MOUNT_POINT=	/mnt
+REV=	${OSrev}
 
+IMAGE=	miniroot-${BOARD}-${REV}.fs
 MKUBOOT?=	mkuboot
 
+MOUNT_POINT=	/mnt
+
+VND?=		vnd0
+VND_DEV=	/dev/${VND}a
+VND_CDEV=	/dev/${VND}c
+VND_IDEV=	/dev/${VND}i
+VND_RDEV=	/dev/r${VND}a
+VND_CRDEV=	/dev/r${VND}c
+VND_RIDEV=	/dev/r${VND}i
+PID!=		echo $$$$
+
 DISKTYPE=	miniroot
+NBLKS=		36864
 MSDOSSTART=	2048
 MSDOSSIZE=	4096
 FFSSTART!=	expr ${MSDOSSTART} + ${MSDOSSIZE}
 
+FS?=		msdos
+PART_ID?=C
+
+NEWFS_ARGS_msdos=-L boot
+MOUNT_ARGS_msdos=-o-l
+
 PDTB=		/usr/local/share/dtb/arm
 PUBOOT=		/usr/local/share/u-boot
 
-all: ${FS}
+cleandir: clean
+clean:
+	rm -f ${IMAGE}
 
-${FS}: bsd.rd
-	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
-	vnconfig -v -t ${DISKTYPE} ${FS} > vnd
-	echo 'u\ne 0\nC\nn\n${MSDOSSTART}\n${MSDOSSIZE}\ne 3\nA6\nn\n${FFSSTART}\n*\nf 0\nw\nq\n' \
-	    | fdisk -e `cat vnd` >/dev/null
-	echo 'a a\n\n\n\nw\nq\n' | disklabel -E `cat vnd` >/dev/null
-	newfs -t msdos -L boot /dev/r`cat vnd`i
-	mount -o-l /dev/`cat vnd`i ${MOUNT_POINT}
+.ifndef DESTDIR
+all ${IMAGE}:
+	@echo setenv DESTDIR before making a ramdisk!
+	@false
+.else
+all:	${IMAGE}
 
+${IMAGE}: rd_setup do_files rd_teardown
+
+.endif
+
+do_files:
+	cp ${.OBJDIR}/../../ramdisk/bsd.rd ${MOUNT_POINT}/bsd.rd
+	ln ${MOUNT_POINT}/bsd.rd ${MOUNT_POINT}/bsd
+	-umount ${MOUNT_POINT}
+	mount ${MOUNT_ARGS_msdos} ${VND_IDEV} ${MOUNT_POINT}
 .for DTB in ${DTBS}
 	cp ${PDTB}/${DTB} ${MOUNT_POINT}/
 .endfor
@@ -36,40 +61,43 @@ ${FS}: bsd.rd
 	    ${.CURDIR}/../boot.cmd ${MOUNT_POINT}/6x_bootscript
 .endif
 .if ${BOARD} == "cubox" || ${BOARD} == "wandboard"
-	dd if=${PUBOOT}/${UBOOT}/SPL of=/dev/r`cat vnd`c bs=1024 seek=1
-	dd if=${PUBOOT}/${UBOOT}/u-boot.img of=/dev/r`cat vnd`c bs=1024 seek=69
+	dd if=${PUBOOT}/${UBOOT}/SPL of=${VND_CDEV} bs=1024 seek=1
+	dd if=${PUBOOT}/${UBOOT}/u-boot.img of=${VND_CDEV} bs=1024 seek=69
 .endif
 .if ${PLATFORM} == "SUNXI"
 	dd if=${PUBOOT}/${UBOOT}/u-boot-sunxi-with-spl.bin \
-	    of=/dev/r`cat vnd`c bs=1024 seek=8
+	    of=${VND_CDEV} bs=1024 seek=8
 .endif
-
 	mkdir -p ${MOUNT_POINT}/efi/boot
 	cp /usr/mdec/BOOTARM.EFI ${MOUNT_POINT}/efi/boot/bootarm.efi
-	umount ${MOUNT_POINT}
 
-	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
-	mount /dev/`cat vnd`a ${MOUNT_POINT}
-	install -c -m 555 -o root -g wheel bsd.rd ${MOUNT_POINT}/bsd
-	ln ${MOUNT_POINT}/bsd ${MOUNT_POINT}/bsd.rd
-	df -i ${MOUNT_POINT}
-	umount ${MOUNT_POINT}
-	vnconfig -u `cat vnd`
-	rm -f vnd
+rd_setup:
+	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
+	vnconfig -v -c -t ${DISKTYPE} ${VND} ${IMAGE}
+	echo 'u\ne 0\n${PART_ID}\nn\n${MSDOSSTART}\n${MSDOSSIZE}\ne 3\nA6\nn\n${FFSSTART}\n*\nf 0\nw\nq\n' \
+	    | fdisk -e ${VND} >/dev/null
+	echo 'a a\n\n\n\nw\nq\n' | disklabel -E ${VND} >/dev/null
+	newfs -t msdos ${NEWFS_ARGS_msdos} ${VND_RIDEV}
+	newfs -m 0 -o space -i 4096 ${VND_RDEV}
+	fsck ${VND_RDEV}
+	mount ${VND_DEV} ${MOUNT_POINT}
 
-bsd.rd:
-	cp ${.OBJDIR}/../../ramdisk/bsd.rd bsd.rd
+rd_teardown:
+	@df -i ${MOUNT_POINT}
+	-umount ${MOUNT_POINT}
+	-vnconfig -u ${VND}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
+	-vnconfig -u ${VND}
+
+.PRECIOUS:	${IMAGE}
 
 .ifdef RELEASEDIR
 install:
-	cp ${FS} ${RELEASEDIR}
+	cp ${IMAGE} ${RELEASEDIR}
 .endif
 
-clean cleandir:
-	rm -f ${FS}
-
 .include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.include <bsd.own.mk>

@@ -24,6 +24,10 @@ namespace lto {
 /// This type defines the callback to add a pre-existing native object file
 /// (e.g. in a cache).
 ///
+/// MB->getBufferIdentifier() is a valid path for the file at the time that it
+/// was opened, but clients should prefer to access MB directly in order to
+/// avoid a potential race condition.
+///
 /// Buffer callbacks must be thread safe.
 typedef std::function<void(unsigned Task, std::unique_ptr<MemoryBuffer> MB)>
     AddBufferFn;

@@ -18,7 +18,7 @@ int test_entry_cmp(const void *a, const void *b)
 
 int main(void)
 {
-	srandom_deterministic(time(NULL));
+	srandom(time(NULL));
 
 	qsort(entries, ntests, sizeof(struct test_entry), test_entry_cmp);
 

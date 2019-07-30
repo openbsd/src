@@ -1,4 +1,4 @@
-//===- LiveRangeShrink.cpp - Move instructions to shrink live range -------===//
+//===-- LiveRangeShrink.cpp - Move instructions to shrink live range ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,32 +14,20 @@
 /// uses, all of which are the only use of the def.
 ///
 ///===---------------------------------------------------------------------===//
-
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/iterator_range.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/TargetRegisterInfo.h"
-#include "llvm/Pass.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
-#include <iterator>
-#include <utility>
-
-using namespace llvm;
 
 #define DEBUG_TYPE "lrshrink"
 
 STATISTIC(NumInstrsHoistedToShrinkLiveRange,
           "Number of insructions hoisted to shrink live range.");
 
-namespace {
+using namespace llvm;
 
+namespace {
 class LiveRangeShrink : public MachineFunctionPass {
 public:
   static char ID;
@@ -57,26 +45,23 @@ public:
 
   bool runOnMachineFunction(MachineFunction &MF) override;
 };
-
-} // end anonymous namespace
+} // End anonymous namespace.
 
 char LiveRangeShrink::ID = 0;
-
 char &llvm::LiveRangeShrinkID = LiveRangeShrink::ID;
 
 INITIALIZE_PASS(LiveRangeShrink, "lrshrink", "Live Range Shrink Pass", false,
                 false)
-
-using InstOrderMap = DenseMap<MachineInstr *, unsigned>;
+namespace {
+typedef DenseMap<MachineInstr *, unsigned> InstOrderMap;
 
 /// Returns \p New if it's dominated by \p Old, otherwise return \p Old.
 /// \p M maintains a map from instruction to its dominating order that satisfies
 /// M[A] > M[B] guarantees that A is dominated by B.
 /// If \p New is not in \p M, return \p Old. Otherwise if \p Old is null, return
 /// \p New.
-static MachineInstr *FindDominatedInstruction(MachineInstr &New,
-                                              MachineInstr *Old,
-                                              const InstOrderMap &M) {
+MachineInstr *FindDominatedInstruction(MachineInstr &New, MachineInstr *Old,
+                                       const InstOrderMap &M) {
   auto NewIter = M.find(&New);
   if (NewIter == M.end())
     return Old;
@@ -97,21 +82,21 @@ static MachineInstr *FindDominatedInstruction(MachineInstr &New,
 
 /// Builds Instruction to its dominating order number map \p M by traversing
 /// from instruction \p Start.
-static void BuildInstOrderMap(MachineBasicBlock::iterator Start,
-                              InstOrderMap &M) {
+void BuildInstOrderMap(MachineBasicBlock::iterator Start, InstOrderMap &M) {
   M.clear();
   unsigned i = 0;
   for (MachineInstr &I : make_range(Start, Start->getParent()->end()))
     M[&I] = i++;
 }
+} // end anonymous namespace
 
 bool LiveRangeShrink::runOnMachineFunction(MachineFunction &MF) {
-  if (skipFunction(MF.getFunction()))
+  if (skipFunction(*MF.getFunction()))
     return false;
 
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
-  LLVM_DEBUG(dbgs() << "**** Analysing " << MF.getName() << '\n');
+  DEBUG(dbgs() << "**** Analysing " << MF.getName() << '\n');
 
   InstOrderMap IOM;
   // Map from register to instruction order (value of IOM) where the
@@ -130,7 +115,7 @@ bool LiveRangeShrink::runOnMachineFunction(MachineFunction &MF) {
     for (MachineBasicBlock::iterator Next = MBB.begin(); Next != MBB.end();) {
       MachineInstr &MI = *Next;
       ++Next;
-      if (MI.isPHI() || MI.isDebugInstr())
+      if (MI.isPHI() || MI.isDebugValue())
         continue;
       if (MI.mayStore())
         SawStore = true;
@@ -218,7 +203,7 @@ bool LiveRangeShrink::runOnMachineFunction(MachineFunction &MF) {
       if (DefMO && Insert && NumEligibleUse > 1 && Barrier <= IOM[Insert]) {
         MachineBasicBlock::iterator I = std::next(Insert->getIterator());
         // Skip all the PHI and debug instructions.
-        while (I != MBB.end() && (I->isPHI() || I->isDebugInstr()))
+        while (I != MBB.end() && (I->isPHI() || I->isDebugValue()))
           I = std::next(I);
         if (I == MI.getIterator())
           continue;

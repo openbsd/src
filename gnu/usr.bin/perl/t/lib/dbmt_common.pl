@@ -156,11 +156,12 @@ unlink <Op_dbmx*>, $Dfile;
 
    use strict;
    use warnings;
+   use vars qw(@ISA @EXPORT);
 
    require Exporter;
    use %s;
-   our @ISA=qw(%s);
-   our @EXPORT = @%s::EXPORT;
+   @ISA=qw(%s);
+   @EXPORT = @%s::EXPORT;
 
    sub STORE {
 	my $self = shift;
@@ -412,7 +413,7 @@ unlink <Op_dbmx*>, $Dfile;
 }
 
 {
-    # Bug ID 20001013.009 (#4434)
+    # Bug ID 20001013.009
     #
     # test that $hash{KEY} = undef doesn't produce the warning
     #     Use of uninitialized value in null operation

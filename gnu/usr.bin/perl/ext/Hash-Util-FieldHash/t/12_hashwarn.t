@@ -7,7 +7,8 @@ use strict;
 use warnings;
 use Hash::Util::FieldHash qw( :all);
 
-our @warnings;
+use vars qw{ @warnings };
+
 BEGIN {
     $SIG{'__WARN__'} = sub { push @warnings, @_ };
     $| = 1;

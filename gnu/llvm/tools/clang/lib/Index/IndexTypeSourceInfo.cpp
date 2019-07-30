@@ -37,7 +37,7 @@ public:
       Relations.emplace_back((unsigned)SymbolRole::RelationIBTypeOf, Parent);
     }
   }
-
+  
   bool shouldWalkTypesOfTypeLocs() const { return false; }
 
 #define TRY_TO(CALL_EXPR)                                                      \
@@ -126,10 +126,9 @@ public:
     return true;
   }
 
-  template<typename TypeLocType>
-  bool HandleTemplateSpecializationTypeLoc(TypeLocType TL) {
-    if (const auto *T = TL.getTypePtr()) {
-      if (IndexCtx.shouldIndexImplicitInstantiation()) {
+  bool VisitTemplateSpecializationTypeLoc(TemplateSpecializationTypeLoc TL) {
+    if (const TemplateSpecializationType *T = TL.getTypePtr()) {
+      if (IndexCtx.shouldIndexImplicitTemplateInsts()) {
         if (CXXRecordDecl *RD = T->getAsCXXRecordDecl())
           IndexCtx.handleReference(RD, TL.getTemplateNameLoc(),
                                    Parent, ParentDC, SymbolRoleSet(), Relations);
@@ -140,14 +139,6 @@ public:
       }
     }
     return true;
-  }
-
-  bool VisitTemplateSpecializationTypeLoc(TemplateSpecializationTypeLoc TL) {
-    return HandleTemplateSpecializationTypeLoc(TL);
-  }
-
-  bool VisitDeducedTemplateSpecializationTypeLoc(DeducedTemplateSpecializationTypeLoc TL) {
-    return HandleTemplateSpecializationTypeLoc(TL);
   }
 
   bool VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
@@ -193,7 +184,7 @@ void IndexingContext::indexTypeSourceInfo(TypeSourceInfo *TInfo,
                                           bool isIBType) {
   if (!TInfo || TInfo->getTypeLoc().isNull())
     return;
-
+  
   indexTypeLoc(TInfo->getTypeLoc(), Parent, DC, isBase, isIBType);
 }
 

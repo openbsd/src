@@ -1,4 +1,4 @@
-/*	$OpenBSD: viornd.c,v 1.3 2019/05/26 15:20:04 sf Exp $	*/
+/*	$OpenBSD: viornd.c,v 1.1 2017/01/21 11:22:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Stefan Fritsch <sf@sfritsch.de>
@@ -96,7 +96,7 @@ viornd_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_ipl = IPL_NET;
 	sc->sc_virtio = vsc;
 
-	virtio_negotiate_features(vsc, NULL);
+	virtio_negotiate_features(vsc, 0, NULL);
 
 	if (sc->sc_dev.dv_cfdata->cf_flags & VIORND_ONESHOT) {
 		sc->sc_interval = 0;
@@ -172,7 +172,7 @@ viornd_vq_done(struct virtqueue *vq)
 	printf("%s: got %d bytes of entropy\n", __func__, len);
 #endif
 	for (i = 0; (i + 1) * sizeof(int) <= len; i++)
-		enqueue_randomness(sc->sc_buf[i]);
+		add_true_randomness(sc->sc_buf[i]);
 
 	if (sc->sc_interval)
 		timeout_add_sec(&sc->sc_tick, sc->sc_interval);

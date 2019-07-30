@@ -12,9 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Process.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Config/llvm-config.h"
+#include "llvm/Config/config.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
@@ -27,14 +26,9 @@ using namespace sys;
 //===          independent code.
 //===----------------------------------------------------------------------===//
 
-Optional<std::string> Process::FindInEnvPath(StringRef EnvName,
-                                             StringRef FileName) {
-  return FindInEnvPath(EnvName, FileName, {});
-}
-
-Optional<std::string> Process::FindInEnvPath(StringRef EnvName,
-                                             StringRef FileName,
-                                             ArrayRef<std::string> IgnoreList) {
+Optional<std::string> Process::FindInEnvPath(const std::string& EnvName,
+                                             const std::string& FileName)
+{
   assert(!path::is_absolute(FileName));
   Optional<std::string> FoundPath;
   Optional<std::string> OptPath = Process::GetEnv(EnvName);
@@ -45,11 +39,8 @@ Optional<std::string> Process::FindInEnvPath(StringRef EnvName,
   SmallVector<StringRef, 8> Dirs;
   SplitString(OptPath.getValue(), Dirs, EnvPathSeparatorStr);
 
-  for (StringRef Dir : Dirs) {
+  for (const auto &Dir : Dirs) {
     if (Dir.empty())
-      continue;
-
-    if (any_of(IgnoreList, [&](StringRef S) { return fs::equivalent(S, Dir); }))
       continue;
 
     SmallString<128> FilePath(Dir);
@@ -93,6 +84,6 @@ bool Process::AreCoreFilesPrevented() {
 #ifdef LLVM_ON_UNIX
 #include "Unix/Process.inc"
 #endif
-#ifdef _WIN32
+#ifdef LLVM_ON_WIN32
 #include "Windows/Process.inc"
 #endif

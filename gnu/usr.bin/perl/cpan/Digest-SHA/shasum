@@ -2,23 +2,22 @@
 
 	## shasum: filter for computing SHA digests (ref. sha1sum/md5sum)
 	##
-	## Copyright (C) 2003-2017 Mark Shelor, All Rights Reserved
+	## Copyright (C) 2003-2015 Mark Shelor, All Rights Reserved
 	##
-	## Version: 6.01
-	## Mon Dec 25 00:08:08 MST 2017
+	## Version: 5.95
+	## Sat Jan 10 12:15:36 MST 2015
 
 	## shasum SYNOPSIS adapted from GNU Coreutils sha1sum. Add
 	## "-a" option for algorithm selection,
-	## "-U" option for Universal Newlines support, and
-	## "-0" option for reading bit strings.
+	## "-U" option for Universal Newlines support,
+	## "-0" option for reading bit strings, and
+	## "-p" option for portable digests (to be deprecated).
 
 BEGIN { pop @INC if $INC[-1] eq '.' }
-
 use strict;
 use warnings;
 use Fcntl;
 use Getopt::Long;
-use Digest::SHA qw($errmsg);
 
 my $POD = <<'END_OF_POD';
 
@@ -35,7 +34,6 @@ shasum - Print or Check SHA Checksums
    -a, --algorithm   1 (default), 224, 256, 384, 512, 512224, 512256
    -b, --binary      read in binary mode
    -c, --check       read SHA sums from the FILEs and check them
-       --tag         create a BSD-style checksum
    -t, --text        read in text mode (default)
    -U, --UNIVERSAL   read in Universal Newlines mode
                          produces same digest on Windows/Unix/Mac
@@ -43,13 +41,11 @@ shasum - Print or Check SHA Checksums
                          ASCII '0' interpreted as 0-bit,
                          ASCII '1' interpreted as 1-bit,
                          all other characters ignored
+   -p, --portable    read in portable mode (to be deprecated)
 
- The following five options are useful only when verifying checksums:
-       --ignore-missing  don't fail or report status for missing files
-   -q, --quiet           don't print OK for each successfully verified file
-   -s, --status          don't output anything, status code shows success
-       --strict          exit non-zero for improperly formatted checksum lines
-   -w, --warn            warn about improperly formatted checksum lines
+ The following two options are useful only when verifying checksums:
+   -s, --status      don't output anything, status code shows success
+   -w, --warn        warn about improperly formatted checksum lines
 
    -h, --help        display this help and exit
    -v, --version     output version information and exit
@@ -62,10 +58,8 @@ shasum - Print or Check SHA Checksums
  The sums are computed as described in FIPS PUB 180-4.  When checking,
  the input should be a former output of this program.  The default
  mode is to print a line with checksum, a character indicating type
- (`*' for binary, ` ' for text, `U' for UNIVERSAL, `^' for BITS),
- and name for each FILE.  The line starts with a `\' character if the
- FILE name contains either newlines or backslashes, which are then
- replaced by the two-character sequences `\n' and `\\' respectively.
+ (`*' for binary, ` ' for text, `U' for UNIVERSAL, `^' for BITS, `?'
+ for portable), and name for each FILE.
 
  Report shasum bugs to mshelor@cpan.org
 
@@ -97,17 +91,18 @@ the 7-bit message I<0001100>:
 
 =head1 AUTHOR
 
-Copyright (c) 2003-2017 Mark Shelor <mshelor@cpan.org>.
+Copyright (c) 2003-2015 Mark Shelor <mshelor@cpan.org>.
 
 =head1 SEE ALSO
 
-I<shasum> is implemented using the Perl module L<Digest::SHA>.
+I<shasum> is implemented using the Perl module L<Digest::SHA> or
+L<Digest::SHA::PurePerl>.
 
 =cut
 
 END_OF_POD
 
-my $VERSION = "6.01";
+my $VERSION = "5.95";
 
 sub usage {
 	my($err, $msg) = @_;
@@ -134,21 +129,20 @@ select((select(STDERR), $| = 1)[0]);
 
 	## Collect options from command line
 
-my ($alg, $binary, $check, $text, $status, $quiet, $warn, $help);
-my ($version, $BITS, $UNIVERSAL, $tag, $strict, $ignore_missing);
+my ($alg, $binary, $check, $text, $status, $warn, $help, $version);
+my ($portable, $BITS, $reverse, $UNIVERSAL, $versions);
 
 eval { Getopt::Long::Configure ("bundling") };
 GetOptions(
 	'b|binary' => \$binary, 'c|check' => \$check,
 	't|text' => \$text, 'a|algorithm=i' => \$alg,
 	's|status' => \$status, 'w|warn' => \$warn,
-	'q|quiet' => \$quiet,
 	'h|help' => \$help, 'v|version' => \$version,
+	'p|portable' => \$portable,
 	'0|01' => \$BITS,
+	'R|REVERSE' => \$reverse,
 	'U|UNIVERSAL' => \$UNIVERSAL,
-	'tag' => \$tag,
-	'strict' => \$strict,
-	'ignore-missing' => \$ignore_missing,
+	'V|VERSIONS' => \$versions,
 ) or usage(1, "");
 
 
@@ -158,34 +152,39 @@ usage(0)
 	if $help;
 usage(1, "shasum: Ambiguous file mode\n")
 	if scalar(grep {defined $_}
-		($binary, $text, $BITS, $UNIVERSAL)) > 1;
+		($binary, $portable, $text, $BITS, $UNIVERSAL)) > 1;
 usage(1, "shasum: --warn option used only when verifying checksums\n")
 	if $warn && !$check;
 usage(1, "shasum: --status option used only when verifying checksums\n")
 	if $status && !$check;
-usage(1, "shasum: --quiet option used only when verifying checksums\n")
-	if $quiet && !$check;
-usage(1, "shasum: --ignore-missing option used only when verifying checksums\n")
-	if $ignore_missing && !$check;
-usage(1, "shasum: --strict option used only when verifying checksums\n")
-	if $strict && !$check;
-usage(1, "shasum: --tag does not support --text mode\n")
-	if $tag && $text;
-usage(1, "shasum: --tag does not support Universal Newlines mode\n")
-	if $tag && $UNIVERSAL;
-usage(1, "shasum: --tag does not support BITS mode\n")
-	if $tag && $BITS;
+
+
+	## Try to use Digest::SHA.  If not installed, use the slower
+	## but functionally equivalent Digest::SHA::PurePerl instead.
+
+	## If option -R is invoked, reverse the module preference,
+	## i.e. try Digest::SHA::PurePerl first, then Digest::SHA.
+
+my @MODS = qw(Digest::SHA Digest::SHA::PurePerl);
+@MODS[0, 1] = @MODS[1, 0] if $reverse;
+
+my $module;
+for (@MODS) {
+	my $mod = $_;
+	if (eval "require $mod") {
+		$module = $mod;
+		last;
+	}
+}
+die "shasum: Unable to find " . join(" or ", @MODS) . "\n"
+	unless defined $module;
 
 
 	## Default to SHA-1 unless overridden by command line option
 
-my %isAlg = map { $_ => 1 } (1, 224, 256, 384, 512, 512224, 512256);
 $alg = 1 unless defined $alg;
-usage(1, "shasum: Unrecognized algorithm\n") unless $isAlg{$alg};
-
-my %Tag = map { $_ => "SHA$_" } (1, 224, 256, 384, 512);
-$Tag{512224} = "SHA512/224";
-$Tag{512256} = "SHA512/256";
+grep { $_ == $alg } (1, 224, 256, 384, 512, 512224, 512256)
+	or usage(1, "shasum: Unrecognized algorithm\n");
 
 
 	## Display version information if requested
@@ -195,16 +194,24 @@ if ($version) {
 	exit(0);
 }
 
+if ($versions) {
+	print "shasum $VERSION\n";
+	print "$module ", eval "\$${module}::VERSION", "\n";
+	print "perl ", defined $^V ? sprintf("%vd", $^V) : $], "\n";
+	exit(0);
+}
+
 
 	## Try to figure out if the OS is DOS-like.  If it is,
 	## default to binary mode when reading files, unless
 	## explicitly overridden by command line "--text" or
-	## "--UNIVERSAL" options.
+	## "--UNIVERSAL" or "--portable" options.
 
 my $isDOSish = ($^O =~ /^(MSWin\d\d|os2|dos|mint|cygwin)$/);
-if ($isDOSish) { $binary = 1 unless $text || $UNIVERSAL }
+if ($isDOSish) { $binary = 1 unless $text || $UNIVERSAL || $portable }
 
-my $modesym = $binary ? '*' : ($UNIVERSAL ? 'U' : ($BITS ? '^' : ' '));
+my $modesym = $binary ? '*' : ($UNIVERSAL ? 'U' :
+		($BITS ? '^' : ($portable ? '?' : ' ')));
 
 
 	## Read from STDIN (-) if no files listed on command line
@@ -217,9 +224,10 @@ my $modesym = $binary ? '*' : ($UNIVERSAL ? 'U' : ($BITS ? '^' : ' '));
 sub sumfile {
 	my $file = shift;
 
-	my $mode = $binary ? 'b' : ($UNIVERSAL ? 'U' : ($BITS ? '0' : ''));
-	my $digest = eval { Digest::SHA->new($alg)->addfile($file, $mode) };
-	if ($@) { warn "shasum: $file: $errmsg\n"; return }
+	my $mode = $binary ? 'b' : ($UNIVERSAL ? 'U' :
+			($BITS ? '0' : ($portable ? 'p' : '')));
+	my $digest = eval { $module->new($alg)->addfile($file, $mode) };
+	if ($@) { warn "shasum: $file: $!\n"; return }
 	$digest->hexdigest;
 }
 
@@ -237,6 +245,7 @@ sub unescape {
 	$_ = shift;
 	s/\\\\/\0/g;
 	s/\\n/\n/g;
+	return if /\\/;
 	s/\0/\\/g;
 	return $_;
 }
@@ -247,8 +256,8 @@ sub unescape {
 sub verify {
 	my $checkfile = shift;
 	my ($err, $fmt_errs, $read_errs, $match_errs) = (0, 0, 0, 0);
-	my ($num_fmt_OK, $num_OK) = (0, 0);
-	my ($bslash, $sum, $fname, $rsp, $digest, $isOK);
+	my ($num_lines, $num_files) = (0, 0);
+	my ($bslash, $sum, $fname, $rsp, $digest);
 
 	local *FH;
 	$checkfile eq '-' and open(FH, '< -')
@@ -256,49 +265,38 @@ sub verify {
 	or sysopen(FH, $checkfile, O_RDONLY)
 		or die "shasum: $checkfile: $!\n";
 	while (<FH>) {
-		next if /^#/;
-		if (/^[ \t]*\\?SHA/) {
-			$modesym = '*';
-			($bslash, $alg, $fname, $sum) =
-			/^[ \t]*(\\?)SHA(\S+) \((.+)\) = ([\da-fA-F]+)/;
-			$alg =~ tr{/}{}d if defined $alg;
-		}
-		else {
-			($bslash, $sum, $modesym, $fname) =
-			/^[ \t]*(\\?)([\da-fA-F]+)[ \t]([ *^U])(.+)/;
-			$alg = defined $sum ? $len2alg{length($sum)} : undef;
-		}
-		if (grep { ! defined $_ } ($alg, $sum, $modesym, $fname) or
-			! $isAlg{$alg}) {
+		next if /^#/; s/\n$//; s/^[ \t]+//; $num_lines++;
+		$bslash = s/^\\//;
+		($sum, $modesym, $fname) =
+			/^([\da-fA-F]+)[ \t]([ *?^U])([^\0]*)/;
+		$alg = defined $sum ? $len2alg{length($sum)} : undef;
+		$fname = unescape($fname) if defined $fname && $bslash;
+		if (grep { ! defined $_ } ($alg, $sum, $modesym, $fname)) {
+			$alg = 1 unless defined $alg;
 			warn("shasum: $checkfile: $.: improperly " .
-				"formatted SHA checksum line\n") if $warn;
+				"formatted SHA$alg checksum line\n") if $warn;
 			$fmt_errs++;
-			$err = 1 if $strict;
 			next;
 		}
-		$num_fmt_OK++;
-		$fname = unescape($fname) if $bslash;
-		next if $ignore_missing && ! -e $fname;
-		$rsp = "$fname: ";
-		($binary, $text, $UNIVERSAL, $BITS) =
-			map { $_ eq $modesym } ('*', ' ', 'U', '^');
-		$isOK = 0;
+		$fname =~ s/\r$// unless -e $fname;
+		$rsp = "$fname: "; $num_files++;
+		($binary, $text, $UNIVERSAL, $BITS, $portable) =
+			map { $_ eq $modesym } ('*', ' ', 'U', '^', 'p');
 		unless ($digest = sumfile($fname)) {
 			$rsp .= "FAILED open or read\n";
 			$err = 1; $read_errs++;
 		}
-		elsif (lc($sum) eq $digest) {
-			$rsp .= "OK\n";
-			$isOK = 1;
-			$num_OK++;
+		else {
+			if (lc($sum) eq $digest) { $rsp .= "OK\n" }
+			else { $rsp .= "FAILED\n"; $err = 1; $match_errs++ }
 		}
-		else { $rsp .= "FAILED\n"; $err = 1; $match_errs++ }
-		print $rsp unless ($status || ($quiet && $isOK));
+		print $rsp unless $status;
 	}
 	close(FH);
-	if (! $num_fmt_OK) {
+	unless ($num_files) {
+		$alg = 1 unless defined $alg;
 		warn("shasum: $checkfile: no properly formatted " .
-			"SHA checksum lines found\n");
+			"SHA$alg checksum lines found\n");
 		$err = 1;
 	}
 	elsif (! $status) {
@@ -309,11 +307,6 @@ sub verify {
 		warn("shasum: WARNING: $match_errs computed checksum" .
 		($match_errs>1?'s':'') . " did NOT match\n") if $match_errs;
 	}
-	if ($ignore_missing && ! $num_OK && $num_fmt_OK) {
-		warn("shasum: $checkfile: no file was verified\n")
-			unless $status;
-		$err = 1;
-	}
 	return($err == 0);
 }
 
@@ -321,17 +314,17 @@ sub verify {
 	## Verify or compute SHA checksums of requested files
 
 my($file, $digest);
+
 my $STATUS = 0;
 for $file (@ARGV) {
 	if ($check) { $STATUS = 1 unless verify($file) }
 	elsif ($digest = sumfile($file)) {
 		if ($file =~ /[\n\\]/) {
 			$file =~ s/\\/\\\\/g; $file =~ s/\n/\\n/g;
-			print "\\";
+			$digest = "\\$digest";
 		}
-		unless ($tag) { print "$digest $modesym$file\n" }
-		else          { print "$Tag{$alg} ($file) = $digest\n" }
+		print "$digest $modesym", "$file\n";
 	}
 	else { $STATUS = 1 }
 }
-exit($STATUS);
+exit($STATUS)

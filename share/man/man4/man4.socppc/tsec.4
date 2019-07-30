@@ -1,0 +1,81 @@
+.\"	$OpenBSD: tsec.4,v 1.5 2013/07/16 16:05:49 schwarze Exp $
+.\"
+.\" Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 16 2013 $
+.Dt TSEC 4 socppc
+.Os
+.Sh NAME
+.Nm tsec
+.Nd three-speed 10/100/Gigabit Ethernet device
+.Sh SYNOPSIS
+.Cd "tsec0 at obio? addr 0x24000 ivec 32"
+.Cd "tsec1 at obio? addr 0x25000 ivec 35"
+.Cd "rgephy* at mii?"
+.Cd "gentbi* at mii?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the three-speed Ethernet controller (TSEC)
+found on the Freescale MPC8349E processor family.
+It uses an external PHY or an internal 10-bit interface.
+.Pp
+The
+.Nm
+driver supports several media types, which are selected via the
+.Xr ifconfig 8
+command.
+The supported media types are:
+.Bl -tag -width "media" -offset indent
+.It media autoselect
+Attempt to autoselect the media type (default)
+.It media 1000baseT mediaopt full-duplex
+Use 1000baseT on copper, full duplex
+.It media 1000baseT Op mediaopt half-duplex
+Use 1000baseT on copper, half duplex
+.It media 1000baseSX mediaopt full-duplex
+Use 1000baseSX on fiber, full duplex
+.It media 1000baseSX Op mediaopt half-duplex
+Use 1000baseSX on fiber, half duplex
+.It media 100baseTX mediaopt full-duplex
+Use 100baseTX, full duplex
+.It media 100baseTX Op mediaopt half-duplex
+Use 100baseTX, half duplex
+.It media 10baseT mediaopt full-duplex
+Use 10baseT, full duplex
+.It media 10baseT Op mediaopt half-duplex
+Use 10baseT, half duplex
+.El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr gentbi 4 ,
+.Xr ifmedia 4 ,
+.Xr inet 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr rgephy 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8
+.Sh HISTORY
+.Ox
+support for
+.Nm
+first appeared in
+.Ox 4.4 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Mark Kettenis Aq Mt kettenis@openbsd.org .

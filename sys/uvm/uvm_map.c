@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.246 2019/06/14 05:52:43 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.233 2017/11/30 00:36:10 guenther Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -91,9 +91,6 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/sysctl.h>
-#include <sys/signalvar.h>
-#include <sys/syslog.h>
-#include <sys/user.h>
 
 #ifdef SYSVSHM
 #include <sys/shm.h>
@@ -1003,14 +1000,8 @@ uvm_mapanon(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 		KASSERT((*addr & PAGE_MASK) == 0);
 
 		/* Check that the space is available. */
-		if (flags & UVM_FLAG_UNMAP) {
-			if ((flags & UVM_FLAG_STACK) &&
-			    !uvm_map_is_stack_remappable(map, *addr, sz)) {
-				error = EINVAL;
-				goto unlock;
-			}
+		if (flags & UVM_FLAG_UNMAP)
 			uvm_unmap_remove(map, *addr, *addr + sz, &dead, FALSE, TRUE);
-		}
 		if (!uvm_map_isavail(map, NULL, &first, &last, *addr, sz)) {
 			error = ENOMEM;
 			goto unlock;
@@ -1073,20 +1064,11 @@ uvm_mapanon(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	entry->inheritance = inherit;
 	entry->wired_count = 0;
 	entry->advice = advice;
-	if (prot & PROT_WRITE)
-		map->wserial++;
-	if (flags & UVM_FLAG_STACK) {
-		entry->etype |= UVM_ET_STACK;
-		if (flags & (UVM_FLAG_FIXED | UVM_FLAG_UNMAP))
-			map->sserial++;
-	}
 	if (flags & UVM_FLAG_COPYONW) {
 		entry->etype |= UVM_ET_COPYONWRITE;
 		if ((flags & UVM_FLAG_OVERLAY) == 0)
 			entry->etype |= UVM_ET_NEEDSCOPY;
 	}
-	if (flags & UVM_FLAG_CONCEAL)
-		entry->etype |= UVM_ET_CONCEAL;
 	if (flags & UVM_FLAG_OVERLAY) {
 		KERNEL_LOCK();
 		entry->aref.ar_pageoff = 0;
@@ -1338,28 +1320,17 @@ uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	entry->inheritance = inherit;
 	entry->wired_count = 0;
 	entry->advice = advice;
-	if (prot & PROT_WRITE)
-		map->wserial++;
-	if (flags & UVM_FLAG_STACK) {
-		entry->etype |= UVM_ET_STACK;
-		if (flags & UVM_FLAG_UNMAP)
-			map->sserial++;
-	}
 	if (uobj)
 		entry->etype |= UVM_ET_OBJ;
 	else if (flags & UVM_FLAG_HOLE)
 		entry->etype |= UVM_ET_HOLE;
 	if (flags & UVM_FLAG_NOFAULT)
 		entry->etype |= UVM_ET_NOFAULT;
-	if (flags & UVM_FLAG_WC)
-		entry->etype |= UVM_ET_WC;
 	if (flags & UVM_FLAG_COPYONW) {
 		entry->etype |= UVM_ET_COPYONWRITE;
 		if ((flags & UVM_FLAG_OVERLAY) == 0)
 			entry->etype |= UVM_ET_NEEDSCOPY;
 	}
-	if (flags & UVM_FLAG_CONCEAL)
-		entry->etype |= UVM_ET_CONCEAL;
 	if (flags & UVM_FLAG_OVERLAY) {
 		entry->aref.ar_pageoff = 0;
 		entry->aref.ar_amap = amap_alloc(sz, M_WAITOK, 0);
@@ -1501,7 +1472,7 @@ uvm_mapent_merge(struct vm_map *map, struct vm_map_entry *e1,
  * Attempt forward and backward joining of entry.
  *
  * Returns entry after joins.
- * We are guaranteed that the amap of entry is either non-existent or
+ * We are guaranteed that the amap of entry is either non-existant or
  * has never been used.
  */
 struct vm_map_entry*
@@ -1544,18 +1515,8 @@ uvm_mapent_tryjoin(struct vm_map *map, struct vm_map_entry *entry,
 void
 uvm_unmap_detach(struct uvm_map_deadq *deadq, int flags)
 {
-	struct vm_map_entry *entry, *tmp;
+	struct vm_map_entry *entry;
 	int waitok = flags & UVM_PLA_WAITOK;
-
-	TAILQ_FOREACH_SAFE(entry, deadq, dfree.deadq, tmp) {
-		/* Skip entries for which we have to grab the kernel lock. */
-		if (entry->aref.ar_amap || UVM_ET_ISSUBMAP(entry) ||
-		    UVM_ET_ISOBJ(entry))
-			continue;
-
-		TAILQ_REMOVE(deadq, entry, dfree.deadq);
-		uvm_mapent_free(entry);
-	}
 
 	if (TAILQ_EMPTY(deadq))
 		return;
@@ -1782,192 +1743,6 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 	*entry = uvm_map_entrybyaddr(&map->addr, address);
 	return *entry != NULL && !UVM_ET_ISHOLE(*entry) &&
 	    (*entry)->start <= address && (*entry)->end > address;
-}
-
-/*
- * Stack must be in a MAP_STACK entry. PROT_NONE indicates stack not yet
- * grown -- then uvm_map_check_region_range() should not cache the entry
- * because growth won't be seen.
- */
-int
-uvm_map_inentry_sp(vm_map_entry_t entry)
-{
-	if ((entry->etype & UVM_ET_STACK) == 0) {
-		if (entry->protection == PROT_NONE)
-			return (-1);	/* don't update range */
-		return (0);
-	}
-	return (1);
-}
-
-/*
- * If a syscall comes from a writeable entry, W^X is violated.
- * (Would be nice if we can spot aliasing, which is also kind of bad)
- */
-int
-uvm_map_inentry_pc(vm_map_entry_t entry)
-{
-	if (entry->protection & PROT_WRITE)
-		return (0);	/* not permitted */
-	return (1);
-}
-
-int
-uvm_map_inentry_recheck(u_long serial, vaddr_t addr, struct p_inentry *ie)
-{
-	return (serial != ie->ie_serial || ie->ie_start == 0 ||
-	    addr < ie->ie_start || addr >= ie->ie_end);
-}
-
-/*
- * Inside a vm_map find the reg address and verify it via function.
- * Remember low and high addresses of region if valid and return TRUE,
- * else return FALSE.
- */
-boolean_t
-uvm_map_inentry_fix(struct proc *p, struct p_inentry *ie, vaddr_t addr,
-    int (*fn)(vm_map_entry_t), u_long serial)
-{
-	vm_map_t map = &p->p_vmspace->vm_map;
-	vm_map_entry_t entry;
-	int ret;
-
-	if (addr < map->min_offset || addr >= map->max_offset)
-		return (FALSE);
-
-	/* lock map */
-	vm_map_lock_read(map);
-
-	/* lookup */
-	if (!uvm_map_lookup_entry(map, trunc_page(addr), &entry)) {
-		vm_map_unlock_read(map);
-		return (FALSE);
-	}
-
-	ret = (*fn)(entry);
-	if (ret == 0) {
-		vm_map_unlock_read(map);
-		return (FALSE);
-	} else if (ret == 1) {
-		ie->ie_start = entry->start;
-		ie->ie_end = entry->end;
-		ie->ie_serial = serial;
-	} else {
-		/* do not update, re-check later */
-	}
-	vm_map_unlock_read(map);
-	return (TRUE);
-}
-
-boolean_t
-uvm_map_inentry(struct proc *p, struct p_inentry *ie, vaddr_t addr,
-    const char *fmt, int (*fn)(vm_map_entry_t), u_long serial)
-{
-	union sigval sv;
-	boolean_t ok = TRUE;
-
-	if (uvm_map_inentry_recheck(serial, addr, ie)) {
-		KERNEL_LOCK();
-		ok = uvm_map_inentry_fix(p, ie, addr, fn, serial);
-		if (!ok) {
-			printf(fmt, p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
-			    addr, ie->ie_start, ie->ie_end);
-			sv.sival_ptr = (void *)PROC_PC(p);
-			trapsignal(p, SIGSEGV, 0, SEGV_ACCERR, sv);
-		}
-		KERNEL_UNLOCK();
-	}
-	return (ok);
-}
-
-/*
- * Check whether the given address range can be converted to a MAP_STACK
- * mapping.
- *
- * Must be called with map locked.
- */
-boolean_t
-uvm_map_is_stack_remappable(struct vm_map *map, vaddr_t addr, vaddr_t sz)
-{
-	vaddr_t end = addr + sz;
-	struct vm_map_entry *first, *iter, *prev = NULL;
-
-	if (!uvm_map_lookup_entry(map, addr, &first)) {
-		printf("map stack 0x%lx-0x%lx of map %p failed: no mapping\n",
-		    addr, end, map);
-		return FALSE;
-	}
-
-	/*
-	 * Check that the address range exists and is contiguous.
-	 */
-	for (iter = first; iter != NULL && iter->start < end;
-	    prev = iter, iter = RBT_NEXT(uvm_map_addr, iter)) {
-		/*
-		 * Make sure that we do not have holes in the range.
-		 */
-#if 0
-		if (prev != NULL) {
-			printf("prev->start 0x%lx, prev->end 0x%lx, "
-			    "iter->start 0x%lx, iter->end 0x%lx\n",
-			    prev->start, prev->end, iter->start, iter->end);
-		}
-#endif
-
-		if (prev != NULL && prev->end != iter->start) {
-			printf("map stack 0x%lx-0x%lx of map %p failed: "
-			    "hole in range\n", addr, end, map);
-			return FALSE;
-		}
-		if (iter->start == iter->end || UVM_ET_ISHOLE(iter)) {
-			printf("map stack 0x%lx-0x%lx of map %p failed: "
-			    "hole in range\n", addr, end, map);
-			return FALSE;
-		}
-	}
-
-	return TRUE;
-}
-
-/*
- * Remap the middle-pages of an existing mapping as a stack range.
- * If there exists a previous contiguous mapping with the given range
- * [addr, addr + sz), with protection PROT_READ|PROT_WRITE, then the
- * mapping is dropped, and a new anon mapping is created and marked as
- * a stack.
- *
- * Must be called with map unlocked.
- */
-int
-uvm_map_remap_as_stack(struct proc *p, vaddr_t addr, vaddr_t sz)
-{
-	vm_map_t map = &p->p_vmspace->vm_map;
-	vaddr_t start, end;
-	int error;
-	int flags = UVM_MAPFLAG(PROT_READ | PROT_WRITE,
-	    PROT_READ | PROT_WRITE | PROT_EXEC,
-	    MAP_INHERIT_COPY, MADV_NORMAL,
-	    UVM_FLAG_STACK | UVM_FLAG_FIXED | UVM_FLAG_UNMAP |
-	    UVM_FLAG_COPYONW);
-
-	start = round_page(addr);
-	end = trunc_page(addr + sz);
-#ifdef MACHINE_STACK_GROWS_UP
-	if (end == addr + sz)
-		end -= PAGE_SIZE;
-#else
-	if (start == addr)
-		start += PAGE_SIZE;
-#endif
-
-	if (start < map->min_offset || end >= map->max_offset || end < start)
-		return EINVAL;
-
-	error = uvm_mapanon(map, &start, end - start, 0, flags);
-	if (error != 0)
-		printf("map stack for pid %d failed\n", p->p_p->ps_pid);
-
-	return error;
 }
 
 /*
@@ -2200,10 +1975,6 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			}
 		}
 
-		/* A stack has been removed.. */
-		if (UVM_ET_ISSTACK(entry) && (map->flags & VM_MAP_ISVMSPACE))
-			map->sserial++;
-
 		/* Kill entry. */
 		uvm_unmap_kill_entry(map, entry);
 
@@ -2313,8 +2084,7 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 		    UVM_ET_ISNEEDSCOPY(iter) &&
 		    ((iter->protection & PROT_WRITE) ||
 		    iter->object.uvm_obj == NULL)) {
-			amap_copy(map, iter, M_WAITOK,
-			    UVM_ET_ISSTACK(iter) ? FALSE : TRUE,
+			amap_copy(map, iter, M_WAITOK, TRUE,
 			    iter->start, iter->end);
 		}
 		iter->wired_count++;
@@ -3083,12 +2853,11 @@ uvm_map_printit(struct vm_map *map, boolean_t full,
 		    entry, entry->start, entry->end, entry->object.uvm_obj,
 		    (long long)entry->offset, entry->aref.ar_amap,
 		    entry->aref.ar_pageoff);
-		(*pr)("\tsubmap=%c, cow=%c, nc=%c, stack=%c, prot(max)=%d/%d, inh=%d, "
+		(*pr)("\tsubmap=%c, cow=%c, nc=%c, prot(max)=%d/%d, inh=%d, "
 		    "wc=%d, adv=%d\n",
 		    (entry->etype & UVM_ET_SUBMAP) ? 'T' : 'F',
 		    (entry->etype & UVM_ET_COPYONWRITE) ? 'T' : 'F', 
 		    (entry->etype & UVM_ET_NEEDSCOPY) ? 'T' : 'F',
-		    (entry->etype & UVM_ET_STACK) ? 'T' : 'F',
 		    entry->protection, entry->max_protection,
 		    entry->inheritance, entry->wired_count, entry->advice);
 
@@ -3280,7 +3049,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 	 */
 	first = uvm_map_entrybyaddr(&map->addr, start);
 	KDASSERT(first != NULL);
-	if (first->end <= start)
+	if (first->end < start)
 		first = RBT_NEXT(uvm_map_addr, first);
 
 	/* First, check for protection violations. */
@@ -3341,10 +3110,6 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 		if (iter->protection != old_prot) {
 			mask = UVM_ET_ISCOPYONWRITE(iter) ?
 			    ~PROT_WRITE : PROT_MASK;
-
-			/* XXX should only wserial++ if no split occurs */
-			if (iter->protection & PROT_WRITE)
-				map->wserial++;
 
 			/* update pmap */
 			if ((iter->protection & mask) == PROT_NONE &&
@@ -4083,17 +3848,19 @@ uvm_map_hint(struct vmspace *vm, vm_prot_t prot, vaddr_t minaddr,
 #endif
 
 #if defined (__LP64__)
-	spacing = MIN(4UL * 1024 * 1024 * 1024, MAXDSIZ) - 1;
+	spacing = (MIN((4UL * 1024 * 1024 * 1024), BRKSIZ) - 1);
 #else
-	spacing = MIN(1 * 1024 * 1024 * 1024, MAXDSIZ) - 1;
+	spacing = (MIN((256 * 1024 * 1024), BRKSIZ) - 1);
 #endif
 
+	addr = (vaddr_t)vm->vm_daddr;
 	/*
 	 * Start malloc/mmap after the brk.
+	 * If the random spacing area has been used up,
+	 * the brk area becomes fair game for mmap as well.
 	 */
-	addr = (vaddr_t)vm->vm_daddr + BRKSIZ;
-	addr = MAX(addr, minaddr);
-
+	if (vm->vm_dused < spacing >> PAGE_SHIFT)
+		addr += BRKSIZ;
 	if (addr < maxaddr) {
 		while (spacing > maxaddr - addr)
 			spacing >>= 1;
@@ -4398,8 +4165,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	for (entry = first; entry != NULL && entry->start < end;
 	    entry = RBT_NEXT(uvm_map_addr, entry)) {
 		if (UVM_ET_ISNEEDSCOPY(entry))
-			amap_copy(srcmap, entry, M_NOWAIT,
-			    UVM_ET_ISSTACK(entry) ? FALSE : TRUE, start, end);
+			amap_copy(srcmap, entry, M_NOWAIT, TRUE, start, end);
 		if (UVM_ET_ISNEEDSCOPY(entry)) {
 			/*
 			 * amap_copy failure
@@ -5291,7 +5057,7 @@ vm_map_lock_try_ln(struct vm_map *map, char *file, int line)
 	boolean_t rv;
 
 	if (map->flags & VM_MAP_INTRSAFE) {
-		rv = mtx_enter_try(&map->mtx);
+		rv = _mtx_enter_try(&map->mtx LOCK_FL_ARGS);
 	} else {
 		mtx_enter(&map->flags_lock);
 		if (map->flags & VM_MAP_BUSY) {
@@ -5299,12 +5065,13 @@ vm_map_lock_try_ln(struct vm_map *map, char *file, int line)
 			return (FALSE);
 		}
 		mtx_leave(&map->flags_lock);
-		rv = (rw_enter(&map->lock, RW_WRITE|RW_NOSLEEP) == 0);
+		rv = (_rw_enter(&map->lock, RW_WRITE|RW_NOSLEEP LOCK_FL_ARGS)
+		    == 0);
 		/* check if the lock is busy and back out if we won the race */
 		if (rv) {
 			mtx_enter(&map->flags_lock);
 			if (map->flags & VM_MAP_BUSY) {
-				rw_exit(&map->lock);
+				_rw_exit(&map->lock LOCK_FL_ARGS);
 				rv = FALSE;
 			}
 			mtx_leave(&map->flags_lock);
@@ -5334,16 +5101,17 @@ tryagain:
 				    PVM, vmmapbsy, 0);
 			}
 			mtx_leave(&map->flags_lock);
-		} while (rw_enter(&map->lock, RW_WRITE|RW_SLEEPFAIL) != 0);
+		} while (_rw_enter(&map->lock, RW_WRITE|RW_SLEEPFAIL
+		    LOCK_FL_ARGS) != 0);
 		/* check if the lock is busy and back out if we won the race */
 		mtx_enter(&map->flags_lock);
 		if (map->flags & VM_MAP_BUSY) {
-			rw_exit(&map->lock);
+			_rw_exit(&map->lock LOCK_FL_ARGS);
 			goto tryagain;
 		}
 		mtx_leave(&map->flags_lock);
 	} else {
-		mtx_enter(&map->mtx);
+		_mtx_enter(&map->mtx LOCK_FL_ARGS);
 	}
 
 	map->timestamp++;
@@ -5356,9 +5124,9 @@ void
 vm_map_lock_read_ln(struct vm_map *map, char *file, int line)
 {
 	if ((map->flags & VM_MAP_INTRSAFE) == 0)
-		rw_enter_read(&map->lock);
+		_rw_enter_read(&map->lock LOCK_FL_ARGS);
 	else
-		mtx_enter(&map->mtx);
+		_mtx_enter(&map->mtx LOCK_FL_ARGS);
 	LPRINTF(("map   lock: %p (at %s %d)\n", map, file, line));
 	uvm_tree_sanity(map, file, line);
 	uvm_tree_size_chk(map, file, line);
@@ -5371,9 +5139,9 @@ vm_map_unlock_ln(struct vm_map *map, char *file, int line)
 	uvm_tree_size_chk(map, file, line);
 	LPRINTF(("map unlock: %p (at %s %d)\n", map, file, line));
 	if ((map->flags & VM_MAP_INTRSAFE) == 0)
-		rw_exit(&map->lock);
+		_rw_exit(&map->lock LOCK_FL_ARGS);
 	else
-		mtx_leave(&map->mtx);
+		_mtx_leave(&map->mtx LOCK_FL_ARGS);
 }
 
 void
@@ -5383,9 +5151,9 @@ vm_map_unlock_read_ln(struct vm_map *map, char *file, int line)
 	/* XXX: RO */ uvm_tree_size_chk(map, file, line);
 	LPRINTF(("map unlock: %p (at %s %d)\n", map, file, line));
 	if ((map->flags & VM_MAP_INTRSAFE) == 0)
-		rw_exit_read(&map->lock);
+		_rw_exit_read(&map->lock LOCK_FL_ARGS);
 	else
-		mtx_leave(&map->mtx);
+		_mtx_leave(&map->mtx LOCK_FL_ARGS);
 }
 
 void
@@ -5397,7 +5165,7 @@ vm_map_downgrade_ln(struct vm_map *map, char *file, int line)
 	LPRINTF(("map   lock: %p (at %s %d)\n", map, file, line));
 	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
 	if ((map->flags & VM_MAP_INTRSAFE) == 0)
-		rw_enter(&map->lock, RW_DOWNGRADE);
+		_rw_enter(&map->lock, RW_DOWNGRADE LOCK_FL_ARGS);
 }
 
 void
@@ -5408,8 +5176,8 @@ vm_map_upgrade_ln(struct vm_map *map, char *file, int line)
 	LPRINTF(("map unlock: %p (at %s %d)\n", map, file, line));
 	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
 	if ((map->flags & VM_MAP_INTRSAFE) == 0) {
-		rw_exit_read(&map->lock);
-		rw_enter_write(&map->lock);
+		_rw_exit_read(&map->lock LOCK_FL_ARGS);
+		_rw_enter_write(&map->lock LOCK_FL_ARGS);
 	}
 	LPRINTF(("map   lock: %p (at %s %d)\n", map, file, line));
 	uvm_tree_sanity(map, file, line);

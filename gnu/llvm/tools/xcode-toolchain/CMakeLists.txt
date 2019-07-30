@@ -49,7 +49,7 @@ if(NOT XCODE_VERSION)
     OUTPUT_STRIP_TRAILING_WHITESPACE
     ERROR_FILE /dev/null
   )
-  string(REGEX MATCH "Xcode ([0-9][0-9]?([.][0-9])+)" version_match ${xcodebuild_version})
+  string(REGEX MATCH "Xcode ([0-9]([.][0-9])+)" version_match ${xcodebuild_version})
   if(version_match)
     message(STATUS "Identified Xcode Version: ${CMAKE_MATCH_1}")
     set(XCODE_VERSION ${CMAKE_MATCH_1})
@@ -93,11 +93,13 @@ add_custom_command(OUTPUT ${LLVMToolchainDir}/Info.plist
                   COMMAND /usr/libexec/PlistBuddy -c "Add:CompatibilityVersion integer ${COMPAT_VERSION}" "${LLVMToolchainDir}/Info.plist"
                   )
 
-add_custom_target(build-xcode-toolchain
-                  COMMAND "${CMAKE_COMMAND}" --build ${CMAKE_BINARY_DIR} --target all)
-add_llvm_install_targets(install-xcode-toolchain
-                         DEPENDS ${LLVMToolchainDir}/Info.plist build-xcode-toolchain
-                         PREFIX ${LLVMToolchainDir}/usr/)
+add_custom_target(install-xcode-toolchain
+                  DEPENDS ${LLVMToolchainDir}/Info.plist
+                  COMMAND "${CMAKE_COMMAND}" --build ${CMAKE_BINARY_DIR} --target all
+                  COMMAND "${CMAKE_COMMAND}"
+                          -DCMAKE_INSTALL_PREFIX=${LLVMToolchainDir}/usr/
+                          -P "${CMAKE_BINARY_DIR}/cmake_install.cmake"
+                  USES_TERMINAL)
 
 if(LLVM_DISTRIBUTION_COMPONENTS)
   if(CMAKE_CONFIGURATION_TYPES)
@@ -108,10 +110,13 @@ if(LLVM_DISTRIBUTION_COMPONENTS)
                   DEPENDS ${LLVMToolchainDir}/Info.plist distribution)
 
   foreach(target ${LLVM_DISTRIBUTION_COMPONENTS})
-    add_llvm_install_targets(install-distribution-${target}
-                             DEPENDS ${target}
-                             COMPONENT ${target}
-                             PREFIX ${LLVMToolchainDir}/usr/)
+    add_custom_target(install-distribution-${target}
+                DEPENDS ${target}
+                COMMAND "${CMAKE_COMMAND}"
+                        -DCMAKE_INSTALL_COMPONENT=${target}
+                        -DCMAKE_INSTALL_PREFIX=${LLVMToolchainDir}/usr/
+                        -P "${CMAKE_BINARY_DIR}/cmake_install.cmake"
+                USES_TERMINAL)
     add_dependencies(install-distribution-toolchain install-distribution-${target})
   endforeach()
 endif()

@@ -41,15 +41,6 @@ MCAsmInfoCOFF::MCAsmInfoCOFF() {
 
   // At least MSVC inline-asm does AShr.
   UseLogicalShr = false;
-
-  // If this is a COFF target, assume that it supports associative comdats. It's
-  // part of the spec.
-  HasCOFFAssociativeComdats = true;
-
-  // We can generate constants in comdat sections that can be shared,
-  // but in order not to create null typed symbols, we actually need to
-  // make them global symbols as well.
-  HasCOFFComdatConstants = true;
 }
 
 void MCAsmInfoMicrosoft::anchor() {}
@@ -58,12 +49,4 @@ MCAsmInfoMicrosoft::MCAsmInfoMicrosoft() = default;
 
 void MCAsmInfoGNUCOFF::anchor() {}
 
-MCAsmInfoGNUCOFF::MCAsmInfoGNUCOFF() {
-  // If this is a GNU environment (mingw or cygwin), don't use associative
-  // comdats for jump tables, unwind information, and other data associated with
-  // a function.
-  HasCOFFAssociativeComdats = false;
-
-  // We don't create constants in comdat sections for MinGW.
-  HasCOFFComdatConstants = false;
-}
+MCAsmInfoGNUCOFF::MCAsmInfoGNUCOFF() = default;

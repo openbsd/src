@@ -34,7 +34,7 @@ namespace llvm {
 namespace opt {
 
 // Ordering on Info. The ordering is *almost* case-insensitive lexicographic,
-// with an exception. '\0' comes at the end of the alphabet instead of the
+// with an exceptions. '\0' comes at the end of the alphabet instead of the
 // beginning (thus options precede any other options which prefix them).
 static int StrCmpOptionNameIgnoreCase(const char *A, const char *B) {
   const char *X = A, *Y = B;
@@ -196,7 +196,7 @@ static unsigned matchOption(const OptTable::Info *I, StringRef Str,
 
 // Returns true if one of the Prefixes + In.Names matches Option
 static bool optionMatches(const OptTable::Info &In, StringRef Option) {
-  if (In.Prefixes)
+  if (In.Values && In.Prefixes)
     for (size_t I = 0; In.Prefixes[I]; I++)
       if (Option == std::string(In.Prefixes[I]) + In.Name)
         return true;
@@ -209,9 +209,8 @@ static bool optionMatches(const OptTable::Info &In, StringRef Option) {
 std::vector<std::string>
 OptTable::suggestValueCompletions(StringRef Option, StringRef Arg) const {
   // Search all options and return possible values.
-  for (size_t I = FirstSearchableIndex, E = OptionInfos.size(); I < E; I++) {
-    const Info &In = OptionInfos[I];
-    if (!In.Values || !optionMatches(In, Option))
+  for (const Info &In : OptionInfos.slice(FirstSearchableIndex)) {
+    if (!optionMatches(In, Option))
       continue;
 
     SmallVector<StringRef, 8> Candidates;
@@ -219,7 +218,7 @@ OptTable::suggestValueCompletions(StringRef Option, StringRef Arg) const {
 
     std::vector<std::string> Result;
     for (StringRef Val : Candidates)
-      if (Val.startswith(Arg) && Arg.compare(Val))
+      if (Val.startswith(Arg))
         Result.push_back(Val);
     return Result;
   }
@@ -229,8 +228,7 @@ OptTable::suggestValueCompletions(StringRef Option, StringRef Arg) const {
 std::vector<std::string>
 OptTable::findByPrefix(StringRef Cur, unsigned short DisableFlags) const {
   std::vector<std::string> Ret;
-  for (size_t I = FirstSearchableIndex, E = OptionInfos.size(); I < E; I++) {
-    const Info &In = OptionInfos[I];
+  for (const Info &In : OptionInfos.slice(FirstSearchableIndex)) {
     if (!In.Prefixes || (!In.HelpText && !In.GroupID))
       continue;
     if (In.Flags & DisableFlags)
@@ -240,85 +238,11 @@ OptTable::findByPrefix(StringRef Cur, unsigned short DisableFlags) const {
       std::string S = std::string(In.Prefixes[I]) + std::string(In.Name) + "\t";
       if (In.HelpText)
         S += In.HelpText;
-      if (StringRef(S).startswith(Cur) && S.compare(std::string(Cur) + "\t"))
+      if (StringRef(S).startswith(Cur))
         Ret.push_back(S);
     }
   }
   return Ret;
-}
-
-unsigned OptTable::findNearest(StringRef Option, std::string &NearestString,
-                               unsigned FlagsToInclude, unsigned FlagsToExclude,
-                               unsigned MinimumLength) const {
-  assert(!Option.empty());
-
-  // Consider each option as a candidate, finding the closest match.
-  unsigned BestDistance = UINT_MAX;
-  for (const Info &CandidateInfo :
-       ArrayRef<Info>(OptionInfos).drop_front(FirstSearchableIndex)) {
-    StringRef CandidateName = CandidateInfo.Name;
-
-    // Ignore option candidates with empty names, such as "--", or names
-    // that do not meet the minimum length.
-    if (CandidateName.empty() || CandidateName.size() < MinimumLength)
-      continue;
-
-    // If FlagsToInclude were specified, ignore options that don't include
-    // those flags.
-    if (FlagsToInclude && !(CandidateInfo.Flags & FlagsToInclude))
-      continue;
-    // Ignore options that contain the FlagsToExclude.
-    if (CandidateInfo.Flags & FlagsToExclude)
-      continue;
-
-    // Ignore positional argument option candidates (which do not
-    // have prefixes).
-    if (!CandidateInfo.Prefixes)
-      continue;
-    // Find the most appropriate prefix. For example, if a user asks for
-    // "--helm", suggest "--help" over "-help".
-    StringRef Prefix = CandidateInfo.Prefixes[0];
-    for (int P = 1; CandidateInfo.Prefixes[P]; P++) {
-      if (Option.startswith(CandidateInfo.Prefixes[P]))
-        Prefix = CandidateInfo.Prefixes[P];
-    }
-
-    // Check if the candidate ends with a character commonly used when
-    // delimiting an option from its value, such as '=' or ':'. If it does,
-    // attempt to split the given option based on that delimiter.
-    std::string Delimiter = "";
-    char Last = CandidateName.back();
-    if (Last == '=' || Last == ':')
-      Delimiter = std::string(1, Last);
-
-    StringRef LHS, RHS;
-    if (Delimiter.empty())
-      LHS = Option;
-    else
-      std::tie(LHS, RHS) = Option.split(Last);
-
-    std::string NormalizedName =
-        (LHS.drop_front(Prefix.size()) + Delimiter).str();
-    unsigned Distance =
-        CandidateName.edit_distance(NormalizedName, /*AllowReplacements=*/true,
-                                    /*MaxEditDistance=*/BestDistance);
-    if (Distance < BestDistance) {
-      BestDistance = Distance;
-      NearestString = (Prefix + CandidateName + RHS).str();
-    }
-  }
-  return BestDistance;
-}
-
-bool OptTable::addValues(const char *Option, const char *Values) {
-  for (size_t I = FirstSearchableIndex, E = OptionInfos.size(); I < E; I++) {
-    Info &In = OptionInfos[I];
-    if (optionMatches(In, Option)) {
-      In.Values = Values;
-      return true;
-    }
-  }
-  return false;
 }
 
 Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index,
@@ -332,8 +256,8 @@ Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index,
   if (isInput(PrefixesUnion, Str))
     return new Arg(getOption(TheInputOptionID), Str, Index++, Str);
 
-  const Info *Start = OptionInfos.data() + FirstSearchableIndex;
-  const Info *End = OptionInfos.data() + OptionInfos.size();
+  const Info *Start = OptionInfos.begin() + FirstSearchableIndex;
+  const Info *End = OptionInfos.end();
   StringRef Name = StringRef(Str).ltrim(PrefixChars);
 
   // Search for the first next option which could be a prefix.
@@ -522,14 +446,15 @@ static const char *getOptionHelpGroup(const OptTable &Opts, OptSpecifier Id) {
 }
 
 void OptTable::PrintHelp(raw_ostream &OS, const char *Name, const char *Title,
-                         bool ShowHidden, bool ShowAllAliases) const {
+                         bool ShowHidden) const {
   PrintHelp(OS, Name, Title, /*Include*/ 0, /*Exclude*/
-            (ShowHidden ? 0 : HelpHidden), ShowAllAliases);
+            (ShowHidden ? 0 : HelpHidden));
 }
 
+
 void OptTable::PrintHelp(raw_ostream &OS, const char *Name, const char *Title,
-                         unsigned FlagsToInclude, unsigned FlagsToExclude,
-                         bool ShowAllAliases) const {
+                         unsigned FlagsToInclude,
+                         unsigned FlagsToExclude) const {
   OS << "OVERVIEW: " << Title << "\n";
   OS << '\n';
   OS << "USAGE: " << Name << " [options] <inputs>\n";
@@ -537,9 +462,12 @@ void OptTable::PrintHelp(raw_ostream &OS, const char *Name, const char *Title,
 
   // Render help text into a map of group-name to a list of (option, help)
   // pairs.
-  std::map<std::string, std::vector<OptionInfo>> GroupedOptionHelp;
+  using helpmap_ty = std::map<std::string, std::vector<OptionInfo>>;
+  helpmap_ty GroupedOptionHelp;
 
-  for (unsigned Id = 1, e = getNumOptions() + 1; Id != e; ++Id) {
+  for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
+    unsigned Id = i + 1;
+
     // FIXME: Split out option groups.
     if (getOptionKind(Id) == Option::GroupClass)
       continue;
@@ -550,26 +478,18 @@ void OptTable::PrintHelp(raw_ostream &OS, const char *Name, const char *Title,
     if (Flags & FlagsToExclude)
       continue;
 
-    // If an alias doesn't have a help text, show a help text for the aliased
-    // option instead.
-    const char *HelpText = getOptionHelpText(Id);
-    if (!HelpText && ShowAllAliases) {
-      const Option Alias = getOption(Id).getAlias();
-      if (Alias.isValid())
-        HelpText = getOptionHelpText(Alias.getID());
-    }
-
-    if (HelpText) {
+    if (const char *Text = getOptionHelpText(Id)) {
       const char *HelpGroup = getOptionHelpGroup(*this, Id);
       const std::string &OptName = getOptionHelpName(*this, Id);
-      GroupedOptionHelp[HelpGroup].push_back({OptName, HelpText});
+      GroupedOptionHelp[HelpGroup].push_back({OptName, Text});
     }
   }
 
-  for (auto& OptionGroup : GroupedOptionHelp) {
-    if (OptionGroup.first != GroupedOptionHelp.begin()->first)
+  for (helpmap_ty::iterator it = GroupedOptionHelp .begin(),
+         ie = GroupedOptionHelp.end(); it != ie; ++it) {
+    if (it != GroupedOptionHelp .begin())
       OS << "\n";
-    PrintHelpOptionList(OS, OptionGroup.first, OptionGroup.second);
+    PrintHelpOptionList(OS, it->first, it->second);
   }
 
   OS.flush();

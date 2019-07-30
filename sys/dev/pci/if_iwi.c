@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.139 2019/04/25 01:52:13 kevlo Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.137 2017/10/26 15:00:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -647,9 +647,9 @@ iwi_media_change(struct ifnet *ifp)
 		return error;
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
-		error = iwi_init(ifp);
+		iwi_init(ifp);
 
-	return error;
+	return 0;
 }
 
 void
@@ -2290,6 +2290,9 @@ iwi_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
+
+	/* in case we were scanning, release the scan "lock" */
+	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 

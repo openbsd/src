@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_argv.c,v 1.75 2018/12/21 16:58:49 schwarze Exp $ */
+/*	$OpenBSD: mdoc_argv.c,v 1.71 2017/05/30 16:21:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -142,7 +142,7 @@ static	const enum mdocargt args_Bl[] = {
 	MDOC_ARG_MAX
 };
 
-static	const struct mdocarg mdocargs[MDOC_MAX - MDOC_Dd] = {
+static	const struct mdocarg __mdocargs[MDOC_MAX - MDOC_Dd] = {
 	{ ARGSFL_NONE, NULL }, /* Dd */
 	{ ARGSFL_NONE, NULL }, /* Dt */
 	{ ARGSFL_NONE, NULL }, /* Os */
@@ -264,6 +264,7 @@ static	const struct mdocarg mdocargs[MDOC_MAX - MDOC_Dd] = {
 	{ ARGSFL_NONE, NULL }, /* %U */
 	{ ARGSFL_NONE, NULL }, /* Ta */
 };
+static	const struct mdocarg *const mdocargs = __mdocargs - MDOC_Dd;
 
 
 /*
@@ -287,7 +288,7 @@ mdoc_argv(struct roff_man *mdoc, int line, enum roff_tok tok,
 	/* Which flags does this macro support? */
 
 	assert(tok >= MDOC_Dd && tok < MDOC_MAX);
-	argtable = mdocargs[tok - MDOC_Dd].argvs;
+	argtable = mdocargs[tok].argvs;
 	if (argtable == NULL)
 		return;
 
@@ -365,7 +366,7 @@ mdoc_argv(struct roff_man *mdoc, int line, enum roff_tok tok,
 		/* Prepare for parsing the next flag. */
 
 		*pos = ipos;
-		argtable = mdocargs[tok - MDOC_Dd].argvs;
+		argtable = mdocargs[tok].argvs;
 	}
 }
 
@@ -414,9 +415,12 @@ mdoc_args(struct roff_man *mdoc, int line, int *pos,
 	char *buf, enum roff_tok tok, char **v)
 {
 	struct roff_node *n;
+	char		 *v_local;
 	enum argsflag	  fl;
 
-	fl = tok == TOKEN_NONE ? ARGSFL_NONE : mdocargs[tok - MDOC_Dd].flags;
+	if (v == NULL)
+		v = &v_local;
+	fl = tok == TOKEN_NONE ? ARGSFL_NONE : mdocargs[tok].flags;
 
 	/*
 	 * We know that we're in an `It', so it's reasonable to expect
@@ -443,20 +447,18 @@ args(struct roff_man *mdoc, int line, int *pos,
 		char *buf, enum argsflag fl, char **v)
 {
 	char		*p;
-	char		*v_local;
 	int		 pairs;
 
 	if (buf[*pos] == '\0') {
 		if (mdoc->flags & MDOC_PHRASELIT &&
 		    ! (mdoc->flags & MDOC_PHRASE)) {
-			mandoc_msg(MANDOCERR_ARG_QUOTE, line, *pos, NULL);
+			mandoc_msg(MANDOCERR_ARG_QUOTE,
+			    mdoc->parse, line, *pos, NULL);
 			mdoc->flags &= ~MDOC_PHRASELIT;
 		}
 		return ARGS_EOLN;
 	}
 
-	if (v == NULL)
-		v = &v_local;
 	*v = buf + *pos;
 
 	if (fl == ARGSFL_DELIM && args_checkpunct(buf, *pos))
@@ -502,7 +504,7 @@ args(struct roff_man *mdoc, int line, int *pos,
 			p = strchr(*v, '\0');
 			if (p[-1] == ' ')
 				mandoc_msg(MANDOCERR_SPACE_EOL,
-				    line, *pos, NULL);
+				    mdoc->parse, line, *pos, NULL);
 			*pos += (int)(p - *v);
 		}
 
@@ -523,12 +525,13 @@ args(struct roff_man *mdoc, int line, int *pos,
 	 * Whitespace is NOT involved in literal termination.
 	 */
 
-	if (mdoc->flags & MDOC_PHRASELIT ||
-	    (mdoc->flags & MDOC_PHRASE && buf[*pos] == '\"')) {
-		if ((mdoc->flags & MDOC_PHRASELIT) == 0) {
+	if (mdoc->flags & MDOC_PHRASELIT || buf[*pos] == '\"') {
+		if ( ! (mdoc->flags & MDOC_PHRASELIT))
 			*v = &buf[++(*pos)];
+
+		if (mdoc->flags & MDOC_PHRASE)
 			mdoc->flags |= MDOC_PHRASELIT;
-		}
+
 		pairs = 0;
 		for ( ; buf[*pos]; (*pos)++) {
 			/* Move following text left after quoted quotes. */
@@ -549,7 +552,7 @@ args(struct roff_man *mdoc, int line, int *pos,
 		if (buf[*pos] == '\0') {
 			if ( ! (mdoc->flags & MDOC_PHRASE))
 				mandoc_msg(MANDOCERR_ARG_QUOTE,
-				    line, *pos, NULL);
+				    mdoc->parse, line, *pos, NULL);
 			return ARGS_WORD;
 		}
 
@@ -563,15 +566,14 @@ args(struct roff_man *mdoc, int line, int *pos,
 			(*pos)++;
 
 		if ('\0' == buf[*pos])
-			mandoc_msg(MANDOCERR_SPACE_EOL, line, *pos, NULL);
+			mandoc_msg(MANDOCERR_SPACE_EOL, mdoc->parse,
+			    line, *pos, NULL);
 
 		return ARGS_WORD;
 	}
 
 	p = &buf[*pos];
-	*v = roff_getarg(mdoc->roff, &p, line, pos);
-	if (v == &v_local)
-		free(*v);
+	*v = mandoc_getarg(mdoc->parse, &p, line, pos);
 
 	/*
 	 * After parsing the last word in this phrase,
@@ -582,7 +584,7 @@ args(struct roff_man *mdoc, int line, int *pos,
 		mdoc->flags &= ~MDOC_PHRASEQL;
 		mdoc->flags |= MDOC_PHRASEQF;
 	}
-	return ARGS_ALLOC;
+	return ARGS_WORD;
 }
 
 /*
@@ -653,9 +655,7 @@ argv_multi(struct roff_man *mdoc, int line,
 			v->value = mandoc_reallocarray(v->value,
 			    v->sz + MULTI_STEP, sizeof(char *));
 
-		if (ac != ARGS_ALLOC)
-			p = mandoc_strdup(p);
-		v->value[(int)v->sz] = p;
+		v->value[(int)v->sz] = mandoc_strdup(p);
 	}
 }
 
@@ -670,10 +670,7 @@ argv_single(struct roff_man *mdoc, int line,
 	if (ac == ARGS_EOLN)
 		return;
 
-	if (ac != ARGS_ALLOC)
-		p = mandoc_strdup(p);
-
 	v->sz = 1;
 	v->value = mandoc_malloc(sizeof(char *));
-	v->value[0] = p;
+	v->value[0] = mandoc_strdup(p);
 }

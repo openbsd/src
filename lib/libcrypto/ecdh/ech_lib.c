@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_lib.c,v 1.14 2018/04/14 07:09:21 tb Exp $ */
+/* $OpenBSD: ech_lib.c,v 1.13 2017/05/02 03:59:44 deraadt Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -109,8 +109,10 @@ ECDH_set_method(EC_KEY *eckey, const ECDH_METHOD *meth)
 		return 0;
 
 #ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(ecdh->engine);
-	ecdh->engine = NULL;
+	if (ecdh->engine) {
+		ENGINE_finish(ecdh->engine);
+		ecdh->engine = NULL;
+	}
 #endif
 	ecdh->meth = meth;
 	return 1;
@@ -136,7 +138,7 @@ ECDH_DATA_new_method(ENGINE *engine)
 		ret->engine = ENGINE_get_default_ECDH();
 	if (ret->engine) {
 		ret->meth = ENGINE_get_ECDH(ret->engine);
-		if (ret->meth == NULL) {
+		if (!ret->meth) {
 			ECDHerror(ERR_R_ENGINE_LIB);
 			ENGINE_finish(ret->engine);
 			free(ret);
@@ -174,7 +176,8 @@ ecdh_data_free(void *data)
 	ECDH_DATA *r = (ECDH_DATA *)data;
 
 #ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(r->engine);
+	if (r->engine)
+		ENGINE_finish(r->engine);
 #endif
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ECDH, r, &r->ex_data);

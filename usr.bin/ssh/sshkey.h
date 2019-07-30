@@ -1,4 +1,4 @@
-/* $OpenBSD: sshkey.h,v 1.31 2019/01/20 22:51:37 djm Exp $ */
+/* $OpenBSD: sshkey.h,v 1.24 2018/02/23 15:58:38 markus Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -32,9 +32,7 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
-#include <openssl/ecdsa.h>
 #else /* OPENSSL */
-#define BIGNUM		void
 #define RSA		void
 #define DSA		void
 #define EC_KEY		void
@@ -98,7 +96,6 @@ struct sshkey_cert {
 	struct sshbuf	*critical;
 	struct sshbuf	*extensions;
 	struct sshkey	*signature_key;
-	char		*signature_type;
 };
 
 /* XXX opaquify? */
@@ -123,7 +120,10 @@ struct sshkey {
 #define	ED25519_PK_SZ	crypto_sign_ed25519_PUBLICKEYBYTES
 
 struct sshkey	*sshkey_new(int);
+int		 sshkey_add_private(struct sshkey *);
+struct sshkey	*sshkey_new_private(int);
 void		 sshkey_free(struct sshkey *);
+int		 sshkey_demote(const struct sshkey *, struct sshkey **);
 int		 sshkey_equal_public(const struct sshkey *,
     const struct sshkey *);
 int		 sshkey_equal(const struct sshkey *, const struct sshkey *);
@@ -151,7 +151,6 @@ int	 sshkey_cert_check_authority(const struct sshkey *, int, int,
     const char *, const char **);
 size_t	 sshkey_format_cert_validity(const struct sshkey_cert *,
     char *, size_t) __attribute__((__bounded__(__string__, 2, 3)));
-int	 sshkey_check_cert_sigtype(const struct sshkey *, const char *);
 
 int	 sshkey_certify(struct sshkey *, struct sshkey *, const char *);
 /* Variant allowing use of a custom signature function (e.g. for ssh-agent) */
@@ -186,12 +185,11 @@ int	 sshkey_puts_opts(const struct sshkey *, struct sshbuf *,
 int	 sshkey_plain_to_blob(const struct sshkey *, u_char **, size_t *);
 int	 sshkey_putb_plain(const struct sshkey *, struct sshbuf *);
 
+int	 sshkey_sigtype(const u_char *, size_t, char **);
 int	 sshkey_sign(const struct sshkey *, u_char **, size_t *,
     const u_char *, size_t, const char *, u_int);
 int	 sshkey_verify(const struct sshkey *, const u_char *, size_t,
     const u_char *, size_t, const char *, u_int);
-int	 sshkey_check_sigtype(const u_char *, size_t, const char *);
-const char *sshkey_sigalg_by_name(const char *);
 
 /* for debug */
 void	sshkey_dump_ec_point(const EC_GROUP *, const EC_POINT *);
@@ -213,7 +211,7 @@ int	sshkey_parse_private_fileblob_type(struct sshbuf *blob, int type,
     const char *passphrase, struct sshkey **keyp, char **commentp);
 
 /* XXX should be internal, but used by ssh-keygen */
-int ssh_rsa_complete_crt_parameters(struct sshkey *, const BIGNUM *);
+int ssh_rsa_generate_additional_parameters(struct sshkey *);
 
 /* stateful keys (e.g. XMSS) */
 typedef void sshkey_printfn(const char *, ...) __attribute__((format(printf, 1, 2)));

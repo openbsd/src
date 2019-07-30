@@ -56,6 +56,7 @@ public:
 private:
   const MemRegion *getVAListAsRegion(SVal SV, const Expr *VAExpr,
                                      bool &IsSymbolic, CheckerContext &C) const;
+  StringRef getVariableNameFromRegion(const MemRegion *Reg) const;
   const ExplodedNode *getStartCallSite(const ExplodedNode *N,
                                        const MemRegion *Reg) const;
 
@@ -63,13 +64,13 @@ private:
                                  CheckerContext &C) const;
   void reportLeakedVALists(const RegionVector &LeakedVALists, StringRef Msg1,
                            StringRef Msg2, CheckerContext &C, ExplodedNode *N,
-                           bool ReportUninit = false) const;
+                           bool ForceReport = false) const;
 
   void checkVAListStartCall(const CallEvent &Call, CheckerContext &C,
                             bool IsCopy) const;
   void checkVAListEndCall(const CallEvent &Call, CheckerContext &C) const;
 
-  class ValistBugVisitor : public BugReporterVisitor {
+  class ValistBugVisitor : public BugReporterVisitorImpl<ValistBugVisitor> {
   public:
     ValistBugVisitor(const MemRegion *Reg, bool IsLeak = false)
         : Reg(Reg), IsLeak(IsLeak) {}
@@ -78,7 +79,7 @@ private:
       ID.AddPointer(&X);
       ID.AddPointer(Reg);
     }
-    std::shared_ptr<PathDiagnosticPiece>
+    std::unique_ptr<PathDiagnosticPiece>
     getEndPath(BugReporterContext &BRC, const ExplodedNode *EndPathNode,
                BugReport &BR) override {
       if (!IsLeak)
@@ -87,7 +88,8 @@ private:
       PathDiagnosticLocation L = PathDiagnosticLocation::createEndOfPath(
           EndPathNode, BRC.getSourceManager());
       // Do not add the statement itself as a range in case of leak.
-      return std::make_shared<PathDiagnosticEventPiece>(L, BR.getDescription(), false);
+      return llvm::make_unique<PathDiagnosticEventPiece>(L, BR.getDescription(),
+                                                         false);
     }
     std::shared_ptr<PathDiagnosticPiece> VisitNode(const ExplodedNode *N,
                                                    const ExplodedNode *PrevN,
@@ -187,7 +189,7 @@ void ValistChecker::checkPreStmt(const VAArgExpr *VAA,
                                  CheckerContext &C) const {
   ProgramStateRef State = C.getState();
   const Expr *VASubExpr = VAA->getSubExpr();
-  SVal VAListSVal = C.getSVal(VASubExpr);
+  SVal VAListSVal = State->getSVal(VASubExpr, C.getLocationContext());
   bool Symbolic;
   const MemRegion *VAList =
       getVAListAsRegion(VAListSVal, VASubExpr, Symbolic, C);
@@ -265,19 +267,15 @@ void ValistChecker::reportUninitializedAccess(const MemRegion *VAList,
 void ValistChecker::reportLeakedVALists(const RegionVector &LeakedVALists,
                                         StringRef Msg1, StringRef Msg2,
                                         CheckerContext &C, ExplodedNode *N,
-                                        bool ReportUninit) const {
+                                        bool ForceReport) const {
   if (!(ChecksEnabled[CK_Unterminated] ||
-        (ChecksEnabled[CK_Uninitialized] && ReportUninit)))
+        (ChecksEnabled[CK_Uninitialized] && ForceReport)))
     return;
   for (auto Reg : LeakedVALists) {
     if (!BT_leakedvalist) {
-      // FIXME: maybe creating a new check name for this type of bug is a better
-      // solution.
-      BT_leakedvalist.reset(
-          new BugType(CheckNames[CK_Unterminated].getName().empty()
-                          ? CheckNames[CK_Uninitialized]
-                          : CheckNames[CK_Unterminated],
-                      "Leaked va_list", categories::MemoryError));
+      BT_leakedvalist.reset(new BugType(CheckNames[CK_Unterminated],
+                                        "Leaked va_list",
+                                        categories::MemoryError));
       BT_leakedvalist->setSuppressOnSink(true);
     }
 
@@ -377,7 +375,7 @@ void ValistChecker::checkVAListEndCall(const CallEvent &Call,
 
 std::shared_ptr<PathDiagnosticPiece> ValistChecker::ValistBugVisitor::VisitNode(
     const ExplodedNode *N, const ExplodedNode *PrevN, BugReporterContext &BRC,
-    BugReport &) {
+    BugReport &BR) {
   ProgramStateRef State = N->getState();
   ProgramStateRef StatePrev = PrevN->getState();
 

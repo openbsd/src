@@ -1,4 +1,4 @@
-//===- DeclarationName.cpp - Declaration names implementation -------------===//
+//===-- DeclarationName.cpp - Declaration names implementation --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,36 +11,20 @@
 // classes.
 //
 //===----------------------------------------------------------------------===//
-
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/DeclBase.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
-#include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/AST/TypeOrdering.h"
 #include "clang/Basic/IdentifierTable.h"
-#include "clang/Basic/LLVM.h"
-#include "clang/Basic/LangOptions.h"
-#include "clang/Basic/OperatorKinds.h"
-#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include <algorithm>
-#include <cassert>
-#include <cstdint>
-#include <string>
-
 using namespace clang;
 
 namespace clang {
-
 /// CXXSpecialName - Records the type associated with one of the
 /// "special" kinds of declaration names in C++, e.g., constructors,
 /// destructors, and conversion functions.
@@ -105,8 +89,6 @@ public:
   }
 };
 
-} // namespace clang
-
 static int compareInt(unsigned A, unsigned B) {
   return (A < B ? -1 : (A > B ? 1 : 0));
 }
@@ -114,14 +96,14 @@ static int compareInt(unsigned A, unsigned B) {
 int DeclarationName::compare(DeclarationName LHS, DeclarationName RHS) {
   if (LHS.getNameKind() != RHS.getNameKind())
     return (LHS.getNameKind() < RHS.getNameKind() ? -1 : 1);
-
+  
   switch (LHS.getNameKind()) {
   case DeclarationName::Identifier: {
     IdentifierInfo *LII = LHS.getAsIdentifierInfo();
     IdentifierInfo *RII = RHS.getAsIdentifierInfo();
     if (!LII) return RII ? -1 : 0;
     if (!RII) return 1;
-
+    
     return LII->getName().compare(RII->getName());
   }
 
@@ -148,7 +130,7 @@ int DeclarationName::compare(DeclarationName LHS, DeclarationName RHS) {
 
     return compareInt(LN, RN);
   }
-
+  
   case DeclarationName::CXXConstructorName:
   case DeclarationName::CXXDestructorName:
   case DeclarationName::CXXConversionFunctionName:
@@ -171,7 +153,7 @@ int DeclarationName::compare(DeclarationName LHS, DeclarationName RHS) {
   case DeclarationName::CXXLiteralOperatorName:
     return LHS.getCXXLiteralIdentifier()->getName().compare(
                                    RHS.getCXXLiteralIdentifier()->getName());
-
+              
   case DeclarationName::CXXUsingDirective:
     return 0;
   }
@@ -215,9 +197,10 @@ void DeclarationName::print(raw_ostream &OS, const PrintingPolicy &Policy) {
   case DeclarationName::CXXConstructorName:
     return printCXXConstructorDestructorName(N.getCXXNameType(), OS, Policy);
 
-  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXDestructorName: {
     OS << '~';
     return printCXXConstructorDestructorName(N.getCXXNameType(), OS, Policy);
+  }
 
   case DeclarationName::CXXDeductionGuideName:
     OS << "<deduction guide for ";
@@ -267,15 +250,13 @@ void DeclarationName::print(raw_ostream &OS, const PrintingPolicy &Policy) {
   llvm_unreachable("Unexpected declaration name kind");
 }
 
-namespace clang {
-
 raw_ostream &operator<<(raw_ostream &OS, DeclarationName N) {
   LangOptions LO;
   N.print(OS, PrintingPolicy(LO));
   return OS;
 }
 
-} // namespace clang
+} // end namespace clang
 
 DeclarationName::NameKind DeclarationName::getNameKind() const {
   switch (getStoredNameKind()) {
@@ -565,7 +546,7 @@ DeclarationNameTable::getCXXLiteralOperatorName(IdentifierInfo *II) {
   if (CXXLiteralOperatorIdName *Name =
                                LiteralNames->FindNodeOrInsertPos(ID, InsertPos))
     return DeclarationName (Name);
-
+  
   CXXLiteralOperatorIdName *LiteralName = new (Ctx) CXXLiteralOperatorIdName;
   LiteralName->ExtraKindOrNumArgs = DeclarationNameExtra::CXXLiteralOperator;
   LiteralName->ID = II;
@@ -636,13 +617,13 @@ bool DeclarationNameInfo::isInstantiationDependent() const {
   case DeclarationName::CXXUsingDirective:
   case DeclarationName::CXXDeductionGuideName:
     return false;
-
+    
   case DeclarationName::CXXConstructorName:
   case DeclarationName::CXXDestructorName:
   case DeclarationName::CXXConversionFunctionName:
     if (TypeSourceInfo *TInfo = LocInfo.NamedType.TInfo)
       return TInfo->getType()->isInstantiationDependentType();
-
+    
     return Name.getCXXNameType()->isInstantiationDependentType();
   }
   llvm_unreachable("All name kinds handled.");
@@ -689,7 +670,7 @@ void DeclarationNameInfo::printName(raw_ostream &OS) const {
   llvm_unreachable("Unexpected declaration name kind");
 }
 
-SourceLocation DeclarationNameInfo::getEndLocPrivate() const {
+SourceLocation DeclarationNameInfo::getEndLoc() const {
   switch (Name.getNameKind()) {
   case DeclarationName::Identifier:
   case DeclarationName::CXXDeductionGuideName:

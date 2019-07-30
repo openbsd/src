@@ -77,10 +77,6 @@ struct auth_zones {
 	rbtree_type xtree;
 	/** do we have downstream enabled */
 	int have_downstream;
-	/** number of queries upstream */
-	size_t num_query_up;
-	/** number of queries downstream */
-	size_t num_query_down;
 };
 
 /**
@@ -126,10 +122,6 @@ struct auth_zone {
 	/** for upstream: this zone answers queries that unbound intends to
 	 * send upstream. */
 	int for_upstream;
-	/** zone has been deleted */
-	int zone_deleted;
-	/** deletelist pointer, unused normally except during delete */
-	struct auth_zone* delete_next;
 };
 
 /**
@@ -222,14 +214,8 @@ struct auth_xfer {
 	 * Hold the lock to access this member (and the serial).
 	 */
 	int notify_received;
-	/** true if the notify_received has a serial number */
-	int notify_has_serial;
 	/** serial number of the notify */
 	uint32_t notify_serial;
-	/** the list of masters for checking notifies.  This list is
-	 * empty on start, and a copy of the list from the probe_task when
-	 * it is done looking them up. */
-	struct auth_master* allow_notify_list;
 
 	/* protected by the lock on the structure, information about
 	 * the loaded authority zone. */
@@ -251,11 +237,6 @@ struct auth_xfer {
 	 * valid any more, if no master responds within this time, either
 	 * with the current zone or a new zone. */
 	time_t expiry;
-
-	/** zone lease start time (start+expiry is expiration time).
-	 * this is renewed every SOA probe and transfer.  On zone load
-	 * from zonefile it is also set (with probe set soon to check) */
-	time_t lease_time;
 };
 
 /**
@@ -273,10 +254,12 @@ struct auth_nextprobe {
 	/* module env for this task */
 	struct module_env* env;
 
-	/** increasing backoff for failures */
-	time_t backoff;
 	/** Timeout for next probe (for SOA) */
 	time_t next_probe;
+	/** zone lease start time (start+expiry is expiration time).
+	 * this is renewed every SOA probe and transfer.  On zone load
+	 * from zonefile it is also set (with probe set soon to check) */
+	time_t lease_time;
 	/** timeout callback for next_probe or expiry(if that is sooner).
 	 * it is on the worker's event_base */
 	struct comm_timer* timer;
@@ -306,12 +289,6 @@ struct auth_probe {
 	struct auth_master* lookup_target;
 	/** are we looking up A or AAAA, first A, then AAAA (if ip6 enabled) */
 	int lookup_aaaa;
-	/** we only want to do lookups for making config work (for notify),
-	 * don't proceed with UDP SOA probe queries */
-	int only_lookup;
-	/** we have seen a new lease this scan, because one of the masters
-	 * replied with the current SOA serial version */
-	int have_new_lease;
 
 	/** once notified, or the timeout has been reached. a scan starts. */
 	/** the scan specific target (notify source), or NULL if none */
@@ -378,20 +355,6 @@ struct auth_transfer {
 	 * data or add of duplicate data).  Flag is cleared once the retry
 	 * with axfr is done. */
 	int ixfr_fail;
-	/** we saw an ixfr-indicating timeout, count of them */
-	int ixfr_possible_timeout_count;
-	/** we are doing IXFR right now */
-	int on_ixfr;
-	/** did we detect the current AXFR/IXFR serial number yet, 0 not yet,
-	 * 1 we saw the first, 2 we saw the second, 3 must be last SOA in xfr*/
-	int got_xfr_serial;
-	/** number of RRs scanned for AXFR/IXFR detection */
-	size_t rr_scan_num;
-	/** we are doing an IXFR but we detected an AXFR contents */
-	int on_ixfr_is_axfr;
-	/** the serial number for the current AXFR/IXFR incoming reply,
-	 * for IXFR, the outermost SOA records serial */
-	uint32_t incoming_xfr_serial;
 
 	/** dns id of AXFR query */
 	uint16_t id;
@@ -422,13 +385,8 @@ struct auth_master {
 	int http;
 	/** use IXFR for this master */
 	int ixfr;
-	/** this is an allow notify member, the master can send notifies
-	 * to us, but we don't send SOA probes, or zone transfer from it */
-	int allow_notify;
 	/** use ssl for channel */
 	int ssl;
-	/** the port number (for urls) */
-	int port;
 	/** if the host is a hostname, the list of resolved addrs, if any*/
 	struct auth_addr* list;
 };
@@ -455,24 +413,11 @@ struct auth_zones* auth_zones_create(void);
  * @param az: auth zones structure
  * @param cfg: config to apply.
  * @param setup: if true, also sets up values in the auth zones structure
+ * @param env: for setup, with current time.
  * @return false on failure.
  */
 int auth_zones_apply_cfg(struct auth_zones* az, struct config_file* cfg,
-	int setup);
-
-/** initial pick up of worker timeouts, ties events to worker event loop
- * @param az: auth zones structure
- * @param env: worker env, of first worker that receives the events (if any)
- * 	in its eventloop.
- */
-void auth_xfer_pickup_initial(struct auth_zones* az, struct module_env* env);
-
-/**
- * Cleanup auth zones.  This removes all events from event bases.
- * Stops the xfr tasks.  But leaves zone data.
- * @param az: auth zones structure.
- */
-void auth_zones_cleanup(struct auth_zones* az);
+	int setup, struct module_env* env);
 
 /**
  * Delete auth zones structure
@@ -514,26 +459,23 @@ int auth_zones_lookup(struct auth_zones* az, struct query_info* qinfo,
  * @param qinfo: query info (parsed).
  * @param edns: edns info (parsed).
  * @param buf: buffer with query ID and flags, also for reply.
- * @param repinfo: reply information for a communication point.
  * @param temp: temporary storage region.
  * @return false if not answered
  */
 int auth_zones_answer(struct auth_zones* az, struct module_env* env,
-	struct query_info* qinfo, struct edns_data* edns,
-	struct comm_reply* repinfo, struct sldns_buffer* buf, struct regional* temp);
+	struct query_info* qinfo, struct edns_data* edns, struct sldns_buffer* buf,
+	struct regional* temp);
 
 /** 
  * Find the auth zone that is above the given qname.
  * Return NULL when there is no auth_zone above the give name, otherwise
  * returns the closest auth_zone above the qname that pertains to it.
  * @param az: auth zones structure.
- * @param name: query to look up for.
- * @param name_len: length of name.
- * @param dclass: class of zone to find.
+ * @param qinfo: query info to lookup.
  * @return NULL or auth_zone that pertains to the query.
  */
 struct auth_zone* auth_zones_find_zone(struct auth_zones* az,
-	uint8_t* name, size_t name_len, uint16_t dclass);
+	struct query_info* qinfo);
 
 /** find an auth zone by name (exact match by name or NULL returned) */
 struct auth_zone* auth_zone_find(struct auth_zones* az, uint8_t* nm,
@@ -542,6 +484,7 @@ struct auth_zone* auth_zone_find(struct auth_zones* az, uint8_t* nm,
 /** find an xfer zone by name (exact match by name or NULL returned) */
 struct auth_xfer* auth_xfer_find(struct auth_zones* az, uint8_t* nm,
 	size_t nmlen, uint16_t dclass);
+
 
 /** create an auth zone. returns wrlocked zone. caller must have wrlock
  * on az. returns NULL on malloc failure */
@@ -555,56 +498,8 @@ int auth_zone_set_zonefile(struct auth_zone* z, char* zonefile);
  * fallbackstr is "yes" or "no". false on parse failure. */
 int auth_zone_set_fallback(struct auth_zone* z, char* fallbackstr);
 
-/** see if the auth zone for the name can fallback
- * @param az: auth zones
- * @param nm: name of delegation point.
- * @param nmlen: length of nm.
- * @param dclass: class of zone to look for.
- * @return true if fallback_enabled is true. false if not.
- * if the zone does not exist, fallback is true (more lenient)
- * also true if zone does not do upstream requests.
- */
-int auth_zones_can_fallback(struct auth_zones* az, uint8_t* nm, size_t nmlen,
-	uint16_t dclass);
-
-/** process notify for auth zones.
- * first checks the access list.  Then processes the notify. This starts
- * the probe sequence or it notes the serial number (if any)
- * @param az: auth zones structure.
- * @param env: module env of the worker that is handling the notify. it will
- * 	pick up the task probe (or transfer), unless already in progress by
- * 	another worker.
- * @param nm: name of the zone.  Uncompressed. from query.
- * @param nmlen: length of name.
- * @param dclass: class of zone.
- * @param addr: source address of notify
- * @param addrlen: length of addr.
- * @param has_serial: if true, the notify has a serial attached.
- * @param serial: the serial number, if has_serial is true.
- * @param refused: is set to true on failure to note refused access.
- * @return fail on failures (refused is false) and when access is
- * 	denied (refused is true).  True when processed.
- */
-int auth_zones_notify(struct auth_zones* az, struct module_env* env,
-	uint8_t* nm, size_t nmlen, uint16_t dclass,
-	struct sockaddr_storage* addr, socklen_t addrlen, int has_serial,
-	uint32_t serial, int* refused);
-
-/** process notify packet and read serial number from SOA.
- * returns 0 if no soa record in the notify */
-int auth_zone_parse_notify_serial(struct sldns_buffer* pkt, uint32_t *serial);
-
-/** for the zone and if not already going, starts the probe sequence.
- * false if zone cannot be found.  This is like a notify arrived and was
- * accepted for that zone. */
-int auth_zones_startprobesequence(struct auth_zones* az,
-	struct module_env* env, uint8_t* nm, size_t nmlen, uint16_t dclass);
-
 /** read auth zone from zonefile. caller must lock zone. false on failure */
-int auth_zone_read_zonefile(struct auth_zone* z, struct config_file* cfg);
-
-/** find serial number of zone or false if none (no SOA record) */
-int auth_zone_get_serial(struct auth_zone* z, uint32_t* serial);
+int auth_zone_read_zonefile(struct auth_zone* z);
 
 /** compare auth_zones for sorted rbtree */
 int auth_zone_cmp(const void* z1, const void* z2);
@@ -627,11 +522,10 @@ struct auth_xfer* auth_xfer_create(struct auth_zones* az, struct auth_zone* z);
  * Set masters in auth xfer structure from config.
  * @param list: pointer to start of list.  The malloced list is returned here.
  * @param c: the config items to copy over.
- * @param with_http: if true, http urls are also included, before the masters.
  * @return false on failure.
  */
-int xfer_set_masters(struct auth_master** list, struct config_auth* c,
-	int with_http);
+int xfer_set_masters(struct auth_master** list, struct config_auth* c);
+
 
 /** xfer nextprobe timeout callback, this is part of task_nextprobe */
 void auth_xfer_timer(void* arg);
@@ -642,19 +536,14 @@ int auth_xfer_probe_udp_callback(struct comm_point* c, void* arg, int err,
 /** callback for task_transfer tcp connections */
 int auth_xfer_transfer_tcp_callback(struct comm_point* c, void* arg, int err,
         struct comm_reply* repinfo);
-/** callback for task_transfer http connections */
-int auth_xfer_transfer_http_callback(struct comm_point* c, void* arg, int err,
-        struct comm_reply* repinfo);
 /** xfer probe timeout callback, part of task_probe */
 void auth_xfer_probe_timer_callback(void* arg);
 /** mesh callback for task_probe on lookup of host names */
 void auth_xfer_probe_lookup_callback(void* arg, int rcode,
-	struct sldns_buffer* buf, enum sec_status sec, char* why_bogus,
-	int was_ratelimited);
+	struct sldns_buffer* buf, enum sec_status sec, char* why_bogus);
 /** mesh callback for task_transfer on lookup of host names */
 void auth_xfer_transfer_lookup_callback(void* arg, int rcode,
-	struct sldns_buffer* buf, enum sec_status sec, char* why_bogus,
-	int was_ratelimited);
+	struct sldns_buffer* buf, enum sec_status sec, char* why_bogus);
 
 /*
  * Compares two 32-bit serial numbers as defined in RFC1982.  Returns

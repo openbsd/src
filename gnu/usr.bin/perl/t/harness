@@ -34,7 +34,7 @@ if ($ARGV[0] && $ARGV[0] eq '-torture') {
 # which live dual lives on CPAN.
 $ENV{PERL_CORE} = 1;
 
-my (@tests, @re, @anti_re);
+my (@tests, $re);
 
 # [.VMS]TEST.COM calls harness with empty arguments, so clean-up @ARGV
 @ARGV = grep $_ && length( $_ ) => @ARGV;
@@ -61,16 +61,13 @@ sub _extract_tests {
     @results;
 }
 
-while ($ARGV[0] && $ARGV[0]=~/^-(n?)re/) {
-    my $ary= $1 ? \@anti_re : \@re;
-
-    if ( $ARGV[0] !~ /=/ ) {
-        shift @ARGV;
-        while (@ARGV and $ARGV[0] !~ /^-/) {
-            push @$ary, shift @ARGV;
-        }
+if ($ARGV[0] && $ARGV[0]=~/^-re/) {
+    if ($ARGV[0]!~/=/) {
+        shift;
+        $re=join "|",@ARGV;
+        @ARGV=();
     } else {
-        push @$ary, (split/=/,shift @ARGV)[1];
+        (undef,$re)=split/=/,shift;
     }
 }
 
@@ -148,7 +145,7 @@ if (@ARGV) {
 	push @seq, $next;
 
 	my @last;
-	push @last,
+	push @last,  sort { lc $a cmp lc $b }
 	    _tests_from_manifest($Config{extensions}, $Config{known_extensions});
 	my %times;
 	if ($state) {
@@ -166,9 +163,7 @@ if (@ARGV) {
 		s,\\,/,g; # canonicalize path
 	    };
 	    # Treat every file matching lib/*.t as a "directory"
-	    m! \A ( \.\. / (?: lib | ext/XS-APItest/t )
-                         / [^/]+ \.t \z | .* [/] ) !x
-                or die "'$_'";
+	    m!\A(\.\./lib/[^/]+\.t\z|.*[/])! or die "'$_'";
 	    push @{$dir{$1}}, $_;
 	    $total_time{$1} += $times{$_} || 0;
 	}
@@ -179,7 +174,7 @@ if (@ARGV) {
 	# sequentially.
 	push @seq, { par => [ map { s!/$!/*!; { seq => $_ } } sort {
 	    # Directories, ordered by total time descending then name ascending
-	    $total_time{$b} <=> $total_time{$a} || lc $a cmp lc $b
+	    $total_time{$b} <=> $total_time{$a} || $a cmp $b
 	} keys %dir ] };
 
 	$rules = { seq => \@seq };
@@ -188,32 +183,12 @@ if (@ARGV) {
 if ($^O eq 'MSWin32') {
     s,\\,/,g for @tests;
 }
-if (@re or @anti_re) {
-    my @keepers;
-    foreach my $test (@tests) {
-        my $keep = 0;
-        if (@re) {
-            foreach my $re (@re) {
-                $keep = 1 if $test=~/$re/;
-            }
-        } else {
-            $keep = 1;
-        }
-        if (@anti_re) {
-            foreach my $anti_re (@anti_re) {
-                $keep = 0 if $test=~/$anti_re/;
-            }
-        }
-        if ($keep) {
-            push @keepers, $test;
-        }
-    }
-    @tests= @keepers;
-}
+@tests=grep /$re/, @tests 
+    if $re;
 
 # Allow eg ./perl t/harness t/op/lc.t
 for (@tests) {
-    if (! -f $_ && !/^\.\./ && -f "../$_") {
+    if (-f "../$_") {
         $_ = "../$_";
         s{^\.\./t/}{};
     }

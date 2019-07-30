@@ -10,16 +10,17 @@
 #ifndef lldb_RegisterInfoInterface_h
 #define lldb_RegisterInfoInterface_h
 
-#include "lldb/Utility/ArchSpec.h"
-#include "lldb/lldb-private-types.h"
 #include <vector>
+
+#include "lldb/Core/ArchSpec.h"
+#include "lldb/lldb-private-types.h"
 
 namespace lldb_private {
 
 ///------------------------------------------------------------------------------
 /// @class RegisterInfoInterface
 ///
-/// RegisterInfo interface to patch RegisterInfo structure for archs.
+/// @brief RegisterInfo interface to patch RegisterInfo structure for archs.
 ///------------------------------------------------------------------------------
 class RegisterInfoInterface {
 public:

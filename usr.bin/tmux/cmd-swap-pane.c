@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-pane.c,v 1.33 2019/04/17 14:37:48 nicm Exp $ */
+/* $OpenBSD: cmd-swap-pane.c,v 1.31 2017/04/22 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -101,17 +101,19 @@ cmd_swap_pane_exec(struct cmd *self, struct cmdq_item *item)
 
 	if (!args_has(self->args, 'd')) {
 		if (src_w != dst_w) {
-			window_set_active_pane(src_w, dst_wp, 1);
-			window_set_active_pane(dst_w, src_wp, 1);
+			window_set_active_pane(src_w, dst_wp);
+			window_set_active_pane(dst_w, src_wp);
 		} else {
 			tmp_wp = dst_wp;
-			window_set_active_pane(src_w, tmp_wp, 1);
+			if (!window_pane_visible(tmp_wp))
+				tmp_wp = src_wp;
+			window_set_active_pane(src_w, tmp_wp);
 		}
 	} else {
 		if (src_w->active == src_wp)
-			window_set_active_pane(src_w, dst_wp, 1);
+			window_set_active_pane(src_w, dst_wp);
 		if (dst_w->active == dst_wp)
-			window_set_active_pane(dst_w, src_wp, 1);
+			window_set_active_pane(dst_w, src_wp);
 	}
 	if (src_w != dst_w) {
 		if (src_w->last == src_wp)

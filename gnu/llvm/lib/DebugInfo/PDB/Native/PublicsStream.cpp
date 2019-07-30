@@ -23,10 +23,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/DebugInfo/PDB/Native/PublicsStream.h"
+#include "GSI.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/DebugInfo/CodeView/SymbolRecord.h"
 #include "llvm/DebugInfo/MSF/MappedBlockStream.h"
+#include "llvm/DebugInfo/PDB/Native/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Native/RawError.h"
+#include "llvm/DebugInfo/PDB/Native/SymbolStream.h"
 #include "llvm/Support/BinaryStreamReader.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
@@ -38,18 +41,14 @@ using namespace llvm::msf;
 using namespace llvm::support;
 using namespace llvm::pdb;
 
-PublicsStream::PublicsStream(std::unique_ptr<MappedBlockStream> Stream)
-    : Stream(std::move(Stream)) {}
+PublicsStream::PublicsStream(PDBFile &File,
+                             std::unique_ptr<MappedBlockStream> Stream)
+    : Pdb(File), Stream(std::move(Stream)) {}
 
 PublicsStream::~PublicsStream() = default;
 
 uint32_t PublicsStream::getSymHash() const { return Header->SymHash; }
-uint16_t PublicsStream::getThunkTableSection() const {
-  return Header->ISectThunkTable;
-}
-uint32_t PublicsStream::getThunkTableOffset() const {
-  return Header->OffThunkTable;
-}
+uint32_t PublicsStream::getAddrMap() const { return Header->AddrMap; }
 
 // Publics stream contains fixed-size headers and a serialized hash table.
 // This implementation is not complete yet. It reads till the end of the
@@ -65,14 +64,20 @@ Error PublicsStream::reload() {
     return make_error<RawError>(raw_error_code::corrupt_file,
                                 "Publics Stream does not contain a header.");
 
-  // Read PSGSIHDR struct.
+  // Read PSGSIHDR and GSIHashHdr structs.
   if (Reader.readObject(Header))
     return make_error<RawError>(raw_error_code::corrupt_file,
                                 "Publics Stream does not contain a header.");
 
-  // Read the hash table.
-  if (auto E = PublicsTable.read(Reader))
-    return E;
+  if (auto EC = readGSIHashHeader(HashHdr, Reader))
+    return EC;
+
+  if (auto EC = readGSIHashRecords(HashRecords, HashHdr, Reader))
+    return EC;
+
+  if (auto EC = readGSIHashBuckets(HashBuckets, HashHdr, Reader))
+    return EC;
+  NumBuckets = HashBuckets.size();
 
   // Something called "address map" follows.
   uint32_t NumAddressMapEntries = Header->AddrMap / sizeof(uint32_t);
@@ -100,3 +105,26 @@ Error PublicsStream::reload() {
                                 "Corrupted publics stream.");
   return Error::success();
 }
+
+iterator_range<codeview::CVSymbolArray::Iterator>
+PublicsStream::getSymbols(bool *HadError) const {
+  auto SymbolS = Pdb.getPDBSymbolStream();
+  if (SymbolS.takeError()) {
+    codeview::CVSymbolArray::Iterator Iter;
+    return make_range(Iter, Iter);
+  }
+  SymbolStream &SS = SymbolS.get();
+
+  return SS.getSymbols(HadError);
+}
+
+Expected<const codeview::CVSymbolArray &>
+PublicsStream::getSymbolArray() const {
+  auto SymbolS = Pdb.getPDBSymbolStream();
+  if (!SymbolS)
+    return SymbolS.takeError();
+
+  return SymbolS->getSymbolArray();
+}
+
+Error PublicsStream::commit() { return Error::success(); }

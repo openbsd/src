@@ -7,8 +7,7 @@ BEGIN {
     our @ISA = qw( ExtUtils::MM_Unix );
 }
 
-our $VERSION = '7.34';
-$VERSION = eval $VERSION;
+our $VERSION = '7.10_02';
 
 
 =head1 NAME
@@ -24,7 +23,7 @@ ExtUtils::MM_Darwin - special behaviors for OS X
 See L<ExtUtils::MM_Unix> for L<ExtUtils::MM_Any> for documentation on the
 methods overridden here.
 
-=head2 Overridden Methods
+=head2 Overriden Methods
 
 =head3 init_dist
 

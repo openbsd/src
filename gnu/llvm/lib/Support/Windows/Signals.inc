@@ -10,7 +10,6 @@
 // This file provides the Win32 specific implementation of the Signals class.
 //
 //===----------------------------------------------------------------------===//
-#include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
@@ -37,6 +36,9 @@
 #ifdef _MSC_VER
  #pragma comment(lib, "psapi.lib")
 #elif __MINGW32__
+ #if (HAVE_LIBPSAPI != 1)
+  #error "libpsapi.a should be present"
+ #endif
  // The version of g++ that comes with MinGW does *not* properly understand
  // the ll format specifier for printf. However, MinGW passes the format
  // specifiers on to the MSVCRT entirely, and the CRT understands the ll
@@ -191,7 +193,7 @@ using namespace llvm;
 static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep);
 static BOOL WINAPI LLVMConsoleCtrlHandler(DWORD dwCtrlType);
 
-// The function to call if ctrl-c is pressed.
+// InterruptFunction - The function to call if ctrl-c is pressed.
 static void (*InterruptFunction)() = 0;
 
 static std::vector<std::string> *FilesToRemove = NULL;
@@ -210,14 +212,8 @@ static StringRef Argv0;
 enum {
 #if defined(_M_X64)
   NativeMachineType = IMAGE_FILE_MACHINE_AMD64
-#elif defined(_M_ARM64)
-  NativeMachineType = IMAGE_FILE_MACHINE_ARM64
-#elif defined(_M_IX86)
-  NativeMachineType = IMAGE_FILE_MACHINE_I386
-#elif defined(_M_ARM)
-  NativeMachineType = IMAGE_FILE_MACHINE_ARMNT
 #else
-  NativeMachineType = IMAGE_FILE_MACHINE_UNKNOWN
+  NativeMachineType = IMAGE_FILE_MACHINE_I386
 #endif
 };
 
@@ -322,18 +318,18 @@ static void PrintStackTraceForThread(llvm::raw_ostream &OS, HANDLE hProcess,
     using namespace llvm;
     // Print the PC in hexadecimal.
     DWORD64 PC = StackFrame.AddrPC.Offset;
-#if defined(_M_X64) || defined(_M_ARM64)
+#if defined(_M_X64)
     OS << format("0x%016llX", PC);
-#elif defined(_M_IX86) || defined(_M_ARM)
+#elif defined(_M_IX86)
     OS << format("0x%08lX", static_cast<DWORD>(PC));
 #endif
 
 // Print the parameters.  Assume there are four.
-#if defined(_M_X64) || defined(_M_ARM64)
+#if defined(_M_X64)
     OS << format(" (0x%016llX 0x%016llX 0x%016llX 0x%016llX)",
             StackFrame.Params[0], StackFrame.Params[1], StackFrame.Params[2],
             StackFrame.Params[3]);
-#elif defined(_M_IX86) || defined(_M_ARM)
+#elif defined(_M_IX86)
     OS << format(" (0x%08lX 0x%08lX 0x%08lX 0x%08lX)",
             static_cast<DWORD>(StackFrame.Params[0]),
             static_cast<DWORD>(StackFrame.Params[1]),
@@ -388,9 +384,9 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 
 #ifdef _MSC_VER
-/// Emulates hitting "retry" from an "abort, retry, ignore" CRT debug report
-/// dialog. "retry" raises an exception which ultimately triggers our stack
-/// dumper.
+/// AvoidMessageBoxHook - Emulates hitting "retry" from an "abort, retry,
+/// ignore" CRT debug report dialog.  "retry" raises an exception which
+/// ultimately triggers our stack dumper.
 static LLVM_ATTRIBUTE_UNUSED int
 AvoidMessageBoxHook(int ReportType, char *Message, int *Return) {
   // Set *Return to the retry code for the return value of _CrtDbgReport:
@@ -448,7 +444,7 @@ static void RegisterHandler() {
   // else multi-threading problems will ensue.
 }
 
-// The public API
+// RemoveFileOnSignal - The public API
 bool sys::RemoveFileOnSignal(StringRef Filename, std::string* ErrMsg) {
   RegisterHandler();
 
@@ -467,7 +463,7 @@ bool sys::RemoveFileOnSignal(StringRef Filename, std::string* ErrMsg) {
   return false;
 }
 
-// The public API
+// DontRemoveFileOnSignal - The public API
 void sys::DontRemoveFileOnSignal(StringRef Filename) {
   if (FilesToRemove == NULL)
     return;
@@ -501,8 +497,8 @@ void sys::DisableSystemDialogsOnCrash() {
   _set_error_mode(_OUT_TO_STDERR);
 }
 
-/// When an error signal (such as SIGABRT or SIGSEGV) is delivered to the
-/// process, print a stack trace and then exit.
+/// PrintStackTraceOnErrorSignal - When an error signal (such as SIBABRT or
+/// SIGSEGV) is delivered to the process, print a stack trace and then exit.
 void sys::PrintStackTraceOnErrorSignal(StringRef Argv0,
                                        bool DisableCrashReporting) {
   ::Argv0 = Argv0;
@@ -530,18 +526,10 @@ void llvm::sys::PrintStackTrace(raw_ostream &OS) {
   StackFrame.AddrPC.Offset = Context.Rip;
   StackFrame.AddrStack.Offset = Context.Rsp;
   StackFrame.AddrFrame.Offset = Context.Rbp;
-#elif defined(_M_IX86)
+#else
   StackFrame.AddrPC.Offset = Context.Eip;
   StackFrame.AddrStack.Offset = Context.Esp;
   StackFrame.AddrFrame.Offset = Context.Ebp;
-#elif defined(_M_ARM64)
-  StackFrame.AddrPC.Offset = Context.Pc;
-  StackFrame.AddrStack.Offset = Context.Sp;
-  StackFrame.AddrFrame.Offset = Context.Fp;
-#elif defined(_M_ARM)
-  StackFrame.AddrPC.Offset = Context.Pc;
-  StackFrame.AddrStack.Offset = Context.Sp;
-  StackFrame.AddrFrame.Offset = Context.R11;
 #endif
   StackFrame.AddrPC.Mode = AddrModeFlat;
   StackFrame.AddrStack.Mode = AddrModeFlat;
@@ -558,12 +546,11 @@ void llvm::sys::SetInterruptFunction(void (*IF)()) {
 }
 
 
-/// Add a function to be called when a signal is delivered to the process. The
-/// handler can have a cookie passed to it to identify what instance of the
-/// handler it is.
-void llvm::sys::AddSignalHandler(sys::SignalHandlerCallback FnPtr,
-                                 void *Cookie) {
-  insertSignalHandler(FnPtr, Cookie);
+/// AddSignalHandler - Add a function to be called when a signal is delivered
+/// to the process.  The handler can have a cookie passed to it to identify
+/// what instance of the handler it is.
+void llvm::sys::AddSignalHandler(void (*FnPtr)(void *), void *Cookie) {
+  CallBacksToRun->push_back(std::make_pair(FnPtr, Cookie));
   RegisterHandler();
   LeaveCriticalSection(&CriticalSection);
 }
@@ -597,7 +584,7 @@ void llvm::sys::RunInterruptHandlers() {
   Cleanup();
 }
 
-/// Find the Windows Registry Key for a given location.
+/// \brief Find the Windows Registry Key for a given location.
 ///
 /// \returns a valid HKEY if the location exists, else NULL.
 static HKEY FindWERKey(const llvm::Twine &RegistryLocation) {
@@ -610,7 +597,7 @@ static HKEY FindWERKey(const llvm::Twine &RegistryLocation) {
   return Key;
 }
 
-/// Populate ResultDirectory with the value for "DumpFolder" for a given
+/// \brief Populate ResultDirectory with the value for "DumpFolder" for a given
 /// Windows Registry key.
 ///
 /// \returns true if a valid value for DumpFolder exists, false otherwise.
@@ -651,7 +638,7 @@ static bool GetDumpFolder(HKEY Key,
   return true;
 }
 
-/// Populate ResultType with a valid MINIDUMP_TYPE based on the value of
+/// \brief Populate ResultType with a valid MINIDUMP_TYPE based on the value of
 /// "DumpType" for a given Windows Registry key.
 ///
 /// According to
@@ -698,7 +685,7 @@ static bool GetDumpType(HKEY Key, MINIDUMP_TYPE &ResultType) {
   return true;
 }
 
-/// Write a Windows dump file containing process information that can be
+/// \brief Write a Windows dump file containing process information that can be
 /// used for post-mortem debugging.
 ///
 /// \returns zero error code if a mini dump created, actual error code
@@ -816,17 +803,6 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
   StackFrame.AddrStack.Offset = ep->ContextRecord->Esp;
   StackFrame.AddrStack.Mode = AddrModeFlat;
   StackFrame.AddrFrame.Offset = ep->ContextRecord->Ebp;
-  StackFrame.AddrFrame.Mode = AddrModeFlat;
-#elif defined(_M_ARM64) || defined(_M_ARM)
-  StackFrame.AddrPC.Offset = ep->ContextRecord->Pc;
-  StackFrame.AddrPC.Mode = AddrModeFlat;
-  StackFrame.AddrStack.Offset = ep->ContextRecord->Sp;
-  StackFrame.AddrStack.Mode = AddrModeFlat;
-#if defined(_M_ARM64)
-  StackFrame.AddrFrame.Offset = ep->ContextRecord->Fp;
-#else
-  StackFrame.AddrFrame.Offset = ep->ContextRecord->R11;
-#endif
   StackFrame.AddrFrame.Mode = AddrModeFlat;
 #endif
 

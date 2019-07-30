@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.48 2019/03/21 06:31:10 jmc Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.42 2018/02/27 23:48:44 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: March 21 2019 $
+.Dd $Mdocdate: February 27 2018 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -106,18 +106,11 @@ for
 overrides any previous
 .Ic append ,
 .Ic default ,
-.Ic ignore ,
 .Ic prepend
 or
 .Ic supersede
 for
 .Ar option .
-.Pp
-If the option's data cannot be appended to, i.e. it has a fixed size,
-then
-.Ic append
-will be treated as
-.Ic default .
 .It Ic default Ar option option-value ;
 If no value for
 .Ar option
@@ -130,7 +123,6 @@ for
 overrides any previous
 .Ic append ,
 .Ic default ,
-.Ic ignore ,
 .Ic prepend
 or
 .Ic supersede
@@ -141,18 +133,6 @@ Discard values provided for the listed options.
 .Ic ignore
 statements are cumulative, except that an empty
 list will remove all previously specified options.
-Each
-.Ic ignore
-for
-.Ar option
-overrides any previous
-.Ic append ,
-.Ic default ,
-.Ic prepend
-or
-.Ic supersede
-for
-.Ar option .
 .It Ic prepend Ar option option-value ;
 Prepend
 .Ar option-value
@@ -166,18 +146,11 @@ for
 overrides any previous
 .Ic append ,
 .Ic default ,
-.Ic ignore ,
 .Ic prepend
 or
 .Ic supersede
 for
 .Ar option .
-.Pp
-If the option's data cannot be prepended to, i.e. it has a fixed size,
-then
-.Ic prepend
-will be treated as
-.Ic supersede .
 .It Ic request Op Ar option , ... ;
 Ask that any lease contain values
 for the listed options.
@@ -197,11 +170,6 @@ subnet-mask,
 tftp-server-name
 and
 time-offset.
-.It Ic require Op Ar option , ... ;
-Discard leases that do not contain the listed options.
-.Ic require
-statements are cumulative, except that an empty
-list will remove all previously specified options.
 .It Ic send Ar option option-value ;
 Include
 .Ar option-value
@@ -222,28 +190,6 @@ for
 overrides any previous
 .Ic append ,
 .Ic default ,
-.Ic ignore ,
-.Ic prepend
-or
-.Ic supersede
-for
-.Ar option .
-.It Ic uselease Op Ar option , ... ;
-Use the unmodified values provided in the lease for
-any specified
-.Ar option .
-.Ic uselease
-statements are cumulative.
-If no
-.Ar option
-is specified all lease option values will be used unmodified.
-.Ic uselease
-for
-.Ar option
-overrides any previous
-.Ic append ,
-.Ic default ,
-.Ic ignore ,
 .Ic prepend
 or
 .Ic supersede
@@ -252,18 +198,6 @@ for
 .El
 .Sh OTHER DECLARATIONS
 .Bl -tag -width Ds
-.It Ic filename Ar path ;
-Use
-.Ar path
-instead of the
-.Ic file
-field of the DHCP offer when binding a lease.
-.It Ic fixed-address Ar ip-address ;
-Use
-.Ar ip-address
-instead of the
-.Ic yiaddr
-field of the DHCP offer when binding a lease.
 .It Ic interface Qo Ar name Qc No { Ar declaration ; ... ; No }
 Apply any
 .Ar declaration
@@ -274,18 +208,11 @@ If more than one
 .Ic reject
 is present all leases from any of the
 addresses will be discarded.
-.It Ic next-server Ar ip-address ;
-Use
-.Ar ip-address
-instead of the
-.Ic siaddr
-field of the DHCP offer when binding a lease.
-.It Ic server-name Ar host ;
-Use
-.Ar host
-instead of the
-.Ic sname
-field of the DHCP offer when binding a lease.
+.It Ic require Op Ar option , ... ;
+Discard leases that do not contain the listed options.
+.Ic require
+statements are cumulative, except that an empty
+list will remove all previously specified options.
 .El
 .Sh SEE ALSO
 .Xr dhclient.leases 5 ,

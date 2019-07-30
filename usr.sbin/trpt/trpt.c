@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.37 2018/05/10 13:30:25 bluhm Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.35 2017/05/18 11:38:07 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@
 #define _KERNEL
 #include <sys/timeout.h>		/* to get timeout_pending() and such */
 #undef _KERNEL
+#include <sys/file.h>
 
 #include <net/route.h>
 #include <net/if.h>
@@ -90,7 +91,6 @@
 #include <err.h>
 #include <stdio.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <kvm.h>
 #include <nlist.h>
 #include <paths.h>
@@ -308,7 +308,7 @@ tcp_trace(short act, short ostate, struct tcpcb *tp,
     struct tcpiphdr *ti, struct tcpipv6hdr *ti6, int req)
 {
 	tcp_seq seq, ack;
-	int flags, len, win;
+	int flags, len, win, timer;
 	struct tcphdr *th;
 	char hbuf[INET6_ADDRSTRLEN];
 
@@ -376,10 +376,11 @@ tcp_trace(short act, short ostate, struct tcpcb *tp,
 		}
 		break;
 	case TA_USER:
+		timer = req >> 8;
+		req &= 0xff;
 		printf("%s", prurequests[req]);
-		break;
-	case TA_TIMER:
-		printf("%s", tcptimers[req]);
+		if (req == PRU_SLOWTIMO || req == PRU_FASTTIMO)
+			printf("<%s>", tcptimers[timer]);
 		break;
 	}
 	printf(" -> %s", tcpstates[tp->t_state]);

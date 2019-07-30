@@ -1,15 +1,15 @@
-/*	$OpenBSD: kqueue-process.c,v 1.13 2018/08/03 15:19:44 visa Exp $	*/
+/*	$OpenBSD: kqueue-process.c,v 1.12 2016/09/20 23:05:27 bluhm Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
 
 #include <sys/types.h>
 #include <sys/event.h>
-#include <sys/time.h>
 #include <sys/wait.h>
 
 #include <err.h>
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -18,19 +18,21 @@
 
 static int process_child(void);
 
-static int pfd1[2];
-static int pfd2[2];
+static void
+usr1handler(int signum)
+{
+	/* nada */
+}
 
 int
 do_process(void)
 {
 	struct kevent ke;
-	struct timespec ts;
 	int kq, status;
 	pid_t pid, pid2;
 	int didfork, didchild;
 	int i;
-	char ch = 0;
+	struct timespec ts;
 
 	/*
 	 * Timeout in case something doesn't work.
@@ -41,11 +43,11 @@ do_process(void)
 	ASS((kq = kqueue()) >= 0,
 	    warn("kqueue"));
 
-	/* Open pipes for synchronizing the children with the parent. */
-	if (pipe(pfd1) == -1)
-		err(1, "pipe 1");
-	if (pipe(pfd2) == -1)
-		err(1, "pipe 2");
+	/*
+	 * Install a signal handler so that we can use pause() to synchronize
+	 * with the child with the parent.
+	 */
+	signal(SIGUSR1, usr1handler);
 
 	switch ((pid = fork())) {
 	case -1:
@@ -53,6 +55,8 @@ do_process(void)
 	case 0:
 		_exit(process_child());
 	}
+
+	sleep(2);	/* wait for child to settle down. */
 
 	EV_SET(&ke, pid, EVFILT_PROC, EV_ADD|EV_ENABLE|EV_CLEAR,
 	    NOTE_EXIT|NOTE_FORK|NOTE_EXEC|NOTE_TRACK, 0, NULL);
@@ -67,8 +71,7 @@ do_process(void)
 	ASS(errno == ESRCH,
 	    warn("register bogus pid on kqueue returned wrong error"));
 
-	ASS(write(pfd1[1], &ch, 1) == 1,
-	    warn("write sync 1"));
+	kill(pid, SIGUSR1);	/* sync 1 */
 
 	didfork = didchild = 0;
 
@@ -104,18 +107,14 @@ do_process(void)
 	ASSX(didchild == 1);
 	ASSX(didfork == 1);
 
-	ASS(write(pfd2[1], &ch, 1) == 1,
-	    warn("write sync 2.1"));
-	ASS(write(pfd1[1], &ch, 1) == 1,
-	    warn("write sync 2"));
+	kill(pid2, SIGUSR1);	/* sync 2.1 */
+	kill(pid, SIGUSR1);	/* sync 2 */
 
-	/*
-	 * Wait for child's exit. It also implies child-child has exited.
-	 * This should ensure that NOTE_EXIT has been posted for both children.
-	 * Child-child's events should get aggregated.
-	 */
+	/* Wait for child's exit. */
 	if (wait(&status) < 0)
 		err(1, "wait");
+	/* Wait for child-child's exec/exit to receive two events at once. */
+	sleep(1);
 
 	for (i = 0; i < 2; i++) {
 		ASS(kevent(kq, NULL, 0, &ke, 1, &ts) == 1,
@@ -146,30 +145,23 @@ do_process(void)
 static int
 process_child(void)
 {
-	int status;
-	char ch;
+	signal(SIGCHLD, SIG_IGN);	/* ignore our children. */
 
-	ASS(read(pfd1[0], &ch, 1) == 1,
-	    warn("read sync 1"));
+	pause();
 
 	/* fork and see if tracking works. */
 	switch (fork()) {
 	case -1:
 		err(1, "fork");
 	case 0:
-		ASS(read(pfd2[0], &ch, 1) == 1,
-		    warn("read sync 2.1"));
+		/* sync 2.1 */
+		pause();
 		execl("/usr/bin/true", "true", (char *)NULL);
 		err(1, "execl(true)");
 	}
 
-	ASS(read(pfd1[0], &ch, 1) == 1,
-	    warn("read sync 2"));
-
-	if (wait(&status) < 0)
-		err(1, "wait 2");
-	if (!WIFEXITED(status))
-		errx(1, "child-child didn't exit?");
+	/* sync 2 */
+	pause();
 
 	return 0;
 }

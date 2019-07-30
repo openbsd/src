@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp_var.h,v 1.43 2019/05/16 12:44:18 florian Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.41 2018/02/10 06:25:16 jsing Exp $	*/
 /*	$NetBSD: ftp_var.h,v 1.18 1997/08/18 10:20:25 lukem Exp $	*/
 
 /*

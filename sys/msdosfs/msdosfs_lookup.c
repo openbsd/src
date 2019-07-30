@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.32 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.30 2016/03/19 12:04:16 natano Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -85,6 +85,7 @@ msdosfs_lookup(void *v)
 	struct vnode *vdp = ap->a_dvp;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
+	struct proc *p = cnp->cn_proc;
 	daddr_t bn;
 	int error;
 	int lockparent;
@@ -399,7 +400,7 @@ notfound:;
 		 */
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent) {
-			VOP_UNLOCK(vdp);
+			VOP_UNLOCK(vdp, p);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		return (EJUSTRETURN);
@@ -490,7 +491,7 @@ foundroot:;
 			return (error);
 		*vpp = DETOV(tdp);
 		if (!lockparent) {
-			VOP_UNLOCK(vdp);
+			VOP_UNLOCK(vdp, p);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		return (0);
@@ -523,7 +524,7 @@ foundroot:;
 		*vpp = DETOV(tdp);
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent)
-			VOP_UNLOCK(vdp);
+			VOP_UNLOCK(vdp, p);
 		return (0);
 	}
 
@@ -548,15 +549,16 @@ foundroot:;
 	 */
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp);	/* race to get the inode */
+		VOP_UNLOCK(pdp, p);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0) {
-			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
+			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN)) {
-			if ((error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY))) {
+			if ((error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY,
+			    p))) {
 				vput(DETOV(tdp));
 				return (error);
 			}
@@ -570,7 +572,7 @@ foundroot:;
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN)) {
-			VOP_UNLOCK(pdp);
+			VOP_UNLOCK(pdp, p);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		*vpp = DETOV(tdp);

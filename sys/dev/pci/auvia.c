@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.59 2018/09/14 08:37:34 miko Exp $ */
+/*	$OpenBSD: auvia.c,v 1.58 2016/12/20 15:45:29 ratchov Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -211,7 +211,7 @@ int	auvia_waitready_codec(struct auvia_softc *sc);
 int	auvia_waitvalid_codec(struct auvia_softc *sc);
 void	auvia_spdif_event(void *, int);
 
-void	auvia_resume(struct auvia_softc *);
+int	auvia_resume(struct auvia_softc *);
 
 const struct pci_matchid auvia_devices[] = {
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_AC97 },
@@ -982,7 +982,8 @@ auvia_intr(void *arg)
 	return (i? 1 : 0);
 }
 
-void
+
+int
 auvia_resume(struct auvia_softc *sc)
 {
 	pci_conf_read(sc->sc_pc, sc->sc_pt, AUVIA_PCICONF_JUNK);
@@ -990,5 +991,7 @@ auvia_resume(struct auvia_softc *sc)
 	    sc->sc_pci_junk);
 
 	ac97_resume(&sc->host_if, sc->codec_if);
+
+	return (0);
 }
 

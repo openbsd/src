@@ -1,7 +1,7 @@
-/*	$OpenBSD: login_skey.c,v 1.27 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.26 2017/07/20 15:47:29 bluhm Exp $	*/
 
 /*
- * Copyright (c) 2000, 2001, 2004 Todd C. Miller <millert@openbsd.org>
+ * Copyright (c) 2000, 2001, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

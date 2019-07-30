@@ -111,13 +111,23 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
     ConstantInt *CopyLen =
         ConstantInt::get(Type::getInt32Ty(Context), NumLoads);
 
-    createMemCpyLoopKnownSize(/* ConvertedInst */ SI,
-                              /* SrcAddr */ SrcAddr, /* DstAddr */ DstAddr,
-                              /* CopyLen */ CopyLen,
-                              /* SrcAlign */ LI->getAlignment(),
-                              /* DestAlign */ SI->getAlignment(),
-                              /* SrcIsVolatile */ LI->isVolatile(),
-                              /* DstIsVolatile */ SI->isVolatile(), TTI);
+    if (!TTI.useWideIRMemcpyLoopLowering()) {
+      createMemCpyLoop(/* ConvertedInst */ SI,
+                       /* SrcAddr */ SrcAddr, /* DstAddr */ DstAddr,
+                       /* CopyLen */ CopyLen,
+                       /* SrcAlign */ LI->getAlignment(),
+                       /* DestAlign */ SI->getAlignment(),
+                       /* SrcIsVolatile */ LI->isVolatile(),
+                       /* DstIsVolatile */ SI->isVolatile());
+    } else {
+      createMemCpyLoopKnownSize(/* ConvertedInst */ SI,
+                                /* SrcAddr */ SrcAddr, /* DstAddr */ DstAddr,
+                                /* CopyLen */ CopyLen,
+                                /* SrcAlign */ LI->getAlignment(),
+                                /* DestAlign */ SI->getAlignment(),
+                                /* SrcIsVolatile */ LI->isVolatile(),
+                                /* DstIsVolatile */ SI->isVolatile(), TTI);
+    }
 
     SI->eraseFromParent();
     LI->eraseFromParent();

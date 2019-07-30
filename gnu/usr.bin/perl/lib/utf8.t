@@ -40,7 +40,7 @@ no utf8; # Ironic, no?
 #
 
 {
-    # bug id 20001009.001 (#4409)
+    # bug id 20001009.001
 
     my ($a, $b);
 
@@ -56,7 +56,7 @@ no utf8; # Ironic, no?
 
 
 {
-    # bug id 20000730.004 (#3599)
+    # bug id 20000730.004
 
     my $smiley = "\x{263a}";
 
@@ -140,9 +140,6 @@ no utf8; # Ironic, no?
           = join " . ", map {sprintf 'chr (%d)', ord $_} split //, $char;
       push @char, [$_, $char, $charsubst, $char_as_ord];
     }
-    my $malformed = $::IS_ASCII
-                    ? "\xE1\xA0"
-                    : I8_to_native("\xE6\xA0");
     # Now we've done all the UTF8 munching hopefully we're safe
     my @tests = (
              ['check our detection program works',
@@ -165,15 +162,15 @@ no utf8; # Ironic, no?
              # "out of memory" error. We really need the "" [rather than qq()
              # or q()] to get the best explosion.
              ["!Feed malformed utf8 into perl.", <<"BANG",
-    use utf8; %a = ("$malformed" =>"sterling");
+    use utf8; %a = ("\xE1\xA0"=>"sterling");
     print 'start'; printf '%x,', ord \$_ foreach keys %a; print "end\n";
 BANG
-	      qr/^Malformed UTF-8 character: .*? \(unexpected non-continuation byte/
+	      qr/^Malformed UTF-8 character \(\d bytes?, need \d, .+\).*start\d+,end$/sm
 	     ],
             );
     foreach (@tests) {
         my ($why, $prog, $expect) = @$_;
-        open P, ">", $progfile or die "Can't open '$progfile': $!";
+        open P, ">$progfile" or die "Can't open '$progfile': $!";
         binmode(P, ":bytes") if $has_perlio;
 	print P $show, $prog, '; print $b'
             or die "Print to 'progfile' failed: $!";

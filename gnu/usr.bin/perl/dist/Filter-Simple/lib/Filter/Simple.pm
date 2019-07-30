@@ -2,12 +2,14 @@ package Filter::Simple;
 
 use Text::Balanced ':ALL';
 
-our $VERSION = '0.95';
+use vars qw{ $VERSION @EXPORT };
+
+$VERSION = '0.92';
 
 use Filter::Util::Call;
 use Carp;
 
-our @EXPORT = qw( FILTER FILTER_ONLY );
+@EXPORT = qw( FILTER FILTER_ONLY );
 
 
 sub import {
@@ -196,7 +198,6 @@ sub gen_filter_import {
                     if ($terminator{terminator} &&
                         m/$terminator{terminator}/) {
                         $lastline = $_;
-                        $count++;
                         last;
                     }
                     $data .= $_;

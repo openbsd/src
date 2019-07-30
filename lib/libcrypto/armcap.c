@@ -1,10 +1,10 @@
-/* $OpenBSD: armcap.c,v 1.8 2019/03/13 10:18:30 patrick Exp $ */
+/* $OpenBSD: armcap.c,v 1.6 2014/06/20 21:00:46 deraadt Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <setjmp.h>
 #include <signal.h>
-#include <openssl/crypto.h>
+#include <crypto.h>
 
 #include "arm_arch.h"
 
@@ -22,10 +22,6 @@ static sigjmp_buf ill_jmp;
  * ARM compilers support inline assembler...
  */
 void _armv7_neon_probe(void);
-void _armv8_aes_probe(void);
-void _armv8_sha1_probe(void);
-void _armv8_sha256_probe(void);
-void _armv8_pmull_probe(void);
 #endif
 
 #if defined(__GNUC__) && __GNUC__>=2
@@ -35,6 +31,9 @@ void OPENSSL_cpuid_setup(void) __attribute__((constructor));
 void
 OPENSSL_cpuid_setup(void)
 {
+#ifndef __OpenBSD__
+	char *e;
+#endif
 #if __ARM_ARCH__ >= 7
 	struct sigaction	ill_oact, ill_act;
 	sigset_t		oset;
@@ -65,21 +64,6 @@ OPENSSL_cpuid_setup(void)
 	if (sigsetjmp(ill_jmp, 1) == 0) {
 		_armv7_neon_probe();
 		OPENSSL_armcap_P |= ARMV7_NEON;
-		if (sigsetjmp(ill_jmp, 1) == 0) {
-			_armv8_pmull_probe();
-			OPENSSL_armcap_P |= ARMV8_PMULL | ARMV8_AES;
-		} else if (sigsetjmp(ill_jmp, 1) == 0) {
-			_armv8_aes_probe();
-			OPENSSL_armcap_P |= ARMV8_AES;
-		}
-		if (sigsetjmp(ill_jmp, 1) == 0) {
-			_armv8_sha1_probe();
-			OPENSSL_armcap_P |= ARMV8_SHA1;
-		}
-		if (sigsetjmp(ill_jmp, 1) == 0) {
-			_armv8_sha256_probe();
-			OPENSSL_armcap_P |= ARMV8_SHA256;
-		}
 	}
 
 	sigaction (SIGILL, &ill_oact, NULL);

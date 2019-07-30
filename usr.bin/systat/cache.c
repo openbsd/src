@@ -1,4 +1,4 @@
-/* $OpenBSD: cache.c,v 1.8 2019/01/17 05:56:29 tedu Exp $ */
+/* $Id: cache.c,v 1.7 2016/08/26 09:10:11 guenther Exp $ */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *

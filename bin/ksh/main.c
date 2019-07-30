@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.97 2019/02/20 23:59:17 schwarze Exp $	*/
+/*	$OpenBSD: main.c,v 1.90 2018/03/15 16:51:29 anton Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -35,7 +35,6 @@ uid_t	ksheuid;
 int	exstat;
 int	subst_exstat;
 const char *safe_prompt;
-int	disable_subst;
 
 Area	aperm;
 
@@ -82,13 +81,14 @@ static const char initsubs[] = "${PS2=> } ${PS3=#? } ${PS4=+ }";
 
 static const char *initcoms [] = {
 	"typeset", "-r", "KSH_VERSION", NULL,
-	"typeset", "-x", "SHELL", "PATH", "HOME", "PWD", "OLDPWD", NULL,
+	"typeset", "-x", "SHELL", "PATH", "HOME", NULL,
 	"typeset", "-ir", "PPID", NULL,
 	"typeset", "-i", "OPTIND=1", NULL,
 	"eval", "typeset -i RANDOM MAILCHECK=\"${MAILCHECK-600}\" SECONDS=\"${SECONDS-0}\" TMOUT=\"${TMOUT-0}\"", NULL,
 	"alias",
 	 /* Standard ksh aliases */
 	  "hash=alias -t",	/* not "alias -t --": hash -r needs to work */
+	  "type=whence -v",
 	  "stop=kill -STOP",
 	  "autoload=typeset -fu",
 	  "functions=typeset -f",
@@ -146,18 +146,10 @@ main(int argc, char *argv[])
 
 	kshname = argv[0];
 
-	if (issetugid()) { /* could later drop privileges */
-		if (pledge("stdio rpath wpath cpath fattr flock getpw proc "
-		    "exec tty id", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
-	} else {
-		if (pledge("stdio rpath wpath cpath fattr flock getpw proc "
-		    "exec tty", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio rpath wpath cpath fattr flock getpw proc exec tty",
+	    NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	ainit(&aperm);		/* initialize permanent Area */
@@ -295,7 +287,7 @@ main(int argc, char *argv[])
 			setstr(pwd_v, current_wd, KSH_RETURN_ERROR);
 	}
 	ppid = getppid();
-	setint(global("PPID"), (int64_t) ppid);
+	setint(global("PPID"), (long) ppid);
 	/* setstr can't fail here */
 	setstr(global(version_param), ksh_version, KSH_RETURN_ERROR);
 
@@ -558,7 +550,6 @@ shell(Source *volatile s, volatile int toplevel)
 		case LERROR:
 		case LSHELL:
 			if (interactive) {
-				c_fc_reset();
 				if (i == LINTR)
 					shellf("\n");
 				/* Reset any eof that was read as part of a

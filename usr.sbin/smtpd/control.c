@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.123 2018/05/31 21:06:12 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.121 2018/01/27 08:32:03 anton Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -101,6 +101,7 @@ control_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_CTL_LIST_ENVELOPES:
 	case IMSG_CTL_DISCOVER_EVPID:
 	case IMSG_CTL_DISCOVER_MSGID:
+	case IMSG_CTL_UNCORRUPT_MSGID:
 	case IMSG_CTL_MTA_SHOW_HOSTS:
 	case IMSG_CTL_MTA_SHOW_RELAYS:
 	case IMSG_CTL_MTA_SHOW_ROUTES:
@@ -312,7 +313,7 @@ control_accept(int listenfd, short event, void *arg)
 
 	count = tree_get(&ctl_count, euid);
 	if (count == NULL) {
-		count = xcalloc(1, sizeof *count);
+		count = xcalloc(1, sizeof *count, "control_accept");
 		tree_xset(&ctl_count, euid, count);
 	}
 
@@ -328,7 +329,7 @@ control_accept(int listenfd, short event, void *arg)
 		++connid;
 	} while (tree_get(&ctl_conns, connid));
 
-	c = xcalloc(1, sizeof(*c));
+	c = xcalloc(1, sizeof(*c), "control_accept");
 	c->euid = euid;
 	c->egid = egid;
 	c->id = connid;
@@ -750,6 +751,7 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		return;
 
 	case IMSG_CTL_DISCOVER_MSGID:
+	case IMSG_CTL_UNCORRUPT_MSGID:
 		if (c->euid)
 			goto badcred;
 

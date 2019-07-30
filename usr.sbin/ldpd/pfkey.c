@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.12 2019/01/23 02:02:04 dlg Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.11 2017/04/18 02:29:56 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -36,7 +36,7 @@ static int	 pfkey_sa_add(int, union ldpd_addr *, union ldpd_addr *,
 		    uint8_t, char *, uint32_t *);
 static int	 pfkey_sa_remove(int, union ldpd_addr *, union ldpd_addr *,
 		    uint32_t *);
-static int	 pfkey_md5sig_establish(struct nbr *, struct ldp_auth *);
+static int	 pfkey_md5sig_establish(struct nbr *, struct nbr_params *nbrp);
 static int	 pfkey_md5sig_remove(struct nbr *);
 
 #define	PFKEY2_CHUNK sizeof(uint64_t)
@@ -367,81 +367,84 @@ pfkey_sa_remove(int af, union ldpd_addr *src, union ldpd_addr *dst,
 }
 
 static int
-pfkey_md5sig_establish(struct nbr *nbr, struct ldp_auth *auth)
+pfkey_md5sig_establish(struct nbr *nbr, struct nbr_params *nbrp)
 {
 	sleep(1);
 
-	pfkey_md5sig_remove(nbr);
+	if (!nbr->auth.spi_out)
+		if (pfkey_sa_add(nbr->af, &nbr->laddr, &nbr->raddr,
+		    nbrp->auth.md5key_len, nbrp->auth.md5key,
+		    &nbr->auth.spi_out) == -1)
+			return (-1);
+	if (!nbr->auth.spi_in)
+		if (pfkey_sa_add(nbr->af, &nbr->raddr, &nbr->laddr,
+		    nbrp->auth.md5key_len, nbrp->auth.md5key,
+		    &nbr->auth.spi_in) == -1)
+			return (-1);
 
-	if (pfkey_sa_add(nbr->af, &nbr->laddr, &nbr->raddr,
-	    auth->md5key_len, auth->md5key, &nbr->auth_spi_out) == -1)
-		return (-1);
-
-	if (pfkey_sa_add(nbr->af, &nbr->raddr, &nbr->laddr,
-	    auth->md5key_len, auth->md5key, &nbr->auth_spi_in) == -1)
-		return (-1);
-
-	nbr->auth_established = 1;
-
+	nbr->auth.established = 1;
 	return (0);
 }
 
 static int
 pfkey_md5sig_remove(struct nbr *nbr)
 {
-	if (nbr->auth_spi_out) {
+	if (nbr->auth.spi_out)
 		if (pfkey_sa_remove(nbr->af, &nbr->laddr, &nbr->raddr,
-		    &nbr->auth_spi_out) == -1)
+		    &nbr->auth.spi_out) == -1)
 			return (-1);
-	}
-	if (nbr->auth_spi_in) {
+	if (nbr->auth.spi_in)
 		if (pfkey_sa_remove(nbr->af, &nbr->raddr, &nbr->laddr,
-		    &nbr->auth_spi_in) == -1)
+		    &nbr->auth.spi_in) == -1)
 			return (-1);
-	}
 
-	nbr->auth_established = 0;
-	nbr->auth_spi_in = 0;
-	nbr->auth_spi_out = 0;
+	nbr->auth.established = 0;
+	nbr->auth.spi_in = 0;
+	nbr->auth.spi_out = 0;
+	nbr->auth.method = AUTH_NONE;
+	memset(nbr->auth.md5key, 0, sizeof(nbr->auth.md5key));
 
 	return (0);
 }
 
-static struct ldp_auth *
-pfkey_find_auth(struct ldpd_conf *conf, struct nbr *nbr)
+int
+pfkey_establish(struct nbr *nbr, struct nbr_params *nbrp)
 {
-	struct ldp_auth *auth, *match = NULL;
+	if (nbrp->auth.method == AUTH_NONE)
+		return (0);
 
-	LIST_FOREACH(auth, &conf->auth_list, entry) {
-		in_addr_t mask = prefixlen2mask(auth->idlen);
-		if ((auth->id.s_addr & mask) != (nbr->id.s_addr & mask))
-			continue;
+	/*
+	 * make sure we keep copies of everything we need to
+	 * remove SAs and flows later again.
+	 */
+	nbr->auth.method = nbrp->auth.method;
 
-		if (match == NULL ||
-		    match->idlen < auth->idlen)
-			match = auth;
+	switch (nbr->auth.method) {
+	case AUTH_MD5SIG:
+		strlcpy(nbr->auth.md5key, nbrp->auth.md5key,
+		    sizeof(nbr->auth.md5key));
+		return (pfkey_md5sig_establish(nbr, nbrp));
+	default:
+		break;
 	}
 
-	return (match);
-}
-
-int
-pfkey_establish(struct ldpd_conf *conf, struct nbr *nbr)
-{
-	struct ldp_auth *auth = NULL;
-
-	auth = pfkey_find_auth(conf, nbr);
-	if (auth == NULL || /* no policy */
-	    auth->md5key_len == 0) /* "no tcpmd5 sig" */
-		return (0);
-	
-	return (pfkey_md5sig_establish(nbr, auth));
+	return (0);
 }
 
 int
 pfkey_remove(struct nbr *nbr)
 {
-	return (pfkey_md5sig_remove(nbr));
+	if (nbr->auth.method == AUTH_NONE || !nbr->auth.established)
+		return (0);
+
+	switch (nbr->auth.method) {
+	case AUTH_MD5SIG:
+		return (pfkey_md5sig_remove(nbr));
+	default:
+		break;
+	}
+
+	return (0);
 }
 
 int

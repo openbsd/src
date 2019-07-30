@@ -15,17 +15,12 @@
 #include "llvm/Transforms/Utils/Mem2Reg.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AssumptionCache.h"
-#include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/PassManager.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Transforms/Utils.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
-#include <vector>
-
+#include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "mem2reg"
@@ -38,7 +33,7 @@ static bool promoteMemoryToRegister(Function &F, DominatorTree &DT,
   BasicBlock &BB = F.getEntryBlock(); // Get the entry node for the function
   bool Changed = false;
 
-  while (true) {
+  while (1) {
     Allocas.clear();
 
     // Find allocas that are safe to promote, by looking at all instructions in
@@ -70,17 +65,15 @@ PreservedAnalyses PromotePass::run(Function &F, FunctionAnalysisManager &AM) {
 }
 
 namespace {
-
 struct PromoteLegacyPass : public FunctionPass {
-  // Pass identification, replacement for typeid
-  static char ID;
-
+  static char ID; // Pass identification, replacement for typeid
   PromoteLegacyPass() : FunctionPass(ID) {
     initializePromoteLegacyPassPass(*PassRegistry::getPassRegistry());
   }
 
   // runOnFunction - To run this pass, first we calculate the alloca
   // instructions that are safe for promotion, then we promote each one.
+  //
   bool runOnFunction(Function &F) override {
     if (skipFunction(F))
       return false;
@@ -96,12 +89,10 @@ struct PromoteLegacyPass : public FunctionPass {
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.setPreservesCFG();
   }
-};
-
-} // end anonymous namespace
+  };
+}  // end of anonymous namespace
 
 char PromoteLegacyPass::ID = 0;
-
 INITIALIZE_PASS_BEGIN(PromoteLegacyPass, "mem2reg", "Promote Memory to "
                                                     "Register",
                       false, false)
@@ -111,6 +102,7 @@ INITIALIZE_PASS_END(PromoteLegacyPass, "mem2reg", "Promote Memory to Register",
                     false, false)
 
 // createPromoteMemoryToRegister - Provide an entry point to create this pass.
+//
 FunctionPass *llvm::createPromoteMemoryToRegisterPass() {
   return new PromoteLegacyPass();
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpclient.c,v 1.20 2019/05/11 17:46:02 rob Exp $	*/
+/*	$OpenBSD: snmpclient.c,v 1.15 2018/02/08 18:02:06 jca Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -26,7 +26,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <ber.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -43,6 +42,7 @@
 
 #include "snmpd.h"
 #include "mib.h"
+#include "ber.h"
 #include "parser.h"
 
 struct snmpc {
@@ -50,6 +50,8 @@ struct snmpc {
 	struct ber_oid		 sc_root_oid;
 	struct ber_oid		 sc_last_oid;
 	struct ber_oid		 sc_oid;
+	struct sockaddr_storage	 sc_addr;
+	socklen_t		 sc_addr_len;
 	u_int32_t		 sc_msgid;
 	int			 sc_fd;
 	int			 sc_retry;
@@ -69,9 +71,9 @@ struct snmpc {
 #define	SNMPC_DATEANDTIME_SHORT_LEN	8
 
 void	 snmpc_run(struct snmpc *, enum actions, const char *);
-void	 snmpc_request(struct snmpc *, unsigned int);
+void	 snmpc_request(struct snmpc *, u_long);
 int	 snmpc_response(struct snmpc *);
-int	 snmpc_sendreq(struct snmpc *, unsigned int);
+int	 snmpc_sendreq(struct snmpc *, u_long);
 int	 snmpc_recvresp(int, int, u_int32_t, struct ber_element **);
 
 struct display_hint *
@@ -97,13 +99,11 @@ snmpclient(struct parse_result *res)
 	int			 s;
 	int			 error;
 	u_int			 i;
+	struct passwd		*pw;
 	struct parse_val	*oid;
 
 	for (i = 0; i < sizeof(display_hints) / sizeof(display_hints[0]); i++)
 		smi_oidlen(&display_hints[i].oid);
-
-	if (pledge("stdio inet dns", NULL) == -1)
-		fatal("pledge");
 
 	bzero(&sc, sizeof(sc));
 
@@ -138,12 +138,29 @@ snmpclient(struct parse_result *res)
 	if (s == -1)
 		errx(1, "invalid host");
 
-	if (connect(s, (struct sockaddr *)ai->ai_addr, ai->ai_addrlen) == -1)
-		errx(1, "cannot connect");
-
+	bcopy(ai->ai_addr, &sc.sc_addr, ai->ai_addrlen);
+	sc.sc_addr_len = ai->ai_addrlen;
 	freeaddrinfo(ai0);
 
-	if (pledge("stdio", NULL) == -1)
+	/*
+	 * Drop privileges to mitigate the risk when running as root.
+	 */
+	if (geteuid() == 0) {
+		if ((pw = getpwnam(SNMPD_USER)) == NULL)
+			err(1, "snmpctl: getpwnam");
+#ifndef DEBUG
+		if (chroot(pw->pw_dir) == -1)
+			err(1, "snmpctl: chroot");
+		if (chdir("/") == -1)
+			err(1, "snmpctl: chdir(\"/\")");
+		if (setgroups(1, &pw->pw_gid) ||
+		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+			err(1, "snmpctl: cannot drop privileges");
+#endif
+	}
+
+	if (pledge("stdio dns", NULL) == -1)
 		fatal("pledge");
 
 	sc.sc_fd = s;
@@ -152,7 +169,7 @@ snmpclient(struct parse_result *res)
 	sc.sc_retry_max = SNMPC_RETRY_MAX;
 
 	if (TAILQ_EMPTY(&res->oids)) {
-		snmpc_run(&sc, res->action, SNMPC_OID_DEFAULT);
+			snmpc_run(&sc, res->action, SNMPC_OID_DEFAULT);
 	} else {
 		TAILQ_FOREACH(oid, &res->oids, val_entry) {
 			snmpc_run(&sc, res->action, oid->val);
@@ -191,7 +208,7 @@ snmpc_run(struct snmpc *sc, enum actions action, const char *oid)
 }
 
 void
-snmpc_request(struct snmpc *sc, unsigned int type)
+snmpc_request(struct snmpc *sc, u_long type)
 {
 	struct pollfd		 pfd[1];
 	int			 nfds, ret;
@@ -378,7 +395,7 @@ snmpc_display_hint_lookup(struct ber_oid *oid)
 }
 
 int
-snmpc_sendreq(struct snmpc *sc, unsigned int type)
+snmpc_sendreq(struct snmpc *sc, u_long type)
 {
 	struct ber_element	*root, *b;
 	struct ber		 ber;
@@ -390,7 +407,7 @@ snmpc_sendreq(struct snmpc *sc, unsigned int type)
 		erroridx = SNMPC_MAXREPETITIONS;
 
 	/* SNMP header */
-	sc->sc_msgid = arc4random() & 0x7fffffff;
+	sc->sc_msgid = arc4random();
 	if ((root = ber_add_sequence(NULL)) == NULL)
 		return (-1);
 	if ((b = ber_printf_elements(root, "ds{tddd{{O0}}",
@@ -401,7 +418,7 @@ snmpc_sendreq(struct snmpc *sc, unsigned int type)
 	}
 
 #ifdef DEBUG
-	fprintf(stderr, "REQUEST(%u):\n", type);
+	fprintf(stderr, "REQUEST(%lu):\n", type);
 	smi_debug_elements(root);
 #endif
 
@@ -411,7 +428,8 @@ snmpc_sendreq(struct snmpc *sc, unsigned int type)
 	if (ber_get_writebuf(&ber, (void *)&ptr) < 1)
 		goto berfail;
 
-	if (send(sc->sc_fd, ptr, len, 0) == -1)
+	if (sendto(sc->sc_fd, ptr, len, 0,
+	    (struct sockaddr *)&sc->sc_addr, sc->sc_addr_len) == -1)
 		goto berfail;
 
 	ber_free_elements(root);

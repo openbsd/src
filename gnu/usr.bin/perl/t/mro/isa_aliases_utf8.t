@@ -1,10 +1,6 @@
 #!./perl
 
-BEGIN {
-    chdir 't' if -d 't';
-    require './test.pl';
-    set_up_inc('../lib');
-}
+BEGIN { chdir 't' if -d 't'; @INC = '../lib'; require './test.pl' }
 
 use utf8;
 use open qw( :utf8 :std );

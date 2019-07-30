@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.224 2019/01/20 20:28:37 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.222 2017/12/30 23:08:29 guenther Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -482,10 +482,10 @@ cdstrategy(struct buf *bp)
 	device_unref(&sc->sc_dev);
 	return;
 
-bad:
-	SET(bp->b_flags, B_ERROR);
+ bad:
+	bp->b_flags |= B_ERROR;
 	bp->b_resid = bp->b_bcount;
-done:
+ done:
 	s = splbio();
 	biodone(bp);
 	splx(s);
@@ -616,7 +616,6 @@ cd_buf_done(struct scsi_xfer *xs)
 	switch (xs->error) {
 	case XS_NOERROR:
 		bp->b_error = 0;
-		CLR(bp->b_flags, B_ERROR);
 		bp->b_resid = xs->resid;
 		break;
 
@@ -628,7 +627,6 @@ cd_buf_done(struct scsi_xfer *xs)
 		error = cd_interpret_sense(xs);
 		if (error == 0) {
 			bp->b_error = 0;
-			CLR(bp->b_flags, B_ERROR);
 			bp->b_resid = xs->resid;
 			break;
 		}
@@ -653,7 +651,7 @@ retry:
 
 	default:
 		bp->b_error = EIO;
-		SET(bp->b_flags, B_ERROR);
+		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
 		break;
 	}
@@ -1035,7 +1033,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		error = scsi_start(sc->sc_link, SSS_STOP, 0);
 		break;
 
-close_tray:
+	close_tray:
 	case CDIOCCLOSE:
 		error = scsi_start(sc->sc_link, SSS_START|SSS_LOEJ,
 		    SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE);
@@ -1095,7 +1093,7 @@ close_tray:
 		break;
 	}
 
-exit:
+ exit:
 
 	device_unref(&sc->sc_dev);
 	return (error);

@@ -12,12 +12,14 @@ class TestWithLimitDebugInfo(TestBase):
     def test_limit_debug_info(self):
         self.build()
 
-        src_file = os.path.join(self.getSourceDir(), "main.cpp")
+        cwd = os.getcwd()
+
+        src_file = os.path.join(cwd, "main.cpp")
         src_file_spec = lldb.SBFileSpec(src_file)
         self.assertTrue(src_file_spec.IsValid(), "breakpoint file")
 
         # Get the path of the executable
-        exe_path = self.getBuildArtifact("a.out")
+        exe_path = os.path.join(cwd, 'a.out')
 
         # Load the executable
         target = self.dbg.CreateTarget(exe_path)

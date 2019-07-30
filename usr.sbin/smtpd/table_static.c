@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.32 2018/12/28 14:21:02 eric Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.17 2017/08/29 07:37:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -26,8 +26,7 @@
 #include <arpa/inet.h>
 
 #include <ctype.h>
-#include <errno.h>
-
+#include <err.h>
 #include <event.h>
 #include <fcntl.h>
 #include <imsg.h>
@@ -39,31 +38,20 @@
 #include "smtpd.h"
 #include "log.h"
 
-struct table_static_priv {
-	int		 type;
-	struct dict	 dict;
-	void		*iter;
-};
-
 /* static backend */
 static int table_static_config(struct table *);
-static int table_static_add(struct table *, const char *, const char *);
-static void table_static_dump(struct table *);
 static int table_static_update(struct table *);
-static int table_static_open(struct table *);
-static int table_static_lookup(struct table *, enum table_service, const char *,
-    char **);
-static int table_static_fetch(struct table *, enum table_service, char **);
-static void table_static_close(struct table *);
+static void *table_static_open(struct table *);
+static int table_static_lookup(void *, struct dict *, const char *,
+    enum table_service, union lookup *);
+static int table_static_fetch(void *, struct dict *, enum table_service,
+    union lookup *);
+static void  table_static_close(void *);
 
 struct table_backend table_backend_static = {
-	"static",
 	K_ALIAS|K_CREDENTIALS|K_DOMAIN|K_NETADDR|K_USERINFO|
-	K_SOURCE|K_MAILADDR|K_ADDRNAME|K_MAILADDRMAP|K_RELAYHOST|
-	K_STRING|K_REGEX,
+	K_SOURCE|K_MAILADDR|K_ADDRNAME|K_MAILADDRMAP,
 	table_static_config,
-	table_static_add,
-	table_static_dump,
 	table_static_open,
 	table_static_update,
 	table_static_close,
@@ -77,52 +65,12 @@ static struct keycmp {
 } keycmp[] = {
 	{ K_DOMAIN, table_domain_match },
 	{ K_NETADDR, table_netaddr_match },
-	{ K_MAILADDR, table_mailaddr_match },
-	{ K_REGEX, table_regex_match },
+	{ K_MAILADDR, table_mailaddr_match }
 };
 
 
-static void
-table_static_priv_free(struct table_static_priv *priv)
-{
-	void *p;
-
-	while (dict_poproot(&priv->dict, (void **)&p))
-		if (p != priv)
-			free(p);
-	free(priv);
-}
-
 static int
-table_static_priv_add(struct table_static_priv *priv, const char *key, const char *val)
-{
-	char lkey[1024];
-	void *old, *new = NULL;
-
-	if (!lowercase(lkey, key, sizeof lkey)) {
-		errno = ENAMETOOLONG;
-		return (-1);
-	}
-
-	if (val) {
-		new = strdup(val);
-		if (new == NULL)
-			return (-1);
-	}
-
-	/* use priv if value is null, so we can detect duplicate entries */
-	old = dict_set(&priv->dict, lkey, new ? new : priv);
-	if (old) {
-		if (old != priv)
-			free(old);
-		return (1);
-	}
-
-	return (0);
-}
-
-static int
-table_static_priv_load(struct table_static_priv *priv, const char *path)
+table_static_config(struct table *t)
 {
 	FILE	*fp;
 	char	*buf = NULL, *p;
@@ -131,10 +79,14 @@ table_static_priv_load(struct table_static_priv *priv, const char *path)
 	ssize_t	 flen;
 	char	*keyp;
 	char	*valp;
-	int	 ret = 0;
+	size_t	 ret = 0;
 
-	if ((fp = fopen(path, "r")) == NULL) {
-		log_warn("%s: fopen", path);
+	/* no config ? ok */
+	if (*t->t_config == '\0')
+		return 1;
+
+	if ((fp = fopen(t->t_config, "r")) == NULL) {
+		log_warn("warn: Table \"%s\"", t->t_config);
 		return 0;
 	}
 
@@ -153,29 +105,29 @@ table_static_priv_load(struct table_static_priv *priv, const char *path)
 		while (isspace((unsigned char)keyp[flen - 1]))
 			keyp[--flen] = '\0';
 		if (*keyp == '#') {
-			if (priv->type == T_NONE) {
+			if (t->t_type == T_NONE) {
 				keyp++;
 				while (isspace((unsigned char)*keyp))
 					++keyp;
 				if (!strcmp(keyp, "@list"))
-					priv->type = T_LIST;
+					t->t_type = T_LIST;
 			}
 			continue;
 		}
 
-		if (priv->type == T_NONE) {
+		if (t->t_type == T_NONE) {
 			for (p = keyp; *p; p++) {
 				if (*p == ' ' || *p == '\t' || *p == ':') {
-					priv->type = T_HASH;
+					t->t_type = T_HASH;
 					break;
 				}
 			}
-			if (priv->type == T_NONE)
-				priv->type = T_LIST;
+			if (t->t_type == T_NONE)
+				t->t_type = T_LIST;
 		}
 
-		if (priv->type == T_LIST) {
-			table_static_priv_add(priv, keyp, NULL);
+		if (t->t_type == T_LIST) {
+			table_add(t, keyp, NULL);
 			continue;
 		}
 
@@ -194,22 +146,22 @@ table_static_priv_load(struct table_static_priv *priv, const char *path)
 				valp = NULL;
 		}
 		if (valp == NULL) {
-			log_warnx("%s: invalid map entry line %d",
-			    path, lineno);
+			log_warnx("%s: invalid map entry line %d", t->t_config,
+			    lineno);
 			goto end;
 		}
 
-		table_static_priv_add(priv, keyp, valp);
+		table_add(t, keyp, valp);
 	}
 
 	if (ferror(fp)) {
-		log_warn("%s: getline", path);
+		log_warn("%s: getline", t->t_config);
 		goto end;
 	}
 
 	/* Accept empty alias files; treat them as hashes */
-	if (priv->type == T_NONE)
-		priv->type = T_HASH;
+	if (t->t_type == T_NONE && t->t_backend->services & K_ALIAS)
+	    t->t_type = T_HASH;
 
 	ret = 1;
 end:
@@ -219,118 +171,52 @@ end:
 }
 
 static int
-table_static_config(struct table *t)
-{
-	struct table_static_priv *priv, *old;
-
-	/* already up, and no config file? ok */
-	if (t->t_handle && *t->t_config == '\0')
-		return 1;
-
-	/* new config */
-	priv = calloc(1, sizeof(*priv));
-	if (priv == NULL)
-		return 0;
-	priv->type = t->t_type;
-	dict_init(&priv->dict);
-	
-	if (*t->t_config) {
-		/* load the config file */
-		if (table_static_priv_load(priv, t->t_config) == 0) {
-			table_static_priv_free(priv);
-			return 0;
-		}
-	}
-
-	if ((old = t->t_handle))
-		table_static_priv_free(old);
-	t->t_handle = priv;
-	t->t_type = priv->type;
-
-	return 1;
-}
-
-static int
-table_static_add(struct table *table, const char *key, const char *val)
-{
-	struct table_static_priv *priv = table->t_handle;
-	int r;
-
-	/* cannot add to a table read from a file */
-	if (*table->t_config)
-		return 0;
-
-	if (table->t_type == T_NONE)
-		table->t_type = val ? T_HASH : T_LIST;
-	else if (table->t_type == T_LIST && val)
-		return 0;
-	else if (table->t_type == T_HASH && val == NULL)
-		return 0;
-
-	if (priv == NULL) {
-		if (table_static_config(table) == 0)
-			return 0;
-		priv = table->t_handle;
-	}
-
-	r = table_static_priv_add(priv, key, val);
-	if (r == -1)
-		return 0;
-	return 1;
-}
-
-static void
-table_static_dump(struct table *table)
-{
-	struct table_static_priv *priv = table->t_handle;
-	const char *key;
-	char *value;
-	void *iter;
-
-	iter = NULL;
-	while (dict_iter(&priv->dict, &iter, &key, (void**)&value)) {
-		if (value && (void*)value != (void*)priv)
-			log_debug("	\"%s\" -> \"%s\"", key, value);
-		else
-			log_debug("	\"%s\"", key);
-	}
-}
-
-static int
 table_static_update(struct table *table)
 {
-	if (table_static_config(table) == 1) {
-		log_info("info: Table \"%s\" successfully updated", table->t_name);
-		return 1;
-	}
+	struct table	*t;
+	void		*p = NULL;
 
+	/* no config ? ok */
+	if (table->t_config[0] == '\0')
+		goto ok;
+
+	t = table_create("static", table->t_name, "update", table->t_config);
+	if (!table_config(t))
+		goto err;
+
+	/* replace former table, frees t */
+	while (dict_poproot(&table->t_dict, (void **)&p))
+		free(p);
+	dict_merge(&table->t_dict, &t->t_dict);
+	table_destroy(t);
+
+ok:
+	log_info("info: Table \"%s\" successfully updated", table->t_name);
+	return 1;
+
+err:
+	table_destroy(t);
 	log_info("info: Failed to update table \"%s\"", table->t_name);
 	return 0;
 }
 
-static int
+static void *
 table_static_open(struct table *table)
 {
-	if (table->t_handle == NULL)
-		return table_static_config(table);
-	return 1;
+	return table;
 }
 
 static void
-table_static_close(struct table *table)
+table_static_close(void *hdl)
 {
-	struct table_static_priv *priv = table->t_handle;
-
-	if (priv)
-		table_static_priv_free(priv);
-	table->t_handle = NULL;
+	return;
 }
 
 static int
-table_static_lookup(struct table *table, enum table_service service, const char *key,
-    char **dst)
+table_static_lookup(void *hdl, struct dict *params, const char *key,
+    enum table_service service, union lookup *lk)
 {
-	struct table_static_priv *priv = table->t_handle;
+	struct table   *m  = hdl;
 	char	       *line;
 	int		ret;
 	int	       (*match)(const char *, const char *) = NULL;
@@ -346,7 +232,7 @@ table_static_lookup(struct table *table, enum table_service service, const char 
 	line = NULL;
 	iter = NULL;
 	ret = 0;
-	while (dict_iter(&priv->dict, &iter, &k, (void **)&v)) {
+	while (dict_iter(&m->t_dict, &iter, &k, (void **)&v)) {
 		if (match) {
 			if (match(key, k)) {
 				line = v;
@@ -363,34 +249,30 @@ table_static_lookup(struct table *table, enum table_service service, const char 
 			break;
 	}
 
-	if (dst == NULL)
+	if (lk == NULL)
 		return ret ? 1 : 0;
 
 	if (ret == 0)
 		return 0;
 
-	*dst = strdup(line);
-	if (*dst == NULL)
-		return -1;
-
-	return 1;
+	return table_parse_lookup(service, key, line, lk);
 }
 
 static int
-table_static_fetch(struct table *t, enum table_service service, char **dst)
+table_static_fetch(void *hdl, struct dict *params,
+    enum table_service service, union lookup *lk)
 {
-	struct table_static_priv *priv = t->t_handle;
-	const char *k;
+	struct table   *t = hdl;
+	const char     *k;
 
-	if (!dict_iter(&priv->dict, &priv->iter, &k, (void **)NULL)) {
-		priv->iter = NULL;
-		if (!dict_iter(&priv->dict, &priv->iter, &k, (void **)NULL))
+	if (!dict_iter(&t->t_dict, &t->t_iter, &k, (void **)NULL)) {
+		t->t_iter = NULL;
+		if (!dict_iter(&t->t_dict, &t->t_iter, &k, (void **)NULL))
 			return 0;
 	}
 
-	*dst = strdup(k);
-	if (*dst == NULL)
-		return -1;
+	if (lk == NULL)
+		return 1;
 
-	return 1;
+	return table_parse_lookup(service, NULL, k, lk);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.252 2019/05/20 07:04:13 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.199 2017/09/08 16:51:21 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -42,6 +42,7 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <netdb.h>
+#include <paths.h>
 #include <pwd.h>
 #include <resolv.h>
 #include <stdio.h>
@@ -62,10 +63,6 @@ static struct file {
 	TAILQ_ENTRY(file)	 entry;
 	FILE			*stream;
 	char			*name;
-	size_t			 ungetpos;
-	size_t			 ungetsize;
-	u_char			*ungetbuf;
-	int			 eof_reached;
 	int			 lineno;
 	int			 errors;
 } *file, *topfile;
@@ -76,9 +73,8 @@ int		 yyparse(void);
 int		 yylex(void);
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
-int		 igetc(void);
 int		 lgetc(int);
-void		 lungetc(int);
+int		 lungetc(int);
 int		 findeol(void);
 int		 yyerror(const char *, ...)
     __attribute__((__format__ (printf, 1, 2)))
@@ -97,18 +93,14 @@ char		*symget(const char *);
 
 struct smtpd		*conf = NULL;
 static int		 errors = 0;
+static uint64_t		 ruleid = 0;
 
+struct filter_conf	*filter = NULL;
 struct table		*table = NULL;
+struct rule		*rule = NULL;
 struct mta_limits	*limits;
 static struct pki	*pki;
 static struct ca	*sca;
-
-struct dispatcher	*dispatcher;
-struct rule		*rule;
-struct processor	*processor;
-struct filter_config	*filter_config;
-static uint32_t		 last_dynchain_id = 1;
-static uint32_t		 last_dynproc_id = 1;
 
 enum listen_options {
 	LO_FAMILY	= 0x000001,
@@ -155,9 +147,12 @@ static int	host_v6(struct listen_opts *);
 static int	host_dns(struct listen_opts *);
 static int	interface(struct listen_opts *);
 
+void		 set_local(const char *);
+void		 set_localaddrs(struct table *);
 int		 delaytonum(char *);
 int		 is_if_in_group(const char *, const char *);
 
+static int config_lo_filter(struct listen_opts *, char *);
 static int config_lo_mask_source(struct listen_opts *);
 
 typedef struct {
@@ -173,55 +168,28 @@ typedef struct {
 
 %}
 
-%token	ACTION ALIAS ANY ARROW AUTH AUTH_OPTIONAL
-%token	BACKUP BOUNCE BUILTIN
-%token	CA CERT CHAIN CHROOT CIPHERS COMMIT COMPRESSION CONNECT
-%token	DATA DATA_LINE DHE DISCONNECT DOMAIN
-%token	EHLO ENABLE ENCRYPTION ERROR EXPAND_ONLY 
-%token	FCRDNS FILTER FOR FORWARD_ONLY FROM
-%token	GROUP
-%token	HELO HELO_SRC HOST HOSTNAME HOSTNAMES
-%token	INCLUDE INET4 INET6
-%token	JUNK
-%token	KEY
-%token	LIMIT LISTEN LMTP LOCAL
-%token	MAIL_FROM MAILDIR MASK_SRC MASQUERADE MATCH MAX_MESSAGE_SIZE MAX_DEFERRED MBOX MDA MTA MX
-%token	NO_DSN NO_VERIFY NOOP
-%token	ON
-%token	PKI PORT PROC PROC_EXEC
-%token	QUEUE QUIT
-%token	RCPT_TO RDNS RECIPIENT RECEIVEDAUTH REGEX RELAY REJECT REPORT REWRITE RSET
-%token	SCHEDULER SENDER SENDERS SMTP SMTP_IN SMTP_OUT SMTPS SOCKET SRC SUB_ADDR_DELIM
-%token	TABLE TAG TAGGED TLS TLS_REQUIRE TTL
-%token	USER USERBASE
-%token	VERIFY VIRTUAL
-%token	WARN_INTERVAL WRAPPER
-
+%token	AS QUEUE COMPRESSION ENCRYPTION MAXMESSAGESIZE MAXMTADEFERRED LISTEN ON ANY PORT EXPIRE
+%token	TABLE SMTPS CERTIFICATE DOMAIN BOUNCEWARN LIMIT INET4 INET6 NODSN SESSION
+%token  RELAY BACKUP VIA DELIVER TO LMTP MAILDIR MBOX RCPTTO HOSTNAME HOSTNAMES
+%token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR SOURCE MTA PKI SCHEDULER
+%token	ARROW AUTH TLS LOCAL VIRTUAL TAG TAGGED ALIAS FILTER KEY CA DHE
+%token	AUTH_OPTIONAL TLS_REQUIRE USERBASE SENDER SENDERS MASK_SOURCE VERIFY FORWARDONLY RECIPIENT
+%token	CIPHERS RECEIVEDAUTH MASQUERADE SOCKET SUBADDRESSING_DELIM AUTHENTICATED
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.table>	table
 %type	<v.number>	size negation
-%type	<v.table>	tables tablenew tableref
+%type	<v.table>	tables tablenew tableref alias virtual userbase
+%type	<v.string>	tagged
 %%
 
 grammar		: /* empty */
 		| grammar '\n'
 		| grammar include '\n'
 		| grammar varset '\n'
-		| grammar bounce '\n'
-		| grammar ca '\n'
-		| grammar mda '\n'
-		| grammar mta '\n'
-		| grammar pki '\n'
-		| grammar proc '\n'
-		| grammar queue '\n'
-		| grammar scheduler '\n'
-		| grammar smtp '\n'
-		| grammar listen '\n'
+		| grammar main '\n'
 		| grammar table '\n'
-		| grammar dispatcher '\n'
-		| grammar match '\n'
-		| grammar filter '\n'
+		| grammar rule '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
 
@@ -246,8 +214,6 @@ varset		: STRING '=' STRING		{
 				if (isspace((unsigned char)*s)) {
 					yyerror("macro name cannot contain "
 					    "whitespace");
-					free($1);
-					free($3);
 					YYERROR;
 				}
 			}
@@ -270,1379 +236,6 @@ optnl		: '\n' optnl
 nl		: '\n' optnl
 		;
 
-negation	: '!'		{ $$ = 1; }
-		| /* empty */	{ $$ = 0; }
-		;
-
-assign		: '=' | ARROW;
-
-
-keyval		: STRING assign STRING		{
-			table_add(table, $1, $3);
-			free($1);
-			free($3);
-		}
-		;
-
-keyval_list	: keyval
-		| keyval comma keyval_list
-		;
-
-stringel	: STRING			{
-			table_add(table, $1, NULL);
-			free($1);
-		}
-		;
-
-string_list	: stringel
-		| stringel comma string_list
-		;
-
-tableval_list	: string_list			{ }
-		| keyval_list			{ }
-		;
-
-bounce:
-BOUNCE WARN_INTERVAL {
-	memset(conf->sc_bounce_warn, 0, sizeof conf->sc_bounce_warn);
-} bouncedelays
-;
-
-
-ca:
-CA STRING {
-	char buf[HOST_NAME_MAX+1];
-
-	/* if not catchall, check that it is a valid domain */
-	if (strcmp($2, "*") != 0) {
-		if (!res_hnok($2)) {
-			yyerror("not a valid domain name: %s", $2);
-			free($2);
-			YYERROR;
-		}
-	}
-	xlowercase(buf, $2, sizeof(buf));
-	free($2);
-	sca = dict_get(conf->sc_ca_dict, buf);
-	if (sca == NULL) {
-		sca = xcalloc(1, sizeof *sca);
-		(void)strlcpy(sca->ca_name, buf, sizeof(sca->ca_name));
-		dict_set(conf->sc_ca_dict, sca->ca_name, sca);
-	}
-} ca_params
-;
-
-
-ca_params_opt:
-CERT STRING {
-	sca->ca_cert_file = $2;
-}
-;
-
-ca_params:
-ca_params_opt
-;
-
-
-mda:
-MDA LIMIT limits_mda
-| MDA WRAPPER STRING STRING {
-	if (dict_get(conf->sc_mda_wrappers, $3)) {
-		yyerror("mda wrapper already declared with that name: %s", $3);
-		YYERROR;
-	}
-	dict_set(conf->sc_mda_wrappers, $3, $4);
-}
-;
-
-
-mta:
-MTA MAX_DEFERRED NUMBER  {
-	conf->sc_mta_max_deferred = $3;
-}
-| MTA LIMIT FOR DOMAIN STRING {
-	struct mta_limits	*d;
-
-	limits = dict_get(conf->sc_limits_dict, $5);
-	if (limits == NULL) {
-		limits = xcalloc(1, sizeof(*limits));
-		dict_xset(conf->sc_limits_dict, $5, limits);
-		d = dict_xget(conf->sc_limits_dict, "default");
-		memmove(limits, d, sizeof(*limits));
-	}
-	free($5);
-} limits_mta
-| MTA LIMIT {
-	limits = dict_get(conf->sc_limits_dict, "default");
-} limits_mta
-;
-
-
-pki:
-PKI STRING {
-	char buf[HOST_NAME_MAX+1];
-
-	/* if not catchall, check that it is a valid domain */
-	if (strcmp($2, "*") != 0) {
-		if (!res_hnok($2)) {
-			yyerror("not a valid domain name: %s", $2);
-			free($2);
-			YYERROR;
-		}
-	}
-	xlowercase(buf, $2, sizeof(buf));
-	free($2);
-	pki = dict_get(conf->sc_pki_dict, buf);
-	if (pki == NULL) {
-		pki = xcalloc(1, sizeof *pki);
-		(void)strlcpy(pki->pki_name, buf, sizeof(pki->pki_name));
-		dict_set(conf->sc_pki_dict, pki->pki_name, pki);
-	}
-} pki_params
-;
- 
-pki_params_opt:
-CERT STRING {
-	pki->pki_cert_file = $2;
-}
-| KEY STRING {
-	pki->pki_key_file = $2;
-}
-| DHE STRING {
-	if (strcasecmp($2, "none") == 0)
-		pki->pki_dhe = 0;
-	else if (strcasecmp($2, "auto") == 0)
-		pki->pki_dhe = 1;
-	else if (strcasecmp($2, "legacy") == 0)
-		pki->pki_dhe = 2;
-	else {
-		yyerror("invalid DHE keyword: %s", $2);
-		free($2);
-		YYERROR;
-	}
-	free($2);
-}
-;
-
-
-pki_params:
-pki_params_opt pki_params
-| /* empty */
-;
-
-
-proc:
-PROC STRING STRING {
-	if (dict_get(conf->sc_processors_dict, $2)) {
-		yyerror("processor already exists with that name: %s", $2);
-		free($2);
-		free($3);
-		YYERROR;
-	}
-	processor = xcalloc(1, sizeof *processor);
-	processor->command = $3;
-} proc_params {
-	dict_set(conf->sc_processors_dict, $2, processor);
-	processor = NULL;
-}
-;
-
-
-proc_params_opt:
-USER STRING {
-	if (processor->user) {
-		yyerror("user already specified for this processor");
-		free($2);
-		YYERROR;
-	}
-	processor->user = $2;
-}
-| GROUP STRING {
-	if (processor->group) {
-		yyerror("group already specified for this processor");
-		free($2);
-		YYERROR;
-	}
-	processor->group = $2;
-}
-| CHROOT STRING {
-	if (processor->chroot) {
-		yyerror("chroot already specified for this processor");
-		free($2);
-		YYERROR;
-	}
-	processor->chroot = $2;
-}
-;
-
-proc_params:
-proc_params_opt proc_params
-| /* empty */
-;
-
-
-queue:
-QUEUE COMPRESSION {
-	conf->sc_queue_flags |= QUEUE_COMPRESSION;
-}
-| QUEUE ENCRYPTION {
-	conf->sc_queue_flags |= QUEUE_ENCRYPTION;
-}
-| QUEUE ENCRYPTION STRING {
-	if (strcasecmp($3, "stdin") == 0 || strcasecmp($3, "-") == 0) {
-		conf->sc_queue_key = "stdin";
-		free($3);
-	}
-	else
-		conf->sc_queue_key = $3;
-	conf->sc_queue_flags |= QUEUE_ENCRYPTION;
-}
-| QUEUE TTL STRING {
-	conf->sc_ttl = delaytonum($3);
-	if (conf->sc_ttl == -1) {
-		yyerror("invalid ttl delay: %s", $3);
-		free($3);
-		YYERROR;
-	}
-	free($3);
-}
-;
-
-
-scheduler:
-SCHEDULER LIMIT limits_scheduler
-;
-
-
-smtp:
-SMTP LIMIT limits_smtp
-| SMTP CIPHERS STRING {
-	conf->sc_tls_ciphers = $3;
-}
-| SMTP MAX_MESSAGE_SIZE size {
-	conf->sc_maxsize = $3;
-}
-| SMTP SUB_ADDR_DELIM STRING {
-	if (strlen($3) != 1) {
-		yyerror("subaddressing-delimiter must be one character");
-		free($3);
-		YYERROR;
-	}
-	if (isspace((int)*$3) ||  !isprint((int)*$3) || *$3== '@') {
-		yyerror("sub-addr-delim uses invalid character");
-		free($3);
-		YYERROR;
-	}
-	conf->sc_subaddressing_delim = $3;
-}
-;
-
-
-dispatcher_local_option:
-USER STRING {
-	if (dispatcher->u.local.requires_root) {
-		yyerror("user may not be specified for this dispatcher");
-		YYERROR;
-	}
-
-	if (dispatcher->u.local.forward_only) {
-		yyerror("user may not be specified for forward-only");
-		YYERROR;
-	}
-
-	if (dispatcher->u.local.expand_only) {
-		yyerror("user may not be specified for expand-only");
-		YYERROR;
-	}
-
-	if (dispatcher->u.local.user) {
-		yyerror("user already specified for this dispatcher");
-		YYERROR;
-	}
-
-	dispatcher->u.local.user = $2;
-}
-| ALIAS tables {
-	struct table   *t = $2;
-
-	if (dispatcher->u.local.table_alias) {
-		yyerror("alias mapping already specified for this dispatcher");
-		YYERROR;
-	}
-
-	if (dispatcher->u.local.table_virtual) {
-		yyerror("virtual mapping already specified for this dispatcher");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_HASH, K_ALIAS)) {
-		yyerror("table \"%s\" may not be used for alias lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	dispatcher->u.local.table_alias = strdup(t->t_name);
-}
-| VIRTUAL tables {
-	struct table   *t = $2;
-
-	if (dispatcher->u.local.table_virtual) {
-		yyerror("virtual mapping already specified for this dispatcher");
-		YYERROR;
-	}
-
-	if (dispatcher->u.local.table_alias) {
-		yyerror("alias mapping already specified for this dispatcher");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_HASH, K_ALIAS)) {
-		yyerror("table \"%s\" may not be used for virtual lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	dispatcher->u.local.table_virtual = strdup(t->t_name);
-}
-| USERBASE tables {
-	struct table   *t = $2;
-
-	if (dispatcher->u.local.table_userbase) {
-		yyerror("userbase mapping already specified for this dispatcher");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_HASH, K_USERINFO)) {
-		yyerror("table \"%s\" may not be used for userbase lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	dispatcher->u.local.table_userbase = strdup(t->t_name);
-}
-| WRAPPER STRING {
-	if (! dict_get(conf->sc_mda_wrappers, $2)) {
-		yyerror("no mda wrapper with that name: %s", $2);
-		YYERROR;
-	}
-	dispatcher->u.local.mda_wrapper = $2;
-}
-;
-
-dispatcher_local_options:
-dispatcher_local_option dispatcher_local_options
-| /* empty */
-;
-
-dispatcher_local:
-MBOX {
-	dispatcher->u.local.requires_root = 1;
-	dispatcher->u.local.user = xstrdup("root");
-	asprintf(&dispatcher->u.local.command, "/usr/libexec/mail.local -f %%{mbox.from} %%{user.username}");
-} dispatcher_local_options
-| MAILDIR {
-	asprintf(&dispatcher->u.local.command, "/usr/libexec/mail.maildir");
-} dispatcher_local_options
-| MAILDIR JUNK {
-	asprintf(&dispatcher->u.local.command, "/usr/libexec/mail.maildir -j");
-} dispatcher_local_options
-| MAILDIR STRING {
-	if (strncmp($2, "~/", 2) == 0)
-		asprintf(&dispatcher->u.local.command,
-		    "/usr/libexec/mail.maildir \"%%{user.directory}/%s\"", $2+2);
-	else
-		asprintf(&dispatcher->u.local.command,
-		    "/usr/libexec/mail.maildir \"%s\"", $2);
-} dispatcher_local_options
-| MAILDIR STRING JUNK {
-	if (strncmp($2, "~/", 2) == 0)
-		asprintf(&dispatcher->u.local.command,
-		    "/usr/libexec/mail.maildir -j \"%%{user.directory}/%s\"", $2+2);
-	else
-		asprintf(&dispatcher->u.local.command,
-		    "/usr/libexec/mail.maildir -j \"%s\"", $2);
-} dispatcher_local_options
-| LMTP STRING {
-	asprintf(&dispatcher->u.local.command,
-	    "/usr/libexec/mail.lmtp -f \"%%{sender}\" -d %s %%{user.username}", $2);
-} dispatcher_local_options
-| LMTP STRING RCPT_TO {
-	asprintf(&dispatcher->u.local.command,
-	    "/usr/libexec/mail.lmtp -f \"%%{sender}\" -d %s %%{dest}", $2);
-} dispatcher_local_options
-| MDA STRING {
-	asprintf(&dispatcher->u.local.command,
-	    "/usr/libexec/mail.mda \"%s\"", $2);
-} dispatcher_local_options
-| FORWARD_ONLY {
-	dispatcher->u.local.forward_only = 1;
-} dispatcher_local_options
-| EXPAND_ONLY {
-	dispatcher->u.local.expand_only = 1;
-} dispatcher_local_options
-
-;
-
-dispatcher_remote_option:
-HELO STRING {
-	if (dispatcher->u.remote.helo) {
-		yyerror("helo already specified for this dispatcher");
-		YYERROR;
-	}
-
-	dispatcher->u.remote.helo = $2;
-}
-| HELO_SRC tables {
-	struct table   *t = $2;
-
-	if (dispatcher->u.remote.helo_source) {
-		yyerror("helo-source mapping already specified for this dispatcher");
-		YYERROR;
-	}
-	if (!table_check_use(t, T_DYNAMIC|T_HASH, K_ADDRNAME)) {
-		yyerror("table \"%s\" may not be used for helo-source lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	dispatcher->u.remote.helo_source = strdup(t->t_name);
-}
-| PKI STRING {
-	if (dispatcher->u.remote.pki) {
-		yyerror("pki already specified for this dispatcher");
-		YYERROR;
-	}
-
-	dispatcher->u.remote.pki = $2;
-}
-| CA STRING {
-	if (dispatcher->u.remote.ca) {
-		yyerror("ca already specified for this dispatcher");
-		YYERROR;
-	}
-
-	dispatcher->u.remote.ca = $2;
-}
-| SRC tables {
-	struct table   *t = $2;
-
-	if (dispatcher->u.remote.source) {
-		yyerror("source mapping already specified for this dispatcher");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_SOURCE)) {
-		yyerror("table \"%s\" may not be used for source lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	dispatcher->u.remote.source = strdup(t->t_name);
-}
-| MAIL_FROM STRING {
-	if (dispatcher->u.remote.mail_from) {
-		yyerror("mail-from already specified for this dispatcher");
-		YYERROR;
-	}
-
-	dispatcher->u.remote.mail_from = $2;
-}
-| BACKUP MX STRING {
-	if (dispatcher->u.remote.backup) {
-		yyerror("backup already specified for this dispatcher");
-		YYERROR;
-	}
-	if (dispatcher->u.remote.smarthost) {
-		yyerror("backup and host are mutually exclusive");
-		YYERROR;
-	}
-
-	dispatcher->u.remote.backup = 1;
-	dispatcher->u.remote.backupmx = $3;
-}
-| BACKUP {
-	if (dispatcher->u.remote.backup) {
-		yyerror("backup already specified for this dispatcher");
-		YYERROR;
-	}
-	if (dispatcher->u.remote.smarthost) {
-		yyerror("backup and host are mutually exclusive");
-		YYERROR;
-	}
-
-	dispatcher->u.remote.backup = 1;
-}
-| HOST tables {
-	struct table   *t = $2;
-
-	if (dispatcher->u.remote.smarthost) {
-		yyerror("host mapping already specified for this dispatcher");
-		YYERROR;
-	}
-	if (dispatcher->u.remote.backup) {
-		yyerror("backup and host are mutually exclusive");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_RELAYHOST)) {
-		yyerror("table \"%s\" may not be used for host lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	dispatcher->u.remote.smarthost = strdup(t->t_name);
-}
-| TLS {
-	if (dispatcher->u.remote.tls_required == 1) {
-		yyerror("tls already specified for this dispatcher");
-		YYERROR;
-	}
-
-	dispatcher->u.remote.tls_required = 1;
-}
-| TLS NO_VERIFY {
-	if (dispatcher->u.remote.tls_required == 1) {
-		yyerror("tls already specified for this dispatcher");
-		YYERROR;
-	}
-
-	dispatcher->u.remote.tls_required = 1;
-	dispatcher->u.remote.tls_noverify = 1;
-}
-| AUTH tables {
-	struct table   *t = $2;
-
-	if (dispatcher->u.remote.smarthost == NULL) {
-		yyerror("auth may not be specified without host on a dispatcher");
-		YYERROR;
-	}
-
-	if (dispatcher->u.remote.auth) {
-		yyerror("auth mapping already specified for this dispatcher");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_HASH, K_CREDENTIALS)) {
-		yyerror("table \"%s\" may not be used for auth lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	dispatcher->u.remote.auth = strdup(t->t_name);
-}
-;
-
-dispatcher_remote_options:
-dispatcher_remote_option dispatcher_remote_options
-| /* empty */
-;
-
-dispatcher_remote :
-RELAY dispatcher_remote_options
-;
-
-dispatcher_type:
-dispatcher_local {
-	dispatcher->type = DISPATCHER_LOCAL;
-}
-| dispatcher_remote {
-	dispatcher->type = DISPATCHER_REMOTE;
-}
-;
-
-dispatcher_option:
-TTL STRING {
-	if (dispatcher->ttl) {
-		yyerror("ttl already specified for this dispatcher");
-		YYERROR;
-	}
-
-	dispatcher->ttl = delaytonum($2);
-	if (dispatcher->ttl == -1) {
-		yyerror("ttl delay \"%s\" is invalid", $2);
-		free($2);
-		YYERROR;
-	}
-	free($2);
-}
-;
-
-dispatcher_options:
-dispatcher_option dispatcher_options
-| /* empty */
-;
-
-dispatcher:
-ACTION STRING {
-	if (dict_get(conf->sc_dispatchers, $2)) {
-		yyerror("dispatcher already declared with that name: %s", $2);
-		YYERROR;
-	}
-	dispatcher = xcalloc(1, sizeof *dispatcher);
-} dispatcher_type dispatcher_options {
-	if (dispatcher->type == DISPATCHER_LOCAL)
-		if (dispatcher->u.local.table_userbase == NULL)
-			dispatcher->u.local.table_userbase = "<getpwnam>";
-	dict_set(conf->sc_dispatchers, $2, dispatcher);
-	dispatcher = NULL;
-}
-;
-
-match_option:
-negation TAG tables {
-	struct table   *t = $3;
-
-	if (rule->flag_tag) {
-		yyerror("tag already specified for this rule");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_STRING)) {
-		yyerror("table \"%s\" may not be used for tag lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	rule->flag_tag = $1 ? -1 : 1;
-	rule->table_tag = strdup(t->t_name);
-}
-|
-negation TAG REGEX tables {
-	struct table   *t = $4;
-
-	if (rule->flag_tag) {
-		yyerror("tag already specified for this rule");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_REGEX)) {
-		yyerror("table \"%s\" may not be used for tag lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	rule->flag_tag = $1 ? -1 : 1;
-	rule->flag_tag_regex = 1;
-	rule->table_tag = strdup(t->t_name);
-}
-
-| negation HELO tables {
-	struct table   *t = $3;
-
-	if (rule->flag_smtp_helo) {
-		yyerror("helo already specified for this rule");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_DOMAIN)) {
-		yyerror("table \"%s\" may not be used for helo lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	rule->flag_smtp_helo = $1 ? -1 : 1;
-	rule->table_smtp_helo = strdup(t->t_name);
-}
-| negation HELO REGEX tables {
-	struct table   *t = $4;
-
-	if (rule->flag_smtp_helo) {
-		yyerror("helo already specified for this rule");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_REGEX)) {
-		yyerror("table \"%s\" may not be used for helo lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	rule->flag_smtp_helo = $1 ? -1 : 1;
-	rule->flag_smtp_helo_regex = 1;
-	rule->table_smtp_helo = strdup(t->t_name);
-}
-| negation TLS {
-	if (rule->flag_smtp_starttls) {
-		yyerror("tls already specified for this rule");
-		YYERROR;
-	}
-	rule->flag_smtp_starttls = $1 ? -1 : 1;
-}
-| negation AUTH {
-	if (rule->flag_smtp_auth) {
-		yyerror("auth already specified for this rule");
-		YYERROR;
-	}
-	rule->flag_smtp_auth = $1 ? -1 : 1;
-}
-| negation AUTH tables {
-	struct table   *t = $3;
-
-	if (rule->flag_smtp_auth) {
-		yyerror("auth already specified for this rule");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_CREDENTIALS)) {
-		yyerror("table \"%s\" may not be used for auth lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	rule->flag_smtp_auth = $1 ? -1 : 1;
-	rule->table_smtp_auth = strdup(t->t_name);
-}
-| negation AUTH REGEX tables {
-	struct table   *t = $4;
-
-	if (rule->flag_smtp_auth) {
-		yyerror("auth already specified for this rule");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_REGEX)) {
-		yyerror("table \"%s\" may not be used for auth lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	rule->flag_smtp_auth = $1 ? -1 : 1;
-	rule->flag_smtp_auth_regex = 1;
-	rule->table_smtp_auth = strdup(t->t_name);
-}
-| negation MAIL_FROM tables {
-	struct table   *t = $3;
-
-	if (rule->flag_smtp_mail_from) {
-		yyerror("mail-from already specified for this rule");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_MAILADDR)) {
-		yyerror("table \"%s\" may not be used for mail-from lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	rule->flag_smtp_mail_from = $1 ? -1 : 1;
-	rule->table_smtp_mail_from = strdup(t->t_name);
-}
-| negation MAIL_FROM REGEX tables {
-	struct table   *t = $4;
-
-	if (rule->flag_smtp_mail_from) {
-		yyerror("mail-from already specified for this rule");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_REGEX)) {
-		yyerror("table \"%s\" may not be used for mail-from lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	rule->flag_smtp_mail_from = $1 ? -1 : 1;
-	rule->flag_smtp_mail_from_regex = 1;
-	rule->table_smtp_mail_from = strdup(t->t_name);
-}
-| negation RCPT_TO tables {
-	struct table   *t = $3;
-
-	if (rule->flag_smtp_rcpt_to) {
-		yyerror("rcpt-to already specified for this rule");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_MAILADDR)) {
-		yyerror("table \"%s\" may not be used for rcpt-to lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	rule->flag_smtp_rcpt_to = $1 ? -1 : 1;
-	rule->table_smtp_rcpt_to = strdup(t->t_name);
-}
-| negation RCPT_TO REGEX tables {
-	struct table   *t = $4;
-
-	if (rule->flag_smtp_rcpt_to) {
-		yyerror("rcpt-to already specified for this rule");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_REGEX)) {
-		yyerror("table \"%s\" may not be used for rcpt-to lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	rule->flag_smtp_rcpt_to = $1 ? -1 : 1;
-	rule->flag_smtp_rcpt_to_regex = 1;
-	rule->table_smtp_rcpt_to = strdup(t->t_name);
-}
-
-| negation FROM SOCKET {
-	if (rule->flag_from) {
-		yyerror("from already specified for this rule");
-		YYERROR;
-	}
-	rule->flag_from = $1 ? -1 : 1;
-	rule->flag_from_socket = 1;
-}
-| negation FROM LOCAL {
-	struct table	*t = table_find(conf, "<localhost>");
-
-	if (rule->flag_from) {
-		yyerror("from already specified for this rule");
-		YYERROR;
-	}
-	rule->flag_from = $1 ? -1 : 1;
-	rule->table_from = strdup(t->t_name);
-}
-| negation FROM ANY {
-	struct table	*t = table_find(conf, "<anyhost>");
-
-	if (rule->flag_from) {
-		yyerror("from already specified for this rule");
-		YYERROR;
-	}
-	rule->flag_from = $1 ? -1 : 1;
-	rule->table_from = strdup(t->t_name);
-}
-| negation FROM SRC tables {
-	struct table   *t = $4;
-
-	if (rule->flag_from) {
-		yyerror("from already specified for this rule");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_NETADDR)) {
-		yyerror("table \"%s\" may not be used for from lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	rule->flag_from = $1 ? -1 : 1;
-	rule->table_from = strdup(t->t_name);
-}
-| negation FROM SRC REGEX tables {
-	struct table   *t = $5;
-
-	if (rule->flag_from) {
-		yyerror("from already specified for this rule");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_REGEX)) {
-		yyerror("table \"%s\" may not be used for from lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	rule->flag_from = $1 ? -1 : 1;
-	rule->flag_from_regex = 1;
-	rule->table_from = strdup(t->t_name);
-}
-
-| negation FROM RDNS tables {
-	struct table   *t = $4;
-
-	if (rule->flag_from) {
-		yyerror("from already specified for this rule");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_DOMAIN)) {
-		yyerror("table \"%s\" may not be used for rdns lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	rule->flag_from = $1 ? -1 : 1;
-	rule->flag_from_rdns = 1;
-	rule->table_from = strdup(t->t_name);
-}
-| negation FROM RDNS REGEX tables {
-	struct table   *t = $5;
-
-	if (rule->flag_from) {
-		yyerror("from already specified for this rule");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_DOMAIN)) {
-		yyerror("table \"%s\" may not be used for rdns lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	rule->flag_from = $1 ? -1 : 1;
-	rule->flag_from_regex = 1;
-	rule->flag_from_rdns = 1;
-	rule->table_from = strdup(t->t_name);
-}
-
-
-| negation FOR LOCAL {
-	struct table   *t = table_find(conf, "<localnames>");
-
-	if (rule->flag_for) {
-		yyerror("for already specified for this rule");
-		YYERROR;
-	}
-	rule->flag_for = $1 ? -1 : 1;
-	rule->table_for = strdup(t->t_name);
-}
-| negation FOR ANY {
-	struct table   *t = table_find(conf, "<anydestination>");
-
-	if (rule->flag_for) {
-		yyerror("for already specified for this rule");
-		YYERROR;
-	}
-	rule->flag_for = $1 ? -1 : 1;
-	rule->table_for = strdup(t->t_name);
-}
-| negation FOR DOMAIN tables {
-	struct table   *t = $4;
-
-	if (rule->flag_for) {
-		yyerror("for already specified for this rule");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_DOMAIN)) {
-		yyerror("table \"%s\" may not be used for 'for' lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	rule->flag_for = $1 ? -1 : 1;
-	rule->table_for = strdup(t->t_name);
-}
-| negation FOR DOMAIN REGEX tables {
-	struct table   *t = $5;
-
-	if (rule->flag_for) {
-		yyerror("for already specified for this rule");
-		YYERROR;
-	}
-
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_REGEX)) {
-		yyerror("table \"%s\" may not be used for 'for' lookups",
-		    t->t_name);
-		YYERROR;
-	}
-
-	rule->flag_for = $1 ? -1 : 1;
-	rule->flag_for_regex = 1;
-	rule->table_for = strdup(t->t_name);
-}
-;
-
-match_options:
-match_option match_options
-| /* empty */
-;
-
-match_dispatcher:
-STRING {
-	if (dict_get(conf->sc_dispatchers, $1) == NULL) {
-		yyerror("no such dispatcher: %s", $1);
-		YYERROR;
-	}
-	rule->dispatcher = $1;
-}
-;
-
-action:
-REJECT {
-	rule->reject = 1;
-}
-| ACTION match_dispatcher
-;
-
-match:
-MATCH {
-	rule = xcalloc(1, sizeof *rule);
-} match_options action {
-	if (!rule->flag_from) {
-		rule->table_from = strdup("<localhost>");
-		rule->flag_from = 1;
-	}
-	if (!rule->flag_for) {
-		rule->table_for = strdup("<localnames>");
-		rule->flag_for = 1;
-	}
-	TAILQ_INSERT_TAIL(conf->sc_rules, rule, r_entry);
-	rule = NULL;
-}
-;
-
-filter_action_builtin:
-REJECT STRING {
-	filter_config->reject = $2;
-}
-| DISCONNECT STRING {
-	filter_config->disconnect = $2;
-}
-;
-
-filter_phase_check_fcrdns:
-negation FCRDNS {
-	filter_config->not_fcrdns = $1 ? -1 : 1;
-	filter_config->fcrdns = 1;
-}
-;
-
-filter_phase_check_rdns:
-negation RDNS {
-	filter_config->not_rdns = $1 ? -1 : 1;
-	filter_config->rdns = 1;
-}
-;
-
-filter_phase_check_rdns_table:
-negation RDNS tables {
-	filter_config->not_rdns_table = $1 ? -1 : 1;
-	filter_config->rdns_table = $3;
-}
-;
-filter_phase_check_rdns_regex:
-negation RDNS REGEX tables {
-	filter_config->not_rdns_regex = $1 ? -1 : 1;
-	filter_config->rdns_regex = $4;
-}
-;
-
-filter_phase_check_src_table:
-negation SRC tables {
-	filter_config->not_src_table = $1 ? -1 : 1;
-	filter_config->src_table = $3;
-}
-;
-filter_phase_check_src_regex:
-negation SRC REGEX tables {
-	filter_config->not_src_regex = $1 ? -1 : 1;
-	filter_config->src_regex = $4;
-}
-;
-
-filter_phase_check_helo_table:
-negation HELO tables {
-	filter_config->not_helo_table = $1 ? -1 : 1;
-	filter_config->helo_table = $3;
-}
-;
-filter_phase_check_helo_regex:
-negation HELO REGEX tables {
-	filter_config->not_helo_regex = $1 ? -1 : 1;
-	filter_config->helo_regex = $4;
-}
-;
-
-filter_phase_check_mail_from_table:
-negation MAIL_FROM tables {
-	filter_config->not_mail_from_table = $1 ? -1 : 1;
-	filter_config->mail_from_table = $3;
-}
-;
-filter_phase_check_mail_from_regex:
-negation MAIL_FROM REGEX tables {
-	filter_config->not_mail_from_regex = $1 ? -1 : 1;
-	filter_config->mail_from_regex = $4;
-}
-;
-
-filter_phase_check_rcpt_to_table:
-negation RCPT_TO tables {
-	filter_config->not_rcpt_to_table = $1 ? -1 : 1;
-	filter_config->rcpt_to_table = $3;
-}
-;
-filter_phase_check_rcpt_to_regex:
-negation RCPT_TO REGEX tables {
-	filter_config->not_rcpt_to_regex = $1 ? -1 : 1;
-	filter_config->rcpt_to_regex = $4;
-}
-;
-
-filter_phase_global_options:
-filter_phase_check_fcrdns |
-filter_phase_check_rdns |
-filter_phase_check_rdns_regex |
-filter_phase_check_rdns_table |
-filter_phase_check_src_regex |
-filter_phase_check_src_table;
-
-filter_phase_connect_options:
-filter_phase_global_options;
-
-filter_phase_helo_options:
-filter_phase_check_helo_table |
-filter_phase_check_helo_regex |
-filter_phase_global_options;
-
-filter_phase_mail_from_options:
-filter_phase_check_helo_table |
-filter_phase_check_helo_regex |
-filter_phase_check_mail_from_table |
-filter_phase_check_mail_from_regex |
-filter_phase_global_options;
-
-filter_phase_rcpt_to_options:
-filter_phase_check_helo_table |
-filter_phase_check_helo_regex |
-filter_phase_check_mail_from_table |
-filter_phase_check_mail_from_regex |
-filter_phase_check_rcpt_to_table |
-filter_phase_check_rcpt_to_regex |
-filter_phase_global_options;
-
-filter_phase_data_options:
-filter_phase_check_helo_table |
-filter_phase_check_helo_regex |
-filter_phase_check_mail_from_table |
-filter_phase_check_mail_from_regex |
-filter_phase_global_options;
-
-/*
-filter_phase_quit_options:
-filter_phase_check_helo_table |
-filter_phase_check_helo_regex |
-filter_phase_global_options;
-
-filter_phase_rset_options:
-filter_phase_check_helo_table |
-filter_phase_check_helo_regex |
-filter_phase_global_options;
-
-filter_phase_noop_options:
-filter_phase_check_helo_table |
-filter_phase_check_helo_regex |
-filter_phase_global_options;
-*/
-
-filter_phase_commit_options:
-filter_phase_check_helo_table |
-filter_phase_check_helo_regex |
-filter_phase_check_mail_from_table |
-filter_phase_check_mail_from_regex |
-filter_phase_global_options;
-
-
-filter_phase_connect:
-CONNECT {
-	filter_config->phase = FILTER_CONNECT;
-} filter_phase_connect_options filter_action_builtin
-;
-
-
-filter_phase_helo:
-HELO {
-	filter_config->phase = FILTER_HELO;
-} filter_phase_helo_options filter_action_builtin
-;
-
-filter_phase_ehlo:
-EHLO {
-	filter_config->phase = FILTER_EHLO;
-} filter_phase_helo_options filter_action_builtin
-;
-
-filter_phase_mail_from:
-MAIL_FROM {
-	filter_config->phase = FILTER_MAIL_FROM;
-} filter_phase_mail_from_options filter_action_builtin
-;
-
-filter_phase_rcpt_to:
-RCPT_TO {
-	filter_config->phase = FILTER_RCPT_TO;
-} filter_phase_rcpt_to_options filter_action_builtin
-;
-
-filter_phase_data:
-DATA {
-	filter_config->phase = FILTER_DATA;
-} filter_phase_data_options filter_action_builtin
-;
-
-/*
-filter_phase_data_line:
-DATA_LINE {
-	filter_config->phase = FILTER_DATA_LINE;
-} filter_action_builtin
-;
-
-filter_phase_quit:
-QUIT {
-	filter_config->phase = FILTER_QUIT;
-} filter_phase_quit_options filter_action_builtin
-;
-
-filter_phase_rset:
-RSET {
-	filter_config->phase = FILTER_RSET;
-} filter_phase_rset_options filter_action_builtin
-;
-
-filter_phase_noop:
-NOOP {
-	filter_config->phase = FILTER_NOOP;
-} filter_phase_noop_options filter_action_builtin
-;
-*/
-
-filter_phase_commit:
-COMMIT {
-	filter_config->phase = FILTER_COMMIT;
-} filter_phase_commit_options filter_action_builtin
-;
-
-
-
-filter_phase:
-filter_phase_connect
-| filter_phase_helo
-| filter_phase_ehlo
-| filter_phase_mail_from
-| filter_phase_rcpt_to
-| filter_phase_data
-/*| filter_phase_data_line*/
-/*| filter_phase_quit*/
-/*| filter_phase_noop*/
-/*| filter_phase_rset*/
-| filter_phase_commit
-;
-
-
-filterel:
-STRING	{
-	struct filter_config   *fr;
-	size_t			i;
-
-	if ((fr = dict_get(conf->sc_filters_dict, $1)) == NULL) {
-		yyerror("no filter exist with that name: %s", $1);
-		free($1);
-		YYERROR;
-	}
-	if (fr->filter_type == FILTER_TYPE_CHAIN) {
-		yyerror("no filter chain allowed within a filter chain: %s", $1);
-		free($1);
-		YYERROR;
-	}
-
-	for (i = 0; i < filter_config->chain_size; i++) {
-		if (strcmp(filter_config->chain[i], $1) == 0) {
-			yyerror("no filter allowed twice within a filter chain: %s", $1);
-			free($1);
-			YYERROR;
-		}
-	}
-
-	if (fr->proc) {
-		if (dict_check(&filter_config->chain_procs, fr->proc)) {
-			yyerror("no proc allowed twice within a filter chain: %s", fr->proc);
-			free($1);
-			YYERROR;
-		}
-		dict_set(&filter_config->chain_procs, fr->proc, NULL);
-	}
-
-	filter_config->chain_size += 1;
-	filter_config->chain = reallocarray(filter_config->chain, filter_config->chain_size, sizeof(char *));
-	if (filter_config->chain == NULL)
-		err(1, NULL);
-	filter_config->chain[filter_config->chain_size - 1] = $1;
-}
-;
-
-filter_list:
-filterel
-| filterel comma filter_list
-;
-
-filter:
-FILTER STRING PROC STRING {
-	if (dict_get(conf->sc_filters_dict, $2)) {
-		yyerror("filter already exists with that name: %s", $2);
-		free($2);
-		free($4);
-		YYERROR;
-	}
-	if (! dict_get(conf->sc_processors_dict, $4)) {
-		yyerror("no processor exist with that name: %s", $4);
-		free($4);
-		YYERROR;
-	}
-
-	filter_config = xcalloc(1, sizeof *filter_config);
-	filter_config->filter_type = FILTER_TYPE_PROC;
-	filter_config->name = $2;
-	filter_config->proc = $4;
-	dict_set(conf->sc_filters_dict, $2, filter_config);
-	filter_config = NULL;
-}
-|
-FILTER STRING PROC_EXEC STRING {
-	char	buffer[128];
-
-	do {
-		(void)snprintf(buffer, sizeof buffer, "<dynproc:%08x>", last_dynproc_id++);
-	} while (dict_check(conf->sc_processors_dict, buffer));
-
-	if (dict_get(conf->sc_filters_dict, $2)) {
-		yyerror("filter already exists with that name: %s", $2);
-		free($2);
-		free($4);
-		YYERROR;
-	}
-
-	processor = xcalloc(1, sizeof *processor);
-	processor->command = $4;
-
-	filter_config = xcalloc(1, sizeof *filter_config);
-	filter_config->filter_type = FILTER_TYPE_PROC;
-	filter_config->name = $2;
-	filter_config->proc = xstrdup(buffer);
-	dict_set(conf->sc_filters_dict, $2, filter_config);
-} proc_params {
-	dict_set(conf->sc_processors_dict, filter_config->proc, processor);
-	processor = NULL;
-	filter_config = NULL;
-}
-|
-FILTER STRING BUILTIN {
-	if (dict_get(conf->sc_filters_dict, $2)) {
-		yyerror("filter already exists with that name: %s", $2);
-		free($2);
-		YYERROR;
-	}
-	filter_config = xcalloc(1, sizeof *filter_config);
-	filter_config->name = $2;
-	filter_config->filter_type = FILTER_TYPE_BUILTIN;
-	dict_set(conf->sc_filters_dict, $2, filter_config);
-} filter_phase {
-	filter_config = NULL;
-}
-|
-FILTER STRING CHAIN {
-	if (dict_get(conf->sc_filters_dict, $2)) {
-		yyerror("filter already exists with that name: %s", $2);
-		free($2);
-		YYERROR;
-	}
-	filter_config = xcalloc(1, sizeof *filter_config);
-	filter_config->filter_type = FILTER_TYPE_CHAIN;
-	dict_init(&filter_config->chain_procs);
-} '{' filter_list '}' {
-	dict_set(conf->sc_filters_dict, $2, filter_config);
-	filter_config = NULL;
-}
-;
-
 size		: NUMBER		{
 			if ($1 < 0) {
 				yyerror("invalid size: %" PRId64, $1);
@@ -1660,6 +253,24 @@ size		: NUMBER		{
 			}
 			free($1);
 			$$ = result;
+		}
+		;
+
+tagged		: TAGGED negation STRING       		{
+			if (strlcpy(rule->r_tag, $3, sizeof rule->r_tag)
+			    >= sizeof rule->r_tag) {
+				yyerror("tag name too long: %s", $3);
+				free($3);
+				YYERROR;
+			}
+			free($3);
+			rule->r_nottag = $2;
+		}
+		;
+
+authenticated  	: negation AUTHENTICATED	{
+			rule->r_wantauth = 1;
+			rule->r_negwantauth = $1;
 		}
 		;
 
@@ -1681,10 +292,10 @@ bouncedelay	: STRING {
 				break;
 			}
 		}
-		;
 
 bouncedelays	: bouncedelays ',' bouncedelay
 		| bouncedelay
+		| /* EMPTY */
 		;
 
 opt_limit_mda	: STRING NUMBER {
@@ -1712,11 +323,11 @@ opt_limit_mda	: STRING NUMBER {
 		}
 		;
 
-limits_smtp	: opt_limit_smtp limits_smtp
+limits_session	: opt_limit_session limits_session
 		| /* empty */
 		;
 
-opt_limit_smtp : STRING NUMBER {
+opt_limit_session : STRING NUMBER {
 			if (!strcmp($1, "max-rcpt")) {
 				conf->sc_session_max_rcpt = $2;
 			}
@@ -1782,43 +393,46 @@ limits_scheduler: opt_limit_scheduler limits_scheduler
 		| /* empty */
 		;
 
+opt_ca		: CERTIFICATE STRING {
+			sca->ca_cert_file = $2;
+		}
+		;
+
+ca		: opt_ca
+		;
+
+opt_pki		: CERTIFICATE STRING {
+			pki->pki_cert_file = $2;
+		}
+		| KEY STRING {
+			pki->pki_key_file = $2;
+		}
+		| DHE STRING {
+			if (strcasecmp($2, "none") == 0)
+				pki->pki_dhe = 0;
+			else if (strcasecmp($2, "auto") == 0)
+				pki->pki_dhe = 1;
+			else if (strcasecmp($2, "legacy") == 0)
+				pki->pki_dhe = 2;
+			else {
+				yyerror("invalid DHE keyword: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		;
+
+pki		: opt_pki pki
+		| /* empty */
+		;
 
 opt_sock_listen : FILTER STRING {
-			if (listen_opts.options & LO_FILTER) {
-				yyerror("filter already specified");
-				free($2);
+			if (config_lo_filter(&listen_opts, $2)) {
 				YYERROR;
 			}
-			if (dict_get(conf->sc_filters_dict, $2) == NULL) {
-				yyerror("no filter exist with that name: %s", $2);
-				free($2);
-				YYERROR;
-			}
-			listen_opts.options |= LO_FILTER;
-			listen_opts.filtername = $2;
 		}
-		| FILTER {
-			char	buffer[128];
-
-			if (listen_opts.options & LO_FILTER) {
-				yyerror("filter already specified");
-				YYERROR;
-			}
-
-			do {
-				(void)snprintf(buffer, sizeof buffer, "<dynchain:%08x>", last_dynchain_id++);
-			} while (dict_check(conf->sc_filters_dict, buffer));
-
-			listen_opts.options |= LO_FILTER;
-			listen_opts.filtername = xstrdup(buffer);
-			filter_config = xcalloc(1, sizeof *filter_config);
-			filter_config->filter_type = FILTER_TYPE_CHAIN;
-			dict_init(&filter_config->chain_procs);
-		} '{' filter_list '}' {
-			dict_set(conf->sc_filters_dict, listen_opts.filtername, filter_config);
-			filter_config = NULL;
-		}
-		| MASK_SRC {
+		| MASK_SOURCE {
 			if (config_lo_mask_source(&listen_opts)) {
 				YYERROR;
 			}
@@ -1873,38 +487,9 @@ opt_if_listen : INET4 {
 			listen_opts.port = $2;
 		}
 		| FILTER STRING			{
-			if (listen_opts.options & LO_FILTER) {
-				yyerror("filter already specified");
+			if (config_lo_filter(&listen_opts, $2)) {
 				YYERROR;
 			}
-			if (dict_get(conf->sc_filters_dict, $2) == NULL) {
-				yyerror("no filter exist with that name: %s", $2);
-				free($2);
-				YYERROR;
-			}
-			listen_opts.options |= LO_FILTER;
-			listen_opts.filtername = $2;
-		}
-		| FILTER {
-			char	buffer[128];
-
-			if (listen_opts.options & LO_FILTER) {
-				yyerror("filter already specified");
-				YYERROR;
-			}
-
-			do {
-				(void)snprintf(buffer, sizeof buffer, "<dynchain:%08x>", last_dynchain_id++);
-			} while (dict_check(conf->sc_filters_dict, buffer));
-
-			listen_opts.options |= LO_FILTER;
-			listen_opts.filtername = xstrdup(buffer);
-			filter_config = xcalloc(1, sizeof *filter_config);
-			filter_config->filter_type = FILTER_TYPE_CHAIN;
-			dict_init(&filter_config->chain_procs);
-		} '{' filter_list '}' {
-			dict_set(conf->sc_filters_dict, listen_opts.filtername, filter_config);
-			filter_config = NULL;
 		}
 		| SMTPS				{
 			if (listen_opts.options & LO_SSL) {
@@ -2035,7 +620,7 @@ opt_if_listen : INET4 {
 			}
 			listen_opts.hostnametable = t;
 		}
-		| MASK_SRC	{
+		| MASK_SOURCE	{
 			if (config_lo_mask_source(&listen_opts)) {
 				YYERROR;
 			}
@@ -2048,7 +633,7 @@ opt_if_listen : INET4 {
 			listen_opts.options |= LO_RECEIVEDAUTH;
 			listen_opts.flags |= F_RECEIVEDAUTH;
 		}
-		| NO_DSN	{
+		| NODSN	{
 			if (listen_opts.options & LO_NODSN) {
 				yyerror("no-dsn already specified");
 				YYERROR;
@@ -2117,12 +702,257 @@ if_listen	: opt_if_listen if_listen
 		| /* empty */
 		;
 
+opt_relay_common: AS STRING	{
+			struct mailaddr maddr, *maddrp;
 
-listen		: LISTEN {
+			if (!text_to_mailaddr(&maddr, $2)) {
+				yyerror("invalid parameter to AS: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+
+			if (maddr.user[0] == '\0' && maddr.domain[0] == '\0') {
+				yyerror("invalid empty parameter to AS");
+				YYERROR;
+			}
+			else if (maddr.domain[0] == '\0') {
+				if (strlcpy(maddr.domain, conf->sc_hostname,
+					sizeof (maddr.domain))
+				    >= sizeof (maddr.domain)) {
+					yyerror("hostname too long for AS parameter: %s",
+					    conf->sc_hostname);
+					YYERROR;
+				}
+			}
+			rule->r_as = xmemdup(&maddr, sizeof (*maddrp), "parse relay_as: AS");
+		}
+		| SOURCE tables			{
+			struct table	*t = $2;
+			if (!table_check_use(t, T_DYNAMIC|T_LIST, K_SOURCE)) {
+				yyerror("invalid use of table \"%s\" as "
+				    "SOURCE parameter", t->t_name);
+				YYERROR;
+			}
+			(void)strlcpy(rule->r_value.relayhost.sourcetable, t->t_name,
+			    sizeof rule->r_value.relayhost.sourcetable);
+		}
+		| HOSTNAME STRING {
+			(void)strlcpy(rule->r_value.relayhost.heloname, $2,
+			    sizeof rule->r_value.relayhost.heloname);
+			free($2);
+		}
+		| HOSTNAMES tables		{
+			struct table	*t = $2;
+			if (!table_check_use(t, T_DYNAMIC|T_HASH, K_ADDRNAME)) {
+				yyerror("invalid use of table \"%s\" as "
+				    "HOSTNAMES parameter", t->t_name);
+				YYERROR;
+			}
+			(void)strlcpy(rule->r_value.relayhost.helotable, t->t_name,
+			    sizeof rule->r_value.relayhost.helotable);
+		}
+		| PKI STRING {
+			if (!lowercase(rule->r_value.relayhost.pki_name, $2,
+				sizeof(rule->r_value.relayhost.pki_name))) {
+				yyerror("pki name too long: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			if (dict_get(conf->sc_pki_dict,
+				rule->r_value.relayhost.pki_name) == NULL) {
+				log_warnx("pki name not found: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| CA STRING {
+			if (!lowercase(rule->r_value.relayhost.ca_name, $2,
+				sizeof(rule->r_value.relayhost.ca_name))) {
+				yyerror("ca name too long: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			if (dict_get(conf->sc_ca_dict,
+				rule->r_value.relayhost.ca_name) == NULL) {
+				log_warnx("ca name not found: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		;
+
+opt_relay	: BACKUP STRING			{
+			rule->r_value.relayhost.flags |= F_BACKUP;
+			if (strlcpy(rule->r_value.relayhost.hostname, $2,
+				sizeof (rule->r_value.relayhost.hostname))
+			    >= sizeof (rule->r_value.relayhost.hostname)) {
+				log_warnx("hostname too long: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| BACKUP       			{
+			rule->r_value.relayhost.flags |= F_BACKUP;
+			(void)strlcpy(rule->r_value.relayhost.hostname,
+			    conf->sc_hostname,
+			    sizeof (rule->r_value.relayhost.hostname));
+		}
+		| TLS       			{
+			rule->r_value.relayhost.flags |= F_STARTTLS;
+		}
+		| TLS VERIFY			{
+			rule->r_value.relayhost.flags |= F_STARTTLS|F_TLS_VERIFY;
+		}
+		;
+
+relay		: opt_relay_common relay
+		| opt_relay relay
+		| /* empty */
+		;
+
+opt_relay_via	: AUTH tables {
+			struct table   *t = $2;
+
+			if (!table_check_use(t, T_DYNAMIC|T_HASH, K_CREDENTIALS)) {
+				yyerror("invalid use of table \"%s\" as AUTH parameter",
+				    t->t_name);
+				YYERROR;
+			}
+			(void)strlcpy(rule->r_value.relayhost.authtable, t->t_name,
+			    sizeof(rule->r_value.relayhost.authtable));
+		}
+		| VERIFY {
+			if (!(rule->r_value.relayhost.flags & F_SSL)) {
+				yyerror("cannot \"verify\" with insecure protocol");
+				YYERROR;
+			}
+			rule->r_value.relayhost.flags |= F_TLS_VERIFY;
+		}
+		;
+
+relay_via	: opt_relay_common relay_via
+		| opt_relay_via relay_via
+		| /* empty */
+		;
+
+main		: BOUNCEWARN {
+			memset(conf->sc_bounce_warn, 0, sizeof conf->sc_bounce_warn);
+		} bouncedelays
+		| SUBADDRESSING_DELIM STRING {
+			if (strlen($2) != 1) {
+				yyerror("subaddressing-delimiter must be one character");
+				free($2);
+				YYERROR;
+			}
+
+			if (isspace((int)*$2) ||  !isprint((int)*$2) || *$2== '@') {
+				yyerror("subaddressing-delimiter uses invalid character");
+				free($2);
+				YYERROR;
+			}
+
+			conf->sc_subaddressing_delim = $2;
+		}
+		| QUEUE COMPRESSION {
+			conf->sc_queue_flags |= QUEUE_COMPRESSION;
+		}
+		| QUEUE ENCRYPTION {
+			conf->sc_queue_flags |= QUEUE_ENCRYPTION;
+		}
+		| QUEUE ENCRYPTION KEY STRING {
+			if (strcasecmp($4, "stdin") == 0 || strcasecmp($4, "-") == 0) {
+				conf->sc_queue_key = "stdin";
+				free($4);
+			}
+			else
+				conf->sc_queue_key = $4;
+			conf->sc_queue_flags |= QUEUE_ENCRYPTION;
+		}
+		| EXPIRE STRING {
+			conf->sc_qexpire = delaytonum($2);
+			if (conf->sc_qexpire == -1) {
+				yyerror("invalid expire delay: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| MAXMESSAGESIZE size {
+			conf->sc_maxsize = $2;
+		}
+		| MAXMTADEFERRED NUMBER  {
+			conf->sc_mta_max_deferred = $2;
+		}
+		| LIMIT SESSION limits_session
+		| LIMIT MDA limits_mda
+		| LIMIT MTA FOR DOMAIN STRING {
+			struct mta_limits	*d;
+
+			limits = dict_get(conf->sc_limits_dict, $5);
+			if (limits == NULL) {
+				limits = xcalloc(1, sizeof(*limits), "mta_limits");
+				dict_xset(conf->sc_limits_dict, $5, limits);
+				d = dict_xget(conf->sc_limits_dict, "default");
+				memmove(limits, d, sizeof(*limits));
+			}
+			free($5);
+		} limits_mta
+		| LIMIT MTA {
+			limits = dict_get(conf->sc_limits_dict, "default");
+		} limits_mta
+		| LIMIT SCHEDULER limits_scheduler
+		| LISTEN {
 			memset(&listen_opts, 0, sizeof listen_opts);
 			listen_opts.family = AF_UNSPEC;
 			listen_opts.flags |= F_EXT_DSN;
 		} ON listener_type
+		| PKI STRING	{
+			char buf[HOST_NAME_MAX+1];
+
+			/* if not catchall, check that it is a valid domain */
+			if (strcmp($2, "*") != 0) {
+				if (!res_hnok($2)) {
+					yyerror("not a valid domain name: %s", $2);
+					free($2);
+					YYERROR;
+				}
+			}
+			xlowercase(buf, $2, sizeof(buf));
+			free($2);
+			pki = dict_get(conf->sc_pki_dict, buf);
+			if (pki == NULL) {
+				pki = xcalloc(1, sizeof *pki, "parse:pki");
+				(void)strlcpy(pki->pki_name, buf, sizeof(pki->pki_name));
+				dict_set(conf->sc_pki_dict, pki->pki_name, pki);
+			}
+		} pki
+		| CA STRING	{
+			char buf[HOST_NAME_MAX+1];
+
+			/* if not catchall, check that it is a valid domain */
+			if (strcmp($2, "*") != 0) {
+				if (!res_hnok($2)) {
+					yyerror("not a valid domain name: %s", $2);
+					free($2);
+					YYERROR;
+				}
+			}
+			xlowercase(buf, $2, sizeof(buf));
+			free($2);
+			sca = dict_get(conf->sc_ca_dict, buf);
+			if (sca == NULL) {
+				sca = xcalloc(1, sizeof *sca, "parse:ca");
+				(void)strlcpy(sca->ca_name, buf, sizeof(sca->ca_name));
+				dict_set(conf->sc_ca_dict, sca->ca_name, sca);
+			}
+		} ca
+		| CIPHERS STRING {
+			conf->sc_tls_ciphers = $2;
+		}
 		;
 
 table		: TABLE STRING STRING	{
@@ -2151,7 +981,7 @@ table		: TABLE STRING STRING	{
 				free($3);
 				YYERROR;
 			}
-			table = table_create(conf, backend, $2, config);
+			table = table_create(backend, $2, NULL, config);
 			if (!table_config(table)) {
 				yyerror("invalid configuration file %s for table %s",
 				    config, table->t_name);
@@ -2159,38 +989,66 @@ table		: TABLE STRING STRING	{
 				free($3);
 				YYERROR;
 			}
-			table = NULL;
 			free($2);
 			free($3);
 		}
 		| TABLE STRING {
-			table = table_create(conf, "static", $2, NULL);
+			table = table_create("static", $2, NULL, NULL);
 			free($2);
 		} '{' tableval_list '}' {
 			table = NULL;
 		}
 		;
 
+assign		: '=' | ARROW;
+
+keyval		: STRING assign STRING		{
+			table->t_type = T_HASH;
+			table_add(table, $1, $3);
+			free($1);
+			free($3);
+		}
+		;
+
+keyval_list	: keyval
+		| keyval comma keyval_list
+		;
+
+stringel	: STRING			{
+			table->t_type = T_LIST;
+			table_add(table, $1, NULL);
+			free($1);
+		}
+		;
+
+string_list	: stringel
+		| stringel comma string_list
+		;
+
+tableval_list	: string_list			{ }
+		| keyval_list			{ }
+		;
+
 tablenew	: STRING			{
 			struct table	*t;
 
-			t = table_create(conf, "static", NULL, NULL);
+			t = table_create("static", NULL, NULL, NULL);
+			t->t_type = T_LIST;
 			table_add(t, $1, NULL);
 			free($1);
 			$$ = t;
 		}
 		| '{'				{
-			table = table_create(conf, "static", NULL, NULL);
+			table = table_create("static", NULL, NULL, NULL);
 		} tableval_list '}'		{
 			$$ = table;
-			table = NULL;
 		}
 		;
 
 tableref       	: '<' STRING '>'       		{
 			struct table	*t;
 
-			if ((t = table_find(conf, $2)) == NULL) {
+			if ((t = table_find($2, NULL)) == NULL) {
 				yyerror("no such table: %s", $2);
 				free($2);
 				YYERROR;
@@ -2204,7 +1062,363 @@ tables		: tablenew			{ $$ = $1; }
 		| tableref			{ $$ = $1; }
 		;
 
+alias		: ALIAS tables			{
+			struct table   *t = $2;
 
+			if (!table_check_use(t, T_DYNAMIC|T_HASH, K_ALIAS)) {
+				yyerror("invalid use of table \"%s\" as ALIAS parameter",
+				    t->t_name);
+				YYERROR;
+			}
+
+			$$ = t;
+		}
+		;
+
+virtual		: VIRTUAL tables		{
+			struct table   *t = $2;
+
+			if (!table_check_use(t, T_DYNAMIC|T_HASH, K_ALIAS)) {
+				yyerror("invalid use of table \"%s\" as VIRTUAL parameter",
+				    t->t_name);
+				YYERROR;
+			}
+			$$ = t;
+		}
+		;
+
+usermapping	: alias		{
+			if (rule->r_mapping) {
+				yyerror("alias specified multiple times");
+				YYERROR;
+			}
+			rule->r_desttype = DEST_DOM;
+			rule->r_mapping = $1;
+		}
+		| virtual	{
+			if (rule->r_mapping) {
+				yyerror("virtual specified multiple times");
+				YYERROR;
+			}
+			rule->r_desttype = DEST_VDOM;
+			rule->r_mapping = $1;
+		}
+		;
+
+userbase	: USERBASE tables	{
+			struct table   *t = $2;
+
+			if (rule->r_userbase) {
+				yyerror("userbase specified multiple times");
+				YYERROR;
+			}
+			if (!table_check_use(t, T_DYNAMIC|T_HASH, K_USERINFO)) {
+				yyerror("invalid use of table \"%s\" as USERBASE parameter",
+				    t->t_name);
+				YYERROR;
+			}
+			rule->r_userbase = t;
+		}
+		;
+
+deliver_as	: AS STRING	{
+			if (strlcpy(rule->r_delivery_user, $2,
+			    sizeof(rule->r_delivery_user))
+			    >= sizeof(rule->r_delivery_user))
+				fatal("username too long");
+			free($2);
+		}
+		| /* empty */	{}
+		;
+
+deliver_action	: DELIVER TO MAILDIR			{
+			rule->r_action = A_MAILDIR;
+			if (strlcpy(rule->r_value.buffer, "~/Maildir",
+			    sizeof(rule->r_value.buffer)) >=
+			    sizeof(rule->r_value.buffer))
+				fatal("pathname too long");
+		}
+		| DELIVER TO MAILDIR STRING		{
+			rule->r_action = A_MAILDIR;
+			if (strlcpy(rule->r_value.buffer, $4,
+			    sizeof(rule->r_value.buffer)) >=
+			    sizeof(rule->r_value.buffer))
+				fatal("pathname too long");
+			free($4);
+		}
+		| DELIVER TO MBOX			{
+			rule->r_action = A_MBOX;
+			if (strlcpy(rule->r_value.buffer, _PATH_MAILDIR "/%u",
+			    sizeof(rule->r_value.buffer))
+			    >= sizeof(rule->r_value.buffer))
+				fatal("pathname too long");
+		}
+		| DELIVER TO LMTP STRING deliver_as	{
+			rule->r_action = A_LMTP;
+			if (strchr($4, ':') || $4[0] == '/') {
+				if (strlcpy(rule->r_value.buffer, $4,
+					sizeof(rule->r_value.buffer))
+					>= sizeof(rule->r_value.buffer))
+					fatal("lmtp destination too long");
+			} else
+				fatal("invalid lmtp destination");
+			free($4);
+		}
+		| DELIVER TO LMTP STRING RCPTTO deliver_as 	{
+			rule->r_action = A_LMTP;
+			if (strchr($4, ':') || $4[0] == '/') {
+				if (strlcpy(rule->r_value.buffer, $4,
+					sizeof(rule->r_value.buffer))
+					>= sizeof(rule->r_value.buffer))
+					fatal("lmtp destination too long");
+				if (strlcat(rule->r_value.buffer, " rcpt-to",
+					sizeof(rule->r_value.buffer))
+					>= sizeof(rule->r_value.buffer))
+					fatal("lmtp recipient too long");
+			} else
+				fatal("invalid lmtp destination");
+			free($4);
+		}
+		| DELIVER TO MDA STRING deliver_as	{
+			rule->r_action = A_MDA;
+			if (strlcpy(rule->r_value.buffer, $4,
+			    sizeof(rule->r_value.buffer))
+			    >= sizeof(rule->r_value.buffer))
+				fatal("command too long");
+			free($4);
+		}
+		;
+
+relay_action   	: RELAY relay {
+			rule->r_action = A_RELAY;
+		}
+		| RELAY VIA STRING {
+			rule->r_action = A_RELAYVIA;
+			if (!text_to_relayhost(&rule->r_value.relayhost, $3)) {
+				yyerror("error: invalid url: %s", $3);
+				free($3);
+				YYERROR;
+			}
+			free($3);
+		} relay_via {
+			/* no worries, F_AUTH cant be set without SSL */
+			if (rule->r_value.relayhost.flags & F_AUTH) {
+				if (rule->r_value.relayhost.authtable[0] == '\0') {
+					yyerror("error: auth without auth table");
+					YYERROR;
+				}
+			}
+		}
+		;
+
+negation	: '!'		{ $$ = 1; }
+		| /* empty */	{ $$ = 0; }
+		;
+
+from		: FROM negation SOURCE tables       		{
+			struct table   *t = $4;
+
+			if (rule->r_sources) {
+				yyerror("from specified multiple times");
+				YYERROR;
+			}
+			if (!table_check_use(t, T_DYNAMIC|T_LIST, K_NETADDR)) {
+				yyerror("invalid use of table \"%s\" as FROM parameter",
+				    t->t_name);
+				YYERROR;
+			}
+			rule->r_notsources = $2;
+			rule->r_sources = t;
+		}
+		| FROM negation ANY    		{
+			if (rule->r_sources) {
+				yyerror("from specified multiple times");
+				YYERROR;
+			}
+			rule->r_sources = table_find("<anyhost>", NULL);
+			rule->r_notsources = $2;
+		}
+		| FROM negation LOCAL  		{
+			if (rule->r_sources) {
+				yyerror("from specified multiple times");
+				YYERROR;
+			}
+			rule->r_sources = table_find("<localhost>", NULL);
+			rule->r_notsources = $2;
+		}
+		;
+
+for		: FOR negation DOMAIN tables {
+			struct table   *t = $4;
+
+			if (rule->r_destination) {
+				yyerror("for specified multiple times");
+				YYERROR;
+			}
+			if (!table_check_use(t, T_DYNAMIC|T_LIST, K_DOMAIN)) {
+				yyerror("invalid use of table \"%s\" as DOMAIN parameter",
+				    t->t_name);
+				YYERROR;
+			}
+			rule->r_notdestination = $2;
+			rule->r_destination = t;
+		}
+		| FOR negation ANY    		{
+			if (rule->r_destination) {
+				yyerror("for specified multiple times");
+				YYERROR;
+			}
+			rule->r_notdestination = $2;
+			rule->r_destination = table_find("<anydestination>", NULL);
+		}
+		| FOR negation LOCAL  		{
+			if (rule->r_destination) {
+				yyerror("for specified multiple times");
+				YYERROR;
+			}
+			rule->r_notdestination = $2;
+			rule->r_destination = table_find("<localnames>", NULL);
+		}
+		;
+
+sender		: SENDER negation tables			{
+			struct table   *t = $3;
+
+			if (rule->r_senders) {
+				yyerror("sender specified multiple times");
+				YYERROR;
+			}
+
+			if (!table_check_use(t, T_DYNAMIC|T_LIST, K_MAILADDR)) {
+				yyerror("invalid use of table \"%s\" as SENDER parameter",
+				    t->t_name);
+				YYERROR;
+			}
+			rule->r_notsenders = $2;
+			rule->r_senders = t;
+		}
+		;
+
+recipient      	: RECIPIENT negation tables			{
+			struct table   *t = $3;
+
+			if (rule->r_recipients) {
+				yyerror("recipient specified multiple times");
+				YYERROR;
+			}
+
+			if (!table_check_use(t, T_DYNAMIC|T_LIST, K_MAILADDR)) {
+				yyerror("invalid use of table \"%s\" as RECIPIENT parameter",
+				    t->t_name);
+				YYERROR;
+			}
+			rule->r_notrecipients = $2;
+			rule->r_recipients = t;
+		}
+		;
+
+forwardonly	: FORWARDONLY {
+			if (rule->r_forwardonly) {
+				yyerror("forward-only specified multiple times");
+				YYERROR;
+			}
+			rule->r_forwardonly = 1;
+		}
+		;
+
+expire		: EXPIRE STRING {
+			if (rule->r_qexpire != -1) {
+				yyerror("expire specified multiple times");
+				YYERROR;
+			}
+			rule->r_qexpire = delaytonum($2);
+			if (rule->r_qexpire == -1) {
+				yyerror("invalid expire delay: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		;
+
+opt_decision	: sender
+		| recipient
+		| from
+		| for
+		| tagged
+		| authenticated
+		;
+decision	: opt_decision decision
+		|
+		;
+
+opt_lookup	: userbase
+		| usermapping
+		;
+lookup		: opt_lookup lookup
+		|
+		;
+
+action		: deliver_action
+		| relay_action
+		|
+		;
+
+opt_accept	: expire
+		| forwardonly
+		;
+
+accept_params	: opt_accept accept_params
+		|
+		;
+
+rule		: ACCEPT {
+			rule = xcalloc(1, sizeof(*rule), "parse rule: ACCEPT");
+			rule->r_id = ++ruleid;
+			rule->r_action = A_NONE;
+			rule->r_decision = R_ACCEPT;
+			rule->r_desttype = DEST_DOM;
+			rule->r_qexpire = -1;
+		} decision lookup action accept_params {
+			if (!rule->r_sources)
+				rule->r_sources = table_find("<localhost>", NULL);
+			if (!rule->r_destination)
+			 	rule->r_destination = table_find("<localnames>", NULL);
+			if (!rule->r_userbase)
+				rule->r_userbase = table_find("<getpwnam>", NULL);
+			if (rule->r_qexpire == -1)
+				rule->r_qexpire = conf->sc_qexpire;
+			if (rule->r_action == A_RELAY || rule->r_action == A_RELAYVIA) {
+				if (rule->r_userbase != table_find("<getpwnam>", NULL)) {
+					yyerror("userbase may not be used with a relay rule");
+					YYERROR;
+				}
+				if (rule->r_mapping) {
+					yyerror("aliases/virtual may not be used with a relay rule");
+					YYERROR;
+				}
+			}
+			if (rule->r_forwardonly && rule->r_action != A_NONE) {
+				yyerror("forward-only may not be used with a default action");
+				YYERROR;
+			}
+			TAILQ_INSERT_TAIL(conf->sc_rules, rule, r_entry);
+			rule = NULL;
+		}
+		| REJECT {
+			rule = xcalloc(1, sizeof(*rule), "parse rule: REJECT");
+			rule->r_id = ++ruleid;
+			rule->r_decision = R_REJECT;
+			rule->r_desttype = DEST_DOM;
+		} decision {
+			if (!rule->r_sources)
+				rule->r_sources = table_find("<localhost>", NULL);
+			if (!rule->r_destination)
+				rule->r_destination = table_find("<localnames>", NULL);
+			TAILQ_INSERT_TAIL(conf->sc_rules, rule, r_entry);
+			rule = NULL;
+		}
+		;
 %%
 
 struct keywords {
@@ -2239,100 +1453,74 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
-		{ "action",		ACTION },
+		{ "accept",		ACCEPT },
 		{ "alias",		ALIAS },
 		{ "any",		ANY },
+		{ "as",			AS },
 		{ "auth",		AUTH },
 		{ "auth-optional",     	AUTH_OPTIONAL },
+		{ "authenticated",     	AUTHENTICATED },
 		{ "backup",		BACKUP },
-		{ "bounce",		BOUNCE },
-		{ "builtin",		BUILTIN },
+		{ "bounce-warn",	BOUNCEWARN },
 		{ "ca",			CA },
-		{ "cert",		CERT },
-		{ "chain",		CHAIN },
-		{ "chroot",		CHROOT },
+		{ "certificate",	CERTIFICATE },
 		{ "ciphers",		CIPHERS },
-		{ "commit",		COMMIT },
 		{ "compression",	COMPRESSION },
-		{ "connect",		CONNECT },
-		{ "data",		DATA },
-		{ "data-line",		DATA_LINE },
+		{ "deliver",		DELIVER },
 		{ "dhe",		DHE },
-		{ "disconnect",		DISCONNECT },
 		{ "domain",		DOMAIN },
-		{ "ehlo",		EHLO },
 		{ "encryption",		ENCRYPTION },
-		{ "expand-only",      	EXPAND_ONLY },
-		{ "fcrdns",		FCRDNS },
+		{ "expire",		EXPIRE },
 		{ "filter",		FILTER },
 		{ "for",		FOR },
-		{ "forward-only",      	FORWARD_ONLY },
+		{ "forward-only",      	FORWARDONLY },
 		{ "from",		FROM },
-		{ "group",		GROUP },
-		{ "helo",		HELO },
-		{ "helo-src",       	HELO_SRC },
-		{ "host",		HOST },
 		{ "hostname",		HOSTNAME },
 		{ "hostnames",		HOSTNAMES },
 		{ "include",		INCLUDE },
 		{ "inet4",		INET4 },
 		{ "inet6",		INET6 },
-		{ "junk",		JUNK },
 		{ "key",		KEY },
 		{ "limit",		LIMIT },
 		{ "listen",		LISTEN },
 		{ "lmtp",		LMTP },
 		{ "local",		LOCAL },
-		{ "mail-from",		MAIL_FROM },
 		{ "maildir",		MAILDIR },
-		{ "mask-src",		MASK_SRC },
+		{ "mask-source",	MASK_SOURCE },
 		{ "masquerade",		MASQUERADE },
-		{ "match",		MATCH },
-		{ "max-deferred",  	MAX_DEFERRED },
-		{ "max-message-size",  	MAX_MESSAGE_SIZE },
+		{ "max-message-size",  	MAXMESSAGESIZE },
+		{ "max-mta-deferred",  	MAXMTADEFERRED },
 		{ "mbox",		MBOX },
 		{ "mda",		MDA },
 		{ "mta",		MTA },
-		{ "mx",			MX },
-		{ "no-dsn",		NO_DSN },
-		{ "no-verify",		NO_VERIFY },
-		{ "noop",		NOOP },
+		{ "no-dsn",		NODSN },
 		{ "on",			ON },
 		{ "pki",		PKI },
 		{ "port",		PORT },
-		{ "proc",		PROC },
-		{ "proc-exec",		PROC_EXEC },
 		{ "queue",		QUEUE },
-		{ "quit",		QUIT },
-		{ "rcpt-to",		RCPT_TO },
-		{ "rdns",		RDNS },
+		{ "rcpt-to",		RCPTTO },
 		{ "received-auth",     	RECEIVEDAUTH },
 		{ "recipient",		RECIPIENT },
-		{ "regex",		REGEX },
 		{ "reject",		REJECT },
 		{ "relay",		RELAY },
-		{ "rset",		RSET },
 		{ "scheduler",		SCHEDULER },
+		{ "sender",    		SENDER },
 		{ "senders",   		SENDERS },
-		{ "smtp",		SMTP },
-		{ "smtp-in",		SMTP_IN },
-		{ "smtp-out",		SMTP_OUT },
+		{ "session",   		SESSION },
 		{ "smtps",		SMTPS },
 		{ "socket",		SOCKET },
-		{ "src",		SRC },
-		{ "sub-addr-delim",	SUB_ADDR_DELIM },
+		{ "source",		SOURCE },
+		{ "subaddressing-delimiter",	SUBADDRESSING_DELIM },
 		{ "table",		TABLE },
 		{ "tag",		TAG },
 		{ "tagged",		TAGGED },
 		{ "tls",		TLS },
 		{ "tls-require",       	TLS_REQUIRE },
-		{ "ttl",		TTL },
-		{ "user",		USER },
+		{ "to",			TO },
 		{ "userbase",		USERBASE },
 		{ "verify",		VERIFY },
+		{ "via",		VIA },
 		{ "virtual",		VIRTUAL },
-		{ "warn-interval",	WARN_INTERVAL },
-		{ "wrapper",		WRAPPER },
 	};
 	const struct keywords	*p;
 
@@ -2345,39 +1533,34 @@ lookup(char *s)
 		return (STRING);
 }
 
-#define START_EXPAND	1
-#define DONE_EXPAND	2
+#define MAXPUSHBACK	128
 
-static int	expanding;
-
-int
-igetc(void)
-{
-	int	c;
-
-	while (1) {
-		if (file->ungetpos > 0)
-			c = file->ungetbuf[--file->ungetpos];
-		else
-			c = getc(file->stream);
-
-		if (c == START_EXPAND)
-			expanding = 1;
-		else if (c == DONE_EXPAND)
-			expanding = 0;
-		else
-			break;
-	}
-	return (c);
-}
+unsigned char	*parsebuf;
+int		 parseindex;
+unsigned char	 pushback_buffer[MAXPUSHBACK];
+int		 pushback_index = 0;
 
 int
 lgetc(int quotec)
 {
 	int		c, next;
 
+	if (parsebuf) {
+		/* Read character from the parsebuffer instead of input. */
+		if (parseindex >= 0) {
+			c = parsebuf[parseindex++];
+			if (c != '\0')
+				return (c);
+			parsebuf = NULL;
+		} else
+			parseindex++;
+	}
+
+	if (pushback_index)
+		return (pushback_buffer[--pushback_index]);
+
 	if (quotec) {
-		if ((c = igetc()) == EOF) {
+		if ((c = getc(file->stream)) == EOF) {
 			yyerror("reached end of file while parsing "
 			    "quoted string");
 			if (file == topfile || popfile() == EOF)
@@ -2387,8 +1570,8 @@ lgetc(int quotec)
 		return (c);
 	}
 
-	while ((c = igetc()) == '\\') {
-		next = igetc();
+	while ((c = getc(file->stream)) == '\\') {
+		next = getc(file->stream);
 		if (next != '\n') {
 			c = next;
 			break;
@@ -2397,45 +1580,37 @@ lgetc(int quotec)
 		file->lineno++;
 	}
 
-	if (c == EOF) {
-		/*
-		 * Fake EOL when hit EOF for the first time. This gets line
-		 * count right if last line in included file is syntactically
-		 * invalid and has no newline.
-		 */
-		if (file->eof_reached == 0) {
-			file->eof_reached = 1;
-			return ('\n');
-		}
-		while (c == EOF) {
-			if (file == topfile || popfile() == EOF)
-				return (EOF);
-			c = igetc();
-		}
+	while (c == EOF) {
+		if (file == topfile || popfile() == EOF)
+			return (EOF);
+		c = getc(file->stream);
 	}
 	return (c);
 }
 
-void
+int
 lungetc(int c)
 {
 	if (c == EOF)
-		return;
-
-	if (file->ungetpos >= file->ungetsize) {
-		void *p = reallocarray(file->ungetbuf, file->ungetsize, 2);
-		if (p == NULL)
-			err(1, "%s", __func__);
-		file->ungetbuf = p;
-		file->ungetsize *= 2;
+		return (EOF);
+	if (parsebuf) {
+		parseindex--;
+		if (parseindex >= 0)
+			return (c);
 	}
-	file->ungetbuf[file->ungetpos++] = c;
+	if (pushback_index < MAXPUSHBACK-1)
+		return (pushback_buffer[pushback_index++] = c);
+	else
+		return (EOF);
 }
 
 int
 findeol(void)
 {
 	int	c;
+
+	parsebuf = NULL;
+	pushback_index = 0;
 
 	/* skip to either EOF or the first real EOL */
 	while (1) {
@@ -2467,7 +1642,7 @@ top:
 	if (c == '#')
 		while ((c = lgetc(0)) != '\n' && c != EOF)
 			; /* nothing */
-	if (c == '$' && !expanding) {
+	if (c == '$' && parsebuf == NULL) {
 		while (1) {
 			if ((c = lgetc(0)) == EOF)
 				return (0);
@@ -2489,13 +1664,8 @@ top:
 			yyerror("macro '%s' not defined", buf);
 			return (findeol());
 		}
-		p = val + strlen(val) - 1;
-		lungetc(DONE_EXPAND);
-		while (p >= val) {
-			lungetc(*p);
-			p--;
-		}
-		lungetc(START_EXPAND);
+		parsebuf = val;
+		parseindex = 0;
 		goto top;
 	}
 
@@ -2512,8 +1682,7 @@ top:
 			} else if (c == '\\') {
 				if ((next = lgetc(quotec)) == EOF)
 					return (0);
-				if (next == quotec || next == ' ' ||
-				    next == '\t')
+				if (next == quotec || c == ' ' || c == '\t')
 					c = next;
 				else if (next == '\n') {
 					file->lineno++;
@@ -2535,7 +1704,7 @@ top:
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			err(1, "%s", __func__);
+			err(1, "yylex: strdup");
 		return (STRING);
 	}
 
@@ -2545,7 +1714,7 @@ top:
 	if (c == '-' || isdigit(c)) {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -2591,7 +1760,7 @@ nodigits:
 	if (isalnum(c) || c == ':' || c == '_') {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -2600,7 +1769,7 @@ nodigits:
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
 			if ((yylval.v.string = strdup(buf)) == NULL)
-				err(1, "%s", __func__);
+				err(1, "yylex: strdup");
 		return (token);
 	}
 	if (c == '\n') {
@@ -2638,16 +1807,16 @@ pushfile(const char *name, int secret)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
-		log_warn("%s", __func__);
+		log_warn("warn: malloc");
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		log_warn("%s", __func__);
+		log_warn("warn: malloc");
 		free(nfile);
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		log_warn("%s: %s", __func__, nfile->name);
+		log_warn("warn: %s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -2658,16 +1827,7 @@ pushfile(const char *name, int secret)
 		free(nfile);
 		return (NULL);
 	}
-	nfile->lineno = TAILQ_EMPTY(&files) ? 1 : 0;
-	nfile->ungetsize = 16;
-	nfile->ungetbuf = malloc(nfile->ungetsize);
-	if (nfile->ungetbuf == NULL) {
-		log_warn("%s", __func__);
-		fclose(nfile->stream);
-		free(nfile->name);
-		free(nfile);
-		return (NULL);
-	}
+	nfile->lineno = 1;
 	TAILQ_INSERT_TAIL(&files, nfile, entry);
 	return (nfile);
 }
@@ -2683,7 +1843,6 @@ popfile(void)
 	TAILQ_REMOVE(&files, file, entry);
 	fclose(file->stream);
 	free(file->name);
-	free(file->ungetbuf);
 	free(file);
 	file = prev;
 	return (file ? 0 : EOF);
@@ -2693,15 +1852,109 @@ int
 parse_config(struct smtpd *x_conf, const char *filename, int opts)
 {
 	struct sym     *sym, *next;
+	struct table   *t;
+	char		hostname[HOST_NAME_MAX+1];
+	char		hostname_copy[HOST_NAME_MAX+1];
+
+	if (getmailname(hostname, sizeof hostname) == -1)
+		return (-1);
 
 	conf = x_conf;
+	memset(conf, 0, sizeof(*conf));
+
+	(void)strlcpy(conf->sc_hostname, hostname, sizeof(conf->sc_hostname));
+
+	conf->sc_maxsize = DEFAULT_MAX_BODY_SIZE;
+	conf->sc_subaddressing_delim = SUBADDRESSING_DELIMITER;
+
+	conf->sc_tables_dict = calloc(1, sizeof(*conf->sc_tables_dict));
+	conf->sc_rules = calloc(1, sizeof(*conf->sc_rules));
+	conf->sc_listeners = calloc(1, sizeof(*conf->sc_listeners));
+	conf->sc_ca_dict = calloc(1, sizeof(*conf->sc_ca_dict));
+	conf->sc_pki_dict = calloc(1, sizeof(*conf->sc_pki_dict));
+	conf->sc_ssl_dict = calloc(1, sizeof(*conf->sc_ssl_dict));
+	conf->sc_limits_dict = calloc(1, sizeof(*conf->sc_limits_dict));
+
+	/* Report mails delayed for more than 4 hours */
+	conf->sc_bounce_warn[0] = 3600 * 4;
+
+	if (conf->sc_tables_dict == NULL	||
+	    conf->sc_rules == NULL		||
+	    conf->sc_listeners == NULL		||
+	    conf->sc_ca_dict == NULL		||
+	    conf->sc_pki_dict == NULL		||
+	    conf->sc_ssl_dict == NULL		||
+	    conf->sc_limits_dict == NULL) {
+		log_warn("warn: cannot allocate memory");
+		free(conf->sc_tables_dict);
+		free(conf->sc_rules);
+		free(conf->sc_listeners);
+		free(conf->sc_ca_dict);
+		free(conf->sc_pki_dict);
+		free(conf->sc_ssl_dict);
+		free(conf->sc_limits_dict);
+		return (-1);
+	}
+
 	errors = 0;
+
+	table = NULL;
+	rule = NULL;
+
+	dict_init(conf->sc_ca_dict);
+	dict_init(conf->sc_pki_dict);
+	dict_init(conf->sc_ssl_dict);
+	dict_init(conf->sc_tables_dict);
+
+	dict_init(conf->sc_limits_dict);
+	limits = xcalloc(1, sizeof(*limits), "mta_limits");
+	limit_mta_set_defaults(limits);
+	dict_xset(conf->sc_limits_dict, "default", limits);
+
+	TAILQ_INIT(conf->sc_listeners);
+	TAILQ_INIT(conf->sc_rules);
+
+	conf->sc_qexpire = SMTPD_QUEUE_EXPIRY;
+	conf->sc_opts = opts;
+
+	conf->sc_mta_max_deferred = 100;
+	conf->sc_scheduler_max_inflight = 5000;
+	conf->sc_scheduler_max_schedule = 10;
+	conf->sc_scheduler_max_evp_batch_size = 256;
+	conf->sc_scheduler_max_msg_batch_size = 1024;
+	
+	conf->sc_session_max_rcpt = 1000;
+	conf->sc_session_max_mails = 100;
+
+	conf->sc_mda_max_session = 50;
+	conf->sc_mda_max_user_session = 7;
+	conf->sc_mda_task_hiwat = 50;
+	conf->sc_mda_task_lowat = 30;
+	conf->sc_mda_task_release = 10;
 
 	if ((file = pushfile(filename, 0)) == NULL) {
 		purge_config(PURGE_EVERYTHING);
 		return (-1);
 	}
 	topfile = file;
+
+	/*
+	 * declare special "localhost", "anyhost" and "localnames" tables
+	 */
+	set_local(hostname);
+
+	t = table_create("static", "<anydestination>", NULL, NULL);
+	t->t_type = T_LIST;
+	table_add(t, "*", NULL);
+
+	/* can't truncate here */
+	(void)strlcpy(hostname_copy, hostname, sizeof hostname_copy);
+
+	hostname_copy[strcspn(hostname_copy, ".")] = '\0';
+	if (strcmp(hostname, hostname_copy) != 0)
+		table_add(t, hostname_copy, NULL);
+
+	table_create("getpwnam", "<getpwnam>", NULL, NULL);
 
 	/*
 	 * parse configuration
@@ -2789,12 +2042,17 @@ cmdline_symset(char *s)
 {
 	char	*sym, *val;
 	int	ret;
+	size_t	len;
 
 	if ((val = strrchr(s, '=')) == NULL)
 		return (-1);
-	sym = strndup(s, val - s);
-	if (sym == NULL)
-		errx(1, "%s: strndup", __func__);
+
+	len = strlen(s) - strlen(val) + 1;
+	if ((sym = malloc(len)) == NULL)
+		errx(1, "cmdline_symset: malloc");
+
+	(void)strlcpy(sym, s, len);
+
 	ret = symset(sym, val + 1, 1);
 	free(sym);
 
@@ -2818,7 +2076,7 @@ symget(const char *nam)
 static void
 create_sock_listener(struct listen_opts *lo)
 {
-	struct listener *l = xcalloc(1, sizeof(*l));
+	struct listener *l = xcalloc(1, sizeof(*l), "create_sock_listener");
 	lo->tag = "local";
 	lo->hostname = conf->sc_hostname;
 	l->ss.ss_family = AF_LOCAL;
@@ -2884,12 +2142,8 @@ config_listener(struct listener *h,  struct listen_opts *lo)
 	if (lo->hostname == NULL)
 		lo->hostname = conf->sc_hostname;
 
-	if (lo->options & LO_FILTER) {
-		h->flags |= F_FILTERED;
-		(void)strlcpy(h->filter_name,
-		    lo->filtername,
-		    sizeof(h->filter_name));
-	}
+	if (lo->filtername)
+		(void)strlcpy(h->filter, lo->filtername, sizeof(h->filter));
 
 	h->pki_name[0] = '\0';
 
@@ -2952,7 +2206,7 @@ host_v4(struct listen_opts *lo)
 	if (inet_pton(AF_INET, lo->ifx, &ina) != 1)
 		return (0);
 
-	h = xcalloc(1, sizeof(*h));
+	h = xcalloc(1, sizeof(*h), "host_v4");
 	sain = (struct sockaddr_in *)&h->ss;
 	sain->sin_len = sizeof(struct sockaddr_in);
 	sain->sin_family = AF_INET;
@@ -2980,7 +2234,7 @@ host_v6(struct listen_opts *lo)
 	if (inet_pton(AF_INET6, lo->ifx, &ina6) != 1)
 		return (0);
 
-	h = xcalloc(1, sizeof(*h));
+	h = xcalloc(1, sizeof(*h), "host_v6");
 	sin6 = (struct sockaddr_in6 *)&h->ss;
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
 	sin6->sin6_family = AF_INET6;
@@ -3020,7 +2274,7 @@ host_dns(struct listen_opts *lo)
 		if (res->ai_family != AF_INET &&
 		    res->ai_family != AF_INET6)
 			continue;
-		h = xcalloc(1, sizeof(*h));
+		h = xcalloc(1, sizeof(*h), "host_dns");
 
 		h->ss.ss_family = res->ai_family;
 		if (res->ai_family == AF_INET) {
@@ -3071,7 +2325,7 @@ interface(struct listen_opts *lo)
 		if (lo->family != AF_UNSPEC && lo->family != p->ifa_addr->sa_family)
 			continue;
 
-		h = xcalloc(1, sizeof(*h));
+		h = xcalloc(1, sizeof(*h), "interface");
 
 		switch (p->ifa_addr->sa_family) {
 		case AF_INET:
@@ -3104,6 +2358,71 @@ interface(struct listen_opts *lo)
 	freeifaddrs(ifap);
 
 	return ret;
+}
+
+void
+set_local(const char *hostname)
+{
+	struct table	*t;
+
+	t = table_create("static", "<localnames>", NULL, NULL);
+	t->t_type = T_LIST;
+	table_add(t, "localhost", NULL);
+	table_add(t, hostname, NULL);
+
+	set_localaddrs(t);
+}
+
+void
+set_localaddrs(struct table *localnames)
+{
+	struct ifaddrs *ifap, *p;
+	struct sockaddr_storage ss;
+	struct sockaddr_in	*sain;
+	struct sockaddr_in6	*sin6;
+	struct table		*t;
+	char buf[NI_MAXHOST + 5];
+
+	t = table_create("static", "<anyhost>", NULL, NULL);
+	table_add(t, "local", NULL);
+	table_add(t, "0.0.0.0/0", NULL);
+	table_add(t, "::/0", NULL);
+
+	if (getifaddrs(&ifap) == -1)
+		fatal("getifaddrs");
+
+	t = table_create("static", "<localhost>", NULL, NULL);
+	table_add(t, "local", NULL);
+
+	for (p = ifap; p != NULL; p = p->ifa_next) {
+		if (p->ifa_addr == NULL)
+			continue;
+		switch (p->ifa_addr->sa_family) {
+		case AF_INET:
+			sain = (struct sockaddr_in *)&ss;
+			*sain = *(struct sockaddr_in *)p->ifa_addr;
+			sain->sin_len = sizeof(struct sockaddr_in);
+			table_add(t, ss_to_text(&ss), NULL);
+			table_add(localnames, ss_to_text(&ss), NULL);
+			(void)snprintf(buf, sizeof buf, "[%s]", ss_to_text(&ss));
+			table_add(localnames, buf, NULL);
+			break;
+
+		case AF_INET6:
+			sin6 = (struct sockaddr_in6 *)&ss;
+			*sin6 = *(struct sockaddr_in6 *)p->ifa_addr;
+			sin6->sin6_len = sizeof(struct sockaddr_in6);
+			table_add(t, ss_to_text(&ss), NULL);
+			table_add(localnames, ss_to_text(&ss), NULL);
+			(void)snprintf(buf, sizeof buf, "[%s]", ss_to_text(&ss));
+			table_add(localnames, buf, NULL);
+			(void)snprintf(buf, sizeof buf, "[ipv6:%s]", ss_to_text(&ss));
+			table_add(localnames, buf, NULL);
+			break;
+		}
+	}
+
+	freeifaddrs(ifap);
 }
 
 int
@@ -3176,7 +2495,7 @@ is_if_in_group(const char *ifname, const char *groupname)
 
         len = ifgr.ifgr_len;
         ifgr.ifgr_groups = xcalloc(len/sizeof(struct ifg_req),
-		sizeof(struct ifg_req));
+		sizeof(struct ifg_req), "is_if_in_group");
         if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1)
                 err(1, "SIOCGIFGROUP");
 
@@ -3193,6 +2512,18 @@ is_if_in_group(const char *ifname, const char *groupname)
 end:
 	close(s);
 	return ret;
+}
+
+static int
+config_lo_filter(struct listen_opts *lo, char *filter_name) {
+	if (lo->options & LO_FILTER) {
+		yyerror("filter already specified");
+		return -1;
+	}
+	lo->options |= LO_FILTER;
+	lo->filtername = filter_name;
+
+	return 0;
 }
 
 static int

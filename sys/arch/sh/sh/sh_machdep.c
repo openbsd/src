@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.48 2018/07/10 04:19:59 guenther Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.46 2016/05/21 00:56:44 deraadt Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -448,7 +448,8 @@ struct sigframe {
  * Send an interrupt to process.
  */
 void
-sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
+sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
+    union sigval val)
 {
 	struct proc *p = curproc;
 	struct sigframe *fp, frame;
@@ -459,8 +460,8 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(p->p_md.md_regs->tf_r15) &&
 	    (psp->ps_sigonstack & sigmask(sig)))
-		fp = (struct sigframe *)
-		    trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
+		fp = (struct sigframe *)((vaddr_t)p->p_sigstk.ss_sp +
+		    p->p_sigstk.ss_size);
 	else
 		fp = (void *)p->p_md.md_regs->tf_r15;
 	--fp;
@@ -469,7 +470,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	bzero(&frame, sizeof(frame));
 
 	if (psp->ps_siginfo & sigmask(sig)) {
-		frame.sf_si = *ksip;
+		initsiginfo(&frame.sf_si, sig, code, type, val);
 		sip = &fp->sf_si;
 	} else
 		sip = NULL;

@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.145 2018/06/19 22:35:07 krw Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.142 2017/05/10 08:37:15 mpi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -35,6 +35,7 @@
 #include <sys/proc.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <sys/device.h>
@@ -42,21 +43,19 @@
 #include <sys/sched.h>
 #include <sys/vmmeter.h>
 
-#include <ctype.h>
+#include <time.h>
+#include <nlist.h>
+#include <kvm.h>
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <kvm.h>
-#include <limits.h>
-#include <nlist.h>
-#include <paths.h>
+#include <unistd.h>
 #include <signal.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
-#include <unistd.h>
-
+#include <paths.h>
+#include <limits.h>
 #include "dkstats.h"
 
 struct nlist namelist[] = {
@@ -517,6 +516,8 @@ dosum(void)
 	/* swap */
 	(void)printf("%11u swap pages\n", uvmexp.swpages);
 	(void)printf("%11u swap pages in use\n", uvmexp.swpginuse);
+	(void)printf("%11u total anon's in system\n", uvmexp.nanon);
+	(void)printf("%11u free anon's\n", uvmexp.nfreeanon);
 
 	/* stat counters */
 	(void)printf("%11u page faults\n", uvmexp.faults);

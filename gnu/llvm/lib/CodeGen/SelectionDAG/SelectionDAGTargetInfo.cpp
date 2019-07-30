@@ -1,4 +1,4 @@
-//===- SelectionDAGTargetInfo.cpp - SelectionDAG Info ---------------------===//
+//===-- SelectionDAGTargetInfo.cpp - SelectionDAG Info --------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/SelectionDAGTargetInfo.h"
-
 using namespace llvm;
 
-SelectionDAGTargetInfo::~SelectionDAGTargetInfo() = default;
+SelectionDAGTargetInfo::~SelectionDAGTargetInfo() {}

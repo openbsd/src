@@ -9,6 +9,7 @@
 
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeArray.h"
 
+#include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/PDBSymDumper.h"
 
 #include <utility>

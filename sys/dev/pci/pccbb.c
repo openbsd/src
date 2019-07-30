@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.98 2018/07/17 03:32:10 dlg Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.97 2017/09/08 05:36:52 deraadt Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -959,16 +959,50 @@ pccbbintr_function(struct pccbb_softc *sc)
 {
 	int retval = 0, val;
 	struct pccbb_intrhand_list *pil;
-	int s;
+	int s, splchanged;
 
 	for (pil = sc->sc_pil; pil != NULL; pil = pil->pil_next) {
-		s = splraise(pil->pil_level);
+		/*
+		 * XXX priority change.  gross.  I use if-else
+		 * sentences instead of switch-case sentences in order
+		 * to avoid duplicate case value error.  More than one
+		 * IPL_XXX may use the same value.  It depends on the
+		 * implementation.
+		 */
+		splchanged = 1;
+#if 0
+		if (pil->pil_level == IPL_SERIAL) {
+			s = splserial();
+		} else if (pil->pil_level == IPL_HIGH) {
+#endif
+		if (pil->pil_level == IPL_HIGH) {
+			s = splhigh();
+		} else if (pil->pil_level == IPL_CLOCK) {
+			s = splclock();
+		} else if (pil->pil_level == IPL_AUDIO) {
+			s = splaudio();
+		} else if (pil->pil_level == IPL_VM) {
+			s = splvm();
+		} else if (pil->pil_level == IPL_TTY) {
+			s = spltty();
+#if 0
+		} else if (pil->pil_level == IPL_SOFTSERIAL) {
+			s = splsoftserial();
+#endif
+		} else if (pil->pil_level == IPL_NET) {
+			s = splnet();
+		} else {
+			splchanged = 0;
+			/* XXX: ih lower than IPL_BIO runs w/ IPL_BIO. */
+		}
 
 		val = (*pil->pil_func)(pil->pil_arg);
 		if (val != 0)
 			pil->pil_count.ec_count++;
 
-		splx(s);
+		if (splchanged != 0) {
+			splx(s);
+		}
 
 		if (retval == 0 || val != 0)
 			retval = val;

@@ -34,7 +34,7 @@ class ObjectDescriptionAPITestCase(TestBase):
         d = {'EXE': 'b.out'}
         self.build(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        exe = self.getBuildArtifact('b.out')
+        exe = os.path.join(os.getcwd(), 'b.out')
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)

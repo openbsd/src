@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.57 2019/06/17 00:21:28 guenther Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.55 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
 #include <sys/filedesc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/fcntl.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -413,7 +412,8 @@ dosendsyslog(struct proc *p, const char *buf, size_t nbyte, int flags,
     enum uio_seg sflg)
 {
 #ifdef KTRACE
-	struct iovec ktriov;
+	struct iovec *ktriov = NULL;
+	int iovlen;
 #endif
 	struct file *fp;
 	char pri[6], *kbuf;
@@ -469,16 +469,18 @@ dosendsyslog(struct proc *p, const char *buf, size_t nbyte, int flags,
 	auio.uio_offset = 0;
 	auio.uio_resid = aiov.iov_len;
 #ifdef KTRACE
-	if (sflg == UIO_USERSPACE && KTRPOINT(p, KTR_GENIO))
-		ktriov = aiov;
-	else
-		ktriov.iov_len = 0;
+	if (KTRPOINT(p, KTR_GENIO)) {
+		ktriov = mallocarray(auio.uio_iovcnt, sizeof(struct iovec),
+		    M_TEMP, M_WAITOK);
+		iovlen = auio.uio_iovcnt * sizeof (struct iovec);
+
+		memcpy(ktriov, auio.uio_iov, iovlen);
+	}
 #endif
 
 	len = auio.uio_resid;
 	if (fp) {
-		int flags = (fp->f_flag & FNONBLOCK) ? MSG_DONTWAIT : 0;
-		error = sosend(fp->f_data, NULL, &auio, NULL, NULL, flags);
+		error = sosend(fp->f_data, NULL, &auio, NULL, NULL, 0);
 		if (error == 0)
 			len -= auio.uio_resid;
 	} else if (constty || cn_devvp) {
@@ -519,8 +521,11 @@ dosendsyslog(struct proc *p, const char *buf, size_t nbyte, int flags,
 	}
 
 #ifdef KTRACE
-	if (error == 0 && ktriov.iov_len != 0)
-		ktrgenio(p, -1, UIO_WRITE, &ktriov, len);
+	if (ktriov != NULL) {
+		if (error == 0)
+			ktrgenio(p, -1, UIO_WRITE, ktriov, len);
+		free(ktriov, M_TEMP, iovlen);
+	}
 #endif
 	if (fp)
 		FRELE(fp, p);

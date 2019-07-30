@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.40 2019/01/22 16:16:26 otto Exp $	*/
+/*	$OpenBSD: optr.c,v 1.39 2015/10/12 15:12:44 deraadt Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -423,7 +423,6 @@ datesort(const void *a1, const void *a2)
 
 	diff = strncmp(d1->dd_name, d2->dd_name, sizeof(d1->dd_name));
 	if (diff == 0)
-		return (d2->dd_ddate < d1->dd_ddate ? -1 :
-		    (d2->dd_ddate > d1->dd_ddate ? 1 : 0));
+		return (d2->dd_ddate - d1->dd_ddate);
 	return (diff);
 }

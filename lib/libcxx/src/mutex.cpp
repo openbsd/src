@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define _LIBCPP_BUILDING_MUTEX
 #include "mutex"
 #include "limits"
 #include "system_error"
+#include "cassert"
 #include "include/atomic_support.h"
-#include "__undef_macros"
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 #ifndef _LIBCPP_HAS_NO_THREADS
@@ -36,7 +37,7 @@ mutex::lock()
 bool
 mutex::try_lock() _NOEXCEPT
 {
-    return __libcpp_mutex_trylock(&__m_);
+    return __libcpp_mutex_trylock(&__m_) == 0;
 }
 
 void
@@ -44,7 +45,7 @@ mutex::unlock() _NOEXCEPT
 {
     int ec = __libcpp_mutex_unlock(&__m_);
     (void)ec;
-    _LIBCPP_ASSERT(ec == 0, "call to mutex::unlock failed");
+    assert(ec == 0);
 }
 
 // recursive_mutex
@@ -58,15 +59,15 @@ recursive_mutex::recursive_mutex()
 
 recursive_mutex::~recursive_mutex()
 {
-    int e = __libcpp_recursive_mutex_destroy(&__m_);
+    int e = __libcpp_mutex_destroy(&__m_);
     (void)e;
-    _LIBCPP_ASSERT(e == 0, "call to ~recursive_mutex() failed");
+    assert(e == 0);
 }
 
 void
 recursive_mutex::lock()
 {
-    int ec = __libcpp_recursive_mutex_lock(&__m_);
+    int ec = __libcpp_mutex_lock(&__m_);
     if (ec)
         __throw_system_error(ec, "recursive_mutex lock failed");
 }
@@ -74,15 +75,15 @@ recursive_mutex::lock()
 void
 recursive_mutex::unlock() _NOEXCEPT
 {
-    int e = __libcpp_recursive_mutex_unlock(&__m_);
+    int e = __libcpp_mutex_unlock(&__m_);
     (void)e;
-    _LIBCPP_ASSERT(e == 0, "call to recursive_mutex::unlock() failed");
+    assert(e == 0);
 }
 
 bool
 recursive_mutex::try_lock() _NOEXCEPT
 {
-    return __libcpp_recursive_mutex_trylock(&__m_);
+    return __libcpp_mutex_trylock(&__m_) == 0;
 }
 
 // timed_mutex
@@ -194,10 +195,13 @@ recursive_timed_mutex::unlock() _NOEXCEPT
 // keep in sync with:  7741191.
 
 #ifndef _LIBCPP_HAS_NO_THREADS
-_LIBCPP_SAFE_STATIC static __libcpp_mutex_t mut = _LIBCPP_MUTEX_INITIALIZER;
-_LIBCPP_SAFE_STATIC static __libcpp_condvar_t cv = _LIBCPP_CONDVAR_INITIALIZER;
+static __libcpp_mutex_t mut = _LIBCPP_MUTEX_INITIALIZER;
+static __libcpp_condvar_t cv = _LIBCPP_CONDVAR_INITIALIZER;
 #endif
 
+/// NOTE: Changes to flag are done via relaxed atomic stores
+///       even though the accesses are protected by a mutex because threads
+///       just entering 'call_once` concurrently read from flag.
 void
 __call_once(volatile unsigned long& flag, void* arg, void(*func)(void*))
 {
@@ -234,7 +238,7 @@ __call_once(volatile unsigned long& flag, void* arg, void(*func)(void*))
             __libcpp_mutex_unlock(&mut);
             func(arg);
             __libcpp_mutex_lock(&mut);
-            __libcpp_atomic_store(&flag, ~0ul, _AO_Release);
+            __libcpp_relaxed_store(&flag, ~0ul);
             __libcpp_mutex_unlock(&mut);
             __libcpp_condvar_broadcast(&cv);
 #ifndef _LIBCPP_NO_EXCEPTIONS

@@ -13,13 +13,8 @@
 
 #include "Filesystem.h"
 #include "Config.h"
-#include "lld/Common/Threads.h"
-#include "llvm/Config/llvm-config.h"
-#include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/FileSystem.h"
-#if LLVM_ON_UNIX
-#include <unistd.h>
-#endif
+#include "llvm/Support/FileOutputBuffer.h"
 #include <thread>
 
 using namespace llvm;
@@ -40,29 +35,27 @@ using namespace lld::elf;
 // Since LLD can link a 1 GB binary in about 5 seconds, that waste
 // actually counts.
 //
-// This function spawns a background thread to remove the file.
+// This function spawns a background thread to call unlink.
 // The calling thread returns almost immediately.
 void elf::unlinkAsync(StringRef Path) {
-// Removing a file is async on windows.
-#if defined(_WIN32)
-  sys::fs::remove(Path);
-#else
-  if (!ThreadsEnabled || !sys::fs::exists(Path) ||
-      !sys::fs::is_regular_file(Path))
+  if (!Config->Threads || !sys::fs::exists(Config->OutputFile) ||
+      !sys::fs::is_regular_file(Config->OutputFile))
     return;
 
-  // We cannot just remove path from a different thread because we are now going
-  // to create path as a new file.
-  // Instead we open the file and unlink it on this thread. The unlink is fast
-  // since the open fd guarantees that it is not removing the last reference.
-  int FD;
-  std::error_code EC = sys::fs::openFileForRead(Path, FD);
-  sys::fs::remove(Path);
+  // First, rename Path to avoid race condition. We cannot remove
+  // Path from a different thread because we are now going to create
+  // Path as a new file. If we do that in a different thread, the new
+  // thread can remove the new file.
+  SmallString<128> TempPath;
+  if (sys::fs::createUniqueFile(Path + "tmp%%%%%%%%", TempPath))
+    return;
+  if (sys::fs::rename(Path, TempPath)) {
+    sys::fs::remove(TempPath);
+    return;
+  }
 
-  // close and therefore remove TempPath in background.
-  if (!EC)
-    std::thread([=] { ::close(FD); }).detach();
-#endif
+  // Remove TempPath in background.
+  std::thread([=] { ::remove(TempPath.str().str().c_str()); }).detach();
 }
 
 // Simulate file creation to see if Path is writable.
@@ -80,7 +73,5 @@ void elf::unlinkAsync(StringRef Path) {
 std::error_code elf::tryCreateFile(StringRef Path) {
   if (Path.empty())
     return std::error_code();
-  if (Path == "-")
-    return std::error_code();
-  return errorToErrorCode(FileOutputBuffer::create(Path, 1).takeError());
+  return FileOutputBuffer::create(Path, 1).getError();
 }

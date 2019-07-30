@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcireg.h,v 1.16 2019/05/10 02:05:35 guenther Exp $ */
+/* $OpenBSD: xhcireg.h,v 1.12 2017/09/08 10:25:19 stsp Exp $ */
 
 /*-
  * Copyright (c) 2014 Martin Pieuchot. All rights reserved.
@@ -71,12 +71,10 @@
 #define  XHCI_HCS1_N_PORTS(x)	(((x) >> 24) & 0xff)
 
 #define XHCI_HCSPARAMS2		0x08	/* RO structual parameters 2 */
-#define  XHCI_HCS2_IST(x)	((x) & 0x7)
-#define  XHCI_HCS2_IST_MICRO(x) (!((x) & 0x8))
+#define  XHCI_HCS2_IST(x)	((x) & 0xF)
 #define  XHCI_HCS2_ERST_MAX(x)	(((x) >> 4) & 0xf)
-#define  XHCI_HCS2_ETE(x)	(((x) >> 8) & 0x1)
-#define  XHCI_HCS2_SPR(x)	(((x) >> 26) & 0x1)
-#define  XHCI_HCS2_SPB_MAX(x)	((((x) >> 16) & 0x3e0) | (((x) >> 27) & 0x1f))
+#define  XHCI_HCS2_SPR(x)	(((x) >> 24) & 0x1)
+#define  XHCI_HCS2_SPB_MAX(x)	(((x) >> 27) & 0x7f)
 
 #define XHCI_HCSPARAMS3		0x0c	/* RO structual parameters 3 */
 #define  XHCI_HCS3_U1_DEL(x)	((x) & 0xff)
@@ -93,8 +91,8 @@
 #define  XHCI_HCC_NSS(x)	(((x) >> 7) & 0x1) /* No secondary sid */
 #define  XHCI_HCC_PAE(x)	(((x) >> 8) & 0x1) /* Pase All Event Data */
 #define  XHCI_HCC_SPC(x)	(((x) >> 9) & 0x1) /* Short packet */
-#define  XHCI_HCC_SEC(x)	(((x) >> 10) & 0x1) /* Stopped EDTLA */
-#define  XHCI_HCC_CFC(x)	(((x) >> 11) & 0x1) /* Configuous Frame ID */
+#define  XHCI_HCC_SEC(x)	(((x) >> 10) & 0xf) /* Stopped EDTLA */
+#define  XHCI_HCC_CFC(x)	(((x) >> 11) & 0xf) /* Configuous Frame ID */
 #define  XHCI_HCC_MAX_PSA_SZ(x)	(((x) >> 12) & 0xf) /* Max pri. stream arr. */
 #define  XHCI_HCC_XECP(x)	(((x) >> 16) & 0xffff) /* Ext. capabilities */
 
@@ -363,15 +361,13 @@ struct xhci_trb {
 #define XHCI_TRB_GET_EP(x)	(((x) >> 16) & 0x1f)
 #define XHCI_TRB_SET_EP(x)	(((x) & 0x1f) << 16)
 #define XHCI_TRB_ISOC_TLBPC(x)	(((x) & 0xf) << 16)
-#define XHCI_TRB_ISOC_FRAME(x)	(((x) & 0x7ff) << 20)
 #define XHCI_TRB_GET_SLOT(x)	(((x) >> 24) & 0xff)
 #define XHCI_TRB_SET_SLOT(x)	(((x) & 0xff) << 24)
 #define XHCI_TRB_SIA		(1U << 31)
 } __packed;
 
 #define XHCI_TRB_FLAGS_BITMASK						\
-    "\20" "\040SIA" "\022TRT_OUT" "\021DIR_IN" "\012BSR" "\007IDT" 	\
-    "\006IOC" "\005CHAIN" "\004NOSNOOP" "\003ISP" "\002LINKSEG" "\001CYCLE"
+    "\20\007IDT\006IOC\005CHAIN\004NOSNOOP\003ISP\002LINKSEG\001CYCLE"
 
 #define XHCI_TRB_TYPE_MASK	0xfc00
 #define XHCI_TRB_TYPE(x)	(((x) & XHCI_TRB_TYPE_MASK) >> 10)

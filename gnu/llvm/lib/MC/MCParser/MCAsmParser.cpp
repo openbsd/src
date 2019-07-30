@@ -10,7 +10,6 @@
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/Config/llvm-config.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
@@ -41,6 +40,11 @@ bool MCAsmParser::parseTokenLoc(SMLoc &Loc) {
 }
 
 bool MCAsmParser::parseEOL(const Twine &Msg) {
+  if (getTok().getKind() == AsmToken::Hash) {
+    StringRef CommentStr = parseStringToEndOfStatement();
+    getLexer().Lex();
+    getLexer().UnLex(AsmToken(AsmToken::EndOfStatement, CommentStr));
+  }
   if (getTok().getKind() != AsmToken::EndOfStatement)
     return Error(getTok().getLoc(), Msg);
   Lex();
@@ -66,6 +70,9 @@ bool MCAsmParser::parseIntToken(int64_t &V, const Twine &Msg) {
 
 bool MCAsmParser::parseOptionalToken(AsmToken::TokenKind T) {
   bool Present = (getTok().getKind() == T);
+  // if token is EOL and current token is # this is an EOL comment.
+  if (getTok().getKind() == AsmToken::Hash && T == AsmToken::EndOfStatement)
+    Present = true;
   if (Present)
     parseToken(T);
   return Present;
@@ -86,6 +93,7 @@ bool MCAsmParser::TokError(const Twine &Msg, SMRange Range) {
 }
 
 bool MCAsmParser::Error(SMLoc L, const Twine &Msg, SMRange Range) {
+  HadError = true;
 
   MCPendingError PErr;
   PErr.Loc = L;

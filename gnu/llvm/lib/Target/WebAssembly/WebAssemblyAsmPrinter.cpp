@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// This file contains a printer that converts from our internal
+/// \brief This file contains a printer that converts from our internal
 /// representation of machine-dependent LLVM code to the WebAssembly assembly
 /// language.
 ///
@@ -31,10 +31,10 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCSectionWasm.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCSymbolWasm.h"
+#include "llvm/MC/MCSymbolELF.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
@@ -53,7 +53,7 @@ MVT WebAssemblyAsmPrinter::getRegType(unsigned RegNo) const {
                 MVT::v4i32, MVT::v4f32})
     if (TRI->isTypeLegalForClass(*TRC, T))
       return T;
-  LLVM_DEBUG(errs() << "Unknown type for register number: " << RegNo);
+  DEBUG(errs() << "Unknown type for register number: " << RegNo);
   llvm_unreachable("Unknown register type");
   return MVT::Other;
 }
@@ -84,45 +84,16 @@ void WebAssemblyAsmPrinter::EmitEndOfAsmFile(Module &M) {
       SmallVector<MVT, 4> Results;
       SmallVector<MVT, 4> Params;
       ComputeSignatureVTs(F, TM, Params, Results);
-      MCSymbol *Sym = getSymbol(&F);
-      getTargetStreamer()->emitIndirectFunctionType(Sym, Params, Results);
-
-      if (TM.getTargetTriple().isOSBinFormatWasm() &&
-          F.hasFnAttribute("wasm-import-module")) {
-        MCSymbolWasm *WasmSym = cast<MCSymbolWasm>(Sym);
-        StringRef Name = F.getFnAttribute("wasm-import-module")
-                             .getValueAsString();
-        getTargetStreamer()->emitImportModule(WasmSym, Name);
-      }
+      getTargetStreamer()->emitIndirectFunctionType(getSymbol(&F), Params,
+                                                    Results);
     }
   }
   for (const auto &G : M.globals()) {
     if (!G.hasInitializer() && G.hasExternalLinkage()) {
-      if (G.getValueType()->isSized()) {
-        uint16_t Size = M.getDataLayout().getTypeAllocSize(G.getValueType());
-        OutStreamer->emitELFSize(getSymbol(&G),
-                                 MCConstantExpr::create(Size, OutContext));
-      }
-    }
-  }
-
-  if (const NamedMDNode *Named = M.getNamedMetadata("wasm.custom_sections")) {
-    for (const Metadata *MD : Named->operands()) {
-      const MDTuple *Tuple = dyn_cast<MDTuple>(MD);
-      if (!Tuple || Tuple->getNumOperands() != 2)
-        continue;
-      const MDString *Name = dyn_cast<MDString>(Tuple->getOperand(0));
-      const MDString *Contents = dyn_cast<MDString>(Tuple->getOperand(1));
-      if (!Name || !Contents)
-        continue;
-
-      OutStreamer->PushSection();
-      std::string SectionName = (".custom_section." + Name->getString()).str();
-      MCSectionWasm *mySection =
-          OutContext.getWasmSection(SectionName, SectionKind::getMetadata());
-      OutStreamer->SwitchSection(mySection);
-      OutStreamer->EmitBytes(Contents->getString());
-      OutStreamer->PopSection();
+      uint16_t Size = M.getDataLayout().getTypeAllocSize(G.getValueType());
+      getTargetStreamer()->emitGlobalImport(G.getGlobalIdentifier());
+      OutStreamer->emitELFSize(getSymbol(&G),
+                               MCConstantExpr::create(Size, OutContext));
     }
   }
 }
@@ -140,7 +111,7 @@ void WebAssemblyAsmPrinter::EmitFunctionBodyStart() {
   getTargetStreamer()->emitParam(CurrentFnSym, MFI->getParams());
 
   SmallVector<MVT, 4> ResultVTs;
-  const Function &F = MF->getFunction();
+  const Function &F(*MF->getFunction());
 
   // Emit the function index.
   if (MDNode *Idx = F.getMetadata("wasm.index")) {
@@ -159,13 +130,36 @@ void WebAssemblyAsmPrinter::EmitFunctionBodyStart() {
   else
     getTargetStreamer()->emitResult(CurrentFnSym, ArrayRef<MVT>());
 
+  if (TM.getTargetTriple().isOSBinFormatELF()) {
+    assert(MFI->getLocals().empty());
+    for (unsigned Idx = 0, IdxE = MRI->getNumVirtRegs(); Idx != IdxE; ++Idx) {
+      unsigned VReg = TargetRegisterInfo::index2VirtReg(Idx);
+      unsigned WAReg = MFI->getWAReg(VReg);
+      // Don't declare unused registers.
+      if (WAReg == WebAssemblyFunctionInfo::UnusedReg)
+        continue;
+      // Don't redeclare parameters.
+      if (WAReg < MFI->getParams().size())
+        continue;
+      // Don't declare stackified registers.
+      if (int(WAReg) < 0)
+        continue;
+      MFI->addLocal(getRegType(VReg));
+    }
+  }
+
   getTargetStreamer()->emitLocal(MFI->getLocals());
 
   AsmPrinter::EmitFunctionBodyStart();
 }
 
+void WebAssemblyAsmPrinter::EmitFunctionBodyEnd() {
+  if (TM.getTargetTriple().isOSBinFormatELF())
+    getTargetStreamer()->emitEndFunc();
+}
+
 void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  LLVM_DEBUG(dbgs() << "EmitInstruction: " << *MI << '\n');
+  DEBUG(dbgs() << "EmitInstruction: " << *MI << '\n');
 
   switch (MI->getOpcode()) {
   case WebAssembly::ARGUMENT_I32:
@@ -193,7 +187,7 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     if (isVerbose()) {
       OutStreamer->AddComment("fallthrough-return: $pop" +
-                              Twine(MFI->getWARegStackId(
+                              utostr(MFI->getWARegStackId(
                                   MFI->getWAReg(MI->getOperand(0).getReg()))));
       OutStreamer->AddBlankLine();
     }
@@ -273,11 +267,12 @@ bool WebAssemblyAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   if (AsmVariant != 0)
     report_fatal_error("There are no defined alternate asm variants");
 
-  // The current approach to inline asm is that "r" constraints are expressed
-  // as local indices, rather than values on the operand stack. This simplifies
-  // using "r" as it eliminates the need to push and pop the values in a
-  // particular order, however it also makes it impossible to have an "m"
-  // constraint. So we don't support it.
+  if (!ExtraCode) {
+    // TODO: For now, we just hard-code 0 as the constant offset; teach
+    // SelectInlineAsmMemoryOperand how to do address mode matching.
+    OS << "0(" + regToString(MI->getOperand(OpNo)) + ')';
+    return false;
+  }
 
   return AsmPrinter::PrintAsmMemoryOperand(MI, OpNo, AsmVariant, ExtraCode, OS);
 }

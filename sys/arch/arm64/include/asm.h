@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.6 2019/05/04 16:18:35 kettenis Exp $	*/
+/*	$OpenBSD: asm.h,v 1.3 2017/06/29 17:36:16 deraadt Exp $	*/
 /*	$NetBSD: asm.h,v 1.4 2001/07/16 05:43:32 matt Exp $	*/
 
 /*
@@ -82,55 +82,6 @@
 # define _PROF_PROLOGUE
 #endif
 
-#if defined(_RET_PROTECTOR)
-# define RETGUARD_CALC_COOKIE(reg) \
-	eor     reg, reg, x30
-
-# define RETGUARD_LOAD_RANDOM(x, reg) \
-	adrp    reg, __CONCAT(__retguard_, x); \
-	ldr     reg, [reg, :lo12:__CONCAT(__retguard_, x)]
-
-# define RETGUARD_SETUP(x, reg) \
-	RETGUARD_SYMBOL(x); \
-	RETGUARD_LOAD_RANDOM(x, reg); \
-	RETGUARD_CALC_COOKIE(reg)
-
-# define RETGUARD_CHECK(x, reg) \
-	RETGUARD_CALC_COOKIE(reg); \
-	RETGUARD_LOAD_RANDOM(x, x9); \
-	subs    reg, reg, x9; \
-	cbz     reg, 66f; \
-	brk     #0x1; \
-66:
-
-# define RETGUARD_PUSH(reg) \
-	str     reg, [sp, #-16]!
-
-# define RETGUARD_POP(reg) \
-	ldr     reg, [sp, #16]!
-
-# define RETGUARD_SYMBOL(x) \
-	.ifndef __CONCAT(__retguard_, x); \
-	.hidden __CONCAT(__retguard_, x); \
-	.type   __CONCAT(__retguard_, x),@object; \
-	.pushsection .openbsd.randomdata.retguard,"aw",@progbits; \
-	.weak   __CONCAT(__retguard_, x); \
-	.p2align 3; \
-	__CONCAT(__retguard_, x): ; \
-	.xword 0; \
-	.size __CONCAT(__retguard_, x), 8; \
-	.popsection; \
-	.endif
-#else
-# define RETGUARD_CALC_COOKIE(reg)
-# define RETGUARD_LOAD_RANDOM(x, reg)
-# define RETGUARD_SETUP(x, reg)
-# define RETGUARD_CHECK(x, reg)
-# define RETGUARD_PUSH(reg)
-# define RETGUARD_POP(reg)
-# define RETGUARD_SYMBOL(x)
-#endif
-
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
 #define	ENTRY_NP(y)	_ENTRY(_C_LABEL(y))
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
@@ -171,5 +122,16 @@
 	.stabs msg,30,0,0,0 ;						\
 	.stabs __STRING(_/**/sym),1,0,0,0
 #endif /* __STDC__ */
+
+
+/*
+ * Sets the trap fault handler. The exception handler will return to the
+ * address in the handler register on a data abort or the xzr register to
+ * clear the handler. The tmp parameter should be a register able to hold
+ * the temporary data.
+ */
+#define SET_FAULT_HANDLER(handler, tmp)					\
+	ldr	tmp, [x18, #CI_CURPCB];		/* Load the pcb */	\
+	str	handler, [tmp, #PCB_ONFAULT]	/* Set the handler */
 
 #endif /* !_MACHINE_ASM_H_ */

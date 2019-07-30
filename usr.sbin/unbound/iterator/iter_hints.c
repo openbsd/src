@@ -244,21 +244,14 @@ read_stubs_addr(struct config_stub* s, struct delegpt* dp)
 	struct config_strlist* p;
 	struct sockaddr_storage addr;
 	socklen_t addrlen;
-	char* auth_name;
 	for(p = s->addrs; p; p = p->next) {
 		log_assert(p->str);
-		if(!authextstrtoaddr(p->str, &addr, &addrlen, &auth_name)) {
+		if(!extstrtoaddr(p->str, &addr, &addrlen)) {
 			log_err("cannot parse stub %s ip address: '%s'", 
 				s->name, p->str);
 			return 0;
 		}
-#if ! defined(HAVE_SSL_SET1_HOST) && ! defined(HAVE_X509_VERIFY_PARAM_SET1_HOST)
-		if(auth_name)
-			log_err("no name verification functionality in "
-				"ssl library, ignored name for %s", p->str);
-#endif
-		if(!delegpt_add_addr_mlc(dp, &addr, addrlen, 0, 0,
-			auth_name)) {
+		if(!delegpt_add_addr_mlc(dp, &addr, addrlen, 0, 0)) {
 			log_err("out of memory");
 			return 0;
 		}
@@ -283,8 +276,6 @@ read_stubs(struct iter_hints* hints, struct config_file* cfg)
 		 * last resort will ask for parent-side NS record and thus
 		 * fallback to the internet name servers on a failure */
 		dp->has_parent_side_NS = (uint8_t)!s->isfirst;
-		/* Do not cache if set. */
-		dp->no_cache = s->no_cache;
 		/* ssl_upstream */
 		dp->ssl_upstream = (uint8_t)s->ssl_upstream;
 		delegpt_log(VERB_QUERY, dp);

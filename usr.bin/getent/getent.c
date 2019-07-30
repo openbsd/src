@@ -1,4 +1,4 @@
-/*	$OpenBSD: getent.c,v 1.21 2018/11/02 10:21:29 kn Exp $	*/
+/*	$OpenBSD: getent.c,v 1.14 2016/02/01 19:57:28 jca Exp $	*/
 /*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@
 
 #include <rpc/rpc.h>
 
-static void	usage(void);
+static int	usage(void);
 static int	ethers(int, char *[]);
 static int	group(int, char *[]);
 static int	hosts(int, char *[]);
@@ -77,16 +77,15 @@ static struct getentdb {
 	const char	*name;
 	int		(*fn)(int, char *[]);
 	const char	*pledge;
-	const char	*unveil;
 } databases[] = {
-	{	"ethers",	ethers,		"stdio rpath",	"/etc/ethers"	},
-	{	"group",	group,		"stdio getpw",	NULL	},
-	{	"hosts",	hosts,		"stdio dns",	NULL	},
-	{	"passwd",	passwd,		"stdio getpw",	NULL	},
-	{	"protocols",	protocols,	"stdio rpath",	"/etc/protocols"	},
-	{	"rpc",		rpc,		"stdio rpath",	"/etc/rpc"	},
-	{	"services",	services,	"stdio rpath",	"/etc/services"	},
-	{	"shells",	shells,		"stdio rpath",	"/etc/shells"	},
+	{	"ethers",	ethers,		"stdio rpath"	},
+	{	"group",	group,		"stdio getpw"	},
+	{	"hosts",	hosts,		"stdio dns"	},
+	{	"passwd",	passwd,		"stdio getpw"	},
+	{	"protocols",	protocols,	"stdio rpath"	},
+	{	"rpc",		rpc,		"stdio rpath"	},
+	{	"services",	services,	"stdio rpath"	},
+	{	"shells",	shells,		"stdio rpath"	},
 
 	{	NULL,		NULL,				},
 };
@@ -96,14 +95,13 @@ main(int argc, char *argv[])
 {
 	struct getentdb	*curdb;
 
+	if (pledge("stdio dns rpath getpw", NULL) == -1)
+		err(1, "pledge");
+
 	if (argc < 2)
 		usage();
 	for (curdb = databases; curdb->name != NULL; curdb++) {
 		if (strcmp(curdb->name, argv[1]) == 0) {
-			if (curdb->unveil != NULL) {
-				if (unveil(curdb->unveil, "r") == -1)
-					err(1, "unveil");
-			}
 			if (pledge(curdb->pledge, NULL) == -1)
 				err(1, "pledge");
 
@@ -115,11 +113,12 @@ main(int argc, char *argv[])
 	return RV_USAGE;
 }
 
-static void
+static int
 usage(void)
 {
 	fprintf(stderr, "usage: %s database [key ...]\n", __progname);
 	exit(RV_USAGE);
+	/* NOTREACHED */
 }
 
 /*
@@ -190,10 +189,8 @@ ethers(int argc, char *argv[])
 static int
 group(int argc, char *argv[])
 {
-	struct group	*gr;
-	const char	*err;
-	gid_t		gid;
 	int		i, rv = RV_OK;
+	struct group	*gr;
 
 	setgroupent(1);
 	if (argc == 2) {
@@ -201,11 +198,13 @@ group(int argc, char *argv[])
 			GROUPPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
-			if ((gr = getgrnam(argv[i])) == NULL) {
-				gid = strtonum(argv[i], 0, GID_MAX, &err);
-				if (err == NULL)
-					gr = getgrgid(gid);
-			}
+			const char	*err;
+			long long id = strtonum(argv[i], 0, UINT_MAX, &err);
+
+			if (!err)
+				gr = getgrgid((gid_t)id);
+			else
+				gr = getgrnam(argv[i]);
 			if (gr != NULL)
 				GROUPPRINT;
 			else {
@@ -225,33 +224,45 @@ hostsprint(const struct hostent *he)
 
 	if (inet_ntop(he->h_addrtype, he->h_addr, buf, sizeof(buf)) == NULL)
 		strlcpy(buf, "# unknown", sizeof(buf));
-	printfmtstrings(he->h_aliases, "  ", " ", "%-39s %s", buf, he->h_name);
+	printfmtstrings(he->h_aliases, "  ", " ", "%-16s  %s", buf, he->h_name);
 }
 static int
-hostsaddrinfo(const char *name)
+hostsaddrinfo(char* name)
 {
 	struct addrinfo	 hints, *res, *res0;
-	char		 buf[INET6_ADDRSTRLEN];
+	void		*src;
 	int		 rv;
+	char		 buf[INET6_ADDRSTRLEN];
 
 	rv = RV_NOTFOUND;
 	memset(buf, 0, sizeof(buf));
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
+	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
 
-	if (getaddrinfo(name, NULL, &hints, &res0) != 0)
-		return (rv);
-	for (res = res0; res; res = res->ai_next) {
-		if ((res->ai_family != AF_INET6 && res->ai_family != AF_INET) ||
-		    getnameinfo(res->ai_addr, res->ai_addrlen, buf, sizeof(buf),
-		    NULL, 0, NI_NUMERICHOST) != 0)
-			strlcpy(buf, "# unknown", sizeof(buf));
-		else
-			rv = RV_OK;
-		printf("%-39s %s\n", buf, name);
+	if (getaddrinfo(name, NULL, &hints, &res0) == 0) {
+		for (res = res0; res; res = res->ai_next) {
+			switch (res->ai_family) {
+			case AF_INET:
+				src = &((struct sockaddr_in*)
+				    res->ai_addr)->sin_addr;
+				break;
+			case AF_INET6:
+				src = &((struct sockaddr_in6*)
+				    res->ai_addr)->sin6_addr;
+				break;
+			default: /* not reached */
+				src = NULL;
+			}
+			if (src==NULL || inet_ntop(res->ai_family, src, buf,
+			    sizeof(buf)) == NULL)
+				strlcpy(buf, "# unknown", sizeof(buf));
+			else
+				rv = RV_OK;
+			printf("%-39s %s\n", buf, name);
+		}
+		freeaddrinfo(res0);
 	}
-	freeaddrinfo(res0);
 
 	return (rv);
 }
@@ -291,10 +302,8 @@ hosts(int argc, char *argv[])
 static int
 passwd(int argc, char *argv[])
 {
-	struct passwd	*pw;
-	const char	*err;
-	uid_t		uid;
 	int		i, rv = RV_OK;
+	struct passwd	*pw;
 
 	setpassent(1);
 	if (argc == 2) {
@@ -302,11 +311,13 @@ passwd(int argc, char *argv[])
 			PASSWDPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
-			if ((pw = getpwnam(argv[i])) == NULL) {
-				uid = strtonum(argv[i], 0, UID_MAX, &err);
-				if (err == NULL)
-					pw = getpwuid(uid);
-			}
+			const char	*err;
+			long long id = strtonum(argv[i], 0, UINT_MAX, &err);
+
+			if (!err)
+				pw = getpwuid((uid_t)id);
+			else
+				pw = getpwnam(argv[i]);
 			if (pw != NULL)
 				PASSWDPRINT;
 			else {
@@ -327,8 +338,6 @@ static int
 protocols(int argc, char *argv[])
 {
 	struct protoent	*pe;
-	const char	*err;
-	int		proto;
 	int		i, rv = RV_OK;
 
 	setprotoent(1);
@@ -337,9 +346,11 @@ protocols(int argc, char *argv[])
 			PROTOCOLSPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
-			proto = strtonum(argv[i], 0, INT_MAX, &err);
+			const char	*err;
+			long long id = strtonum(argv[i], 0, UINT_MAX, &err);
+
 			if (!err)
-				pe = getprotobynumber(proto);
+				pe = getprotobynumber((int)id);
 			else
 				pe = getprotobyname(argv[i]);
 			if (pe != NULL)
@@ -362,8 +373,6 @@ static int
 rpc(int argc, char *argv[])
 {
 	struct rpcent	*re;
-	const char	*err;
-	int		rpc;
 	int		i, rv = RV_OK;
 
 	setrpcent(1);
@@ -372,9 +381,11 @@ rpc(int argc, char *argv[])
 			RPCPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
-			rpc = strtonum(argv[i], 0, INT_MAX, &err);
+			const char	*err;
+			long long id = strtonum(argv[i], 0, UINT_MAX, &err);
+
 			if (!err)
-				re = getrpcbynumber(rpc);
+				re = getrpcbynumber((int)id);
 			else
 				re = getrpcbyname(argv[i]);
 			if (re != NULL)
@@ -397,9 +408,6 @@ static int
 services(int argc, char *argv[])
 {
 	struct servent	*se;
-	const char	*err;
-	char		*proto;
-	in_port_t	port;
 	int		i, rv = RV_OK;
 
 	setservent(1);
@@ -408,11 +416,15 @@ services(int argc, char *argv[])
 			SERVICESPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
-			if ((proto = strchr(argv[i], '/')) != NULL)
+			const char	*err;
+			long long	id;
+			char *proto = strchr(argv[i], '/');
+
+			if (proto != NULL)
 				*proto++ = '\0';
-			port = strtonum(argv[i], 0, IPPORT_HILASTAUTO, &err);
+			id = strtonum(argv[i], 0, UINT_MAX, &err);
 			if (!err)
-				se = getservbyport(htons(port), proto);
+				se = getservbyport(htons((u_short)id), proto);
 			else
 				se = getservbyname(argv[i], proto);
 			if (se != NULL)

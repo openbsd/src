@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_start.S,v 1.17 2019/05/06 03:32:48 mlarkin Exp $	*/
+/*	$OpenBSD: armv7_start.S,v 1.15 2017/10/26 02:48:36 jsg Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -13,7 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of Genetec Corporation may not be used to endorse or
+ * 3. The name of Genetec Corporation may not be used to endorse or 
  *    promote products derived from this software without specific prior
  *    written permission.
  *
@@ -30,12 +30,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "assym.h"
-
 #include <machine/asm.h>
 #include <arm/sysreg.h>
 #include <arm/armreg.h>
 #include <arm/pte.h>
+
+#undef	DOMAIN_CLIENT	/* XXX */
+#include "assym.h"
 
 #ifdef __clang__
 .arch_extension sec
@@ -92,9 +93,9 @@ ENTRY(hvc_call)
  *	omap4_smc_call - issues a secure monitor API call
  *	@r0: contains the monitor API number
  *	@r1: contains the value to set
- *
+ * 
  *	This function will send a secure monitor call to the internal rom code in
- *	the trust mode. The rom code expects that r0 will contain the value and
+ *	the trust mode. The rom code expects that r0 will contain the value and 
  *	r12 will contain the API number, so internally the function swaps the
  *	register settings around.  The trust mode code may also alter all the cpu
  *	registers so everything (including the lr register) is saved on the stack

@@ -25,7 +25,7 @@ using namespace clang;
 
 namespace {
 
-/// Numbers things which need to correspond across multiple TUs.
+/// \brief Numbers things which need to correspond across multiple TUs.
 /// Typically these are things like static locals, lambdas, or blocks.
 class MicrosoftNumberingContext : public MangleNumberingContext {
   llvm::DenseMap<const Type *, unsigned> ManglingNumbers;
@@ -76,8 +76,8 @@ class MicrosoftCXXABI : public CXXABI {
 public:
   MicrosoftCXXABI(ASTContext &Ctx) : Context(Ctx) { }
 
-  MemberPointerInfo
-  getMemberPointerInfo(const MemberPointerType *MPT) const override;
+  std::pair<uint64_t, unsigned>
+  getMemberPointerWidthAndAlign(const MemberPointerType *MPT) const override;
 
   CallingConv getDefaultMethodCallConv(bool isVariadic) const override {
     if (!isVariadic &&
@@ -106,7 +106,7 @@ public:
   void addTypedefNameForUnnamedTagDecl(TagDecl *TD,
                                        TypedefNameDecl *DD) override {
     TD = TD->getCanonicalDecl();
-    DD = DD->getCanonicalDecl();
+    DD = cast<TypedefNameDecl>(DD->getCanonicalDecl());
     TypedefNameDecl *&I = UnnamedTagDeclToTypedefNameDecl[TD];
     if (!I)
       I = DD;
@@ -227,7 +227,7 @@ getMSMemberPointerSlots(const MemberPointerType *MPT) {
   return std::make_pair(Ptrs, Ints);
 }
 
-CXXABI::MemberPointerInfo MicrosoftCXXABI::getMemberPointerInfo(
+std::pair<uint64_t, unsigned> MicrosoftCXXABI::getMemberPointerWidthAndAlign(
     const MemberPointerType *MPT) const {
   // The nominal struct is laid out with pointers followed by ints and aligned
   // to a pointer width if any are present and an int width otherwise.
@@ -237,25 +237,22 @@ CXXABI::MemberPointerInfo MicrosoftCXXABI::getMemberPointerInfo(
 
   unsigned Ptrs, Ints;
   std::tie(Ptrs, Ints) = getMSMemberPointerSlots(MPT);
-  MemberPointerInfo MPI;
-  MPI.HasPadding = false;
-  MPI.Width = Ptrs * PtrSize + Ints * IntSize;
+  uint64_t Width = Ptrs * PtrSize + Ints * IntSize;
+  unsigned Align;
 
   // When MSVC does x86_32 record layout, it aligns aggregate member pointers to
   // 8 bytes.  However, __alignof usually returns 4 for data memptrs and 8 for
   // function memptrs.
   if (Ptrs + Ints > 1 && Target.getTriple().isArch32Bit())
-    MPI.Align = 64;
+    Align = 64;
   else if (Ptrs)
-    MPI.Align = Target.getPointerAlign(0);
+    Align = Target.getPointerAlign(0);
   else
-    MPI.Align = Target.getIntAlign();
+    Align = Target.getIntAlign();
 
-  if (Target.getTriple().isArch64Bit()) {
-    MPI.Width = llvm::alignTo(MPI.Width, MPI.Align);
-    MPI.HasPadding = MPI.Width != (Ptrs * PtrSize + Ints * IntSize);
-  }
-  return MPI;
+  if (Target.getTriple().isArch64Bit())
+    Width = llvm::alignTo(Width, Align);
+  return std::make_pair(Width, Align);
 }
 
 CXXABI *clang::CreateMicrosoftCXXABI(ASTContext &Ctx) {

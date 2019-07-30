@@ -20,6 +20,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Object/Binary.h"
+#include "llvm/Object/COFF.h"
 #include "llvm/Object/Error.h"
 #include "llvm/Object/MachOUniversal.h"
 #include "llvm/Object/ObjectFile.h"
@@ -32,6 +33,13 @@
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
+#include <memory>
+#include <utility>
 #include <vector>
 
 using namespace llvm;
@@ -41,18 +49,16 @@ using namespace object;
 #define DEBUG_TYPE "coverage-mapping"
 
 void CoverageMappingIterator::increment() {
-  if (ReadErr != coveragemap_error::success)
-    return;
-
   // Check if all the records were read or if an error occurred while reading
   // the next record.
-  if (auto E = Reader->readNextRecord(Record))
+  if (auto E = Reader->readNextRecord(Record)) {
     handleAllErrors(std::move(E), [&](const CoverageMapError &CME) {
       if (CME.get() == coveragemap_error::eof)
         *this = CoverageMappingIterator();
       else
-        ReadErr = CME.get();
+        llvm_unreachable("Unexpected error in coverage mapping iterator");
     });
+  }
 }
 
 Error RawCoverageReader::readULEB128(uint64_t &Result) {
@@ -147,7 +153,7 @@ Error RawCoverageMappingReader::readCounter(Counter &C) {
 static const unsigned EncodingExpansionRegionBit = 1
                                                    << Counter::EncodingTagBits;
 
-/// Read the sub-array of regions for the given inferred file id.
+/// \brief Read the sub-array of regions for the given inferred file id.
 /// \param NumFileIDs the number of file ids that are defined for this
 /// function.
 Error RawCoverageMappingReader::readMappingRegionsSubArray(
@@ -208,13 +214,6 @@ Error RawCoverageMappingReader::readMappingRegionsSubArray(
     if (auto Err = readIntMax(ColumnEnd, std::numeric_limits<unsigned>::max()))
       return Err;
     LineStart += LineStartDelta;
-
-    // If the high bit of ColumnEnd is set, this is a gap region.
-    if (ColumnEnd & (1U << 31)) {
-      Kind = CounterMappingRegion::GapRegion;
-      ColumnEnd &= ~(1U << 31);
-    }
-
     // Adjust the column locations for the empty regions that are supposed to
     // cover whole lines. Those regions should be encoded with the
     // column range (1 -> std::numeric_limits<unsigned>::max()), but because
@@ -228,7 +227,7 @@ Error RawCoverageMappingReader::readMappingRegionsSubArray(
       ColumnEnd = std::numeric_limits<unsigned>::max();
     }
 
-    LLVM_DEBUG({
+    DEBUG({
       dbgs() << "Counter in file " << InferredFileID << " " << LineStart << ":"
              << ColumnStart << " -> " << (LineStart + NumLines) << ":"
              << ColumnEnd << ", ";
@@ -239,12 +238,9 @@ Error RawCoverageMappingReader::readMappingRegionsSubArray(
       dbgs() << "\n";
     });
 
-    auto CMR = CounterMappingRegion(C, InferredFileID, ExpandedFileID,
-                                    LineStart, ColumnStart,
-                                    LineStart + NumLines, ColumnEnd, Kind);
-    if (CMR.startLoc() > CMR.endLoc())
-      return make_error<CoverageMapError>(coveragemap_error::malformed);
-    MappingRegions.push_back(CMR);
+    MappingRegions.push_back(CounterMappingRegion(
+        C, InferredFileID, ExpandedFileID, LineStart, ColumnStart,
+        LineStart + NumLines, ColumnEnd, Kind));
   }
   return Error::success();
 }
@@ -533,16 +529,11 @@ Expected<std::unique_ptr<CovMapFuncRecordReader>> CovMapFuncRecordReader::get(
     return llvm::make_unique<VersionedCovMapFuncRecordReader<
         CovMapVersion::Version1, IntPtrT, Endian>>(P, R, F);
   case CovMapVersion::Version2:
-  case CovMapVersion::Version3:
     // Decompress the name data.
     if (Error E = P.create(P.getNameData()))
       return std::move(E);
-    if (Version == CovMapVersion::Version2)
-      return llvm::make_unique<VersionedCovMapFuncRecordReader<
-          CovMapVersion::Version2, IntPtrT, Endian>>(P, R, F);
-    else
-      return llvm::make_unique<VersionedCovMapFuncRecordReader<
-          CovMapVersion::Version3, IntPtrT, Endian>>(P, R, F);
+    return llvm::make_unique<VersionedCovMapFuncRecordReader<
+        CovMapVersion::Version2, IntPtrT, Endian>>(P, R, F);
   }
   llvm_unreachable("Unsupported version");
 }

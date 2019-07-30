@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.143 2018/07/02 20:56:22 bluhm Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.138 2018/02/10 05:24:23 deraadt Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -866,9 +866,9 @@ softdep_flushworklist(struct mount *oldmnt, int *countp, struct proc *p)
 	devvp = VFSTOUFS(oldmnt)->um_devvp;
 	while ((count = softdep_process_worklist(oldmnt)) > 0) {
 		*countp += count;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 		error = VOP_FSYNC(devvp, p->p_ucred, MNT_WAIT, p);
-		VOP_UNLOCK(devvp);
+		VOP_UNLOCK(devvp, p);
 		if (error)
 			break;
 	}
@@ -2307,7 +2307,7 @@ check_inode_unwritten(struct inodedep *inodedep)
 	if (inodedep->id_state & ONWORKLIST)
 		WORKLIST_REMOVE(&inodedep->id_list);
 	if (inodedep->id_savedino1 != NULL) {
-		free(inodedep->id_savedino1, M_INODEDEP, inodedep->id_unsize);
+		free(inodedep->id_savedino1, M_INODEDEP, 0);
 		inodedep->id_savedino1 = NULL;
 	}
 	if (free_inodedep(inodedep) == 0) {
@@ -3419,7 +3419,6 @@ initiate_write_inodeblock_ufs1(struct inodedep *inodedep, struct buf *bp)
 		FREE_LOCK(&lk);
 		inodedep->id_savedino1 = malloc(sizeof(struct ufs1_dinode),
 		    M_INODEDEP, M_WAITOK);
-		inodedep->id_unsize = sizeof(struct ufs1_dinode);
 		ACQUIRE_LOCK(&lk);
 		*inodedep->id_savedino1 = *dp;
 		memset(dp, 0, sizeof(struct ufs1_dinode));
@@ -3562,7 +3561,6 @@ initiate_write_inodeblock_ufs2(struct inodedep *inodedep, struct buf *bp)
 			panic("initiate_write_inodeblock_ufs2: I/O underway");
 		inodedep->id_savedino2 = malloc(sizeof(struct ufs2_dinode),
 		    M_INODEDEP, M_WAITOK);
-		inodedep->id_unsize = sizeof(struct ufs2_dinode);
 		*inodedep->id_savedino2 = *dp;
 		memset(dp, 0, sizeof(struct ufs2_dinode));
 		return;
@@ -3847,7 +3845,7 @@ softdep_disk_write_complete(struct buf *bp)
 			if (indirdep->ir_state & GOINGAWAY)
 				panic("disk_write_complete: indirdep gone");
 			memcpy(bp->b_data, indirdep->ir_saveddata, bp->b_bcount);
-			free(indirdep->ir_saveddata, M_INDIRDEP, bp->b_bcount);
+			free(indirdep->ir_saveddata, M_INDIRDEP, 0);
 			indirdep->ir_saveddata = NULL;
 			indirdep->ir_state &= ~UNDONE;
 			indirdep->ir_state |= ATTACHED;
@@ -4036,7 +4034,7 @@ handle_written_inodeblock(struct inodedep *inodedep, struct buf *bp)
 			*dp1 = *inodedep->id_savedino1;
 		else
 			*dp2 = *inodedep->id_savedino2;
-		free(inodedep->id_savedino1, M_INODEDEP, inodedep->id_unsize);
+		free(inodedep->id_savedino1, M_INODEDEP, 0);
 		inodedep->id_savedino1 = NULL;
 		if ((bp->b_flags & B_DELWRI) == 0)
 			stat_inode_bitmap++;
@@ -4578,9 +4576,9 @@ softdep_fsync(struct vnode *vp)
 		 * ufs_lookup for details on possible races.
 		 */
 		FREE_LOCK(&lk);
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, p);
 		error = VFS_VGET(mnt, parentino, &pvp);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 		if (error != 0)
 			return (error);
 		/*
@@ -4640,7 +4638,8 @@ softdep_fsync_mountdev(struct vnode *vp, int waitfor)
 	if (!vn_isdisk(vp, NULL))
 		panic("softdep_fsync_mountdev: vnode not a disk");
 	ACQUIRE_LOCK(&lk);
-	LIST_FOREACH_SAFE(bp, &vp->v_dirtyblkhd, b_vnbufs, nbp) {
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
 		/* 
 		 * If it is already scheduled, skip to the next buffer.
 		 */
@@ -4931,7 +4930,7 @@ loop:
 	 * all potential buffers on the dirty list will be visible.
 	 */
 	drain_output(vp, 1);
-	if (LIST_EMPTY(&vp->v_dirtyblkhd)) {
+	if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
 		FREE_LOCK(&lk);
 		return (0);
 	}

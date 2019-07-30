@@ -98,8 +98,6 @@ public:
 
 protected:
   friend class SBTraceOptions;
-  friend class SBDebugger;
-  friend class SBTarget;
 
   StructuredDataImplUP m_impl_up;
 };

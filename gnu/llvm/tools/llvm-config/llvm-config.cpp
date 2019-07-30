@@ -17,16 +17,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Config/llvm-config.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdlib>
 #include <set>
@@ -63,7 +62,7 @@ enum LinkMode {
   LinkModeStatic = 2,
 };
 
-/// Traverse a single component adding to the topological ordering in
+/// \brief Traverse a single component adding to the topological ordering in
 /// \arg RequiredLibs.
 ///
 /// \param Name - The component to traverse.
@@ -130,7 +129,7 @@ static void VisitComponent(const std::string &Name,
   }
 }
 
-/// Compute the list of required libraries for a given list of
+/// \brief Compute the list of required libraries for a given list of
 /// components, in an order suitable for passing to a linker (that is, libraries
 /// appear prior to their dependencies).
 ///
@@ -224,7 +223,7 @@ Typical components:\n\
   exit(1);
 }
 
-/// Compute the path to the main executable.
+/// \brief Compute the path to the main executable.
 std::string GetExecutablePath(const char *Argv0) {
   // This just needs to be some symbol in the binary; C++ doesn't
   // allow taking the address of ::main however.
@@ -232,7 +231,7 @@ std::string GetExecutablePath(const char *Argv0) {
   return llvm::sys::fs::getMainExecutable(Argv0, P);
 }
 
-/// Expand the semi-colon delimited LLVM_DYLIB_COMPONENTS into
+/// \brief Expand the semi-colon delimited LLVM_DYLIB_COMPONENTS into
 /// the full list of components.
 std::vector<std::string> GetAllDyLibComponents(const bool IsInDevelopmentTree,
                                                const bool GetComponentNames,
@@ -377,12 +376,6 @@ int main(int argc, char **argv) {
     StaticExt = "a";
     StaticDir = SharedDir = ActiveLibDir;
     StaticPrefix = SharedPrefix = "lib";
-  } else if (HostTriple.isOSOpenBSD()) {
-    SharedExt = "so";
-    SharedVersionedExt = ".so" ;
-    StaticExt = "a";
-    StaticDir = SharedDir = ActiveLibDir;
-    StaticPrefix = SharedPrefix = "lib";
   } else {
     // default to the unix values:
     SharedExt = "so";
@@ -399,7 +392,7 @@ int main(int argc, char **argv) {
 
   bool DyLibExists = false;
   const std::string DyLibName =
-      (SharedPrefix + "LLVM" + SharedVersionedExt).str();
+      (SharedPrefix + "LLVM-" + SharedVersionedExt).str();
 
   // If LLVM_LINK_DYLIB is ON, the single shared library will be returned
   // for "--libs", etc, if they exist. This behaviour can be overridden with
@@ -411,12 +404,7 @@ int main(int argc, char **argv) {
     if (DirSep == "\\") {
       std::replace(path.begin(), path.end(), '/', '\\');
     }
-    // path does not include major.minor
-    if (HostTriple.isOSOpenBSD()) {
-      DyLibExists = true;
-    } else {
-      DyLibExists = sys::fs::exists(path);
-    }
+    DyLibExists = sys::fs::exists(path);
     if (!DyLibExists) {
       // The shared library does not exist: don't error unless the user
       // explicitly passes --link-shared.
@@ -534,7 +522,7 @@ int main(int argc, char **argv) {
             if (DyLibExists && !sys::fs::exists(path)) {
               Components =
                   GetAllDyLibComponents(IsInDevelopmentTree, true, DirSep);
-              llvm::sort(Components.begin(), Components.end());
+              std::sort(Components.begin(), Components.end());
               break;
             }
           }
@@ -591,7 +579,7 @@ int main(int argc, char **argv) {
     usage();
 
   if (LinkMode == LinkModeShared && !DyLibExists && !BuiltSharedLibs) {
-    WithColor::error(errs(), "llvm-config") << DyLibName << " is missing\n";
+    errs() << "llvm-config: error: " << DyLibName << " is missing\n";
     return 1;
   }
 
@@ -624,19 +612,19 @@ int main(int argc, char **argv) {
           break;
         // Using component shared libraries.
         for (auto &Lib : MissingLibs)
-          WithColor::error(errs(), "llvm-config") << "missing: " << Lib << "\n";
+          errs() << "llvm-config: error: missing: " << Lib << "\n";
         return 1;
       case LinkModeAuto:
         if (DyLibExists) {
           LinkMode = LinkModeShared;
           break;
         }
-        WithColor::error(errs(), "llvm-config")
-            << "component libraries and shared library\n\n";
+        errs()
+            << "llvm-config: error: component libraries and shared library\n\n";
         LLVM_FALLTHROUGH;
       case LinkModeStatic:
         for (auto &Lib : MissingLibs)
-          WithColor::error(errs(), "llvm-config") << "missing: " << Lib << "\n";
+          errs() << "llvm-config: error: missing: " << Lib << "\n";
         return 1;
       }
     } else if (LinkMode == LinkModeAuto) {
@@ -719,8 +707,7 @@ int main(int argc, char **argv) {
       OS << (LinkMode == LinkModeStatic ? LLVM_SYSTEM_LIBS : "") << '\n';
     }
   } else if (!Components.empty()) {
-    WithColor::error(errs(), "llvm-config")
-        << "components given, but unused\n\n";
+    errs() << "llvm-config: error: components given, but unused\n\n";
     usage();
   }
 

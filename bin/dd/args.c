@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.31 2019/02/16 10:54:00 bluhm Exp $	*/
+/*	$OpenBSD: args.c,v 1.29 2018/01/03 19:12:20 schwarze Exp $	*/
 /*	$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $	*/
 
 /*-
@@ -95,9 +95,9 @@ jcl(char **argv)
 
 	in.dbsz = out.dbsz = 512;
 
-	while (*++argv != NULL) {
-		if ((oper = strdup(*argv)) == NULL)
-			err(1, NULL);
+	while ((oper = *++argv) != NULL) {
+		if ((oper = strdup(oper)) == NULL)
+			errx(1, "out of memory");
 		if ((arg = strchr(oper, '=')) == NULL)
 			errx(1, "unknown operand %s", oper);
 		*arg++ = '\0';
@@ -113,7 +113,6 @@ jcl(char **argv)
 			    tmp.name);
 		ddflags |= ap->set;
 		ap->f(arg);
-		free(oper);
 	}
 
 	/* Final sanity checks. */
@@ -219,8 +218,8 @@ f_ibs(char *arg)
 static void
 f_if(char *arg)
 {
-	if ((in.name = strdup(arg)) == NULL)
-		err(1, NULL);
+
+	in.name = arg;
 }
 
 static void
@@ -234,8 +233,8 @@ f_obs(char *arg)
 static void
 f_of(char *arg)
 {
-	if ((out.name = strdup(arg)) == NULL)
-		err(1, NULL);
+
+	out.name = arg;
 }
 
 static void
@@ -274,7 +273,6 @@ static const struct conv {
 	{ "ascii",	C_ASCII,	C_EBCDIC,	e2a_POSIX },
 	{ "block",	C_BLOCK,	C_UNBLOCK,	NULL },
 	{ "ebcdic",	C_EBCDIC,	C_ASCII,	a2e_POSIX },
-	{ "fsync",	C_FSYNC,	0,		NULL },
 	{ "ibm",	C_EBCDIC,	C_ASCII,	a2ibm_POSIX },
 	{ "lcase",	C_LCASE,	C_UCASE,	NULL },
 	{ "osync",	C_OSYNC,	C_BS,		NULL },

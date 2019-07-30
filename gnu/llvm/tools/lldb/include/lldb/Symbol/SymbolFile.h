@@ -26,10 +26,10 @@ public:
   //------------------------------------------------------------------
   // Symbol file ability bits.
   //
-  // Each symbol file can claim to support one or more symbol file abilities.
-  // These get returned from SymbolFile::GetAbilities(). These help us to
-  // determine which plug-in will be best to load the debug information found
-  // in files.
+  // Each symbol file can claim to support one or more symbol file
+  // abilities. These get returned from SymbolFile::GetAbilities().
+  // These help us to determine which plug-in will be best to load
+  // the debug information found in files.
   //------------------------------------------------------------------
   enum Abilities {
     CompileUnits = (1u << 0),
@@ -148,10 +148,10 @@ public:
                                         SymbolContextList &sc_list);
   virtual uint32_t
   FindGlobalVariables(const ConstString &name,
-                      const CompilerDeclContext *parent_decl_ctx,
+                      const CompilerDeclContext *parent_decl_ctx, bool append,
                       uint32_t max_matches, VariableList &variables);
   virtual uint32_t FindGlobalVariables(const RegularExpression &regex,
-                                       uint32_t max_matches,
+                                       bool append, uint32_t max_matches,
                                        VariableList &variables);
   virtual uint32_t FindFunctions(const ConstString &name,
                                  const CompilerDeclContext *parent_decl_ctx,
@@ -199,8 +199,6 @@ public:
   /// for this module have been changed.
   //------------------------------------------------------------------
   virtual void SectionFileAddressesChanged() {}
-
-  virtual void Dump(Stream &s) {}
 
 protected:
   ObjectFile *m_obj_file; // The object file that symbols can be extracted from.

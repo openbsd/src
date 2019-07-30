@@ -1,4 +1,4 @@
-//===- StraightLineStrengthReduce.cpp - -----------------------------------===//
+//===-- StraightLineStrengthReduce.cpp - ------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -55,45 +55,26 @@
 //
 // - When (i' - i) is constant but i and i' are not, we could still perform
 //   SLSR.
-
-#include "llvm/ADT/APInt.h"
-#include "llvm/ADT/DepthFirstIterator.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
-#include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Dominators.h"
-#include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/InstrTypes.h"
-#include "llvm/IR/Instruction.h"
-#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/Operator.h"
 #include "llvm/IR/PatternMatch.h"
-#include "llvm/IR/Type.h"
-#include "llvm/IR/Value.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
-#include <cassert>
-#include <cstdint>
-#include <limits>
+#include "llvm/Transforms/Utils/Local.h"
 #include <list>
 #include <vector>
 
 using namespace llvm;
 using namespace PatternMatch;
 
-static const unsigned UnknownAddressSpace =
-    std::numeric_limits<unsigned>::max();
-
 namespace {
+
+static const unsigned UnknownAddressSpace = ~0u;
 
 class StraightLineStrengthReduce : public FunctionPass {
 public:
@@ -107,22 +88,20 @@ public:
       GEP,     // &B[..][i * S][..]
     };
 
-    Candidate() = default;
+    Candidate()
+        : CandidateKind(Invalid), Base(nullptr), Index(nullptr),
+          Stride(nullptr), Ins(nullptr), Basis(nullptr) {}
     Candidate(Kind CT, const SCEV *B, ConstantInt *Idx, Value *S,
               Instruction *I)
-        : CandidateKind(CT), Base(B), Index(Idx), Stride(S), Ins(I) {}
-
-    Kind CandidateKind = Invalid;
-
-    const SCEV *Base = nullptr;
-
+        : CandidateKind(CT), Base(B), Index(Idx), Stride(S), Ins(I),
+          Basis(nullptr) {}
+    Kind CandidateKind;
+    const SCEV *Base;
     // Note that Index and Stride of a GEP candidate do not necessarily have the
     // same integer type. In that case, during rewriting, Stride will be
     // sign-extended or truncated to Index's type.
-    ConstantInt *Index = nullptr;
-
-    Value *Stride = nullptr;
-
+    ConstantInt *Index;
+    Value *Stride;
     // The instruction this candidate corresponds to. It helps us to rewrite a
     // candidate with respect to its immediate basis. Note that one instruction
     // can correspond to multiple candidates depending on how you associate the
@@ -137,16 +116,16 @@ public:
     // or
     //
     // <Base: b, Index: 2, Stride: a + 1>
-    Instruction *Ins = nullptr;
-
+    Instruction *Ins;
     // Points to the immediate basis of this candidate, or nullptr if we cannot
     // find any basis for this candidate.
-    Candidate *Basis = nullptr;
+    Candidate *Basis;
   };
 
   static char ID;
 
-  StraightLineStrengthReduce() : FunctionPass(ID) {
+  StraightLineStrengthReduce()
+      : FunctionPass(ID), DL(nullptr), DT(nullptr), TTI(nullptr) {
     initializeStraightLineStrengthReducePass(*PassRegistry::getPassRegistry());
   }
 
@@ -169,58 +148,46 @@ private:
   // Returns true if Basis is a basis for C, i.e., Basis dominates C and they
   // share the same base and stride.
   bool isBasisFor(const Candidate &Basis, const Candidate &C);
-
   // Returns whether the candidate can be folded into an addressing mode.
   bool isFoldable(const Candidate &C, TargetTransformInfo *TTI,
                   const DataLayout *DL);
-
   // Returns true if C is already in a simplest form and not worth being
   // rewritten.
   bool isSimplestForm(const Candidate &C);
-
   // Checks whether I is in a candidate form. If so, adds all the matching forms
   // to Candidates, and tries to find the immediate basis for each of them.
   void allocateCandidatesAndFindBasis(Instruction *I);
-
   // Allocate candidates and find bases for Add instructions.
   void allocateCandidatesAndFindBasisForAdd(Instruction *I);
-
   // Given I = LHS + RHS, factors RHS into i * S and makes (LHS + i * S) a
   // candidate.
   void allocateCandidatesAndFindBasisForAdd(Value *LHS, Value *RHS,
                                             Instruction *I);
   // Allocate candidates and find bases for Mul instructions.
   void allocateCandidatesAndFindBasisForMul(Instruction *I);
-
   // Splits LHS into Base + Index and, if succeeds, calls
   // allocateCandidatesAndFindBasis.
   void allocateCandidatesAndFindBasisForMul(Value *LHS, Value *RHS,
                                             Instruction *I);
-
   // Allocate candidates and find bases for GetElementPtr instructions.
   void allocateCandidatesAndFindBasisForGEP(GetElementPtrInst *GEP);
-
   // A helper function that scales Idx with ElementSize before invoking
   // allocateCandidatesAndFindBasis.
   void allocateCandidatesAndFindBasisForGEP(const SCEV *B, ConstantInt *Idx,
                                             Value *S, uint64_t ElementSize,
                                             Instruction *I);
-
   // Adds the given form <CT, B, Idx, S> to Candidates, and finds its immediate
   // basis.
   void allocateCandidatesAndFindBasis(Candidate::Kind CT, const SCEV *B,
                                       ConstantInt *Idx, Value *S,
                                       Instruction *I);
-
   // Rewrites candidate C with respect to Basis.
   void rewriteCandidateWithBasis(const Candidate &C, const Candidate &Basis);
-
   // A helper function that factors ArrayIdx to a product of a stride and a
   // constant index, and invokes allocateCandidatesAndFindBasis with the
   // factorings.
   void factorArrayIndex(Value *ArrayIdx, const SCEV *Base, uint64_t ElementSize,
                         GetElementPtrInst *GEP);
-
   // Emit code that computes the "bump" from Basis to C. If the candidate is a
   // GEP and the bump is not divisible by the element size of the GEP, this
   // function sets the BumpWithUglyGEP flag to notify its caller to bump the
@@ -229,22 +196,19 @@ private:
                          IRBuilder<> &Builder, const DataLayout *DL,
                          bool &BumpWithUglyGEP);
 
-  const DataLayout *DL = nullptr;
-  DominatorTree *DT = nullptr;
+  const DataLayout *DL;
+  DominatorTree *DT;
   ScalarEvolution *SE;
-  TargetTransformInfo *TTI = nullptr;
+  TargetTransformInfo *TTI;
   std::list<Candidate> Candidates;
-
   // Temporarily holds all instructions that are unlinked (but not deleted) by
   // rewriteCandidateWithBasis. These instructions will be actually removed
   // after all rewriting finishes.
   std::vector<Instruction *> UnlinkedInstructions;
 };
-
-} // end anonymous namespace
+}  // anonymous namespace
 
 char StraightLineStrengthReduce::ID = 0;
-
 INITIALIZE_PASS_BEGIN(StraightLineStrengthReduce, "slsr",
                       "Straight line strength reduction", false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
@@ -686,8 +650,8 @@ void StraightLineStrengthReduce::rewriteCandidateWithBasis(
         else
           Reduced = Builder.CreateGEP(nullptr, Basis.Ins, Bump);
       }
-      break;
     }
+    break;
   default:
     llvm_unreachable("C.CandidateKind is invalid");
   };

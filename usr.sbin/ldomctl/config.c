@@ -1,7 +1,7 @@
-/*	$OpenBSD: config.c,v 1.24 2018/09/16 14:27:32 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.22 2017/01/17 22:10:55 krw Exp $	*/
 
 /*
- * Copyright (c) 2012, 2018 Mark Kettenis
+ * Copyright (c) 2012 Mark Kettenis
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -74,7 +74,6 @@ uint64_t max_devices = 16;
 
 uint64_t rombase;
 uint64_t romsize;
-uint64_t uartbase;
 
 uint64_t max_page_size;
 
@@ -286,22 +285,6 @@ pri_alloc_memory(uint64_t base, uint64_t size)
 }
 
 void
-pri_delete_devalias(struct md *md)
-{
-	struct md_node *node;
-
-	/*
-	 * There may be multiple "devalias" nodes.  Only remove the one
-	 * that resides under the "openboot" node.
-	 */
-	node = md_find_node(protomd, "openboot");
-	assert(node);
-	node = md_find_subnode(protomd, node, "devalias");
-	if (node)
-		md_delete_node(protomd, node);
-}
-
-void
 pri_init(struct md *md)
 {
 	struct md_node *node, *node2;
@@ -341,7 +324,7 @@ pri_init(struct md *md)
 				continue;
 			if (!md_get_prop_val(md, node2, "offset", &offset) ||
 			    !md_get_prop_val(md, node2, "size", &size))
-				continue;
+					continue;
 			rombase = base + offset;
 			romsize = size;
 		}
@@ -357,13 +340,13 @@ pri_init(struct md *md)
 
 	protomd = md_copy(md);
 	md_find_delete_node(protomd, "components");
+	md_find_delete_node(protomd, "devalias");
 	md_find_delete_node(protomd, "domain-services");
 	md_find_delete_node(protomd, "channel-devices");
 	md_find_delete_node(protomd, "channel-endpoints");
 	md_find_delete_node(protomd, "firmware");
 	md_find_delete_node(protomd, "ldc_endpoints");
 	md_find_delete_node(protomd, "memory-segments");
-	pri_delete_devalias(protomd);
 	md_collect_garbage(protomd);
 	md_write(protomd, "protomd");
 
@@ -515,9 +498,8 @@ hvmd_init_console(struct md *md, struct md_node *node)
 	if (resource_id >= max_guests)
 		errx(1, "resource_id larger than max_guests");
 
-	console = xzalloc(sizeof(*console));
+	console = xmalloc(sizeof(*console));
 	md_get_prop_val(md, node, "ino", &console->ino);
-	md_get_prop_val(md, node, "uartbase", &console->uartbase);
 	console->resource_id = resource_id;
 	consoles[resource_id] = console;
 	console->hv_node = node;
@@ -582,7 +564,6 @@ hvmd_init_device(struct md *md, struct md_node *node)
 	device = xzalloc(sizeof(*device));
 	md_get_prop_val(md, node, "gid", &device->gid);
 	md_get_prop_val(md, node, "cfghandle", &device->cfghandle);
-	md_get_prop_val(md, node, "rcid", &device->rcid);
 	device->resource_id = resource_id;
 	if (strcmp(node->name->str, "pcie_bus") == 0)
 		pcie_busses[resource_id] = device;
@@ -756,11 +737,16 @@ hvmd_init(struct md *md)
 	md_get_prop_val(md, node, "tod", &tod);
 	md_get_prop_val(md, node, "erpt-pa", &erpt_pa);
 	md_get_prop_val(md, node, "erpt-size", &erpt_size);
-	md_get_prop_val(md, node, "uartbase", &uartbase);
 
-	node = md_find_node(md, "platform");
-	if (node)
-		md_get_prop_val(md, node, "stick-frequency", &stick_frequency);
+	node = md_find_node(md, "frag_space");
+	md_get_prop_val(md, node, "fragsize", &fragsize);
+	TAILQ_INIT(&frag_mblocks);
+	TAILQ_FOREACH(prop, &node->prop_list, link) {
+		if (prop->tag == MD_PROP_ARC &&
+		    strcmp(prop->name->str, "fwd") == 0)
+			hvmd_init_frag(md, prop->d.arc.node);
+	}
+	pri_alloc_memory(0, fragsize);
 
 	node = md_find_node(md, "hvmd_mblock");
 	if (node) {
@@ -770,18 +756,6 @@ hvmd_init(struct md *md)
 		md_get_prop_val(md, node, "md_maxsize", &md_maxsize);
 		pri_alloc_memory(hvmd_mblock->membase, hvmd_mblock->memsize);
 	}
-
-	node = md_find_node(md, "frag_space");
-	md_get_prop_val(md, node, "fragsize", &fragsize);
-	if (fragsize == 0)
-		fragsize = md_maxsize;
-	TAILQ_INIT(&frag_mblocks);
-	TAILQ_FOREACH(prop, &node->prop_list, link) {
-		if (prop->tag == MD_PROP_ARC &&
-		    strcmp(prop->name->str, "fwd") == 0)
-			hvmd_init_frag(md, prop->d.arc.node);
-	}
-	pri_alloc_memory(0, fragsize);
 
 	node = md_find_node(md, "consoles");
 	TAILQ_FOREACH(prop, &node->prop_list, link) {
@@ -927,7 +901,6 @@ hvmd_finalize_device(struct md *md, struct device *device, const char *name)
 	md_add_prop_val(md, node, "resource_id", device->resource_id);
 	md_add_prop_val(md, node, "cfghandle", device->cfghandle);
 	md_add_prop_val(md, node, "gid", device->gid);
-	md_add_prop_val(md, node, "rcid", device->rcid);
 	device->hv_node = node;
 }
 
@@ -1058,11 +1031,6 @@ hvmd_finalize_console(struct md *md, struct console *console)
 	md_add_prop_val(md, node, "ino", console->ino);
 	console->hv_node = node;
 
-	if (console->uartbase) {
-		md_add_prop_val(md, node, "uartbase", console->uartbase);
-		return;
-	}
-
 	TAILQ_FOREACH(endpoint, &console->guest->endpoint_list, link) {
 		if (endpoint->rx_ino == console->ino) {
 			md_link_node(md, node, endpoint->hv_node);
@@ -1118,7 +1086,6 @@ hvmd_finalize_guest(struct md *md, struct guest *guest)
 	md_add_prop_val(md, node, "mdpa", guest->mdpa);
 	md_add_prop_val(md, node, "rombase", rombase);
 	md_add_prop_val(md, node, "romsize", romsize);
-	md_add_prop_val(md, node, "uartbase", uartbase);
 	guest->hv_node = node;
 
 	node = md_add_node(md, "virtual_devices");
@@ -1836,11 +1803,11 @@ guest_add_devalias(struct guest *guest, const char *name, const char *path)
 	struct md_node *parent;
 	struct md_node *node;
 
-	parent = md_find_node(md, "openboot");
-	assert(parent);
-
-	node = md_find_subnode(md, parent, "devalias");
+	node = md_find_node(md, "devalias");
 	if (node == NULL) {
+		parent = md_find_node(md, "openboot");
+		assert(parent);
+
 		node = md_add_node(md, "devalias");
 		md_link_node(md, parent, node);
 	}
@@ -2206,25 +2173,6 @@ guest_add_vnetwork(struct guest *guest, uint64_t id, uint64_t mac_addr,
 	free(devpath);
 }
 
-void
-guest_add_variable(struct guest *guest, const char *name, const char *str)
-{
-	struct md *md = guest->md;
-	struct md_node *parent;
-	struct md_node *node;
-
-	node = md_find_node(md, "variables");
-	if (node == NULL) {
-		parent = md_find_node(md, "root");
-		assert(parent);
-
-		node = md_add_node(md, "variables");
-		md_link_node(md, parent, node);
-	}
-
-	md_add_prop_str(md, node, name, str);
-}
-
 struct cpu *
 guest_find_cpu(struct guest *guest, uint64_t pid)
 {
@@ -2248,6 +2196,7 @@ guest_finalize(struct guest *guest)
 	struct md_node *child;
 	struct cpu *cpu;
 	uint64_t pid;
+	uint64_t id;
 	const char *name;
 	char *path;
 
@@ -2287,23 +2236,25 @@ guest_finalize(struct guest *guest)
 		}
 	}
 
-	node = md_find_node(md, "memory");
-	TAILQ_FOREACH_SAFE(prop, &node->prop_list, link, prop2) {
-		if (prop->tag == MD_PROP_ARC &&
-		    strcmp(prop->name->str, "fwd") == 0) {
-			node2 = prop->d.arc.node;
-			md_delete_node(md, node2);
-		}
-	}
-
 	md_collect_garbage(md);
 
-	parent = md_find_node(md, "memory");
+	node = md_find_node(md, "memory");
+	md_get_prop_val(md, node, "memory-generation-id#", &id);
+	md_delete_node(md, node);
+	md_collect_garbage(md);
+
+	parent = md_find_node(md, "root");
+	assert(parent);
+
+	node = md_add_node(md, "memory");
+	md_add_prop_val(md, node, "memory-generation-id#", id);
+	md_link_node(md, parent, node);
+
 	TAILQ_FOREACH(mblock, &guest->mblock_list, link) {
 		child = md_add_node(md, "mblock");
 		md_add_prop_val(md, child, "base", mblock->realbase);
 		md_add_prop_val(md, child, "size", mblock->memsize);
-		md_link_node(md, parent, child);
+		md_link_node(md, node, child);
 	}
 
 	xasprintf(&path, "%s.md", guest->name);
@@ -2337,7 +2288,6 @@ build_config(const char *filename)
 	struct domain *domain;
 	struct vdisk *vdisk;
 	struct vnet *vnet;
-	struct var *var;
 	uint64_t num_cpus, primary_num_cpus;
 	uint64_t memory, primary_memory;
 
@@ -2394,13 +2344,6 @@ build_config(const char *filename)
 	guest_add_memory(primary, -1, primary_memory);
 
 	SIMPLEQ_FOREACH(domain, &conf.domain_list, entry) {
-		if (strcmp(domain->name, "primary") != 0)
-			continue;
-		SIMPLEQ_FOREACH(var, &domain->var_list, entry)
-			guest_add_variable(primary, var->name, var->str);
-	}
-
-	SIMPLEQ_FOREACH(domain, &conf.domain_list, entry) {
 		if (strcmp(domain->name, "primary") == 0)
 			continue;
 		guest = guest_create(domain->name);
@@ -2414,8 +2357,6 @@ build_config(const char *filename)
 		SIMPLEQ_FOREACH(vnet, &domain->vnet_list, entry)
 			guest_add_vnetwork(guest, i++, vnet->mac_addr,
 			    vnet->mtu);
-		SIMPLEQ_FOREACH(var, &domain->var_list, entry)
-			guest_add_variable(guest, var->name, var->str);
 
 		guest_finalize(guest);
 	}

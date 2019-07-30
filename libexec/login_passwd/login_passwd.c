@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_passwd.c,v 1.15 2018/06/13 15:02:09 reyk Exp $	*/
+/*	$OpenBSD: login_passwd.c,v 1.14 2015/11/19 18:37:01 millert Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -30,8 +30,9 @@
 
 int
 pwd_login(char *username, char *password, char *wheel, int lastchance,
-    char *class, struct passwd *pwd)
+    char *class)
 {
+	struct passwd *pwd;
 	size_t plen;
 	char *goodhash = NULL;
 	int passok = 0;
@@ -45,6 +46,7 @@ pwd_login(char *username, char *password, char *wheel, int lastchance,
 	if (password == NULL)
 		return (AUTH_FAILED);
 
+	pwd = getpwnam_shadow(username);
 	if (pwd)
 		goodhash = pwd->pw_passwd;
 

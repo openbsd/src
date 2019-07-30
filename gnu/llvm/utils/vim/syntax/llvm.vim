@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:   llvm
 " Maintainer: The LLVM team, http://llvm.org/
-" Version:      $Revision: 1.1.1.6 $
+" Version:      $Revision: 1.1.1.4 $
 
 if version < 600
   syntax clear
@@ -75,8 +75,6 @@ syn keyword llvmKeyword
       \ distinct
       \ dllexport
       \ dllimport
-      \ dso_local
-      \ dso_preemptable
       \ except
       \ external
       \ externally_initialized
@@ -137,7 +135,7 @@ syn keyword llvmKeyword
       \ seq_cst
       \ sideeffect
       \ signext
-      \ syncscope
+      \ singlethread
       \ source_filename
       \ speculatable
       \ spir_func
@@ -146,7 +144,6 @@ syn keyword llvmKeyword
       \ ssp
       \ sspreq
       \ sspstrong
-      \ strictfp
       \ swiftcc
       \ tail
       \ target
@@ -201,7 +198,6 @@ syn match  llvmSpecialComment /;\s*PR\d*\s*$/
 syn match  llvmSpecialComment /;\s*REQUIRES:.*$/
 syn match  llvmSpecialComment /;\s*RUN:.*$/
 syn match  llvmSpecialComment /;\s*CHECK:.*$/
-syn match  llvmSpecialComment "\v;\s*CHECK-(NEXT|NOT|DAG|SAME|LABEL):.*$"
 syn match  llvmSpecialComment /;\s*XFAIL:.*$/
 
 if version >= 508 || !exists("did_c_syn_inits")

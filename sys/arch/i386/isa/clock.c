@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.54 2019/05/23 19:00:52 jasper Exp $	*/
+/*	$OpenBSD: clock.c,v 1.52 2017/09/08 05:36:51 deraadt Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -190,7 +190,10 @@ rtcdrain(void *v)
 	if (to != NULL)
 		timeout_del(to);
 
-	/* Drain any un-acknowledged RTC interrupts. */
+	/*
+	 * Drain any un-acknowledged RTC interrupts.
+	 * See comment in cpu_initclocks().
+	 */
 	while (mc146818_read(NULL, MC_REGC) & MC_REGC_PF)
 		; /* Nothing. */
 }
@@ -241,7 +244,6 @@ rtcintr(void *arg)
 int
 gettick(void)
 {
-	u_long s;
 
 	if (clock_broken_latch) {
 		int v1, v2, v3;
@@ -252,7 +254,7 @@ gettick(void)
 		 * CPUs don't do MP anyway.
 		 */
 
-		s = intr_disable();
+		disable_intr();
 
 		v1 = inb(IO_TIMER1 + TIMER_CNTR0);
 		v1 |= inb(IO_TIMER1 + TIMER_CNTR0) << 8;
@@ -261,7 +263,7 @@ gettick(void)
 		v3 = inb(IO_TIMER1 + TIMER_CNTR0);
 		v3 |= inb(IO_TIMER1 + TIMER_CNTR0) << 8;
 
-		intr_restore(s);
+		enable_intr();
 
 		if (v1 >= v2 && v2 >= v3 && v1 - v3 < 0x200)
 			return (v2);
@@ -296,15 +298,17 @@ gettick(void)
 		return (v3);
 	} else {
 		u_char lo, hi;
+		u_long ef;
 
 		mtx_enter(&timer_mutex);
-		s = intr_disable();
+		ef = read_eflags();
+		disable_intr();
 		/* Select counter 0 and latch it. */
 		outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
 		lo = inb(IO_TIMER1 + TIMER_CNTR0);
 		hi = inb(IO_TIMER1 + TIMER_CNTR0);
 
-		intr_restore(s);
+		write_eflags(ef);
 		mtx_leave(&timer_mutex);
 		return ((hi << 8) | lo);
 	}
@@ -746,9 +750,10 @@ i8254_get_timecount(struct timecounter *tc)
 {
 	u_char hi, lo;
 	u_int count;
-	u_long s;
+	u_long ef;
 
-	s = intr_disable();
+	ef = read_eflags();
+	disable_intr();
 
 	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
 	lo = inb(IO_TIMER1 + TIMER_CNTR0);
@@ -762,8 +767,7 @@ i8254_get_timecount(struct timecounter *tc)
 	}
 	i8254_lastcount = count;
 	count += i8254_offset;
-
-	intr_restore(s);
+	write_eflags(ef);
 
 	return (count);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.84 2019/04/20 23:10:00 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.80 2018/01/22 09:01:39 mpi Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -43,18 +43,21 @@ typedef __uint32_t	Elf32_Off;	/* Unsigned file offset */
 typedef __int32_t	Elf32_Sword;	/* Signed large integer */
 typedef __uint32_t	Elf32_Word;	/* Unsigned large integer */
 typedef __uint16_t	Elf32_Half;	/* Unsigned medium integer */
-typedef __uint64_t	Elf32_Lword;
 
 typedef __uint64_t	Elf64_Addr;
 typedef __uint64_t	Elf64_Off;
 typedef __int32_t	Elf64_Shalf;
 
+#ifdef __alpha__
+typedef __int64_t	Elf64_Sword;
+typedef __uint64_t	Elf64_Word;
+#else
 typedef __int32_t	Elf64_Sword;
 typedef __uint32_t	Elf64_Word;
+#endif
 
 typedef __int64_t	Elf64_Sxword;
 typedef __uint64_t	Elf64_Xword;
-typedef __uint64_t	Elf64_Lword;
 
 typedef __uint32_t	Elf64_Half;
 typedef __uint16_t	Elf64_Quarter;
@@ -197,7 +200,6 @@ typedef struct {
 
 /* Non-standard */
 #define EM_ALPHA_EXP	0x9026		/* DEC ALPHA */
-#define EM__LAST__	(EM_ALPHA_EXP + 1)
 
 #define EM_NUM		22		/* number of machine types */
 
@@ -205,9 +207,6 @@ typedef struct {
 #define EV_NONE		0		/* Invalid */
 #define EV_CURRENT	1		/* Current */
 #define EV_NUM		2		/* number of versions */
-
-/* Magic for e_phnum: get real value from sh_info of first section header */
-#define PN_XNUM		0xffff
 
 /* Section Header */
 typedef struct {
@@ -261,26 +260,11 @@ typedef struct {
 #define SHT_SHLIB		10	/* reserved - purpose unknown */
 #define SHT_DYNSYM		11	/* dynamic symbol table section */
 #define SHT_NUM			12	/* number of section types */
-#define SHT_INIT_ARRAY		14	/* pointers to init functions */
-#define SHT_FINI_ARRAY		15	/* pointers to termination functions */
-#define SHT_PREINIT_ARRAY	16	/* ptrs to funcs called before init */
-#define SHT_GROUP		17	/* defines a section group */
 #define SHT_SYMTAB_SHNDX	18	/* Section indexes (see SHN_XINDEX). */
-#define SHT_LOOS	0x60000000	/* reserved range for OS specific */
-#define SHT_SUNW_dof	0x6ffffff4	/* used by dtrace */
-#define SHT_GNU_LIBLIST	0x6ffffff7	/* libraries to be prelinked */
-#define SHT_SUNW_move	0x6ffffffa	/* inf for partially init'ed symbols */
-#define SHT_SUNW_syminfo	0x6ffffffc	/* ad symbol information */ 
-#define SHT_SUNW_verdef		0x6ffffffd	/* symbol versioning inf */
-#define SHT_SUNW_verneed	0x6ffffffe	/* symbol versioning req */
-#define SHT_SUNW_versym		0x6fffffff	/* symbol versioning table */
-#define SHT_HIOS	0x6fffffff	/*  section header types */
 #define SHT_LOPROC	0x70000000	/* reserved range for processor */
 #define SHT_HIPROC	0x7fffffff	/*  specific section header types */
 #define SHT_LOUSER	0x80000000	/* reserved range for application */
 #define SHT_HIUSER	0xffffffff	/*  specific indexes */
-
-#define SHT_GNU_HASH	0x6ffffff6	/* GNU-style hash table section */
 
 /* Section names */
 #define ELF_BSS         ".bss"		/* uninitialized data */
@@ -540,7 +524,6 @@ typedef struct {
 #define DT_HIPROC	0x7fffffff	/*  specific dynamic array tags */
 
 /* some other useful tags */
-#define DT_GNU_HASH	0x6ffffef5	/* address of GNU hash table */
 #define DT_RELACOUNT	0x6ffffff9	/* if present, number of RELATIVE */
 #define DT_RELCOUNT	0x6ffffffa	/* relocs, which must come first */
 #define DT_FLAGS_1      0x6ffffffb

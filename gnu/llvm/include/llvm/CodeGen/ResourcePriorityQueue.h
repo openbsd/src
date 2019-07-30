@@ -20,19 +20,19 @@
 #include "llvm/CodeGen/DFAPacketizer.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
-#include "llvm/CodeGen/TargetInstrInfo.h"
-#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/MC/MCInstrItineraries.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
   class ResourcePriorityQueue;
 
   /// Sorting functions for the Available queue.
-  struct resource_sort {
+  struct resource_sort : public std::binary_function<SUnit*, SUnit*, bool> {
     ResourcePriorityQueue *PQ;
     explicit resource_sort(ResourcePriorityQueue *pq) : PQ(pq) {}
 
-    bool operator()(const SUnit* LHS, const SUnit* RHS) const;
+    bool operator()(const SUnit* left, const SUnit* right) const;
   };
 
   class ResourcePriorityQueue : public SchedulingPriorityQueue {
@@ -121,7 +121,7 @@ namespace llvm {
     void remove(SUnit *SU) override;
 
     /// scheduledNode - Main resource tracking point.
-    void scheduledNode(SUnit *SU) override;
+    void scheduledNode(SUnit *Node) override;
     bool isResourceAvailable(SUnit *SU);
     void reserveResources(SUnit *SU);
 

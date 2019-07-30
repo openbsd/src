@@ -1,4 +1,4 @@
-/* $OpenBSD: tpm.c,v 1.9 2019/05/15 21:28:21 tedu Exp $ */
+/* $OpenBSD: tpm.c,v 1.2 2016/10/25 06:48:58 pirofti Exp $ */
 
 /*
  * Minimal interface to Trusted Platform Module chips implementing the
@@ -194,7 +194,7 @@ const char *tpm_hids[] = {
 	"BCM0102",
 	"NSC1200",
 	"ICO0102",
-	NULL
+	0
 };
 
 int
@@ -268,7 +268,6 @@ tpm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	printf("\n");
 	sc->sc_enabled = 1;
 }
 
@@ -423,9 +422,9 @@ tpm_init(struct tpm_softc *sc)
 			break;
 
 	if (tpm_devs[i].devid)
-		printf(", %s rev 0x%x", tpm_devs[i].name, sc->sc_rev);
+		printf(": %s rev 0x%x\n", tpm_devs[i].name, sc->sc_rev);
 	else
-		printf(", device 0x%08x rev 0x%x", sc->sc_devid, sc->sc_rev);
+		printf(": device 0x%08x rev 0x%x\n", sc->sc_devid, sc->sc_rev);
 
 	return 0;
 }

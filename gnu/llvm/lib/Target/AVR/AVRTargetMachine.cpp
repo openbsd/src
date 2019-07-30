@@ -25,7 +25,7 @@
 
 namespace llvm {
 
-static const char *AVRDataLayout = "e-P1-p:16:8-i8:8-i16:8-i32:8-i64:8-f32:8-f64:8-n8-a:8";
+static const char *AVRDataLayout = "e-p:16:8-i8:8-i16:8-i32:8-i64:8-f32:8-f64:8-n8-a:8";
 
 /// Processes a CPU name.
 static StringRef getCPU(StringRef CPU) {
@@ -40,21 +40,14 @@ static Reloc::Model getEffectiveRelocModel(Optional<Reloc::Model> RM) {
   return RM.hasValue() ? *RM : Reloc::Static;
 }
 
-static CodeModel::Model getEffectiveCodeModel(Optional<CodeModel::Model> CM) {
-  if (CM)
-    return *CM;
-  return CodeModel::Small;
-}
-
 AVRTargetMachine::AVRTargetMachine(const Target &T, const Triple &TT,
                                    StringRef CPU, StringRef FS,
                                    const TargetOptions &Options,
-                                   Optional<Reloc::Model> RM,
-                                   Optional<CodeModel::Model> CM,
-                                   CodeGenOpt::Level OL, bool JIT)
-    : LLVMTargetMachine(T, AVRDataLayout, TT, getCPU(CPU), FS, Options,
-                        getEffectiveRelocModel(RM), getEffectiveCodeModel(CM),
-                        OL),
+                                   Optional<Reloc::Model> RM, CodeModel::Model CM,
+                                   CodeGenOpt::Level OL)
+    : LLVMTargetMachine(
+          T, AVRDataLayout, TT,
+          getCPU(CPU), FS, Options, getEffectiveRelocModel(RM), CM, OL),
       SubTarget(TT, getCPU(CPU), FS, *this) {
   this->TLOF = make_unique<AVRTargetObjectFile>();
   initAsmInfo();
@@ -88,6 +81,7 @@ extern "C" void LLVMInitializeAVRTarget() {
 
   auto &PR = *PassRegistry::getPassRegistry();
   initializeAVRExpandPseudoPass(PR);
+  initializeAVRInstrumentFunctionsPass(PR);
   initializeAVRRelaxMemPass(PR);
 }
 

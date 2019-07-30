@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.48 2019/06/16 13:50:39 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.31 2017/11/23 06:26:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -23,7 +23,6 @@
 #include "dsp.h"
 #include "siofile.h"
 #include "midi.h"
-#include "opt.h"
 #include "sysex.h"
 #include "utils.h"
 
@@ -46,8 +45,12 @@ void dev_midi_omsg(void *, unsigned char *, int);
 void dev_midi_fill(void *, int);
 void dev_midi_exit(void *);
 
+int play_filt_resamp(struct slot *, void *, void *, int);
+int play_filt_dec(struct slot *, void *, void *, int);
 void dev_mix_badd(struct dev *, struct slot *);
 void dev_mix_adjvol(struct dev *);
+int rec_filt_resamp(struct slot *, void *, void *, int);
+int rec_filt_enc(struct slot *, void *, void *, int);
 void dev_sub_bcopy(struct dev *, struct slot *);
 
 void dev_onmove(struct dev *, int);
@@ -73,12 +76,11 @@ void dev_mmcstop(struct dev *);
 void dev_mmcloc(struct dev *, unsigned int);
 
 void slot_log(struct slot *);
+struct slot *slot_new(struct dev *, char *, struct slotops *, void *, int);
 void slot_del(struct slot *);
 void slot_setvol(struct slot *, unsigned int);
 void slot_attach(struct slot *);
 void slot_ready(struct slot *);
-void slot_allocbufs(struct slot *);
-void slot_freebufs(struct slot *);
 void slot_start(struct slot *);
 void slot_detach(struct slot *);
 void slot_stop(struct slot *);
@@ -131,6 +133,9 @@ slot_log(struct slot *s)
 	static char *pstates[] = {
 		"ini", "sta", "rdy", "run", "stp", "mid"
 	};
+	static char *tstates[] = {
+		"off", "sta", "run", "stp"
+	};
 #endif
 	log_puts(s->name);
 	log_putu(s->unit);
@@ -141,6 +146,8 @@ slot_log(struct slot *s)
 		if (s->ops) {
 			log_puts(",pst=");
 			log_puts(pstates[s->pstate]);
+			log_puts(",mmc=");
+			log_puts(tstates[s->tstate]);
 		}
 	}
 #endif
@@ -473,7 +480,8 @@ dev_midi_omsg(void *arg, unsigned char *msg, int len)
 			    (x->u.loc.hr & 0x1f) * 3600 * MTC_SEC +
 			     x->u.loc.min * 60 * MTC_SEC +
 			     x->u.loc.sec * MTC_SEC +
-			     x->u.loc.fr * (MTC_SEC / fps));
+			     x->u.loc.fr * (MTC_SEC / fps) +
+			     x->u.loc.cent * (MTC_SEC / 100 / fps));
 			break;
 		}
 		break;
@@ -544,14 +552,56 @@ slot_skip(struct slot *s)
 	return max - s->skip;
 }
 
+int
+play_filt_resamp(struct slot *s, void *res_in, void *out, int todo)
+{
+	int i, offs, vol, nch;
+	void *in;
+
+	if (s->mix.resampbuf) {
+		todo = resamp_do(&s->mix.resamp,
+		    res_in, s->mix.resampbuf, todo);
+		in = s->mix.resampbuf;
+	} else
+		in = res_in;
+
+	nch = s->mix.cmap.nch;
+	vol = ADATA_MUL(s->mix.weight, s->mix.vol) / s->mix.join;
+	cmap_add(&s->mix.cmap, in, out, vol, todo);
+
+	offs = 0;
+	for (i = s->mix.join - 1; i > 0; i--) {
+		offs += nch;
+		cmap_add(&s->mix.cmap, (adata_t *)in + offs, out, vol, todo);
+	}
+	offs = 0;
+	for (i = s->mix.expand - 1; i > 0; i--) {
+		offs += nch;
+		cmap_add(&s->mix.cmap, in, (adata_t *)out + offs, vol, todo);
+	}
+	return todo;
+}
+
+int
+play_filt_dec(struct slot *s, void *in, void *out, int todo)
+{
+	void *tmp;
+
+	tmp = s->mix.decbuf;
+	if (tmp)
+		dec_do(&s->mix.dec, in, tmp, todo);
+	return play_filt_resamp(s, tmp ? tmp : in, out, todo);
+}
+
 /*
- * Mix the slot input block over the output block
+ * mix "todo" frames from the input block over the output block; if
+ * there are frames to drop, less frames are consumed from the input
  */
 void
 dev_mix_badd(struct dev *d, struct slot *s)
 {
-	adata_t *idata, *odata, *in;
-	int icount, i, offs, vol, nch;
+	adata_t *idata, *odata;
+	int icount;
 
 	odata = DEV_PBUF(d);
 	idata = (adata_t *)abuf_rgetblk(&s->mix.buf, &icount);
@@ -564,43 +614,7 @@ dev_mix_badd(struct dev *d, struct slot *s)
 		panic();
 	}
 #endif
-
-	/*
-	 * Apply the following processing chain:
-	 *
-	 *	dec -> resamp-> cmap
-	 *
-	 * where the first two are optional.
-	 */
-
-	in = idata;
-
-	if (s->mix.decbuf) {
-		dec_do(&s->mix.dec, (void *)in, s->mix.decbuf, s->round);
-		in = s->mix.decbuf;
-	}
-
-	if (s->mix.resampbuf) {
-		resamp_do(&s->mix.resamp, in, s->mix.resampbuf, s->round);
-		in = s->mix.resampbuf;
-	}
-
-	nch = s->mix.cmap.nch;
-	vol = ADATA_MUL(s->mix.weight, s->mix.vol) / s->mix.join;
-	cmap_add(&s->mix.cmap, in, odata, vol, d->round);
-
-	offs = 0;
-	for (i = s->mix.join - 1; i > 0; i--) {
-		offs += nch;
-		cmap_add(&s->mix.cmap, in + offs, odata, vol, d->round);
-	}
-
-	offs = 0;
-	for (i = s->mix.expand - 1; i > 0; i--) {
-		offs += nch;
-		cmap_add(&s->mix.cmap, in, odata + offs, vol, d->round);
-	}
-
+	play_filt_dec(s, idata, odata, s->round);
 	abuf_rdiscard(&s->mix.buf, s->round * s->mix.bpf);
 }
 
@@ -612,12 +626,11 @@ dev_mix_adjvol(struct dev *d)
 {
 	unsigned int n;
 	struct slot *i, *j;
-	int jcmax, icmax, weight;
+	int weight;
 
 	for (i = d->slot_list; i != NULL; i = i->next) {
 		if (!(i->mode & MODE_PLAY))
 			continue;
-		icmax = i->opt->pmin + i->mix.nch - 1;
 		weight = ADATA_UNIT;
 		if (d->autovol) {
 			/*
@@ -628,15 +641,14 @@ dev_mix_adjvol(struct dev *d)
 			for (j = d->slot_list; j != NULL; j = j->next) {
 				if (!(j->mode & MODE_PLAY))
 					continue;
-				jcmax = j->opt->pmin + j->mix.nch - 1;
-				if (i->opt->pmin <= jcmax &&
-				    icmax >= j->opt->pmin)
+				if (i->mix.slot_cmin <= j->mix.slot_cmax &&
+				    i->mix.slot_cmax >= j->mix.slot_cmin)
 					n++;
 			}
 			weight /= n;
 		}
-		if (weight > i->opt->maxweight)
-			weight = i->opt->maxweight;
+		if (weight > i->mix.maxweight)
+			weight = i->mix.maxweight;
 		i->mix.weight = ADATA_MUL(weight, MIDI_TO_ADATA(d->master));
 #ifdef DEBUG
 		if (log_level >= 3) {
@@ -644,11 +656,52 @@ dev_mix_adjvol(struct dev *d)
 			log_puts(": set weight: ");
 			log_puti(i->mix.weight);
 			log_puts("/");
-			log_puti(i->opt->maxweight);
+			log_puti(i->mix.maxweight);
 			log_puts("\n");
 		}
 #endif
 	}
+}
+
+int
+rec_filt_resamp(struct slot *s, void *in, void *res_out, int todo)
+{
+	int i, vol, offs, nch;
+	void *out = res_out;
+
+	out = (s->sub.resampbuf) ? s->sub.resampbuf : res_out;
+
+	nch = s->sub.cmap.nch;
+	vol = ADATA_UNIT / s->sub.join;
+	cmap_copy(&s->sub.cmap, in, out, vol, todo);
+
+	offs = 0;
+	for (i = s->sub.join - 1; i > 0; i--) {
+		offs += nch;
+		cmap_add(&s->sub.cmap, (adata_t *)in + offs, out, vol, todo);
+	}
+	offs = 0;
+	for (i = s->sub.expand - 1; i > 0; i--) {
+		offs += nch;
+		cmap_copy(&s->sub.cmap, in, (adata_t *)out + offs, vol, todo);
+	}
+	if (s->sub.resampbuf) {
+		todo = resamp_do(&s->sub.resamp,
+		    s->sub.resampbuf, res_out, todo);
+	}
+	return todo;
+}
+
+int
+rec_filt_enc(struct slot *s, void *in, void *out, int todo)
+{
+	void *tmp;
+
+	tmp = s->sub.encbuf;
+	todo = rec_filt_resamp(s, in, tmp ? tmp : out, todo);
+	if (tmp)
+		enc_do(&s->sub.enc, tmp, out, todo);
+	return todo;
 }
 
 /*
@@ -657,12 +710,8 @@ dev_mix_adjvol(struct dev *d)
 void
 dev_sub_bcopy(struct dev *d, struct slot *s)
 {
-	adata_t *idata, *enc_out, *resamp_out, *cmap_out;
-	void *odata;
+	adata_t *idata, *odata;
 	int ocount, moffs;
-
-	int i, vol, offs, nch;
-
 
 	if (s->mode & MODE_MON) {
 		moffs = d->poffs + d->round;
@@ -678,44 +727,8 @@ dev_sub_bcopy(struct dev *d, struct slot *s)
 		panic();
 	}
 #endif
-
-	/*
-	 * Apply the following processing chain:
-	 *
-	 *	cmap -> resamp -> enc
-	 *
-	 * where the last two are optional.
-	 */
-
-	enc_out = odata;
-	resamp_out = s->sub.encbuf ? s->sub.encbuf : enc_out;
-	cmap_out = s->sub.resampbuf ? s->sub.resampbuf : resamp_out;
-
-	nch = s->sub.cmap.nch;
-	vol = ADATA_UNIT / s->sub.join;
-	cmap_copy(&s->sub.cmap, idata, cmap_out, vol, d->round);
-
-	offs = 0;
-	for (i = s->sub.join - 1; i > 0; i--) {
-		offs += nch;
-		cmap_add(&s->sub.cmap, idata + offs, cmap_out, vol, d->round);
-	}
-
-	offs = 0;
-	for (i = s->sub.expand - 1; i > 0; i--) {
-		offs += nch;
-		cmap_copy(&s->sub.cmap, idata, cmap_out + offs, vol, d->round);
-	}
-
-	if (s->sub.resampbuf) {
-		resamp_do(&s->sub.resamp,
-		    s->sub.resampbuf, resamp_out, d->round);
-	}
-
-	if (s->sub.encbuf)
-		enc_do(&s->sub.enc, s->sub.encbuf, (void *)enc_out, s->round);
-
-	abuf_wcommit(&s->sub.buf, s->round * s->sub.bpf);
+	ocount = rec_filt_enc(s, idata, odata, d->round);
+	abuf_wcommit(&s->sub.buf, ocount * s->sub.bpf);
 }
 
 /*
@@ -823,17 +836,15 @@ dev_cycle(struct dev *d)
 			 * layer, so s->mix.buf.used == 0 and we can
 			 * destroy the buffer
 			 */
-			*ps = s->next;
 			s->pstate = SLOT_INIT;
+			abuf_done(&s->mix.buf);
+			if (s->mix.decbuf)
+				xfree(s->mix.decbuf);
+			if (s->mix.resampbuf)
+				xfree(s->mix.resampbuf);
 			s->ops->eof(s->arg);
-			slot_freebufs(s);
+			*ps = s->next;
 			dev_mix_adjvol(d);
-#ifdef DEBUG
-			if (log_level >= 3) {
-				slot_log(s);
-				log_puts(": drained\n");
-			}
-#endif
 			continue;
 		}
 
@@ -967,7 +978,6 @@ dev_new(char *path, struct aparams *par,
 	d = xmalloc(sizeof(struct dev));
 	d->path = xstrdup(path);
 	d->num = dev_sndnum++;
-	d->opt_list = NULL;
 
 	/*
 	 * XXX: below, we allocate a midi input buffer, since we don't
@@ -993,6 +1003,7 @@ dev_new(char *path, struct aparams *par,
 		d->slot[i].unit = i;
 		d->slot[i].ops = NULL;
 		d->slot[i].vol = MIDI_MAXCTL;
+		d->slot[i].tstate = MMC_OFF;
 		d->slot[i].serial = d->serial++;
 		strlcpy(d->slot[i].name, "prog", SLOT_NAMEMAX);
 	}
@@ -1234,8 +1245,6 @@ dev_del(struct dev *d)
 		log_puts(": deleting\n");
 	}
 #endif
-	while (d->opt_list != NULL)
-		opt_del(d, d->opt_list);
 	if (d->pstate != DEV_CFG)
 		dev_close(d);
 	for (p = &dev_list; *p != d; p = &(*p)->next) {
@@ -1307,9 +1316,9 @@ dev_sync_attach(struct dev *d)
 	}
 	for (i = 0; i < DEV_NSLOT; i++) {
 		s = d->slot + i;
-		if (!s->ops || !s->opt->mmc)
+		if (!s->ops || s->tstate == MMC_OFF)
 			continue;
-		if (s->pstate != SLOT_READY) {
+		if (s->tstate != MMC_START || s->pstate != SLOT_READY) {
 #ifdef DEBUG
 			if (log_level >= 3) {
 				slot_log(s);
@@ -1323,9 +1332,18 @@ dev_sync_attach(struct dev *d)
 		return;
 	for (i = 0; i < DEV_NSLOT; i++) {
 		s = d->slot + i;
-		if (!s->ops || !s->opt->mmc)
+		if (!s->ops)
 			continue;
-		slot_attach(s);
+		if (s->tstate == MMC_START) {
+#ifdef DEBUG
+			if (log_level >= 3) {
+				slot_log(s);
+				log_puts(": started\n");
+			}
+#endif
+			s->tstate = MMC_RUN;
+			slot_attach(s);
+		}
 	}
 	d->tstate = MMC_RUN;
 	dev_midi_full(d);
@@ -1395,140 +1413,11 @@ dev_mmcloc(struct dev *d, unsigned int origin)
 		dev_mmcstart(d);
 }
 
-
-/*
- * allocate buffers & conversion chain
- */
-void
-slot_allocbufs(struct slot *s)
-{
-	unsigned int dev_nch;
-	struct dev *d = s->dev;
-
-	if (s->mode & MODE_PLAY) {
-		s->mix.bpf = s->par.bps * s->mix.nch;
-		abuf_init(&s->mix.buf, s->appbufsz * s->mix.bpf);
-
-		dev_nch = s->opt->pmax - s->opt->pmin + 1;
-		s->mix.decbuf = NULL;
-		s->mix.resampbuf = NULL;
-		s->mix.join = 1;
-		s->mix.expand = 1;
-		if (s->opt->dup) {
-			if (dev_nch > s->mix.nch)
-				s->mix.expand = dev_nch / s->mix.nch;
-			else if (dev_nch < s->mix.nch)
-				s->mix.join = s->mix.nch / dev_nch;
-		}
-		cmap_init(&s->mix.cmap,
-		    s->opt->pmin, s->opt->pmin + s->mix.nch - 1,
-		    s->opt->pmin, s->opt->pmin + s->mix.nch - 1,
-		    0, d->pchan - 1,
-		    s->opt->pmin, s->opt->pmax);
-		if (!aparams_native(&s->par)) {
-			dec_init(&s->mix.dec, &s->par, s->mix.nch);
-			s->mix.decbuf =
-			    xmalloc(s->round * s->mix.nch * sizeof(adata_t));
-		}
-		if (s->rate != d->rate) {
-			resamp_init(&s->mix.resamp, s->round, d->round,
-			    s->mix.nch);
-			s->mix.resampbuf =
-			    xmalloc(d->round * s->mix.nch * sizeof(adata_t));
-		}
-	}
-
-	if (s->mode & MODE_RECMASK) {
-		s->sub.bpf = s->par.bps * s->sub.nch;
-		abuf_init(&s->sub.buf, s->appbufsz * s->sub.bpf);
-
-		dev_nch = s->opt->rmax - s->opt->rmin + 1;
-		s->sub.encbuf = NULL;
-		s->sub.resampbuf = NULL;
-		s->sub.join = 1;
-		s->sub.expand = 1;
-		if (s->opt->dup) {
-			if (dev_nch > s->sub.nch)
-				s->sub.join = dev_nch / s->sub.nch;
-			else if (dev_nch < s->sub.nch)
-				s->sub.expand = s->sub.nch / dev_nch;
-		}
-		cmap_init(&s->sub.cmap,
-		    0, ((s->mode & MODE_MON) ? d->pchan : d->rchan) - 1,
-		    s->opt->rmin, s->opt->rmax,
-		    s->opt->rmin, s->opt->rmin + s->sub.nch - 1,
-		    s->opt->rmin, s->opt->rmin + s->sub.nch - 1);
-		if (s->rate != d->rate) {
-			resamp_init(&s->sub.resamp, d->round, s->round,
-			    s->sub.nch);
-			s->sub.resampbuf =
-			    xmalloc(d->round * s->sub.nch * sizeof(adata_t));
-		}
-		if (!aparams_native(&s->par)) {
-			enc_init(&s->sub.enc, &s->par, s->sub.nch);
-			s->sub.encbuf =
-			    xmalloc(s->round * s->sub.nch * sizeof(adata_t));
-		}
-
-		/*
-		 * cmap_copy() doesn't write samples in all channels,
-	         * for instance when mono->stereo conversion is
-	         * disabled. So we have to prefill cmap_copy() output
-	         * with silence.
-	         */
-		if (s->sub.resampbuf) {
-			memset(s->sub.resampbuf, 0,
-			    d->round * s->sub.nch * sizeof(adata_t));
-		} else if (s->sub.encbuf) {
-			memset(s->sub.encbuf, 0,
-			    s->round * s->sub.nch * sizeof(adata_t));
-		} else {
-			memset(s->sub.buf.data, 0,
-			    s->appbufsz * s->sub.nch * sizeof(adata_t));
-		}
-	}
-
-#ifdef DEBUG
-	if (log_level >= 3) {
-		slot_log(s);
-		log_puts(": allocated ");
-		log_putu(s->appbufsz);
-		log_puts("/");
-		log_putu(SLOT_BUFSZ(s));
-		log_puts(" fr buffers\n");
-	}
-#endif
-}
-
-/*
- * free buffers & conversion chain
- */
-void
-slot_freebufs(struct slot *s)
-{
-	if (s->mode & MODE_RECMASK) {
-		abuf_done(&s->sub.buf);
-		if (s->sub.encbuf)
-			xfree(s->sub.encbuf);
-		if (s->sub.resampbuf)
-			xfree(s->sub.resampbuf);
-	}
-
-	if (s->mode & MODE_PLAY) {
-		abuf_done(&s->mix.buf);
-		if (s->mix.decbuf)
-			xfree(s->mix.decbuf);
-		if (s->mix.resampbuf)
-			xfree(s->mix.resampbuf);
-	}
-}
-
 /*
  * allocate a new slot and register the given call-backs
  */
 struct slot *
-slot_new(struct dev *d, struct opt *opt, char *who,
-    struct slotops *ops, void *arg, int mode)
+slot_new(struct dev *d, char *who, struct slotops *ops, void *arg, int mode)
 {
 	char *p;
 	char name[SLOT_NAMEMAX];
@@ -1623,17 +1512,6 @@ slot_new(struct dev *d, struct opt *opt, char *who,
 #endif
 
 found:
-	if ((mode & MODE_REC) && (opt->mode & MODE_MON)) {
-		mode |= MODE_MON;
-		mode &= ~MODE_REC;
-	}
-	if ((mode & opt->mode) != mode) {
-		if (log_level >= 1) {
-			slot_log(s);
-			log_puts(": requested mode not allowed\n");
-		}
-		return 0;
-	}
 	if (!dev_ref(d))
 		return NULL;
 	if ((mode & d->mode) != mode) {
@@ -1645,34 +1523,29 @@ found:
 		return 0;
 	}
 	s->dev = d;
-	s->opt = opt;
 	s->ops = ops;
 	s->arg = arg;
 	s->pstate = SLOT_INIT;
+	s->tstate = MMC_OFF;
 	s->mode = mode;
 	aparams_init(&s->par);
-	if (s->mode & MODE_PLAY)
-		s->mix.nch = s->opt->pmax - s->opt->pmin + 1;
-	if (s->mode & MODE_RECMASK)
-		s->sub.nch = s->opt->rmax - s->opt->rmin + 1;
-	s->xrun = s->opt->mmc ? XRUN_SYNC : XRUN_IGNORE;
+	if (s->mode & MODE_PLAY) {
+		s->mix.slot_cmin = s->mix.dev_cmin = 0;
+		s->mix.slot_cmax = s->mix.dev_cmax = d->pchan - 1;
+	}
+	if (s->mode & MODE_RECMASK) {
+		s->sub.slot_cmin = s->sub.dev_cmin = 0;
+		s->sub.slot_cmax = s->sub.dev_cmax =
+		    ((s->mode & MODE_MON) ? d->pchan : d->rchan) - 1;
+	}
+	s->xrun = XRUN_IGNORE;
+	s->dup = 0;
 	s->appbufsz = d->bufsz;
 	s->round = d->round;
 	s->rate = d->rate;
+	s->mix.maxweight = ADATA_UNIT;
 	dev_midi_slotdesc(d, s);
 	dev_midi_vol(d, s);
-#ifdef DEBUG
-	if (log_level >= 3) {
-		slot_log(s);
-		log_puts(": using ");
-		dev_log(d);
-		log_puts(".");
-		log_puts(opt->name);
-		log_puts(", mode = ");
-		log_putx(mode);
-		log_puts("\n");
-	}
-#endif
 	return s;
 }
 
@@ -1715,6 +1588,8 @@ slot_setvol(struct slot *s, unsigned int vol)
 	}
 #endif
 	s->vol = vol;
+	if (s->ops == NULL)
+		return;
 	s->mix.vol = MIDI_TO_ADATA(s->vol);
 }
 
@@ -1725,6 +1600,7 @@ void
 slot_attach(struct slot *s)
 {
 	struct dev *d = s->dev;
+	unsigned int slot_nch, dev_nch;
 	long long pos;
 	int startpos;
 
@@ -1772,9 +1648,90 @@ slot_attach(struct slot *s)
 #endif
 	s->next = d->slot_list;
 	d->slot_list = s;
+	s->skip = 0;
 	if (s->mode & MODE_PLAY) {
+		slot_nch = s->mix.slot_cmax - s->mix.slot_cmin + 1;
+		dev_nch = s->mix.dev_cmax - s->mix.dev_cmin + 1;
+		s->mix.decbuf = NULL;
+		s->mix.resampbuf = NULL;
+		s->mix.join = 1;
+		s->mix.expand = 1;
+		if (s->dup) {
+			if (dev_nch > slot_nch)
+				s->mix.expand = dev_nch / slot_nch;
+			else if (dev_nch < slot_nch)
+				s->mix.join = slot_nch / dev_nch;
+		}
+		cmap_init(&s->mix.cmap,
+		    s->mix.slot_cmin, s->mix.slot_cmax,
+		    s->mix.slot_cmin, s->mix.slot_cmax,
+		    0, d->pchan - 1,
+		    s->mix.dev_cmin, s->mix.dev_cmax);
+		if (!aparams_native(&s->par)) {
+			dec_init(&s->mix.dec, &s->par, slot_nch);
+			s->mix.decbuf =
+			    xmalloc(s->round * slot_nch * sizeof(adata_t));
+		}
+		if (s->rate != d->rate) {
+			resamp_init(&s->mix.resamp, s->round, d->round,
+			    slot_nch);
+			s->mix.resampbuf =
+			    xmalloc(d->round * slot_nch * sizeof(adata_t));
+		}
 		s->mix.vol = MIDI_TO_ADATA(s->vol);
 		dev_mix_adjvol(d);
+	}
+	if (s->mode & MODE_RECMASK) {
+		slot_nch = s->sub.slot_cmax - s->sub.slot_cmin + 1;
+		dev_nch = s->sub.dev_cmax - s->sub.dev_cmin + 1;
+		s->sub.encbuf = NULL;
+		s->sub.resampbuf = NULL;
+		s->sub.join = 1;
+		s->sub.expand = 1;
+		if (s->dup) {
+			if (dev_nch > slot_nch)
+				s->sub.join = dev_nch / slot_nch;
+			else if (dev_nch < slot_nch)
+				s->sub.expand = slot_nch / dev_nch;
+		}
+		cmap_init(&s->sub.cmap,
+		    0, ((s->mode & MODE_MON) ? d->pchan : d->rchan) - 1,
+		    s->sub.dev_cmin, s->sub.dev_cmax,
+		    s->sub.slot_cmin, s->sub.slot_cmax,
+		    s->sub.slot_cmin, s->sub.slot_cmax);
+		if (s->rate != d->rate) {
+			resamp_init(&s->sub.resamp, d->round, s->round,
+			    slot_nch);
+			s->sub.resampbuf =
+			    xmalloc(d->round * slot_nch * sizeof(adata_t));
+		}
+		if (!aparams_native(&s->par)) {
+			enc_init(&s->sub.enc, &s->par, slot_nch);
+			s->sub.encbuf =
+			    xmalloc(s->round * slot_nch * sizeof(adata_t));
+		}
+
+		/*
+		 * cmap_copy() doesn't write samples in all channels,
+	         * for instance when mono->stereo conversion is
+	         * disabled. So we have to prefill cmap_copy() output
+	         * with silence.
+	         */
+		if (s->sub.resampbuf) {
+			memset(s->sub.resampbuf, 0,
+			    d->round * slot_nch * sizeof(adata_t));
+		} else if (s->sub.encbuf) {
+			memset(s->sub.encbuf, 0,
+			    s->round * slot_nch * sizeof(adata_t));
+		} else {
+			memset(s->sub.buf.data, 0,
+			    s->appbufsz * slot_nch * sizeof(adata_t));
+		}
+
+		/*
+		 * N-th recorded block is the N-th played block
+		 */
+		s->sub.prime = -startpos / (int)s->round;
 	}
 }
 
@@ -1791,10 +1748,12 @@ slot_ready(struct slot *s)
 	 */
 	if (s->dev->pstate == DEV_CFG)
 		return;
-	if (!s->opt->mmc)
+	if (s->tstate == MMC_OFF)
 		slot_attach(s);
-	else
+	else {
+		s->tstate = MMC_START;
 		dev_sync_attach(s->dev);
+	}
 }
 
 /*
@@ -1804,43 +1763,59 @@ slot_ready(struct slot *s)
 void
 slot_start(struct slot *s)
 {
+	unsigned int bufsz;
 #ifdef DEBUG
+	struct dev *d = s->dev;
+
+
 	if (s->pstate != SLOT_INIT) {
 		slot_log(s);
 		log_puts(": slot_start: wrong state\n");
 		panic();
 	}
+#endif
+	bufsz = s->appbufsz;
 	if (s->mode & MODE_PLAY) {
+#ifdef DEBUG
 		if (log_level >= 3) {
 			slot_log(s);
 			log_puts(": playing ");
 			aparams_log(&s->par);
 			log_puts(" -> ");
-			aparams_log(&s->dev->par);
+			aparams_log(&d->par);
 			log_puts("\n");
 		}
+#endif
+		s->mix.bpf = s->par.bps *
+		    (s->mix.slot_cmax - s->mix.slot_cmin + 1);
+		abuf_init(&s->mix.buf, bufsz * s->mix.bpf);
 	}
 	if (s->mode & MODE_RECMASK) {
+#ifdef DEBUG
 		if (log_level >= 3) {
 			slot_log(s);
 			log_puts(": recording ");
 			aparams_log(&s->par);
 			log_puts(" <- ");
-			aparams_log(&s->dev->par);
+			aparams_log(&d->par);
 			log_puts("\n");
-		}
 	}
 #endif
-	slot_allocbufs(s);
-
-	if (s->mode & MODE_RECMASK) {
-		/*
-		 * N-th recorded block is the N-th played block
-		 */
-		s->sub.prime = -dev_getpos(s->dev) / s->dev->round;
+		s->sub.bpf = s->par.bps *
+		    (s->sub.slot_cmax - s->sub.slot_cmin + 1);
+		abuf_init(&s->sub.buf, bufsz * s->sub.bpf);
 	}
-	s->skip = 0;
-
+	s->mix.weight = MIDI_TO_ADATA(MIDI_MAXCTL);
+#ifdef DEBUG
+	if (log_level >= 3) {
+		slot_log(s);
+		log_puts(": allocated ");
+		log_putu(s->appbufsz);
+		log_puts("/");
+		log_putu(SLOT_BUFSZ(s));
+		log_puts(" fr buffers\n");
+	}
+#endif
 	if (s->mode & MODE_PLAY) {
 		s->pstate = SLOT_START;
 	} else {
@@ -1873,8 +1848,19 @@ slot_detach(struct slot *s)
 #endif
 	}
 	*ps = s->next;
-	if (s->mode & MODE_PLAY)
+	if (s->mode & MODE_RECMASK) {
+		if (s->sub.encbuf)
+			xfree(s->sub.encbuf);
+		if (s->sub.resampbuf)
+			xfree(s->sub.resampbuf);
+	}
+	if (s->mode & MODE_PLAY) {
+		if (s->mix.decbuf)
+			xfree(s->mix.decbuf);
+		if (s->mix.resampbuf)
+			xfree(s->mix.resampbuf);
 		dev_mix_adjvol(s->dev);
+	}
 }
 
 /*
@@ -1891,37 +1877,37 @@ slot_stop(struct slot *s)
 	}
 #endif
 	if (s->pstate == SLOT_START) {
-		/*
-		 * If in rec-only mode, we're already in the READY or
-		 * RUN states. We're here because the play buffer was
-		 * not full enough, try to start so it's drained.
-		 */
-		s->pstate = SLOT_READY;
-		slot_ready(s);
-	}
-
-	if (s->pstate == SLOT_RUN) {
 		if (s->mode & MODE_PLAY) {
-			/*
-			 * Don't detach, dev_cycle() will do it for us
-			 * when the buffer is drained.
-			 */
-			s->pstate = SLOT_STOP;
-			return;
-		}
-		slot_detach(s);
-	} else {
+			s->pstate = SLOT_READY;
+			slot_ready(s);
+		} else
+			s->pstate = SLOT_INIT;
+	}
+	if (s->mode & MODE_RECMASK)
+		abuf_done(&s->sub.buf);
+	if (s->pstate == SLOT_READY) {
 #ifdef DEBUG
 		if (log_level >= 3) {
 			slot_log(s);
 			log_puts(": not drained (blocked by mmc)\n");
 		}
 #endif
+		if (s->mode & MODE_PLAY)
+			abuf_done(&s->mix.buf);
+		s->ops->eof(s->arg);
+		s->pstate = SLOT_INIT;
+	} else {
+		/* s->pstate == SLOT_RUN */
+		if (s->mode & MODE_PLAY)
+			s->pstate = SLOT_STOP;
+		else {
+			slot_detach(s);
+			s->pstate = SLOT_INIT;
+			s->ops->eof(s->arg);
+		}
 	}
-
-	s->pstate = SLOT_INIT;
-	s->ops->eof(s->arg);
-	slot_freebufs(s);
+	if (s->tstate != MMC_OFF)
+		s->tstate = MMC_STOP;
 }
 
 void

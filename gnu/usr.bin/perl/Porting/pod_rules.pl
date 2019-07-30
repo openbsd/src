@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-our (%Build, %Targets, $Verbose, $Test);
+use vars qw(%Build %Targets $Verbose $Test);
 use Text::Tabs;
 use Text::Wrap;
 use Getopt::Long;
@@ -32,8 +32,7 @@ if (ord("A") == 193) {
             # plan9 =>  'plan9/mkfile',
            );
 
-require './Porting/pod_lib.pl';
-require './Porting/manifest_lib.pl';
+require 'Porting/pod_lib.pl';
 sub my_die;
 
 # process command-line switches
@@ -141,15 +140,14 @@ sub do_manifest {
     my @manifest =
         grep {! m!^pod/[^. \t]+\.pod.*!}
             grep {! m!^README\.(\S+)! || $state->{ignore}{$1}} split "\n", $prev;
-    # NOTE - the sort code here is shared with Porting/manisort currently.
-    # If you change one, change the other. Or refactor them. :-)
-    join "\n",  sort_manifest(
-                    @manifest,
-                    &generate_manifest_pod(),
-                    &generate_manifest_readme()
-                ),
-                '', # elegant way to add a newline to the end
-    ;
+    join "\n", (
+                # Dictionary order - fold and handle non-word chars as nothing
+                map  { $_->[0] }
+                sort { $a->[1] cmp $b->[1] || $a->[0] cmp $b->[0] }
+                map  { my $f = lc $_; $f =~ s/[^a-z0-9\s]//g; [ $_, $f ] }
+                @manifest,
+                &generate_manifest_pod(),
+                &generate_manifest_readme()), '';
 }
 
 sub do_nmake {

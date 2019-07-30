@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.35 2018/07/09 19:20:30 guenther Exp $	*/
+/*	$OpenBSD: icu.s,v 1.33 2015/07/16 05:10:14 guenther Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ _C_LABEL(imen):
  *   esi - address to resume loop at
  *   edi - scratch for Xsoftnet
  */
-KIDTVEC(spllower)
+IDTVEC(spllower)
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
@@ -76,7 +76,7 @@ KIDTVEC(spllower)
  *   esi - address to resume loop at
  *   edi - scratch for Xsoftnet
  */
-KIDTVEC(doreti)
+IDTVEC(doreti)
 	popl	%ebx			# get previous priority
 	movl	$1f,%esi		# address to resume loop at
 1:	movl	%ebx,%eax
@@ -96,6 +96,10 @@ KIDTVEC(doreti)
 	movl	%ebx,CPL
 	je	3f
 	testb   $SEL_RPL,TF_CS(%esp)
+#ifdef VM86
+	jnz	4f
+	testl	$PSL_VM,TF_EFLAGS(%esp)
+#endif
 	jz	3f
 4:	CLEAR_ASTPENDING(%ecx)
 	sti
@@ -104,18 +108,14 @@ KIDTVEC(doreti)
 	addl	$4,%esp
 	cli
 	jmp	2b
-3:
-#ifdef DIAGNOSTIC
-	movl	$0xf9,%esi
-#endif
-	INTRFASTEXIT
+3:	INTRFASTEXIT
 
 
 /*
  * Soft interrupt handlers
  */
 
-KIDTVEC(softtty)
+IDTVEC(softtty)
 	movl	$IPL_SOFTTTY,%eax
 	movl	%eax,CPL
 	sti
@@ -124,7 +124,7 @@ KIDTVEC(softtty)
 	addl	$4,%esp
 	jmp	*%esi
 
-KIDTVEC(softnet)
+IDTVEC(softnet)
 	movl	$IPL_SOFTNET,%eax
 	movl	%eax,CPL
 	sti
@@ -134,7 +134,7 @@ KIDTVEC(softnet)
 	jmp	*%esi
 #undef DONETISR
 
-KIDTVEC(softclock)
+IDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK,%eax
 	movl	%eax,CPL
 	sti

@@ -1,6 +1,6 @@
 package overload;
 
-our $VERSION = '1.30';
+our $VERSION = '1.26';
 
 %ops = (
     with_assign         => "+ - * / % ** << >> x .",
@@ -21,7 +21,9 @@ our $VERSION = '1.30';
 );
 
 my %ops_seen;
-@ops_seen{ map split(/ /), values %ops } = ();
+for $category (keys %ops) {
+    $ops_seen{$_}++ for (split /\s+/, $ops{$category});
+}
 
 sub nil {}
 
@@ -38,7 +40,7 @@ sub OVERLOAD {
       }
     } else {
       warnings::warnif("overload arg '$_' is invalid")
-        unless exists $ops_seen{$_};
+        unless $ops_seen{$_};
       $sub = $arg{$_};
       if (not ref $sub) {
 	$ {$package . "::(" . $_} = $sub;
@@ -63,7 +65,7 @@ sub unimport {
   *{$package . "::(("} = \&nil;
   for (@_) {
       warnings::warnif("overload arg '$_' is invalid")
-        unless exists $ops_seen{$_};
+        unless $ops_seen{$_};
       delete $ {$package . "::"}{$_ eq 'fallback' ? '()' : "(" .$_};
   }
 }
@@ -310,7 +312,7 @@ An appropriate implementation of C<--> might look like
         # ...
     sub decr { --${$_[0]}; }
 
-If the "bitwise" feature is enabled (see L<feature>), a fifth
+If the experimental "bitwise" feature is enabled (see L<feature>), a fifth
 TRUE argument is passed to subroutines handling C<&>, C<|>, C<^> and C<~>.
 This indicates that the caller is expecting numeric behaviour.  The fourth
 argument will be C<undef>, as that position (C<$_[3]>) is reserved for use
@@ -693,7 +695,7 @@ The specified function will be passed four parameters.
 The first three arguments coincide with those that would have been
 passed to the corresponding method if it had been defined.
 The fourth argument is the C<use overload> key for that missing
-method.  If the "bitwise" feature is enabled (see L<feature>),
+method.  If the experimental "bitwise" feature is enabled (see L<feature>),
 a fifth TRUE argument is passed to subroutines handling C<&>, C<|>, C<^> and C<~> to indicate that the caller is expecting numeric behaviour.
 
 For example, if C<$a> is an object blessed into a package declaring

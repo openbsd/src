@@ -2,9 +2,10 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    require "./test.pl";
-    set_up_inc('../lib');
+    @INC = '../lib';
 }
+
+BEGIN { require "./test.pl"; }
 
 plan(tests => 37);
 
@@ -17,16 +18,16 @@ if (is_miniperl()) {
     $devnull = File::Spec->devnull;
 }
 
-open(TRY, '>tmpIo_argv1.tmp') || (die "Can't open temp file: $!");
+open(TRY, '>Io_argv1.tmp') || (die "Can't open temp file: $!");
 print TRY "a line\n";
 close TRY or die "Could not close: $!";
-open(TRY, '>tmpIo_argv2.tmp') || (die "Can't open temp file: $!");
+open(TRY, '>Io_argv2.tmp') || (die "Can't open temp file: $!");
 print TRY "another line\n";
 close TRY or die "Could not close: $!";
 
 $x = runperl(
     prog	=> 'while (<>) { print $., $_; }',
-    args	=> [ 'tmpIo_argv1.tmp', 'tmpIo_argv1.tmp' ],
+    args	=> [ 'Io_argv1.tmp', 'Io_argv1.tmp' ],
 );
 is($x, "1a line\n2a line\n", '<> from two files');
 
@@ -34,7 +35,7 @@ is($x, "1a line\n2a line\n", '<> from two files');
     $x = runperl(
 	prog	=> 'while (<>) { print $_; }',
 	stdin	=> "foo\n",
-	args	=> [ 'tmpIo_argv1.tmp', '-' ],
+	args	=> [ 'Io_argv1.tmp', '-' ],
     );
     is($x, "a line\nfoo\n", '<> from a file and STDIN');
 
@@ -55,9 +56,9 @@ is($x, "1a line\n2a line\n", '<> from two files');
 
     $x = runperl(
 	prog	=> 'while (<>) { print $ARGV.q/,/.$_ }',
-	args	=> [ 'tmpIo_argv1.tmp', 'tmpIo_argv2.tmp' ],
+	args	=> [ 'Io_argv1.tmp', 'Io_argv2.tmp' ],
     );
-    is($x, "tmpIo_argv1.tmp,a line\ntmpIo_argv2.tmp,another line\n", '$ARGV is the file name');
+    is($x, "Io_argv1.tmp,a line\nIo_argv2.tmp,another line\n", '$ARGV is the file name');
 
 TODO: {
         local $::TODO = "unrelated bug in redirection implementation" if $^O eq 'VMS';
@@ -83,8 +84,8 @@ TODO: {
     is( 0+$?, 0, q(eof() doesn't segfault) );
 }
 
-@ARGV = is_miniperl() ? ('tmpIo_argv1.tmp', 'tmpIo_argv1.tmp', 'tmpIo_argv1.tmp')
-    : ('tmpIo_argv1.tmp', 'tmpIo_argv1.tmp', $devnull, 'tmpIo_argv1.tmp');
+@ARGV = is_miniperl() ? ('Io_argv1.tmp', 'Io_argv1.tmp', 'Io_argv1.tmp')
+    : ('Io_argv1.tmp', 'Io_argv1.tmp', $devnull, 'Io_argv1.tmp');
 while (<>) {
     $y .= $. . $_;
     if (eof()) {
@@ -95,11 +96,11 @@ while (<>) {
 is($y, "1a line\n2a line\n3a line\n", '<> from @ARGV');
 
 
-open(TRY, '>tmpIo_argv1.tmp') or die "Can't open temp file: $!";
+open(TRY, '>Io_argv1.tmp') or die "Can't open temp file: $!";
 close TRY or die "Could not close: $!";
-open(TRY, '>tmpIo_argv2.tmp') or die "Can't open temp file: $!";
+open(TRY, '>Io_argv2.tmp') or die "Can't open temp file: $!";
 close TRY or die "Could not close: $!";
-@ARGV = ('tmpIo_argv1.tmp', 'tmpIo_argv2.tmp');
+@ARGV = ('Io_argv1.tmp', 'Io_argv2.tmp');
 $^I = '_bak';   # not .bak which confuses VMS
 $/ = undef;
 my $i = 11;
@@ -109,9 +110,9 @@ while (<>) {
     print;
     next_test();
 }
-open(TRY, '<tmpIo_argv1.tmp') or die "Can't open temp file: $!";
+open(TRY, '<Io_argv1.tmp') or die "Can't open temp file: $!";
 print while <TRY>;
-open(TRY, '<tmpIo_argv2.tmp') or die "Can't open temp file: $!";
+open(TRY, '<Io_argv2.tmp') or die "Can't open temp file: $!";
 print while <TRY>;
 close TRY or die "Could not close: $!";
 undef $^I;
@@ -123,7 +124,7 @@ ok( eof TRY );
     ok( eof NEVEROPENED,    'eof() true on unopened filehandle' );
 }
 
-open STDIN, 'tmpIo_argv1.tmp' or die $!;
+open STDIN, 'Io_argv1.tmp' or die $!;
 @ARGV = ();
 ok( !eof(),     'STDIN has something' );
 
@@ -135,7 +136,7 @@ SKIP: {
     @ARGV = ();
     ok( eof(),      'eof() true with empty @ARGV' );
 
-    @ARGV = ('tmpIo_argv1.tmp');
+    @ARGV = ('Io_argv1.tmp');
     ok( !eof() );
 
     @ARGV = ($devnull, $devnull);
@@ -147,7 +148,7 @@ SKIP: {
 
 SKIP: {
     local $/;
-    open my $fh, 'tmpIo_argv1.tmp' or die "Could not open tmpIo_argv1.tmp: $!";
+    open my $fh, 'Io_argv1.tmp' or die "Could not open Io_argv1.tmp: $!";
     <$fh>;	# set $. = 1
     is( <$fh>, undef );
 
@@ -165,19 +166,19 @@ SKIP: {
     close $fh or die "Could not close: $!";
 }
 
-open(TRY, '>tmpIo_argv1.tmp') || (die "Can't open temp file: $!");
+open(TRY, '>Io_argv1.tmp') || (die "Can't open temp file: $!");
 print TRY "one\n\nthree\n";
 close TRY or die "Could not close: $!";
 
 $x = runperl(
     prog	=> 'print $..$ARGV.$_ while <<>>',
-    args	=> [ 'tmpIo_argv1.tmp' ],
+    args	=> [ 'Io_argv1.tmp' ],
 );
-is($x, "1tmpIo_argv1.tmpone\n2tmpIo_argv1.tmp\n3tmpIo_argv1.tmpthree\n", '<<>>');
+is($x, "1Io_argv1.tmpone\n2Io_argv1.tmp\n3Io_argv1.tmpthree\n", '<<>>');
 
 $x = runperl(
     prog	=> '$w=q/b/;$w.=<<>>;print $w',
-    args	=> [ 'tmpIo_argv1.tmp' ],
+    args	=> [ 'Io_argv1.tmp' ],
 );
 is($x, "bone\n", '<<>> and rcatline');
 
@@ -232,24 +233,24 @@ SKIP: {
     $x = runperl(
         prog	=> 'while (<<>>) { }',
         stderr	=> 1,
-        args	=> [ 'tmpIo_argv1.tmp', '"echo foo |"' ],
+        args	=> [ 'Io_argv1.tmp', '"echo foo |"' ],
     );
     like($x, qr/^Can't open echo foo \|: .* at -e line 1, <> line 3/, '<<>> does not treat ...| as fork after eof');
 }
 
 # This used to dump core
 fresh_perl_is( <<'**PROG**', "foobar", {}, "ARGV aliasing and eof()" ); 
-open OUT, ">tmpIo_argv3.tmp" or die "Can't open temp file: $!";
+open OUT, ">Io_argv3.tmp" or die "Can't open temp file: $!";
 print OUT "foo";
 close OUT;
-open IN, "tmpIo_argv3.tmp" or die "Can't open temp file: $!";
+open IN, "Io_argv3.tmp" or die "Can't open temp file: $!";
 *ARGV = *IN;
 while (<>) {
     print;
     print "bar" if eof();
 }
 close IN;
-unlink "tmpIo_argv3.tmp";
+unlink "Io_argv3.tmp";
 **PROG**
 
 # This used to fail an assertion.
@@ -263,6 +264,6 @@ is runperl(prog => 'undef *x; delete $::{ARGV}; $x++;'
   "ok\n", 'deleting $::{ARGV}';
 
 END {
-    unlink_all 'tmpIo_argv1.tmp', 'tmpIo_argv1.tmp_bak',
-	'tmpIo_argv2.tmp', 'tmpIo_argv2.tmp_bak', 'tmpIo_argv3.tmp';
+    unlink_all 'Io_argv1.tmp', 'Io_argv1.tmp_bak',
+	'Io_argv2.tmp', 'Io_argv2.tmp_bak', 'Io_argv3.tmp';
 }

@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.18 2019/01/27 16:59:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.14 2017/12/24 23:29:52 patrick Exp $
 
 .include <bsd.own.mk>
 
-LLVM_V=			7.0.1
+LLVM_V=			5.0.1
 CLANG_INTR_INCDIR=	/usr/lib/clang/${LLVM_V}/include
 
 TBLGEN= ${.OBJDIR}/../../../clang-tblgen/clang-tblgen
@@ -21,13 +21,11 @@ HEADERS=	stdalign.h \
 
 .if ${MACHINE_ARCH} == "aarch64" || ${MACHINE_ARCH} == "arm"
 GEN+=		arm_neon.h
-GEN+=		arm_fp16.h
 HEADERS+=	arm_acle.h ${GEN}
 .elif ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
 HEADERS+=	adxintrin.h \
 		ammintrin.h \
 		avx2intrin.h \
-		avx512bitalgintrin.h \
 		avx512bwintrin.h \
 		avx512cdintrin.h \
 		avx512dqintrin.h \
@@ -36,62 +34,43 @@ HEADERS+=	adxintrin.h \
 		avx512ifmaintrin.h \
 		avx512ifmavlintrin.h \
 		avx512pfintrin.h \
-		avx512vbmi2intrin.h \
 		avx512vbmiintrin.h \
 		avx512vbmivlintrin.h \
-		avx512vlbitalgintrin.h \
 		avx512vlbwintrin.h \
 		avx512vlcdintrin.h \
 		avx512vldqintrin.h \
 		avx512vlintrin.h \
-		avx512vlvbmi2intrin.h \
-		avx512vlvnniintrin.h \
-		avx512vnniintrin.h \
 		avx512vpopcntdqintrin.h \
-		avx512vpopcntdqvlintrin.h \
 		avxintrin.h \
 		bmi2intrin.h \
 		bmiintrin.h \
-		cetintrin.h \
 		cpuid.h \
-		cldemoteintrin.h \
 		clflushoptintrin.h \
-		clwbintrin.h \
 		clzerointrin.h \
 		emmintrin.h \
 		f16cintrin.h \
 		fma4intrin.h \
 		fmaintrin.h \
 		fxsrintrin.h \
-		gfniintrin.h \
 		ia32intrin.h \
 		immintrin.h \
-		invpcidintrin.h \
 		lwpintrin.h \
 		lzcntintrin.h \
 		mm3dnow.h \
-		mm_malloc.h \
 		mmintrin.h \
-		movdirintrin.h \
+		mm_malloc.h \
 		mwaitxintrin.h \
 		nmmintrin.h \
-		pconfigintrin.h \
 		pkuintrin.h \
 		pmmintrin.h \
 		popcntintrin.h \
 		prfchwintrin.h \
-		ptwriteintrin.h \
 		rdseedintrin.h \
 		rtmintrin.h \
-		sgxintrin.h \
 		shaintrin.h \
 		smmintrin.h \
 		tbmintrin.h \
 		tmmintrin.h \
-		vaesintrin.h \
-		vpclmulqdqintrin.h \
-		waitpkgintrin.h \
-		wbnoinvdintrin.h \
 		wmmintrin.h \
 		__wmmintrin_aes.h \
 		__wmmintrin_pclmul.h \
@@ -123,11 +102,6 @@ install includes: ${HEADERS}
 	    ${.ALLSRC} ${DESTDIR}${CLANG_INTR_INCDIR}
 
 arm_neon.h: ${CLANG_INC}/clang/Basic/arm_neon.td
-	${TBLGEN} -gen-arm-neon -I${CLANG_INC}/clang/Basic \
-	    -o ${.TARGET} ${.ALLSRC}
-
-arm_fp16.h: ${CLANG_INC}/clang/Basic/arm_fp16.td
-	${TBLGEN} -gen-arm-fp16 -I${CLANG_INC}/clang/Basic \
-	    -o ${.TARGET} ${.ALLSRC}
+	${TBLGEN} -gen-arm-neon -o ${.TARGET} ${.ALLSRC}
 
 .include <bsd.obj.mk>

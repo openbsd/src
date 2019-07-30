@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.h,v 1.5 2019/04/23 13:35:12 visa Exp $	*/
+/*	$OpenBSD: mplock.h,v 1.3 2017/12/04 09:51:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -47,19 +47,19 @@ struct __mp_lock {
 #ifndef _LOCORE
 
 void	___mp_lock_init(struct __mp_lock *);
-void	__mp_lock(struct __mp_lock *);
-void	__mp_unlock(struct __mp_lock *);
-int	__mp_release_all(struct __mp_lock *);
-int	__mp_release_all_but_one(struct __mp_lock *);
-void	__mp_acquire_count(struct __mp_lock *, int);
+void	___mp_lock(struct __mp_lock * LOCK_FL_VARS);
+void	___mp_unlock(struct __mp_lock * LOCK_FL_VARS);
+int	___mp_release_all(struct __mp_lock * LOCK_FL_VARS);
+int	___mp_release_all_but_one(struct __mp_lock * LOCK_FL_VARS);
+void	___mp_acquire_count(struct __mp_lock *, int LOCK_FL_VARS);
 int	__mp_lock_held(struct __mp_lock *, struct cpu_info *);
 
 #ifdef WITNESS
 
-void	_mp_lock_init(struct __mp_lock *, const struct lock_type *);
+void	_mp_lock_init(struct __mp_lock *, struct lock_type *);
 
 #define __mp_lock_init(mpl) do {					\
-	static const struct lock_type __lock_type = { .lt_name = #mpl };\
+	static struct lock_type __lock_type = { .lt_name = #mpl };	\
 	_mp_lock_init((mpl), &__lock_type);				\
 } while (0)
 
@@ -68,6 +68,16 @@ void	_mp_lock_init(struct __mp_lock *, const struct lock_type *);
 #define __mp_lock_init		___mp_lock_init
 
 #endif /* WITNESS */
+
+#define __mp_lock(mpl)		___mp_lock((mpl) LOCK_FILE_LINE)
+#define __mp_unlock(mpl)	___mp_unlock((mpl) LOCK_FILE_LINE)
+
+#define __mp_release_all(mpl) \
+	___mp_release_all((mpl) LOCK_FILE_LINE)
+#define __mp_release_all_but_one(mpl) \
+	___mp_release_all_but_one((mpl) LOCK_FILE_LINE)
+#define __mp_acquire_count(mpl, count) \
+	___mp_acquire_count((mpl), (count) LOCK_FILE_LINE)
 
 #endif
 

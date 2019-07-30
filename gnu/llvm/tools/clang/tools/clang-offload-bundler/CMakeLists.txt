@@ -18,7 +18,6 @@ set(CLANG_OFFLOAD_BUNDLER_LIB_DEPS
 add_dependencies(clang clang-offload-bundler)
 
 target_link_libraries(clang-offload-bundler
-  PRIVATE
   ${CLANG_OFFLOAD_BUNDLER_LIB_DEPS}
   )
 

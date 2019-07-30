@@ -32,18 +32,19 @@ class VLASizeChecker : public Checker< check::PreStmt<DeclStmt> > {
   mutable std::unique_ptr<BugType> BT;
   enum VLASize_Kind { VLA_Garbage, VLA_Zero, VLA_Tainted, VLA_Negative };
 
-  void reportBug(VLASize_Kind Kind, const Expr *SizeE, ProgramStateRef State,
-                 CheckerContext &C,
-                 std::unique_ptr<BugReporterVisitor> Visitor = nullptr) const;
-
+  void reportBug(VLASize_Kind Kind,
+                 const Expr *SizeE,
+                 ProgramStateRef State,
+                 CheckerContext &C) const;
 public:
   void checkPreStmt(const DeclStmt *DS, CheckerContext &C) const;
 };
 } // end anonymous namespace
 
-void VLASizeChecker::reportBug(
-    VLASize_Kind Kind, const Expr *SizeE, ProgramStateRef State,
-    CheckerContext &C, std::unique_ptr<BugReporterVisitor> Visitor) const {
+void VLASizeChecker::reportBug(VLASize_Kind Kind,
+                               const Expr *SizeE,
+                               ProgramStateRef State,
+                               CheckerContext &C) const {
   // Generate an error node.
   ExplodedNode *N = C.generateErrorNode(State);
   if (!N)
@@ -72,7 +73,6 @@ void VLASizeChecker::reportBug(
   }
 
   auto report = llvm::make_unique<BugReport>(*BT, os.str(), N);
-  report->addVisitor(std::move(Visitor));
   report->addRange(SizeE->getSourceRange());
   bugreporter::trackNullOrUndefValue(N, SizeE, *report);
   C.emitReport(std::move(report));
@@ -94,7 +94,7 @@ void VLASizeChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
   // FIXME: Handle multi-dimensional VLAs.
   const Expr *SE = VLA->getSizeExpr();
   ProgramStateRef state = C.getState();
-  SVal sizeV = C.getSVal(SE);
+  SVal sizeV = state->getSVal(SE, C.getLocationContext());
 
   if (sizeV.isUndef()) {
     reportBug(VLA_Garbage, SE, state, C);
@@ -108,8 +108,7 @@ void VLASizeChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
 
   // Check if the size is tainted.
   if (state->isTainted(sizeV)) {
-    reportBug(VLA_Tainted, SE, nullptr, C,
-              llvm::make_unique<TaintBugVisitor>(sizeV));
+    reportBug(VLA_Tainted, SE, nullptr, C);
     return;
   }
 

@@ -11,7 +11,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/Support/Format.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "nvptx-mcexpr"
@@ -48,7 +47,10 @@ void NVPTXFloatMCExpr::printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const {
   }
 
   APInt API = APF.bitcastToAPInt();
-  OS << format_hex_no_prefix(API.getZExtValue(), NumHex, /*Upper=*/true);
+  std::string HexStr(utohexstr(API.getZExtValue()));
+  if (HexStr.length() < NumHex)
+    OS << std::string(NumHex - HexStr.length(), '0');
+  OS << utohexstr(API.getZExtValue());
 }
 
 const NVPTXGenericMCSymbolRefExpr*

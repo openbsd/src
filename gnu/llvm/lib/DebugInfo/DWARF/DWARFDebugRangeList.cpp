@@ -13,17 +13,9 @@
 #include "llvm/Support/raw_ostream.h"
 #include <cinttypes>
 #include <cstdint>
+#include <utility>
 
 using namespace llvm;
-
-// FIXME: There are several versions of this. Consolidate them.
-template <typename... Ts>
-static Error createError(char const *Fmt, const Ts &... Vals) {
-  std::string Buffer;
-  raw_string_ostream Stream(Buffer);
-  Stream << format(Fmt, Vals...);
-  return make_error<StringError>(Stream.str(), inconvertibleErrorCode());
-}
 
 void DWARFDebugRangeList::clear() {
   Offset = -1U;
@@ -31,36 +23,32 @@ void DWARFDebugRangeList::clear() {
   Entries.clear();
 }
 
-Error DWARFDebugRangeList::extract(const DWARFDataExtractor &data,
-                                   uint32_t *offset_ptr) {
+bool DWARFDebugRangeList::extract(const DWARFDataExtractor &data,
+                                  uint32_t *offset_ptr) {
   clear();
   if (!data.isValidOffset(*offset_ptr))
-    return createError("invalid range list offset 0x%" PRIx32, *offset_ptr);
-
+    return false;
   AddressSize = data.getAddressSize();
   if (AddressSize != 4 && AddressSize != 8)
-    return createError("invalid address size: %d", AddressSize);
+    return false;
   Offset = *offset_ptr;
   while (true) {
-    RangeListEntry Entry;
-    Entry.SectionIndex = -1ULL;
-
+    RangeListEntry entry;
     uint32_t prev_offset = *offset_ptr;
-    Entry.StartAddress = data.getRelocatedAddress(offset_ptr);
-    Entry.EndAddress =
-        data.getRelocatedAddress(offset_ptr, &Entry.SectionIndex);
+    entry.StartAddress =
+        data.getRelocatedAddress(offset_ptr, &entry.SectionIndex);
+    entry.EndAddress = data.getRelocatedAddress(offset_ptr);
 
     // Check that both values were extracted correctly.
     if (*offset_ptr != prev_offset + 2 * AddressSize) {
       clear();
-      return createError("invalid range list entry at offset 0x%" PRIx32,
-                         prev_offset);
+      return false;
     }
-    if (Entry.isEndOfListEntry())
+    if (entry.isEndOfListEntry())
       break;
-    Entries.push_back(Entry);
+    Entries.push_back(entry);
   }
-  return Error::success();
+  return true;
 }
 
 void DWARFDebugRangeList::dump(raw_ostream &OS) const {
@@ -73,29 +61,16 @@ void DWARFDebugRangeList::dump(raw_ostream &OS) const {
   OS << format("%08x <End of list>\n", Offset);
 }
 
-DWARFAddressRangesVector DWARFDebugRangeList::getAbsoluteRanges(
-    llvm::Optional<BaseAddress> BaseAddr) const {
+DWARFAddressRangesVector
+DWARFDebugRangeList::getAbsoluteRanges(uint64_t BaseAddress) const {
   DWARFAddressRangesVector Res;
   for (const RangeListEntry &RLE : Entries) {
     if (RLE.isBaseAddressSelectionEntry(AddressSize)) {
-      BaseAddr = {RLE.EndAddress, RLE.SectionIndex};
-      continue;
+      BaseAddress = RLE.EndAddress;
+    } else {
+      Res.push_back({BaseAddress + RLE.StartAddress,
+                     BaseAddress + RLE.EndAddress, RLE.SectionIndex});
     }
-
-    DWARFAddressRange E;
-    E.LowPC = RLE.StartAddress;
-    E.HighPC = RLE.EndAddress;
-    E.SectionIndex = RLE.SectionIndex;
-    // Base address of a range list entry is determined by the closest preceding
-    // base address selection entry in the same range list. It defaults to the
-    // base address of the compilation unit if there is no such entry.
-    if (BaseAddr) {
-      E.LowPC += BaseAddr->Address;
-      E.HighPC += BaseAddr->Address;
-      if (E.SectionIndex == -1ULL)
-        E.SectionIndex = BaseAddr->SectionIndex;
-    }
-    Res.push_back(E);
   }
   return Res;
 }

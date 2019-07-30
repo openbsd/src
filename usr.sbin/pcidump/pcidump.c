@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.54 2019/06/02 02:37:12 dlg Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.46 2017/08/31 12:03:02 otto Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -50,21 +50,12 @@ const char *str2busdevfunc(const char *, int *, int *, int *);
 int pci_nfuncs(int, int);
 int pci_read(int, int, int, u_int32_t, u_int32_t *);
 int pci_readmask(int, int, int, u_int32_t, u_int32_t *);
-void dump_bars(int, int, int, int);
 void dump_caplist(int, int, int, u_int8_t);
 void dump_pci_powerstate(int, int, int, uint8_t);
 void dump_pcie_linkspeed(int, int, int, uint8_t);
-void dump_pcie_devserial(int, int, int, uint16_t);
-void dump_msi(int, int, int, uint8_t);
-void dump_msix(int, int, int, uint8_t);
 void print_pcie_ls(uint8_t);
 int dump_rom(int, int, int);
 int dump_vga_bios(void);
-
-static const char *
-	pci_class_name(pci_class_t);
-static const char *
-	pci_subclass_name(pci_class_t, pci_subclass_t);
 
 void	dump_type0(int bus, int dev, int func);
 void	dump_type1(int bus, int dev, int func);
@@ -338,7 +329,7 @@ dump_pci_powerstate(int bus, int dev, int func, uint8_t ptr)
 	if (pci_read(bus, dev, func, ptr + PCI_PMCSR, &pmcsr) != 0)
 		return;
 
-	printf("\t\tState: D%d", pmcsr & PCI_PMCSR_STATE_MASK);
+	printf("\t	State: D%d", pmcsr & PCI_PMCSR_STATE_MASK);
 	if (pmcsr & PCI_PMCSR_PME_EN)
 		printf(" PME# enabled");
 	if (pmcsr & PCI_PMCSR_PME_STATUS)
@@ -391,56 +382,12 @@ dump_pcie_linkspeed(int bus, int dev, int func, uint8_t ptr)
 	swidth = (sreg >> 4) & 0x3f;
 	sspeed = sreg & 0x0f;
 
-	printf("\t\tLink Speed: ");
+	printf("\t        Link Speed: ");
 	print_pcie_ls(sspeed);
 	printf(" / ");
 	print_pcie_ls(cspeed);
-	printf(" GT/s, ");
 
-	printf("Link Width: x%d / x%d\n", swidth, cwidth);
-}
-
-void
-dump_pcie_devserial(int bus, int dev, int func, u_int16_t ptr)
-{
-	uint32_t lower, upper;
-	uint64_t serial;
-
-	if ((pci_read(bus, dev, func, ptr + 8, &upper) != 0) ||
-	    (pci_read(bus, dev, func, ptr + 4, &lower) != 0))
-		return;
-
-	serial = ((uint64_t)upper << 32) | (uint64_t)lower;
-
-	printf("\t\tSerial Number: %016llx\n", serial);
-}
-
-void
-dump_msi(int bus, int dev, int func, u_int8_t ptr)
-{
-	u_int32_t reg;
-
-	if (pci_read(bus, dev, func, ptr, &reg) != 0)
-		return;
-
-	printf("\t\tEnabled: %s\n", reg & PCI_MSI_MC_MSIE ? "yes" : "no");
-}
-
-void
-dump_msix(int bus, int dev, int func, u_int8_t ptr)
-{
-	u_int32_t reg;
-	u_int32_t table;
-
-	if ((pci_read(bus, dev, func, ptr, &reg) != 0) ||
-	    (pci_read(bus, dev, func, ptr + PCI_MSIX_TABLE, &table) != 0))
-		return;
-
-	printf("\t\tEnabled: %s; table size %d (BAR %d:%d)\n",
-	    reg & PCI_MSIX_MC_MSIXE ? "yes" : "no",
-	    PCI_MSIX_MC_TBLSZ(reg) + 1,
-	    (table & PCI_MSIX_TABLE_BIR),
-	    (table & PCI_MSIX_TABLE_OFF));
+	printf(" GT/s Link Width: x%d / x%d\n", swidth, cwidth);
 }
 
 void
@@ -470,12 +417,6 @@ dump_pcie_enhanced_caplist(int bus, int dev, int func)
 		printf("\t0x%04x: Enhanced Capability 0x%02x: ", ptr, ecap);
 		printf("%s\n", pci_enhanced_capnames[capidx]);
 
-		switch (ecap) {
-		case 0x03:
-			dump_pcie_devserial(bus, dev, func, ptr);
-			break;
-		}
-
 		ptr = PCI_PCIE_ECAP_NEXT(reg);
 
 	} while (ptr != PCI_PCIE_ECAP_LAST);
@@ -503,27 +444,18 @@ dump_caplist(int bus, int dev, int func, u_int8_t ptr)
 		if (cap >= nitems(pci_capnames))
 			cap = 0;
 		printf("%s\n", pci_capnames[cap]);
-		switch (cap) {
-		case PCI_CAP_PWRMGMT:
+		if (cap == PCI_CAP_PWRMGMT)
 			dump_pci_powerstate(bus, dev, func, ptr);
-			break;
-		case PCI_CAP_PCIEXPRESS:
+		if (cap == PCI_CAP_PCIEXPRESS) {
 			dump_pcie_linkspeed(bus, dev, func, ptr);
 			dump_pcie_enhanced_caplist(bus, dev, func);
-			break;
-		case PCI_CAP_MSI:
-			dump_msi(bus, dev,func, ptr);
-			break;
-		case PCI_CAP_MSIX:
-			dump_msix(bus, dev, func, ptr);
-			break;
 		}
 		ptr = PCI_CAPLIST_NEXT(reg);
 	}
 }
 
 void
-dump_bars(int bus, int dev, int func, int end)
+dump_type0(int bus, int dev, int func)
 {
 	const char *memtype;
 	u_int64_t mem;
@@ -531,7 +463,7 @@ dump_bars(int bus, int dev, int func, int end)
 	u_int32_t reg, reg1;
 	int bar;
 
-	for (bar = PCI_MAPREG_START; bar < end; bar += 0x4) {
+	for (bar = PCI_MAPREG_START; bar < PCI_MAPREG_END; bar += 0x4) {
 		if (pci_read(bus, dev, func, bar, &reg) != 0 ||
 		    pci_readmask(bus, dev, func, bar, &reg1) != 0)
 			warn("unable to read PCI_MAPREG 0x%02x", bar);
@@ -587,14 +519,6 @@ dump_bars(int bus, int dev, int func, int end)
 			break;
 		}
 	}
-}
-
-void
-dump_type0(int bus, int dev, int func)
-{
-	u_int32_t reg;
-
-	dump_bars(bus, dev, func, PCI_MAPREG_END);
 
 	if (pci_read(bus, dev, func, PCI_CARDBUS_CIS_REG, &reg) != 0)
 		warn("unable to read PCI_CARDBUS_CIS_REG");
@@ -625,30 +549,35 @@ void
 dump_type1(int bus, int dev, int func)
 {
 	u_int32_t reg;
+	int bar;
 
-	dump_bars(bus, dev, func, PCI_MAPREG_PPB_END);
+	for (bar = PCI_MAPREG_START; bar < PCI_MAPREG_PPB_END; bar += 0x4) {
+		if (pci_read(bus, dev, func, bar, &reg) != 0)
+			warn("unable to read PCI_MAPREG 0x%02x", bar);
+		printf("\t0x%04x: %08x\n", bar, reg);
+	}
 
 	if (pci_read(bus, dev, func, PCI_PRIBUS_1, &reg) != 0)
 		warn("unable to read PCI_PRIBUS_1");
-	printf("\t0x%04x: Primary Bus: %d, Secondary Bus: %d, "
-	    "Subordinate Bus: %d,\n\t\tSecondary Latency Timer: %02x\n",
+	printf("\t0x%04x: Primary Bus: %d Secondary Bus: %d "
+	    "Subordinate Bus: %d \n\t        Secondary Latency Timer: %02x\n",
 	    PCI_PRIBUS_1, (reg >> 0) & 0xff, (reg >> 8) & 0xff,
 	    (reg >> 16) & 0xff, (reg >> 24) & 0xff);
 
 	if (pci_read(bus, dev, func, PCI_IOBASEL_1, &reg) != 0)
 		warn("unable to read PCI_IOBASEL_1");
-	printf("\t0x%04x: I/O Base: %02x, I/O Limit: %02x, "
+	printf("\t0x%04x: I/O Base: %02x I/O Limit: %02x "
 	    "Secondary Status: %04x\n", PCI_IOBASEL_1, (reg >> 0 ) & 0xff,
 	    (reg >> 8) & 0xff, (reg >> 16) & 0xffff);
 
 	if (pci_read(bus, dev, func, PCI_MEMBASE_1, &reg) != 0)
 		warn("unable to read PCI_MEMBASE_1");
-	printf("\t0x%04x: Memory Base: %04x, Memory Limit: %04x\n",
+	printf("\t0x%04x: Memory Base: %04x Memory Limit: %04x\n",
 	    PCI_MEMBASE_1, (reg >> 0) & 0xffff, (reg >> 16) & 0xffff);
 
 	if (pci_read(bus, dev, func, PCI_PMBASEL_1, &reg) != 0)
 		warn("unable to read PCI_PMBASEL_1");
-	printf("\t0x%04x: Prefetch Memory Base: %04x, "
+	printf("\t0x%04x: Prefetch Memory Base: %04x "
 	    "Prefetch Memory Limit: %04x\n", PCI_PMBASEL_1,
 	    (reg >> 0) & 0xffff, (reg >> 16) & 0xffff);
 
@@ -670,7 +599,7 @@ dump_type1(int bus, int dev, int func)
 #define PCI_IOBASEH_1	0x30
 	if (pci_read(bus, dev, func, PCI_IOBASEH_1, &reg) != 0)
 		warn("unable to read PCI_IOBASEH_1");
-	printf("\t0x%04x: I/O Base Upper 16 Bits: %04x, "
+	printf("\t0x%04x: I/O Base Upper 16 Bits: %04x "
 	    "I/O Limit Upper 16 Bits: %04x\n", PCI_IOBASEH_1,
 	    (reg >> 0) & 0xffff, (reg >> 16) & 0xffff);
 
@@ -682,7 +611,7 @@ dump_type1(int bus, int dev, int func)
 
 	if (pci_read(bus, dev, func, PCI_INTERRUPT_REG, &reg) != 0)
 		warn("unable to read PCI_INTERRUPT_REG");
-	printf("\t0x%04x: Interrupt Pin: %02x, Line: %02x, "
+	printf("\t0x%04x: Interrupt Pin: %02x Line: %02x "
 	    "Bridge Control: %04x\n",
 	    PCI_INTERRUPT_REG, PCI_INTERRUPT_PIN(reg),
 	    PCI_INTERRUPT_LINE(reg), reg >> 16);
@@ -760,36 +689,28 @@ dump(int bus, int dev, int func)
 {
 	u_int32_t reg;
 	u_int8_t capptr = PCI_CAPLISTPTR_REG;
-	pci_class_t class;
-	pci_subclass_t subclass;
 
 	if (pci_read(bus, dev, func, PCI_ID_REG, &reg) != 0)
 		warn("unable to read PCI_ID_REG");
-	printf("\t0x%04x: Vendor ID: %04x, Product ID: %04x\n", PCI_ID_REG,
+	printf("\t0x%04x: Vendor ID: %04x Product ID: %04x\n", PCI_ID_REG,
 	    PCI_VENDOR(reg), PCI_PRODUCT(reg));
 
 	if (pci_read(bus, dev, func, PCI_COMMAND_STATUS_REG, &reg) != 0)
 		warn("unable to read PCI_COMMAND_STATUS_REG");
-	printf("\t0x%04x: Command: %04x, Status: %04x\n",
+	printf("\t0x%04x: Command: %04x Status: %04x\n",
 	    PCI_COMMAND_STATUS_REG, reg & 0xffff, (reg  >> 16) & 0xffff);
 
 	if (pci_read(bus, dev, func, PCI_CLASS_REG, &reg) != 0)
 		warn("unable to read PCI_CLASS_REG");
-	class = PCI_CLASS(reg);
-	subclass = PCI_SUBCLASS(reg);
-	printf("\t0x%04x:\tClass: %02x %s,", PCI_CLASS_REG, class,
-	    pci_class_name(class));
-	printf(" Subclass: %02x %s,", subclass,
-	    pci_subclass_name(class, subclass));
-	printf("\n\t\tInterface: %02x, Revision: %02x\n",
-	    PCI_INTERFACE(reg), PCI_REVISION(reg));
+	printf("\t0x%04x: Class: %02x Subclass: %02x Interface: %02x "
+	    "Revision: %02x\n", PCI_CLASS_REG, PCI_CLASS(reg),
+	    PCI_SUBCLASS(reg), PCI_INTERFACE(reg), PCI_REVISION(reg));
 
 	if (pci_read(bus, dev, func, PCI_BHLC_REG, &reg) != 0)
 		warn("unable to read PCI_BHLC_REG");
-	printf("\t0x%04x: BIST: %02x, Header Type: %02x, "
-	    "Latency Timer: %02x,\n\t\tCache Line Size: %02x\n", PCI_BHLC_REG,
-	    PCI_BIST(reg), PCI_HDRTYPE(reg),
-	    PCI_LATTIMER(reg), PCI_CACHELINE(reg));
+	printf("\t0x%04x: BIST: %02x Header Type: %02x Latency Timer: %02x "
+	    "Cache Line Size: %02x\n", PCI_BHLC_REG, PCI_BIST(reg),
+	    PCI_HDRTYPE(reg), PCI_LATTIMER(reg), PCI_CACHELINE(reg));
 
 	switch (PCI_HDRTYPE_TYPE(reg)) {
 	case 2:
@@ -951,275 +872,4 @@ dump_vga_bios(void)
 #else
 	return (ENODEV);
 #endif
-}
-
-struct pci_subclass {
-	pci_subclass_t	 subclass;
-	const char	*name;
-};
-
-struct pci_class {
-	pci_class_t	 class;
-	const char	*name;
-	const struct pci_subclass
-			*subclass;
-	size_t		 nsubclass;
-};
-
-static const struct pci_subclass pci_subclass_prehistoric[] = {
-	{ PCI_SUBCLASS_PREHISTORIC_MISC,	"Miscellaneous"	},
-	{ PCI_SUBCLASS_PREHISTORIC_VGA,		"VGA"		},
-};
-
-static const struct pci_subclass pci_subclass_mass_storage[] = {
-	{ PCI_SUBCLASS_MASS_STORAGE_SCSI,	"SCSI"		},
-	{ PCI_SUBCLASS_MASS_STORAGE_IDE,	"IDE"		},
-	{ PCI_SUBCLASS_MASS_STORAGE_FLOPPY,	"Floppy"	},
-	{ PCI_SUBCLASS_MASS_STORAGE_IPI,	"IPI"		},
-	{ PCI_SUBCLASS_MASS_STORAGE_RAID,	"RAID"		},
-	{ PCI_SUBCLASS_MASS_STORAGE_ATA,	"ATA"		},
-	{ PCI_SUBCLASS_MASS_STORAGE_SATA,	"SATA"		},
-	{ PCI_SUBCLASS_MASS_STORAGE_SAS,	"SAS"		},
-	{ PCI_SUBCLASS_MASS_STORAGE_UFS,	"UFS"		},
-	{ PCI_SUBCLASS_MASS_STORAGE_NVM,	"NVM"		},
-	{ PCI_SUBCLASS_MASS_STORAGE_MISC,	"Miscellaneous"	},
-};
-
-static const struct pci_subclass pci_subclass_network[] = {
-	{ PCI_SUBCLASS_NETWORK_ETHERNET,	"Ethernet"	},
-	{ PCI_SUBCLASS_NETWORK_TOKENRING,	"Token Ring"	},
-	{ PCI_SUBCLASS_NETWORK_FDDI,		"FDDI"		},
-	{ PCI_SUBCLASS_NETWORK_ATM,		"ATM"		},
-	{ PCI_SUBCLASS_NETWORK_ISDN,		"ISDN"		},
-	{ PCI_SUBCLASS_NETWORK_WORLDFIP,	"WorldFip"	},
-	{ PCI_SUBCLASS_NETWORK_PCIMGMULTICOMP,	"PCMIG Multi Computing"	},
-	{ PCI_SUBCLASS_NETWORK_INFINIBAND,	"InfiniBand"	},
-	{ PCI_SUBCLASS_NETWORK_MISC,		"Miscellaneous"	},
-};
-
-static const struct pci_subclass pci_subclass_display[] = {
-	{ PCI_SUBCLASS_DISPLAY_VGA,		"VGA"		},
-	{ PCI_SUBCLASS_DISPLAY_XGA,		"XGA"		},
-	{ PCI_SUBCLASS_DISPLAY_3D,		"3D"		},
-	{ PCI_SUBCLASS_DISPLAY_MISC,		"Miscellaneous"	},
-};
-
-static const struct pci_subclass pci_subclass_memory[] = {
-	{ PCI_SUBCLASS_MEMORY_RAM,		"RAM"		},
-	{ PCI_SUBCLASS_MEMORY_FLASH,		"Flash"		},
-	{ PCI_SUBCLASS_MEMORY_MISC,		"Miscellaneous" },
-};
-
-static const struct pci_subclass pci_subclass_bridge[] = {
-	{ PCI_SUBCLASS_BRIDGE_HOST,		"Host"		},
-	{ PCI_SUBCLASS_BRIDGE_ISA,		"ISA"		},
-	{ PCI_SUBCLASS_BRIDGE_EISA,		"EISA"		},
-	{ PCI_SUBCLASS_BRIDGE_MC,		"MicroChannel"	},
-	{ PCI_SUBCLASS_BRIDGE_PCI,		"PCI"		},
-	{ PCI_SUBCLASS_BRIDGE_PCMCIA,		"PCMCIA"	},
-	{ PCI_SUBCLASS_BRIDGE_NUBUS,		"NuBus"		},
-	{ PCI_SUBCLASS_BRIDGE_RACEWAY,		"RACEway"	},
-	{ PCI_SUBCLASS_BRIDGE_STPCI,		"Semi-transparent PCI" },
-	{ PCI_SUBCLASS_BRIDGE_INFINIBAND,	"InfiniBand"	},
-	{ PCI_SUBCLASS_BRIDGE_MISC,		"Miscellaneous"	},
-	{ PCI_SUBCLASS_BRIDGE_AS,		"advanced switching" },
-};
-
-static const struct pci_subclass pci_subclass_communications[] = {
-	{ PCI_SUBCLASS_COMMUNICATIONS_SERIAL,	"Serial"	},
-	{ PCI_SUBCLASS_COMMUNICATIONS_PARALLEL,	"Parallel"	},
-	{ PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL,	"Multi-port Serial" },
-	{ PCI_SUBCLASS_COMMUNICATIONS_MODEM,	"Modem"		},
-	{ PCI_SUBCLASS_COMMUNICATIONS_GPIB,	"GPIB"		},
-	{ PCI_SUBCLASS_COMMUNICATIONS_SMARTCARD,
-						"Smartcard"	},
-	{ PCI_SUBCLASS_COMMUNICATIONS_MISC,	"Miscellaneous" },
-};
-
-static const struct pci_subclass pci_subclass_system[] = {
-	{ PCI_SUBCLASS_SYSTEM_PIC,		"Interrupt"	},
-	{ PCI_SUBCLASS_SYSTEM_DMA,		"8237 DMA"	},
-	{ PCI_SUBCLASS_SYSTEM_TIMER,		"8254 Timer"	},
-	{ PCI_SUBCLASS_SYSTEM_RTC,		"RTC"		},
-	{ PCI_SUBCLASS_SYSTEM_SDHC,		"SDHC"		},
-	{ PCI_SUBCLASS_SYSTEM_IOMMU,		"IOMMU"		},
-	{ PCI_SUBCLASS_SYSTEM_ROOTCOMPEVENT,	"Root Complex Event" },
-	{ PCI_SUBCLASS_SYSTEM_MISC,		"Miscellaneous" },
-};
-
-static const struct pci_subclass pci_subclass_input[] = {
-	{ PCI_SUBCLASS_INPUT_KEYBOARD,		"Keyboard"	},
-	{ PCI_SUBCLASS_INPUT_DIGITIZER,		"Digitizer"	},
-	{ PCI_SUBCLASS_INPUT_MOUSE,		"Mouse"		},
-	{ PCI_SUBCLASS_INPUT_SCANNER,		"Scanner"	},
-	{ PCI_SUBCLASS_INPUT_GAMEPORT,		"Game Port"	},
-	{ PCI_SUBCLASS_INPUT_MISC,		"Miscellaneous"	},
-};
-
-static const struct pci_subclass pci_subclass_dock[] = {
-	{ PCI_SUBCLASS_DOCK_GENERIC,		"Generic"	},
-	{ PCI_SUBCLASS_DOCK_MISC,		"Miscellaneous"	},
-};
-
-static const struct pci_subclass pci_subclass_processor[] = {
-	{ PCI_SUBCLASS_PROCESSOR_386,		"386"		},
-	{ PCI_SUBCLASS_PROCESSOR_486,		"486"		},
-	{ PCI_SUBCLASS_PROCESSOR_PENTIUM,	"Pentium"	},
-	{ PCI_SUBCLASS_PROCESSOR_ALPHA,		"Alpha"		},
-	{ PCI_SUBCLASS_PROCESSOR_POWERPC,	"PowerPC"	},
-	{ PCI_SUBCLASS_PROCESSOR_MIPS,		"MIPS"		},
-	{ PCI_SUBCLASS_PROCESSOR_COPROC,	"Co-Processor"	},
-};
-
-static const struct pci_subclass pci_subclass_serialbus[] = {
-	{ PCI_SUBCLASS_SERIALBUS_FIREWIRE,	"FireWire"	},
-	{ PCI_SUBCLASS_SERIALBUS_ACCESS,	"ACCESS.bus"	},
-	{ PCI_SUBCLASS_SERIALBUS_SSA,		"SSA"		},
-	{ PCI_SUBCLASS_SERIALBUS_USB,		"USB"		},
-	{ PCI_SUBCLASS_SERIALBUS_FIBER,		"Fiber Channel"	},
-	{ PCI_SUBCLASS_SERIALBUS_SMBUS,		"SMBus"		},
-	{ PCI_SUBCLASS_SERIALBUS_INFINIBAND,	"InfiniBand"	},
-	{ PCI_SUBCLASS_SERIALBUS_IPMI,		"IPMI"		},
-	{ PCI_SUBCLASS_SERIALBUS_SERCOS,	"SERCOS"	},
-	{ PCI_SUBCLASS_SERIALBUS_CANBUS,	"CANbus"	},
-};
-
-static const struct pci_subclass pci_subclass_wireless[] = {
-	{ PCI_SUBCLASS_WIRELESS_IRDA,		"IrDA"		},
-	{ PCI_SUBCLASS_WIRELESS_CONSUMERIR,	"Consumer IR"	},
-	{ PCI_SUBCLASS_WIRELESS_RF,		"RF"		},
-	{ PCI_SUBCLASS_WIRELESS_BLUETOOTH,	"Bluetooth"	},
-	{ PCI_SUBCLASS_WIRELESS_BROADBAND,	"Broadband"	},
-	{ PCI_SUBCLASS_WIRELESS_802_11A,	"802.11a"	},
-	{ PCI_SUBCLASS_WIRELESS_802_11B,	"802.11b"	},
-	{ PCI_SUBCLASS_WIRELESS_MISC,		"Miscellaneous"	},
-};
-
-static const struct pci_subclass pci_subclass_i2o[] = {
-	{ PCI_SUBCLASS_I2O_STANDARD,		"Standard"	},
-};
-
-static const struct pci_subclass pci_subclass_satcom[] = {
-	{ PCI_SUBCLASS_SATCOM_TV,		"TV"		},
-	{ PCI_SUBCLASS_SATCOM_AUDIO,		"Audio"		},
-	{ PCI_SUBCLASS_SATCOM_VOICE,		"Voice"		},
-	{ PCI_SUBCLASS_SATCOM_DATA,		"Data"		},
-};
-
-static const struct pci_subclass pci_subclass_crypto[] = {
-	{ PCI_SUBCLASS_CRYPTO_NETCOMP,		"Network/Computing" },
-	{ PCI_SUBCLASS_CRYPTO_ENTERTAINMENT,	"Entertainment"	},
-	{ PCI_SUBCLASS_CRYPTO_MISC,		"Miscellaneous"	},
-};
-
-static const struct pci_subclass pci_subclass_dasp[] = {
-	{ PCI_SUBCLASS_DASP_DPIO,		"DPIO"		},
-	{ PCI_SUBCLASS_DASP_TIMEFREQ,		"Time and Frequency" },
-	{ PCI_SUBCLASS_DASP_SYNC,		"Synchronization" },
-	{ PCI_SUBCLASS_DASP_MGMT,		"Management"	},
-	{ PCI_SUBCLASS_DASP_MISC,		"Miscellaneous"	},
-};
-
-#define CLASS(_c, _n, _s) { \
-	.class = _c, \
-	.name = _n, \
-	.subclass = _s, \
-	.nsubclass = nitems(_s), \
-}
-
-static const struct pci_class pci_classes[] = {
-	CLASS(PCI_CLASS_PREHISTORIC,	"Prehistoric",
-	    pci_subclass_prehistoric),
-	CLASS(PCI_CLASS_MASS_STORAGE,	"Mass Storage",
-	    pci_subclass_mass_storage),
-	CLASS(PCI_CLASS_NETWORK,	"Network",
-	    pci_subclass_network),
-	CLASS(PCI_CLASS_DISPLAY,	"Display",
-	    pci_subclass_display),
-	CLASS(PCI_CLASS_MEMORY,		"Memory",
-	    pci_subclass_memory),
-	CLASS(PCI_CLASS_BRIDGE,		"Bridge",
-	    pci_subclass_bridge),
-	CLASS(PCI_CLASS_COMMUNICATIONS,	"Communications",
-	    pci_subclass_communications),
-	CLASS(PCI_CLASS_SYSTEM,		"System",
-	    pci_subclass_system),
-	CLASS(PCI_CLASS_INPUT,		"Input",
-	    pci_subclass_input),
-	CLASS(PCI_CLASS_DOCK,		"Dock",
-	    pci_subclass_dock),
-	CLASS(PCI_CLASS_PROCESSOR,	"Processor",
-	    pci_subclass_processor),
-	CLASS(PCI_CLASS_SERIALBUS,	"Serial Bus",
-	    pci_subclass_serialbus),
-	CLASS(PCI_CLASS_WIRELESS,	"Wireless",
-	    pci_subclass_wireless),
-	CLASS(PCI_CLASS_I2O,		"I2O",
-	    pci_subclass_i2o),
-	CLASS(PCI_CLASS_SATCOM,		"Satellite Comm",
-	    pci_subclass_satcom),
-	CLASS(PCI_CLASS_CRYPTO,		"Crypto",
-	    pci_subclass_crypto),
-	CLASS(PCI_CLASS_DASP,		"DASP",
-	    pci_subclass_dasp),
-};
-
-static const struct pci_class *
-pci_class(pci_class_t class)
-{
-	const struct pci_class *pc;
-	size_t i;
-
-	for (i = 0; i < nitems(pci_classes); i++) {
-		pc = &pci_classes[i];
-		if (pc->class == class)
-			return (pc);
-	}
-
-	return (NULL);
-}
-
-static const struct pci_subclass *
-pci_subclass(const struct pci_class *pc, pci_subclass_t subclass)
-{
-	const struct pci_subclass *ps;
-	size_t i;
-
-	for (i = 0; i < pc->nsubclass; i++) {
-		ps = &pc->subclass[i];
-		if (ps->subclass == subclass)
-			return (ps);
-	}
-
-	return (NULL);
-}
-
-static const char *
-pci_class_name(pci_class_t class)
-{
-	const struct pci_class *pc;
-
-	pc = pci_class(class);
-	if (pc == NULL)
-		return ("(unknown)");
-
-	return (pc->name);
-}
-
-
-static const char *
-pci_subclass_name(pci_class_t class, pci_subclass_t subclass)
-{
-	const struct pci_class *pc;
-	const struct pci_subclass *ps;
-
-	pc = pci_class(class);
-	if (pc == NULL)
-		return ("(unknown)");
-
-	ps = pci_subclass(pc, subclass);
-	if (ps == NULL)
-		return ("(unknown)");
-
-	return (ps->name);
 }

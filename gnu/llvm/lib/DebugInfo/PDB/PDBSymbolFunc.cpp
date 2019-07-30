@@ -15,6 +15,7 @@
 #include "llvm/DebugInfo/PDB/PDBSymDumper.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolData.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeFunctionSig.h"
+#include "llvm/DebugInfo/PDB/PDBSymbolTypeUDT.h"
 #include "llvm/DebugInfo/PDB/PDBTypes.h"
 
 #include <unordered_set>
@@ -104,19 +105,4 @@ bool PDBSymbolFunc::isDestructor() const {
   if (Name == "__vecDelDtor")
     return true;
   return false;
-}
-
-std::unique_ptr<IPDBEnumLineNumbers> PDBSymbolFunc::getLineNumbers() const {
-  auto Len = RawSymbol->getLength();
-  return Session.findLineNumbersByAddress(RawSymbol->getVirtualAddress(),
-                                          Len ? Len : 1);
-}
-
-uint32_t PDBSymbolFunc::getCompilandId() const {
-  if (auto Lines = getLineNumbers()) {
-    if (auto FirstLine = Lines->getNext()) {
-      return FirstLine->getCompilandId();
-    }
-  }
-  return 0;
 }

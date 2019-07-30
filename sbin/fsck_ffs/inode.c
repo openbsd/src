@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.49 2018/09/16 02:43:11 millert Exp $	*/
+/*	$OpenBSD: inode.c,v 1.48 2016/12/16 17:44:59 krw Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -525,7 +525,10 @@ void
 pinode(ino_t ino)
 {
 	union dinode *dp;
-	const char *p;
+	char *p;
+#ifndef SMALL
+	struct passwd *pw;
+#endif
 	time_t t;
 
 	printf(" I=%llu ", (unsigned long long)ino);
@@ -534,8 +537,8 @@ pinode(ino_t ino)
 	dp = ginode(ino);
 	printf(" OWNER=");
 #ifndef SMALL
-	if ((p = user_from_uid(DIP(dp, di_uid), 1)) != NULL)
-		printf("%s ", p);
+	if ((pw = getpwuid(DIP(dp, di_uid))) != 0)
+		printf("%s ", pw->pw_name);
 	else
 #endif
 		printf("%u ", (unsigned)DIP(dp, di_uid));

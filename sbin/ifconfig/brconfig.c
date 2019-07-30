@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.21 2019/05/10 01:29:31 guenther Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.19 2018/02/24 06:31:47 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -36,6 +36,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <net/if_bridge.h>
@@ -922,6 +923,7 @@ bridge_rule(int targc, char **targv, int ln)
 	int argc = targc;
 	struct ifbrlreq rule;
 	struct ether_addr *ea, *dea;
+	struct in_addr *ia;
 
 	if (argc == 0) {
 		warnx("invalid rule");

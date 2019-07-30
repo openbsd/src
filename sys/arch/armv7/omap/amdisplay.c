@@ -1,4 +1,4 @@
-/* $OpenBSD: amdisplay.c,v 1.10 2019/05/06 03:45:58 mlarkin Exp $ */
+/* $OpenBSD: amdisplay.c,v 1.7 2017/10/25 14:34:22 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Ian Sutton <ians@openbsd.org>
  *
@@ -219,8 +219,6 @@ amdisplay_attach(struct device *parent, struct device *self, void *args)
 		return;
 	}
 
-	free(edid_buf, M_DEVBUF, EDID_LENGTH);
-
 #ifdef LCD_DEBUG
 	edid_print(&sc->sc_edid);
 #endif
@@ -248,6 +246,7 @@ amdisplay_attach(struct device *parent, struct device *self, void *args)
 	/* configure DMA framebuffer */
 	if (amdisplay_setup_dma(sc)) {
 		printf("%s: couldn't allocate DMA framebuffer\n", DEVNAME(sc));
+		free(edid_buf, M_DEVBUF, EDID_LENGTH);
 		amdisplay_detach(self, 0);
 		return;
 	}
@@ -317,7 +316,7 @@ amdisplay_attach(struct device *parent, struct device *self, void *args)
 	    | LCD_LCDDMA_CTRL_FRAME_MODE);
 	reg |= (0x4 << LCD_LCDDMA_CTRL_BURST_SIZE_SHAMT)
 	    |  LCD_LCDDMA_CTRL_FRAME_MODE;
-	HWRITE4(sc, LCD_LCDDMA_CTRL, reg);
+	HWRITE4(sc, LCD_LCDDMA_CTRL, reg); 
 
 	/* set framebuffer location + bounds */
 	HWRITE4(sc, LCD_LCDDMA_FB0, sc->sc_fb0_dma_segs[0].ds_addr);
@@ -411,33 +410,21 @@ amdisplay_intr(void *arg)
 		HCLR4(sc, LCD_RASTER_CTRL, LCD_RASTER_CTRL_PALMODE);
 		HSET4(sc, LCD_RASTER_CTRL, 0x02 << LCD_RASTER_CTRL_PALMODE_SHAMT);
 		HSET4(sc, LCD_RASTER_CTRL, LCD_RASTER_CTRL_LCDEN);
-	}
-
-	if (ISSET(reg, LCD_IRQ_FUF)) {
+	} if (ISSET(reg, LCD_IRQ_FUF)) { 
 		DPRINTF(15, ("%s: FIFO underflow\n", DEVNAME(sc)));
-	}
-
-	if (ISSET(reg, LCD_IRQ_SYNC)) {
+	} if (ISSET(reg, LCD_IRQ_SYNC)) {
 		sc->sc_flags |= LCD_RESET_PENDING;
 		DPRINTF(18, ("%s: sync lost\n", DEVNAME(sc)));
-	}
-
-	if (ISSET(reg, LCD_IRQ_RR_DONE)) {
+	} if (ISSET(reg, LCD_IRQ_RR_DONE)) { 
 		DPRINTF(21, ("%s: frame done\n", DEVNAME(sc)));
 		HWRITE4(sc, LCD_LCDDMA_FB0, sc->sc_fb0_dma_segs[0].ds_addr);
 		HWRITE4(sc, LCD_LCDDMA_FB0_CEIL, (sc->sc_fb0_dma_segs[0].ds_addr
 		    + sc->sc_fb_size) - 1);
-	}
-
-	if (ISSET(reg, LCD_IRQ_EOF0)) {
+	} if (ISSET(reg, LCD_IRQ_EOF0)) {
 		DPRINTF(21, ("%s: framebuffer 0 done\n", DEVNAME(sc)));
-	}
-
-	if (ISSET(reg, LCD_IRQ_EOF1)) {
+	} if (ISSET(reg, LCD_IRQ_EOF1)) {
 		DPRINTF(21, ("%s: framebuffer 1 done\n", DEVNAME(sc)));
-	}
-
-	if (ISSET(reg, LCD_IRQ_DONE)) {
+	} if (ISSET(reg, LCD_IRQ_DONE)) {
 		if (ISSET(sc->sc_flags, LCD_RESET_PENDING)) {
 			HWRITE4(sc, LCD_IRQSTATUS, 0xFFFFFFFF);
 			HSET4(sc, LCD_CLKC_RESET, LCD_CLKC_RESET_MAIN_RST);
@@ -447,9 +434,7 @@ amdisplay_intr(void *arg)
 			sc->sc_flags &= ~LCD_RESET_PENDING;
 		}
 		DPRINTF(15, ("%s: last frame done\n", DEVNAME(sc)));
-	}
-
-	if (ISSET(reg, LCD_IRQ_ACB)) {
+	} if (ISSET(reg, LCD_IRQ_ACB)) {
 		DPRINTF(15, ("%s: AC bias event\n", DEVNAME(sc)));
 	}
 
@@ -540,7 +525,7 @@ amdisplay_conf_crt_timings(struct amdisplay_softc *sc)
 
 	/* Lines per panel */
 	timing1 |= (height & 0x3ff);
-	timing2 |= ((height >> 10 ) & 1)
+	timing2 |= ((height >> 10 ) & 1) 
 	    << LCD_RASTER_TIMING_2_LPP_B10_SHAMT;
 
 	/* waveform settings */

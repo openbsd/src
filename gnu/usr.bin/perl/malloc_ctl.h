@@ -1,5 +1,5 @@
-#ifndef PERL_MALLOC_CTL_H_
-#  define PERL_MALLOC_CTL_H_
+#ifndef MALLOC_CTL_H
+#  define MALLOC_CTL_H
 
 struct perl_mstats {
     UV *nfree;

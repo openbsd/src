@@ -1,4 +1,4 @@
-/*	$OpenBSD: coll.c,v 1.12 2019/05/13 17:00:12 schwarze Exp $	*/
+/*	$OpenBSD: coll.c,v 1.11 2015/12/11 21:41:51 mmcc Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -45,6 +45,12 @@
 
 struct key_specs *keys;
 size_t keys_num = 0;
+
+wint_t symbol_decimal_point = L'.';
+/* there is no default thousands separator in collate rules: */
+wint_t symbol_thousands_sep = 0;
+wint_t symbol_negative_sign = L'-';
+wint_t symbol_positive_sign = L'+';
 
 static int wstrcoll(struct key_value *kv1, struct key_value *kv2, size_t offset);
 static int gnumcoll(struct key_value*, struct key_value *, size_t offset);
@@ -695,7 +701,7 @@ read_number(struct bwstring *s0, int *sign, wchar_t *smain, size_t *main_len, wc
 	while (iswblank(bws_get_iter_value(s)))
 		s = bws_iterator_inc(s, 1);
 
-	if (bws_get_iter_value(s) == L'-') {
+	if (bws_get_iter_value(s) == (wchar_t)symbol_negative_sign) {
 		*sign = -1;
 		s = bws_iterator_inc(s, 1);
 	}
@@ -710,13 +716,16 @@ read_number(struct bwstring *s0, int *sign, wchar_t *smain, size_t *main_len, wc
 			smain[*main_len] = bws_get_iter_value(s);
 			s = bws_iterator_inc(s, 1);
 			*main_len += 1;
-		} else
+		} else if (symbol_thousands_sep &&
+		    (bws_get_iter_value(s) == (wchar_t)symbol_thousands_sep))
+			s = bws_iterator_inc(s, 1);
+		else
 			break;
 	}
 
 	smain[*main_len] = 0;
 
-	if (bws_get_iter_value(s) == L'.') {
+	if (bws_get_iter_value(s) == (wchar_t)symbol_decimal_point) {
 		s = bws_iterator_inc(s, 1);
 		while (iswdigit(bws_get_iter_value(s)) &&
 		    *frac_len < MAX_NUM_SIZE) {

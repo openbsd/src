@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruserpass.c,v 1.32 2019/05/16 12:44:18 florian Exp $	*/
+/*	$OpenBSD: ruserpass.c,v 1.30 2015/01/16 06:40:08 deraadt Exp $	*/
 /*	$NetBSD: ruserpass.c,v 1.14 1997/07/20 09:46:01 lukem Exp $	*/
 
 /*

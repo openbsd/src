@@ -7,7 +7,6 @@
 #include "DEFS.h"
 
 ENTRY(bzero)
-	RETGUARD_SETUP(bzero, r11)
 	movq	%rsi,%rdx
 
 	cld				/* set fill direction forward */
@@ -38,6 +37,5 @@ L1:	movq	%rdx,%rcx		/* zero remainder by bytes */
 	rep
 	stosb
 
-	RETGUARD_CHECK(bzero, r11)
 	ret
 END_WEAK(bzero)

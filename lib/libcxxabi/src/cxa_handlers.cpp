@@ -14,11 +14,11 @@
 #include <new>
 #include <exception>
 #include "abort_message.h"
+#include "config.h"
 #include "cxxabi.h"
 #include "cxa_handlers.hpp"
 #include "cxa_exception.hpp"
 #include "private_typeinfo.h"
-#include "include/atomic_support.h"
 
 namespace std
 {
@@ -26,9 +26,13 @@ namespace std
 unexpected_handler
 get_unexpected() _NOEXCEPT
 {
-    return __libcpp_atomic_load(&__cxa_unexpected_handler, _AO_Acquire);
+    return __sync_fetch_and_add(&__cxa_unexpected_handler, (unexpected_handler)0);
+//  The above is safe but overkill on x86
+//  Using of C++11 atomics this should be rewritten
+//  return __cxa_unexpected_handler.load(memory_order_acq);
 }
 
+__attribute__((visibility("hidden"), noreturn))
 void
 __unexpected(unexpected_handler func)
 {
@@ -47,9 +51,13 @@ unexpected()
 terminate_handler
 get_terminate() _NOEXCEPT
 {
-    return __libcpp_atomic_load(&__cxa_terminate_handler, _AO_Acquire);
+    return __sync_fetch_and_add(&__cxa_terminate_handler, (terminate_handler)0);
+//  The above is safe but overkill on x86
+//  Using of C++11 atomics this should be rewritten
+//  return __cxa_terminate_handler.load(memory_order_acq);
 }
 
+__attribute__((visibility("hidden"), noreturn))
 void
 __terminate(terminate_handler func) _NOEXCEPT
 {
@@ -84,27 +92,35 @@ terminate() _NOEXCEPT
         {
             _Unwind_Exception* unwind_exception =
                 reinterpret_cast<_Unwind_Exception*>(exception_header + 1) - 1;
-            if (__isOurExceptionClass(unwind_exception))
+            bool native_exception =
+                (unwind_exception->exception_class & get_vendor_and_language) ==
+                               (kOurExceptionClass & get_vendor_and_language);
+            if (native_exception)
                 __terminate(exception_header->terminateHandler);
         }
     }
     __terminate(get_terminate());
 }
 
-extern "C" {
-new_handler __cxa_new_handler = 0;
-}
+// In the future this will become:
+// std::atomic<std::new_handler>  __cxa_new_handler(0);
+extern "C" _LIBCXXABI_DATA_VIS new_handler __cxa_new_handler = 0;
 
 new_handler
 set_new_handler(new_handler handler) _NOEXCEPT
 {
-    return __libcpp_atomic_exchange(&__cxa_new_handler, handler, _AO_Acq_Rel);
+    return __atomic_exchange_n(&__cxa_new_handler, handler, __ATOMIC_ACQ_REL);
+//  Using of C++11 atomics this should be rewritten
+//  return __cxa_new_handler.exchange(handler, memory_order_acq_rel);
 }
 
 new_handler
 get_new_handler() _NOEXCEPT
 {
-    return __libcpp_atomic_load(&__cxa_new_handler, _AO_Acquire);
+    return __sync_fetch_and_add(&__cxa_new_handler, (new_handler)0);
+//  The above is safe but overkill on x86
+//  Using of C++11 atomics this should be rewritten
+//  return __cxa_new_handler.load(memory_order_acq);
 }
 
 }  // std

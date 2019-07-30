@@ -54,7 +54,6 @@ enum ProcessorTypes {
   AMD_BTVER1,
   AMD_BTVER2,
   AMDFAM17H,
-  INTEL_KNM,
   CPU_TYPE_MAX
 };
 
@@ -75,7 +74,6 @@ enum ProcessorSubtypes {
   INTEL_COREI7_BROADWELL,
   INTEL_COREI7_SKYLAKE,
   INTEL_COREI7_SKYLAKE_AVX512,
-  INTEL_COREI7_CANNONLAKE,
   CPU_SUBTYPE_MAX
 };
 
@@ -341,12 +339,6 @@ getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
       *Subtype = INTEL_COREI7_SKYLAKE_AVX512; // "skylake-avx512"
       break;
 
-    // Cannonlake:
-    case 0x66:
-      *Type = INTEL_COREI7;
-      *Subtype = INTEL_COREI7_CANNONLAKE; // "cannonlake"
-      break;
-
     case 0x1c: // Most 45 nm Intel Atom processors
     case 0x26: // 45 nm Atom Lincroft
     case 0x27: // 32 nm Atom Medfield
@@ -367,10 +359,6 @@ getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
 
     case 0x57:
       *Type = INTEL_KNL; // knl
-      break;
-
-    case 0x85:
-      *Type = INTEL_KNM; // knm
       break;
 
     default: // Unknown family 6 CPU.
@@ -416,9 +404,9 @@ static void getAMDProcessorTypeAndSubtype(unsigned Family, unsigned Model,
       *Subtype = AMDFAM15H_BDVER3;
       break; // "bdver3"; 30h-3Fh: Steamroller
     }
-    if ((Model >= 0x10 && Model <= 0x1f) || Model == 0x02) {
+    if (Model >= 0x10 && Model <= 0x1f) {
       *Subtype = AMDFAM15H_BDVER2;
-      break; // "bdver2"; 02h, 10h-1Fh: Piledriver
+      break; // "bdver2"; 10h-1Fh: Piledriver
     }
     if (Model <= 0x0f) {
       *Subtype = AMDFAM15H_BDVER1;

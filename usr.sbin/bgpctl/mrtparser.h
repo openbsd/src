@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.h,v 1.3 2019/02/25 11:51:58 claudio Exp $ */
+/*	$OpenBSD: mrtparser.h,v 1.1 2011/09/21 10:37:51 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -15,11 +15,29 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "bgpd.h"
+struct sockaddr_vpn4 {
+	u_int8_t		sv_len;
+	sa_family_t		sv_family;
+	u_int8_t		sv_labellen;
+	u_int8_t		sv_pad;
+	struct in_addr		sv_addr;
+	u_int64_t		sv_rd;
+	u_int8_t		sv_label[21];
+	u_int8_t		sv_pad2[3];
+};
+
+#define AF_VPNv4	250	/* XXX high enough to not cause issues */
+
+union mrt_addr {
+	struct sockaddr_in6	sin6;
+	struct sockaddr_in	sin;
+	struct sockaddr_vpn4	svpn4;
+	struct sockaddr		sa;
+};
 
 /* data structures for the MSG_TABLE_DUMP_V2 format */
 struct mrt_peer_entry {
-	struct bgpd_addr	addr;
+	union mrt_addr		addr;
 	u_int32_t		bgp_id;
 	u_int32_t		asnum;
 };
@@ -39,7 +57,7 @@ struct mrt_attr {
 struct mrt_rib_entry {
 	void		*aspath;
 	struct mrt_attr	*attrs;
-	struct bgpd_addr nexthop;
+	union mrt_addr	 nexthop;
 	time_t		 originated;
 	u_int32_t	 local_pref;
 	u_int32_t	 med;
@@ -51,7 +69,7 @@ struct mrt_rib_entry {
 
 struct mrt_rib {
 	struct mrt_rib_entry	*entries;
-	struct bgpd_addr	 prefix;
+	union mrt_addr		 prefix;
 	u_int32_t		 seqnum;
 	u_int16_t		 nentries;
 	u_int8_t		 prefixlen;
@@ -59,19 +77,17 @@ struct mrt_rib {
 
 /* data structures for the BGP4MP MESSAGE and STATE types */
 struct mrt_bgp_state {
-	struct timespec		time;
-	struct bgpd_addr	src;
-	struct bgpd_addr	dst;
-	u_int32_t		src_as;
-	u_int32_t		dst_as;
-	u_int16_t		old_state;
-	u_int16_t		new_state;
+	union mrt_addr	src;
+	union mrt_addr	dst;
+	u_int32_t	src_as;
+	u_int32_t	dst_as;
+	u_int16_t	old_state;
+	u_int16_t	new_state;
 };
 
 struct mrt_bgp_msg {
-	struct timespec	 time;
-	struct bgpd_addr src;
-	struct bgpd_addr dst;
+	union mrt_addr	 src;
+	union mrt_addr	 dst;
 	u_int32_t	 src_as;
 	u_int32_t	 dst_as;
 	u_int16_t	 msg_len;

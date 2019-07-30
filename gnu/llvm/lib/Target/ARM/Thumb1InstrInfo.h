@@ -53,7 +53,6 @@ public:
                             const TargetRegisterClass *RC,
                             const TargetRegisterInfo *TRI) const override;
 
-  bool canCopyGluedNodeDuringSchedule(SDNode *N) const override;
 private:
   void expandLoadStackGuard(MachineBasicBlock::iterator MI) const override;
 };

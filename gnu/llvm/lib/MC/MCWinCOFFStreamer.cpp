@@ -25,7 +25,6 @@
 #include "llvm/MC/MCFragment.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectStreamer.h"
-#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbolCOFF.h"
 #include "llvm/MC/MCWinCOFFStreamer.h"
@@ -42,12 +41,9 @@ using namespace llvm;
 
 #define DEBUG_TYPE "WinCOFFStreamer"
 
-MCWinCOFFStreamer::MCWinCOFFStreamer(MCContext &Context,
-                                     std::unique_ptr<MCAsmBackend> MAB,
-                                     std::unique_ptr<MCCodeEmitter> CE,
-                                     std::unique_ptr<MCObjectWriter> OW)
-    : MCObjectStreamer(Context, std::move(MAB), std::move(OW), std::move(CE)),
-      CurSymbol(nullptr) {}
+MCWinCOFFStreamer::MCWinCOFFStreamer(MCContext &Context, MCAsmBackend &MAB,
+                                     MCCodeEmitter &CE, raw_pwrite_stream &OS)
+    : MCObjectStreamer(Context, MAB, OS, &CE), CurSymbol(nullptr) {}
 
 void MCWinCOFFStreamer::EmitInstToData(const MCInst &Inst,
                                        const MCSubtargetInfo &STI) {
@@ -63,7 +59,7 @@ void MCWinCOFFStreamer::EmitInstToData(const MCInst &Inst,
     Fixups[i].setOffset(Fixups[i].getOffset() + DF->getContents().size());
     DF->getFixups().push_back(Fixups[i]);
   }
-  DF->setHasInstructions(STI);
+
   DF->getContents().append(Code.begin(), Code.end());
 }
 
@@ -183,7 +179,7 @@ void MCWinCOFFStreamer::EmitCOFFSafeSEH(MCSymbol const *Symbol) {
   if (SXData->getAlignment() < 4)
     SXData->setAlignment(4);
 
-  new MCSymbolIdFragment(Symbol, SXData);
+  new MCSafeSEHFragment(Symbol, SXData);
 
   getAssembler().registerSymbol(*Symbol);
   CSymbol->setIsSafeSEH();
@@ -192,17 +188,6 @@ void MCWinCOFFStreamer::EmitCOFFSafeSEH(MCSymbol const *Symbol) {
   // function. Go ahead and oblige it here.
   CSymbol->setType(COFF::IMAGE_SYM_DTYPE_FUNCTION
                    << COFF::SCT_COMPLEX_TYPE_SHIFT);
-}
-
-void MCWinCOFFStreamer::EmitCOFFSymbolIndex(MCSymbol const *Symbol) {
-  MCSection *Sec = getCurrentSectionOnly();
-  getAssembler().registerSection(*Sec);
-  if (Sec->getAlignment() < 4)
-    Sec->setAlignment(4);
-
-  new MCSymbolIdFragment(Symbol, getCurrentSectionOnly());
-
-  getAssembler().registerSymbol(*Symbol);
 }
 
 void MCWinCOFFStreamer::EmitCOFFSectionIndex(const MCSymbol *Symbol) {
@@ -226,25 +211,6 @@ void MCWinCOFFStreamer::EmitCOFFSecRel32(const MCSymbol *Symbol,
         MCE, MCConstantExpr::create(Offset, getContext()), getContext());
   // Build the secrel32 relocation.
   MCFixup Fixup = MCFixup::create(DF->getContents().size(), MCE, FK_SecRel_4);
-  // Record the relocation.
-  DF->getFixups().push_back(Fixup);
-  // Emit 4 bytes (zeros) to the object file.
-  DF->getContents().resize(DF->getContents().size() + 4, 0);
-}
-
-void MCWinCOFFStreamer::EmitCOFFImgRel32(const MCSymbol *Symbol,
-                                         int64_t Offset) {
-  visitUsedSymbol(*Symbol);
-  MCDataFragment *DF = getOrCreateDataFragment();
-  // Create Symbol A for the relocation relative reference.
-  const MCExpr *MCE = MCSymbolRefExpr::create(
-      Symbol, MCSymbolRefExpr::VK_COFF_IMGREL32, getContext());
-  // Add the constant offset, if given.
-  if (Offset)
-    MCE = MCBinaryExpr::createAdd(
-        MCE, MCConstantExpr::create(Offset, getContext()), getContext());
-  // Build the imgrel relocation.
-  MCFixup Fixup = MCFixup::create(DF->getContents().size(), MCE, FK_Data_4);
   // Record the relocation.
   DF->getFixups().push_back(Fixup);
   // Emit 4 bytes (zeros) to the object file.
@@ -288,18 +254,24 @@ void MCWinCOFFStreamer::EmitLocalCommonSymbol(MCSymbol *S, uint64_t Size,
   auto *Symbol = cast<MCSymbolCOFF>(S);
 
   MCSection *Section = getContext().getObjectFileInfo()->getBSSSection();
-  PushSection();
-  SwitchSection(Section);
-  EmitValueToAlignment(ByteAlignment, 0, 1, 0);
-  EmitLabel(Symbol);
+  getAssembler().registerSection(*Section);
+  if (Section->getAlignment() < ByteAlignment)
+    Section->setAlignment(ByteAlignment);
+
+  getAssembler().registerSymbol(*Symbol);
   Symbol->setExternal(false);
-  EmitZeros(Size);
-  PopSection();
+
+  if (ByteAlignment != 1)
+    new MCAlignFragment(ByteAlignment, /*Value=*/0, /*ValueSize=*/0,
+                        ByteAlignment, Section);
+
+  MCFillFragment *Fragment = new MCFillFragment(
+      /*Value=*/0, Size, Section);
+  Symbol->setFragment(Fragment);
 }
 
 void MCWinCOFFStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,
-                                     uint64_t Size, unsigned ByteAlignment,
-                                     SMLoc Loc) {
+                                     uint64_t Size, unsigned ByteAlignment) {
   llvm_unreachable("not implemented");
 }
 
@@ -313,7 +285,7 @@ void MCWinCOFFStreamer::EmitIdent(StringRef IdentString) {
   llvm_unreachable("not implemented");
 }
 
-void MCWinCOFFStreamer::EmitWinEHHandlerData(SMLoc Loc) {
+void MCWinCOFFStreamer::EmitWinEHHandlerData() {
   llvm_unreachable("not implemented");
 }
 

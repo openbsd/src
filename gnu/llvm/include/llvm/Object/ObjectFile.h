@@ -15,7 +15,6 @@
 #define LLVM_OBJECT_OBJECTFILE_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/BinaryFormat/Magic.h"
 #include "llvm/MC/SubtargetFeature.h"
@@ -24,6 +23,7 @@
 #include "llvm/Object/SymbolicFile.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
+#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <cassert>
@@ -65,7 +65,7 @@ public:
   symbol_iterator getSymbol() const;
   uint64_t getType() const;
 
-  /// Get a string that represents the type of this relocation.
+  /// @brief Get a string that represents the type of this relocation.
   ///
   /// This is for display purposes only.
   void getTypeName(SmallVectorImpl<char> &Result) const;
@@ -100,7 +100,7 @@ public:
   uint64_t getSize() const;
   std::error_code getContents(StringRef &Result) const;
 
-  /// Get the alignment of this section as the actual value (not log 2).
+  /// @brief Get the alignment of this section as the actual value (not log 2).
   uint64_t getAlignment() const;
 
   bool isCompressed() const;
@@ -109,7 +109,6 @@ public:
   bool isBSS() const;
   bool isVirtual() const;
   bool isBitcode() const;
-  bool isStripped() const;
 
   bool containsSymbol(SymbolRef S) const;
 
@@ -154,12 +153,12 @@ public:
   /// offset or a virtual address.
   uint64_t getValue() const;
 
-  /// Get the alignment of this symbol as the actual value (not log 2).
+  /// @brief Get the alignment of this symbol as the actual value (not log 2).
   uint32_t getAlignment() const;
   uint64_t getCommonSize() const;
   Expected<SymbolRef::Type> getType() const;
 
-  /// Get section this symbol is defined in reference to. Result is
+  /// @brief Get section this symbol is defined in reference to. Result is
   /// end_sections() if it is undefined or is an absolute symbol.
   Expected<section_iterator> getSection() const;
 
@@ -237,7 +236,6 @@ protected:
   // A section is 'virtual' if its contents aren't present in the object image.
   virtual bool isSectionVirtual(DataRefImpl Sec) const = 0;
   virtual bool isSectionBitcode(DataRefImpl Sec) const;
-  virtual bool isSectionStripped(DataRefImpl Sec) const;
   virtual relocation_iterator section_rel_begin(DataRefImpl Sec) const = 0;
   virtual relocation_iterator section_rel_end(DataRefImpl Sec) const = 0;
   virtual section_iterator getRelocatedSection(DataRefImpl Sec) const;
@@ -262,10 +260,6 @@ public:
     return getCommonSymbolSizeImpl(Symb);
   }
 
-  virtual std::vector<SectionRef> dynamic_relocation_sections() const {
-    return std::vector<SectionRef>();
-  }
-
   using symbol_iterator_range = iterator_range<symbol_iterator>;
   symbol_iterator_range symbols() const {
     return symbol_iterator_range(symbol_begin(), symbol_end());
@@ -279,20 +273,20 @@ public:
     return section_iterator_range(section_begin(), section_end());
   }
 
-  /// The number of bytes used to represent an address in this object
+  /// @brief The number of bytes used to represent an address in this object
   ///        file format.
   virtual uint8_t getBytesInAddress() const = 0;
 
   virtual StringRef getFileFormatName() const = 0;
-  virtual Triple::ArchType getArch() const = 0;
+  virtual /* Triple::ArchType */ unsigned getArch() const = 0;
   virtual SubtargetFeatures getFeatures() const = 0;
   virtual void setARMSubArch(Triple &TheTriple) const { }
-  virtual Expected<uint64_t> getStartAddress() const {
-    return errorCodeToError(object_error::parse_failed);
-  };
 
-  /// Create a triple from the data in this object file.
-  Triple makeTriple() const;
+  /// Returns platform-specific object flags, if any.
+  virtual std::error_code getPlatformFlags(unsigned &Result) const {
+    Result = 0;
+    return object_error::invalid_file_type;
+  }
 
   virtual std::error_code
     getBuildAttributes(ARMAttributeParser &Attributes) const {
@@ -308,7 +302,7 @@ public:
   /// @returns Pointer to ObjectFile subclass to handle this type of object.
   /// @param ObjectPath The path to the object file. ObjectPath.isObject must
   ///        return true.
-  /// Create ObjectFile from path.
+  /// @brief Create ObjectFile from path.
   static Expected<OwningBinary<ObjectFile>>
   createObjectFile(StringRef ObjectPath);
 
@@ -323,10 +317,10 @@ public:
     return v->isObject();
   }
 
-  static Expected<std::unique_ptr<COFFObjectFile>>
+  static ErrorOr<std::unique_ptr<COFFObjectFile>>
   createCOFFObjectFile(MemoryBufferRef Object);
 
-  static Expected<std::unique_ptr<ObjectFile>>
+  static ErrorOr<std::unique_ptr<ObjectFile>>
   createELFObjectFile(MemoryBufferRef Object);
 
   static Expected<std::unique_ptr<MachOObjectFile>>
@@ -443,10 +437,6 @@ inline bool SectionRef::isVirtual() const {
 
 inline bool SectionRef::isBitcode() const {
   return OwningObject->isSectionBitcode(SectionPimpl);
-}
-
-inline bool SectionRef::isStripped() const {
-  return OwningObject->isSectionStripped(SectionPimpl);
 }
 
 inline relocation_iterator SectionRef::relocation_begin() const {

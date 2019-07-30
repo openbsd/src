@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.25 2019/03/17 18:17:45 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.20 2018/02/20 18:05:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,7 +85,7 @@
 static void EVP_PKEY_free_it(EVP_PKEY *x);
 
 int
-EVP_PKEY_bits(const EVP_PKEY *pkey)
+EVP_PKEY_bits(EVP_PKEY *pkey)
 {
 	if (pkey && pkey->ameth && pkey->ameth->pkey_bits)
 		return pkey->ameth->pkey_bits(pkey);
@@ -93,7 +93,7 @@ EVP_PKEY_bits(const EVP_PKEY *pkey)
 }
 
 int
-EVP_PKEY_size(const EVP_PKEY *pkey)
+EVP_PKEY_size(EVP_PKEY *pkey)
 {
 	if (pkey && pkey->ameth && pkey->ameth->pkey_size)
 		return pkey->ameth->pkey_size(pkey);
@@ -229,8 +229,11 @@ pkey_set_type(EVP_PKEY *pkey, int type, const char *str, int len)
 		if ((type == pkey->save_type) && pkey->ameth)
 			return 1;
 #ifndef OPENSSL_NO_ENGINE
-		ENGINE_finish(pkey->engine);
-		pkey->engine = NULL;
+		/* If we have an ENGINE release it */
+		if (pkey->engine) {
+			ENGINE_finish(pkey->engine);
+			pkey->engine = NULL;
+		}
 #endif
 	}
 	if (str)
@@ -238,7 +241,7 @@ pkey_set_type(EVP_PKEY *pkey, int type, const char *str, int len)
 	else
 		ameth = EVP_PKEY_asn1_find(&e, type);
 #ifndef OPENSSL_NO_ENGINE
-	if (pkey == NULL)
+	if (!pkey && e)
 		ENGINE_finish(e);
 #endif
 	if (!ameth) {
@@ -277,25 +280,9 @@ EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 }
 
 void *
-EVP_PKEY_get0(const EVP_PKEY *pkey)
+EVP_PKEY_get0(EVP_PKEY *pkey)
 {
 	return pkey->pkey.ptr;
-}
-
-const unsigned char *
-EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
-{
-	ASN1_OCTET_STRING *os;
-
-	if (pkey->type != EVP_PKEY_HMAC) {
-		EVPerror(EVP_R_EXPECTING_AN_HMAC_KEY);
-		return NULL;
-	}
-
-	os = EVP_PKEY_get0(pkey);
-	*len = os->length;
-
-	return os->data;
 }
 
 #ifndef OPENSSL_NO_RSA
@@ -439,7 +426,8 @@ EVP_PKEY_type(int type)
 	else
 		ret = NID_undef;
 #ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(e);
+	if (e)
+		ENGINE_finish(e);
 #endif
 	return ret;
 }
@@ -482,8 +470,10 @@ EVP_PKEY_free_it(EVP_PKEY *x)
 		x->pkey.ptr = NULL;
 	}
 #ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(x->engine);
-	x->engine = NULL;
+	if (x->engine) {
+		ENGINE_finish(x->engine);
+		x->engine = NULL;
+	}
 #endif
 }
 

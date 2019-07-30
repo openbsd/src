@@ -513,6 +513,7 @@ val_nsec_proves_no_wc(struct ub_packed_rrset_key* nsec, uint8_t* qname,
 	/* Determine if a NSEC record proves the non-existence of a 
 	 * wildcard that could have produced qname. */
 	int labs;
+	int i;
 	uint8_t* ce = nsec_closest_encloser(qname, nsec);
 	uint8_t* strip;
 	size_t striplen;
@@ -525,13 +526,13 @@ val_nsec_proves_no_wc(struct ub_packed_rrset_key* nsec, uint8_t* qname,
 	 * and next names. */
 	labs = dname_count_labels(qname) - dname_count_labels(ce);
 
-	if(labs > 0) {
+	for(i=labs; i>0; i--) {
 		/* i is number of labels to strip off qname, prepend * wild */
 		strip = qname;
 		striplen = qnamelen;
-		dname_remove_labels(&strip, &striplen, labs);
+		dname_remove_labels(&strip, &striplen, i);
 		if(striplen > LDNS_MAX_DOMAINLEN-2)
-			return 0; /* too long to prepend wildcard */
+			continue; /* too long to prepend wildcard */
 		buf[0] = 1;
 		buf[1] = (uint8_t)'*';
 		memmove(buf+2, strip, striplen);

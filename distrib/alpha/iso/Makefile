@@ -1,8 +1,10 @@
-#	$OpenBSD: Makefile,v 1.20 2019/05/01 20:53:34 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.15 2014/09/21 13:44:44 deraadt Exp $
+
+TOP=	${.CURDIR}/..
+
+.include "${TOP}/Makefile.inc"
 
 CDROM=		install${OSrev}.iso
-MOUNT_POINT=	/mnt
-
 RELXDIR?=	/home/relx-${MACHINE}
 RELDIR?=	/home/rel-${MACHINE}
 
@@ -16,7 +18,7 @@ XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xfont${OSrev}.tgz \
 all: ${CDROM}
 
 ${CDROM}: ${BASE} ${XBASE}
-	rm -rf ${.OBJDIR}/cd-dir
+	-rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
 	cp -p ${BASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
@@ -33,31 +35,31 @@ ${CDROM}: ${BASE} ${XBASE}
 	cp -p ${RELDIR}/boot ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${RELDIR}/bootxx ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
-	(mkhybrid -a -R -T -L -d -D -N -o ${.OBJDIR}/${CDROM} -v -v -v \
+	(mkhybrid -a -R -v -v -T -L -d -D -N -o ${.OBJDIR}/${CDROM} \
 	    -A "OpenBSD ${OSREV} ${MACHINE} Install CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/${MACHINE}   ${OSREV} Install CD" \
 	    ${.OBJDIR}/cd-dir 2>&1) | tee log
-	vnconfig -v ${CDROM} > vnd
-	mount -t cd9660 /dev/`cat vnd`a ${MOUNT_POINT}
+	vnconfig -v -c vnd0 ${.OBJDIR}/${CDROM}
+	mount -t cd9660 /dev/vnd0a /mnt
 	/usr/mdec/installboot -v \
 	    -s `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/${MACHINE}/boot$$" | cut -d' ' -f1` \
 	    -e `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/${MACHINE}/boot$$" | cut -d' ' -f2` \
-	    ${MOUNT_POINT}/${OSREV}/${MACHINE}/boot /usr/mdec/bootxx `cat vnd`
-	umount ${MOUNT_POINT}
-	vnconfig -u `cat vnd`
-	rm -f vnd
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
+	    /mnt/${OSREV}/${MACHINE}/boot /usr/mdec/bootxx /dev/rvnd0c
+	umount /mnt
+	vnconfig -u vnd0
 
 install:
 	cp ${CDROM} ${RELDIR}/
 
 clean cleandir:
-	rm -f ${CDROM}
+	/bin/rm -f ${CDROM}
 	rm -rf cd-dir log
 
+unconfig:
+	-umount /mnt
+	-vnconfig -u vnd0
+
 .include <bsd.obj.mk>
+.include <bsd.subdir.mk>

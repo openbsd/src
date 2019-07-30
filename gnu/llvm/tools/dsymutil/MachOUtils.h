@@ -9,9 +9,8 @@
 #ifndef LLVM_TOOLS_DSYMUTIL_MACHOUTILS_H
 #define LLVM_TOOLS_DSYMUTIL_MACHOUTILS_H
 
-#include "llvm/ADT/StringRef.h"
-#include "llvm/Support/FileSystem.h"
 #include <string>
+#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
 class MCStreamer;
@@ -21,20 +20,12 @@ class DebugMap;
 struct LinkOptions;
 namespace MachOUtils {
 
-struct ArchAndFile {
-  std::string Arch;
-  // Optional because TempFile has no default constructor.
-  Optional<llvm::sys::fs::TempFile> File;
-
-  llvm::Error createTempFile();
-  llvm::StringRef path() const;
-
-  ArchAndFile(StringRef Arch) : Arch(Arch) {}
-  ArchAndFile(ArchAndFile &&A) = default;
-  ~ArchAndFile();
+struct ArchAndFilename {
+  std::string Arch, Path;
+  ArchAndFilename(StringRef Arch, StringRef Path) : Arch(Arch), Path(Path) {}
 };
 
-bool generateUniversalBinary(SmallVectorImpl<ArchAndFile> &ArchFiles,
+bool generateUniversalBinary(SmallVectorImpl<ArchAndFilename> &ArchFiles,
                              StringRef OutputFileName, const LinkOptions &,
                              StringRef SDKPath);
 
@@ -42,7 +33,7 @@ bool generateDsymCompanion(const DebugMap &DM, MCStreamer &MS,
                            raw_fd_ostream &OutFile);
 
 std::string getArchName(StringRef Arch);
-} // namespace MachOUtils
-} // namespace dsymutil
-} // namespace llvm
+}
+}
+}
 #endif // LLVM_TOOLS_DSYMUTIL_MACHOUTILS_H

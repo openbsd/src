@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_check.c,v 1.17 2019/01/20 01:56:59 tb Exp $ */
+/* $OpenBSD: dh_check.c,v 1.16 2016/07/05 02:54:35 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,7 +74,7 @@
 int
 DH_check(const DH *dh, int *ret)
 {
-	int is_prime, ok = 0;
+	int ok = 0;
 	BN_CTX *ctx = NULL;
 	BN_ULONG l;
 	BIGNUM *q = NULL;
@@ -102,23 +102,16 @@ DH_check(const DH *dh, int *ret)
 	} else
 		*ret |= DH_UNABLE_TO_CHECK_GENERATOR;
 
-	is_prime = BN_is_prime_ex(dh->p, BN_prime_checks, ctx, NULL);
-	if (is_prime < 0)
-		goto err;
-	if (is_prime == 0)
+	if (!BN_is_prime_ex(dh->p, BN_prime_checks, ctx, NULL))
 		*ret |= DH_CHECK_P_NOT_PRIME;
 	else {
 		if (!BN_rshift1(q, dh->p))
 			goto err;
-		is_prime = BN_is_prime_ex(q, BN_prime_checks, ctx, NULL);
-		if (is_prime < 0)
-			goto err;
-		if (is_prime == 0)
+		if (!BN_is_prime_ex(q, BN_prime_checks, ctx, NULL))
 			*ret |= DH_CHECK_P_NOT_SAFE_PRIME;
 	}
 	ok = 1;
-
- err:
+err:
 	BN_CTX_free(ctx);
 	BN_free(q);
 	return ok;

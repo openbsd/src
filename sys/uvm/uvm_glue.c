@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.74 2019/01/10 20:26:34 kettenis Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.73 2017/05/08 09:32:19 mpi Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -103,27 +103,33 @@ uvm_kernacc(caddr_t addr, size_t len, int rw)
 /*
  * uvm_vslock: wire user memory for I/O
  *
- * - called from sys_sysctl
+ * - called from physio and sys_sysctl
  */
+
 int
 uvm_vslock(struct proc *p, caddr_t addr, size_t len, vm_prot_t access_type)
 {
-	struct vm_map *map = &p->p_vmspace->vm_map;
+	struct vm_map *map;
 	vaddr_t start, end;
+	int rv;
 
+	map = &p->p_vmspace->vm_map;
 	start = trunc_page((vaddr_t)addr);
 	end = round_page((vaddr_t)addr + len);
 	if (end <= start)
 		return (EINVAL);
 
-	return uvm_fault_wire(map, start, end, access_type);
+	rv = uvm_fault_wire(map, start, end, access_type);
+
+	return (rv);
 }
 
 /*
  * uvm_vsunlock: unwire user memory wired by uvm_vslock()
  *
- * - called from sys_sysctl
+ * - called from physio and sys_sysctl
  */
+
 void
 uvm_vsunlock(struct proc *p, caddr_t addr, size_t len)
 {
@@ -131,7 +137,8 @@ uvm_vsunlock(struct proc *p, caddr_t addr, size_t len)
 
 	start = trunc_page((vaddr_t)addr);
 	end = round_page((vaddr_t)addr + len);
-	KASSERT(end > start);
+	if (end <= start)
+		return;
 
 	uvm_fault_unwire(&p->p_vmspace->vm_map, start, end);
 }
@@ -139,21 +146,19 @@ uvm_vsunlock(struct proc *p, caddr_t addr, size_t len)
 /*
  * uvm_vslock_device: wire user memory, make sure it's device reachable
  *  and bounce if necessary.
- *
- * - called from physio
+ * Always bounces for now.
  */
 int
 uvm_vslock_device(struct proc *p, void *addr, size_t len,
     vm_prot_t access_type, void **retp)
 {
-	struct vm_map *map = &p->p_vmspace->vm_map;
 	struct vm_page *pg;
 	struct pglist pgl;
 	int npages;
 	vaddr_t start, end, off;
 	vaddr_t sva, va;
 	vsize_t sz;
-	int error, mapv, i;
+	int error, i;
 
 	start = trunc_page((vaddr_t)addr);
 	end = round_page((vaddr_t)addr + len);
@@ -162,23 +167,17 @@ uvm_vslock_device(struct proc *p, void *addr, size_t len,
 	if (end <= start)
 		return (EINVAL);
 
-	vm_map_lock_read(map);
-retry:
-	mapv = map->timestamp;
-	vm_map_unlock_read(map);
-
-	if ((error = uvm_fault_wire(map, start, end, access_type)))
+	if ((error = uvm_fault_wire(&p->p_vmspace->vm_map, start, end,
+	    access_type))) {
 		return (error);
-
-	vm_map_lock_read(map);
-	if (mapv != map->timestamp)
-		goto retry;
+	}
 
 	npages = atop(sz);
 	for (i = 0; i < npages; i++) {
 		paddr_t pa;
 
-		if (!pmap_extract(map->pmap, start + ptoa(i), &pa)) {
+		if (!pmap_extract(p->p_vmspace->vm_map.pmap,
+		    start + ptoa(i), &pa)) {
 			error = EFAULT;
 			goto out_unwire;
 		}
@@ -220,16 +219,10 @@ retry:
 out_unmap:
 	uvm_km_free(kernel_map, sva, sz);
 out_unwire:
-	uvm_fault_unwire_locked(map, start, end);
-	vm_map_unlock_read(map);
+	uvm_fault_unwire(&p->p_vmspace->vm_map, start, end);
 	return (error);
 }
 
-/*
- * uvm_vsunlock_device: unwire user memory wired by uvm_vslock_device()
- *
- * - called from physio
- */
 void
 uvm_vsunlock_device(struct proc *p, void *addr, size_t len, void *map)
 {
@@ -239,14 +232,13 @@ uvm_vsunlock_device(struct proc *p, void *addr, size_t len, void *map)
 
 	start = trunc_page((vaddr_t)addr);
 	end = round_page((vaddr_t)addr + len);
-	KASSERT(end > start);
 	sz = end - start;
+	if (end <= start)
+		return;
 
 	if (map)
 		copyout(map, addr, len);
-
-	uvm_fault_unwire_locked(&p->p_vmspace->vm_map, start, end);
-	vm_map_unlock_read(&p->p_vmspace->vm_map);
+	uvm_fault_unwire(&p->p_vmspace->vm_map, start, end);
 
 	if (!map)
 		return;

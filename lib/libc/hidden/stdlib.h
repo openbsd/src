@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.16 2019/05/10 15:03:24 otto Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.12 2017/09/05 03:16:13 schwarze Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -54,7 +54,6 @@ PROTO_STD_DEPRECATED(_Exit);
 PROTO_DEPRECATED(a64l);
 PROTO_NORMAL(abort);
 PROTO_NORMAL(abs);
-/* PROTO_NORMAL(aligned_alloc)		not yet, breaks emacs */
 PROTO_NORMAL(arc4random);
 PROTO_NORMAL(arc4random_buf);
 PROTO_NORMAL(arc4random_uniform);
@@ -65,7 +64,6 @@ PROTO_STD_DEPRECATED(atol);
 PROTO_STD_DEPRECATED(atoll);
 PROTO_STD_DEPRECATED(bsearch);
 /*PROTO_NORMAL(calloc);			not yet, breaks emacs */
-PROTO_NORMAL(calloc_conceal);
 PROTO_NORMAL(cgetcap);
 PROTO_NORMAL(cgetclose);
 PROTO_NORMAL(cgetent);
@@ -106,7 +104,6 @@ PROTO_STD_DEPRECATED(llabs);
 PROTO_STD_DEPRECATED(lldiv);
 PROTO_DEPRECATED(lrand48);
 /*PROTO_NORMAL(malloc);			not yet, breaks emacs */
-PROTO_NORMAL(malloc_conceal);
 PROTO_STD_DEPRECATED(mblen);
 PROTO_STD_DEPRECATED(mbstowcs);
 PROTO_STD_DEPRECATED(mbtowc);

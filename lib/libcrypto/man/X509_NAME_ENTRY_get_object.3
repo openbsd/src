@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_NAME_ENTRY_get_object.3,v 1.13 2019/06/14 13:59:32 schwarze Exp $
+.\" $OpenBSD: X509_NAME_ENTRY_get_object.3,v 1.10 2018/03/27 17:35:50 schwarze Exp $
 .\" full merge up to: OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 14 2019 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt X509_NAME_ENTRY_GET_OBJECT 3
 .Os
 .Sh NAME
@@ -93,16 +93,16 @@
 .Fc
 .Ft ASN1_OBJECT *
 .Fo X509_NAME_ENTRY_get_object
-.Fa "const X509_NAME_ENTRY *ne"
+.Fa "X509_NAME_ENTRY *ne"
 .Fc
 .Ft ASN1_STRING *
 .Fo X509_NAME_ENTRY_get_data
-.Fa "const X509_NAME_ENTRY *ne"
+.Fa "X509_NAME_ENTRY *ne"
 .Fc
 .Ft int
 .Fo X509_NAME_ENTRY_set_object
 .Fa "X509_NAME_ENTRY *ne"
-.Fa "const ASN1_OBJECT *obj"
+.Fa "ASN1_OBJECT *obj"
 .Fc
 .Ft int
 .Fo X509_NAME_ENTRY_set_data
@@ -124,13 +124,13 @@
 .Fa "X509_NAME_ENTRY **ne"
 .Fa "int nid"
 .Fa "int type"
-.Fa "const unsigned char *bytes"
+.Fa "unsigned char *bytes"
 .Fa "int len"
 .Fc
 .Ft X509_NAME_ENTRY *
 .Fo X509_NAME_ENTRY_create_by_OBJ
 .Fa "X509_NAME_ENTRY **ne"
-.Fa "const ASN1_OBJECT *obj"
+.Fa "ASN1_OBJECT *obj"
 .Fa "int type"
 .Fa "const unsigned char *bytes"
 .Fa "int len"
@@ -223,14 +223,16 @@ but in the case of
 the field type must be set first so the relevant field information
 can be looked up internally.
 .Sh RETURN VALUES
-The
-.Fn X509_NAME_ENTRY_new
-function returns a valid
+.Fn X509_NAME_ENTRY_new ,
+.Fn X509_NAME_ENTRY_create_by_txt ,
+.Fn X509_NAME_ENTRY_create_by_NID ,
+and
+.Fn X509_NAME_ENTRY_create_by_OBJ
+return a valid
 .Vt X509_NAME_ENTRY
-structure if successful; otherwise
+structure on success or
 .Dv NULL
-is returned and an error code can be retrieved with
-.Xr ERR_get_error 3 .
+if an error occurred.
 .Pp
 .Fn X509_NAME_ENTRY_get_object
 returns a valid
@@ -246,29 +248,12 @@ structure if it is set or
 .Dv NULL
 if an error occurred.
 .Pp
-The
 .Fn X509_NAME_ENTRY_set_object
-function returns 1 if successful;
-otherwise 0 is returned and an error code can be retrieved with
-.Xr ERR_get_error 3 .
-.Pp
+and
 .Fn X509_NAME_ENTRY_set_data
 return 1 on success or 0 on error.
-In some cases of failure, the reason can be determined with
-.Xr ERR_get_error 3 .
-.Pp
-.Fn X509_NAME_ENTRY_create_by_txt ,
-.Fn X509_NAME_ENTRY_create_by_NID ,
-and
-.Fn X509_NAME_ENTRY_create_by_OBJ
-return a valid
-.Vt X509_NAME_ENTRY
-structure on success or
-.Dv NULL
-if an error occurred.
-In some cases of failure, the reason can be determined with
-.Xr ERR_get_error 3 .
 .Sh SEE ALSO
+.Xr ERR_get_error 3 ,
 .Xr OBJ_nid2obj 3 ,
 .Xr X509_NAME_add_entry 3 ,
 .Xr X509_NAME_get_entry 3 ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.85 2019/01/09 12:11:38 mpi Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.83 2017/05/02 11:44:32 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -688,7 +688,7 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 	if (crd->crd_flags & CRD_F_COMP) {
 		if (result > crd->crd_len) {
 			/* Compression was useless, we lost time */
-			free(out, M_CRYPTO_DATA, result);
+			free(out, M_CRYPTO_DATA, 0);
 			return 0;
 		}
 	}
@@ -719,7 +719,7 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 			}
 		}
 	}
-	free(out, M_CRYPTO_DATA, result);
+	free(out, M_CRYPTO_DATA, 0);
 	return 0;
 }
 
@@ -971,8 +971,7 @@ swcr_freesession(u_int64_t tid)
 
 			if (swd->sw_kschedule) {
 				explicit_bzero(swd->sw_kschedule, txf->ctxsize);
-				free(swd->sw_kschedule, M_CRYPTO_DATA,
-				    txf->ctxsize);
+				free(swd->sw_kschedule, M_CRYPTO_DATA, 0);
 			}
 			break;
 
@@ -986,11 +985,11 @@ swcr_freesession(u_int64_t tid)
 
 			if (swd->sw_ictx) {
 				explicit_bzero(swd->sw_ictx, axf->ctxsize);
-				free(swd->sw_ictx, M_CRYPTO_DATA, axf->ctxsize);
+				free(swd->sw_ictx, M_CRYPTO_DATA, 0);
 			}
 			if (swd->sw_octx) {
 				explicit_bzero(swd->sw_octx, axf->ctxsize);
-				free(swd->sw_octx, M_CRYPTO_DATA, axf->ctxsize);
+				free(swd->sw_octx, M_CRYPTO_DATA, 0);
 			}
 			break;
 
@@ -1002,12 +1001,12 @@ swcr_freesession(u_int64_t tid)
 
 			if (swd->sw_ictx) {
 				explicit_bzero(swd->sw_ictx, axf->ctxsize);
-				free(swd->sw_ictx, M_CRYPTO_DATA, axf->ctxsize);
+				free(swd->sw_ictx, M_CRYPTO_DATA, 0);
 			}
 			break;
 		}
 
-		free(swd, M_CRYPTO_DATA, sizeof(*swd));
+		free(swd, M_CRYPTO_DATA, 0);
 	}
 	return 0;
 }

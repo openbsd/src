@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.30 2019/01/06 18:27:14 tedu Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.28 2017/12/11 23:33:44 tb Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -18,9 +18,7 @@
 #include <limits.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <time.h>
-#include <poll.h>
 #include <unistd.h>
 
 #define XLENGTH 58
@@ -61,11 +59,10 @@ int
 main(int argc, char *argv[])
 {
 	long t, a;
-	int i, j, s, k, rv;
+	int i, j, s, k;
 	int scrol;
 	int n = 0;
 	struct timespec delay, end;
-	struct pollfd pfd;
 	const char *errstr;
 	long scroldelay = 50000000;
 	int xbase;
@@ -100,17 +97,11 @@ main(int argc, char *argv[])
 
 	initscr();
 
-	if (pledge("stdio tty", NULL) == -1)
-		err(1, "pledge");
-
 	signal(SIGINT,sighndl);
 	signal(SIGTERM,sighndl);
 	signal(SIGHUP,sighndl);
 	signal(SIGWINCH, sigresize);
 	signal(SIGCONT, sigresize);	/* for resizes during suspend */
-
-	pfd.fd = STDIN_FILENO;
-	pfd.events = POLLIN;
 
 	cbreak();
 	noecho();
@@ -230,15 +221,7 @@ main(int argc, char *argv[])
 		/* want scrolling to END on the second */
 		if (scrol && !wintoosmall)
 			delay.tv_nsec -= 5 * scroldelay;
-		rv = ppoll(&pfd, 1, &delay, NULL);
-		if (rv == 1) {
-			char q = 0;
-			read(STDIN_FILENO, &q, 1);
-			if (q == 'q') {
-				n = 1;
-				end.tv_sec = now.tv_sec;
-			}
-		}
+		nanosleep(&delay, NULL);
 		now.tv_sec++;
 
 		if (sigtermed) {

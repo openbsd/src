@@ -8,9 +8,8 @@ if ($] < 5.004_55) {
 
 use strict;
 use warnings;
-BEGIN { unshift @INC, 't'; }
 
-require "filter-util.pl" ;
+require "./filter-util.pl" ;
 
 use vars qw( $Inc $Perl) ;
 

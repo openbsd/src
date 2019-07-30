@@ -20,6 +20,8 @@
 #include "llvm/Support/Path.h"
 
 #include <cstdint>
+#include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -34,7 +36,6 @@ static bool is32bit(MachineTypes Machine) {
   switch (Machine) {
   default:
     llvm_unreachable("unsupported machine");
-  case IMAGE_FILE_MACHINE_ARM64:
   case IMAGE_FILE_MACHINE_AMD64:
     return false;
   case IMAGE_FILE_MACHINE_ARMNT:
@@ -51,8 +52,6 @@ static uint16_t getImgRelRelocation(MachineTypes Machine) {
     return IMAGE_REL_AMD64_ADDR32NB;
   case IMAGE_FILE_MACHINE_ARMNT:
     return IMAGE_REL_ARM_ADDR32NB;
-  case IMAGE_FILE_MACHINE_ARM64:
-    return IMAGE_REL_ARM64_ADDR32NB;
   case IMAGE_FILE_MACHINE_I386:
     return IMAGE_REL_I386_DIR32NB;
   }
@@ -91,15 +90,7 @@ static void writeStringTable(std::vector<uint8_t> &B,
 }
 
 static ImportNameType getNameType(StringRef Sym, StringRef ExtName,
-                                  MachineTypes Machine, bool MinGW) {
-  // A decorated stdcall function in MSVC is exported with the
-  // type IMPORT_NAME, and the exported function name includes the
-  // the leading underscore. In MinGW on the other hand, a decorated
-  // stdcall function still omits the underscore (IMPORT_NAME_NOPREFIX).
-  // See the comment in isDecorated in COFFModuleDefinition.cpp for more
-  // details.
-  if (ExtName.startswith("_") && ExtName.contains('@') && !MinGW)
-    return IMPORT_NAME;
+                                  MachineTypes Machine) {
   if (Sym != ExtName)
     return IMPORT_NAME_UNDECORATE;
   if (Machine == IMAGE_FILE_MACHINE_I386 && Sym.startswith("_"))
@@ -196,7 +187,7 @@ ObjectFactory::createImportDescriptor(std::vector<uint8_t> &Buffer) {
           (ImportName.size() + 1)),
       u32(NumberOfSymbols),
       u16(0),
-      u16(is32bit(Machine) ? IMAGE_FILE_32BIT_MACHINE : C_Invalid),
+      u16(is32bit(Machine) ? IMAGE_FILE_32BIT_MACHINE : 0),
   };
   append(Buffer, Header);
 
@@ -332,7 +323,7 @@ ObjectFactory::createNullImportDescriptor(std::vector<uint8_t> &Buffer) {
           sizeof(coff_import_directory_table_entry)),
       u32(NumberOfSymbols),
       u16(0),
-      u16(is32bit(Machine) ? IMAGE_FILE_32BIT_MACHINE : C_Invalid),
+      u16(is32bit(Machine) ? IMAGE_FILE_32BIT_MACHINE : 0),
   };
   append(Buffer, Header);
 
@@ -395,7 +386,7 @@ NewArchiveMember ObjectFactory::createNullThunk(std::vector<uint8_t> &Buffer) {
           VASize),
       u32(NumberOfSymbols),
       u16(0),
-      u16(is32bit(Machine) ? IMAGE_FILE_32BIT_MACHINE : C_Invalid),
+      u16(is32bit(Machine) ? IMAGE_FILE_32BIT_MACHINE : 0),
   };
   append(Buffer, Header);
 
@@ -546,12 +537,7 @@ NewArchiveMember ObjectFactory::createWeakExternal(StringRef Sym,
        u16(0),
        IMAGE_SYM_CLASS_WEAK_EXTERNAL,
        1},
-      {{{2, 0, 0, 0, IMAGE_WEAK_EXTERN_SEARCH_ALIAS, 0, 0, 0}},
-       u32(0),
-       u16(0),
-       u16(0),
-       IMAGE_SYM_CLASS_NULL,
-       0},
+      {{{2, 0, 0, 0, 3, 0, 0, 0}}, u32(0), u16(0), u16(0), uint8_t(0), 0},
   };
   SymbolTable[2].Name.Offset.Offset = sizeof(uint32_t);
 
@@ -569,9 +555,9 @@ NewArchiveMember ObjectFactory::createWeakExternal(StringRef Sym,
   return {MemoryBufferRef(StringRef(Buf, Buffer.size()), ImportName)};
 }
 
-Error writeImportLibrary(StringRef ImportName, StringRef Path,
-                         ArrayRef<COFFShortExport> Exports,
-                         MachineTypes Machine, bool MinGW) {
+std::error_code writeImportLibrary(StringRef ImportName, StringRef Path,
+                                   ArrayRef<COFFShortExport> Exports,
+                                   MachineTypes Machine, bool MakeWeakAliases) {
 
   std::vector<NewArchiveMember> Members;
   ObjectFactory OF(llvm::sys::path::filename(ImportName), Machine);
@@ -589,6 +575,12 @@ Error writeImportLibrary(StringRef ImportName, StringRef Path,
     if (E.Private)
       continue;
 
+    if (E.isWeak() && MakeWeakAliases) {
+      Members.push_back(OF.createWeakExternal(E.Name, E.ExtName, false));
+      Members.push_back(OF.createWeakExternal(E.Name, E.ExtName, true));
+      continue;
+    }
+
     ImportType ImportType = IMPORT_CODE;
     if (E.Data)
       ImportType = IMPORT_DATA;
@@ -596,27 +588,24 @@ Error writeImportLibrary(StringRef ImportName, StringRef Path,
       ImportType = IMPORT_CONST;
 
     StringRef SymbolName = E.SymbolName.empty() ? E.Name : E.SymbolName;
-    ImportNameType NameType = getNameType(SymbolName, E.Name, Machine, MinGW);
+    ImportNameType NameType = getNameType(SymbolName, E.Name, Machine);
     Expected<std::string> Name = E.ExtName.empty()
                                      ? SymbolName
                                      : replace(SymbolName, E.Name, E.ExtName);
 
-    if (!Name)
-      return Name.takeError();
-
-    if (!E.AliasTarget.empty() && *Name != E.AliasTarget) {
-      Members.push_back(OF.createWeakExternal(E.AliasTarget, *Name, false));
-      Members.push_back(OF.createWeakExternal(E.AliasTarget, *Name, true));
-      continue;
+    if (!Name) {
+      return errorToErrorCode(Name.takeError());
     }
 
     Members.push_back(
         OF.createShortImport(*Name, E.Ordinal, ImportType, NameType));
   }
 
-  return writeArchive(Path, Members, /*WriteSymtab*/ true,
-                      object::Archive::K_GNU,
-                      /*Deterministic*/ true, /*Thin*/ false);
+  std::pair<StringRef, std::error_code> Result =
+      writeArchive(Path, Members, /*WriteSymtab*/ true, object::Archive::K_GNU,
+                   /*Deterministic*/ true, /*Thin*/ false);
+
+  return Result.second;
 }
 
 } // namespace object

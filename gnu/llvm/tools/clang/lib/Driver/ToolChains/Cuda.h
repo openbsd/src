@@ -11,14 +11,14 @@
 #define LLVM_CLANG_LIB_DRIVER_TOOLCHAINS_CUDA_H
 
 #include "clang/Basic/Cuda.h"
+#include "clang/Basic/VersionTuple.h"
 #include "clang/Driver/Action.h"
 #include "clang/Driver/Multilib.h"
-#include "clang/Driver/Tool.h"
 #include "clang/Driver/ToolChain.h"
+#include "clang/Driver/Tool.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/VersionTuple.h"
 #include <set>
 #include <vector>
 
@@ -40,7 +40,7 @@ private:
 
   // CUDA architectures for which we have raised an error in
   // CheckCudaVersionSupportsArch.
-  mutable llvm::SmallSet<CudaArch, 4> ArchsWithBadVersion;
+  mutable llvm::SmallSet<CudaArch, 4> ArchsWithVersionTooLowErrors;
 
 public:
   CudaInstallationDetector(const Driver &D, const llvm::Triple &HostTriple,
@@ -49,30 +49,30 @@ public:
   void AddCudaIncludeArgs(const llvm::opt::ArgList &DriverArgs,
                           llvm::opt::ArgStringList &CC1Args) const;
 
-  /// Emit an error if Version does not support the given Arch.
+  /// \brief Emit an error if Version does not support the given Arch.
   ///
   /// If either Version or Arch is unknown, does not emit an error.  Emits at
   /// most one error per Arch.
   void CheckCudaVersionSupportsArch(CudaArch Arch) const;
 
-  /// Check whether we detected a valid Cuda install.
+  /// \brief Check whether we detected a valid Cuda install.
   bool isValid() const { return IsValid; }
-  /// Print information about the detected CUDA installation.
+  /// \brief Print information about the detected CUDA installation.
   void print(raw_ostream &OS) const;
 
-  /// Get the detected Cuda install's version.
+  /// \brief Get the detected Cuda install's version.
   CudaVersion version() const { return Version; }
-  /// Get the detected Cuda installation path.
+  /// \brief Get the detected Cuda installation path.
   StringRef getInstallPath() const { return InstallPath; }
-  /// Get the detected path to Cuda's bin directory.
+  /// \brief Get the detected path to Cuda's bin directory.
   StringRef getBinPath() const { return BinPath; }
-  /// Get the detected Cuda Include path.
+  /// \brief Get the detected Cuda Include path.
   StringRef getIncludePath() const { return IncludePath; }
-  /// Get the detected Cuda library path.
+  /// \brief Get the detected Cuda library path.
   StringRef getLibPath() const { return LibPath; }
-  /// Get the detected Cuda device library path.
+  /// \brief Get the detected Cuda device library path.
   StringRef getLibDevicePath() const { return LibDevicePath; }
-  /// Get libdevice file for given architecture
+  /// \brief Get libdevice file for given architecture
   std::string getLibDeviceFile(StringRef Gpu) const {
     return LibDeviceMap.lookup(Gpu);
   }
@@ -112,20 +112,6 @@ class LLVM_LIBRARY_VISIBILITY Linker : public Tool {
                      const char *LinkingOutput) const override;
 };
 
-class LLVM_LIBRARY_VISIBILITY OpenMPLinker : public Tool {
- public:
-   OpenMPLinker(const ToolChain &TC)
-       : Tool("NVPTX::OpenMPLinker", "nvlink", TC, RF_Full, llvm::sys::WEM_UTF8,
-              "--options-file") {}
-
-   bool hasIntegratedCPP() const override { return false; }
-
-   void ConstructJob(Compilation &C, const JobAction &JA,
-                     const InputInfo &Output, const InputInfoList &Inputs,
-                     const llvm::opt::ArgList &TCArgs,
-                     const char *LinkingOutput) const override;
-};
-
 } // end namespace NVPTX
 } // end namespace tools
 
@@ -134,14 +120,11 @@ namespace toolchains {
 class LLVM_LIBRARY_VISIBILITY CudaToolChain : public ToolChain {
 public:
   CudaToolChain(const Driver &D, const llvm::Triple &Triple,
-                const ToolChain &HostTC, const llvm::opt::ArgList &Args,
-                const Action::OffloadKind OK);
+                const ToolChain &HostTC, const llvm::opt::ArgList &Args);
 
-  const llvm::Triple *getAuxTriple() const override {
+  virtual const llvm::Triple *getAuxTriple() const override {
     return &HostTC.getTriple();
   }
-
-  std::string getInputFilename(const InputInfo &Input) const override;
 
   llvm::opt::DerivedArgList *
   TranslateArgs(const llvm::opt::DerivedArgList &Args, StringRef BoundArch,
@@ -158,8 +141,7 @@ public:
   bool isPIEDefault() const override { return false; }
   bool isPICDefaultForced() const override { return false; }
   bool SupportsProfiling() const override { return false; }
-  bool supportsDebugInfoOption(const llvm::opt::Arg *A) const override;
-  bool IsMathErrnoDefault() const override { return false; }
+  bool SupportsObjCGC() const override { return false; }
 
   void AddCudaIncludeArgs(const llvm::opt::ArgList &DriverArgs,
                           llvm::opt::ArgStringList &CC1Args) const override;
@@ -181,17 +163,12 @@ public:
   computeMSVCVersion(const Driver *D,
                      const llvm::opt::ArgList &Args) const override;
 
-  unsigned GetDefaultDwarfVersion() const override { return 2; }
-
   const ToolChain &HostTC;
   CudaInstallationDetector CudaInstallation;
 
 protected:
   Tool *buildAssembler() const override;  // ptxas
   Tool *buildLinker() const override;     // fatbinary (ok, not really a linker)
-
-private:
-  const Action::OffloadKind OK;
 };
 
 } // end namespace toolchains

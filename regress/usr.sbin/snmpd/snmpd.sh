@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: snmpd.sh,v 1.8 2018/07/20 21:59:53 claudio Exp $
+# $OpenBSD: snmpd.sh,v 1.5 2017/08/28 22:05:44 rob Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@openbsd.org>
 # *
@@ -63,9 +63,10 @@ echo "\nConfiguration: default community strings, trap receiver, trap handle\n"
 
 cat > ${OBJDIR}/snmpd.conf <<EOF
 # This is config template (1) for snmpd regression testing
+listen_addr="127.0.0.1"
+
 # Restrict daemon to listen on localhost only
-listen on 127.0.0.1
-listen on ::1
+listen on \$listen_addr
 
 # Specify a number of trap receivers
 trap receiver localhost
@@ -166,9 +167,10 @@ echo "\nConfiguration: seclevel auth\n"
 
 cat > ${OBJDIR}/snmpd.conf <<EOF
 # This is config template (2) for snmpd regression testing
+listen_addr="127.0.0.1"
+
 # Restrict daemon to listen on localhost only
-listen on 127.0.0.1
-listen on ::1
+listen on \$listen_addr
 
 seclevel auth
 
@@ -189,7 +191,7 @@ eval $snmpctl_command > /dev/null 2>&1
 if [ $? -eq 0 ]
 then
 	echo "Non-defaut ro community string test failed."
-	FAILED=1
+	fail=1
 fi
 
 # get with SHA authentication
@@ -202,7 +204,7 @@ system="$(eval $snmpget_command | awk '{ print $2 }')"
 if [ "$system" != "$os" ]
 then
 	echo "Retrieval test with seclevel auth and SHA failed."
-	FAILED=1
+	fail=1
 fi
 
 kill $(pgrep snmpd) >/dev/null 2>&1
@@ -213,9 +215,10 @@ echo "\nConfiguration: seclevel enc\n"
 
 cat > ${OBJDIR}/snmpd.conf <<EOF
 # This is config template (3) for snmpd regression testing
+listen_addr="127.0.0.1"
+
 # Restrict daemon to listen on localhost only
-listen on 127.0.0.1
-listen on ::1
+listen on \$listen_addr
 
 seclevel enc
 
@@ -238,7 +241,7 @@ system="$(eval $snmpget_command | awk '{ print $2 }')"
 if [ "$system" != "$os" ]
 then
 	echo "seclevel auth with SHA failed"
-	FAILED=1
+	fail=1
 fi
 
 kill $(pgrep snmpd) >/dev/null 2>&1
@@ -249,9 +252,10 @@ echo "\nConfiguration: non-default community strings, custom oids\n"
 
 cat > ${OBJDIR}/snmpd.conf <<EOF
 # This is config template (4) for snmpd regression testing
+listen_addr="127.0.0.1"
+
 # Restrict daemon to listen on localhost only
-listen on 127.0.0.1
-listen on ::1
+listen on \$listen_addr
 
 read-only community non-default-ro
 
@@ -326,7 +330,7 @@ eval $snmpset_command > /dev/null 2>&1
 if [ $? -eq 0  ]
 then
 	echo "Setting of a ro custom oid test unexpectedly succeeded."
-	FAILED=1
+	fail=1
 fi
 
 kill $(pgrep snmpd) >/dev/null 2>&1

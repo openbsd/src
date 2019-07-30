@@ -14,11 +14,11 @@ use MakeMaker::Test::Utils;
 use File::Temp;
 use Cwd 'abs_path';
 
+use Test::More;
 use ExtUtils::MM;
-use Test::More
-    !MM->can_run(make()) && $ENV{PERL_CORE} && $Config{'usecrosscompile'}
+plan !MM->can_run(make()) && $ENV{PERL_CORE} && $Config{'usecrosscompile'}
     ? (skip_all => "cross-compiling and make not available")
-    : (tests => 18);
+    : ();
 
 #--------------------- Setup
 
@@ -117,3 +117,5 @@ test_for_echo(
     "Foo\nBar\nBaz\n",
     "append"
 );
+
+done_testing;

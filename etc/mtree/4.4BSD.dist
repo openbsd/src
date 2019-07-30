@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.310 2019/05/11 07:18:15 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.301 2017/11/05 10:29:24 rpe Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -103,8 +103,9 @@ etc
     ssl
         private			uname=root mode=0700
         ..
+        lib
+        ..
     ..
-
 ..
 
 # ./home
@@ -433,8 +434,6 @@ usr
             ..
             fortune
             ..
-            hack
-            ..
             quiz.db
             ..
         ..
@@ -488,8 +487,6 @@ usr
                 ..
                 amd64
                 ..
-                arm64
-                ..
                 armv7
                 ..
                 hppa
@@ -507,6 +504,8 @@ usr
                 octeon
                 ..
                 sgi
+                ..
+                socppc
                 ..
                 sparc64
                 ..
@@ -546,6 +545,8 @@ usr
                 ..
                 sgi
                 ..
+                socppc
+                ..
                 sparc64
                 ..
             ..
@@ -576,18 +577,18 @@ usr
         ..
 
         # ./usr/share/zoneinfo
-        zoneinfo		gname=bin uname=root mode=0755
-            Australia		gname=bin uname=root mode=0755
+        zoneinfo		gname=bin uname=root mode=0555
+            Australia		gname=bin uname=root mode=0555
             ..
-            Brazil		gname=bin uname=root mode=0755
+            Brazil		gname=bin uname=root mode=0555
             ..
-            Canada		gname=bin uname=root mode=0755
+            Canada		gname=bin uname=root mode=0555
             ..
-            Chile		gname=bin uname=root mode=0755
+            Chile		gname=bin uname=root mode=0555
             ..
-            Mexico		gname=bin uname=root mode=0755
+            Mexico		gname=bin uname=root mode=0555
             ..
-            US			gname=bin uname=root mode=0755
+            US			gname=bin uname=root mode=0555
             ..
         ..
    ..
@@ -632,6 +633,10 @@ var
 
     # ./var/games
     games			uname=root gname=games mode=0775
+        hackdir			uname=root gname=games mode=0775
+            save		uname=root gname=games mode=0770
+            ..
+        ..
         save			uname=root gname=games mode=0775
         ..
         phantasia		uname=root gname=games mode=0775

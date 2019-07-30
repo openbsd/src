@@ -1,4 +1,4 @@
-//===- ARMTargetFrameLowering.h - Define frame lowering for ARM -*- C++ -*-===//
+//==-- ARMTargetFrameLowering.h - Define frame lowering for ARM --*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,19 +6,18 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+//
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_LIB_TARGET_ARM_ARMFRAMELOWERING_H
 #define LLVM_LIB_TARGET_ARM_ARMFRAMELOWERING_H
 
-#include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/CodeGen/TargetFrameLowering.h"
-#include <vector>
+#include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
-
-class ARMSubtarget;
-class CalleeSavedInfo;
-class MachineFunction;
+  class ARMSubtarget;
 
 class ARMFrameLowering : public TargetFrameLowering {
 protected:
@@ -39,12 +38,10 @@ public:
 
   bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator MI,
-                                  std::vector<CalleeSavedInfo> &CSI,
+                                  const std::vector<CalleeSavedInfo> &CSI,
                                   const TargetRegisterInfo *TRI) const override;
 
   bool noFramePointerElim(const MachineFunction &MF) const override;
-
-  bool enableCalleeSaveSkip(const MachineFunction &MF) const override;
 
   bool hasFP(const MachineFunction &MF) const override;
   bool hasReservedCallFrame(const MachineFunction &MF) const override;
@@ -65,14 +62,14 @@ public:
     return true;
   }
 
-private:
+ private:
   void emitPushInst(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                     const std::vector<CalleeSavedInfo> &CSI, unsigned StmOpc,
                     unsigned StrOpc, bool NoGap,
                     bool(*Func)(unsigned, bool), unsigned NumAlignedDPRCS2Regs,
                     unsigned MIFlags = 0) const;
   void emitPopInst(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
-                   std::vector<CalleeSavedInfo> &CSI, unsigned LdmOpc,
+                   const std::vector<CalleeSavedInfo> &CSI, unsigned LdmOpc,
                    unsigned LdrOpc, bool isVarArg, bool NoGap,
                    bool(*Func)(unsigned, bool),
                    unsigned NumAlignedDPRCS2Regs) const;
@@ -83,6 +80,6 @@ private:
                                 MachineBasicBlock::iterator MI) const override;
 };
 
-} // end namespace llvm
+} // End llvm namespace
 
-#endif // LLVM_LIB_TARGET_ARM_ARMFRAMELOWERING_H
+#endif

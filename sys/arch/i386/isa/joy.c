@@ -1,4 +1,4 @@
-/*	$OpenBSD: joy.c,v 1.16 2018/07/30 14:19:12 kettenis Exp $	*/
+/*	$OpenBSD: joy.c,v 1.15 2015/02/10 21:58:16 miod Exp $	*/
 /*	$NetBSD: joy.c,v 1.3 1996/05/05 19:46:15 christos Exp $	*/
 
 /*-
@@ -97,9 +97,8 @@ joyread(dev_t dev, struct uio *uio, int flag)
 	int port = sc->port;
 	int i, t0, t1;
 	int state = 0, x = 0, y = 0;
-	u_long s;
 
-	s = intr_disable();
+	disable_intr();
 	outb(port, 0xff);
 	t0 = joy_get_tick();
 	t1 = t0;
@@ -118,7 +117,7 @@ joyread(dev_t dev, struct uio *uio, int flag)
 		if (x && y)
 			break;
 	}
-	intr_restore(s);
+	enable_intr();
 	c.x = x ? sc->x_off[JOYPART(dev)] + TICKS2USEC(t0 - x) : 0x80000000;
 	c.y = y ? sc->y_off[JOYPART(dev)] + TICKS2USEC(t0 - y) : 0x80000000;
 	state >>= 4;

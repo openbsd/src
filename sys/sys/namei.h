@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.40 2019/05/13 22:55:27 beck Exp $	*/
+/*	$OpenBSD: namei.h,v 1.34 2017/08/29 02:51:27 deraadt Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -59,28 +59,20 @@ struct nameidata {
 	struct	vnode *ni_startdir;	/* starting directory */
 	struct	vnode *ni_rootdir;	/* logical root directory */
 	uint64_t ni_pledge;		/* expected pledge for namei */
-	u_char ni_unveil;		/* required unveil flags for namei */
 	/*
 	 * Results: returned from/manipulated by lookup
 	 */
 	struct	vnode *ni_vp;		/* vnode of result */
 	struct	vnode *ni_dvp;		/* vnode of intermediate directory */
-
 	/*
 	 * Shared between namei and lookup/commit routines.
 	 */
 	size_t	ni_pathlen;		/* remaining chars in path */
 	char	*ni_next;		/* next location in pathname */
 	u_long	ni_loopcnt;		/* count of symlinks encountered */
-	struct unveil *ni_unveil_match; /* last matching unveil component */
-	struct vnode **ni_tvp;		/* traversed vnodes */
-	size_t ni_tvpend;		/* end of traversed vnode list */
-	size_t ni_tvpsize;		/* size of traversed vnode list */
-	int ni_unveil_eacces;		/* indicates unveil flag mismatch */
-
 	/*
 	 * Lookup parameters: this structure describes the subset of
-	 * information from the nameidat satructure that is passed
+	 * information from the nameidata structure that is passed
 	 * through the VOP interface.
 	 */
 	struct componentname {
@@ -95,8 +87,6 @@ struct nameidata {
 		 * Shared between lookup and commit routines.
 		 */
 		char	*cn_pnbuf;	/* pathname buffer */
-		char	*cn_rpbuf;	/* realpath buffer */
-		size_t	cn_rpi;		/* realpath index */
 		char	*cn_nameptr;	/* pointer to looked up name */
 		long	cn_namelen;	/* length of looked up component */
 		long	cn_consume;	/* chars to consume in lookup() */
@@ -145,12 +135,9 @@ struct nameidata {
 #define MAKEENTRY	0x004000      /* entry is to be added to name cache */
 #define ISLASTCN	0x008000      /* this is last component of pathname */
 #define ISSYMLINK	0x010000      /* symlink needs interpretation */
-#define REALPATH	0x020000      /* save pathname buffer for realpath */
 #define	REQUIREDIR	0x080000      /* must be a directory */
 #define STRIPSLASHES    0x100000      /* strip trailing slashes */
 #define PDIRUNLOCK	0x200000      /* vfs_lookup() unlocked parent dir */
-#define BYPASSUNVEIL	0x400000      /* bypass pledgepath check */
-#define KERNELPATH	0x800000      /* access file as kernel, not process */
 
 /*
  * Initialization of an nameidata structure.
@@ -256,13 +243,4 @@ struct	nchstats {
 	{ "ncs_dothits", CTLTYPE_QUAD },	\
 	{ "nch_dotdothits", CTLTYPE_QUAD },	\
 }
-
-/* Unveil flags for namei */
-#define	UNVEIL_READ	0x01
-#define	UNVEIL_WRITE	0x02
-#define	UNVEIL_CREATE	0x04
-#define	UNVEIL_EXEC	0x08
-#define	UNVEIL_USERSET	0x0F
-#define	UNVEIL_INSPECT	0x80
-
 #endif /* !_SYS_NAMEI_H_ */

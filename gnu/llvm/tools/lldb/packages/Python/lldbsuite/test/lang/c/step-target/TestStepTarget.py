@@ -14,6 +14,9 @@ class TestStepTarget(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    def getCategories(self):
+        return ['basic_process']
+
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -24,7 +27,7 @@ class TestStepTarget(TestBase):
     @add_test_categories(['pyapi'])
     def get_to_start(self):
         self.build()
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
@@ -52,7 +55,6 @@ class TestStepTarget(TestBase):
         thread = threads[0]
         return thread
 
-    @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr32343")
     def test_with_end_line(self):
         """Test stepping over vrs. hitting breakpoints & subsequent stepping in various forms."""
 
@@ -64,7 +66,6 @@ class TestStepTarget(TestBase):
 
         self.assertTrue(frame.name == "lotsOfArgs", "Stepped to lotsOfArgs.")
 
-    @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr32343")
     def test_with_end_line_bad_name(self):
         """Test stepping over vrs. hitting breakpoints & subsequent stepping in various forms."""
 
@@ -77,7 +78,6 @@ class TestStepTarget(TestBase):
             frame.line_entry.line == self.end_line,
             "Stepped to the block end.")
 
-    @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr32343")
     def test_with_end_line_deeper(self):
         """Test stepping over vrs. hitting breakpoints & subsequent stepping in various forms."""
 
@@ -88,7 +88,6 @@ class TestStepTarget(TestBase):
         frame = thread.frames[0]
         self.assertTrue(frame.name == "modifyInt", "Stepped to modifyInt.")
 
-    @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr32343")
     def test_with_command_and_block(self):
         """Test stepping over vrs. hitting breakpoints & subsequent stepping in various forms."""
 
@@ -104,7 +103,6 @@ class TestStepTarget(TestBase):
         frame = thread.frames[0]
         self.assertTrue(frame.name == "lotsOfArgs", "Stepped to lotsOfArgs.")
 
-    @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr32343")
     def test_with_command_and_block_and_bad_name(self):
         """Test stepping over vrs. hitting breakpoints & subsequent stepping in various forms."""
 

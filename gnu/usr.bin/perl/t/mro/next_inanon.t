@@ -13,26 +13,26 @@ anonymous subroutine.
 =cut
 
 {
-    package AA;
+    package A;
     use mro 'c3'; 
 
     sub foo {
-      return 'AA::foo';
+      return 'A::foo';
     }
 
     sub bar {
-      return 'AA::bar';
+      return 'A::bar';
     }
 }
 
 {
-    package BB;
-    use base 'AA';
+    package B;
+    use base 'A';
     use mro 'c3'; 
     
     sub foo {
       my $code = sub {
-        return 'BB::foo => ' . (shift)->next::method();
+        return 'B::foo => ' . (shift)->next::method();
       };
       return (shift)->$code;
     }
@@ -40,7 +40,7 @@ anonymous subroutine.
     sub bar {
       my $code1 = sub {
         my $code2 = sub {
-          return 'BB::bar => ' . (shift)->next::method();
+          return 'B::bar => ' . (shift)->next::method();
         };
         return (shift)->$code2;
       };
@@ -48,10 +48,10 @@ anonymous subroutine.
     }
 }
 
-is(BB->foo, "BB::foo => AA::foo",
+is(B->foo, "B::foo => A::foo",
    'method resolved inside anonymous sub');
 
-is(BB->bar, "BB::bar => AA::bar",
+is(B->bar, "B::bar => A::bar",
    'method resolved inside nested anonymous subs');
 
 

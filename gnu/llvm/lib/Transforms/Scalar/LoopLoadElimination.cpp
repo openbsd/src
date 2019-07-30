@@ -25,34 +25,26 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/LoopAccessAnalysis.h"
-#include "llvm/Analysis/LoopAnalysisManager.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
-#include "llvm/Analysis/TargetLibraryInfo.h"
-#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/PassManager.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Utils.h"
 #include "llvm/Transforms/Utils/LoopVersioning.h"
 #include <algorithm>
 #include <cassert>
@@ -61,10 +53,10 @@
 #include <tuple>
 #include <utility>
 
-using namespace llvm;
-
 #define LLE_OPTION "loop-load-elim"
 #define DEBUG_TYPE LLE_OPTION
+
+using namespace llvm;
 
 static cl::opt<unsigned> CheckPerElim(
     "runtime-check-per-loop-load-elim", cl::Hidden,
@@ -80,7 +72,7 @@ STATISTIC(NumLoopLoadEliminted, "Number of loads eliminated by LLE");
 
 namespace {
 
-/// Represent a store-to-forwarding candidate.
+/// \brief Represent a store-to-forwarding candidate.
 struct StoreToLoadForwardingCandidate {
   LoadInst *Load;
   StoreInst *Store;
@@ -88,7 +80,7 @@ struct StoreToLoadForwardingCandidate {
   StoreToLoadForwardingCandidate(LoadInst *Load, StoreInst *Store)
       : Load(Load), Store(Store) {}
 
-  /// Return true if the dependence from the store to the load has a
+  /// \brief Return true if the dependence from the store to the load has a
   /// distance of one.  E.g. A[i+1] = A[i]
   bool isDependenceDistanceOfOne(PredicatedScalarEvolution &PSE,
                                  Loop *L) const {
@@ -135,12 +127,10 @@ struct StoreToLoadForwardingCandidate {
 #endif
 };
 
-} // end anonymous namespace
-
-/// Check if the store dominates all latches, so as long as there is no
+/// \brief Check if the store dominates all latches, so as long as there is no
 /// intervening store this value will be loaded in the next iteration.
-static bool doesStoreDominatesAllLatches(BasicBlock *StoreBlock, Loop *L,
-                                         DominatorTree *DT) {
+bool doesStoreDominatesAllLatches(BasicBlock *StoreBlock, Loop *L,
+                                  DominatorTree *DT) {
   SmallVector<BasicBlock *, 8> Latches;
   L->getLoopLatches(Latches);
   return llvm::all_of(Latches, [&](const BasicBlock *Latch) {
@@ -148,21 +138,19 @@ static bool doesStoreDominatesAllLatches(BasicBlock *StoreBlock, Loop *L,
   });
 }
 
-/// Return true if the load is not executed on all paths in the loop.
+/// \brief Return true if the load is not executed on all paths in the loop.
 static bool isLoadConditional(LoadInst *Load, Loop *L) {
   return Load->getParent() != L->getHeader();
 }
 
-namespace {
-
-/// The per-loop class that does most of the work.
+/// \brief The per-loop class that does most of the work.
 class LoadEliminationForLoop {
 public:
   LoadEliminationForLoop(Loop *L, LoopInfo *LI, const LoopAccessInfo &LAI,
                          DominatorTree *DT)
       : L(L), LI(LI), LAI(LAI), DT(DT), PSE(LAI.getPSE()) {}
 
-  /// Look through the loop-carried and loop-independent dependences in
+  /// \brief Look through the loop-carried and loop-independent dependences in
   /// this loop and find store->load dependences.
   ///
   /// Note that no candidate is returned if LAA has failed to analyze the loop
@@ -179,7 +167,7 @@ public:
     // forward and backward dependences qualify.  Disqualify loads that have
     // other unknown dependences.
 
-    SmallPtrSet<Instruction *, 4> LoadsWithUnknownDepedence;
+    SmallSet<Instruction *, 4> LoadsWithUnknownDepedence;
 
     for (const auto &Dep : *Deps) {
       Instruction *Source = Dep.getSource(LAI);
@@ -223,14 +211,14 @@ public:
     return Candidates;
   }
 
-  /// Return the index of the instruction according to program order.
+  /// \brief Return the index of the instruction according to program order.
   unsigned getInstrIndex(Instruction *Inst) {
     auto I = InstOrder.find(Inst);
     assert(I != InstOrder.end() && "No index for instruction");
     return I->second;
   }
 
-  /// If a load has multiple candidates associated (i.e. different
+  /// \brief If a load has multiple candidates associated (i.e. different
   /// stores), it means that it could be forwarding from multiple stores
   /// depending on control flow.  Remove these candidates.
   ///
@@ -253,8 +241,8 @@ public:
       std::forward_list<StoreToLoadForwardingCandidate> &Candidates) {
     // If Store is nullptr it means that we have multiple stores forwarding to
     // this store.
-    using LoadToSingleCandT =
-        DenseMap<LoadInst *, const StoreToLoadForwardingCandidate *>;
+    typedef DenseMap<LoadInst *, const StoreToLoadForwardingCandidate *>
+        LoadToSingleCandT;
     LoadToSingleCandT LoadToSingleCand;
 
     for (const auto &Cand : Candidates) {
@@ -285,24 +273,22 @@ public:
 
     Candidates.remove_if([&](const StoreToLoadForwardingCandidate &Cand) {
       if (LoadToSingleCand[Cand.Load] != &Cand) {
-        LLVM_DEBUG(
-            dbgs() << "Removing from candidates: \n"
-                   << Cand
-                   << "  The load may have multiple stores forwarding to "
-                   << "it\n");
+        DEBUG(dbgs() << "Removing from candidates: \n" << Cand
+                     << "  The load may have multiple stores forwarding to "
+                     << "it\n");
         return true;
       }
       return false;
     });
   }
 
-  /// Given two pointers operations by their RuntimePointerChecking
+  /// \brief Given two pointers operations by their RuntimePointerChecking
   /// indices, return true if they require an alias check.
   ///
   /// We need a check if one is a pointer for a candidate load and the other is
   /// a pointer for a possibly intervening store.
   bool needsChecking(unsigned PtrIdx1, unsigned PtrIdx2,
-                     const SmallPtrSet<Value *, 4> &PtrsWrittenOnFwdingPath,
+                     const SmallSet<Value *, 4> &PtrsWrittenOnFwdingPath,
                      const std::set<Value *> &CandLoadPtrs) {
     Value *Ptr1 =
         LAI.getRuntimePointerChecking()->getPointerInfo(PtrIdx1).PointerValue;
@@ -312,11 +298,11 @@ public:
             (PtrsWrittenOnFwdingPath.count(Ptr2) && CandLoadPtrs.count(Ptr1)));
   }
 
-  /// Return pointers that are possibly written to on the path from a
+  /// \brief Return pointers that are possibly written to on the path from a
   /// forwarding store to a load.
   ///
   /// These pointers need to be alias-checked against the forwarding candidates.
-  SmallPtrSet<Value *, 4> findPointersWrittenOnForwardingPath(
+  SmallSet<Value *, 4> findPointersWrittenOnForwardingPath(
       const SmallVectorImpl<StoreToLoadForwardingCandidate> &Candidates) {
     // From FirstStore to LastLoad neither of the elimination candidate loads
     // should overlap with any of the stores.
@@ -354,7 +340,7 @@ public:
     // We're looking for stores after the first forwarding store until the end
     // of the loop, then from the beginning of the loop until the last
     // forwarded-to load.  Collect the pointer for the stores.
-    SmallPtrSet<Value *, 4> PtrsWrittenOnFwdingPath;
+    SmallSet<Value *, 4> PtrsWrittenOnFwdingPath;
 
     auto InsertStorePtr = [&](Instruction *I) {
       if (auto *S = dyn_cast<StoreInst>(I))
@@ -369,16 +355,16 @@ public:
     return PtrsWrittenOnFwdingPath;
   }
 
-  /// Determine the pointer alias checks to prove that there are no
+  /// \brief Determine the pointer alias checks to prove that there are no
   /// intervening stores.
   SmallVector<RuntimePointerChecking::PointerCheck, 4> collectMemchecks(
       const SmallVectorImpl<StoreToLoadForwardingCandidate> &Candidates) {
 
-    SmallPtrSet<Value *, 4> PtrsWrittenOnFwdingPath =
+    SmallSet<Value *, 4> PtrsWrittenOnFwdingPath =
         findPointersWrittenOnForwardingPath(Candidates);
 
     // Collect the pointers of the candidate loads.
-    // FIXME: SmallPtrSet does not work with std::inserter.
+    // FIXME: SmallSet does not work with std::inserter.
     std::set<Value *> CandLoadPtrs;
     transform(Candidates,
                    std::inserter(CandLoadPtrs, CandLoadPtrs.begin()),
@@ -397,17 +383,17 @@ public:
               return false;
             });
 
-    LLVM_DEBUG(dbgs() << "\nPointer Checks (count: " << Checks.size()
-                      << "):\n");
-    LLVM_DEBUG(LAI.getRuntimePointerChecking()->printChecks(dbgs(), Checks));
+    DEBUG(dbgs() << "\nPointer Checks (count: " << Checks.size() << "):\n");
+    DEBUG(LAI.getRuntimePointerChecking()->printChecks(dbgs(), Checks));
 
     return Checks;
   }
 
-  /// Perform the transformation for a candidate.
+  /// \brief Perform the transformation for a candidate.
   void
   propagateStoredValueToLoadUsers(const StoreToLoadForwardingCandidate &Cand,
                                   SCEVExpander &SEE) {
+    //
     // loop:
     //      %x = load %gep_i
     //         = ... %x
@@ -440,12 +426,11 @@ public:
     Cand.Load->replaceAllUsesWith(PHI);
   }
 
-  /// Top-level driver for each loop: find store->load forwarding
+  /// \brief Top-level driver for each loop: find store->load forwarding
   /// candidates, add run-time checks and perform transformation.
   bool processLoop() {
-    LLVM_DEBUG(dbgs() << "\nIn \"" << L->getHeader()->getParent()->getName()
-                      << "\" checking " << *L << "\n");
-
+    DEBUG(dbgs() << "\nIn \"" << L->getHeader()->getParent()->getName()
+                 << "\" checking " << *L << "\n");
     // Look for store-to-load forwarding cases across the
     // backedge. E.g.:
     //
@@ -483,7 +468,7 @@ public:
     SmallVector<StoreToLoadForwardingCandidate, 4> Candidates;
     unsigned NumForwarding = 0;
     for (const StoreToLoadForwardingCandidate Cand : StoreToLoadDependences) {
-      LLVM_DEBUG(dbgs() << "Candidate " << Cand);
+      DEBUG(dbgs() << "Candidate " << Cand);
 
       // Make sure that the stored values is available everywhere in the loop in
       // the next iteration.
@@ -502,10 +487,9 @@ public:
         continue;
 
       ++NumForwarding;
-      LLVM_DEBUG(
-          dbgs()
-          << NumForwarding
-          << ". Valid store-to-load forwarding across the loop backedge\n");
+      DEBUG(dbgs()
+            << NumForwarding
+            << ". Valid store-to-load forwarding across the loop backedge\n");
       Candidates.push_back(Cand);
     }
     if (Candidates.empty())
@@ -518,26 +502,25 @@ public:
 
     // Too many checks are likely to outweigh the benefits of forwarding.
     if (Checks.size() > Candidates.size() * CheckPerElim) {
-      LLVM_DEBUG(dbgs() << "Too many run-time checks needed.\n");
+      DEBUG(dbgs() << "Too many run-time checks needed.\n");
       return false;
     }
 
     if (LAI.getPSE().getUnionPredicate().getComplexity() >
         LoadElimSCEVCheckThreshold) {
-      LLVM_DEBUG(dbgs() << "Too many SCEV run-time checks needed.\n");
+      DEBUG(dbgs() << "Too many SCEV run-time checks needed.\n");
       return false;
     }
 
     if (!Checks.empty() || !LAI.getPSE().getUnionPredicate().isAlwaysTrue()) {
       if (L->getHeader()->getParent()->optForSize()) {
-        LLVM_DEBUG(
-            dbgs() << "Versioning is needed but not allowed when optimizing "
-                      "for size.\n");
+        DEBUG(dbgs() << "Versioning is needed but not allowed when optimizing "
+                        "for size.\n");
         return false;
       }
 
       if (!L->isLoopSimplifyForm()) {
-        LLVM_DEBUG(dbgs() << "Loop is not is loop-simplify form");
+        DEBUG(dbgs() << "Loop is not is loop-simplify form");
         return false;
       }
 
@@ -564,7 +547,7 @@ public:
 private:
   Loop *L;
 
-  /// Maps the load/store instructions to their index according to
+  /// \brief Maps the load/store instructions to their index according to
   /// program order.
   DenseMap<Instruction *, unsigned> InstOrder;
 
@@ -574,8 +557,6 @@ private:
   DominatorTree *DT;
   PredicatedScalarEvolution PSE;
 };
-
-} // end anonymous namespace
 
 static bool
 eliminateLoadsAcrossLoops(Function &F, LoopInfo &LI, DominatorTree &DT,
@@ -603,14 +584,10 @@ eliminateLoadsAcrossLoops(Function &F, LoopInfo &LI, DominatorTree &DT,
   return Changed;
 }
 
-namespace {
-
-/// The pass.  Most of the work is delegated to the per-loop
+/// \brief The pass.  Most of the work is delegated to the per-loop
 /// LoadEliminationForLoop class.
 class LoopLoadElimination : public FunctionPass {
 public:
-  static char ID;
-
   LoopLoadElimination() : FunctionPass(ID) {
     initializeLoopLoadEliminationPass(*PassRegistry::getPassRegistry());
   }
@@ -639,12 +616,13 @@ public:
     AU.addPreserved<DominatorTreeWrapperPass>();
     AU.addPreserved<GlobalsAAWrapperPass>();
   }
+
+  static char ID;
 };
 
 } // end anonymous namespace
 
 char LoopLoadElimination::ID;
-
 static const char LLE_name[] = "Loop Load Elimination";
 
 INITIALIZE_PASS_BEGIN(LoopLoadElimination, LLE_OPTION, LLE_name, false, false)
@@ -655,7 +633,9 @@ INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_END(LoopLoadElimination, LLE_OPTION, LLE_name, false, false)
 
-FunctionPass *llvm::createLoopLoadEliminationPass() {
+namespace llvm {
+
+FunctionPass *createLoopLoadEliminationPass() {
   return new LoopLoadElimination();
 }
 
@@ -672,8 +652,7 @@ PreservedAnalyses LoopLoadEliminationPass::run(Function &F,
   auto &LAM = AM.getResult<LoopAnalysisManagerFunctionProxy>(F).getManager();
   bool Changed = eliminateLoadsAcrossLoops(
       F, LI, DT, [&](Loop &L) -> const LoopAccessInfo & {
-        LoopStandardAnalysisResults AR = {AA, AC,  DT,  LI,
-                                          SE, TLI, TTI, nullptr};
+        LoopStandardAnalysisResults AR = {AA, AC, DT, LI, SE, TLI, TTI};
         return LAM.getResult<LoopAccessAnalysis>(L, AR);
       });
 
@@ -683,3 +662,5 @@ PreservedAnalyses LoopLoadEliminationPass::run(Function &F,
   PreservedAnalyses PA;
   return PA;
 }
+
+} // end namespace llvm

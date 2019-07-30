@@ -1,7 +1,21 @@
 # Test against SHA-1 Sample Vectors from NIST
 
 use strict;
-use Digest::SHA;
+
+my $MODULE;
+
+BEGIN {
+	$MODULE = (-d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
+	eval "require $MODULE" || die $@;
+	$MODULE->import(qw());
+}
+
+BEGIN {
+	if ($ENV{PERL_CORE}) {
+		chdir 't' if -d 't';
+		@INC = '../lib';
+	}
+}
 
 my $nist_hashes = <<END_OF_NIST_HASHES;
 DA39A3EE5E6B4B0D3255BFEF95601890AFD80709 ^
@@ -37,7 +51,7 @@ print "1..", scalar(@hashes), "\n";
 my $testnum = 1;
 
 my $message = "";
-my $sha = Digest::SHA->new(1);
+my $sha = $MODULE->new(1);
 for (@lines) {
 	next unless /^[\d ^]/;
 	$message .= $_;

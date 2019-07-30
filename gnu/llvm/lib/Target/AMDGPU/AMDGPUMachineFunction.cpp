@@ -9,38 +9,20 @@
 
 #include "AMDGPUMachineFunction.h"
 #include "AMDGPUSubtarget.h"
-#include "AMDGPUPerfHintAnalysis.h"
-#include "llvm/CodeGen/MachineModuleInfo.h"
 
 using namespace llvm;
 
 AMDGPUMachineFunction::AMDGPUMachineFunction(const MachineFunction &MF) :
   MachineFunctionInfo(),
   LocalMemoryObjects(),
-  ExplicitKernArgSize(0),
+  KernArgSize(0),
   MaxKernArgAlign(0),
   LDSSize(0),
-  IsEntryFunction(AMDGPU::isEntryFunctionCC(MF.getFunction().getCallingConv())),
-  NoSignedZerosFPMath(MF.getTarget().Options.NoSignedZerosFPMath),
-  MemoryBound(false),
-  WaveLimiter(false) {
-  const AMDGPUSubtarget &ST = AMDGPUSubtarget::get(MF);
-
+  ABIArgOffset(0),
+  IsEntryFunction(AMDGPU::isEntryFunctionCC(MF.getFunction()->getCallingConv())),
+  NoSignedZerosFPMath(MF.getTarget().Options.NoSignedZerosFPMath) {
   // FIXME: Should initialize KernArgSize based on ExplicitKernelArgOffset,
   // except reserved size is not correctly aligned.
-  const Function &F = MF.getFunction();
-
-  if (auto *Resolver = MF.getMMI().getResolver()) {
-    if (AMDGPUPerfHintAnalysis *PHA = static_cast<AMDGPUPerfHintAnalysis*>(
-          Resolver->getAnalysisIfAvailable(&AMDGPUPerfHintAnalysisID, true))) {
-      MemoryBound = PHA->isMemoryBound(&F);
-      WaveLimiter = PHA->needsWaveLimiter(&F);
-    }
-  }
-
-  CallingConv::ID CC = F.getCallingConv();
-  if (CC == CallingConv::AMDGPU_KERNEL || CC == CallingConv::SPIR_KERNEL)
-    ExplicitKernArgSize = ST.getExplicitKernArgSize(F, MaxKernArgAlign);
 }
 
 unsigned AMDGPUMachineFunction::allocateLDSGlobal(const DataLayout &DL,

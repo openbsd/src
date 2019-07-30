@@ -6,12 +6,13 @@ use TestInit qw(T);
 use strict;
 use Config;
 
-require './t/test.pl';
+require 't/test.pl';
 
-plan(tests => 5);
+plan(tests => 6);
 
 use_ok('Module::CoreList');
 use_ok('Module::CoreList::Utils');
+use_ok('Module::CoreList::TieHashDelta');
 
 {
   no warnings 'once';

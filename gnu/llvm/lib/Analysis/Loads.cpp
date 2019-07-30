@@ -72,7 +72,7 @@ static bool isDereferenceableAndAlignedPointer(
                         V->getPointerDereferenceableBytes(DL, CheckForNonNull));
   if (KnownDerefBytes.getBoolValue()) {
     if (KnownDerefBytes.uge(Size))
-      if (!CheckForNonNull || isKnownNonZero(V, DL, 0, nullptr, CtxI, DT))
+      if (!CheckForNonNull || isKnownNonNullAt(V, CtxI, DT))
         return isAligned(V, Align, DL);
   }
 
@@ -80,7 +80,7 @@ static bool isDereferenceableAndAlignedPointer(
   if (const GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
     const Value *Base = GEP->getPointerOperand();
 
-    APInt Offset(DL.getIndexTypeSizeInBits(GEP->getType()), 0);
+    APInt Offset(DL.getPointerTypeSizeInBits(GEP->getType()), 0);
     if (!GEP->accumulateConstantOffset(DL, Offset) || Offset.isNegative() ||
         !Offset.urem(APInt(Offset.getBitWidth(), Align)).isMinValue())
       return false;
@@ -108,8 +108,8 @@ static bool isDereferenceableAndAlignedPointer(
                                               DL, CtxI, DT, Visited);
 
   if (auto CS = ImmutableCallSite(V))
-    if (auto *RP = getArgumentAliasingToReturnedPointer(CS))
-      return isDereferenceableAndAlignedPointer(RP, Align, Size, DL, CtxI, DT,
+    if (const Value *RV = CS.getReturnedArgOperand())
+      return isDereferenceableAndAlignedPointer(RV, Align, Size, DL, CtxI, DT,
                                                 Visited);
 
   // If we don't know, assume the worst.
@@ -146,7 +146,7 @@ bool llvm::isDereferenceableAndAlignedPointer(const Value *V, unsigned Align,
 
   SmallPtrSet<const Value *, 32> Visited;
   return ::isDereferenceableAndAlignedPointer(
-      V, Align, APInt(DL.getIndexTypeSizeInBits(VTy), DL.getTypeStoreSize(Ty)), DL,
+      V, Align, APInt(DL.getTypeSizeInBits(VTy), DL.getTypeStoreSize(Ty)), DL,
       CtxI, DT, Visited);
 }
 
@@ -156,7 +156,7 @@ bool llvm::isDereferenceablePointer(const Value *V, const DataLayout &DL,
   return isDereferenceableAndAlignedPointer(V, 1, DL, CtxI, DT);
 }
 
-/// Test if A and B will obviously have the same value.
+/// \brief Test if A and B will obviously have the same value.
 ///
 /// This includes recognizing that %t0 and %t1 will have the same
 /// value in code like this:
@@ -187,7 +187,7 @@ static bool AreEquivalentAddressValues(const Value *A, const Value *B) {
   return false;
 }
 
-/// Check if executing a load of this pointer value cannot trap.
+/// \brief Check if executing a load of this pointer value cannot trap.
 ///
 /// If DT and ScanFrom are specified this method performs context-sensitive
 /// analysis and returns true if it is safe to load immediately before ScanFrom.
@@ -414,7 +414,7 @@ Value *llvm::FindAvailablePtrLoadStore(Value *Ptr, Type *AccessTy,
 
       // If we have alias analysis and it says the store won't modify the loaded
       // value, ignore the store.
-      if (AA && !isModSet(AA->getModRefInfo(SI, StrippedPtr, AccessSize)))
+      if (AA && (AA->getModRefInfo(SI, StrippedPtr, AccessSize) & MRI_Mod) == 0)
         continue;
 
       // Otherwise the store that may or may not alias the pointer, bail out.
@@ -426,7 +426,8 @@ Value *llvm::FindAvailablePtrLoadStore(Value *Ptr, Type *AccessTy,
     if (Inst->mayWriteToMemory()) {
       // If alias analysis claims that it really won't modify the load,
       // ignore it.
-      if (AA && !isModSet(AA->getModRefInfo(Inst, StrippedPtr, AccessSize)))
+      if (AA &&
+          (AA->getModRefInfo(Inst, StrippedPtr, AccessSize) & MRI_Mod) == 0)
         continue;
 
       // May modify the pointer, bail out.

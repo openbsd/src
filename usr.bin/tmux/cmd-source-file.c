@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.41 2019/06/05 20:00:53 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.35 2017/04/19 16:59:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -38,8 +38,8 @@ const struct cmd_entry cmd_source_file_entry = {
 	.name = "source-file",
 	.alias = "source",
 
-	.args = { "nqv", 1, -1 },
-	.usage = "[-nqv] path ...",
+	.args = { "q", 1, 1 },
+	.usage = "[-q] path",
 
 	.flags = 0,
 	.exec = cmd_source_file_exec
@@ -49,62 +49,45 @@ static enum cmd_retval
 cmd_source_file_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
-	int			 flags = 0;
+	int			 quiet = args_has(args, 'q');
 	struct client		*c = item->client;
-	struct cmdq_item	*new_item, *after;
+	struct cmdq_item	*new_item;
 	enum cmd_retval		 retval;
-	char			*pattern, *cwd;
-	const char		*path, *error;
+	char			*pattern, *tmp;
+	const char		*path = args->argv[0];
 	glob_t			 g;
-	int			 i;
-	u_int			 j;
+	u_int			 i;
 
-	if (args_has(args, 'q'))
-		flags |= CMD_PARSE_QUIET;
-	if (args_has(args, 'n'))
-		flags |= CMD_PARSE_PARSEONLY;
-	if (args_has(args, 'v'))
-		flags |= CMD_PARSE_VERBOSE;
-	utf8_stravis(&cwd, server_client_get_cwd(c, NULL), VIS_GLOB);
+	if (*path == '/')
+		pattern = xstrdup(path);
+	else {
+		utf8_stravis(&tmp, server_client_get_cwd(c), VIS_GLOB);
+		xasprintf(&pattern, "%s/%s", tmp, path);
+		free(tmp);
+	}
+	log_debug("%s: %s", __func__, pattern);
 
 	retval = CMD_RETURN_NORMAL;
-	for (i = 0; i < args->argc; i++) {
-		path = args->argv[i];
-		if (*path == '/')
-			pattern = xstrdup(path);
-		else
-			xasprintf(&pattern, "%s/%s", cwd, path);
-		log_debug("%s: %s", __func__, pattern);
-
-		if (glob(pattern, 0, NULL, &g) != 0) {
-			error = strerror(errno);
-			if (errno != ENOENT || (~flags & CMD_PARSE_QUIET)) {
-				cmdq_error(item, "%s: %s", path, error);
-				retval = CMD_RETURN_ERROR;
-			}
-			free(pattern);
-			continue;
+	if (glob(pattern, 0, NULL, &g) != 0) {
+		if (!quiet || errno != ENOENT) {
+			cmdq_error(item, "%s: %s", path, strerror(errno));
+			retval = CMD_RETURN_ERROR;
 		}
 		free(pattern);
+		return (retval);
+	}
+	free(pattern);
 
-		after = item;
-		for (j = 0; j < g.gl_pathc; j++) {
-			path = g.gl_pathv[j];
-			if (load_cfg(path, c, after, flags, &new_item) < 0)
-				retval = CMD_RETURN_ERROR;
-			else if (new_item != NULL)
-				after = new_item;
-		}
-		globfree(&g);
+	for (i = 0; i < (u_int)g.gl_pathc; i++) {
+		if (load_cfg(g.gl_pathv[i], c, item, quiet) < 0)
+			retval = CMD_RETURN_ERROR;
 	}
 	if (cfg_finished) {
-		if (retval == CMD_RETURN_ERROR && c->session == NULL)
-			c->retval = 1;
 		new_item = cmdq_get_callback(cmd_source_file_done, NULL);
 		cmdq_insert_after(item, new_item);
 	}
 
-	free(cwd);
+	globfree(&g);
 	return (retval);
 }
 

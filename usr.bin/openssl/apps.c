@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.51 2019/02/09 15:49:21 inoguchi Exp $ */
+/* $OpenBSD: apps.c,v 1.47 2018/02/07 08:57:25 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2065,8 +2065,7 @@ policies_print(BIO *out, X509_STORE_CTX *ctx)
 	nodes_print(out, "Authority", X509_policy_tree_get0_policies(tree));
 	nodes_print(out, "User", X509_policy_tree_get0_user_policies(tree));
 
-	if (free_out)
-		BIO_free(out);
+	BIO_free(out);
 }
 
 /*
@@ -2320,15 +2319,3 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed,
 	fprintf(stderr, "unknown option '%s'\n", arg);
 	return (1);
 }
-
-void
-show_cipher(const OBJ_NAME *name, void *arg)
-{
-	int *n = arg;
-
-	if (!islower((unsigned char)*name->name))
-		return;
-
-	fprintf(stderr, " -%-24s%s", name->name, (++*n % 3 != 0 ? "" : "\n"));
-}
-

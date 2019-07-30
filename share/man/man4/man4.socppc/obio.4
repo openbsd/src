@@ -1,0 +1,56 @@
+.\"     $OpenBSD: obio.4,v 1.2 2008/05/20 11:39:12 jmc Exp $
+.\"
+.\" Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: May 20 2008 $
+.Dt OBIO 4 socppc
+.Os
+.Sh NAME
+.Nm obio
+.Nd socppc onboard I/O bus device
+.Sh SYNOPSIS
+.Cd "obio0 at mainbus?"
+.Sh DESCRIPTION
+The
+.Nm
+interface serves as an abstraction used by the autoconfiguration
+system to help find and attach devices integrated on Freescale SoC
+processors.
+.Pp
+.Nm
+provides support for the following devices:
+.Pp
+.Bl -tag -width 12n -offset indent -compact
+.It Xr com 4
+serial communications interface
+.It Xr ehci 4
+USB Enhanced Host Controller Interface
+.It Xr ipic 4
+integrated programmable interrupt controller
+.It Xr sociic 4
+socppc onboard I2C controller
+.It Xr socpcic 4
+socppc onboard PCI controller
+.It Xr tsec 4
+three-speed 10/100/Gigabit Ethernet device
+.El
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr mainbus 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.4 .

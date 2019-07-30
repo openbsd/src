@@ -49,6 +49,7 @@ private:
   bool isPICDefaultForced() const override;
   bool IsIntegratedAssemblerDefault() const override;
   bool hasBlocksRuntime() const override;
+  bool SupportsObjCGC() const override;
   bool SupportsProfiling() const override;
   bool HasNativeLLVMSupport() const override;
   void addClangTargetOptions(const llvm::opt::ArgList &DriverArgs,
@@ -62,9 +63,6 @@ private:
   void AddClangCXXStdlibIncludeArgs(
       const llvm::opt::ArgList &DriverArgs,
       llvm::opt::ArgStringList &CC1Args) const override;
-  void AddCXXStdlibLibArgs(const llvm::opt::ArgList &Args,
-                           llvm::opt::ArgStringList &CmdArgs) const override;
-  std::string getThreadModel() const override;
 
   const char *getDefaultLinker() const override {
     return "lld";

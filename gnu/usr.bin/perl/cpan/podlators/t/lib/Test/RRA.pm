@@ -13,7 +13,6 @@ use strict;
 use warnings;
 
 use Exporter;
-use File::Temp;
 use Test::More;
 
 # For Perl 5.006 compatibility.
@@ -27,56 +26,12 @@ our (@EXPORT_OK, @ISA, $VERSION);
 # consistency is good).
 BEGIN {
     @ISA       = qw(Exporter);
-    @EXPORT_OK = qw(
-      is_file_contents skip_unless_author skip_unless_automated use_prereq
-    );
+    @EXPORT_OK = qw(skip_unless_author skip_unless_automated use_prereq);
 
     # This version should match the corresponding rra-c-util release, but with
     # two digits for the minor version, including a leading zero if necessary,
     # so that it will sort properly.
-    $VERSION = '6.03';
-}
-
-# Compare a string to the contents of a file, similar to the standard is()
-# function, but to show the line-based unified diff between them if they
-# differ.
-#
-# $got      - The output that we received
-# $expected - The path to the file containing the expected output
-# $message  - The message to use when reporting the test results
-#
-# Returns: undef
-#  Throws: Exception on failure to read or write files or run diff
-sub is_file_contents {
-    my ($got, $expected, $message) = @_;
-
-    # If they're equal, this is simple.
-    open(my $fh, '<', $expected) or BAIL_OUT("Cannot open $expected: $!\n");
-    my $data = do { local $/ = undef; <$fh> };
-    close($fh) or BAIL_OUT("Cannot close $expected: $!\n");
-    if ($got eq $data) {
-        is($got, $data, $message);
-        return;
-    }
-
-    # Otherwise, we show a diff, but only if we have IPC::System::Simple.
-    eval { require IPC::System::Simple };
-    if ($@) {
-        ok(0, $message);
-        return;
-    }
-
-    # They're not equal.  Write out what we got so that we can run diff.
-    my $tmp     = File::Temp->new();
-    my $tmpname = $tmp->filename;
-    print {$tmp} $got or BAIL_OUT("Cannot write to $tmpname: $!\n");
-    my @command = ('diff', '-u', $expected, $tmpname);
-    my $diff = IPC::System::Simple::capturex([0 .. 1], @command);
-    diag($diff);
-
-    # Remove the temporary file and report failure.
-    ok(0, $message);
-    return;
+    $VERSION = '5.09';
 }
 
 # Skip this test unless author tests are requested.  Takes a short description
@@ -270,7 +225,7 @@ SOFTWARE.
 Test::More(3), Test::RRA::Automake(3), Test::RRA::Config(3)
 
 This module is maintained in the rra-c-util package.  The current version is
-available from L<https://www.eyrie.org/~eagle/software/rra-c-util/>.
+available from L<http://www.eyrie.org/~eagle/software/rra-c-util/>.
 
 The functions to control when tests are run use environment variables defined
 by the L<Lancaster

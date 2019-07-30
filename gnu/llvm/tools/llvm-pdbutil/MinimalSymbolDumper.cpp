@@ -10,7 +10,6 @@
 #include "MinimalSymbolDumper.h"
 
 #include "FormatUtil.h"
-#include "InputFile.h"
 #include "LinePrinter.h"
 
 #include "llvm/DebugInfo/CodeView/CVRecord.h"
@@ -19,12 +18,23 @@
 #include "llvm/DebugInfo/CodeView/LazyRandomTypeCollection.h"
 #include "llvm/DebugInfo/CodeView/SymbolRecord.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
-#include "llvm/DebugInfo/PDB/Native/PDBStringTable.h"
 #include "llvm/Support/FormatVariadic.h"
 
 using namespace llvm;
 using namespace llvm::codeview;
 using namespace llvm::pdb;
+
+static StringRef getSymbolKindName(SymbolKind K) {
+  switch (K) {
+#define SYMBOL_RECORD(EnumName, value, name)                                   \
+  case EnumName:                                                               \
+    return #EnumName;
+#include "llvm/DebugInfo/CodeView/CodeViewSymbols.def"
+  default:
+    llvm_unreachable("Unknown symbol kind!");
+  }
+  return "";
+}
 
 static std::string formatLocalSymFlags(uint32_t IndentLevel,
                                        LocalSymFlags Flags) {
@@ -206,7 +216,6 @@ static std::string formatSourceLanguage(SourceLanguage Lang) {
     RETURN_CASE(SourceLanguage, JScript, "javascript");
     RETURN_CASE(SourceLanguage, MSIL, "msil");
     RETURN_CASE(SourceLanguage, HLSL, "hlsl");
-    RETURN_CASE(SourceLanguage, D, "d");
   }
   return formatUnknownEnum(Lang);
 }
@@ -260,7 +269,6 @@ static std::string formatMachineType(CPUType Cpu) {
     RETURN_CASE(CPUType, ARM_XMAC, "arm xmac");
     RETURN_CASE(CPUType, ARM_WMMX, "arm wmmx");
     RETURN_CASE(CPUType, ARM7, "arm 7");
-    RETURN_CASE(CPUType, ARM64, "arm64");
     RETURN_CASE(CPUType, Omni, "omni");
     RETURN_CASE(CPUType, Ia64, "intel itanium ia64");
     RETURN_CASE(CPUType, Ia64_2, "intel itanium ia64 2");
@@ -289,11 +297,57 @@ static std::string formatCookieKind(FrameCookieKind Kind) {
 
 static std::string formatRegisterId(RegisterId Id) {
   switch (Id) {
-#define CV_REGISTER(name, val) RETURN_CASE(RegisterId, name, #name)
-#include "llvm/DebugInfo/CodeView/CodeViewRegisters.def"
-#undef CV_REGISTER
+    RETURN_CASE(RegisterId, VFrame, "vframe");
+    RETURN_CASE(RegisterId, AL, "al");
+    RETURN_CASE(RegisterId, CL, "cl");
+    RETURN_CASE(RegisterId, DL, "dl");
+    RETURN_CASE(RegisterId, BL, "bl");
+    RETURN_CASE(RegisterId, AH, "ah");
+    RETURN_CASE(RegisterId, CH, "ch");
+    RETURN_CASE(RegisterId, DH, "dh");
+    RETURN_CASE(RegisterId, BH, "bh");
+    RETURN_CASE(RegisterId, AX, "ax");
+    RETURN_CASE(RegisterId, CX, "cx");
+    RETURN_CASE(RegisterId, DX, "dx");
+    RETURN_CASE(RegisterId, BX, "bx");
+    RETURN_CASE(RegisterId, SP, "sp");
+    RETURN_CASE(RegisterId, BP, "bp");
+    RETURN_CASE(RegisterId, SI, "si");
+    RETURN_CASE(RegisterId, DI, "di");
+    RETURN_CASE(RegisterId, EAX, "eax");
+    RETURN_CASE(RegisterId, ECX, "ecx");
+    RETURN_CASE(RegisterId, EDX, "edx");
+    RETURN_CASE(RegisterId, EBX, "ebx");
+    RETURN_CASE(RegisterId, ESP, "esp");
+    RETURN_CASE(RegisterId, EBP, "ebp");
+    RETURN_CASE(RegisterId, ESI, "esi");
+    RETURN_CASE(RegisterId, EDI, "edi");
+    RETURN_CASE(RegisterId, ES, "es");
+    RETURN_CASE(RegisterId, CS, "cs");
+    RETURN_CASE(RegisterId, SS, "ss");
+    RETURN_CASE(RegisterId, DS, "ds");
+    RETURN_CASE(RegisterId, FS, "fs");
+    RETURN_CASE(RegisterId, GS, "gs");
+    RETURN_CASE(RegisterId, IP, "ip");
+    RETURN_CASE(RegisterId, RAX, "rax");
+    RETURN_CASE(RegisterId, RBX, "rbx");
+    RETURN_CASE(RegisterId, RCX, "rcx");
+    RETURN_CASE(RegisterId, RDX, "rdx");
+    RETURN_CASE(RegisterId, RSI, "rsi");
+    RETURN_CASE(RegisterId, RDI, "rdi");
+    RETURN_CASE(RegisterId, RBP, "rbp");
+    RETURN_CASE(RegisterId, RSP, "rsp");
+    RETURN_CASE(RegisterId, R8, "r8");
+    RETURN_CASE(RegisterId, R9, "r9");
+    RETURN_CASE(RegisterId, R10, "r10");
+    RETURN_CASE(RegisterId, R11, "r11");
+    RETURN_CASE(RegisterId, R12, "r12");
+    RETURN_CASE(RegisterId, R13, "r13");
+    RETURN_CASE(RegisterId, R14, "r14");
+    RETURN_CASE(RegisterId, R15, "r15");
+  default:
+    return formatUnknownEnum(Id);
   }
-  return formatUnknownEnum(Id);
 }
 
 static std::string formatRange(LocalVariableAddrRange Range) {
@@ -323,39 +377,25 @@ Error MinimalSymbolDumper::visitSymbolBegin(codeview::CVSymbol &Record,
   // append to the existing line.
   P.formatLine("{0} | {1} [size = {2}]",
                fmt_align(Offset, AlignStyle::Right, 6),
-               formatSymbolKind(Record.Type), Record.length());
+               getSymbolKindName(Record.Type), Record.length());
   P.Indent();
   return Error::success();
 }
 
 Error MinimalSymbolDumper::visitSymbolEnd(CVSymbol &Record) {
-  if (RecordBytes) {
-    AutoIndent Indent(P, 7);
-    P.formatBinary("bytes", Record.content(), 0);
-  }
   P.Unindent();
   return Error::success();
 }
 
-std::string MinimalSymbolDumper::typeOrIdIndex(codeview::TypeIndex TI,
-                                               bool IsType) const {
-  if (TI.isSimple() || TI.isDecoratedItemId())
+std::string MinimalSymbolDumper::typeIndex(TypeIndex TI) const {
+  if (TI.isSimple())
     return formatv("{0}", TI).str();
-  auto &Container = IsType ? Types : Ids;
-  StringRef Name = Container.getTypeName(TI);
+  StringRef Name = Types.getTypeName(TI);
   if (Name.size() > 32) {
     Name = Name.take_front(32);
     return formatv("{0} ({1}...)", TI, Name);
   } else
     return formatv("{0} ({1})", TI, Name);
-}
-
-std::string MinimalSymbolDumper::idIndex(codeview::TypeIndex TI) const {
-  return typeOrIdIndex(TI, false);
-}
-
-std::string MinimalSymbolDumper::typeIndex(TypeIndex TI) const {
-  return typeOrIdIndex(TI, true);
 }
 
 Error MinimalSymbolDumper::visitKnownRecord(CVSymbol &CVR, BlockSym &Block) {
@@ -394,27 +434,18 @@ Error MinimalSymbolDumper::visitKnownRecord(CVSymbol &CVR,
                                             SectionSym &Section) {
   P.format(" `{0}`", Section.Name);
   AutoIndent Indent(P, 7);
-  P.formatLine("length = {0}, alignment = {1}, rva = {2}, section # = {3}",
+  P.formatLine("length = {0}, alignment = {1}, rva = {2}, section # = {3}, "
+               "characteristics = {4}",
                Section.Length, Section.Alignment, Section.Rva,
-               Section.SectionNumber);
-  P.printLine("characteristics =");
-  AutoIndent Indent2(P, 2);
-  P.printLine(formatSectionCharacteristics(P.getIndentLevel(),
-                                           Section.Characteristics, 1, "",
-                                           CharacteristicStyle::Descriptive));
+               Section.SectionNumber, Section.Characteristics);
   return Error::success();
 }
 
 Error MinimalSymbolDumper::visitKnownRecord(CVSymbol &CVR, CoffGroupSym &CG) {
   P.format(" `{0}`", CG.Name);
   AutoIndent Indent(P, 7);
-  P.formatLine("length = {0}, addr = {1}", CG.Size,
-               formatSegmentOffset(CG.Segment, CG.Offset));
-  P.printLine("characteristics =");
-  AutoIndent Indent2(P, 2);
-  P.printLine(formatSectionCharacteristics(P.getIndentLevel(),
-                                           CG.Characteristics, 1, "",
-                                           CharacteristicStyle::Descriptive));
+  P.formatLine("length = {0}, addr = {1}, characteristics = {2}", CG.Size,
+               formatSegmentOffset(CG.Segment, CG.Offset), CG.Characteristics);
   return Error::success();
 }
 
@@ -452,17 +483,6 @@ Error MinimalSymbolDumper::visitKnownRecord(CVSymbol &CVR,
 Error MinimalSymbolDumper::visitKnownRecord(CVSymbol &CVR, FileStaticSym &FS) {
   P.format(" `{0}`", FS.Name);
   AutoIndent Indent(P, 7);
-  if (SymGroup) {
-    Expected<StringRef> FileName =
-        SymGroup->getNameFromStringTable(FS.ModFilenameOffset);
-    if (FileName) {
-      P.formatLine("type = {0}, file name = {1} ({2}), flags = {3}",
-                   typeIndex(FS.Index), FS.ModFilenameOffset, *FileName,
-                   formatLocalSymFlags(P.getIndentLevel() + 9, FS.Flags));
-    }
-    return Error::success();
-  }
-
   P.formatLine("type = {0}, file name offset = {1}, flags = {2}",
                typeIndex(FS.Index), FS.ModFilenameOffset,
                formatLocalSymFlags(P.getIndentLevel() + 9, FS.Flags));
@@ -640,7 +660,7 @@ Error MinimalSymbolDumper::visitKnownRecord(CVSymbol &CVR, InlineSiteSym &IS) {
   StringRef Annotations(reinterpret_cast<const char *>(Bytes.begin()),
                         Bytes.size());
 
-  P.formatLine("inlinee = {0}, parent = {1}, end = {2}", idIndex(IS.Inlinee),
+  P.formatLine("inlinee = {0}, parent = {1}, end = {2}", typeIndex(IS.Inlinee),
                IS.Parent, IS.End);
   P.formatLine("annotations = {0}", toHex(Annotations));
   return Error::success();
@@ -705,19 +725,9 @@ Error MinimalSymbolDumper::visitKnownRecord(CVSymbol &CVR, ProcSym &Proc) {
                Proc.Parent, Proc.End,
                formatSegmentOffset(Proc.Segment, Proc.CodeOffset),
                Proc.CodeSize);
-  bool IsType = true;
-  switch (Proc.getKind()) {
-  case SymbolRecordKind::GlobalProcIdSym:
-  case SymbolRecordKind::ProcIdSym:
-  case SymbolRecordKind::DPCProcIdSym:
-    IsType = false;
-    break;
-  default:
-    break;
-  }
+  // FIXME: It seems FunctionType is sometimes an id and sometimes a type.
   P.formatLine("type = `{0}`, debug start = {1}, debug end = {2}, flags = {3}",
-               typeOrIdIndex(Proc.FunctionType, IsType), Proc.DbgStart,
-               Proc.DbgEnd,
+               typeIndex(Proc.FunctionType), Proc.DbgStart, Proc.DbgEnd,
                formatProcSymFlags(P.getIndentLevel() + 9, Proc.Flags));
   return Error::success();
 }
@@ -730,7 +740,7 @@ Error MinimalSymbolDumper::visitKnownRecord(CVSymbol &CVR,
 Error MinimalSymbolDumper::visitKnownRecord(CVSymbol &CVR, CallerSym &Caller) {
   AutoIndent Indent(P, 7);
   for (const auto &I : Caller.Indices) {
-    P.formatLine("callee: {0}", idIndex(I));
+    P.formatLine("callee: {0}", typeIndex(I));
   }
   return Error::success();
 }
@@ -758,11 +768,5 @@ Error MinimalSymbolDumper::visitKnownRecord(CVSymbol &CVR, UDTSym &UDT) {
   P.format(" `{0}`", UDT.Name);
   AutoIndent Indent(P, 7);
   P.formatLine("original type = {0}", UDT.Type);
-  return Error::success();
-}
-
-Error MinimalSymbolDumper::visitKnownRecord(CVSymbol &CVR,
-                                            UsingNamespaceSym &UN) {
-  P.format(" `{0}`", UN.Name);
   return Error::success();
 }

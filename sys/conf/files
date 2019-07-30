@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.671 2019/05/04 11:34:47 kettenis Exp $
+#	$OpenBSD: files,v 1.660 2018/02/14 23:51:49 jsg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -59,7 +59,6 @@ define	onewire_bitbang
 # net device attributes - we have generic code for ether(net)
 define	crypto
 define	ether
-define	mpls
 define	sppp
 define	wlan
 
@@ -74,7 +73,7 @@ define	ax88190		# AX88190-family Ethernet controllers
 # a wscons output device; used later, but needs to be near the top for
 # common file (e.g. vga) definitions.
 define	wsdisplaydev		{[mux = 1]}
-define	wsemuldisplaydev	{[console = -1], [primary = -1], [mux = 1]}
+define	wsemuldisplaydev	{[console = -1], [mux = 1]}
 define	wskbddev		{[console = -1], [mux = 1]}
 define	wsmousedev		{[mux = 0]}
 
@@ -325,10 +324,6 @@ device	com: tty
 file	dev/ic/com.c			com & (com | com_cardbus | com_gsc |
 					       com_isapnp)	needs-flag
 
-# ARM PrimeCell PL011 UART
-device	pluart: tty
-file	dev/ic/pluart.c			pluart
-
 # PC-like keyboard controller
 define	pckbcslot {[slot = -1]}
 device	pckbc: pckbcslot
@@ -469,10 +464,6 @@ file	dev/usb/ehci.c			ehci	needs-flag
 device	xhci: usbus
 file	dev/usb/xhci.c			xhci	needs-flag
 
-# AMD Cryptographic Co-processor
-device	ccp
-file	dev/ic/ccp.c			ccp
-
 # SDHC SD/MMC controller
 device	sdhc: sdmmcbus
 file	dev/sdmmc/sdhc.c		sdhc
@@ -562,10 +553,8 @@ pseudo-device gre: ifnet
 pseudo-device mobileip: ifnet
 pseudo-device crypto: ifnet
 pseudo-device trunk: ifnet, ether, ifmedia
-pseudo-device mpe: ifnet, mpls
-pseudo-device mpw: ifnet, mpls, ether
-pseudo-device mpip: ifnet, mpls
-pseudo-device bpe: ifnet, ether, ifmedia
+pseudo-device mpe: ifnet, ether
+pseudo-device mpw: ifnet, ether
 pseudo-device vether: ifnet, ether
 pseudo-device pppx: ifnet
 pseudo-device vxlan: ifnet, ether, ifmedia
@@ -611,9 +600,6 @@ file	dev/hotplug.c			hotplug	needs-flag
 
 pseudo-device pppoe: ifnet, ether, sppp
 file 	net/if_pppoe.c			pppoe	needs-flag
-
-pseudo-device kcov
-file	dev/kcov.c			kcov	needs-flag
 
 # XXX machine-independent SCSI files should live somewhere here, maybe
 
@@ -689,11 +675,9 @@ file kern/kern_proc.c
 file kern/kern_prot.c
 file kern/kern_resource.c
 file kern/kern_pledge.c
-file kern/kern_unveil.c
 file kern/kern_sched.c
 file kern/kern_sensors.c
 file kern/kern_sig.c
-file kern/kern_smr.c
 file kern/kern_subr.c
 file kern/kern_sysctl.c
 file kern/kern_synch.c
@@ -711,7 +695,6 @@ file kern/subr_disk.c
 file kern/subr_evcount.c
 file kern/subr_extent.c
 file kern/subr_hibernate.c		hibernate
-file kern/subr_kubsan.c			kubsan
 file kern/subr_log.c
 file kern/subr_percpu.c
 file kern/subr_poison.c			diagnostic
@@ -807,6 +790,7 @@ file net/switchctl.c			switch
 file net/switchofp.c			switch
 file net/pipex.c			pipex
 file net/radix.c			pf | ipsec | pipex | nfsserver
+file net/raw_usrreq.c
 file net/rtable.c
 file net/route.c
 file net/rtsock.c
@@ -817,9 +801,7 @@ file net/if_mobileip.c			mobileip		needs-count
 file net/if_trunk.c			trunk			needs-count
 file net/trunklacp.c			trunk
 file net/if_mpe.c			mpe			needs-count
-file net/if_mpw.c			mpw			needs-count
-file net/if_mpip.c			mpip
-file net/if_bpe.c			bpe			needs-count
+file net/if_mpw.c			mpw & bridge		needs-count
 file net/if_vether.c			vether			needs-count
 file net/if_pair.c			pair			needs-count
 file net/if_pppx.c			pppx			needs-count

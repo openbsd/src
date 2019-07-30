@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.70 2019/05/30 22:03:14 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.67 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -99,8 +99,9 @@
  */
 bus_addr_t pci_mcfg_addr;
 int pci_mcfg_min_bus, pci_mcfg_max_bus;
-bus_space_tag_t pci_mcfgt;
+bus_space_tag_t pci_mcfgt = X86_BUS_SPACE_MEM;
 bus_space_handle_t pci_mcfgh[256];
+void pci_mcfg_map_bus(int);
 
 struct mutex pci_conf_lock = MUTEX_INITIALIZER(IPL_HIGH);
 
@@ -139,25 +140,6 @@ struct bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
 };
-
-void
-pci_mcfg_init(bus_space_tag_t iot, bus_addr_t addr, int segment,
-    int min_bus, int max_bus)
-{
-	if (segment == 0) {
-		pci_mcfgt = iot;
-		pci_mcfg_addr = addr;
-		pci_mcfg_min_bus = min_bus;
-		pci_mcfg_max_bus = max_bus;
-	}
-}
-
-pci_chipset_tag_t
-pci_lookup_segment(int segment)
-{
-	KASSERT(segment == 0);
-	return NULL;
-}
 
 void
 pci_attach_hook(struct device *parent, struct device *self,
@@ -475,8 +457,7 @@ msix_addroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
 	    _bus_space_map(memt, base + offset, tblsz * 16, 0, &memh))
 		panic("%s: cannot map registers", __func__);
 
-	bus_space_write_4(memt, memh, PCI_MSIX_MA(entry), addr);
-	bus_space_write_4(memt, memh, PCI_MSIX_MAU32(entry), 0);
+	bus_space_write_8(memt, memh, PCI_MSIX_MA(entry), addr);
 	bus_space_write_4(memt, memh, PCI_MSIX_MD(entry), vec);
 	bus_space_barrier(memt, memh, PCI_MSIX_MA(entry), 16,
 	    BUS_SPACE_BARRIER_WRITE);

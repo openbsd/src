@@ -13,7 +13,6 @@ BEGIN {
         plan skip_all => 'This is not Win32';
     }
 }
-plan 'no_plan'; # BinGOs says there are 63 but I can only see 62
 
 use Config;
 use File::Spec;
@@ -147,6 +146,7 @@ note "init_others creates expected keys"; {
     $mm_w32->init_xs;
 
     my $s_PM = join( " \\\n\t", sort keys %{$mm_w32->{PM}} );
+    my $k_PM = join( " \\\n\t", %{$mm_w32->{PM}} );
 
     my $constants = $mm_w32->constants;
 
@@ -156,6 +156,7 @@ note "init_others creates expected keys"; {
          qr|^MAKEMAKER  \s* = \s* \Q$INC{'ExtUtils/MakeMaker.pm'}\E \s* $|xms,
          qr|^MM_VERSION \s* = \s* \Q$ExtUtils::MakeMaker::VERSION\E \s* $|xms,
          qr|^TO_INST_PM \s* = \s* \Q$s_PM\E \s* $|xms,
+         qr|^PM_TO_BLIB \s* = \s* \Q$k_PM\E \s* $|xms,
         )
     {
         like( $constants, $regex, 'constants() check' );
@@ -280,7 +281,7 @@ unlink "${script_name}$script_ext" if -f "${script_name}$script_ext";
 
         my @cc_env = ExtUtils::MM_Win32::_identify_compiler_environment( $config );
 
-        my %cc_env = ( BORLAND => $cc_env[0], GCC => $cc_env[1], MSVC => $cc_env[2] );
+        my %cc_env = ( BORLAND => $cc_env[0], GCC => $cc_env[1], DLLTOOL => $cc_env[2] );
 
         return \%cc_env;
     }
@@ -299,6 +300,16 @@ unlink "${script_name}$script_ext" if -f "${script_name}$script_ext";
     }
 
     my @tests = (
+        {
+            config => {},
+            key => 'DLLTOOL', expect => 'dlltool',
+            desc => 'empty dlltool defaults to "dlltool"',
+        },
+        {
+            config => { dlltool => 'test' },
+            key => 'DLLTOOL', expect => 'test',
+            desc => 'dlltool value is taken over verbatim from %Config, if set',
+        },
         {
             config => {},
             key => 'GCC', expect => 0,
@@ -336,8 +347,8 @@ unlink "${script_name}$script_ext" if -f "${script_name}$script_ext";
         },
         {
             config => { cc => 'C:/Borland/bin/bcc.exe' },
-            key => 'BORLAND', expect => 1,
-            desc => 'fully qualified borland cc is recognized',
+            key => 'BORLAND', expect => 0,
+            desc => 'fully qualified borland cc is not recognized',
         },
         {
             config => { cc => 'bcc-1.exe' },
@@ -353,6 +364,10 @@ unlink "${script_name}$script_ext" if -f "${script_name}$script_ext";
 
     _check_cc_id_value($_) for @tests;
 }
+
+
+done_testing;
+
 
 package FakeOut;
 

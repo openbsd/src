@@ -161,10 +161,6 @@ Value *SimplifyGEPInst(Type *SrcTy, ArrayRef<Value *> Ops,
 Value *SimplifyInsertValueInst(Value *Agg, Value *Val, ArrayRef<unsigned> Idxs,
                                const SimplifyQuery &Q);
 
-/// Given operands for an InsertElement, fold the result or return null.
-Value *SimplifyInsertElementInst(Value *Vec, Value *Elt, Value *Idx,
-                                 const SimplifyQuery &Q);
-
 /// Given operands for an ExtractValueInst, fold the result or return null.
 Value *SimplifyExtractValueInst(Value *Agg, ArrayRef<unsigned> Idxs,
                                 const SimplifyQuery &Q);
@@ -196,9 +192,6 @@ Value *SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
 /// result. In case we don't need FastMathFlags, simply fall to SimplifyBinOp.
 Value *SimplifyFPBinOp(unsigned Opcode, Value *LHS, Value *RHS,
                        FastMathFlags FMF, const SimplifyQuery &Q);
-
-/// Given a callsite, fold the result or return null.
-Value *SimplifyCall(ImmutableCallSite CS, const SimplifyQuery &Q);
 
 /// Given a function and iterators over arguments, fold the result or return
 /// null.

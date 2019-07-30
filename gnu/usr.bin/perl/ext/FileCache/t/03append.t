@@ -1,7 +1,7 @@
 #!./perl
 
 use FileCache maxopen => 2;
-our @files;
+use vars qw(@files);
 BEGIN { @files = qw(foo bar baz quux Foo_Bar) }
 END   { 1 while unlink @files }
 

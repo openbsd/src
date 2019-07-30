@@ -1,4 +1,4 @@
-/* $OpenBSD: notify.c,v 1.28 2019/05/07 10:25:15 nicm Exp $ */
+/* $OpenBSD: notify.c,v 1.25 2017/08/30 10:33:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 George Nachman <tmux@georgester.com>
@@ -36,34 +36,13 @@ struct notify_entry {
 };
 
 static void
-notify_hook_formats(struct cmdq_item *item, struct session *s, struct window *w,
-    int pane)
+notify_hook(struct cmdq_item *item, struct notify_entry *ne)
 {
-	if (s != NULL) {
-		cmdq_format(item, "hook_session", "$%u", s->id);
-		cmdq_format(item, "hook_session_name", "%s", s->name);
-	}
-	if (w != NULL) {
-		cmdq_format(item, "hook_window", "@%u", w->id);
-		cmdq_format(item, "hook_window_name", "%s", w->name);
-	}
-	if (pane != -1)
-		cmdq_format(item, "hook_pane", "%%%d", pane);
-}
-
-static void
-notify_insert_hook(struct cmdq_item *item, struct notify_entry *ne)
-{
-	struct cmd_find_state		 fs;
-	struct options			*oo;
-	struct cmdq_item		*new_item;
-	struct session			*s = ne->session;
-	struct window			*w = ne->window;
-	struct options_entry		*o;
-	struct options_array_item	*a;
-	struct cmd_list			*cmdlist;
-
-	log_debug("%s: %s", __func__, ne->name);
+	struct cmd_find_state	 fs;
+	struct hook		*hook;
+	struct cmdq_item	*new_item;
+	struct session		*s = ne->session;
+	struct window		*w = ne->window;
 
 	cmd_find_clear_state(&fs, 0);
 	if (cmd_find_empty_state(&ne->fs) || !cmd_find_valid_state(&ne->fs))
@@ -71,31 +50,26 @@ notify_insert_hook(struct cmdq_item *item, struct notify_entry *ne)
 	else
 		cmd_find_copy_state(&fs, &ne->fs);
 
-	if (fs.s == NULL)
-		oo = global_s_options;
-	else
-		oo = fs.s->options;
-	o = options_get(oo, ne->name);
-	if (o == NULL)
+	hook = hooks_find(hooks_get(fs.s), ne->name);
+	if (hook == NULL)
 		return;
+	log_debug("notify hook %s", ne->name);
 
-	a = options_array_first(o);
-	while (a != NULL) {
-		cmdlist = options_array_item_value(a)->cmdlist;
-		if (cmdlist == NULL) {
-			a = options_array_next(a);
-			continue;
-		}
+	new_item = cmdq_get_command(hook->cmdlist, &fs, NULL, CMDQ_NOHOOKS);
+	cmdq_format(new_item, "hook", "%s", ne->name);
 
-		new_item = cmdq_get_command(cmdlist, &fs, NULL, CMDQ_NOHOOKS);
-		cmdq_format(new_item, "hook", "%s", ne->name);
-		notify_hook_formats(new_item, s, w, ne->pane);
-
-		cmdq_insert_after(item, new_item);
-		item = new_item;
-
-		a = options_array_next(a);
+	if (s != NULL) {
+		cmdq_format(new_item, "hook_session", "$%u", s->id);
+		cmdq_format(new_item, "hook_session_name", "%s", s->name);
 	}
+	if (w != NULL) {
+		cmdq_format(new_item, "hook_window", "@%u", w->id);
+		cmdq_format(new_item, "hook_window_name", "%s", w->name);
+	}
+	if (ne->pane != -1)
+		cmdq_format(new_item, "hook_pane", "%%%d", ne->pane);
+
+	cmdq_insert_after(item, new_item);
 }
 
 static enum cmd_retval
@@ -128,7 +102,7 @@ notify_callback(struct cmdq_item *item, void *data)
 	if (strcmp(ne->name, "session-window-changed") == 0)
 		control_notify_session_window_changed(ne->session);
 
-	notify_insert_hook(item, ne);
+	notify_hook(item, ne);
 
 	if (ne->client != NULL)
 		server_client_unref(ne->client);
@@ -181,31 +155,13 @@ notify_add(const char *name, struct cmd_find_state *fs, struct client *c,
 }
 
 void
-notify_hook(struct cmdq_item *item, const char *name)
-{
-	struct notify_entry	ne;
-
-	memset(&ne, 0, sizeof ne);
-
-	ne.name = name;
-	cmd_find_copy_state(&ne.fs, &item->target);
-
-	ne.client = item->client;
-	ne.session = item->target.s;
-	ne.window = item->target.w;
-	ne.pane = item->target.wp->id;
-
-	notify_insert_hook(item, &ne);
-}
-
-void
-notify_input(struct window_pane *wp, const u_char *buf, size_t len)
+notify_input(struct window_pane *wp, struct evbuffer *input)
 {
 	struct client	*c;
 
 	TAILQ_FOREACH(c, &clients, entry) {
 		if (c->flags & CLIENT_CONTROL)
-			control_notify_input(c, wp, buf, len);
+			control_notify_input(c, wp, input);
 	}
 }
 

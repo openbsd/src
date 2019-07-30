@@ -1,10 +1,9 @@
-# $OpenBSD: Makefile,v 1.148 2019/03/21 14:15:13 schwarze Exp $
+# $OpenBSD: Makefile,v 1.138 2018/03/18 13:06:36 schwarze Exp $
 
 .include <bsd.own.mk>
 
 MAN=	\
 	ACCESS_DESCRIPTION_new.3 \
-	ASN1_INTEGER_get.3 \
 	ASN1_OBJECT_new.3 \
 	ASN1_STRING_length.3 \
 	ASN1_STRING_new.3 \
@@ -68,8 +67,8 @@ MAN=	\
 	CONF_modules_free.3 \
 	CONF_modules_load_file.3 \
 	CRYPTO_get_mem_functions.3 \
-	CRYPTO_lock.3 \
 	CRYPTO_set_ex_data.3 \
+	CRYPTO_set_locking_callback.3 \
 	DES_set_key.3 \
 	DH_generate_key.3 \
 	DH_generate_parameters.3 \
@@ -98,17 +97,6 @@ MAN=	\
 	EC_KEY_new.3 \
 	EC_POINT_add.3 \
 	EC_POINT_new.3 \
-	ENGINE_add.3 \
-	ENGINE_ctrl.3 \
-	ENGINE_get_default_RSA.3 \
-	ENGINE_init.3 \
-	ENGINE_new.3 \
-	ENGINE_register_RSA.3 \
-	ENGINE_register_all_RSA.3 \
-	ENGINE_set_RSA.3 \
-	ENGINE_set_default.3 \
-	ENGINE_set_flags.3 \
-	ENGINE_unregister_RSA.3 \
 	ERR.3 \
 	ERR_GET_LIB.3 \
 	ERR_asprintf_error_data.3 \
@@ -151,11 +139,6 @@ MAN=	\
 	EVP_SealInit.3 \
 	EVP_SignInit.3 \
 	EVP_VerifyInit.3 \
-	EVP_aes_128_cbc.3 \
-	EVP_camellia_128_cbc.3 \
-	EVP_des_cbc.3 \
-	EVP_rc4.3 \
-	EVP_sm4_cbc.3 \
 	EXTENDED_KEY_USAGE_new.3 \
 	GENERAL_NAME_new.3 \
 	HMAC.3 \
@@ -308,6 +291,7 @@ MAN=	\
 	d2i_X509_REQ.3 \
 	d2i_X509_SIG.3 \
 	des_read_pw.3 \
+	engine.3 \
 	evp.3 \
 	get_rfc3526_prime_8192.3 \
 	i2d_PKCS7_bio_stream.3 \

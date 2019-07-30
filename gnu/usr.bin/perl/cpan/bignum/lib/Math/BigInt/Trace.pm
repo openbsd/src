@@ -2,20 +2,20 @@
 
 package Math::BigInt::Trace;
 
-require 5.010;
+require 5.006;
 use strict;
 use warnings;
 
 use Exporter;
 use Math::BigInt;
 
-our ($accuracy, $precision, $round_mode, $div_scale);
+our ($PACKAGE, @EXPORT_OK, $accuracy, $precision, $round_mode, $div_scale);
 
 our @ISA = qw(Exporter Math::BigInt);
 
-our $VERSION = '0.49';
+our $VERSION = '0.42_01';
 
-use overload;                   # inherit overload from Math::BigInt
+use overload;                   # inherit overload from BigInt
 
 # Globals
 $accuracy = $precision = undef;

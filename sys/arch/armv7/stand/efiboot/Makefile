@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2018/06/23 22:13:50 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.8 2017/11/22 21:22:40 kettenis Exp $
 
 NOMAN=		#
 
@@ -8,8 +8,7 @@ PROG=		BOOTARM.EFI
 OBJFMT=		binary
 INSTALL_STRIP=
 BINDIR=		/usr/mdec
-SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efidev.c efipxe.c
-SRCS+=		fdt.c
+SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efidev.c fdt.c
 
 S=		${.CURDIR}/../../../..
 EFIDIR=		${S}/stand/efi
@@ -17,8 +16,7 @@ EFIDIR=		${S}/stand/efi
 OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
 
-LDFLAGS+=	-nostdlib -T ${.CURDIR}/ldscript.arm -Bsymbolic -shared
-LDFLAGS+=	-z notext -z norelro
+LDFLAGS+=-nostdlib -T ${.CURDIR}/ldscript.arm -Bsymbolic -shared
 
 .PATH:	${S}/stand/boot
 SRCS+=	boot.c cmd.c vars.c
@@ -31,7 +29,6 @@ SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
 	lseek.c open.c read.c readdir.c stat.c
 SRCS+=	loadfile.c
 SRCS+=	ufs.c
-SRCS+=	arp.c ether.c globals.c in_cksum.c net.c netif.c netudp.c tftp.c
 
 .PATH:	${S}/lib/libkern/arch/arm ${S}/lib/libkern
 SRCS+=	divsi3.S divdi3.c moddi3.c qdivrem.c strlcpy.c strlen.c
@@ -49,7 +46,6 @@ CPPFLAGS+=	-DNEEDS_HEAP_H
 COPTS+=		-ffreestanding -fno-stack-protector
 COPTS+=		-fshort-wchar -fPIC -fno-builtin
 COPTS+=		-Wall -Werror
-COPTS+=		-mfloat-abi=soft
 
 PROG.elf=	${PROG:S/.EFI/.elf/}
 CLEANFILES+=	${PROG.elf} ${PROG.elf}.tmp

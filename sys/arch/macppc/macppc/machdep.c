@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.185 2019/04/01 07:00:52 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.182 2017/12/11 05:27:40 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -442,7 +442,8 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
  * Send a signal to process.
  */
 void
-sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
+sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
+    union sigval val)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
@@ -460,8 +461,8 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(tf->fixreg[1]) &&
 	    (psp->ps_sigonstack & sigmask(sig)))
-		fp = (struct sigframe *)
-		    trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
+		fp = (struct sigframe *)(p->p_sigstk.ss_sp
+					 + p->p_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)tf->fixreg[1];
 
@@ -475,7 +476,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	bcopy(tf, &frame.sf_sc.sc_frame, sizeof *tf);
 	if (psp->ps_siginfo & sigmask(sig)) {
 		frame.sf_sip = &fp->sf_si;
-		frame.sf_si = *ksip;
+		initsiginfo(&frame.sf_si, sig, code, type, val);
 	}
 	frame.sf_sc.sc_cookie = (long)&fp->sf_sc ^ p->p_p->ps_sigcookie;
 	if (copyout(&frame, fp, sizeof frame) != 0)
@@ -733,9 +734,6 @@ boot(int howto)
 {
 	static int syncing;
 
-	if ((howto & RB_RESET) != 0)
-		goto doreset;
-
 	if (cold) {
 		if ((howto & RB_USERREQ) == 0)
 			howto |= RB_HALT;
@@ -778,7 +776,6 @@ haltsys:
 		printf("halted\n\n");
 		OF_exit();
 	}
-doreset:
 	printf("rebooting\n\n");
 
 #if NADB > 0

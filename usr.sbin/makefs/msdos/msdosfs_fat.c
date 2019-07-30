@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.5 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.4 2016/12/17 16:43:30 krw Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.31 2016/05/07 16:43:02 mlelstv Exp $	*/
 
 /*-
@@ -52,6 +52,7 @@
  * kernel include files.
  */
 #include <sys/param.h>
+#include <sys/file.h>
 
 #include "ffs/buf.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.212 2019/06/01 14:11:17 mpi Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.202 2017/12/30 20:47:00 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -65,8 +65,6 @@
 #include <uvm/uvm.h>
 #include <machine/tcb.h>
 
-#include "kcov.h"
-
 int	nprocesses = 1;		/* process 0 */
 int	nthreads = 1;		/* proc 0 */
 int	randompid;		/* when set to 1, pid's go random */
@@ -76,8 +74,6 @@ void fork_return(void *);
 pid_t alloctid(void);
 pid_t allocpid(void);
 int ispidtaken(pid_t);
-
-void unveil_copy(struct process *parent, struct process *child);
 
 struct proc *thread_new(struct proc *_parent, vaddr_t _uaddr);
 struct process *process_new(struct proc *, struct process *, int);
@@ -180,10 +176,6 @@ thread_new(struct proc *parent, vaddr_t uaddr)
 	p->p_sleeplocks = NULL;
 #endif
 
-#if NKCOV > 0
-	p->p_kd = NULL;
-#endif
-
 	return p;
 }
 
@@ -206,12 +198,8 @@ process_initialize(struct process *pr, struct proc *p)
 	KASSERT(p->p_ucred->cr_ref >= 2);	/* new thread and new process */
 
 	LIST_INIT(&pr->ps_children);
-	LIST_INIT(&pr->ps_ftlist);
-	LIST_INIT(&pr->ps_kqlist);
-	LIST_INIT(&pr->ps_sigiolst);
 
 	timeout_set(&pr->ps_realit_to, realitexpire, pr);
-	timeout_set(&pr->ps_rucheck_to, rucheck, pr);
 }
 
 
@@ -240,17 +228,12 @@ process_new(struct proc *p, struct process *parent, int flags)
 
 	/* post-copy fixups */
 	pr->ps_pptr = parent;
-	pr->ps_limit->pl_refcnt++;
-	if (pr->ps_limit->pl_rlimit[RLIMIT_CPU].rlim_cur != RLIM_INFINITY)
-		timeout_add_msec(&pr->ps_rucheck_to, RUCHECK_INTERVAL);
+	pr->ps_limit->p_refcnt++;
 
 	/* bump references to the text vnode (for sysctl) */
 	pr->ps_textvp = parent->ps_textvp;
 	if (pr->ps_textvp)
 		vref(pr->ps_textvp);
-
-	/* copy unveil if unveil is active */
-	unveil_copy(parent, pr);
 
 	pr->ps_flags = parent->ps_flags &
 	    (PS_SUGID | PS_SUGIDEXEC | PS_PLEDGE | PS_EXECPLEDGE | PS_WXNEEDED);

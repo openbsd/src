@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.57 2019/06/10 06:07:15 jmc Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.51 2018/02/05 12:43:29 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2019 $
+.Dd $Mdocdate: February 5 2018 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -28,10 +28,10 @@ The
 .Xr ospfd 8
 daemon implements the Open Shortest Path First protocol version 2 as described
 in RFC 2328.
-.Pp
+.Sh SECTIONS
 The
 .Nm
-config file is divided into the following main sections:
+config file is divided into three main sections.
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
@@ -83,11 +83,6 @@ interface.
 The only settings that can be set globally and not overruled are listed below.
 .Pp
 .Bl -tag -width Ds -compact
-.It Ic fib-priority Ar prio
-Set the routing priority to
-.Ar prio .
-The default is 32.
-.Pp
 .It Xo
 .Ic fib-update
 .Pq Ic yes Ns | Ns Ic no
@@ -190,12 +185,6 @@ Setting more than one option needs curly brackets:
 redistribute static set { metric 300 type 2 }
 .Ed
 .Pp
-The use of
-.Ic redistribute Ar prefix | rtlabel
-can result in higher CPU usage, since
-.Xr ospfd 8
-will need to process more route updates.
-.Pp
 .It Xo
 .Ic rfc1583compat
 .Pq Ic yes Ns | Ns Ic no
@@ -257,7 +246,7 @@ Areas are used for grouping interfaces.
 All interface-specific parameters can
 be configured per area, overruling the global settings.
 .Bl -tag -width Ds
-.It Ic area Ar id | address
+.It Ic area Ar address
 Specify an area section, grouping one or more interfaces.
 .Bd -literal -offset indent
 area 0.0.0.0 {

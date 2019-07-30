@@ -1,4 +1,4 @@
-//===- llvm/Analysis/AssumptionCache.h - Track @llvm.assume -----*- C++ -*-===//
+//===- llvm/Analysis/AssumptionCache.h - Track @llvm.assume ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,8 +18,9 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/DenseMapInfo.h"
-#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallSet.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
@@ -27,31 +28,25 @@
 
 namespace llvm {
 
-class CallInst;
-class Function;
-class raw_ostream;
-class Value;
-
-/// A cache of \@llvm.assume calls within a function.
+/// \brief A cache of @llvm.assume calls within a function.
 ///
 /// This cache provides fast lookup of assumptions within a function by caching
 /// them and amortizing the cost of scanning for them across all queries. Passes
 /// that create new assumptions are required to call registerAssumption() to
-/// register any new \@llvm.assume calls that they create. Deletions of
-/// \@llvm.assume calls do not require special handling.
+/// register any new @llvm.assume calls that they create. Deletions of
+/// @llvm.assume calls do not require special handling.
 class AssumptionCache {
-  /// The function for which this cache is handling assumptions.
+  /// \brief The function for which this cache is handling assumptions.
   ///
   /// We track this to lazily populate our assumptions.
   Function &F;
 
-  /// Vector of weak value handles to calls of the \@llvm.assume
+  /// \brief Vector of weak value handles to calls of the @llvm.assume
   /// intrinsic.
   SmallVector<WeakTrackingVH, 4> AssumeHandles;
 
   class AffectedValueCallbackVH final : public CallbackVH {
     AssumptionCache *AC;
-
     void deleted() override;
     void allUsesReplacedWith(Value *) override;
 
@@ -64,7 +59,7 @@ class AssumptionCache {
 
   friend AffectedValueCallbackVH;
 
-  /// A map of values about which an assumption might be providing
+  /// \brief A map of values about which an assumption might be providing
   /// information to the relevant set of assumptions.
   using AffectedValuesMap =
       DenseMap<AffectedValueCallbackVH, SmallVector<WeakTrackingVH, 1>,
@@ -77,19 +72,19 @@ class AssumptionCache {
   /// Copy affected values in the cache for OV to be affected values for NV.
   void copyAffectedValuesInCache(Value *OV, Value *NV);
 
-  /// Flag tracking whether we have scanned the function yet.
+  /// \brief Flag tracking whether we have scanned the function yet.
   ///
   /// We want to be as lazy about this as possible, and so we scan the function
   /// at the last moment.
-  bool Scanned = false;
+  bool Scanned;
 
-  /// Scan the function for assumptions and add them to the cache.
+  /// \brief Scan the function for assumptions and add them to the cache.
   void scanFunction();
 
 public:
-  /// Construct an AssumptionCache from a function by scanning all of
+  /// \brief Construct an AssumptionCache from a function by scanning all of
   /// its instructions.
-  AssumptionCache(Function &F) : F(F) {}
+  AssumptionCache(Function &F) : F(F), Scanned(false) {}
 
   /// This cache is designed to be self-updating and so it should never be
   /// invalidated.
@@ -98,17 +93,17 @@ public:
     return false;
   }
 
-  /// Add an \@llvm.assume intrinsic to this function's cache.
+  /// \brief Add an @llvm.assume intrinsic to this function's cache.
   ///
   /// The call passed in must be an instruction within this function and must
   /// not already be in the cache.
   void registerAssumption(CallInst *CI);
 
-  /// Update the cache of values being affected by this assumption (i.e.
+  /// \brief Update the cache of values being affected by this assumption (i.e.
   /// the values about which this assumption provides information).
   void updateAffectedValues(CallInst *CI);
 
-  /// Clear the cache of \@llvm.assume intrinsics for a function.
+  /// \brief Clear the cache of @llvm.assume intrinsics for a function.
   ///
   /// It will be re-scanned the next time it is requested.
   void clear() {
@@ -117,7 +112,7 @@ public:
     Scanned = false;
   }
 
-  /// Access the list of assumption handles currently tracked for this
+  /// \brief Access the list of assumption handles currently tracked for this
   /// function.
   ///
   /// Note that these produce weak handles that may be null. The caller must
@@ -131,7 +126,7 @@ public:
     return AssumeHandles;
   }
 
-  /// Access the list of assumptions which affect this value.
+  /// \brief Access the list of assumptions which affect this value.
   MutableArrayRef<WeakTrackingVH> assumptionsFor(const Value *V) {
     if (!Scanned)
       scanFunction();
@@ -144,34 +139,32 @@ public:
   }
 };
 
-/// A function analysis which provides an \c AssumptionCache.
+/// \brief A function analysis which provides an \c AssumptionCache.
 ///
 /// This analysis is intended for use with the new pass manager and will vend
 /// assumption caches for a given function.
 class AssumptionAnalysis : public AnalysisInfoMixin<AssumptionAnalysis> {
   friend AnalysisInfoMixin<AssumptionAnalysis>;
-
   static AnalysisKey Key;
 
 public:
-  using Result = AssumptionCache;
+  typedef AssumptionCache Result;
 
   AssumptionCache run(Function &F, FunctionAnalysisManager &) {
     return AssumptionCache(F);
   }
 };
 
-/// Printer pass for the \c AssumptionAnalysis results.
+/// \brief Printer pass for the \c AssumptionAnalysis results.
 class AssumptionPrinterPass : public PassInfoMixin<AssumptionPrinterPass> {
   raw_ostream &OS;
 
 public:
   explicit AssumptionPrinterPass(raw_ostream &OS) : OS(OS) {}
-
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 };
 
-/// An immutable pass that tracks lazily created \c AssumptionCache
+/// \brief An immutable pass that tracks lazily created \c AssumptionCache
 /// objects.
 ///
 /// This is essentially a workaround for the legacy pass manager's weaknesses
@@ -184,11 +177,10 @@ class AssumptionCacheTracker : public ImmutablePass {
   /// delete our cache of intrinsics for a function when it is deleted.
   class FunctionCallbackVH final : public CallbackVH {
     AssumptionCacheTracker *ACT;
-
     void deleted() override;
 
   public:
-    using DMI = DenseMapInfo<Value *>;
+    typedef DenseMapInfo<Value *> DMI;
 
     FunctionCallbackVH(Value *V, AssumptionCacheTracker *ACT = nullptr)
         : CallbackVH(V), ACT(ACT) {}
@@ -196,14 +188,12 @@ class AssumptionCacheTracker : public ImmutablePass {
 
   friend FunctionCallbackVH;
 
-  using FunctionCallsMap =
-      DenseMap<FunctionCallbackVH, std::unique_ptr<AssumptionCache>,
-               FunctionCallbackVH::DMI>;
-
+  typedef DenseMap<FunctionCallbackVH, std::unique_ptr<AssumptionCache>,
+                   FunctionCallbackVH::DMI> FunctionCallsMap;
   FunctionCallsMap AssumptionCaches;
 
 public:
-  /// Get the cached assumptions for a function.
+  /// \brief Get the cached assumptions for a function.
   ///
   /// If no assumptions are cached, this will scan the function. Otherwise, the
   /// existing cache will be returned.
@@ -218,7 +208,6 @@ public:
   }
 
   void verifyAnalysis() const override;
-
   bool doFinalization(Module &) override {
     verifyAnalysis();
     return false;
@@ -229,4 +218,4 @@ public:
 
 } // end namespace llvm
 
-#endif // LLVM_ANALYSIS_ASSUMPTIONCACHE_H
+#endif

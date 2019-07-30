@@ -44,8 +44,7 @@ ENTRY(bcopy)
 	xchgq	%rdi,%rsi
 	/* fall into memmove */
 
-NENTRY(memmove)
-	RETGUARD_SETUP(memmove, r10)
+ENTRY(memmove)
 	movq	%rdi,%r11	/* save dest */
 	movq	%rdx,%rcx
 	movq	%rdi,%rax
@@ -55,7 +54,6 @@ NENTRY(memmove)
 	jmp	2f		/* nope */
 
 ENTRY(memcpy)
-	RETGUARD_SETUP(memmove, r10)
 	movq	%rdi,%r11	/* save dest */
 	movq	%rdx,%rcx
 2:
@@ -67,7 +65,7 @@ ENTRY(memcpy)
 	rep
 	movsb
 	movq	%r11,%rax
-	jmp 3f
+	ret
 1:
 	addq	%rcx,%rdi	/* copy backwards. */
 	addq	%rcx,%rsi
@@ -85,5 +83,4 @@ ENTRY(memcpy)
 	movsq
 	movq	%r11,%rax
 	cld
-3:	RETGUARD_CHECK(memmove, r10)
 	ret

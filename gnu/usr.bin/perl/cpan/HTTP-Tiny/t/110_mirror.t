@@ -5,8 +5,7 @@ use warnings;
 
 use File::Basename;
 use Test::More 0.88;
-use lib 't';
-use Util    qw[tmpfile rewind slurp monkey_patch dir_list parse_case
+use t::Util    qw[tmpfile rewind slurp monkey_patch dir_list parse_case
                   set_socket_source sort_headers $CRLF $LF];
 use HTTP::Tiny;
 use File::Temp qw/tempdir/;
@@ -52,11 +51,6 @@ for my $file ( dir_list("corpus", qr/^mirror/ ) ) {
     open my $fh, ">", $tempfile;
     close $fh;
     utime $mtime, $mtime, $tempfile;
-    if ($^O eq 'MSWin32') {
-        # Deal with stat and daylight savings issues on Windows
-        # by reading back mtime
-        $timestamp{$url_basename} = (stat $tempfile)[9];
-    }
   }
 
   # setup mocking and test

@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// This file registers the WebAssembly target.
+/// \brief This file registers the WebAssembly target.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -30,7 +30,7 @@ Target &llvm::getTheWebAssemblyTarget64() {
 
 extern "C" void LLVMInitializeWebAssemblyTargetInfo() {
   RegisterTarget<Triple::wasm32> X(getTheWebAssemblyTarget32(), "wasm32",
-                                   "WebAssembly 32-bit", "WebAssembly");
+                                   "WebAssembly 32-bit");
   RegisterTarget<Triple::wasm64> Y(getTheWebAssemblyTarget64(), "wasm64",
-                                   "WebAssembly 64-bit", "WebAssembly");
+                                   "WebAssembly 64-bit");
 }

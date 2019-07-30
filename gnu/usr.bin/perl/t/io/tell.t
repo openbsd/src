@@ -2,11 +2,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
+    @INC = '../lib';
     require './test.pl';
-    set_up_inc('../lib');
 }
 
-plan(35);
+print "1..35\n";
 
 $TST = 'TST';
 
@@ -16,7 +16,7 @@ $Is_Dosish = ($^O eq 'MSWin32' or $^O eq 'NetWare' or $^O eq 'dos' or
 
 open($TST, 'harness') || (die "Can't open harness");
 binmode $TST if $Is_Dosish;
-ok(!eof(TST), "eof is false after open() non-empty file");
+if (eof(TST)) { print "not ok 1\n"; } else { print "ok 1\n"; }
 
 $firstline = <$TST>;
 $secondpos = tell;
@@ -25,33 +25,33 @@ $x = 0;
 while (<TST>) {
     if (eof) {$x++;}
 }
-is($x, 1, "only one eof is in the file");
+if ($x == 1) { print "ok 2\n"; } else { print "not ok 2\n"; }
 
 $lastpos = tell;
 
-ok(eof, "tell() doesn't change current state of eof");
+unless (eof) { print "not ok 3\n"; } else { print "ok 3\n"; }
 
-ok(seek($TST,0,0), "set current position at beginning of the file");
+if (seek($TST,0,0)) { print "ok 4\n"; } else { print "not ok 4\n"; }
 
-ok(!eof, "reset at beginning of file clears eof flag");
+if (eof) { print "not ok 5\n"; } else { print "ok 5\n"; }
 
-is($firstline, <TST>, "first line is the same after open() and after seek()");
+if ($firstline eq <TST>) { print "ok 6\n"; } else { print "not ok 6\n"; }
 
-is($secondpos, tell, "position is the same after reading the first line");
+if ($secondpos == tell) { print "ok 7\n"; } else { print "not ok 7\n"; }
 
-ok(seek(TST,0,1), "move current position on +0");
+if (seek(TST,0,1)) { print "ok 8\n"; } else { print "not ok 8\n"; }
 
-ok(!eof($TST), "it doesn't set eof flag");
+if (eof($TST)) { print "not ok 9\n"; } else { print "ok 9\n"; }
 
-is($secondpos, tell, "it doesn't change tell position");
+if ($secondpos == tell) { print "ok 10\n"; } else { print "not ok 10\n"; }
 
-ok(seek(TST,0,2), "move current position at the end of the file");
+if (seek(TST,0,2)) { print "ok 11\n"; } else { print "not ok 11\n"; }
 
-is($lastpos, tell, "the position is the same as after reading whole file line by line");
+if ($lastpos == tell) { print "ok 12\n"; } else { print "not ok 12\n"; }
 
-ok(eof, "it sets eof flag");
+unless (eof) { print "not ok 13\n"; } else { print "ok 13\n"; }
 
-ok($., "current line number \$. is not null");
+if ($. == 0) { print "not ok 14\n"; } else { print "ok 14\n"; }
 
 $curline = $.;
 open(OTHER, 'harness') || (die "Can't open harness: $!");
@@ -60,43 +60,42 @@ binmode OTHER if (($^O eq 'MSWin32') || ($^O eq 'NetWare'));
 {
     local($.);
 
-    ok($., "open() doesn't change filehandler for \$.");
+    if ($. == 0) { print "not ok 15\n"; } else { print "ok 15\n"; }
 
     tell OTHER;
-    ok(!$., "tell() does change filehandler for \$.");
+    if ($. == 0) { print "ok 16\n"; } else { print "not ok 16\n"; }
 
     $. = 5;
     scalar <OTHER>;
-    is ($., 6, "reading of one line adds +1 to current line number \$.");
+    if ($. == 6) { print "ok 17\n"; } else { print "not ok 17\n"; }
 }
 
-is($., $curline, "the 'local' correctly restores old value of filehandler for \$. when goes out of scope");
+if ($. == $curline) { print "ok 18\n"; } else { print "not ok 18\n"; }
 
 {
     local($.);
 
     scalar <OTHER>;
-    is($., 7, "reading of one line inside 'local' change filehandler for \$.");
+    if ($. == 7) { print "ok 19\n"; } else { print "not ok 19\n"; }
 }
 
-is($., $curline, "the 'local' correctly restores old value of filehandler for \$. when goes out of scope");
+if ($. == $curline) { print "ok 20\n"; } else { print "not ok 20\n"; }
 
 {
     local($.);
 
     tell OTHER;
-    is($., 7, "tell() inside 'local' change filehandler for \$.");
+    if ($. == 7) { print "ok 21\n"; } else { print "not ok 21\n"; }
 }
 
 close(OTHER);
 {
     no warnings 'closed';
-    is(tell(OTHER), -1, "tell() for closed file returns -1");
+    if (tell(OTHER) == -1)  { print "ok 22\n"; } else { print "not ok 22\n"; }
 }
 {
     no warnings 'unopened';
-    # this must be a handle that has never been opened
-    is(tell(UNOPENED), -1, "tell() for unopened file returns -1");
+    if (tell(ETHER) == -1)  { print "ok 23\n"; } else { print "not ok 23\n"; }
 }
 
 # ftell(STDIN) (or any std streams) is undefined, it can return -1 or
@@ -109,15 +108,15 @@ close($TST);
 open($tst,">$written")  || die "Cannot open $written:$!";
 binmode $tst if $Is_Dosish;
 
-is(tell($tst), 0, "tell() for new file returns 0");
+if (tell($tst) == 0) { print "ok 24\n"; } else { print "not ok 24\n"; }
 
 print $tst "fred\n";
 
-is(tell($tst), 5, 'tell() after writing "fred\n" returns 5');
+if (tell($tst) == 5) { print "ok 25\n"; } else { print "not ok 25\n"; }
 
 print $tst "more\n";
 
-is(tell($tst), 10, 'tell() after writing "more\n" returns 10');
+if (tell($tst) == 10) { print "ok 26\n"; } else { print "not ok 26\n"; }
 
 close($tst);
 
@@ -128,21 +127,21 @@ if (0)
 {
  # :stdio does not pass these so ignore them for now 
 
-is(tell($tst), 0, 'tell() for open mode "+>>" returns 0');
+if (tell($tst) == 0) { print "ok 27\n"; } else { print "not ok 27\n"; }
 
 $line = <$tst>;
 
-is($line, "fred\n", 'check first line in mode "+>>"');
+if ($line eq "fred\n") { print "ok 29\n"; } else { print "not ok 29\n"; }
 
-is(tell($tst), 5, "check tell() afrer reading first line");
+if (tell($tst) == 5) { print "ok 30\n"; } else { print "not ok 30\n"; }
 
 }
 
 print $tst "xxxx\n";
 
-ok( tell($tst) == 15 ||
-    tell($tst) == 5,
-    'check tell() after writing "xxxx\n"'); # unset PERLIO or PERLIO=stdio (e.g. HP-UX, Solaris)
+if (tell($tst) == 15 ||
+    tell($tst) == 5) # unset PERLIO or PERLIO=stdio (e.g. HP-UX, Solaris)
+{ print "ok 27\n"; } else { print "not ok 27\n"; }
 
 close($tst);
 
@@ -157,17 +156,17 @@ open($tst,">>$written")  || die "Cannot open $written:$!";
 # Cygwin and VOS differ from other implementations.
 
 if (tell ($tst) == 6) {
-  pass("check tell() after writing in mode '>>'");
+  print "ok 28\n";
 }
 else {
   if (($^O eq "cygwin") && (&PerlIO::get_layers($tst) eq 'stdio')) {
-    fail "# TODO: file pointer not at eof";
+    print "not ok 28 # TODO: file pointer not at eof\n";
   }
   elsif ($^O eq "vos") {
-    fail "# TODO: Hit bug posix-2056. file pointer not at eof";
+    print "not ok 28 # TODO: Hit bug posix-2056. file pointer not at eof\n";
   }
   else {
-    fail "file pointer not at eof";
+    print "not ok 28 - file pointer not at eof\n";
   }
 }
 
@@ -175,15 +174,22 @@ close $tst;
 
 open FH, "test.pl";
 $fh = *FH; # coercible glob
-is(tell($fh), 0, "tell on coercible glob");
-is(tell, 0, "argless tell after tell \$coercible");
+$not = "not " x! (tell $fh == 0);
+print "${not}ok 29 - tell on coercible glob\n";
+$not = "not " x! (tell == 0);
+print "${not}ok 30 - argless tell after tell \$coercible\n";
 tell *$fh;
-is(tell, 0, "argless tell after tell *\$coercible");
+$not = "not " x! (tell == 0);
+print "${not}ok 31 - argless tell after tell *\$coercible\n";
 eof $fh;
-is(tell, 0, "argless tell after eof \$coercible");
+$not = "not " x! (tell == 0);
+print "${not}ok 32 - argless tell after eof \$coercible\n";
 eof *$fh;
-is(tell, 0, "argless tell after eof *\$coercible");
+$not = "not " x! (tell == 0);
+print "${not}ok 33 - argless tell after eof *\$coercible\n";
 seek $fh,0,0;
-is(tell, 0, "argless tell after seek \$coercible...");
+$not = "not " x! (tell == 0);
+print "${not}ok 34 - argless tell after seek \$coercible...\n";
 seek *$fh,0,0;
-is(tell, 0, "argless tell after seek *\$coercible...");
+$not = "not " x! (tell == 0);
+print "${not}ok 35 - argless tell after seek *\$coercible...\n";

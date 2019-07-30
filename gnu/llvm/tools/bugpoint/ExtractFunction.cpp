@@ -85,7 +85,7 @@ std::unique_ptr<Module>
 BugDriver::deleteInstructionFromProgram(const Instruction *I,
                                         unsigned Simplification) {
   // FIXME, use vmap?
-  std::unique_ptr<Module> Clone = CloneModule(*Program);
+  Module *Clone = CloneModule(Program).release();
 
   const BasicBlock *PBB = I->getParent();
   const Function *PF = PBB->getParent();
@@ -118,7 +118,8 @@ BugDriver::deleteInstructionFromProgram(const Instruction *I,
     Passes.push_back("simplifycfg"); // Delete dead control flow
 
   Passes.push_back("verify");
-  std::unique_ptr<Module> New = runPassesOn(Clone.get(), Passes);
+  std::unique_ptr<Module> New = runPassesOn(Clone, Passes);
+  delete Clone;
   if (!New) {
     errs() << "Instruction removal failed.  Sorry. :(  Please report a bug!\n";
     exit(1);
@@ -127,8 +128,7 @@ BugDriver::deleteInstructionFromProgram(const Instruction *I,
 }
 
 std::unique_ptr<Module>
-BugDriver::performFinalCleanups(std::unique_ptr<Module> M,
-                                bool MayModifySemantics) {
+BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
   // Make all functions external, so GlobalDCE doesn't delete them...
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     I->setLinkage(GlobalValue::ExternalLinkage);
@@ -141,11 +141,12 @@ BugDriver::performFinalCleanups(std::unique_ptr<Module> M,
   else
     CleanupPasses.push_back("deadargelim");
 
-  std::unique_ptr<Module> New = runPassesOn(M.get(), CleanupPasses);
+  std::unique_ptr<Module> New = runPassesOn(M, CleanupPasses);
   if (!New) {
     errs() << "Final cleanups failed.  Sorry. :(  Please report a bug!\n";
     return nullptr;
   }
+  delete M;
   return New;
 }
 
@@ -156,7 +157,7 @@ std::unique_ptr<Module> BugDriver::extractLoop(Module *M) {
   std::unique_ptr<Module> NewM = runPassesOn(M, LoopExtractPasses);
   if (!NewM) {
     outs() << "*** Loop extraction failed: ";
-    EmitProgressBitcode(*M, "loopextraction", true);
+    EmitProgressBitcode(M, "loopextraction", true);
     outs() << "*** Sorry. :(  Please report a bug!\n";
     return nullptr;
   }
@@ -318,15 +319,15 @@ llvm::SplitFunctionsOutOfModule(Module *M, const std::vector<Function *> &F,
   }
 
   ValueToValueMapTy NewVMap;
-  std::unique_ptr<Module> New = CloneModule(*M, NewVMap);
+  std::unique_ptr<Module> New = CloneModule(M, NewVMap);
 
   // Remove the Test functions from the Safe module
   std::set<Function *> TestFunctions;
   for (unsigned i = 0, e = F.size(); i != e; ++i) {
     Function *TNOF = cast<Function>(VMap[F[i]]);
-    LLVM_DEBUG(errs() << "Removing function ");
-    LLVM_DEBUG(TNOF->printAsOperand(errs(), false));
-    LLVM_DEBUG(errs() << "\n");
+    DEBUG(errs() << "Removing function ");
+    DEBUG(TNOF->printAsOperand(errs(), false));
+    DEBUG(errs() << "\n");
     TestFunctions.insert(cast<Function>(NewVMap[TNOF]));
     DeleteFunctionBody(TNOF); // Function is now external in this module!
   }
@@ -372,51 +373,51 @@ llvm::SplitFunctionsOutOfModule(Module *M, const std::vector<Function *> &F,
 std::unique_ptr<Module>
 BugDriver::extractMappedBlocksFromModule(const std::vector<BasicBlock *> &BBs,
                                          Module *M) {
-  auto Temp = sys::fs::TempFile::create(OutputPrefix + "-extractblocks%%%%%%%");
-  if (!Temp) {
+  SmallString<128> Filename;
+  int FD;
+  std::error_code EC = sys::fs::createUniqueFile(
+      OutputPrefix + "-extractblocks%%%%%%%", FD, Filename);
+  if (EC) {
     outs() << "*** Basic Block extraction failed!\n";
-    errs() << "Error creating temporary file: " << toString(Temp.takeError())
-           << "\n";
-    EmitProgressBitcode(*M, "basicblockextractfail", true);
+    errs() << "Error creating temporary file: " << EC.message() << "\n";
+    EmitProgressBitcode(M, "basicblockextractfail", true);
     return nullptr;
   }
-  DiscardTemp Discard{*Temp};
+  sys::RemoveFileOnSignal(Filename);
 
-  // Extract all of the blocks except the ones in BBs.
-  SmallVector<BasicBlock *, 32> BlocksToExtract;
-  for (Function &F : *M)
-    for (BasicBlock &BB : F)
-      // Check if this block is going to be extracted.
-      if (std::find(BBs.begin(), BBs.end(), &BB) == BBs.end())
-        BlocksToExtract.push_back(&BB);
-
-  raw_fd_ostream OS(Temp->FD, /*shouldClose*/ false);
-  for (BasicBlock *BB : BBs) {
+  tool_output_file BlocksToNotExtractFile(Filename.c_str(), FD);
+  for (std::vector<BasicBlock *>::const_iterator I = BBs.begin(), E = BBs.end();
+       I != E; ++I) {
+    BasicBlock *BB = *I;
     // If the BB doesn't have a name, give it one so we have something to key
     // off of.
     if (!BB->hasName())
       BB->setName("tmpbb");
-    OS << BB->getParent()->getName() << " " << BB->getName() << "\n";
+    BlocksToNotExtractFile.os() << BB->getParent()->getName() << " "
+                                << BB->getName() << "\n";
   }
-  OS.flush();
-  if (OS.has_error()) {
+  BlocksToNotExtractFile.os().close();
+  if (BlocksToNotExtractFile.os().has_error()) {
     errs() << "Error writing list of blocks to not extract\n";
-    EmitProgressBitcode(*M, "basicblockextractfail", true);
-    OS.clear_error();
+    EmitProgressBitcode(M, "basicblockextractfail", true);
+    BlocksToNotExtractFile.os().clear_error();
     return nullptr;
   }
+  BlocksToNotExtractFile.keep();
 
   std::string uniqueFN = "--extract-blocks-file=";
-  uniqueFN += Temp->TmpName;
+  uniqueFN += Filename.str();
   const char *ExtraArg = uniqueFN.c_str();
 
   std::vector<std::string> PI;
   PI.push_back("extract-blocks");
   std::unique_ptr<Module> Ret = runPassesOn(M, PI, 1, &ExtraArg);
 
+  sys::fs::remove(Filename.c_str());
+
   if (!Ret) {
     outs() << "*** Basic Block extraction failed, please report a bug!\n";
-    EmitProgressBitcode(*M, "basicblockextractfail", true);
+    EmitProgressBitcode(M, "basicblockextractfail", true);
   }
   return Ret;
 }

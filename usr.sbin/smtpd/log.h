@@ -1,7 +1,7 @@
-/*	$OpenBSD: log.h,v 1.8 2018/04/26 20:57:59 eric Exp $	*/
+/*	$OpenBSD: log.h,v 1.7 2017/01/09 14:49:22 reyk Exp $	*/
 
 /*
- * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2010 Gilles Chehade <gilles@poolp.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,12 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef LOG_H
-#define LOG_H
+#include <syslog.h>
 
-#include <stdarg.h>
-#include <sys/cdefs.h>
-
+/* log.c */
 void	log_init(int, int);
 void	log_procinit(const char *);
 void	log_setverbose(int);
@@ -43,4 +40,7 @@ __dead void fatal(const char *, ...)
 __dead void fatalx(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
 
-#endif /* LOG_H */
+/* util.c */
+void	log_trace_verbose(int);
+void	log_trace(int, const char *, ...)
+	    __attribute__((format (printf, 2, 3)));

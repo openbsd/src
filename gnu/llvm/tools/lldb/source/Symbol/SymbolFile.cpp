@@ -30,7 +30,8 @@ SymbolFile *SymbolFile::FindPlugin(ObjectFile *obj_file) {
   if (obj_file != nullptr) {
 
     // We need to test the abilities of this section list. So create what it
-    // would be with this new obj_file.
+    // would
+    // be with this new obj_file.
     lldb::ModuleSP module_sp(obj_file->GetModule());
     if (module_sp) {
       // Default to the main module section list.
@@ -59,16 +60,16 @@ SymbolFile *SymbolFile::FindPlugin(ObjectFile *obj_file) {
         if (sym_file_abilities > best_symfile_abilities) {
           best_symfile_abilities = sym_file_abilities;
           best_symfile_ap.reset(curr_symfile_ap.release());
-          // If any symbol file parser has all of the abilities, then we should
-          // just stop looking.
+          // If any symbol file parser has all of the abilities, then
+          // we should just stop looking.
           if ((kAllAbilities & sym_file_abilities) == kAllAbilities)
             break;
         }
       }
     }
     if (best_symfile_ap.get()) {
-      // Let the winning symbol file parser initialize itself more completely
-      // now that it has been chosen
+      // Let the winning symbol file parser initialize itself more
+      // completely now that it has been chosen
       best_symfile_ap->InitializeObject();
     }
   }
@@ -96,16 +97,19 @@ uint32_t SymbolFile::ResolveSymbolContext(const FileSpec &file_spec,
   return 0;
 }
 
-uint32_t
-SymbolFile::FindGlobalVariables(const ConstString &name,
-                                const CompilerDeclContext *parent_decl_ctx,
-                                uint32_t max_matches, VariableList &variables) {
+uint32_t SymbolFile::FindGlobalVariables(
+    const ConstString &name, const CompilerDeclContext *parent_decl_ctx,
+    bool append, uint32_t max_matches, VariableList &variables) {
+  if (!append)
+    variables.Clear();
   return 0;
 }
 
 uint32_t SymbolFile::FindGlobalVariables(const RegularExpression &regex,
-                                         uint32_t max_matches,
+                                         bool append, uint32_t max_matches,
                                          VariableList &variables) {
+  if (!append)
+    variables.Clear();
   return 0;
 }
 

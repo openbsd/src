@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.189 2019/01/07 06:51:37 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.181 2017/05/30 16:21:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012-2019 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -47,7 +47,7 @@ static	void		dword(struct roff_man *, int, int, const char *,
 static	int		find_pending(struct roff_man *, enum roff_tok,
 				int, int, struct roff_node *);
 static	int		lookup(struct roff_man *, int, int, int, const char *);
-static	int		macro_or_word(MACRO_PROT_ARGS, char *, int);
+static	int		macro_or_word(MACRO_PROT_ARGS, int);
 static	void		break_intermediate(struct roff_node *,
 				struct roff_node *);
 static	int		parse_rest(struct roff_man *, enum roff_tok,
@@ -58,7 +58,7 @@ static	void		rew_last(struct roff_man *, const struct roff_node *);
 static	void		rew_pending(struct roff_man *,
 				const struct roff_node *);
 
-static const struct mdoc_macro mdoc_macros[MDOC_MAX - MDOC_Dd] = {
+const	struct mdoc_macro __mdoc_macros[MDOC_MAX - MDOC_Dd] = {
 	{ in_line_eoln, MDOC_PROLOGUE }, /* Dd */
 	{ in_line_eoln, MDOC_PROLOGUE }, /* Dt */
 	{ in_line_eoln, MDOC_PROLOGUE }, /* Os */
@@ -199,14 +199,8 @@ static const struct mdoc_macro mdoc_macros[MDOC_MAX - MDOC_Dd] = {
 	{ in_line_eoln, 0 }, /* %U */
 	{ phrase_ta, MDOC_CALLABLE | MDOC_PARSED | MDOC_JOIN }, /* Ta */
 };
+const	struct mdoc_macro *const mdoc_macros = __mdoc_macros - MDOC_Dd;
 
-
-const struct mdoc_macro *
-mdoc_macro(enum roff_tok tok)
-{
-	assert(tok >= MDOC_Dd && tok < MDOC_MAX);
-	return mdoc_macros + (tok - MDOC_Dd);
-}
 
 /*
  * This is called at the end of parsing.  It must traverse up the tree,
@@ -225,13 +219,14 @@ mdoc_endparse(struct roff_man *mdoc)
 
 	for ( ; n; n = n->parent)
 		if (n->type == ROFFT_BLOCK &&
-		    mdoc_macro(n->tok)->flags & MDOC_EXPLICIT)
-			mandoc_msg(MANDOCERR_BLK_NOEND,
-			    n->line, n->pos, "%s", roff_name[n->tok]);
+		    mdoc_macros[n->tok].flags & MDOC_EXPLICIT)
+			mandoc_msg(MANDOCERR_BLK_NOEND, mdoc->parse,
+			    n->line, n->pos, roff_name[n->tok]);
 
 	/* Rewind to the first. */
 
-	rew_last(mdoc, mdoc->meta.first);
+	rew_last(mdoc, mdoc->first);
+	mdoc_state_reset(mdoc);
 }
 
 /*
@@ -247,12 +242,13 @@ lookup(struct roff_man *mdoc, int from, int line, int ppos, const char *p)
 		mdoc->flags &= ~MDOC_PHRASEQF;
 		return TOKEN_NONE;
 	}
-	if (from == TOKEN_NONE || mdoc_macro(from)->flags & MDOC_PARSED) {
+	if (from == TOKEN_NONE || mdoc_macros[from].flags & MDOC_PARSED) {
 		res = roffhash_find(mdoc->mdocmac, p, 0);
 		if (res != TOKEN_NONE) {
-			if (mdoc_macro(res)->flags & MDOC_CALLABLE)
+			if (mdoc_macros[res].flags & MDOC_CALLABLE)
 				return res;
-			mandoc_msg(MANDOCERR_MACRO_CALL, line, ppos, "%s", p);
+			mandoc_msg(MANDOCERR_MACRO_CALL,
+			    mdoc->parse, line, ppos, p);
 		}
 	}
 	return TOKEN_NONE;
@@ -293,8 +289,6 @@ rew_pending(struct roff_man *mdoc, const struct roff_node *n)
 			case ROFFT_HEAD:
 				roff_body_alloc(mdoc, n->line, n->pos,
 				    n->tok);
-				if (n->tok == MDOC_Ss)
-					mdoc->flags &= ~ROFF_NONOFILL;
 				break;
 			case ROFFT_BLOCK:
 				break;
@@ -413,15 +407,16 @@ find_pending(struct roff_man *mdoc, enum roff_tok tok, int line, int ppos,
 		if (n->flags & NODE_ENDED)
 			continue;
 		if (n->type == ROFFT_BLOCK &&
-		    mdoc_macro(n->tok)->flags & MDOC_EXPLICIT) {
+		    mdoc_macros[n->tok].flags & MDOC_EXPLICIT) {
 			irc = 1;
 			break_intermediate(mdoc->last, target);
 			if (target->type == ROFFT_HEAD)
 				target->flags |= NODE_ENDED;
 			else if ( ! (target->flags & NODE_ENDED)) {
-				mandoc_msg(MANDOCERR_BLK_NEST,
-				    line, ppos, "%s breaks %s",
-				    roff_name[tok], roff_name[n->tok]);
+				mandoc_vmsg(MANDOCERR_BLK_NEST,
+				    mdoc->parse, line, ppos,
+				    "%s breaks %s", roff_name[tok],
+				    roff_name[n->tok]);
 				mdoc_endbody_alloc(mdoc, line, ppos,
 				    tok, target);
 			}
@@ -473,15 +468,14 @@ append_delims(struct roff_man *mdoc, int line, int *pos, char *buf)
 {
 	char		*p;
 	int		 la;
-	enum margserr	 ac;
 
 	if (buf[*pos] == '\0')
 		return;
 
 	for (;;) {
 		la = *pos;
-		ac = mdoc_args(mdoc, line, pos, buf, TOKEN_NONE, &p);
-		if (ac == ARGS_EOLN)
+		if (mdoc_args(mdoc, line, pos, buf, TOKEN_NONE, &p) ==
+		    ARGS_EOLN)
 			break;
 		dword(mdoc, line, la, p, DELIM_MAX, 1);
 
@@ -499,8 +493,6 @@ append_delims(struct roff_man *mdoc, int line, int *pos, char *buf)
 
 		if (mandoc_eos(p, strlen(p)))
 			mdoc->last->flags |= NODE_EOS;
-		if (ac == ARGS_ALLOC)
-			free(p);
 	}
 }
 
@@ -510,23 +502,27 @@ append_delims(struct roff_man *mdoc, int line, int *pos, char *buf)
  * Otherwise, allocate it and return 0.
  */
 static int
-macro_or_word(MACRO_PROT_ARGS, char *p, int parsed)
+macro_or_word(MACRO_PROT_ARGS, int parsed)
 {
+	char		*p;
 	int		 ntok;
 
-	ntok = buf[ppos] == '"' || parsed == 0 ||
-	    mdoc->flags & MDOC_PHRASELIT ? TOKEN_NONE :
-	    lookup(mdoc, tok, line, ppos, p);
+	p = buf + ppos;
+	ntok = TOKEN_NONE;
+	if (*p == '"')
+		p++;
+	else if (parsed && ! (mdoc->flags & MDOC_PHRASELIT))
+		ntok = lookup(mdoc, tok, line, ppos, p);
 
 	if (ntok == TOKEN_NONE) {
 		dword(mdoc, line, ppos, p, DELIM_MAX, tok == TOKEN_NONE ||
-		    mdoc_macro(tok)->flags & MDOC_JOIN);
+		    mdoc_macros[tok].flags & MDOC_JOIN);
 		return 0;
 	} else {
 		if (tok != TOKEN_NONE &&
-		    mdoc_macro(tok)->fp == in_line_eoln)
+		    mdoc_macros[tok].fp == in_line_eoln)
 			rew_elem(mdoc, tok);
-		(*mdoc_macro(ntok)->fp)(mdoc, ntok, line, ppos, pos, buf);
+		mdoc_macro(mdoc, ntok, line, ppos, pos, buf);
 		if (tok == TOKEN_NONE)
 			append_delims(mdoc, line, pos, buf);
 		return 1;
@@ -631,7 +627,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 			 * the scope - of the current block ends.
 			 */
 
-			mandoc_msg(MANDOCERR_BLK_NEST,
+			mandoc_vmsg(MANDOCERR_BLK_NEST, mdoc->parse,
 			    line, ppos, "%s breaks %s",
 			    roff_name[atok], roff_name[later->tok]);
 
@@ -674,8 +670,8 @@ blk_exp_close(MACRO_PROT_ARGS)
 	}
 
 	if (body == NULL) {
-		mandoc_msg(MANDOCERR_BLK_NOTOPEN, line, ppos,
-		    "%s", roff_name[tok]);
+		mandoc_msg(MANDOCERR_BLK_NOTOPEN, mdoc->parse,
+		    line, ppos, roff_name[tok]);
 		if (maxargs && endbody == NULL) {
 			/*
 			 * Stray .Ec without previous .Eo:
@@ -690,25 +686,14 @@ blk_exp_close(MACRO_PROT_ARGS)
 			mdoc_tail_alloc(mdoc, line, ppos, atok);
 	}
 
-	if ((mdoc_macro(tok)->flags & MDOC_PARSED) == 0) {
+	if ( ! (mdoc_macros[tok].flags & MDOC_PARSED)) {
 		if (buf[*pos] != '\0')
-			mandoc_msg(MANDOCERR_ARG_SKIP, line, ppos,
-			    "%s %s", roff_name[tok], buf + *pos);
+			mandoc_vmsg(MANDOCERR_ARG_SKIP,
+			    mdoc->parse, line, ppos,
+			    "%s %s", roff_name[tok],
+			    buf + *pos);
 		if (endbody == NULL && n != NULL)
 			rew_pending(mdoc, n);
-
-		/*
-		 * Restore the fill mode that was set before the display.
-		 * This needs to be done here rather than during validation
-		 * such that subsequent nodes get the right flags.
-		 */
-
-		if (tok == MDOC_Ed && body != NULL) {
-			if (body->flags & NODE_NOFILL)
-				mdoc->flags |= ROFF_NOFILL;
-			else
-				mdoc->flags &= ~ROFF_NOFILL;
-		}
 		return;
 	}
 
@@ -730,18 +715,14 @@ blk_exp_close(MACRO_PROT_ARGS)
 
 		if (ntok == TOKEN_NONE) {
 			dword(mdoc, line, lastarg, p, DELIM_MAX,
-			    mdoc_macro(tok)->flags & MDOC_JOIN);
-			if (ac == ARGS_ALLOC)
-				free(p);
+			    MDOC_JOIN & mdoc_macros[tok].flags);
 			continue;
 		}
-		if (ac == ARGS_ALLOC)
-			free(p);
 
 		if (n != NULL)
 			rew_last(mdoc, n);
 		mdoc->flags &= ~MDOC_NEWLINE;
-		(*mdoc_macro(ntok)->fp)(mdoc, ntok, line, lastarg, pos, buf);
+		mdoc_macro(mdoc, ntok, line, lastarg, pos, buf);
 		break;
 	}
 
@@ -845,14 +826,12 @@ in_line(MACRO_PROT_ARGS)
 			} else if ( ! nc && ! cnt) {
 				mdoc_argv_free(arg);
 				mandoc_msg(MANDOCERR_MACRO_EMPTY,
-				    line, ppos, "%s", roff_name[tok]);
+				    mdoc->parse, line, ppos,
+				    roff_name[tok]);
 			}
-			(*mdoc_macro(ntok)->fp)(mdoc, ntok,
-			    line, la, pos, buf);
+			mdoc_macro(mdoc, ntok, line, la, pos, buf);
 			if (nl)
 				append_delims(mdoc, line, pos, buf);
-			if (ac == ARGS_ALLOC)
-				free(p);
 			return;
 		}
 
@@ -894,10 +873,7 @@ in_line(MACRO_PROT_ARGS)
 		}
 
 		dword(mdoc, line, la, p, d,
-		    mdoc_macro(tok)->flags & MDOC_JOIN);
-
-		if (ac == ARGS_ALLOC)
-			free(p);
+		    mdoc_macros[tok].flags & MDOC_JOIN);
 
 		/*
 		 * If the first argument is a closing delimiter,
@@ -936,8 +912,8 @@ in_line(MACRO_PROT_ARGS)
 			rew_last(mdoc, mdoc->last);
 		} else {
 			mdoc_argv_free(arg);
-			mandoc_msg(MANDOCERR_MACRO_EMPTY,
-			    line, ppos, "%s", roff_name[tok]);
+			mandoc_msg(MANDOCERR_MACRO_EMPTY, mdoc->parse,
+			    line, ppos, roff_name[tok]);
 		}
 	}
 	if (nl)
@@ -949,25 +925,24 @@ in_line(MACRO_PROT_ARGS)
 static void
 blk_full(MACRO_PROT_ARGS)
 {
+	int		  la, nl, parsed;
 	struct mdoc_arg	 *arg;
 	struct roff_node *blk; /* Our own or a broken block. */
 	struct roff_node *head; /* Our own head. */
 	struct roff_node *body; /* Our own body. */
 	struct roff_node *n;
-	char		 *p;
-	size_t		  iarg;
-	int		  done, la, nl, parsed;
 	enum margserr	  ac, lac;
+	char		 *p;
 
 	nl = MDOC_NEWLINE & mdoc->flags;
 
 	if (buf[*pos] == '\0' && (tok == MDOC_Sh || tok == MDOC_Ss)) {
-		mandoc_msg(MANDOCERR_MACRO_EMPTY,
-		    line, ppos, "%s", roff_name[tok]);
+		mandoc_msg(MANDOCERR_MACRO_EMPTY, mdoc->parse,
+		    line, ppos, roff_name[tok]);
 		return;
 	}
 
-	if ((mdoc_macro(tok)->flags & MDOC_EXPLICIT) == 0) {
+	if ( ! (mdoc_macros[tok].flags & MDOC_EXPLICIT)) {
 
 		/* Here, tok is one of Sh Ss Nm Nd It. */
 
@@ -983,20 +958,21 @@ blk_full(MACRO_PROT_ARGS)
 
 			if (tok == MDOC_It && n->tok == MDOC_Bl) {
 				if (blk != NULL) {
-					mandoc_msg(MANDOCERR_BLK_BROKEN,
-					    line, ppos, "It breaks %s",
+					mandoc_vmsg(MANDOCERR_BLK_BROKEN,
+					    mdoc->parse, line, ppos,
+					    "It breaks %s",
 					    roff_name[blk->tok]);
 					rew_pending(mdoc, blk);
 				}
 				break;
 			}
 
-			if (mdoc_macro(n->tok)->flags & MDOC_EXPLICIT) {
+			if (mdoc_macros[n->tok].flags & MDOC_EXPLICIT) {
 				switch (tok) {
 				case MDOC_Sh:
 				case MDOC_Ss:
-					mandoc_msg(MANDOCERR_BLK_BROKEN,
-					    line, ppos,
+					mandoc_vmsg(MANDOCERR_BLK_BROKEN,
+					    mdoc->parse, line, ppos,
 					    "%s breaks %s", roff_name[tok],
 					    roff_name[n->tok]);
 					rew_pending(mdoc, n);
@@ -1022,7 +998,8 @@ blk_full(MACRO_PROT_ARGS)
 			/* Item breaking an explicit block. */
 
 			if (blk != NULL) {
-				mandoc_msg(MANDOCERR_BLK_BROKEN, line, ppos,
+				mandoc_vmsg(MANDOCERR_BLK_BROKEN,
+				    mdoc->parse, line, ppos,
 				    "It breaks %s", roff_name[blk->tok]);
 				rew_pending(mdoc, blk);
 				blk = NULL;
@@ -1036,7 +1013,7 @@ blk_full(MACRO_PROT_ARGS)
 		/* Skip items outside lists. */
 
 		if (tok == MDOC_It && (n == NULL || n->tok != MDOC_Bl)) {
-			mandoc_msg(MANDOCERR_IT_STRAY,
+			mandoc_vmsg(MANDOCERR_IT_STRAY, mdoc->parse,
 			    line, ppos, "It %s", buf + *pos);
 			roff_elem_alloc(mdoc, line, ppos, ROFF_br);
 			rew_elem(mdoc, ROFF_br);
@@ -1053,16 +1030,6 @@ blk_full(MACRO_PROT_ARGS)
 	 * regular child nodes.
 	 */
 
-	switch (tok) {
-	case MDOC_Sh:
-		mdoc->flags &= ~ROFF_NOFILL;
-		break;
-	case MDOC_Ss:
-		mdoc->flags |= ROFF_NONOFILL;
-		break;
-	default:
-		break;
-	}
 	mdoc_argv(mdoc, line, tok, &arg, pos, buf);
 	blk = mdoc_block_alloc(mdoc, line, ppos, tok, arg);
 	head = body = NULL;
@@ -1124,17 +1091,14 @@ blk_full(MACRO_PROT_ARGS)
 		}
 
 		if (tok == MDOC_Bd || tok == MDOC_Bk) {
-			mandoc_msg(MANDOCERR_ARG_EXCESS, line, la,
-			    "%s ... %s", roff_name[tok], buf + la);
-			if (ac == ARGS_ALLOC)
-				free(p);
+			mandoc_vmsg(MANDOCERR_ARG_EXCESS,
+			    mdoc->parse, line, la, "%s ... %s",
+			    roff_name[tok], buf + la);
 			break;
 		}
 		if (tok == MDOC_Rs) {
-			mandoc_msg(MANDOCERR_ARG_SKIP,
+			mandoc_vmsg(MANDOCERR_ARG_SKIP, mdoc->parse,
 			    line, la, "Rs %s", buf + la);
-			if (ac == ARGS_ALLOC)
-				free(p);
 			break;
 		}
 		if (ac == ARGS_PUNCT)
@@ -1149,8 +1113,6 @@ blk_full(MACRO_PROT_ARGS)
 		    ac != ARGS_PHRASE &&
 		    mdoc_isdelim(p) == DELIM_OPEN) {
 			dword(mdoc, line, la, p, DELIM_OPEN, 0);
-			if (ac == ARGS_ALLOC)
-				free(p);
 			continue;
 		}
 
@@ -1182,10 +1144,7 @@ blk_full(MACRO_PROT_ARGS)
 			continue;
 		}
 
-		done = macro_or_word(mdoc, tok, line, la, pos, buf, p, parsed);
-		if (ac == ARGS_ALLOC)
-			free(p);
-		if (done)
+		if (macro_or_word(mdoc, tok, line, la, pos, buf, parsed))
 			break;
 	}
 
@@ -1204,33 +1163,6 @@ blk_full(MACRO_PROT_ARGS)
 
 	rew_last(mdoc, head);
 	body = roff_body_alloc(mdoc, line, ppos, tok);
-	if (tok == MDOC_Ss)
-		mdoc->flags &= ~ROFF_NONOFILL;
-
-	/*
-	 * Set up fill mode for display blocks.
-	 * This needs to be done here up front rather than during
-	 * validation such that child nodes get the right flags.
-	 */
-
-	if (tok == MDOC_Bd && arg != NULL) {
-		for (iarg = 0; iarg < arg->argc; iarg++) {
-			switch (arg->argv[iarg].arg) {
-			case MDOC_Unfilled:
-			case MDOC_Literal:
-				mdoc->flags |= ROFF_NOFILL;
-				break;
-			case MDOC_Filled:
-			case MDOC_Ragged:
-			case MDOC_Centred:
-				mdoc->flags &= ~ROFF_NOFILL;
-				break;
-			default:
-				continue;
-			}
-			break;
-		}
-	}
 out:
 	if (mdoc->flags & MDOC_FREECOL) {
 		rew_last(mdoc, body);
@@ -1242,7 +1174,7 @@ out:
 static void
 blk_part_imp(MACRO_PROT_ARGS)
 {
-	int		  done, la, nl;
+	int		  la, nl;
 	enum margserr	  ac;
 	char		 *p;
 	struct roff_node *blk; /* saved block context */
@@ -1277,18 +1209,13 @@ blk_part_imp(MACRO_PROT_ARGS)
 
 		if (body == NULL && mdoc_isdelim(p) == DELIM_OPEN) {
 			dword(mdoc, line, la, p, DELIM_OPEN, 0);
-			if (ac == ARGS_ALLOC)
-				free(p);
 			continue;
 		}
 
 		if (body == NULL)
 			body = roff_body_alloc(mdoc, line, ppos, tok);
 
-		done = macro_or_word(mdoc, tok, line, la, pos, buf, p, 1);
-		if (ac == ARGS_ALLOC)
-			free(p);
-		if (done)
+		if (macro_or_word(mdoc, tok, line, la, pos, buf, 1))
 			break;
 	}
 	if (body == NULL)
@@ -1307,13 +1234,13 @@ blk_part_imp(MACRO_PROT_ARGS)
 	for (n = body->child; n && n->next; n = n->next)
 		/* Do nothing. */ ;
 	if (n && n->tok == MDOC_Ns)
-		roff_node_relink(mdoc, n);
+		mdoc_node_relink(mdoc, n);
 }
 
 static void
 blk_part_exp(MACRO_PROT_ARGS)
 {
-	int		  done, la, nl;
+	int		  la, nl;
 	enum margserr	  ac;
 	struct roff_node *head; /* keep track of head */
 	char		 *p;
@@ -1338,8 +1265,6 @@ blk_part_exp(MACRO_PROT_ARGS)
 
 		if (head == NULL && mdoc_isdelim(p) == DELIM_OPEN) {
 			dword(mdoc, line, la, p, DELIM_OPEN, 0);
-			if (ac == ARGS_ALLOC)
-				free(p);
 			continue;
 		}
 
@@ -1349,17 +1274,11 @@ blk_part_exp(MACRO_PROT_ARGS)
 				dword(mdoc, line, la, p, DELIM_MAX, 0);
 			rew_last(mdoc, head);
 			roff_body_alloc(mdoc, line, ppos, tok);
-			if (tok == MDOC_Eo) {
-				if (ac == ARGS_ALLOC)
-					free(p);
+			if (tok == MDOC_Eo)
 				continue;
-			}
 		}
 
-		done = macro_or_word(mdoc, tok, line, la, pos, buf, p, 1);
-		if (ac == ARGS_ALLOC)
-			free(p);
-		if (done)
+		if (macro_or_word(mdoc, tok, line, la, pos, buf, 1))
 			break;
 	}
 
@@ -1417,12 +1336,10 @@ in_line_argn(MACRO_PROT_ARGS)
 		la = *pos;
 		ac = mdoc_args(mdoc, line, pos, buf, tok, &p);
 
-		if ((ac == ARGS_WORD || ac == ARGS_ALLOC) && state == -1 &&
-		    (mdoc_macro(tok)->flags & MDOC_IGNDELIM) == 0 &&
+		if (ac == ARGS_WORD && state == -1 &&
+		    ! (mdoc_macros[tok].flags & MDOC_IGNDELIM) &&
 		    mdoc_isdelim(p) == DELIM_OPEN) {
 			dword(mdoc, line, la, p, DELIM_OPEN, 0);
-			if (ac == ARGS_ALLOC)
-				free(p);
 			continue;
 		}
 
@@ -1434,8 +1351,8 @@ in_line_argn(MACRO_PROT_ARGS)
 
 		if (ac == ARGS_PUNCT || ac == ARGS_EOLN) {
 			if (abs(state) < 2 && tok == MDOC_Pf)
-				mandoc_msg(MANDOCERR_PF_SKIP,
-				    line, ppos, "Pf %s",
+				mandoc_vmsg(MANDOCERR_PF_SKIP,
+				    mdoc->parse, line, ppos, "Pf %s",
 				    p == NULL ? "at eol" : p);
 			break;
 		}
@@ -1453,14 +1370,11 @@ in_line_argn(MACRO_PROT_ARGS)
 				rew_elem(mdoc, tok);
 				state = -2;
 			}
-			(*mdoc_macro(ntok)->fp)(mdoc, ntok,
-			    line, la, pos, buf);
-			if (ac == ARGS_ALLOC)
-				free(p);
+			mdoc_macro(mdoc, ntok, line, la, pos, buf);
 			break;
 		}
 
-		if (mdoc_macro(tok)->flags & MDOC_IGNDELIM ||
+		if (mdoc_macros[tok].flags & MDOC_IGNDELIM ||
 		    mdoc_isdelim(p) == DELIM_NONE) {
 			if (state == -1) {
 				mdoc_elem_alloc(mdoc, line, ppos, tok, arg);
@@ -1473,15 +1387,12 @@ in_line_argn(MACRO_PROT_ARGS)
 		}
 
 		dword(mdoc, line, la, p, DELIM_MAX,
-		    mdoc_macro(tok)->flags & MDOC_JOIN);
-		if (ac == ARGS_ALLOC)
-			free(p);
-		p = mdoc->last->string;
+		    mdoc_macros[tok].flags & MDOC_JOIN);
 	}
 
 	if (state == -1) {
-		mandoc_msg(MANDOCERR_MACRO_EMPTY,
-		    line, ppos, "%s", roff_name[tok]);
+		mandoc_msg(MANDOCERR_MACRO_EMPTY, mdoc->parse,
+		    line, ppos, roff_name[tok]);
 		return;
 	}
 
@@ -1510,8 +1421,8 @@ in_line_eoln(MACRO_PROT_ARGS)
 
 	if (buf[*pos] == '\0' &&
 	    (tok == MDOC_Fd || *roff_name[tok] == '%')) {
-		mandoc_msg(MANDOCERR_MACRO_EMPTY,
-		    line, ppos, "%s", roff_name[tok]);
+		mandoc_msg(MANDOCERR_MACRO_EMPTY, mdoc->parse,
+		    line, ppos, roff_name[tok]);
 		return;
 	}
 
@@ -1531,19 +1442,13 @@ static int
 parse_rest(struct roff_man *mdoc, enum roff_tok tok,
     int line, int *pos, char *buf)
 {
-	char		*p;
-	int		 done, la;
-	enum margserr	 ac;
+	int		 la;
 
 	for (;;) {
 		la = *pos;
-		ac = mdoc_args(mdoc, line, pos, buf, tok, &p);
-		if (ac == ARGS_EOLN)
+		if (mdoc_args(mdoc, line, pos, buf, tok, NULL) == ARGS_EOLN)
 			return 0;
-		done = macro_or_word(mdoc, tok, line, la, pos, buf, p, 1);
-		if (ac == ARGS_ALLOC)
-			free(p);
-		if (done)
+		if (macro_or_word(mdoc, tok, line, la, pos, buf, 1))
 			return 1;
 	}
 }
@@ -1585,7 +1490,8 @@ phrase_ta(MACRO_PROT_ARGS)
 	}
 
 	if (n == NULL || n->norm->Bl.type != LIST_column) {
-		mandoc_msg(MANDOCERR_TA_STRAY, line, ppos, "Ta");
+		mandoc_msg(MANDOCERR_TA_STRAY, mdoc->parse,
+		    line, ppos, "Ta");
 		return;
 	}
 

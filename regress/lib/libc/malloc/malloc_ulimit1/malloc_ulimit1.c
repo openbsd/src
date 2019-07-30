@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc_ulimit1.c,v 1.5 2019/06/12 11:31:36 bluhm Exp $	*/
+/*	$OpenBSD: malloc_ulimit1.c,v 1.3 2017/07/27 15:08:37 bluhm Exp $	*/
 
 /* Public Domain, 2006, Otto Moerbeek <otto@drijf.net> */
 
@@ -14,16 +14,13 @@
  * 2006) where the allocation of the region itself succeeds, but the
  * page dir entry pages fails.
  * This in turn trips a "hole in directories" error.
- * Having a large (512M) ulimit -m helps a lot in triggering the
+ * Having a large (512M) ulimit -m helps a lot in triggering the 
  * problem. Note that you may need to run this test multiple times to
  * see the error.
 */
 
-#define STARTI	1300
-#define FACTOR	1024
-
-/* This test takes forever with junking turned on. */
-char *malloc_options = "jj";
+#define	STARTI	1300
+#define FACTOR 	1024
 
 int
 main()

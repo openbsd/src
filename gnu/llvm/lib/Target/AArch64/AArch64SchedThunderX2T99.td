@@ -22,17 +22,10 @@ def ThunderX2T99Model : SchedMachineModel {
   let LoadLatency           =   4; // Optimistic load latency.
   let MispredictPenalty     =  12; // Extra cycles for mispredicted branch.
   // Determined via a mix of micro-arch details and experimentation.
-  let LoopMicroOpBufferSize = 128;
+  let LoopMicroOpBufferSize =  32;
   let PostRAScheduler       =   1; // Using PostRA sched.
   let CompleteModel         =   1;
-
-  list<Predicate> UnsupportedFeatures = [HasSVE];
-
-  // FIXME: Remove when all errors have been fixed.
-  let FullInstRWOverlapCheck = 0;
 }
-
-let SchedModel = ThunderX2T99Model in {
 
 // Define the issue ports.
 
@@ -53,6 +46,8 @@ def THX2T99P4 : ProcResource<1>;
 
 // Port 5: Load/store.
 def THX2T99P5 : ProcResource<1>;
+
+let SchedModel = ThunderX2T99Model in {
 
 // Define groups for the functional units on each issue port.  Each group
 // created will be used by a WriteRes later on.
@@ -320,36 +315,6 @@ def THX2T99Write_8Cyc_LS01_F01 : SchedWriteRes<[THX2T99LS01, THX2T99F01]> {
   let NumMicroOps = 3;
 }
 
-// 8 cycles on LS0 or LS1 and I0, I1, or I2.
-def THX2T99Write_8Cyc_I012 : SchedWriteRes<[THX2T99LS01, THX2T99I012]> {
-  let Latency = 8;
-  let NumMicroOps = 4;
-}
-
-// 12 cycles on LS0 or LS1 and I0, I1, or I2.
-def THX2T99Write_12Cyc_I012 : SchedWriteRes<[THX2T99LS01, THX2T99I012]> {
-  let Latency = 12;
-  let NumMicroOps = 6;
-}
-
-// 16 cycles on LS0 or LS1 and I0, I1, or I2.
-def THX2T99Write_16Cyc_I012 : SchedWriteRes<[THX2T99LS01, THX2T99I012]> {
-  let Latency = 16;
-  let NumMicroOps = 8;
-}
-
-// 24 cycles on LS0 or LS1 and I0, I1, or I2.
-def THX2T99Write_24Cyc_I012 : SchedWriteRes<[THX2T99LS01, THX2T99I012]> {
-  let Latency = 24;
-  let NumMicroOps = 12;
-}
-
-// 32 cycles on LS0 or LS1 and I0, I1, or I2.
-def THX2T99Write_32Cyc_I012 : SchedWriteRes<[THX2T99LS01, THX2T99I012]> {
-  let Latency = 32;
-  let NumMicroOps = 16;
-}
-
 // Define commonly used read types.
 
 // No forwarding is provided for these types.
@@ -362,9 +327,12 @@ def : ReadAdvance<ReadID,      0>;
 def : ReadAdvance<ReadExtrHi,  0>;
 def : ReadAdvance<ReadAdrBase, 0>;
 def : ReadAdvance<ReadVLD,     0>;
+}
 
 //===----------------------------------------------------------------------===//
 // 3. Instruction Tables.
+
+let SchedModel = ThunderX2T99Model in {
 
 //---
 // 3.1 Branch Instructions
@@ -391,7 +359,7 @@ def : WriteRes<WriteBarrier, []> { let Latency = 1; }
 def : WriteRes<WriteHint,    []> { let Latency = 1; }
 
 def : WriteRes<WriteAtomic,  []> {
-  let Latency = 4;
+  let Unsupported = 1;
   let NumMicroOps = 2;
 }
 
@@ -400,7 +368,7 @@ def : WriteRes<WriteAtomic,  []> {
 //---
 def : InstRW<[THX2T99Write_1Cyc_I2], (instrs B, BL, BR, BLR)>;
 def : InstRW<[THX2T99Write_1Cyc_I2], (instrs RET)>;
-def : InstRW<[THX2T99Write_1Cyc_I2], (instregex "^B..$")>;
+def : InstRW<[THX2T99Write_1Cyc_I2], (instregex "^B.*")>;
 def : InstRW<[THX2T99Write_1Cyc_I2],
             (instregex "^CBZ", "^CBNZ", "^TBZ", "^TBNZ")>;
 
@@ -416,63 +384,63 @@ def : InstRW<[THX2T99Write_1Cyc_I2],
 // Address generation
 def : WriteRes<WriteI,       [THX2T99I012]> {
   let Latency = 1;
-  let ResourceCycles = [1];
+  let ResourceCycles = [1, 3];
   let NumMicroOps = 2;
 }
 
 def : InstRW<[WriteI],
             (instregex "ADD?(W|X)r(i|r|s|x)",   "ADDS?(W|X)r(i|r|s|x)(64)?",
                        "AND?(W|X)r(i|r|s|x)",   "ANDS?(W|X)r(i|r|s|x)",
-                       "ADC(W|X)r",
+                       "ADC?(W|X)r(i|r|s|x)",   "ADCS?(W|X)r(i|r|s|x)",
                        "BIC?(W|X)r(i|r|s|x)",   "BICS?(W|X)r(i|r|s|x)",
                        "EON?(W|X)r(i|r|s|x)",   "ORN?(W|X)r(i|r|s|x)",
                        "ORR?(W|X)r(i|r|s|x)",   "SUB?(W|X)r(i|r|s|x)",
-                       "SUBS?(W|X)r(i|r|s|x)",  "SBC(W|X)r",
-                       "SBCS(W|X)r",            "CCMN(W|X)(i|r)",
-                       "CCMP(W|X)(i|r)",        "CSEL(W|X)r",
-                       "CSINC(W|X)r",           "CSINV(W|X)r",
-                       "CSNEG(W|X)r")>;
+                       "SUBS?(W|X)r(i|r|s|x)",  "SBC?(W|X)r(i|r|s|x)",
+                       "SBCS?(W|X)r(i|r|s|x)",  "CCMN?(W|X)r(i|r|s|x)",
+                       "CCMP?(W|X)r(i|r|s|x)",  "CSEL?(W|X)r(i|r|s|x)",
+                       "CSINC?(W|X)r(i|r|s|x)", "CSINV?(W|X)r(i|r|s|x)",
+                       "CSNEG?(W|X)r(i|r|s|x)")>;
 
 def : InstRW<[WriteI], (instrs COPY)>;
 
 // ALU, extend and/or shift
 def : WriteRes<WriteISReg,   [THX2T99I012]> {
   let Latency = 2;
-  let ResourceCycles = [2];
+  let ResourceCycles = [2, 3];
   let NumMicroOps = 2;
 }
 
 def : InstRW<[WriteISReg],
             (instregex "ADD?(W|X)r(i|r|s|x)",   "ADDS?(W|X)r(i|r|s|x)(64)?",
                        "AND?(W|X)r(i|r|s|x)",   "ANDS?(W|X)r(i|r|s|x)",
-                       "ADC(W|X)r",
+                       "ADC?(W|X)r(i|r|s|x)",   "ADCS?(W|X)r(i|r|s|x)",
                        "BIC?(W|X)r(i|r|s|x)",   "BICS?(W|X)r(i|r|s|x)",
                        "EON?(W|X)r(i|r|s|x)",   "ORN?(W|X)r(i|r|s|x)",
                        "ORR?(W|X)r(i|r|s|x)",   "SUB?(W|X)r(i|r|s|x)",
-                       "SUBS?(W|X)r(i|r|s|x)",  "SBC(W|X)r",
-                       "SBCS(W|X)r",            "CCMN(W|X)(i|r)",
-                       "CCMP(W|X)(i|r)",        "CSEL(W|X)r",
-                       "CSINC(W|X)r",           "CSINV(W|X)r",
-                       "CSNEG(W|X)r")>;
+                       "SUBS?(W|X)r(i|r|s|x)",  "SBC?(W|X)r(i|r|s|x)",
+                       "SBCS?(W|X)r(i|r|s|x)",  "CCMN?(W|X)r(i|r|s|x)",
+                       "CCMP?(W|X)r(i|r|s|x)",  "CSEL?(W|X)r(i|r|s|x)",
+                       "CSINC?(W|X)r(i|r|s|x)", "CSINV?(W|X)r(i|r|s|x)",
+                       "CSNEG?(W|X)r(i|r|s|x)")>;
 
 def : WriteRes<WriteIEReg,   [THX2T99I012]> {
   let Latency = 1;
-  let ResourceCycles = [1];
+  let ResourceCycles = [1, 3];
   let NumMicroOps = 2;
 }
 
 def : InstRW<[WriteIEReg],
             (instregex "ADD?(W|X)r(i|r|s|x)",   "ADDS?(W|X)r(i|r|s|x)(64)?",
                        "AND?(W|X)r(i|r|s|x)",   "ANDS?(W|X)r(i|r|s|x)",
-                       "ADC(W|X)r",
+                       "ADC?(W|X)r(i|r|s|x)",   "ADCS?(W|X)r(i|r|s|x)",
                        "BIC?(W|X)r(i|r|s|x)",   "BICS?(W|X)r(i|r|s|x)",
                        "EON?(W|X)r(i|r|s|x)",   "ORN?(W|X)r(i|r|s|x)",
                        "ORR?(W|X)r(i|r|s|x)",   "SUB?(W|X)r(i|r|s|x)",
-                       "SUBS?(W|X)r(i|r|s|x)",  "SBC(W|X)r",
-                       "SBCS(W|X)r",            "CCMN(W|X)(i|r)",
-                       "CCMP(W|X)(i|r)",        "CSEL(W|X)r",
-                       "CSINC(W|X)r",           "CSINV(W|X)r",
-                       "CSNEG(W|X)r")>;
+                       "SUBS?(W|X)r(i|r|s|x)",  "SBC?(W|X)r(i|r|s|x)",
+                       "SBCS?(W|X)r(i|r|s|x)",  "CCMN?(W|X)r(i|r|s|x)",
+                       "CCMP?(W|X)r(i|r|s|x)",  "CSEL?(W|X)r(i|r|s|x)",
+                       "CSINC?(W|X)r(i|r|s|x)", "CSINV?(W|X)r(i|r|s|x)",
+                       "CSNEG?(W|X)r(i|r|s|x)")>;
 
 // Move immed
 def : WriteRes<WriteImm,     [THX2T99I012]> {
@@ -500,14 +468,14 @@ def : WriteRes<WriteIS,      [THX2T99I012]> {
 // Latency range of 13-23/13-39.
 def : WriteRes<WriteID32,    [THX2T99I1]> {
   let Latency = 39;
-  let ResourceCycles = [39];
+  let ResourceCycles = [13, 39];
   let NumMicroOps = 4;
 }
 
 // Divide, X-form
 def : WriteRes<WriteID64,    [THX2T99I1]> {
   let Latency = 23;
-  let ResourceCycles = [23];
+  let ResourceCycles = [13, 23];
   let NumMicroOps = 4;
 }
 
@@ -1147,7 +1115,7 @@ def : InstRW<[THX2T99XWriteFDivSP], (instrs FDIVSrr)>;
 def : InstRW<[THX2T99XWriteFSqrtSP], (instrs FSQRTSr)>;
 def : InstRW<[THX2T99XWriteFDivSP], (instregex "^FDIVv.*32$")>;
 def : InstRW<[THX2T99XWriteFSqrtSP], (instregex "^.*SQRT.*32$")>;
-def : InstRW<[THX2T99Write_16Cyc_F01], (instregex "^FDIVSrr", "^FSQRTSr")>;
+def : InstRW<[THX2T99Write_16Cyc_F01], (instregex "^FDIVSrr", "^FSQRTSrr")>;
 
 // FP divide, D-form
 // FP square root, D-form
@@ -1155,7 +1123,7 @@ def : InstRW<[THX2T99XWriteFDivDP], (instrs FDIVDrr)>;
 def : InstRW<[THX2T99XWriteFSqrtDP], (instrs FSQRTDr)>;
 def : InstRW<[THX2T99XWriteFDivDP], (instregex "^FDIVv.*64$")>;
 def : InstRW<[THX2T99XWriteFSqrtDP], (instregex "^.*SQRT.*64$")>;
-def : InstRW<[THX2T99Write_23Cyc_F01], (instregex "^FDIVDrr", "^FSQRTDr")>;
+def : InstRW<[THX2T99Write_23Cyc_F01], (instregex "^FDIVDrr", "^FSQRTDrr")>;
 
 // FP multiply
 // FP multiply accumulate
@@ -1252,17 +1220,17 @@ def : InstRW<[THX2T99Write_5Cyc_F01], (instrs FMOVXDHighr, FMOVDXHighr)>;
 def : WriteRes<WriteV, [THX2T99F01]> {
   let Latency = 7;
   let NumMicroOps = 4;
-  let ResourceCycles = [4];
+  let ResourceCycles = [4, 23];
 }
 
 // ASIMD arith, reduce, 4H/4S
 // ASIMD arith, reduce, 8B/8H
 // ASIMD arith, reduce, 16B
 
-// ASIMD logical (MVN (alias for NOT), ORN, ORR)
+// ASIMD logical (MOV, MVN, ORN, ORR)
 def : InstRW<[THX2T99Write_5Cyc_F01],
-            (instregex "^ANDv", "^BICv", "^EORv", "^ORRv", "^ORNv", "^NOTv")>;
-
+            (instregex "^ANDv", "^BICv", "^EORv", "^MOVv", "^MVNv",
+                       "^ORRv", "^ORNv", "^NOTv")>;
 // ASIMD arith, reduce
 def : InstRW<[THX2T99Write_10Cyc_F01],
             (instregex "^ADDVv", "^SADDLVv", "^UADDLVv")>;
@@ -1513,7 +1481,7 @@ def : InstRW<[THX2T99Write_5Cyc_F01], (instregex "^INSv")>;
 def : InstRW<[THX2T99Write_5Cyc_F01], (instregex "^[SU]MOVv")>;
 
 // ASIMD move, integer immed
-def : InstRW<[THX2T99Write_5Cyc_F01], (instregex "^MOVIv")>;
+def : InstRW<[THX2T99Write_5Cyc_F01], (instregex "^MOVIv", "^MOVIDv")>;
 
 // ASIMD move, FP immed
 def : InstRW<[THX2T99Write_5Cyc_F01], (instregex "^FMOVv")>;
@@ -1772,109 +1740,6 @@ def : InstRW<[THX2T99Write_1Cyc_LS01_F01, WriteAdr],
 def : InstRW<[THX2T99Write_1Cyc_LS01_F01], (instregex "^ST4i(8|16|32|64)$")>;
 def : InstRW<[THX2T99Write_1Cyc_LS01_F01, WriteAdr],
             (instregex "^ST4i(8|16|32|64)_POST$")>;
-
-// V8.1a Atomics (LSE)
-def : InstRW<[THX2T99Write_8Cyc_I012, WriteAtomic],
-            (instrs CASB, CASH, CASW, CASX)>;
-
-def : InstRW<[THX2T99Write_12Cyc_I012, WriteAtomic],
-            (instrs CASAB, CASAH, CASAW, CASAX)>;
-
-def : InstRW<[THX2T99Write_12Cyc_I012, WriteAtomic],
-            (instrs CASLB, CASLH, CASLW, CASLX)>;
-
-def : InstRW<[THX2T99Write_16Cyc_I012, WriteAtomic],
-            (instrs CASALB, CASALH, CASALW, CASALX)>;
-
-def : InstRW<[THX2T99Write_12Cyc_I012, WriteAtomic],
-            (instrs LDLARB, LDLARH, LDLARW, LDLARX)>;
-
-def : InstRW<[THX2T99Write_8Cyc_I012, WriteAtomic],
-            (instrs LDADDB, LDADDH, LDADDW, LDADDX)>;
-
-def : InstRW<[THX2T99Write_12Cyc_I012, WriteAtomic],
-            (instrs LDADDAB, LDADDAH, LDADDAW, LDADDAX)>;
-
-def : InstRW<[THX2T99Write_12Cyc_I012, WriteAtomic],
-            (instrs LDADDLB, LDADDLH, LDADDLW, LDADDLX)>;
-
-def : InstRW<[THX2T99Write_16Cyc_I012, WriteAtomic],
-            (instrs LDADDALB, LDADDALH, LDADDALW, LDADDALX)>;
-
-def : InstRW<[THX2T99Write_8Cyc_I012, WriteAtomic],
-            (instrs LDCLRB, LDCLRH, LDCLRW, LDCLRX)>;
-
-def : InstRW<[THX2T99Write_12Cyc_I012, WriteAtomic],
-            (instrs LDCLRAB, LDCLRAH, LDCLRAW, LDCLRAX)>;
-
-def : InstRW<[THX2T99Write_12Cyc_I012, WriteAtomic],
-            (instrs LDCLRLB, LDCLRLH, LDCLRLW, LDCLRLX)>;
-
-def : InstRW<[THX2T99Write_16Cyc_I012, WriteAtomic],
-            (instrs LDCLRALB, LDCLRALH, LDCLRALW, LDCLRALX)>;
-
-def : InstRW<[THX2T99Write_8Cyc_I012, WriteAtomic],
-            (instrs LDEORB, LDEORH, LDEORW, LDEORX)>;
-
-def : InstRW<[THX2T99Write_12Cyc_I012, WriteAtomic],
-            (instrs LDEORAB, LDEORAH, LDEORAW, LDEORAX)>;
-
-def : InstRW<[THX2T99Write_12Cyc_I012, WriteAtomic],
-            (instrs LDEORLB, LDEORLH, LDEORLW, LDEORLX)>;
-
-def : InstRW<[THX2T99Write_16Cyc_I012, WriteAtomic],
-            (instrs LDEORALB, LDEORALH, LDEORALW, LDEORALX)>;
-
-def : InstRW<[THX2T99Write_8Cyc_I012, WriteAtomic],
-            (instrs LDSETB, LDSETH, LDSETW, LDSETX)>;
-
-def : InstRW<[THX2T99Write_12Cyc_I012, WriteAtomic],
-            (instrs LDSETAB, LDSETAH, LDSETAW, LDSETAX)>;
-
-def : InstRW<[THX2T99Write_12Cyc_I012, WriteAtomic],
-            (instrs LDSETLB, LDSETLH, LDSETLW, LDSETLX)>;
-
-def : InstRW<[THX2T99Write_16Cyc_I012, WriteAtomic],
-            (instrs LDSETALB, LDSETALH, LDSETALW, LDSETALX)>;
-
-def : InstRW<[THX2T99Write_8Cyc_I012, WriteAtomic],
-            (instrs LDSMAXB, LDSMAXH, LDSMAXW, LDSMAXX,
-             LDSMAXAB, LDSMAXAH, LDSMAXAW, LDSMAXAX,
-             LDSMAXLB, LDSMAXLH, LDSMAXLW, LDSMAXLX,
-             LDSMAXALB, LDSMAXALH, LDSMAXALW, LDSMAXALX)>;
-
-def : InstRW<[THX2T99Write_8Cyc_I012, WriteAtomic],
-            (instrs LDSMINB, LDSMINH, LDSMINW, LDSMINX,
-             LDSMINAB, LDSMINAH, LDSMINAW, LDSMINAX,
-             LDSMINLB, LDSMINLH, LDSMINLW, LDSMINLX,
-             LDSMINALB, LDSMINALH, LDSMINALW, LDSMINALX)>;
-
-def : InstRW<[THX2T99Write_8Cyc_I012, WriteAtomic],
-            (instrs LDUMAXB, LDUMAXH, LDUMAXW, LDUMAXX,
-             LDUMAXAB, LDUMAXAH, LDUMAXAW, LDUMAXAX,
-             LDUMAXLB, LDUMAXLH, LDUMAXLW, LDUMAXLX,
-             LDUMAXALB, LDUMAXALH, LDUMAXALW, LDUMAXALX)>;
-
-def : InstRW<[THX2T99Write_8Cyc_I012, WriteAtomic],
-            (instrs LDUMINB, LDUMINH, LDUMINW, LDUMINX,
-             LDUMINAB, LDUMINAH, LDUMINAW, LDUMINAX,
-             LDUMINLB, LDUMINLH, LDUMINLW, LDUMINLX,
-             LDUMINALB, LDUMINALH, LDUMINALW, LDUMINALX)>;
-
-def : InstRW<[THX2T99Write_8Cyc_I012, WriteAtomic],
-            (instrs SWPB, SWPH, SWPW, SWPX)>;
-
-def : InstRW<[THX2T99Write_12Cyc_I012, WriteAtomic],
-            (instrs SWPAB, SWPAH, SWPAW, SWPAX)>;
-
-def : InstRW<[THX2T99Write_12Cyc_I012, WriteAtomic],
-            (instrs SWPLB, SWPLH, SWPLW, SWPLX)>;
-
-def : InstRW<[THX2T99Write_16Cyc_I012, WriteAtomic],
-            (instrs SWPALB, SWPALH, SWPALW, SWPALX)>;
-
-def : InstRW<[THX2T99Write_8Cyc_I012, WriteAtomic],
-            (instrs STLLRB, STLLRH, STLLRW, STLLRX)>;
 
 } // SchedModel = ThunderX2T99Model
 

@@ -15,7 +15,6 @@
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
-#include "clang/Driver/SanitizerArgs.h"
 #include "llvm/Option/ArgList.h"
 
 using namespace clang::driver;
@@ -70,10 +69,10 @@ void openbsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-mabi");
     CmdArgs.push_back(mips::getGnuCompatibleMipsABIName(ABIName).data());
 
-    if (getToolChain().getTriple().isLittleEndian())
-      CmdArgs.push_back("-EL");
-    else
+    if (getToolChain().getArch() == llvm::Triple::mips64)
       CmdArgs.push_back("-EB");
+    else
+      CmdArgs.push_back("-EL");
 
     AddAssemblerKPIC(getToolChain(), Args, CmdArgs);
     break;
@@ -100,8 +99,6 @@ void openbsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
                                    const InputInfoList &Inputs,
                                    const ArgList &Args,
                                    const char *LinkingOutput) const {
-  const toolchains::OpenBSD &ToolChain =
-      static_cast<const toolchains::OpenBSD &>(getToolChain());
   const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
 
@@ -140,7 +137,7 @@ void openbsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (Args.hasArg(options::OPT_pie))
     CmdArgs.push_back("-pie");
-  if (Args.hasArg(options::OPT_nopie) || Args.hasArg(options::OPT_pg))
+  if (Args.hasArg(options::OPT_nopie))
     CmdArgs.push_back("-nopie");
 
   if (Output.isFilename()) {
@@ -152,11 +149,10 @@ void openbsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared)) {
-      if (Args.hasArg(options::OPT_pg)) {
-        CmdArgs.push_back("-nopie");
+      if (Args.hasArg(options::OPT_pg))
         CmdArgs.push_back(
             Args.MakeArgString(getToolChain().GetFilePath("gcrt0.o")));
-      } else if (Args.hasArg(options::OPT_static) &&
+      else if (Args.hasArg(options::OPT_static) &&
                !Args.hasArg(options::OPT_nopie))
         CmdArgs.push_back(
             Args.MakeArgString(getToolChain().GetFilePath("rcrt0.o")));
@@ -177,27 +173,17 @@ void openbsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
                             options::OPT_s, options::OPT_t,
                             options::OPT_Z_Flag, options::OPT_r});
 
-  bool NeedsSanitizerDeps = addSanitizerRuntimes(ToolChain, Args, CmdArgs);
-  bool NeedsXRayDeps = addXRayRuntime(ToolChain, Args, CmdArgs);
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs, JA);
 
   if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs)) {
     if (D.CCCIsCXX()) {
-      if (getToolChain().ShouldLinkCXXStdlib(Args))
-        getToolChain().AddCXXStdlibLibArgs(Args, CmdArgs);
+      getToolChain().AddCXXStdlibLibArgs(Args, CmdArgs);
       if (Args.hasArg(options::OPT_pg))
         CmdArgs.push_back("-lm_p");
       else
         CmdArgs.push_back("-lm");
     }
-    if (NeedsSanitizerDeps) {
-      CmdArgs.push_back(ToolChain.getCompilerRTArgString(Args, "builtins", false));
-      linkSanitizerRuntimeDeps(ToolChain, CmdArgs);
-    }
-    if (NeedsXRayDeps) {
-      CmdArgs.push_back(ToolChain.getCompilerRTArgString(Args, "builtins", false));
-      linkXRayRuntimeDeps(ToolChain, CmdArgs);
-    }
+
     // FIXME: For some reason GCC passes -lgcc before adding
     // the default system libraries. Just mimic this for now.
     CmdArgs.push_back("-lcompiler_rt");
@@ -228,26 +214,8 @@ void openbsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
           Args.MakeArgString(getToolChain().GetFilePath("crtendS.o")));
   }
 
-  const char *Exec = Args.MakeArgString(
-      !NeedsSanitizerDeps ? getToolChain().GetLinkerPath()
-                          : getToolChain().GetProgramPath("ld.lld"));
+  const char *Exec = Args.MakeArgString(getToolChain().GetLinkerPath());
   C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
-}
-
-SanitizerMask OpenBSD::getSupportedSanitizers() const {
-  const bool IsX86 = getTriple().getArch() == llvm::Triple::x86;
-  const bool IsX86_64 = getTriple().getArch() == llvm::Triple::x86_64;
-
-  // For future use, only UBsan at the moment
-  SanitizerMask Res = ToolChain::getSupportedSanitizers();
-
-  if (IsX86 || IsX86_64) {
-    Res |= SanitizerKind::Vptr;
-    Res |= SanitizerKind::Fuzzer;
-    Res |= SanitizerKind::FuzzerNoLink;
-  }
-
-  return Res;
 }
 
 /// OpenBSD - OpenBSD tool chain which can call as(1) and ld(1) directly.
@@ -306,16 +274,14 @@ void OpenBSD::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
 
 void OpenBSD::AddCXXStdlibLibArgs(const ArgList &Args,
                                  ArgStringList &CmdArgs) const {
-  bool Profiling = Args.hasArg(options::OPT_pg);
-
-  switch (GetCXXStdlibType(Args)) {
+ switch (GetCXXStdlibType(Args)) {
   case ToolChain::CST_Libcxx:
-    CmdArgs.push_back(Profiling ? "-lc++_p" : "-lc++");
-    CmdArgs.push_back(Profiling ? "-lc++abi_p" : "-lc++abi");
-    CmdArgs.push_back(Profiling ? "-lpthread_p" : "-lpthread");
+    CmdArgs.push_back("-lc++");
+    CmdArgs.push_back("-lc++abi");
+    CmdArgs.push_back("-lpthread");
     break;
   case ToolChain::CST_Libstdcxx:
-    CmdArgs.push_back(Profiling ? "-lstdc++_p" : "-lstdc++");
+    CmdArgs.push_back("-lstdc++");
     break;
   }
 }

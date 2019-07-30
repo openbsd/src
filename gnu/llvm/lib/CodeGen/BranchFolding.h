@@ -1,4 +1,4 @@
-//===- BranchFolding.h - Fold machine code branch instructions --*- C++ -*-===//
+//===-- BranchFolding.h - Fold machine code branch instructions -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,27 +10,20 @@
 #ifndef LLVM_LIB_CODEGEN_BRANCHFOLDING_H
 #define LLVM_LIB_CODEGEN_BRANCHFOLDING_H
 
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/BlockFrequency.h"
-#include "llvm/Support/Compiler.h"
-#include <cstdint>
 #include <vector>
 
 namespace llvm {
-
-class BasicBlock;
-class MachineBlockFrequencyInfo;
-class MachineBranchProbabilityInfo;
-class MachineFunction;
-class MachineLoopInfo;
-class MachineModuleInfo;
-class MachineRegisterInfo;
-class raw_ostream;
-class TargetInstrInfo;
-class TargetRegisterInfo;
+  class MachineBlockFrequencyInfo;
+  class MachineBranchProbabilityInfo;
+  class MachineFunction;
+  class MachineModuleInfo;
+  class MachineLoopInfo;
+  class TargetInstrInfo;
+  class TargetRegisterInfo;
 
   class LLVM_LIBRARY_VISIBILITY BranchFolder {
   public:
@@ -38,11 +31,11 @@ class TargetRegisterInfo;
 
     explicit BranchFolder(bool defaultEnableTailMerge,
                           bool CommonHoist,
-                          MBFIWrapper &FreqInfo,
-                          const MachineBranchProbabilityInfo &ProbInfo,
+                          MBFIWrapper &MBFI,
+                          const MachineBranchProbabilityInfo &MBPI,
                           // Min tail length to merge. Defaults to commandline
                           // flag. Ignored for optsize.
-                          unsigned MinTailLength = 0);
+                          unsigned MinCommonTailLength = 0);
 
     /// Perhaps branch folding, tail merging and other CFG optimizations on the
     /// given function.  Block placement changes the layout and may create new
@@ -56,7 +49,6 @@ class TargetRegisterInfo;
     class MergePotentialsElt {
       unsigned Hash;
       MachineBasicBlock *Block;
-
     public:
       MergePotentialsElt(unsigned h, MachineBasicBlock *b)
         : Hash(h), Block(b) {}
@@ -70,17 +62,14 @@ class TargetRegisterInfo;
 
       bool operator<(const MergePotentialsElt &) const;
     };
-
-    using MPIterator = std::vector<MergePotentialsElt>::iterator;
-
+    typedef std::vector<MergePotentialsElt>::iterator MPIterator;
     std::vector<MergePotentialsElt> MergePotentials;
     SmallPtrSet<const MachineBasicBlock*, 2> TriedMerging;
-    DenseMap<const MachineBasicBlock *, int> EHScopeMembership;
+    DenseMap<const MachineBasicBlock *, int> FuncletMembership;
 
     class SameTailElt {
       MPIterator MPIter;
       MachineBasicBlock::iterator TailStartPos;
-
     public:
       SameTailElt(MPIterator mp, MachineBasicBlock::iterator tsp)
         : MPIter(mp), TailStartPos(tsp) {}
@@ -88,23 +77,18 @@ class TargetRegisterInfo;
       MPIterator getMPIter() const {
         return MPIter;
       }
-
       MergePotentialsElt &getMergePotentialsElt() const {
         return *getMPIter();
       }
-
       MachineBasicBlock::iterator getTailStartPos() const {
         return TailStartPos;
       }
-
       unsigned getHash() const {
         return getMergePotentialsElt().getHash();
       }
-
       MachineBasicBlock *getBlock() const {
         return getMergePotentialsElt().getBlock();
       }
-
       bool tailIsWholeBlock() const {
         return TailStartPos == getBlock()->begin();
       }
@@ -112,7 +96,6 @@ class TargetRegisterInfo;
       void setBlock(MachineBasicBlock *MBB) {
         getMergePotentialsElt().setBlock(MBB);
       }
-
       void setTailStartPos(MachineBasicBlock::iterator Pos) {
         TailStartPos = Pos;
       }
@@ -132,12 +115,11 @@ class TargetRegisterInfo;
     LivePhysRegs LiveRegs;
 
   public:
-    /// This class keeps track of branch frequencies of newly created
+    /// \brief This class keeps track of branch frequencies of newly created
     /// blocks and tail-merged blocks.
     class MBFIWrapper {
     public:
       MBFIWrapper(const MachineBlockFrequencyInfo &I) : MBFI(I) {}
-
       BlockFrequency getBlockFreq(const MachineBasicBlock *MBB) const;
       void setBlockFreq(const MachineBasicBlock *MBB, BlockFrequency F);
       raw_ostream &printBlockFreq(raw_ostream &OS,
@@ -164,8 +146,8 @@ class TargetRegisterInfo;
 
     /// Delete the instruction OldInst and everything after it, replacing it
     /// with an unconditional branch to NewDest.
-    void replaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
-                                 MachineBasicBlock &NewDest);
+    void ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
+                                 MachineBasicBlock *NewDest);
 
     /// Given a machine basic block and an iterator into it, split the MBB so
     /// that the part before the iterator falls into the part starting at the
@@ -200,8 +182,8 @@ class TargetRegisterInfo;
                                    unsigned &commonTailIndex);
 
     /// Create merged DebugLocs of identical instructions across SameTails and
-    /// assign it to the instruction in common tail; merge MMOs and undef flags.
-    void mergeCommonTails(unsigned commonTailIndex);
+    /// assign it to the instruction in common tail.
+    void MergeCommonTailDebugLocs(unsigned commonTailIndex);
 
     bool OptimizeBranches(MachineFunction &MF);
 
@@ -221,7 +203,6 @@ class TargetRegisterInfo;
     /// the function, move the instructions before MBB terminator if it's legal.
     bool HoistCommonCodeInSuccs(MachineBasicBlock *MBB);
   };
+}
 
-} // end namespace llvm
-
-#endif // LLVM_LIB_CODEGEN_BRANCHFOLDING_H
+#endif /* LLVM_CODEGEN_BRANCHFOLDING_HPP */

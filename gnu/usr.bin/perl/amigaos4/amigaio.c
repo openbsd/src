@@ -646,7 +646,7 @@ static void S_exec_failed(pTHX_ const char *cmd, int fd, int do_report)
 static I32 S_do_amigaos_exec3(pTHX_ const char *incmd, int fd, int do_report)
 {
 	dVAR;
-	const char **argv, **a;
+	const char **a;
 	char *s;
 	char *buf;
 	char *cmd;
@@ -656,9 +656,7 @@ static I32 S_do_amigaos_exec3(pTHX_ const char *incmd, int fd, int do_report)
 
 	PERL_ARGS_ASSERT_DO_EXEC3;
 
-	ENTER;
 	Newx(buf, cmdlen, char);
-	SAVEFREEPV(buf);
 	cmd = buf;
 	memcpy(cmd, incmd, cmdlen);
 
@@ -670,7 +668,7 @@ static I32 S_do_amigaos_exec3(pTHX_ const char *incmd, int fd, int do_report)
 	if (*cmd == '.' && isSPACE(cmd[1]))
 		goto doshell;
 
-	if (strBEGINs(cmd, "exec") && isSPACE(cmd[4]))
+	if (strnEQ(cmd, "exec", 4) && isSPACE(cmd[4]))
 		goto doshell;
 
 	s = cmd;
@@ -711,16 +709,15 @@ doshell:
 			PERL_FPU_POST_EXEC
 			S_exec_failed(aTHX_ PL_sh_path, fd, do_report);
 			amigaos_post_exec(fd, do_report);
-			goto leave;
+			Safefree(buf);
+			return result;
 		}
 	}
 
-	Newx(argv, (s - cmd) / 2 + 2, const char *);
-	SAVEFREEPV(argv);
-	cmd = savepvn(cmd, s - cmd);
-	SAVEFREEPV(cmd);
-	a = argv;
-	for (s = cmd; *s;)
+	Newx(PL_Argv, (s - cmd) / 2 + 2, const char *);
+	PL_Cmd = savepvn(cmd, s - cmd);
+	a = PL_Argv;
+	for (s = PL_Cmd; *s;)
 	{
 		while (isSPACE(*s))
 			s++;
@@ -732,18 +729,22 @@ doshell:
 			*s++ = '\0';
 	}
 	*a = NULL;
-	if (argv[0])
+	if (PL_Argv[0])
 	{
 		PERL_FPU_PRE_EXEC
-		result = myexecvp(FALSE, argv[0], EXEC_ARGV_CAST(argv));
+		result = myexecvp(FALSE, PL_Argv[0], EXEC_ARGV_CAST(PL_Argv));
 		PERL_FPU_POST_EXEC
-		if (errno == ENOEXEC) /* for system V NIH syndrome */
+		if (errno == ENOEXEC)
+		{
+			/* for system V NIH syndrome */
+			do_execfree();
 			goto doshell;
-		S_exec_failed(aTHX_ argv[0], fd, do_report);
+		}
+		S_exec_failed(aTHX_ PL_Argv[0], fd, do_report);
 		amigaos_post_exec(fd, do_report);
 	}
-leave:
-	LEAVE;
+	do_execfree();
+	Safefree(buf);
 	return result;
 }
 
@@ -753,47 +754,42 @@ I32 S_do_amigaos_aexec5(
 	dVAR;
 	I32 result = -1;
 	PERL_ARGS_ASSERT_DO_AEXEC5;
-	ENTER;
 	if (sp > mark)
 	{
-		const char **argv, **a;
+		const char **a;
 		const char *tmps = NULL;
-		Newx(argv, sp - mark + 1, const char *);
-		SAVEFREEPV(argv);
-		a = argv;
+		Newx(PL_Argv, sp - mark + 1, const char *);
+		a = PL_Argv;
 
 		while (++mark <= sp)
 		{
-			if (*mark) {
-				char *arg = savepv(SvPV_nolen_const(*mark));
-				SAVEFREEPV(arg);
-				*a++ = arg;
-			} else
+			if (*mark)
+				*a++ = SvPV_nolen_const(*mark);
+			else
 				*a++ = "";
 		}
 		*a = NULL;
-		if (really) {
-			tmps = savepv(SvPV_nolen_const(really));
-			SAVEFREEPV(tmps);
-		}
-		if ((!really && *argv[0] != '/') ||
+		if (really)
+			tmps = SvPV_nolen_const(really);
+		if ((!really && *PL_Argv[0] != '/') ||
 		        (really && *tmps != '/')) /* will execvp use PATH? */
 			TAINT_ENV(); /* testing IFS here is overkill, probably
                                         */
 		PERL_FPU_PRE_EXEC
 		if (really && *tmps)
 		{
-			result = myexecvp(FALSE, tmps, EXEC_ARGV_CAST(argv));
+			result = myexecvp(FALSE, tmps, EXEC_ARGV_CAST(PL_Argv));
 		}
 		else
 		{
-			result = myexecvp(FALSE, argv[0], EXEC_ARGV_CAST(argv));
+			result = myexecvp(FALSE, PL_Argv[0],
+			                  EXEC_ARGV_CAST(PL_Argv));
 		}
 		PERL_FPU_POST_EXEC
-		S_exec_failed(aTHX_(really ? tmps : argv[0]), fd, do_report);
+		S_exec_failed(aTHX_(really ? tmps : PL_Argv[0]), fd, do_report);
 	}
 	amigaos_post_exec(fd, do_report);
-	LEAVE;
+	do_execfree();
 	return result;
 }
 

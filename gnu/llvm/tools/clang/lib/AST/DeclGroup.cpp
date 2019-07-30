@@ -1,4 +1,4 @@
-//===- DeclGroup.cpp - Classes for representing groups of Decls -----------===//
+//===--- DeclGroup.cpp - Classes for representing groups of Decls -*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,9 +13,7 @@
 
 #include "clang/AST/DeclGroup.h"
 #include "clang/AST/ASTContext.h"
-#include <cassert>
-#include <memory>
-
+#include "clang/AST/Decl.h"
 using namespace clang;
 
 DeclGroup* DeclGroup::Create(ASTContext &C, Decl **Decls, unsigned NumDecls) {

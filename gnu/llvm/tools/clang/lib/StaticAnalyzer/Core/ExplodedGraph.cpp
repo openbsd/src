@@ -1,4 +1,4 @@
-//===- ExplodedGraph.cpp - Local, Path-Sens. "Exploded Graph" -------------===//
+//=-- ExplodedGraph.cpp - Local, Path-Sens. "Exploded Graph" -*- C++ -*------=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,24 +13,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
-#include "clang/AST/Expr.h"
-#include "clang/AST/ExprObjC.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/Stmt.h"
-#include "clang/Analysis/ProgramPoint.h"
-#include "clang/Analysis/Support/BumpVector.h"
-#include "clang/Basic/LLVM.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState_Fwd.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/Optional.h"
-#include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/Casting.h"
-#include <cassert>
-#include <memory>
+#include "llvm/ADT/Statistic.h"
 
 using namespace clang;
 using namespace ento;
@@ -40,7 +29,7 @@ using namespace ento;
 //===----------------------------------------------------------------------===//
 
 // An out of line virtual method to provide a home for the class vtable.
-ExplodedNode::Auditor::~Auditor() = default;
+ExplodedNode::Auditor::~Auditor() {}
 
 #ifndef NDEBUG
 static ExplodedNode::Auditor* NodeAuditor = nullptr;
@@ -56,9 +45,10 @@ void ExplodedNode::SetAuditor(ExplodedNode::Auditor* A) {
 // Cleanup.
 //===----------------------------------------------------------------------===//
 
-ExplodedGraph::ExplodedGraph() = default;
+ExplodedGraph::ExplodedGraph()
+  : NumNodes(0), ReclaimNodeInterval(0) {}
 
-ExplodedGraph::~ExplodedGraph() = default;
+ExplodedGraph::~ExplodedGraph() {}
 
 //===----------------------------------------------------------------------===//
 // Node reclamation.
@@ -197,9 +187,12 @@ void ExplodedGraph::reclaimRecentlyAllocatedNodes() {
     return;
   ReclaimCounter = ReclaimNodeInterval;
 
-  for (const auto node : ChangedNodes)
+  for (NodeVector::iterator it = ChangedNodes.begin(), et = ChangedNodes.end();
+       it != et; ++it) {
+    ExplodedNode *node = *it;
     if (shouldCollect(node))
       collectNode(node);
+  }
   ChangedNodes.clear();
 }
 
@@ -217,11 +210,11 @@ void ExplodedGraph::reclaimRecentlyAllocatedNodes() {
 // 2. The group is empty, in which case the storage value is null.
 // 3. The group contains a single node.
 // 4. The group contains more than one node.
-using ExplodedNodeVector = BumpVector<ExplodedNode *>;
-using GroupStorage = llvm::PointerUnion<ExplodedNode *, ExplodedNodeVector *>;
+typedef BumpVector<ExplodedNode *> ExplodedNodeVector;
+typedef llvm::PointerUnion<ExplodedNode *, ExplodedNodeVector *> GroupStorage;
 
 void ExplodedNode::addPredecessor(ExplodedNode *V, ExplodedGraph &G) {
-  assert(!V->isSink());
+  assert (!V->isSink());
   Preds.addNode(V, G);
   V->Succs.addNode(this, G);
 #ifndef NDEBUG
@@ -353,22 +346,25 @@ std::unique_ptr<ExplodedGraph>
 ExplodedGraph::trim(ArrayRef<const NodeTy *> Sinks,
                     InterExplodedGraphMap *ForwardMap,
                     InterExplodedGraphMap *InverseMap) const {
+
   if (Nodes.empty())
     return nullptr;
 
-  using Pass1Ty = llvm::DenseSet<const ExplodedNode *>;
+  typedef llvm::DenseSet<const ExplodedNode*> Pass1Ty;
   Pass1Ty Pass1;
 
-  using Pass2Ty = InterExplodedGraphMap;
+  typedef InterExplodedGraphMap Pass2Ty;
   InterExplodedGraphMap Pass2Scratch;
   Pass2Ty &Pass2 = ForwardMap ? *ForwardMap : Pass2Scratch;
 
   SmallVector<const ExplodedNode*, 10> WL1, WL2;
 
   // ===- Pass 1 (reverse DFS) -===
-  for (const auto Sink : Sinks)
-    if (Sink)
-      WL1.push_back(Sink);
+  for (ArrayRef<const NodeTy *>::iterator I = Sinks.begin(), E = Sinks.end();
+       I != E; ++I) {
+    if (*I)
+      WL1.push_back(*I);
+  }
 
   // Process the first worklist until it is empty.
   while (!WL1.empty()) {
@@ -449,3 +445,4 @@ ExplodedGraph::trim(ArrayRef<const NodeTy *> Sinks,
 
   return G;
 }
+

@@ -19,7 +19,7 @@ use Test::More;
 
 use Unicode::UCD qw(charinfo charprop charprops_all);
 
-my $expected_version = '10.0.0';
+my $expected_version = '8.0.0';
 my $current_version = Unicode::UCD::UnicodeVersion;
 my $v_unicode_version = pack "C*", split /\./, $current_version;
 my $unknown_script = ($v_unicode_version lt v5.0.0)
@@ -819,19 +819,10 @@ use charnames ();   # Don't use \N{} on things not in original Unicode
                     # version; else will get a compilation error when this .t
                     # is run on an older version.
 
-my $ret_len;
 is(num("0"), 0, 'Verify num("0") == 0');
-is(num("0", \$ret_len), 0, 'Verify num("0", \$ret_len) == 0');
-is($ret_len, 1, "... and the returned length is 1");
-ok(! defined num("", \$ret_len), 'Verify num("", \$ret_len) isnt defined');
-is($ret_len, 0, "... and the returned length is 0");
-ok(! defined num("A", \$ret_len), 'Verify num("A") isnt defined');
-is($ret_len, 0, "... and the returned length is 0");
-is(num("98765", \$ret_len), 98765, 'Verify num("98765") == 98765');
-is($ret_len, 5, "... and the returned length is 5");
-ok(! defined num("98765\N{FULLWIDTH DIGIT FOUR}", \$ret_len),
+is(num("98765"), 98765, 'Verify num("98765") == 98765');
+ok(! defined num("98765\N{FULLWIDTH DIGIT FOUR}"),
    'Verify num("98765\N{FULLWIDTH DIGIT FOUR}") isnt defined');
-is($ret_len, 5, "... but the returned length is 5");
 my $tai_lue_2;
 if ($v_unicode_version ge v4.1.0) {
     my $tai_lue_1 = charnames::string_vianame("NEW TAI LUE DIGIT ONE");
@@ -843,13 +834,8 @@ if ($v_unicode_version ge v4.1.0) {
 }
 if ($v_unicode_version ge v5.2.0) {
     ok(! defined num($tai_lue_2
-         . charnames::string_vianame("NEW TAI LUE THAM DIGIT ONE"), \$ret_len),
+         . charnames::string_vianame("NEW TAI LUE THAM DIGIT ONE")),
          'Verify num("\N{NEW TAI LUE DIGIT TWO}\N{NEW TAI LUE THAM DIGIT ONE}") isnt defined');
-    is($ret_len, 1, "... but the returned length is 1");
-    ok(! defined num(charnames::string_vianame("NEW TAI LUE THAM DIGIT ONE")
-                     .  $tai_lue_2, \$ret_len),
-         'Verify num("\N{NEW TAI LUE THAM DIGIT ONE}\N{NEW TAI LUE DIGIT TWO}") isnt defined');
-    is($ret_len, 1, "... but the returned length is 1");
 }
 if ($v_unicode_version ge v5.1.0) {
     my $cham_0 = charnames::string_vianame("CHAM DIGIT ZERO");
@@ -857,10 +843,8 @@ if ($v_unicode_version ge v5.1.0) {
        'Verify num("\N{CHAM DIGIT ZERO}\N{CHAM DIGIT THREE}") == 3');
     if ($v_unicode_version ge v5.2.0) {
         ok(! defined num(  $cham_0
-                         . charnames::string_vianame("JAVANESE DIGIT NINE"),
-                         \$ret_len),
+                         . charnames::string_vianame("JAVANESE DIGIT NINE")),
         'Verify num("\N{CHAM DIGIT ZERO}\N{JAVANESE DIGIT NINE}") isnt defined');
-    is($ret_len, 1, "... but the returned length is 1");
     }
 }
 is(num("\N{SUPERSCRIPT TWO}"), 2, 'Verify num("\N{SUPERSCRIPT TWO} == 2');
@@ -1431,14 +1415,9 @@ sub fail_with_diff ($$$$) {
     # For use below to output better messages
     my ($prop, $official, $constructed, $tested_function_name) = @_;
 
-    if (! $ENV{PERL_DIFF_TOOL}) {
-
-        is($constructed, $official, "$tested_function_name('$prop')");
-
-        diag("Set environment variable PERL_DIFF_TOOL=diff_tool to see just "
-           . "the differences.");
-        return;
-    }
+    is($constructed, $official, "$tested_function_name('$prop')");
+    diag("Comment out lines " . (__LINE__ - 1) . " through " . (__LINE__ + 1) . " in '$0' on Un*x-like systems to see just the differences.  Uses the 'diff' first in your \$PATH");
+    return;
 
     fail("$tested_function_name('$prop')");
 
@@ -1455,7 +1434,7 @@ sub fail_with_diff ($$$$) {
     close $gend || die "Can't close gend";
 
     my $diff = File::Temp->new();
-    system("$ENV{PERL_DIFF_TOOL} $off $gend > $diff");
+    system("diff $off $gend > $diff");
 
     open my $fh, "<", $diff || die "Can't open $diff";
     my @diffs = <$fh>;
@@ -2715,13 +2694,5 @@ ok($/ eq $input_record_separator,  "The record separator didn't get overridden")
 if (! ok(@warnings == 0, "No warnings were generated")) {
     diag(join "\n", "The warnings are:", @warnings);
 }
-
-# And make sure that the max code point returned actually fits in an IV, which
-# currently range iterators are.
-my $count = 0;
-for my $i ($Unicode::UCD::MAX_CP - 1 .. $Unicode::UCD::MAX_CP) {
-    $count++;
-}
-is($count, 2, "MAX_CP isn't too large");
 
 done_testing();

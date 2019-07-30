@@ -1,0 +1,10 @@
+#	$OpenBSD: networks,v 1.5 1997/09/15 09:54:52 deraadt Exp $
+#
+
+# Internet networks (from nic.ddn.mil)
+# 1) The multicast network
+BASE-ADDRESS.MCAST.NET	224
+loopback		127	loop
+
+# Your subnets follow...
+

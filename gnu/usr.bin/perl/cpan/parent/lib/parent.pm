@@ -1,7 +1,7 @@
 package parent;
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.236';
+$VERSION = '0.234';
 
 sub import {
     my $class = shift;
@@ -19,11 +19,11 @@ sub import {
 
     {
         no strict 'refs';
-        push @{"$inheritor\::ISA"}, @_; # dies if a loop is detected
+        push @{"$inheritor\::ISA"}, @_;
     };
 };
 
-1;
+"All your base are belong to us"
 
 __END__
 

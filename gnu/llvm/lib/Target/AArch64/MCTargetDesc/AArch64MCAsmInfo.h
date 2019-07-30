@@ -34,12 +34,8 @@ struct AArch64MCAsmInfoELF : public MCAsmInfoELF {
   explicit AArch64MCAsmInfoELF(const Triple &T);
 };
 
-struct AArch64MCAsmInfoMicrosoftCOFF : public MCAsmInfoMicrosoft {
-  explicit AArch64MCAsmInfoMicrosoftCOFF();
-};
-
-struct AArch64MCAsmInfoGNUCOFF : public MCAsmInfoGNUCOFF {
-  explicit AArch64MCAsmInfoGNUCOFF();
+struct AArch64MCAsmInfoCOFF : public MCAsmInfoCOFF {
+  explicit AArch64MCAsmInfoCOFF();
 };
 
 } // namespace llvm

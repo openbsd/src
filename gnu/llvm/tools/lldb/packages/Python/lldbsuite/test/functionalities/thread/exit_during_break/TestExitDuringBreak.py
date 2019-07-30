@@ -26,10 +26,13 @@ class ExitDuringBreakpointTestCase(TestBase):
     @expectedFailureAll(
         oslist=["linux"],
         bugnumber="llvm.org/pr15824 thread states not properly maintained")
+    @expectedFailureAll(
+        oslist=["freebsd"],
+        bugnumber="llvm.org/pr18190 thread states not properly maintained")
     def test(self):
         """Test thread exit during breakpoint handling."""
         self.build(dictionary=self.getBuildFlags())
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # This should create a breakpoint in the main thread.

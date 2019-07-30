@@ -1,4 +1,4 @@
-/*	$OpenBSD: strptime.c,v 1.30 2019/05/12 12:49:52 schwarze Exp $ */
+/*	$OpenBSD: strptime.c,v 1.22 2016/05/23 00:05:15 guenther Exp $ */
 /*	$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $	*/
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,6 @@
 
 #include <ctype.h>
 #include <locale.h>
-#include <stdint.h>
 #include <string.h>
 #include <time.h>
 
@@ -72,7 +71,6 @@ static const int mon_lengths[2][MONSPERYEAR] = {
         { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
 };
 
-static	int _conv_num64(const unsigned char **, int64_t *, int64_t, int64_t);
 static	int _conv_num(const unsigned char **, int *, int, int);
 static	int leaps_thru_end_of(const int y);
 static	char *_strptime(const char *, const char *, struct tm *, int);
@@ -116,7 +114,7 @@ _strptime(const char *buf, const char *fmt, struct tm *tm, int initialize)
 			fmt++;
 			continue;
 		}
-
+				
 		if ((c = *fmt++) != '%')
 			goto literal;
 
@@ -142,7 +140,7 @@ literal:
 			_LEGAL_ALT(0);
 			alt_format |= _ALT_O;
 			goto again;
-
+			
 		/*
 		 * "Complex" conversion rules, implemented through recursion.
 		 */
@@ -254,11 +252,8 @@ literal:
 			century = i * 100;
 			break;
 
-		case 'e':	/* The day of month. */
-			if (isspace(*bp))
-				bp++;
-			/* FALLTHROUGH */
-		case 'd':
+		case 'd':	/* The day of month. */
+		case 'e':
 			_LEGAL_ALT(_ALT_O);
 			if (!(_conv_num(&bp, &tm->tm_mday, 1, 31)))
 				return (NULL);
@@ -335,19 +330,10 @@ literal:
 
 		case 'S':	/* The seconds. */
 			_LEGAL_ALT(_ALT_O);
-			if (!(_conv_num(&bp, &tm->tm_sec, 0, 60)))
+			if (!(_conv_num(&bp, &tm->tm_sec, 0, 61)))
 				return (NULL);
 			break;
-		case 's':	/* Seconds since epoch */
-			{
-				int64_t i64;
-				if (!(_conv_num64(&bp, &i64, 0, INT64_MAX)))
-					return (NULL);
-				if (!gmtime_r(&i64, tm))
-					return (NULL);
-				fields = 0xffff;	 /* everything */
-			}
-			break;
+
 		case 'U':	/* The week of year, beginning on sunday. */
 		case 'W':	/* The week of year, beginning on monday. */
 			_LEGAL_ALT(_ALT_O);
@@ -380,7 +366,7 @@ literal:
 				 * number but without the century.
 				 */
 			if (!(_conv_num(&bp, &i, 0, 99)))
-				return (NULL);
+				return (NULL);				
 			continue;
 
 		case 'G':	/* The year corresponding to the ISO week
@@ -416,24 +402,36 @@ literal:
 			tzset();
 			if (strncmp((const char *)bp, gmt, 3) == 0) {
 				tm->tm_isdst = 0;
-				tm->tm_gmtoff = 0;
-				tm->tm_zone = gmt;
+#ifdef TM_GMTOFF
+				tm->TM_GMTOFF = 0;
+#endif
+#ifdef TM_ZONE
+				tm->TM_ZONE = gmt;
+#endif
 				bp += 3;
 			} else if (strncmp((const char *)bp, utc, 3) == 0) {
 				tm->tm_isdst = 0;
-				tm->tm_gmtoff = 0;
-				tm->tm_zone = utc;
+#ifdef TM_GMTOFF
+				tm->TM_GMTOFF = 0;
+#endif
+#ifdef TM_ZONE
+				tm->TM_ZONE = utc;
+#endif
 				bp += 3;
 			} else {
 				ep = _find_string(bp, &i,
-						 (const char * const *)tzname,
-						  NULL, 2);
+					       	 (const char * const *)tzname,
+					       	  NULL, 2);
 				if (ep == NULL)
 					return (NULL);
 
 				tm->tm_isdst = i;
-				tm->tm_gmtoff = -(timezone);
-				tm->tm_zone = tzname[i];
+#ifdef TM_GMTOFF
+				tm->TM_GMTOFF = -(timezone);
+#endif
+#ifdef TM_ZONE
+				tm->TM_ZONE = tzname[i];
+#endif
 				bp = ep;
 			}
 			continue;
@@ -452,6 +450,9 @@ literal:
 			 * C[DS]T = Central : -5 | -6
 			 * M[DS]T = Mountain: -6 | -7
 			 * P[DS]T = Pacific : -7 | -8
+			 *          Military
+			 * [A-IL-M] = -1 ... -9 (J not used)
+			 * [N-Y]  = +1 ... +12
 			 */
 			while (isspace(*bp))
 				bp++;
@@ -467,8 +468,12 @@ literal:
 				/*FALLTHROUGH*/
 			case 'Z':
 				tm->tm_isdst = 0;
-				tm->tm_gmtoff = 0;
-				tm->tm_zone = utc;
+#ifdef TM_GMTOFF
+				tm->TM_GMTOFF = 0;
+#endif
+#ifdef TM_ZONE
+				tm->TM_ZONE = utc;
+#endif
 				continue;
 			case '+':
 				neg = 0;
@@ -480,38 +485,84 @@ literal:
 				--bp;
 				ep = _find_string(bp, &i, nast, NULL, 4);
 				if (ep != NULL) {
-					tm->tm_gmtoff = (-5 - i) * SECSPERHOUR;
-					tm->tm_zone = (char *)nast[i];
+#ifdef TM_GMTOFF
+					tm->TM_GMTOFF = -5 - i;
+#endif
+#ifdef TM_ZONE
+					tm->TM_ZONE = (char *)nast[i];
+#endif
 					bp = ep;
 					continue;
 				}
 				ep = _find_string(bp, &i, nadt, NULL, 4);
 				if (ep != NULL) {
 					tm->tm_isdst = 1;
-					tm->tm_gmtoff = (-4 - i) * SECSPERHOUR;
-					tm->tm_zone = (char *)nadt[i];
+#ifdef TM_GMTOFF
+					tm->TM_GMTOFF = -4 - i;
+#endif
+#ifdef TM_ZONE
+					tm->TM_ZONE = (char *)nadt[i];
+#endif
 					bp = ep;
+					continue;
+				}
+
+				if ((*bp >= 'A' && *bp <= 'I') ||
+				    (*bp >= 'L' && *bp <= 'Y')) {
+#ifdef TM_GMTOFF
+					/* Argh! No 'J'! */
+					if (*bp >= 'A' && *bp <= 'I')
+						tm->TM_GMTOFF =
+						    ('A' - 1) - (int)*bp;
+					else if (*bp >= 'L' && *bp <= 'M')
+						tm->TM_GMTOFF = 'A' - (int)*bp;
+					else if (*bp >= 'N' && *bp <= 'Y')
+						tm->TM_GMTOFF = (int)*bp - 'M';
+#endif
+#ifdef TM_ZONE
+					tm->TM_ZONE = NULL; /* XXX */
+#endif
+					bp++;
 					continue;
 				}
 				return NULL;
 			}
-			if (!isdigit(bp[0]) || !isdigit(bp[1]))
-				return NULL;
-			offs = ((bp[0]-'0') * 10 + (bp[1]-'0')) * SECSPERHOUR;
-			bp += 2;
-			if (*bp == ':')
-				bp++;
-			if (isdigit(*bp)) {
-				offs += (*bp++ - '0') * 10 * SECSPERMIN;
-				if (!isdigit(*bp))
+			offs = 0;
+			for (i = 0; i < 4; ) {
+				if (isdigit(*bp)) {
+					offs = offs * 10 + (*bp++ - '0');
+					i++;
+					continue;
+				}
+				if (i == 2 && *bp == ':') {
+					bp++;
+					continue;
+				}
+				break;
+			}
+			switch (i) {
+			case 2:
+				offs *= 100;
+				break;
+			case 4:
+				i = offs % 100;
+				if (i >= 60)
 					return NULL;
-				offs += (*bp++ - '0') * SECSPERMIN;
+				/* Convert minutes into decimal */
+				offs = (offs / 100) * 100 + (i * 50) / 30;
+				break;
+			default:
+				return NULL;
 			}
 			if (neg)
 				offs = -offs;
 			tm->tm_isdst = 0;	/* XXX */
-			tm->tm_gmtoff = offs;
-			tm->tm_zone = NULL;	/* XXX */
+#ifdef TM_GMTOFF
+			tm->TM_GMTOFF = offs;
+#endif
+#ifdef TM_ZONE
+			tm->TM_ZONE = NULL;	/* XXX */
+#endif
 			continue;
 
 		/*
@@ -609,29 +660,6 @@ _conv_num(const unsigned char **buf, int *dest, int llim, int ulim)
 	return (1);
 }
 
-static int
-_conv_num64(const unsigned char **buf, int64_t *dest, int64_t llim, int64_t ulim)
-{
-	int result = 0;
-	int64_t rulim = ulim;
-
-	if (**buf < '0' || **buf > '9')
-		return (0);
-
-	/* we use rulim to break out of the loop when we run out of digits */
-	do {
-		result *= 10;
-		result += *(*buf)++ - '0';
-		rulim /= 10;
-	} while ((result * 10 <= ulim) && rulim && **buf >= '0' && **buf <= '9');
-
-	if (result < llim || result > ulim)
-		return (0);
-
-	*dest = result;
-	return (1);
-}
-
 static const u_char *
 _find_string(const u_char *bp, int *tgt, const char * const *n1,
 		const char * const *n2, int c)
@@ -654,7 +682,7 @@ _find_string(const u_char *bp, int *tgt, const char * const *n1,
 	return NULL;
 }
 
-static int
+static int              
 leaps_thru_end_of(const int y)
 {
 	return (y >= 0) ? (y / 4 - y / 100 + y / 400) :

@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.58 2018/11/28 22:00:30 kn Exp $	 */
+/* $OpenBSD: display.c,v 1.54 2018/01/04 17:44:20 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -100,7 +100,6 @@ int y_header;
 int y_idlecursor;
 int y_procs;
 extern int ncpu;
-extern int ncpuonline;
 extern int combine_cpus;
 extern struct process_select ps;
 
@@ -126,10 +125,9 @@ static int (*standendp)(void);
 int
 display_resize(void)
 {
-	int cpu_lines, display_lines;
+	int display_lines;
+	int cpu_lines = (combine_cpus ? 1 : ncpu);
 
-	ncpuonline = getncpuonline();
-	cpu_lines = (combine_cpus ? 1 : ncpuonline);
 	y_mem = 2 + cpu_lines;
 	y_header = 4 + cpu_lines;
 	y_procs = 5 + cpu_lines;
@@ -138,7 +136,7 @@ display_resize(void)
 	/* if operating in "dumb" mode, we only need one line */
 	display_lines = smart_terminal ? screen_length - y_procs : 1;
 
-	y_idlecursor = y_message = 3 + (combine_cpus ? 1 : ncpuonline);
+	y_idlecursor = y_message = 3 + (combine_cpus ? 1 : ncpu);
 	if (screen_length <= y_message)
 		y_idlecursor = y_message = screen_length - 1;
 
@@ -379,9 +377,9 @@ cpustates_tag(int cpu)
 }
 
 void
-i_cpustates(int64_t *ostates, int *online)
+i_cpustates(int64_t *ostates)
 {
-	int i, first, cpu, cpu_line;
+	int i, first, cpu;
 	double value;
 	int64_t *states;
 	char **names, *thisname;
@@ -395,8 +393,6 @@ i_cpustates(int64_t *ostates, int *online)
 		}
 		memset(values, 0, num_cpustates * sizeof(*values));
 		for (cpu = 0; cpu < ncpu; cpu++) {
-			if (!online[cpu])
-				continue;
 			names = cpustate_names;
 			states = ostates + (CPUSTATES * cpu);
 			i = 0;
@@ -413,11 +409,11 @@ i_cpustates(int64_t *ostates, int *online)
 			first = 0;
 			move(2, 0);
 			clrtoeol();
-			printwp("%-3d CPUs: ", ncpuonline);
+			printwp("%-3d CPUs: ", ncpu);
 
 			while ((thisname = *names++) != NULL) {
 				if (*thisname != '\0') {
-					value = values[i++] / ncpuonline;
+					value = values[i++] / ncpu;
 					/* if percentage is >= 1000, print it as 100% */
 					printwp((value >= 1000 ? "%s%4.0f%% %s" :
 					    "%s%4.1f%% %s"), first++ == 0 ? "" : ", ",
@@ -428,18 +424,14 @@ i_cpustates(int64_t *ostates, int *online)
 		}
 		return;
 	}
-	for (cpu = cpu_line = 0; cpu < ncpu; cpu++) {
-		/* skip if offline */
-		if (!online[cpu])
-			continue;
-
+	for (cpu = 0; cpu < ncpu; cpu++) {
 		/* now walk thru the names and print the line */
 		names = cpustate_names;
 		first = 0;
 		states = ostates + (CPUSTATES * cpu);
 
-		if (screen_length > 2 + cpu_line || !smart_terminal) {
-			move(2 + cpu_line, 0);
+		if (screen_length > 2 + cpu || !smart_terminal) {
+			move(2 + cpu, 0);
 			clrtoeol();
 			addstrp(cpustates_tag(cpu));
 
@@ -455,7 +447,6 @@ i_cpustates(int64_t *ostates, int *online)
 				}
 			}
 			putn();
-			cpu_line++;
 		}
 	}
 }
@@ -817,8 +808,7 @@ show_help(void)
 	    "I | i        - toggle the display of idle processes\n"
 	    "k [-sig] pid - send signal `-sig' to process `pid'\n"
 	    "n|# count    - show `count' processes\n"
-	    "o [-]field   - specify sort order (size, res, cpu, time, pri, pid, command)\n"
-	    "               (o -field sorts in reverse)\n"
+	    "o field      - specify sort order (size, res, cpu, time, pri, pid, command)\n"
 	    "P pid        - highlight process `pid' (P+ switches highlighting off)\n"
 	    "p pid        - display process by `pid' (p+ selects all processes)\n"
 	    "q            - quit\n"

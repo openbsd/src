@@ -25,7 +25,6 @@
 #include "llvm/MC/LaneBitmask.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Support/BranchProbability.h"
-#include "llvm/Support/Printable.h"
 #include <cassert>
 #include <cstdint>
 #include <functional>
@@ -58,7 +57,7 @@ private:
 public:
   void addNodeToList(MachineInstr *N);
   void removeNodeFromList(MachineInstr *N);
-  void transferNodesFromList(ilist_traits &FromList, instr_iterator First,
+  void transferNodesFromList(ilist_traits &OldList, instr_iterator First,
                              instr_iterator Last);
   void deleteNode(MachineInstr *MI);
 };
@@ -98,8 +97,6 @@ private:
   using const_probability_iterator =
       std::vector<BranchProbability>::const_iterator;
 
-  Optional<uint64_t> IrrLoopHeaderWeight;
-
   /// Keep track of the physical registers that are livein of the basicblock.
   using LiveInVector = std::vector<RegisterMaskPair>;
   LiveInVector LiveIns;
@@ -115,18 +112,13 @@ private:
   /// branch.
   bool AddressTaken = false;
 
-  /// Indicate that this basic block is the entry block of an EH scope, i.e.,
-  /// the block that used to have a catchpad or cleanuppad instruction in the
-  /// LLVM IR.
-  bool IsEHScopeEntry = false;
-
   /// Indicate that this basic block is the entry block of an EH funclet.
   bool IsEHFuncletEntry = false;
 
   /// Indicate that this basic block is the entry block of a cleanup funclet.
   bool IsCleanupFuncletEntry = false;
 
-  /// since getSymbol is a relatively heavy-weight operation, the symbol
+  /// \brief since getSymbol is a relatively heavy-weight operation, the symbol
   /// is only computed once and is cached.
   mutable MCSymbol *CachedMCSymbol = nullptr;
 
@@ -228,14 +220,6 @@ public:
   }
   inline iterator_range<const_iterator> terminators() const {
     return make_range(getFirstTerminator(), end());
-  }
-
-  /// Returns a range that iterates over the phis in the basic block.
-  inline iterator_range<iterator> phis() {
-    return make_range(begin(), getFirstNonPHI());
-  }
-  inline iterator_range<const_iterator> phis() const {
-    return const_cast<MachineBasicBlock *>(this)->phis();
   }
 
   // Machine-CFG iterators
@@ -380,14 +364,6 @@ public:
 
   bool hasEHPadSuccessor() const;
 
-  /// Returns true if this is the entry block of an EH scope, i.e., the block
-  /// that used to have a catchpad or cleanuppad instruction in the LLVM IR.
-  bool isEHScopeEntry() const { return IsEHScopeEntry; }
-
-  /// Indicates if this is the entry block of an EH scope, i.e., the block that
-  /// that used to have a catchpad or cleanuppad instruction in the LLVM IR.
-  void setIsEHScopeEntry(bool V = true) { IsEHScopeEntry = V; }
-
   /// Returns true if this is the entry block of an EH funclet.
   bool isEHFuncletEntry() const { return IsEHFuncletEntry; }
 
@@ -469,18 +445,6 @@ public:
 
   /// Replace successor OLD with NEW and update probability info.
   void replaceSuccessor(MachineBasicBlock *Old, MachineBasicBlock *New);
-
-  /// Copy a successor (and any probability info) from original block to this
-  /// block's. Uses an iterator into the original blocks successors.
-  ///
-  /// This is useful when doing a partial clone of successors. Afterward, the
-  /// probabilities may need to be normalized.
-  void copySuccessor(MachineBasicBlock *Orig, succ_iterator I);
-
-  /// Split the old successor into old plus new and updates the probability
-  /// info.
-  void splitSuccessor(MachineBasicBlock *Old, MachineBasicBlock *New,
-                      bool NormalizeSuccProbs = false);
 
   /// Transfers all the successors from MBB to this machine basic block (i.e.,
   /// copies all the successors FromMBB and remove all the successors from
@@ -579,7 +543,7 @@ public:
   /// Check if the edge between this block and the given successor \p
   /// Succ, can be split. If this returns true a subsequent call to
   /// SplitCriticalEdge is guaranteed to return a valid basic block if
-  /// no changes occurred in the meantime.
+  /// no changes occured in the meantime.
   bool canSplitCriticalEdge(const MachineBasicBlock *Succ) const;
 
   void pop_front() { Insts.pop_front(); }
@@ -718,17 +682,10 @@ public:
                             bool IsCond);
 
   /// Find the next valid DebugLoc starting at MBBI, skipping any DBG_VALUE
-  /// and DBG_LABEL instructions.  Return UnknownLoc if there is none.
+  /// instructions.  Return UnknownLoc if there is none.
   DebugLoc findDebugLoc(instr_iterator MBBI);
   DebugLoc findDebugLoc(iterator MBBI) {
     return findDebugLoc(MBBI.getInstrIterator());
-  }
-
-  /// Find the previous valid DebugLoc preceding MBBI, skipping and DBG_VALUE
-  /// instructions.  Return UnknownLoc if there is none.
-  DebugLoc findPrevDebugLoc(instr_iterator MBBI);
-  DebugLoc findPrevDebugLoc(iterator MBBI) {
-    return findPrevDebugLoc(MBBI.getInstrIterator());
   }
 
   /// Find and return the merged DebugLoc of the branch instructions of the
@@ -742,8 +699,8 @@ public:
     LQR_Unknown ///< Register liveness not decidable from local neighborhood.
   };
 
-  /// Return whether (physical) register \p Reg has been defined and not
-  /// killed as of just before \p Before.
+  /// Return whether (physical) register \p Reg has been <def>ined and not
+  /// <kill>ed as of just before \p Before.
   ///
   /// Search is localised to a neighborhood of \p Neighborhood instructions
   /// before (searching for defs or kills) and \p Neighborhood instructions
@@ -757,10 +714,9 @@ public:
 
   // Debugging methods.
   void dump() const;
-  void print(raw_ostream &OS, const SlotIndexes * = nullptr,
-             bool IsStandalone = true) const;
+  void print(raw_ostream &OS, const SlotIndexes* = nullptr) const;
   void print(raw_ostream &OS, ModuleSlotTracker &MST,
-             const SlotIndexes * = nullptr, bool IsStandalone = true) const;
+             const SlotIndexes* = nullptr) const;
 
   // Printing method used by LoopInfo.
   void printAsOperand(raw_ostream &OS, bool PrintType = true) const;
@@ -772,14 +728,6 @@ public:
 
   /// Return the MCSymbol for this basic block.
   MCSymbol *getSymbol() const;
-
-  Optional<uint64_t> getIrrLoopHeaderWeight() const {
-    return IrrLoopHeaderWeight;
-  }
-
-  void setIrrLoopHeaderWeight(uint64_t Weight) {
-    IrrLoopHeaderWeight = Weight;
-  }
 
 private:
   /// Return probability iterator corresponding to the I successor iterator.
@@ -800,7 +748,7 @@ private:
 
   // Machine-CFG mutators
 
-  /// Add Pred as a predecessor of this MachineBasicBlock. Don't do this
+  /// Remove Pred as a predecessor of this MachineBasicBlock. Don't do this
   /// unless you know what you're doing, because it doesn't update Pred's
   /// successors list. Use Pred->addSuccessor instead.
   void addPredecessor(MachineBasicBlock *Pred);
@@ -813,17 +761,9 @@ private:
 
 raw_ostream& operator<<(raw_ostream &OS, const MachineBasicBlock &MBB);
 
-/// Prints a machine basic block reference.
-///
-/// The format is:
-///   %bb.5           - a machine basic block with MBB.getNumber() == 5.
-///
-/// Usage: OS << printMBBReference(MBB) << '\n';
-Printable printMBBReference(const MachineBasicBlock &MBB);
-
 // This is useful when building IndexedMaps keyed on basic block pointers.
-struct MBB2NumberFunctor {
-  using argument_type = const MachineBasicBlock *;
+struct MBB2NumberFunctor :
+  public std::unary_function<const MachineBasicBlock*, unsigned> {
   unsigned operator()(const MachineBasicBlock *MBB) const {
     return MBB->getNumber();
   }
@@ -915,7 +855,7 @@ public:
 /// const_instr_iterator} and the respective reverse iterators.
 template<typename IterT>
 inline IterT skipDebugInstructionsForward(IterT It, IterT End) {
-  while (It != End && It->isDebugInstr())
+  while (It != End && It->isDebugValue())
     It++;
   return It;
 }
@@ -926,7 +866,7 @@ inline IterT skipDebugInstructionsForward(IterT It, IterT End) {
 /// const_instr_iterator} and the respective reverse iterators.
 template<class IterT>
 inline IterT skipDebugInstructionsBackward(IterT It, IterT Begin) {
-  while (It != Begin && It->isDebugInstr())
+  while (It != Begin && It->isDebugValue())
     It--;
   return It;
 }

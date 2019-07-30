@@ -6,8 +6,8 @@
  *    License or the Artistic License, as specified in the README file.
  */
 
-#ifndef PERL_DQUOTE_INLINE_H_ /* Guard against nested #inclusion */
-#define PERL_DQUOTE_INLINE_H_
+#ifndef DQUOTE_INLINE_H /* Guard against nested #inclusion */
+#define DQUOTE_INLINE_H
 
 /*
  - regcurly - a little FSA that accepts {\d+,?\d*}
@@ -64,4 +64,4 @@ S_form_short_octal_warning(pTHX_
                      (int) (s - sans_leading_zeros), sans_leading_zeros,
                      *s);
 }
-#endif  /* PERL_DQUOTE_INLINE_H_ */
+#endif  /* DQUOTE_INLINE_H */

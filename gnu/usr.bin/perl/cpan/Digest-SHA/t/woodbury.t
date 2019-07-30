@@ -3,7 +3,21 @@
 # Vectors and initial script courtesy of Adam Woodbury, The MITRE Corporation
 
 use strict;
-use Digest::SHA qw(hmac_sha256 hmac_sha384 hmac_sha512);
+
+my $MODULE;
+
+BEGIN {
+	$MODULE = (-d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
+	eval "require $MODULE" || die $@;
+	$MODULE->import(qw(hmac_sha256 hmac_sha384 hmac_sha512));
+}
+
+BEGIN {
+	if ($ENV{PERL_CORE}) {
+		chdir 't' if -d 't';
+		@INC = '../lib';
+	}
+}
 
 my @plex = map { eval } <DATA>;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.33 2019/03/26 19:32:46 mlarkin Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.24 2018/02/21 19:24:15 guenther Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -52,33 +52,9 @@ invlpg(u_int64_t addr)
 }  
 
 static __inline void
-sidt(void *p)
-{
-	__asm volatile("sidt (%0)" : : "r" (p) : "memory");
-}
-
-static __inline void
 lidt(void *p)
 {
 	__asm volatile("lidt (%0)" : : "r" (p) : "memory");
-}
-
-static __inline void
-sgdt(void *p)
-{
-	__asm volatile("sgdt (%0)" : : "r" (p) : "memory");
-}
-
-static __inline void
-bare_lgdt(struct region_descriptor *p)
-{
-	__asm volatile("lgdt (%0)" : : "r" (p) : "memory");
-}
-
-static __inline void
-sldt(u_short *sel)
-{
-	__asm volatile("sldt (%0)" : : "r" (sel) : "memory");
 }
 
 static __inline void
@@ -169,23 +145,24 @@ tlbflush(void)
 	__asm volatile("movq %0,%%cr3" : : "r" (val));
 }
 
-static inline void
-invpcid(uint64_t type, paddr_t pcid, paddr_t addr)
-{
-	uint64_t desc[2] = { pcid, addr };
-	asm volatile("invpcid %0,%1" : : "m"(desc[0]), "r"(type));
-}
-#define INVPCID_ADDR		0
-#define INVPCID_PCID		1
-#define INVPCID_ALL		2
-#define INVPCID_NON_GLOBAL	3
-
 #ifdef notyet
 void	setidt(int idx, /*XXX*/caddr_t func, int typ, int dpl);
 #endif
 
 
 /* XXXX ought to be in psl.h with spl() functions */
+
+static __inline void
+disable_intr(void)
+{
+	__asm volatile("cli");
+}
+
+static __inline void
+enable_intr(void)
+{
+	__asm volatile("sti");
+}
 
 static __inline u_long
 read_rflags(void)
@@ -202,19 +179,13 @@ write_rflags(u_long ef)
 	__asm volatile("pushq %0; popfq" : : "r" (ef));
 }
 
-static __inline void
-intr_enable(void)
-{
-	__asm volatile("sti");
-}
-
 static __inline u_long
 intr_disable(void)
 {
 	u_long ef;
 
 	ef = read_rflags();
-	__asm volatile("cli");
+	disable_intr();
 	return (ef);
 }
 
@@ -312,23 +283,7 @@ static __inline void
 mwait(u_long extensions, u_int hints)
 {
 
-	__asm volatile(
-		"	mwait			;"
-		"	mov	$8,%%rcx	;"
-		"	.align	16,0x90		;"
-		"3:	call	5f		;"
-		"4:	pause			;"
-		"	lfence			;"
-		"	call	4b		;"
-		"	.align	16,0xcc		;"
-		"5:	call	7f		;"
-		"6:	pause			;"
-		"	lfence			;"
-		"	call	6b		;"
-		"	.align	16,0xcc		;"
-		"7:	loop	3b		;"
-		"	add	$(16*8),%%rsp"
-	    : "+c" (extensions) : "a" (hints));
+	__asm volatile("mwait" : : "a" (hints), "c" (extensions));
 }
 
 static __inline void
@@ -351,18 +306,6 @@ xgetbv(uint32_t reg)
 	return (((uint64_t)hi << 32) | (uint64_t)lo);
 }
 
-static __inline void
-stgi(void)
-{
-	__asm volatile("stgi");
-}
-
-static __inline void
-clgi(void)
-{
-	__asm volatile("clgi");
-}
-
 /* Break into DDB. */
 static __inline void
 breakpoint(void)
@@ -376,8 +319,6 @@ void cpu_ucode_apply(struct cpu_info *);
 
 struct cpu_info_full;
 void cpu_enter_pages(struct cpu_info_full *);
-
-int rdmsr_safe(u_int msr, uint64_t *);
 
 #endif /* _KERNEL */
 

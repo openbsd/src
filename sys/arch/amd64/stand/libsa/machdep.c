@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.8 2019/05/10 21:20:43 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.6 2015/09/18 13:30:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -31,8 +31,10 @@
 #include "biosdev.h"
 #include <machine/apmvar.h>
 #include <machine/biosvar.h>
-#include <machine/specialreg.h>
-#include <machine/vmmvar.h>
+
+#ifdef EFIBOOT
+#include "efiboot.h"
+#endif
 
 volatile struct BIOS_regs	BIOS_regs;
 
@@ -42,15 +44,11 @@ volatile struct BIOS_regs	BIOS_regs;
 #define CKPT(c) /* c */
 #endif
 
-const char *vmm_hv_signature = VMM_HV_SIGNATURE;
-
 void
 machdep(void)
 {
-	int i, j, vmm = 0;
+	int i, j;
 	struct i386_boot_probes *pr;
-	uint32_t dummy, ebx, ecx, edx;
-	dev_t dev;
 
 	/*
 	 * The list of probe routines is now in conf.c.
@@ -67,27 +65,15 @@ machdep(void)
 			printf("\n");
 		}
 	}
-
-	CPUID(0x1, dummy, dummy, ecx, dummy);
-	if (ecx & CPUIDECX_HV) {
-		CPUID(0x40000000, dummy, ebx, ecx, edx);
-		if (memcmp(&ebx, &vmm_hv_signature[0], sizeof(uint32_t)) == 0 &&
-		    memcmp(&ecx, &vmm_hv_signature[4], sizeof(uint32_t)) == 0 &&
-		    memcmp(&edx, &vmm_hv_signature[8], sizeof(uint32_t)) == 0)
-			vmm = 1;
-	}
-
-	/* Set console to com0/115200 by default in vmm */
-	if (vmm) {
-		dev = ttydev("com0");
-		cnspeed(dev, 115200);
-		cnset(dev);
-	}
 }
 
 int
 check_skip_conf(void)
 {
 	/* Return non-zero (skip boot.conf) if Control "shift" key down */
+#ifndef EFIBOOT
 	return (pc_getshifts(0) & 0x04);
+#else
+	return (efi_cons_getshifts(0) & 0x04);
+#endif
 }

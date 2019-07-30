@@ -33,9 +33,9 @@ class DependencyGraphCallback : public PPCallbacks {
   llvm::SetVector<const FileEntry *> AllFiles;
   typedef llvm::DenseMap<const FileEntry *,
                          SmallVector<const FileEntry *, 2> > DependencyMap;
-
+  
   DependencyMap Dependencies;
-
+  
 private:
   raw_ostream &writeNodeReference(raw_ostream &OS,
                                   const FileEntry *Node);
@@ -50,13 +50,12 @@ public:
                           StringRef FileName, bool IsAngled,
                           CharSourceRange FilenameRange, const FileEntry *File,
                           StringRef SearchPath, StringRef RelativePath,
-                          const Module *Imported,
-                          SrcMgr::CharacteristicKind FileType) override;
+                          const Module *Imported) override;
 
   void EndOfMainFile() override {
     OutputGraphFile();
   }
-
+  
 };
 }
 
@@ -66,20 +65,18 @@ void clang::AttachDependencyGraphGen(Preprocessor &PP, StringRef OutputFile,
                                                                SysRoot));
 }
 
-void DependencyGraphCallback::InclusionDirective(
-    SourceLocation HashLoc,
-    const Token &IncludeTok,
-    StringRef FileName,
-    bool IsAngled,
-    CharSourceRange FilenameRange,
-    const FileEntry *File,
-    StringRef SearchPath,
-    StringRef RelativePath,
-    const Module *Imported,
-    SrcMgr::CharacteristicKind FileType) {
+void DependencyGraphCallback::InclusionDirective(SourceLocation HashLoc,
+                                                 const Token &IncludeTok,
+                                                 StringRef FileName,
+                                                 bool IsAngled,
+                                                 CharSourceRange FilenameRange,
+                                                 const FileEntry *File,
+                                                 StringRef SearchPath,
+                                                 StringRef RelativePath,
+                                                 const Module *Imported) {
   if (!File)
     return;
-
+  
   SourceManager &SM = PP->getSourceManager();
   const FileEntry *FromFile
     = SM.getFileEntryForID(SM.getFileID(SM.getExpansionLoc(HashLoc)));
@@ -87,7 +84,7 @@ void DependencyGraphCallback::InclusionDirective(
     return;
 
   Dependencies[FromFile].push_back(File);
-
+  
   AllFiles.insert(File);
   AllFiles.insert(FromFile);
 }
@@ -109,7 +106,7 @@ void DependencyGraphCallback::OutputGraphFile() {
   }
 
   OS << "digraph \"dependencies\" {\n";
-
+  
   // Write the nodes
   for (unsigned I = 0, N = AllFiles.size(); I != N; ++I) {
     // Write the node itself.
@@ -119,15 +116,15 @@ void DependencyGraphCallback::OutputGraphFile() {
     StringRef FileName = AllFiles[I]->getName();
     if (FileName.startswith(SysRoot))
       FileName = FileName.substr(SysRoot.size());
-
+    
     OS << DOT::EscapeString(FileName)
     << "\"];\n";
   }
 
   // Write the edges
-  for (DependencyMap::iterator F = Dependencies.begin(),
+  for (DependencyMap::iterator F = Dependencies.begin(), 
                             FEnd = Dependencies.end();
-       F != FEnd; ++F) {
+       F != FEnd; ++F) {    
     for (unsigned I = 0, N = F->second.size(); I != N; ++I) {
       OS.indent(2);
       writeNodeReference(OS, F->first);

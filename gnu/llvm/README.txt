@@ -1,4 +1,4 @@
-The LLVM Compiler Infrastructure
+Low Level Virtual Machine (LLVM)
 ================================
 
 This directory and its subdirectories contain source code for LLVM,

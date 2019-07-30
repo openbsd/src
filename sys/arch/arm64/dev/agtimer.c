@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.10 2018/08/11 10:41:08 kettenis Exp $ */
+/* $OpenBSD: agtimer.c,v 1.9 2018/01/31 10:52:12 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -46,6 +46,8 @@ static struct timecounter agtimer_timecounter = {
 	agtimer_get_timecount, NULL, 0x7fffffff, 0, "agtimer", 0, NULL
 };
 
+#define MAX_ARM_CPUS	8
+
 struct agtimer_pcpu_softc {
 	uint64_t 		pc_nexttickevent;
 	uint64_t 		pc_nextstatevent;
@@ -56,7 +58,7 @@ struct agtimer_softc {
 	struct device		sc_dev;
 	int			sc_node;
 
-	struct agtimer_pcpu_softc sc_pstat[MAXCPUS];
+	struct agtimer_pcpu_softc sc_pstat[MAX_ARM_CPUS];
 
 	u_int32_t		sc_ticks_err_cnt;
 	u_int32_t		sc_ticks_per_second;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.72 2019/05/13 18:20:13 mpi Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.65 2017/05/16 12:24:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -252,7 +252,6 @@ void	bstp_set_port_proto(struct bstp_port *, int);
 void	bstp_set_port_tc(struct bstp_port *, int);
 void	bstp_set_timer_tc(struct bstp_port *);
 void	bstp_set_timer_msgage(struct bstp_port *);
-void	bstp_reset(struct bstp_state *);
 int	bstp_rerooted(struct bstp_state *, struct bstp_port *);
 u_int32_t	bstp_calc_path_cost(struct bstp_port *);
 void	bstp_notify_rtage(struct bstp_port *, int);
@@ -875,8 +874,11 @@ bstp_info_superior(struct bstp_pri_vector *pv,
 }
 
 void
-bstp_reset(struct bstp_state *bs)
+bstp_assign_roles(struct bstp_state *bs)
 {
+	struct bstp_port *bp, *rbp = NULL;
+	struct bstp_pri_vector pv;
+
 	/* default to our priority vector */
 	bs->bs_root_pv = bs->bs_bridge_pv;
 	bs->bs_root_msg_age = 0;
@@ -884,15 +886,6 @@ bstp_reset(struct bstp_state *bs)
 	bs->bs_root_fdelay = bs->bs_bridge_fdelay;
 	bs->bs_root_htime = bs->bs_bridge_htime;
 	bs->bs_root_port = NULL;
-}
-
-void
-bstp_assign_roles(struct bstp_state *bs)
-{
-	struct bstp_port *bp, *rbp = NULL;
-	struct bstp_pri_vector pv;
-
-	bstp_reset(bs);
 
 	/* check if any received info supersedes us */
 	LIST_FOREACH(bp, &bs->bs_bplist, bp_next) {
@@ -1591,7 +1584,7 @@ bstp_notify_rtage(struct bstp_port *bp, int pending)
 {
 	int age = 0;
 
-	KERNEL_ASSERT_LOCKED();
+	NET_ASSERT_LOCKED();
 
 	switch (bp->bp_protover) {
 	case BSTP_PROTO_STP:
@@ -1614,7 +1607,7 @@ void
 bstp_ifstate(void *arg)
 {
 	struct ifnet *ifp = (struct ifnet *)arg;
-	struct bridge_iflist *bif;
+	struct bridge_iflist *p;
 	struct bstp_port *bp;
 	struct bstp_state *bs;
 	int s;
@@ -1623,11 +1616,11 @@ bstp_ifstate(void *arg)
 		return;
 
 	s = splnet();
-	if ((bif = bridge_getbif(ifp)) == NULL)
+	if ((p = (struct bridge_iflist *)ifp->if_bridgeport) == NULL)
 		goto done;
-	if ((bif->bif_flags & IFBIF_STP) == 0)
+	if ((p->bif_flags & IFBIF_STP) == 0)
 		goto done;
-	if ((bp = bif->bif_stp) == NULL)
+	if ((bp = p->bif_stp) == NULL)
 		goto done;
 	if ((bs = bp->bp_bs) == NULL)
 		goto done;
@@ -1845,7 +1838,6 @@ bstp_initialization(struct bstp_state *bs)
 
 	if (LIST_EMPTY(&bs->bs_bplist)) {
 		bstp_stop(bs);
-		bstp_reset(bs);
 		return;
 	}
 
@@ -1887,7 +1879,8 @@ bstp_initialization(struct bstp_state *bs)
 
 	if (!timeout_initialized(&bs->bs_bstptimeout))
 		timeout_set(&bs->bs_bstptimeout, bstp_tick, bs);
-	if (!timeout_pending(&bs->bs_bstptimeout))
+	if (bs->bs_ifflags & IFF_RUNNING &&
+	    !timeout_pending(&bs->bs_bstptimeout))
 		timeout_add_sec(&bs->bs_bstptimeout, 1);
 
 	LIST_FOREACH(bp, &bs->bs_bplist, bp_next) {
@@ -1904,7 +1897,9 @@ struct bstp_state *
 bstp_create(struct ifnet *ifp)
 {
 	struct bstp_state *bs;
+	int s;
 
+	s = splnet();
 	bs = malloc(sizeof(*bs), M_DEVBUF, M_WAITOK|M_ZERO);
 	LIST_INIT(&bs->bs_bplist);
 
@@ -1919,6 +1914,8 @@ bstp_create(struct ifnet *ifp)
 	bs->bs_protover = BSTP_PROTO_RSTP;	/* STP instead of RSTP? */
 
 	getmicrotime(&bs->bs_last_tc_time);
+
+	splx(s);
 
 	return (bs);
 }
@@ -2086,7 +2083,7 @@ bstp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct bstp_state *bs = sc->sc_stp;
 	struct ifbrparam *ifbp = (struct ifbrparam *)data;
 	struct ifbreq *ifbr = (struct ifbreq *)data;
-	struct bridge_iflist *bif;
+	struct bridge_iflist *p;
 	struct ifnet *ifs;
 	struct bstp_port *bp;
 	int r = 0, err = 0, val;
@@ -2099,16 +2096,16 @@ bstp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			err = ENOENT;
 			break;
 		}
-		if (ifs->if_bridgeidx != ifp->if_index) {
+		p = (struct bridge_iflist *)ifs->if_bridgeport;
+		if (p == NULL || p->bridge_sc != sc) {
 			err = ESRCH;
 			break;
 		}
-		bif = bridge_getbif(ifs);
-		if ((bif->bif_flags & IFBIF_STP) == 0) {
+		if ((p->bif_flags & IFBIF_STP) == 0) {
 			err = EINVAL;
 			break;
 		}
-		bp = bif->bif_stp;
+		bp = p->bif_stp;
 		break;
 	default:
 		break;

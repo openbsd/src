@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_lib.c,v 1.37 2018/04/14 07:09:21 tb Exp $ */
+/* $OpenBSD: rsa_lib.c,v 1.36 2018/02/20 17:42:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,8 +114,10 @@ RSA_set_method(RSA *rsa, const RSA_METHOD *meth)
 	if (mtmp->finish)
 		mtmp->finish(rsa);
 #ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(rsa->engine);
-	rsa->engine = NULL;
+	if (rsa->engine) {
+		ENGINE_finish(rsa->engine);
+		rsa->engine = NULL;
+	}
 #endif
 	rsa->meth = meth;
 	if (meth->init)
@@ -147,7 +149,7 @@ RSA_new_method(ENGINE *engine)
 		ret->engine = ENGINE_get_default_RSA();
 	if (ret->engine) {
 		ret->meth = ENGINE_get_RSA(ret->engine);
-		if (ret->meth == NULL) {
+		if (!ret->meth) {
 			RSAerror(ERR_R_ENGINE_LIB);
 			ENGINE_finish(ret->engine);
 			free(ret);
@@ -175,7 +177,8 @@ RSA_new_method(ENGINE *engine)
 	ret->flags = ret->meth->flags & ~RSA_FLAG_NON_FIPS_ALLOW;
 	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data)) {
 #ifndef OPENSSL_NO_ENGINE
-		ENGINE_finish(ret->engine);
+		if (ret->engine)
+			ENGINE_finish(ret->engine);
 #endif
 		free(ret);
 		return NULL;
@@ -183,7 +186,8 @@ RSA_new_method(ENGINE *engine)
 
 	if (ret->meth->init != NULL && !ret->meth->init(ret)) {
 #ifndef OPENSSL_NO_ENGINE
-		ENGINE_finish(ret->engine);
+		if (ret->engine)
+			ENGINE_finish(ret->engine);
 #endif
 		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data);
 		free(ret);
@@ -207,7 +211,8 @@ RSA_free(RSA *r)
 	if (r->meth->finish)
 		r->meth->finish(r);
 #ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(r->engine);
+	if (r->engine)
+		ENGINE_finish(r->engine);
 #endif
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, r, &r->ex_data);

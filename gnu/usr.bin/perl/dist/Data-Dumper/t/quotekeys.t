@@ -86,9 +86,10 @@ sub run_tests_for_quotekeys {
     $obj->Quotekeys($quotekeys);
     $dumps{'objqkundef'} = _dumptostr($obj);
 
-    is($dumps{'ddqkundef'}, $dumps{'objqkundef'},
+    note("Quotekeys(undef) will fall back to the default value\nfor \$Data::Dumper::Quotekeys, which is a true value.");
+    isnt($dumps{'ddqkundef'}, $dumps{'objqkundef'},
         "\$Data::Dumper::Quotekeys = undef and Quotekeys(undef) are equivalent");
-    is($dumps{'ddqkzero'}, $dumps{'objqkundef'},
+    isnt($dumps{'ddqkzero'}, $dumps{'objqkundef'},
         "\$Data::Dumper::Quotekeys = undef and = 0 are equivalent");
     %dumps = ();
 

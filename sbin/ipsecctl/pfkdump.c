@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.48 2018/08/28 15:17:56 mpi Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.46 2017/04/19 15:59:38 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -27,8 +27,6 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/sysctl.h>
-#include <sys/queue.h>
-
 #include <net/pfkeyv2.h>
 #include <netinet/ip_ipsp.h>
 #include <netdb.h>
@@ -42,27 +40,26 @@
 #include "ipsecctl.h"
 #include "pfkey.h"
 
-static void	print_proto(struct sadb_ext *, struct sadb_msg *, int);
-static void	print_flow(struct sadb_ext *, struct sadb_msg *, int);
-static void	print_supp(struct sadb_ext *, struct sadb_msg *, int);
-static void	print_prop(struct sadb_ext *, struct sadb_msg *, int);
-static void	print_sens(struct sadb_ext *, struct sadb_msg *, int);
-static void	print_spir(struct sadb_ext *, struct sadb_msg *, int);
-static void	print_policy(struct sadb_ext *, struct sadb_msg *, int);
-static void	print_sa(struct sadb_ext *, struct sadb_msg *, int);
-static void	print_addr(struct sadb_ext *, struct sadb_msg *, int);
-static void	print_key(struct sadb_ext *, struct sadb_msg *, int);
-static void	print_life(struct sadb_ext *, struct sadb_msg *, int);
-static void	print_ident(struct sadb_ext *, struct sadb_msg *, int);
-static void	print_udpenc(struct sadb_ext *, struct sadb_msg *, int);
-static void	print_tag(struct sadb_ext *, struct sadb_msg *, int);
-static void	print_tap(struct sadb_ext *, struct sadb_msg *, int);
-static void	print_satype(struct sadb_ext *, struct sadb_msg *, int);
-static void	print_counter(struct sadb_ext *, struct sadb_msg *, int);
+static void	print_proto(struct sadb_ext *, struct sadb_msg *);
+static void	print_flow(struct sadb_ext *, struct sadb_msg *);
+static void	print_supp(struct sadb_ext *, struct sadb_msg *);
+static void	print_prop(struct sadb_ext *, struct sadb_msg *);
+static void	print_sens(struct sadb_ext *, struct sadb_msg *);
+static void	print_spir(struct sadb_ext *, struct sadb_msg *);
+static void	print_policy(struct sadb_ext *, struct sadb_msg *);
+static void	print_sa(struct sadb_ext *, struct sadb_msg *);
+static void	print_addr(struct sadb_ext *, struct sadb_msg *);
+static void	print_key(struct sadb_ext *, struct sadb_msg *);
+static void	print_life(struct sadb_ext *, struct sadb_msg *);
+static void	print_ident(struct sadb_ext *, struct sadb_msg *);
+static void	print_udpenc(struct sadb_ext *, struct sadb_msg *);
+static void	print_tag(struct sadb_ext *, struct sadb_msg *);
+static void	print_tap(struct sadb_ext *, struct sadb_msg *);
+static void	print_satype(struct sadb_ext *, struct sadb_msg *);
 
 static struct idname *lookup(struct idname *, u_int32_t);
 static char    *lookup_name(struct idname *, u_int32_t);
-static void	print_ext(struct sadb_ext *, struct sadb_msg *, int);
+static void	print_ext(struct sadb_ext *, struct sadb_msg *);
 
 void		pfkey_print_raw(u_int8_t *, ssize_t);
 static char	*print_flags(uint32_t);
@@ -72,7 +69,7 @@ struct sadb_ext *extensions[SADB_EXT_MAX + 1];
 struct idname {
 	u_int32_t id;
 	char *name;
-	void (*func)(struct sadb_ext *, struct sadb_msg *, int);
+	void (*func)(struct sadb_ext *, struct sadb_msg *);
 };
 
 struct idname ext_types[] = {
@@ -108,7 +105,6 @@ struct idname ext_types[] = {
 	{ SADB_X_EXT_TAG,		"tag",			print_tag },
 	{ SADB_X_EXT_TAP,		"tap",			print_tap },
 	{ SADB_X_EXT_SATYPE2,		"satype2",		print_satype },
-	{ SADB_X_EXT_COUNTER,		"counter",		print_counter },
 	{ 0,				NULL,			NULL }
 };
 
@@ -238,7 +234,7 @@ lookup_name(struct idname *tab, u_int32_t id)
 }
 
 static void
-print_ext(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_ext(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct idname *entry;
 
@@ -249,7 +245,7 @@ print_ext(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 	}
 	printf("\t%s: ", entry->name);
 	if (entry->func != NULL)
-		(*entry->func)(ext, msg, opts);
+		(*entry->func)(ext, msg);
 	else
 		printf("type %u len %u",
 		    ext->sadb_ext_type, ext->sadb_ext_len);
@@ -284,7 +280,7 @@ print_flags(uint32_t flags)
 }
 
 static void
-print_sa(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_sa(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_sa *sa = (struct sadb_sa *)ext;
 
@@ -304,7 +300,7 @@ print_sa(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 
 /* ARGSUSED1 */
 static void
-print_addr(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_addr(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_address *addr = (struct sadb_address *)ext;
 	struct sockaddr *sa;
@@ -336,7 +332,7 @@ print_addr(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 
 /* ARGSUSED1 */
 static void
-print_key(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_key(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_key *key = (struct sadb_key *)ext;
 	u_int8_t *data;
@@ -352,7 +348,7 @@ print_key(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 
 /* ARGSUSED1 */
 static void
-print_life(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_life(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_lifetime *life = (struct sadb_lifetime *)ext;
 
@@ -364,7 +360,7 @@ print_life(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 }
 
 static void
-print_proto(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_proto(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_protocol *proto = (struct sadb_protocol *)ext;
 
@@ -380,7 +376,7 @@ print_proto(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 
 /* ARGSUSED1 */
 static void
-print_flow(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_flow(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_protocol *proto = (struct sadb_protocol *)ext;
 	char *dir = "unknown";
@@ -398,7 +394,7 @@ print_flow(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 }
 
 static void
-print_tag(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_tag(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_x_tag *stag = (struct sadb_x_tag *)ext;
 	char *p;
@@ -408,7 +404,7 @@ print_tag(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 }
 
 static void
-print_tap(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_tap(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_x_tap *stap = (struct sadb_x_tap *)ext;
 
@@ -416,33 +412,11 @@ print_tap(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 }
 
 static void
-print_satype(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_satype(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_protocol *proto = (struct sadb_protocol *)ext;
 
 	printf("type %s", lookup_name(sa_types, proto->sadb_protocol_proto));
-}
-
-static void
-print_counter(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
-{
-	struct sadb_x_counter *scnt = (struct sadb_x_counter *)ext;
-
-	printf("\n");
-
-#define plural(n) ((n) != 1 ? "s" : "")
-#define p(f, m) if (scnt->f || opts & IPSECCTL_OPT_VERBOSE2) \
-	printf(m, scnt->f, plural(scnt->f))
-	p(sadb_x_counter_ipackets, "\t\t%llu input packet%s\n");
-	p(sadb_x_counter_opackets, "\t\t%llu output packet%s\n");
-	p(sadb_x_counter_ibytes, "\t\t%llu input byte%s\n");
-	p(sadb_x_counter_obytes, "\t\t%llu output byte%s\n");
-	p(sadb_x_counter_idecompbytes, "\t\t%llu input byte%s, decompressed\n");
-	p(sadb_x_counter_ouncompbytes,"\t\t%llu output byte%s, uncompressed\n");
-	p(sadb_x_counter_idrops, "\t\t%llu packet%s dropped on input\n");
-	p(sadb_x_counter_odrops, "\t\t%llu packet%s dropped on output\n");
-#undef p
-#undef plural
 }
 
 static char *
@@ -470,7 +444,7 @@ print_alg(struct sadb_alg *alg, u_int8_t ext_type)
 
 /* ARGSUSED1 */
 static void
-print_supp(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_supp(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_supported *supported = (struct sadb_supported *)ext;
 	struct sadb_alg *alg;
@@ -490,7 +464,7 @@ print_supp(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 
 /* ARGSUSED1 */
 static void
-print_comb(struct sadb_comb *comb, struct sadb_msg *msg, int opts)
+print_comb(struct sadb_comb *comb, struct sadb_msg *msg)
 {
 	printf("\t\tauth %s min %u max %u\n"
 	    "\t\tenc %s min %u max %u\n"
@@ -518,7 +492,7 @@ print_comb(struct sadb_comb *comb, struct sadb_msg *msg, int opts)
 
 /* ARGSUSED1 */
 static void
-print_prop(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_prop(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_prop *prop = (struct sadb_prop *)ext;
 	struct sadb_comb *comb;
@@ -528,12 +502,12 @@ print_prop(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 	    (size_t)((u_int8_t *)comb - (u_int8_t *)ext) <
 	    ext->sadb_ext_len * PFKEYV2_CHUNK;
 	    comb++)
-		print_comb(comb, msg, opts);
+		print_comb(comb, msg);
 }
 
 /* ARGSUSED1 */
 static void
-print_sens(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_sens(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_sens *sens = (struct sadb_sens *)ext;
 
@@ -545,7 +519,7 @@ print_sens(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 
 /* ARGSUSED1 */
 static void
-print_spir(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_spir(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_spirange *spirange = (struct sadb_spirange *)ext;
 
@@ -555,7 +529,7 @@ print_spir(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 
 /* ARGSUSED1 */
 static void
-print_ident(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_ident(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_ident *ident = (struct sadb_ident *)ext;
 
@@ -566,7 +540,7 @@ print_ident(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 
 /* ARGSUSED1 */
 static void
-print_policy(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_policy(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_x_policy *x_policy = (struct sadb_x_policy *)ext;
 
@@ -575,7 +549,7 @@ print_policy(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 
 /* ARGSUSED1 */
 static void
-print_udpenc(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+print_udpenc(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_x_udpencap *x_udpencap = (struct sadb_x_udpencap *)ext;
 
@@ -857,7 +831,7 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 	if (opts & IPSECCTL_OPT_VERBOSE) {
 		for (i = 0; i <= SADB_EXT_MAX; i++)
 			if (extensions[i])
-				print_ext(extensions[i], msg, opts);
+				print_ext(extensions[i], msg);
 	}
 	fflush(stdout);
 }
@@ -881,7 +855,7 @@ pfkey_monitor_sa(struct sadb_msg *msg, int opts)
 		    strerror(msg->sadb_msg_errno));
 	for (i = 0; i <= SADB_EXT_MAX; i++)
 		if (extensions[i])
-			print_ext(extensions[i], msg, opts);
+			print_ext(extensions[i], msg);
 	fflush(stdout);
 }
 

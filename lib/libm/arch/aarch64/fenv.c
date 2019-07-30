@@ -1,4 +1,4 @@
-/* $OpenBSD: fenv.c,v 1.3 2019/03/12 22:14:50 patrick Exp $ */
+/* $OpenBSD: fenv.c,v 1.2 2018/03/16 10:22:52 kettenis Exp $ */
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -60,7 +60,6 @@ feclearexcept(int excepts)
 {
 	fexcept_t r;
 
-	excepts &= FE_ALL_EXCEPT;
 	__mrs_fpsr(r);
 	r &= ~excepts;
 	__msr_fpsr(r);
@@ -78,7 +77,6 @@ fegetexceptflag(fexcept_t *flagp, int excepts)
 {
 	fexcept_t r;
 
-	excepts &= FE_ALL_EXCEPT;
 	__mrs_fpsr(r);
 	*flagp = r & excepts;
 	return (0);
@@ -94,7 +92,6 @@ feraiseexcept(int excepts)
 {
 	fexcept_t r;
 
-	excepts &= FE_ALL_EXCEPT;
 	__mrs_fpsr(r);
 	r |= excepts;
 	__msr_fpsr(r);
@@ -112,7 +109,6 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 {
 	fexcept_t r;
 
-	excepts &= FE_ALL_EXCEPT;
 	__mrs_fpsr(r);
 	r &= ~excepts;
 	r |= *flagp & excepts;
@@ -131,7 +127,6 @@ fetestexcept(int excepts)
 {
 	fexcept_t r;
 
-	excepts &= FE_ALL_EXCEPT;
 	__mrs_fpsr(r);
 	return (r & excepts);
 }
@@ -180,10 +175,10 @@ fegetenv(fenv_t *envp)
 	fenv_t r;
 
 	__mrs_fpcr(r);
-	*envp = r;
+	*envp = r & _ENABLE_MASK;
 
 	__mrs_fpsr(r);
-	*envp |= (r << 32);
+	*envp |= r & (FE_ALL_EXCEPT | (_ROUND_MASK << _ROUND_SHIFT));
 
 	return (0);
 }
@@ -201,13 +196,13 @@ feholdexcept(fenv_t *envp)
 	fenv_t r;
 
 	__mrs_fpcr(r);
-	*envp = r;
-	r &= ~_ENABLE_MASK;
+	*envp = r & _ENABLE_MASK;
+	r &= ~(_ENABLE_MASK);
 	__msr_fpcr(r);
 
 	__mrs_fpsr(r);
-	*envp |= (r << 32);
-	r &= ~FE_ALL_EXCEPT;
+	*envp |= r & (FE_ALL_EXCEPT | (_ROUND_MASK << _ROUND_SHIFT));
+	r &= ~(_ENABLE_MASK);
 	__msr_fpsr(r);
 	return (0);
 }
@@ -225,8 +220,8 @@ int
 fesetenv(const fenv_t *envp)
 {
 
-	__msr_fpcr(*envp & 0xffffffff);
-	__msr_fpsr(*envp >> 32);
+	__msr_fpcr((*envp) & _ENABLE_MASK);
+	__msr_fpsr((*envp) & (FE_ALL_EXCEPT | (_ROUND_MASK << _ROUND_SHIFT)));
 	return (0);
 }
 DEF_STD(fesetenv);

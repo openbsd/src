@@ -27,7 +27,7 @@ struct PGOIndirectCallSiteVisitor
 };
 
 // Helper function that finds all indirect call sites.
-inline std::vector<Instruction *> findIndirectCallSites(Function &F) {
+static inline std::vector<Instruction *> findIndirectCallSites(Function &F) {
   PGOIndirectCallSiteVisitor ICV;
   ICV.visit(F);
   return ICV.IndirectCallInsts;

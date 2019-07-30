@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.40 2018/09/16 02:44:06 millert Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.39 2016/10/10 02:22:59 gsoares Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -544,10 +544,10 @@ static void
 makelist(struct listhead *head, enum listtype type, char *src)
 {
 	struct list *li;
+	struct passwd *pw;
+	struct group *gr;
 	struct stat st;
 	char *sp, *p, buf[PATH_MAX];
-	uid_t uid;
-	gid_t gid;
 	int empty;
 
 	empty = 1;
@@ -588,14 +588,14 @@ makelist(struct listhead *head, enum listtype type, char *src)
 
 		switch (type) {
 		case LT_USER:
-			if (uid_from_user(sp, &uid) == -1)
+			if ((pw = getpwnam(sp)) == NULL)
 				errx(STATUS_BADUSAGE, "unknown user `%s'", sp);
-			li->li_number = uid;
+			li->li_number = pw->pw_uid;
 			break;
 		case LT_GROUP:
-			if (gid_from_group(sp, &gid) == -1)
+			if ((gr = getgrnam(sp)) == NULL)
 				errx(STATUS_BADUSAGE, "unknown group `%s'", sp);
-			li->li_number = gid;
+			li->li_number = gr->gr_gid;
 			break;
 		case LT_TTY:
 			if (strcmp(sp, "-") == 0) {

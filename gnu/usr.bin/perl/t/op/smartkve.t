@@ -8,24 +8,14 @@ BEGIN {
 use strict;
 use warnings;
 no warnings 'experimental::refaliasing';
-our ($data, $array, $values, $hash, $errpat);
+use vars qw($data $array $values $hash $errpat);
 
 plan 'no_plan';
 
 my $empty;
 
-sub set_errpat {
-    # Checking for a comma after the line number ensures that we are using
-    # yyerror for the error, rather than croak.  yyerror is preferable for
-    # compile-time errors.
-    $errpat =
-       qr/Experimental $_[0] on scalar is now forbidden .* line 1\.(?x:
-         ).*Type of arg 1 to $_[0] must be hash or array \(not (?x:
-         ).*line 1,/s;
-}
-
 # Keys -- errors
-set_errpat 'keys';
+$errpat = qr/Experimental keys on scalar is now forbidden/;
 
 eval "keys undef";
 like($@, $errpat,
@@ -56,7 +46,7 @@ like($@, $errpat,
 ) or print "# Got: $@";
 
 # Values -- errors
-set_errpat 'values';
+$errpat = qr/Experimental values on scalar is now forbidden/;
 
 eval "values undef";
 like($@, $errpat,
@@ -87,7 +77,7 @@ like($@, $errpat,
 ) or print "# Got: $@";
 
 # Each -- errors
-set_errpat 'each';
+$errpat = qr/Experimental each on scalar is now forbidden/;
 
 eval "each undef";
 like($@, $errpat,
@@ -116,3 +106,20 @@ eval q"each $hash qw/foo bar/";
 like($@, $errpat,
   'Errors: each $hash, @stuff throws error'
 ) or print "# Got: $@";
+
+use feature 'refaliasing';
+my $a = 7;
+our %h;
+\$h{f} = \$a;
+($a, $b) = each %h;
+is "$a $b", "f 7", 'each %hash in list assignment';
+$a = 7;
+($a, $b) = (3, values %h);
+is "$a $b", "3 7", 'values %hash in list assignment';
+*a = sub { \@_ }->($a);
+$a = 7;
+($a, $b) = each our @a;
+is "$a $b", "0 7", 'each @array in list assignment';
+$a = 7;
+($a, $b) = (3, values @a);
+is "$a $b", "3 7", 'values @array in list assignment';

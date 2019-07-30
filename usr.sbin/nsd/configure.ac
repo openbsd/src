@@ -3,9 +3,8 @@ dnl Some global settings
 dnl
 
 sinclude(acx_nlnetlabs.m4)
-sinclude(dnstap/dnstap.m4)
 
-AC_INIT(NSD,4.1.27,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.1.20,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 CFLAGS="$CFLAGS"
@@ -231,28 +230,6 @@ if test $ac_cv_c_unused_attribute = yes; then
 fi
 ])dnl
 
-AC_DEFUN([CHECK_NORETURN_ATTRIBUTE],
-[AC_REQUIRE([AC_PROG_CC])
-AC_MSG_CHECKING(whether the C compiler (${CC-cc}) accepts the "noreturn" attribute)
-AC_CACHE_VAL(ac_cv_c_noreturn_attribute,
-[ac_cv_c_noreturn_attribute=no
-AC_TRY_COMPILE(
-[ #include <stdio.h>
-__attribute__((noreturn)) void f(int x) { printf("%d", x); }
-], [
-   f(1);
-],
-[ac_cv_c_noreturn_attribute="yes"],
-[ac_cv_c_noreturn_attribute="no"])
-])
-
-AC_MSG_RESULT($ac_cv_c_noreturn_attribute)
-if test $ac_cv_c_noreturn_attribute = yes; then
-  AC_DEFINE(HAVE_ATTR_NORETURN, 1, [Whether the C compiler accepts the "noreturn" attribute])
-  AC_DEFINE(ATTR_NORETURN, [__attribute__((__noreturn__))], [apply the noreturn attribute to a function that exits the program])
-fi
-])dnl End of CHECK_NORETURN_ATTRIBUTE
-
 AC_DEFUN([CHECK_COMPILER_FLAG],
 [
 AC_REQUIRE([AC_PROG_CC])
@@ -319,7 +296,6 @@ AC_TYPE_OFF_T
 
 AC_CHECK_FORMAT_ATTRIBUTE
 AC_CHECK_UNUSED_ATTRIBUTE
-CHECK_NORETURN_ATTRIBUTE
 ACX_CHECK_MEMCMP_SIGNED
 AC_CHECK_CTIME_R
 
@@ -439,7 +415,7 @@ fi
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([time.h arpa/inet.h signal.h string.h strings.h fcntl.h limits.h netinet/in.h netinet/tcp.h stddef.h sys/param.h sys/socket.h sys/un.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h glob.h grp.h endian.h])
+AC_CHECK_HEADERS([time.h arpa/inet.h signal.h string.h strings.h fcntl.h limits.h netinet/in.h netinet/tcp.h stddef.h sys/param.h sys/socket.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h glob.h grp.h endian.h])
 
 AC_DEFUN([CHECK_VALIST_DEF],
 [
@@ -610,12 +586,6 @@ AC_CHECK_TYPE(in_addr_t, [], [AC_DEFINE([in_addr_t], [uint32_t], [in_addr_t])], 
 #endif])
 ACX_CHECK_SS_FAMILY
 AC_CHECK_MEMBERS([struct stat.st_mtimensec, struct stat.st_mtim.tv_nsec])
-AC_CHECK_MEMBERS([struct sockaddr_un.sun_len],,,[
-AC_INCLUDES_DEFAULT
-#ifdef HAVE_SYS_UN_H
-#include <sys/un.h>
-#endif
-])
 
 # Checks for library functions.
 AC_FUNC_CHOWN
@@ -627,8 +597,7 @@ AC_SYS_LARGEFILE
 AC_CHECK_SIZEOF(void*)
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_FUNCS([arc4random arc4random_uniform])
-AC_SEARCH_LIBS([setusercontext],[util],[AC_CHECK_HEADERS([login_cap.h])])
-AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime strftime localtime_r setusercontext glob initgroups setresuid setreuid setresgid setregid getpwnam mmap ppoll clock_gettime accept4])
+AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime strftime localtime_r setusercontext glob initgroups setresuid setreuid setresgid setregid getpwnam mmap ppoll clock_gettime])
 
 AC_ARG_ENABLE(recvmmsg, AC_HELP_STRING([--enable-recvmmsg], [Enable recvmmsg and sendmmsg compilation, faster but some kernel versions may have implementation problems for IPv6]))
 case "$enable_recvmmsg" in
@@ -672,7 +641,7 @@ AC_DEFINE([HAVE_SENDMMSG], [1], [Define if sendmmsg exists])]
 esac
 
 # check if setreuid en setregid fail, on MacOSX10.4(darwin8).
-if echo $target_os | grep darwin8 > /dev/null; then
+if echo $build_os | grep darwin8 > /dev/null; then
 	AC_DEFINE(DARWIN_BROKEN_SETREUID, 1, [Define this if on macOSX10.4-darwin8 and setreuid and setregid do not work])
 fi
 
@@ -963,30 +932,6 @@ case "$enable_packed" in
 	;;
 esac
 
-# check for dnstap if requested
-dt_DNSTAP([${localstatedir}/run/nsd-dnstap.sock],
-    [
-        AC_DEFINE([USE_DNSTAP], [1], [Define to 1 to enable dnstap support])
-        AC_SUBST([ENABLE_DNSTAP], [1])
-
-        AC_SUBST([opt_dnstap_socket_path])
-        ACX_ESCAPE_BACKSLASH($opt_dnstap_socket_path, hdr_dnstap_socket_path)
-        AC_DEFINE_UNQUOTED(DNSTAP_SOCKET_PATH,
-            ["$hdr_dnstap_socket_path"], [default dnstap socket path])
-
-        AC_SUBST([DNSTAP_SRC], ["dnstap/dnstap.c dnstap/dnstap.pb-c.c dnstap/dnstap_collector.c"])
-        AC_SUBST([DNSTAP_OBJ], ["dnstap.o dnstap_collector.o dnstap.pb-c.o"])
-	dnstap_config="dnstap/dnstap_config.h"
-    ],
-    [
-        AC_SUBST([ENABLE_DNSTAP], [0])
-    ]
-)
-
-# Include systemd.m4 - begin
-sinclude(systemd.m4)
-# Include systemd.m4 - end
-
 AH_BOTTOM([
 /* define before includes as it specifies what standard to use. */
 #if (defined(HAVE_PSELECT) && !defined (HAVE_PSELECT_PROTO)) \
@@ -1185,5 +1130,5 @@ if test "$enable_checking" = "yes"; then
         echo "************************************************"
 fi
 
-AC_CONFIG_FILES([Makefile $dnstap_config])
+AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

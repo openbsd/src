@@ -26,16 +26,18 @@
 #      define dEXT 
 #      define EXTCONST extern const
 #      define dEXTCONST const
-#    elif defined(PERLDLL) || defined(__SYMBIAN32__)
-#      define EXT EXTERN_C __declspec(dllexport)
-#      define dEXT 
-#      define EXTCONST EXTERN_C __declspec(dllexport) const
-#      define dEXTCONST const
 #    else
-#      define EXT EXTERN_C __declspec(dllimport)
-#      define dEXT 
-#      define EXTCONST EXTERN_C __declspec(dllimport) const
-#      define dEXTCONST const
+#      if defined(PERLDLL) || defined(__SYMBIAN32__)
+#        define EXT EXTERN_C __declspec(dllexport)
+#        define dEXT 
+#        define EXTCONST EXTERN_C __declspec(dllexport) const
+#        define dEXTCONST const
+#      else
+#        define EXT EXTERN_C __declspec(dllimport)
+#        define dEXT 
+#        define EXTCONST EXTERN_C __declspec(dllimport) const
+#        define dEXTCONST const
+#      endif
 #    endif
 #  else
 #    if defined(__CYGWIN__) && defined(USEIMPORTLIB)

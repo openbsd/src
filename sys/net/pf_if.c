@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.96 2018/12/10 16:48:15 kn Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.92 2018/02/06 09:16:11 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -180,7 +180,7 @@ pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
 	case PFI_KIF_REF_ROUTE:
 		if (kif->pfik_routes <= 0) {
 			DPFPRINTF(LOG_ERR,
-			    "pfi_kif_unref: route refcount <= 0");
+			    "pfi_kif_unref: state refcount <= 0");
 			return;
 		}
 		kif->pfik_routes--;
@@ -227,7 +227,7 @@ pfi_attach_ifnet(struct ifnet *ifp)
 	pfi_initialize();
 	pfi_update++;
 	if ((kif = pfi_kif_get(ifp->if_xname)) == NULL)
-		panic("%s: pfi_kif_get failed", __func__);
+		panic("pfi_kif_get failed");
 
 	kif->pfik_ifp = ifp;
 	ifp->if_pf_kif = (caddr_t)kif;
@@ -265,7 +265,7 @@ pfi_attach_ifgroup(struct ifg_group *ifg)
 	pfi_initialize();
 	pfi_update++;
 	if ((kif = pfi_kif_get(ifg->ifg_group)) == NULL)
-		panic("%s: pfi_kif_get failed", __func__);
+		panic("pfi_kif_get failed");
 
 	kif->pfik_group = ifg;
 	ifg->ifg_pf_kif = (caddr_t)kif;
@@ -293,22 +293,9 @@ pfi_group_change(const char *group)
 
 	pfi_update++;
 	if ((kif = pfi_kif_get(group)) == NULL)
-		panic("%s: pfi_kif_get failed", __func__);
+		panic("pfi_kif_get failed");
 
 	pfi_kif_update(kif);
-}
-
-void
-pfi_group_addmember(const char *group, struct ifnet *ifp)
-{
-	struct pfi_kif		*gkif, *ikif;
-
-	if ((gkif = pfi_kif_get(group)) == NULL ||
-	    (ikif = pfi_kif_get(ifp->if_xname)) == NULL)
-		panic("%s: pfi_kif_get failed", __func__);
-	ikif->pfik_flags |= gkif->pfik_flags;
-
-	pfi_group_change(group);	
 }
 
 int
@@ -320,7 +307,7 @@ pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
 		case 0:
 			return (0);
 		case 1:
-			return (pf_match_addr(0, &dyn->pfid_addr4,
+			return (PF_MATCHA(0, &dyn->pfid_addr4,
 			    &dyn->pfid_mask4, a, AF_INET));
 		default:
 			return (pfr_match_addr(dyn->pfid_kt, a, AF_INET));
@@ -332,7 +319,7 @@ pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
 		case 0:
 			return (0);
 		case 1:
-			return (pf_match_addr(0, &dyn->pfid_addr6,
+			return (PF_MATCHA(0, &dyn->pfid_addr6,
 			    &dyn->pfid_mask6, a, AF_INET6));
 		default:
 			return (pfr_match_addr(dyn->pfid_kt, a, AF_INET6));

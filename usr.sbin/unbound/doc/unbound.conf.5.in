@@ -1,4 +1,4 @@
-.TH "unbound.conf" "5" "Mar 12, 2019" "NLnet Labs" "unbound 1.9.1"
+.TH "unbound.conf" "5" "Sep 18, 2017" "NLnet Labs" "unbound 1.6.6"
 .\"
 .\" unbound.conf.5 -- unbound.conf manual
 .\"
@@ -85,7 +85,7 @@ interface and port number), if not specified the default port (from
 \fBport\fR) is used.
 .TP
 .B ip\-address: \fI<ip address[@port]>
-Same as interface: (for ease of compatibility with nsd.conf).
+Same as interface: (for easy of compatibility with nsd.conf).
 .TP
 .B interface\-automatic: \fI<yes or no>
 Detect source interface on UDP queries and copy them to replies.  This
@@ -171,16 +171,6 @@ Maximum UDP response size (not applied to TCP response).  65536 disables the
 udp response size maximum, and uses the choice from the client, always.
 Suggested values are 512 to 4096. Default is 4096.
 .TP
-.B stream\-wait\-size: \fI<number>
-Number of bytes size maximum to use for waiting stream buffers.  Default is
-4 megabytes.  A plain number is in bytes, append 'k', 'm' or 'g' for kilobytes,
-megabytes or gigabytes (1024*1024 bytes in a megabyte).  As TCP and TLS streams
-queue up multiple results, the amount of memory used for these buffers does
-not exceed this number, otherwise the responses are dropped.  This manages
-the total memory usage of the server (under heavy use), the number of requests
-that can be queued up per connection is also limited, with further requests
-waiting in TCP buffers.
-.TP
 .B msg\-buffer\-size: \fI<number>
 Number of bytes size of the message buffers. Default is 65552 bytes, enough
 for 64 Kb packets, the maximum DNS message size. No message larger than this
@@ -227,12 +217,6 @@ eg. 1500 msec.  When timeouts happen you need extra sockets, it checks
 the ID and remote IP of packets, and unwanted packets are added to the
 unwanted packet counter.
 .TP
-.B unknown\-server\-time\-limit: \fI<msec>
-The wait time in msec for waiting for an unknown server to reply.
-Increase this if you are behind a slow satellite link, to eg. 1128.
-That would then avoid re\-querying every initial query because it times out.
-Default is 376 msec.
-.TP
 .B so\-rcvbuf: \fI<number>
 If not 0, then set the SO_RCVBUF socket option to get more buffer
 space on UDP port 53 incoming queries.  So that short spikes on busy
@@ -258,9 +242,9 @@ to so\-rcvbuf.
 .B so\-reuseport: \fI<yes or no>
 If yes, then open dedicated listening sockets for incoming queries for each
 thread and try to set the SO_REUSEPORT socket option on each socket.  May
-distribute incoming queries to threads more evenly.  Default is yes.
-On Linux it is supported in kernels >= 3.9.  On other systems, FreeBSD, OSX
-it may also work.  You can enable it (on any platform and kernel),
+distribute incoming queries to threads more evenly.  Default is no.  On Linux
+it is supported in kernels >= 3.9.  On other systems, FreeBSD, OSX it may
+also work.  You can enable it (on any platform and kernel),
 it then attempts to open the port and passes the option if it was available
 at compile time, if that works it is used, if it fails, it continues
 silently (unless verbosity 3) without the option.
@@ -268,7 +252,7 @@ silently (unless verbosity 3) without the option.
 .B ip\-transparent: \fI<yes or no>
 If yes, then use IP_TRANSPARENT socket option on sockets where unbound
 is listening for incoming traffic.  Default no.  Allows you to bind to
-non\-local interfaces.  For example for non\-existent IP addresses that
+non\-local interfaces.  For example for non\-existant IP addresses that
 are going to exist later on, with host failover configuration.  This is
 a lot like interface\-automatic, but that one services all interfaces
 and with this option you can select which (future) interfaces unbound
@@ -294,9 +278,11 @@ Must be set to a power of 2.
 .TP
 .B cache\-max\-ttl: \fI<seconds>
 Time to live maximum for RRsets and messages in the cache. Default is
-86400 seconds (1 day).  When the TTL expires, the cache item has expired.
+86400 seconds (1 day). If the maximum kicks in, responses to clients
+still get decrementing TTLs based on the original (larger) values.
+When the internal TTL expires, the cache item has expired.
 Can be set lower to force the resolver to query for data often, and not
-trust (very large) TTL values.  Downstream clients also see the lower TTL.
+trust (very large) TTL values.
 .TP
 .B cache\-min\-ttl: \fI<seconds>
 Time to live minimum for RRsets and messages in the cache. Default is 0.
@@ -367,37 +353,6 @@ Note that not all platform supports socket option to set MSS (TCP_MAXSEG).
 Default is system default MSS determined by interface MTU and
 negotiation between Unbound and other servers.
 .TP
-.B tcp-idle-timeout: \fI<msec>\fR
-The period Unbound will wait for a query on a TCP connection.
-If this timeout expires Unbound closes the connection.
-This option defaults to 30000 milliseconds.
-When the number of free incoming TCP buffers falls below 50% of the
-total number configured, the option value used is progressively
-reduced, first to 1% of the configured value, then to 0.2% of the
-configured value if the number of free buffers falls below 35% of the
-total number configured, and finally to 0 if the number of free buffers
-falls below 20% of the total number configured. A minimum timeout of
-200 milliseconds is observed regardless of the option value used.
-.TP
-.B edns-tcp-keepalive: \fI<yes or no>\fR
-Enable or disable EDNS TCP Keepalive. Default is no.
-.TP
-.B edns-tcp-keepalive-timeout: \fI<msec>\fR
-The period Unbound will wait for a query on a TCP connection when
-EDNS TCP Keepalive is active. If this timeout expires Unbound closes
-the connection. If the client supports the EDNS TCP Keepalive option,
-Unbound sends the timeout value to the client to encourage it to
-close the connection before the server times out.
-This option defaults to 120000 milliseconds.
-When the number of free incoming TCP buffers falls below 50% of
-the total number configured, the advertised timeout is progressively
-reduced to 1% of the configured value, then to 0.2% of the configured
-value if the number of free buffers falls below 35% of the total number
-configured, and finally to 0 if the number of free buffers falls below
-20% of the total number configured.
-A minimum actual timeout of 200 milliseconds is observed regardless of the
-advertised timeout.
-.TP
 .B tcp\-upstream: \fI<yes or no>
 Enable or disable whether the upstream queries use TCP only for transport.
 Default is no.  Useful in tunneling scenarios.
@@ -407,88 +362,29 @@ Enable udp upstream even if do-udp is no.  Default is no, and this does not
 change anything.  Useful for TLS service providers, that want no udp downstream
 but use udp to fetch data upstream.
 .TP
-.B tls\-upstream: \fI<yes or no>
-Enabled or disable whether the upstream queries use TLS only for transport.
-Default is no.  Useful in tunneling scenarios.  The TLS contains plain DNS in
-TCP wireformat.  The other server must support this (see
-\fBtls\-service\-key\fR).
-If you enable this, also configure a tls\-cert\-bundle or use tls\-win\-cert to
-load CA certs, otherwise the connections cannot be authenticated.
-This option enables TLS for all of them, but if you do not set this you can
-configure TLS specifically for some forward zones with forward\-tls\-upstream.  And also with stub\-tls\-upstream.
-.TP
 .B ssl\-upstream: \fI<yes or no>
-Alternate syntax for \fBtls\-upstream\fR.  If both are present in the config
-file the last is used.
+Enabled or disable whether the upstream queries use SSL only for transport.
+Default is no.  Useful in tunneling scenarios.  The SSL contains plain DNS in
+TCP wireformat.  The other server must support this (see
+\fBssl\-service\-key\fR).
 .TP
-.B tls\-service\-key: \fI<file>
-If enabled, the server provides TLS service on the TCP ports marked
-implicitly or explicitly for TLS service with tls\-port.  The file must
-contain the private key for the TLS session, the public certificate is in
-the tls\-service\-pem file and it must also be specified if tls\-service\-key
-is specified.  The default is "", turned off.  Enabling or disabling
-this service requires a restart (a reload is not enough), because the
-key is read while root permissions are held and before chroot (if any).
-The ports enabled implicitly or explicitly via \fBtls\-port:\fR do not provide
-normal DNS TCP service.
-.TP
-.B ssl\-service\-key: \fI<file>
-Alternate syntax for \fBtls\-service\-key\fR.
-.TP
-.B tls\-service\-pem: \fI<file>
-The public key certificate pem file for the tls service.  Default is "",
-turned off.
+.B ssl\-service-key: \fI<file>
+If enabled, the server provider SSL service on its TCP sockets.  The clients
+have to use ssl\-upstream: yes.  The file is the private key for the TLS
+session.  The public certificate is in the ssl\-service\-pem file.  Default
+is "", turned off.  Requires a restart (a reload is not enough) if changed,
+because the private key is read while root permissions are held and before
+chroot (if any).  Normal DNS TCP service is not provided and gives errors,
+this service is best run with a different \fBport:\fR config or \fI@port\fR
+suffixes in the \fBinterface\fR config.
 .TP
 .B ssl\-service\-pem: \fI<file>
-Alternate syntax for \fBtls\-service\-pem\fR.
-.TP
-.B tls\-port: \fI<number>
-The port number on which to provide TCP TLS service, default 853, only
-interfaces configured with that port number as @number get the TLS service.
+The public key certificate pem file for the ssl service.  Default is "",
+turned off.
 .TP
 .B ssl\-port: \fI<number>
-Alternate syntax for \fBtls\-port\fR.
-.TP
-.B tls\-cert\-bundle: \fI<file>
-If null or "", no file is used.  Set it to the certificate bundle file,
-for example "/etc/pki/tls/certs/ca\-bundle.crt".  These certificates are used
-for authenticating connections made to outside peers.  For example auth\-zone
-urls, and also DNS over TLS connections.
-.TP
-.B ssl\-cert\-bundle: \fI<file>
-Alternate syntax for \fBtls\-cert\-bundle\fR.
-.TP
-.B tls\-win\-cert: \fI<yes or no>
-Add the system certificates to the cert bundle certificates for authentication.
-If no cert bundle, it uses only these certificates.  Default is no.
-On windows this option uses the certificates from the cert store.  Use
-the tls\-cert\-bundle option on other systems.
-.TP
-.B tls\-additional\-port: \fI<portnr>
-List portnumbers as tls\-additional\-port, and when interfaces are defined,
-eg. with the @port suffix, as this port number, they provide dns over TLS
-service.  Can list multiple, each on a new statement.
-.TP
-.B tls-session-ticket-keys: \fI<file>
-If not "", lists files with 80 bytes of random contents that are used to
-perform TLS session resumption for clients using the unbound server.
-These files contain the secret key for the TLS session tickets.
-First key use to encrypt and decrypt TLS session tickets.
-Other keys use to decrypt only.  With this you can roll over to new keys,
-by generating a new first file and allowing decrypt of the old file by
-listing it after the first file for some time, after the wait clients are not
-using the old key any more and the old key can be removed.
-One way to create the file is dd if=/dev/random bs=1 count=80 of=ticket.dat
-The first 16 bytes should be different from the old one if you create a second key, that is the name used to identify the key.  Then there is 32 bytes random
-data for an AES key and then 32 bytes random data for the HMAC key.
-.TP
-.B tls\-ciphers: \fI<string with cipher list>
-Set the list of ciphers to allow when serving TLS.  Use "" for defaults,
-and that is the default.
-.TP
-.B tls\-ciphersuites: \fI<string with ciphersuites list>
-Set the list of ciphersuites to allow when serving TLS.  This is for newer
-TLS 1.3 connections.  Use "" for defaults, and that is the default.
+The port number on which to provide TCP SSL service, default 853, only
+interfaces configured with that port number as @number get the SSL service.
 .TP
 .B use\-systemd: \fI<yes or no>
 Enable or disable systemd socket activation.
@@ -499,18 +395,11 @@ Enable or disable whether the unbound server forks into the background as
 a daemon.  Set the value to \fIno\fR when unbound runs as systemd service.
 Default is yes.
 .TP
-.B tcp\-connection\-limit: \fI<IP netblock> <limit>
-Allow up to \fIlimit\fR simultaneous TCP connections from the given netblock.
-When at the limit, further connections are accepted but closed immediately.
-This option is experimental at this time.
-.TP
 .B access\-control: \fI<IP netblock> <action>
 The netblock is given as an IP4 or IP6 address with /size appended for a
 classless network block. The action can be \fIdeny\fR, \fIrefuse\fR,
-\fIallow\fR, \fIallow_setrd\fR, \fIallow_snoop\fR, \fIdeny_non_local\fR or
-\fIrefuse_non_local\fR.
+\fIallow\fR, \fIallow_snoop\fR, \fIdeny_non_local\fR or \fIrefuse_non_local\fR.
 The most specific netblock match is used, if none match \fIdeny\fR is used.
-The order of the access\-control statements therefore does not matter.
 .IP
 The action \fIdeny\fR stops queries from hosts from that netblock.
 .IP
@@ -527,15 +416,6 @@ the unbound server recursive lookup algorithm, and static data is served
 in the reply.  This supports normal operations where nonrecursive queries
 are made for the authoritative data.  For nonrecursive queries any replies
 from the dynamic cache are refused.
-.IP
-The \fIallow_setrd\fR action ignores the recursion desired (RD) bit and
-treats all requests as if the recursion desired bit is set.  Note that this
-behavior violates RFC 1034 which states that a name server should never perform
-recursive service unless asked via the RD bit since this interferes with
-trouble shooting of name servers and their databases. This prohibited behavior
-may be useful if another DNS server must forward requests for specific
-zones to a resolver DNS server, but only supports stub domains and
-sends queries to the resolver DNS server with the RD bit cleared.
 .IP
 The action \fIallow_snoop\fR gives nonrecursive access too.  This give
 both recursive and non recursive access.  The name \fIallow_snoop\fR refers
@@ -596,9 +476,8 @@ to chroot and dropping permissions. This allows the pidfile to be
 Additionally, unbound may need to access /dev/random (for entropy)
 from inside the chroot.
 .IP
-If given a chroot is done to the given directory. By default chroot is
-enabled and the default is "@UNBOUND_CHROOT_DIR@". If you give "" no
-chroot is performed.
+If given a chroot is done to the given directory. The default is
+"@UNBOUND_CHROOT_DIR@". If you give "" no chroot is performed.
 .TP
 .B username: \fI<name>
 If given, after binding the port the user privileges are dropped. Default is
@@ -657,21 +536,6 @@ name, type, class, return code, time to resolve, from cache and response size.
 Default is no.  Note that it takes time to print these
 lines which makes the server (significantly) slower.  Odd (nonprintable)
 characters in names are printed as '?'.
-.TP
-.B log\-tag\-queryreply: \fI<yes or no>
-Prints the word 'query' and 'reply' with log\-queries and log\-replies.
-This makes filtering logs easier.  The default is off (for backwards
-compatibility).
-.TP
-.B log\-local\-actions: \fI<yes or no>
-Print log lines to inform about local zone actions.  These lines are like the
-local\-zone type inform prints out, but they are also printed for the other
-types of local zones.
-.TP
-.B log\-servfail: \fI<yes or no>
-Print log lines that say why queries return SERVFAIL to clients.
-This is separate from the verbosity debug logs, much smaller, and printed
-at the error level, not the info level of debug info from verbosity.
 .TP
 .B pidfile: \fI<filename>
 The process id is written to the file. Default is to not write to a file.
@@ -746,7 +610,7 @@ noerror for empty nonterminals, hence this is possible.  Very old software
 might return nxdomain for empty nonterminals (that usually happen for reverse
 IP address lookups), and thus may be incompatible with this.  To try to avoid
 this only DNSSEC-secure nxdomains are used, because the old software does not
-have DNSSEC.  Default is on.
+have DNSSEC.  Default is off.
 The nxdomain must be secure, this means nsec3 with optout is insufficient.
 .TP
 .B harden\-referral\-path: \fI<yes or no>
@@ -755,7 +619,7 @@ infrastructure data.  Validates the replies if trust anchors are configured
 and the zones are signed.  This enforces DNSSEC validation on nameserver
 NS sets and the nameserver addresses that are encountered on the referral
 path to the answer.
-Default no, because it burdens the authority servers, and it is
+Default off, because it burdens the authority servers, and it is
 not RFC standard, and could lead to performance problems because of the
 extra query load that is generated.  Experimental option.
 If you enable it consider adding more numbers after the target\-fetch\-policy
@@ -786,19 +650,13 @@ Send minimum amount of information to upstream servers to enhance privacy.
 Only sent minimum required labels of the QNAME and set QTYPE to A when
 possible. Best effort approach; full QNAME and original QTYPE will be sent when
 upstream replies with a RCODE other than NOERROR, except when receiving
-NXDOMAIN from a DNSSEC signed zone. Default is yes.
+NXDOMAIN from a DNSSEC signed zone. Default is off.
 .TP
 .B qname\-minimisation\-strict: \fI<yes or no>
 QNAME minimisation in strict mode. Do not fall-back to sending full QNAME to
 potentially broken nameservers. A lot of domains will not be resolvable when
 this option in enabled. Only use if you know what you are doing.
 This option only has effect when qname-minimisation is enabled. Default is off.
-.TP
-.B aggressive\-nsec: \fI<yes or no>
-Aggressive NSEC uses the DNSSEC NSEC chain to synthesize NXDOMAIN
-and other denials, using information from previous NXDOMAINs answers.
-Default is no.  It helps to reduce the query rate towards targets that get
-a very high nonexistent name lookup rate.
 .TP
 .B private\-address: \fI<IP address or subnet>
 Give IPv4 of IPv6 addresses or classless subnets. These are addresses
@@ -847,18 +705,12 @@ keep the cache up to date.  Default is no.  Turning it on gives about
 10 percent more traffic and load on the machine, but popular items do
 not expire from the cache.
 .TP
-.B prefetch\-key: \fI<yes or no>
+.B prefetch-key: \fI<yes or no>
 If yes, fetch the DNSKEYs earlier in the validation process, when a DS
 record is encountered.  This lowers the latency of requests.  It does use
 a little more CPU.  Also if the cache is set to 0, it is no use. Default is no.
 .TP
-.B deny\-any: \fI<yes or no>
-If yes, deny queries of type ANY with an empty response.  Default is no.
-If disabled, unbound responds with a short list of resource records if some
-can be found in the cache and makes the upstream type ANY query if there
-are none.
-.TP
-.B rrset\-roundrobin: \fI<yes or no>
+.B rrset-roundrobin: \fI<yes or no>
 If yes, Unbound rotates RRSet order in response (the random number is taken
 from the query ID, for speed and thread safety).  Default is no.
 .TP
@@ -866,11 +718,9 @@ from the query ID, for speed and thread safety).  Default is no.
 If yes, Unbound doesn't insert authority/additional sections into response
 messages when those sections are not required.  This reduces response
 size significantly, and may avoid TCP fallback for some responses.
-This may cause a slight speedup.  The default is yes, even though the DNS
+This may cause a slight speedup.  The default is no, because the DNS
 protocol RFCs mandate these sections, and the additional content could
-be of use and save roundtrips for clients.  Because they are not used,
-and the saved roundtrips are easier saved with prefetch, whilst this is
-faster.
+be of use and save roundtrips for clients.
 .TP
 .B disable-dnssec-lame-check: \fI<yes or no>
 If true, disables the DNSSEC lameness check in the iterator.  This check
@@ -886,12 +736,6 @@ Setting this to "iterator" will result in a non\-validating server.
 Setting this to "validator iterator" will turn on DNSSEC validation.
 The ordering of the modules is important.
 You must also set trust\-anchors for validation to be useful.
-The default is "validator iterator".  When the server is built with
-EDNS client subnet support the default is "subnetcache validator iterator".
-Most modules that need to be listed here have to be listed at the beginning
-of the line.  The cachedb module has to be listed just before the iterator.
-The python module can be listed in different places, it then processes the
-output of the module it is just before.
 .TP
 .B trust\-anchor\-file: \fI<filename>
 File with trusted keys for validation. Both DS and DNSKEY entries can appear
@@ -926,9 +770,6 @@ expanded on start and on reload.
 .TP
 .B trust\-anchor\-signaling: \fI<yes or no>
 Send RFC8145 key tag query after trust anchor priming. Default is off.
-.TP
-.B root\-key\-sentinel: \fI<yes or no>
-Root key trust anchor sentinel. Default is on.
 .TP
 .B dlv\-anchor\-file: \fI<filename>
 This option was used during early days DNSSEC deployment when no parent-side
@@ -1024,17 +865,6 @@ If enabled, unbound attempts to serve old responses from cache with a
 TTL of 0 in the response without waiting for the actual resolution to finish.
 The actual resolution answer ends up in the cache later on.  Default is "no".
 .TP
-.B serve\-expired\-ttl: \fI<seconds>
-Limit serving of expired responses to configured seconds after expiration. 0
-disables the limit. This option only applies when \fBserve\-expired\fR is
-enabled. The default is 0.
-.TP
-.B serve\-expired\-ttl\-reset: \fI<yes or no>
-Set the TTL of expired records to the \fBserve\-expired\-ttl\fR value after a
-failed attempt to retrieve the record from upstream. This makes sure that the
-expired records will be served as long as there are queries for it. Default is
-"no".
-.TP
 .B val\-nsec3\-keysize\-iterations: \fI<"list of values">
 List of keysize and iteration count values, separated by spaces, surrounded
 by quotes. Default is "1024 150 2048 500 4096 2500". This determines the
@@ -1083,7 +913,7 @@ Number of bytes size of the aggressive negative cache. Default is 1 megabyte.
 A plain number is in bytes, append 'k', 'm' or 'g' for kilobytes, megabytes
 or gigabytes (1024*1024 bytes in a megabyte).
 .TP
-.B unblock\-lan\-zones: \fI<yes or no>
+.B unblock\-lan\-zones: \fI<yesno>
 Default is disabled.  If enabled, then for private address space,
 the reverse lookups are no longer filtered.  This allows unbound when
 running as dns service on a host where it provides service for that host,
@@ -1094,7 +924,7 @@ as a (DHCP-) DNS network resolver for a group of machines, where such
 lookups should be filtered (RFC compliance), this also stops potential
 data leakage about the local network to the upstream DNS servers.
 .TP
-.B insecure\-lan\-zones: \fI<yes or no>
+.B insecure\-lan\-zones: \fI<yesno>
 Default is disabled.  If enabled, then reverse lookups in private
 address space are not validated.  This is usually required whenever
 \fIunblock\-lan\-zones\fR is used.
@@ -1103,7 +933,7 @@ address space are not validated.  This is usually required whenever
 Configure a local zone. The type determines the answer to give if
 there is no match from local\-data. The types are deny, refuse, static,
 transparent, redirect, nodefault, typetransparent, inform, inform_deny,
-inform_redirect, always_transparent, always_refuse, always_nxdomain, noview,
+always_transparent, always_refuse, always_nxdomain,
 and are explained below. After that the default settings are listed. Use
 local\-data: to enter data into the local zone. Answers for local zones
 are authoritative DNS answers. By default the zones are class IN.
@@ -1164,10 +994,6 @@ looking up infected names are logged, eg. to run antivirus on them.
 The query is dropped, like 'deny', and logged, like 'inform'.  Ie. find
 infected machines without answering the queries.
 .TP 10
-\h'5'\fIinform_redirect\fR
-The query is redirected, like 'redirect', and logged, like 'inform'.
-Ie. answer queries with fixed data and also log the machines that ask.
-.TP 10
 \h'5'\fIalways_transparent\fR
 Like transparent, but ignores local data and resolves normally.
 .TP 10
@@ -1176,13 +1002,6 @@ Like refuse, but ignores local data and refuses the query.
 .TP 10
 \h'5'\fIalways_nxdomain\fR
 Like static, but ignores local data and returns nxdomain for the query.
-.TP 10
-\h'5'\fInoview\fR
-Breaks out of that view and moves towards the global local zones for answer
-to the query.  If the view first is no, it'll resolve normally.  If view first
-is enabled, it'll break perform that step and check the global answers.
-For when the view has view specific overrides but some zone has to be
-answered from global local zone contents. 
 .TP 10
 \h'5'\fInodefault\fR
 Used to turn off default contents for AS112 zones. The other types
@@ -1247,7 +1066,7 @@ local\-data: "onion. 10800 IN
     SOA localhost. nobody.invalid. 1 3600 1200 604800 10800"
 .fi
 .TP 10
-\h'5'\fItest (RFC 2606)\fR
+\h'5'\fItest (RFC 7686)\fR
 Default content:
 .nf
 local\-zone: "test." static
@@ -1256,7 +1075,7 @@ local\-data: "test. 10800 IN
     SOA localhost. nobody.invalid. 1 3600 1200 604800 10800"
 .fi
 .TP 10
-\h'5'\fIinvalid (RFC 2606)\fR
+\h'5'\fIinvalid (RFC 7686)\fR
 Default content:
 .nf
 local\-zone: "invalid." static
@@ -1323,8 +1142,7 @@ TTL can be inserted like this: "2001:DB8::4 7200 www.example.com"
 Assign tags to localzones. Tagged localzones will only be applied when the
 used access-control element has a matching tag. Tags must be defined in
 \fIdefine\-tags\fR.  Enclose list of tags in quotes ("") and put spaces between
-tags.  When there are multiple tags it checks if the intersection of the
-list of tags for the query and local\-zone\-tag is non-empty.
+tags.
 .TP 5
 .B local\-zone\-override: \fI<zone> <IP netblock> <type>
 Override the localzone type for queries from addresses matching netblock.
@@ -1406,28 +1224,13 @@ to complete.  Default is 10, allowing 1/10 traffic to flow normally.
 This can make ordinary queries complete (if repeatedly queried for),
 and enter the cache, whilst also mitigating the traffic flow by the
 factor given.
-.TP 5
-.B fast\-server\-permil: \fI<number>
-Specify how many times out of 1000 to pick from the set of fastest servers.
-0 turns the feature off.  A value of 900 would pick from the fastest
-servers 90 percent of the time, and would perform normal exploration of random
-servers for the remaining time. When prefetch is enabled (or serve\-expired),
-such prefetches are not sped up, because there is no one waiting for it, and it
-presents a good moment to perform server exploration. The
-\fBfast\-server\-num\fR option can be used to specify the size of the fastest
-servers set. The default for fast\-server\-permil is 0.
-.TP 5
-.B fast\-server\-num: \fI<number>
-Set the number of servers that should be used for fast server selection. Only
-use the fastest specified number of servers with the fast\-server\-permil
-option, that turns this on or off. The default is to use the fastest 3 servers.
 .SS "Remote Control Options"
 In the
 .B remote\-control:
 clause are the declarations for the remote control facility.  If this is
 enabled, the \fIunbound\-control\fR(8) utility can be used to send
 commands to the running unbound server.  The server uses these clauses
-to setup TLSv1 security for the connection.  The
+to setup SSLv3 / TLSv1 security for the connection.  The
 \fIunbound\-control\fR(8) utility also reads the \fBremote\-control\fR
 section for options.  To setup the correct self\-signed certificates use the
 \fIunbound\-control\-setup\fR(8) utility.
@@ -1443,14 +1246,6 @@ By default localhost (127.0.0.1 and ::1) is listened to.
 Use 0.0.0.0 and ::0 to listen to all interfaces.
 If you change this and permissions have been dropped, you must restart
 the server for the change to take effect.
-.IP
-If you set it to an absolute path, a local socket is used.  The local socket
-does not use the certificates and keys, so those files need not be present.
-To restrict access, unbound sets permissions on the file to the user and
-group that is configured, the access bits are set to allow the group members
-to access the control socket file.  Put users that need to access the socket
-in the that group.  To restrict access further, create a directory to put
-the control socket in and restrict access to that directory.
 .TP 5
 .B control\-port: \fI<port number>
 The port number to listen on for IPv4 or IPv6 control interfaces,
@@ -1459,9 +1254,11 @@ If you change this and permissions have been dropped, you must restart
 the server for the change to take effect.
 .TP 5
 .B control\-use\-cert: \fI<yes or no>
-For localhost control-interface you can disable the use of TLS by setting
-this option to "no", default is "yes".  For local sockets, TLS is disabled
-and the value of this option is ignored.
+Whether to require certificate authentication of control connections.
+The default is "yes".
+This should not be changed unless there are other mechanisms in place
+to prevent untrusted users from accessing the remote control
+interface.
 .TP 5
 .B server\-key\-file: \fI<private key file>
 Path to the server private key, by default unbound_server.key.
@@ -1527,7 +1324,7 @@ IP address of stub zone nameserver. Can be IP 4 or IP 6.
 To use a nondefault port for DNS communication append '@' with the port number.
 .TP
 .B stub\-prime: \fI<yes or no>
-This option is by default no.  If enabled it performs NS set priming,
+This option is by default off.  If enabled it performs NS set priming,
 which is similar to root hints, where it starts using the list of nameservers
 currently published by the zone.  Thus, if the hint list is slightly outdated,
 the resolver picks up a correct list online.
@@ -1538,16 +1335,9 @@ The data could not be retrieved and would have caused SERVFAIL because
 the servers are unreachable, instead it is tried without this clause.
 The default is no.
 .TP
-.B stub\-tls\-upstream: \fI<yes or no>
-Enabled or disable whether the queries to this stub use TLS for transport.
-Default is no.
-.TP
 .B stub\-ssl\-upstream: \fI<yes or no>
-Alternate syntax for \fBstub\-tls\-upstream\fR.
-.TP
-.B stub\-no\-cache: \fI<yes or no>
-Default is no.  If enabled, data inside the stub is not cached.  This is
-useful when you want immediate changes to be visible.
+Enabled or disable whether the queries to this stub use SSL for transport.
+Default is no.
 .SS "Forward Zone Options"
 .LP
 There may be multiple
@@ -1575,115 +1365,22 @@ Name of server to forward to. Is itself resolved before it is used.
 .B forward\-addr: \fI<IP address>
 IP address of server to forward to. Can be IP 4 or IP 6.
 To use a nondefault port for DNS communication append '@' with the port number.
-If tls is enabled, then you can append a '#' and a name, then it'll check
-the tls authentication certificates with that name.  If you combine
-the '@' and '#', the '@' comes first.
-.IP
-At high verbosity it logs the TLS certificate, with TLS enabled.
-If you leave out the '#' and auth name from the forward\-addr, any
-name is accepted.  The cert must also match a CA from the tls\-cert\-bundle.
 .TP
 .B forward\-first: \fI<yes or no>
-If a forwarded query is met with a SERVFAIL error, and this option is
-enabled, unbound will fall back to normal recursive resolution for this
-query as if no query forwarding had been specified.  The default is "no".
-.TP
-.B forward\-tls\-upstream: \fI<yes or no>
-Enabled or disable whether the queries to this forwarder use TLS for transport.
-Default is no.
-If you enable this, also configure a tls\-cert\-bundle or use tls\-win\-cert to
-load CA certs, otherwise the connections cannot be authenticated.
+If enabled, a query is attempted without the forward clause if it fails.
+The data could not be retrieved and would have caused SERVFAIL because
+the servers are unreachable, instead it is tried without this clause.
+The default is no.
 .TP
 .B forward\-ssl\-upstream: \fI<yes or no>
-Alternate syntax for \fBforward\-tls\-upstream\fR.
-.TP
-.B forward\-no\-cache: \fI<yes or no>
-Default is no.  If enabled, data inside the forward is not cached.  This is
-useful when you want immediate changes to be visible.
-.SS "Authority Zone Options"
-.LP
-Authority zones are configured with \fBauth\-zone:\fR, and each one must
-have a \fBname:\fR.  There can be multiple ones, by listing multiple auth\-zone clauses, each with a different name, pertaining to that part of the namespace.
-The authority zone with the name closest to the name looked up is used.
-Authority zones are processed after \fBlocal\-zones\fR and before
-cache (\fBfor\-downstream:\fR \fIyes\fR), and when used in this manner
-make unbound respond like an authority server.  Authority zones are also
-processed after cache, just before going to the network to fetch
-information for recursion (\fBfor\-upstream:\fR \fIyes\fR), and when used
-in this manner provide a local copy of an authority server that speeds up
-lookups of that data.
-.LP
-Authority zones can be read from zonefile.  And can be kept updated via
-AXFR and IXFR.  After update the zonefile is rewritten.  The update mechanism
-uses the SOA timer values and performs SOA UDP queries to detect zone changes.
-.LP
-If the update fetch fails, the timers in the SOA record are used to time
-another fetch attempt.  Until the SOA expiry timer is reached.  Then the
-zone is expired.  When a zone is expired, queries are SERVFAIL, and
-any new serial number is accepted from the master (even if older), and if
-fallback is enabled, the fallback activates to fetch from the upstream instead
-of the SERVFAIL.
-.TP
-.B name: \fI<zone name>
-Name of the authority zone.
-.TP
-.B master: \fI<IP address or host name>
-Where to download a copy of the zone from, with AXFR and IXFR.  Multiple
-masters can be specified.  They are all tried if one fails.
-.TP
-.B url: \fI<url to zonefile>
-Where to download a zonefile for the zone.  With http or https.  An example
-for the url is "http://www.example.com/example.org.zone".  Multiple url
-statements can be given, they are tried in turn.  If only urls are given
-the SOA refresh timer is used to wait for making new downloads.  If also
-masters are listed, the masters are first probed with UDP SOA queries to
-see if the SOA serial number has changed, reducing the number of downloads.
-If none of the urls work, the masters are tried with IXFR and AXFR.
-For https, the \fBtls\-cert\-bundle\fR and the hostname from the url are used
-to authenticate the connection.
-.TP
-.B allow\-notify: \fI<IP address or host name or netblockIP/prefix>
-With allow\-notify you can specify additional sources of notifies.
-When notified, the server attempts to first probe and then zone transfer.
-If the notify is from a master, it first attempts that master.  Otherwise
-other masters are attempted.  If there are no masters, but only urls, the
-file is downloaded when notified.  The masters from master: statements are
-allowed notify by default.
-.TP
-.B fallback\-enabled: \fI<yes or no>
-Default no.  If enabled, unbound falls back to querying the internet as
-a resolver for this zone when lookups fail.  For example for DNSSEC
-validation failures.
-.TP
-.B for\-downstream: \fI<yes or no>
-Default yes.  If enabled, unbound serves authority responses to
-downstream clients for this zone.  This option makes unbound behave, for
-the queries with names in this zone, like one of the authority servers for
-that zone.  Turn it off if you want unbound to provide recursion for the
-zone but have a local copy of zone data.  If for\-downstream is no and
-for\-upstream is yes, then unbound will DNSSEC validate the contents of the
-zone before serving the zone contents to clients and store validation
-results in the cache.
-.TP
-.B for\-upstream: \fI<yes or no>
-Default yes.  If enabled, unbound fetches data from this data collection
-for answering recursion queries.  Instead of sending queries over the internet
-to the authority servers for this zone, it'll fetch the data directly from
-the zone data.  Turn it on when you want unbound to provide recursion for
-downstream clients, and use the zone data as a local copy to speed up lookups.
-.TP
-.B zonefile: \fI<filename>
-The filename where the zone is stored.  If not given then no zonefile is used.
-If the file does not exist or is empty, unbound will attempt to fetch zone
-data (eg. from the master servers).
+Enabled or disable whether the queries to this forwarder use SSL for transport.
+Default is no.
 .SS "View Options"
 .LP
 There may be multiple
 .B view:
 clauses. Each with a \fBname:\fR and zero or more \fBlocal\-zone\fR and
-\fBlocal\-data\fR elements. Views can also contain view\-first, 
-response\-ip, response\-ip\-data and local\-data\-ptr elements.
-View can be mapped to requests by specifying the
+\fBlocal\-data\fR elements. View can be mapped to requests by specifying the
 view name in an \fBaccess\-control\-view\fR element. Options from matching
 views will override global options. Global options will be used if no matching
 view is found, or when the matching view does not have the option specified.
@@ -1743,12 +1440,6 @@ It must be /96 or shorter.  The default prefix is 64:ff9b::/96.
 .B dns64\-synthall: \fI<yes or no>\fR
 Debug option, default no.  If enabled, synthesize all AAAA records
 despite the presence of actual AAAA records.
-.TP
-.B dns64\-ignore\-aaaa: \fI<name>\fR
-List domain for which the AAAA records are ignored and the A record is
-used by dns64 processing instead.  Can be entered multiple times, list a
-new domain for which it applies, one per line.  Applies also to names
-underneath the name given.
 .SS "DNSCrypt Options"
 .LP
 The
@@ -1788,7 +1479,7 @@ but do not want to advertise over \fBdnscrypt\-provider\fR's TXT record certs
 distribution.
 A typical use case is when rotating certificates, existing clients may still use
 the client magic from the old cert in their queries until they fetch and update
-the new cert. Likewise, it would allow one to prime the new cert/key without
+the new cert. Likewise, it would allow to prime the new cert/key without
 distributing the new cert yet, this can be useful when using a network of
 servers using anycast and on which the configuration may not get updated at the
 exact same time. By priming the cert, the servers can handle both old and new
@@ -1864,24 +1555,6 @@ to expose to third parties for IPv6.  Defaults to 56.
 .B max\-client\-subnet\-ipv4: \fI<number>\fR
 Specifies the maximum prefix length of the client source address we are willing
 to expose to third parties for IPv4. Defaults to 24.
-.TP
-.B min\-client\-subnet\-ipv6: \fI<number>\fR
-Specifies the minimum prefix length of the IPv6 source mask we are willing to
-accept in queries. Shorter source masks result in REFUSED answers. Source mask
-of 0 is always accepted. Default is 0.
-.TP
-.B min\-client\-subnet\-ipv4: \fI<number>\fR
-Specifies the minimum prefix length of the IPv4 source mask we are willing to
-accept in queries. Shorter source masks result in REFUSED answers. Source mask 
-of 0 is always accepted. Default is 0.
-.TP
-.B max\-ecs\-tree\-size\-ipv4: \fI<number>\fR
-Specifies the maximum number of subnets ECS answers kept in the ECS radix tree.
-This number applies for each qname/qclass/qtype tuple. Defaults to 100.
-.TP
-.B max\-ecs\-tree\-size\-ipv6: \fI<number>\fR
-Specifies the maximum number of subnets ECS answers kept in the ECS radix tree.
-This number applies for each qname/qclass/qtype tuple. Defaults to 100.
 .SS "Opportunistic IPsec Support Module Options"
 .LP
 The IPsec module must be configured in the \fBmodule\-config:\fR "ipsecmod
@@ -1961,42 +1634,15 @@ If it finds a valid answer in the backend, Unbound uses it to respond
 to the query without performing iterative DNS resolution.
 If Unbound cannot even find an answer in the backend, it resolves the
 query as usual, and stores the answer in the backend.
-.P
-If Unbound was built with
-\fB\-\-with\-libhiredis\fR
-on a system that has installed the hiredis C client library of Redis,
-then the "redis" backend can be used.
-This backend communicates with the specified Redis server over a TCP
-connection to store and retrieve cache data.
-It can be used as a persistent and/or shared cache backend.
-It should be noted that Unbound never removes data stored in the Redis server,
-even if some data have expired in terms of DNS TTL or the Redis server has
-cached too much data;
-if necessary the Redis server must be configured to limit the cache size,
-preferably with some kind of least-recently-used eviction policy.
-This backend uses synchronous communication with the Redis server
-based on the assumption that the communication is stable and sufficiently
-fast.
-The thread waiting for a response from the Redis server cannot handle
-other DNS queries.
-Although the backend has the ability to reconnect to the server when
-the connection is closed unexpectedly and there is a configurable timeout
-in case the server is overly slow or hangs up, these cases are assumed
-to be very rare.
-If connection close or timeout happens too often, Unbound will be
-effectively unusable with this backend.
-It's the administrator's responsibility to make the assumption hold.
-.P
 The
 .B cachedb:
 clause gives custom settings of the cache DB module.
 .TP
 .B backend: \fI<backend name>\fR
 Specify the backend database name.
-The default database is the in-memory backend named "testframe", which,
-as the name suggests, is not of any practical use.
-Depending on the build-time configuration, "redis" backend may also be
-used as described above.
+Currently, only the in-memory "testframe" backend is supported.
+As the name suggests this backend is not of any practical use.
+This option defaults to "testframe".
 .TP
 .B secret-seed: \fI<"secret string">\fR
 Specify a seed to calculate a hash value from query information.
@@ -2006,28 +1652,6 @@ operationally.
 If the backend database is shared by multiple Unbound instances,
 all instances must use the same secret seed.
 This option defaults to "default".
-.P
-The following
-.B cachedb
-otions are specific to the redis backend.
-.TP
-.B redis-server-host: \fI<server address or name>\fR
-The IP (either v6 or v4) address or domain name of the Redis server.
-In general an IP address should be specified as otherwise Unbound will have to
-resolve the name of the server every time it establishes a connection
-to the server.
-This option defaults to "127.0.0.1".
-.TP
-.B redis-server-port: \fI<port number>\fR
-The TCP port number of the Redis server.
-This option defaults to 6379.
-.TP
-.B redis-timeout: \fI<msec>\fR
-The period until when Unbound waits for a response from the Redis sever.
-If this timeout expires Unbound closes the connection, treats it as
-if the Redis server does not have the requested data, and will try to
-re-establish a new connection later.
-This option defaults to 100 milliseconds.
 .SH "MEMORY CONTROL EXAMPLE"
 In the example config settings below memory usage is reduced. Some service
 levels are lower, notable very large data and a high TCP load are no longer

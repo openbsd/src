@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.89 2018/11/14 23:55:04 dlg Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.87 2017/10/09 08:35:38 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -239,14 +239,16 @@ ipip_input_if(struct mbuf **mp, int *offp, int proto, int oaf,
 		itos = ip->ip_tos;
 		mode = m->m_flags & (M_AUTH|M_CONF) ?
 		    ECN_ALLOWED_IPSEC : ECN_ALLOWED;
-		if (!ip_ecn_egress(mode, &otos, &itos)) {
+		if (!ip_ecn_egress(mode, &otos, &ip->ip_tos)) {
 			DPRINTF(("%s: ip_ecn_egress() failed\n", __func__));
 			ipipstat_inc(ipips_pdrops);
 			goto bad;
 		}
 		/* re-calculate the checksum if ip_tos was changed */
-		if (itos != ip->ip_tos)
-			ip_tos_patch(ip, itos);
+		if (itos != ip->ip_tos) {
+			ip->ip_sum = 0;
+			ip->ip_sum = in_cksum(m, hlen);
+		}
 		break;
 #ifdef INET6
     	case IPPROTO_IPV6:
@@ -329,9 +331,11 @@ int
 ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
     int dummy2)
 {
-	u_int8_t tp, otos, itos;
-	u_int64_t obytes;
+	u_int8_t tp, otos;
+
+	u_int8_t itos;
 	struct ip *ipo;
+
 #ifdef INET6
 	struct ip6_hdr *ip6, *ip6o;
 #endif /* INET6 */
@@ -521,20 +525,21 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 	*mp = m;
 
 	if (tdb->tdb_dst.sa.sa_family == AF_INET) {
-		obytes = m->m_pkthdr.len - sizeof(struct ip);
 		if (tdb->tdb_xform->xf_type == XF_IP4)
-			tdb->tdb_cur_bytes += obytes;
+			tdb->tdb_cur_bytes +=
+			    m->m_pkthdr.len - sizeof(struct ip);
 
-		ipipstat_add(ipips_obytes, obytes);
+		ipipstat_add(ipips_obytes, m->m_pkthdr.len - sizeof(struct ip));
 	}
 
 #ifdef INET6
 	if (tdb->tdb_dst.sa.sa_family == AF_INET6) {
-		obytes = m->m_pkthdr.len - sizeof(struct ip6_hdr);
 		if (tdb->tdb_xform->xf_type == XF_IP4)
-			tdb->tdb_cur_bytes += obytes;
+			tdb->tdb_cur_bytes +=
+			    m->m_pkthdr.len - sizeof(struct ip6_hdr);
 
-		ipipstat_add(ipips_obytes, obytes);
+		ipipstat_add(ipips_obytes,
+		    m->m_pkthdr.len - sizeof(struct ip6_hdr));
 	}
 #endif /* INET6 */
 

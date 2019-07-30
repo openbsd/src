@@ -21,7 +21,7 @@ class NSIndexPathDataFormatterTestCase(TestBase):
 
     def appkit_tester_impl(self, commands):
         self.build()
-        self.runCmd("file " + self.getBuildArtifact("a.out"), CURRENT_EXECUTABLE_SET)
+        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line(
             self, "main.m", self.line, num_expected_locations=1, loc_exact=True)
@@ -46,7 +46,6 @@ class NSIndexPathDataFormatterTestCase(TestBase):
 
     @skipUnlessDarwin
     @expectedFailureAll(archs=['i386'], bugnumber="rdar://28656605")
-    @expectedFailureAll(archs=['armv7', 'armv7k'], bugnumber="rdar://problem/34561607") # NSIndexPath formatter isn't working for 32-bit arm
     def test_nsindexpath_with_run_command(self):
         """Test formatters for NSIndexPath."""
         self.appkit_tester_impl(self.nsindexpath_data_formatter_commands)

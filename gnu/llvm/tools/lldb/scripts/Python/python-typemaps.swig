@@ -102,8 +102,7 @@
 %typemap(argout) (char *dst, size_t dst_len) {
    Py_XDECREF($result);   /* Blow away any previous result */
    if (result == 0) {
-      lldb_private::PythonString string("");
-      $result = string.release();
+      $result = Py_None;
       Py_INCREF($result);
    } else {
       llvm::StringRef ref(static_cast<const char*>($1), result);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.h,v 1.7 2019/02/20 07:36:37 patrick Exp $	*/
+/*	$OpenBSD: ofw_regulator.h,v 1.5 2017/12/18 09:13:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -23,13 +23,9 @@ struct regulator_device {
 	void	*rd_cookie;
 	uint32_t (*rd_get_voltage)(void *);
 	int	(*rd_set_voltage)(void *, uint32_t);
-	uint32_t (*rd_get_current)(void *);
-	int	(*rd_set_current)(void *, uint32_t);
 	int	(*rd_enable)(void *, int);
 
-	uint32_t rd_volt_min, rd_volt_max;
-	uint32_t rd_amp_min, rd_amp_max;
-	uint32_t rd_ramp_delay;
+	uint32_t rd_min, rd_max;
 
 	LIST_ENTRY(regulator_device) rd_list;
 	uint32_t rd_phandle;
@@ -41,7 +37,5 @@ int	regulator_enable(uint32_t);
 int	regulator_disable(uint32_t);
 uint32_t regulator_get_voltage(uint32_t);
 int	regulator_set_voltage(uint32_t, uint32_t);
-uint32_t regulator_get_current(uint32_t);
-int	regulator_set_current(uint32_t, uint32_t);
 
 #endif /* _DEV_OFW_REGULATOR_H_ */

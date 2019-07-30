@@ -40,7 +40,6 @@ class ThreadStepOutTestCase(TestBase):
         oslist=["freebsd"],
         bugnumber="llvm.org/pr19347 2nd thread stops at breakpoint")
     @expectedFailureAll(oslist=["windows"])
-    @expectedFailureAll(oslist=["watchos"], archs=['armv7k'], bugnumber="rdar://problem/34674488") # stop reason is trace when it should be step-out
     def test_step_all_threads(self):
         """Test thread step out on all threads via command interpreter. """
         self.build(dictionary=self.getBuildFlags())
@@ -125,7 +124,7 @@ class ThreadStepOutTestCase(TestBase):
 
     def step_out_test(self, step_out_func):
         """Test single thread step out of a function."""
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # This should create a breakpoint in the main thread.

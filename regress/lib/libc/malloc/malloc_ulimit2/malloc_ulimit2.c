@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc_ulimit2.c,v 1.5 2019/06/12 11:31:36 bluhm Exp $	*/
+/*	$OpenBSD: malloc_ulimit2.c,v 1.3 2017/07/27 15:08:37 bluhm Exp $	*/
 
 /* Public Domain, 2006, Otto Moerbeek <otto@drijf.net> */
 
@@ -9,10 +9,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define FACTOR	1024
-
-/* This test takes forever with junking turned on. */
-char *malloc_options = "jj";
+#define FACTOR 	1024
 
 int
 main()

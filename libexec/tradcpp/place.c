@@ -32,7 +32,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
 #include "utils.h"
 #include "array.h"
@@ -53,10 +52,8 @@ static bool overall_failure;
 
 static const char *myprogname;
 
-static FILE *debuglogfile;
-
 ////////////////////////////////////////////////////////////
-// placefiles
+// seenfiles
 
 static
 struct placefile *
@@ -102,42 +99,6 @@ place_getparsedir(const struct place *place)
 		return ".";
 	}
 	return place->file->dir;
-}
-
-static
-struct placefile *
-placefile_find(const struct place *incfrom, const char *name)
-{
-	unsigned i, num;
-	struct placefile *pf;
-
-	num = placefilearray_num(&placefiles);
-	for (i=0; i<num; i++) {
-		pf = placefilearray_get(&placefiles, i);
-		if (place_eq(incfrom, &pf->includedfrom) &&
-		    !strcmp(name, pf->name)) {
-			return pf;
-		}
-	}
-	return NULL;
-}
-
-void
-place_changefile(struct place *p, const char *name)
-{
-	struct placefile *pf;
-
-	assert(p->type == P_FILE);
-	if (!strcmp(name, p->file->name)) {
-		return;
-	}
-	pf = placefile_find(&p->file->includedfrom, name);
-	if (pf == NULL) {
-		pf = placefile_create(&p->file->includedfrom, name,
-				      p->file->fromsystemdir);
-		placefilearray_add(&placefiles, pf, NULL);
-	}
-	p->file = pf;
 }
 
 const struct placefile *
@@ -193,6 +154,7 @@ place_setfilestart(struct place *p, const struct placefile *pf)
 	p->column = 1;
 }
 
+static
 const char *
 place_getname(const struct place *p)
 {
@@ -204,30 +166,6 @@ place_getname(const struct place *p)
 	}
 	assert(0);
 	return NULL;
-}
-
-bool
-place_samefile(const struct place *a, const struct place *b)
-{
-	if (a->type != b->type) {
-		return false;
-	}
-	if (a->file != b->file) {
-		return false;
-	}
-	return true;
-}
-
-bool
-place_eq(const struct place *a, const struct place *b)
-{
-	if (!place_samefile(a, b)) {
-		return false;
-	}
-	if (a->line != b->line || a->column != b->column) {
-		return false;
-	}
-	return true;
 }
 
 static
@@ -284,70 +222,6 @@ bool
 complain_failed(void)
 {
 	return overall_failure;
-}
-
-////////////////////////////////////////////////////////////
-// debug logging
-
-void
-debuglog_open(const struct place *p, /*const*/ char *file)
-{
-	assert(debuglogfile == NULL);
-	debuglogfile = fopen(file, "w");
-	if (debuglogfile == NULL) {
-		complain(p, "%s: %s", file, strerror(errno));
-		die();
-	}
-}
-
-void
-debuglog_close(void)
-{
-	if (debuglogfile != NULL) {
-		fclose(debuglogfile);
-		debuglogfile = NULL;
-	}
-}
-
-PF(2, 3) void
-debuglog(const struct place *p, const char *fmt, ...)
-{
-	va_list ap;
-
-	if (debuglogfile == NULL) {
-		return;
-	}
-
-	fprintf(debuglogfile, "%s:%u: ", place_getname(p), p->line);
-	va_start(ap, fmt);
-	vfprintf(debuglogfile, fmt, ap);
-	va_end(ap);
-	fprintf(debuglogfile, "\n");
-	fflush(debuglogfile);
-}
-
-PF(3, 4) void
-debuglog2(const struct place *p, const struct place *p2, const char *fmt, ...)
-{
-	va_list ap;
-
-	if (debuglogfile == NULL) {
-		return;
-	}
-
-	fprintf(debuglogfile, "%s:%u: ", place_getname(p), p->line);
-	if (place_samefile(p, p2)) {
-		fprintf(debuglogfile, "(block began at line %u) ",
-			p2->line);
-	} else {
-		fprintf(debuglogfile, "(block began at %s:%u)",
-			place_getname(p2), p2->line);
-	}
-	va_start(ap, fmt);
-	vfprintf(debuglogfile, fmt, ap);
-	va_end(ap);
-	fprintf(debuglogfile, "\n");
-	fflush(debuglogfile);
 }
 
 ////////////////////////////////////////////////////////////

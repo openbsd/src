@@ -21,9 +21,7 @@
 #include <grp.h>
 #endif /* HAVE_GRP_H */
 #ifdef HAVE_SETUSERCONTEXT
-#ifdef HAVE_LOGIN_CAP_H
 #include <login_cap.h>
-#endif /* HAVE_LOGIN_CAP_H */
 #endif /* HAVE_SETUSERCONTEXT */
 
 #include <assert.h>
@@ -47,15 +45,13 @@
 #include "tsig.h"
 #include "remote.h"
 #include "xfrd-disk.h"
-#ifdef USE_DNSTAP
-#include "dnstap/dnstap_collector.h"
-#endif
 
 /* The server handler... */
 struct nsd nsd;
 static char hostname[MAXHOSTNAMELEN];
 extern config_parser_state_type* cfg_parser;
-static void version(void) ATTR_NORETURN;
+
+static void error(const char *format, ...) ATTR_FORMAT(printf, 1, 2);
 
 /*
  * Print the help text.
@@ -119,21 +115,56 @@ version(void)
 	exit(0);
 }
 
+/*
+ * Something went wrong, give error messages and exit.
+ *
+ */
+static void
+error(const char *format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	log_vmsg(LOG_ERR, format, args);
+	va_end(args);
+	exit(1);
+}
+
+static void
+append_trailing_slash(const char** dirname, region_type* region)
+{
+	int l = strlen(*dirname);
+	if (l>0 && (*dirname)[l-1] != '/' && l < 0xffffff) {
+		char *dirname_slash = region_alloc(region, l+2);
+		memcpy(dirname_slash, *dirname, l+1);
+		strlcat(dirname_slash, "/", l+2);
+		/* old dirname is leaked, this is only used for chroot, once */
+		*dirname = dirname_slash;
+	}
+}
+
+static int
+file_inside_chroot(const char* fname, const char* chr)
+{
+	/* true if filename starts with chroot or is not absolute */
+	return ((fname && fname[0] && strncmp(fname, chr, strlen(chr)) == 0) ||
+		(fname && fname[0] != '/'));
+}
+
 void
 get_ip_port_frm_str(const char* arg, const char** hostname,
         const char** port)
 {
-	/* parse src[@port] option */
-	char* delim = NULL;
+        /* parse src[@port] option */
+        char* delim = NULL;
 	if (arg) {
 		delim = strchr(arg, '@');
 	}
 
-	if (delim) {
-		*delim = '\0';
-		*port = delim+1;
-	}
-	*hostname = arg;
+        if (delim) {
+                *delim = '\0';
+                *port = delim+1;
+        }
+        *hostname = arg;
 }
 
 /* append interface to interface array (names, udp, tcp) */
@@ -954,7 +985,7 @@ main(int argc, char *argv[])
 		int fd;
 
 		/* Take off... */
-		switch (fork()) {
+		switch ((nsd.pid = fork())) {
 		case 0:
 			/* Child */
 			break;
@@ -1107,12 +1138,6 @@ main(int argc, char *argv[])
 	options_zonestatnames_create(nsd.options);
 	server_zonestat_alloc(&nsd);
 #endif /* USE_ZONE_STATS */
-#ifdef USE_DNSTAP
-	if(nsd.options->dnstap_enable) {
-		nsd.dt_collector = dt_collector_create(&nsd);
-		dt_collector_start(nsd.dt_collector, &nsd);
-	}
-#endif /* USE_DNSTAP */
 
 	if(nsd.server_kind == NSD_SERVER_MAIN) {
 		server_prepare_xfrd(&nsd);

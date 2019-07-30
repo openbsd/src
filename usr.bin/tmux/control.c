@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.23 2019/05/31 11:34:09 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.20 2017/01/15 22:00:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -68,9 +68,10 @@ control_error(struct cmdq_item *item, void *data)
 void
 control_callback(struct client *c, int closed, __unused void *data)
 {
-	char			*line;
+	char			*line, *cause;
+	struct cmd_list		*cmdlist;
+	struct cmd		*cmd;
 	struct cmdq_item	*item;
-	struct cmd_parse_result	*pr;
 
 	if (closed)
 		c->flags |= CLIENT_EXIT;
@@ -84,20 +85,16 @@ control_callback(struct client *c, int closed, __unused void *data)
 			break;
 		}
 
-		pr = cmd_parse_from_string(line, NULL);
-		switch (pr->status) {
-		case CMD_PARSE_EMPTY:
-			break;
-		case CMD_PARSE_ERROR:
-			item = cmdq_get_callback(control_error, pr->error);
+		cmdlist = cmd_string_parse(line, NULL, 0, &cause);
+		if (cmdlist == NULL) {
+			item = cmdq_get_callback(control_error, cause);
 			cmdq_append(c, item);
-			break;
-		case CMD_PARSE_SUCCESS:
-			item = cmdq_get_command(pr->cmdlist, NULL, NULL, 0);
-			item->shared->flags |= CMDQ_SHARED_CONTROL;
+		} else {
+			TAILQ_FOREACH(cmd, &cmdlist->list, qentry)
+				cmd->flags |= CMD_CONTROL;
+			item = cmdq_get_command(cmdlist, NULL, NULL, 0);
 			cmdq_append(c, item);
-			cmd_list_free(pr->cmdlist);
-			break;
+			cmd_list_free(cmdlist);
 		}
 
 		free(line);

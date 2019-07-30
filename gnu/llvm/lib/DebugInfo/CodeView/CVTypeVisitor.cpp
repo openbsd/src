@@ -9,6 +9,7 @@
 
 #include "llvm/DebugInfo/CodeView/CVTypeVisitor.h"
 
+#include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/DebugInfo/CodeView/CodeViewError.h"
 #include "llvm/DebugInfo/CodeView/TypeCollection.h"
 #include "llvm/DebugInfo/CodeView/TypeDeserializer.h"

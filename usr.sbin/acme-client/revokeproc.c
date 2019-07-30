@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.15 2019/06/16 19:49:13 florian Exp $ */
+/*	$Id: revokeproc.c,v 1.13 2017/07/08 13:37:23 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -91,10 +91,10 @@ X509expires(X509 *x)
 }
 
 int
-revokeproc(int fd, const char *certfile, int force,
+revokeproc(int fd, const char *certdir, const char *certfile, int force,
     int revocate, const char *const *alts, size_t altsz)
 {
-	char		*der = NULL, *dercp, *der64 = NULL;
+	char		*path = NULL, *der = NULL, *dercp, *der64 = NULL;
 	char		*san = NULL, *str, *tok;
 	int		 rc = 0, cc, i, extsz, ssz, len;
 	size_t		*found = NULL;
@@ -114,8 +114,11 @@ revokeproc(int fd, const char *certfile, int force,
 	 * We allow "f" to be NULL IFF the cert doesn't exist yet.
 	 */
 
-	if ((f = fopen(certfile, "r")) == NULL && errno != ENOENT) {
-		warn("%s", certfile);
+	if (asprintf(&path, "%s/%s", certdir, certfile) == -1) {
+		warn("asprintf");
+		goto out;
+	} else if ((f = fopen(path, "r")) == NULL && errno != ENOENT) {
+		warn("%s", path);
 		goto out;
 	}
 
@@ -137,7 +140,7 @@ revokeproc(int fd, const char *certfile, int force,
 	 */
 
 	if (f == NULL && revocate) {
-		warnx("%s: no certificate found", certfile);
+		warnx("%s/%s: no certificate found", certdir, certfile);
 		(void)writeop(fd, COMM_REVOKE_RESP, REVOKE_OK);
 		goto out;
 	} else if (f == NULL && !revocate) {
@@ -178,7 +181,7 @@ revokeproc(int fd, const char *certfile, int force,
 			continue;
 
 		if (san != NULL) {
-			warnx("%s: two SAN entries", certfile);
+			warnx("%s/%s: two SAN entries", certdir, certfile);
 			goto out;
 		}
 
@@ -201,7 +204,7 @@ revokeproc(int fd, const char *certfile, int force,
 	}
 
 	if (san == NULL) {
-		warnx("%s: does not have a SAN entry", certfile);
+		warnx("%s/%s: does not have a SAN entry", certdir, certfile);
 		goto out;
 	}
 
@@ -230,11 +233,13 @@ revokeproc(int fd, const char *certfile, int force,
 			if (strcmp(tok, alts[j]) == 0)
 				break;
 		if (j == altsz) {
-			warnx("%s: unknown SAN entry: %s", certfile, tok);
+			warnx("%s/%s: unknown SAN entry: %s",
+			    certdir, certfile, tok);
 			goto out;
 		}
 		if (found[j]++) {
-			warnx("%s: duplicate SAN entry: %s", certfile, tok);
+			warnx("%s/%s: duplicate SAN entry: %s",
+			    certdir, certfile, tok);
 			goto out;
 		}
 	}
@@ -242,7 +247,8 @@ revokeproc(int fd, const char *certfile, int force,
 	for (j = 0; j < altsz; j++) {
 		if (found[j])
 			continue;
-		warnx("%s: domain not listed: %s", certfile, alts[j]);
+		warnx("%s/%s: domain not listed: %s",
+		    certdir, certfile, alts[j]);
 		goto out;
 	}
 
@@ -253,7 +259,7 @@ revokeproc(int fd, const char *certfile, int force,
 	 */
 
 	if (revocate) {
-		dodbg("%s: revocation", certfile);
+		dodbg("%s/%s: revocation", certdir, certfile);
 
 		/*
 		 * First, tell netproc we're online.
@@ -287,14 +293,16 @@ revokeproc(int fd, const char *certfile, int force,
 	rop = time(NULL) >= (t - RENEW_ALLOW) ? REVOKE_EXP : REVOKE_OK;
 
 	if (rop == REVOKE_EXP)
-		dodbg("%s: certificate renewable: %lld days left",
-		    certfile, (long long)(t - time(NULL)) / 24 / 60 / 60);
+		dodbg("%s/%s: certificate renewable: %lld days left",
+		    certdir, certfile,
+		    (long long)(t - time(NULL)) / 24 / 60 / 60);
 	else
-		dodbg("%s: certificate valid: %lld days left",
-		    certfile, (long long)(t - time(NULL)) / 24 / 60 / 60);
+		dodbg("%s/%s: certificate valid: %lld days left",
+		    certdir, certfile,
+		    (long long)(t - time(NULL)) / 24 / 60 / 60);
 
 	if (rop == REVOKE_OK && force) {
-		warnx("%s: forcing renewal", certfile);
+		warnx("%s/%s: forcing renewal", certdir, certfile);
 		rop = REVOKE_EXP;
 	}
 
@@ -327,9 +335,12 @@ out:
 	close(fd);
 	if (f != NULL)
 		fclose(f);
-	X509_free(x);
-	BIO_free(bio);
+	if (x != NULL)
+		X509_free(x);
+	if (bio != NULL)
+		BIO_free(bio);
 	free(san);
+	free(path);
 	free(der);
 	free(found);
 	free(der64);

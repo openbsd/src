@@ -24,13 +24,13 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
-#include <drm/drmP.h>
-#include <drm/radeon_drm.h>
+#include <dev/pci/drm/drmP.h>
+#include <dev/pci/drm/radeon_drm.h>
 #include "radeon.h"
 
 #include "atom.h"
 #include "atom-bits.h"
-#include <drm/drm_dp_helper.h>
+#include <dev/pci/drm/drm_dp_helper.h>
 
 /* move these to drm_dp_helper.c/h */
 #define DP_LINK_CONFIGURATION_SIZE 9
@@ -38,41 +38,43 @@
 
 #ifdef DRMDEBUG
 static char *voltage_names[] = {
-	"0.4V", "0.6V", "0.8V", "1.2V"
+        "0.4V", "0.6V", "0.8V", "1.2V"
 };
 static char *pre_emph_names[] = {
-	"0dB", "3.5dB", "6dB", "9.5dB"
+        "0dB", "3.5dB", "6dB", "9.5dB"
 };
 #endif
 
 /***** radeon AUX functions *****/
 
-/* Atom needs data in little endian format so swap as appropriate when copying
- * data to or from atom. Note that atom operates on dw units.
- *
- * Use to_le=true when sending data to atom and provide at least
- * ALIGN(num_bytes,4) bytes in the dst buffer.
- *
- * Use to_le=false when receiving data from atom and provide ALIGN(num_bytes,4)
- * byes in the src buffer.
+/* Atom needs data in little endian format
+ * so swap as appropriate when copying data to
+ * or from atom. Note that atom operates on
+ * dw units.
  */
 void radeon_atom_copy_swap(u8 *dst, u8 *src, u8 num_bytes, bool to_le)
 {
 #ifdef __BIG_ENDIAN
-	u32 src_tmp[5], dst_tmp[5];
+	u8 src_tmp[20], dst_tmp[20]; /* used for byteswapping */
+	u32 *dst32, *src32;
 	int i;
-	u8 align_num_bytes = roundup2(num_bytes, 4);
 
+	memcpy(src_tmp, src, num_bytes);
+	src32 = (u32 *)src_tmp;
+	dst32 = (u32 *)dst_tmp;
 	if (to_le) {
-		memcpy(src_tmp, src, num_bytes);
-		for (i = 0; i < align_num_bytes / 4; i++)
-			dst_tmp[i] = cpu_to_le32(src_tmp[i]);
-		memcpy(dst, dst_tmp, align_num_bytes);
-	} else {
-		memcpy(src_tmp, src, align_num_bytes);
-		for (i = 0; i < align_num_bytes / 4; i++)
-			dst_tmp[i] = le32_to_cpu(src_tmp[i]);
+		for (i = 0; i < ((num_bytes + 3) / 4); i++)
+			dst32[i] = cpu_to_le32(src32[i]);
 		memcpy(dst, dst_tmp, num_bytes);
+	} else {
+		u8 dws = num_bytes & ~3;
+		for (i = 0; i < ((num_bytes + 3) / 4); i++)
+			dst32[i] = le32_to_cpu(src32[i]);
+		memcpy(dst, dst_tmp, dws);
+		if (num_bytes % 4) {
+			for (i = 0; i < (num_bytes % 4); i++)
+				dst[dws+i] = dst_tmp[dws+i];
+		}
 	}
 #else
 	memcpy(dst, src, num_bytes);
@@ -99,9 +101,6 @@ static int radeon_process_aux_ch(struct radeon_i2c_chan *chan,
 
 	memset(&args, 0, sizeof(args));
 
-	mutex_lock(&chan->mutex);
-	mutex_lock(&rdev->mode_info.atom_context->scratch_mutex);
-
 	base = (unsigned char *)(rdev->mode_info.atom_context->scratch + 1);
 
 	radeon_atom_copy_swap(base, send, send_bytes, true);
@@ -114,7 +113,7 @@ static int radeon_process_aux_ch(struct radeon_i2c_chan *chan,
 	if (ASIC_IS_DCE4(rdev))
 		args.v2.ucHPD_ID = chan->rec.hpd;
 
-	atom_execute_table_scratch_unlocked(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
 
 	*ack = args.v1.ucReplyStatus;
 
@@ -148,9 +147,6 @@ static int radeon_process_aux_ch(struct radeon_i2c_chan *chan,
 
 	r = recv_bytes;
 done:
-	mutex_unlock(&rdev->mode_info.atom_context->scratch_mutex);
-	mutex_unlock(&chan->mutex);
-
 	return r;
 }
 
@@ -304,10 +300,10 @@ static int convert_bpc_to_bpp(int bpc)
 
 /***** radeon specific DP functions *****/
 
-static int radeon_dp_get_dp_link_config(struct drm_connector *connector,
-					const u8 dpcd[DP_DPCD_SIZE],
-					unsigned pix_clock,
-					unsigned *dp_lanes, unsigned *dp_rate)
+int radeon_dp_get_dp_link_config(struct drm_connector *connector,
+				 const u8 dpcd[DP_DPCD_SIZE],
+				 unsigned pix_clock,
+				 unsigned *dp_lanes, unsigned *dp_rate)
 {
 	int bpp = convert_bpc_to_bpp(radeon_get_monitor_bpc(connector));
 	static const unsigned link_rates[3] = { 162000, 270000, 540000 };
@@ -389,21 +385,22 @@ bool radeon_dp_getdpcd(struct radeon_connector *radeon_connector)
 {
 	struct radeon_connector_atom_dig *dig_connector = radeon_connector->con_priv;
 	u8 msg[DP_DPCD_SIZE];
-	int ret;
+	int ret, i;
 
-	ret = drm_dp_dpcd_read(&radeon_connector->ddc_bus->aux, DP_DPCD_REV, msg,
-			       DP_DPCD_SIZE);
-	if (ret == DP_DPCD_SIZE) {
-		memcpy(dig_connector->dpcd, msg, DP_DPCD_SIZE);
+	for (i = 0; i < 7; i++) {
+		ret = drm_dp_dpcd_read(&radeon_connector->ddc_bus->aux, DP_DPCD_REV, msg,
+				       DP_DPCD_SIZE);
+		if (ret == DP_DPCD_SIZE) {
+			memcpy(dig_connector->dpcd, msg, DP_DPCD_SIZE);
 
-		DRM_DEBUG_KMS("DPCD: %*ph\n", (int)sizeof(dig_connector->dpcd),
-			      dig_connector->dpcd);
+			DRM_DEBUG_KMS("DPCD: %*ph\n", (int)sizeof(dig_connector->dpcd),
+				      dig_connector->dpcd);
 
-		radeon_dp_probe_oui(radeon_connector);
+			radeon_dp_probe_oui(radeon_connector);
 
-		return true;
+			return true;
+		}
 	}
-
 	dig_connector->dpcd[0] = 0;
 	return false;
 }

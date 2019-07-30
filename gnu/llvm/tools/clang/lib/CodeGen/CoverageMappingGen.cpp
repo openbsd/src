@@ -29,35 +29,26 @@ using namespace clang;
 using namespace CodeGen;
 using namespace llvm::coverage;
 
-void CoverageSourceInfo::SourceRangeSkipped(SourceRange Range, SourceLocation) {
+void CoverageSourceInfo::SourceRangeSkipped(SourceRange Range) {
   SkippedRanges.push_back(Range);
 }
 
 namespace {
 
-/// A region of source code that can be mapped to a counter.
+/// \brief A region of source code that can be mapped to a counter.
 class SourceMappingRegion {
   Counter Count;
 
-  /// The region's starting location.
+  /// \brief The region's starting location.
   Optional<SourceLocation> LocStart;
 
-  /// The region's ending location.
+  /// \brief The region's ending location.
   Optional<SourceLocation> LocEnd;
-
-  /// Whether this region should be emitted after its parent is emitted.
-  bool DeferRegion;
-
-  /// Whether this region is a gap region. The count from a gap region is set
-  /// as the line execution count if there are no other regions on the line.
-  bool GapRegion;
 
 public:
   SourceMappingRegion(Counter Count, Optional<SourceLocation> LocStart,
-                      Optional<SourceLocation> LocEnd, bool DeferRegion = false,
-                      bool GapRegion = false)
-      : Count(Count), LocStart(LocStart), LocEnd(LocEnd),
-        DeferRegion(DeferRegion), GapRegion(GapRegion) {}
+                      Optional<SourceLocation> LocEnd)
+      : Count(Count), LocStart(LocStart), LocEnd(LocEnd) {}
 
   const Counter &getCounter() const { return Count; }
 
@@ -67,67 +58,22 @@ public:
 
   void setStartLoc(SourceLocation Loc) { LocStart = Loc; }
 
-  SourceLocation getStartLoc() const LLVM_READONLY { return getBeginLoc(); }
-  SourceLocation getBeginLoc() const {
+  SourceLocation getStartLoc() const {
     assert(LocStart && "Region has no start location");
     return *LocStart;
   }
 
   bool hasEndLoc() const { return LocEnd.hasValue(); }
 
-  void setEndLoc(SourceLocation Loc) {
-    assert(Loc.isValid() && "Setting an invalid end location");
-    LocEnd = Loc;
-  }
+  void setEndLoc(SourceLocation Loc) { LocEnd = Loc; }
 
   SourceLocation getEndLoc() const {
     assert(LocEnd && "Region has no end location");
     return *LocEnd;
   }
-
-  bool isDeferred() const { return DeferRegion; }
-
-  void setDeferred(bool Deferred) { DeferRegion = Deferred; }
-
-  bool isGap() const { return GapRegion; }
-
-  void setGap(bool Gap) { GapRegion = Gap; }
 };
 
-/// Spelling locations for the start and end of a source region.
-struct SpellingRegion {
-  /// The line where the region starts.
-  unsigned LineStart;
-
-  /// The column where the region starts.
-  unsigned ColumnStart;
-
-  /// The line where the region ends.
-  unsigned LineEnd;
-
-  /// The column where the region ends.
-  unsigned ColumnEnd;
-
-  SpellingRegion(SourceManager &SM, SourceLocation LocStart,
-                 SourceLocation LocEnd) {
-    LineStart = SM.getSpellingLineNumber(LocStart);
-    ColumnStart = SM.getSpellingColumnNumber(LocStart);
-    LineEnd = SM.getSpellingLineNumber(LocEnd);
-    ColumnEnd = SM.getSpellingColumnNumber(LocEnd);
-  }
-
-  SpellingRegion(SourceManager &SM, SourceMappingRegion &R)
-      : SpellingRegion(SM, R.getStartLoc(), R.getEndLoc()) {}
-
-  /// Check if the start and end locations appear in source order, i.e
-  /// top->bottom, left->right.
-  bool isInSourceOrder() const {
-    return (LineStart < LineEnd) ||
-           (LineStart == LineEnd && ColumnStart <= ColumnEnd);
-  }
-};
-
-/// Provides the common functionality for the different
+/// \brief Provides the common functionality for the different
 /// coverage mapping region builders.
 class CoverageMappingBuilder {
 public:
@@ -136,17 +82,17 @@ public:
   const LangOptions &LangOpts;
 
 private:
-  /// Map of clang's FileIDs to IDs used for coverage mapping.
+  /// \brief Map of clang's FileIDs to IDs used for coverage mapping.
   llvm::SmallDenseMap<FileID, std::pair<unsigned, SourceLocation>, 8>
       FileIDMapping;
 
 public:
-  /// The coverage mapping regions for this function
+  /// \brief The coverage mapping regions for this function
   llvm::SmallVector<CounterMappingRegion, 32> MappingRegions;
-  /// The source mapping regions for this function.
+  /// \brief The source mapping regions for this function.
   std::vector<SourceMappingRegion> SourceRegions;
 
-  /// A set of regions which can be used as a filter.
+  /// \brief A set of regions which can be used as a filter.
   ///
   /// It is produced by emitExpansionRegions() and is used in
   /// emitSourceRegions() to suppress producing code regions if
@@ -158,7 +104,7 @@ public:
                          const LangOptions &LangOpts)
       : CVM(CVM), SM(SM), LangOpts(LangOpts) {}
 
-  /// Return the precise end location for the given token.
+  /// \brief Return the precise end location for the given token.
   SourceLocation getPreciseTokenLocEnd(SourceLocation Loc) {
     // We avoid getLocForEndOfToken here, because it doesn't do what we want for
     // macro locations, which we just treat as expanded files.
@@ -167,14 +113,14 @@ public:
     return Loc.getLocWithOffset(TokLen);
   }
 
-  /// Return the start location of an included file or expanded macro.
+  /// \brief Return the start location of an included file or expanded macro.
   SourceLocation getStartOfFileOrMacro(SourceLocation Loc) {
     if (Loc.isMacroID())
       return Loc.getLocWithOffset(-SM.getFileOffset(Loc));
     return SM.getLocForStartOfFile(SM.getFileID(Loc));
   }
 
-  /// Return the end location of an included file or expanded macro.
+  /// \brief Return the end location of an included file or expanded macro.
   SourceLocation getEndOfFileOrMacro(SourceLocation Loc) {
     if (Loc.isMacroID())
       return Loc.getLocWithOffset(SM.getFileIDSize(SM.getFileID(Loc)) -
@@ -182,18 +128,18 @@ public:
     return SM.getLocForEndOfFile(SM.getFileID(Loc));
   }
 
-  /// Find out where the current file is included or macro is expanded.
+  /// \brief Find out where the current file is included or macro is expanded.
   SourceLocation getIncludeOrExpansionLoc(SourceLocation Loc) {
-    return Loc.isMacroID() ? SM.getImmediateExpansionRange(Loc).getBegin()
+    return Loc.isMacroID() ? SM.getImmediateExpansionRange(Loc).first
                            : SM.getIncludeLoc(SM.getFileID(Loc));
   }
 
-  /// Return true if \c Loc is a location in a built-in macro.
+  /// \brief Return true if \c Loc is a location in a built-in macro.
   bool isInBuiltin(SourceLocation Loc) {
     return SM.getBufferName(SM.getSpellingLoc(Loc)) == "<built-in>";
   }
 
-  /// Check whether \c Loc is included or expanded from \c Parent.
+  /// \brief Check whether \c Loc is included or expanded from \c Parent.
   bool isNestedIn(SourceLocation Loc, FileID Parent) {
     do {
       Loc = getIncludeOrExpansionLoc(Loc);
@@ -203,23 +149,23 @@ public:
     return true;
   }
 
-  /// Get the start of \c S ignoring macro arguments and builtin macros.
+  /// \brief Get the start of \c S ignoring macro arguments and builtin macros.
   SourceLocation getStart(const Stmt *S) {
     SourceLocation Loc = S->getLocStart();
     while (SM.isMacroArgExpansion(Loc) || isInBuiltin(Loc))
-      Loc = SM.getImmediateExpansionRange(Loc).getBegin();
+      Loc = SM.getImmediateExpansionRange(Loc).first;
     return Loc;
   }
 
-  /// Get the end of \c S ignoring macro arguments and builtin macros.
+  /// \brief Get the end of \c S ignoring macro arguments and builtin macros.
   SourceLocation getEnd(const Stmt *S) {
     SourceLocation Loc = S->getLocEnd();
     while (SM.isMacroArgExpansion(Loc) || isInBuiltin(Loc))
-      Loc = SM.getImmediateExpansionRange(Loc).getBegin();
+      Loc = SM.getImmediateExpansionRange(Loc).first;
     return getPreciseTokenLocEnd(Loc);
   }
 
-  /// Find the set of files we have regions for and assign IDs
+  /// \brief Find the set of files we have regions for and assign IDs
   ///
   /// Fills \c Mapping with the virtual file mapping needed to write out
   /// coverage and collects the necessary file information to emit source and
@@ -259,7 +205,7 @@ public:
     }
   }
 
-  /// Get the coverage mapping file ID for \c Loc.
+  /// \brief Get the coverage mapping file ID for \c Loc.
   ///
   /// If such file id doesn't exist, return None.
   Optional<unsigned> getCoverageFileID(SourceLocation Loc) {
@@ -269,7 +215,7 @@ public:
     return None;
   }
 
-  /// Gather all the regions that were skipped by the preprocessor
+  /// \brief Gather all the regions that were skipped by the preprocessor
   /// using the constructs like #if.
   void gatherSkippedRegions() {
     /// An array of the minimum lineStarts and the maximum lineEnds
@@ -295,18 +241,21 @@ public:
       auto CovFileID = getCoverageFileID(LocStart);
       if (!CovFileID)
         continue;
-      SpellingRegion SR{SM, LocStart, LocEnd};
+      unsigned LineStart = SM.getSpellingLineNumber(LocStart);
+      unsigned ColumnStart = SM.getSpellingColumnNumber(LocStart);
+      unsigned LineEnd = SM.getSpellingLineNumber(LocEnd);
+      unsigned ColumnEnd = SM.getSpellingColumnNumber(LocEnd);
       auto Region = CounterMappingRegion::makeSkipped(
-          *CovFileID, SR.LineStart, SR.ColumnStart, SR.LineEnd, SR.ColumnEnd);
+          *CovFileID, LineStart, ColumnStart, LineEnd, ColumnEnd);
       // Make sure that we only collect the regions that are inside
-      // the source code of this function.
+      // the souce code of this function.
       if (Region.LineStart >= FileLineRanges[*CovFileID].first &&
           Region.LineEnd <= FileLineRanges[*CovFileID].second)
         MappingRegions.push_back(Region);
     }
   }
 
-  /// Generate the coverage counter mapping regions from collected
+  /// \brief Generate the coverage counter mapping regions from collected
   /// source regions.
   void emitSourceRegions(const SourceRegionFilter &Filter) {
     for (const auto &Region : SourceRegions) {
@@ -335,23 +284,20 @@ public:
       if (Filter.count(std::make_pair(LocStart, LocEnd)))
         continue;
 
-      // Find the spelling locations for the mapping region.
-      SpellingRegion SR{SM, LocStart, LocEnd};
-      assert(SR.isInSourceOrder() && "region start and end out of order");
+      // Find the spilling locations for the mapping region.
+      unsigned LineStart = SM.getSpellingLineNumber(LocStart);
+      unsigned ColumnStart = SM.getSpellingColumnNumber(LocStart);
+      unsigned LineEnd = SM.getSpellingLineNumber(LocEnd);
+      unsigned ColumnEnd = SM.getSpellingColumnNumber(LocEnd);
 
-      if (Region.isGap()) {
-        MappingRegions.push_back(CounterMappingRegion::makeGapRegion(
-            Region.getCounter(), *CovFileID, SR.LineStart, SR.ColumnStart,
-            SR.LineEnd, SR.ColumnEnd));
-      } else {
-        MappingRegions.push_back(CounterMappingRegion::makeRegion(
-            Region.getCounter(), *CovFileID, SR.LineStart, SR.ColumnStart,
-            SR.LineEnd, SR.ColumnEnd));
-      }
+      assert(LineStart <= LineEnd && "region start and end out of order");
+      MappingRegions.push_back(CounterMappingRegion::makeRegion(
+          Region.getCounter(), *CovFileID, LineStart, ColumnStart, LineEnd,
+          ColumnEnd));
     }
   }
 
-  /// Generate expansion regions for each virtual file we've seen.
+  /// \brief Generate expansion regions for each virtual file we've seen.
   SourceRegionFilter emitExpansionRegions() {
     SourceRegionFilter Filter;
     for (const auto &FM : FileIDMapping) {
@@ -371,17 +317,20 @@ public:
              "region spans multiple files");
       Filter.insert(std::make_pair(ParentLoc, LocEnd));
 
-      SpellingRegion SR{SM, ParentLoc, LocEnd};
-      assert(SR.isInSourceOrder() && "region start and end out of order");
+      unsigned LineStart = SM.getSpellingLineNumber(ParentLoc);
+      unsigned ColumnStart = SM.getSpellingColumnNumber(ParentLoc);
+      unsigned LineEnd = SM.getSpellingLineNumber(LocEnd);
+      unsigned ColumnEnd = SM.getSpellingColumnNumber(LocEnd);
+
       MappingRegions.push_back(CounterMappingRegion::makeExpansion(
-          *ParentFileID, *ExpandedFileID, SR.LineStart, SR.ColumnStart,
-          SR.LineEnd, SR.ColumnEnd));
+          *ParentFileID, *ExpandedFileID, LineStart, ColumnStart, LineEnd,
+          ColumnEnd));
     }
     return Filter;
   }
 };
 
-/// Creates unreachable coverage regions for the functions that
+/// \brief Creates unreachable coverage regions for the functions that
 /// are not emitted.
 struct EmptyCoverageMappingBuilder : public CoverageMappingBuilder {
   EmptyCoverageMappingBuilder(CoverageMappingModuleGen &CVM, SourceManager &SM,
@@ -415,7 +364,7 @@ struct EmptyCoverageMappingBuilder : public CoverageMappingBuilder {
     SourceRegions.emplace_back(Counter(), Start, End);
   }
 
-  /// Write the mapping data to the output stream
+  /// \brief Write the mapping data to the output stream
   void write(llvm::raw_ostream &OS) {
     SmallVector<unsigned, 16> FileIDMapping;
     gatherFileIDs(FileIDMapping);
@@ -429,38 +378,31 @@ struct EmptyCoverageMappingBuilder : public CoverageMappingBuilder {
   }
 };
 
-/// A StmtVisitor that creates coverage mapping regions which map
+/// \brief A StmtVisitor that creates coverage mapping regions which map
 /// from the source code locations to the PGO counters.
 struct CounterCoverageMappingBuilder
     : public CoverageMappingBuilder,
       public ConstStmtVisitor<CounterCoverageMappingBuilder> {
-  /// The map of statements to count values.
+  /// \brief The map of statements to count values.
   llvm::DenseMap<const Stmt *, unsigned> &CounterMap;
 
-  /// A stack of currently live regions.
+  /// \brief A stack of currently live regions.
   std::vector<SourceMappingRegion> RegionStack;
-
-  /// The currently deferred region: its end location and count can be set once
-  /// its parent has been popped from the region stack.
-  Optional<SourceMappingRegion> DeferredRegion;
 
   CounterExpressionBuilder Builder;
 
-  /// A location in the most recently visited file or macro.
+  /// \brief A location in the most recently visited file or macro.
   ///
   /// This is used to adjust the active source regions appropriately when
   /// expressions cross file or macro boundaries.
   SourceLocation MostRecentLocation;
 
-  /// Location of the last terminated region.
-  Optional<std::pair<SourceLocation, size_t>> LastTerminatedRegion;
-
-  /// Return a counter for the subtraction of \c RHS from \c LHS
+  /// \brief Return a counter for the subtraction of \c RHS from \c LHS
   Counter subtractCounters(Counter LHS, Counter RHS) {
     return Builder.subtract(LHS, RHS);
   }
 
-  /// Return a counter for the sum of \c LHS and \c RHS.
+  /// \brief Return a counter for the sum of \c LHS and \c RHS.
   Counter addCounters(Counter LHS, Counter RHS) {
     return Builder.add(LHS, RHS);
   }
@@ -469,106 +411,32 @@ struct CounterCoverageMappingBuilder
     return addCounters(addCounters(C1, C2), C3);
   }
 
-  /// Return the region counter for the given statement.
+  /// \brief Return the region counter for the given statement.
   ///
   /// This should only be called on statements that have a dedicated counter.
   Counter getRegionCounter(const Stmt *S) {
     return Counter::getCounter(CounterMap[S]);
   }
 
-  /// Push a region onto the stack.
+  /// \brief Push a region onto the stack.
   ///
   /// Returns the index on the stack where the region was pushed. This can be
   /// used with popRegions to exit a "scope", ending the region that was pushed.
   size_t pushRegion(Counter Count, Optional<SourceLocation> StartLoc = None,
                     Optional<SourceLocation> EndLoc = None) {
-    if (StartLoc) {
+    if (StartLoc)
       MostRecentLocation = *StartLoc;
-      completeDeferred(Count, MostRecentLocation);
-    }
     RegionStack.emplace_back(Count, StartLoc, EndLoc);
 
     return RegionStack.size() - 1;
   }
 
-  /// Complete any pending deferred region by setting its end location and
-  /// count, and then pushing it onto the region stack.
-  size_t completeDeferred(Counter Count, SourceLocation DeferredEndLoc) {
-    size_t Index = RegionStack.size();
-    if (!DeferredRegion)
-      return Index;
-
-    // Consume the pending region.
-    SourceMappingRegion DR = DeferredRegion.getValue();
-    DeferredRegion = None;
-
-    // If the region ends in an expansion, find the expansion site.
-    FileID StartFile = SM.getFileID(DR.getStartLoc());
-    if (SM.getFileID(DeferredEndLoc) != StartFile) {
-      if (isNestedIn(DeferredEndLoc, StartFile)) {
-        do {
-          DeferredEndLoc = getIncludeOrExpansionLoc(DeferredEndLoc);
-        } while (StartFile != SM.getFileID(DeferredEndLoc));
-      } else {
-        return Index;
-      }
-    }
-
-    // The parent of this deferred region ends where the containing decl ends,
-    // so the region isn't useful.
-    if (DR.getStartLoc() == DeferredEndLoc)
-      return Index;
-
-    // If we're visiting statements in non-source order (e.g switch cases or
-    // a loop condition) we can't construct a sensible deferred region.
-    if (!SpellingRegion(SM, DR.getStartLoc(), DeferredEndLoc).isInSourceOrder())
-      return Index;
-
-    DR.setGap(true);
-    DR.setCounter(Count);
-    DR.setEndLoc(DeferredEndLoc);
-    handleFileExit(DeferredEndLoc);
-    RegionStack.push_back(DR);
-    return Index;
-  }
-
-  /// Complete a deferred region created after a terminated region at the
-  /// top-level.
-  void completeTopLevelDeferredRegion(Counter Count,
-                                      SourceLocation DeferredEndLoc) {
-    if (DeferredRegion || !LastTerminatedRegion)
-      return;
-
-    if (LastTerminatedRegion->second != RegionStack.size())
-      return;
-
-    SourceLocation Start = LastTerminatedRegion->first;
-    if (SM.getFileID(Start) != SM.getMainFileID())
-      return;
-
-    SourceMappingRegion DR = RegionStack.back();
-    DR.setStartLoc(Start);
-    DR.setDeferred(false);
-    DeferredRegion = DR;
-    completeDeferred(Count, DeferredEndLoc);
-  }
-
-  size_t locationDepth(SourceLocation Loc) {
-    size_t Depth = 0;
-    while (Loc.isValid()) {
-      Loc = getIncludeOrExpansionLoc(Loc);
-      Depth++;
-    }
-    return Depth;
-  }
-
-  /// Pop regions from the stack into the function's list of regions.
+  /// \brief Pop regions from the stack into the function's list of regions.
   ///
   /// Adds all regions from \c ParentIndex to the top of the stack to the
   /// function's \c SourceRegions.
   void popRegions(size_t ParentIndex) {
     assert(RegionStack.size() >= ParentIndex && "parent not in stack");
-    bool ParentOfDeferredRegion = false;
     while (RegionStack.size() > ParentIndex) {
       SourceMappingRegion &Region = RegionStack.back();
       if (Region.hasStartLoc()) {
@@ -576,41 +444,19 @@ struct CounterCoverageMappingBuilder
         SourceLocation EndLoc = Region.hasEndLoc()
                                     ? Region.getEndLoc()
                                     : RegionStack[ParentIndex].getEndLoc();
-        size_t StartDepth = locationDepth(StartLoc);
-        size_t EndDepth = locationDepth(EndLoc);
         while (!SM.isWrittenInSameFile(StartLoc, EndLoc)) {
-          bool UnnestStart = StartDepth >= EndDepth;
-          bool UnnestEnd = EndDepth >= StartDepth;
-          if (UnnestEnd) {
-            // The region ends in a nested file or macro expansion. Create a
-            // separate region for each expansion.
-            SourceLocation NestedLoc = getStartOfFileOrMacro(EndLoc);
-            assert(SM.isWrittenInSameFile(NestedLoc, EndLoc));
+          // The region ends in a nested file or macro expansion. Create a
+          // separate region for each expansion.
+          SourceLocation NestedLoc = getStartOfFileOrMacro(EndLoc);
+          assert(SM.isWrittenInSameFile(NestedLoc, EndLoc));
 
-            if (!isRegionAlreadyAdded(NestedLoc, EndLoc))
-              SourceRegions.emplace_back(Region.getCounter(), NestedLoc, EndLoc);
+          if (!isRegionAlreadyAdded(NestedLoc, EndLoc))
+            SourceRegions.emplace_back(Region.getCounter(), NestedLoc, EndLoc);
 
-            EndLoc = getPreciseTokenLocEnd(getIncludeOrExpansionLoc(EndLoc));
-            if (EndLoc.isInvalid())
-              llvm::report_fatal_error("File exit not handled before popRegions");
-            EndDepth--;
-          }
-          if (UnnestStart) {
-            // The region begins in a nested file or macro expansion. Create a
-            // separate region for each expansion.
-            SourceLocation NestedLoc = getEndOfFileOrMacro(StartLoc);
-            assert(SM.isWrittenInSameFile(StartLoc, NestedLoc));
-
-            if (!isRegionAlreadyAdded(StartLoc, NestedLoc))
-              SourceRegions.emplace_back(Region.getCounter(), StartLoc, NestedLoc);
-
-            StartLoc = getIncludeOrExpansionLoc(StartLoc);
-            if (StartLoc.isInvalid())
-              llvm::report_fatal_error("File exit not handled before popRegions");
-            StartDepth--;
-          }
+          EndLoc = getPreciseTokenLocEnd(getIncludeOrExpansionLoc(EndLoc));
+          if (EndLoc.isInvalid())
+            llvm::report_fatal_error("File exit not handled before popRegions");
         }
-        Region.setStartLoc(StartLoc);
         Region.setEndLoc(EndLoc);
 
         MostRecentLocation = EndLoc;
@@ -621,60 +467,34 @@ struct CounterCoverageMappingBuilder
           MostRecentLocation = getIncludeOrExpansionLoc(EndLoc);
 
         assert(SM.isWrittenInSameFile(Region.getStartLoc(), EndLoc));
-        assert(SpellingRegion(SM, Region).isInSourceOrder());
         SourceRegions.push_back(Region);
-
-        if (ParentOfDeferredRegion) {
-          ParentOfDeferredRegion = false;
-
-          // If there's an existing deferred region, keep the old one, because
-          // it means there are two consecutive returns (or a similar pattern).
-          if (!DeferredRegion.hasValue() &&
-              // File IDs aren't gathered within macro expansions, so it isn't
-              // useful to try and create a deferred region inside of one.
-              !EndLoc.isMacroID())
-            DeferredRegion =
-                SourceMappingRegion(Counter::getZero(), EndLoc, None);
-        }
-      } else if (Region.isDeferred()) {
-        assert(!ParentOfDeferredRegion && "Consecutive deferred regions");
-        ParentOfDeferredRegion = true;
       }
       RegionStack.pop_back();
-
-      // If the zero region pushed after the last terminated region no longer
-      // exists, clear its cached information.
-      if (LastTerminatedRegion &&
-          RegionStack.size() < LastTerminatedRegion->second)
-        LastTerminatedRegion = None;
     }
-    assert(!ParentOfDeferredRegion && "Deferred region with no parent");
   }
 
-  /// Return the currently active region.
+  /// \brief Return the currently active region.
   SourceMappingRegion &getRegion() {
     assert(!RegionStack.empty() && "statement has no region");
     return RegionStack.back();
   }
 
-  /// Propagate counts through the children of \c S.
+  /// \brief Propagate counts through the children of \c S.
   Counter propagateCounts(Counter TopCount, const Stmt *S) {
-    SourceLocation StartLoc = getStart(S);
-    SourceLocation EndLoc = getEnd(S);
-    size_t Index = pushRegion(TopCount, StartLoc, EndLoc);
+    size_t Index = pushRegion(TopCount, getStart(S), getEnd(S));
     Visit(S);
     Counter ExitCount = getRegion().getCounter();
     popRegions(Index);
 
     // The statement may be spanned by an expansion. Make sure we handle a file
     // exit out of this expansion before moving to the next statement.
-    if (SM.isBeforeInTranslationUnit(StartLoc, S->getLocStart()))
-      MostRecentLocation = EndLoc;
+    if (SM.isBeforeInTranslationUnit(getStart(S), S->getLocStart()))
+      MostRecentLocation = getEnd(S);
 
     return ExitCount;
   }
 
-  /// Check whether a region with bounds \c StartLoc and \c EndLoc
+  /// \brief Check whether a region with bounds \c StartLoc and \c EndLoc
   /// is already added to \c SourceRegions.
   bool isRegionAlreadyAdded(SourceLocation StartLoc, SourceLocation EndLoc) {
     return SourceRegions.rend() !=
@@ -685,7 +505,7 @@ struct CounterCoverageMappingBuilder
                         });
   }
 
-  /// Adjust the most recently visited location to \c EndLoc.
+  /// \brief Adjust the most recently visited location to \c EndLoc.
   ///
   /// This should be used after visiting any statements in non-source order.
   void adjustForOutOfOrderTraversal(SourceLocation EndLoc) {
@@ -702,7 +522,7 @@ struct CounterCoverageMappingBuilder
       MostRecentLocation = getIncludeOrExpansionLoc(MostRecentLocation);
   }
 
-  /// Adjust regions and state when \c NewLoc exits a file.
+  /// \brief Adjust regions and state when \c NewLoc exits a file.
   ///
   /// If moving from our most recently tracked location to \c NewLoc exits any
   /// files, this adjusts our current region stack and creates the file regions
@@ -757,11 +577,9 @@ struct CounterCoverageMappingBuilder
       SourceLocation Loc = MostRecentLocation;
       while (isNestedIn(Loc, ParentFile)) {
         SourceLocation FileStart = getStartOfFileOrMacro(Loc);
-        if (StartLocs.insert(FileStart).second) {
+        if (StartLocs.insert(FileStart).second)
           SourceRegions.emplace_back(*ParentCounter, FileStart,
                                      getEndOfFileOrMacro(Loc));
-          assert(SpellingRegion(SM, SourceRegions.back()).isInSourceOrder());
-        }
         Loc = getIncludeOrExpansionLoc(Loc);
       }
     }
@@ -769,7 +587,7 @@ struct CounterCoverageMappingBuilder
     MostRecentLocation = NewLoc;
   }
 
-  /// Ensure that \c S is included in the current region.
+  /// \brief Ensure that \c S is included in the current region.
   void extendRegion(const Stmt *S) {
     SourceMappingRegion &Region = getRegion();
     SourceLocation StartLoc = getStart(S);
@@ -777,56 +595,18 @@ struct CounterCoverageMappingBuilder
     handleFileExit(StartLoc);
     if (!Region.hasStartLoc())
       Region.setStartLoc(StartLoc);
-
-    completeDeferred(Region.getCounter(), StartLoc);
   }
 
-  /// Mark \c S as a terminator, starting a zero region.
+  /// \brief Mark \c S as a terminator, starting a zero region.
   void terminateRegion(const Stmt *S) {
     extendRegion(S);
     SourceMappingRegion &Region = getRegion();
-    SourceLocation EndLoc = getEnd(S);
     if (!Region.hasEndLoc())
-      Region.setEndLoc(EndLoc);
+      Region.setEndLoc(getEnd(S));
     pushRegion(Counter::getZero());
-    auto &ZeroRegion = getRegion();
-    ZeroRegion.setDeferred(true);
-    LastTerminatedRegion = {EndLoc, RegionStack.size()};
   }
 
-  /// Find a valid gap range between \p AfterLoc and \p BeforeLoc.
-  Optional<SourceRange> findGapAreaBetween(SourceLocation AfterLoc,
-                                           SourceLocation BeforeLoc) {
-    // If the start and end locations of the gap are both within the same macro
-    // file, the range may not be in source order.
-    if (AfterLoc.isMacroID() || BeforeLoc.isMacroID())
-      return None;
-    if (!SM.isWrittenInSameFile(AfterLoc, BeforeLoc))
-      return None;
-    return {{AfterLoc, BeforeLoc}};
-  }
-
-  /// Find the source range after \p AfterStmt and before \p BeforeStmt.
-  Optional<SourceRange> findGapAreaBetween(const Stmt *AfterStmt,
-                                           const Stmt *BeforeStmt) {
-    return findGapAreaBetween(getPreciseTokenLocEnd(getEnd(AfterStmt)),
-                              getStart(BeforeStmt));
-  }
-
-  /// Emit a gap region between \p StartLoc and \p EndLoc with the given count.
-  void fillGapAreaWithCount(SourceLocation StartLoc, SourceLocation EndLoc,
-                            Counter Count) {
-    if (StartLoc == EndLoc)
-      return;
-    assert(SpellingRegion(SM, StartLoc, EndLoc).isInSourceOrder());
-    handleFileExit(StartLoc);
-    size_t Index = pushRegion(Count, StartLoc, EndLoc);
-    getRegion().setGap(true);
-    handleFileExit(EndLoc);
-    popRegions(Index);
-  }
-
-  /// Keep counts of breaks and continues inside loops.
+  /// \brief Keep counts of breaks and continues inside loops.
   struct BreakContinue {
     Counter BreakCount;
     Counter ContinueCount;
@@ -837,15 +617,13 @@ struct CounterCoverageMappingBuilder
       CoverageMappingModuleGen &CVM,
       llvm::DenseMap<const Stmt *, unsigned> &CounterMap, SourceManager &SM,
       const LangOptions &LangOpts)
-      : CoverageMappingBuilder(CVM, SM, LangOpts), CounterMap(CounterMap),
-        DeferredRegion(None) {}
+      : CoverageMappingBuilder(CVM, SM, LangOpts), CounterMap(CounterMap) {}
 
-  /// Write the mapping data to the output stream
+  /// \brief Write the mapping data to the output stream
   void write(llvm::raw_ostream &OS) {
     llvm::SmallVector<unsigned, 8> VirtualFileMapping;
     gatherFileIDs(VirtualFileMapping);
     SourceRegionFilter Filter = emitExpansionRegions();
-    assert(!DeferredRegion && "Deferred region never completed");
     emitSourceRegions(Filter);
     gatherSkippedRegions();
 
@@ -867,8 +645,6 @@ struct CounterCoverageMappingBuilder
   }
 
   void VisitDecl(const Decl *D) {
-    assert(!DeferredRegion && "Deferred region never completed");
-
     Stmt *Body = D->getBody();
 
     // Do not propagate region counts into system headers.
@@ -876,12 +652,6 @@ struct CounterCoverageMappingBuilder
       return;
 
     propagateCounts(getRegionCounter(Body), Body);
-    assert(RegionStack.empty() && "Regions entered but never exited");
-
-    // Discard the last uncompleted deferred region in a decl, if one exists.
-    // This prevents lines at the end of a function containing only whitespace
-    // or closing braces from being marked as uncovered.
-    DeferredRegion = None;
   }
 
   void VisitReturnStmt(const ReturnStmt *S) {
@@ -901,13 +671,10 @@ struct CounterCoverageMappingBuilder
   void VisitGotoStmt(const GotoStmt *S) { terminateRegion(S); }
 
   void VisitLabelStmt(const LabelStmt *S) {
-    Counter LabelCount = getRegionCounter(S);
     SourceLocation Start = getStart(S);
-    completeTopLevelDeferredRegion(LabelCount, Start);
-    completeDeferred(LabelCount, Start);
     // We can't extendRegion here or we risk overlapping with our new region.
     handleFileExit(Start);
-    pushRegion(LabelCount, Start);
+    pushRegion(getRegionCounter(S), Start);
     Visit(S->getSubStmt());
   }
 
@@ -915,8 +682,6 @@ struct CounterCoverageMappingBuilder
     assert(!BreakContinueStack.empty() && "break not in a loop or switch!");
     BreakContinueStack.back().BreakCount = addCounters(
         BreakContinueStack.back().BreakCount, getRegion().getCounter());
-    // FIXME: a break in a switch should terminate regions for all preceding
-    // case statements, not just the most recent one.
     terminateRegion(S);
   }
 
@@ -925,16 +690,6 @@ struct CounterCoverageMappingBuilder
     BreakContinueStack.back().ContinueCount = addCounters(
         BreakContinueStack.back().ContinueCount, getRegion().getCounter());
     terminateRegion(S);
-  }
-
-  void VisitCallExpr(const CallExpr *E) {
-    VisitStmt(E);
-
-    // Terminate the region when we hit a noreturn function.
-    // (This is helpful dealing with switch statements.)
-    QualType CalleeType = E->getCallee()->getType();
-    if (getFunctionExtInfo(*CalleeType).getNoReturn())
-      terminateRegion(E);
   }
 
   void VisitWhileStmt(const WhileStmt *S) {
@@ -954,11 +709,6 @@ struct CounterCoverageMappingBuilder
         addCounters(ParentCount, BackedgeCount, BC.ContinueCount);
     propagateCounts(CondCount, S->getCond());
     adjustForOutOfOrderTraversal(getEnd(S));
-
-    // The body count applies to the area immediately after the increment.
-    auto Gap = findGapAreaBetween(S->getCond(), S->getBody());
-    if (Gap)
-      fillGapAreaWithCount(Gap->getBegin(), Gap->getEnd(), BodyCount);
 
     Counter OutCount =
         addCounters(BC.BreakCount, subtractCounters(CondCount, BodyCount));
@@ -995,41 +745,27 @@ struct CounterCoverageMappingBuilder
     Counter ParentCount = getRegion().getCounter();
     Counter BodyCount = getRegionCounter(S);
 
-    // The loop increment may contain a break or continue.
-    if (S->getInc())
-      BreakContinueStack.emplace_back();
-
     // Handle the body first so that we can get the backedge count.
-    BreakContinueStack.emplace_back();
+    BreakContinueStack.push_back(BreakContinue());
     extendRegion(S->getBody());
     Counter BackedgeCount = propagateCounts(BodyCount, S->getBody());
-    BreakContinue BodyBC = BreakContinueStack.pop_back_val();
+    BreakContinue BC = BreakContinueStack.pop_back_val();
 
     // The increment is essentially part of the body but it needs to include
     // the count for all the continue statements.
-    BreakContinue IncrementBC;
-    if (const Stmt *Inc = S->getInc()) {
-      propagateCounts(addCounters(BackedgeCount, BodyBC.ContinueCount), Inc);
-      IncrementBC = BreakContinueStack.pop_back_val();
-    }
+    if (const Stmt *Inc = S->getInc())
+      propagateCounts(addCounters(BackedgeCount, BC.ContinueCount), Inc);
 
     // Go back to handle the condition.
-    Counter CondCount = addCounters(
-        addCounters(ParentCount, BackedgeCount, BodyBC.ContinueCount),
-        IncrementBC.ContinueCount);
+    Counter CondCount =
+        addCounters(ParentCount, BackedgeCount, BC.ContinueCount);
     if (const Expr *Cond = S->getCond()) {
       propagateCounts(CondCount, Cond);
       adjustForOutOfOrderTraversal(getEnd(S));
     }
 
-    // The body count applies to the area immediately after the increment.
-    auto Gap = findGapAreaBetween(getPreciseTokenLocEnd(S->getRParenLoc()),
-                                  getStart(S->getBody()));
-    if (Gap)
-      fillGapAreaWithCount(Gap->getBegin(), Gap->getEnd(), BodyCount);
-
-    Counter OutCount = addCounters(BodyBC.BreakCount, IncrementBC.BreakCount,
-                                   subtractCounters(CondCount, BodyCount));
+    Counter OutCount =
+        addCounters(BC.BreakCount, subtractCounters(CondCount, BodyCount));
     if (OutCount != ParentCount)
       pushRegion(OutCount);
   }
@@ -1046,12 +782,6 @@ struct CounterCoverageMappingBuilder
     extendRegion(S->getBody());
     Counter BackedgeCount = propagateCounts(BodyCount, S->getBody());
     BreakContinue BC = BreakContinueStack.pop_back_val();
-
-    // The body count applies to the area immediately after the range.
-    auto Gap = findGapAreaBetween(getPreciseTokenLocEnd(S->getRParenLoc()),
-                                  getStart(S->getBody()));
-    if (Gap)
-      fillGapAreaWithCount(Gap->getBegin(), Gap->getEnd(), BodyCount);
 
     Counter LoopCount =
         addCounters(ParentCount, BackedgeCount, BC.ContinueCount);
@@ -1073,12 +803,6 @@ struct CounterCoverageMappingBuilder
     Counter BackedgeCount = propagateCounts(BodyCount, S->getBody());
     BreakContinue BC = BreakContinueStack.pop_back_val();
 
-    // The body count applies to the area immediately after the collection.
-    auto Gap = findGapAreaBetween(getPreciseTokenLocEnd(S->getRParenLoc()),
-                                  getStart(S->getBody()));
-    if (Gap)
-      fillGapAreaWithCount(Gap->getBegin(), Gap->getEnd(), BodyCount);
-
     Counter LoopCount =
         addCounters(ParentCount, BackedgeCount, BC.ContinueCount);
     Counter OutCount =
@@ -1099,20 +823,15 @@ struct CounterCoverageMappingBuilder
     extendRegion(Body);
     if (const auto *CS = dyn_cast<CompoundStmt>(Body)) {
       if (!CS->body_empty()) {
-        // Make a region for the body of the switch.  If the body starts with
-        // a case, that case will reuse this region; otherwise, this covers
-        // the unreachable code at the beginning of the switch body.
+        // The body of the switch needs a zero region so that fallthrough counts
+        // behave correctly, but it would be misleading to include the braces of
+        // the compound statement in the zeroed area, so we need to handle this
+        // specially.
         size_t Index =
-            pushRegion(Counter::getZero(), getStart(CS->body_front()));
+            pushRegion(Counter::getZero(), getStart(CS->body_front()),
+                       getEnd(CS->body_back()));
         for (const auto *Child : CS->children())
           Visit(Child);
-
-        // Set the end for the body of the switch, if it isn't already set.
-        for (size_t i = RegionStack.size(); i != Index; --i) {
-          if (!RegionStack[i - 1].hasEndLoc())
-            RegionStack[i - 1].setEndLoc(getEnd(CS->body_back()));
-        }
-
         popRegions(Index);
       }
     } else
@@ -1170,21 +889,12 @@ struct CounterCoverageMappingBuilder
     // counter for the body when looking at the coverage.
     propagateCounts(ParentCount, S->getCond());
 
-    // The 'then' count applies to the area immediately after the condition.
-    auto Gap = findGapAreaBetween(S->getCond(), S->getThen());
-    if (Gap)
-      fillGapAreaWithCount(Gap->getBegin(), Gap->getEnd(), ThenCount);
-
     extendRegion(S->getThen());
     Counter OutCount = propagateCounts(ThenCount, S->getThen());
 
     Counter ElseCount = subtractCounters(ParentCount, ThenCount);
     if (const Stmt *Else = S->getElse()) {
-      // The 'else' count applies to the area immediately after the 'then'.
-      Gap = findGapAreaBetween(S->getThen(), Else);
-      if (Gap)
-        fillGapAreaWithCount(Gap->getBegin(), Gap->getEnd(), ElseCount);
-      extendRegion(Else);
+      extendRegion(S->getElse());
       OutCount = addCounters(OutCount, propagateCounts(ElseCount, Else));
     } else
       OutCount = addCounters(OutCount, ElseCount);
@@ -1221,34 +931,25 @@ struct CounterCoverageMappingBuilder
     Visit(E->getCond());
 
     if (!isa<BinaryConditionalOperator>(E)) {
-      // The 'then' count applies to the area immediately after the condition.
-      auto Gap =
-          findGapAreaBetween(E->getQuestionLoc(), getStart(E->getTrueExpr()));
-      if (Gap)
-        fillGapAreaWithCount(Gap->getBegin(), Gap->getEnd(), TrueCount);
-
       extendRegion(E->getTrueExpr());
       propagateCounts(TrueCount, E->getTrueExpr());
     }
-
     extendRegion(E->getFalseExpr());
     propagateCounts(subtractCounters(ParentCount, TrueCount),
                     E->getFalseExpr());
   }
 
   void VisitBinLAnd(const BinaryOperator *E) {
-    extendRegion(E->getLHS());
-    propagateCounts(getRegion().getCounter(), E->getLHS());
-    handleFileExit(getEnd(E->getLHS()));
+    extendRegion(E);
+    Visit(E->getLHS());
 
     extendRegion(E->getRHS());
     propagateCounts(getRegionCounter(E), E->getRHS());
   }
 
   void VisitBinLOr(const BinaryOperator *E) {
-    extendRegion(E->getLHS());
-    propagateCounts(getRegion().getCounter(), E->getLHS());
-    handleFileExit(getEnd(E->getLHS()));
+    extendRegion(E);
+    Visit(E->getLHS());
 
     extendRegion(E->getRHS());
     propagateCounts(getRegionCounter(E), E->getRHS());
@@ -1290,9 +991,6 @@ static void dump(llvm::raw_ostream &OS, StringRef FunctionName,
       break;
     case CounterMappingRegion::SkippedRegion:
       OS << "Skipped,";
-      break;
-    case CounterMappingRegion::GapRegion:
-      OS << "Gap,";
       break;
     }
 
@@ -1385,7 +1083,8 @@ void CoverageMappingModuleGen::emit() {
   // and coverage mappings is a multiple of 8.
   if (size_t Rem = OS.str().size() % 8) {
     CoverageMappingSize += 8 - Rem;
-    OS.write_zeros(8 - Rem);
+    for (size_t I = 0, S = 8 - Rem; I < S; ++I)
+      OS << '\0';
   }
   auto *FilenamesAndMappingsVal =
       llvm::ConstantDataArray::getString(Ctx, OS.str(), false);

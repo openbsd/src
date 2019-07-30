@@ -69,7 +69,7 @@ class UnicodeLiteralsTestCase(TestBase):
             self.skipTest(
                 "Skipping because this test is known to crash on i386")
 
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)

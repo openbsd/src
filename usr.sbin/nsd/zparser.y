@@ -68,7 +68,7 @@ nsec3_add_params(const char* hash_algo_str, const char* flag_str,
 %token <type> T_AXFR T_MAILB T_MAILA T_DS T_DLV T_SSHFP T_RRSIG T_NSEC T_DNSKEY
 %token <type> T_SPF T_NSEC3 T_IPSECKEY T_DHCID T_NSEC3PARAM T_TLSA T_URI
 %token <type> T_NID T_L32 T_L64 T_LP T_EUI48 T_EUI64 T_CAA T_CDS T_CDNSKEY
-%token <type> T_OPENPGPKEY T_CSYNC T_AVC T_SMIMEA
+%token <type> T_OPENPGPKEY T_CSYNC T_AVC
 
 /* other tokens */
 %token	       DOLLAR_TTL DOLLAR_ORIGIN NL SP
@@ -298,57 +298,25 @@ rel_dname:	label
 
 wire_dname:	wire_abs_dname
     |	wire_rel_dname
-    {
-	    /* terminate in root label and copy the origin in there */
-	    if(parser->origin && domain_dname(parser->origin)) {
-		    $$.len = $1.len + domain_dname(parser->origin)->name_size;
-		    if ($$.len > MAXDOMAINLEN)
-			    zc_error("domain name exceeds %d character limit",
-				     MAXDOMAINLEN);
-		    $$.str = (char *) region_alloc(parser->rr_region, $$.len);
-		    memmove($$.str, $1.str, $1.len);
-		    memmove($$.str + $1.len, dname_name(domain_dname(parser->origin)),
-			domain_dname(parser->origin)->name_size);
-	    } else {
-		    $$.len = $1.len + 1;
-		    if ($$.len > MAXDOMAINLEN)
-			    zc_error("domain name exceeds %d character limit",
-				     MAXDOMAINLEN);
-		    $$.str = (char *) region_alloc(parser->rr_region, $$.len);
-		    memmove($$.str, $1.str, $1.len);
-		    $$.str[ $1.len ] = 0;
-	    }
-    }
     ;
 
 wire_abs_dname:	'.'
     {
-	    char *result = (char *) region_alloc(parser->rr_region, 1);
+	    char *result = (char *) region_alloc(parser->rr_region, 2);
 	    result[0] = 0;
+	    result[1] = '\0';
 	    $$.str = result;
 	    $$.len = 1;
     }
-    |	'@'
-    {
-	    if(parser->origin && domain_dname(parser->origin)) {
-		    $$.len = domain_dname(parser->origin)->name_size;
-		    $$.str = (char *) region_alloc(parser->rr_region, $$.len);
-		    memmove($$.str, dname_name(domain_dname(parser->origin)), $$.len);
-	    } else {
-		    $$.len = 1;
-		    $$.str = (char *) region_alloc(parser->rr_region, $$.len);
-		    $$.str[0] = 0;
-	    }
-    }
     |	wire_rel_dname '.'
     {
+	    char *result = (char *) region_alloc(parser->rr_region,
+						 $1.len + 2);
+	    memcpy(result, $1.str, $1.len);
+	    result[$1.len] = 0;
+	    result[$1.len+1] = '\0';
+	    $$.str = result;
 	    $$.len = $1.len + 1;
-	    if ($$.len > MAXDOMAINLEN)
-		    zc_error("domain name exceeds %d character limit",
-			     MAXDOMAINLEN);
-	    $$.str = (char *) region_alloc(parser->rr_region, $$.len);
-	    memcpy($$.str, $1.str, $1.len);
-	    $$.str[$1.len] = 0;
     }
     ;
 
@@ -362,7 +330,7 @@ wire_label:	STR
 
 	    /* make label anyway */
 	    result[0] = $1.len;
-	    memmove(result+1, $1.str, $1.len);
+	    memcpy(result+1, $1.str, $1.len);
 
 	    $$.str = result;
 	    $$.len = $1.len + 1;
@@ -372,13 +340,16 @@ wire_label:	STR
 wire_rel_dname:	wire_label
     |	wire_rel_dname '.' wire_label
     {
-	    $$.len = $1.len + $3.len;
-	    if ($$.len > MAXDOMAINLEN)
+	    if ($1.len + $3.len - 3 > MAXDOMAINLEN)
 		    zc_error("domain name exceeds %d character limit",
 			     MAXDOMAINLEN);
-	    $$.str = (char *) region_alloc(parser->rr_region, $$.len);
-	    memmove($$.str, $1.str, $1.len);
-	    memmove($$.str + $1.len, $3.str, $3.len);
+
+	    /* make dname anyway */
+	    $$.len = $1.len + $3.len;
+	    $$.str = (char *) region_alloc(parser->rr_region, $$.len + 1);
+	    memcpy($$.str, $1.str, $1.len);
+	    memcpy($$.str + $1.len, $3.str, $3.len);
+	    $$.str[$$.len] = '\0';
     }
     ;
 
@@ -646,8 +617,6 @@ type_and_rdata:
     |	T_DNSKEY sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_TLSA sp rdata_tlsa
     |	T_TLSA sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
-    |	T_SMIMEA sp rdata_smimea
-    |	T_SMIMEA sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_NID sp rdata_nid
     |	T_NID sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_L32 sp rdata_l32
@@ -974,15 +943,6 @@ rdata_tlsa:	STR sp STR sp STR sp str_sp_seq trail
     }
     ;
 
-rdata_smimea:	STR sp STR sp STR sp str_sp_seq trail
-    {
-	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $1.str)); /* usage */
-	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $3.str)); /* selector */
-	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $5.str)); /* matching type */
-	    zadd_rdata_wireformat(zparser_conv_hex(parser->region, $7.str, $7.len)); /* ca data */
-    }
-    ;
-
 rdata_dnskey:	STR sp STR sp STR sp str_sp_seq trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str)); /* flags */
@@ -1012,10 +972,8 @@ rdata_ipsec_base: STR sp STR sp STR sp dotted_str
 			/* convert and insert the dname */
 			if(strlen($7.str) == 0)
 				zc_error_prev_line("IPSECKEY must specify gateway name");
-			if(!(name = dname_parse(parser->region, $7.str))) {
+			if(!(name = dname_parse(parser->region, $7.str)))
 				zc_error_prev_line("IPSECKEY bad gateway dname %s", $7.str);
-				break;
-			}
 			if($7.str[strlen($7.str)-1] != '.') {
 				if(parser->origin == error_domain) {
 		    			zc_error("cannot concatenate origin to domain name, because origin failed to parse");
@@ -1082,7 +1040,7 @@ rdata_eui64:	STR trail
     ;
 
 /* RFC7553 */
-rdata_uri:	STR sp STR sp dotted_str trail
+rdata_uri:	STR sp STR sp STR trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str)); /* priority */
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $3.str)); /* weight */
@@ -1091,7 +1049,7 @@ rdata_uri:	STR sp STR sp dotted_str trail
     ;
 
 /* RFC 6844 */
-rdata_caa:	STR sp STR sp dotted_str trail
+rdata_caa:	STR sp STR sp STR trail
     {
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $1.str)); /* Flags */
 	    zadd_rdata_wireformat(zparser_conv_tag(parser->region, $3.str, $3.len)); /* Tag */

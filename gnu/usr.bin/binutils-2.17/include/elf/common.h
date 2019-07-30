@@ -286,9 +286,6 @@
 #define EV_NONE		0		/* Invalid ELF version */
 #define EV_CURRENT	1		/* Current version */
 
-/* Magic for e_phnum: get real value from sh_info of first section header */
-#define PN_XNUM		0xffff
-
 /* Values for program header, p_type field.  */
 
 #define PT_NULL		0		/* Program header table entry unused */
@@ -346,7 +343,6 @@
 #define SHT_LOOS	0x60000000	/* First of OS specific semantics */
 #define SHT_HIOS	0x6fffffff	/* Last of OS specific semantics */
 
-#define SHT_GNU_HASH	0x6ffffff6	/* GNU style symbol hash table */
 #define SHT_GNU_LIBLIST	0x6ffffff7	/* List of prelink dependencies */
 
 /* The next three section types are defined by Solaris, and are named
@@ -359,9 +355,6 @@
 #define SHT_GNU_verdef	SHT_SUNW_verdef
 #define SHT_GNU_verneed	SHT_SUNW_verneed
 #define SHT_GNU_versym	SHT_SUNW_versym
-
-#define SHT_LLVM_LINKER_OPTIONS 0x6fff4c01 /* Linker options */
-#define SHT_LLVM_ADDRSIG 0x6fff4c03	/* List of address-significant symbols */
 
 #define SHT_LOPROC	0x70000000	/* Processor-specific semantics, lo */
 #define SHT_HIPROC	0x7FFFFFFF	/* Processor-specific semantics, hi */

@@ -19,8 +19,6 @@ sub BEGIN {
 
 use Storable qw(freeze nfreeze thaw);
 
-$Storable::flags = Storable::FLAGS_COMPAT;
-
 use Test::More tests => 21;
 
 $a = 'toto';

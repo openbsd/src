@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.34 2018/04/09 17:53:36 tobias Exp $	*/
+/*	$OpenBSD: tree.c,v 1.33 2018/03/15 16:51:29 anton Exp $	*/
 
 /*
  * command tree climbing
@@ -365,7 +365,7 @@ vfptreef(struct shf *shf, int indent, const char *fmt, va_list va)
 
 	while ((c = *fmt++)) {
 		if (c == '%') {
-			int64_t n;
+			long n;
 			char *p;
 			int neg;
 
@@ -376,7 +376,7 @@ vfptreef(struct shf *shf, int indent, const char *fmt, va_list va)
 			case 'd': /* decimal */
 				n = va_arg(va, int);
 				neg = n < 0;
-				p = u64ton(neg ? -n : n, 10);
+				p = ulton(neg ? -n : n, 10);
 				if (neg)
 					*--p = '-';
 				while (*p)
@@ -392,7 +392,7 @@ vfptreef(struct shf *shf, int indent, const char *fmt, va_list va)
 				tputS(p, shf);
 				break;
 			case 'u': /* unsigned decimal */
-				p = u64ton(va_arg(va, unsigned int), 10);
+				p = ulton(va_arg(va, unsigned int), 10);
 				while (*p)
 					tputc(*p++, shf);
 				break;

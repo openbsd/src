@@ -1,0 +1,50 @@
+.\"	$OpenBSD: sunxi.4,v 1.4 2016/08/06 00:16:50 jsg Exp $
+.\"
+.\" Copyright (c) 2014 Raphael Graf <rapha@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: August 6 2016 $
+.Dt SUNXI 4 armv7
+.Os
+.Sh NAME
+.Nm sunxi
+.Nd Allwinner Technology A1X/A20 SoCs device bus
+.Sh SYNOPSIS
+.Cd "sunxi0 at mainbus?"
+.Sh DESCRIPTION
+The
+.Nm
+interface serves as an abstraction used by the autoconfiguration
+system to help find and attach devices integrated in Allwinner Technology SoC
+processors.
+.Pp
+.Nm
+provides support for the following devices:
+.Pp
+.Bl -tag -width 12n -offset indent -compact
+.It Xr sxiccmu 4
+A1X/A20 clock control module device
+.It Xr sxipio 4
+A1X/A20 GPIO controller
+.It Xr sxitimer 4
+A1X/A20 timer device
+.El
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr mainbus 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 5.5 .

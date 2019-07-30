@@ -6,7 +6,6 @@ set(LLVM_LINK_COMPONENTS
   Core
   IPO
   IRReader
-  AggressiveInstCombine
   InstCombine
   Instrumentation
   Linker
@@ -38,7 +37,7 @@ add_llvm_tool(bugpoint
 export_executable_symbols(bugpoint)
 
 if(WITH_POLLY AND LINK_POLLY_INTO_TOOLS)
-  target_link_libraries(bugpoint PRIVATE Polly)
+  target_link_libraries(bugpoint Polly)
   # Ensure LLVMTarget can resolve dependences in Polly.
-  target_link_libraries(bugpoint PRIVATE LLVMTarget)
+  target_link_libraries(bugpoint LLVMTarget)
 endif(WITH_POLLY AND LINK_POLLY_INTO_TOOLS)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.118 2019/02/19 11:37:26 pirofti Exp $	*/
+/*	$OpenBSD: server.c,v 1.113 2017/11/29 16:55:08 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -119,13 +119,6 @@ server_privinit(struct server *srv)
 	}
 
 	/* Open listening socket in the privileged process */
-	if ((srv->srv_conf.flags & SRVFLAG_TLS) && srv->srv_conf.tls_cert ==
-	    NULL) {
-		/* soft fail if cert is not there yet */
-		srv->srv_s = -1;
-		return (0);
-	}
-
 	if ((srv->srv_s = server_socket_listen(&srv->srv_conf.ss,
 	    srv->srv_conf.port, &srv->srv_conf)) == -1)
 		return (-1);
@@ -141,8 +134,6 @@ server_tls_cmp(struct server *s1, struct server *s2, int match_keypair)
 	sc1 = &s1->srv_conf;
 	sc2 = &s2->srv_conf;
 
-	if (sc1->tls_flags != sc2->tls_flags)
-		return (-1);
 	if (sc1->tls_protocols != sc2->tls_protocols)
 		return (-1);
 	if (sc1->tls_ticket_lifetime != sc2->tls_ticket_lifetime)
@@ -216,49 +207,11 @@ server_tls_load_ocsp(struct server *srv)
 }
 
 int
-server_tls_load_ca(struct server *srv)
-{
-	if ((srv->srv_conf.tls_flags & TLSFLAG_CA) == 0 ||
-	    srv->srv_conf.tls_ca_file == NULL)
-		return (0);
-
-	if ((srv->srv_conf.tls_ca = tls_load_file(
-	    srv->srv_conf.tls_ca_file,
-	    &srv->srv_conf.tls_ca_len, NULL)) == NULL)
-		return (-1);
-	log_debug("%s: using ca cert(s) from %s", __func__,
-	    srv->srv_conf.tls_ca_file);
-
-	return (0);
-}
-
-int
-server_tls_load_crl(struct server *srv)
-{
-	if ((srv->srv_conf.tls_flags & TLSFLAG_CA) == 0 ||
-	    srv->srv_conf.tls_crl_file == NULL)
-		return (0);
-
-	if ((srv->srv_conf.tls_crl = tls_load_file(
-	    srv->srv_conf.tls_crl_file,
-	    &srv->srv_conf.tls_crl_len, NULL)) == NULL)
-		return (-1);
-	log_debug("%s: using crl(s) from %s", __func__,
-	    srv->srv_conf.tls_crl_file);
-
-	return (0);
-}
-
-int
 server_tls_init(struct server *srv)
 {
 	struct server_config *srv_conf;
 
 	if ((srv->srv_conf.flags & SRVFLAG_TLS) == 0)
-		return (0);
-
-	if (srv->srv_conf.tls_cert == NULL)
-		/* soft fail if cert is not there yet */
 		return (0);
 
 	log_debug("%s: setting up tls for %s", __func__, srv->srv_conf.name);
@@ -311,23 +264,6 @@ server_tls_init(struct server *srv)
 		return (-1);
 	}
 
-	if (srv->srv_conf.tls_ca != NULL) {
-		if (tls_config_set_ca_mem(srv->srv_tls_config,
-		    srv->srv_conf.tls_ca, srv->srv_conf.tls_ca_len) != 0) {
-			log_warnx("%s: failed to add ca cert(s)", __func__);
-			return (-1);
-		}
-		if (tls_config_set_crl_mem(srv->srv_tls_config,
-		    srv->srv_conf.tls_crl, srv->srv_conf.tls_crl_len) != 0) {
-			log_warnx("%s: failed to add crl(s)", __func__);
-			return (-1);
-		}
-		if (srv->srv_conf.tls_flags & TLSFLAG_OPTIONAL)
-			tls_config_verify_client_optional(srv->srv_tls_config);
-		else
-			tls_config_verify_client(srv->srv_tls_config);
-	}
-
 	TAILQ_FOREACH(srv_conf, &srv->srv_hosts, entry) {
 		if (srv_conf->tls_cert == NULL || srv_conf->tls_key == NULL)
 			continue;
@@ -374,19 +310,13 @@ server_tls_init(struct server *srv)
 		return (-1);
 	}
 
-	/* We're now done with the public/private key & ca/crl... */
+	/* We're now done with the public/private key... */
 	tls_config_clear_keys(srv->srv_tls_config);
 	freezero(srv->srv_conf.tls_cert, srv->srv_conf.tls_cert_len);
 	freezero(srv->srv_conf.tls_key, srv->srv_conf.tls_key_len);
-	free(srv->srv_conf.tls_ca);
-	free(srv->srv_conf.tls_crl);
-	srv->srv_conf.tls_ca = NULL;
 	srv->srv_conf.tls_cert = NULL;
-	srv->srv_conf.tls_crl = NULL;
 	srv->srv_conf.tls_key = NULL;
-	srv->srv_conf.tls_ca_len = 0;
 	srv->srv_conf.tls_cert_len = 0;
-	srv->srv_conf.tls_crl_len = 0;
 	srv->srv_conf.tls_key_len = 0;
 
 	return (0);
@@ -491,22 +421,13 @@ server_purge(struct server *srv)
 void
 serverconfig_free(struct server_config *srv_conf)
 {
-	struct fastcgi_param	*param, *tparam;
-
 	free(srv_conf->return_uri);
-	free(srv_conf->tls_ca_file);
-	free(srv_conf->tls_ca);
 	free(srv_conf->tls_cert_file);
-	free(srv_conf->tls_crl_file);
-	free(srv_conf->tls_crl);
 	free(srv_conf->tls_key_file);
 	free(srv_conf->tls_ocsp_staple_file);
 	free(srv_conf->tls_ocsp_staple);
 	freezero(srv_conf->tls_cert, srv_conf->tls_cert_len);
 	freezero(srv_conf->tls_key, srv_conf->tls_key_len);
-
-	TAILQ_FOREACH_SAFE(param, &srv_conf->fcgiparams, entry, tparam)
-		free(param);
 }
 
 void
@@ -514,17 +435,12 @@ serverconfig_reset(struct server_config *srv_conf)
 {
 	srv_conf->auth = NULL;
 	srv_conf->return_uri = NULL;
-	srv_conf->tls_ca = NULL;
-	srv_conf->tls_ca_file = NULL;
 	srv_conf->tls_cert = NULL;
 	srv_conf->tls_cert_file = NULL;
-	srv_conf->tls_crl = NULL;
-	srv_conf->tls_crl_file = NULL;
 	srv_conf->tls_key = NULL;
 	srv_conf->tls_key_file = NULL;
 	srv_conf->tls_ocsp_staple = NULL;
 	srv_conf->tls_ocsp_staple_file = NULL;
-	TAILQ_INIT(&srv_conf->fcgiparams);
 }
 
 struct server *
@@ -1375,9 +1291,6 @@ server_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_CFG_TLS:
 		config_getserver_tls(httpd_env, imsg);
-		break;
-	case IMSG_CFG_FCGI:
-		config_getserver_fcgiparams(httpd_env, imsg);
 		break;
 	case IMSG_CFG_DONE:
 		config_getcfg(httpd_env, imsg);

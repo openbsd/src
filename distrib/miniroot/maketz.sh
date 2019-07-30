@@ -1,10 +1,10 @@
 #!/bin/sh
 
+destdir=$1
+
 if [ $# -lt 1 ]; then
-	destdir=/
-	echo 'warning: using DESTDIR=/'
-else
-	destdir=$1
+	echo usage: maketz.sh DESTDIR
+	exit 0
 fi
 
 (

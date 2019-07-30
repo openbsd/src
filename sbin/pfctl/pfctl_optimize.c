@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.41 2019/03/07 08:01:52 kn Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.38 2017/11/25 22:20:06 sashan Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -892,6 +892,11 @@ load_feedback_profile(struct pfctl *pf, struct superblocks *superblocks)
 		rs = pf_find_or_create_ruleset(pr.anchor_call);
 		por->por_rule.anchor = rs->anchor;
 		TAILQ_INSERT_TAIL(&queue, por, por_entry);
+
+		/* XXX pfctl_get_pool(pf->dev, &pr.rule.rpool, nr, pr.ticket,
+		 *         PF_PASS, pf->anchor) ???
+		 * ... pfctl_clear_pool(&pr.rule.rpool)
+		 */
 	}
 
 	if (construct_superblocks(pf, &queue, &prof_superblocks))
@@ -1227,9 +1232,11 @@ add_opt_table(struct pfctl *pf, struct pf_opt_tbl **tbl, sa_family_t af,
 	node_host.ifname = ifname;
 	node_host.weight = addr->weight;
 
+#ifdef OPT_DEBUG
 	DEBUG("<%s> adding %s/%d", (*tbl)->pt_name, inet_ntop(af,
 	    &node_host.addr.v.a.addr, buf, sizeof(buf)),
-	    unmask(&node_host.addr.v.a.mask));
+	    unmask(&node_host.addr.v.a.mask, af));
+#endif /* OPT_DEBUG */
 
 	if (append_addr_host((*tbl)->pt_buf, &node_host, 0, 0)) {
 		warn("failed to add host");
@@ -1552,8 +1559,8 @@ exclude_supersets(struct pf_rule *super, struct pf_rule *sub)
 	    sub->src.addr.type == PF_ADDR_ADDRMASK &&
 	    super->src.neg == sub->src.neg &&
 	    super->af == sub->af &&
-	    unmask(&super->src.addr.v.a.mask) <
-	    unmask(&sub->src.addr.v.a.mask) &&
+	    unmask(&super->src.addr.v.a.mask, super->af) <
+	    unmask(&sub->src.addr.v.a.mask, sub->af) &&
 	    super->src.addr.v.a.addr.addr32[0] ==
 	    (sub->src.addr.v.a.addr.addr32[0] &
 	    super->src.addr.v.a.mask.addr32[0]) &&
@@ -1580,8 +1587,8 @@ exclude_supersets(struct pf_rule *super, struct pf_rule *sub)
 	    sub->dst.addr.type == PF_ADDR_ADDRMASK &&
 	    super->dst.neg == sub->dst.neg &&
 	    super->af == sub->af &&
-	    unmask(&super->dst.addr.v.a.mask) <
-	    unmask(&sub->dst.addr.v.a.mask) &&
+	    unmask(&super->dst.addr.v.a.mask, super->af) <
+	    unmask(&sub->dst.addr.v.a.mask, sub->af) &&
 	    super->dst.addr.v.a.addr.addr32[0] ==
 	    (sub->dst.addr.v.a.addr.addr32[0] &
 	    super->dst.addr.v.a.mask.addr32[0]) &&

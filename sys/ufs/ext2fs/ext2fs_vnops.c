@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.85 2018/09/06 11:50:54 jsg Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.79 2018/01/08 16:15:34 millert Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -80,9 +80,9 @@ int
 ext2fs_create(void *v)
 {
 	struct vop_create_args *ap = v;
-
-	return (ext2fs_makeinode(MAKEIMODE(ap->a_vap->va_type,
-	    ap->a_vap->va_mode), ap->a_dvp, ap->a_vpp, ap->a_cnp));
+	return ext2fs_makeinode(MAKEIMODE(ap->a_vap->va_type,
+					  ap->a_vap->va_mode),
+			  	ap->a_dvp, ap->a_vpp, ap->a_cnp);
 }
 
 /*
@@ -98,9 +98,9 @@ ext2fs_mknod(void *v)
 	struct inode *ip;
 	int error;
 
-	error = ext2fs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
-	    ap->a_dvp, vpp, ap->a_cnp);
-	if (error != 0)
+	if ((error =
+		ext2fs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
+		ap->a_dvp, vpp, ap->a_cnp)) != 0)
 		return (error);
 	ip = VTOI(*vpp);
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
@@ -432,6 +432,7 @@ ext2fs_link(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
+	struct proc *p = cnp->cn_proc;
 	struct inode *ip;
 	int error;
 
@@ -449,7 +450,7 @@ ext2fs_link(void *v)
 		error = EXDEV;
 		goto out2;
 	}
-	if (dvp != vp && (error = vn_lock(vp, LK_EXCLUSIVE))) {
+	if (dvp != vp && (error = vn_lock(vp, LK_EXCLUSIVE, p))) {
 		VOP_ABORTOP(dvp, cnp);
 		goto out2;
 	}
@@ -476,7 +477,7 @@ ext2fs_link(void *v)
 	pool_put(&namei_pool, cnp->cn_pnbuf);
 out1:
 	if (dvp != vp)
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, p);
 out2:
 	vput(dvp);
 	return (error);
@@ -517,6 +518,7 @@ ext2fs_rename(void *v)
 	struct componentname *tcnp = ap->a_tcnp;
 	struct componentname *fcnp = ap->a_fcnp;
 	struct inode *ip, *xp, *dp;
+	struct proc *p = fcnp->cn_proc;
 	struct ext2fs_dirtemplate dirbuf;
 	/* struct timespec ts; */
 	int doingdirectory = 0, oldparent = 0, newparent = 0;
@@ -578,31 +580,31 @@ abortit:
 		(void) vfs_relookup(fdvp, &fvp, fcnp);
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
 	}
-	if ((error = vn_lock(fvp, LK_EXCLUSIVE)) != 0)
+	if ((error = vn_lock(fvp, LK_EXCLUSIVE, p)) != 0)
 		goto abortit;
 	dp = VTOI(fdvp);
 	ip = VTOI(fvp);
 	if ((nlink_t)ip->i_e2fs_nlink >= LINK_MAX) {
-		VOP_UNLOCK(fvp);
+		VOP_UNLOCK(fvp, p);
 		error = EMLINK;
 		goto abortit;
 	}
 	if ((ip->i_e2fs_flags & (EXT2_IMMUTABLE | EXT2_APPEND)) ||
 		(dp->i_e2fs_flags & EXT2_APPEND)) {
-		VOP_UNLOCK(fvp);
+		VOP_UNLOCK(fvp, p);
 		error = EPERM;
 		goto abortit;
 	}
 	if ((ip->i_e2fs_mode & IFMT) == IFDIR) {
-		error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
-		if (!error && tvp)
-			error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred,
+        	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
+        	if (!error && tvp)
+                	error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred,
 			    tcnp->cn_proc);
-		if (error) {
-			VOP_UNLOCK(fvp);
-			error = EACCES;
-			goto abortit;
-		}
+        	if (error) {
+                	VOP_UNLOCK(fvp, p);
+                	error = EACCES;
+                	goto abortit;
+        	}
 		/*
 		 * Avoid ".", "..", and aliases of "." for obvious reasons.
 		 */
@@ -611,7 +613,7 @@ abortit:
 			(fcnp->cn_flags&ISDOTDOT) ||
 			(tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
-			VOP_UNLOCK(fvp);
+			VOP_UNLOCK(fvp, p);
 			error = EINVAL;
 			goto abortit;
 		}
@@ -639,7 +641,7 @@ abortit:
 	ip->i_e2fs_nlink++;
 	ip->i_flag |= IN_CHANGE;
 	if ((error = ext2fs_update(ip, 1)) != 0) {
-		VOP_UNLOCK(fvp);
+		VOP_UNLOCK(fvp, p);
 		goto bad;
 	}
 
@@ -654,7 +656,7 @@ abortit:
 	 * call to checkpath().
 	 */
 	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
-	VOP_UNLOCK(fvp);
+	VOP_UNLOCK(fvp, p);
 	if (oldparent != dp->i_number)
 		newparent = dp->i_number;
 	if (doingdirectory && newparent) {
@@ -758,7 +760,7 @@ abortit:
 		 * decrement the link count on the parent
 		 * of the target directory.
 		 */
-		if (doingdirectory && !newparent) {
+		 if (doingdirectory && !newparent) {
 			dp->i_e2fs_nlink--;
 			dp->i_flag |= IN_CHANGE;
 		}
@@ -872,7 +874,7 @@ bad:
 out:
 	if (doingdirectory)
 		ip->i_flag &= ~IN_RENAME;
-	if (vn_lock(fvp, LK_EXCLUSIVE) == 0) {
+	if (vn_lock(fvp, LK_EXCLUSIVE, p) == 0) {
 		ip->i_e2fs_nlink--;
 		ip->i_flag |= IN_CHANGE;
 		vput(fvp);
@@ -966,11 +968,11 @@ ext2fs_mkdir(void *v)
 		panic("ext2fs_mkdir: blksize"); /* XXX should grow with balloc() */
 	else {
 		error = ext2fs_setsize(ip, VTOI(dvp)->i_e2fs->e2fs_bsize);
-		if (error) {
-			dp->i_e2fs_nlink--;
-			dp->i_flag |= IN_CHANGE;
-			goto bad;
-		}
+  	        if (error) {
+  	        	dp->i_e2fs_nlink--;
+  	        	dp->i_flag |= IN_CHANGE;
+  	        	goto bad;
+  	        }
 		ip->i_flag |= IN_CHANGE;
 	}
 
@@ -1012,6 +1014,14 @@ ext2fs_rmdir(void *v)
 
 	ip = VTOI(vp);
 	dp = VTOI(dvp);
+	/*
+	 * No rmdir "." please.
+	 */
+	if (dp == ip) {
+		vrele(dvp);
+		vput(vp);
+		return (EINVAL);
+	}
 	/*
 	 * Verify the directory is empty (and valid).
 	 * (Rmdir ".." won't be valid since
@@ -1077,7 +1087,6 @@ ext2fs_symlink(void *v)
 
 	error = ext2fs_makeinode(IFLNK | ap->a_vap->va_mode, ap->a_dvp,
 			      vpp, ap->a_cnp);
-	vput(ap->a_dvp);
 	if (error)
 		return (error);
 	vp = *vpp;
@@ -1173,6 +1182,7 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	if ((error = ext2fs_inode_alloc(pdir, mode, cnp->cn_cred, &tvp))
 	    != 0) {
 		pool_put(&namei_pool, cnp->cn_pnbuf);
+		vput(dvp);
 		return (error);
 	}
 	ip = VTOI(tvp);
@@ -1197,6 +1207,7 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
 		pool_put(&namei_pool, cnp->cn_pnbuf);
+	vput(dvp);
 	*vpp = tvp;
 	return (0);
 
@@ -1206,6 +1217,7 @@ bad:
 	 * or the directory so must deallocate the inode.
 	 */
 	pool_put(&namei_pool, cnp->cn_pnbuf);
+	vput(dvp);
 	ip->i_e2fs_nlink = 0;
 	ip->i_flag |= IN_CHANGE;
 	tvp->v_type = VNON;

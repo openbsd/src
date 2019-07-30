@@ -207,9 +207,9 @@ bool MachineModuleInfo::doInitialization(Module &M) {
   ObjFileMMI = nullptr;
   CurCallSite = 0;
   DbgInfoAvailable = UsesVAFloatArgument = UsesMorestackAddr = false;
-  HasSplitStack = HasNosplitStack = false;
   AddrLabelSymbols = nullptr;
   TheModule = &M;
+
   return false;
 }
 
@@ -276,8 +276,7 @@ MachineModuleInfo::getOrCreateMachineFunction(const Function &F) {
   MachineFunction *MF;
   if (I.second) {
     // No pre-existing machine function, create a new one.
-    const TargetSubtargetInfo &STI = *TM.getSubtargetImpl(F);
-    MF = new MachineFunction(F, TM, STI, NextFnNum++, *this);
+    MF = new MachineFunction(&F, TM, NextFnNum++, *this);
     // Update the set entry.
     I.first->second.reset(MF);
   } else {
@@ -314,10 +313,10 @@ public:
     MMI.deleteMachineFunctionFor(F);
     return true;
   }
-
+  
   StringRef getPassName() const override {
     return "Free MachineFunction";
-  }
+  } 
 };
 
 } // end anonymous namespace

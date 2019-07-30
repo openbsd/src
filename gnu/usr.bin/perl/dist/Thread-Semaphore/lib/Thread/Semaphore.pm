@@ -3,7 +3,7 @@ package Thread::Semaphore;
 use strict;
 use warnings;
 
-our $VERSION = '2.13';
+our $VERSION = '2.12';
 $VERSION = eval $VERSION;
 
 use threads::shared;
@@ -64,22 +64,6 @@ sub down_force {
     $$sema -= $dec;
 }
 
-# Decrement a semaphore's count with timeout
-#  (timeout in seconds; decrement amount defaults to 1)
-sub down_timed {
-    my $sema = shift;
-    my $timeout = $validate_arg->(shift);
-    my $dec = @_ ? $validate_arg->(shift) : 1;
-
-    lock($$sema);
-    my $abs = time() + $timeout;
-    until ($$sema >= $dec) {
-        return if !cond_timedwait($$sema, $abs);
-    }
-    $$sema -= $dec;
-    return 1;
-}
-
 # Increment a semaphore's count (increment amount defaults to 1)
 sub up {
     my $sema = shift;
@@ -118,7 +102,7 @@ Thread::Semaphore - Thread-safe semaphores
 
 =head1 VERSION
 
-This document describes Thread::Semaphore version 2.13
+This document describes Thread::Semaphore version 2.12
 
 =head1 SYNOPSIS
 
@@ -206,23 +190,6 @@ number (which must be an integer >= 1), or by one if no number is specified.
 This method does not block, and may cause the semaphore's count to drop
 below zero.
 
-=item ->down_timed(TIMEOUT)
-
-=item ->down_timed(TIMEOUT, NUMBER)
-
-The C<down_timed> method attempts to decrease the semaphore's count by 1
-or by the specified number within the specified timeout period given in
-seconds (which must be an integer >= 0).
-
-If the semaphore's count would drop below zero, this method will block
-until either the semaphore's count is greater than or equal to the
-amount you're C<down>ing the semaphore's count by, or until the timeout is
-reached.
-
-If the timeout is reached, this method will return I<false>, and the
-semaphore's count remains unchanged.  Otherwise, the semaphore's count is
-decremented and this method returns I<true>.
-
 =item ->up()
 
 =item ->up(NUMBER)
@@ -251,15 +218,10 @@ environment.
 
 =head1 SEE ALSO
 
-Thread::Semaphore on MetaCPAN:
-L<https://metacpan.org/release/Thread-Semaphore>
-
-Code repository for CPAN distribution:
-L<https://github.com/Dual-Life/Thread-Semaphore>
+Thread::Semaphore Discussion Forum on CPAN:
+L<http://www.cpanforum.com/dist/Thread-Semaphore>
 
 L<threads>, L<threads::shared>
-
-Sample code in the I<examples> directory of this distribution on CPAN.
 
 =head1 MAINTAINER
 

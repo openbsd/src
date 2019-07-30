@@ -98,7 +98,6 @@ public:
   static const uint32_t FirstNonSimpleIndex = 0x1000;
   static const uint32_t SimpleKindMask = 0x000000ff;
   static const uint32_t SimpleModeMask = 0x00000700;
-  static const uint32_t DecoratedItemIdMask = 0x80000000;
 
 public:
   TypeIndex() : Index(static_cast<uint32_t>(SimpleTypeKind::None)) {}
@@ -111,7 +110,6 @@ public:
   uint32_t getIndex() const { return Index; }
   void setIndex(uint32_t I) { Index = I; }
   bool isSimple() const { return Index < FirstNonSimpleIndex; }
-  bool isDecoratedItemId() const { return !!(Index & DecoratedItemIdMask); }
 
   bool isNoneType() const { return *this == None(); }
 

@@ -1,94 +1,99 @@
 package Locale::Codes::Language;
 # Copyright (C) 2001      Canon Research Centre Europe (CRE).
 # Copyright (C) 2002-2009 Neil Bowers
-# Copyright (c) 2010-2018 Sullivan Beck
+# Copyright (c) 2010-2015 Sullivan Beck
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
-# This file was automatically generated.  Any changes to this file will
-# be lost the next time 'gen_mods' is run.
-#    Generated on: Fri Feb 23 12:55:25 EST 2018
-
 use strict;
-use warnings;
 require 5.006;
-use Exporter qw(import);
+use warnings;
 
-our($VERSION,@EXPORT);
-$VERSION   = '3.56';
-
-################################################################################
-use if $] >= 5.027007, 'deprecate';
+require Exporter;
+use Carp;
 use Locale::Codes;
 use Locale::Codes::Constants;
+use Locale::Codes::Language_Codes;
+use Locale::Codes::Language_Retired;
 
-@EXPORT    = qw(
-                code2language
+#=======================================================================
+#       Public Global Variables
+#=======================================================================
+
+our($VERSION,@ISA,@EXPORT,@EXPORT_OK);
+
+$VERSION='3.37';
+@ISA       = qw(Exporter);
+@EXPORT    = qw(code2language
                 language2code
                 all_language_codes
                 all_language_names
                 language_code2code
+                LOCALE_LANG_ALPHA_2
+                LOCALE_LANG_ALPHA_3
+                LOCALE_LANG_TERM
                );
-push(@EXPORT,@Locale::Codes::Constants::CONSTANTS_LANGUAGE);
-
-our $obj = new Locale::Codes('language');
-$obj->show_errors(0);
-
-sub show_errors {
-   my($val) = @_;
-   $obj->show_errors($val);
-}
 
 sub code2language {
-   return $obj->code2name(@_);
+   return Locale::Codes::_code2name('language',@_);
 }
 
 sub language2code {
-   return $obj->name2code(@_);
+   return Locale::Codes::_name2code('language',@_);
 }
 
 sub language_code2code {
-   return $obj->code2code(@_);
+   return Locale::Codes::_code2code('language',@_);
 }
 
 sub all_language_codes {
-   return $obj->all_codes(@_);
+   return Locale::Codes::_all_codes('language',@_);
 }
 
 sub all_language_names {
-   return $obj->all_names(@_);
+   return Locale::Codes::_all_names('language',@_);
 }
 
 sub rename_language {
-   return $obj->rename_code(@_);
+   return Locale::Codes::_rename('language',@_);
 }
 
 sub add_language {
-   return $obj->add_code(@_);
+   return Locale::Codes::_add_code('language',@_);
 }
 
 sub delete_language {
-   return $obj->delete_code(@_);
+   return Locale::Codes::_delete_code('language',@_);
 }
 
 sub add_language_alias {
-   return $obj->add_alias(@_);
+   return Locale::Codes::_add_alias('language',@_);
 }
 
 sub delete_language_alias {
-   return $obj->delete_alias(@_);
+   return Locale::Codes::_delete_alias('language',@_);
 }
 
 sub rename_language_code {
-   return $obj->replace_code(@_);
+   return Locale::Codes::_rename_code('language',@_);
 }
 
 sub add_language_code_alias {
-   return $obj->add_code_alias(@_);
+   return Locale::Codes::_add_code_alias('language',@_);
 }
 
 sub delete_language_code_alias {
-   return $obj->delete_code_alias(@_);
+   return Locale::Codes::_delete_code_alias('language',@_);
 }
 
 1;
+# Local Variables:
+# mode: cperl
+# indent-tabs-mode: nil
+# cperl-indent-level: 3
+# cperl-continued-statement-offset: 2
+# cperl-continued-brace-offset: 0
+# cperl-brace-offset: 0
+# cperl-brace-imaginary-offset: 0
+# cperl-label-offset: -2
+# End:

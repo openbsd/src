@@ -26,14 +26,13 @@ class UniversalTestCase(TestBase):
     @skipUnlessDarwin
     @unittest2.skipUnless(hasattr(os, "uname") and os.uname()[4] in [
                           'i386', 'x86_64'], "requires i386 or x86_64")
-    @skipIfDarwinEmbedded # this test file assumes we're targetting an x86 system
     def test_sbdebugger_create_target_with_file_and_target_triple(self):
         """Test the SBDebugger.CreateTargetWithFileAndTargetTriple() API."""
         # Invoke the default build rule.
         self.build()
 
         # Note that "testit" is a universal binary.
-        exe = self.getBuildArtifact("testit")
+        exe = os.path.join(os.getcwd(), "testit")
 
         # Create a target by the debugger.
         target = self.dbg.CreateTargetWithFileAndTargetTriple(
@@ -48,7 +47,6 @@ class UniversalTestCase(TestBase):
     @skipUnlessDarwin
     @unittest2.skipUnless(hasattr(os, "uname") and os.uname()[4] in [
                           'i386', 'x86_64'], "requires i386 or x86_64")
-    @skipIfDarwinEmbedded # this test file assumes we're targetting an x86 system
     def test_process_launch_for_universal(self):
         """Test process launch of a universal binary."""
         from lldbsuite.test.lldbutil import print_registers
@@ -57,7 +55,7 @@ class UniversalTestCase(TestBase):
         self.build()
 
         # Note that "testit" is a universal binary.
-        exe = self.getBuildArtifact("testit")
+        exe = os.path.join(os.getcwd(), "testit")
 
         # By default, x86_64 is assumed if no architecture is specified.
         self.expect("file " + exe, CURRENT_EXECUTABLE_SET,
@@ -119,7 +117,6 @@ class UniversalTestCase(TestBase):
     @skipUnlessDarwin
     @unittest2.skipUnless(hasattr(os, "uname") and os.uname()[4] in [
                           'i386', 'x86_64'], "requires i386 or x86_64")
-    @skipIfDarwinEmbedded # this test file assumes we're targetting an x86 system
     def test_process_attach_with_wrong_arch(self):
         """Test that when we attach to a binary from the wrong fork of a universal binary, we fix up the ABI correctly."""
         # Now keep the architecture at 32 bit, but switch the binary we launch to
@@ -130,7 +127,7 @@ class UniversalTestCase(TestBase):
         self.build()
 
         # Note that "testit" is a universal binary.
-        exe = self.getBuildArtifact("testit")
+        exe = os.path.join(os.getcwd(), "testit")
 
         # Create a target by the debugger.
         target = self.dbg.CreateTargetWithFileAndTargetTriple(

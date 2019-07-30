@@ -58,8 +58,7 @@ private:
 bool DeadCodeElimination::isLiveInstr(const MachineInstr *MI) const {
   if (MI->mayStore() || MI->isBranch() || MI->isCall() || MI->isReturn())
     return true;
-  if (MI->hasOrderedMemoryRef() || MI->hasUnmodeledSideEffects() ||
-      MI->isPosition())
+  if (MI->hasOrderedMemoryRef() || MI->hasUnmodeledSideEffects())
     return true;
   if (MI->isPHI())
     return false;
@@ -214,7 +213,7 @@ bool DeadCodeElimination::erase(const SetVector<NodeId> &Nodes) {
       return false;
     return A.Id < B.Id;
   };
-  llvm::sort(DRNs.begin(), DRNs.end(), UsesFirst);
+  std::sort(DRNs.begin(), DRNs.end(), UsesFirst);
 
   if (trace())
     dbgs() << "Removing dead ref nodes:\n";

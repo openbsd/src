@@ -1,9 +1,17 @@
-#	$OpenBSD: Makefile,v 1.26 2019/05/03 20:03:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 2017/08/13 15:41:30 jasper Exp $
 
-FS=		install${OSrev}.fs
-FSSIZE=		921600
-FSDISKTYPE=	install360
-CDROM=		install${OSrev}.iso
+TOP=	${.CURDIR}/..
+
+.include "${TOP}/Makefile.inc"
+
+CDROM=		install${REV}.iso
+
+FS=		install${REV}.fs
+FSSIZE=		737280
+FSTYPE=		install360
+
+RAMDISK=	RAMDISK_CD
+
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
 
@@ -18,21 +26,28 @@ BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
 XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xfont${OSrev}.tgz \
 		${RELXDIR}/xshare${OSrev}.tgz ${RELXDIR}/xserv${OSrev}.tgz
 
-all: ${FS} ${CDROM}
+VND?=		vnd0
+VND_DEV=	/dev/${VND}a
+VND_RDEV=	/dev/r${VND}a
+VND_CRDEV=	/dev/r${VND}c
+BOOT?=		${DESTDIR}/usr/mdec/boot
+PID!=		echo $$$$
+REALIMAGE!=	echo /var/tmp/image.${PID}
+
+all: ${CDROM} ${FS}
 
 ${FS}: ${BASE} ${XBASE} bsd.gz
-	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
-	vnconfig -v ${FS} > vnd
-	fdisk -yi -l ${FSSIZE} -f ${DESTDIR}/usr/mdec/mbr `cat vnd`
-	disklabel -w `cat vnd` ${FSDISKTYPE}
-	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
-	mount /dev/`cat vnd`a ${MOUNT_POINT}
-	cp ${DESTDIR}/usr/mdec/boot ${MOUNT_POINT}/boot
+	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${FSSIZE}
+	vnconfig -v -c ${VND} ${REALIMAGE}
+	fdisk -yi -l ${FSSIZE} -f ${DESTDIR}/usr/mdec/mbr ${VND}
+	disklabel -w ${VND} ${FSTYPE}
+	newfs -m 0 -o space -i 524288 -c ${FSSIZE} ${VND_RDEV}
+	mount ${VND_DEV} ${MOUNT_POINT}
+	cp ${BOOT} ${MOUNT_POINT}/boot
 	strip -R .comment -R .SUNW_ctf ${MOUNT_POINT}/boot
-	installboot -v -r ${MOUNT_POINT} `cat vnd` \
+	dd if=bsd.gz of=${MOUNT_POINT}/bsd bs=512
+	installboot -v -r ${MOUNT_POINT} ${VND_CRDEV} \
 	    ${DESTDIR}/usr/mdec/biosboot ${MOUNT_POINT}/boot
-	install -c -m 555 -o root -g wheel bsd.gz ${MOUNT_POINT}/bsd
-	ln ${MOUNT_POINT}/bsd ${MOUNT_POINT}/bsd.rd
 	mkdir -p ${MOUNT_POINT}/${OSREV}/${MACHINE}
 	mkdir -p ${MOUNT_POINT}/etc
 	echo "set image /${OSREV}/${MACHINE}/bsd.rd" > ${MOUNT_POINT}/etc/boot.conf
@@ -44,13 +59,16 @@ ${FS}: ${BASE} ${XBASE} bsd.gz
 	    ${MOUNT_POINT}/${OSREV}/${MACHINE}/SHA256
 	# XXX no SHA256.sig
 
-	df -i ${MOUNT_POINT}
+	@echo ""
+	@df -i ${MOUNT_POINT}
+	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u `cat vnd`
-	rm -f vnd
+	vnconfig -u ${VND}
+	cp ${REALIMAGE} ${FS}
+	rm ${REALIMAGE}
 
 ${CDROM}: ${BASE} ${XBASE}
-	rm -rf ${.OBJDIR}/cd-dir
+	-rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	mkdir -p ${.OBJDIR}/cd-dir/etc
 	echo "set image /${OSREV}/${MACHINE}/bsd.rd" > ${.OBJDIR}/cd-dir/etc/boot.conf
@@ -65,7 +83,7 @@ ${CDROM}: ${BASE} ${XBASE}
 	cp -p ${RELDIR}/cdbr ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${RELDIR}/cdboot ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/cdboot
 
-	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} \
+	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} -v -v \
 	    -A "OpenBSD ${OSREV} ${MACHINE} Install CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
@@ -73,24 +91,20 @@ ${CDROM}: ${BASE} ${XBASE}
 	    -b ${OSREV}/${MACHINE}/cdbr -c ${OSREV}/${MACHINE}/boot.catalog \
 	    ${.OBJDIR}/cd-dir
 
-bsd.gz: bsd.rd
-	cp bsd.rd bsd.strip
-	strip bsd.strip
-	strip -R .comment -R .SUNW_ctf bsd.strip
-	gzip -9cn bsd.strip > bsd.gz
-
-bsd.rd: ${BSDRD}
-	cp ${BSDRD} bsd.rd
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
-
 install:
 	cp ${CDROM} ${FS} ${RELDIR}/
 
 clean cleandir:
-	rm -f ${CDROM} ${FS}
+	/bin/rm -f ${CDROM} ${FS}
 	rm -rf cd-dir
 
+bsd.gz: bsd.rd
+	cp ${BSDRD} bsd.strip
+	strip bsd.strip
+	strip -R .comment -R .SUNW_ctf bsd.strip
+	gzip -c9n bsd.strip > bsd.gz
+
+bsd.rd: ${BSDRD}
+
 .include <bsd.obj.mk>
+.include <bsd.subdir.mk>

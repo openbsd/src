@@ -75,14 +75,12 @@ static struct pattern_info filter_info;
 static int
 is_ucase(char *str)
 {
-	wchar_t ch;
-	int len;
+	char *str_end = str + strlen(str);
+	LWCHAR ch;
 
-	for (; *str != '\0'; str += len) {
-		if ((len = mbtowc(&ch, str, MB_CUR_MAX)) == -1) {
-			mbtowc(NULL, NULL, MB_CUR_MAX);
-			len = 1;
-		} else if (iswupper(ch))
+	while (str < str_end) {
+		ch = step_char(&str, +1, str_end);
+		if (isupper(ch))
 			return (1);
 	}
 	return (0);

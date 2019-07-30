@@ -1,4 +1,4 @@
-/* $OpenBSD: a_enum.c,v 1.20 2019/04/28 05:05:56 tb Exp $ */
+/* $OpenBSD: a_enum.c,v 1.18 2017/01/29 17:49:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,7 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-#include <limits.h>
 #include <stdio.h>
 
 #include <openssl/asn1.h>
@@ -105,10 +104,10 @@ ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v)
 }
 
 long
-ASN1_ENUMERATED_get(const ASN1_ENUMERATED *a)
+ASN1_ENUMERATED_get(ASN1_ENUMERATED *a)
 {
 	int neg = 0, i;
-	unsigned long r = 0;
+	long r = 0;
 
 	if (a == NULL)
 		return (0L);
@@ -129,17 +128,13 @@ ASN1_ENUMERATED_get(const ASN1_ENUMERATED *a)
 		r <<= 8;
 		r |= (unsigned char)a->data[i];
 	}
-
-	if (r > LONG_MAX)
-		return -1;
-
 	if (neg)
-		return -(long)r;
-	return (long)r;
+		r = -r;
+	return (r);
 }
 
 ASN1_ENUMERATED *
-BN_to_ASN1_ENUMERATED(const BIGNUM *bn, ASN1_ENUMERATED *ai)
+BN_to_ASN1_ENUMERATED(BIGNUM *bn, ASN1_ENUMERATED *ai)
 {
 	ASN1_ENUMERATED *ret;
 	int len, j;
@@ -182,7 +177,7 @@ err:
 }
 
 BIGNUM *
-ASN1_ENUMERATED_to_BN(const ASN1_ENUMERATED *ai, BIGNUM *bn)
+ASN1_ENUMERATED_to_BN(ASN1_ENUMERATED *ai, BIGNUM *bn)
 {
 	BIGNUM *ret;
 

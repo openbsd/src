@@ -1,4 +1,4 @@
-//===- GCNRegPressure.cpp -------------------------------------------------===//
+//===------------------------- GCNRegPressure.cpp - -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,27 +6,13 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+/// \file
+//
+//===----------------------------------------------------------------------===//
 
 #include "GCNRegPressure.h"
-#include "AMDGPUSubtarget.h"
-#include "SIRegisterInfo.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/CodeGen/LiveInterval.h"
-#include "llvm/CodeGen/LiveIntervals.h"
-#include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineOperand.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterPressure.h"
-#include "llvm/CodeGen/SlotIndexes.h"
-#include "llvm/CodeGen/TargetRegisterInfo.h"
-#include "llvm/Config/llvm-config.h"
-#include "llvm/MC/LaneBitmask.h"
-#include "llvm/Support/Compiler.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/raw_ostream.h"
-#include <algorithm>
-#include <cassert>
 
 using namespace llvm;
 
@@ -50,7 +36,7 @@ void llvm::printLivesAt(SlotIndex SI,
       for (const auto &S : LI.subranges()) {
         if (!S.liveAt(SI)) continue;
         if (firstTime) {
-          dbgs() << "  " << printReg(Reg, MRI.getTargetRegisterInfo())
+          dbgs() << "  " << PrintReg(Reg, MRI.getTargetRegisterInfo())
                  << '\n';
           firstTime = false;
         }
@@ -77,6 +63,7 @@ static bool isEqual(const GCNRPTracker::LiveRegSet &S1,
   }
   return true;
 }
+
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -120,7 +107,7 @@ void GCNRegPressure::inc(unsigned Reg,
     assert(PrevMask < NewMask);
 
     Value[Kind == SGPR_TUPLE ? SGPR32 : VGPR32] +=
-      Sign * (~PrevMask & NewMask).getNumLanes();
+      Sign * countPopulation((~PrevMask & NewMask).getAsInteger());
 
     if (PrevMask.none()) {
       assert(NewMask.any());
@@ -132,7 +119,7 @@ void GCNRegPressure::inc(unsigned Reg,
   }
 }
 
-bool GCNRegPressure::less(const GCNSubtarget &ST,
+bool GCNRegPressure::less(const SISubtarget &ST,
                           const GCNRegPressure& O,
                           unsigned MaxOccupancy) const {
   const auto SGPROcc = std::min(MaxOccupancy,
@@ -178,7 +165,7 @@ bool GCNRegPressure::less(const GCNSubtarget &ST,
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 LLVM_DUMP_METHOD
-void GCNRegPressure::print(raw_ostream &OS, const GCNSubtarget *ST) const {
+void GCNRegPressure::print(raw_ostream &OS, const SISubtarget *ST) const {
   OS << "VGPRs: " << getVGPRNum();
   if (ST) OS << "(O" << ST->getOccupancyWithNumVGPRs(getVGPRNum()) << ')';
   OS << ", SGPRs: " << getSGPRNum();
@@ -189,6 +176,7 @@ void GCNRegPressure::print(raw_ostream &OS, const GCNSubtarget *ST) const {
   OS << '\n';
 }
 #endif
+
 
 static LaneBitmask getDefRegMask(const MachineOperand &MO,
                                  const MachineRegisterInfo &MRI) {
@@ -213,7 +201,7 @@ static LaneBitmask getUsedRegMask(const MachineOperand &MO,
     return MRI.getTargetRegisterInfo()->getSubRegIndexLaneMask(SubReg);
 
   auto MaxMask = MRI.getMaxLaneMaskForVReg(MO.getReg());
-  if (MaxMask == LaneBitmask::getLane(0)) // cannot have subregs
+  if (MaxMask.getAsInteger() == 1) // cannot have subregs
     return MaxMask;
 
   // For a tentative schedule LIS isn't updated yet but livemask should remain
@@ -284,25 +272,16 @@ GCNRPTracker::LiveRegSet llvm::getLiveRegs(SlotIndex SI,
   return LiveRegs;
 }
 
-void GCNRPTracker::reset(const MachineInstr &MI,
-                         const LiveRegSet *LiveRegsCopy,
-                         bool After) {
-  const MachineFunction &MF = *MI.getMF();
-  MRI = &MF.getRegInfo();
+void GCNUpwardRPTracker::reset(const MachineInstr &MI,
+                               const LiveRegSet *LiveRegsCopy) {
+  MRI = &MI.getParent()->getParent()->getRegInfo();
   if (LiveRegsCopy) {
     if (&LiveRegs != LiveRegsCopy)
       LiveRegs = *LiveRegsCopy;
   } else {
-    LiveRegs = After ? getLiveRegsAfter(MI, LIS)
-                     : getLiveRegsBefore(MI, LIS);
+    LiveRegs = getLiveRegsAfter(MI, LIS);
   }
-
   MaxPressure = CurPressure = getRegPressure(*MRI, LiveRegs);
-}
-
-void GCNUpwardRPTracker::reset(const MachineInstr &MI,
-                               const LiveRegSet *LiveRegsCopy) {
-  GCNRPTracker::reset(MI, LiveRegsCopy, true);
 }
 
 void GCNUpwardRPTracker::recede(const MachineInstr &MI) {
@@ -310,7 +289,7 @@ void GCNUpwardRPTracker::recede(const MachineInstr &MI) {
 
   LastTrackedMI = &MI;
 
-  if (MI.isDebugInstr())
+  if (MI.isDebugValue())
     return;
 
   auto const RegUses = collectVirtualRegUses(MI, LIS, *MRI);
@@ -358,7 +337,13 @@ bool GCNDownwardRPTracker::reset(const MachineInstr &MI,
   NextMI = skipDebugInstructionsForward(NextMI, MBBEnd);
   if (NextMI == MBBEnd)
     return false;
-  GCNRPTracker::reset(*NextMI, LiveRegsCopy, false);
+  if (LiveRegsCopy) {
+    if (&LiveRegs != LiveRegsCopy)
+      LiveRegs = *LiveRegsCopy;
+  } else {
+    LiveRegs = getLiveRegsBefore(*NextMI, LIS);
+  }
+  MaxPressure = CurPressure = getRegPressure(*MRI, LiveRegs);
   return true;
 }
 
@@ -445,12 +430,12 @@ static void reportMismatch(const GCNRPTracker::LiveRegSet &LISLR,
   for (auto const &P : TrackedLR) {
     auto I = LISLR.find(P.first);
     if (I == LISLR.end()) {
-      dbgs() << "  " << printReg(P.first, TRI)
+      dbgs() << "  " << PrintReg(P.first, TRI)
              << ":L" << PrintLaneMask(P.second)
              << " isn't found in LIS reported set\n";
     }
     else if (I->second != P.second) {
-      dbgs() << "  " << printReg(P.first, TRI)
+      dbgs() << "  " << PrintReg(P.first, TRI)
         << " masks doesn't match: LIS reported "
         << PrintLaneMask(I->second)
         << ", tracked "
@@ -461,7 +446,7 @@ static void reportMismatch(const GCNRPTracker::LiveRegSet &LISLR,
   for (auto const &P : LISLR) {
     auto I = TrackedLR.find(P.first);
     if (I == TrackedLR.end()) {
-      dbgs() << "  " << printReg(P.first, TRI)
+      dbgs() << "  " << PrintReg(P.first, TRI)
              << ":L" << PrintLaneMask(P.second)
              << " isn't found in tracked set\n";
     }
@@ -499,7 +484,7 @@ void GCNRPTracker::printLiveRegs(raw_ostream &OS, const LiveRegSet& LiveRegs,
     unsigned Reg = TargetRegisterInfo::index2VirtReg(I);
     auto It = LiveRegs.find(Reg);
     if (It != LiveRegs.end() && It->second.any())
-      OS << ' ' << printVRegOrUnit(Reg, TRI) << ':'
+      OS << ' ' << PrintVRegOrUnit(Reg, TRI) << ':'
          << PrintLaneMask(It->second);
   }
   OS << '\n';

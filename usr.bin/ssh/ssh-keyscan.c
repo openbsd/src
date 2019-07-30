@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keyscan.c,v 1.127 2019/06/06 05:13:13 otto Exp $ */
+/* $OpenBSD: ssh-keyscan.c,v 1.119 2018/03/02 21:40:15 jmc Exp $ */
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -63,8 +63,6 @@ int get_keytypes = KT_RSA|KT_ECDSA|KT_ED25519;
 int hash_hosts = 0;		/* Hash hostname on output */
 
 int print_sshfp = 0;		/* Print SSHFP records instead of known_hosts */
-
-int found_one = 0;		/* Successfully found a key */
 
 #define MAXMAXFD 256
 
@@ -246,17 +244,16 @@ keygrab_ssh2(con *c)
 		exit(1);
 	}
 #ifdef WITH_OPENSSL
-	c->c_ssh->kex->kex[KEX_DH_GRP1_SHA1] = kex_gen_client;
-	c->c_ssh->kex->kex[KEX_DH_GRP14_SHA1] = kex_gen_client;
-	c->c_ssh->kex->kex[KEX_DH_GRP14_SHA256] = kex_gen_client;
-	c->c_ssh->kex->kex[KEX_DH_GRP16_SHA512] = kex_gen_client;
-	c->c_ssh->kex->kex[KEX_DH_GRP18_SHA512] = kex_gen_client;
+	c->c_ssh->kex->kex[KEX_DH_GRP1_SHA1] = kexdh_client;
+	c->c_ssh->kex->kex[KEX_DH_GRP14_SHA1] = kexdh_client;
+	c->c_ssh->kex->kex[KEX_DH_GRP14_SHA256] = kexdh_client;
+	c->c_ssh->kex->kex[KEX_DH_GRP16_SHA512] = kexdh_client;
+	c->c_ssh->kex->kex[KEX_DH_GRP18_SHA512] = kexdh_client;
 	c->c_ssh->kex->kex[KEX_DH_GEX_SHA1] = kexgex_client;
 	c->c_ssh->kex->kex[KEX_DH_GEX_SHA256] = kexgex_client;
-	c->c_ssh->kex->kex[KEX_ECDH_SHA2] = kex_gen_client;
+	c->c_ssh->kex->kex[KEX_ECDH_SHA2] = kexecdh_client;
 #endif
-	c->c_ssh->kex->kex[KEX_C25519_SHA256] = kex_gen_client;
-	c->c_ssh->kex->kex[KEX_KEM_SNTRUP4591761X25519_SHA512] = kex_gen_client;
+	c->c_ssh->kex->kex[KEX_C25519_SHA256] = kexc25519_client;
 	ssh_set_verify_host_key_callback(c->c_ssh, key_print_wrapper);
 	/*
 	 * do the key-exchange until an error occurs or until
@@ -270,8 +267,6 @@ keyprint_one(const char *host, struct sshkey *key)
 {
 	char *hostport;
 	const char *known_host, *hashed;
-
-	found_one = 1;
 
 	if (print_sshfp) {
 		export_dns_rr(host, key, stdout, 0);
@@ -631,13 +626,14 @@ main(int argc, char **argv)
 {
 	int debug_flag = 0, log_level = SYSLOG_LEVEL_INFO;
 	int opt, fopt_count = 0, j;
-	char *tname, *cp, *line = NULL;
-	size_t linesize = 0;
+	char *tname, *cp, line[NI_MAXHOST];
 	FILE *fp;
+	u_long linenum;
 
 	extern int optind;
 	extern char *optarg;
 
+	ssh_malloc_init();	/* must be called before any mallocs */
 	TAILQ_INIT(&tq);
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
@@ -751,8 +747,11 @@ main(int argc, char **argv)
 		else if ((fp = fopen(argv[j], "r")) == NULL)
 			fatal("%s: %s: %s", __progname, argv[j],
 			    strerror(errno));
+		linenum = 0;
 
-		while (getline(&line, &linesize, fp) != -1) {
+		while (read_keyfile_line(fp,
+		    argv[j] == NULL ? "(stdin)" : argv[j], line, sizeof(line),
+		    &linenum) != -1) {
 			/* Chomp off trailing whitespace and comments */
 			if ((cp = strchr(line, '#')) == NULL)
 				cp = line + strlen(line) - 1;
@@ -777,7 +776,6 @@ main(int argc, char **argv)
 
 		fclose(fp);
 	}
-	free(line);
 
 	while (optind < argc)
 		do_host(argv[optind++]);
@@ -785,5 +783,5 @@ main(int argc, char **argv)
 	while (ncon > 0)
 		conloop();
 
-	return found_one ? 0 : 1;
+	return (0);
 }

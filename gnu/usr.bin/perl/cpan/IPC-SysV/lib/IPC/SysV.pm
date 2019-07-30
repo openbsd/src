@@ -18,7 +18,7 @@ use Config;
 require Exporter;
 @ISA = qw(Exporter);
 
-$VERSION = '2.07';
+$VERSION = '2.06_01';
 
 # To support new constants, just add them to @EXPORT_OK
 # and the C/XS code will be generated automagically.

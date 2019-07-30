@@ -12,11 +12,6 @@ we welcome any feedback.
 Chapter 3 Introduction
 ======================
 
-**Warning: This text is currently out of date due to ORC API updates.**
-
-**The example code has been updated and can be used. The text will be updated
-once the API churn dies down.**
-
 Welcome to Chapter 3 of the "Building an ORC-based JIT in LLVM" tutorial. This
 chapter discusses lazy JITing and shows you how to enable it by adding an ORC
 CompileOnDemand layer the JIT from `Chapter 2 <BuildingAJIT2.html>`_.
@@ -26,7 +21,7 @@ Lazy Compilation
 
 When we add a module to the KaleidoscopeJIT class from Chapter 2 it is
 immediately optimized, compiled and linked for us by the IRTransformLayer,
-IRCompileLayer and RTDyldObjectLinkingLayer respectively. This scheme, where all the
+IRCompileLayer and ObjectLinkingLayer respectively. This scheme, where all the
 work to make a Module executable is done up front, is simple to understand and
 its performance characteristics are easy to reason about. However, it will lead
 to very high startup times if the amount of code to be compiled is large, and
@@ -38,7 +33,7 @@ the ORC APIs provide us with a layer to lazily compile LLVM IR:
 *CompileOnDemandLayer*.
 
 The CompileOnDemandLayer class conforms to the layer interface described in
-Chapter 2, but its addModule method behaves quite differently from the layers
+Chapter 2, but its addModuleSet method behaves quite differently from the layers
 we have seen so far: rather than doing any work up front, it just scans the
 Modules being added and arranges for each function in them to be compiled the
 first time it is called. To do this, the CompileOnDemandLayer creates two small
@@ -78,22 +73,21 @@ lazy compilation. We just need a few changes to the source:
   private:
     std::unique_ptr<TargetMachine> TM;
     const DataLayout DL;
-    RTDyldObjectLinkingLayer ObjectLayer;
-    IRCompileLayer<decltype(ObjectLayer), SimpleCompiler> CompileLayer;
+    std::unique_ptr<JITCompileCallbackManager> CompileCallbackManager;
+    ObjectLinkingLayer<> ObjectLayer;
+    IRCompileLayer<decltype(ObjectLayer)> CompileLayer;
 
-    using OptimizeFunction =
-        std::function<std::shared_ptr<Module>(std::shared_ptr<Module>)>;
+    typedef std::function<std::unique_ptr<Module>(std::unique_ptr<Module>)>
+      OptimizeFunction;
 
     IRTransformLayer<decltype(CompileLayer), OptimizeFunction> OptimizeLayer;
-
-    std::unique_ptr<JITCompileCallbackManager> CompileCallbackManager;
     CompileOnDemandLayer<decltype(OptimizeLayer)> CODLayer;
 
   public:
-    using ModuleHandle = decltype(CODLayer)::ModuleHandleT;
+    typedef decltype(CODLayer)::ModuleSetHandleT ModuleHandle;
 
 First we need to include the CompileOnDemandLayer.h header, then add two new
-members: a std::unique_ptr<JITCompileCallbackManager> and a CompileOnDemandLayer,
+members: a std::unique_ptr<CompileCallbackManager> and a CompileOnDemandLayer,
 to our class. The CompileCallbackManager member is used by the CompileOnDemandLayer
 to create the compile callback needed for each function.
 
@@ -101,10 +95,9 @@ to create the compile callback needed for each function.
 
   KaleidoscopeJIT()
       : TM(EngineBuilder().selectTarget()), DL(TM->createDataLayout()),
-        ObjectLayer([]() { return std::make_shared<SectionMemoryManager>(); }),
         CompileLayer(ObjectLayer, SimpleCompiler(*TM)),
         OptimizeLayer(CompileLayer,
-                      [this](std::shared_ptr<Module> M) {
+                      [this](std::unique_ptr<Module> M) {
                         return optimizeModule(std::move(M));
                       }),
         CompileCallbackManager(
@@ -140,7 +133,7 @@ our CompileCallbackManager. Finally, we need to supply an "indirect stubs
 manager builder": a utility function that constructs IndirectStubManagers, which
 are in turn used to build the stubs for the functions in each module. The
 CompileOnDemandLayer will call the indirect stub manager builder once for each
-call to addModule, and use the resulting indirect stubs manager to create
+call to addModuleSet, and use the resulting indirect stubs manager to create
 stubs for all functions in all modules in the set. If/when the module set is
 removed from the JIT the indirect stubs manager will be deleted, freeing any
 memory allocated to the stubs. We supply this function by using the
@@ -151,8 +144,9 @@ createLocalIndirectStubsManagerBuilder utility.
   // ...
           if (auto Sym = CODLayer.findSymbol(Name, false))
   // ...
-  return cantFail(CODLayer.addModule(std::move(Ms),
-                                     std::move(Resolver)));
+  return CODLayer.addModuleSet(std::move(Ms),
+                               make_unique<SectionMemoryManager>(),
+                               std::move(Resolver));
   // ...
 
   // ...
@@ -160,7 +154,7 @@ createLocalIndirectStubsManagerBuilder utility.
   // ...
 
   // ...
-  CODLayer.removeModule(H);
+  CODLayer.removeModuleSet(H);
   // ...
 
 Finally, we need to replace the references to OptimizeLayer in our addModule,
@@ -179,7 +173,7 @@ layer added to enable lazy function-at-a-time compilation. To build this example
 .. code-block:: bash
 
     # Compile
-    clang++ -g toy.cpp `llvm-config --cxxflags --ldflags --system-libs --libs core orcjit native` -O3 -o toy
+    clang++ -g toy.cpp `llvm-config --cxxflags --ldflags --system-libs --libs core orc native` -O3 -o toy
     # Run
     ./toy
 

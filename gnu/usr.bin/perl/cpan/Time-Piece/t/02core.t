@@ -1,4 +1,4 @@
-use Test::More tests => 100;
+use Test::More tests => 102;
 
 my $is_win32 = ($^O =~ /Win32/);
 my $is_qnx = ($^O eq 'qnx');
@@ -18,6 +18,9 @@ is($t->mday,              29);
 is($t->day_of_month,      29);
 is($t->mon,                2);
 is($t->_mon,               1);
+is($t->monname,        'Feb');
+is($t->month,          'Feb');
+is($t->fullmonth, 'February');
 is($t->year,            2000);
 is($t->_year,            100);
 is($t->yy,              '00');
@@ -25,6 +28,9 @@ is($t->yy,              '00');
 cmp_ok($t->wday,        '==',         3);
 cmp_ok($t->_wday,       '==',         2);
 cmp_ok($t->day_of_week, '==',         2);
+cmp_ok($t->wdayname,    'eq',     'Tue');
+cmp_ok($t->day,         'eq',     'Tue');
+cmp_ok($t->fullday,     'eq', 'Tuesday');
 cmp_ok($t->yday,        '==',        59);
 cmp_ok($t->day_of_year, '==',        59);
 
@@ -70,8 +76,15 @@ cmp_ok($t->week, '==', 9);
 # 20 or 19, is fun, too..as far as I can read SUSv2 it should be 20.)
 cmp_ok($t->strftime('%d'), '==', 29);
 
-cmp_ok($t->strftime('%D'), 'eq', '02/29/00'); # Yech!
-cmp_ok($t->strftime('%e'), 'eq', '29');       # should test with < 10
+SKIP: {
+  skip "can't strftime %D, %R, %T or %e on Win32", 1 if $is_win32;
+  cmp_ok($t->strftime('%D'), 'eq', '02/29/00'); # Yech!
+}
+SKIP:{
+  skip "can't strftime %D, %R, %T or %e on Win32", 1 if $is_win32;
+  skip "can't strftime %e on QNX", 1 if $is_qnx;
+  cmp_ok($t->strftime('%e'), 'eq', '29');       # should test with < 10
+}
 
 # %h is locale-dependent
 cmp_ok($t->strftime('%H'), 'eq', '12'); # should test with < 10
@@ -83,11 +96,17 @@ cmp_ok($t->strftime('%M'), 'eq', '34'); # should test with < 10
 # %p, %P, and %r are not widely implemented,
 # and are possibly unportable (am or AM or a.m., and so on)
 
-cmp_ok($t->strftime('%R'), 'eq', '12:34');    # should test with > 12
+SKIP: {
+  skip "can't strftime %R on Win32 or QNX", 1 if $is_win32 or $is_qnx;
+  cmp_ok($t->strftime('%R'), 'eq', '12:34');    # should test with > 12
+}
 
 ok($t->strftime('%S') eq '56'); # should test with < 10
 
-cmp_ok($t->strftime('%T'), 'eq', '12:34:56'); # < 12 and > 12
+SKIP: {
+  skip "can't strftime %T on Win32", 1 if $is_win32;
+  cmp_ok($t->strftime('%T'), 'eq', '12:34:56'); # < 12 and > 12
+}
 
 # There are bugs in the implementation of %u in many platforms.
 # (e.g. Linux seems to think, despite the man page, that %u
@@ -96,7 +115,7 @@ cmp_ok($t->strftime('%T'), 'eq', '12:34:56'); # < 12 and > 12
 cmp_ok($t->strftime('%U'), 'eq', '09'); # Sun cmp Mon
 
 SKIP: {
-    skip "can't strftime %V on QNX or VOS", 1 if $is_qnx or $is_vos;
+    skip "can't strftime %V on Win32 or QNX or VOS", 1 if $is_win32 or $is_qnx or $is_vos;
     # is this test really broken on Mac OS? -- rjbs, 2006-02-08
     cmp_ok($t->strftime('%V'), 'eq', '09'); # Sun cmp Mon
 }
@@ -124,7 +143,6 @@ cmp_ok($t->date_separator, 'eq', '-');
 
 $t->date_separator("/");
 cmp_ok($t->date_separator, 'eq', '/');
-cmp_ok(Time::Piece::date_separator(), 'eq', '/');
 cmp_ok($t->ymd,            'eq', '2000/02/29');
 
 $t->date_separator("-");
@@ -133,7 +151,6 @@ cmp_ok($t->hms("."),       'eq', '12.34.56');
 
 $t->time_separator(".");
 cmp_ok($t->time_separator, 'eq', '.');
-cmp_ok(Time::Piece::time_separator(), 'eq', '.');
 cmp_ok($t->hms,            'eq', '12.34.56');
 
 $t->time_separator(":");
@@ -151,8 +168,7 @@ cmp_ok($t->day, 'eq', "Merdi");
 
 $t->day_list(@days);
 
-my @nmdays = Time::Piece::day_list();
-is_deeply (\@nmdays, \@days);
+cmp_ok($t->day, 'eq', "Tue");
 
 my @months = $t->mon_list();
 
@@ -168,8 +184,6 @@ cmp_ok($t->month, 'eq', "februari");
 $t->mon_list(@months);
 
 cmp_ok($t->month, 'eq', "Feb");
-my @nmmonths = Time::Piece::mon_list();
-is_deeply (\@nmmonths, \@months);
 
 cmp_ok(
   $t->datetime(date => '/', T => ' ', time => '-'),
@@ -219,16 +233,20 @@ cmp_ok(
   951827696
 );
 
+#from Time::Piece::Plus
+#test reverse parsing
+my $now = localtime();
+my $strp_format = "%Y-%m-%d %H:%M:%S";
+
+my $now_str = $now->strftime($strp_format);
+
+my $now_parsed = $now->strptime($now_str, $strp_format);
+
+cmp_ok($now_parsed->epoch, '==', $now->epoch);
+cmp_ok($now_parsed->strftime($strp_format), 'eq', $now->strftime($strp_format));
+cmp_ok($now_parsed->strftime(), 'eq', $now->strftime());
+
 
 my $s = Time::Seconds->new(-691050);
 is($s->pretty, 'minus 7 days, 23 hours, 57 minutes, 30 seconds');
 
-$s = Time::Seconds->new(-90061);
-is($s->pretty, 'minus 1 day, 1 hour, 1 minute, 1 second');
-
-$s = Time::Seconds->new(10);
-is($s->pretty, '10 seconds');
-$s = Time::Seconds->new(130);
-is($s->pretty, '2 minutes, 10 seconds');
-$s = Time::Seconds->new(7330);
-is($s->pretty, '2 hours, 2 minutes, 10 seconds', "Format correct");

@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.35 2018/06/18 23:15:05 bluhm Exp $ */
+/* $OpenBSD: apicvec.s,v 1.33 2017/07/06 06:17:05 deraadt Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -37,12 +37,16 @@
 #include <machine/i82093reg.h>
 #include <machine/i82489reg.h>
 
+#define XINTR(vec) Xintr##vec
+
 	.globl  _C_LABEL(apic_stray)
 
 #ifdef MULTIPROCESSOR
-IDTVEC(intripi)
+	.globl	XINTR(ipi)
+XINTR(ipi):
 	subl	$8,%esp			/* space for tf_{err,trapno} */
-	INTRENTRY(ipi)
+	INTRENTRY
+	MAKE_FRAME
 	pushl	CPL
 	movl	_C_LABEL(lapic_ppr),%eax
 	movl	%eax,CPL
@@ -51,13 +55,11 @@ IDTVEC(intripi)
 	call	_C_LABEL(i386_ipi_handler)
 	cli
 	popl	CPL
-#ifdef DIAGNOSTIC
-	movl	$0xf8,%esi
-#endif
 	INTRFASTEXIT
 
+	.globl	XINTR(ipi_invltlb)
 	.p2align 4,0xcc
-IDTVEC(intripi_invltlb)
+XINTR(ipi_invltlb):
 	pushl	%eax
 	pushl	%ds
 	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
@@ -75,8 +77,9 @@ IDTVEC(intripi_invltlb)
 	popl	%eax
 	iret
 
+	.globl	XINTR(ipi_invlpg)
 	.p2align 4,0xcc
-IDTVEC(intripi_invlpg)
+XINTR(ipi_invlpg):
 	pushl	%eax
 	pushl	%ds
 	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
@@ -94,8 +97,9 @@ IDTVEC(intripi_invlpg)
 	popl	%eax
 	iret
 
+	.globl	XINTR(ipi_invlrange)
 	.p2align 4,0xcc
-IDTVEC(intripi_invlrange)
+XINTR(ipi_invlrange):
 	pushl	%eax
 	pushl	%edx
 	pushl	%ds
@@ -119,8 +123,9 @@ IDTVEC(intripi_invlrange)
 	popl	%eax
 	iret
 
+	.globl	XINTR(ipi_reloadcr3)
 	.p2align 4,0xcc
-IDTVEC(intripi_reloadcr3)
+XINTR(ipi_reloadcr3):
 	pushl	%eax
 	pushl	%ds
 	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
@@ -150,9 +155,11 @@ IDTVEC(intripi_reloadcr3)
 	/*
 	 * Interrupt from the local APIC timer.
 	 */
-IDTVEC(intrltimer)
+	.globl	XINTR(ltimer)
+XINTR(ltimer):
 	subl	$8,%esp			/* space for tf_{err,trapno} */
-	INTRENTRY(ltimer)
+	INTRENTRY
+	MAKE_FRAME
 	pushl	CPL
 	movl	_C_LABEL(lapic_ppr),%eax
 	movl	%eax,CPL
@@ -166,9 +173,11 @@ IDTVEC(intrltimer)
 	decl	CPUVAR(IDEPTH)
 	jmp	_C_LABEL(Xdoreti)
 
-KIDTVEC(intrsoftclock)
+	.globl	XINTR(softclock), XINTR(softnet), XINTR(softtty)
+XINTR(softclock):
 	subl	$8,%esp			/* space for tf_{err,trapno} */
-	INTRENTRY(intrsoftclock)
+	INTRENTRY
+	MAKE_FRAME
 	pushl	CPL
 	movl	$IPL_SOFTCLOCK,CPL
 	andl	$~(1<<SIR_CLOCK),CPUVAR(IPENDING)
@@ -181,9 +190,10 @@ KIDTVEC(intrsoftclock)
 	decl	CPUVAR(IDEPTH)
 	jmp	_C_LABEL(Xdoreti)
 
-KIDTVEC(intrsoftnet)
+XINTR(softnet):
 	subl	$8,%esp			/* space for tf_{err,trapno} */
-	INTRENTRY(intrsoftnet)
+	INTRENTRY
+	MAKE_FRAME
 	pushl	CPL
 	movl	$IPL_SOFTNET,CPL
 	andl	$~(1<<SIR_NET),CPUVAR(IPENDING)
@@ -197,9 +207,10 @@ KIDTVEC(intrsoftnet)
 	jmp	_C_LABEL(Xdoreti)
 #undef DONETISR
 
-KIDTVEC(intrsofttty)
+XINTR(softtty):
 	subl	$8,%esp			/* space for tf_{err,trapno} */
-	INTRENTRY(intrsofttty)
+	INTRENTRY
+	MAKE_FRAME
 	pushl	CPL
 	movl	$IPL_SOFTTTY,CPL
 	andl	$~(1<<SIR_TTY),CPUVAR(IPENDING)
@@ -225,9 +236,10 @@ KIDTVEC(intrsofttty)
 	 */
 
 #define APICINTR(name, num, early_ack, late_ack, mask, unmask, level_mask) \
-IDTVEC(intr_##name##num)						\
+_C_LABEL(Xintr_##name##num):						\
 	subl	$8,%esp			/* space for tf_{err,trapno} */	;\
-	INTRENTRY(intr_##name##num)					;\
+	INTRENTRY							;\
+	MAKE_FRAME							;\
 	pushl	CPL							;\
 	movl	_C_LABEL(lapic_ppr),%eax				;\
 	orl	$num,%eax						;\

@@ -1,0 +1,112 @@
+#	$OpenBSD: GENERIC,v 1.30 2014/12/11 19:44:17 tedu Exp $
+#
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+machine		socppc powerpc
+include		"../../../conf/GENERIC"
+maxusers	32			# estimated number of users
+
+option		PCIVERBOSE
+option		USBVERBOSE
+
+option		USER_PCICONF	# user-space PCI configuration
+option		APERTURE
+
+config		bsd	swap generic
+
+mainbus0	at root
+cpu0		at mainbus0
+obio0		at mainbus0
+
+# On-board CF
+wdc0		at mainbus0
+wdc1		at mainbus0
+wd*		at wdc? flags 0x0000
+
+# On-board IPIC
+ipic0		at obio?
+
+# On-board I2C
+sociic0		at obio?
+sociic1		at obio?
+iic*		at sociic?
+ricohrtc0	at iic? addr 0x32	# Ricoh RTC
+fintek0		at iic?	flags 0x0001	# temp/fan controller
+
+# On-board DUART
+com0		at obio?
+com1		at obio?
+
+# On-board PCI
+socpcic*	at mainbus?
+socpcic*	at obio?
+pci*		at socpcic?
+
+pciide*		at pci?
+wd*		at pciide? flags 0x0000
+
+vge*		at pci?
+
+# On-board USB
+ehci0		at obio?
+usb*		at ehci?
+
+# USB devices
+uhub*	at usb?			# USB Hubs
+uhub*	at uhub?		# USB Hubs
+ulpt*	at uhub?		# USB Printers
+umass*	at uhub?		# USB Mass Storage devices
+uhidev*	at uhub?		# Human Interface Devices
+ums*	at uhidev?		# USB mouse
+wsmouse* at ums? mux 0
+ukbd*	at uhidev?		# USB keyboard
+wskbd*	at ukbd? mux 1
+uhid*	at uhidev?		# USB generic HID support
+upd*	at uhidev?		# USB Power Devices sensors
+axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
+axen*	at uhub?		# ASIX Electronics AX88179 USB Ethernet
+mos*	at uhub?		# MOSCHIP CS730/7830 10/100 Ethernet
+smsc*	at uhub?		# SMSC LAN95xx Ethernet
+uath*	at uhub?		# Atheros AR5005UR/AR5005UX
+athn*	at uhub?		# Atheros AR9002U
+ural*	at uhub?		# Ralink RT2500USB
+rum*	at uhub?		# Ralink RT2501USB/RT2601USB
+run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
+rsu*	at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU
+urtwn*	at uhub?		# Realtek RTL8188CU/RTL8192CU
+zyd*	at uhub?		# Zydas ZD1211
+ugen*	at uhub?		# USB Generic driver
+uthum*	at uhidev?		# TEMPerHUM sensor
+ugold*	at uhidev?		# gold TEMPer sensor
+utwitch* at uhidev?		# YUREX BBU sensor
+
+udl*		at uhub?
+wsdisplay*	at udl?
+
+scsibus*	at scsi?
+sd*		at scsibus?
+
+# On-board TSEC
+tsec0		at obio?
+tsec1		at obio?
+
+rgephy*		at mii?		# Realtek 8169S/8110S PHY
+eephy*		at mii?		# Marvell 88E1000 series PHY
+rlphy*		at mii?		# Realtek 8139 internal PHYs
+ciphy*		at mii?		# Cicada CS8201 10/100/1000 copper PHY
+gentbi*		at mii?		# Generic 1000BASE-X ten-bit PHY
+ukphy*		at mii?		# Generic unknown PHY
+
+# PCI
+athn*		at pci?		# Atheros AR9k (802.11a/g/n)
+hifn*		at pci?		# Hi/fn 7751 crypto card
+
+pseudo-device	hotplug		1	# devices hot plugging
+pseudo-device	wsmux		2	# mouse & keyboard multiplexor

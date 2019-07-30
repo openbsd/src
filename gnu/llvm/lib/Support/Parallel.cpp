@@ -10,10 +10,6 @@
 #include "llvm/Support/Parallel.h"
 #include "llvm/Config/llvm-config.h"
 
-#if LLVM_ENABLE_THREADS
-
-#include "llvm/Support/Threading.h"
-
 #include <atomic>
 #include <stack>
 #include <thread>
@@ -22,7 +18,7 @@ using namespace llvm;
 
 namespace {
 
-/// An abstract class that takes closures and runs them asynchronously.
+/// \brief An abstract class that takes closures and runs them asynchronously.
 class Executor {
 public:
   virtual ~Executor() = default;
@@ -31,8 +27,19 @@ public:
   static Executor *getDefaultExecutor();
 };
 
-#if defined(_MSC_VER)
-/// An Executor that runs tasks via ConcRT.
+#if !LLVM_ENABLE_THREADS
+class SyncExecutor : public Executor {
+public:
+  virtual void add(std::function<void()> F) { F(); }
+};
+
+Executor *Executor::getDefaultExecutor() {
+  static SyncExecutor Exec;
+  return &Exec;
+}
+
+#elif defined(_MSC_VER)
+/// \brief An Executor that runs tasks via ConcRT.
 class ConcRTExecutor : public Executor {
   struct Taskish {
     Taskish(std::function<void()> Task) : Task(Task) {}
@@ -59,11 +66,12 @@ Executor *Executor::getDefaultExecutor() {
 }
 
 #else
-/// An implementation of an Executor that runs closures on a thread pool
+/// \brief An implementation of an Executor that runs closures on a thread pool
 ///   in filo order.
 class ThreadPoolExecutor : public Executor {
 public:
-  explicit ThreadPoolExecutor(unsigned ThreadCount = hardware_concurrency())
+  explicit ThreadPoolExecutor(
+      unsigned ThreadCount = std::thread::hardware_concurrency())
       : Done(ThreadCount) {
     // Spawn all but one of the threads in another thread as spawning threads
     // can take a while.
@@ -119,6 +127,7 @@ Executor *Executor::getDefaultExecutor() {
 #endif
 }
 
+#if LLVM_ENABLE_THREADS
 void parallel::detail::TaskGroup::spawn(std::function<void()> F) {
   L.inc();
   Executor::getDefaultExecutor()->add([&, F] {
@@ -126,4 +135,4 @@ void parallel::detail::TaskGroup::spawn(std::function<void()> F) {
     L.dec();
   });
 }
-#endif // LLVM_ENABLE_THREADS
+#endif

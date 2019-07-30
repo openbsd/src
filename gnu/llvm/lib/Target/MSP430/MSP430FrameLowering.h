@@ -15,7 +15,7 @@
 #define LLVM_LIB_TARGET_MSP430_MSP430FRAMELOWERING_H
 
 #include "MSP430.h"
-#include "llvm/CodeGen/TargetFrameLowering.h"
+#include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
 class MSP430FrameLowering : public TargetFrameLowering {
@@ -40,7 +40,7 @@ public:
                                  const TargetRegisterInfo *TRI) const override;
   bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator MI,
-                                  std::vector<CalleeSavedInfo> &CSI,
+                                  const std::vector<CalleeSavedInfo> &CSI,
                                   const TargetRegisterInfo *TRI) const override;
 
   bool hasFP(const MachineFunction &MF) const override;

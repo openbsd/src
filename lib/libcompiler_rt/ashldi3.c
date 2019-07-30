@@ -41,5 +41,8 @@ __ashldi3(di_int a, si_int b)
 }
 
 #if defined(__ARM_EABI__)
-AEABI_RTABI di_int __aeabi_llsl(di_int a, si_int b) COMPILER_RT_ALIAS(__ashldi3);
+AEABI_RTABI di_int __aeabi_llsl(di_int a, si_int b) {
+  return __ashldi3(a, b);
+}
 #endif
+

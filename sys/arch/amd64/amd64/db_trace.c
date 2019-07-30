@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.43 2019/02/02 14:32:58 visa Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.38 2018/02/10 10:25:44 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -73,6 +73,85 @@ struct db_variable * db_eregs = db_regs + nitems(db_regs);
  */
 #define	INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
 
+#define	NONE		0
+#define	TRAP		1
+#define	SYSCALL		2
+#define	INTERRUPT	3
+#define	AST		4
+
+void db_nextframe(struct callframe **, db_addr_t *, long *, int,
+    int (*) (const char *, ...));
+
+/*
+ * Figure out the next frame up in the call stack.
+ * For trap(), we print the address of the faulting instruction and
+ *   proceed with the calling frame.  We return the ip that faulted.
+ *   If the trap was caused by jumping through a bogus pointer, then
+ *   the next line in the backtrace will list some random function as
+ *   being called.  It should get the argument list correct, though.
+ *   It might be possible to dig out from the next frame up the name
+ *   of the function that faulted, but that could get hairy.
+ */
+void
+db_nextframe(struct callframe **fp, db_addr_t *ip, long *argp, int is_trap,
+    int (*pr)(const char *, ...))
+{
+
+	switch (is_trap) {
+	    case NONE:
+		*ip = (db_addr_t)
+			db_get_value((db_addr_t)&(*fp)->f_retaddr, 8, FALSE);
+		*fp = (struct callframe *)
+			db_get_value((db_addr_t)&(*fp)->f_frame, 8, FALSE);
+		break;
+
+	    default: {
+		struct trapframe *tf;
+
+		/* The only argument to trap() or syscall() is the trapframe. */
+		tf = (struct trapframe *)argp;
+		switch (is_trap) {
+		case TRAP:
+			(*pr)("--- trap (number %d) ---\n", tf->tf_trapno);
+			break;
+		case AST:
+			(*pr)("--- ast ---\n");
+			break;
+		case SYSCALL:
+			(*pr)("--- syscall (number %ld) ---\n", tf->tf_rax);
+			break;
+		case INTERRUPT:
+			(*pr)("--- interrupt ---\n");
+			break;
+		}
+		*fp = (struct callframe *)tf->tf_rbp;
+		*ip = (db_addr_t)tf->tf_rip;
+		break;
+	    }
+	}
+}
+
+static inline int
+db_is_trap(const char *name)
+{
+	if (name != NULL) {
+		if (!strcmp(name, "trap"))
+			return TRAP;
+		if (!strcmp(name, "ast"))
+			return AST;
+		if (!strcmp(name, "syscall"))
+			return SYSCALL;
+		if (name[0] == 'X') {
+			if (!strncmp(name, "Xintr", 5) ||
+			    !strncmp(name, "Xresume", 7) ||
+			    !strncmp(name, "Xrecurse", 8) ||
+			    !strcmp(name, "Xdoreti") ||
+			    !strncmp(name, "Xsoft", 5))
+				return INTERRUPT;
+		}
+	}
+	return NONE;
+}
 
 const unsigned long *db_reg_args[6] = {
 	(unsigned long *)&ddb_regs.tf_rdi,
@@ -91,6 +170,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	unsigned long	*argp, *arg0;
 	db_addr_t	callpc;
 	unsigned int	cr4save = CR4_SMEP|CR4_SMAP;
+	int		is_trap = 0;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_proc = FALSE;
 	struct proc	*p;
@@ -155,17 +235,21 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			unsigned long instr = db_get_value(callpc, 8, FALSE);
 
 			offset = 1;
-			if (instr == 0xe5894855 ||
-					/* enter: pushl %rbp, movq %rsp, %rbp */
-			    (instr & 0x00ffffff) == 0x00e58948
-					/* enter+1: movq %rsp, %rbp */) {
+			if ((instr & 0x00ffffff) == 0x00e58955 ||
+					/* enter: pushl %ebp, movl %esp, %ebp */
+			    (instr & 0x0000ffff) == 0x0000e589
+					/* enter+1: movl %esp, %ebp */) {
 				offset = 0;
 			}
 		}
-
-		narg = db_ctf_func_numargs(sym);
-		if (narg < 0 || narg > 6)
-			narg = 6;
+		if (INKERNEL(callpc) && (is_trap = db_is_trap(name)) != NONE)
+			narg = 0;
+		else {
+			is_trap = NONE;
+			narg = db_ctf_func_numargs(sym);
+			if (narg < 0 || narg > 6)
+				narg = 6;
+		}
 
 		if (name == NULL)
 			(*pr)("%lx(", callpc);
@@ -207,7 +291,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		db_printsym(callpc, DB_STGY_PROC, pr);
 		(*pr)("\n");
 
-		if (lastframe == 0 && offset == 0 && !have_addr) {
+		if (lastframe == 0 && offset == 0 && !have_addr && !is_trap) {
 			/* Frame really belongs to next callpc */
 			lastframe = (struct callframe *)(ddb_regs.tf_rsp-8);
 			callpc = (db_addr_t)
@@ -216,11 +300,19 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			continue;
 		}
 
+		if (is_trap == INTERRUPT && lastframe != NULL) {
+			/*
+			 * Interrupt routines don't update %rbp, so it still
+			 * points to the frame that was interrupted.  Pull
+			 * back to just above lastframe so we can find the
+			 * trapframe as with syscalls and traps.
+			 */
+			frame = (struct callframe *)&lastframe->f_retaddr;
+			arg0 = &frame->f_arg0;
+		}
+
 		lastframe = frame;
-		callpc = (db_addr_t)db_get_value(
-		    (db_addr_t)&frame->f_retaddr, 8, FALSE);
-		frame = (struct callframe *)db_get_value(
-		    (db_addr_t)&frame->f_frame, 8, FALSE);
+		db_nextframe(&frame, &callpc, arg0, is_trap, pr);
 
 		if (frame == 0) {
 			/* end of chain */
@@ -250,6 +342,11 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	}
 	(*pr)("end trace frame: 0x%lx, count: %d\n", frame, count);
 
+	if (count && is_trap != NONE) {
+		db_printsym(callpc, DB_STGY_XTRN, pr);
+		(*pr)(":\n");
+	}
+
 	if (cr4save & CR4_SMAP)
 		lcr4(cr4save);
 }
@@ -258,20 +355,60 @@ void
 db_save_stack_trace(struct db_stack_trace *st)
 {
 	struct callframe *frame, *lastframe;
+	db_addr_t callpc;
+	unsigned int i;
 
 	frame = __builtin_frame_address(0);
-	st->st_count = 0;
-	while (st->st_count < DB_STACK_TRACE_MAX) {
-		st->st_pc[st->st_count++] = frame->f_retaddr;
 
-		lastframe = frame;
-		frame = frame->f_frame;
+	callpc = db_get_value((db_addr_t)&frame->f_retaddr, 8, FALSE);
+	frame = frame->f_frame;
+
+	lastframe = NULL;
+	for (i = 0; i < DB_STACK_TRACE_MAX && frame != NULL; i++) {
+		struct trapframe *tf;
+		char		*name;
+		db_expr_t	offset;
+		Elf_Sym *	sym;
+		int		is_trap;
+
+		st->st_pc[st->st_count++] = callpc;
+		sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
+		db_symbol_values(sym, &name, NULL);
+
+		if (INKERNEL(callpc))
+			is_trap = db_is_trap(name);
+		else
+			is_trap = NONE;
+
+		if (is_trap == NONE) {
+			lastframe = frame;
+			callpc = frame->f_retaddr;
+			frame = frame->f_frame;
+		} else {
+			if (is_trap == INTERRUPT) {
+				/*
+				 * Interrupt routines don't update %rbp,
+				 * so it still points to the frame that
+				 * was interrupted.  Pull back to just
+				 * above lastframe so we can find the
+				 * trapframe as with syscalls and traps.
+				 */
+				if (lastframe == NULL)
+					break;
+
+				frame =
+				    (struct callframe *)&lastframe->f_retaddr;
+			}
+			lastframe = frame;
+
+			tf = (struct trapframe *)&frame->f_arg0;
+			callpc = (db_addr_t)tf->tf_rip;
+			frame = (struct callframe *)tf->tf_rbp;
+		}
 
 		if (!INKERNEL(frame))
 			break;
 		if (frame <= lastframe)
-			break;
-		if (!INKERNEL(frame->f_retaddr))
 			break;
 	}
 }

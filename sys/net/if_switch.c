@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.28 2019/05/12 16:24:44 akoshibe Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.23 2018/02/19 08:59:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -221,7 +221,6 @@ switchintr(void)
 		return;
 
 	while ((m = ml_dequeue(&ml)) != NULL) {
-		KASSERT(m->m_flags & M_PKTHDR);
 		ifp = if_get(m->m_pkthdr.ph_ifidx);
 		if (ifp == NULL) {
 			m_freem(m);
@@ -434,7 +433,6 @@ switch_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		}
 		breq->ifbr_ifsflags = swpo->swpo_flags;
 		breq->ifbr_portno = swpo->swpo_port_no;
-		breq->ifbr_protected = swpo->swpo_protected;
 		break;
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == IFF_UP)
@@ -468,19 +466,6 @@ switch_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		brop->ifbop_last_tc_time.tv_sec = bs->bs_last_tc_time.tv_sec;
 		brop->ifbop_last_tc_time.tv_usec = bs->bs_last_tc_time.tv_usec;
 		break;
-	case SIOCBRDGSIFPROT:
-		ifs = ifunit(breq->ifbr_ifsname);
-		if (ifs == NULL) {
-			error = ENOENT;
-			break;
-		}
-		swpo = (struct switch_port *)ifs->if_switchport;
-		if (swpo == NULL || swpo->swpo_switch != sc) {
-			error = ESRCH;
-			break;
-		}
-		swpo->swpo_protected = breq->ifbr_protected;
-		break;
 	case SIOCSWGDPID:
 	case SIOCSWSDPID:
 	case SIOCSWGMAXFLOW:
@@ -506,7 +491,7 @@ switch_port_add(struct switch_softc *sc, struct ifbreq *req)
 	if ((ifs = ifunit(req->ifbr_ifsname)) == NULL)
 		return (ENOENT);
 
-	if (ifs->if_bridgeidx != 0)
+	if (ifs->if_bridgeport != NULL)
 		return (EBUSY);
 
 	if (ifs->if_switchport != NULL) {
@@ -574,7 +559,7 @@ switch_port_list(struct switch_softc *sc, struct ifbifconf *bifc)
 		strlcpy(breq.ifbr_name, sc->sc_if.if_xname, IFNAMSIZ);
 		breq.ifbr_ifsflags = swpo->swpo_flags;
 		breq.ifbr_portno = swpo->swpo_port_no;
-		breq.ifbr_protected = swpo->swpo_protected;
+
 		if ((error = copyout((caddr_t)&breq,
 		    (caddr_t)(bifc->ifbic_req + n), sizeof(breq))) != 0)
 			goto done;
@@ -653,7 +638,10 @@ struct mbuf *
 switch_port_ingress(struct switch_softc *sc, struct ifnet *src_if,
     struct mbuf *m)
 {
+	struct switch_port	*swpo;
 	struct ether_header	 eh;
+
+	swpo = (struct switch_port *)src_if->if_switchport;
 
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
@@ -730,7 +718,8 @@ switch_port_egress(struct switch_softc *sc, struct switch_fwdp_queue *fwdp_q,
 		 */
 		if (!(swpo->swpo_flags & IFBIF_LOCAL) &&
 		    ((len - ETHER_HDR_LEN) > dst_if->if_mtu))
-			bridge_fragment(&sc->sc_if, dst_if, &eh, mc);
+			bridge_fragment((struct bridge_softc *)sc,
+			    dst_if, &eh, mc);
 		else
 			switch_ifenqueue(sc, dst_if, mc,
 			    (swpo->swpo_flags & IFBIF_LOCAL));
@@ -753,7 +742,6 @@ switch_ifenqueue(struct switch_softc *sc, struct ifnet *ifp,
 	/* Loop prevention. */
 	m->m_flags |= M_PROTO1;
 
-	KASSERT(m->m_flags & M_PKTHDR);
 	len = m->m_pkthdr.len;
 
 	if (local) {
@@ -1500,23 +1488,22 @@ switch_mtap(caddr_t arg, struct mbuf *m, int dir, uint64_t datapath_id)
 int
 ofp_split_mbuf(struct mbuf *m, struct mbuf **mtail)
 {
+	struct ofp_header	*oh;
 	uint16_t		 ohlen;
 
 	*mtail = NULL;
 
  again:
 	/* We need more data. */
-	KASSERT(m->m_flags & M_PKTHDR);
-	if (m->m_pkthdr.len < sizeof(struct ofp_header))
+	if (m->m_pkthdr.len < sizeof(*oh))
 		return (-1);
 
-	m_copydata(m, offsetof(struct ofp_header, oh_length), sizeof(ohlen),
-	    (caddr_t)&ohlen);
-	ohlen = ntohs(ohlen);
+	oh = mtod(m, struct ofp_header *);
+	ohlen = ntohs(oh->oh_length);
 
 	/* We got an invalid packet header, skip it. */
-	if (ohlen < sizeof(struct ofp_header)) {
-		m_adj(m, sizeof(struct ofp_header));
+	if (ohlen < sizeof(*oh)) {
+		m_adj(m, sizeof(*oh));
 		goto again;
 	}
 

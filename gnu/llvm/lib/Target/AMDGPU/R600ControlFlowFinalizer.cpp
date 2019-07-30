@@ -1,4 +1,4 @@
-//===- R600ControlFlowFinalizer.cpp - Finalize Control Flow Inst ----------===//
+//===-- R600ControlFlowFinalizer.cpp - Finalize Control Flow Inst----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,8 +9,7 @@
 //
 /// \file
 /// This pass compute turns all control flow pseudo instructions into native one
-/// computing their address on the fly; it also sets STACK_SIZE info.
-//
+/// computing their address on the fly ; it also sets STACK_SIZE info.
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPU.h"
@@ -19,7 +18,6 @@
 #include "R600InstrInfo.h"
 #include "R600MachineFunctionInfo.h"
 #include "R600RegisterInfo.h"
-#include "MCTargetDesc/AMDGPUMCTargetDesc.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -31,15 +29,13 @@
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/DebugLoc.h"
-#include "llvm/IR/Function.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <new>
 #include <set>
 #include <utility>
 #include <vector>
@@ -51,6 +47,7 @@ using namespace llvm;
 namespace {
 
 struct CFStack {
+
   enum StackItem {
     ENTRY = 0,
     SUB_ENTRY = 1,
@@ -94,7 +91,7 @@ bool CFStack::branchStackContains(CFStack::StackItem Item) {
 }
 
 bool CFStack::requiresWorkAroundForInst(unsigned Opcode) {
-  if (Opcode == R600::CF_ALU_PUSH_BEFORE && ST->hasCaymanISA() &&
+  if (Opcode == AMDGPU::CF_ALU_PUSH_BEFORE && ST->hasCaymanISA() &&
       getLoopDepth() > 1)
     return true;
 
@@ -103,10 +100,10 @@ bool CFStack::requiresWorkAroundForInst(unsigned Opcode) {
 
   switch(Opcode) {
   default: return false;
-  case R600::CF_ALU_PUSH_BEFORE:
-  case R600::CF_ALU_ELSE_AFTER:
-  case R600::CF_ALU_BREAK:
-  case R600::CF_ALU_CONTINUE:
+  case AMDGPU::CF_ALU_PUSH_BEFORE:
+  case AMDGPU::CF_ALU_ELSE_AFTER:
+  case AMDGPU::CF_ALU_BREAK:
+  case AMDGPU::CF_ALU_CONTINUE:
     if (CurrentSubEntries == 0)
       return false;
     if (ST->getWavefrontSize() == 64) {
@@ -137,7 +134,7 @@ unsigned CFStack::getSubEntrySize(CFStack::StackItem Item) {
     return 0;
   case CFStack::FIRST_NON_WQM_PUSH:
   assert(!ST->hasCaymanISA());
-  if (ST->getGeneration() <= AMDGPUSubtarget::R700) {
+  if (ST->getGeneration() <= R600Subtarget::R700) {
     // +1 For the push operation.
     // +2 Extra space required.
     return 3;
@@ -150,7 +147,7 @@ unsigned CFStack::getSubEntrySize(CFStack::StackItem Item) {
     return 2;
   }
   case CFStack::FIRST_NON_WQM_PUSH_W_FULL_ENTRY:
-    assert(ST->getGeneration() >= AMDGPUSubtarget::EVERGREEN);
+    assert(ST->getGeneration() >= R600Subtarget::EVERGREEN);
     // +1 For the push operation.
     // +1 Extra space required.
     return 2;
@@ -168,8 +165,8 @@ void CFStack::updateMaxStackSize() {
 void CFStack::pushBranch(unsigned Opcode, bool isWQM) {
   CFStack::StackItem Item = CFStack::ENTRY;
   switch(Opcode) {
-  case R600::CF_PUSH_EG:
-  case R600::CF_ALU_PUSH_BEFORE:
+  case AMDGPU::CF_PUSH_EG:
+  case AMDGPU::CF_ALU_PUSH_BEFORE:
     if (!isWQM) {
       if (!ST->hasCaymanISA() &&
           !branchStackContains(CFStack::FIRST_NON_WQM_PUSH))
@@ -177,7 +174,7 @@ void CFStack::pushBranch(unsigned Opcode, bool isWQM) {
                                              // See comment in
                                              // CFStack::getSubEntrySize()
       else if (CurrentEntries > 0 &&
-               ST->getGeneration() > AMDGPUSubtarget::EVERGREEN &&
+               ST->getGeneration() > R600Subtarget::EVERGREEN &&
                !ST->hasCaymanISA() &&
                !branchStackContains(CFStack::FIRST_NON_WQM_PUSH_W_FULL_ENTRY))
         Item = CFStack::FIRST_NON_WQM_PUSH_W_FULL_ENTRY;
@@ -217,7 +214,7 @@ void CFStack::popLoop() {
 
 class R600ControlFlowFinalizer : public MachineFunctionPass {
 private:
-  using ClauseFile = std::pair<MachineInstr *, std::vector<MachineInstr *>>;
+  typedef std::pair<MachineInstr *, std::vector<MachineInstr *>> ClauseFile;
 
   enum ControlFlowInstruction {
     CF_TC,
@@ -233,6 +230,7 @@ private:
     CF_END
   };
 
+  static char ID;
   const R600InstrInfo *TII = nullptr;
   const R600RegisterInfo *TRI = nullptr;
   unsigned MaxFetchInst;
@@ -240,8 +238,8 @@ private:
 
   bool IsTrivialInst(MachineInstr &MI) const {
     switch (MI.getOpcode()) {
-    case R600::KILL:
-    case R600::RETURN:
+    case AMDGPU::KILL:
+    case AMDGPU::RETURN:
       return true;
     default:
       return false;
@@ -250,44 +248,44 @@ private:
 
   const MCInstrDesc &getHWInstrDesc(ControlFlowInstruction CFI) const {
     unsigned Opcode = 0;
-    bool isEg = (ST->getGeneration() >= AMDGPUSubtarget::EVERGREEN);
+    bool isEg = (ST->getGeneration() >= R600Subtarget::EVERGREEN);
     switch (CFI) {
     case CF_TC:
-      Opcode = isEg ? R600::CF_TC_EG : R600::CF_TC_R600;
+      Opcode = isEg ? AMDGPU::CF_TC_EG : AMDGPU::CF_TC_R600;
       break;
     case CF_VC:
-      Opcode = isEg ? R600::CF_VC_EG : R600::CF_VC_R600;
+      Opcode = isEg ? AMDGPU::CF_VC_EG : AMDGPU::CF_VC_R600;
       break;
     case CF_CALL_FS:
-      Opcode = isEg ? R600::CF_CALL_FS_EG : R600::CF_CALL_FS_R600;
+      Opcode = isEg ? AMDGPU::CF_CALL_FS_EG : AMDGPU::CF_CALL_FS_R600;
       break;
     case CF_WHILE_LOOP:
-      Opcode = isEg ? R600::WHILE_LOOP_EG : R600::WHILE_LOOP_R600;
+      Opcode = isEg ? AMDGPU::WHILE_LOOP_EG : AMDGPU::WHILE_LOOP_R600;
       break;
     case CF_END_LOOP:
-      Opcode = isEg ? R600::END_LOOP_EG : R600::END_LOOP_R600;
+      Opcode = isEg ? AMDGPU::END_LOOP_EG : AMDGPU::END_LOOP_R600;
       break;
     case CF_LOOP_BREAK:
-      Opcode = isEg ? R600::LOOP_BREAK_EG : R600::LOOP_BREAK_R600;
+      Opcode = isEg ? AMDGPU::LOOP_BREAK_EG : AMDGPU::LOOP_BREAK_R600;
       break;
     case CF_LOOP_CONTINUE:
-      Opcode = isEg ? R600::CF_CONTINUE_EG : R600::CF_CONTINUE_R600;
+      Opcode = isEg ? AMDGPU::CF_CONTINUE_EG : AMDGPU::CF_CONTINUE_R600;
       break;
     case CF_JUMP:
-      Opcode = isEg ? R600::CF_JUMP_EG : R600::CF_JUMP_R600;
+      Opcode = isEg ? AMDGPU::CF_JUMP_EG : AMDGPU::CF_JUMP_R600;
       break;
     case CF_ELSE:
-      Opcode = isEg ? R600::CF_ELSE_EG : R600::CF_ELSE_R600;
+      Opcode = isEg ? AMDGPU::CF_ELSE_EG : AMDGPU::CF_ELSE_R600;
       break;
     case CF_POP:
-      Opcode = isEg ? R600::POP_EG : R600::POP_R600;
+      Opcode = isEg ? AMDGPU::POP_EG : AMDGPU::POP_R600;
       break;
     case CF_END:
       if (ST->hasCaymanISA()) {
-        Opcode = R600::CF_END_CM;
+        Opcode = AMDGPU::CF_END_CM;
         break;
       }
-      Opcode = isEg ? R600::CF_END_EG : R600::CF_END_R600;
+      Opcode = isEg ? AMDGPU::CF_END_EG : AMDGPU::CF_END_R600;
       break;
     }
     assert (Opcode && "No opcode selected");
@@ -305,21 +303,21 @@ private:
         continue;
       if (MO.isDef()) {
         unsigned Reg = MO.getReg();
-        if (R600::R600_Reg128RegClass.contains(Reg))
+        if (AMDGPU::R600_Reg128RegClass.contains(Reg))
           DstMI = Reg;
         else
           DstMI = TRI->getMatchingSuperReg(Reg,
-              AMDGPURegisterInfo::getSubRegFromChannel(TRI->getHWRegChan(Reg)),
-              &R600::R600_Reg128RegClass);
+              TRI->getSubRegFromChannel(TRI->getHWRegChan(Reg)),
+              &AMDGPU::R600_Reg128RegClass);
       }
       if (MO.isUse()) {
         unsigned Reg = MO.getReg();
-        if (R600::R600_Reg128RegClass.contains(Reg))
+        if (AMDGPU::R600_Reg128RegClass.contains(Reg))
           SrcMI = Reg;
         else
           SrcMI = TRI->getMatchingSuperReg(Reg,
-              AMDGPURegisterInfo::getSubRegFromChannel(TRI->getHWRegChan(Reg)),
-              &R600::R600_Reg128RegClass);
+              TRI->getSubRegFromChannel(TRI->getHWRegChan(Reg)),
+              &AMDGPU::R600_Reg128RegClass);
       }
     }
     if ((DstRegs.find(SrcMI) == DstRegs.end())) {
@@ -359,15 +357,15 @@ private:
 
   void getLiteral(MachineInstr &MI, std::vector<MachineOperand *> &Lits) const {
     static const unsigned LiteralRegs[] = {
-      R600::ALU_LITERAL_X,
-      R600::ALU_LITERAL_Y,
-      R600::ALU_LITERAL_Z,
-      R600::ALU_LITERAL_W
+      AMDGPU::ALU_LITERAL_X,
+      AMDGPU::ALU_LITERAL_Y,
+      AMDGPU::ALU_LITERAL_Z,
+      AMDGPU::ALU_LITERAL_W
     };
     const SmallVector<std::pair<MachineOperand *, int64_t>, 3> Srcs =
         TII->getSrcs(MI);
     for (const auto &Src:Srcs) {
-      if (Src.first->getReg() != R600::ALU_LITERAL_X)
+      if (Src.first->getReg() != AMDGPU::ALU_LITERAL_X)
         continue;
       int64_t Imm = Src.second;
       std::vector<MachineOperand *>::iterator It =
@@ -377,7 +375,7 @@ private:
 
       // Get corresponding Operand
       MachineOperand &Operand = MI.getOperand(
-          TII->getOperandIdx(MI.getOpcode(), R600::OpName::literal));
+          TII->getOperandIdx(MI.getOpcode(), AMDGPU::OpName::literal));
 
       if (It != Lits.end()) {
         // Reuse existing literal reg
@@ -400,7 +398,7 @@ private:
       unsigned LiteralPair0 = Literals[i];
       unsigned LiteralPair1 = (i + 1 < e)?Literals[i + 1]:0;
       InsertPos = BuildMI(MBB, InsertPos->getDebugLoc(),
-          TII->get(R600::LITERALS))
+          TII->get(AMDGPU::LITERALS))
           .addImm(LiteralPair0)
           .addImm(LiteralPair1);
     }
@@ -442,7 +440,7 @@ private:
       }
       for (unsigned i = 0, e = Literals.size(); i < e; i += 2) {
         MachineInstrBuilder MILit = BuildMI(MBB, I, I->getDebugLoc(),
-            TII->get(R600::LITERALS));
+            TII->get(AMDGPU::LITERALS));
         if (Literals[i]->isImm()) {
             MILit.addImm(Literals[i]->getImm());
         } else {
@@ -471,7 +469,7 @@ private:
                        unsigned &CfCount) {
     CounterPropagateAddr(*Clause.first, CfCount);
     MachineBasicBlock *BB = Clause.first->getParent();
-    BuildMI(BB, DL, TII->get(R600::FETCH_CLAUSE)).addImm(CfCount);
+    BuildMI(BB, DL, TII->get(AMDGPU::FETCH_CLAUSE)).addImm(CfCount);
     for (unsigned i = 0, e = Clause.second.size(); i < e; ++i) {
       BB->splice(InsertPos, BB, Clause.second[i]);
     }
@@ -483,7 +481,7 @@ private:
     Clause.first->getOperand(0).setImm(0);
     CounterPropagateAddr(*Clause.first, CfCount);
     MachineBasicBlock *BB = Clause.first->getParent();
-    BuildMI(BB, DL, TII->get(R600::ALU_CLAUSE)).addImm(CfCount);
+    BuildMI(BB, DL, TII->get(AMDGPU::ALU_CLAUSE)).addImm(CfCount);
     for (unsigned i = 0, e = Clause.second.size(); i < e; ++i) {
       BB->splice(InsertPos, BB, Clause.second[i]);
     }
@@ -501,8 +499,6 @@ private:
   }
 
 public:
-  static char ID;
-
   R600ControlFlowFinalizer() : MachineFunctionPass(ID) {}
 
   bool runOnMachineFunction(MachineFunction &MF) override {
@@ -513,14 +509,14 @@ public:
 
     R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
 
-    CFStack CFStack(ST, MF.getFunction().getCallingConv());
+    CFStack CFStack(ST, MF.getFunction()->getCallingConv());
     for (MachineFunction::iterator MB = MF.begin(), ME = MF.end(); MB != ME;
         ++MB) {
       MachineBasicBlock &MBB = *MB;
       unsigned CfCount = 0;
       std::vector<std::pair<unsigned, std::set<MachineInstr *>>> LoopStack;
       std::vector<MachineInstr * > IfThenElseStack;
-      if (MF.getFunction().getCallingConv() == CallingConv::AMDGPU_VS) {
+      if (MF.getFunction()->getCallingConv() == CallingConv::AMDGPU_VS) {
         BuildMI(MBB, MBB.begin(), MBB.findDebugLoc(MBB.begin()),
             getHWInstrDesc(CF_CALL_FS));
         CfCount++;
@@ -532,7 +528,7 @@ public:
       for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
           I != E;) {
         if (TII->usesTextureCache(*I) || TII->usesVertexCache(*I)) {
-          LLVM_DEBUG(dbgs() << CfCount << ":"; I->dump(););
+          DEBUG(dbgs() << CfCount << ":"; I->dump(););
           FetchClauses.push_back(MakeFetchClause(MBB, I));
           CfCount++;
           LastAlu.back() = nullptr;
@@ -540,34 +536,33 @@ public:
         }
 
         MachineBasicBlock::iterator MI = I;
-        if (MI->getOpcode() != R600::ENDIF)
+        if (MI->getOpcode() != AMDGPU::ENDIF)
           LastAlu.back() = nullptr;
-        if (MI->getOpcode() == R600::CF_ALU)
+        if (MI->getOpcode() == AMDGPU::CF_ALU)
           LastAlu.back() = &*MI;
         I++;
         bool RequiresWorkAround =
             CFStack.requiresWorkAroundForInst(MI->getOpcode());
         switch (MI->getOpcode()) {
-        case R600::CF_ALU_PUSH_BEFORE:
+        case AMDGPU::CF_ALU_PUSH_BEFORE:
           if (RequiresWorkAround) {
-            LLVM_DEBUG(dbgs()
-                       << "Applying bug work-around for ALU_PUSH_BEFORE\n");
-            BuildMI(MBB, MI, MBB.findDebugLoc(MI), TII->get(R600::CF_PUSH_EG))
+            DEBUG(dbgs() << "Applying bug work-around for ALU_PUSH_BEFORE\n");
+            BuildMI(MBB, MI, MBB.findDebugLoc(MI), TII->get(AMDGPU::CF_PUSH_EG))
                 .addImm(CfCount + 1)
                 .addImm(1);
-            MI->setDesc(TII->get(R600::CF_ALU));
+            MI->setDesc(TII->get(AMDGPU::CF_ALU));
             CfCount++;
-            CFStack.pushBranch(R600::CF_PUSH_EG);
+            CFStack.pushBranch(AMDGPU::CF_PUSH_EG);
           } else
-            CFStack.pushBranch(R600::CF_ALU_PUSH_BEFORE);
+            CFStack.pushBranch(AMDGPU::CF_ALU_PUSH_BEFORE);
           LLVM_FALLTHROUGH;
-        case R600::CF_ALU:
+        case AMDGPU::CF_ALU:
           I = MI;
           AluClauses.push_back(MakeALUClause(MBB, I));
-          LLVM_DEBUG(dbgs() << CfCount << ":"; MI->dump(););
+          DEBUG(dbgs() << CfCount << ":"; MI->dump(););
           CfCount++;
           break;
-        case R600::WHILELOOP: {
+        case AMDGPU::WHILELOOP: {
           CFStack.pushLoop();
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
               getHWInstrDesc(CF_WHILE_LOOP))
@@ -580,7 +575,7 @@ public:
           CfCount++;
           break;
         }
-        case R600::ENDLOOP: {
+        case AMDGPU::ENDLOOP: {
           CFStack.popLoop();
           std::pair<unsigned, std::set<MachineInstr *>> Pair =
               std::move(LoopStack.back());
@@ -592,19 +587,19 @@ public:
           CfCount++;
           break;
         }
-        case R600::IF_PREDICATE_SET: {
+        case AMDGPU::IF_PREDICATE_SET: {
           LastAlu.push_back(nullptr);
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
               getHWInstrDesc(CF_JUMP))
               .addImm(0)
               .addImm(0);
           IfThenElseStack.push_back(MIb);
-          LLVM_DEBUG(dbgs() << CfCount << ":"; MIb->dump(););
+          DEBUG(dbgs() << CfCount << ":"; MIb->dump(););
           MI->eraseFromParent();
           CfCount++;
           break;
         }
-        case R600::ELSE: {
+        case AMDGPU::ELSE: {
           MachineInstr * JumpInst = IfThenElseStack.back();
           IfThenElseStack.pop_back();
           CounterPropagateAddr(*JumpInst, CfCount);
@@ -612,13 +607,13 @@ public:
               getHWInstrDesc(CF_ELSE))
               .addImm(0)
               .addImm(0);
-          LLVM_DEBUG(dbgs() << CfCount << ":"; MIb->dump(););
+          DEBUG(dbgs() << CfCount << ":"; MIb->dump(););
           IfThenElseStack.push_back(MIb);
           MI->eraseFromParent();
           CfCount++;
           break;
         }
-        case R600::ENDIF: {
+        case AMDGPU::ENDIF: {
           CFStack.popBranch();
           if (LastAlu.back()) {
             ToPopAfter.push_back(LastAlu.back());
@@ -628,7 +623,7 @@ public:
                 .addImm(CfCount + 1)
                 .addImm(1);
             (void)MIb;
-            LLVM_DEBUG(dbgs() << CfCount << ":"; MIb->dump(););
+            DEBUG(dbgs() << CfCount << ":"; MIb->dump(););
             CfCount++;
           }
 
@@ -640,7 +635,7 @@ public:
           MI->eraseFromParent();
           break;
         }
-        case R600::BREAK: {
+        case AMDGPU::BREAK: {
           CfCount ++;
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
               getHWInstrDesc(CF_LOOP_BREAK))
@@ -649,7 +644,7 @@ public:
           MI->eraseFromParent();
           break;
         }
-        case R600::CONTINUE: {
+        case AMDGPU::CONTINUE: {
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
               getHWInstrDesc(CF_LOOP_CONTINUE))
               .addImm(0);
@@ -658,12 +653,12 @@ public:
           CfCount++;
           break;
         }
-        case R600::RETURN: {
+        case AMDGPU::RETURN: {
           DebugLoc DL = MBB.findDebugLoc(MI);
           BuildMI(MBB, MI, DL, getHWInstrDesc(CF_END));
           CfCount++;
           if (CfCount % 2) {
-            BuildMI(MBB, I, DL, TII->get(R600::PAD));
+            BuildMI(MBB, I, DL, TII->get(AMDGPU::PAD));
             CfCount++;
           }
           MI->eraseFromParent();
@@ -675,7 +670,7 @@ public:
         }
         default:
           if (TII->isExport(MI->getOpcode())) {
-            LLVM_DEBUG(dbgs() << CfCount << ":"; MI->dump(););
+            DEBUG(dbgs() << CfCount << ":"; MI->dump(););
             CfCount++;
           }
           break;
@@ -684,7 +679,7 @@ public:
       for (unsigned i = 0, e = ToPopAfter.size(); i < e; ++i) {
         MachineInstr *Alu = ToPopAfter[i];
         BuildMI(MBB, Alu, MBB.findDebugLoc((MachineBasicBlock::iterator)Alu),
-            TII->get(R600::CF_ALU_POP_AFTER))
+            TII->get(AMDGPU::CF_ALU_POP_AFTER))
             .addImm(Alu->getOperand(0).getImm())
             .addImm(Alu->getOperand(1).getImm())
             .addImm(Alu->getOperand(2).getImm())
@@ -707,16 +702,9 @@ public:
   }
 };
 
-} // end anonymous namespace
-
-INITIALIZE_PASS_BEGIN(R600ControlFlowFinalizer, DEBUG_TYPE,
-                     "R600 Control Flow Finalizer", false, false)
-INITIALIZE_PASS_END(R600ControlFlowFinalizer, DEBUG_TYPE,
-                    "R600 Control Flow Finalizer", false, false)
-
 char R600ControlFlowFinalizer::ID = 0;
 
-char &llvm::R600ControlFlowFinalizerID = R600ControlFlowFinalizer::ID;
+} // end anonymous namespace
 
 FunctionPass *llvm::createR600ControlFlowFinalizer() {
   return new R600ControlFlowFinalizer();

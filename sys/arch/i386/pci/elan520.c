@@ -1,4 +1,4 @@
-/*	$OpenBSD: elan520.c,v 1.22 2018/07/30 14:19:12 kettenis Exp $	*/
+/*	$OpenBSD: elan520.c,v 1.21 2014/12/10 12:27:56 mikeb Exp $	*/
 /*	$NetBSD: elan520.c,v 1.4 2002/10/02 05:47:15 thorpej Exp $	*/
 
 /*-
@@ -345,8 +345,8 @@ elansc_update_cpuspeed(void)
 void
 elansc_setperf(int level)
 {
+	uint32_t eflags;
 	uint8_t cpuctl, speed;
-	u_long s;
 
 	level = (level > 50) ? 100 : 0;
 
@@ -356,10 +356,12 @@ elansc_setperf(int level)
 	if ((cpuctl & CPUCTL_CPU_CLK_SPD_MASK) == speed)
 		return;
 
-	s = intr_disable();
+	eflags = read_eflags();
+	disable_intr();
 	bus_space_write_1(elansc->sc_memt, elansc->sc_memh, MMCR_CPUCTL,
 	    (cpuctl & ~CPUCTL_CPU_CLK_SPD_MASK) | speed);
-	intr_restore(s);
+	enable_intr();
+	write_eflags(eflags);
 
 	elansc_update_cpuspeed();
 }

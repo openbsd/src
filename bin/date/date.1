@@ -1,4 +1,4 @@
-.\"	$OpenBSD: date.1,v 1.70 2019/01/22 06:53:30 jmc Exp $
+.\"	$OpenBSD: date.1,v 1.67 2016/09/12 17:28:47 jca Exp $
 .\"	$NetBSD: date.1,v 1.12 1996/03/12 04:32:37 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)date.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: January 22 2019 $
+.Dd $Mdocdate: September 12 2016 $
 .Dt DATE 1
 .Os
 .Sh NAME
@@ -43,7 +43,6 @@
 .Nm date
 .Op Fl aju
 .Op Fl d Ar dst
-.Op Fl f Ar pformat
 .Op Fl r Ar seconds
 .Op Fl t Ar minutes_west
 .Op Fl z Ar output_zone
@@ -87,11 +86,6 @@ to
 .Xr gettimeofday 2
 will return a non-zero value for
 .Fa tz_dsttime .
-.It Fl f Ar pformat
-Parse the specified time using
-.Xr strptime 3
-with a format string of
-.Ar pformat .
 .It Fl j
 Parse the provided date and time and display the result without changing
 the clock.
@@ -172,10 +166,8 @@ and leap years are handled automatically.
 .Bl -tag -width Ds
 .It Ev TZ
 The time zone to use when parsing or displaying dates.
-It is normally specified as a pathname relative to
-.Pa /usr/share/zoneinfo ,
-though see
-.Xr tzset 3
+See
+.Xr environ 7
 for more information.
 If this variable is not set, the time zone is determined based on
 .Pa /etc/localtime ,
@@ -212,12 +204,6 @@ Set the time to
 without modifying the date:
 .Pp
 .Dl # date 1432
-.Pp
-If the mailing list server located in California
-is being taken offline at 05.45,
-work out what time it will be locally, here in Tokyo:
-.Pp
-.Dl $ TZ=America/Los_Angeles date -j -z Asia/Tokyo 0545
 .Sh SEE ALSO
 .Xr adjtime 2 ,
 .Xr gettimeofday 2 ,
@@ -233,7 +219,7 @@ utility is compliant with the
 specification.
 .Pp
 The flags
-.Op Fl adfjrtz ,
+.Op Fl adjrtz ,
 as well as the conversion specifiers
 .Ql \&%F ,
 .Ql \&%G ,

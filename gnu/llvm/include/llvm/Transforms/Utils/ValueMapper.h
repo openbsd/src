@@ -21,17 +21,9 @@
 
 namespace llvm {
 
-class Constant;
-class Function;
-class GlobalAlias;
-class GlobalVariable;
-class Instruction;
-class MDNode;
-class Metadata;
-class Type;
 class Value;
-
-using ValueToValueMapTy = ValueMap<const Value *, WeakTrackingVH>;
+class Instruction;
+typedef ValueMap<const Value *, WeakTrackingVH> ValueToValueMapTy;
 
 /// This is a class that can be implemented by clients to remap types when
 /// cloning constants and instructions.
@@ -52,10 +44,10 @@ class ValueMaterializer {
   virtual void anchor(); // Out of line method.
 
 protected:
+  ~ValueMaterializer() = default;
   ValueMaterializer() = default;
   ValueMaterializer(const ValueMaterializer &) = default;
   ValueMaterializer &operator=(const ValueMaterializer &) = default;
-  ~ValueMaterializer() = default;
 
 public:
   /// This method can be implemented to generate a mapped Value on demand. For
@@ -99,7 +91,7 @@ enum RemapFlags {
   RF_NullMapMissingGlobalValues = 8,
 };
 
-inline RemapFlags operator|(RemapFlags LHS, RemapFlags RHS) {
+static inline RemapFlags operator|(RemapFlags LHS, RemapFlags RHS) {
   return RemapFlags(unsigned(LHS) | unsigned(RHS));
 }
 

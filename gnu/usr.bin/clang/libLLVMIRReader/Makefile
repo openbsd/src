@@ -1,10 +1,17 @@
-# $OpenBSD: Makefile,v 1.3 2019/03/05 09:44:40 jsg Exp $
+# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:35 espie Exp $
 
 LIB=	LLVMIRReader
+NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/IRReader
 
-SRCS+=	IRReader.cpp
+.include <bsd.own.mk>
+SRCS=	IRReader.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/IRReader
+
+install:
+	@# Nothing here so far ...
+
+.include <bsd.lib.mk>

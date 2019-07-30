@@ -1,4 +1,4 @@
-//===- NaryReassociate.h - Reassociate n-ary expressions --------*- C++ -*-===//
+//===- NaryReassociate.h - Reassociate n-ary expressions ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -81,25 +81,15 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/AssumptionCache.h"
+#include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/IR/Dominators.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/IR/ValueHandle.h"
 
 namespace llvm {
-
-class AssumptionCache;
-class BinaryOperator;
-class DataLayout;
-class DominatorTree;
-class Function;
-class GetElementPtrInst;
-class Instruction;
-class ScalarEvolution;
-class SCEV;
-class TargetLibraryInfo;
-class TargetTransformInfo;
-class Type;
-class Value;
-
 class NaryReassociatePass : public PassInfoMixin<NaryReassociatePass> {
 public:
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
@@ -119,7 +109,6 @@ private:
 
   // Reassociate GEP for better CSE.
   Instruction *tryReassociateGEP(GetElementPtrInst *GEP);
-
   // Try splitting GEP at the I-th index and see whether either part can be
   // CSE'ed. This is a helper function for tryReassociateGEP.
   //
@@ -129,7 +118,6 @@ private:
   //                                      ..., i-th index).
   GetElementPtrInst *tryReassociateGEPAtIndex(GetElementPtrInst *GEP,
                                               unsigned I, Type *IndexedType);
-
   // Given GEP's I-th index = LHS + RHS, see whether &Base[..][LHS][..] or
   // &Base[..][RHS][..] can be CSE'ed and rewrite GEP accordingly.
   GetElementPtrInst *tryReassociateGEPAtIndex(GetElementPtrInst *GEP,
@@ -158,7 +146,6 @@ private:
   // \c CandidateExpr. Returns null if not found.
   Instruction *findClosestMatchingDominator(const SCEV *CandidateExpr,
                                             Instruction *Dominatee);
-
   // GetElementPtrInst implicitly sign-extends an index if the index is shorter
   // than the pointer size. This function returns whether Index is shorter than
   // GEP's pointer size, i.e., whether Index needs to be sign-extended in order
@@ -171,7 +158,6 @@ private:
   ScalarEvolution *SE;
   TargetLibraryInfo *TLI;
   TargetTransformInfo *TTI;
-
   // A lookup table quickly telling which instructions compute the given SCEV.
   // Note that there can be multiple instructions at different locations
   // computing to the same SCEV, so we map a SCEV to an instruction list.  For
@@ -183,7 +169,6 @@ private:
   //     bar(a + b);
   DenseMap<const SCEV *, SmallVector<WeakTrackingVH, 2>> SeenExprs;
 };
-
-} // end namespace llvm
+} // namespace llvm
 
 #endif // LLVM_TRANSFORMS_SCALAR_NARYREASSOCIATE_H

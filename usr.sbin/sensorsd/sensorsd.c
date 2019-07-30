@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.65 2019/05/31 15:55:50 schwarze Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.61 2017/03/20 15:31:23 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -114,6 +114,9 @@ main(int argc, char *argv[])
 	int		 ch, check_period = CHECK_PERIOD;
 	const char	*errstr;
 
+	if (pledge("stdio rpath proc exec", NULL) == -1)
+		err(1, "pledge");
+
 	while ((ch = getopt(argc, argv, "c:df:")) != -1) {
 		switch (ch) {
 		case 'c':
@@ -140,22 +143,13 @@ main(int argc, char *argv[])
 	if (argc > 0)
 		usage();
 
-	if (configfile == NULL)
-		if (asprintf(&configfile, "/etc/sensorsd.conf") == -1)
-			err(1, "out of memory");
-
-	if (unveil(configfile, "r") == -1)
-		err(1, "unveil");
-	if (unveil("/", "x") == -1)
-		err(1, "unveil");
-
-	if (pledge("stdio rpath proc exec", NULL) == -1)
-		err(1, "pledge");
-
 	openlog("sensorsd", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
 	create();
 
+	if (configfile == NULL)
+		if (asprintf(&configfile, "/etc/sensorsd.conf") == -1)
+			err(1, "out of memory");
 	parse_config(configfile);
 
 	if (debug == 0 && daemon(0, 0) == -1)
@@ -693,16 +687,13 @@ print_sensor(enum sensor_type type, int64_t value)
 		snprintf(fbuf, RFBUFSIZ, "%lld", value);
 		break;
 	case SENSOR_DISTANCE:
-		snprintf(fbuf, RFBUFSIZ, "%.3f m", value / 1000000.0);
+		snprintf(fbuf, RFBUFSIZ, "%.2f mm", value / 1000.0);
 		break;
 	case SENSOR_PRESSURE:
 		snprintf(fbuf, RFBUFSIZ, "%.2f Pa", value / 1000.0);
 		break;
 	case SENSOR_ACCEL:
 		snprintf(fbuf, RFBUFSIZ, "%2.4f m/s^2", value / 1000000.0);
-		break;
-	case SENSOR_VELOCITY:
-		snprintf(fbuf, RFBUFSIZ, "%4.3f m/s", value / 1000000.0);
 		break;
 	default:
 		snprintf(fbuf, RFBUFSIZ, "%lld ???", value);
@@ -817,14 +808,13 @@ get_val(char *buf, int upper, enum sensor_type type)
 	case SENSOR_LUX:
 	case SENSOR_FREQ:
 	case SENSOR_ACCEL:
-	case SENSOR_DISTANCE:
-	case SENSOR_VELOCITY:
 		rval = val * 1000 * 1000;
 		break;
 	case SENSOR_TIMEDELTA:
 		rval = val * 1000 * 1000 * 1000;
 		break;
 	case SENSOR_HUMIDITY:
+	case SENSOR_DISTANCE:
 	case SENSOR_PRESSURE:
 		rval = val * 1000.0;
 		break;

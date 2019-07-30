@@ -1,4 +1,4 @@
-/* $OpenBSD: window-client.c,v 1.23 2019/05/28 07:18:42 nicm Exp $ */
+/* $OpenBSD: window-client.c,v 1.14 2018/02/28 08:55:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -25,14 +25,14 @@
 
 #include "tmux.h"
 
-static struct screen	*window_client_init(struct window_mode_entry *,
+static struct screen	*window_client_init(struct window_pane *,
 			     struct cmd_find_state *, struct args *);
-static void		 window_client_free(struct window_mode_entry *);
-static void		 window_client_resize(struct window_mode_entry *, u_int,
+static void		 window_client_free(struct window_pane *);
+static void		 window_client_resize(struct window_pane *, u_int,
 			     u_int);
-static void		 window_client_key(struct window_mode_entry *,
-			     struct client *, struct session *,
-			     struct winlink *, key_code, struct mouse_event *);
+static void		 window_client_key(struct window_pane *,
+			     struct client *, struct session *, key_code,
+			     struct mouse_event *);
 
 #define WINDOW_CLIENT_DEFAULT_COMMAND "detach-client -t '%%'"
 
@@ -40,22 +40,8 @@ static void		 window_client_key(struct window_mode_entry *,
 	"session #{session_name} " \
 	"(#{client_width}x#{client_height}, #{t:client_activity})"
 
-static const struct menu_item window_client_menu_items[] = {
-	{ "Detach", 'd', NULL },
-	{ "Detach Tagged", 'D', NULL },
-	{ "", KEYC_NONE, NULL },
-	{ "Tag", 't', NULL },
-	{ "Tag All", '\024', NULL },
-	{ "Tag None", 'T', NULL },
-	{ "", KEYC_NONE, NULL },
-	{ "Cancel", 'q', NULL },
-
-	{ NULL, KEYC_NONE, NULL }
-};
-
 const struct window_mode window_client_mode = {
 	.name = "client-mode",
-	.default_format = WINDOW_CLIENT_DEFAULT_FORMAT,
 
 	.init = window_client_init,
 	.free = window_client_free,
@@ -81,8 +67,6 @@ struct window_client_itemdata {
 };
 
 struct window_client_modedata {
-	struct window_pane		 *wp;
-
 	struct mode_tree_data		 *data;
 	char				 *format;
 	char				 *command;
@@ -232,61 +216,33 @@ window_client_draw(__unused void *modedata, void *itemdata,
 {
 	struct window_client_itemdata	*item = itemdata;
 	struct client			*c = item->c;
-	struct screen			*s = ctx->s;
 	struct window_pane		*wp;
-	u_int				 cx = s->cx, cy = s->cy, lines, at;
+	u_int				 cx = ctx->s->cx, cy = ctx->s->cy;
 
 	if (c->session == NULL || (c->flags & (CLIENT_DEAD|CLIENT_DETACHING)))
 		return;
 	wp = c->session->curw->window->active;
 
-	lines = status_line_size(c);
-	if (lines >= sy)
-		lines = 0;
-	if (status_at_line(c) == 0)
-		at = lines;
-	else
-		at = 0;
+	screen_write_preview(ctx, &wp->base, sx, sy - 3);
 
-	screen_write_cursormove(ctx, cx, cy + at, 0);
-	screen_write_preview(ctx, &wp->base, sx, sy - 2 - lines);
-
-	if (at != 0)
-		screen_write_cursormove(ctx, cx, cy + 2, 0);
-	else
-		screen_write_cursormove(ctx, cx, cy + sy - 1 - lines, 0);
+	screen_write_cursormove(ctx, cx, cy + sy - 2);
 	screen_write_hline(ctx, sx, 0, 0);
 
-	if (at != 0)
-		screen_write_cursormove(ctx, cx, cy, 0);
+	screen_write_cursormove(ctx, cx, cy + sy - 1);
+	if (c->status.old_status != NULL)
+		screen_write_fast_copy(ctx, c->status.old_status, 0, 0, sx, 1);
 	else
-		screen_write_cursormove(ctx, cx, cy + sy - lines, 0);
-	screen_write_fast_copy(ctx, &c->status.screen, 0, 0, sx, lines);
-}
-
-static void
-window_client_menu(void *modedata, struct client *c, key_code key)
-{
-	struct window_client_modedata	*data = modedata;
-	struct window_pane		*wp = data->wp;
-	struct window_mode_entry	*wme;
-
-	wme = TAILQ_FIRST(&wp->modes);
-	if (wme == NULL || wme->data != modedata)
-		return;
-	window_client_key(wme, c, NULL, NULL, key, NULL);
+		screen_write_fast_copy(ctx, &c->status.status, 0, 0, sx, 1);
 }
 
 static struct screen *
-window_client_init(struct window_mode_entry *wme,
-    __unused struct cmd_find_state *fs, struct args *args)
+window_client_init(struct window_pane *wp, __unused struct cmd_find_state *fs,
+    struct args *args)
 {
-	struct window_pane		*wp = wme->wp;
 	struct window_client_modedata	*data;
 	struct screen			*s;
 
-	wme->data = data = xcalloc(1, sizeof *data);
-	data->wp = wp;
+	wp->modedata = data = xcalloc(1, sizeof *data);
 
 	if (args == NULL || !args_has(args, 'F'))
 		data->format = xstrdup(WINDOW_CLIENT_DEFAULT_FORMAT);
@@ -298,8 +254,7 @@ window_client_init(struct window_mode_entry *wme,
 		data->command = xstrdup(args->argv[0]);
 
 	data->data = mode_tree_start(wp, args, window_client_build,
-	    window_client_draw, NULL, window_client_menu, data,
-	    window_client_menu_items, window_client_sort_list,
+	    window_client_draw, NULL, data, window_client_sort_list,
 	    nitems(window_client_sort_list), &s);
 	mode_tree_zoom(data->data, args);
 
@@ -310,9 +265,9 @@ window_client_init(struct window_mode_entry *wme,
 }
 
 static void
-window_client_free(struct window_mode_entry *wme)
+window_client_free(struct window_pane *wp)
 {
-	struct window_client_modedata	*data = wme->data;
+	struct window_client_modedata	*data = wp->modedata;
 	u_int				 i;
 
 	if (data == NULL)
@@ -331,9 +286,9 @@ window_client_free(struct window_mode_entry *wme)
 }
 
 static void
-window_client_resize(struct window_mode_entry *wme, u_int sx, u_int sy)
+window_client_resize(struct window_pane *wp, u_int sx, u_int sy)
 {
-	struct window_client_modedata	*data = wme->data;
+	struct window_client_modedata	*data = wp->modedata;
 
 	mode_tree_resize(data->data, sx, sy);
 }
@@ -356,12 +311,10 @@ window_client_do_detach(void* modedata, void *itemdata,
 }
 
 static void
-window_client_key(struct window_mode_entry *wme, struct client *c,
-    __unused struct session *s, __unused struct winlink *wl, key_code key,
-    struct mouse_event *m)
+window_client_key(struct window_pane *wp, struct client *c,
+    __unused struct session *s, key_code key, struct mouse_event *m)
 {
-	struct window_pane		*wp = wme->wp;
-	struct window_client_modedata	*data = wme->data;
+	struct window_client_modedata	*data = wp->modedata;
 	struct mode_tree_data		*mtd = data->data;
 	struct window_client_itemdata	*item;
 	int				 finished;

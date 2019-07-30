@@ -26,9 +26,6 @@
 #else
 #  if defined(I_SYSLOG) || PATCHLEVEL < 6
 #    include <syslog.h>
-#  else
-#    undef HAVE_SYSLOG
-#    include "fallback/syslog.h"
 #  endif
 #endif
 

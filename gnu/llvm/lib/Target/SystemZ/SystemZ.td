@@ -58,7 +58,7 @@ include "SystemZInstrHFP.td"
 include "SystemZInstrDFP.td"
 include "SystemZInstrSystem.td"
 
-def SystemZInstrInfo : InstrInfo { let guessInstructionProperties = 0; }
+def SystemZInstrInfo : InstrInfo {}
 
 //===----------------------------------------------------------------------===//
 // Assembly parser
@@ -75,5 +75,4 @@ def SystemZAsmParser : AsmParser {
 def SystemZ : Target {
   let InstructionSet = SystemZInstrInfo;
   let AssemblyParsers = [SystemZAsmParser];
-  let AllowRegisterRenaming = 1;
 }

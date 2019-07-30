@@ -1,4 +1,4 @@
-/* $OpenBSD: copystr.S,v 1.4 2018/08/12 17:15:10 mortimer Exp $ */
+/* $OpenBSD: copystr.S,v 1.3 2017/02/15 21:39:50 patrick Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -35,7 +35,6 @@
  * Copy string from x0 to x1
  */
 ENTRY(copystr)
-	RETGUARD_SETUP(copystr, x15)
 	mrs	x6, tpidr_el1			// load curcpu
 	ldr	x6, [x6, #(CI_CURPCB)]
 	ldr	x5, [x6, #(PCB_ONFAULT)]
@@ -66,7 +65,6 @@ ENTRY(copystr)
 	str	x8, [x3]
 2:
 	str	x5, [x6, #(PCB_ONFAULT)]
-	RETGUARD_CHECK(copystr, x15)
 	ret
 
 /*
@@ -78,7 +76,6 @@ ENTRY(copystr)
  * Copy string from user space to kernel space
  */
 ENTRY(copyinstr)
-	RETGUARD_SETUP(copystr, x15)
 	mrs	x6, tpidr_el1			// load curcpu
 	ldr	x6, [x6, #(CI_CURPCB)]
 	ldr	x5, [x6, #(PCB_ONFAULT)]
@@ -107,7 +104,6 @@ ENTRY(copyinstr)
  * Copy string from kernel space to user space
  */
 ENTRY(copyoutstr)
-	RETGUARD_SETUP(copystr, x15)
 	mrs	x6, tpidr_el1			// load curcpu
 	ldr	x6, [x6, #(CI_CURPCB)]
 	ldr	x5, [x6, #(PCB_ONFAULT)]

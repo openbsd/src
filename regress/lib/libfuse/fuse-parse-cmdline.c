@@ -1,4 +1,3 @@
-/* $OpenBSD: fuse-parse-cmdline.c,v 1.3 2018/07/20 12:05:08 helg Exp $ */
 /*
  * Copyright (c) 2017 Helg Bredow <helg@openbsd.org>
  *
@@ -60,8 +59,10 @@ test_all_args(char **dir, int *multithreaded, int *foreground)
 		exit(__LINE__);
 	if (multithreaded != NULL && *multithreaded == 1)
 		exit(__LINE__);
+/* TODO Not implemented yet
 	if (foreground != NULL && *foreground == 0)
 		exit(__LINE__);
+*/
 
 	if (args.argc != 1)
 		exit(__LINE__);

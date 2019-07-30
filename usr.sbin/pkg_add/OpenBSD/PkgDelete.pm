@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.47 2019/06/09 09:36:24 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.39 2018/02/27 22:46:53 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -103,6 +103,18 @@ sub handle_options
 	$state->SUPER::handle_options('X',
 	    '[-acimnqsVvXx] [-B pkg-destdir] [-D name[=value]] [pkg-name ...]');
 
+	my $base = $state->opt('B') // $ENV{'PKG_DESTDIR'} // '';
+	if ($base ne '') {
+		$base.='/' unless $base =~ m/\/$/o;
+	}
+	$ENV{'PKG_DESTDIR'} = $base;
+
+	$state->{destdir} = $base;
+	if ($base eq '') {
+	    $state->{destdirname} = '';
+	} else {
+	    $state->{destdirname} = '${PKG_DESTDIR}';
+	}
 	$state->{exclude} = $state->opt('X');
 }
 
@@ -129,13 +141,6 @@ sub deleteset_from_location
 {
 	my ($self, $location) = @_;
 	return $self->deleteset->add_older(OpenBSD::Handle->from_location($location));
-}
-
-sub solve_dependency
-{
-	my ($self, $solver, $dep, $package) = @_;
-	# simpler dependency solving
-	return $solver->find_dep_in_installed($self, $dep);
 }
 
 package OpenBSD::DeleteSet;
@@ -244,10 +249,10 @@ sub really_remove
 		$state->status->what("Deleting");
 	}
 	$set->setup_header($state);
-	for my $pkg ($set->older) {
-		$set->setup_header($state, $pkg);
-		$state->log->set_context('-'.$pkg->pkgname);
-		OpenBSD::Delete::delete_handle($pkg, $state);
+	for my $pkgname ($set->older_names) {
+		$set->setup_header($state, $set->{older}{$pkgname});
+		$state->log->set_context('-'.$pkgname);
+		OpenBSD::Delete::delete_package($pkgname, $state);
 	}
 	$state->progress->next($state->ntogo);
 	$state->syslog("Removed #1", $set->print);
@@ -289,7 +294,7 @@ sub process_set
 		}
 		my $r = OpenBSD::RequiredBy->new($pkgname);
 		for my $pkg ($r->list) {
-			next if $set->{older}{$pkg};
+			next if $set->{older}->{$pkg};
 			my $f = $state->tracker->find($pkg);
 			if (defined $f) {
 				$todo->{$pkg} = $f;
@@ -306,7 +311,7 @@ sub process_set
 			}
 		}
 		if (keys %$bad2 > 0) {
-			$state->errsay("#1 depends on non-existent #2",
+			$state->errsay("#1 depends on non-existant #2",
 			    $set->print, join(' ', sort keys %$bad2));
 			if (fix_bad_dependencies($state)) {
 				for my $pkg (keys %$bad2) {
@@ -348,25 +353,19 @@ sub process_set
 		$state->build_deptree($set, values %$todo);
 		return (values %$todo, $set);
 	}
-	for my $pkg ($set->older) {
-		$pkg->complete_old;
-		if (!defined $pkg->plist) {
-			$state->say("Corrupt set #1, run pkg_check",
-			    $set->print);
-			$set->cleanup(OpenBSD::Handle::CANT_DELETE);
-			$state->tracker->cant($set);
-			return ();
-		}
-		if ($state->{do_automatic} &&
-		    $pkg->plist->has('manual-installation')) {
-			$state->say("Won't delete manually installed #1",
-			    $set->print) if $state->verbose;
-			$set->cleanup(OpenBSD::Handle::CANT_DELETE);
-			$state->tracker->cant($set);
-			return ();
-		}
-		if (defined $pkg->plist->{tags}) {
-			if (!$set->solver->solve_tags($state)) {
+	if ($state->{do_automatic}) {
+		for my $pkg  ($set->older) {
+			$pkg->complete_old;
+			if (!defined $pkg->plist) {
+				$state->say("Corrupt set #1, run pkg_check",
+				    $set->print);
+				$set->cleanup(OpenBSD::Handle::CANT_DELETE);
+				$state->tracker->cant($set);
+				return ();
+			}
+			if ($pkg->plist->has('manual-installation')) {
+				$state->say("Won't delete manually installed #1",
+				    $set->print) if $state->verbose;
 				$set->cleanup(OpenBSD::Handle::CANT_DELETE);
 				$state->tracker->cant($set);
 				return ();

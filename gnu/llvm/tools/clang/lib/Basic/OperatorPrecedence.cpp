@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// Defines and computes precedence levels for binary/ternary operators.
+/// \brief Defines and computes precedence levels for binary/ternary operators.
 ///
 //===----------------------------------------------------------------------===//
 #include "clang/Basic/OperatorPrecedence.h"
@@ -63,7 +63,6 @@ prec::Level getBinOpPrecedence(tok::TokenKind Kind, bool GreaterThanIsOperator,
   case tok::lessequal:
   case tok::less:
   case tok::greaterequal:         return prec::Relational;
-  case tok::spaceship:            return prec::Spaceship;
   case tok::lessless:             return prec::Shift;
   case tok::plus:
   case tok::minus:                return prec::Additive;

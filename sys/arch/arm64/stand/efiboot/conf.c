@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 2019/04/10 04:19:31 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.12 2018/02/06 20:35:21 naddy Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -27,31 +27,20 @@
  */
 
 #include <sys/param.h>
-#include <sys/queue.h>
-#include <sys/disklabel.h>
 #include <lib/libsa/stand.h>
 #include <lib/libsa/tftp.h>
 #include <lib/libsa/ufs.h>
 #include <dev/cons.h>
 
-#include <dev/biovar.h>
-#include <dev/softraidvar.h>
-
-#include <efi.h>
-
-#include "disk.h"
 #include "efiboot.h"
 #include "efidev.h"
 #include "efipxe.h"
-#include "softraid_arm64.h"
 
-const char version[] = "0.16";
+const char version[] = "0.11";
 int	debug = 0;
 
 struct fs_ops file_system[] = {
-	{ mtftp_open,  mtftp_close,  mtftp_read,  mtftp_write,  mtftp_seek,
-	  mtftp_stat,  mtftp_readdir   },
-	{ efitftp_open,tftp_close,   tftp_read,   tftp_write,   tftp_seek,
+	{ tftp_open,   tftp_close,   tftp_read,   tftp_write,   tftp_seek,
 	  tftp_stat,   tftp_readdir   },
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
 	  ufs_stat,    ufs_readdir    },
@@ -61,7 +50,6 @@ int nfsys = nitems(file_system);
 struct devsw	devsw[] = {
 	{ "tftp", tftpstrategy, tftpopen, tftpclose, tftpioctl },
 	{ "sd", efistrategy, efiopen, eficlose, efiioctl },
-	{ "sr", srstrategy, sropen, srclose, srioctl },
 };
 int ndevs = nitems(devsw);
 
@@ -70,8 +58,3 @@ struct consdev constab[] = {
 	{ NULL }
 };
 struct consdev *cn_tab;
-
-struct netif_driver *netif_drivers[] = {
-	&efinet_driver,
-};
-int n_netif_drivers = nitems(netif_drivers);

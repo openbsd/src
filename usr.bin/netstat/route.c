@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.103 2019/05/10 01:29:31 guenther Exp $	*/
+/*	$OpenBSD: route.c,v 1.101 2016/09/15 01:01:07 dlg Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/route.h>
 #include <netinet/ip_ipsp.h>
@@ -54,90 +55,95 @@
 
 #include "netstat.h"
 
+/* alignment constraint for routing socket */
+#define ROUNDUP(a) \
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
+
+struct radix_node_head ***rt_head;
+struct radix_node_head ***rnt;
+struct radix_node_head *rt_tables[AF_MAX+1];	/* provides enough space */
+u_int8_t		  af2rtafidx[AF_MAX+1];
+
 static union {
 	struct		sockaddr u_sa;
 	u_int32_t	u_data[64];
 	int		u_dummy;	/* force word-alignment */
 } pt_u;
 
+int	do_rtent = 0;
 struct	rtentry rtentry;
+struct	radix_node rnode;
+struct	radix_mask rmask;
 
 static struct sockaddr *kgetsa(struct sockaddr *);
-static struct sockaddr *plentosa(sa_family_t, int, struct sockaddr *);
-static struct art_node *getdefault(struct art_table *);
-static void p_table(struct art_table *);
-static void p_artnode(struct art_node *);
+static void p_tree(struct radix_node *);
+static void p_rtnode(void);
+static void p_rtflags(u_char);
 static void p_krtentry(struct rtentry *);
 
 /*
  * Print routing tables.
  */
 void
-routepr(u_long afmap, u_long af2idx, u_long af2idx_max, u_int tableid)
+routepr(u_long rtree, u_long mtree, u_long af2idx, u_long rtbl_id_max,
+    u_int tableid)
 {
-	struct art_root ar;
-	struct art_node *node;
-	struct srp *afm_head, *afm;
-	struct {
-		unsigned int	limit;
-		void	      **tbl;
-	} map;
-	void **tbl;
-	int i;
-	uint8_t af2i[AF_MAX+1];
-	uint8_t af2i_max;
+	struct radix_node_head *rnh, head;
+	int i, idxmax = 0;
+	u_int rtidxmax;
 
 	printf("Routing tables\n");
 
-	if (afmap == 0 || af2idx == 0 || af2idx_max == 0) {
-		printf("symbol not in namelist\n");
+	if (rtree == 0 || af2idx == 0) {
+		printf("rt_tables: symbol not in namelist\n");
 		return;
 	}
 
-	kread(afmap, &afm_head, sizeof(afm_head));
-	kread(af2idx, af2i, sizeof(af2i));
-	kread(af2idx_max, &af2i_max, sizeof(af2i_max));
+	kread((u_long)rtree, &rt_head, sizeof(rt_head));
+	kread((u_long)rtbl_id_max, &rtidxmax, sizeof(rtidxmax));
+	kread((long)af2idx, &af2rtafidx, sizeof(af2rtafidx));
 
-	if ((afm = calloc(af2i_max + 1, sizeof(*afm))) == NULL)
-		err(1, NULL);
-
-	kread((u_long)afm_head, afm, (af2i_max + 1) * sizeof(*afm));
-
-	for (i = 1; i <= AF_MAX; i++) {
-		if (af != AF_UNSPEC && af != i)
-			continue;
-		if (af2i[i] == 0 || afm[af2i[i]].ref == NULL)
-			continue;
-
-		kread((u_long)afm[af2i[i]].ref, &map, sizeof(map));
-		if (tableid >= map.limit)
-			continue;
-
-		if ((tbl = calloc(map.limit, sizeof(*tbl))) == NULL)
-			err(1, NULL);
-
-		kread((u_long)map.tbl, tbl, map.limit * sizeof(*tbl));
-		if (tbl[tableid] == NULL)
-			continue;
-
-		kread((u_long)tbl[tableid], &ar, sizeof(ar));
-
-		free(tbl);
-
-		if (ar.ar_root.ref == NULL)
-			continue;
-
-		pr_family(i);
-		pr_rthdr(i, Aflag);
-
-		node = getdefault(ar.ar_root.ref);
-		if (node != NULL)
-			p_artnode(node);
-
-		p_table(ar.ar_root.ref);
+	for (i = 0; i <= AF_MAX; i++) {
+		if (af2rtafidx[i] > idxmax)
+			idxmax = af2rtafidx[i];
 	}
 
-	free(afm);
+	if ((rnt = calloc(rtidxmax + 1, sizeof(struct radix_node_head **))) ==
+	    NULL)
+		err(1, NULL);
+
+	kread((u_long)rt_head, rnt, (rtidxmax + 1) *
+	    sizeof(struct radix_node_head **));
+	if (tableid > rtidxmax || rnt[tableid] == NULL) {
+		printf("Bad table %u\n", tableid);
+		return;
+	}
+	kread((u_long)rnt[tableid], rt_tables, (idxmax + 1) * sizeof(rnh));
+
+	for (i = 0; i <= AF_MAX; i++) {
+		if (i == AF_UNSPEC) {
+			if (Aflag && (af == AF_UNSPEC || af == 0xff)) {
+				kread(mtree, &rnh, sizeof(rnh));
+				kread((u_long)rnh, &head, sizeof(head));
+				printf("Netmasks:\n");
+				p_tree(head.rnh_treetop);
+			}
+			continue;
+		}
+		if (af2rtafidx[i] == 0)
+			/* no table for this AF */
+			continue;
+		if ((rnh = rt_tables[af2rtafidx[i]]) == NULL)
+			continue;
+		kread((u_long)rnh, &head, sizeof(head));
+		if (af == AF_UNSPEC || af == i) {
+			pr_family(i);
+			do_rtent = 1;
+			pr_rthdr(i, Aflag);
+			p_tree(head.rnh_treetop);
+		}
+	}
 }
 
 static struct sockaddr *
@@ -150,128 +156,106 @@ kgetsa(struct sockaddr *dst)
 	return (&pt_u.u_sa);
 }
 
-static struct sockaddr *
-plentosa(sa_family_t af, int plen, struct sockaddr *sa_mask)
-{
-	struct sockaddr_in *sin = (struct sockaddr_in *)sa_mask;
-	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa_mask;
-	uint8_t *p;
-	int i;
-
-	if (plen < 0)
-		return (NULL);
-
-	memset(sa_mask, 0, sizeof(struct sockaddr_storage));
-
-	switch (af) {
-	case AF_INET:
-		if (plen > 32)
-			return (NULL);
-		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof(struct sockaddr_in);
-		memset(&sin->sin_addr, 0, sizeof(sin->sin_addr));
-		p = (uint8_t *)&sin->sin_addr;
-		break;
-	case AF_INET6:
-		if (plen > 128)
-			return (NULL);
-		sin6->sin6_family = AF_INET6;
-		sin6->sin6_len = sizeof(struct sockaddr_in6);
-		memset(&sin6->sin6_addr.s6_addr, 0, sizeof(sin6->sin6_addr.s6_addr));
-		p = sin6->sin6_addr.s6_addr;
-		break;
-	default:
-		return (NULL);
-	}
-
-	for (i = 0; i < plen / 8; i++)
-		p[i] = 0xff;
-	if (plen % 8)
-		p[i] = (0xff00 >> (plen % 8)) & 0xff;
-
-	return (sa_mask);
-}
-
-static struct art_node *
-getdefault(struct art_table *at)
-{
-	struct art_node *node;
-	struct art_table table;
-	union {
-		struct srp		 node;
-		unsigned long		 count;
-	} *heap;
-
-	kread((u_long)at, &table, sizeof(table));
-	heap = calloc(1, AT_HEAPSIZE(table.at_bits));
-	kread((u_long)table.at_heap, heap, AT_HEAPSIZE(table.at_bits));
-
-	node = heap[1].node.ref;
-
-	free(heap);
-
-	return (node);
-}
-
 static void
-p_table(struct art_table *at)
+p_tree(struct radix_node *rn)
 {
-	struct art_node *next, *node;
-	struct art_table *nat, table;
-	union {
-		struct srp		 node;
-		unsigned long		 count;
-	} *heap;
-	int i, j;
 
-	kread((u_long)at, &table, sizeof(table));
-	heap = calloc(1, AT_HEAPSIZE(table.at_bits));
-	kread((u_long)table.at_heap, heap, AT_HEAPSIZE(table.at_bits));
-
-	for (j = 1; j < table.at_minfringe; j += 2) {
-		for (i = (j > 2) ? j : 2; i < table.at_minfringe; i <<= 1) {
-			next = heap[i >> 1].node.ref;
-			node = heap[i].node.ref;
-			if (node != NULL && node != next)
-				p_artnode(node);
-		}
-	}
-
-	for (i = table.at_minfringe; i < table.at_minfringe << 1; i++) {
-		next = heap[i >> 1].node.ref;
-		node = heap[i].node.ref;
-		if (!ISLEAF(node)) {
-			nat = SUBTABLE(node);
-			node = getdefault(nat);
-		} else
-			nat = NULL;
-
-		if (node != NULL && node != next)
-			p_artnode(node);
-
-		if (nat != NULL)
-			p_table(nat);
-	}
-
-	free(heap);
-}
-
-static void
-p_artnode(struct art_node *an)
-{
-	struct art_node node;
-	struct rtentry *rt;
-
-	kread((u_long)an, &node, sizeof(node));
-	rt = node.an_rtlist.sl_head.ref;
-
-	while (rt != NULL) {
-		kread((u_long)rt, &rtentry, sizeof(rtentry));
+again:
+	kread((u_long)rn, &rnode, sizeof(rnode));
+	if (rnode.rn_b < 0) {
 		if (Aflag)
-			printf("%-16p ", rt);
-		p_krtentry(&rtentry);
-		rt = rtentry.rt_next.se_next.ref;
+			printf("%-16p ", rn);
+		if (rnode.rn_flags & RNF_ROOT) {
+			if (Aflag)
+				printf("(root node)%s",
+				    rnode.rn_dupedkey ? " =>\n" : "\n");
+		} else if (do_rtent) {
+			kread((u_long)rn, &rtentry, sizeof(rtentry));
+			p_krtentry(&rtentry);
+			if (Aflag)
+				p_rtnode();
+		} else {
+			p_sockaddr(kgetsa((struct sockaddr *)rnode.rn_key),
+			    0, 0, 44);
+			putchar('\n');
+		}
+		if ((rn = rnode.rn_dupedkey))
+			goto again;
+	} else {
+		if (Aflag && do_rtent) {
+			printf("%-16p ", rn);
+			p_rtnode();
+		}
+		rn = rnode.rn_r;
+		p_tree(rnode.rn_l);
+		p_tree(rn);
 	}
+}
+
+static void
+p_rtflags(u_char flags)
+{
+	putchar('<');
+	if (flags & RNF_NORMAL)
+		putchar('N');
+	if (flags & RNF_ROOT)
+		putchar('R');
+	if (flags & RNF_ACTIVE)
+		putchar('A');
+	if (flags & ~(RNF_NORMAL | RNF_ROOT | RNF_ACTIVE))
+		printf("/0x%02x", flags);
+	putchar('>');
+}
+
+char	nbuf[25];
+
+static void
+p_rtnode(void)
+{
+	struct radix_mask *rm = rnode.rn_mklist;
+
+	if (rnode.rn_b < 0) {
+		snprintf(nbuf, sizeof nbuf, " => %p", rnode.rn_dupedkey);
+		printf("\t  (%p)%s", rnode.rn_p, rnode.rn_dupedkey ? nbuf : "");
+		if (rnode.rn_mask) {
+			printf(" mask ");
+			p_sockaddr(kgetsa((struct sockaddr *)rnode.rn_mask),
+			    0, 0, -1);
+		} else if (rm == NULL) {
+			putchar('\n');
+			return;
+		}
+	} else {
+		snprintf(nbuf, sizeof nbuf, "(%d)", rnode.rn_b);
+		printf("%6.6s (%p) %16p : %16p", nbuf,
+		    rnode.rn_p, rnode.rn_l, rnode.rn_r);
+	}
+
+	putchar(' ');
+	p_rtflags(rnode.rn_flags);
+
+	while (rm) {
+		kread((u_long)rm, &rmask, sizeof(rmask));
+		snprintf(nbuf, sizeof nbuf, " %d refs, ", rmask.rm_refs);
+		printf("\n\tmk = %p {(%d),%s", rm, -1 - rmask.rm_b,
+		    rmask.rm_refs ? nbuf : " ");
+		p_rtflags(rmask.rm_flags);
+		printf(", ");
+		if (rmask.rm_flags & RNF_NORMAL) {
+			struct radix_node rnode_aux;
+
+			printf("leaf = %p ", rmask.rm_leaf);
+			kread((u_long)rmask.rm_leaf, &rnode_aux, sizeof(rnode_aux));
+			p_sockaddr(kgetsa((struct sockaddr *)rnode_aux.rn_mask),
+			    0, 0, -1);
+		} else
+			p_sockaddr(kgetsa((struct sockaddr *)rmask.rm_mask),
+			    0, 0, -1);
+		putchar('}');
+		if ((rm = rmask.rm_mklist))
+			printf(" ->");
+	}
+	putchar('\n');
 }
 
 static void
@@ -290,21 +274,28 @@ p_krtentry(struct rtentry *rt)
 		return;
 	}
 
-	mask = plentosa(sa->sa_family, rt_plen(rt), mask);
+	if (rt_mask(rt)) {
+		bcopy(kgetsa(rt_mask(rt)), mask, sizeof(struct sockaddr));
+		if (sa->sa_len > sizeof(struct sockaddr))
+			bcopy(kgetsa(rt_mask(rt)), mask, sa->sa_len);
+	} else
+		mask = 0;
 
 	p_addr(sa, mask, rt->rt_flags);
 	p_gwaddr(kgetsa(rt->rt_gateway), sa->sa_family);
 	p_flags(rt->rt_flags, "%-6.6s ");
-	printf("%5u %8lld ", rt->rt_refcnt - 1, rt->rt_use);
+	printf("%5u %8lld ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)
 		printf("%5u ", rt->rt_rmx.rmx_mtu);
 	else
 		printf("%5s ", "-");
 	putchar((rt->rt_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
-	printf("  %2d", rt->rt_priority & RTP_MASK);
+	printf("  %2d", rt->rt_priority);
 
-	if (rt->rt_ifidx != 0)
-		printf(" if%d", rt->rt_ifidx);
+	if (rt->rt_ifidx != 0) {
+		printf(" if%d%s", rt->rt_ifidx,
+		    rt->rt_nodes[0].rn_dupedkey ? " =>" : "");
+	}
 	putchar('\n');
 	if (vflag)
 		printf("\texpire   %10lld%c\n",

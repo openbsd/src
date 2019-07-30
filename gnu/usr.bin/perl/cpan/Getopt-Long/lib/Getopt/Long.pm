@@ -4,24 +4,23 @@
 # Author          : Johan Vromans
 # Created On      : Tue Sep 11 15:00:12 1990
 # Last Modified By: Johan Vromans
-# Last Modified On: Sat May 27 12:11:39 2017
-# Update Count    : 1715
+# Last Modified On: Thu Oct  8 14:57:49 2015
+# Update Count    : 1697
 # Status          : Released
 
 ################ Module Preamble ################
 
+package Getopt::Long;
+
 use 5.004;
 
 use strict;
-use warnings;
-
-package Getopt::Long;
 
 use vars qw($VERSION);
-$VERSION        =  2.50;
+$VERSION        =  2.48;
 # For testing versions only.
 use vars qw($VERSION_STRING);
-$VERSION_STRING = "2.50";
+$VERSION_STRING = "2.48";
 
 use Exporter;
 use vars qw(@ISA @EXPORT @EXPORT_OK);
@@ -1046,8 +1045,7 @@ sub FindOption ($$$$$) {
 	# Complete the option name, if appropriate.
 	if ( @hits == 1 && $hits[0] ne $opt ) {
 	    $tryopt = $hits[0];
-	    $tryopt = lc ($tryopt)
-	      if $ignorecase > (($bundling && length($tryopt) == 1) ? 1 : 0);
+	    $tryopt = lc ($tryopt) if $ignorecase;
 	    print STDERR ("=> option \"$opt\" -> \"$tryopt\"\n")
 		if $debug;
 	}
@@ -1112,23 +1110,10 @@ sub FindOption ($$$$$) {
 
     # Check if there is an option argument available.
     if ( $gnu_compat ) {
-	my $optargtype = 0; # none, 1 = empty, 2 = nonempty, 3 = aux
-	if ( defined($optarg) ) {
-	    $optargtype = (length($optarg) == 0) ? 1 : 2;
-	}
-	elsif ( defined $rest || @$argv > 0 ) {
-	    # GNU getopt_long() does not accept the (optional)
-	    # argument to be passed to the option without = sign.
-	    # We do, since not doing so breaks existing scripts.
-	    $optargtype = 3;
-	}
-	if(($optargtype == 0) && !$mand) {
-	    my $val
-	      = defined($ctl->[CTL_DEFAULT]) ? $ctl->[CTL_DEFAULT]
-	      : $type eq 's'                 ? ''
-	      :                                0;
-	    return (1, $opt, $ctl, $val);
-	}
+	my $optargtype = 0; # 0 = none, 1 = empty, 2 = nonempty
+	$optargtype = ( !defined($optarg) ? 0 : ( (length($optarg) == 0) ? 1 : 2 ) );
+	return (1, $opt, $ctl, undef)
+	  if (($optargtype == 0) && !$mand);
 	return (1, $opt, $ctl, $type eq 's' ? '' : 0)
 	  if $optargtype == 1;  # --foo=  -> return nothing
     }
@@ -1466,7 +1451,7 @@ sub VersionMessage(@) {
 
     my $v = $main::VERSION;
     my $fh = $pa->{-output} ||
-      ( ($pa->{-exitval} eq "NOEXIT" || $pa->{-exitval} < 2) ? \*STDOUT : \*STDERR );
+      ($pa->{-exitval} eq "NOEXIT" || $pa->{-exitval} < 2) ? \*STDOUT : \*STDERR;
 
     print $fh (defined($pa->{-message}) ? $pa->{-message} : (),
 	       $0, defined $v ? " version $v" : (),
@@ -1768,12 +1753,12 @@ destination for the option:
     GetOptions ("library=s" => \@libfiles);
 
 Alternatively, you can specify that the option can have multiple
-values by adding a "@", and pass a reference to a scalar as the
+values by adding a "@", and pass a scalar reference as the
 destination:
 
     GetOptions ("library=s@" => \$libfiles);
 
-Used with the example above, C<@libfiles> c.q. C<@$libfiles> would
+Used with the example above, C<@libfiles> (or C<@$libfiles>) would
 contain two strings upon completion: C<"lib/stdlib"> and
 C<"lib/extlib">, in that order. It is also possible to specify that
 only integer or floating point numbers are acceptable values.
@@ -2337,14 +2322,11 @@ do. Without C<gnu_compat>, C<--opt=> gives an error. With C<gnu_compat>,
 C<--opt=> will give option C<opt> and empty value.
 This is the way GNU getopt_long() does it.
 
-Note that C<--opt value> is still accepted, even though GNU
-getopt_long() doesn't.
-
 =item gnu_getopt
 
 This is a short way of setting C<gnu_compat> C<bundling> C<permute>
 C<no_getopt_compat>. With C<gnu_getopt>, command line handling should be
-reasonably compatible with GNU getopt_long().
+fully compatible with GNU getopt_long().
 
 =item require_order
 

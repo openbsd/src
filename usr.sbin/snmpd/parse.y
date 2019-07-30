@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.55 2019/06/11 05:36:32 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.45 2017/08/20 07:03:45 tb Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -61,10 +61,6 @@ static struct file {
 	TAILQ_ENTRY(file)	 entry;
 	FILE			*stream;
 	char			*name;
-	size_t			 ungetpos;
-	size_t			 ungetsize;
-	u_char			*ungetbuf;
-	int			 eof_reached;
 	int			 lineno;
 	int			 errors;
 } *file, *topfile;
@@ -78,9 +74,8 @@ int		 yyerror(const char *, ...)
     __attribute__((__nonnull__ (1)));
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
-int		 igetc(void);
 int		 lgetc(int);
-void		 lungetc(int);
+int		 lungetc(int);
 int		 findeol(void);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
@@ -104,9 +99,9 @@ struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
 int		 host_dns(const char *, struct addresslist *,
 		    int, in_port_t, struct ber_oid *, char *,
-		    struct address *, int);
+		    struct address *);
 int		 host(const char *, struct addresslist *,
-		    int, in_port_t, struct ber_oid *, char *, char *, int);
+		    int, in_port_t, struct ber_oid *, char *, char *);
 
 typedef struct {
 	union {
@@ -133,12 +128,12 @@ typedef struct {
 %token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES RTFILTER
 %token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
 %token	SECLEVEL NONE AUTH ENC USER AUTHKEY ENCKEY ERROR DISABLED
-%token	SOCKET RESTRICTED AGENTX HANDLE DEFAULT SRCADDR TCP UDP
+%token	SOCKET RESTRICTED AGENTX HANDLE DEFAULT SRCADDR
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostcmn
 %type	<v.string>	srcaddr
-%type	<v.number>	optwrite yesno seclevel socktype proto
+%type	<v.number>	optwrite yesno seclevel socktype
 %type	<v.data>	objtype cmd
 %type	<v.oid>		oid hostoid trapoid
 %type	<v.auth>	auth
@@ -177,8 +172,6 @@ varset		: STRING '=' STRING	{
 				if (isspace((unsigned char)*s)) {
 					yyerror("macro name cannot contain "
 					    "whitespace");
-					free($1);
-					free($3);
 					YYERROR;
 				}
 			}
@@ -204,9 +197,9 @@ yesno		:  STRING			{
 		}
 		;
 
-main		: LISTEN ON STRING proto	{
+main		: LISTEN ON STRING		{
 			if (host($3, &conf->sc_addresses, 16, SNMPD_PORT, NULL,
-			    NULL, NULL, $4) <= 0) {
+			    NULL, NULL) <= 0) {
 				yyerror("invalid ip address: %s", $3);
 				free($3);
 				YYERROR;
@@ -449,7 +442,7 @@ srcaddr		: /* empty */				{ $$ = NULL; }
 
 hostdef		: STRING hostoid hostcmn srcaddr	{
 			if (host($1, hlist, 1,
-			    SNMPD_TRAPPORT, $2, $3, $4, IPPROTO_UDP) <= 0) {
+			    SNMPD_TRAPPORT, $2, $3, $4) <= 0) {
 				yyerror("invalid host: %s", $1);
 				free($1);
 				YYERROR;
@@ -500,18 +493,6 @@ auth		: STRING			{
 			else if (strcasecmp($1, "hmac-sha1") == 0 ||
 			     strcasecmp($1, "hmac-sha1-96") == 0)
 				$$ = AUTH_SHA1;
-			else if (strcasecmp($1, "hmac-sha224") == 0 ||
-			    strcasecmp($1, "usmHMAC128SHA224AuthProtocol") == 0)
-				$$ = AUTH_SHA224;
-			else if (strcasecmp($1, "hmac-sha256") == 0 ||
-			    strcasecmp($1, "usmHMAC192SHA256AuthProtocol") == 0)
-				$$ = AUTH_SHA256;
-			else if (strcasecmp($1, "hmac-sha384") == 0 ||
-			    strcasecmp($1, "usmHMAC256SHA384AuthProtocol") == 0)
-				$$ = AUTH_SHA384;
-			else if (strcasecmp($1, "hmac-sha512") == 0 ||
-			    strcasecmp($1, "usmHMAC384SHA512AuthProtocol") == 0)
-				$$ = AUTH_SHA512;
 			else {
 				yyerror("syntax error, bad auth hmac");
 				free($1);
@@ -541,11 +522,6 @@ enc		: STRING			{
 socktype	: RESTRICTED		{ $$ = SOCK_TYPE_RESTRICTED; }
 		| AGENTX		{ $$ = SOCK_TYPE_AGENTX; }
 		| /* nothing */		{ $$ = 0; }
-		;
-
-proto		: /* empty */			{ $$ = IPPROTO_UDP; }
-		| TCP				{ $$ = IPPROTO_TCP; }
-		| UDP				{ $$ = IPPROTO_UDP; }
 		;
 
 cmd		: STRING		{
@@ -658,9 +634,7 @@ lookup(char *s)
 		{ "source-address",	SRCADDR },
 		{ "string",		OCTETSTRING },
 		{ "system",		SYSTEM },
-		{ "tcp",		TCP },
 		{ "trap",		TRAP },
-		{ "udp",		UDP },
 		{ "user",		USER }
 	};
 	const struct keywords	*p;
@@ -674,38 +648,34 @@ lookup(char *s)
 		return (STRING);
 }
 
-#define START_EXPAND	1
-#define DONE_EXPAND	2
+#define MAXPUSHBACK	128
 
-static int	expanding;
-
-int
-igetc(void)
-{
-	int	c;
-
-	while (1) {
-		if (file->ungetpos > 0)
-			c = file->ungetbuf[--file->ungetpos];
-		else c = getc(file->stream);
-
-		if (c == START_EXPAND)
-			expanding = 1;
-		else if (c == DONE_EXPAND)
-			expanding = 0;
-		else
-			break;
-	}
-	return (c);
-}
+u_char	*parsebuf;
+int	 parseindex;
+u_char	 pushback_buffer[MAXPUSHBACK];
+int	 pushback_index = 0;
 
 int
 lgetc(int quotec)
 {
 	int		c, next;
 
+	if (parsebuf) {
+		/* Read character from the parsebuffer instead of input. */
+		if (parseindex >= 0) {
+			c = parsebuf[parseindex++];
+			if (c != '\0')
+				return (c);
+			parsebuf = NULL;
+		} else
+			parseindex++;
+	}
+
+	if (pushback_index)
+		return (pushback_buffer[--pushback_index]);
+
 	if (quotec) {
-		if ((c = igetc()) == EOF) {
+		if ((c = getc(file->stream)) == EOF) {
 			yyerror("reached end of file while parsing quoted string");
 			if (file == topfile || popfile() == EOF)
 				return (EOF);
@@ -714,8 +684,8 @@ lgetc(int quotec)
 		return (c);
 	}
 
-	while ((c = igetc()) == '\\') {
-		next = igetc();
+	while ((c = getc(file->stream)) == '\\') {
+		next = getc(file->stream);
 		if (next != '\n') {
 			c = next;
 			break;
@@ -732,39 +702,28 @@ lgetc(int quotec)
 		c = ' ';
 	}
 
-	if (c == EOF) {
-		/*
-		 * Fake EOL when hit EOF for the first time. This gets line
-		 * count right if last line in included file is syntactically
-		 * invalid and has no newline.
-		 */
-		if (file->eof_reached == 0) {
-			file->eof_reached = 1;
-			return ('\n');
-		}
-		while (c == EOF) {
-			if (file == topfile || popfile() == EOF)
-				return (EOF);
-			c = igetc();
-		}
+	while (c == EOF) {
+		if (file == topfile || popfile() == EOF)
+			return (EOF);
+		c = getc(file->stream);
 	}
 	return (c);
 }
 
-void
+int
 lungetc(int c)
 {
 	if (c == EOF)
-		return;
-
-	if (file->ungetpos >= file->ungetsize) {
-		void *p = reallocarray(file->ungetbuf, file->ungetsize, 2);
-		if (p == NULL)
-			err(1, "%s", __func__);
-		file->ungetbuf = p;
-		file->ungetsize *= 2;
+		return (EOF);
+	if (parsebuf) {
+		parseindex--;
+		if (parseindex >= 0)
+			return (c);
 	}
-	file->ungetbuf[file->ungetpos++] = c;
+	if (pushback_index < MAXPUSHBACK-1)
+		return (pushback_buffer[pushback_index++] = c);
+	else
+		return (EOF);
 }
 
 int
@@ -772,9 +731,14 @@ findeol(void)
 {
 	int	c;
 
+	parsebuf = NULL;
+
 	/* skip to either EOF or the first real EOL */
 	while (1) {
-		c = lgetc(0);
+		if (pushback_index)
+			c = pushback_buffer[--pushback_index];
+		else
+			c = lgetc(0);
 		if (c == '\n') {
 			file->lineno++;
 			break;
@@ -802,7 +766,7 @@ top:
 	if (c == '#')
 		while ((c = lgetc(0)) != '\n' && c != EOF)
 			; /* nothing */
-	if (c == '$' && !expanding) {
+	if (c == '$' && parsebuf == NULL) {
 		while (1) {
 			if ((c = lgetc(0)) == EOF)
 				return (0);
@@ -824,13 +788,8 @@ top:
 			yyerror("macro '%s' not defined", buf);
 			return (findeol());
 		}
-		p = val + strlen(val) - 1;
-		lungetc(DONE_EXPAND);
-		while (p >= val) {
-			lungetc(*p);
-			p--;
-		}
-		lungetc(START_EXPAND);
+		parsebuf = val;
+		parseindex = 0;
 		goto top;
 	}
 
@@ -847,8 +806,7 @@ top:
 			} else if (c == '\\') {
 				if ((next = lgetc(quotec)) == EOF)
 					return (0);
-				if (next == quotec || next == ' ' ||
-				    next == '\t')
+				if (next == quotec || c == ' ' || c == '\t')
 					c = next;
 				else if (next == '\n') {
 					file->lineno++;
@@ -870,7 +828,7 @@ top:
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			err(1, "%s", __func__);
+			err(1, "yylex: strdup");
 		return (STRING);
 	}
 
@@ -880,7 +838,7 @@ top:
 	if (c == '-' || isdigit(c)) {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -919,7 +877,7 @@ nodigits:
 	if (isalnum(c) || c == ':' || c == '_') {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -928,7 +886,7 @@ nodigits:
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
 			if ((yylval.v.string = strdup(buf)) == NULL)
-				err(1, "%s", __func__);
+				err(1, "yylex: strdup");
 		return (token);
 	}
 	if (c == '\n') {
@@ -966,16 +924,16 @@ pushfile(const char *name, int secret)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
-		log_warn("%s", __func__);
+		log_warn("malloc");
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		log_warn("%s", __func__);
+		log_warn("malloc");
 		free(nfile);
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		log_warn("%s: %s", __func__, nfile->name);
+		log_warn("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -986,16 +944,7 @@ pushfile(const char *name, int secret)
 		free(nfile);
 		return (NULL);
 	}
-	nfile->lineno = TAILQ_EMPTY(&files) ? 1 : 0;
-	nfile->ungetsize = 16;
-	nfile->ungetbuf = malloc(nfile->ungetsize);
-	if (nfile->ungetbuf == NULL) {
-		log_warn("%s", __func__);
-		fclose(nfile->stream);
-		free(nfile->name);
-		free(nfile);
-		return (NULL);
-	}
+	nfile->lineno = 1;
 	TAILQ_INSERT_TAIL(&files, nfile, entry);
 	return (nfile);
 }
@@ -1011,7 +960,6 @@ popfile(void)
 	TAILQ_REMOVE(&files, file, entry);
 	fclose(file->stream);
 	free(file->name);
-	free(file->ungetbuf);
 	free(file);
 	file = prev;
 	return (file ? 0 : EOF);
@@ -1021,11 +969,9 @@ struct snmpd *
 parse_config(const char *filename, u_int flags)
 {
 	struct sym	*sym, *next;
-	struct address	*h;
-	int found;
 
 	if ((conf = calloc(1, sizeof(*conf))) == NULL) {
-		log_warn("%s", __func__);
+		log_warn("cannot allocate memory");
 		return (NULL);
 	}
 
@@ -1053,25 +999,18 @@ parse_config(const char *filename, u_int flags)
 
 	endservent();
 
-	/* Setup default listen addresses */
 	if (TAILQ_EMPTY(&conf->sc_addresses)) {
-		host("0.0.0.0", &conf->sc_addresses, 1, SNMPD_PORT,
-		    NULL, NULL, NULL, IPPROTO_UDP);
-		host("::", &conf->sc_addresses, 1, SNMPD_PORT,
-		    NULL, NULL, NULL, IPPROTO_UDP);
-	}
-	if (conf->sc_traphandler) {
-		found = 0;
-		TAILQ_FOREACH(h, &conf->sc_addresses, entry) {
-			if (h->ipproto == IPPROTO_UDP)
-				found = 1;
-		}
-		if (!found) {
-			log_warnx("trap handler needs at least one "
-			    "udp listen address");
-			free(conf);
-			return (NULL);
-		}
+		struct address		*h;
+		if ((h = calloc(1, sizeof(*h))) == NULL)
+			fatal("snmpe: %s", __func__);
+		h->ss.ss_family = AF_INET;
+		h->port = SNMPD_PORT;
+		TAILQ_INSERT_TAIL(&conf->sc_addresses, h, entry);
+		if ((h = calloc(1, sizeof(*h))) == NULL)
+			fatal("snmpe: %s", __func__);
+		h->ss.ss_family = AF_INET6;
+		h->port = SNMPD_PORT;
+		TAILQ_INSERT_TAIL(&conf->sc_addresses, h, entry);
 	}
 
 	/* Free macros and check which have not been used. */
@@ -1140,12 +1079,17 @@ cmdline_symset(char *s)
 {
 	char	*sym, *val;
 	int	ret;
+	size_t	len;
 
 	if ((val = strrchr(s, '=')) == NULL)
 		return (-1);
-	sym = strndup(s, val - s);
-	if (sym == NULL)
-		errx(1, "%s: strndup", __func__);
+
+	len = strlen(s) - strlen(val) + 1;
+	if ((sym = malloc(len)) == NULL)
+		errx(1, "cmdline_symset: malloc");
+
+	(void)strlcpy(sym, s, len);
+
 	ret = symset(sym, val + 1, 1);
 	free(sym);
 
@@ -1218,8 +1162,7 @@ host_v6(const char *s)
 
 int
 host_dns(const char *s, struct addresslist *al, int max,
-    in_port_t port, struct ber_oid *oid, char *cmn,
-    struct address *src, int ipproto)
+	in_port_t port, struct ber_oid *oid, char *cmn, struct address *src)
 {
 	struct addrinfo		 hints, *res0, *res;
 	int			 error, cnt = 0;
@@ -1250,7 +1193,6 @@ host_dns(const char *s, struct addresslist *al, int max,
 			fatal(__func__);
 
 		h->port = port;
-		h->ipproto = ipproto;
 		if (oid != NULL) {
 			if ((h->sa_oid = calloc(1, sizeof(*oid))) == NULL)
 				fatal(__func__);
@@ -1293,7 +1235,7 @@ host_dns(const char *s, struct addresslist *al, int max,
 
 int
 host(const char *s, struct addresslist *al, int max,
-    in_port_t port, struct ber_oid *oid, char *cmn, char *srcaddr, int ipproto)
+    in_port_t port, struct ber_oid *oid, char *cmn, char *srcaddr)
 {
 	struct address	*h, *src = NULL;
 
@@ -1317,7 +1259,6 @@ host(const char *s, struct addresslist *al, int max,
 		h->port = port;
 		h->sa_oid = oid;
 		h->sa_community = cmn;
-		h->ipproto = ipproto;
 		if (src != NULL && h->ss.ss_family != src->ss.ss_family) {
 			log_warnx("host and source-address family mismatch");
 			return (-1);
@@ -1328,5 +1269,5 @@ host(const char *s, struct addresslist *al, int max,
 		return (1);
 	}
 
-	return (host_dns(s, al, max, port, oid, cmn, src, ipproto));
+	return (host_dns(s, al, max, port, oid, cmn, src));
 }

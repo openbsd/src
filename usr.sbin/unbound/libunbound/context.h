@@ -45,7 +45,6 @@
 #include "util/rbtree.h"
 #include "services/modstack.h"
 #include "libunbound/unbound.h"
-#include "libunbound/unbound-event.h"
 #include "util/data/packed_rrset.h"
 struct libworker;
 struct tube;
@@ -149,10 +148,8 @@ struct ctx_query {
 	/** was this query cancelled (for bg worker) */
 	int cancelled;
 
-	/** for async query, the callback function of type ub_callback_type */
+	/** for async query, the callback function */
 	ub_callback_type cb;
-	/** for event callbacks the type is ub_event_callback_type */
-        ub_event_callback_type cb_event;
 	/** for async query, the callback user arg */
 	void* cb_arg;
 
@@ -241,13 +238,11 @@ void context_query_delete(struct ctx_query* q);
  * @param rrtype: type
  * @param rrclass: class
  * @param cb: callback for async, or NULL for sync.
- * @param cb_event: event callback for async, or NULL for sync.
  * @param cbarg: user arg for async queries.
  * @return new ctx_query or NULL for malloc failure.
  */
 struct ctx_query* context_new(struct ub_ctx* ctx, const char* name, int rrtype,
-        int rrclass,  ub_callback_type cb, ub_event_callback_type cb_event,
-	void* cbarg);
+        int rrclass, ub_callback_type cb, void* cbarg);
 
 /**
  * Get a new alloc. Creates a new one or uses a cached one.

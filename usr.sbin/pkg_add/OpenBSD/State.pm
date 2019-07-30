@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.56 2019/04/06 10:48:51 espie Exp $
+# $OpenBSD: State.pm,v 1.51 2018/02/27 22:46:53 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -105,10 +105,6 @@ sub new
 {
 	my $class = shift;
 	my $cmd = shift;
-	if (!defined $cmd) {
-		$cmd = $0;
-		$cmd =~ s,.*/,,;
-	}
 	my $o = bless {cmd => $cmd}, $class;
 	$o->init(@_);
 	return $o;
@@ -360,13 +356,12 @@ sub find_window_size
 	my $self = shift;
 	require Term::ReadKey;
 	my @l = Term::ReadKey::GetTermSizeGWINSZ(\*STDOUT);
-	# default to sane values
-	$self->{width} = 80;
-	$self->{height} = 24;
-	if (@l == 4) {
-		# only use what we got if sane
-		$self->{width} = $l[0] if $l[0] > 0;
-		$self->{height} = $l[1] if $l[1] > 0;
+	if (@l != 4) {
+		$self->{width} = 80;
+		$self->{height} = 24;
+	} else {
+		$self->{width} = $l[0];
+		$self->{height} = $l[1];
 		$SIG{'WINCH'} = sub {
 			$self->find_window_size;
 		};
@@ -456,6 +451,7 @@ sub _system
 {
 	my $self = shift;
 	$self->sync_display;
+	my $r = fork;
 	my ($todo, $todo2);
 	if (ref $_[0] eq 'CODE') {
 		$todo = shift;
@@ -467,14 +463,11 @@ sub _system
 	} else {
 		$todo2 = sub {};
 	}
-	my $r = fork;
 	if (!defined $r) {
 		return 1;
 	} elsif ($r == 0) {
-		$DB::inhibit_exit = 0;
 		&$todo;
-		exec {$_[0]} @_ or
-		    exit 1;
+		exec {$_[0]} @_ or return 1;
 	} else {
 		&$todo2;
 		waitpid($r, 0);
@@ -493,7 +486,7 @@ sub system
 		if (ref $_[0] eq 'CODE') {
 			shift;
 		}
-		$self->errsay("system(#1) failed: #2",
+		$self->say("system(#1) failed: #2",
 		    join(", ", @_), $self->child_error);
 	}
 	return $r;

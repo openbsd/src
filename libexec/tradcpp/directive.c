@@ -28,12 +28,10 @@
  */
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
-#include <errno.h>
 
-#include "bool.h"
 #include "utils.h"
 #include "mode.h"
 #include "place.h"
@@ -177,15 +175,12 @@ ifstate_pop(void)
 
 static
 void
-d_if(struct lineplace *lp, struct place *p2, char *line)
+d_if(struct place *p, struct place *p2, char *line)
 {
-	bool doprint;
 	char *expr;
 	bool val;
 	struct place p3 = *p2;
 	size_t oldlen;
-
-	doprint = ifstate->curtrue;
 
 	expr = macroexpand(p2, line, strlen(line), true);
 
@@ -199,66 +194,40 @@ d_if(struct lineplace *lp, struct place *p2, char *line)
 	} else {
 		val = 0;
 	}
-	ifstate_push(&lp->current, val);
+	ifstate_push(p, val);
 	dostrfree(expr);
-
-	if (doprint) {
-		debuglog(&lp->current, "#if: %s",
-			  ifstate->curtrue ? "taken" : "not taken");
-	}
 }
 
 static
 void
-d_ifdef(struct lineplace *lp, struct place *p2, char *line)
+d_ifdef(struct place *p, struct place *p2, char *line)
 {
-	bool doprint;
-
-	doprint = ifstate->curtrue;
-
 	uncomment(line);
 	oneword("#ifdef", p2, line);
-	ifstate_push(&lp->current, macro_isdefined(line));
-
-	if (doprint) {
-		debuglog(&lp->current, "#ifdef %s: %s",
-			 line, ifstate->curtrue ? "taken" : "not taken");
-	}
+	ifstate_push(p, macro_isdefined(line));
 }
 
 static
 void
-d_ifndef(struct lineplace *lp, struct place *p2, char *line)
+d_ifndef(struct place *p, struct place *p2, char *line)
 {
-	bool doprint;
-
-	doprint = ifstate->curtrue;
-
 	uncomment(line);
 	oneword("#ifndef", p2, line);
-	ifstate_push(&lp->current, !macro_isdefined(line));
-
-	if (doprint) {
-		debuglog(&lp->current, "#ifndef %s: %s",
-			 line, ifstate->curtrue ? "taken" : "not taken");
-	}
+	ifstate_push(p, !macro_isdefined(line));
 }
 
 static
 void
-d_elif(struct lineplace *lp, struct place *p2, char *line)
+d_elif(struct place *p, struct place *p2, char *line)
 {
-	bool doprint;
 	char *expr;
 	struct place p3 = *p2;
 	size_t oldlen;
 
 	if (ifstate->seenelse) {
-		complain(&lp->current, "#elif after #else");
+		complain(p, "#elif after #else");
 		complain_fail();
 	}
-
-	doprint = ifstate->curtrue;
 
 	if (ifstate->evertrue) {
 		ifstate->curtrue = false;
@@ -274,52 +243,36 @@ d_elif(struct lineplace *lp, struct place *p2, char *line)
 		ifstate->evertrue = ifstate->curtrue;
 		dostrfree(expr);
 	}
-
-	if (doprint) {
-		debuglog2(&lp->current, &ifstate->startplace, "#elif: %s",
-			  ifstate->curtrue ? "taken" : "not taken");
-	}
 }
 
 static
 void
-d_else(struct lineplace *lp, struct place *p2, char *line)
+d_else(struct place *p, struct place *p2, char *line)
 {
-	bool doprint;
-
 	(void)p2;
 	(void)line;
 
 	if (ifstate->seenelse) {
-		complain(&lp->current,
-			 "Multiple #else directives in one conditional");
+		complain(p, "Multiple #else directives in one conditional");
 		complain_fail();
 	}
-
-	doprint = ifstate->curtrue;
 
 	ifstate->curtrue = !ifstate->evertrue;
 	ifstate->evertrue = true;
 	ifstate->seenelse = true;
-
-	if (doprint) {
-		debuglog2(&lp->current, &ifstate->startplace, "#else: %s",
-			  ifstate->curtrue ? "taken" : "not taken");
-	}
 }
 
 static
 void
-d_endif(struct lineplace *lp, struct place *p2, char *line)
+d_endif(struct place *p, struct place *p2, char *line)
 {
 	(void)p2;
 	(void)line;
 
 	if (ifstate->prev == NULL) {
-		complain(&lp->current, "Unmatched #endif");
+		complain(p, "Unmatched #endif");
 		complain_fail();
 	} else {
-		debuglog2(&lp->current, &ifstate->startplace, "#endif");
 		ifstate_pop();
 	}
 }
@@ -329,12 +282,12 @@ d_endif(struct lineplace *lp, struct place *p2, char *line)
 
 static
 void
-d_define(struct lineplace *lp, struct place *p2, char *line)
+d_define(struct place *p, struct place *p2, char *line)
 {
 	size_t pos, argpos;
 	struct place p3, p4;
 
-	(void)lp;
+	(void)p;
 
 	/*
 	 * line may be:
@@ -384,25 +337,22 @@ d_define(struct lineplace *lp, struct place *p2, char *line)
 	p4.column += pos;
 
 	if (argpos) {
-		debuglog(&lp->current, "Defining %s()", line);
 		macro_define_params(p2, line, &p3,
 				    line + argpos, &p4,
 				    line + pos);
 	} else {
-		debuglog(&lp->current, "Defining %s", line);
 		macro_define_plain(p2, line, &p4, line + pos);
 	}
 }
 
 static
 void
-d_undef(struct lineplace *lp, struct place *p2, char *line)
+d_undef(struct place *p, struct place *p2, char *line)
 {
-	(void)lp;
+	(void)p;
 
 	uncomment(line);
 	oneword("#undef", p2, line);
-	debuglog(&lp->current, "Undef %s", line);
 	macro_undef(line);
 }
 
@@ -418,17 +368,13 @@ tryinclude(struct place *p, char *line)
 	len = strlen(line);
 	if (len > 2 && line[0] == '"' && line[len-1] == '"') {
 		line[len-1] = '\0';
-		debuglog(p, "Entering include file \"%s\"", line+1);
 		file_readquote(p, line+1);
-		debuglog(p, "Leaving include file \"%s\"", line+1);
 		line[len-1] = '"';
 		return true;
 	}
 	if (len > 2 && line[0] == '<' && line[len-1] == '>') {
 		line[len-1] = '\0';
-		debuglog(p, "Entering include file <%s>", line+1);
 		file_readbracket(p, line+1);
-		debuglog(p, "Leaving include file <%s>", line+1);
 		line[len-1] = '>';
 		return true;
 	}
@@ -437,13 +383,13 @@ tryinclude(struct place *p, char *line)
 
 static
 void
-d_include(struct lineplace *lp, struct place *p2, char *line)
+d_include(struct place *p, struct place *p2, char *line)
 {
 	char *text;
 	size_t oldlen;
 
 	uncomment(line);
-	if (tryinclude(&lp->current, line)) {
+	if (tryinclude(p, line)) {
 		return;
 	}
 	text = macroexpand(p2, line, strlen(line), false);
@@ -453,78 +399,26 @@ d_include(struct lineplace *lp, struct place *p2, char *line)
 	/* trim to fit, so the malloc debugging won't complain */
 	text = dorealloc(text, oldlen + 1, strlen(text) + 1);
 
-	if (tryinclude(&lp->current, text)) {
+	if (tryinclude(p, text)) {
 		dostrfree(text);
 		return;
 	}
-	complain(&lp->current, "Illegal #include directive");
-	complain(&lp->current, "Before macro expansion: #include %s", line);
-	complain(&lp->current, "After macro expansion: #include %s", text);
+	complain(p, "Illegal #include directive");
+	complain(p, "Before macro expansion: #include %s", line);
+	complain(p, "After macro expansion: #include %s", text);
 	dostrfree(text);
 	complain_fail();
 }
 
 static
 void
-d_line(struct lineplace *lp, struct place *p2, char *line)
+d_line(struct place *p, struct place *p2, char *line)
 {
-	char *text;
-	size_t oldlen;
-	unsigned long val;
-	char *moretext;
-	size_t moretextlen;
-	char *filename;
+	(void)p2;
+	(void)line;
 
-	text = macroexpand(p2, line, strlen(line), true);
-
-	oldlen = strlen(text);
-	uncomment(text);
-	/* trim to fit, so the malloc debugging won't complain */
-	text = dorealloc(text, oldlen + 1, strlen(text) + 1);
-
-	/*
-	 * What we should have here: either 1234 "file.c",
-	 * or just 1234.
-	 */
-
-	errno = 0;
-	val = strtoul(text, &moretext, 10);
-	if (errno) {
-		complain(&lp->current, "No line number in #line directive");
-		goto fail;
-	}
-#if UINT_MAX < ULONG_MAX
-	if (val > UINT_MAX) {
-		complain(&lp->current,
-			 "Line number in #line directive too large");
-		goto fail;
-	}
-#endif
-	moretext += strspn(moretext, ws);
-	moretextlen = strlen(moretext);
-	lp->current.column += (moretext - text);
-
-	if (moretextlen > 2 &&
-	    moretext[0] == '"' && moretext[moretextlen-1] == '"') {
-		filename = dostrndup(moretext+1, moretextlen-2);
-		place_changefile(&lp->nextline, filename);
-		dostrfree(filename);
-	}
-	else if (moretextlen > 0) {
-		complain(&lp->current,
-			 "Invalid file name in #line directive");
-		goto fail;
-	}
-
-	lp->nextline.line = val;
-	dostrfree(text);
-	return;
-
-fail:
-	complain(&lp->current, "Before macro expansion: #line %s", line);
-	complain(&lp->current, "After macro expansion: #line %s", text);
-	complain_fail();
-	dostrfree(text);
+	/* XXX */
+	complain(p, "Sorry, no #line yet");
 }
 
 ////////////////////////////////////////////////////////////
@@ -532,12 +426,12 @@ fail:
 
 static
 void
-d_warning(struct lineplace *lp, struct place *p2, char *line)
+d_warning(struct place *p, struct place *p2, char *line)
 {
 	char *msg;
 
 	msg = macroexpand(p2, line, strlen(line), false);
-	complain(&lp->current, "#warning: %s", msg);
+	complain(p, "#warning: %s", msg);
 	if (mode.werror) {
 		complain_fail();
 	}
@@ -546,12 +440,12 @@ d_warning(struct lineplace *lp, struct place *p2, char *line)
 
 static
 void
-d_error(struct lineplace *lp, struct place *p2, char *line)
+d_error(struct place *p, struct place *p2, char *line)
 {
 	char *msg;
 
 	msg = macroexpand(p2, line, strlen(line), false);
-	complain(&lp->current, "#error: %s", msg);
+	complain(p, "#error: %s", msg);
 	complain_fail();
 	dostrfree(msg);
 }
@@ -561,11 +455,11 @@ d_error(struct lineplace *lp, struct place *p2, char *line)
 
 static
 void
-d_pragma(struct lineplace *lp, struct place *p2, char *line)
+d_pragma(struct place *p, struct place *p2, char *line)
 {
 	(void)p2;
 
-	complain(&lp->current, "#pragma %s", line);
+	complain(p, "#pragma %s", line);
 	complain_fail();
 }
 
@@ -575,7 +469,7 @@ d_pragma(struct lineplace *lp, struct place *p2, char *line)
 static const struct {
 	const char *name;
 	bool ifskip;
-	void (*func)(struct lineplace *, struct place *, char *line);
+	void (*func)(struct place *, struct place *, char *line);
 } directives[] = {
 	{ "define",  true,  d_define },
 	{ "elif",    false, d_elif },
@@ -595,13 +489,13 @@ static const unsigned numdirectives = HOWMANY(directives);
 
 static
 void
-directive_gotdirective(struct lineplace *lp, char *line)
+directive_gotdirective(struct place *p, char *line)
 {
 	struct place p2;
 	size_t len, skip;
 	unsigned i;
 
-	p2 = lp->current;
+	p2 = *p;
 	for (i=0; i<numdirectives; i++) {
 		len = strlen(directives[i].name);
 		if (!strncmp(line, directives[i].name, len) &&
@@ -618,7 +512,7 @@ directive_gotdirective(struct lineplace *lp, char *line)
 			if (len < strlen(line)) {
 				line[len] = '\0';
 			}
-			directives[i].func(lp, &p2, line);
+			directives[i].func(p, &p2, line);
 			return;
 		}
 	}
@@ -629,7 +523,7 @@ directive_gotdirective(struct lineplace *lp, char *line)
 	}
 
 	skip = strcspn(line, ws);
-	complain(&lp->current, "Unknown directive #%.*s", (int)skip, line);
+	complain(p, "Unknown directive #%.*s", (int)skip, line);
 	complain_fail();
 }
 
@@ -638,13 +532,13 @@ directive_gotdirective(struct lineplace *lp, char *line)
  */
 static
 size_t
-directive_scancomments(const struct lineplace *lp, char *line, size_t len)
+directive_scancomments(const struct place *p, char *line, size_t len)
 {
 	size_t pos;
 	bool incomment;
 	struct place p2;
 
-	p2 = lp->current;
+	p2 = *p;
 	incomment = 0;
 	for (pos = 0; pos+1 < len; pos++) {
 		if (line[pos] == '/' && line[pos+1] == '*') {
@@ -680,25 +574,25 @@ directive_scancomments(const struct lineplace *lp, char *line, size_t len)
 }
 
 void
-directive_gotline(struct lineplace *lp, char *line, size_t len)
+directive_gotline(struct place *p, char *line, size_t len)
 {
 	size_t skip;
 
 	if (warns.nestcomment) {
-		directive_scancomments(lp, line, len);
+		directive_scancomments(p, line, len);
 	}
 
 	/* check if we have a directive line (# exactly in column 0) */
-	if (len > 0 && line[0] == '#') {
+	if (line[0] == '#') {
 		skip = 1 + strspn(line + 1, ws);
 		assert(skip <= len);
-		lp->current.column += skip;
+		p->column += skip;
 		assert(line[len] == '\0');
-		directive_gotdirective(lp, line+skip /*, length = len-skip */);
-		lp->current.column += len-skip;
+		directive_gotdirective(p, line+skip /*, length = len-skip */);
+		p->column += len-skip;
 	} else if (ifstate->curtrue) {
-		macro_sendline(&lp->current, line, len);
-		lp->current.column += len;
+		macro_sendline(p, line, len);
+		p->column += len;
 	}
 }
 

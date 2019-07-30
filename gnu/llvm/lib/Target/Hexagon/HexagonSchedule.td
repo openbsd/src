@@ -79,8 +79,3 @@ include "HexagonScheduleV60.td"
 
 include "HexagonScheduleV62.td"
 
-//===----------------------------------------------------------------------===//
-// V65 Machine Info +
-//===----------------------------------------------------------------------===//
-
-include "HexagonScheduleV65.td"

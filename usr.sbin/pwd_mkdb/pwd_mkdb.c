@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.55 2018/10/09 12:33:40 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.53 2015/11/05 15:10:11 semarie Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -188,9 +188,8 @@ main(int argc, char **argv)
 	/* Tweak openinfo values for large passwd files. */
 	if (st.st_size > (off_t)100*1024)
 		openinfo.cachesize = MINIMUM(st.st_size * 20, (off_t)12*1024*1024);
-	/* Estimate number of elements based on a 128-byte average entry. */
-	if (st.st_size / 128 * 3 > openinfo.nelem)
-		openinfo.nelem = st.st_size / 128 * 3;
+	if (st.st_size / 128 > openinfo.nelem)
+		openinfo.nelem = st.st_size / 128;
 
 	/* If only updating a single record, stash the old uid */
 	if (username) {

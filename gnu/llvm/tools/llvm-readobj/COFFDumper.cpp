@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// This file implements the COFF-specific dumper for llvm-readobj.
+/// \brief This file implements the COFF-specific dumper for llvm-readobj.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -31,16 +31,16 @@
 #include "llvm/DebugInfo/CodeView/DebugStringTableSubsection.h"
 #include "llvm/DebugInfo/CodeView/LazyRandomTypeCollection.h"
 #include "llvm/DebugInfo/CodeView/Line.h"
-#include "llvm/DebugInfo/CodeView/MergingTypeTableBuilder.h"
 #include "llvm/DebugInfo/CodeView/RecordSerialization.h"
+#include "llvm/DebugInfo/CodeView/SymbolDeserializer.h"
 #include "llvm/DebugInfo/CodeView/SymbolDumpDelegate.h"
 #include "llvm/DebugInfo/CodeView/SymbolDumper.h"
 #include "llvm/DebugInfo/CodeView/SymbolRecord.h"
 #include "llvm/DebugInfo/CodeView/TypeDumpVisitor.h"
-#include "llvm/DebugInfo/CodeView/TypeHashing.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
 #include "llvm/DebugInfo/CodeView/TypeStreamMerger.h"
+#include "llvm/DebugInfo/CodeView/TypeTableBuilder.h"
 #include "llvm/DebugInfo/CodeView/TypeTableCollection.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Object/ObjectFile.h"
@@ -48,10 +48,17 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ConvertUTF.h"
+#include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/ScopedPrinter.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Win64EH.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
+#include <cstring>
+#include <system_error>
+#include <time.h>
 
 using namespace llvm;
 using namespace llvm::object;
@@ -67,8 +74,6 @@ struct LoadConfigTables {
   uint32_t GuardFlags = 0;
   uint64_t GuardFidTableVA = 0;
   uint64_t GuardFidTableCount = 0;
-  uint64_t GuardLJmpTableVA = 0;
-  uint64_t GuardLJmpTableCount = 0;
 };
 
 class COFFDumper : public ObjDumper {
@@ -83,9 +88,6 @@ public:
   void printSymbols() override;
   void printDynamicSymbols() override;
   void printUnwindInfo() override;
-
-  void printNeededLibraries() override;
-
   void printCOFFImports() override;
   void printCOFFExports() override;
   void printCOFFDirectives() override;
@@ -94,9 +96,8 @@ public:
   void printCOFFResources() override;
   void printCOFFLoadConfig() override;
   void printCodeViewDebugInfo() override;
-  void
-  mergeCodeViewTypes(llvm::codeview::MergingTypeTableBuilder &CVIDs,
-                     llvm::codeview::MergingTypeTableBuilder &CVTypes) override;
+  void mergeCodeViewTypes(llvm::codeview::TypeTableBuilder &CVIDs,
+                          llvm::codeview::TypeTableBuilder &CVTypes) override;
   void printStackMap() const override;
 private:
   void printSymbol(const SymbolRef &Sym);
@@ -244,7 +245,7 @@ std::error_code createCOFFDumper(const object::ObjectFile *Obj,
 
 } // namespace llvm
 
-// Given a section and an offset into this section the function returns the
+// Given a a section and an offset into this section the function returns the
 // symbol used for the relocation at the offset.
 std::error_code COFFDumper::resolveSymbol(const coff_section *Section,
                                           uint64_t Offset, SymbolRef &Sym) {
@@ -607,8 +608,8 @@ void COFFDumper::cacheRelocations() {
       RelocMap[Section].push_back(Reloc);
 
     // Sort relocations by address.
-    llvm::sort(RelocMap[Section].begin(), RelocMap[Section].end(),
-               relocAddressLess);
+    std::sort(RelocMap[Section].begin(), RelocMap[Section].end(),
+              relocAddressLess);
   }
 }
 
@@ -769,7 +770,7 @@ void COFFDumper::printRVATable(uint64_t TableVA, uint64_t Count,
   for (uintptr_t I = TableStart; I < TableEnd; I += EntrySize) {
     uint32_t RVA = *reinterpret_cast<const ulittle32_t *>(I);
     raw_ostream &OS = W.startLine();
-    OS << W.hex(Obj->getImageBase() + RVA);
+    OS << "0x" << utohexstr(Obj->getImageBase() + RVA);
     if (PrintExtra)
       PrintExtra(OS, reinterpret_cast<const uint8_t *>(I));
     OS << '\n';
@@ -801,11 +802,6 @@ void COFFDumper::printCOFFLoadConfig() {
     } else {
       printRVATable(Tables.GuardFidTableVA, Tables.GuardFidTableCount, 4);
     }
-  }
-
-  if (Tables.GuardLJmpTableVA) {
-    ListScope LS(W, "GuardLJmpTable");
-    printRVATable(Tables.GuardLJmpTableVA, Tables.GuardLJmpTableCount, 4);
   }
 }
 
@@ -886,9 +882,6 @@ void COFFDumper::printCOFFLoadConfig(const T *Conf, LoadConfigTables &Tables) {
   W.printHex("GuardRFVerifyStackPointerFunctionPointer",
              Conf->GuardRFVerifyStackPointerFunctionPointer);
   W.printHex("HotPatchTableOffset", Conf->HotPatchTableOffset);
-
-  Tables.GuardLJmpTableVA = Conf->GuardLongJumpTargetTable;
-  Tables.GuardLJmpTableCount = Conf->GuardLongJumpTargetCount;
 }
 
 void COFFDumper::printBaseOfDataField(const pe32_header *Hdr) {
@@ -902,9 +895,7 @@ void COFFDumper::printCodeViewDebugInfo() {
   for (const SectionRef &S : Obj->sections()) {
     StringRef SectionName;
     error(S.getName(SectionName));
-    // .debug$T is a standard CodeView type section, while .debug$P is the same
-    // format but used for MSVC precompiled header object files.
-    if (SectionName == ".debug$T" || SectionName == ".debug$P")
+    if (SectionName == ".debug$T")
       printCodeViewTypeSection(SectionName, S);
   }
   for (const SectionRef &S : Obj->sections()) {
@@ -1203,8 +1194,8 @@ void COFFDumper::printFileNameForOffset(StringRef Label, uint32_t FileOffset) {
   W.printHex(Label, getFileNameForFileOffset(FileOffset), FileOffset);
 }
 
-void COFFDumper::mergeCodeViewTypes(MergingTypeTableBuilder &CVIDs,
-                                    MergingTypeTableBuilder &CVTypes) {
+void COFFDumper::mergeCodeViewTypes(TypeTableBuilder &CVIDs,
+                                    TypeTableBuilder &CVTypes) {
   for (const SectionRef &S : Obj->sections()) {
     StringRef SectionName;
     error(S.getName(SectionName));
@@ -1432,9 +1423,9 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
       const coff_aux_weak_external *Aux;
       error(getSymbolAuxData(Obj, Symbol, I, Aux));
 
-      Expected<COFFSymbolRef> Linked = Obj->getSymbol(Aux->TagIndex);
+      ErrorOr<COFFSymbolRef> Linked = Obj->getSymbol(Aux->TagIndex);
       StringRef LinkedName;
-      std::error_code EC = errorToErrorCode(Linked.takeError());
+      std::error_code EC = Linked.getError();
       if (EC || (EC = Obj->getSymbolName(*Linked, LinkedName))) {
         LinkedName = "";
         error(EC);
@@ -1490,10 +1481,10 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
       const coff_aux_clr_token *Aux;
       error(getSymbolAuxData(Obj, Symbol, I, Aux));
 
-      Expected<COFFSymbolRef> ReferredSym =
+      ErrorOr<COFFSymbolRef> ReferredSym =
           Obj->getSymbol(Aux->SymbolTableIndex);
       StringRef ReferredName;
-      std::error_code EC = errorToErrorCode(ReferredSym.takeError());
+      std::error_code EC = ReferredSym.getError();
       if (EC || (EC = Obj->getSymbolName(*ReferredSym, ReferredName))) {
         ReferredName = "";
         error(EC);
@@ -1534,25 +1525,6 @@ void COFFDumper::printUnwindInfo() {
     W.printEnum("unsupported Image Machine", Obj->getMachine(),
                 makeArrayRef(ImageFileMachineType));
     break;
-  }
-}
-
-void COFFDumper::printNeededLibraries() {
-  ListScope D(W, "NeededLibraries");
-
-  using LibsTy = std::vector<StringRef>;
-  LibsTy Libs;
-
-  for (const ImportDirectoryEntryRef &DirRef : Obj->import_directories()) {
-    StringRef Name;
-    if (!DirRef.getName(Name))
-      Libs.push_back(Name);
-  }
-
-  std::stable_sort(Libs.begin(), Libs.end());
-
-  for (const auto &L : Libs) {
-    outs() << "  " << L << "\n";
   }
 }
 
@@ -1655,7 +1627,7 @@ void COFFDumper::printCOFFDirectives() {
   }
 }
 
-static std::string getBaseRelocTypeName(uint8_t Type) {
+static StringRef getBaseRelocTypeName(uint8_t Type) {
   switch (Type) {
   case COFF::IMAGE_REL_BASED_ABSOLUTE: return "ABSOLUTE";
   case COFF::IMAGE_REL_BASED_HIGH: return "HIGH";
@@ -1664,7 +1636,11 @@ static std::string getBaseRelocTypeName(uint8_t Type) {
   case COFF::IMAGE_REL_BASED_HIGHADJ: return "HIGHADJ";
   case COFF::IMAGE_REL_BASED_ARM_MOV32T: return "ARM_MOV32(T)";
   case COFF::IMAGE_REL_BASED_DIR64: return "DIR64";
-  default: return "unknown (" + llvm::utostr(Type) + ")";
+  default: {
+    static std::string Result;
+    Result = "unknown (" + llvm::utostr(Type) + ")";
+    return Result;
+  }
   }
 }
 
@@ -1824,19 +1800,20 @@ void COFFDumper::printStackMap() const {
 
   if (Obj->isLittleEndian())
     prettyPrintStackMap(
-        W, StackMapV2Parser<support::little>(StackMapContentsArray));
+                      llvm::outs(),
+                      StackMapV2Parser<support::little>(StackMapContentsArray));
   else
-    prettyPrintStackMap(W,
+    prettyPrintStackMap(llvm::outs(),
                         StackMapV2Parser<support::big>(StackMapContentsArray));
 }
 
-void llvm::dumpCodeViewMergedTypes(
-    ScopedPrinter &Writer, llvm::codeview::MergingTypeTableBuilder &IDTable,
-    llvm::codeview::MergingTypeTableBuilder &CVTypes) {
+void llvm::dumpCodeViewMergedTypes(ScopedPrinter &Writer,
+                                   llvm::codeview::TypeTableBuilder &IDTable,
+                                   llvm::codeview::TypeTableBuilder &CVTypes) {
   // Flatten it first, then run our dumper on it.
   SmallString<0> TypeBuf;
-  CVTypes.ForEachRecord([&](TypeIndex TI, const CVType &Record) {
-    TypeBuf.append(Record.RecordData.begin(), Record.RecordData.end());
+  CVTypes.ForEachRecord([&](TypeIndex TI, ArrayRef<uint8_t> Record) {
+    TypeBuf.append(Record.begin(), Record.end());
   });
 
   TypeTableCollection TpiTypes(CVTypes.records());

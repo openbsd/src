@@ -51,7 +51,6 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Config/llvm-config.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
@@ -192,7 +191,7 @@ private:
 public:
   // Main entry point for this pass.
   bool runOnMachineFunction(MachineFunction &MF) override {
-    if (skipFunction(MF.getFunction()))
+    if (skipFunction(*MF.getFunction()))
       return false;
 
     // If we don't have VSX on the subtarget, don't do anything.
@@ -249,7 +248,7 @@ bool PPCVSXSwapRemoval::gatherVectorInstructions() {
   for (MachineBasicBlock &MBB : *MF) {
     for (MachineInstr &MI : MBB) {
 
-      if (MI.isDebugInstr())
+      if (MI.isDebugValue())
         continue;
 
       bool RelevantInstr = false;
@@ -354,8 +353,6 @@ bool PPCVSXSwapRemoval::gatherVectorInstructions() {
         break;
       case PPC::LXSDX:
       case PPC::LXSSPX:
-      case PPC::XFLOADf64:
-      case PPC::XFLOADf32:
         // A load of a floating-point value into the high-order half of
         // a vector register is safe, provided that we introduce a swap
         // following the load, which will be done by the SUBREG_TO_REG
@@ -443,7 +440,7 @@ bool PPCVSXSwapRemoval::gatherVectorInstructions() {
         // We can handle STXSDX and STXSSPX similarly to LXSDX and LXSSPX,
         // by adding special handling for narrowing copies as well as
         // widening ones.  However, I've experimented with this, and in
-        // practice we currently do not appear to use STXSDX fed by
+        // practice we currently do not appear to use STXSDX fed by 
         // a narrowing copy from a full vector register.  Since I can't
         // generate any useful test cases, I've left this alone for now.
       case PPC::STXSDX:
@@ -520,16 +517,14 @@ bool PPCVSXSwapRemoval::gatherVectorInstructions() {
       // permute control vectors (for shift values 1, 2, 3).  However,
       // VPERM has a more restrictive register class.
       case PPC::XXSLDWI:
-      case PPC::XSCVDPSPN:
-      case PPC::XSCVSPDPN:
         break;
       }
     }
   }
 
   if (RelevantFunction) {
-    LLVM_DEBUG(dbgs() << "Swap vector when first built\n\n");
-    LLVM_DEBUG(dumpSwapVector());
+    DEBUG(dbgs() << "Swap vector when first built\n\n");
+    DEBUG(dumpSwapVector());
   }
 
   return RelevantFunction;
@@ -588,14 +583,14 @@ unsigned PPCVSXSwapRemoval::lookThruCopyLike(unsigned SrcReg,
 // as such so their containing webs will not be optimized.
 void PPCVSXSwapRemoval::formWebs() {
 
-  LLVM_DEBUG(dbgs() << "\n*** Forming webs for swap removal ***\n\n");
+  DEBUG(dbgs() << "\n*** Forming webs for swap removal ***\n\n");
 
   for (unsigned EntryIdx = 0; EntryIdx < SwapVector.size(); ++EntryIdx) {
 
     MachineInstr *MI = SwapVector[EntryIdx].VSEMI;
 
-    LLVM_DEBUG(dbgs() << "\n" << SwapVector[EntryIdx].VSEId << " ");
-    LLVM_DEBUG(MI->dump());
+    DEBUG(dbgs() << "\n" << SwapVector[EntryIdx].VSEId << " ");
+    DEBUG(MI->dump());
 
     // It's sufficient to walk vector uses and join them to their unique
     // definitions.  In addition, check full vector register operands
@@ -625,11 +620,10 @@ void PPCVSXSwapRemoval::formWebs() {
       (void)EC->unionSets(SwapVector[DefIdx].VSEId,
                           SwapVector[EntryIdx].VSEId);
 
-      LLVM_DEBUG(dbgs() << format("Unioning %d with %d\n",
-                                  SwapVector[DefIdx].VSEId,
-                                  SwapVector[EntryIdx].VSEId));
-      LLVM_DEBUG(dbgs() << "  Def: ");
-      LLVM_DEBUG(DefMI->dump());
+      DEBUG(dbgs() << format("Unioning %d with %d\n", SwapVector[DefIdx].VSEId,
+                             SwapVector[EntryIdx].VSEId));
+      DEBUG(dbgs() << "  Def: ");
+      DEBUG(DefMI->dump());
     }
   }
 }
@@ -640,7 +634,7 @@ void PPCVSXSwapRemoval::formWebs() {
 // as rejected.
 void PPCVSXSwapRemoval::recordUnoptimizableWebs() {
 
-  LLVM_DEBUG(dbgs() << "\n*** Rejecting webs for swap removal ***\n\n");
+  DEBUG(dbgs() << "\n*** Rejecting webs for swap removal ***\n\n");
 
   for (unsigned EntryIdx = 0; EntryIdx < SwapVector.size(); ++EntryIdx) {
     int Repr = EC->getLeaderValue(SwapVector[EntryIdx].VSEId);
@@ -658,13 +652,12 @@ void PPCVSXSwapRemoval::recordUnoptimizableWebs() {
 
       SwapVector[Repr].WebRejected = 1;
 
-      LLVM_DEBUG(
-          dbgs() << format("Web %d rejected for physreg, partial reg, or not "
-                           "swap[pable]\n",
-                           Repr));
-      LLVM_DEBUG(dbgs() << "  in " << EntryIdx << ": ");
-      LLVM_DEBUG(SwapVector[EntryIdx].VSEMI->dump());
-      LLVM_DEBUG(dbgs() << "\n");
+      DEBUG(dbgs() <<
+            format("Web %d rejected for physreg, partial reg, or not "
+                   "swap[pable]\n", Repr));
+      DEBUG(dbgs() << "  in " << EntryIdx << ": ");
+      DEBUG(SwapVector[EntryIdx].VSEMI->dump());
+      DEBUG(dbgs() << "\n");
     }
 
     // Reject webs than contain swapping loads that feed something other
@@ -685,13 +678,13 @@ void PPCVSXSwapRemoval::recordUnoptimizableWebs() {
 
           SwapVector[Repr].WebRejected = 1;
 
-          LLVM_DEBUG(dbgs() << format(
-                         "Web %d rejected for load not feeding swap\n", Repr));
-          LLVM_DEBUG(dbgs() << "  def " << EntryIdx << ": ");
-          LLVM_DEBUG(MI->dump());
-          LLVM_DEBUG(dbgs() << "  use " << UseIdx << ": ");
-          LLVM_DEBUG(UseMI.dump());
-          LLVM_DEBUG(dbgs() << "\n");
+          DEBUG(dbgs() <<
+                format("Web %d rejected for load not feeding swap\n", Repr));
+          DEBUG(dbgs() << "  def " << EntryIdx << ": ");
+          DEBUG(MI->dump());
+          DEBUG(dbgs() << "  use " << UseIdx << ": ");
+          DEBUG(UseMI.dump());
+          DEBUG(dbgs() << "\n");
         }
       }
 
@@ -709,13 +702,13 @@ void PPCVSXSwapRemoval::recordUnoptimizableWebs() {
 
         SwapVector[Repr].WebRejected = 1;
 
-        LLVM_DEBUG(dbgs() << format(
-                       "Web %d rejected for store not fed by swap\n", Repr));
-        LLVM_DEBUG(dbgs() << "  def " << DefIdx << ": ");
-        LLVM_DEBUG(DefMI->dump());
-        LLVM_DEBUG(dbgs() << "  use " << EntryIdx << ": ");
-        LLVM_DEBUG(MI->dump());
-        LLVM_DEBUG(dbgs() << "\n");
+        DEBUG(dbgs() <<
+              format("Web %d rejected for store not fed by swap\n", Repr));
+        DEBUG(dbgs() << "  def " << DefIdx << ": ");
+        DEBUG(DefMI->dump());
+        DEBUG(dbgs() << "  use " << EntryIdx << ": ");
+        DEBUG(MI->dump());
+        DEBUG(dbgs() << "\n");
       }
 
       // Ensure all uses of the register defined by DefMI feed store
@@ -726,22 +719,21 @@ void PPCVSXSwapRemoval::recordUnoptimizableWebs() {
         if (SwapVector[UseIdx].VSEMI->getOpcode() != MI->getOpcode()) {
           SwapVector[Repr].WebRejected = 1;
 
-          LLVM_DEBUG(
-              dbgs() << format(
-                  "Web %d rejected for swap not feeding only stores\n", Repr));
-          LLVM_DEBUG(dbgs() << "  def "
-                            << " : ");
-          LLVM_DEBUG(DefMI->dump());
-          LLVM_DEBUG(dbgs() << "  use " << UseIdx << ": ");
-          LLVM_DEBUG(SwapVector[UseIdx].VSEMI->dump());
-          LLVM_DEBUG(dbgs() << "\n");
+          DEBUG(dbgs() <<
+                format("Web %d rejected for swap not feeding only stores\n",
+                       Repr));
+          DEBUG(dbgs() << "  def " << " : ");
+          DEBUG(DefMI->dump());
+          DEBUG(dbgs() << "  use " << UseIdx << ": ");
+          DEBUG(SwapVector[UseIdx].VSEMI->dump());
+          DEBUG(dbgs() << "\n");
         }
       }
     }
   }
 
-  LLVM_DEBUG(dbgs() << "Swap vector after web analysis:\n\n");
-  LLVM_DEBUG(dumpSwapVector());
+  DEBUG(dbgs() << "Swap vector after web analysis:\n\n");
+  DEBUG(dumpSwapVector());
 }
 
 // Walk the swap vector entries looking for swaps fed by permuting loads
@@ -751,7 +743,7 @@ void PPCVSXSwapRemoval::recordUnoptimizableWebs() {
 // such that multiple loads feed the same swap, etc.)
 void PPCVSXSwapRemoval::markSwapsForRemoval() {
 
-  LLVM_DEBUG(dbgs() << "\n*** Marking swaps for removal ***\n\n");
+  DEBUG(dbgs() << "\n*** Marking swaps for removal ***\n\n");
 
   for (unsigned EntryIdx = 0; EntryIdx < SwapVector.size(); ++EntryIdx) {
 
@@ -766,8 +758,8 @@ void PPCVSXSwapRemoval::markSwapsForRemoval() {
           int UseIdx = SwapMap[&UseMI];
           SwapVector[UseIdx].WillRemove = 1;
 
-          LLVM_DEBUG(dbgs() << "Marking swap fed by load for removal: ");
-          LLVM_DEBUG(UseMI.dump());
+          DEBUG(dbgs() << "Marking swap fed by load for removal: ");
+          DEBUG(UseMI.dump());
         }
       }
 
@@ -781,8 +773,8 @@ void PPCVSXSwapRemoval::markSwapsForRemoval() {
         int DefIdx = SwapMap[DefMI];
         SwapVector[DefIdx].WillRemove = 1;
 
-        LLVM_DEBUG(dbgs() << "Marking swap feeding store for removal: ");
-        LLVM_DEBUG(DefMI->dump());
+        DEBUG(dbgs() << "Marking swap feeding store for removal: ");
+        DEBUG(DefMI->dump());
       }
 
     } else if (SwapVector[EntryIdx].IsSwappable &&
@@ -827,8 +819,8 @@ void PPCVSXSwapRemoval::handleSpecialSwappables(int EntryIdx) {
     MachineInstr *MI = SwapVector[EntryIdx].VSEMI;
     unsigned NElts;
 
-    LLVM_DEBUG(dbgs() << "Changing splat: ");
-    LLVM_DEBUG(MI->dump());
+    DEBUG(dbgs() << "Changing splat: ");
+    DEBUG(MI->dump());
 
     switch (MI->getOpcode()) {
     default:
@@ -851,8 +843,8 @@ void PPCVSXSwapRemoval::handleSpecialSwappables(int EntryIdx) {
     else
       MI->getOperand(1).setImm(EltNo);
 
-    LLVM_DEBUG(dbgs() << "  Into: ");
-    LLVM_DEBUG(MI->dump());
+    DEBUG(dbgs() << "  Into: ");
+    DEBUG(MI->dump());
     break;
   }
 
@@ -865,8 +857,8 @@ void PPCVSXSwapRemoval::handleSpecialSwappables(int EntryIdx) {
   case SHValues::SH_XXPERMDI: {
     MachineInstr *MI = SwapVector[EntryIdx].VSEMI;
 
-    LLVM_DEBUG(dbgs() << "Changing XXPERMDI: ");
-    LLVM_DEBUG(MI->dump());
+    DEBUG(dbgs() << "Changing XXPERMDI: ");
+    DEBUG(MI->dump());
 
     unsigned Selector = MI->getOperand(3).getImm();
     if (Selector == 0 || Selector == 3)
@@ -878,14 +870,8 @@ void PPCVSXSwapRemoval::handleSpecialSwappables(int EntryIdx) {
     MI->getOperand(1).setReg(Reg2);
     MI->getOperand(2).setReg(Reg1);
 
-    // We also need to swap kill flag associated with the register.
-    bool IsKill1 = MI->getOperand(1).isKill();
-    bool IsKill2 = MI->getOperand(2).isKill();
-    MI->getOperand(1).setIsKill(IsKill2);
-    MI->getOperand(2).setIsKill(IsKill1);
-
-    LLVM_DEBUG(dbgs() << "  Into: ");
-    LLVM_DEBUG(MI->dump());
+    DEBUG(dbgs() << "  Into: ");
+    DEBUG(MI->dump());
     break;
   }
 
@@ -895,16 +881,16 @@ void PPCVSXSwapRemoval::handleSpecialSwappables(int EntryIdx) {
   case SHValues::SH_COPYWIDEN: {
     MachineInstr *MI = SwapVector[EntryIdx].VSEMI;
 
-    LLVM_DEBUG(dbgs() << "Changing SUBREG_TO_REG: ");
-    LLVM_DEBUG(MI->dump());
+    DEBUG(dbgs() << "Changing SUBREG_TO_REG: ");
+    DEBUG(MI->dump());
 
     unsigned DstReg = MI->getOperand(0).getReg();
     const TargetRegisterClass *DstRC = MRI->getRegClass(DstReg);
     unsigned NewVReg = MRI->createVirtualRegister(DstRC);
 
     MI->getOperand(0).setReg(NewVReg);
-    LLVM_DEBUG(dbgs() << "  Into: ");
-    LLVM_DEBUG(MI->dump());
+    DEBUG(dbgs() << "  Into: ");
+    DEBUG(MI->dump());
 
     auto InsertPoint = ++MachineBasicBlock::iterator(MI);
 
@@ -920,19 +906,19 @@ void PPCVSXSwapRemoval::handleSpecialSwappables(int EntryIdx) {
       BuildMI(*MI->getParent(), InsertPoint, MI->getDebugLoc(),
               TII->get(PPC::COPY), VSRCTmp1)
         .addReg(NewVReg);
-      LLVM_DEBUG(std::prev(InsertPoint)->dump());
+      DEBUG(std::prev(InsertPoint)->dump());
 
       insertSwap(MI, InsertPoint, VSRCTmp2, VSRCTmp1);
-      LLVM_DEBUG(std::prev(InsertPoint)->dump());
+      DEBUG(std::prev(InsertPoint)->dump());
 
       BuildMI(*MI->getParent(), InsertPoint, MI->getDebugLoc(),
               TII->get(PPC::COPY), DstReg)
         .addReg(VSRCTmp2);
-      LLVM_DEBUG(std::prev(InsertPoint)->dump());
+      DEBUG(std::prev(InsertPoint)->dump());
 
     } else {
       insertSwap(MI, InsertPoint, DstReg, NewVReg);
-      LLVM_DEBUG(std::prev(InsertPoint)->dump());
+      DEBUG(std::prev(InsertPoint)->dump());
     }
     break;
   }
@@ -943,7 +929,7 @@ void PPCVSXSwapRemoval::handleSpecialSwappables(int EntryIdx) {
 // a copy operation.
 bool PPCVSXSwapRemoval::removeSwaps() {
 
-  LLVM_DEBUG(dbgs() << "\n*** Removing swaps ***\n\n");
+  DEBUG(dbgs() << "\n*** Removing swaps ***\n\n");
 
   bool Changed = false;
 
@@ -956,9 +942,9 @@ bool PPCVSXSwapRemoval::removeSwaps() {
               MI->getOperand(0).getReg())
           .add(MI->getOperand(1));
 
-      LLVM_DEBUG(dbgs() << format("Replaced %d with copy: ",
-                                  SwapVector[EntryIdx].VSEId));
-      LLVM_DEBUG(MI->dump());
+      DEBUG(dbgs() << format("Replaced %d with copy: ",
+                             SwapVector[EntryIdx].VSEId));
+      DEBUG(MI->dump());
 
       MI->eraseFromParent();
     }
@@ -978,7 +964,7 @@ LLVM_DUMP_METHOD void PPCVSXSwapRemoval::dumpSwapVector() {
 
     dbgs() << format("%6d", ID);
     dbgs() << format("%6d", EC->getLeaderValue(ID));
-    dbgs() << format(" %bb.%3d", MI->getParent()->getNumber());
+    dbgs() << format(" BB#%3d", MI->getParent()->getNumber());
     dbgs() << format("  %14s  ", TII->getName(MI->getOpcode()).str().c_str());
 
     if (SwapVector[EntryIdx].IsLoad)

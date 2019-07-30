@@ -42,8 +42,7 @@ Error BinaryStreamWriter::writeCString(StringRef Str) {
 }
 
 Error BinaryStreamWriter::writeFixedString(StringRef Str) {
-
-  return writeBytes(arrayRefFromStringRef(Str));
+  return writeBytes(ArrayRef<uint8_t>(Str.bytes_begin(), Str.bytes_end()));
 }
 
 Error BinaryStreamWriter::writeStreamRef(BinaryStreamRef Ref) {

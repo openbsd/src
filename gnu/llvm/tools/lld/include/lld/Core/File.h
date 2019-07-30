@@ -43,7 +43,7 @@ class File {
 public:
   virtual ~File();
 
-  /// Kinds of files that are supported.
+  /// \brief Kinds of files that are supported.
   enum Kind {
     kindErrorObject,          ///< a error object file (.o)
     kindNormalizedObject,     ///< a normalized file (.o)
@@ -59,7 +59,7 @@ public:
     kindArchiveLibrary        ///< archive (.a)
   };
 
-  /// Returns file kind.  Need for dyn_cast<> on File objects.
+  /// \brief Returns file kind.  Need for dyn_cast<> on File objects.
   Kind kind() const {
     return _kind;
   }
@@ -114,8 +114,10 @@ public:
     AtomRange(AtomVector<T> &v) : _v(v) {}
     AtomRange(const AtomVector<T> &v) : _v(const_cast<AtomVector<T> &>(v)) {}
 
-    using ConstDerefFn = const T* (*)(const OwningAtomPtr<T>&);
-    using DerefFn = T* (*)(OwningAtomPtr<T>&);
+    typedef std::pointer_to_unary_function<const OwningAtomPtr<T>&,
+                                           const T*> ConstDerefFn;
+
+    typedef std::pointer_to_unary_function<OwningAtomPtr<T>&, T*> DerefFn;
 
     typedef llvm::mapped_iterator<typename AtomVector<T>::const_iterator,
                                   ConstDerefFn> ConstItTy;
@@ -172,19 +174,19 @@ public:
     AtomVector<T> &_v;
   };
 
-  /// Must be implemented to return the AtomVector object for
+  /// \brief Must be implemented to return the AtomVector object for
   /// all DefinedAtoms in this File.
   virtual const AtomRange<DefinedAtom> defined() const = 0;
 
-  /// Must be implemented to return the AtomVector object for
+  /// \brief Must be implemented to return the AtomVector object for
   /// all UndefinedAtomw in this File.
   virtual const AtomRange<UndefinedAtom> undefined() const = 0;
 
-  /// Must be implemented to return the AtomVector object for
+  /// \brief Must be implemented to return the AtomVector object for
   /// all SharedLibraryAtoms in this File.
   virtual const AtomRange<SharedLibraryAtom> sharedLibrary() const = 0;
 
-  /// Must be implemented to return the AtomVector object for
+  /// \brief Must be implemented to return the AtomVector object for
   /// all AbsoluteAtoms in this File.
   virtual const AtomRange<AbsoluteAtom> absolute() const = 0;
 
@@ -194,7 +196,7 @@ public:
   /// of a different file.  We need to destruct all atoms before any files.
   virtual void clearAtoms() = 0;
 
-  /// If a file is parsed using a different method than doParse(),
+  /// \brief If a file is parsed using a different method than doParse(),
   /// one must use this method to set the last error status, so that
   /// doParse will not be called twice. Only YAML reader uses this
   /// (because YAML reader does not read blobs but structured data).
@@ -212,12 +214,12 @@ public:
   }
 
 protected:
-  /// only subclasses of File can be instantiated
+  /// \brief only subclasses of File can be instantiated
   File(StringRef p, Kind kind)
     : _path(p), _kind(kind), _ordinal(UINT64_MAX),
       _nextAtomOrdinal(0) {}
 
-  /// Subclasses should override this method to parse the
+  /// \brief Subclasses should override this method to parse the
   /// memory buffer passed to this file's constructor.
   virtual std::error_code doParse() { return std::error_code(); }
 

@@ -1,4 +1,4 @@
-//===- LiveRangeCalc.h - Calculate live ranges ------------------*- C++ -*-===//
+//===---- LiveRangeCalc.h - Calculate live ranges ---------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -26,35 +26,28 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IndexedMap.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/LiveInterval.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/CodeGen/SlotIndexes.h"
-#include "llvm/MC/LaneBitmask.h"
-#include <utility>
 
 namespace llvm {
 
-template <class NodeT> class DomTreeNodeBase;
+/// Forward declarations for MachineDominators.h:
 class MachineDominatorTree;
-class MachineFunction;
-class MachineRegisterInfo;
-
-using MachineDomTreeNode = DomTreeNodeBase<MachineBasicBlock>;
+template <class NodeT> class DomTreeNodeBase;
+typedef DomTreeNodeBase<MachineBasicBlock> MachineDomTreeNode;
 
 class LiveRangeCalc {
-  const MachineFunction *MF = nullptr;
-  const MachineRegisterInfo *MRI = nullptr;
-  SlotIndexes *Indexes = nullptr;
-  MachineDominatorTree *DomTree = nullptr;
-  VNInfo::Allocator *Alloc = nullptr;
+  const MachineFunction *MF;
+  const MachineRegisterInfo *MRI;
+  SlotIndexes *Indexes;
+  MachineDominatorTree *DomTree;
+  VNInfo::Allocator *Alloc;
 
   /// LiveOutPair - A value and the block that defined it.  The domtree node is
   /// redundant, it can be computed as: MDT[Indexes.getMBBFromIndex(VNI->def)].
-  using LiveOutPair = std::pair<VNInfo *, MachineDomTreeNode *>;
+  typedef std::pair<VNInfo*, MachineDomTreeNode*> LiveOutPair;
 
   /// LiveOutMap - Map basic blocks to the value leaving the block.
-  using LiveOutMap = IndexedMap<LiveOutPair, MBB2NumberFunctor>;
+  typedef IndexedMap<LiveOutPair, MBB2NumberFunctor> LiveOutMap;
 
   /// Bit vector of active entries in LiveOut, also used as a visited set by
   /// findReachingDefs.  One entry per basic block, indexed by block number.
@@ -73,7 +66,7 @@ class LiveRangeCalc {
   /// registers do not overlap), but the defined/undefined information must
   /// be kept separate for each individual range.
   /// By convention, EntryInfoMap[&LR] = { Defined, Undefined }.
-  using EntryInfoMap = DenseMap<LiveRange *, std::pair<BitVector, BitVector>>;
+  typedef DenseMap<LiveRange*,std::pair<BitVector,BitVector>> EntryInfoMap;
   EntryInfoMap EntryInfos;
 
   /// Map each basic block where a live range is live out to the live-out value
@@ -112,10 +105,10 @@ class LiveRangeCalc {
     SlotIndex Kill;
 
     // Live-in value filled in by updateSSA once it is known.
-    VNInfo *Value = nullptr;
+    VNInfo *Value;
 
     LiveInBlock(LiveRange &LR, MachineDomTreeNode *node, SlotIndex kill)
-      : LR(LR), DomNode(node), Kill(kill) {}
+      : LR(LR), DomNode(node), Kill(kill), Value(nullptr) {}
   };
 
   /// LiveIn - Work list of blocks where the live-in value has yet to be
@@ -147,7 +140,7 @@ class LiveRangeCalc {
   ///
   /// PhysReg, when set, is used to verify live-in lists on basic blocks.
   bool findReachingDefs(LiveRange &LR, MachineBasicBlock &UseMBB,
-                        SlotIndex Use, unsigned PhysReg,
+                        SlotIndex Kill, unsigned PhysReg,
                         ArrayRef<SlotIndex> Undefs);
 
   /// updateSSA - Compute the values that will be live in to all requested
@@ -178,7 +171,8 @@ class LiveRangeCalc {
   void resetLiveOutMap();
 
 public:
-  LiveRangeCalc() = default;
+  LiveRangeCalc() : MF(nullptr), MRI(nullptr), Indexes(nullptr),
+                    DomTree(nullptr), Alloc(nullptr) {}
 
   //===--------------------------------------------------------------------===//
   // High-level interface.
@@ -192,8 +186,10 @@ public:
   /// that may overlap a previously computed live range, and before the first
   /// live range in a function.  If live ranges are not known to be
   /// non-overlapping, call reset before each.
-  void reset(const MachineFunction *mf, SlotIndexes *SI,
-             MachineDominatorTree *MDT, VNInfo::Allocator *VNIA);
+  void reset(const MachineFunction *MF,
+             SlotIndexes*,
+             MachineDominatorTree*,
+             VNInfo::Allocator*);
 
   //===--------------------------------------------------------------------===//
   // Mid-level interface.
@@ -282,17 +278,8 @@ public:
   /// Every predecessor of a live-in block must have been given a value with
   /// setLiveOutValue, the value may be null for live-trough blocks.
   void calculateValues();
-
-  /// A diagnostic function to check if the end of the block @p MBB is
-  /// jointly dominated by the blocks corresponding to the slot indices
-  /// in @p Defs. This function is mainly for use in self-verification
-  /// checks.
-  LLVM_ATTRIBUTE_UNUSED
-  static bool isJointlyDominated(const MachineBasicBlock *MBB,
-                                 ArrayRef<SlotIndex> Defs,
-                                 const SlotIndexes &Indexes);
 };
 
 } // end namespace llvm
 
-#endif // LLVM_LIB_CODEGEN_LIVERANGECALC_H
+#endif

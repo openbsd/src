@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.c,v 1.39 2018/12/20 03:39:29 dlg Exp $	*/
+/*	$OpenBSD: addrtoname.c,v 1.37 2016/12/14 19:12:16 jca Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -34,7 +34,10 @@ struct rtentry;
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+
+#ifdef INET6
 #include <netinet/ip6.h>
+#endif
 
 #include <arpa/inet.h>
 
@@ -75,6 +78,7 @@ struct hnamemem eprototable[HASHNAMESIZE];
 struct hnamemem dnaddrtable[HASHNAMESIZE];
 struct hnamemem llcsaptable[HASHNAMESIZE];
 
+#ifdef INET6
 struct h6namemem {
 	struct in6_addr addr;
 	char *name;
@@ -82,6 +86,7 @@ struct h6namemem {
 };
 
 struct h6namemem h6nametable[HASHNAMESIZE];
+#endif /* INET6 */
 
 struct enamemem {
 	u_short e_addr0;
@@ -229,6 +234,7 @@ getname(const u_char *ap)
 	return (p->name);
 }
 
+#ifdef INET6
 /*
  * Return a name for the IP6 address pointed to by ap.  This address
  * is assumed to be in network byte order.
@@ -287,6 +293,7 @@ getname6(const u_char *ap)
 	p->name = savestr(cp);
 	return (p->name);
 }
+#endif /* INET6 */
 
 static char hex[] = "0123456789abcdef";
 
@@ -737,7 +744,6 @@ static struct etherlist {
 	char *name;
 } etherlist[] = {
 	{{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }, "Broadcast" },
-	{{ 0x01, 0x80, 0xc2, 0x00, 0x00, 0x0e }, "LLDP_Multicast" },
 	{{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, NULL }
 };
 
@@ -896,6 +902,7 @@ newhnamemem(void)
 	return (p);
 }
 
+#ifdef INET6
 /* Return a zero'ed h6namemem struct and cuts down on calloc() overhead */
 struct h6namemem *
 newh6namemem(void)
@@ -914,3 +921,4 @@ newh6namemem(void)
 	p = ptr++;
 	return (p);
 }
+#endif /* INET6 */

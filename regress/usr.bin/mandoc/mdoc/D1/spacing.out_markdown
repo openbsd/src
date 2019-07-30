@@ -6,17 +6,12 @@ D1-SPACING(1) - General Commands Manual
 
 # DESCRIPTION
 
-BEGINTEST
-
-preceding
-paragraph
+preceding text
 
 > spacing in and around one-line displays
 
 empty display:
 
-following text  
-ENDTEST  
-end of file
+following text
 
-OpenBSD - January 7, 2019
+OpenBSD - July 4, 2017

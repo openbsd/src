@@ -25,13 +25,13 @@
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
-#include "llvm/CodeGen/TargetInstrInfo.h"
-#include "llvm/CodeGen/TargetRegisterInfo.h"
-#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <climits>
 using namespace llvm;
 
@@ -93,8 +93,9 @@ private:
 
 /// Schedule - Schedule the DAG using list scheduling.
 void ScheduleDAGVLIW::Schedule() {
-  LLVM_DEBUG(dbgs() << "********** List Scheduling " << printMBBReference(*BB)
-                    << " '" << BB->getName() << "' **********\n");
+  DEBUG(dbgs()
+        << "********** List Scheduling BB#" << BB->getNumber()
+        << " '" << BB->getName() << "' **********\n");
 
   // Build the scheduling graph.
   BuildSchedGraph(AA);
@@ -151,8 +152,8 @@ void ScheduleDAGVLIW::releaseSuccessors(SUnit *SU) {
 /// count of its successors. If a successor pending count is zero, add it to
 /// the Available queue.
 void ScheduleDAGVLIW::scheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
-  LLVM_DEBUG(dbgs() << "*** Scheduling [" << CurCycle << "]: ");
-  LLVM_DEBUG(SU->dump(this));
+  DEBUG(dbgs() << "*** Scheduling [" << CurCycle << "]: ");
+  DEBUG(SU->dump(this));
 
   Sequence.push_back(SU);
   assert(CurCycle >= SU->getDepth() && "Node scheduled above its depth!");
@@ -246,7 +247,7 @@ void ScheduleDAGVLIW::listScheduleTopDown() {
     } else if (!HasNoopHazards) {
       // Otherwise, we have a pipeline stall, but no other problem, just advance
       // the current cycle and try again.
-      LLVM_DEBUG(dbgs() << "*** Advancing cycle, no work to do\n");
+      DEBUG(dbgs() << "*** Advancing cycle, no work to do\n");
       HazardRec->AdvanceCycle();
       ++NumStalls;
       ++CurCycle;
@@ -254,7 +255,7 @@ void ScheduleDAGVLIW::listScheduleTopDown() {
       // Otherwise, we have no instructions to issue and we have instructions
       // that will fault if we don't do this right.  This is the case for
       // processors without pipeline interlocks and other cases.
-      LLVM_DEBUG(dbgs() << "*** Emitting noop\n");
+      DEBUG(dbgs() << "*** Emitting noop\n");
       HazardRec->EmitNoop();
       Sequence.push_back(nullptr);   // NULL here means noop
       ++NumNoops;

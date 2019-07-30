@@ -10,15 +10,15 @@
 #ifndef LLD_ELF_EHFRAME_H
 #define LLD_ELF_EHFRAME_H
 
-#include "lld/Common/LLVM.h"
+#include "lld/Core/LLVM.h"
 
 namespace lld {
 namespace elf {
 class InputSectionBase;
 struct EhSectionPiece;
 
-size_t readEhRecordSize(InputSectionBase *S, size_t Off);
-uint8_t getFdeEncoding(EhSectionPiece *P);
+template <class ELFT> size_t readEhRecordSize(InputSectionBase *S, size_t Off);
+template <class ELFT> uint8_t getFdeEncoding(EhSectionPiece *P);
 } // namespace elf
 } // namespace lld
 

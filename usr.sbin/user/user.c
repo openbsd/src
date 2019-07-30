@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.124 2018/12/31 14:25:00 millert Exp $ */
+/* $OpenBSD: user.c,v 1.120 2017/05/24 09:18:15 mestre Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -319,22 +319,6 @@ copydotfiles(char *skeldir, char *dir)
 	return n;
 }
 
-/* returns 1 if the specified gid exists in the group file, else 0 */
-static int
-gid_exists(gid_t gid)
-{
-    return group_from_gid(gid, 1) != NULL;
-}
-
-/* return 1 if the specified group exists in the group file, else 0 */
-static int
-group_exists(const char *group)
-{
-    gid_t gid;
-
-    return gid_from_group(group, &gid) != -1;
-}
-
 /* create a group entry with gid `gid' */
 static int
 creategid(char *group, gid_t gid, const char *name)
@@ -348,7 +332,7 @@ creategid(char *group, gid_t gid, const char *name)
 	int		wroteit = 0;
 	size_t		len;
 
-	if (group_exists(group)) {
+	if (getgrnam(group) != NULL) {
 		warnx("group `%s' already exists", group);
 		return 0;
 	}
@@ -523,7 +507,7 @@ append_group(char *user, int ngroups, const char **groups)
 	char		buf[LINE_MAX];
 	char		f[MaxFileNameLen];
 	char		*colon;
-	const char	*ugid = NULL;
+	char		*ugid = NULL;
 	int		fd;
 	int		cc;
 	int		i;
@@ -689,7 +673,7 @@ static int
 getnextgid(uid_t *gidp, uid_t lo, uid_t hi)
 {
 	for (*gidp = lo ; *gidp < hi ; *gidp += 1) {
-		if (!gid_exists((gid_t)*gidp)) {
+		if (getgrgid((gid_t)*gidp) == NULL) {
 			return 1;
 		}
 	}
@@ -724,7 +708,7 @@ save_range(user_t *up, char *cp)
 			up->u_rc += 1;
 		}
 	} else {
-		warnx("Bad uid range `%s'", cp);
+		warnx("Bad range `%s'", cp);
 		return 0;
 	}
 	return 1;
@@ -873,30 +857,14 @@ read_defaults(user_t *up)
 	up->u_defrc = up->u_rc;
 }
 
-/* return 1 if the specified uid exists in the passwd file, else 0 */
-static int
-uid_exists(uid_t uid)
-{
-    return user_from_uid(uid, 1) != NULL;
-}
-
-/* return 1 if the specified user exists in the passwd file, else 0 */
-static int
-user_exists(const char *user)
-{
-    uid_t uid;
-
-    return uid_from_user(user, &uid) != -1;
-}
-
 /* return the next valid unused uid */
 static int
 getnextuid(int sync_uid_gid, uid_t *uid, uid_t low_uid, uid_t high_uid)
 {
 	for (*uid = low_uid ; *uid <= high_uid ; (*uid)++) {
-		if (!uid_exists((uid_t)*uid) && *uid != NOBODY_UID) {
+		if (getpwuid((uid_t)(*uid)) == NULL && *uid != NOBODY_UID) {
 			if (sync_uid_gid) {
-				if (!gid_exists((gid_t)*uid)) {
+				if (getgrgid((gid_t)(*uid)) == NULL) {
 					return 1;
 				}
 			} else {
@@ -1080,14 +1048,14 @@ adduser(char *login_name, user_t *up)
 		}
 	}
 	/* check uid isn't already allocated */
-	if (!(up->u_flags & F_DUPUID) && uid_exists((uid_t)up->u_uid)) {
+	if (!(up->u_flags & F_DUPUID) && getpwuid((uid_t)(up->u_uid)) != NULL) {
 		close(ptmpfd);
 		pw_abort();
 		errx(EXIT_FAILURE, "uid %u is already in use", up->u_uid);
 	}
 	/* if -g=uid was specified, check gid is unused */
 	if (sync_uid_gid) {
-		if (gid_exists((gid_t)up->u_uid)) {
+		if (getgrgid((gid_t)(up->u_uid)) != NULL) {
 			close(ptmpfd);
 			pw_abort();
 			errx(EXIT_FAILURE, "gid %u is already in use", up->u_uid);
@@ -1102,7 +1070,7 @@ adduser(char *login_name, user_t *up)
 		gid = grp->gr_gid;
 	}
 	/* check name isn't already in use */
-	if (!(up->u_flags & F_DUPUID) && user_exists(login_name)) {
+	if (!(up->u_flags & F_DUPUID) && getpwnam(login_name) != NULL) {
 		close(ptmpfd);
 		pw_abort();
 		errx(EXIT_FAILURE, "already a `%s' user", login_name);
@@ -1218,7 +1186,8 @@ adduser(char *login_name, user_t *up)
 			(void) asystem("%s -R u+w %s", CHMOD, home);
 		}
 	}
-	if (strcmp(up->u_primgrp, "=uid") == 0 && !group_exists(login_name) &&
+	if (strcmp(up->u_primgrp, "=uid") == 0 &&
+	    getgrnam(login_name) == NULL &&
 	    !creategid(login_name, gid, "")) {
 		close(ptmpfd);
 		pw_abort();
@@ -1458,8 +1427,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	if (up != NULL) {
 		if (up->u_flags & F_USERNAME) {
 			/* if changing name, check new name isn't already in use */
-			if (strcmp(login_name, newlogin) != 0 &&
-			    user_exists(newlogin)) {
+			if (strcmp(login_name, newlogin) != 0 && getpwnam(newlogin) != NULL) {
 				close(ptmpfd);
 				pw_abort();
 				errx(EXIT_FAILURE, "already a `%s' user", newlogin);
@@ -1545,8 +1513,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		}
 		if (up->u_flags & F_UID) {
 			/* check uid isn't already allocated */
-			if (!(up->u_flags & F_DUPUID) &&
-			    uid_exists((uid_t)up->u_uid)) {
+			if (!(up->u_flags & F_DUPUID) && getpwuid((uid_t)(up->u_uid)) != NULL) {
 				close(ptmpfd);
 				pw_abort();
 				errx(EXIT_FAILURE, "uid %u is already in use", up->u_uid);
@@ -1556,7 +1523,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		if (up->u_flags & F_GROUP) {
 			/* if -g=uid was specified, check gid is unused */
 			if (strcmp(up->u_primgrp, "=uid") == 0) {
-				if (gid_exists((gid_t)pwp->pw_uid)) {
+				if (getgrgid((gid_t)(pwp->pw_uid)) != NULL) {
 					close(ptmpfd);
 					pw_abort();
 					errx(EXIT_FAILURE, "gid %u is already "
@@ -1670,7 +1637,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		}
 		if (up->u_flags & F_SETSECGROUP) {
 			for (i = 0 ; i < up->u_groupc ; i++) {
-				if (!group_exists(up->u_groupv[i])) {
+				if (getgrnam(up->u_groupv[i]) == NULL) {
 					close(ptmpfd);
 					pw_abort();
 					errx(EXIT_FAILURE,
@@ -1848,8 +1815,7 @@ useradd(int argc, char **argv)
 			break;
 		case 'r':
 			defaultfield = 1;
-			if (!save_range(&u, optarg))
-				exit(EXIT_FAILURE);
+			(void) save_range(&u, optarg);
 			break;
 		case 's':
 			defaultfield = 1;
@@ -2149,7 +2115,7 @@ groupadd(int argc, char **argv)
 	if (gid < 0 && !getnextgid(&gid, LowGid, HighGid)) {
 		errx(EXIT_FAILURE, "can't add group: can't get next gid");
 	}
-	if (!dupgid && gid_exists((gid_t)gid)) {
+	if (!dupgid && getgrgid((gid_t) gid) != NULL) {
 		errx(EXIT_FAILURE, "can't add group: gid %d is a duplicate", gid);
 	}
 	openlog("groupadd", LOG_PID, LOG_USER);
@@ -2182,7 +2148,7 @@ groupdel(int argc, char **argv)
 	}
 	checkeuid();
 	openlog("groupdel", LOG_PID, LOG_USER);
-	if (!group_exists(*argv)) {
+	if (getgrnam(*argv) == NULL) {
 		warnx("No such group: `%s'", *argv);
 		return EXIT_FAILURE;
 	}

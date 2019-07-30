@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.78 2019/06/18 07:33:24 anton Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.76 2016/02/27 18:50:38 natano Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -168,10 +168,6 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	if ((error = getinoquota(oip)) != 0)
 		return (error);
 
-	fs = oip->i_fs;
-	if (length > fs->fs_maxfilesize)
-		return (EFBIG);
-
 	uvm_vnp_setsize(ovp, length);
 	oip->i_ci.ci_lasta = oip->i_ci.ci_clen 
 	    = oip->i_ci.ci_cstart = oip->i_ci.ci_lastw = 0;
@@ -200,6 +196,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		}
 	}
 
+	fs = oip->i_fs;
 	osize = DIP(oip, size);
 	/*
 	 * Lengthen the size of the file. We must ensure that the
@@ -207,6 +204,8 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	 * value of osize is 0, length will be at least 1.
 	 */
 	if (osize < length) {
+		if (length > fs->fs_maxfilesize)
+			return (EFBIG);
 		aflags = B_CLRBUF;
 		if (flags & IO_SYNC)
 			aflags |= B_SYNC;
@@ -561,7 +560,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 		}
 	}
 	if (copy != NULL) {
-		free(copy, M_TEMP, fs->fs_bsize);
+		free(copy, M_TEMP, 0);
 	} else {
 		bp->b_flags |= B_INVAL;
 		brelse(bp);

@@ -26,7 +26,7 @@ class BlocksTestCase(TestBase):
 
     def launch_common(self):
         self.build()
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         self.is_started = False

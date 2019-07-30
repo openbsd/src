@@ -1,7 +1,21 @@
 # Test against long bitwise vectors from Jim Gillogly and Francois Grieu
 
 use strict;
-use Digest::SHA;
+
+my $MODULE;
+
+BEGIN {
+	$MODULE = (-d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
+	eval "require $MODULE" || die $@;
+	$MODULE->import(qw());
+}
+
+BEGIN {
+	if ($ENV{PERL_CORE}) {
+		chdir 't' if -d 't';
+		@INC = '../lib';
+	}
+}
 
 #	SHA-1 Test Vectors
 #
@@ -43,7 +57,7 @@ for (1 .. 8) { my $line = <DATA>; $STATE011 .= $line }
 my $testnum = 1;
 print "1..", scalar(@vec110)/2 + scalar(@vec011)/2, "\n";
 
-my $state110 = Digest::SHA->putstate($STATE110);
+my $state110 = $MODULE->putstate($STATE110);
 while (@vec110) {
 	my $state = $state110->clone;
 	$state->add_bits(shift @vec110);
@@ -51,7 +65,7 @@ while (@vec110) {
 	print "ok ", $testnum++, "\n";
 }
 
-my $state011 = Digest::SHA->putstate($STATE011);
+my $state011 = $MODULE->putstate($STATE011);
 while (@vec011) {
 	my $state = $state011->clone;
 	$state->add_bits(shift @vec011);

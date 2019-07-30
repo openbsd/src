@@ -25,7 +25,7 @@ public:
   ~ScriptInterpreterNone() override;
 
   bool ExecuteOneLine(
-      llvm::StringRef command, CommandReturnObject *result,
+      const char *command, CommandReturnObject *result,
       const ExecuteScriptOptions &options = ExecuteScriptOptions()) override;
 
   void ExecuteInterpreterLoop() override;

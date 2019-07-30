@@ -6,24 +6,21 @@ NNAAMMEE
        TP-literal - indented paragraphs in literal context
 
 DDEESSCCRRIIPPTTIIOONN
-       BEGINTEST before indentation
+       regular text
 
-       tag       regular indented text
+       tag       indented text
 
-       regular paragraph
+       regular text
        literal
        text
 
        tag       indented
-                 literal
                  text
 
        literal
-       paragraph
+       text
        regular text
-       ENDTEST
-       end of file
 
 
 
-OpenBSD                         January 6, 2019                  TP-LITERAL(1)
+OpenBSD                         January 4, 2011                  TP-LITERAL(1)

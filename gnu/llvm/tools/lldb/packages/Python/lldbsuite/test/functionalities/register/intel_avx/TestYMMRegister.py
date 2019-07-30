@@ -21,13 +21,11 @@ class TestYMMRegister(TestBase):
     @skipIfiOSSimulator
     @skipIfTargetAndroid()
     @skipIf(archs=no_match(['i386', 'x86_64']))
-    @expectedFailureAll(oslist=["linux"], bugnumber="rdar://30523153")
-    @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr37995")
     def test(self):
-        self.build(dictionary={"CFLAGS_EXTRAS": "-march=haswell"})
+        self.build()
         self.setTearDownCleanup()
 
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         target = self.dbg.CreateTarget(exe)
 
         self.assertTrue(target, VALID_TARGET)
@@ -58,10 +56,9 @@ class TestYMMRegister(TestBase):
         else:
             register_range = 8
         for i in range(register_range):
-            j = i - ((i / 8) * 8)
             self.runCmd("thread step-inst")
 
-            register_byte = (byte_pattern1 | j)
+            register_byte = (byte_pattern1 | i)
             pattern = "ymm" + str(i) + " = " + str('{') + (
                 str(hex(register_byte)) + ' ') * 31 + str(hex(register_byte)) + str('}')
 
@@ -69,7 +66,7 @@ class TestYMMRegister(TestBase):
                 "register read ymm" + str(i),
                 substrs=[pattern])
 
-            register_byte = (byte_pattern2 | j)
+            register_byte = (byte_pattern2 | i)
             pattern = "ymm" + str(i) + " = " + str('{') + (
                 str(hex(register_byte)) + ' ') * 31 + str(hex(register_byte)) + str('}')
 

@@ -17,7 +17,7 @@
 
 #include "BPF.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/TargetLowering.h"
+#include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
 class BPFSubtarget;
@@ -28,8 +28,7 @@ enum NodeType : unsigned {
   CALL,
   SELECT_CC,
   BR_CC,
-  Wrapper,
-  MEMCPY
+  Wrapper
 };
 }
 
@@ -47,27 +46,11 @@ public:
   // with the given GlobalAddress is legal.
   bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const override;
 
-  std::pair<unsigned, const TargetRegisterClass *>
-  getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
-                               StringRef Constraint, MVT VT) const override;
-
   MachineBasicBlock *
   EmitInstrWithCustomInserter(MachineInstr &MI,
                               MachineBasicBlock *BB) const override;
 
-  bool getHasAlu32() const { return HasAlu32; }
-  bool getHasJmpExt() const { return HasJmpExt; }
-
-  EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
-                         EVT VT) const override;
-
-  MVT getScalarShiftAmountTy(const DataLayout &, EVT) const override;
-
 private:
-  // Control Instruction Selection Features
-  bool HasAlu32;
-  bool HasJmpExt;
-
   SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
@@ -108,14 +91,6 @@ private:
                                          Type *Ty) const override {
     return true;
   }
-
-  unsigned EmitSubregExt(MachineInstr &MI, MachineBasicBlock *BB, unsigned Reg,
-                         bool isSigned) const;
-
-  MachineBasicBlock * EmitInstrWithCustomInserterMemcpy(MachineInstr &MI,
-                                                        MachineBasicBlock *BB)
-                                                        const;
-
 };
 }
 

@@ -1,2 +1,0 @@
-mandoc: nesting.in:14:37: UNSUPP: nested .while loops
-mandoc: nesting.in:18:4: UNSUPP: cannot continue this .while loop

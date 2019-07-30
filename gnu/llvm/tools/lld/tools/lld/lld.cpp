@@ -7,32 +7,23 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the main function of the lld executable. The main
-// function is a thin wrapper which dispatches to the platform specific
-// driver.
+// This is the entry point to the lld driver. This is a thin wrapper which
+// dispatches to the given platform specific driver.
 //
-// lld is a single executable that contains four different linkers for ELF,
-// COFF, WebAssembly and Mach-O. The main function dispatches according to
-// argv[0] (i.e. command name). The most common name for each target is shown
-// below:
-//
-//  - ld.lld:    ELF (Unix)
-//  - ld64:      Mach-O (macOS)
-//  - lld-link:  COFF (Windows)
-//  - ld-wasm:   WebAssembly
-//
-// lld can be invoked as "lld" along with "-flavor" option. This is for
-// backward compatibility and not recommended.
+// If there is -flavor option, it is dispatched according to the arguments.
+// If the flavor parameter is not present, then it is dispatched according
+// to argv[0].
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/Common/Driver.h"
+#include "lld/Driver/Driver.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/Support/InitLLVM.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Path.h"
-#include <cstdlib>
+#include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/Signals.h"
 
 using namespace lld;
 using namespace llvm;
@@ -43,7 +34,6 @@ enum Flavor {
   Gnu,     // -flavor gnu
   WinLink, // -flavor link
   Darwin,  // -flavor darwin
-  Wasm,    // -flavor wasm
 };
 
 LLVM_ATTRIBUTE_NORETURN static void die(const Twine &S) {
@@ -54,23 +44,10 @@ LLVM_ATTRIBUTE_NORETURN static void die(const Twine &S) {
 static Flavor getFlavor(StringRef S) {
   return StringSwitch<Flavor>(S)
       .CasesLower("ld", "ld.lld", "gnu", Gnu)
-      .CasesLower("wasm", "ld-wasm", Wasm)
       .CaseLower("link", WinLink)
-      .CasesLower("ld64", "ld64.lld", "darwin", Darwin)
+      .CaseLower("darwin", Darwin)
       .Default(Invalid);
 }
-
-#ifndef __OpenBSD__
-static bool isPETarget(const std::vector<const char *> &V) {
-  for (auto It = V.begin(); It + 1 != V.end(); ++It) {
-    if (StringRef(*It) != "-m")
-      continue;
-    StringRef S = *(It + 1);
-    return S == "i386pe" || S == "i386pep" || S == "thumb2pe" || S == "arm64pe";
-  }
-  return false;
-}
-#endif
 
 static Flavor parseProgname(StringRef Progname) {
 #if __APPLE__
@@ -113,38 +90,26 @@ static Flavor parseFlavor(std::vector<const char *> &V) {
   return parseProgname(Arg0);
 }
 
-// If this function returns true, lld calls _exit() so that it quickly
-// exits without invoking destructors of globally allocated objects.
-//
-// We don't want to do that if we are running tests though, because
-// doing that breaks leak sanitizer. So, lit sets this environment variable,
-// and we use it to detect whether we are running tests or not.
-static bool canExitEarly() { return StringRef(getenv("LLD_IN_TEST")) != "1"; }
-
 /// Universal linker main(). This linker emulates the gnu, darwin, or
 /// windows linker based on the argv[0] or -flavor option.
 int main(int Argc, const char **Argv) {
-  InitLLVM X(Argc, Argv);
+  // Standard set up, so program fails gracefully.
+  sys::PrintStackTraceOnErrorSignal(Argv[0]);
+  PrettyStackTraceProgram StackPrinter(Argc, Argv);
+  llvm_shutdown_obj Shutdown;
 
   std::vector<const char *> Args(Argv, Argv + Argc);
   switch (parseFlavor(Args)) {
   case Gnu:
-#ifndef __OpenBSD__
-    if (isPETarget(Args))
-      return !mingw::link(Args);
-#endif
-    return !elf::link(Args, canExitEarly());
+    return !elf::link(Args, true);
 #ifndef __OpenBSD__
   case WinLink:
-    return !coff::link(Args, canExitEarly());
+    return !coff::link(Args);
   case Darwin:
-    return !mach_o::link(Args, canExitEarly());
-  case Wasm:
-    return !wasm::link(Args, canExitEarly());
+    return !mach_o::link(Args);
 #endif
   default:
     die("lld is a generic driver.\n"
-        "Invoke ld.lld (Unix), ld64.lld (macOS), lld-link (Windows), wasm-lld"
-        " (WebAssembly) instead");
+        "Invoke ld.lld (Unix), ld (macOS) or lld-link (Windows) instead.");
   }
 }

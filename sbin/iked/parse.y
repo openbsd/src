@@ -1,7 +1,6 @@
-/*	$OpenBSD: parse.y,v 1.80 2019/05/11 16:30:23 patrick Exp $	*/
+/*	$OpenBSD: parse.y,v 1.70 2018/01/31 13:25:55 patrick Exp $	*/
 
 /*
- * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -60,10 +59,6 @@ static struct file {
 	TAILQ_ENTRY(file)	 entry;
 	FILE			*stream;
 	char			*name;
-	size_t			 ungetpos;
-	size_t			 ungetsize;
-	u_char			*ungetbuf;
-	int			 eof_reached;
 	int			 lineno;
 	int			 errors;
 } *file;
@@ -82,9 +77,8 @@ int		 yyerror(const char *, ...)
     __attribute__((__nonnull__ (1)));
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
-int		 igetc(void);
 int		 lgetc(int);
-void		 lungetc(int);
+int		 lungetc(int);
 int		 findeol(void);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
@@ -106,7 +100,6 @@ static int		 rules = 0;
 static int		 passive = 0;
 static int		 decouple = 0;
 static int		 mobike = 1;
-static int		 fragmentation = 0;
 static char		*ocsp_url = NULL;
 
 struct ipsec_xf {
@@ -255,7 +248,7 @@ const struct ipsec_xf groupxfs[] = {
 	{ "grp29",		IKEV2_XFORMDH_BRAINPOOL_P384R1 },
 	{ "brainpool512",	IKEV2_XFORMDH_BRAINPOOL_P512R1 },
 	{ "grp30",		IKEV2_XFORMDH_BRAINPOOL_P512R1 },
-	{ "curve25519",		IKEV2_XFORMDH_CURVE25519 },
+	{ "curve25519",		IKEV2_XFORMDH_X_CURVE25519 },
 	{ NULL }
 };
 
@@ -397,7 +390,6 @@ typedef struct {
 %token	IKEV1 FLOW SA TCPMD5 TUNNEL TRANSPORT COUPLE DECOUPLE SET
 %token	INCLUDE LIFETIME BYTES INET INET6 QUICK SKIP DEFAULT
 %token	IPCOMP OCSP IKELIFETIME MOBIKE NOMOBIKE
-%token	FRAGMENTATION NOFRAGMENTATION
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.string>		string
@@ -442,7 +434,7 @@ comma		: ','
 include		: INCLUDE STRING		{
 			struct file	*nfile;
 
-			if ((nfile = pushfile($2, 1)) == NULL) {
+			if ((nfile = pushfile($2, 0)) == NULL) {
 				yyerror("failed to include file %s", $2);
 				free($2);
 				YYERROR;
@@ -458,8 +450,6 @@ set		: SET ACTIVE	{ passive = 0; }
 		| SET PASSIVE	{ passive = 1; }
 		| SET COUPLE	{ decouple = 0; }
 		| SET DECOUPLE	{ decouple = 1; }
-		| SET FRAGMENTATION	{ fragmentation = 1; }
-		| SET NOFRAGMENTATION	{ fragmentation = 0; }
 		| SET MOBIKE	{ mobike = 1; }
 		| SET NOMOBIKE	{ mobike = 0; }
 		| SET OCSP STRING		{
@@ -1084,8 +1074,6 @@ varset		: STRING '=' string
 				if (isspace((unsigned char)*s)) {
 					yyerror("macro name cannot contain "
 					    "whitespace");
-					free($1);
-					free($3);
 					YYERROR;
 				}
 			}
@@ -1172,7 +1160,6 @@ lookup(char *s)
 		{ "esp",		ESP },
 		{ "file",		FILENAME },
 		{ "flow",		FLOW },
-		{ "fragmentation",	FRAGMENTATION },
 		{ "from",		FROM },
 		{ "group",		GROUP },
 		{ "ike",		IKEV1 },
@@ -1187,7 +1174,6 @@ lookup(char *s)
 		{ "local",		LOCAL },
 		{ "mobike",		MOBIKE },
 		{ "name",		NAME },
-		{ "nofragmentation",	NOFRAGMENTATION },
 		{ "nomobike",		NOMOBIKE },
 		{ "ocsp",		OCSP },
 		{ "passive",		PASSIVE },
@@ -1225,39 +1211,34 @@ lookup(char *s)
 	}
 }
 
-#define START_EXPAND	1
-#define DONE_EXPAND	2
+#define MAXPUSHBACK	128
 
-static int	expanding;
-
-int
-igetc(void)
-{
-	int	c;
-
-	while (1) {
-		if (file->ungetpos > 0)
-			c = file->ungetbuf[--file->ungetpos];
-		else
-			c = getc(file->stream);
-
-		if (c == START_EXPAND)
-			expanding = 1;
-		else if (c == DONE_EXPAND)
-			expanding = 0;
-		else
-			break;
-	}
-	return (c);
-}
+unsigned char	*parsebuf;
+int		 parseindex;
+unsigned char	 pushback_buffer[MAXPUSHBACK];
+int		 pushback_index = 0;
 
 int
 lgetc(int quotec)
 {
 	int		c, next;
 
+	if (parsebuf) {
+		/* Read character from the parsebuffer instead of input. */
+		if (parseindex >= 0) {
+			c = parsebuf[parseindex++];
+			if (c != '\0')
+				return (c);
+			parsebuf = NULL;
+		} else
+			parseindex++;
+	}
+
+	if (pushback_index)
+		return (pushback_buffer[--pushback_index]);
+
 	if (quotec) {
-		if ((c = igetc()) == EOF) {
+		if ((c = getc(file->stream)) == EOF) {
 			yyerror("reached end of file while parsing "
 			    "quoted string");
 			if (popfile() == EOF)
@@ -1267,8 +1248,8 @@ lgetc(int quotec)
 		return (c);
 	}
 
-	while ((c = igetc()) == '\\') {
-		next = igetc();
+	while ((c = getc(file->stream)) == '\\') {
+		next = getc(file->stream);
 		if (next != '\n') {
 			c = next;
 			break;
@@ -1278,38 +1259,27 @@ lgetc(int quotec)
 	}
 
 	while (c == EOF) {
-		/*
-		 * Fake EOL when hit EOF for the first time. This gets line
-		 * count right if last line in included file is syntactically
-		 * invalid and has no newline.
-		 */
-		if (file->eof_reached == 0) {
-			file->eof_reached = 1;
-			return ('\n');
-		}
-		while (c == EOF) {
-			if (popfile() == EOF)
-				return (EOF);
-			c = igetc();
-		}
+		if (popfile() == EOF)
+			return (EOF);
+		c = getc(file->stream);
 	}
 	return (c);
 }
 
-void
+int
 lungetc(int c)
 {
 	if (c == EOF)
-		return;
-
-	if (file->ungetpos >= file->ungetsize) {
-		void *p = reallocarray(file->ungetbuf, file->ungetsize, 2);
-		if (p == NULL)
-			err(1, "lungetc");
-		file->ungetbuf = p;
-		file->ungetsize *= 2;
+		return (EOF);
+	if (parsebuf) {
+		parseindex--;
+		if (parseindex >= 0)
+			return (c);
 	}
-	file->ungetbuf[file->ungetpos++] = c;
+	if (pushback_index < MAXPUSHBACK-1)
+		return (pushback_buffer[pushback_index++] = c);
+	else
+		return (EOF);
 }
 
 int
@@ -1317,9 +1287,14 @@ findeol(void)
 {
 	int	c;
 
+	parsebuf = NULL;
+
 	/* skip to either EOF or the first real EOL */
 	while (1) {
-		c = lgetc(0);
+		if (pushback_index)
+			c = pushback_buffer[--pushback_index];
+		else
+			c = lgetc(0);
 		if (c == '\n') {
 			file->lineno++;
 			break;
@@ -1347,7 +1322,7 @@ top:
 	if (c == '#')
 		while ((c = lgetc(0)) != '\n' && c != EOF)
 			; /* nothing */
-	if (c == '$' && !expanding) {
+	if (c == '$' && parsebuf == NULL) {
 		while (1) {
 			if ((c = lgetc(0)) == EOF)
 				return (0);
@@ -1369,13 +1344,8 @@ top:
 			yyerror("macro '%s' not defined", buf);
 			return (findeol());
 		}
-		p = val + strlen(val) - 1;
-		lungetc(DONE_EXPAND);
-		while (p >= val) {
-			lungetc(*p);
-			p--;
-		}
-		lungetc(START_EXPAND);
+		parsebuf = val;
+		parseindex = 0;
 		goto top;
 	}
 
@@ -1392,8 +1362,7 @@ top:
 			} else if (c == '\\') {
 				if ((next = lgetc(quotec)) == EOF)
 					return (0);
-				if (next == quotec || next == ' ' ||
-				    next == '\t')
+				if (next == quotec || c == ' ' || c == '\t')
 					c = next;
 				else if (next == '\n') {
 					file->lineno++;
@@ -1415,7 +1384,7 @@ top:
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			err(1, "%s", __func__);
+			err(1, "yylex: strdup");
 		return (STRING);
 	}
 
@@ -1425,7 +1394,7 @@ top:
 	if (c == '-' || isdigit(c)) {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -1464,7 +1433,7 @@ nodigits:
 	if (isalnum(c) || c == ':' || c == '_' || c == '*') {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -1473,7 +1442,7 @@ nodigits:
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
 			if ((yylval.v.string = strdup(buf)) == NULL)
-				err(1, "%s", __func__);
+				err(1, "yylex: strdup");
 		return (token);
 	}
 	if (c == '\n') {
@@ -1511,11 +1480,11 @@ pushfile(const char *name, int secret)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
-		warn("%s", __func__);
+		warn("malloc");
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		warn("%s", __func__);
+		warn("malloc");
 		free(nfile);
 		return (NULL);
 	}
@@ -1523,12 +1492,12 @@ pushfile(const char *name, int secret)
 		nfile->stream = stdin;
 		free(nfile->name);
 		if ((nfile->name = strdup("stdin")) == NULL) {
-			warn("%s", __func__);
+			warn("strdup");
 			free(nfile);
 			return (NULL);
 		}
 	} else if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		warn("%s: %s", __func__, nfile->name);
+		warn("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -1539,16 +1508,7 @@ pushfile(const char *name, int secret)
 		free(nfile);
 		return (NULL);
 	}
-	nfile->lineno = TAILQ_EMPTY(&files) ? 1 : 0;
-	nfile->ungetsize = 16;
-	nfile->ungetbuf = malloc(nfile->ungetsize);
-	if (nfile->ungetbuf == NULL) {
-		warn("%s", __func__);
-		fclose(nfile->stream);
-		free(nfile->name);
-		free(nfile);
-		return (NULL);
-	}
+	nfile->lineno = 1;
 	TAILQ_INSERT_TAIL(&files, nfile, entry);
 	return (nfile);
 }
@@ -1563,7 +1523,6 @@ popfile(void)
 		TAILQ_REMOVE(&files, file, entry);
 		fclose(file->stream);
 		free(file->name);
-		free(file->ungetbuf);
 		free(file);
 		file = prev;
 		return (0);
@@ -1586,7 +1545,6 @@ parse_config(const char *filename, struct iked *x_env)
 	free(ocsp_url);
 
 	mobike = 1;
-	fragmentation = 0;
 	decouple = passive = 0;
 	ocsp_url = NULL;
 
@@ -1600,7 +1558,6 @@ parse_config(const char *filename, struct iked *x_env)
 	env->sc_passive = passive ? 1 : 0;
 	env->sc_decoupled = decouple ? 1 : 0;
 	env->sc_mobike = mobike;
-	env->sc_frag = fragmentation;
 	env->sc_ocsp_url = ocsp_url;
 
 	if (!rules)
@@ -1669,13 +1626,17 @@ cmdline_symset(char *s)
 {
 	char	*sym, *val;
 	int	ret;
+	size_t	len;
 
 	if ((val = strrchr(s, '=')) == NULL)
 		return (-1);
 
-	sym = strndup(s, val - s);
-	if (sym == NULL)
-		err(1, "%s", __func__);
+	len = strlen(s) - strlen(val) + 1;
+	if ((sym = malloc(len)) == NULL)
+		err(1, "cmdline_symset: malloc");
+
+	strlcpy(sym, s, len);
+
 	ret = symset(sym, val + 1, 1);
 	free(sym);
 
@@ -1965,11 +1926,11 @@ host(const char *s)
 		if (errno == ERANGE || !q || *q || mask > 128 || q == (p + 1))
 			errx(1, "host: invalid netmask '%s'", p);
 		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
-			err(1, "%s", __func__);
+			err(1, "host: calloc");
 		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
 	} else {
 		if ((ps = strdup(s)) == NULL)
-			err(1, "%s", __func__);
+			err(1, "host: strdup");
 		mask = -1;
 	}
 
@@ -2015,7 +1976,7 @@ host_v6(const char *s, int prefixlen)
 
 	ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 	if (ipa == NULL)
-		err(1, "%s", __func__);
+		err(1, "host_v6: calloc");
 	ipa->af = res->ai_family;
 	memcpy(&ipa->address, res->ai_addr, sizeof(struct sockaddr_in6));
 	if (prefixlen > 128)
@@ -2032,10 +1993,10 @@ host_v6(const char *s, int prefixlen)
 	if (prefixlen != 128) {
 		ipa->netaddress = 1;
 		if (asprintf(&ipa->name, "%s/%d", hbuf, prefixlen) == -1)
-			err(1, "%s", __func__);
+			err(1, "host_v6: asprintf");
 	} else {
 		if ((ipa->name = strdup(hbuf)) == NULL)
-			err(1, "%s", __func__);
+			err(1, "host_v6: strdup");
 	}
 
 	freeaddrinfo(res);
@@ -2062,7 +2023,7 @@ host_v4(const char *s, int mask)
 
 	ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 	if (ipa == NULL)
-		err(1, "%s", __func__);
+		err(1, "host_v4: calloc");
 
 	ina.sin_family = AF_INET;
 	ina.sin_len = sizeof(ina);
@@ -2070,7 +2031,7 @@ host_v4(const char *s, int mask)
 
 	ipa->name = strdup(s);
 	if (ipa->name == NULL)
-		err(1, "%s", __func__);
+		err(1, "host_v4: strdup");
 	ipa->af = AF_INET;
 	ipa->next = NULL;
 	ipa->tail = ipa;
@@ -2104,7 +2065,7 @@ host_dns(const char *s, int mask)
 
 		ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 		if (ipa == NULL)
-			err(1, "%s", __func__);
+			err(1, "host_dns: calloc");
 		switch (res->ai_family) {
 		case AF_INET:
 			memcpy(&ipa->address, res->ai_addr,
@@ -2121,7 +2082,7 @@ host_dns(const char *s, int mask)
 			err(1, "host_dns: getnameinfo");
 		ipa->name = strdup(hbuf);
 		if (ipa->name == NULL)
-			err(1, "%s", __func__);
+			err(1, "host_dns: strdup");
 		ipa->af = res->ai_family;
 		ipa->next = NULL;
 		ipa->tail = ipa;
@@ -2168,7 +2129,7 @@ host_any(void)
 
 	ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 	if (ipa == NULL)
-		err(1, "%s", __func__);
+		err(1, "host_any: calloc");
 	ipa->af = AF_UNSPEC;
 	ipa->netaddress = 1;
 	ipa->tail = ipa;
@@ -2197,10 +2158,10 @@ ifa_load(void)
 			continue;
 		n = calloc(1, sizeof(struct ipsec_addr_wrap));
 		if (n == NULL)
-			err(1, "%s", __func__);
+			err(1, "ifa_load: calloc");
 		n->af = ifa->ifa_addr->sa_family;
 		if ((n->name = strdup(ifa->ifa_name)) == NULL)
-			err(1, "%s", __func__);
+			err(1, "ifa_load: strdup");
 		if (n->af == AF_INET) {
 			sa_in = (struct sockaddr_in *)ifa->ifa_addr;
 			memcpy(&n->address, sa_in, sizeof(*sa_in));
@@ -2276,7 +2237,7 @@ ifa_grouplookup(const char *ifa_name)
 
 	len = ifgr.ifgr_len;
 	if ((ifgr.ifgr_groups = calloc(1, len)) == NULL)
-		err(1, "%s", __func__);
+		err(1, "calloc");
 	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
 		err(1, "ioctl");
 
@@ -2320,10 +2281,10 @@ ifa_lookup(const char *ifa_name)
 			continue;
 		n = calloc(1, sizeof(struct ipsec_addr_wrap));
 		if (n == NULL)
-			err(1, "%s", __func__);
+			err(1, "ifa_lookup: calloc");
 		memcpy(n, p, sizeof(struct ipsec_addr_wrap));
 		if ((n->name = strdup(p->name)) == NULL)
-			err(1, "%s", __func__);
+			err(1, "ifa_lookup: strdup");
 		switch (n->af) {
 		case AF_INET:
 			set_ipmask(n, 32);
@@ -2640,7 +2601,7 @@ copy_transforms(unsigned int type,
 			*dst = recallocarray(*dst, *ndst,
 			    *ndst + 1, sizeof(struct iked_transform));
 			if (*dst == NULL)
-				err(1, "%s", __func__);
+				err(1, "copy_transforms: recallocarray");
 			b = *dst + (*ndst)++;
 
 			b->xform_type = type;
@@ -2658,7 +2619,7 @@ copy_transforms(unsigned int type,
 		*dst = recallocarray(*dst, *ndst,
 		    *ndst + 1, sizeof(struct iked_transform));
 		if (*dst == NULL)
-			err(1, "%s", __func__);
+			err(1, "copy_transforms: recallocarray");
 		b = *dst + (*ndst)++;
 		memcpy(b, a, sizeof(*b));
 	}
@@ -2810,7 +2771,7 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 
 	if (ike_sa == NULL || ike_sa->nxfs == 0) {
 		if ((p = calloc(1, sizeof(*p))) == NULL)
-			err(1, "%s", __func__);
+			err(1, "create_ike: calloc");
 		p->prop_id = ikepropid++;
 		p->prop_protoid = IKEV2_SAPROTO_IKE;
 		p->prop_nxforms = ikev2_default_nike_transforms;
@@ -2820,7 +2781,7 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 	} else {
 		for (i = 0; i < ike_sa->nxfs; i++) {
 			if ((p = calloc(1, sizeof(*p))) == NULL)
-				err(1, "%s", __func__);
+				err(1, "create_ike: calloc");
 
 			xf = NULL;
 			xfi = 0;
@@ -2856,7 +2817,7 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 
 	if (ipsec_sa == NULL || ipsec_sa->nxfs == 0) {
 		if ((p = calloc(1, sizeof(*p))) == NULL)
-			err(1, "%s", __func__);
+			err(1, "create_ike: calloc");
 		p->prop_id = ipsecpropid++;
 		p->prop_protoid = saproto;
 		p->prop_nxforms = ikev2_default_nesp_transforms;
@@ -2882,7 +2843,7 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 			}
 
 			if ((p = calloc(1, sizeof(*p))) == NULL)
-				err(1, "%s", __func__);
+				err(1, "create_ike: calloc");
 
 			xf = NULL;
 			xfi = 0;

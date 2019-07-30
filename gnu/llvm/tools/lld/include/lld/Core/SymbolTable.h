@@ -10,9 +10,9 @@
 #ifndef LLD_CORE_SYMBOL_TABLE_H
 #define LLD_CORE_SYMBOL_TABLE_H
 
-#include "lld/Common/LLVM.h"
+#include "lld/Core/LLVM.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/Support/DJB.h"
+#include "llvm/ADT/StringExtras.h"
 #include <cstring>
 #include <map>
 #include <vector>
@@ -27,35 +27,35 @@ class ResolverOptions;
 class SharedLibraryAtom;
 class UndefinedAtom;
 
-/// The SymbolTable class is responsible for coalescing atoms.
+/// \brief The SymbolTable class is responsible for coalescing atoms.
 ///
 /// All atoms coalescable by-name or by-content should be added.
 /// The method replacement() can be used to find the replacement atom
 /// if an atom has been coalesced away.
 class SymbolTable {
 public:
-  /// add atom to symbol table
+  /// @brief add atom to symbol table
   bool add(const DefinedAtom &);
 
-  /// add atom to symbol table
+  /// @brief add atom to symbol table
   bool add(const UndefinedAtom &);
 
-  /// add atom to symbol table
+  /// @brief add atom to symbol table
   bool add(const SharedLibraryAtom &);
 
-  /// add atom to symbol table
+  /// @brief add atom to symbol table
   bool add(const AbsoluteAtom &);
 
-  /// returns atom in symbol table for specified name (or nullptr)
+  /// @brief returns atom in symbol table for specified name (or nullptr)
   const Atom *findByName(StringRef sym);
 
-  /// returns vector of remaining UndefinedAtoms
+  /// @brief returns vector of remaining UndefinedAtoms
   std::vector<const UndefinedAtom *> undefines();
 
-  /// if atom has been coalesced away, return replacement, else return atom
+  /// @brief if atom has been coalesced away, return replacement, else return atom
   const Atom *replacement(const Atom *);
 
-  /// if atom has been coalesced away, return true
+  /// @brief if atom has been coalesced away, return true
   bool isCoalescedAway(const Atom *);
 
 private:
@@ -65,7 +65,7 @@ private:
     static StringRef getEmptyKey() { return StringRef(); }
     static StringRef getTombstoneKey() { return StringRef(" ", 1); }
     static unsigned getHashValue(StringRef const val) {
-      return llvm::djbHash(val, 0);
+      return llvm::HashString(val);
     }
     static bool isEqual(StringRef const lhs, StringRef const rhs) {
       return lhs.equals(rhs);

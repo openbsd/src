@@ -1,4 +1,4 @@
-/* $OpenBSD: ttymodes.c,v 1.34 2018/07/09 21:20:26 markus Exp $ */
+/* $OpenBSD: ttymodes.c,v 1.33 2018/02/16 04:43:11 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -53,8 +53,8 @@
 #include "packet.h"
 #include "log.h"
 #include "compat.h"
-#include "sshbuf.h"
-#include "ssherr.h"
+#include "buffer.h"
+#include "compat.h"
 
 #define TTY_OP_END		0
 /*
@@ -248,18 +248,17 @@ baud_to_speed(int baud)
  * being constructed.
  */
 void
-ssh_tty_make_modes(struct ssh *ssh, int fd, struct termios *tiop)
+tty_make_modes(int fd, struct termios *tiop)
 {
 	struct termios tio;
-	struct sshbuf *buf;
-	int r, ibaud, obaud;
+	int baud;
+	Buffer buf;
 
-	if ((buf = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+	buffer_init(&buf);
 
 	if (tiop == NULL) {
 		if (fd == -1) {
-			debug("%s: no fd or tio", __func__);
+			debug("tty_make_modes: no fd or tio");
 			goto end;
 		}
 		if (tcgetattr(fd, &tio) == -1) {
@@ -270,28 +269,27 @@ ssh_tty_make_modes(struct ssh *ssh, int fd, struct termios *tiop)
 		tio = *tiop;
 
 	/* Store input and output baud rates. */
-	obaud = speed_to_baud(cfgetospeed(&tio));
-	ibaud = speed_to_baud(cfgetispeed(&tio));
-	if ((r = sshbuf_put_u8(buf, TTY_OP_OSPEED)) != 0 ||
-	    (r = sshbuf_put_u32(buf, obaud)) != 0 ||
-	    (r = sshbuf_put_u8(buf, TTY_OP_ISPEED)) != 0 ||
-	    (r = sshbuf_put_u32(buf, ibaud)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	baud = speed_to_baud(cfgetospeed(&tio));
+	buffer_put_char(&buf, TTY_OP_OSPEED);
+	buffer_put_int(&buf, baud);
+	baud = speed_to_baud(cfgetispeed(&tio));
+	buffer_put_char(&buf, TTY_OP_ISPEED);
+	buffer_put_int(&buf, baud);
 
 	/* Store values of mode flags. */
 #define TTYCHAR(NAME, OP) \
-	if ((r = sshbuf_put_u8(buf, OP)) != 0 || \
-	    (r = sshbuf_put_u32(buf, tio.c_cc[NAME])) != 0) \
-		fatal("%s: buffer error: %s", __func__, ssh_err(r)); \
+	buffer_put_char(&buf, OP); \
+	buffer_put_int(&buf, tio.c_cc[NAME]);
 
 #define SSH_TTYMODE_IUTF8 42  /* for SSH_BUG_UTF8TTYMODE */
 
 #define TTYMODE(NAME, FIELD, OP) \
 	if (OP == SSH_TTYMODE_IUTF8 && (datafellows & SSH_BUG_UTF8TTYMODE)) { \
 		debug3("%s: SSH_BUG_UTF8TTYMODE", __func__); \
-	} else if ((r = sshbuf_put_u8(buf, OP)) != 0 || \
-	    (r = sshbuf_put_u32(buf, ((tio.FIELD & NAME) != 0))) != 0) \
-		fatal("%s: buffer error: %s", __func__, ssh_err(r)); \
+	} else { \
+		buffer_put_char(&buf, OP); \
+		buffer_put_int(&buf, ((tio.FIELD & NAME) != 0)); \
+	}
 
 #include "ttymodes.h"
 
@@ -300,10 +298,9 @@ ssh_tty_make_modes(struct ssh *ssh, int fd, struct termios *tiop)
 
 end:
 	/* Mark end of mode data. */
-	if ((r = sshbuf_put_u8(buf, TTY_OP_END)) != 0 ||
-	    (r = sshpkt_put_stringb(ssh, buf)) != 0)
-		fatal("%s: packet error: %s", __func__, ssh_err(r));
-	sshbuf_free(buf);
+	buffer_put_char(&buf, TTY_OP_END);
+	packet_put_string(buffer_ptr(&buf), buffer_len(&buf));
+	buffer_free(&buf);
 }
 
 /*
@@ -311,24 +308,16 @@ end:
  * manner from a packet being read.
  */
 void
-ssh_tty_parse_modes(struct ssh *ssh, int fd)
+tty_parse_modes(int fd, int *n_bytes_ptr)
 {
 	struct termios tio;
-	struct sshbuf *buf;
-	const u_char *data;
-	u_char opcode;
-	u_int baud, u;
-	int r, failure = 0;
-	size_t len;
+	int opcode, baud;
+	int n_bytes = 0;
+	int failure = 0;
 
-	if ((r = sshpkt_get_string_direct(ssh, &data, &len)) != 0)
-		fatal("%s: packet error: %s", __func__, ssh_err(r));
-	if (len == 0)
+	*n_bytes_ptr = packet_get_int();
+	if (*n_bytes_ptr == 0)
 		return;
-	if ((buf = sshbuf_from(data, len)) == NULL) {
-		error("%s: sshbuf_from failed", __func__);
-		return;
-	}
 
 	/*
 	 * Get old attributes for the terminal.  We will modify these
@@ -340,48 +329,42 @@ ssh_tty_parse_modes(struct ssh *ssh, int fd)
 		failure = -1;
 	}
 
-	while (sshbuf_len(buf) > 0) {
-		if ((r = sshbuf_get_u8(buf, &opcode)) != 0)
-			fatal("%s: packet error: %s", __func__, ssh_err(r));
+	for (;;) {
+		n_bytes += 1;
+		opcode = packet_get_char();
 		switch (opcode) {
 		case TTY_OP_END:
 			goto set;
 
 		case TTY_OP_ISPEED:
-			if ((r = sshbuf_get_u32(buf, &baud)) != 0)
-				fatal("%s: packet error: %s",
-				    __func__, ssh_err(r));
+			n_bytes += 4;
+			baud = packet_get_int();
 			if (failure != -1 &&
 			    cfsetispeed(&tio, baud_to_speed(baud)) == -1)
 				error("cfsetispeed failed for %d", baud);
 			break;
 
 		case TTY_OP_OSPEED:
-			if ((r = sshbuf_get_u32(buf, &baud)) != 0)
-				fatal("%s: packet error: %s",
-				    __func__, ssh_err(r));
+			n_bytes += 4;
+			baud = packet_get_int();
 			if (failure != -1 &&
 			    cfsetospeed(&tio, baud_to_speed(baud)) == -1)
 				error("cfsetospeed failed for %d", baud);
 			break;
 
 #define TTYCHAR(NAME, OP) \
-		case OP: \
-			if ((r = sshbuf_get_u32(buf, &u)) != 0) \
-				fatal("%s: packet error: %s", __func__, \
-				    ssh_err(r)); \
-			tio.c_cc[NAME] = u; \
-			break;
+	case OP: \
+	  n_bytes += 4; \
+	  tio.c_cc[NAME] = packet_get_int(); \
+	  break;
 #define TTYMODE(NAME, FIELD, OP) \
-		case OP: \
-			if ((r = sshbuf_get_u32(buf, &u)) != 0) \
-				fatal("%s: packet error: %s", __func__, \
-				    ssh_err(r)); \
-			if (u) \
-				tio.FIELD |= NAME; \
-			else \
-				tio.FIELD &= ~NAME; \
-			break;
+	case OP: \
+	  n_bytes += 4; \
+	  if (packet_get_int()) \
+	    tio.FIELD |= NAME; \
+	  else \
+	    tio.FIELD &= ~NAME;	\
+	  break;
 
 #include "ttymodes.h"
 
@@ -399,12 +382,11 @@ ssh_tty_parse_modes(struct ssh *ssh, int fd)
 			 * to stop.
 			 */
 			if (opcode > 0 && opcode < 160) {
-				if ((r = sshbuf_get_u32(buf, NULL)) != 0)
-					fatal("%s: packet error: %s", __func__,
-					    ssh_err(r));
+				n_bytes += 4;
+				(void) packet_get_int();
 				break;
 			} else {
-				logit("%s: unknown opcode %d", __func__,
+				logit("parse_tty_modes: unknown opcode %d",
 				    opcode);
 				goto set;
 			}
@@ -412,10 +394,10 @@ ssh_tty_parse_modes(struct ssh *ssh, int fd)
 	}
 
 set:
-	len = sshbuf_len(buf);
-	sshbuf_free(buf);
-	if (len > 0) {
-		logit("%s: %zu bytes left", __func__, len);
+	if (*n_bytes_ptr != n_bytes) {
+		*n_bytes_ptr = n_bytes;
+		logit("parse_tty_modes: n_bytes_ptr != n_bytes: %d %d",
+		    *n_bytes_ptr, n_bytes);
 		return;		/* Don't process bytes passed */
 	}
 	if (failure == -1)

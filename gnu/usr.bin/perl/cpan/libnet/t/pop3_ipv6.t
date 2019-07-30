@@ -63,5 +63,4 @@ sub pop3_server {
   }
 
   note("POP3 dialog done");
-  return 0;
 }

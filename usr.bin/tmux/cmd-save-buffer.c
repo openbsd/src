@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.46 2019/06/13 21:44:13 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.43 2017/04/22 06:13:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -60,13 +60,11 @@ static enum cmd_retval
 cmd_save_buffer_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
-	struct client		*c = cmd_find_client(item, NULL, 1);
-	struct session		*s = item->target.s;
-	struct winlink		*wl = item->target.wl;
-	struct window_pane	*wp = item->target.wp;
+	struct client		*c = item->client;
 	struct paste_buffer	*pb;
-	const char		*bufname, *bufdata, *start, *end, *flags;
-	char			*msg, *path, *file;
+	const char		*path, *bufname, *bufdata, *start, *end;
+	const char		*flags;
+	char			*msg, *file;
 	size_t			 size, used, msglen, bufsize;
 	FILE			*f;
 
@@ -86,12 +84,10 @@ cmd_save_buffer_exec(struct cmd *self, struct cmdq_item *item)
 	bufdata = paste_buffer_data(pb, &bufsize);
 
 	if (self->entry == &cmd_show_buffer_entry)
-		path = xstrdup("-");
+		path = "-";
 	else
-		path = format_single(item, args->argv[0], c, s, wl, wp);
+		path = args->argv[0];
 	if (strcmp(path, "-") == 0) {
-		free(path);
-		c = item->client;
 		if (c == NULL) {
 			cmdq_error(item, "can't write to stdout");
 			return (CMD_RETURN_ERROR);
@@ -105,9 +101,7 @@ cmd_save_buffer_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(self->args, 'a'))
 		flags = "ab";
 
-	file = server_client_get_path(item->client, path);
-	free(path);
-
+	file = server_client_get_path(c, path);
 	f = fopen(file, flags);
 	if (f == NULL) {
 		cmdq_error(item, "%s: %s", file, strerror(errno));

@@ -19,7 +19,7 @@ class SectionAPITestCase(TestBase):
         d = {'EXE': 'b.out'}
         self.build(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        exe = self.getBuildArtifact('b.out')
+        exe = os.path.join(os.getcwd(), 'b.out')
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
 

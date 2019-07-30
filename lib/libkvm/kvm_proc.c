@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.59 2018/05/03 15:47:41 zhuk Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.58 2016/11/07 00:26:33 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,6 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -101,9 +100,9 @@
 static char	*_kvm_ureadm(kvm_t *, const struct kinfo_proc *, u_long, u_long *);
 static ssize_t	kvm_ureadm(kvm_t *, const struct kinfo_proc *, u_long, char *, size_t);
 
-static char	**kvm_argv(kvm_t *, const struct kinfo_proc *, u_long, int, int, int);
+static char	**kvm_argv(kvm_t *, const struct kinfo_proc *, u_long, int, int);
 
-static char	**kvm_doargv(kvm_t *, const struct kinfo_proc *, int, int,
+static char	**kvm_doargv(kvm_t *, const struct kinfo_proc *, int,
 		    void (*)(struct ps_strings *, u_long *, int *));
 static int	proc_verify(kvm_t *, const struct kinfo_proc *);
 static void	ps_str_a(struct ps_strings *, u_long *, int *);
@@ -258,12 +257,11 @@ _kvm_reallocarray(kvm_t *kd, void *p, size_t i, size_t n)
  */
 static char **
 kvm_argv(kvm_t *kd, const struct kinfo_proc *p, u_long addr, int narg,
-    int maxcnt, int isenv)
+    int maxcnt)
 {
-	char *np, *cp, *ep, *ap, **argv, ***pargv, **pargspc, **pargbuf;
+	char *np, *cp, *ep, *ap, **argv;
 	u_long oaddr = -1;
-	int len, cc, *parglen, *pargc;
-	size_t argc;
+	int len, cc;
 
 	/*
 	 * Check that there aren't an unreasonable number of arguments,
@@ -272,88 +270,77 @@ kvm_argv(kvm_t *kd, const struct kinfo_proc *p, u_long addr, int narg,
 	if (narg > ARG_MAX || addr < VM_MIN_ADDRESS || addr >= VM_MAXUSER_ADDRESS)
 		return (0);
 
-	if (isenv) {
-		pargspc = &kd->envspc;
-		pargbuf = &kd->envbuf;
-		parglen = &kd->envlen;
-		pargv = &kd->envp;
-		pargc = &kd->envc;
-	} else {
-		pargspc = &kd->argspc;
-		pargbuf = &kd->argbuf;
-		parglen = &kd->arglen;
-		pargv = &kd->argv;
-		pargc = &kd->argc;
-	}
-
-	if (*pargv == 0)
-		argc = MAX(narg + 1, 32);
-	else if (narg + 1 > *pargc)
-		argc = MAX(2 * (*pargc), narg + 1);
-	else
-		goto argv_allocated;
-	argv = _kvm_reallocarray(kd, *pargv, argc, sizeof(**pargv));
-	if (argv == 0)
-		return (0);
-	*pargv = argv;
-	*pargc = argc;
-
-argv_allocated:
-	if (*pargspc == 0) {
-		*pargspc = _kvm_malloc(kd, kd->nbpg);
-		if (*pargspc == 0)
+	if (kd->argv == 0) {
+		/*
+		 * Try to avoid reallocs.
+		 */
+		kd->argc = MAX(narg + 1, 32);
+		kd->argv = _kvm_reallocarray(kd, NULL, kd->argc,
+		    sizeof(*kd->argv));
+		if (kd->argv == 0)
 			return (0);
-		*parglen = kd->nbpg;
+	} else if (narg + 1 > kd->argc) {
+		kd->argc = MAX(2 * kd->argc, narg + 1);
+		kd->argv = (char **)_kvm_reallocarray(kd, kd->argv, kd->argc,
+		    sizeof(*kd->argv));
+		if (kd->argv == 0)
+			return (0);
 	}
-	if (*pargbuf == 0) {
-		*pargbuf = _kvm_malloc(kd, kd->nbpg);
-		if (*pargbuf == 0)
+	if (kd->argspc == 0) {
+		kd->argspc = _kvm_malloc(kd, kd->nbpg);
+		if (kd->argspc == 0)
+			return (0);
+		kd->arglen = kd->nbpg;
+	}
+	if (kd->argbuf == 0) {
+		kd->argbuf = _kvm_malloc(kd, kd->nbpg);
+		if (kd->argbuf == 0)
 			return (0);
 	}
 	cc = sizeof(char *) * narg;
-	if (kvm_ureadm(kd, p, addr, (char *)*pargv, cc) != cc)
+	if (kvm_ureadm(kd, p, addr, (char *)kd->argv, cc) != cc)
 		return (0);
-	ap = np = *pargspc;
-	argv = *pargv;
+	ap = np = kd->argspc;
+	argv = kd->argv;
 	len = 0;
 
 	/*
 	 * Loop over pages, filling in the argument vector.
 	 */
-	while (argv < *pargv + narg && *argv != 0) {
+	while (argv < kd->argv + narg && *argv != 0) {
 		addr = (u_long)*argv & ~(kd->nbpg - 1);
 		if (addr != oaddr) {
-			if (kvm_ureadm(kd, p, addr, *pargbuf, kd->nbpg) !=
+			if (kvm_ureadm(kd, p, addr, kd->argbuf, kd->nbpg) !=
 			    kd->nbpg)
 				return (0);
 			oaddr = addr;
 		}
 		addr = (u_long)*argv & (kd->nbpg - 1);
-		cp = *pargbuf + addr;
+		cp = kd->argbuf + addr;
 		cc = kd->nbpg - addr;
 		if (maxcnt > 0 && cc > maxcnt - len)
 			cc = maxcnt - len;
 		ep = memchr(cp, '\0', cc);
 		if (ep != 0)
 			cc = ep - cp + 1;
-		if (len + cc > *parglen) {
-			ptrdiff_t off;
+		if (len + cc > kd->arglen) {
+			int off;
 			char **pp;
-			char *op = *pargspc;
+			char *op = kd->argspc;
 			char *newp;
 
-			newp = _kvm_reallocarray(kd, *pargspc,
-			    *parglen, 2);
+			newp = _kvm_reallocarray(kd, kd->argspc,
+			    kd->arglen, 2);
 			if (newp == 0)
 				return (0);
-			*pargspc = newp;
-			*parglen *= 2;
+			kd->argspc = newp;
+			kd->arglen *= 2;
 			/*
 			 * Adjust argv pointers in case realloc moved
 			 * the string space.
 			 */
-			off = *pargspc - op;
-			for (pp = *pargv; pp < argv; pp++)
+			off = kd->argspc - op;
+			for (pp = kd->argv; pp < argv; pp++)
 				*pp += off;
 			ap += off;
 			np += off;
@@ -380,7 +367,7 @@ argv_allocated:
 	}
 	/* Make sure argv is terminated. */
 	*argv = 0;
-	return (*pargv);
+	return (kd->argv);
 }
 
 static void
@@ -425,7 +412,7 @@ proc_verify(kvm_t *kd, const struct kinfo_proc *p)
 }
 
 static char **
-kvm_doargv(kvm_t *kd, const struct kinfo_proc *p, int nchr, int isenv,
+kvm_doargv(kvm_t *kd, const struct kinfo_proc *p, int nchr,
     void (*info)(struct ps_strings *, u_long *, int *))
 {
 	static struct ps_strings *ps;
@@ -457,7 +444,7 @@ kvm_doargv(kvm_t *kd, const struct kinfo_proc *p, int nchr, int isenv,
 	(*info)(&arginfo, &addr, &cnt);
 	if (cnt == 0)
 		return (0);
-	ap = kvm_argv(kd, p, addr, cnt, nchr, isenv);
+	ap = kvm_argv(kd, p, addr, cnt, nchr);
 	/*
 	 * For live kernels, make sure this process didn't go away.
 	 */
@@ -467,53 +454,47 @@ kvm_doargv(kvm_t *kd, const struct kinfo_proc *p, int nchr, int isenv,
 }
 
 static char **
-kvm_arg_sysctl(kvm_t *kd, pid_t pid, int nchr, int isenv)
+kvm_arg_sysctl(kvm_t *kd, pid_t pid, int nchr, int env)
 {
 	size_t len, orglen;
 	int mib[4], ret;
-	char *buf, **pargbuf;
+	char *buf;
 
-	if (isenv) {
-		pargbuf = &kd->envbuf;
-		orglen = kd->nbpg;
-	} else {
-		pargbuf = &kd->argbuf;
-		orglen = 8 * kd->nbpg;	/* XXX - should be ARG_MAX */
-	}
-	if (*pargbuf == NULL &&
-	    (*pargbuf = _kvm_malloc(kd, orglen)) == NULL)
+	orglen = env ? kd->nbpg : 8 * kd->nbpg;	/* XXX - should be ARG_MAX */
+	if (kd->argbuf == NULL &&
+	    (kd->argbuf = _kvm_malloc(kd, orglen)) == NULL)
 		return (NULL);
 
 again:
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_PROC_ARGS;
 	mib[2] = (int)pid;
-	mib[3] = isenv ? KERN_PROC_ENV : KERN_PROC_ARGV;
+	mib[3] = env ? KERN_PROC_ENV : KERN_PROC_ARGV;
 
 	len = orglen;
-	ret = (sysctl(mib, 4, *pargbuf, &len, NULL, 0) < 0);
+	ret = (sysctl(mib, 4, kd->argbuf, &len, NULL, 0) < 0);
 	if (ret && errno == ENOMEM) {
-		buf = _kvm_reallocarray(kd, *pargbuf, orglen, 2);
+		buf = _kvm_reallocarray(kd, kd->argbuf, orglen, 2);
 		if (buf == NULL)
 			return (NULL);
 		orglen *= 2;
-		*pargbuf = buf;
+		kd->argbuf = buf;
 		goto again;
 	}
 
 	if (ret) {
-		free(*pargbuf);
-		*pargbuf = NULL;
+		free(kd->argbuf);
+		kd->argbuf = NULL;
 		_kvm_syserr(kd, kd->program, "kvm_arg_sysctl");
 		return (NULL);
 	}
 #if 0
-	for (argv = (char **)*pargbuf; *argv != NULL; argv++)
+	for (argv = (char **)kd->argbuf; *argv != NULL; argv++)
 		if (strlen(*argv) > nchr)
 			*argv[nchr] = '\0';
 #endif
 
-	return (char **)(*pargbuf);
+	return (char **)(kd->argbuf);
 }
 
 /*
@@ -524,7 +505,7 @@ kvm_getargv(kvm_t *kd, const struct kinfo_proc *kp, int nchr)
 {
 	if (ISALIVE(kd))
 		return (kvm_arg_sysctl(kd, kp->p_pid, nchr, 0));
-	return (kvm_doargv(kd, kp, nchr, 0, ps_str_a));
+	return (kvm_doargv(kd, kp, nchr, ps_str_a));
 }
 
 char **
@@ -532,7 +513,7 @@ kvm_getenvv(kvm_t *kd, const struct kinfo_proc *kp, int nchr)
 {
 	if (ISALIVE(kd))
 		return (kvm_arg_sysctl(kd, kp->p_pid, nchr, 1));
-	return (kvm_doargv(kd, kp, nchr, 1, ps_str_e));
+	return (kvm_doargv(kd, kp, nchr, ps_str_e));
 }
 
 /*

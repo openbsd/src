@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.41 2019/04/14 10:16:00 jsg Exp $
+#	$OpenBSD: mkioctls,v 1.39 2017/07/29 08:50:42 zhuk Exp $
 
 #
 # Copyright (c) 1994
@@ -68,7 +68,6 @@ BEGIN {
 	print "#include <sys/dkio.h>"
 	print "#include <sys/filio.h>"
 	print "#include <sys/gpio.h>"
-	print "#include <sys/kcov.h>"
 	print "#include <sys/memrange.h>"
 	print "#include <sys/mtio.h>"
 	print "#include <sys/pciio.h>"
@@ -83,12 +82,14 @@ BEGIN {
 	print "#include <dev/vndioctl.h>"
 	print "#include <scsi/scsi_all.h>"
 	print "#include <dev/vscsivar.h>"
-	print "#include <dev/pci/drm/include/uapi/drm/i915_drm.h>"
+	print "#include <dev/pci/drm/i915_drm.h>"
 	print "#include <dev/pv/pvvar.h>"
 	print "#include <dev/usb/udlio.h>"
 	print "#include <dev/usb/usb.h>"
 	print "#include <sys/ioctl.h>"
 	print "#include \"kdump.h\""
+	print ""
+	print "struct drm_i915_gem_execbuffer {};"
 	print ""
 	print "const char *"
 	print "ioctlname(unsigned long val)"
@@ -97,7 +98,7 @@ BEGIN {
 	print ""
 }
 
-/^[ 	]*#[ 	]*define[ 	]+(ATAIO|AUDIO_|BIOC|CDIO|CHIO|DIOC|DRM|GPIO|IPMICTL|TIO|FIO|KIO|MEMRANGE|MTIOC|LIOC|SIO|OSIO|SESIOC_|SIOC|PCIOC|PIPEX|PPPIOC|PPPOE|PVBUSIOC|RIOC|RND|STRIOC|SCIOC|OSCIOC|TUN|UDLIO|USB|VIDIOC|VNDIOC|VSCSI|WSKBD|WSMOUSE|WSDISPLAY|WSMUX|PTM)[A-Z_0-9]*[ 	]+(DRM)?_IO/ {
+/^[ 	]*#[ 	]*define[ 	]+(ATAIO|AUDIO_|BIOC|CDIO|CHIO|DIOC|DRM|GPIO|IPMICTL|TIO|FIO|MEMRANGE|MTIOC|LIOC|SIO|OSIO|SESIOC_|SIOC|PCIOC|PIPEX|PPPIOC|PPPOE|PVBUSIOC|RIOC|RND|STRIOC|SCIOC|OSCIOC|TUN|UDLIO|USB|VIDIOC|VNDIOC|VSCSI|WSKBD|WSMOUSE|WSDISPLAY|WSMUX|PTM)[A-Z_0-9]*[ 	]+(DRM)?_IO/ {
 
 	# find where the name starts
 	for (i = 1; i <= NF; i++)

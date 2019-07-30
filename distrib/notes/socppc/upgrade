@@ -1,0 +1,2 @@
+dnl	$OpenBSD: upgrade,v 1.1 2008/05/13 20:47:32 kettenis Exp $
+OpenBSDUpgrade({:-bsd.rd on the boot disk-:})

@@ -1,9 +1,10 @@
 #!/bin/sh
-#	$OpenBSD: dasho.sh,v 1.3 2018/07/08 17:36:47 martijn Exp $
+#	$OpenBSD: dasho.sh,v 1.2 2016/09/28 11:46:45 bluhm Exp $
 
 : ${FTP:=ftp}
 
-mkdir temp && tmpdir=$(readlink -f temp) || exit 1
+tmpdir=$(readlink -f temp) &&
+mkdir $tmpdir || exit 1
 
 trap 'rm -rf "$tmpdir"' EXIT
 trap 'rm -rf "$tmpdir"; exit 1' INT HUP TERM

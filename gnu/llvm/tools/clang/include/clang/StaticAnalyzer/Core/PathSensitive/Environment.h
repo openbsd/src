@@ -1,4 +1,4 @@
-//===- Environment.h - Map from Stmt* to Locations/Values -------*- C++ -*-===//
+//== Environment.h - Map from Stmt* to Locations/Values ---------*- C++ -*--==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,18 +14,17 @@
 #ifndef LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_ENVIRONMENT_H
 #define LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_ENVIRONMENT_H
 
-#include "clang/Analysis/AnalysisDeclContext.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState_Fwd.h"
+#include "clang/Analysis/AnalysisContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "llvm/ADT/ImmutableMap.h"
-#include <utility>
 
 namespace clang {
 
-class Stmt;
+class LiveVariables;
 
 namespace ento {
 
+class EnvironmentManager;
 class SValBuilder;
 class SymbolReaper;
 
@@ -33,21 +32,21 @@ class SymbolReaper;
 /// This allows the environment to manage context-sensitive bindings,
 /// which is essentially for modeling recursive function analysis, among
 /// other things.
-class EnvironmentEntry : public std::pair<const Stmt *,
+class EnvironmentEntry : public std::pair<const Stmt*,
                                           const StackFrameContext *> {
 public:
   EnvironmentEntry(const Stmt *s, const LocationContext *L);
 
   const Stmt *getStmt() const { return first; }
   const LocationContext *getLocationContext() const { return second; }
-
+  
   /// Profile an EnvironmentEntry for inclusion in a FoldingSet.
   static void Profile(llvm::FoldingSetNodeID &ID,
                       const EnvironmentEntry &E) {
     ID.AddPointer(E.getStmt());
     ID.AddPointer(E.getLocationContext());
   }
-
+  
   void Profile(llvm::FoldingSetNodeID &ID) const {
     Profile(ID, *this);
   }
@@ -58,17 +57,19 @@ class Environment {
 private:
   friend class EnvironmentManager;
 
-  using BindingsTy = llvm::ImmutableMap<EnvironmentEntry, SVal>;
+  // Type definitions.
+  typedef llvm::ImmutableMap<EnvironmentEntry, SVal> BindingsTy;
 
+  // Data.
   BindingsTy ExprBindings;
 
-  Environment(BindingsTy eb) : ExprBindings(eb) {}
+  Environment(BindingsTy eb)
+    : ExprBindings(eb) {}
 
   SVal lookupExpr(const EnvironmentEntry &E) const;
 
 public:
-  using iterator = BindingsTy::iterator;
-
+  typedef BindingsTy::iterator iterator;
   iterator begin() const { return ExprBindings.begin(); }
   iterator end() const { return ExprBindings.end(); }
 
@@ -91,19 +92,21 @@ public:
   bool operator==(const Environment& RHS) const {
     return ExprBindings == RHS.ExprBindings;
   }
-
-  void print(raw_ostream &Out, const char *NL, const char *Sep,
-             const LocationContext *WithLC = nullptr) const;
+  
+  void print(raw_ostream &Out, const char *NL, const char *Sep) const;
+  
+private:
+  void printAux(raw_ostream &Out, bool printLocations,
+                const char *NL, const char *Sep) const;
 };
 
 class EnvironmentManager {
 private:
-  using FactoryTy = Environment::BindingsTy::Factory;
-
+  typedef Environment::BindingsTy::Factory FactoryTy;
   FactoryTy F;
 
 public:
-  EnvironmentManager(llvm::BumpPtrAllocator &Allocator) : F(Allocator) {}
+  EnvironmentManager(llvm::BumpPtrAllocator& Allocator) : F(Allocator) {}
 
   Environment getInitialEnvironment() {
     return Environment(F.getEmptyMap());
@@ -118,8 +121,8 @@ public:
                                  ProgramStateRef state);
 };
 
-} // namespace ento
+} // end GR namespace
 
-} // namespace clang
+} // end clang namespace
 
-#endif // LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_ENVIRONMENT_H
+#endif

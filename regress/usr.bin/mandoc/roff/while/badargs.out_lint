@@ -1,3 +1,0 @@
-mandoc: badargs.in:11:2: WARNING: conditional request controls empty scope: while
-mandoc: badargs.in:11:9: WARNING: blank line in fill mode, using .sp
-mandoc: badargs.in:11:2: WARNING: conditional request controls empty scope: while

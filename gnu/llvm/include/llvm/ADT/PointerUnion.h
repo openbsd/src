@@ -25,7 +25,7 @@
 namespace llvm {
 
 template <typename T> struct PointerUnionTypeSelectorReturn {
-  using Return = T;
+  typedef T Return;
 };
 
 /// Get a type based on whether two types are the same or not.
@@ -33,25 +33,25 @@ template <typename T> struct PointerUnionTypeSelectorReturn {
 /// For:
 ///
 /// \code
-///   using Ret = typename PointerUnionTypeSelector<T1, T2, EQ, NE>::Return;
+///   typedef typename PointerUnionTypeSelector<T1, T2, EQ, NE>::Return Ret;
 /// \endcode
 ///
 /// Ret will be EQ type if T1 is same as T2 or NE type otherwise.
 template <typename T1, typename T2, typename RET_EQ, typename RET_NE>
 struct PointerUnionTypeSelector {
-  using Return = typename PointerUnionTypeSelectorReturn<RET_NE>::Return;
+  typedef typename PointerUnionTypeSelectorReturn<RET_NE>::Return Return;
 };
 
 template <typename T, typename RET_EQ, typename RET_NE>
 struct PointerUnionTypeSelector<T, T, RET_EQ, RET_NE> {
-  using Return = typename PointerUnionTypeSelectorReturn<RET_EQ>::Return;
+  typedef typename PointerUnionTypeSelectorReturn<RET_EQ>::Return Return;
 };
 
 template <typename T1, typename T2, typename RET_EQ, typename RET_NE>
 struct PointerUnionTypeSelectorReturn<
     PointerUnionTypeSelector<T1, T2, RET_EQ, RET_NE>> {
-  using Return =
-      typename PointerUnionTypeSelector<T1, T2, RET_EQ, RET_NE>::Return;
+  typedef
+      typename PointerUnionTypeSelector<T1, T2, RET_EQ, RET_NE>::Return Return;
 };
 
 /// Provide PointerLikeTypeTraits for void* that is used by PointerUnion
@@ -86,8 +86,8 @@ public:
 ///    X = P.get<int*>();     // runtime assertion failure.
 template <typename PT1, typename PT2> class PointerUnion {
 public:
-  using ValTy =
-      PointerIntPair<void *, 1, bool, PointerUnionUIntTraits<PT1, PT2>>;
+  typedef PointerIntPair<void *, 1, bool, PointerUnionUIntTraits<PT1, PT2>>
+      ValTy;
 
 private:
   ValTy Val;
@@ -102,6 +102,7 @@ private:
 
 public:
   PointerUnion() = default;
+
   PointerUnion(PT1 V)
       : Val(const_cast<void *>(
             PointerLikeTypeTraits<PT1>::getAsVoidPointer(V))) {}
@@ -116,15 +117,14 @@ public:
     // we recursively strip off low bits if we have a nested PointerUnion.
     return !PointerLikeTypeTraits<PT1>::getFromVoidPointer(Val.getPointer());
   }
-
   explicit operator bool() const { return !isNull(); }
 
   /// Test if the Union currently holds the type matching T.
   template <typename T> int is() const {
-    using Ty = typename ::llvm::PointerUnionTypeSelector<
-        PT1, T, IsPT1,
-        ::llvm::PointerUnionTypeSelector<PT2, T, IsPT2,
-                                         UNION_DOESNT_CONTAIN_TYPE<T>>>::Return;
+    typedef typename ::llvm::PointerUnionTypeSelector<
+        PT1, T, IsPT1, ::llvm::PointerUnionTypeSelector<
+                           PT2, T, IsPT2, UNION_DOESNT_CONTAIN_TYPE<T>>>::Return
+        Ty;
     int TyNo = Ty::Num;
     return static_cast<int>(Val.getInt()) == TyNo;
   }
@@ -158,8 +158,7 @@ public:
     assert(
         get<PT1>() == Val.getPointer() &&
         "Can't get the address because PointerLikeTypeTraits changes the ptr");
-    return const_cast<PT1 *>(
-        reinterpret_cast<const PT1 *>(Val.getAddrOfPointer()));
+    return const_cast<PT1 *>(reinterpret_cast<const PT1 *>(Val.getAddrOfPointer()));
   }
 
   /// Assignment from nullptr which just clears the union.
@@ -208,7 +207,8 @@ bool operator<(PointerUnion<PT1, PT2> lhs, PointerUnion<PT1, PT2> rhs) {
 // Teach SmallPtrSet that PointerUnion is "basically a pointer", that has
 // # low bits available = min(PT1bits,PT2bits)-1.
 template <typename PT1, typename PT2>
-struct PointerLikeTypeTraits<PointerUnion<PT1, PT2>> {
+class PointerLikeTypeTraits<PointerUnion<PT1, PT2>> {
+public:
   static inline void *getAsVoidPointer(const PointerUnion<PT1, PT2> &P) {
     return P.getOpaqueValue();
   }
@@ -228,22 +228,19 @@ struct PointerLikeTypeTraits<PointerUnion<PT1, PT2>> {
 /// for usage.
 template <typename PT1, typename PT2, typename PT3> class PointerUnion3 {
 public:
-  using InnerUnion = PointerUnion<PT1, PT2>;
-  using ValTy = PointerUnion<InnerUnion, PT3>;
+  typedef PointerUnion<PT1, PT2> InnerUnion;
+  typedef PointerUnion<InnerUnion, PT3> ValTy;
 
 private:
   ValTy Val;
 
   struct IsInnerUnion {
     ValTy Val;
-
     IsInnerUnion(ValTy val) : Val(val) {}
-
     template <typename T> int is() const {
       return Val.template is<InnerUnion>() &&
              Val.template get<InnerUnion>().template is<T>();
     }
-
     template <typename T> T get() const {
       return Val.template get<InnerUnion>().template get<T>();
     }
@@ -251,15 +248,14 @@ private:
 
   struct IsPT3 {
     ValTy Val;
-
     IsPT3(ValTy val) : Val(val) {}
-
     template <typename T> int is() const { return Val.template is<T>(); }
     template <typename T> T get() const { return Val.template get<T>(); }
   };
 
 public:
   PointerUnion3() = default;
+
   PointerUnion3(PT1 V) { Val = InnerUnion(V); }
   PointerUnion3(PT2 V) { Val = InnerUnion(V); }
   PointerUnion3(PT3 V) { Val = V; }
@@ -272,9 +268,10 @@ public:
   /// Test if the Union currently holds the type matching T.
   template <typename T> int is() const {
     // If T is PT1/PT2 choose IsInnerUnion otherwise choose IsPT3.
-    using Ty = typename ::llvm::PointerUnionTypeSelector<
+    typedef typename ::llvm::PointerUnionTypeSelector<
         PT1, T, IsInnerUnion,
-        ::llvm::PointerUnionTypeSelector<PT2, T, IsInnerUnion, IsPT3>>::Return;
+        ::llvm::PointerUnionTypeSelector<PT2, T, IsInnerUnion, IsPT3>>::Return
+        Ty;
     return Ty(Val).template is<T>();
   }
 
@@ -284,9 +281,10 @@ public:
   template <typename T> T get() const {
     assert(is<T>() && "Invalid accessor called");
     // If T is PT1/PT2 choose IsInnerUnion otherwise choose IsPT3.
-    using Ty = typename ::llvm::PointerUnionTypeSelector<
+    typedef typename ::llvm::PointerUnionTypeSelector<
         PT1, T, IsInnerUnion,
-        ::llvm::PointerUnionTypeSelector<PT2, T, IsInnerUnion, IsPT3>>::Return;
+        ::llvm::PointerUnionTypeSelector<PT2, T, IsInnerUnion, IsPT3>>::Return
+        Ty;
     return Ty(Val).template get<T>();
   }
 
@@ -330,7 +328,8 @@ public:
 // Teach SmallPtrSet that PointerUnion3 is "basically a pointer", that has
 // # low bits available = min(PT1bits,PT2bits,PT2bits)-2.
 template <typename PT1, typename PT2, typename PT3>
-struct PointerLikeTypeTraits<PointerUnion3<PT1, PT2, PT3>> {
+class PointerLikeTypeTraits<PointerUnion3<PT1, PT2, PT3>> {
+public:
   static inline void *getAsVoidPointer(const PointerUnion3<PT1, PT2, PT3> &P) {
     return P.getOpaqueValue();
   }
@@ -346,26 +345,21 @@ struct PointerLikeTypeTraits<PointerUnion3<PT1, PT2, PT3>> {
   };
 };
 
-template <typename PT1, typename PT2, typename PT3>
-bool operator<(PointerUnion3<PT1, PT2, PT3> lhs,
-               PointerUnion3<PT1, PT2, PT3> rhs) {
-  return lhs.getOpaqueValue() < rhs.getOpaqueValue();
-}
-
 /// A pointer union of four pointer types. See documentation for PointerUnion
 /// for usage.
 template <typename PT1, typename PT2, typename PT3, typename PT4>
 class PointerUnion4 {
 public:
-  using InnerUnion1 = PointerUnion<PT1, PT2>;
-  using InnerUnion2 = PointerUnion<PT3, PT4>;
-  using ValTy = PointerUnion<InnerUnion1, InnerUnion2>;
+  typedef PointerUnion<PT1, PT2> InnerUnion1;
+  typedef PointerUnion<PT3, PT4> InnerUnion2;
+  typedef PointerUnion<InnerUnion1, InnerUnion2> ValTy;
 
 private:
   ValTy Val;
 
 public:
   PointerUnion4() = default;
+
   PointerUnion4(PT1 V) { Val = InnerUnion1(V); }
   PointerUnion4(PT2 V) { Val = InnerUnion1(V); }
   PointerUnion4(PT3 V) { Val = InnerUnion2(V); }
@@ -379,10 +373,9 @@ public:
   /// Test if the Union currently holds the type matching T.
   template <typename T> int is() const {
     // If T is PT1/PT2 choose InnerUnion1 otherwise choose InnerUnion2.
-    using Ty = typename ::llvm::PointerUnionTypeSelector<
-        PT1, T, InnerUnion1,
-        ::llvm::PointerUnionTypeSelector<PT2, T, InnerUnion1,
-                                         InnerUnion2>>::Return;
+    typedef typename ::llvm::PointerUnionTypeSelector<
+        PT1, T, InnerUnion1, ::llvm::PointerUnionTypeSelector<
+                                 PT2, T, InnerUnion1, InnerUnion2>>::Return Ty;
     return Val.template is<Ty>() && Val.template get<Ty>().template is<T>();
   }
 
@@ -392,10 +385,9 @@ public:
   template <typename T> T get() const {
     assert(is<T>() && "Invalid accessor called");
     // If T is PT1/PT2 choose InnerUnion1 otherwise choose InnerUnion2.
-    using Ty = typename ::llvm::PointerUnionTypeSelector<
-        PT1, T, InnerUnion1,
-        ::llvm::PointerUnionTypeSelector<PT2, T, InnerUnion1,
-                                         InnerUnion2>>::Return;
+    typedef typename ::llvm::PointerUnionTypeSelector<
+        PT1, T, InnerUnion1, ::llvm::PointerUnionTypeSelector<
+                                 PT2, T, InnerUnion1, InnerUnion2>>::Return Ty;
     return Val.template get<Ty>().template get<T>();
   }
 
@@ -443,7 +435,8 @@ public:
 // Teach SmallPtrSet that PointerUnion4 is "basically a pointer", that has
 // # low bits available = min(PT1bits,PT2bits,PT2bits)-2.
 template <typename PT1, typename PT2, typename PT3, typename PT4>
-struct PointerLikeTypeTraits<PointerUnion4<PT1, PT2, PT3, PT4>> {
+class PointerLikeTypeTraits<PointerUnion4<PT1, PT2, PT3, PT4>> {
+public:
   static inline void *
   getAsVoidPointer(const PointerUnion4<PT1, PT2, PT3, PT4> &P) {
     return P.getOpaqueValue();
@@ -462,21 +455,18 @@ struct PointerLikeTypeTraits<PointerUnion4<PT1, PT2, PT3, PT4>> {
 
 // Teach DenseMap how to use PointerUnions as keys.
 template <typename T, typename U> struct DenseMapInfo<PointerUnion<T, U>> {
-  using Pair = PointerUnion<T, U>;
-  using FirstInfo = DenseMapInfo<T>;
-  using SecondInfo = DenseMapInfo<U>;
+  typedef PointerUnion<T, U> Pair;
+  typedef DenseMapInfo<T> FirstInfo;
+  typedef DenseMapInfo<U> SecondInfo;
 
   static inline Pair getEmptyKey() { return Pair(FirstInfo::getEmptyKey()); }
-
   static inline Pair getTombstoneKey() {
     return Pair(FirstInfo::getTombstoneKey());
   }
-
   static unsigned getHashValue(const Pair &PairVal) {
     intptr_t key = (intptr_t)PairVal.getOpaqueValue();
     return DenseMapInfo<intptr_t>::getHashValue(key);
   }
-
   static bool isEqual(const Pair &LHS, const Pair &RHS) {
     return LHS.template is<T>() == RHS.template is<T>() &&
            (LHS.template is<T>() ? FirstInfo::isEqual(LHS.template get<T>(),

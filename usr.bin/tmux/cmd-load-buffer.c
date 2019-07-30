@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.56 2019/06/18 11:08:42 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.51 2018/01/15 15:27:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -56,14 +56,11 @@ cmd_load_buffer_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args			*args = self->args;
 	struct cmd_load_buffer_data	*cdata;
-	struct client			*c = cmd_find_client(item, NULL, 1);
-	struct session			*s = item->target.s;
-	struct winlink			*wl = item->target.wl;
-	struct window_pane		*wp = item->target.wp;
+	struct client			*c = item->client;
 	FILE				*f;
-	const char			*bufname;
+	const char			*path, *bufname;
 	char				*pdata = NULL, *new_pdata, *cause;
-	char				*path, *file;
+	char				*file;
 	size_t				 psize;
 	int				 ch, error;
 
@@ -71,11 +68,8 @@ cmd_load_buffer_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(args, 'b'))
 		bufname = args_get(args, 'b');
 
-	path = format_single(item, args->argv[0], c, s, wl, wp);
+	path = args->argv[0];
 	if (strcmp(path, "-") == 0) {
-		free(path);
-		c = item->client;
-
 		cdata = xcalloc(1, sizeof *cdata);
 		cdata->item = item;
 
@@ -85,17 +79,14 @@ cmd_load_buffer_exec(struct cmd *self, struct cmdq_item *item)
 		error = server_set_stdin_callback(c, cmd_load_buffer_callback,
 		    cdata, &cause);
 		if (error != 0) {
-			cmdq_error(item, "-: %s", cause);
+			cmdq_error(item, "%s: %s", path, cause);
 			free(cause);
-			free(cdata);
 			return (CMD_RETURN_ERROR);
 		}
 		return (CMD_RETURN_WAIT);
 	}
 
-	file = server_client_get_path(item->client, path);
-	free(path);
-
+	file = server_client_get_path(c, path);
 	f = fopen(file, "rb");
 	if (f == NULL) {
 		cmdq_error(item, "%s: %s", file, strerror(errno));
@@ -176,7 +167,7 @@ cmd_load_buffer_callback(struct client *c, int closed, void *data)
 		free(cause);
 	}
 out:
-	cmdq_continue(cdata->item);
+	cdata->item->flags &= ~CMDQ_WAITING;
 
 	free(cdata->bufname);
 	free(cdata);

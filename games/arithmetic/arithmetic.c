@@ -1,4 +1,4 @@
-/*	$OpenBSD: arithmetic.c,v 1.28 2018/12/27 17:27:23 tedu Exp $	*/
+/*	$OpenBSD: arithmetic.c,v 1.27 2016/09/11 14:21:17 tb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
 #include <time.h>
 #include <unistd.h>
 
-int	getrandom(uint32_t, int, int);
+int	getrandom(int, int, int);
 __dead void	intr(int);
 int	opnum(int);
 void	penalise(int, int, int);
@@ -82,7 +82,7 @@ const char keylist[] = "+-x/";
 const char defaultkeys[] = "+-";
 const char *keys = defaultkeys;
 int nkeys = sizeof(defaultkeys) - 1;
-uint32_t rangemax = 10;
+int rangemax = 10;
 int nright, nwrong;
 time_t qtime;
 #define	NQUESTS	20
@@ -115,7 +115,7 @@ main(int argc, char *argv[])
 			break;
 		}
 		case 'r':
-			rangemax = strtonum(optarg, 1, (1ULL<<31)-1, &errstr);
+			rangemax = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "invalid range, %s: %s", errstr, optarg);
 			break;
@@ -266,10 +266,9 @@ retry:
  * penalties themselves.
  */
 
-uint32_t penalty[sizeof(keylist) - 1][2];
+int penalty[sizeof(keylist) - 1][2];
 struct penalty {
-	int value;		/* Penalised value. */
-	uint32_t penalty;	/* Its penalty. */
+	int value, penalty;	/* Penalised value and its penalty. */
 	struct penalty *next;
 } *penlist[sizeof(keylist) - 1][2];
 
@@ -301,9 +300,9 @@ penalise(int value, int op, int operand)
  * we find the corresponding value and return that, decreasing its penalty.
  */
 int
-getrandom(uint32_t maxval, int op, int operand)
+getrandom(int maxval, int op, int operand)
 {
-	uint32_t value;
+	int value;
 	struct penalty **pp, *p;
 
 	op = opnum(op);
@@ -314,7 +313,7 @@ getrandom(uint32_t maxval, int op, int operand)
 	 * are positions to be located in the penalty list.
 	 */
 	if (value < maxval)
-		return((int)value);
+		return(value);
 	value -= maxval;
 
 	/*

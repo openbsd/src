@@ -22,6 +22,10 @@ elseif(IOS)
   set(LLDB_DEFAULT_DISABLE_PYTHON 1)
 endif()
 
+if(IOS)
+  add_definitions(-DNO_XPC_SERVICES)
+endif()
+
 set(LLDB_DISABLE_PYTHON ${LLDB_DEFAULT_DISABLE_PYTHON} CACHE BOOL
   "Disables the Python scripting integration.")
 set(LLDB_DISABLE_CURSES ${LLDB_DEFAULT_DISABLE_CURSES} CACHE BOOL
@@ -231,12 +235,6 @@ if (CXX_SUPPORTS_NO_VLA_EXTENSION)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-vla-extension")
 endif ()
 
-check_cxx_compiler_flag("-Wno-gnu-anonymous-struct"
-                        CXX_SUPPORTS_NO_GNU_ANONYMOUS_STRUCT)
-
-check_cxx_compiler_flag("-Wno-nested-anon-types"
-                        CXX_SUPPORTS_NO_NESTED_ANON_TYPES)
-
 # Disable MSVC warnings
 if( MSVC )
   add_definitions(
@@ -277,7 +275,7 @@ include_directories(BEFORE
 
 if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
   install(DIRECTORY include/
-    COMPONENT lldb-headers
+    COMPONENT lldb_headers
     DESTINATION include
     FILES_MATCHING
     PATTERN "*.h"
@@ -287,21 +285,13 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
     )
 
   install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/
-    COMPONENT lldb-headers
+    COMPONENT lldb_headers
     DESTINATION include
     FILES_MATCHING
     PATTERN "*.h"
     PATTERN ".svn" EXCLUDE
     PATTERN ".cmake" EXCLUDE
     )
-
-  add_custom_target(lldb-headers)
-  set_target_properties(lldb-headers PROPERTIES FOLDER "Misc")
-
-  if (NOT CMAKE_CONFIGURATION_TYPES)
-    add_llvm_install_targets(install-lldb-headers
-                             COMPONENT lldb-headers)
-  endif()
 endif()
 
 if (NOT LIBXML2_FOUND AND NOT (CMAKE_SYSTEM_NAME MATCHES "Windows"))
@@ -346,17 +336,13 @@ else()
 
 endif()
 
-if( WIN32 AND NOT CYGWIN )
-  set(PURE_WINDOWS 1)
-endif()
+if (HAVE_LIBPTHREAD)
+  list(APPEND system_libs pthread)
+endif(HAVE_LIBPTHREAD)
 
-if(NOT PURE_WINDOWS)
-  set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-  find_package(Threads REQUIRED)
-  list(APPEND system_libs ${CMAKE_THREAD_LIBS_INIT})
+if (HAVE_LIBDL)
+  list(APPEND system_libs ${CMAKE_DL_LIBS})
 endif()
-
-list(APPEND system_libs ${CMAKE_DL_LIBS})
 
 # Figure out if lldb could use lldb-server.  If so, then we'll
 # ensure we build lldb-server when an lldb target is being built.
@@ -409,6 +395,15 @@ if(LLDB_USING_LIBSTDCXX)
             "- enable exceptions (via LLVM_ENABLE_EH)\n"
             "- ignore this warning and accept occasional instability")
     endif()
+endif()
+
+if(MSVC)
+    set(LLDB_USE_BUILTIN_DEMANGLER ON)
+else()
+    option(LLDB_USE_BUILTIN_DEMANGLER "Use lldb's builtin demangler instead of the system one" ON)
+endif()
+if(LLDB_USE_BUILTIN_DEMANGLER)
+    add_definitions(-DLLDB_USE_BUILTIN_DEMANGLER)
 endif()
 
 if ((CMAKE_SYSTEM_NAME MATCHES "Android") AND LLVM_BUILD_STATIC AND

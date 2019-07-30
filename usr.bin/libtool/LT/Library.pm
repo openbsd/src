@@ -1,4 +1,4 @@
-# $OpenBSD: Library.pm,v 1.13 2018/10/28 15:21:49 naddy Exp $
+# $OpenBSD: Library.pm,v 1.12 2015/09/21 08:49:06 ajacoutot Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -191,7 +191,7 @@ sub inspect
 	return @deps;
 }
 
-# give the list of RPATH/RUNPATH directories
+# give the list of RPATH directories
 sub findrpaths
 {
 	my $self = shift;
@@ -203,16 +203,16 @@ sub findrpaths
 		say "warning: library was specified that could not be found: $self->{key}";
 		return;
 	}
-	tsay {"inspecting $filename for non standard RPATH/RUNPATH..."};
+	tsay {"inspecting $filename for non standard RPATH..."};
 	open(my $fh, '-|', "objdump", "-p", "--", $filename);
 	while (<$fh>) {
-		if (m/R(?:UN)?PATH\s+(.*)$/) {
+		if (m/RPATH\s+(.*)$/) {
 			@dirs = split(":", $1);
 			last;
 		}
 	}
 	tsay {"found ", (@dirs == 0) ? 'none ' : '',
-		"RPATH/RUNPATH for $filename\n@dirs"};
+		"RPATH for $filename\n@dirs"};
 	return @dirs;
 }
 

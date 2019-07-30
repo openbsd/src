@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.121 2019/02/05 02:17:32 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.114 2018/01/02 06:38:45 guenther Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -69,7 +69,7 @@
 
 struct nlist vnodenl[] = {
 #define	FNL_NFILE	0		/* sysctl */
-	{"_numfiles"},
+	{"_nfiles"},
 #define FNL_MAXFILE	1		/* sysctl */
 	{"_maxfiles"},
 #define TTY_NTTY	2		/* sysctl */
@@ -229,8 +229,6 @@ main(int argc, char *argv[])
 			ttymodeprep();
 	}
 
-	if (unveil(_PATH_DEVDB, "r") == -1)
-		err(1, "unveil");
 	if (pledge("stdio rpath vminfo", NULL) == -1)
 		err(1, "pledge");
 
@@ -566,7 +564,7 @@ ufs_print(struct vnode *vp)
 	if (S_ISCHR(ip->i_ffs1_mode) || S_ISBLK(ip->i_ffs1_mode))
 		if (usenumflag ||
 		    ((name = devname(ip->i_ffs1_rdev, type)) == NULL))
-			(void)printf("   %2u,%-2u",
+			(void)printf("   %2d,%-2d",
 			    major(ip->i_ffs1_rdev), minor(ip->i_ffs1_rdev));
 		else
 			(void)printf(" %7s", name);
@@ -666,7 +664,7 @@ nfs_print(struct vnode *vp)
 	if (S_ISCHR(np->n_vattr.va_mode) || S_ISBLK(np->n_vattr.va_mode))
 		if (usenumflag ||
 		    ((name = devname(np->n_vattr.va_rdev, type)) == NULL))
-			(void)printf("   %2u,%-2u", major(np->n_vattr.va_rdev),
+			(void)printf("   %2d,%-2d", major(np->n_vattr.va_rdev),
 			    minor(np->n_vattr.va_rdev));
 		else
 			(void)printf(" %7s", name);
@@ -974,7 +972,7 @@ ttyprt(struct itty *tp)
 	int i, j;
 
 	if (usenumflag || (name = devname(tp->t_dev, S_IFCHR)) == NULL)
-		(void)printf("%2u,%-3u   ", major(tp->t_dev), minor(tp->t_dev));
+		(void)printf("%2d,%-3d   ", major(tp->t_dev), minor(tp->t_dev));
 	else
 		(void)printf("%7s ", name);
 	(void)printf("%3d %4d ", tp->t_rawq_c_cc, tp->t_canq_c_cc);
@@ -1046,6 +1044,8 @@ filemode(void)
 
 		if (kf->f_iflags & FIF_HASLOCK)
 			*fbp++ = 'L';
+		if (kf->f_iflags & FIF_LARVAL)
+			*fbp++ = 'l';
 
 		*fbp = '\0';
 		(void)printf("%6s  %3ld", flagbuf, (long)kf->f_count);
@@ -1146,7 +1146,7 @@ swapmode(void)
 
 		if (!totalflag) {
 			if (usenumflag)
-				(void)printf("%2u,%-2u       %*d ",
+				(void)printf("%2d,%-2d       %*d ",
 				    major(swdev[i].se_dev),
 				    minor(swdev[i].se_dev),
 				    hlen, swdev[i].se_nblks / bdiv);

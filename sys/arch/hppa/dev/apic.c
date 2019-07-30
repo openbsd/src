@@ -1,4 +1,4 @@
-/*	$OpenBSD: apic.c,v 1.19 2018/05/14 13:54:39 kettenis Exp $	*/
+/*	$OpenBSD: apic.c,v 1.18 2015/09/08 07:14:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -134,10 +134,8 @@ apic_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	    PCI_INTERRUPT_LINE(reg));
 #endif
 	line = PCI_INTERRUPT_LINE(reg);
-	if (sc->sc_irq[line] <= 0) {
-		if ((sc->sc_irq[line] = cpu_intr_findirq()) == -1)
-			return 1;
-	}
+	if (sc->sc_irq[line] == 0)
+		sc->sc_irq[line] = cpu_intr_findirq();
 	*ihp = (line << APIC_INT_LINE_SHIFT) | sc->sc_irq[line];
 	return (APIC_INT_IRQ(*ihp) == 0);
 }

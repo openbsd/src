@@ -1,6 +1,10 @@
-#	$OpenBSD: Makefile,v 1.37 2019/05/05 15:59:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.27 2017/06/14 16:36:09 deraadt Exp $
 
-CDROM=		install${OSrev}.iso
+TOP=	${.CURDIR}/..
+
+.include "${TOP}/Makefile.inc"
+
+CDROM=		install${REV}.iso
 RELXDIR?=	/home/relx-${MACHINE}
 RELDIR?=	/home/rel-${MACHINE}
 
@@ -26,7 +30,8 @@ all: ${CDROM}
 # The following values need to be consistent with the `cdroot' layout in
 # /etc/disktab
 SGIVOLSZ=8320	# oa, pp (size of volume header in 2048 byte sectors)
-CDROMSZ=489	# nt     (size of the iso image in megabytes)
+FFSSZ=206720	# pa     (size of the ffs partition in 2048 byte sectors)
+CDROMSZ=420	# nt     (size of the iso image in megabytes)
 
 # Creating an IP27 bootable CD-ROM image with a usable FFS filesystem on it
 # is extremely tricky. We are facing the following challenges:
@@ -38,39 +43,38 @@ CDROMSZ=489	# nt     (size of the iso image in megabytes)
 # filling the 2048 byte sector filesystem.
 
 ${CDROM}:
-	rm -rf ${.OBJDIR}/cd-dir
+	-rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/
 
 	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=2048b count=${CDROMSZ}
 
 	# Create the 512 byte sector volume header
 
-	vnconfig -v ${CDROM} > vnd
+	vnconfig -v -c vnd0 ${.OBJDIR}/${CDROM}
 
-	/usr/mdec/sgivol -qi -h `expr ${SGIVOLSZ} \* 4` `cat vnd`
+	/usr/mdec/sgivol -qi -h `expr ${SGIVOLSZ} \* 4` vnd0
 	uudecode -o ${.OBJDIR}/xfs512.bin.gz \
 	    ${.CURDIR}/../cdfs/xfs512.bin.gz.uue
 	gzip -d ${.OBJDIR}/xfs512.bin.gz
 	cat ${DESTDIR}/usr/mdec/boot64 >> ${.OBJDIR}/xfs512.bin
 	dd if=${.OBJDIR}/xfs512.bin of=${.OBJDIR}/xfs obs=16m conv=osync
-	/usr/mdec/sgivol -qw xfsboot ${.OBJDIR}/xfs `cat vnd`
-	/usr/mdec/sgivol -qw bootecof ${DESTDIR}/usr/mdec/bootecoff `cat vnd`
-	/usr/mdec/sgivol -ql bootecof sash `cat vnd`
-	/usr/mdec/sgivol -qw boot32 ${DESTDIR}/usr/mdec/boot32 `cat vnd`
-	/usr/mdec/sgivol -ql boot32 sashARCS `cat vnd`
-	/usr/mdec/sgivol -qw boot64 ${DESTDIR}/usr/mdec/boot64 `cat vnd`
-	/usr/mdec/sgivol -ql boot64 sash64 `cat vnd`
+	/usr/mdec/sgivol -qw xfsboot ${.OBJDIR}/xfs vnd0
+	/usr/mdec/sgivol -qw bootecof ${DESTDIR}/usr/mdec/bootecoff vnd0
+	/usr/mdec/sgivol -ql bootecof sash vnd0
+	/usr/mdec/sgivol -qw boot32 ${DESTDIR}/usr/mdec/boot32 vnd0
+	/usr/mdec/sgivol -ql boot32 sashARCS vnd0
+	/usr/mdec/sgivol -qw boot64 ${DESTDIR}/usr/mdec/boot64 vnd0
+	/usr/mdec/sgivol -ql boot64 sash64 vnd0
 
-	vnconfig -u `cat vnd`
-	rm -f vnd
+	vnconfig -u vnd0
 
 	# Create the 2048 byte sector media with the FFS partition
 
-	vnconfig -v -t cdroot ${CDROM} > vnd
+	vnconfig -v -c -t cdroot vnd0 ${.OBJDIR}/${CDROM}
 
-	disklabel -w `cat vnd` cdroot "OpenBSD/sgi     "
-	newfs -m 0 -o space -i 524288 /dev/r`cat vnd`a
-	mount /dev/`cat vnd`a ${.OBJDIR}/cd-dir
+	disklabel -w vnd0 cdroot "OpenBSD/sgi     "
+	newfs /dev/rvnd0a
+	mount /dev/vnd0a ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
 	cp ${DESTDIR}/usr/mdec/bootecoff ${.OBJDIR}/cd-dir/bootecoff
@@ -99,21 +103,22 @@ ${CDROM}:
 	umount ${.OBJDIR}/cd-dir
 
 	# Summary
-	disklabel `cat vnd`
-	/usr/mdec/sgivol `cat vnd`
+	disklabel vnd0
+	/usr/mdec/sgivol vnd0
 
-	vnconfig -u `cat vnd`
-	rm -f vnd
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
+	vnconfig -u vnd0
 
 install:
 	cp ${CDROM} ${RELDIR}/
 
+unconfig:
+	-umount /mnt
+	-umount ${.OBJDIR}/cd-dir
+	-vnconfig -u vnd0
+
 clean cleandir:
-	rm -f ${CDROM} xfs512.bin xfs
+	/bin/rm -f ${CDROM} xfs512.bin xfs
 	rm -rf cd-dir
 
 .include <bsd.obj.mk>
+.include <bsd.subdir.mk>

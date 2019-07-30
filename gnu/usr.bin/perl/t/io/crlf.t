@@ -2,9 +2,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    require "./test.pl";
-    set_up_inc('../lib');
-    require "./charset_tools.pl";
+    @INC = qw(. ../lib);
+    require "./test.pl"; require "charset_tools.pl";
     skip_all_without_perlio();
 }
 

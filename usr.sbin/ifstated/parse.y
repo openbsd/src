@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.55 2019/02/13 22:57:08 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.48 2018/03/06 15:26:14 rob Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -149,8 +149,6 @@ varset		: STRING '=' string		{
 				if (isspace((unsigned char)*s)) {
 					yyerror("macro name cannot contain "
 					    "whitespace");
-					free($1);
-					free($3);
 					YYERROR;
 				}
 			}
@@ -564,8 +562,7 @@ top:
 			} else if (c == '\\') {
 				if ((next = lgetc(quotec)) == EOF)
 					return (0);
-				if (next == quotec || next == ' ' ||
-				    next == '\t')
+				if (next == quotec || c == ' ' || c == '\t')
 					c = next;
 				else if (next == '\n') {
 					file->lineno++;
@@ -587,7 +584,7 @@ top:
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			err(1, "%s", __func__);
+			err(1, "yylex: strdup");
 		return (STRING);
 	}
 
@@ -597,7 +594,7 @@ top:
 	if (c == '-' || isdigit(c)) {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -636,7 +633,7 @@ nodigits:
 	if (isalnum(c) || c == ':' || c == '_' || c == '&' || c == '|') {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -645,7 +642,7 @@ nodigits:
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
 			if ((yylval.v.string = strdup(buf)) == NULL)
-				err(1, "%s", __func__);
+				err(1, "yylex: strdup");
 		return (token);
 	}
 	if (c == '\n') {
@@ -683,16 +680,16 @@ pushfile(const char *name, int secret)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
-		warn("%s", __func__);
+		warn("malloc");
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		warn("%s", __func__);
+		warn("strdup");
 		free(nfile);
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		warn("%s: %s", __func__, nfile->name);
+		warn("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -732,7 +729,7 @@ parse_config(char *filename, int opts)
 	struct ifsd_state *state;
 
 	if ((conf = calloc(1, sizeof(struct ifsd_config))) == NULL) {
-		err(1, "%s", __func__);
+		err(1, NULL);
 		return (NULL);
 	}
 
@@ -872,12 +869,17 @@ cmdline_symset(char *s)
 {
 	char	*sym, *val;
 	int	ret;
+	size_t	len;
 
 	if ((val = strrchr(s, '=')) == NULL)
 		return (-1);
-	sym = strndup(s, val - s);
-	if (sym == NULL)
-		err(1, "%s", __func__);
+
+	len = strlen(s) - strlen(val) + 1;
+	if ((sym = malloc(len)) == NULL)
+		err(1, NULL);
+
+	strlcpy(sym, s, len);
+
 	ret = symset(sym, val + 1, 1);
 	free(sym);
 
@@ -917,12 +919,12 @@ init_state(struct ifsd_state *state)
 	TAILQ_INIT(&state->external_tests);
 
 	if ((state->init = calloc(1, sizeof(*state->init))) == NULL)
-		err(1, "%s", __func__);
+		err(1, "init_state: calloc");
 	state->init->type = IFSD_ACTION_CONDITION;
 	TAILQ_INIT(&state->init->act.c.actions);
 
 	if ((state->body = calloc(1, sizeof(*state->body))) == NULL)
-		err(1, "%s", __func__);
+		err(1, "init_state: calloc");
 	state->body->type = IFSD_ACTION_CONDITION;
 	TAILQ_INIT(&state->body->act.c.actions);
 }
@@ -944,7 +946,7 @@ new_ifstate(char *ifname, int s)
 			break;
 	if (ifstate == NULL) {
 		if ((ifstate = calloc(1, sizeof(*ifstate))) == NULL)
-			err(1, "%s", __func__);
+			err(1, NULL);
 		if (strlcpy(ifstate->ifname, ifname,
 		    sizeof(ifstate->ifname)) >= sizeof(ifstate->ifname))
 			errx(1, "ifname strlcpy truncation");
@@ -975,9 +977,9 @@ new_external(char *command, u_int32_t frequency)
 			break;
 	if (external == NULL) {
 		if ((external = calloc(1, sizeof(*external))) == NULL)
-			err(1, "%s", __func__);
+			err(1, NULL);
 		if ((external->command = strdup(command)) == NULL)
-			err(1, "%s", __func__);
+			err(1, NULL);
 		external->frequency = frequency;
 		TAILQ_INIT(&external->expressions);
 		TAILQ_INSERT_TAIL(&state->external_tests, external, entries);

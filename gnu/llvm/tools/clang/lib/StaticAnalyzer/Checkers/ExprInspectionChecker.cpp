@@ -8,11 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Checkers/SValExplainer.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
-#include "clang/StaticAnalyzer/Core/IssueHash.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
+#include "clang/StaticAnalyzer/Checkers/SValExplainer.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ScopedPrinter.h"
 
@@ -42,7 +41,6 @@ class ExprInspectionChecker : public Checker<eval::Call, check::DeadSymbols,
   void analyzerExplain(const CallExpr *CE, CheckerContext &C) const;
   void analyzerPrintState(const CallExpr *CE, CheckerContext &C) const;
   void analyzerGetExtent(const CallExpr *CE, CheckerContext &C) const;
-  void analyzerHashDump(const CallExpr *CE, CheckerContext &C) const;
 
   typedef void (ExprInspectionChecker::*FnCheck)(const CallExpr *,
                                                  CheckerContext &C) const;
@@ -81,7 +79,6 @@ bool ExprInspectionChecker::evalCall(const CallExpr *CE,
           &ExprInspectionChecker::analyzerPrintState)
     .Case("clang_analyzer_numTimesReached",
           &ExprInspectionChecker::analyzerNumTimesReached)
-    .Case("clang_analyzer_hashDump", &ExprInspectionChecker::analyzerHashDump)
     .Default(nullptr);
 
   if (!Handler)
@@ -149,7 +146,7 @@ void ExprInspectionChecker::analyzerEval(const CallExpr *CE,
 
   // A specific instantiation of an inlined function may have more constrained
   // values than can generally be assumed. Skip the check.
-  if (LC->getStackFrame()->getParent() != nullptr)
+  if (LC->getCurrentStackFrame()->getParent() != nullptr)
     return;
 
   reportBug(getArgumentValueString(CE, C), C);
@@ -178,7 +175,7 @@ void ExprInspectionChecker::analyzerCheckInlined(const CallExpr *CE,
   // when we are analyzing it as an inlined function. This means that
   // clang_analyzer_checkInlined(true) should always print TRUE, but
   // clang_analyzer_checkInlined(false) should never actually print anything.
-  if (LC->getStackFrame()->getParent() == nullptr)
+  if (LC->getCurrentStackFrame()->getParent() == nullptr)
     return;
 
   reportBug(getArgumentValueString(CE, C), C);
@@ -275,7 +272,6 @@ void ExprInspectionChecker::checkEndAnalysis(ExplodedGraph &G, BugReporter &BR,
 
     reportBug(llvm::to_string(NumTimesReached), BR, N);
   }
-  ReachedStats.clear();
 }
 
 void ExprInspectionChecker::analyzerCrash(const CallExpr *CE,
@@ -283,18 +279,7 @@ void ExprInspectionChecker::analyzerCrash(const CallExpr *CE,
   LLVM_BUILTIN_TRAP;
 }
 
-void ExprInspectionChecker::analyzerHashDump(const CallExpr *CE,
-                                             CheckerContext &C) const {
-  const LangOptions &Opts = C.getLangOpts();
-  const SourceManager &SM = C.getSourceManager();
-  FullSourceLoc FL(CE->getArg(0)->getLocStart(), SM);
-  std::string HashContent =
-      GetIssueString(SM, FL, getCheckName().getName(), "Category",
-                     C.getLocationContext()->getDecl(), Opts);
-
-  reportBug(HashContent, C);
-}
-
 void ento::registerExprInspectionChecker(CheckerManager &Mgr) {
   Mgr.registerChecker<ExprInspectionChecker>();
 }
+

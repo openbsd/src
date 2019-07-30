@@ -21,7 +21,7 @@
 namespace llvm {
 namespace PBQP {
 
-  /// Represents a solution to a PBQP problem.
+  /// \brief Represents a solution to a PBQP problem.
   ///
   /// To get the selection for each node in the problem use the getSelection method.
   class Solution {
@@ -29,18 +29,23 @@ namespace PBQP {
     using SelectionsMap = std::map<GraphBase::NodeId, unsigned>;
     SelectionsMap selections;
 
+    unsigned r0Reductions = 0;
+    unsigned r1Reductions = 0;
+    unsigned r2Reductions = 0;
+    unsigned rNReductions = 0;
+
   public:
-    /// Initialise an empty solution.
+    /// \brief Initialise an empty solution.
     Solution() = default;
 
-    /// Set the selection for a given node.
+    /// \brief Set the selection for a given node.
     /// @param nodeId Node id.
     /// @param selection Selection for nodeId.
     void setSelection(GraphBase::NodeId nodeId, unsigned selection) {
       selections[nodeId] = selection;
     }
 
-    /// Get a node's selection.
+    /// \brief Get a node's selection.
     /// @param nodeId Node id.
     /// @return The selection for nodeId;
     unsigned getSelection(GraphBase::NodeId nodeId) const {

@@ -1,7 +1,0 @@
-|123456789|123456789|123456789
-| accent Ã©|doubleã‚« |ascii    
-|   comb eÌ|3byte â€’  |truncate 
-|  four ğ €€|badbyte ÿ|end      
-|  incom Â|cont €   |end      
-||two      |and three
-||         |three onl

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.11 2019/06/06 19:43:35 kettenis Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.8 2018/03/07 01:39:08 jsg Exp $	*/
 /*
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2017 Adam Steen <adam@adamsteen.com.au>
@@ -120,7 +120,7 @@ uint64_t
 measure_tsc_freq(struct timecounter *tc)
 {
 	uint64_t count1, count2, frequency, min_freq, tsc1, tsc2;
-	u_long s;
+	u_long ef;
 	int delay_usec, i, err1, err2, usec, success = 0;
 
 	/* warmup the timers */
@@ -133,13 +133,14 @@ measure_tsc_freq(struct timecounter *tc)
 
 	delay_usec = 100000;
 	for (i = 0; i < 3; i++) {
-		s = intr_disable();
+		ef = read_rflags();
+		disable_intr();
 
 		err1 = get_tsc_and_timecount(tc, &tsc1, &count1);
 		delay(delay_usec);
 		err2 = get_tsc_and_timecount(tc, &tsc2, &count2);
 
-		intr_restore(s);
+		write_rflags(ef);
 
 		if (err1 || err2)
 			continue;
@@ -172,10 +173,11 @@ calibrate_tsc_freq(void)
 		return;
 	tsc_frequency = freq;
 	tsc_timecounter.tc_frequency = freq;
-#ifndef MULTIPROCESSOR
 	if (tsc_is_invariant)
 		tsc_timecounter.tc_quality = 2000;
-#endif
+
+	printf("%s: recalibrated TSC frequency %llu Hz\n",
+	    reference->tc_name, tsc_timecounter.tc_frequency);
 }
 
 void
@@ -211,9 +213,7 @@ tsc_timecounter_init(struct cpu_info *ci, uint64_t cpufreq)
 	/* Newer CPUs don't require recalibration */
 	if (tsc_frequency > 0) {
 		tsc_timecounter.tc_frequency = tsc_frequency;
-#ifndef MULTIPROCESSOR
 		tsc_timecounter.tc_quality = 2000;
-#endif
 	} else {
 		tsc_recalibrate = 1;
 		tsc_frequency = cpufreq;

@@ -15,10 +15,12 @@ from lldbsuite.test import lldbutil
 class StdSmartPtrDataFormatterTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
-    @add_test_categories(["libstdcxx"])
+    @skipIfFreeBSD
+    @skipIfWindows  # libstdcpp not ported to Windows
+    @skipIfDarwin  # doesn't compile on Darwin
     def test_with_run_command(self):
         self.build()
-        self.runCmd("file " + self.getBuildArtifact("a.out"), CURRENT_EXECUTABLE_SET)
+        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_source_regexp(
             self, "Set break point at this line.")

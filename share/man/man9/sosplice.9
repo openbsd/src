@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sosplice.9,v 1.9 2018/08/15 12:10:49 kn Exp $
+.\"	$OpenBSD: sosplice.9,v 1.8 2016/06/13 21:24:43 bluhm Exp $
 .\"
 .\" Copyright (c) 2011-2013 Alexander Bluhm <bluhm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 15 2018 $
+.Dd $Mdocdate: June 13 2016 $
 .Dt SOSPLICE 9
 .Os
 .Sh NAME
@@ -59,30 +59,28 @@ See the
 .Sx ERRORS
 section for possible failures.
 The connection between both sockets is implemented by setting these
-additional fields in the
-.Vt struct sosplice Va *so_sp
-field in
+additional fields in
 .Vt struct socket :
 .Pp
 .Bl -dash -compact -offset indent
 .It
-.Vt struct socket Va *ssp_socket
+.Vt struct socket Fa *so_splice
 links from the source to the drain socket.
 .It
-.Vt struct socket Va *ssp_soback
+.Vt struct socket Fa *so_spliceback
 links back from the drain to the source socket.
 .It
-.Vt off_t Va ssp_len
+.Vt off_t Fa so_splicelen
 counts the number of bytes spliced so far from this socket.
 .It
-.Vt off_t Va ssp_max
+.Vt off_t Fa so_splicemax
 specifies the maximum number of bytes to splice from this socket if
 non-zero.
 .It
-.Vt struct timeval Va ssp_idletv
+.Vt struct timeval Fa so_idletv
 specifies the maximum idle time if non-zero.
 .It
-.Vt struct timeout Va ssp_idleto
+.Vt struct timeout Fa so_idleto
 provides storage for the kernel timeout if idle time is used.
 .El
 .Pp

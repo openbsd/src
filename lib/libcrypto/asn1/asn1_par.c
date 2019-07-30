@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_par.c,v 1.27 2019/03/24 16:07:25 beck Exp $ */
+/* $OpenBSD: asn1_par.c,v 1.25 2015/09/30 19:01:14 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -130,10 +130,6 @@ asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offset,
 	p = *pp;
 	tot = p + length;
 	op = p - 1;
-	if (depth > 128) {
-		BIO_printf(bp, "Max depth exceeded\n");
-		goto end;
-	}
 	while ((p < tot) && (op < p)) {
 		op = p;
 		j = ASN1_get_object(&p, &len, &tag, &xclass, length);
@@ -181,14 +177,12 @@ asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offset,
 						ret = 0;
 						goto end;
 					}
-					if ((r == 2) || (p >= tot)) {
-						len = (long)(p - ep);
+					if ((r == 2) || (p >= tot))
 						break;
-					}
 				}
-			} else {
+			} else
 				while (p < ep) {
-					r = asn1_parse2(bp, &p, (long)(ep - p),
+					r = asn1_parse2(bp, &p, (long)len,
 					    offset + (p - *pp), depth + 1,
 					    indent, dump);
 					if (r == 0) {
@@ -196,7 +190,6 @@ asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offset,
 						goto end;
 					}
 				}
-			}
 		} else if (xclass != 0) {
 			p += len;
 			if (BIO_write(bp, "\n", 1) <= 0)

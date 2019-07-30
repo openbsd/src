@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.107 2019/01/12 19:37:16 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.95 2017/12/23 10:23:34 kettenis Exp $
 
 machine		armv7 arm
 
@@ -23,21 +23,18 @@ option		INET6
 option		EXT2FS
 option		NFSCLIENT
 
-option		PCIVERBOSE
 option		USBVERBOSE
 
 config		bsd root on rd0a swap on rd0b
 
 # The main bus device
 mainbus0	at root
-softraid0	at root
 simplebus*	at fdt?
 cpu0		at mainbus?
 
 # Cortex-A9
 cortex0		at mainbus?
-ampintc*	at fdt? early 1
-ampintcmsi*	at fdt? early 1
+ampintc*	at fdt?
 amptimer*	at cortex?
 agtimer*	at fdt?
 armliicc*	at cortex?
@@ -45,7 +42,6 @@ armliicc*	at cortex?
 # iMX
 imxccm*		at fdt? early 1		# clock control module
 imxiomuxc*	at fdt? early 1		# iomux controller
-imxanatop*	at fdt? early 1		# anatop controller
 imxgpc*		at fdt?			# power controller
 imxdog*		at fdt?			# watchdog timer
 imxgpio*	at fdt?			# user-visible GPIO pins?
@@ -58,7 +54,6 @@ sdmmc*		at imxesdhc?		# SD/MMC bus
 imxahci*	at fdt?			# AHCI/SATA
 imxehci*	at fdt?			# EHCI
 usb*		at imxehci?
-imxrtc*		at fdt?			# SNVS RTC
 
 # OMAP3xxx/OMAP4xxx SoC
 omap0		at mainbus?
@@ -69,7 +64,7 @@ intc*		at fdt?			# OMAP3 interrupt controller
 omwugen*	at fdt?			# Wake-up generator
 #edma*		at fdt?			# OMAP3 dma controller
 prcm*		at omap?		# power/clock controller
-pinctrl*	at fdt?			# pin muxing
+ompinmux*	at fdt?			# pin muxing
 omdog*		at fdt?			# watchdog timer
 omgpio*		at fdt?			# user-visible GPIO pins?
 gpio*		at omgpio?
@@ -105,8 +100,8 @@ sximmc*		at fdt?			# SD/MMC card controller
 sdmmc*		at sximmc?		# SD/MMC bus
 ehci*		at fdt?			# EHCI (shim)
 usb*		at ehci?	#flags 0x1
-ohci*		at fdt?
-usb*		at ohci?
+#ohci*		at sunxi?
+#usb*		at ohci?
 sxitwi*		at fdt?			# Two-Wire Serial Interface
 iic*		at sxitwi?		# I2C bus
 
@@ -115,9 +110,6 @@ sysreg*		at fdt?
 pluart*		at fdt?
 plrtc*		at fdt?
 virtio*		at fdt?
-virtio*		at pci?
-pciecam*	at fdt?
-pci*		at pciecam?
 
 sdhc*		at fdt?
 sdmmc*		at sdhc?
@@ -163,8 +155,6 @@ mvpinctrl*	at fdt?
 mvmdio*		at fdt?
 mvneta*		at fdt?
 mvmpic*		at fdt?
-mvpcie*		at fdt?
-pci*		at mvpcie?
 mvpxa*		at fdt?
 sdmmc*		at mvpxa?
 
@@ -184,7 +174,6 @@ pcfrtc*		at iic?
 pcxrtc*		at iic?
 rkpmic*		at iic?			# RK808 PMIC
 tpspmic*	at iic?
-pcagpio*	at iic?
 
 # virtio devices
 vioblk*		at virtio?
@@ -193,33 +182,8 @@ viomb*		at virtio?
 viornd*		at virtio?
 vioscsi*	at virtio?
 
-# PCI
-ppb*		at pci?			# PCI-PCI bridges
-pci*		at ppb?
-
-# PCI Ethernet
-em*		at pci?			# Intel Pro/1000 Ethernet
-ix*		at pci?			# Intel 82598EB 10Gb Ethernet
-mskc*		at pci?			# Marvell Yukon-2
-msk*		at mskc?		#  each port of above
-re*		at pci?			# Realtek 8169/8169S/8110S
-
-# PCI SCSI
-ahci*		at pci? flags 0x0000	# AHCI SATA controllers
-					# flags 0x0001 to force SATA 1 (1.5Gb/s)
-nvme*		at pci?			# NVMe controllers
-
-# USB Controllers
-ohci*		at pci?			# Open Host Controller
-uhci*		at pci?			# Universal Host Controller (Intel)
-ehci*		at pci?			# Enhanced Host Controller
-xhci*		at pci?			# eXtensible Host Controller
-
 # USB bus support
-usb*		at ohci?
-usb*		at uhci?
 usb*		at ehci?	flags 0x1
-usb*		at xhci?
 
 uhub*		at usb?
 uhub*		at uhub?
@@ -237,7 +201,6 @@ smsc*		at uhub?		# SMSC LAN95xx Ethernet
 cdce*		at uhub?		# CDC Ethernet
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 mos*		at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
-mue*		at uhub?		# Microchip LAN75xx/LAN78xx Ethernet
 url*		at uhub?		# Realtek RTL8150L based adapters
 ure*		at uhub?		# Realtek RTL8152 based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
@@ -268,4 +231,3 @@ pseudo-device	openprom
 pseudo-device	loop 1
 pseudo-device	bpfilter 1
 pseudo-device	rd 1
-pseudo-device	bio 1

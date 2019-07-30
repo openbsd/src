@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.31 2019/03/25 16:46:48 jsing Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.28 2017/02/07 02:08:38 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,6 +77,10 @@ SSL_use_certificate(SSL *ssl, X509 *x)
 		SSLerror(ssl, ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
+	if (!ssl_cert_inst(&ssl->cert)) {
+		SSLerror(ssl, ERR_R_MALLOC_FAILURE);
+		return (0);
+	}
 	return (ssl_set_cert(ssl->cert, x));
 }
 
@@ -129,7 +133,7 @@ SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len)
 	X509 *x;
 	int ret;
 
-	x = d2i_X509(NULL, &d, (long)len);
+	x = d2i_X509(NULL, &d,(long)len);
 	if (x == NULL) {
 		SSLerror(ssl, ERR_R_ASN1_LIB);
 		return (0);
@@ -148,6 +152,10 @@ SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
 
 	if (rsa == NULL) {
 		SSLerror(ssl, ERR_R_PASSED_NULL_PARAMETER);
+		return (0);
+	}
+	if (!ssl_cert_inst(&ssl->cert)) {
+		SSLerror(ssl, ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 	if ((pkey = EVP_PKEY_new()) == NULL) {
@@ -246,12 +254,14 @@ end:
 }
 
 int
-SSL_use_RSAPrivateKey_ASN1(SSL *ssl, const unsigned char *d, long len)
+SSL_use_RSAPrivateKey_ASN1(SSL *ssl, unsigned char *d, long len)
 {
 	int ret;
+	const unsigned char *p;
 	RSA *rsa;
 
-	if ((rsa = d2i_RSAPrivateKey(NULL, &d, (long)len)) == NULL) {
+	p = d;
+	if ((rsa = d2i_RSAPrivateKey(NULL, &p,(long)len)) == NULL) {
 		SSLerror(ssl, ERR_R_ASN1_LIB);
 		return (0);
 	}
@@ -268,6 +278,10 @@ SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey)
 
 	if (pkey == NULL) {
 		SSLerror(ssl, ERR_R_PASSED_NULL_PARAMETER);
+		return (0);
+	}
+	if (!ssl_cert_inst(&ssl->cert)) {
+		SSLerror(ssl, ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 	ret = ssl_set_pkey(ssl->cert, pkey);
@@ -318,9 +332,11 @@ int
 SSL_use_PrivateKey_ASN1(int type, SSL *ssl, const unsigned char *d, long len)
 {
 	int ret;
+	const unsigned char *p;
 	EVP_PKEY *pkey;
 
-	if ((pkey = d2i_PrivateKey(type, NULL, &d, (long)len)) == NULL) {
+	p = d;
+	if ((pkey = d2i_PrivateKey(type, NULL, &p,(long)len)) == NULL) {
 		SSLerror(ssl, ERR_R_ASN1_LIB);
 		return (0);
 	}
@@ -335,6 +351,10 @@ SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
 {
 	if (x == NULL) {
 		SSLerrorx(ERR_R_PASSED_NULL_PARAMETER);
+		return (0);
+	}
+	if (!ssl_cert_inst(&ctx->internal->cert)) {
+		SSLerrorx(ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 	return (ssl_set_cert(ctx->internal->cert, x));
@@ -445,7 +465,7 @@ SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, const unsigned char *d)
 	X509 *x;
 	int ret;
 
-	x = d2i_X509(NULL, &d, (long)len);
+	x = d2i_X509(NULL, &d,(long)len);
 	if (x == NULL) {
 		SSLerrorx(ERR_R_ASN1_LIB);
 		return (0);
@@ -464,6 +484,10 @@ SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa)
 
 	if (rsa == NULL) {
 		SSLerrorx(ERR_R_PASSED_NULL_PARAMETER);
+		return (0);
+	}
+	if (!ssl_cert_inst(&ctx->internal->cert)) {
+		SSLerrorx(ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 	if ((pkey = EVP_PKEY_new()) == NULL) {
@@ -523,9 +547,11 @@ int
 SSL_CTX_use_RSAPrivateKey_ASN1(SSL_CTX *ctx, const unsigned char *d, long len)
 {
 	int ret;
+	const unsigned char *p;
 	RSA *rsa;
 
-	if ((rsa = d2i_RSAPrivateKey(NULL, &d, (long)len)) == NULL) {
+	p = d;
+	if ((rsa = d2i_RSAPrivateKey(NULL, &p,(long)len)) == NULL) {
 		SSLerrorx(ERR_R_ASN1_LIB);
 		return (0);
 	}
@@ -540,6 +566,10 @@ SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey)
 {
 	if (pkey == NULL) {
 		SSLerrorx(ERR_R_PASSED_NULL_PARAMETER);
+		return (0);
+	}
+	if (!ssl_cert_inst(&ctx->internal->cert)) {
+		SSLerrorx(ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 	return (ssl_set_pkey(ctx->internal->cert, pkey));
@@ -590,9 +620,11 @@ SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx, const unsigned char *d,
     long len)
 {
 	int ret;
+	const unsigned char *p;
 	EVP_PKEY *pkey;
 
-	if ((pkey = d2i_PrivateKey(type, NULL, &d, (long)len)) == NULL) {
+	p = d;
+	if ((pkey = d2i_PrivateKey(type, NULL, &p,(long)len)) == NULL) {
 		SSLerrorx(ERR_R_ASN1_LIB);
 		return (0);
 	}
@@ -611,43 +643,63 @@ SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx, const unsigned char *d,
 static int
 ssl_ctx_use_certificate_chain_bio(SSL_CTX *ctx, BIO *in)
 {
-	X509 *ca, *x = NULL;
-	unsigned long err;
 	int ret = 0;
+	X509 *x = NULL;
 
-	if ((x = PEM_read_bio_X509_AUX(in, NULL, ctx->default_passwd_callback,
-	    ctx->default_passwd_callback_userdata)) == NULL) {
+	ERR_clear_error(); /* clear error stack for SSL_CTX_use_certificate() */
+
+	x = PEM_read_bio_X509_AUX(in, NULL, ctx->default_passwd_callback,
+	    ctx->default_passwd_callback_userdata);
+	if (x == NULL) {
 		SSLerrorx(ERR_R_PEM_LIB);
-		goto err;
+		goto end;
 	}
 
-	if (!SSL_CTX_use_certificate(ctx, x))
-		goto err;
+	ret = SSL_CTX_use_certificate(ctx, x);
 
-	if (!ssl_cert_set0_chain(ctx->internal->cert, NULL))
-		goto err;
+	if (ERR_peek_error() != 0)
+		ret = 0;
+	/* Key/certificate mismatch doesn't imply ret==0 ... */
+	if (ret) {
+		/*
+		 * If we could set up our certificate, now proceed to
+		 * the CA certificates.
+		 */
+		X509 *ca;
+		int r;
+		unsigned long err;
 
-	/* Process any additional CA certificates. */
-	while ((ca = PEM_read_bio_X509(in, NULL,
-	    ctx->default_passwd_callback,
-	    ctx->default_passwd_callback_userdata)) != NULL) {
-		if (!ssl_cert_add0_chain_cert(ctx->internal->cert, ca)) {
-			X509_free(ca);
-			goto err;
+		sk_X509_pop_free(ctx->extra_certs, X509_free);
+		ctx->extra_certs = NULL;
+
+		while ((ca = PEM_read_bio_X509(in, NULL,
+		    ctx->default_passwd_callback,
+		    ctx->default_passwd_callback_userdata)) != NULL) {
+			r = SSL_CTX_add_extra_chain_cert(ctx, ca);
+			if (!r) {
+				X509_free(ca);
+				ret = 0;
+				goto end;
+			}
+			/*
+			 * Note that we must not free r if it was successfully
+			 * added to the chain (while we must free the main
+			 * certificate, since its reference count is increased
+			 * by SSL_CTX_use_certificate).
+			 */
 		}
+
+		/* When the while loop ends, it's usually just EOF. */
+		err = ERR_peek_last_error();
+		if (ERR_GET_LIB(err) == ERR_LIB_PEM &&
+		    ERR_GET_REASON(err) == PEM_R_NO_START_LINE)
+			ERR_clear_error();
+		else
+			ret = 0; /* some real error */
 	}
 
-	/* When the while loop ends, it's usually just EOF. */
-	err = ERR_peek_last_error();
-	if (ERR_GET_LIB(err) == ERR_LIB_PEM &&
-	    ERR_GET_REASON(err) == PEM_R_NO_START_LINE) {
-		ERR_clear_error();
-		ret = 1;
-	}
-
- err:
+end:
 	X509_free(x);
-
 	return (ret);
 }
 

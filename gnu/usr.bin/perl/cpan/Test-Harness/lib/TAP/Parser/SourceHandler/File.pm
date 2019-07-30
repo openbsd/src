@@ -16,11 +16,11 @@ TAP::Parser::SourceHandler::File - Stream TAP from a text file.
 
 =head1 VERSION
 
-Version 3.42
+Version 3.36
 
 =cut
 
-our $VERSION = '3.42';
+our $VERSION = '3.36_01';
 
 =head1 SYNOPSIS
 
@@ -71,8 +71,7 @@ sub can_handle {
     return 0.9 if $file->{lc_ext} eq '.tap';
 
     if ( my $exts = $config->{extensions} ) {
-        my @exts = ref $exts eq 'ARRAY' ? @$exts : $exts;
-        return 0.9 if grep { lc($_) eq $file->{lc_ext} } @exts;
+        return 0.9 if grep { lc($_) eq $file->{lc_ext} } @$exts;
     }
 
     return 0;

@@ -18,6 +18,7 @@
 #include "llvm-c/Transforms/Vectorize.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/IR/LegacyPassManager.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/InitializePasses.h"
 
 using namespace llvm;
@@ -32,6 +33,10 @@ void llvm::initializeVectorization(PassRegistry &Registry) {
 
 void LLVMInitializeVectorization(LLVMPassRegistryRef R) {
   initializeVectorization(*unwrap(R));
+}
+
+// DEPRECATED: Remove after the LLVM 5 release.
+void LLVMAddBBVectorizePass(LLVMPassManagerRef PM) {
 }
 
 void LLVMAddLoopVectorizePass(LLVMPassManagerRef PM) {

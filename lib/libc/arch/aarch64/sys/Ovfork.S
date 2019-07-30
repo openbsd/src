@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.4 2018/08/12 17:15:10 mortimer Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.3 2017/11/22 20:36:02 kettenis Exp $	*/
 /*	$NetBSD: Ovfork.S,v 1.6 2003/08/07 16:42:03 agc Exp $	*/
 
 /*-
@@ -35,11 +35,9 @@
 #include "SYS.h"
 
 SYSENTRY_HIDDEN(vfork)
-	RETGUARD_SETUP(vfork, x15)
 	mov	x2, x30
 	SYSTRAP(vfork)
 	bcs	CERROR
 	mov	x30, x2
-	RETGUARD_CHECK(vfork, x15)
 	ret
 SYSCALL_END_HIDDEN(vfork)

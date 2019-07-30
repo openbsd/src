@@ -475,7 +475,7 @@ tsig_verify(tsig_record_type *tsig)
 				    &tsig->prior_mac_size);
 
 	if (tsig->mac_size != tsig->prior_mac_size
-	    || CRYPTO_memcmp(tsig->mac_data,
+	    || memcmp(tsig->mac_data,
 		      tsig->prior_mac_data,
 		      tsig->mac_size) != 0)
 	{

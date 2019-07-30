@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Object/IRObjectFile.h"
+#include "RecordStreamer.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/BinaryFormat/Magic.h"
 #include "llvm/Bitcode/BitcodeReader.h"
@@ -19,8 +20,17 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCObjectFileInfo.h"
+#include "llvm/MC/MCParser/MCAsmParser.h"
+#include "llvm/MC/MCParser/MCTargetAsmParser.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -72,22 +82,20 @@ StringRef IRObjectFile::getTargetTriple() const {
   return Mods[0]->getTargetTriple();
 }
 
-Expected<MemoryBufferRef>
-IRObjectFile::findBitcodeInObject(const ObjectFile &Obj) {
+ErrorOr<MemoryBufferRef> IRObjectFile::findBitcodeInObject(const ObjectFile &Obj) {
   for (const SectionRef &Sec : Obj.sections()) {
     if (Sec.isBitcode()) {
       StringRef SecContents;
       if (std::error_code EC = Sec.getContents(SecContents))
-        return errorCodeToError(EC);
+        return EC;
       return MemoryBufferRef(SecContents, Obj.getFileName());
     }
   }
 
-  return errorCodeToError(object_error::bitcode_section_not_found);
+  return object_error::bitcode_section_not_found;
 }
 
-Expected<MemoryBufferRef>
-IRObjectFile::findBitcodeInMemBuffer(MemoryBufferRef Object) {
+ErrorOr<MemoryBufferRef> IRObjectFile::findBitcodeInMemBuffer(MemoryBufferRef Object) {
   file_magic Type = identify_magic(Object.getBuffer());
   switch (Type) {
   case file_magic::bitcode:
@@ -98,19 +106,19 @@ IRObjectFile::findBitcodeInMemBuffer(MemoryBufferRef Object) {
     Expected<std::unique_ptr<ObjectFile>> ObjFile =
         ObjectFile::createObjectFile(Object, Type);
     if (!ObjFile)
-      return ObjFile.takeError();
+      return errorToErrorCode(ObjFile.takeError());
     return findBitcodeInObject(*ObjFile->get());
   }
   default:
-    return errorCodeToError(object_error::invalid_file_type);
+    return object_error::invalid_file_type;
   }
 }
 
 Expected<std::unique_ptr<IRObjectFile>>
 IRObjectFile::create(MemoryBufferRef Object, LLVMContext &Context) {
-  Expected<MemoryBufferRef> BCOrErr = findBitcodeInMemBuffer(Object);
+  ErrorOr<MemoryBufferRef> BCOrErr = findBitcodeInMemBuffer(Object);
   if (!BCOrErr)
-    return BCOrErr.takeError();
+    return errorCodeToError(BCOrErr.getError());
 
   Expected<std::vector<BitcodeModule>> BMsOrErr =
       getBitcodeModuleList(*BCOrErr);
@@ -134,10 +142,10 @@ IRObjectFile::create(MemoryBufferRef Object, LLVMContext &Context) {
 
 Expected<IRSymtabFile> object::readIRSymtab(MemoryBufferRef MBRef) {
   IRSymtabFile F;
-  Expected<MemoryBufferRef> BCOrErr =
+  ErrorOr<MemoryBufferRef> BCOrErr =
       IRObjectFile::findBitcodeInMemBuffer(MBRef);
   if (!BCOrErr)
-    return BCOrErr.takeError();
+    return errorCodeToError(BCOrErr.getError());
 
   Expected<BitcodeFileContents> BFCOrErr = getBitcodeFileContents(*BCOrErr);
   if (!BFCOrErr)

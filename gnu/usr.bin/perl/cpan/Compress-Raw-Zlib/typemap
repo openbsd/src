@@ -15,8 +15,7 @@ const char *			T_PV
 char *			        T_PV
 uLong				T_UV
 z_off_t				T_UV
-STRLEN				T_UV
-DualType            T_DUAL
+DualType                	T_DUAL
 int_undef           T_IV_undef
 
 

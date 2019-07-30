@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.22 2019/02/27 06:33:56 sthen Exp $
+.\" $OpenBSD: iked.8,v 1.20 2017/03/27 10:06:41 reyk Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 27 2019 $
+.Dd $Mdocdate: March 27 2017 $
 .Dt IKED 8
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@ is an Internet Key Exchange (IKEv2) daemon which performs mutual
 authentication and which establishes and maintains IPsec flows and
 security associations (SAs) between the two peers.
 .Pp
-The IKEv2 protocol is defined in RFC 7296,
+The IKEv2 protocol is defined in RFC 5996,
 which combines and updates the previous standards:
 ISAKMP/Oakley (RFC 2408),
 IKE (RFC 2409),
@@ -61,8 +61,7 @@ By default,
 .Nm
 blocks any IPv6 traffic unless a flow for this address family has been
 negotiated.
-This option disables VPN traffic leakage prevention on dual stack hosts
-(RFC 7359).
+This option is used to prevent VPN traffic leakages on dual stack hosts.
 .It Fl D Ar macro Ns = Ns Ar value
 Define
 .Ar macro
@@ -187,9 +186,8 @@ control socket.
 .%A P. Hoffman
 .%A Y. Nir
 .%A P. Eronen
-.%A T. Kivinen
-.%D October 2014
-.%R RFC 7296
+.%D September 2010
+.%R RFC 5996
 .%T Internet Key Exchange Protocol Version 2 (IKEv2)
 .Re
 .Sh HISTORY

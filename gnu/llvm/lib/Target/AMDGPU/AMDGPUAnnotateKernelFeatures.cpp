@@ -1,4 +1,4 @@
-//===- AMDGPUAnnotateKernelFeaturesPass.cpp -------------------------------===//
+//===-- AMDGPUAnnotateKernelFeaturesPass.cpp ------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,28 +14,13 @@
 
 #include "AMDGPU.h"
 #include "AMDGPUSubtarget.h"
-#include "Utils/AMDGPUBaseInfo.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/CallGraphSCCPass.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
-#include "llvm/IR/CallSite.h"
-#include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/Instruction.h"
+#include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/Type.h"
-#include "llvm/IR/Use.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Target/TargetMachine.h"
 
 #define DEBUG_TYPE "amdgpu-annotate-kernel-features"
 
@@ -57,7 +42,6 @@ public:
 
   bool doInitialization(CallGraph &CG) override;
   bool runOnSCC(CallGraphSCC &SCC) override;
-
   StringRef getPassName() const override {
     return "AMDGPU Annotate Kernel Features";
   }
@@ -74,7 +58,7 @@ public:
     AMDGPUAS AS);
 };
 
-} // end anonymous namespace
+}
 
 char AMDGPUAnnotateKernelFeatures::ID = 0;
 
@@ -172,9 +156,8 @@ static StringRef intrinsicToAttrName(Intrinsic::ID ID,
   case Intrinsic::amdgcn_dispatch_id:
     return "amdgpu-dispatch-id";
   case Intrinsic::amdgcn_kernarg_segment_ptr:
-    return "amdgpu-kernarg-segment-ptr";
   case Intrinsic::amdgcn_implicitarg_ptr:
-    return "amdgpu-implicitarg-ptr";
+    return "amdgpu-kernarg-segment-ptr";
   case Intrinsic::amdgcn_queue_ptr:
   case Intrinsic::trap:
   case Intrinsic::debugtrap:
@@ -207,8 +190,7 @@ static void copyFeaturesToFunction(Function &Parent, const Function &Callee,
     { "amdgpu-work-group-id-z" },
     { "amdgpu-dispatch-ptr" },
     { "amdgpu-dispatch-id" },
-    { "amdgpu-kernarg-segment-ptr" },
-    { "amdgpu-implicitarg-ptr" }
+    { "amdgpu-kernarg-segment-ptr" }
   };
 
   if (handleAttr(Parent, Callee, "amdgpu-queue-ptr"))
@@ -219,7 +201,7 @@ static void copyFeaturesToFunction(Function &Parent, const Function &Callee,
 }
 
 bool AMDGPUAnnotateKernelFeatures::addFeatureAttributes(Function &F) {
-  const GCNSubtarget &ST = TM->getSubtarget<GCNSubtarget>(F);
+  const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>(F);
   bool HasFlat = ST.hasFlatAddressSpace();
   bool HasApertureRegs = ST.hasApertureRegs();
   SmallPtrSet<const Constant *, 8> ConstantExprVisited;
@@ -309,6 +291,7 @@ bool AMDGPUAnnotateKernelFeatures::runOnSCC(CallGraphSCC &SCC) {
 
     Changed |= addFeatureAttributes(*F);
   }
+
 
   return Changed;
 }

@@ -47,7 +47,7 @@ class LongjmpTestCase(TestBase):
         self.step_back_out()
 
     def start_test(self, symbol):
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
 
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 

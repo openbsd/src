@@ -10,9 +10,9 @@ unless( eval q{require warnings::register; warnings::register->import; 1} ) {
         Carp::carp(@_);
     }
 }
-our %attr;
+use vars qw(%attr $VERSION);
 
-our $VERSION = '2.24';
+$VERSION = '2.23';
 $VERSION =~ tr/_//d;
 
 # constant.pm is slow

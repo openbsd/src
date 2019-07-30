@@ -14,7 +14,7 @@ use warnings; # uses #3 and #4, since warnings uses Carp
 
 use Exporter (); # use #5
 
-our $VERSION   = "1.003";
+our $VERSION   = "0.996";
 our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw( set_style set_style_standard add_callback
 		     concise_subref concise_cv concise_main
@@ -28,10 +28,7 @@ our %EXPORT_TAGS =
 # use #6
 use B qw(class ppname main_start main_root main_cv cstring svref_2object
 	 SVf_IOK SVf_NOK SVf_POK SVf_IVisUV SVf_FAKE OPf_KIDS OPf_SPECIAL
-         OPf_STACKED
-         OPpSPLIT_ASSIGN OPpSPLIT_LEX
-	 CVf_ANON CVf_LEXICAL CVf_NAMED
-	 PAD_FAKELEX_ANON PAD_FAKELEX_MULTI SVf_ROK);
+	 CVf_ANON PAD_FAKELEX_ANON PAD_FAKELEX_MULTI SVf_ROK);
 
 my %style =
   ("terse" =>
@@ -146,14 +143,13 @@ sub concise_subref {
 
 sub concise_stashref {
     my($order, $h) = @_;
-    my $name = svref_2object($h)->NAME;
+    local *s;
     foreach my $k (sort keys %$h) {
 	next unless defined $h->{$k};
-	my $coderef = ref $h->{$k} eq 'CODE' ? $h->{$k}
-		    : ref\$h->{$k} eq 'GLOB' ? *{$h->{$k}}{CODE} || next
-		    : next;
+	*s = $h->{$k};
+	my $coderef = *s{CODE} or next;
 	reset_sequence();
-	print "FUNC: *", $name, "::", $k, "\n";
+	print "FUNC: ", *s, "\n";
 	my $codeobj = svref_2object($coderef);
 	next unless ref $codeobj eq 'B::CV';
 	eval { concise_cv_obj($order, $codeobj, $k) };
@@ -599,42 +595,30 @@ require B::Op_private;
 our %hints; # used to display each COP's op_hints values
 
 # strict refs, subs, vars
-@hints{0x2,0x200,0x400,0x20,0x40,0x80} = ('$', '&', '*', 'x$', 'x&', 'x*');
+@hints{2,512,1024,32,64,128} = ('$', '&', '*', 'x$', 'x&', 'x*');
 # integers, locale, bytes
-@hints{0x1,0x4,0x8,0x10} = ('i', 'l', 'b');
+@hints{1,4,8,16} = ('i', 'l', 'b');
 # block scope, localise %^H, $^OPEN (in), $^OPEN (out)
-@hints{0x100,0x20000,0x40000,0x80000} = ('{','%','<','>');
+@hints{256,131072,262144,524288} = ('{','%','<','>');
 # overload new integer, float, binary, string, re
-@hints{0x1000,0x2000,0x4000,0x8000,0x10000} = ('I', 'F', 'B', 'S', 'R');
+@hints{4096,8192,16384,32768,65536} = ('I', 'F', 'B', 'S', 'R');
 # taint and eval
-@hints{0x100000,0x200000} = ('T', 'E');
-# filetest access, use utf8, unicode_strings feature
-@hints{0x400000,0x800000,0x800} = ('X', 'U', 'us');
+@hints{1048576,2097152} = ('T', 'E');
+# filetest access, UTF-8
+@hints{4194304,8388608} = ('X', 'U');
 
-# pick up the feature hints constants.
-# Note that we're relying on non-API parts of feature.pm,
-# but its less naughty than just blindly copying those constants into
-# this src file.
-#
-require feature;
-
-sub hints_flags {
-    my($x) = @_;
+sub _flags {
+    my($hash, $x) = @_;
     my @s;
-    for my $flag (sort {$b <=> $a} keys %hints) {
-	if ($hints{$flag} and $x & $flag and $x >= $flag) {
+    for my $flag (sort {$b <=> $a} keys %$hash) {
+	if ($hash->{$flag} and $x & $flag and $x >= $flag) {
 	    $x -= $flag;
-	    push @s, $hints{$flag};
+	    push @s, $hash->{$flag};
 	}
     }
-    if ($x & $feature::hint_mask) {
-        push @s, "fea=" . (($x & $feature::hint_mask) >> $feature::hint_shift);
-        $x &= ~$feature::hint_mask;
-    }
-    push @s, sprintf "0x%x", $x if $x;
+    push @s, $x if $x;
     return join(",", @s);
 }
-
 
 # return a string like 'LVINTRO,1' for the op $name with op_private
 # value $x
@@ -693,6 +677,11 @@ sub private_flags {
     return join ",", @flags;
 }
 
+sub hints_flags {
+    my($x) = @_;
+    _flags(\%hints, $x);
+}
+
 sub concise_sv {
     my($sv, $hr, $preferpv) = @_;
     $hr->{svclass} = class($sv);
@@ -717,47 +706,30 @@ sub concise_sv {
 	$hr->{svval} = "*$stash" . $gv->SAFENAME;
 	return "*$stash" . $gv->SAFENAME;
     } else {
-	while (class($sv) eq "IV" && $sv->FLAGS & SVf_ROK) {
-	    $hr->{svval} .= "\\";
-	    $sv = $sv->RV;
+	if ($] >= 5.011) {
+	    while (class($sv) eq "IV" && $sv->FLAGS & SVf_ROK) {
+		$hr->{svval} .= "\\";
+		$sv = $sv->RV;
+	    }
+	} else {
+	    while (class($sv) eq "RV") {
+		$hr->{svval} .= "\\";
+		$sv = $sv->RV;
+	    }
 	}
 	if (class($sv) eq "SPECIAL") {
-	    $hr->{svval} .= ["Null", "sv_undef", "sv_yes", "sv_no",
-                             '', '', '', "sv_zero"]->[$$sv];
+	    $hr->{svval} .= ["Null", "sv_undef", "sv_yes", "sv_no"]->[$$sv];
 	} elsif ($preferpv
-	      && ($sv->FLAGS & SVf_POK)) {
+	      && ($sv->FLAGS & SVf_POK || class($sv) eq "REGEXP")) {
 	    $hr->{svval} .= cstring($sv->PV);
 	} elsif ($sv->FLAGS & SVf_NOK) {
 	    $hr->{svval} .= $sv->NV;
 	} elsif ($sv->FLAGS & SVf_IOK) {
 	    $hr->{svval} .= $sv->int_value;
-	} elsif ($sv->FLAGS & SVf_POK) {
+	} elsif ($sv->FLAGS & SVf_POK || class($sv) eq "REGEXP") {
 	    $hr->{svval} .= cstring($sv->PV);
 	} elsif (class($sv) eq "HV") {
 	    $hr->{svval} .= 'HASH';
-	} elsif (class($sv) eq "AV") {
-	    $hr->{svval} .= 'ARRAY';
-	} elsif (class($sv) eq "CV") {
-	    if ($sv->CvFLAGS & CVf_ANON) {
-		$hr->{svval} .= 'CODE';
-	    } elsif ($sv->CvFLAGS & CVf_NAMED) {
-		$hr->{svval} .= "&";
-		unless ($sv->CvFLAGS & CVf_LEXICAL) {
-		    my $stash = $sv->STASH;
-		    unless (class($stash) eq "SPECIAL") {
-			$hr->{svval} .= $stash->NAME . "::";
-		    }
-		}
-		$hr->{svval} .= $sv->NAME_HEK;
-	    } else {
-		$hr->{svval} .= "&";
-		$sv = $sv->GV;
-		my $stash = $sv->STASH;
-		unless (class($stash) eq "SPECIAL") {
-		    $hr->{svval} .= $stash->NAME . "::";
-		}
-		$hr->{svval} .= $sv->SAFENAME;
-	    }
 	}
 
 	$hr->{svval} = 'undef' unless defined $hr->{svval};
@@ -782,50 +754,6 @@ sub fill_srclines {
     unshift @l, $fullnm; # like @{_<$fullnm} in debug, array starts at 1
     $srclines{$fullnm} = \@l;
 }
-
-# Given a pad target, return the pad var's name and cop range /
-# fakeness, or failing that, its target number.
-# e.g.
-#   ('$i', '$i:5,7')
-# or
-#   ('$i', '$i:fake:a')
-# or
-#   ('t5', 't5')
-
-sub padname {
-    my ($targ) = @_;
-
-    my ($targarg, $targarglife);
-    my $padname = (($curcv->PADLIST->ARRAY)[0]->ARRAY)[$targ];
-    if (defined $padname and class($padname) ne "SPECIAL" and
-        $padname->LEN)
-    {
-        $targarg  = $padname->PVX;
-        if ($padname->FLAGS & SVf_FAKE) {
-            # These changes relate to the jumbo closure fix.
-            # See changes 19939 and 20005
-            my $fake = '';
-            $fake .= 'a'
-                if $padname->PARENT_FAKELEX_FLAGS & PAD_FAKELEX_ANON;
-            $fake .= 'm'
-                if $padname->PARENT_FAKELEX_FLAGS & PAD_FAKELEX_MULTI;
-            $fake .= ':' . $padname->PARENT_PAD_INDEX
-                if $curcv->CvFLAGS & CVf_ANON;
-            $targarglife = "$targarg:FAKE:$fake";
-        }
-        else {
-            my $intro = $padname->COP_SEQ_RANGE_LOW - $cop_seq_base;
-            my $finish = int($padname->COP_SEQ_RANGE_HIGH) - $cop_seq_base;
-            $finish = "end" if $finish == 999999999 - $cop_seq_base;
-            $targarglife = "$targarg:$intro,$finish";
-        }
-    } else {
-        $targarglife = $targarg = "t" . $targ;
-    }
-    return $targarg, $targarglife;
-}
-
-
 
 sub concise_op {
     my ($op, $level, $format) = @_;
@@ -859,14 +787,39 @@ sub concise_op {
             : 1;
 	my (@targarg, @targarglife);
 	for my $i (0..$count-1) {
-	    my ($targarg, $targarglife) = padname($h{targ} + $i);
+	    my ($targarg, $targarglife);
+	    my $padname = (($curcv->PADLIST->ARRAY)[0]->ARRAY)[$h{targ}+$i];
+	    if (defined $padname and class($padname) ne "SPECIAL" and
+		$padname->LEN)
+	    {
+		$targarg  = $padname->PVX;
+		if ($padname->FLAGS & SVf_FAKE) {
+		    # These changes relate to the jumbo closure fix.
+		    # See changes 19939 and 20005
+		    my $fake = '';
+		    $fake .= 'a'
+			if $padname->PARENT_FAKELEX_FLAGS & PAD_FAKELEX_ANON;
+		    $fake .= 'm'
+			if $padname->PARENT_FAKELEX_FLAGS & PAD_FAKELEX_MULTI;
+		    $fake .= ':' . $padname->PARENT_PAD_INDEX
+			if $curcv->CvFLAGS & CVf_ANON;
+		    $targarglife = "$targarg:FAKE:$fake";
+		}
+		else {
+		    my $intro = $padname->COP_SEQ_RANGE_LOW - $cop_seq_base;
+		    my $finish = int($padname->COP_SEQ_RANGE_HIGH) - $cop_seq_base;
+		    $finish = "end" if $finish == 999999999 - $cop_seq_base;
+		    $targarglife = "$targarg:$intro,$finish";
+		}
+	    } else {
+		$targarglife = $targarg = "t" . ($h{targ}+$i);
+	    }
 	    push @targarg,     $targarg;
 	    push @targarglife, $targarglife;
 	}
 	$h{targarg}     = join '; ', @targarg;
 	$h{targarglife} = join '; ', @targarglife;
     }
-
     $h{arg} = "";
     $h{svclass} = $h{svaddr} = $h{svval} = "";
     if ($h{class} eq "PMOP") {
@@ -884,35 +837,22 @@ sub concise_op {
 		$extra = " replstart->" . seq($op->pmreplstart);
 	    }
 	}
-	elsif ($op->name eq 'split') {
-            if (    ($op->private & OPpSPLIT_ASSIGN) # @array  = split
-                 && (not $op->flags & OPf_STACKED))  # @{expr} = split
-            {
-                # with C<@array = split(/pat/, str);>,
-                #  array is stored in /pat/'s pmreplroot; either
-                # as an integer index into the pad (for a lexical array)
-                # or as GV for a package array (which will be a pad index
-                # on threaded builds)
-
-                if ($op->private & $B::Op_private::defines{'OPpSPLIT_LEX'}) {
-                    my $off = $op->pmreplroot; # union with op_pmtargetoff
-                    my ($name, $full) = padname($off);
-                    $extra = " => $full";
-                }
-                else {
-                    # union with op_pmtargetoff, op_pmtargetgv
-                    my $gv = $op->pmreplroot;
-                    if (!ref($gv)) {
-                        # the value is actually a pad offset
-                        $gv = (($curcv->PADLIST->ARRAY)[1]->ARRAY)[$gv]->NAME;
-                    }
-                    else {
-                        # unthreaded: its a GV
-                        $gv = $gv->NAME;
-                    }
-                    $extra = " => \@$gv";
-                }
-            }
+	elsif ($op->name eq 'pushre') {
+	    # with C<@stash_array = split(/pat/, str);>,
+	    #  *stash_array is stored in /pat/'s pmreplroot.
+	    my $gv = $op->pmreplroot;
+	    if (!ref($gv)) {
+		# threaded: the value is actually a pad offset for where
+		# the GV is kept (op_pmtargetoff)
+		if ($gv) {
+		    $gv = (($curcv->PADLIST->ARRAY)[1]->ARRAY)[$gv]->NAME;
+		}
+	    }
+	    else {
+		# unthreaded: its a GV (if it exists)
+		$gv = (ref($gv) eq "B::GV") ? $gv->NAME : undef;
+	    }
+	    $extra = " => \@$gv" if $gv;
 	}
 	$h{arg} = "($precomp$extra)";
     } elsif ($h{class} eq "PVOP" and $h{name} !~ '^transr?\z') {
@@ -931,7 +871,10 @@ sub concise_op {
 	$h{arg} = "($label$stash $cseq $loc)";
 	if ($show_src) {
 	    fill_srclines($pathnm) unless exists $srclines{$pathnm};
-	    my $line = $srclines{$pathnm}[$ln] // "-src unavailable under -e";
+	    # Would love to retain Jim's use of // but this code needs to be
+	    # portable to 5.8.x
+	    my $line = $srclines{$pathnm}[$ln];
+	    $line = "-src unavailable under -e" unless defined $line;
 	    $h{src} = "$ln: $line";
 	}
     } elsif ($h{class} eq "LOOP") {
@@ -941,11 +884,6 @@ sub concise_op {
 	undef $lastnext;
 	$h{arg} = "(other->" . seq($op->other) . ")";
 	$h{otheraddr} = sprintf("%#x", $ {$op->other});
-        if ($h{name} eq "argdefelem") {
-            # targ used for element index
-            $h{targarglife} = $h{targarg} = "";
-            $h{arg} .= "[" . $op->targ . "]";
-        }
     }
     elsif ($h{class} eq "SVOP" or $h{class} eq "PADOP") {
 	unless ($h{name} eq 'aelemfast' and $op->flags & OPf_SPECIAL) {
@@ -1101,6 +1039,10 @@ sub tree {
 # number for the user's program as being a small offset later, so all we
 # have to worry about are changes in the offset.
 
+# [For 5.8.x and earlier perl is generating sequence numbers for all ops,
+#  and using them to reference labels]
+
+
 # When you say "perl -MO=Concise -e '$a'", the output should look like:
 
 # 4  <@> leave[t1] vKP/REFC ->(end)
@@ -1115,7 +1057,7 @@ sub tree {
 # to update the corresponding magic number in the next line.
 # Remember, this needs to stay the last things in the module.
 
-my $cop_seq_mnum = 12;
+my $cop_seq_mnum = 16;
 $cop_seq_base = svref_2object(eval 'sub{0;}')->START->cop_seq + $cop_seq_mnum;
 
 1;
@@ -1649,9 +1591,6 @@ string if this is not a COP. Here are the symbols used:
     X filetest access
     U utf-8
 
-    us      use feature 'unicode_strings'
-    fea=NNN feature bundle number
-
 =item B<#hintsval>
 
 The numeric value of the COP's hint flags, or an empty string if this is not
@@ -1703,9 +1642,20 @@ The numeric value of the OP's private flags.
 The sequence number of the OP. Note that this is a sequence number
 generated by B::Concise.
 
+=item B<#seqnum>
+
+5.8.x and earlier only. 5.9 and later do not provide this.
+
+The real sequence number of the OP, as a regular number and not adjusted
+to be relative to the start of the real program. (This will generally be
+a fairly large number because all of B<B::Concise> is compiled before
+your program is).
+
 =item B<#opt>
 
 Whether or not the op has been optimized by the peephole optimizer.
+
+Only available in 5.9 and later.
 
 =item B<#sibaddr>
 

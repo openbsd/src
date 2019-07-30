@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.107 2019/05/08 21:46:56 tb Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.89 2018/01/04 20:38:12 jmc Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 8 2019 $
+.Dd $Mdocdate: January 4 2018 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -24,9 +24,9 @@
 .Nm
 is the configuration file for the HTTP daemon,
 .Xr httpd 8 .
-.Pp
+.Sh SECTIONS
 .Nm
-is divided into the following main sections:
+is divided into four main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
@@ -52,12 +52,12 @@ addresses of the specified network interface.
 If
 .Sq *
 is given as an address,
-.Xr httpd 8
-will listen on all IPv4 and IPv6 addresses.
+it will be used as an alias for
 .Ar 0.0.0.0
-means to listen on all IPv4 addresses and
-.Ar ::
-all IPv6 addresses.
+to listen on all IPv4 addresses.
+Likewise,
+.Sq ::
+can be used to listen on all IPv6 addresses.
 A
 .Ar port
 can be specified by number or name.
@@ -198,8 +198,6 @@ argument can be used with return codes in the 3xx range to send a
 .Sq Location:
 header for redirection to a specified URI.
 .Pp
-It is possible to rewrite the request to redirect it to a different
-external location.
 The
 .Ar uri
 may contain predefined macros that will be expanded at runtime:
@@ -208,9 +206,7 @@ may contain predefined macros that will be expanded at runtime:
 .It Ic $DOCUMENT_URI
 The request path.
 .It Ic $QUERY_STRING
-The query string of the request.
-.It Ic $QUERY_STRING_ENC
-The URL-encoded query string of the request.
+The optional query string of the request.
 .It Ic $REMOTE_ADDR
 The IP address of the connected client.
 .It Ic $REMOTE_PORT
@@ -222,7 +218,7 @@ The request path and optional query string.
 .It Ic $SERVER_ADDR
 The configured IP address of the server.
 .It Ic $SERVER_PORT
-The configured TCP port of the server.
+The configured TCP server port of the server.
 .It Ic $SERVER_NAME
 The name of the server.
 .It Ic $HTTP_HOST
@@ -236,7 +232,6 @@ option.
 .El
 .It Ic connection Ar option
 Set the specified options and limits for HTTP connections.
-Multiple options may be specified within curly braces.
 Valid options are:
 .Bl -tag -width Ds
 .It Ic max request body Ar number
@@ -263,7 +258,6 @@ Set the default media type for the specified location,
 overwriting the global setting.
 .It Ic directory Ar option
 Set the specified options when serving or accessing directories.
-Multiple options may be specified within curly braces.
 Valid options are:
 .Bl -tag -width Ds
 .It Oo Ic no Oc Ic auto index
@@ -278,17 +272,9 @@ Disable the directory index.
 .Xr httpd 8
 will neither display nor generate a directory index.
 .El
-.It Oo Ic no Oc Ic fastcgi Oo Ar option Oc
+.It Oo Ic no Oc Ic fastcgi Op Ic socket Ar socket
 Enable FastCGI instead of serving files.
-Valid options are:
-.Bl -tag -width Ds
-.It Ic socket Ar socket
-.Nm httpd
-passes HTTP requests to a FastCGI handler listening on the socket
-.Ar socket .
-The socket can either be a UNIX domain socket or a TCP socket listening
-on localhost (127.0.0.1).
-If the FastCGI handler is listening on a UNIX domain socket,
+The
 .Ar socket
 is a local path name within the
 .Xr chroot 2
@@ -296,16 +282,8 @@ root directory of
 .Xr httpd 8
 and defaults to
 .Pa /run/slowcgi.sock .
-Alternatively if
-the FastCGI handler is listening on a TCP socket,
-.Ar socket
-starts with a colon followed by the TCP port number.
-.It Ic param Ar variable value
-Sets a variable that will be sent to the FastCGI server.
-Each statement defines one variable.
-.El
 .Pp
-The FastCGI handler will be given the following variables by default:
+The FastCGI handler will be given the following variables:
 .Pp
 .Bl -tag -width GATEWAY_INTERFACE -offset indent -compact
 .It Ic DOCUMENT_ROOT
@@ -364,10 +342,6 @@ The revision of the HTTP specification used.
 .It Ic SERVER_SOFTWARE
 The server software name of
 .Xr httpd 8 .
-.It Ic TLS_PEER_VERIFY
-A variable that is set to a comma separated list of TLS client verification
-features in use
-.Pq omitted when TLS client verification is not in use .
 .El
 .It Ic hsts Oo Ar option Oc
 Enable HTTP Strict Transport Security.
@@ -418,10 +392,10 @@ the
 using pattern matching instead of shell globbing rules,
 see
 .Xr patterns 7 .
-The pattern may contain captures that can be used in an enclosed
+The pattern may contain captures that can be used in the
+.Ar uri
+of an enclosed
 .Ic block return
-or
-.Ic request rewrite
 option.
 .It Oo Ic no Oc Ic log Op Ar option
 Set the specified logging options.
@@ -434,7 +408,6 @@ but can be changed per server or location.
 Use the
 .Ic no log
 directive to disable logging of any requests.
-Multiple options may be specified within curly braces.
 Valid options are:
 .Bl -tag -width Ds
 .It Ic access Ar name
@@ -455,8 +428,7 @@ The
 .Ar style
 can be
 .Cm common ,
-.Cm combined ,
-.Cm forwarded
+.Cm combined
 or
 .Cm connection .
 The styles
@@ -465,14 +437,6 @@ and
 .Cm combined
 write a log entry after each request similar to the standard Apache
 and nginx access log formats.
-The style
-.Cm forwarded
-extends the style
-.Cm combined
-by appending two fields containing the values of the headers
-.Ar X-Forwarded-For
-and
-.Ar X-Forwarded-Port .
 The style
 .Cm connection
 writes a summarized log entry after each connection,
@@ -490,32 +454,12 @@ instead of the log files.
 Disable any previous
 .Ic block
 in a location.
-.It Ic request Ar option
-Configure the options for the request path.
-Multiple options may be specified within curly braces.
+.It Ic root Ar option
+Configure the document root and options for the request path.
 Valid options are:
 .Bl -tag -width Ds
-.It Oo Ic no Oc Ic rewrite Ar path
-Enable or disable rewriting of the request.
-Unlike the redirection with
-.Ic block return ,
-this will change the request path internally before
-.Nm httpd
-makes a final decision about the matching location.
-The
-.Ar path
-argument may contain predefined macros that will be expanded at runtime.
-See the
-.Ic block return
-option for the list of supported macros.
-.It Ic strip Ar number
-Strip
-.Ar number
-path components from the beginning of the request path before looking
-up the stripped-down path at the document root.
-.El
-.It Ic root Ar directory
-Configure the document root of the server.
+.It Ar directory
+Set the document root of the server.
 The
 .Ar directory
 is a pathname within the
@@ -524,13 +468,18 @@ root directory of
 .Nm httpd .
 If not specified, it defaults to
 .Pa /htdocs .
+.It Ic strip Ar number
+Strip
+.Ar number
+path components from the beginning of the request path before looking
+up the stripped-down path at the document root.
+.El
 .It Ic tcp Ar option
 Enable or disable the specified TCP/IP options; see
 .Xr tcp 4
 and
 .Xr ip 4
 for more information about the options.
-Multiple options may be specified within curly braces.
 Valid options are:
 .Bl -tag -width Ds
 .It Ic backlog Ar number
@@ -560,7 +509,6 @@ This will affect the TCP window size.
 .It Ic tls Ar option
 Set the TLS configuration for the server.
 These options are only used if TLS has been enabled via the listen directive.
-Multiple options may be specified within curly braces.
 Valid options are:
 .Bl -tag -width Ds
 .It Ic certificate Ar file
@@ -578,23 +526,6 @@ will be used (strong crypto cipher suites without anonymous DH).
 See the CIPHERS section of
 .Xr openssl 1
 for information about SSL/TLS cipher suites and preference lists.
-.It Ic client ca Ar cafile Oo Ic crl Ar crlfile Oc Op Ic optional
-Require
-.Po
-or, if
-.Ic optional
-is specified, request but do not require
-.Pc
-TLS client certificates whose authenticity can be verified
-against the CA certificate(s) in
-.Ar cafile
-in order to proceed beyond the TLS handshake.
-With
-.Ic crl
-specified, additionally require that no certificate in the client chain be
-listed as revoked in the CRL(s) in
-.Ar crlfile .
-CA certificates and CRLs should be PEM encoded.
 .It Ic dhe Ar params
 Specify the DHE parameters to use for DHE cipher suites.
 Valid parameter values are none, legacy and auto.
@@ -675,8 +606,7 @@ and
 .Pp
 The
 .Ic types
-section must include one or more lines of the following syntax,
-enclosed in curly braces:
+section must include one or more lines of the following syntax:
 .Bl -tag -width Ds
 .It Ar type/subtype Ar name Op Ar name ...
 Set the media
@@ -692,15 +622,6 @@ Include types definitions from an external file, for example
 .Pa /usr/share/misc/mime.types .
 .El
 .Sh EXAMPLES
-Example configuration files for
-.Nm
-and
-.Xr acme-client 1
-are provided in
-.Pa /etc/examples/httpd.conf
-and
-.Pa /etc/examples/acme-client.conf .
-.Pp
 The following example will start one server that is pre-forked two
 times and is listening on all local IP addresses.
 It additionally defines some media types overriding the defaults.
@@ -773,17 +694,6 @@ server "example.com" {
 
 server "www.example.com" {
 	listen on 10.0.0.1 port 80
-}
-.Ed
-The request can also be rewritten with the
-.Ic request rewrite
-directive:
-.Bd -literal -offset indent
-server "example.com" {
-	listen on * port 80
-	location match "/old/(.*)" {
-		request rewrite "/new/%1"
-	}
 }
 .Ed
 .Sh SEE ALSO

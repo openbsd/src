@@ -21,7 +21,7 @@ class LitConfig(object):
 
     def __init__(self, progname, path, quiet,
                  useValgrind, valgrindLeakCheck, valgrindArgs,
-                 noExecute, debug, isWindows, singleProcess,
+                 noExecute, debug, isWindows,
                  params, config_prefix = None,
                  maxIndividualTestTime = 0,
                  maxFailures = None,
@@ -37,17 +37,15 @@ class LitConfig(object):
         self.valgrindUserArgs = list(valgrindArgs)
         self.noExecute = noExecute
         self.debug = debug
-        self.singleProcess = singleProcess
         self.isWindows = bool(isWindows)
         self.params = dict(params)
         self.bashPath = None
 
         # Configuration files to look for when discovering test suites.
         self.config_prefix = config_prefix or 'lit'
-        self.suffixes = ['cfg.py', 'cfg']
-        self.config_names = ['%s.%s' % (self.config_prefix,x) for x in self.suffixes]
-        self.site_config_names = ['%s.site.%s' % (self.config_prefix,x) for x in self.suffixes]
-        self.local_config_names = ['%s.local.%s' % (self.config_prefix,x) for x in self.suffixes]
+        self.config_name = '%s.cfg' % (self.config_prefix,)
+        self.site_config_name = '%s.site.cfg' % (self.config_prefix,)
+        self.local_config_name = '%s.local.cfg' % (self.config_prefix,)
 
         self.numErrors = 0
         self.numWarnings = 0
@@ -83,8 +81,6 @@ class LitConfig(object):
             Interface for setting maximum time to spend executing
             a single test
         """
-        if not isinstance(value, int):
-            self.fatal('maxIndividualTestTime must set to a value of type int.')
         self._maxIndividualTestTime = value
         if self.maxIndividualTestTime > 0:
             # The current implementation needs psutil to set

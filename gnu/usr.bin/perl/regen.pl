@@ -15,7 +15,7 @@ use strict;
 
 my $tap = $ARGV[0] && $ARGV[0] eq '--tap' ? '# ' : '';
 foreach my $pl (map {chomp; "regen/$_"} <DATA>) {
-  my @command =  ($^X, '-I.', $pl, @ARGV);
+  my @command =  ($^X, $pl, @ARGV);
   print "$tap@command\n";
   system @command
     and die "@command failed: $?" 

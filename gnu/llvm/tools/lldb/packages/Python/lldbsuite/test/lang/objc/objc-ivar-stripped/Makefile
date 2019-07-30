@@ -3,7 +3,7 @@ LEVEL = ../../../make
 OBJC_SOURCES := main.m
 LDFLAGS = $(CFLAGS) -lobjc -framework Foundation
 
-all:        a.out.stripped
+default:        a.out.stripped
 
 a.out.stripped: a.out.dSYM
 	strip -o a.out.stripped a.out

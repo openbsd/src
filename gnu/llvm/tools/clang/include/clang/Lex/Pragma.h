@@ -1,4 +1,4 @@
-//===- Pragma.h - Pragma registration and handling --------------*- C++ -*-===//
+//===--- Pragma.h - Pragma registration and handling ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -17,36 +17,36 @@
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
-#include <string>
+#include <cassert>
 
 namespace clang {
-
-class PragmaNamespace;
-class Preprocessor;
-class Token;
+  class Preprocessor;
+  class Token;
+  class IdentifierInfo;
+  class PragmaNamespace;
 
   /**
-   * Describes how the pragma was introduced, e.g., with \#pragma,
+   * \brief Describes how the pragma was introduced, e.g., with \#pragma,
    * _Pragma, or __pragma.
    */
   enum PragmaIntroducerKind {
     /**
-     * The pragma was introduced via \#pragma.
+     * \brief The pragma was introduced via \#pragma.
      */
     PIK_HashPragma,
-
+    
     /**
-     * The pragma was introduced via the C99 _Pragma(string-literal).
+     * \brief The pragma was introduced via the C99 _Pragma(string-literal).
      */
     PIK__Pragma,
-
+    
     /**
-     * The pragma was introduced via the Microsoft
+     * \brief The pragma was introduced via the Microsoft 
      * __pragma(token-string).
      */
     PIK___pragma
   };
-
+  
 /// PragmaHandler - Instances of this interface defined to handle the various
 /// pragmas that the language front-end uses.  Each handler optionally has a
 /// name (e.g. "pack") and the HandlePragma method is invoked when a pragma with
@@ -58,10 +58,9 @@ class Token;
 /// pragmas.
 class PragmaHandler {
   std::string Name;
-
 public:
-  PragmaHandler() = default;
   explicit PragmaHandler(StringRef name) : Name(name) {}
+  PragmaHandler() {}
   virtual ~PragmaHandler();
 
   StringRef getName() const { return Name; }
@@ -90,8 +89,8 @@ public:
 class PragmaNamespace : public PragmaHandler {
   /// Handlers - This is a map of the handlers in this namespace with their name
   /// as key.
-  llvm::StringMap<PragmaHandler *> Handlers;
-
+  ///
+  llvm::StringMap<PragmaHandler*> Handlers;
 public:
   explicit PragmaNamespace(StringRef Name) : PragmaHandler(Name) {}
   ~PragmaNamespace() override;
@@ -104,13 +103,16 @@ public:
                              bool IgnoreNull = true) const;
 
   /// AddPragma - Add a pragma to this namespace.
+  ///
   void AddPragma(PragmaHandler *Handler);
 
   /// RemovePragmaHandler - Remove the given handler from the
   /// namespace.
   void RemovePragmaHandler(PragmaHandler *Handler);
 
-  bool IsEmpty() const { return Handlers.empty(); }
+  bool IsEmpty() {
+    return Handlers.empty();
+  }
 
   void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
                     Token &FirstToken) override;
@@ -118,6 +120,7 @@ public:
   PragmaNamespace *getIfNamespace() override { return this; }
 };
 
-} // namespace clang
 
-#endif // LLVM_CLANG_LEX_PRAGMA_H
+}  // end namespace clang
+
+#endif

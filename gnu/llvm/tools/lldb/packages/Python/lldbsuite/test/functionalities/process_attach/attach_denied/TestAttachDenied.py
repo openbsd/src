@@ -18,18 +18,16 @@ exe_name = 'AttachDenied'  # Must match Makefile
 class AttachDeniedTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
-    NO_DEBUG_INFO_TESTCASE = True
 
     @skipIfWindows
     @skipIfiOSSimulator
-    @skipIfDarwinEmbedded  # ptrace(ATTACH_REQUEST...) won't work on ios/tvos/etc
     def test_attach_to_process_by_id_denied(self):
         """Test attach by process id denied"""
         self.build()
-        exe = self.getBuildArtifact(exe_name)
+        exe = os.path.join(os.getcwd(), exe_name)
 
         # Use a file as a synchronization point between test and inferior.
-        pid_file_path = lldbutil.append_to_process_working_directory(self,
+        pid_file_path = lldbutil.append_to_process_working_directory(
             "pid_file_%d" % (int(time.time())))
         self.addTearDownHook(
             lambda: self.run_platform_command(

@@ -84,7 +84,7 @@ class StandardUnwindTest(TestBase):
         else:
             self.skipTest("No expectations for the current architecture")
 
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
 

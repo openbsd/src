@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.35 2019/02/13 22:57:08 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.25 2017/08/28 06:00:05 florian Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -52,10 +52,6 @@ static struct file {
 	TAILQ_ENTRY(file)	 entry;
 	FILE			*stream;
 	char			*name;
-	size_t			 ungetpos;
-	size_t			 ungetsize;
-	u_char			*ungetbuf;
-	int			 eof_reached;
 	int			 lineno;
 	int			 errors;
 } *file, *topfile;
@@ -69,9 +65,8 @@ int		 yyerror(const char *, ...)
     __attribute__((__nonnull__ (1)));
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
-int		 igetc(void);
 int		 lgetc(int);
-void		 lungetc(int);
+int		 lungetc(int);
 int		 findeol(void);
 
 struct listener *host_unix(const char *path);
@@ -101,7 +96,7 @@ struct ldapd_config	*conf;
 SPLAY_GENERATE(ssltree, ssl, ssl_nodes, ssl_cmp);
 
 static struct aci	*mk_aci(int type, int rights, enum scope scope,
-				char *target, char *subject, char *attr);
+				char *target, char *subject);
 
 typedef struct {
 	union {
@@ -125,7 +120,7 @@ static struct namespace *current_ns = NULL;
 %token  <v.number>	NUMBER
 %type	<v.number>	port ssl boolean comp_level
 %type	<v.number>	aci_type aci_access aci_rights aci_right aci_scope
-%type	<v.string>	aci_target aci_attr aci_subject certname
+%type	<v.string>	aci_target aci_subject certname
 %type	<v.aci>		aci
 
 %%
@@ -299,8 +294,8 @@ comp_level	: /* empty */			{ $$ = 6; }
 		| LEVEL NUMBER			{ $$ = $2; }
 		;
 
-aci		: aci_type aci_access TO aci_scope aci_target aci_attr aci_subject {
-			if (($$ = mk_aci($1, $2, $4, $5, $6, $7)) == NULL) {
+aci		: aci_type aci_access TO aci_scope aci_target aci_subject {
+			if (($$ = mk_aci($1, $2, $4, $5, $6)) == NULL) {
 				free($5);
 				free($6);
 				YYERROR;
@@ -308,7 +303,7 @@ aci		: aci_type aci_access TO aci_scope aci_target aci_attr aci_subject {
 		}
 		| aci_type aci_access {
 			if (($$ = mk_aci($1, $2, LDAP_SCOPE_SUBTREE, NULL,
-			    NULL, NULL)) == NULL) {
+			    NULL)) == NULL) {
 				YYERROR;
 			}
 		}
@@ -343,10 +338,6 @@ aci_target	: ANY				{ $$ = NULL; }
 		| STRING			{ $$ = $1; normalize_dn($$); }
 		;
 
-aci_attr	: /* empty */			{ $$ = NULL; }
-		| ATTRIBUTE STRING		{ $$ = $2; }
-		;
-
 aci_subject	: /* empty */			{ $$ = NULL; }
 		| BY ANY			{ $$ = NULL; }
 		| BY STRING			{ $$ = $2; normalize_dn($$); }
@@ -374,8 +365,6 @@ varset		: STRING '=' STRING		{
 				if (isspace((unsigned char)*s)) {
 					yyerror("macro name cannot contain "
 					    "whitespace");
-					free($1);
-					free($3);
 					YYERROR;
 				}
 			}
@@ -434,7 +423,6 @@ lookup(char *s)
 		{ "access",		ACCESS },
 		{ "allow",		ALLOW },
 		{ "any",		ANY },
-		{ "attribute",		ATTRIBUTE },
 		{ "bind",		BIND },
 		{ "by",			BY },
 		{ "cache-size",		CACHE_SIZE },
@@ -482,39 +470,34 @@ lookup(char *s)
 		return (STRING);
 }
 
-#define	START_EXPAND	1
-#define	DONE_EXPAND	2
+#define MAXPUSHBACK	128
 
-static int	expanding;
-
-int
-igetc(void)
-{
-	int	c;
-
-	while (1) {
-		if (file->ungetpos > 0)
-			c = file->ungetbuf[--file->ungetpos];
-		else
-			c = getc(file->stream);
-
-		if (c == START_EXPAND)
-			expanding = 1;
-		else if (c == DONE_EXPAND)
-			expanding = 0;
-		else
-			break;
-	}
-	return (c);
-}
+u_char	*parsebuf;
+int	 parseindex;
+u_char	 pushback_buffer[MAXPUSHBACK];
+int	 pushback_index = 0;
 
 int
 lgetc(int quotec)
 {
 	int		c, next;
 
+	if (parsebuf) {
+		/* Read character from the parsebuffer instead of input. */
+		if (parseindex >= 0) {
+			c = parsebuf[parseindex++];
+			if (c != '\0')
+				return (c);
+			parsebuf = NULL;
+		} else
+			parseindex++;
+	}
+
+	if (pushback_index)
+		return (pushback_buffer[--pushback_index]);
+
 	if (quotec) {
-		if ((c = igetc()) == EOF) {
+		if ((c = getc(file->stream)) == EOF) {
 			yyerror("reached end of file while parsing "
 			    "quoted string");
 			if (file == topfile || popfile() == EOF)
@@ -524,8 +507,8 @@ lgetc(int quotec)
 		return (c);
 	}
 
-	while ((c = igetc()) == '\\') {
-		next = igetc();
+	while ((c = getc(file->stream)) == '\\') {
+		next = getc(file->stream);
 		if (next != '\n') {
 			c = next;
 			break;
@@ -534,39 +517,28 @@ lgetc(int quotec)
 		file->lineno++;
 	}
 
-	if (c == EOF) {
-		/*
-		 * Fake EOL when hit EOF for the first time. This gets line
-		 * count right if last line in included file is syntactically
-		 * invalid and has no newline.
-		 */
-		if (file->eof_reached == 0) {
-			file->eof_reached = 1;
-			return ('\n');
-		}
-		while (c == EOF) {
-			if (file == topfile || popfile() == EOF)
-				return (EOF);
-			c = igetc();
-		}
+	while (c == EOF) {
+		if (file == topfile || popfile() == EOF)
+			return (EOF);
+		c = getc(file->stream);
 	}
 	return (c);
 }
 
-void
+int
 lungetc(int c)
 {
 	if (c == EOF)
-		return;
-
-	if (file->ungetpos >= file->ungetsize) {
-		void *p = reallocarray(file->ungetbuf, file->ungetsize, 2);
-		if (p == NULL)
-			err(1, "%s", __func__);
-		file->ungetbuf = p;
-		file->ungetsize *= 2;
+		return (EOF);
+	if (parsebuf) {
+		parseindex--;
+		if (parseindex >= 0)
+			return (c);
 	}
-	file->ungetbuf[file->ungetpos++] = c;
+	if (pushback_index < MAXPUSHBACK-1)
+		return (pushback_buffer[pushback_index++] = c);
+	else
+		return (EOF);
 }
 
 int
@@ -574,9 +546,14 @@ findeol(void)
 {
 	int	c;
 
+	parsebuf = NULL;
+
 	/* skip to either EOF or the first real EOL */
 	while (1) {
-		c = lgetc(0);
+		if (pushback_index)
+			c = pushback_buffer[--pushback_index];
+		else
+			c = lgetc(0);
 		if (c == '\n') {
 			file->lineno++;
 			break;
@@ -604,7 +581,7 @@ top:
 	if (c == '#')
 		while ((c = lgetc(0)) != '\n' && c != EOF)
 			; /* nothing */
-	if (c == '$' && !expanding) {
+	if (c == '$' && parsebuf == NULL) {
 		while (1) {
 			if ((c = lgetc(0)) == EOF)
 				return (0);
@@ -626,13 +603,8 @@ top:
 			yyerror("macro '%s' not defined", buf);
 			return (findeol());
 		}
-		p = val + strlen(val) - 1;
-		lungetc(DONE_EXPAND);
-		while (p >= val) {
-			lungetc(*p);
-			p--;
-		}
-		lungetc(START_EXPAND);
+		parsebuf = val;
+		parseindex = 0;
 		goto top;
 	}
 
@@ -649,8 +621,7 @@ top:
 			} else if (c == '\\') {
 				if ((next = lgetc(quotec)) == EOF)
 					return (0);
-				if (next == quotec || next == ' ' ||
-				    next == '\t')
+				if (next == quotec || c == ' ' || c == '\t')
 					c = next;
 				else if (next == '\n') {
 					file->lineno++;
@@ -682,7 +653,7 @@ top:
 	if (c == '-' || isdigit(c)) {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -721,7 +692,7 @@ nodigits:
 	if (isalnum(c) || c == ':' || c == '_' || c == '*') {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -770,16 +741,16 @@ pushfile(const char *name, int secret)
 	log_debug("parsing config %s", name);
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
-		log_warn("%s", __func__);
+		log_warn("malloc");
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		log_warn("%s", __func__);
+		log_warn("malloc");
 		free(nfile);
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		log_warn("%s: %s", __func__, nfile->name);
+		log_warn("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -791,16 +762,7 @@ pushfile(const char *name, int secret)
 		free(nfile);
 		return (NULL);
 	}
-	nfile->lineno = TAILQ_EMPTY(&files) ? 1 : 0;
-	nfile->ungetsize = 16;
-	nfile->ungetbuf = malloc(nfile->ungetsize);
-	if (nfile->ungetbuf == NULL) {
-		log_warn("%s", __func__);
-		fclose(nfile->stream);
-		free(nfile->name);
-		free(nfile);
-		return (NULL);
-	}
+	nfile->lineno = 1;
 	TAILQ_INSERT_TAIL(&files, nfile, entry);
 	return (nfile);
 }
@@ -816,7 +778,6 @@ popfile(void)
 	TAILQ_REMOVE(&files, file, entry);
 	fclose(file->stream);
 	free(file->name);
-	free(file->ungetbuf);
 	free(file);
 	file = prev;
 	return (file ? 0 : EOF);
@@ -912,12 +873,17 @@ cmdline_symset(char *s)
 {
 	char	*sym, *val;
 	int	ret;
+	size_t	len;
 
 	if ((val = strrchr(s, '=')) == NULL)
 		return (-1);
-	sym = strndup(s, val - s);
-	if (sym == NULL)
-		fatal("%s: strndup", __func__);
+
+	len = strlen(s) - strlen(val) + 1;
+	if ((sym = malloc(len)) == NULL)
+		fatal("cmdline_symset: malloc");
+
+	strlcpy(sym, s, len);
+
 	ret = symset(sym, val + 1, 1);
 	free(sym);
 
@@ -1166,8 +1132,7 @@ interface(const char *s, const char *cert,
 }
 
 static struct aci *
-mk_aci(int type, int rights, enum scope scope, char *target, char *attr,
-    char *subject)
+mk_aci(int type, int rights, enum scope scope, char *target, char *subject)
 {
 	struct aci	*aci;
 
@@ -1179,15 +1144,12 @@ mk_aci(int type, int rights, enum scope scope, char *target, char *attr,
 	aci->rights = rights;
 	aci->scope = scope;
 	aci->target = target;
-	aci->attribute = attr;
 	aci->subject = subject;
 
-	log_debug("%s %02X access to %s%s%s scope %d by %s",
+	log_debug("%s %02X access to %s scope %d by %s",
 	    aci->type == ACI_DENY ? "deny" : "allow",
 	    aci->rights,
 	    aci->target ? aci->target : "any",
-	    aci->attribute ? " attribute " : "",
-	    aci->attribute ? aci->attribute : "",
 	    aci->scope,
 	    aci->subject ? aci->subject : "any");
 

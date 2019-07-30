@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.10 2018/12/07 08:40:54 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.9 2016/09/02 16:36:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -38,8 +38,7 @@ mask2prefixlen(in_addr_t ina)
 uint8_t
 mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 {
-	unsigned int l = 0;
-	uint8_t *ap, *ep;
+	uint8_t	l = 0, *ap, *ep;
 
 	/*
 	 * sin6_len is the size of the sockaddr so substract the offset of
@@ -55,35 +54,32 @@ mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 			break;
 		case 0xfe:
 			l += 7;
-			goto done;
+			return (l);
 		case 0xfc:
 			l += 6;
-			goto done;
+			return (l);
 		case 0xf8:
 			l += 5;
-			goto done;
+			return (l);
 		case 0xf0:
 			l += 4;
-			goto done;
+			return (l);
 		case 0xe0:
 			l += 3;
-			goto done;
+			return (l);
 		case 0xc0:
 			l += 2;
-			goto done;
+			return (l);
 		case 0x80:
 			l += 1;
-			goto done;
+			return (l);
 		case 0x00:
-			goto done;
+			return (l);
 		default:
 			fatalx("non contiguous inet6 netmask");
 		}
 	}
 
-done:
-	if (l > sizeof(struct in6_addr) * 8)
-		fatalx("inet6 prefixlen out of bound");
 	return (l);
 }
 

@@ -75,16 +75,18 @@ static void
 dl_unload_all_files(pTHX_ void *unused)
 {
     CV *sub;
-    PERL_UNUSED_ARG(unused);
+    AV *dl_librefs;
+    SV *dl_libref;
+
     if ((sub = get_cvs("DynaLoader::dl_unload_file", 0)) != NULL) {
-        AV *dl_librefs = get_av("DynaLoader::dl_librefs", 0);
-        SV *dl_libref;
+        dl_librefs = get_av("DynaLoader::dl_librefs", 0);
+        EXTEND(SP,1);
         while ((dl_libref = av_pop(dl_librefs)) != &PL_sv_undef) {
            dSP;
            ENTER;
            SAVETMPS;
            PUSHMARK(SP);
-           XPUSHs(sv_2mortal(dl_libref));
+           PUSHs(sv_2mortal(dl_libref));
            PUTBACK;
            call_sv((SV*)sub, G_DISCARD | G_NODEBUG);
            FREETMPS;

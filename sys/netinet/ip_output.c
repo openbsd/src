@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.355 2019/06/10 16:32:51 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.346 2018/03/21 14:42:41 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -460,7 +460,7 @@ sendit:
 	if (ntohs(ip->ip_len) <= mtu) {
 		ip->ip_sum = 0;
 		if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
-		    (ifp->if_bridgeidx == 0))
+		    (ifp->if_bridgeport == NULL))
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 		else {
 			ipstat_inc(ips_outswcsum);
@@ -564,7 +564,6 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 	struct ifnet *encif;
 #endif
 	struct ip *ip;
-	int error;
 
 #if NPF > 0
 	/*
@@ -634,12 +633,7 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 	m->m_flags &= ~(M_MCAST | M_BCAST);
 
 	/* Callee frees mbuf */
-	error = ipsp_process_packet(m, tdb, AF_INET, 0);
-	if (error) {
-		ipsecstat_inc(ipsec_odrops);
-		tdb->tdb_odrops++;
-	}
-	return error;
+	return ipsp_process_packet(m, tdb, AF_INET, 0);
 }
 #endif /* IPSEC */
 
@@ -719,7 +713,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		mhip->ip_sum = 0;
 		if ((ifp != NULL) &&
 		    (ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
-		    (ifp->if_bridgeidx == 0))
+		    (ifp->if_bridgeport == NULL))
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 		else {
 			ipstat_inc(ips_outswcsum);
@@ -740,7 +734,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	ip->ip_sum = 0;
 	if ((ifp != NULL) &&
 	    (ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
-	    (ifp->if_bridgeidx == 0))
+	    (ifp->if_bridgeport == NULL))
 		m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 	else {
 		ipstat_inc(ips_outswcsum);
@@ -860,10 +854,9 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 	int error = 0;
 	u_int rtid = 0;
 
-	if (level != IPPROTO_IP)
-		return (EINVAL);
-
-	switch (op) {
+	if (level != IPPROTO_IP) {
+		error = EINVAL;
+	} else switch (op) {
 	case PRCO_SETOPT:
 		switch (optname) {
 		case IP_OPTIONS:
@@ -1234,15 +1227,13 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 int
 ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 {
-	struct mbuf *n;
-	struct ipoption *p;
-	int cnt, off, optlen;
+	int cnt, optlen;
 	u_char *cp;
 	u_char opt;
 
 	/* turn off any old options */
-	m_freem(*pcbopt);
-	*pcbopt = NULL;
+	m_free(*pcbopt);
+	*pcbopt = 0;
 	if (m == NULL || m->m_len == 0) {
 		/*
 		 * Only turning off any previous options.
@@ -1250,36 +1241,38 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 		return (0);
 	}
 
-	if (m->m_len % sizeof(int32_t) ||
-	    m->m_len > MAX_IPOPTLEN + sizeof(struct in_addr))
+	if (m->m_len % sizeof(int32_t))
 		return (EINVAL);
 
-	/* Don't sleep because NET_LOCK() is hold. */
-	if ((n = m_get(M_NOWAIT, MT_SOOPTS)) == NULL)
-		return (ENOBUFS);
-	p = mtod(n, struct ipoption *);
-	memset(p, 0, sizeof (*p));	/* 0 = IPOPT_EOL, needed for padding */
-	n->m_len = sizeof(struct in_addr);
-
-	off = 0;
+	/*
+	 * IP first-hop destination address will be stored before
+	 * actual options; move other options back
+	 * and clear it when none present.
+	 */
+	if (m->m_data + m->m_len + sizeof(struct in_addr) >= &m->m_dat[MLEN])
+		return (EINVAL);
 	cnt = m->m_len;
-	cp = mtod(m, u_char *);
+	m->m_len += sizeof(struct in_addr);
+	cp = mtod(m, u_char *) + sizeof(struct in_addr);
+	memmove((caddr_t)cp, mtod(m, caddr_t), (unsigned)cnt);
+	memset(mtod(m, caddr_t), 0, sizeof(struct in_addr));
 
-	while (cnt > 0) {
+	for (; cnt > 0; cnt -= optlen, cp += optlen) {
 		opt = cp[IPOPT_OPTVAL];
-
-		if (opt == IPOPT_NOP || opt == IPOPT_EOL) {
+		if (opt == IPOPT_EOL)
+			break;
+		if (opt == IPOPT_NOP)
 			optlen = 1;
-		} else {
+		else {
 			if (cnt < IPOPT_OLEN + sizeof(*cp))
-				goto bad;
+				return (EINVAL);
 			optlen = cp[IPOPT_OLEN];
 			if (optlen < IPOPT_OLEN  + sizeof(*cp) || optlen > cnt)
-				goto bad;
+				return (EINVAL);
 		}
 		switch (opt) {
+
 		default:
-			memcpy(p->ipopt_list + off, cp, optlen);
 			break;
 
 		case IPOPT_LSRR:
@@ -1293,48 +1286,33 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 			 * actual IP option, but is stored before the options.
 			 */
 			if (optlen < IPOPT_MINOFF - 1 + sizeof(struct in_addr))
-				goto bad;
-
-			/*
-			 * Optlen is smaller because first address is popped.
-			 * Cnt and cp will be adjusted a bit later to reflect
-			 * this.
-			 */
+				return (EINVAL);
+			m->m_len -= sizeof(struct in_addr);
+			cnt -= sizeof(struct in_addr);
 			optlen -= sizeof(struct in_addr);
-			p->ipopt_list[off + IPOPT_OPTVAL] = opt;
-			p->ipopt_list[off + IPOPT_OLEN] = optlen;
-
+			cp[IPOPT_OLEN] = optlen;
 			/*
 			 * Move first hop before start of options.
 			 */
-			memcpy(&p->ipopt_dst, cp + IPOPT_OFFSET,
+			memcpy(mtod(m, caddr_t), &cp[IPOPT_OFFSET+1],
 			    sizeof(struct in_addr));
-			cp += sizeof(struct in_addr);
-			cnt -= sizeof(struct in_addr);
 			/*
-			 * Then copy rest of options
+			 * Then copy rest of options back
+			 * to close up the deleted entry.
 			 */
-			memcpy(p->ipopt_list + off + IPOPT_OFFSET,
-			    cp + IPOPT_OFFSET, optlen - IPOPT_OFFSET);
+			memmove((caddr_t)&cp[IPOPT_OFFSET+1],
+			    (caddr_t)(&cp[IPOPT_OFFSET+1] +
+			    sizeof(struct in_addr)),
+			    (unsigned)cnt - (IPOPT_OFFSET+1));
 			break;
 		}
-		off += optlen;
-		cp += optlen;
-		cnt -= optlen;
-
-		if (opt == IPOPT_EOL)
-			break;
 	}
-	/* pad options to next word, since p was zeroed just adjust off */
-	off = (off + sizeof(int32_t) - 1) & ~(sizeof(int32_t) - 1);
-	n->m_len += off;
-	if (n->m_len > sizeof(*p)) {
- bad:
-		m_freem(n);
+	if (m->m_len > MAX_IPOPTLEN + sizeof(struct in_addr))
 		return (EINVAL);
-	}
+	*pcbopt = m_copym(m, 0, M_COPYALL, M_NOWAIT);
+	if (*pcbopt == NULL)
+		return (ENOBUFS);
 
-	*pcbopt = n;
 	return (0);
 }
 
@@ -1362,7 +1340,8 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 		 * allocate one and initialize to default values.
 		 */
 		imo = malloc(sizeof(*imo), M_IPMOPTS, M_WAITOK|M_ZERO);
-		immp = mallocarray(IP_MIN_MEMBERSHIPS, sizeof(*immp), M_IPMOPTS,
+		immp = (struct in_multi **)malloc(
+		    (sizeof(*immp) * IP_MIN_MEMBERSHIPS), M_IPMOPTS,
 		    M_WAITOK|M_ZERO);
 		*imop = imo;
 		imo->imo_ifidx = 0;
@@ -1516,8 +1495,9 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 			omships = imo->imo_membership;
 			newmax = ((imo->imo_max_memberships + 1) * 2) - 1;
 			if (newmax <= IP_MAX_MEMBERSHIPS) {
-				nmships = mallocarray(newmax, sizeof(*nmships),
-				    M_IPMOPTS, M_NOWAIT|M_ZERO);
+				nmships = (struct in_multi **)mallocarray(
+				    newmax, sizeof(*nmships), M_IPMOPTS,
+				    M_NOWAIT|M_ZERO);
 				if (nmships != NULL) {
 					memcpy(nmships, omships,
 					    sizeof(*omships) *
@@ -1621,8 +1601,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 	    imo->imo_ttl == IP_DEFAULT_MULTICAST_TTL &&
 	    imo->imo_loop == IP_DEFAULT_MULTICAST_LOOP &&
 	    imo->imo_num_memberships == 0) {
-		free(imo->imo_membership , M_IPMOPTS,
-		    imo->imo_max_memberships * sizeof(struct in_multi *));
+		free(imo->imo_membership , M_IPMOPTS, 0);
 		free(*imop, M_IPMOPTS, sizeof(**imop));
 		*imop = NULL;
 	}
@@ -1687,8 +1666,7 @@ ip_freemoptions(struct ip_moptions *imo)
 	if (imo != NULL) {
 		for (i = 0; i < imo->imo_num_memberships; ++i)
 			in_delmulti(imo->imo_membership[i]);
-		free(imo->imo_membership, M_IPMOPTS,
-		    imo->imo_max_memberships * sizeof(struct in_multi *));
+		free(imo->imo_membership, M_IPMOPTS, 0);
 		free(imo, M_IPMOPTS, sizeof(*imo));
 	}
 }
@@ -1806,14 +1784,14 @@ in_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 
 	if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_TCPv4) ||
-		    ip->ip_hl != 5 || ifp->if_bridgeidx != 0) {
+		    ip->ip_hl != 5 || ifp->if_bridgeport != NULL) {
 			tcpstat_inc(tcps_outswcsum);
 			in_delayed_cksum(m);
 			m->m_pkthdr.csum_flags &= ~M_TCP_CSUM_OUT; /* Clear */
 		}
 	} else if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_UDPv4) ||
-		    ip->ip_hl != 5 || ifp->if_bridgeidx != 0) {
+		    ip->ip_hl != 5 || ifp->if_bridgeport != NULL) {
 			udpstat_inc(udps_outswcsum);
 			in_delayed_cksum(m);
 			m->m_pkthdr.csum_flags &= ~M_UDP_CSUM_OUT; /* Clear */

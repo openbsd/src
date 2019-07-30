@@ -1,4 +1,4 @@
-//===- DeclGroup.h - Classes for representing groups of Decls ---*- C++ -*-===//
+//===--- DeclGroup.h - Classes for representing groups of Decls -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,26 +14,26 @@
 #ifndef LLVM_CLANG_AST_DECLGROUP_H
 #define LLVM_CLANG_AST_DECLGROUP_H
 
+#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/TrailingObjects.h"
 #include <cassert>
-#include <cstdint>
 
 namespace clang {
 
 class ASTContext;
 class Decl;
+class DeclGroup;
+class DeclGroupIterator;
 
 class DeclGroup final : private llvm::TrailingObjects<DeclGroup, Decl *> {
   // FIXME: Include a TypeSpecifier object.
-  unsigned NumDecls = 0;
+  unsigned NumDecls;
 
 private:
-  DeclGroup() = default;
+  DeclGroup() : NumDecls(0) {}
   DeclGroup(unsigned numdecls, Decl** decls);
 
 public:
-  friend TrailingObjects;
-
   static DeclGroup *Create(ASTContext &C, Decl **Decls, unsigned NumDecls);
 
   unsigned size() const { return NumDecls; }
@@ -47,21 +47,23 @@ public:
     assert (i < NumDecls && "Out-of-bounds access.");
     return getTrailingObjects<Decl *>()[i];
   }
+
+  friend TrailingObjects;
 };
 
 class DeclGroupRef {
   // Note this is not a PointerIntPair because we need the address of the
   // non-group case to be valid as a Decl** for iteration.
   enum Kind { SingleDeclKind=0x0, DeclGroupKind=0x1, Mask=0x1 };
-
-  Decl* D = nullptr;
+  Decl* D;
 
   Kind getKind() const {
     return (Kind) (reinterpret_cast<uintptr_t>(D) & Mask);
   }
 
 public:
-  DeclGroupRef() = default;
+  DeclGroupRef() : D(nullptr) {}
+
   explicit DeclGroupRef(Decl* d) : D(d) {}
   explicit DeclGroupRef(DeclGroup* dg)
     : D((Decl*) (reinterpret_cast<uintptr_t>(dg) | DeclGroupKind)) {}
@@ -74,8 +76,8 @@ public:
     return DeclGroupRef(DeclGroup::Create(C, Decls, NumDecls));
   }
 
-  using iterator = Decl **;
-  using const_iterator = Decl * const *;
+  typedef Decl** iterator;
+  typedef Decl* const * const_iterator;
 
   bool isNull() const { return D == nullptr; }
   bool isSingleDecl() const { return getKind() == SingleDeclKind; }
@@ -131,26 +133,22 @@ public:
   }
 };
 
-} // namespace clang
+} // end clang namespace
 
 namespace llvm {
-
   // DeclGroupRef is "like a pointer", implement PointerLikeTypeTraits.
   template <typename T>
-  struct PointerLikeTypeTraits;
+  class PointerLikeTypeTraits;
   template <>
-  struct PointerLikeTypeTraits<clang::DeclGroupRef> {
+  class PointerLikeTypeTraits<clang::DeclGroupRef> {
+  public:
     static inline void *getAsVoidPointer(clang::DeclGroupRef P) {
       return P.getAsOpaquePtr();
     }
-
     static inline clang::DeclGroupRef getFromVoidPointer(void *P) {
       return clang::DeclGroupRef::getFromOpaquePtr(P);
     }
-
     enum { NumLowBitsAvailable = 0 };
   };
-
-} // namespace llvm
-
-#endif // LLVM_CLANG_AST_DECLGROUP_H
+}
+#endif

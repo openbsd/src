@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.244 2019/01/10 18:50:32 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.236 2017/11/29 15:22:22 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -33,8 +33,6 @@
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
 
-#include <dev/i2c/i2cvar.h>
-
 #ifdef SMALL_KERNEL
 #undef ACPI_DEBUG
 #endif
@@ -48,9 +46,6 @@
 #define AML_INTSTRLEN		16
 #define AML_NAMESEG_LEN		4
 
-struct aml_value	*aml_loadtable(struct acpi_softc *, const char *,
-			    const char *, const char *, const char *,
-			    const char *, struct aml_value *);
 struct aml_scope	*aml_load(struct acpi_softc *, struct aml_scope *,
 			    struct aml_value *, struct aml_value *);
 
@@ -63,13 +58,13 @@ struct aml_value	*aml_allocvalue(int, int64_t, const void *);
 struct aml_value	*_aml_setvalue(struct aml_value *, int, int64_t,
 			    const void *);
 
-uint64_t		aml_convradix(uint64_t, int, int);
-uint64_t		aml_evalexpr(uint64_t, uint64_t, int);
-int			aml_lsb(uint64_t);
-int			aml_msb(uint64_t);
+u_int64_t		aml_convradix(u_int64_t, int, int);
+u_int64_t		aml_evalexpr(u_int64_t, u_int64_t, int);
+int			aml_lsb(u_int64_t);
+int			aml_msb(u_int64_t);
 
-int			aml_tstbit(const uint8_t *, int);
-void			aml_setbit(uint8_t *, int, int);
+int			aml_tstbit(const u_int8_t *, int);
+void			aml_setbit(u_int8_t *, int, int);
 
 void			aml_addref(struct aml_value *, const char *);
 void			aml_delref(struct aml_value **, const char *);
@@ -101,7 +96,7 @@ struct aml_value	*aml_callosi(struct aml_scope *, struct aml_value *);
 
 const char		*aml_getname(const char *);
 int64_t			aml_hextoint(const char *);
-void			aml_dump(int, uint8_t *);
+void			aml_dump(int, u_int8_t *);
 void			_aml_die(const char *fn, int line, const char *fmt, ...);
 #define aml_die(x...)	_aml_die(__FUNCTION__, __LINE__, x)
 
@@ -488,7 +483,7 @@ acpi_stall(int us)
 
 #ifdef ACPI_DEBUG
 void
-aml_dump(int len, uint8_t *buf)
+aml_dump(int len, u_int8_t *buf)
 {
 	int		idx;
 
@@ -502,7 +497,7 @@ aml_dump(int len, uint8_t *buf)
 
 /* Bit mangling code */
 int
-aml_tstbit(const uint8_t *pb, int bit)
+aml_tstbit(const u_int8_t *pb, int bit)
 {
 	pb += aml_bytepos(bit);
 
@@ -510,7 +505,7 @@ aml_tstbit(const uint8_t *pb, int bit)
 }
 
 void
-aml_setbit(uint8_t *pb, int bit, int val)
+aml_setbit(u_int8_t *pb, int bit, int val)
 {
 	pb += aml_bytepos(bit);
 
@@ -1061,10 +1056,10 @@ aml_freevalue(struct aml_value *val)
 
 /* Convert number from one radix to another
  * Used in BCD conversion routines */
-uint64_t
-aml_convradix(uint64_t val, int iradix, int oradix)
+u_int64_t
+aml_convradix(u_int64_t val, int iradix, int oradix)
 {
-	uint64_t rv = 0, pwr;
+	u_int64_t rv = 0, pwr;
 
 	rv = 0;
 	pwr = 1;
@@ -1078,7 +1073,7 @@ aml_convradix(uint64_t val, int iradix, int oradix)
 
 /* Calculate LSB */
 int
-aml_lsb(uint64_t val)
+aml_lsb(u_int64_t val)
 {
 	int		lsb;
 
@@ -1093,7 +1088,7 @@ aml_lsb(uint64_t val)
 
 /* Calculate MSB */
 int
-aml_msb(uint64_t val)
+aml_msb(u_int64_t val)
 {
 	int		msb;
 
@@ -1107,10 +1102,10 @@ aml_msb(uint64_t val)
 }
 
 /* Evaluate Math operands */
-uint64_t
-aml_evalexpr(uint64_t lhs, uint64_t rhs, int opcode)
+u_int64_t
+aml_evalexpr(u_int64_t lhs, u_int64_t rhs, int opcode)
 {
-	uint64_t res = 0;
+	u_int64_t res = 0;
 
 	switch (opcode) {
 		/* Math operations */
@@ -1216,8 +1211,8 @@ aml_evalexpr(uint64_t lhs, uint64_t rhs, int opcode)
 void
 aml_bufcpy(void *pvDst, int dstPos, const void *pvSrc, int srcPos, int len)
 {
-	const uint8_t *pSrc = pvSrc;
-	uint8_t *pDst = pvDst;
+	const u_int8_t *pSrc = pvSrc;
+	u_int8_t *pDst = pvDst;
 	int		idx;
 
 	if (aml_bytealigned(dstPos|srcPos|len)) {
@@ -1437,7 +1432,7 @@ int odp;
 const char hext[] = "0123456789ABCDEF";
 
 const char *
-aml_eisaid(uint32_t pid)
+aml_eisaid(u_int32_t pid)
 {
 	static char id[8];
 
@@ -2293,7 +2288,6 @@ aml_register_regionspace(struct aml_node *node, int iospace, void *cookie,
 
 void aml_rwgen(struct aml_value *, int, int, struct aml_value *, int, int);
 void aml_rwgpio(struct aml_value *, int, int, struct aml_value *, int, int);
-void aml_rwgsb(struct aml_value *, int, int, int, struct aml_value *, int, int);
 void aml_rwindexfield(struct aml_value *, struct aml_value *val, int);
 void aml_rwfield(struct aml_value *, int, int, struct aml_value *, int);
 
@@ -2303,21 +2297,14 @@ aml_rdpciaddr(struct aml_node *pcidev, union amlpci_t *addr)
 {
 	int64_t res;
 
-	addr->bus = 0;
-	addr->seg = 0;
 	if (aml_evalinteger(acpi_softc, pcidev, "_ADR", 0, NULL, &res) == 0) {
 		addr->fun = res & 0xFFFF;
 		addr->dev = res >> 16;
 	}
 	while (pcidev != NULL) {
-		/* HID device (PCI or PCIE root): eval _SEG and _BBN */
+		/* HID device (PCI or PCIE root): eval _BBN */
 		if (__aml_search(pcidev, "_HID", 0)) {
-			if (aml_evalinteger(acpi_softc, pcidev, "_SEG",
-			        0, NULL, &res) == 0) {
-				addr->seg = res;
-			}
-			if (aml_evalinteger(acpi_softc, pcidev, "_BBN",
-			        0, NULL, &res) == 0) {
+			if (aml_evalinteger(acpi_softc, pcidev, "_BBN", 0, NULL, &res) == 0) {
 				addr->bus = res;
 				break;
 			}
@@ -2332,7 +2319,7 @@ acpi_genio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
     int access_size, int len, void *buffer)
 {
 	struct aml_regionspace *region = &aml_regionspace[iospace];
-	uint8_t *pb;
+	u_int8_t *pb;
 	int reg;
 
 	dnprintf(50, "genio: %.2x 0x%.8llx %s\n",
@@ -2340,7 +2327,7 @@ acpi_genio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 
 	KASSERT((len % access_size) == 0);
 
-	pb = (uint8_t *)buffer;
+	pb = (u_int8_t *)buffer;
 	for (reg = 0; reg < len; reg += access_size) {
 		uint64_t value;
 		int err;
@@ -2438,10 +2425,8 @@ aml_rwgen(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
 	tlen = roundup(bpos + blen, sz << 3);
 	type = rgn->v_opregion.iospace;
 
-	if (aml_regionspace[type].handler == NULL) {
-		printf("%s: unregistered RegionSpace 0x%x\n", __func__, type);
-		return;
-	}
+	if (aml_regionspace[type].handler == NULL)
+		panic("%s: unregistered RegionSpace 0x%x\n", __func__, type);
 
 	/* Allocate temporary storage */
 	if (tlen > aml_intlen) {
@@ -2525,108 +2510,6 @@ aml_rwgpio(struct aml_value *conn, int bpos, int blen, struct aml_value *val,
 		_aml_setvalue(val, AML_OBJTYPE_INTEGER, v, NULL);
 	}
 }
-
-#ifndef SMALL_KERNEL
-
-void
-aml_rwgsb(struct aml_value *conn, int alen, int bpos, int blen,
-    struct aml_value *val, int mode, int flag)
-{
-	union acpi_resource *crs = (union acpi_resource *)conn->v_buffer;
-	struct aml_node *node;
-	i2c_tag_t tag;
-	i2c_op_t op;
-	i2c_addr_t addr;
-	int cmdlen, buflen;
-	uint8_t cmd;
-	uint8_t *buf;
-	int err;
-
-	if (conn->type != AML_OBJTYPE_BUFFER || conn->length < 5 ||
-	    AML_CRSTYPE(crs) != LR_SERBUS || AML_CRSLEN(crs) > conn->length ||
-	    crs->lr_i2cbus.revid != 1 || crs->lr_i2cbus.type != LR_SERBUS_I2C)
-		aml_die("Invalid GenericSerialBus");
-	if (AML_FIELD_ACCESS(flag) != AML_FIELD_BUFFERACC ||
-	    bpos & 0x3 || blen != 8)
-		aml_die("Invalid GenericSerialBus access");
-
-	node = aml_searchname(conn->node,
-	    (char *)&crs->lr_i2cbus.vdata[crs->lr_i2cbus.tlength - 6]);
-
-	if (node == NULL || node->i2c == NULL)
-		aml_die("Could not find GenericSerialBus controller");
-
-	switch (((flag >> 6) & 0x3)) {
-	case 0:			/* Normal */
-		switch (AML_FIELD_ATTR(flag)) {
-		case 0x02:	/* AttribQuick */
-			cmdlen = 0;
-			buflen = 0;
-			break;
-		case 0x04:	/* AttribSendReceive */
-			cmdlen = 0;
-			buflen = 1;
-			break;
-		case 0x06:	/* AttribByte */
-			cmdlen = 1;
-			buflen = 1;
-			break;
-		case 0x08:	/* AttribWord */
-			cmdlen = 1;
-			buflen = 2;
-			break;
-		case 0x0b:	/* AttribBytes */
-			cmdlen = 1;
-			buflen = alen;
-			break;
-		case 0x0e:	/* AttribRawBytes */
-			cmdlen = 0;
-			buflen = alen;
-			break;
-		default:
-			aml_die("unsupported access type 0x%x", flag);
-			break;
-		}
-		break;
-	case 1:			/* AttribBytes */
-		cmdlen = 1;
-		buflen = AML_FIELD_ATTR(flag);
-		break;
-	case 2:			/* AttribRawBytes */
-		cmdlen = 0;
-		buflen = AML_FIELD_ATTR(flag);
-		break;
-	default:
-		aml_die("unsupported access type 0x%x", flag);
-		break;
-	}
-
-	if (mode == ACPI_IOREAD) {
-		_aml_setvalue(val, AML_OBJTYPE_BUFFER, buflen + 2, NULL);
-		op = I2C_OP_READ_WITH_STOP;
-	} else {
-		op = I2C_OP_WRITE_WITH_STOP;
-	}
-
-	tag = node->i2c;
-	addr = crs->lr_i2cbus._adr;
-	cmd = bpos >> 3;
-	buf = val->v_buffer;
-
-	iic_acquire_bus(tag, 0);
-	err = iic_exec(tag, op, addr, &cmd, cmdlen, &buf[2], buflen, 0);
-	iic_release_bus(tag, 0);
-
-	/*
-	 * The ACPI specification doesn't tell us what the status
-	 * codes mean beyond implying that zero means success.  So use
-	 * the error returned from the transfer.  All possible error
-	 * numbers should fit in a single byte.
-	 */
-	buf[0] = err;
-}
-
-#endif
 
 void
 aml_rwindexfield(struct aml_value *fld, struct aml_value *val, int mode)
@@ -2729,13 +2612,6 @@ aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val,
 			aml_rwgpio(ref2, bpos, blen, val, mode,
 			    fld->v_field.flags);
 			break;
-#ifndef SMALL_KERNEL
-		case ACPI_OPREG_GSB:
-			aml_rwgsb(ref2, fld->v_field.ref3,
-			    fld->v_field.bitpos + bpos, blen,
-			    val, mode, fld->v_field.flags);
-			break;
-#endif
 		default:
 			aml_rwgen(ref1, fld->v_field.bitpos + bpos, blen,
 			    val, mode, fld->v_field.flags);
@@ -2819,17 +2695,15 @@ aml_parsefieldlist(struct aml_scope *mscope, int opcode, int flags,
 	bpos = 0;
 	while (mscope->pos < mscope->end) {
 		switch (*mscope->pos) {
-		case 0x00: /* ReservedField */
+		case 0x00: /* reserved, length */
 			mscope->pos++;
 			blen = aml_parselength(mscope);
 			break;
-		case 0x01: /* AccessField */
-			mscope->pos++;
+		case 0x01: /* flags */
+			mscope->pos += 3;
 			blen = 0;
-			flags = aml_get8(mscope->pos++);
-			flags |= aml_get8(mscope->pos++) << 8;
 			break;
-		case 0x02: /* ConnectionField */
+		case 0x02: /* connection */
 			mscope->pos++;
 			blen = 0;
 			conn = aml_parse(mscope, 'o', "Connection");
@@ -2837,14 +2711,7 @@ aml_parsefieldlist(struct aml_scope *mscope, int opcode, int flags,
 				aml_die("Could not parse connection");
 			conn->node = mscope->node;
 			break;
-		case 0x03: /* ExtendedAccessField */
-			mscope->pos++;
-			blen = 0;
-			flags = aml_get8(mscope->pos++);
-			flags |= aml_get8(mscope->pos++) << 8;
-			indexval = aml_get8(mscope->pos++);
-			break;
-		default: /* NamedField */
+		default: /* 4-byte name, length */
 			mscope->pos = aml_parsename(mscope->node, mscope->pos,
 			    &rv, 1);
 			blen = aml_parselength(mscope);
@@ -2905,33 +2772,29 @@ int
 acpi_event_wait(struct aml_scope *scope, struct aml_value *evt, int timeout)
 {
 	/* Wait for event to occur; do work in meantime */
-	while (evt->v_evt.state == 0 && timeout >= 0) {
-		if (acpi_dotask(acpi_softc))
-		    continue;
-		if (!cold) {
-			if (rwsleep(evt, &acpi_softc->sc_lck, PWAIT,
-			    "acpievt", 1) == EWOULDBLOCK) {
-				if (timeout < AML_NO_TIMEOUT)
-					timeout -= (1000 / hz);
-			}
-		} else {
-			delay(1000);
-			if (timeout < AML_NO_TIMEOUT)
-				timeout--;
-		}
+	evt->v_evt.state = 0;
+	while (!evt->v_evt.state) {
+		if (!acpi_dotask(acpi_softc) && !cold)
+			tsleep(evt, PWAIT, "acpievt", 1);
+		else
+			delay(100);
 	}
-	if (evt->v_evt.state == 0)
+	if (evt->v_evt.state == 1) {
+		/* Object is signaled */
+		return (0);
+	} else if (timeout == 0) {
+		/* Zero timeout */
 		return (-1);
-	evt->v_evt.state--;
+	}
+	/* Wait for timeout or signal */
 	return (0);
 }
 
 void
 acpi_event_signal(struct aml_scope *scope, struct aml_value *evt)
 {
-	evt->v_evt.state++;
-	if (evt->v_evt.state > 0)
-		wakeup_one(evt);
+	evt->v_evt.state = 1;
+	/* Wakeup waiters */
 }
 
 void
@@ -3667,37 +3530,6 @@ aml_seterror(struct aml_scope *scope, const char *fmt, ...)
 	return aml_allocvalue(AML_OBJTYPE_INTEGER, 0, 0);
 }
 
-struct aml_value *
-aml_loadtable(struct acpi_softc *sc, const char *signature,
-     const char *oemid, const char *oemtableid, const char *rootpath,
-     const char *parameterpath, struct aml_value *parameterdata)
-{
-	struct acpi_table_header *hdr;
-	struct acpi_dsdt *p_dsdt;
-	struct acpi_q *entry;
-
-	if (strlen(rootpath) > 0)
-		aml_die("LoadTable: RootPathString unsupported");
-	if (strlen(parameterpath) > 0)
-		aml_die("LoadTable: ParameterPathString unsupported");
-
-	SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
-		hdr = entry->q_table;
-		if (strncmp(hdr->signature, signature,
-		    sizeof(hdr->signature)) == 0 &&
-		    strncmp(hdr->oemid, oemid, sizeof(hdr->oemid)) == 0 &&
-		    strncmp(hdr->oemtableid, oemtableid,
-		    sizeof(hdr->oemtableid)) == 0) {
-			p_dsdt = entry->q_table;
-			acpi_parse_aml(sc, p_dsdt->aml, p_dsdt->hdr_length -
-			    sizeof(p_dsdt->hdr));
-			return aml_allocvalue(AML_OBJTYPE_DDBHANDLE, 0, 0);
-		}
-	}
-
-	return aml_allocvalue(AML_OBJTYPE_INTEGER, 0, 0);
-}
-
 /* Load new SSDT scope from memory address */
 struct aml_scope *
 aml_load(struct acpi_softc *sc, struct aml_scope *scope,
@@ -4219,7 +4051,7 @@ aml_parse(struct aml_scope *scope, int ret_type, const char *stype)
 	case AMLOP_EVENT:
 		/* Event: N */
 		rv = _aml_setvalue(opargs[0], AML_OBJTYPE_EVENT, 0, 0);
-		rv->v_evt.state = 0;
+		rv->v_integer = 0;
 		break;
 	case AMLOP_MUTEX:
 		/* Mutex: Nw */
@@ -4359,9 +4191,7 @@ aml_parse(struct aml_scope *scope, int ret_type, const char *stype)
 	case AMLOP_LOADTABLE:
 		/* LoadTable(Sig:Str, OEMID:Str, OEMTable:Str, [RootPath:Str], [ParmPath:Str],
 		   [ParmData:DataRefObj]) => DDBHandle */
-		my_ret = aml_loadtable(acpi_softc, opargs[0]->v_string,
-		    opargs[1]->v_string, opargs[2]->v_string,
-		    opargs[3]->v_string, opargs[4]->v_string, opargs[5]);
+		aml_die("LoadTable");
 		break;
 	case AMLOP_LOAD:
 		/* Load(Object:NameString, DDBHandle:SuperName) */
@@ -4462,7 +4292,7 @@ parse_error:
 }
 
 int
-acpi_parse_aml(struct acpi_softc *sc, uint8_t *start, uint32_t length)
+acpi_parse_aml(struct acpi_softc *sc, u_int8_t *start, u_int32_t length)
 {
 	struct aml_scope *scope;
 	struct aml_value res;

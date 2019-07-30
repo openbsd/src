@@ -19,6 +19,7 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/Analysis/ObjectUtils.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/ModuleSummaryIndex.h"
 #include "llvm/LTO/Config.h"
@@ -70,7 +71,7 @@ std::string getThinLTOOutputFile(const std::string &Path,
                                  const std::string &NewPrefix);
 
 /// Setup optimization remarks.
-Expected<std::unique_ptr<ToolOutputFile>>
+Expected<std::unique_ptr<tool_output_file>>
 setupOptimizationRemarks(LLVMContext &Context, StringRef LTORemarksFilename,
                          bool LTOPassRemarksWithHotness, int Count = -1);
 
@@ -125,7 +126,6 @@ public:
     using irsymtab::Symbol::getCommonSize;
     using irsymtab::Symbol::getCommonAlignment;
     using irsymtab::Symbol::getCOFFWeakExternalFallback;
-    using irsymtab::Symbol::getSectionName;
     using irsymtab::Symbol::isExecutable;
   };
 
@@ -209,16 +209,10 @@ ThinBackend createInProcessThinBackend(unsigned ParallelismLevel);
 /// appends ".thinlto.bc" and writes the index to that path. If
 /// ShouldEmitImportsFiles is true it also writes a list of imported files to a
 /// similar path with ".imports" appended instead.
-/// LinkedObjectsFile is an output stream to write the list of object files for
-/// the final ThinLTO linking. Can be nullptr.
-/// OnWrite is callback which receives module identifier and notifies LTO user
-/// that index file for the module (and optionally imports file) was created.
-using IndexWriteCallback = std::function<void(const std::string &)>;
 ThinBackend createWriteIndexesThinBackend(std::string OldPrefix,
                                           std::string NewPrefix,
                                           bool ShouldEmitImportsFiles,
-                                          raw_fd_ostream *LinkedObjectsFile,
-                                          IndexWriteCallback OnWrite);
+                                          std::string LinkedObjectsFile);
 
 /// This class implements a resolution-based interface to LLVM's LTO
 /// functionality. It supports regular LTO, parallel LTO code generation and
@@ -284,6 +278,7 @@ private:
 
     unsigned ParallelCodeGenParallelismLevel;
     LTOLLVMContext Ctx;
+    bool HasModule = false;
     std::unique_ptr<Module> CombinedModule;
     std::unique_ptr<IRMover> Mover;
 
@@ -324,14 +319,6 @@ private:
     bool VisibleOutsideSummary = false;
 
     bool UnnamedAddr = true;
-
-    /// True if module contains the prevailing definition.
-    bool Prevailing = false;
-
-    /// Returns true if module contains the prevailing definition and symbol is
-    /// an IR symbol. For example when module-level inline asm block is used,
-    /// symbol can be prevailing in module but have no IR name.
-    bool isPrevailingIRSymbol() const { return Prevailing && !IRName.empty(); }
 
     /// This field keeps track of the partition number of this global. The
     /// regular LTO object is partition 0, while each ThinLTO object has its own
@@ -384,7 +371,8 @@ private:
                    const SymbolResolution *&ResI, const SymbolResolution *ResE);
 
   Error runRegularLTO(AddStreamFn AddStream);
-  Error runThinLTO(AddStreamFn AddStream, NativeObjectCache Cache);
+  Error runThinLTO(AddStreamFn AddStream, NativeObjectCache Cache,
+                   bool HasRegularLTO);
 
   mutable bool CalledGetMaxTasks = false;
 };

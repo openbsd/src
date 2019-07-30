@@ -70,7 +70,7 @@ eval q{
 	my $x = "a";
 	$t .= $x;
 	do {
-		no warnings "shadow";
+		no warnings "misc";
 		$t .= $x;
 		my $x = "b";
 		$t .= $x;

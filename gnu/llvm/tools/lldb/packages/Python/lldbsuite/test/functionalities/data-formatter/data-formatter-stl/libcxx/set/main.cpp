@@ -1,4 +1,8 @@
 #include <string>
+#ifdef _LIBCPP_INLINE_VISIBILITY
+#undef _LIBCPP_INLINE_VISIBILITY
+#endif
+#define _LIBCPP_INLINE_VISIBILITY
 #include <set>
 
 typedef std::set<int> intset;
@@ -16,12 +20,6 @@ int thefoo_rw(int arg = 1)
 	return g_the_foo;
 }
 
-void by_ref_and_ptr(intset &ref, intset *ptr)
-{
-    // Stop here to check by ref and ptr
-    return;
-} 
-
 int main()
 {
     intset ii;
@@ -37,9 +35,7 @@ int main()
 
 	ii.insert(6);
 	thefoo_rw(1);  // Set break point at this line.
-
-        by_ref_and_ptr(ii, &ii);
-
+    
 	ii.clear();
 	thefoo_rw(1);  // Set break point at this line.
 

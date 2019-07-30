@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.34 2019/05/18 19:38:25 rob Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.32 2017/08/13 02:12:16 tedu Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
  */
 
 #include <err.h>
-#include <errno.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdio.h>
@@ -53,8 +52,6 @@
 #include "screen.h"
 #include "tetris.h"
 
-#define NUMKEYS 6
-
 cell	board[B_SIZE];
 int	Rows, Cols;
 const struct shape *curshape;
@@ -62,7 +59,6 @@ const struct shape *nextshape;
 long	fallrate;
 int	score;
 char	key_msg[100];
-char	scorepath[PATH_MAX];
 int	showpreview, classic;
 
 static void		 elide(void);
@@ -146,28 +142,19 @@ randshape(void)
 		tmp = &shapes[classic? tmp->rotc : tmp->rot];
 	return (tmp);
 }
+	
 
 int
 main(int argc, char *argv[])
 {
 	int pos, c;
 	char *keys;
-	int level = 2, ret;
-	char key_write[NUMKEYS][10];
-	char *home;
+	int level = 2;
+	char key_write[6][10];
 	const char *errstr;
 	int ch, i, j;
 
-	home = getenv("HOME");
-	if (home == NULL || *home == '\0')
-		err(1, "getenv");
-
-	ret = snprintf(scorepath, sizeof(scorepath), "%s/%s", home,
-	    ".tetris.scores");
-	if (ret < 0 || ret >= PATH_MAX)
-		errc(1, ENAMETOOLONG, "%s/%s", home, ".tetris.scores");
-
-	if (pledge("stdio rpath wpath cpath tty unveil", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
 		err(1, "pledge");
 
 	keys = "jkl pq";
@@ -184,7 +171,7 @@ main(int argc, char *argv[])
 			classic = 1;
 			break;
 		case 'k':
-			if (strlen(keys = optarg) != NUMKEYS)
+			if (strlen(keys = optarg) != 6)
 				usage();
 			break;
 		case 'l':
@@ -212,8 +199,8 @@ main(int argc, char *argv[])
 
 	fallrate = 1000000000L / level;
 
-	for (i = 0; i < NUMKEYS; i++) {
-		for (j = i+1; j < NUMKEYS; j++) {
+	for (i = 0; i <= 5; i++) {
+		for (j = i+1; j <= 5; j++) {
 			if (keys[i] == keys[j])
 				errx(1, "duplicate command keys specified.");
 		}
@@ -232,13 +219,6 @@ main(int argc, char *argv[])
 
 	(void)signal(SIGINT, onintr);
 	scr_init();
-
-	if (unveil(scorepath, "rwc") == -1)
-		err(1, "unveil");
-
-	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
-		err(1, "pledge");
-
 	setup_board();
 
 	scr_set();

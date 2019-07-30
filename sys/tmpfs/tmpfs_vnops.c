@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.33 2018/10/22 17:31:25 krw Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.27 2016/06/19 11:54:33 natano Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -182,14 +182,14 @@ tmpfs_lookup(void *v)
 		 * and thus prevents parent from disappearing.
 		 */
 		rw_enter_write(&pnode->tn_nlock);
-		VOP_UNLOCK(dvp);
+		VOP_UNLOCK(dvp, curproc);
 
 		/*
 		 * Get a vnode of the '..' entry and re-acquire the lock.
 		 * Release the tn_nlock.
 		 */
 		error = tmpfs_vnode_get(dvp->v_mount, pnode, vpp);
-		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY, curproc);
 		goto out;
 
 	} else if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
@@ -289,13 +289,13 @@ done:
 out:
 	/*
 	 * If (1) we succeded, (2) found a distinct vnode to return and (3) were
-	 * either explicitly told to keep the parent locked or are in the
+	 * either explicitely told to keep the parent locked or are in the
 	 * middle of a lookup, unlock the parent vnode.
 	 */
 	if ((error == 0 || error == EJUSTRETURN) && /* (1) */
 	    *vpp != dvp &&			    /* (2) */
 	    (!lockparent || !lastcn)) {		    /* (3) */
-		VOP_UNLOCK(dvp);
+		VOP_UNLOCK(dvp, curproc);
 		cnp->cn_flags |= PDIRUNLOCK;
 	} else
 		KASSERT(VOP_ISLOCKED(dvp));
@@ -339,15 +339,19 @@ tmpfs_mknod(void *v)
 	enum vtype vt = vap->va_type;
 	int error;
 
-	if (vt != VBLK && vt != VCHR && vt != VFIFO)
+	if (vt != VBLK && vt != VCHR && vt != VFIFO) {
+		vput(dvp);
 		return EINVAL;
+	}
 
+	/* tmpfs_alloc_file() will unlock 'dvp'. */
 	error = tmpfs_alloc_file(dvp, vpp, vap, cnp, NULL);
+	if (error)
+		return error;
 
-	if (error == 0)
-		vput(*vpp);
+	vput(*vpp);
 
-	return error;
+	return 0;
 }
 
 int
@@ -385,7 +389,6 @@ tmpfs_open(void *v)
 int
 tmpfs_close(void *v)
 {
-#ifdef DIAGNOSTIC
 	struct vop_close_args /* {
 		struct vnode	*a_vp;
 		int		a_fflag;
@@ -394,7 +397,7 @@ tmpfs_close(void *v)
 	struct vnode *vp = ap->a_vp;
 
 	KASSERT(VOP_ISLOCKED(vp));
-#endif
+
 	return 0;
 }
 
@@ -656,7 +659,6 @@ out:
 int
 tmpfs_fsync(void *v)
 {
-#ifdef DIAGNOSTIC
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
 		struct ucred *a_cred;
@@ -669,7 +671,6 @@ tmpfs_fsync(void *v)
 
 	/* Nothing to do.  Just update. */
 	KASSERT(VOP_ISLOCKED(vp));
-#endif
 	return 0;
 }
 
@@ -790,7 +791,7 @@ tmpfs_link(void *v)
 	dnode = VP_TO_TMPFS_DIR(dvp);
 	node = VP_TO_TMPFS_NODE(vp);
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, curproc);
 
 	/* Check for maximum number of links limit. */
 	if (node->tn_links == LINK_MAX) {
@@ -831,7 +832,7 @@ tmpfs_link(void *v)
 	error = 0;
 out:
 	pool_put(&namei_pool, cnp->cn_pnbuf);
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, curproc);
 	vput(dvp);
 	return error;
 }
@@ -849,12 +850,9 @@ tmpfs_mkdir(void *v)
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
 	struct vattr *vap = ap->a_vap;
-	int error;
 
 	KASSERT(vap->va_type == VDIR);
-	error = tmpfs_alloc_file(dvp, vpp, vap, cnp, NULL);
-	vput(dvp);
-	return error;
+	return tmpfs_alloc_file(dvp, vpp, vap, cnp, NULL);
 }
 
 int
@@ -961,7 +959,6 @@ tmpfs_symlink(void *v)
 	vap->va_type = VLNK;
 
 	error = tmpfs_alloc_file(dvp, vpp, vap, cnp, target);
-	vput(dvp);
 	if (error == 0)
 		vput(*vpp);
 
@@ -1049,7 +1046,7 @@ tmpfs_inactive(void *v)
 	if (vp->v_type == VREG && tmpfs_uio_cached(node))
 		tmpfs_uio_uncache(node);
 
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, curproc);
 
 	/*
 	 * If we are done with the node, reclaim it so that it can be reused
@@ -1357,9 +1354,9 @@ tmpfs_rename(void *v)
 	 * the caller does reject rename("x/.", "y").  Go figure.)
 	 */
 
-	VOP_UNLOCK(tdvp);
+	VOP_UNLOCK(tdvp, curproc);
 	if ((tvp != NULL) && (tvp != tdvp))
-		VOP_UNLOCK(tvp);
+		VOP_UNLOCK(tvp, curproc);
 
 	vrele(fvp);
 	if (tvp != NULL)
@@ -1785,7 +1782,7 @@ fail3:	if (tvp != NULL) {
 	}
 
 fail2:	vput(fvp);
-fail1:	VOP_UNLOCK(dvp);
+fail1:	VOP_UNLOCK(dvp, curproc);
 fail0:	return error;
 }
 
@@ -1888,10 +1885,10 @@ tmpfs_rename_exit(struct tmpfs_mount *tmpfs,
 		else
 			vrele(tvp);
 	}
-	VOP_UNLOCK(tdvp);
+	VOP_UNLOCK(tdvp, curproc);
 	vput(fvp);
 	if (fdvp != tdvp)
-		VOP_UNLOCK(fdvp);
+		VOP_UNLOCK(fdvp, curproc);
 
 #if 0				/* XXX */
 	if (fdvp != tdvp)
@@ -1913,9 +1910,9 @@ tmpfs_rename_lock_directory(struct vnode *vp, struct tmpfs_node *node)
 	KASSERT(node->tn_vnode == vp);
 	KASSERT(node->tn_type == VDIR);
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, curproc);
 	if (node->tn_spec.tn_dir.tn_parent == NULL) {
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, curproc);
 		return ENOENT;
 	}
 
@@ -1985,7 +1982,7 @@ tmpfs_rename_genealogy(struct tmpfs_node *fdnode, struct tmpfs_node *tdnode,
 		node = parent;
 	}
 
-	VOP_UNLOCK(tdnode->tn_vnode);
+	VOP_UNLOCK(tdnode->tn_vnode, curproc);
 	return 0;
 }
 
@@ -2173,7 +2170,7 @@ fail4:	if (b_vp != NULL) {
 	}
 
 fail3:	KASSERT(VOP_ISLOCKED(b_dvp) == LK_EXCLUSIVE);
-	VOP_UNLOCK(b_dvp);
+	VOP_UNLOCK(b_dvp, curproc);
 
 fail2:	if (a_vp != NULL) {
 		KASSERT(VOP_ISLOCKED(a_vp) == LK_EXCLUSIVE);
@@ -2181,7 +2178,7 @@ fail2:	if (a_vp != NULL) {
 	}
 
 fail1:	KASSERT(VOP_ISLOCKED(a_dvp) == LK_EXCLUSIVE);
-	VOP_UNLOCK(a_dvp);
+	VOP_UNLOCK(a_dvp, curproc);
 
 fail0:	/* KASSERT(VOP_ISLOCKED(a_dvp) != LK_EXCLUSIVE); */
 	/* KASSERT(VOP_ISLOCKED(b_dvp) != LK_EXCLUSIVE); */

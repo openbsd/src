@@ -57,10 +57,10 @@ static void EnsureFPIntrinsicsExist(Module &M, Function &Fn,
   }
 }
 
-/// This function is used when we want to lower an intrinsic call to a call of
-/// an external function. This handles hard cases such as when there was already
-/// a prototype for the external function, but that prototype doesn't match the
-/// arguments we expect to pass in.
+/// ReplaceCallWith - This function is used when we want to lower an intrinsic
+/// call to a call of an external function.  This handles hard cases such as
+/// when there was already a prototype for the external function, and if that
+/// prototype doesn't match the arguments we expect to pass in.
 template <class ArgIt>
 static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
                                  ArgIt ArgBegin, ArgIt ArgEnd,
@@ -113,22 +113,22 @@ void IntrinsicLowering::AddPrototypes(Module &M) {
       case Intrinsic::memcpy:
         M.getOrInsertFunction("memcpy",
           Type::getInt8PtrTy(Context),
-                              Type::getInt8PtrTy(Context),
-                              Type::getInt8PtrTy(Context),
+                              Type::getInt8PtrTy(Context), 
+                              Type::getInt8PtrTy(Context), 
                               DL.getIntPtrType(Context));
         break;
       case Intrinsic::memmove:
         M.getOrInsertFunction("memmove",
           Type::getInt8PtrTy(Context),
-                              Type::getInt8PtrTy(Context),
-                              Type::getInt8PtrTy(Context),
+                              Type::getInt8PtrTy(Context), 
+                              Type::getInt8PtrTy(Context), 
                               DL.getIntPtrType(Context));
         break;
       case Intrinsic::memset:
         M.getOrInsertFunction("memset",
           Type::getInt8PtrTy(Context),
-                              Type::getInt8PtrTy(Context),
-                              Type::getInt32Ty(M.getContext()),
+                              Type::getInt8PtrTy(Context), 
+                              Type::getInt32Ty(M.getContext()), 
                               DL.getIntPtrType(Context));
         break;
       case Intrinsic::sqrt:
@@ -161,11 +161,12 @@ void IntrinsicLowering::AddPrototypes(Module &M) {
       }
 }
 
-/// Emit the code to lower bswap of V before the specified instruction IP.
+/// LowerBSWAP - Emit the code to lower bswap of V before the specified
+/// instruction IP.
 static Value *LowerBSWAP(LLVMContext &Context, Value *V, Instruction *IP) {
-  assert(V->getType()->isIntOrIntVectorTy() && "Can't bswap a non-integer type!");
+  assert(V->getType()->isIntegerTy() && "Can't bswap a non-integer type!");
 
-  unsigned BitSize = V->getType()->getScalarSizeInBits();
+  unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
 
   IRBuilder<> Builder(IP);
 
@@ -189,10 +190,10 @@ static Value *LowerBSWAP(LLVMContext &Context, Value *V, Instruction *IP) {
     Value *Tmp1 = Builder.CreateLShr(V,ConstantInt::get(V->getType(), 24),
                                      "bswap.1");
     Tmp3 = Builder.CreateAnd(Tmp3,
-                         ConstantInt::get(V->getType(), 0xFF0000),
+                         ConstantInt::get(Type::getInt32Ty(Context), 0xFF0000),
                              "bswap.and3");
     Tmp2 = Builder.CreateAnd(Tmp2,
-                           ConstantInt::get(V->getType(), 0xFF00),
+                           ConstantInt::get(Type::getInt32Ty(Context), 0xFF00),
                              "bswap.and2");
     Tmp4 = Builder.CreateOr(Tmp4, Tmp3, "bswap.or1");
     Tmp2 = Builder.CreateOr(Tmp2, Tmp1, "bswap.or2");
@@ -210,37 +211,37 @@ static Value *LowerBSWAP(LLVMContext &Context, Value *V, Instruction *IP) {
                                     "bswap.5");
     Value* Tmp4 = Builder.CreateLShr(V, ConstantInt::get(V->getType(), 8),
                                      "bswap.4");
-    Value* Tmp3 = Builder.CreateLShr(V,
+    Value* Tmp3 = Builder.CreateLShr(V, 
                                      ConstantInt::get(V->getType(), 24),
                                      "bswap.3");
-    Value* Tmp2 = Builder.CreateLShr(V,
+    Value* Tmp2 = Builder.CreateLShr(V, 
                                      ConstantInt::get(V->getType(), 40),
                                      "bswap.2");
-    Value* Tmp1 = Builder.CreateLShr(V,
+    Value* Tmp1 = Builder.CreateLShr(V, 
                                      ConstantInt::get(V->getType(), 56),
                                      "bswap.1");
     Tmp7 = Builder.CreateAnd(Tmp7,
-                             ConstantInt::get(V->getType(),
+                             ConstantInt::get(Type::getInt64Ty(Context),
                                               0xFF000000000000ULL),
                              "bswap.and7");
     Tmp6 = Builder.CreateAnd(Tmp6,
-                             ConstantInt::get(V->getType(),
+                             ConstantInt::get(Type::getInt64Ty(Context),
                                               0xFF0000000000ULL),
                              "bswap.and6");
     Tmp5 = Builder.CreateAnd(Tmp5,
-                        ConstantInt::get(V->getType(),
+                        ConstantInt::get(Type::getInt64Ty(Context),
                              0xFF00000000ULL),
                              "bswap.and5");
     Tmp4 = Builder.CreateAnd(Tmp4,
-                        ConstantInt::get(V->getType(),
+                        ConstantInt::get(Type::getInt64Ty(Context),
                              0xFF000000ULL),
                              "bswap.and4");
     Tmp3 = Builder.CreateAnd(Tmp3,
-                             ConstantInt::get(V->getType(),
+                             ConstantInt::get(Type::getInt64Ty(Context),
                              0xFF0000ULL),
                              "bswap.and3");
     Tmp2 = Builder.CreateAnd(Tmp2,
-                             ConstantInt::get(V->getType(),
+                             ConstantInt::get(Type::getInt64Ty(Context),
                              0xFF00ULL),
                              "bswap.and2");
     Tmp8 = Builder.CreateOr(Tmp8, Tmp7, "bswap.or1");
@@ -256,7 +257,8 @@ static Value *LowerBSWAP(LLVMContext &Context, Value *V, Instruction *IP) {
   return V;
 }
 
-/// Emit the code to lower ctpop of V before the specified instruction IP.
+/// LowerCTPOP - Emit the code to lower ctpop of V before the specified
+/// instruction IP.
 static Value *LowerCTPOP(LLVMContext &Context, Value *V, Instruction *IP) {
   assert(V->getType()->isIntegerTy() && "Can't ctpop a non-integer type!");
 
@@ -274,7 +276,7 @@ static Value *LowerCTPOP(LLVMContext &Context, Value *V, Instruction *IP) {
 
   for (unsigned n = 0; n < WordSize; ++n) {
     Value *PartValue = V;
-    for (unsigned i = 1, ct = 0; i < (BitSize>64 ? 64 : BitSize);
+    for (unsigned i = 1, ct = 0; i < (BitSize>64 ? 64 : BitSize); 
          i <<= 1, ++ct) {
       Value *MaskCst = ConstantInt::get(V->getType(), MaskValues[ct]);
       Value *LHS = Builder.CreateAnd(PartValue, MaskCst, "cppop.and1");
@@ -295,7 +297,8 @@ static Value *LowerCTPOP(LLVMContext &Context, Value *V, Instruction *IP) {
   return Count;
 }
 
-/// Emit the code to lower ctlz of V before the specified instruction IP.
+/// LowerCTLZ - Emit the code to lower ctlz of V before the specified
+/// instruction IP.
 static Value *LowerCTLZ(LLVMContext &Context, Value *V, Instruction *IP) {
 
   IRBuilder<> Builder(IP);
@@ -381,7 +384,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
 
   case Intrinsic::siglongjmp: {
     // Insert the call to abort
-    ReplaceCallWith("abort", CI, CS.arg_end(), CS.arg_end(),
+    ReplaceCallWith("abort", CI, CS.arg_end(), CS.arg_end(), 
                     Type::getVoidTy(Context));
     break;
   }
@@ -392,7 +395,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::bswap:
     CI->replaceAllUsesWith(LowerBSWAP(Context, CI->getArgOperand(0), CI));
     break;
-
+    
   case Intrinsic::ctlz:
     CI->replaceAllUsesWith(LowerCTLZ(Context, CI->getArgOperand(0), CI));
     break;
@@ -420,7 +423,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
       CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
     break;
   }
-
+    
   case Intrinsic::get_dynamic_area_offset:
     errs() << "WARNING: this target does not support the custom llvm.get."
               "dynamic.area.offset.  It is being lowered to a constant 0\n";
@@ -456,7 +459,6 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   }
 
   case Intrinsic::dbg_declare:
-  case Intrinsic::dbg_label:
     break;    // Simply strip out debugging intrinsics
 
   case Intrinsic::eh_typeid_for:
@@ -473,7 +475,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::assume:
   case Intrinsic::var_annotation:
     break;   // Strip out these intrinsics
-
+ 
   case Intrinsic::memcpy: {
     Type *IntPtr = DL.getIntPtrType(Context);
     Value *Size = Builder.CreateIntCast(CI->getArgOperand(2), IntPtr,

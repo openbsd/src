@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_utl.c,v 1.37 2019/04/16 19:42:20 tb Exp $ */
+/* $OpenBSD: v3_utl.c,v 1.27 2018/03/20 16:16:59 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -66,7 +66,6 @@
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 
-char *bn_to_string(const BIGNUM *bn);
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char * const *a, const char * const *b);
 static STACK_OF(OPENSSL_STRING) *get_email(X509_NAME *name,
@@ -79,42 +78,35 @@ static int ipv6_from_asc(unsigned char *v6, const char *in);
 static int ipv6_cb(const char *elem, int len, void *usr);
 static int ipv6_hex(unsigned char *out, const char *in, int inlen);
 
-/* Add a CONF_VALUE name-value pair to stack. */
+/* Add a CONF_VALUE name value pair to stack */
+
 int
 X509V3_add_value(const char *name, const char *value,
     STACK_OF(CONF_VALUE) **extlist)
 {
 	CONF_VALUE *vtmp = NULL;
-	STACK_OF(CONF_VALUE) *free_exts = NULL;
+	char *tname = NULL, *tvalue = NULL;
 
-	if ((vtmp = calloc(1, sizeof(CONF_VALUE))) == NULL)
+	if (name && !(tname = strdup(name)))
 		goto err;
-	if (name != NULL) {
-		if ((vtmp->name = strdup(name)) == NULL)
-			goto err;
-	}
-	if (value != NULL) {
-		if ((vtmp->value = strdup(value)) == NULL)
-			goto err;
-	}
-
-	if (*extlist == NULL) {
-		if ((free_exts = *extlist = sk_CONF_VALUE_new_null()) == NULL)
-			goto err;
-	}
-
+	if (value && !(tvalue = strdup(value)))
+		goto err;
+	if (!(vtmp = malloc(sizeof(CONF_VALUE))))
+		goto err;
+	if (!*extlist && !(*extlist = sk_CONF_VALUE_new_null()))
+		goto err;
+	vtmp->section = NULL;
+	vtmp->name = tname;
+	vtmp->value = tvalue;
 	if (!sk_CONF_VALUE_push(*extlist, vtmp))
 		goto err;
-
 	return 1;
 
- err:
+err:
 	X509V3error(ERR_R_MALLOC_FAILURE);
-	X509V3_conf_free(vtmp);
-	if (free_exts != NULL) {
-		sk_CONF_VALUE_free(*extlist);
-		*extlist = NULL;
-	}
+	free(vtmp);
+	free(tname);
+	free(tvalue);
 	return 0;
 }
 
@@ -148,7 +140,7 @@ X509V3_add_value_bool(const char *name, int asn1_bool,
 }
 
 int
-X509V3_add_value_bool_nf(const char *name, int asn1_bool,
+X509V3_add_value_bool_nf(char *name, int asn1_bool,
     STACK_OF(CONF_VALUE) **extlist)
 {
 	if (asn1_bool)
@@ -156,65 +148,39 @@ X509V3_add_value_bool_nf(const char *name, int asn1_bool,
 	return 1;
 }
 
-char *
-bn_to_string(const BIGNUM *bn)
-{
-	const char *sign = "";
-	char *bnstr, *hex;
-	char *ret = NULL;
-
-	/* Only display small numbers in decimal, as conversion is quadratic. */
-	if (BN_num_bits(bn) < 128)
-		return BN_bn2dec(bn);
-
-	if ((hex = bnstr = BN_bn2hex(bn)) == NULL)
-		goto err;
-
-	if (BN_is_negative(bn)) {
-		sign = "-";
-		hex++;
-	}
-
-	if (asprintf(&ret, "%s0x%s", sign, hex) == -1)
-		ret = NULL;
-
- err:
-	free(bnstr);
-	return ret;
-}
 
 char *
-i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *a)
+i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, ASN1_ENUMERATED *a)
 {
-	BIGNUM *bntmp;
+	BIGNUM *bntmp = NULL;
 	char *strtmp = NULL;
 
-	if (a == NULL)
+	if (!a)
 		return NULL;
-	if ((bntmp = ASN1_ENUMERATED_to_BN(a, NULL)) == NULL ||
-	    (strtmp = bn_to_string(bntmp)) == NULL)
+	if (!(bntmp = ASN1_ENUMERATED_to_BN(a, NULL)) ||
+	    !(strtmp = BN_bn2dec(bntmp)))
 		X509V3error(ERR_R_MALLOC_FAILURE);
 	BN_free(bntmp);
 	return strtmp;
 }
 
 char *
-i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, const ASN1_INTEGER *a)
+i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, ASN1_INTEGER *a)
 {
-	BIGNUM *bntmp;
+	BIGNUM *bntmp = NULL;
 	char *strtmp = NULL;
 
-	if (a == NULL)
+	if (!a)
 		return NULL;
-	if ((bntmp = ASN1_INTEGER_to_BN(a, NULL)) == NULL ||
-	    (strtmp = bn_to_string(bntmp)) == NULL)
+	if (!(bntmp = ASN1_INTEGER_to_BN(a, NULL)) ||
+	    !(strtmp = BN_bn2dec(bntmp)))
 		X509V3error(ERR_R_MALLOC_FAILURE);
 	BN_free(bntmp);
 	return strtmp;
 }
 
 ASN1_INTEGER *
-s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
+s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, char *value)
 {
 	BIGNUM *bn = NULL;
 	ASN1_INTEGER *aint;
@@ -264,7 +230,7 @@ s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
 }
 
 int
-X509V3_add_value_int(const char *name, const ASN1_INTEGER *aint,
+X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
     STACK_OF(CONF_VALUE) **extlist)
 {
 	char *strtmp;
@@ -280,7 +246,7 @@ X509V3_add_value_int(const char *name, const ASN1_INTEGER *aint,
 }
 
 int
-X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool)
+X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool)
 {
 	char *btmp;
 
@@ -298,14 +264,14 @@ X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool)
 		return 1;
 	}
 
- err:
+err:
 	X509V3error(X509V3_R_INVALID_BOOLEAN_STRING);
 	X509V3_conf_err(value);
 	return 0;
 }
 
 int
-X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint)
+X509V3_get_value_int(CONF_VALUE *value, ASN1_INTEGER **aint)
 {
 	ASN1_INTEGER *itmp;
 
@@ -401,7 +367,7 @@ X509V3_parse_list(const char *line)
 	free(linebuf);
 	return values;
 
- err:
+err:
 	free(linebuf);
 	sk_CONF_VALUE_pop_free(values, X509V3_conf_free);
 	return NULL;
@@ -509,12 +475,12 @@ string_to_hex(const char *str, long *len)
 
 	return hexbuf;
 
- err:
+err:
 	free(hexbuf);
 	X509V3error(ERR_R_MALLOC_FAILURE);
 	return NULL;
 
- badhex:
+badhex:
 	free(hexbuf);
 	X509V3error(X509V3_R_ILLEGAL_HEX_DIGIT);
 	return NULL;
@@ -545,8 +511,7 @@ sk_strcmp(const char * const *a, const char * const *b)
 	return strcmp(*a, *b);
 }
 
-STACK_OF(OPENSSL_STRING) *
-X509_get1_email(X509 *x)
+STACK_OF(OPENSSL_STRING) *X509_get1_email(X509 *x)
 {
 	GENERAL_NAMES *gens;
 	STACK_OF(OPENSSL_STRING) *ret;
@@ -557,8 +522,7 @@ X509_get1_email(X509 *x)
 	return ret;
 }
 
-STACK_OF(OPENSSL_STRING) *
-X509_get1_ocsp(X509 *x)
+STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(X509 *x)
 {
 	AUTHORITY_INFO_ACCESS *info;
 	STACK_OF(OPENSSL_STRING) *ret = NULL;
@@ -581,8 +545,7 @@ X509_get1_ocsp(X509 *x)
 	return ret;
 }
 
-STACK_OF(OPENSSL_STRING) *
-X509_REQ_get1_email(X509_REQ *x)
+STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(X509_REQ *x)
 {
 	GENERAL_NAMES *gens;
 	STACK_OF(X509_EXTENSION) *exts;
@@ -597,8 +560,8 @@ X509_REQ_get1_email(X509_REQ *x)
 }
 
 
-static STACK_OF(OPENSSL_STRING) *
-get_email(X509_NAME *name, GENERAL_NAMES *gens)
+static
+STACK_OF(OPENSSL_STRING) *get_email(X509_NAME *name, GENERAL_NAMES *gens)
 {
 	STACK_OF(OPENSSL_STRING) *ret = NULL;
 	X509_NAME_ENTRY *ne;
@@ -665,13 +628,12 @@ X509_email_free(STACK_OF(OPENSSL_STRING) *sk)
 	sk_OPENSSL_STRING_pop_free(sk, str_free);
 }
 
-typedef int (*equal_fn)(const unsigned char *pattern, size_t pattern_len,
+typedef int (*equal_fn) (const unsigned char *pattern, size_t pattern_len,
     const unsigned char *subject, size_t subject_len, unsigned int flags);
 
 /* Skip pattern prefix to match "wildcard" subject */
-static void
-skip_prefix(const unsigned char **p, size_t *plen, const unsigned char *subject,
-    size_t subject_len, unsigned int flags)
+static void skip_prefix(const unsigned char **p, size_t *plen,
+    const unsigned char *subject, size_t subject_len, unsigned int flags)
 {
 	const unsigned char *pattern = *p;
 	size_t pattern_len = *plen;
@@ -709,9 +671,9 @@ skip_prefix(const unsigned char **p, size_t *plen, const unsigned char *subject,
  */
 
 /* Compare using strncasecmp */
-static int
-equal_nocase(const unsigned char *pattern, size_t pattern_len,
-    const unsigned char *subject, size_t subject_len, unsigned int flags)
+static int equal_nocase(const unsigned char *pattern, size_t pattern_len,
+    const unsigned char *subject, size_t subject_len,
+    unsigned int flags)
 {
 	if (memchr(pattern, '\0', pattern_len) != NULL)
 		return 0;
@@ -724,9 +686,9 @@ equal_nocase(const unsigned char *pattern, size_t pattern_len,
 }
 
 /* Compare using strncmp. */
-static int
-equal_case(const unsigned char *pattern, size_t pattern_len,
-    const unsigned char *subject, size_t subject_len, unsigned int flags)
+static int equal_case(const unsigned char *pattern, size_t pattern_len,
+    const unsigned char *subject, size_t subject_len,
+    unsigned int flags)
 {
 	if (memchr(pattern, 0, pattern_len) != NULL)
 		return 0;
@@ -742,9 +704,9 @@ equal_case(const unsigned char *pattern, size_t pattern_len,
  * RFC 5280, section 7.5, requires that only the domain is compared in a
  * case-insensitive manner.
  */
-static int
-equal_email(const unsigned char *a, size_t a_len, const unsigned char *b,
-    size_t b_len, unsigned int unused_flags)
+static int equal_email(const unsigned char *a, size_t a_len,
+    const unsigned char *b, size_t b_len,
+    unsigned int unused_flags)
 {
 	size_t pos = a_len;
 	if (a_len != b_len)
@@ -757,8 +719,7 @@ equal_email(const unsigned char *a, size_t a_len, const unsigned char *b,
 	while (pos > 0) {
 		pos--;
 		if (a[pos] == '@' || b[pos] == '@') {
-			if (!equal_nocase(a + pos, a_len - pos, b + pos,
-			    a_len - pos, 0))
+			if (!equal_nocase(a + pos, a_len - pos, b + pos, a_len - pos, 0))
 				return 0;
 			break;
 		}
@@ -772,8 +733,7 @@ equal_email(const unsigned char *a, size_t a_len, const unsigned char *b,
  * Compare the prefix and suffix with the subject, and check that the
  * characters in-between are valid.
  */
-static int
-wildcard_match(const unsigned char *prefix, size_t prefix_len,
+static int wildcard_match(const unsigned char *prefix, size_t prefix_len,
     const unsigned char *suffix, size_t suffix_len,
     const unsigned char *subject, size_t subject_len, unsigned int flags)
 {
@@ -828,8 +788,8 @@ wildcard_match(const unsigned char *prefix, size_t prefix_len,
 #define LABEL_HYPHEN    (1 << 2)
 #define LABEL_IDNA      (1 << 3)
 
-static const unsigned char *
-valid_star(const unsigned char *p, size_t len, unsigned int flags)
+static const unsigned char *valid_star(const unsigned char *p, size_t len,
+    unsigned int flags)
 {
 	const unsigned char *star = 0;
 	size_t i;
@@ -907,8 +867,7 @@ valid_star(const unsigned char *p, size_t len, unsigned int flags)
 }
 
 /* Compare using wildcards. */
-static int
-equal_wildcard(const unsigned char *pattern, size_t pattern_len,
+static int equal_wildcard(const unsigned char *pattern, size_t pattern_len,
     const unsigned char *subject, size_t subject_len, unsigned int flags)
 {
 	const unsigned char *star = NULL;
@@ -967,9 +926,8 @@ do_check_string(ASN1_STRING *a, int cmp_type, equal_fn equal,
 	return rv;
 }
 
-static int
-do_x509_check(X509 *x, const char *chk, size_t chklen, unsigned int flags,
-    int check_type, char **peername)
+static int do_x509_check(X509 *x, const char *chk, size_t chklen,
+    unsigned int flags, int check_type, char **peername)
 {
 	GENERAL_NAMES *gens = NULL;
 	X509_NAME *name = NULL;
@@ -1052,9 +1010,8 @@ do_x509_check(X509 *x, const char *chk, size_t chklen, unsigned int flags,
 	return 0;
 }
 
-int
-X509_check_host(X509 *x, const char *chk, size_t chklen, unsigned int flags,
-    char **peername)
+int X509_check_host(X509 *x, const char *chk, size_t chklen,
+    unsigned int flags, char **peername)
 {
 	if (chk == NULL)
 		return -2;
@@ -1065,8 +1022,8 @@ X509_check_host(X509 *x, const char *chk, size_t chklen, unsigned int flags,
 	return do_x509_check(x, chk, chklen, flags, GEN_DNS, peername);
 }
 
-int
-X509_check_email(X509 *x, const char *chk, size_t chklen, unsigned int flags)
+int X509_check_email(X509 *x, const char *chk, size_t chklen,
+    unsigned int flags)
 {
 	if (chk == NULL)
 		return -2;
@@ -1077,8 +1034,7 @@ X509_check_email(X509 *x, const char *chk, size_t chklen, unsigned int flags)
 	return do_x509_check(x, chk, chklen, flags, GEN_EMAIL, NULL);
 }
 
-int
-X509_check_ip(X509 *x, const unsigned char *chk, size_t chklen,
+int X509_check_ip(X509 *x, const unsigned char *chk, size_t chklen,
     unsigned int flags)
 {
 	if (chk == NULL)
@@ -1086,8 +1042,7 @@ X509_check_ip(X509 *x, const unsigned char *chk, size_t chklen,
 	return do_x509_check(x, (char *)chk, chklen, flags, GEN_IPADD, NULL);
 }
 
-int
-X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags)
+int X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags)
 {
 	unsigned char ipout[16];
 	size_t iplen;
@@ -1166,7 +1121,7 @@ a2i_IPADDRESS_NC(const char *ipasc)
 
 	return ret;
 
- err:
+err:
 	free(iptmp);
 	if (ret)
 		ASN1_OCTET_STRING_free(ret);
@@ -1229,7 +1184,7 @@ ipv6_from_asc(unsigned char *v6, const char *in)
 
 	/* Treat the IPv6 representation as a list of values
 	 * separated by ':'. The presence of a '::' will parse
-	 * as one, two or three zero length elements.
+ 	 * as one, two or three zero length elements.
 	 */
 	if (!CONF_parse_list(in, ':', 0, ipv6_cb, &v6stat))
 		return 0;

@@ -16,10 +16,10 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineTraceMetrics.h"
-#include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 using namespace llvm;
 
@@ -91,9 +91,9 @@ bool AArch64StorePairSuppress::shouldAddSTPToBlock(const MachineBasicBlock *BB) 
   if (SCDesc->isValid() && !SCDesc->isVariant()) {
     unsigned ResLenWithSTP = BBTrace.getResourceLength(None, SCDesc);
     if (ResLenWithSTP > ResLength) {
-      LLVM_DEBUG(dbgs() << "  Suppress STP in BB: " << BB->getNumber()
-                        << " resources " << ResLength << " -> " << ResLenWithSTP
-                        << "\n");
+      DEBUG(dbgs() << "  Suppress STP in BB: " << BB->getNumber()
+                   << " resources " << ResLength << " -> " << ResLenWithSTP
+                   << "\n");
       return false;
     }
   }
@@ -120,21 +120,21 @@ bool AArch64StorePairSuppress::isNarrowFPStore(const MachineInstr &MI) {
 }
 
 bool AArch64StorePairSuppress::runOnMachineFunction(MachineFunction &MF) {
-  if (skipFunction(MF.getFunction()))
+  if (skipFunction(*MF.getFunction()))
     return false;
 
   const TargetSubtargetInfo &ST = MF.getSubtarget();
   TII = static_cast<const AArch64InstrInfo *>(ST.getInstrInfo());
   TRI = ST.getRegisterInfo();
   MRI = &MF.getRegInfo();
-  SchedModel.init(&ST);
+  SchedModel.init(ST.getSchedModel(), &ST, TII);
   Traces = &getAnalysis<MachineTraceMetrics>();
   MinInstr = nullptr;
 
-  LLVM_DEBUG(dbgs() << "*** " << getPassName() << ": " << MF.getName() << '\n');
+  DEBUG(dbgs() << "*** " << getPassName() << ": " << MF.getName() << '\n');
 
   if (!SchedModel.hasInstrSchedModel()) {
-    LLVM_DEBUG(dbgs() << "  Skipping pass: no machine model present.\n");
+    DEBUG(dbgs() << "  Skipping pass: no machine model present.\n");
     return false;
   }
 
@@ -156,7 +156,7 @@ bool AArch64StorePairSuppress::runOnMachineFunction(MachineFunction &MF) {
           if (!SuppressSTP && shouldAddSTPToBlock(MI.getParent()))
             break;
           // Otherwise, continue unpairing the stores in this block.
-          LLVM_DEBUG(dbgs() << "Unpairing store " << MI << "\n");
+          DEBUG(dbgs() << "Unpairing store " << MI << "\n");
           SuppressSTP = true;
           TII->suppressLdStPair(MI);
         }

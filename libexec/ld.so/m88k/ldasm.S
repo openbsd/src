@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.29 2019/02/03 02:20:36 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.27 2017/09/03 00:14:07 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -44,15 +44,13 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
-#define	AUX_base	7
-#define	AUX_entry	9
-
 /*
  * ld.so entry point.
  * On entry: r31 points to the kernel argument struct (argv, argv, environ).
  * The environment pointers list is followed by an array of AuxInfo
  * structs filled by the kernel.
  */
+#define DL_DATA_SIZE	(4 * 16)	 /* 16 * sizeof(ELF_Addr) */
 ENTRY(_dl_start)
 	/*
 	 * Two nop because execution may skip up to two instructions.
@@ -68,12 +66,7 @@ ENTRY(_dl_start)
 	 * Get some room for the contiguous AUX pointers array.
 	  */
 	or	%r30, %r31, 0
-	subu	%r31, %r31, (4 * (AUX_entry + 1))
-
-	/*
-	 * Align the stack to a 16 byte boundary.
-	 */
-	clr	%r31, %r31, 4<0>
+	subu	%r31, %r31, DL_DATA_SIZE
 
 	/*
 	 * Invoke _dl_boot_bind
@@ -90,12 +83,12 @@ ENTRY(_dl_start)
 	ld	%r2,  %r30, 0		| argc
 	addu	%r6,  %r30, 4 + 4
 	lda	%r3,  %r6[%r2]		| envp
-	ld	%r4,  %r31, 4 * AUX_base| ldoff
+	ld	%r4,  %r31, 4 * 7	| ldoff
 	or	%r5,  %r31, 0		| array base
 	bsr.n	_dl_boot
 	 addu	%r2,  %r30, 4		| argv
 
-	or	%r31, %r30, 0
+	addu	%r31, %r31, DL_DATA_SIZE
 	bsr	1f			| the following instruction is skipped
 	bcnd	eq0, %r0, _dl_dtors	| but gives us the pc-relative offset
 1:	ld.h	%r5, %r1, 2		| fetch branch offset (low 16 bits)
@@ -157,8 +150,13 @@ ENTRY(_dl_bind_start)
 	 addu	%r31, %r31, REG_SIZE + PLT_FRAME_SIZE
 END(_dl_bind_start)
 
+ENTRY(_dl_cerror)
+	jmp.n	%r1
+	 subu	%r2, %r0, %r2
+END(_dl_cerror)
+
 ENTRY(_dl_cacheflush)
 	tb0	0, %r0, 451
-	or	%r0, %r0, %r0				| never hit
+	br	_dl_cerror		| never hit
 	jmp	%r1
 END(_dl_cacheflush)

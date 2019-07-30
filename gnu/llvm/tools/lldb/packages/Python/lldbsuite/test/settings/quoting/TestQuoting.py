@@ -79,25 +79,19 @@ class SettingsCommandTestCase(TestBase):
         to stdout. Compare the stdout with args_out."""
         self.buildDefault()
 
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        local_outfile = self.getBuildArtifact("output.txt")
-        if lldb.remote_platform:
-            remote_outfile = "output.txt" # Relative to platform's PWD
-        else:
-            remote_outfile = local_outfile
-
-        self.runCmd("process launch -- %s %s" %(remote_outfile, args_in))
+        self.runCmd("process launch -o stdout.txt -- " + args_in)
 
         if lldb.remote_platform:
-            src_file_spec = lldb.SBFileSpec(remote_outfile, False)
-            dst_file_spec = lldb.SBFileSpec(local_outfile, True)
+            src_file_spec = lldb.SBFileSpec('stdout.txt', False)
+            dst_file_spec = lldb.SBFileSpec('stdout.txt', True)
             lldb.remote_platform.Get(src_file_spec, dst_file_spec)
 
-        with open(local_outfile, 'r') as f:
+        with open('stdout.txt', 'r') as f:
             output = f.read()
 
-        self.RemoveTempFile(local_outfile)
+        self.RemoveTempFile("stdout.txt")
 
         self.assertEqual(output, args_out)

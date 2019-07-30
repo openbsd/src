@@ -83,7 +83,7 @@ struct rbtree_type;
 /** how nice is a server without further information, in msec 
  * Equals rtt initial timeout value.
  */
-extern int UNKNOWN_SERVER_NICENESS;
+#define UNKNOWN_SERVER_NICENESS 376
 /** maximum timeout before a host is deemed unsuitable, in msec. 
  * After host_ttl this will be timed out and the host will be tried again. 
  * Equals RTT_MAX_TIMEOUT
@@ -371,9 +371,6 @@ struct iter_qstate {
 	/** QNAME minimisation state, RFC7816 */
 	enum minimisation_state minimisation_state;
 
-	/** State for capsfail: QNAME minimisation state for comparisons. */
-	enum minimisation_state caps_minimisation_state;
-
 	/**
 	 * The query info that is sent upstream. Will be a subset of qchase
 	 * when qname minimisation is enabled.
@@ -390,11 +387,6 @@ struct iter_qstate {
 	 * Count number of time-outs. Used to prevent resolving failures when
 	 * the QNAME minimisation QTYPE is blocked. */
 	int minimise_timeout_count;
-
-	/** True if the current response is from auth_zone */
-	int auth_zone_response;
-	/** True if the auth_zones should not be consulted for the query */
-	int auth_zone_avoid;
 };
 
 /**

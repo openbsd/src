@@ -107,6 +107,7 @@ void tools::SHAVE::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(
         Args.MakeArgString(std::string("-i:") + A->getValue(0)));
   }
+  CmdArgs.push_back("-elf"); // Output format.
   CmdArgs.push_back(II.getFilename());
   CmdArgs.push_back(
       Args.MakeArgString(std::string("-o:") + Output.getFilename()));
@@ -198,7 +199,7 @@ void tools::Myriad::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   std::string Exec =
-      Args.MakeArgString(TC.GetProgramPath("sparc-myriad-rtems-ld"));
+      Args.MakeArgString(TC.GetProgramPath("sparc-myriad-elf-ld"));
   C.addCommand(llvm::make_unique<Command>(JA, *this, Args.MakeArgString(Exec),
                                           CmdArgs, Inputs));
 }
@@ -217,11 +218,10 @@ MyriadToolChain::MyriadToolChain(const Driver &D, const llvm::Triple &Triple,
     D.Diag(clang::diag::err_target_unsupported_arch)
         << Triple.getArchName() << "myriad";
     LLVM_FALLTHROUGH;
-  case llvm::Triple::shave:
-    return;
   case llvm::Triple::sparc:
   case llvm::Triple::sparcel:
-    GCCInstallation.init(Triple, Args, {"sparc-myriad-rtems"});
+  case llvm::Triple::shave:
+    GCCInstallation.init(Triple, Args, {"sparc-myriad-elf"});
   }
 
   if (GCCInstallation.isValid()) {
@@ -231,7 +231,7 @@ MyriadToolChain::MyriadToolChain(const Driver &D, const llvm::Triple &Triple,
     addPathIfExists(D, CompilerSupportDir, getFilePaths());
   }
   // libstd++ and libc++ must both be found in this one place.
-  addPathIfExists(D, D.Dir + "/../sparc-myriad-rtems/lib", getFilePaths());
+  addPathIfExists(D, D.Dir + "/../sparc-myriad-elf/lib", getFilePaths());
 }
 
 MyriadToolChain::~MyriadToolChain() {}
@@ -242,11 +242,9 @@ void MyriadToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     addSystemInclude(DriverArgs, CC1Args, getDriver().SysRoot + "/include");
 }
 
-void MyriadToolChain::addLibCxxIncludePaths(
-    const llvm::opt::ArgList &DriverArgs,
-    llvm::opt::ArgStringList &CC1Args) const {
+std::string MyriadToolChain::findLibCxxIncludePath() const {
   std::string Path(getDriver().getInstalledDir());
-  addSystemInclude(DriverArgs, CC1Args, Path + "/../include/c++/v1");
+  return Path + "/../include/c++/v1";
 }
 
 void MyriadToolChain::addLibStdCxxIncludePaths(

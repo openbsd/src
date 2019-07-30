@@ -1,7 +1,21 @@
 # Test against short bitwise vectors from Jim Gillogly and Francois Grieu
 
 use strict;
-use Digest::SHA;
+
+my $MODULE;
+
+BEGIN {
+	$MODULE = (-d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
+	eval "require $MODULE" || die $@;
+	$MODULE->import(qw());
+}
+
+BEGIN {
+	if ($ENV{PERL_CORE}) {
+		chdir 't' if -d 't';
+		@INC = '../lib';
+	}
+}
 
 #	SHA-1 Test Vectors
 #
@@ -43,7 +57,7 @@ my $numtests = scalar(@vecs) / 4;
 print "1..$numtests\n";
 
 my $testnum = 1;
-my $sha = Digest::SHA->new(1);
+my $sha = $MODULE->new(1);
 
 while (@vecs) {
 	my $frag = shift @vecs;

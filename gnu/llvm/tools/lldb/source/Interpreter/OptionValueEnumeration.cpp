@@ -109,21 +109,23 @@ lldb::OptionValueSP OptionValueEnumeration::DeepCopy() const {
   return OptionValueSP(new OptionValueEnumeration(*this));
 }
 
-size_t OptionValueEnumeration::AutoComplete(CommandInterpreter &interpreter,
-                                            CompletionRequest &request) {
-  request.SetWordComplete(false);
+size_t OptionValueEnumeration::AutoComplete(
+    CommandInterpreter &interpreter, llvm::StringRef s, int match_start_point,
+    int max_return_elements, bool &word_complete, StringList &matches) {
+  word_complete = false;
+  matches.Clear();
 
   const uint32_t num_enumerators = m_enumerations.GetSize();
-  if (!request.GetCursorArgumentPrefix().empty()) {
+  if (!s.empty()) {
     for (size_t i = 0; i < num_enumerators; ++i) {
       llvm::StringRef name = m_enumerations.GetCStringAtIndex(i).GetStringRef();
-      if (name.startswith(request.GetCursorArgumentPrefix()))
-        request.AddCompletion(name);
+      if (name.startswith(s))
+        matches.AppendString(name);
     }
   } else {
     // only suggest "true" or "false" by default
     for (size_t i = 0; i < num_enumerators; ++i)
-      request.AddCompletion(m_enumerations.GetCStringAtIndex(i).GetStringRef());
+      matches.AppendString(m_enumerations.GetCStringAtIndex(i).GetStringRef());
   }
-  return request.GetNumberOfMatches();
+  return matches.GetSize();
 }

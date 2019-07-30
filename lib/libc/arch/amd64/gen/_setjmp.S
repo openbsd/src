@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.4 2019/03/30 12:37:59 mortimer Exp $	*/
+/*	$OpenBSD: _setjmp.S,v 1.3 2016/05/12 15:46:03 deraadt Exp $	*/
 /*	$NetBSD: _setjmp.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
  */
 
 ENTRY(_setjmp)
-	RETGUARD_SETUP(_setjmp, r10)
 	movq    (%rsp),%r11
 	leaq	__jmpxor(%rip),%rcx
 	movq    %rbx,(_JB_RBX * 8)(%rdi)
@@ -73,19 +72,11 @@ ENTRY(_setjmp)
 	xorq	%rcx,%rcx
 
 	xorq	%rax,%rax
-	RETGUARD_CHECK(_setjmp, r10)
 	ret
 END(_setjmp)
 
 ENTRY(_longjmp)
 	leaq	 __jmpxor(%rip),%rcx
-	movq    (_JB_RSP * 8)(%rdi),%r11
-	xorq	(1*8)(%rcx),%r11
-	movq	%r11,%rsp
-	movq    (_JB_PC  * 8)(%rdi),%r11
-	xorq	(2*8)(%rcx),%r11
-	movq	%r11,0(%rsp)
-	RETGUARD_SETUP(_longjmp, r10)
 	movq    (_JB_RBX * 8)(%rdi),%rbx
 	movq    (_JB_RBP * 8)(%rdi),%r11
 	xorq    (0*8)(%rcx),%r11
@@ -94,12 +85,17 @@ ENTRY(_longjmp)
 	movq    (_JB_R13 * 8)(%rdi),%r13
 	movq    (_JB_R14 * 8)(%rdi),%r14
 	movq    (_JB_R15 * 8)(%rdi),%r15
+	movq    (_JB_RSP * 8)(%rdi),%r11
+	xorq	(1*8)(%rcx),%r11
+	movq	%r11,%rsp
+	movq    (_JB_PC  * 8)(%rdi),%r11
+	xorq	(2*8)(%rcx),%r11
 	xorq	%rcx,%rcx
 
 	movl	%esi,%eax
 	testl	%eax,%eax
 	jnz	1f
 	incl	%eax
-1:	RETGUARD_CHECK(_longjmp, r10)
+1:	movq	%r11,0(%rsp)
 	ret
 END(_longjmp)

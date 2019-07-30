@@ -1,3 +1,2 @@
-# Don't forget to give libc++ the same type of bump!
-major=1
+major=0
 minor=0

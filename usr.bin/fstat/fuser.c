@@ -1,7 +1,7 @@
-/*	$OpenBSD: fuser.c,v 1.8 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: fuser.c,v 1.6 2015/01/16 06:40:08 deraadt Exp $	*/
 
 /*
- * Copyright (c) 2009 Todd C. Miller <millert@openbsd.org>
+ * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -133,7 +133,7 @@ fuser_check(struct kinfo_file *kf)
 static void
 printfu(struct fuser *fu)
 {
-	const char *name;
+	struct passwd *pwd;
 
 	printf("%d", fu->pid);
 	fflush(stdout);
@@ -148,11 +148,11 @@ printfu(struct fuser *fu)
 		fprintf(stderr, "t");
 
 	if (uflg) {
-		name = user_from_uid(fu->uid, 1);
-		if (name != NULL)
-			fprintf(stderr, "(%s)", name);
+		pwd = getpwuid(fu->uid);
+		if (pwd != NULL)
+			fprintf(stderr, "(%s)", pwd->pw_name);
 		else
-			fprintf(stderr, "(%u)", fu->uid);
+			fprintf(stderr, "(%d)", fu->uid);
 	}
 
 	putchar(' ');

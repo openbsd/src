@@ -10,8 +10,11 @@
 #include "llvm/DebugInfo/PDB/Native/SymbolStream.h"
 
 #include "llvm/DebugInfo/CodeView/CodeView.h"
-#include "llvm/DebugInfo/CodeView/SymbolRecord.h"
+#include "llvm/DebugInfo/CodeView/TypeRecord.h"
 #include "llvm/DebugInfo/MSF/MappedBlockStream.h"
+#include "llvm/DebugInfo/PDB/Native/PDBFile.h"
+#include "llvm/DebugInfo/PDB/Native/RawConstants.h"
+#include "llvm/DebugInfo/PDB/Native/RawError.h"
 #include "llvm/Support/BinaryStreamReader.h"
 #include "llvm/Support/Endian.h"
 
@@ -40,7 +43,3 @@ SymbolStream::getSymbols(bool *HadError) const {
 }
 
 Error SymbolStream::commit() { return Error::success(); }
-
-codeview::CVSymbol SymbolStream::readRecord(uint32_t Offset) const {
-  return *SymbolRecords.at(Offset);
-}

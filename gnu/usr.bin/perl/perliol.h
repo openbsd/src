@@ -1,5 +1,5 @@
-#ifndef PERLIOL_H_
-#define PERLIOL_H_
+#ifndef _PERLIOL_H
+#define _PERLIOL_H
 
 typedef struct {
     PerlIO_funcs *funcs;
@@ -286,7 +286,7 @@ PERL_CALLCONV SSize_t   PerlIOUnix_write(pTHX_ PerlIO *f, const void *vbuf, Size
 /* Utf8 */
 PERL_CALLCONV IV        PerlIOUtf8_pushed(pTHX_ PerlIO *f, const char *mode, SV *arg, PerlIO_funcs *tab);
 
-#endif				/* PERLIOL_H_ */
+#endif				/* _PERLIOL_H */
 
 /*
  * ex: set ts=8 sts=4 sw=4 et:

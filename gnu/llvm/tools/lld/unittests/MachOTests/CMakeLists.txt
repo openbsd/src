@@ -7,7 +7,6 @@ add_lld_unittest(lldMachOTests
   )
 
 target_link_libraries(lldMachOTests
-  PRIVATE
   lldDriver
   lldMachO
   lldYAML

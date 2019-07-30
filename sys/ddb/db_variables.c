@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_variables.c,v 1.20 2019/02/15 18:34:59 anton Exp $	*/
+/*	$OpenBSD: db_variables.c,v 1.18 2016/01/25 14:30:30 mpi Exp $	*/
 /*	$NetBSD: db_variables.c,v 1.8 1996/02/05 01:57:19 christos Exp $	*/
 
 /*
@@ -163,8 +163,9 @@ db_var_rw_int(struct db_variable *var, db_expr_t *expr, int mode)
 {
 
 	if (mode == DB_VAR_SET)
-		*(int *)var->valuep = *expr;
+		*var->valuep = *(int *)expr;
 	else
 		*expr = *(int *)var->valuep;
 	return (0);
 }
+

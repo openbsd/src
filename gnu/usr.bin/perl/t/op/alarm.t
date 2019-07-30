@@ -2,14 +2,15 @@
 
 BEGIN {
     chdir 't' if -d 't';
+    @INC = '../lib';
     require './test.pl';
-    set_up_inc('../lib');
 }
 
-
-use Config;
-if ( !$Config{d_alarm} ) {
-    skip_all("alarm() not implemented on this platform");
+BEGIN {
+    use Config;
+    if( !$Config{d_alarm} ) {
+        skip_all("alarm() not implemented on this platform");
+    }
 }
 
 plan tests => 5;

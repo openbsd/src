@@ -41,7 +41,7 @@ BEGIN {
   "172.29.249.249" => 0,
 
   # Hopefully all these web ports are open
-  "www.google.com." => 1,
+  "www.geocities.com." => 1,
   "www.freeservers.com." => 1,
   "yahoo.com." => 1,
   "www.yahoo.com." => 1,
@@ -69,11 +69,11 @@ $SIG{ALRM} = sub {
 
 my $p = new Net::Ping "syn", 10;
 
-isa_ok($p, 'Net::Ping', 'new(syn, 10) worked');
+isa_ok($p, 'Net::Ping', 'new() worked');
 
 # Change to use the more common web port.
 # (Make sure getservbyname works in scalar context.)
-cmp_ok(($p->{port_num} = getservbyname("http", "tcp")), '>', 0, 'valid port');
+cmp_ok(($p->{port_num} = getservbyname("http", "tcp")), '>', 0, 'vaid port');
 
 foreach my $host (keys %webs) {
   # ping() does dns resolution and
@@ -86,17 +86,9 @@ Alarm(20);
 foreach my $host (sort keys %webs) {
   my $on = $p->ack($host);
   if ($on) {
-    if ($webs{$host}) {
-      is($webs{$host}, 1, "ack: supposed to be up http://$host/ [" . ($p->{bad}->{$host} || "") . "]");
-    } else {
-      ok("TODO ack: supposed to be up: http://$host/ [" . ($p->{bad}->{$host} || "") . "]");
-    }
-  } else {
-    if (!$webs{$host}) {
-      is($webs{$host}, 0, "supposed to be down: http://$host/ [" . ($p->{bad}->{$host} || "") . "]");
-    } else {
-      ok("TODO ack: supposed to be down: http://$host/ [" . ($p->{bad}->{$host} || "") . "]");
-    }
+    is($webs{$host}, 1, "supposed to be up: http://$host/ [" . ($p->{bad}->{$host} || "") . "]");
+  } else {   
+    is($webs{$host}, 0, "supposed to be down: http://$host/ [" . ($p->{bad}->{$host} || "") . "]");
   }
   delete $webs{$host};
   Alarm(20);

@@ -98,14 +98,13 @@ SKIP: {
 SKIP: {
     skip "Fails in 5.15.5 and below (perl bug)", 1 if $] < 5.0150051;
     use Config;
-    skip "no Hash::Util", 1 unless $Config{extensions} =~ /\bHash::Util\b/;
+    skip "no B", 1 unless $Config{extensions} =~ /\bB\b/;
     use warnings; local $^W = 1; no warnings 'once';
     my $w;
     local $SIG{__WARN__} = sub { $w .= shift };
-    # any old XS sub from any old module which uses Exporter
-    use autouse 'Hash::Util' => "all_keys";
-    *Hash::Util::all_keys = \&all_keys;
-    require Hash::Util;
+    use autouse B => "sv_undef";
+    *B::sv_undef = \&sv_undef;
+    require B;
     is $w, undef,
       'no redefinition warning when clobbering autouse stub with new XSUB';
 }

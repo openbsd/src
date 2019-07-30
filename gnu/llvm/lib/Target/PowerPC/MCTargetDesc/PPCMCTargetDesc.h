@@ -19,7 +19,6 @@
 
 #include "llvm/Support/MathExtras.h"
 #include <cstdint>
-#include <memory>
 
 namespace llvm {
 
@@ -27,9 +26,8 @@ class MCAsmBackend;
 class MCCodeEmitter;
 class MCContext;
 class MCInstrInfo;
-class MCObjectTargetWriter;
+class MCObjectWriter;
 class MCRegisterInfo;
-class MCSubtargetInfo;
 class MCTargetOptions;
 class Target;
 class Triple;
@@ -44,16 +42,17 @@ MCCodeEmitter *createPPCMCCodeEmitter(const MCInstrInfo &MCII,
                                       const MCRegisterInfo &MRI,
                                       MCContext &Ctx);
 
-MCAsmBackend *createPPCAsmBackend(const Target &T, const MCSubtargetInfo &STI,
-                                  const MCRegisterInfo &MRI,
+MCAsmBackend *createPPCAsmBackend(const Target &T, const MCRegisterInfo &MRI,
+                                  const Triple &TT, StringRef CPU,
                                   const MCTargetOptions &Options);
 
 /// Construct an PPC ELF object writer.
-std::unique_ptr<MCObjectTargetWriter> createPPCELFObjectWriter(bool Is64Bit,
-                                                               uint8_t OSABI);
+MCObjectWriter *createPPCELFObjectWriter(raw_pwrite_stream &OS, bool Is64Bit,
+                                         bool IsLittleEndian, uint8_t OSABI);
 /// Construct a PPC Mach-O object writer.
-std::unique_ptr<MCObjectTargetWriter>
-createPPCMachObjectWriter(bool Is64Bit, uint32_t CPUType, uint32_t CPUSubtype);
+MCObjectWriter *createPPCMachObjectWriter(raw_pwrite_stream &OS, bool Is64Bit,
+                                          uint32_t CPUType,
+                                          uint32_t CPUSubtype);
 
 /// Returns true iff Val consists of one contiguous run of 1s with any number of
 /// 0s on either side.  The 1s are allowed to wrap from LSB to MSB, so
@@ -98,7 +97,6 @@ static inline bool isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
 // Defines symbolic names for the PowerPC instructions.
 //
 #define GET_INSTRINFO_ENUM
-#define GET_INSTRINFO_SCHED_ENUM
 #include "PPCGenInstrInfo.inc"
 
 #define GET_SUBTARGETINFO_ENUM

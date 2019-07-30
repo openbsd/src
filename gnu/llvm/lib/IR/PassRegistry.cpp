@@ -14,12 +14,8 @@
 
 #include "llvm/PassRegistry.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/PassInfo.h"
 #include "llvm/PassSupport.h"
 #include "llvm/Support/ManagedStatic.h"
-#include <cassert>
-#include <memory>
-#include <utility>
 
 using namespace llvm;
 
@@ -37,7 +33,7 @@ PassRegistry *PassRegistry::getPassRegistry() {
 // Accessors
 //
 
-PassRegistry::~PassRegistry() = default;
+PassRegistry::~PassRegistry() {}
 
 const PassInfo *PassRegistry::getPassInfo(const void *TI) const {
   sys::SmartScopedReader<true> Guard(Lock);
@@ -124,6 +120,6 @@ void PassRegistry::addRegistrationListener(PassRegistrationListener *L) {
 void PassRegistry::removeRegistrationListener(PassRegistrationListener *L) {
   sys::SmartScopedWriter<true> Guard(Lock);
 
-  auto I = llvm::find(Listeners, L);
+  auto I = find(Listeners, L);
   Listeners.erase(I);
 }

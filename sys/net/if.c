@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.585 2019/06/15 17:05:21 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.549 2018/03/20 08:58:19 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -84,7 +84,6 @@
 #include <sys/domain.h>
 #include <sys/task.h>
 #include <sys/atomic.h>
-#include <sys/percpu.h>
 #include <sys/proc.h>
 
 #include <dev/rndvar.h>
@@ -130,12 +129,9 @@
 #include <net/pfvar.h>
 #endif
 
-#include <sys/device.h>
-
 void	if_attachsetup(struct ifnet *);
 void	if_attachdomain(struct ifnet *);
 void	if_attach_common(struct ifnet *);
-int	if_createrdomain(int, struct ifnet *);
 int	if_setrdomain(struct ifnet *, int);
 void	if_slowtimo(void *);
 
@@ -144,14 +140,11 @@ int	if_detached_ioctl(struct ifnet *, u_long, caddr_t);
 
 int	ifioctl_get(u_long, caddr_t);
 int	ifconf(caddr_t);
-static int
-	if_sffpage_check(const caddr_t);
 
 int	if_getgroup(caddr_t, struct ifnet *);
 int	if_getgroupmembers(caddr_t);
 int	if_getgroupattribs(caddr_t);
 int	if_setgroupattribs(caddr_t);
-int	if_getgrouplist(caddr_t);
 
 void	if_linkstate(struct ifnet *);
 void	if_linkstate_task(void *);
@@ -224,7 +217,6 @@ void	if_idxmap_insert(struct ifnet *);
 void	if_idxmap_remove(struct ifnet *);
 
 TAILQ_HEAD(, ifg_group) ifg_head = TAILQ_HEAD_INITIALIZER(ifg_head);
-
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
 
@@ -469,7 +461,8 @@ if_alloc_sadl(struct ifnet *ifp)
 	 * now.  This is useful for interfaces that can change
 	 * link types, and thus switch link names often.
 	 */
-	if_free_sadl(ifp);
+	if (ifp->if_sadl != NULL)
+		if_free_sadl(ifp);
 
 	namelen = strlen(ifp->if_xname);
 	masklen = offsetof(struct sockaddr_dl, sdl_data[0]) + namelen;
@@ -497,10 +490,7 @@ if_alloc_sadl(struct ifnet *ifp)
 void
 if_free_sadl(struct ifnet *ifp)
 {
-	if (ifp->if_sadl == NULL)
-		return;
-
-	free(ifp->if_sadl, M_IFADDR, ifp->if_sadl->sdl_len);
+	free(ifp->if_sadl, M_IFADDR, 0);
 	ifp->if_sadl = NULL;
 }
 
@@ -617,8 +607,6 @@ if_attach_common(struct ifnet *ifp)
 	ifp->if_snd.ifq_ifqs[0] = &ifp->if_snd;
 	ifp->if_ifqs = ifp->if_snd.ifq_ifqs;
 	ifp->if_nifqs = 1;
-	if (ifp->if_txmit == 0)
-		ifp->if_txmit = IF_TXMIT_DEFAULT;
 
 	ifiq_init(&ifp->if_rcv, ifp, 0);
 
@@ -638,8 +626,6 @@ if_attach_common(struct ifnet *ifp)
 
 	if (ifp->if_rtrequest == NULL)
 		ifp->if_rtrequest = if_rtrequest_dummy;
-	if (ifp->if_enqueue == NULL)
-		ifp->if_enqueue = if_enqueue_ifq;
 	ifp->if_llprio = IFQ_DEFPRIO;
 
 	SRPL_INIT(&ifp->if_inputs);
@@ -691,16 +677,15 @@ if_qstart_compat(struct ifqueue *ifq)
 int
 if_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
-#if NPF > 0
-	if (m->m_pkthdr.pf.delay > 0)
-		return (pf_delay_pkt(m, ifp->if_index));
-#endif
+	unsigned int idx;
+	struct ifqueue *ifq;
+	int error;
 
 #if NBRIDGE > 0
-	if (ifp->if_bridgeidx && (m->m_flags & M_PROTO1) == 0) {
-		int error;
-
-		error = bridge_enqueue(ifp, m);
+	if (ifp->if_bridgeport && (m->m_flags & M_PROTO1) == 0) {
+		KERNEL_LOCK();
+		error = bridge_output(ifp, m, NULL, NULL);
+		KERNEL_UNLOCK();
 		return (error);
 	}
 #endif
@@ -709,26 +694,12 @@ if_enqueue(struct ifnet *ifp, struct mbuf *m)
 	pf_pkt_addr_changed(m);
 #endif	/* NPF > 0 */
 
-	return ((*ifp->if_enqueue)(ifp, m));
-}
-
-int
-if_enqueue_ifq(struct ifnet *ifp, struct mbuf *m)
-{
-	struct ifqueue *ifq = &ifp->if_snd;
-	int error;
-
-	if (ifp->if_nifqs > 1) {
-		unsigned int idx;
-
-		/*
-		 * use the operations on the first ifq to pick which of
-		 * the array gets this mbuf.
-		 */
-
-		idx = ifq_idx(&ifp->if_snd, ifp->if_nifqs, m);
-		ifq = ifp->if_ifqs[idx];
-	}
+	/*
+	 * use the operations on the first ifq to pick which of the array
+	 * gets this mbuf.
+	 */
+	idx = ifq_idx(&ifp->if_snd, ifp->if_nifqs, m);
+	ifq = ifp->if_ifqs[idx];
 
 	error = ifq_enqueue(ifq, m);
 	if (error)
@@ -742,7 +713,7 @@ if_enqueue_ifq(struct ifnet *ifp, struct mbuf *m)
 void
 if_input(struct ifnet *ifp, struct mbuf_list *ml)
 {
-	ifiq_input(&ifp->if_rcv, ml);
+	ifiq_input(&ifp->if_rcv, ml, 2048);
 }
 
 int
@@ -898,36 +869,19 @@ if_ih_remove(struct ifnet *ifp, int (*input)(struct ifnet *, struct mbuf *,
 	}
 }
 
-static void
-if_ih_input(struct ifnet *ifp, struct mbuf *m)
-{
-	struct ifih *ifih;
-	struct srp_ref sr;
-
-	/*
-	 * Pass this mbuf to all input handlers of its
-	 * interface until it is consumed.
-	 */
-	SRPL_FOREACH(ifih, &sr, &ifp->if_inputs, ifih_next) {
-		if ((*ifih->ifih_input)(ifp, m, ifih->ifih_cookie))
-			break;
-	}
-	SRPL_LEAVE(&sr);
-
-	if (ifih == NULL)
-		m_freem(m);
-}
-
 void
 if_input_process(struct ifnet *ifp, struct mbuf_list *ml)
 {
 	struct mbuf *m;
+	struct ifih *ifih;
+	struct srp_ref sr;
+	int s;
 
 	if (ml_empty(ml))
 		return;
 
 	if (!ISSET(ifp->if_xflags, IFXF_CLONED))
-		enqueue_randomness(ml_len(ml));
+		add_net_randomness(ml_len(ml));
 
 	/*
 	 * We grab the NET_LOCK() before processing any packet to
@@ -942,35 +896,23 @@ if_input_process(struct ifnet *ifp, struct mbuf_list *ml)
 	 * lists.
 	 */
 	NET_RLOCK();
-	while ((m = ml_dequeue(ml)) != NULL)
-		if_ih_input(ifp, m);
-	NET_RUNLOCK();
-}
-
-void
-if_vinput(struct ifnet *ifp, struct mbuf *m)
-{
-#if NBPFILTER > 0
-	caddr_t if_bpf;
-#endif
-
-	m->m_pkthdr.ph_ifidx = ifp->if_index;
-	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
-
-	counters_pkt(ifp->if_counters,
-	    ifc_ipackets, ifc_ibytes, m->m_pkthdr.len);
-
-#if NBPFILTER > 0
-	if_bpf = ifp->if_bpf;
-	if (if_bpf) {
-		if (bpf_mtap_ether(if_bpf, m, BPF_DIRECTION_OUT)) {
-			m_freem(m);
-			return;
+	s = splnet();
+	while ((m = ml_dequeue(ml)) != NULL) {
+		/*
+		 * Pass this mbuf to all input handlers of its
+		 * interface until it is consumed.
+		 */
+		SRPL_FOREACH(ifih, &sr, &ifp->if_inputs, ifih_next) {
+			if ((*ifih->ifih_input)(ifp, m, ifih->ifih_cookie))
+				break;
 		}
-	}
-#endif
+		SRPL_LEAVE(&sr);
 
-	if_ih_input(ifp, m);
+		if (ifih == NULL)
+			m_freem(m);
+	}
+	splx(s);
+	NET_RUNLOCK();
 }
 
 void
@@ -978,14 +920,14 @@ if_netisr(void *unused)
 {
 	int n, t = 0;
 
-	NET_RLOCK();
+	NET_LOCK();
 
 	while ((n = netisr) != 0) {
 		/* Like sched_pause() but with a rwlock dance. */
 		if (curcpu()->ci_schedstate.spc_schedflags & SPCF_SHOULDYIELD) {
-			NET_RUNLOCK();
+			NET_UNLOCK();
 			yield();
-			NET_RLOCK();
+			NET_LOCK();
 		}
 
 		atomic_clearbits_int(&netisr, n);
@@ -1011,8 +953,11 @@ if_netisr(void *unused)
 		}
 #endif
 #if NBRIDGE > 0
-		if (n & (1 << NETISR_BRIDGE))
+		if (n & (1 << NETISR_BRIDGE)) {
+			KERNEL_LOCK();
 			bridgeintr();
+			KERNEL_UNLOCK();
+		}
 #endif
 #if NSWITCH > 0
 		if (n & (1 << NETISR_SWITCH)) {
@@ -1046,7 +991,7 @@ if_netisr(void *unused)
 	}
 #endif
 
-	NET_RUNLOCK();
+	NET_UNLOCK();
 }
 
 void
@@ -1136,9 +1081,9 @@ if_detach(struct ifnet *ifp)
 		}
 	}
 
-	free(ifp->if_addrhooks, M_TEMP, sizeof(*ifp->if_addrhooks));
-	free(ifp->if_linkstatehooks, M_TEMP, sizeof(*ifp->if_linkstatehooks));
-	free(ifp->if_detachhooks, M_TEMP, sizeof(*ifp->if_detachhooks));
+	free(ifp->if_addrhooks, M_TEMP, 0);
+	free(ifp->if_linkstatehooks, M_TEMP, 0);
+	free(ifp->if_detachhooks, M_TEMP, 0);
 
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])
@@ -1150,9 +1095,6 @@ if_detach(struct ifnet *ifp)
 	rtm_ifannounce(ifp, IFAN_DEPARTURE);
 	splx(s);
 	NET_UNLOCK();
-
-	if (ifp->if_counters != NULL)
-		if_counters_free(ifp);
 
 	for (i = 0; i < ifp->if_nifqs; i++)
 		ifq_destroy(ifp->if_ifqs[i]);
@@ -1194,7 +1136,7 @@ if_isconnected(const struct ifnet *ifp0, unsigned int ifidx)
 		connected = 1;
 
 #if NBRIDGE > 0
-	if (ifp0->if_bridgeidx != 0 && ifp0->if_bridgeidx == ifp->if_bridgeidx)
+	if (SAME_BRIDGE(ifp0->if_bridgeport, ifp->if_bridgeport))
 		connected = 1;
 #endif
 #if NCARP > 0
@@ -1217,6 +1159,8 @@ if_clone_create(const char *name, int rdomain)
 	struct ifnet *ifp;
 	int unit, ret;
 
+	NET_ASSERT_LOCKED();
+
 	ifc = if_clone_lookup(name, &unit);
 	if (ifc == NULL)
 		return (EINVAL);
@@ -1224,16 +1168,17 @@ if_clone_create(const char *name, int rdomain)
 	if (ifunit(name) != NULL)
 		return (EEXIST);
 
+	/* XXXSMP breaks atomicity */
+	NET_UNLOCK();
 	ret = (*ifc->ifc_create)(ifc, unit);
+	NET_LOCK();
 
 	if (ret != 0 || (ifp = ifunit(name)) == NULL)
 		return (ret);
 
-	NET_LOCK();
 	if_addgroup(ifp, ifc->ifc_name);
 	if (rdomain != 0)
 		if_setrdomain(ifp, rdomain);
-	NET_UNLOCK();
 
 	return (ret);
 }
@@ -1248,6 +1193,8 @@ if_clone_destroy(const char *name)
 	struct ifnet *ifp;
 	int ret;
 
+	NET_ASSERT_LOCKED();
+
 	ifc = if_clone_lookup(name, NULL);
 	if (ifc == NULL)
 		return (EINVAL);
@@ -1259,15 +1206,17 @@ if_clone_destroy(const char *name)
 	if (ifc->ifc_destroy == NULL)
 		return (EOPNOTSUPP);
 
-	NET_LOCK();
 	if (ifp->if_flags & IFF_UP) {
 		int s;
 		s = splnet();
 		if_down(ifp);
 		splx(s);
 	}
+
+	/* XXXSMP breaks atomicity */
 	NET_UNLOCK();
 	ret = (*ifc->ifc_destroy)(ifp);
+	NET_LOCK();
 
 	return (ret);
 }
@@ -1324,15 +1273,19 @@ if_clone_lookup(const char *name, int *unitp)
 void
 if_clone_attach(struct if_clone *ifc)
 {
-	/*
-	 * we are called at kernel boot by main(), when pseudo devices are
-	 * being attached. The main() is the only guy which may alter the
-	 * if_cloners. While system is running and main() is done with
-	 * initialization, the if_cloners becomes immutable. 
-	 */
-	KASSERT(pdevinit_done == 0);
 	LIST_INSERT_HEAD(&if_cloners, ifc, ifc_list);
 	if_cloners_count++;
+}
+
+/*
+ * Unregister a network interface cloner.
+ */
+void
+if_clone_detach(struct if_clone *ifc)
+{
+
+	LIST_REMOVE(ifc, ifc_list);
+	if_cloners_count--;
 }
 
 /*
@@ -1345,17 +1298,17 @@ if_clone_list(struct if_clonereq *ifcr)
 	struct if_clone *ifc;
 	int count, error = 0;
 
+	ifcr->ifcr_total = if_cloners_count;
 	if ((dst = ifcr->ifcr_buffer) == NULL) {
 		/* Just asking how many there are. */
-		ifcr->ifcr_total = if_cloners_count;
 		return (0);
 	}
 
 	if (ifcr->ifcr_count < 0)
 		return (EINVAL);
 
-	ifcr->ifcr_total = if_cloners_count;
-	count = MIN(if_cloners_count, ifcr->ifcr_count);
+	count = (if_cloners_count < ifcr->ifcr_count) ?
+	    if_cloners_count : ifcr->ifcr_count;
 
 	LIST_FOREACH(ifc, &if_cloners, ifc_list) {
 		if (count == 0)
@@ -1412,8 +1365,8 @@ ifa_ifwithaddr(struct sockaddr *addr, u_int rtableid)
 	struct ifaddr *ifa;
 	u_int rdomain;
 
+	KERNEL_ASSERT_LOCKED();
 	rdomain = rtable_l2(rtableid);
-	KERNEL_LOCK();
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_rdomain != rdomain)
 			continue;
@@ -1422,13 +1375,10 @@ ifa_ifwithaddr(struct sockaddr *addr, u_int rtableid)
 			if (ifa->ifa_addr->sa_family != addr->sa_family)
 				continue;
 
-			if (equal(addr, ifa->ifa_addr)) {
-				KERNEL_UNLOCK();
+			if (equal(addr, ifa->ifa_addr))
 				return (ifa);
-			}
 		}
 	}
-	KERNEL_UNLOCK();
 	return (NULL);
 }
 
@@ -1441,8 +1391,8 @@ ifa_ifwithdstaddr(struct sockaddr *addr, u_int rdomain)
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 
+	KERNEL_ASSERT_LOCKED();
 	rdomain = rtable_l2(rdomain);
-	KERNEL_LOCK();
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_rdomain != rdomain)
 			continue;
@@ -1451,14 +1401,11 @@ ifa_ifwithdstaddr(struct sockaddr *addr, u_int rdomain)
 				if (ifa->ifa_addr->sa_family !=
 				    addr->sa_family || ifa->ifa_dstaddr == NULL)
 					continue;
-				if (equal(addr, ifa->ifa_dstaddr)) {
-					KERNEL_UNLOCK();
+				if (equal(addr, ifa->ifa_dstaddr))
 					return (ifa);
-				}
 			}
 		}
 	}
-	KERNEL_UNLOCK();
 	return (NULL);
 }
 
@@ -1666,7 +1613,7 @@ if_slowtimo(void *arg)
 	if (ifp->if_watchdog) {
 		if (ifp->if_timer > 0 && --ifp->if_timer == 0)
 			task_add(net_tq(ifp->if_index), &ifp->if_watchdogtask);
-		timeout_add_sec(&ifp->if_slowtimo, IFNET_SLOWTIMO);
+		timeout_add(&ifp->if_slowtimo, hz / IFNET_SLOWHZ);
 	}
 	splx(s);
 }
@@ -1699,8 +1646,6 @@ struct ifnet *
 ifunit(const char *name)
 {
 	struct ifnet *ifp;
-
-	KERNEL_ASSERT_LOCKED();
 
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (strcmp(ifp->if_xname, name) == 0)
@@ -1765,33 +1710,6 @@ if_setlladdr(struct ifnet *ifp, const uint8_t *lladdr)
 }
 
 int
-if_createrdomain(int rdomain, struct ifnet *ifp)
-{
-	int error;
-	struct ifnet *loifp;
-	char loifname[IFNAMSIZ];
-	unsigned int unit = rdomain;
-
-	if (!rtable_exists(rdomain) && (error = rtable_add(rdomain)) != 0)
-		return (error);
-	if (!rtable_empty(rdomain))
-		return (EEXIST);
-
-	/* Create rdomain including its loopback if with unit == rdomain */
-	snprintf(loifname, sizeof(loifname), "lo%u", unit);
-	error = if_clone_create(loifname, 0);
-	if ((loifp = ifunit(loifname)) == NULL)
-		return (ENXIO);
-	if (error && (ifp != loifp || error != EEXIST))
-		return (error);
-
-	rtable_l2set(rdomain, rdomain, loifp->if_index);
-	loifp->if_rdomain = rdomain;
-
-	return (0);
-}
-
-int
 if_setrdomain(struct ifnet *ifp, int rdomain)
 {
 	struct ifreq ifr;
@@ -1800,18 +1718,41 @@ if_setrdomain(struct ifnet *ifp, int rdomain)
 	if (rdomain < 0 || rdomain > RT_TABLEID_MAX)
 		return (EINVAL);
 
-	if (rdomain != ifp->if_rdomain &&
-	    (ifp->if_flags & IFF_LOOPBACK) &&
-	    (ifp->if_index == rtable_loindex(ifp->if_rdomain)))
-		return (EPERM);
+	/*
+	 * Create the routing table if it does not exist, including its
+	 * loopback interface with unit == rdomain.
+	 */
+	if (!rtable_exists(rdomain)) {
+		struct ifnet *loifp;
+		char loifname[IFNAMSIZ];
+		unsigned int unit = rdomain;
 
-	if (!rtable_exists(rdomain))
-		return (ESRCH);
+		snprintf(loifname, sizeof(loifname), "lo%u", unit);
+		error = if_clone_create(loifname, 0);
+
+		if ((loifp = ifunit(loifname)) == NULL)
+			return (ENXIO);
+
+		/* Do not error out if creating the default lo(4) interface */
+		if (error && (ifp != loifp || error != EEXIST))
+			return (error);
+
+		if ((error = rtable_add(rdomain)) == 0)
+			rtable_l2set(rdomain, rdomain, loifp->if_index);
+		if (error) {
+			if_clone_destroy(loifname);
+			return (error);
+		}
+
+		loifp->if_rdomain = rdomain;
+	}
 
 	/* make sure that the routing table is a real rdomain */
 	if (rdomain != rtable_l2(rdomain))
 		return (EINVAL);
 
+	/* remove all routing entries when switching domains */
+	/* XXX this is a bit ugly */
 	if (rdomain != ifp->if_rdomain) {
 		s = splnet();
 		/*
@@ -1875,12 +1816,16 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCIFCREATE:
 		if ((error = suser(p)) != 0)
 			return (error);
+		NET_LOCK();
 		error = if_clone_create(ifr->ifr_name, 0);
+		NET_UNLOCK();
 		return (error);
 	case SIOCIFDESTROY:
 		if ((error = suser(p)) != 0)
 			return (error);
+		NET_LOCK();
 		error = if_clone_destroy(ifr->ifr_name);
+		NET_UNLOCK();
 		return (error);
 	case SIOCSIFGATTR:
 		if ((error = suser(p)) != 0)
@@ -1893,7 +1838,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCIFGCLONERS:
 	case SIOCGIFGMEMB:
 	case SIOCGIFGATTR:
-	case SIOCGIFGLIST:
 	case SIOCGIFFLAGS:
 	case SIOCGIFXFLAGS:
 	case SIOCGIFMETRIC:
@@ -2091,12 +2035,9 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSIFRDOMAIN:
 		if ((error = suser(p)) != 0)
 			break;
-		error = if_createrdomain(ifr->ifr_rdomainid, ifp);
-		if (!error || error == EEXIST) {
-			NET_LOCK();
-			error = if_setrdomain(ifp, ifr->ifr_rdomainid);
-			NET_UNLOCK();
-		}
+		NET_LOCK();
+		error = if_setrdomain(ifp, ifr->ifr_rdomainid);
+		NET_UNLOCK();
 		break;
 
 	case SIOCAIFGROUP:
@@ -2158,8 +2099,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSIFLLPRIO:
 		if ((error = suser(p)))
 			break;
-		if (ifr->ifr_llprio < IFQ_MINPRIO ||
-		    ifr->ifr_llprio > IFQ_MAXPRIO) {
+		if (ifr->ifr_llprio > UCHAR_MAX) {
 			error = EINVAL;
 			break;
 		}
@@ -2168,55 +2108,31 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		NET_UNLOCK();
 		break;
 
-	case SIOCGIFSFFPAGE:
-		error = suser(p);
-		if (error != 0)
-			break;
-
-		error = if_sffpage_check(data);
-		if (error != 0)
-			break;
-
-		/* don't take NET_LOCK because i2c reads take a long time */
-		error = ((*ifp->if_ioctl)(ifp, cmd, data));
-		break;
-
 	case SIOCSETKALIVE:
 	case SIOCDIFPHYADDR:
 	case SIOCSLIFPHYADDR:
 	case SIOCSLIFPHYRTABLE:
 	case SIOCSLIFPHYTTL:
 	case SIOCSLIFPHYDF:
-	case SIOCSLIFPHYECN:
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:
 	case SIOCSVNETID:
 	case SIOCSVNETFLOWID:
-	case SIOCSTXHPRIO:
-	case SIOCSRXHPRIO:
 	case SIOCSIFPAIR:
 	case SIOCSIFPARENT:
 	case SIOCDIFPARENT:
-	case SIOCSETMPWCFG:
-	case SIOCSETLABEL:
-	case SIOCDELLABEL:
-	case SIOCSPWE3CTRLWORD:
-	case SIOCSPWE3FAT:
-	case SIOCSPWE3NEIGHBOR:
-	case SIOCDPWE3NEIGHBOR:
 		if ((error = suser(p)) != 0)
 			break;
 		/* FALLTHROUGH */
 	default:
+		NET_LOCK();
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 			(struct mbuf *) cmd, (struct mbuf *) data,
 			(struct mbuf *) ifp, p));
-		if (error == EOPNOTSUPP) {
-			NET_LOCK();
+		if (error == EOPNOTSUPP)
 			error = ((*ifp->if_ioctl)(ifp, cmd, data));
-			NET_UNLOCK();
-		}
+		NET_UNLOCK();
 		break;
 	}
 
@@ -2247,7 +2163,9 @@ ifioctl_get(u_long cmd, caddr_t data)
 		NET_RUNLOCK();
 		return (error);
 	case SIOCIFGCLONERS:
+		NET_RLOCK();
 		error = if_clone_list((struct if_clonereq *)data);
+		NET_RUNLOCK();
 		return (error);
 	case SIOCGIFGMEMB:
 		NET_RLOCK();
@@ -2257,11 +2175,6 @@ ifioctl_get(u_long cmd, caddr_t data)
 	case SIOCGIFGATTR:
 		NET_RLOCK();
 		error = if_getgroupattribs(data);
-		NET_RUNLOCK();
-		return (error);
-	case SIOCGIFGLIST:
-		NET_RLOCK();
-		error = if_getgrouplist(data);
 		NET_RUNLOCK();
 		return (error);
 	}
@@ -2341,86 +2254,6 @@ ifioctl_get(u_long cmd, caddr_t data)
 	NET_RUNLOCK();
 
 	return (error);
-}
-
-static int
-if_sffpage_check(const caddr_t data)
-{
-	const struct if_sffpage *sff = (const struct if_sffpage *)data;
-
-	switch (sff->sff_addr) {
-	case IFSFF_ADDR_EEPROM:
-	case IFSFF_ADDR_DDM:
-		break;
-	default:
-		return (EINVAL);
-	}
-
-	return (0);
-}
-
-int
-if_txhprio_l2_check(int hdrprio)
-{
-	switch (hdrprio) {
-	case IF_HDRPRIO_PACKET:
-		return (0);
-	default:
-		if (hdrprio >= IF_HDRPRIO_MIN && hdrprio <= IF_HDRPRIO_MAX)
-			return (0);
-		break;
-	}
-
-	return (EINVAL);
-}
-
-int
-if_txhprio_l3_check(int hdrprio)
-{
-	switch (hdrprio) {
-	case IF_HDRPRIO_PACKET:
-	case IF_HDRPRIO_PAYLOAD:
-		return (0);
-	default:
-		if (hdrprio >= IF_HDRPRIO_MIN && hdrprio <= IF_HDRPRIO_MAX)
-			return (0);
-		break;
-	}
-
-	return (EINVAL);
-}
-
-int
-if_rxhprio_l2_check(int hdrprio)
-{
-	switch (hdrprio) {
-	case IF_HDRPRIO_PACKET:
-	case IF_HDRPRIO_OUTER:
-		return (0);
-	default:
-		if (hdrprio >= IF_HDRPRIO_MIN && hdrprio <= IF_HDRPRIO_MAX)
-			return (0);
-		break;
-	}
-
-	return (EINVAL);
-}
-
-int
-if_rxhprio_l3_check(int hdrprio)
-{
-	switch (hdrprio) {
-	case IF_HDRPRIO_PACKET:
-	case IF_HDRPRIO_PAYLOAD:
-	case IF_HDRPRIO_OUTER:
-		return (0);
-	default:
-		if (hdrprio >= IF_HDRPRIO_MIN && hdrprio <= IF_HDRPRIO_MAX)
-			return (0);
-		break;
-	}
-
-	return (EINVAL);
 }
 
 /*
@@ -2506,47 +2339,11 @@ ifconf(caddr_t data)
 }
 
 void
-if_counters_alloc(struct ifnet *ifp)
-{
-	KASSERT(ifp->if_counters == NULL);
-
-	ifp->if_counters = counters_alloc(ifc_ncounters);
-}
-
-void
-if_counters_free(struct ifnet *ifp)
-{
-	KASSERT(ifp->if_counters != NULL);
-
-	counters_free(ifp->if_counters, ifc_ncounters);
-	ifp->if_counters = NULL;
-}
-
-void
 if_getdata(struct ifnet *ifp, struct if_data *data)
 {
 	unsigned int i;
 
 	*data = ifp->if_data;
-
-	if (ifp->if_counters != NULL) {
-		uint64_t counters[ifc_ncounters];
-
-		counters_read(ifp->if_counters, counters, nitems(counters));
-
-		data->ifi_ipackets += counters[ifc_ipackets];
-		data->ifi_ierrors += counters[ifc_ierrors];
-		data->ifi_opackets += counters[ifc_opackets];
-		data->ifi_oerrors += counters[ifc_oerrors];
-		data->ifi_collisions += counters[ifc_collisions];
-		data->ifi_ibytes += counters[ifc_ibytes];
-		data->ifi_obytes += counters[ifc_obytes];
-		data->ifi_imcasts += counters[ifc_imcasts];
-		data->ifi_omcasts += counters[ifc_omcasts];
-		data->ifi_iqdrops += counters[ifc_iqdrops];
-		data->ifi_oqdrops += counters[ifc_oqdrops];
-		data->ifi_noproto += counters[ifc_noproto];
-	}
 
 	for (i = 0; i < ifp->if_nifqs; i++) {
 		struct ifqueue *ifq = ifp->if_ifqs[i];
@@ -2644,7 +2441,7 @@ if_addgroup(struct ifnet *ifp, const char *groupname)
 	TAILQ_INSERT_TAIL(&ifp->if_groups, ifgl, ifgl_next);
 
 #if NPF > 0
-	pfi_group_addmember(groupname, ifp);
+	pfi_group_change(groupname);
 #endif
 
 	return (0);
@@ -2811,41 +2608,6 @@ if_setgroupattribs(caddr_t data)
 
 	TAILQ_FOREACH(ifgm, &ifg->ifg_members, ifgm_next)
 		ifgm->ifgm_ifp->if_ioctl(ifgm->ifgm_ifp, SIOCSIFGATTR, data);
-
-	return (0);
-}
-
-/*
- * Stores all groups in memory pointed to by data
- */
-int
-if_getgrouplist(caddr_t data)
-{
-	struct ifgroupreq	*ifgr = (struct ifgroupreq *)data;
-	struct ifg_group	*ifg;
-	struct ifg_req		 ifgrq, *ifgp;
-	int			 len, error;
-
-	if (ifgr->ifgr_len == 0) {
-		TAILQ_FOREACH(ifg, &ifg_head, ifg_next)
-			ifgr->ifgr_len += sizeof(ifgrq);
-		return (0);
-	}
-
-	len = ifgr->ifgr_len;
-	ifgp = ifgr->ifgr_groups;
-	TAILQ_FOREACH(ifg, &ifg_head, ifg_next) {
-		if (len < sizeof(ifgrq))
-			return (EINVAL);
-		bzero(&ifgrq, sizeof ifgrq);
-		strlcpy(ifgrq.ifgrq_group, ifg->ifg_group,
-                    sizeof(ifgrq.ifgrq_group));
-		if ((error = copyout((caddr_t)&ifgrq, (caddr_t)ifgp,
-                    sizeof(struct ifg_req))))
-			return (error);
-		len -= sizeof(ifgrq);
-		ifgp++;
-	}
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.122 2019/06/12 05:04:45 otto Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.113 2017/01/09 14:49:22 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -20,7 +20,6 @@
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
-#include <sys/sysctl.h>
 #include <sys/wait.h>
 #include <sys/un.h>
 #include <netinet/in.h>
@@ -32,7 +31,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#include <tls.h>
 #include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -42,7 +40,6 @@
 
 void		sighdlr(int);
 __dead void	usage(void);
-int		auto_preconditions(const struct ntpd_conf *);
 int		main(int, char *[]);
 void		check_child(void);
 int		dispatch_imsg(struct ntpd_conf *, int, char **);
@@ -102,19 +99,6 @@ usage(void)
 		fprintf(stderr, "usage: %s [-dnSsv] [-f file]\n",
 		    __progname);
 	exit(1);
-}
-
-int
-auto_preconditions(const struct ntpd_conf *cnf)
-{
-	int mib[2] = { CTL_KERN, KERN_SECURELVL };
-	int constraints, securelevel;
-	size_t sz = sizeof(int);
-
-	if (sysctl(mib, 2, &securelevel, &sz, NULL, 0) < 0)
-		err(1, "sysctl");
-	constraints = !TAILQ_EMPTY(&cnf->constraints);
-	return !cnf->settime && constraints && securelevel == 0;
 }
 
 #define POLL_MAX		8
@@ -179,8 +163,7 @@ main(int argc, char *argv[])
 	}
 
 	/* log to stderr until daemonized */
-	log_init(1, LOG_DAEMON);
-	log_setverbose(lconf.verbose);
+	log_init(lconf.debug ? lconf.debug : 1, LOG_DAEMON);
 
 	argc -= optind;
 	argv += optind;
@@ -201,10 +184,6 @@ main(int argc, char *argv[])
 	if ((pw = getpwnam(NTPD_USER)) == NULL)
 		errx(1, "unknown user %s", NTPD_USER);
 
-	lconf.automatic = auto_preconditions(&lconf);
-	if (lconf.automatic)
-		lconf.settime = 1;
-
 	if (pname != NULL) {
 		/* Remove our proc arguments, so child doesn't need to. */
 		if (sanitize_argv(&argc0, &argv0) == -1)
@@ -222,13 +201,11 @@ main(int argc, char *argv[])
 			    pname);
 
 		fatalx("%s: process '%s' failed", __func__, pname);
-	} else {
-		if ((control_check(CTLSOCKET)) == -1)
-			fatalx("ntpd already running");
 	}
 
 	if (setpriority(PRIO_PROCESS, 0, -20) == -1)
 		warn("can't set priority");
+
 	reset_adjtime();
 	if (!lconf.settime) {
 		log_init(lconf.debug, LOG_DAEMON);
@@ -242,9 +219,6 @@ main(int argc, char *argv[])
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, PF_UNSPEC,
 	    pipe_chld) == -1)
 		fatal("socketpair");
-
-	if (chdir("/") == -1)
-		fatal("chdir(\"/\")");
 
 	signal(SIGCHLD, sighdlr);
 
@@ -270,10 +244,6 @@ main(int argc, char *argv[])
 	 * Constraint processes are forked with certificates in memory,
 	 * then privdrop into chroot before speaking to the outside world.
 	 */
-	if (unveil(tls_default_ca_cert_file(), "r") == -1)
-		err(1, "unveil");
-	if (unveil("/usr/sbin/ntpd", "x") == -1)
-		err(1, "unveil");
 	if (pledge("stdio rpath inet settime proc exec id", NULL) == -1)
 		err(1, "pledge");
 
@@ -513,9 +483,6 @@ ntpd_settime(double d)
 	struct timeval	tv, curtime;
 	char		buf[80];
 	time_t		tval;
-
-	if (d == 0)
-		return;
 
 	if (gettimeofday(&curtime, NULL) == -1) {
 		log_warn("gettimeofday");

@@ -18,6 +18,7 @@
 #include "llvm/Transforms/IPO/GlobalDCE.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
@@ -114,7 +115,7 @@ void GlobalDCEPass::UpdateGVDependencies(GlobalValue &GV) {
     ComputeDependencies(User, Deps);
   Deps.erase(&GV); // Remove self-reference.
   for (GlobalValue *GVU : Deps) {
-    GVDependencies[GVU].insert(&GV);
+    GVDependencies.insert(std::make_pair(GVU, &GV));
   }
 }
 
@@ -198,8 +199,8 @@ PreservedAnalyses GlobalDCEPass::run(Module &M, ModuleAnalysisManager &MAM) {
                                            AliveGlobals.end()};
   while (!NewLiveGVs.empty()) {
     GlobalValue *LGV = NewLiveGVs.pop_back_val();
-    for (auto *GVD : GVDependencies[LGV])
-      MarkLive(*GVD, &NewLiveGVs);
+    for (auto &&GVD : make_range(GVDependencies.equal_range(LGV)))
+      MarkLive(*GVD.second, &NewLiveGVs);
   }
 
   // Now that all globals which are needed are in the AliveGlobals set, we loop

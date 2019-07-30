@@ -29,24 +29,24 @@
 #ifndef LLVM_PASS_H
 #define LLVM_PASS_H
 
-#include "llvm/ADT/StringRef.h"
 #include <string>
 
 namespace llvm {
 
-class AnalysisResolver;
-class AnalysisUsage;
 class BasicBlock;
 class Function;
-class ImmutablePass;
 class Module;
+class AnalysisUsage;
 class PassInfo;
-class PMDataManager;
+class ImmutablePass;
 class PMStack;
+class AnalysisResolver;
+class PMDataManager;
 class raw_ostream;
+class StringRef;
 
 // AnalysisID - Use the PassInfo to identify a pass...
-using AnalysisID = const void *;
+typedef const void* AnalysisID;
 
 /// Different types of internal pass managers. External pass managers
 /// (PassManager and FunctionPassManager) are not represented here.
@@ -79,21 +79,24 @@ enum PassKind {
 /// constrained passes described below.
 ///
 class Pass {
-  AnalysisResolver *Resolver = nullptr;  // Used to resolve analysis
+  AnalysisResolver *Resolver;  // Used to resolve analysis
   const void *PassID;
   PassKind Kind;
+  void operator=(const Pass&) = delete;
+  Pass(const Pass &) = delete;
 
 public:
-  explicit Pass(PassKind K, char &pid) : PassID(&pid), Kind(K) {}
-  Pass(const Pass &) = delete;
-  Pass &operator=(const Pass &) = delete;
+  explicit Pass(PassKind K, char &pid)
+    : Resolver(nullptr), PassID(&pid), Kind(K) { }
   virtual ~Pass();
+
 
   PassKind getPassKind() const { return Kind; }
 
   /// getPassName - Return a nice clean name for a pass.  This usually
   /// implemented in terms of the name that is registered by one of the
   /// Registration templates, but can be overloaded directly.
+  ///
   virtual StringRef getPassName() const;
 
   /// getPassID - Return the PassID number that corresponds to this pass.
@@ -103,10 +106,12 @@ public:
 
   /// doInitialization - Virtual method overridden by subclasses to do
   /// any necessary initialization before any pass is run.
+  ///
   virtual bool doInitialization(Module &)  { return false; }
 
   /// doFinalization - Virtual method overriden by subclasses to do any
   /// necessary clean up after all passes have run.
+  ///
   virtual bool doFinalization(Module &) { return false; }
 
   /// print - Print out the internal state of the pass.  This is called by
@@ -115,20 +120,19 @@ public:
   /// null.  This automatically forwards to a virtual function that does not
   /// provide the Module* in case the analysis doesn't need it it can just be
   /// ignored.
-  virtual void print(raw_ostream &OS, const Module *M) const;
-
+  ///
+  virtual void print(raw_ostream &O, const Module *M) const;
   void dump() const; // dump - Print to stderr.
 
   /// createPrinterPass - Get a Pass appropriate to print the IR this
   /// pass operates on (Module, Function or MachineFunction).
-  virtual Pass *createPrinterPass(raw_ostream &OS,
+  virtual Pass *createPrinterPass(raw_ostream &O,
                                   const std::string &Banner) const = 0;
 
   /// Each pass is responsible for assigning a pass manager to itself.
   /// PMS is the stack of available pass manager.
   virtual void assignPassManager(PMStack &,
                                  PassManagerType) {}
-
   /// Check if available pass managers are suitable for this pass or not.
   virtual void preparePassManager(PMStack &);
 
@@ -143,6 +147,7 @@ public:
   /// analysis information to do their job.  If a pass specifies that it uses a
   /// particular analysis result to this function, it can then use the
   /// getAnalysis<AnalysisType>() function, below.
+  ///
   virtual void getAnalysisUsage(AnalysisUsage &) const;
 
   /// releaseMemory() - This member can be implemented by a pass if it wants to
@@ -155,6 +160,7 @@ public:
   ///
   /// Optionally implement this function to release pass memory when it is no
   /// longer used.
+  ///
   virtual void releaseMemory();
 
   /// getAdjustedAnalysisPointer - This method is used when a pass implements
@@ -191,6 +197,7 @@ public:
   /// the case when the analysis is not available.  This method is often used by
   /// transformation APIs to update analysis results for a pass automatically as
   /// the transform is performed.
+  ///
   template<typename AnalysisType> AnalysisType *
     getAnalysisIfAvailable() const; // Defined in PassAnalysisSupport.h
 
@@ -199,11 +206,13 @@ public:
   /// obviously cannot give you a properly typed instance of the class if you
   /// don't have the class name available (use getAnalysisIfAvailable if you
   /// do), but it can tell you if you need to preserve the pass at least.
+  ///
   bool mustPreserveAnalysisID(char &AID) const;
 
   /// getAnalysis<AnalysisType>() - This function is used by subclasses to get
   /// to the analysis information that they claim to use by overriding the
   /// getAnalysisUsage function.
+  ///
   template<typename AnalysisType>
   AnalysisType &getAnalysis() const; // Defined in PassAnalysisSupport.h
 
@@ -217,6 +226,7 @@ public:
   AnalysisType &getAnalysisID(AnalysisID PI, Function &F);
 };
 
+
 //===----------------------------------------------------------------------===//
 /// ModulePass class - This class is used to implement unstructured
 /// interprocedural optimizations and analyses.  ModulePasses may do anything
@@ -224,13 +234,8 @@ public:
 ///
 class ModulePass : public Pass {
 public:
-  explicit ModulePass(char &pid) : Pass(PT_Module, pid) {}
-
-  // Force out-of-line virtual method.
-  ~ModulePass() override;
-
   /// createPrinterPass - Get a module printer pass.
-  Pass *createPrinterPass(raw_ostream &OS,
+  Pass *createPrinterPass(raw_ostream &O,
                           const std::string &Banner) const override;
 
   /// runOnModule - Virtual method overriden by subclasses to process the module
@@ -242,11 +247,16 @@ public:
   ///  Return what kind of Pass Manager can manage this pass.
   PassManagerType getPotentialPassManagerType() const override;
 
+  explicit ModulePass(char &pid) : Pass(PT_Module, pid) {}
+  // Force out-of-line virtual method.
+  ~ModulePass() override;
+
 protected:
   /// Optional passes call this function to check whether the pass should be
   /// skipped. This is the case when optimization bisect is over the limit.
   bool skipModule(Module &M) const;
 };
+
 
 //===----------------------------------------------------------------------===//
 /// ImmutablePass class - This class is used to provide information that does
@@ -255,22 +265,25 @@ protected:
 ///
 class ImmutablePass : public ModulePass {
 public:
-  explicit ImmutablePass(char &pid) : ModulePass(pid) {}
-
-  // Force out-of-line virtual method.
-  ~ImmutablePass() override;
-
   /// initializePass - This method may be overriden by immutable passes to allow
   /// them to perform various initialization actions they require.  This is
   /// primarily because an ImmutablePass can "require" another ImmutablePass,
   /// and if it does, the overloaded version of initializePass may get access to
   /// these passes with getAnalysis<>.
+  ///
   virtual void initializePass();
 
   ImmutablePass *getAsImmutablePass() override { return this; }
 
   /// ImmutablePasses are never run.
+  ///
   bool runOnModule(Module &) override { return false; }
+
+  explicit ImmutablePass(char &pid)
+  : ModulePass(pid) {}
+
+  // Force out-of-line virtual method.
+  ~ImmutablePass() override;
 };
 
 //===----------------------------------------------------------------------===//
@@ -287,11 +300,12 @@ public:
   explicit FunctionPass(char &pid) : Pass(PT_Function, pid) {}
 
   /// createPrinterPass - Get a function printer pass.
-  Pass *createPrinterPass(raw_ostream &OS,
+  Pass *createPrinterPass(raw_ostream &O,
                           const std::string &Banner) const override;
 
   /// runOnFunction - Virtual method overriden by subclasses to do the
   /// per-function processing of the pass.
+  ///
   virtual bool runOnFunction(Function &F) = 0;
 
   void assignPassManager(PMStack &PMS, PassManagerType T) override;
@@ -305,6 +319,8 @@ protected:
   /// optimization bisect is over the limit.
   bool skipFunction(const Function &F) const;
 };
+
+
 
 //===----------------------------------------------------------------------===//
 /// BasicBlockPass class - This class is used to implement most local
@@ -321,7 +337,7 @@ public:
   explicit BasicBlockPass(char &pid) : Pass(PT_BasicBlock, pid) {}
 
   /// createPrinterPass - Get a basic block printer pass.
-  Pass *createPrinterPass(raw_ostream &OS,
+  Pass *createPrinterPass(raw_ostream &O,
                           const std::string &Banner) const override;
 
   using llvm::Pass::doInitialization;
@@ -329,14 +345,17 @@ public:
 
   /// doInitialization - Virtual method overridden by BasicBlockPass subclasses
   /// to do any necessary per-function initialization.
+  ///
   virtual bool doInitialization(Function &);
 
   /// runOnBasicBlock - Virtual method overriden by subclasses to do the
   /// per-basicblock processing of the pass.
+  ///
   virtual bool runOnBasicBlock(BasicBlock &BB) = 0;
 
   /// doFinalization - Virtual method overriden by BasicBlockPass subclasses to
   /// do any post processing needed after all passes have run.
+  ///
   virtual bool doFinalization(Function &);
 
   void assignPassManager(PMStack &PMS, PassManagerType T) override;
@@ -353,26 +372,19 @@ protected:
 
 /// If the user specifies the -time-passes argument on an LLVM tool command line
 /// then the value of this boolean will be true, otherwise false.
-/// This is the storage for the -time-passes option.
+/// @brief This is the storage for the -time-passes option.
 extern bool TimePassesIsEnabled;
 
 /// isFunctionInPrintList - returns true if a function should be printed via
 //  debugging options like -print-after-all/-print-before-all.
-//  Tells if the function IR should be printed by PrinterPass.
+//  @brief Tells if the function IR should be printed by PrinterPass.
 extern bool isFunctionInPrintList(StringRef FunctionName);
-
-/// forcePrintModuleIR - returns true if IR printing passes should
-//  be printing module IR (even for local-pass printers e.g. function-pass)
-//  to provide more context, as enabled by debugging option -print-module-scope
-//  Tells if IR printer should be printing module IR
-extern bool forcePrintModuleIR();
-
-} // end namespace llvm
+} // End llvm namespace
 
 // Include support files that contain important APIs commonly used by Passes,
 // but that we want to separate out to make it easier to read the header files.
-#include "llvm/InitializePasses.h"
+//
 #include "llvm/PassAnalysisSupport.h"
 #include "llvm/PassSupport.h"
 
-#endif // LLVM_PASS_H
+#endif

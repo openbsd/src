@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BPFInstPrinter.h"
+#include "BPF.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -55,7 +56,7 @@ void BPFInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   if (Op.isReg()) {
     O << getRegisterName(Op.getReg());
   } else if (Op.isImm()) {
-    O << formatImm((int32_t)Op.getImm());
+    O << (int32_t)Op.getImm();
   } else {
     assert(Op.isExpr() && "Expected an expression");
     printExpr(Op.getExpr(), O);
@@ -75,9 +76,9 @@ void BPFInstPrinter::printMemOperand(const MCInst *MI, int OpNo, raw_ostream &O,
   if (OffsetOp.isImm()) {
     auto Imm = OffsetOp.getImm();
     if (Imm >= 0)
-      O << " + " << formatImm(Imm);
+      O << " + " << formatDec(Imm);
     else
-      O << " - " << formatImm(-Imm);
+      O << " - " << formatDec(-Imm);
   } else {
     assert(0 && "Expected an immediate");
   }
@@ -87,22 +88,7 @@ void BPFInstPrinter::printImm64Operand(const MCInst *MI, unsigned OpNo,
                                        raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isImm())
-    O << formatImm(Op.getImm());
-  else if (Op.isExpr())
-    printExpr(Op.getExpr(), O);
+    O << (uint64_t)Op.getImm();
   else
     O << Op;
-}
-
-void BPFInstPrinter::printBrTargetOperand(const MCInst *MI, unsigned OpNo,
-                                       raw_ostream &O) {
-  const MCOperand &Op = MI->getOperand(OpNo);
-  if (Op.isImm()) {
-    int16_t Imm = Op.getImm();
-    O << ((Imm >= 0) ? "+" : "") << formatImm(Imm);
-  } else if (Op.isExpr()) {
-    printExpr(Op.getExpr(), O);
-  } else {
-    O << Op;
-  }
 }

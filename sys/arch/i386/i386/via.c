@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.45 2018/06/01 14:23:48 fcambus Exp $	*/
+/*	$OpenBSD: via.c,v 1.42 2018/02/21 21:09:57 mikeb Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -88,7 +88,7 @@ viac3_crypto_setup(void)
 
 	vc3_sc = malloc(sizeof(*vc3_sc), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (vc3_sc == NULL)
-		return;
+		return;	/* YYY bitch? */
 
 	bzero(algs, sizeof(algs));
 	algs[CRYPTO_AES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
@@ -103,8 +103,7 @@ viac3_crypto_setup(void)
 	vc3_sc->sc_cid = crypto_get_driverid(0);
 	if (vc3_sc->sc_cid < 0) {
 		free(vc3_sc, M_DEVBUF, sizeof(*vc3_sc));
-		vc3_sc = NULL;
-		return;
+		return;		/* YYY bitch? */
 	}
 
 	crypto_register(vc3_sc->sc_cid, algs, viac3_crypto_newsession,
@@ -342,12 +341,16 @@ viac3_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	u_int32_t *key;
 	int	err = 0;
 
-	if ((crd->crd_len % 16) != 0)
-		return (EINVAL);
+	if ((crd->crd_len % 16) != 0) {
+		err = EINVAL;
+		return (err);
+	}
 
 	sc->op_buf = malloc(crd->crd_len, M_DEVBUF, M_NOWAIT);
-	if (sc->op_buf == NULL)
-		return (ENOMEM);
+	if (sc->op_buf == NULL) {
+		err = ENOMEM;
+		return (err);
+	}
 
 	if (crd->crd_flags & CRD_F_ENCRYPT) {
 		sc->op_cw[0] = ses->ses_cw0 | C3_CRYPT_CWLO_ENCRYPT;
@@ -533,7 +536,7 @@ viac3_rnd(void *v)
 #endif
 
 	for (i = 0, p = buffer; i < VIAC3_RNG_BUFSIZ; i++, p++)
-		enqueue_randomness(*p);
+		add_true_randomness(*p);
 
 	timeout_add_msec(tmo, 10);
 }

@@ -54,8 +54,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/CFG.h"
 #include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Analysis/TargetLibraryInfo.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/IntrinsicInst.h"
@@ -66,6 +64,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Transforms/Utils/Local.h"
 
 #define DEBUG_TYPE "safepoint-placement"
 
@@ -114,7 +113,6 @@ struct PlaceBackedgeSafepointsImpl : public FunctionPass {
   ScalarEvolution *SE = nullptr;
   DominatorTree *DT = nullptr;
   LoopInfo *LI = nullptr;
-  TargetLibraryInfo *TLI = nullptr;
 
   PlaceBackedgeSafepointsImpl(bool CallSafepoints = false)
       : FunctionPass(ID), CallSafepointsEnabled(CallSafepoints) {
@@ -133,7 +131,6 @@ struct PlaceBackedgeSafepointsImpl : public FunctionPass {
     SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-    TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
     for (Loop *I : *LI) {
       runOnLoopAndSubLoops(I);
     }
@@ -144,7 +141,6 @@ struct PlaceBackedgeSafepointsImpl : public FunctionPass {
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<ScalarEvolutionWrapperPass>();
     AU.addRequired<LoopInfoWrapperPass>();
-    AU.addRequired<TargetLibraryInfoWrapperPass>();
     // We no longer modify the IR at all in this pass.  Thus all
     // analysis are preserved.
     AU.setPreservesAll();
@@ -169,7 +165,6 @@ struct PlaceSafepoints : public FunctionPass {
     // We modify the graph wholesale (inlining, block insertion, etc).  We
     // preserve nothing at the moment.  We could potentially preserve dom tree
     // if that was worth doing
-    AU.addRequired<TargetLibraryInfoWrapperPass>();
   }
 };
 }
@@ -179,11 +174,10 @@ struct PlaceSafepoints : public FunctionPass {
 // callers job.
 static void
 InsertSafepointPoll(Instruction *InsertBefore,
-                    std::vector<CallSite> &ParsePointsNeeded /*rval*/,
-                    const TargetLibraryInfo &TLI);
+                    std::vector<CallSite> &ParsePointsNeeded /*rval*/);
 
-static bool needsStatepoint(const CallSite &CS, const TargetLibraryInfo &TLI) {
-  if (callsGCLeafFunction(CS, TLI))
+static bool needsStatepoint(const CallSite &CS) {
+  if (callsGCLeafFunction(CS))
     return false;
   if (CS.isCall()) {
     CallInst *call = cast<CallInst>(CS.getInstruction());
@@ -200,8 +194,7 @@ static bool needsStatepoint(const CallSite &CS, const TargetLibraryInfo &TLI) {
 /// answer; i.e. false is always valid.
 static bool containsUnconditionalCallSafepoint(Loop *L, BasicBlock *Header,
                                                BasicBlock *Pred,
-                                               DominatorTree &DT,
-                                               const TargetLibraryInfo &TLI) {
+                                               DominatorTree &DT) {
   // In general, we're looking for any cut of the graph which ensures
   // there's a call safepoint along every edge between Header and Pred.
   // For the moment, we look only for the 'cuts' that consist of a single call
@@ -224,7 +217,7 @@ static bool containsUnconditionalCallSafepoint(Loop *L, BasicBlock *Header,
         // unconditional poll. In practice, this is only a theoretical concern
         // since we don't have any methods with conditional-only safepoint
         // polls.
-        if (needsStatepoint(CS, TLI))
+        if (needsStatepoint(CS))
           return true;
     }
 
@@ -323,18 +316,16 @@ bool PlaceBackedgeSafepointsImpl::runOnLoop(Loop *L) {
     // avoiding the runtime cost of the actual safepoint.
     if (!AllBackedges) {
       if (mustBeFiniteCountedLoop(L, SE, Pred)) {
-        LLVM_DEBUG(dbgs() << "skipping safepoint placement in finite loop\n");
+        DEBUG(dbgs() << "skipping safepoint placement in finite loop\n");
         FiniteExecution++;
         continue;
       }
       if (CallSafepointsEnabled &&
-          containsUnconditionalCallSafepoint(L, Header, Pred, *DT, *TLI)) {
+          containsUnconditionalCallSafepoint(L, Header, Pred, *DT)) {
         // Note: This is only semantically legal since we won't do any further
         // IPO or inlining before the actual call insertion..  If we hadn't, we
         // might latter loose this call safepoint.
-        LLVM_DEBUG(
-            dbgs()
-            << "skipping safepoint placement due to unconditional call\n");
+        DEBUG(dbgs() << "skipping safepoint placement due to unconditional call\n");
         CallInLoop++;
         continue;
       }
@@ -350,7 +341,7 @@ bool PlaceBackedgeSafepointsImpl::runOnLoop(Loop *L) {
     // variables) and branches to the true header
     TerminatorInst *Term = Pred->getTerminator();
 
-    LLVM_DEBUG(dbgs() << "[LSP] terminator instruction: " << *Term);
+    DEBUG(dbgs() << "[LSP] terminator instruction: " << *Term);
 
     PollLocations.push_back(Term);
   }
@@ -481,9 +472,6 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
   if (!shouldRewriteFunction(F))
     return false;
 
-  const TargetLibraryInfo &TLI =
-      getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
-
   bool Modified = false;
 
   // In various bits below, we rely on the fact that uses are reachable from
@@ -524,7 +512,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
     };
     // We need the order of list to be stable so that naming ends up stable
     // when we split edges.  This makes test cases much easier to write.
-    llvm::sort(PollLocations.begin(), PollLocations.end(), OrderByBBName);
+    std::sort(PollLocations.begin(), PollLocations.end(), OrderByBBName);
 
     // We can sometimes end up with duplicate poll locations.  This happens if
     // a single loop is visited more than once.   The fact this happens seems
@@ -590,7 +578,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
   // safepoint polls themselves.
   for (Instruction *PollLocation : PollsNeeded) {
     std::vector<CallSite> RuntimeCalls;
-    InsertSafepointPoll(PollLocation, RuntimeCalls, TLI);
+    InsertSafepointPoll(PollLocation, RuntimeCalls);
     ParsePointNeeded.insert(ParsePointNeeded.end(), RuntimeCalls.begin(),
                             RuntimeCalls.end());
   }
@@ -622,8 +610,7 @@ INITIALIZE_PASS_END(PlaceSafepoints, "place-safepoints", "Place Safepoints",
 
 static void
 InsertSafepointPoll(Instruction *InsertBefore,
-                    std::vector<CallSite> &ParsePointsNeeded /*rval*/,
-                    const TargetLibraryInfo &TLI) {
+                    std::vector<CallSite> &ParsePointsNeeded /*rval*/) {
   BasicBlock *OrigBB = InsertBefore->getParent();
   Module *M = InsertBefore->getModule();
   assert(M && "must be part of a module");
@@ -682,7 +669,7 @@ InsertSafepointPoll(Instruction *InsertBefore,
   assert(ParsePointsNeeded.empty());
   for (auto *CI : Calls) {
     // No safepoint needed or wanted
-    if (!needsStatepoint(CI, TLI))
+    if (!needsStatepoint(CI))
       continue;
 
     // These are likely runtime calls.  Should we assert that via calling

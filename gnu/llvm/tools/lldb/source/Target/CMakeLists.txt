@@ -1,3 +1,5 @@
+include_directories(../Plugins/Process/Utility)
+
 add_lldb_library(lldbTarget
   ABI.cpp
   CPPLanguageRuntime.cpp

@@ -42,11 +42,13 @@ __fixunsdfdi(fp_t a) {
 #endif
 
 #if defined(__ARM_EABI__)
-#if defined(COMPILER_RT_ARMHF_TARGET)
-AEABI_RTABI du_int __aeabi_d2ulz(fp_t a) {
+AEABI_RTABI du_int
+#if defined(__SOFT_FP__)
+__aeabi_d2ulz(fp_t a) {
+#else
+__aeabi_d2ulz(double a) {
+#endif
   return __fixunsdfdi(a);
 }
-#else
-AEABI_RTABI du_int __aeabi_d2ulz(fp_t a) COMPILER_RT_ALIAS(__fixunsdfdi);
 #endif
-#endif
+

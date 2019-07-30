@@ -15,10 +15,12 @@ from lldbsuite.test import lldbutil
 class StdUniquePtrDataFormatterTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
-    @add_test_categories(["libstdcxx"])
+    @skipIfFreeBSD
+    @skipIfWindows  # libstdcpp not ported to Windows
+    @skipIfDarwin  # doesn't compile on Darwin
     def test_with_run_command(self):
         self.build()
-        self.runCmd("file " + self.getBuildArtifact("a.out"), CURRENT_EXECUTABLE_SET)
+        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_source_regexp(
             self, "Set break point at this line.")
@@ -65,13 +67,12 @@ class StdUniquePtrDataFormatterTestCase(TestBase):
     @skipIfFreeBSD
     @skipIfWindows  # libstdcpp not ported to Windows
     @skipIfDarwin  # doesn't compile on Darwin
-    @skipIfwatchOS  # libstdcpp not ported to watchos
     def test_recursive_unique_ptr(self):
         # Tests that LLDB can handle when we have a loop in the unique_ptr
         # reference chain and that it correctly handles the different options
         # for the frame variable command in this case.
         self.build()
-        self.runCmd("file " + self.getBuildArtifact("a.out"), CURRENT_EXECUTABLE_SET)
+        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_source_regexp(
             self, "Set break point at this line.")

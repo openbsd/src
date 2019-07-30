@@ -8,8 +8,9 @@ BD-CENTERED(1) - General Commands Manual
 
 preceding text
 
-> The text in this centered block is wide enough to not fit on one line.
+> first line of the block  
+> second line
 
 following text
 
-OpenBSD - January 4, 2019
+OpenBSD - July 4, 2017

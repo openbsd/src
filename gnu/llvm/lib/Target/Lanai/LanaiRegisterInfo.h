@@ -14,7 +14,7 @@
 #ifndef LLVM_LIB_TARGET_LANAI_LANAIREGISTERINFO_H
 #define LLVM_LIB_TARGET_LANAI_LANAIREGISTERINFO_H
 
-#include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 
 #define GET_REGINFO_HEADER
 #include "LanaiGenRegisterInfo.inc"
@@ -47,6 +47,9 @@ struct LanaiRegisterInfo : public LanaiGenRegisterInfo {
   unsigned getBaseRegister() const;
   bool hasBasePointer(const MachineFunction &MF) const;
 
+  // Exception handling queries.
+  unsigned getEHExceptionRegister() const;
+  unsigned getEHHandlerRegister() const;
   int getDwarfRegNum(unsigned RegNum, bool IsEH) const;
 };
 

@@ -33,15 +33,6 @@ void ODRHash::AddIdentifierInfo(const IdentifierInfo *II) {
 }
 
 void ODRHash::AddDeclarationName(DeclarationName Name) {
-  // Index all DeclarationName and use index numbers to refer to them.
-  auto Result = DeclNameMap.insert(std::make_pair(Name, DeclNameMap.size()));
-  ID.AddInteger(Result.first->second);
-  if (!Result.second) {
-    // If found in map, the the DeclarationName has previously been processed.
-    return;
-  }
-
-  // First time processing each DeclarationName, also process its details.
   AddBoolean(Name.isEmpty());
   if (Name.isEmpty())
     return;
@@ -148,8 +139,6 @@ void ODRHash::AddTemplateArgument(TemplateArgument TA) {
       AddQualType(TA.getAsType());
       break;
     case TemplateArgument::Declaration:
-      AddDecl(TA.getAsDecl());
-      break;
     case TemplateArgument::NullPtr:
     case TemplateArgument::Integral:
       break;
@@ -169,17 +158,11 @@ void ODRHash::AddTemplateArgument(TemplateArgument TA) {
   }
 }
 
-void ODRHash::AddTemplateParameterList(const TemplateParameterList *TPL) {
-  assert(TPL && "Expecting non-null pointer.");
-
-  ID.AddInteger(TPL->size());
-  for (auto *ND : TPL->asArray()) {
-    AddSubDecl(ND);
-  }
-}
+void ODRHash::AddTemplateParameterList(const TemplateParameterList *TPL) {}
 
 void ODRHash::clear() {
-  DeclNameMap.clear();
+  DeclMap.clear();
+  TypeMap.clear();
   Bools.clear();
   ID.clear();
 }
@@ -216,7 +199,6 @@ unsigned ODRHash::CalculateHash() {
   return ID.ComputeHash();
 }
 
-namespace {
 // Process a Decl pointer.  Add* methods call back into ODRHash while Visit*
 // methods process the relevant parts of the Decl.
 class ODRDeclVisitor : public ConstDeclVisitor<ODRDeclVisitor> {
@@ -251,10 +233,6 @@ public:
     if (D) {
       Hash.AddDecl(D);
     }
-  }
-
-  void AddTemplateArgument(TemplateArgument TA) {
-    Hash.AddTemplateArgument(TA);
   }
 
   void Visit(const Decl *D) {
@@ -317,14 +295,26 @@ public:
   }
 
   void VisitFunctionDecl(const FunctionDecl *D) {
-    // Handled by the ODRHash for FunctionDecl
-    ID.AddInteger(D->getODRHash());
+    ID.AddInteger(D->getStorageClass());
+    Hash.AddBoolean(D->isInlineSpecified());
+    Hash.AddBoolean(D->isVirtualAsWritten());
+    Hash.AddBoolean(D->isPure());
+    Hash.AddBoolean(D->isDeletedAsWritten());
+
+    ID.AddInteger(D->param_size());
+
+    for (auto *Param : D->parameters()) {
+      Hash.AddSubDecl(Param);
+    }
+
+    AddQualType(D->getReturnType());
 
     Inherited::VisitFunctionDecl(D);
   }
 
   void VisitCXXMethodDecl(const CXXMethodDecl *D) {
-    // Handled by the ODRHash for FunctionDecl
+    Hash.AddBoolean(D->isConst());
+    Hash.AddBoolean(D->isVolatile());
 
     Inherited::VisitCXXMethodDecl(D);
   }
@@ -352,72 +342,11 @@ public:
       AddDecl(D->getFriendDecl());
     }
   }
-
-  void VisitTemplateTypeParmDecl(const TemplateTypeParmDecl *D) {
-    // Only care about default arguments as part of the definition.
-    const bool hasDefaultArgument =
-        D->hasDefaultArgument() && !D->defaultArgumentWasInherited();
-    Hash.AddBoolean(hasDefaultArgument);
-    if (hasDefaultArgument) {
-      AddTemplateArgument(D->getDefaultArgument());
-    }
-    Hash.AddBoolean(D->isParameterPack());
-
-    Inherited::VisitTemplateTypeParmDecl(D);
-  }
-
-  void VisitNonTypeTemplateParmDecl(const NonTypeTemplateParmDecl *D) {
-    // Only care about default arguments as part of the definition.
-    const bool hasDefaultArgument =
-        D->hasDefaultArgument() && !D->defaultArgumentWasInherited();
-    Hash.AddBoolean(hasDefaultArgument);
-    if (hasDefaultArgument) {
-      AddStmt(D->getDefaultArgument());
-    }
-    Hash.AddBoolean(D->isParameterPack());
-
-    Inherited::VisitNonTypeTemplateParmDecl(D);
-  }
-
-  void VisitTemplateTemplateParmDecl(const TemplateTemplateParmDecl *D) {
-    // Only care about default arguments as part of the definition.
-    const bool hasDefaultArgument =
-        D->hasDefaultArgument() && !D->defaultArgumentWasInherited();
-    Hash.AddBoolean(hasDefaultArgument);
-    if (hasDefaultArgument) {
-      AddTemplateArgument(D->getDefaultArgument().getArgument());
-    }
-    Hash.AddBoolean(D->isParameterPack());
-
-    Inherited::VisitTemplateTemplateParmDecl(D);
-  }
-
-  void VisitTemplateDecl(const TemplateDecl *D) {
-    Hash.AddTemplateParameterList(D->getTemplateParameters());
-
-    Inherited::VisitTemplateDecl(D);
-  }
-
-  void VisitRedeclarableTemplateDecl(const RedeclarableTemplateDecl *D) {
-    Hash.AddBoolean(D->isMemberSpecialization());
-    Inherited::VisitRedeclarableTemplateDecl(D);
-  }
-
-  void VisitFunctionTemplateDecl(const FunctionTemplateDecl *D) {
-    AddDecl(D->getTemplatedDecl());
-    Inherited::VisitFunctionTemplateDecl(D);
-  }
-
-  void VisitEnumConstantDecl(const EnumConstantDecl *D) {
-    AddStmt(D->getInitExpr());
-    Inherited::VisitEnumConstantDecl(D);
-  }
 };
-} // namespace
 
 // Only allow a small portion of Decl's to be processed.  Remove this once
 // all Decl's can be handled.
-bool ODRHash::isWhitelistedDecl(const Decl *D, const DeclContext *Parent) {
+bool ODRHash::isWhitelistedDecl(const Decl *D, const CXXRecordDecl *Parent) {
   if (D->isImplicit()) return false;
   if (D->getDeclContext() != Parent) return false;
 
@@ -428,10 +357,8 @@ bool ODRHash::isWhitelistedDecl(const Decl *D, const DeclContext *Parent) {
     case Decl::CXXConstructor:
     case Decl::CXXDestructor:
     case Decl::CXXMethod:
-    case Decl::EnumConstant: // Only found in EnumDecl's.
     case Decl::Field:
     case Decl::Friend:
-    case Decl::FunctionTemplate:
     case Decl::StaticAssert:
     case Decl::TypeAlias:
     case Decl::Typedef:
@@ -442,6 +369,7 @@ bool ODRHash::isWhitelistedDecl(const Decl *D, const DeclContext *Parent) {
 
 void ODRHash::AddSubDecl(const Decl *D) {
   assert(D && "Expecting non-null pointer.");
+  AddDecl(D);
 
   ODRDeclVisitor(ID, *this).Visit(D);
 }
@@ -463,13 +391,9 @@ void ODRHash::AddCXXRecordDecl(const CXXRecordDecl *Record) {
   // Filter out sub-Decls which will not be processed in order to get an
   // accurate count of Decl's.
   llvm::SmallVector<const Decl *, 16> Decls;
-  for (Decl *SubDecl : Record->decls()) {
+  for (const Decl *SubDecl : Record->decls()) {
     if (isWhitelistedDecl(SubDecl, Record)) {
       Decls.push_back(SubDecl);
-      if (auto *Function = dyn_cast<FunctionDecl>(SubDecl)) {
-        // Compute/Preload ODRHash into FunctionDecl.
-        Function->getODRHash();
-      }
     }
   }
 
@@ -477,131 +401,25 @@ void ODRHash::AddCXXRecordDecl(const CXXRecordDecl *Record) {
   for (auto SubDecl : Decls) {
     AddSubDecl(SubDecl);
   }
-
-  const ClassTemplateDecl *TD = Record->getDescribedClassTemplate();
-  AddBoolean(TD);
-  if (TD) {
-    AddTemplateParameterList(TD->getTemplateParameters());
-  }
-
-  ID.AddInteger(Record->getNumBases());
-  auto Bases = Record->bases();
-  for (auto Base : Bases) {
-    AddQualType(Base.getType());
-    ID.AddInteger(Base.isVirtual());
-    ID.AddInteger(Base.getAccessSpecifierAsWritten());
-  }
-}
-
-void ODRHash::AddFunctionDecl(const FunctionDecl *Function,
-                              bool SkipBody) {
-  assert(Function && "Expecting non-null pointer.");
-
-  // Skip functions that are specializations or in specialization context.
-  const DeclContext *DC = Function;
-  while (DC) {
-    if (isa<ClassTemplateSpecializationDecl>(DC)) return;
-    if (auto *F = dyn_cast<FunctionDecl>(DC)) {
-      if (F->isFunctionTemplateSpecialization()) {
-        if (!isa<CXXMethodDecl>(DC)) return;
-        if (DC->getLexicalParent()->isFileContext()) return;
-        // Inline method specializations are the only supported
-        // specialization for now.
-      }
-    }
-    DC = DC->getParent();
-  }
-
-  ID.AddInteger(Function->getDeclKind());
-
-  const auto *SpecializationArgs = Function->getTemplateSpecializationArgs();
-  AddBoolean(SpecializationArgs);
-  if (SpecializationArgs) {
-    ID.AddInteger(SpecializationArgs->size());
-    for (const TemplateArgument &TA : SpecializationArgs->asArray()) {
-      AddTemplateArgument(TA);
-    }
-  }
-
-  if (const auto *Method = dyn_cast<CXXMethodDecl>(Function)) {
-    AddBoolean(Method->isConst());
-    AddBoolean(Method->isVolatile());
-  }
-
-  ID.AddInteger(Function->getStorageClass());
-  AddBoolean(Function->isInlineSpecified());
-  AddBoolean(Function->isVirtualAsWritten());
-  AddBoolean(Function->isPure());
-  AddBoolean(Function->isDeletedAsWritten());
-  AddBoolean(Function->isExplicitlyDefaulted());
-
-  AddDecl(Function);
-
-  AddQualType(Function->getReturnType());
-
-  ID.AddInteger(Function->param_size());
-  for (auto Param : Function->parameters())
-    AddSubDecl(Param);
-
-  if (SkipBody) {
-    AddBoolean(false);
-    return;
-  }
-
-  const bool HasBody = Function->isThisDeclarationADefinition() &&
-                       !Function->isDefaulted() && !Function->isDeleted() &&
-                       !Function->isLateTemplateParsed();
-  AddBoolean(HasBody);
-  if (HasBody) {
-    auto *Body = Function->getBody();
-    AddBoolean(Body);
-    if (Body)
-      AddStmt(Body);
-  }
-}
-
-void ODRHash::AddEnumDecl(const EnumDecl *Enum) {
-  assert(Enum);
-  AddDeclarationName(Enum->getDeclName());
-
-  AddBoolean(Enum->isScoped());
-  if (Enum->isScoped())
-    AddBoolean(Enum->isScopedUsingClassTag());
-
-  if (Enum->getIntegerTypeSourceInfo())
-    AddQualType(Enum->getIntegerType());
-
-  // Filter out sub-Decls which will not be processed in order to get an
-  // accurate count of Decl's.
-  llvm::SmallVector<const Decl *, 16> Decls;
-  for (Decl *SubDecl : Enum->decls()) {
-    if (isWhitelistedDecl(SubDecl, Enum)) {
-      assert(isa<EnumConstantDecl>(SubDecl) && "Unexpected Decl");
-      Decls.push_back(SubDecl);
-    }
-  }
-
-  ID.AddInteger(Decls.size());
-  for (auto SubDecl : Decls) {
-    AddSubDecl(SubDecl);
-  }
-
 }
 
 void ODRHash::AddDecl(const Decl *D) {
   assert(D && "Expecting non-null pointer.");
-  D = D->getCanonicalDecl();
-
-  if (const NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
-    AddDeclarationName(ND->getDeclName());
+  auto Result = DeclMap.insert(std::make_pair(D, DeclMap.size()));
+  ID.AddInteger(Result.first->second);
+  // On first encounter of a Decl pointer, process it.  Every time afterwards,
+  // only the index value is needed.
+  if (!Result.second) {
     return;
   }
 
   ID.AddInteger(D->getKind());
-  // TODO: Handle non-NamedDecl here.
+
+  if (const NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
+    AddDeclarationName(ND->getDeclName());
+  }
 }
 
-namespace {
 // Process a Type pointer.  Add* methods call back into ODRHash while Visit*
 // methods process the relevant parts of the Type.
 class ODRTypeVisitor : public TypeVisitor<ODRTypeVisitor> {
@@ -726,41 +544,13 @@ public:
     VisitFunctionType(T);
   }
 
-  void VisitPointerType(const PointerType *T) {
-    AddQualType(T->getPointeeType());
-    VisitType(T);
-  }
-
-  void VisitReferenceType(const ReferenceType *T) {
-    AddQualType(T->getPointeeTypeAsWritten());
-    VisitType(T);
-  }
-
-  void VisitLValueReferenceType(const LValueReferenceType *T) {
-    VisitReferenceType(T);
-  }
-
-  void VisitRValueReferenceType(const RValueReferenceType *T) {
-    VisitReferenceType(T);
-  }
-
   void VisitTypedefType(const TypedefType *T) {
     AddDecl(T->getDecl());
     QualType UnderlyingType = T->getDecl()->getUnderlyingType();
     VisitQualifiers(UnderlyingType.getQualifiers());
-    while (true) {
-      if (const TypedefType *Underlying =
-              dyn_cast<TypedefType>(UnderlyingType.getTypePtr())) {
-        UnderlyingType = Underlying->getDecl()->getUnderlyingType();
-        continue;
-      }
-      if (const ElaboratedType *Underlying =
-              dyn_cast<ElaboratedType>(UnderlyingType.getTypePtr())) {
-        UnderlyingType = Underlying->getNamedType();
-        continue;
-      }
-
-      break;
+    while (const TypedefType *Underlying =
+               dyn_cast<TypedefType>(UnderlyingType.getTypePtr())) {
+      UnderlyingType = Underlying->getDecl()->getUnderlyingType();
     }
     AddType(UnderlyingType.getTypePtr());
     VisitType(T);
@@ -818,10 +608,17 @@ public:
     AddDecl(T->getDecl());
   }
 };
-} // namespace
 
 void ODRHash::AddType(const Type *T) {
   assert(T && "Expecting non-null pointer.");
+  auto Result = TypeMap.insert(std::make_pair(T, TypeMap.size()));
+  ID.AddInteger(Result.first->second);
+  // On first encounter of a Type pointer, process it.  Every time afterwards,
+  // only the index value is needed.
+  if (!Result.second) {
+    return;
+  }
+
   ODRTypeVisitor(ID, *this).Visit(T);
 }
 

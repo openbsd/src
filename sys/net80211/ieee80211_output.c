@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.125 2019/05/12 18:12:38 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.122 2017/12/14 18:52:17 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -392,26 +392,25 @@ ieee80211_up_to_ac(struct ieee80211com *ic, int up)
 int
 ieee80211_classify(struct ieee80211com *ic, struct mbuf *m)
 {
-	struct ether_header eh;
+	struct ether_header *eh;
 	u_int8_t ds_field;
 #if NVLAN > 0
 	if (m->m_flags & M_VLANTAG)	/* use VLAN 802.1D user-priority */
 		return EVL_PRIOFTAG(m->m_pkthdr.ether_vtag);
 #endif
-	m_copydata(m, 0, sizeof(eh), (caddr_t)&eh);
-	if (eh.ether_type == htons(ETHERTYPE_IP)) {
-		struct ip ip;
-		m_copydata(m, sizeof(eh), sizeof(ip), (caddr_t)&ip);
-		if (ip.ip_v != 4)
+	eh = mtod(m, struct ether_header *);
+	if (eh->ether_type == htons(ETHERTYPE_IP)) {
+		struct ip *ip = (struct ip *)&eh[1];
+		if (ip->ip_v != 4)
 			return 0;
-		ds_field = ip.ip_tos;
+		ds_field = ip->ip_tos;
 	}
 #ifdef INET6
-	else if (eh.ether_type == htons(ETHERTYPE_IPV6)) {
-		struct ip6_hdr ip6;
+	else if (eh->ether_type == htons(ETHERTYPE_IPV6)) {
+		struct ip6_hdr *ip6 = (struct ip6_hdr *)&eh[1];
 		u_int32_t flowlabel;
-		m_copydata(m, sizeof(eh), sizeof(ip6), (caddr_t)&ip6);
-		flowlabel = ntohl(ip6.ip6_flow);
+
+		flowlabel = ntohl(ip6->ip6_flow);
 		if ((flowlabel >> 28) != 6)
 			return 0;
 		ds_field = (flowlabel >> 20) & 0xff;
@@ -1263,7 +1262,7 @@ ieee80211_get_auth(struct ieee80211com *ic, struct ieee80211_node *ni,
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return NULL;
-	m_align(m, 2 * 3);
+	MH_ALIGN(m, 2 * 3);
 	m->m_pkthdr.len = m->m_len = 2 * 3;
 
 	frm = mtod(m, u_int8_t *);
@@ -1287,9 +1286,9 @@ ieee80211_get_deauth(struct ieee80211com *ic, struct ieee80211_node *ni,
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return NULL;
-	m_align(m, 2);
-	m->m_pkthdr.len = m->m_len = 2;
+	MH_ALIGN(m, 2);
 
+	m->m_pkthdr.len = m->m_len = 2;
 	*mtod(m, u_int16_t *) = htole16(reason);
 
 	return m;
@@ -1447,9 +1446,9 @@ ieee80211_get_disassoc(struct ieee80211com *ic, struct ieee80211_node *ni,
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return NULL;
-	m_align(m, 2);
-	m->m_pkthdr.len = m->m_len = 2;
+	MH_ALIGN(m, 2);
 
+	m->m_pkthdr.len = m->m_len = 2;
 	*mtod(m, u_int16_t *) = htole16(reason);
 
 	return m;
@@ -1819,8 +1818,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	m = ieee80211_getmgmt(M_DONTWAIT, MT_DATA,
 	    8 + 2 + 2 +
-	    2 + ((ic->ic_userflags & IEEE80211_F_HIDENWID) ?
-	    0 : ni->ni_esslen) +
+	    2 + ((ic->ic_flags & IEEE80211_F_HIDENWID) ? 0 : ni->ni_esslen) +
 	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
 	    2 + 1 +
 	    2 + ((ic->ic_opmode == IEEE80211_M_IBSS) ? 2 : 254) +
@@ -1855,7 +1853,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	memset(frm, 0, 8); frm += 8;	/* timestamp is set by hardware */
 	LE_WRITE_2(frm, ni->ni_intval); frm += 2;
 	frm = ieee80211_add_capinfo(frm, ic, ni);
-	if (ic->ic_userflags & IEEE80211_F_HIDENWID)
+	if (ic->ic_flags & IEEE80211_F_HIDENWID)
 		frm = ieee80211_add_ssid(frm, NULL, 0);
 	else
 		frm = ieee80211_add_ssid(frm, ni->ni_essid, ni->ni_esslen);

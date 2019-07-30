@@ -1,4 +1,5 @@
 #!./perl
+use strict;
 
 # quickie tests to see if h2ph actually runs and does more or less what is
 # expected
@@ -23,7 +24,7 @@ plan(6);
 sub txt_compare {
     local $/;
     my ($A, $B);
-    for (($A,$B) = @_) { open(_,"<",$_) ? $_ = <_> : die "$_ : $!"; close _ }
+    for (($A,$B) = @_) { open(_,"<$_") ? $_ = <_> : die "$_ : $!"; close _ }
     $A cmp $B;
 }
 

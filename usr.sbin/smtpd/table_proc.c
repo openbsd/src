@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_proc.c,v 1.15 2018/12/27 14:23:41 eric Exp $	*/
+/*	$OpenBSD: table_proc.c,v 1.6 2015/12/05 13:14:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -116,14 +116,14 @@ table_proc_end(void)
  * API
  */
 
-static int
+static void *
 table_proc_open(struct table *table)
 {
 	struct table_proc_priv	*priv;
 	struct table_open_params op;
 	int			 fd;
 
-	priv = xcalloc(1, sizeof(*priv));
+	priv = xcalloc(1, sizeof(*priv), "table_proc_open");
 
 	fd = fork_proc_backend("table", table->t_config, table->t_name);
 	if (fd == -1)
@@ -139,9 +139,7 @@ table_proc_open(struct table *table)
 	table_proc_call(priv);
 	table_proc_end();
 
-	table->t_handle = priv;
-
-	return (1);
+	return (priv);
 }
 
 static int
@@ -160,43 +158,60 @@ table_proc_update(struct table *table)
 }
 
 static void
-table_proc_close(struct table *table)
+table_proc_close(void *arg)
 {
-	struct table_proc_priv	*priv = table->t_handle;
+	struct table_proc_priv	*priv = arg;
 
 	imsg_compose(&priv->ibuf, PROC_TABLE_CLOSE, 0, 0, -1, NULL, 0);
 	imsg_flush(&priv->ibuf);
-
-	table->t_handle = NULL;
 }
 
 static int
-imsg_add_params(struct ibuf *buf)
+imsg_add_params(struct ibuf *buf, struct dict *params)
 {
-	size_t count = 0;
+	size_t count;
+	const char *key;
+	char *value;
+	void *iter;
+
+	count = 0;
+	if (params)
+		count = dict_count(params);
 
 	if (imsg_add(buf, &count, sizeof(count)) == -1)
 		return (-1);
+
+	if (count == 0)
+		return (0);
+
+	iter = NULL;
+	while (dict_iter(params, &iter, &key, (void **)&value)) {
+		if (imsg_add(buf, key, strlen(key) + 1) == -1)
+			return (-1);
+		if (imsg_add(buf, value, strlen(value) + 1) == -1)
+			return (-1);
+	}
 
 	return (0);
 }
 
 static int
-table_proc_lookup(struct table *table, enum table_service s, const char *k, char **dst)
+table_proc_lookup(void *arg, struct dict *params, const char *k, enum table_service s,
+    union lookup *lk)
 {
-	struct table_proc_priv	*priv = table->t_handle;
+	struct table_proc_priv	*priv = arg;
 	struct ibuf		*buf;
 	int			 r;
 
 	buf = imsg_create(&priv->ibuf,
-	    dst ? PROC_TABLE_LOOKUP : PROC_TABLE_CHECK, 0, 0,
+	    lk ? PROC_TABLE_LOOKUP : PROC_TABLE_CHECK, 0, 0,
 	    sizeof(s) + strlen(k) + 1);
 
 	if (buf == NULL)
 		return (-1);
 	if (imsg_add(buf, &s, sizeof(s)) == -1)
 		return (-1);
-	if (imsg_add_params(buf) == -1)
+	if (imsg_add_params(buf, params) == -1)
 		return (-1);
 	if (imsg_add(buf, k, strlen(k) + 1) == -1)
 		return (-1);
@@ -205,7 +220,7 @@ table_proc_lookup(struct table *table, enum table_service s, const char *k, char
 	table_proc_call(priv);
 	table_proc_read(&r, sizeof(r));
 
-	if (r == 1 && dst) {
+	if (r == 1 && lk) {
 		if (rlen == 0) {
 			log_warnx("warn: table-proc: empty response");
 			fatalx("table-proc: exiting");
@@ -214,9 +229,7 @@ table_proc_lookup(struct table *table, enum table_service s, const char *k, char
 			log_warnx("warn: table-proc: not NUL-terminated");
 			fatalx("table-proc: exiting");
 		}
-		*dst = strdup(rdata);
-		if (*dst == NULL)
-			r = -1;
+		r = table_parse_lookup(s, k, rdata, lk);
 		table_proc_read(NULL, rlen);
 	}
 
@@ -226,9 +239,9 @@ table_proc_lookup(struct table *table, enum table_service s, const char *k, char
 }
 
 static int
-table_proc_fetch(struct table *table, enum table_service s, char **dst)
+table_proc_fetch(void *arg, struct dict *params, enum table_service s, union lookup *lk)
 {
-	struct table_proc_priv	*priv = table->t_handle;
+	struct table_proc_priv	*priv = arg;
 	struct ibuf		*buf;
 	int			 r;
 
@@ -237,7 +250,7 @@ table_proc_fetch(struct table *table, enum table_service s, char **dst)
 		return (-1);
 	if (imsg_add(buf, &s, sizeof(s)) == -1)
 		return (-1);
-	if (imsg_add_params(buf) == -1)
+	if (imsg_add_params(buf, params) == -1)
 		return (-1);
 	imsg_close(&priv->ibuf, buf);
 
@@ -253,9 +266,7 @@ table_proc_fetch(struct table *table, enum table_service s, char **dst)
 			log_warnx("warn: table-proc: not NUL-terminated");
 			fatalx("table-proc: exiting");
 		}
-		*dst = strdup(rdata);
-		if (*dst == NULL)
-			r = -1;
+		r = table_parse_lookup(s, NULL, rdata, lk);
 		table_proc_read(NULL, rlen);
 	}
 
@@ -265,10 +276,7 @@ table_proc_fetch(struct table *table, enum table_service s, char **dst)
 }
 
 struct table_backend table_backend_proc = {
-	"proc",
 	K_ANY,
-	NULL,
-	NULL,
 	NULL,
 	table_proc_open,
 	table_proc_update,

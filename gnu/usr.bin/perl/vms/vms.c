@@ -196,7 +196,7 @@ static char * int_tovmspath(const char *path, char *buf, int * utf8_fl);
 
 static char *__mystrtolower(char *str)
 {
-  if (str) for (; *str; ++str) *str= toLOWER_L1(*str);
+  if (str) for (; *str; ++str) *str= tolower(*str);
   return str;
 }
 
@@ -213,38 +213,19 @@ static bool will_taint = FALSE;  /* tainting active, but no PL_curinterp yet */
 /* munching */ 
 static int no_translate_barewords;
 
-/* DECC feature indexes.  We grab the indexes at start-up
- * time for later use with decc$feature_get_value.
+/* DECC Features that may need to affect how Perl interprets
+ * displays filename information
  */
-static int disable_to_vms_logname_translation_index = -1;
-static int disable_posix_root_index = -1;
-static int efs_case_preserve_index = -1;
-static int efs_charset_index = -1;
-static int filename_unix_no_version_index = -1;
-static int filename_unix_only_index = -1;
-static int filename_unix_report_index = -1;
-static int posix_compliant_pathnames_index = -1;
-static int readdir_dropdotnotype_index = -1;
-
-#define DECC_DISABLE_TO_VMS_LOGNAME_TRANSLATION \
-    (decc$feature_get_value(disable_to_vms_logname_translation_index,__FEATURE_MODE_CURVAL)>0)
-#define DECC_DISABLE_POSIX_ROOT  \
-    (decc$feature_get_value(disable_posix_root_index,__FEATURE_MODE_CURVAL)>0)
-#define DECC_EFS_CASE_PRESERVE  \
-    (decc$feature_get_value(efs_case_preserve_index,__FEATURE_MODE_CURVAL)>0)
-#define DECC_EFS_CHARSET  \
-    (decc$feature_get_value(efs_charset_index,__FEATURE_MODE_CURVAL)>0)
-#define DECC_FILENAME_UNIX_NO_VERSION  \
-    (decc$feature_get_value(filename_unix_no_version_index,__FEATURE_MODE_CURVAL)>0)
-#define DECC_FILENAME_UNIX_ONLY  \
-    (decc$feature_get_value(filename_unix_only_index,__FEATURE_MODE_CURVAL)>0)
-#define DECC_FILENAME_UNIX_REPORT  \
-    (decc$feature_get_value(filename_unix_report_index,__FEATURE_MODE_CURVAL)>0)
-#define DECC_POSIX_COMPLIANT_PATHNAMES   \
-    (decc$feature_get_value(posix_compliant_pathnames_index,__FEATURE_MODE_CURVAL)>0)
-#define DECC_READDIR_DROPDOTNOTYPE  \
-    (decc$feature_get_value(readdir_dropdotnotype_index,__FEATURE_MODE_CURVAL)>0)
-
+static int decc_disable_to_vms_logname_translation = 1;
+static int decc_disable_posix_root = 1;
+int decc_efs_case_preserve = 0;
+static int decc_efs_charset = 0;
+static int decc_efs_charset_index = -1;
+static int decc_filename_unix_no_version = 0;
+static int decc_filename_unix_only = 0;
+int decc_filename_unix_report = 0;
+int decc_posix_compliant_pathnames = 0;
+int decc_readdir_dropdotnotype = 0;
 static int vms_process_case_tolerant = 1;
 int vms_vtf7_filenames = 0;
 int gnv_unix_shell = 0;
@@ -304,15 +285,15 @@ is_unix_filespec(const char *path)
     const char * pch1;
 
     ret_val = 0;
-    if (! strBEGINs(path,"\"^UP^")) {
+    if (strncmp(path,"\"^UP^",5) != 0) {
 	pch1 = strchr(path, '/');
 	if (pch1 != NULL)
 	    ret_val = 1;
 	else {
 
 	    /* If the user wants UNIX files, "." needs to be treated as in UNIX */
-	    if (DECC_FILENAME_UNIX_REPORT || DECC_FILENAME_UNIX_ONLY) {
-	      if (strEQ(path,"."))
+	    if (decc_filename_unix_report || decc_filename_unix_only) {
+	    if (strcmp(path,".") == 0)
 		ret_val = 1;
 	    }
 	}
@@ -465,13 +446,13 @@ copy_expand_unix_filename_escape(char *outspec, const char *inspec, int *output_
     if ((inspec[0] == '$') && (inspec[1] == '(')) {
     int tcnt;
 
-	if (isALPHA_L1(inspec[2]) || (inspec[2] == '.') || (inspec[2] == '_')) {
+	if (isalnum(inspec[2]) || (inspec[2] == '.') || (inspec[2] == '_')) {
 	    tcnt = 3;
 	    outspec[0] = inspec[0];
 	    outspec[1] = inspec[1];
 	    outspec[2] = inspec[2];
 
-	    while(isALPHA_L1(inspec[tcnt]) ||
+	    while(isalnum(inspec[tcnt]) ||
 		  (inspec[2] == '.') || (inspec[2] == '_')) {
 		outspec[tcnt] = inspec[tcnt];
 		tcnt++;
@@ -494,7 +475,7 @@ copy_expand_unix_filename_escape(char *outspec, const char *inspec, int *output_
 	return 1;
 	break;
     case '?':
-	if (!DECC_EFS_CHARSET)
+	if (decc_efs_charset == 0)
 	  outspec[0] = '%';
 	else
 	  outspec[0] = '?';
@@ -502,6 +483,7 @@ copy_expand_unix_filename_escape(char *outspec, const char *inspec, int *output_
 	return 1;
 	break;
     case '.':
+    case '~':
     case '!':
     case '#':
     case '&':
@@ -523,7 +505,7 @@ copy_expand_unix_filename_escape(char *outspec, const char *inspec, int *output_
         /* Don't escape again if following character is 
          * already something we escape.
          */
-        if (strchr(".!#&\'`()+@{},;[]%^=_\\", *(inspec+1))) {
+        if (strchr(".~!#&\'`()+@{},;[]%^=_\\", *(inspec+1))) {
 	    *outspec = *inspec;
 	    *output_cnt = 1;
 	    return 1;
@@ -770,7 +752,7 @@ vms_split_path(const char * path, char * * volume, int * vol_len, char * * root,
      * The parser can not tell the difference when a "." is a version
      * delimiter or a part of the file specification.
      */
-    if ((DECC_EFS_CHARSET) &&
+    if ((decc_efs_charset) && 
 	(item_list[verspec].length > 0) &&
 	(item_list[verspec].component[0] == '.')) {
 	*name = item_list[namespec].component;
@@ -806,9 +788,9 @@ is_dir_ext(char * e_spec, int e_len, char * vs_spec, int vs_len)
 
     /* Look for the DIR on the extension */
     if (vms_process_case_tolerant) {
-        if ((toUPPER_A(e_spec[1]) == 'D') &&
-            (toUPPER_A(e_spec[2]) == 'I') &&
-            (toUPPER_A(e_spec[3]) == 'R')) {
+        if ((toupper(e_spec[1]) == 'D') &&
+            (toupper(e_spec[2]) == 'I') &&
+            (toupper(e_spec[3]) == 'R')) {
             return 1;
         }
     } else {
@@ -863,10 +845,10 @@ S_remove_ppf_prefix(const char *lnm, char *eqv, unsigned short int eqvlen)
 {
     if (*((int *)lnm) == *((int *)"SYS$")                    &&
         eqvlen >= 4 && eqv[0] == 0x1b && eqv[1] == 0x00      &&
-        ( (lnm[4] == 'O' && strEQ(lnm,"SYS$OUTPUT"))  ||
-          (lnm[4] == 'I' && strEQ(lnm,"SYS$INPUT"))   ||
-          (lnm[4] == 'E' && strEQ(lnm,"SYS$ERROR"))   ||
-          (lnm[4] == 'C' && strEQ(lnm,"SYS$COMMAND")) )  ) {
+        ( (lnm[4] == 'O' && !strcmp(lnm,"SYS$OUTPUT"))  ||
+          (lnm[4] == 'I' && !strcmp(lnm,"SYS$INPUT"))   ||
+          (lnm[4] == 'E' && !strcmp(lnm,"SYS$ERROR"))   ||
+          (lnm[4] == 'C' && !strcmp(lnm,"SYS$COMMAND")) )  ) {
 
         memmove(eqv, eqv+4, eqvlen-4);
         eqvlen -= 4;
@@ -905,7 +887,7 @@ Perl_vmstrnenv(const char *lnm, char *eqv, unsigned long int idx,
       set_errno(EINVAL); set_vaxc_errno(SS$_BADPARAM); return 0;
     }
     for (cp1 = lnm, cp2 = uplnm; *cp1; cp1++, cp2++) {
-      *cp2 = toUPPER_A(*cp1);
+      *cp2 = _toupper(*cp1);
       if (cp1 - lnm > LNM$C_NAMLENGTH) {
         set_errno(EINVAL); set_vaxc_errno(SS$_IVLOGNAM);
         return 0;
@@ -938,7 +920,7 @@ Perl_vmstrnenv(const char *lnm, char *eqv, unsigned long int idx,
           for (i = 0; environ[i]; i++) { 
             if ((eq = strchr(environ[i],'=')) && 
                 lnmdsc.dsc$w_length == (eq - environ[i]) &&
-                strnEQ(environ[i],lnm,eq - environ[i])) {
+                !strncmp(environ[i],lnm,eq - environ[i])) {
               eq++;
               for (eqvlen = 0; eq[eqvlen]; eqvlen++) eqv[eqvlen] = eq[eqvlen];
               if (!eqvlen) continue;
@@ -1096,8 +1078,8 @@ Perl_my_getenv(pTHX_ const char *lnm, bool sys)
       eqv = __my_getenv_eqv;  
     }
 
-    for (cp1 = lnm, cp2 = eqv; *cp1; cp1++,cp2++) *cp2 = toUPPER_A(*cp1);
-    if (memEQs(eqv, cp1 - lnm, "DEFAULT")) {
+    for (cp1 = lnm, cp2 = eqv; *cp1; cp1++,cp2++) *cp2 = _toupper(*cp1);
+    if (cp1 - lnm == 7 && !strncmp(eqv,"DEFAULT",7)) {
       int len;
       getcwd(eqv,LNM$C_NAMLENGTH);
 
@@ -1192,8 +1174,8 @@ Perl_my_getenv_len(pTHX_ const char *lnm, unsigned long *len, bool sys)
       buf = __my_getenv_len_eqv;  
     }
 
-    for (cp1 = lnm, cp2 = buf; *cp1; cp1++,cp2++) *cp2 = toUPPER_A(*cp1);
-    if (memEQs(buf, cp1 - lnm, "DEFAULT")) {
+    for (cp1 = lnm, cp2 = buf; *cp1; cp1++,cp2++) *cp2 = _toupper(*cp1);
+    if (cp1 - lnm == 7 && !strncmp(buf,"DEFAULT",7)) {
     char * zeros;
 
       getcwd(buf,LNM$C_NAMLENGTH);
@@ -1319,7 +1301,7 @@ prime_env_iter(void)
   envhv = GvHVn(PL_envgv);
   /* Perform a dummy fetch as an lval to insure that the hash table is
    * set up.  Otherwise, the hv_store() will turn into a nullop. */
-  (void) hv_fetchs(envhv,"DEFAULT",TRUE);
+  (void) hv_fetch(envhv,"DEFAULT",7,TRUE);
 
   for (i = 0; env_tables[i]; i++) {
      if (!have_sym && (tmpdsc.dsc$a_pointer = env_tables[i]->dsc$a_pointer) &&
@@ -1413,7 +1395,7 @@ prime_env_iter(void)
       if (sts == SS$_BUFFEROVF && ckWARN(WARN_INTERNAL))
         Perl_warner(aTHX_ packWARN(WARN_INTERNAL),"Buffer overflow in prime_env_iter: %s",buf);
 
-      for (cp1 = buf; *cp1 && isSPACE_L1(*cp1); cp1++) ;
+      for (cp1 = buf; *cp1 && isspace(*cp1); cp1++) ;
       if (*cp1 == '(' || /* Logical name table name */
           *cp1 == '='    /* Next eqv of searchlist  */) continue;
       if (*cp1 == '"') cp1++;
@@ -1508,7 +1490,7 @@ Perl_vmssetenv(pTHX_ const char *lnm, const char *eqv, struct dsc$descriptor_s *
     }
 
     for (cp1 = lnm, cp2 = uplnm; *cp1; cp1++, cp2++) {
-      *cp2 = toUPPER_A(*cp1);
+      *cp2 = _toupper(*cp1);
       if (cp1 - lnm > LNM$C_NAMLENGTH) {
         set_errno(EINVAL); set_vaxc_errno(SS$_IVLOGNAM);
         return SS$_IVLOGNAM;
@@ -1524,7 +1506,7 @@ Perl_vmssetenv(pTHX_ const char *lnm, const char *eqv, struct dsc$descriptor_s *
           for (i = 0; environ[i]; i++) { /* If it's an environ elt, reset */
             if ((cp1 = strchr(environ[i],'=')) && 
                 lnmdsc.dsc$w_length == (cp1 - environ[i]) &&
-                strnEQ(environ[i],lnm,cp1 - environ[i])) {
+                !strncmp(environ[i],lnm,cp1 - environ[i])) {
               unsetenv(lnm);
               return 0;
             }
@@ -1655,8 +1637,8 @@ Perl_my_setenv(pTHX_ const char *lnm, const char *eqv)
       if  (len == 7) {
         char uplnm[8];
         int i;
-        for (i = 0; lnm[i]; i++) uplnm[i] = toUPPER_A(lnm[i]);
-        if (strEQ(uplnm,"DEFAULT")) {
+        for (i = 0; lnm[i]; i++) uplnm[i] = _toupper(lnm[i]);
+        if (!strcmp(uplnm,"DEFAULT")) {
           if (eqv && *eqv) my_chdir(eqv);
           return;
         }
@@ -2162,7 +2144,7 @@ my_tmpfile(void)
   cp = (char *)PerlMem_malloc(L_tmpnam+24);
   if (cp == NULL) _ckvmssts_noperl(SS$_INSFMEM);
 
-  if (DECC_FILENAME_UNIX_ONLY == 0)
+  if (decc_filename_unix_only == 0)
     strcpy(cp,"Sys$Scratch:");
   else
     strcpy(cp,"/tmp/");
@@ -3739,7 +3721,7 @@ store_pipelocs(pTHX)
 
         if (SvROK(dirsv)) continue;
         dir = SvPVx(dirsv,n_a);
-        if (strEQ(dir,".")) continue;
+        if (strcmp(dir,".") == 0) continue;
         if ((tounixpath_utf8(dir, unixdir, NULL)) == NULL)
             continue;
 
@@ -3840,7 +3822,7 @@ vmspipe_tempfile(pTHX)
     */
 
     index++;
-    if (!DECC_FILENAME_UNIX_ONLY) {
+    if (!decc_filename_unix_only) {
       sprintf(file,"sys$scratch:perlpipe_%08.8x_%d.com",mypid,index);
       fp = fopen(file,"w");
       if (!fp) {
@@ -3895,7 +3877,7 @@ vmspipe_tempfile(pTHX)
     fstat(fileno(fp), &s0.crtl_stat);
     fclose(fp);
 
-    if (DECC_FILENAME_UNIX_ONLY)
+    if (decc_filename_unix_only)
 	int_tounixspec(file, file, NULL);
     fp = fopen(file,"r","shr=get");
     if (!fp) return 0;
@@ -5592,7 +5574,7 @@ int_rmsexpand
    rms_set_rsal(mynam, outbuf, NAM$C_MAXRSS, outbufl, (VMS_MAXRSS - 1));
 
 #ifdef NAM$M_NO_SHORT_UPCASE
-  if (DECC_EFS_CASE_PRESERVE)
+  if (decc_efs_case_preserve)
     rms_set_nam_nop(mynam, NAM$M_NO_SHORT_UPCASE);
 #endif
 
@@ -5656,7 +5638,7 @@ int_rmsexpand
   /* If the input filespec contained any lowercase characters,
    * downcase the result for compatibility with Unix-minded code. */
 int_expanded:
-  if (!DECC_EFS_CASE_PRESERVE) {
+  if (!decc_efs_case_preserve) {
     char * tbuf;
     for (tbuf = rms_get_fna(myfab, mynam); *tbuf; tbuf++)
       if (islower(*tbuf)) { haslower = 1; break; }
@@ -5729,7 +5711,7 @@ int_expanded:
 	rms_clear_nam_nop(defnam);
 	rms_set_nam_nop(defnam, NAM$M_SYNCHK);
 #ifdef NAM$M_NO_SHORT_UPCASE
-	if (DECC_EFS_CASE_PRESERVE)
+	if (decc_efs_case_preserve)
 	  rms_set_nam_nop(defnam, NAM$M_NO_SHORT_UPCASE);
 #endif
 #ifdef NAML$M_OPEN_SPECIAL
@@ -5809,7 +5791,7 @@ int_expanded:
 
   /* Posix format specifications must have matching quotes */
   if (speclen < (VMS_MAXRSS - 1)) {
-    if (DECC_POSIX_COMPLIANT_PATHNAMES && (spec_buf[0] == '\"')) {
+    if (decc_posix_compliant_pathnames && (spec_buf[0] == '\"')) {
       if ((speclen > 1) && (spec_buf[speclen-1] != '\"')) {
         spec_buf[speclen] = '\"';
         speclen++;
@@ -5817,7 +5799,7 @@ int_expanded:
     }
   }
   spec_buf[speclen] = '\0';
-  if (haslower && !DECC_EFS_CASE_PRESERVE) __mystrtolower(spec_buf);
+  if (haslower && !decc_efs_case_preserve) __mystrtolower(spec_buf);
 
   /* Have we been working with an expanded, but not resultant, spec? */
   /* Also, convert back to Unix syntax if necessary. */
@@ -6028,7 +6010,7 @@ int_fileify_dirspec(const char *dir, char *buf, int *utf8_fl)
     dirlen = strlen(dir);
     while (dirlen && dir[dirlen-1] == '/') --dirlen;
     if (!dirlen) { /* We had Unixish '/' -- substitute top of current tree */
-      if (!DECC_POSIX_COMPLIANT_PATHNAMES && DECC_DISABLE_POSIX_ROOT) {
+      if (!decc_posix_compliant_pathnames && decc_disable_posix_root) {
         dir = "/sys$disk";
         dirlen = 9;
       }
@@ -6042,7 +6024,7 @@ int_fileify_dirspec(const char *dir, char *buf, int *utf8_fl)
     trndir = (char *)PerlMem_malloc(VMS_MAXRSS + 1);
     if (trndir == NULL) _ckvmssts_noperl(SS$_INSFMEM);
     if (!strpbrk(dir+1,"/]>:")  &&
-	(!DECC_POSIX_COMPLIANT_PATHNAMES && DECC_DISABLE_POSIX_ROOT)) {
+	(!decc_posix_compliant_pathnames && decc_disable_posix_root)) {
       strcpy(trndir,*dir == '/' ? dir + 1: dir);
       trnlnm_iter_count = 0;
       while (!strpbrk(trndir,"/]>:") && simple_trnlnm(trndir,trndir,VMS_MAXRSS-1)) {
@@ -6066,11 +6048,11 @@ int_fileify_dirspec(const char *dir, char *buf, int *utf8_fl)
      *    ... do_fileify_dirspec("myroot",buf,1) ...
      * does something useful.
      */
-    if (dirlen >= 2 && strEQ(trndir+dirlen-2,".]")) {
+    if (dirlen >= 2 && !strcmp(trndir+dirlen-2,".]")) {
       trndir[--dirlen] = '\0';
       trndir[dirlen-1] = ']';
     }
-    if (dirlen >= 2 && strEQ(trndir+dirlen-2,".>")) {
+    if (dirlen >= 2 && !strcmp(trndir+dirlen-2,".>")) {
       trndir[--dirlen] = '\0';
       trndir[dirlen-1] = '>';
     }
@@ -6158,7 +6140,7 @@ int_fileify_dirspec(const char *dir, char *buf, int *utf8_fl)
         } while ((cp1 = strstr(cp1,"/.")) != NULL);
         lastdir = strrchr(trndir,'/');
       }
-      else if (dirlen >= 7 && strEQ(&trndir[dirlen-7],"/000000")) {
+      else if (dirlen >= 7 && !strcmp(&trndir[dirlen-7],"/000000")) {
 	char * ret_chr;
         /* Ditto for specs that end in an MFD -- let the VMS code
          * figure out whether it's a real device or a rooted logical. */
@@ -6204,7 +6186,7 @@ int_fileify_dirspec(const char *dir, char *buf, int *utf8_fl)
             }
             is_dir = is_dir_ext(cp2, e_len, cp3, vs_len);
             if (!is_dir) {
-                if (!DECC_EFS_CHARSET) {
+                if (!decc_efs_charset) {
                     /* If this is not EFS, then not a directory */
                     PerlMem_free(trndir);
                     PerlMem_free(vmsdir);
@@ -6220,7 +6202,7 @@ int_fileify_dirspec(const char *dir, char *buf, int *utf8_fl)
                 /* The .dir for now, and fix this better later */
                 dirlen = cp2 - trndir;
             }
-            if (DECC_EFS_CHARSET && !strchr(trndir,'/')) {
+            if (decc_efs_charset && !strchr(trndir,'/')) {
                 /* Dots are allowed in dir names, so escape them if input not in Unix syntax. */
                 char *cp4 = is_dir ? (cp2 - 1) : cp2;
                   
@@ -6244,11 +6226,11 @@ int_fileify_dirspec(const char *dir, char *buf, int *utf8_fl)
 
       /* We've picked up everything up to the directory file name.
          Now just add the type and version, and we're set. */
-      if ((!DECC_EFS_CASE_PRESERVE) && vms_process_case_tolerant)
+      if ((!decc_efs_case_preserve) && vms_process_case_tolerant)
           strcat(buf,".dir");
       else
           strcat(buf,".DIR");
-      if (!DECC_FILENAME_UNIX_NO_VERSION)
+      if (!decc_filename_unix_no_version)
           strcat(buf,";1");
       PerlMem_free(trndir);
       PerlMem_free(vmsdir);
@@ -6276,7 +6258,7 @@ int_fileify_dirspec(const char *dir, char *buf, int *utf8_fl)
       rms_set_dna(dirfab, dirnam, ".DIR;1", 6);
       rms_set_esal(dirnam, esa, NAM$C_MAXRSS, esal, (VMS_MAXRSS - 1));
 #ifdef NAM$M_NO_SHORT_UPCASE
-      if (DECC_EFS_CASE_PRESERVE)
+      if (decc_efs_case_preserve)
 	rms_set_nam_nop(dirnam, NAM$M_NO_SHORT_UPCASE);
 #endif
 
@@ -6351,7 +6333,7 @@ int_fileify_dirspec(const char *dir, char *buf, int *utf8_fl)
       if (rms_is_nam_fnb(dirnam, NAM$M_EXP_TYPE)) {  /* Was type specified? */
         /* Yep; check version while we're at it, if it's there. */
         cmplen = rms_is_nam_fnb(dirnam, NAM$M_EXP_VER) ? 6 : 4;
-        if (strnNE(rms_nam_typel(dirnam), ".DIR;1", cmplen)) {
+        if (strncmp(rms_nam_typel(dirnam), ".DIR;1", cmplen)) { 
           /* Something other than .DIR[;1].  Bzzt. */
 	  sts = rms_free_search_context(&dirfab);
 	  PerlMem_free(esa);
@@ -6419,7 +6401,7 @@ int_fileify_dirspec(const char *dir, char *buf, int *utf8_fl)
           /* Go back and expand rooted logical name */
           rms_set_nam_nop(dirnam, NAM$M_SYNCHK | NAM$M_NOCONCEAL);
 #ifdef NAM$M_NO_SHORT_UPCASE
-	  if (DECC_EFS_CASE_PRESERVE)
+	  if (decc_efs_case_preserve)
 	    rms_set_nam_nop(dirnam, NAM$M_NO_SHORT_UPCASE);
 #endif
           if (!(sys$parse(&dirfab) & STS$K_SUCCESS)) {
@@ -6446,7 +6428,7 @@ int_fileify_dirspec(const char *dir, char *buf, int *utf8_fl)
           if (!cp1) cp1 = strstr(my_esa,"]<");
           dirlen = cp1 - my_esa;
           memcpy(buf, my_esa, dirlen);
-          if (strBEGINs(cp1+2,"000000]")) {
+          if (!strncmp(cp1+2,"000000]",7)) {
             buf[dirlen-1] = '\0';
 	    /* fix-me Not full ODS-5, just extra dots in directories for now */
 	    cp1 = buf + dirlen - 1;
@@ -6502,7 +6484,7 @@ int_fileify_dirspec(const char *dir, char *buf, int *utf8_fl)
 
       /* $PARSE may have upcased filespec, so convert output to lower
        * case if input contained any lowercase characters. */
-      if (haslower && !DECC_EFS_CASE_PRESERVE) __mystrtolower(buf);
+      if (haslower && !decc_efs_case_preserve) __mystrtolower(buf);
       PerlMem_free(trndir);
       PerlMem_free(esa);
       if (esal != NULL)
@@ -6621,11 +6603,11 @@ int_pathify_dirspec_simple(const char * dir, char * buf,
             memcpy(&buf[len], n_spec, n_len);
             len += n_len;
             if (e_len > 0) {
-                if (DECC_EFS_CHARSET) {
+                if (decc_efs_charset) {
                     if (e_len == 4 
-                        && (toUPPER_A(e_spec[1]) == 'D')
-                        && (toUPPER_A(e_spec[2]) == 'I')
-                        && (toUPPER_A(e_spec[3]) == 'R')) {
+                        && (toupper(e_spec[1]) == 'D')
+                        && (toupper(e_spec[2]) == 'I')
+                        && (toupper(e_spec[3]) == 'R')) {
 
                         /* Corner case: directory spec with invalid version.
                          * Valid would have followed is_dir path above.
@@ -6716,7 +6698,7 @@ int_pathify_dirspec(const char *dir, char *buf)
         trnlen = strlen(trndir);
 
         /* Trap simple rooted lnms, and return lnm:[000000] */
-        if (strEQ(trndir+trnlen-2,".]")) {
+        if (!strcmp(trndir+trnlen-2,".]")) {
             my_strlcpy(buf, dir, VMS_MAXRSS);
             strcat(buf, ":[000000]");
             PerlMem_free(trndir);
@@ -6730,7 +6712,7 @@ int_pathify_dirspec(const char *dir, char *buf)
 
     /* At this point we do not work with *dir, but the copy in  *trndir */
 
-    if (need_to_lower && !DECC_EFS_CASE_PRESERVE) {
+    if (need_to_lower && !decc_efs_case_preserve) {
         /* Legacy mode, lower case the returned value */
         __mystrtolower(trndir);
     }
@@ -6763,7 +6745,7 @@ int_pathify_dirspec(const char *dir, char *buf)
                 /* is a relative Unix directory specification */
 
                 sts = 1;
-                if (!DECC_FILENAME_UNIX_REPORT && DECC_EFS_CHARSET) {
+                if (!decc_filename_unix_report && decc_efs_charset) {
                     int is_dir;
                     is_dir = is_dir_ext(e_spec, e_len, vs_spec, vs_len);
 
@@ -6820,7 +6802,7 @@ int_pathify_dirspec(const char *dir, char *buf)
                     d_spec, d_len, n_spec, n_len,
                     e_spec, e_len, vs_spec, vs_len);
 
-                if ((ret_spec != NULL) && (!DECC_EFS_CASE_PRESERVE)) {
+                if ((ret_spec != NULL) && (!decc_efs_case_preserve)) {
                     /* Legacy mode, lower case the returned value */
                     __mystrtolower(ret_spec);
                 }
@@ -6897,7 +6879,7 @@ int_pathify_dirspec(const char *dir, char *buf)
         }
 
         /* Under ODS-2 rules, '.' becomes '_', so fix it up */
-        if (!DECC_EFS_CHARSET) {
+        if (!decc_efs_charset) {
              int dir_start = 0;
              char * str = buf;
              if (str[0] == '.') {
@@ -7050,8 +7032,8 @@ int_tounixspec(const char *spec, char *rslt, int * utf8_fl)
   /* New VMS specific format needs translation
    * glob passes filenames with trailing '\n' and expects this preserved.
    */
-  if (DECC_POSIX_COMPLIANT_PATHNAMES) {
-    if (! strBEGINs(spec, "\"^UP^")) {
+  if (decc_posix_compliant_pathnames) {
+    if (strncmp(spec, "\"^UP^", 5) == 0) {
       char * uspec;
       char *tunix;
       int tunix_len;
@@ -7089,7 +7071,7 @@ int_tounixspec(const char *spec, char *rslt, int * utf8_fl)
     cmp_rslt = 0;
 
     /* Look for EFS ^/ */
-    if (DECC_EFS_CHARSET) {
+    if (decc_efs_charset) {
       while (cp1 != NULL) {
 	cp2 = cp1 - 1;
 	if (*cp2 != '^') {
@@ -7103,7 +7085,7 @@ int_tounixspec(const char *spec, char *rslt, int * utf8_fl)
   }
 
   /* Look for "." and ".." */
-  if (DECC_FILENAME_UNIX_REPORT) {
+  if (decc_filename_unix_report) {
     if (spec[0] == '.') {
       if ((spec[1] == '\0') || (spec[1] == '\n')) {
 	cmp_rslt = 1;
@@ -7150,7 +7132,7 @@ int_tounixspec(const char *spec, char *rslt, int * utf8_fl)
   }
 
   /* Special case 1 - sys$posix_root = / */
-  if (!DECC_DISABLE_POSIX_ROOT) {
+  if (!decc_disable_posix_root) {
     if (strncasecmp(spec, "SYS$POSIX_ROOT:", 15) == 0) {
       *cp1 = '/';
       cp1++;
@@ -7265,7 +7247,7 @@ int_tounixspec(const char *spec, char *rslt, int * utf8_fl)
       if (*(cp2+1) == ']' || *(cp2+1) == '>') {
         while (*(cp2+1) == ']' || *(cp2+1) == '>' ||
                *(cp2+1) == '[' || *(cp2+1) == '<') cp2++;
-        if (memEQs(cp2,7,"[000000") && (*(cp2+7) == ']' ||
+        if (!strncmp(cp2,"[000000",7) && (*(cp2+7) == ']' ||
             *(cp2+7) == '>' || *(cp2+7) == '.')) cp2 += 7;
       }
       else if ( *(cp2+1) == '.' && *(cp2+2) == '.') {
@@ -7308,7 +7290,7 @@ int_tounixspec(const char *spec, char *rslt, int * utf8_fl)
           cp1 += outchars_added;
           break;
       case ';':
-          if (DECC_FILENAME_UNIX_NO_VERSION) {
+          if (decc_filename_unix_no_version) {
               /* Easy, drop the version */
               while (*cp2)
                   cp2++;
@@ -7341,7 +7323,7 @@ int_tounixspec(const char *spec, char *rslt, int * utf8_fl)
           }
           dot_seen = 1;
           /* This is an extension */
-          if (DECC_READDIR_DROPDOTNOTYPE) {
+          if (decc_readdir_dropdotnotype) {
               cp2++;
               if ((!*cp2) || (*cp2 == ';') || (*cp2 == '.')) {
                   /* Drop the dot for the extension */
@@ -7481,8 +7463,8 @@ posix_root_to_vms(char *vmspath, int vmspath_len,
 
 #if __CRTL_VER >= 80200000
   /* If not a posix spec already, convert it */
-  if (DECC_POSIX_COMPLIANT_PATHNAMES) {
-    if (! strBEGINs(unixpath,"\"^UP^")) {
+  if (decc_posix_compliant_pathnames) {
+    if (strncmp(unixpath,"\"^UP^",5) != 0) {
       sprintf(vmspath,"\"^UP^%s\"",unixpath);
     }
     else {
@@ -7498,7 +7480,7 @@ posix_root_to_vms(char *vmspath, int vmspath_len,
      int i,j;
 
      /* Check to see if this is under the POSIX root */
-     if (DECC_DISABLE_POSIX_ROOT) {
+     if (decc_disable_posix_root) {
 	return RMS$_FNF;
      }
 
@@ -7555,7 +7537,7 @@ posix_root_to_vms(char *vmspath, int vmspath_len,
   rms_bind_fab_nam(myfab, mynam);
   rms_set_esal(mynam, esa, NAM$C_MAXRSS, esal, VMS_MAXRSS - 1);
   rms_set_rsal(mynam, rsa, NAM$C_MAXRSS, rsal, VMS_MAXRSS - 1);
-  if (DECC_EFS_CASE_PRESERVE)
+  if (decc_efs_case_preserve)
     mynam.naml$b_nop |= NAM$M_NO_SHORT_UPCASE;
 #ifdef NAML$M_OPEN_SPECIAL
   mynam.naml$l_input_flags |= NAML$M_OPEN_SPECIAL;
@@ -7597,7 +7579,7 @@ posix_root_to_vms(char *vmspath, int vmspath_len,
   /* on any failure, returned the POSIX ^UP^ filespec */
   if (!(sts & 1)) {
      /* This can happen if user does not have permission to read directories */
-     if (! strBEGINs(unixpath,"\"^UP^"))
+     if (strncmp(unixpath,"\"^UP^",5) != 0)
        sprintf(vmspath,"\"^UP^%s\"",unixpath);
      else
        my_strlcpy(vmspath, unixpath, vmspath_len + 1);
@@ -7671,13 +7653,15 @@ slash_dev_special_to_vms(const char *unixptr, char *vmspath, int vmspath_len)
 {
     char * nextslash;
     int len;
+    int cmp;
 
     unixptr += 4;
     nextslash = strchr(unixptr, '/');
     len = strlen(unixptr);
     if (nextslash != NULL)
 	len = nextslash - unixptr;
-    if (strEQ(unixptr, "null")) {
+    cmp = strncmp("null", unixptr, 5);
+    if (cmp == 0) {
 	if (vmspath_len >= 6) {
 	    strcpy(vmspath, "_NLA0:");
 	    return SS$_NORMAL;
@@ -7736,7 +7720,7 @@ posix_to_vmsspec_hardway(char *vmspath, int vmspath_len, const char *unixpath,
 
   quoted = 0;
   /* This could have a "^UP^ on the front */
-  if (strBEGINs(unixptr,"\"^UP^")) {
+  if (strncmp(unixptr,"\"^UP^",5) == 0) {
     quoted = 1;
     unixptr+= 5;
     unixlen-= 5;
@@ -7785,8 +7769,8 @@ posix_to_vmsspec_hardway(char *vmspath, int vmspath_len, const char *unixpath,
     /* relative paths */
 
     /* If allowing logical names on relative pathnames, then handle here */
-    if ((unixptr[0] != '.') && !DECC_DISABLE_TO_VMS_LOGNAME_TRANSLATION &&
-	!DECC_POSIX_COMPLIANT_PATHNAMES) {
+    if ((unixptr[0] != '.') && !decc_disable_to_vms_logname_translation &&
+	!decc_posix_compliant_pathnames) {
     char * nextslash;
     int seg_len;
     char * trn;
@@ -7833,6 +7817,7 @@ posix_to_vmsspec_hardway(char *vmspath, int vmspath_len, const char *unixpath,
 		   &vs_len);
 
 	    while (sts == 0) {
+	    int cmp;
 
 		/* A logical name must be a directory  or the full
 		   specification.  It is only a full specification if
@@ -7880,7 +7865,8 @@ posix_to_vmsspec_hardway(char *vmspath, int vmspath_len, const char *unixpath,
 
 		    /* This should not be there, but nothing is perfect */
 		    if (r_len > 9) {
-			if (strEQ(&r_spec[1], "000000.")) {
+			cmp = strcmp(&r_spec[1], "000000.");
+			if (cmp == 0) {
 			    r_spec += 7;
 			    r_spec[7] = '[';
 			    r_len -= 7;
@@ -7901,7 +7887,8 @@ posix_to_vmsspec_hardway(char *vmspath, int vmspath_len, const char *unixpath,
 		    d_spec[0] = '[';
 		    d_spec[d_len - 1] = ']';
 		    if (d_len > 9) {
-			if (strEQ(&d_spec[1], "000000.")) {
+			cmp = strcmp(&d_spec[1], "000000.");
+			if (cmp == 0) {
 			    d_spec += 7;
 			    d_spec[7] = '[';
 			    d_len -= 7;
@@ -8009,12 +7996,17 @@ posix_to_vmsspec_hardway(char *vmspath, int vmspath_len, const char *unixpath,
     nextslash = strchr(&unixptr[1],'/');
     seg_len = 0;
     if (nextslash != NULL) {
+      int cmp;
       seg_len = nextslash - &unixptr[1];
       my_strlcpy(vmspath, unixptr, seg_len + 2);
-      if (memEQs(vmspath, seg_len, "dev")) {
+      cmp = 1;
+      if (seg_len == 3) {
+	cmp = strncmp(vmspath, "dev", 4);
+	if (cmp == 0) {
 	    sts = slash_dev_special_to_vms(unixptr, vmspath, vmspath_len);
 	    if (sts == SS$_NORMAL)
 		return SS$_NORMAL;
+	}
       }
       sts = posix_root_to_vms(esa, vmspath_len, vmspath, utf8_fl);
     }
@@ -8034,8 +8026,10 @@ posix_to_vmsspec_hardway(char *vmspath, int vmspath_len, const char *unixpath,
 	  dir_start = 1;
 	  dir_dot = 1;
 	  if (vmslen > 7) {
+	  int cmp;
 	    rptr = vmsptr - 7;
-	    if (strEQ(rptr,"000000.")) {
+	    cmp = strcmp(rptr,"000000.");
+	    if (cmp == 0) {
 	      vmslen -= 7;
 	      vmsptr -= 7;
 	      vmsptr[1] = '\0';
@@ -8080,18 +8074,22 @@ posix_to_vmsspec_hardway(char *vmspath, int vmspath_len, const char *unixpath,
       }
       else {
       int trnend;
+      int cmp;
 
 	/* now we have foo:bar or foo:[000000]bar to decide from */
 	islnm = vmstrnenv(vmspath, esa, 0, fildev, 0);
 
-        if (!islnm && !DECC_POSIX_COMPLIANT_PATHNAMES) {
-	    if (strEQ(vmspath, "bin")) {
+        if (!islnm && !decc_posix_compliant_pathnames) {
+
+	    cmp = strncmp("bin", vmspath, 4);
+	    if (cmp == 0) {
 	        /* bin => SYS$SYSTEM: */
 		islnm = vmstrnenv("SYS$SYSTEM:", esa, 0, fildev, 0);
 	    }
 	    else {
 	        /* tmp => SYS$SCRATCH: */
-		if (strEQ(vmspath, "tmp")) {
+	        cmp = strncmp("tmp", vmspath, 4);
+		if (cmp == 0) {
 		    islnm = vmstrnenv("SYS$SCRATCH:", esa, 0, fildev, 0);
 		}
 	    }
@@ -8337,6 +8335,7 @@ posix_to_vmsspec_hardway(char *vmspath, int vmspath_len, const char *unixpath,
 	vmsptr += out_cnt;
 	unixptr += in_cnt;
 	break;
+    case '~':
     case ';':
     case '\\':
     case '?':
@@ -8452,8 +8451,8 @@ int_tovmsspec(const char *path, char *rslt, int dir_flag, int * utf8_flag)
    /* Posix specifications are now a native VMS format */
   /*--------------------------------------------------*/
 #if __CRTL_VER >= 80200000
-  if (DECC_POSIX_COMPLIANT_PATHNAMES) {
-    if (strBEGINs(path,"\"^UP^")) {
+  if (decc_posix_compliant_pathnames) {
+    if (strncmp(path,"\"^UP^",5) == 0) {
       posix_to_vmsspec_hardway(rslt, rslt_len, path, dir_flag, utf8_flag);
       return rslt;
     }
@@ -8552,7 +8551,7 @@ int_tovmsspec(const char *path, char *rslt, int dir_flag, int * utf8_flag)
 
     while (*(cp2+1) == '/') cp2++;  /* Skip multiple /s */
     if (!*(cp2+1)) {
-      if (DECC_DISABLE_POSIX_ROOT) {
+      if (decc_disable_posix_root) {
 	strcpy(rslt,"sys$disk:[000000]");
       }
       else {
@@ -8573,19 +8572,19 @@ int_tovmsspec(const char *path, char *rslt, int dir_flag, int * utf8_flag)
 
      /* DECC special handling */
     if (!islnm) {
-      if (strEQ(rslt,"bin")) {
+      if (strcmp(rslt,"bin") == 0) {
 	strcpy(rslt,"sys$system");
 	cp1 = rslt + 10;
 	*cp1 = 0;
 	islnm = simple_trnlnm(rslt,trndev,VMS_MAXRSS-1);
       }
-      else if (strEQ(rslt,"tmp")) {
+      else if (strcmp(rslt,"tmp") == 0) {
 	strcpy(rslt,"sys$scratch");
 	cp1 = rslt + 11;
 	*cp1 = 0;
 	islnm = simple_trnlnm(rslt,trndev,VMS_MAXRSS-1);
       }
-      else if (!DECC_DISABLE_POSIX_ROOT) {
+      else if (!decc_disable_posix_root) {
         strcpy(rslt, "sys$posix_root");
 	cp1 = rslt + 14;
 	*cp1 = 0;
@@ -8593,8 +8592,8 @@ int_tovmsspec(const char *path, char *rslt, int dir_flag, int * utf8_flag)
         while (*(cp2+1) == '/') cp2++;  /* Skip multiple /s */
 	islnm = simple_trnlnm(rslt,trndev,VMS_MAXRSS-1);
       }
-      else if (strEQ(rslt,"dev")) {
-	if (strBEGINs(cp2,"/null")) {
+      else if (strcmp(rslt,"dev") == 0) {
+	if (strncmp(cp2,"/null", 5) == 0) {
 	  if ((cp2[5] == 0) || (cp2[5] == '/')) {
 	    strcpy(rslt,"NLA0");
 	    cp1 = rslt + 4;
@@ -8627,7 +8626,7 @@ int_tovmsspec(const char *path, char *rslt, int dir_flag, int * utf8_flag)
         }
       }
       else {
-	if (DECC_DISABLE_POSIX_ROOT) {
+	if (decc_disable_posix_root) {
 	  *(cp1++) = ':';
 	  hasdir = 0;
 	}
@@ -8689,7 +8688,7 @@ int_tovmsspec(const char *path, char *rslt, int dir_flag, int * utf8_flag)
         else cp2 += 3;  /* Trailing '/' was there, so skip it, too */
       }
       else {
-        if (DECC_EFS_CHARSET == 0) {
+        if (decc_efs_charset == 0) {
 	  if (cp1 > rslt && *(cp1-1) == '^')
 	    cp1--;         /* remove the escape, if any */
 	  *(cp1++) = '_';  /* fix up syntax - '.' in name not allowed */
@@ -8702,7 +8701,7 @@ int_tovmsspec(const char *path, char *rslt, int dir_flag, int * utf8_flag)
     else {
       if (!infront && cp1 > rslt && *(cp1-1) == '-')  *(cp1++) = '.';
       if (*cp2 == '.') {
-        if (DECC_EFS_CHARSET == 0) {
+        if (decc_efs_charset == 0) {
 	  if (cp1 > rslt && *(cp1-1) == '^')
 	    cp1--;         /* remove the escape, if any */
 	  *(cp1++) = '_';
@@ -8729,12 +8728,11 @@ int_tovmsspec(const char *path, char *rslt, int dir_flag, int * utf8_flag)
   while (*cp2) {
     switch(*cp2) {
     case '?':
-        if (DECC_EFS_CHARSET == 0)
+        if (decc_efs_charset == 0)
 	  *(cp1++) = '%';
 	else
 	  *(cp1++) = '?';
 	cp2++;
-	break;
     case ' ':
 	if (cp2 >= path && (cp2 == path || *(cp2-1) != '^')) /* not previously escaped */
 	    *(cp1)++ = '^';
@@ -8743,7 +8741,7 @@ int_tovmsspec(const char *path, char *rslt, int dir_flag, int * utf8_flag)
 	break;
     case '.':
 	if (((cp2 < lastdot) || (cp2[1] == '\0')) &&
-	    DECC_READDIR_DROPDOTNOTYPE) {
+	    decc_readdir_dropdotnotype) {
 	  VMSEFS_DOT_WITH_ESCAPE(cp1, rslt, VMS_MAXRSS);
 	  cp2++;
 
@@ -8773,9 +8771,9 @@ int_tovmsspec(const char *path, char *rslt, int dir_flag, int * utf8_flag)
 
 	    /* Test through */
 	    *(cp1++) = *(cp2++);
-	    if (isALPHA_L1(*cp2) || (*cp2 == '.') || (*cp2 == '_')) {
+	    if (isalnum(*cp2) || (*cp2 == '.') || (*cp2 == '_')) {
 		*(cp1++) = *(cp2++);
-		while (isALPHA_L1(*cp2) || (*cp2 == '.') || (*cp2 == '_')) {
+		while (isalnum(*cp2) || (*cp2 == '.') || (*cp2 == '_')) {
 		    *(cp1++) = *(cp2++);
 		}
 		if (*cp2 == ')') {
@@ -8791,6 +8789,7 @@ int_tovmsspec(const char *path, char *rslt, int dir_flag, int * utf8_flag)
 	}
 	break;
     case '\"':
+    case '~':
     case '`':
     case '!':
     case '#':
@@ -8799,7 +8798,7 @@ int_tovmsspec(const char *path, char *rslt, int dir_flag, int * utf8_flag)
         /* Don't escape again if following character is 
          * already something we escape.
          */
-        if (strchr("\"`!#%^&()=+\'@[]{}:\\|<>_.", *(cp2+1))) {
+        if (strchr("\"~`!#%^&()=+\'@[]{}:\\|<>_.", *(cp2+1))) {
 	    *(cp1++) = *(cp2++);
 	    break;
         }
@@ -8829,7 +8828,7 @@ int_tovmsspec(const char *path, char *rslt, int dir_flag, int * utf8_flag)
          * or we've been promised there are no version numbers, then
          * escape it.
          */
-	if (DECC_FILENAME_UNIX_NO_VERSION) {
+	if (decc_filename_unix_no_version) {
 	  *(cp1++) = '^';
 	}
 	else {
@@ -8843,7 +8842,7 @@ int_tovmsspec(const char *path, char *rslt, int dir_flag, int * utf8_flag)
 	*(cp1++) = *(cp2++);
     }
   }
-  if ((no_type_seen == 1) && DECC_READDIR_DROPDOTNOTYPE) {
+  if ((no_type_seen == 1) && decc_readdir_dropdotnotype) {
   char *lcp1;
     lcp1 = cp1;
     lcp1--;
@@ -9187,7 +9186,7 @@ mp_getredirection(pTHX_ int *ac, char ***av)
      * subprocess, so we satisfy that desire.
      */
     ap = argv[argc-1];
-    if (strEQ(ap, "&"))
+    if (0 == strcmp("&", ap))
        exit(background_process(aTHX_ --argc, argv));
     if (*ap && '&' == ap[strlen(ap)-1])
 	{
@@ -9200,7 +9199,7 @@ mp_getredirection(pTHX_ int *ac, char ***av)
      */
     for (j = 0; j < argc; ++j)
 	{
-	if (strEQ(argv[j], "<"))
+	if (0 == strcmp("<", argv[j]))
 	    {
 	    if (j+1 >= argc)
 		{
@@ -9215,7 +9214,7 @@ mp_getredirection(pTHX_ int *ac, char ***av)
 	    in = 1 + ap;
 	    continue;
 	    }
-	if (strEQ(ap, ">"))
+	if (0 == strcmp(">", ap))
 	    {
 	    if (j+1 >= argc)
 		{
@@ -9266,7 +9265,7 @@ mp_getredirection(pTHX_ int *ac, char ***av)
 		}
 	    continue;
 	    }
-	if (strEQ(argv[j], "|"))
+	if (0 == strcmp("|", argv[j]))
 	    {
 	    if (j+1 >= argc)
 		{
@@ -9352,7 +9351,7 @@ mp_getredirection(pTHX_ int *ac, char ***av)
 	if (out != NULL) vmssetuserlnm("SYS$OUTPUT", out);
 
     if (err != NULL) {
-        if (strEQ(err, "&1")) {
+        if (strcmp(err,"&1") == 0) {
             dup2(fileno(stdout), fileno(stderr));
             vmssetuserlnm("SYS$ERROR", "SYS$OUTPUT");
         } else {
@@ -9424,10 +9423,10 @@ mp_expand_wild_cards(pTHX_ char *item, struct list_item **head,
 #endif
 
     for (cp = item; *cp; cp++) {
-	if (*cp == '*' || *cp == '%' || isSPACE_L1(*cp)) break;
+	if (*cp == '*' || *cp == '%' || isspace(*cp)) break;
 	if (*cp == '.' && *(cp-1) == '.' && *(cp-2) =='.') break;
     }
-    if (!*cp || isSPACE_L1(*cp))
+    if (!*cp || isspace(*cp))
 	{
 	add_item(head, tail, item, count);
 	return;
@@ -9488,10 +9487,10 @@ mp_expand_wild_cards(pTHX_ char *item, struct list_item **head,
 	 * Be consistent with what the C RTL has already done to the rest of
 	 * the argv items and lowercase all of these names.
 	 */
-	if (!DECC_EFS_CASE_PRESERVE) {
+	if (!decc_efs_case_preserve) {
 	    for (c = string; *c; ++c)
 	    if (isupper(*c))
-		*c = toLOWER_L1(*c);
+		*c = tolower(*c);
 	}
 	if (isunix) trim_unixpath(string,item,1);
 	add_item(head, tail, string, count);
@@ -9538,8 +9537,8 @@ pipe_and_fork(pTHX_ char **cmargv)
     j = l = 0;
     p = subcmd;
     q = cmargv[0];
-    ismcr = q && toUPPER_A(*q) == 'M'     && toUPPER_A(*(q+1)) == 'C' 
-              && toUPPER_A(*(q+2)) == 'R' && !*(q+3);
+    ismcr = q && toupper(*q) == 'M'     && toupper(*(q+1)) == 'C' 
+              && toupper(*(q+2)) == 'R' && !*(q+3);
 
     while (q && l < MAX_DCL_LINE_LENGTH) {
         if (!*q) {
@@ -9654,6 +9653,36 @@ vms_image_init(int *argcp, char ***argvp)
     Perl_csighandler_init();
 #endif
 
+    /* This was moved from the pre-image init handler because on threaded */
+    /* Perl it was always returning 0 for the default value. */
+    status = simple_trnlnm("SYS$POSIX_ROOT", eqv, LNM$C_NAMLENGTH);
+    if (status > 0) {
+        int s;
+	s = decc$feature_get_index("DECC$DISABLE_POSIX_ROOT");
+	if (s > 0) {
+            int initial;
+	    initial = decc$feature_get_value(s, 4);
+	    if (initial > 0) {
+                /* initial is: 0 if nothing has set the feature */
+                /*            -1 if initialized to default */
+                /*             1 if set by logical name */
+                /*             2 if set by decc$feature_set_value */
+		decc_disable_posix_root = decc$feature_get_value(s, 1);
+
+                /* If the value is not valid, force the feature off */
+		if (decc_disable_posix_root < 0) {
+		    decc$feature_set_value(s, 1, 1);
+		    decc_disable_posix_root = 1;
+		}
+	    }
+	    else {
+		/* Nothing has asked for it explicitly, so use our own default. */
+		decc_disable_posix_root = 1;
+		decc$feature_set_value(s, 1, 1);
+	    }
+	}
+    }
+
   _ckvmssts_noperl(sys$getjpiw(0,NULL,NULL,jpilist,iosb,NULL,NULL));
   _ckvmssts_noperl(iosb[0]);
   for (i = 0; i < sizeof iprv / sizeof(unsigned long int); i++) {
@@ -9704,7 +9733,7 @@ vms_image_init(int *argcp, char ***argvp)
    * logical, some versions of the CRTL will add a phanthom /000000/
    * directory.  This needs to be removed.
    */
-  if (DECC_FILENAME_UNIX_REPORT) {
+  if (decc_filename_unix_report) {
     char * zeros;
     int ulen;
     ulen = strlen(argvp[0][0]);
@@ -9722,7 +9751,7 @@ vms_image_init(int *argcp, char ***argvp)
      * it will be converted to VMS mode incorrectly.
      */
     ulen--;
-    if ((argvp[0][0][ulen] == '.') && (DECC_READDIR_DROPDOTNOTYPE))
+    if ((argvp[0][0][ulen] == '.') && (decc_readdir_dropdotnotype))
       argvp[0][0][ulen] = '\0';
   }
 
@@ -9904,9 +9933,9 @@ Perl_trim_unixpath(pTHX_ char *fspec, const char *wildspec, int opts)
 	  PerlMem_free(unixwild);
 	  return 0;
       }
-      if (!DECC_EFS_CASE_PRESERVE) {
+      if (!decc_efs_case_preserve) {
  	for (cp1 = tpl, cp2 = base; *cp1 && *cp2; cp1++,cp2++)
-	  if (toLOWER_L1(*cp1) != toLOWER_L1(*cp2)) break;
+	  if (_tolower(*cp1) != _tolower(*cp2)) break;
       }
       segdirs = dirs - totells;  /* Min # of dirs we must have left */
       for (front = cp2+1; *front; front++) if (*front == '/') segdirs--;
@@ -9927,8 +9956,8 @@ Perl_trim_unixpath(pTHX_ char *fspec, const char *wildspec, int opts)
     if (lcres == NULL) _ckvmssts_noperl(SS$_INSFMEM);
     for (cp1=tplate,cp2=lcres; *cp1 && cp2 <= lcres + (VMS_MAXRSS - 1);
          cp1++,cp2++) {
-	    if (!DECC_EFS_CASE_PRESERVE) {
-		*cp2 = toLOWER_L1(*cp1);  /* Make lc copy for match */
+	    if (!decc_efs_case_preserve) {
+		*cp2 = _tolower(*cp1);  /* Make lc copy for match */
 	    }
 	    else {
 		*cp2 = *cp1;
@@ -9961,8 +9990,8 @@ Perl_trim_unixpath(pTHX_ char *fspec, const char *wildspec, int opts)
            cp1++, cp2++) {
          if (*cp1 == '?') *cp2 = '%'; /* Substitute VMS' wildcard for Unix' */
          else {
-	    if (!DECC_EFS_CASE_PRESERVE) {
-	      *cp2 = toLOWER_L1(*cp1);  /* else lowercase for match */
+	    if (!decc_efs_case_preserve) {
+	      *cp2 = _tolower(*cp1);  /* else lowercase for match */
 	    }
 	    else {
 	      *cp2 = *cp1;  /* else preserve case for match */
@@ -10013,9 +10042,9 @@ Perl_trim_unixpath(pTHX_ char *fspec, const char *wildspec, int opts)
 	    PerlMem_free(tpl);
 	    return 0;
 	}
-	if (!DECC_EFS_CASE_PRESERVE) {
+	if (!decc_efs_case_preserve) {
 	  for (cp1 = def, cp2 = base; *cp1 && *cp2; cp1++,cp2++)
-	    if (toLOWER_L1(*cp1) != toLOWER_L1(*cp2)) break;
+	    if (_tolower(*cp1) != _tolower(*cp2)) break;
 	}
         segdirs = dirs - totells;  /* Min # of dirs we must have left */
         for (st = cp2+1; *st; st++) if (*st == '/') segdirs--;
@@ -10111,7 +10140,7 @@ Perl_opendir(pTHX_ const char *name)
      * must be escaped in a VMS-format name to their unescaped form, which is
      * presumably allowed in a Unix-format name.
      */
-    dd->flags = DECC_FILENAME_UNIX_REPORT ? PERL_VMSDIR_M_UNIXSPECS : 0;
+    dd->flags = decc_filename_unix_report ? PERL_VMSDIR_M_UNIXSPECS : 0;
     dd->pat.dsc$a_pointer = dd->pattern;
     dd->pat.dsc$w_length = strlen(dd->pattern);
     dd->pat.dsc$b_dtype = DSC$K_DTYPE_T;
@@ -10274,10 +10303,10 @@ Perl_readdir(pTHX_ DIR *dd)
     /* Force the buffer to end with a NUL, and downcase name to match C convention. */
     buff[res.dsc$w_length] = '\0';
     p = buff + res.dsc$w_length;
-    while (--p >= buff) if (!isSPACE_L1(*p)) break;  
+    while (--p >= buff) if (!isspace(*p)) break;  
     *p = '\0';
-    if (!DECC_EFS_CASE_PRESERVE) {
-      for (p = buff; *p; p++) *p = toLOWER_L1(*p);
+    if (!decc_efs_case_preserve) {
+      for (p = buff; *p; p++) *p = _tolower(*p);
     }
 
     /* Skip any directory component and just copy the name. */
@@ -10300,7 +10329,7 @@ Perl_readdir(pTHX_ DIR *dd)
 
         /* In Unix report mode, remove the ".dir;1" from the name */
         /* if it is a real directory. */
-        if (DECC_FILENAME_UNIX_REPORT && DECC_EFS_CHARSET) {
+        if (decc_filename_unix_report && decc_efs_charset) {
             if (is_dir_ext(e_spec, e_len, vs_spec, vs_len)) {
                 Stat_t statbuf;
                 int ret_sts;
@@ -10314,7 +10343,7 @@ Perl_readdir(pTHX_ DIR *dd)
         }
 
         /* Drop NULL extensions on UNIX file specification */
-	if ((e_len == 1) && DECC_READDIR_DROPDOTNOTYPE) {
+	if ((e_len == 1) && decc_readdir_dropdotnotype) {
 	    e_len = 0;
 	    e_spec[0] = '\0';
         }
@@ -10474,7 +10503,7 @@ vms_execfree(struct dsc$descriptor_s *vmscmd)
 static char *
 setup_argstr(pTHX_ SV *really, SV **mark, SV **sp)
 {
-  char *junk, *tmps = NULL, *cmd;
+  char *junk, *tmps = NULL;
   size_t cmdlen = 0;
   size_t rlen;
   SV **idx;
@@ -10495,23 +10524,22 @@ setup_argstr(pTHX_ SV *really, SV **mark, SV **sp)
       cmdlen += rlen ? rlen + 1 : 0;
     }
   }
-  Newx(cmd, cmdlen+1, char);
-  SAVEFREEPV(cmd);
+  Newx(PL_Cmd, cmdlen+1, char);
 
   if (tmps && *tmps) {
-    my_strlcpy(cmd, tmps, cmdlen + 1);
+    my_strlcpy(PL_Cmd, tmps, cmdlen + 1);
     mark++;
   }
-  else *cmd = '\0';
+  else *PL_Cmd = '\0';
   while (++mark <= sp) {
     if (*mark) {
       char *s = SvPVx(*mark,n_a);
       if (!*s) continue;
-      if (*cmd) my_strlcat(cmd, " ", cmdlen+1);
-      my_strlcat(cmd, s, cmdlen+1);
+      if (*PL_Cmd) my_strlcat(PL_Cmd, " ", cmdlen+1);
+      my_strlcat(PL_Cmd, s, cmdlen+1);
     }
   }
-  return cmd;
+  return PL_Cmd;
 
 }  /* end of setup_argstr() */
 
@@ -10577,11 +10605,11 @@ setup_cmddsc(pTHX_ const char *incmd, int check_img, int *suggest_quote,
 
   s = cmd;
 
-  while (*s && isSPACE_L1(*s)) s++;
+  while (*s && isspace(*s)) s++;
 
   if (*s == '@' || *s == '$') {
     vmsspec[0] = *s;  rest = s + 1;
-    for (cp = &vmsspec[1]; *rest && isSPACE_L1(*rest); rest++,cp++) *cp = *rest;
+    for (cp = &vmsspec[1]; *rest && isspace(*rest); rest++,cp++) *cp = *rest;
   }
   else { cp = vmsspec; rest = s; }
 
@@ -10649,7 +10677,7 @@ setup_cmddsc(pTHX_ const char *incmd, int check_img, int *suggest_quote,
   if (*rest == '.' || *rest == '/') {
     char *cp2;
     for (cp2 = resspec;
-         *rest && !isSPACE_L1(*rest) && cp2 - resspec < (VMS_MAXRSS - 1);
+         *rest && !isspace(*rest) && cp2 - resspec < (VMS_MAXRSS - 1);
          rest++, cp2++) *cp2 = *rest;
     *cp2 = '\0';
     if (int_tovmsspec(resspec, cp, 0, NULL)) { 
@@ -10659,7 +10687,7 @@ setup_cmddsc(pTHX_ const char *incmd, int check_img, int *suggest_quote,
       /* A trailing '.' is appended under ODS-5 rules.            */
       /* Here we do not want that trailing "." as it prevents     */
       /* Looking for a implied ".exe" type. */
-      if (DECC_EFS_CHARSET) {
+      if (decc_efs_charset) {
           int i;
           i = strlen(vmsspec);
           if (vmsspec[i-1] == '.') {
@@ -10717,7 +10745,7 @@ setup_cmddsc(pTHX_ const char *incmd, int check_img, int *suggest_quote,
     if (retsts & 1) {
       FILE *fp;
       s = resspec;
-      while (*s && !isSPACE_L1(*s)) s++;
+      while (*s && !isspace(*s)) s++;
       *s = '\0';
 
       /* check that it's really not DCL with no file extension */
@@ -10725,7 +10753,7 @@ setup_cmddsc(pTHX_ const char *incmd, int check_img, int *suggest_quote,
       if (fp) {
         char b[256] = {0,0,0,0};
         read(fileno(fp), b, 256);
-        isdcl = isPRINT_L1(b[0]) && isPRINT_L1(b[1]) && isPRINT_L1(b[2]) && isPRINT_L1(b[3]);
+        isdcl = isprint(b[0]) && isprint(b[1]) && isprint(b[2]) && isprint(b[3]);
 	if (isdcl) {
 	  int shebang_len;
 
@@ -10735,13 +10763,12 @@ setup_cmddsc(pTHX_ const char *incmd, int check_img, int *suggest_quote,
 	     shebang_len = 2;
 #ifdef ALTERNATE_SHEBANG
 	  else {
-	    if (strEQ(b, ALTERNATE_SHEBANG)) {
+	    shebang_len = strlen(ALTERNATE_SHEBANG);
+	    if (strncmp(b, ALTERNATE_SHEBANG, shebang_len) == 0) {
 	      char * perlstr;
 		perlstr = strstr("perl",b);
 		if (perlstr == NULL)
 		  shebang_len = 0;
-                else
-                  shebang_len = strlen(ALTERNATE_SHEBANG);
 	    }
 	    else
 	      shebang_len = 0;
@@ -10756,11 +10783,11 @@ setup_cmddsc(pTHX_ const char *incmd, int check_img, int *suggest_quote,
 	    i = shebang_len;
 	     /* Image is following after white space */
 	    /*--------------------------------------*/
-	    while (isPRINT_L1(b[i]) && isSPACE_L1(b[i]))
+	    while (isprint(b[i]) && isspace(b[i]))
 		i++;
 
 	    j = 0;
-	    while (isPRINT_L1(b[i]) && !isSPACE_L1(b[i])) {
+	    while (isprint(b[i]) && !isspace(b[i])) {
 		tmpspec[j++] = b[i++];
 		if (j >= NAM$C_MAXRSS)
 		   break;
@@ -10770,12 +10797,12 @@ setup_cmddsc(pTHX_ const char *incmd, int check_img, int *suggest_quote,
 	     /* There may be some default parameters to the image */
 	    /*---------------------------------------------------*/
 	    j = 0;
-	    while (isPRINT_L1(b[i])) {
+	    while (isprint(b[i])) {
 		image_argv[j++] = b[i++];
 		if (j >= NAM$C_MAXRSS)
 		   break;
 	    }
-	    while ((j > 0) && !isPRINT_L1(image_argv[j-1]))
+	    while ((j > 0) && !isprint(image_argv[j-1]))
 		j--;
 	    image_argv[j] = 0;
 
@@ -10860,7 +10887,7 @@ setup_cmddsc(pTHX_ const char *incmd, int check_img, int *suggest_quote,
 	    my_strlcat(vmscmd->dsc$a_pointer, resspec, MAX_DCL_LINE_LENGTH);
 	else {
 	    rest = cmd;
-	    while (*rest && isSPACE_L1(*rest)) rest++;
+	    while (*rest && isspace(*rest)) rest++;
 	}
 
 	if (image_argv[0] != 0) {
@@ -10928,24 +10955,22 @@ Perl_vms_do_aexec(pTHX_ SV *really,SV **mark,SV **sp)
   bool exec_sts;
   char * cmd;
 
-  if (vfork_called) {           /* this follows a vfork - act Unixish */
-    vfork_called--;
-    if (vfork_called < 0) {
-      Perl_warn(aTHX_ "Internal inconsistency in tracking vforks");
-      vfork_called = 0;
-    }
-    else return do_aexec(really,mark,sp);
-  }
-                                           /* no vfork - act VMSish */
   if (sp > mark) {
-    ENTER;
+    if (vfork_called) {           /* this follows a vfork - act Unixish */
+      vfork_called--;
+      if (vfork_called < 0) {
+        Perl_warn(aTHX_ "Internal inconsistency in tracking vforks");
+        vfork_called = 0;
+      }
+      else return do_aexec(really,mark,sp);
+    }
+                                           /* no vfork - act VMSish */
     cmd = setup_argstr(aTHX_ really,mark,sp);
     exec_sts = vms_do_exec(cmd);
-    LEAVE;
+    Safefree(cmd);  /* Clean up from setup_argstr() */
     return exec_sts;
   }
 
-  SETERRNO(ENOENT, RMS_FNF);
   return FALSE;
 }  /* end of vms_do_aexec() */
 /*}}}*/
@@ -11030,10 +11055,8 @@ Perl_do_aspawn(pTHX_ SV* really, SV** mark, SV** sp)
     else
         flags = 0;
 
-    ENTER;
     cmd = setup_argstr(aTHX_ really, mark, sp);
     sts = do_spawn2(aTHX_ cmd, flags);
-    LEAVE;
     /* pp_sys will clean up cmd */
     return sts;
   }
@@ -11067,6 +11090,9 @@ int
 do_spawn2(pTHX_ const char *cmd, int flags)
 {
   unsigned long int sts, substs;
+
+  /* The caller of this routine expects to Safefree(PL_Cmd) */
+  Newx(PL_Cmd,10,char);
 
   TAINT_ENV();
   TAINT_PROPER("spawn");
@@ -11257,7 +11283,7 @@ Perl_my_fgetname(FILE *fp, char * buf) {
     retname = fgetname(fp, buf, 1);
 
     /* If we are in VMS mode, then we are done */
-    if (!DECC_FILENAME_UNIX_REPORT || (retname == NULL)) {
+    if (!decc_filename_unix_report || (retname == NULL)) {
        return retname;
     }
 
@@ -11405,7 +11431,7 @@ fillpasswd (pTHX_ const char *name, struct passwd *pwd)
     }
     else
         my_strlcpy(pwd->pw_unixdir, pwd->pw_dir, sizeof(pwd->pw_unixdir));
-    if (!DECC_EFS_CASE_PRESERVE)
+    if (!decc_efs_case_preserve)
         __mystrtolower(pwd->pw_unixdir);
     return 1;
 }
@@ -11805,7 +11831,7 @@ encode_dev (pTHX_ const char *dev)
 	break;
     if (isdigit (*q))
       c= (*q) - '0';
-    else if (isALPHA_A(toUPPER_A(*q)))
+    else if (isalpha (toupper (*q)))
       c= toupper (*q) - 'A' + (char)10;
     else
       continue; /* Skip '$'s */
@@ -11828,7 +11854,7 @@ static int
 is_null_device(const char *name)
 {
   if (decc_bug_devnull != 0) {
-    if (strBEGINs(name, "/dev/null"))
+    if (strncmp("/dev/null", name, 9) == 0)
       return 1;
   }
     /* The VMS null device is named "_NLA0:", usually abbreviated as "NL:".
@@ -11838,9 +11864,9 @@ is_null_device(const char *name)
        filename, but two consecutive colons indicates a nodename rather
        than a device.  [pr]  */
   if (*name == '_') ++name;
-  if (toLOWER_L1(*name++) != 'n') return 0;
-  if (toLOWER_L1(*name++) != 'l') return 0;
-  if (toLOWER_L1(*name) == 'a') ++name;
+  if (tolower(*name++) != 'n') return 0;
+  if (tolower(*name++) != 'l') return 0;
+  if (tolower(*name) == 'a') ++name;
   if (*name == '0') ++name;
   return (*name++ == ':') && (*name != ':');
 }
@@ -12008,7 +12034,7 @@ Perl_cando_by_name_int(pTHX_ I32 bit, bool effective, const char *fname, int opt
 
 }
 
-/* Do the permissions in *statbufp allow some operation? */
+/* Do the permissions allow some operation?  Assumes PL_statcache already set. */
 /* Do this via $Check_Access on VMS, since the CRTL stat() returns only a
  * subset of the applicable information.
  */
@@ -12115,7 +12141,7 @@ Perl_flex_stat_int(pTHX_ const char *fspec, Stat_t *statbufp, int lstat_flag)
   /*
    * If we are in POSIX filespec mode, accept the filename as is.
    */
-  if (!DECC_POSIX_COMPLIANT_PATHNAMES) {
+  if (decc_posix_compliant_pathnames == 0) {
 #endif
 
     /* Try for a simple stat first.  If fspec contains a filename without
@@ -12178,15 +12204,15 @@ Perl_flex_stat_int(pTHX_ const char *fspec, Stat_t *statbufp, int lstat_flag)
          * format unless * DECC$EFS_CHARSET is in effect, so temporarily
          * enable it if it isn't already.
          */
-        if (!DECC_EFS_CHARSET && (efs_charset_index > 0))
-            decc$feature_set_value(efs_charset_index, 1, 1);
+        if (!decc_efs_charset && (decc_efs_charset_index > 0))
+            decc$feature_set_value(decc_efs_charset_index, 1, 1); 
         if (lstat_flag == 0)
 	    retval = stat(fspec, &statbufp->crtl_stat);
         else
 	    retval = lstat(fspec, &statbufp->crtl_stat);
         save_spec = fspec;
-        if (!DECC_EFS_CHARSET && (efs_charset_index > 0)) {
-            decc$feature_set_value(efs_charset_index, 1, 0);
+        if (!decc_efs_charset && (decc_efs_charset_index > 0)) {
+            decc$feature_set_value(decc_efs_charset_index, 1, 0); 
             efs_hack = 1;
         }
     }
@@ -12202,8 +12228,8 @@ Perl_flex_stat_int(pTHX_ const char *fspec, Stat_t *statbufp, int lstat_flag)
 #endif
 
   /* As you were... */
-  if (!DECC_EFS_CHARSET)
-    decc$feature_set_value(efs_charset_index,1,0);
+  if (!decc_efs_charset)
+    decc$feature_set_value(decc$feature_get_index("DECC$EFS_CHARSET"),1,0); 
 
     if (!retval) {
       char *cptr;
@@ -12215,8 +12241,8 @@ Perl_flex_stat_int(pTHX_ const char *fspec, Stat_t *statbufp, int lstat_flag)
 
       /* If we used the efs_hack above, we must also use it here for */
       /* perl_cando to work */
-      if (efs_hack && (efs_charset_index > 0)) {
-          decc$feature_set_value(efs_charset_index, 1, 1);
+      if (efs_hack && (decc_efs_charset_index > 0)) {
+          decc$feature_set_value(decc_efs_charset_index, 1, 1);
       }
 
       /* If we've got a directory, save a fileified, expanded version of it
@@ -12239,8 +12265,8 @@ Perl_flex_stat_int(pTHX_ const char *fspec, Stat_t *statbufp, int lstat_flag)
                            0,
                            0);
 
-      if (efs_hack && (efs_charset_index > 0)) {
-          decc$feature_set_value(efs_charset_index, 1, 0);
+      if (efs_hack && (decc_efs_charset_index > 0)) {
+          decc$feature_set_value(decc_efs_charset, 1, 0);
       }
 
       /* Fix me: If this is NULL then stat found a file, and we could */
@@ -12369,7 +12395,7 @@ Perl_rmscopy(pTHX_ const char *spec_in, const char *spec_out, int preserve_dates
     rms_nam_esll(nam) = 0;
     rms_nam_rsll(nam) = 0;
 #ifdef NAM$M_NO_SHORT_UPCASE
-    if (DECC_EFS_CASE_PRESERVE)
+    if (decc_efs_case_preserve)
 	rms_set_nam_nop(nam, NAM$M_NO_SHORT_UPCASE);
 #endif
 
@@ -12930,11 +12956,11 @@ mod2fname(pTHX_ CV *cv)
       last = 0;
       dest = workbuff;
       for (source = work_name; *source; source++) {
-	if (last == toUPPER_A(*source)) {
+	if (last == toupper(*source)) {
 	continue;
 	}
 	*dest++ = *source;
-	last = toUPPER_A(*source);
+	last = toupper(*source);
       }
       my_strlcpy(work_name, workbuff, sizeof(work_name));
     }
@@ -12989,7 +13015,7 @@ Perl_vms_start_glob(pTHX_ SV *tmpglob, IO *io)
         return NULL;
     }
 
-    vms_old_glob = !DECC_FILENAME_UNIX_REPORT;
+    vms_old_glob = !decc_filename_unix_report;
 
 #ifdef VMS_LONGNAME_SUPPORT
     lff_flags = LIB$M_FIL_LONG_NAMES;
@@ -13037,7 +13063,7 @@ Perl_vms_start_glob(pTHX_ SV *tmpglob, IO *io)
     }
 
     /* In UNIX report mode, assume UNIX unless VMS directory delimiters seen */
-    if ((hasdir == 0) && DECC_FILENAME_UNIX_REPORT) {
+    if ((hasdir == 0) && decc_filename_unix_report) {
         isunix = 1;
     }
 
@@ -13089,7 +13115,7 @@ Perl_vms_start_glob(pTHX_ SV *tmpglob, IO *io)
 	for (cp=wilddsc.dsc$a_pointer; ok && cp && *cp; cp++) {
 	    if (*cp == '?') {
                 wildquery = 1;
-                if (!DECC_EFS_CHARSET)
+                if (!decc_efs_charset)
                     *cp = '%';
             } else if (*cp == '%') {
                 wildquery = 1;
@@ -13151,7 +13177,7 @@ Perl_vms_start_glob(pTHX_ SV *tmpglob, IO *io)
 
                 /* In Unix report mode, remove the ".dir;1" from the name */
                 /* if it is a real directory */
-                if (DECC_FILENAME_UNIX_REPORT && DECC_EFS_CHARSET) {
+                if (decc_filename_unix_report && decc_efs_charset) {
                     if (is_dir_ext(e_spec, e_len, vs_spec, vs_len)) {
                         Stat_t statbuf;
                         int ret_sts;
@@ -13166,14 +13192,14 @@ Perl_vms_start_glob(pTHX_ SV *tmpglob, IO *io)
                 }
 
 		/* No version & a null extension on UNIX handling */
-		if ((e_len == 1) && DECC_READDIR_DROPDOTNOTYPE) {
+		if ((e_len == 1) && decc_readdir_dropdotnotype) {
 		    e_len = 0;
 		    *e_spec = '\0';
 		}
 	    }
 
-	    if (!DECC_EFS_CASE_PRESERVE) {
-	        for (cp = rstr; *cp; cp++) *cp = toLOWER_L1(*cp);
+	    if (!decc_efs_case_preserve) {
+	        for (cp = rstr; *cp; cp++) *cp = _tolower(*cp);
 	    }
 
             /* Find File treats a Null extension as return all extensions */
@@ -13380,7 +13406,7 @@ init_os_extras(void)
 {
   dTHX;
   char* file = __FILE__;
-  if (DECC_DISABLE_TO_VMS_LOGNAME_TRANSLATION) {
+  if (decc_disable_to_vms_logname_translation) {
     no_translate_barewords = TRUE;
   } else {
     no_translate_barewords = FALSE;
@@ -13510,16 +13536,16 @@ int vms_fid_to_name(char * outname, int outlen,
          * format unless * DECC$EFS_CHARSET is in effect, so temporarily
          * enable it if it isn't already.
          */
-        if (!DECC_EFS_CHARSET && (efs_charset_index > 0))
-            decc$feature_set_value(efs_charset_index, 1, 1);
+        if (!decc_efs_charset && (decc_efs_charset_index > 0))
+            decc$feature_set_value(decc_efs_charset_index, 1, 1); 
         ret_spec = int_tovmspath(name, temp_fspec, NULL);
         if (lstat_flag == 0) {
             sts = decc$stat(name, &statbuf);
         } else {
             sts = decc$lstat(name, &statbuf);
         }
-        if (!DECC_EFS_CHARSET && (efs_charset_index > 0))
-            decc$feature_set_value(efs_charset_index, 1, 0);
+        if (!decc_efs_charset && (decc_efs_charset_index > 0))
+            decc$feature_set_value(decc_efs_charset_index, 1, 0); 
     }
 
 
@@ -13568,7 +13594,7 @@ mp_do_vms_realpath(pTHX_ const char *filespec, char *outbuf,
     char * rslt = NULL;
 
 #ifdef HAS_SYMLINK
-    if (DECC_POSIX_COMPLIANT_PATHNAMES) {
+    if (decc_posix_compliant_pathnames > 0 ) {
 	/* realpath currently only works if posix compliant pathnames are
 	 * enabled.  It may start working when they are not, but in that
 	 * case we still want the fallback behavior for backwards compatibility
@@ -13625,7 +13651,7 @@ mp_do_vms_realpath(pTHX_ const char *filespec, char *outbuf,
 	            }
 
 	            /* Drop NULL extensions on UNIX file specification */
-		    if ((e_len == 1) && DECC_READDIR_DROPDOTNOTYPE) {
+		    if ((e_len == 1) && decc_readdir_dropdotnotype) {
 			e_len = 0;
 			e_spec[0] = '\0';
 		    }
@@ -13636,7 +13662,7 @@ mp_do_vms_realpath(pTHX_ const char *filespec, char *outbuf,
                     /* Downcase if input had any lower case letters and 
 	             * case preservation is not in effect. 
 	             */
-	            if (!DECC_EFS_CASE_PRESERVE) {
+	            if (!decc_efs_case_preserve) {
 	                for (cp = filespec; *cp; cp++)
 	                    if (islower(*cp)) { haslower = 1; break; }
 
@@ -13647,14 +13673,14 @@ mp_do_vms_realpath(pTHX_ const char *filespec, char *outbuf,
 
 	    /* Now for some hacks to deal with backwards and forward */
 	    /* compatibility */
-	    if (!DECC_EFS_CHARSET) {
+	    if (!decc_efs_charset) {
 
 		/* 1. ODS-2 mode wants to do a syntax only translation */
 		rslt = int_rmsexpand(filespec, outbuf,
 				    NULL, 0, NULL, utf8_fl);
 
 	    } else {
-		if (DECC_FILENAME_UNIX_REPORT) {
+		if (decc_filename_unix_report) {
 		    char * dir_name;
 		    char * vms_dir_name;
 		    char * file_name;
@@ -13787,7 +13813,7 @@ mp_do_vms_realname(pTHX_ const char *filespec, char *outbuf,
 	    /* Downcase if input had any lower case letters and 
 	     * case preservation is not in effect. 
 	     */
-	    if (!DECC_EFS_CASE_PRESERVE) {
+	    if (!decc_efs_case_preserve) {
 	        for (cp = filespec; *cp; cp++)
 	            if (islower(*cp)) { haslower = 1; break; }
 
@@ -13847,7 +13873,7 @@ set_feature_default(const char *name, int value)
     if (value > 0) {
         status = simple_trnlnm(name, val_str, sizeof(val_str));
         if (status) {
-            val_str[0] = toUPPER_A(val_str[0]);
+            val_str[0] = _toupper(val_str[0]);
             if (val_str[0] == 'D' || val_str[0] == '0' || val_str[0] == 'F')
 	        return 0;
         }
@@ -13885,9 +13911,9 @@ extern "C" {
 extern void
 vmsperl_set_features(void)
 {
-    int status, initial;
+    int status;
     int s;
-    char val_str[LNM$C_NAMLENGTH+1];
+    char val_str[10];
 #if defined(JPI$_CASE_LOOKUP_PERM)
     const unsigned long int jpicode1 = JPI$_CASE_LOOKUP_PERM;
     const unsigned long int jpicode2 = JPI$_CASE_LOOKUP_IMAGE;
@@ -13899,7 +13925,7 @@ vmsperl_set_features(void)
     vms_debug_on_exception = 0;
     status = simple_trnlnm("PERL_VMS_EXCEPTION_DEBUG", val_str, sizeof(val_str));
     if (status) {
-       val_str[0] = toUPPER_A(val_str[0]);
+       val_str[0] = _toupper(val_str[0]);
        if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T'))
 	 vms_debug_on_exception = 1;
        else
@@ -13910,7 +13936,7 @@ vmsperl_set_features(void)
     vms_debug_fileify = 0;
     status = simple_trnlnm("PERL_VMS_FILEIFY_DEBUG", val_str, sizeof(val_str));
     if (status) {
-	val_str[0] = toUPPER_A(val_str[0]);
+	val_str[0] = _toupper(val_str[0]);
         if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T'))
 	    vms_debug_fileify = 1;
         else
@@ -13930,7 +13956,7 @@ vmsperl_set_features(void)
     vms_bug_stat_filename = 0;
     status = simple_trnlnm("PERL_VMS_BUG_STAT_FILENAME", val_str, sizeof(val_str));
     if (status) {
-	val_str[0] = toUPPER_A(val_str[0]);
+	val_str[0] = _toupper(val_str[0]);
         if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T'))
 	    vms_bug_stat_filename = 1;
         else
@@ -13942,7 +13968,7 @@ vmsperl_set_features(void)
     vms_vtf7_filenames = 0;
     status = simple_trnlnm("PERL_VMS_VTF7_FILENAMES", val_str, sizeof(val_str));
     if (status) {
-       val_str[0] = toUPPER_A(val_str[0]);
+       val_str[0] = _toupper(val_str[0]);
        if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T'))
 	 vms_vtf7_filenames = 1;
        else
@@ -13953,15 +13979,12 @@ vmsperl_set_features(void)
     vms_unlink_all_versions = 0;
     status = simple_trnlnm("PERL_VMS_UNLINK_ALL_VERSIONS", val_str, sizeof(val_str));
     if (status) {
-       val_str[0] = toUPPER_A(val_str[0]);
+       val_str[0] = _toupper(val_str[0]);
        if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T'))
 	 vms_unlink_all_versions = 1;
        else
 	 vms_unlink_all_versions = 0;
     }
-
-    /* The path separator in PERL5LIB is '|' unless running under a Unix shell. */
-    PL_perllib_sep = '|';
 
     /* Detect running under GNV Bash or other UNIX like shell */
     gnv_unix_shell = 0;
@@ -13977,26 +14000,11 @@ vmsperl_set_features(void)
 	 /* Reverse default ordering of PERL_ENV_TABLES. */
 	 defenv[0] = &crtlenvdsc;
 	 defenv[1] = &fildevdsc;
-	 PL_perllib_sep = ':';
     }
     /* Some reasonable defaults that are not CRTL defaults */
     set_feature_default("DECC$EFS_CASE_PRESERVE", 1);
     set_feature_default("DECC$ARGV_PARSE_STYLE", 1);     /* Requires extended parse. */
     set_feature_default("DECC$EFS_CHARSET", 1);
-
-   /* If POSIX root doesn't exist or nothing has set it explicitly, we disable it,
-    * which confusingly means enabling the feature.  For some reason only the default
-    * -- not current -- value can be set, so we cannot use the confusingly-named
-    * set_feature_default function, which sets the current value.
-    */
-    s = decc$feature_get_index("DECC$DISABLE_POSIX_ROOT");
-    disable_posix_root_index = s;
-
-    status = simple_trnlnm("SYS$POSIX_ROOT", val_str, LNM$C_NAMLENGTH);
-    initial = decc$feature_get_value(disable_posix_root_index, __FEATURE_MODE_INIT_STATE);
-    if (!status || !initial) {
-        decc$feature_set_value(disable_posix_root_index, 0, 1);
-    }
 
     /* hacks to see if known bugs are still present for testing */
 
@@ -14004,7 +14012,7 @@ vmsperl_set_features(void)
     decc_bug_devnull = 0;
     status = simple_trnlnm("DECC_BUG_DEVNULL", val_str, sizeof(val_str));
     if (status) {
-       val_str[0] = toUPPER_A(val_str[0]);
+       val_str[0] = _toupper(val_str[0]);
        if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T'))
           decc_bug_devnull = 1;
        else
@@ -14012,29 +14020,73 @@ vmsperl_set_features(void)
     }
 
     s = decc$feature_get_index("DECC$DISABLE_TO_VMS_LOGNAME_TRANSLATION");
-    disable_to_vms_logname_translation_index = s;
+    if (s >= 0) {
+	decc_disable_to_vms_logname_translation = decc$feature_get_value(s, 1);
+	if (decc_disable_to_vms_logname_translation < 0)
+	    decc_disable_to_vms_logname_translation = 0;
+    }
 
     s = decc$feature_get_index("DECC$EFS_CASE_PRESERVE");
-    efs_case_preserve_index = s;
+    if (s >= 0) {
+	decc_efs_case_preserve = decc$feature_get_value(s, 1);
+	if (decc_efs_case_preserve < 0)
+	    decc_efs_case_preserve = 0;
+    }
 
     s = decc$feature_get_index("DECC$EFS_CHARSET");
-    efs_charset_index = s;
+    decc_efs_charset_index = s;
+    if (s >= 0) {
+	decc_efs_charset = decc$feature_get_value(s, 1);
+	if (decc_efs_charset < 0)
+	    decc_efs_charset = 0;
+    }
 
     s = decc$feature_get_index("DECC$FILENAME_UNIX_REPORT");
-    filename_unix_report_index = s;
+    if (s >= 0) {
+	decc_filename_unix_report = decc$feature_get_value(s, 1);
+	if (decc_filename_unix_report > 0) {
+	    decc_filename_unix_report = 1;
+	    vms_posix_exit = 1;
+	}
+	else
+	    decc_filename_unix_report = 0;
+    }
 
     s = decc$feature_get_index("DECC$FILENAME_UNIX_ONLY");
-    filename_unix_only_index = s;
+    if (s >= 0) {
+	decc_filename_unix_only = decc$feature_get_value(s, 1);
+	if (decc_filename_unix_only > 0) {
+	    decc_filename_unix_only = 1;
+	}
+	else {
+	    decc_filename_unix_only = 0;
+	}
+    }
 
     s = decc$feature_get_index("DECC$FILENAME_UNIX_NO_VERSION");
-    filename_unix_no_version_index = s;
+    if (s >= 0) {
+	decc_filename_unix_no_version = decc$feature_get_value(s, 1);
+	if (decc_filename_unix_no_version < 0)
+	    decc_filename_unix_no_version = 0;
+    }
 
     s = decc$feature_get_index("DECC$READDIR_DROPDOTNOTYPE");
-    readdir_dropdotnotype_index = s;
+    if (s >= 0) {
+	decc_readdir_dropdotnotype = decc$feature_get_value(s, 1);
+	if (decc_readdir_dropdotnotype < 0)
+	    decc_readdir_dropdotnotype = 0;
+    }
 
 #if __CRTL_VER >= 80200000
     s = decc$feature_get_index("DECC$POSIX_COMPLIANT_PATHNAMES");
-    posix_compliant_pathnames_index = s;
+    if (s >= 0) {
+	decc_posix_compliant_pathnames = decc$feature_get_value(s, 1);
+	if (decc_posix_compliant_pathnames < 0)
+	    decc_posix_compliant_pathnames = 0;
+	if (decc_posix_compliant_pathnames > 4)
+	    decc_posix_compliant_pathnames = 0;
+    }
+
 #endif
 
 #if defined(JPI$_CASE_LOOKUP_PERM) && defined(PPROP$K_CASE_BLIND)
@@ -14057,7 +14109,7 @@ vmsperl_set_features(void)
     /* for strict backward compatibility */
     status = simple_trnlnm("PERL_VMS_POSIX_EXIT", val_str, sizeof(val_str));
     if (status) {
-       val_str[0] = toUPPER_A(val_str[0]);
+       val_str[0] = _toupper(val_str[0]);
        if ((val_str[0] == 'E') || (val_str[0] == '1') || (val_str[0] == 'T'))
 	 vms_posix_exit = 1;
        else

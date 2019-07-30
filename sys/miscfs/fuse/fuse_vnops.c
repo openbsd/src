@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.52 2018/07/18 10:47:02 helg Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.37 2017/11/30 11:29:03 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -66,7 +66,6 @@ int	fusefs_lock(void *);
 int	fusefs_unlock(void *);
 int	fusefs_islocked(void *);
 int	fusefs_advlock(void *);
-int	fusefs_fsync(void *);
 
 /* Prototypes for fusefs kqfilter */
 int	filt_fusefsread(struct knote *, long);
@@ -88,7 +87,7 @@ struct vops fusefs_vops = {
 	.vop_ioctl	= fusefs_ioctl,
 	.vop_poll	= fusefs_poll,
 	.vop_kqfilter	= fusefs_kqfilter,
-	.vop_fsync	= fusefs_fsync,
+	.vop_fsync	= nullop,
 	.vop_remove	= fusefs_remove,
 	.vop_link	= fusefs_link,
 	.vop_rename	= fusefs_rename,
@@ -205,54 +204,32 @@ filt_fusefsvnode(struct knote *kn, long int hint)
 	return (kn->kn_fflags != 0);
 }
 
-/*
- * FUSE file systems can maintain a file handle for each VFS file descriptor
- * that is opened. The OpenBSD VFS does not make file descriptors visible to 
- * us so we fake it by mapping open flags to file handles.
- * There is no way for FUSE to know which file descriptor is being used
- * by an application for a file operation. We only maintain 3 descriptors,
- * one each for O_RDONLY, O_WRONLY and O_RDWR. When reading and writing, the
- * first open descriptor is used and this may well not be the one that was set
- * by FUSE open and may have even been opened by another application.
- */
 int
 fusefs_open(void *v)
 {
 	struct vop_open_args *ap;
 	struct fusefs_node *ip;
 	struct fusefs_mnt *fmp;
-	struct vnode *vp;
 	enum fufh_type fufh_type = FUFH_RDONLY;
 	int flags;
 	int error;
 	int isdir;
 
 	ap = v;
-	vp = ap->a_vp;
-	ip = VTOI(vp);
+	ip = VTOI(ap->a_vp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
 	if (!fmp->sess_init)
 		return (ENXIO);
 
 	isdir = 0;
-	if (vp->v_type == VDIR)
+	if (ap->a_vp->v_type == VDIR)
 		isdir = 1;
 	else {
 		if ((ap->a_mode & FREAD) && (ap->a_mode & FWRITE))
 			fufh_type = FUFH_RDWR;
-		else if (ap->a_mode & (FWRITE))
+		else if (ap->a_mode  & (FWRITE))
 			fufh_type = FUFH_WRONLY;
-
-		/*
-		 * Due to possible attribute caching, there is no
-		 * reliable way to determine if the file was modified
-		 * externally (e.g. network file system) so clear the
-		 * UVM cache to ensure that it is not stale. The file
-		 * can still become stale later on read but this will
-		 * satisfy most situations.
-		 */
-		uvm_vnp_uncache(vp);
 	}
 
 	/* already open i think all is ok */
@@ -275,9 +252,8 @@ fusefs_close(void *v)
 	struct vop_close_args *ap;
 	struct fusefs_node *ip;
 	struct fusefs_mnt *fmp;
-	struct fusebuf *fbuf;
 	enum fufh_type fufh_type = FUFH_RDONLY;
-	int error = 0;
+	int isdir, i;
 
 	ap = v;
 	ip = VTOI(ap->a_vp);
@@ -286,44 +262,34 @@ fusefs_close(void *v)
 	if (!fmp->sess_init)
 		return (0);
 
+	if (ap->a_vp->v_type == VDIR) {
+		isdir = 1;
+
+		if (ip->fufh[fufh_type].fh_type != FUFH_INVALID)
+			return (fusefs_file_close(fmp, ip, fufh_type, O_RDONLY,
+			    isdir, ap->a_p));
+	} else {
+		if (ap->a_fflag & IO_NDELAY)
+			return (0);
+
+		if ((ap->a_fflag & FREAD) && (ap->a_fflag & FWRITE))
+			fufh_type = FUFH_RDWR;
+		else if (ap->a_fflag  & (FWRITE))
+			fufh_type = FUFH_WRONLY;
+	}
+
 	/*
-	 * The file or directory may have been opened more than once so there
-	 * is no reliable way to determine when to ask the FUSE daemon to
-	 * release its file descriptor. For files, ask the daemon to flush any
-	 * buffers to disk now. All open file descriptors will be released on
-	 * VOP_INACTIVE(9).
+	 * if fh not valid lookup for another valid fh in vnode.
+	 * Do we need panic if there's not a valid fh ?
 	 */
-
-	if (ap->a_vp->v_type == VDIR)
-		return (0);
-
-	/* Implementing flush is optional so don't error. */
-	if (fmp->undef_op & UNDEF_FLUSH)
-		return (0);
-
-	/* Only flush writeable file descriptors. */
-	if ((ap->a_fflag & FREAD) && (ap->a_fflag & FWRITE))
-		fufh_type = FUFH_RDWR;
-	else if (ap->a_fflag & (FWRITE))
-		fufh_type = FUFH_WRONLY;
-	else
-		return (0);
-
-	if (ip->fufh[fufh_type].fh_type == FUFH_INVALID)
-		return (EBADF);
-
-	fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_FLUSH, ap->a_p);
-	fbuf->fb_io_fd = ip->fufh[fufh_type].fh_id;
-	error = fb_queue(fmp->dev, fbuf);
-	fb_delete(fbuf);
-	if (error == ENOSYS) {
-		fmp->undef_op |= UNDEF_FLUSH;
-
-		/* Implementing flush is optional so don't error. */
+	if (ip->fufh[fufh_type].fh_type != FUFH_INVALID) {
+		for (i = 0; i < FUFH_MAXTYPE; i++)
+			if (ip->fufh[fufh_type].fh_type != FUFH_INVALID)
+				break;
 		return (0);
 	}
 
-	return (error);
+	return (0);
 }
 
 int
@@ -332,9 +298,11 @@ fusefs_access(void *v)
 	struct vop_access_args *ap;
 	struct fusefs_node *ip;
 	struct fusefs_mnt *fmp;
+	struct fusebuf *fbuf;
 	struct ucred *cred;
 	struct vattr vattr;
 	struct proc *p;
+	uint32_t mask = 0;
 	int error = 0;
 
 	ap = v;
@@ -343,32 +311,50 @@ fusefs_access(void *v)
 	ip = VTOI(ap->a_vp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
-	/* 
-	 * Only user that mounted the file system can access it unless
-	 * allow_other mount option was specified.
-	 */
-	if (!fmp->allow_other && cred->cr_uid != fmp->mp->mnt_stat.f_owner)
-		return (EACCES);
-
 	if (!fmp->sess_init)
 		return (ENXIO);
 
-	/*
-	 * Disallow write attempts on filesystems mounted read-only;
-	 * unless the file is a socket, fifo, or a block or character
-	 * device resident on the filesystem.
-	 */
-	if ((ap->a_mode & VWRITE) && (fmp->mp->mnt_flag & MNT_RDONLY)) {
-		switch (ap->a_vp->v_type) {
-		case VREG:
-		case VDIR:
-		case VLNK:
-			return (EROFS);
-		default:
-			break;
+	if (fmp->undef_op & UNDEF_ACCESS)
+		goto system_check;
+
+	if (ap->a_vp->v_type == VLNK)
+		goto system_check;
+
+	if (ap->a_vp->v_type == VREG && (ap->a_mode & VWRITE & VEXEC))
+		goto system_check;
+
+	if ((ap->a_mode & VWRITE) && (fmp->mp->mnt_flag & MNT_RDONLY))
+		return (EACCES);
+
+	if ((ap->a_mode & VWRITE) != 0)
+		mask |= 0x2;
+
+	if ((ap->a_mode & VREAD) != 0)
+		mask |= 0x4;
+
+	if ((ap->a_mode & VEXEC) != 0)
+		mask |= 0x1;
+
+	fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_ACCESS, p);
+	fbuf->fb_io_mode = mask;
+
+	error = fb_queue(fmp->dev, fbuf);
+	if (error) {
+		if (error == ENOSYS) {
+			fmp->undef_op |= UNDEF_ACCESS;
+			fb_delete(fbuf);
+			goto system_check;
 		}
+
+		printf("fusefs: access error %i\n", error);
+		fb_delete(fbuf);
+		return (error);
 	}
 
+	fb_delete(fbuf);
+	return (error);
+
+system_check:
 	if ((error = VOP_GETATTR(ap->a_vp, &vattr, cred, p)) != 0)
 		return (error);
 
@@ -385,7 +371,6 @@ fusefs_getattr(void *v)
 	struct fusefs_mnt *fmp;
 	struct vattr *vap = ap->a_vap;
 	struct proc *p = ap->a_p;
-	struct ucred *cred = p->p_ucred;
 	struct fusefs_node *ip;
 	struct fusebuf *fbuf;
 	struct stat *st;
@@ -393,33 +378,6 @@ fusefs_getattr(void *v)
 
 	ip = VTOI(vp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
-
-	/* 
-	 * Only user that mounted the file system can access it unless
-	 * allow_other mount option was specified. Return dummy values
-	 * for the root inode in this situation.
-	 */
-	if (!fmp->allow_other && cred->cr_uid != fmp->mp->mnt_stat.f_owner) {
-		memset(vap, 0, sizeof(*vap));
-		vap->va_type = VNON;
-		if (vp->v_mount->mnt_flag & MNT_RDONLY)
-			vap->va_mode = S_IRUSR | S_IXUSR;
-		else
-			vap->va_mode = S_IRWXU;
-		vap->va_nlink = 1;
-		vap->va_uid = fmp->mp->mnt_stat.f_owner;
-		vap->va_gid = fmp->mp->mnt_stat.f_owner;
-		vap->va_fsid = fmp->mp->mnt_stat.f_fsid.val[0];
-		vap->va_fileid = ip->ufs_ino.i_number;
-		vap->va_size = S_BLKSIZE;
-		vap->va_blocksize = S_BLKSIZE;
-		vap->va_atime.tv_sec = fmp->mp->mnt_stat.f_ctime;
-		vap->va_mtime.tv_sec = fmp->mp->mnt_stat.f_ctime;
-		vap->va_ctime.tv_sec = fmp->mp->mnt_stat.f_ctime;
-		vap->va_rdev = fmp->dev;
-		vap->va_bytes = S_BLKSIZE;
-		return (0);
-	}
 
 	if (!fmp->sess_init)
 		return (ENXIO);
@@ -432,9 +390,9 @@ fusefs_getattr(void *v)
 		return (error);
 	}
 
+	VATTR_NULL(vap);
 	st = &fbuf->fb_attr;
 
-	memset(vap, 0, sizeof(*vap));
 	vap->va_type = IFTOVT(st->st_mode);
 	vap->va_mode = st->st_mode & ~S_IFMT;
 	vap->va_nlink = st->st_nlink;
@@ -461,7 +419,6 @@ fusefs_setattr(void *v)
 	struct vattr *vap = ap->a_vap;
 	struct vnode *vp = ap->a_vp;
 	struct fusefs_node *ip = VTOI(vp);
-	struct ucred *cred = ap->a_cred;
 	struct proc *p = ap->a_p;
 	struct fusefs_mnt *fmp;
 	struct fusebuf *fbuf;
@@ -507,11 +464,6 @@ fusefs_setattr(void *v)
 	}
 
 	if (vap->va_size != VNOVAL) {
-		/*
-		 * Disallow write attempts on read-only file systems;
-		 * unless the file is a socket, fifo, or a block or
-		 * character device resident on the file system.
-		 */
 		switch (vp->v_type) {
 		case VDIR:
 			error = EISDIR;
@@ -555,18 +507,6 @@ fusefs_setattr(void *v)
 			error = EROFS;
 			goto out;
 		}
-
-		/*
-		 * chmod returns EFTYPE if the effective user ID is not the
-		 * super-user, the mode includes the sticky bit (S_ISVTX), and
-		 * path does not refer to a directory
-		 */
-		if (cred->cr_uid != 0 && vp->v_type != VDIR &&
-		    (vap->va_mode & S_ISTXT)) {
-			error = EFTYPE;
-			goto out;
-		}
-
 		fbuf->fb_attr.st_mode = vap->va_mode & ALLPERMS;
 		io->fi_flags |= FUSE_FATTR_MODE;
 	}
@@ -580,12 +520,6 @@ fusefs_setattr(void *v)
 		if (error == ENOSYS)
 			fmp->undef_op |= UNDEF_SETATTR;
 		goto out;
-	}
-
-	/* truncate was successful, let uvm know */
-	if (vap->va_size != VNOVAL && vap->va_size != ip->filesize) {
-		ip->filesize = vap->va_size;
-		uvm_vnp_setsize(vp, vap->va_size);
 	}
 
 	VN_KNOTE(ap->a_vp, NOTE_ATTRIB);
@@ -639,7 +573,7 @@ fusefs_link(void *v)
 		error = EXDEV;
 		goto out2;
 	}
-	if (dvp != vp && (error = vn_lock(vp, LK_EXCLUSIVE))) {
+	if (dvp != vp && (error = vn_lock(vp, LK_EXCLUSIVE, p))) {
 		VOP_ABORTOP(dvp, cnp);
 		goto out2;
 	}
@@ -667,7 +601,7 @@ fusefs_link(void *v)
 
 out1:
 	if (dvp != vp)
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, p);
 out2:
 	vput(dvp);
 	return (error);
@@ -783,7 +717,7 @@ fusefs_readdir(void *v)
 			 * dirent was larger than residual space left in
 			 * buffer.
 			 */
-			if (error == ENOBUFS)
+			if (error == ENOBUFS && fbuf->fb_len == 0)
 				error = 0;
 
 			fb_delete(fbuf);
@@ -820,42 +754,30 @@ fusefs_inactive(void *v)
 	struct vop_inactive_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct proc *p = ap->a_p;
+	struct ucred *cred = p->p_ucred;
 	struct fusefs_node *ip = VTOI(vp);
 	struct fusefs_filehandle *fufh = NULL;
 	struct fusefs_mnt *fmp;
-	int type, flags;
+	struct vattr vattr;
+	int error = 0;
+	int type;
 
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
-	/* Close all open file handles. */
 	for (type = 0; type < FUFH_MAXTYPE; type++) {
 		fufh = &(ip->fufh[type]);
-		if (fufh->fh_type != FUFH_INVALID) {
-
-			/*
-			 * FUSE file systems expect the same flags to be sent
-			 * on release that were sent on open. We don't have a 
-			 * record of them so make a best guess.
-			 */
-			switch (type) {
-			case FUFH_RDONLY:
-				flags = O_RDONLY;
-				break;
-			case FUFH_WRONLY:
-				flags = O_WRONLY;
-				break;
-			default:
-				flags = O_RDWR;
-			}
-
-			fusefs_file_close(fmp, ip, fufh->fh_type, flags,
-			    (vp->v_type == VDIR), p);
-		}
+		if (fufh->fh_type != FUFH_INVALID)
+			fusefs_file_close(fmp, ip, fufh->fh_type, type,
+			    (vp->v_type == VDIR), ap->a_p);
 	}
 
-	VOP_UNLOCK(vp);
+	error = VOP_GETATTR(vp, &vattr, cred, p);
 
-	/* Don't return error to prevent kernel panic in vclean(9). */
+	VOP_UNLOCK(vp, p);
+
+	if (error)
+		vrecycle(vp, p);
+
 	return (0);
 }
 
@@ -905,16 +827,15 @@ fusefs_reclaim(void *v)
 {
 	struct vop_reclaim_args *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct proc *p = ap->a_p;
 	struct fusefs_node *ip = VTOI(vp);
 	struct fusefs_filehandle *fufh = NULL;
 	struct fusefs_mnt *fmp;
 	struct fusebuf *fbuf;
-	int type, error = 0;
+	int type;
 
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
-	/* Close opened files. */
+	/*close opened files*/
 	for (type = 0; type < FUFH_MAXTYPE; type++) {
 		fufh = &(ip->fufh[type]);
 		if (fufh->fh_type != FUFH_INVALID) {
@@ -925,13 +846,13 @@ fusefs_reclaim(void *v)
 	}
 
 	/*
-	 * If the fuse connection is opened ask libfuse to free the vnodes.
+	 * if the fuse connection is opened
+	 * ask libfuse to free the vnodes
 	 */
 	if (fmp->sess_init && ip->ufs_ino.i_number != FUSE_ROOTINO) {
-		fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_RECLAIM, p);
-		error = fb_queue(fmp->dev, fbuf);
-		if (error)
-			printf("fusefs: vnode reclaim failed: %d\n", error);
+		fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_RECLAIM, ap->a_p);
+		if (fb_queue(fmp->dev, fbuf))
+			printf("fusefs: libfuse vnode reclaim failed\n");
 		fb_delete(fbuf);
 	}
 
@@ -940,10 +861,8 @@ fusefs_reclaim(void *v)
 	 */
 	ufs_ihashrem(&ip->ufs_ino);
 
-	free(ip, M_FUSEFS, sizeof(*ip));
+	free(ip, M_FUSEFS, 0);
 	vp->v_data = NULL;
-
-	/* Must return success otherwise kernel panic in vclean(9). */
 	return (0);
 }
 
@@ -980,11 +899,15 @@ fusefs_create(void *v)
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 	mode = MAKEIMODE(vap->va_type, vap->va_mode);
 
-	if (!fmp->sess_init)
-		return (ENXIO);
+	if (!fmp->sess_init) {
+		error = ENXIO;
+		goto out;
+	}
 
-	if (fmp->undef_op & UNDEF_MKNOD)
-		return (ENOSYS);
+	if (fmp->undef_op & UNDEF_MKNOD) {
+		error = ENOSYS;
+		goto out;
+	}
 
 	fbuf = fb_setup(cnp->cn_namelen + 1, ip->ufs_ino.i_number,
 	    FBT_MKNOD, p);
@@ -999,18 +922,22 @@ fusefs_create(void *v)
 		if (error == ENOSYS)
 			fmp->undef_op |= UNDEF_MKNOD;
 
+		fb_delete(fbuf);
 		goto out;
 	}
 
-	if ((error = VFS_VGET(fmp->mp, fbuf->fb_ino, &tdp)))
+	if ((error = VFS_VGET(fmp->mp, fbuf->fb_ino, &tdp))) {
+		fb_delete(fbuf);
 		goto out;
+	}
 
 	tdp->v_type = IFTOVT(fbuf->fb_io_mode);
 
 	*vpp = tdp;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-out:
 	fb_delete(fbuf);
+out:
+	vput(ap->a_dvp);
 	return (error);
 }
 
@@ -1032,11 +959,15 @@ fusefs_mknod(void *v)
 	ip = VTOI(dvp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
-	if (!fmp->sess_init)
-		return (ENXIO);
+	if (!fmp->sess_init) {
+		error = ENXIO;
+		goto out;
+	}
 
-	if (fmp->undef_op & UNDEF_MKNOD)
-		return (ENOSYS);
+	if (fmp->undef_op & UNDEF_MKNOD) {
+		error = ENOSYS;
+		goto out;
+	}
 
 	fbuf = fb_setup(cnp->cn_namelen + 1, ip->ufs_ino.i_number,
 	    FBT_MKNOD, p);
@@ -1053,16 +984,21 @@ fusefs_mknod(void *v)
 		if (error == ENOSYS)
 			fmp->undef_op |= UNDEF_MKNOD;
 
+		fb_delete(fbuf);
 		goto out;
 	}
 
-	if ((error = VFS_VGET(fmp->mp, fbuf->fb_ino, &tdp)))
+	if ((error = VFS_VGET(fmp->mp, fbuf->fb_ino, &tdp))) {
+		fb_delete(fbuf);
 		goto out;
+	}
 
 	tdp->v_type = IFTOVT(fbuf->fb_io_mode);
 
 	*vpp = tdp;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
+	fb_delete(fbuf);
+	vput(ap->a_dvp);
 
 	/* Remove inode so that it will be reloaded by VFS_VGET and
 	 * checked to see if it is an alias of an existing entry in
@@ -1072,8 +1008,9 @@ fusefs_mknod(void *v)
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
 	*vpp = NULL;
+	return (0);
 out:
-	fb_delete(fbuf);
+	vput(ap->a_dvp);
 	return (error);
 }
 
@@ -1186,12 +1123,6 @@ fusefs_write(void *v)
 		uio->uio_resid += diff;
 		uio->uio_offset -= diff;
 
-		if (uio->uio_offset > ip->filesize) {
-			ip->filesize = uio->uio_offset;
-			uvm_vnp_setsize(vp, uio->uio_offset);
-		}
-		uvm_vnp_uncache(vp);
-
 		fb_delete(fbuf);
 		fbuf = NULL;
 	}
@@ -1260,7 +1191,7 @@ abortit:
 		goto abortit;
 	}
 
-	if ((error = vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY)) != 0)
+	if ((error = vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY, p)) != 0)
 		goto abortit;
 	dp = VTOI(fdvp);
 	ip = VTOI(fvp);
@@ -1280,7 +1211,7 @@ abortit:
 		    dp == ip ||
 		    (fcnp->cn_flags & ISDOTDOT) ||
 		    (tcnp->cn_flags & ISDOTDOT)) {
-			VOP_UNLOCK(fvp);
+			VOP_UNLOCK(fvp, p);
 			error = EINVAL;
 			goto abortit;
 		}
@@ -1289,13 +1220,13 @@ abortit:
 
 	if (!fmp->sess_init) {
 		error = ENXIO;
-		VOP_UNLOCK(fvp);
+		VOP_UNLOCK(fvp, p);
 		goto abortit;
 	}
 
 	if (fmp->undef_op & UNDEF_RENAME) {
 		error = ENOSYS;
-		VOP_UNLOCK(fvp);
+		VOP_UNLOCK(fvp, p);
 		goto abortit;
 	}
 
@@ -1317,14 +1248,14 @@ abortit:
 		}
 
 		fb_delete(fbuf);
-		VOP_UNLOCK(fvp);
+		VOP_UNLOCK(fvp, p);
 		goto abortit;
 	}
 
 	fb_delete(fbuf);
 	VN_KNOTE(fvp, NOTE_RENAME);
 
-	VOP_UNLOCK(fvp);
+	VOP_UNLOCK(fvp, p);
 	if (tdvp == tvp)
 		vrele(tdvp);
 	else
@@ -1422,6 +1353,15 @@ fusefs_rmdir(void *v)
 	if (fmp->undef_op & UNDEF_RMDIR) {
 		error = ENOSYS;
 		goto out;
+	}
+
+	/*
+	 * No rmdir "." please.
+	 */
+	if (dp == ip) {
+		vrele(dvp);
+		vput(vp);
+		return (EINVAL);
 	}
 
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
@@ -1550,60 +1490,4 @@ fusefs_advlock(void *v)
 
 	return (lf_advlock(&ip->ufs_ino.i_lockf, ip->filesize, ap->a_id,
 	    ap->a_op, ap->a_fl, ap->a_flags));
-}
-
-int
-fusefs_fsync(void *v)
-{
-	struct vop_fsync_args *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct proc *p = ap->a_p;
-	struct fusefs_node *ip;
-	struct fusefs_mnt *fmp;
-	struct fusefs_filehandle *fufh;
-	struct fusebuf *fbuf;
-	int type, error = 0;
-
-	/*
-	 * Can't write to directory file handles so no need to fsync.
-	 * FUSE has fsyncdir but it doesn't make sense on OpenBSD.
-	 */
-	if (vp->v_type == VDIR)
-		return (0);
-
-	ip = VTOI(vp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
-
-	if (!fmp->sess_init)
-		return (ENXIO);
-
-	/* Implementing fsync is optional so don't error. */
-	if (fmp->undef_op & UNDEF_FSYNC)
-		return (0);
-
-	/* Sync all writeable file descriptors. */
-	for (type = 0; type < FUFH_MAXTYPE; type++) {
-		fufh = &(ip->fufh[type]);
-		if (fufh->fh_type == FUFH_WRONLY ||
-		    fufh->fh_type == FUFH_RDWR) {
-
-			fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_FSYNC, p);
-			fbuf->fb_io_fd = fufh->fh_id;
-
-			/* Always behave as if ap->a_waitfor = MNT_WAIT. */
-			error = fb_queue(fmp->dev, fbuf);
-			fb_delete(fbuf);
-			if (error)
-				break;
-		}
-	}
-
-	if (error == ENOSYS) {
-		fmp->undef_op |= UNDEF_FSYNC;
-
-		/* Implementing fsync is optional so don't error. */
-		return (0);
-	}
-
-	return (error);
 }

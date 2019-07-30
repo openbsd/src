@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.189 2018/12/30 23:09:58 guenther Exp $	*/
+/*	$OpenBSD: queue.c,v 1.184 2017/11/21 12:20:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -28,6 +28,7 @@
 #include <event.h>
 #include <imsg.h>
 #include <inttypes.h>
+#include <libgen.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -209,7 +210,7 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 		if (queue_envelope_load(evpid, &evp) == 0)
 			return;
 
-		bounce.type = B_FAILED;
+		bounce.type = B_ERROR;
 		envelope_set_errormsg(&evp, "Envelope expired");
 		envelope_set_esc_class(&evp, ESC_STATUS_TEMPFAIL);
 		envelope_set_esc_code(&evp, ESC_DELIVERY_TIME_EXPIRED);
@@ -341,7 +342,7 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 		}
 		if (evp.dsn_notify & DSN_SUCCESS) {
-			bounce.type = B_DELIVERED;
+			bounce.type = B_DSN;
 			bounce.dsn_ret = evp.dsn_ret;
 			envelope_set_esc_class(&evp, ESC_STATUS_OK);
 			if (imsg->hdr.type == IMSG_MDA_DELIVERY_OK)
@@ -399,7 +400,7 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 			m_close(p_scheduler);
 			return;
 		}
-		bounce.type = B_FAILED;
+		bounce.type = B_ERROR;
 		envelope_set_errormsg(&evp, "%s", reason);
 		envelope_set_esc_class(&evp, ESC_STATUS_PERMFAIL);
 		envelope_set_esc_code(&evp, code);
@@ -426,7 +427,7 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 		envelope_set_errormsg(&evp, "%s", "Loop detected");
 		envelope_set_esc_class(&evp, ESC_STATUS_TEMPFAIL);
 		envelope_set_esc_code(&evp, ESC_ROUTING_LOOP_DETECTED);
-		bounce.type = B_FAILED;
+		bounce.type = B_ERROR;
 		queue_bounce(&evp, &bounce);
 		queue_envelope_delete(evp.id);
 		m_create(p_scheduler, IMSG_QUEUE_DELIVERY_LOOP, 0, 0, -1);
@@ -515,13 +516,22 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_msgid(&m, &msgid);
 		m_end(&m);
 		/* handle concurrent walk requests */
-		wi = xcalloc(1, sizeof *wi);
+		wi = xcalloc(1, sizeof *wi, "queu_imsg");
 		wi->msgid = msgid;
 		wi->peerid = imsg->hdr.peerid;
 		evtimer_set(&wi->ev, queue_msgid_walk, wi);
 		tv.tv_sec = 0;
 		tv.tv_usec = 10;
 		evtimer_add(&wi->ev, &tv);
+		return;
+
+	case IMSG_CTL_UNCORRUPT_MSGID:
+		m_msg(&m, imsg);
+		m_get_msgid(&m, &msgid);
+		m_end(&m);
+		ret = queue_message_uncorrupt(msgid);
+		m_compose(p_control, imsg->hdr.type, imsg->hdr.peerid,
+		    0, -1, &ret, sizeof ret);
 		return;
 	}
 
@@ -576,7 +586,7 @@ queue_bounce(struct envelope *e, struct delivery_bounce *d)
 	b.retry = 0;
 	b.lasttry = 0;
 	b.creation = time(NULL);
-	b.ttl = 3600 * 24 * 7;
+	b.expire = 3600 * 24 * 7;
 
 	if (e->dsn_notify & DSN_NEVER)
 		return;
@@ -623,7 +633,7 @@ queue(void)
 	struct timeval	 tv;
 	struct event	 ev_qload;
 
-	purge_config(PURGE_EVERYTHING & ~PURGE_DISPATCHERS);
+	purge_config(PURGE_EVERYTHING);
 
 	if ((pw = getpwnam(SMTPD_QUEUE_USER)) == NULL)
 		if ((pw = getpwnam(SMTPD_USER)) == NULL)
@@ -686,7 +696,6 @@ static void
 queue_timeout(int fd, short event, void *p)
 {
 	static uint32_t	 msgid = 0;
-	struct dispatcher *dsp;
 	struct envelope	 evp;
 	struct event	*ev = p;
 	struct timeval	 tv;
@@ -705,13 +714,6 @@ queue_timeout(int fd, short event, void *p)
 	}
 
 	if (r) {
-		dsp = dict_get(env->sc_dispatchers, evp.dispatcher);
-		if (dsp == NULL) {
-			log_warnx("warn: queue: missing dispatcher \"%s\""
-			    " for envelope %016"PRIx64", ignoring",
-			    evp.dispatcher, evp.id);
-			goto reset;
-		}
 		if (msgid && evpid_to_msgid(evp.id) != msgid) {
 			m_create(p_scheduler, IMSG_QUEUE_MESSAGE_COMMIT,
 			    0, 0, -1);
@@ -724,7 +726,6 @@ queue_timeout(int fd, short event, void *p)
 		m_close(p_scheduler);
 	}
 
-reset:
 	tv.tv_sec = 0;
 	tv.tv_usec = 10;
 	evtimer_add(ev, &tv);

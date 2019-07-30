@@ -12,15 +12,13 @@
 
 #include "llvm/Support/DataTypes.h"
 
-#include <memory>
-
 namespace llvm {
 
 class MCAsmBackend;
 class MCCodeEmitter;
 class MCContext;
 class MCInstrInfo;
-class MCObjectTargetWriter;
+class MCObjectWriter;
 class MCRegisterInfo;
 class MCSubtargetInfo;
 class MCTargetOptions;
@@ -89,11 +87,11 @@ MCCodeEmitter *createSystemZMCCodeEmitter(const MCInstrInfo &MCII,
                                           MCContext &Ctx);
 
 MCAsmBackend *createSystemZMCAsmBackend(const Target &T,
-                                        const MCSubtargetInfo &STI,
                                         const MCRegisterInfo &MRI,
+                                        const Triple &TT, StringRef CPU,
                                         const MCTargetOptions &Options);
 
-std::unique_ptr<MCObjectTargetWriter> createSystemZObjectWriter(uint8_t OSABI);
+MCObjectWriter *createSystemZObjectWriter(raw_pwrite_stream &OS, uint8_t OSABI);
 } // end namespace llvm
 
 // Defines symbolic names for SystemZ registers.

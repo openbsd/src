@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.46 2019/06/16 07:36:25 otto Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.35 2016/12/05 10:41:33 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -41,12 +41,8 @@
 #include <ctype.h>
 #include <tls.h>
 #include <pwd.h>
-#include <math.h>
 
 #include "ntpd.h"
-
-#define	IMF_FIXDATE	"%a, %d %h %Y %T GMT"
-#define	X509_DATE	"%Y-%m-%d %T UTC"
 
 int	 constraint_addr_init(struct constraint *);
 struct constraint *
@@ -157,13 +153,8 @@ constraint_query(struct constraint *cstr)
 		/* Proceed and query the time */
 		break;
 	case STATE_DNS_TEMPFAIL:
-		if (now > cstr->last + (cstr->dnstries >= TRIES_AUTO_DNSFAIL ?
-		    CONSTRAINT_RETRY_INTERVAL : INTERVAL_AUIO_DNSFAIL)) {
-			cstr->dnstries++;
-			/* Retry resolving the address */
-			constraint_init(cstr);
-			return 0;
-		}
+		/* Retry resolving the address */
+		constraint_init(cstr);
 		return (-1);
 	case STATE_QUERY_SENT:
 		if (cstr->last + CONSTRAINT_SCAN_TIMEOUT > now) {
@@ -348,7 +339,7 @@ priv_constraint_child(const char *pw_dir, uid_t pw_uid, gid_t pw_gid)
 	/* Init TLS and load CA certs before chroot() */
 	if (tls_init() == -1)
 		fatalx("tls_init");
-	if ((conf->ca = tls_load_file(tls_default_ca_cert_file(),
+	if ((conf->ca = tls_load_file(CONSTRAINT_CA,
 	    &conf->ca_len, NULL)) == NULL)
 		fatalx("failed to load constraint ca");
 
@@ -729,7 +720,7 @@ constraint_msg_dns(u_int32_t id, u_int8_t *data, size_t len)
 		return;
 	}
 
-	if (len % (sizeof(struct sockaddr_storage) + sizeof(int)) != 0)
+	if ((len % sizeof(struct sockaddr_storage)) != 0)
 		fatalx("IMSG_CONSTRAINT_DNS len");
 
 	p = data;
@@ -739,9 +730,6 @@ constraint_msg_dns(u_int32_t id, u_int8_t *data, size_t len)
 		memcpy(&h->ss, p, sizeof(h->ss));
 		p += sizeof(h->ss);
 		len -= sizeof(h->ss);
-		memcpy(&h->notauth, p, sizeof(int));
-		p += sizeof(int);
-		len -= sizeof(int);
 
 		if (ncstr == NULL || cstr->addr_head.pool) {
 			ncstr = new_constraint();
@@ -769,9 +757,7 @@ constraint_msg_dns(u_int32_t id, u_int8_t *data, size_t len)
 int
 constraint_cmp(const void *a, const void *b)
 {
-	time_t at = *(const time_t *)a;
-	time_t bt = *(const time_t *)b;
-	return at < bt ? -1 : (at > bt ? 1 : 0);
+	return (*(const time_t *)a - *(const time_t *)b);
 }
 
 void
@@ -779,7 +765,7 @@ constraint_update(void)
 {
 	struct constraint *cstr;
 	int	 cnt, i;
-	time_t	*values;
+	time_t	*sum;
 	time_t	 now;
 
 	now = getmonotime();
@@ -790,31 +776,29 @@ constraint_update(void)
 			continue;
 		cnt++;
 	}
-	if (cnt == 0)
-		return;
 
-	if ((values = calloc(cnt, sizeof(time_t))) == NULL)
+	if ((sum = calloc(cnt, sizeof(time_t))) == NULL)
 		fatal("calloc");
 
 	i = 0;
 	TAILQ_FOREACH(cstr, &conf->constraints, entry) {
 		if (cstr->state != STATE_REPLY_RECEIVED)
 			continue;
-		values[i++] = cstr->constraint + (now - cstr->last);
+		sum[i++] = cstr->constraint + (now - cstr->last);
 	}
 
-	qsort(values, cnt, sizeof(time_t), constraint_cmp);
+	qsort(sum, cnt, sizeof(time_t), constraint_cmp);
 
 	/* calculate median */
 	i = cnt / 2;
 	if (cnt % 2 == 0)
-		conf->constraint_median = (values[i - 1] + values[i]) / 2;
-	else
-		conf->constraint_median = values[i];
+		if (sum[i - 1] < sum[i])
+			i -= 1;
 
 	conf->constraint_last = now;
+	conf->constraint_median = sum[i];
 
-	free(values);
+	free(sum);
 }
 
 void
@@ -834,7 +818,7 @@ int
 constraint_check(double val)
 {
 	struct timeval	tv;
-	double		diff;
+	double		constraint;
 	time_t		now;
 
 	if (conf->constraint_median == 0)
@@ -844,9 +828,10 @@ constraint_check(double val)
 	now = getmonotime();
 	tv.tv_sec = conf->constraint_median + (now - conf->constraint_last);
 	tv.tv_usec = 0;
-	diff = fabs(val - gettime_from_timeval(&tv));
+	constraint = gettime_from_timeval(&tv);
 
-	if (diff > CONSTRAINT_MARGIN) {
+	if (((val - constraint) > CONSTRAINT_MARGIN) ||
+	    ((constraint - val) > CONSTRAINT_MARGIN)) {
 		/* XXX get new constraint if too many errors happened */
 		if (conf->constraint_errors++ >
 		    (CONSTRAINT_ERROR_MARGIN * peer_cnt)) {
@@ -884,15 +869,14 @@ httpsdate_init(const char *addr, const char *port, const char *hostname,
 
 	if ((httpsdate->tls_config = tls_config_new()) == NULL)
 		goto fail;
-	if (tls_config_set_ca_mem(httpsdate->tls_config, ca, ca_len) == -1)
+
+	if (tls_config_set_ciphers(httpsdate->tls_config, "all") != 0)
 		goto fail;
 
-	/*
-	 * Due to the fact that we're trying to determine a constraint for time
-	 * we do our own certificate validity checking, since the automatic
-	 * version is based on our wallclock, which may well be inaccurate...
-	 */
-	tls_config_insecure_noverifytime(httpsdate->tls_config);
+	if (ca == NULL || ca_len == 0)
+		tls_config_insecure_noverifycert(httpsdate->tls_config);
+	else
+		tls_config_set_ca_mem(httpsdate->tls_config, ca, ca_len);
 
 	return (httpsdate);
 
@@ -922,11 +906,8 @@ httpsdate_free(void *arg)
 int
 httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
 {
-	char	 timebuf1[32], timebuf2[32];
 	size_t	 outlen = 0, maxlength = CONSTRAINT_MAXHEADERLENGTH, len;
 	char	*line, *p, *buf;
-	time_t	 httptime, notbefore, notafter;
-	struct tm *tm;
 	ssize_t	 ret;
 
 	if ((httpsdate->tls_ctx = tls_client()) == NULL)
@@ -982,7 +963,7 @@ httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
 		 * or ANSI C's asctime() - the latter doesn't include
 		 * the timezone which is required here.
 		 */
-		if (strptime(p, IMF_FIXDATE,
+		if (strptime(p, "%a, %d %h %Y %T GMT",
 		    &httpsdate->tls_tm) == NULL) {
 			log_warnx("unsupported date format");
 			free(line);
@@ -993,42 +974,6 @@ httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
 		break;
  next:
 		free(line);
-	}
-
-	/*
-	 * Now manually check the validity of the certificate presented in the
-	 * TLS handshake, based on the time specified by the server's HTTP Date:
-	 * header.
-	 */
-	notbefore = tls_peer_cert_notbefore(httpsdate->tls_ctx);
-	notafter = tls_peer_cert_notafter(httpsdate->tls_ctx);
-	if ((httptime = timegm(&httpsdate->tls_tm)) == -1)
-		goto fail;
-	if (httptime <= notbefore) {
-		if ((tm = gmtime(&notbefore)) == NULL)
-			goto fail;
-		if (strftime(timebuf1, sizeof(timebuf1), X509_DATE, tm) == 0)
-			goto fail;
-		if (strftime(timebuf2, sizeof(timebuf2), X509_DATE,
-		    &httpsdate->tls_tm) == 0)
-			goto fail;
-		log_warnx("tls certificate not yet valid: %s (%s): "
-		    "not before %s, now %s", httpsdate->tls_addr,
-		    httpsdate->tls_hostname, timebuf1, timebuf2);
-		goto fail;
-	}
-	if (httptime >= notafter) {
-		if ((tm = gmtime(&notafter)) == NULL)
-			goto fail;
-		if (strftime(timebuf1, sizeof(timebuf1), X509_DATE, tm) == 0)
-			goto fail;
-		if (strftime(timebuf2, sizeof(timebuf2), X509_DATE,
-		    &httpsdate->tls_tm) == 0)
-			goto fail;
-		log_warnx("tls certificate expired: %s (%s): "
-		    "not after %s, now %s", httpsdate->tls_addr,
-		    httpsdate->tls_hostname, timebuf1, timebuf2);
-		goto fail;
 	}
 
 	return (0);

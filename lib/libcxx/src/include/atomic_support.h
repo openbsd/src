@@ -16,7 +16,6 @@
 #if defined(__clang__) && __has_builtin(__atomic_load_n)             \
                        && __has_builtin(__atomic_store_n)            \
                        && __has_builtin(__atomic_add_fetch)          \
-                       && __has_builtin(__atomic_exchange_n)         \
                        && __has_builtin(__atomic_compare_exchange_n) \
                        && defined(__ATOMIC_RELAXED)                  \
                        && defined(__ATOMIC_CONSUME)                  \
@@ -30,7 +29,7 @@
 #endif
 
 #if !defined(_LIBCPP_HAS_ATOMIC_BUILTINS) && !defined(_LIBCPP_HAS_NO_THREADS)
-# if defined(_LIBCPP_WARNING)
+# if defined(_MSC_VER) && !defined(__clang__)
     _LIBCPP_WARNING("Building libc++ without __atomic builtins is unsupported")
 # else
 #   warning Building libc++ without __atomic builtins is unsupported
@@ -46,7 +45,7 @@ namespace {
 enum __libcpp_atomic_order {
     _AO_Relaxed = __ATOMIC_RELAXED,
     _AO_Consume = __ATOMIC_CONSUME,
-    _AO_Acquire = __ATOMIC_ACQUIRE,
+    _AO_Aquire  = __ATOMIC_ACQUIRE,
     _AO_Release = __ATOMIC_RELEASE,
     _AO_Acq_Rel = __ATOMIC_ACQ_REL,
     _AO_Seq     = __ATOMIC_SEQ_CST
@@ -81,14 +80,6 @@ _ValueType __libcpp_atomic_add(_ValueType* __val, _AddType __a,
                                int __order = _AO_Seq)
 {
     return __atomic_add_fetch(__val, __a, __order);
-}
-
-template <class _ValueType>
-inline _LIBCPP_INLINE_VISIBILITY
-_ValueType __libcpp_atomic_exchange(_ValueType* __target,
-                                    _ValueType __value, int __order = _AO_Seq)
-{
-    return __atomic_exchange_n(__target, __value, __order);
 }
 
 template <class _ValueType>
@@ -142,16 +133,6 @@ _ValueType __libcpp_atomic_add(_ValueType* __val, _AddType __a,
                                int = 0)
 {
     return *__val += __a;
-}
-
-template <class _ValueType>
-inline _LIBCPP_INLINE_VISIBILITY
-_ValueType __libcpp_atomic_exchange(_ValueType* __target,
-                                    _ValueType __value, int __order = _AO_Seq)
-{
-    _ValueType old = *__target;
-    *__target = __value;
-    return old;
 }
 
 template <class _ValueType>

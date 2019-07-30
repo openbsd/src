@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.61 2019/06/02 06:53:11 bentley Exp $
+.\"	$OpenBSD: sort.1,v 1.57 2017/06/10 14:54:42 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: June 2 2019 $
+.Dd $Mdocdate: June 10 2017 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -52,9 +52,7 @@ The
 .Nm
 utility sorts text and binary files by lines.
 A line is a record separated from the subsequent record by a
-newline (default) or NUL
-.Ql \e0
-character
+newline (default) or NUL \'\\0\' character
 .Po
 .Fl z
 option
@@ -62,8 +60,9 @@ option
 A record can contain any printable or unprintable characters.
 Comparisons are based on one or more sort keys extracted from
 each line of input, and are performed lexicographically,
-according to the specified command-line options
-that can tune the actual sorting behavior.
+according to the current locale's collating rules and the
+specified command-line options that can tune the actual
+sorting behavior.
 By default, if keys are not given,
 .Nm
 uses entire lines for comparison.
@@ -178,6 +177,10 @@ Unknown strings are considered smaller than valid month names.
 .It Fl n , Fl Fl numeric-sort , Fl Fl sort Ns = Ns Cm numeric
 An initial numeric string, consisting of optional blank space, optional
 minus sign, and zero or more digits (including decimal point)
+.\" with
+.\" optional radix character and thousands
+.\" separator
+.\" (as defined in the current locale),
 is sorted by arithmetic value.
 Leading blank characters are ignored.
 .It Fl R , Fl Fl random-sort , Fl Fl sort Ns = Ns Cm random
@@ -202,6 +205,7 @@ The files are compared by their prefixes and versions (leading
 zeros are ignored in version numbers, see example below).
 If an input string does not match the pattern, then it is compared
 using the byte compare function.
+All string comparisons are performed in the C locale.
 .Pp
 For example:
 .Bd -literal -offset indent
@@ -280,14 +284,12 @@ delimit an empty field; further, the initial blank space
 considered part of a field when determining key offsets.
 To use NUL as field separator, use
 .Fl t
-\(aq\e0\(aq.
+\'\\0\'.
 .It Fl z , Fl Fl zero-terminated
 Use NUL as the record separator.
 By default, records in the files are expected to be separated by
 the newline characters.
-With this option, NUL
-.Pq Ql \e0
-is used as the record separator character.
+With this option, NUL (\'\\0\') is used as the record separator character.
 .El
 .Pp
 Other options:
@@ -337,7 +339,7 @@ and
 .Fl s .
 .It Fl Fl help
 Print the help text and exit.
-.It Fl H , Fl Fl mergesort
+.It Fl Fl mergesort , Fl H
 Use mergesort.
 This is a universal algorithm that can always be used,
 but it is not always the fastest.
@@ -496,6 +498,43 @@ which has no
 equivalent.
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
+.It Ev GNUSORT_NUMERIC_COMPATIBILITY
+If defined
+.Fl t
+will not override the locale numeric symbols, that is, thousand
+separators and decimal separators.
+By default, if we specify
+.Fl t
+with the same symbol as the thousand separator or decimal point,
+the symbol will be treated as the field separator.
+Older behavior was less definite: the symbol was treated as both field
+separator and numeric separator, simultaneously.
+This environment variable enables the old behavior.
+.It Ev LANG
+Used as a last resort to determine different kinds of locale-specific
+behavior if neither the respective environment variable nor
+.Ev LC_ALL
+are set.
+.It Ev LC_ALL
+Locale settings that override all of the other locale settings.
+This environment variable can be used to set all these settings
+to the same value at once.
+.It Ev LC_COLLATE
+Locale settings to be used to determine the collation for
+sorting records.
+.It Ev LC_CTYPE
+Locale settings to be used to case conversion and classification
+of characters, that is, which characters are considered
+whitespaces, etc.
+.It Ev LC_MESSAGES
+Locale settings that determine the language of output messages
+that
+.Nm
+prints out.
+.It Ev LC_NUMERIC
+Locale settings that determine the number format used in numeric sort.
+.It Ev LC_TIME
+Locale settings that determine the month format used in month sort.
 .It Ev TMPDIR
 Path to the directory in which temporary files will be stored.
 Note that
@@ -539,10 +578,7 @@ The
 .Nm
 utility is compliant with the
 .St -p1003.1-2008
-specification, except that it ignores the user's
-.Xr locale 1
-and always assumes
-.Ev LC_ALL Ns =C.
+specification.
 .Pp
 The flags
 .Op Fl gHhiMRSsTVz
@@ -592,10 +628,13 @@ This implementation of
 has no limits on input line length (other than imposed by available
 memory) or any restrictions on bytes allowed within lines.
 .Pp
-The performance depends highly on
+The performance depends highly on locale settings,
 efficient choice of sort keys and key complexity.
-The fastest sort is on whole lines, with option
+The fastest sort is with the C locale, on whole lines, with option
 .Fl s .
+In general, the C locale is the fastest, followed by single-byte
+locales with multi-byte locales being the slowest.
+The correct collation order respected in all cases.
 For the key specification, the simpler to process the
 lines the faster the search will be.
 .Pp

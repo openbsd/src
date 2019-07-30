@@ -4,7 +4,7 @@ use 5.006;
 use strict;
 our($VERSION, @ISA, @EXPORT, @EXPORT_OK);
 
-$VERSION = "2.03";
+$VERSION = "2.02";
 
 require IO::File;
 @ISA = qw(IO::File);
@@ -36,7 +36,7 @@ require IO::File;
 #
 # Everything we're willing to export, we must first import.
 #
-IO::Handle->import( grep { !defined(&$_) } @EXPORT, @EXPORT_OK );
+import IO::Handle grep { !defined(&$_) } @EXPORT, @EXPORT_OK;
 
 #
 # Some people call "FileHandle::function", so all the functions
@@ -88,8 +88,8 @@ sub import {
 #
 
 sub pipe {
-    my $r = IO::Handle->new;
-    my $w = IO::Handle->new;
+    my $r = new IO::Handle;
+    my $w = new IO::Handle;
     CORE::pipe($r, $w) or return undef;
     ($r, $w);
 }

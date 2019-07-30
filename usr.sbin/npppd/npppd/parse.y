@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2019/02/27 04:52:19 denis Exp $ */
+/*	$OpenBSD: parse.y,v 1.19 2017/08/12 11:20:34 goda Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -42,6 +42,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include "npppd_auth.h"
+#include "slist.h"
 #include "npppd.h"
 #ifdef USE_NPPPD_RADIUS
 #include "radius_req.h"
@@ -1230,8 +1231,7 @@ yylex(void)
 			} else if (c == '\\') {
 				if ((next = lgetc(quotec)) == EOF)
 					return (0);
-				if (next == quotec || next == ' ' ||
-				    next == '\t')
+				if (next == quotec || c == ' ' || c == '\t')
 					c = next;
 				else if (next == '\n') {
 					file->lineno++;
@@ -1263,7 +1263,7 @@ yylex(void)
 	if (c == '-' || isdigit(c)) {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -1302,7 +1302,7 @@ nodigits:
 	if (isalnum(c) || c == ':' || c == '_' || c == '*') {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -1329,11 +1329,11 @@ pushfile(const char *name)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
-		log_warn("%s", __func__);
+		log_warn("malloc");
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		log_warn("%s", __func__);
+		log_warn("malloc");
 		free(nfile);
 		return (NULL);
 	}
@@ -1342,7 +1342,7 @@ pushfile(const char *name)
 #else
 	if ((nfile->stream = priv_fopen(nfile->name)) == NULL) {
 #endif
-		log_warn("%s: %s", __func__, nfile->name);
+		log_warn("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);

@@ -1,4 +1,3 @@
-# 	$OpenBSD: root.cnf,v 1.2 2018/07/17 17:06:49 tb Exp $
 # For regression tests
 default_ca = CA_regress
 

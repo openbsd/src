@@ -109,6 +109,13 @@ void perror(const char* s);
 
 #ifdef __cplusplus
 
+// snprintf
+#if defined(_LIBCPP_MSVCRT)
+extern "C++" {
+#include "support/win32/support.h"
+}
+#endif
+
 #undef getc
 #undef putc
 #undef clearerr

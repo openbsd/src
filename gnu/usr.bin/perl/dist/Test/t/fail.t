@@ -1,6 +1,6 @@
 # -*-perl-*-
 use strict;
-our $Expect;
+use vars qw($Expect);
 use Test qw($TESTOUT $TESTERR $ntest ok skip plan); 
 plan tests => 14;
 

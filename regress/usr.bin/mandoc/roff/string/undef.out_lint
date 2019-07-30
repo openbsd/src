@@ -1,2 +1,0 @@
-mandoc: undef.in:14:15: WARNING: undefined string, using "": mys
-mandoc: undef.in:34:2: ERROR: skipping unknown macro: .mym

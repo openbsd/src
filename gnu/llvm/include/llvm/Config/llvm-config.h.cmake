@@ -14,9 +14,6 @@
 #ifndef LLVM_CONFIG_H
 #define LLVM_CONFIG_H
 
-/* Define if LLVM_ENABLE_DUMP is enabled */
-#cmakedefine LLVM_ENABLE_DUMP
-
 /* Define if we link Polly to the tools */
 #cmakedefine LINK_POLLY_INTO_TOOLS
 
@@ -56,14 +53,14 @@
 /* Define if this is Unixish platform */
 #cmakedefine LLVM_ON_UNIX ${LLVM_ON_UNIX}
 
+/* Define if this is Win32ish platform */
+#cmakedefine LLVM_ON_WIN32 ${LLVM_ON_WIN32}
+
 /* Define if we have the Intel JIT API runtime support library */
 #cmakedefine01 LLVM_USE_INTEL_JITEVENTS
 
 /* Define if we have the oprofile JIT-support library */
 #cmakedefine01 LLVM_USE_OPROFILE
-
-/* Define if we have the perf JIT-support library */
-#cmakedefine01 LLVM_USE_PERF
 
 /* Major version of the LLVM API */
 #define LLVM_VERSION_MAJOR ${LLVM_VERSION_MAJOR}
@@ -76,10 +73,5 @@
 
 /* LLVM version string */
 #define LLVM_VERSION_STRING "${PACKAGE_VERSION}"
-
-/* Whether LLVM records statistics for use with GetStatistics(),
- * PrintStatistics() or PrintStatisticsJSON()
- */
-#cmakedefine01 LLVM_FORCE_ENABLE_STATS
 
 #endif

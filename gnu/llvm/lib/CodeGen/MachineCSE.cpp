@@ -1,4 +1,4 @@
-//===- MachineCSE.cpp - Machine Common Subexpression Elimination Pass -----===//
+//===-- MachineCSE.cpp - Machine Common Subexpression Elimination Pass ----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,35 +15,18 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/ScopedHashTable.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineDominators.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/TargetInstrInfo.h"
-#include "llvm/CodeGen/TargetOpcodes.h"
-#include "llvm/CodeGen/TargetRegisterInfo.h"
-#include "llvm/CodeGen/TargetSubtargetInfo.h"
-#include "llvm/MC/MCInstrDesc.h"
-#include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/RecyclingAllocator.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cassert>
-#include <iterator>
-#include <utility>
-#include <vector>
-
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "machine-cse"
@@ -57,18 +40,15 @@ STATISTIC(NumCrossBBCSEs,
 STATISTIC(NumCommutes,  "Number of copies coalesced after commuting");
 
 namespace {
-
   class MachineCSE : public MachineFunctionPass {
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
     AliasAnalysis *AA;
     MachineDominatorTree *DT;
     MachineRegisterInfo *MRI;
-
   public:
     static char ID; // Pass identification
-
-    MachineCSE() : MachineFunctionPass(ID) {
+    MachineCSE() : MachineFunctionPass(ID), LookAheadLimit(0), CurrVN(0) {
       initializeMachineCSEPass(*PassRegistry::getPassRegistry());
     }
 
@@ -89,18 +69,16 @@ namespace {
     }
 
   private:
-    using AllocatorTy = RecyclingAllocator<BumpPtrAllocator,
-                            ScopedHashTableVal<MachineInstr *, unsigned>>;
-    using ScopedHTType =
-        ScopedHashTable<MachineInstr *, unsigned, MachineInstrExpressionTrait,
-                        AllocatorTy>;
-    using ScopeType = ScopedHTType::ScopeTy;
-
-    unsigned LookAheadLimit = 0;
-    DenseMap<MachineBasicBlock *, ScopeType *> ScopeMap;
+    unsigned LookAheadLimit;
+    typedef RecyclingAllocator<BumpPtrAllocator,
+        ScopedHashTableVal<MachineInstr*, unsigned> > AllocatorTy;
+    typedef ScopedHashTable<MachineInstr*, unsigned,
+        MachineInstrExpressionTrait, AllocatorTy> ScopedHTType;
+    typedef ScopedHTType::ScopeTy ScopeType;
+    DenseMap<MachineBasicBlock*, ScopeType*> ScopeMap;
     ScopedHTType VNT;
-    SmallVector<MachineInstr *, 64> Exps;
-    unsigned CurrVN = 0;
+    SmallVector<MachineInstr*, 64> Exps;
+    unsigned CurrVN;
 
     bool PerformTrivialCopyPropagation(MachineInstr *MI,
                                        MachineBasicBlock *MBB);
@@ -126,13 +104,10 @@ namespace {
                          DenseMap<MachineDomTreeNode*, unsigned> &OpenChildren);
     bool PerformCSE(MachineDomTreeNode *Node);
   };
-
 } // end anonymous namespace
 
 char MachineCSE::ID = 0;
-
 char &llvm::MachineCSEID = MachineCSE::ID;
-
 INITIALIZE_PASS_BEGIN(MachineCSE, DEBUG_TYPE,
                       "Machine Common Subexpression Elimination", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
@@ -176,10 +151,11 @@ bool MachineCSE::PerformTrivialCopyPropagation(MachineInstr *MI,
     // class given a super-reg class and subreg index.
     if (DefMI->getOperand(1).getSubReg())
       continue;
-    if (!MRI->constrainRegAttrs(SrcReg, Reg))
+    const TargetRegisterClass *RC = MRI->getRegClass(Reg);
+    if (!MRI->constrainRegClass(SrcReg, RC))
       continue;
-    LLVM_DEBUG(dbgs() << "Coalescing: " << *DefMI);
-    LLVM_DEBUG(dbgs() << "***     to: " << *MI);
+    DEBUG(dbgs() << "Coalescing: " << *DefMI);
+    DEBUG(dbgs() << "***     to: " << *MI);
     // Propagate SrcReg of copies to MI.
     MO.setReg(SrcReg);
     MRI->clearKillFlags(SrcReg);
@@ -249,8 +225,8 @@ bool MachineCSE::hasLivePhysRegDefUses(const MachineInstr *MI,
       continue;
     if (TargetRegisterInfo::isVirtualRegister(Reg))
       continue;
-    // Reading either caller preserved or constant physregs is ok.
-    if (!MRI->isCallerPreservedOrConstPhysReg(Reg))
+    // Reading constant physregs is ok.
+    if (!MRI->isConstantPhysReg(Reg))
       for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
         PhysRefs.insert(*AI);
   }
@@ -314,7 +290,7 @@ bool MachineCSE::PhysRegDefsReach(MachineInstr *CSMI, MachineInstr *MI,
   unsigned LookAheadLeft = LookAheadLimit;
   while (LookAheadLeft) {
     // Skip over dbg_value's.
-    while (I != E && I != EE && I->isDebugInstr())
+    while (I != E && I != EE && I->isDebugValue())
       ++I;
 
     if (I == EE) {
@@ -353,7 +329,7 @@ bool MachineCSE::PhysRegDefsReach(MachineInstr *CSMI, MachineInstr *MI,
 
 bool MachineCSE::isCSECandidate(MachineInstr *MI) {
   if (MI->isPosition() || MI->isPHI() || MI->isImplicitDef() || MI->isKill() ||
-      MI->isInlineAsm() || MI->isDebugInstr())
+      MI->isInlineAsm() || MI->isDebugValue())
     return false;
 
   // Ignore copies.
@@ -445,23 +421,25 @@ bool MachineCSE::isProfitableToCSE(unsigned CSReg, unsigned Reg,
   // Heuristics #3: If the common subexpression is used by PHIs, do not reuse
   // it unless the defined value is already used in the BB of the new use.
   bool HasPHI = false;
-  for (MachineInstr &UseMI : MRI->use_nodbg_instructions(CSReg)) {
-    HasPHI |= UseMI.isPHI();
-    if (UseMI.getParent() == MI->getParent())
-      return true;
+  SmallPtrSet<MachineBasicBlock*, 4> CSBBs;
+  for (MachineInstr &MI : MRI->use_nodbg_instructions(CSReg)) {
+    HasPHI |= MI.isPHI();
+    CSBBs.insert(MI.getParent());
   }
 
-  return !HasPHI;
+  if (!HasPHI)
+    return true;
+  return CSBBs.count(MI->getParent());
 }
 
 void MachineCSE::EnterScope(MachineBasicBlock *MBB) {
-  LLVM_DEBUG(dbgs() << "Entering: " << MBB->getName() << '\n');
+  DEBUG(dbgs() << "Entering: " << MBB->getName() << '\n');
   ScopeType *Scope = new ScopeType(VNT);
   ScopeMap[MBB] = Scope;
 }
 
 void MachineCSE::ExitScope(MachineBasicBlock *MBB) {
-  LLVM_DEBUG(dbgs() << "Exiting: " << MBB->getName() << '\n');
+  DEBUG(dbgs() << "Exiting: " << MBB->getName() << '\n');
   DenseMap<MachineBasicBlock*, ScopeType*>::iterator SI = ScopeMap.find(MBB);
   assert(SI != ScopeMap.end());
   delete SI->second;
@@ -545,12 +523,13 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
     // Found a common subexpression, eliminate it.
     unsigned CSVN = VNT.lookup(MI);
     MachineInstr *CSMI = Exps[CSVN];
-    LLVM_DEBUG(dbgs() << "Examining: " << *MI);
-    LLVM_DEBUG(dbgs() << "*** Found a common subexpression: " << *CSMI);
+    DEBUG(dbgs() << "Examining: " << *MI);
+    DEBUG(dbgs() << "*** Found a common subexpression: " << *CSMI);
 
     // Check if it's profitable to perform this CSE.
     bool DoCSE = true;
-    unsigned NumDefs = MI->getNumDefs();
+    unsigned NumDefs = MI->getDesc().getNumDefs() +
+                       MI->getDesc().getNumImplicitDefs();
 
     for (unsigned i = 0, e = MI->getNumOperands(); NumDefs && i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
@@ -579,17 +558,16 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
              "Do not CSE physical register defs!");
 
       if (!isProfitableToCSE(NewReg, OldReg, CSMI, MI)) {
-        LLVM_DEBUG(dbgs() << "*** Not profitable, avoid CSE!\n");
+        DEBUG(dbgs() << "*** Not profitable, avoid CSE!\n");
         DoCSE = false;
         break;
       }
 
-      // Don't perform CSE if the result of the new instruction cannot exist
-      // within the constraints (register class, bank, or low-level type) of
-      // the old instruction.
-      if (!MRI->constrainRegAttrs(NewReg, OldReg)) {
-        LLVM_DEBUG(
-            dbgs() << "*** Not the same register constraints, avoid CSE!\n");
+      // Don't perform CSE if the result of the old instruction cannot exist
+      // within the register class of the new instruction.
+      const TargetRegisterClass *OldRC = MRI->getRegClass(OldReg);
+      if (!MRI->constrainRegClass(NewReg, OldRC)) {
+        DEBUG(dbgs() << "*** Not the same register class, avoid CSE!\n");
         DoCSE = false;
         break;
       }
@@ -620,12 +598,12 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
       // Go through implicit defs of CSMI and MI, and clear the kill flags on
       // their uses in all the instructions between CSMI and MI.
       // We might have made some of the kill flags redundant, consider:
-      //   subs  ... implicit-def %nzcv    <- CSMI
-      //   csinc ... implicit killed %nzcv <- this kill flag isn't valid anymore
-      //   subs  ... implicit-def %nzcv    <- MI, to be eliminated
-      //   csinc ... implicit killed %nzcv
+      //   subs  ... %NZCV<imp-def>        <- CSMI
+      //   csinc ... %NZCV<imp-use,kill>   <- this kill flag isn't valid anymore
+      //   subs  ... %NZCV<imp-def>        <- MI, to be eliminated
+      //   csinc ... %NZCV<imp-use,kill>
       // Since we eliminated MI, and reused a register imp-def'd by CSMI
-      // (here %nzcv), that register, if it was killed before MI, should have
+      // (here %NZCV), that register, if it was killed before MI, should have
       // that kill flag removed, because it's lifetime was extended.
       if (CSMI->getParent() == MI->getParent()) {
         for (MachineBasicBlock::iterator II = CSMI, IE = MI; II != IE; ++II)
@@ -724,7 +702,7 @@ bool MachineCSE::PerformCSE(MachineDomTreeNode *Node) {
 }
 
 bool MachineCSE::runOnMachineFunction(MachineFunction &MF) {
-  if (skipFunction(MF.getFunction()))
+  if (skipFunction(*MF.getFunction()))
     return false;
 
   TII = MF.getSubtarget().getInstrInfo();

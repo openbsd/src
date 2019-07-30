@@ -30,13 +30,13 @@ if(LLVM_BUILD_INSTRUMENTED)
   endif()
 
   if(NOT LLVM_PROFDATA)
-    message(STATUS "To enable merging PGO data LLVM_PROFDATA has to point to llvm-profdata")
-  else()
-    add_custom_target(generate-profdata
-      COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/perf-helper.py merge ${LLVM_PROFDATA} ${CMAKE_CURRENT_BINARY_DIR}/clang.profdata ${CMAKE_CURRENT_BINARY_DIR}
-      COMMENT "Merging profdata"
-      DEPENDS generate-profraw)
+    message(FATAL_ERROR "Must set LLVM_PROFDATA to point to llvm-profdata to use for merging PGO data")
   endif()
+
+  add_custom_target(generate-profdata
+    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/perf-helper.py merge ${LLVM_PROFDATA} ${CMAKE_CURRENT_BINARY_DIR}/clang.profdata ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Merging profdata"
+    DEPENDS generate-profraw)
 endif()
 
 find_program(DTRACE dtrace)

@@ -61,17 +61,6 @@ void Sema::AddAlignmentAttributesForRecord(RecordDecl *RD) {
       RD->addAttr(MaxFieldAlignmentAttr::CreateImplicit(Context,
                                                         Alignment * 8));
   }
-  if (PackIncludeStack.empty())
-    return;
-  // The #pragma pack affected a record in an included file,  so Clang should
-  // warn when that pragma was written in a file that included the included
-  // file.
-  for (auto &PackedInclude : llvm::reverse(PackIncludeStack)) {
-    if (PackedInclude.CurrentPragmaLocation != PackStack.CurrentPragmaLocation)
-      break;
-    if (PackedInclude.HasNonDefaultValue)
-      PackedInclude.ShouldWarnOnInclude = true;
-  }
 }
 
 void Sema::AddMsStructLayoutForRecord(RecordDecl *RD) {
@@ -205,7 +194,7 @@ void Sema::ActOnPragmaPack(SourceLocation PragmaLoc, PragmaMsStackAction Action,
   // "#pragma pack(pop, identifier, n) is undefined"
   if (Action & Sema::PSK_Pop) {
     if (Alignment && !SlotLabel.empty())
-      Diag(PragmaLoc, diag::warn_pragma_pack_pop_identifier_and_alignment);
+      Diag(PragmaLoc, diag::warn_pragma_pack_pop_identifer_and_alignment);
     if (PackStack.Stack.empty())
       Diag(PragmaLoc, diag::warn_pragma_pop_failed) << "pack" << "stack empty";
   }
@@ -213,62 +202,7 @@ void Sema::ActOnPragmaPack(SourceLocation PragmaLoc, PragmaMsStackAction Action,
   PackStack.Act(PragmaLoc, Action, SlotLabel, AlignmentVal);
 }
 
-void Sema::DiagnoseNonDefaultPragmaPack(PragmaPackDiagnoseKind Kind,
-                                        SourceLocation IncludeLoc) {
-  if (Kind == PragmaPackDiagnoseKind::NonDefaultStateAtInclude) {
-    SourceLocation PrevLocation = PackStack.CurrentPragmaLocation;
-    // Warn about non-default alignment at #includes (without redundant
-    // warnings for the same directive in nested includes).
-    // The warning is delayed until the end of the file to avoid warnings
-    // for files that don't have any records that are affected by the modified
-    // alignment.
-    bool HasNonDefaultValue =
-        PackStack.hasValue() &&
-        (PackIncludeStack.empty() ||
-         PackIncludeStack.back().CurrentPragmaLocation != PrevLocation);
-    PackIncludeStack.push_back(
-        {PackStack.CurrentValue,
-         PackStack.hasValue() ? PrevLocation : SourceLocation(),
-         HasNonDefaultValue, /*ShouldWarnOnInclude*/ false});
-    return;
-  }
-
-  assert(Kind == PragmaPackDiagnoseKind::ChangedStateAtExit && "invalid kind");
-  PackIncludeState PrevPackState = PackIncludeStack.pop_back_val();
-  if (PrevPackState.ShouldWarnOnInclude) {
-    // Emit the delayed non-default alignment at #include warning.
-    Diag(IncludeLoc, diag::warn_pragma_pack_non_default_at_include);
-    Diag(PrevPackState.CurrentPragmaLocation, diag::note_pragma_pack_here);
-  }
-  // Warn about modified alignment after #includes.
-  if (PrevPackState.CurrentValue != PackStack.CurrentValue) {
-    Diag(IncludeLoc, diag::warn_pragma_pack_modified_after_include);
-    Diag(PackStack.CurrentPragmaLocation, diag::note_pragma_pack_here);
-  }
-}
-
-void Sema::DiagnoseUnterminatedPragmaPack() {
-  if (PackStack.Stack.empty())
-    return;
-  bool IsInnermost = true;
-  for (const auto &StackSlot : llvm::reverse(PackStack.Stack)) {
-    Diag(StackSlot.PragmaPushLocation, diag::warn_pragma_pack_no_pop_eof);
-    // The user might have already reset the alignment, so suggest replacing
-    // the reset with a pop.
-    if (IsInnermost && PackStack.CurrentValue == PackStack.DefaultValue) {
-      DiagnosticBuilder DB = Diag(PackStack.CurrentPragmaLocation,
-                                  diag::note_pragma_pack_pop_instead_reset);
-      SourceLocation FixItLoc = Lexer::findLocationAfterToken(
-          PackStack.CurrentPragmaLocation, tok::l_paren, SourceMgr, LangOpts,
-          /*SkipTrailing=*/false);
-      if (FixItLoc.isValid())
-        DB << FixItHint::CreateInsertion(FixItLoc, "pop");
-    }
-    IsInnermost = false;
-  }
-}
-
-void Sema::ActOnPragmaMSStruct(PragmaMSStructKind Kind) {
+void Sema::ActOnPragmaMSStruct(PragmaMSStructKind Kind) { 
   MSStructPragmaOn = (Kind == PMSST_ON);
 }
 
@@ -315,8 +249,7 @@ void Sema::PragmaStack<ValueType>::Act(SourceLocation PragmaLocation,
     return;
   }
   if (Action & PSK_Push)
-    Stack.emplace_back(StackSlotLabel, CurrentValue, CurrentPragmaLocation,
-                       PragmaLocation);
+    Stack.push_back(Slot(StackSlotLabel, CurrentValue, CurrentPragmaLocation));
   else if (Action & PSK_Pop) {
     if (!StackSlotLabel.empty()) {
       // If we've got a label, try to find it and jump there.
@@ -330,7 +263,7 @@ void Sema::PragmaStack<ValueType>::Act(SourceLocation PragmaLocation,
         Stack.erase(std::prev(I.base()), Stack.end());
       }
     } else if (!Stack.empty()) {
-      // We do not have a label, just pop the last entry.
+      // We don't have a label, just pop the last entry.
       CurrentValue = Stack.back().Value;
       CurrentPragmaLocation = Stack.back().PragmaLocation;
       Stack.pop_back();
@@ -389,7 +322,7 @@ bool Sema::UnifySection(StringRef SectionName,
   return false;
 }
 
-/// Called on well formed \#pragma bss_seg().
+/// \brief Called on well formed \#pragma bss_seg().
 void Sema::ActOnPragmaMSSeg(SourceLocation PragmaLocation,
                             PragmaMsStackAction Action,
                             llvm::StringRef StackSlotLabel,
@@ -410,7 +343,7 @@ void Sema::ActOnPragmaMSSeg(SourceLocation PragmaLocation,
   Stack->Act(PragmaLocation, Action, StackSlotLabel, SegmentName);
 }
 
-/// Called on well formed \#pragma bss_seg().
+/// \brief Called on well formed \#pragma bss_seg().
 void Sema::ActOnPragmaMSSection(SourceLocation PragmaLocation,
                                 int SectionFlags, StringLiteral *SegmentName) {
   UnifySection(SegmentName->getString(), SectionFlags, PragmaLocation);
@@ -520,7 +453,7 @@ attrMatcherRuleListToString(ArrayRef<attr::SubjectMatchRule> Rules) {
 
 } // end anonymous namespace
 
-void Sema::ActOnPragmaAttributePush(ParsedAttr &Attribute,
+void Sema::ActOnPragmaAttributePush(AttributeList &Attribute,
                                     SourceLocation PragmaLoc,
                                     attr::ParsedSubjectMatchRuleSet Rules) {
   SmallVector<attr::SubjectMatchRule, 4> SubjectMatchRules;
@@ -645,7 +578,7 @@ void Sema::AddPragmaAttributes(Scope *S, Decl *D) {
   if (PragmaAttributeStack.empty())
     return;
   for (auto &Entry : PragmaAttributeStack) {
-    ParsedAttr *Attribute = Entry.Attribute;
+    const AttributeList *Attribute = Entry.Attribute;
     assert(Attribute && "Expected an attribute");
 
     // Ensure that the attribute can be applied to the given declaration.
@@ -659,10 +592,9 @@ void Sema::AddPragmaAttributes(Scope *S, Decl *D) {
     if (!Applies)
       continue;
     Entry.IsUsed = true;
+    assert(!Attribute->getNext() && "Expected just one attribute");
     PragmaAttributeCurrentTargetDecl = D;
-    ParsedAttributesView Attrs;
-    Attrs.addAtStart(Attribute);
-    ProcessDeclAttributeList(S, D, Attrs);
+    ProcessDeclAttributeList(S, D, Attribute);
     PragmaAttributeCurrentTargetDecl = nullptr;
   }
 }
@@ -693,7 +625,7 @@ void Sema::AddRangeBasedOptnone(FunctionDecl *FD) {
     AddOptnoneAttributeIfNoConflicts(FD, OptimizeOffPragmaLocation);
 }
 
-void Sema::AddOptnoneAttributeIfNoConflicts(FunctionDecl *FD,
+void Sema::AddOptnoneAttributeIfNoConflicts(FunctionDecl *FD, 
                                             SourceLocation Loc) {
   // Don't add a conflicting attribute. No diagnostic is needed.
   if (FD->hasAttr<MinSizeAttr>() || FD->hasAttr<AlwaysInlineAttr>())

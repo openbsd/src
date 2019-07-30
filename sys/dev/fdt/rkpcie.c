@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpcie.c,v 1.8 2019/06/03 00:43:26 kettenis Exp $	*/
+/*	$OpenBSD: rkpcie.c,v 1.3 2018/01/13 18:08:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -137,6 +137,9 @@ pcireg_t rkpcie_conf_read(void *, pcitag_t, int);
 void	rkpcie_conf_write(void *, pcitag_t, int, pcireg_t);
 
 int	rkpcie_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int	rkpcie_intr_map_msi(struct pci_attach_args *, pci_intr_handle_t *);
+int	rkpcie_intr_map_msix(struct pci_attach_args *, int,
+	    pci_intr_handle_t *);
 const char *rkpcie_intr_string(void *, pci_intr_handle_t);
 void	*rkpcie_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *, char *);
@@ -286,8 +289,8 @@ rkpcie_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pc.pc_intr_v = sc;
 	sc->sc_pc.pc_intr_map = rkpcie_intr_map;
-	sc->sc_pc.pc_intr_map_msi = _pci_intr_map_msi;
-	sc->sc_pc.pc_intr_map_msix = _pci_intr_map_msix;
+	sc->sc_pc.pc_intr_map_msi = rkpcie_intr_map_msi;
+	sc->sc_pc.pc_intr_map_msix = rkpcie_intr_map_msix;
 	sc->sc_pc.pc_intr_string = rkpcie_intr_string;
 	sc->sc_pc.pc_intr_establish = rkpcie_intr_establish;
 	sc->sc_pc.pc_intr_disestablish = rkpcie_intr_disestablish;
@@ -303,7 +306,6 @@ rkpcie_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_ioex = sc->sc_ioex;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = sc->sc_bus;
-	pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
 
 	config_found(self, &pba, NULL);
 }
@@ -311,7 +313,7 @@ rkpcie_attach(struct device *parent, struct device *self, void *aux)
 void
 rkpcie_atr_init(struct rkpcie_softc *sc)
 {
-	uint32_t *ranges = NULL;
+	uint32_t *ranges;
 	struct extent *ex;
 	bus_addr_t addr;
 	bus_size_t size, offset;
@@ -472,9 +474,16 @@ rkpcie_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	}
 }
 
+struct rkpcie_intr_handle {
+	pci_chipset_tag_t	ih_pc;
+	pcitag_t		ih_tag;
+	int			ih_intrpin;
+};
+
 int
 rkpcie_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
+	struct rkpcie_intr_handle *ih;
 	int pin = pa->pa_rawintrpin;
 
 	if (pin == 0 || pin > PCI_INTERRUPT_PIN_MAX)
@@ -483,24 +492,37 @@ rkpcie_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	if (pa->pa_tag == 0)
 		return -1;
 
-	ihp->ih_pc = pa->pa_pc;
-	ihp->ih_tag = pa->pa_intrtag;
-	ihp->ih_intrpin = pa->pa_intrpin;
-	ihp->ih_type = PCI_INTX;
+	ih = malloc(sizeof(struct rkpcie_intr_handle), M_DEVBUF, M_WAITOK);
+	ih->ih_pc = pa->pa_pc;
+	ih->ih_tag = pa->pa_intrtag;
+	ih->ih_intrpin = pa->pa_intrpin;
+	*ihp = (pci_intr_handle_t)ih;
 
 	return 0;
+}
+
+int
+rkpcie_intr_map_msi(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSI, NULL, NULL) == 0)
+		return -1;
+
+	return -1;
+}
+
+int
+rkpcie_intr_map_msix(struct pci_attach_args *pa, int vec,
+    pci_intr_handle_t *ihp)
+{
+	return -1;
 }
 
 const char *
 rkpcie_intr_string(void *v, pci_intr_handle_t ih)
 {
-	switch (ih.ih_type) {
-	case PCI_MSI:
-		return "msi";
-	case PCI_MSIX:
-		return "msix";
-	}
-
 	return "intx";
 }
 
@@ -509,38 +531,14 @@ rkpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg, char *name)
 {
 	struct rkpcie_softc *sc = v;
-	void *cookie;
 
-	KASSERT(ih.ih_type != PCI_NONE);
+	/* Unmask legacy interrupts. */
+	HWRITE4(sc, PCIE_CLIENT_INT_MASK,
+	    PCIE_CLIENT_INTA_UNMASK | PCIE_CLIENT_INTB_UNMASK |
+	    PCIE_CLIENT_INTC_UNMASK | PCIE_CLIENT_INTD_UNMASK);
 
-	if (ih.ih_type != PCI_INTX) {
-		uint64_t addr, data;
-
-		/* Assume hardware passes Requester ID as sideband data. */
-		data = pci_requester_id(ih.ih_pc, ih.ih_tag);
-		cookie = fdt_intr_establish_msi(sc->sc_node, &addr,
-		    &data, level, func, arg, name);
-		if (cookie == NULL)
-			return NULL;
-
-		/* TODO: translate address to the PCI device's view */
-
-		if (ih.ih_type == PCI_MSIX) {
-			pci_msix_enable(ih.ih_pc, ih.ih_tag,
-			    sc->sc_iot, ih.ih_intrpin, addr, data);
-		} else
-			pci_msi_enable(ih.ih_pc, ih.ih_tag, addr, data);
-	} else {
-		/* Unmask legacy interrupts. */
-		HWRITE4(sc, PCIE_CLIENT_INT_MASK,
-		    PCIE_CLIENT_INTA_UNMASK | PCIE_CLIENT_INTB_UNMASK |
-		    PCIE_CLIENT_INTC_UNMASK | PCIE_CLIENT_INTD_UNMASK);
-
-		cookie = fdt_intr_establish_idx(sc->sc_node, 1, level,
-		    func, arg, name);
-	}
-
-	return cookie;
+	return arm_intr_establish_fdt_idx(sc->sc_node, 1, level,
+	    func, arg, name);
 }
 
 void

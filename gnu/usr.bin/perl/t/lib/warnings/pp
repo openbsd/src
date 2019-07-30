@@ -21,8 +21,6 @@
   Constant subroutine (anonymous) undefined
 	$foo = sub () { 3 }; undef &$foo;
 
-  Invalid negative number (%s) in chr
-
 __END__
 # pp.c
 use warnings 'substr' ;
@@ -131,8 +129,10 @@ $_ = "\x80  \xff" ;
 reverse ;
 EXPECT
 ########
-# NAME chr -1
-use warnings 'utf8';
-my $chr = chr(-1);
+# NAME deprecation of complement with above ff code points
+$_ = ~ "\xff";
+$_ = ~ "\x{100}";
 EXPECT
-Invalid negative number (-1) in chr at - line 2.
+OPTION regex
+Use of strings with code points over 0xFF as arguments to 1's complement \(~\) operator is deprecated at - line \d+.
+Use of code point 0xFF+EFF is deprecated; the permissible max is 0x7F+ at - line \d+.

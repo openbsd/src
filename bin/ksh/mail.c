@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.c,v 1.27 2019/01/14 08:48:16 schwarze Exp $	*/
+/*	$OpenBSD: mail.c,v 1.22 2015/10/19 14:42:16 mmcc Exp $	*/
 
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
@@ -6,7 +6,6 @@
  */
 
 #include <sys/stat.h>
-#include <sys/time.h>
 
 #include <string.h>
 #include <time.h>
@@ -31,7 +30,7 @@ typedef struct mbox {
 
 static mbox_t	*mplist;
 static mbox_t	mbox;
-static struct	timespec mlastchkd;	/* when mail was last checked */
+static time_t	mlastchkd;	/* when mail was last checked */
 static time_t	mailcheck_interval;
 
 static void	munset(mbox_t *); /* free mlist and mval */
@@ -42,28 +41,22 @@ void
 mcheck(void)
 {
 	mbox_t		*mbp;
-	struct timespec	 elapsed, now;
+	time_t		 now;
 	struct tbl	*vp;
 	struct stat	 stbuf;
-	static int	 first = 1;
 
-	if (mplist)
-		mbp = mplist;
-	else if ((vp = global("MAIL")) && (vp->flag & ISSET))
-		mbp = &mbox;
-	else
-		mbp = NULL;
-	if (mbp == NULL)
-		return;
+	now = time(NULL);
+	if (mlastchkd == 0)
+		mlastchkd = now;
+	if (now - mlastchkd >= mailcheck_interval) {
+		mlastchkd = now;
 
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	if (first) {
-		mlastchkd = now;
-		first = 0;
-	}
-	timespecsub(&now, &mlastchkd, &elapsed);
-	if (elapsed.tv_sec >= mailcheck_interval) {
-		mlastchkd = now;
+		if (mplist)
+			mbp = mplist;
+		else if ((vp = global("MAIL")) && (vp->flag & ISSET))
+			mbp = &mbox;
+		else
+			mbp = NULL;
 
 		while (mbp) {
 			if (mbp->mb_path && stat(mbp->mb_path, &stbuf) == 0 &&
@@ -88,7 +81,7 @@ mcheck(void)
 }
 
 void
-mcset(int64_t interval)
+mcset(long int interval)
 {
 	mailcheck_interval = interval;
 }
@@ -128,10 +121,10 @@ mpset(char *mptoparse)
 		/* POSIX/bourne-shell say file%message */
 		for (p = mpath; (mmsg = strchr(p, '%')); ) {
 			/* a literal percent? (POSIXism) */
-			if (mmsg > mpath && mmsg[-1] == '\\') {
+			if (mmsg[-1] == '\\') {
 				/* use memmove() to avoid overlap problems */
 				memmove(mmsg - 1, mmsg, strlen(mmsg) + 1);
-				p = mmsg;
+				p = mmsg + 1;
 				continue;
 			}
 			break;
@@ -142,11 +135,7 @@ mpset(char *mptoparse)
 		if (mmsg) {
 			*mmsg = '\0';
 			mmsg++;
-			if (*mmsg == '\0')
-				mmsg = NULL;
 		}
-		if (*mpath == '\0')
-			continue;
 		mbp = mballoc(mpath, mmsg);
 		mbp->mb_next = mplist;
 		mplist = mbp;

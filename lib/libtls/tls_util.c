@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_util.c,v 1.14 2019/04/13 18:47:58 tb Exp $ */
+/* $OpenBSD: tls_util.c,v 1.12 2018/02/08 07:55:29 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -43,11 +43,10 @@ tls_set_mem(char **dest, size_t *destlen, const void *src, size_t srclen)
 	free(*dest);
 	*dest = NULL;
 	*destlen = 0;
-	if (src != NULL) {
+	if (src != NULL)
 		if ((*dest = memdup(src, srclen)) == NULL)
 			return -1;
-		*destlen = srclen;
-	}
+	*destlen = srclen;
 	return 0;
 }
 
@@ -102,14 +101,10 @@ tls_host_port(const char *hostport, char **host, char **port)
 
 	*p++ = '\0';
 
-	if (asprintf(host, "%s", h) == -1) {
-		*host = NULL;
+	if (asprintf(host, "%s", h) == -1)
 		goto err;
-	}
-	if (asprintf(port, "%s", p) == -1) {
-		*port = NULL;
+	if (asprintf(port, "%s", p) == -1)
 		goto err;
-	}
 
 	rv = 0;
 	goto done;

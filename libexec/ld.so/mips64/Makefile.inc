@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2019/04/19 08:59:40 visa Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2017/08/27 21:59:52 deraadt Exp $
 
-# no jump tables in _dl_boot_bind()
-CFLAGS += -fno-jump-tables
+LIBCSRCDIR=${.CURDIR}/../../lib/libc
+CPPFLAGS+= -I${LIBCSRCDIR}/arch/mips64

@@ -26,7 +26,6 @@ all_categories = {
     'gmodules': 'Tests that can be run with -gmodules debug information',
     'expression': 'Tests related to the expression parser',
     'libc++': 'Test for libc++ data formatters',
-    'libstdcxx': 'Test for libstdcxx data formatters',
     'objc': 'Tests related to the Objective-C programming language support',
     'pyapi': 'Tests related to the Python API',
     'basic_process': 'Basic process execution sniff tests.',
@@ -35,9 +34,7 @@ all_categories = {
     'stresstest': 'Tests related to stressing lldb limits',
     'flakey': 'Flakey test cases, i.e. tests that do not reliably pass at each execution',
     'lldb-mi': 'lldb-mi tests',
-    'darwin-log': 'Darwin log tests',
-    'watchpoint': 'Watchpoint-related tests',
-}
+    'darwin-log': 'Darwin log tests'}
 
 
 def unique_string_match(yourentry, list):
@@ -56,10 +53,10 @@ def is_supported_on_platform(category, platform, compiler_path):
         # -gsplit-dwarf is not implemented by clang on Windows.
         return platform in ["linux", "freebsd"]
     elif category == "dsym":
-        return platform in ["darwin", "macosx", "ios", "watchos", "tvos", "bridgeos"]
+        return platform in ["darwin", "macosx", "ios"]
     elif category == "gmodules":
         # First, check to see if the platform can even support gmodules.
-        if platform not in ["freebsd", "darwin", "macosx", "ios", "watchos", "tvos", "bridgeos"]:
+        if platform not in ["linux", "freebsd", "darwin", "macosx", "ios"]:
             return False
         return gmodules.is_compiler_clang_with_gmodules(compiler_path)
     return True

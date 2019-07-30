@@ -41,8 +41,7 @@ private:
   /// [4] XOP8 map opcode
   /// [5] XOP9 map opcode
   /// [6] XOPA map opcode
-  /// [7] 3dnow map opcode
-  std::unique_ptr<ContextDecision> Tables[8];
+  ContextDecision* Tables[7];
 
   // Table of ModRM encodings.
   typedef std::map<std::vector<unsigned>, unsigned> ModRMMapTy;
@@ -245,9 +244,7 @@ public:
   ///                       correspond to the desired instruction.
   /// @param uid          - The unique ID of the instruction.
   /// @param is32bit      - Instructon is only 32-bit
-  /// @param noPrefix     - Instruction record has no prefix.
   /// @param ignoresVEX_L - Instruction ignores VEX.L
-  /// @param ignoresVEX_W - Instruction ignores VEX.W
   /// @param AddrSize     - Instructions address size 16/32/64. 0 is unspecified
   void setTableFields(OpcodeType type,
                       InstructionContext insnContext,
@@ -255,9 +252,7 @@ public:
                       const ModRMFilter &filter,
                       InstrUID uid,
                       bool is32bit,
-                      bool noPrefix,
                       bool ignoresVEX_L,
-                      bool ignoresVEX_W,
                       unsigned AddrSize);
 
   /// specForUID - Returns the instruction specifier for a given unique

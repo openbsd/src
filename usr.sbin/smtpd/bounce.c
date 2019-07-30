@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.80 2018/12/08 08:01:15 sunil Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.77 2016/11/30 11:52:48 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -150,29 +150,29 @@ bounce_add(uint64_t evpid)
 
 	switch (evp.esc_class) {
 	case ESC_STATUS_OK:
-		key.bounce.type = B_DELIVERED;
+		key.bounce.type = B_DSN;
 		break;
 	case ESC_STATUS_TEMPFAIL:
-		key.bounce.type = B_DELAYED;
+		key.bounce.type = B_WARNING;
 		break;
 	default:
-		key.bounce.type = B_FAILED;
+		key.bounce.type = B_ERROR;
 	}
 
 	key.bounce.dsn_ret = evp.dsn_ret;
-	key.bounce.ttl = evp.ttl;
+	key.bounce.expire = evp.expire;
 	msg = SPLAY_FIND(bounce_message_tree, &messages, &key);
 	if (msg == NULL) {
-		msg = xcalloc(1, sizeof(*msg));
+		msg = xcalloc(1, sizeof(*msg), "bounce_add");
 		msg->msgid = key.msgid;
 		msg->bounce = key.bounce;
 
 		TAILQ_INIT(&msg->envelopes);
 
-		msg->smtpname = xstrdup(evp.smtpname);
+		msg->smtpname = xstrdup(evp.smtpname, "bounce_add");
 		(void)snprintf(buf, sizeof(buf), "%s@%s", evp.sender.user,
 		    evp.sender.domain);
-		msg->to = xstrdup(buf);
+		msg->to = xstrdup(buf, "bounce_add");
 		nmessage += 1;
 		SPLAY_INSERT(bounce_message_tree, &messages, msg);
 		log_debug("debug: bounce: new message %08" PRIx32,
@@ -187,9 +187,9 @@ bounce_add(uint64_t evpid)
 	(void)snprintf(buf, sizeof(buf), "%s@%s: %s\n", evp.dest.user,
 	    evp.dest.domain, line);
 
-	be = xmalloc(sizeof *be);
+	be = xmalloc(sizeof *be, "bounce_add");
 	be->id = evpid;
-	be->report = xstrdup(buf);
+	be->report = xstrdup(buf, "bounce_add");
 	(void)strlcpy(be->dest.user, evp.dest.user, sizeof(be->dest.user));
 	(void)strlcpy(be->dest.domain, evp.dest.domain,
 	    sizeof(be->dest.domain));
@@ -225,8 +225,8 @@ bounce_fd(int fd)
 
 	msg = TAILQ_FIRST(&pending);
 
-	s = xcalloc(1, sizeof(*s));
-	s->smtpname = xstrdup(msg->smtpname);
+	s = xcalloc(1, sizeof(*s), "bounce_fd");
+	s->smtpname = xstrdup(msg->smtpname, "bounce_fd");
 	s->state = BOUNCE_EHLO;
 	s->io = io_new();
 	io_set_callback(s->io, bounce_io, s);
@@ -478,14 +478,14 @@ bounce_next(struct bounce_session *s)
 		    s->boundary, s->smtpname);
 
 		switch (s->msg->bounce.type) {
-		case B_FAILED:
+		case B_ERROR:
 			io_xprint(s->io, notice_error);
 			break;
-		case B_DELAYED:
+		case B_WARNING:
 			io_xprintf(s->io, notice_warning,
 			    bounce_duration(s->msg->bounce.delay));
 			break;
-		case B_DELIVERED:
+		case B_DSN:
 			io_xprint(s->io, s->msg->bounce.mta_without_dsn ?
 			    notice_relay : notice_success);
 			break;
@@ -498,9 +498,9 @@ bounce_next(struct bounce_session *s)
 		}
 		io_xprint(s->io, "\n");
 
-		if (s->msg->bounce.type == B_DELAYED)
+		if (s->msg->bounce.type == B_WARNING)
 			io_xprintf(s->io, notice_warning2,
-			    bounce_duration(s->msg->bounce.ttl));
+			    bounce_duration(s->msg->bounce.expire));
 
 		io_xprintf(s->io,
 		    "    Below is a copy of the original message:\n"
@@ -549,7 +549,7 @@ bounce_next(struct bounce_session *s)
 			if ((len = getline(&line, &sz, s->msgfp)) == -1)
 				break;
 			if (len == 1 && line[0] == '\n' && /* end of headers */
-			    s->msg->bounce.type == B_DELIVERED &&
+			    s->msg->bounce.type == B_DSN &&
 			    s->msg->bounce.dsn_ret ==  DSN_RETHDRS) {
 				free(line);
 				fclose(s->msgfp);
@@ -795,15 +795,15 @@ static const char *
 action_str(const struct delivery_bounce *b)
 {
 	switch (b->type) {
-	case B_FAILED:
-		return ("failed");
-	case B_DELAYED:
+	case B_ERROR:
+		return ("error");
+	case B_WARNING:
 		return ("delayed");
-	case B_DELIVERED:
+	case B_DSN:
 		if (b->mta_without_dsn)
 			return ("relayed");
 
-		return ("delivered");
+		return ("success");
 	default:
 		log_warn("warn: bounce: unknown bounce_type");
 		return ("");

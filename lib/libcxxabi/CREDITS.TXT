@@ -58,7 +58,7 @@ E: erik@olofsson.info
 D: Minor patches and fixes
 
 N: Jon Roelofs
-E: jroelofs@jroelofs.com
+E: jonathan@codesourcery.com
 D: ARM EHABI Unwind & Exception Handling, Bare-metal
 
 N: Nico Weber

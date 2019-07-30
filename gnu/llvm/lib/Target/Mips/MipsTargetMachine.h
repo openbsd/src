@@ -40,11 +40,11 @@ class MipsTargetMachine : public LLVMTargetMachine {
 public:
   MipsTargetMachine(const Target &T, const Triple &TT, StringRef CPU,
                     StringRef FS, const TargetOptions &Options,
-                    Optional<Reloc::Model> RM, Optional<CodeModel::Model> CM,
-                    CodeGenOpt::Level OL, bool JIT, bool isLittle);
+                    Optional<Reloc::Model> RM, CodeModel::Model CM,
+                    CodeGenOpt::Level OL, bool isLittle);
   ~MipsTargetMachine() override;
 
-  TargetTransformInfo getTargetTransformInfo(const Function &F) override;
+  TargetIRAnalysis getTargetIRAnalysis() override;
 
   const MipsSubtarget *getSubtargetImpl() const {
     if (Subtarget)
@@ -54,7 +54,7 @@ public:
 
   const MipsSubtarget *getSubtargetImpl(const Function &F) const override;
 
-  /// Reset the subtarget for the Mips target.
+  /// \brief Reset the subtarget for the Mips target.
   void resetSubtarget(MachineFunction *MF);
 
   // Pass Pipeline Configuration
@@ -80,8 +80,8 @@ class MipsebTargetMachine : public MipsTargetMachine {
 public:
   MipsebTargetMachine(const Target &T, const Triple &TT, StringRef CPU,
                       StringRef FS, const TargetOptions &Options,
-                      Optional<Reloc::Model> RM, Optional<CodeModel::Model> CM,
-                      CodeGenOpt::Level OL, bool JIT);
+                      Optional<Reloc::Model> RM, CodeModel::Model CM,
+                      CodeGenOpt::Level OL);
 };
 
 /// Mips32/64 little endian target machine.
@@ -92,8 +92,8 @@ class MipselTargetMachine : public MipsTargetMachine {
 public:
   MipselTargetMachine(const Target &T, const Triple &TT, StringRef CPU,
                       StringRef FS, const TargetOptions &Options,
-                      Optional<Reloc::Model> RM, Optional<CodeModel::Model> CM,
-                      CodeGenOpt::Level OL, bool JIT);
+                      Optional<Reloc::Model> RM, CodeModel::Model CM,
+                      CodeGenOpt::Level OL);
 };
 
 } // end namespace llvm

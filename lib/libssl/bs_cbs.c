@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbs.c,v 1.18 2019/01/23 22:20:40 beck Exp $	*/
+/*	$OpenBSD: bs_cbs.c,v 1.17 2015/06/24 09:44:18 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -14,6 +14,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -346,8 +347,10 @@ cbs_get_asn1(CBS *cbs, CBS *out, unsigned int tag_value, int skip_header)
 	    tag != tag_value)
 		return 0;
 
-	if (skip_header && !CBS_skip(out, header_len))
+	if (skip_header && !CBS_skip(out, header_len)) {
+		assert(0);
 		return 0;
+	}
 
 	return 1;
 }

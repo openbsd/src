@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.4 2018/06/26 07:12:35 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.3 2016/01/08 10:54:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -20,11 +20,13 @@
 #include "opt.h"
 #include "utils.h"
 
+struct opt *opt_list = NULL;
+
 /*
  * create a new audio sub-device "configuration"
  */
 struct opt *
-opt_new(struct dev *d, char *name,
+opt_new(char *name, struct dev *dev,
     int pmin, int pmax, int rmin, int rmax,
     int maxweight, int mmc, int dup, unsigned int mode)
 {
@@ -32,9 +34,7 @@ opt_new(struct dev *d, char *name,
 	unsigned int len;
 	char c;
 
-	if (opt_byname(d, name)) {
-		dev_log(d);
-		log_puts(".");
+	if (opt_byname(name, dev->num)) {
 		log_puts(name);
 		log_puts(": already defined\n");
 		return NULL;
@@ -66,11 +66,12 @@ opt_new(struct dev *d, char *name,
 	o->mmc = mmc;
 	o->dup = dup;
 	o->mode = mode;
+	o->dev = dev;
 	memcpy(o->name, name, len + 1);
-	o->next = d->opt_list;
-	d->opt_list = o;
+	o->next = opt_list;
+	opt_list = o;
 	if (log_level >= 2) {
-		dev_log(d);
+		dev_log(o->dev);
 		log_puts(".");
 		log_puts(o->name);
 		log_puts(":");
@@ -106,11 +107,13 @@ opt_new(struct dev *d, char *name,
 }
 
 struct opt *
-opt_byname(struct dev *d, char *name)
+opt_byname(char *name, unsigned int num)
 {
 	struct opt *o;
 
-	for (o = d->opt_list; o != NULL; o = o->next) {
+	for (o = opt_list; o != NULL; o = o->next) {
+		if (o->dev->num != num)
+			continue;
 		if (strcmp(name, o->name) == 0)
 			return o;
 	}
@@ -118,11 +121,11 @@ opt_byname(struct dev *d, char *name)
 }
 
 void
-opt_del(struct dev *d, struct opt *o)
+opt_del(struct opt *o)
 {
 	struct opt **po;
 
-	for (po = &d->opt_list; *po != o; po = &(*po)->next) {
+	for (po = &opt_list; *po != o; po = &(*po)->next) {
 #ifdef DEBUG
 		if (*po == NULL) {
 			log_puts("opt_del: not on list\n");

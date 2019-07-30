@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: mklocatedb.sh,v 1.14 2019/01/17 06:15:44 tedu Exp $
+#	$OpenBSD: mklocatedb.sh,v 1.13 2007/03/18 20:13:49 otto Exp $
 #
 # Copyright (c) September 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -30,6 +30,7 @@
 # 
 # usage: mklocatedb [-presort] < filelist > database
 #
+# $Id: mklocatedb.sh,v 1.13 2007/03/18 20:13:49 otto Exp $
 
 
 # The directory containing locate subprograms

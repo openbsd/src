@@ -41,7 +41,9 @@ class MiFileTestCase(lldbmi_testcase.MiTestCaseBase):
         self.spawnLldbMi(args=None)
 
         # Test that -file-exec-and-symbols works for absolute path
-        self.runCmd("-file-exec-and-symbols \"%s\"" % self.myexe)
+        import os
+        path = os.path.join(os.getcwd(), self.myexe)
+        self.runCmd("-file-exec-and-symbols \"%s\"" % path)
         self.expect("\^done")
 
         # Run
@@ -58,8 +60,7 @@ class MiFileTestCase(lldbmi_testcase.MiTestCaseBase):
         self.spawnLldbMi(args=None)
 
         # Test that -file-exec-and-symbols works for relative path
-        import os
-        path = os.path.relpath(self.myexe, self.getBuildDir())
+        path = "./%s" % self.myexe
         self.runCmd("-file-exec-and-symbols %s" % path)
         self.expect("\^done")
 

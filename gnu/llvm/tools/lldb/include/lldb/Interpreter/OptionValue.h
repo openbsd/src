@@ -15,7 +15,6 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/FormatEntity.h"
-#include "lldb/Utility/CompletionRequest.h"
 #include "lldb/Utility/ConstString.h"
 #include "lldb/Utility/Status.h"
 #include "lldb/lldb-defines.h"
@@ -77,8 +76,8 @@ public:
   //-----------------------------------------------------------------
   virtual Type GetType() const = 0;
 
-  // If this value is always hidden, the avoid showing any info on this value,
-  // just show the info for the child values.
+  // If this value is always hidden, the avoid showing any info on this
+  // value, just show the info for the child values.
   virtual bool ValueIsTransparent() const {
     return GetType() == eTypeProperties;
   }
@@ -101,7 +100,9 @@ public:
   virtual lldb::OptionValueSP DeepCopy() const = 0;
 
   virtual size_t AutoComplete(CommandInterpreter &interpreter,
-                              CompletionRequest &request);
+                              llvm::StringRef s, int match_start_point,
+                              int max_return_elements, bool &word_complete,
+                              StringList &matches);
 
   //-----------------------------------------------------------------
   // Subclasses can override these functions
@@ -125,8 +126,8 @@ public:
   virtual bool DumpQualifiedName(Stream &strm) const;
 
   //-----------------------------------------------------------------
-  // Subclasses should NOT override these functions as they use the above
-  // functions to implement functionality
+  // Subclasses should NOT override these functions as they use the
+  // above functions to implement functionality
   //-----------------------------------------------------------------
   uint32_t GetTypeAsMask() { return 1u << GetType(); }
 
@@ -182,8 +183,9 @@ public:
   CreateValueFromCStringForTypeMask(const char *value_cstr, uint32_t type_mask,
                                     Status &error);
 
-  // Get this value as a uint64_t value if it is encoded as a boolean, uint64_t
-  // or int64_t. Other types will cause "fail_value" to be returned
+  // Get this value as a uint64_t value if it is encoded as a boolean,
+  // uint64_t or int64_t. Other types will cause "fail_value" to be
+  // returned
   uint64_t GetUInt64Value(uint64_t fail_value, bool *success_ptr);
 
   OptionValueArch *GetAsArch();
@@ -337,10 +339,10 @@ protected:
   void *m_baton;
   bool m_value_was_set; // This can be used to see if a value has been set
                         // by a call to SetValueFromCString(). It is often
-                        // handy to know if an option value was set from the
-                        // command line or as a setting, versus if we just have
-                        // the default value that was already populated in the
-                        // option value.
+                        // handy to know if an option value was set from
+                        // the command line or as a setting, versus if we
+                        // just have the default value that was already
+                        // populated in the option value.
 };
 
 } // namespace lldb_private

@@ -1,4 +1,4 @@
-/* $OpenBSD: gss-serv.c,v 1.31 2018/07/09 21:37:55 markus Exp $ */
+/* $OpenBSD: gss-serv.c,v 1.30 2017/06/24 06:34:38 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -32,7 +32,8 @@
 #include <string.h>
 
 #include "xmalloc.h"
-#include "sshkey.h"
+#include "buffer.h"
+#include "key.h"
 #include "hostfile.h"
 #include "auth.h"
 #include "log.h"

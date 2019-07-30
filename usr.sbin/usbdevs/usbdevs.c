@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.31 2019/04/14 18:16:19 deraadt Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.25 2015/12/22 08:36:40 mmcc Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -30,31 +30,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <dev/usb/usb.h>
-
-#include <err.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <vis.h>
 #include <string.h>
+#include <sys/types.h>
+#include <fcntl.h>
 #include <unistd.h>
+#include <err.h>
+#include <errno.h>
+#include <dev/usb/usb.h>
 
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-#define MINIMUM(a, b) (((a) < (b)) ? (a) : (b))
-
 #define USBDEV "/dev/usb"
 
 int verbose = 0;
+int showdevs = 0;
 
 void usage(void);
-void usbdev(int f, uint8_t);
+void usbdev(int f, int a, int rec);
 void usbdump(int f);
 void dumpone(char *name, int f, int addr);
 int main(int, char **);
@@ -64,38 +60,30 @@ extern char *__progname;
 void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-v] [-a addr] [-d usbdev]\n", __progname);
+	fprintf(stderr, "usage: %s [-dv] [-a addr] [-f dev]\n", __progname);
 	exit(1);
 }
 
 char done[USB_MAX_DEVICES];
+int indent;
 
 void
-usbdev(int f, uint8_t addr)
+usbdev(int f, int a, int rec)
 {
 	struct usb_device_info di;
-	int e, i, port, nports;
-	uint16_t change, status;
-	char vv[sizeof(di.udi_vendor)*4], vp[sizeof(di.udi_product)*4];
-	char vr[sizeof(di.udi_release)*4], vs[sizeof(di.udi_serial)*4];
+	int e, p, i;
 
-	di.udi_addr = addr;
+	di.udi_addr = a;
 	e = ioctl(f, USB_DEVICEINFO, &di);
 	if (e) {
 		if (errno != ENXIO)
-			printf("addr %d: I/O error\n", addr);
+			printf("addr %d: I/O error\n", a);
 		return;
 	}
 
-	printf("addr %02u: ", addr);
-	done[addr] = 1;
-	strvis(vv, di.udi_vendor, VIS_CSTYLE);
-	strvis(vp, di.udi_product, VIS_CSTYLE);
-	printf("%04x:%04x %s, %s", di.udi_vendorNo, di.udi_productNo,
-	    vv, vp);
-
+	printf("addr %d: ", a);
+	done[a] = 1;
 	if (verbose) {
-		printf("\n\t ");
 		switch (di.udi_speed) {
 		case USB_SPEED_LOW:
 			printf("low speed, ");
@@ -121,115 +109,70 @@ usbdev(int f, uint8_t addr)
 			printf("config %d, ", di.udi_config);
 		else
 			printf("unconfigured, ");
-
-		strvis(vr, di.udi_release, VIS_CSTYLE);
-		strvis(vs, di.udi_serial, VIS_CSTYLE);
-		printf("rev %s", vr);
-		if (strlen(di.udi_serial))
-			printf(", iSerial %s", vs);
 	}
-	printf("\n");
-
 	if (verbose) {
+		printf("%s(0x%04x), %s(0x%04x), rev %s",
+		    di.udi_product, di.udi_productNo,
+		    di.udi_vendor, di.udi_vendorNo, di.udi_release);
+		if (strlen(di.udi_serial))
+			printf(", iSerialNumber %s", di.udi_serial);
+	} else
+		printf("%s, %s", di.udi_product, di.udi_vendor);
+	printf("\n");
+	if (showdevs) {
 		for (i = 0; i < USB_MAX_DEVNAMES; i++)
 			if (di.udi_devnames[i][0])
-				printf("\t driver: %s\n", di.udi_devnames[i]);
+				printf("%*s  %s\n", indent, "",
+				    di.udi_devnames[i]);
 	}
+	if (!rec)
+		return;
+	for (p = 0; p < di.udi_nports && p < nitems(di.udi_ports); p++) {
+		int s = di.udi_ports[p];
 
-	if (verbose > 1) {
-		nports = MINIMUM(di.udi_nports, nitems(di.udi_ports));
-		for (port = 0; port < nports; port++) {
-			status = di.udi_ports[port] & 0xffff;
-			change = di.udi_ports[port] >> 16;
-			printf("\t port %02u: %04x.%04x", port+1, change,
-			    status);
-
-			if (status & UPS_CURRENT_CONNECT_STATUS)
-				printf(" connect");
-
-			if (status & UPS_PORT_ENABLED)
-				printf(" enabled");
-
-			if (status & UPS_SUSPEND)
-				printf(" supsend");
-
-			if (status & UPS_OVERCURRENT_INDICATOR)
-				printf(" overcurrent");
-
-			if (di.udi_speed < USB_SPEED_SUPER) {
-				if (status & UPS_PORT_L1)
-					printf(" l1");
-
-				if (status & UPS_PORT_POWER)
-					printf(" power");
-			} else {
-				if (status & UPS_PORT_POWER_SS)
-					printf(" power");
-
-				switch (UPS_PORT_LS_GET(status)) {
-				case UPS_PORT_LS_U0:
-					printf(" U0");
-					break;
-				case UPS_PORT_LS_U1:
-					printf(" U1");
-					break;
-				case UPS_PORT_LS_U2:
-					printf(" U2");
-					break;
-				case UPS_PORT_LS_U3:
-					printf(" U3");
-					break;
-				case UPS_PORT_LS_SS_DISABLED:
-					printf(" SS.disabled");
-					break;
-				case UPS_PORT_LS_RX_DETECT:
-					printf(" Rx.detect");
-					break;
-				case UPS_PORT_LS_SS_INACTIVE:
-					printf(" ss.inactive");
-					break;
-				case UPS_PORT_LS_POLLING:
-					printf(" polling");
-					break;
-				case UPS_PORT_LS_RECOVERY:
-					printf(" recovery");
-					break;
-				case UPS_PORT_LS_HOT_RESET:
-					printf(" hot.reset");
-					break;
-				case UPS_PORT_LS_COMP_MOD:
-					printf(" comp.mod");
-					break;
-				case UPS_PORT_LS_LOOPBACK:
-					printf(" loopback");
-					break;
-				}
+		if (s >= USB_MAX_DEVICES) {
+			if (verbose) {
+				printf("%*sport %d %s\n", indent+1, "", p+1,
+				    s == USB_PORT_ENABLED ? "enabled" :
+				    s == USB_PORT_SUSPENDED ? "suspended" :
+				    s == USB_PORT_POWERED ? "powered" :
+				    s == USB_PORT_DISABLED ? "disabled" :
+				    "???");
 			}
-
-			printf("\n");
+			continue;
 		}
+		indent++;
+		printf("%*s", indent, "");
+		if (verbose)
+			printf("port %d ", p+1);
+		if (s == 0)
+			printf("addr 0 should never happen!\n");
+		else
+			usbdev(f, s, 1);
+		indent--;
 	}
 }
 
 void
 usbdump(int f)
 {
-	uint8_t addr;
+	int a;
 
-	for (addr = 1; addr < USB_MAX_DEVICES; addr++) {
-		if (!done[addr])
-			usbdev(f, addr);
+	for (a = 1; a < USB_MAX_DEVICES; a++) {
+		if (!done[a])
+			usbdev(f, a, 1);
 	}
 }
 
 void
 dumpone(char *name, int f, int addr)
 {
-	if (!addr)
+	if (verbose)
 		printf("Controller %s:\n", name);
+	indent = 0;
 	memset(done, 0, sizeof done);
 	if (addr)
-		usbdev(f, addr);
+		usbdev(f, addr, 0);
 	else
 		usbdump(f);
 }
@@ -244,7 +187,7 @@ main(int argc, char **argv)
 	int addr = 0;
 	int ncont;
 
-	while ((ch = getopt(argc, argv, "a:d:v?")) != -1) {
+	while ((ch = getopt(argc, argv, "a:df:v?")) != -1) {
 		switch (ch) {
 		case 'a':
 			addr = strtonum(optarg, 1, USB_MAX_DEVICES, &errstr);
@@ -252,10 +195,13 @@ main(int argc, char **argv)
 				errx(1, "addr %s", errstr);
 			break;
 		case 'd':
+			showdevs = 1;
+			break;
+		case 'f':
 			dev = optarg;
 			break;
 		case 'v':
-			verbose++;
+			verbose = 1;
 			break;
 		default:
 			usage();
@@ -263,9 +209,6 @@ main(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
-
-	if (argc != 0)
-		usage();
 
 	if (dev == 0) {
 		for (ncont = 0, i = 0; i < 10; i++) {
@@ -286,12 +229,10 @@ main(int argc, char **argv)
 			    __progname);
 	} else {
 		f = open(dev, O_RDONLY);
-		if (f >= 0) {
+		if (f >= 0)
 			dumpone(dev, f, addr);
-			close(f);
-		} else
+		else
 			err(1, "%s", dev);
 	}
-
-	return 0;
+	exit(0);
 }

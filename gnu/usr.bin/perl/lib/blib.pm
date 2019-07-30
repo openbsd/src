@@ -39,8 +39,9 @@ Nick Ing-Simmons nik@tiuk.ti.com
 use Cwd;
 use File::Spec;
 
-our $VERSION = '1.07';
-our $Verbose = 0;
+use vars qw($VERSION $Verbose);
+$VERSION = '1.06';
+$Verbose = 0;
 
 sub import
 {

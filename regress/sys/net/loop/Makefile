@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2018/06/25 22:22:49 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2017/11/24 14:39:15 bluhm Exp $
 
 # Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -47,16 +47,16 @@ regress:
 .endif
 .endif
 
-.PHONY: busy-rdomains ifconfig unconfig
+.PHONY: check-interfaces check-rdomains ifconfig unconfig
 
-busy-rdomains:
+check-rdomains:
 	# check if rdomains are busy
 .for n in ${NUMS}
 	@if /sbin/ifconfig | grep -v '^lo${n}:' | grep ' rdomain ${n} '; then\
 	    echo routing domain ${n} is already used >&2; exit 1; fi
 .endfor
 
-ifconfig: unconfig
+ifconfig: check-rdomains unconfig
 	# create and configure loopback interfaces
 .for n in ${NUMS}
 	${SUDO} /sbin/ifconfig lo${n} rdomain ${n}
@@ -78,7 +78,7 @@ unconfig:
 
 stamp-setup: Makefile
 	@echo '\n======== $@ ========'
-	${.MAKE} -C ${.CURDIR} busy-rdomains ifconfig
+	${.MAKE} -C ${.CURDIR} ifconfig
 	date >$@
 
 # Create python include file containing the addresses.

@@ -23,7 +23,6 @@
 #include <openssl/conf.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
-
 #include "cryptlib.h"
 
 int OpenSSL_config(const char *);
@@ -35,7 +34,6 @@ static void
 OPENSSL_init_crypto_internal(void)
 {
 	crypto_init_thread = pthread_self();
-
 	OPENSSL_cpuid_setup();
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_ciphers();

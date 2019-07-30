@@ -1,4 +1,4 @@
-//===- PreISelIntrinsicLowering.cpp - Pre-ISel intrinsic lowering pass ----===//
+//===-- PreISelIntrinsicLowering.cpp - Pre-ISel intrinsic lowering pass ---===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,15 +16,15 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/Type.h"
-#include "llvm/IR/User.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Casting.h"
 
 using namespace llvm;
 
-static bool lowerLoadRelative(Function &F) {
+namespace {
+
+bool lowerLoadRelative(Function &F) {
   if (F.use_empty())
     return false;
 
@@ -55,7 +55,7 @@ static bool lowerLoadRelative(Function &F) {
   return Changed;
 }
 
-static bool lowerIntrinsics(Module &M) {
+bool lowerIntrinsics(Module &M) {
   bool Changed = false;
   for (Function &F : M) {
     if (F.getName().startswith("llvm.load.relative."))
@@ -64,26 +64,23 @@ static bool lowerIntrinsics(Module &M) {
   return Changed;
 }
 
-namespace {
-
 class PreISelIntrinsicLoweringLegacyPass : public ModulePass {
 public:
   static char ID;
-
   PreISelIntrinsicLoweringLegacyPass() : ModulePass(ID) {}
 
-  bool runOnModule(Module &M) override { return lowerIntrinsics(M); }
+  bool runOnModule(Module &M) { return lowerIntrinsics(M); }
 };
 
-} // end anonymous namespace
-
 char PreISelIntrinsicLoweringLegacyPass::ID;
+}
 
 INITIALIZE_PASS(PreISelIntrinsicLoweringLegacyPass,
                 "pre-isel-intrinsic-lowering", "Pre-ISel Intrinsic Lowering",
                 false, false)
 
-ModulePass *llvm::createPreISelIntrinsicLoweringPass() {
+namespace llvm {
+ModulePass *createPreISelIntrinsicLoweringPass() {
   return new PreISelIntrinsicLoweringLegacyPass;
 }
 
@@ -94,3 +91,4 @@ PreservedAnalyses PreISelIntrinsicLoweringPass::run(Module &M,
   else
     return PreservedAnalyses::none();
 }
+} // End llvm namespace

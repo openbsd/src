@@ -11,6 +11,8 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCObjectFileInfo.h"
+#include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Win64EH.h"
@@ -218,17 +220,17 @@ static void EmitUnwindInfo(MCStreamer &streamer, WinEH::FrameInfo *info) {
 
 void llvm::Win64EH::UnwindEmitter::Emit(MCStreamer &Streamer) const {
   // Emit the unwind info structs first.
-  for (const auto &CFI : Streamer.getWinFrameInfos()) {
+  for (WinEH::FrameInfo *CFI : Streamer.getWinFrameInfos()) {
     MCSection *XData = Streamer.getAssociatedXDataSection(CFI->TextSection);
     Streamer.SwitchSection(XData);
-    ::EmitUnwindInfo(Streamer, CFI.get());
+    ::EmitUnwindInfo(Streamer, CFI);
   }
 
   // Now emit RUNTIME_FUNCTION entries.
-  for (const auto &CFI : Streamer.getWinFrameInfos()) {
+  for (WinEH::FrameInfo *CFI : Streamer.getWinFrameInfos()) {
     MCSection *PData = Streamer.getAssociatedPDataSection(CFI->TextSection);
     Streamer.SwitchSection(PData);
-    EmitRuntimeFunction(Streamer, CFI.get());
+    EmitRuntimeFunction(Streamer, CFI);
   }
 }
 

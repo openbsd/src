@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2019/01/27 16:59:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:34 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -7,9 +7,8 @@ LLVM_SRCS=	${.CURDIR}/../../../../../llvm
 HDRS=	MipsGenAsmMatcher.inc MipsGenAsmWriter.inc \
 	MipsGenCallingConv.inc MipsGenDAGISel.inc \
 	MipsGenDisassemblerTables.inc MipsGenFastISel.inc \
-	MipsGenGlobalISel.inc MipsGenInstrInfo.inc \
-	MipsGenMCCodeEmitter.inc MipsGenMCPseudoLowering.inc \
-	MipsGenSubtargetInfo.inc MipsGenRegisterBank.inc \
+	MipsGenInstrInfo.inc MipsGenMCCodeEmitter.inc \
+	MipsGenMCPseudoLowering.inc MipsGenSubtargetInfo.inc \
 	MipsGenRegisterInfo.inc
 
 all: ${HDRS}
@@ -50,11 +49,6 @@ MipsGenFastISel.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/Mips \
 		-o ${.TARGET} ${.ALLSRC}
 
-MipsGenGlobalISel.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
-	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel \
-		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/Mips \
-		-o ${.TARGET} ${.ALLSRC}
-
 MipsGenInstrInfo.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-instr-info \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/Mips \
@@ -67,11 +61,6 @@ MipsGenMCCodeEmitter.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
 
 MipsGenMCPseudoLowering.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-pseudo-lowering \
-		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/Mips \
-		-o ${.TARGET} ${.ALLSRC}
-
-MipsGenRegisterBank.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
-	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-register-bank \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/Mips \
 		-o ${.TARGET} ${.ALLSRC}
 

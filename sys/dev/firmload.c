@@ -1,4 +1,4 @@
-/*	$OpenBSD: firmload.c,v 1.16 2018/08/13 23:12:39 deraadt Exp $	*/
+/*	$OpenBSD: firmload.c,v 1.14 2015/12/29 04:46:28 mmcc Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -25,7 +25,6 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/pledge.h>
 
 int
 loadfirmware(const char *name, u_char **bufp, size_t *buflen)
@@ -51,9 +50,7 @@ loadfirmware(const char *name, u_char **bufp, size_t *buflen)
 		goto err;
 	}
 
-	NDINIT(&nid, LOOKUP, NOFOLLOW|LOCKLEAF|KERNELPATH,
-	    UIO_SYSSPACE, path, p);
-	nid.ni_pledge = PLEDGE_RPATH;
+	NDINIT(&nid, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE, path, p);
 	error = namei(&nid);
 #ifdef RAMDISK_HOOKS
 	/* try again with mounted disk */
@@ -64,9 +61,7 @@ loadfirmware(const char *name, u_char **bufp, size_t *buflen)
 			goto err;
 		}
 
-		NDINIT(&nid, LOOKUP, NOFOLLOW|LOCKLEAF|KERNELPATH,
-		    UIO_SYSSPACE, path, p);
-		nid.ni_pledge = PLEDGE_RPATH;
+		NDINIT(&nid, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE, path, p);
 		error = namei(&nid);
 	}
 #endif

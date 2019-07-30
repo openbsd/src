@@ -62,7 +62,9 @@ private:
 REGISTER_SET_WITH_PROGRAMSTATE(CalledSuperDealloc, SymbolRef)
 
 namespace {
-class SuperDeallocBRVisitor final : public BugReporterVisitor {
+class SuperDeallocBRVisitor final
+    : public BugReporterVisitorImpl<SuperDeallocBRVisitor> {
+
   SymbolRef ReceiverSymbol;
   bool Satisfied;
 
@@ -105,6 +107,8 @@ void ObjCSuperDeallocChecker::checkPreObjCMessage(const ObjCMethodCall &M,
   }
 
   reportUseAfterDealloc(ReceiverSymbol, Desc, M.getOriginExpr(), C);
+
+  return;
 }
 
 void ObjCSuperDeallocChecker::checkPreCall(const CallEvent &Call,

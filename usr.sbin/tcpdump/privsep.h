@@ -21,10 +21,12 @@
 
 #define TCPDUMP_MAGIC 0xa1b2c3d4
 
+/* file ids used by priv_getlines */
+#define FTAB_PFOSFP	0
+
 enum cmd_types {
 	PRIV_OPEN_BPF,		/* open a bpf descriptor */
 	PRIV_OPEN_DUMP,		/* open dump file for reading */
-	PRIV_OPEN_PFOSFP,	/* open pf.os(5) fingerprint db for reading */
 	PRIV_OPEN_OUTPUT,	/* open output file */
 	PRIV_SETFILTER,		/* set a bpf read filter */
 	PRIV_GETHOSTBYADDR,	/* resolve numeric address into hostname */
@@ -33,6 +35,7 @@ enum cmd_types {
 	PRIV_GETSERVENTRIES,	/* get the service entries table */
 	PRIV_GETPROTOENTRIES,	/* get the ip protocol entries table */
 	PRIV_LOCALTIME,		/* return localtime */
+	PRIV_GETLINES,		/* get lines from a file */
 	PRIV_INIT_DONE,		/* signal that the initialization is done */
 	PRIV_PCAP_STATS		/* get pcap_stats() results */
 };
@@ -45,11 +48,11 @@ __dead void priv_exec(int, char **);
 void    priv_init_done(void);
 
 int	setfilter(int, int, char *);
-int	pcap_live(const char *, int, int, u_int, u_int, u_int);
+int	pcap_live(const char *, int, int, u_int, u_int);
 
 struct bpf_program *priv_pcap_setfilter(pcap_t *, int, u_int32_t);
 pcap_t *priv_pcap_live(const char *, int, int, int, char *, u_int,
-	    u_int, u_int);
+	    u_int);
 pcap_t *priv_pcap_offline(const char *, char *);
 
 size_t	priv_gethostbyaddr(char *, size_t, int, char *, size_t);
@@ -72,8 +75,12 @@ void	priv_getprotoentries(void);
    calling priv_getprotoentries() until it returns zero */
 size_t	priv_getprotoentry(char *, size_t, int *);
 
-/* Retrieve pf.os(5) fingerprints file descriptor */
-int	priv_open_pfosfp();
+/* Start getting lines from a file */
+void	priv_getlines(size_t);
+
+/* Retrieve a single line from a file, should be called repeatedly after
+   calling priv_getlines() until it returns zero */
+size_t	priv_getline(char *, size_t);
 
 /* Return the pcap statistics upon completion */
 int	priv_pcap_stats(struct pcap_stat *);

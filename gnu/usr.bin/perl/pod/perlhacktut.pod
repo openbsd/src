@@ -74,7 +74,7 @@ of C<pat>:
 
     items = SP - MARK;
     MARK++;
-    SvPVCLEAR(cat);
+    sv_setpvn(cat, "", 0);
  +  patcopy = pat;
     while (pat < patend) {
 

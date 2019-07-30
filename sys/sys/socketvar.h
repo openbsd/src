@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.89 2019/02/15 05:55:21 dlg Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.82 2018/01/09 15:14:23 mpi Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -34,7 +34,6 @@
 
 #include <sys/selinfo.h>			/* for struct selinfo */
 #include <sys/queue.h>
-#include <sys/sigio.h>				/* for struct sigio_ref */
 #include <sys/task.h>
 #include <sys/timeout.h>
 
@@ -73,14 +72,16 @@ struct socket {
 	struct	soqhead	*so_onq;	/* queue (q or q0) that we're on */
 	struct	soqhead	so_q0;		/* queue of partial connections */
 	struct	soqhead	so_q;		/* queue of incoming connections */
-	struct	sigio_ref so_sigio;	/* async I/O registration */
 	TAILQ_ENTRY(socket) so_qe;	/* our queue entry (q or q0) */
 	short	so_q0len;		/* partials on so_q0 */
 	short	so_qlen;		/* number of connections on so_q */
 	short	so_qlimit;		/* max number queued connections */
 	short	so_timeo;		/* connection timeout */
-	u_long	so_oobmark;		/* chars to oob mark */
 	u_int	so_error;		/* error affecting connection */
+	pid_t	so_pgid;		/* pgid for signals */
+	uid_t	so_siguid;		/* uid of process who set so_pgid */
+	uid_t	so_sigeuid;		/* euid of process who set so_pgid */
+	u_long	so_oobmark;		/* chars to oob mark */
 /*
  * Variables for socket splicing, allocated only when needed.
  */
@@ -147,6 +148,7 @@ struct socket {
 #define	SS_ISDISCONNECTED	0x800	/* socket disconnected from peer */
 
 #define	SS_PRIV			0x080	/* privileged for broadcast, raw... */
+#define	SS_NBIO			0x100	/* non-blocking ops */
 #define	SS_ASYNC		0x200	/* async i/o notify */
 #define	SS_CONNECTOUT		0x1000	/* connect, not accept, at this end */
 #define	SS_ISSENDING		0x2000	/* hint for lower layer */
@@ -155,12 +157,6 @@ struct socket {
 #ifdef _KERNEL
 
 #include <lib/libkern/libkern.h>
-
-/*
- * Values for sounlock()/sofree().
- */
-#define SL_NOUNLOCK	0x00
-#define SL_LOCKED	0x42
 
 void	soassertlocked(struct socket *);
 
@@ -274,23 +270,26 @@ struct knote;
 /*
  * File operations on sockets.
  */
-int	soo_read(struct file *, struct uio *, int);
-int	soo_write(struct file *, struct uio *, int);
-int	soo_ioctl(struct file *, u_long, caddr_t, struct proc *);
-int	soo_poll(struct file *, int events, struct proc *);
-int	soo_kqfilter(struct file *, struct knote *);
-int 	soo_close(struct file *, struct proc *);
+int	soo_read(struct file *fp, off_t *, struct uio *uio, 
+	    struct ucred *cred);
+int	soo_write(struct file *fp, off_t *, struct uio *uio,
+	    struct ucred *cred);
+int	soo_ioctl(struct file *fp, u_long cmd, caddr_t data,
+	    struct proc *p);
+int	soo_poll(struct file *fp, int events, struct proc *p);
+int	soo_kqfilter(struct file *fp, struct knote *kn);
+int 	soo_close(struct file *fp, struct proc *p);
 int	soo_stat(struct file *, struct stat *, struct proc *);
 void	sbappend(struct socket *, struct sockbuf *, struct mbuf *);
 void	sbappendstream(struct socket *, struct sockbuf *, struct mbuf *);
-int	sbappendaddr(struct socket *, struct sockbuf *,
-	    const struct sockaddr *, struct mbuf *, struct mbuf *);
+int	sbappendaddr(struct socket *, struct sockbuf *, struct sockaddr *,
+	    struct mbuf *, struct mbuf *);
 int	sbappendcontrol(struct socket *, struct sockbuf *, struct mbuf *,
 	    struct mbuf *);
 void	sbappendrecord(struct socket *, struct sockbuf *, struct mbuf *);
 void	sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n);
 struct mbuf *
-	sbcreatecontrol(const void *, size_t, int type, int level);
+	sbcreatecontrol(caddr_t p, int size, int type, int level);
 void	sbdrop(struct socket *, struct sockbuf *, int);
 void	sbdroprecord(struct sockbuf *sb);
 void	sbflush(struct socket *, struct sockbuf *);
@@ -307,12 +306,12 @@ int	soaccept(struct socket *so, struct mbuf *nam);
 int	sobind(struct socket *so, struct mbuf *nam, struct proc *p);
 void	socantrcvmore(struct socket *so);
 void	socantsendmore(struct socket *so);
-int	soclose(struct socket *, int);
+int	soclose(struct socket *so);
 int	soconnect(struct socket *so, struct mbuf *nam);
 int	soconnect2(struct socket *so1, struct socket *so2);
 int	socreate(int dom, struct socket **aso, int type, int proto);
 int	sodisconnect(struct socket *so);
-void	sofree(struct socket *so, int);
+void	sofree(struct socket *so);
 int	sogetopt(struct socket *so, int level, int optname, struct mbuf *m);
 void	sohasoutofband(struct socket *so);
 void	soisconnected(struct socket *so);
@@ -339,7 +338,7 @@ int	sockargs(struct mbuf **, const void *, size_t, int);
 
 int	sosleep(struct socket *, void *, int, const char *, int);
 int	solock(struct socket *);
-void	sounlock(struct socket *, int);
+void	sounlock(int);
 
 int	sendit(struct proc *, int, struct msghdr *, int, register_t *);
 int	recvit(struct proc *, int, struct msghdr *, caddr_t,

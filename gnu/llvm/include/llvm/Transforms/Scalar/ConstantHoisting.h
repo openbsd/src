@@ -1,4 +1,4 @@
-//==- ConstantHoisting.h - Prepare code for expensive constants --*- C++ -*-==//
+//===-- ConstantHoisting.h - Prepare code for expensive constants ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -31,80 +31,67 @@
 // This optimization is only applied to integer constants in instructions and
 // simple (this means not nested) constant cast expressions. For example:
 // %0 = load i64* inttoptr (i64 big_constant to i64*)
-//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TRANSFORMS_SCALAR_CONSTANTHOISTING_H
 #define LLVM_TRANSFORMS_SCALAR_CONSTANTHOISTING_H
 
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/BlockFrequencyInfo.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/PassManager.h"
-#include <algorithm>
-#include <vector>
 
 namespace llvm {
-
-class BasicBlock;
-class BlockFrequencyInfo;
-class Constant;
-class ConstantInt;
-class DominatorTree;
-class Function;
-class Instruction;
-class TargetTransformInfo;
 
 /// A private "module" namespace for types and utilities used by
 /// ConstantHoisting. These are implementation details and should not be used by
 /// clients.
 namespace consthoist {
-
-/// Keeps track of the user of a constant and the operand index where the
+/// \brief Keeps track of the user of a constant and the operand index where the
 /// constant is used.
 struct ConstantUser {
   Instruction *Inst;
   unsigned OpndIdx;
 
-  ConstantUser(Instruction *Inst, unsigned Idx) : Inst(Inst), OpndIdx(Idx) {}
+  ConstantUser(Instruction *Inst, unsigned Idx) : Inst(Inst), OpndIdx(Idx) { }
 };
 
-using ConstantUseListType = SmallVector<ConstantUser, 8>;
+typedef SmallVector<ConstantUser, 8> ConstantUseListType;
 
-/// Keeps track of a constant candidate and its uses.
+/// \brief Keeps track of a constant candidate and its uses.
 struct ConstantCandidate {
   ConstantUseListType Uses;
   ConstantInt *ConstInt;
-  unsigned CumulativeCost = 0;
+  unsigned CumulativeCost;
 
-  ConstantCandidate(ConstantInt *ConstInt) : ConstInt(ConstInt) {}
+  ConstantCandidate(ConstantInt *ConstInt)
+    : ConstInt(ConstInt), CumulativeCost(0) { }
 
-  /// Add the user to the use list and update the cost.
+  /// \brief Add the user to the use list and update the cost.
   void addUser(Instruction *Inst, unsigned Idx, unsigned Cost) {
     CumulativeCost += Cost;
     Uses.push_back(ConstantUser(Inst, Idx));
   }
 };
 
-/// This represents a constant that has been rebased with respect to a
+/// \brief This represents a constant that has been rebased with respect to a
 /// base constant. The difference to the base constant is recorded in Offset.
 struct RebasedConstantInfo {
   ConstantUseListType Uses;
   Constant *Offset;
 
   RebasedConstantInfo(ConstantUseListType &&Uses, Constant *Offset)
-    : Uses(std::move(Uses)), Offset(Offset) {}
+    : Uses(std::move(Uses)), Offset(Offset) { }
 };
 
-using RebasedConstantListType = SmallVector<RebasedConstantInfo, 4>;
+typedef SmallVector<RebasedConstantInfo, 4> RebasedConstantListType;
 
-/// A base constant and all its rebased constants.
+/// \brief A base constant and all its rebased constants.
 struct ConstantInfo {
   ConstantInt *BaseConstant;
   RebasedConstantListType RebasedConstants;
 };
-
-} // end namespace consthoist
+}
 
 class ConstantHoistingPass : public PassInfoMixin<ConstantHoistingPass> {
 public:
@@ -121,8 +108,8 @@ public:
   }
 
 private:
-  using ConstCandMapType = DenseMap<ConstantInt *, unsigned>;
-  using ConstCandVecType = std::vector<consthoist::ConstantCandidate>;
+  typedef DenseMap<ConstantInt *, unsigned> ConstCandMapType;
+  typedef std::vector<consthoist::ConstantCandidate> ConstCandVecType;
 
   const TargetTransformInfo *TTI;
   DominatorTree *DT;
@@ -161,7 +148,6 @@ private:
   void deleteDeadCastInst() const;
   bool optimizeConstants(Function &Fn);
 };
-
-} // end namespace llvm
+}
 
 #endif // LLVM_TRANSFORMS_SCALAR_CONSTANTHOISTING_H

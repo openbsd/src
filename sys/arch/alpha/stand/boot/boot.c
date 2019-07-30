@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.24 2019/04/10 04:17:31 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.23 2014/02/19 22:02:14 miod Exp $	*/
 /*	$NetBSD: boot.c,v 1.10 1997/01/18 01:58:33 cgd Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ main()
 	char *name, **namep;
 	u_int64_t entry;
 	int rc;
-	uint64_t marks[MARK_MAX];
+	u_long marks[MARK_MAX];
 #ifdef DEBUG
 	struct rpb *r;
 	struct mddt *mddtp;

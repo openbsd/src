@@ -16,8 +16,8 @@
 ///                  +------------+         +------+
 
 #include "MachONormalizedFile.h"
-#include "lld/Common/LLVM.h"
 #include "lld/Core/Error.h"
+#include "lld/Core/LLVM.h"
 #include "lld/ReaderWriter/YamlContext.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
@@ -257,7 +257,7 @@ template <> struct ScalarTraits<SectionAlignment> {
     return StringRef(); // returning empty string means success
   }
 
-  static QuotingType mustQuote(StringRef) { return QuotingType::None; }
+  static bool mustQuote(StringRef) { return false; }
 };
 
 template <>
@@ -522,7 +522,7 @@ struct ScalarTraits<VMProtect> {
     // Return the empty string on success,
     return StringRef();
   }
-  static QuotingType mustQuote(StringRef) { return QuotingType::None; }
+  static bool mustQuote(StringRef) { return false; }
 };
 
 
@@ -706,7 +706,7 @@ struct ScalarTraits<PackedVersion> {
     // Return the empty string on success,
     return StringRef();
   }
-  static QuotingType mustQuote(StringRef) { return QuotingType::None; }
+  static bool mustQuote(StringRef) { return false; }
 };
 
 template <>

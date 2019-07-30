@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.53 2019/04/02 07:08:40 stsp Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.50 2018/03/20 04:18:40 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -118,14 +118,11 @@ sdmmc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmap = saa->dmap;
 	sc->sc_flags = saa->flags;
 	sc->sc_caps = saa->caps;
-	sc->sc_max_seg = saa->max_seg ? saa->max_seg : MAXPHYS;
 	sc->sc_max_xfer = saa->max_xfer;
-	memcpy(&sc->sc_cookies, &saa->cookies, sizeof(sc->sc_cookies));
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_DMA) && sc->sc_dmap == NULL) {
 		error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, SDMMC_MAXNSEGS,
-		    sc->sc_max_seg, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
-		    &sc->sc_dmap);
+		    MAXPHYS, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &sc->sc_dmap);
 		if (error) {
 			printf("%s: can't create DMA map\n", DEVNAME(sc));
 			return;
@@ -181,8 +178,7 @@ sdmmc_activate(struct device *self, int act)
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
 		/* If card in slot, cause a detach/re-attach */
-		if (ISSET(sc->sc_flags, SMF_CARD_PRESENT) &&
-		    !ISSET(sc->sc_caps, SMC_CAPS_NONREMOVABLE))
+		if (ISSET(sc->sc_flags, SMF_CARD_PRESENT))
 			sc->sc_dying = -1;
 		break;
 	case DVACT_RESUME:

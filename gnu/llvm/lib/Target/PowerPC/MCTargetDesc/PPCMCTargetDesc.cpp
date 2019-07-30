@@ -94,6 +94,15 @@ static MCAsmInfo *createPPCMCAsmInfo(const MCRegisterInfo &MRI,
   return MAI;
 }
 
+static void adjustCodeGenOpts(const Triple &TT, Reloc::Model RM,
+                              CodeModel::Model &CM) {
+  if (CM == CodeModel::Default) {
+    if (!TT.isOSDarwin() &&
+        (TT.getArch() == Triple::ppc64 || TT.getArch() == Triple::ppc64le))
+      CM = CodeModel::Medium;
+  }
+}
+
 namespace {
 
 class PPCTargetAsmStreamer : public PPCTargetStreamer {
@@ -239,7 +248,7 @@ static MCInstPrinter *createPPCMCInstPrinter(const Triple &T,
                                              const MCAsmInfo &MAI,
                                              const MCInstrInfo &MII,
                                              const MCRegisterInfo &MRI) {
-  return new PPCInstPrinter(MAI, MII, MRI, T);
+  return new PPCInstPrinter(MAI, MII, MRI, T.isOSDarwin());
 }
 
 extern "C" void LLVMInitializePowerPCTargetMC() {
@@ -247,6 +256,9 @@ extern "C" void LLVMInitializePowerPCTargetMC() {
        {&getThePPC32Target(), &getThePPC64Target(), &getThePPC64LETarget()}) {
     // Register the MC asm info.
     RegisterMCAsmInfoFn C(*T, createPPCMCAsmInfo);
+
+    // Register the MC codegen info.
+    TargetRegistry::registerMCAdjustCodeGenOpts(*T, adjustCodeGenOpts);
 
     // Register the MC instruction info.
     TargetRegistry::RegisterMCInstrInfo(*T, createPPCMCInstrInfo);

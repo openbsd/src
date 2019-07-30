@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.h,v 1.9 2018/09/16 02:38:57 millert Exp $	*/
+/*	$OpenBSD: glob.h,v 1.8 2014/11/24 20:01:43 millert Exp $	*/
 /*	$NetBSD: glob.h,v 1.4 1996/06/08 19:48:25 christos Exp $	*/
 
 /*
@@ -54,8 +54,7 @@ FILE	*input;				/* Current command input file */
 char	mailname[PATHSIZE];		/* Name of current file */
 char	prevfile[PATHSIZE];		/* Name of previous file */
 char	*homedir;			/* Path name of home directory */
-const char
-	*myname;			/* My login name */
+char	*myname;			/* My login name */
 off_t	mailsize;			/* Size of system mailbox */
 int	lexnumber;			/* Number of TNUMBER from scan() */
 char	lexstring[STRINGLEN];		/* String from TSTRING, scan() */

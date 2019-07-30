@@ -1,11 +1,7 @@
-#	$OpenBSD: files.fdt,v 1.80 2019/05/11 14:43:27 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.44 2018/03/21 09:20:10 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
-
-device	pinctrl
-attach	pinctrl at fdt
-file	dev/fdt/pinctrl.c		pinctrl
 
 device	simplefb: wsemuldisplaydev, rasops15, rasops16, rasops24, rasops32
 attach	simplefb at fdt
@@ -49,10 +45,6 @@ attach	axppmic at i2c
 attach	axppmic at rsb with axppmic_rsb
 file	dev/fdt/axppmic.c		axppmic
 
-device	fanpwr
-attach	fanpwr at i2c
-file	dev/fdt/fanpwr.c		fanpwr
-
 device	sypwr
 attach	sypwr at i2c
 file	dev/fdt/sypwr.c			sypwr
@@ -77,19 +69,10 @@ device	exrtc
 attach	exrtc at fdt
 file	dev/fdt/exrtc.c			exrtc
 
-# ARM PrimeCell PL061 General Purpose Input/Output
-device	plgpio
-attach	plgpio at fdt
-file	dev/fdt/plgpio.c		plgpio
-
 # ARM PrimeCell PL031 Real-time clock
 device	plrtc
 attach	plrtc at fdt
 file	dev/fdt/plrtc.c			plrtc
-
-# ARM PrimeCell PL011 UART
-attach	pluart at fdt with pluart_fdt
-file	dev/fdt/pluart_fdt.c		pluart_fdt
 
 # ARM Power State Coordination Interface
 device	psci
@@ -109,9 +92,6 @@ file	dev/fdt/if_dwge_fdt.c		dwge_fdt
 attach	ehci at fdt with ehci_fdt
 file	dev/fdt/ehci_fdt.c		ehci_fdt
 
-attach	ohci at fdt with ohci_fdt
-file	dev/fdt/ohci_fdt.c		ohci_fdt
-
 attach	sdhc at fdt with sdhc_fdt
 file	dev/fdt/sdhc_fdt.c		sdhc_fdt
 
@@ -121,22 +101,6 @@ file	dev/fdt/xhci_fdt.c		xhci_fdt
 device	syscon: fdt
 attach	syscon at fdt
 file	dev/fdt/syscon.c		syscon
-
-device	hiclock
-attach	hiclock at fdt
-file	dev/fdt/hiclock.c		hiclock
-
-device	hidwusb: fdt
-attach	hidwusb at fdt
-file	dev/fdt/hidwusb.c		hidwusb
-
-device	hireset
-attach	hireset at fdt
-file	dev/fdt/hireset.c		hireset
-
-device	hitemp
-attach	hitemp at fdt
-file	dev/fdt/hitemp.c		hitemp
 
 device	rkclock
 attach	rkclock at fdt
@@ -182,17 +146,9 @@ device	dwdog
 attach	dwdog at fdt
 file	dev/fdt/dwdog.c			dwdog
 
-device	dwpcie: pcibus
-attach	dwpcie at fdt
-file	dev/fdt/dwpcie.c		dwpcie
-
 device	mvclock
 attach	mvclock at fdt
 file	dev/fdt/mvclock.c		mvclock
-
-device	mvgicp
-attach	mvgicp at fdt
-file	dev/fdt/mvgicp.c		mvgicp
 
 device	mvgpio
 attach	mvgpio at fdt
@@ -214,22 +170,6 @@ device	mvneta: ether, ifnet, mii, ifmedia
 attach	mvneta at fdt
 file	dev/fdt/if_mvneta.c		mvneta
 
-device	mvrng
-attach	mvrng at fdt
-file	dev/fdt/mvrng.c			mvrng
-
-device	mvrtc
-attach	mvrtc at fdt
-file	dev/fdt/mvrtc.c			mvrtc
-
-device	mvtemp
-attach	mvtemp at fdt
-file	dev/fdt/mvtemp.c		mvtemp
-
-device	mvuart
-attach	mvuart at fdt
-file	dev/fdt/mvuart.c		mvuart
-
 device	dwxe: ether, ifnet, mii, ifmedia
 attach	dwxe at fdt
 file	dev/fdt/if_dwxe.c		dwxe
@@ -237,67 +177,3 @@ file	dev/fdt/if_dwxe.c		dwxe
 device	acrtc
 attach	acrtc at rsb
 file	dev/fdt/acrtc.c			acrtc
-
-device	imxanatop
-attach	imxanatop at fdt
-file	dev/fdt/imxanatop.c		imxanatop
-
-device	imxccm
-attach	imxccm at fdt
-file	dev/fdt/imxccm.c		imxccm
-
-device	imxesdhc: sdmmcbus
-attach	imxesdhc at fdt
-file	dev/fdt/imxesdhc.c		imxesdhc
-
-device	imxgpc
-attach	imxgpc at fdt
-file	dev/fdt/imxgpc.c		imxgpc
-
-device	imxgpio
-attach	imxgpio at fdt
-file	dev/fdt/imxgpio.c		imxgpio
-
-device	imxiic: i2cbus
-attach	imxiic at fdt
-file	dev/fdt/imxiic.c		imxiic
-
-device	imxiomuxc
-attach	imxiomuxc at fdt
-file	dev/fdt/imxiomuxc.c		imxiomuxc
-
-device	imxrtc
-attach	imxrtc at fdt
-file	dev/fdt/imxrtc.c		imxrtc
-
-device	imxsrc: fdt
-attach	imxsrc at fdt
-file	dev/fdt/imxsrc.c		imxsrc
-
-device	imxuart
-attach	imxuart at fdt
-file	dev/fdt/imxuart.c		imxuart
-
-device	fec: ether, ifnet, mii, ifmedia
-attach	fec at fdt
-file	dev/fdt/if_fec.c		fec
-
-define	spi {}
-device	imxspi: spi
-attach	imxspi at fdt
-file	dev/fdt/imxspi.c		imxspi
-
-attach	ccp at fdt with ccp_fdt
-file	dev/fdt/ccp_fdt.c		ccp_fdt
-
-attach	com at fdt with com_fdt
-file	dev/fdt/com_fdt.c		com_fdt
-
-device	ssdfb: wsemuldisplaydev, rasops1
-attach	ssdfb at spi with ssdfb_spi
-attach	ssdfb at i2c with ssdfb_i2c
-file	dev/fdt/ssdfb.c			ssdfb
-
-device	fusbtc
-attach	fusbtc at i2c
-file	dev/fdt/fusbtc.c		fusbtc

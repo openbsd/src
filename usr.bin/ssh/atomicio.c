@@ -1,4 +1,4 @@
-/* $OpenBSD: atomicio.c,v 1.30 2019/01/24 02:42:23 dtucker Exp $ */
+/* $OpenBSD: atomicio.c,v 1.28 2016/07/27 23:18:12 djm Exp $ */
 /*
  * Copyright (c) 2006 Damien Miller. All rights reserved.
  * Copyright (c) 2005 Anil Madhavapeddy. All rights reserved.
@@ -54,14 +54,9 @@ atomicio6(ssize_t (*f) (int, void *, size_t), int fd, void *_s, size_t n,
 		res = (f) (fd, s + pos, n - pos);
 		switch (res) {
 		case -1:
-			if (errno == EINTR) {
-				/* possible SIGALARM, update callback */
-				if (cb != NULL && cb(cb_arg, 0) == -1) {
-					errno = EINTR;
-					return pos;
-				}
+			if (errno == EINTR)
 				continue;
-			} else if (errno == EAGAIN || errno == EWOULDBLOCK) {
+			if (errno == EAGAIN) {
 				(void)poll(&pfd, 1, -1);
 				continue;
 			}
@@ -112,14 +107,9 @@ atomiciov6(ssize_t (*f) (int, const struct iovec *, int), int fd,
 		res = (f) (fd, iov, iovcnt);
 		switch (res) {
 		case -1:
-			if (errno == EINTR) {
-				/* possible SIGALARM, update callback */
-				if (cb != NULL && cb(cb_arg, 0) == -1) {
-					errno = EINTR;
-					return pos;
-				}
+			if (errno == EINTR)
 				continue;
-			} else if (errno == EAGAIN || errno == EWOULDBLOCK) {
+			if (errno == EAGAIN) {
 				(void)poll(&pfd, 1, -1);
 				continue;
 			}

@@ -22,6 +22,8 @@ class TestWatchpointEvents (TestBase):
         self.main_source = "main.c"
 
     @add_test_categories(['pyapi'])
+    # Watchpoints not supported
+    @expectedFailureAndroid(archs=['arm', 'aarch64'])
     @expectedFailureAll(
         oslist=["linux"],
         archs=["aarch64"],
@@ -33,7 +35,7 @@ class TestWatchpointEvents (TestBase):
         """Test that adding, deleting and modifying watchpoints sends the appropriate events."""
         self.build()
 
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)

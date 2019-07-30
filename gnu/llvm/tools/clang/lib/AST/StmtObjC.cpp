@@ -64,7 +64,7 @@ ObjCAtTryStmt *ObjCAtTryStmt::CreateEmpty(const ASTContext &Context,
   return new (Mem) ObjCAtTryStmt(EmptyShell(), NumCatchStmts, HasFinally);
 }
 
-SourceLocation ObjCAtTryStmt::getEndLoc() const {
+SourceLocation ObjCAtTryStmt::getLocEnd() const {
   if (HasFinally)
     return getFinallyStmt()->getLocEnd();
   if (NumCatchStmts)

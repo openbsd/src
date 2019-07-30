@@ -35,8 +35,6 @@ BEGIN {
 
 use Storable qw(freeze thaw);
 
-$Storable::flags = Storable::FLAGS_COMPAT;
-
 #$Storable::DEBUGME = 1;
 BEGIN {
     plan tests => 34;

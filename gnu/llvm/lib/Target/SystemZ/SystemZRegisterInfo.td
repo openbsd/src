@@ -65,7 +65,6 @@ class GPR64<bits<16> num, string n, GPR32 low, GPR32 high>
  : SystemZRegWithSubregs<n, [low, high]> {
   let HWEncoding = num;
   let SubRegIndices = [subreg_l32, subreg_h32];
-  let CoveredBySubRegs = 1;
 }
 
 // 8 even-odd pairs of GPR64s.
@@ -73,7 +72,6 @@ class GPR128<bits<16> num, string n, GPR64 low, GPR64 high>
  : SystemZRegWithSubregs<n, [low, high]> {
   let HWEncoding = num;
   let SubRegIndices = [subreg_l64, subreg_h64];
-  let CoveredBySubRegs = 1;
 }
 
 // General-purpose registers
@@ -130,7 +128,7 @@ defm AnyReg : SystemZRegClass<"AnyReg",
                               [i64, f64, v8i8, v4i16, v2i32, v2f32], 64,
                               (add (sequence "R%uD", 0, 15),
                                    (sequence "F%uD", 0, 15),
-                                   (sequence "V%u", 0, 15)), 0/*allocatable*/>;
+                                   (sequence "V%u", 0, 15))>;
 
 //===----------------------------------------------------------------------===//
 // Floating-point registers
@@ -196,7 +194,6 @@ class FPR128<bits<16> num, string n, FPR64 low, FPR64 high>
  : SystemZRegWithSubregs<n, [low, high]> {
   let HWEncoding = num;
   let SubRegIndices = [subreg_l64, subreg_h64];
-  let CoveredBySubRegs = 1;
 }
 
 // Floating-point registers.  Registers 16-31 require the vector facility.
@@ -263,7 +260,7 @@ defm VF128 : SystemZRegClass<"VF128",
 
 // All vector registers.
 defm VR128 : SystemZRegClass<"VR128",
-                             [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64, f128],
+                             [f128, v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
                              128, (add (sequence "V%u", 0, 7),
                                        (sequence "V%u", 16, 31),
                                        (sequence "V%u", 8, 15))>;
@@ -296,8 +293,8 @@ def v128any : TypedReg<untyped, VR128>;
 // The 2-bit condition code field of the PSW.  Every register named in an
 // inline asm needs a class associated with it.
 def CC : SystemZReg<"cc">;
-let isAllocatable = 0, CopyCost = -1 in
-  def CCR : RegisterClass<"SystemZ", [i32], 32, (add CC)>;
+let isAllocatable = 0 in
+  def CCRegs : RegisterClass<"SystemZ", [i32], 32, (add CC)>;
 
 // Access registers.
 class ACR32<bits<16> num, string n> : SystemZReg<n> {

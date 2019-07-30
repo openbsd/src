@@ -117,16 +117,29 @@ clear_cmd(void)
 }
 
 /*
- * Display an ASCII string, usually as a prompt for input,
- * into the command buffer.
+ * Display a string, usually as a prompt for input into the command buffer.
  */
 void
 cmd_putstr(char *s)
 {
+	LWCHAR prev_ch = 0;
+	LWCHAR ch;
+	char *endline = s + strlen(s);
 	while (*s != '\0') {
-		putchr(*s++);
-		cmd_col++;
-		prompt_col++;
+		char *ns = s;
+		ch = step_char(&ns, +1, endline);
+		while (s < ns)
+			putchr(*s++);
+		if (!utf_mode) {
+			cmd_col++;
+			prompt_col++;
+		} else if (!is_composing_char(ch) &&
+		    !is_combining_char(prev_ch, ch)) {
+			int width = is_wide_char(ch) ? 2 : 1;
+			cmd_col += width;
+			prompt_col += width;
+		}
+		prev_ch = ch;
 	}
 }
 
@@ -1069,7 +1082,7 @@ cmd_char(int c)
 retry:
 			cmd_mbc_buf_index = 1;
 			*cmd_mbc_buf = c & 0xff;
-			if (isascii((unsigned char)c))
+			if (IS_ASCII_OCTET(c))
 				cmd_mbc_buf_len = 1;
 			else if (IS_UTF8_LEAD(c)) {
 				cmd_mbc_buf_len = utf_len(c);

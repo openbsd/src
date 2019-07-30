@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.343 2019/06/10 23:48:21 dlg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.336 2017/12/29 17:05:25 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -119,8 +119,6 @@ struct cpumem *ipcounters;
 int ip_sysctl_ipstat(void *, size_t *, void *);
 
 static struct mbuf_queue	ipsend_mq;
-
-extern struct niqueue		arpinq;
 
 int	ip_ours(struct mbuf **, int *, int, int);
 int	ip_local(struct mbuf **, int *, int, int);
@@ -343,8 +341,9 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	}
 
 #if NCARP > 0
-	if (carp_lsdrop(ifp, m, AF_INET, &ip->ip_src.s_addr,
-	    &ip->ip_dst.s_addr, (ip->ip_p == IPPROTO_ICMP ? 0 : 1)))
+	if (ifp->if_type == IFT_CARP &&
+	    carp_lsdrop(m, AF_INET, &ip->ip_src.s_addr, &ip->ip_dst.s_addr,
+	    (ip->ip_p == IPPROTO_ICMP ? 0 : 1)))
 		goto bad;
 #endif
 
@@ -452,9 +451,8 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	}
 
 #if NCARP > 0
-	if (ip->ip_p == IPPROTO_ICMP &&
-	    carp_lsdrop(ifp, m, AF_INET, &ip->ip_src.s_addr,
-	    &ip->ip_dst.s_addr, 1))
+	if (ifp->if_type == IFT_CARP && ip->ip_p == IPPROTO_ICMP &&
+	    carp_lsdrop(m, AF_INET, &ip->ip_src.s_addr, &ip->ip_dst.s_addr, 1))
 		goto bad;
 #endif
 	/*
@@ -949,7 +947,6 @@ insert:
 		nq = LIST_NEXT(q, ipqe_q);
 		pool_put(&ipqent_pool, q);
 		ip_frags--;
-		m_removehdr(t);
 		m_cat(m, t);
 	}
 
@@ -966,7 +963,13 @@ insert:
 	pool_put(&ipq_pool, fp);
 	m->m_len += (ip->ip_hl << 2);
 	m->m_data -= (ip->ip_hl << 2);
-	m_calchdrlen(m);
+	/* some debugging cruft by sklower, below, will go away soon */
+	if (m->m_flags & M_PKTHDR) { /* XXX this should be done elsewhere */
+		int plen = 0;
+		for (t = m; t; t = t->m_next)
+			plen += t->m_len;
+		m->m_pkthdr.len = plen;
+	}
 	return (m);
 
 dropfrag:
@@ -1381,7 +1384,7 @@ ip_stripoptions(struct mbuf *m)
 	ip->ip_len = htons(ntohs(ip->ip_len) - olen);
 }
 
-const u_char inetctlerrmap[PRC_NCMDS] = {
+const int inetctlerrmap[PRC_NCMDS] = {
 	0,		0,		0,		0,
 	0,		EMSGSIZE,	EHOSTDOWN,	EHOSTUNREACH,
 	EHOSTUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,
@@ -1581,8 +1584,7 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #endif
 
 	/* Almost all sysctl names at this level are terminal. */
-	if (namelen != 1 && name[0] != IPCTL_IFQUEUE &&
-	    name[0] != IPCTL_ARPQUEUE)
+	if (namelen != 1 && name[0] != IPCTL_IFQUEUE)
 		return (ENOTDIR);
 
 	switch (name[0]) {
@@ -1621,7 +1623,6 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (error);
 #ifdef IPSEC
 	case IPCTL_ENCDEBUG:
-	case IPCTL_IPSEC_STATS:
 	case IPCTL_IPSEC_EXPIRE_ACQUIRE:
 	case IPCTL_IPSEC_EMBRYONIC_SA_TIMEOUT:
 	case IPCTL_IPSEC_REQUIRE_PFS:
@@ -1642,9 +1643,6 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case IPCTL_IFQUEUE:
 		return (sysctl_niq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &ipintrq));
-	case IPCTL_ARPQUEUE:
-		return (sysctl_niq(name + 1, namelen - 1,
-		    oldp, oldlenp, newp, newlen, &arpinq));
 	case IPCTL_STATS:
 		return (ip_sysctl_ipstat(oldp, oldlenp, newp));
 #ifdef MROUTING
@@ -1712,7 +1710,7 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 	if (inp->inp_socket->so_options & SO_TIMESTAMP) {
 		struct timeval tv;
 
-		m_microtime(m, &tv);
+		microtime(&tv);
 		*mp = sbcreatecontrol((caddr_t) &tv, sizeof(tv),
 		    SCM_TIMESTAMP, SOL_SOCKET);
 		if (*mp)

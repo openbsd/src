@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.288 2019/06/02 03:58:28 visa Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.275 2018/03/20 15:45:32 mpi Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -76,7 +76,6 @@
 #include <sys/pipe.h>
 #include <sys/task.h>
 #include <sys/witness.h>
-#include <sys/smr.h>
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -107,7 +106,7 @@ extern void nfs_init(void);
 const char	copyright[] =
 "Copyright (c) 1982, 1986, 1989, 1991, 1993\n"
 "\tThe Regents of the University of California.  All rights reserved.\n"
-"Copyright (c) 1995-2019 OpenBSD. All rights reserved.  https://www.OpenBSD.org\n";
+"Copyright (c) 1995-2018 OpenBSD. All rights reserved.  https://www.OpenBSD.org\n";
 
 /* Components of the first process -- never freed. */
 struct	session session0;
@@ -124,6 +123,7 @@ extern	struct user *proc0paddr;
 
 struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
+struct	timespec boottime;
 int	db_active = 0;
 int	ncpus =  1;
 int	ncpusfound = 1;			/* number of cpus we find */
@@ -137,6 +137,9 @@ long	__guard_local __attribute__((section(".openbsd.randomdata")));
 int	main(void *);
 void	check_console(struct proc *);
 void	start_init(void *);
+void	start_cleaner(void *);
+void	start_update(void *);
+void	start_reaper(void *);
 void	crypto_init(void);
 void	db_ctf_init(void);
 void	prof_init(void);
@@ -156,6 +159,7 @@ extern char *syscallnames[];
 struct emul emul_native = {
 	"native",
 	NULL,
+	sendsig,
 	SYS_syscall,
 	SYS_MAXSYSCALL,
 	sysent,
@@ -171,12 +175,10 @@ struct emul emul_native = {
 	NULL,		/* coredump */
 	sigcode,
 	esigcode,
-	sigcoderet
+	sigcoderet,
+	EMUL_ENABLED | EMUL_NATIVE,
 };
 
-#ifdef DIAGNOSTIC
-int pdevinit_done = 0;
-#endif
 
 /*
  * System startup; initialize the world, create process 0, mount root
@@ -191,6 +193,8 @@ main(void *framep)
 	struct proc *p;
 	struct process *pr;
 	struct pdevinit *pdev;
+	quad_t lim;
+	int i;
 	extern struct pdevinit pdevinit[];
 	extern void disk_init(void);
 
@@ -238,9 +242,6 @@ main(void *framep)
 
 	/* Initialize SRP subsystem. */
 	srp_startup();
-
-	/* Initialize SMR subsystem. */
-	smr_startup();
 
 	/*
 	 * Initialize process and pgrp structures.
@@ -316,8 +317,19 @@ main(void *framep)
 	p->p_fd = pr->ps_fd = fdinit();
 
 	/* Create the limits structures. */
-	lim_startup(&limit0);
 	pr->ps_limit = &limit0;
+	for (i = 0; i < nitems(p->p_rlimit); i++)
+		limit0.pl_rlimit[i].rlim_cur =
+		    limit0.pl_rlimit[i].rlim_max = RLIM_INFINITY;
+	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_cur = NOFILE;
+	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_max = MIN(NOFILE_MAX,
+	    (maxfiles - NOFILE > NOFILE) ?  maxfiles - NOFILE : NOFILE);
+	limit0.pl_rlimit[RLIMIT_NPROC].rlim_cur = MAXUPRC;
+	lim = ptoa(uvmexp.free);
+	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = lim;
+	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
+	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
+	limit0.p_refcnt = 1;
 
 	/* Allocate a prototype map so we have something to fork. */
 	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
@@ -394,9 +406,6 @@ main(void *framep)
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
 		if (pdev->pdev_count > 0)
 			(*pdev->pdev_attach)(pdev->pdev_count);
-#ifdef DIAGNOSTIC
-	pdevinit_done = 1;
-#endif
 
 #ifdef CRYPTO
 	crypto_init();
@@ -484,7 +493,7 @@ main(void *framep)
 		panic("cannot find root vnode");
 	p->p_fd->fd_cdir = rootvnode;
 	vref(p->p_fd->fd_cdir);
-	VOP_UNLOCK(rootvnode);
+	VOP_UNLOCK(rootvnode, p);
 	p->p_fd->fd_rdir = NULL;
 
 	/*
@@ -501,8 +510,9 @@ main(void *framep)
 	 * from the file system.  Reset p->p_rtime as it may have been
 	 * munched in mi_switch() after the time got set.
 	 */
+	nanotime(&boottime);
 	LIST_FOREACH(pr, &allprocess, ps_list) {
-		getnanotime(&pr->ps_start);
+		pr->ps_start = boottime;
 		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
 			nanouptime(&p->p_cpu->ci_schedstate.spc_runtime);
 			timespecclear(&p->p_rtime);
@@ -516,15 +526,15 @@ main(void *framep)
 		panic("fork pagedaemon");
 
 	/* Create the reaper daemon kernel thread. */
-	if (kthread_create(reaper, NULL, &reaperproc, "reaper"))
+	if (kthread_create(start_reaper, NULL, &reaperproc, "reaper"))
 		panic("fork reaper");
 
 	/* Create the cleaner daemon kernel thread. */
-	if (kthread_create(buf_daemon, NULL, &cleanerproc, "cleaner"))
+	if (kthread_create(start_cleaner, NULL, NULL, "cleaner"))
 		panic("fork cleaner");
 
 	/* Create the update daemon kernel thread. */
-	if (kthread_create(syncer_thread, NULL, &syncerproc, "update"))
+	if (kthread_create(start_update, NULL, NULL, "update"))
 		panic("fork update");
 
 	/* Create the aiodone daemon kernel thread. */ 
@@ -642,7 +652,7 @@ start_init(void *arg)
 	if (uvm_map(&p->p_vmspace->vm_map, &addr, PAGE_SIZE, 
 	    NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_MASK, MAP_INHERIT_COPY,
-	    MADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW|UVM_FLAG_STACK)))
+	    MADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)))
 		panic("init: couldn't allocate argument space");
 
 	for (pathp = &initpaths[0]; (path = *pathp) != NULL; pathp++) {
@@ -736,4 +746,25 @@ start_init(void *arg)
 	}
 	printf("init: not found\n");
 	panic("no init");
+}
+
+void
+start_update(void *arg)
+{
+	sched_sync(curproc);
+	/* NOTREACHED */
+}
+
+void
+start_cleaner(void *arg)
+{
+	buf_daemon(curproc);
+	/* NOTREACHED */
+}
+
+void
+start_reaper(void *arg)
+{
+	reaper();
+	/* NOTREACHED */
 }

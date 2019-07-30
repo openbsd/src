@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.36 2019/05/30 13:34:54 beck Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.28 2017/09/06 12:36:24 bluhm Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -39,7 +39,6 @@
 #include <sys/lock.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
-#include <sys/ktrace.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
@@ -211,6 +210,7 @@ vfs_getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
     char *bufp)
 {
 	struct vnode *lvp, *uvp = NULL;
+	struct proc *p = curproc;
 	char *obp;
 	int error, vpid;
 
@@ -233,9 +233,9 @@ vfs_getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 
 
 	/* Release current lock before acquiring the parent lock */
-	VOP_UNLOCK(lvp);
+	VOP_UNLOCK(lvp, p);
 
-	error = vget(uvp, LK_EXCLUSIVE | LK_RETRY);
+	error = vget(uvp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (error)
 		*uvpp = NULL;
 
@@ -253,7 +253,7 @@ vfs_getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 
 		*uvpp = NULL;
 		
-		error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
+		error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY, p);
 		if (!error) {
 			*bpp = obp; /* restore the buffer */
 			return (-1);
@@ -266,7 +266,7 @@ vfs_getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	return (error);
 }
 
-/* Common routine shared by sys___getcwd() and vn_isunder() and sys___realpath() */
+/* Common routine shared by sys___getcwd() and vn_isunder() */
 int
 vfs_getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
     int limit, int flags, struct proc *p)
@@ -285,7 +285,7 @@ vfs_getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 	vref(rvp);
 	vref(lvp);
 
-	error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
+	error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (error) {
 		vrele(lvp);
 		lvp = NULL;
@@ -338,7 +338,7 @@ vfs_getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 
 			vref(lvp);
 
-			error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
+			error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY, p);
 			if (error) {
 				vrele(lvp);
 				lvp = NULL;
@@ -395,8 +395,8 @@ int
 sys___getcwd(struct proc *p, void *v, register_t *retval) 
 {
 	struct sys___getcwd_args *uap = v;
-	int error, len = SCARG(uap, len);
-	char *path, *bp;
+	int error, lenused, len = SCARG(uap, len);
+	char *path, *bp, *bend;
 
 	if (len > MAXPATHLEN * 4)
 		len = MAXPATHLEN * 4;
@@ -405,8 +405,9 @@ sys___getcwd(struct proc *p, void *v, register_t *retval)
 
 	path = malloc(len, M_TEMP, M_WAITOK);
 
-	bp = &path[len - 1];
-	*bp = '\0';
+	bp = &path[len];
+	bend = bp;
+	*(--bp) = '\0';
 
 	/*
 	 * 5th argument here is "max number of vnodes to traverse".
@@ -419,13 +420,11 @@ sys___getcwd(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto out;
 
-	/* Put the result into user buffer */
-	error = copyoutstr(bp, SCARG(uap, buf), MAXPATHLEN, NULL);
+	lenused = bend - bp;
+	*retval = lenused;
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_NAMEI))
-		ktrnamei(p, bp);
-#endif
+	/* Put the result into user buffer */
+	error = copyout(bp, SCARG(uap, buf), lenused);
 
 out:
 	free(path, M_TEMP, len);

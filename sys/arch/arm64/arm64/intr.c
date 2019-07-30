@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.14 2019/05/13 20:55:22 drahn Exp $ */
+/* $OpenBSD: intr.c,v 1.10 2018/01/31 10:52:12 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -27,7 +27,7 @@
 #include <dev/ofw/openfirm.h>
 
 uint32_t arm_intr_get_parent(int);
-uint32_t arm_intr_map_msi(int, uint64_t *);
+uint32_t arm_intr_msi_get_parent(int);
 
 void *arm_intr_prereg_establish_fdt(void *, int *, int, int (*)(void *),
     void *, char *);
@@ -56,11 +56,8 @@ void (*arm_intr_dispatch)(void *) = arm_dflt_intr;
 void
 arm_cpu_intr(void *frame)
 {
-	struct cpu_info	*ci = curcpu();
-
-	ci->ci_idepth++;
+	/* XXX - change this to have irq_dispatch use function pointer */
 	(*arm_intr_dispatch)(frame);
-	ci->ci_idepth--;
 }
 void
 arm_dflt_intr(void *frame)
@@ -85,67 +82,15 @@ arm_intr_get_parent(int node)
 }
 
 uint32_t
-arm_intr_map_msi(int node, uint64_t *data)
+arm_intr_msi_get_parent(int node)
 {
-	uint64_t msi_base;
 	uint32_t phandle = 0;
-	uint32_t *cell;
-	uint32_t *map;
-	uint32_t mask, rid_base, rid;
-	int i, len, length, mcells, ncells;
 
-	len = OF_getproplen(node, "msi-map");
-	if (len <= 0) {
-		while (node && !phandle) {
-			phandle = OF_getpropint(node, "msi-parent", 0);
-			node = OF_parent(node);
-		}
-
-		return phandle;
+	while (node && !phandle) {
+		phandle = OF_getpropint(node, "msi-parent", 0);
+		node = OF_parent(node);
 	}
 
-	map = malloc(len, M_TEMP, M_WAITOK);
-	OF_getpropintarray(node, "msi-map", map, len);
-
-	mask = OF_getpropint(node, "msi-map-mask", 0xffff);
-	rid = *data & mask;
-
-	cell = map;
-	ncells = len / sizeof(uint32_t);
-	while (ncells > 1) {
-		node = OF_getnodebyphandle(cell[1]);
-		if (node == 0)
-			goto out;
-
-		/*
-		 * Some device trees (e.g. those for the Rockchip
-		 * RK3399 boards) are missing a #msi-cells property.
-		 * Assume the msi-specifier uses a single cell in that
-		 * case.
-		 */
-		mcells = OF_getpropint(node, "#msi-cells", 1);
-		if (ncells < mcells + 3)
-			goto out;
-
-		rid_base = cell[0];
-		length = cell[2 + mcells];
-		msi_base = cell[2];
-		for (i = 1; i < mcells; i++) {
-			msi_base <<= 32;
-			msi_base |= cell[2 + i];
-		}
-		if (rid >= rid_base && rid < rid_base + length) {
-			*data = msi_base + (rid - rid_base);
-			phandle = cell[1];
-			break;
-		}
-
-		cell += (3 + mcells);
-		ncells -= (3 + mcells);
-	}
-
-out:
-	free(map, M_TEMP, len);
 	return phandle;
 }
 
@@ -364,14 +309,14 @@ arm_intr_establish_fdt_idx(int node, int idx, int level, int (*func)(void *),
 }
 
 void *
-arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int level,
-    int (*func)(void *), void *cookie, char *name)
+arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int acells,
+    int level, int (*func)(void *), void *cookie, char *name)
 {
 	struct interrupt_controller *ic;
 	struct arm_intr_handle *ih;
-	uint32_t *cell;
-	uint32_t map_mask[4], *map;
-	int len, acells, ncells;
+	uint32_t *cell, phandle;
+	int map_mask[4], *map, map_len;
+	int i, len, ncells;
 	void *val = NULL;
 
 	if (nreg != sizeof(map_mask))
@@ -381,16 +326,20 @@ arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int level,
 	    sizeof(map_mask)) != sizeof(map_mask))
 		return NULL;
 
-	len = OF_getproplen(node, "interrupt-map");
-	if (len <= 0)
+	map_len = OF_getproplen(node, "interrupt-map");
+	if (map_len <= 0)
 		return NULL;
 
-	map = malloc(len, M_DEVBUF, M_WAITOK);
-	OF_getpropintarray(node, "interrupt-map", map, len);
+	map = malloc(map_len, M_DEVBUF, M_WAITOK);
+	len = OF_getpropintarray(node, "interrupt-map", map, map_len);
+	if (len != map_len) {
+		free(map, M_DEVBUF, map_len);
+		return NULL;
+	}
 
 	cell = map;
-	ncells = len / sizeof(uint32_t);
-	while (ncells > 5) {
+	ncells = map_len / sizeof(uint32_t);
+	for (i = 0; ncells > 0; i++) {
 		LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
 			if (ic->ic_phandle == cell[4])
 				break;
@@ -399,13 +348,13 @@ arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int level,
 		if (ic == NULL)
 			break;
 
-		acells = OF_getpropint(ic->ic_node, "#address-cells", 0);
 		if (ncells >= (5 + acells + ic->ic_cells) &&
 		    (reg[0] & map_mask[0]) == cell[0] &&
 		    (reg[1] & map_mask[1]) == cell[1] &&
 		    (reg[2] & map_mask[2]) == cell[2] &&
 		    (reg[3] & map_mask[3]) == cell[3] &&
 		    ic->ic_establish) {
+			phandle = cell[4];
 			val = ic->ic_establish(ic->ic_cookie, &cell[5 + acells],
 			    level, func, cookie, name);
 			break;
@@ -416,7 +365,7 @@ arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int level,
 	}
 
 	if (val == NULL) {
-		free(map, M_DEVBUF, len);
+		free(map, M_DEVBUF, map_len);
 		return NULL;
 	}
 
@@ -424,7 +373,7 @@ arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int level,
 	ih->ih_ic = ic;
 	ih->ih_ih = val;
 
-	free(map, M_DEVBUF, len);
+	free(map, M_DEVBUF, map_len);
 	return ih;
 }
 
@@ -437,7 +386,7 @@ arm_intr_establish_fdt_msi(int node, uint64_t *addr, uint64_t *data,
 	uint32_t phandle;
 	void *val = NULL;
 
-	phandle = arm_intr_map_msi(node, data);
+	phandle = arm_intr_msi_get_parent(node);
 	LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
 		if (ic->ic_phandle == phandle)
 			break;
@@ -464,26 +413,6 @@ arm_intr_disestablish_fdt(void *cookie)
 
 	ic->ic_disestablish(ih->ih_ih);
 	free(ih, M_DEVBUF, sizeof(*ih));
-}
-
-void
-arm_intr_enable(void *cookie)
-{
-	struct arm_intr_handle *ih = cookie;
-	struct interrupt_controller *ic = ih->ih_ic;
-
-	KASSERT(ic->ic_enable != NULL);
-	ic->ic_enable(ih->ih_ih);
-}
-
-void
-arm_intr_disable(void *cookie)
-{
-	struct arm_intr_handle *ih = cookie;
-	struct interrupt_controller *ic = ih->ih_ic;
-
-	KASSERT(ic->ic_disable != NULL);
-	ic->ic_disable(ih->ih_ih);
 }
 
 /*

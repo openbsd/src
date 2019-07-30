@@ -13,6 +13,11 @@ class TestStepOverWatchpoint(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    def getCategories(self):
+        return ['basic_process']
+
+    # Watchpoints not supported
+    @expectedFailureAndroid(archs=['arm', 'aarch64'])
     @expectedFailureAll(
         oslist=["linux"],
         archs=[
@@ -24,12 +29,10 @@ class TestStepOverWatchpoint(TestBase):
         bugnumber="llvm.org/pr24446: WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows")
     # Read-write watchpoints not supported on SystemZ
     @expectedFailureAll(archs=['s390x'])
-    @expectedFailureAll(oslist=["ios", "watchos", "tvos", "bridgeos"], bugnumber="<rdar://problem/34027183>")  # watchpoint tests aren't working on arm64
-    @add_test_categories(["basic_process"])
     def test(self):
         """Test stepping over watchpoints."""
         self.build()
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), 'a.out')
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(self.target, VALID_TARGET)
@@ -81,7 +84,7 @@ class TestStepOverWatchpoint(TestBase):
         # Most of the MIPS boards provide only one H/W watchpoints, and S/W
         # watchpoints are not supported yet
         arch = self.getArchitecture()
-        if re.match("^mips", arch) or re.match("powerpc64le", arch):
+        if re.match("^mips", arch):
             self.runCmd("watchpoint delete 1")
 
         # resolve_location=True, read=False, write=True

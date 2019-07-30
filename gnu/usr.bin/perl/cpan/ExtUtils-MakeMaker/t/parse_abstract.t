@@ -13,17 +13,16 @@ sub test_abstract {
 
     local $Test::Builder::Level = $Test::Builder::Level + 1;
 
-    my $ok = 0;
-    for my $crlf (0, 1) {
-        my ($fh,$file) = tempfile( DIR => 't', UNLINK => 1 );
-        binmode $fh, $crlf ? ':crlf' : ':raw';
-        print $fh $code;
-        close $fh;
-        # Hack up a minimal MakeMaker object.
-        my $mm = bless { DISTNAME => $package }, "MM";
-        my $have = $mm->parse_abstract($file);
-        $ok += is( $have, $want, "$name :crlf=$crlf" ) ? 1 : 0;
-    }
+    my ($fh,$file) = tempfile( DIR => 't', UNLINK => 1 );
+    print $fh $code;
+    close $fh;
+
+    # Hack up a minimal MakeMaker object.
+    my $mm = bless { DISTNAME => $package }, "MM";
+    my $have = $mm->parse_abstract($file);
+
+    my $ok = is( $have, $want, $name );
+
     return $ok;
 }
 

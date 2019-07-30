@@ -2,15 +2,13 @@
 
 BEGIN {
     chdir 't' if -d 't';
+    @INC = '../lib';
     require './test.pl';
-    set_up_inc('../lib');
     skip_all("VMS too picky about line endings for record-oriented pipes")
 	if $^O eq 'VMS';
 }
 
 use strict;
-
-++$|;
 
 my $Perl = which_perl();
 
@@ -37,8 +35,8 @@ $c += 6;	# Tests with sleep()...
 
 print "1..$c\n";
 
-my $set_out = "binmode STDOUT, ':raw'";
-$set_out = "binmode STDOUT, ':raw:crlf'"
+my $set_out = '';
+$set_out = "binmode STDOUT, ':crlf'"
     if defined  $main::use_crlf && $main::use_crlf == 1;
 
 sub testread ($$$$$$$) {
@@ -91,7 +89,6 @@ sub testpipe ($$$$$$) {
   } else {
     die "Unrecognized write: '$how_w'";
   }
-  binmode $fh; # remove any :utf8 set by PERL_UNICODE
   binmode $fh, ':crlf'
       if defined $main::use_crlf && $main::use_crlf == 1;
   testread($fh, $str, $read_c, $how_r, $write_c, $how_w, "pipe$why");
@@ -104,7 +101,6 @@ sub testfile ($$$$$$) {
   my $filename = tempfile();
   open my $fh, '>', $filename or die "open: > $filename: $!";
   select $fh;
-  binmode $fh; # remove any :utf8 set by PERL_UNICODE
   binmode $fh, ':crlf' 
       if defined $main::use_crlf && $main::use_crlf == 1;
   if ($how_w eq 'print') {	# AUTOFLUSH???
@@ -120,7 +116,6 @@ sub testfile ($$$$$$) {
   }
   close $fh or die "close: $!";
   open $fh, '<', $filename or die "open: < $filename: $!";
-  binmode $fh;
   binmode $fh, ':crlf'
       if defined $main::use_crlf && $main::use_crlf == 1;
   testread($fh, $str, $read_c, $how_r, $write_c, $how_w, "file$why");

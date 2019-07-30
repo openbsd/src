@@ -37,7 +37,6 @@
 #include "llvm/Analysis/BasicAliasAnalysis.h"
 #include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/MemorySSA.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionAliasAnalysis.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
@@ -59,17 +58,13 @@ struct LoopStandardAnalysisResults {
   ScalarEvolution &SE;
   TargetLibraryInfo &TLI;
   TargetTransformInfo &TTI;
-  MemorySSA *MSSA;
 };
-
-/// Enables memory ssa as a dependency for loop passes.
-extern cl::opt<bool> EnableMSSALoopDependency;
 
 /// Extern template declaration for the analysis set for this IR unit.
 extern template class AllAnalysesOn<Loop>;
 
 extern template class AnalysisManager<Loop, LoopStandardAnalysisResults &>;
-/// The loop analysis manager.
+/// \brief The loop analysis manager.
 ///
 /// See the documentation for the AnalysisManager template for detail
 /// documentation. This typedef serves as a convenient way to refer to this

@@ -26,6 +26,18 @@ using namespace llvm;
 using namespace llvm::codeview;
 using namespace llvm::pdb;
 
+static StringRef getLeafTypeName(TypeLeafKind K) {
+  switch (K) {
+#define TYPE_RECORD(EnumName, value, name)                                     \
+  case EnumName:                                                               \
+    return #EnumName;
+#include "llvm/DebugInfo/CodeView/CodeViewTypes.def"
+  default:
+    llvm_unreachable("Unknown type leaf kind!");
+  }
+  return "";
+}
+
 static std::string formatClassOptions(uint32_t IndentLevel,
                                       ClassOptions Options) {
   std::vector<std::string> Opts;
@@ -200,7 +212,7 @@ Error MinimalTypeDumpVisitor::visitTypeBegin(CVType &Record, TypeIndex Index) {
   if (!Hashes) {
     P.formatLine("{0} | {1} [size = {2}]",
                  fmt_align(Index, AlignStyle::Right, Width),
-                 formatTypeLeafKind(Record.Type), Record.length());
+                 getLeafTypeName(Record.Type), Record.length());
   } else {
     std::string H;
     if (Index.toArrayIndex() >= HashValues.size()) {
@@ -219,7 +231,7 @@ Error MinimalTypeDumpVisitor::visitTypeBegin(CVType &Record, TypeIndex Index) {
     }
     P.formatLine("{0} | {1} [size = {2}, hash = {3}]",
                  fmt_align(Index, AlignStyle::Right, Width),
-                 formatTypeLeafKind(Record.Type), Record.length(), H);
+                 getLeafTypeName(Record.Type), Record.length(), H);
   }
   P.Indent(Width + 3);
   return Error::success();
@@ -234,7 +246,7 @@ Error MinimalTypeDumpVisitor::visitTypeEnd(CVType &Record) {
 }
 
 Error MinimalTypeDumpVisitor::visitMemberBegin(CVMemberRecord &Record) {
-  P.formatLine("- {0}", formatTypeLeafKind(Record.Kind));
+  P.formatLine("- {0}", getLeafTypeName(Record.Kind));
   return Error::success();
 }
 
@@ -303,9 +315,8 @@ Error MinimalTypeDumpVisitor::visitKnownRecord(CVType &CVR,
     P.formatLine("unique name: `{0}`", Class.UniqueName);
   P.formatLine("vtable: {0}, base list: {1}, field list: {2}",
                Class.VTableShape, Class.DerivationList, Class.FieldList);
-  P.formatLine("options: {0}, sizeof {1}",
-               formatClassOptions(P.getIndentLevel(), Class.Options),
-               Class.Size);
+  P.formatLine("options: {0}",
+               formatClassOptions(P.getIndentLevel(), Class.Options));
   return Error::success();
 }
 
@@ -315,9 +326,8 @@ Error MinimalTypeDumpVisitor::visitKnownRecord(CVType &CVR,
   if (Union.hasUniqueName())
     P.formatLine("unique name: `{0}`", Union.UniqueName);
   P.formatLine("field list: {0}", Union.FieldList);
-  P.formatLine("options: {0}, sizeof {1}",
-               formatClassOptions(P.getIndentLevel(), Union.Options),
-               Union.Size);
+  P.formatLine("options: {0}",
+               formatClassOptions(P.getIndentLevel(), Union.Options));
   return Error::success();
 }
 
@@ -466,21 +476,6 @@ Error MinimalTypeDumpVisitor::visitKnownRecord(CVType &CVR,
 Error MinimalTypeDumpVisitor::visitKnownRecord(CVType &CVR, LabelRecord &R) {
   std::string Type = (R.Mode == LabelType::Far) ? "far" : "near";
   P.format(" type = {0}", Type);
-  return Error::success();
-}
-
-Error MinimalTypeDumpVisitor::visitKnownRecord(CVType &CVR,
-                                               PrecompRecord &Precomp) {
-  P.format(" start index = {0:X+}, types count = {1:X+}, signature = {2:X+},"
-           " precomp path = {3}",
-           Precomp.StartTypeIndex, Precomp.TypesCount, Precomp.Signature,
-           Precomp.PrecompFilePath);
-  return Error::success();
-}
-
-Error MinimalTypeDumpVisitor::visitKnownRecord(CVType &CVR,
-                                               EndPrecompRecord &EP) {
-  P.format(" signature = {0:X+}", EP.Signature);
   return Error::success();
 }
 

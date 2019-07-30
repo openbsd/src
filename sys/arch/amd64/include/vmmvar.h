@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.66 2019/05/17 19:07:16 guenther Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.51 2018/03/29 02:25:10 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -27,7 +27,7 @@
 #define VMM_MAX_DISKS_PER_VM	4
 #define VMM_MAX_PATH_DISK	128
 #define VMM_MAX_PATH_CDROM	128
-#define VMM_MAX_NAME_LEN	64
+#define VMM_MAX_NAME_LEN	32
 #define VMM_MAX_KERNEL_PATH	128
 #define VMM_MAX_VCPUS_PER_VM	64
 #define VMM_MAX_VM_MEM_SIZE	32768
@@ -321,22 +321,6 @@ enum {
 	VEI_DIR_IN
 };
 
-enum {
-	VMM_CPU_MODE_REAL,
-	VMM_CPU_MODE_PROT,
-	VMM_CPU_MODE_PROT32,
-	VMM_CPU_MODE_COMPAT,
-	VMM_CPU_MODE_LONG,
-	VMM_CPU_MODE_UNKNOWN,
-};
-
-/*
- * Port definitions not found elsewhere
- */
-#define PCKBC_AUX	0x61
-#define ELCR0		0x4D0
-#define ELCR1		0x4D1
-
 /*
  * vm exit data
  *  vm_exit_inout		: describes an IN/OUT exit
@@ -349,6 +333,16 @@ struct vm_exit_inout {
 	uint8_t			vei_encoding;	/* operand encoding */
 	uint16_t		vei_port;	/* port */
 	uint32_t		vei_data;	/* data */
+};
+
+/*
+ * union vm_exit
+ *
+ * Contains VM exit information communicated to vmd(8). This information is
+ * gathered by vmm(4) from the CPU on each exit that requires help from vmd.
+ */
+union vm_exit {
+	struct vm_exit_inout	vei;		/* IN/OUT exit */
 };
 
 /*
@@ -415,19 +409,10 @@ struct vcpu_segment_info {
 #define VCPU_REGS_MISC_ENABLE	6
 #define VCPU_REGS_NMSRS	(VCPU_REGS_MISC_ENABLE + 1)
 
-#define VCPU_REGS_DR0		0
-#define VCPU_REGS_DR1		1
-#define VCPU_REGS_DR2		2
-#define VCPU_REGS_DR3		3
-#define VCPU_REGS_DR6		4
-#define VCPU_REGS_DR7		5
-#define VCPU_REGS_NDRS	(VCPU_REGS_DR7 + 1)
-
 struct vcpu_reg_state {
 	uint64_t			vrs_gprs[VCPU_REGS_NGPRS];
 	uint64_t			vrs_crs[VCPU_REGS_NCRS];
 	uint64_t			vrs_msrs[VCPU_REGS_NMSRS];
-	uint64_t			vrs_drs[VCPU_REGS_NDRS];
 	struct vcpu_segment_info	vrs_sregs[VCPU_REGS_NSREGS];
 	struct vcpu_segment_info	vrs_gdtr;
 	struct vcpu_segment_info	vrs_idtr;
@@ -437,21 +422,6 @@ struct vm_mem_range {
 	paddr_t	vmr_gpa;
 	vaddr_t vmr_va;
 	size_t	vmr_size;
-};
-
-/*
- * struct vm_exit
- *
- * Contains VM exit information communicated to vmd(8). This information is
- * gathered by vmm(4) from the CPU on each exit that requires help from vmd.
- */
-struct vm_exit {
-	union {
-		struct vm_exit_inout	vei;		/* IN/OUT exit */
-	};
-
-	struct vcpu_reg_state		vrs;
-	int				cpl;
 };
 
 struct vm_create_params {
@@ -479,7 +449,7 @@ struct vm_run_params {
 	uint16_t	vrp_irq;		/* IRQ to inject */
 
 	/* Input/output parameter to VMM_IOC_RUN */
-	struct vm_exit	*vrp_exit;		/* updated exit data */
+	union vm_exit	*vrp_exit;		/* updated exit data */
 
 	/* Output parameter from VMM_IOC_RUN */
 	uint16_t	vrp_exit_reason;	/* exit reason */
@@ -529,9 +499,8 @@ struct vm_intr_params {
 #define VM_RWREGS_SREGS	0x2	/* read/write segment registers */
 #define VM_RWREGS_CRS	0x4	/* read/write CRs */
 #define VM_RWREGS_MSRS	0x8	/* read/write MSRs */
-#define VM_RWREGS_DRS	0x10	/* read/write DRs */
 #define VM_RWREGS_ALL	(VM_RWREGS_GPRS | VM_RWREGS_SREGS | VM_RWREGS_CRS | \
-    VM_RWREGS_MSRS | VM_RWREGS_DRS)
+    VM_RWREGS_MSRS)
 
 struct vm_rwregs_params {
 	/*
@@ -559,13 +528,12 @@ struct vm_rwregs_params {
 /*
  * clone host capabilities minus:
  *  debug store (CPUIDECX_DTES64, CPUIDECX_DSCPL, CPUID_DS)
- *  monitor/mwait (CPUIDECX_MWAIT, CPUIDECX_MWAITX)
- *  vmx/svm (CPUIDECX_VMX, CPUIDECX_SVM)
+ *  monitor/mwait (CPUIDECX_MWAIT)
+ *  vmx (CPUIDECX_VMX)
  *  smx (CPUIDECX_SMX)
  *  speedstep (CPUIDECX_EST)
  *  thermal (CPUIDECX_TM2, CPUID_ACPI, CPUID_TM)
  *  context id (CPUIDECX_CNXTID)
- *  machine check (CPUID_MCE, CPUID_MCA)
  *  silicon debug (CPUIDECX_SDBG)
  *  xTPR (CPUIDECX_XTPR)
  *  perf/debug (CPUIDECX_PDCM)
@@ -579,22 +547,16 @@ struct vm_rwregs_params {
  *  hyperthreading (CPUID_HTT)
  *  pending break enabled (CPUID_PBE)
  *  MTRR (CPUID_MTRR)
- *  Speculative execution control features (AMD)
  */
 #define VMM_CPUIDECX_MASK ~(CPUIDECX_EST | CPUIDECX_TM2 | CPUIDECX_MWAIT | \
     CPUIDECX_PDCM | CPUIDECX_VMX | CPUIDECX_DTES64 | \
     CPUIDECX_DSCPL | CPUIDECX_SMX | CPUIDECX_CNXTID | \
     CPUIDECX_SDBG | CPUIDECX_XTPR | CPUIDECX_PCID | \
     CPUIDECX_DCA | CPUIDECX_X2APIC | CPUIDECX_DEADLINE)
-#define VMM_ECPUIDECX_MASK ~(CPUIDECX_SVM | CPUIDECX_MWAITX)
 #define VMM_CPUIDEDX_MASK ~(CPUID_ACPI | CPUID_TM | \
     CPUID_HTT | CPUID_DS | CPUID_APIC | \
     CPUID_PSN | CPUID_SS | CPUID_PBE | \
-    CPUID_MTRR | CPUID_MCE | CPUID_MCA)
-#define VMM_AMDSPEC_EBX_MASK ~(CPUIDEBX_IBPB | CPUIDEBX_IBRS | \
-    CPUIDEBX_STIBP | CPUIDEBX_IBRS_ALWAYSON | CPUIDEBX_STIBP_ALWAYSON | \
-    CPUIDEBX_IBRS_PREF | CPUIDEBX_SSBD | CPUIDEBX_VIRT_SSBD | \
-    CPUIDEBX_SSBD_NOTREQ)
+    CPUID_MTRR)
 
 /*
  * SEFF flags - copy from host minus:
@@ -625,19 +587,11 @@ struct vm_rwregs_params {
     SEFF0EBX_AVX512BW | SEFF0EBX_AVX512VL)
 #define VMM_SEFF0ECX_MASK ~(SEFF0ECX_AVX512VBMI)
 
-/* EDX mask contains the bits to include */
-#define VMM_SEFF0EDX_MASK (SEFF0EDX_MD_CLEAR)
-
 /*
  * Extended function flags - copy from host minus:
  * 0x80000001  EDX:RDTSCP Support
  */
 #define VMM_FEAT_EFLAGS_MASK ~(CPUID_RDTSCP)
-
-/*
- * CPUID[0x4] deterministic cache info
- */
-#define VMM_CPUID4_CACHE_TOPOLOGY_MASK	0x3FF
 
 #ifdef _KERNEL
 
@@ -832,16 +786,6 @@ struct vcpu_gueststate
 	uint32_t	vg_exit_reason;		/* 0x88 */
 	uint64_t	vg_rflags;		/* 0x90 */
 	uint64_t	vg_xcr0;		/* 0x98 */
-	/*
-	 * Debug registers
-	 * - %dr4/%dr5 are aliased to %dr6/%dr7 (or cause #DE)
-	 * - %dr7 is saved automatically in the VMCS
-	 */
-	uint64_t	vg_dr0;			/* 0xa0 */
-	uint64_t	vg_dr1;			/* 0xa8 */
-	uint64_t	vg_dr2;			/* 0xb0 */
-	uint64_t	vg_dr3;			/* 0xb8 */
-	uint64_t	vg_dr6;			/* 0xc0 */
 };
 
 /*
@@ -880,7 +824,7 @@ struct vcpu {
 	uint8_t vc_virt_mode;
 
 	struct cpu_info *vc_last_pcpu;
-	struct vm_exit vc_exit;
+	union vm_exit vc_exit;
 
 	uint16_t vc_intr;
 	uint8_t vc_irqready;
@@ -892,10 +836,6 @@ struct vcpu {
 	struct vcpu_gueststate vc_gueststate;
 
 	uint8_t vc_event;
-
-	uint32_t vc_pvclock_version;
-	paddr_t vc_pvclock_system_gpa;
-	uint32_t vc_pvclock_system_tsc_mul;
 
 	/* VMX only */
 	uint64_t vc_vmx_basic;
@@ -935,7 +875,7 @@ int	vmwrite(uint64_t, uint64_t);
 int	vmread(uint64_t, uint64_t *);
 void	invvpid(uint64_t, struct vmx_invvpid_descriptor *);
 void	invept(uint64_t, struct vmx_invept_descriptor *);
-int	vmx_enter_guest(uint64_t *, struct vcpu_gueststate *, int, uint8_t);
+int	vmx_enter_guest(uint64_t *, struct vcpu_gueststate *, int);
 int	svm_enter_guest(uint64_t, struct vcpu_gueststate *,
     struct region_descriptor *);
 void	start_vmm_on_cpu(struct cpu_info *);

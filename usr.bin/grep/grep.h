@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.h,v 1.26 2019/01/23 23:00:54 tedu Exp $	*/
+/*	$OpenBSD: grep.h,v 1.25 2017/12/09 18:38:37 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -27,7 +27,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/stat.h>
 
 #include <limits.h>
 #include <regex.h>
@@ -107,7 +106,7 @@ typedef struct mmfile {
 	char	*base, *end, *ptr;
 } mmf_t;
 
-mmf_t		*mmopen(int fd, struct stat *sb);
+mmf_t		*mmopen(char *fn, char *mode);
 void		 mmclose(mmf_t *mmf);
 char		*mmfgetln(mmf_t *mmf, size_t *l);
 
@@ -115,8 +114,8 @@ char		*mmfgetln(mmf_t *mmf, size_t *l);
 struct file;
 typedef struct file file_t;
 
-file_t		*grep_fdopen(int fd);
-file_t		*grep_open(char *path);
+file_t		*grep_fdopen(int fd, char *mode);
+file_t		*grep_open(char *path, char *mode);
 int		 grep_bin_file(file_t *f);
 char		*grep_fgetln(file_t *f, size_t *l);
 void		 grep_close(file_t *f);

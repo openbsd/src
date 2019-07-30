@@ -10,7 +10,6 @@
 #ifndef LLVM_LIB_TARGET_WEBASSEMBLY_WEBASSEMBLYASMPRINTER_H
 #define LLVM_LIB_TARGET_WEBASSEMBLY_WEBASSEMBLYASMPRINTER_H
 
-#include "WebAssemblyMachineFunctionInfo.h"
 #include "WebAssemblySubtarget.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/MC/MCStreamer.h"
@@ -18,6 +17,7 @@
 
 namespace llvm {
 class MCSymbol;
+class WebAssemblyFunctionInfo;
 class WebAssemblyTargetStreamer;
 class WebAssemblyMCInstLower;
 
@@ -57,6 +57,7 @@ public:
   void EmitJumpTableInfo() override;
   void EmitConstantPool() override;
   void EmitFunctionBodyStart() override;
+  void EmitFunctionBodyEnd() override;
   void EmitInstruction(const MachineInstr *MI) override;
   const MCExpr *lowerConstant(const Constant *CV) override;
   bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,

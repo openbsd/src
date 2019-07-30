@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.174 2018/10/04 17:33:41 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.169 2018/03/18 21:05:21 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -191,9 +191,6 @@ tcp_template(struct tcpcb *tp)
 	struct mbuf *m;
 	struct tcphdr *th;
 
-	CTASSERT(sizeof(struct ip) + sizeof(struct tcphdr) <= MHLEN);
-	CTASSERT(sizeof(struct ip6_hdr) + sizeof(struct tcphdr) <= MHLEN);
-
 	if ((m = tp->t_template) == 0) {
 		m = m_get(M_DONTWAIT, MT_HEADER);
 		if (m == NULL)
@@ -211,6 +208,19 @@ tcp_template(struct tcpcb *tp)
 #endif /* INET6 */
 		}
 		m->m_len += sizeof (struct tcphdr);
+
+		/*
+		 * The link header, network header, TCP header, and TCP options
+		 * all must fit in this mbuf. For now, assume the worst case of
+		 * TCP options size. Eventually, compute this from tp flags.
+		 */
+		if (m->m_len + MAX_TCPOPTLEN + max_linkhdr >= MHLEN) {
+			MCLGET(m, M_DONTWAIT);
+			if ((m->m_flags & M_EXT) == 0) {
+				m_free(m);
+				return (0);
+			}
+		}
 	}
 
 	switch(tp->pf) {
@@ -423,6 +433,7 @@ tcp_newtcpcb(struct inpcb *inp)
 	tp->t_maxseg = tcp_mssdflt;
 	tp->t_maxopd = 0;
 
+	TCP_INIT_DELACK(tp);
 	for (i = 0; i < TCPT_NTIMERS; i++)
 		TCP_TIMER_INIT(tp, i);
 
@@ -506,6 +517,7 @@ tcp_close(struct tcpcb *tp)
 	tcp_freeq(tp);
 
 	tcp_canceltimers(tp);
+	TCP_CLEAR_DELACK(tp);
 	syn_cache_cleanup(tp);
 
 	/* Free SACK holes. */
@@ -517,7 +529,8 @@ tcp_close(struct tcpcb *tp)
 	}
 
 	m_free(tp->t_template);
-	/* Free tcpcb after all pending timers have been run. */
+
+	tp->t_flags |= TF_DEAD;
 	TCP_TIMER_ARM(tp, TCPT_REAPER, 0);
 
 	inp->inp_ppcb = NULL;
@@ -939,7 +952,7 @@ tcp_signature_tdb_init(struct tdb *tdbp, struct xformsw *xsp,
 	tdbp->tdb_amxkey = malloc(ii->ii_authkeylen, M_XDATA, M_NOWAIT);
 	if (tdbp->tdb_amxkey == NULL)
 		return (ENOMEM);
-	memcpy(tdbp->tdb_amxkey, ii->ii_authkey, ii->ii_authkeylen);
+	bcopy(ii->ii_authkey, tdbp->tdb_amxkey, ii->ii_authkeylen);
 	tdbp->tdb_amxkeylen = ii->ii_authkeylen;
 
 	return (0);
@@ -950,7 +963,7 @@ tcp_signature_tdb_zeroize(struct tdb *tdbp)
 {
 	if (tdbp->tdb_amxkey) {
 		explicit_bzero(tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
-		free(tdbp->tdb_amxkey, M_XDATA, tdbp->tdb_amxkeylen);
+		free(tdbp->tdb_amxkey, M_XDATA, 0);
 		tdbp->tdb_amxkey = NULL;
 	}
 

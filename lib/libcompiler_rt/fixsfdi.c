@@ -45,11 +45,13 @@ __fixsfdi(fp_t a) {
 #endif
 
 #if defined(__ARM_EABI__)
-#if defined(COMPILER_RT_ARMHF_TARGET)
-AEABI_RTABI di_int __aeabi_f2lz(fp_t a) {
+AEABI_RTABI di_int
+#if defined(__SOFT_FP__)
+__aeabi_f2lz(fp_t a) {
+#else
+__aeabi_f2lz(float a) {
+#endif
   return __fixsfdi(a);
 }
-#else
-AEABI_RTABI di_int __aeabi_f2lz(fp_t a) COMPILER_RT_ALIAS(__fixsfdi);
 #endif
-#endif
+

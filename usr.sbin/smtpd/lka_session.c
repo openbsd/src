@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.92 2018/12/28 11:40:29 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.81 2017/05/26 21:30:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -81,7 +81,7 @@ lka_session(uint64_t id, struct envelope *envelope)
 		tree_init(&sessions);
 	}
 
-	lks = xcalloc(1, sizeof(*lks));
+	lks = xcalloc(1, sizeof(*lks), "lka_session");
 	lks->id = id;
 	RB_INIT(&lks->expand.tree);
 	TAILQ_INIT(&lks->deliverylist);
@@ -93,7 +93,6 @@ lka_session(uint64_t id, struct envelope *envelope)
 	memset(&xn, 0, sizeof xn);
 	xn.type = EXPAND_ADDRESS;
 	xn.u.mailaddr = lks->envelope.rcpt;
-	lks->expand.parent = NULL;
 	lks->expand.rule = NULL;
 	lks->expand.queue = &lks->nodes;
 	expand_insert(&lks->expand, &xn);
@@ -104,7 +103,6 @@ void
 lka_session_forward_reply(struct forward_req *fwreq, int fd)
 {
 	struct lka_session     *lks;
-	struct dispatcher      *dsp;
 	struct rule	       *rule;
 	struct expandnode      *xn;
 	int			ret;
@@ -124,13 +122,12 @@ lka_session_forward_reply(struct forward_req *fwreq, int fd)
 		break;
 	case 1:
 		if (fd == -1) {
-			dsp = dict_get(env->sc_dispatchers, lks->rule->dispatcher);
-			if (dsp->u.local.forward_only) {
+			if (lks->expand.rule->r_forwardonly) {
 				log_trace(TRACE_EXPAND, "expand: no .forward "
 				    "for user %s on forward-only rule", fwreq->user);
 				lks->error = LKA_TEMPFAIL;
 			}
-			else if (dsp->u.local.expand_only) {
+			else if (lks->expand.rule->r_action == A_NONE) {
 				log_trace(TRACE_EXPAND, "expand: no .forward "
 				    "for user %s and no default action on rule", fwreq->user);
 				lks->error = LKA_PERMFAIL;
@@ -142,12 +139,12 @@ lka_session_forward_reply(struct forward_req *fwreq, int fd)
 			}
 		}
 		else {
-			dsp = dict_get(env->sc_dispatchers, rule->dispatcher);
-
 			/* expand for the current user and rule */
 			lks->expand.rule = rule;
 			lks->expand.parent = xn;
-
+			lks->expand.alias = 0;
+			xn->mapping = rule->r_mapping;
+			xn->userbase = rule->r_userbase;
 			/* forwards_get() will close the descriptor no matter what */
 			ret = forwards_get(fd, &lks->expand);
 			if (ret == -1) {
@@ -156,12 +153,12 @@ lka_session_forward_reply(struct forward_req *fwreq, int fd)
 				lks->error = LKA_TEMPFAIL;
 			}
 			else if (ret == 0) {
-				if (dsp->u.local.forward_only) {
+				if (lks->expand.rule->r_forwardonly) {
 					log_trace(TRACE_EXPAND, "expand: empty .forward "
 					    "for user %s on forward-only rule", fwreq->user);
 					lks->error = LKA_TEMPFAIL;
 				}
-				else if (dsp->u.local.expand_only) {
+				else if (lks->expand.rule->r_action == A_NONE) {
 					log_trace(TRACE_EXPAND, "expand: empty .forward "
 					    "for user %s and no default action on rule", fwreq->user);
 					lks->error = LKA_PERMFAIL;
@@ -178,11 +175,6 @@ lka_session_forward_reply(struct forward_req *fwreq, int fd)
 		/* temporary failure while looking up ~/.forward */
 		lks->error = LKA_TEMPFAIL;
 	}
-
-	if (lks->error == LKA_TEMPFAIL && lks->errormsg == NULL)
-		lks->errormsg = "424 4.2.4 Mailing list expansion problem";
-	if (lks->error == LKA_PERMFAIL && lks->errormsg == NULL)
-		lks->errormsg = "524 5.2.4 Mailing list expansion problem";
 
 	lka_resume(lks);
 }
@@ -211,7 +203,6 @@ lka_resume(struct lka_session *lks)
 		log_trace(TRACE_EXPAND, "expand: lka_done: expanded to empty "
 		    "delivery list");
 		lks->error = LKA_PERMFAIL;
-		lks->errormsg = "524 5.2.4 Mailing list expansion problem";
 	}
     error:
 	if (lks->error) {
@@ -262,8 +253,6 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 	struct envelope		ep;
 	struct expandnode	node;
 	struct mailaddr		maddr;
-	struct dispatcher      *dsp;
-	struct table	       *userbase;
 	int			r;
 	union lookup		lk;
 	char		       *tag;
@@ -271,7 +260,6 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 	if (xn->depth >= EXPAND_DEPTH) {
 		log_trace(TRACE_EXPAND, "expand: lka_expand: node too deep.");
 		lks->error = LKA_PERMFAIL;
-		lks->errormsg = "524 5.2.4 Mailing list expansion problem";
 		return;
 	}
 
@@ -292,22 +280,24 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		ep.dest = xn->u.mailaddr;
 		if (xn->parent) /* nodes with parent are forward addresses */
 			ep.flags |= EF_INTERNAL;
-
 		rule = ruleset_match(&ep);
-		if (rule == NULL || rule->reject) {
+		if (rule == NULL || rule->r_decision == R_REJECT) {
 			lks->error = (errno == EAGAIN) ?
 			    LKA_TEMPFAIL : LKA_PERMFAIL;
 			break;
 		}
 
-		dsp = dict_xget(env->sc_dispatchers, rule->dispatcher);
-		if (dsp->type == DISPATCHER_REMOTE) {
+		xn->mapping = rule->r_mapping;
+		xn->userbase = rule->r_userbase;
+
+		if (rule->r_action == A_RELAY || rule->r_action == A_RELAYVIA) {
 			lka_submit(lks, rule, xn);
 		}
-		else if (dsp->u.local.table_virtual) {
+		else if (rule->r_desttype == DEST_VDOM) {
 			/* expand */
 			lks->expand.rule = rule;
 			lks->expand.parent = xn;
+			lks->expand.alias = 1;
 
 			/* temporary replace the mailaddr with a copy where
 			 * we eventually strip the '+'-part before lookup.
@@ -326,60 +316,54 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 				log_trace(TRACE_EXPAND, "expand: lka_expand: "
 				    "no aliases for virtual");
 			}
-			if (lks->error == LKA_TEMPFAIL && lks->errormsg == NULL)
-				lks->errormsg = "424 4.2.4 Mailing list expansion problem";
-			if (lks->error == LKA_PERMFAIL && lks->errormsg == NULL)
-				lks->errormsg = "524 5.2.4 Mailing list expansion problem";
 		}
 		else {
 			lks->expand.rule = rule;
 			lks->expand.parent = xn;
-			xn->rule = rule;
-
+			lks->expand.alias = 1;
 			memset(&node, 0, sizeof node);
 			node.type = EXPAND_USERNAME;
 			xlowercase(node.u.user, xn->u.mailaddr.user,
 			    sizeof node.u.user);
+			node.mapping = rule->r_mapping;
+			node.userbase = rule->r_userbase;
 			expand_insert(&lks->expand, &node);
 		}
 		break;
 
 	case EXPAND_USERNAME:
 		log_trace(TRACE_EXPAND, "expand: lka_expand: username: %s "
-		    "[depth=%d, sameuser=%d]",
-		    xn->u.user, xn->depth, xn->sameuser);
+		    "[depth=%d]", xn->u.user, xn->depth);
+
+		if (xn->sameuser) {
+			log_trace(TRACE_EXPAND, "expand: lka_expand: same "
+			    "user, submitting");
+			lka_submit(lks, rule, xn);
+			break;
+		}
 
 		/* expand aliases with the given rule */
-		dsp = dict_xget(env->sc_dispatchers, rule->dispatcher);
-
 		lks->expand.rule = rule;
 		lks->expand.parent = xn;
-
-		if (!xn->sameuser &&
-		    (dsp->u.local.table_alias || dsp->u.local.table_virtual)) {
-			if (dsp->u.local.table_alias)
-				r = aliases_get(&lks->expand, xn->u.user);
-			if (dsp->u.local.table_virtual)
-				r = aliases_virtual_get(&lks->expand, &xn->u.mailaddr);
+		lks->expand.alias = 1;
+		xn->mapping = rule->r_mapping;
+		xn->userbase = rule->r_userbase;
+		if (rule->r_mapping) {
+			r = aliases_get(&lks->expand, xn->u.user);
 			if (r == -1) {
 				log_trace(TRACE_EXPAND, "expand: lka_expand: "
 				    "error in alias lookup");
 				lks->error = LKA_TEMPFAIL;
-				if (lks->errormsg == NULL)
-					lks->errormsg = "424 4.2.4 Mailing list expansion problem";
 			}
 			if (r)
 				break;
 		}
 
 		/* gilles+hackers@ -> gilles@ */
-		if ((tag = strchr(xn->u.user, *env->sc_subaddressing_delim)) != NULL) {
+		if ((tag = strchr(xn->u.user, *env->sc_subaddressing_delim)) != NULL)
 			*tag++ = '\0';
-			(void)strlcpy(xn->subaddress, tag, sizeof xn->subaddress);
-		}
 
-		userbase = table_find(env, dsp->u.local.table_userbase);
-		r = table_lookup(userbase, K_USERINFO, xn->u.user, &lk);
+		r = table_lookup(rule->r_userbase, NULL, xn->u.user, K_USERINFO, &lk);
 		if (r == -1) {
 			log_trace(TRACE_EXPAND, "expand: lka_expand: "
 			    "backend error while searching user");
@@ -392,19 +376,10 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 			lks->error = LKA_PERMFAIL;
 			break;
 		}
-		xn->realuser = 1;
-
-		if (xn->sameuser && xn->parent->forwarded) {
-			log_trace(TRACE_EXPAND, "expand: lka_expand: same "
-			    "user, submitting");
-			lka_submit(lks, rule, xn);
-			break;
-		}
 
 		/* no aliases found, query forward file */
 		lks->rule = rule;
 		lks->node = xn;
-		xn->forwarded = 1;
 
 		memset(&fwreq, 0, sizeof(fwreq));
 		fwreq.id = lks->id;
@@ -419,8 +394,7 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		break;
 
 	case EXPAND_FILENAME:
-		dsp = dict_xget(env->sc_dispatchers, rule->dispatcher);
-		if (dsp->u.local.forward_only) {
+		if (rule->r_forwardonly) {
 			log_trace(TRACE_EXPAND, "expand: filename matched on forward-only rule");
 			lks->error = LKA_TEMPFAIL;
 			break;
@@ -431,8 +405,7 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		break;
 
 	case EXPAND_ERROR:
-		dsp = dict_xget(env->sc_dispatchers, rule->dispatcher);
-		if (dsp->u.local.forward_only) {
+		if (rule->r_forwardonly) {
 			log_trace(TRACE_EXPAND, "expand: error matched on forward-only rule");
 			lks->error = LKA_TEMPFAIL;
 			break;
@@ -447,14 +420,34 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		break;
 
 	case EXPAND_FILTER:
-		dsp = dict_xget(env->sc_dispatchers, rule->dispatcher);
-		if (dsp->u.local.forward_only) {
+		if (rule->r_forwardonly) {
 			log_trace(TRACE_EXPAND, "expand: filter matched on forward-only rule");
 			lks->error = LKA_TEMPFAIL;
 			break;
 		}
 		log_trace(TRACE_EXPAND, "expand: lka_expand: filter: %s "
 		    "[depth=%d]", xn->u.buffer, xn->depth);
+		lka_submit(lks, rule, xn);
+		break;
+
+	case EXPAND_MAILDIR:
+		log_trace(TRACE_EXPAND, "expand: lka_expand: maildir: %s "
+		    "[depth=%d]", xn->u.buffer, xn->depth);
+		r = table_lookup(rule->r_userbase, NULL,
+		    xn->parent->u.user, K_USERINFO, &lk);
+		if (r == -1) {
+			log_trace(TRACE_EXPAND, "expand: lka_expand: maildir: "
+			    "backend error while searching user");
+			lks->error = LKA_TEMPFAIL;
+			break;
+		}
+		if (r == 0) {
+			log_trace(TRACE_EXPAND, "expand: lka_expand: maildir: "
+			    "user-part does not match system user");
+			lks->error = LKA_PERMFAIL;
+			break;
+		}
+
 		lka_submit(lks, rule, xn);
 		break;
 	}
@@ -476,57 +469,101 @@ lka_find_ancestor(struct expandnode *xn, enum expand_type type)
 static void
 lka_submit(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 {
+	union lookup		 lk;
 	struct envelope		*ep;
-	struct dispatcher	*dsp;
-	const char		*user;
-	const char		*format;
+	struct expandnode	*xn2;
+	int			 r;
 
-	ep = xmemdup(&lks->envelope, sizeof *ep);
-	(void)strlcpy(ep->dispatcher, rule->dispatcher, sizeof ep->dispatcher);
+	ep = xmemdup(&lks->envelope, sizeof *ep, "lka_submit");
+	ep->expire = rule->r_qexpire;
 
-	dsp = dict_xget(env->sc_dispatchers, ep->dispatcher);
-
-	switch (dsp->type) {
-	case DISPATCHER_REMOTE:
+	switch (rule->r_action) {
+	case A_RELAY:
+	case A_RELAYVIA:
 		if (xn->type != EXPAND_ADDRESS)
 			fatalx("lka_deliver: expect address");
 		ep->type = D_MTA;
 		ep->dest = xn->u.mailaddr;
+		ep->agent.mta.relay = rule->r_value.relayhost;
+
+		/* only rewrite if not a bounce */
+		if (ep->sender.user[0] && rule->r_as && rule->r_as->user[0])
+			(void)strlcpy(ep->sender.user, rule->r_as->user,
+			    sizeof ep->sender.user);
+		if (ep->sender.user[0] && rule->r_as && rule->r_as->domain[0])
+			(void)strlcpy(ep->sender.domain, rule->r_as->domain,
+			    sizeof ep->sender.domain);
 		break;
-
-	case DISPATCHER_BOUNCE:
-	case DISPATCHER_LOCAL:
-		if (xn->type != EXPAND_USERNAME &&
-		    xn->type != EXPAND_FILENAME &&
-		    xn->type != EXPAND_FILTER)
-			fatalx("lka_deliver: wrong type: %d", xn->type);
-
+	case A_NONE:
+	case A_MBOX:
+	case A_MAILDIR:
+	case A_FILENAME:
+	case A_MDA:
+	case A_LMTP:
 		ep->type = D_MDA;
 		ep->dest = lka_find_ancestor(xn, EXPAND_ADDRESS)->u.mailaddr;
-		if (xn->type == EXPAND_USERNAME) {
-			(void)strlcpy(ep->mda_user, xn->u.user, sizeof(ep->mda_user));
-			(void)strlcpy(ep->mda_subaddress, xn->subaddress, sizeof(ep->mda_subaddress));
+
+		/* set username */
+		if ((xn->type == EXPAND_FILTER || xn->type == EXPAND_FILENAME)
+		    && xn->alias) {
+			(void)strlcpy(ep->agent.mda.username, SMTPD_USER,
+			    sizeof(ep->agent.mda.username));
 		}
 		else {
-			user = !xn->parent->realuser ?
-			    SMTPD_USER :
-			    xn->parent->u.user;
-			(void)strlcpy(ep->mda_user, user, sizeof (ep->mda_user));
+			xn2 = lka_find_ancestor(xn, EXPAND_USERNAME);
+			(void)strlcpy(ep->agent.mda.username, xn2->u.user,
+			    sizeof(ep->agent.mda.username));
+		}
 
-			/* this battle needs to be fought ... */
-			if (xn->type == EXPAND_FILTER &&
-			    strcmp(ep->mda_user, SMTPD_USER) == 0)
-				log_warnx("commands executed from aliases "
-				    "run with %s privileges", SMTPD_USER);
+		r = table_lookup(rule->r_userbase, NULL, ep->agent.mda.username,
+		    K_USERINFO, &lk);
+		if (r <= 0) {
+			lks->error = (r == -1) ? LKA_TEMPFAIL : LKA_PERMFAIL;
+			free(ep);
+			return;
+		}
+		(void)strlcpy(ep->agent.mda.usertable, rule->r_userbase->t_name,
+		    sizeof ep->agent.mda.usertable);
+		(void)strlcpy(ep->agent.mda.username, lk.userinfo.username,
+		    sizeof ep->agent.mda.username);
+		strlcpy(ep->agent.mda.delivery_user, rule->r_delivery_user,
+		    sizeof ep->agent.mda.delivery_user);
 
-			if (xn->type == EXPAND_FILENAME)
-				format = "/usr/libexec/mail.mboxfile -f %%{mbox.from} %s";
-			else if (xn->type == EXPAND_FILTER)
-				format = "%s";
-			(void)snprintf(ep->mda_exec, sizeof(ep->mda_exec),
-			    format, xn->u.buffer);
+		if (xn->type == EXPAND_FILENAME) {
+			ep->agent.mda.method = A_FILENAME;
+			(void)strlcpy(ep->agent.mda.buffer, xn->u.buffer,
+			    sizeof ep->agent.mda.buffer);
+		}
+		else if (xn->type == EXPAND_FILTER) {
+			ep->agent.mda.method = A_MDA;
+			(void)strlcpy(ep->agent.mda.buffer, xn->u.buffer,
+			    sizeof ep->agent.mda.buffer);
+		}
+		else if (xn->type == EXPAND_USERNAME) {
+			ep->agent.mda.method = rule->r_action;
+			(void)strlcpy(ep->agent.mda.buffer, rule->r_value.buffer,
+			    sizeof ep->agent.mda.buffer);
+		}
+		else if (xn->type == EXPAND_MAILDIR) {
+			ep->agent.mda.method = A_MAILDIR;
+			(void)strlcpy(ep->agent.mda.buffer, xn->u.buffer,
+			    sizeof ep->agent.mda.buffer);
+		}
+		else
+			fatalx("lka_deliver: bad node type");
+
+		r = mda_expand_format(ep->agent.mda.buffer,
+		    sizeof(ep->agent.mda.buffer), ep, &lk.userinfo);
+		if (!r) {
+			lks->error = LKA_TEMPFAIL;
+			log_warnx("warn: format string error while"
+			    " expanding for user %s", ep->agent.mda.username);
+			free(ep);
+			return;
 		}
 		break;
+	default:
+		fatalx("lka_submit: bad rule action");
 	}
 
 	TAILQ_INSERT_TAIL(&lks->deliverylist, ep, entry);

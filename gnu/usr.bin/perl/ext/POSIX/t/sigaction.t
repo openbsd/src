@@ -5,7 +5,7 @@ BEGIN{
 	use Config;
 	eval 'use POSIX';
 	if($@ || $^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'dos' ||
-	   ($^O eq 'VMS' && !$Config{'d_sigaction'})) {
+	   $^O eq 'MacOS' || ($^O eq 'VMS' && !$Config{'d_sigaction'})) {
 		print "1..0\n";
 		exit 0;
 	}
@@ -14,7 +14,7 @@ BEGIN{
 use Test::More tests => 36;
 
 use strict;
-our ( $bad, $bad7, $ok10, $bad18, $ok );
+use vars qw/$bad $bad7 $ok10 $bad18 $ok/;
 
 $^W=1;
 
@@ -202,11 +202,7 @@ SKIP: {
     $skip{pid}{$^O} = $skip{uid}{$^O} = "not set for kill()"
         if (($^O.$Config{osvers}) =~ /^darwin[0-8]\./
             ||
-            ($^O.$Config{osvers}) =~ /^openbsd[0-6]\./
-            ||
-            ($^O eq 'gnu')
-            ||
-            ($^O eq 'dragonfly'));
+            ($^O.$Config{osvers}) =~ /^openbsd[0-6]\./);
     my $tests = keys %{{ %siginfo, %opt_val }};
     eval 'use POSIX qw(SA_SIGINFO); SA_SIGINFO';
     skip("no SA_SIGINFO", $tests) if $@;

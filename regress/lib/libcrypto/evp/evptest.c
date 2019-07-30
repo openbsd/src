@@ -1,4 +1,3 @@
-/*	$OpenBSD: evptest.c,v 1.8 2019/03/17 18:33:01 tb Exp $	*/
 /* Written by Ben Laurie, 2001 */
 /*
  * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
@@ -144,7 +143,6 @@ test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
 {
 	EVP_CIPHER_CTX ctx;
 	unsigned char out[4096];
-	const unsigned char *eiv;
 	int outl, outl2;
 
 	printf("Testing cipher %s%s\n", EVP_CIPHER_name(c),
@@ -161,12 +159,8 @@ test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
 		test1_exit(5);
 	}
 	EVP_CIPHER_CTX_init(&ctx);
-	EVP_CIPHER_CTX_set_flags(&ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
 	if (encdec != 0) {
-		eiv = iv;
-		if (EVP_CIPHER_mode(c) == EVP_CIPH_WRAP_MODE && in == 0)
-			eiv = NULL;
-		if (!EVP_EncryptInit_ex(&ctx, c, NULL, key, eiv)) {
+		if (!EVP_EncryptInit_ex(&ctx, c,NULL, key, iv)) {
 			fprintf(stderr, "EncryptInit failed\n");
 			ERR_print_errors_fp(stderr);
 			test1_exit(10);
@@ -199,10 +193,7 @@ test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
 	}
 
 	if (encdec <= 0) {
-		eiv = iv;
-		if (EVP_CIPHER_mode(c) == EVP_CIPH_WRAP_MODE && in == 0)
-			eiv = NULL;
-		if (!EVP_DecryptInit_ex(&ctx, c,NULL, key, eiv)) {
+		if (!EVP_DecryptInit_ex(&ctx, c,NULL, key, iv)) {
 			fprintf(stderr, "DecryptInit failed\n");
 			ERR_print_errors_fp(stderr);
 			test1_exit(11);

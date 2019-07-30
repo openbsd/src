@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.113 2019/02/13 23:47:43 dlg Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.107 2018/03/27 15:03:52 dhill Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -216,9 +216,8 @@ in6_get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
  * in6 - upper 64bits are preserved
  */
 int
-in6_get_soii_ifid(struct ifnet *ifp0, struct in6_addr *in6)
+in6_get_soii_ifid(struct ifnet *ifp, struct in6_addr *in6)
 {
-	struct ifnet *ifp;
 	SHA2_CTX ctx;
 	u_int8_t digest[SHA512_DIGEST_LENGTH];
 	struct in6_addr prefix;
@@ -226,25 +225,10 @@ in6_get_soii_ifid(struct ifnet *ifp0, struct in6_addr *in6)
 	int dad_counter = 0; /* XXX not used */
 	char *addr;
 
-	if (ifp0->if_xflags & IFXF_INET6_NOSOII)
+	if (ifp->if_xflags & IFXF_INET6_NOSOII)
 		return -1;
 
-	sdl = ifp0->if_sadl;
-
-	if (sdl == NULL || sdl->sdl_alen == 0) {
-		/*
-		 * try to get it from some other hardware interface like
-		 * in in6_get_ifid()
-		 */
-		TAILQ_FOREACH(ifp, &ifnet, if_list) {
-			if (ifp == ifp0)
-				continue;
-			sdl = ifp->if_sadl;
-			if (sdl != NULL && sdl->sdl_alen != 0)
-				break;
-		}
-	}
-
+	sdl = ifp->if_sadl;
 	if (sdl == NULL || sdl->sdl_alen == 0)
 		return -1;
 
@@ -293,8 +277,19 @@ in6_get_ifid(struct ifnet *ifp0, struct in6_addr *in6)
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp == ifp0)
 			continue;
-		if (in6_get_hw_ifid(ifp, in6) == 0)
+		if (in6_get_hw_ifid(ifp, in6) != 0)
+			continue;
+
+		/*
+		 * to borrow ifid from other interface, ifid needs to be
+		 * globally unique
+		 */
+		if (IFID_UNIVERSAL(in6)) {
+			nd6log((LOG_DEBUG,
+			    "%s: borrow interface identifier from %s\n",
+			    ifp0->if_xname, ifp->if_xname));
 			goto success;
+		}
 	}
 
 	/* last resort: get from random number source */
@@ -374,12 +369,11 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 		return (0); /* No need to install a connected route. */
 	}
 
-	flags = RTF_CONNECTED | RTF_MPATH;
+	flags = RTF_CONNECTED;
 	if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 		flags |= RTF_CLONING;
 
-	error = rt_ifa_add(&ia6->ia_ifa, flags, ia6->ia_ifa.ifa_addr,
-	    ifp->if_rdomain);
+	error = rt_ifa_add(&ia6->ia_ifa, flags, ia6->ia_ifa.ifa_addr);
 	if (error) {
 		in6_purgeaddr(&ia6->ia_ifa);
 		return (error);
@@ -392,13 +386,9 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 int
 in6_ifattach_loopback(struct ifnet *ifp)
 {
-	struct in6_addr in6 = in6addr_loopback;
 	struct in6_aliasreq ifra;
 
 	KASSERT(ifp->if_flags & IFF_LOOPBACK);
-
-	if (in6ifa_ifpwithaddr(ifp, &in6) != NULL)
-		return (0);
 
 	bzero(&ifra, sizeof(ifra));
 	strncpy(ifra.ifra_name, ifp->if_xname, sizeof(ifra.ifra_name));
@@ -430,6 +420,57 @@ in6_ifattach_loopback(struct ifnet *ifp)
 }
 
 /*
+ * compute NI group address, based on the current hostname setting.
+ * see draft-ietf-ipngwg-icmp-name-lookup-* (04 and later).
+ *
+ * when ifp == NULL, the caller is responsible for filling scopeid.
+ */
+int
+in6_nigroup(struct ifnet *ifp, const char *name, int namelen,
+    struct sockaddr_in6 *sa6)
+{
+	const char *p;
+	u_int8_t *q;
+	SHA2_CTX ctx;
+	u_int8_t digest[SHA512_DIGEST_LENGTH];
+	u_int8_t l;
+	u_int8_t n[64];	/* a single label must not exceed 63 chars */
+
+	if (!namelen || !name)
+		return -1;
+
+	p = name;
+	while (p && *p && *p != '.' && p - name < namelen)
+		p++;
+	if (p - name > sizeof(n) - 1)
+		return -1;	/* label too long */
+	l = p - name;
+	strncpy((char *)n, name, l);
+	n[(int)l] = '\0';
+	for (q = n; *q; q++) {
+		if ('A' <= *q && *q <= 'Z')
+			*q = *q - 'A' + 'a';
+	}
+
+	/* generate 8 bytes of pseudo-random value. */
+	SHA512Init(&ctx);
+	SHA512Update(&ctx, &l, sizeof(l));
+	SHA512Update(&ctx, n, l);
+	SHA512Final(digest, &ctx);
+
+	bzero(sa6, sizeof(*sa6));
+	sa6->sin6_family = AF_INET6;
+	sa6->sin6_len = sizeof(*sa6);
+	sa6->sin6_addr.s6_addr16[0] = htons(0xff02);
+	sa6->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
+	sa6->sin6_addr.s6_addr8[11] = 2;
+	memcpy(&sa6->sin6_addr.s6_addr32[3], digest,
+	    sizeof(sa6->sin6_addr.s6_addr32[3]));
+
+	return 0;
+}
+
+/*
  * XXX multiple loopback interface needs more care.  for instance,
  * nodelocal address needs to be configured onto only one of them.
  * XXX multiple link-local address case
@@ -457,13 +498,13 @@ in6_ifattach(struct ifnet *ifp)
 	if ((ifp->if_flags & IFF_MULTICAST) == 0)
 		return (EINVAL);
 
-	/*
-	 * Assign loopback address if this lo(4) interface is the
-	 * default for its rdomain.
-	 */
-	if ((ifp->if_flags & IFF_LOOPBACK) &&
-	    (ifp->if_index == rtable_loindex(ifp->if_rdomain))) {
+	/* Assign loopback address, if there's none. */
+	if (ifp->if_flags & IFF_LOOPBACK) {
+		struct in6_addr in6 = in6addr_loopback;
 		int error;
+
+		if (in6ifa_ifpwithaddr(ifp, &in6) != NULL)
+			return (0);
 
 		error = in6_ifattach_loopback(ifp);
 		if (error)

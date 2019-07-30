@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.42 2019/06/10 23:26:29 dlg Exp $	*/
+/*	$OpenBSD: time.h,v 1.37 2017/12/11 23:31:16 jca Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -84,8 +84,6 @@ struct timezone {
 /* Operations on timevals. */
 #define	timerclear(tvp)		(tvp)->tv_sec = (tvp)->tv_usec = 0
 #define	timerisset(tvp)		((tvp)->tv_sec || (tvp)->tv_usec)
-#define	timerisvalid(tvp)						\
-	((tvp)->tv_usec >= 0 && (tvp)->tv_usec < 1000000)
 #define	timercmp(tvp, uvp, cmp)						\
 	(((tvp)->tv_sec == (uvp)->tv_sec) ?				\
 	    ((tvp)->tv_usec cmp (uvp)->tv_usec) :			\
@@ -112,8 +110,6 @@ struct timezone {
 /* Operations on timespecs. */
 #define	timespecclear(tsp)		(tsp)->tv_sec = (tsp)->tv_nsec = 0
 #define	timespecisset(tsp)		((tsp)->tv_sec || (tsp)->tv_nsec)
-#define	timespecisvalid(tsp)						\
-	((tsp)->tv_nsec >= 0 && (tsp)->tv_nsec < 1000000000L)
 #define	timespeccmp(tsp, usp, cmp)					\
 	(((tsp)->tv_sec == (usp)->tv_sec) ?				\
 	    ((tsp)->tv_nsec cmp (usp)->tv_nsec) :			\
@@ -172,38 +168,39 @@ struct bintime {
 	uint64_t frac;
 };
 
-#define bintimecmp(btp, ctp, cmp)					\
-	((btp)->sec == (ctp)->sec ?					\
-	    (btp)->frac cmp (ctp)->frac :				\
-	    (btp)->sec cmp (ctp)->sec)
-
 static __inline void
-bintimeaddfrac(const struct bintime *bt, uint64_t x, struct bintime *ct)
+bintime_addx(struct bintime *bt, uint64_t x)
 {
-	ct->sec = bt->sec;
-	if (bt->frac > bt->frac + x)
-		ct->sec++;
-	ct->frac = bt->frac + x;
+	uint64_t u;
+
+	u = bt->frac;
+	bt->frac += x;
+	if (u > bt->frac)
+		bt->sec++;
 }
 
 static __inline void
-bintimeadd(const struct bintime *bt, const struct bintime *ct,
-    struct bintime *dt)
+bintime_add(struct bintime *bt, struct bintime *bt2)
 {
-	dt->sec = bt->sec + ct->sec;
-	if (bt->frac > bt->frac + ct->frac)
-		dt->sec++;
-	dt->frac = bt->frac + ct->frac;
+	uint64_t u;
+
+	u = bt->frac;
+	bt->frac += bt2->frac;
+	if (u > bt->frac)
+		bt->sec++;
+	bt->sec += bt2->sec;
 }
 
 static __inline void
-bintimesub(const struct bintime *bt, const struct bintime *ct,
-    struct bintime *dt)
+bintime_sub(struct bintime *bt, struct bintime *bt2)
 {
-	dt->sec = bt->sec - ct->sec;
-	if (bt->frac < bt->frac - ct->frac)
-		dt->sec--;
-	dt->frac = bt->frac - ct->frac;
+	uint64_t u;
+
+	u = bt->frac;
+	bt->frac -= bt2->frac;
+	if (u < bt->frac)
+		bt->sec--;
+	bt->sec -= bt2->sec;
 }
 
 /*-
@@ -221,30 +218,34 @@ bintimesub(const struct bintime *bt, const struct bintime *ct,
  */
 
 static __inline void
-BINTIME_TO_TIMESPEC(const struct bintime *bt, struct timespec *ts)
+bintime2timespec(struct bintime *bt, struct timespec *ts)
 {
+
 	ts->tv_sec = bt->sec;
 	ts->tv_nsec = (long)(((uint64_t)1000000000 * (uint32_t)(bt->frac >> 32)) >> 32);
 }
 
 static __inline void
-TIMESPEC_TO_BINTIME(const struct timespec *ts, struct bintime *bt)
+timespec2bintime(struct timespec *ts, struct bintime *bt)
 {
+
 	bt->sec = ts->tv_sec;
 	/* 18446744073 = int(2^64 / 1000000000) */
 	bt->frac = (uint64_t)ts->tv_nsec * (uint64_t)18446744073ULL; 
 }
 
 static __inline void
-BINTIME_TO_TIMEVAL(const struct bintime *bt, struct timeval *tv)
+bintime2timeval(struct bintime *bt, struct timeval *tv)
 {
+
 	tv->tv_sec = bt->sec;
 	tv->tv_usec = (long)(((uint64_t)1000000 * (uint32_t)(bt->frac >> 32)) >> 32);
 }
 
 static __inline void
-TIMEVAL_TO_BINTIME(const struct timeval *tv, struct bintime *bt)
+timeval2bintime(struct timeval *tv, struct bintime *bt)
 {
+
 	bt->sec = (time_t)tv->tv_sec;
 	/* 18446744073709 = int(2^64 / 1000000) */
 	bt->frac = (uint64_t)tv->tv_usec * (uint64_t)18446744073709ULL;
@@ -254,7 +255,7 @@ extern volatile time_t time_second;	/* Seconds since epoch, wall time. */
 extern volatile time_t time_uptime;	/* Seconds since reboot. */
 
 /*
- * Functions for looking at our clocks: [get]{bin,nano,micro}[boot|up]time()
+ * Functions for looking at our clock: [get]{bin,nano,micro}[up]time()
  *
  * Functions without the "get" prefix returns the best timestamp
  * we can produce in the given format.
@@ -266,10 +267,7 @@ extern volatile time_t time_uptime;	/* Seconds since reboot. */
  * Functions containing "up" returns time relative to boot and
  * should be used for calculating time intervals.
  *
- * Functions containing "boot" return the GMT time at which the
- * system booted.
- *
- * Functions with just "time" return the current GMT time.
+ * Functions without "up" returns GMT time.
  *
  * Functions with the "get" prefix returns a less precise result
  * much faster than the functions without "get" prefix and should
@@ -291,9 +289,6 @@ void	microuptime(struct timeval *);
 void	getnanouptime(struct timespec *);
 void	getmicrouptime(struct timeval *);
 
-void	binboottime(struct bintime *);
-void	microboottime(struct timeval *);
-
 struct proc;
 int	clock_gettime(struct proc *, clockid_t, struct timespec *);
 
@@ -301,7 +296,7 @@ int	timespecfix(struct timespec *);
 int	itimerfix(struct timeval *);
 int	itimerdecr(struct itimerval *itp, int usec);
 void	itimerround(struct timeval *);
-int	settime(const struct timespec *);
+int	settime(struct timespec *);
 int	ratecheck(struct timeval *, const struct timeval *);
 int	ppsratecheck(struct timeval *, int *, int);
 
@@ -332,20 +327,6 @@ void clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
 
 /* Traditional POSIX base year */
 #define POSIX_BASE_YEAR 1970
-
-static __inline void
-NSEC_TO_TIMEVAL(uint64_t ns, struct timeval *tv)
-{
-	tv->tv_sec = ns / 1000000000L;
-	tv->tv_usec = (ns % 1000000000L) / 1000;
-}
-
-static __inline void
-NSEC_TO_TIMESPEC(uint64_t ns, struct timespec *tv)
-{
-	tv->tv_sec = ns / 1000000000L;
-	tv->tv_nsec = ns % 1000000000L;
-}
 
 #else /* !_KERNEL */
 #include <time.h>

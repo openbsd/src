@@ -17,7 +17,7 @@
 
 //===----------------------------------------------------------------------===//
 /// @class POSIXStopInfo
-/// Simple base class for all POSIX-specific StopInfo objects.
+/// @brief Simple base class for all POSIX-specific StopInfo objects.
 ///
 class POSIXStopInfo : public lldb_private::StopInfo {
 public:
@@ -27,7 +27,7 @@ public:
 
 //===----------------------------------------------------------------------===//
 /// @class POSIXLimboStopInfo
-/// Represents the stop state of a process ready to exit.
+/// @brief Represents the stop state of a process ready to exit.
 ///
 class POSIXLimboStopInfo : public POSIXStopInfo {
 public:
@@ -45,8 +45,21 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+/// @class POSIXCrashStopInfo
+/// @brief Represents the stop state of process that is ready to crash.
+///
+class POSIXCrashStopInfo : public POSIXStopInfo {
+public:
+  POSIXCrashStopInfo(FreeBSDThread &thread, uint32_t status, CrashReason reason,
+                     lldb::addr_t fault_addr);
+  ~POSIXCrashStopInfo();
+
+  lldb::StopReason GetStopReason() const;
+};
+
+//===----------------------------------------------------------------------===//
 /// @class POSIXNewThreadStopInfo
-/// Represents the stop state of process when a new thread is spawned.
+/// @brief Represents the stop state of process when a new thread is spawned.
 ///
 
 class POSIXNewThreadStopInfo : public POSIXStopInfo {

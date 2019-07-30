@@ -14,9 +14,7 @@
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/TargetInstrInfo.h"
-#include "llvm/CodeGen/TargetLowering.h"
-#include "llvm/CodeGen/TargetSubtargetInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
@@ -26,6 +24,9 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
 
 using namespace llvm;
@@ -564,24 +565,6 @@ bool llvm::returnTypeIsEligibleForTailCall(const Function *F,
     return false;
 
   const Value *RetVal = Ret->getOperand(0), *CallVal = I;
-  // Intrinsic like llvm.memcpy has no return value, but the expanded
-  // libcall may or may not have return value. On most platforms, it
-  // will be expanded as memcpy in libc, which returns the first
-  // argument. On other platforms like arm-none-eabi, memcpy may be
-  // expanded as library call without return value, like __aeabi_memcpy.
-  const CallInst *Call = cast<CallInst>(I);
-  if (Function *F = Call->getCalledFunction()) {
-    Intrinsic::ID IID = F->getIntrinsicID();
-    if (((IID == Intrinsic::memcpy &&
-          TLI.getLibcallName(RTLIB::MEMCPY) == StringRef("memcpy")) ||
-         (IID == Intrinsic::memmove &&
-          TLI.getLibcallName(RTLIB::MEMMOVE) == StringRef("memmove")) ||
-         (IID == Intrinsic::memset &&
-          TLI.getLibcallName(RTLIB::MEMSET) == StringRef("memset"))) &&
-        RetVal == Call->getArgOperand(0))
-      return true;
-  }
-
   SmallVector<unsigned, 4> RetPath, CallPath;
   SmallVector<CompositeType *, 4> RetSubTypes, CallSubTypes;
 
@@ -629,26 +612,26 @@ bool llvm::returnTypeIsEligibleForTailCall(const Function *F,
   return true;
 }
 
-static void collectEHScopeMembers(
-    DenseMap<const MachineBasicBlock *, int> &EHScopeMembership, int EHScope,
+static void collectFuncletMembers(
+    DenseMap<const MachineBasicBlock *, int> &FuncletMembership, int Funclet,
     const MachineBasicBlock *MBB) {
   SmallVector<const MachineBasicBlock *, 16> Worklist = {MBB};
   while (!Worklist.empty()) {
     const MachineBasicBlock *Visiting = Worklist.pop_back_val();
-    // Don't follow blocks which start new scopes.
+    // Don't follow blocks which start new funclets.
     if (Visiting->isEHPad() && Visiting != MBB)
       continue;
 
-    // Add this MBB to our scope.
-    auto P = EHScopeMembership.insert(std::make_pair(Visiting, EHScope));
+    // Add this MBB to our funclet.
+    auto P = FuncletMembership.insert(std::make_pair(Visiting, Funclet));
 
     // Don't revisit blocks.
     if (!P.second) {
-      assert(P.first->second == EHScope && "MBB is part of two scopes!");
+      assert(P.first->second == Funclet && "MBB is part of two funclets!");
       continue;
     }
 
-    // Returns are boundaries where scope transfer can occur, don't follow
+    // Returns are boundaries where funclet transfer can occur, don't follow
     // successors.
     if (Visiting->isReturnBlock())
       continue;
@@ -659,25 +642,25 @@ static void collectEHScopeMembers(
 }
 
 DenseMap<const MachineBasicBlock *, int>
-llvm::getEHScopeMembership(const MachineFunction &MF) {
-  DenseMap<const MachineBasicBlock *, int> EHScopeMembership;
+llvm::getFuncletMembership(const MachineFunction &MF) {
+  DenseMap<const MachineBasicBlock *, int> FuncletMembership;
 
   // We don't have anything to do if there aren't any EH pads.
-  if (!MF.hasEHScopes())
-    return EHScopeMembership;
+  if (!MF.hasEHFunclets())
+    return FuncletMembership;
 
   int EntryBBNumber = MF.front().getNumber();
   bool IsSEH = isAsynchronousEHPersonality(
-      classifyEHPersonality(MF.getFunction().getPersonalityFn()));
+      classifyEHPersonality(MF.getFunction()->getPersonalityFn()));
 
   const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
-  SmallVector<const MachineBasicBlock *, 16> EHScopeBlocks;
+  SmallVector<const MachineBasicBlock *, 16> FuncletBlocks;
   SmallVector<const MachineBasicBlock *, 16> UnreachableBlocks;
   SmallVector<const MachineBasicBlock *, 16> SEHCatchPads;
   SmallVector<std::pair<const MachineBasicBlock *, int>, 16> CatchRetSuccessors;
   for (const MachineBasicBlock &MBB : MF) {
-    if (MBB.isEHScopeEntry()) {
-      EHScopeBlocks.push_back(&MBB);
+    if (MBB.isEHFuncletEntry()) {
+      FuncletBlocks.push_back(&MBB);
     } else if (IsSEH && MBB.isEHPad()) {
       SEHCatchPads.push_back(&MBB);
     } else if (MBB.pred_empty()) {
@@ -686,8 +669,8 @@ llvm::getEHScopeMembership(const MachineFunction &MF) {
 
     MachineBasicBlock::const_iterator MBBI = MBB.getFirstTerminator();
 
-    // CatchPads are not scopes for SEH so do not consider CatchRet to
-    // transfer control to another scope.
+    // CatchPads are not funclets for SEH so do not consider CatchRet to
+    // transfer control to another funclet.
     if (MBBI == MBB.end() || MBBI->getOpcode() != TII->getCatchReturnOpcode())
       continue;
 
@@ -700,24 +683,24 @@ llvm::getEHScopeMembership(const MachineFunction &MF) {
   }
 
   // We don't have anything to do if there aren't any EH pads.
-  if (EHScopeBlocks.empty())
-    return EHScopeMembership;
+  if (FuncletBlocks.empty())
+    return FuncletMembership;
 
   // Identify all the basic blocks reachable from the function entry.
-  collectEHScopeMembers(EHScopeMembership, EntryBBNumber, &MF.front());
-  // All blocks not part of a scope are in the parent function.
+  collectFuncletMembers(FuncletMembership, EntryBBNumber, &MF.front());
+  // All blocks not part of a funclet are in the parent function.
   for (const MachineBasicBlock *MBB : UnreachableBlocks)
-    collectEHScopeMembers(EHScopeMembership, EntryBBNumber, MBB);
-  // Next, identify all the blocks inside the scopes.
-  for (const MachineBasicBlock *MBB : EHScopeBlocks)
-    collectEHScopeMembers(EHScopeMembership, MBB->getNumber(), MBB);
-  // SEH CatchPads aren't really scopes, handle them separately.
+    collectFuncletMembers(FuncletMembership, EntryBBNumber, MBB);
+  // Next, identify all the blocks inside the funclets.
+  for (const MachineBasicBlock *MBB : FuncletBlocks)
+    collectFuncletMembers(FuncletMembership, MBB->getNumber(), MBB);
+  // SEH CatchPads aren't really funclets, handle them separately.
   for (const MachineBasicBlock *MBB : SEHCatchPads)
-    collectEHScopeMembers(EHScopeMembership, EntryBBNumber, MBB);
+    collectFuncletMembers(FuncletMembership, EntryBBNumber, MBB);
   // Finally, identify all the targets of a catchret.
   for (std::pair<const MachineBasicBlock *, int> CatchRetPair :
        CatchRetSuccessors)
-    collectEHScopeMembers(EHScopeMembership, CatchRetPair.second,
+    collectFuncletMembers(FuncletMembership, CatchRetPair.second,
                           CatchRetPair.first);
-  return EHScopeMembership;
+  return FuncletMembership;
 }

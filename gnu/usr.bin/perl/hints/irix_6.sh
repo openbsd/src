@@ -580,7 +580,10 @@ $define|true|[yY]*)
 
 #define sPRIfldbl $sPRIfldbl
 
+#define I_STDLIB $i_stdlib
+#ifdef I_STDLIB
 #include <stdlib.h>
+#endif
 
 int main()
 { 
@@ -619,7 +622,10 @@ EOP
 
 #define sPRIfldbl $sPRIfldbl
 
+#define I_STDLIB $i_stdlib
+#ifdef I_STDLIB
 #include <stdlib.h>
+#endif
 
 int main()
 { 

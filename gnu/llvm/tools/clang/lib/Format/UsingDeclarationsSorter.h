@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// This file declares UsingDeclarationsSorter, a TokenAnalyzer that
+/// \brief This file declares UsingDeclarationsSorter, a TokenAnalyzer that
 /// sorts consecutive using declarations.
 ///
 //===----------------------------------------------------------------------===//
@@ -25,7 +25,7 @@ class UsingDeclarationsSorter : public TokenAnalyzer {
 public:
   UsingDeclarationsSorter(const Environment &Env, const FormatStyle &Style);
 
-  std::pair<tooling::Replacements, unsigned>
+  tooling::Replacements
   analyze(TokenAnnotator &Annotator,
           SmallVectorImpl<AnnotatedLine *> &AnnotatedLines,
           FormatTokenLexer &Tokens) override;

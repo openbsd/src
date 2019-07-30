@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCContext.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
@@ -105,7 +104,6 @@ void MCContext::reset() {
   MachOUniquingMap.clear();
   ELFUniquingMap.clear();
   COFFUniquingMap.clear();
-  WasmUniquingMap.clear();
 
   NextID.clear();
   AllowTemporaryLabels = true;
@@ -488,19 +486,53 @@ MCSectionCOFF *MCContext::getAssociativeCOFFSection(MCSectionCOFF *Sec,
                         "", 0, UniqueID);
 }
 
-MCSectionWasm *MCContext::getWasmSection(const Twine &Section, SectionKind K,
+void MCContext::renameWasmSection(MCSectionWasm *Section, StringRef Name) {
+  StringRef GroupName;
+  assert(!Section->getGroup() && "not yet implemented");
+
+  unsigned UniqueID = Section->getUniqueID();
+  WasmUniquingMap.erase(
+      WasmSectionKey{Section->getSectionName(), GroupName, UniqueID});
+  auto I = WasmUniquingMap.insert(std::make_pair(
+                                     WasmSectionKey{Name, GroupName, UniqueID},
+                                     Section))
+               .first;
+  StringRef CachedName = I->first.SectionName;
+  const_cast<MCSectionWasm *>(Section)->setSectionName(CachedName);
+}
+
+MCSectionWasm *MCContext::createWasmRelSection(const Twine &Name, unsigned Type,
+                                               unsigned Flags,
+                                               const MCSymbolWasm *Group) {
+  StringMap<bool>::iterator I;
+  bool Inserted;
+  std::tie(I, Inserted) =
+      RelSecNames.insert(std::make_pair(Name.str(), true));
+
+  return new (WasmAllocator.Allocate())
+      MCSectionWasm(I->getKey(), Type, Flags, SectionKind::getReadOnly(),
+                    Group, ~0, nullptr);
+}
+
+MCSectionWasm *MCContext::getWasmNamedSection(const Twine &Prefix,
+                                              const Twine &Suffix, unsigned Type,
+                                              unsigned Flags) {
+  return getWasmSection(Prefix + "." + Suffix, Type, Flags, Suffix);
+}
+
+MCSectionWasm *MCContext::getWasmSection(const Twine &Section, unsigned Type,
+                                         unsigned Flags,
                                          const Twine &Group, unsigned UniqueID,
                                          const char *BeginSymName) {
   MCSymbolWasm *GroupSym = nullptr;
-  if (!Group.isTriviallyEmpty() && !Group.str().empty()) {
+  if (!Group.isTriviallyEmpty() && !Group.str().empty())
     GroupSym = cast<MCSymbolWasm>(getOrCreateSymbol(Group));
-    GroupSym->setComdat(true);
-  }
 
-  return getWasmSection(Section, K, GroupSym, UniqueID, BeginSymName);
+  return getWasmSection(Section, Type, Flags, GroupSym, UniqueID, BeginSymName);
 }
 
-MCSectionWasm *MCContext::getWasmSection(const Twine &Section, SectionKind Kind,
+MCSectionWasm *MCContext::getWasmSection(const Twine &Section, unsigned Type,
+                                         unsigned Flags,
                                          const MCSymbolWasm *GroupSym,
                                          unsigned UniqueID,
                                          const char *BeginSymName) {
@@ -516,18 +548,15 @@ MCSectionWasm *MCContext::getWasmSection(const Twine &Section, SectionKind Kind,
 
   StringRef CachedName = Entry.first.SectionName;
 
-  MCSymbol *Begin = createSymbol(CachedName, false, false);
-  cast<MCSymbolWasm>(Begin)->setType(wasm::WASM_SYMBOL_TYPE_SECTION);
+  SectionKind Kind = SectionKind::getText();
+
+  MCSymbol *Begin = nullptr;
+  if (BeginSymName)
+    Begin = createTempSymbol(BeginSymName, false);
 
   MCSectionWasm *Result = new (WasmAllocator.Allocate())
-      MCSectionWasm(CachedName, Kind, GroupSym, UniqueID, Begin);
+      MCSectionWasm(CachedName, Type, Flags, Kind, GroupSym, UniqueID, Begin);
   Entry.second = Result;
-
-  auto *F = new MCDataFragment();
-  Result->getFragmentList().insert(Result->begin(), F);
-  F->setParent(Result);
-  Begin->setFragment(F);
-
   return Result;
 }
 
@@ -535,61 +564,28 @@ MCSubtargetInfo &MCContext::getSubtargetCopy(const MCSubtargetInfo &STI) {
   return *new (MCSubtargetAllocator.Allocate()) MCSubtargetInfo(STI);
 }
 
-void MCContext::addDebugPrefixMapEntry(const std::string &From,
-                                       const std::string &To) {
-  DebugPrefixMap.insert(std::make_pair(From, To));
-}
-
-void MCContext::RemapDebugPaths() {
-  const auto &DebugPrefixMap = this->DebugPrefixMap;
-  const auto RemapDebugPath = [&DebugPrefixMap](std::string &Path) {
-    for (const auto &Entry : DebugPrefixMap)
-      if (StringRef(Path).startswith(Entry.first)) {
-        std::string RemappedPath =
-            (Twine(Entry.second) + Path.substr(Entry.first.size())).str();
-        Path.swap(RemappedPath);
-      }
-  };
-
-  // Remap compilation directory.
-  std::string CompDir = CompilationDir.str();
-  RemapDebugPath(CompDir);
-  CompilationDir = CompDir;
-
-  // Remap MCDwarfDirs in all compilation units.
-  for (auto &CUIDTablePair : MCDwarfLineTablesCUMap)
-    for (auto &Dir : CUIDTablePair.second.getMCDwarfDirs())
-      RemapDebugPath(Dir);
-}
-
 //===----------------------------------------------------------------------===//
 // Dwarf Management
 //===----------------------------------------------------------------------===//
 
-/// getDwarfFile - takes a file name and number to place in the dwarf file and
+/// getDwarfFile - takes a file name an number to place in the dwarf file and
 /// directory tables.  If the file number has already been allocated it is an
 /// error and zero is returned and the client reports the error, else the
 /// allocated file number is returned.  The file numbers may be in any order.
-Expected<unsigned> MCContext::getDwarfFile(StringRef Directory,
-                                           StringRef FileName,
-                                           unsigned FileNumber,
-                                           MD5::MD5Result *Checksum,
-                                           Optional<StringRef> Source,
-                                           unsigned CUID) {
+unsigned MCContext::getDwarfFile(StringRef Directory, StringRef FileName,
+                                 unsigned FileNumber, unsigned CUID) {
   MCDwarfLineTable &Table = MCDwarfLineTablesCUMap[CUID];
-  return Table.tryGetFile(Directory, FileName, Checksum, Source, FileNumber);
+  return Table.getFile(Directory, FileName, FileNumber);
 }
 
 /// isValidDwarfFileNumber - takes a dwarf file number and returns true if it
 /// currently is assigned and false otherwise.
 bool MCContext::isValidDwarfFileNumber(unsigned FileNumber, unsigned CUID) {
-  const MCDwarfLineTable &LineTable = getMCDwarfLineTable(CUID);
-  if (FileNumber == 0)
-    return getDwarfVersion() >= 5 && LineTable.hasRootFile();
-  if (FileNumber >= LineTable.getMCDwarfFiles().size())
+  const SmallVectorImpl<MCDwarfFile> &MCDwarfFiles = getMCDwarfFiles(CUID);
+  if (FileNumber == 0 || FileNumber >= MCDwarfFiles.size())
     return false;
 
-  return !LineTable.getMCDwarfFiles()[FileNumber].Name.empty();
+  return !MCDwarfFiles[FileNumber].Name.empty();
 }
 
 /// Remove empty sections from SectionStartEndSyms, to avoid generating
@@ -603,11 +599,6 @@ CodeViewContext &MCContext::getCVContext() {
   if (!CVContext.get())
     CVContext.reset(new CodeViewContext);
   return *CVContext.get();
-}
-
-void MCContext::clearCVLocSeen() {
-  if (CVContext)
-    CVContext->clearCVLocSeen();
 }
 
 //===----------------------------------------------------------------------===//

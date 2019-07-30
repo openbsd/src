@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.34 2019/04/17 14:37:48 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.33 2017/08/30 10:33:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -72,7 +72,7 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 	int			 size, percentage, dst_idx;
 	enum layout_type	 type;
 	struct layout_cell	*lc;
-	int			 not_same_window, flags;
+	int			 not_same_window;
 
 	if (self->entry == &cmd_join_pane_entry)
 		not_same_window = 1;
@@ -124,11 +124,7 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 		else
 			size = (dst_wp->sx * percentage) / 100;
 	}
-	if (args_has(args, 'b'))
-		flags = SPAWN_BEFORE;
-	else
-		flags = 0;
-	lc = layout_split_pane(dst_wp, type, size, flags);
+	lc = layout_split_pane(dst_wp, type, size, args_has(args, 'b'), 0);
 	if (lc == NULL) {
 		cmdq_error(item, "create pane failed: pane too small");
 		return (CMD_RETURN_ERROR);
@@ -149,7 +145,7 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 	server_redraw_window(dst_w);
 
 	if (!args_has(args, 'd')) {
-		window_set_active_pane(dst_w, src_wp, 1);
+		window_set_active_pane(dst_w, src_wp);
 		session_select(dst_s, dst_idx);
 		cmd_find_from_session(current, dst_s, 0);
 		server_redraw_session(dst_s);

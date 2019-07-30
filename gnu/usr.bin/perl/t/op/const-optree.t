@@ -6,7 +6,7 @@
 BEGIN {
     chdir 't';
     require './test.pl';
-    set_up_inc('../lib');
+    @INC = '../lib';
 }
 plan 168;
 
@@ -432,8 +432,7 @@ for \%_ (@tests) {
     if (exists $_{deprecated}) {
         if ($_{deprecated}) {
             like $w, qr/^Constants from lexical variables potentially (?x:
-                       )modified elsewhere are deprecated\. This will (?x:
-                       )not be allowed in Perl 5\.32 at /,
+                       )modified elsewhere are deprecated at /,
                 "$nickname is deprecated";
         }
         else {

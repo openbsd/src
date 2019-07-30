@@ -1,7 +1,5 @@
 #!./perl
 
-BEGIN { unshift @INC, '.' }
-
 chdir 't' if -d 't';
 
 sub ok {

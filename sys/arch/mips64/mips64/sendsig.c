@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.32 2019/05/06 12:57:56 visa Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.27 2016/05/21 00:56:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -88,11 +88,20 @@ struct sigframe {
 	siginfo_t sf_si;
 };
 
+#ifdef DEBUG
+int sigdebug = 0;
+pid_t sigpid = 0;
+#define SDB_FOLLOW	0x01
+#define SDB_KSTACK	0x02
+#define SDB_FPSTATE	0x04
+#endif
+
 /*
  * Send an interrupt to process.
  */
 void
-sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
+sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
+    union sigval val)
 {
 	struct cpu_info *ci = curcpu();
 	struct proc *p = curproc;
@@ -112,9 +121,8 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 		fsize -= sizeof(siginfo_t);
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(regs->sp) && (psp->ps_sigonstack & sigmask(sig)))
-		fp = (struct sigframe *)
-		    (trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size)
-		    - fsize);
+		fp = (struct sigframe *)(p->p_sigstk.ss_sp +
+					 p->p_sigstk.ss_size - fsize);
 	else
 		fp = (struct sigframe *)(regs->sp - fsize);
 	/*
@@ -138,7 +146,10 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	}
 
 	if (psp->ps_siginfo & sigmask(sig)) {
-		if (copyout(ksip, (caddr_t)&fp->sf_si, sizeof *ksip))
+		siginfo_t si;
+
+		initsiginfo(&si, sig, code, type, val);
+		if (copyout((caddr_t)&si, (caddr_t)&fp->sf_si, sizeof si))
 			goto bail;
 	}
 
@@ -228,17 +239,4 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		bcopy((caddr_t)ksc.sc_fpregs, (caddr_t)&p->p_md.md_regs->f0,
 			sizeof(ksc.sc_fpregs));
 	return (EJUSTRETURN);
-}
-
-void
-signotify(struct proc *p)
-{
-	/*
-	 * Ensure that preceding stores are visible to other CPUs
-	 * before setting the AST flag.
-	 */
-	membar_producer();
-
-	aston(p);
-	cpu_unidle(p->p_cpu);
 }

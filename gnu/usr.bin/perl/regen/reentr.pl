@@ -18,7 +18,7 @@
 
 BEGIN {
     # Get function prototypes
-    require './regen/regen_lib.pl';
+    require 'regen/regen_lib.pl';
 }
 
 use strict;
@@ -62,8 +62,8 @@ sub open_print_header {
 
 my $h = open_print_header('reentr.h');
 print $h <<EOF;
-#ifndef PERL_REENTR_H_
-#define PERL_REENTR_H_
+#ifndef REENTR_H
+#define REENTR_H
 
 /* If compiling for a threaded perl, we will macro-wrap the system/library
  * interfaces (e.g. getpwent()) which have threaded versions
@@ -73,7 +73,7 @@ print $h <<EOF;
  */
 
 #ifndef PERL_REENTR_API
-# if defined(PERL_CORE) || defined(PERL_EXT) || defined(PERL_REENTRANT)
+# if defined(PERL_CORE) || defined(PERL_EXT)
 #  define PERL_REENTR_API 1
 # else
 #  define PERL_REENTR_API 0
@@ -104,11 +104,6 @@ print $h <<EOF;
 #   undef HAS_CRYPT_R
 #   undef HAS_STRERROR_R
 #   define NETDB_R_OBSOLETE
-#endif
-
-#if defined(__GLIBC__) && (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 24))
-#   undef HAS_READDIR_R
-#   undef HAS_READDIR64_R
 #endif
 
 /*
@@ -203,7 +198,7 @@ while (<DATA>) { # Read in the protoypes.
     }
 
     # If given the -U option open up the metaconfig unit for this function.
-    if ($opts{U} && open(U, ">", "d_${func}_r.U"))  {
+    if ($opts{U} && open(U, ">d_${func}_r.U"))  {
     	binmode U;
     }
 
@@ -540,12 +535,16 @@ EOF
 	PL_reentrant_buffer->$sz = sysconf($sc);
 	if (PL_reentrant_buffer->$sz == (size_t) -1)
 		PL_reentrant_buffer->$sz = REENTRANTUSUALSIZE;
-#   elif defined(__osf__) && defined(__alpha) && defined(SIABUFSIZ)
-	PL_reentrant_buffer->$sz = SIABUFSIZ;
-#   elif defined(__sgi)
-	PL_reentrant_buffer->$sz = BUFSIZ;
 #   else
+#       if defined(__osf__) && defined(__alpha) && defined(SIABUFSIZ)
+	PL_reentrant_buffer->$sz = SIABUFSIZ;
+#       else
+#           ifdef __sgi
+	PL_reentrant_buffer->$sz = BUFSIZ;
+#           else
 	PL_reentrant_buffer->$sz = REENTRANTUSUALSIZE;
+#           endif
+#       endif
 #   endif 
 EOF
 	    pushinitfree $genfunc;
@@ -774,13 +773,6 @@ print $c <<"EOF";
 #include "perl.h"
 #include "reentr.h"
 
-#define RenewDouble(data_pointer, size_pointer, type) \\
-    STMT_START { \\
-	const size_t size = *(size_pointer) * 2; \\
-	Renew((data_pointer), (size), type); \\
-	*(size_pointer) = size; \\
-    } STMT_END
-
 void
 Perl_reentrant_size(pTHX) {
 	PERL_UNUSED_CONTEXT;
@@ -848,8 +840,9 @@ Perl_reentrant_retry(const char *f, ...)
 		PERL_REENTRANT_MAXSIZE / 2)
 #endif
 	    {
-		RenewDouble(PL_reentrant_buffer->_hostent_buffer,
-			&PL_reentrant_buffer->_hostent_size, char);
+		PL_reentrant_buffer->_hostent_size *= 2;
+		Renew(PL_reentrant_buffer->_hostent_buffer,
+		      PL_reentrant_buffer->_hostent_size, char);
 		switch (PL_op->op_type) {
 	        case OP_GHBYADDR:
 		    p0    = va_arg(ap, void *);
@@ -880,8 +873,9 @@ Perl_reentrant_retry(const char *f, ...)
 #endif
 	    {
 		Gid_t gid;
-		RenewDouble(PL_reentrant_buffer->_grent_buffer,
-		      &PL_reentrant_buffer->_grent_size, char);
+		PL_reentrant_buffer->_grent_size *= 2;
+		Renew(PL_reentrant_buffer->_grent_buffer,
+		      PL_reentrant_buffer->_grent_size, char);
 		switch (PL_op->op_type) {
 	        case OP_GGRNAM:
 		    p0 = va_arg(ap, void *);
@@ -914,8 +908,9 @@ Perl_reentrant_retry(const char *f, ...)
 #endif
 	    {
 		Netdb_net_t net;
-		RenewDouble(PL_reentrant_buffer->_netent_buffer,
-		      &PL_reentrant_buffer->_netent_size, char);
+		PL_reentrant_buffer->_netent_size *= 2;
+		Renew(PL_reentrant_buffer->_netent_buffer,
+		      PL_reentrant_buffer->_netent_size, char);
 		switch (PL_op->op_type) {
 	        case OP_GNBYADDR:
 		    net = va_arg(ap, Netdb_net_t);
@@ -945,8 +940,9 @@ Perl_reentrant_retry(const char *f, ...)
 #endif
 	    {
 		Uid_t uid;
-		RenewDouble(PL_reentrant_buffer->_pwent_buffer,
-		      &PL_reentrant_buffer->_pwent_size, char);
+		PL_reentrant_buffer->_pwent_size *= 2;
+		Renew(PL_reentrant_buffer->_pwent_buffer,
+		      PL_reentrant_buffer->_pwent_size, char);
 		switch (PL_op->op_type) {
 	        case OP_GPWNAM:
 		    p0 = va_arg(ap, void *);
@@ -980,8 +976,9 @@ Perl_reentrant_retry(const char *f, ...)
 		PERL_REENTRANT_MAXSIZE / 2)
 #endif
 	    {
-		RenewDouble(PL_reentrant_buffer->_protoent_buffer,
-		      &PL_reentrant_buffer->_protoent_size, char);
+		PL_reentrant_buffer->_protoent_size *= 2;
+		Renew(PL_reentrant_buffer->_protoent_buffer,
+		      PL_reentrant_buffer->_protoent_size, char);
 		switch (PL_op->op_type) {
 	        case OP_GPBYNAME:
 		    p0 = va_arg(ap, void *);
@@ -1009,8 +1006,9 @@ Perl_reentrant_retry(const char *f, ...)
 		PERL_REENTRANT_MAXSIZE / 2)
 #endif
 	    {
-		RenewDouble(PL_reentrant_buffer->_servent_buffer,
-		      &PL_reentrant_buffer->_servent_size, char);
+		PL_reentrant_buffer->_servent_size *= 2;
+		Renew(PL_reentrant_buffer->_servent_buffer,
+		      PL_reentrant_buffer->_servent_size, char);
 		switch (PL_op->op_type) {
 	        case OP_GSBYNAME:
 		    p0 = va_arg(ap, void *);

@@ -1,0 +1,151 @@
+.\"	$OpenBSD: malloc.conf.5,v 1.14 2018/03/19 13:35:06 otto Exp $
+.\"
+.\" Copyright (c) 2012 Damien Miller <djm@openbsd.org>
+.\" Copyright (c) 2008, 2009, 2010, 2011 Otto Moerbeek <otto@drijf.net>
+.\" Copyright (c) 2003, 2004, 2005 Ted Unangst <tedu@openbsd.org>
+.\" Copyright (c) 1995, 1996 Poul-Henning Kamp <phk@freebsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: March 19 2018 $
+.Dt MALLOC.CONF 5
+.Os
+.Sh NAME
+.Nm malloc.conf
+.Nd options for the memory allocator
+.Sh DESCRIPTION
+Upon the first call to the
+.Xr malloc 3
+family of functions, an initialization sequence inspects the
+symbolic link
+.Pa /etc/malloc.conf ,
+next checks the environment for a variable called
+.Ev MALLOC_OPTIONS ,
+and finally looks at the global variable
+.Va malloc_options
+in the program.
+Each is scanned for the following flags.
+Flags are single letters.
+Unless otherwise noted uppercase means on, lowercase means off.
+.Bl -tag -width indent
+.It Cm C
+.Dq Canaries .
+Add canaries at the end of allocations in order to detect
+heap overflows.
+The canary's content is checked when
+.Xr free 3
+is called.
+If it has been corrupted, the process is aborted.
+.It Cm D
+.Dq Dump .
+.Xr malloc 3
+will dump statistics to the file
+.Pa ./malloc.out ,
+if it already exists,
+at exit.
+This option requires the library to have been compiled with -DMALLOC_STATS in
+order to have any effect.
+.It Cm F
+.Dq Freecheck .
+Enable more extensive double free and use after free detection.
+All chunks in the delayed free list will be checked for double frees.
+Unused pages on the freelist are read and write protected to
+cause a segmentation fault upon access.
+.It Cm G
+.Dq Guard .
+Enable guard pages.
+Each page size or larger allocation is followed by a guard page that will
+cause a segmentation fault upon any access.
+.It Cm J
+.Dq More junking .
+Increase the junk level by one if it is smaller than 2.
+.It Cm j
+.Dq Less junking .
+Decrease the junk level by one if it is larger than 0.
+Junking writes some junk bytes into the area allocated.
+Junk is bytes of 0xdb when allocating;
+freed chunks are filled with 0xdf.
+By default the junk level is 1: after free,
+small chunks are completely junked;
+for pages the first part is junked.
+After a delay,
+the filling pattern is validated and the process is aborted if the pattern
+was modified.
+For junk level 2, junking is done on allocation as well and without size
+restrictions.
+If the junk level is zero, no junking is performed.
+.It Cm R
+.Dq realloc .
+Always reallocate when
+.Xr realloc 3
+is called, even if the initial allocation was big enough.
+.\".Pp
+.\".It Cm U
+.\".Dq utrace .
+.\"Generate entries for
+.\".Xr ktrace 1
+.\"for all operations.
+.\"Consult the source for this one.
+.It Cm S
+Enable all options suitable for security auditing.
+.It Cm U
+.Dq Free unmap .
+Enable use after free protection for larger allocations.
+Unused pages on the freelist are read and write protected to
+cause a segmentation fault upon access.
+.It Cm X
+.Dq xmalloc .
+Rather than return failure,
+.Xr abort 3
+the program with a diagnostic message on stderr.
+It is the intention that this option be set at compile time by
+including in the source:
+.Bd -literal -offset indent
+extern char *malloc_options;
+malloc_options = "X";
+.Ed
+.Pp
+Note that this will cause code that is supposed to handle
+out-of-memory conditions gracefully to abort instead.
+.It Cm <
+.Dq Halve the cache size .
+Decrease the size of the free page cache by a factor of two.
+.It Cm >
+.Dq Double the cache size .
+Increase the size of the free page cache by a factor of two.
+.El
+.Pp
+If a program changes behavior if any of these options (except
+.Cm X )
+are used,
+it is buggy.
+.Pp
+The default number of free pages cached is 64 per malloc pool.
+Multi-threaded programs use multiple pools.
+.Sh ENVIRONMENT
+.Bl -tag -width "/etc/malloc.conf"
+.It Ev MALLOC_OPTIONS
+string of option flags
+.El
+.Sh FILES
+.Bl -tag -width "/etc/malloc.conf"
+.It Pa /etc/malloc.conf
+symbolic link to filename containing option flags
+.El
+.Sh EXAMPLES
+Set a systemwide reduction of the cache to a quarter of the
+default size and use guard pages:
+.Pp
+.Dl # ln -s 'G<<' /etc/malloc.conf
+.Sh SEE ALSO
+.Xr malloc 3

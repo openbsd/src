@@ -16,9 +16,8 @@
 
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandObject.h"
-#include "lldb/Utility/Args.h"
-#include "lldb/Utility/CompletionRequest.h"
 #include "lldb/lldb-forward.h"
 
 namespace lldb_private {
@@ -41,11 +40,17 @@ public:
 
   bool WantsCompletion() override;
 
-  int HandleCompletion(CompletionRequest &request) override;
+  int HandleCompletion(Args &input, int &cursor_index,
+                       int &cursor_char_position, int match_start_point,
+                       int max_return_elements, bool &word_complete,
+                       StringList &matches) override;
 
-  int HandleArgumentCompletion(
-      CompletionRequest &request,
-      OptionElementVector &opt_element_vector) override;
+  int HandleArgumentCompletion(Args &input, int &cursor_index,
+                               int &cursor_char_position,
+                               OptionElementVector &opt_element_vector,
+                               int match_start_point, int max_return_elements,
+                               bool &word_complete,
+                               StringList &matches) override;
 
   Options *GetOptions() override;
 
@@ -69,8 +74,8 @@ public:
   OptionArgVectorSP GetOptionArguments() const { return m_option_args_sp; }
   const char *GetOptionString() { return m_option_string.c_str(); }
 
-  // this takes an alias - potentially nested (i.e. an alias to an alias) and
-  // expands it all the way to a non-alias command
+  // this takes an alias - potentially nested (i.e. an alias to an alias)
+  // and expands it all the way to a non-alias command
   std::pair<lldb::CommandObjectSP, OptionArgVectorSP> Desugar();
 
 protected:

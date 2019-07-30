@@ -95,8 +95,6 @@ private:
   bool SRetAfterThis : 1;   // isIndirect()
   bool InReg : 1;           // isDirect() || isExtend() || isIndirect()
   bool CanBeFlattened: 1;   // isDirect()
-  bool SignExt : 1;         // isExtend()
-  bool SuppressSRet : 1;    // isIndirect()
 
   bool canHavePaddingType() const {
     return isDirect() || isExtend() || isIndirect() || isExpand();
@@ -112,14 +110,13 @@ private:
   }
 
   ABIArgInfo(Kind K)
-      : TheKind(K), PaddingInReg(false), InReg(false), SuppressSRet(false) {
+      : TheKind(K), PaddingInReg(false), InReg(false) {
   }
 
 public:
   ABIArgInfo()
       : TypeData(nullptr), PaddingType(nullptr), DirectOffset(0),
-        TheKind(Direct), PaddingInReg(false), InReg(false),
-        SuppressSRet(false) {}
+        TheKind(Direct), PaddingInReg(false), InReg(false) {}
 
   static ABIArgInfo getDirect(llvm::Type *T = nullptr, unsigned Offset = 0,
                               llvm::Type *Padding = nullptr,
@@ -136,38 +133,15 @@ public:
     AI.setInReg(true);
     return AI;
   }
-
-  static ABIArgInfo getSignExtend(QualType Ty, llvm::Type *T = nullptr) {
-    assert(Ty->isIntegralOrEnumerationType() && "Unexpected QualType");
+  static ABIArgInfo getExtend(llvm::Type *T = nullptr) {
     auto AI = ABIArgInfo(Extend);
     AI.setCoerceToType(T);
     AI.setPaddingType(nullptr);
     AI.setDirectOffset(0);
-    AI.setSignExt(true);
     return AI;
   }
-
-  static ABIArgInfo getZeroExtend(QualType Ty, llvm::Type *T = nullptr) {
-    assert(Ty->isIntegralOrEnumerationType() && "Unexpected QualType");
-    auto AI = ABIArgInfo(Extend);
-    AI.setCoerceToType(T);
-    AI.setPaddingType(nullptr);
-    AI.setDirectOffset(0);
-    AI.setSignExt(false);
-    return AI;
-  }
-
-  // ABIArgInfo will record the argument as being extended based on the sign
-  // of its type.
-  static ABIArgInfo getExtend(QualType Ty, llvm::Type *T = nullptr) {
-    assert(Ty->isIntegralOrEnumerationType() && "Unexpected QualType");
-    if (Ty->hasSignedIntegerRepresentation())
-      return getSignExtend(Ty, T);
-    return getZeroExtend(Ty, T);
-  }
-
-  static ABIArgInfo getExtendInReg(QualType Ty, llvm::Type *T = nullptr) {
-    auto AI = getExtend(Ty, T);
+  static ABIArgInfo getExtendInReg(llvm::Type *T = nullptr) {
+    auto AI = getExtend(T);
     AI.setInReg(true);
     return AI;
   }
@@ -280,15 +254,6 @@ public:
     DirectOffset = Offset;
   }
 
-  bool isSignExt() const {
-    assert(isExtend() && "Invalid kind!");
-    return SignExt;
-  }
-  void setSignExt(bool SExt) {
-    assert(isExtend() && "Invalid kind!");
-    SignExt = SExt;
-  }
-
   llvm::Type *getPaddingType() const {
     return (canHavePaddingType() ? PaddingType : nullptr);
   }
@@ -386,7 +351,7 @@ public:
     AllocaFieldIndex = FieldIndex;
   }
 
-  /// Return true if this field of an inalloca struct should be returned
+  /// \brief Return true if this field of an inalloca struct should be returned
   /// to implement a struct return calling convention.
   bool getInAllocaSRet() const {
     assert(isInAlloca() && "Invalid kind!");
@@ -406,16 +371,6 @@ public:
   void setCanBeFlattened(bool Flatten) {
     assert(isDirect() && "Invalid kind!");
     CanBeFlattened = Flatten;
-  }
-
-  bool getSuppressSRet() const {
-    assert(isIndirect() && "Invalid kind!");
-    return SuppressSRet;
-  }
-
-  void setSuppressSRet(bool Suppress) {
-    assert(isIndirect() && "Invalid kind!");
-    SuppressSRet = Suppress;
   }
 
   void dump() const;
@@ -506,7 +461,7 @@ class CGFunctionInfo final
   unsigned EffectiveCallingConvention : 8;
 
   /// The clang::CallingConv that this was originally created with.
-  unsigned ASTCallingConvention : 6;
+  unsigned ASTCallingConvention : 7;
 
   /// Whether this is an instance method.
   unsigned InstanceMethod : 1;
@@ -526,9 +481,6 @@ class CGFunctionInfo final
   /// How many arguments to pass inreg.
   unsigned HasRegParm : 1;
   unsigned RegParm : 3;
-
-  /// Whether this function has nocf_check attribute.
-  unsigned NoCfCheck : 1;
 
   RequiredArgs Required;
 
@@ -614,9 +566,6 @@ public:
   /// Whether this function no longer saves caller registers.
   bool isNoCallerSavedRegs() const { return NoCallerSavedRegs; }
 
-  /// Whether this function has nocf_check attribute.
-  bool isNoCfCheck() const { return NoCfCheck; }
-
   /// getASTCallingConvention() - Return the AST-specified calling
   /// convention.
   CallingConv getASTCallingConvention() const {
@@ -642,7 +591,7 @@ public:
   FunctionType::ExtInfo getExtInfo() const {
     return FunctionType::ExtInfo(isNoReturn(), getHasRegParm(), getRegParm(),
                                  getASTCallingConvention(), isReturnsRetained(),
-                                 isNoCallerSavedRegs(), isNoCfCheck());
+                                 isNoCallerSavedRegs());
   }
 
   CanQualType getReturnType() const { return getArgsBuffer()[0].type; }
@@ -660,10 +609,10 @@ public:
     return getExtParameterInfos()[argIndex];
   }
 
-  /// Return true if this function uses inalloca arguments.
+  /// \brief Return true if this function uses inalloca arguments.
   bool usesInAlloca() const { return ArgStruct; }
 
-  /// Get the struct type used to represent all the arguments in memory.
+  /// \brief Get the struct type used to represent all the arguments in memory.
   llvm::StructType *getArgStruct() const { return ArgStruct; }
   CharUnits getArgStructAlignment() const {
     return CharUnits::fromQuantity(ArgStructAlign);
@@ -682,7 +631,6 @@ public:
     ID.AddBoolean(NoCallerSavedRegs);
     ID.AddBoolean(HasRegParm);
     ID.AddInteger(RegParm);
-    ID.AddBoolean(NoCfCheck);
     ID.AddInteger(Required.getOpaqueData());
     ID.AddBoolean(HasExtParameterInfos);
     if (HasExtParameterInfos) {
@@ -709,7 +657,6 @@ public:
     ID.AddBoolean(info.getNoCallerSavedRegs());
     ID.AddBoolean(info.getHasRegParm());
     ID.AddInteger(info.getRegParm());
-    ID.AddBoolean(info.getNoCfCheck());
     ID.AddInteger(required.getOpaqueData());
     ID.AddBoolean(!paramInfos.empty());
     if (!paramInfos.empty()) {

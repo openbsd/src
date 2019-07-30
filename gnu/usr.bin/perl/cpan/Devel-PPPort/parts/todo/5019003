@@ -1,0 +1,3 @@
+5.019003
+croak_memory_wrap              # U (Perl_croak_memory_wrap)
+sv_pos_b2u_flags               # U

@@ -1,7 +1,7 @@
-/*	$OpenBSD: tbl_html.c,v 1.28 2019/03/17 18:20:07 schwarze Exp $ */
+/*	$OpenBSD: tbl_html.c,v 1.18 2017/07/31 16:14:04 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,8 +23,6 @@
 #include <string.h>
 
 #include "mandoc.h"
-#include "roff.h"
-#include "tbl.h"
 #include "out.h"
 #include "html.h"
 
@@ -79,23 +77,23 @@ html_tbl_sulen(const struct roffsu *su, void *arg)
 static void
 html_tblopen(struct html *h, const struct tbl_span *sp)
 {
-	html_close_paragraph(h);
+	struct tag	*t;
+	int		 ic;
+
 	if (h->tbl.cols == NULL) {
 		h->tbl.len = html_tbl_len;
 		h->tbl.slen = html_tbl_strlen;
 		h->tbl.sulen = html_tbl_sulen;
 		tblcalc(&h->tbl, sp, 0, 0);
 	}
+
 	assert(NULL == h->tblt);
-	h->tblt = print_otag(h, TAG_TABLE, "c?ss", "tbl",
-	    "border",
-		sp->opts->opts & TBL_OPT_ALLBOX ? "1" : NULL,
-	    "border-style",
-		sp->opts->opts & TBL_OPT_DBOX ? "double" :
-		sp->opts->opts & TBL_OPT_BOX ? "solid" : NULL,
-	    "border-top-style",
-		sp->pos == TBL_SPAN_DHORIZ ? "double" :
-		sp->pos == TBL_SPAN_HORIZ ? "solid" : NULL);
+	h->tblt = print_otag(h, TAG_TABLE, "c", "tbl");
+
+	t = print_otag(h, TAG_COLGROUP, "");
+	for (ic = 0; ic < sp->opts->cols; ic++)
+		print_otag(h, TAG_COL, "shw", h->tbl.cols[ic].width);
+	print_tagq(h, t);
 }
 
 void
@@ -110,136 +108,41 @@ print_tblclose(struct html *h)
 void
 print_tbl(struct html *h, const struct tbl_span *sp)
 {
-	const struct tbl_dat	*dp;
-	const struct tbl_cell	*cp;
-	const struct tbl_span	*psp;
-	struct tag		*tt;
-	const char		*hspans, *vspans, *halign, *valign;
-	const char		*bborder, *lborder, *rborder;
-	char			 hbuf[4], vbuf[4];
-	int			 i;
+	const struct tbl_dat *dp;
+	struct tag	*tt;
+	int		 ic;
+
+	/* Inhibit printing of spaces: we do padding ourselves. */
 
 	if (h->tblt == NULL)
 		html_tblopen(h, sp);
 
-	/*
-	 * Horizontal lines spanning the whole table
-	 * are handled by previous or following table rows.
-	 */
-
-	if (sp->pos != TBL_SPAN_DATA)
-		return;
-
-	/* Inhibit printing of spaces: we do padding ourselves. */
+	assert(h->tblt);
 
 	h->flags |= HTML_NONOSPACE;
 	h->flags |= HTML_NOSPACE;
 
-	/* Draw a vertical line left of this row? */
+	tt = print_otag(h, TAG_TR, "");
 
-	switch (sp->layout->vert) {
-	case 2:
-		lborder = "double";
-		break;
-	case 1:
-		lborder = "solid";
+	switch (sp->pos) {
+	case TBL_SPAN_HORIZ:
+	case TBL_SPAN_DHORIZ:
+		print_otag(h, TAG_TD, "?", "colspan", "0");
 		break;
 	default:
-		lborder = NULL;
+		dp = sp->first;
+		for (ic = 0; ic < sp->opts->cols; ic++) {
+			print_stagq(h, tt);
+			print_otag(h, TAG_TD, "");
+
+			if (dp == NULL || dp->layout->col > ic)
+				continue;
+			if (dp->layout->pos != TBL_CELL_DOWN)
+				if (dp->string != NULL)
+					print_text(h, dp->string);
+			dp = dp->next;
+		}
 		break;
-	}
-
-	/* Draw a horizontal line below this row? */
-
-	bborder = NULL;
-	if ((psp = sp->next) != NULL) {
-		switch (psp->pos) {
-		case TBL_SPAN_DHORIZ:
-			bborder = "double";
-			break;
-		case TBL_SPAN_HORIZ:
-			bborder = "solid";
-			break;
-		default:
-			break;
-		}
-	}
-
-	tt = print_otag(h, TAG_TR, "ss",
-	    "border-left-style", lborder,
-	    "border-bottom-style", bborder);
-
-	for (dp = sp->first; dp != NULL; dp = dp->next) {
-		print_stagq(h, tt);
-
-		/*
-		 * Do not generate <td> elements for continuations
-		 * of spanned cells.  Larger <td> elements covering
-		 * this space were already generated earlier.
-		 */
-
-		cp = dp->layout;
-		if (cp->pos == TBL_CELL_SPAN || cp->pos == TBL_CELL_DOWN ||
-		    (dp->string != NULL && strcmp(dp->string, "\\^") == 0))
-			continue;
-
-		/* Determine the attribute values. */
-
-		if (dp->hspans > 0) {
-			(void)snprintf(hbuf, sizeof(hbuf),
-			    "%d", dp->hspans + 1);
-			hspans = hbuf;
-		} else
-			hspans = NULL;
-		if (dp->vspans > 0) {
-			(void)snprintf(vbuf, sizeof(vbuf),
-			    "%d", dp->vspans + 1);
-			vspans = vbuf;
-		} else
-			vspans = NULL;
-
-		switch (cp->pos) {
-		case TBL_CELL_CENTRE:
-			halign = "center";
-			break;
-		case TBL_CELL_RIGHT:
-		case TBL_CELL_NUMBER:
-			halign = "right";
-			break;
-		default:
-			halign = NULL;
-			break;
-		}
-		if (cp->flags & TBL_CELL_TALIGN)
-			valign = "top";
-		else if (cp->flags & TBL_CELL_BALIGN)
-			valign = "bottom";
-		else
-			valign = NULL;
-
-		for (i = dp->hspans; i > 0; i--)
-			cp = cp->next;
-		switch (cp->vert) {
-		case 2:
-			rborder = "double";
-			break;
-		case 1:
-			rborder = "solid";
-			break;
-		default:
-			rborder = NULL;
-			break;
-		}
-
-		/* Print the element and the attributes. */
-
-		print_otag(h, TAG_TD, "??sss",
-		    "colspan", hspans, "rowspan", vspans,
-		    "vertical-align", valign,
-		    "text-align", halign,
-		    "border-right-style", rborder);
-		if (dp->string != NULL)
-			print_text(h, dp->string);
 	}
 
 	print_tagq(h, tt);
@@ -252,4 +155,5 @@ print_tbl(struct html *h, const struct tbl_span *sp)
 		h->tbl.cols = NULL;
 		print_tblclose(h);
 	}
+
 }

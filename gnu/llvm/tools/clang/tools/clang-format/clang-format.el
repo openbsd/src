@@ -119,12 +119,10 @@ is a zero-based file offset, assuming ‘utf-8-unix’ coding."
       (byte-to-position (1+ byte)))))
 
 ;;;###autoload
-(defun clang-format-region (start end &optional style assume-file-name)
+(defun clang-format-region (start end &optional style)
   "Use clang-format to format the code between START and END according to STYLE.
-If called interactively uses the region or the current statement if there is no
-no active region. If no STYLE is given uses `clang-format-style'. Use
-ASSUME-FILE-NAME to locate a style config file, if no ASSUME-FILE-NAME is given
-uses the function `buffer-file-name'."
+If called interactively uses the region or the current statement if there
+is no active region.  If no style is given uses `clang-format-style'."
   (interactive
    (if (use-region-p)
        (list (region-beginning) (region-end))
@@ -132,9 +130,6 @@ uses the function `buffer-file-name'."
 
   (unless style
     (setq style clang-format-style))
-
-  (unless assume-file-name
-    (setq assume-file-name buffer-file-name))
 
   (let ((file-start (clang-format--bufferpos-to-filepos start 'approximate
                                                         'utf-8-unix))
@@ -149,21 +144,16 @@ uses the function `buffer-file-name'."
         ;; always use ‘utf-8-unix’ and ignore the buffer coding system.
         (default-process-coding-system '(utf-8-unix . utf-8-unix)))
     (unwind-protect
-        (let ((status (apply #'call-process-region
-                             nil nil clang-format-executable
-                             nil `(,temp-buffer ,temp-file) nil
-                             `("-output-replacements-xml"
-                               ;; Guard against a nil assume-file-name.
-                               ;; If the clang-format option -assume-filename
-                               ;; is given a blank string it will crash as per
-                               ;; the following bug report
-                               ;; https://bugs.llvm.org/show_bug.cgi?id=34667
-                               ,@(and assume-file-name
-                                      (list "-assume-filename" assume-file-name))
-                               "-style" ,style
-                               "-offset" ,(number-to-string file-start)
-                               "-length" ,(number-to-string (- file-end file-start))
-                               "-cursor" ,(number-to-string cursor))))
+        (let ((status (call-process-region
+                       nil nil clang-format-executable
+                       nil `(,temp-buffer ,temp-file) nil
+
+                       "-output-replacements-xml"
+                       "-assume-filename" (or (buffer-file-name) "")
+                       "-style" style
+                       "-offset" (number-to-string file-start)
+                       "-length" (number-to-string (- file-end file-start))
+                       "-cursor" (number-to-string cursor)))
               (stderr (with-temp-buffer
                         (unless (zerop (cadr (insert-file-contents temp-file)))
                           (insert ": "))
@@ -191,13 +181,10 @@ uses the function `buffer-file-name'."
       (when (buffer-name temp-buffer) (kill-buffer temp-buffer)))))
 
 ;;;###autoload
-(defun clang-format-buffer (&optional style assume-file-name)
-  "Use clang-format to format the current buffer according to STYLE.
-If no STYLE is given uses `clang-format-style'. Use ASSUME-FILE-NAME
-to locate a style config file. If no ASSUME-FILE-NAME is given uses
-the function `buffer-file-name'."
+(defun clang-format-buffer (&optional style)
+  "Use clang-format to format the current buffer according to STYLE."
   (interactive)
-  (clang-format-region (point-min) (point-max) style assume-file-name))
+  (clang-format-region (point-min) (point-max) style))
 
 ;;;###autoload
 (defalias 'clang-format 'clang-format-region)

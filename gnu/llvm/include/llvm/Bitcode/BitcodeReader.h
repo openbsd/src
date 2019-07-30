@@ -1,4 +1,4 @@
-//===- llvm/Bitcode/BitcodeReader.h - Bitcode reader ------------*- C++ -*-===//
+//===-- llvm/Bitcode/BitcodeReader.h - Bitcode reader ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,23 +14,18 @@
 #ifndef LLVM_BITCODE_BITCODEREADER_H
 #define LLVM_BITCODE_BITCODEREADER_H
 
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/Bitcode/BitCodes.h"
+#include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/ModuleSummaryIndex.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include <cstdint>
 #include <memory>
-#include <string>
-#include <system_error>
-#include <vector>
-namespace llvm {
 
-class LLVMContext;
-class Module;
+namespace llvm {
+  class LLVMContext;
+  class Module;
 
   // These functions are for converting Expected/Error values to
   // ErrorOr/std::error_code for compatibility with legacy clients. FIXME:
@@ -86,7 +81,6 @@ class Module;
     StringRef getBuffer() const {
       return StringRef((const char *)Buffer.begin(), Buffer.size());
     }
-
     StringRef getStrtab() const { return Strtab; }
 
     StringRef getModuleIdentifier() const { return ModuleIdentifier; }
@@ -188,6 +182,7 @@ class Module;
 
   /// isBitcodeWrapper - Return true if the given bytes are the magic bytes
   /// for an LLVM IR bitcode wrapper.
+  ///
   inline bool isBitcodeWrapper(const unsigned char *BufPtr,
                                const unsigned char *BufEnd) {
     // See if you can find the hidden message in the magic bytes :-).
@@ -201,6 +196,7 @@ class Module;
 
   /// isRawBitcode - Return true if the given bytes are the magic bytes for
   /// raw LLVM IR bitcode (without a wrapper).
+  ///
   inline bool isRawBitcode(const unsigned char *BufPtr,
                            const unsigned char *BufEnd) {
     // These bytes sort of have a hidden message, but it's not in
@@ -214,6 +210,7 @@ class Module;
 
   /// isBitcode - Return true if the given bytes are the magic bytes for
   /// LLVM IR bitcode, either with or without a wrapper.
+  ///
   inline bool isBitcode(const unsigned char *BufPtr,
                         const unsigned char *BufEnd) {
     return isBitcodeWrapper(BufPtr, BufEnd) ||
@@ -261,12 +258,10 @@ class Module;
     return std::error_code(static_cast<int>(E), BitcodeErrorCategory());
   }
 
-} // end namespace llvm
+} // End llvm namespace
 
 namespace std {
-
 template <> struct is_error_code_enum<llvm::BitcodeError> : std::true_type {};
+}
 
-} // end namespace std
-
-#endif // LLVM_BITCODE_BITCODEREADER_H
+#endif

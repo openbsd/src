@@ -65,7 +65,7 @@ struct respip_client_info;
  * Maximum number of mesh state activations. Any more is likely an
  * infinite loop in the module. It is then terminated.
  */
-#define MESH_MAX_ACTIVATION 10000
+#define MESH_MAX_ACTIVATION 3000
 
 /**
  * Max number of references-to-references-to-references.. search size.
@@ -223,11 +223,10 @@ struct mesh_reply {
 
 /** 
  * Mesh result callback func.
- * called as func(cb_arg, rcode, buffer_with_reply, security, why_bogus,
- *		was_ratelimited);
+ * called as func(cb_arg, rcode, buffer_with_reply, security, why_bogus);
  */
-typedef void (*mesh_cb_func_type)(void* cb_arg, int rcode, struct sldns_buffer*,
-	enum sec_status, char* why_bogus, int was_ratelimited);
+typedef void (*mesh_cb_func_type)(void*, int, struct sldns_buffer*, enum sec_status, 
+	char*);
 
 /**
  * Callback to result routine
@@ -243,8 +242,9 @@ struct mesh_cb {
 	uint16_t qflags;
 	/** buffer for reply */
 	struct sldns_buffer* buf;
+
 	/** callback routine for results. if rcode != 0 buf has message.
-	 * called as cb(cb_arg, rcode, buf, sec_state, why_bogus, was_ratelimited);
+	 * called as cb(cb_arg, rcode, buf, sec_state);
 	 */
 	mesh_cb_func_type cb;
 	/** user arg for callback */
@@ -632,15 +632,5 @@ void mesh_list_insert(struct mesh_state* m, struct mesh_state** fp,
  */
 void mesh_list_remove(struct mesh_state* m, struct mesh_state** fp,
 	struct mesh_state** lp);
-
-/**
- * Remove mesh reply entry from the reply entry list.  Searches for
- * the comm_point pointer.
- * @param mesh: to update the counters.
- * @param m: the mesh state.
- * @param cp: the comm_point to remove from the list.
- */
-void mesh_state_remove_reply(struct mesh_area* mesh, struct mesh_state* m,
-	struct comm_point* cp);
 
 #endif /* SERVICES_MESH_H */

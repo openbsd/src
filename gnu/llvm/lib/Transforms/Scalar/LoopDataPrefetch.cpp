@@ -18,20 +18,25 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/CodeMetrics.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/OptimizationRemarkEmitter.h"
+#include "llvm/Analysis/OptimizationDiagnosticInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/ScalarEvolutionAliasAnalysis.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 using namespace llvm;
 
@@ -71,7 +76,7 @@ public:
 private:
   bool runOnLoop(Loop *L);
 
-  /// Check if the stride of the accesses is large enough to
+  /// \brief Check if the the stride of the accesses is large enough to
   /// warrant a prefetch.
   bool isStrideLargeEnough(const SCEVAddRecExpr *AR);
 
@@ -115,7 +120,9 @@ public:
     AU.addPreserved<LoopInfoWrapperPass>();
     AU.addRequired<OptimizationRemarkEmitterWrapperPass>();
     AU.addRequired<ScalarEvolutionWrapperPass>();
-    AU.addPreserved<ScalarEvolutionWrapperPass>();
+    // FIXME: For some reason, preserving SE here breaks LSR (even if
+    // this pass changes nothing).
+    // AU.addPreserved<ScalarEvolutionWrapperPass>();
     AU.addRequired<TargetTransformInfoWrapperPass>();
   }
 
@@ -244,9 +251,9 @@ bool LoopDataPrefetch::runOnLoop(Loop *L) {
   if (ItersAhead > getMaxPrefetchIterationsAhead())
     return MadeChange;
 
-  LLVM_DEBUG(dbgs() << "Prefetching " << ItersAhead
-                    << " iterations ahead (loop size: " << LoopSize << ") in "
-                    << L->getHeader()->getParent()->getName() << ": " << *L);
+  DEBUG(dbgs() << "Prefetching " << ItersAhead
+               << " iterations ahead (loop size: " << LoopSize << ") in "
+               << L->getHeader()->getParent()->getName() << ": " << *L);
 
   SmallVector<std::pair<Instruction *, const SCEVAddRecExpr *>, 16> PrefLoads;
   for (const auto BB : L->blocks()) {
@@ -275,7 +282,7 @@ bool LoopDataPrefetch::runOnLoop(Loop *L) {
       if (!LSCEVAddRec)
         continue;
 
-      // Check if the stride of the accesses is large enough to warrant a
+      // Check if the the stride of the accesses is large enough to warrant a
       // prefetch.
       if (!isStrideLargeEnough(LSCEVAddRec))
         continue;
@@ -320,12 +327,10 @@ bool LoopDataPrefetch::runOnLoop(Loop *L) {
            ConstantInt::get(I32, MemI->mayReadFromMemory() ? 0 : 1),
            ConstantInt::get(I32, 3), ConstantInt::get(I32, 1)});
       ++NumPrefetches;
-      LLVM_DEBUG(dbgs() << "  Access: " << *PtrValue << ", SCEV: " << *LSCEV
-                        << "\n");
-      ORE->emit([&]() {
-        return OptimizationRemark(DEBUG_TYPE, "Prefetched", MemI)
-               << "prefetched memory access";
-      });
+      DEBUG(dbgs() << "  Access: " << *PtrValue << ", SCEV: " << *LSCEV
+                   << "\n");
+      ORE->emit(OptimizationRemark(DEBUG_TYPE, "Prefetched", MemI)
+                << "prefetched memory access");
 
       MadeChange = true;
     }

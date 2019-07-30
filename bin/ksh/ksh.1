@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.203 2019/04/03 14:55:12 jca Exp $
+.\"	$OpenBSD: ksh.1,v 1.198 2018/02/06 15:13:32 schwarze Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: April 3 2019 $
+.Dd $Mdocdate: February 6 2018 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -540,7 +540,7 @@ if no
 .Ar list
 is executed, the exit status is zero.
 .It Xo Ic for Ar name
-.Op Cm in Op Ar word ... ;
+.Oo Cm in Ar word No ... Oc ;
 .Cm do Ar list ; Cm done
 .Xc
 For each
@@ -564,10 +564,10 @@ e.g.\&
 The exit status of a
 .Ic for
 statement is the last exit status of
-.Ar list .
-If there are no items,
+.Ar list ;
+if
 .Ar list
-is not executed and the exit status is zero.
+is never executed, the exit status is zero.
 .It Xo Ic if Ar list ;
 .Cm then Ar list ;
 .Oo Cm elif Ar list ;
@@ -858,6 +858,8 @@ The following command aliases are defined automatically by the shell:
 .Ic r Ns ='fc -s'
 .It
 .Ic stop Ns ='kill -STOP'
+.It
+.Ic type Ns ='whence -v'
 .El
 .Pp
 Tracked aliases allow the shell to remember where it found a particular
@@ -1717,10 +1719,6 @@ loops to store the value that is read from standard input.
 The number of seconds since the shell started or, if the parameter has been
 assigned an integer value, the number of seconds since the assignment plus the
 value that was assigned.
-.It Ev TERM
-The user's terminal type.
-If set, it will be used to determine the escape sequence used to
-clear the screen.
 .It Ev TMOUT
 If set to a positive integer in an interactive shell, it specifies the maximum
 number of seconds the shell will wait for input after printing the primary
@@ -4077,11 +4075,6 @@ traps in functions are not yet implemented.
 .It Ic true
 A command that exits with a zero value.
 .Pp
-.It Ic type
-Short form of
-.Ic command Fl V
-(see above).
-.Pp
 .It Xo
 .Ic typeset
 .Oo
@@ -4694,11 +4687,6 @@ Moves the cursor to the beginning of the edited input line.
 Uppercase the first character in the next
 .Ar n
 words, leaving the cursor past the end of the last word.
-.It clear-screen: ^L
-Clears the screen if the
-.Ev TERM
-parameter is set and the terminal supports clearing the screen, then
-reprints the prompt string and the current input line.
 .It comment: ^[#
 If the current line does not begin with a comment character, one is added at
 the beginning of the line and the line is entered (as if return had been
@@ -4891,7 +4879,7 @@ The last
 word of the previous command is inserted at the cursor.
 .It quote: ^^
 The following character is taken literally rather than as an editing command.
-.It redraw:
+.It redraw: ^L
 Reprints the prompt string and the current input line.
 .It Xo search-character-backward:
 .Op Ar n

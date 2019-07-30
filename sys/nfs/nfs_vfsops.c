@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.122 2018/07/02 20:56:22 bluhm Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.116 2018/02/10 05:24:23 deraadt Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -71,20 +71,17 @@ extern struct nfsstats nfsstats;
 extern int nfs_ticks;
 extern u_int32_t nfs_procids[NFS_NPROCS];
 
-int	nfs_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-	    struct proc *);
-int	nfs_checkexp(struct mount *, struct mbuf *, int *, struct ucred **);
-struct	mount *nfs_mount_diskless(struct nfs_dlmount *, char *, int,
-	    struct vnode **, struct proc *p);
+int		nfs_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+int		nfs_checkexp(struct mount *, struct mbuf *, int *, struct ucred **);
+struct mount	*nfs_mount_diskless(struct nfs_dlmount *, char *, int);
 int	mountnfs(struct nfs_args *, struct mount *, struct mbuf *,
-	    const char *, char *, struct vnode **, struct proc *p);
+	    const char *, char *);
 int	nfs_quotactl(struct mount *, int, uid_t, caddr_t, struct proc *);
 int	nfs_root(struct mount *, struct vnode **);
 int	nfs_start(struct mount *, int, struct proc *);
 int	nfs_statfs(struct mount *, struct statfs *, struct proc *);
 int	nfs_sync(struct mount *, int, int, struct ucred *, struct proc *);
 int	nfs_unmount(struct mount *, int, struct proc *);
-void	nfs_reaper(void *);
 int	nfs_vget(struct mount *, ino_t, struct vnode **);
 int	nfs_vptofh(struct vnode *, struct fid *);
 int	nfs_mountroot(void);
@@ -126,13 +123,15 @@ nfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	struct nfsmount *nmp = VFSTONFS(mp);
 	int error = 0, retattr;
 	struct ucred *cred;
+	struct nfsnode *np;
 	u_quad_t tquad;
 
 	info.nmi_v3 = (nmp->nm_flag & NFSMNT_NFSV3);
 
-	error = nfs_root(mp, &vp);
+	error = nfs_nget(mp, (nfsfh_t *)nmp->nm_fh, nmp->nm_fhsize, &np);
 	if (error)
 		return (error);
+	vp = NFSTOV(np);
 	cred = crget();
 	cred->cr_ngroups = 0;
 	if (info.nmi_v3 && (nmp->nm_flag & NFSMNT_GOTFSINFO) == 0)
@@ -179,7 +178,7 @@ nfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	copy_statfs_info(sbp, mp);
 	m_freem(info.nmi_mrep);
 nfsmout: 
-	vput(vp);
+	vrele(vp);
 	crfree(cred);
 	return (error);
 }
@@ -282,14 +281,14 @@ nfs_mountroot(void)
 	 */
 	if (nfs_boot_getfh(&nfs_diskless.nd_boot, "root", &nfs_diskless.nd_root, -1))
 		panic("nfs_mountroot: root");
-	mp = nfs_mount_diskless(&nfs_diskless.nd_root, "/", 0, &vp, procp);
+	mp = nfs_mount_diskless(&nfs_diskless.nd_root, "/", 0);
+	nfs_root(mp, &rootvp);
 	printf("root on %s\n", nfs_diskless.nd_root.ndm_host);
 
 	/*
 	 * Link it into the mount list.
 	 */
 	TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	rootvp = vp;
 	vfs_unbusy(mp);
 
 	/* Get root attributes (for the time). */
@@ -334,8 +333,8 @@ nfs_mountroot(void)
 	 */
 	error = nfs_boot_getfh(&nfs_diskless.nd_boot, "swap", &nfs_diskless.nd_swap, 5);
 	if (!error) {
-		mp = nfs_mount_diskless(&nfs_diskless.nd_swap, "/swap", 0, &vp,
-		    procp);
+		mp = nfs_mount_diskless(&nfs_diskless.nd_swap, "/swap", 0);
+		nfs_root(mp, &vp);
 		vfs_unbusy(mp);
 
 		/*
@@ -377,8 +376,7 @@ nfs_mountroot(void)
  * Internal version of mount system call for diskless setup.
  */
 struct mount *
-nfs_mount_diskless(struct nfs_dlmount *ndmntp, char *mntname, int mntflag,
-    struct vnode **vpp, struct proc *p)
+nfs_mount_diskless(struct nfs_dlmount *ndmntp, char *mntname, int mntflag)
 {
 	struct mount *mp;
 	struct mbuf *m;
@@ -394,7 +392,7 @@ nfs_mount_diskless(struct nfs_dlmount *ndmntp, char *mntname, int mntflag,
 	    (m->m_len = ndmntp->ndm_args.addr->sa_len));
 
 	error = mountnfs(&ndmntp->ndm_args, mp, m, mntname,
-	    ndmntp->ndm_args.hostname, vpp, p);
+	    ndmntp->ndm_args.hostname);
 	if (error)
 		panic("nfs_mountroot: mount %s failed: %d", mntname, error);
 
@@ -558,7 +556,6 @@ nfs_mount(struct mount *mp, const char *path, void *data,
 	int error;
 	struct nfs_args *args = data;
 	struct mbuf *nam;
-	struct vnode *vp;
 	char hst[MNAMELEN];
 	size_t len;
 	u_char nfh[NFSX_V3FHMAX];
@@ -602,7 +599,7 @@ nfs_mount(struct mount *mp, const char *path, void *data,
 	if (error)
 		return (error);
 	args->fh = nfh;
-	error = mountnfs(args, mp, nam, path, hst, &vp, p);
+	error = mountnfs(args, mp, nam, path, hst);
 	return (error);
 }
 
@@ -611,12 +608,9 @@ nfs_mount(struct mount *mp, const char *path, void *data,
  */
 int
 mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam,
-    const char *pth, char *hst, struct vnode **vpp, struct proc *p)
+    const char *pth, char *hst)
 {
 	struct nfsmount *nmp;
-	struct nfsnode *np;
-	struct vnode *vp;
-	struct vattr attr;
 	int error;
 
 	if (mp->mnt_flag & MNT_UPDATE) {
@@ -639,10 +633,12 @@ mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam,
 	nmp->nm_readdirsize = NFS_READDIRSIZE;
 	nmp->nm_numgrps = NFS_MAXGRPS;
 	nmp->nm_readahead = NFS_DEFRAHEAD;
+	nmp->nm_fhsize = argp->fhsize;
 	nmp->nm_acregmin = NFS_MINATTRTIMO;
 	nmp->nm_acregmax = NFS_MAXATTRTIMO;
 	nmp->nm_acdirmin = NFS_MINATTRTIMO;
 	nmp->nm_acdirmax = NFS_MAXATTRTIMO;
+	bcopy(argp->fh, nmp->nm_fh, argp->fhsize);
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	memset(mp->mnt_stat.f_mntonname, 0, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntonname, pth, MNAMELEN);
@@ -677,30 +673,6 @@ mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam,
 	 * point.
 	 */
 	mp->mnt_stat.f_iosize = NFS_MAXDGRAMDATA;
-	error = nfs_nget(mp, (nfsfh_t *)argp->fh, argp->fhsize, &np);
-	if (error)
-		goto bad;
-	vp = NFSTOV(np);
-	error = VOP_GETATTR(vp, &attr, p->p_ucred, p);
-	if (error) {
-		vput(vp);
-		goto bad;
-	}
-
-	/*
-	 * A reference count is needed on the nfsnode representing the
-	 * remote root.  If this object is not persistent, then backward
-	 * traversals of the mount point (i.e. "..") will not work if
-	 * the nfsnode gets flushed out of the cache. Ufs does not have
-	 * this problem, because one can identify root inodes by their
-	 * number == ROOTINO (2).  So, just unlock, but no rele.
-	 */
-	nmp->nm_vnode = vp;
-	if (vp->v_type == VNON)
-		vp->v_type = VDIR;
-	vp->v_flag = VROOT;
-	VOP_UNLOCK(vp);
-	*vpp = vp;
 
 	return (0);
 bad:
@@ -715,53 +687,24 @@ int
 nfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 {
 	struct nfsmount *nmp;
-	struct vnode *vp;
-	int error, flags = 0;
+	int error, flags;
 
 	nmp = VFSTONFS(mp);
-	error = nfs_root(mp, &vp);
-	if (error)
-		return (error);
-
-	if ((mntflags & MNT_FORCE) == 0 && vp->v_usecount > 2) {
-		vput(vp);
-		return (EBUSY);
-	}
+	flags = 0;
 
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
-	error = vflush(mp, vp, flags);
-	if (error) {
-		vput(vp);
+	error = vflush(mp, NULL, flags);
+	if (error)
 		return (error);
-	}
 
-	/*
-	 * There are two references count to get rid of here: one
-	 * from mountnfs() and one from nfs_root() above.
-	 */
-	vrele(vp);
-	vput(vp);
-	vgone(vp);
 	nfs_disconnect(nmp);
 	m_freem(nmp->nm_nam);
 	timeout_del(&nmp->nm_rtimeout);
-	timeout_set_proc(&nmp->nm_rtimeout, nfs_reaper, nmp);
-	timeout_add(&nmp->nm_rtimeout, 0);
+	free(nmp, M_NFSMNT, sizeof(*nmp));
 	mp->mnt_data = NULL;
 	return (0);
-}
-
-/*
- * Delay nfs mount point free until pending or sleeping timeouts have finished.
- */
-void
-nfs_reaper(void *arg)
-{
-	struct nfsmount *nmp = arg;
-
-	free(nmp, M_NFSMNT, sizeof(*nmp));
 }
 
 /*
@@ -770,19 +713,15 @@ nfs_reaper(void *arg)
 int
 nfs_root(struct mount *mp, struct vnode **vpp)
 {
-	struct vnode *vp;
 	struct nfsmount *nmp;
+	struct nfsnode *np;
 	int error;
 
 	nmp = VFSTONFS(mp);
-	vp = nmp->nm_vnode;
-	vref(vp);
-	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if (error) {
-		vrele(vp);
+	error = nfs_nget(mp, (nfsfh_t *)nmp->nm_fh, nmp->nm_fhsize, &np);
+	if (error)
 		return (error);
-	}
-	*vpp = vp;
+	*vpp = NFSTOV(np);
 	return (0);
 }
 
@@ -812,9 +751,9 @@ loop:
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		if (VOP_ISLOCKED(vp) || LIST_EMPTY(&vp->v_dirtyblkhd))
+		if (VOP_ISLOCKED(vp) || LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
 			continue;
-		if (vget(vp, LK_EXCLUSIVE))
+		if (vget(vp, LK_EXCLUSIVE, p))
 			goto loop;
 		error = VOP_FSYNC(vp, cred, waitfor, p);
 		if (error)

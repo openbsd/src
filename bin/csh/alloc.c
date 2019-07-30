@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.20 2018/09/18 17:48:22 millert Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.17 2015/12/26 13:48:38 mestre Exp $	*/
 /*	$NetBSD: alloc.c,v 1.6 1995/03/21 09:02:23 cgd Exp $	*/
 
 /*-
@@ -34,13 +34,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <string.h>
 
 #include "csh.h"
 #include "extern.h"
 
 void *
-xmalloc(size_t n)
+Malloc(size_t n)
 {
     void *ptr;
 
@@ -52,7 +51,7 @@ xmalloc(size_t n)
 }
 
 void *
-xreallocarray(void * p, size_t c, size_t n)
+Reallocarray(void * p, size_t c, size_t n)
 {
     void *ptr;
 
@@ -64,7 +63,7 @@ xreallocarray(void * p, size_t c, size_t n)
 }
 
 void *
-xcalloc(size_t s, size_t n)
+Calloc(size_t s, size_t n)
 {
     void *ptr;
 
@@ -74,18 +73,4 @@ xcalloc(size_t s, size_t n)
     }
 
     return (ptr);
-}
-
-char *
-xstrdup(const char *s)
-{
-    char *n;
- 
-    if (s == NULL)
-	s = "";
-    if ((n = strdup(s)) == NULL) {
-	child++;
-	stderror(ERR_NOMEM);
-    }
-    return (n);
 }

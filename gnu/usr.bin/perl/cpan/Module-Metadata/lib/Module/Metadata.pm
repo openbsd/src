@@ -1,6 +1,6 @@
 # -*- mode: cperl; tab-width: 8; indent-tabs-mode: nil; basic-offset: 2 -*-
-# vim:ts=8:sw=2:et:sta:sts=2:tw=78
-package Module::Metadata; # git description: v1.000032-7-gb4e8a3f
+# vim:ts=8:sw=2:et:sta:sts=2
+package Module::Metadata; # git description: v1.000030-2-g52f466c
 # ABSTRACT: Gather package and POD information from perl module files
 
 # Adapted from Perl-licensed code originally distributed with
@@ -14,7 +14,7 @@ sub __clean_eval { eval $_[0] }
 use strict;
 use warnings;
 
-our $VERSION = '1.000033';
+our $VERSION = '1.000031'; # TRIAL
 
 use Carp qw/croak/;
 use File::Spec;
@@ -411,29 +411,15 @@ sub _init {
   }
   $self->_parse_fh($handle);
 
-  @{$self->{packages}} = __uniq(@{$self->{packages}});
-
   unless($self->{module} and length($self->{module})) {
-    # CAVEAT (possible TODO): .pmc files not treated the same as .pm
-    if ($self->{filename} =~ /\.pm$/) {
-      my ($v, $d, $f) = File::Spec->splitpath($self->{filename});
+    my ($v, $d, $f) = File::Spec->splitpath($self->{filename});
+    if($f =~ /\.pm$/) {
       $f =~ s/\..+$//;
-      my @candidates = grep /(^|::)$f$/, @{$self->{packages}};
-      $self->{module} = shift(@candidates); # this may be undef
+      my @candidates = grep /$f$/, @{$self->{packages}};
+      $self->{module} = shift(@candidates); # punt
     }
     else {
-      # this seems like an atrocious heuristic, albeit marginally better than
-      # what was here before. It should be rewritten entirely to be more like
-      # "if it's not a .pm file, it's not require()able as a name, therefore
-      # name() should be undef."
-      if ((grep /main/, @{$self->{packages}})
-          or (grep /main/, keys %{$self->{versions}})) {
-        $self->{module} = 'main';
-      }
-      else {
-        # TODO: this should maybe default to undef instead
-        $self->{module} = $self->{packages}[0] || '';
-      }
+      $self->{module} = 'main';
     }
   }
 
@@ -454,7 +440,6 @@ sub _do_find_module {
     my $testfile = File::Spec->catfile($dir, $file);
     return [ File::Spec->rel2abs( $testfile ), $dir ]
       if -e $testfile and !-d _;  # For stuff like ExtUtils::xsubpp
-    # CAVEAT (possible TODO): .pmc files are not discoverable here
     $testfile .= '.pm';
     return [ File::Spec->rel2abs( $testfile ), $dir ]
       if -e $testfile;
@@ -664,12 +649,6 @@ sub _parse_fh {
   $self->{pod_headings} = \@pod;
 }
 
-sub __uniq (@)
-{
-    my (%seen, $key);
-    grep { not $seen{ $key = $_ }++ } @_;
-}
-
 {
 my $pn = 0;
 sub _evaluate_version_line {
@@ -841,7 +820,7 @@ Module::Metadata - Gather package and POD information from perl module files
 
 =head1 VERSION
 
-version 1.000033
+version 1.000031
 
 =head1 SYNOPSIS
 
@@ -1058,7 +1037,7 @@ There is also a mailing list available for users of this distribution, at
 L<http://lists.perl.org/list/cpan-workers.html>.
 
 There is also an irc channel available for users of this distribution, at
-L<C<#toolchain> on C<irc.perl.org>|irc://irc.perl.org/#toolchain>.
+L<irc://irc.perl.org/#toolchain>.
 
 =head1 AUTHOR
 
@@ -1070,7 +1049,7 @@ assistance from David Golden (xdg) <dagolden@cpan.org>.
 
 =head1 CONTRIBUTORS
 
-=for stopwords Karen Etheridge David Golden Vincent Pit Matt S Trout Chris Nehren Graham Knop Olivier Mengué Tomas Doran Tatsuhiko Miyagawa tokuhirom Kent Fredric Peter Rabbitson Steve Hay Jerry D. Hedden Craig A. Berry Mitchell Steinbrunner Edward Zborowski Gareth Harper James Raspass 'BinGOs' Williams Josh Jore
+=for stopwords Karen Etheridge David Golden Vincent Pit Matt S Trout Chris Nehren Graham Knop Olivier Mengué Tomas Doran Tatsuhiko Miyagawa tokuhirom Peter Rabbitson Steve Hay Josh Jore Craig A. Berry Mitchell Steinbrunner Edward Zborowski Gareth Harper James Raspass Jerry D. Hedden 'BinGOs' Williams Kent Fredric
 
 =over 4
 
@@ -1116,10 +1095,6 @@ tokuhirom <tokuhirom@gmail.com>
 
 =item *
 
-Kent Fredric <kentnl@cpan.org>
-
-=item *
-
 Peter Rabbitson <ribasushi@cpan.org>
 
 =item *
@@ -1128,15 +1103,11 @@ Steve Hay <steve.m.hay@googlemail.com>
 
 =item *
 
-Jerry D. Hedden <jdhedden@cpan.org>
+Josh Jore <jjore@cpan.org>
 
 =item *
 
 Craig A. Berry <cberry@cpan.org>
-
-=item *
-
-Craig A. Berry <craigberry@mac.com>
 
 =item *
 
@@ -1160,11 +1131,15 @@ James Raspass <jraspass@gmail.com>
 
 =item *
 
+Jerry D. Hedden <jdhedden@cpan.org>
+
+=item *
+
 Chris 'BinGOs' Williams <chris@bingosnet.co.uk>
 
 =item *
 
-Josh Jore <jjore@cpan.org>
+Kent Fredric <kentnl@cpan.org>
 
 =back
 

@@ -6,9 +6,7 @@ NNAAMMEE
        MT-args - argument handling of the man-ext mailto macro
 
 DDEESSCCRRIIPPTTIIOONN
-       argument, text, and tail: text <test@example.com>tail args
-
-       argument plus text: invalid address <test@example.com> next line
+       argument plus text: invalid address <test@example.com>
 
        argument but no text: <test@example.com>
 
@@ -22,4 +20,4 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-OpenBSD                         August 13, 2018                     MT-ARGS(1)
+OpenBSD                          June 25, 2017                      MT-ARGS(1)

@@ -31,16 +31,6 @@ public:
   virtual bool contains(TypeIndex Index) = 0;
   virtual uint32_t size() = 0;
   virtual uint32_t capacity() = 0;
-
-  template <typename TFunc> void ForEachRecord(TFunc Func) {
-    Optional<TypeIndex> Next = getFirst();
-
-    while (Next.hasValue()) {
-      TypeIndex N = *Next;
-      Func(N, getType(N));
-      Next = getNext(N);
-    }
-  }
 };
 }
 }

@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.122 2019/02/19 06:54:39 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.119 2017/11/23 20:49:38 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: February 19 2019 $
+.Dd $Mdocdate: November 23 2017 $
 .Dt ISAKMPD 8
 .Os
 .Sh NAME
@@ -601,7 +601,6 @@ Furthermore the last step will need to be done once for each ID you
 want the peer to have.
 The 10.0.0.1 below symbolizes that ID, in this case an IPv4 ID,
 and should be changed for each invocation.
-A fully qualified domain name (FQDN) may be used instead of an IPv4 ID.
 You will be asked for a DN for each run.
 Encoding the ID in the common name is recommended, as it should be unique.
 .Bd -literal -offset indent
@@ -611,38 +610,34 @@ Encoding the ID in the common name is recommended, as it should be unique.
 .Pp
 Now take these certificate signing requests to your CA and process
 them as below.
-A configuration file is used to add a
+A
 .Em subjectAltName
-extension field matching the ID used by
+extension field should be added to the certificate.
+Replace 10.0.0.1 with the IP address which
 .Nm
-to the certificate.
+will use as the certificate identity.
 .Pp
-If using an IPv4 ID, copy
+Copy
 .Pa /etc/ssl/x509v3.cnf
 to a temporary file and edit it to replace
 .Dv $ENV::CERTIP
-with the IP address (10.0.0.1 in this example), then generate a signed
-certificate:
+with 10.0.0.1, then run:
 .Bd -literal -offset indent
-# sed 's,\\$ENV::CERTIP,10.0.0.1,' \e
-	< /etc/ssl/x509v3.cnf > ~/tmp_x509v3.cnf
 # openssl x509 -req \e
 	-days 365 -in 10.0.0.1.csr \e
 	-CA /etc/ssl/ca.crt -CAkey /etc/ssl/private/ca.key \e
-	-CAcreateserial -extfile ~/tmp_x509v3.cnf \e
+	-CAcreateserial -extfile /etc/ssl/x509v3.cnf \e
 	-extensions x509v3_IPAddr -out 10.0.0.1.crt
 .Ed
 .Pp
-For an FQDN certificate, replace
-.Dv $ENV::CERTFQDN
-with the hostname and generate a signed certificate:
+For a FQDN certificate, replace
+.Dv $ENV::CERTIP
+with the hostname and run:
 .Bd -literal -offset indent
-# sed 's,\\$ENV::CERTFQDN,somehost.somedomain,' \e
-	< /etc/ssl/x509v3.cnf > ~/tmp_x509v3.cnf
 # openssl x509 -req \e
 	-days 365 -in somehost.somedomain.csr \e
 	-CA /etc/ssl/ca.crt -CAkey /etc/ssl/private/ca.key \e
-	-CAcreateserial -extfile ~/tmp_x509v3.cnf \e
+	-CAcreateserial -extfile /etc/ssl/x509v3.cnf \e
 	-extensions x509v3_FQDN -out somehost.somedomain.crt
 .Ed
 .Pp
@@ -811,17 +806,8 @@ It is not possible to change the interfaces
 .Nm
 listens on without a restart.
 .Pp
-For redundant setups with
-.Xr carp 4
-and
-.Xr sasyncd 8 ,
+For redundant setups,
 .Xr sasyncd 8
 must be manually restarted every time
 .Nm
-is restarted, and
-.Xr isakmpd.conf 5
-must explicitly configure
-.Nm
-to listen on the virtual IP address of each
-.Xr carp 4
-interface.
+is restarted.

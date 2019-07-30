@@ -15,7 +15,7 @@
 #define LLVM_LIB_TARGET_SPARC_SPARCFRAMELOWERING_H
 
 #include "Sparc.h"
-#include "llvm/CodeGen/TargetFrameLowering.h"
+#include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
 

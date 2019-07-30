@@ -34,6 +34,7 @@
 #pragma once
 
 // Third party headers:
+#include "lldb/API/SBCommandReturnObject.h"
 #include "lldb/API/SBError.h"
 
 // In-house headers:
@@ -41,7 +42,6 @@
 #include "MICmnLLDBDebugSessionInfoVarObj.h"
 #include "MICmnMIValueList.h"
 #include "MICmnMIValueTuple.h"
-#include "MICmnMIResultRecord.h"
 
 //++
 //============================================================================
@@ -377,6 +377,6 @@ public:
 
   // Attributes:
 private:
+  lldb::SBCommandReturnObject m_lldbResult;
   const CMIUtilString m_constStrArgLocation;
-  CMICmnMIResultRecord m_resultRecord;
 };

@@ -10,17 +10,18 @@
 // This file defines and implements the PassInfo class.
 //
 //===----------------------------------------------------------------------===//
-
 #ifndef LLVM_PASSINFO_H
 #define LLVM_PASSINFO_H
 
 #include "llvm/ADT/StringRef.h"
+
 #include <cassert>
 #include <vector>
 
 namespace llvm {
 
 class Pass;
+class TargetMachine;
 
 //===---------------------------------------------------------------------------
 /// PassInfo class - An instance of this class exists for every pass known by
@@ -30,17 +31,18 @@ class Pass;
 ///
 class PassInfo {
 public:
-  using NormalCtor_t = Pass* (*)();
+  typedef Pass* (*NormalCtor_t)();
 
 private:
   StringRef PassName;     // Nice name for Pass
   StringRef PassArgument; // Command Line argument to run this pass
   const void *PassID;
-  const bool IsCFGOnlyPass = false;      // Pass only looks at the CFG.
+  const bool IsCFGOnlyPass;              // Pass only looks at the CFG.
   const bool IsAnalysis;                 // True if an analysis pass.
   const bool IsAnalysisGroup;            // True if an analysis group.
   std::vector<const PassInfo *> ItfImpl; // Interfaces implemented by this pass
-  NormalCtor_t NormalCtor = nullptr;
+
+  NormalCtor_t NormalCtor;
 
 public:
   /// PassInfo ctor - Do not call this directly, this should only be invoked
@@ -49,22 +51,21 @@ public:
            bool isCFGOnly, bool is_analysis)
       : PassName(name), PassArgument(arg), PassID(pi), IsCFGOnlyPass(isCFGOnly),
         IsAnalysis(is_analysis), IsAnalysisGroup(false), NormalCtor(normal) {}
-
   /// PassInfo ctor - Do not call this directly, this should only be invoked
   /// through RegisterPass. This version is for use by analysis groups; it
   /// does not auto-register the pass.
   PassInfo(StringRef name, const void *pi)
-      : PassName(name), PassID(pi), IsAnalysis(false), IsAnalysisGroup(true) {}
-
-  PassInfo(const PassInfo &) = delete;
-  PassInfo &operator=(const PassInfo &) = delete;
+      : PassName(name), PassArgument(""), PassID(pi), IsCFGOnlyPass(false),
+        IsAnalysis(false), IsAnalysisGroup(true), NormalCtor(nullptr) {}
 
   /// getPassName - Return the friendly name for the pass, never returns null
+  ///
   StringRef getPassName() const { return PassName; }
 
   /// getPassArgument - Return the command line option that may be passed to
   /// 'opt' that will cause this pass to be run.  This will return null if there
   /// is no argument.
+  ///
   StringRef getPassArgument() const { return PassArgument; }
 
   /// getTypeInfo - Return the id object for the pass...
@@ -76,6 +77,7 @@ public:
 
   /// isAnalysisGroup - Return true if this is an analysis group, not a normal
   /// pass.
+  ///
   bool isAnalysisGroup() const { return IsAnalysisGroup; }
   bool isAnalysis() const { return IsAnalysis; }
 
@@ -86,6 +88,7 @@ public:
   /// getNormalCtor - Return a pointer to a function, that when called, creates
   /// an instance of the pass and returns it.  This pointer may be null if there
   /// is no default constructor for the pass.
+  ///
   NormalCtor_t getNormalCtor() const {
     return NormalCtor;
   }
@@ -105,17 +108,23 @@ public:
   /// addInterfaceImplemented - This method is called when this pass is
   /// registered as a member of an analysis group with the RegisterAnalysisGroup
   /// template.
+  ///
   void addInterfaceImplemented(const PassInfo *ItfPI) {
     ItfImpl.push_back(ItfPI);
   }
 
   /// getInterfacesImplemented - Return a list of all of the analysis group
   /// interfaces implemented by this pass.
+  ///
   const std::vector<const PassInfo*> &getInterfacesImplemented() const {
     return ItfImpl;
   }
+
+private:
+  void operator=(const PassInfo &) = delete;
+  PassInfo(const PassInfo &) = delete;
 };
 
-} // end namespace llvm
+}
 
-#endif // LLVM_PASSINFO_H
+#endif

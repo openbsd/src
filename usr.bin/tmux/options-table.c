@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.106 2019/05/26 17:34:45 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.95 2018/02/22 10:54:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -39,9 +39,6 @@ static const char *options_table_mode_keys_list[] = {
 static const char *options_table_clock_mode_style_list[] = {
 	"12", "24", NULL
 };
-static const char *options_table_status_list[] = {
-	"off", "on", "2", "3", "4", "5", NULL
-};
 static const char *options_table_status_keys_list[] = {
 	"emacs", "vi", NULL
 };
@@ -63,86 +60,9 @@ static const char *options_table_pane_status_list[] = {
 static const char *options_table_set_clipboard_list[] = {
 	"off", "external", "on", NULL
 };
-static const char *options_table_window_size_list[] = {
-	"largest", "smallest", "manual", NULL
-};
-
-/* Status line format. */
-#define OPTIONS_TABLE_STATUS_FORMAT1 \
-	"#[align=left range=left #{status-left-style}]" \
-	"#{T;=/#{status-left-length}:status-left}#[norange default]" \
-	"#[list=on align=#{status-justify}]" \
-	"#[list=left-marker]<#[list=right-marker]>#[list=on]" \
-	"#{W:" \
-		"#[range=window|#{window_index} " \
-			"#{window-status-style}" \
-			"#{?#{&&:#{window_last_flag}," \
-				"#{!=:#{window-status-last-style},default}}, " \
-				"#{window-status-last-style}," \
-			"}" \
-			"#{?#{&&:#{window_bell_flag}," \
-				"#{!=:#{window-status-bell-style},default}}, " \
-				"#{window-status-bell-style}," \
-				"#{?#{&&:#{||:#{window_activity_flag}," \
-					     "#{window_silence_flag}}," \
-					"#{!=:" \
-					"#{window-status-activity-style}," \
-					"default}}, " \
-					"#{window-status-activity-style}," \
-				"}" \
-			"}" \
-		"]" \
-		"#{T:window-status-format}" \
-		"#[norange default]" \
-		"#{?window_end_flag,,#{window-status-separator}}" \
-	"," \
-		"#[range=window|#{window_index} list=focus " \
-			"#{?#{!=:#{window-status-current-style},default}," \
-	                        "#{window-status-current-style}," \
-	                        "#{window-status-style}" \
-	                "}" \
-			"#{?#{&&:#{window_last_flag}," \
-				"#{!=:#{window-status-last-style},default}}, " \
-				"#{window-status-last-style}," \
-			"}" \
-			"#{?#{&&:#{window_bell_flag}," \
-				"#{!=:#{window-status-bell-style},default}}, " \
-				"#{window-status-bell-style}," \
-				"#{?#{&&:#{||:#{window_activity_flag}," \
-					     "#{window_silence_flag}}," \
-					"#{!=:" \
-					"#{window-status-activity-style}," \
-					"default}}, " \
-					"#{window-status-activity-style}," \
-				"}" \
-			"}" \
-		"]" \
-		"#{T:window-status-current-format}" \
-		"#[norange list=on default]" \
-		"#{?window_end_flag,,#{window-status-separator}}" \
-	"}" \
-	"#[nolist align=right range=right #{status-right-style}]" \
-	"#{T;=/#{status-right-length}:status-right}#[norange default]"
-#define OPTIONS_TABLE_STATUS_FORMAT2 \
-	"#[align=centre]#{P:#{?pane_active,#[reverse],}" \
-	"#{pane_index}[#{pane_width}x#{pane_height}]#[default] }"
-static const char *options_table_status_format_default[] = {
-	OPTIONS_TABLE_STATUS_FORMAT1, OPTIONS_TABLE_STATUS_FORMAT2, NULL
-};
-
-/* Helper for hook options. */
-#define OPTIONS_TABLE_HOOK(hook_name, default_value) \
-	{ .name = hook_name, \
-	  .type = OPTIONS_TABLE_COMMAND, \
-	  .scope = OPTIONS_TABLE_SESSION, \
-	  .flags = OPTIONS_TABLE_IS_ARRAY|OPTIONS_TABLE_IS_HOOK, \
-	  .default_str = default_value,	\
-	  .separator = "" \
-	}
 
 /* Top-level options. */
 const struct options_table_entry options_table[] = {
-	/* Server options. */
 	{ .name = "buffer-limit",
 	  .type = OPTIONS_TABLE_NUMBER,
 	  .scope = OPTIONS_TABLE_SERVER,
@@ -152,9 +72,8 @@ const struct options_table_entry options_table[] = {
 	},
 
 	{ .name = "command-alias",
-	  .type = OPTIONS_TABLE_STRING,
+	  .type = OPTIONS_TABLE_ARRAY,
 	  .scope = OPTIONS_TABLE_SERVER,
-	  .flags = OPTIONS_TABLE_IS_ARRAY,
 	  .default_str = "split-pane=split-window,"
 			 "splitp=split-window,"
 			 "server-info=show-messages -JT,"
@@ -218,9 +137,8 @@ const struct options_table_entry options_table[] = {
 	},
 
 	{ .name = "terminal-overrides",
-	  .type = OPTIONS_TABLE_STRING,
+	  .type = OPTIONS_TABLE_ARRAY,
 	  .scope = OPTIONS_TABLE_SERVER,
-	  .flags = OPTIONS_TABLE_IS_ARRAY,
 	  .default_str = "xterm*:XT:Ms=\\E]52;%p1%s;%p2%s\\007"
 			 ":Cs=\\E]12;%p1%s\\007:Cr=\\E]112\\007"
 			 ":Ss=\\E[%p1%d q:Se=\\E[2 q,screen*:XT",
@@ -228,14 +146,12 @@ const struct options_table_entry options_table[] = {
 	},
 
 	{ .name = "user-keys",
-	  .type = OPTIONS_TABLE_STRING,
+	  .type = OPTIONS_TABLE_ARRAY,
 	  .scope = OPTIONS_TABLE_SERVER,
-	  .flags = OPTIONS_TABLE_IS_ARRAY,
 	  .default_str = "",
 	  .separator = ","
 	},
 
-	/* Session options. */
 	{ .name = "activity-action",
 	  .type = OPTIONS_TABLE_CHOICE,
 	  .scope = OPTIONS_TABLE_SESSION,
@@ -276,13 +192,6 @@ const struct options_table_entry options_table[] = {
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SESSION,
 	  .default_str = _PATH_BSHELL
-	},
-
-	{ .name = "default-size",
-	  .type = OPTIONS_TABLE_STRING,
-	  .scope = OPTIONS_TABLE_SESSION,
-	  .pattern = "[0-9]*x[0-9]*",
-	  .default_str = "80x24"
 	},
 
 	{ .name = "destroy-unattached",
@@ -353,10 +262,52 @@ const struct options_table_entry options_table[] = {
 	  .default_str = "lock -np"
 	},
 
+	{ .name = "message-attr",
+	  .type = OPTIONS_TABLE_ATTRIBUTES,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_num = 0,
+	  .style = "message-style"
+	},
+
+	{ .name = "message-bg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_num = 3,
+	  .style = "message-style"
+	},
+
+	{ .name = "message-command-attr",
+	  .type = OPTIONS_TABLE_ATTRIBUTES,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_num = 0,
+	  .style = "message-command-style"
+	},
+
+	{ .name = "message-command-bg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_num = 0,
+	  .style = "message-command-style"
+	},
+
+	{ .name = "message-command-fg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_num = 3,
+	  .style = "message-command-style"
+	},
+
 	{ .name = "message-command-style",
 	  .type = OPTIONS_TABLE_STYLE,
 	  .scope = OPTIONS_TABLE_SESSION,
 	  .default_str = "bg=black,fg=yellow"
+	},
+
+	{ .name = "message-fg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_num = 0,
+	  .style = "message-style"
 	},
 
 	{ .name = "message-style",
@@ -417,29 +368,30 @@ const struct options_table_entry options_table[] = {
 	},
 
 	{ .name = "status",
-	  .type = OPTIONS_TABLE_CHOICE,
+	  .type = OPTIONS_TABLE_FLAG,
 	  .scope = OPTIONS_TABLE_SESSION,
-	  .choices = options_table_status_list,
 	  .default_num = 1
+	},
+
+	{ .name = "status-attr",
+	  .type = OPTIONS_TABLE_ATTRIBUTES,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_num = 0,
+	  .style = "status-style"
 	},
 
 	{ .name = "status-bg",
 	  .type = OPTIONS_TABLE_COLOUR,
 	  .scope = OPTIONS_TABLE_SESSION,
 	  .default_num = 2,
+	  .style = "status-style"
 	},
 
 	{ .name = "status-fg",
 	  .type = OPTIONS_TABLE_COLOUR,
 	  .scope = OPTIONS_TABLE_SESSION,
 	  .default_num = 0,
-	},
-
-	{ .name = "status-format",
-	  .type = OPTIONS_TABLE_STRING,
-	  .scope = OPTIONS_TABLE_SESSION,
-	  .flags = OPTIONS_TABLE_IS_ARRAY,
-	  .default_arr = options_table_status_format_default,
+	  .style = "status-style"
 	},
 
 	{ .name = "status-interval",
@@ -470,6 +422,27 @@ const struct options_table_entry options_table[] = {
 	  .default_str = "[#S] "
 	},
 
+	{ .name = "status-left-attr",
+	  .type = OPTIONS_TABLE_ATTRIBUTES,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_num = 0,
+	  .style = "status-left-style"
+	},
+
+	{ .name = "status-left-bg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_num = 8,
+	  .style = "status-left-style"
+	},
+
+	{ .name = "status-left-fg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_num = 8,
+	  .style = "status-left-style"
+	},
+
 	{ .name = "status-left-length",
 	  .type = OPTIONS_TABLE_NUMBER,
 	  .scope = OPTIONS_TABLE_SESSION,
@@ -494,9 +467,28 @@ const struct options_table_entry options_table[] = {
 	{ .name = "status-right",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SESSION,
-	  .default_str = "#{?window_bigger,"
-	                 "[#{window_offset_x}#,#{window_offset_y}] ,}"
-	                 "\"#{=21:pane_title}\" %H:%M %d-%b-%y"
+	  .default_str = " \"#{=21:pane_title}\" %H:%M %d-%b-%y"
+	},
+
+	{ .name = "status-right-attr",
+	  .type = OPTIONS_TABLE_ATTRIBUTES,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_num = 0,
+	  .style = "status-right-style"
+	},
+
+	{ .name = "status-right-bg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_num = 8,
+	  .style = "status-right-style"
+	},
+
+	{ .name = "status-right-fg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_num = 8,
+	  .style = "status-right-style"
 	},
 
 	{ .name = "status-right-length",
@@ -520,11 +512,10 @@ const struct options_table_entry options_table[] = {
 	},
 
 	{ .name = "update-environment",
-	  .type = OPTIONS_TABLE_STRING,
+	  .type = OPTIONS_TABLE_ARRAY,
 	  .scope = OPTIONS_TABLE_SESSION,
-	  .flags = OPTIONS_TABLE_IS_ARRAY,
-	  .default_str = "DISPLAY KRB5CCNAME SSH_ASKPASS SSH_AUTH_SOCK "
-	  		 "SSH_AGENT_PID SSH_CONNECTION WINDOWID XAUTHORITY"
+	  .default_str = "DISPLAY SSH_ASKPASS SSH_AUTH_SOCK SSH_AGENT_PID "
+			 "SSH_CONNECTION WINDOWID XAUTHORITY"
 	},
 
 	{ .name = "visual-activity",
@@ -551,10 +542,9 @@ const struct options_table_entry options_table[] = {
 	{ .name = "word-separators",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SESSION,
-	  .default_str = " "
+	  .default_str = " -_@"
 	},
 
-	/* Window options. */
 	{ .name = "aggressive-resize",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .scope = OPTIONS_TABLE_WINDOW,
@@ -599,6 +589,22 @@ const struct options_table_entry options_table[] = {
 	  .default_num = 1
 	},
 
+	{ .name = "force-height",
+	  .type = OPTIONS_TABLE_NUMBER,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .minimum = 0,
+	  .maximum = INT_MAX,
+	  .default_num = 0
+	},
+
+	{ .name = "force-width",
+	  .type = OPTIONS_TABLE_NUMBER,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .minimum = 0,
+	  .maximum = INT_MAX,
+	  .default_num = 0
+	},
+
 	{ .name = "main-pane-height",
 	  .type = OPTIONS_TABLE_NUMBER,
 	  .scope = OPTIONS_TABLE_WINDOW,
@@ -613,6 +619,27 @@ const struct options_table_entry options_table[] = {
 	  .minimum = 1,
 	  .maximum = INT_MAX,
 	  .default_num = 80
+	},
+
+	{ .name = "mode-attr",
+	  .type = OPTIONS_TABLE_ATTRIBUTES,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 0,
+	  .style = "mode-style"
+	},
+
+	{ .name = "mode-bg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 3,
+	  .style = "mode-style"
+	},
+
+	{ .name = "mode-fg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 0,
+	  .style = "mode-style"
 	},
 
 	{ .name = "mode-keys",
@@ -664,6 +691,20 @@ const struct options_table_entry options_table[] = {
 	  .default_num = 0
 	},
 
+	{ .name = "pane-active-border-bg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 8,
+	  .style = "pane-active-border-style"
+	},
+
+	{ .name = "pane-active-border-fg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 2,
+	  .style = "pane-active-border-style"
+	},
+
 	{ .name = "pane-active-border-style",
 	  .type = OPTIONS_TABLE_STYLE,
 	  .scope = OPTIONS_TABLE_WINDOW,
@@ -676,6 +717,20 @@ const struct options_table_entry options_table[] = {
 	  .minimum = 0,
 	  .maximum = USHRT_MAX,
 	  .default_num = 0
+	},
+
+	{ .name = "pane-border-bg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 8,
+	  .style = "pane-border-style"
+	},
+
+	{ .name = "pane-border-fg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 8,
+	  .style = "pane-border-style"
 	},
 
 	{ .name = "pane-border-format",
@@ -716,17 +771,31 @@ const struct options_table_entry options_table[] = {
 	  .default_str = "default"
 	},
 
-	{ .name = "window-size",
-	  .type = OPTIONS_TABLE_CHOICE,
-	  .scope = OPTIONS_TABLE_WINDOW,
-	  .choices = options_table_window_size_list,
-	  .default_num = WINDOW_SIZE_SMALLEST
-	},
-
 	{ .name = "window-style",
 	  .type = OPTIONS_TABLE_STYLE,
 	  .scope = OPTIONS_TABLE_WINDOW,
 	  .default_str = "default"
+	},
+
+	{ .name = "window-status-activity-attr",
+	  .type = OPTIONS_TABLE_ATTRIBUTES,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = GRID_ATTR_REVERSE,
+	  .style = "window-status-activity-style"
+	},
+
+	{ .name = "window-status-activity-bg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 8,
+	  .style = "window-status-activity-style"
+	},
+
+	{ .name = "window-status-activity-fg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 8,
+	  .style = "window-status-activity-style"
 	},
 
 	{ .name = "window-status-activity-style",
@@ -735,10 +804,66 @@ const struct options_table_entry options_table[] = {
 	  .default_str = "reverse"
 	},
 
+	{ .name = "window-status-attr",
+	  .type = OPTIONS_TABLE_ATTRIBUTES,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 0,
+	  .style = "window-status-style"
+	},
+
+	{ .name = "window-status-bell-attr",
+	  .type = OPTIONS_TABLE_ATTRIBUTES,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = GRID_ATTR_REVERSE,
+	  .style = "window-status-bell-style"
+	},
+
+	{ .name = "window-status-bell-bg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 8,
+	  .style = "window-status-bell-style"
+	},
+
+	{ .name = "window-status-bell-fg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 8,
+	  .style = "window-status-bell-style"
+	},
+
 	{ .name = "window-status-bell-style",
 	  .type = OPTIONS_TABLE_STYLE,
 	  .scope = OPTIONS_TABLE_WINDOW,
 	  .default_str = "reverse"
+	},
+
+	{ .name = "window-status-bg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 8,
+	  .style = "window-status-style"
+	},
+
+	{ .name = "window-status-current-attr",
+	  .type = OPTIONS_TABLE_ATTRIBUTES,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 0,
+	  .style = "window-status-current-style"
+	},
+
+	{ .name = "window-status-current-bg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 8,
+	  .style = "window-status-current-style"
+	},
+
+	{ .name = "window-status-current-fg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 8,
+	  .style = "window-status-current-style"
 	},
 
 	{ .name = "window-status-current-format",
@@ -753,10 +878,38 @@ const struct options_table_entry options_table[] = {
 	  .default_str = "default"
 	},
 
+	{ .name = "window-status-fg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 8,
+	  .style = "window-status-style"
+	},
+
 	{ .name = "window-status-format",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
 	  .default_str = "#I:#W#{?window_flags,#{window_flags}, }"
+	},
+
+	{ .name = "window-status-last-attr",
+	  .type = OPTIONS_TABLE_ATTRIBUTES,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 0,
+	  .style = "window-status-last-style"
+	},
+
+	{ .name = "window-status-last-bg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 8,
+	  .style = "window-status-last-style"
+	},
+
+	{ .name = "window-status-last-fg",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_num = 8,
+	  .style = "window-status-last-style"
 	},
 
 	{ .name = "window-status-last-style",
@@ -788,67 +941,6 @@ const struct options_table_entry options_table[] = {
 	  .scope = OPTIONS_TABLE_WINDOW,
 	  .default_num = 1
 	},
-
-	/* Hook options. */
-	OPTIONS_TABLE_HOOK("after-bind-key", ""),
-	OPTIONS_TABLE_HOOK("after-capture-pane", ""),
-	OPTIONS_TABLE_HOOK("after-copy-mode", ""),
-	OPTIONS_TABLE_HOOK("after-display-message", ""),
-	OPTIONS_TABLE_HOOK("after-display-panes", ""),
-	OPTIONS_TABLE_HOOK("after-list-buffers", ""),
-	OPTIONS_TABLE_HOOK("after-list-clients", ""),
-	OPTIONS_TABLE_HOOK("after-list-keys", ""),
-	OPTIONS_TABLE_HOOK("after-list-panes", ""),
-	OPTIONS_TABLE_HOOK("after-list-sessions", ""),
-	OPTIONS_TABLE_HOOK("after-list-windows", ""),
-	OPTIONS_TABLE_HOOK("after-load-buffer", ""),
-	OPTIONS_TABLE_HOOK("after-lock-server", ""),
-	OPTIONS_TABLE_HOOK("after-new-session", ""),
-	OPTIONS_TABLE_HOOK("after-new-window", ""),
-	OPTIONS_TABLE_HOOK("after-paste-buffer", ""),
-	OPTIONS_TABLE_HOOK("after-pipe-pane", ""),
-	OPTIONS_TABLE_HOOK("after-queue", ""),
-	OPTIONS_TABLE_HOOK("after-refresh-client", ""),
-	OPTIONS_TABLE_HOOK("after-rename-session", ""),
-	OPTIONS_TABLE_HOOK("after-rename-window", ""),
-	OPTIONS_TABLE_HOOK("after-resize-pane", ""),
-	OPTIONS_TABLE_HOOK("after-resize-window", ""),
-	OPTIONS_TABLE_HOOK("after-save-buffer", ""),
-	OPTIONS_TABLE_HOOK("after-select-layout", ""),
-	OPTIONS_TABLE_HOOK("after-select-pane", ""),
-	OPTIONS_TABLE_HOOK("after-select-window", ""),
-	OPTIONS_TABLE_HOOK("after-send-keys", ""),
-	OPTIONS_TABLE_HOOK("after-set-buffer", ""),
-	OPTIONS_TABLE_HOOK("after-set-environment", ""),
-	OPTIONS_TABLE_HOOK("after-set-hook", ""),
-	OPTIONS_TABLE_HOOK("after-set-option", ""),
-	OPTIONS_TABLE_HOOK("after-show-environment", ""),
-	OPTIONS_TABLE_HOOK("after-show-messages", ""),
-	OPTIONS_TABLE_HOOK("after-show-options", ""),
-	OPTIONS_TABLE_HOOK("after-split-window", ""),
-	OPTIONS_TABLE_HOOK("after-unbind-key", ""),
-	OPTIONS_TABLE_HOOK("alert-activity", ""),
-	OPTIONS_TABLE_HOOK("alert-bell", ""),
-	OPTIONS_TABLE_HOOK("alert-silence", ""),
-	OPTIONS_TABLE_HOOK("client-attached", ""),
-	OPTIONS_TABLE_HOOK("client-detached", ""),
-	OPTIONS_TABLE_HOOK("client-resized", ""),
-	OPTIONS_TABLE_HOOK("client-session-changed", ""),
-	OPTIONS_TABLE_HOOK("pane-died", ""),
-	OPTIONS_TABLE_HOOK("pane-exited", ""),
-	OPTIONS_TABLE_HOOK("pane-focus-in", ""),
-	OPTIONS_TABLE_HOOK("pane-focus-out", ""),
-	OPTIONS_TABLE_HOOK("pane-mode-changed", ""),
-	OPTIONS_TABLE_HOOK("pane-set-clipboard", ""),
-	OPTIONS_TABLE_HOOK("session-closed", ""),
-	OPTIONS_TABLE_HOOK("session-created", ""),
-	OPTIONS_TABLE_HOOK("session-renamed", ""),
-	OPTIONS_TABLE_HOOK("session-window-changed", ""),
-	OPTIONS_TABLE_HOOK("window-layout-changed", ""),
-	OPTIONS_TABLE_HOOK("window-linked", ""),
-	OPTIONS_TABLE_HOOK("window-pane-changed", ""),
-	OPTIONS_TABLE_HOOK("window-renamed", ""),
-	OPTIONS_TABLE_HOOK("window-unlinked", ""),
 
 	{ .name = NULL }
 };

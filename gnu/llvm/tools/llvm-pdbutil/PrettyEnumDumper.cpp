@@ -26,29 +26,25 @@ void EnumDumper::start(const PDBSymbolTypeEnum &Symbol) {
   WithColor(Printer, PDB_ColorItem::Keyword).get() << "enum ";
   WithColor(Printer, PDB_ColorItem::Type).get() << Symbol.getName();
   if (!opts::pretty::NoEnumDefs) {
-    auto UnderlyingType = Symbol.getUnderlyingType();
-    if (!UnderlyingType)
-      return;
-    if (UnderlyingType->getBuiltinType() != PDB_BuiltinType::Int ||
-        UnderlyingType->getLength() != 4) {
+    auto BuiltinType = Symbol.getUnderlyingType();
+    if (BuiltinType->getBuiltinType() != PDB_BuiltinType::Int ||
+        BuiltinType->getLength() != 4) {
       Printer << " : ";
       BuiltinDumper Dumper(Printer);
-      Dumper.start(*UnderlyingType);
+      Dumper.start(*BuiltinType);
     }
-    auto EnumValues = Symbol.findAllChildren<PDBSymbolData>();
     Printer << " {";
     Printer.Indent();
-    if (EnumValues && EnumValues->getChildCount() > 0) {
-      while (auto EnumValue = EnumValues->getNext()) {
-        if (EnumValue->getDataKind() != PDB_DataKind::Constant)
-          continue;
-        Printer.NewLine();
-        WithColor(Printer, PDB_ColorItem::Identifier).get()
-            << EnumValue->getName();
-        Printer << " = ";
-        WithColor(Printer, PDB_ColorItem::LiteralValue).get()
-            << EnumValue->getValue();
-      }
+    auto EnumValues = Symbol.findAllChildren<PDBSymbolData>();
+    while (auto EnumValue = EnumValues->getNext()) {
+      if (EnumValue->getDataKind() != PDB_DataKind::Constant)
+        continue;
+      Printer.NewLine();
+      WithColor(Printer, PDB_ColorItem::Identifier).get()
+          << EnumValue->getName();
+      Printer << " = ";
+      WithColor(Printer, PDB_ColorItem::LiteralValue).get()
+          << EnumValue->getValue();
     }
     Printer.Unindent();
     Printer.NewLine();

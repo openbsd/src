@@ -36,11 +36,9 @@ Using Clang as a Compiler
    ControlFlowIntegrity
    LTOVisibility
    SafeStack
-   ShadowCallStack
    SourceBasedCodeCoverage
    Modules
    MSVCCompatibility
-   OpenMPSupport
    ThinLTO
    CommandGuide/index
    FAQ
@@ -62,7 +60,6 @@ Using Clang as a Library
    LibASTMatchers
    HowToSetupToolingForLLVM
    JSONCompilationDatabase
-   RefactoringEngine
 
 Using Clang Tools
 =================
@@ -86,7 +83,6 @@ Design Documents
    PTHInternals
    PCHInternals
    ItaniumMangleAbiTags
-   HardwareAssistedAddressSanitizerDesign.rst
 
 
 Indices and tables

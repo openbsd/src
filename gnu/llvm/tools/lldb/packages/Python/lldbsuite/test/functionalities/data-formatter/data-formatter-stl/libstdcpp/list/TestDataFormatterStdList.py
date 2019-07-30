@@ -27,11 +27,11 @@ class StdListDataFormatterTestCase(TestBase):
         self.final_line = line_number(
             'main.cpp', '// Set final break point at this line.')
 
-    @add_test_categories(["libstdcxx"])
+    @skipIfWindows  # libstdcpp not ported to Windows
     def test_with_run_command(self):
         """Test that that file and class static variables display correctly."""
         self.build()
-        self.runCmd("file " + self.getBuildArtifact("a.out"), CURRENT_EXECUTABLE_SET)
+        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line(
             self, "main.cpp", self.line, num_expected_locations=-1)

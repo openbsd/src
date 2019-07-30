@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_bsdauth.c,v 1.12 2019/04/01 11:05:41 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_bsdauth.c,v 1.8 2017/08/21 21:41:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -25,7 +25,6 @@
 #include <bsd_auth.h>
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <grp.h>
 #include <imsg.h>
 #include <login_cap.h>
@@ -62,13 +61,11 @@ struct auth_groupcheck_args {
 	size_t	grouplen;
 };
 
-__dead static void
-		 module_bsdauth_main(void);
+static pid_t	 module_bsdauth_main(int, int);
 static void	 module_bsdauth_config_set(void *, const char *, int,
 		    char * const *);
 static void	 module_bsdauth_userpass(void *, u_int, const char *,
 		    const char *);
-static pid_t	 start_child(char *, int);
 __dead static void
 		 fatal(const char *);
 
@@ -80,40 +77,25 @@ static struct module_handlers module_bsdauth_handlers = {
 int
 main(int argc, char *argv[])
 {
-	int		 ch, pairsock[2], status;
+	int		 pipe_chld, pairsock[2], status;
 	struct imsgbuf	 ibuf;
 	struct imsg	 imsg;
 	ssize_t		 n;
 	size_t		 datalen;
 	pid_t		 pid;
-	char		*saved_argv0;
 
-	while ((ch = getopt(argc, argv, "M")) != -1)
-		switch (ch) {
-		case 'M':
-			module_bsdauth_main();
-			/* never return, not rearched here */
-			break;
-		default:
-			break;
-		}
-	saved_argv0 = argv[0];
-	argc -= optind;
-	argv += optind;
-
-	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, PF_UNSPEC,
-	    pairsock) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pairsock) == -1)
 		err(EXIT_FAILURE, "socketpair");
 
-	openlog(NULL, LOG_PID, LOG_DAEMON);
-
-	pid = start_child(saved_argv0, pairsock[1]);
+	pipe_chld = pairsock[1];
+	pid = module_bsdauth_main(pairsock[0], pairsock[1]);
 
 	/*
 	 * Privileged process
 	 */
+	openlog(NULL, LOG_PID, LOG_DAEMON);
 	setproctitle("[priv]");
-	imsg_init(&ibuf, pairsock[0]);
+	imsg_init(&ibuf, pipe_chld);
 
 	if (pledge("stdio getpw rpath proc exec", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
@@ -178,8 +160,8 @@ main(int argc, char *argv[])
 					break;
 				}
 				args = (struct auth_groupcheck_args *)imsg.data;
-				if (datalen <
-				    sizeof(struct auth_groupcheck_args) +
+				if (datalen < sizeof(
+					    struct auth_groupcheck_args) +
 				    args->userlen + args->grouplen) {
 					syslog(LOG_ERR, "Short message");
 					break;
@@ -213,8 +195,8 @@ group_done:
 				    0, 0, -1, NULL, 0);
 				break;
 			    }
+			    imsg_free(&imsg);
 			}
-			imsg_free(&imsg);
 			imsg_flush(&ibuf);
 		}
 		imsg_flush(&ibuf);
@@ -228,15 +210,24 @@ group_done:
 	exit(WEXITSTATUS(status));
 }
 
-static void
-module_bsdauth_main(void)
+static pid_t
+module_bsdauth_main(int pipe_prnt, int pipe_chld)
 {
 	int			 i;
+	pid_t			 pid;
 	struct module_bsdauth	 module_bsdauth;
 
-	/*
-	 * main process
-	 */
+	pid = fork();
+	if (pid == -1)
+		err(EXIT_FAILURE, "fork");
+
+	if (pid > 0) {
+		close(pipe_prnt);
+		return (pid);
+	}
+	close(pipe_chld);
+
+	/* main process */
 	setproctitle("[main]");
 	openlog(NULL, LOG_PID, LOG_DAEMON);
 	memset(&module_bsdauth, 0, sizeof(module_bsdauth));
@@ -247,7 +238,7 @@ module_bsdauth_main(void)
 	module_drop_privilege(module_bsdauth.base);
 
 	module_load(module_bsdauth.base);
-	imsg_init(&module_bsdauth.ibuf, 3);
+	imsg_init(&module_bsdauth.ibuf, pipe_prnt);
 
 	if (pledge("stdio proc", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
@@ -264,7 +255,7 @@ module_bsdauth_main(void)
 	}
 	free(module_bsdauth.okgroups);
 
-	exit(EXIT_SUCCESS);
+	_exit(EXIT_SUCCESS);
 }
 
 static void
@@ -296,10 +287,7 @@ module_bsdauth_config_set(void *ctx, const char *name, int argc,
 		groups[i] = NULL;
 		module->okgroups = groups;
 		module_send_message(module->base, IMSG_OK, NULL);
-	} else if (strncmp(name, "_", 1) == 0)
-		/* ignore all internal messages */
-		module_send_message(module->base, IMSG_OK, NULL);
-	else
+	} else
 		module_send_message(module->base, IMSG_NG,
 		    "Unknown config parameter `%s'", name);
 	return;
@@ -388,35 +376,6 @@ auth_ng:
 	module_userpass_fail(module->base, q_id, reason);
 	imsg_free(&imsg);
 	return;
-}
-
-pid_t
-start_child(char *argv0, int fd)
-{
-	char *argv[5];
-	int argc = 0;
-	pid_t pid;
-
-	switch (pid = fork()) {
-	case -1:
-		fatal("cannot fork");
-	case 0:
-		break;
-	default:
-		close(fd);
-		return (pid);
-	}
-
-	if (fd != 3) {
-		if (dup2(fd, 3) == -1)
-			fatal("cannot setup imsg fd");
-	} else if (fcntl(fd, F_SETFD, 0) == -1)
-		fatal("cannot setup imsg fd");
-
-	argv[argc++] = argv0;
-	argv[argc++] = "-M";	/* main proc */
-	execvp(argv0, argv);
-	fatal("execvp");
 }
 
 static void

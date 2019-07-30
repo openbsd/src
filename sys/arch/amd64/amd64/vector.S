@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.79 2019/01/20 00:53:08 mlarkin Exp $	*/
+/*	$OpenBSD: vector.S,v 1.54 2018/03/09 07:43:07 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -65,6 +65,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define ALIGN_TEXT	.align 16,0x90
+
 #include <machine/param.h>
 #include <machine/i8259.h>
 #include <machine/i82093reg.h>
@@ -121,9 +123,7 @@ IDTVEC(trap02)
 	pushq	$0
 	pushq	$T_NMI
 calltrap_specstk:			# special stack path
-	INTR_ENTRY_KERN
-	INTR_SAVE_MOST_GPRS_NO_ADJ
-	INTR_CLEAR_GPRS
+	INTR_REENTRY
 	movl	$MSR_GSBASE,%ecx	# save current GS.base...
 	rdmsr
 	movq	%rax,%r12		# ...in %r12 and %r13
@@ -144,7 +144,7 @@ INTRENTRY_LABEL(calltrap_specstk):
 	cld
 	SMAP_CLAC
 	movq	%rsp,%rdi
-	call	_C_LABEL(kerntrap)
+	call	trap
 	movl	$MSR_GSBASE,%ecx	# restore GS.base
 	movq	%r12,%rax
 	movq	%r13,%rdx
@@ -164,84 +164,14 @@ INTRENTRY_LABEL(calltrap_specstk):
 KUENTRY(calltrap_specstk_tramp)
 	movq	%r15,%cr3		# restore %cr3
 	popq	%r15
-	addq	$8,%rsp			# ignore tf_err
+	popq	%rbp
 	popq	%rbx
 	popq	%rax
-	addq	$8,%rsp			# ignore tf_trapno
-	popq	%rbp
+	addq	$48,%rsp		# ignored TF_[DEFG]S
 	iretq
 
 IDTVEC(trap03)
-#if defined(GPROF) || !defined(DDBPROF)
 	ZTRAP(T_BPTFLT)
-#else /* !defined(GPROF) && defined(DDBPROF) */
-	pushq	$0
-	pushq	$T_BPTFLT
-	testb	$SEL_RPL,24(%rsp)
-	je	INTRENTRY_LABEL(trap03)
-	jmp	alltraps
-	.text
-	.global	INTRENTRY_LABEL(trap03)
-INTRENTRY_LABEL(trap03):
-	INTR_ENTRY_KERN
-	INTR_SAVE_MOST_GPRS_NO_ADJ
-	sti
-	cld
-	SMAP_CLAC
-	movq	%rsp, %rdi
-	call	_C_LABEL(db_prof_hook)
-	cmpl	$1, %eax
-	jne	.Lreal_kern_trap
-
-	cli
-	movq	TF_RDI(%rsp),%rdi
-	movq	TF_RSI(%rsp),%rsi
-	movq	TF_R8(%rsp),%r8
-	movq	TF_R9(%rsp),%r9
-	movq	TF_R10(%rsp),%r10
-	movq	TF_R12(%rsp),%r12
-	movq	TF_R13(%rsp),%r13
-	movq	TF_R14(%rsp),%r14
-	movq	TF_R15(%rsp),%r15
-	movq	TF_RBP(%rsp),%rbp
-	movq	TF_RBX(%rsp),%rbx
-	movq	TF_RDX(%rsp),%rdx
-	movq	TF_RCX(%rsp),%rcx
-	movq	TF_R11(%rsp),%r11
-	/* %rax restored below, after being used to shift the stack */
-
-	/*
-	 * We are returning from a probe trap so we need to fix the
-	 * stack layout and emulate the patched instruction.
-	 * Reserve enough room to emulate "pushq %rbp".
-	 */
-	subq	$16, %rsp
-
-	/* Shift hardware-saved registers. */
-	movq	(TF_RIP + 16)(%rsp), %rax
-	movq	%rax, TF_RIP(%rsp)
-	movq	(TF_CS + 16)(%rsp), %rax
-	movq	%rax, TF_CS(%rsp)
-	movq	(TF_RFLAGS + 16)(%rsp), %rax
-	movq	%rax, TF_RFLAGS(%rsp)
-	movq	(TF_RSP + 16)(%rsp), %rax
-	movq	%rax, TF_RSP(%rsp)
-	movq	(TF_SS + 16)(%rsp), %rax
-	movq	%rax, TF_SS(%rsp)
-
-	/* Pull 8 bytes off the stack and store %rbp in the expected location.*/
-	movq	TF_RSP(%rsp), %rax
-	subq	$8, %rax
-	movq	%rax, TF_RSP(%rsp)
-	movq	%rbp, (%rax)
-
-	/* Finally restore %rax */
-	movq	(TF_RAX + 16)(%rsp),%rax
-
-	addq	$TF_RIP,%rsp
-	iretq
-#endif /* !defined(GPROF) && defined(DDBPROF) */
-
 IDTVEC(trap04)
 	ZTRAP(T_OFLOW)	# impossible: INTO instruction invalid in amd64
 IDTVEC(trap05)
@@ -249,7 +179,17 @@ IDTVEC(trap05)
 IDTVEC(trap06)
 	ZTRAP(T_PRIVINFLT)
 IDTVEC(trap07)
-	ZTRAP(T_DNA)		# impossible: we don't do lazy FPU
+	pushq	$0			# dummy error code
+	pushq	$T_DNA
+	INTRENTRY(trap07)
+	sti
+	cld
+	SMAP_CLAC
+	movq	CPUVAR(SELF),%rdi
+	movq	%rsp, %rsi
+	call	_C_LABEL(fpudna)
+	cli
+	INTRFASTEXIT
 IDTVEC(trap08)
 	pushq	$T_DOUBLEFLT
 	jmp	calltrap_specstk
@@ -262,69 +202,64 @@ IDTVEC(trap0b)
 IDTVEC(trap0c)
 	TRAP(T_STKFLT)
 
-/*
- * The #GP (general protection fault) handler has a few weird cases
- * to handle:
- *  - trapping in iretq to userspace and
- *  - trapping in xrstor in the kernel.
- *  - trapping when invalid MSRs are read in rdmsr_safe
- * We detect these by examining the %rip in the iretq_frame.
- * Handling them is done by updating %rip in the iretq_frame to point
- * to a stub handler of some sort and then iretq'ing to it.  For the
- * iretq fault we resume in a stub which acts like we got a fresh #GP.
- * For the xrstor fault we resume to a stub which returns an error to
- * the routine that requested the xrstor.
- */
+	/*
+	 * If iretq faults, we'll get a trap at doreti_iret with CPL==0 but
+	 * the user's GS.base, which INTRENTRY wouldn't handle correctly
+	 * (it would skip the swapgs), so locally expand both it and
+	 * INTR_SAVE_GPRS, but add an extra test comparing %rip to doreti_iret
+	 * so that we can do the necessary swapgs in that case.
+	 */
 IDTVEC(trap0d)
-	pushq	%rdx
 	pushq	%rcx
-	movq	24(%rsp),%rdx		/* over %r[cd]x and err to %rip */
-	leaq	doreti_iret(%rip),%rcx
-	cmpq	%rcx,%rdx
-	je	.Lhandle_doreti
-	leaq	xrstor_fault(%rip),%rcx
-	cmpq	%rcx,%rdx
-	je	.Lhandle_xrstor
-	leaq	xsetbv_fault(%rip),%rcx
-	cmpq	%rcx,%rdx
-	je	.Lhandle_xsetbv
-	leaq	rdmsr_safe_fault(%rip),%rcx
-	cmpq	%rcx,%rdx
-	je	.Lhandle_rdmsr_safe
+	leaq	_C_LABEL(doreti_iret)(%rip),%rcx
+	cmpq	%rcx,16(%rsp)		/* over %rcx and err to %rip */
 	popq	%rcx
-	popq	%rdx
-	TRAP(T_PROTFLT)
-
-.Lhandle_rdmsr_safe:
-	/* rdmsr faulted; just resume in rdmsr_resume */
-	leaq	rdmsr_resume(%rip),%rcx
-	jmp	1f
-
-.Lhandle_xrstor:
-	/* xrstor faulted; just resume in xrstor_resume */
-	leaq	xrstor_resume(%rip),%rcx
-	jmp	1f
-
-.Lhandle_xsetbv:
-	/* xsetbv faulted; just resume in xsetbv_resume */
-	leaq	xsetbv_resume(%rip),%rcx
-	jmp	1f
-
-.Lhandle_doreti:
-	/* iretq faulted; resume in a stub that acts like we got a #GP */
-	leaq	.Lhandle_doreti_resume(%rip),%rcx
-1:	movq	%rcx,24(%rsp)		/* over %r[cd]x and err to %rip */
-	popq	%rcx
-	popq	%rdx
-	addq	$8,%rsp			/* pop the err code */
-	jmp	doreti_iret
-.Lhandle_doreti_resume:
-	ZTRAP(T_PROTFLT)
+	je	1f
+	testq	$SEL_RPL,16(%rsp)	/* over err and %rip to %cs */
+	je	INTRENTRY_LABEL(trap0d)
+1:	swapgs
+	movq	%rax,CPUVAR(SCRATCH)
+	movq	CPUVAR(KERN_CR3),%rax
+	testq	%rax,%rax
+	jz	98f
+	movq	%rax,%cr3
+	jmp	98f
+	.text
+	.globl	INTRENTRY_LABEL(trap0d)
+INTRENTRY_LABEL(trap0d):	/* from kernel */
+	pushq	$T_PROTFLT
+	subq	$152,%rsp
+	movq	%rcx,TF_RCX(%rsp)
+	jmp	99f
+98:	/* from userspace */
+	movq	CPUVAR(KERN_RSP),%rax
+	xchgq	%rax,%rsp
+	movq	%rcx,TF_RCX(%rsp)
+	/* set trapno in the trap frame */
+	movq	$T_PROTFLT,TF_TRAPNO(%rsp)
+	/* copy err and iretq frame to the trap frame */
+	movq	0(%rax),%rcx
+	movq	%rcx,TF_ERR(%rsp)
+	add	$8,%rax
+	movq	IRETQ_RIP(%rax),%rcx
+	movq	%rcx,TF_RIP(%rsp)
+	movq	IRETQ_CS(%rax),%rcx
+	movq	%rcx,TF_CS(%rsp)
+	movq	IRETQ_RFLAGS(%rax),%rcx
+	movq	%rcx,TF_RFLAGS(%rsp)
+	movq	IRETQ_RSP(%rax),%rcx
+	movq	%rcx,TF_RSP(%rsp)
+	movq	IRETQ_SS(%rax),%rcx
+	movq	%rcx,TF_SS(%rsp)
+	movq	CPUVAR(SCRATCH),%rax
+99:	INTR_SAVE_MOST_GPRS_NO_ADJ
+	sti
+	jmp	calltrap
 
 IDTVEC(trap0e)
 	TRAP(T_PAGEFLT)
 IDTVEC(intrspurious)
-IDTVEC_NOALIGN(trap0f)
+IDTVEC(trap0f)
 	iretq
 IDTVEC(trap10)
 	ZTRAP(T_ARITHTRAP)
@@ -335,17 +270,17 @@ IDTVEC(trap12)
 IDTVEC(trap13)
 	ZTRAP(T_XMM)
 IDTVEC(trap14)
-IDTVEC_NOALIGN(trap15)
-IDTVEC_NOALIGN(trap16)
-IDTVEC_NOALIGN(trap17)
-IDTVEC_NOALIGN(trap18)
-IDTVEC_NOALIGN(trap19)
-IDTVEC_NOALIGN(trap1a)
-IDTVEC_NOALIGN(trap1b)
-IDTVEC_NOALIGN(trap1c)
-IDTVEC_NOALIGN(trap1d)
-IDTVEC_NOALIGN(trap1e)
-IDTVEC_NOALIGN(trap1f)
+IDTVEC(trap15)
+IDTVEC(trap16)
+IDTVEC(trap17)
+IDTVEC(trap18)
+IDTVEC(trap19)
+IDTVEC(trap1a)
+IDTVEC(trap1b)
+IDTVEC(trap1c)
+IDTVEC(trap1d)
+IDTVEC(trap1e)
+IDTVEC(trap1f)
 	/* 20 - 31 reserved for future exp */
 	ZTRAP(T_RESERVED)
 
@@ -370,87 +305,100 @@ Xexceptions:
 	.quad	_C_LABEL(Xtrap1e), _C_LABEL(Xtrap1f)
 
 /*
- * All traps go through here.  Figure out whether we're
- * a) coming from usermode and need the Meltdown mitigation before
- *    jumping to user trap handling followed by AST and
- *    return-to-userspace handling, or
- * b) coming from supervisor mode and can directly jump to kernel
- *    trap handling before returning sans AST or other handling.
+ * If an error is detected during trap, syscall, or interrupt exit
+ * then it occurs with CPL==0, but with the user GS.base and on the
+ * U-K page tables and tramp stack, pushing another iretq_frame on
+ * top of the one we were trying to use.  trap0d above will handle
+ * switching the GS.base, page table, and stack and call trap(),
+ * which will change tf_rip from pointing to the failed iretq to
+ * instead point to resume_iret here.  Since we trapped with CPL==0,
+ * intr_fast_exit will leave us at CPL==0 on the U+K page tables
+ * and the kernel GS.base, but the iretq will take us back to the
+ * tramp stack and our original iretq_frame which was from CPL==3.
+ * That means a simple INTRENTRY won't work for us: despite appearing
+ * to be coming from CPL==3 we don't need the page table change or
+ * swapgs, but we do need the stack switch.
+ *
+ * So, locally expand INTRENTRY for the bits we need: switch stacks,
+ * and set up a trapframe as if we were handling a general protection
+ * fault.  This will cause the process to get a SIGBUS.
  */
-KUTEXT_PAGE_START
- 	.align	NBPG, 0xcc
-	/*
-	 * This is the Meltdown alltraps page, which is mapped into
-	 * the U-K page tables at the same location as alltraps
-	 * below.  For this, the Meltdown case, we must be coming from
-	 * userspace so we skip the SEL_RPL test and go directly to
-	 * the swapgs+use-scratch+change-cr3 sequence.  Switching to
-	 * the kernel page tables (thank you, Intel) will make us
-	 * continue at the "movq CPUVAR(KERN_RSP),%rax" after alltraps
-	 * below.  In case the CPU speculates past the mov to cr3,
-	 * we put a retpoline-style pause-jmp-to-pause loop.
-	 */
-Xalltraps:
-	swapgs
+NENTRY(resume_iret)
 	movq	%rax,CPUVAR(SCRATCH)
-	movq	CPUVAR(KERN_CR3),%rax
-	movq	%rax,%cr3
-0:	pause
-	lfence
-	jmp	0b
-KUTEXT_PAGE_END
-
-KTEXT_PAGE_START
-	.align	NBPG, 0xcc
-GENTRY(alltraps)
-	testb	$SEL_RPL,24(%rsp)
-	je	alltraps_kern
-	swapgs
-	movq	%rax,CPUVAR(SCRATCH)
-	.space	(0b - Xalltraps) - (. - alltraps), 0x90
-
-	/*
-	 * Traps from userspace
-	 */
-	INTR_ENTRY_USER
+	movq	CPUVAR(KERN_RSP),%rax
+	xchgq	%rax,%rsp
+	movq	%rcx,TF_RCX(%rsp)
+	/* set trapno+err in the trap frame */
+	movq	$T_PROTFLT,TF_TRAPNO(%rsp)
+	movq	$0,TF_ERR(%rsp)
+	/* copy iretq frame to the trap frame */
+	movq	IRETQ_RIP(%rax),%rcx
+	movq	%rcx,TF_RIP(%rsp)
+	movq	IRETQ_CS(%rax),%rcx
+	movq	%rcx,TF_CS(%rsp)
+	movq	IRETQ_RFLAGS(%rax),%rcx
+	movq	%rcx,TF_RFLAGS(%rsp)
+	movq	IRETQ_RSP(%rax),%rcx
+	movq	%rcx,TF_RSP(%rsp)
+	movq	IRETQ_SS(%rax),%rcx
+	movq	%rcx,TF_SS(%rsp)
+	movq	CPUVAR(SCRATCH),%rax
 	INTR_SAVE_MOST_GPRS_NO_ADJ
-	INTR_CLEAR_GPRS
 	sti
-	cld
-	SMAP_CLAC
-	.globl	recall_trap
-recall_trap:
-	movq	%rsp, %rdi
-	call	_C_LABEL(usertrap)
-	cli
-	jmp	intr_user_exit
-END(alltraps)
+	jmp	calltrap
+
 
 /*
- * Traps from supervisor mode (kernel)
+ * All traps go through here. Call the generic trap handler, and
+ * check for ASTs afterwards.
  */
-	_ALIGN_TRAPS
-GENTRY(alltraps_kern)
-	INTR_ENTRY_KERN
-	INTR_SAVE_MOST_GPRS_NO_ADJ
+KUENTRY(alltraps)
+	INTRENTRY(alltraps)
 	sti
+calltrap:
 	cld
 	SMAP_CLAC
-.Lreal_kern_trap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
+#if !defined(GPROF) && defined(DDBPROF)
+	cmpl	$T_BPTFLT,TF_TRAPNO(%rsp)
+	jne	.Lreal_trap
+
 	movq	%rsp, %rdi
-	call	_C_LABEL(kerntrap)
-2:	cli
+	call	_C_LABEL(db_prof_hook)
+	cmpl	$1, %eax
+	jne	.Lreal_trap
+
+	/*
+	 * Abuse the error field to indicate that intr_fast_exit needs
+	 * to emulate the patched instruction.
+	 */
+	movl	$INTR_FAKE_TRAP, TF_ERR(%rsp)
+	jz	2f
+.Lreal_trap:
+#endif /* !defined(GPROF) && defined(DDBPROF) */
+	movq	%rsp, %rdi
+	call	_C_LABEL(trap)
+2:	/* Check for ASTs on exit to user mode. */
+	cli
+	CHECK_ASTPENDING(%r11)
+	je	1f
+	testb	$SEL_RPL,TF_CS(%rsp)
+	jz	1f
+5:	CLEAR_ASTPENDING(%r11)
+	sti
+	movq	%rsp, %rdi
+	call	_C_LABEL(ast)
+	jmp	2b
 #ifndef DIAGNOSTIC
-	INTRFASTEXIT
+1:	INTRFASTEXIT
 #else /* DIAGNOSTIC */
-	cmpl	CPUVAR(ILEVEL),%ebx
+1:	cmpl	CPUVAR(ILEVEL),%ebx
 	jne	3f
 	INTRFASTEXIT
 3:	sti
-	leaq	spl_lowered(%rip),%rdi
+	movabsq	$spl_lowered,%rdi
 	movl	CPUVAR(ILEVEL),%esi
 	movl	%ebx,%edx
 	xorq	%rax,%rax
@@ -461,13 +409,11 @@ GENTRY(alltraps_kern)
 	movl	%ebx,CPUVAR(ILEVEL)
 	jmp	2b
 
-	.pushsection .rodata
+	.section .rodata
 spl_lowered:
 	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
-	.popsection
+	.text
 #endif /* DIAGNOSTIC */
-END(alltraps_kern)
-KTEXT_PAGE_END
 
 
 /*
@@ -484,13 +430,17 @@ KTEXT_PAGE_END
  * callee-saved registers %ebx, %ebp, and %r1[2-5] twice.
  *
  * If the interrupt frame is made more flexible,  INTR can push %eax first and
- * decide the ipending case with less overhead
+ * decide the ipending case with less overhead, e.g., by avoiding loading the
+ * segment registers.
+ *
  */
 
 /* XXX See comment in locore.s */
 #define	XINTR(name,num)		Xintr_##name##num
 
-KUENTRY(x2apic_eoi)
+	KUTEXT
+	.globl _C_LABEL(x2apic_eoi)
+_C_LABEL(x2apic_eoi):
 	pushq   %rax
 	pushq   %rcx
 	pushq   %rdx
@@ -508,12 +458,12 @@ KUENTRY(x2apic_eoi)
 KIDTVEC(recurse_lapic_ipi)
 	INTR_RECURSE_HWFRAME
 	pushq	$0
-	subq	$8,%rsp			/* if_ppl filled in below */
+	subq	$8,%rsp			/* unused __if_trapno */
 	INTR_REENTRY
 	jmp	1f
 IDTVEC(intr_lapic_ipi)
 	pushq	$0
-	subq	$8,%rsp			/* if_ppl filled in below */
+	subq	$8,%rsp			/* unused __if_trapno */
 	INTRENTRY(intr_lapic_ipi)
 	CODEPATCH_START
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
@@ -521,14 +471,14 @@ IDTVEC(intr_lapic_ipi)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_IPI,%ebx
 	jae	2f
-KIDTVEC_FALLTHROUGH(resume_lapic_ipi)
+KIDTVEC(resume_lapic_ipi)
 1:
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_IPI,CPUVAR(ILEVEL)
-	sti
+        sti
 	cld
 	SMAP_CLAC
-	movq	%rbx,IF_PPL(%rsp)
+	pushq	%rbx
 	call	_C_LABEL(x86_ipi_handler)
 	jmp	_C_LABEL(Xdoreti)
 2:
@@ -536,11 +486,6 @@ KIDTVEC_FALLTHROUGH(resume_lapic_ipi)
 	orq	%rax,CPUVAR(IPENDING)
 	INTRFASTEXIT
 
-/*
- * "Fast" IPI handlers.  These are the IPIs which are handled without
- * unblocking interrupts, so no need for 'recurse' or 'resume' entry points
- */
-/* invalidate the entire TLB, no PCIDs version */
 IDTVEC(ipi_invltlb)
 	pushq	%rax
 
@@ -555,7 +500,6 @@ IDTVEC(ipi_invltlb)
 	popq	%rax
 	iretq
 
-/* invalidate a single page, no PCIDs version */
 IDTVEC(ipi_invlpg)
 	pushq	%rax
 
@@ -570,7 +514,6 @@ IDTVEC(ipi_invlpg)
 	popq	%rax
 	iretq
 
-/* invalidate a range of pages, no PCIDs version */
 IDTVEC(ipi_invlrange)
 	pushq	%rax
 	pushq	%rdx
@@ -591,117 +534,6 @@ IDTVEC(ipi_invlrange)
 	popq	%rax
 	iretq
 
-/*
- * Invalidate the userspace PCIDs.
- */
-IDTVEC(ipi_invltlb_pcid)
-	pushq	%rax
-
-	ioapic_asm_ack()
-
-	/* set the type */
-	movl	$INVPCID_PCID,%eax
-
-	/* finish getting space for the INVPCID descriptor */
-#if INVPCID_PCID == PCID_PROC
-	pushq	%rax
-#else
-	pushq	$PCID_PROC
-#endif
-
-	invpcid	(%rsp),%rax
-
-	/* bump the pcid in the descriptor and invpcid again */
-	movl	$PCID_PROC_INTEL,(%rsp)
-	invpcid	(%rsp),%rax
-
-	lock
-	decq	tlb_shoot_wait
-
-	/* restore the stack */
-	popq	%rax
-	popq	%rax
-	iretq
-
-/*
- * Invalidate a VA in two PCIDs.  Kernel VAs are present in PCIDs 0 and 1,
- * while userspace VAs are present in PCIDs 1 and 2.
- */
-IDTVEC(ipi_invlpg_pcid)
-	pushq	%rax
-
-	ioapic_asm_ack()
-
-	/* space for the INVPCID descriptor */
-	subq	$16,%rsp
-
-	/* set the PCID in the descriptor */
-	movl	tlb_shoot_first_pcid,%eax
-	movq	%rax,(%rsp)
-
-	/* set the address in the descriptor */
-	movq	tlb_shoot_addr1,%rax
-	movq	%rax,8(%rsp)
-
-	/* set the type to zero, and invpcid */
-	xorl	%eax,%eax
-	invpcid	(%rsp),%rax
-
-	/* bump the pcid in the descriptor and invpcid again */
-	addl	$1,(%rsp)
-	invpcid	(%rsp),%rax
-
-	lock
-	decq	tlb_shoot_wait
-
-	/* restore the stack */
-	addq	$16,%rsp
-	popq	%rax
-	iretq
-
-/*
- * Invalidate a range of VA in two PCIDs.  Kernel VAs are present in
- * PCIDs 0 and 1, while userspace VAs are present in PCIDs 1 and 2.
- */
-IDTVEC(ipi_invlrange_pcid)
-	pushq	%rax
-	pushq	%rdx
-	pushq	%rcx
-
-	ioapic_asm_ack()
-
-	/* space for the INVPCID descriptor */
-	subq	$16,%rsp
-
-	/* set the PCID in the descriptor */
-	movl	tlb_shoot_first_pcid,%eax
-	movq	%rax,(%rsp)
-
-	/* set up for the loop: load the limit and set the type to zero */
-	movq	tlb_shoot_addr2,%rdx
-	xorl	%ecx,%ecx
-
-	/* set the address in the descriptor and loop the invalidate */
-	movq	tlb_shoot_addr1,%rax
-1:	movq	%rax,8(%rsp)
-	invpcid	(%rsp),%rcx
-	addl	$1,(%rsp)
-	invpcid	(%rsp),%rcx
-	subl	$1,(%rsp)
-	addq	$PAGE_SIZE,%rax
-	cmpq	%rdx,%rax
-	jb	1b
-
-	lock
-	decq	tlb_shoot_wait
-
-	/* restore the stack */
-	addq	$16,%rsp
-	popq	%rcx
-	popq	%rdx
-	popq	%rax
-	iretq
-
 #endif /* MULTIPROCESSOR */
 
 	/*
@@ -710,12 +542,12 @@ IDTVEC(ipi_invlrange_pcid)
 KIDTVEC(recurse_lapic_ltimer)
 	INTR_RECURSE_HWFRAME
 	pushq	$0
-	subq	$8,%rsp			/* if_ppl filled in below */
+	subq	$8,%rsp			/* unused __if_trapno */
 	INTR_REENTRY
 	jmp	1f
 IDTVEC(intr_lapic_ltimer)
 	pushq	$0
-	subq	$8,%rsp			/* if_ppl filled in below */
+	subq	$8,%rsp			/* unused __if_trapno */
 	INTRENTRY(intr_lapic_ltimer)
 	CODEPATCH_START
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
@@ -723,14 +555,14 @@ IDTVEC(intr_lapic_ltimer)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_CLOCK,%ebx
 	jae	2f
-KIDTVEC_FALLTHROUGH(resume_lapic_ltimer)
+KIDTVEC(resume_lapic_ltimer)
 1:
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_CLOCK,CPUVAR(ILEVEL)
 	sti
 	cld
 	SMAP_CLAC
-	movq	%rbx,IF_PPL(%rsp)
+	pushq	%rbx
 	xorq	%rdi,%rdi
 	call	_C_LABEL(lapic_clockintr)
 	jmp	_C_LABEL(Xdoreti)
@@ -747,30 +579,31 @@ KIDTVEC_FALLTHROUGH(resume_lapic_ltimer)
 KIDTVEC(recurse_xen_upcall)
 	INTR_RECURSE_HWFRAME
 	pushq	$0
-	subq	$8,%rsp			/* if_ppl filled in below */
+	subq	$8,%rsp			/* unused __if_trapno */
 	INTR_REENTRY
 	jmp	1f
 IDTVEC(intr_xen_upcall)
 	pushq	$0
-	subq	$8,%rsp			/* if_ppl filled in below */
+	subq	$8,%rsp			/* unused __if_trapno */
 	INTRENTRY(intr_xen_upcall)
 	call	_C_LABEL(xen_intr_ack)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_NET,%ebx
 	jae	2f
-KIDTVEC_FALLTHROUGH(resume_xen_upcall)
+KIDTVEC(resume_xen_upcall)
 1:
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_NET,CPUVAR(ILEVEL)
 	sti
 	cld
 	SMAP_CLAC
-	movq	%rbx,IF_PPL(%rsp)
+	pushq	%rbx
 	call	_C_LABEL(xen_intr)
 	jmp	_C_LABEL(Xdoreti)
 2:
 	movq	$(1 << LIR_XEN),%rax
 	orq	%rax,CPUVAR(IPENDING)
+3:
 	INTRFASTEXIT
 #endif /* NXEN > 0 */
 
@@ -782,29 +615,30 @@ KIDTVEC_FALLTHROUGH(resume_xen_upcall)
 KIDTVEC(recurse_hyperv_upcall)
 	INTR_RECURSE_HWFRAME
 	pushq	$0
-	subq	$8,%rsp			/* if_ppl filled in below */
+	subq	$8,%rsp			/* unused __if_trapno */
 	INTR_REENTRY
 	jmp	1f
 IDTVEC(intr_hyperv_upcall)
 	pushq	$0
-	subq	$8,%rsp			/* if_ppl filled in below */
+	subq	$8,%rsp			/* unused __if_trapno */
 	INTRENTRY(intr_hyperv_upcall)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_NET,%ebx
 	jae	2f
-KIDTVEC_FALLTHROUGH(resume_hyperv_upcall)
+KIDTVEC(resume_hyperv_upcall)
 1:
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_NET,CPUVAR(ILEVEL)
 	sti
 	cld
 	SMAP_CLAC
-	movq	%rbx,IF_PPL(%rsp)
+	pushq	%rbx
 	call	_C_LABEL(hv_intr)
 	jmp	_C_LABEL(Xdoreti)
 2:
 	movq	$(1 << LIR_HYPERV),%rax
 	orq	%rax,CPUVAR(IPENDING)
+3:
 	INTRFASTEXIT
 #endif /* NHYPERV > 0 */
 #endif /* NLAPIC > 0 */
@@ -820,9 +654,9 @@ KIDTVEC_FALLTHROUGH(resume_hyperv_upcall)
 #define	INTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
 KIDTVEC(recurse_##name##num)						;\
 	INTR_RECURSE_HWFRAME						;\
-	subq	$16,%rsp		/* space for if_{ppl,err} */	;\
+	subq	$16,%rsp		/* space for __if_{trapno,err} */;\
 	INTR_REENTRY							;\
-KIDTVEC_FALLTHROUGH(resume_##name##num)					\
+KIDTVEC(resume_##name##num)						\
 	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
 	movl	%ebx,%r13d						;\
 	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\
@@ -830,7 +664,7 @@ KIDTVEC_FALLTHROUGH(resume_##name##num)					\
 	jmp	1f							;\
 IDTVEC(intr_##name##num)						;\
 	pushq	$0			/* dummy error code */		;\
-	subq	$8,%rsp			/* if_ppl filled in below */	;\
+	subq	$8,%rsp			/* unused __if_trapno */	;\
 	INTRENTRY(intr_##name##num)					;\
 	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\
 	mask(num)			/* mask it in hardware */	;\
@@ -843,14 +677,14 @@ IDTVEC(intr_##name##num)						;\
 	cmpl	%ebx,%r13d						;\
 	jae	10f			/* currently masked; hold it */	;\
 1:									\
-	movq	%r13,IF_PPL(%rsp)					;\
+	pushq	%r13							;\
 	movl	%ebx,CPUVAR(ILEVEL)					;\
 	sti								;\
 	cld								;\
 	SMAP_CLAC							;\
 	incl	CPUVAR(IDEPTH)						;\
 	movq	IS_HANDLERS(%r14),%rbx					;\
-6:	/* loop, walking chain of handlers */				\
+6:									\
 	movl	IH_LEVEL(%rbx),%r12d					;\
 	cmpl	%r13d,%r12d						;\
 	jle	7f							;\
@@ -868,13 +702,13 @@ IDTVEC(intr_##name##num)						;\
 4:	movq	IH_NEXT(%rbx),%rbx	/* next handler in chain */	;\
 	testq	%rbx,%rbx						;\
 	jnz	6b							;\
-5:	/* successfully handled */					\
+5:									\
 	cli								;\
 	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
 	sti								;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
-7:	/* current IPL > handler's ih_level */				\
+7:									\
 	cli								;\
 	movq	$(1 << num),%rax					;\
 	orq     %rax,CPUVAR(IPENDING)					;\
@@ -882,18 +716,16 @@ IDTVEC(intr_##name##num)						;\
 	late_ack(num)							;\
 	sti								;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
-10:	/* currently masked */						\
+10:									\
 	cli								;\
 	movq	$(1 << num),%rax					;\
 	orq	%rax,CPUVAR(IPENDING)					;\
 	level_mask(num)							;\
 	late_ack(num)							;\
 	INTRFASTEXIT							;\
-9:	/* spurious interrupt */					\
+9:									\
 	unmask(num)							;\
 	late_ack(num)							;\
-	testb	$SEL_RPL,TF_CS(%rsp)					;\
-	jnz	intr_user_exit						;\
 	INTRFASTEXIT
 
 #define ICUADDR IO_ICU1
@@ -1372,9 +1204,6 @@ _C_LABEL(ioapic_level_stubs):
 /*
  * Soft interrupt handlers
  */
-NENTRY(retpoline_r13)
-	JMP_RETPOLINE(r13)
-
 KIDTVEC(softtty)
 	movl	$IPL_SOFTTTY, CPUVAR(ILEVEL)
 	sti
@@ -1382,7 +1211,7 @@ KIDTVEC(softtty)
 	movl	$X86_SOFTINTR_SOFTTTY,%edi
 	call	_C_LABEL(softintr_dispatch)
 	decl	CPUVAR(IDEPTH)
-	jmp	retpoline_r13
+	jmp	*%r13
 
 KIDTVEC(softnet)
 	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
@@ -1391,7 +1220,7 @@ KIDTVEC(softnet)
 	movl	$X86_SOFTINTR_SOFTNET,%edi
 	call	_C_LABEL(softintr_dispatch)
 	decl	CPUVAR(IDEPTH)
-	jmp	retpoline_r13
+	jmp	*%r13
 
 KIDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
@@ -1400,4 +1229,4 @@ KIDTVEC(softclock)
 	movl	$X86_SOFTINTR_SOFTCLOCK,%edi
 	call	_C_LABEL(softintr_dispatch)
 	decl	CPUVAR(IDEPTH)
-	jmp	retpoline_r13
+	jmp	*%r13

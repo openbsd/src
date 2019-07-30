@@ -37,16 +37,7 @@ using namespace object;
 ELFObjectFileBase::ELFObjectFileBase(unsigned int Type, MemoryBufferRef Source)
     : ObjectFile(Type, Source) {}
 
-template <class ELFT>
-static Expected<std::unique_ptr<ELFObjectFile<ELFT>>>
-createPtr(MemoryBufferRef Object) {
-  auto Ret = ELFObjectFile<ELFT>::create(Object);
-  if (Error E = Ret.takeError())
-    return std::move(E);
-  return make_unique<ELFObjectFile<ELFT>>(std::move(*Ret));
-}
-
-Expected<std::unique_ptr<ObjectFile>>
+ErrorOr<std::unique_ptr<ObjectFile>>
 ObjectFile::createELFObjectFile(MemoryBufferRef Obj) {
   std::pair<unsigned char, unsigned char> Ident =
       getElfArchType(Obj.getBuffer());
@@ -54,29 +45,37 @@ ObjectFile::createELFObjectFile(MemoryBufferRef Obj) {
       1ULL << countTrailingZeros(uintptr_t(Obj.getBufferStart()));
 
   if (MaxAlignment < 2)
-    return createError("Insufficient alignment");
+    return object_error::parse_failed;
 
+  std::error_code EC;
+  std::unique_ptr<ObjectFile> R;
   if (Ident.first == ELF::ELFCLASS32) {
     if (Ident.second == ELF::ELFDATA2LSB)
-      return createPtr<ELF32LE>(Obj);
+      R.reset(new ELFObjectFile<ELFType<support::little, false>>(Obj, EC));
     else if (Ident.second == ELF::ELFDATA2MSB)
-      return createPtr<ELF32BE>(Obj);
+      R.reset(new ELFObjectFile<ELFType<support::big, false>>(Obj, EC));
     else
-      return createError("Invalid ELF data");
+      return object_error::parse_failed;
   } else if (Ident.first == ELF::ELFCLASS64) {
     if (Ident.second == ELF::ELFDATA2LSB)
-      return createPtr<ELF64LE>(Obj);
+      R.reset(new ELFObjectFile<ELFType<support::little, true>>(Obj, EC));
     else if (Ident.second == ELF::ELFDATA2MSB)
-      return createPtr<ELF64BE>(Obj);
+      R.reset(new ELFObjectFile<ELFType<support::big, true>>(Obj, EC));
     else
-      return createError("Invalid ELF data");
+      return object_error::parse_failed;
+  } else {
+    return object_error::parse_failed;
   }
-  return createError("Invalid ELF class");
+
+  if (EC)
+    return EC;
+  return std::move(R);
 }
 
 SubtargetFeatures ELFObjectFileBase::getMIPSFeatures() const {
   SubtargetFeatures Features;
-  unsigned PlatformFlags = getPlatformFlags();
+  unsigned PlatformFlags;
+  getPlatformFlags(PlatformFlags);
 
   switch (PlatformFlags & ELF::EF_MIPS_ARCH) {
   case ELF::EF_MIPS_ARCH_1:
@@ -238,25 +237,12 @@ SubtargetFeatures ELFObjectFileBase::getARMFeatures() const {
   return Features;
 }
 
-SubtargetFeatures ELFObjectFileBase::getRISCVFeatures() const {
-  SubtargetFeatures Features;
-  unsigned PlatformFlags = getPlatformFlags();
-
-  if (PlatformFlags & ELF::EF_RISCV_RVC) {
-    Features.AddFeature("c");
-  }
-
-  return Features;
-}
-
 SubtargetFeatures ELFObjectFileBase::getFeatures() const {
   switch (getEMachine()) {
   case ELF::EM_MIPS:
     return getMIPSFeatures();
   case ELF::EM_ARM:
     return getARMFeatures();
-  case ELF::EM_RISCV:
-    return getRISCVFeatures();
   default:
     return SubtargetFeatures();
   }
@@ -274,7 +260,8 @@ void ELFObjectFileBase::setARMSubArch(Triple &TheTriple) const {
 
   std::string Triple;
   // Default to ARM, but use the triple if it's been set.
-  if (TheTriple.isThumb())
+  if (TheTriple.getArch() == Triple::thumb ||
+      TheTriple.getArch() == Triple::thumbeb)
     Triple = "thumb";
   else
     Triple = "arm";

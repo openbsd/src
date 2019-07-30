@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiintc.c,v 1.5 2019/05/06 03:49:53 mlarkin Exp $	*/
+/*	$OpenBSD: sxiintc.c,v 1.3 2017/01/21 08:26:49 patrick Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -26,6 +26,7 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
+#include <armv7/armv7/armv7var.h>
 #include <dev/fdt/sunxireg.h>
 #include <armv7/sunxi/sxiintc.h>
 
@@ -254,7 +255,7 @@ sxiintc_calc_masks(void)
 		for (; i < NIPL; i++)
 			sxiintc_imask[IRQ2REG32(irq)][i] |=
 			    (1 << IRQ2BIT32(irq));
-		/* XXX - set enable/disable, priority */
+		/* XXX - set enable/disable, priority */ 
 	}
 
 	sxiintc_setipl(ci->ci_cpl);
@@ -297,7 +298,7 @@ sxiintc_splraise(int new)
 		new = old;
 
 	sxiintc_setipl(new);
-
+  
 	return (old);
 }
 
@@ -365,7 +366,7 @@ sxiintc_irq_handler(void *frame)
 		else
 			arg = frame;
 
-		if (ih->ih_func(arg))
+		if (ih->ih_func(arg)) 
 			ih->ih_count.ec_count++;
 	}
 	sxiintc_splx(s);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ext.c,v 1.18 2018/05/14 23:47:10 tb Exp $ */
+/* $OpenBSD: ocsp_ext.c,v 1.15 2016/12/27 16:01:19 jsing Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -88,8 +88,7 @@ OCSP_REQUEST_get_ext_by_NID(OCSP_REQUEST *x, int nid, int lastpos)
 }
 
 int
-OCSP_REQUEST_get_ext_by_OBJ(OCSP_REQUEST *x, const ASN1_OBJECT *obj,
-    int lastpos)
+OCSP_REQUEST_get_ext_by_OBJ(OCSP_REQUEST *x, ASN1_OBJECT *obj, int lastpos)
 {
 	return X509v3_get_ext_by_OBJ(x->tbsRequest->requestExtensions, obj,
 	    lastpos);
@@ -150,7 +149,7 @@ OCSP_ONEREQ_get_ext_by_NID(OCSP_ONEREQ *x, int nid, int lastpos)
 }
 
 int
-OCSP_ONEREQ_get_ext_by_OBJ(OCSP_ONEREQ *x, const ASN1_OBJECT *obj, int lastpos)
+OCSP_ONEREQ_get_ext_by_OBJ(OCSP_ONEREQ *x, ASN1_OBJECT *obj, int lastpos)
 {
 	return X509v3_get_ext_by_OBJ(x->singleRequestExtensions, obj, lastpos);
 }
@@ -210,8 +209,7 @@ OCSP_BASICRESP_get_ext_by_NID(OCSP_BASICRESP *x, int nid, int lastpos)
 }
 
 int
-OCSP_BASICRESP_get_ext_by_OBJ(OCSP_BASICRESP *x, const ASN1_OBJECT *obj,
-    int lastpos)
+OCSP_BASICRESP_get_ext_by_OBJ(OCSP_BASICRESP *x, ASN1_OBJECT *obj, int lastpos)
 {
 	return X509v3_get_ext_by_OBJ(x->tbsResponseData->responseExtensions,
 	    obj, lastpos);
@@ -273,7 +271,7 @@ OCSP_SINGLERESP_get_ext_by_NID(OCSP_SINGLERESP *x, int nid, int lastpos)
 }
 
 int
-OCSP_SINGLERESP_get_ext_by_OBJ(OCSP_SINGLERESP *x, const ASN1_OBJECT *obj,
+OCSP_SINGLERESP_get_ext_by_OBJ(OCSP_SINGLERESP *x, ASN1_OBJECT *obj,
     int lastpos)
 {
 	return X509v3_get_ext_by_OBJ(x->singleExtensions, obj, lastpos);
@@ -437,7 +435,7 @@ OCSP_copy_nonce(OCSP_BASICRESP *resp, OCSP_REQUEST *req)
 }
 
 X509_EXTENSION *
-OCSP_crlID_new(const char *url, long *n, char *tim)
+OCSP_crlID_new(char *url, long *n, char *tim)
 {
 	X509_EXTENSION *x = NULL;
 	OCSP_CRLID *cid = NULL;
@@ -519,7 +517,7 @@ err:
  * method forces NID_ad_ocsp and uniformResourceLocator [6] IA5String.
  */
 X509_EXTENSION *
-OCSP_url_svcloc_new(X509_NAME* issuer, const char **urls)
+OCSP_url_svcloc_new(X509_NAME* issuer, char **urls)
 {
 	X509_EXTENSION *x = NULL;
 	ASN1_IA5STRING *ia5 = NULL;

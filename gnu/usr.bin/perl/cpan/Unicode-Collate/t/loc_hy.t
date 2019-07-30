@@ -77,7 +77,8 @@ $objHy->change(UCA_Version => 22);
 
 for my $h (0, 1) {
     no warnings 'utf8';
-    my $t = $h ? pack('U', 0xFFFF) : 'z';
+    my $t = $h ? pack('U', 0xFFFF) : "";
+    $objHy->change(highestFFFF => 1) if $h;
 
    ok($objHy->lt("\x{583}$t", "\x{584}"));
    ok($objHy->lt("\x{584}$t", "\x{587}"));

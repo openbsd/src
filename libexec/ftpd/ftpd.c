@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.226 2019/05/08 23:56:48 tedu Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.223 2016/09/03 15:00:48 jca Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -390,10 +390,10 @@ main(int argc, char *argv[])
 	endpwent();
 
 	if (daemon_mode) {
-		int *fds, fd;
+		int *fds, i, fd;
 		struct pollfd *pfds;
 		struct addrinfo hints, *res, *res0;
-		nfds_t n, i;
+		nfds_t n;
 
 		/*
 		 * Detach from parent.
@@ -1113,32 +1113,36 @@ bad:
 }
 
 void
-retrieve(enum ret_cmd cmd, char *name)
+retrieve(char *cmd, char *name)
 {
 	FILE *fin, *dout;
 	struct stat st;
 	pid_t pid;
 	time_t start;
 
-	if (cmd == RET_FILE) {
+	if (cmd == NULL) {
 		fin = fopen(name, "r");
 		st.st_size = 0;
 	} else {
-		fin = ftpd_ls("-lgA", name, &pid);
+		char line[BUFSIZ];
+
+		(void) snprintf(line, sizeof(line), cmd, name);
+		name = line;
+		fin = ftpd_popen(line, "r", &pid);
 		st.st_size = -1;
 		st.st_blksize = BUFSIZ;
 	}
 	if (fin == NULL) {
 		if (errno != 0) {
 			perror_reply(550, name);
-			if (cmd == RET_FILE) {
+			if (cmd == NULL) {
 				LOGCMD("get", name);
 			}
 		}
 		return;
 	}
 	byte_count = -1;
-	if (cmd == RET_FILE &&
+	if (cmd == NULL &&
 	    (fstat(fileno(fin), &st) < 0 || !S_ISREG(st.st_mode))) {
 		reply(550, "%s: not a plain file.", name);
 		goto done;
@@ -1171,8 +1175,8 @@ retrieve(enum ret_cmd cmd, char *name)
 		goto done;
 	time(&start);
 	send_data(fin, dout, st.st_blksize, st.st_size,
-	    (restart_point == 0 && cmd == RET_FILE && S_ISREG(st.st_mode)));
-	if ((cmd == RET_FILE) && stats)
+	    (restart_point == 0 && cmd == NULL && S_ISREG(st.st_mode)));
+	if ((cmd == NULL) && stats)
 		logxfer(name, byte_count, start);
 	(void) fclose(dout);
 	data = -1;
@@ -1180,7 +1184,7 @@ done:
 	if (pdata >= 0)
 		(void) close(pdata);
 	pdata = -1;
-	if (cmd == RET_FILE) {
+	if (cmd == NULL) {
 		LOGBYTES("get", name, byte_count);
 		fclose(fin);
 	} else {
@@ -1730,7 +1734,10 @@ statfilecmd(char *filename)
 	int c;
 	int atstart;
 	pid_t pid;
-	fin = ftpd_ls("-lgA", filename, &pid);
+	char line[LINE_MAX];
+
+	(void)snprintf(line, sizeof(line), "/bin/ls -lgA %s", filename);
+	fin = ftpd_popen(line, "r", &pid);
 	if (fin == NULL) {
 		reply(451, "Local resource failure");
 		return;
@@ -1802,8 +1809,8 @@ statcmd(void)
 		ispassive++;
 		goto printaddr;
 	} else if (usedefault == 0) {
-		size_t alen, i;
-		int af;
+		size_t alen;
+		int af, i;
 
 		su = (union sockunion *)&data_dest;
 printaddr:
@@ -2538,8 +2545,7 @@ guniquefd(char *local, char **nam)
 {
 	static char new[PATH_MAX];
 	struct stat st;
-	size_t len;
-	int count, fd;
+	int count, len, fd;
 	char *cp;
 
 	cp = strrchr(local, '/');
@@ -2626,7 +2632,7 @@ send_file_list(char *whichf)
 			 */
 			if (dirname[0] == '-' && *dirlist == NULL &&
 			    transflag == 0) {
-				retrieve(RET_FILE, dirname);
+				retrieve("/bin/ls %s", dirname);
 				goto out;
 			}
 			perror_reply(550, whichf);
@@ -2771,7 +2777,7 @@ logxfer(char *name, off_t size, time_t start)
 		    ((guest) ? "*" : pw->pw_name), dhostname);
 		free(vpw);
 
-		if (len == -1 || len >= sizeof(buf)) {
+		if (len >= sizeof(buf) || len == -1) {
 			if ((len = strlen(buf)) == 0)
 				return;		/* should not happen */
 			buf[len - 1] = '\n';

@@ -37,14 +37,15 @@ public:
   bool CalculateStopInfo() override;
   Unwind *GetUnwinder() override;
 
-  Status DoResume();
+  bool DoResume();
 
   HostThread GetHostThread() const { return m_host_thread; }
 
 private:
-  lldb::RegisterContextSP m_thread_reg_ctx_sp;
+  lldb::RegisterContextSP CreateRegisterContextForFrameIndex(uint32_t idx);
+
   HostThread m_host_thread;
 };
-} // namespace lldb_private
+}
 
 #endif

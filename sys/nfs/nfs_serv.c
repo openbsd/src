@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.119 2019/01/19 01:53:44 cheloha Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.112 2017/12/30 20:47:00 guenther Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -596,7 +596,7 @@ nfsrv_read(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		i = 0;
 		m = m2 = info.nmi_mb;
 		while (left > 0) {
-			siz = min(m_trailingspace(m), left);
+			siz = min(M_TRAILINGSPACE(m), left);
 			if (siz > 0) {
 				left -= siz;
 				i++;
@@ -619,7 +619,7 @@ nfsrv_read(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		while (left > 0) {
 			if (m == NULL)
 				panic("nfsrv_read iov");
-			siz = min(m_trailingspace(m), left);
+			siz = min(M_TRAILINGSPACE(m), left);
 			if (siz > 0) {
 				iv->iov_base = mtod(m, caddr_t) + m->m_len;
 				iv->iov_len = siz;
@@ -685,7 +685,6 @@ nfsrv_write(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	int i, cnt;
 	struct mbuf *mp;
 	struct nfs_fattr *fp;
-	struct timeval boottime;
 	struct vattr va, forat;
 	u_int32_t *tl;
 	int32_t t1;
@@ -830,9 +829,8 @@ nfsrv_write(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		 * but it may make the values more human readable,
 		 * for debugging purposes.
 		 */
-		microboottime(&boottime);
 		*tl++ = txdr_unsigned(boottime.tv_sec);
-		*tl = txdr_unsigned(boottime.tv_usec);
+		*tl = txdr_unsigned(boottime.tv_nsec/1000);
 	} else {
 		fp = nfsm_build(&info.nmi_mb, NFSX_V2FATTR);
 		nfsm_srvfattr(nfsd, &va, fp);
@@ -963,9 +961,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	if (nd.ni_vp == NULL) {
 		if (va.va_type == VREG || va.va_type == VSOCK) {
 			vrele(nd.ni_startdir);
-			error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd,
-			    &va);
-			vput(nd.ni_dvp);
+			error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 			if (!error) {
 				pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 				if (exclusive_flag) {
@@ -997,7 +993,6 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 				va.va_rdev = (dev_t)rdev;
 			error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd,
 			    &va);
-			vput(nd.ni_dvp);
 			if (error) {
 				vrele(nd.ni_startdir);
 				if (nd.ni_cnd.cn_flags & HASBUF) {
@@ -1207,7 +1202,6 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	if (vtyp == VSOCK) {
 		vrele(nd.ni_startdir);
 		error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
-		vput(nd.ni_dvp);
 		if (!error)
 			pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 	} else {
@@ -1220,7 +1214,6 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 			goto out;
 		}
 		error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
-		vput(nd.ni_dvp);
 		if (error) {
 			vrele(nd.ni_startdir);
 			goto out;
@@ -1722,7 +1715,7 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	nfsm_mtouio(&io, len2);
 	if (!info.nmi_v3) {
 		nfsm_dissect(sp, struct nfsv2_sattr *, NFSX_V2SATTR);
-		va.va_mode = nfstov_mode(sp->sa_mode);
+		va.va_mode = fxdr_unsigned(u_int16_t, sp->sa_mode);
 	}
 	*(pathcp + len2) = '\0';
 	if (nd.ni_vp) {
@@ -1981,13 +1974,6 @@ nfsrv_rmdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		goto out;
 	}
 	/*
-	 * A mounted on directory cannot be deleted.
-	 */
-	if (vp->v_mountedhere != NULL) {
-		error = EBUSY;
-		goto out;
-	}
-	/*
 	 * The root of a mounted filesystem cannot be deleted.
 	 */
 	if (vp->v_flag & VROOT)
@@ -2094,12 +2080,12 @@ nfsrv_readdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	}
 	off = toff;
 	cnt = fxdr_unsigned(int, *tl);
-	xfer = NFS_SRVMAXDATA(nfsd);
-	if (cnt > xfer || cnt < 0)
-		cnt = xfer;
 	siz = ((cnt + DIRBLKSIZ - 1) & ~(DIRBLKSIZ - 1));
+	xfer = NFS_SRVMAXDATA(nfsd);
 	if (siz > xfer)
 		siz = xfer;
+	if (cnt > xfer)
+		cnt = xfer;
 	fullsiz = siz;
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
@@ -2119,7 +2105,7 @@ nfsrv_readdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		error = 0;
 		goto nfsmout;
 	}
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, procp);
 	rbuf = malloc(fullsiz, M_TEMP, M_WAITOK);
 again:
 	iv.iov_base = rbuf;
@@ -2133,7 +2119,7 @@ again:
 	io.uio_procp = NULL;
 	eofflag = 0;
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, procp);
 	error = VOP_READDIR(vp, &io, cred, &eofflag);
 
 	off = (off_t)io.uio_offset;
@@ -2143,7 +2129,7 @@ again:
 			error = getret;
 	}
 
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, procp);
 	if (error) {
 		vrele(vp);
 		free(rbuf, M_TEMP, fullsiz);
@@ -2287,18 +2273,19 @@ nfsrv_readdirplus(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	nfsm_dissect(tl, u_int32_t *, 6 * NFSX_UNSIGNED);
-	off = toff = fxdr_hyper(tl);
+	toff = fxdr_hyper(tl);
 	tl += 2;
 	verf = fxdr_hyper(tl);
 	tl += 2;
 	siz = fxdr_unsigned(int, *tl++);
 	cnt = fxdr_unsigned(int, *tl);
-	xfer = NFS_SRVMAXDATA(nfsd);
-	if (cnt > xfer || cnt < 0)
-		cnt = xfer;
+	off = toff;
 	siz = ((siz + DIRBLKSIZ - 1) & ~(DIRBLKSIZ - 1));
+	xfer = NFS_SRVMAXDATA(nfsd);
 	if (siz > xfer)
 		siz = xfer;
+	if (cnt > xfer)
+		cnt = xfer;
 	fullsiz = siz;
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
@@ -2317,7 +2304,7 @@ nfsrv_readdirplus(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		error = 0;
 		goto nfsmout;
 	}
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, procp);
 
 	rbuf = malloc(fullsiz, M_TEMP, M_WAITOK);
 again:
@@ -2332,13 +2319,13 @@ again:
 	io.uio_procp = NULL;
 	eofflag = 0;
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, procp);
 	error = VOP_READDIR(vp, &io, cred, &eofflag);
 
 	off = (u_quad_t)io.uio_offset;
 	getret = VOP_GETATTR(vp, &at, cred, procp);
 
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, procp);
 
 	if (!error)
 		error = getret;
@@ -2508,7 +2495,6 @@ nfsrv_commit(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	struct vattr bfor, aft;
 	struct vnode *vp;
 	struct nfsm_info	info;
-	struct timeval boottime;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 	u_int32_t *tl;
@@ -2534,8 +2520,6 @@ nfsrv_commit(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	off = fxdr_hyper(tl);
 	tl += 2;
 	cnt = fxdr_unsigned(int, *tl);
-	if (cnt < 0)
-		cnt = 0;
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		nfsm_reply(2 * NFSX_UNSIGNED);
@@ -2551,9 +2535,8 @@ nfsrv_commit(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	nfsm_srvwcc(nfsd, for_ret, &bfor, aft_ret, &aft, &info);
 	if (!error) {
 		tl = nfsm_build(&info.nmi_mb, NFSX_V3WRITEVERF);
-		microboottime(&boottime);
 		*tl++ = txdr_unsigned(boottime.tv_sec);
-		*tl = txdr_unsigned(boottime.tv_usec);
+		*tl = txdr_unsigned(boottime.tv_nsec/1000);
 	} else
 		error = 0;
 nfsmout:

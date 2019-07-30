@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.59 2019/01/23 23:00:54 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.58 2017/12/09 18:38:37 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -77,7 +77,6 @@ grep_tree(char **argv)
 			if(!sflag)
 				warnc(p->fts_errno, "%s", p->fts_path);
 			break;
-		case FTS_D:
 		case FTS_DP:
 			break;
 		default:
@@ -102,13 +101,11 @@ procfile(char *fn)
 
 	if (fn == NULL) {
 		fn = "(standard input)";
-		f = grep_fdopen(STDIN_FILENO);
+		f = grep_fdopen(STDIN_FILENO, "r");
 	} else {
-		f = grep_open(fn);
+		f = grep_open(fn, "r");
 	}
 	if (f == NULL) {
-		if (errno == EISDIR)
-			return 0;
 		file_err = 1;
 		if (!sflag)
 			warn("%s", fn);

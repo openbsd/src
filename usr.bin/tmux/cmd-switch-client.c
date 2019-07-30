@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.57 2019/04/17 14:39:37 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.53 2017/08/30 10:33:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -61,7 +61,7 @@ cmd_switch_client_exec(struct cmd *self, struct cmdq_item *item)
 	if ((c = cmd_find_client(item, args_get(args, 'c'), 0)) == NULL)
 		return (CMD_RETURN_ERROR);
 
-	if (tflag != NULL && tflag[strcspn(tflag, ":.%")] != '\0') {
+	if (tflag != NULL && tflag[strcspn(tflag, ":.")] != '\0') {
 		type = CMD_FIND_PANE;
 		flags = 0;
 	} else {
@@ -113,11 +113,8 @@ cmd_switch_client_exec(struct cmd *self, struct cmdq_item *item)
 		if (item->client == NULL)
 			return (CMD_RETURN_NORMAL);
 		if (wl != NULL) {
-			server_unzoom_window(wl->window);
-			if (wp != NULL) {
-				window_redraw_active_switch(wp->window, wp);
-				window_set_active_pane(wp->window, wp, 1);
-			}
+			if (wp != NULL)
+				window_set_active_pane(wp->window, wp);
 			session_set_current(s, wl);
 			cmd_find_from_session(&item->shared->current, s, 0);
 		}
@@ -131,7 +128,6 @@ cmd_switch_client_exec(struct cmd *self, struct cmdq_item *item)
 	c->session = s;
 	if (~item->shared->flags & CMDQ_SHARED_REPEAT)
 		server_client_set_key_table(c, NULL);
-	tty_update_client_offset(c);
 	status_timer_start(c);
 	notify_client("client-session-changed", c);
 	session_update_activity(s, NULL);

@@ -19,13 +19,13 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm-c/Support.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/ConvertUTF.h"
@@ -45,6 +45,17 @@ using namespace llvm;
 using namespace cl;
 
 #define DEBUG_TYPE "commandline"
+
+#if LLVM_ENABLE_ABI_BREAKING_CHECKS
+namespace llvm {
+// If LLVM_ENABLE_ABI_BREAKING_CHECKS is set the flag -mllvm -reverse-iterate
+// can be used to toggle forward/reverse iteration of unordered containers.
+// This will help uncover differences in codegen caused due to undefined
+// iteration order.
+static cl::opt<bool, true> ReverseIteration("reverse-iterate",
+  cl::location(ReverseIterate<bool>::value));
+}
+#endif
 
 //===----------------------------------------------------------------------===//
 // Template instantiations and anchors.
@@ -689,9 +700,7 @@ static bool EatsUnboundedNumberOfValues(const Option *O) {
          O->getNumOccurrencesFlag() == cl::OneOrMore;
 }
 
-static bool isWhitespace(char C) {
-  return C == ' ' || C == '\t' || C == '\r' || C == '\n';
-}
+static bool isWhitespace(char C) { return strchr(" \t\n\r\f\v", C); }
 
 static bool isQuote(char C) { return C == '\"' || C == '\''; }
 
@@ -712,19 +721,17 @@ void cl::TokenizeGNUCommandLine(StringRef Src, StringSaver &Saver,
         break;
     }
 
-    char C = Src[I];
-
     // Backslash escapes the next character.
-    if (I + 1 < E && C == '\\') {
+    if (I + 1 < E && Src[I] == '\\') {
       ++I; // Skip the escape.
       Token.push_back(Src[I]);
       continue;
     }
 
     // Consume a quoted string.
-    if (isQuote(C)) {
-      ++I;
-      while (I != E && Src[I] != C) {
+    if (isQuote(Src[I])) {
+      char Quote = Src[I++];
+      while (I != E && Src[I] != Quote) {
         // Backslash escapes the next character.
         if (Src[I] == '\\' && I + 1 != E)
           ++I;
@@ -737,7 +744,7 @@ void cl::TokenizeGNUCommandLine(StringRef Src, StringSaver &Saver,
     }
 
     // End the token if this is whitespace.
-    if (isWhitespace(C)) {
+    if (isWhitespace(Src[I])) {
       if (!Token.empty())
         NewArgv.push_back(Saver.save(StringRef(Token)).data());
       Token.clear();
@@ -745,7 +752,7 @@ void cl::TokenizeGNUCommandLine(StringRef Src, StringSaver &Saver,
     }
 
     // This is a normal character.  Append it.
-    Token.push_back(C);
+    Token.push_back(Src[I]);
   }
 
   // Append the last token after hitting EOF with no whitespace.
@@ -803,27 +810,25 @@ void cl::TokenizeWindowsCommandLine(StringRef Src, StringSaver &Saver,
   // end of the source string.
   enum { INIT, UNQUOTED, QUOTED } State = INIT;
   for (size_t I = 0, E = Src.size(); I != E; ++I) {
-    char C = Src[I];
-
     // INIT state indicates that the current input index is at the start of
     // the string or between tokens.
     if (State == INIT) {
-      if (isWhitespace(C)) {
+      if (isWhitespace(Src[I])) {
         // Mark the end of lines in response files
-        if (MarkEOLs && C == '\n')
+        if (MarkEOLs && Src[I] == '\n')
           NewArgv.push_back(nullptr);
         continue;
       }
-      if (C == '"') {
+      if (Src[I] == '"') {
         State = QUOTED;
         continue;
       }
-      if (C == '\\') {
+      if (Src[I] == '\\') {
         I = parseBackslash(Src, I, Token);
         State = UNQUOTED;
         continue;
       }
-      Token.push_back(C);
+      Token.push_back(Src[I]);
       State = UNQUOTED;
       continue;
     }
@@ -832,38 +837,38 @@ void cl::TokenizeWindowsCommandLine(StringRef Src, StringSaver &Saver,
     // quotes.
     if (State == UNQUOTED) {
       // Whitespace means the end of the token.
-      if (isWhitespace(C)) {
+      if (isWhitespace(Src[I])) {
         NewArgv.push_back(Saver.save(StringRef(Token)).data());
         Token.clear();
         State = INIT;
         // Mark the end of lines in response files
-        if (MarkEOLs && C == '\n')
+        if (MarkEOLs && Src[I] == '\n')
           NewArgv.push_back(nullptr);
         continue;
       }
-      if (C == '"') {
+      if (Src[I] == '"') {
         State = QUOTED;
         continue;
       }
-      if (C == '\\') {
+      if (Src[I] == '\\') {
         I = parseBackslash(Src, I, Token);
         continue;
       }
-      Token.push_back(C);
+      Token.push_back(Src[I]);
       continue;
     }
 
     // QUOTED state means that it's reading a token quoted by double quotes.
     if (State == QUOTED) {
-      if (C == '"') {
+      if (Src[I] == '"') {
         State = UNQUOTED;
         continue;
       }
-      if (C == '\\') {
+      if (Src[I] == '\\') {
         I = parseBackslash(Src, I, Token);
         continue;
       }
-      Token.push_back(C);
+      Token.push_back(Src[I]);
     }
   }
   // Append the last token after hitting EOF with no whitespace.
@@ -872,45 +877,6 @@ void cl::TokenizeWindowsCommandLine(StringRef Src, StringSaver &Saver,
   // Mark the end of response files
   if (MarkEOLs)
     NewArgv.push_back(nullptr);
-}
-
-void cl::tokenizeConfigFile(StringRef Source, StringSaver &Saver,
-                            SmallVectorImpl<const char *> &NewArgv,
-                            bool MarkEOLs) {
-  for (const char *Cur = Source.begin(); Cur != Source.end();) {
-    SmallString<128> Line;
-    // Check for comment line.
-    if (isWhitespace(*Cur)) {
-      while (Cur != Source.end() && isWhitespace(*Cur))
-        ++Cur;
-      continue;
-    }
-    if (*Cur == '#') {
-      while (Cur != Source.end() && *Cur != '\n')
-        ++Cur;
-      continue;
-    }
-    // Find end of the current line.
-    const char *Start = Cur;
-    for (const char *End = Source.end(); Cur != End; ++Cur) {
-      if (*Cur == '\\') {
-        if (Cur + 1 != End) {
-          ++Cur;
-          if (*Cur == '\n' ||
-              (*Cur == '\r' && (Cur + 1 != End) && Cur[1] == '\n')) {
-            Line.append(Start, Cur - 1);
-            if (*Cur == '\r')
-              ++Cur;
-            Start = Cur + 1;
-          }
-        }
-      } else if (*Cur == '\n')
-        break;
-    }
-    // Tokenize line.
-    Line.append(Start, Cur);
-    cl::TokenizeGNUCommandLine(Line, Saver, NewArgv, MarkEOLs);
-  }
 }
 
 // It is called byte order marker but the UTF-8 BOM is actually not affected
@@ -974,7 +940,7 @@ static bool ExpandResponseFile(StringRef FName, StringSaver &Saver,
   return true;
 }
 
-/// Expand response files on a command line recursively using the given
+/// \brief Expand response files on a command line recursively using the given
 /// StringSaver and tokenization strategy.
 bool cl::ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
                              SmallVectorImpl<const char *> &Argv,
@@ -1015,15 +981,6 @@ bool cl::ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
     Argv.insert(Argv.begin() + I, ExpandedArgv.begin(), ExpandedArgv.end());
   }
   return AllExpanded;
-}
-
-bool cl::readConfigFile(StringRef CfgFile, StringSaver &Saver,
-                        SmallVectorImpl<const char *> &Argv) {
-  if (!ExpandResponseFile(CfgFile, Saver, cl::tokenizeConfigFile, Argv,
-                          /*MarkEOLs*/ false, /*RelativeNames*/ true))
-    return false;
-  return ExpandResponseFiles(Saver, cl::tokenizeConfigFile, Argv,
-                             /*MarkEOLs*/ false, /*RelativeNames*/ true);
 }
 
 /// ParseEnvironmentOptions - An alternative entry point to the
@@ -1081,10 +1038,7 @@ bool CommandLineParser::ParseCommandLineOptions(int argc,
   SmallVector<const char *, 20> newArgv(argv, argv + argc);
   BumpPtrAllocator A;
   StringSaver Saver(A);
-  ExpandResponseFiles(Saver,
-         Triple(sys::getProcessTriple()).isOSWindows() ?
-         cl::TokenizeWindowsCommandLine : cl::TokenizeGNUCommandLine,
-         newArgv);
+  ExpandResponseFiles(Saver, TokenizeGNUCommandLine, newArgv);
   argv = &newArgv[0];
   argc = static_cast<int>(newArgv.size());
 
@@ -1270,15 +1224,8 @@ bool CommandLineParser::ParseCommandLineOptions(int argc,
 
     // If this is a named positional argument, just remember that it is the
     // active one...
-    if (Handler->getFormattingFlag() == cl::Positional) {
-      if ((Handler->getMiscFlags() & PositionalEatsArgs) && !Value.empty()) {
-        Handler->error("This argument does not take a value.\n"
-                       "\tInstead, it consumes any positional arguments until "
-                       "the next recognized option.", *Errs);
-        ErrorParsing = true;
-      }
+    if (Handler->getFormattingFlag() == cl::Positional)
       ActivePositionalArg = Handler;
-    }
     else
       ErrorParsing |= ProvideOption(Handler, ArgName, Value, argc, argv, i);
   }
@@ -1382,9 +1329,9 @@ bool CommandLineParser::ParseCommandLineOptions(int argc,
   // Now that we know if -debug is specified, we can use it.
   // Note that if ReadResponseFiles == true, this must be done before the
   // memory allocated for the expanded command line is free()d below.
-  LLVM_DEBUG(dbgs() << "Args: ";
-             for (int i = 0; i < argc; ++i) dbgs() << argv[i] << ' ';
-             dbgs() << '\n';);
+  DEBUG(dbgs() << "Args: ";
+        for (int i = 0; i < argc; ++i) dbgs() << argv[i] << ' ';
+        dbgs() << '\n';);
 
   // Free all of the memory allocated to the map.  Command line options may only
   // be processed once!
@@ -1403,15 +1350,15 @@ bool CommandLineParser::ParseCommandLineOptions(int argc,
 // Option Base class implementation
 //
 
-bool Option::error(const Twine &Message, StringRef ArgName, raw_ostream &Errs) {
+bool Option::error(const Twine &Message, StringRef ArgName) {
   if (!ArgName.data())
     ArgName = ArgStr;
   if (ArgName.empty())
-    Errs << HelpStr; // Be nice for positional arguments
+    errs() << HelpStr; // Be nice for positional arguments
   else
-    Errs << GlobalParser->ProgramName << ": for the -" << ArgName;
+    errs() << GlobalParser->ProgramName << ": for the -" << ArgName;
 
-  Errs << " option: " << Message << "\n";
+  errs() << " option: " << Message << "\n";
   return true;
 }
 
@@ -1481,12 +1428,8 @@ void alias::printOptionInfo(size_t GlobalWidth) const {
 size_t basic_parser_impl::getOptionWidth(const Option &O) const {
   size_t Len = O.ArgStr.size();
   auto ValName = getValueName();
-  if (!ValName.empty()) {
-    size_t FormattingLen = 3;
-    if (O.getMiscFlags() & PositionalEatsArgs)
-      FormattingLen = 6;
-    Len += getValueStr(O, ValName).size() + FormattingLen;
-  }
+  if (!ValName.empty())
+    Len += getValueStr(O, ValName).size() + 3;
 
   return Len + 6;
 }
@@ -1499,13 +1442,8 @@ void basic_parser_impl::printOptionInfo(const Option &O,
   outs() << "  -" << O.ArgStr;
 
   auto ValName = getValueName();
-  if (!ValName.empty()) {
-    if (O.getMiscFlags() & PositionalEatsArgs) {
-      outs() << " <" << getValueStr(O, ValName) << ">...";
-    } else {
-      outs() << "=<" << getValueStr(O, ValName) << '>';
-    }
-  }
+  if (!ValName.empty())
+    outs() << "=<" << getValueStr(O, ValName) << '>';
 
   Option::printHelpStr(O.HelpStr, GlobalWidth, getOptionWidth(O));
 }
@@ -1831,13 +1769,7 @@ public:
   void operator=(bool Value) {
     if (!Value)
       return;
-    printHelp();
 
-    // Halt the program since help information was printed
-    exit(0);
-  }
-
-  void printHelp() {
     SubCommand *Sub = GlobalParser->getActiveSubCommand();
     auto &OptionsMap = Sub->OptionsMap;
     auto &PositionalOpts = Sub->PositionalOpts;
@@ -1905,6 +1837,9 @@ public:
     for (auto I : GlobalParser->MoreHelp)
       outs() << I;
     GlobalParser->MoreHelp.clear();
+
+    // Halt the program since help information was printed
+    exit(0);
   }
 };
 
@@ -2104,9 +2039,9 @@ void CommandLineParser::printOptionValues() {
     Opts[i].second->printOptionValue(MaxArgLen, PrintAllOptions);
 }
 
-static VersionPrinterTy OverrideVersionPrinter = nullptr;
+static void (*OverrideVersionPrinter)() = nullptr;
 
-static std::vector<VersionPrinterTy> *ExtraVersionPrinters = nullptr;
+static std::vector<void (*)()> *ExtraVersionPrinters = nullptr;
 
 namespace {
 class VersionPrinter {
@@ -2146,7 +2081,7 @@ public:
       return;
 
     if (OverrideVersionPrinter != nullptr) {
-      OverrideVersionPrinter(outs());
+      (*OverrideVersionPrinter)();
       exit(0);
     }
     print();
@@ -2155,8 +2090,10 @@ public:
     // information.
     if (ExtraVersionPrinters != nullptr) {
       outs() << '\n';
-      for (auto I : *ExtraVersionPrinters)
-        I(outs());
+      for (std::vector<void (*)()>::iterator I = ExtraVersionPrinters->begin(),
+                                             E = ExtraVersionPrinters->end();
+           I != E; ++I)
+        (*I)();
     }
 
     exit(0);
@@ -2174,24 +2111,31 @@ static cl::opt<VersionPrinter, true, parser<bool>>
 
 // Utility function for printing the help message.
 void cl::PrintHelpMessage(bool Hidden, bool Categorized) {
+  // This looks weird, but it actually prints the help message. The Printers are
+  // types of HelpPrinter and the help gets printed when its operator= is
+  // invoked. That's because the "normal" usages of the help printer is to be
+  // assigned true/false depending on whether -help or -help-hidden was given or
+  // not.  Since we're circumventing that we have to make it look like -help or
+  // -help-hidden were given, so we assign true.
+
   if (!Hidden && !Categorized)
-    UncategorizedNormalPrinter.printHelp();
+    UncategorizedNormalPrinter = true;
   else if (!Hidden && Categorized)
-    CategorizedNormalPrinter.printHelp();
+    CategorizedNormalPrinter = true;
   else if (Hidden && !Categorized)
-    UncategorizedHiddenPrinter.printHelp();
+    UncategorizedHiddenPrinter = true;
   else
-    CategorizedHiddenPrinter.printHelp();
+    CategorizedHiddenPrinter = true;
 }
 
 /// Utility function for printing version number.
 void cl::PrintVersionMessage() { VersionPrinterInstance.print(); }
 
-void cl::SetVersionPrinter(VersionPrinterTy func) { OverrideVersionPrinter = func; }
+void cl::SetVersionPrinter(void (*func)()) { OverrideVersionPrinter = func; }
 
-void cl::AddExtraVersionPrinter(VersionPrinterTy func) {
+void cl::AddExtraVersionPrinter(void (*func)()) {
   if (!ExtraVersionPrinters)
-    ExtraVersionPrinters = new std::vector<VersionPrinterTy>;
+    ExtraVersionPrinters = new std::vector<void (*)()>;
 
   ExtraVersionPrinters->push_back(func);
 }

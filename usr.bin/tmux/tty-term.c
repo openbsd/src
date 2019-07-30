@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.65 2019/05/29 20:05:15 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.58 2018/02/04 10:10:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -252,9 +252,7 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_SMACS] = { TTYCODE_STRING, "smacs" },
 	[TTYC_SMCUP] = { TTYCODE_STRING, "smcup" },
 	[TTYC_SMKX] = { TTYCODE_STRING, "smkx" },
-	[TTYC_SMOL] = { TTYCODE_STRING, "Smol" },
 	[TTYC_SMSO] = { TTYCODE_STRING, "smso" },
-	[TTYC_SMULX] = { TTYCODE_STRING, "Smulx" },
 	[TTYC_SMUL] = { TTYCODE_STRING, "smul" },
 	[TTYC_SMXX] =  { TTYCODE_STRING, "smxx" },
 	[TTYC_SS] = { TTYCODE_STRING, "Ss" },
@@ -301,53 +299,25 @@ tty_term_strip(const char *s)
 	return (xstrdup(buf));
 }
 
-static char *
-tty_term_override_next(const char *s, size_t *offset)
-{
-	static char	value[BUFSIZ];
-	size_t		n = 0, at = *offset;
-
-	if (s[at] == '\0')
-		return (NULL);
-
-	while (s[at] != '\0') {
-		if (s[at] == ':') {
-			if (s[at + 1] == ':') {
-				value[n++] = ':';
-				at += 2;
-			} else
-				break;
-		} else {
-			value[n++] = s[at];
-			at++;
-		}
-		if (n == (sizeof value) - 1)
-			return (NULL);
-	}
-	if (s[at] != '\0')
-		*offset = at + 1;
-	else
-		*offset = at;
-	value[n] = '\0';
-	return (value);
-}
-
 static void
 tty_term_override(struct tty_term *term, const char *override)
 {
 	const struct tty_term_code_entry	*ent;
 	struct tty_code				*code;
-	size_t                                   offset = 0;
-	char					*cp, *value, *s;
+	char					*next, *s, *copy, *cp, *value;
 	const char				*errstr;
 	u_int					 i;
 	int					 n, remove;
 
-	s = tty_term_override_next(override, &offset);
-	if (s == NULL || fnmatch(s, term->name, 0) != 0)
-		return;
+	copy = next = xstrdup(override);
 
-	while ((s = tty_term_override_next(override, &offset)) != NULL) {
+	s = strsep(&next, ":");
+	if (s == NULL || next == NULL || fnmatch(s, term->name, 0) != 0) {
+		free(copy);
+		return;
+	}
+
+	while ((s = strsep(&next, ":")) != NULL) {
 		if (*s == '\0')
 			continue;
 		value = NULL;
@@ -368,8 +338,6 @@ tty_term_override(struct tty_term *term, const char *override)
 
 		if (remove)
 			log_debug("%s override: %s@", term->name, s);
-		else if (*value == '\0')
-			log_debug("%s override: %s", term->name, s);
 		else
 			log_debug("%s override: %s=%s", term->name, s, value);
 
@@ -408,6 +376,7 @@ tty_term_override(struct tty_term *term, const char *override)
 
 		free(value);
 	}
+	free(s);
 }
 
 struct tty_term *
@@ -417,9 +386,7 @@ tty_term_find(char *name, int fd, char **cause)
 	const struct tty_term_code_entry	*ent;
 	struct tty_code				*code;
 	struct options_entry			*o;
-	struct options_array_item		*a;
-	union options_value			*ov;
-	u_int					 i;
+	u_int					 size, i;
 	int		 			 n, error;
 	const char				*s, *acs;
 
@@ -494,11 +461,12 @@ tty_term_find(char *name, int fd, char **cause)
 
 	/* Apply terminal overrides. */
 	o = options_get_only(global_options, "terminal-overrides");
-	a = options_array_first(o);
-	while (a != NULL) {
-		ov = options_array_item_value(a);
-		tty_term_override(term, ov->string);
-		a = options_array_next(a);
+	if (options_array_size(o, &size) != -1) {
+		for (i = 0; i < size; i++) {
+			s = options_array_get(o, i);
+			if (s != NULL)
+				tty_term_override(term, s);
+		}
 	}
 
 	/* Delete curses data. */
@@ -520,9 +488,8 @@ tty_term_find(char *name, int fd, char **cause)
 		goto error;
 	}
 
-	/* Figure out if we have 256 colours (or more). */
-	if (tty_term_number(term, TTYC_COLORS) >= 256 ||
-	    tty_term_has(term, TTYC_RGB))
+	/* Figure out if we have 256. */
+	if (tty_term_number(term, TTYC_COLORS) == 256)
 		term->flags |= TERM_256COLOURS;
 
 	/*
@@ -685,7 +652,7 @@ tty_term_describe(struct tty_term *term, enum tty_code_code code)
 		break;
 	case TTYCODE_STRING:
 		strnvis(out, term->codes[code].value.string, sizeof out,
-		    VIS_OCTAL|VIS_CSTYLE|VIS_TAB|VIS_NL);
+		    VIS_OCTAL|VIS_TAB|VIS_NL);
 		xsnprintf(s, sizeof s, "%4u: %s: (string) %s",
 		    code, tty_term_codes[code].name,
 		    out);

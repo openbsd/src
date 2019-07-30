@@ -9,19 +9,15 @@
 
 #include "LTO.h"
 #include "Config.h"
+#include "Error.h"
 #include "InputFiles.h"
-#include "LinkerScript.h"
-#include "SymbolTable.h"
 #include "Symbols.h"
-#include "lld/Common/ErrorHandler.h"
-#include "lld/Common/TargetOptionsCommandFlags.h"
+#include "lld/Core/TargetOptionsCommandFlags.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/BinaryFormat/ELF.h"
-#include "llvm/Bitcode/BitcodeReader.h"
-#include "llvm/Bitcode/BitcodeWriter.h"
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/LTO/Caching.h"
 #include "llvm/LTO/Config.h"
@@ -31,6 +27,7 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cstddef>
 #include <memory>
@@ -45,180 +42,111 @@ using namespace llvm::ELF;
 using namespace lld;
 using namespace lld::elf;
 
-// Creates an empty file to store a list of object files for final
-// linking of distributed ThinLTO.
-static std::unique_ptr<raw_fd_ostream> openFile(StringRef File) {
+// This is for use when debugging LTO.
+static void saveBuffer(StringRef Buffer, const Twine &Path) {
   std::error_code EC;
-  auto Ret =
-      llvm::make_unique<raw_fd_ostream>(File, EC, sys::fs::OpenFlags::F_None);
-  if (EC) {
-    error("cannot open " + File + ": " + EC.message());
-    return nullptr;
-  }
-  return Ret;
+  raw_fd_ostream OS(Path.str(), EC, sys::fs::OpenFlags::F_None);
+  if (EC)
+    error("cannot create " + Path + ": " + EC.message());
+  OS << Buffer;
 }
 
-static std::string getThinLTOOutputFile(StringRef ModulePath) {
-  return lto::getThinLTOOutputFile(ModulePath,
-                                   Config->ThinLTOPrefixReplace.first,
-                                   Config->ThinLTOPrefixReplace.second);
+static void diagnosticHandler(const DiagnosticInfo &DI) {
+  SmallString<128> ErrStorage;
+  raw_svector_ostream OS(ErrStorage);
+  DiagnosticPrinterRawOStream DP(OS);
+  DI.print(DP);
+  warn(ErrStorage);
 }
 
-static lto::Config createConfig() {
-  lto::Config C;
+static void checkError(Error E) {
+  handleAllErrors(std::move(E), [&](ErrorInfoBase &EIB) -> Error {
+    error(EIB.message());
+    return Error::success();
+  });
+}
+
+static std::unique_ptr<lto::LTO> createLTO() {
+  lto::Config Conf;
 
   // LLD supports the new relocations.
-  C.Options = InitTargetOptionsFromCodeGenFlags();
-  C.Options.RelaxELFRelocations = true;
-
-  // Always emit a section per function/datum with LTO.
-  C.Options.FunctionSections = true;
-  C.Options.DataSections = true;
+  Conf.Options = InitTargetOptionsFromCodeGenFlags();
+  Conf.Options.RelaxELFRelocations = true;
 
   if (Config->Relocatable)
-    C.RelocModel = None;
+    Conf.RelocModel = None;
   else if (Config->Pic)
-    C.RelocModel = Reloc::PIC_;
+    Conf.RelocModel = Reloc::PIC_;
   else
-    C.RelocModel = Reloc::Static;
-
-  C.CodeModel = GetCodeModelFromCMModel();
-  C.DisableVerify = Config->DisableVerify;
-  C.DiagHandler = diagnosticHandler;
-  C.OptLevel = Config->LTOO;
-  C.CPU = GetCPUStr();
+    Conf.RelocModel = Reloc::Static;
+  Conf.CodeModel = GetCodeModelFromCMModel();
+  Conf.DisableVerify = Config->DisableVerify;
+  Conf.DiagHandler = diagnosticHandler;
+  Conf.OptLevel = Config->LTOO;
 
   // Set up a custom pipeline if we've been asked to.
-  C.OptPipeline = Config->LTONewPmPasses;
-  C.AAPipeline = Config->LTOAAPipeline;
+  Conf.OptPipeline = Config->LTONewPmPasses;
+  Conf.AAPipeline = Config->LTOAAPipeline;
 
   // Set up optimization remarks if we've been asked to.
-  C.RemarksFilename = Config->OptRemarksFilename;
-  C.RemarksWithHotness = Config->OptRemarksWithHotness;
-
-  C.SampleProfile = Config->LTOSampleProfile;
-  C.UseNewPM = Config->LTONewPassManager;
-  C.DebugPassManager = Config->LTODebugPassManager;
-  C.DwoDir = Config->DwoDir;
+  Conf.RemarksFilename = Config->OptRemarksFilename;
+  Conf.RemarksWithHotness = Config->OptRemarksWithHotness;
 
   if (Config->SaveTemps)
-    checkError(C.addSaveTemps(Config->OutputFile.str() + ".",
-                              /*UseInputModulePath*/ true));
-  return C;
-}
+    checkError(Conf.addSaveTemps(std::string(Config->OutputFile) + ".",
+                                 /*UseInputModulePath*/ true));
 
-BitcodeCompiler::BitcodeCompiler() {
-  // Initialize LTOObj.
   lto::ThinBackend Backend;
-
-  if (Config->ThinLTOIndexOnly) {
-    StringRef Path = Config->ThinLTOIndexOnlyArg;
-    if (!Path.empty())
-      IndexFile = openFile(Path);
-
-    auto OnIndexWrite = [&](const std::string &Identifier) {
-      ObjectToIndexFileState[Identifier] = true;
-    };
-
-    Backend = lto::createWriteIndexesThinBackend(
-        Config->ThinLTOPrefixReplace.first, Config->ThinLTOPrefixReplace.second,
-        Config->ThinLTOEmitImportsFiles, IndexFile.get(), OnIndexWrite);
-  } else if (Config->ThinLTOJobs != -1U) {
+  if (Config->ThinLTOJobs != -1u)
     Backend = lto::createInProcessThinBackend(Config->ThinLTOJobs);
-  }
-
-  LTOObj = llvm::make_unique<lto::LTO>(createConfig(), Backend,
-                                       Config->LTOPartitions);
-
-  // Initialize UsedStartStop.
-  for (Symbol *Sym : Symtab->getSymbols()) {
-    StringRef Name = Sym->getName();
-    for (StringRef Prefix : {"__start_", "__stop_"})
-      if (Name.startswith(Prefix))
-        UsedStartStop.insert(Name.substr(Prefix.size()));
-  }
+  return llvm::make_unique<lto::LTO>(std::move(Conf), Backend,
+                                     Config->LTOPartitions);
 }
+
+BitcodeCompiler::BitcodeCompiler() : LTOObj(createLTO()) {}
 
 BitcodeCompiler::~BitcodeCompiler() = default;
 
 static void undefine(Symbol *S) {
-  replaceSymbol<Undefined>(S, nullptr, S->getName(), STB_GLOBAL, STV_DEFAULT,
-                           S->Type);
+  replaceBody<Undefined>(S, S->body()->getName(), /*IsLocal=*/false,
+                         STV_DEFAULT, S->body()->Type, nullptr);
 }
 
 void BitcodeCompiler::add(BitcodeFile &F) {
   lto::InputFile &Obj = *F.Obj;
-  bool IsExec = !Config->Shared && !Config->Relocatable;
-
-  if (Config->ThinLTOIndexOnly)
-    ObjectToIndexFileState.insert({Obj.getName(), false});
-
-  ArrayRef<Symbol *> Syms = F.getSymbols();
-  ArrayRef<lto::InputFile::Symbol> ObjSyms = Obj.symbols();
+  unsigned SymNum = 0;
+  std::vector<Symbol *> Syms = F.getSymbols();
   std::vector<lto::SymbolResolution> Resols(Syms.size());
 
   // Provide a resolution to the LTO API for each symbol.
-  for (size_t I = 0, E = Syms.size(); I != E; ++I) {
-    Symbol *Sym = Syms[I];
-    const lto::InputFile::Symbol &ObjSym = ObjSyms[I];
-    lto::SymbolResolution &R = Resols[I];
+  for (const lto::InputFile::Symbol &ObjSym : Obj.symbols()) {
+    Symbol *Sym = Syms[SymNum];
+    lto::SymbolResolution &R = Resols[SymNum];
+    ++SymNum;
+    SymbolBody *B = Sym->body();
 
     // Ideally we shouldn't check for SF_Undefined but currently IRObjectFile
     // reports two symbols for module ASM defined. Without this check, lld
     // flags an undefined in IR with a definition in ASM as prevailing.
     // Once IRObjectFile is fixed to report only one symbol this hack can
     // be removed.
-    R.Prevailing = !ObjSym.isUndefined() && Sym->File == &F;
+    R.Prevailing = !ObjSym.isUndefined() && B->File == &F;
 
-    // We ask LTO to preserve following global symbols:
-    // 1) All symbols when doing relocatable link, so that them can be used
-    //    for doing final link.
-    // 2) Symbols that are used in regular objects.
-    // 3) C named sections if we have corresponding __start_/__stop_ symbol.
-    // 4) Symbols that are defined in bitcode files and used for dynamic linking.
-    R.VisibleToRegularObj = Config->Relocatable || Sym->IsUsedInRegularObj ||
-                            (R.Prevailing && Sym->includeInDynsym()) ||
-                            UsedStartStop.count(ObjSym.getSectionName());
-    const auto *DR = dyn_cast<Defined>(Sym);
-    R.FinalDefinitionInLinkageUnit =
-        (IsExec || Sym->Visibility != STV_DEFAULT) && DR &&
-        // Skip absolute symbols from ELF objects, otherwise PC-rel relocations
-        // will be generated by for them, triggering linker errors.
-        // Symbol section is always null for bitcode symbols, hence the check
-        // for isElf(). Skip linker script defined symbols as well: they have
-        // no File defined.
-        !(DR->Section == nullptr && (!Sym->File || Sym->File->isElf()));
-
+    R.VisibleToRegularObj =
+        Sym->IsUsedInRegularObj || (R.Prevailing && Sym->includeInDynsym());
     if (R.Prevailing)
       undefine(Sym);
-
-    // We tell LTO to not apply interprocedural optimization for wrapped
-    // (with --wrap) symbols because otherwise LTO would inline them while
-    // their values are still not final.
-    R.LinkerRedefined = !Sym->CanInline;
+    R.LinkerRedefined = Config->RenamedSymbols.count(Sym);
   }
   checkError(LTOObj->add(std::move(F.Obj), Resols));
-}
-
-static void createEmptyIndex(StringRef ModulePath) {
-  std::string Path = replaceThinLTOSuffix(getThinLTOOutputFile(ModulePath));
-  std::unique_ptr<raw_fd_ostream> OS = openFile(Path + ".thinlto.bc");
-  if (!OS)
-    return;
-
-  ModuleSummaryIndex M(/*HaveGVs*/ false);
-  M.setSkipModuleByDistributedBackend();
-  WriteIndexToFile(M, *OS);
-
-  if (Config->ThinLTOEmitImportsFiles)
-    openFile(Path + ".imports");
 }
 
 // Merge all the bitcode files we have seen, codegen the result
 // and return the resulting ObjectFile(s).
 std::vector<InputFile *> BitcodeCompiler::compile() {
+  std::vector<InputFile *> Ret;
   unsigned MaxTasks = LTOObj->getMaxTasks();
-  Buf.resize(MaxTasks);
+  Buff.resize(MaxTasks);
   Files.resize(MaxTasks);
 
   // The --thinlto-cache-dir option specifies the path to a directory in which
@@ -235,60 +163,29 @@ std::vector<InputFile *> BitcodeCompiler::compile() {
   checkError(LTOObj->run(
       [&](size_t Task) {
         return llvm::make_unique<lto::NativeObjectStream>(
-            llvm::make_unique<raw_svector_ostream>(Buf[Task]));
+            llvm::make_unique<raw_svector_ostream>(Buff[Task]));
       },
       Cache));
-
-  // Emit empty index files for non-indexed files
-  if (Config->ThinLTOIndexOnly) {
-    for (auto &Identifier : ObjectToIndexFileState)
-      if (!Identifier.getValue()) {
-        std::string Path = getThinLTOOutputFile(Identifier.getKey());
-        openFile(Path + ".thinlto.bc");
-
-        if (Config->ThinLTOEmitImportsFiles)
-          openFile(Path + ".imports");
-      }
-  }
-
-  // If LazyObjFile has not been added to link, emit empty index files.
-  // This is needed because this is what GNU gold plugin does and we have a
-  // distributed build system that depends on that behavior.
-  if (Config->ThinLTOIndexOnly) {
-    for (LazyObjFile *F : LazyObjFiles)
-      if (!F->AddedToLink && isBitcode(F->MB))
-        createEmptyIndex(F->getName());
-
-    if (!Config->LTOObjPath.empty())
-      saveBuffer(Buf[0], Config->LTOObjPath);
-
-    // ThinLTO with index only option is required to generate only the index
-    // files. After that, we exit from linker and ThinLTO backend runs in a
-    // distributed environment.
-    if (IndexFile)
-      IndexFile->close();
-    return {};
-  }
 
   if (!Config->ThinLTOCacheDir.empty())
     pruneCache(Config->ThinLTOCacheDir, Config->ThinLTOCachePolicy);
 
-  std::vector<InputFile *> Ret;
   for (unsigned I = 0; I != MaxTasks; ++I) {
-    if (Buf[I].empty())
+    if (Buff[I].empty())
       continue;
     if (Config->SaveTemps) {
       if (I == 0)
-        saveBuffer(Buf[I], Config->OutputFile + ".lto.o");
+        saveBuffer(Buff[I], Config->OutputFile + ".lto.o");
       else
-        saveBuffer(Buf[I], Config->OutputFile + Twine(I) + ".lto.o");
+        saveBuffer(Buff[I], Config->OutputFile + Twine(I) + ".lto.o");
     }
-    InputFile *Obj = createObjectFile(MemoryBufferRef(Buf[I], "lto.tmp"));
+    InputFile *Obj = createObjectFile(MemoryBufferRef(Buff[I], "lto.tmp"));
     Ret.push_back(Obj);
   }
 
   for (std::unique_ptr<MemoryBuffer> &File : Files)
     if (File)
       Ret.push_back(createObjectFile(*File));
+
   return Ret;
 }

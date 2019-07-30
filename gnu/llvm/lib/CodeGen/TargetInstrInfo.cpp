@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
@@ -19,9 +19,6 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/ScoreboardHazardRecognizer.h"
 #include "llvm/CodeGen/StackMaps.h"
-#include "llvm/CodeGen/TargetFrameLowering.h"
-#include "llvm/CodeGen/TargetLowering.h"
-#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -29,7 +26,10 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetFrameLowering.h"
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include <cctype>
 
 using namespace llvm;
@@ -67,11 +67,6 @@ void TargetInstrInfo::insertNoop(MachineBasicBlock &MBB,
   llvm_unreachable("Target didn't implement insertNoop!");
 }
 
-static bool isAsmComment(const char *Str, const MCAsmInfo &MAI) {
-  return strncmp(Str, MAI.getCommentString().data(),
-                 MAI.getCommentString().size()) == 0;
-}
-
 /// Measure the specified inline asm to determine an approximation of its
 /// length.
 /// Comments (which run till the next SeparatorString or newline) do not
@@ -80,46 +75,29 @@ static bool isAsmComment(const char *Str, const MCAsmInfo &MAI) {
 /// multiple instructions separated by SeparatorString or newlines.
 /// Variable-length instructions are not handled here; this function
 /// may be overloaded in the target code to do that.
-/// We implement a special case of the .space directive which takes only a
-/// single integer argument in base 10 that is the size in bytes. This is a
-/// restricted form of the GAS directive in that we only interpret
-/// simple--i.e. not a logical or arithmetic expression--size values without
-/// the optional fill value. This is primarily used for creating arbitrary
-/// sized inline asm blocks for testing purposes.
 unsigned TargetInstrInfo::getInlineAsmLength(const char *Str,
                                              const MCAsmInfo &MAI) const {
   // Count the number of instructions in the asm.
-  bool AtInsnStart = true;
-  unsigned Length = 0;
+  bool atInsnStart = true;
+  unsigned InstCount = 0;
   for (; *Str; ++Str) {
     if (*Str == '\n' || strncmp(Str, MAI.getSeparatorString(),
                                 strlen(MAI.getSeparatorString())) == 0) {
-      AtInsnStart = true;
-    } else if (isAsmComment(Str, MAI)) {
+      atInsnStart = true;
+    } else if (strncmp(Str, MAI.getCommentString().data(),
+                       MAI.getCommentString().size()) == 0) {
       // Stop counting as an instruction after a comment until the next
       // separator.
-      AtInsnStart = false;
+      atInsnStart = false;
     }
 
-    if (AtInsnStart && !std::isspace(static_cast<unsigned char>(*Str))) {
-      unsigned AddLength = MAI.getMaxInstLength();
-      if (strncmp(Str, ".space", 6) == 0) {
-        char *EStr;
-        int SpaceSize;
-        SpaceSize = strtol(Str + 6, &EStr, 10);
-        SpaceSize = SpaceSize < 0 ? 0 : SpaceSize;
-        while (*EStr != '\n' && std::isspace(static_cast<unsigned char>(*EStr)))
-          ++EStr;
-        if (*EStr == '\0' || *EStr == '\n' ||
-            isAsmComment(EStr, MAI)) // Successfully parsed .space argument
-          AddLength = SpaceSize;
-      }
-      Length += AddLength;
-      AtInsnStart = false;
+    if (atInsnStart && !std::isspace(static_cast<unsigned char>(*Str))) {
+      ++InstCount;
+      atInsnStart = false;
     }
   }
 
-  return Length;
+  return InstCount * MAI.getMaxInstLength();
 }
 
 /// ReplaceTailWithBranchTo - Delete the instruction OldInst and everything
@@ -174,14 +152,6 @@ MachineInstr *TargetInstrInfo::commuteInstructionImpl(MachineInstr &MI,
   bool Reg2IsUndef = MI.getOperand(Idx2).isUndef();
   bool Reg1IsInternal = MI.getOperand(Idx1).isInternalRead();
   bool Reg2IsInternal = MI.getOperand(Idx2).isInternalRead();
-  // Avoid calling isRenamable for virtual registers since we assert that
-  // renamable property is only queried/set for physical registers.
-  bool Reg1IsRenamable = TargetRegisterInfo::isPhysicalRegister(Reg1)
-                             ? MI.getOperand(Idx1).isRenamable()
-                             : false;
-  bool Reg2IsRenamable = TargetRegisterInfo::isPhysicalRegister(Reg2)
-                             ? MI.getOperand(Idx2).isRenamable()
-                             : false;
   // If destination is tied to either of the commuted source register, then
   // it must be updated.
   if (HasDef && Reg0 == Reg1 &&
@@ -199,7 +169,7 @@ MachineInstr *TargetInstrInfo::commuteInstructionImpl(MachineInstr &MI,
   MachineInstr *CommutedMI = nullptr;
   if (NewMI) {
     // Create a new instruction.
-    MachineFunction &MF = *MI.getMF();
+    MachineFunction &MF = *MI.getParent()->getParent();
     CommutedMI = MF.CloneMachineInstr(&MI);
   } else {
     CommutedMI = &MI;
@@ -219,12 +189,6 @@ MachineInstr *TargetInstrInfo::commuteInstructionImpl(MachineInstr &MI,
   CommutedMI->getOperand(Idx1).setIsUndef(Reg2IsUndef);
   CommutedMI->getOperand(Idx2).setIsInternalRead(Reg1IsInternal);
   CommutedMI->getOperand(Idx1).setIsInternalRead(Reg2IsInternal);
-  // Avoid calling setIsRenamable for virtual registers since we assert that
-  // renamable property is only queried/set for physical registers.
-  if (TargetRegisterInfo::isPhysicalRegister(Reg1))
-    CommutedMI->getOperand(Idx2).setIsRenamable(Reg1IsRenamable);
-  if (TargetRegisterInfo::isPhysicalRegister(Reg2))
-    CommutedMI->getOperand(Idx1).setIsRenamable(Reg2IsRenamable);
   return CommutedMI;
 }
 
@@ -424,11 +388,10 @@ bool TargetInstrInfo::produceSameValue(const MachineInstr &MI0,
   return MI0.isIdenticalTo(MI1, MachineInstr::IgnoreVRegDefs);
 }
 
-MachineInstr &TargetInstrInfo::duplicate(MachineBasicBlock &MBB,
-    MachineBasicBlock::iterator InsertBefore, const MachineInstr &Orig) const {
+MachineInstr *TargetInstrInfo::duplicate(MachineInstr &Orig,
+                                         MachineFunction &MF) const {
   assert(!Orig.isNotDuplicable() && "Instruction cannot be duplicated");
-  MachineFunction &MF = *MBB.getParent();
-  return MF.CloneMachineInstrBundle(MBB, InsertBefore, Orig);
+  return MF.CloneMachineInstr(&Orig);
 }
 
 // If the COPY instruction in MI can be folded to a stack operation, return
@@ -452,7 +415,7 @@ static const TargetRegisterClass *canFoldCopy(const MachineInstr &MI,
   assert(TargetRegisterInfo::isVirtualRegister(FoldReg) &&
          "Cannot fold physregs");
 
-  const MachineRegisterInfo &MRI = MI.getMF()->getRegInfo();
+  const MachineRegisterInfo &MRI = MI.getParent()->getParent()->getRegInfo();
   const TargetRegisterClass *RC = MRI.getRegClass(FoldReg);
 
   if (TargetRegisterInfo::isPhysicalRegister(LiveOp.getReg()))
@@ -532,13 +495,21 @@ static MachineInstr *foldPatchpoint(MachineFunction &MF, MachineInstr &MI,
   return NewMI;
 }
 
+/// foldMemoryOperand - Attempt to fold a load or store of the specified stack
+/// slot into the specified machine instruction for the specified operand(s).
+/// If this is possible, a new instruction is returned with the specified
+/// operand folded, otherwise NULL is returned. The client is responsible for
+/// removing the old instruction and adding the new one in the instruction
+/// stream.
 MachineInstr *TargetInstrInfo::foldMemoryOperand(MachineInstr &MI,
                                                  ArrayRef<unsigned> Ops, int FI,
                                                  LiveIntervals *LIS) const {
   auto Flags = MachineMemOperand::MONone;
-  for (unsigned OpIdx : Ops)
-    Flags |= MI.getOperand(OpIdx).isDef() ? MachineMemOperand::MOStore
-                                          : MachineMemOperand::MOLoad;
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+    if (MI.getOperand(Ops[i]).isDef())
+      Flags |= MachineMemOperand::MOStore;
+    else
+      Flags |= MachineMemOperand::MOLoad;
 
   MachineBasicBlock *MBB = MI.getParent();
   assert(MBB && "foldMemoryOperand needs an inserted instruction");
@@ -554,10 +525,10 @@ MachineInstr *TargetInstrInfo::foldMemoryOperand(MachineInstr &MI,
   if (Flags & MachineMemOperand::MOStore) {
     MemSize = MFI.getObjectSize(FI);
   } else {
-    for (unsigned OpIdx : Ops) {
+    for (unsigned Idx : Ops) {
       int64_t OpSize = MFI.getObjectSize(FI);
 
-      if (auto SubReg = MI.getOperand(OpIdx).getSubReg()) {
+      if (auto SubReg = MI.getOperand(Idx).getSubReg()) {
         unsigned SubRegSize = TRI->getSubRegIdxSize(SubReg);
         if (SubRegSize > 0 && !(SubRegSize % 8))
           OpSize = SubRegSize / 8;
@@ -617,54 +588,6 @@ MachineInstr *TargetInstrInfo::foldMemoryOperand(MachineInstr &MI,
   else
     loadRegFromStackSlot(*MBB, Pos, MO.getReg(), FI, RC, TRI);
   return &*--Pos;
-}
-
-MachineInstr *TargetInstrInfo::foldMemoryOperand(MachineInstr &MI,
-                                                 ArrayRef<unsigned> Ops,
-                                                 MachineInstr &LoadMI,
-                                                 LiveIntervals *LIS) const {
-  assert(LoadMI.canFoldAsLoad() && "LoadMI isn't foldable!");
-#ifndef NDEBUG
-  for (unsigned OpIdx : Ops)
-    assert(MI.getOperand(OpIdx).isUse() && "Folding load into def!");
-#endif
-
-  MachineBasicBlock &MBB = *MI.getParent();
-  MachineFunction &MF = *MBB.getParent();
-
-  // Ask the target to do the actual folding.
-  MachineInstr *NewMI = nullptr;
-  int FrameIndex = 0;
-
-  if ((MI.getOpcode() == TargetOpcode::STACKMAP ||
-       MI.getOpcode() == TargetOpcode::PATCHPOINT ||
-       MI.getOpcode() == TargetOpcode::STATEPOINT) &&
-      isLoadFromStackSlot(LoadMI, FrameIndex)) {
-    // Fold stackmap/patchpoint.
-    NewMI = foldPatchpoint(MF, MI, Ops, FrameIndex, *this);
-    if (NewMI)
-      NewMI = &*MBB.insert(MI, NewMI);
-  } else {
-    // Ask the target to do the actual folding.
-    NewMI = foldMemoryOperandImpl(MF, MI, Ops, MI, LoadMI, LIS);
-  }
-
-  if (!NewMI)
-    return nullptr;
-
-  // Copy the memoperands from the load to the folded instruction.
-  if (MI.memoperands_empty()) {
-    NewMI->setMemRefs(LoadMI.memoperands_begin(), LoadMI.memoperands_end());
-  } else {
-    // Handle the rare case of folding multiple loads.
-    NewMI->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
-    for (MachineInstr::mmo_iterator I = LoadMI.memoperands_begin(),
-                                    E = LoadMI.memoperands_end();
-         I != E; ++I) {
-      NewMI->addMemOperand(MF, *I);
-    }
-  }
-  return NewMI;
 }
 
 bool TargetInstrInfo::hasReassociableOperands(
@@ -762,13 +685,11 @@ bool TargetInstrInfo::getMachineCombinerPatterns(
 
   return false;
 }
-
 /// Return true when a code sequence can improve loop throughput.
 bool
 TargetInstrInfo::isThroughputPattern(MachineCombinerPattern Pattern) const {
   return false;
 }
-
 /// Attempt the reassociation transformation to reduce critical path length.
 /// See the above comments before getMachineCombinerPatterns().
 void TargetInstrInfo::reassociateOps(
@@ -777,7 +698,7 @@ void TargetInstrInfo::reassociateOps(
     SmallVectorImpl<MachineInstr *> &InsInstrs,
     SmallVectorImpl<MachineInstr *> &DelInstrs,
     DenseMap<unsigned, unsigned> &InstrIdxForVirtReg) const {
-  MachineFunction *MF = Root.getMF();
+  MachineFunction *MF = Root.getParent()->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
   const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
   const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
@@ -860,7 +781,7 @@ void TargetInstrInfo::genAlternativeCodeSequence(
     SmallVectorImpl<MachineInstr *> &InsInstrs,
     SmallVectorImpl<MachineInstr *> &DelInstrs,
     DenseMap<unsigned, unsigned> &InstIdxForVirtReg) const {
-  MachineRegisterInfo &MRI = Root.getMF()->getRegInfo();
+  MachineRegisterInfo &MRI = Root.getParent()->getParent()->getRegInfo();
 
   // Select the previous instruction in the sequence based on the input pattern.
   MachineInstr *Prev = nullptr;
@@ -882,9 +803,59 @@ void TargetInstrInfo::genAlternativeCodeSequence(
   reassociateOps(Root, *Prev, Pattern, InsInstrs, DelInstrs, InstIdxForVirtReg);
 }
 
+/// foldMemoryOperand - Same as the previous version except it allows folding
+/// of any load and store from / to any address, not just from a specific
+/// stack slot.
+MachineInstr *TargetInstrInfo::foldMemoryOperand(MachineInstr &MI,
+                                                 ArrayRef<unsigned> Ops,
+                                                 MachineInstr &LoadMI,
+                                                 LiveIntervals *LIS) const {
+  assert(LoadMI.canFoldAsLoad() && "LoadMI isn't foldable!");
+#ifndef NDEBUG
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+    assert(MI.getOperand(Ops[i]).isUse() && "Folding load into def!");
+#endif
+  MachineBasicBlock &MBB = *MI.getParent();
+  MachineFunction &MF = *MBB.getParent();
+
+  // Ask the target to do the actual folding.
+  MachineInstr *NewMI = nullptr;
+  int FrameIndex = 0;
+
+  if ((MI.getOpcode() == TargetOpcode::STACKMAP ||
+       MI.getOpcode() == TargetOpcode::PATCHPOINT ||
+       MI.getOpcode() == TargetOpcode::STATEPOINT) &&
+      isLoadFromStackSlot(LoadMI, FrameIndex)) {
+    // Fold stackmap/patchpoint.
+    NewMI = foldPatchpoint(MF, MI, Ops, FrameIndex, *this);
+    if (NewMI)
+      NewMI = &*MBB.insert(MI, NewMI);
+  } else {
+    // Ask the target to do the actual folding.
+    NewMI = foldMemoryOperandImpl(MF, MI, Ops, MI, LoadMI, LIS);
+  }
+
+  if (!NewMI) return nullptr;
+
+  // Copy the memoperands from the load to the folded instruction.
+  if (MI.memoperands_empty()) {
+    NewMI->setMemRefs(LoadMI.memoperands_begin(), LoadMI.memoperands_end());
+  }
+  else {
+    // Handle the rare case of folding multiple loads.
+    NewMI->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+    for (MachineInstr::mmo_iterator I = LoadMI.memoperands_begin(),
+                                    E = LoadMI.memoperands_end();
+         I != E; ++I) {
+      NewMI->addMemOperand(MF, *I);
+    }
+  }
+  return NewMI;
+}
+
 bool TargetInstrInfo::isReallyTriviallyReMaterializableGeneric(
     const MachineInstr &MI, AliasAnalysis *AA) const {
-  const MachineFunction &MF = *MI.getMF();
+  const MachineFunction &MF = *MI.getParent()->getParent();
   const MachineRegisterInfo &MRI = MF.getRegInfo();
 
   // Remat clients assume operand 0 is the defined register.
@@ -962,7 +933,7 @@ bool TargetInstrInfo::isReallyTriviallyReMaterializableGeneric(
 }
 
 int TargetInstrInfo::getSPAdjust(const MachineInstr &MI) const {
-  const MachineFunction *MF = MI.getMF();
+  const MachineFunction *MF = MI.getParent()->getParent();
   const TargetFrameLowering *TFI = MF->getSubtarget().getFrameLowering();
   bool StackGrowsDown =
     TFI->getStackGrowthDirection() == TargetFrameLowering::StackGrowsDown;
@@ -1165,8 +1136,6 @@ bool TargetInstrInfo::getRegSequenceInputs(
   for (unsigned OpIdx = 1, EndOpIdx = MI.getNumOperands(); OpIdx != EndOpIdx;
        OpIdx += 2) {
     const MachineOperand &MOReg = MI.getOperand(OpIdx);
-    if (MOReg.isUndef())
-      continue;
     const MachineOperand &MOSubIdx = MI.getOperand(OpIdx + 1);
     assert(MOSubIdx.isImm() &&
            "One of the subindex of the reg_sequence is not an immediate");
@@ -1190,8 +1159,6 @@ bool TargetInstrInfo::getExtractSubregInputs(
   // Def = EXTRACT_SUBREG v0.sub1, sub0.
   assert(DefIdx == 0 && "EXTRACT_SUBREG only has one def");
   const MachineOperand &MOReg = MI.getOperand(1);
-  if (MOReg.isUndef())
-    return false;
   const MachineOperand &MOSubIdx = MI.getOperand(2);
   assert(MOSubIdx.isImm() &&
          "The subindex of the extract_subreg is not an immediate");
@@ -1216,8 +1183,6 @@ bool TargetInstrInfo::getInsertSubregInputs(
   assert(DefIdx == 0 && "INSERT_SUBREG only has one def");
   const MachineOperand &MOBaseReg = MI.getOperand(1);
   const MachineOperand &MOInsertedReg = MI.getOperand(2);
-  if (MOInsertedReg.isUndef())
-    return false;
   const MachineOperand &MOSubIdx = MI.getOperand(3);
   assert(MOSubIdx.isImm() &&
          "One of the subindex of the reg_sequence is not an immediate");

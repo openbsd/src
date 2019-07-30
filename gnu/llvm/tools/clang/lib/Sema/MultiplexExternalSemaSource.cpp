@@ -16,8 +16,10 @@
 
 using namespace clang;
 
-///Constructs a new multiplexing external sema source and appends the
+///\brief Constructs a new multiplexing external sema source and appends the
 /// given element to it.
+///
+///\param[in] source - An ExternalSemaSource.
 ///
 MultiplexExternalSemaSource::MultiplexExternalSemaSource(ExternalSemaSource &s1,
                                                         ExternalSemaSource &s2){
@@ -28,7 +30,7 @@ MultiplexExternalSemaSource::MultiplexExternalSemaSource(ExternalSemaSource &s1,
 // pin the vtable here.
 MultiplexExternalSemaSource::~MultiplexExternalSemaSource() {}
 
-///Appends new source to the source list.
+///\brief Appends new source to the source list.
 ///
 ///\param[in] source - An ExternalSemaSource.
 ///
@@ -121,7 +123,7 @@ void MultiplexExternalSemaSource::FindExternalLexicalDecls(
     Sources[i]->FindExternalLexicalDecls(DC, IsKindWeWant, Result);
 }
 
-void MultiplexExternalSemaSource::FindFileRegionDecls(FileID File,
+void MultiplexExternalSemaSource::FindFileRegionDecls(FileID File, 
                                                       unsigned Offset,
                                                       unsigned Length,
                                                 SmallVectorImpl<Decl *> &Decls){
@@ -164,28 +166,14 @@ void MultiplexExternalSemaSource::PrintStats() {
     Sources[i]->PrintStats();
 }
 
-Module *MultiplexExternalSemaSource::getModule(unsigned ID) {
-  for (size_t i = 0; i < Sources.size(); ++i)
-    if (auto M = Sources[i]->getModule(ID))
-      return M;
-  return nullptr;
-}
-
-bool MultiplexExternalSemaSource::DeclIsFromPCHWithObjectFile(const Decl *D) {
-  for (auto *S : Sources)
-    if (S->DeclIsFromPCHWithObjectFile(D))
-      return true;
-  return false;
-}
-
 bool MultiplexExternalSemaSource::layoutRecordType(const RecordDecl *Record,
-                                                   uint64_t &Size,
+                                                   uint64_t &Size, 
                                                    uint64_t &Alignment,
                       llvm::DenseMap<const FieldDecl *, uint64_t> &FieldOffsets,
                   llvm::DenseMap<const CXXRecordDecl *, CharUnits> &BaseOffsets,
           llvm::DenseMap<const CXXRecordDecl *, CharUnits> &VirtualBaseOffsets){
   for(size_t i = 0; i < Sources.size(); ++i)
-    if (Sources[i]->layoutRecordType(Record, Size, Alignment, FieldOffsets,
+    if (Sources[i]->layoutRecordType(Record, Size, Alignment, FieldOffsets, 
                                      BaseOffsets, VirtualBaseOffsets))
       return true;
   return false;
@@ -243,10 +231,10 @@ void MultiplexExternalSemaSource::ReadMismatchingDeleteExpressions(
     Source->ReadMismatchingDeleteExpressions(Exprs);
 }
 
-bool MultiplexExternalSemaSource::LookupUnqualified(LookupResult &R, Scope *S){
+bool MultiplexExternalSemaSource::LookupUnqualified(LookupResult &R, Scope *S){ 
   for(size_t i = 0; i < Sources.size(); ++i)
     Sources[i]->LookupUnqualified(R, S);
-
+  
   return !R.empty();
 }
 
@@ -255,13 +243,13 @@ void MultiplexExternalSemaSource::ReadTentativeDefinitions(
   for(size_t i = 0; i < Sources.size(); ++i)
     Sources[i]->ReadTentativeDefinitions(TentativeDefs);
 }
-
+  
 void MultiplexExternalSemaSource::ReadUnusedFileScopedDecls(
                                 SmallVectorImpl<const DeclaratorDecl*> &Decls) {
   for(size_t i = 0; i < Sources.size(); ++i)
     Sources[i]->ReadUnusedFileScopedDecls(Decls);
 }
-
+  
 void MultiplexExternalSemaSource::ReadDelegatingConstructors(
                                   SmallVectorImpl<CXXConstructorDecl*> &Decls) {
   for(size_t i = 0; i < Sources.size(); ++i)

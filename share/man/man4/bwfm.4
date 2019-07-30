@@ -1,4 +1,4 @@
-.\" $OpenBSD: bwfm.4,v 1.9 2019/04/04 06:58:56 jmc Exp $
+.\" $OpenBSD: bwfm.4,v 1.6 2018/02/11 04:23:02 patrick Exp $
 .\"
 .\" Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 4 2019 $
+.Dd $Mdocdate: February 11 2018 $
 .Dt BWFM 4
 .Os
 .Sh NAME
 .Nm bwfm
-.Nd Broadcom and Cypress IEEE 802.11a/ac/b/g/n wireless network device
+.Nd Broadcom and Cypress wireless network device
 .Sh SYNOPSIS
 .Cd "bwfm* at pci?"
 .Cd "bwfm* at sdmmc?"
@@ -88,7 +88,8 @@ using WPA key
 .Dq mywpakey ,
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-nwid mynwid wpakey mywpakey
+nwid mynwid
+wpakey mywpakey
 dhcp
 .Ed
 .Pp
@@ -97,7 +98,8 @@ The following
 example creates a host-based access point on boot:
 .Bd -literal -offset indent
 mediaopt hostap
-nwid mynwid wpakey mywpakey
+nwid mynwid
+wpakey mywpakey
 inet 192.168.1.1 255.255.255.0
 .Ed
 .Sh SEE ALSO
@@ -122,5 +124,3 @@ driver was written by
 .An Patrick Wildt Aq Mt patrick@blueri.se .
 .Sh CAVEATS
 The firmware is outdated and contains known vulnerabilities.
-.Pp
-This driver does not support powersave mode.

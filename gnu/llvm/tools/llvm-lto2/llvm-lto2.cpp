@@ -17,7 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Bitcode/BitcodeReader.h"
-#include "llvm/CodeGen/CommandFlags.inc"
+#include "llvm/CodeGen/CommandFlags.h"
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/LTO/Caching.h"
 #include "llvm/LTO/LTO.h"
@@ -100,21 +100,10 @@ static cl::opt<bool> OptRemarksWithHotness(
     cl::desc("Whether to include hotness informations in the remarks.\n"
              "Has effect only if -pass-remarks-output is specified."));
 
-static cl::opt<std::string>
-    SamplePGOFile("lto-sample-profile-file",
-                  cl::desc("Specify a SamplePGO profile file"));
-
 static cl::opt<bool>
     UseNewPM("use-new-pm",
              cl::desc("Run LTO passes using the new pass manager"),
              cl::init(false), cl::Hidden);
-
-static cl::opt<bool>
-    DebugPassManager("debug-pass-manager", cl::init(false), cl::Hidden,
-                     cl::desc("Print pass management debugging information"));
-
-static cl::opt<std::string>
-    StatsFile("stats-file", cl::desc("Filename to write statistics to"));
 
 static void check(Error E, std::string Msg) {
   if (!E)
@@ -192,8 +181,7 @@ static int run(int argc, char **argv) {
     DiagnosticPrinterRawOStream DP(errs());
     DI.print(DP);
     errs() << '\n';
-    if (DI.getSeverity() == DS_Error)
-      exit(1);
+    exit(1);
   };
 
   Conf.CPU = MCPU;
@@ -201,9 +189,7 @@ static int run(int argc, char **argv) {
   Conf.MAttrs = MAttrs;
   if (auto RM = getRelocModel())
     Conf.RelocModel = *RM;
-  Conf.CodeModel = getCodeModel();
-
-  Conf.DebugPassManager = DebugPassManager;
+  Conf.CodeModel = CMModel;
 
   if (SaveTemps)
     check(Conf.addSaveTemps(OutputFilename + "."),
@@ -212,8 +198,6 @@ static int run(int argc, char **argv) {
   // Optimization remarks.
   Conf.RemarksFilename = OptRemarksOutput;
   Conf.RemarksWithHotness = OptRemarksWithHotness;
-
-  Conf.SampleProfile = SamplePGOFile;
 
   // Run a custom pipeline, if asked for.
   Conf.OptPipeline = OptPipeline;
@@ -244,15 +228,10 @@ static int run(int argc, char **argv) {
 
   Conf.OverrideTriple = OverrideTriple;
   Conf.DefaultTriple = DefaultTriple;
-  Conf.StatsFile = StatsFile;
 
   ThinBackend Backend;
   if (ThinLTODistributedIndexes)
-    Backend = createWriteIndexesThinBackend(/* OldPrefix */ "",
-                                            /* NewPrefix */ "",
-                                            /* ShouldEmitImportsFiles */ true,
-                                            /* LinkedObjectsFile */ nullptr,
-                                            /* OnWrite */ {});
+    Backend = createWriteIndexesThinBackend("", "", true, "");
   else
     Backend = createInProcessThinBackend(Threads);
   LTO Lto(std::move(Conf), std::move(Backend));
@@ -376,9 +355,6 @@ static int dumpSymtab(int argc, char **argv) {
 
       if (TT.isOSBinFormatCOFF() && Sym.isWeak() && Sym.isIndirect())
         outs() << "         fallback " << Sym.getCOFFWeakExternalFallback() << '\n';
-
-      if (!Sym.getSectionName().empty())
-        outs() << "         section " << Sym.getSectionName() << "\n";
     }
 
     outs() << '\n';

@@ -26,12 +26,13 @@
 //                  MICmdBase.h / .cpp
 //                  MICmdCmd.h / .cpp
 
+#if defined(_MSC_VER)
+#define _INC_SIGNAL // Stop window's signal.h being included -
+                    // CODETAG_IOR_SIGNALS
+#endif              // _MSC_VER
+
 // Third party headers:
 #include "lldb/API/SBHostOS.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/Signals.h"
-#include <atomic>
 #include <csignal>
 #include <stdio.h>
 
@@ -71,13 +72,14 @@ void sigint_handler(int vSigno) {
 #ifdef _WIN32 // Restore handler as it is not persistent on Windows
   signal(SIGINT, sigint_handler);
 #endif
-  static std::atomic_flag g_interrupt_sent = ATOMIC_FLAG_INIT;
+  static bool g_interrupt_sent = false;
   CMIDriverMgr &rDriverMgr = CMIDriverMgr::Instance();
   lldb::SBDebugger *pDebugger = rDriverMgr.DriverGetTheDebugger();
   if (pDebugger != nullptr) {
-    if (!g_interrupt_sent.test_and_set()) {
+    if (!g_interrupt_sent) {
+      g_interrupt_sent = true;
       pDebugger->DispatchInputInterrupt();
-      g_interrupt_sent.clear();
+      g_interrupt_sent = false;
     }
   }
 
@@ -171,10 +173,6 @@ int main(int argc, char const *argv[]) {
   CMIUtilDebug::WaitForDbgAttachInfinteLoop();
 #endif //  _WIN32
 #endif // MICONFIG_DEBUG_SHOW_ATTACH_DBG_DLG
-
-  llvm::StringRef ToolName = argv[0];
-  llvm::sys::PrintStackTraceOnErrorSignal(ToolName);
-  llvm::PrettyStackTraceProgram X(argc, argv);
 
   // *** Order is important here ***
   bool bOk = DriverSystemInit();

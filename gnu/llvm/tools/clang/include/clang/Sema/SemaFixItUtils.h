@@ -1,4 +1,4 @@
-//===--- SemaFixItUtils.h - Sema FixIts -------------------------*- C++ -*-===//
+//===--- SemaFixItUtils.h - Sema FixIts -----------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

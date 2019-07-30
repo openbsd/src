@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// A wrapper class around \c RecursiveASTVisitor that visits each
+/// \brief A wrapper class around \c RecursiveASTVisitor that visits each
 /// occurrences of a named symbol.
 ///
 //===----------------------------------------------------------------------===//
@@ -68,18 +68,6 @@ public:
 
   bool VisitMemberExpr(const MemberExpr *Expr) {
     return visit(Expr->getFoundDecl().getDecl(), Expr->getMemberLoc());
-  }
-
-  bool VisitOffsetOfExpr(const OffsetOfExpr *S) {
-    for (unsigned I = 0, E = S->getNumComponents(); I != E; ++I) {
-      const OffsetOfNode &Component = S->getComponent(I);
-      if (Component.getKind() == OffsetOfNode::Field) {
-        if (!visit(Component.getField(), Component.getLocEnd()))
-          return false;
-      }
-      // FIXME: Try to resolve dependent field references.
-    }
-    return true;
   }
 
   // Other visitors:

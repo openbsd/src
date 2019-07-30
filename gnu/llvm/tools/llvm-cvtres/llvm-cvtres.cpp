@@ -20,7 +20,6 @@
 #include "llvm/Option/Option.h"
 #include "llvm/Support/BinaryStreamError.h"
 #include "llvm/Support/Error.h"
-#include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -64,6 +63,8 @@ class CvtResOptTable : public opt::OptTable {
 public:
   CvtResOptTable() : OptTable(InfoTable, true) {}
 };
+
+static ExitOnError ExitOnErr;
 }
 
 LLVM_ATTRIBUTE_NORETURN void reportError(Twine Msg) {
@@ -94,12 +95,22 @@ template <typename T> T error(Expected<T> EC) {
   return std::move(EC.get());
 }
 
-int main(int Argc, const char **Argv) {
-  InitLLVM X(Argc, Argv);
+int main(int argc_, const char *argv_[]) {
+  sys::PrintStackTraceOnErrorSignal(argv_[0]);
+  PrettyStackTraceProgram X(argc_, argv_);
+
+  ExitOnErr.setBanner("llvm-cvtres: ");
+
+  SmallVector<const char *, 256> argv;
+  SpecificBumpPtrAllocator<char> ArgAllocator;
+  ExitOnErr(errorCodeToError(sys::Process::GetArgumentVector(
+      argv, makeArrayRef(argv_, argc_), ArgAllocator)));
+
+  llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
   CvtResOptTable T;
   unsigned MAI, MAC;
-  ArrayRef<const char *> ArgsArr = makeArrayRef(Argv + 1, Argc - 1);
+  ArrayRef<const char *> ArgsArr = makeArrayRef(argv_ + 1, argc_);
   opt::InputArgList InputArgs = T.ParseArgs(ArgsArr, MAI, MAC);
 
   if (InputArgs.hasArg(OPT_HELP)) {
@@ -115,7 +126,6 @@ int main(int Argc, const char **Argv) {
     std::string MachineString = InputArgs.getLastArgValue(OPT_MACHINE).upper();
     MachineType = StringSwitch<COFF::MachineTypes>(MachineString)
                       .Case("ARM", COFF::IMAGE_FILE_MACHINE_ARMNT)
-                      .Case("ARM64", COFF::IMAGE_FILE_MACHINE_ARM64)
                       .Case("X64", COFF::IMAGE_FILE_MACHINE_AMD64)
                       .Case("X86", COFF::IMAGE_FILE_MACHINE_I386)
                       .Default(COFF::IMAGE_FILE_MACHINE_UNKNOWN);
@@ -145,9 +155,6 @@ int main(int Argc, const char **Argv) {
   if (Verbose) {
     outs() << "Machine: ";
     switch (MachineType) {
-    case COFF::IMAGE_FILE_MACHINE_ARM64:
-      outs() << "ARM64\n";
-      break;
     case COFF::IMAGE_FILE_MACHINE_ARMNT:
       outs() << "ARM\n";
       break;
@@ -195,7 +202,7 @@ int main(int Argc, const char **Argv) {
   auto FileOrErr =
       FileOutputBuffer::create(OutputFile, OutputBuffer->getBufferSize());
   if (!FileOrErr)
-    reportError(OutputFile, errorToErrorCode(FileOrErr.takeError()));
+    reportError(OutputFile, FileOrErr.getError());
   std::unique_ptr<FileOutputBuffer> FileBuffer = std::move(*FileOrErr);
   std::copy(OutputBuffer->getBufferStart(), OutputBuffer->getBufferEnd(),
             FileBuffer->getBufferStart());

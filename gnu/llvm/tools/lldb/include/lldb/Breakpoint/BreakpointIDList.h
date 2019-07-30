@@ -18,9 +18,7 @@
 // Other libraries and framework includes
 // Project includes
 
-#include "lldb/lldb-enumerations.h"
 #include "lldb/Breakpoint/BreakpointID.h"
-#include "lldb/Breakpoint/BreakpointName.h"
 #include "lldb/lldb-private.h"
 
 namespace lldb_private {
@@ -55,7 +53,7 @@ public:
 
   bool FindBreakpointID(const char *bp_id, size_t *position) const;
 
-  void InsertStringArray(llvm::ArrayRef<const char *> string_array,
+  void InsertStringArray(const char **string_array, size_t array_size,
                          CommandReturnObject &result);
 
   // Returns a pair consisting of the beginning and end of a breakpoint
@@ -66,8 +64,6 @@ public:
 
   static void FindAndReplaceIDRanges(Args &old_args, Target *target,
                                      bool allow_locations,
-                                     BreakpointName::Permissions
-                                       ::PermissionKinds purpose,
                                      CommandReturnObject &result,
                                      Args &new_args);
 

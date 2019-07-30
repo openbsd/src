@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.21 2019/06/14 05:52:42 deraadt Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.18 2017/04/20 15:21:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,9 +31,7 @@
  *	@(#)kern_xxx.c	8.2 (Berkeley) 11/14/93
  */
 
-#include <sys/param.h>
 #include <sys/pledge.h>
-#include <uvm/uvm_extern.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -66,18 +64,6 @@ mi_syscall(struct proc *p, register_t code, const struct sysent *callp,
 		KERNEL_UNLOCK();
 	}
 #endif
-
-	/* SP must be within MAP_STACK space */
-	if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
-	    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
-	    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
-		return (EPERM);
-
-	/* PC must not be in writeable memory */
-	if (!uvm_map_inentry(p, &p->p_pcinentry, PROC_PC(p),
-	    "[%s]%d/%d pc=%lx inside %lx-%lx: writeable syscall\n",
-	    uvm_map_inentry_pc, p->p_vmspace->vm_map.wserial))
-		return (EPERM);
 
 	if (lock)
 		KERNEL_LOCK();

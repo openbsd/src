@@ -15,10 +15,10 @@
 #ifndef LLVM_TRANSFORMS_UTILS_FUNCTIONCOMPARATOR_H
 #define LLVM_TRANSFORMS_UTILS_FUNCTIONCOMPARATOR_H
 
+#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/IR/Attributes.h"
-#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/ValueMap.h"
 #include "llvm/Support/AtomicOrdering.h"
@@ -28,17 +28,7 @@
 
 namespace llvm {
 
-class APFloat;
-class APInt;
-class BasicBlock;
-class Constant;
-class Function;
-class GlobalValue;
-class InlineAsm;
-class Instruction;
-class MDNode;
-class Type;
-class Value;
+class GetElementPtrInst;
 
 /// GlobalNumberState assigns an integer to each global value in the program,
 /// which is used by the comparison routine to order references to globals. This
@@ -53,16 +43,14 @@ class Value;
 /// compare those, but this would not work for stripped bitcodes or for those
 /// few symbols without a name.
 class GlobalNumberState {
-  struct Config : ValueMapConfig<GlobalValue *> {
+  struct Config : ValueMapConfig<GlobalValue*> {
     enum { FollowRAUW = false };
   };
-
   // Each GlobalValue is mapped to an identifier. The Config ensures when RAUW
   // occurs, the mapping does not change. Tracking changes is unnecessary, and
   // also problematic for weak symbols (which may be overwritten).
-  using ValueNumberMap = ValueMap<GlobalValue *, uint64_t, Config>;
+  typedef ValueMap<GlobalValue *, uint64_t, Config> ValueNumberMap;
   ValueNumberMap GlobalNumbers;
-
   // The next unused serial number to assign to a global.
   uint64_t NextNumber = 0;
 
@@ -76,10 +64,6 @@ public:
     if (Inserted)
       NextNumber++;
     return MapIter->second;
-  }
-
-  void erase(GlobalValue *Global) {
-    GlobalNumbers.erase(Global);
   }
 
   void clear() {
@@ -99,10 +83,9 @@ public:
 
   /// Test whether the two functions have equivalent behaviour.
   int compare();
-
   /// Hash a function. Equivalent functions will have the same hash, and unequal
   /// functions will have different hashes with high probability.
-  using FunctionHash = uint64_t;
+  typedef uint64_t FunctionHash;
   static FunctionHash functionHash(Function &);
 
 protected:

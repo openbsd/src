@@ -1,7 +1,11 @@
+@import Foundation;
 @import myModule;
-@import minmax;
 
-int main(int argc, char **argv) {
-  public_func(); // Set breakpoint 0 here.
-  return 0;
+int main()
+{
+    @autoreleasepool
+    {
+        MyClass *myObject = [MyClass alloc];
+        [myObject publicMethod]; // Set breakpoint 0 here.
+    }
 }

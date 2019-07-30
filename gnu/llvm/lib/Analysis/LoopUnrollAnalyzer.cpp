@@ -14,10 +14,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/LoopUnrollAnalyzer.h"
+#include "llvm/IR/Dominators.h"
 
 using namespace llvm;
 
-/// Try to simplify instruction \param I using its SCEV expression.
+/// \brief Try to simplify instruction \param I using its SCEV expression.
 ///
 /// The idea is that some AddRec expressions become constants, which then
 /// could trigger folding of other instructions. However, that only happens

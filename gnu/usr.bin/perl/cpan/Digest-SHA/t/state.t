@@ -1,5 +1,19 @@
 use strict;
-use Digest::SHA qw(sha384_hex sha512_hex);
+
+my $MODULE;
+
+BEGIN {
+	$MODULE = (-d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
+	eval "require $MODULE" || die $@;
+	$MODULE->import(qw(sha384_hex sha512_hex));
+}
+
+BEGIN {
+	if ($ENV{PERL_CORE}) {
+		chdir 't' if -d 't';
+		@INC = '../lib';
+	}
+}
 
 my @sharsp = (
 	"34aa973cd4c4daa4f61eeb2bdbad27316534016f",
@@ -34,7 +48,7 @@ while (@sharsp) {
 	}
 	my $digest;
 	my $state;
-	unless ($state = Digest::SHA->putstate(shift @states)) {
+	unless ($state = $MODULE->putstate(shift @states)) {
 		print "not ok ", $testnum++, "\n";
 		next;
 	}

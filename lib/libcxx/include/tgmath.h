@@ -14,24 +14,16 @@
 /*
     tgmath.h synopsis
 
-#include <ctgmath>
+#include <complex.h>
+#include <math.h>
 
 */
 
-#include <__config>
+#include <complex.h>
+#include <math.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
-
-#ifdef __cplusplus
-
-#include <ctgmath>
-
-#else  // __cplusplus
-
-#include_next <tgmath.h>
-
-#endif  // __cplusplus
 
 #endif  // _LIBCPP_TGMATH_H

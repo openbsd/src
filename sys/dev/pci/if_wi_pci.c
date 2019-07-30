@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.53 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.52 2015/11/24 17:11:39 mpi Exp $	*/
 
 /*
- * Copyright (c) 2001-2003 Todd C. Miller <millert@openbsd.org>
+ * Copyright (c) 2001-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

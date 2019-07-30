@@ -11,16 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "AVRMCTargetDesc.h"
 #include "AVRELFStreamer.h"
 #include "AVRMCAsmInfo.h"
-#include "AVRMCELFStreamer.h"
-#include "AVRMCTargetDesc.h"
 #include "AVRTargetStreamer.h"
 #include "InstPrinter/AVRInstPrinter.h"
 
-#include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCELFStreamer.h"
-#include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -37,7 +34,7 @@
 
 using namespace llvm;
 
-MCInstrInfo *llvm::createAVRMCInstrInfo() {
+static MCInstrInfo *createAVRMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitAVRMCInstrInfo(X);
 
@@ -69,12 +66,9 @@ static MCInstPrinter *createAVRMCInstPrinter(const Triple &T,
 }
 
 static MCStreamer *createMCStreamer(const Triple &T, MCContext &Context,
-                                    std::unique_ptr<MCAsmBackend> &&MAB,
-                                    std::unique_ptr<MCObjectWriter> &&OW,
-                                    std::unique_ptr<MCCodeEmitter> &&Emitter,
-                                    bool RelaxAll) {
-  return createELFStreamer(Context, std::move(MAB), std::move(OW),
-                           std::move(Emitter), RelaxAll);
+                                    MCAsmBackend &MAB, raw_pwrite_stream &OS,
+                                    MCCodeEmitter *Emitter, bool RelaxAll) {
+  return createELFStreamer(Context, MAB, OS, Emitter, RelaxAll);
 }
 
 static MCTargetStreamer *
@@ -110,7 +104,7 @@ extern "C" void LLVMInitializeAVRTargetMC() {
   // Register the MC Code Emitter
   TargetRegistry::RegisterMCCodeEmitter(getTheAVRTarget(), createAVRMCCodeEmitter);
 
-  // Register the obj streamer
+  // Register the ELF streamer
   TargetRegistry::RegisterELFStreamer(getTheAVRTarget(), createMCStreamer);
 
   // Register the obj target streamer.

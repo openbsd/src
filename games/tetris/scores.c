@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.24 2019/05/20 02:11:22 lteo Exp $	*/
+/*	$OpenBSD: scores.c,v 1.22 2016/08/27 02:00:10 guenther Exp $	*/
 /*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
 
 /*-
@@ -91,8 +91,9 @@ static char *thisuser(void);
 static void
 getscores(FILE **fpp)
 {
-	int sd, mint, i;
-	char *mstr, *human;
+	int sd, mint, i, ret;
+	char *mstr, *human, *home;
+	char scorepath[PATH_MAX];
 	FILE *sf;
 
 	if (fpp != NULL) {
@@ -105,6 +106,14 @@ getscores(FILE **fpp)
 		mstr = "r";
 		human = "reading";
 	}
+
+	home = getenv("HOME");
+	if (home == NULL || *home == '\0')
+		err(1, "getenv");
+
+	ret = snprintf(scorepath, sizeof(scorepath), "%s/%s", home, ".tetris.scores");
+	if (ret < 0 || ret >= PATH_MAX)
+		errc(1, ENAMETOOLONG, "%s/%s", home, ".tetris.scores");
 
 	sd = open(scorepath, mint, 0666);
 	if (sd < 0) {

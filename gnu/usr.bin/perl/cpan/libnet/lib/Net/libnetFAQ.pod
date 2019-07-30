@@ -20,12 +20,11 @@ CPAN Request Tracker at
 
 =head1 Author and Copyright Information
 
-Copyright (C) 1997-1998 Graham Barr.  All rights reserved.
+Copyright (c) 1997-1998 Graham Barr. All rights reserved.
 This document is free; you can redistribute it and/or modify it
 under the terms of the Artistic License.
 
-Steve Hay E<lt>F<shay@cpan.org>E<gt> is now maintaining libnet as of version
-1.22_02.
+Currently maintained by Steve Hay <shay@cpan.org>.
 
 =head2 Disclaimer
 
@@ -57,7 +56,7 @@ Authen::SASL is required for AUTH support.
 
 IO::Socket::SSL version 2.007 or higher is required for SSL support.
 
-IO::Socket::IP version 0.25 or IO::Socket::INET6 version 2.62 is
+IO::Socket::IP version 0.20 or IO::Socket::INET6 version 2.62 is
 required for IPv6 support.
 
 =head2 What machines support libnet ?
@@ -298,4 +297,6 @@ being sent or response being received.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (C) 1997-1998 Graham Barr.  All rights reserved.
+Copyright (c) 1997 Graham Barr.
+All rights reserved.
+

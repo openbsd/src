@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.258 2019/05/31 15:25:57 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.248 2017/11/28 18:25:53 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -68,7 +68,7 @@
 
 #define FD_RESERVE		5
 
-#define RELAY_MAX_BACKLOG	512
+#define RELAY_MAX_SESSIONS	1024
 #define RELAY_TIMEOUT		600
 #define RELAY_CACHESIZE		-1	/* use default size */
 #define RELAY_NUMPROC		3
@@ -137,18 +137,13 @@ struct ctl_relaytable {
 	u_int32_t	 flags;
 };
 
-enum fd_type {
-	RELAY_FD_CERT	= 1,
-	RELAY_FD_CACERT	= 2,
-	RELAY_FD_CAFILE	= 3,
-	RELAY_FD_KEY	= 4
-};
-
 struct ctl_relayfd {
-	objid_t		 id;
 	objid_t		 relayid;
-	enum fd_type	 type;
+	int		 type;
 };
+#define RELAY_FD_CERT	1
+#define RELAY_FD_CACERT	2
+#define RELAY_FD_CAFILE	3
 
 struct ctl_script {
 	objid_t		 host;
@@ -198,7 +193,6 @@ enum relay_state {
 	STATE_PENDING,
 	STATE_PRECONNECT,
 	STATE_CONNECTED,
-	STATE_CLOSED,
 	STATE_DONE
 };
 
@@ -556,13 +550,11 @@ TAILQ_HEAD(rdrlist, rdr);
 struct rsession {
 	objid_t				 se_id;
 	objid_t				 se_relayid;
-	struct sockaddr_storage		 se_sockname;
 	struct ctl_relay_event		 se_in;
 	struct ctl_relay_event		 se_out;
 	void				*se_priv;
 	SIPHASH_CTX			 se_siphashctx;
 	struct relay_table		*se_table;
-	struct relay_table		*se_table0;
 	struct event			 se_ev;
 	struct timeval			 se_timeout;
 	struct timeval			 se_tv_start;
@@ -609,9 +601,11 @@ enum rule_action {
 };
 
 struct rule_addr {
+	int				 addr_af;
 	struct sockaddr_storage		 addr;
 	u_int8_t			 addr_mask;
-	int				 addr_port;
+	int				 addr_net;
+	in_port_t			 addr_port;
 };
 
 #define RELAY_ADDR_EQ(_a, _b)						\
@@ -627,10 +621,6 @@ struct rule_addr {
 	((_a)->addr_mask != (_b)->addr_mask ||				\
 	sockaddr_cmp((struct sockaddr *)&(_a)->addr,			\
 	(struct sockaddr *)&(_b)->addr, (_a)->addr_mask) != 0)
-
-#define RELAY_AF_NEQ(_a, _b)						\
-	(((_a) != AF_UNSPEC) && ((_b) != AF_UNSPEC) &&			\
-	((_a) != (_b)))
 
 struct relay_rule {
 	objid_t			 rule_id;
@@ -712,14 +702,6 @@ struct relay_ticket_key {
 };
 #define	TLS_SESSION_LIFETIME	(2 * 3600)
 
-#define HTTPFLAG_WEBSOCKETS	0x01
-
-struct keyname {
-	TAILQ_ENTRY(keyname)	 entry;
-	char			*name;
-};
-TAILQ_HEAD(keynamelist, keyname);
-
 struct protocol {
 	objid_t			 id;
 	u_int32_t		 flags;
@@ -729,7 +711,6 @@ struct protocol {
 	u_int8_t		 tcpipttl;
 	u_int8_t		 tcpipminttl;
 	size_t			 httpheaderlen;
-	int			 httpflags;
 	u_int8_t		 tlsflags;
 	char			 tlsciphers[768];
 	char			 tlsdhparams[128];
@@ -738,7 +719,6 @@ struct protocol {
 	char			 tlscacert[PATH_MAX];
 	char			 tlscakey[PATH_MAX];
 	char			*tlscapass;
-	struct keynamelist	 tlscerts;
 	char			 name[MAX_NAME_SIZE];
 	int			 tickets;
 	enum prototype		 type;
@@ -776,16 +756,6 @@ struct ca_pkey {
 };
 TAILQ_HEAD(ca_pkeylist, ca_pkey);
 
-struct relay_cert {
-	objid_t			 cert_id;
-	objid_t			 cert_relayid;
-	int			 cert_fd;
-	int			 cert_key_fd;
-	EVP_PKEY		*cert_pkey;
-	TAILQ_ENTRY(relay_cert)	 cert_entry;
-};
-TAILQ_HEAD(relaycertlist, relay_cert);
-
 struct relay_config {
 	objid_t			 id;
 	u_int32_t		 flags;
@@ -800,6 +770,7 @@ struct relay_config {
 	struct timeval		 timeout;
 	enum forwardmode	 fwdmode;
 	union hashkey		 hashkey;
+	off_t			 tls_key_len;
 	off_t			 tls_cakey_len;
 };
 
@@ -824,8 +795,10 @@ struct relay {
 	struct tls_config	*rl_tls_client_cfg;
 	struct tls		*rl_tls_ctx;
 
-	int			 rl_tls_ca_fd;
-	int			 rl_tls_cacert_fd;
+	int			rl_tls_cert_fd;
+	int			rl_tls_ca_fd;
+	int			rl_tls_cacert_fd;
+	char			*rl_tls_key;
 	EVP_PKEY		*rl_tls_pkey;
 	X509			*rl_tls_cacertx509;
 	char			*rl_tls_cakey;
@@ -1107,7 +1080,6 @@ struct relayd {
 	struct routerlist	*sc_rts;
 	struct netroutelist	*sc_routes;
 	struct ca_pkeylist	*sc_pkeys;
-	struct relaycertlist	*sc_certs;
 	struct sessionlist	 sc_sessions;
 	char			 sc_demote_group[IFNAMSIZ];
 	u_int16_t		 sc_id;
@@ -1135,9 +1107,8 @@ struct relayd {
 #define RELAYD_OPT_VERBOSE		0x01
 #define RELAYD_OPT_NOACTION		0x04
 #define RELAYD_OPT_LOGUPDATE		0x08
-#define RELAYD_OPT_LOGHOSTCHECK		0x10
-#define RELAYD_OPT_LOGCON		0x20
-#define RELAYD_OPT_LOGCONERR		0x40
+#define RELAYD_OPT_LOGNOTIFY		0x10
+#define RELAYD_OPT_LOGALL		0x18
 
 /* control.c */
 int	 control_init(struct privsep *, struct control_sock *);
@@ -1159,9 +1130,6 @@ int	 cmdline_symset(char *);
 const char *host_error(enum host_error);
 const char *host_status(enum host_status);
 const char *table_check(enum table_check);
-#ifdef DEBUG
-const char *relay_state(enum relay_state);
-#endif
 const char *print_availability(u_long, u_long);
 const char *print_host(struct sockaddr_storage *, char *, size_t);
 const char *print_time(struct timeval *, struct timeval *, char *, size_t);
@@ -1203,8 +1171,10 @@ void	 relay(struct privsep *, struct privsep_proc *);
 int	 relay_privinit(struct relay *);
 void	 relay_notify_done(struct host *, const char *);
 int	 relay_session_cmp(struct rsession *, struct rsession *);
-void	 relay_close(struct rsession *, const char *, int);
-int	 relay_reset_event(struct rsession *, struct ctl_relay_event *);
+char	*relay_load_fd(int, off_t *);
+int	 relay_load_certfiles(struct relay *);
+void	 relay_close(struct rsession *, const char *);
+int	 relay_reset_event(struct ctl_relay_event *);
 void	 relay_natlook(int, short, void *);
 void	 relay_session(struct rsession *);
 int	 relay_from_table(struct rsession *);
@@ -1256,7 +1226,6 @@ const char
 	*relay_httpmethod_byid(u_int);
 const char
 	*relay_httperror_byid(u_int);
-int	 relay_http_priv_init(struct rsession *);
 int	 relay_httpdesc_init(struct ctl_relay_event *);
 ssize_t	 relay_http_time(time_t, char *, size_t);
 
@@ -1316,11 +1285,6 @@ struct relay	*relay_findbyname(struct relayd *, const char *);
 struct relay	*relay_findbyaddr(struct relayd *, struct relay_config *);
 EVP_PKEY	*pkey_find(struct relayd *, char *hash);
 struct ca_pkey	*pkey_add(struct relayd *, EVP_PKEY *, char *hash);
-struct relay_cert *cert_add(struct relayd *, objid_t);
-struct relay_cert *cert_find(struct relayd *, objid_t);
-char		*relay_load_fd(int, off_t *);
-int		 relay_load_certfiles(struct relayd *, struct relay *,
-		    const char *);
 int		 expand_string(char *, size_t, const char *, const char *);
 void		 translate_string(char *);
 void		 purge_key(char **, off_t);
@@ -1355,8 +1319,6 @@ void		 relay_log(struct rsession *, char *);
 int		 kv_log(struct rsession *, struct kv *, u_int16_t,
 		     enum direction);
 struct kv	*kv_find(struct kvtree *, struct kv *);
-struct kv	*kv_find_value(struct kvtree *, char *, const char *,
-		     const char *);
 int		 kv_cmp(struct kv *, struct kv *);
 int		 rule_add(struct protocol *, struct relay_rule *, const char
 		     *);
@@ -1420,7 +1382,7 @@ __dead void fatalx(const char *, ...)
 enum privsep_procid
 	    proc_getid(struct privsep_proc *, unsigned int, const char *);
 int	 proc_flush_imsg(struct privsep *, enum privsep_procid, int);
-void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int, int,
+void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int,
 	    int, char **, enum privsep_procid);
 void	 proc_kill(struct privsep *);
 void	 proc_connect(struct privsep *);

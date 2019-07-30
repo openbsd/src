@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// This file contains FormatTokenLexer, which tokenizes a source file
+/// \brief This file contains FormatTokenLexer, which tokenizes a source file
 /// into a token stream suitable for ClangFormat.
 ///
 //===----------------------------------------------------------------------===//
@@ -36,7 +36,7 @@ enum LexerState {
 
 class FormatTokenLexer {
 public:
-  FormatTokenLexer(const SourceManager &SourceMgr, FileID ID, unsigned Column,
+  FormatTokenLexer(const SourceManager &SourceMgr, FileID ID,
                    const FormatStyle &Style, encoding::Encoding Encoding);
 
   ArrayRef<FormatToken *> lex();
@@ -72,8 +72,6 @@ private:
   // an opening ${. It also maintains a stack of lexing contexts to handle
   // nested template parts by balancing curly braces.
   void handleTemplateStrings();
-
-  void tryParsePythonComment();
 
   bool tryMerge_TMacro();
 

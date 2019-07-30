@@ -38,9 +38,6 @@
 #ifndef LLVM_SUPPORT_REGEX2_H
 #define LLVM_SUPPORT_REGEX2_H
 
-#include "regutils.h"
-#include <stddef.h>
-
 /*
  * internals of regex_t
  */

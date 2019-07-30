@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.7 2019/04/04 15:47:15 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.5 2018/03/15 12:27:01 jca Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -31,13 +31,6 @@ static struct version_range_test version_range_tests[] = {
 	{
 		.options = 0,
 		.minver = TLS1_VERSION,
-		.maxver = TLS1_3_VERSION,
-		.want_minver = TLS1_VERSION,
-		.want_maxver = TLS1_3_VERSION,
-	},
-	{
-		.options = 0,
-		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
 		.want_minver = TLS1_VERSION,
 		.want_maxver = TLS1_2_VERSION,
@@ -47,13 +40,6 @@ static struct version_range_test version_range_tests[] = {
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
 		.want_minver = TLS1_1_VERSION,
-		.want_maxver = TLS1_2_VERSION,
-	},
-	{
-		.options = SSL_OP_NO_TLSv1_3,
-		.minver = TLS1_VERSION,
-		.maxver = TLS1_3_VERSION,
-		.want_minver = TLS1_VERSION,
 		.want_maxver = TLS1_2_VERSION,
 	},
 	{
@@ -92,26 +78,9 @@ static struct version_range_test version_range_tests[] = {
 		.want_maxver = TLS1_1_VERSION,
 	},
 	{
-		.options = SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
-		    SSL_OP_NO_TLSv1_2,
+		.options = SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2,
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
-		.want_minver = 0,
-		.want_maxver = 0,
-	},
-	{
-		.options = SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
-		    SSL_OP_NO_TLSv1_2,
-		.minver = TLS1_VERSION,
-		.maxver = TLS1_3_VERSION,
-		.want_minver = TLS1_3_VERSION,
-		.want_maxver = TLS1_3_VERSION,
-	},
-	{
-		.options = SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
-		    SSL_OP_NO_TLSv1_2 | SSL_OP_NO_TLSv1_3,
-		.minver = TLS1_VERSION,
-		.maxver = TLS1_3_VERSION,
 		.want_minver = 0,
 		.want_maxver = 0,
 	},
@@ -135,34 +104,6 @@ static struct version_range_test version_range_tests[] = {
 		.maxver = TLS1_2_VERSION,
 		.want_minver = TLS1_2_VERSION,
 		.want_maxver = TLS1_2_VERSION,
-	},
-	{
-		.options = 0,
-		.minver = TLS1_VERSION,
-		.maxver = TLS1_3_VERSION,
-		.want_minver = TLS1_VERSION,
-		.want_maxver = TLS1_3_VERSION,
-	},
-	{
-		.options = 0,
-		.minver = TLS1_1_VERSION,
-		.maxver = TLS1_3_VERSION,
-		.want_minver = TLS1_1_VERSION,
-		.want_maxver = TLS1_3_VERSION,
-	},
-	{
-		.options = 0,
-		.minver = TLS1_2_VERSION,
-		.maxver = TLS1_3_VERSION,
-		.want_minver = TLS1_2_VERSION,
-		.want_maxver = TLS1_3_VERSION,
-	},
-	{
-		.options = 0,
-		.minver = TLS1_3_VERSION,
-		.maxver = TLS1_3_VERSION,
-		.want_minver = TLS1_3_VERSION,
-		.want_maxver = TLS1_3_VERSION,
 	},
 	{
 		.options = 0,
@@ -208,7 +149,7 @@ test_ssl_enabled_version_range(void)
 		vrt = &version_range_tests[i];
 
 		SSL_clear_options(ssl, SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
-		    SSL_OP_NO_TLSv1_2 | SSL_OP_NO_TLSv1_3);
+		    SSL_OP_NO_TLSv1_2);
 		SSL_set_options(ssl, vrt->options);
 
 		minver = maxver = 0xffff;
@@ -290,14 +231,6 @@ static struct shared_version_test shared_version_tests[] = {
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
 		.peerver = TLS1_2_VERSION,
-		.want_maxver = TLS1_2_VERSION,
-	},
-	{
-		.ssl_method = TLS_method,
-		.options = 0,
-		.minver = TLS1_VERSION,
-		.maxver = TLS1_2_VERSION,
-		.peerver = TLS1_3_VERSION,
 		.want_maxver = TLS1_2_VERSION,
 	},
 	{
@@ -450,7 +383,7 @@ test_ssl_max_shared_version(void)
 		}
 
 		SSL_clear_options(ssl, SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
-		    SSL_OP_NO_TLSv1_2 | SSL_OP_NO_TLSv1_3);
+		    SSL_OP_NO_TLSv1_2);
 		SSL_set_options(ssl, svt->options);
 
 		maxver = 0;
@@ -506,13 +439,6 @@ static struct min_max_version_test min_max_version_tests[] = {
 		.ssl_method = TLS_method,
 		.minver = 0,
 		.maxver = TLS1_2_VERSION,
-		.want_minver = TLS1_VERSION,
-		.want_maxver = TLS1_2_VERSION,
-	},
-	{
-		.ssl_method = TLS_method,
-		.minver = 0,
-		.maxver = TLS1_3_VERSION,
 		.want_minver = TLS1_VERSION,
 		.want_maxver = TLS1_2_VERSION,
 	},
@@ -658,7 +584,7 @@ test_ssl_min_max_version(void)
 
 	failed = 0;
 
-	for (i = 0; i < N_MIN_MAX_VERSION_TESTS; i++) {
+	for (i = 0; i < N_SHARED_VERSION_TESTS; i++) {
 		mmvt = &min_max_version_tests[i];
 
 		if ((ssl_ctx = SSL_CTX_new(mmvt->ssl_method())) == NULL) { 
@@ -783,8 +709,6 @@ main(int argc, char **argv)
 	int failed = 0;
 
 	SSL_library_init();
-
-	/* XXX - Test ssl_supported_version_range() */
 
 	failed |= test_ssl_enabled_version_range();
 	failed |= test_ssl_max_shared_version();

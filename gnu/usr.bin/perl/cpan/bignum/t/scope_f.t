@@ -32,3 +32,4 @@ SKIP: {
   isnt (ref(hex(9)), 'Math::BigInt', 'hex is not overloaded');
   isnt (ref(oct(07)), 'Math::BigInt', 'oct is not overloaded');
 }
+

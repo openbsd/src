@@ -8,10 +8,6 @@
  *
  */
 
-#ifndef PERL_UTIL_H_
-#define PERL_UTIL_H_
-
-
 #ifdef VMS
 #  define PERL_FILE_IS_ABSOLUTE(f) \
 	(*(f) == '/'							\
@@ -19,22 +15,28 @@
 	     || ((*(f) == '[' || *(f) == '<')				\
 		 && (isWORDCHAR((f)[1]) || strchr("$-_]>",(f)[1])))))
 
-#elif defined(WIN32) || defined(__CYGWIN__)
-#  define PERL_FILE_IS_ABSOLUTE(f) \
+#else		/* !VMS */
+#  if defined(WIN32) || defined(__CYGWIN__)
+#    define PERL_FILE_IS_ABSOLUTE(f) \
 	(*(f) == '/' || *(f) == '\\'		/* UNC/rooted path */	\
 	 || ((f)[0] && (f)[1] == ':'))		/* drive name */
-#elif defined(NETWARE)
-#  define PERL_FILE_IS_ABSOLUTE(f) \
+#  else		/* !WIN32 */
+#  ifdef NETWARE
+#    define PERL_FILE_IS_ABSOLUTE(f) \
 	(((f)[0] && (f)[1] == ':')		/* drive name */	\
 	 || ((f)[0] == '\\' && (f)[1] == '\\')	/* UNC path */	\
 	 ||	((f)[3] == ':'))				/* volume name, currently only sys */
-#elif defined(DOSISH) || defined(__SYMBIAN32__)
-#  define PERL_FILE_IS_ABSOLUTE(f) \
+#  else		/* !NETWARE */
+#    if defined(DOSISH) || defined(__SYMBIAN32__)
+#      define PERL_FILE_IS_ABSOLUTE(f) \
 	(*(f) == '/'							\
 	 || ((f)[0] && (f)[1] == ':'))		/* drive name */
-#else	/* NEITHER DOSISH NOR SYMBIANISH */
-#  define PERL_FILE_IS_ABSOLUTE(f)	(*(f) == '/')
-#endif
+#    else	/* NEITHER DOSISH NOR SYMBIANISH */
+#      define PERL_FILE_IS_ABSOLUTE(f)	(*(f) == '/')
+#    endif	/* DOSISH */
+#   endif	/* NETWARE */
+#  endif	/* WIN32 */
+#endif		/* VMS */
 
 /*
 =head1 Miscellaneous Functions
@@ -82,12 +84,6 @@ typedef struct PERL_DRAND48_T perl_drand48_t;
 
 #define Perl_drand48_init(seed) (Perl_drand48_init_r(&PL_random_state, (seed)))
 #define Perl_drand48() (Perl_drand48_r(&PL_random_state))
-
-#ifdef PERL_CORE
-/* uses a different source of randomness to avoid interfering with the results
- * of rand() */
-#define Perl_internal_drand48() (Perl_drand48_r(&PL_internal_random_state))
-#endif
 
 #ifdef USE_C_BACKTRACE
 
@@ -232,28 +228,6 @@ means arg not present, 1 is empty string/null byte */
     sizeof("" apiver "")-1, sizeof("" xsver "")-1)
 #  define HS_CXT cv
 #endif
-
-#define instr(haystack, needle) strstr(haystack, needle)
-
-#ifdef HAS_MEMMEM
-#   define ninstr(big, bigend, little, lend)                                \
-            ((char *) memmem((big), (bigend) - (big),                       \
-                             (little), (lend) - (little)))
-#endif
-
-#ifdef __Lynx__
-/* Missing proto on LynxOS */
-int mkstemp(char*);
-#endif
-
-#if defined(HAS_MKOSTEMP) && defined(PERL_CORE)
-#   define Perl_my_mkostemp(templte, flags) mkostemp(templte, flags)
-#endif
-#if defined(HAS_MKSTEMP) && defined(PERL_CORE)
-#   define Perl_my_mkstemp(templte) mkstemp(templte)
-#endif
-
-#endif /* PERL_UTIL_H_ */
 
 /*
  * ex: set ts=8 sts=4 sw=4 et:

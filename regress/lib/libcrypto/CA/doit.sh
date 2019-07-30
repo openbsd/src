@@ -1,5 +1,4 @@
 #!/bin/sh
-#	$OpenBSD: doit.sh,v 1.2 2018/07/17 17:06:49 tb Exp $
 
 rm -rf root intermediate certs
 echo 1000 > rootserial

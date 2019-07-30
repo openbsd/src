@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.21 2019/05/06 12:56:30 visa Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.18 2018/02/18 14:42:32 visa Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -32,11 +32,10 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/atomic.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -122,34 +121,22 @@ mips64_ipi_intr(void *arg)
 	return 1;
 }
 
-static void
-do_send_ipi(unsigned int cpuid, unsigned int ipimask)
-{
-#ifdef DEBUG
-	if (cpuid >= CPU_MAXID || get_cpu_info(cpuid) == NULL)
-		panic("mips_send_ipi: bogus cpu_id");
-	if (!cpuset_isset(&cpus_running, get_cpu_info(cpuid)))
-	        panic("mips_send_ipi: CPU %u not running", cpuid);
-#endif
-
-	atomic_setbits_int(&ipi_mailbox[cpuid], ipimask);
-
-	hw_ipi_intr_set(cpuid);
-}
-
 /*
  * Send an interprocessor interrupt.
  */
 void
 mips64_send_ipi(unsigned int cpuid, unsigned int ipimask)
 {
-	/*
-	 * Ensure that preceding stores are visible to other CPUs
-	 * before sending the IPI.
-	 */
-	membar_producer();
+#ifdef DEBUG
+	if (cpuid >= CPU_MAXID || get_cpu_info(cpuid) == NULL)
+		panic("mips_send_ipi: bogus cpu_id");
+	if (!cpuset_isset(&cpus_running, get_cpu_info(cpuid)))
+	        panic("mips_send_ipi: CPU %ld not running", cpuid);
+#endif
 
-	do_send_ipi(cpuid, ipimask);
+	atomic_setbits_int(&ipi_mailbox[cpuid], ipimask);
+
+	hw_ipi_intr_set(cpuid);
 }
 
 /*
@@ -163,17 +150,11 @@ mips64_multicast_ipi(unsigned int cpumask, unsigned int ipimask)
 
 	cpumask &= ~(1 << cpu_number());
 
-	/*
-	 * Ensure that preceding stores are visible to other CPUs
-	 * before sending the IPI.
-	 */
-	membar_producer();
-
 	CPU_INFO_FOREACH(cii, ci) {
 		if (!(cpumask & (1UL << ci->ci_cpuid)) || 
 		    !cpuset_isset(&cpus_running, ci))
 			continue;
-		do_send_ipi(ci->ci_cpuid, ipimask);
+		mips64_send_ipi(ci->ci_cpuid, ipimask);
 	}
 }
 
@@ -181,7 +162,7 @@ void
 mips64_ipi_nop(void)
 {
 #ifdef DEBUG
-	printf("mips64_ipi_nop on cpu%lu\n", cpu_number());
+	printf("mips64_ipi_nop on cpu%d\n", cpu_number());
 #endif
 }
 
@@ -235,6 +216,9 @@ smp_rendezvous_cpus(unsigned long map,
 	smp_rv_func_arg = arg;
 	smp_rv_waiters[0] = 0;
 	smp_rv_waiters[1] = 0;
+
+	/* Ensure the parameters are visible to other CPUs. */
+	membar_producer();
 
 	/* signal other processors, which will enter the IPI with interrupts off */
 	mips64_multicast_ipi(map, MIPS64_IPI_RENDEZVOUS);

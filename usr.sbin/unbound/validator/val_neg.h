@@ -80,12 +80,6 @@ struct val_neg_cache {
 	size_t max;
 	/** max nsec3 iterations allowed */
 	size_t nsec3_max_iter;
-	/** number of times neg cache records were used to generate NOERROR
-	 * responses. */
-	size_t num_neg_cache_noerror;
-	/** number of times neg cache records were used to generate NXDOMAIN
-	 * responses. */
-	size_t num_neg_cache_nxdomain;
 };
 
 /**
@@ -256,7 +250,6 @@ int val_neg_dlvlookup(struct val_neg_cache* neg, uint8_t* qname, size_t len,
  * 	more conservative, especially for opt-out zones, since the receiver
  * 	may have a trust-anchor below the optout and thus the optout cannot
  * 	be used to create a proof from the negative cache.
- * @param cfg: config options.
  * @return a reply message if something was found. 
  * 	This reply may still need validation.
  * 	NULL if nothing found (or out of memory).
@@ -264,7 +257,7 @@ int val_neg_dlvlookup(struct val_neg_cache* neg, uint8_t* qname, size_t len,
 struct dns_msg* val_neg_getmsg(struct val_neg_cache* neg, 
 	struct query_info* qinfo, struct regional* region, 
 	struct rrset_cache* rrset_cache, struct sldns_buffer* buf, time_t now,
-	int addsoa, uint8_t* topname, struct config_file* cfg);
+	int addsoa, uint8_t* topname);
 
 
 /**** functions exposed for unit test ****/

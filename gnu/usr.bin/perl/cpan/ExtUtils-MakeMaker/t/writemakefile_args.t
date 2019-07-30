@@ -17,13 +17,11 @@ use MakeMaker::Test::Setup::BFD;
 
 use ExtUtils::MakeMaker;
 
-chdir 't';
-perl_lib; # sets $ENV{PERL5LIB} relative to t/
-
 use File::Temp qw[tempdir];
-my $tmpdir = tempdir( DIR => '../t', CLEANUP => 1 );
-use Cwd; my $cwd = getcwd; END { chdir $cwd } # so File::Temp can cleanup
+my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
 chdir $tmpdir;
+
+perl_lib();
 
 ok( setup_recurs(), 'setup' );
 END {

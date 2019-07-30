@@ -3,11 +3,7 @@
 use strict;
 use warnings;
 
-BEGIN {
-    chdir 't' if -d 't';
-    require q(./test.pl);
-    set_up_inc('../lib', 'lib');
-}
+BEGIN { chdir 't' if -d 't'; require q(./test.pl); @INC = qw "../lib lib" }
 
 use utf8;
 use open qw( :utf8 :std );
@@ -51,7 +47,7 @@ plan(tests => 12);
     SKIP: {    
         eval 'use Sub::Name';
         skip("Sub::Name is required for this test", 3) if $@;
-
+    
         my $m = sub { (shift)->next::method() };
         Sub::Name::subname('Baɾ::ƚ', $m);
         {

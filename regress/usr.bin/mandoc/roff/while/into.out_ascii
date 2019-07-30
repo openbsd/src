@@ -1,9 +1,0 @@
-WHILE-INTO(1)               General Commands Manual              WHILE-INTO(1)
-
-NNAAMMEE
-     wwhhiillee--iinnttoo - while request extending into a macro
-
-DDEESSCCRRIIPPTTIIOONN
-     initial text 10 after macro final text
-
-OpenBSD                         August 24, 2018                        OpenBSD

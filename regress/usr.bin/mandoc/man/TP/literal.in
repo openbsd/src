@@ -1,33 +1,27 @@
-.\" $OpenBSD: literal.in,v 1.4 2019/01/06 04:41:15 schwarze Exp $
-.TH TP-LITERAL 1 "January 6, 2019"
+.\" $OpenBSD: literal.in,v 1.3 2017/07/04 14:53:24 schwarze Exp $
+.TH TP-LITERAL 1 "January 4, 2011"
 .SH NAME
 TP-literal \- indented paragraphs in literal context
 .SH DESCRIPTION
-BEGINTEST
-before indentation
+regular
+text
 .TP 10n
 tag
-regular
 indented
 text
 .PP
 regular
-paragraph
+text
 .nf
 literal
 text
 .TP 10n
 tag
 indented
-literal
 text
 .PP
 literal
-paragraph
+text
 .fi
 regular
 text
-.br
-ENDTEST
-.br
-end of file

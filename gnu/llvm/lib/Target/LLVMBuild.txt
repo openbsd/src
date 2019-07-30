@@ -20,7 +20,6 @@
 [common]
 subdirectories =
  AMDGPU
- ARC
  ARM
  AArch64
  AVR

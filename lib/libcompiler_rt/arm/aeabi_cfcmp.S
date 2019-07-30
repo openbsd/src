@@ -30,7 +30,7 @@ DEFINE_COMPILERRT_FUNCTION(__aeabi_cfcmpeq)
         push {r0-r3, lr}
         bl __aeabi_cfcmpeq_check_nan
         cmp r0, #1
-#if defined(USE_THUMB_1)
+#if __ARM_ARCH_ISA_THUMB == 1
         beq 1f
         // NaN has been ruled out, so __aeabi_cfcmple can't trap
         mov r0, sp
@@ -46,12 +46,9 @@ DEFINE_COMPILERRT_FUNCTION(__aeabi_cfcmpeq)
         pop {r0-r3, lr}
 
         // NaN has been ruled out, so __aeabi_cfcmple can't trap
-        // Use "it ne" + unconditional branch to guarantee a supported relocation if
-        // __aeabi_cfcmple is in a different section for some builds.
-        IT(ne)
         bne __aeabi_cfcmple
 
-#if defined(USE_THUMB_2)
+#if defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__)
         mov ip, #APSR_C
         msr APSR_nzcvq, ip
 #else
@@ -81,7 +78,7 @@ DEFINE_COMPILERRT_FUNCTION(__aeabi_cfcmple)
 
         bl __aeabi_fcmplt
         cmp r0, #1
-#if defined(USE_THUMB_1)
+#if __ARM_ARCH_ISA_THUMB == 1
         bne 1f
         // Z = 0, C = 0
         movs r0, #1

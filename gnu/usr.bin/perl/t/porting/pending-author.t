@@ -27,15 +27,19 @@ use TestInit qw(T); # T is chdir to the top level
 use strict;
 use File::Spec;
 
-require './t/test.pl';
+require 't/test.pl';
 find_git_or_skip('all');
 
 my $devnull = File::Spec->devnull;
-my @lines = `git status --porcelain 2>$devnull`;
-skip_all("git status --porcelain doesn't seem to work here")
-    if $? != 0;
-skip_all("No pending changes")
-    if !grep !/^\?\?/, @lines;
+my $changes;
+foreach (`git status --porcelain 2>$devnull`) {
+    next if /^\?\?/;
+    ++$changes;
+    last;
+}
+
+skip_all("No pending changes (or git status --porcelain doesn't work here)")
+    unless $changes;
 
 sub get {
     my $key = shift;

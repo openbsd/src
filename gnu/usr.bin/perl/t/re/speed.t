@@ -16,15 +16,14 @@
 
 BEGIN {
     chdir 't' if -d 't';
+    @INC = ('../lib','.','../ext/re');
     require Config; import Config;
     require './test.pl';
-    set_up_inc('../lib','.','../ext/re');
+    skip_all('no re module') unless defined &DynaLoader::boot_DynaLoader;
+    skip_all_without_unicode_tables();
 }
 
-skip_all('no re module') unless defined &DynaLoader::boot_DynaLoader;
-skip_all_without_unicode_tables();
-
-plan tests => 59;  #** update watchdog timeouts proportionally when adding tests
+plan tests => 58;  #** update watchdog timeouts proportionally when adding tests
 
 use strict;
 use warnings;
@@ -120,7 +119,6 @@ sub run_tests {
         ok ($s !~ /.*?:::\s*ab/ms, 'PREGf_IMPLICIT/ms');
         ok ($s !~ /.*?:::\s*ab/msi,'PREGf_IMPLICIT/msi');
 
-
         for my $star ('*', '{0,}') {
             for my $greedy ('', '?') {
                 for my $flags ('', 'i', 'm', 'mi') {
@@ -131,7 +129,7 @@ TODO:
                         {
                             local $main::TODO = 'regdump gets mangled by the VMS pipe implementation' if $^O eq 'VMS';
                             fresh_perl_like(<<"PROG", qr/\b\Q$text\E\b/, {}, "/.${star}${greedy}X/${flags}${s} anchors implicitly");
-BEGIN { require './test.pl'; set_up_inc('../lib', '.', '../ext/re'); }
+BEGIN { \@INC = ('../lib', '.', '../ext/re'); }
 use re 'debug';
 qr/.${star}${greedy}:::\\s*ab/${flags}${s}
 PROG
@@ -141,7 +139,6 @@ PROG
             }
         }
     }
-
 
     {
         # [perl #127855] Slowdown in m//g on COW strings of certain lengths
@@ -156,9 +153,6 @@ PROG
         ok( $elapsed <= 2, "should not COW on long string with substr and m//g");
     }
 
-    # [perl #133185] Infinite loop
-    like("!\xdf", eval 'qr/\pp(?aai)\xdf/',
-         'Compiling qr/\pp(?aai)\xdf/ doesn\'t loop');
 
 } # End of sub run_tests
 

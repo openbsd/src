@@ -84,9 +84,7 @@ class XunitFormatter(ResultsFormatter):
         """
         # Get the content into unicode
         if isinstance(str_or_unicode, str):
-            # If we hit decoding errors due to data corruption, replace the
-            # invalid characters with U+FFFD REPLACEMENT CHARACTER.
-            unicode_content = str_or_unicode.decode('utf-8', 'replace')
+            unicode_content = str_or_unicode.decode('utf-8')
         else:
             unicode_content = str_or_unicode
         return self.invalid_xml_re.sub(

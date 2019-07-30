@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.227 2019/06/13 08:15:26 claudio Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.223 2018/01/15 13:48:31 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ nd6_option(union nd_opts *ndopts)
 	if (!ndopts)
 		panic("ndopts == NULL in nd6_option");
 	if (!ndopts->nd_opts_last)
-		panic("%s: uninitialized ndopts", __func__);
+		panic("uninitialized ndopts in nd6_option");
 	if (!ndopts->nd_opts_search)
 		return NULL;
 	if (ndopts->nd_opts_done)
@@ -230,7 +230,7 @@ nd6_options(union nd_opts *ndopts)
 	if (!ndopts)
 		panic("ndopts == NULL in nd6_options");
 	if (!ndopts->nd_opts_last)
-		panic("%s: uninitialized ndopts", __func__);
+		panic("uninitialized ndopts in nd6_options");
 	if (!ndopts->nd_opts_search)
 		return 0;
 
@@ -336,10 +336,8 @@ nd6_timer(void *arg)
 	secs = expire - time_uptime;
 	if (secs < 0)
 		secs = 0;
-	if (!TAILQ_EMPTY(&nd6_list)) {
-		nd6_timer_next = time_uptime + secs;
+	if (!TAILQ_EMPTY(&nd6_list))
 		timeout_add_sec(&nd6_timer_to, secs);
-	}
 
 	NET_UNLOCK();
 }
@@ -787,7 +785,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	struct ifaddr *ifa;
 
-	if (ISSET(rt->rt_flags, RTF_GATEWAY|RTF_MULTICAST|RTF_MPLS))
+	if (ISSET(rt->rt_flags, RTF_GATEWAY|RTF_MULTICAST))
 		return;
 
 	if (nd6_need_cache(ifp) == 0 && (rt->rt_flags & RTF_HOST) == 0) {
@@ -1016,20 +1014,20 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 	struct in6_ndireq *ndi = (struct in6_ndireq *)data;
 	struct in6_nbrinfo *nbi = (struct in6_nbrinfo *)data;
 	struct rtentry *rt;
+	int error = 0;
+
+	NET_ASSERT_LOCKED();
 
 	switch (cmd) {
 	case SIOCGIFINFO_IN6:
-		NET_RLOCK();
 		ndi->ndi = *ND_IFINFO(ifp);
-		NET_RUNLOCK();
-		return (0);
+		break;
 	case SIOCGNBRINFO_IN6:
 	{
 		struct llinfo_nd6 *ln;
 		struct in6_addr nb_addr = nbi->addr; /* make local for safety */
 		time_t expire;
 
-		NET_RLOCK();
 		/*
 		 * XXX: KAME specific hack for scoped addresses
 		 *      XXXX: for other scopes than link-local?
@@ -1045,9 +1043,9 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		rt = nd6_lookup(&nb_addr, 0, ifp, ifp->if_rdomain);
 		if (rt == NULL ||
 		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) == NULL) {
+			error = EINVAL;
 			rtfree(rt);
-			NET_RUNLOCK();
-			return (EINVAL);
+			break;
 		}
 		expire = ln->ln_rt->rt_expire;
 		if (expire != 0) {
@@ -1059,13 +1057,12 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		nbi->asked = ln->ln_asked;
 		nbi->isrouter = ln->ln_router;
 		nbi->expire = expire;
-
 		rtfree(rt);
-		NET_RUNLOCK();
-		return (0);
+
+		break;
 	}
 	}
-	return (0);
+	return (error);
 }
 
 /*

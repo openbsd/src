@@ -1,7 +1,6 @@
-/*	$OpenBSD: types.h,v 1.30 2019/05/11 16:30:23 patrick Exp $	*/
+/*	$OpenBSD: types.h,v 1.29 2017/11/27 18:39:35 patrick Exp $	*/
 
 /*
- * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -104,7 +103,6 @@ enum imsg_type {
 	IMSG_CTL_ACTIVE,
 	IMSG_CTL_PASSIVE,
 	IMSG_CTL_MOBIKE,
-	IMSG_CTL_FRAGMENTATION,
 	IMSG_COMPILE,
 	IMSG_UDP_SOCKET,
 	IMSG_PFKEY_SOCKET,

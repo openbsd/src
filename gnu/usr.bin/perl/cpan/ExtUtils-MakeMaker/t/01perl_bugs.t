@@ -7,7 +7,7 @@ use warnings;
 
 use lib 't/lib';
 
-use Test::More tests => 1;
+use Test::More;
 
 note "The 0.01 / Gconvert bug"; {
     my $number = 0.01;
@@ -21,3 +21,5 @@ or upgrade to a newer version of Perl.
 END
     };
 }
+
+done_testing;

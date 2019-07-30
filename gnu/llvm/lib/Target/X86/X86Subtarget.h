@@ -20,14 +20,11 @@
 #include "X86SelectionDAGInfo.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/CodeGen/GlobalISel/CallLowering.h"
-#include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
-#include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
-#include "llvm/CodeGen/GlobalISel/RegisterBankInfo.h"
-#include "llvm/CodeGen/TargetSubtargetInfo.h"
+#include "llvm/CodeGen/GlobalISel/GISelAccessor.h"
 #include "llvm/IR/CallingConv.h"
+#include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Target/TargetMachine.h"
-#include <climits>
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <memory>
 
 #define GET_SUBTARGETINFO_HEADER
@@ -51,24 +48,6 @@ enum Style {
 } // end namespace PICStyles
 
 class X86Subtarget final : public X86GenSubtargetInfo {
-public:
-  enum X86ProcFamilyEnum {
-    Others,
-    IntelAtom,
-    IntelSLM,
-    IntelGLM,
-    IntelGLP,
-    IntelTRM,
-    IntelHaswell,
-    IntelBroadwell,
-    IntelSkylake,
-    IntelKNL,
-    IntelSKX,
-    IntelCannonlake,
-    IntelIcelakeClient,
-    IntelIcelakeServer,
-  };
-
 protected:
   enum X86SSEEnum {
     NoSSE, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, AVX, AVX2, AVX512F
@@ -78,8 +57,12 @@ protected:
     NoThreeDNow, MMX, ThreeDNow, ThreeDNowA
   };
 
+  enum X86ProcFamilyEnum {
+    Others, IntelAtom, IntelSLM, IntelGLM
+  };
+
   /// X86 processor family: Intel Atom, and others
-  X86ProcFamilyEnum X86ProcFamily = Others;
+  X86ProcFamilyEnum X86ProcFamily;
 
   /// Which PIC style to use
   PICStyles::Style PICStyle;
@@ -87,352 +70,258 @@ protected:
   const TargetMachine &TM;
 
   /// SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, or none supported.
-  X86SSEEnum X86SSELevel = NoSSE;
+  X86SSEEnum X86SSELevel;
 
   /// MMX, 3DNow, 3DNow Athlon, or none supported.
-  X863DNowEnum X863DNowLevel = NoThreeDNow;
+  X863DNowEnum X863DNowLevel;
 
   /// True if the processor supports X87 instructions.
-  bool HasX87 = false;
-
-  /// True if this processor has NOPL instruction
-  /// (generally pentium pro+).
-  bool HasNOPL = false;
+  bool HasX87;
 
   /// True if this processor has conditional move instructions
   /// (generally pentium pro+).
-  bool HasCMov = false;
+  bool HasCMov;
 
   /// True if the processor supports X86-64 instructions.
-  bool HasX86_64 = false;
+  bool HasX86_64;
 
   /// True if the processor supports POPCNT.
-  bool HasPOPCNT = false;
+  bool HasPOPCNT;
 
   /// True if the processor supports SSE4A instructions.
-  bool HasSSE4A = false;
+  bool HasSSE4A;
 
   /// Target has AES instructions
-  bool HasAES = false;
-  bool HasVAES = false;
+  bool HasAES;
 
   /// Target has FXSAVE/FXRESTOR instructions
-  bool HasFXSR = false;
+  bool HasFXSR;
 
   /// Target has XSAVE instructions
-  bool HasXSAVE = false;
+  bool HasXSAVE;
 
   /// Target has XSAVEOPT instructions
-  bool HasXSAVEOPT = false;
+  bool HasXSAVEOPT;
 
   /// Target has XSAVEC instructions
-  bool HasXSAVEC = false;
+  bool HasXSAVEC;
 
   /// Target has XSAVES instructions
-  bool HasXSAVES = false;
+  bool HasXSAVES;
 
   /// Target has carry-less multiplication
-  bool HasPCLMUL = false;
-  bool HasVPCLMULQDQ = false;
-
-  /// Target has Galois Field Arithmetic instructions
-  bool HasGFNI = false;
+  bool HasPCLMUL;
 
   /// Target has 3-operand fused multiply-add
-  bool HasFMA = false;
+  bool HasFMA;
 
   /// Target has 4-operand fused multiply-add
-  bool HasFMA4 = false;
+  bool HasFMA4;
 
   /// Target has XOP instructions
-  bool HasXOP = false;
+  bool HasXOP;
 
   /// Target has TBM instructions.
-  bool HasTBM = false;
+  bool HasTBM;
 
   /// Target has LWP instructions
-  bool HasLWP = false;
+  bool HasLWP;
 
   /// True if the processor has the MOVBE instruction.
-  bool HasMOVBE = false;
+  bool HasMOVBE;
 
   /// True if the processor has the RDRAND instruction.
-  bool HasRDRAND = false;
+  bool HasRDRAND;
 
   /// Processor has 16-bit floating point conversion instructions.
-  bool HasF16C = false;
+  bool HasF16C;
 
   /// Processor has FS/GS base insturctions.
-  bool HasFSGSBase = false;
+  bool HasFSGSBase;
 
   /// Processor has LZCNT instruction.
-  bool HasLZCNT = false;
+  bool HasLZCNT;
 
   /// Processor has BMI1 instructions.
-  bool HasBMI = false;
+  bool HasBMI;
 
   /// Processor has BMI2 instructions.
-  bool HasBMI2 = false;
+  bool HasBMI2;
 
   /// Processor has VBMI instructions.
-  bool HasVBMI = false;
-
-  /// Processor has VBMI2 instructions.
-  bool HasVBMI2 = false;
+  bool HasVBMI;
 
   /// Processor has Integer Fused Multiply Add
-  bool HasIFMA = false;
+  bool HasIFMA;
 
   /// Processor has RTM instructions.
-  bool HasRTM = false;
+  bool HasRTM;
 
   /// Processor has ADX instructions.
-  bool HasADX = false;
+  bool HasADX;
 
   /// Processor has SHA instructions.
-  bool HasSHA = false;
+  bool HasSHA;
 
   /// Processor has PRFCHW instructions.
-  bool HasPRFCHW = false;
+  bool HasPRFCHW;
 
   /// Processor has RDSEED instructions.
-  bool HasRDSEED = false;
+  bool HasRDSEED;
 
   /// Processor has LAHF/SAHF instructions.
-  bool HasLAHFSAHF = false;
+  bool HasLAHFSAHF;
 
   /// Processor has MONITORX/MWAITX instructions.
-  bool HasMWAITX = false;
+  bool HasMWAITX;
 
   /// Processor has Cache Line Zero instruction
-  bool HasCLZERO = false;
-
-  /// Processor has Cache Line Demote instruction
-  bool HasCLDEMOTE = false;
-
-  /// Processor has MOVDIRI instruction (direct store integer).
-  bool HasMOVDIRI = false;
-
-  /// Processor has MOVDIR64B instruction (direct store 64 bytes).
-  bool HasMOVDIR64B = false;
-
-  /// Processor has ptwrite instruction.
-  bool HasPTWRITE = false;
+  bool HasCLZERO;
 
   /// Processor has Prefetch with intent to Write instruction
-  bool HasPREFETCHWT1 = false;
+  bool HasPFPREFETCHWT1;
+
+  /// True if BT (bit test) of memory instructions are slow.
+  bool IsBTMemSlow;
 
   /// True if SHLD instructions are slow.
-  bool IsSHLDSlow = false;
+  bool IsSHLDSlow;
 
   /// True if the PMULLD instruction is slow compared to PMULLW/PMULHW and
   //  PMULUDQ.
-  bool IsPMULLDSlow = false;
+  bool IsPMULLDSlow;
 
   /// True if unaligned memory accesses of 16-bytes are slow.
-  bool IsUAMem16Slow = false;
+  bool IsUAMem16Slow;
 
   /// True if unaligned memory accesses of 32-bytes are slow.
-  bool IsUAMem32Slow = false;
+  bool IsUAMem32Slow;
 
   /// True if SSE operations can have unaligned memory operands.
   /// This may require setting a configuration bit in the processor.
-  bool HasSSEUnalignedMem = false;
+  bool HasSSEUnalignedMem;
 
   /// True if this processor has the CMPXCHG16B instruction;
   /// this is true for most x86-64 chips, but not the first AMD chips.
-  bool HasCmpxchg16b = false;
+  bool HasCmpxchg16b;
 
   /// True if the LEA instruction should be used for adjusting
   /// the stack pointer. This is an optimization for Intel Atom processors.
-  bool UseLeaForSP = false;
-
-  /// True if POPCNT instruction has a false dependency on the destination register.
-  bool HasPOPCNTFalseDeps = false;
-
-  /// True if LZCNT/TZCNT instructions have a false dependency on the destination register.
-  bool HasLZCNTFalseDeps = false;
-
-  /// True if its preferable to combine to a single shuffle using a variable
-  /// mask over multiple fixed shuffles.
-  bool HasFastVariableShuffle = false;
+  bool UseLeaForSP;
 
   /// True if there is no performance penalty to writing only the lower parts
   /// of a YMM or ZMM register without clearing the upper part.
-  bool HasFastPartialYMMorZMMWrite = false;
-
-  /// True if there is no performance penalty for writing NOPs with up to
-  /// 11 bytes.
-  bool HasFast11ByteNOP = false;
-
-  /// True if there is no performance penalty for writing NOPs with up to
-  /// 15 bytes.
-  bool HasFast15ByteNOP = false;
-
-  /// True if gather is reasonably fast. This is true for Skylake client and
-  /// all AVX-512 CPUs.
-  bool HasFastGather = false;
+  bool HasFastPartialYMMorZMMWrite;
 
   /// True if hardware SQRTSS instruction is at least as fast (latency) as
   /// RSQRTSS followed by a Newton-Raphson iteration.
-  bool HasFastScalarFSQRT = false;
+  bool HasFastScalarFSQRT;
 
   /// True if hardware SQRTPS/VSQRTPS instructions are at least as fast
   /// (throughput) as RSQRTPS/VRSQRTPS followed by a Newton-Raphson iteration.
-  bool HasFastVectorFSQRT = false;
+  bool HasFastVectorFSQRT;
 
   /// True if 8-bit divisions are significantly faster than
   /// 32-bit divisions and should be used when possible.
-  bool HasSlowDivide32 = false;
+  bool HasSlowDivide32;
 
   /// True if 32-bit divides are significantly faster than
   /// 64-bit divisions and should be used when possible.
-  bool HasSlowDivide64 = false;
+  bool HasSlowDivide64;
 
   /// True if LZCNT instruction is fast.
-  bool HasFastLZCNT = false;
+  bool HasFastLZCNT;
 
   /// True if SHLD based rotate is fast.
-  bool HasFastSHLDRotate = false;
-
-  /// True if the processor supports macrofusion.
-  bool HasMacroFusion = false;
+  bool HasFastSHLDRotate;
 
   /// True if the processor has enhanced REP MOVSB/STOSB.
-  bool HasERMSB = false;
+  bool HasERMSB;
 
   /// True if the short functions should be padded to prevent
   /// a stall when returning too early.
-  bool PadShortFunctions = false;
+  bool PadShortFunctions;
 
-  /// True if two memory operand instructions should use a temporary register
-  /// instead.
-  bool SlowTwoMemOps = false;
+  /// True if the Calls with memory reference should be converted
+  /// to a register-based indirect call.
+  bool CallRegIndirect;
 
   /// True if the LEA instruction inputs have to be ready at address generation
   /// (AG) time.
-  bool LEAUsesAG = false;
+  bool LEAUsesAG;
 
   /// True if the LEA instruction with certain arguments is slow
-  bool SlowLEA = false;
+  bool SlowLEA;
 
   /// True if the LEA instruction has all three source operands: base, index,
   /// and offset or if the LEA instruction uses base and index registers where
   /// the base is EBP, RBP,or R13
-  bool Slow3OpsLEA = false;
+  bool Slow3OpsLEA;
 
   /// True if INC and DEC instructions are slow when writing to flags
-  bool SlowIncDec = false;
+  bool SlowIncDec;
 
   /// Processor has AVX-512 PreFetch Instructions
-  bool HasPFI = false;
+  bool HasPFI;
 
   /// Processor has AVX-512 Exponential and Reciprocal Instructions
-  bool HasERI = false;
+  bool HasERI;
 
   /// Processor has AVX-512 Conflict Detection Instructions
-  bool HasCDI = false;
+  bool HasCDI;
 
   /// Processor has AVX-512 population count Instructions
-  bool HasVPOPCNTDQ = false;
+  bool HasVPOPCNTDQ;
 
   /// Processor has AVX-512 Doubleword and Quadword instructions
-  bool HasDQI = false;
+  bool HasDQI;
 
   /// Processor has AVX-512 Byte and Word instructions
-  bool HasBWI = false;
+  bool HasBWI;
 
   /// Processor has AVX-512 Vector Length eXtenstions
-  bool HasVLX = false;
+  bool HasVLX;
 
   /// Processor has PKU extenstions
-  bool HasPKU = false;
-
-  /// Processor has AVX-512 Vector Neural Network Instructions
-  bool HasVNNI = false;
-
-  /// Processor has AVX-512 Bit Algorithms instructions
-  bool HasBITALG = false;
+  bool HasPKU;
 
   /// Processor supports MPX - Memory Protection Extensions
-  bool HasMPX = false;
-
-  /// Processor supports CET SHSTK - Control-Flow Enforcement Technology
-  /// using Shadow Stack
-  bool HasSHSTK = false;
-
-  /// Processor supports Invalidate Process-Context Identifier
-  bool HasINVPCID = false;
+  bool HasMPX;
 
   /// Processor has Software Guard Extensions
-  bool HasSGX = false;
+  bool HasSGX;
 
   /// Processor supports Flush Cache Line instruction
-  bool HasCLFLUSHOPT = false;
+  bool HasCLFLUSHOPT;
 
   /// Processor supports Cache Line Write Back instruction
-  bool HasCLWB = false;
-
-  /// Processor supports Write Back No Invalidate instruction
-  bool HasWBNOINVD = false;
-
-  /// Processor support RDPID instruction
-  bool HasRDPID = false;
-
-  /// Processor supports WaitPKG instructions
-  bool HasWAITPKG = false;
-
-  /// Processor supports PCONFIG instruction
-  bool HasPCONFIG = false;
-
-  /// Use a retpoline thunk rather than indirect calls to block speculative
-  /// execution.
-  bool UseRetpoline = false;
-
-  /// When using a retpoline thunk, call an externally provided thunk rather
-  /// than emitting one inside the compiler.
-  bool UseRetpolineExternalThunk = false;
+  bool HasCLWB;
 
   /// Use software floating point for code generation.
-  bool UseSoftFloat = false;
+  bool UseSoftFloat;
 
   /// The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
-  unsigned stackAlignment = 4;
-
-  /// Whether function prologues should save register arguments on the stack.
-  bool SaveArgs = false;
+  unsigned stackAlignment;
 
   /// Max. memset / memcpy size that is turned into rep/movs, rep/stos ops.
   ///
-  // FIXME: this is a known good value for Yonah. How about others?
-  unsigned MaxInlineSizeThreshold = 128;
-
-  /// Indicates target prefers 256 bit instructions.
-  bool Prefer256Bit = false;
+  unsigned MaxInlineSizeThreshold;
 
   /// What processor and OS we're targeting.
   Triple TargetTriple;
 
-  /// GlobalISel related APIs.
-  std::unique_ptr<CallLowering> CallLoweringInfo;
-  std::unique_ptr<LegalizerInfo> Legalizer;
-  std::unique_ptr<RegisterBankInfo> RegBankInfo;
-  std::unique_ptr<InstructionSelector> InstSelector;
+  /// Instruction itineraries for scheduling
+  InstrItineraryData InstrItins;
+
+  /// Gather the accessor points to GlobalISel-related APIs.
+  /// This is used to avoid ifndefs spreading around while GISel is
+  /// an optional library.
+  std::unique_ptr<GISelAccessor> GISel;
 
 private:
   /// Override the stack alignment.
   unsigned StackAlignOverride;
-
-  /// Preferred vector width from function attribute.
-  unsigned PreferVectorWidthOverride;
-
-  /// Resolved preferred vector width from function attribute and subtarget
-  /// features.
-  unsigned PreferVectorWidth = UINT32_MAX;
-
-  /// Required vector width from function attribute.
-  unsigned RequiredVectorWidth;
 
   /// True if compiling for 64-bit, false for 16-bit or 32-bit.
   bool In64BitMode;
@@ -442,10 +331,6 @@ private:
 
   /// True if compiling for 16-bit, false for 32-bit or 64-bit.
   bool In16BitMode;
-
-  /// Contains the Overhead of gather\scatter instructions
-  int GatherOverhead = 1024;
-  int ScatterOverhead = 1024;
 
   X86SelectionDAGInfo TSInfo;
   // Ordering here is important. X86InstrInfo initializes X86RegisterInfo which
@@ -459,9 +344,10 @@ public:
   /// of the specified triple.
   ///
   X86Subtarget(const Triple &TT, StringRef CPU, StringRef FS,
-               const X86TargetMachine &TM, unsigned StackAlignOverride,
-               unsigned PreferVectorWidthOverride,
-               unsigned RequiredVectorWidth);
+               const X86TargetMachine &TM, unsigned StackAlignOverride);
+
+  /// This object will take onwership of \p GISelAccessor.
+  void setGISelAccessor(GISelAccessor &GISel) { this->GISel.reset(&GISel); }
 
   const X86TargetLowering *getTargetLowering() const override {
     return &TLInfo;
@@ -480,8 +366,6 @@ public:
   const X86RegisterInfo *getRegisterInfo() const override {
     return &getInstrInfo()->getRegisterInfo();
   }
-
-  bool getSaveArgs() const { return SaveArgs; }
 
   /// Returns the minimum alignment known to hold of the
   /// stack frame on entry to the function and which must be maintained by every
@@ -506,6 +390,7 @@ private:
   /// Initialize the full set of dependencies so we can use an initializer
   /// list for X86Subtarget.
   X86Subtarget &initializeSubtargetDependencies(StringRef CPU, StringRef FS);
+  void initializeEnvironment();
   void initSubtargetFeatures(StringRef CPU, StringRef FS);
 
 public:
@@ -538,7 +423,6 @@ public:
   void setPICStyle(PICStyles::Style Style)  { PICStyle = Style; }
 
   bool hasX87() const { return HasX87; }
-  bool hasNOPL() const { return HasNOPL; }
   bool hasCMov() const { return HasCMov; }
   bool hasSSE1() const { return X86SSELevel >= SSE1; }
   bool hasSSE2() const { return X86SSELevel >= SSE2; }
@@ -549,6 +433,7 @@ public:
   bool hasAVX() const { return X86SSELevel >= AVX; }
   bool hasAVX2() const { return X86SSELevel >= AVX2; }
   bool hasAVX512() const { return X86SSELevel >= AVX512F; }
+  bool hasFp256() const { return hasAVX(); }
   bool hasInt256() const { return hasAVX2(); }
   bool hasSSE4A() const { return HasSSE4A; }
   bool hasMMX() const { return X863DNowLevel >= MMX; }
@@ -556,18 +441,15 @@ public:
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
   bool hasPOPCNT() const { return HasPOPCNT; }
   bool hasAES() const { return HasAES; }
-  bool hasVAES() const { return HasVAES; }
   bool hasFXSR() const { return HasFXSR; }
   bool hasXSAVE() const { return HasXSAVE; }
   bool hasXSAVEOPT() const { return HasXSAVEOPT; }
   bool hasXSAVEC() const { return HasXSAVEC; }
   bool hasXSAVES() const { return HasXSAVES; }
   bool hasPCLMUL() const { return HasPCLMUL; }
-  bool hasVPCLMULQDQ() const { return HasVPCLMULQDQ; }
-  bool hasGFNI() const { return HasGFNI; }
   // Prefer FMA4 to FMA - its better for commutation/memory folding and
   // has equal or better performance on all supported targets.
-  bool hasFMA() const { return HasFMA; }
+  bool hasFMA() const { return (HasFMA || hasAVX512()) && !HasFMA4; }
   bool hasFMA4() const { return HasFMA4; }
   bool hasAnyFMA() const { return hasFMA() || hasFMA4(); }
   bool hasXOP() const { return HasXOP; }
@@ -581,55 +463,35 @@ public:
   bool hasBMI() const { return HasBMI; }
   bool hasBMI2() const { return HasBMI2; }
   bool hasVBMI() const { return HasVBMI; }
-  bool hasVBMI2() const { return HasVBMI2; }
   bool hasIFMA() const { return HasIFMA; }
   bool hasRTM() const { return HasRTM; }
   bool hasADX() const { return HasADX; }
   bool hasSHA() const { return HasSHA; }
-  bool hasPRFCHW() const { return HasPRFCHW || HasPREFETCHWT1; }
-  bool hasPREFETCHWT1() const { return HasPREFETCHWT1; }
-  bool hasSSEPrefetch() const {
-    // We implicitly enable these when we have a write prefix supporting cache
-    // level OR if we have prfchw, but don't already have a read prefetch from
-    // 3dnow.
-    return hasSSE1() || (hasPRFCHW() && !has3DNow()) || hasPREFETCHWT1();
-  }
+  bool hasPRFCHW() const { return HasPRFCHW; }
   bool hasRDSEED() const { return HasRDSEED; }
   bool hasLAHFSAHF() const { return HasLAHFSAHF; }
   bool hasMWAITX() const { return HasMWAITX; }
   bool hasCLZERO() const { return HasCLZERO; }
-  bool hasCLDEMOTE() const { return HasCLDEMOTE; }
-  bool hasMOVDIRI() const { return HasMOVDIRI; }
-  bool hasMOVDIR64B() const { return HasMOVDIR64B; }
-  bool hasPTWRITE() const { return HasPTWRITE; }
+  bool isBTMemSlow() const { return IsBTMemSlow; }
   bool isSHLDSlow() const { return IsSHLDSlow; }
   bool isPMULLDSlow() const { return IsPMULLDSlow; }
   bool isUnalignedMem16Slow() const { return IsUAMem16Slow; }
   bool isUnalignedMem32Slow() const { return IsUAMem32Slow; }
-  int getGatherOverhead() const { return GatherOverhead; }
-  int getScatterOverhead() const { return ScatterOverhead; }
   bool hasSSEUnalignedMem() const { return HasSSEUnalignedMem; }
   bool hasCmpxchg16b() const { return HasCmpxchg16b; }
   bool useLeaForSP() const { return UseLeaForSP; }
-  bool hasPOPCNTFalseDeps() const { return HasPOPCNTFalseDeps; }
-  bool hasLZCNTFalseDeps() const { return HasLZCNTFalseDeps; }
-  bool hasFastVariableShuffle() const {
-    return HasFastVariableShuffle;
-  }
   bool hasFastPartialYMMorZMMWrite() const {
     return HasFastPartialYMMorZMMWrite;
   }
-  bool hasFastGather() const { return HasFastGather; }
   bool hasFastScalarFSQRT() const { return HasFastScalarFSQRT; }
   bool hasFastVectorFSQRT() const { return HasFastVectorFSQRT; }
   bool hasFastLZCNT() const { return HasFastLZCNT; }
   bool hasFastSHLDRotate() const { return HasFastSHLDRotate; }
-  bool hasMacroFusion() const { return HasMacroFusion; }
   bool hasERMSB() const { return HasERMSB; }
   bool hasSlowDivide32() const { return HasSlowDivide32; }
   bool hasSlowDivide64() const { return HasSlowDivide64; }
   bool padShortFunctions() const { return PadShortFunctions; }
-  bool slowTwoMemOps() const { return SlowTwoMemOps; }
+  bool callRegIndirect() const { return CallRegIndirect; }
   bool LEAusesAG() const { return LEAUsesAG; }
   bool slowLEA() const { return SlowLEA; }
   bool slow3OpsLEA() const { return Slow3OpsLEA; }
@@ -642,57 +504,13 @@ public:
   bool hasBWI() const { return HasBWI; }
   bool hasVLX() const { return HasVLX; }
   bool hasPKU() const { return HasPKU; }
-  bool hasVNNI() const { return HasVNNI; }
-  bool hasBITALG() const { return HasBITALG; }
   bool hasMPX() const { return HasMPX; }
-  bool hasSHSTK() const { return HasSHSTK; }
   bool hasCLFLUSHOPT() const { return HasCLFLUSHOPT; }
-  bool hasCLWB() const { return HasCLWB; }
-  bool hasWBNOINVD() const { return HasWBNOINVD; }
-  bool hasRDPID() const { return HasRDPID; }
-  bool hasWAITPKG() const { return HasWAITPKG; }
-  bool hasPCONFIG() const { return HasPCONFIG; }
-  bool hasSGX() const { return HasSGX; }
-  bool hasINVPCID() const { return HasINVPCID; }
-  bool useRetpoline() const { return UseRetpoline; }
-  bool useRetpolineExternalThunk() const { return UseRetpolineExternalThunk; }
-
-  unsigned getPreferVectorWidth() const { return PreferVectorWidth; }
-  unsigned getRequiredVectorWidth() const { return RequiredVectorWidth; }
-
-  // Helper functions to determine when we should allow widening to 512-bit
-  // during codegen.
-  // TODO: Currently we're always allowing widening on CPUs without VLX,
-  // because for many cases we don't have a better option.
-  bool canExtendTo512DQ() const {
-    return hasAVX512() && (!hasVLX() || getPreferVectorWidth() >= 512);
-  }
-  bool canExtendTo512BW() const  {
-    return hasBWI() && canExtendTo512DQ();
-  }
-
-  // If there are no 512-bit vectors and we prefer not to use 512-bit registers,
-  // disable them in the legalizer.
-  bool useAVX512Regs() const {
-    return hasAVX512() && (canExtendTo512DQ() || RequiredVectorWidth > 256);
-  }
-
-  bool useBWIRegs() const {
-    return hasBWI() && useAVX512Regs();
-  }
 
   bool isXRaySupported() const override { return is64Bit(); }
 
-  X86ProcFamilyEnum getProcFamily() const { return X86ProcFamily; }
-
-  /// TODO: to be removed later and replaced with suitable properties
   bool isAtom() const { return X86ProcFamily == IntelAtom; }
   bool isSLM() const { return X86ProcFamily == IntelSLM; }
-  bool isGLM() const {
-    return X86ProcFamily == IntelGLM ||
-           X86ProcFamily == IntelGLP ||
-           X86ProcFamily == IntelTRM;
-  }
   bool useSoftFloat() const { return UseSoftFloat; }
 
   /// Use mfence if we have SSE2 or we're on x86-64 (even if we asked for
@@ -704,7 +522,6 @@ public:
 
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
   bool isTargetFreeBSD() const { return TargetTriple.isOSFreeBSD(); }
-  bool isTargetOpenBSD() const { return TargetTriple.isOSOpenBSD(); }
   bool isTargetDragonFly() const { return TargetTriple.isOSDragonFly(); }
   bool isTargetSolaris() const { return TargetTriple.isOSSolaris(); }
   bool isTargetPS4() const { return TargetTriple.isPS4CPU(); }
@@ -751,9 +568,13 @@ public:
 
   bool isOSWindows() const { return TargetTriple.isOSWindows(); }
 
-  bool isTargetWin64() const { return In64BitMode && isOSWindows(); }
+  bool isTargetWin64() const {
+    return In64BitMode && TargetTriple.isOSWindows();
+  }
 
-  bool isTargetWin32() const { return !In64BitMode && isOSWindows(); }
+  bool isTargetWin32() const {
+    return !In64BitMode && (isTargetCygMing() || isTargetKnownWindowsMSVC());
+  }
 
   bool isPICStyleGOT() const { return PICStyle == PICStyles::GOT; }
   bool isPICStyleRIPRel() const { return PICStyle == PICStyles::RIPRel; }
@@ -769,7 +590,6 @@ public:
     // On Win64, all these conventions just use the default convention.
     case CallingConv::C:
     case CallingConv::Fast:
-    case CallingConv::Swift:
     case CallingConv::X86_FastCall:
     case CallingConv::X86_StdCall:
     case CallingConv::X86_ThisCall:
@@ -808,9 +628,16 @@ public:
   /// Return true if the subtarget allows calls to immediate address.
   bool isLegalToCallImmediateAddr() const;
 
-  /// If we are using retpolines, we need to expand indirectbr to avoid it
-  /// lowering to an actual indirect jump.
-  bool enableIndirectBrExpand() const override { return useRetpoline(); }
+  /// This function returns the name of a function which has an interface
+  /// like the non-standard bzero function, if such a function exists on
+  /// the current subtarget and it is considered prefereable over
+  /// memset with zero passed as the second argument. Otherwise it
+  /// returns null.
+  const char *getBZeroEntry() const;
+
+  /// This function returns true if the target has sincos() routine in its
+  /// compiler runtime or math libraries.
+  bool hasSinCos() const;
 
   /// Enable the MachineScheduler pass for all X86 subtargets.
   bool enableMachineScheduler() const override { return true; }
@@ -820,11 +647,14 @@ public:
 
   bool enableEarlyIfConversion() const override;
 
+  /// Return the instruction itineraries based on the subtarget selection.
+  const InstrItineraryData *getInstrItineraryData() const override {
+    return &InstrItins;
+  }
+
   AntiDepBreakMode getAntiDepBreakMode() const override {
     return TargetSubtargetInfo::ANTIDEP_CRITICAL;
   }
-
-  bool enableAdvancedRASplitCost() const override { return true; }
 };
 
 } // end namespace llvm

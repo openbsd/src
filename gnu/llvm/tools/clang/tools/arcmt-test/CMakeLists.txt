@@ -7,7 +7,6 @@ add_clang_executable(arcmt-test
   )
 
 target_link_libraries(arcmt-test
-  PRIVATE
   clangARCMigrate
   clangBasic
   clangFrontend

@@ -1,4 +1,0 @@
-Name: Whitespace test
-Description: pkg-config(1) regress file
-Version: 1.0
-Requires: whitespace-prop-2  >=  0 whitespace-prop-2 >=  0

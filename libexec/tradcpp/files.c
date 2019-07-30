@@ -27,6 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,7 +35,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "bool.h"
 #include "array.h"
 #include "mode.h"
 #include "place.h"
@@ -172,21 +172,14 @@ static
 void
 file_read(const struct placefile *pf, int fd, const char *name, bool toplevel)
 {
-	struct lineplace places;
-	struct place ptmp;
+	struct place linestartplace, nextlinestartplace, ptmp;
 	size_t bufend, bufmax, linestart, lineend, nextlinestart, tmp;
 	ssize_t result;
 	bool ateof = false;
 	char *buf;
 
-	place_setfilestart(&places.current, pf);
-	places.nextline = places.current;
-
-	if (name) {
-		debuglog(&places.current, "Reading file %s", name);
-	} else {
-		debuglog(&places.current, "Reading standard input");
-	}
+	place_setfilestart(&linestartplace, pf);
+	nextlinestartplace = linestartplace;
 
 	bufmax = 128;
 	bufend = 0;
@@ -230,15 +223,9 @@ file_read(const struct placefile *pf, int fd, const char *name, bool toplevel)
 			} else if (result == 0) {
 				/* eof in middle of line */
 				ateof = true;
-				ptmp = places.current;
+				ptmp = linestartplace;
 				ptmp.column += bufend - linestart;
-				if (buf[bufend - 1] == '\n') {
-					complain(&ptmp, "Unclosed comment");
-					complain_fail();
-				} else {
-					complain(&ptmp,
-						 "No newline at end of file");
-				}
+				complain(&ptmp, "No newline at end of file");
 				if (mode.werror) {
 					complain_fail();
 				}
@@ -257,7 +244,7 @@ file_read(const struct placefile *pf, int fd, const char *name, bool toplevel)
 		assert(buf[lineend] == '\n');
 		buf[lineend] = '\0';
 		nextlinestart = lineend+1;
-		places.nextline.line++;
+		nextlinestartplace.line++;
 
 		/* check for CR/NL */
 		if (lineend > 0 && buf[lineend-1] == '\r') {
@@ -284,18 +271,21 @@ file_read(const struct placefile *pf, int fd, const char *name, bool toplevel)
 		assert(buf[lineend] == '\0');
 
 		/* count how many commented-out newlines we swallowed */
-		places.nextline.line += countnls(buf, linestart, lineend);
+		nextlinestartplace.line += countnls(buf, linestart, lineend);
 
-		/* process the line (even if it's empty) */
-		directive_gotline(&places, buf+linestart, lineend-linestart);
+		/* if the line isn't empty, process it */
+		if (lineend > linestart) {
+			directive_gotline(&linestartplace,
+					  buf+linestart, lineend-linestart);
+		}
 
 		linestart = nextlinestart;
 		lineend = findeol(buf, linestart, bufend);
-		places.current = places.nextline;
+		linestartplace = nextlinestartplace;
 	}
 
 	if (toplevel) {
-		directive_goteof(&places.current);
+		directive_goteof(&linestartplace);
 	}
 	dofree(buf, bufmax);
 }
@@ -406,7 +396,7 @@ file_readabsolute(struct place *place, const char *name)
 
 	assert(place != NULL);
 
-	if (name == NULL) {
+	if ((name == NULL) || !strcmp(name, "-")) {
 		fd = STDIN_FILENO;
 		pf = place_addfile(place, "<standard-input>", false);
 	} else {

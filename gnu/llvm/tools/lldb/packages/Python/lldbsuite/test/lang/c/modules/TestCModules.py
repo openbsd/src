@@ -28,7 +28,7 @@ class CModulesTestCase(TestBase):
     @skipIf(macos_version=["<", "10.12"])
     def test_expr(self):
         self.build()
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break inside the foo function which takes a bar_ptr argument.

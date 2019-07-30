@@ -22,7 +22,8 @@ class SBFrameFindValueTestCase(TestBase):
         self.build()
         self.setTearDownCleanup()
 
-        exe = self.getBuildArtifact("a.out")
+        exe_name = "a.out"
+        exe = os.path.join(os.getcwd(), exe_name)
 
         # Create the target
         target = self.dbg.CreateTarget(exe)

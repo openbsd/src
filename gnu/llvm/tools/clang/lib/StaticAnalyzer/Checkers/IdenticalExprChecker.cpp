@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// This defines IdenticalExprChecker, a check that warns about
+/// \brief This defines IdenticalExprChecker, a check that warns about
 /// unintended use of identical expressions.
 ///
 /// It checks for use of identical expressions with comparison operators and
@@ -255,10 +255,7 @@ void FindIdenticalExprVisitor::checkComparisonOp(const BinaryOperator *B) {
     PathDiagnosticLocation ELoc =
         PathDiagnosticLocation::createOperatorLoc(B, BR.getSourceManager());
     StringRef Message;
-    if (Op == BO_Cmp)
-      Message = "comparison of identical expressions always evaluates to "
-                "'equal'";
-    else if (((Op == BO_EQ) || (Op == BO_LE) || (Op == BO_GE)))
+    if (((Op == BO_EQ) || (Op == BO_LE) || (Op == BO_GE)))
       Message = "comparison of identical expressions always evaluates to true";
     else
       Message = "comparison of identical expressions always evaluates to false";
@@ -296,7 +293,7 @@ bool FindIdenticalExprVisitor::VisitConditionalOperator(
   return true;
 }
 
-/// Determines whether two statement trees are identical regarding
+/// \brief Determines whether two statement trees are identical regarding
 /// operators and symbols.
 ///
 /// Exceptions: expressions containing macros or functions with possible side

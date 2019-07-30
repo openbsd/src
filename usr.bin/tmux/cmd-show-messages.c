@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-messages.c,v 1.28 2018/08/23 15:45:05 nicm Exp $ */
+/* $OpenBSD: cmd-show-messages.c,v 1.27 2017/04/22 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -44,6 +44,7 @@ const struct cmd_entry cmd_show_messages_entry = {
 };
 
 static int	cmd_show_messages_terminals(struct cmdq_item *, int);
+static int	cmd_show_messages_jobs(struct cmdq_item *, int);
 
 static int
 cmd_show_messages_terminals(struct cmdq_item *item, int blank)
@@ -66,6 +67,25 @@ cmd_show_messages_terminals(struct cmdq_item *item, int blank)
 	return (n != 0);
 }
 
+static int
+cmd_show_messages_jobs(struct cmdq_item *item, int blank)
+{
+	struct job	*job;
+	u_int		 n;
+
+	n = 0;
+	LIST_FOREACH(job, &all_jobs, entry) {
+		if (blank) {
+			cmdq_print(item, "%s", "");
+			blank = 0;
+		}
+		cmdq_print(item, "Job %u: %s [fd=%d, pid=%ld, status=%d]",
+		    n, job->cmd, job->fd, (long)job->pid, job->status);
+		n++;
+	}
+	return (n != 0);
+}
+
 static enum cmd_retval
 cmd_show_messages_exec(struct cmd *self, struct cmdq_item *item)
 {
@@ -84,7 +104,7 @@ cmd_show_messages_exec(struct cmd *self, struct cmdq_item *item)
 		done = 1;
 	}
 	if (args_has(args, 'J')) {
-		job_print_summary(item, blank);
+		cmd_show_messages_jobs(item, blank);
 		done = 1;
 	}
 	if (done)

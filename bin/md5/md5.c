@@ -1,8 +1,8 @@
-/*	$OpenBSD: md5.c,v 1.95 2019/05/18 16:53:39 otto Exp $	*/
+/*	$OpenBSD: md5.c,v 1.92 2017/09/11 16:35:38 millert Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
- *	Todd C. Miller <millert@openbsd.org>
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -421,7 +421,7 @@ digest_end(const struct hash_function *hf, void *ctx, char *buf, size_t bsize,
 		hf->final(digest, ctx);
 		if (b64_ntop(digest, hf->digestlen, buf, bsize) == -1)
 			errx(1, "error encoding base64");
-		free(digest);
+		freezero(digest, hf->digestlen);
 	} else {
 		hf->end(ctx, buf);
 	}
@@ -549,11 +549,11 @@ digest_filelist(const char *file, struct hash_function *defhash, int selcount,
 	int found, base64, error, cmp, i;
 	size_t algorithm_max, algorithm_min;
 	const char *algorithm;
-	char *filename, *checksum, *line, *p, *tmpline;
+	char *filename, *checksum, *buf, *p;
 	char digest[MAX_DIGEST_LEN + 1];
-	ssize_t linelen;
+	char *lbuf = NULL;
 	FILE *listfp, *fp;
-	size_t len, linesize, nread;
+	size_t len, nread;
 	int *sel_found = NULL;
 	u_char data[32 * 1024];
 	union ANY_CTX context;
@@ -580,15 +580,20 @@ digest_filelist(const char *file, struct hash_function *defhash, int selcount,
 	}
 
 	error = found = 0;
-	line = NULL;
-	linesize = 0;
-	while ((linelen = getline(&line, &linesize, listfp)) != -1) {
-		tmpline = line;
+	while ((buf = fgetln(listfp, &len))) {
 		base64 = 0;
-		if (line[linelen - 1] == '\n')
-			line[linelen - 1] = '\0';
-		while (isspace((unsigned char)*tmpline))
-			tmpline++;
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = '\0';
+		else {
+			if ((lbuf = malloc(len + 1)) == NULL)
+				err(1, NULL);
+
+			(void)memcpy(lbuf, buf, len);
+			lbuf[len] = '\0';
+			buf = lbuf;
+		}
+		while (isspace((unsigned char)*buf))
+			buf++;
 
 		/*
 		 * Crack the line into an algorithm, filename, and checksum.
@@ -598,11 +603,11 @@ digest_filelist(const char *file, struct hash_function *defhash, int selcount,
 		 * Fallback on GNU form:
 		 *  CHECKSUM  FILENAME
 		 */
-		p = strchr(tmpline, ' ');
+		p = strchr(buf, ' ');
 		if (p != NULL && *(p + 1) == '(') {
 			/* BSD form */
 			*p = '\0';
-			algorithm = tmpline;
+			algorithm = buf;
 			len = strlen(algorithm);
 			if (len > algorithm_max || len < algorithm_min)
 				continue;
@@ -653,7 +658,7 @@ digest_filelist(const char *file, struct hash_function *defhash, int selcount,
 			if ((hf = defhash) == NULL)
 				continue;
 			algorithm = hf->name;
-			checksum = tmpline;
+			checksum = buf;
 			if ((p = strchr(checksum, ' ')) == NULL)
 				continue;
 			if (hf->style == STYLE_CKSUM) {
@@ -720,15 +725,11 @@ digest_filelist(const char *file, struct hash_function *defhash, int selcount,
 			error = 1;
 		}
 	}
-	free(line);
-	if (ferror(listfp)) {
-		warn("%s: getline", file);
-		error = 1;
-	}
 	if (listfp != stdin)
 		fclose(listfp);
 	if (!found)
 		warnx("%s: no properly formatted checksum lines found", file);
+	free(lbuf);
 	if (sel_found != NULL) {
 		/*
 		 * Mark found files by setting them to NULL so that we can

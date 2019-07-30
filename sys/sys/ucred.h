@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucred.h,v 1.13 2018/06/21 13:58:21 visa Exp $	*/
+/*	$OpenBSD: ucred.h,v 1.12 2018/02/19 08:59:53 mpi Exp $	*/
 /*	$NetBSD: ucred.h,v 1.12 1995/06/01 22:44:50 jtc Exp $	*/
 
 /*
@@ -68,6 +68,7 @@ struct xucred {
 };
 
 #ifdef _KERNEL
+#define	crhold(cr)	(cr)->cr_ref++
 
 int		crfromxucred(struct ucred *, const struct xucred *);
 void		crset(struct ucred *, const struct ucred *);
@@ -75,7 +76,6 @@ struct ucred	*crcopy(struct ucred *cr);
 struct ucred	*crdup(struct ucred *cr);
 void		crfree(struct ucred *cr);
 struct ucred	*crget(void);
-struct ucred	*crhold(struct ucred *);
 int		suser(struct proc *p);
 int		suser_ucred(struct ucred *cred);
 

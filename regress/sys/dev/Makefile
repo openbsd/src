@@ -1,7 +1,5 @@
-#	$OpenBSD: Makefile,v 1.7 2019/03/18 22:12:40 claudio Exp $
+#	$OpenBSD: Makefile,v 1.4 2016/09/06 04:35:03 ratchov Exp $
 
-SUBDIR+=	fdesc
-SUBDIR+=	kcov
-#SUBDIR+=	wscons
+SUBDIR+= fdesc
 
 .include <bsd.subdir.mk>

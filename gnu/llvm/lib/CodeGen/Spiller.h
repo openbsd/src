@@ -1,4 +1,4 @@
-//===- llvm/CodeGen/Spiller.h - Spiller -------------------------*- C++ -*-===//
+//===-- llvm/CodeGen/Spiller.h - Spiller -*- C++ -*------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,10 +12,11 @@
 
 namespace llvm {
 
-class LiveRangeEdit;
-class MachineFunction;
-class MachineFunctionPass;
-class VirtRegMap;
+  class LiveRangeEdit;
+  class MachineFunction;
+  class MachineFunctionPass;
+  class VirtRegMap;
+  class LiveIntervals;
 
   /// Spiller interface.
   ///
@@ -23,14 +24,12 @@ class VirtRegMap;
   /// demand.
   class Spiller {
     virtual void anchor();
-
   public:
     virtual ~Spiller() = 0;
 
     /// spill - Spill the LRE.getParent() live interval.
     virtual void spill(LiveRangeEdit &LRE) = 0;
-
-    virtual void postOptimization() {}
+    virtual void postOptimization(){};
   };
 
   /// Create and return a spiller that will insert spill code directly instead
@@ -38,7 +37,6 @@ class VirtRegMap;
   Spiller *createInlineSpiller(MachineFunctionPass &pass,
                                MachineFunction &mf,
                                VirtRegMap &vrm);
+}
 
-} // end namespace llvm
-
-#endif // LLVM_LIB_CODEGEN_SPILLER_H
+#endif

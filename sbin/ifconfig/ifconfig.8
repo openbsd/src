@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.337 2019/05/31 16:13:55 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.305 2018/03/16 19:45:13 benno Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: May 31 2019 $
+.Dd $Mdocdate: March 16 2018 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -122,7 +122,7 @@ a host name present in the host name database,
 .Xr hosts 5 ;
 .Dq dot
 notation (IPv4);
-colon-separated (IPv6);
+colon separated (IPv6);
 or CIDR notation.
 .It Ar dest_address
 Specify the address of the correspondent on the other end
@@ -160,17 +160,13 @@ At least the following devices can be created on demand:
 .Pp
 .Xr bridge 4 ,
 .Xr carp 4 ,
-.Xr egre 4 ,
 .Xr enc 4 ,
-.Xr eoip 4 ,
 .Xr etherip 4 ,
 .Xr gif 4 ,
 .Xr gre 4 ,
 .Xr lo 4 ,
-.Xr mgre 4 ,
 .Xr mpe 4 ,
 .Xr mpw 4 ,
-.Xr nvgre 4 ,
 .Xr pair 4 ,
 .Xr pflog 4 ,
 .Xr pflow 4 ,
@@ -412,7 +408,9 @@ networks into subnetworks.
 The mask includes the network part of the local address
 and the subnet part, which is taken from the host field of the address.
 The mask can be specified as a single hexadecimal number
-with a leading 0x, or with a dot-notation Internet address.
+with a leading 0x, with a dot-notation Internet address,
+or with a pseudo-network name listed in the network table
+.Xr networks 5 .
 The mask contains 1's for the bit positions in the 32-bit address
 which are to be used for the network and subnet parts,
 and 0's for the host part.
@@ -471,12 +469,6 @@ and will never send any requests.
 .It Cm -staticarp
 If ARP is enabled, the host will perform normally,
 sending out requests and listening for replies.
-.It Cm transceiver
-Query and display information and diagnostics from GBIC and SFP
-.\", or QSFP
-modules installed in an interface.
-It is only supported by drivers implementing the necessary functionality
-on hardware which supports it.
 .It Cm up
 Mark an interface
 .Dq up .
@@ -848,7 +840,7 @@ and
 Create a load balancing group consisting of up to 32 nodes.
 Each node is specified as a
 .Ar vhid:advskew
-tuple in a comma-separated list.
+tuple in a comma separated list.
 .It Cm carpdev Ar iface
 Attach to parent interface
 .Ar iface .
@@ -905,8 +897,6 @@ will begin advertising as master.
 .Ar wireless-interface
 .Op Oo Fl Oc Ns Cm bssid Ar bssid
 .Op Oo Fl Oc Ns Cm chan Op Ar n
-.Op Oo Fl Oc Ns Cm join Ar id
-.Op Oo Fl Oc Ns Cm joinlist
 .Op Oo Fl Oc Ns Cm nwflag Ar flag
 .Op Oo Fl Oc Ns Cm nwid Ar id
 .Op Oo Fl Oc Ns Cm nwkey Ar key
@@ -938,71 +928,24 @@ show the list of channels supported by the device.
 .It Cm -chan
 Unset the desired channel.
 It doesn't affect the channel to be created for IBSS or Host AP mode.
-.It Cm join Ar id
-Add the network with NWID/ESSID
-.Ar id
-to the list of auto-join networks.
-Information about such networks is retained,
-such that configured interfaces can automatically switch to such networks
-as necessary.
-Note that
-.Cm join
-does not represent a complete "wireless profile" as only the
-.Cm wpakey , nwkey ,
-and
-.Cm nwid
-parameters are retained.
-IEEE802.11 mode (11a/11b/11g/11n) and channel parameters are not retained,
-so should not be included.
-.Pp
-The
-.Ar id
-can either be any text string up to 32 characters in length,
-or a series of hexadecimal digits up to 64 digits.
-Any necessary
-.Cm wpakey
-or
-.Cm nwkey
-arguments should be specified on the same line.
-The empty string allows the interface to automatically connect to any
-available access points if no known access points are found.
-May not be used with
-.Cm nwid .
-.It Cm -join Ar id
-Remove the network with NWID
-.Ar id ,
-from the list of auto-join networks.
-.It Cm joinlist
-Show the list of currently configured auto-join networks.
-.It Cm -joinlist
-Remove all networks in the list of auto-join networks.
 .It Cm nwflag Ar flag
 Set specified flag.
-The flag name can be:
-.Bl -tag -width tenletters
-.It hidenwid
+The flag name can be either
+.Ql hidenwid
+or
+.Ql nobridge .
 The
 .Ql hidenwid
 flag will hide the network ID (ESSID) in beacon frames when operating
 in Host AP mode.
 It will also prevent responses to probe requests with an unspecified
 network ID.
-.It nobridge
 The
 .Ql nobridge
 flag will disable the direct bridging of frames between associated
 nodes when operating in Host AP mode.
 Setting this flag will block and filter direct inter-station
 communications.
-.It stayauth
-The
-.Ql stayauth
-flag will cause the interface to ignore deauth frames.
-This flag should only be used on wifi networks which are being
-attacked with spoofed deauth frames.
-It breaks interoperability with spectrum management solutions and access
-points that perform band-steering of clients.
-.El
 .Pp
 Note that the
 .Ql hidenwid
@@ -1017,16 +960,16 @@ and
 .It Cm -nwflag Ar flag
 Remove specified flag.
 .It Cm nwid Ar id
-Connect to the network with NWID
-.Ar id .
-Unlike auto-join networks,
-information about the network is not retained.
+Configure network ID.
+The
+.Ar id
+can either be any text string up to 32 characters in length,
+or a series of hexadecimal digits up to 64 digits.
 The empty string allows the interface to connect to any available
 access points.
-May not be used with
-.Cm join .
+Note that network ID is synonymous with Extended Service Set ID (ESSID).
 .It Cm -nwid
-Set the NWID to the empty string to allow the interface to connect
+Set the network ID to the empty string to allow the interface to connect
 to any available access point.
 .It Cm nwkey Ar key
 Enable WEP encryption using the specified
@@ -1068,20 +1011,9 @@ Write
 to the persistent memory of the network card, and
 enable WEP encryption using that
 .Ar key .
-.It Cm powersave
+.It Cm powersave Op Ar duration
 Enable 802.11 power saving mode.
-Power saving is disabled by default.
-See driver specific manual pages
-to see details of the implementation relevant to that device.
-.\" XXX
-.\" Undocumented because optional sleep period
-.\" only configurable on legacy an(4) and atw(4) devices.
-.\" XXX
-.\" Op Ar duration
-.\" If enabled, the receiver sleep period is set to 100ms,
-.\" though some drivers allow this to be altered via the
-.\" .Ar duration
-.\" argument.
+Optionally set the receiver sleep duration (in milliseconds).
 .It Cm -powersave
 Disable 802.11 power saving mode.
 .It Cm scan
@@ -1168,9 +1100,9 @@ The key can be given using either a passphrase or a full length hex key,
 starting with 0x.
 If a passphrase is used the
 .Cm nwid
-or
-.Cm join
-option must first be specified, since
+option must be set prior to specifying the
+.Cm wpakey
+option, since
 .Nm
 will hash the nwid along with the passphrase to create the key.
 .It Cm -wpakey
@@ -1262,10 +1194,10 @@ Currently configured addresses will not be removed until they become
 invalid.
 .It Cm eui64
 Fill the interface index
-.Pq the lowermost 64 bits of an IPv6 address
+.Pq the lowermost 64th bit of an IPv6 address
 automatically.
 .It Cm pltime Ar n
-Set preferred lifetime for the address, in seconds.
+Set preferred lifetime for the address.
 .It Cm soii
 Enable persistent Semantically Opaque Interface Identifiers (SOIIs),
 as per RFC 7217, for link local and SLAAC addresses on the interface.
@@ -1287,7 +1219,7 @@ Set the IPv6 tentative address bit.
 .It Cm -tentative
 Clear the IPv6 tentative address bit.
 .It Cm vltime Ar n
-Set valid lifetime for the address, in seconds.
+Set valid lifetime for the address.
 .El
 .Sh INTERFACE GROUPS
 .Nm ifconfig
@@ -1322,63 +1254,67 @@ If
 .Ar number
 is omitted, it is decreased by 1.
 .El
-.Sh MPLS
+.Sh MPE
+.Nm ifconfig
+.Ar mpe-interface
+.Op Cm mplslabel Ar mpls-label
+.Pp
+The following options are available for an
+.Xr mpe 4
+interface:
+.Bl -tag -width Ds
+.It Cm mplslabel Ar mpls-label
+Set the MPLS label to
+.Ar mpls-label .
+This value is a 20-bit number which will be used as the MPLS header for
+packets entering the MPLS domain.
+.El
+.Sh MPW
 .nr nS 1
 .Bk -words
 .Nm ifconfig
-.Ar mpls-interface
-.Op Cm mplslabel Ar mpls-label
-.Op Oo Fl Oc Ns Cm pwecw
-.Op Oo Fl Oc Ns Cm pwefat
-.Op Cm pweneighbor Ar mpls-label Ar neighbor
-.Op Cm tunneldomain Ar rdomain
+.Ar mpw-interface
+.Op Oo Fl Oc Ns Cm controlword
+.Op Cm encap Ar encapsulation
+.Op Cm mpwlabel Ar local-label remote-label Cm neighbor Ar dest-address
 .Ek
-.nr nS 0
+.nr Ns 0
 .Pp
-The following options are available for
-.Xr mpe 4 ,
-.Xr mpip 4 ,
-and
+The following options are available for an
 .Xr mpw 4
-interfaces:
+interface:
 .Bl -tag -width Ds
-.It Cm mplslabel Ar mpls-label
-Set the local MPLS label to
-.Ar mpls-label .
-MPLS packets sent to this label on the local system will be
-decapsulated for input.
-An MPLS label is a 20-bit number.
-Labels 0 to 15 inclusive are reserved labels and cannot be used.
-.It Cm tunneldomain Ar rdomain
-Use the route domain
-.Ar rdomain
-for MPLS transit.
-The MPLS encapsulated traffic does not need to terminate in the same
-routing domain as the interface itself.
-.El
-.Pp
-The following options are available for the
-.Xr mpip 4
-and
-.Xr mpw 4
-interfaces that provide MPLS Pseudowire Emulation Edge-to-Edge (PWE3)
-functionality:
-.Bl -tag -width Ds
-.It Cm pwecw
-Enable the use of the PWE3 Control Word.
-.It Fl Ns Cm pwecw
-Disable the use of the PWE3 Control Word.
-.It Cm pwefat
-Enable the use of the Flow-Aware Transport (FAT) flow label.
-.It Fl Ns Cm pwefat
-Disable the use of the Flow-Aware Transport (FAT) flow label.
-.It Cm pweneighbor Ar mpls-label Ar neighbor
-Use
-.Ar mpls-label
-and
-.Ar neighbor
-as the remote MPLS label and neighbor respectively.
-Remote MPLS labels have the same restrictions on values as local MPLS labels.
+.It Cm controlword
+Configure the mpw interface to use control-word.
+.It Cm -controlword
+Remove control-word configuration from the interface.
+.It Cm encap Ar encapsulation
+Configures the mpw encapsulation type with value
+.Ar encapsulation
+which can be
+.Cm ethernet
+or
+.Cm ethernet-tagged .
+By default it's assumed to be
+.Cm ethernet
+mode.
+.It Cm mpwlabel Ar local-label remote-label
+Set mpw local label to
+.Ar local-label
+and remote label to
+.Ar remote-label .
+The
+.Ar local-label
+is a 20-bit number which will be used to create a local label route to
+the mpw interface and the
+.Ar remote-label
+is another 20-bit number which will be used to create the output label header.
+.It Cm neighbor Ar dest-address
+Sets the destination address where this mpw should output.
+The
+.Ar dest-address
+is an IPv4 address that will be used to find the nexthop in the MPLS
+network.
 .El
 .Sh PAIR
 .nr nS 1
@@ -1644,20 +1580,6 @@ Set the port number for the port named
 .Ar interface .
 The default value is the interface index of the
 .Ar interface .
-.It Cm protected Ar interface ids
-Put
-.Ar interface
-in protected domains.
-.Ar ids
-is a comma delimited list of domain IDs, between 1 and 31, to put the
-interface in.
-Interfaces that are part of a protected domain cannot forward traffic to any
-other interface in that domain.
-Interfaces do not belong to any protected domain by default.
-.It Cm -protected Ar interface
-Remove
-.Ar interface
-from all protected domains.
 .It Cm up
 Start the switch processing packets.
 .El
@@ -1671,16 +1593,6 @@ The following options are available for a
 .Xr trunk 4
 interface:
 .Bl -tag -width Ds
-.It Cm lacpmode Cm active Ns | Ns Cm passive
-Set the LACP trunk mode to either
-.Cm active
-or
-.Cm passive .
-.It Cm lacptimeout Cm fast Ns | Ns Cm slow
-Set the LACP timeout speed to either
-.Cm fast
-or
-.Cm slow .
 .It Cm trunkport Ar child-iface
 Add
 .Ar child-iface
@@ -1700,24 +1612,18 @@ for a complete list of the available protocols.
 .Nm ifconfig
 .Ar tunnel-interface
 .Op Oo Fl Oc Ns Cm keepalive Ar period count
-.Op Cm rxprio Ar prio
 .Op Oo Fl Oc Ns Cm tunnel Ar src_address dest_address
+.Op Cm tunneldomain Ar tableid
 .Op Oo Fl Oc Ns Cm tunneldf
-.Op Oo Fl Oc Ns Cm tunneldomain Ar rtable
 .Op Cm tunnelttl Ar ttl
-.Op Cm txprio Ar prio
 .Op Oo Fl Oc Ns Cm vnetflowid
 .Op Oo Fl Oc Ns Cm vnetid Ar network-id
 .Ek
 .nr nS 0
 .Pp
-.Xr egre 4 ,
-.Xr eoip 4 ,
 .Xr etherip 4 ,
 .Xr gif 4 ,
 .Xr gre 4 ,
-.Xr mgre 4 ,
-.Xr nvgre 4 ,
 and
 .Xr vxlan 4
 are all tunnel interfaces.
@@ -1742,16 +1648,6 @@ is 2 since the round-trip time of keepalive packets needs to be accounted for.
 Disable the
 .Xr gre 4
 keepalive mechanism.
-.It Cm rxprio Ar prio
-Configure the source used for the packet priority when decapsulating a packet.
-The value can be a priority number from 0 to 7, or
-.Ar packet
-to use the priority currently set on the packet.
-If supported by the interface, the value may also be set to
-.Ar outer
-to have the priority field copied from the tunnel protocol headers, or
-.Ar payload
-to have the priority field copied from the encapsulated protocol headers.
 .It Cm tunnel Ar src_address dest_address Ns Op : Ns Ar dest_port
 Set the source and destination tunnel addresses on a tunnel interface.
 Packets routed to this interface will be encapsulated in
@@ -1762,21 +1658,19 @@ The optional destination port can be specified for interfaces such as
 which further encapsulate the packets in UDP datagrams.
 .It Cm -tunnel
 Remove the source and destination tunnel addresses.
+.It Cm tunneldomain Ar tableid
+Use routing table
+.Ar tableid
+instead of the default table.
+The tunnel does not need to terminate in the same routing domain as the
+interface itself.
+.Ar tableid
+can be set to any valid routing table ID;
+the corresponding routing domain is derived from this table.
 .It Cm tunneldf
 Do not allow fragmentation of encapsulated packets.
 .It Cm -tunneldf
 Allow fragmentation of encapsulated packets.
-.It Cm tunneldomain Ar rtable
-Use routing table
-.Ar rtable
-instead of the default table.
-The tunnel does not need to terminate in the same routing domain as the
-interface itself.
-.Ar rtable
-can be set to any valid routing table ID;
-the corresponding routing domain is derived from this table.
-.It Cm -tunneldomain
-Use the default routing table and routing domain 0.
 .It Cm tunnelttl Ar ttl
 Set the IP or multicast TTL of the tunnel packets.
 If supported by the tunnel protocol,
@@ -1784,16 +1678,6 @@ the value can also be set to
 .Ar copy
 to have the TTL copied between the encapsulated protocol headers
 and the tunnel protocol headers.
-.It Cm txprio Ar prio
-Configure the value used for the priority field in the tunnel
-protocol headers.
-The value can be a priority number from 0 to 7, or
-.Ar packet
-to use the priority currently set on the packet.
-If supported by the interface, the value can also be set to
-.Ar payload
-to have the priority field copied from the encapsulated protocol headers
-to the tunnel protocol headers.
 .It Cm vnetflowid
 Use a portion of the virtual network identifier space for a flow identifier.
 This allows load balancing of the encapsulated traffic over multiple
@@ -1803,14 +1687,10 @@ Disable the use of a flow identifier in the virtual network identifier.
 .It Cm vnetid Ar network-id
 Set the virtual network identifier.
 This is a number which is used by tunnel protocols such as
-.Xr eoip 4
-and
 .Xr vxlan 4
 to identify packets with a virtual network.
 The accepted size of the number depends on the individual tunnel protocol;
-it is a 16-bit number for
-.Xr eoip 4 ,
-and a 24-bit number for
+it is a 24-bit number for
 .Xr vxlan 4 .
 If supported by the tunnel protocol,
 the value can also be set to
@@ -1888,8 +1768,6 @@ device will try to establish a data connection with the service provider.
 .Nm ifconfig
 .Ar vlan-interface
 .Op Oo Fl Oc Ns Cm parent Ar parent-interface
-.Op Cm rxprio Ar prio
-.Op Cm txprio Ar prio
 .Op Oo Fl Oc Ns Cm vnetid Ar vlan-tag
 .Ek
 .nr nS 0
@@ -1917,19 +1795,6 @@ it will inherit a copy of the parent interface's Ethernet address.
 .It Cm -parent
 Disassociate from the parent interface.
 This breaks the link between the VLAN interface and its parent.
-.It Cm rxprio Ar prio
-Set the value used for the packet priority field.
-Values may be from 0 to 7,
-.Ar packet
-to maintain the current packet priority, or
-.Ar outer
-to use the priority field in the 802.1Q or 802.1ad headers.
-.It Cm txprio Ar prio
-Set the value used for the priority field in the 802.1Q or 802.1ad
-headers.
-Values may be from 0 to 7, or
-.Ar packet
-to use the priority of packets transmitted on the interface.
 .It Cm vnetid Ar vlan-tag
 Set the VLAN tag value to
 .Ar vlan-tag .
@@ -1939,7 +1804,7 @@ headers in packets handled by
 or
 .Xr svlan 4
 interfaces respectively.
-Valid tag values are from 1 to 4094 inclusive.
+Valid tag values are from 1 to 4095 inclusive.
 .It Cm -vnetid
 Clear the tag value.
 Packets on a VLAN interface without a tag set will use a value of
@@ -1980,6 +1845,7 @@ tried to alter an interface's configuration.
 .Xr route 4 ,
 .Xr hostname.if 5 ,
 .Xr hosts 5 ,
+.Xr networks 5 ,
 .Xr rc 8 ,
 .Xr slaacd 8 ,
 .Xr tcpdump 8

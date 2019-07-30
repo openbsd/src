@@ -6,18 +6,15 @@ NNAAMMEE
        RS-literal - indented literal text
 
 DDEESSCCRRIIPPTTIIOONN
-       BEGINTEST
-       initial regular text
-       literal text
-       before display
+       regular text
+       literal
+       text
               This is a short line.
               This is a very long line that would wrap if it weren't in literal context.
+
        literal text
-       after display
-       final regular text
-       ENDTEST
-       end of file
+       regular text
 
 
 
-OpenBSD                         January 5, 2019                  RS-LITERAL(1)
+OpenBSD                         January 5, 2013                  RS-LITERAL(1)

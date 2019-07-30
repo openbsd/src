@@ -1,6 +1,0 @@
-a:
-	exec
-	SYSLIB=zoinx
-
-
-.PHONY: a

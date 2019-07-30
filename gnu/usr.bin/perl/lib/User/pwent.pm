@@ -1,7 +1,7 @@
 package User::pwent;
 
 use 5.006;
-our $VERSION = '1.01';
+our $VERSION = '1.00';
 
 use strict;
 use warnings;
@@ -10,12 +10,6 @@ use Config;
 use Carp;
 
 our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
-our ( $pw_name,    $pw_passwd,  $pw_uid,  $pw_gid,
-    $pw_gecos,   $pw_dir,     $pw_shell,
-    $pw_expire,  $pw_change,  $pw_class,
-    $pw_age,
-    $pw_quota,   $pw_comment,
-    );
 BEGIN {
     use Exporter   ();
     @EXPORT      = qw(getpwent getpwuid getpwnam getpw);
@@ -27,12 +21,15 @@ BEGIN {
                         $pw_expire  $pw_change  $pw_class
                         $pw_age
                         $pw_quota   $pw_comment
+                        $pw_expire
+
                    );
     %EXPORT_TAGS = (
         FIELDS => [ grep(/^\$pw_/, @EXPORT_OK), @EXPORT ],
         ALL    => [ @EXPORT, @EXPORT_OK ],
     );
 }
+use vars grep /^\$pw_/, @EXPORT_OK;
 
 #
 # XXX: these mean somebody hacked this module's source

@@ -63,8 +63,6 @@ struct query_info;
  * @param zone: delegation point name.
  * @param zonelen: length of zone name wireformat dname.
  * @param ssl_upstream: use SSL for upstream queries.
- * @param tls_auth_name: if ssl_upstream, use this name with TLS
- * 	authentication.
  * @param q: wich query state to reactivate upon return.
  * @return: false on failure (memory or socket related). no query was
  *      sent.
@@ -72,8 +70,7 @@ struct query_info;
 struct outbound_entry* libworker_send_query(struct query_info* qinfo,
 	uint16_t flags, int dnssec, int want_dnssec, int nocaps,
 	struct sockaddr_storage* addr, socklen_t addrlen, uint8_t* zone,
-	size_t zonelen, int ssl_upstream, char* tls_auth_name,
-	struct module_qstate* q);
+	size_t zonelen, int ssl_upstream, struct module_qstate* q);
 
 /** process incoming replies from the network */
 int libworker_handle_reply(struct comm_point* c, void* arg, int error,
@@ -89,15 +86,15 @@ void libworker_handle_control_cmd(struct tube* tube, uint8_t* msg, size_t len,
 
 /** mesh callback with fg results */
 void libworker_fg_done_cb(void* arg, int rcode, sldns_buffer* buf, 
-	enum sec_status s, char* why_bogus, int was_ratelimited);
+	enum sec_status s, char* why_bogus);
 
 /** mesh callback with bg results */
 void libworker_bg_done_cb(void* arg, int rcode, sldns_buffer* buf, 
-	enum sec_status s, char* why_bogus, int was_ratelimited);
+	enum sec_status s, char* why_bogus);
 
 /** mesh callback with event results */
 void libworker_event_done_cb(void* arg, int rcode, struct sldns_buffer* buf, 
-	enum sec_status s, char* why_bogus, int was_ratelimited);
+	enum sec_status s, char* why_bogus);
 
 /**
  * Worker signal handler function. User argument is the worker itself.
@@ -118,8 +115,6 @@ void worker_sighandler(int sig, void* arg);
  * @param zone: wireformat dname of the zone.
  * @param zonelen: length of zone name.
  * @param ssl_upstream: use SSL for upstream queries.
- * @param tls_auth_name: if ssl_upstream, use this name with TLS
- * 	authentication.
  * @param q: wich query state to reactivate upon return.
  * @return: false on failure (memory or socket related). no query was
  *      sent.
@@ -127,8 +122,7 @@ void worker_sighandler(int sig, void* arg);
 struct outbound_entry* worker_send_query(struct query_info* qinfo,
 	uint16_t flags, int dnssec, int want_dnssec, int nocaps,
 	struct sockaddr_storage* addr, socklen_t addrlen, uint8_t* zone,
-	size_t zonelen, int ssl_upstream, char* tls_auth_name,
-	struct module_qstate* q);
+	size_t zonelen, int ssl_upstream, struct module_qstate* q);
 
 /** 
  * process control messages from the main thread. Frees the control 

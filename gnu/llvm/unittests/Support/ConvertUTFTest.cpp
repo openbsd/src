@@ -9,8 +9,10 @@
 
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/Support/Format.h"
 #include "gtest/gtest.h"
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace llvm;

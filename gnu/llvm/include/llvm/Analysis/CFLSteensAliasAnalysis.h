@@ -1,4 +1,4 @@
-//==- CFLSteensAliasAnalysis.h - Unification-based Alias Analysis -*- C++-*-==//
+//=- CFLSteensAliasAnalysis.h - Unification-based Alias Analysis ---*- C++-*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,34 +16,30 @@
 #define LLVM_ANALYSIS_CFLSTEENSALIASANALYSIS_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/None.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CFLAliasAnalysisUtils.h"
-#include "llvm/Analysis/MemoryLocation.h"
-#include "llvm/IR/PassManager.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Casting.h"
 #include <forward_list>
-#include <memory>
 
 namespace llvm {
 
-class Function;
 class TargetLibraryInfo;
 
 namespace cflaa {
-
 struct AliasSummary;
-
-} // end namespace cflaa
+}
 
 class CFLSteensAAResult : public AAResultBase<CFLSteensAAResult> {
   friend AAResultBase<CFLSteensAAResult>;
-
   class FunctionInfo;
 
 public:
-  explicit CFLSteensAAResult(const TargetLibraryInfo &TLI);
+  explicit CFLSteensAAResult(const TargetLibraryInfo &);
   CFLSteensAAResult(CFLSteensAAResult &&Arg);
   ~CFLSteensAAResult();
 
@@ -55,16 +51,16 @@ public:
     return false;
   }
 
-  /// Inserts the given Function into the cache.
+  /// \brief Inserts the given Function into the cache.
   void scan(Function *Fn);
 
   void evict(Function *Fn);
 
-  /// Ensures that the given function is available in the cache.
+  /// \brief Ensures that the given function is available in the cache.
   /// Returns the appropriate entry from the cache.
   const Optional<FunctionInfo> &ensureCached(Function *Fn);
 
-  /// Get the alias summary for the given function
+  /// \brief Get the alias summary for the given function
   /// Return nullptr if the summary is not found or not available
   const cflaa::AliasSummary *getAliasSummary(Function &Fn);
 
@@ -72,7 +68,7 @@ public:
 
   AliasResult alias(const MemoryLocation &LocA, const MemoryLocation &LocB) {
     if (LocA.Ptr == LocB.Ptr)
-      return MustAlias;
+      return LocA.Size == LocB.Size ? MustAlias : PartialAlias;
 
     // Comparisons between global variables and other constants should be
     // handled by BasicAA.
@@ -92,7 +88,7 @@ public:
 private:
   const TargetLibraryInfo &TLI;
 
-  /// Cached mapping of Functions to their StratifiedSets.
+  /// \brief Cached mapping of Functions to their StratifiedSets.
   /// If a function's sets are currently being built, it is marked
   /// in the cache as an Optional without a value. This way, if we
   /// have any kind of recursion, it is discernable from a function
@@ -109,11 +105,10 @@ private:
 /// in particular to leverage invalidation to trigger re-computation of sets.
 class CFLSteensAA : public AnalysisInfoMixin<CFLSteensAA> {
   friend AnalysisInfoMixin<CFLSteensAA>;
-
   static AnalysisKey Key;
 
 public:
-  using Result = CFLSteensAAResult;
+  typedef CFLSteensAAResult Result;
 
   CFLSteensAAResult run(Function &F, FunctionAnalysisManager &AM);
 };
@@ -134,10 +129,12 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
 
+//===--------------------------------------------------------------------===//
+//
 // createCFLSteensAAWrapperPass - This pass implements a set-based approach to
 // alias analysis.
+//
 ImmutablePass *createCFLSteensAAWrapperPass();
+}
 
-} // end namespace llvm
-
-#endif // LLVM_ANALYSIS_CFLSTEENSALIASANALYSIS_H
+#endif

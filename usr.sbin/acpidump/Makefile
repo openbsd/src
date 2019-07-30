@@ -1,7 +1,6 @@
-# $OpenBSD: Makefile,v 1.7 2018/06/24 10:39:59 kettenis Exp $
+# $OpenBSD: Makefile,v 1.6 2017/01/24 00:20:28 deraadt Exp $
 
-.if ${MACHINE} == "amd64" || ${MACHINE} == "arm64" || \
-    ${MACHINE} == "i386"
+.if (${MACHINE} == "i386") || (${MACHINE} == "amd64")
 PROG= acpidump
 SRCS= acpidump.c
 LDADD=	-lkvm

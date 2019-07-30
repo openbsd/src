@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.8 2019/04/09 14:21:32 aoyama Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.7 2017/03/16 18:08:58 miod Exp $	*/
 /*	$NetBSD: init_main.c,v 1.6 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -98,10 +98,6 @@
  */
 
 #include <sys/param.h>
-#define _KERNEL
-#include <sys/fcntl.h>
-#undef _KERNEL
-#include <lib/libkern/libkern.h>
 #include <machine/board.h>
 #include <luna88k/stand/boot/samachdep.h>
 #include <luna88k/stand/boot/status.h>
@@ -116,7 +112,6 @@ static const char *nvram_by_symbol(char *);
 int cpuspeed;	/* for DELAY() macro */
 int machtype;
 char default_file[64];
-char upgrade_file[64];
 
 uint16_t dipswitch = 0;
 int nplane;
@@ -137,8 +132,6 @@ int boot_timeout = BOOT_TIMEOUT;
 static const char prompt[] = "boot> ";
 
 int debug;
-
-int exist(const char *);
 
 /*
  * FUSE ROM and NVRAM data
@@ -188,7 +181,7 @@ main(void)
 	nplane = get_plane_numbers();
 	cninit();
 
-	printf("\nOpenBSD/" MACHINE " (%s) boot 0.6\n\n", machstr);
+	printf("\nOpenBSD/" MACHINE " (%s) boot 0.5\n\n", machstr);
 
 #ifdef SUPPORT_ETHERNET
 	try_bootp = 1;
@@ -212,13 +205,6 @@ main(void)
 
 	snprintf(default_file, sizeof(default_file),
 	    "%s(%d,%d)%s", nvv != NULL ? nvv : "sd", unit, part, "bsd");
-	snprintf(upgrade_file, sizeof(upgrade_file),
-	    "%s(%d,%d)%s", nvv != NULL ? nvv : "sd", unit, part, "bsd.upgrade");
-
-	if (exist(upgrade_file)) {
-		strlcpy(default_file, upgrade_file, sizeof(default_file));
-		printf("upgrade detected: switching to %s\n", default_file);
-	}
 
 	/* auto-boot? (SW1) */
 	if ((dipswitch & 0x8000) != 0) {
@@ -253,20 +239,6 @@ main(void)
 
 	_rtt();
 	/* NOTREACHED */
-}
-
-/* Check file existence with "device(unit, part)filename" format */ 
-
-int
-exist(const char *name)
-{
-	int fd;
-
-	fd = open(name, O_RDONLY);
-	if (fd == -1)
-		return 0;
-	close(fd);
-	return 1;
 }
 
 int

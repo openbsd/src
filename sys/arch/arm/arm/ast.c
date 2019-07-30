@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.16 2018/06/26 10:00:09 kettenis Exp $	*/
+/*	$OpenBSD: ast.c,v 1.14 2014/11/18 20:51:01 krw Exp $	*/
 /*	$NetBSD: ast.c,v 1.6 2003/10/31 16:44:34 cl Exp $	*/
 
 /*
@@ -79,10 +79,20 @@ ast(struct trapframe *tf)
 {
 	struct proc *p = curproc;
 
+	/* Interrupts were restored by exception_exit. */
+
 	uvmexp.traps++;
-	p->p_addr->u_pcb.pcb_tf = tf;
-	refreshcreds(p);
+
+#ifdef DEBUG
+	if (p == NULL)
+		panic("ast: no curproc!");
+	if (&p->p_addr->u_pcb == 0)
+		panic("ast: no pcb!");
+#endif	
+
 	uvmexp.softs++;
 	mi_ast(p, want_resched);
 	userret(p);
 }
+
+/* End of ast.c */

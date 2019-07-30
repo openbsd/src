@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// This file declares the WebAssembly-specific subclass of
+/// \brief This file declares the WebAssembly-specific subclass of
 /// TargetMachine.
 ///
 //===----------------------------------------------------------------------===//
@@ -28,9 +28,8 @@ class WebAssemblyTargetMachine final : public LLVMTargetMachine {
 public:
   WebAssemblyTargetMachine(const Target &T, const Triple &TT, StringRef CPU,
                            StringRef FS, const TargetOptions &Options,
-                           Optional<Reloc::Model> RM,
-                           Optional<CodeModel::Model> CM, CodeGenOpt::Level OL,
-                           bool JIT);
+                           Optional<Reloc::Model> RM, CodeModel::Model CM,
+                           CodeGenOpt::Level OL);
 
   ~WebAssemblyTargetMachine() override;
   const WebAssemblySubtarget *
@@ -43,7 +42,8 @@ public:
     return TLOF.get();
   }
 
-  TargetTransformInfo getTargetTransformInfo(const Function &F) override;
+  /// \brief Get the TargetIRAnalysis for this target.
+  TargetIRAnalysis getTargetIRAnalysis() override;
 
   bool usesPhysRegsForPEI() const override { return false; }
 };

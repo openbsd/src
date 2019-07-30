@@ -31,7 +31,7 @@ use vars qw[$DEBUG $error $VERSION $WARN $FOLLOW_SYMLINK $CHOWN $CHMOD
 $DEBUG                  = 0;
 $WARN                   = 1;
 $FOLLOW_SYMLINK         = 0;
-$VERSION                = "2.30";
+$VERSION                = "2.04_01";
 $CHOWN                  = 1;
 $CHMOD                  = 1;
 $SAME_PERMISSIONS       = $> == 0 ? 1 : 0;
@@ -263,7 +263,7 @@ sub _get_handle {
 
             ### different reader/writer modules, different error vars... sigh
             if( MODE_READ->($mode) ) {
-                $fh = IO::Uncompress::Bunzip2->new( $file, MultiStream => 1 ) or do {
+                $fh = IO::Uncompress::Bunzip2->new( $file ) or do {
                     $self->_error( qq[Could not read '$file': ] .
                         $IO::Uncompress::Bunzip2::Bunzip2Error
                     );
@@ -601,7 +601,6 @@ sub extract {
     my $self    = shift;
     my @args    = @_;
     my @files;
-    my $hashmap;
 
     # use the speed optimization for all extracted files
     local($self->{cwd}) = cwd() unless $self->{cwd};
@@ -618,15 +617,16 @@ sub extract {
             ### go find it then
             } else {
 
-                # create hash-map once to speed up lookup
-                $hashmap = $hashmap || {
-                    map { $_->full_path, $_ } @{$self->_data}
-                };
+                my $found;
+                for my $entry ( @{$self->_data} ) {
+                    next unless $file eq $entry->full_path;
 
-                if (exists $hashmap->{$file}) {
                     ### we found the file you're looking for
-                    push @files, $hashmap->{$file};
-                } else {
+                    push @files, $entry;
+                    $found++;
+                }
+
+                unless( $found ) {
                     return $self->_error(
                         qq[Could not find '$file' in archive] );
                 }
@@ -845,23 +845,9 @@ sub _extract_file {
         return;
     }
 
-    ### If a file system already contains a block device with the same name as
-    ### the being extracted regular file, we would write the file's content
-    ### to the block device. So remove the existing file (block device) now.
-    ### If an archive contains multiple same-named entries, the last one
-    ### should replace the previous ones. So remove the old file now.
-    ### If the old entry is a symlink to a file outside of the CWD, the new
-    ### entry would create a file there. This is CVE-2018-12015
-    ### <https://rt.cpan.org/Ticket/Display.html?id=125523>.
-    if (-l $full || -e _) {
-	if (!unlink $full) {
-	    $self->_error( qq[Could not remove old file '$full': $!] );
-	    return;
-	}
-    }
     if( length $entry->type && $entry->is_file ) {
         my $fh = IO::File->new;
-        $fh->open( $full, '>' ) or (
+        $fh->open( '>' . $full ) or (
             $self->_error( qq[Could not open file '$full': $!] ),
             return
         );
@@ -1770,8 +1756,7 @@ Example usage:
 
 sub iter {
     my $class       = shift;
-    my $filename    = shift;
-    return unless defined $filename;
+    my $filename    = shift or return;
     my $compressed  = shift || 0;
     my $opts        = shift || {};
 
@@ -2264,7 +2249,7 @@ For example, if you add a Unicode string like
     $tar->add_data('file.txt', "Euro: \x{20AC}");
 
 then there will be a problem later when the tarfile gets written out
-to disk via C<< $tar->write() >>:
+to disk via C<$tar->write()>:
 
     Wide character in print at .../Archive/Tar.pm line 1014.
 

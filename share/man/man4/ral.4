@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.114 2019/03/29 07:07:05 jmc Exp $
+.\" $OpenBSD: ral.4,v 1.111 2017/05/31 03:45:15 jsg Exp $
 .\"
 .\" Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 29 2019 $
+.Dd $Mdocdate: May 31 2017 $
 .Dt RAL 4
 .Os
 .Sh NAME
@@ -65,10 +65,7 @@ The RT3090 chipset is the first generation of single-chip 802.11n adapters
 from Ralink.
 .Pp
 The RT3900E chipset is a single-chip 802.11n adapter from Ralink.
-The MAC/Baseband Processor can be an RT3290, RT5390 or RT5392.
-The RT3290 is a combo 802.11n and Bluetooth chip.
-It operates in the 2 Ghz spectrum and supports one transmit path and on one
-receiver path (1T1R).
+The MAC/Baseband Processor can be an RT5390 or RT5392.
 The RT5390 chip operates in the 2GHz spectrum and supports one transmit path
 and one receiver path (1T1R).
 The RT5392 chip operates in the 2GHz spectrum and supports up to two transmit
@@ -127,10 +124,6 @@ hardware for the WEP40, WEP104, TKIP(+MIC) and CCMP ciphers.
 The transmit speed is user-selectable or can be adapted automatically by the
 driver depending on the number of hardware transmission retries.
 .Pp
-In Host AP mode,
-devices with the RT2700, RT2800, RT3090, and RT3900E chipsets
-are compatible with clients using powersave.
-.Pp
 The
 .Nm
 driver can be configured at runtime with
@@ -146,7 +139,6 @@ files to be loaded when an interface is brought up:
 .It /etc/firmware/ral-rt2561s
 .It /etc/firmware/ral-rt2661
 .It /etc/firmware/ral-rt2860
-.It /etc/firmware/ral-rt3290
 .El
 .Pp
 The RT2500 chipset does not require a firmware file to operate.
@@ -294,7 +286,8 @@ using WPA key
 .Dq mywpakey ,
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-nwid mynwid wpakey mywpakey
+nwid mynwid
+wpakey mywpakey
 dhcp
 .Ed
 .Pp
@@ -303,7 +296,8 @@ The following
 example creates a host-based access point on boot:
 .Bd -literal -offset indent
 mediaopt hostap
-nwid mynwid wpakey mywpakey
+nwid mynwid
+wpakey mywpakey
 inet 192.168.1.1 255.255.255.0
 .Ed
 .Sh SEE ALSO
@@ -351,7 +345,7 @@ before those features can be supported.
 On the RT2500, RT2501 and RT2600 chipsets, host AP mode doesn't
 support power saving.
 Clients attempting to use power saving mode may experience significant
-packet loss.
+packet loss (disabling power saving on the client will fix this).
 .Pp
 Some PCI
 .Nm

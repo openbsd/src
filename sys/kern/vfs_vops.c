@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.21 2019/05/03 14:24:13 visa Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.17 2018/02/10 05:24:23 deraadt Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -336,7 +336,7 @@ int
 VOP_FSYNC(struct vnode *vp, struct ucred *cred, int waitfor, 
     struct proc *p)
 {
-	int r, s;
+	int r;
 	struct vop_fsync_args a;
 	a.a_vp = vp;
 	a.a_cred = cred;
@@ -351,10 +351,6 @@ VOP_FSYNC(struct vnode *vp, struct ucred *cred, int waitfor,
 	vp->v_inflight++;
 	r = (vp->v_op->vop_fsync)(&a);
 	vp->v_inflight--;
-	s = splbio();
-	if (r == 0 && vp->v_bioflag & VBIOERROR)
-		r = EIO;
-	splx(s);
 	return r;
 }
 
@@ -461,8 +457,6 @@ VOP_RMDIR(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 
 	ASSERT_VP_ISLOCKED(dvp);
 	ASSERT_VP_ISLOCKED(vp);
-
-	KASSERT(dvp != vp);
 
 	if (dvp->v_op->vop_rmdir == NULL)
 		return (EOPNOTSUPP);
@@ -590,11 +584,12 @@ VOP_RECLAIM(struct vnode *vp, struct proc *p)
 }
 
 int
-VOP_LOCK(struct vnode *vp, int flags)
+VOP_LOCK(struct vnode *vp, int flags, struct proc *p)
 {
 	struct vop_lock_args a;
 	a.a_vp = vp;
 	a.a_flags = flags;
+	a.a_p = p;
 
 	if (vp->v_op->vop_lock == NULL)
 		return (EOPNOTSUPP);
@@ -603,11 +598,12 @@ VOP_LOCK(struct vnode *vp, int flags)
 }
 
 int
-VOP_UNLOCK(struct vnode *vp)
+VOP_UNLOCK(struct vnode *vp, struct proc *p)
 {
 	int r;
 	struct vop_unlock_args a;
 	a.a_vp = vp;
+	a.a_p = p;
 
 	if (vp->v_op->vop_unlock == NULL)
 		return (EOPNOTSUPP);
@@ -687,6 +683,7 @@ VOP_PATHCONF(struct vnode *vp, int name, register_t *retval)
 int
 VOP_ADVLOCK(struct vnode *vp, void *id, int op, struct flock *fl, int flags)
 {
+	int r;
 	struct vop_advlock_args a;
 	a.a_vp = vp;
 	a.a_id = id;
@@ -697,7 +694,10 @@ VOP_ADVLOCK(struct vnode *vp, void *id, int op, struct flock *fl, int flags)
 	if (vp->v_op->vop_advlock == NULL)
 		return (EOPNOTSUPP);
 
-	return (vp->v_op->vop_advlock)(&a);
+	vp->v_inflight++;
+	r = (vp->v_op->vop_advlock)(&a);
+	vp->v_inflight--;
+	return r;
 }
 
 int

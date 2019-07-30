@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.20 2019/06/17 12:42:52 florian Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.11 2017/11/27 01:58:52 florian Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 17 2019 $
+.Dd $Mdocdate: November 27 2017 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -26,15 +26,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-file is divided into the following main sections:
+config file is divided into three main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
 configuration file.
 .It Sy Authorities
-Certificate authorities (CAs) that can be contacted via ACME.
+TLS authorities that can be contacted via ACME.
 .It Sy Domains
-Certificate specifications.
+Domains that the user wants to receive TLS certificates for.
 .El
 .Pp
 Additional configuration files can be included with the
@@ -52,7 +52,7 @@ and extend to the end of the current line.
 Care should be taken when commenting out multi-line text:
 the comment is effective until the end of the entire block.
 .Pp
-Argument names not beginning with a letter, digit, underscore, or '/'
+Argument names not beginning with a letter, digit, underscore or '/'
 must be quoted.
 .Sh MACROS
 Macros can be defined that will later be expanded in context.
@@ -63,10 +63,9 @@ Macros are not expanded inside quotes.
 .Pp
 For example:
 .Bd -literal -offset indent
-api_url="https://acme-v01.api.letsencrypt.org/directory"
-authority letsencrypt {
-	api url $api_url
-	account key "/etc/acme/letsencrypt-privkey.pem"
+le="letsencrypt"
+domain example.com {
+	sign with $le
 }
 .Ed
 .Sh AUTHORITIES
@@ -83,63 +82,49 @@ is a string used to reference this certificate authority.
 .Pp
 It is followed by a block of options enclosed in curly brackets:
 .Bl -tag -width Ds
-.It Ic account key Ar file Op Ar keytype
+.It Ic account key Ar file
 Specify a
 .Ar file
-used to identify the user of this certificate authority.
-.Ar keytype
-can be
-.Cm rsa
-or
-.Cm ecdsa .
-It defaults to
-.Cm rsa .
+used to identify the user of this CA.
 .It Ic api url Ar url
 Specify the
 .Ar url
 under which the ACME API is reachable.
 .El
+.Pp
+An example authority block:
+.Bd -literal -offset indent
+authority letsencrypt {
+	api url "https://acme-v01.api.letsencrypt.org/directory"
+	account key "/etc/ssl/private/my-acme.key"
+}
+.Ed
 .Sh DOMAINS
-The certificates to be obtained through ACME.
+The domains that are configured to obtain SSL certificates through ACME.
 .Bl -tag -width Ds
 .It Ic domain Ar name Brq ...
 Each domain section begins with the
 .Ic domain
-keyword followed by the name to be used as the common name component
-of the subject of the X.509 certificate.
+keyword followed by the domain name.
 .El
 .Pp
 It is followed by a block of options enclosed in curly brackets:
 .Bl -tag -width Ds
 .It Ic alternative names Brq ...
-Specify a list of alternative names for which the certificate will be valid.
-The common name is included automatically if this option is present,
-but there is no automatic conversion/inclusion between "www." and
-plain domain name forms.
-.It Ic domain key Ar file Op Ar keytype
+Specify a list of alternative names the certificate will be valid for.
+.It Ic domain key Ar file
 The private key file for which the certificate will be obtained.
-.Ar keytype
-can be
-.Cm rsa
-or
-.Cm ecdsa .
-It defaults to
-.Cm rsa .
 .It Ic domain certificate Ar file
 The filename of the certificate that will be issued.
-This is optional if
-.Ar domain full chain certificate
-is specified.
 .It Ic domain chain certificate Ar file
 The filename in which to store the certificate chain
-that will be returned by the certificate authority.
+that will be returned by the CA.
 It needs to be in the same directory as the
 .Ar domain certificate
 (or in a subdirectory) and can be specified as a relative or absolute path.
-This setting is optional.
 .It Ic domain full chain certificate Ar file
 The filename in which to store the full certificate chain
-that will be returned by the certificate authority.
+that will be returned by the CA.
 It needs to be in the same directory as the
 .Ar domain certificate
 (or in a subdirectory) and can be specified as a relative or absolute path.
@@ -148,20 +133,47 @@ This is a combination of the
 and the
 .Ar domain chain certificate
 in one file, and is required by most browsers.
-This is optional if
-.Ar domain certificate
-is specified.
 .It Ic sign with Ar authority
 The certificate authority (as declared above in the
 .Sx AUTHORITIES
-section) to use.
-If this setting is absent, the first authority specified is used.
+section) to use for this domain is selected.
 .It Ic challengedir Ar path
 The directory in which the challenge file will be stored.
 If it is not specified, a default of
 .Pa /var/www/acme
 will be used.
 .El
+.Pp
+An example domain declaration looks like this:
+.Bd -literal -offset indent
+domain example.com {
+	alternative names { secure.example.com www.example.com }
+	domain key "/etc/ssl/private/example.com.key"
+	domain certificate "/etc/ssl/example.com.crt"
+	domain full chain certificate "/etc/ssl/example.com.fullchain.pem"
+	sign with letsencrypt
+	challengedir "/var/www/acme"
+}
+.Ed
+.Pp
+An
+.Xr httpd.conf 5
+server declaration to use that certificate looks like this:
+.Bd -literal -offset indent
+server "example.com" {
+        alias "www.example.com"
+        alias "secure.example.com"
+        listen on $ext_addr port 80
+        listen on $ext_addr tls port 443
+        tls certificate "/etc/ssl/example.com.fullchain.pem"
+        tls key "/etc/ssl/private/example.com.key"
+        location "/.well-known/acme-challenge/*" {
+                root "/acme"
+                root strip 2
+        }
+        root "/htdocs"
+}
+.Ed
 .Sh FILES
 .Bl -tag -width "/etc/acme-client.conf" -compact
 .It Pa /etc/acme-client.conf

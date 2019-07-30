@@ -2,20 +2,20 @@
 
 package Math::BigFloat::Trace;
 
-require 5.010;
+require 5.006;
 use strict;
 use warnings;
 
 use Exporter;
 use Math::BigFloat;
 
-our ($accuracy, $precision, $round_mode, $div_scale);
+our ($PACKAGE, @EXPORT_OK, $accuracy, $precision, $round_mode, $div_scale);
 
 our @ISA = qw(Exporter Math::BigFloat);
 
-our $VERSION = '0.49';
+our $VERSION = '0.42_01';
 
-use overload;                   # inherit overload from Math::BigFloat
+use overload;                   # inherit overload from BigFloat
 
 # Globals
 $accuracy = $precision = undef;

@@ -10,6 +10,7 @@
 #include "DAGISelMatcher.h"
 #include "CodeGenDAGPatterns.h"
 #include "CodeGenTarget.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/TableGen/Record.h"
 using namespace llvm;
@@ -79,18 +80,18 @@ bool Matcher::canMoveBeforeNode(const Matcher *Other) const {
 
 
 ScopeMatcher::~ScopeMatcher() {
-  for (Matcher *C : Children)
-    delete C;
+  for (unsigned i = 0, e = Children.size(); i != e; ++i)
+    delete Children[i];
 }
 
 SwitchOpcodeMatcher::~SwitchOpcodeMatcher() {
-  for (auto &C : Cases)
-    delete C.second;
+  for (unsigned i = 0, e = Cases.size(); i != e; ++i)
+    delete Cases[i].second;
 }
 
 SwitchTypeMatcher::~SwitchTypeMatcher() {
-  for (auto &C : Cases)
-    delete C.second;
+  for (unsigned i = 0, e = Cases.size(); i != e; ++i)
+    delete Cases[i].second;
 }
 
 CheckPredicateMatcher::CheckPredicateMatcher(const TreePredicateFn &pred)
@@ -106,11 +107,11 @@ TreePredicateFn CheckPredicateMatcher::getPredicate() const {
 
 void ScopeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "Scope\n";
-  for (const Matcher *C : Children) {
-    if (!C)
+  for (unsigned i = 0, e = getNumChildren(); i != e; ++i) {
+    if (!getChild(i))
       OS.indent(indent+1) << "NULL POINTER\n";
     else
-      C->print(OS, indent+2);
+      getChild(i)->print(OS, indent+2);
   }
 }
 
@@ -161,9 +162,9 @@ void CheckOpcodeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
 
 void SwitchOpcodeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "SwitchOpcode: {\n";
-  for (const auto &C : Cases) {
-    OS.indent(indent) << "case " << C.first->getEnumName() << ":\n";
-    C.second->print(OS, indent+2);
+  for (unsigned i = 0, e = Cases.size(); i != e; ++i) {
+    OS.indent(indent) << "case " << Cases[i].first->getEnumName() << ":\n";
+    Cases[i].second->print(OS, indent+2);
   }
   OS.indent(indent) << "}\n";
 }
@@ -176,9 +177,9 @@ void CheckTypeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
 
 void SwitchTypeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "SwitchType: {\n";
-  for (const auto &C : Cases) {
-    OS.indent(indent) << "case " << getEnumName(C.first) << ":\n";
-    C.second->print(OS, indent+2);
+  for (unsigned i = 0, e = Cases.size(); i != e; ++i) {
+    OS.indent(indent) << "case " << getEnumName(Cases[i].first) << ":\n";
+    Cases[i].second->print(OS, indent+2);
   }
   OS.indent(indent) << "}\n";
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.155 2019/06/16 07:36:25 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.146 2017/05/30 23:30:48 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -95,10 +95,12 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 
 	start_child(NTPDNS_PROC_NAME, pipe_dns[1], argc, argv);
 
-	log_init(nconf->debug, LOG_DAEMON);
-	log_setverbose(nconf->verbose);
-	if (!nconf->debug && setsid() == -1)
-		fatal("setsid");
+	/* in this case the parent didn't init logging and didn't daemonize */
+	if (nconf->settime && !nconf->debug) {
+		log_init(nconf->debug, LOG_DAEMON);
+		if (setsid() == -1)
+			fatal("setsid");
+	}
 	log_procinit("ntp");
 
 	if ((se = getservbyname("ntp", "udp")) == NULL)
@@ -314,11 +316,6 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		    (peer_cnt == 0 && sensors_cnt == 0)))
 			priv_settime(0);	/* no good peers, don't wait */
 
-		TAILQ_FOREACH(cstr, &conf->constraints, entry) {
-			if (constraint_query(cstr) == -1)
-				continue;
-		}
-
 		if (ibuf_main->w.queued > 0)
 			pfd[PFD_PIPE_MAIN].events |= POLLOUT;
 		if (ibuf_dns->w.queued > 0)
@@ -333,7 +330,15 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		}
 		ctls = i;
 
+		TAILQ_FOREACH(cstr, &conf->constraints, entry) {
+			if (constraint_query(cstr) == -1)
+				continue;
+		}
+
 		now = getmonotime();
+		if (constraint_cnt)
+			nextaction = now + 1;
+
 		timeout = nextaction - now;
 		if (timeout < 0)
 			timeout = 0;
@@ -392,7 +397,7 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 			if (pfd[j].revents & (POLLIN|POLLERR)) {
 				nfds--;
 				if (client_dispatch(idx2peer[j - idx_peers],
-				    conf->settime, conf->automatic) == -1) {
+				    conf->settime) == -1) {
 					log_warn("pipe write error (settime)");
 					ntp_quit = 1;
 				}
@@ -444,11 +449,9 @@ ntp_dispatch_imsg(void)
 			if (n == 1 && !conf->status.synced) {
 				log_info("clock is now synced");
 				conf->status.synced = 1;
-				priv_dns(IMSG_SYNCED, NULL, 0);
 			} else if (n == 0 && conf->status.synced) {
 				log_info("clock is now unsynced");
 				conf->status.synced = 0;
-				priv_dns(IMSG_UNSYNCED, NULL, 0);
 			}
 			break;
 		case IMSG_CONSTRAINT_RESULT:
@@ -471,7 +474,7 @@ int
 ntp_dispatch_imsg_dns(void)
 {
 	struct imsg		 imsg;
-	struct ntp_peer		*peer, *npeer, *tmp;
+	struct ntp_peer		*peer, *npeer;
 	u_int16_t		 dlen;
 	u_char			*p;
 	struct ntp_addr		*h;
@@ -501,42 +504,20 @@ ntp_dispatch_imsg_dns(void)
 				break;
 			}
 
-			/*
-			 * For the redo dns case we want to have only one clone
-			 * of the pool peer, since it wil be cloned again
-			 */
-			if (peer->addr_head.pool) {
-				TAILQ_FOREACH_SAFE(npeer, &conf->ntp_peers,
-				    entry, tmp) {
-					if (npeer->id == peer->id)
-						continue;
-					if (strcmp(npeer->addr_head.name,
-					    peer->addr_head.name) == 0)
-						peer_remove(npeer);
-				}
-			}
-
 			dlen = imsg.hdr.len - IMSG_HEADER_SIZE;
 			if (dlen == 0) {	/* no data -> temp error */
-				log_warnx("DNS lookup tempfail");
 				peer->state = STATE_DNS_TEMPFAIL;
-				if (++conf->tmpfail > TRIES_AUTO_DNSFAIL)
-					priv_settime(0);
 				break;
 			}
 
 			p = (u_char *)imsg.data;
-			while (dlen >= sizeof(struct sockaddr_storage) +
-			    sizeof(int)) {
+			while (dlen >= sizeof(struct sockaddr_storage)) {
 				if ((h = calloc(1, sizeof(struct ntp_addr))) ==
 				    NULL)
 					fatal(NULL);
 				memcpy(&h->ss, p, sizeof(h->ss));
 				p += sizeof(h->ss);
 				dlen -= sizeof(h->ss);
-				memcpy(&h->notauth, p, sizeof(int));
-				p += sizeof(int);
-				dlen -= sizeof(int);
 				if (peer->addr_head.pool) {
 					npeer = new_peer();
 					npeer->weight = peer->weight;
@@ -590,19 +571,6 @@ peer_remove(struct ntp_peer *p)
 	TAILQ_REMOVE(&conf->ntp_peers, p, entry);
 	free(p);
 	peer_cnt--;
-}
-
-void
-peer_addr_head_clear(struct ntp_peer *p)
-{
-	struct ntp_addr *a = p->addr_head.a;
-	while (a) {
-		struct ntp_addr *next = a->next;
-		free(a);
-		a = next;
-	}
-	p->addr_head.a = NULL;
-	p->addr = NULL;
 }
 
 static void
@@ -764,10 +732,9 @@ priv_settime(double offset)
 void
 priv_dns(int cmd, char *name, u_int32_t peerid)
 {
-	u_int16_t	dlen = 0;
+	u_int16_t	dlen;
 
-	if (name != NULL)
-		dlen = strlen(name) + 1;
+	dlen = strlen(name) + 1;
 	imsg_compose(ibuf_dns, cmd, peerid, 0, -1, name, dlen);
 }
 

@@ -3,7 +3,11 @@
 # check if builtins behave as prototyped
 #
 
-# Ideally tests in t/comp wouldn't use require, as require isn't tested yet
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+}
+
 print "1..16\n";
 
 my $i = 1;

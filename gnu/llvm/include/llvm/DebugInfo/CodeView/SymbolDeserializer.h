@@ -46,12 +46,6 @@ public:
       return EC;
     return Error::success();
   }
-  template <typename T> static Expected<T> deserializeAs(CVSymbol Symbol) {
-    T Record(Symbol.kind());
-    if (auto EC = deserializeAs<T>(Symbol, Record))
-      return std::move(EC);
-    return Record;
-  }
 
   explicit SymbolDeserializer(SymbolVisitorDelegate *Delegate,
                               CodeViewContainer Container)

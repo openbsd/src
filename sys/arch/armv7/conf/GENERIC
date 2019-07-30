@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.122 2019/05/08 23:54:39 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.106 2018/01/06 13:05:20 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -22,9 +22,7 @@ option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 option WSDISPLAY_DEFAULTSCREENS=1
 
 option		CONF_HAVE_GPIO
-option		PCIVERBOSE
 option		USBVERBOSE
-option		USER_PCICONF	# user-space PCI configuration
 
 config		bsd	swap generic
 
@@ -35,8 +33,7 @@ cpu0		at mainbus?
 
 # Cortex-A9
 cortex0		at mainbus?
-ampintc*	at fdt? early 1
-ampintcmsi*	at fdt? early 1
+ampintc*	at fdt?
 amptimer*	at cortex?
 agtimer*	at fdt?
 armliicc*	at cortex?
@@ -44,7 +41,7 @@ armliicc*	at cortex?
 # iMX
 imxccm*		at fdt? early 1		# clock control module
 imxiomuxc*	at fdt? early 1		# iomux controller
-imxanatop*	at fdt? early 1		# anatop controller
+imxanatop*	at fdt?			# anatop controller
 imxgpc*		at fdt?			# power controller
 imxdog*		at fdt?			# watchdog timer
 imxtemp*	at fdt?			# temperature monitor
@@ -58,11 +55,6 @@ sdmmc*		at imxesdhc?		# SD/MMC bus
 imxahci*	at fdt?			# AHCI/SATA
 imxehci*	at fdt?			# EHCI
 usb*		at imxehci?
-imxrtc*		at fdt?			# SNVS RTC
-imxspi*		at fdt?
-ssdfb*		at iic?
-ssdfb*		at spi?
-wsdisplay*	at ssdfb?
 
 # OMAP3xxx/OMAP4xxx SoC
 omap0		at mainbus?
@@ -73,7 +65,7 @@ intc*		at fdt?			# OMAP3 interrupt controller
 omwugen*	at fdt?			# Wake-up generator
 #edma*		at fdt?			# OMAP3 dma controller
 prcm*		at omap?		# power/clock controller
-pinctrl*	at fdt?			# pin muxing
+ompinmux*	at fdt?			# pin muxing
 omdog*		at fdt?			# watchdog timer
 omgpio*		at fdt?			# user-visible GPIO pins?
 gpio*		at omgpio?
@@ -112,8 +104,8 @@ sximmc*		at fdt?			# SD/MMC card controller
 sdmmc*		at sximmc?		# SD/MMC bus
 ehci*		at fdt?			# EHCI (shim)
 usb*		at ehci?	#flags 0x1
-ohci*		at fdt?
-usb*		at ohci?
+#ohci*		at sunxi?
+#usb*		at ohci?
 sxitemp*	at fdt?			# Temperature sensor
 sxits*		at fdt?			# Touchpad controller
 sxitwi*		at fdt?			# Two-Wire Serial Interface
@@ -124,13 +116,10 @@ sysreg*		at fdt?
 pluart*		at fdt?
 plrtc*		at fdt?
 virtio*		at fdt?
-virtio*		at pci?
-pciecam*	at fdt?
-pci*		at pciecam?
 
 sdhc*		at fdt?
 sdmmc*		at sdhc?
-bwfm*		at sdmmc?		# Broadcom FullMAC
+#bwfm*		at sdmmc?		# Broadcom FullMAC
 
 psci*		at fdt? early 1
 syscon*		at fdt? early 1
@@ -176,8 +165,6 @@ mvpinctrl*	at fdt?
 mvmdio*		at fdt?
 mvneta*		at fdt?
 mvmpic*		at fdt?
-mvpcie*		at fdt?
-pci*		at mvpcie?
 mvpxa*		at fdt?
 sdmmc*		at mvpxa?
 
@@ -198,7 +185,6 @@ pcfrtc*		at iic?
 pcxrtc*		at iic?
 rkpmic*		at iic?			# RK808 PMIC
 tpspmic*	at iic?
-pcagpio*	at iic?
 
 # virtio devices
 vioblk*		at virtio?
@@ -207,33 +193,8 @@ viomb*		at virtio?
 viornd*		at virtio?
 vioscsi*	at virtio?
 
-# PCI
-ppb*		at pci?			# PCI-PCI bridges
-pci*		at ppb?
-
-# PCI Ethernet
-em*		at pci?			# Intel Pro/1000 Ethernet
-ix*		at pci?			# Intel 82598EB 10Gb Ethernet
-mskc*		at pci?			# Marvell Yukon-2
-msk*		at mskc?		#  each port of above
-re*		at pci?			# Realtek 8169/8169S/8110S
-
-# PCI SCSI
-ahci*		at pci? flags 0x0000	# AHCI SATA controllers
-					# flags 0x0001 to force SATA 1 (1.5Gb/s)
-nvme*		at pci?			# NVMe controllers
-
-# USB Controllers
-ohci*		at pci?			# Open Host Controller
-uhci*		at pci?			# Universal Host Controller (Intel)
-ehci*		at pci?			# Enhanced Host Controller
-xhci*		at pci?			# eXtensible Host Controller
-
 # USB bus support
-usb*		at ohci?
-usb*		at uhci?
 usb*		at ehci?	flags 0x1
-usb*		at xhci?
 
 # USB devices
 uhub*	at usb?			# USB Hubs
@@ -256,10 +217,6 @@ umct*	at uhub?		# MCT USB-RS232 serial adapter
 ucom*	at umct?
 uslcom*	at uhub?		# Silicon Laboratories CP210x serial
 ucom*	at uslcom?
-uscom*	at uhub?		# Simple USB serial adapters
-ucom*	at uscom?
-ucrcom*	at uhub?		# Chromebook serial
-ucom*	at ucrcom?
 uark*	at uhub?		# Arkmicro ARK3116 serial
 ucom*	at uark?
 moscom*	at uhub?		# MosChip MCS7703 serial
@@ -308,7 +265,6 @@ upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 ugl*	at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
 udav*	at uhub?		# Davicom DM9601 based Ethernet
 mos*	at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
-mue*	at uhub?		# Microchip LAN75xx/LAN78xx Ethernet
 url*	at uhub?		# Realtek RTL8150L based adapters
 ure*	at uhub?		# Realtek RTL8152 based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
@@ -344,7 +300,7 @@ video*	at utvfu?
 audio*	at utvfu?
 udl*	at uhub?		# DisplayLink USB displays
 wsdisplay* at udl?
-bwfm*	at uhub?		# Broadcom FullMAC
+#bwfm*	at uhub?		# Broadcom FullMAC
 
 atphy*		at mii?			# Attansic F1 PHYs
 rgephy*		at mii?			# Realtek 8169S/8110S PHY

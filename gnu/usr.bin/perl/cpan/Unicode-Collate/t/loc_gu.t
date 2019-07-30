@@ -50,7 +50,8 @@ ok($objGu->eq("\x{A82}", "\x{A81}"));
 
 for my $h (0, 1) {
     no warnings 'utf8';
-    my $t = $h ? pack('U', 0xFFFF) : 'z';
+    my $t = $h ? pack('U', 0xFFFF) : "";
+    $objGu->change(highestFFFF => 1) if $h;
 
     ok($objGu->lt("\x{AD0}$t", "\x{A82}"));
     ok($objGu->lt("\x{A82}$t", "\x{A83}"));

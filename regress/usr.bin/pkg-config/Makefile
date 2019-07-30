@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.61 2019/02/04 20:18:27 jasper Exp $
+#	$OpenBSD: Makefile,v 1.57 2017/08/26 09:07:52 jsg Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -62,12 +62,9 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		whitespace-cflags \
 		whitespace-libs \
 		whitespace-linebreak \
-		whitespace-requires-1 \
-		whitespace-requires-2 \
 		whitespace-name \
 		whitespace-property-1 \
 		whitespace-property-2 \
-		whitespace-property-3 \
 		quoting \
 		broken-require-1 \
 		broken-require-2 \
@@ -82,9 +79,6 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		find-config-3 \
 		find-config-4 \
 		find-config-5 \
-		validate-1 \
-		validate-2 \
-		validate-3 \
 		variable-get-1 \
 		variable-set \
 		variables-1 \
@@ -92,8 +86,6 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		variables-3 \
 		variables-4 \
 		variables-5 \
-		variables-6 \
-		variables-7 \
 		filter-system-dirs-1 \
 		filter-system-dirs-2 \
 		filter-system-dirs-3 \
@@ -476,14 +468,6 @@ whitespace-linebreak:
 	@${VPCONFIG} --libs linebreak
 	@diff -u ${WANT} ${GOT}
 
-whitespace-requires-1:
-	# Test whitespace in version comparison
-	@${VPCONFIG} --exists $@
-
-whitespace-requires-2:
-	# Test whitespace in version comparison
-	@${VPCONFIG} --exists $@
-
 whitespace-name:
 	# Test whitespace in Name
 	@echo "Requested 'whitespace > 0.2.0' but version of Whitespace test is 0.0.0" > ${WANT}
@@ -497,13 +481,7 @@ whitespace-property-1:
 	@diff -u ${WANT} ${GOT}
 
 whitespace-property-2:
-	# Test whitespace after property value
-	@echo "0.0.0" > ${WANT}
-	@${VPCONFIG} --modversion whitespace-prop-2
-	@diff -u ${WANT} ${GOT}
-
-whitespace-property-3:
-	# Test whitespace before property value
+	# Test whitespace after property name
 	@echo "0.0.0" > ${WANT}
 	@${VPCONFIG} --modversion whitespace-prop-3
 	@diff -u ${WANT} ${GOT}
@@ -573,23 +551,6 @@ find-config-5:
 	# Multiple existential tests combined (with space)
 	@${VPCONFIG} --exists vers1 vers2
 
-validate-1:
-	# Ensure it doesn't process dependencies
-	@${VPCONFIG} --validate missing-req
-
-validate-2:
-	# Test for empty files
-	@echo "Package file '${.CURDIR}/pcdir//corrupt3.pc' appears to be empty" > ${WANT}
-	@echo "Package 'corrupt3' has no Name: field" >> ${WANT}
-	@! ${VPCONFIG} --validate corrupt3
-	@diff -u ${WANT} ${GOT}
-
-validate-3:
-	# Test for missing fields
-	@echo "Package 'corrupt2' has no Name: field" > ${WANT}
-	@! ${VPCONFIG} --validate corrupt2
-	@diff -u ${WANT} ${GOT}
-
 variable-get-1:
 	# Test --variable
 	@echo "/tmp" > ${WANT}
@@ -631,18 +592,6 @@ variables-5:
 	# Test --variable
 	@echo ' -lfoo-1' > ${WANT}
 	@${VPCONFIG} --libs variables
-	@diff -u ${WANT} ${GOT}
-
-variables-6:
-	# Test variable overriding from environment
-	@echo ' -lfoo-2' > ${WANT}
-	@PKG_CONFIG_VARIABLES_FOO_API_VERSION=2 ${VPCONFIG} --libs variables
-	@diff -u ${WANT} ${GOT}
-
-variables-7:
-	# Ensure variable overriding only uses uppercase keys
-	@echo ' -lfoo-1' > ${WANT}
-	@PKG_CONFIG_variables_foo_api_version=2 ${VPCONFIG} --libs variables
 	@diff -u ${WANT} ${GOT}
 
 filter-system-dirs-1:

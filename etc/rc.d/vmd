@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: vmd,v 1.10 2019/01/21 01:41:16 claudio Exp $
+# $OpenBSD: vmd,v 1.7 2018/02/20 10:12:14 sthen Exp $
 
 daemon="/usr/sbin/vmd"
 
@@ -8,12 +8,21 @@ daemon="/usr/sbin/vmd"
 
 # Child will not return a config parsing error to the parent.
 rc_pre() {
-	# use rcexec here since daemon_flags may contain arguments with spaces
-	${rcexec} "${daemon} -n ${daemon_flags}"
+	${daemon} -n ${daemon_flags}
+}
+
+list_running() {
+	vmctl status | awk '$2 ~ "[0-9]" {print $8}'
 }
 
 rc_stop() {
-	_rc_do vmctl stop -a -w
+	for vm in $(list_running); do
+		_rc_do vmctl stop "$vm"
+		while list_running | fgrep -wq "$vm"; do
+			sleep .1
+		done
+	done
+
 	pkill -T "${daemon_rtable}" -xf "${pexp}"
 }
 

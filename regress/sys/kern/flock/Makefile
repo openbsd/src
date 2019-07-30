@@ -1,25 +1,16 @@
-#	$OpenBSD: Makefile,v 1.9 2019/05/06 16:32:04 anton Exp $
+#	$OpenBSD: Makefile,v 1.3 2011/07/07 01:38:53 guenther Exp $
 
-PROGS+=		flock
-SRCS_flock=	flock.c util.c
+PROG=	flock
 
-PROGS+=		lockf
-SRCS_lockf=	lockf.c util.c
+TESTS!=jot 15 1
 
-WARNINGS=	yes
+# XXX known failures (talk to art)
+REGRESS_SKIP_TARGETS = t-5 t-6
 
-TESTS_FLOCK!=	jot 24 1
-.for t in ${TESTS_FLOCK}
-flock-$t: flock
-	./flock ${LOCKFLAGS} $t
-REGRESS_TARGETS+=flock-$t
-.endfor
-
-TESTS_LOCKF!=	jot 2 1
-.for t in ${TESTS_LOCKF}
-lockf-$t: lockf
-	./lockf ${LOCKFLAGS} $t
-REGRESS_TARGETS+=lockf-$t
+.for a in ${TESTS}
+t-${a}: flock
+	./flock /tmp ${a}
+REGRESS_TARGETS+=t-${a}
 .endfor
 
 .include <bsd.regress.mk>

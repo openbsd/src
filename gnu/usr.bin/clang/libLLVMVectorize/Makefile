@@ -1,17 +1,20 @@
-# $OpenBSD: Makefile,v 1.7 2019/03/05 09:44:42 jsg Exp $
+# $OpenBSD: Makefile,v 1.4 2017/10/04 20:57:09 patrick Exp $
 
 LIB=	LLVMVectorize
+NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms
 
-SRCS+=	LoadStoreVectorizer.cpp \
-	LoopVectorizationLegality.cpp \
+.include <bsd.own.mk>
+SRCS=	Vectorize.cpp \
+	LoadStoreVectorizer.cpp \
 	LoopVectorize.cpp \
-	SLPVectorizer.cpp \
-	VPlan.cpp \
-	VPlanHCFGBuilder.cpp \
-	VPlanVerifier.cpp \
-	Vectorize.cpp
+	SLPVectorizer.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Transforms/Vectorize
+
+install:
+	@# Nothing here so far ...
+
+.include <bsd.lib.mk>

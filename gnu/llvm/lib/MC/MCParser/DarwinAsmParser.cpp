@@ -40,7 +40,7 @@ using namespace llvm;
 
 namespace {
 
-/// Implementation of directive handling which is shared across all
+/// \brief Implementation of directive handling which is shared across all
 /// Darwin targets.
 class DarwinAsmParser : public MCAsmParserExtension {
   template<bool (DarwinAsmParser::*HandlerMethod)(StringRef, SMLoc)>
@@ -54,7 +54,7 @@ class DarwinAsmParser : public MCAsmParserExtension {
                           unsigned TAA = 0, unsigned ImplicitAlign = 0,
                           unsigned StubSize = 0);
 
-  SMLoc LastVersionDirective;
+  SMLoc LastVersionMinDirective;
 
 public:
   DarwinAsmParser() = default;
@@ -186,17 +186,14 @@ public:
     addDirectiveHandler<&DarwinAsmParser::parseSectionDirectiveTLV>(".tlv");
 
     addDirectiveHandler<&DarwinAsmParser::parseSectionDirectiveIdent>(".ident");
-    addDirectiveHandler<&DarwinAsmParser::parseWatchOSVersionMin>(
+    addDirectiveHandler<&DarwinAsmParser::parseVersionMin>(
       ".watchos_version_min");
-    addDirectiveHandler<&DarwinAsmParser::parseTvOSVersionMin>(
-      ".tvos_version_min");
-    addDirectiveHandler<&DarwinAsmParser::parseIOSVersionMin>(
-      ".ios_version_min");
-    addDirectiveHandler<&DarwinAsmParser::parseMacOSXVersionMin>(
+    addDirectiveHandler<&DarwinAsmParser::parseVersionMin>(".tvos_version_min");
+    addDirectiveHandler<&DarwinAsmParser::parseVersionMin>(".ios_version_min");
+    addDirectiveHandler<&DarwinAsmParser::parseVersionMin>(
       ".macosx_version_min");
-    addDirectiveHandler<&DarwinAsmParser::parseBuildVersion>(".build_version");
 
-    LastVersionDirective = SMLoc();
+    LastVersionMinDirective = SMLoc();
   }
 
   bool parseDirectiveAltEntry(StringRef, SMLoc);
@@ -444,24 +441,7 @@ public:
                          MachO::S_THREAD_LOCAL_INIT_FUNCTION_POINTERS);
   }
 
-  bool parseWatchOSVersionMin(StringRef Directive, SMLoc Loc) {
-    return parseVersionMin(Directive, Loc, MCVM_WatchOSVersionMin);
-  }
-  bool parseTvOSVersionMin(StringRef Directive, SMLoc Loc) {
-    return parseVersionMin(Directive, Loc, MCVM_TvOSVersionMin);
-  }
-  bool parseIOSVersionMin(StringRef Directive, SMLoc Loc) {
-    return parseVersionMin(Directive, Loc, MCVM_IOSVersionMin);
-  }
-  bool parseMacOSXVersionMin(StringRef Directive, SMLoc Loc) {
-    return parseVersionMin(Directive, Loc, MCVM_OSXVersionMin);
-  }
-
-  bool parseBuildVersion(StringRef Directive, SMLoc Loc);
-  bool parseVersionMin(StringRef Directive, SMLoc Loc, MCVersionMinType Type);
-  bool parseVersion(unsigned *Major, unsigned *Minor, unsigned *Update);
-  void checkVersion(StringRef Directive, StringRef Arg, SMLoc Loc,
-                    Triple::OSType ExpectedOS);
+  bool parseVersionMin(StringRef, SMLoc);
 };
 
 } // end anonymous namespace
@@ -888,7 +868,6 @@ bool DarwinAsmParser::parseDirectiveZerofill(StringRef, SMLoc) {
   Lex();
 
   StringRef Section;
-  SMLoc SectionLoc = getLexer().getLoc();
   if (getParser().parseIdentifier(Section))
     return TokError("expected section name after comma in '.zerofill' "
                     "directive");
@@ -897,10 +876,9 @@ bool DarwinAsmParser::parseDirectiveZerofill(StringRef, SMLoc) {
   // the section but with no symbol.
   if (getLexer().is(AsmToken::EndOfStatement)) {
     // Create the zerofill section but no symbol
-    getStreamer().EmitZerofill(
-        getContext().getMachOSection(Segment, Section, MachO::S_ZEROFILL, 0,
-                                     SectionKind::getBSS()),
-        /*Symbol=*/nullptr, /*Size=*/0, /*ByteAlignment=*/0, SectionLoc);
+    getStreamer().EmitZerofill(getContext().getMachOSection(
+                                 Segment, Section, MachO::S_ZEROFILL,
+                                 0, SectionKind::getBSS()));
     return false;
   }
 
@@ -959,7 +937,7 @@ bool DarwinAsmParser::parseDirectiveZerofill(StringRef, SMLoc) {
   getStreamer().EmitZerofill(getContext().getMachOSection(
                                Segment, Section, MachO::S_ZEROFILL,
                                0, SectionKind::getBSS()),
-                             Sym, Size, 1 << Pow2Alignment, SectionLoc);
+                             Sym, Size, 1 << Pow2Alignment);
 
   return false;
 }
@@ -1000,143 +978,69 @@ bool DarwinAsmParser::parseDirectiveDataRegionEnd(StringRef, SMLoc) {
   return false;
 }
 
-/// parseVersion ::= major, minor [, update]
-bool DarwinAsmParser::parseVersion(unsigned *Major, unsigned *Minor,
-                                   unsigned *Update) {
+/// parseVersionMin
+///  ::= .ios_version_min major,minor[,update]
+///  ::= .macosx_version_min major,minor[,update]
+bool DarwinAsmParser::parseVersionMin(StringRef Directive, SMLoc Loc) {
+  int64_t Major = 0, Minor = 0, Update = 0;
+  int Kind = StringSwitch<int>(Directive)
+    .Case(".watchos_version_min", MCVM_WatchOSVersionMin)
+    .Case(".tvos_version_min", MCVM_TvOSVersionMin)
+    .Case(".ios_version_min", MCVM_IOSVersionMin)
+    .Case(".macosx_version_min", MCVM_OSXVersionMin);
   // Get the major version number.
   if (getLexer().isNot(AsmToken::Integer))
-    return TokError("invalid OS major version number, integer expected");
-  int64_t MajorVal = getLexer().getTok().getIntVal();
-  if (MajorVal > 65535 || MajorVal <= 0)
     return TokError("invalid OS major version number");
-  *Major = (unsigned)MajorVal;
+  Major = getLexer().getTok().getIntVal();
+  if (Major > 65535 || Major <= 0)
+    return TokError("invalid OS major version number");
   Lex();
   if (getLexer().isNot(AsmToken::Comma))
-    return TokError("OS minor version number required, comma expected");
+    return TokError("minor OS version number required, comma expected");
   Lex();
   // Get the minor version number.
   if (getLexer().isNot(AsmToken::Integer))
-    return TokError("invalid OS minor version number, integer expected");
-  int64_t MinorVal = getLexer().getTok().getIntVal();
-  if (MinorVal > 255 || MinorVal < 0)
     return TokError("invalid OS minor version number");
-  *Minor = MinorVal;
+  Minor = getLexer().getTok().getIntVal();
+  if (Minor > 255 || Minor < 0)
+    return TokError("invalid OS minor version number");
   Lex();
-
   // Get the update level, if specified
-  *Update = 0;
-  if (getLexer().is(AsmToken::EndOfStatement))
-    return false;
-  if (getLexer().isNot(AsmToken::Comma))
-    return TokError("invalid OS update specifier, comma expected");
-  Lex();
-  if (getLexer().isNot(AsmToken::Integer))
-    return TokError("invalid OS update version number, integer expected");
-  int64_t UpdateVal = getLexer().getTok().getIntVal();
-  if (UpdateVal > 255 || UpdateVal < 0)
-    return TokError("invalid OS update version number");
-  *Update = UpdateVal;
-  Lex();
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    if (getLexer().isNot(AsmToken::Comma))
+      return TokError("invalid update specifier, comma expected");
+    Lex();
+    if (getLexer().isNot(AsmToken::Integer))
+      return TokError("invalid OS update number");
+    Update = getLexer().getTok().getIntVal();
+    if (Update > 255 || Update < 0)
+      return TokError("invalid OS update number");
+    Lex();
+  }
+
+  const Triple &T = getContext().getObjectFileInfo()->getTargetTriple();
+  Triple::OSType ExpectedOS = Triple::UnknownOS;
+  switch ((MCVersionMinType)Kind) {
+  case MCVM_WatchOSVersionMin: ExpectedOS = Triple::WatchOS; break;
+  case MCVM_TvOSVersionMin:    ExpectedOS = Triple::TvOS;    break;
+  case MCVM_IOSVersionMin:     ExpectedOS = Triple::IOS;     break;
+  case MCVM_OSXVersionMin:     ExpectedOS = Triple::MacOSX;  break;
+  }
+  if (T.getOS() != ExpectedOS)
+    Warning(Loc, Directive + " should only be used for " +
+            Triple::getOSTypeName(ExpectedOS) + " targets");
+
+  if (LastVersionMinDirective.isValid()) {
+    Warning(Loc, "overriding previous version_min directive");
+    Note(LastVersionMinDirective, "previous definition is here");
+  }
+  LastVersionMinDirective = Loc;
+
+  // We've parsed a correct version specifier, so send it to the streamer.
+  getStreamer().EmitVersionMin((MCVersionMinType)Kind, Major, Minor, Update);
+
   return false;
 }
-
-void DarwinAsmParser::checkVersion(StringRef Directive, StringRef Arg,
-                                   SMLoc Loc, Triple::OSType ExpectedOS) {
-  const Triple &Target = getContext().getObjectFileInfo()->getTargetTriple();
-  if (Target.getOS() != ExpectedOS)
-    Warning(Loc, Twine(Directive) +
-            (Arg.empty() ? Twine() : Twine(' ') + Arg) +
-            " used while targeting " + Target.getOSName());
-
-  if (LastVersionDirective.isValid()) {
-    Warning(Loc, "overriding previous version directive");
-    Note(LastVersionDirective, "previous definition is here");
-  }
-  LastVersionDirective = Loc;
-}
-
-static Triple::OSType getOSTypeFromMCVM(MCVersionMinType Type) {
-  switch (Type) {
-  case MCVM_WatchOSVersionMin: return Triple::WatchOS;
-  case MCVM_TvOSVersionMin:    return Triple::TvOS;
-  case MCVM_IOSVersionMin:     return Triple::IOS;
-  case MCVM_OSXVersionMin:     return Triple::MacOSX;
-  }
-  llvm_unreachable("Invalid mc version min type");
-}
-
-/// parseVersionMin
-///   ::= .ios_version_min parseVersion
-///   |   .macosx_version_min parseVersion
-///   |   .tvos_version_min parseVersion
-///   |   .watchos_version_min parseVersion
-bool DarwinAsmParser::parseVersionMin(StringRef Directive, SMLoc Loc,
-                                      MCVersionMinType Type) {
-  unsigned Major;
-  unsigned Minor;
-  unsigned Update;
-  if (parseVersion(&Major, &Minor, &Update))
-    return true;
-
-  if (parseToken(AsmToken::EndOfStatement))
-    return addErrorSuffix(Twine(" in '") + Directive + "' directive");
-
-  Triple::OSType ExpectedOS = getOSTypeFromMCVM(Type);
-  checkVersion(Directive, StringRef(), Loc, ExpectedOS);
-
-  getStreamer().EmitVersionMin(Type, Major, Minor, Update);
-  return false;
-}
-
-static Triple::OSType getOSTypeFromPlatform(MachO::PlatformType Type) {
-  switch (Type) {
-  case MachO::PLATFORM_MACOS:   return Triple::MacOSX;
-  case MachO::PLATFORM_IOS:     return Triple::IOS;
-  case MachO::PLATFORM_TVOS:    return Triple::TvOS;
-  case MachO::PLATFORM_WATCHOS: return Triple::WatchOS;
-  case MachO::PLATFORM_BRIDGEOS: /* silence warning */break;
-  }
-  llvm_unreachable("Invalid mach-o platform type");
-}
-
-/// parseBuildVersion
-///   ::= .build_version (macos|ios|tvos|watchos), parseVersion
-bool DarwinAsmParser::parseBuildVersion(StringRef Directive, SMLoc Loc) {
-  StringRef PlatformName;
-  SMLoc PlatformLoc = getTok().getLoc();
-  if (getParser().parseIdentifier(PlatformName))
-    return TokError("platform name expected");
-
-  unsigned Platform = StringSwitch<unsigned>(PlatformName)
-    .Case("macos", MachO::PLATFORM_MACOS)
-    .Case("ios", MachO::PLATFORM_IOS)
-    .Case("tvos", MachO::PLATFORM_TVOS)
-    .Case("watchos", MachO::PLATFORM_WATCHOS)
-    .Default(0);
-  if (Platform == 0)
-    return Error(PlatformLoc, "unknown platform name");
-
-  if (getLexer().isNot(AsmToken::Comma))
-    return TokError("version number required, comma expected");
-  Lex();
-
-  unsigned Major;
-  unsigned Minor;
-  unsigned Update;
-  if (parseVersion(&Major, &Minor, &Update))
-    return true;
-
-  if (parseToken(AsmToken::EndOfStatement))
-    return addErrorSuffix(" in '.build_version' directive");
-
-  Triple::OSType ExpectedOS
-    = getOSTypeFromPlatform((MachO::PlatformType)Platform);
-  checkVersion(Directive, PlatformName, Loc, ExpectedOS);
-
-  getStreamer().EmitBuildVersion(Platform, Major, Minor, Update);
-  return false;
-}
-
 
 namespace llvm {
 

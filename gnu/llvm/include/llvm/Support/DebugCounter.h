@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 /// \file
-/// This file provides an implementation of debug counters.  Debug
+/// \brief This file provides an implementation of debug counters.  Debug
 /// counters are a tool that let you narrow down a miscompilation to a specific
 /// thing happening.
 ///
@@ -55,7 +55,7 @@ namespace llvm {
 
 class DebugCounter {
 public:
-  /// Returns a reference to the singleton instance.
+  /// \brief Returns a reference to the singleton instance.
   static DebugCounter &instance();
 
   // Used by the command line option parser to push a new value it parsed.
@@ -70,49 +70,55 @@ public:
     return instance().addCounter(Name, Desc);
   }
   inline static bool shouldExecute(unsigned CounterName) {
-    if (!isCountingEnabled())
-      return true;
-
+// Compile to nothing when debugging is off
+#ifdef NDEBUG
+    return true;
+#else
     auto &Us = instance();
     auto Result = Us.Counters.find(CounterName);
     if (Result != Us.Counters.end()) {
-      auto &CounterInfo = Result->second;
-      ++CounterInfo.Count;
-
-      // We only execute while the Skip is not smaller than Count,
-      // and the StopAfter + Skip is larger than Count.
+      auto &CounterPair = Result->second;
+      // We only execute while the skip (first) is zero and the count (second)
+      // is non-zero.
       // Negative counters always execute.
-      if (CounterInfo.Skip < 0)
+      if (CounterPair.first < 0)
         return true;
-      if (CounterInfo.Skip >= CounterInfo.Count)
+      if (CounterPair.first != 0) {
+        --CounterPair.first;
         return false;
-      if (CounterInfo.StopAfter < 0)
+      }
+      if (CounterPair.second < 0)
         return true;
-      return CounterInfo.StopAfter + CounterInfo.Skip >= CounterInfo.Count;
+      if (CounterPair.second != 0) {
+        --CounterPair.second;
+        return true;
+      }
+      return false;
     }
     // Didn't find the counter, should we warn?
     return true;
+#endif // NDEBUG
   }
 
   // Return true if a given counter had values set (either programatically or on
   // the command line).  This will return true even if those values are
   // currently in a state where the counter will always execute.
   static bool isCounterSet(unsigned ID) {
-    return instance().Counters[ID].IsSet;
+    return instance().Counters.count(ID);
   }
 
-  // Return the Count for a counter. This only works for set counters.
-  static int64_t getCounterValue(unsigned ID) {
+  // Return the skip and count for a counter. This only works for set counters.
+  static std::pair<int, int> getCounterValue(unsigned ID) {
     auto &Us = instance();
     auto Result = Us.Counters.find(ID);
     assert(Result != Us.Counters.end() && "Asking about a non-set counter");
-    return Result->second.Count;
+    return Result->second;
   }
 
-  // Set a registered counter to a given Count value.
-  static void setCounterValue(unsigned ID, int64_t Count) {
+  // Set a registered counter to a given value.
+  static void setCounterValue(unsigned ID, const std::pair<int, int> &Val) {
     auto &Us = instance();
-    Us.Counters[ID].Count = Count;
+    Us.Counters[ID] = Val;
   }
 
   // Dump or print the current counter set into llvm::dbgs().
@@ -130,7 +136,7 @@ public:
 
   // Return the name and description of the counter with the given ID.
   std::pair<std::string, std::string> getCounterInfo(unsigned ID) const {
-    return std::make_pair(RegisteredCounters[ID], Counters.lookup(ID).Desc);
+    return std::make_pair(RegisteredCounters[ID], CounterDesc.lookup(ID));
   }
 
   // Iterate through the registered counters
@@ -140,48 +146,20 @@ public:
   }
   CounterVector::const_iterator end() const { return RegisteredCounters.end(); }
 
-  // Force-enables counting all DebugCounters.
-  //
-  // Since DebugCounters are incompatible with threading (not only do they not
-  // make sense, but we'll also see data races), this should only be used in
-  // contexts where we're certain we won't spawn threads.
-  static void enableAllCounters() { instance().Enabled = true; }
-
 private:
-  static bool isCountingEnabled() {
-// Compile to nothing when debugging is off
-#ifdef NDEBUG
-    return false;
-#else
-    return instance().Enabled;
-#endif
-  }
-
   unsigned addCounter(const std::string &Name, const std::string &Desc) {
     unsigned Result = RegisteredCounters.insert(Name);
-    Counters[Result] = {};
-    Counters[Result].Desc = Desc;
+    CounterDesc[Result] = Desc;
     return Result;
   }
-  // Struct to store counter info.
-  struct CounterInfo {
-    int64_t Count = 0;
-    int64_t Skip = 0;
-    int64_t StopAfter = -1;
-    bool IsSet = false;
-    std::string Desc;
-  };
-  DenseMap<unsigned, CounterInfo> Counters;
+  DenseMap<unsigned, std::pair<long, long>> Counters;
+  DenseMap<unsigned, std::string> CounterDesc;
   CounterVector RegisteredCounters;
-
-  // Whether we should do DebugCounting at all. DebugCounters aren't
-  // thread-safe, so this should always be false in multithreaded scenarios.
-  bool Enabled = false;
 };
 
 #define DEBUG_COUNTER(VARNAME, COUNTERNAME, DESC)                              \
   static const unsigned VARNAME =                                              \
-      DebugCounter::registerCounter(COUNTERNAME, DESC)
+      DebugCounter::registerCounter(COUNTERNAME, DESC);
 
 } // namespace llvm
 #endif

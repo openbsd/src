@@ -19,7 +19,11 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <utility>
 #include <vector>
 
@@ -57,14 +61,13 @@ class TailDuplicator {
 public:
   /// Prepare to run on a specific machine function.
   /// @param MF - Function that will be processed
-  /// @param PreRegAlloc - true if used before register allocation
   /// @param MBPI - Branch Probability Info. Used to propagate correct
   ///     probabilities when modifying the CFG.
   /// @param LayoutMode - When true, don't use the existing layout to make
   ///     decisions.
   /// @param TailDupSize - Maxmimum size of blocks to tail-duplicate. Zero
   ///     default implies using the command line value TailDupSize.
-  void initMF(MachineFunction &MF, bool PreRegAlloc,
+  void initMF(MachineFunction &MF,
               const MachineBranchProbabilityInfo *MBPI,
               bool LayoutMode, unsigned TailDupSize = 0);
 

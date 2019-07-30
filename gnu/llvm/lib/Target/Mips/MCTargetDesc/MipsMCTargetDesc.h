@@ -16,14 +16,12 @@
 
 #include "llvm/Support/DataTypes.h"
 
-#include <memory>
-
 namespace llvm {
 class MCAsmBackend;
 class MCCodeEmitter;
 class MCContext;
 class MCInstrInfo;
-class MCObjectTargetWriter;
+class MCObjectWriter;
 class MCRegisterInfo;
 class MCSubtargetInfo;
 class MCTargetOptions;
@@ -45,12 +43,25 @@ MCCodeEmitter *createMipsMCCodeEmitterEL(const MCInstrInfo &MCII,
                                          const MCRegisterInfo &MRI,
                                          MCContext &Ctx);
 
-MCAsmBackend *createMipsAsmBackend(const Target &T, const MCSubtargetInfo &STI,
-                                   const MCRegisterInfo &MRI,
-                                   const MCTargetOptions &Options);
+MCAsmBackend *createMipsAsmBackendEB32(const Target &T,
+                                       const MCRegisterInfo &MRI,
+                                       const Triple &TT, StringRef CPU,
+                                       const MCTargetOptions &Options);
+MCAsmBackend *createMipsAsmBackendEL32(const Target &T,
+                                       const MCRegisterInfo &MRI,
+                                       const Triple &TT, StringRef CPU,
+                                       const MCTargetOptions &Options);
+MCAsmBackend *createMipsAsmBackendEB64(const Target &T,
+                                       const MCRegisterInfo &MRI,
+                                       const Triple &TT, StringRef CPU,
+                                       const MCTargetOptions &Options);
+MCAsmBackend *createMipsAsmBackendEL64(const Target &T,
+                                       const MCRegisterInfo &MRI,
+                                       const Triple &TT, StringRef CPU,
+                                       const MCTargetOptions &Options);
 
-std::unique_ptr<MCObjectTargetWriter>
-createMipsELFObjectWriter(const Triple &TT, bool IsN32);
+MCObjectWriter *createMipsELFObjectWriter(raw_pwrite_stream &OS, uint8_t OSABI,
+                                          bool IsLittleEndian, bool Is64Bit);
 
 namespace MIPS_MC {
 StringRef selectMipsCPU(const Triple &TT, StringRef CPU);

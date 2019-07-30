@@ -63,7 +63,7 @@ foreach my $l (1, 21) {
 
 use strict;
 
-open F, '.' and binmode F and sysread F, $_, 1;
+open F, '.' and sysread F, $_, 1;
 my $err = $! + 0;
 close F;
 
@@ -148,9 +148,6 @@ SKIP: {
 	skip( 2, 'The pipe function is unimplemented' );
     }
 
-    binmode $out;
-    binmode $in;
-
     # Make the pipe autoflushing
     {
 	my $old_fh = select $out;
@@ -217,7 +214,6 @@ SKIP: {
     pipe $in, $out;
     binmode $out, ':utf8';
     binmode $in,  ':utf8';
-    no warnings qw(deprecated);
     syswrite $out, "...\n";
     $line .= readline $in;
 
@@ -230,7 +226,6 @@ SKIP: {
     pipe $in, $out;
     binmode $out, ':utf8';
     binmode $in,  ':utf8';
-    no warnings qw(deprecated);
     syswrite $out, "\x{2080}...\n";
     $line .= readline $in;
 

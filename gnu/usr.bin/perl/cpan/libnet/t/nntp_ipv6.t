@@ -63,5 +63,4 @@ sub nntp_server {
     }
   }
   note("NNTP dialog done");
-  return 0;
 }

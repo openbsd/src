@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.95 2018/07/07 15:41:25 visa Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.90 2017/12/30 23:08:29 guenther Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -154,9 +154,9 @@ spec_open(void *v)
 			vp->v_flag |= VISTTY;
 		if (cdevsw[maj].d_flags & D_CLONE)
 			return (spec_open_clone(ap));
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, p);
 		error = (*cdevsw[maj].d_open)(dev, ap->a_mode, S_IFCHR, p);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 		return (error);
 
 	case VBLK:
@@ -219,10 +219,10 @@ spec_read(void *v)
 	switch (vp->v_type) {
 
 	case VCHR:
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, p);
 		error = (*cdevsw[major(vp->v_rdev)].d_read)
 			(vp->v_rdev, uio, ap->a_ioflag);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 		return (error);
 
 	case VBLK:
@@ -273,7 +273,7 @@ spec_inactive(void *v)
 {
 	struct vop_inactive_args *ap = v;
 
-	VOP_UNLOCK(ap->a_vp);
+	VOP_UNLOCK(ap->a_vp, ap->a_p);
 	return (0);
 }
 
@@ -306,10 +306,10 @@ spec_write(void *v)
 	switch (vp->v_type) {
 
 	case VCHR:
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, p);
 		error = (*cdevsw[major(vp->v_rdev)].d_write)
 			(vp->v_rdev, uio, ap->a_ioflag);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 		return (error);
 
 	case VBLK:
@@ -429,7 +429,8 @@ spec_fsync(void *v)
 	 */
 loop:
 	s = splbio();
-	LIST_FOREACH_SAFE(bp, &vp->v_dirtyblkhd, b_vnbufs, nbp) {
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp != NULL; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
 		if ((bp->b_flags & B_BUSY))
 			continue;
 		if ((bp->b_flags & B_DELWRI) == 0)
@@ -521,10 +522,10 @@ spec_close(void *v)
 		 * vclean(), the vnode is already locked.
 		 */
 		if (!(vp->v_flag & VXLOCK))
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 		error = vinvalbuf(vp, V_SAVE, ap->a_cred, p, 0, 0);
 		if (!(vp->v_flag & VXLOCK))
-			VOP_UNLOCK(vp);
+			VOP_UNLOCK(vp, p);
 		if (error)
 			return (error);
 		/*
@@ -549,10 +550,10 @@ spec_close(void *v)
 	/* release lock if held and this isn't coming from vclean() */
 	relock = VOP_ISLOCKED(vp) && !(vp->v_flag & VXLOCK);
 	if (relock)
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, p);
 	error = (*devclose)(dev, ap->a_fflag, mode, p);
 	if (relock)
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	return (error);
 }
 
@@ -561,16 +562,11 @@ spec_getattr(void *v)
 {
 	struct vop_getattr_args	*ap = v;
 	struct vnode		*vp = ap->a_vp;
-	int			 error;
 
 	if (!(vp->v_flag & VCLONE))
 		return (EBADF);
 
-	vn_lock(vp->v_specparent, LK_EXCLUSIVE|LK_RETRY);
-	error = VOP_GETATTR(vp->v_specparent, ap->a_vap, ap->a_cred, ap->a_p);
-	VOP_UNLOCK(vp->v_specparent);
-
-	return (error);
+	return (VOP_GETATTR(vp->v_specparent, ap->a_vap, ap->a_cred, ap->a_p));
 }
 
 int
@@ -584,9 +580,9 @@ spec_setattr(void *v)
 	if (!(vp->v_flag & VCLONE))
 		return (EBADF);
 
-	vn_lock(vp->v_specparent, LK_EXCLUSIVE|LK_RETRY);
+	vn_lock(vp->v_specparent, LK_EXCLUSIVE|LK_RETRY, p);
 	error = VOP_SETATTR(vp->v_specparent, ap->a_vap, ap->a_cred, p);
-	VOP_UNLOCK(vp->v_specparent);
+	VOP_UNLOCK(vp, p);
 
 	return (error);
 }
@@ -596,16 +592,11 @@ spec_access(void *v)
 {
 	struct vop_access_args	*ap = v;
 	struct vnode		*vp = ap->a_vp;
-	int			 error;
 
 	if (!(vp->v_flag & VCLONE))
 		return (EBADF);
 
-	vn_lock(vp->v_specparent, LK_EXCLUSIVE|LK_RETRY);
-	error = VOP_ACCESS(vp->v_specparent, ap->a_mode, ap->a_cred, ap->a_p);
-	VOP_UNLOCK(vp->v_specparent);
-
-	return (error);
+	return (VOP_ACCESS(vp->v_specparent, ap->a_mode, ap->a_cred, ap->a_p));
 }
 
 /*
@@ -732,12 +723,12 @@ spec_open_clone(struct vop_open_args *ap)
 		return (error); /* out of vnodes */
 	}
 
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, ap->a_p);
 
 	error = cdevsw[major(vp->v_rdev)].d_open(cvp->v_rdev, ap->a_mode,
 	    S_IFCHR, ap->a_p);
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, ap->a_p);
 
 	if (error) {
 		vput(cvp);

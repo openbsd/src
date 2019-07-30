@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.96 2019/05/12 18:12:38 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.84 2018/02/05 08:44:13 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -77,10 +77,9 @@ enum ieee80211_phymode {
 	IEEE80211_MODE_11A	= 1,	/* 5GHz, OFDM */
 	IEEE80211_MODE_11B	= 2,	/* 2GHz, CCK */
 	IEEE80211_MODE_11G	= 3,	/* 2GHz, OFDM */
-	IEEE80211_MODE_11N	= 4,	/* 2GHz/5GHz, OFDM/HT */
-	IEEE80211_MODE_11AC	= 5,	/* 5GHz, OFDM/VHT */
+	IEEE80211_MODE_11N	= 4,	/* 11n, 2GHz/5GHz */
 };
-#define	IEEE80211_MODE_MAX	(IEEE80211_MODE_11AC+1)
+#define	IEEE80211_MODE_MAX	(IEEE80211_MODE_11N+1)
 
 enum ieee80211_opmode {
 	IEEE80211_M_STA		= 1,	/* infrastructure station */
@@ -120,7 +119,6 @@ struct ieee80211_channel {
 #define IEEE80211_CHAN_DYN	0x0400	/* Dynamic CCK-OFDM channel */
 #define IEEE80211_CHAN_XR	0x1000	/* Extended range OFDM channel */
 #define IEEE80211_CHAN_HT	0x2000	/* 11n/HT channel */
-#define IEEE80211_CHAN_VHT	0x4000	/* 11ac/VHT channel */
 
 /*
  * Useful combinations of channel characteristics.
@@ -144,8 +142,6 @@ struct ieee80211_channel {
 	(((_c)->ic_flags & IEEE80211_CHAN_G) == IEEE80211_CHAN_G)
 #define	IEEE80211_IS_CHAN_N(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_HT) == IEEE80211_CHAN_HT)
-#define	IEEE80211_IS_CHAN_AC(_c) \
-	(((_c)->ic_flags & IEEE80211_CHAN_VHT) == IEEE80211_CHAN_VHT)
 
 #define	IEEE80211_IS_CHAN_2GHZ(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_2GHZ) != 0)
@@ -244,10 +240,10 @@ struct ieee80211com {
 	u_char			ic_chan_scan[howmany(IEEE80211_CHAN_MAX,NBBY)];
 	struct mbuf_queue	ic_mgtq;
 	struct mbuf_queue	ic_pwrsaveq;
+	u_int			ic_scan_lock;	/* user-initiated scan */
 	u_int8_t		ic_scan_count;	/* count scans */
 	u_int32_t		ic_flags;	/* state flags */
 	u_int32_t		ic_xflags;	/* more flags */
-	u_int32_t		ic_userflags;	/* yet more flags */
 	u_int32_t		ic_caps;	/* capabilities */
 	u_int16_t		ic_modecaps;	/* set of mode capabilities */
 	u_int16_t		ic_curmode;	/* current mode */
@@ -256,7 +252,7 @@ struct ieee80211com {
 	enum ieee80211_state	ic_state;	/* 802.11 state */
 	u_int32_t		*ic_aid_bitmap;
 	u_int16_t		ic_max_aid;
-	enum ieee80211_protmode	ic_protmode;	/* 802.11g/n protection mode */
+	enum ieee80211_protmode	ic_protmode;	/* 802.11g protection mode */
 	struct ifmedia		ic_media;	/* interface media config */
 	caddr_t			ic_rawbpf;	/* packet filter structure */
 	struct ieee80211_node	*ic_bss;	/* information for this node */
@@ -339,34 +335,12 @@ struct ieee80211com {
 	u_int8_t		ic_aselcaps;
 	u_int8_t		ic_dialog_token;
 	int			ic_fixed_mcs;
-	TAILQ_HEAD(, ieee80211_ess)	 ic_ess;
 };
 #define	ic_if		ic_ac.ac_if
 #define	ic_softc	ic_if.if_softc
 
-/* list of APs we want to automatically use */
-/* all data is copied from struct ieee80211com */
-struct ieee80211_ess {
-	/* nwid */
-	int			esslen;
-	u_int8_t		essid[IEEE80211_NWID_LEN];
-
-	/* clear/wep/wpa */
-	u_int32_t		flags;
-
-	/* nwkey */
-	struct ieee80211_key    nw_keys[IEEE80211_GROUP_NKID];
-	int			def_txkey;
-
-	/* wpakey */
-	u_int8_t		psk[IEEE80211_PMK_LEN];
-	u_int			rsnprotos;
-	u_int			rsnakms;
-	u_int			rsnciphers;
-	enum ieee80211_cipher	rsngroupcipher;
-
-	TAILQ_ENTRY(ieee80211_ess) ess_next;
-};
+LIST_HEAD(ieee80211com_head, ieee80211com);
+extern struct ieee80211com_head ieee80211com_head;
 
 #define	IEEE80211_ADDR_EQ(a1,a2)	(memcmp(a1,a2,IEEE80211_ADDR_LEN) == 0)
 #define	IEEE80211_ADDR_COPY(dst,src)	memcpy(dst,src,IEEE80211_ADDR_LEN)
@@ -394,8 +368,7 @@ struct ieee80211_ess {
 #define	IEEE80211_F_HTON	0x02000000	/* CONF: HT enabled */
 #define	IEEE80211_F_PBAR	0x04000000	/* CONF: PBAC required */
 #define	IEEE80211_F_BGSCAN	0x08000000	/* STATUS: background scan */
-#define IEEE80211_F_AUTO_JOIN	0x10000000	/* CONF: auto-join active */
-#define	IEEE80211_F_VHTON	0x20000000	/* CONF: VHT enabled */
+#define IEEE80211_F_USERMASK	0xf0000000	/* CONF: ioctl flag mask */
 
 /* ic_xflags */
 #define	IEEE80211_F_TX_MGMT_ONLY 0x00000001	/* leave data frames on ifq */
@@ -454,11 +427,6 @@ enum ieee80211_phymode ieee80211_chan2mode(struct ieee80211com *,
 		const struct ieee80211_channel *);
 void	ieee80211_disable_wep(struct ieee80211com *); 
 void	ieee80211_disable_rsn(struct ieee80211com *); 
-int	ieee80211_add_ess(struct ieee80211com *, struct ieee80211_join *);
-void	ieee80211_del_ess(struct ieee80211com *, char *, int, int);
-void	ieee80211_set_ess(struct ieee80211com *, struct ieee80211_ess *,
-	    struct ieee80211_node *);
-struct ieee80211_ess *ieee80211_get_ess(struct ieee80211com *, const char *, int);
 
 extern	int ieee80211_cache_size;
 

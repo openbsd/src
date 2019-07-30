@@ -55,8 +55,7 @@ Expected<relocation_iterator>
 RuntimeDyldMachO::processScatteredVANILLA(
                           unsigned SectionID, relocation_iterator RelI,
                           const ObjectFile &BaseObjT,
-                          RuntimeDyldMachO::ObjSectionToIDMap &ObjSectionToID,
-                          bool TargetIsLocalThumbFunc) {
+                          RuntimeDyldMachO::ObjSectionToIDMap &ObjSectionToID) {
   const MachOObjectFile &Obj =
     static_cast<const MachOObjectFile&>(BaseObjT);
   MachO::any_relocation_info RE =
@@ -86,7 +85,6 @@ RuntimeDyldMachO::processScatteredVANILLA(
 
   Addend -= SectionBaseAddr;
   RelocationEntry R(SectionID, Offset, RelocType, Addend, IsPCRel, Size);
-  R.IsTargetThumbFunc = TargetIsLocalThumbFunc;
 
   addRelocationForSection(R, TargetSectionID);
 
@@ -196,10 +194,10 @@ Error RuntimeDyldMachO::populateIndirectSymbolPointersSection(
   assert((PTSectionSize % PTEntrySize) == 0 &&
          "Pointers section does not contain a whole number of stubs?");
 
-  LLVM_DEBUG(dbgs() << "Populating pointer table section "
-                    << Sections[PTSectionID].getName() << ", Section ID "
-                    << PTSectionID << ", " << NumPTEntries << " entries, "
-                    << PTEntrySize << " bytes each:\n");
+  DEBUG(dbgs() << "Populating pointer table section "
+               << Sections[PTSectionID].getName() << ", Section ID "
+               << PTSectionID << ", " << NumPTEntries << " entries, "
+               << PTEntrySize << " bytes each:\n");
 
   for (unsigned i = 0; i < NumPTEntries; ++i) {
     unsigned SymbolIndex =
@@ -210,8 +208,8 @@ Error RuntimeDyldMachO::populateIndirectSymbolPointersSection(
       IndirectSymbolName = *IndirectSymbolNameOrErr;
     else
       return IndirectSymbolNameOrErr.takeError();
-    LLVM_DEBUG(dbgs() << "  " << IndirectSymbolName << ": index " << SymbolIndex
-                      << ", PT offset: " << PTEntryOffset << "\n");
+    DEBUG(dbgs() << "  " << IndirectSymbolName << ": index " << SymbolIndex
+          << ", PT offset: " << PTEntryOffset << "\n");
     RelocationEntry RE(PTSectionID, PTEntryOffset,
                        MachO::GENERIC_RELOC_VANILLA, 0, false, 2);
     addRelocationForSymbol(RE, IndirectSymbolName);
@@ -275,8 +273,8 @@ unsigned char *RuntimeDyldMachOCRTPBase<Impl>::processFDE(uint8_t *P,
                                                           int64_t DeltaForEH) {
   typedef typename Impl::TargetPtrT TargetPtrT;
 
-  LLVM_DEBUG(dbgs() << "Processing FDE: Delta for text: " << DeltaForText
-                    << ", Delta for EH: " << DeltaForEH << "\n");
+  DEBUG(dbgs() << "Processing FDE: Delta for text: " << DeltaForText
+               << ", Delta for EH: " << DeltaForEH << "\n");
   uint32_t Length = readBytesUnaligned(P, 4);
   P += 4;
   uint8_t *Ret = P + Length;

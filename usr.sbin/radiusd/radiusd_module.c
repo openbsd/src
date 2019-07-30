@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.12 2019/04/03 11:54:56 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.10 2016/04/05 21:24:02 krw Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -67,7 +67,7 @@ struct module_base {
 };
 
 static int	 module_common_radpkt(struct module_base *, uint32_t, u_int,
-		    const u_char *, size_t);
+		    int, const u_char *, size_t);
 static int	 module_recv_imsg(struct module_base *);
 static int	 module_imsg_handler(struct module_base *, struct imsg *);
 #ifdef USE_LIBEVENT
@@ -241,11 +241,11 @@ module_userpass_fail(struct module_base *base, u_int q_id, const char *msg)
 }
 
 int
-module_accsreq_answer(struct module_base *base, u_int q_id, const u_char *pkt,
-    size_t pktlen)
+module_accsreq_answer(struct module_base *base, u_int q_id, int modified,
+    const u_char *pkt, size_t pktlen)
 {
 	return (module_common_radpkt(base, IMSG_RADIUSD_MODULE_ACCSREQ_ANSWER,
-	    q_id, pkt, pktlen));
+	    q_id, modified, pkt, pktlen));
 }
 
 int
@@ -262,7 +262,7 @@ module_accsreq_aborted(struct module_base *base, u_int q_id)
 
 static int
 module_common_radpkt(struct module_base *base, uint32_t imsg_type, u_int q_id,
-    const u_char *pkt, size_t pktlen)
+    int modified, const u_char *pkt, size_t pktlen)
 {
 	int		 ret = 0, off = 0, len, siz;
 	struct iovec	 iov[2];
@@ -270,23 +270,24 @@ module_common_radpkt(struct module_base *base, uint32_t imsg_type, u_int q_id,
 
 	len = pktlen;
 	ans.q_id = q_id;
-	ans.pktlen = pktlen;
+	ans.modified = modified;
 	while (off < len) {
 		siz = MAX_IMSGSIZE - sizeof(ans);
-		if (len - off > siz)
-			ans.final = false;
-		else {
+		if (len - off > siz) {
 			ans.final = true;
-			siz = len - off;
+			ans.datalen = siz;
+		} else {
+			ans.final = true;
+			ans.datalen = len - off;
 		}
 		iov[0].iov_base = &ans;
 		iov[0].iov_len = sizeof(ans);
 		iov[1].iov_base = (u_char *)pkt + off;
-		iov[1].iov_len = siz;
+		iov[1].iov_len = ans.datalen;
 		ret = imsg_composev(&base->ibuf, imsg_type, 0, 0, -1, iov, 2);
 		if (ret == -1)
 			break;
-		off += siz;
+		off += ans.datalen;
 	}
 	module_reset_event(base);
 
@@ -426,17 +427,17 @@ module_imsg_handler(struct module_base *base, struct imsg *imsg)
 			break;
 		}
 		accessreq = (struct radiusd_module_radpkt_arg *)imsg->data;
-		if (base->radpktsiz < accessreq->pktlen) {
+		if (base->radpktsiz < accessreq->datalen) {
 			u_char *nradpkt;
 			if ((nradpkt = realloc(base->radpkt,
-			    accessreq->pktlen)) == NULL) {
+			    accessreq->datalen)) == NULL) {
 				syslog(LOG_ERR, "Could not handle received "
 				    "ACCSREQ message: %m");
 				base->radpktoff = 0;
 				goto accsreq_out;
 			}
 			base->radpkt = nradpkt;
-			base->radpktsiz = accessreq->pktlen;
+			base->radpktsiz = accessreq->datalen;
 		}
 		chunklen = datalen - sizeof(struct radiusd_module_radpkt_arg);
 		if (chunklen > base->radpktsiz - base->radpktoff){
@@ -451,7 +452,7 @@ module_imsg_handler(struct module_base *base, struct imsg *imsg)
 		base->radpktoff += chunklen;
 		if (!accessreq->final)
 			goto accsreq_out;
-		if (base->radpktoff != accessreq->pktlen) {
+		if (base->radpktoff != accessreq->datalen) {
 			syslog(LOG_ERR,
 			    "Could not handle received ACCSREQ "
 			    "message: length is mismatch");

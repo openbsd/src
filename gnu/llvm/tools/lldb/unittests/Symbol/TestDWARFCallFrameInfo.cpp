@@ -16,7 +16,7 @@
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Symbol/DWARFCallFrameInfo.h"
 #include "lldb/Utility/StreamString.h"
-#include "TestingSupport/TestUtilities.h"
+#include "unittests/Utility/Helpers/TestUtilities.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
@@ -96,12 +96,10 @@ void DWARFCallFrameInfoTest::TestBasic(DWARFCallFrameInfo::Type type,
       "basic-call-frame-info-%%%%%%", "obj", obj));
   llvm::FileRemover obj_remover(obj);
 
-  llvm::StringRef args[] = {YAML2OBJ, yaml};
+  const char *args[] = {YAML2OBJ, yaml.c_str(), nullptr};
   llvm::StringRef obj_ref = obj;
-  const llvm::Optional<llvm::StringRef> redirects[] = {llvm::None, obj_ref,
-                                                       llvm::None};
-  ASSERT_EQ(0,
-            llvm::sys::ExecuteAndWait(YAML2OBJ, args, llvm::None, redirects));
+  const llvm::StringRef *redirects[] = {nullptr, &obj_ref, nullptr};
+  ASSERT_EQ(0, llvm::sys::ExecuteAndWait(YAML2OBJ, args, nullptr, redirects));
 
   uint64_t size;
   ASSERT_NO_ERROR(llvm::sys::fs::file_size(obj, size));

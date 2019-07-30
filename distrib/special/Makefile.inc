@@ -1,6 +1,6 @@
 # options for all the directories below
 
-COPTS+=-Oz -fno-stack-protector -fno-unwind-tables
+COPTS+=-Oz -fno-stack-protector
 MAN=
 LDSTATIC=-static
 NOPIE=

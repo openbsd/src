@@ -5,7 +5,7 @@ use Test::More;
 
 BEGIN { use_ok('XS::APItest') };
 
-our ($XS_VERSION, $VERSION);
+use vars qw($XS_VERSION $VERSION);
 
 # This is what the code expects
 my $real_version = $XS::APItest::VERSION;

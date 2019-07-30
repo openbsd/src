@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2019/02/26 23:39:51 jsg Exp $
+# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:09 patrick Exp $
 
 LIB=	LLVMSupport
 NOPIC=
@@ -7,8 +7,7 @@ NOPROFILE=
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Support
 
 .include <bsd.own.mk>
-SRCS=	AMDGPUMetadata.cpp \
-	APFloat.cpp \
+SRCS=	APFloat.cpp \
 	APInt.cpp \
 	APSInt.cpp \
 	ARMAttributeParser.cpp \
@@ -25,19 +24,17 @@ SRCS=	AMDGPUMetadata.cpp \
 	COM.cpp \
 	CachePruning.cpp \
 	Chrono.cpp \
-	CodeGenCoverage.cpp \
 	CommandLine.cpp \
 	Compression.cpp \
 	ConvertUTF.cpp \
 	ConvertUTFWrapper.cpp \
 	CrashRecoveryContext.cpp \
-	DAGDeltaAlgorithm.cpp \
-	DJB.cpp \
 	DataExtractor.cpp \
 	Debug.cpp \
 	DebugCounter.cpp \
 	DeltaAlgorithm.cpp \
-	SupportError.cpp \
+	DAGDeltaAlgorithm.cpp \
+	Error.cpp \
 	ErrorHandling.cpp \
 	FileUtilities.cpp \
 	FileOutputBuffer.cpp \
@@ -47,24 +44,20 @@ SRCS=	AMDGPUMetadata.cpp \
 	GlobPattern.cpp \
 	GraphWriter.cpp \
 	Hashing.cpp \
-	InitLLVM.cpp \
 	IntEqClasses.cpp \
 	IntervalMap.cpp \
-	JSON.cpp \
 	JamCRC.cpp \
-	KnownBits.cpp \
 	LEB128.cpp \
 	LineIterator.cpp \
 	Locale.cpp \
 	LockFileManager.cpp \
-	SupportLowLevelType.cpp \
+	LowLevelType.cpp \
 	ManagedStatic.cpp \
 	MathExtras.cpp \
 	MemoryBuffer.cpp \
 	MD5.cpp \
 	NativeFormatting.cpp \
 	Options.cpp \
-	Parallel.cpp \
 	PluginLoader.cpp \
 	PrettyStackTrace.cpp \
 	RandomNumberGenerator.cpp \
@@ -115,24 +108,13 @@ SRCS=	AMDGPUMetadata.cpp \
 	TargetRegistry.cpp \
 	ThreadLocal.cpp \
 	Threading.cpp \
-	UnicodeCaseFold.cpp \
 	Valgrind.cpp \
-	VersionTuple.cpp \
 	Watchdog.cpp \
-	WithColor.cpp \
 	xxhash.cpp
-
-SupportError.cpp:
-	ln -s ${LLVM_SRCS}/lib/Support/Error.cpp $@
-
-SupportLowLevelType.cpp:
-	ln -s ${LLVM_SRCS}/lib/Support/LowLevelType.cpp $@
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Support
 
 install:
 	@# Nothing here so far ...
-
-CLEANFILES+= SupportError.cpp SupportLowLevelType.cpp
 
 .include <bsd.lib.mk>

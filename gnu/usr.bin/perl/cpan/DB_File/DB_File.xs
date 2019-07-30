@@ -6,7 +6,7 @@
 
  All comments/suggestions/problems are welcome
 
-     Copyright (c) 1995-2016 Paul Marquess. All rights reserved.
+     Copyright (c) 1995-2014 Paul Marquess. All rights reserved.
      This program is free software; you can redistribute it and/or
      modify it under the same terms as Perl itself.
 
@@ -270,7 +270,7 @@ typedef db_recno_t	recno_t;
 #if DB_VERSION_MAJOR == 2 && DB_VERSION_MINOR < 5
 #  define R_SETCURSOR	0x800000
 #else
-#  define R_SETCURSOR	(DB_OPFLAGS_MASK)
+#  define R_SETCURSOR	(-100)
 #endif
 
 #define R_RECNOSYNC     0
@@ -536,6 +536,7 @@ u_int		flags ;
     if (flagSet(flags, R_CURSOR)) {
 	return ((db->cursor)->c_put)(db->cursor, &key, &value, DB_CURRENT);
     }
+
     if (flagSet(flags, R_SETCURSOR)) {
 	if ((db->dbp)->put(db->dbp, NULL, &key, &value, 0) != 0)
 		return -1 ;
@@ -606,9 +607,6 @@ const DBT * key2 ;
     
 #ifdef AT_LEAST_DB_3_2
     PERL_UNUSED_ARG(db);
-#endif
-#ifdef AT_LEAST_DB_6_0
-    PERL_UNUSED_ARG(locp);
 #endif
 
     if (CurrentDB->in_compare) {
@@ -1439,10 +1437,10 @@ SV *   sv ;
 		    value = (int)SvIV(*svp) ;
 
 		if (fixed) {
-		    (void)dbp->set_re_pad(dbp, value) ;
+		    status = dbp->set_re_pad(dbp, value) ;
 		}
 		else {
-		    (void)dbp->set_re_delim(dbp, value) ;
+		    status = dbp->set_re_delim(dbp, value) ;
 		}
 
             }
@@ -1451,12 +1449,12 @@ SV *   sv ;
                svp = hv_fetch(action, "reclen", 6, FALSE);
 	       if (svp) {
 		   u_int32_t len =  my_SvUV32(*svp) ;
-                   (void)dbp->set_re_len(dbp, len) ;
+                   status = dbp->set_re_len(dbp, len) ;
 	       }    
 	   }
          
 	    if (name != NULL) {
-	        (void)dbp->set_re_source(dbp, name) ;
+	        status = dbp->set_re_source(dbp, name) ;
 	        name = NULL ;
 	    }	
 
@@ -1469,7 +1467,7 @@ SV *   sv ;
 		name = NULL ;
          
 
-	    (void)dbp->set_flags(dbp, (u_int32_t)DB_RENUMBER) ;
+	    status = dbp->set_flags(dbp, (u_int32_t)DB_RENUMBER) ;
          
 		if (flags){
 	            (void)dbp->set_flags(dbp, (u_int32_t)flags) ;

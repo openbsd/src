@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// Fix bitcasted functions.
+/// \brief Fix bitcasted functions.
 ///
 /// WebAssembly requires caller and callee signatures to match, however in LLVM,
 /// some amount of slop is vaguely permitted. Detect mismatch by looking for
@@ -24,7 +24,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "WebAssembly.h"
-#include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
@@ -35,11 +34,6 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "wasm-fix-function-bitcasts"
-
-static cl::opt<bool> TemporaryWorkarounds(
-  "wasm-temporary-workarounds",
-  cl::desc("Apply certain temporary workarounds"),
-  cl::init(true), cl::Hidden);
 
 namespace {
 class FixFunctionBitcasts final : public ModulePass {
@@ -61,9 +55,6 @@ public:
 } // End anonymous namespace
 
 char FixFunctionBitcasts::ID = 0;
-INITIALIZE_PASS(FixFunctionBitcasts, DEBUG_TYPE,
-                "Fix mismatching bitcasts for WebAssembly", false, false)
-
 ModulePass *llvm::createWebAssemblyFixFunctionBitcasts() {
   return new FixFunctionBitcasts();
 }
@@ -77,19 +68,10 @@ static void FindUses(Value *V, Function &F,
     if (BitCastOperator *BC = dyn_cast<BitCastOperator>(U.getUser()))
       FindUses(BC, F, Uses, ConstantBCs);
     else if (U.get()->getType() != F.getType()) {
-      CallSite CS(U.getUser());
-      if (!CS)
-        // Skip uses that aren't immediately called
-        continue;
-      Value *Callee = CS.getCalledValue();
-      if (Callee != V)
-        // Skip calls where the function isn't the callee
-        continue;
       if (isa<Constant>(U.get())) {
         // Only add constant bitcasts to the list once; they get RAUW'd
         auto c = ConstantBCs.insert(cast<Constant>(U.get()));
-        if (!c.second)
-          continue;
+        if (!c.second) continue;
       }
       Uses.push_back(std::make_pair(&U, &F));
     }
@@ -115,10 +97,9 @@ static Function *CreateWrapper(Function *F, FunctionType *Ty) {
   // Determine what arguments to pass.
   SmallVector<Value *, 4> Args;
   Function::arg_iterator AI = Wrapper->arg_begin();
-  Function::arg_iterator AE = Wrapper->arg_end();
   FunctionType::param_iterator PI = F->getFunctionType()->param_begin();
   FunctionType::param_iterator PE = F->getFunctionType()->param_end();
-  for (; AI != AE && PI != PE; ++AI, ++PI) {
+  for (; AI != Wrapper->arg_end() && PI != PE; ++AI, ++PI) {
     if (AI->getType() != *PI) {
       Wrapper->eraseFromParent();
       return nullptr;
@@ -127,9 +108,6 @@ static Function *CreateWrapper(Function *F, FunctionType *Ty) {
   }
   for (; PI != PE; ++PI)
     Args.push_back(UndefValue::get(*PI));
-  if (F->isVarArg())
-    for (; AI != AE; ++AI)
-      Args.push_back(&*AI);
 
   CallInst *Call = CallInst::Create(F, Args, "", BB);
 
@@ -150,41 +128,11 @@ static Function *CreateWrapper(Function *F, FunctionType *Ty) {
 }
 
 bool FixFunctionBitcasts::runOnModule(Module &M) {
-  Function *Main = nullptr;
-  CallInst *CallMain = nullptr;
   SmallVector<std::pair<Use *, Function *>, 0> Uses;
   SmallPtrSet<Constant *, 2> ConstantBCs;
 
   // Collect all the places that need wrappers.
-  for (Function &F : M) {
-    FindUses(&F, F, Uses, ConstantBCs);
-
-    // If we have a "main" function, and its type isn't
-    // "int main(int argc, char *argv[])", create an artificial call with it
-    // bitcasted to that type so that we generate a wrapper for it, so that
-    // the C runtime can call it.
-    if (!TemporaryWorkarounds && !F.isDeclaration() && F.getName() == "main") {
-      Main = &F;
-      LLVMContext &C = M.getContext();
-      Type *MainArgTys[] = {
-        PointerType::get(Type::getInt8PtrTy(C), 0),
-        Type::getInt32Ty(C)
-      };
-      FunctionType *MainTy = FunctionType::get(Type::getInt32Ty(C), MainArgTys,
-                                               /*isVarArg=*/false);
-      if (F.getFunctionType() != MainTy) {
-        Value *Args[] = {
-          UndefValue::get(MainArgTys[0]),
-          UndefValue::get(MainArgTys[1])
-        };
-        Value *Casted = ConstantExpr::getBitCast(Main,
-                                                 PointerType::get(MainTy, 0));
-        CallMain = CallInst::Create(Casted, Args, "call_main");
-        Use *UseMain = &CallMain->getOperandUse(2);
-        Uses.push_back(std::make_pair(UseMain, &F));
-      }
-    }
-  }
+  for (Function &F : M) FindUses(&F, F, Uses, ConstantBCs);
 
   DenseMap<std::pair<Function *, FunctionType *>, Function *> Wrappers;
 
@@ -200,9 +148,9 @@ bool FixFunctionBitcasts::runOnModule(Module &M) {
     if (!Ty)
       continue;
 
-    // Bitcasted vararg functions occur in Emscripten's implementation of
-    // EM_ASM, so suppress wrappers for them for now.
-    if (TemporaryWorkarounds && (Ty->isVarArg() || F->isVarArg()))
+    // Wasm varargs are not ABI-compatible with non-varargs. Just ignore
+    // such casts for now.
+    if (Ty->isVarArg() || F->isVarArg())
       continue;
 
     auto Pair = Wrappers.insert(std::make_pair(std::make_pair(F, Ty), nullptr));
@@ -217,20 +165,6 @@ bool FixFunctionBitcasts::runOnModule(Module &M) {
       U->get()->replaceAllUsesWith(Wrapper);
     else
       U->set(Wrapper);
-  }
-
-  // If we created a wrapper for main, rename the wrapper so that it's the
-  // one that gets called from startup.
-  if (CallMain) {
-    Main->setName("__original_main");
-    Function *MainWrapper =
-        cast<Function>(CallMain->getCalledValue()->stripPointerCasts());
-    MainWrapper->setName("main");
-    MainWrapper->setLinkage(Main->getLinkage());
-    MainWrapper->setVisibility(Main->getVisibility());
-    Main->setLinkage(Function::PrivateLinkage);
-    Main->setVisibility(Function::DefaultVisibility);
-    delete CallMain;
   }
 
   return true;

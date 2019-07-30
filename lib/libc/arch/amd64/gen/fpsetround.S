@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetround.S,v 1.3 2018/07/03 23:14:05 mortimer Exp $	*/
+/*	$OpenBSD: fpsetround.S,v 1.2 2015/05/29 08:50:12 uebayasi Exp $	*/
 /*	$NetBSD: fpsetround.S,v 1.3 2002/06/12 19:17:22 fvdl Exp $	*/
 
 /*
@@ -22,7 +22,6 @@ ENTRY(_fpsetround)
 #else
 ENTRY(fpsetround)
 #endif
-	RETGUARD_SETUP(fpsetround, r11)
 	fnstcw	-4(%rsp)
 	stmxcsr	-8(%rsp)
 
@@ -47,7 +46,6 @@ ENTRY(fpsetround)
 
 	ldmxcsr	-8(%rsp)
 	fldcw	-4(%rsp)
-	RETGUARD_CHECK(fpsetround, r11)
 	ret
 #ifdef WEAK_ALIAS
 END(_fpsetround)

@@ -62,12 +62,10 @@ understanding the encoding.
 Magic Numbers
 -------------
 
-The first four bytes of a bitstream are used as an application-specific magic
-number.  Generic bitcode tools may look at the first four bytes to determine
-whether the stream is a known stream type.  However, these tools should *not*
-determine whether a bitstream is valid based on its magic number alone.  New
-application-specific bitstream formats are being developed all the time; tools
-should not reject them just because they have a hitherto unseen magic number.
+The first two bytes of a bitcode file are 'BC' (``0x42``, ``0x43``).  The second
+two bytes are an application-specific magic number.  Generic bitcode tools can
+look at only the first two bytes to verify the file is bitcode, while
+application-specific programs will want to look at all four.
 
 .. _primitives:
 
@@ -498,8 +496,11 @@ LLVM IR Magic Number
 The magic number for LLVM IR files is:
 
 :raw-html:`<tt><blockquote>`
-['B'\ :sub:`8`, 'C'\ :sub:`8`, 0x0\ :sub:`4`, 0xC\ :sub:`4`, 0xE\ :sub:`4`, 0xD\ :sub:`4`]
+[0x0\ :sub:`4`, 0xC\ :sub:`4`, 0xE\ :sub:`4`, 0xD\ :sub:`4`]
 :raw-html:`</blockquote></tt>`
+
+When combined with the bitcode magic number and viewed as bytes, this is
+``"BC 0xC0DE"``.
 
 .. _Signed VBRs:
 
@@ -680,7 +681,7 @@ for each library name referenced.
 MODULE_CODE_GLOBALVAR Record
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``[GLOBALVAR, strtab offset, strtab size, pointer type, isconst, initid, linkage, alignment, section, visibility, threadlocal, unnamed_addr, externally_initialized, dllstorageclass, comdat, attributes, preemptionspecifier]``
+``[GLOBALVAR, strtab offset, strtab size, pointer type, isconst, initid, linkage, alignment, section, visibility, threadlocal, unnamed_addr, externally_initialized, dllstorageclass, comdat]``
 
 The ``GLOBALVAR`` record (code 7) marks the declaration or definition of a
 global variable. The operand fields are:
@@ -760,21 +761,12 @@ global variable. The operand fields are:
 
 * *comdat*: An encoding of the COMDAT of this function
 
-* *attributes*: If nonzero, the 1-based index into the table of AttributeLists.
-
-.. _bcpreemptionspecifier:
-
-* *preemptionspecifier*: If present, an encoding of the runtime preemption specifier of this variable:
-
-  * ``dso_preemptable``: code 0
-  * ``dso_local``: code 1
-
 .. _FUNCTION:
 
 MODULE_CODE_FUNCTION Record
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``[FUNCTION, strtab offset, strtab size, type, callingconv, isproto, linkage, paramattr, alignment, section, visibility, gc, prologuedata, dllstorageclass, comdat, prefixdata, personalityfn, preemptionspecifier]``
+``[FUNCTION, strtab offset, strtab size, type, callingconv, isproto, linkage, paramattr, alignment, section, visibility, gc, prologuedata, dllstorageclass, comdat, prefixdata, personalityfn]``
 
 The ``FUNCTION`` record (code 8) marks the declaration or definition of a
 function. The operand fields are:
@@ -836,12 +828,10 @@ function. The operand fields are:
 * *personalityfn*: If non-zero, the value index of the personality function for this function,
   plus 1.
 
-* *preemptionspecifier*: If present, an encoding of the :ref:`runtime preemption specifier<bcpreemptionspecifier>`  of this function.
- 
 MODULE_CODE_ALIAS Record
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-``[ALIAS, strtab offset, strtab size, alias type, aliasee val#, linkage, visibility, dllstorageclass, threadlocal, unnamed_addr, preemptionspecifier]``
+``[ALIAS, strtab offset, strtab size, alias type, aliasee val#, linkage, visibility, dllstorageclass, threadlocal, unnamed_addr]``
 
 The ``ALIAS`` record (code 9) marks the definition of an alias. The operand
 fields are
@@ -865,8 +855,6 @@ fields are
 
 * *unnamed_addr*: If present, an encoding of the
   :ref:`unnamed_addr<bcunnamedaddr>` attribute of this alias
-
-* *preemptionspecifier*: If present, an encoding of the :ref:`runtime preemption specifier<bcpreemptionspecifier>`  of this alias.
 
 .. _MODULE_CODE_GCNAME:
 
@@ -903,7 +891,7 @@ PARAMATTR_CODE_ENTRY Record
 
 The ``ENTRY`` record (code 2) contains a variable number of values describing a
 unique set of function parameter attributes. Each *attrgrp* value is used as a
-key with which to look up an entry in the attribute group table described
+key with which to look up an entry in the the attribute group table described
 in the ``PARAMATTR_GROUP_BLOCK`` block.
 
 .. _PARAMATTR_CODE_ENTRY_OLD:
@@ -1051,12 +1039,6 @@ The integer codes are mapped to well-known attributes as follows.
 * code 50: ``inaccessiblememonly_or_argmemonly``
 * code 51: ``allocsize(<EltSizeParam>[, <NumEltsParam>])``
 * code 52: ``writeonly``
-* code 53: ``speculatable``
-* code 54: ``strictfp``
-* code 55: ``sanitize_hwaddress``
-* code 56: ``nocf_check``
-* code 57: ``optforfuzzing``
-* code 58: ``shadowcallstack``
 
 .. note::
   The ``allocsize`` attribute has a special encoding for its arguments. Its two

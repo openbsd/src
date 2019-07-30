@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-ecdsa.c,v 1.16 2019/01/21 09:54:11 djm Exp $ */
+/* $OpenBSD: ssh-ecdsa.c,v 1.14 2018/02/07 02:06:51 jsing Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -45,7 +45,6 @@ ssh_ecdsa_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
     const u_char *data, size_t datalen, u_int compat)
 {
 	ECDSA_SIG *sig = NULL;
-	const BIGNUM *sig_r, *sig_s;
 	int hash_alg;
 	u_char digest[SSH_DIGEST_MAX_LENGTH];
 	size_t len, dlen;
@@ -77,9 +76,8 @@ ssh_ecdsa_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
 		ret = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
-	ECDSA_SIG_get0(sig, &sig_r, &sig_s);
-	if ((ret = sshbuf_put_bignum2(bb, sig_r)) != 0 ||
-	    (ret = sshbuf_put_bignum2(bb, sig_s)) != 0)
+	if ((ret = sshbuf_put_bignum2(bb, sig->r)) != 0 ||
+	    (ret = sshbuf_put_bignum2(bb, sig->s)) != 0)
 		goto out;
 	if ((ret = sshbuf_put_cstring(b, sshkey_ssh_name_plain(key))) != 0 ||
 	    (ret = sshbuf_put_stringb(b, bb)) != 0)
@@ -110,7 +108,6 @@ ssh_ecdsa_verify(const struct sshkey *key,
     const u_char *data, size_t datalen, u_int compat)
 {
 	ECDSA_SIG *sig = NULL;
-	BIGNUM *sig_r = NULL, *sig_s = NULL;
 	int hash_alg;
 	u_char digest[SSH_DIGEST_MAX_LENGTH];
 	size_t dlen;
@@ -145,21 +142,15 @@ ssh_ecdsa_verify(const struct sshkey *key,
 	}
 
 	/* parse signature */
-	if (sshbuf_get_bignum2(sigbuf, &sig_r) != 0 ||
-	    sshbuf_get_bignum2(sigbuf, &sig_s) != 0) {
-		ret = SSH_ERR_INVALID_FORMAT;
-		goto out;
-	}
 	if ((sig = ECDSA_SIG_new()) == NULL) {
 		ret = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
-	if (!ECDSA_SIG_set0(sig, sig_r, sig_s)) {
-		ret = SSH_ERR_LIBCRYPTO_ERROR;
+	if (sshbuf_get_bignum2(sigbuf, sig->r) != 0 ||
+	    sshbuf_get_bignum2(sigbuf, sig->s) != 0) {
+		ret = SSH_ERR_INVALID_FORMAT;
 		goto out;
 	}
-	sig_r = sig_s = NULL; /* transferred */
-
 	if (sshbuf_len(sigbuf) != 0) {
 		ret = SSH_ERR_UNEXPECTED_TRAILING_DATA;
 		goto out;
@@ -185,8 +176,6 @@ ssh_ecdsa_verify(const struct sshkey *key,
 	sshbuf_free(sigbuf);
 	sshbuf_free(b);
 	ECDSA_SIG_free(sig);
-	BN_clear_free(sig_r);
-	BN_clear_free(sig_s);
 	free(ktype);
 	return ret;
 }

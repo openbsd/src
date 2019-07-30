@@ -14,6 +14,8 @@ use lib './lib';
 use strict;
 use ExtUtils::MakeMaker;
 
-use Test::More tests => 1;
+use Test::More;
 
-ok(1, "Your test code goes here");
+pass("Your test code goes here");
+
+done_testing();

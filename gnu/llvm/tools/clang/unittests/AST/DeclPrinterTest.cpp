@@ -31,25 +31,18 @@ using namespace tooling;
 
 namespace {
 
-using PrintingPolicyModifier = void (*)(PrintingPolicy &policy);
-
-void PrintDecl(raw_ostream &Out, const ASTContext *Context, const Decl *D,
-               PrintingPolicyModifier PolicyModifier) {
+void PrintDecl(raw_ostream &Out, const ASTContext *Context, const Decl *D) {
   PrintingPolicy Policy = Context->getPrintingPolicy();
   Policy.TerseOutput = true;
-  if (PolicyModifier)
-    PolicyModifier(Policy);
   D->print(Out, Policy, /*Indentation*/ 0, /*PrintInstantiation*/ false);
 }
 
 class PrintMatch : public MatchFinder::MatchCallback {
   SmallString<1024> Printed;
   unsigned NumFoundDecls;
-  PrintingPolicyModifier PolicyModifier;
 
 public:
-  PrintMatch(PrintingPolicyModifier PolicyModifier)
-      : NumFoundDecls(0), PolicyModifier(PolicyModifier) {}
+  PrintMatch() : NumFoundDecls(0) {}
 
   void run(const MatchFinder::MatchResult &Result) override {
     const Decl *D = Result.Nodes.getNodeAs<Decl>("id");
@@ -60,7 +53,7 @@ public:
       return;
 
     llvm::raw_svector_ostream Out(Printed);
-    PrintDecl(Out, Result.Context, D, PolicyModifier);
+    PrintDecl(Out, Result.Context, D);
   }
 
   StringRef getPrinted() const {
@@ -72,12 +65,13 @@ public:
   }
 };
 
-::testing::AssertionResult
-PrintedDeclMatches(StringRef Code, const std::vector<std::string> &Args,
-                   const DeclarationMatcher &NodeMatch,
-                   StringRef ExpectedPrinted, StringRef FileName,
-                   PrintingPolicyModifier PolicyModifier = nullptr) {
-  PrintMatch Printer(PolicyModifier);
+::testing::AssertionResult PrintedDeclMatches(
+                                  StringRef Code,
+                                  const std::vector<std::string> &Args,
+                                  const DeclarationMatcher &NodeMatch,
+                                  StringRef ExpectedPrinted,
+                                  StringRef FileName) {
+  PrintMatch Printer;
   MatchFinder Finder;
   Finder.addMatcher(NodeMatch, &Printer);
   std::unique_ptr<FrontendActionFactory> Factory(
@@ -104,30 +98,27 @@ PrintedDeclMatches(StringRef Code, const std::vector<std::string> &Args,
   return ::testing::AssertionSuccess();
 }
 
-::testing::AssertionResult
-PrintedDeclCXX98Matches(StringRef Code, StringRef DeclName,
-                        StringRef ExpectedPrinted,
-                        PrintingPolicyModifier PolicyModifier = nullptr) {
+::testing::AssertionResult PrintedDeclCXX98Matches(StringRef Code,
+                                                   StringRef DeclName,
+                                                   StringRef ExpectedPrinted) {
   std::vector<std::string> Args(1, "-std=c++98");
   return PrintedDeclMatches(Code,
                             Args,
                             namedDecl(hasName(DeclName)).bind("id"),
                             ExpectedPrinted,
-                            "input.cc",
-                            PolicyModifier);
+                            "input.cc");
 }
 
-::testing::AssertionResult
-PrintedDeclCXX98Matches(StringRef Code, const DeclarationMatcher &NodeMatch,
-                        StringRef ExpectedPrinted,
-                        PrintingPolicyModifier PolicyModifier = nullptr) {
+::testing::AssertionResult PrintedDeclCXX98Matches(
+                                  StringRef Code,
+                                  const DeclarationMatcher &NodeMatch,
+                                  StringRef ExpectedPrinted) {
   std::vector<std::string> Args(1, "-std=c++98");
   return PrintedDeclMatches(Code,
                             Args,
                             NodeMatch,
                             ExpectedPrinted,
-                            "input.cc",
-                            PolicyModifier);
+                            "input.cc");
 }
 
 ::testing::AssertionResult PrintedDeclCXX11Matches(StringRef Code,
@@ -352,47 +343,6 @@ TEST(DeclPrinter, TestFunctionDecl1) {
     "void A()"));
 }
 
-TEST(DeclPrinter, TestFreeFunctionDecl_FullyQualifiedName) {
-    ASSERT_TRUE(PrintedDeclCXX98Matches(
-      "void A();",
-      "A",
-      "void A()",
-      [](PrintingPolicy &Policy){ Policy.FullyQualifiedName = true; }));
-}
-
-TEST(DeclPrinter, TestFreeFunctionDeclInNamespace_FullyQualifiedName) {
-    ASSERT_TRUE(PrintedDeclCXX98Matches(
-      "namespace X { void A(); };",
-      "A",
-      "void X::A()",
-      [](PrintingPolicy &Policy){ Policy.FullyQualifiedName = true; }));
-}
-
-TEST(DeclPrinter, TestMemberFunction_FullyQualifiedName) {
-    ASSERT_TRUE(PrintedDeclCXX98Matches(
-      "struct X { void A(); };",
-      "A",
-      "void X::A()",
-      [](PrintingPolicy &Policy){ Policy.FullyQualifiedName = true; }));
-}
-
-TEST(DeclPrinter, TestMemberFunctionInNamespace_FullyQualifiedName) {
-    ASSERT_TRUE(PrintedDeclCXX98Matches(
-      "namespace Z { struct X { void A(); }; }",
-      "A",
-      "void Z::X::A()",
-      [](PrintingPolicy &Policy){ Policy.FullyQualifiedName = true; }));
-}
-
-TEST(DeclPrinter, TestMemberFunctionOutside_FullyQualifiedName) {
-    ASSERT_TRUE(PrintedDeclCXX98Matches(
-      "struct X { void A(); };"
-       "void X::A() {}",
-      functionDecl(hasName("A"), isDefinition()).bind("id"),
-      "void X::A()",
-      [](PrintingPolicy &Policy){ Policy.FullyQualifiedName = true; }));
-}
-
 TEST(DeclPrinter, TestFunctionDecl2) {
   ASSERT_TRUE(PrintedDeclCXX98Matches(
     "void A() {}",
@@ -528,27 +478,6 @@ TEST(DeclPrinter, TestCXXConstructorDecl4) {
     "A(const A &a, int = 0)"));
 }
 
-TEST(DeclPrinter, TestCXXConstructorDeclWithMemberInitializer) {
-  ASSERT_TRUE(PrintedDeclCXX98Matches(
-    "struct A {"
-    "  int m;"
-    "  A() : m(2) {}"
-    "};",
-    cxxConstructorDecl(ofClass(hasName("A"))).bind("id"),
-    "A()"));
-}
-
-TEST(DeclPrinter, TestCXXConstructorDeclWithMemberInitializer_NoTerseOutput) {
-  ASSERT_TRUE(PrintedDeclCXX98Matches(
-    "struct A {"
-    "  int m;"
-    "  A() : m(2) {}"
-    "};",
-    cxxConstructorDecl(ofClass(hasName("A"))).bind("id"),
-    "A() : m(2) {\n}\n",
-    [](PrintingPolicy &Policy){ Policy.TerseOutput = false; }));
-}
-
 TEST(DeclPrinter, TestCXXConstructorDecl5) {
   ASSERT_TRUE(PrintedDeclCXX11Matches(
     "struct A {"
@@ -611,7 +540,7 @@ TEST(DeclPrinter, TestCXXConstructorDecl11) {
     "  A(T&&... ts) : T(ts)... {}"
     "};",
     cxxConstructorDecl(ofClass(hasName("A"))).bind("id"),
-    "A<T...>(T &&...ts)"));
+    "A<T...>(T &&...ts) : T(ts)... {}"));
 }
 
 TEST(DeclPrinter, TestCXXDestructorDecl1) {

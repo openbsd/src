@@ -18,17 +18,16 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/IOHandler.h"
 #include "lldb/Host/OptionParser.h"
+#include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandHistory.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandObjectRegexCommand.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
-#include "lldb/Interpreter/OptionArgParser.h"
 #include "lldb/Interpreter/OptionValueBoolean.h"
 #include "lldb/Interpreter/OptionValueString.h"
 #include "lldb/Interpreter/OptionValueUInt64.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
-#include "lldb/Utility/Args.h"
 #include "lldb/Utility/StringList.h"
 
 using namespace lldb;
@@ -235,13 +234,20 @@ public:
     return "";
   }
 
-  int HandleArgumentCompletion(
-      CompletionRequest &request,
-      OptionElementVector &opt_element_vector) override {
+  int HandleArgumentCompletion(Args &input, int &cursor_index,
+                               int &cursor_char_position,
+                               OptionElementVector &opt_element_vector,
+                               int match_start_point, int max_return_elements,
+                               bool &word_complete,
+                               StringList &matches) override {
+    auto completion_str = input[cursor_index].ref;
+    completion_str = completion_str.take_front(cursor_char_position);
+
     CommandCompletions::InvokeCommonCompletionCallbacks(
         GetCommandInterpreter(), CommandCompletions::eDiskFileCompletion,
-        request, nullptr);
-    return request.GetNumberOfMatches();
+        completion_str, match_start_point, max_return_elements, nullptr,
+        word_complete, matches);
+    return matches.GetSize();
   }
 
   Options *GetOptions() override { return &m_options; }
@@ -324,8 +330,9 @@ protected:
 
       m_interpreter.HandleCommandsFromFile(cmd_file, exe_ctx, options, result);
     } else {
-      // No options were set, inherit any settings from nested "command source"
-      // commands, or set to sane default settings...
+      // No options were set, inherit any settings from nested "command
+      // source" commands,
+      // or set to sane default settings...
       CommandInterpreterRunOptions options;
       m_interpreter.HandleCommandsFromFile(cmd_file, exe_ctx, options, result);
     }
@@ -536,9 +543,9 @@ rather than using a positional placeholder:"
   ~CommandObjectCommandsAlias() override = default;
 
 protected:
-  bool DoExecute(llvm::StringRef raw_command_line,
+  bool DoExecute(const char *raw_command_line,
                  CommandReturnObject &result) override {
-    if (raw_command_line.empty()) {
+    if (!raw_command_line || !raw_command_line[0]) {
       result.AppendError("'command alias' requires at least two arguments");
       return false;
     }
@@ -546,13 +553,42 @@ protected:
     ExecutionContext exe_ctx = GetCommandInterpreter().GetExecutionContext();
     m_option_group.NotifyOptionParsingStarting(&exe_ctx);
 
-    OptionsWithRaw args_with_suffix(raw_command_line);
-    const char *remainder = args_with_suffix.GetRawPart().c_str();
+    const char *remainder = nullptr;
 
-    if (args_with_suffix.HasArgs())
-      if (!ParseOptionsAndNotify(args_with_suffix.GetArgs(), result,
-                                 m_option_group, exe_ctx))
-        return false;
+    if (raw_command_line[0] == '-') {
+      // We have some options and these options MUST end with --.
+      const char *end_options = nullptr;
+      const char *s = raw_command_line;
+      while (s && s[0]) {
+        end_options = ::strstr(s, "--");
+        if (end_options) {
+          end_options += 2; // Get past the "--"
+          if (::isspace(end_options[0])) {
+            remainder = end_options;
+            while (::isspace(*remainder))
+              ++remainder;
+            break;
+          }
+        }
+        s = end_options;
+      }
+
+      if (end_options) {
+        Args args(
+            llvm::StringRef(raw_command_line, end_options - raw_command_line));
+        if (!ParseOptions(args, result))
+          return false;
+
+        Status error(m_option_group.NotifyOptionParsingFinished(&exe_ctx));
+        if (error.Fail()) {
+          result.AppendError(error.AsCString());
+          result.SetStatus(eReturnStatusFailed);
+          return false;
+        }
+      }
+    }
+    if (nullptr == remainder)
+      remainder = raw_command_line;
 
     llvm::StringRef raw_command_string(remainder);
     Args args(raw_command_string);
@@ -577,7 +613,8 @@ protected:
     }
 
     // Strip the new alias name off 'raw_command_string'  (leave it on args,
-    // which gets passed to 'Execute', which does the stripping itself.
+    // which gets passed to 'Execute', which
+    // does the stripping itself.
     size_t pos = raw_command_string.find(alias_command);
     if (pos == 0) {
       raw_command_string = raw_command_string.substr(alias_command.size());
@@ -615,8 +652,9 @@ protected:
       return false;
     } else if (!cmd_obj->WantsRawCommandString()) {
       // Note that args was initialized with the original command, and has not
-      // been updated to this point. Therefore can we pass it to the version of
-      // Execute that does not need/expect raw input in the alias.
+      // been updated to this point.
+      // Therefore can we pass it to the version of Execute that does not
+      // need/expect raw input in the alias.
       return HandleAliasingNormalCommand(args, result);
     } else {
       return HandleAliasingRawCommand(alias_command, raw_command_string,
@@ -1090,8 +1128,8 @@ protected:
       return error;
     }
     const size_t first_separator_char_pos = 1;
-    // use the char that follows 's' as the regex separator character so we can
-    // have "s/<regex>/<subst>/" or "s|<regex>|<subst>|"
+    // use the char that follows 's' as the regex separator character
+    // so we can have "s/<regex>/<subst>/" or "s|<regex>|<subst>|"
     const char separator_char = regex_sed[first_separator_char_pos];
     const size_t second_separator_char_pos =
         regex_sed.find(separator_char, first_separator_char_pos + 1);
@@ -1120,7 +1158,8 @@ protected:
     }
 
     if (third_separator_char_pos != regex_sed_size - 1) {
-      // Make sure that everything that follows the last regex separator char
+      // Make sure that everything that follows the last regex
+      // separator char
       if (regex_sed.find_first_not_of("\t\n\v\f\r ",
                                       third_separator_char_pos + 1) !=
           std::string::npos) {
@@ -1268,7 +1307,7 @@ public:
   }
 
 protected:
-  bool DoExecute(llvm::StringRef raw_command_line,
+  bool DoExecute(const char *raw_command_line,
                  CommandReturnObject &result) override {
     ScriptInterpreter *scripter = m_interpreter.GetScriptInterpreter();
 
@@ -1357,7 +1396,7 @@ public:
   }
 
 protected:
-  bool DoExecute(llvm::StringRef raw_command_line,
+  bool DoExecute(const char *raw_command_line,
                  CommandReturnObject &result) override {
     ScriptInterpreter *scripter = m_interpreter.GetScriptInterpreter();
 
@@ -1423,13 +1462,20 @@ public:
 
   ~CommandObjectCommandsScriptImport() override = default;
 
-  int HandleArgumentCompletion(
-      CompletionRequest &request,
-      OptionElementVector &opt_element_vector) override {
+  int HandleArgumentCompletion(Args &input, int &cursor_index,
+                               int &cursor_char_position,
+                               OptionElementVector &opt_element_vector,
+                               int match_start_point, int max_return_elements,
+                               bool &word_complete,
+                               StringList &matches) override {
+    llvm::StringRef completion_str = input[cursor_index].ref;
+    completion_str = completion_str.take_front(cursor_char_position);
+
     CommandCompletions::InvokeCommonCompletionCallbacks(
         GetCommandInterpreter(), CommandCompletions::eDiskFileCompletion,
-        request, nullptr);
-    return request.GetNumberOfMatches();
+        completion_str, match_start_point, max_return_elements, nullptr,
+        word_complete, matches);
+    return matches.GetSize();
   }
 
   Options *GetOptions() override { return &m_options; }
@@ -1494,11 +1540,10 @@ protected:
       // FIXME: this is necessary because CommandObject::CheckRequirements()
       // assumes that commands won't ever be recursively invoked, but it's
       // actually possible to craft a Python script that does other "command
-      // script imports" in __lldb_init_module the real fix is to have
-      // recursive commands possible with a CommandInvocation object separate
-      // from the CommandObject itself, so that recursive command invocations
-      // won't stomp on each other (wrt to execution contents, options, and
-      // more)
+      // script imports" in __lldb_init_module the real fix is to have recursive
+      // commands possible with a CommandInvocation object separate from the
+      // CommandObject itself, so that recursive command invocations won't stomp
+      // on each other (wrt to execution contents, options, and more)
       m_exe_ctx.Clear();
       if (m_interpreter.GetScriptInterpreter()->LoadScriptingModule(
               entry.c_str(), m_options.m_allow_reload, init_session, error)) {
@@ -1594,7 +1639,7 @@ protected:
         break;
       case 's':
         m_synchronicity =
-            (ScriptedCommandSynchronicity)OptionArgParser::ToOptionEnum(
+            (ScriptedCommandSynchronicity)Args::StringToOptionEnum(
                 option_arg, GetDefinitions()[option_idx].enum_values, 0, error);
         if (!error.Success())
           error.SetErrorStringWithFormat(

@@ -63,7 +63,7 @@ warn "# didn't find " . join(' ', keys %ops) if keys %ops;
 # add it to the regex above too. (PADOPs are currently only produced
 # under ithreads, though).
 #
-our ( $a, $b );
+use vars qw( $a $b );
 sub bar {
 	# OP SVOP COP IV here or in sub definition
 	my @bar = (1, 2, 3);
@@ -92,7 +92,11 @@ sub bar {
 # Schwern's example of finding an RV
 my $path = join " ", map { qq["-I$_"] } @INC;
 my $items = qx{$^X $path "-MO=Terse" -le "print \\42" 2>&1};
-like( $items, qr/IV $hex \\42/, 'RV (but now stored in an IV)' );
+if( $] >= 5.011 ) {
+    like( $items, qr/IV $hex \\42/, 'RV (but now stored in an IV)' );
+} else {
+    like( $items, qr/RV $hex \\42/, 'RV' );
+}
 
 package TieOut;
 

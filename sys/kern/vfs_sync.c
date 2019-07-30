@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.60 2018/08/13 15:26:17 visa Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.57 2018/02/10 05:24:23 deraadt Exp $  */
 
 /*
  *  Portions of this code are:
@@ -133,13 +133,14 @@ vn_syncer_add_to_worklist(struct vnode *vp, int delay)
  * System filesystem synchronizer daemon.
  */
 void
-syncer_thread(void *arg)
+sched_sync(struct proc *p)
 {
-	struct proc *p = curproc;
 	struct synclist *slp;
 	struct vnode *vp;
 	time_t starttime;
 	int s;
+
+	syncerproc = curproc;
 
 	for (;;) {
 		starttime = time_second;
@@ -155,7 +156,7 @@ syncer_thread(void *arg)
 			syncer_delayno = 0;
 
 		while ((vp = LIST_FIRST(slp)) != NULL) {
-			if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT)) {
+			if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT, p)) {
 				/*
 				 * If we fail to get the lock, we move this
 				 * vnode one second ahead in time.
@@ -182,7 +183,7 @@ syncer_thread(void *arg)
 					if (vp->v_mount != NULL)
 						printf("mounted on: %s\n",
 						    vp->v_mount->mnt_stat.f_mntonname);
-					panic("%s: fsync failed", __func__);
+					panic("sched_sync: fsync failed");
 				}
 #endif /* DIAGNOSTIC */
 				/*
@@ -359,7 +360,7 @@ sync_inactive(void *v)
 	int s;
 
 	if (vp->v_usecount == 0) {
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, ap->a_p);
 		return (0);
 	}
 

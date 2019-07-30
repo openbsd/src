@@ -1,4 +1,4 @@
-/*	$OpenBSD: spellprog.c,v 1.14 2019/03/10 20:45:11 schwarze Exp $	*/
+/*	$OpenBSD: spellprog.c,v 1.13 2017/07/28 17:16:35 nicm Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -72,6 +72,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <locale.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -107,7 +108,7 @@ char	*estrdup(const char *);
 void	 ise(void);
 void	 print_word(FILE *);
 void	 ztos(char *);
-static void __dead usage(void);
+__dead void usage(void);
 
 /* from look.c */
 int	 look(unsigned char *, unsigned char *, unsigned char *);
@@ -246,6 +247,8 @@ main(int argc, char **argv)
 	struct stat sb;
 	FILE *file, *found;
 
+	setlocale(LC_ALL, "");
+
 	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		err(1, "pledge");
 
@@ -313,7 +316,7 @@ main(int argc, char **argv)
 			if (ch == EOF) {
 				if (found != NULL)
 					fclose(found);
-				return (0);
+				exit(0);
 			}
 		}
 		for (cp = word, dp = original; cp < ep; )
@@ -342,7 +345,7 @@ lcase:
 		file = stdout;
 	}
 
-	return (0);
+	exit(0);
 }
 
 void
@@ -785,7 +788,7 @@ dict(char *bp, char *ep)
 	return (rval);
 }
 
-static void __dead
+__dead void
 usage(void)
 {
 	extern char *__progname;

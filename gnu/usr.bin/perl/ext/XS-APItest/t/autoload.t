@@ -80,12 +80,12 @@ is join(" ", eval 'a "b", "c"'), '$',
 ok(XS::APItest::AUTOLOADtest->can('AUTOLOAD'), 'Test class ->can AUTOLOAD');
 
 # Used to communicate from the XS AUTOLOAD to Perl land
-our $the_method;
+use vars '$the_method';
 
 # First, set up the Perl equivalent to what we're testing in
 # XS so we have a comparison
 package PerlBase;
-our $AUTOLOAD;
+use vars '$AUTOLOAD';
 sub AUTOLOAD {
   Test::More::ok(defined $AUTOLOAD);
   return 1 if not defined $AUTOLOAD;
@@ -94,10 +94,12 @@ sub AUTOLOAD {
 }
 
 package PerlDerived;
-our @ISA = qw(PerlBase);
+use vars '@ISA';
+@ISA = qw(PerlBase);
 
 package Derived;
-our @ISA = qw(XS::APItest::AUTOLOADtest);
+use vars '@ISA';
+@ISA = qw(XS::APItest::AUTOLOADtest);
 
 package main;
 

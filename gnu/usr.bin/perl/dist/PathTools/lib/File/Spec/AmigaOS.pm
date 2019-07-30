@@ -1,12 +1,13 @@
 package File::Spec::AmigaOS;
 
 use strict;
+use vars qw(@ISA $VERSION);
 require File::Spec::Unix;
 
-our $VERSION = '3.74';
+$VERSION = '3.64';
 $VERSION =~ tr/_//d;
 
-our @ISA = qw(File::Spec::Unix);
+@ISA = qw(File::Spec::Unix);
 
 =head1 NAME
 

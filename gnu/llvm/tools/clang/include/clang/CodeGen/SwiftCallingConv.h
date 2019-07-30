@@ -1,4 +1,4 @@
-//==-- SwiftCallingConv.h - Swift ABI lowering ------------------*- C++ -*-===//
+//==-- SwiftCallingConv.h - Swift ABI lowering -----------------------------==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -116,12 +116,6 @@ private:
   void splitVectorEntry(unsigned index);
 };
 
-/// Should an aggregate which expands to the given type sequence
-/// be passed/returned indirectly under swiftcall?
-bool shouldPassIndirectly(CodeGenModule &CGM,
-                          ArrayRef<llvm::Type*> types,
-                          bool asReturnValue);
-
 /// Return the maximum voluntary integer size for the current target.
 CharUnits getMaximumVoluntaryIntegerSize(CodeGenModule &CGM);
 
@@ -152,15 +146,9 @@ void legalizeVectorType(CodeGenModule &CGM, CharUnits vectorSize,
                         llvm::VectorType *vectorTy,
                         llvm::SmallVectorImpl<llvm::Type*> &types);
 
-/// Is the given record type required to be passed and returned indirectly
-/// because of language restrictions?
-///
-/// This considers *only* mandatory indirectness due to language restrictions,
-/// such as C++'s non-trivially-copyable types and Objective-C's __weak
-/// references.  A record for which this returns true may still be passed
-/// indirectly for other reasons, such as being too large to fit in a
-/// reasonable number of registers.
-bool mustPassRecordIndirectly(CodeGenModule &CGM, const RecordDecl *record);
+/// Should a C++ record type be passed and returned indirectly?
+bool shouldPassCXXRecordIndirectly(CodeGenModule &CGM,
+                                   const CXXRecordDecl *record);
 
 /// Classify the rules for how to return a particular type.
 ABIArgInfo classifyReturnType(CodeGenModule &CGM, CanQualType type);
@@ -172,7 +160,7 @@ ABIArgInfo classifyArgumentType(CodeGenModule &CGM, CanQualType type);
 /// private interface for Clang.
 void computeABIInfo(CodeGenModule &CGM, CGFunctionInfo &FI);
 
-/// Is swifterror lowered to a register by the target ABI?
+/// Is swifterror lowered to a register by the target ABI.
 bool isSwiftErrorLoweredInRegister(CodeGenModule &CGM);
 
 } // end namespace swiftcall

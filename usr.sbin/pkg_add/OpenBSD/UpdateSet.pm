@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.83 2019/04/07 10:44:25 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.77 2018/02/27 22:46:53 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -61,8 +61,6 @@ package OpenBSD::hint2;
 our @ISA = qw(OpenBSD::hint);
 
 package OpenBSD::DeleteSet;
-use OpenBSD::Error;
-
 sub new
 {
 	my ($class, $state) = @_;
@@ -73,8 +71,7 @@ sub add_older
 {
 	my $self = shift;
 	for my $h (@_) {
-		$self->{older}{$h->pkgname} = $h;
-		$h->{is_old} = 1;
+		$self->{older}->{$h->pkgname} = $h;
 	}
 	return $self;
 }
@@ -92,11 +89,6 @@ sub older_names
 }
 
 sub all_handles
-{
-	&older;
-}
-
-sub changed_handles
 {
 	&older;
 }
@@ -184,23 +176,6 @@ sub merge
 	return $self;
 }
 
-sub match_locations
-{
-	return [];
-}
-
-OpenBSD::Auto::cache(solver,
-    sub {
-    	require OpenBSD::Dependencies;
-	return OpenBSD::Dependencies::Solver->new(shift);
-    });
-
-OpenBSD::Auto::cache(conflict_cache,
-    sub {
-    	require OpenBSD::Dependencies;
-	return OpenBSD::ConflictCache->new;
-    });
-
 package OpenBSD::UpdateSet;
 our @ISA = qw(OpenBSD::DeleteSet);
 
@@ -263,7 +238,7 @@ sub add_newer
 {
 	my $self = shift;
 	for my $h (@_) {
-		$self->{newer}{$h->pkgname} = $h;
+		$self->{newer}->{$h->pkgname} = $h;
 		$self->{updates}++;
 	}
 	return $self;
@@ -285,10 +260,6 @@ sub move_kept
 		delete $self->{older}{$h->pkgname};
 		delete $self->{newer}{$h->pkgname};
 		$self->{kept}{$h->pkgname} = $h;
-		if (!defined $h->{location}) {
-			$h->{location} = 
-			    $self->{repo}->installed->find($h->pkgname);
-		}
 		$h->complete_dependency_info;
 		$h->{update_found} = $h;
 	}
@@ -347,12 +318,6 @@ sub all_handles
 {
 	my $self = shift;
 	return ($self->older, $self->newer, $self->kept);
-}
-
-sub changed_handles
-{
-	my $self = shift;
-	return ($self->older, $self->newer);
 }
 
 sub hint_names
@@ -439,17 +404,15 @@ sub validate_plists
 	}
 	if (defined $state->{overflow}) {
 		$state->vstat->tally;
-		$state->vstat->drop_changes;
-		# nothing to try if we don't have existing stuff to remove
-		return 0 if $self->older == 0;
-		# we already tried the other way around...
-		return 0 if $state->{delete_first};
-		if ($state->defines('deletefirst') ||
-		    $state->confirm_defaults_to_no(
-			"Delete older packages first")) {
-			# okay we recurse doing things the other way around
-			$state->{delete_first} = 1;
-			return $self->validate_plists($state);
+		# okay, let's retry the other way around if we haven't yet
+		if (!defined $state->{delete_first}) {
+			if ($state->defines('deletefirst') ||
+			    $state->confirm_defaults_to_no(
+			    "Delete older packages first")) {
+				$state->{delete_first} = 1;
+				$state->vstat->drop_changes;
+				return $self->validate_plists($state);
+			}
 		}
 	}
 	if ($state->{problems}) {

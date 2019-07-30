@@ -13,6 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCAsmInfoWasm.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCSectionWasm.h"
 using namespace llvm;
 
 void MCAsmInfoWasm::anchor() { }

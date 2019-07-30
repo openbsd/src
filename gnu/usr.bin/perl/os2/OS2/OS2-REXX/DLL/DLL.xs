@@ -164,7 +164,7 @@ _call(name, address, queue="SESSION", ...)
 	   if (result.strptr)
 	       sv_setpvn(ST(0), result.strptr, result.strlength);
 	   else
-	       SvPVCLEAR(ST(0));
+	       sv_setpvn(ST(0), "", 0);
        }
        if (result.strptr && result.strptr != resbuf)
 	   DosFreeMem(result.strptr);

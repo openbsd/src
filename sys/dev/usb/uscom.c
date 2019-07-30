@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscom.c,v 1.7 2019/02/24 17:36:28 patrick Exp $	*/
+/*	$OpenBSD: uscom.c,v 1.5 2016/09/02 09:14:59 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -52,9 +52,7 @@ struct ucom_methods uscom_methods = {
 };
 
 static const struct usb_devno uscom_devs[] = {
-	{ USB_VENDOR_HP,		USB_PRODUCT_HP_HPX9GP },
-	{ USB_VENDOR_DYNASTREAM,	USB_PRODUCT_DYNASTREAM_ANTUSB2 },
-	{ USB_VENDOR_DYNASTREAM,	USB_PRODUCT_DYNASTREAM_ANTUSBM }
+	{ USB_VENDOR_HP,	USB_PRODUCT_HP_HPX9GP }
 };
 
 int	 uscom_match(struct device *, void *, void *);

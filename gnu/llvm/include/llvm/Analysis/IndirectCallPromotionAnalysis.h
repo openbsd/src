@@ -27,12 +27,10 @@ private:
   // Allocate space to read the profile annotation.
   std::unique_ptr<InstrProfValueData[]> ValueDataArray;
 
-  // Count is the call count for the direct-call target.
-  // TotalCount is the total call count for the indirect-call callsite.
-  // RemainingCount is the TotalCount minus promoted-direct-call count.
+  // Count is the call count for the direct-call target and
+  // TotalCount is the call count for the indirect-call callsite.
   // Return true we should promote this indirect-call target.
-  bool isPromotionProfitable(uint64_t Count, uint64_t TotalCount,
-                             uint64_t RemainingCount);
+  bool isPromotionProfitable(uint64_t Count, uint64_t TotalCount);
 
   // Returns the number of profitable candidates to promote for the
   // current ValueDataArray and the given \p Inst.
@@ -48,7 +46,7 @@ private:
 public:
   ICallPromotionAnalysis();
 
-  /// Returns reference to array of InstrProfValueData for the given
+  /// \brief Returns reference to array of InstrProfValueData for the given
   /// instruction \p I.
   ///
   /// The \p NumVals, \p TotalCount and \p NumCandidates

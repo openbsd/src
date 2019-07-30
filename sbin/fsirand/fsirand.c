@@ -1,7 +1,7 @@
-/*	$OpenBSD: fsirand.c,v 1.40 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.39 2016/08/14 22:35:54 guenther Exp $	*/
 
 /*
- * Copyright (c) 1997 Todd C. Miller <millert@openbsd.org>
+ * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

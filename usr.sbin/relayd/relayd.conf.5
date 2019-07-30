@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.190 2019/05/31 15:25:57 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.182 2017/11/29 21:17:51 jmc Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2019 $
+.Dd $Mdocdate: November 29 2017 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -25,9 +25,9 @@
 .Nm
 is the configuration file for the relay daemon,
 .Xr relayd 8 .
-.Pp
+.Sh SECTIONS
 .Nm
-is divided into the following main sections:
+is divided into seven main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
@@ -123,14 +123,14 @@ Set the interval in seconds at which the hosts will be checked.
 The default interval is 10 seconds.
 .It Xo
 .Ic log
-.Pq Ic state changes Ns | Ns Ic host checks
+.Pq Ic updates Ns | Ns Ic all
 .Xc
-Log host checks:
-Either log only the
-.Ic state changes
-of hosts or log all
-.Ic host checks
-that were run, even if the state didn't change.
+Log state notifications after completed host checks.
+Either only log the
+.Ic updates
+to new states or log
+.Ic all
+state notifications, even if the state didn't change.
 The host state can be
 .Dq up
 (the health check completed successfully),
@@ -139,12 +139,6 @@ The host state can be
 or
 .Dq unknown
 (the host is disabled or has not been checked yet).
-.It Xo
-.Ic log connection Op Ic errors
-.Xc
-When using relays, log all TCP connections.
-Optionally log only
-.Ic connection errors .
 .It Ic prefork Ar number
 When using relays, run the specified number of processes to handle
 relayed connections.
@@ -682,10 +676,27 @@ Like the previous directive, but for redirections with rdr-to in
 .Xc
 Specify the address and port for the relay to listen on.
 The relay will accept incoming connections to the specified address.
+.Pp
 If the
 .Ic tls
 keyword is present, the relay will accept connections using the
 encrypted TLS protocol.
+The relay will attempt to look up a private key in
+.Pa /etc/ssl/private/address:port.key
+and a public certificate in
+.Pa /etc/ssl/address:port.crt ,
+where
+.Ar address
+is the specified IP address and
+.Ar port
+is the specified port that the relay listens on.
+If these files are not present, the relay will continue to look in
+.Pa /etc/ssl/private/address.key
+and
+.Pa /etc/ssl/address.crt .
+See
+.Xr ssl 8
+for details about SSL/TLS server certificates.
 .It Ic protocol Ar name
 Use the specified protocol definition for the relay.
 The generic TCP protocol options will be used by default;
@@ -838,7 +849,7 @@ Valid options are:
 .Bl -tag -width Ds
 .It Ic backlog Ar number
 Set the maximum length the queue of pending connections may grow to.
-The backlog option is 10 by default, is limited to 512 and capped by the
+The backlog option is 10 by default and is limited by the
 .Ic kern.somaxconn
 .Xr sysctl 8
 variable.
@@ -946,25 +957,6 @@ Values higher than 1024 bits can cause incompatibilities with older
 TLS clients.
 The default is
 .Ic no edh .
-.It Ic keypair Ar name
-The relay will attempt to look up a private key in
-.Pa /etc/ssl/private/name:port.key
-and a public certificate in
-.Pa /etc/ssl/name:port.crt ,
-where
-.Ar port
-is the specified port that the relay listens on.
-If these files are not present, the relay will continue to look in
-.Pa /etc/ssl/private/name.key
-and
-.Pa /etc/ssl/name.crt .
-This option can be specified multiple times for TLS Server Name Indication.
-If not specified,
-a keypair will be loaded using the specified IP address of the relay as
-.Ar name .
-See
-.Xr ssl 8
-for details about SSL/TLS server certificates.
 .It Ic no cipher-server-preference
 Prefer the client's cipher list over the server's preferences when
 choosing a cipher for the connection.
@@ -1008,10 +1000,6 @@ Valid options are:
 .It Ic headerlen Ar number
 Set the maximum size of all HTTP headers in bytes.
 The default value is 8192 and it is limited to a maximum of 131072.
-.It Ic websockets
-Allow connection upgrade to websocket protocol.
-The default is
-.Ic no websockets .
 .El
 .El
 .Sh FILTER RULES
@@ -1082,13 +1070,6 @@ evaluation is skipped.
 .It Ic inet No or Ic inet6
 Only match connections with the specified address family,
 either of type IPv4 or IPv6.
-.It Ic from Ar address Ns Oo Li / Ns Ar prefix Oc
-This rule only matches for connections from the specified source.
-.It Ic to Ar address Ns Oo Li / Ns Ar prefix Oc
-This rule only matches for connections to the specified destination.
-The destination is the address the client was connecting to,
-typically the relay's listen address in non-transparent mode,
-not the address of the forwarded backend connection.
 .It Ic forward to Pf < Ar table Ns >
 Forward the request to a server in the specified table.
 With this option, requests can be passed to specific backend servers.
@@ -1503,6 +1484,7 @@ http protocol "https" {
 	match header set "Keep-Alive" value "$TIMEOUT"
 
 	match query hash "sessid"
+	match hash "sessid"
 
 	pass
 	block path "/cgi-bin/index.cgi" value "*command=*"

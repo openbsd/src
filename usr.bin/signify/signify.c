@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.131 2019/03/23 07:10:06 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.128 2017/07/11 23:27:13 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -80,7 +80,7 @@ usage(const char *error)
 #ifndef VERIFYONLY
 	    "\t%1$s -C [-q] -p pubkey -x sigfile [file ...]\n"
 	    "\t%1$s -G [-n] [-c comment] -p pubkey -s seckey\n"
-	    "\t%1$s -S [-enz] [-x sigfile] -s seckey -m message\n"
+	    "\t%1$s -S [-ez] [-x sigfile] -s seckey -m message\n"
 #endif
 	    "\t%1$s -V [-eqz] [-p pubkey] [-t keytype] [-x sigfile] -m message\n",
 	    getprogname());
@@ -142,7 +142,7 @@ parseb64file(const char *filename, char *b64, void *buf, size_t buflen,
 		errx(1, "missing new line after base64 in %s", filename);
 	*b64end = '\0';
 	if (b64_pton(commentend + 1, buf, buflen) != buflen)
-		errx(1, "unable to parse %s", filename);
+		errx(1, "invalid base64 encoding in %s", filename);
 	if (memcmp(buf, PKALG, 2) != 0)
 		errx(1, "unsupported file %s", filename);
 	return b64end - b64 + 1;
@@ -254,7 +254,6 @@ kdf(uint8_t *salt, size_t saltlen, int rounds, int allowstdin, int confirm,
 {
 	char pass[1024];
 	int rppflags = RPP_ECHO_OFF;
-	const char *errstr = NULL;
 
 	if (rounds == 0) {
 		memset(key, 0, keylen);
@@ -271,17 +270,15 @@ kdf(uint8_t *salt, size_t saltlen, int rounds, int allowstdin, int confirm,
 		char pass2[1024];
 		if (!readpassphrase("confirm passphrase: ", pass2,
 		    sizeof(pass2), rppflags))
-			errstr = "unable to read passphrase";
-		if (!errstr && strcmp(pass, pass2) != 0)
-			errstr = "passwords don't match";
+			errx(1, "unable to read passphrase");
+		if (strcmp(pass, pass2) != 0)
+			errx(1, "passwords don't match");
 		explicit_bzero(pass2, sizeof(pass2));
 	}
-	if (!errstr && bcrypt_pbkdf(pass, strlen(pass), salt, saltlen, key,
+	if (bcrypt_pbkdf(pass, strlen(pass), salt, saltlen, key,
 	    keylen, rounds) == -1)
-		errstr = "bcrypt pbkdf";
+		errx(1, "bcrypt pbkdf");
 	explicit_bzero(pass, sizeof(pass));
-	if (errstr)
-		errx(1, "%s", errstr);
 }
 
 static void
@@ -754,8 +751,7 @@ main(int argc, char **argv)
 	char sigfilebuf[PATH_MAX];
 	const char *comment = "signify";
 	char *keytype = NULL;
-	int ch;
-	int none = 0;
+	int ch, rounds;
 	int embedded = 0;
 	int quiet = 0;
 	int gzip = 0;
@@ -769,6 +765,8 @@ main(int argc, char **argv)
 
 	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
 		err(1, "pledge");
+
+	rounds = 42;
 
 	while ((ch = getopt(argc, argv, "CGSVzc:em:np:qs:t:x:")) != -1) {
 		switch (ch) {
@@ -807,7 +805,7 @@ main(int argc, char **argv)
 			msgfile = optarg;
 			break;
 		case 'n':
-			none = 1;
+			rounds = 0;
 			break;
 		case 'p':
 			pubkeyfile = optarg;
@@ -870,14 +868,14 @@ main(int argc, char **argv)
 		if (!pubkeyfile || !seckeyfile)
 			usage("must specify pubkey and seckey");
 		check_keyname_compliance(pubkeyfile, seckeyfile);
-		generate(pubkeyfile, seckeyfile, none ? 0 : 42, comment);
+		generate(pubkeyfile, seckeyfile, rounds, comment);
 		break;
 	case SIGN:
 		/* no pledge */
 		if (gzip) {
 			if (!msgfile || !seckeyfile || !sigfile)
 				usage("must specify message sigfile seckey");
-			zsign(seckeyfile, msgfile, sigfile, none);
+			zsign(seckeyfile, msgfile, sigfile);
 		} else {
 			if (!msgfile || !seckeyfile)
 				usage("must specify message and seckey");

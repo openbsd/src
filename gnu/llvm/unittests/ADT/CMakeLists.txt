@@ -2,8 +2,7 @@ set(LLVM_LINK_COMPONENTS
   Support
   )
 
-add_llvm_unittest(ADTTests
-  AnyTest.cpp
+set(ADTSources
   APFloatTest.cpp
   APIntTest.cpp
   APSIntTest.cpp
@@ -17,9 +16,7 @@ add_llvm_unittest(ADTTests
   DenseMapTest.cpp
   DenseSetTest.cpp
   DepthFirstIteratorTest.cpp
-  EquivalenceClassesTest.cpp
   FoldingSet.cpp
-  FunctionExtrasTest.cpp
   FunctionRefTest.cpp
   HashingTest.cpp
   IListBaseTest.cpp
@@ -35,7 +32,6 @@ add_llvm_unittest(ADTTests
   IntrusiveRefCntPtrTest.cpp
   IteratorTest.cpp
   MakeUniqueTest.cpp
-  MappedIteratorTest.cpp
   MapVectorTest.cpp
   OptionalTest.cpp
   PackedVectorTest.cpp
@@ -46,6 +42,7 @@ add_llvm_unittest(ADTTests
   PostOrderIteratorTest.cpp
   PriorityWorklistTest.cpp
   RangeAdapterTest.cpp
+  ReverseIterationTest.cpp
   SCCIteratorTest.cpp
   STLExtrasTest.cpp
   ScopeExitTest.cpp
@@ -53,13 +50,11 @@ add_llvm_unittest(ADTTests
   SetVectorTest.cpp
   SimpleIListTest.cpp
   SmallPtrSetTest.cpp
-  SmallSetTest.cpp
   SmallStringTest.cpp
   SmallVectorTest.cpp
   SparseBitVectorTest.cpp
   SparseMultiSetTest.cpp
   SparseSetTest.cpp
-  StatisticTest.cpp
   StringExtrasTest.cpp
   StringMapTest.cpp
   StringRefTest.cpp
@@ -68,6 +63,10 @@ add_llvm_unittest(ADTTests
   TripleTest.cpp
   TwineTest.cpp
   VariadicFunctionTest.cpp
+ )
+
+add_llvm_unittest(ADTTests
+  ${ADTSources}
   )
 
 add_dependencies(ADTTests intrinsics_gen)

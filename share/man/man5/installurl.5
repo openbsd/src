@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installurl.5,v 1.8 2019/04/27 22:30:05 tj Exp $
+.\"	$OpenBSD: installurl.5,v 1.6 2017/05/19 16:56:49 tb Exp $
 .\"
 .\" Copyright (c) 2017 Robert Peichaer <rpe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 27 2019 $
+.Dd $Mdocdate: May 19 2017 $
 .Dt INSTALLURL 5
 .Os
 .Sh NAME
@@ -27,9 +27,10 @@ file contains a single line specifying an
 .Ox
 mirror server URL, such as
 .Pp
-.Dl https://cdn.openbsd.org/pub/OpenBSD
+.Dl https://ftp.openbsd.org/pub/OpenBSD
 .Pp
-It is created by the installer script during installations and upgrades.
+It is created by the installer script during installations and upgrades
+over HTTP.
 .Pp
 Empty lines and lines beginning with
 .Sq #
@@ -40,5 +41,4 @@ in the file are ignored.
 .El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
-.Xr syspatch 8 ,
-.Xr sysupgrade 8
+.Xr syspatch 8

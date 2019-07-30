@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.52 2019/06/17 12:42:52 florian Exp $ */
+/*	$Id: main.c,v 1.36 2017/11/27 01:58:52 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -36,10 +36,11 @@ int
 main(int argc, char *argv[])
 {
 	const char	 **alts = NULL;
-	char		 *certdir = NULL;
+	char		 *certdir = NULL, *certfile = NULL;
+	char		 *chainfile = NULL, *fullchainfile = NULL;
+	char		 *acctkey = NULL;
 	char		 *chngdir = NULL, *auth = NULL;
 	char		 *conffile = CONF_FILE;
-	char		 *tmps, *tmpsd;
 	int		  key_fds[2], acct_fds[2], chng_fds[2], cert_fds[2];
 	int		  file_fds[2], dns_fds[2], rvk_fds[2];
 	int		  force = 0;
@@ -55,17 +56,20 @@ main(int argc, char *argv[])
 	struct domain_c		*domain = NULL;
 	struct altname_c	*ac;
 
-	while ((c = getopt(argc, argv, "Fnrvf:")) != -1)
+	while ((c = getopt(argc, argv, "FADrvnf:")) != -1)
 		switch (c) {
-		case 'F':
-			force = 1;
-			break;
 		case 'f':
 			if ((conffile = strdup(optarg)) == NULL)
 				err(EXIT_FAILURE, "strdup");
 			break;
-		case 'n':
-			popts |= ACME_OPT_CHECK;
+		case 'F':
+			force = 1;
+			break;
+		case 'A':
+			popts |= ACME_OPT_NEWACCT;
+			break;
+		case 'D':
+			popts |= ACME_OPT_NEWDKEY;
 			break;
 		case 'r':
 			revocate = 1;
@@ -73,6 +77,9 @@ main(int argc, char *argv[])
 		case 'v':
 			verbose = verbose ? 2 : 1;
 			popts |= ACME_OPT_VERBOSE;
+			break;
+		case 'n':
+			popts |= ACME_OPT_CHECK;
 			break;
 		default:
 			goto usage;
@@ -83,7 +90,7 @@ main(int argc, char *argv[])
 
 	/* parse config file */
 	if ((conf = parse_config(conffile, popts)) == NULL)
-		return EXIT_FAILURE;
+		exit(EXIT_FAILURE);
 
 	argc -= optind;
 	argv += optind;
@@ -96,35 +103,44 @@ main(int argc, char *argv[])
 	argc--;
 	argv++;
 
-	/*
-	 * The parser enforces that at least cert or fullchain is set.
-	 * XXX Test if cert, chain and fullchain have the same dirname?
-	 */
-	tmps = domain->cert ? domain->cert : domain->fullchain;
-	if ((tmps = strdup(tmps)) == NULL)
-		err(EXIT_FAILURE, "strdup");
-	if ((tmpsd = dirname(tmps)) == NULL)
-		err(EXIT_FAILURE, "dirname");
-	if ((certdir = strdup(tmpsd)) == NULL)
-		err(EXIT_FAILURE, "strdup");	
-	free(tmps);
-	tmps = tmpsd = NULL;
+	if (domain->cert != NULL) {
+		if ((certdir = dirname(domain->cert)) != NULL) {
+			if ((certdir = strdup(certdir)) == NULL)
+				err(EXIT_FAILURE, "strdup");
+		} else
+			err(EXIT_FAILURE, "dirname");
+	} else {
+		/* the parser enforces that at least cert or fullchain is set */
+		if ((certdir = dirname(domain->fullchain)) != NULL) {
+			if ((certdir = strdup(certdir)) == NULL)
+				err(EXIT_FAILURE, "strdup");
+		} else
+			err(EXIT_FAILURE, "dirname");
 
-
-	/* chain or fullchain can be relative paths according */
-	if (domain->chain && domain->chain[0] != '/') {
-		if (asprintf(&tmps, "%s/%s", certdir, domain->chain) == -1)
-			err(EXIT_FAILURE, "asprintf");
-		free(domain->chain);
-		domain->chain = tmps;
-		tmps = NULL;
 	}
-	if (domain->fullchain && domain->fullchain[0] != '/') {
-		if (asprintf(&tmps, "%s/%s", certdir, domain->fullchain) == -1)
-			err(EXIT_FAILURE, "asprintf");
-		free(domain->fullchain);
-		domain->fullchain = tmps;
-		tmps = NULL;
+
+	if (domain->cert != NULL) {
+		if ((certfile = basename(domain->cert)) != NULL) {
+			if ((certfile = strdup(certfile)) == NULL)
+				err(EXIT_FAILURE, "strdup");
+		} else
+			err(EXIT_FAILURE, "basename");
+	}
+
+	if(domain->chain != NULL) {
+		if ((chainfile = basename(domain->chain)) != NULL) {
+			if ((chainfile = strdup(chainfile)) == NULL)
+				err(EXIT_FAILURE, "strdup");
+		} else
+			err(EXIT_FAILURE, "basename");
+	}
+
+	if(domain->fullchain != NULL) {
+		if ((fullchainfile = basename(domain->fullchain)) != NULL) {
+			if ((fullchainfile = strdup(fullchainfile)) == NULL)
+				err(EXIT_FAILURE, "strdup");
+		} else
+			err(EXIT_FAILURE, "basename");
 	}
 
 	if ((auth = domain->auth) == NULL) {
@@ -138,9 +154,19 @@ main(int argc, char *argv[])
 			errx(EXIT_FAILURE, "authority %s not found", auth);
 	}
 
-	if ((chngdir = domain->challengedir) == NULL)
-		if ((chngdir = strdup(WWW_DIR)) == NULL)
-			err(EXIT_FAILURE, "strdup");
+	acctkey = authority->account;
+
+	if (acctkey == NULL) {
+		/* XXX replace with existance check in parse.y */
+		err(EXIT_FAILURE, "no account key in config?");
+	}
+	if (domain->challengedir == NULL)
+		chngdir = strdup(WWW_DIR);
+	else
+		chngdir = domain->challengedir;
+
+	if (chngdir == NULL)
+		err(EXIT_FAILURE, "strdup");
 
 	/*
 	 * Do some quick checks to see if our paths exist.
@@ -156,16 +182,32 @@ main(int argc, char *argv[])
 		ne++;
 	}
 
+	if (!(popts & ACME_OPT_NEWDKEY) && access(domain->key, R_OK) == -1) {
+		warnx("%s: domain key file must exist", domain->key);
+		ne++;
+	} else if ((popts & ACME_OPT_NEWDKEY) && access(domain->key, R_OK) != -1) {
+		dodbg("%s: domain key exists (not creating)", domain->key);
+		popts &= ~ACME_OPT_NEWDKEY;
+	}
+
 	if (access(chngdir, R_OK) == -1) {
 		warnx("%s: challenge directory must exist", chngdir);
 		ne++;
 	}
 
+	if (!(popts & ACME_OPT_NEWACCT) && access(acctkey, R_OK) == -1) {
+		warnx("%s: account key file must exist", acctkey);
+		ne++;
+	} else if ((popts & ACME_OPT_NEWACCT) && access(acctkey, R_OK) != -1) {
+		dodbg("%s: account key exists (not creating)", acctkey);
+		popts &= ~ACME_OPT_NEWACCT;
+	}
+
 	if (ne > 0)
-		return EXIT_FAILURE;
+		exit(EXIT_FAILURE);
 
 	if (popts & ACME_OPT_CHECK)
-		return EXIT_SUCCESS;
+		exit(EXIT_SUCCESS);
 
 	/* Set the zeroth altname as our domain. */
 	altsz = domain->altname_count + 1;
@@ -215,8 +257,9 @@ main(int argc, char *argv[])
 		c = netproc(key_fds[1], acct_fds[1],
 		    chng_fds[1], cert_fds[1],
 		    dns_fds[1], rvk_fds[1],
-		    revocate, authority,
+		    (popts & ACME_OPT_NEWACCT), revocate, authority,
 		    (const char *const *)alts, altsz);
+		free(alts);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
@@ -242,8 +285,8 @@ main(int argc, char *argv[])
 		close(file_fds[0]);
 		close(file_fds[1]);
 		c = keyproc(key_fds[0], domain->key,
-		    (const char **)alts, altsz,
-		    domain->keytype);
+		    (const char **)alts, altsz, (popts & ACME_OPT_NEWDKEY));
+		free(alts);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
@@ -256,14 +299,14 @@ main(int argc, char *argv[])
 
 	if (pids[COMP_ACCOUNT] == 0) {
 		proccomp = COMP_ACCOUNT;
+		free(alts);
 		close(cert_fds[0]);
 		close(dns_fds[0]);
 		close(rvk_fds[0]);
 		close(chng_fds[0]);
 		close(file_fds[0]);
 		close(file_fds[1]);
-		c = acctproc(acct_fds[0], authority->account,
-		    authority->keytype);
+		c = acctproc(acct_fds[0], acctkey, (popts & ACME_OPT_NEWACCT));
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
@@ -276,6 +319,7 @@ main(int argc, char *argv[])
 
 	if (pids[COMP_CHALLENGE] == 0) {
 		proccomp = COMP_CHALLENGE;
+		free(alts);
 		close(cert_fds[0]);
 		close(dns_fds[0]);
 		close(rvk_fds[0]);
@@ -294,6 +338,7 @@ main(int argc, char *argv[])
 
 	if (pids[COMP_CERT] == 0) {
 		proccomp = COMP_CERT;
+		free(alts);
 		close(dns_fds[0]);
 		close(rvk_fds[0]);
 		close(file_fds[1]);
@@ -311,10 +356,11 @@ main(int argc, char *argv[])
 
 	if (pids[COMP_FILE] == 0) {
 		proccomp = COMP_FILE;
+		free(alts);
 		close(dns_fds[0]);
 		close(rvk_fds[0]);
-		c = fileproc(file_fds[1], certdir, domain->cert, domain->chain,
-		    domain->fullchain);
+		c = fileproc(file_fds[1], certdir, certfile, chainfile,
+		    fullchainfile);
 		/*
 		 * This is different from the other processes in that it
 		 * can return 2 if the certificates were updated.
@@ -331,6 +377,7 @@ main(int argc, char *argv[])
 
 	if (pids[COMP_DNS] == 0) {
 		proccomp = COMP_DNS;
+		free(alts);
 		close(rvk_fds[0]);
 		c = dnsproc(dns_fds[0]);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
@@ -345,9 +392,11 @@ main(int argc, char *argv[])
 
 	if (pids[COMP_REVOKE] == 0) {
 		proccomp = COMP_REVOKE;
-		c = revokeproc(rvk_fds[0], domain->cert != NULL ? domain->cert :
-		    domain->fullchain, force, revocate,
+		c = revokeproc(rvk_fds[0], certdir,
+		    certfile != NULL ? certfile : fullchainfile,
+		    force, revocate,
 		    (const char *const *)alts, altsz);
+		free(alts);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
@@ -355,8 +404,10 @@ main(int argc, char *argv[])
 
 	/* Jail: sandbox, file-system, user. */
 
-	if (pledge("stdio", NULL) == -1)
-		err(EXIT_FAILURE, "pledge");
+	if (pledge("stdio", NULL) == -1) {
+		warn("pledge");
+		exit(EXIT_FAILURE);
+	}
 
 	/*
 	 * Collect our subprocesses.
@@ -372,9 +423,10 @@ main(int argc, char *argv[])
 	    checkexit(pids[COMP_DNS], COMP_DNS) +
 	    checkexit(pids[COMP_REVOKE], COMP_REVOKE);
 
+	free(alts);
 	return rc != COMP__MAX ? EXIT_FAILURE : (c == 2 ? EXIT_SUCCESS : 2);
 usage:
 	fprintf(stderr,
-	    "usage: acme-client [-Fnrv] [-f configfile] domain\n");
+	    "usage: acme-client [-ADFnrv] [-f configfile] domain\n");
 	return EXIT_FAILURE;
 }

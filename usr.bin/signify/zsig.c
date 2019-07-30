@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.16 2019/03/23 07:10:06 tedu Exp $ */
+/* $OpenBSD: zsig.c,v 1.15 2017/07/11 23:52:05 tedu Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -231,8 +231,7 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 }
 
 void
-zsign(const char *seckeyfile, const char *msgfile, const char *sigfile,
-    int skipdate)
+zsign(const char *seckeyfile, const char *msgfile, const char *sigfile)
 {
 	size_t bufsize = MYBUFSIZE;
 	int fdin, fdout;
@@ -262,11 +261,7 @@ zsign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 
 	msg = xmalloc(space);
 	buffer = xmalloc(bufsize);
-	if (skipdate) {
-		clock = 0;
-	} else {
-		time(&clock);
-	}
+	time(&clock);
 	strftime(date, sizeof date, "%Y-%m-%dT%H:%M:%SZ", gmtime(&clock));
 	snprintf(msg, space,
 	    "date=%s\n"

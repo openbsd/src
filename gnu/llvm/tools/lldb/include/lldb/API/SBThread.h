@@ -93,8 +93,6 @@ public:
 
   void StepOver(lldb::RunMode stop_other_threads = lldb::eOnlyDuringStepping);
 
-  void StepOver(lldb::RunMode stop_other_threads, SBError &error);
-
   void StepInto(lldb::RunMode stop_other_threads = lldb::eOnlyDuringStepping);
 
   void StepInto(const char *target_name,
@@ -105,15 +103,9 @@ public:
 
   void StepOut();
 
-  void StepOut(SBError &error);
-
-  void StepOutOfFrame(SBFrame &frame);
-
-  void StepOutOfFrame(SBFrame &frame, SBError &error);
+  void StepOutOfFrame(lldb::SBFrame &frame);
 
   void StepInstruction(bool step_over);
-
-  void StepInstruction(bool step_over, SBError &error);
 
   SBError StepOverUntil(lldb::SBFrame &frame, lldb::SBFileSpec &file_spec,
                         uint32_t line);
@@ -126,8 +118,6 @@ public:
   SBError JumpToLine(lldb::SBFileSpec &file_spec, uint32_t line);
 
   void RunToAddress(lldb::addr_t addr);
-
-  void RunToAddress(lldb::addr_t addr, SBError &error);
 
   SBError ReturnFromFrame(SBFrame &frame, SBValue &return_value);
 
@@ -156,11 +146,7 @@ public:
   //--------------------------------------------------------------------------
   bool Suspend();
 
-  bool Suspend(SBError &error);
-
   bool Resume();
-
-  bool Resume(SBError &error);
 
   bool IsSuspended();
 
@@ -210,7 +196,6 @@ public:
 protected:
   friend class SBBreakpoint;
   friend class SBBreakpointLocation;
-  friend class SBBreakpointCallbackBaton;
   friend class SBExecutionContext;
   friend class SBFrame;
   friend class SBProcess;

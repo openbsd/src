@@ -19,6 +19,7 @@
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -61,7 +62,7 @@ static void completeEphemeralValues(SmallPtrSetImpl<const Value *> &Visited,
       continue;
 
     EphValues.insert(V);
-    LLVM_DEBUG(dbgs() << "Ephemeral Value: " << *V << "\n");
+    DEBUG(dbgs() << "Ephemeral Value: " << *V << "\n");
 
     // Append any more operands to consider.
     appendSpeculatableOperands(V, Visited, Worklist);

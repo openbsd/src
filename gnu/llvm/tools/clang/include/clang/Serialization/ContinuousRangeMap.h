@@ -1,4 +1,4 @@
-//===- ContinuousRangeMap.h - Map with int range as key ---------*- C++ -*-===//
+//===--- ContinuousRangeMap.h - Map with int range as key -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,15 +16,13 @@
 #define LLVM_CLANG_SERIALIZATION_CONTINUOUSRANGEMAP_H
 
 #include "clang/Basic/LLVM.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include <algorithm>
-#include <cassert>
 #include <utility>
 
 namespace clang {
 
-/// A map from continuous integer ranges to some value, with a very
+/// \brief A map from continuous integer ranges to some value, with a very
 /// specialized interface.
 ///
 /// CRM maps from integer ranges to values. The ranges are continuous, i.e.
@@ -37,15 +35,14 @@ namespace clang {
 template <typename Int, typename V, unsigned InitialCapacity>
 class ContinuousRangeMap {
 public:
-  using value_type = std::pair<Int, V>;
-  using reference = value_type &;
-  using const_reference = const value_type &;
-  using pointer = value_type *;
-  using const_pointer = const value_type *;
+  typedef std::pair<Int, V> value_type;
+  typedef value_type &reference;
+  typedef const value_type &const_reference;
+  typedef value_type *pointer;
+  typedef const value_type *const_pointer;
 
 private:
-  using Representation = SmallVector<value_type, InitialCapacity>;
-
+  typedef SmallVector<value_type, InitialCapacity> Representation;
   Representation Rep;
 
   struct Compare {
@@ -55,7 +52,7 @@ private:
     bool operator ()(Int L, const_reference R) const {
       return L < R.first;
     }
-    bool operator ()(Int L, Int R) const {
+    bool operator ()(Int L, Int R) const { 
       return L < R;
     }
     bool operator ()(const_reference L, const_reference R) const {
@@ -72,19 +69,19 @@ public:
            "Must insert keys in order.");
     Rep.push_back(Val);
   }
-
+  
   void insertOrReplace(const value_type &Val) {
     iterator I = std::lower_bound(Rep.begin(), Rep.end(), Val, Compare());
     if (I != Rep.end() && I->first == Val.first) {
       I->second = Val.second;
       return;
     }
-
+    
     Rep.insert(I, Val);
   }
 
-  using iterator = typename Representation::iterator;
-  using const_iterator = typename Representation::const_iterator;
+  typedef typename Representation::iterator iterator;
+  typedef typename Representation::const_iterator const_iterator;
 
   iterator begin() { return Rep.begin(); }
   iterator end() { return Rep.end(); }
@@ -106,19 +103,20 @@ public:
 
   reference back() { return Rep.back(); }
   const_reference back() const { return Rep.back(); }
-
-  /// An object that helps properly build a continuous range map
+  
+  /// \brief An object that helps properly build a continuous range map
   /// from a set of values.
   class Builder {
     ContinuousRangeMap &Self;
-
-  public:
-    explicit Builder(ContinuousRangeMap &Self) : Self(Self) {}
+    
     Builder(const Builder&) = delete;
     Builder &operator=(const Builder&) = delete;
-
+    
+  public:
+    explicit Builder(ContinuousRangeMap &Self) : Self(Self) { }
+    
     ~Builder() {
-      llvm::sort(Self.Rep.begin(), Self.Rep.end(), Compare());
+      std::sort(Self.Rep.begin(), Self.Rep.end(), Compare());
       std::unique(Self.Rep.begin(), Self.Rep.end(),
                   [](const_reference A, const_reference B) {
         // FIXME: we should not allow any duplicate keys, but there are a lot of
@@ -128,15 +126,14 @@ public:
         return A == B;
       });
     }
-
+    
     void insert(const value_type &Val) {
       Self.Rep.push_back(Val);
     }
   };
-
   friend class Builder;
 };
 
-} // namespace clang
+}
 
-#endif // LLVM_CLANG_SERIALIZATION_CONTINUOUSRANGEMAP_H
+#endif

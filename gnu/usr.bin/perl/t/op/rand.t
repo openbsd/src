@@ -17,12 +17,14 @@
 
 BEGIN {
     chdir "t" if -d "t";
-    require "./test.pl";
-    set_up_inc( qw(. ../lib) );
+    @INC = qw(. ../lib);
 }
 
 use strict;
 use Config;
+
+require "./test.pl";
+
 
 my $reps = 100_000;	# How many times to try rand each time.
 			# May be changed, but should be over 500.

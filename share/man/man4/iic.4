@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.98 2019/05/11 16:00:12 patrick Exp $
+.\"	$OpenBSD: iic.4,v 1.90 2017/11/30 16:14:30 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 11 2019 $
+.Dd $Mdocdate: November 30 2017 $
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -38,7 +38,6 @@
 .Cd "iic* at gdiumiic?              # loongson"
 .Cd "iic* at tsciic?                # alpha"
 .Cd "iic* at dwiic?                 # amd64"
-.Cd "iic* at octiic?                # octeon"
 .Sh DESCRIPTION
 .Tn I2C
 is a two-wire bus developed by Philips used for connecting
@@ -97,8 +96,6 @@ Intel ICH SMBus controller
 Apple Kauai I2C controller
 .It Xr nviic 4
 NVIDIA nForce2/3/4 SMBus controller
-.It Xr octiic 4
-OCTEON two-wire serial interface
 .It Xr pcfiic 4
 Phillips PCF8584 I2C controller
 .It Xr piic 4
@@ -114,8 +111,6 @@ VIA SMBus controller
 .El
 .Sh SUPPORTED SLAVES
 .Bl -tag -width 13n -compact
-.It Xr abcrtc 4
-Abracon AB1805 real-time clock
 .It Xr adc 4
 Analog Devices AD7416/AD7417/7418 temperature sensor
 .It Xr adl 4
@@ -144,26 +139,18 @@ Asus ASB 100 temperature sensor
 Apple sudden motion sensor
 .It Xr bgw 4
 Bosch motion sensor
-.It Xr ccpmic 4
-Intel Crystal Cove Power Management IC
 .It Xr ecadc 4
 environmental monitoring subsystem temperature sensor
-.It Xr fanpwr 4
-Fairchild FAN53555 voltage regulator
 .It Xr fcu 4
 Apple Fan Control Unit sensor device
 .It Xr fintek 4
 Fintek F75375 temperature sensor
-.It Xr fusbtc 4
-Fairchild FUSB302 USB Type-C Port controller
 .It Xr glenv 4
 Genesys Logic GL518SM temperature, voltage, and fan sensor
 .It Xr iatp 4
 Atmel maXTouch touchpad and touchscreen
 .It Xr ihidev 4
 HID over I2C support
-.It Xr islrtc 4
-Intersil ISL1208/1218 real-time clock
 .It Xr lisa 4
 STMicroelectronics LIS331DL MEMS motion sensor
 .It Xr lm 4
@@ -176,12 +163,10 @@ National Semiconductor LM93 temperature, voltage, and fan sensor
 National Semiconductor LM75/LM76/LM77 temperature sensor
 .It Xr maxds 4
 Maxim DS1624/DS1631/DS1721 temperature sensor
-.It Xr maxrtc 4
-Maxim DS1307 real-time clock
 .It Xr maxtmp 4
 Maxim MAX6642/MAX6690 temperature sensor
 .It Xr mfokclock 4
-M41T8x real-time clock
+M41T8x Real Time Clock
 .It Xr nvt 4
 Nuvoton W83795G/ADG temperature, voltage, and fan sensor
 .It Xr pcagpio 4
@@ -191,11 +176,11 @@ Philips PCA9532/9552 GPIO LED dimmer
 .It Xr pcfadc 4
 Philips PCF8591 temperature sensor
 .It Xr pcfrtc 4
-NXP PCF8523 real-time clock
+NXP PCF8523 Real Time Clock
 .It Xr pcxrtc 4
-NXP PCF8563 real-time clock
+NXP PCF8563 Real Time Clock
 .It Xr ricohrtc 4
-Ricoh RS5C372 real-time clock
+Ricoh RS5C372 Real Time Clock
 .It Xr sdtemp 4
 SO-DIMM (JC-42.4) temperature sensor
 .It Xr spdmem 4

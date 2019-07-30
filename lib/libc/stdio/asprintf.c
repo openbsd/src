@@ -1,7 +1,7 @@
-/*	$OpenBSD: asprintf.c,v 1.26 2019/01/25 00:19:25 millert Exp $	*/
+/*	$OpenBSD: asprintf.c,v 1.25 2017/03/17 14:53:08 deraadt Exp $	*/
 
 /*
- * Copyright (c) 1997 Todd C. Miller <millert@openbsd.org>
+ * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

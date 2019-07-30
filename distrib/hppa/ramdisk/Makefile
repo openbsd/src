@@ -1,79 +1,105 @@
-#	$OpenBSD: Makefile,v 1.45 2019/05/12 16:05:44 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.35 2017/09/18 20:13:52 jasper Exp $
 
-LIF=		lif${OSrev}.fs
-CDROM=		cd${OSrev}.iso
+CBIN=		instbin
+ARCHDIR=	${.CURDIR}/..
+SRCDIR=		${.CURDIR}/../../..
+
+.include <bsd.own.mk>
+
+.if exists(${ARCHDIR}/Makefile.inc)
+.include "${ARCHDIR}/Makefile.inc"
+.endif
+
+IMAGE?=		ramdisk${REV}.fs
+CRUNCHGENOPTS?=-E
+KERNEL?=	RAMDISK
+UTILS?=		${.CURDIR}/../../miniroot
+
+LISTS=		${ARCHDIR}/list ${.CURDIR}/list.local
 MTREE=		${UTILS}/mtree.conf
-RAMDISK=	RAMDISK
 
-LISTS=		${.CURDIR}/list
-UTILS=		${.CURDIR}/../../miniroot
+LIF?=		lif${REV}.fs
+CDROM?=		cd${REV}.iso
+MKBOOT?=	/usr/mdec/mkboot
+BOOT?=		${DESTDIR}/usr/mdec/boot
+CDBOOT?=	${DESTDIR}/usr/mdec/cdboot
 
-MRDISKTYPE=	rdroot
-MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
+STRIPOPTS?=	-R .SUNW_ctf
+GZIPFLAGS?=	-9n
 
-all: ${LIF} ${CDROM}
+DISKTYPE=	rdroot
+MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=4096
 
-${LIF}: bsd.lif
-	/usr/mdec/mkboot -v ${DESTDIR}/usr/mdec/boot bsd.lif ${LIF}
+all:	bsd.rd ${LIF} ${CDROM}
 
-${CDROM}: bsd.rd
-	rm -rf ${.OBJDIR}/cd-dir/
-	mkdir -p ${.OBJDIR}/cd-dir/
+${LIF}:	bsd ${BOOT}
+	${MKBOOT} -v ${BOOT} bsd ${LIF}
+
+${CDROM}: bsd ${CDBOOT}
+	-rm -rf ${.OBJDIR}/cd-dir
+	mkdir ${.OBJDIR}/cd-dir
 	cp bsd.rd ${.OBJDIR}/cd-dir/bsd.rd
 	mkhybrid -A "OpenBSD ${OSREV} hppa bootonly CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/hppa ${OSREV} boot-only CD" \
 	    -o ${.OBJDIR}/${CDROM} ${.OBJDIR}/cd-dir
-	dd if=${DESTDIR}/usr/mdec/cdboot of=${.OBJDIR}/${CDROM} \
-	    bs=32k count=1 conv=notrunc
+	dd if=${CDBOOT} of=${.OBJDIR}/${CDROM} bs=32k count=1 conv=notrunc
 	dd if=/dev/zero bs=64k count=1 >> ${.OBJDIR}/${CDROM}
 
-bsd.lif: bsd.rd
-	(cat bsd.rd ; dd if=/dev/zero count=1) | gzip -9n > bsd.lif
-
-bsd.rd: mr.fs bsd
-	cp bsd bsd.rd
-	rdsetroot bsd.rd mr.fs
-	strip -R .SUNW_ctf bsd.rd
-
-bsd:
-	cd ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
+obsd:
+	cd ${SRCDIR}/sys/arch/${MACHINE}/compile/${KERNEL} && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
+	cp -p ${SRCDIR}/sys/arch/${MACHINE}/compile/${KERNEL}/obj/bsd obsd
 
-mr.fs: instbin
+bsd.rd:	obsd ${IMAGE} rdsetroot
+	cp obsd bsd.rd
+	${.OBJDIR}/rdsetroot bsd.rd ${IMAGE}
+	strip ${STRIPOPTS} bsd.rd
+
+bsd:	bsd.rd
+	(cat bsd.rd ; dd if=/dev/zero count=1) | gzip ${GZIPFLAGS} > bsd
+
+rdsetroot: ${.CURDIR}/../../common/elfrdsetroot.c \
+	   ${.CURDIR}/../../common/elf32.c ${.CURDIR}/../../common/elf64.c
+	${HOSTCC} ${HOSTCCFLAGS} -o rdsetroot \
+	    ${.CURDIR}/../../common/elfrdsetroot.c \
+	    ${.CURDIR}/../../common/elf32.c ${.CURDIR}/../../common/elf64.c
+
+${IMAGE}: ${CBIN}
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
-	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
+	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} ARCHDIR=${ARCHDIR} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
-	rm $@.d/instbin
-	makefs ${MRMAKEFSARGS} $@ $@.d
+	rm $@.d/${CBIN}
+	makefs ${MAKEFSARGS_RD} $@ $@.d
+	vnconfig -v -c vnd0 $@
+	df -i /dev/vnd0a
+	vnconfig -u vnd0
 
-instbin.mk instbin.cache instbin.c: instbin.conf
-	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib \
-	    -c instbin.c -e instbin -m instbin.mk instbin.conf
+${CBIN}.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
 
-instbin: instbin.mk instbin.cache instbin.c
-	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
+${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
+	crunchgen ${CRUNCHGENOPTS} -D ${SRCDIR} -L ${DESTDIR}/usr/lib \
+	    ${CBIN}.conf
 
-instbin.conf: ${LISTS}
-	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
-
-.ifdef RELEASEDIR
-install:
-	cp bsd.rd ${RELEASEDIR}/bsd.rd
-	chmod a+r ${RELEASEDIR}/bsd.rd
-	cp ${LIF} ${RELEASEDIR}
-	cp ${CDROM} ${RELEASEDIR}
-.endif
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 
 clean cleandir:
-	rm -f *.core mr.fs instbin instbin.mk instbin.cache \
-	    lib*.a lib*.olist instbin.map \
-	    instbin.conf *.o *.lo *.c bsd bsd.* ${LIF} ${CDROM}
-	rm -rf mr.fs.d
+	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
+	    lib*.a lib*.olist ${CBIN}.map \
+	    ${CBIN}.conf *.o *.lo *.c obsd bsd bsd.* ${LIF} ${CDROM}
+	/bin/rm -rf ${IMAGE}.d
+
+.ifdef RELEASEDIR
+beforeinstall:
+	cp bsd.rd ${LIF} ${CDROM} ${RELEASEDIR}
+	chmod a+r ${RELEASEDIR}/bsd.rd
+.endif
 
 .include <bsd.obj.mk>
+.include <bsd.subdir.mk>

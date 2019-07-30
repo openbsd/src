@@ -1,4 +1,4 @@
-//===- Bitcode/Writer/ValueEnumerator.h - Number values ---------*- C++ -*-===//
+//===-- Bitcode/Writer/ValueEnumerator.h - Number values --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,57 +14,56 @@
 #ifndef LLVM_LIB_BITCODE_WRITER_VALUEENUMERATOR_H
 #define LLVM_LIB_BITCODE_WRITER_VALUEENUMERATOR_H
 
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/UniqueVector.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/UseListOrder.h"
-#include <cassert>
-#include <cstdint>
-#include <utility>
 #include <vector>
 
 namespace llvm {
 
+class Type;
+class Value;
+class Instruction;
 class BasicBlock;
 class Comdat;
 class Function;
-class Instruction;
+class Module;
+class Metadata;
 class LocalAsMetadata;
 class MDNode;
-class Metadata;
-class Module;
+class MDOperand;
 class NamedMDNode;
-class raw_ostream;
-class Type;
-class Value;
+class AttributeList;
 class ValueSymbolTable;
+class MDSymbolTable;
+class raw_ostream;
 
 class ValueEnumerator {
 public:
-  using TypeList = std::vector<Type *>;
+  typedef std::vector<Type*> TypeList;
 
   // For each value, we remember its Value* and occurrence frequency.
-  using ValueList = std::vector<std::pair<const Value *, unsigned>>;
+  typedef std::vector<std::pair<const Value*, unsigned> > ValueList;
 
   /// Attribute groups as encoded in bitcode are almost AttributeSets, but they
   /// include the AttributeList index, so we have to track that in our map.
-  using IndexAndAttrSet = std::pair<unsigned, AttributeSet>;
+  typedef std::pair<unsigned, AttributeSet> IndexAndAttrSet;
 
   UseListOrderStack UseListOrders;
 
 private:
-  using TypeMapType = DenseMap<Type *, unsigned>;
+  typedef DenseMap<Type*, unsigned> TypeMapType;
   TypeMapType TypeMap;
   TypeList Types;
 
-  using ValueMapType = DenseMap<const Value *, unsigned>;
+  typedef DenseMap<const Value*, unsigned> ValueMapType;
   ValueMapType ValueMap;
   ValueList Values;
 
-  using ComdatSetType = UniqueVector<const Comdat *>;
+  typedef UniqueVector<const Comdat *> ComdatSetType;
   ComdatSetType Comdats;
 
   std::vector<const Metadata *> MDs;
@@ -89,7 +88,7 @@ private:
     }
   };
 
-  using MetadataMapType = DenseMap<const Metadata *, MDIndex>;
+  typedef DenseMap<const Metadata *, MDIndex> MetadataMapType;
   MetadataMapType MetadataMap;
 
   /// Range of metadata IDs, as a half-open range.
@@ -100,18 +99,18 @@ private:
     /// Number of strings in the prefix of the metadata range.
     unsigned NumStrings = 0;
 
-    MDRange() = default;
+    MDRange() {}
     explicit MDRange(unsigned First) : First(First) {}
   };
   SmallDenseMap<unsigned, MDRange, 1> FunctionMDInfo;
 
   bool ShouldPreserveUseListOrder;
 
-  using AttributeGroupMapType = DenseMap<IndexAndAttrSet, unsigned>;
+  typedef DenseMap<IndexAndAttrSet, unsigned> AttributeGroupMapType;
   AttributeGroupMapType AttributeGroupMap;
   std::vector<IndexAndAttrSet> AttributeGroups;
 
-  using AttributeListMapType = DenseMap<AttributeList, unsigned>;
+  typedef DenseMap<AttributeList, unsigned> AttributeListMapType;
   AttributeListMapType AttributeListMap;
   std::vector<AttributeList> AttributeLists;
 
@@ -119,7 +118,7 @@ private:
   /// the "getGlobalBasicBlockID" method.
   mutable DenseMap<const BasicBlock*, unsigned> GlobalBasicBlockIDs;
 
-  using InstructionMapType = DenseMap<const Instruction *, unsigned>;
+  typedef DenseMap<const Instruction*, unsigned> InstructionMapType;
   InstructionMapType InstructionMap;
   unsigned InstructionCount;
 
@@ -139,10 +138,10 @@ private:
   unsigned FirstFuncConstantID;
   unsigned FirstInstID;
 
+  ValueEnumerator(const ValueEnumerator &) = delete;
+  void operator=(const ValueEnumerator &) = delete;
 public:
   ValueEnumerator(const Module &M, bool ShouldPreserveUseListOrder);
-  ValueEnumerator(const ValueEnumerator &) = delete;
-  ValueEnumerator &operator=(const ValueEnumerator &) = delete;
 
   void dump() const;
   void print(raw_ostream &OS, const ValueMapType &Map, const char *Name) const;
@@ -150,17 +149,14 @@ public:
              const char *Name) const;
 
   unsigned getValueID(const Value *V) const;
-
   unsigned getMetadataID(const Metadata *MD) const {
     auto ID = getMetadataOrNullID(MD);
     assert(ID != 0 && "Metadata not in slotcalculator!");
     return ID - 1;
   }
-
   unsigned getMetadataOrNullID(const Metadata *MD) const {
     return MetadataMap.lookup(MD).ID;
   }
-
   unsigned numMDs() const { return MDs.size(); }
 
   bool shouldPreserveUseListOrder() const { return ShouldPreserveUseListOrder; }
@@ -212,13 +208,10 @@ public:
   }
 
   const TypeList &getTypes() const { return Types; }
-
   const std::vector<const BasicBlock*> &getBasicBlocks() const {
     return BasicBlocks;
   }
-
   const std::vector<AttributeList> &getAttributeLists() const { return AttributeLists; }
-
   const std::vector<IndexAndAttrSet> &getAttributeGroups() const {
     return AttributeGroups;
   }
@@ -233,8 +226,8 @@ public:
 
   /// incorporateFunction/purgeFunction - If you'd like to deal with a function,
   /// use these two methods to get its data into the ValueEnumerator!
+  ///
   void incorporateFunction(const Function &F);
-
   void purgeFunction();
   uint64_t computeBitsRequiredForTypeIndicies() const;
 
@@ -299,6 +292,6 @@ private:
   void EnumerateNamedMetadata(const Module &M);
 };
 
-} // end namespace llvm
+} // End llvm namespace
 
-#endif // LLVM_LIB_BITCODE_WRITER_VALUEENUMERATOR_H
+#endif

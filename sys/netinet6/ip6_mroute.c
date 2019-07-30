@@ -128,8 +128,8 @@ void phyint_send6(struct ifnet *, struct ip6_hdr *, struct mbuf *);
  * Globals.  All but ip6_mrouter, ip6_mrtproto and mrt6stat could be static,
  * except for netstat or debugging purposes.
  */
-struct socket  *ip6_mrouter[RT_TABLEID_MAX + 1];
-struct rttimer_queue *mrouter6q[RT_TABLEID_MAX + 1];
+struct socket  *ip6_mrouter[RT_TABLEID_MAX];
+struct rttimer_queue *mrouter6q[RT_TABLEID_MAX];
 int		ip6_mrouter_ver = 0;
 int		ip6_mrtproto;    /* for netstat only */
 struct mrt6stat	mrt6stat;
@@ -242,29 +242,17 @@ int
 mrt6_ioctl(struct socket *so, u_long cmd, caddr_t data)
 {
 	struct inpcb *inp = sotoinpcb(so);
-	int error;
-
-	if (inp == NULL)
-		return (ENOTCONN);
 
 	switch (cmd) {
 	case SIOCGETSGCNT_IN6:
-		NET_RLOCK();
-		error = get_sg6_cnt((struct sioc_sg_req6 *)data,
-		    inp->inp_rtableid);
-		NET_RUNLOCK();
-		break;
+		return (get_sg6_cnt((struct sioc_sg_req6 *)data,
+		    inp->inp_rtableid));
 	case SIOCGETMIFCNT_IN6:
-		NET_RLOCK();
-		error = get_mif6_cnt((struct sioc_mif_req6 *)data,
-		    inp->inp_rtableid);
-		NET_RUNLOCK();
-		break;
+		return (get_mif6_cnt((struct sioc_mif_req6 *)data,
+		    inp->inp_rtableid));
 	default:
-		error = ENOTTY;
-		break;
+		return (ENOTTY);
 	}
-	return error;
 }
 
 /*
@@ -454,7 +442,7 @@ mrt6_sysctl_mfc(void *oldp, size_t *oldlenp)
 	msa.ms6a_len = *oldlenp;
 	msa.ms6a_needed = 0;
 
-	for (rtableid = 0; rtableid <= RT_TABLEID_MAX; rtableid++)
+	for (rtableid = 0; rtableid < RT_TABLEID_MAX; rtableid++)
 		rtable_walk(rtableid, AF_INET6, mrt6_rtwalk_mf6csysctl, &msa);
 
 	if (msa.ms6a_minfos != NULL && msa.ms6a_needed > 0 &&
@@ -1244,8 +1232,7 @@ mrt6_mcast6_add(struct ifnet *ifp, struct sockaddr *origin,
 		return NULL;
 	}
 
-	rv = rt_ifa_add(ifa, RTF_HOST | RTF_MULTICAST | RTF_MPATH, group,
-	    ifp->if_rdomain);
+	rv = rt_ifa_add(ifa, RTF_HOST | RTF_MULTICAST, group);
 	if (rv != 0) {
 		DPRINTF("rt_ifa_add failed %d", rv);
 		return NULL;

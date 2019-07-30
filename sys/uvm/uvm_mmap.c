@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.156 2019/05/11 20:02:00 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.148 2018/03/27 08:42:49 mpi Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -168,6 +168,145 @@ sys_mquery(struct proc *p, void *v, register_t *retval)
 	return (error);
 }
 
+/*
+ * sys_mincore: determine if pages are in core or not.
+ */
+/* ARGSUSED */
+int
+sys_mincore(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_mincore_args /* {
+		syscallarg(void *) addr;
+		syscallarg(size_t) len;
+		syscallarg(char *) vec;
+	} */ *uap = v;
+	vm_page_t m;
+	char *vec, *pgi, *pgs;
+	struct uvm_object *uobj;
+	struct vm_amap *amap;
+	struct vm_anon *anon;
+	vm_map_entry_t entry, next;
+	vaddr_t start, end, lim;
+	vm_map_t map;
+	vsize_t len, npgs;
+	int error = 0; 
+
+	map = &p->p_vmspace->vm_map;
+
+	start = (vaddr_t)SCARG(uap, addr);
+	len = SCARG(uap, len);
+	vec = SCARG(uap, vec);
+
+	if (start & PAGE_MASK)
+		return (EINVAL);
+	len = round_page(len);
+	end = start + len;
+	if (end <= start)
+		return (EINVAL);
+
+	npgs = len >> PAGE_SHIFT;
+
+	/*
+ 	 * < art> Anyone trying to mincore more than 4GB of address space is
+	 *	clearly insane.
+	 */
+	if (npgs >= (0xffffffff >> PAGE_SHIFT))
+		return (E2BIG);
+	pgs = mallocarray(npgs, sizeof(*pgs), M_TEMP, M_WAITOK | M_CANFAIL);
+	if (pgs == NULL)
+		return (ENOMEM);
+	pgi = pgs;
+
+	/*
+	 * Lock down vec, so our returned status isn't outdated by
+	 * storing the status byte for a page.
+	 */
+	if ((error = uvm_vslock(p, vec, npgs, PROT_WRITE)) != 0) {
+		free(pgs, M_TEMP, npgs * sizeof(*pgs));
+		return (error);
+	}
+
+	vm_map_lock_read(map);
+
+	if (uvm_map_lookup_entry(map, start, &entry) == FALSE) {
+		error = ENOMEM;
+		goto out;
+	}
+
+	for (/* nothing */;
+	     entry != NULL && entry->start < end;
+	     entry = RBT_NEXT(uvm_map_addr, entry)) {
+		KASSERT(!UVM_ET_ISSUBMAP(entry));
+		KASSERT(start >= entry->start);
+
+		/* Make sure there are no holes. */
+		next = RBT_NEXT(uvm_map_addr, entry);
+		if (entry->end < end &&
+		     (next == NULL ||
+		      next->start > entry->end)) {
+			error = ENOMEM;
+			goto out;
+		}
+
+		lim = end < entry->end ? end : entry->end;
+
+		/*
+		 * Special case for objects with no "real" pages.  Those
+		 * are always considered resident (mapped devices).
+		 */
+		if (UVM_ET_ISOBJ(entry)) {
+			KASSERT(!UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj));
+			if (entry->object.uvm_obj->pgops->pgo_fault != NULL) {
+				for (/* nothing */; start < lim;
+				     start += PAGE_SIZE, pgi++)
+					*pgi = 1;
+				continue;
+			}
+		}
+
+		amap = entry->aref.ar_amap;	/* top layer */
+		uobj = entry->object.uvm_obj;	/* bottom layer */
+
+		for (/* nothing */; start < lim; start += PAGE_SIZE, pgi++) {
+			*pgi = 0;
+			if (amap != NULL) {
+				/* Check the top layer first. */
+				anon = amap_lookup(&entry->aref,
+				    start - entry->start);
+				if (anon != NULL && anon->an_page != NULL) {
+					/*
+					 * Anon has the page for this entry
+					 * offset.
+					 */
+					*pgi = 1;
+				}
+			}
+
+			if (uobj != NULL && *pgi == 0) {
+				/* Check the bottom layer. */
+				m = uvm_pagelookup(uobj,
+				    entry->offset + (start - entry->start));
+				if (m != NULL) {
+					/*
+					 * Object has the page for this entry
+					 * offset.
+					 */
+					*pgi = 1;
+				}
+			}
+		}
+	}
+
+ out:
+	vm_map_unlock_read(map);
+	uvm_vsunlock(p, SCARG(uap, vec), npgs);
+	/* now the map is unlocked we can copyout without fear. */
+	if (error == 0)
+		copyout(pgs, vec, npgs * sizeof(char));
+	free(pgs, M_TEMP, npgs * sizeof(*pgs));
+	return (error);
+}
+
 int	uvm_wxabort;
 
 /*
@@ -183,14 +322,14 @@ uvm_wxcheck(struct proc *p, char *call)
 	if (wxallowed && (pr->ps_flags & PS_WXNEEDED))
 		return (0);
 
-	if (uvm_wxabort) {
-		/* Report W^X failures */
-		if (pr->ps_wxcounter++ == 0)
-			log(LOG_NOTICE, "%s(%d): %s W^X violation\n",
-			    pr->ps_comm, pr->ps_pid, call);
-		/* Send uncatchable SIGABRT for coredump */
+	/* Report W^X failures, and potentially SIGABRT */
+	if (pr->ps_wxcounter++ == 0)
+		log(LOG_NOTICE, "%s(%d): %s W^X violation\n",
+		    pr->ps_comm, pr->ps_pid, call);
+
+	/* Send uncatchable SIGABRT for coredump */
+	if (uvm_wxabort)
 		sigexit(p, SIGABRT);
-	}
 
 	return (ENOTSUP);
 }
@@ -232,6 +371,7 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 	size = (vsize_t) SCARG(uap, len);
 	prot = SCARG(uap, prot);
 	flags = SCARG(uap, flags);
+	flags &= ~MAP_STACK;	/* XXX MAP_STACK coming in 2018 */
 	fd = SCARG(uap, fd);
 	pos = SCARG(uap, pos);
 
@@ -250,16 +390,6 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 		return (EINVAL);
 	if ((flags & (MAP_FIXED|__MAP_NOREPLACE)) == __MAP_NOREPLACE)
 		return (EINVAL);
-	if (flags & MAP_STACK) {
-		if ((flags & (MAP_ANON|MAP_PRIVATE)) != (MAP_ANON|MAP_PRIVATE))
-			return (EINVAL);
-		if (flags & ~(MAP_STACK|MAP_FIXED|MAP_ANON|MAP_PRIVATE))
-			return (EINVAL);
-		if (pos != 0)
-			return (EINVAL);
-		if ((prot & (PROT_READ|PROT_WRITE)) != (PROT_READ|PROT_WRITE))
-			return (EINVAL);
-	}
 	if (size == 0)
 		return (EINVAL);
 
@@ -284,12 +414,18 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 			return (EINVAL);
 		if (vm_min_address > 0 && addr < vm_min_address)
 			return (EINVAL);
+
 	}
 
 	/* check for file mappings (i.e. not anonymous) and verify file. */
 	if ((flags & MAP_ANON) == 0) {
-		if ((fp = fd_getfile(fdp, fd)) == NULL)
+		KERNEL_LOCK();
+		if ((fp = fd_getfile(fdp, fd)) == NULL) {
+			KERNEL_UNLOCK();
 			return (EBADF);
+		}
+
+		FREF(fp);
 
 		if (fp->f_type != DTYPE_VNODE) {
 			error = ENODEV;		/* only mmap vnodes! */
@@ -313,6 +449,8 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 			flags |= MAP_ANON;
 			FRELE(fp, p);
 			fp = NULL;
+			/* XXX */
+			KERNEL_UNLOCK();
 			goto is_anon;
 		}
 
@@ -362,10 +500,8 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 			 * EPERM.
 			 */
 			if (fp->f_flag & FWRITE) {
-				KERNEL_LOCK();
-				error = VOP_GETATTR(vp, &va, p->p_ucred, p);
-				KERNEL_UNLOCK();
-				if (error)
+				if ((error =
+				    VOP_GETATTR(vp, &va, p->p_ucred, p)))
 					goto out;
 				if ((va.va_flags & (IMMUTABLE|APPEND)) == 0)
 					maxprot |= PROT_WRITE;
@@ -390,10 +526,8 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 				goto out;
 			}
 		}
-		KERNEL_LOCK();
 		error = uvm_mmapfile(&p->p_vmspace->vm_map, &addr, size, prot, maxprot,
 		    flags, vp, pos, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur, p);
-		KERNEL_UNLOCK();
 	} else {		/* MAP_ANON case */
 		if (fd != -1)
 			return EINVAL;
@@ -427,8 +561,10 @@ is_anon:	/* label for SunOS style /dev/zero */
 		*retval = (register_t)(addr + pageoff);
 
 out:
-	if (fp)
+	if (fp) {
 		FRELE(fp, p);
+		KERNEL_UNLOCK();
+	}
 	return (error);
 }
 
@@ -531,6 +667,7 @@ sys_munmap(struct proc *p, void *v, register_t *retval)
 
 	TAILQ_INIT(&dead_entries);
 	uvm_unmap_remove(map, addr, addr + size, &dead_entries, FALSE, TRUE);
+
 	vm_map_unlock(map);	/* and unlock */
 
 	uvm_unmap_detach(&dead_entries, 0);
@@ -908,10 +1045,6 @@ uvm_mmapanon(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	else
 		/* shared: create amap now */
 		uvmflag |= UVM_FLAG_OVERLAY;
-	if (flags & MAP_STACK)
-		uvmflag |= UVM_FLAG_STACK;
-	if (flags & MAP_CONCEAL)
-		uvmflag |= UVM_FLAG_CONCEAL;
 
 	/* set up mapping flags */
 	uvmflag = UVM_MAPFLAG(prot, maxprot,
@@ -1018,10 +1151,6 @@ uvm_mmapfile(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 		uvmflag |= UVM_FLAG_COPYONW;
 	if (flags & __MAP_NOFAULT)
 		uvmflag |= (UVM_FLAG_NOFAULT | UVM_FLAG_OVERLAY);
-	if (flags & MAP_STACK)
-		uvmflag |= UVM_FLAG_STACK;
-	if (flags & MAP_CONCEAL)
-		uvmflag |= UVM_FLAG_CONCEAL;
 
 	/* set up mapping flags */
 	uvmflag = UVM_MAPFLAG(prot, maxprot,
@@ -1040,8 +1169,8 @@ uvm_mmapfile(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	return (error);
 }
 
-/* an address that can't be in userspace or kernelspace */
-#define	BOGO_PC	(u_long)-1
+/* an address that can't be in userspace */
+#define	BOGO_PC	(KERNBASE + 1)
 int
 sys_kbind(struct proc *p, void *v, register_t *retval)
 {

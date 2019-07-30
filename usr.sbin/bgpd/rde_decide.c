@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.74 2019/01/21 02:07:56 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.67 2018/02/05 03:55:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -122,13 +122,11 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 
 	asp1 = prefix_aspath(p1);
 	asp2 = prefix_aspath(p2);
-	peer1 = prefix_peer(p1);
-	peer2 = prefix_peer(p2);
 
 	/* pathes with errors are not eligible */
-	if (asp1 == NULL || asp1->flags & F_ATTR_PARSE_ERR)
+	if (asp1->flags & F_ATTR_PARSE_ERR)
 		return (-1);
-	if (asp2 == NULL || asp2->flags & F_ATTR_PARSE_ERR)
+	if (asp2->flags & F_ATTR_PARSE_ERR)
 		return (1);
 
 	/* only loop free pathes are eligible */
@@ -137,16 +135,10 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	if (asp2->flags & F_ATTR_LOOP)
 		return (1);
 
-	/*
-	 * 1. check if prefix is eligible a.k.a reachable
-	 *    A NULL nexthop is eligible since it is used for locally
-	 *    announced networks.
-	 */
-	if (prefix_nexthop(p2) != NULL &&
-	    prefix_nexthop(p2)->state != NEXTHOP_REACH)
+	/* 1. check if prefix is eligible a.k.a reachable */
+	if (asp2->nexthop != NULL && asp2->nexthop->state != NEXTHOP_REACH)
 		return (1);
-	if (prefix_nexthop(p1) != NULL &&
-	    prefix_nexthop(p1)->state != NEXTHOP_REACH)
+	if (asp1->nexthop != NULL && asp1->nexthop->state != NEXTHOP_REACH)
 		return (-1);
 
 	/* 2. local preference of prefix, bigger is better */
@@ -173,10 +165,10 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	 * It is absolutely important that the ebgp value in peer_config.ebgp
 	 * is bigger than all other ones (IBGP, confederations)
 	 */
-	if (peer1->conf.ebgp != peer2->conf.ebgp) {
-		if (peer1->conf.ebgp) /* peer1 is EBGP other is lower */
+	if (asp1->peer->conf.ebgp != asp2->peer->conf.ebgp) {
+		if (asp1->peer->conf.ebgp) /* p1 is EBGP other is lower */
 			return 1;
-		else if (peer2->conf.ebgp) /* peer2 is EBGP */
+		else if (asp2->peer->conf.ebgp) /* p2 is EBGP */
 			return -1;
 	}
 
@@ -205,12 +197,12 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 		memcpy(&p1id, a->data, sizeof(p1id));
 		p1id = ntohl(p1id);
 	} else
-		p1id = peer1->remote_bgpid;
+		p1id = asp1->peer->remote_bgpid;
 	if ((a = attr_optget(asp2, ATTR_ORIGINATOR_ID)) != NULL) {
 		memcpy(&p2id, a->data, sizeof(p2id));
 		p2id = ntohl(p2id);
 	} else
-		p2id = peer2->remote_bgpid;
+		p2id = asp2->peer->remote_bgpid;
 	if ((p2id - p1id) != 0)
 		return (p2id - p1id);
 
@@ -224,12 +216,23 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 		return (p2cnt - p1cnt);
 
 	/* 12. lowest peer address wins (IPv4 is better than IPv6) */
+	peer1 = prefix_peer(p1);
+	peer2 = prefix_peer(p2);
 	if (memcmp(&peer1->remote_addr, &peer2->remote_addr,
 	    sizeof(peer1->remote_addr)) != 0)
 		return (-memcmp(&peer1->remote_addr, &peer2->remote_addr,
 		    sizeof(peer1->remote_addr)));
 
+	/* 13. for announced prefixes prefer dynamic routes */
+	if ((asp1->flags & F_ANN_DYNAMIC) != (asp2->flags & F_ANN_DYNAMIC)) {
+		if (asp1->flags & F_ANN_DYNAMIC)
+			return (1);
+		else
+			return (-1);
+	}
+
 	fatalx("Uh, oh a politician in the decision process");
+	/* NOTREACHED */
 }
 
 /*
@@ -246,8 +249,10 @@ prefix_evaluate(struct prefix *p, struct rib_entry *re)
 		/* decision process is turned off */
 		if (p != NULL)
 			LIST_INSERT_HEAD(&re->prefix_h, p, rib_l);
-		if (re->active != NULL)
+		if (re->active != NULL) {
+			prefix_aspath(re->active)->active_cnt--;
 			re->active = NULL;
+		}
 		return;
 	}
 
@@ -255,7 +260,7 @@ prefix_evaluate(struct prefix *p, struct rib_entry *re)
 		if (LIST_EMPTY(&re->prefix_h))
 			LIST_INSERT_HEAD(&re->prefix_h, p, rib_l);
 		else {
-			LIST_FOREACH(xp, &re->prefix_h, rib_l) {
+			LIST_FOREACH(xp, &re->prefix_h, rib_l)
 				if (prefix_cmp(p, xp) > 0) {
 					LIST_INSERT_BEFORE(xp, p, rib_l);
 					break;
@@ -264,23 +269,23 @@ prefix_evaluate(struct prefix *p, struct rib_entry *re)
 					LIST_INSERT_AFTER(xp, p, rib_l);
 					break;
 				}
-			}
 		}
 	}
 
 	xp = LIST_FIRST(&re->prefix_h);
 	if (xp != NULL) {
 		struct rde_aspath *xasp = prefix_aspath(xp);
-		if (xasp == NULL ||
-		    xasp->flags & (F_ATTR_LOOP|F_ATTR_PARSE_ERR) ||
-		    (prefix_nexthop(xp) != NULL && prefix_nexthop(xp)->state !=
-		    NEXTHOP_REACH))
+		if (xasp->flags & (F_ATTR_LOOP|F_ATTR_PARSE_ERR) ||
+		    (xasp->nexthop != NULL &&
+		    xasp->nexthop->state != NEXTHOP_REACH))
 			/* xp is ineligible */
 			xp = NULL;
 	}
 
 	if (re->active != xp) {
 		/* need to generate an update */
+		if (re->active != NULL)
+			prefix_aspath(re->active)->active_cnt--;
 
 		/*
 		 * Send update with remove for re->active and add for xp
@@ -292,5 +297,7 @@ prefix_evaluate(struct prefix *p, struct rib_entry *re)
 			rde_send_kroute(re_rib(re), xp, re->active);
 
 		re->active = xp;
+		if (xp != NULL)
+			prefix_aspath(xp)->active_cnt++;
 	}
 }

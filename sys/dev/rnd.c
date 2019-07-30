@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.199 2018/04/28 15:44:59 jasper Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.198 2018/02/09 03:01:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -199,7 +199,7 @@
 
 /*
  * Raw entropy collection from device drivers; at interrupt context or not.
- * enqueue_randomness() provide data which is put into the entropy queue.
+ * add_*_randomness() provide data which is put into the entropy queue.
  */
 
 #define QEVLEN	128		 /* must be a power of 2 */
@@ -284,14 +284,21 @@ rnd_qlen(void)
  * are for keyboard scan codes, 256 and upwards - for interrupts.
  */
 void
-enqueue_randomness(u_int val)
+enqueue_randomness(u_int state, u_int val)
 {
 	struct rand_event *rep;
 	struct timespec	ts;
 	u_int qlen;
 
+#ifdef DIAGNOSTIC
+	if (state >= RND_SRC_NUM)
+		return;
+#endif
+
 	if (timeout_initialized(&rnd_timeout))
 		nanotime(&ts);
+
+	val += state << 13;
 
 	mtx_enter(&rnd_enqlck);
 	rep = rnd_put();
@@ -410,7 +417,7 @@ extract_entropy(u_int8_t *buf)
 	memcpy(buf, digest, EBUFSIZE);
 
 	/* Modify pool so next hash will produce different results */
-	enqueue_randomness(EBUFSIZE);
+	add_timer_randomness(EBUFSIZE);
 	dequeue_randomness(NULL);
 
 	/* Wipe data from memory */
@@ -440,8 +447,8 @@ suspend_randomness(void)
 	struct timespec ts;
 
 	getnanotime(&ts);
-	enqueue_randomness(ts.tv_sec);
-	enqueue_randomness(ts.tv_nsec);
+	add_true_randomness(ts.tv_sec);
+	add_true_randomness(ts.tv_nsec);
 
 	dequeue_randomness(NULL);
 	rs_count = 0;
@@ -456,8 +463,8 @@ resume_randomness(char *buf, size_t buflen)
 	if (buf && buflen)
 		_rs_seed(buf, buflen);
 	getnanotime(&ts);
-	enqueue_randomness(ts.tv_sec);
-	enqueue_randomness(ts.tv_nsec);
+	add_true_randomness(ts.tv_sec);
+	add_true_randomness(ts.tv_nsec);
 
 	dequeue_randomness(NULL);
 	rs_count = 0;

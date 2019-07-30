@@ -2,12 +2,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
+    @INC = '../lib';
     require './test.pl';
-    set_up_inc( '../lib' );
 }
 use strict;
 no warnings 'void';
-use Errno qw(ENOENT EISDIR);
 
 my $called;
 my $result = do{ ++$called; 'value';};
@@ -42,7 +41,7 @@ if (open my $do, '>', $file18) {
 
 do $file18; die $@ if $@;
 
-# bug ID 20010920.007 (#7713)
+# bug ID 20010920.007
 eval qq{ do qq(a file that does not exist); };
 is($@, '', "do on a non-existing file, first try");
 
@@ -248,7 +247,7 @@ SKIP: {
     my $saved_errno = $!;
     ok(!$rv,          "do returns false on io errror");
     ok(!$saved_error, "\$\@ not set on io error");
-    ok($saved_errno == ENOENT, "\$! is ENOENT for nonexistent file");
+    ok($saved_errno,  "\$! set on io error");
 }
 
 # do subname should not be do "subname"
@@ -305,16 +304,5 @@ SKIP: {
     f(do { 1; !!(my $x = bless []); });
 }
 
-
-# do file $!s must be correct
-{
-    local @INC = ('.'); #want EISDIR not ENOENT
-    my $rv = do 'op'; # /t/op dir
-    my $saved_error = $@;
-    my $saved_errno = $!+0;
-    ok(!$rv,                    "do dir returns false");
-    ok(!$saved_error,           "\$\@ is false on do dir");
-    ok($saved_errno == EISDIR,  "\$! is EISDIR on do dir");
-}
 
 done_testing();

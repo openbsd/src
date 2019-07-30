@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.234 2019/04/02 01:47:49 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.227 2018/02/25 17:24:44 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -87,10 +87,12 @@ int	uidflag;
 int	verbose;
 int	quiet;
 int	donothing;
+char	print_unit;
 
 void	makedisktab(FILE *, struct disklabel *);
 void	makelabel(char *, char *, struct disklabel *);
 int	writelabel(int, struct disklabel *);
+void	l_perror(char *);
 int	edit(struct disklabel *, int);
 int	editit(const char *);
 char	*skip(char *);
@@ -115,10 +117,9 @@ getphysmem(void)
 int
 main(int argc, char *argv[])
 {
+	int ch, f, error = 0;
 	FILE *t;
 	char *autotable = NULL;
-	int ch, f, error = 0;
-	char print_unit = '\0';
 
 	getphysmem();
 
@@ -229,8 +230,8 @@ main(int argc, char *argv[])
 			errx(1, "autoalloc failed");
 	} else if (argc == 2 || argc == 3) {
 		/* Ensure f is a disk device before pledging. */
-		if (ioctl(f, DIOCGDINFO, &lab) == -1)
-			err(4, "DIOCGDINFO");
+		if (ioctl(f, DIOCGDINFO, &lab) < 0)
+			err(4, "ioctl DIOCGDINFO");
 
 		if (pledge("stdio rpath wpath disklabel", NULL) == -1)
 			err(1, "pledge");
@@ -269,9 +270,14 @@ main(int argc, char *argv[])
 		if (!(t = fopen(argv[1], "r")))
 			err(4, "%s", argv[1]);
 		error = getasciilabel(t, &lab);
+		memset(&lab.d_uid, 0, sizeof(lab.d_uid));
 		if (error == 0) {
-			memset(&lab.d_uid, 0, sizeof(lab.d_uid));
 			error = writelabel(f, &lab);
+			if (error == 0) {
+				if (ioctl(f, DIOCGDINFO, &lab) < 0)
+					err(4, "ioctl DIOCGDINFO");
+				mpsave(&lab);
+			}
 		}
 		fclose(t);
 		break;
@@ -314,23 +320,47 @@ writelabel(int f, struct disklabel *lp)
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
-
 	if (!donothing) {
-		/* Write new label to disk. */
-		if (ioctl(f, DIOCWDINFO, lp) == -1) {
-			warn("DIOCWDINFO");
+		if (ioctl(f, DIOCWDINFO, lp) < 0) {
+			l_perror("ioctl DIOCWDINFO");
 			return (1);
 		}
+	}
 
-		/* Refresh our copy of the on-disk current label to get UID. */
-		if (ioctl(f, DIOCGDINFO, &lab) == -1)
-			err(4, "DIOCGDINFO");
-
-		/* Finally, write out any mount point information. */
+	/* Finally, write out any mount point information. */
+	if (!donothing) {
+		/* First refresh our copy of the current label to get UID. */
+		if (ioctl(f, DIOCGDINFO, &lab) < 0)
+			err(4, "ioctl DIOCGDINFO");
 		mpsave(lp);
 	}
 
 	return (0);
+}
+
+void
+l_perror(char *s)
+{
+
+	switch (errno) {
+	case ESRCH:
+		warnx("%s: No disk label on disk", s);
+		break;
+	case EINVAL:
+		warnx("%s: Label magic number or checksum is wrong!\n"
+		    "(disklabel or kernel is out of date?)", s);
+		break;
+	case EBUSY:
+		warnx("%s: Open partition would move or shrink", s);
+		break;
+	case EXDEV:
+		warnx("%s: Labeled partition or 'a' partition must start "
+		    "at beginning of disk", s);
+		break;
+	default:
+		warn("%s", s);
+		break;
+	}
 }
 
 /*
@@ -340,15 +370,15 @@ void
 readlabel(int f)
 {
 
-	if (cflag && ioctl(f, DIOCRLDINFO) == -1)
-		err(4, "DIOCRLDINFO");
+	if (cflag && ioctl(f, DIOCRLDINFO) < 0)
+		err(4, "ioctl DIOCRLDINFO");
 
 	if ((op == RESTORE) || dflag || aflag) {
-		if (ioctl(f, DIOCGPDINFO, &lab) == -1)
-			err(4, "DIOCGPDINFO");
+		if (ioctl(f, DIOCGPDINFO, &lab) < 0)
+			err(4, "ioctl DIOCGPDINFO");
 	} else {
-		if (ioctl(f, DIOCGDINFO, &lab) == -1)
-			err(4, "DIOCGDINFO");
+		if (ioctl(f, DIOCGDINFO, &lab) < 0)
+			err(4, "ioctl DIOCGDINFO");
 	}
 }
 
@@ -364,8 +394,8 @@ parselabel(void)
 		err(4, NULL);
 	i = asprintf(&partduid,
 	    "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx.a",
-	    lab.d_uid[0], lab.d_uid[1], lab.d_uid[2], lab.d_uid[3],
-	    lab.d_uid[4], lab.d_uid[5], lab.d_uid[6], lab.d_uid[7]);
+            lab.d_uid[0], lab.d_uid[1], lab.d_uid[2], lab.d_uid[3],
+            lab.d_uid[4], lab.d_uid[5], lab.d_uid[6], lab.d_uid[7]);
 	if (i == -1)
 		err(4, NULL);
 	setfsent();
@@ -487,7 +517,7 @@ scale(u_int64_t sz, char unit, struct disklabel *lp)
 void
 display_partition(FILE *f, struct disklabel *lp, int i, char unit)
 {
-	struct partition *pp = &lp->d_partitions[i];
+	volatile struct partition *pp = &lp->d_partitions[i];
 	double p_size;
 
 	p_size = scale(DL_GETPSIZE(pp), unit, lp);
@@ -570,8 +600,8 @@ display(FILE *f, struct disklabel *lp, char unit, int all)
 	fprintf(f, "label: %.*s\n", (int)sizeof(lp->d_packname),
 	    lp->d_packname);
 	fprintf(f, "duid: %02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx\n",
-	    lp->d_uid[0], lp->d_uid[1], lp->d_uid[2], lp->d_uid[3],
-	    lp->d_uid[4], lp->d_uid[5], lp->d_uid[6], lp->d_uid[7]);
+            lp->d_uid[0], lp->d_uid[1], lp->d_uid[2], lp->d_uid[3],
+            lp->d_uid[4], lp->d_uid[5], lp->d_uid[6], lp->d_uid[7]);
 	fprintf(f, "flags:");
 	if (lp->d_flags & D_BADSECT)
 		fprintf(f, " badsect");
@@ -618,6 +648,7 @@ edit(struct disklabel *lp, int f)
 	int first, ch, fd, error = 0;
 	struct disklabel label;
 	FILE *fp;
+	u_int64_t total_sectors, starting_sector, ending_sector;
 
 	if ((fd = mkstemp(tmpfil)) == -1 || (fp = fdopen(fd, "w")) == NULL) {
 		warn("%s", tmpfil);
@@ -643,10 +674,17 @@ edit(struct disklabel *lp, int f)
 			warn("%s", tmpfil);
 			break;
 		}
-		/* Start with the kernel's idea of the default label. */
-		if (ioctl(f, DIOCGPDINFO, &label) == -1)
-			err(4, "DIOCGPDINFO");
+		/* Get values set by OS and not the label. */
+		if (ioctl(f, DIOCGPDINFO, &label) < 0)
+			err(4, "ioctl DIOCGPDINFO");
+		ending_sector = DL_GETBEND(&label);
+		starting_sector = DL_GETBSTART(&label);
+		total_sectors = DL_GETDSIZE(&label);
 		error = getasciilabel(fp, &label);
+		DL_SETBEND(&label, ending_sector);
+		DL_SETBSTART(&label, starting_sector);
+		DL_SETDSIZE(&label, total_sectors);
+
 		if (error == 0) {
 			if (cmplabel(lp, &label) == 0) {
 				puts("No changes.");

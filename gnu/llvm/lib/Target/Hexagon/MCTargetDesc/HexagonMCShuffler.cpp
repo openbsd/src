@@ -17,14 +17,10 @@
 #include "MCTargetDesc/HexagonMCShuffler.h"
 #include "Hexagon.h"
 #include "MCTargetDesc/HexagonMCInstrInfo.h"
-#include "MCTargetDesc/HexagonShuffler.h"
-#include "llvm/MC/MCInst.h"
-#include "llvm/MC/MCInstrDesc.h"
-#include "llvm/MC/MCInstrInfo.h"
+#include "MCTargetDesc/HexagonMCTargetDesc.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cassert>
 
 using namespace llvm;
 
@@ -38,8 +34,7 @@ void HexagonMCShuffler::init(MCInst &MCB) {
     // Copy the bundle for the shuffling.
     for (const auto &I : HexagonMCInstrInfo::bundleInstructions(MCB)) {
       MCInst &MI = *const_cast<MCInst *>(I.getInst());
-      LLVM_DEBUG(dbgs() << "Shuffling: " << MCII.getName(MI.getOpcode())
-                        << '\n');
+      DEBUG(dbgs() << "Shuffling: " << MCII.getName(MI.getOpcode()) << '\n');
       assert(!HexagonMCInstrInfo::getDesc(MCII, MI).isPseudo());
 
       if (!HexagonMCInstrInfo::isImmext(MI)) {
@@ -99,7 +94,7 @@ bool HexagonMCShuffler::reshuffleTo(MCInst &MCB) {
     copyTo(MCB);
     return true;
   }
-  LLVM_DEBUG(MCB.dump());
+  DEBUG(MCB.dump());
   return false;
 }
 
@@ -114,16 +109,15 @@ bool llvm::HexagonMCShuffle(MCContext &Context, bool Fatal,
 
   if (!HexagonMCInstrInfo::bundleSize(MCB)) {
     // There once was a bundle:
-    //    BUNDLE implicit-def %d2, implicit-def %r4, implicit-def %r5,
-    //    implicit-def %d7, ...
-    //      * %d2 = IMPLICIT_DEF; flags:
-    //      * %d7 = IMPLICIT_DEF; flags:
+    //    BUNDLE %D2<imp-def>, %R4<imp-def>, %R5<imp-def>, %D7<imp-def>, ...
+    //      * %D2<def> = IMPLICIT_DEF; flags:
+    //      * %D7<def> = IMPLICIT_DEF; flags:
     // After the IMPLICIT_DEFs were removed by the asm printer, the bundle
     // became empty.
-    LLVM_DEBUG(dbgs() << "Skipping empty bundle");
+    DEBUG(dbgs() << "Skipping empty bundle");
     return false;
   } else if (!HexagonMCInstrInfo::isBundle(MCB)) {
-    LLVM_DEBUG(dbgs() << "Skipping stand-alone insn");
+    DEBUG(dbgs() << "Skipping stand-alone insn");
     return false;
   }
 
@@ -134,21 +128,21 @@ bool
 llvm::HexagonMCShuffle(MCContext &Context, MCInstrInfo const &MCII,
                        MCSubtargetInfo const &STI, MCInst &MCB,
                        SmallVector<DuplexCandidate, 8> possibleDuplexes) {
+
   if (DisableShuffle)
     return false;
 
   if (!HexagonMCInstrInfo::bundleSize(MCB)) {
     // There once was a bundle:
-    //    BUNDLE implicit-def %d2, implicit-def %r4, implicit-def %r5,
-    //    implicit-def %d7, ...
-    //      * %d2 = IMPLICIT_DEF; flags:
-    //      * %d7 = IMPLICIT_DEF; flags:
+    //    BUNDLE %D2<imp-def>, %R4<imp-def>, %R5<imp-def>, %D7<imp-def>, ...
+    //      * %D2<def> = IMPLICIT_DEF; flags:
+    //      * %D7<def> = IMPLICIT_DEF; flags:
     // After the IMPLICIT_DEFs were removed by the asm printer, the bundle
     // became empty.
-    LLVM_DEBUG(dbgs() << "Skipping empty bundle");
+    DEBUG(dbgs() << "Skipping empty bundle");
     return false;
   } else if (!HexagonMCInstrInfo::isBundle(MCB)) {
-    LLVM_DEBUG(dbgs() << "Skipping stand-alone insn");
+    DEBUG(dbgs() << "Skipping stand-alone insn");
     return false;
   }
 
@@ -171,7 +165,7 @@ llvm::HexagonMCShuffle(MCContext &Context, MCInstrInfo const &MCII,
       break;
   }
 
-  if (!doneShuffling) {
+  if (doneShuffling == false) {
     HexagonMCShuffler MCS(Context, false, MCII, STI, MCB);
     doneShuffling = MCS.reshuffleTo(MCB); // shuffle
   }

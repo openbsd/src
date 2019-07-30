@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.5 2018/06/26 07:13:54 ratchov Exp $	*/
+/*	$OpenBSD: sock.h,v 1.4 2015/11/25 18:46:21 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,6 +19,7 @@
 
 #include "amsg.h"
 
+struct opt;
 struct file;
 struct slot;
 struct midi;
@@ -55,6 +56,7 @@ struct sock {
 	unsigned int walign;		/* align written data to this */
 	unsigned int ralign;		/* read data is aligned to this */
 	int lastvol;			/* last volume */
+	struct opt *opt;		/* "subdevice" definition */
 	struct slot *slot;		/* audio device slot number */
 	struct midi *midi;		/* midi endpoint */
 	struct port *port;		/* midi port */

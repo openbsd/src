@@ -13,7 +13,6 @@ BEGIN {
     @INC = qw(lib Porting t);
     require 'test.pl';
     skip_all("pre-computed SHA1 won't match under EBCDIC") if $::IS_EBCDIC;
-    skip_all("This distro may have modified some files in cpan/. Skipping validation.") if $ENV{'PERL_BUILD_PACKAGING'};
 }
 
 use strict;
@@ -74,16 +73,10 @@ my $data_fh;
 
 if ( $regen ) {
   open $data_fh, '>:raw', $customised or die "Can't open $customised";
-  print $data_fh <<'#';
-# Regenerate this file using:
-#     cd t
-#     ./perl -I../lib porting/customized.t --regen
-#
 }
 else {
   open $data_fh, '<:raw', $customised or die "Can't open $customised";
   while (<$data_fh>) {
-    next if /^#/;
     chomp;
     my ($module,$file,$sha) = split ' ';
     $customised{ $module }->{ $file } = $sha;

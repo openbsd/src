@@ -24,7 +24,6 @@ subdirectories =
  DebugInfo
  Demangle
  ExecutionEngine
- FuzzMutate
  LineEditor
  Linker
  IR
@@ -43,7 +42,6 @@ subdirectories =
  Testing
  ToolDrivers
  Transforms
- WindowsManifest
 
 [component_0]
 type = Group

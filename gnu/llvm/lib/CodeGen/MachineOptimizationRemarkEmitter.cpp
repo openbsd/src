@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/LazyMachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/LLVMContext.h"
 
@@ -27,8 +28,7 @@ DiagnosticInfoMIROptimization::MachineArgument::MachineArgument(
   Key = MKey;
 
   raw_string_ostream OS(Val);
-  MI.print(OS, /*IsStandalone=*/true, /*SkipOpers=*/false,
-           /*SkipDebugLoc=*/true);
+  MI.print(OS, /*SkipOpers=*/false, /*SkipDebugLoc=*/true);
 }
 
 Optional<uint64_t>
@@ -51,15 +51,24 @@ void MachineOptimizationRemarkEmitter::emit(
   auto &OptDiag = cast<DiagnosticInfoMIROptimization>(OptDiagCommon);
   computeHotness(OptDiag);
 
-  LLVMContext &Ctx = MF.getFunction().getContext();
+  LLVMContext &Ctx = MF.getFunction()->getContext();
 
-  // Only emit it if its hotness meets the threshold.
-  if (OptDiag.getHotness().getValueOr(0) <
-      Ctx.getDiagnosticsHotnessThreshold()) {
+  // If a diagnostic has a hotness value, then only emit it if its hotness
+  // meets the threshold.
+  if (OptDiag.getHotness() &&
+      *OptDiag.getHotness() < Ctx.getDiagnosticsHotnessThreshold()) {
     return;
   }
 
-  Ctx.diagnose(OptDiag);
+  yaml::Output *Out = Ctx.getDiagnosticsOutputFile();
+  if (Out) {
+    auto *P = &const_cast<DiagnosticInfoOptimizationBase &>(OptDiagCommon);
+    *Out << P;
+  }
+  // FIXME: now that IsVerbose is part of DI, filtering for this will be moved
+  // from here to clang.
+  if (!OptDiag.isVerbose() || shouldEmitVerbose())
+    Ctx.diagnose(OptDiag);
 }
 
 MachineOptimizationRemarkEmitterPass::MachineOptimizationRemarkEmitterPass()
@@ -72,7 +81,7 @@ bool MachineOptimizationRemarkEmitterPass::runOnMachineFunction(
     MachineFunction &MF) {
   MachineBlockFrequencyInfo *MBFI;
 
-  if (MF.getFunction().getContext().getDiagnosticsHotnessRequested())
+  if (MF.getFunction()->getContext().getDiagnosticsHotnessRequested())
     MBFI = &getAnalysis<LazyMachineBlockFrequencyInfoPass>().getBFI();
   else
     MBFI = nullptr;

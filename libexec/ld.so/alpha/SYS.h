@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.2 2019/02/03 02:20:36 guenther Exp $ */
+/*	$OpenBSD: SYS.h,v 1.1 2017/08/27 21:59:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -65,7 +65,10 @@
 LEAF_NOPROFILE(_dl_##c, irrelevant);					\
 	CALLSYS_NOERROR(c);						\
 	beq	a3, 1f;							\
-	subq	zero, v0, v0;	/* return -errno */			\
+	jmp	zero, _dl_cerror;					\
 1:									\
 	RET;								\
 END(_dl_##c)
+_dl_cerror:
+	subq	zero, v0, v0	/* return -errno */
+	RET

@@ -60,8 +60,7 @@ cvt_text(char *odst, char *osrc, int *chpos, int *lenp, int ops)
 	char *edst = odst;
 	char *src;
 	char *src_end;
-	wchar_t ch;
-	int len;
+	LWCHAR ch;
 
 	if (lenp != NULL)
 		src_end = osrc + *lenp;
@@ -71,30 +70,24 @@ cvt_text(char *odst, char *osrc, int *chpos, int *lenp, int ops)
 	for (src = osrc, dst = odst; src < src_end; ) {
 		int src_pos = src - osrc;
 		int dst_pos = dst - odst;
-		if ((len = mbtowc(&ch, src, src_end - src)) < 1)
-			ch = L'\0';
+		ch = step_char(&src, +1, src_end);
 		if ((ops & CVT_BS) && ch == '\b' && dst > odst) {
-			src++;
 			/* Delete backspace and preceding char. */
 			do {
 				dst--;
-			} while (dst > odst && IS_UTF8_TRAIL(*dst));
-		} else if ((ops & CVT_ANSI) && ch == ESC) {
+			} while (dst > odst &&
+			    !IS_ASCII_OCTET(*dst) && !IS_UTF8_LEAD(*dst));
+		} else if ((ops & CVT_ANSI) && IS_CSI_START(ch)) {
 			/* Skip to end of ANSI escape sequence. */
 			src++;	/* skip the CSI start char */
 			while (src < src_end)
 				if (!is_ansi_middle(*src++))
 					break;
-		} else if (len < 1) {
-			*dst++ = *src++;
-			if (chpos != NULL)
-				chpos[dst_pos] = src_pos;
 		} else {
-			src += len;
 			/* Just copy the char to the destination buffer. */
 			if ((ops & CVT_TO_LC) && iswupper(ch))
 				ch = towlower(ch);
-			dst += wctomb(dst, ch);
+			put_wchar(&dst, ch);
 			/* Record the original position of the char. */
 			if (chpos != NULL)
 				chpos[dst_pos] = src_pos;

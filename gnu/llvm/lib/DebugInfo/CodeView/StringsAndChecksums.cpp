@@ -35,36 +35,14 @@ void StringsAndChecksumsRef::initializeStrings(
   assert(SR.kind() == DebugSubsectionKind::StringTable);
   assert(!Strings && "Found a string table even though we already have one!");
 
-  OwnedStrings = std::make_shared<DebugStringTableSubsectionRef>();
+  OwnedStrings = llvm::make_unique<DebugStringTableSubsectionRef>();
   consumeError(OwnedStrings->initialize(SR.getRecordData()));
-  Strings = OwnedStrings.get();
-}
-
-void StringsAndChecksumsRef::reset() {
-  resetStrings();
-  resetChecksums();
-}
-
-void StringsAndChecksumsRef::resetStrings() {
-  OwnedStrings.reset();
-  Strings = nullptr;
-}
-
-void StringsAndChecksumsRef::resetChecksums() {
-  OwnedChecksums.reset();
-  Checksums = nullptr;
-}
-
-void StringsAndChecksumsRef::setStrings(
-    const DebugStringTableSubsectionRef &StringsRef) {
-  OwnedStrings = std::make_shared<DebugStringTableSubsectionRef>();
-  *OwnedStrings = StringsRef;
   Strings = OwnedStrings.get();
 }
 
 void StringsAndChecksumsRef::setChecksums(
     const DebugChecksumsSubsectionRef &CS) {
-  OwnedChecksums = std::make_shared<DebugChecksumsSubsectionRef>();
+  OwnedChecksums = llvm::make_unique<DebugChecksumsSubsectionRef>();
   *OwnedChecksums = CS;
   Checksums = OwnedChecksums.get();
 }
@@ -75,7 +53,7 @@ void StringsAndChecksumsRef::initializeChecksums(
   if (Checksums)
     return;
 
-  OwnedChecksums = std::make_shared<DebugChecksumsSubsectionRef>();
+  OwnedChecksums = llvm::make_unique<DebugChecksumsSubsectionRef>();
   consumeError(OwnedChecksums->initialize(FCR.getRecordData()));
   Checksums = OwnedChecksums.get();
 }

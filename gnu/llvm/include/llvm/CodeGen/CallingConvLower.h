@@ -1,4 +1,4 @@
-//===- llvm/CallingConvLower.h - Calling Conventions ------------*- C++ -*-===//
+//===-- llvm/CallingConvLower.h - Calling Conventions -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,12 +18,11 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/TargetCallingConv.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/Target/TargetCallingConv.h"
 
 namespace llvm {
-
 class CCState;
 class MVT;
 class TargetMachine;
@@ -201,7 +200,6 @@ private:
   unsigned MaxStackArgAlign;
   SmallVector<uint32_t, 16> UsedRegs;
   SmallVector<CCValAssign, 4> PendingLocs;
-  SmallVector<ISD::ArgFlagsTy, 4> PendingArgFlags;
 
   // ByValInfo and SmallVector<ByValInfo, 4> ByValRegs:
   //
@@ -304,7 +302,7 @@ public:
   /// CheckReturn - Analyze the return values of a function, returning
   /// true if the return can be performed without sret-demotion, and
   /// false otherwise.
-  bool CheckReturn(const SmallVectorImpl<ISD::OutputArg> &Outs,
+  bool CheckReturn(const SmallVectorImpl<ISD::OutputArg> &ArgsFlags,
                    CCAssignFn Fn);
 
   /// AnalyzeCallOperands - Analyze the outgoing arguments to a call,
@@ -505,13 +503,8 @@ public:
   }
 
   // Get list of pending assignments
-  SmallVectorImpl<CCValAssign> &getPendingLocs() {
+  SmallVectorImpl<llvm::CCValAssign> &getPendingLocs() {
     return PendingLocs;
-  }
-
-  // Get a list of argflags for pending assignments.
-  SmallVectorImpl<ISD::ArgFlagsTy> &getPendingArgFlags() {
-    return PendingArgFlags;
   }
 
   /// Compute the remaining unused register parameters that would be used for
@@ -571,6 +564,8 @@ private:
   void MarkAllocated(unsigned Reg);
 };
 
+
+
 } // end namespace llvm
 
-#endif // LLVM_CODEGEN_CALLINGCONVLOWER_H
+#endif

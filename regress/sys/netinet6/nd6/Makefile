@@ -1,12 +1,20 @@
-#	$OpenBSD: Makefile,v 1.9 2019/05/10 02:22:34 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.8 2017/12/20 23:37:56 bluhm Exp $
 
 # The following ports must be installed:
 #
 # python-2.7          interpreted object-oriented programming language
+# py-libdnet          python interface to libdnet
 # scapy               powerful interactive packet manipulation in python
 
-.if ! exists(/usr/local/bin/python2.7) || ! exists(/usr/local/bin/scapy)
+.if ! (make(clean) || make(cleandir) || make(obj))
+# Check wether all required python packages are installed.  If some
+# are missing print a warning and skip the tests, but do not fail.
+PYTHON_IMPORT !!= python2.7 -c 'from scapy.all import *' 2>&1 || true
+.endif
+
+.if ! empty(PYTHON_IMPORT)
 regress:
+	@echo '${PYTHON_IMPORT}'
 	@echo Install python and the scapy module for additional tests.
 	@echo SKIPPED
 .endif
@@ -77,16 +85,15 @@ addr.py: Makefile
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
 .if ${.CURDIR} == ${.OBJDIR}
-PYTHON =	python2.7 -u ./
+PYTHON =	python2.7 ./
 .else
-PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 -u ${.CURDIR}/
+PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 ${.CURDIR}/
 .endif
 
 # Clear neighbor cache and ping all addresses.  This ensures that
 # the ip addresses are configured and all routing table are set up
 # to allow bidirectional packet flow.
-REGRESS_TARGETS =	run-ping6
-run-ping6:
+run-regress-ping6:
 	@echo '\n======== $@ ========'
 	${SUDO} ndp -c
 .for ip in LOCAL_ADDR REMOTE_ADDR
@@ -97,11 +104,12 @@ run-ping6:
 ND6_SCRIPTS !!=		cd ${.CURDIR} && ls -1 nd6*.py
 
 .for s in ${ND6_SCRIPTS}
-REGRESS_TARGETS =	run-${s}
-run-${s}: addr.py
+run-regress-${s}: addr.py
 	@echo '\n======== $@ ========'
 	${SUDO} ${PYTHON}${s}
 .endfor
+
+REGRESS_TARGETS =	run-regress-ping6 ${ND6_SCRIPTS:S/^/run-regress-/}
 
 CLEANFILES +=		addr.py *.pyc *.log
 

@@ -19,12 +19,10 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/Mangler.h"
-#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
@@ -35,25 +33,7 @@ AArch64MCInstLower::AArch64MCInstLower(MCContext &ctx, AsmPrinter &printer)
 
 MCSymbol *
 AArch64MCInstLower::GetGlobalAddressSymbol(const MachineOperand &MO) const {
-  const GlobalValue *GV = MO.getGlobal();
-  unsigned TargetFlags = MO.getTargetFlags();
-  const Triple &TheTriple = Printer.TM.getTargetTriple();
-  if (!TheTriple.isOSBinFormatCOFF())
-    return Printer.getSymbol(GV);
-
-  assert(TheTriple.isOSWindows() &&
-         "Windows is the only supported COFF target");
-
-  bool IsIndirect = (TargetFlags & AArch64II::MO_DLLIMPORT);
-  if (!IsIndirect)
-    return Printer.getSymbol(GV);
-
-  SmallString<128> Name;
-  Name = "__imp_";
-  Printer.TM.getNameWithPrefix(Name, GV,
-                               Printer.getObjFileLowering().getMangler());
-
-  return Ctx.getOrCreateSymbol(Name);
+  return Printer.getSymbol(MO.getGlobal());
 }
 
 MCSymbol *
@@ -173,20 +153,11 @@ MCOperand AArch64MCInstLower::lowerSymbolOperandELF(const MachineOperand &MO,
 
 MCOperand AArch64MCInstLower::lowerSymbolOperandCOFF(const MachineOperand &MO,
                                                      MCSymbol *Sym) const {
-  AArch64MCExpr::VariantKind RefKind = AArch64MCExpr::VK_NONE;
-  if (MO.getTargetFlags() & AArch64II::MO_TLS) {
-    if ((MO.getTargetFlags() & AArch64II::MO_FRAGMENT) == AArch64II::MO_PAGEOFF)
-      RefKind = AArch64MCExpr::VK_SECREL_LO12;
-    else if ((MO.getTargetFlags() & AArch64II::MO_FRAGMENT) ==
-             AArch64II::MO_HI12)
-      RefKind = AArch64MCExpr::VK_SECREL_HI12;
-  }
-  const MCExpr *Expr =
-      MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_None, Ctx);
+  MCSymbolRefExpr::VariantKind RefKind = MCSymbolRefExpr::VK_None;
+  const MCExpr *Expr = MCSymbolRefExpr::create(Sym, RefKind, Ctx);
   if (!MO.isJTI() && MO.getOffset())
     Expr = MCBinaryExpr::createAdd(
         Expr, MCConstantExpr::create(MO.getOffset(), Ctx), Ctx);
-  Expr = AArch64MCExpr::create(Expr, RefKind, Ctx);
   return MCOperand::createExpr(Expr);
 }
 

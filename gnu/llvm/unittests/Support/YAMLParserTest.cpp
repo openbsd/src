@@ -180,7 +180,6 @@ TEST(YAMLParser, HandlesEndOfFileGracefully) {
 }
 
 TEST(YAMLParser, HandlesNullValuesInKeyValueNodesGracefully) {
-  ExpectParseError("KeyValueNode with null key", "? \"\n:");
   ExpectParseError("KeyValueNode with null value", "test: '");
 }
 

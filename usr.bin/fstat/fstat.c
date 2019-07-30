@@ -1,7 +1,7 @@
-/*	$OpenBSD: fstat.c,v 1.99 2019/02/05 02:17:32 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.91 2017/12/08 17:51:26 deraadt Exp $	*/
 
 /*
- * Copyright (c) 2009 Todd C. Miller <millert@openbsd.org>
+ * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -87,14 +87,10 @@
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
-struct fstat_filter {
-	int what;
-	int arg;
-};
-
 struct fileargs fileargs = SLIST_HEAD_INITIALIZER(fileargs);
 
 int	fsflg;	/* show files on same filesystem as file(s) argument */
+int	pflg;	/* show files open by a particular pid */
 int	uflg;	/* show files open by a particular (effective) user */
 int	checkfile; /* true if restricting to particular files or filesystems */
 int	nflg;	/* (numerical) display f.s. and rdev as dev_t */
@@ -105,9 +101,6 @@ int	cflg; 	/* fuser only */
 
 int	fuser;	/* 1 if we are fuser, 0 if we are fstat */
 int	signo;	/* signal to send (fuser only) */
-
-int	nfilter = 0;	/* How many uid/pid filters are in place */
-struct fstat_filter *filter = NULL; /* An array of uid/pid filters */
 
 kvm_t *kd;
 uid_t uid;
@@ -144,7 +137,7 @@ main(int argc, char *argv[])
 {
 	struct passwd *passwd;
 	struct kinfo_file *kf, *kflast;
-	int ch;
+	int arg, ch, what;
 	char *memf, *nlistf, *optstr;
 	char buf[_POSIX2_LINE_MAX];
 	const char *errstr;
@@ -152,6 +145,8 @@ main(int argc, char *argv[])
 
 	hideroot = getuid();
 
+	arg = -1;
+	what = KERN_FILE_BYPID;
 	nlistf = memf = NULL;
 	oflg = 0;
 
@@ -163,9 +158,6 @@ main(int argc, char *argv[])
 		fuser = 0;
 		optstr = "fnop:su:vN:M:";
 	}
-
-	/* Keep passwd file open for faster lookups. */
-	setpassent(1);
 
 	/*
 	 * fuser and fstat share three flags: -f, -s and -u.  In both cases
@@ -201,18 +193,15 @@ main(int argc, char *argv[])
 			oflg = 1;
 			break;
 		case 'p':
-			if ((filter = recallocarray(filter, nfilter, nfilter + 1,
-			    sizeof(*filter))) == NULL)
-				err(1, NULL);
-			filter[nfilter].arg = strtonum(optarg, 0, INT_MAX,
-			    &errstr);
+			if (pflg++)
+				usage();
+			arg = strtonum(optarg, 0, INT_MAX, &errstr);
 			if (errstr != NULL) {
 				warnx("-p requires a process id, %s: %s",
 					errstr, optarg);
 				usage();
 			}
-			filter[nfilter].what = KERN_FILE_BYPID;
-			nfilter++;
+			what = KERN_FILE_BYPID;
 			break;
 		case 's':
 			sflg = 1;
@@ -225,24 +214,19 @@ main(int argc, char *argv[])
 			}
 			break;
 		case 'u':
-			uflg = 1;
+			if (uflg++)
+				usage();
 			if (!fuser) {
-				uid_t uid;
-
-				if (uid_from_user(optarg, &uid) == -1) {
-					uid = strtonum(optarg, 0, UID_MAX,
+				if (!(passwd = getpwnam(optarg))) {
+					arg = strtonum(optarg, 0, UID_MAX,
 					    &errstr);
 					if (errstr != NULL) {
 						errx(1, "%s: unknown uid",
 						    optarg);
 					}
-				}
-				if ((filter = recallocarray(filter, nfilter,
-				    nfilter + 1, sizeof(*filter))) == NULL)
-					err(1, NULL);
-				filter[nfilter].arg = uid;
-				filter[nfilter].what = KERN_FILE_BYUID;
-				nfilter++;
+				} else
+					arg = passwd->pw_uid;
+				what = KERN_FILE_BYUID;
 			}
 			break;
 		case 'v':
@@ -286,15 +270,8 @@ main(int argc, char *argv[])
 		checkfile = 1;
 	}
 
-	if (nfilter == 1) {
-		if ((kf = kvm_getfiles(kd, filter[0].what, filter[0].arg,
-		    sizeof(*kf), &cnt)) == NULL)
-			errx(1, "%s", kvm_geterr(kd));
-	} else {
-		if ((kf = kvm_getfiles(kd, KERN_FILE_BYPID, -1, sizeof(*kf),
-		    &cnt)) == NULL)
-			errx(1, "%s", kvm_geterr(kd));
-	}
+	if ((kf = kvm_getfiles(kd, what, arg, sizeof(*kf), &cnt)) == NULL)
+		errx(1, "%s", kvm_geterr(kd));
 
 	if (fuser) {
 		/*
@@ -354,7 +331,7 @@ fstat_header(void)
 	putchar('\n');
 }
 
-const char *Uname, *Comm;
+char	*Uname, *Comm;
 uid_t	*procuid;
 pid_t	Pid;
 
@@ -385,23 +362,11 @@ pid_t	Pid;
 void
 fstat_dofile(struct kinfo_file *kf)
 {
-	int i;
 
 	Uname = user_from_uid(kf->p_uid, 0);
 	procuid = &kf->p_uid;
 	Pid = kf->p_pid;
 	Comm = kf->p_comm;
-
-	for (i = 0; i < nfilter; i++) {
-		if (filter[i].what == KERN_FILE_BYPID) {
-			if (filter[i].arg == Pid)
-				break;
-		} else if (filter[i].arg == *procuid) {
-			break;
-		}
-	}
-	if (i == nfilter && nfilter != 0)
-		return;
 
 	switch (kf->f_type) {
 	case DTYPE_VNODE:
@@ -467,7 +432,7 @@ vtrans(struct kinfo_file *kf)
 	}
 
 	if (nflg)
-		(void)printf(" %2lu,%-2lu", (long)major(kf->va_fsid),
+		(void)printf(" %2ld,%-2ld", (long)major(kf->va_fsid),
 		    (long)minor(kf->va_fsid));
 	else if (!(kf->v_flag & VCLONE))
 		(void)printf(" %-8s", kf->f_mntonname);
@@ -487,8 +452,6 @@ vtrans(struct kinfo_file *kf)
 		strlcat(rwep, "w", sizeof rwep);
 	if (kf->fd_ofileflags & UF_EXCLOSE)
 		strlcat(rwep, "e", sizeof rwep);
-	if (kf->fd_ofileflags & UF_PLEDGED)
-		strlcat(rwep, "p", sizeof rwep);
 	printf(" %4s", rwep);
 	switch (kf->v_type) {
 	case VBLK:
@@ -497,7 +460,7 @@ vtrans(struct kinfo_file *kf)
 
 		if (nflg || ((name = devname(kf->va_rdev,
 		    kf->v_type == VCHR ?  S_IFCHR : S_IFBLK)) == NULL))
-			printf("   %2u,%-3u", major(kf->va_rdev), minor(kf->va_rdev));
+			printf("   %2d,%-3d", major(kf->va_rdev), minor(kf->va_rdev));
 		else
 			printf("  %7s", name);
 		if (oflg)
@@ -775,15 +738,11 @@ socktrans(struct kinfo_file *kf)
 		printf("* internet %s", stype);
 		getinetproto(kf->so_protocol);
 		print_inet_details(kf);
-		if (kf->inp_rtableid)
-			printf(" rtable %u", kf->inp_rtableid);
 		break;
 	case AF_INET6:
 		printf("* internet6 %s", stype);
 		getinetproto(kf->so_protocol);
 		print_inet6_details(kf);
-		if (kf->inp_rtableid)
-			printf(" rtable %u", kf->inp_rtableid);
 		break;
 	case AF_UNIX:
 		/* print address of pcb and connected pcb */
@@ -815,11 +774,6 @@ socktrans(struct kinfo_file *kf)
 	case AF_ROUTE:
 		/* print protocol number and socket address */
 		printf("* route %s", stype);
-		printf(" %d ", kf->so_protocol);
-		hide((void *)(uintptr_t)kf->f_data);
-		break;
-	case AF_KEY:
-		printf("* pfkey %s", stype);
 		printf(" %d ", kf->so_protocol);
 		hide((void *)(uintptr_t)kf->f_data);
 		break;

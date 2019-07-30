@@ -43,7 +43,6 @@
  */
 
 #include "config.h"
-#include <ctype.h>
 #include "util/log.h"
 #include "util/config_file.h"
 #include "util/module.h"
@@ -108,16 +107,6 @@ print_option(struct config_file* cfg, const char* opt, int final)
 		if(!p) fatal_exit("out of memory");
 		printf("%s\n", p);
 		free(p);
-		return;
-	}
-	if(strcmp(opt, "auto-trust-anchor-file") == 0 && final) {
-		struct config_strlist* s = cfg->auto_trust_anchor_file_list;
-		for(; s; s=s->next) {
-			char *p = fname_after_chroot(s->str, cfg, 1);
-			if(!p) fatal_exit("out of memory");
-			printf("%s\n", p);
-			free(p);
-		}
 		return;
 	}
 	if(!config_get_option(cfg, opt, config_print_func, stdout))
@@ -253,23 +242,6 @@ aclchecks(struct config_file* cfg)
 	}
 }
 
-/** check tcp connection limit ips */
-static void
-tcpconnlimitchecks(struct config_file* cfg)
-{
-	int d;
-	struct sockaddr_storage a;
-	socklen_t alen;
-	struct config_str2list* tcl;
-	for(tcl=cfg->tcp_connection_limits; tcl; tcl = tcl->next) {
-		if(!netblockstrtoaddr(tcl->str, UNBOUND_DNS_PORT, &a, &alen,
-			&d)) {
-			fatal_exit("cannot parse tcp connection limit address %s %s",
-				tcl->str, tcl->str2);
-		}
-	}
-}
-
 /** true if fname is a file */
 static int
 is_file(const char* fname)
@@ -391,53 +363,14 @@ ecs_conf_checks(struct config_file* cfg)
 }
 #endif /* CLIENT_SUBNET */
 
-/** check that the modules exist, are compiled in */
-static void
-check_modules_exist(const char* module_conf)
-{
-	const char** names = module_list_avail();
-	const char* s = module_conf;
-	while(*s) {
-		int i = 0;
-		int is_ok = 0;
-		while(*s && isspace((unsigned char)*s))
-			s++;
-		if(!*s) break;
-		while(names[i]) {
-			if(strncmp(names[i], s, strlen(names[i])) == 0) {
-				is_ok = 1;
-				break;
-			}
-			i++;
-		}
-		if(is_ok == 0) {
-			char n[64];
-			size_t j;
-			n[0]=0;
-			n[sizeof(n)-1]=0;
-			for(j=0; j<sizeof(n)-1; j++) {
-				if(!s[j] || isspace((unsigned char)s[j])) {
-					n[j] = 0;
-					break;
-				}
-				n[j] = s[j];
-			}
-			fatal_exit("module_conf lists module '%s' but that "
-				"module is not available.", n);
-		}
-		s += strlen(names[i]);
-	}
-}
-
 /** check configuration for errors */
 static void
-morechecks(struct config_file* cfg)
+morechecks(struct config_file* cfg, const char* fname)
 {
 	warn_hosts("stub-host", cfg->stubs);
 	warn_hosts("forward-host", cfg->forwards);
 	interfacechecks(cfg);
 	aclchecks(cfg);
-	tcpconnlimitchecks(cfg);
 
 	if(cfg->verbosity < 0)
 		fatal_exit("verbosity value < 0");
@@ -462,6 +395,19 @@ morechecks(struct config_file* cfg)
 	if(cfg->chrootdir && cfg->chrootdir[0] &&
 		!is_dir(cfg->chrootdir)) {
 		fatal_exit("bad chroot directory");
+	}
+	if(cfg->chrootdir && cfg->chrootdir[0]) {
+		char buf[10240];
+		buf[0] = 0;
+		if(fname[0] != '/') {
+			if(getcwd(buf, sizeof(buf)) == NULL)
+				fatal_exit("getcwd: %s", strerror(errno));
+			(void)strlcat(buf, "/", sizeof(buf));
+		}
+		(void)strlcat(buf, fname, sizeof(buf));
+		if(strncmp(buf, cfg->chrootdir, strlen(cfg->chrootdir)) != 0)
+			fatal_exit("config file %s is not inside chroot %s",
+				buf, cfg->chrootdir);
 	}
 	if(cfg->directory && cfg->directory[0]) {
 		char* ad = fname_after_chroot(cfg->directory, cfg, 0);
@@ -509,9 +455,6 @@ morechecks(struct config_file* cfg)
 	free(cfg->chrootdir);
 	cfg->chrootdir = NULL;
 
-	/* check that the modules listed in module_conf exist */
-	check_modules_exist(cfg->module_conf);
-
 	/* There should be no reason for 'respip' module not to work with
 	 * dns64, but it's not explicitly confirmed,  so the combination is
 	 * excluded below.   It's simply unknown yet for the combination of
@@ -558,6 +501,7 @@ morechecks(struct config_file* cfg)
 #if defined(WITH_PYTHONMODULE) && defined(CLIENT_SUBNET)
 		&& strcmp(cfg->module_conf, "python subnetcache iterator") != 0
 		&& strcmp(cfg->module_conf, "subnetcache python iterator") != 0
+		&& strcmp(cfg->module_conf, "subnetcache validator iterator") != 0
 		&& strcmp(cfg->module_conf, "python subnetcache validator iterator") != 0
 		&& strcmp(cfg->module_conf, "subnetcache python validator iterator") != 0
 		&& strcmp(cfg->module_conf, "subnetcache validator python iterator") != 0
@@ -587,13 +531,8 @@ morechecks(struct config_file* cfg)
 		endpwent();
 #  endif
 	}
-
-	if (pledge("stdio rpath", NULL) == -1)
-		fatal_exit("Could not pledge");
-
 #endif
-	if(cfg->remote_control_enable && options_remote_is_address(cfg)
-		&& cfg->control_use_cert) {
+	if(cfg->remote_control_enable && cfg->remote_control_use_cert) {
 		check_chroot_string("server-key-file", &cfg->server_key_file,
 			cfg->chrootdir, cfg);
 		check_chroot_string("server-cert-file", &cfg->server_cert_file,
@@ -640,7 +579,7 @@ static void
 check_auth(struct config_file* cfg)
 {
 	struct auth_zones* az = auth_zones_create();
-	if(!az || !auth_zones_apply_cfg(az, cfg, 0)) {
+	if(!az || !auth_zones_apply_cfg(az, cfg, 0, NULL)) {
 		fatal_exit("Could not setup authority zones");
 	}
 	auth_zones_delete(az);
@@ -671,7 +610,7 @@ checkconf(const char* cfgfile, const char* opt, int final)
 		config_delete(cfg);
 		return;
 	}
-	morechecks(cfg);
+	morechecks(cfg, cfgfile);
 	check_mod(cfg, iter_get_funcblock());
 	check_mod(cfg, val_get_funcblock());
 #ifdef WITH_PYTHONMODULE
@@ -728,10 +667,6 @@ int main(int argc, char* argv[])
 	if(argc == 1)
 		f = argv[0];
 	else	f = cfgfile;
-
-	if (pledge("stdio rpath getpw", NULL) == -1)
-		fatal_exit("Could not pledge");
-
 	checkconf(f, opt, final);
 	checklock_stop();
 	return 0;

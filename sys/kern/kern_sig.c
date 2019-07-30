@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.230 2019/05/13 19:21:31 bluhm Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.218 2018/03/27 08:22:41 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -86,10 +86,6 @@ void postsig(struct proc *, int);
 int cansignal(struct proc *, struct process *, int);
 
 struct pool sigacts_pool;	/* memory pool for sigacts structures */
-
-void sigio_del(struct sigiolst *);
-void sigio_unlink(struct sigio_ref *, struct sigiolst *);
-struct mutex sigio_lock = MUTEX_INITIALIZER(IPL_HIGH);
 
 /*
  * Can thread p, send the signal signum to process qr?
@@ -364,8 +360,7 @@ setsigvec(struct proc *p, int signum, struct sigaction *sa)
 	 */
 	if (sa->sa_handler == SIG_IGN ||
 	    (sigprop[signum] & SA_IGNORE && sa->sa_handler == SIG_DFL)) {
-		atomic_clearbits_int(&p->p_siglist, bit);
-		atomic_clearbits_int(&p->p_p->ps_siglist, bit);
+		atomic_clearbits_int(&p->p_siglist, bit);	
 		if (signum != SIGCONT)
 			ps->ps_sigignore |= bit;	/* easier in psignal */
 		ps->ps_sigcatch &= ~bit;
@@ -420,7 +415,6 @@ execsigs(struct proc *p)
 			if (nc != SIGCONT)
 				ps->ps_sigignore |= mask;
 			atomic_clearbits_int(&p->p_siglist, mask);
-			atomic_clearbits_int(&p->p_p->ps_siglist, mask);
 		}
 		ps->ps_sigact[nc] = SIG_DFL;
 	}
@@ -474,7 +468,7 @@ int
 sys_sigpending(struct proc *p, void *v, register_t *retval)
 {
 
-	*retval = p->p_siglist | p->p_p->ps_siglist;
+	*retval = p->p_siglist;
 	return (0);
 }
 
@@ -560,11 +554,6 @@ sys_sigaltstack(struct proc *p, void *v, register_t *retval)
 	}
 	if (ss.ss_size < MINSIGSTKSZ)
 		return (ENOMEM);
-
-	error = uvm_map_remap_as_stack(p, (vaddr_t)ss.ss_sp, ss.ss_size);
-	if (error)
-		return (error);
-
 	p->p_sigstk = ss;
 	return (0);
 }
@@ -704,9 +693,6 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 	(euid) == (pr)->ps_ucred->cr_svuid || \
 	(euid) == (pr)->ps_ucred->cr_uid)
 
-#define CANSIGIO(cr, pr) \
-	CANDELIVER((cr)->cr_ruid, (cr)->cr_uid, (pr))
-
 /*
  * Deliver signum to pgid, but first check uid/euid against each
  * process and see if it is permitted.
@@ -735,6 +721,18 @@ csignal(pid_t pgid, int signum, uid_t uid, uid_t euid)
 }
 
 /*
+ * Send a signal to a process group.
+ */
+void
+gsignal(int pgid, int signum)
+{
+	struct pgrp *pgrp;
+
+	if (pgid && (pgrp = pgfind(pgid)))
+		pgsignal(pgrp, signum, 0);
+}
+
+/*
  * Send a signal to a process group.  If checktty is 1,
  * limit to members which have a controlling terminal.
  */
@@ -747,37 +745,6 @@ pgsignal(struct pgrp *pgrp, int signum, int checkctty)
 		LIST_FOREACH(pr, &pgrp->pg_members, ps_pglist)
 			if (checkctty == 0 || pr->ps_flags & PS_CONTROLT)
 				prsignal(pr, signum);
-}
-
-/*
- * Send a SIGIO or SIGURG signal to a process or process group using stored
- * credentials rather than those of the current process.
- */
-void
-pgsigio(struct sigio_ref *sir, int sig, int checkctty)
-{
-	struct process *pr;
-	struct sigio *sigio;
-
-	if (sir->sir_sigio == NULL)
-		return;
-
-	mtx_enter(&sigio_lock);
-	sigio = sir->sir_sigio;
-	if (sigio == NULL)
-		goto out;
-	if (sigio->sio_pgid > 0) {
-		if (CANSIGIO(sigio->sio_ucred, sigio->sio_proc))
-			prsignal(sigio->sio_proc, sig);
-	} else if (sigio->sio_pgid < 0) {
-		LIST_FOREACH(pr, &sigio->sio_pgrp->pg_members, ps_pglist) {
-			if (CANSIGIO(sigio->sio_ucred, pr) &&
-			    (checkctty == 0 || (pr->ps_flags & PS_CONTROLT)))
-				prsignal(pr, sig);
-		}
-	}
-out:
-	mtx_leave(&sigio_lock);
 }
 
 /*
@@ -826,15 +793,17 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 	if ((pr->ps_flags & PS_TRACED) == 0 &&
 	    (ps->ps_sigcatch & mask) != 0 &&
 	    (p->p_sigmask & mask) == 0) {
-		siginfo_t si;
-		initsiginfo(&si, signum, trapno, code, sigval);
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG)) {
+			siginfo_t si;
+
+			initsiginfo(&si, signum, trapno, code, sigval);
 			ktrpsig(p, signum, ps->ps_sigact[signum],
 			    p->p_sigmask, code, &si);
 		}
 #endif
-		sendsig(ps->ps_sigact[signum], signum, p->p_sigmask, &si);
+		(*pr->ps_emul->e_sendsig)(ps->ps_sigact[signum], signum,
+		    p->p_sigmask, trapno, code, sigval);
 		postsig_done(p, signum, ps);
 	} else {
 		p->p_sisig = signum;
@@ -877,6 +846,7 @@ psignal(struct proc *p, int signum)
 
 /*
  * type = SPROCESS	process signal, can be diverted (sigwait())
+ *	XXX if blocked in all threads, mark as pending in struct process
  * type = STHREAD	thread signal, but should be propagated if unhandled
  * type = SPROPAGATED	propagated to this thread, so don't propagate again
  */
@@ -886,12 +856,9 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	int s, prop;
 	sig_t action;
 	int mask;
-	int *siglist;
 	struct process *pr = p->p_p;
 	struct proc *q;
 	int wakeparent = 0;
-
-	KERNEL_ASSERT_LOCKED();
 
 #ifdef DIAGNOSTIC
 	if ((u_int)signum >= NSIG || signum == 0)
@@ -909,7 +876,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		if (pr->ps_flags & PS_COREDUMP && signum == SIGKILL) {
 			if (pr->ps_single != NULL)
 				p = pr->ps_single;
-			atomic_setbits_int(&p->p_p->ps_siglist, mask);
+			atomic_setbits_int(&p->p_siglist, mask);
 			return;
 		}
 
@@ -964,6 +931,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	 */
 	if (pr->ps_flags & PS_TRACED) {
 		action = SIG_DFL;
+		atomic_setbits_int(&p->p_siglist, mask);
 	} else {
 		/*
 		 * If the signal is being ignored,
@@ -993,23 +961,17 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			if (prop & SA_TTYSTOP && pr->ps_pgrp->pg_jobc == 0)
 				return;
 		}
+
+		atomic_setbits_int(&p->p_siglist, mask);
 	}
-	/*
-	 * If delivered to process, mark as pending there.  Continue and stop
-	 * signals will be propagated to all threads.  So they are always
-	 * marked at thread level.
-	 */
-	siglist = (type == SPROCESS) ? &pr->ps_siglist : &p->p_siglist;
-	if (prop & SA_CONT) {
-		siglist = &p->p_siglist;
-		atomic_clearbits_int(siglist, stopsigmask);
-	}
+
+	if (prop & SA_CONT)
+		atomic_clearbits_int(&p->p_siglist, stopsigmask);
+
 	if (prop & SA_STOP) {
-		siglist = &p->p_siglist;
-		atomic_clearbits_int(siglist, contsigmask);
+		atomic_clearbits_int(&p->p_siglist, contsigmask);
 		atomic_clearbits_int(&p->p_flag, P_CONTINUED);
 	}
-	atomic_setbits_int(siglist, mask);
 
 	/*
 	 * XXX delay processing of SA_STOP signals unless action == SIG_DFL?
@@ -1052,7 +1014,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		 * be awakened.
 		 */
 		if ((prop & SA_CONT) && action == SIG_DFL) {
-			atomic_clearbits_int(siglist, mask);
+			atomic_clearbits_int(&p->p_siglist, mask);
 			goto out;
 		}
 		/*
@@ -1066,7 +1028,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			 */
 			if (pr->ps_flags & PS_PPWAIT)
 				goto out;
-			atomic_clearbits_int(siglist, mask);
+			atomic_clearbits_int(&p->p_siglist, mask);
 			p->p_xstat = signum;
 			proc_stop(p, 0);
 			goto out;
@@ -1109,7 +1071,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			atomic_clearbits_int(&p->p_flag, P_SUSPSIG);
 			wakeparent = 1;
 			if (action == SIG_DFL)
-				atomic_clearbits_int(siglist, mask);
+				atomic_clearbits_int(&p->p_siglist, mask);
 			if (action == SIG_CATCH)
 				goto runfast;
 			if (p->p_wchan == 0)
@@ -1123,7 +1085,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			 * Already stopped, don't need to stop again.
 			 * (If we did the shell could get confused.)
 			 */
-			atomic_clearbits_int(siglist, mask);
+			atomic_clearbits_int(&p->p_siglist, mask);
 			goto out;
 		}
 
@@ -1188,7 +1150,7 @@ issignal(struct proc *p)
 	int s;
 
 	for (;;) {
-		mask = SIGPENDING(p);
+		mask = p->p_siglist & ~p->p_sigmask;
 		if (pr->ps_flags & PS_PPWAIT)
 			mask &= ~stopsigmask;
 		if (mask == 0)	 	/* no signal to send */
@@ -1196,7 +1158,6 @@ issignal(struct proc *p)
 		signum = ffs((long)mask);
 		mask = sigmask(signum);
 		atomic_clearbits_int(&p->p_siglist, mask);
-		atomic_clearbits_int(&p->p_p->ps_siglist, mask);
 
 		/*
 		 * We should see pending but ignored signals
@@ -1251,7 +1212,6 @@ issignal(struct proc *p)
 
 			/* take the signal! */
 			atomic_clearbits_int(&p->p_siglist, mask);
-			atomic_clearbits_int(&p->p_p->ps_siglist, mask);
 		}
 
 		prop = sigprop[signum];
@@ -1394,7 +1354,6 @@ postsig(struct proc *p, int signum)
 	sig_t action;
 	u_long trapno;
 	int mask, returnmask;
-	siginfo_t si;
 	union sigval sigval;
 	int s, code;
 
@@ -1415,10 +1374,12 @@ postsig(struct proc *p, int signum)
 		code = p->p_sicode;
 		sigval = p->p_sigval;
 	}
-	initsiginfo(&si, signum, trapno, code, sigval);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_PSIG)) {
+		siginfo_t si;
+
+		initsiginfo(&si, signum, trapno, code, sigval);
 		ktrpsig(p, signum, action, p->p_flag & P_SIGSUSPEND ?
 		    p->p_oldmask : p->p_sigmask, code, &si);
 	}
@@ -1465,7 +1426,8 @@ postsig(struct proc *p, int signum)
 			p->p_sigval.sival_ptr = NULL;
 		}
 
-		sendsig(action, signum, returnmask, &si);
+		(*pr->ps_emul->e_sendsig)(action, signum, returnmask, trapno,
+		    code, sigval);
 		postsig_done(p, signum, ps);
 		splx(s);
 	}
@@ -1591,8 +1553,7 @@ coredump(struct proc *p)
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
 
-	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW | O_NONBLOCK,
-	    S_IRUSR | S_IWUSR);
+	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW, S_IRUSR | S_IWUSR);
 
 	if (error)
 		goto out;
@@ -1603,7 +1564,7 @@ coredump(struct proc *p)
 	 */
 	vp = nd.ni_vp;
 	if ((error = VOP_GETATTR(vp, &vattr, cred, p)) != 0) {
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, p);
 		vn_close(vp, FWRITE, cred, p);
 		goto out;
 	}
@@ -1611,7 +1572,7 @@ coredump(struct proc *p)
 	    vattr.va_mode & ((VREAD | VWRITE) >> 3 | (VREAD | VWRITE) >> 6) ||
 	    vattr.va_uid != cred->cr_uid) {
 		error = EACCES;
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, p);
 		vn_close(vp, FWRITE, cred, p);
 		goto out;
 	}
@@ -1624,7 +1585,7 @@ coredump(struct proc *p)
 	io.io_vp = vp;
 	io.io_cred = cred;
 	io.io_offset = 0;
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, p);
 	vref(vp);
 	error = vn_close(vp, FWRITE, cred, p);
 	if (error == 0)
@@ -1647,8 +1608,7 @@ coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
 
 	csize = len;
 	do {
-		if (sigmask(SIGKILL) &
-		    (io->io_proc->p_siglist | io->io_proc->p_p->ps_siglist))
+		if (io->io_proc->p_siglist & sigmask(SIGKILL))
 			return (EINTR);
 
 		/* Rest of the loop sleeps with lock held, so... */
@@ -1661,14 +1621,11 @@ coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
 		    IO_UNIT, io->io_cred, NULL, io->io_proc);
 		if (error) {
 			struct process *pr = io->io_proc->p_p;
-
 			if (error == ENOSPC)
-				log(LOG_ERR,
-				    "coredump of %s(%d) failed, filesystem full\n",
+				log(LOG_ERR, "coredump of %s(%d) failed, filesystem full\n",
 				    pr->ps_comm, pr->ps_pid);
 			else
-				log(LOG_ERR,
-				    "coredump of %s(%d), write failed: errno %d\n",
+				log(LOG_ERR, "coredump of %s(%d), write failed: errno %d\n",
 				    pr->ps_comm, pr->ps_pid, error);
 			return (error);
 		}
@@ -1730,7 +1687,7 @@ sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 		if (KTRPOINT(p, KTR_STRUCT))
 			ktrreltimespec(p, &ts);
 #endif
-		if (!timespecisvalid(&ts))
+		if (ts.tv_nsec < 0 || ts.tv_nsec >= 1000000000)
 			timeinvalid = 1;
 		else {
 			to_ticks = (uint64_t)hz * ts.tv_sec +
@@ -1750,8 +1707,8 @@ sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 			if (smask & mask) {
 				if (p->p_siglist & smask)
 					m = &p->p_siglist;
-				else if (pr->ps_siglist & smask)
-					m = &pr->ps_siglist;
+				else if (pr->ps_mainproc->p_siglist & smask)
+					m = &pr->ps_mainproc->p_siglist;
 				else {
 					/* signal got eaten by someone else? */
 					continue;
@@ -1878,7 +1835,7 @@ userret(struct proc *p)
 		KERNEL_UNLOCK();
 	}
 
-	if (SIGPENDING(p) != 0) {
+	if (SIGPENDING(p)) {
 		KERNEL_LOCK();
 		while ((signum = CURSIG(p)) != 0)
 			postsig(p, signum);
@@ -2085,236 +2042,4 @@ single_thread_clear(struct proc *p, int flag)
 		}
 		SCHED_UNLOCK(s);
 	}
-}
-
-void
-sigio_del(struct sigiolst *rmlist)
-{
-	struct sigio *sigio;
-
-	while ((sigio = LIST_FIRST(rmlist)) != NULL) {
-		LIST_REMOVE(sigio, sio_pgsigio);
-		crfree(sigio->sio_ucred);
-		free(sigio, M_SIGIO, sizeof(*sigio));
-	}
-}
-
-void
-sigio_unlink(struct sigio_ref *sir, struct sigiolst *rmlist)
-{
-	struct sigio *sigio;
-
-	MUTEX_ASSERT_LOCKED(&sigio_lock);
-
-	sigio = sir->sir_sigio;
-	if (sigio != NULL) {
-		KASSERT(sigio->sio_myref == sir);
-		sir->sir_sigio = NULL;
-
-		if (sigio->sio_pgid > 0)
-			sigio->sio_proc = NULL;
-		else
-			sigio->sio_pgrp = NULL;
-		LIST_REMOVE(sigio, sio_pgsigio);
-
-		LIST_INSERT_HEAD(rmlist, sigio, sio_pgsigio);
-	}
-}
-
-void
-sigio_free(struct sigio_ref *sir)
-{
-	struct sigiolst rmlist;
-
-	if (sir->sir_sigio == NULL)
-		return;
-
-	LIST_INIT(&rmlist);
-
-	mtx_enter(&sigio_lock);
-	sigio_unlink(sir, &rmlist);
-	mtx_leave(&sigio_lock);
-
-	sigio_del(&rmlist);
-}
-
-void
-sigio_freelist(struct sigiolst *sigiolst)
-{
-	struct sigiolst rmlist;
-	struct sigio *sigio;
-
-	if (LIST_EMPTY(sigiolst))
-		return;
-
-	LIST_INIT(&rmlist);
-
-	mtx_enter(&sigio_lock);
-	while ((sigio = LIST_FIRST(sigiolst)) != NULL)
-		sigio_unlink(sigio->sio_myref, &rmlist);
-	mtx_leave(&sigio_lock);
-
-	sigio_del(&rmlist);
-}
-
-int
-sigio_setown(struct sigio_ref *sir, pid_t pgid)
-{
-	struct sigiolst rmlist;
-	struct proc *p = curproc;
-	struct pgrp *pgrp = NULL;
-	struct process *pr = NULL;
-	struct sigio *sigio;
-	int error;
-
-	if (pgid == 0) {
-		sigio_free(sir);
-		return (0);
-	}
-
-	sigio = malloc(sizeof(*sigio), M_SIGIO, M_WAITOK);
-	sigio->sio_pgid = pgid;
-	sigio->sio_ucred = crhold(p->p_ucred);
-	sigio->sio_myref = sir;
-
-	LIST_INIT(&rmlist);
-
-	/*
-	 * The kernel lock, and not sleeping between prfind()/pgfind() and
-	 * linking of the sigio ensure that the process or process group does
-	 * not disappear unexpectedly.
-	 */
-	KERNEL_LOCK();
-	mtx_enter(&sigio_lock);
-
-	if (pgid > 0) {
-		pr = prfind(pgid);
-		if (pr == NULL) {
-			error = ESRCH;
-			goto fail;
-		}
-
-		/*
-		 * Policy - Don't allow a process to FSETOWN a process
-		 * in another session.
-		 *
-		 * Remove this test to allow maximum flexibility or
-		 * restrict FSETOWN to the current process or process
-		 * group for maximum safety.
-		 */
-		if (pr->ps_session != p->p_p->ps_session) {
-			error = EPERM;
-			goto fail;
-		}
-
-		if ((pr->ps_flags & PS_EXITING) != 0) {
-			error = ESRCH;
-			goto fail;
-		}
-	} else /* if (pgid < 0) */ {
-		pgrp = pgfind(-pgid);
-		if (pgrp == NULL) {
-			error = ESRCH;
-			goto fail;
-		}
-
-		/*
-		 * Policy - Don't allow a process to FSETOWN a process
-		 * in another session.
-		 *
-		 * Remove this test to allow maximum flexibility or
-		 * restrict FSETOWN to the current process or process
-		 * group for maximum safety.
-		 */
-		if (pgrp->pg_session != p->p_p->ps_session) {
-			error = EPERM;
-			goto fail;
-		}
-	}
-
-	if (pgid > 0) {
-		sigio->sio_proc = pr;
-		LIST_INSERT_HEAD(&pr->ps_sigiolst, sigio, sio_pgsigio);
-	} else {
-		sigio->sio_pgrp = pgrp;
-		LIST_INSERT_HEAD(&pgrp->pg_sigiolst, sigio, sio_pgsigio);
-	}
-
-	sigio_unlink(sir, &rmlist);
-	sir->sir_sigio = sigio;
-
-	mtx_leave(&sigio_lock);
-	KERNEL_UNLOCK();
-
-	sigio_del(&rmlist);
-
-	return (0);
-
-fail:
-	mtx_leave(&sigio_lock);
-	KERNEL_UNLOCK();
-
-	crfree(sigio->sio_ucred);
-	free(sigio, M_SIGIO, sizeof(*sigio));
-
-	return (error);
-}
-
-pid_t
-sigio_getown(struct sigio_ref *sir)
-{
-	struct sigio *sigio;
-	pid_t pgid = 0;
-
-	mtx_enter(&sigio_lock);
-	sigio = sir->sir_sigio;
-	if (sigio != NULL)
-		pgid = sigio->sio_pgid;
-	mtx_leave(&sigio_lock);
-
-	return (pgid);
-}
-
-void
-sigio_copy(struct sigio_ref *dst, struct sigio_ref *src)
-{
-	struct sigiolst rmlist;
-	struct sigio *newsigio, *sigio;
-
-	sigio_free(dst);
-
-	if (src->sir_sigio == NULL)
-		return;
-
-	newsigio = malloc(sizeof(*newsigio), M_SIGIO, M_WAITOK);
-	LIST_INIT(&rmlist);
-
-	mtx_enter(&sigio_lock);
-
-	sigio = src->sir_sigio;
-	if (sigio == NULL) {
-		mtx_leave(&sigio_lock);
-		free(newsigio, M_SIGIO, sizeof(*newsigio));
-		return;
-	}
-
-	newsigio->sio_pgid = sigio->sio_pgid;
-	newsigio->sio_ucred = crhold(sigio->sio_ucred);
-	newsigio->sio_myref = dst;
-	if (newsigio->sio_pgid > 0) {
-		newsigio->sio_proc = sigio->sio_proc;
-		LIST_INSERT_HEAD(&newsigio->sio_proc->ps_sigiolst, newsigio,
-		    sio_pgsigio);
-	} else {
-		newsigio->sio_pgrp = sigio->sio_pgrp;
-		LIST_INSERT_HEAD(&newsigio->sio_pgrp->pg_sigiolst, newsigio,
-		    sio_pgsigio);
-	}
-
-	sigio_unlink(dst, &rmlist);
-	dst->sir_sigio = newsigio;
-
-	mtx_leave(&sigio_lock);
-
-	sigio_del(&rmlist);
 }

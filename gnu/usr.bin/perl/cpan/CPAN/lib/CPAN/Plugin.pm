@@ -3,7 +3,7 @@ package CPAN::Plugin;
 use strict;
 use warnings;
 
-our $VERSION = '0.96';
+our $VERSION = '0.95';
 
 require CPAN;
 
@@ -94,8 +94,8 @@ CPAN::Plugin - Base class for CPAN shell extensions
 
 =head1 SYNOPSIS
 
-   package CPAN::Plugin::Flurb;
-   use parent 'CPAN::Plugin';
+   package My::Plugin;
+   use base 'CPAN::Plugin';
 
    sub post_test {
      my ($self, $distribution_object) = @_;

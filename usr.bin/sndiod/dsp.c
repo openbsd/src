@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.14 2018/09/18 06:05:45 miko Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.12 2016/10/27 04:37:47 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -200,25 +200,20 @@ aparams_native(struct aparams *par)
 /*
  * resample the given number of frames
  */
-void
+int
 resamp_do(struct resamp *p, adata_t *in, adata_t *out, int todo)
 {
 	unsigned int nch;
 	adata_t *idata;
 	unsigned int oblksz;
+	unsigned int ifr;
 	int s, ds, diff;
 	adata_t *odata;
 	unsigned int iblksz;
+	unsigned int ofr;
 	unsigned int c;
 	adata_t *ctxbuf, *ctx;
 	unsigned int ctx_start;
-
-#ifdef DEBUG
-	if (todo % p->iblksz != 0) {
-		log_puts("resamp_do: partial blocks not supported\n");
-		panic();
-	}
-#endif
 
 	/*
 	 * Partially copy structures into local variables, to avoid
@@ -227,16 +222,30 @@ resamp_do(struct resamp *p, adata_t *in, adata_t *out, int todo)
 	 */
 	idata = in;
 	odata = out;
-	diff = p->oblksz;
+	diff = p->diff;
 	iblksz = p->iblksz;
 	oblksz = p->oblksz;
 	ctxbuf = p->ctx;
 	ctx_start = p->ctx_start;
 	nch = p->nch;
+	ifr = todo;
+	ofr = oblksz;
 
+	/*
+	 * Start conversion.
+	 */
+#ifdef DEBUG
+	if (log_level >= 4) {
+		log_puts("resamp: copying ");
+		log_puti(todo);
+		log_puts(" frames, diff = ");
+		log_putu(diff);
+		log_puts("\n");
+	}
+#endif
 	for (;;) {
-		if (diff >= oblksz) {
-			if (todo == 0)
+		if (diff < 0) {
+			if (ifr == 0)
 				break;
 			ctx_start ^= 1;
 			ctx = ctxbuf + ctx_start;
@@ -244,21 +253,43 @@ resamp_do(struct resamp *p, adata_t *in, adata_t *out, int todo)
 				*ctx = *idata++;
 				ctx += RESAMP_NCTX;
 			}
-			diff -= oblksz;
-			todo--;
-		} else {
+			diff += oblksz;
+			ifr--;
+		} else if (diff > 0) {
+			if (ofr == 0)
+				break;
 			ctx = ctxbuf;
 			for (c = nch; c > 0; c--) {
-				s = ctx[ctx_start ^ 1];
-				ds = ctx[ctx_start] - s;
+				s = ctx[ctx_start];
+				ds = ctx[ctx_start ^ 1] - s;
 				ctx += RESAMP_NCTX;
 				*odata++ = s + ADATA_MULDIV(ds, diff, oblksz);
 			}
-			diff += iblksz;
+			diff -= iblksz;
+			ofr--;
+		} else {
+			if (ifr == 0 || ofr == 0)
+				break;
+			ctx = ctxbuf + ctx_start;
+			for (c = nch; c > 0; c--) {
+				*odata++ = *ctx;
+				ctx += RESAMP_NCTX;
+			}
+			ctx_start ^= 1;
+			ctx = ctxbuf + ctx_start;
+			for (c = nch; c > 0; c--) {
+				*ctx = *idata++;
+				ctx += RESAMP_NCTX;
+			}
+			diff -= iblksz;
+			diff += oblksz;
+			ifr--;
+			ofr--;
 		}
 	}
-
+	p->diff = diff;
 	p->ctx_start = ctx_start;
+	return oblksz - ofr;
 }
 
 /*
@@ -268,11 +299,15 @@ void
 resamp_init(struct resamp *p, unsigned int iblksz,
     unsigned int oblksz, int nch)
 {
+	unsigned int i;
+
 	p->iblksz = iblksz;
 	p->oblksz = oblksz;
+	p->diff = 0;
 	p->nch = nch;
 	p->ctx_start = 0;
-	memset(p->ctx, 0, sizeof(p->ctx));
+	for (i = 0; i < NCHAN_MAX * RESAMP_NCTX; i++)
+		p->ctx[i] = 0;
 #ifdef DEBUG
 	if (log_level >= 3) {
 		log_puts("resamp: ");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.77 2018/12/28 12:47:28 eric Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.71 2016/08/31 10:18:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -44,19 +44,19 @@ aliases_get(struct expand *expand, const char *username)
 	size_t			nbaliases;
 	int			ret;
 	union lookup		lk;
-	struct dispatcher      *dsp;
 	struct table	       *mapping = NULL;
+	struct table	       *userbase = NULL;
 	char		       *pbuf;
 
-	dsp = dict_xget(env->sc_dispatchers, expand->rule->dispatcher);
-	mapping = table_find(env, dsp->u.local.table_alias);
+	mapping = expand->rule->r_mapping;
+	userbase = expand->rule->r_userbase;
 
 	xlowercase(buf, username, sizeof(buf));
 
 	/* first, check if entry has a user-part tag */
 	pbuf = strchr(buf, *env->sc_subaddressing_delim);
 	if (pbuf) {
-		ret = table_lookup(mapping, K_ALIAS, buf, &lk);
+		ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
 		if (ret < 0)
 			return (-1);
 		if (ret)
@@ -65,7 +65,7 @@ aliases_get(struct expand *expand, const char *username)
 	}
 
 	/* no user-part tag, try looking up user */
-	ret = table_lookup(mapping, K_ALIAS, buf, &lk);
+	ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
 	if (ret <= 0)
 		return ret;
 
@@ -77,6 +77,8 @@ expand:
 			nbaliases += aliases_expand_include(expand,
 			    xn->u.buffer);
 		else {
+			xn->mapping = mapping;
+			xn->userbase = userbase;
 			expand_insert(expand, xn);
 			nbaliases++;
 		}
@@ -100,11 +102,11 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 	char		       *pbuf;
 	int			nbaliases;
 	int			ret;
-	struct dispatcher      *dsp;
 	struct table	       *mapping = NULL;
+	struct table	       *userbase = NULL;
 
-	dsp = dict_xget(env->sc_dispatchers, expand->rule->dispatcher);
-	mapping = table_find(env, dsp->u.local.table_virtual);
+	mapping = expand->rule->r_mapping;
+	userbase = expand->rule->r_userbase;
 
 	if (!bsnprintf(user, sizeof(user), "%s", maddr->user))
 		return 0;
@@ -127,7 +129,7 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 		if (!bsnprintf(buf, sizeof(buf), "%s%c%s@%s",
 			user, *env->sc_subaddressing_delim, tag, domain))
 			return 0;
-		ret = table_lookup(mapping, K_ALIAS, buf, &lk);
+		ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
 		if (ret < 0)
 			return (-1);
 		if (ret)
@@ -137,7 +139,7 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 	/* then, check if entry exists without user-part tag */
 	if (!bsnprintf(buf, sizeof(buf), "%s@%s", user, domain))
 		return 0;
-	ret = table_lookup(mapping, K_ALIAS, buf, &lk);
+	ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
 	if (ret < 0)
 		return (-1);
 	if (ret)
@@ -148,7 +150,7 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 		if (!bsnprintf(buf, sizeof(buf), "%s%c%s",
 			user, *env->sc_subaddressing_delim, tag))
 			return 0;
-		ret = table_lookup(mapping, K_ALIAS, buf, &lk);
+		ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
 		if (ret < 0)
 			return (-1);
 		if (ret)
@@ -158,7 +160,7 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 	/* Failed ? We lookup for username only */
 	if (!bsnprintf(buf, sizeof(buf), "%s", user))
 		return 0;
-	ret = table_lookup(mapping, K_ALIAS, buf, &lk);
+	ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
 	if (ret < 0)
 		return (-1);
 	if (ret)
@@ -167,14 +169,14 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 	if (!bsnprintf(buf, sizeof(buf), "@%s", domain))
 		return 0;
 	/* Failed ? We lookup for catch all for virtual domain */
-	ret = table_lookup(mapping, K_ALIAS, buf, &lk);
+	ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
 	if (ret < 0)
 		return (-1);
 	if (ret)
 		goto expand;
 
 	/* Failed ? We lookup for a *global* catch all */
-	ret = table_lookup(mapping, K_ALIAS, "@", &lk);
+	ret = table_lookup(mapping, NULL, "@", K_ALIAS, &lk);
 	if (ret <= 0)
 		return (ret);
 
@@ -186,6 +188,8 @@ expand:
 			nbaliases += aliases_expand_include(expand,
 			    xn->u.buffer);
 		else {
+			xn->mapping = mapping;
+			xn->userbase = userbase;
 			expand_insert(expand, xn);
 			nbaliases++;
 		}

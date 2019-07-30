@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.61 2019/03/24 06:19:26 visa Exp $ */
+/* $OpenBSD: cpu.h,v 1.58 2017/05/29 14:19:49 mpi Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -101,7 +101,6 @@ typedef union alpha_t_float {
 #include <sys/cdefs.h>
 #include <sys/device.h>
 #include <sys/sched.h>
-#include <sys/srp.h>
 
 struct pcb;
 struct proc;
@@ -311,7 +310,7 @@ struct clockframe {
  * This is used during profiling to integrate system time.
  */
 #define	PROC_PC(p)	((p)->p_md.md_tf->tf_regs[FRAME_PC])
-#define	PROC_STACK(p)	((p)->p_md.md_tf->tf_regs[FRAME_SP])
+#define	PROC_STACK(p)	(alpha_pal_rdusp())	/*XXX only works for curproc */
 
 /*
  * Preempt the current process if in interrupt from user mode,
@@ -423,18 +422,6 @@ void alpha_enable_fp(struct proc *, int);
 #ifdef MULTIPROCESSOR
 #include <sys/mplock.h>
 #endif
-
-static inline u_long
-intr_disable(void)
-{
-	return (u_long)splhigh();
-}
-
-static inline void
-intr_restore(u_long s)
-{
-	splx((int)s);
-}
 
 #endif /* _KERNEL */
 #endif /* _MACHINE_CPU_H_ */

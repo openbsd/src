@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.47 2019/05/10 01:29:31 guenther Exp $ */
+/*	$OpenBSD: parse.y,v 1.37 2017/01/05 13:53:09 krw Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -26,13 +26,13 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <net/route.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <unistd.h>
+#include <ifaddrs.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -104,8 +104,7 @@ typedef struct {
 
 %}
 
-%token	SPLIT_HORIZON TRIGGERED_UPDATES FIBPRIORITY FIBUPDATE
-%token	REDISTRIBUTE RDOMAIN
+%token	SPLIT_HORIZON TRIGGERED_UPDATES FIBUPDATE REDISTRIBUTE RDOMAIN
 %token	AUTHKEY AUTHTYPE AUTHMD AUTHMDKEYID
 %token	INTERFACE RTLABEL
 %token	COST PASSIVE
@@ -155,8 +154,6 @@ varset		: STRING '=' string {
 				if (isspace((unsigned char)*s)) {
 					yyerror("macro name cannot contain "
 					    "whitespace");
-					free($1);
-					free($3);
 					YYERROR;
 				}
 			}
@@ -196,13 +193,6 @@ conf_main	: SPLIT_HORIZON STRING {
 				YYERROR;
 			}
 			conf->rdomain = $2;
-		}
-		| FIBPRIORITY NUMBER {
-			if ($2 <= RTP_NONE || $2 > RTP_MAX) {
-				yyerror("invalid fib-priority");
-				YYERROR;
-			}
-			conf->fib_priority = $2;
 		}
 		| FIBUPDATE yesno {
 			if ($2 == 0)
@@ -362,8 +352,7 @@ interface	: INTERFACE STRING {
 		}
 		;
 
-interface_block	: /* empty */
-		| '{' optnl interfaceopts_l '}'
+interface_block	: '{' optnl interfaceopts_l '}'
 		| '{' optnl '}'
 		;
 
@@ -431,7 +420,6 @@ lookup(char *s)
 	    {"auth-type",		AUTHTYPE},
 	    {"cost",			COST},
 	    {"demote",			DEMOTE},
-	    {"fib-priority",		FIBPRIORITY},
 	    {"fib-update",		FIBUPDATE},
 	    {"interface",		INTERFACE},
 	    {"no",			NO},
@@ -605,8 +593,7 @@ top:
 			} else if (c == '\\') {
 				if ((next = lgetc(quotec)) == EOF)
 					return (0);
-				if (next == quotec || next == ' ' ||
-				    next == '\t')
+				if (next == quotec || c == ' ' || c == '\t')
 					c = next;
 				else if (next == '\n') {
 					file->lineno++;
@@ -628,7 +615,7 @@ top:
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			err(1, "%s", __func__);
+			err(1, "yylex: strdup");
 		return (STRING);
 	}
 
@@ -638,7 +625,7 @@ top:
 	if (c == '-' || isdigit(c)) {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -677,7 +664,7 @@ nodigits:
 	if (isalnum(c) || c == ':' || c == '_') {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -686,7 +673,7 @@ nodigits:
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
 			if ((yylval.v.string = strdup(buf)) == NULL)
-				err(1, "%s", __func__);
+				err(1, "yylex: strdup");
 		return (token);
 	}
 	if (c == '\n') {
@@ -724,16 +711,16 @@ pushfile(const char *name, int secret)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
-		log_warn("%s", __func__);
+		log_warn("malloc");
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		log_warn("%s", __func__);
+		log_warn("malloc");
 		free(nfile);
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		log_warn("%s: %s", __func__, nfile->name);
+		log_warn("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -780,7 +767,6 @@ parse_config(char *filename, int opts)
 	defs->auth_type = AUTH_NONE;
 	conf->opts = opts;
 	conf->options = OPT_SPLIT_POISONED;
-	conf->fib_priority = RTP_RIP;
 	SIMPLEQ_INIT(&conf->redist_list);
 
 	if ((file = pushfile(filename, !(conf->opts & RIPD_OPT_NOACTION))) == NULL) {
@@ -862,12 +848,17 @@ cmdline_symset(char *s)
 {
 	char	*sym, *val;
 	int	ret;
+	size_t	len;
 
 	if ((val = strrchr(s, '=')) == NULL)
 		return (-1);
-	sym = strndup(s, val - s);
-	if (sym == NULL)
-		errx(1, "%s: strndup", __func__);
+
+	len = strlen(s) - strlen(val) + 1;
+	if ((sym = malloc(len)) == NULL)
+		errx(1, "cmdline_symset: malloc");
+
+	strlcpy(sym, s, len);
+
 	ret = symset(sym, val + 1, 1);
 	free(sym);
 

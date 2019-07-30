@@ -12,23 +12,23 @@ This tests the use of an eval{} block to wrap a next::method call.
 =cut
 
 {
-    package AA;
+    package A;
     use mro 'c3'; 
 
     sub foo {
-      die 'AA::foo died';
-      return 'AA::foo succeeded';
+      die 'A::foo died';
+      return 'A::foo succeeded';
     }
 }
 
 {
-    package BB;
-    use base 'AA';
+    package B;
+    use base 'A';
     use mro 'c3'; 
     
     sub foo {
       eval {
-        return 'BB::foo => ' . (shift)->next::method();
+        return 'B::foo => ' . (shift)->next::method();
       };
 
       if ($@) {
@@ -37,8 +37,8 @@ This tests the use of an eval{} block to wrap a next::method call.
     }
 }
 
-like(BB->foo,
-   qr/^AA::foo died/,
+like(B->foo, 
+   qr/^A::foo died/, 
    'method resolved inside eval{}');
 
 

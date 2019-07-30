@@ -133,15 +133,13 @@ void nacltools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (D.CCCIsCXX() &&
       !Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs)) {
-    if (ToolChain.ShouldLinkCXXStdlib(Args)) {
-      bool OnlyLibstdcxxStatic =
-          Args.hasArg(options::OPT_static_libstdcxx) && !IsStatic;
-      if (OnlyLibstdcxxStatic)
-        CmdArgs.push_back("-Bstatic");
-      ToolChain.AddCXXStdlibLibArgs(Args, CmdArgs);
-      if (OnlyLibstdcxxStatic)
-        CmdArgs.push_back("-Bdynamic");
-    }
+    bool OnlyLibstdcxxStatic =
+        Args.hasArg(options::OPT_static_libstdcxx) && !IsStatic;
+    if (OnlyLibstdcxxStatic)
+      CmdArgs.push_back("-Bstatic");
+    ToolChain.AddCXXStdlibLibArgs(Args, CmdArgs);
+    if (OnlyLibstdcxxStatic)
+      CmdArgs.push_back("-Bdynamic");
     CmdArgs.push_back("-lm");
   }
 
@@ -309,31 +307,25 @@ void NaClToolChain::AddCXXStdlibLibArgs(const ArgList &Args,
   CmdArgs.push_back("-lc++");
 }
 
-void NaClToolChain::addLibCxxIncludePaths(
-    const llvm::opt::ArgList &DriverArgs,
-    llvm::opt::ArgStringList &CC1Args) const {
+std::string NaClToolChain::findLibCxxIncludePath() const {
   const Driver &D = getDriver();
 
   SmallString<128> P(D.Dir + "/../");
   switch (getTriple().getArch()) {
-  default:
-    break;
   case llvm::Triple::arm:
     llvm::sys::path::append(P, "arm-nacl/include/c++/v1");
-    addSystemInclude(DriverArgs, CC1Args, P.str());
-    break;
+    return P.str();
   case llvm::Triple::x86:
     llvm::sys::path::append(P, "x86_64-nacl/include/c++/v1");
-    addSystemInclude(DriverArgs, CC1Args, P.str());
-    break;
+    return P.str();
   case llvm::Triple::x86_64:
     llvm::sys::path::append(P, "x86_64-nacl/include/c++/v1");
-    addSystemInclude(DriverArgs, CC1Args, P.str());
-    break;
+    return P.str();
   case llvm::Triple::mipsel:
     llvm::sys::path::append(P, "mipsel-nacl/include/c++/v1");
-    addSystemInclude(DriverArgs, CC1Args, P.str());
-    break;
+    return P.str();
+  default:
+    return "";
   }
 }
 

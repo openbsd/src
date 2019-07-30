@@ -204,12 +204,6 @@ struct ub_result {
 	char* why_bogus;
 
 	/**
-	 * If the query or one of its subqueries was ratelimited. Useful if
-	 * ratelimiting is enabled and answer is SERVFAIL.
-	 */
-	int was_ratelimited;
-
-	/**
 	 * TTL for the result, in seconds.  If the security is bogus, then
 	 * you also cannot trust this value.
 	 */
@@ -308,17 +302,6 @@ int ub_ctx_config(struct ub_ctx* ctx, const char* fname);
  * @return 0 if OK, else error.
  */
 int ub_ctx_set_fwd(struct ub_ctx* ctx, const char* addr);
-
-/**
- * Use DNS over TLS to send queries to machines set with ub_ctx_set_fwd().
- *
- * @param ctx: context.
- *	At this time it is only possible to set configuration before the
- *	first resolve is done.
- * @param tls: enable or disable DNS over TLS
- * @return 0 if OK, else error.
- */
-int ub_ctx_set_tls(struct ub_ctx* ctx, int tls);
 
 /**
  * Add a stub zone, with given address to send to.  This is for custom
@@ -691,8 +674,6 @@ struct ub_server_stats {
 	long long qtcp;
 	/** number of outgoing queries over TCP */
 	long long qtcp_outgoing;
-	/** number of queries over (DNS over) TLS */
-	long long qtls;
 	/** number of queries over IPv6 */
 	long long qipv6;
 	/** number of queries with QR bit */
@@ -766,25 +747,6 @@ struct ub_server_stats {
 	long long num_query_dnscrypt_replay;
 	/** number of dnscrypt nonces cache entries */
 	long long nonce_cache_count;
-	/** number of queries for unbound's auth_zones, upstream query */
-	long long num_query_authzone_up;
-	/** number of queries for unbound's auth_zones, downstream answers */
-	long long num_query_authzone_down;
-	/** number of times neg cache records were used to generate NOERROR
-	 * responses. */
-	long long num_neg_cache_noerror;
-	/** number of times neg cache records were used to generate NXDOMAIN
-	 * responses. */
-	long long num_neg_cache_nxdomain;
-	/** number of queries answered from edns-subnet specific data */
-	long long num_query_subnet;
-	/** number of queries answered from edns-subnet specific data, and
-	 * the answer was from the edns-subnet cache. */
-	long long num_query_subnet_cache;
-	/** number of bytes in the stream wait buffers */
-	long long mem_stream_wait;
-	/** number of TLS connection resume */
-	long long qtls_resume;
 };
 
 /** 

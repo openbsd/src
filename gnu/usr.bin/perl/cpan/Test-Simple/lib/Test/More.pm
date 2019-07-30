@@ -17,9 +17,10 @@ sub _carp {
     return warn @_, " at $file line $line\n";
 }
 
-our $VERSION = '1.302133';
+our $VERSION = '1.001014';
+$VERSION = eval $VERSION;    ## no critic (BuiltinFunctions::ProhibitStringyEval)
 
-use Test::Builder::Module;
+use Test::Builder::Module 0.99;
 our @ISA    = qw(Test::Builder::Module);
 our @EXPORT = qw(ok use_ok require_ok
   is isnt like unlike is_deeply
@@ -125,8 +126,6 @@ the end.
 
   done_testing( $number_of_tests_run );
 
-B<NOTE> C<done_testing()> should never be called in an C<END { ... }> block.
-
 Sometimes you really don't know how many tests were run, or it's too
 difficult to calculate.  In which case you can leave off
 $number_of_tests_run.
@@ -177,21 +176,11 @@ sub import_extra {
 
     my @other = ();
     my $idx   = 0;
-    my $import;
     while( $idx <= $#{$list} ) {
         my $item = $list->[$idx];
 
         if( defined $item and $item eq 'no_diag' ) {
             $class->builder->no_diag(1);
-        }
-        elsif( defined $item and $item eq 'import' ) {
-            if ($import) {
-                push @$import, @{$list->[ ++$idx ]};
-            }
-            else {
-                $import = $list->[ ++$idx ];
-                push @other, $item, $import;
-            }
         }
         else {
             push @other, $item;
@@ -201,18 +190,6 @@ sub import_extra {
     }
 
     @$list = @other;
-
-    if ($class eq __PACKAGE__ && (!$import || grep $_ eq '$TODO', @$import)) {
-        my $to = $class->builder->exported_to;
-        no strict 'refs';
-        *{"$to\::TODO"} = \our $TODO;
-        if ($import) {
-            @$import = grep $_ ne '$TODO', @$import;
-        }
-        else {
-            push @$list, import => [grep $_ ne '$TODO', @EXPORT];
-        }
-    }
 
     return;
 }
@@ -233,10 +210,6 @@ you ran doesn't matter, just the fact that your tests ran to
 conclusion.
 
 This is safer than and replaces the "no_plan" plan.
-
-B<Note:> You must never put C<done_testing()> inside an C<END { ... }> block.
-The plan is there to ensure your test does not exit before testing has
-completed. If you use an END block you completely bypass this protection.
 
 =back
 
@@ -730,7 +703,7 @@ sub new_ok {
 
 =item B<subtest>
 
-    subtest $name => \&code, @args;
+    subtest $name => \&code;
 
 C<subtest()> runs the &code as its own little test with its own plan and
 its own result.  The main test counts this as a single test using the
@@ -789,20 +762,11 @@ subtests are equivalent:
       done_testing();
   };
 
-Extra arguments given to C<subtest> are passed to the callback. For example:
-
-    sub my_subtest {
-        my $range = shift;
-        ...
-    }
-
-    for my $range (1, 10, 100, 1000) {
-        subtest "testing range $range", \&my_subtest, $range;
-    }
-
 =cut
 
 sub subtest {
+    my ($name, $subtests) = @_;
+
     my $tb = Test::More->builder;
     return $tb->subtest(@_);
 }
@@ -976,10 +940,7 @@ sub use_ok ($;@) {
     @imports = () unless @imports;
     my $tb = Test::More->builder;
 
-    my %caller;
-    @caller{qw/pack file line sub args want eval req strict warn/} = caller(0);
-
-    my ($pack, $filename, $line, $warn) = @caller{qw/pack file line warn/};
+    my( $pack, $filename, $line ) = caller;
     $filename =~ y/\n\r/_/; # so it doesn't run off the "#line $line $f" line
 
     my $code;
@@ -988,7 +949,7 @@ sub use_ok ($;@) {
         # for it to work with non-Exporter based modules.
         $code = <<USE;
 package $pack;
-BEGIN { \${^WARNING_BITS} = \$args[-1] if defined \$args[-1] }
+
 #line $line $filename
 use $module $imports[0];
 1;
@@ -997,14 +958,14 @@ USE
     else {
         $code = <<USE;
 package $pack;
-BEGIN { \${^WARNING_BITS} = \$args[-1] if defined \$args[-1] }
+
 #line $line $filename
 use $module \@{\$args[0]};
 1;
 USE
     }
 
-    my ($eval_result, $eval_error) = _eval($code, \@imports, $warn);
+    my( $eval_result, $eval_error ) = _eval( $code, \@imports );
     my $ok = $tb->ok( $eval_result, "use $module;" );
 
     unless($ok) {
@@ -1072,20 +1033,6 @@ improve in the future.
 
 L<Test::Differences> and L<Test::Deep> provide more in-depth functionality
 along these lines.
-
-B<NOTE> is_deeply() has limitations when it comes to comparing strings and
-refs:
-
-    my $path = path('.');
-    my $hash = {};
-    is_deeply( $path, "$path" ); # ok
-    is_deeply( $hash, "$hash" ); # fail
-
-This happens because is_deeply will unoverload all arguments unconditionally.
-It is probably best not to use is_deeply with overloading. For legacy reasons
-this is not likely to ever be fixed. If you would like a much better tool for
-this you should see L<Test2::Suite> Specifically L<Test2::Tools::Compare> has
-an C<is()> function that works like C<is_deeply> with many improvements.
 
 =cut
 
@@ -1187,7 +1134,7 @@ sub _type {
 
     return '' if !ref $thing;
 
-    for my $type (qw(Regexp ARRAY HASH REF SCALAR GLOB CODE VSTRING)) {
+    for my $type (qw(Regexp ARRAY HASH REF SCALAR GLOB CODE)) {
         return $type if UNIVERSAL::isa( $thing, $type );
     }
 
@@ -1346,13 +1293,10 @@ sub skip {
     my( $why, $how_many ) = @_;
     my $tb = Test::More->builder;
 
-    # If the plan is set, and is static, then skip needs a count. If the plan
-    # is 'no_plan' we are fine. As well if plan is undefined then we are
-    # waiting for done_testing.
-    unless (defined $how_many) {
-        my $plan = $tb->has_plan;
+    unless( defined $how_many ) {
+        # $how_many can only be avoided when no_plan is in use.
         _carp "skip() needs to know \$how_many tests are in the block"
-            if $plan && $plan =~ m/^\d+$/;
+          unless $tb->has_plan eq 'no_plan';
         $how_many = 1;
     }
 
@@ -1959,6 +1903,8 @@ comes from.
 
 =head2 BUNDLES
 
+L<Bundle::Test> installs a whole bunch of useful test modules.
+
 L<Test::Most> Most commonly needed test functions and features.
 
 =head1 AUTHORS
@@ -1979,7 +1925,7 @@ the perl-qa gang.
 
 =head1 BUGS
 
-See F<https://github.com/Test-More/test-more/issues> to report and view bugs.
+See F<http://rt.cpan.org> to report and view bugs.
 
 
 =head1 SOURCE

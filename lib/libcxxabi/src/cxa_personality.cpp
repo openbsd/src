@@ -18,20 +18,11 @@
 #include <typeinfo>
 
 #include "__cxxabi_config.h"
+#include "config.h"
 #include "cxa_exception.hpp"
 #include "cxa_handlers.hpp"
 #include "private_typeinfo.h"
 #include "unwind.h"
-
-#if defined(__SEH__) && !defined(__USING_SJLJ_EXCEPTIONS__)
-#include <windows.h>
-#include <winnt.h>
-
-extern "C" EXCEPTION_DISPOSITION _GCC_specific_handler(PEXCEPTION_RECORD,
-                                                       void *, PCONTEXT,
-                                                       PDISPATCHER_CONTEXT,
-                                                       _Unwind_Personality_Fn);
-#endif
 
 /*
     Exception Header Layout:
@@ -326,7 +317,7 @@ call_terminate(bool native_exception, _Unwind_Exception* unwind_exception)
     std::terminate();
 }
 
-#if defined(_LIBCXXABI_ARM_EHABI)
+#if LIBCXXABI_ARM_EHABI
 static const void* read_target2_value(const void* ptr)
 {
     uintptr_t offset = *reinterpret_cast<const uintptr_t*>(ptr);
@@ -337,7 +328,7 @@ static const void* read_target2_value(const void* ptr)
     // deferred to the linker. For bare-metal they turn into absolute
     // relocations. For linux they turn into GOT-REL relocations."
     // https://gcc.gnu.org/ml/gcc-patches/2009-08/msg00264.html
-#if defined(LIBCXXABI_BAREMETAL)
+#if LIBCXXABI_BAREMETAL
     return reinterpret_cast<const void*>(reinterpret_cast<uintptr_t>(ptr) +
                                          offset);
 #else
@@ -357,17 +348,14 @@ get_shim_type_info(uint64_t ttypeIndex, const uint8_t* classInfo,
         call_terminate(native_exception, unwind_exception);
     }
 
-    assert(((ttypeEncoding == DW_EH_PE_absptr) ||  // LLVM or GCC 4.6
-            (ttypeEncoding == DW_EH_PE_pcrel) ||  // GCC 4.7 baremetal
-            (ttypeEncoding == (DW_EH_PE_pcrel | DW_EH_PE_indirect))) &&  // GCC 4.7 linux
-           "Unexpected TTypeEncoding");
+    assert(ttypeEncoding == DW_EH_PE_absptr && "Unexpected TTypeEncoding");
     (void)ttypeEncoding;
 
     const uint8_t* ttypePtr = classInfo - ttypeIndex * sizeof(uintptr_t);
     return reinterpret_cast<const __shim_type_info *>(
         read_target2_value(ttypePtr));
 }
-#else // !defined(_LIBCXXABI_ARM_EHABI)
+#else // !LIBCXXABI_ARM_EHABI
 static
 const __shim_type_info*
 get_shim_type_info(uint64_t ttypeIndex, const uint8_t* classInfo,
@@ -403,7 +391,7 @@ get_shim_type_info(uint64_t ttypeIndex, const uint8_t* classInfo,
     classInfo -= ttypeIndex;
     return (const __shim_type_info*)readEncodedPointer(&classInfo, ttypeEncoding);
 }
-#endif // !defined(_LIBCXXABI_ARM_EHABI)
+#endif // !LIBCXXABI_ARM_EHABI
 
 /*
     This is checking a thrown exception type, excpType, against a possibly empty
@@ -414,7 +402,7 @@ get_shim_type_info(uint64_t ttypeIndex, const uint8_t* classInfo,
     the list will catch a excpType.  If any catchType in the list can catch an
     excpType, then this exception spec does not catch the excpType.
 */
-#if defined(_LIBCXXABI_ARM_EHABI)
+#if LIBCXXABI_ARM_EHABI
 static
 bool
 exception_spec_can_catch(int64_t specIndex, const uint8_t* classInfo,
@@ -427,10 +415,7 @@ exception_spec_can_catch(int64_t specIndex, const uint8_t* classInfo,
         call_terminate(false, unwind_exception);
     }
 
-    assert(((ttypeEncoding == DW_EH_PE_absptr) ||  // LLVM or GCC 4.6
-            (ttypeEncoding == DW_EH_PE_pcrel) ||  // GCC 4.7 baremetal
-            (ttypeEncoding == (DW_EH_PE_pcrel | DW_EH_PE_indirect))) &&  // GCC 4.7 linux
-           "Unexpected TTypeEncoding");
+    assert(ttypeEncoding == DW_EH_PE_absptr && "Unexpected TTypeEncoding");
     (void)ttypeEncoding;
 
     // specIndex is negative of 1-based byte offset into classInfo;
@@ -502,7 +487,7 @@ get_thrown_object_ptr(_Unwind_Exception* unwind_exception)
     // Even for foreign exceptions, the exception object is *probably* at unwind_exception + 1
     //    Regardless, this library is prohibited from touching a foreign exception
     void* adjustedPtr = unwind_exception + 1;
-    if (__getExceptionClass(unwind_exception) == kOurDependentExceptionClass)
+    if (unwind_exception->exception_class == kOurDependentExceptionClass)
         adjustedPtr = ((__cxa_dependent_exception*)adjustedPtr - 1)->primaryException;
     return adjustedPtr;
 }
@@ -943,16 +928,12 @@ _UA_CLEANUP_PHASE
         Else a cleanup is not found: return _URC_CONTINUE_UNWIND
 */
 
-#if !defined(_LIBCXXABI_ARM_EHABI)
-#if defined(__SEH__) && !defined(__USING_SJLJ_EXCEPTIONS__)
-static _Unwind_Reason_Code __gxx_personality_imp
-#else
+#if !LIBCXXABI_ARM_EHABI
 _LIBCXXABI_FUNC_VIS _Unwind_Reason_Code
 #ifdef __USING_SJLJ_EXCEPTIONS__
 __gxx_personality_sj0
 #else
 __gxx_personality_v0
-#endif
 #endif
                     (int version, _Unwind_Action actions, uint64_t exceptionClass,
                      _Unwind_Exception* unwind_exception, _Unwind_Context* context)
@@ -1036,17 +1017,6 @@ __gxx_personality_v0
     // We were called improperly: neither a phase 1 or phase 2 search
     return _URC_FATAL_PHASE1_ERROR;
 }
-
-#if defined(__SEH__) && !defined(__USING_SJLJ_EXCEPTIONS__)
-extern "C" _LIBCXXABI_FUNC_VIS EXCEPTION_DISPOSITION
-__gxx_personality_seh0(PEXCEPTION_RECORD ms_exc, void *this_frame,
-                       PCONTEXT ms_orig_context, PDISPATCHER_CONTEXT ms_disp)
-{
-  return _GCC_specific_handler(ms_exc, this_frame, ms_orig_context, ms_disp,
-                               __gxx_personality_imp);
-}
-#endif
-
 #else
 
 extern "C" _Unwind_Reason_Code __gnu_unwind_frame(_Unwind_Exception*,
@@ -1065,7 +1035,7 @@ static _Unwind_Reason_Code continue_unwind(_Unwind_Exception* unwind_exception,
 }
 
 // ARM register names
-#if !defined(LIBCXXABI_USE_LLVM_UNWINDER)
+#if !LIBCXXABI_USE_LLVM_UNWINDER
 static const uint32_t REG_UCB = 12;  // Register to save _Unwind_Control_Block
 #endif
 static const uint32_t REG_SP = 13;
@@ -1098,9 +1068,10 @@ __gxx_personality_v0(_Unwind_State state,
     if (unwind_exception == 0 || context == 0)
         return _URC_FATAL_PHASE1_ERROR;
 
-    bool native_exception = __isOurExceptionClass(unwind_exception);
+    bool native_exception = (unwind_exception->exception_class & get_vendor_and_language) ==
+                            (kOurExceptionClass & get_vendor_and_language);
 
-#if !defined(LIBCXXABI_USE_LLVM_UNWINDER)
+#if !LIBCXXABI_USE_LLVM_UNWINDER
     // Copy the address of _Unwind_Control_Block to r12 so that
     // _Unwind_GetLanguageSpecificData() and _Unwind_GetRegionStart() can
     // return correct address.
@@ -1202,7 +1173,9 @@ __cxa_call_unexpected(void* arg)
     if (unwind_exception == 0)
         call_terminate(false, unwind_exception);
     __cxa_begin_catch(unwind_exception);
-    bool native_old_exception = __isOurExceptionClass(unwind_exception);
+    bool native_old_exception =
+        (unwind_exception->exception_class & get_vendor_and_language) ==
+        (kOurExceptionClass                & get_vendor_and_language);
     std::unexpected_handler u_handler;
     std::terminate_handler t_handler;
     __cxa_exception* old_exception_header = 0;
@@ -1215,7 +1188,7 @@ __cxa_call_unexpected(void* arg)
         u_handler = old_exception_header->unexpectedHandler;
         // If std::__unexpected(u_handler) rethrows the same exception,
         //   these values get overwritten by the rethrow.  So save them now:
-#if defined(_LIBCXXABI_ARM_EHABI)
+#if LIBCXXABI_ARM_EHABI
         ttypeIndex = (int64_t)(int32_t)unwind_exception->barrier_cache.bitpattern[4];
         lsda = (const uint8_t*)unwind_exception->barrier_cache.bitpattern[2];
 #else
@@ -1264,14 +1237,16 @@ __cxa_call_unexpected(void* arg)
             if (new_exception_header == 0)
                 // This shouldn't be able to happen!
                 std::__terminate(t_handler);
-            bool native_new_exception = __isOurExceptionClass(&new_exception_header->unwindHeader);
+            bool native_new_exception =
+                (new_exception_header->unwindHeader.exception_class & get_vendor_and_language) ==
+                                                (kOurExceptionClass & get_vendor_and_language);
             void* adjustedPtr;
             if (native_new_exception && (new_exception_header != old_exception_header))
             {
                 const __shim_type_info* excpType =
                     static_cast<const __shim_type_info*>(new_exception_header->exceptionType);
                 adjustedPtr =
-                    __getExceptionClass(&new_exception_header->unwindHeader) == kOurDependentExceptionClass ?
+                    new_exception_header->unwindHeader.exception_class == kOurDependentExceptionClass ?
                         ((__cxa_dependent_exception*)new_exception_header)->primaryException :
                         new_exception_header + 1;
                 if (!exception_spec_can_catch(ttypeIndex, classInfo, ttypeEncoding,

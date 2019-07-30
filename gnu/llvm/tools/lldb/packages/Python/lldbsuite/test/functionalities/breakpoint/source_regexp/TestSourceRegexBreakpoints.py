@@ -28,7 +28,7 @@ class TestSourceRegexBreakpoints(TestBase):
     def source_regex_locations(self):
         """ Test that restricting source expressions to files & to functions. """
         # Create a target by the debugger.
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
 
@@ -64,7 +64,7 @@ class TestSourceRegexBreakpoints(TestBase):
     def source_regex_restrictions(self):
         """ Test that restricting source expressions to files & to functions. """
         # Create a target by the debugger.
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
 

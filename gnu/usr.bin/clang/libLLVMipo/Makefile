@@ -1,16 +1,16 @@
-# $OpenBSD: Makefile,v 1.10 2019/03/05 09:44:42 jsg Exp $
+# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:10 patrick Exp $
 
 LIB=	LLVMipo
+NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms/IPO
 
-SRCS+=	ArgumentPromotion.cpp \
+.include <bsd.own.mk>
+SRCS=	ArgumentPromotion.cpp \
 	AlwaysInliner.cpp \
 	BarrierNoopPass.cpp \
-	BlockExtractor.cpp \
-	CalledValuePropagation.cpp \
 	ConstantMerge.cpp \
 	CrossDSOCFI.cpp \
 	DeadArgumentElimination.cpp \
@@ -34,17 +34,15 @@ SRCS+=	ArgumentPromotion.cpp \
 	PartialInlining.cpp \
 	PassManagerBuilder.cpp \
 	PruneEH.cpp \
-	ipoSCCP.cpp \
 	SampleProfile.cpp \
 	StripDeadPrototypes.cpp \
 	StripSymbols.cpp \
-	SyntheticCountsPropagation.cpp \
 	ThinLTOBitcodeWriter.cpp \
 	WholeProgramDevirt.cpp
 
-ipoSCCP.cpp:
-	ln -s ${LLVM_SRCS}/lib/Transforms/IPO/SCCP.cpp $@
-
 .PATH:	${.CURDIR}/../../../llvm/lib/Transforms/IPO
 
-CLEANFILES+= ipoSCCP.cpp
+install:
+	@# Nothing here so far ...
+
+.include <bsd.lib.mk>

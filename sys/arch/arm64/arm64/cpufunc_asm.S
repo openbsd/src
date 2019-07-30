@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm.S,v 1.6 2019/03/15 05:42:38 kevlo Exp $ */
+/* $OpenBSD: cpufunc_asm.S,v 1.4 2018/01/10 23:27:18 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Robin Randhawa
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -27,10 +27,12 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
  */
 
 #include <machine/asm.h>
 #include <machine/param.h>
+//__FBSDID("$FreeBSD: head/sys/arm64/arm64/cpufunc_asm.S 305546 2016-09-07 16:46:54Z andrew $");
 
 /*
  * FIXME:
@@ -69,6 +71,7 @@
 .if \ic != 0
 	isb
 .endif
+	ret
 .endm
 
 /*
@@ -76,54 +79,44 @@
  */
 
 ENTRY(cpu_setttb)
-	RETGUARD_SETUP(cpu_setttb, x15)
 	mrs	x2, ttbr1_el1
 	bfi	x2, x0, #48, #16
 	msr	ttbr1_el1, x2
 	isb
 	msr	ttbr0_el1, x1
 	isb
-	RETGUARD_CHECK(cpu_setttb, x15)
 	ret
 END(cpu_setttb)
 
 ENTRY(cpu_tlb_flush)
-	RETGUARD_SETUP(cpu_tlb_flush, x15)
 	dsb	ishst
 	tlbi	vmalle1is
 	dsb	ish
 	isb
-	RETGUARD_CHECK(cpu_tlb_flush, x15)
 	ret
 END(cpu_tlb_flush)
 
 ENTRY(cpu_tlb_flush_asid)
-	RETGUARD_SETUP(cpu_tlb_flush_asid, x15)
 	dsb	ishst
 	tlbi	vae1is, x0
 	dsb	ish
 	isb
-	RETGUARD_CHECK(cpu_tlb_flush_asid, x15)
 	ret
 END(cpu_tlb_flush_asid)
 
 ENTRY(cpu_tlb_flush_all_asid)
-	RETGUARD_SETUP(cpu_tlb_flush_all_asid, x15)
 	dsb	ishst
 	tlbi	vaale1is, x0
 	dsb	ish
 	isb
-	RETGUARD_CHECK(cpu_tlb_flush_all_asid, x15)
 	ret
 END(cpu_tlb_flush_all_asid)
 
 ENTRY(cpu_tlb_flush_asid_all)
-	RETGUARD_SETUP(cpu_tlb_flush_asid_all, x15)
 	dsb	ishst
 	tlbi	aside1is, x0
 	dsb	ish
 	isb
-	RETGUARD_CHECK(cpu_tlb_flush_asid_all, x15)
 	ret
 END(cpu_tlb_flush_asid_all)
 
@@ -131,20 +124,14 @@ END(cpu_tlb_flush_asid_all)
  * void cpu_dcache_wb_range(vaddr_t, vsize_t)
  */
 ENTRY(cpu_dcache_wb_range)
-	RETGUARD_SETUP(cpu_dcache_wb_range, x15)
 	cache_handle_range	dcop = cvac
-	RETGUARD_CHECK(cpu_dcache_wb_range, x15)
-	ret
 END(cpu_dcache_wb_range)
 
 /*
  * void cpu_dcache_wbinv_range(vaddr_t, vsize_t)
  */
 ENTRY(cpu_dcache_wbinv_range)
-	RETGUARD_SETUP(cpu_dcache_wbinv_range, x15)
 	cache_handle_range	dcop = civac
-	RETGUARD_CHECK(cpu_dcache_wbinv_range, x15)
-	ret
 END(cpu_dcache_wbinv_range)
 
 /*
@@ -154,28 +141,19 @@ END(cpu_dcache_wbinv_range)
  * must use wb-inv of the entire cache.
  */
 ENTRY(cpu_dcache_inv_range)
-	RETGUARD_SETUP(cpu_dcache_inv_range, x15)
 	cache_handle_range	dcop = ivac
-	RETGUARD_CHECK(cpu_dcache_inv_range, x15)
-	ret
 END(cpu_dcache_inv_range)
 
 /*
  * void cpu_idcache_wbinv_range(vaddr_t, vsize_t)
  */
 ENTRY(cpu_idcache_wbinv_range)
-	RETGUARD_SETUP(cpu_idcache_wbinv_range, x15)
 	cache_handle_range	dcop = civac, ic = 1, icop = ivau
-	RETGUARD_CHECK(cpu_idcache_wbinv_range, x15)
-	ret
 END(cpu_idcache_wbinv_range)
 
 /*
  * void cpu_icache_sync_range(vaddr_t, vsize_t)
  */
 ENTRY(cpu_icache_sync_range)
-	RETGUARD_SETUP(cpu_icache_sync_range, x15)
 	cache_handle_range	dcop = cvau, ic = 1, icop = ivau
-	RETGUARD_CHECK(cpu_icache_sync_range, x15)
-	ret
 END(cpu_icache_sync_range)

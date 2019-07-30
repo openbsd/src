@@ -16,7 +16,6 @@
 #include "lldb/DataFormatters/ValueObjectPrinter.h"
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
-#include "lldb/Interpreter/OptionArgParser.h"
 #include "lldb/Target/Target.h"
 
 #include "llvm/ADT/ArrayRef.h"
@@ -86,8 +85,8 @@ Status OptionGroupValueObjectDisplay::SetOptionValue(
   switch (short_option) {
   case 'd': {
     int32_t result;
-    result = OptionArgParser::ToOptionEnum(option_arg, g_dynamic_value_types, 2,
-                                           error);
+    result =
+        Args::StringToOptionEnum(option_arg, g_dynamic_value_types, 2, error);
     if (error.Success())
       use_dynamic = (lldb::DynamicValueType)result;
   } break;
@@ -145,14 +144,14 @@ Status OptionGroupValueObjectDisplay::SetOptionValue(
     break;
 
   case 'S':
-    use_synth = OptionArgParser::ToBoolean(option_arg, true, &success);
+    use_synth = Args::StringToBoolean(option_arg, true, &success);
     if (!success)
       error.SetErrorStringWithFormat("invalid synthetic-type '%s'",
                                      option_arg.str().c_str());
     break;
 
   case 'V':
-    run_validator = OptionArgParser::ToBoolean(option_arg, true, &success);
+    run_validator = Args::StringToBoolean(option_arg, true, &success);
     if (!success)
       error.SetErrorStringWithFormat("invalid validate '%s'",
                                      option_arg.str().c_str());

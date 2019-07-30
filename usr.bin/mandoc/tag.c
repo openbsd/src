@@ -1,6 +1,6 @@
-/*	$OpenBSD: tag.c,v 1.21 2018/11/22 11:30:15 schwarze Exp $ */
+/*	$OpenBSD: tag.c,v 1.19 2018/02/08 01:36:38 tb Exp $ */
 /*
- * Copyright (c) 2015, 2016, 2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2015, 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,8 +16,6 @@
  */
 #include <sys/types.h>
 
-#include <err.h>
-#include <limits.h>
 #include <signal.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -121,57 +119,41 @@ fail:
 
 /*
  * Set the line number where a term is defined,
- * unless it is already defined at a lower priority.
+ * unless it is already defined at a higher priority.
  */
 void
 tag_put(const char *s, int prio, size_t line)
 {
 	struct tag_entry	*entry;
-	const char		*se;
 	size_t			 len;
 	unsigned int		 slot;
 
+	/* Sanity checks. */
+
 	if (tag_files.tfd <= 0)
 		return;
-
 	if (s[0] == '\\' && (s[1] == '&' || s[1] == 'e'))
 		s += 2;
-
-	/*
-	 * Skip whitespace and whatever follows it,
-	 * and if there is any, downgrade the priority.
-	 */
-
-	len = strcspn(s, " \t");
-	if (len == 0)
+	if (*s == '\0' || strchr(s, ' ') != NULL)
 		return;
 
-	se = s + len;
-	if (*se != '\0')
-		prio = INT_MAX;
-
-	slot = ohash_qlookupi(&tag_data, s, &se);
+	slot = ohash_qlookup(&tag_data, s);
 	entry = ohash_find(&tag_data, slot);
 
 	if (entry == NULL) {
 
 		/* Build a new entry. */
 
-		entry = mandoc_malloc(sizeof(*entry) + len + 1);
+		len = strlen(s) + 1;
+		entry = mandoc_malloc(sizeof(*entry) + len);
 		memcpy(entry->s, s, len);
-		entry->s[len] = '\0';
 		entry->lines = NULL;
 		entry->maxlines = entry->nlines = 0;
 		ohash_insert(&tag_data, slot, entry);
 
 	} else {
 
-		/*
-		 * Lower priority numbers take precedence,
-		 * but 0 is special.
-		 * A tag with priority 0 is only used
-		 * if the tag occurs exactly once.
-		 */
+		/* Handle priority 0 entries. */
 
 		if (prio == 0) {
 			if (entry->prio == 0)
@@ -215,11 +197,6 @@ tag_write(void)
 
 	if (tag_files.tfd <= 0)
 		return;
-	if (tag_files.tagname != NULL && ohash_find(&tag_data,
-            ohash_qlookup(&tag_data, tag_files.tagname)) == NULL) {
-		warnx("%s: no such tag", tag_files.tagname);
-		tag_files.tagname = NULL;
-	}
 	stream = fdopen(tag_files.tfd, "w");
 	entry = ohash_first(&tag_data, &slot);
 	while (entry != NULL) {

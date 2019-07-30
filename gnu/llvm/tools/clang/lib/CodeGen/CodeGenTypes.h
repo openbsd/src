@@ -140,7 +140,7 @@ class CodeGenTypes {
 
   /// Contains the LLVM IR type for any converted RecordDecl.
   llvm::DenseMap<const Type*, llvm::StructType *> RecordDeclTypes;
-
+  
   /// Hold memoized CGFunctionInfo results.
   llvm::FoldingSet<CGFunctionInfo> FunctionInfos;
 
@@ -149,20 +149,22 @@ class CodeGenTypes {
   /// struct A { struct B { int x; } } when processing 'x', the 'A' and 'B'
   /// types will be in this set.
   llvm::SmallPtrSet<const Type*, 4> RecordsBeingLaidOut;
-
+  
   llvm::SmallPtrSet<const CGFunctionInfo*, 4> FunctionsBeingProcessed;
-
+  
   /// True if we didn't layout a function due to a being inside
   /// a recursive struct conversion, set this to true.
   bool SkippedLayout;
 
   SmallVector<const RecordDecl *, 8> DeferredRecords;
-
+  
   /// This map keeps cache of llvm::Types and maps clang::Type to
   /// corresponding llvm::Type.
   llvm::DenseMap<const Type *, llvm::Type *> TypeCache;
 
   llvm::SmallSet<const Type *, 8> RecordsWithOpaqueMemberPointers;
+
+  unsigned ClangCallConvToLLVMCallConv(CallingConv CC);
 
 public:
   CodeGenTypes(CodeGenModule &cgm);
@@ -178,13 +180,10 @@ public:
   llvm::LLVMContext &getLLVMContext() { return TheModule.getContext(); }
   const CodeGenOptions &getCodeGenOpts() const;
 
-  /// Convert clang calling convention to LLVM callilng convention.
-  unsigned ClangCallConvToLLVMCallConv(CallingConv CC);
-
   /// ConvertType - Convert type T into a llvm::Type.
   llvm::Type *ConvertType(QualType T);
 
-  /// Converts the GlobalDecl into an llvm::Type. This should be used
+  /// \brief Converts the GlobalDecl into an llvm::Type. This should be used
   /// when we know the target of the function we want to convert.  This is
   /// because some functions (explicitly, those with pass_object_size
   /// parameters) may not have the same signature as their type portrays, and
@@ -225,7 +224,7 @@ public:
   /// replace the 'opaque' type we previously made for it if applicable.
   void UpdateCompletedType(const TagDecl *TD);
 
-  /// Remove stale types from the type cache when an inheritance model
+  /// \brief Remove stale types from the type cache when an inheritance model
   /// gets assigned to a class.
   void RefreshTypeCacheForClass(const CXXRecordDecl *RD);
 
@@ -313,8 +312,7 @@ public:
                                              const FunctionProtoType *type,
                                              RequiredArgs required,
                                              unsigned numPrefixArgs);
-  const CGFunctionInfo &
-  arrangeUnprototypedMustTailThunk(const CXXMethodDecl *MD);
+  const CGFunctionInfo &arrangeMSMemberPointerThunk(const CXXMethodDecl *MD);
   const CGFunctionInfo &arrangeMSCtorClosure(const CXXConstructorDecl *CD,
                                                  CXXCtorType CT);
   const CGFunctionInfo &arrangeCXXMethodType(const CXXRecordDecl *RD,
@@ -335,7 +333,7 @@ public:
                     ArrayRef<FunctionProtoType::ExtParameterInfo> paramInfos,
                                                 RequiredArgs args);
 
-  /// Compute a new LLVM record layout object for the given record.
+  /// \brief Compute a new LLVM record layout object for the given record.
   CGRecordLayout *ComputeRecordLayout(const RecordDecl *D,
                                       llvm::StructType *Ty);
 
@@ -343,7 +341,7 @@ public:
   /// optional suffix and name the given LLVM type using it.
   void addRecordTypeName(const RecordDecl *RD, llvm::StructType *Ty,
                          StringRef suffix);
-
+  
 
 public:  // These are internal details of CGT that shouldn't be used externally.
   /// ConvertRecordDeclType - Lay out a tagged decl type like struct or union.
@@ -365,7 +363,7 @@ public:  // These are internal details of CGT that shouldn't be used externally.
   /// IsZeroInitializable - Return whether a record type can be
   /// zero-initialized (in the C++ sense) with an LLVM zeroinitializer.
   bool isZeroInitializable(const RecordDecl *RD);
-
+  
   bool isRecordLayoutComplete(const Type *Ty) const;
   bool noRecordsBeingLaidOut() const {
     return RecordsBeingLaidOut.empty();
@@ -373,7 +371,7 @@ public:  // These are internal details of CGT that shouldn't be used externally.
   bool isRecordBeingLaidOut(const Type *Ty) const {
     return RecordsBeingLaidOut.count(Ty);
   }
-
+                            
 };
 
 }  // end namespace CodeGen

@@ -16,17 +16,12 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/Option.h"
 #include "llvm/Support/Error.h"
-#include "llvm/Support/FileOutputBuffer.h"
-#include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Signals.h"
-#include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/WindowsManifest/WindowsManifestMerger.h"
 
 #include <system_error>
 
@@ -63,49 +58,32 @@ class CvtResOptTable : public opt::OptTable {
 public:
   CvtResOptTable() : OptTable(InfoTable, true) {}
 };
+
+static ExitOnError ExitOnErr;
 } // namespace
 
 LLVM_ATTRIBUTE_NORETURN void reportError(Twine Msg) {
-  WithColor::error(errs(), "llvm-mt") << Msg << '\n';
+  errs() << "llvm-mt error: " << Msg << "\n";
   exit(1);
 }
 
-static void reportError(StringRef Input, std::error_code EC) {
-  reportError(Twine(Input) + ": " + EC.message());
-}
+int main(int argc, const char **argv) {
+  sys::PrintStackTraceOnErrorSignal(argv[0]);
+  PrettyStackTraceProgram X(argc, argv);
 
-void error(std::error_code EC) {
-  if (EC)
-    reportError(EC.message());
-}
+  ExitOnErr.setBanner("llvm-mt: ");
 
-void error(Error EC) {
-  if (EC)
-    handleAllErrors(std::move(EC), [&](const ErrorInfoBase &EI) {
-      reportError(EI.message());
-    });
-}
+  SmallVector<const char *, 256> argv_buf;
+  SpecificBumpPtrAllocator<char> ArgAllocator;
+  ExitOnErr(errorCodeToError(sys::Process::GetArgumentVector(
+      argv_buf, makeArrayRef(argv, argc), ArgAllocator)));
 
-int main(int Argc, const char **Argv) {
-  InitLLVM X(Argc, Argv);
+  llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
   CvtResOptTable T;
   unsigned MAI, MAC;
-  ArrayRef<const char *> ArgsArr = makeArrayRef(Argv + 1, Argc - 1);
+  ArrayRef<const char *> ArgsArr = makeArrayRef(argv + 1, argc);
   opt::InputArgList InputArgs = T.ParseArgs(ArgsArr, MAI, MAC);
-
-  for (auto *Arg : InputArgs.filtered(OPT_INPUT)) {
-    auto ArgString = Arg->getAsString(InputArgs);
-    std::string Diag;
-    raw_string_ostream OS(Diag);
-    OS << "invalid option '" << ArgString << "'";
-
-    std::string Nearest;
-    if (T.findNearest(ArgString, Nearest) < 2)
-      OS << ", did you mean '" << Nearest << "'?";
-
-    reportError(OS.str());
-  }
 
   for (auto &Arg : InputArgs) {
     if (Arg->getOption().matches(OPT_unsupported)) {
@@ -126,6 +104,7 @@ int main(int Argc, const char **Argv) {
   }
 
   StringRef OutputFile;
+
   if (InputArgs.hasArg(OPT_out)) {
     OutputFile = InputArgs.getLastArgValue(OPT_out);
   } else if (InputFiles.size() == 1) {
@@ -134,27 +113,5 @@ int main(int Argc, const char **Argv) {
     reportError("no output file specified");
   }
 
-  windows_manifest::WindowsManifestMerger Merger;
-
-  for (const auto &File : InputFiles) {
-    ErrorOr<std::unique_ptr<MemoryBuffer>> ManifestOrErr =
-        MemoryBuffer::getFile(File);
-    if (!ManifestOrErr)
-      reportError(File, ManifestOrErr.getError());
-    MemoryBuffer &Manifest = *ManifestOrErr.get();
-    error(Merger.merge(Manifest));
-  }
-
-  std::unique_ptr<MemoryBuffer> OutputBuffer = Merger.getMergedManifest();
-  if (!OutputBuffer)
-    reportError("empty manifest not written");
-  Expected<std::unique_ptr<FileOutputBuffer>> FileOrErr =
-      FileOutputBuffer::create(OutputFile, OutputBuffer->getBufferSize());
-  if (!FileOrErr)
-    reportError(OutputFile, errorToErrorCode(FileOrErr.takeError()));
-  std::unique_ptr<FileOutputBuffer> FileBuffer = std::move(*FileOrErr);
-  std::copy(OutputBuffer->getBufferStart(), OutputBuffer->getBufferEnd(),
-            FileBuffer->getBufferStart());
-  error(FileBuffer->commit());
   return 0;
 }

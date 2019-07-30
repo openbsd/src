@@ -3,10 +3,10 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    require './test.pl';
-    set_up_inc('../lib');
+    @INC = '../lib';
 }
 
+BEGIN { require './test.pl'; }
 plan tests => 254;
 
 while (<DATA>) {

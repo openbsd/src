@@ -16,12 +16,14 @@
 #define LLVM_CLANG_AST_OPERATIONKINDS_H
 
 namespace clang {
-
+  
 /// CastKind - The kind of operation required for a conversion.
 enum CastKind {
 #define CAST_OPERATION(Name) CK_##Name,
 #include "clang/AST/OperationKinds.def"
 };
+
+static const CastKind CK_Invalid = static_cast<CastKind>(-1);
 
 enum BinaryOperatorKind {
 #define BINARY_OPERATION(Name, Spelling) BO_##Name,
@@ -33,15 +35,15 @@ enum UnaryOperatorKind {
 #include "clang/AST/OperationKinds.def"
 };
 
-/// The kind of bridging performed by the Objective-C bridge cast.
+/// \brief The kind of bridging performed by the Objective-C bridge cast.
 enum ObjCBridgeCastKind {
-  /// Bridging via __bridge, which does nothing but reinterpret
+  /// \brief Bridging via __bridge, which does nothing but reinterpret
   /// the bits.
   OBC_Bridge,
-  /// Bridging via __bridge_transfer, which transfers ownership of an
+  /// \brief Bridging via __bridge_transfer, which transfers ownership of an
   /// Objective-C pointer into ARC.
   OBC_BridgeTransfer,
-  /// Bridging via __bridge_retain, which makes an ARC object available
+  /// \brief Bridging via __bridge_retain, which makes an ARC object available
   /// as a +1 C pointer.
   OBC_BridgeRetained
 };

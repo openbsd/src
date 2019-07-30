@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6opts.c,v 1.6 2018/10/22 16:12:45 kn Exp $	*/
+/*	$OpenBSD: print-ip6opts.c,v 1.5 2015/11/16 00:16:39 mmcc Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -29,6 +29,7 @@
  * SUCH DAMAGE.
  */
 
+#ifdef INET6
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -150,3 +151,4 @@ dstopt_print(const u_char *bp)
     fputs("[|DSTOPT]", stdout);
     return(dstoptlen);
 }
+#endif /* INET6 */

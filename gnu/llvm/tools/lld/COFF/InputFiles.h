@@ -11,9 +11,8 @@
 #define LLD_COFF_INPUT_FILES_H
 
 #include "Config.h"
-#include "lld/Common/LLVM.h"
+#include "lld/Core/LLVM.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/LTO/LTO.h"
 #include "llvm/Object/Archive.h"
@@ -32,8 +31,6 @@ class DbiModuleDescriptorBuilder;
 namespace lld {
 namespace coff {
 
-std::vector<MemoryBufferRef> getArchiveMembers(llvm::object::Archive *File);
-
 using llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN;
 using llvm::COFF::MachineTypes;
 using llvm::object::Archive;
@@ -48,7 +45,8 @@ class DefinedImportData;
 class DefinedImportThunk;
 class Lazy;
 class SectionChunk;
-class Symbol;
+struct Symbol;
+class SymbolBody;
 class Undefined;
 
 // The root class of input files.
@@ -59,7 +57,7 @@ public:
   virtual ~InputFile() {}
 
   // Returns the filename.
-  StringRef getName() const { return MB.getBufferIdentifier(); }
+  StringRef getName() { return MB.getBufferIdentifier(); }
 
   // Reads a file (the constructor doesn't do that).
   virtual void parse() = 0;
@@ -103,41 +101,32 @@ private:
 };
 
 // .obj or .o file. This may be a member of an archive file.
-class ObjFile : public InputFile {
+class ObjectFile : public InputFile {
 public:
-  explicit ObjFile(MemoryBufferRef M) : InputFile(ObjectKind, M) {}
+  explicit ObjectFile(MemoryBufferRef M) : InputFile(ObjectKind, M) {}
   static bool classof(const InputFile *F) { return F->kind() == ObjectKind; }
   void parse() override;
   MachineTypes getMachineType() override;
-  ArrayRef<Chunk *> getChunks() { return Chunks; }
-  ArrayRef<SectionChunk *> getDebugChunks() { return DebugChunks; }
-  ArrayRef<SectionChunk *> getSXDataChunks() { return SXDataChunks; }
-  ArrayRef<SectionChunk *> getGuardFidChunks() { return GuardFidChunks; }
-  ArrayRef<SectionChunk *> getGuardLJmpChunks() { return GuardLJmpChunks; }
-  ArrayRef<Symbol *> getSymbols() { return Symbols; }
+  std::vector<Chunk *> &getChunks() { return Chunks; }
+  std::vector<SectionChunk *> &getDebugChunks() { return DebugChunks; }
+  std::vector<SymbolBody *> &getSymbols() { return SymbolBodies; }
 
-  // Returns a Symbol object for the SymbolIndex'th symbol in the
+  // Returns a SymbolBody object for the SymbolIndex'th symbol in the
   // underlying object file.
-  Symbol *getSymbol(uint32_t SymbolIndex) {
-    return Symbols[SymbolIndex];
+  SymbolBody *getSymbolBody(uint32_t SymbolIndex) {
+    return SparseSymbolBodies[SymbolIndex];
   }
 
   // Returns the underying COFF file.
   COFFObjectFile *getCOFFObj() { return COFFObj.get(); }
 
-  static std::vector<ObjFile *> Instances;
+  // True if this object file is compatible with SEH.
+  // COFF-specific and x86-only.
+  bool SEHCompat = false;
 
-  // Flags in the absolute @feat.00 symbol if it is present. These usually
-  // indicate if an object was compiled with certain security features enabled
-  // like stack guard, safeseh, /guard:cf, or other things.
-  uint32_t Feat00Flags = 0;
-
-  // True if this object file is compatible with SEH.  COFF-specific and
-  // x86-only. COFF spec 5.10.1. The .sxdata section.
-  bool hasSafeSEH() { return Feat00Flags & 0x1; }
-
-  // True if this file was compiled with /guard:cf.
-  bool hasGuardCF() { return Feat00Flags & 0x800; }
+  // The list of safe exception handlers listed in .sxdata section.
+  // COFF-specific and x86-only.
+  std::set<SymbolBody *> SEHandlers;
 
   // Pointer to the PDB module descriptor builder. Various debug info records
   // will reference object files by "module index", which is here. Things like
@@ -148,38 +137,13 @@ public:
 private:
   void initializeChunks();
   void initializeSymbols();
+  void initializeSEH();
 
-  SectionChunk *
-  readSection(uint32_t SectionNumber,
-              const llvm::object::coff_aux_section_definition *Def,
-              StringRef LeaderName);
-
-  void readAssociativeDefinition(
-      COFFSymbolRef COFFSym,
-      const llvm::object::coff_aux_section_definition *Def);
-
-  void readAssociativeDefinition(
-      COFFSymbolRef COFFSym,
-      const llvm::object::coff_aux_section_definition *Def,
-      uint32_t ParentSection);
-
-  void recordPrevailingSymbolForMingw(
-      COFFSymbolRef COFFSym,
-      llvm::DenseMap<StringRef, uint32_t> &PrevailingSectionMap);
-
-  void maybeAssociateSEHForMingw(
-      COFFSymbolRef Sym, const llvm::object::coff_aux_section_definition *Def,
-      const llvm::DenseMap<StringRef, uint32_t> &PrevailingSectionMap);
-
-  llvm::Optional<Symbol *>
-  createDefined(COFFSymbolRef Sym,
-                std::vector<const llvm::object::coff_aux_section_definition *>
-                    &ComdatDefs,
-                bool &PrevailingComdat);
-  Symbol *createRegular(COFFSymbolRef Sym);
-  Symbol *createUndefined(COFFSymbolRef Sym);
+  SymbolBody *createDefined(COFFSymbolRef Sym, const void *Aux, bool IsFirst);
+  SymbolBody *createUndefined(COFFSymbolRef Sym);
 
   std::unique_ptr<COFFObjectFile> COFFObj;
+  const coff_section *SXData = nullptr;
 
   // List of all chunks defined by this file. This includes both section
   // chunks and non-section chunks for common symbols.
@@ -188,27 +152,21 @@ private:
   // CodeView debug info sections.
   std::vector<SectionChunk *> DebugChunks;
 
-  // Chunks containing symbol table indices of exception handlers. Only used for
-  // 32-bit x86.
-  std::vector<SectionChunk *> SXDataChunks;
-
-  // Chunks containing symbol table indices of address taken symbols and longjmp
-  // targets.  These are not linked into the final binary when /guard:cf is set.
-  std::vector<SectionChunk *> GuardFidChunks;
-  std::vector<SectionChunk *> GuardLJmpChunks;
-
   // This vector contains the same chunks as Chunks, but they are
   // indexed such that you can get a SectionChunk by section index.
   // Nonexistent section indices are filled with null pointers.
   // (Because section number is 1-based, the first slot is always a
   // null pointer.)
-  std::vector<SectionChunk *> SparseChunks;
+  std::vector<Chunk *> SparseChunks;
 
-  // This vector contains a list of all symbols defined or referenced by this
-  // file. They are indexed such that you can get a Symbol by symbol
+  // List of all symbols referenced or defined by this file.
+  std::vector<SymbolBody *> SymbolBodies;
+
+  // This vector contains the same symbols as SymbolBodies, but they
+  // are indexed such that you can get a SymbolBody by symbol
   // index. Nonexistent indices (which are occupied by auxiliary
   // symbols in the real symbol table) are filled with null pointers.
-  std::vector<Symbol *> Symbols;
+  std::vector<SymbolBody *> SparseSymbolBodies;
 };
 
 // This type represents import library members that contain DLL names
@@ -216,14 +174,14 @@ private:
 // for details about the format.
 class ImportFile : public InputFile {
 public:
-  explicit ImportFile(MemoryBufferRef M) : InputFile(ImportKind, M) {}
+  explicit ImportFile(MemoryBufferRef M)
+      : InputFile(ImportKind, M), Live(!Config->DoGC) {}
 
   static bool classof(const InputFile *F) { return F->kind() == ImportKind; }
 
-  static std::vector<ImportFile *> Instances;
-
-  Symbol *ImpSym = nullptr;
-  Symbol *ThunkSym = nullptr;
+  DefinedImportData *ImpSym = nullptr;
+  DefinedImportData *ConstSym = nullptr;
+  DefinedImportThunk *ThunkSym = nullptr;
   std::string DLLName;
 
 private:
@@ -235,15 +193,12 @@ public:
   Chunk *Location = nullptr;
 
   // We want to eliminate dllimported symbols if no one actually refers them.
-  // These "Live" bits are used to keep track of which import library members
+  // This "Live" bit is used to keep track of which import library members
   // are actually in use.
   //
   // If the Live bit is turned off by MarkLive, Writer will ignore dllimported
-  // symbols provided by this import library member. We also track whether the
-  // imported symbol is used separately from whether the thunk is used in order
-  // to avoid creating unnecessary thunks.
-  bool Live = !Config->DoGC;
-  bool ThunkLive = !Config->DoGC;
+  // symbols provided by this import library member.
+  bool Live;
 };
 
 // Used for LTO.
@@ -251,19 +206,18 @@ class BitcodeFile : public InputFile {
 public:
   explicit BitcodeFile(MemoryBufferRef M) : InputFile(BitcodeKind, M) {}
   static bool classof(const InputFile *F) { return F->kind() == BitcodeKind; }
-  ArrayRef<Symbol *> getSymbols() { return Symbols; }
+  std::vector<SymbolBody *> &getSymbols() { return SymbolBodies; }
   MachineTypes getMachineType() override;
-  static std::vector<BitcodeFile *> Instances;
   std::unique_ptr<llvm::lto::InputFile> Obj;
 
 private:
   void parse() override;
 
-  std::vector<Symbol *> Symbols;
+  std::vector<SymbolBody *> SymbolBodies;
 };
 } // namespace coff
 
-std::string toString(const coff::InputFile *File);
+std::string toString(coff::InputFile *File);
 } // namespace lld
 
 #endif

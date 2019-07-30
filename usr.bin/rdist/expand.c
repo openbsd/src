@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.17 2018/09/21 19:00:45 millert Exp $	*/
+/*	$OpenBSD: expand.c,v 1.15 2015/01/20 09:00:16 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -52,7 +52,6 @@ char	       *pathp;
 char	       *lastpathp;
 char	       *tilde;		/* "~user" if not expanding tilde, else "" */
 char	       *tpathp;
-char		pathbuf[BUFSIZ];
 
 int		expany;		/* any expansions done? */
 char	       *entp;
@@ -117,6 +116,7 @@ expand(struct namelist *list, int wh)		/* quote in list->n_name */
 {
 	struct namelist *nl, *prev;
 	int n;
+	char pathbuf[BUFSIZ];
 
 	if (debug)
 		debugmsg(DM_CALL, "expand(%p, %d) start, list = %s", 
@@ -260,16 +260,33 @@ expstr(u_char *s)
 		return;
 	}
 	if (*s == '~') {
-		if ((cp = strchr(s, '/')) == NULL) {
+		cp = ++s;
+		if (*cp == CNULL || *cp == '/') {
 			tilde = "~";
-			s++;
+			cp1 = (u_char *)homedir;
 		} else {
-			tilde = memcpy(ebuf, s, (cp - s));
-			ebuf[cp - s] = '\0';
+			tilde = (char *)(cp1 = ebuf);
+			*cp1++ = '~';
+			do
+				*cp1++ = *cp++;
+			while (*cp && *cp != '/');
+			*cp1 = CNULL;
+			if (pw == NULL || strcmp(pw->pw_name, 
+						 (char *)ebuf+1) != 0) {
+				if ((pw = getpwnam((char *)ebuf+1)) == NULL) {
+					strlcat((char *)ebuf, 
+					        ": unknown user name",
+					        sizeof(ebuf));
+					yyerror((char *)ebuf+1);
+					return;
+				}
+			}
+			cp1 = (u_char *)pw->pw_dir;
 			s = cp;
 		}
-		cp = exptilde(path, tilde, sizeof(pathbuf));
-		tpathp = pathp = (char *)cp;
+		for (cp = (u_char *)path; (*cp++ = *cp1++) != '\0'; )
+			continue;
+		tpathp = pathp = (char *)cp - 1;
 	} else {
 		tpathp = pathp = path;
 		tilde = "";

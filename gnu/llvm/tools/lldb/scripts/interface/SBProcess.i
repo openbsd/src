@@ -373,19 +373,6 @@ public:
     uint32_t
     LoadImage (lldb::SBFileSpec &image_spec, lldb::SBError &error);
     
-    %feature("autodoc", "
-    Load the library whose filename is given by image_spec looking in all the
-    paths supplied in the paths argument.  If successful, return a token that
-    can be passed to UnloadImage and fill loaded_path with the path that was
-    successfully loaded.  On failure, return 
-    lldb.LLDB_INVALID_IMAGE_TOKEN.
-    ") LoadImageUsingPaths;
-    uint32_t 
-    LoadImageUsingPaths(const lldb::SBFileSpec &image_spec,
-                        SBStringList &paths,
-                        lldb::SBFileSpec &loaded_path, 
-                        SBError &error);
-
     lldb::SBError
     UnloadImage (uint32_t image_token);
     
@@ -429,18 +416,6 @@ public:
 
     lldb::SBMemoryRegionInfoList
     GetMemoryRegions();
-
-    %feature("autodoc", "
-    Get information about the process.
-    Valid process info will only be returned when the process is alive,
-    use IsValid() to check if the info returned is valid.
-
-    process_info = process.GetProcessInfo()
-    if process_info.IsValid():
-        process_info.GetProcessID()
-    ") GetProcessInfo;
-    lldb::SBProcessInfo
-    GetProcessInfo();
 
     %pythoncode %{
         def __get_is_alive__(self):

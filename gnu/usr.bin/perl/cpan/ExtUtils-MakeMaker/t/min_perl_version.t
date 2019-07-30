@@ -8,52 +8,22 @@ BEGIN {
 }
 
 use strict;
-use warnings;
 
 use TieOut;
 use MakeMaker::Test::Utils;
+use MakeMaker::Test::Setup::MPV;
 use Config;
+use Test::More;
 use ExtUtils::MM;
-use Test::More
-    !MM->can_run(make()) && $ENV{PERL_CORE} && $Config{'usecrosscompile'}
+plan !MM->can_run(make()) && $ENV{PERL_CORE} && $Config{'usecrosscompile'}
     ? (skip_all => "cross-compiling and make not available")
-    : (tests => 35);
+    : (tests => 36);
 use File::Path;
 
 use ExtUtils::MakeMaker;
-my $CM = eval { require CPAN::Meta; };
-
-my $DIRNAME = 'Min-PerlVers';
-my %FILES = (
-    'Makefile.PL'   => <<'END',
-use ExtUtils::MakeMaker;
-WriteMakefile(
-    NAME             => 'Min::PerlVers',
-    AUTHOR           => 'John Doe <jd@example.com>',
-    VERSION_FROM     => 'lib/Min/PerlVers.pm',
-    PREREQ_PM        => { strict => 0 },
-    MIN_PERL_VERSION => '5.005',
-);
-END
-
-    'lib/Min/PerlVers.pm'    => <<'END',
-package Min::PerlVers;
-$VERSION = 0.05;
-
-=head1 NAME
-
-Min::PerlVers - being picky about perl versions
-
-=cut
-
-1;
-END
-
-);
 
 # avoid environment variables interfering with our make runs
-delete @ENV{qw(PERL_JSON_BACKEND CPAN_META_JSON_BACKEND PERL_YAML_BACKEND)} if $ENV{PERL_CORE};
-delete @ENV{qw(LIB MAKEFLAGS PERL_CORE)};
+delete @ENV{qw(LIB MAKEFLAGS)};
 
 my $perl     = which_perl();
 my $make     = make_run();
@@ -63,10 +33,10 @@ chdir 't';
 
 perl_lib();
 
-hash2files($DIRNAME, \%FILES);
+ok( setup_recurs(), 'setup' );
 END {
     ok( chdir(File::Spec->updir), 'leaving dir' );
-    ok( rmtree($DIRNAME), 'teardown' );
+    ok( teardown_recurs(), 'teardown' );
 }
 
 ok( chdir 'Min-PerlVers', 'entering dir Min-PerlVers' ) ||
@@ -168,7 +138,6 @@ END
 note "PREREQ_PRINT output"; {
     my $prereq_out = run(qq{$perl Makefile.PL "PREREQ_PRINT=1"});
     is( $?, 0,            'PREREQ_PRINT exiting normally' );
-    $prereq_out =~ s/.*(\$PREREQ_PM\s*=)/$1/s; # strip off errors eg from chcp
     my $prereq_out_sane = $prereq_out =~ /^\s*\$PREREQ_PM\s*=/;
     ok( $prereq_out_sane, '  and talking like we expect' ) ||
         diag($prereq_out);
@@ -178,7 +147,6 @@ note "PREREQ_PRINT output"; {
 
         package _Prereq::Print::WithMPV;          ## no critic
         our($PREREQ_PM, $BUILD_REQUIRES, $MIN_PERL_VERSION, $ERR);
-        $BUILD_REQUIRES = undef; # suppress "used only once"
         $ERR = '';
         eval {
             eval $prereq_out;                     ## no critic
@@ -196,7 +164,7 @@ note "PRINT_PREREQ output"; {
     is( $?, 0,                      'PRINT_PREREQ exiting normally' );
     ok( $prereq_out !~ /^warning/i, '  and not complaining loudly' );
     like( $prereq_out,
-        qr/^perl\(perl\) \s* >= 5\.005 \s+ perl\(strict\) \s* >= \s* 0 \s*$/mx,
+        qr/^perl\(perl\) \s* >= 5\.005 \s+ perl\(strict\) \s* >= \s* 0 \s*$/x,
                                     'dump has prereqs and perl version' );
 }
 
@@ -226,15 +194,14 @@ note "ppd output"; {
 }
 
 
-note "META.yml output"; SKIP: {
-    skip 'Failed to load CPAN::Meta', 4 unless $CM;
+note "META.yml output"; {
     my $distdir  = 'Min-PerlVers-0.05';
     $distdir =~ s{\.}{_}g if $Is_VMS;
 
     my $meta_yml = "$distdir/META.yml";
     my $meta_json = "$distdir/META.json";
     my @make_out    = run(qq{$make metafile});
-    END { rmtree $distdir if defined $distdir }
+    END { rmtree $distdir }
 
     for my $case (
         ['META.yml', $meta_yml],
@@ -252,3 +219,4 @@ note "META.yml output"; SKIP: {
         );
     }
 }
+

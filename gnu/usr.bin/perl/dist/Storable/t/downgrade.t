@@ -26,12 +26,12 @@ use Test::More;
 use Storable 'thaw';
 
 use strict;
-our (%U_HASH, $UTF8_CROAK, $RESTRICTED_CROAK);
+use vars qw(@RESTRICT_TESTS %R_HASH %U_HASH $UTF8_CROAK $RESTRICTED_CROAK);
 
-our @RESTRICT_TESTS = ('Locked hash', 'Locked hash placeholder',
+@RESTRICT_TESTS = ('Locked hash', 'Locked hash placeholder',
                    'Locked keys', 'Locked keys placeholder',
                   );
-our %R_HASH = (perl => 'rules');
+%R_HASH = (perl => 'rules');
 
 if ($] > 5.007002) {
   # This is cheating. "\xdf" in Latin 1 is beta S, so will match \w if it

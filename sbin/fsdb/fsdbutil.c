@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdbutil.c,v 1.20 2019/02/05 02:17:32 deraadt Exp $	*/
+/*	$OpenBSD: fsdbutil.c,v 1.18 2017/07/29 21:14:56 fcambus Exp $	*/
 /*	$NetBSD: fsdbutil.c,v 1.5 1996/09/28 19:30:37 christos Exp $	*/
 
 /*-
@@ -83,7 +83,8 @@ argcount(struct cmdtable *cmdp, int argc, char *argv[])
 void
 printstat(const char *cp, ino_t inum, union dinode *dp)
 {
-	const char *name;
+	struct group *grp;
+	struct passwd *pw;
 	time_t t;
 	char *p;
 
@@ -96,11 +97,11 @@ printstat(const char *cp, ino_t inum, union dinode *dp)
 		puts("regular file");
 		break;
 	case IFBLK:
-		printf("block special (%u,%u)",
+		printf("block special (%d,%d)",
 		    (int)major(DIP(dp, di_rdev)), (int)minor(DIP(dp, di_rdev)));
 		break;
 	case IFCHR:
-		printf("character special (%u,%u)",
+		printf("character special (%d,%d)",
 		    (int)major(DIP(dp, di_rdev)), (int)minor(DIP(dp, di_rdev)));
 		break;
 	case IFLNK:
@@ -138,12 +139,12 @@ printstat(const char *cp, ino_t inum, union dinode *dp)
 	printf("\n\tATIME=%15.15s %4.4s [%d nsec]\n", &p[4], &p[20],
 	    DIP(dp, di_atimensec));
 
-	if ((name = user_from_uid(DIP(dp, di_uid), 1)) != NULL)
-		printf("OWNER=%s ", name);
+	if ((pw = getpwuid(DIP(dp, di_uid))))
+		printf("OWNER=%s ", pw->pw_name);
 	else
 		printf("OWNUID=%u ", DIP(dp, di_uid));
-	if ((name = group_from_gid(DIP(dp, di_gid), 1)) != NULL)
-		printf("GRP=%s ", name);
+	if ((grp = getgrgid(DIP(dp, di_gid))))
+		printf("GRP=%s ", grp->gr_name);
 	else
 		printf("GID=%u ", DIP(dp, di_gid));
 

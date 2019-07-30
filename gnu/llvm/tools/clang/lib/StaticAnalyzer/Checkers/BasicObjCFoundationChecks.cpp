@@ -436,7 +436,8 @@ void CFNumberChecker::checkPreStmt(const CallExpr *CE,
     return;
 
   // Get the value of the "theType" argument.
-  SVal TheTypeVal = C.getSVal(CE->getArg(1));
+  const LocationContext *LCtx = C.getLocationContext();
+  SVal TheTypeVal = state->getSVal(CE->getArg(1), LCtx);
 
   // FIXME: We really should allow ranges of valid theType values, and
   //   bifurcate the state appropriately.
@@ -456,7 +457,7 @@ void CFNumberChecker::checkPreStmt(const CallExpr *CE,
   // Look at the value of the integer being passed by reference.  Essentially
   // we want to catch cases where the value passed in is not equal to the
   // size of the type being created.
-  SVal TheValueExpr = C.getSVal(CE->getArg(2));
+  SVal TheValueExpr = state->getSVal(CE->getArg(2), LCtx);
 
   // FIXME: Eventually we should handle arbitrary locations.  We can do this
   //  by having an enhanced memory model that does low-level typing.
@@ -570,7 +571,7 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
 
   // Get the argument's value.
   const Expr *Arg = CE->getArg(0);
-  SVal ArgVal = C.getSVal(Arg);
+  SVal ArgVal = state->getSVal(Arg, C.getLocationContext());
   Optional<DefinedSVal> DefArgVal = ArgVal.getAs<DefinedSVal>();
   if (!DefArgVal)
     return;
@@ -976,7 +977,8 @@ assumeCollectionNonEmpty(CheckerContext &C, ProgramStateRef State,
   if (!State)
     return nullptr;
 
-  SymbolRef CollectionS = C.getSVal(FCS->getCollection()).getAsSymbol();
+  SymbolRef CollectionS =
+    State->getSVal(FCS->getCollection(), C.getLocationContext()).getAsSymbol();
   return assumeCollectionNonEmpty(C, State, CollectionS, Assumption);
 }
 
@@ -1164,7 +1166,7 @@ void ObjCLoopChecker::checkDeadSymbols(SymbolReaper &SymReaper,
 
 namespace {
 /// \class ObjCNonNilReturnValueChecker
-/// The checker restricts the return values of APIs known to
+/// \brief The checker restricts the return values of APIs known to
 /// never (or almost never) return 'nil'.
 class ObjCNonNilReturnValueChecker
   : public Checker<check::PostObjCMessage,
@@ -1204,7 +1206,7 @@ ProgramStateRef
 ObjCNonNilReturnValueChecker::assumeExprIsNonNull(const Expr *NonNullExpr,
                                                   ProgramStateRef State,
                                                   CheckerContext &C) const {
-  SVal Val = C.getSVal(NonNullExpr);
+  SVal Val = State->getSVal(NonNullExpr, C.getLocationContext());
   if (Optional<DefinedOrUnknownSVal> DV = Val.getAs<DefinedOrUnknownSVal>())
     return State->assume(*DV, true);
   return State;

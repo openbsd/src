@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.116 2019/04/28 17:59:51 mpi Exp $	*/
+/*	$OpenBSD: main.c,v 1.112 2017/08/12 03:21:02 benno Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -54,12 +54,14 @@
 #include "netstat.h"
 
 struct nlist nl[] = {
-#define N_AFMAP		0
-	{ "_afmap"},
-#define N_AF2IDX	1
-	{ "_af2idx" },
-#define N_AF2IDXMAX	2
-	{ "_af2idx_max" },
+#define N_RTREE		0
+	{ "_rt_tables"},
+#define N_RTMASK	1
+	{ "_mask_rnhead" },
+#define N_AF2RTAFIDX	2
+	{ "_af2rtafidx" },
+#define N_RTBLIDMAX	3
+	{ "_rtbl_id_max" },
 
 	{ "" }
 };
@@ -75,7 +77,6 @@ struct protox {
 	{ ipip_stats,	"ipencap", 0 },
 	{ tcp_stats,	"tcp",	IPPROTO_TCP },
 	{ udp_stats,	"udp",	IPPROTO_UDP },
-	{ ipsec_stats,	"ipsec", 0 },
 	{ esp_stats,	"esp", 0 },
 	{ ah_stats,	"ah", 0 },
 	{ etherip_stats,"etherip", 0 },
@@ -102,7 +103,7 @@ struct protox *protoprotox[] = {
 static void usage(void);
 static struct protox *name2protox(char *);
 static struct protox *knownname(char *);
-void gettable(u_int);
+u_int gettable(const char *);
 
 kvm_t *kvmd;
 
@@ -127,7 +128,7 @@ main(int argc, char *argv[])
 	tableid = getrtable();
 
 	while ((ch = getopt(argc, argv,
-	    "AaBbc:deFf:ghI:iLlM:mN:np:P:qrsT:tuvW:w:")) != -1)
+	    "AaBbc:dFf:ghI:iLlM:mN:np:P:qrsT:tuvW:w:")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
@@ -147,10 +148,7 @@ main(int argc, char *argv[])
 				errx(1, "count is %s", errstr);
 			break;
 		case 'd':
-			dflag = IF_SHOW_DROP;
-			break;
-		case 'e':
-			dflag = IF_SHOW_ERRS;
+			dflag = 1;
 			break;
 		case 'F':
 			Fflag = 1;
@@ -166,6 +164,8 @@ main(int argc, char *argv[])
 				af = AF_UNIX;
 			else if (strcmp(optarg, "mpls") == 0)
 				af = AF_MPLS;
+			else if (strcmp(optarg, "mask") == 0)
+				af = 0xff;
 			else {
 				(void)fprintf(stderr,
 				    "%s: %s: unknown address family\n",
@@ -232,10 +232,8 @@ main(int argc, char *argv[])
 			++sflag;
 			break;
 		case 'T':
-			tableid = strtonum(optarg, 0, RT_TABLEID_MAX, &errstr);
-			if (errstr)
-				errx(1, "invalid table id: %s", errstr);
 			Tflag = 1;
+			tableid = gettable(optarg);
 			break;
 		case 't':
 			tflag = 1;
@@ -339,13 +337,11 @@ main(int argc, char *argv[])
 			errx(1, "no namelist");
 	}
 
-	if (!need_nlist && Tflag)
-		gettable(tableid);
-
 	if (rflag) {
 		if (Aflag || nlistf != NULL || memf != NULL)
-			routepr(nl[N_AFMAP].n_value, nl[N_AF2IDX].n_value,
-			    nl[N_AF2IDXMAX].n_value, tableid);
+			routepr(nl[N_RTREE].n_value, nl[N_RTMASK].n_value,
+			    nl[N_AF2RTAFIDX].n_value, nl[N_RTBLIDMAX].n_value,
+			    tableid);
 		else
 			p_rttables(af, tableid);
 		exit(0);
@@ -446,9 +442,9 @@ usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: %s [-AaBln] [-f address_family] [-M core] [-N system]\n"
-	    "       %s [-bdeFgilmnqrstu] [-f address_family] [-M core] [-N system]\n"
-	    "               [-T rtable]\n"
-	    "       %s [-bdehn] [-c count] [-I interface] [-M core] [-N system] [-w wait]\n"
+	    "       %s [-bdFgilmnqrstu] [-f address_family] [-M core] [-N system]\n"
+	    "               [-T tableid]\n"
+	    "       %s [-bdhn] [-c count] [-I interface] [-M core] [-N system] [-w wait]\n"
 	    "       %s [-v] [-M core] [-N system] -P pcbaddr\n"
 	    "       %s [-s] [-M core] [-N system] [-p protocol]\n"
 	    "       %s [-a] [-f address_family] [-i | -I interface]\n"
@@ -458,12 +454,18 @@ usage(void)
 	exit(1);
 }
 
-void
-gettable(u_int tableid)
+u_int
+gettable(const char *s)
 {
+	const char *errstr;
 	struct rt_tableinfo info;
 	int mib[6];
 	size_t len;
+	u_int tableid;
+
+	tableid = strtonum(s, 0, RT_TABLEID_MAX, &errstr);
+	if (errstr)
+		errx(1, "invalid table id: %s", errstr);
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -475,4 +477,6 @@ gettable(u_int tableid)
 	len = sizeof(info);
 	if (sysctl(mib, 6, &info, &len, NULL, 0) == -1)
 		err(1, "routing table %d", tableid);
+
+	return (tableid);
 }

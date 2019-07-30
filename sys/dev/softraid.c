@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.394 2019/05/18 14:02:27 tim Exp $ */
+/* $OpenBSD: softraid.c,v 1.391 2018/02/08 06:02:09 deraadt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1470,29 +1470,28 @@ unwind:
 		for (bc1 = SLIST_FIRST(&bv1->sbv_chunks); bc1 != NULL;
 		    bc1 = bc2) {
 			bc2 = SLIST_NEXT(bc1, sbc_link);
-			free(bc1->sbc_metadata, M_DEVBUF,
-			    sizeof(*bc1->sbc_metadata));
-			free(bc1, M_DEVBUF, sizeof(*bc1));
+			free(bc1->sbc_metadata, M_DEVBUF, 0);
+			free(bc1, M_DEVBUF, 0);
 		}
-		free(bv1, M_DEVBUF, sizeof(*bv1));
+		free(bv1, M_DEVBUF, 0);
 	}
 	/* Free keydisks chunks. */
 	for (bc1 = SLIST_FIRST(&kdh); bc1 != NULL; bc1 = bc2) {
 		bc2 = SLIST_NEXT(bc1, sbc_link);
-		free(bc1->sbc_metadata, M_DEVBUF, sizeof(*bc1->sbc_metadata));
-		free(bc1, M_DEVBUF, sizeof(*bc1));
+		free(bc1->sbc_metadata, M_DEVBUF, 0);
+		free(bc1, M_DEVBUF, 0);
 	}
 	/* Free unallocated chunks. */
 	for (bc1 = SLIST_FIRST(&bch); bc1 != NULL; bc1 = bc2) {
 		bc2 = SLIST_NEXT(bc1, sbc_link);
-		free(bc1->sbc_metadata, M_DEVBUF, sizeof(*bc1->sbc_metadata));
-		free(bc1, M_DEVBUF, sizeof(*bc1));
+		free(bc1->sbc_metadata, M_DEVBUF, 0);
+		free(bc1, M_DEVBUF, 0);
 	}
 
 	while (!SLIST_EMPTY(&sdklist)) {
 		sdk = SLIST_FIRST(&sdklist);
 		SLIST_REMOVE_HEAD(&sdklist, sdk_link);
-		free(sdk, M_DEVBUF, sizeof(*sdk));
+		free(sdk, M_DEVBUF, 0);
 	}
 
 	free(devs, M_DEVBUF, BIOC_CRMAXLEN * sizeof(dev_t));
@@ -1752,7 +1751,7 @@ sr_hotplug_unregister(struct sr_discipline *sd, void *func)
 	if (mhe != NULL) {
 		SLIST_REMOVE(&sr_hotplug_callbacks, mhe,
 		    sr_hotplug_list, shl_link);
-		free(mhe, M_DEVBUF, sizeof(*mhe));
+		free(mhe, M_DEVBUF, 0);
 	}
 }
 
@@ -1954,8 +1953,7 @@ sr_ccb_free(struct sr_discipline *sd)
 	while ((ccb = TAILQ_FIRST(&sd->sd_ccb_freeq)) != NULL)
 		TAILQ_REMOVE(&sd->sd_ccb_freeq, ccb, ccb_link);
 
-	free(sd->sd_ccb, M_DEVBUF, sd->sd_max_wu * sd->sd_max_ccb_per_wu *
-	    sizeof(struct sr_ccb));
+	free(sd->sd_ccb, M_DEVBUF, 0);
 }
 
 struct sr_ccb *
@@ -2134,7 +2132,7 @@ sr_wu_free(struct sr_discipline *sd)
 
 	while ((wu = TAILQ_FIRST(&sd->sd_wu)) != NULL) {
 		TAILQ_REMOVE(&sd->sd_wu, wu, swu_next);
-		free(wu, M_DEVBUF, sizeof(*wu));
+		free(wu, M_DEVBUF, 0);
 	}
 }
 
@@ -2968,14 +2966,13 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 	goto done;
 
 fail:
-	free(hotspare, M_DEVBUF, sizeof(*hotspare));
+	free(hotspare, M_DEVBUF, 0);
 
 done:
 	if (sd)
-		free(sd->sd_vol.sv_chunks, M_DEVBUF,
-		    sizeof(sd->sd_vol.sv_chunks));
-	free(sd, M_DEVBUF, sizeof(*sd));
-	free(sm, M_DEVBUF, sizeof(*sm));
+		free(sd->sd_vol.sv_chunks, M_DEVBUF, 0);
+	free(sd, M_DEVBUF, 0);
+	free(sm, M_DEVBUF, 0);
 	if (open) {
 		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, curproc);
 		vput(vn);
@@ -3082,7 +3079,7 @@ sr_hotspare_rebuild(struct sr_discipline *sd)
 			/* Remove hotspare from available list. */
 			sc->sc_hotspare_no--;
 			SLIST_REMOVE(cl, hotspare, sr_chunk, src_link);
-			free(hotspare, M_DEVBUF, sizeof(*hotspare));
+			free(hotspare, M_DEVBUF, 0);
 
 		}
 		rw_exit_write(&sc->sc_lock);
@@ -3378,7 +3375,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 				    &sd->sd_meta->ssdi.ssd_uuid);
 				sr_error(sc, "disk %s is currently in use; "
 				    "cannot force create", uuid);
-				free(uuid, M_DEVBUF, 37);
+				free(uuid, M_DEVBUF, 0);
 				goto unwind;
 			}
 
@@ -3442,7 +3439,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 		if (sr_already_assembled(sd)) {
 			uuid = sr_uuid_format(&sd->sd_meta->ssdi.ssd_uuid);
 			sr_error(sc, "disk %s already assembled", uuid);
-			free(uuid, M_DEVBUF, 37);
+			free(uuid, M_DEVBUF, 0);
 			goto unwind;
 		}
 
@@ -3808,8 +3805,8 @@ sr_ioctl_installboot(struct sr_softc *sc, struct sr_discipline *sd,
 	rv = 0;
 
 done:
-	free(bootblk, M_DEVBUF, bbs);
-	free(bootldr, M_DEVBUF, bls);
+	free(bootblk, M_DEVBUF, 0);
+	free(bootldr, M_DEVBUF, 0);
 
 	return (rv);
 }
@@ -3835,12 +3832,13 @@ sr_chunks_unwind(struct sr_softc *sc, struct sr_chunk_head *cl)
 			 * the problem introduced by vnode aliasing... specfs
 			 * has no locking, whereas ufs/ffs does!
 			 */
-			vn_lock(ch_entry->src_vn, LK_EXCLUSIVE | LK_RETRY);
+			vn_lock(ch_entry->src_vn, LK_EXCLUSIVE |
+			    LK_RETRY, curproc);
 			VOP_CLOSE(ch_entry->src_vn, FREAD | FWRITE, NOCRED,
 			    curproc);
 			vput(ch_entry->src_vn);
 		}
-		free(ch_entry, M_DEVBUF, sizeof(*ch_entry));
+		free(ch_entry, M_DEVBUF, 0);
 	}
 	SLIST_INIT(cl);
 }
@@ -3864,14 +3862,14 @@ sr_discipline_free(struct sr_discipline *sd)
 	if (sd->sd_free_resources)
 		sd->sd_free_resources(sd);
 	free(sd->sd_vol.sv_chunks, M_DEVBUF, 0);
-	free(sd->sd_meta, M_DEVBUF, SR_META_SIZE * DEV_BSIZE);
-	free(sd->sd_meta_foreign, M_DEVBUF, smd[sd->sd_meta_type].smd_size);
+	free(sd->sd_meta, M_DEVBUF, 0);
+	free(sd->sd_meta_foreign, M_DEVBUF, 0);
 
 	som = &sd->sd_meta_opt;
 	for (omi = SLIST_FIRST(som); omi != NULL; omi = omi_next) {
 		omi_next = SLIST_NEXT(omi, omi_link);
 		free(omi->omi_som, M_DEVBUF, 0);
-		free(omi, M_DEVBUF, sizeof(*omi));
+		free(omi, M_DEVBUF, 0);
 	}
 
 	if (sd->sd_target != 0) {
@@ -3887,7 +3885,7 @@ sr_discipline_free(struct sr_discipline *sd)
 		TAILQ_REMOVE(&sc->sc_dis_list, sd, sd_link);
 
 	explicit_bzero(sd, sizeof *sd);
-	free(sd, M_DEVBUF, sizeof(*sd));
+	free(sd, M_DEVBUF, 0);
 }
 
 void

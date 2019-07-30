@@ -1,4 +1,4 @@
-/*	$OpenBSD: noexec.c,v 1.20 2019/05/10 15:57:39 visa Exp $	*/
+/*	$OpenBSD: noexec.c,v 1.17 2017/07/18 23:00:31 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -44,7 +44,7 @@ int page_size;
 char label[64] = "non-exec ";
 
 #define PAD 64*1024
-#define	MAXPAGESIZE 16384
+#define	MAXPAGESIZE 8192
 #define TESTSZ 256	/* assuming the testfly() will fit */
 u_int64_t data[(PAD + TESTSZ + PAD + MAXPAGESIZE) / 8] = { 0 };
 u_int64_t bss[(PAD + TESTSZ + PAD + MAXPAGESIZE) / 8];
@@ -187,7 +187,7 @@ main(int argc, char *argv[])
 	size_t size;
 	char *ep;
 	void *p, *ptr;
-	int pflags, ch;
+	int ch;
 
 	if ((page_size = sysconf(_SC_PAGESIZE)) < 0)
 		err(1, "sysconf");
@@ -196,7 +196,6 @@ main(int argc, char *argv[])
 	setvbuf(stderr, NULL, _IONBF, 0);
 
 	p = NULL;
-	pflags = MAP_PRIVATE|MAP_ANON|MAP_FIXED;
 	func = &noexec;
 	size = TESTSZ;
 	while ((ch = getopt(argc, argv, "TDBHSmps:")) != -1) {
@@ -204,7 +203,6 @@ main(int argc, char *argv[])
 			switch (ch) {
 			case 'T':
 				p = &testfly;
-				pflags &=~ MAP_FIXED;
 				(void) strlcat(label, "text", sizeof(label));
 				continue;
 			case 'D':
@@ -227,7 +225,6 @@ main(int argc, char *argv[])
 				continue;
 			case 'S':
 				p = getaddr(&stack);
-				pflags |= MAP_STACK;
 				(void) strlcat(label, "stack", sizeof(label));
 				continue;
 			case 's':	/* only valid for heap and size */
@@ -244,19 +241,18 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'm':
 			if (p) {
+				if ((ptr = mmap(p, size + 2 * page_size,
+				    PROT_READ|PROT_WRITE,
+				    MAP_ANON|MAP_FIXED, -1, 0)) == MAP_FAILED)
+					err(1, "mmap");
 				(void) strlcat(label, "-mmap", sizeof(label));
 			} else {
-				pflags = MAP_ANON;
+				if ((ptr = mmap(p, size + 2 * page_size,
+				    PROT_READ|PROT_WRITE,
+				    MAP_ANON, -1, 0)) == MAP_FAILED)
+					err(1, "mmap");
 				func = &noexec_mmap;
 				(void) strlcat(label, "mmap", sizeof(label));
-			}
-			ptr = mmap(p, size + 2 * page_size,
-			    PROT_READ|PROT_WRITE, pflags, -1, 0LL);
-			if (ptr == MAP_FAILED) {
-				err(1, "mmap: addr %p, len %zu, prot %d, "
-				    "flags %d, fd %d, offset %lld",
-				    p, size + 2 * page_size,
-				    PROT_READ|PROT_WRITE, pflags, -1, 0LL);
 			}
 			p = ptr;
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.24 2019/05/16 05:00:00 martijn Exp $	*/
+
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -242,12 +242,6 @@ smi_find(struct oid *oid)
 }
 
 struct oid *
-smi_nfind(struct oid *oid)
-{
-	return (RB_NFIND(oidtree, &smi_oidtree, oid));
-}
-
-struct oid *
 smi_findkey(char *name)
 {
 	struct oid	oid;
@@ -410,7 +404,7 @@ smi_debug_elements(struct ber_element *root)
 		fprintf(stderr, "class: <INVALID>(%u) type: ", root->be_class);
 		break;
 	}
-	fprintf(stderr, "(%u) encoding %u ",
+	fprintf(stderr, "(%lu) encoding %lu ",
 	    root->be_type, root->be_encoding);
 
 	if ((value = smi_print_element(root)) == NULL)
@@ -543,7 +537,7 @@ smi_print_element(struct ber_element *root)
 	return (NULL);
 }
 
-unsigned int
+unsigned long
 smi_application(struct ber_element *elm)
 {
 	if (elm->be_class != BER_CLASS_APPLICATION)

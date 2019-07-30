@@ -10,28 +10,14 @@ BEGIN {
 
 use Sys::Hostname;
 
-use Test::More tests => 4;
+eval {
+    $host = hostname;
+};
 
-SKIP:
-{
-    eval {
-        $host = hostname;
-    };
-    skip "No hostname available", 1
-      if $@ =~ /Cannot get host name/;
-    isnt($host, undef, "got a hostname");
-}
-
-{
-    use warnings;
-    my $warn;
-    local $SIG{__WARN__} = sub { $warn = "@_" };
-    eval { hostname("dummy") };
-    ok($warn, "warns with an argument");
-    like($warn, qr/hostname\(\) doesn't accept any arguments/,
-         "appropriate message");
-    no warnings "deprecated";
-    undef $warn;
-    eval { hostname("dummy") };
-    is($warn, undef, "no warning when disabled");
+if ($@) {
+    print "1..0\n" if $@ =~ /Cannot get host name/;
+} else {
+    print "1..1\n";
+    print "# \$host = '$host'\n";
+    print "ok 1\n";
 }

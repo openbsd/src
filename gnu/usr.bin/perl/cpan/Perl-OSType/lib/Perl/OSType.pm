@@ -4,7 +4,7 @@ use warnings;
 package Perl::OSType;
 # ABSTRACT: Map Perl operating system names to generic types
 
-our $VERSION = '1.010';
+our $VERSION = '1.009';
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -47,7 +47,6 @@ my %OSTYPES = qw(
   solaris     Unix
   sunos       Unix
   cygwin      Unix
-  msys        Unix
   os2         Unix
   interix     Unix
   gnu         Unix
@@ -97,7 +96,7 @@ Perl::OSType - Map Perl operating system names to generic types
 
 =head1 VERSION
 
-version 1.010
+version 1.009
 
 =head1 SYNOPSIS
 
@@ -176,21 +175,13 @@ David Golden <dagolden@cpan.org>
 
 =head1 CONTRIBUTORS
 
-=for stopwords Chris 'BinGOs' Williams David Golden Graham Ollis Jonas B. Nielsen Owain G. Ainsworth Paul Green Piotr Roszatycki
+=for stopwords Chris 'BinGOs' Williams Jonas B. Nielsen Owain G. Ainsworth Paul Green Piotr Roszatycki
 
 =over 4
 
 =item *
 
 Chris 'BinGOs' Williams <chris@bingosnet.co.uk>
-
-=item *
-
-David Golden <xdg@xdg.me>
-
-=item *
-
-Graham Ollis <plicease@cpan.org>
 
 =item *
 
@@ -212,7 +203,7 @@ Piotr Roszatycki <piotr.roszatycki@gmail.com>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2016 by David Golden.
+This software is copyright (c) 2015 by David Golden.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

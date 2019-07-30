@@ -3,9 +3,9 @@
 BEGIN {
     $| = 1;
     chdir 't' if -d 't';
+    @INC = '../lib';
     require './test.pl';
-    set_up_inc( '../lib' );
-    plan (tests => 196); # some tests are run in BEGIN block
+    plan (tests => 192);
 }
 
 # Test that defined() returns true for magic variables created on the fly,
@@ -61,7 +61,6 @@ $PERL =
     $Is_VMS     ? $^X      :
     $Is_MSWin32 ? '.\perl' :
                   './perl');
-
 
 sub env_is {
     my ($key, $val, $desc) = @_;
@@ -467,7 +466,6 @@ SKIP:  {
 
     undef %Errno::;
     delete $INC{"Errno.pm"};
-    delete $::{"!"};
 
     open(FOO, "nonesuch"); # Generate ENOENT
     my %errs = %{"!"}; # Cause Errno.pm to be loaded at run-time
@@ -643,14 +641,6 @@ is ${^LAST_FH}, \*STDIN, '${^LAST_FH} after another tell';
 # This also tests that ${^LAST_FH} is a weak reference:
 is ${^LAST_FH}, undef, '${^LAST_FH} is undef when PL_last_in_gv is NULL';
 
-# all of these would set PL_last_in_gv to a non-GV which would
-# assert when referenced by the magic for ${^LAST_FH}.
-# The approach to fixing this has changed (#128263), but it's still useful
-# to check each op.
-for my $code ('tell $0', 'sysseek $0, 0, 0', 'seek $0, 0, 0', 'eof $0') {
-    fresh_perl_is("$code; print defined \${^LAST_FH} ? qq(not ok\n) : qq(ok\n)", "ok\n",
-                  undef, "check $code doesn't define \${^LAST_FH}");
-}
 
 # $|
 fresh_perl_is 'print $| = ~$|', "1\n", {switches => ['-l']},
@@ -685,14 +675,11 @@ is ${^MPEN}, undef, '${^MPEN} starts undefined';
 # This one used to croak due to that missing break:
 is ++${^MPEN}, 1, '${^MPEN} can be incremented';
 
-{
-    no warnings 'deprecated';
-    eval { ${^E_NCODING} = 1 };
-    is $@, "", 'Setting ${^E_NCODING} does nothing';
-    $_ = ${^E_NCODING};
-    pass('can read ${^E_NCODING} without blowing up');
-    is $_, 1, '${^E_NCODING} is whatever it was set to';
-}
+eval { ${^E_NCODING} = 1 };
+like $@, qr/^Modification of a /, 'Setting ${^E_NCODING} croaks';
+$_ = ${^E_NCODING};
+pass('can read ${^E_NCODING} without blowing up');
+is $_, undef, '${^E_NCODING} is undef';
 
 {
     my $warned = 0;
@@ -715,7 +702,6 @@ is ++${^MPEN}, 1, '${^MPEN} can be incremented';
     sub FETCH { push @RT12608::G::ISA, "RT12608::H"; "RT12608::Y"; }
 }
 
-
 # ^^^^^^^^^ New tests go here ^^^^^^^^^
 
 SKIP: {
@@ -729,12 +715,10 @@ SKIP: {
 	    if $ENV{PERL_VALGRIND} || $Is_VMS;
 
 	    $PATH = $ENV{PATH};
-	    $SYSTEMROOT = $ENV{SYSTEMROOT} if exists $ENV{SYSTEMROOT}; # win32
 	    $PDL = $ENV{PERL_DESTRUCT_LEVEL} || 0;
 	    $ENV{foo} = "bar";
 	    %ENV = ();
 	    $ENV{PATH} = $PATH;
-	    $ENV{SYSTEMROOT} = $SYSTEMROOT if defined $SYSTEMROOT;
 	    $ENV{PERL_DESTRUCT_LEVEL} = $PDL || 0;
 	    if ($Is_MSWin32) {
 		is `set foo 2>NUL`, "";

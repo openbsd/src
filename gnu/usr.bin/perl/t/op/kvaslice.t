@@ -8,7 +8,7 @@ BEGIN {
 
 # use strict;
 
-plan tests => 38;
+plan tests => 39;
 
 # simple use cases
 {
@@ -119,6 +119,13 @@ plan tests => 38;
         eval 'local %a[1,2]';
         like $@, qr{^Can't modify index/value array slice in local at},
             'local dies';
+    }
+    # no delete
+    {
+        local $@;
+        eval 'delete %a[1,2]';
+        like $@, qr{^delete argument is index/value array slice, use array slice},
+            'delete dies';
     }
     # no assign
     {

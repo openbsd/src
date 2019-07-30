@@ -1,5 +1,5 @@
-.\" $OpenBSD: ASN1_STRING_length.3,v 1.19 2019/06/14 13:59:32 schwarze Exp $
-.\" full merge up to: OpenSSL 4a56d2a3 Feb 25 16:49:27 2018 +0300
+.\" $OpenBSD: ASN1_STRING_length.3,v 1.14 2018/03/27 17:35:50 schwarze Exp $
+.\" full merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 14 2019 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt ASN1_STRING_LENGTH 3
 .Os
 .Sh NAME
@@ -84,8 +84,8 @@
 .In openssl/asn1.h
 .Ft int
 .Fo ASN1_STRING_cmp
-.Fa "const ASN1_STRING *a"
-.Fa "const ASN1_STRING *b"
+.Fa "ASN1_STRING *a"
+.Fa "ASN1_STRING *b"
 .Fc
 .Ft unsigned char *
 .Fo ASN1_STRING_data
@@ -93,7 +93,7 @@
 .Fc
 .Ft ASN1_STRING *
 .Fo ASN1_STRING_dup
-.Fa "const ASN1_STRING *a"
+.Fa "ASN1_STRING *a"
 .Fc
 .Ft const unsigned char *
 .Fo ASN1_STRING_get0_data
@@ -101,7 +101,7 @@
 .Fc
 .Ft int
 .Fo ASN1_STRING_length
-.Fa "const ASN1_STRING *x"
+.Fa "ASN1_STRING *x"
 .Fc
 .Ft void
 .Fo ASN1_STRING_length_set
@@ -117,11 +117,11 @@
 .Ft int
 .Fo ASN1_STRING_to_UTF8
 .Fa "unsigned char **out"
-.Fa "const ASN1_STRING *in"
+.Fa "ASN1_STRING *in"
 .Fc
 .Ft int
 .Fo ASN1_STRING_type
-.Fa "const ASN1_STRING *x"
+.Fa "ASN1_STRING *x"
 .Fc
 .Sh DESCRIPTION
 These functions manipulate
@@ -240,9 +240,9 @@ is NUL terminated, and it may contain embedded NUL characters.
 The format of the data depends on the string type:
 for example for an
 .Vt IA5String
-the data contains ASCII characters, for a
+the data contains ASCII characters, a
 .Vt BMPString
-two bytes per character in big endian format, and for a
+two bytes per character in big endian format, and a
 .Vt UTF8String
 UTF-8 characters.
 .Pp
@@ -287,16 +287,8 @@ or a negative number if an error occurred.
 .Fn ASN1_STRING_type
 returns an integer constant, for example
 .Dv V_ASN1_OCTET_STRING .
-.Pp
-In some cases of failure of
-.Fn ASN1_STRING_dup ,
-.Fn ASN1_STRING_set ,
-and
-.Fn ASN1_STRING_to_UTF8 ,
-the reason can be determined with
-.Xr ERR_get_error 3 .
 .Sh SEE ALSO
-.Xr ASN1_STRING_new 3
+.Xr ERR_get_error 3
 .Sh HISTORY
 .Fn ASN1_STRING_cmp ,
 .Fn ASN1_STRING_dup ,

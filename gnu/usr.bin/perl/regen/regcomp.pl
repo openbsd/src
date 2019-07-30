@@ -20,7 +20,7 @@
 
 BEGIN {
     # Get function prototypes
-    require './regen/regen_lib.pl';
+    require 'regen/regen_lib.pl';
 }
 use strict;
 
@@ -126,8 +126,7 @@ sub parse_opcode_def {
     # the content of the "desc" field from the first step is extracted here:
     @{$node}{qw(type code args flags longj)}= split /[,\s]\s*/, $node->{desc};
 
-    defined $node->{$_} or $node->{$_} = ""
-        for qw(type code args flags longj);
+    $node->{$_} //= "" for qw(type code args flags longj);
 
     register_node($node); # has to be before the type_alias code below
 
@@ -613,7 +612,7 @@ format GuTS =
  ^*~~
  \$node->{pod_comment}
  ^$name_fmt ^<<<<<<<<< ^$descr_fmt~~
- \$node->{name}, \$code, defined \$node->{comment} ? \$node->{comment} : ''
+ \$node->{name}, \$code, \$node->{comment}//''
 .
 1;
 EOD
@@ -621,7 +620,7 @@ EOD
     my $old_fh= select($guts);
     $~= "GuTS";
 
-    open my $oldguts, '<', 'pod/perldebguts.pod'
+    open my $oldguts, "pod/perldebguts.pod"
         or die "$0 cannot open pod/perldebguts.pod for reading: $!";
     while (<$oldguts>) {
         print;
@@ -649,8 +648,7 @@ END_OF_DESCR
     while (<$oldguts>) {
         last if /=for regcomp.pl end/;
     }
-    do { print } while <$oldguts>; #win32 can't unlink an open FH
-    close $oldguts or die "Error closing pod/perldebguts.pod: $!";
+    do { print } while <$oldguts>;
     select $old_fh;
     close_and_rename($guts);
 }

@@ -19,11 +19,9 @@ namespace llvm {
 namespace codeview {
 
 class TypeIndex;
-struct GloballyHashedType;
-class GlobalTypeTableBuilder;
-class MergingTypeTableBuilder;
+class TypeTableBuilder;
 
-/// Merge one set of type records into another.  This method assumes
+/// \brief Merge one set of type records into another.  This method assumes
 /// that all records are type records, and there are no Id records present.
 ///
 /// \param Dest The table to store the re-written type records into.
@@ -36,11 +34,11 @@ class MergingTypeTableBuilder;
 ///
 /// \returns Error::success() if the operation succeeded, otherwise an
 /// appropriate error code.
-Error mergeTypeRecords(MergingTypeTableBuilder &Dest,
+Error mergeTypeRecords(TypeTableBuilder &Dest,
                        SmallVectorImpl<TypeIndex> &SourceToDest,
                        const CVTypeArray &Types);
 
-/// Merge one set of id records into another.  This method assumes
+/// \brief Merge one set of id records into another.  This method assumes
 /// that all records are id records, and there are no Type records present.
 /// However, since Id records can refer back to Type records, this method
 /// assumes that the referenced type records have also been merged into
@@ -61,11 +59,11 @@ Error mergeTypeRecords(MergingTypeTableBuilder &Dest,
 ///
 /// \returns Error::success() if the operation succeeded, otherwise an
 /// appropriate error code.
-Error mergeIdRecords(MergingTypeTableBuilder &Dest, ArrayRef<TypeIndex> Types,
+Error mergeIdRecords(TypeTableBuilder &Dest, ArrayRef<TypeIndex> Types,
                      SmallVectorImpl<TypeIndex> &SourceToDest,
                      const CVTypeArray &Ids);
 
-/// Merge a unified set of type and id records, splitting them into
+/// \brief Merge a unified set of type and id records, splitting them into
 /// separate output streams.
 ///
 /// \param DestIds The table to store the re-written id records into.
@@ -80,26 +78,10 @@ Error mergeIdRecords(MergingTypeTableBuilder &Dest, ArrayRef<TypeIndex> Types,
 ///
 /// \returns Error::success() if the operation succeeded, otherwise an
 /// appropriate error code.
-Error mergeTypeAndIdRecords(MergingTypeTableBuilder &DestIds,
-                            MergingTypeTableBuilder &DestTypes,
+Error mergeTypeAndIdRecords(TypeTableBuilder &DestIds,
+                            TypeTableBuilder &DestTypes,
                             SmallVectorImpl<TypeIndex> &SourceToDest,
                             const CVTypeArray &IdsAndTypes);
-
-Error mergeTypeAndIdRecords(GlobalTypeTableBuilder &DestIds,
-                            GlobalTypeTableBuilder &DestTypes,
-                            SmallVectorImpl<TypeIndex> &SourceToDest,
-                            const CVTypeArray &IdsAndTypes,
-                            ArrayRef<GloballyHashedType> Hashes);
-
-Error mergeTypeRecords(GlobalTypeTableBuilder &Dest,
-                       SmallVectorImpl<TypeIndex> &SourceToDest,
-                       const CVTypeArray &Types,
-                       ArrayRef<GloballyHashedType> Hashes);
-
-Error mergeIdRecords(GlobalTypeTableBuilder &Dest, ArrayRef<TypeIndex> Types,
-                     SmallVectorImpl<TypeIndex> &SourceToDest,
-                     const CVTypeArray &Ids,
-                     ArrayRef<GloballyHashedType> Hashes);
 
 } // end namespace codeview
 } // end namespace llvm

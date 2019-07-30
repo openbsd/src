@@ -50,6 +50,7 @@ add_lldb_library(lldbSymbol
     lldbPluginExpressionParserGo
     lldbPluginSymbolFileDWARF
     lldbPluginSymbolFilePDB
+    lldbPluginObjectContainerBSDArchive
     lldbPluginCPlusPlusLanguage
     lldbPluginObjCLanguage
 

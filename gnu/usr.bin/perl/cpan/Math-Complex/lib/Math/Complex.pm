@@ -10,32 +10,13 @@ package Math::Complex;
 { use 5.006; }
 use strict;
 
-our $VERSION = 1.59_01;
+our $VERSION = 1.59;
 
 use Config;
 
-our ($Inf, $ExpInf);
-our ($vax_float, $has_inf, $has_nan);
-
+our($Inf, $ExpInf);
 BEGIN {
-    $vax_float = (pack("d",1) =~ /^[\x80\x10]\x40/);
-    $has_inf   = !$vax_float;
-    $has_nan   = !$vax_float;
-
-    unless ($has_inf) {
-      # For example in vax, there is no Inf,
-      # and just mentioning the DBL_MAX (1.70141183460469229e+38)
-      # causes SIGFPE.
-
-      # These are pretty useless without a real infinity,
-      # but setting them makes for less warnings about their
-      # undefined values.
-      $Inf = "Inf";
-      $ExpInf = "Inf";
-      return;
-    }
-
-    my %DBL_MAX =  # These are IEEE 754 maxima.
+    my %DBL_MAX =
 	(
 	  4  => '1.70141183460469229e+38',
 	  8  => '1.7976931348623157e+308',
@@ -45,7 +26,6 @@ BEGIN {
 	 12 => '1.1897314953572317650857593266280070162E+4932',
 	 16 => '1.1897314953572317650857593266280070162E+4932',
 	);
-
     my $nvsize = $Config{nvsize} ||
 	        ($Config{uselongdouble} && $Config{longdblsize}) ||
                  $Config{doublesize};
@@ -60,7 +40,7 @@ BEGIN {
     if ($^O eq 'unicosmk') {
 	$Inf = $DBL_MAX;
     } else {
-	local $SIG{FPE} = sub { };
+	local $SIG{FPE} = { };
         local $!;
 	# We do want an arithmetic overflow, Inf INF inf Infinity.
 	for my $t (
@@ -79,12 +59,12 @@ BEGIN {
 		$Inf = $i;
 		last;
 	    }
-          }
+	}
 	$Inf = $DBL_MAX unless defined $Inf;  # Oh well, close enough.
 	die "Math::Complex: Could not get Infinity"
 	    unless $Inf > $BIGGER_THAN_THIS;
-	$ExpInf = eval 'exp(99999)';
-      }
+	$ExpInf = exp(99999);
+    }
     # print "# On this machine, Inf = '$Inf'\n";
 }
 
@@ -210,9 +190,9 @@ sub _make {
 
     if (defined $p) {
 	$p =~ s/^\+//;
-	$p =~ s/^(-?)inf$/"${1}9**9**9"/e if $has_inf;
+	$p =~ s/^(-?)inf$/"${1}9**9**9"/e;
 	$q =~ s/^\+//;
-	$q =~ s/^(-?)inf$/"${1}9**9**9"/e if $has_inf;
+	$q =~ s/^(-?)inf$/"${1}9**9**9"/e;
     }
 
     return ($p, $q);
@@ -235,8 +215,8 @@ sub _emake {
     if (defined $p) {
 	$p =~ s/^\+//;
 	$q =~ s/^\+//;
-	$p =~ s/^(-?)inf$/"${1}9**9**9"/e if $has_inf;
-	$q =~ s/^(-?)inf$/"${1}9**9**9"/e if $has_inf;
+	$p =~ s/^(-?)inf$/"${1}9**9**9"/e;
+	$q =~ s/^(-?)inf$/"${1}9**9**9"/e;
     }
 
     return ($p, $q);

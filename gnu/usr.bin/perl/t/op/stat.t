@@ -2,12 +2,10 @@
 
 BEGIN {
     chdir 't' if -d 't';
+    @INC = '../lib';
     require './test.pl';	# for which_perl() etc
-    set_up_inc('../lib');
 }
 
-use strict;
-use warnings;
 use Config;
 
 my ($Null, $Curdir);
@@ -27,29 +25,28 @@ if ($^O eq 'MSWin32') {
     ${^WIN32_SLOPPY_STAT} = 0;
 }
 
-plan tests => 110;
+plan tests => 118;
 
 my $Perl = which_perl();
 
 $ENV{LC_ALL}   = 'C';		# Forge English error messages.
 $ENV{LANGUAGE} = 'C';		# Ditto in GNU.
 
-my $Is_Amiga   = $^O eq 'amigaos';
-my $Is_Cygwin  = $^O eq 'cygwin';
-my $Is_Darwin  = $^O eq 'darwin';
-my $Is_Dos     = $^O eq 'dos';
-my $Is_MSWin32 = $^O eq 'MSWin32';
-my $Is_NetWare = $^O eq 'NetWare';
-my $Is_OS2     = $^O eq 'os2';
-my $Is_Solaris = $^O eq 'solaris';
-my $Is_VMS     = $^O eq 'VMS';
-my $Is_MPRAS   = $^O =~ /svr4/ && -f '/etc/.relid';
-my $Is_Android = $^O =~ /android/;
-my $Is_Dfly    = $^O eq 'dragonfly';
+$Is_Amiga   = $^O eq 'amigaos';
+$Is_Cygwin  = $^O eq 'cygwin';
+$Is_Darwin  = $^O eq 'darwin';
+$Is_Dos     = $^O eq 'dos';
+$Is_MSWin32 = $^O eq 'MSWin32';
+$Is_NetWare = $^O eq 'NetWare';
+$Is_OS2     = $^O eq 'os2';
+$Is_Solaris = $^O eq 'solaris';
+$Is_VMS     = $^O eq 'VMS';
+$Is_MPRAS   = $^O =~ /svr4/ && -f '/etc/.relid';
+$Is_Android = $^O =~ /android/;
 
-my $Is_Dosish  = $Is_Dos || $Is_OS2 || $Is_MSWin32 || $Is_NetWare;
+$Is_Dosish  = $Is_Dos || $Is_OS2 || $Is_MSWin32 || $Is_NetWare;
 
-my $ufs_no_ctime = ($Is_Dfly || $Is_Darwin) && (() = `df -t ufs . 2>/dev/null`) == 2;
+$Is_UFS     = $Is_Darwin && (() = `df -t ufs . 2>/dev/null`) == 2;
 
 if ($Is_Cygwin && !is_miniperl) {
   require Win32;
@@ -144,7 +141,8 @@ SKIP: {
         # no ctime concept $ctime is ALWAYS == $mtime
         # expect netware to be the same ...
         skip "No ctime concept on this OS", 2
-                                     if $Is_MSWin32 || $ufs_no_ctime;
+                                     if $Is_MSWin32 || 
+                                        ($Is_Darwin && $Is_UFS);
 
         if( !ok($mtime, 'hard link mtime') ||
             !isnt($mtime, $ctime, 'hard link ctime != mtime') ) {
@@ -153,8 +151,8 @@ SKIP: {
 # has this problem.  Building on the ClearCase VOBS filesystem may also
 # cause this failure.
 #
-# Some UFS implementations don't have a ctime concept, and thus are
-# expected to fail this test.
+# Darwin's UFS doesn't have a ctime concept, and thus is expected to fail
+# this test.
 DIAG
         }
     }
@@ -373,7 +371,7 @@ SKIP: {
     ok(! -t TTY,    '!-t on closed TTY filehandle');
 
     {
-        local our $TODO = 'STDIN not a tty when output is to pipe' if $Is_VMS;
+        local $TODO = 'STDIN not a tty when output is to pipe' if $Is_VMS;
         ok(-t,          '-t on STDIN');
     }
 }
@@ -445,7 +443,7 @@ ok(-f(),    '     -f() "');
 
 unlink $tmpfile or print "# unlink failed: $!\n";
 
-# bug id 20011101.069 (#7861)
+# bug id 20011101.069
 my @r = \stat($Curdir);
 is(scalar @r, 13,   'stat returns full 13 elements');
 
@@ -482,7 +480,6 @@ like $@, qr/^The stat preceding lstat\(\) wasn't an lstat at /,
     open(FOO, ">$tmpfile") || DIE("Can't open temp test file: $!");
     my @statbuf = stat FOO;
     stat "test.pl";
-    no warnings 'io';
     my @lstatbuf = lstat *FOO{IO};
     is "@lstatbuf", "@statbuf", 'lstat $ioref reverts to regular fstat';
     close(FOO);
@@ -492,7 +489,7 @@ like $@, qr/^The stat preceding lstat\(\) wasn't an lstat at /,
 SKIP: {
     skip "No lstat", 2 unless $Config{d_lstat};
 
-    # bug id 20020124.004 (#8334)
+    # bug id 20020124.004
     # If we have d_lstat, we should have symlink()
     my $linkname = 'stat-' . rand =~ y/.//dr;
     my $target = $Perl;
@@ -559,12 +556,25 @@ SKIP: {
 }
 
 SKIP: {
-    skip "No dirfd()", 4 unless $Config{d_dirfd} || $Config{d_dir_dd_fd};
+    skip "No dirfd()", 9 unless $Config{d_dirfd} || $Config{d_dir_dd_fd};
     ok(opendir(DIR, "."), 'Can open "." dir') || diag "Can't open '.':  $!";
     ok(stat(DIR), "stat() on dirhandle works"); 
     ok(-d -r _ , "chained -x's on dirhandle"); 
     ok(-d DIR, "-d on a dirhandle works");
+
+    # And now for the ambiguous bareword case
+    {
+	no warnings 'deprecated';
+	ok(open(DIR, "TEST"), 'Can open "TEST" dir')
+	    || diag "Can't open 'TEST':  $!";
+    }
+    my $size = (stat(DIR))[7];
+    ok(defined $size, "stat() on bareword works");
+    is($size, -s "TEST", "size returned by stat of bareword is for the file");
+    ok(-f _, "ambiguous bareword uses file handle, not dir handle");
+    ok(-f DIR);
     closedir DIR or die $!;
+    close DIR or die $!;
 }
 
 {
@@ -579,17 +589,32 @@ SKIP: {
     #PVIO's hold dirhandle information, so let's test them too.
 
     SKIP: {
-        skip "No dirfd()", 4 unless $Config{d_dirfd} || $Config{d_dir_dd_fd};
+        skip "No dirfd()", 9 unless $Config{d_dirfd} || $Config{d_dir_dd_fd};
         ok(opendir(DIR, "."), 'Can open "." dir') || diag "Can't open '.':  $!";
         ok(stat(*DIR{IO}), "stat() on *DIR{IO} works");
 	ok(-d _ , "The special file handle _ is set correctly"); 
         ok(-d -r *DIR{IO} , "chained -x's on *DIR{IO}");
+
+	# And now for the ambiguous bareword case
+	{
+	    no warnings 'deprecated';
+	    ok(open(DIR, "TEST"), 'Can open "TEST" dir')
+		|| diag "Can't open 'TEST':  $!";
+	}
+	my $size = (stat(*DIR{IO}))[7];
+	ok(defined $size, "stat() on *THINGY{IO} works");
+	is($size, -s "TEST",
+	   "size returned by stat of *THINGY{IO} is for the file");
+	ok(-f _, "ambiguous *THINGY{IO} uses file handle, not dir handle");
+	ok(-f *DIR{IO});
 	closedir DIR or die $!;
+	close DIR or die $!;
     }
 }
 
 # [perl #71002]
 {
+    local $^W = 1;
     my $w;
     local $SIG{__WARN__} = sub { warn shift; ++$w };
     stat 'prepeinamehyparcheiarcheiometoonomaavto';
@@ -612,35 +637,18 @@ is join("-", 1,2,3,(stat stat stat),4,5,6), "1-2-3-4-5-6",
   'stat inside stat gets scalar context';
 
 # [perl #126162] stat an array should not work
-# skip if -e '2'.
+my $Errno_loaded = eval { require Errno };
+my $statfile = './op/stat.t';
+my @statarg = ($statfile, $statfile);
+ok !stat(@statarg),
+  'stat on an array of valid paths should warn and should not return any data';
+my $error = 0+$!;
 SKIP:
 {
-    skip "There is a file named '2', which invalidates this test", 2 if -e '2';
-
-    my $Errno_loaded = eval { require Errno };
-    my @statarg = ($statfile, $statfile);
-    no warnings 'syntax';
-    ok !stat(@statarg),
-    'stat on an array of valid paths should warn and should not return any data';
-    my $error = 0+$!;
     skip "Errno not available", 1
       unless $Errno_loaded;
     is $error, &Errno::ENOENT,
       'stat on an array of valid paths should return ENOENT';
-}
-
-# [perl #131895] stat() doesn't fail on filenames containing \0 / NUL
-{
-    no warnings 'syscalls';
-    ok !stat("TEST\0-"), 'stat on filename with \0';
-}
-SKIP: {
-    my $link = "stat_t_$$\_TEST.symlink";
-    my $can_symlink = eval { symlink "TEST", $link };
-    skip "cannot symlink", 1 unless $can_symlink;
-    no warnings 'syscalls';
-    ok !lstat("$link\0-"), 'lstat on filename with \0';
-    unlink $link;
 }
 
 END {

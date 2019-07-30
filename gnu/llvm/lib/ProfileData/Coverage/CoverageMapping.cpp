@@ -33,7 +33,6 @@
 #include <cassert>
 #include <cstdint>
 #include <iterator>
-#include <map>
 #include <memory>
 #include <string>
 #include <system_error>
@@ -83,7 +82,7 @@ Counter CounterExpressionBuilder::simplify(Counter ExpressionTree) {
     return Counter::getZero();
 
   // Group the terms by counter ID.
-  llvm::sort(Terms.begin(), Terms.end(), [](const Term &LHS, const Term &RHS) {
+  std::sort(Terms.begin(), Terms.end(), [](const Term &LHS, const Term &RHS) {
     return LHS.CounterID < RHS.CounterID;
   });
 
@@ -207,10 +206,8 @@ Error CoverageMapping::loadFunctionRecord(
   else
     OrigFuncName = getFuncNameWithoutPrefix(OrigFuncName, Record.Filenames[0]);
 
-  // Don't load records for (filenames, function) pairs we've already seen.
-  auto FilenamesHash = hash_combine_range(Record.Filenames.begin(),
-                                          Record.Filenames.end());
-  if (!RecordProvenance[FilenamesHash].insert(hash_value(OrigFuncName)).second)
+  // Don't load records for functions we've already seen.
+  if (!FunctionNames.insert(OrigFuncName).second)
     return Error::success();
 
   CounterMappingContext Ctx(Record.Expressions);
@@ -220,7 +217,7 @@ Error CoverageMapping::loadFunctionRecord(
                                                 Record.FunctionHash, Counts)) {
     instrprof_error IPE = InstrProfError::take(std::move(E));
     if (IPE == instrprof_error::hash_mismatch) {
-      FuncHashMismatches.emplace_back(Record.FunctionName, Record.FunctionHash);
+      MismatchedFunctionCount++;
       return Error::success();
     } else if (IPE != instrprof_error::unknown_function)
       return make_error<InstrProfError>(IPE);
@@ -240,8 +237,7 @@ Error CoverageMapping::loadFunctionRecord(
     Function.pushRegion(Region, *ExecutionCount);
   }
   if (Function.CountedRegions.size() != Record.MappingRegions.size()) {
-    FuncCounterMismatches.emplace_back(Record.FunctionName,
-                                       Function.CountedRegions.size());
+    MismatchedFunctionCount++;
     return Error::success();
   }
 
@@ -254,22 +250,17 @@ Expected<std::unique_ptr<CoverageMapping>> CoverageMapping::load(
     IndexedInstrProfReader &ProfileReader) {
   auto Coverage = std::unique_ptr<CoverageMapping>(new CoverageMapping());
 
-  for (const auto &CoverageReader : CoverageReaders) {
-    for (auto RecordOrErr : *CoverageReader) {
-      if (Error E = RecordOrErr.takeError())
-        return std::move(E);
-      const auto &Record = *RecordOrErr;
+  for (const auto &CoverageReader : CoverageReaders)
+    for (const auto &Record : *CoverageReader)
       if (Error E = Coverage->loadFunctionRecord(Record, ProfileReader))
         return std::move(E);
-    }
-  }
 
   return std::move(Coverage);
 }
 
 Expected<std::unique_ptr<CoverageMapping>>
 CoverageMapping::load(ArrayRef<StringRef> ObjectFilenames,
-                      StringRef ProfileFilename, ArrayRef<StringRef> Arches) {
+                      StringRef ProfileFilename, StringRef Arch) {
   auto ProfileReaderOrErr = IndexedInstrProfReader::create(ProfileFilename);
   if (Error E = ProfileReaderOrErr.takeError())
     return std::move(E);
@@ -277,11 +268,10 @@ CoverageMapping::load(ArrayRef<StringRef> ObjectFilenames,
 
   SmallVector<std::unique_ptr<CoverageMappingReader>, 4> Readers;
   SmallVector<std::unique_ptr<MemoryBuffer>, 4> Buffers;
-  for (const auto &File : llvm::enumerate(ObjectFilenames)) {
-    auto CovMappingBufOrErr = MemoryBuffer::getFileOrSTDIN(File.value());
+  for (StringRef ObjectFilename : ObjectFilenames) {
+    auto CovMappingBufOrErr = MemoryBuffer::getFileOrSTDIN(ObjectFilename);
     if (std::error_code EC = CovMappingBufOrErr.getError())
       return errorCodeToError(EC);
-    StringRef Arch = Arches.empty() ? StringRef() : Arches[File.index()];
     auto CoverageReaderOrErr =
         BinaryCoverageReader::create(CovMappingBufOrErr.get(), Arch);
     if (Error E = CoverageReaderOrErr.takeError())
@@ -294,12 +284,13 @@ CoverageMapping::load(ArrayRef<StringRef> ObjectFilenames,
 
 namespace {
 
-/// Distributes functions into instantiation sets.
+/// \brief Distributes functions into instantiation sets.
 ///
 /// An instantiation set is a collection of functions that have the same source
 /// code, ie, template functions specializations.
 class FunctionInstantiationSetCollector {
-  using MapT = std::map<LineColPair, std::vector<const FunctionRecord *>>;
+  using MapT = DenseMap<std::pair<unsigned, unsigned>,
+                        std::vector<const FunctionRecord *>>;
   MapT InstantiatedFunctions;
 
 public:
@@ -322,145 +313,65 @@ class SegmentBuilder {
 
   SegmentBuilder(std::vector<CoverageSegment> &Segments) : Segments(Segments) {}
 
-  /// Emit a segment with the count from \p Region starting at \p StartLoc.
-  //
-  /// \p IsRegionEntry: The segment is at the start of a new non-gap region.
-  /// \p EmitSkippedRegion: The segment must be emitted as a skipped region.
-  void startSegment(const CountedRegion &Region, LineColPair StartLoc,
-                    bool IsRegionEntry, bool EmitSkippedRegion = false) {
-    bool HasCount = !EmitSkippedRegion &&
-                    (Region.Kind != CounterMappingRegion::SkippedRegion);
-
-    // If the new segment wouldn't affect coverage rendering, skip it.
-    if (!Segments.empty() && !IsRegionEntry && !EmitSkippedRegion) {
-      const auto &Last = Segments.back();
-      if (Last.HasCount == HasCount && Last.Count == Region.ExecutionCount &&
-          !Last.IsRegionEntry)
-        return;
-    }
-
-    if (HasCount)
-      Segments.emplace_back(StartLoc.first, StartLoc.second,
-                            Region.ExecutionCount, IsRegionEntry,
-                            Region.Kind == CounterMappingRegion::GapRegion);
-    else
-      Segments.emplace_back(StartLoc.first, StartLoc.second, IsRegionEntry);
-
-    LLVM_DEBUG({
-      const auto &Last = Segments.back();
-      dbgs() << "Segment at " << Last.Line << ":" << Last.Col
-             << " (count = " << Last.Count << ")"
-             << (Last.IsRegionEntry ? ", RegionEntry" : "")
-             << (!Last.HasCount ? ", Skipped" : "")
-             << (Last.IsGapRegion ? ", Gap" : "") << "\n";
-    });
+  /// Start a segment with no count specified.
+  void startSegment(unsigned Line, unsigned Col) {
+    DEBUG(dbgs() << "Top level segment at " << Line << ":" << Col << "\n");
+    Segments.emplace_back(Line, Col, /*IsRegionEntry=*/false);
   }
 
-  /// Emit segments for active regions which end before \p Loc.
-  ///
-  /// \p Loc: The start location of the next region. If None, all active
-  /// regions are completed.
-  /// \p FirstCompletedRegion: Index of the first completed region.
-  void completeRegionsUntil(Optional<LineColPair> Loc,
-                            unsigned FirstCompletedRegion) {
-    // Sort the completed regions by end location. This makes it simple to
-    // emit closing segments in sorted order.
-    auto CompletedRegionsIt = ActiveRegions.begin() + FirstCompletedRegion;
-    std::stable_sort(CompletedRegionsIt, ActiveRegions.end(),
-                      [](const CountedRegion *L, const CountedRegion *R) {
-                        return L->endLoc() < R->endLoc();
-                      });
+  /// Start a segment with the given Region's count.
+  void startSegment(unsigned Line, unsigned Col, bool IsRegionEntry,
+                    const CountedRegion &Region) {
+    // Avoid creating empty regions.
+    if (!Segments.empty() && Segments.back().Line == Line &&
+        Segments.back().Col == Col)
+      Segments.pop_back();
+    DEBUG(dbgs() << "Segment at " << Line << ":" << Col);
+    // Set this region's count.
+    if (Region.Kind != CounterMappingRegion::SkippedRegion) {
+      DEBUG(dbgs() << " with count " << Region.ExecutionCount);
+      Segments.emplace_back(Line, Col, Region.ExecutionCount, IsRegionEntry);
+    } else
+      Segments.emplace_back(Line, Col, IsRegionEntry);
+    DEBUG(dbgs() << "\n");
+  }
 
-    // Emit segments for all completed regions.
-    for (unsigned I = FirstCompletedRegion + 1, E = ActiveRegions.size(); I < E;
-         ++I) {
-      const auto *CompletedRegion = ActiveRegions[I];
-      assert((!Loc || CompletedRegion->endLoc() <= *Loc) &&
-             "Completed region ends after start of new region");
+  /// Start a segment for the given region.
+  void startSegment(const CountedRegion &Region) {
+    startSegment(Region.LineStart, Region.ColumnStart, true, Region);
+  }
 
-      const auto *PrevCompletedRegion = ActiveRegions[I - 1];
-      auto CompletedSegmentLoc = PrevCompletedRegion->endLoc();
-
-      // Don't emit any more segments if they start where the new region begins.
-      if (Loc && CompletedSegmentLoc == *Loc)
-        break;
-
-      // Don't emit a segment if the next completed region ends at the same
-      // location as this one.
-      if (CompletedSegmentLoc == CompletedRegion->endLoc())
-        continue;
-
-      // Use the count from the last completed region which ends at this loc.
-      for (unsigned J = I + 1; J < E; ++J)
-        if (CompletedRegion->endLoc() == ActiveRegions[J]->endLoc())
-          CompletedRegion = ActiveRegions[J];
-
-      startSegment(*CompletedRegion, CompletedSegmentLoc, false);
-    }
-
-    auto Last = ActiveRegions.back();
-    if (FirstCompletedRegion && Last->endLoc() != *Loc) {
-      // If there's a gap after the end of the last completed region and the
-      // start of the new region, use the last active region to fill the gap.
-      startSegment(*ActiveRegions[FirstCompletedRegion - 1], Last->endLoc(),
-                   false);
-    } else if (!FirstCompletedRegion && (!Loc || *Loc != Last->endLoc())) {
-      // Emit a skipped segment if there are no more active regions. This
-      // ensures that gaps between functions are marked correctly.
-      startSegment(*Last, Last->endLoc(), false, true);
-    }
-
-    // Pop the completed regions.
-    ActiveRegions.erase(CompletedRegionsIt, ActiveRegions.end());
+  /// Pop the top region off of the active stack, starting a new segment with
+  /// the containing Region's count.
+  void popRegion() {
+    const CountedRegion *Active = ActiveRegions.back();
+    unsigned Line = Active->LineEnd, Col = Active->ColumnEnd;
+    ActiveRegions.pop_back();
+    if (ActiveRegions.empty())
+      startSegment(Line, Col);
+    else
+      startSegment(Line, Col, false, *ActiveRegions.back());
   }
 
   void buildSegmentsImpl(ArrayRef<CountedRegion> Regions) {
-    for (const auto &CR : enumerate(Regions)) {
-      auto CurStartLoc = CR.value().startLoc();
-
-      // Active regions which end before the current region need to be popped.
-      auto CompletedRegions =
-          std::stable_partition(ActiveRegions.begin(), ActiveRegions.end(),
-                                [&](const CountedRegion *Region) {
-                                  return !(Region->endLoc() <= CurStartLoc);
-                                });
-      if (CompletedRegions != ActiveRegions.end()) {
-        unsigned FirstCompletedRegion =
-            std::distance(ActiveRegions.begin(), CompletedRegions);
-        completeRegionsUntil(CurStartLoc, FirstCompletedRegion);
-      }
-
-      bool GapRegion = CR.value().Kind == CounterMappingRegion::GapRegion;
-
-      // Try to emit a segment for the current region.
-      if (CurStartLoc == CR.value().endLoc()) {
-        // Avoid making zero-length regions active. If it's the last region,
-        // emit a skipped segment. Otherwise use its predecessor's count.
-        const bool Skipped = (CR.index() + 1) == Regions.size();
-        startSegment(ActiveRegions.empty() ? CR.value() : *ActiveRegions.back(),
-                     CurStartLoc, !GapRegion, Skipped);
-        continue;
-      }
-      if (CR.index() + 1 == Regions.size() ||
-          CurStartLoc != Regions[CR.index() + 1].startLoc()) {
-        // Emit a segment if the next region doesn't start at the same location
-        // as this one.
-        startSegment(CR.value(), CurStartLoc, !GapRegion);
-      }
-
-      // This region is active (i.e not completed).
-      ActiveRegions.push_back(&CR.value());
+    for (const auto &Region : Regions) {
+      // Pop any regions that end before this one starts.
+      while (!ActiveRegions.empty() &&
+             ActiveRegions.back()->endLoc() <= Region.startLoc())
+        popRegion();
+      // Add this region to the stack.
+      ActiveRegions.push_back(&Region);
+      startSegment(Region);
     }
-
-    // Complete any remaining active regions.
-    if (!ActiveRegions.empty())
-      completeRegionsUntil(None, 0);
+    // Pop any regions that are left in the stack.
+    while (!ActiveRegions.empty())
+      popRegion();
   }
 
   /// Sort a nested sequence of regions from a single file.
   static void sortNestedRegions(MutableArrayRef<CountedRegion> Regions) {
-    llvm::sort(Regions.begin(), Regions.end(), [](const CountedRegion &LHS,
-                                                  const CountedRegion &RHS) {
+    std::sort(Regions.begin(), Regions.end(), [](const CountedRegion &LHS,
+                                                 const CountedRegion &RHS) {
       if (LHS.startLoc() != RHS.startLoc())
         return LHS.startLoc() < RHS.startLoc();
       if (LHS.endLoc() != RHS.endLoc())
@@ -515,7 +426,7 @@ class SegmentBuilder {
   }
 
 public:
-  /// Build a sorted list of CoverageSegments from a list of Regions.
+  /// Build a list of CoverageSegments from a list of Regions.
   static std::vector<CoverageSegment>
   buildSegments(MutableArrayRef<CountedRegion> Regions) {
     std::vector<CoverageSegment> Segments;
@@ -524,28 +435,7 @@ public:
     sortNestedRegions(Regions);
     ArrayRef<CountedRegion> CombinedRegions = combineRegions(Regions);
 
-    LLVM_DEBUG({
-      dbgs() << "Combined regions:\n";
-      for (const auto &CR : CombinedRegions)
-        dbgs() << "  " << CR.LineStart << ":" << CR.ColumnStart << " -> "
-               << CR.LineEnd << ":" << CR.ColumnEnd
-               << " (count=" << CR.ExecutionCount << ")\n";
-    });
-
     Builder.buildSegmentsImpl(CombinedRegions);
-
-#ifndef NDEBUG
-    for (unsigned I = 1, E = Segments.size(); I < E; ++I) {
-      const auto &L = Segments[I - 1];
-      const auto &R = Segments[I];
-      if (!(L.Line < R.Line) && !(L.Line == R.Line && L.Col < R.Col)) {
-        LLVM_DEBUG(dbgs() << " ! Segment " << L.Line << ":" << L.Col
-                          << " followed by " << R.Line << ":" << R.Col << "\n");
-        assert(false && "Coverage segments not unique or sorted");
-      }
-    }
-#endif
-
     return Segments;
   }
 };
@@ -557,7 +447,7 @@ std::vector<StringRef> CoverageMapping::getUniqueSourceFiles() const {
   for (const auto &Function : getCoveredFunctions())
     Filenames.insert(Filenames.end(), Function.Filenames.begin(),
                      Function.Filenames.end());
-  llvm::sort(Filenames.begin(), Filenames.end());
+  std::sort(Filenames.begin(), Filenames.end());
   auto Last = std::unique(Filenames.begin(), Filenames.end());
   Filenames.erase(Last, Filenames.end());
   return Filenames;
@@ -613,14 +503,14 @@ CoverageData CoverageMapping::getCoverageForFile(StringRef Filename) const {
       }
   }
 
-  LLVM_DEBUG(dbgs() << "Emitting segments for file: " << Filename << "\n");
+  DEBUG(dbgs() << "Emitting segments for file: " << Filename << "\n");
   FileCoverage.Segments = SegmentBuilder::buildSegments(Regions);
 
   return FileCoverage;
 }
 
-std::vector<InstantiationGroup>
-CoverageMapping::getInstantiationGroups(StringRef Filename) const {
+std::vector<const FunctionRecord *>
+CoverageMapping::getInstantiations(StringRef Filename) const {
   FunctionInstantiationSetCollector InstantiationSetCollector;
   for (const auto &Function : Functions) {
     auto MainFileID = findMainViewFileID(Filename, Function);
@@ -629,12 +519,12 @@ CoverageMapping::getInstantiationGroups(StringRef Filename) const {
     InstantiationSetCollector.insert(Function, *MainFileID);
   }
 
-  std::vector<InstantiationGroup> Result;
-  for (auto &InstantiationSet : InstantiationSetCollector) {
-    InstantiationGroup IG{InstantiationSet.first.first,
-                          InstantiationSet.first.second,
-                          std::move(InstantiationSet.second)};
-    Result.emplace_back(std::move(IG));
+  std::vector<const FunctionRecord *> Result;
+  for (const auto &InstantiationSet : InstantiationSetCollector) {
+    if (InstantiationSet.second.size() < 2)
+      continue;
+    Result.insert(Result.end(), InstantiationSet.second.begin(),
+                  InstantiationSet.second.end());
   }
   return Result;
 }
@@ -654,8 +544,7 @@ CoverageMapping::getCoverageForFunction(const FunctionRecord &Function) const {
         FunctionCoverage.Expansions.emplace_back(CR, Function);
     }
 
-  LLVM_DEBUG(dbgs() << "Emitting segments for function: " << Function.Name
-                    << "\n");
+  DEBUG(dbgs() << "Emitting segments for function: " << Function.Name << "\n");
   FunctionCoverage.Segments = SegmentBuilder::buildSegments(Regions);
 
   return FunctionCoverage;
@@ -673,64 +562,11 @@ CoverageData CoverageMapping::getCoverageForExpansion(
         ExpansionCoverage.Expansions.emplace_back(CR, Expansion.Function);
     }
 
-  LLVM_DEBUG(dbgs() << "Emitting segments for expansion of file "
-                    << Expansion.FileID << "\n");
+  DEBUG(dbgs() << "Emitting segments for expansion of file " << Expansion.FileID
+               << "\n");
   ExpansionCoverage.Segments = SegmentBuilder::buildSegments(Regions);
 
   return ExpansionCoverage;
-}
-
-LineCoverageStats::LineCoverageStats(
-    ArrayRef<const CoverageSegment *> LineSegments,
-    const CoverageSegment *WrappedSegment, unsigned Line)
-    : ExecutionCount(0), HasMultipleRegions(false), Mapped(false), Line(Line),
-      LineSegments(LineSegments), WrappedSegment(WrappedSegment) {
-  // Find the minimum number of regions which start in this line.
-  unsigned MinRegionCount = 0;
-  auto isStartOfRegion = [](const CoverageSegment *S) {
-    return !S->IsGapRegion && S->HasCount && S->IsRegionEntry;
-  };
-  for (unsigned I = 0; I < LineSegments.size() && MinRegionCount < 2; ++I)
-    if (isStartOfRegion(LineSegments[I]))
-      ++MinRegionCount;
-
-  bool StartOfSkippedRegion = !LineSegments.empty() &&
-                              !LineSegments.front()->HasCount &&
-                              LineSegments.front()->IsRegionEntry;
-
-  HasMultipleRegions = MinRegionCount > 1;
-  Mapped =
-      !StartOfSkippedRegion &&
-      ((WrappedSegment && WrappedSegment->HasCount) || (MinRegionCount > 0));
-
-  if (!Mapped)
-    return;
-
-  // Pick the max count from the non-gap, region entry segments and the
-  // wrapped count.
-  if (WrappedSegment)
-    ExecutionCount = WrappedSegment->Count;
-  if (!MinRegionCount)
-    return;
-  for (const auto *LS : LineSegments)
-    if (isStartOfRegion(LS))
-      ExecutionCount = std::max(ExecutionCount, LS->Count);
-}
-
-LineCoverageIterator &LineCoverageIterator::operator++() {
-  if (Next == CD.end()) {
-    Stats = LineCoverageStats();
-    Ended = true;
-    return *this;
-  }
-  if (Segments.size())
-    WrappedSegment = Segments.back();
-  Segments.clear();
-  while (Next != CD.end() && Next->Line == Line)
-    Segments.push_back(&*Next++);
-  Stats = LineCoverageStats(Segments, WrappedSegment, Line);
-  ++Line;
-  return *this;
 }
 
 static std::string getCoverageMapErrString(coveragemap_error Err) {

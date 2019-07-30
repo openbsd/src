@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.h,v 1.18 2019/04/01 07:00:52 tedu Exp $	*/
+/*	$OpenBSD: reboot.h,v 1.17 2014/07/11 14:36:44 uebayasi Exp $	*/
 /*	$NetBSD: reboot.h,v 1.9 1996/04/22 01:23:25 christos Exp $	*/
 
 /*
@@ -56,7 +56,6 @@
 #define	RB_POWERDOWN	0x1000	/* attempt to power down machine */
 #define	RB_SERCONS	0x2000	/* use serial console if available */
 #define	RB_USERREQ	0x4000	/* boot() called at user request (e.g. ddb) */
-#define	RB_RESET	0x8000	/* just reset, no cleanup  */
 
 /*
  * Constants for converting boot-style device number to type,

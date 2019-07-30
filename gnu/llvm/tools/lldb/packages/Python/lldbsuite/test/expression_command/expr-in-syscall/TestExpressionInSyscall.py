@@ -22,7 +22,7 @@ class ExprSyscallTestCase(TestBase):
         self.expr_syscall()
 
     def expr_syscall(self):
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), 'a.out')
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)

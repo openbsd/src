@@ -4,31 +4,34 @@
 use strict;
 use Config;
 
-use Test::More;
 BEGIN {
   unless (eval "require Socket") {
-    plan skip_all => 'no Socket';
+    print "1..0 \# Skip: no Socket\n";
+    exit;
   }
   unless ($Config{d_getpbyname}) {
-    plan skip_all => 'no getprotobyname';
+    print "1..0 \# Skip: no getprotobyname\n";
+    exit;
   }
 }
 
+use Test::More tests => 2;
 BEGIN {use_ok('Net::Ping')};
 
 SKIP: {
   skip "icmp ping requires root privileges.", 1
-    if !Net::Ping::_isroot() or $^O eq 'MSWin32';
+    if ($> and $^O ne 'VMS' and $^O ne 'cygwin')
+      or (($^O eq 'MSWin32' or $^O eq 'cygwin')
+	  and !IsAdminUser())
+	or ($^O eq 'VMS'
+	    and (`write sys\$output f\$privilege("SYSPRV")` =~ m/FALSE/));
   my $p = new Net::Ping "icmp";
-  my $result = $p->ping("127.0.0.1");
-  if ($result == 1) {
-    is($result, 1, "icmp ping 127.0.0.1");
-  } else {
-  TODO: {
-      local $TODO = "icmp firewalled?";
-      is($result, 1, "icmp ping 127.0.0.1");
-    }
-  }
+  is($p->ping("127.0.0.1"), 1, "icmp ping 127.0.0.1");
 }
 
-done_testing;
+sub IsAdminUser {
+  return unless $^O eq 'MSWin32' or $^O eq "cygwin";
+  return unless eval { require Win32 };
+  return unless defined &Win32::IsAdminUser;
+  return Win32::IsAdminUser();
+}

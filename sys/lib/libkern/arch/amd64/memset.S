@@ -7,7 +7,6 @@
 #include <machine/asm.h>
 
 ENTRY(memset)
-	RETGUARD_SETUP(memset, r10)
 	movq	%rsi,%rax
 	andq	$0xff,%rax
 	movq	%rdx,%rcx
@@ -50,5 +49,5 @@ ENTRY(memset)
 L1:	rep
 	stosb
 	movq	%r11,%rax
-	RETGUARD_CHECK(memset, r10)
+
 	ret

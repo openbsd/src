@@ -40,12 +40,14 @@ class TestUnionMembers(TestBase):
     def _load_exe(self):
         self.build()
 
-        src_file = os.path.join(self.getSourceDir(), "main.c")
+        cwd = os.getcwd()
+
+        src_file = os.path.join(cwd, "main.c")
         self.src_file_spec = lldb.SBFileSpec(src_file)
         self.assertTrue(self.src_file_spec.IsValid(), "breakpoint file")
 
         # Get the path of the executable
-        exe_path = self.getBuildArtifact("a.out")
+        exe_path = os.path.join(cwd, 'a.out')
 
         # Load the executable
         self.target = self.dbg.CreateTarget(exe_path)

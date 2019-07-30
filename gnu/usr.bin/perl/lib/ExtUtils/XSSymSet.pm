@@ -2,7 +2,8 @@ package ExtUtils::XSSymSet;
 
 use strict;
 use Config;
-our $VERSION = '1.4';
+use vars qw( $VERSION );
+$VERSION = '1.3';
 
 
 sub new { 

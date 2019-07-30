@@ -1,4 +1,4 @@
-//===- HexagonConstPropagation.cpp ----------------------------------------===//
+//===--- HexagonConstPropagation.cpp --------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -25,17 +25,14 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/TargetRegisterInfo.h"
-#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/Constants.h"
-#include "llvm/IR/Type.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include <cassert>
 #include <cstdint>
 #include <cstring>
@@ -88,7 +85,7 @@ namespace {
       : Reg(MO.getReg()), SubReg(MO.getSubReg()) {}
 
     void print(const TargetRegisterInfo *TRI = nullptr) const {
-      dbgs() << printReg(Reg, TRI, SubReg);
+      dbgs() << PrintReg(Reg, TRI, SubReg);
     }
 
     bool operator== (const Register &R) const {
@@ -170,12 +167,10 @@ namespace {
     bool convertToProperty();
   };
 
-#ifndef NDEBUG
   raw_ostream &operator<< (raw_ostream &os, const LatticeCell &L) {
     L.print(os);
     return os;
   }
-#endif
 
   class MachineConstEvaluator;
 
@@ -187,7 +182,7 @@ namespace {
 
     // Mapping: vreg -> cell
     // The keys are registers _without_ subregisters. This won't allow
-    // definitions in the form of "vreg:subreg = ...". Such definitions
+    // definitions in the form of "vreg:subreg<def> = ...". Such definitions
     // would be questionable from the point of view of SSA, since the "vreg"
     // could not be initialized in its entirety (specifically, an instruction
     // defining the "other part" of "vreg" would also count as a definition
@@ -229,8 +224,7 @@ namespace {
       void print(raw_ostream &os, const TargetRegisterInfo &TRI) const;
 
     private:
-      using MapType = std::map<unsigned, LatticeCell>;
-
+      typedef std::map<unsigned,LatticeCell> MapType;
       MapType Map;
       // To avoid creating "top" entries, return a const reference to
       // this cell in "get". Also, have a "Bottom" cell to return from
@@ -238,8 +232,7 @@ namespace {
       LatticeCell Top, Bottom;
 
     public:
-      using const_iterator = MapType::const_iterator;
-
+      typedef MapType::const_iterator const_iterator;
       const_iterator begin() const { return Map.begin(); }
       const_iterator end() const { return Map.end(); }
     };
@@ -261,10 +254,10 @@ namespace {
     MachineRegisterInfo      *MRI;
     MachineConstEvaluator    &MCE;
 
-    using CFGEdge = std::pair<unsigned, unsigned>;
-    using SetOfCFGEdge = std::set<CFGEdge>;
-    using SetOfInstr = std::set<const MachineInstr *>;
-    using QueueOfCFGEdge = std::queue<CFGEdge>;
+    typedef std::pair<unsigned,unsigned> CFGEdge;
+    typedef std::set<CFGEdge> SetOfCFGEdge;
+    typedef std::set<const MachineInstr*> SetOfInstr;
+    typedef std::queue<CFGEdge> QueueOfCFGEdge;
 
     LatticeCell     Bottom;
     CellMap         Cells;
@@ -280,7 +273,7 @@ namespace {
   public:
     MachineConstEvaluator(MachineFunction &Fn)
       : TRI(*Fn.getSubtarget().getRegisterInfo()),
-        MF(Fn), CX(Fn.getFunction().getContext()) {}
+        MF(Fn), CX(Fn.getFunction()->getContext()) {}
     virtual ~MachineConstEvaluator() = default;
 
     // The required interface:
@@ -298,7 +291,7 @@ namespace {
     // - A function "rewrite", that given the cell map after propagation,
     //   could rewrite instruction MI in a more beneficial form. Return
     //   "true" if a change has been made, "false" otherwise.
-    using CellMap = MachineConstPropagator::CellMap;
+    typedef MachineConstPropagator::CellMap CellMap;
     virtual bool evaluate(const MachineInstr &MI, const CellMap &Inputs,
                           CellMap &Outputs) = 0;
     virtual bool evaluate(const Register &R, const LatticeCell &SrcC,
@@ -465,7 +458,6 @@ bool LatticeCell::convertToProperty() {
   return true;
 }
 
-#ifndef NDEBUG
 void LatticeCell::print(raw_ostream &os) const {
   if (isProperty()) {
     os << "{ ";
@@ -503,7 +495,6 @@ void LatticeCell::print(raw_ostream &os) const {
   }
   os << " }";
 }
-#endif
 
 // "Meet" operation on two cells. This is the key of the propagation
 // algorithm.
@@ -606,18 +597,16 @@ uint32_t LatticeCell::properties() const {
   return Ps;
 }
 
-#ifndef NDEBUG
 void MachineConstPropagator::CellMap::print(raw_ostream &os,
       const TargetRegisterInfo &TRI) const {
   for (auto &I : Map)
-    dbgs() << "  " << printReg(I.first, &TRI) << " -> " << I.second << '\n';
+    dbgs() << "  " << PrintReg(I.first, &TRI) << " -> " << I.second << '\n';
 }
-#endif
 
 void MachineConstPropagator::visitPHI(const MachineInstr &PN) {
   const MachineBasicBlock *MB = PN.getParent();
   unsigned MBN = MB->getNumber();
-  LLVM_DEBUG(dbgs() << "Visiting FI(" << printMBBReference(*MB) << "): " << PN);
+  DEBUG(dbgs() << "Visiting FI(BB#" << MBN << "): " << PN);
 
   const MachineOperand &MD = PN.getOperand(0);
   Register DefR(MD);
@@ -642,8 +631,8 @@ Bottomize:
     const MachineBasicBlock *PB = PN.getOperand(i+1).getMBB();
     unsigned PBN = PB->getNumber();
     if (!EdgeExec.count(CFGEdge(PBN, MBN))) {
-      LLVM_DEBUG(dbgs() << "  edge " << printMBBReference(*PB) << "->"
-                        << printMBBReference(*MB) << " not executable\n");
+      DEBUG(dbgs() << "  edge BB#" << PBN << "->BB#" << MBN
+                   << " not executable\n");
       continue;
     }
     const MachineOperand &SO = PN.getOperand(i);
@@ -658,9 +647,9 @@ Bottomize:
 
     LatticeCell SrcC;
     bool Eval = MCE.evaluate(UseR, Cells.get(UseR.Reg), SrcC);
-    LLVM_DEBUG(dbgs() << "  edge from " << printMBBReference(*PB) << ": "
-                      << printReg(UseR.Reg, &MCE.TRI, UseR.SubReg) << SrcC
-                      << '\n');
+    DEBUG(dbgs() << "  edge from BB#" << PBN << ": "
+                 << PrintReg(UseR.Reg, &MCE.TRI, UseR.SubReg)
+                 << SrcC << '\n');
     Changed |= Eval ? DefC.meet(SrcC)
                     : DefC.setBottom();
     Cells.update(DefR.Reg, DefC);
@@ -672,11 +661,11 @@ Bottomize:
 }
 
 void MachineConstPropagator::visitNonBranch(const MachineInstr &MI) {
-  LLVM_DEBUG(dbgs() << "Visiting MI(" << printMBBReference(*MI.getParent())
-                    << "): " << MI);
+  DEBUG(dbgs() << "Visiting MI(BB#" << MI.getParent()->getNumber()
+               << "): " << MI);
   CellMap Outputs;
   bool Eval = MCE.evaluate(MI, Cells, Outputs);
-  LLVM_DEBUG({
+  DEBUG({
     if (Eval) {
       dbgs() << "  outputs:";
       for (auto &I : Outputs)
@@ -714,7 +703,7 @@ void MachineConstPropagator::visitNonBranch(const MachineInstr &MI) {
   }
 }
 
-// Starting at a given branch, visit remaining branches in the block.
+// \brief Starting at a given branch, visit remaining branches in the block.
 // Traverse over the subsequent branches for as long as the preceding one
 // can fall through. Add all the possible targets to the flow work queue,
 // including the potential fall-through to the layout-successor block.
@@ -729,8 +718,8 @@ void MachineConstPropagator::visitBranchesFrom(const MachineInstr &BrI) {
   while (It != End) {
     const MachineInstr &MI = *It;
     InstrExec.insert(&MI);
-    LLVM_DEBUG(dbgs() << "Visiting " << (EvalOk ? "BR" : "br") << "("
-                      << printMBBReference(B) << "): " << MI);
+    DEBUG(dbgs() << "Visiting " << (EvalOk ? "BR" : "br") << "(BB#"
+                 << MBN << "): " << MI);
     // Do not evaluate subsequent branches if the evaluation of any of the
     // previous branches failed. Keep iterating over the branches only
     // to mark them as executable.
@@ -764,23 +753,22 @@ void MachineConstPropagator::visitBranchesFrom(const MachineInstr &BrI) {
     // last one set "FallsThru", then add an edge to the layout successor
     // to the targets.
     Targets.clear();
-    LLVM_DEBUG(dbgs() << "  failed to evaluate a branch...adding all CFG "
-                         "successors\n");
+    DEBUG(dbgs() << "  failed to evaluate a branch...adding all CFG "
+                    "successors\n");
     for (const MachineBasicBlock *SB : B.successors())
       Targets.insert(SB);
   }
 
   for (const MachineBasicBlock *TB : Targets) {
     unsigned TBN = TB->getNumber();
-    LLVM_DEBUG(dbgs() << "  pushing edge " << printMBBReference(B) << " -> "
-                      << printMBBReference(*TB) << "\n");
+    DEBUG(dbgs() << "  pushing edge BB#" << MBN << " -> BB#" << TBN << "\n");
     FlowQ.push(CFGEdge(MBN, TBN));
   }
 }
 
 void MachineConstPropagator::visitUsesOf(unsigned Reg) {
-  LLVM_DEBUG(dbgs() << "Visiting uses of " << printReg(Reg, &MCE.TRI)
-                    << Cells.get(Reg) << '\n');
+  DEBUG(dbgs() << "Visiting uses of " << PrintReg(Reg, &MCE.TRI)
+               << Cells.get(Reg) << '\n');
   for (MachineInstr &MI : MRI->use_nodbg_instructions(Reg)) {
     // Do not process non-executable instructions. They can become exceutable
     // later (via a flow-edge in the work queue). In such case, the instruc-
@@ -800,7 +788,7 @@ bool MachineConstPropagator::computeBlockSuccessors(const MachineBasicBlock *MB,
       SetVector<const MachineBasicBlock*> &Targets) {
   MachineBasicBlock::const_iterator FirstBr = MB->end();
   for (const MachineInstr &MI : *MB) {
-    if (MI.isDebugInstr())
+    if (MI.isDebugValue())
       continue;
     if (MI.isBranch()) {
       FirstBr = MI.getIterator();
@@ -815,7 +803,7 @@ bool MachineConstPropagator::computeBlockSuccessors(const MachineBasicBlock *MB,
   for (MachineBasicBlock::const_iterator I = FirstBr; I != End; ++I) {
     const MachineInstr &MI = *I;
     // Can there be debug instructions between branches?
-    if (MI.isDebugInstr())
+    if (MI.isDebugValue())
       continue;
     if (!InstrExec.count(&MI))
       continue;
@@ -871,10 +859,8 @@ void MachineConstPropagator::propagate(MachineFunction &MF) {
     CFGEdge Edge = FlowQ.front();
     FlowQ.pop();
 
-    LLVM_DEBUG(
-        dbgs() << "Picked edge "
-               << printMBBReference(*MF.getBlockNumbered(Edge.first)) << "->"
-               << printMBBReference(*MF.getBlockNumbered(Edge.second)) << '\n');
+    DEBUG(dbgs() << "Picked edge BB#" << Edge.first << "->BB#"
+                 << Edge.second << '\n');
     if (Edge.first != EntryNum)
       if (EdgeExec.count(Edge))
         continue;
@@ -897,7 +883,7 @@ void MachineConstPropagator::propagate(MachineFunction &MF) {
     // If the successor block just became executable, visit all instructions.
     // To see if this is the first time we're visiting it, check the first
     // non-debug instruction to see if it is executable.
-    while (It != End && It->isDebugInstr())
+    while (It != End && It->isDebugValue())
       ++It;
     assert(It == End || !It->isPHI());
     // If this block has been visited, go on to the next one.
@@ -906,7 +892,7 @@ void MachineConstPropagator::propagate(MachineFunction &MF) {
     // For now, scan all non-branch instructions. Branches require different
     // processing.
     while (It != End && !It->isBranch()) {
-      if (!It->isDebugInstr()) {
+      if (!It->isDebugValue()) {
         InstrExec.insert(&*It);
         visitNonBranch(*It);
       }
@@ -928,7 +914,7 @@ void MachineConstPropagator::propagate(MachineFunction &MF) {
     }
   } // while (FlowQ)
 
-  LLVM_DEBUG({
+  DEBUG({
     dbgs() << "Cells after propagation:\n";
     Cells.print(dbgs(), MCE.TRI);
     dbgs() << "Dead CFG edges:\n";
@@ -937,8 +923,7 @@ void MachineConstPropagator::propagate(MachineFunction &MF) {
       for (const MachineBasicBlock *SB : B.successors()) {
         unsigned SN = SB->getNumber();
         if (!EdgeExec.count(CFGEdge(BN, SN)))
-          dbgs() << "  " << printMBBReference(B) << " -> "
-                 << printMBBReference(*SB) << '\n';
+          dbgs() << "  BB#" << BN << " -> BB#" << SN << '\n';
       }
     }
   });
@@ -1043,7 +1028,7 @@ bool MachineConstPropagator::rewrite(MachineFunction &MF) {
 // This is the constant propagation algorithm as described by Wegman-Zadeck.
 // Most of the terminology comes from there.
 bool MachineConstPropagator::run(MachineFunction &MF) {
-  LLVM_DEBUG(MF.print(dbgs() << "Starting MachineConstPropagator\n", nullptr));
+  DEBUG(MF.print(dbgs() << "Starting MachineConstPropagator\n", 0));
 
   MRI = &MF.getRegInfo();
 
@@ -1055,10 +1040,10 @@ bool MachineConstPropagator::run(MachineFunction &MF) {
   propagate(MF);
   bool Changed = rewrite(MF);
 
-  LLVM_DEBUG({
+  DEBUG({
     dbgs() << "End of MachineConstPropagator (Changed=" << Changed << ")\n";
     if (Changed)
-      MF.print(dbgs(), nullptr);
+      MF.print(dbgs(), 0);
   });
   return Changed;
 }
@@ -1293,8 +1278,7 @@ bool MachineConstEvaluator::evaluateCMPpi(uint32_t Cmp, uint32_t Props,
 
 bool MachineConstEvaluator::evaluateCMPpp(uint32_t Cmp, uint32_t Props1,
       uint32_t Props2, bool &Result) {
-  using P = ConstantProperties;
-
+  typedef ConstantProperties P;
   if ((Props1 & P::NaN) && (Props2 & P::NaN))
     return false;
   if (!(Props1 & P::Finite) || !(Props2 & P::Finite))
@@ -1881,15 +1865,20 @@ namespace {
   public:
     static char ID;
 
-    HexagonConstPropagation() : MachineFunctionPass(ID) {}
+    HexagonConstPropagation() : MachineFunctionPass(ID) {
+      PassRegistry &Registry = *PassRegistry::getPassRegistry();
+      initializeHexagonConstPropagationPass(Registry);
+    }
 
     StringRef getPassName() const override {
       return "Hexagon Constant Propagation";
     }
 
     bool runOnMachineFunction(MachineFunction &MF) override {
-      const Function &F = MF.getFunction();
-      if (skipFunction(F))
+      const Function *F = MF.getFunction();
+      if (!F)
+        return false;
+      if (skipFunction(*F))
         return false;
 
       HexagonConstEvaluator HCE(MF);
@@ -1897,12 +1886,12 @@ namespace {
     }
   };
 
+  char HexagonConstPropagation::ID = 0;
+
 } // end anonymous namespace
 
-char HexagonConstPropagation::ID = 0;
-
-INITIALIZE_PASS(HexagonConstPropagation, "hexagon-constp",
-  "Hexagon Constant Propagation", false, false)
+INITIALIZE_PASS(HexagonConstPropagation, "hcp", "Hexagon Constant Propagation",
+                false, false)
 
 HexagonConstEvaluator::HexagonConstEvaluator(MachineFunction &Fn)
   : MachineConstEvaluator(Fn),
@@ -1939,7 +1928,7 @@ bool HexagonConstEvaluator::evaluate(const MachineInstr &MI,
   if (MI.isRegSequence()) {
     unsigned Sub1 = MI.getOperand(2).getImm();
     unsigned Sub2 = MI.getOperand(4).getImm();
-    const TargetRegisterClass &DefRC = *MRI->getRegClass(DefR.Reg);
+    const TargetRegisterClass *DefRC = MRI->getRegClass(DefR.Reg);
     unsigned SubLo = HRI.getHexagonSubRegIndex(DefRC, Hexagon::ps_sub_lo);
     unsigned SubHi = HRI.getHexagonSubRegIndex(DefRC, Hexagon::ps_sub_hi);
     if (Sub1 != SubLo && Sub1 != SubHi)
@@ -1973,7 +1962,7 @@ bool HexagonConstEvaluator::evaluate(const MachineInstr &MI,
     {
       const MachineOperand &VO = MI.getOperand(1);
       // The operand of CONST32 can be a blockaddress, e.g.
-      //   %0 = CONST32 <blockaddress(@eat, %l)>
+      //   %vreg0<def> = CONST32 <blockaddress(@eat, %L)>
       // Do this check for all instructions for safety.
       if (!VO.isImm())
         return false;
@@ -2020,8 +2009,6 @@ bool HexagonConstEvaluator::evaluate(const MachineInstr &MI,
     case Hexagon::A2_combineii:  // combine(#s8Ext, #s8)
     case Hexagon::A4_combineii:  // combine(#s8, #u6Ext)
     {
-      if (!MI.getOperand(1).isImm() || !MI.getOperand(2).isImm())
-        return false;
       uint64_t Hi = MI.getOperand(1).getImm();
       uint64_t Lo = MI.getOperand(2).getImm();
       uint64_t Res = (Hi << 32) | (Lo & 0xFFFFFFFF);
@@ -2205,8 +2192,7 @@ bool HexagonConstEvaluator::evaluate(const Register &R,
   if (Input.isBottom())
     return false;
 
-  using P = ConstantProperties;
-
+  typedef ConstantProperties P;
   if (Input.isProperty()) {
     uint32_t Ps = Input.properties();
     if (Ps & (P::Zero|P::NaN)) {
@@ -2631,8 +2617,6 @@ bool HexagonConstEvaluator::evaluateHexLogical(const MachineInstr &MI,
       Eval = evaluateANDrr(R1, Register(Src2), Inputs, RC);
       break;
     case Hexagon::A2_andir: {
-      if (!Src2.isImm())
-        return false;
       APInt A(32, Src2.getImm(), true);
       Eval = evaluateANDri(R1, A, Inputs, RC);
       break;
@@ -2642,8 +2626,6 @@ bool HexagonConstEvaluator::evaluateHexLogical(const MachineInstr &MI,
       Eval = evaluateORrr(R1, Register(Src2), Inputs, RC);
       break;
     case Hexagon::A2_orir: {
-      if (!Src2.isImm())
-        return false;
       APInt A(32, Src2.getImm(), true);
       Eval = evaluateORri(R1, A, Inputs, RC);
       break;
@@ -2779,7 +2761,7 @@ bool HexagonConstEvaluator::rewriteHexConstDefs(MachineInstr &MI,
   AllDefs = false;
 
   // Some diagnostics.
-  // LLVM_DEBUG({...}) gets confused with all this code as an argument.
+  // DEBUG({...}) gets confused with all this code as an argument.
 #ifndef NDEBUG
   bool Debugging = DebugFlag && isCurrentDebugType(DEBUG_TYPE);
   if (Debugging) {
@@ -2793,7 +2775,7 @@ bool HexagonConstEvaluator::rewriteHexConstDefs(MachineInstr &MI,
       HasUse = true;
       // PHIs can legitimately have "top" cells after propagation.
       if (!MI.isPHI() && !Inputs.has(R.Reg)) {
-        dbgs() << "Top " << printReg(R.Reg, &HRI, R.SubReg)
+        dbgs() << "Top " << PrintReg(R.Reg, &HRI, R.SubReg)
                << " in MI: " << MI;
         continue;
       }
@@ -2809,7 +2791,7 @@ bool HexagonConstEvaluator::rewriteHexConstDefs(MachineInstr &MI,
           if (!MO.isReg() || !MO.isUse() || MO.isImplicit())
             continue;
           unsigned R = MO.getReg();
-          dbgs() << printReg(R, &TRI) << ": " << Inputs.get(R) << "\n";
+          dbgs() << PrintReg(R, &TRI) << ": " << Inputs.get(R) << "\n";
         }
       }
     }
@@ -2855,8 +2837,7 @@ bool HexagonConstEvaluator::rewriteHexConstDefs(MachineInstr &MI,
     if (!L.isSingle()) {
       // If this a zero/non-zero cell, we can fold a definition
       // of a predicate register.
-      using P = ConstantProperties;
-
+      typedef ConstantProperties P;
       uint64_t Ps = L.properties();
       if (!(Ps & (P::Zero|P::NonZero)))
         continue;
@@ -2924,10 +2905,10 @@ bool HexagonConstEvaluator::rewriteHexConstDefs(MachineInstr &MI,
     ChangedNum++;
   }
 
-  LLVM_DEBUG({
+  DEBUG({
     if (!NewInstrs.empty()) {
       MachineFunction &MF = *MI.getParent()->getParent();
-      dbgs() << "In function: " << MF.getName() << "\n";
+      dbgs() << "In function: " << MF.getFunction()->getName() << "\n";
       dbgs() << "Rewrite: for " << MI << "  created " << *NewInstrs[0];
       for (unsigned i = 1; i < NewInstrs.size(); ++i)
         dbgs() << "          " << *NewInstrs[i];
@@ -3058,9 +3039,7 @@ bool HexagonConstEvaluator::rewriteHexConstUses(MachineInstr &MI,
       assert(Inputs.has(R1.Reg) && Inputs.has(R2.Reg));
       LatticeCell LS1, LS2;
       unsigned CopyOf = 0;
-
-      using P = ConstantProperties;
-
+      typedef ConstantProperties P;
       if (getCell(R1, Inputs, LS1) && (LS1.properties() & P::Zero))
         CopyOf = 2;
       else if (getCell(R2, Inputs, LS2) && (LS2.properties() & P::Zero))
@@ -3091,7 +3070,7 @@ bool HexagonConstEvaluator::rewriteHexConstUses(MachineInstr &MI,
         MO.setIsKill(false);
   }
 
-  LLVM_DEBUG({
+  DEBUG({
     if (NewMI) {
       dbgs() << "Rewrite: for " << MI;
       if (NewMI != &MI)
@@ -3131,7 +3110,7 @@ bool HexagonConstEvaluator::rewriteHexBranch(MachineInstr &BrI,
   if (BrI.getOpcode() == Hexagon::J2_jump)
     return false;
 
-  LLVM_DEBUG(dbgs() << "Rewrite(" << printMBBReference(B) << "):" << BrI);
+  DEBUG(dbgs() << "Rewrite(BB#" << B.getNumber() << "):" << BrI);
   bool Rewritten = false;
   if (NumTargets > 0) {
     assert(!FallsThru && "This should have been checked before");
@@ -3149,7 +3128,7 @@ bool HexagonConstEvaluator::rewriteHexBranch(MachineInstr &BrI,
       BrI.setDesc(JD);
       while (BrI.getNumOperands() > 0)
         BrI.RemoveOperand(0);
-      // This ensures that all implicit operands (e.g. implicit-def %r31, etc)
+      // This ensures that all implicit operands (e.g. %R31<imp-def>, etc)
       // are present in the rewritten branch.
       for (auto &Op : NI->operands())
         BrI.addOperand(Op);

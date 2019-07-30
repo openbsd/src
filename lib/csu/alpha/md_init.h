@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.10 2018/11/22 21:37:29 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.9 2017/08/11 20:13:30 guenther Exp $ */
 /*-
  * Copyright (c) 2001 Ross Harvey
  * All rights reserved.
@@ -81,17 +81,19 @@
 	"	mov	$16, $9			\n" \
 	"	br	$11, L2			\n" \
 	"L2:	ldiq	$12, L2			\n" \
-	"	subq	$11, $12, $10		\n" \
+	"	subq	$11, $12, $11		\n" \
+	"	mov	$11, $17		\n" \
 	"	lda	$6, _DYNAMIC		\n" \
-	"	addq	$10, $6, $15		\n" \
+	"	addq	$11, $6, $16		\n" \
+	"	mov	$16, $15		\n" \
+	"	bsr	$26, _reloc_alpha_got	\n" \
 	"	lda	$sp, -80($sp)		\n" \
 	"	mov	$9, $16			\n" \
 	"	lda	$11, 0($sp)		\n" \
 	"	mov	$11, $17		\n" \
 	"	mov	$15, $18		\n" \
-	"	lda	$27, _dl_boot_bind	\n" \
-	"	addq	$10, $27, $27		\n" \
-	"	bsr	$26, _dl_boot_bind	\n" \
+	"	jsr	$26, _dl_boot_bind	\n" \
+	"	ldgp	$gp, 0($26)		\n" \
 	"	mov	$9, $16			\n" \
 	"	mov	0, $17			\n" \
 	"	jsr	$26, ___start		\n" \

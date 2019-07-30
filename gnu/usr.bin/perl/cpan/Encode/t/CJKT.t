@@ -57,7 +57,8 @@ for my $charset (sort keys %Charset){
     $txt = join('',<$src>);
     close($src);
     
-    eval { $uni = $transcoder->decode($txt, 1) } or print $@;
+    eval{ $uni = $transcoder->decode($txt, 1) }; 
+    $@ and print $@;
     ok(defined($uni),  "decode $charset"); $seq++;
     is(length($txt),0, "decode $charset completely"); $seq++;
     
@@ -88,7 +89,8 @@ for my $charset (sort keys %Charset){
     close $src;
 
     my $unisave = $uni;
-    eval { $txt = $transcoder->encode($uni,1) } or print $@;
+    eval{ $txt = $transcoder->encode($uni,1) };    
+    $@ and print $@;
     ok(defined($txt),   "encode $charset"); $seq++;
     is(length($uni), 0, "encode $charset completely");  $seq++;
     $uni = $unisave;

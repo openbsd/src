@@ -1,4 +1,4 @@
-/*	$OpenBSD: i8259.c,v 1.11 2018/07/27 21:11:31 kettenis Exp $	*/
+/*	$OpenBSD: i8259.c,v 1.10 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: i8259.c,v 1.2 2003/03/02 18:27:15 fvdl Exp $	*/
 
 /*
@@ -162,9 +162,8 @@ i8259_hwunmask(struct pic *pic, int pin)
 {
 	unsigned port;
 	u_int8_t byte;
-	u_long s;
 
-	s = intr_disable();
+	disable_intr();	/* XXX */
 	i8259_imen &= ~(1 << pin);
 #ifdef PIC_MASKDELAY
 	delay(10);
@@ -177,7 +176,7 @@ i8259_hwunmask(struct pic *pic, int pin)
 		byte = i8259_imen & 0xff;
 	}
 	outb(port, byte);
-	intr_restore(s);
+	enable_intr();
 }
 
 static void

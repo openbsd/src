@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.98 2019/06/07 04:57:45 dlg Exp $ */
+/*	$OpenBSD: parse.y,v 1.86 2018/02/11 02:27:33 benno Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -25,7 +25,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <net/route.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <ctype.h>
@@ -49,10 +48,6 @@ static struct file {
 	TAILQ_ENTRY(file)	 entry;
 	FILE			*stream;
 	char			*name;
-	size_t			 ungetpos;
-	size_t			 ungetsize;
-	u_char			*ungetbuf;
-	int			 eof_reached;
 	int			 lineno;
 	int			 errors;
 } *file, *topfile;
@@ -66,9 +61,8 @@ int		 yyerror(const char *, ...)
     __attribute__((__nonnull__ (1)));
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
-int		 igetc(void);
 int		 lgetc(int);
-void		 lungetc(int);
+int		 lungetc(int);
 int		 findeol(void);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
@@ -83,6 +77,7 @@ int		 symset(const char *, const char *, int);
 char		*symget(const char *);
 
 void		 clear_config(struct ospfd_conf *xconf);
+u_int32_t	 get_rtr_id(void);
 int		 host(const char *, struct in_addr *, struct in_addr *);
 
 static struct ospfd_conf	*conf;
@@ -119,15 +114,14 @@ typedef struct {
 		int64_t		 number;
 		char		*string;
 		struct redistribute *redist;
-		struct in_addr	 id;
 	} v;
 	int lineno;
 } YYSTYPE;
 
 %}
 
-%token	AREA INTERFACE ROUTERID FIBPRIORITY FIBUPDATE REDISTRIBUTE RTLABEL
-%token	RDOMAIN RFC1583COMPAT STUB ROUTER SPFDELAY SPFHOLDTIME EXTTAG
+%token	AREA INTERFACE ROUTERID FIBUPDATE REDISTRIBUTE RTLABEL RDOMAIN
+%token	RFC1583COMPAT STUB ROUTER SPFDELAY SPFHOLDTIME EXTTAG
 %token	AUTHKEY AUTHTYPE AUTHMD AUTHMDKEYID
 %token	METRIC PASSIVE
 %token	HELLOINTERVAL FASTHELLOINTERVAL TRANSMITDELAY
@@ -145,7 +139,6 @@ typedef struct {
 %type	<v.number>	deadtime
 %type	<v.string>	string dependon
 %type	<v.redist>	redistribute
-%type	<v.id>		areaid
 
 %%
 
@@ -161,8 +154,7 @@ grammar		: /* empty */
 include		: INCLUDE STRING		{
 			struct file	*nfile;
 
-			if ((nfile = pushfile($2,
-			    !(conf->opts & OSPFD_OPT_NOACTION))) == NULL) {
+			if ((nfile = pushfile($2, 1)) == NULL) {
 				yyerror("failed to include file %s", $2);
 				free($2);
 				YYERROR;
@@ -211,8 +203,6 @@ varset		: STRING '=' string		{
 				if (isspace((unsigned char)*s)) {
 					yyerror("macro name cannot contain "
 					    "whitespace");
-					free($1);
-					free($3);
 					YYERROR;
 				}
 			}
@@ -230,13 +220,6 @@ conf_main	: ROUTERID STRING {
 				YYERROR;
 			}
 			free($2);
-		}
-		| FIBPRIORITY NUMBER {
-			if ($2 <= RTP_NONE || $2 > RTP_MAX) {
-				yyerror("invalid fib-priority");
-				YYERROR;
-			}
-			conf->fib_priority = $2;
 		}
 		| FIBUPDATE yesno {
 			if ($2 == 0)
@@ -589,8 +572,15 @@ comma		: ','
 		| /*empty*/
 		;
 
-area		: AREA areaid {
-			area = conf_get_area($2);
+area		: AREA STRING {
+			struct in_addr	id;
+			if (inet_aton($2, &id) == 0) {
+				yyerror("error parsing area");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			area = conf_get_area(id);
 
 			memcpy(&areadefs, defs, sizeof(areadefs));
 			md_list_copy(&areadefs.md_list, &defs->md_list);
@@ -604,23 +594,6 @@ area		: AREA areaid {
 
 demotecount	: NUMBER	{ $$ = $1; }
 		| /*empty*/	{ $$ = 1; }
-		;
-
-areaid		: NUMBER {
-			if ($1 < 0 || $1 > 0xffffffff) {
-				yyerror("invalid area id");
-				YYERROR;
-			}
-			$$.s_addr = htonl($1);
-		}
-		| STRING {
-			if (inet_aton($1, &$$) == 0) {
-				yyerror("error parsing area");
-				free($1);
-				YYERROR;
-			}
-			free($1);
-		}
 		;
 
 areaopts_l	: areaopts_l areaoptsl nl
@@ -823,7 +796,6 @@ lookup(char *s)
 		{"depend",		DEPEND},
 		{"external-tag",	EXTTAG},
 		{"fast-hello-interval",	FASTHELLOINTERVAL},
-		{"fib-priority",	FIBPRIORITY},
 		{"fib-update",		FIBUPDATE},
 		{"hello-interval",	HELLOINTERVAL},
 		{"include",		INCLUDE},
@@ -862,39 +834,34 @@ lookup(char *s)
 		return (STRING);
 }
 
-#define START_EXPAND	1
-#define DONE_EXPAND	2
+#define MAXPUSHBACK	128
 
-static int	expanding;
-
-int
-igetc(void)
-{
-	int	c;
-
-	while (1) {
-		if (file->ungetpos > 0)
-			c = file->ungetbuf[--file->ungetpos];
-		else
-			c = getc(file->stream);
-
-		if (c == START_EXPAND)
-			expanding = 1;
-		else if (c == DONE_EXPAND)
-			expanding = 0;
-		else
-			break;
-	}
-	return (c);
-}
+u_char	*parsebuf;
+int	 parseindex;
+u_char	 pushback_buffer[MAXPUSHBACK];
+int	 pushback_index = 0;
 
 int
 lgetc(int quotec)
 {
 	int		c, next;
 
+	if (parsebuf) {
+		/* Read character from the parsebuffer instead of input. */
+		if (parseindex >= 0) {
+			c = parsebuf[parseindex++];
+			if (c != '\0')
+				return (c);
+			parsebuf = NULL;
+		} else
+			parseindex++;
+	}
+
+	if (pushback_index)
+		return (pushback_buffer[--pushback_index]);
+
 	if (quotec) {
-		if ((c = igetc()) == EOF) {
+		if ((c = getc(file->stream)) == EOF) {
 			yyerror("reached end of file while parsing "
 			    "quoted string");
 			if (file == topfile || popfile() == EOF)
@@ -904,8 +871,8 @@ lgetc(int quotec)
 		return (c);
 	}
 
-	while ((c = igetc()) == '\\') {
-		next = igetc();
+	while ((c = getc(file->stream)) == '\\') {
+		next = getc(file->stream);
 		if (next != '\n') {
 			c = next;
 			break;
@@ -914,39 +881,28 @@ lgetc(int quotec)
 		file->lineno++;
 	}
 
-	if (c == EOF) {
-		/*
-		 * Fake EOL when hit EOF for the first time. This gets line
-		 * count right if last line in included file is syntactically
-		 * invalid and has no newline.
-		 */
-		if (file->eof_reached == 0) {
-			file->eof_reached = 1;
-			return ('\n');
-		}
-		while (c == EOF) {
-			if (file == topfile || popfile() == EOF)
-				return (EOF);
-			c = igetc();
-		}
+	while (c == EOF) {
+		if (file == topfile || popfile() == EOF)
+			return (EOF);
+		c = getc(file->stream);
 	}
 	return (c);
 }
 
-void
+int
 lungetc(int c)
 {
 	if (c == EOF)
-		return;
-
-	if (file->ungetpos >= file->ungetsize) {
-		void *p = reallocarray(file->ungetbuf, file->ungetsize, 2);
-		if (p == NULL)
-			err(1, "%s", __func__);
-		file->ungetbuf = p;
-		file->ungetsize *= 2;
+		return (EOF);
+	if (parsebuf) {
+		parseindex--;
+		if (parseindex >= 0)
+			return (c);
 	}
-	file->ungetbuf[file->ungetpos++] = c;
+	if (pushback_index < MAXPUSHBACK-1)
+		return (pushback_buffer[pushback_index++] = c);
+	else
+		return (EOF);
 }
 
 int
@@ -954,9 +910,14 @@ findeol(void)
 {
 	int	c;
 
+	parsebuf = NULL;
+
 	/* skip to either EOF or the first real EOL */
 	while (1) {
-		c = lgetc(0);
+		if (pushback_index)
+			c = pushback_buffer[--pushback_index];
+		else
+			c = lgetc(0);
 		if (c == '\n') {
 			file->lineno++;
 			break;
@@ -984,7 +945,7 @@ top:
 	if (c == '#')
 		while ((c = lgetc(0)) != '\n' && c != EOF)
 			; /* nothing */
-	if (c == '$' && !expanding) {
+	if (c == '$' && parsebuf == NULL) {
 		while (1) {
 			if ((c = lgetc(0)) == EOF)
 				return (0);
@@ -1006,13 +967,8 @@ top:
 			yyerror("macro '%s' not defined", buf);
 			return (findeol());
 		}
-		p = val + strlen(val) - 1;
-		lungetc(DONE_EXPAND);
-		while (p >= val) {
-			lungetc(*p);
-			p--;
-		}
-		lungetc(START_EXPAND);
+		parsebuf = val;
+		parseindex = 0;
 		goto top;
 	}
 
@@ -1029,8 +985,7 @@ top:
 			} else if (c == '\\') {
 				if ((next = lgetc(quotec)) == EOF)
 					return (0);
-				if (next == quotec || next == ' ' ||
-				    next == '\t')
+				if (next == quotec || c == ' ' || c == '\t')
 					c = next;
 				else if (next == '\n') {
 					file->lineno++;
@@ -1052,7 +1007,7 @@ top:
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			err(1, "%s", __func__);
+			err(1, "yylex: strdup");
 		return (STRING);
 	}
 
@@ -1062,7 +1017,7 @@ top:
 	if (c == '-' || isdigit(c)) {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -1101,7 +1056,7 @@ nodigits:
 	if (isalnum(c) || c == ':' || c == '_') {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -1110,7 +1065,7 @@ nodigits:
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
 			if ((yylval.v.string = strdup(buf)) == NULL)
-				err(1, "%s", __func__);
+				err(1, "yylex: strdup");
 		return (token);
 	}
 	if (c == '\n') {
@@ -1148,16 +1103,16 @@ pushfile(const char *name, int secret)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
-		log_warn("%s", __func__);
+		log_warn("malloc");
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		log_warn("%s", __func__);
+		log_warn("malloc");
 		free(nfile);
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		log_warn("%s: %s", __func__, nfile->name);
+		log_warn("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -1168,16 +1123,7 @@ pushfile(const char *name, int secret)
 		free(nfile);
 		return (NULL);
 	}
-	nfile->lineno = TAILQ_EMPTY(&files) ? 1 : 0;
-	nfile->ungetsize = 16;
-	nfile->ungetbuf = malloc(nfile->ungetsize);
-	if (nfile->ungetbuf == NULL) {
-		log_warn("%s", __func__);
-		fclose(nfile->stream);
-		free(nfile->name);
-		free(nfile);
-		return (NULL);
-	}
+	nfile->lineno = 1;
 	TAILQ_INSERT_TAIL(&files, nfile, entry);
 	return (nfile);
 }
@@ -1193,7 +1139,6 @@ popfile(void)
 	TAILQ_REMOVE(&files, file, entry);
 	fclose(file->stream);
 	free(file->name);
-	free(file->ungetbuf);
 	free(file);
 	file = prev;
 	return (file ? 0 : EOF);
@@ -1224,10 +1169,8 @@ parse_config(char *filename, int opts)
 	conf->spf_delay = DEFAULT_SPF_DELAY;
 	conf->spf_hold_time = DEFAULT_SPF_HOLDTIME;
 	conf->spf_state = SPF_IDLE;
-	conf->fib_priority = RTP_OSPF;
 
-	if ((file = pushfile(filename,
-	    !(conf->opts & OSPFD_OPT_NOACTION))) == NULL) {
+	if ((file = pushfile(filename, !(conf->opts & OSPFD_OPT_NOACTION))) == NULL) {
 		free(conf);
 		return (NULL);
 	}
@@ -1264,6 +1207,9 @@ parse_config(char *filename, int opts)
 		clear_config(conf);
 		return (NULL);
 	}
+
+	if (conf->rtr_id.s_addr == 0)
+		conf->rtr_id.s_addr = get_rtr_id();
 
 	return (conf);
 }
@@ -1313,12 +1259,17 @@ cmdline_symset(char *s)
 {
 	char	*sym, *val;
 	int	ret;
+	size_t	len;
 
 	if ((val = strrchr(s, '=')) == NULL)
 		return (-1);
-	sym = strndup(s, val - s);
-	if (sym == NULL)
-		errx(1, "%s: strndup", __func__);
+
+	len = strlen(s) - strlen(val) + 1;
+	if ((sym = malloc(len)) == NULL)
+		errx(1, "cmdline_symset: malloc");
+
+	strlcpy(sym, s, len);
+
 	ret = symset(sym, val + 1, 1);
 	free(sym);
 
@@ -1379,45 +1330,18 @@ conf_get_if(struct kif *kif, struct kif_addr *ka)
 int
 conf_check_rdomain(unsigned int rdomain)
 {
-	struct area		*a;
-	struct iface		*i;
-	struct in_addr		 addr;
-	struct kif		*kif;
-	struct redistribute	*r;
-	int			 errs = 0;
-
-	SIMPLEQ_FOREACH(r, &conf->redist_list, entry)
-		if (r->dependon[0] != '\0') {
-			bzero(&addr, sizeof(addr));
-			kif = kif_findname(r->dependon, addr, NULL);
-			if (kif->rdomain != rdomain) {
-				logit(LOG_CRIT,
-				    "depend on %s: interface not in rdomain %u",
-				    kif->ifname, rdomain);
-				errs++;
-			}
-		}
+	struct area	*a;
+	struct iface	*i;
+	int		 errs = 0;
 
 	LIST_FOREACH(a, &conf->area_list, entry)
-		LIST_FOREACH(i, &a->iface_list, entry) {
+		LIST_FOREACH(i, &a->iface_list, entry)
 			if (i->rdomain != rdomain) {
 				logit(LOG_CRIT,
 				    "interface %s not in rdomain %u",
 				    i->name, rdomain);
 				errs++;
 			}
-			if (i->dependon[0] != '\0') {
-				bzero(&addr, sizeof(addr));
-				kif = kif_findname(i->dependon, addr, NULL);
-				if (kif->rdomain != rdomain) {
-					logit(LOG_CRIT,
-					    "depend on %s: interface not in "
-					    "rdomain %u",
-					    kif->ifname, rdomain);
-					errs++;
-				}
-			}
-		}
 
 	return (errs);
 }

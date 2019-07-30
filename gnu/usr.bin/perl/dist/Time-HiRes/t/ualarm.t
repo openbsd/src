@@ -9,7 +9,6 @@ BEGIN {
 }
 
 use Test::More tests => 12;
-BEGIN { push @INC, '.' }
 use t::Watchdog;
 
 use Config;

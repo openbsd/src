@@ -9,11 +9,11 @@ include $(LEVEL)/Makefile.rules
 a.out: lib_a lib_b
 
 lib_%:
-	$(MAKE) VPATH=$(VPATH) -f $(SRCDIR)/$*.mk
+	$(MAKE) -f $*.mk
 
 hidden_lib_d:
 	$(MAKE) -C hidden
 
 clean::
-	$(MAKE) -f $(SRCDIR)/a.mk clean
-	$(MAKE) -f $(SRCDIR)/b.mk clean
+	$(MAKE) -f a.mk clean
+	$(MAKE) -f b.mk clean

@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..52\n"; }
+BEGIN { $| = 1; print "1..42\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -65,29 +65,17 @@ ok($objDePhone->gt("O\x{308}", "OE"));
 ok($objDePhone->gt("u\x{308}", "ue"));
 ok($objDePhone->gt("U\x{308}", "UE"));
 
-# 14
-
 ok($objDePhone->eq("a\x{308}", "A\x{308}"));
 ok($objDePhone->eq("o\x{308}", "O\x{308}"));
 ok($objDePhone->eq("u\x{308}", "U\x{308}"));
 
-ok($objDePhone->eq($auml, $Auml));
-ok($objDePhone->eq($ouml, $Ouml));
-ok($objDePhone->eq($uuml, $Uuml));
-
-# 20
+# 17
 
 $objDePhone->change(level => 3);
 
 ok($objDePhone->lt("a\x{308}", "A\x{308}"));
 ok($objDePhone->lt("o\x{308}", "O\x{308}"));
 ok($objDePhone->lt("u\x{308}", "U\x{308}"));
-
-ok($objDePhone->lt($auml, $Auml));
-ok($objDePhone->lt($ouml, $Ouml));
-ok($objDePhone->lt($uuml, $Uuml));
-
-# 26
 
 ok($objDePhone->eq("a\x{308}", $auml));
 ok($objDePhone->eq("A\x{308}", $Auml));
@@ -96,7 +84,7 @@ ok($objDePhone->eq("O\x{308}", $Ouml));
 ok($objDePhone->eq("u\x{308}", $uuml));
 ok($objDePhone->eq("U\x{308}", $Uuml));
 
-# 32
+# 26
 
 ok($objDePhone->eq("a\x{308}\x{304}", "\x{1DF}"));
 ok($objDePhone->eq("A\x{308}\x{304}", "\x{1DE}"));
@@ -111,44 +99,26 @@ ok($objDePhone->eq("U\x{308}\x{304}", "\x{1D5}"));
 ok($objDePhone->eq("u\x{308}\x{30C}", "\x{1DA}"));
 ok($objDePhone->eq("U\x{308}\x{30C}", "\x{1D9}"));
 
-# 44
+# 38
 
-{
-  my $objDePhoneBook = Unicode::Collate::Locale->
+my $objDePhoneBook = Unicode::Collate::Locale->
     new(locale => 'de__phonebook', normalization => undef);
-  ok($objDePhoneBook->getlocale, 'de__phonebook');
-  $objDePhoneBook->change(level => 1);
-  ok($objDePhoneBook->eq("a\x{308}", "ae"));
-}
 
-# 46
+ok($objDePhoneBook->getlocale, 'de__phonebook');
 
-{
-  my $objDePhonebk = Unicode::Collate::Locale->
+$objDePhoneBook->change(level => 1);
+
+ok($objDePhoneBook->eq("a\x{308}", "ae"));
+
+# 40
+
+my $objDePhonebk = Unicode::Collate::Locale->
     new(locale => 'de-phonebk', normalization => undef);
-  ok($objDePhonebk->getlocale, 'de__phonebook');
-  $objDePhonebk->change(level => 1);
-  ok($objDePhonebk->eq("a\x{308}", "ae"));
-}
 
-# 48
+ok($objDePhonebk->getlocale, 'de__phonebook');
 
-{
-  my $objDeDePhone = Unicode::Collate::Locale->
-    new(locale => 'de_DE_phone', normalization => undef);
-  ok($objDeDePhone->getlocale, 'de__phonebook');
-  $objDeDePhone->change(level => 1);
-  ok($objDeDePhone->eq("a\x{308}", "ae"));
-}
+$objDePhonebk->change(level => 1);
 
-# 50
+ok($objDePhonebk->eq("a\x{308}", "ae"));
 
-{
-  my $objDeChPhonebk = Unicode::Collate::Locale->
-    new(locale => 'de_CH_phonebk', normalization => undef);
-  ok($objDeChPhonebk->getlocale, 'de__phonebook');
-  $objDeChPhonebk->change(level => 1);
-  ok($objDeChPhonebk->eq("a\x{308}", "ae"));
-}
-
-# 52
+# 42

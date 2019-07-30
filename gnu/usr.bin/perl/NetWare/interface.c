@@ -78,10 +78,10 @@ ClsPerlHost::PerlRun(PerlInterpreter *my_perl)
 	return(perl_run(my_perl));	// Run Perl.
 }
 
-int
+void
 ClsPerlHost::PerlDestroy(PerlInterpreter *my_perl)
 {
-	return(perl_destruct(my_perl));		// Destructor for Perl.
+	perl_destruct(my_perl);		// Destructor for Perl.
 }
 
 void
@@ -148,18 +148,19 @@ int RunPerl(int argc, char **argv, char **env)
 	{
 		PL_perl_destruct_level = 0;
 
-		if(!nlm.PerlParse(my_perl, argc, argv, env))
+		exitstatus = nlm.PerlParse(my_perl, argc, argv, env);
+		if(exitstatus == 0)
 		{
 			#if defined(TOP_CLONE) && defined(USE_ITHREADS)		// XXXXXX testing
 				new_perl = perl_clone(my_perl, 1);
 
-				(void) perl_run(new_perl);	// Run Perl.
+				exitstatus = perl_run(new_perl);	// Run Perl.
 				PERL_SET_THX(my_perl);
 			#else
-				(void) nlm.PerlRun(my_perl);
+				exitstatus = nlm.PerlRun(my_perl);
 			#endif
 		}
-		exitstatus = nlm.PerlDestroy(my_perl);
+		nlm.PerlDestroy(my_perl);
 	}
 	if(my_perl)
 		nlm.PerlFree(my_perl);
@@ -168,7 +169,7 @@ int RunPerl(int argc, char **argv, char **env)
 		if (new_perl)
 		{
 			PERL_SET_THX(new_perl);
-			exitstatus = nlm.PerlDestroy(new_perl);
+			nlm.PerlDestroy(new_perl);
 			nlm.PerlFree(my_perl);
 		}
 	#endif

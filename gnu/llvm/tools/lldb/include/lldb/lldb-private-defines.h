@@ -13,7 +13,8 @@
 #if defined(__cplusplus)
 
 // Include Compiler.h here so we don't define LLVM_FALLTHROUGH and then
-// Compiler.h later tries to redefine it.
+// Compiler.h
+// later tries to redefine it.
 #include "llvm/Support/Compiler.h"
 
 #ifndef LLVM_FALLTHROUGH
@@ -23,7 +24,7 @@
 #endif
 
 /// \macro LLVM_FALLTHROUGH
-/// Marks an empty statement preceding a deliberate switch fallthrough.
+/// \brief Marks an empty statement preceding a deliberate switch fallthrough.
 #if __has_cpp_attribute(clang::fallthrough)
 #define LLVM_FALLTHROUGH [[clang::fallthrough]]
 #else

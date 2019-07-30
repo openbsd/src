@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 // Third party headers
-#include "llvm/Support/Compiler.h"
 #include <cstdlib>
 #include <inttypes.h> // for PRIx8
 #include <limits.h>   // for ULONG_MAX
@@ -891,7 +890,7 @@ CMIUtilString CMIUtilString::ConvertToPrintableASCII(const char vChar,
   case '"':
     if (bEscapeQuotes)
       return "\\\"";
-    LLVM_FALLTHROUGH;
+  // fall thru
   default:
     if (::isprint(vChar))
       return Format("%c", vChar);
@@ -925,7 +924,7 @@ CMIUtilString::ConvertCharValueToPrintableASCII(char vChar,
   case '"':
     if (bEscapeQuotes)
       return "\\\"";
-    LLVM_FALLTHROUGH;
+  // fall thru
   default:
     if (::isprint(vChar))
       return Format("%c", vChar);

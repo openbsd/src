@@ -25,32 +25,26 @@ subdirectories =
  llvm-as
  llvm-bcanalyzer
  llvm-cat
- llvm-cfi-verify
  llvm-cov
  llvm-cvtres
  llvm-diff
  llvm-dis
  llvm-dwarfdump
  llvm-dwp
- llvm-exegesis
  llvm-extract
  llvm-jitlistener
  llvm-link
  llvm-lto
  llvm-mc
- llvm-mca
+ llvm-mcmarkup
  llvm-modextract
- llvm-mt
  llvm-nm
- llvm-objcopy
  llvm-objdump
  llvm-pdbutil
  llvm-profdata
- llvm-rc
  llvm-rtdyld
  llvm-size
  llvm-split
- llvm-undname
  opt
  verify-uselistorder
 

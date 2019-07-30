@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.69 2019/01/17 05:56:29 tedu Exp $	 */
+/* $Id: main.c,v 1.67 2018/02/08 07:00:33 martijn Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -392,7 +392,6 @@ initialize(void)
 	initmalloc();
 	initnfs();
 	initcpu();
-	inituvm();
 }
 
 void

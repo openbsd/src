@@ -18,6 +18,6 @@ Target &getTheAVRTarget() {
 
 extern "C" void LLVMInitializeAVRTargetInfo() {
   llvm::RegisterTarget<llvm::Triple::avr> X(llvm::getTheAVRTarget(), "avr",
-                                            "Atmel AVR Microcontroller", "AVR");
+                                            "Atmel AVR Microcontroller");
 }
 

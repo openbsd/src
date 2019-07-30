@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.76 2019/05/13 15:19:16 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.70 2017/11/27 16:25:50 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -71,11 +71,9 @@ int		 relay_httpurl_test(struct ctl_relay_event *,
 		    struct relay_rule *, struct kvlist *);
 int		 relay_httpcookie_test(struct ctl_relay_event *,
 		    struct relay_rule *, struct kvlist *);
-int		 relay_apply_actions(struct ctl_relay_event *, struct kvlist *,
-		    struct relay_table *);
+int		 relay_apply_actions(struct ctl_relay_event *, struct kvlist *);
 int		 relay_match_actions(struct ctl_relay_event *,
-		    struct relay_rule *, struct kvlist *, struct kvlist *,
-		    struct relay_table **);
+		    struct relay_rule *, struct kvlist *, struct kvlist *);
 void		 relay_httpdesc_free(struct http_descriptor *);
 
 static struct relayd	*env = NULL;
@@ -160,7 +158,6 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	const char		*errstr;
 	size_t			 size, linelen;
 	struct kv		*hdr = NULL;
-	struct kv		*upgrade = NULL, *upgrade_ws = NULL;
 
 	getmonotime(&con->se_tv_last);
 	cre->timedout = 0;
@@ -409,7 +406,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		action = relay_test(proto, cre);
 		switch (action) {
 		case RES_FAIL:
-			relay_close(con, "filter rule failed", 1);
+			relay_close(con, "filter rule failed");
 			return;
 		case RES_BAD:
 			relay_abort_http(con, 400, "Bad Request",
@@ -423,40 +420,6 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		if (action != RES_PASS) {
 			relay_abort_http(con, 403, "Forbidden", con->se_label);
 			return;
-		}
-
-		/*
-		 * HTTP 101 Switching Protocols
-		 */
-		upgrade = kv_find_value(&desc->http_headers,
-		    "Connection", "upgrade", ",");
-		upgrade_ws = kv_find_value(&desc->http_headers,
-		    "Upgrade", "websocket", ",");
-		if (cre->dir == RELAY_DIR_REQUEST && upgrade_ws != NULL) {
-			if ((proto->httpflags & HTTPFLAG_WEBSOCKETS) == 0) {
-				relay_abort_http(con, 403,
-				    "Websocket Forbidden", 0);
-				return;
-			} else if (upgrade == NULL) {
-				relay_abort_http(con, 400,
-				    "Bad Websocket Request", 0);
-				return;
-			} else if (desc->http_method != HTTP_METHOD_GET) {
-				relay_abort_http(con, 405,
-				    "Websocket Method Not Allowed", 0);
-				return;
-			}
-		} else if (cre->dir == RELAY_DIR_RESPONSE &&
-		    desc->http_status == 101) {
-			if (upgrade_ws != NULL && upgrade != NULL &&
-			    (proto->httpflags & HTTPFLAG_WEBSOCKETS)) {
-				cre->dst->toread = TOREAD_UNLIMITED;
-				cre->dst->bev->readcb = relay_read;
-			} else {
-				relay_abort_http(con, 502,
-				    "Bad Websocket Gateway", 0);
-				return;
-			}
 		}
 
 		switch (desc->http_method) {
@@ -522,15 +485,6 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			bev->readcb = relay_read_httpchunks;
 		}
 
-		/*
-		 * Ask the server to close the connection after this request
-		 * since we don't read any further request headers.
-		 */
-		if (cre->toread == TOREAD_UNLIMITED)
-			if (kv_add(&desc->http_headers, "Connection",
-			    "close", 0) == NULL)
-				goto fail;
-
 		if (cre->dir == RELAY_DIR_REQUEST) {
 			if (relay_writerequest_http(cre->dst, cre) == -1)
 			    goto fail;
@@ -558,12 +512,12 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		}
 	}
 	if (con->se_done) {
-		relay_close(con, "last http read (done)", 0);
+		relay_close(con, "last http read (done)");
 		return;
 	}
 	switch (relay_splice(cre)) {
 	case -1:
-		relay_close(con, strerror(errno), 1);
+		relay_close(con, strerror(errno));
 	case 1:
 		return;
 	case 0:
@@ -635,10 +589,10 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 	/* The callback readcb() might have freed the session. */
 	return;
  done:
-	relay_close(con, "last http content read", 0);
+	relay_close(con, "last http content read");
 	return;
  fail:
-	relay_close(con, strerror(errno), 1);
+	relay_close(con, strerror(errno));
 }
 
 void
@@ -698,7 +652,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 		 */
 		if (sscanf(line, "%llx", &llval) != 1 || llval < 0) {
 			free(line);
-			relay_close(con, "invalid chunk size", 1);
+			relay_close(con, "invalid chunk size");
 			return;
 		}
 
@@ -759,10 +713,10 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	return;
 
  done:
-	relay_close(con, "last http chunk read (done)", 0);
+	relay_close(con, "last http chunk read (done)");
 	return;
  fail:
-	relay_close(con, strerror(errno), 1);
+	relay_close(con, strerror(errno));
 }
 
 void
@@ -1037,7 +991,7 @@ relay_abort_http(struct rsession *con, u_int code, const char *msg,
 	/* In some cases this function may be called from generic places */
 	if (rlay->rl_proto->type != RELAY_PROTO_HTTP ||
 	    (rlay->rl_proto->flags & F_RETURN) == 0) {
-		relay_close(con, msg, 0);
+		relay_close(con, msg);
 		return;
 	}
 
@@ -1106,9 +1060,9 @@ relay_abort_http(struct rsession *con, u_int code, const char *msg,
  done:
 	free(body);
 	if (asprintf(&httpmsg, "%s (%03d %s)", msg, code, httperr) == -1)
-		relay_close(con, msg, 1);
+		relay_close(con, msg);
 	else {
-		relay_close(con, httpmsg, 1);
+		relay_close(con, httpmsg);
 		free(httpmsg);
 	}
 }
@@ -1495,7 +1449,7 @@ relay_httpcookie_test(struct ctl_relay_event *cre, struct relay_rule *rule,
 
 int
 relay_match_actions(struct ctl_relay_event *cre, struct relay_rule *rule,
-    struct kvlist *matches, struct kvlist *actions, struct relay_table **tbl)
+    struct kvlist *matches, struct kvlist *actions)
 {
 	struct rsession		*con = cre->con;
 	struct kv		*kv, *tmp;
@@ -1504,9 +1458,11 @@ relay_match_actions(struct ctl_relay_event *cre, struct relay_rule *rule,
 	 * Apply the following options instantly (action per match).
 	 */
 	if (rule->rule_table != NULL)
-		*tbl = rule->rule_table;
+		con->se_table = rule->rule_table;
+
 	if (rule->rule_tag != 0)
 		con->se_tag = rule->rule_tag == -1 ? 0 : rule->rule_tag;
+
 	if (rule->rule_label != 0)
 		con->se_label = rule->rule_label == -1 ? 0 : rule->rule_label;
 
@@ -1530,8 +1486,7 @@ relay_match_actions(struct ctl_relay_event *cre, struct relay_rule *rule,
 }
 
 int
-relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions,
-    struct relay_table *tbl)
+relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions)
 {
 	struct rsession		*con = cre->con;
 	struct http_descriptor	*desc = cre->desc;
@@ -1720,22 +1675,12 @@ relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions,
 	}
 
 	/*
-	 * Change the backend if the forward table has been changed.
-	 * This only works in the request direction.
-	 */
-	if (cre->dir == RELAY_DIR_REQUEST && con->se_table != tbl) {
-		relay_reset_event(con, &con->se_out);
-		con->se_table = tbl;
-		con->se_haslog = 1;
-	}
-
-	/*
 	 * log tag for request and response, request method
 	 * and end of request marker ","
 	 */
 	if ((con->se_log != NULL) &&
 	    ((meth = relay_httpmethod_byid(desc->http_method)) != NULL) &&
-	    (asprintf(&msg, " %s", meth) != -1))
+	    (asprintf(&msg, " %s",meth) >= 0))
 		evbuffer_add(con->se_log, msg, strlen(msg));
 	free(msg);
 	relay_log(con, cre->dir == RELAY_DIR_REQUEST ? "" : ";");
@@ -1765,7 +1710,6 @@ relay_test(struct protocol *proto, struct ctl_relay_event *cre)
 	struct rsession		*con;
 	struct http_descriptor	*desc = cre->desc;
 	struct relay_rule	*r = NULL, *rule = NULL;
-	struct relay_table	*tbl = NULL;
 	u_int			 cnt = 0;
 	u_int			 action = RES_PASS;
 	struct kvlist		 actions, matches;
@@ -1786,12 +1730,13 @@ relay_test(struct protocol *proto, struct ctl_relay_event *cre)
 			RELAY_GET_SKIP_STEP(RULE_SKIP_DIR);
 		else if (proto->type != r->rule_proto)
 			RELAY_GET_SKIP_STEP(RULE_SKIP_PROTO);
-		else if (RELAY_AF_NEQ(r->rule_af, cre->ss.ss_family) ||
-		     RELAY_AF_NEQ(r->rule_af, cre->dst->ss.ss_family))
+		else if (r->rule_af != AF_UNSPEC &&
+		    (cre->ss.ss_family != r->rule_af ||
+		     cre->dst->ss.ss_family != r->rule_af))
 			RELAY_GET_SKIP_STEP(RULE_SKIP_AF);
 		else if (RELAY_ADDR_CMP(&r->rule_src, &cre->ss) != 0)
 			RELAY_GET_SKIP_STEP(RULE_SKIP_SRC);
-		else if (RELAY_ADDR_CMP(&r->rule_dst, &con->se_sockname) != 0)
+		else if (RELAY_ADDR_CMP(&r->rule_dst, &cre->dst->ss) != 0)
 			RELAY_GET_SKIP_STEP(RULE_SKIP_DST);
 		else if (r->rule_method != HTTP_METHOD_NONE &&
 		    (desc->http_method == HTTP_METHOD_RESPONSE ||
@@ -1815,7 +1760,7 @@ relay_test(struct protocol *proto, struct ctl_relay_event *cre)
 
 			if (r->rule_action == RULE_ACTION_MATCH) {
 				if (relay_match_actions(cre, r, &matches,
-				    &actions, &tbl) != 0) {
+				    &actions) != 0) {
 					/* Something bad happened, drop */
 					action = RES_DROP;
 					break;
@@ -1849,13 +1794,13 @@ relay_test(struct protocol *proto, struct ctl_relay_event *cre)
 		}
 	}
 
-	if (rule != NULL && relay_match_actions(cre, rule, NULL, &actions, &tbl)
+	if (rule != NULL && relay_match_actions(cre, rule, NULL, &actions)
 	    != 0) {
 		/* Something bad happened, drop */
 		action = RES_DROP;
 	}
 
-	if (relay_apply_actions(cre, &actions, tbl) != 0) {
+	if (relay_apply_actions(cre, &actions) != 0) {
 		/* Something bad happened, drop */
 		action = RES_DROP;
 	}
@@ -1890,7 +1835,7 @@ relay_calc_skip_steps(struct relay_rules *rules)
 			RELAY_SET_SKIP_STEPS(RULE_SKIP_DIR);
 		else if (cur->rule_proto != prev->rule_proto)
 			RELAY_SET_SKIP_STEPS(RULE_SKIP_PROTO);
-		else if (RELAY_AF_NEQ(cur->rule_af, prev->rule_af))
+		else if (cur->rule_af != prev->rule_af)
 			RELAY_SET_SKIP_STEPS(RULE_SKIP_AF);
 		else if (RELAY_ADDR_NEQ(&cur->rule_src, &prev->rule_src))
 			RELAY_SET_SKIP_STEPS(RULE_SKIP_SRC);

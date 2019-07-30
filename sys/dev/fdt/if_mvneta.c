@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.7 2019/04/30 20:26:02 patrick Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.4 2018/02/09 00:08:17 jmatthew Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -161,7 +161,6 @@ struct mvneta_softc {
 		PHY_MODE_RGMII_ID,
 	}			 sc_phy_mode;
 	int			 sc_fixed_link;
-	int			 sc_inband_status;
 	int			 sc_phy;
 	int			 sc_link;
 };
@@ -183,8 +182,6 @@ int mvneta_intr(void *);
 
 void mvneta_start(struct ifnet *);
 int mvneta_ioctl(struct ifnet *, u_long, caddr_t);
-void mvneta_inband_statchg(struct mvneta_softc *);
-void mvneta_port_change(struct mvneta_softc *);
 void mvneta_port_up(struct mvneta_softc *);
 int mvneta_up(struct mvneta_softc *);
 void mvneta_down(struct mvneta_softc *);
@@ -258,30 +255,22 @@ mvneta_miibus_statchg(struct device *self)
 		MVNETA_WRITE(sc, MVNETA_PANC, panc);
 	}
 
-	mvneta_port_change(sc);
-}
+	if (!!(sc->sc_mii.mii_media_status & IFM_ACTIVE) != sc->sc_link) {
+		sc->sc_link = !sc->sc_link;
 
-void
-mvneta_inband_statchg(struct mvneta_softc *sc)
-{
-	uint32_t reg;
-
-	sc->sc_mii.mii_media_status = IFM_AVALID;
-	sc->sc_mii.mii_media_active = IFM_ETHER;
-
-	reg = MVNETA_READ(sc, MVNETA_PS0);
-	if (reg & MVNETA_PS0_LINKUP)
-		sc->sc_mii.mii_media_status |= IFM_ACTIVE;
-	if (reg & MVNETA_PS0_GMIISPEED)
-		sc->sc_mii.mii_media_active |= IFM_1000_T;
-	else if (reg & MVNETA_PS0_MIISPEED)
-		sc->sc_mii.mii_media_active |= IFM_100_TX;
-	else
-		sc->sc_mii.mii_media_active |= IFM_10_T;
-	if (reg & MVNETA_PS0_FULLDX)
-		sc->sc_mii.mii_media_active |= IFM_FDX;
-
-	mvneta_port_change(sc);
+		if (sc->sc_link) {
+			uint32_t panc = MVNETA_READ(sc, MVNETA_PANC);
+			panc &= ~MVNETA_PANC_FORCELINKFAIL;
+			panc |= MVNETA_PANC_FORCELINKPASS;
+			MVNETA_WRITE(sc, MVNETA_PANC, panc);
+			mvneta_port_up(sc);
+		} else {
+			uint32_t panc = MVNETA_READ(sc, MVNETA_PANC);
+			panc &= ~MVNETA_PANC_FORCELINKPASS;
+			panc |= MVNETA_PANC_FORCELINKFAIL;
+			MVNETA_WRITE(sc, MVNETA_PANC, panc);
+		}
+	}
 }
 
 void
@@ -340,8 +329,7 @@ mvneta_match(struct device *parent, void *cfdata, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "marvell,armada-370-neta") ||
-	    OF_is_compatible(faa->fa_node, "marvell,armada-3700-neta");
+	return OF_is_compatible(faa->fa_node, "marvell,armada-370-neta");
 }
 
 void
@@ -349,11 +337,9 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mvneta_softc *sc = (struct mvneta_softc *) self;
 	struct fdt_attach_args *faa = aux;
-	uint32_t ctl0, ctl2, panc;
 	struct ifnet *ifp;
 	int i, len, node;
 	char *phy_mode;
-	char *managed;
 
 	printf("\n");
 
@@ -397,17 +383,6 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 	if (OF_getproplen(faa->fa_node, "fixed-link") >= 0 ||
 	    OF_child(faa->fa_node))
 		sc->sc_fixed_link = 1;
-
-	if ((len = OF_getproplen(faa->fa_node, "managed")) >= 0) {
-		managed = malloc(len, M_TEMP, M_WAITOK);
-		OF_getprop(faa->fa_node, "managed", managed, len);
-		if (!strncmp(managed, "in-band-status",
-		    strlen("in-band-status"))) {
-			sc->sc_fixed_link = 1;
-			sc->sc_inband_status = 1;
-		}
-		free(managed, M_TEMP, len);
-	}
 
 	if (!sc->sc_fixed_link) {
 		node = OF_getnodebyphandle(OF_getpropint(faa->fa_node,
@@ -459,10 +434,9 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 	MVNETA_WRITE(sc, MVNETA_PMIC, 0);
 
 	/* mask all interrupts */
-	MVNETA_WRITE(sc, MVNETA_PRXTXTIM, MVNETA_PRXTXTI_PMISCICSUMMARY);
+	MVNETA_WRITE(sc, MVNETA_PRXTXTIM, 0);
 	MVNETA_WRITE(sc, MVNETA_PRXTXIM, 0);
-	MVNETA_WRITE(sc, MVNETA_PMIM, MVNETA_PMI_PHYSTATUSCHNG |
-	    MVNETA_PMI_LINKCHANGE | MVNETA_PMI_PSCSYNCCHNG);
+	MVNETA_WRITE(sc, MVNETA_PMIM, 0);
 	MVNETA_WRITE(sc, MVNETA_PIE, 0);
 
 	/* enable MBUS Retry bit16 */
@@ -504,6 +478,15 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 	MVNETA_WRITE(sc, MVNETA_EUC,
 	    MVNETA_READ(sc, MVNETA_EUC) & ~MVNETA_EUC_POLLING);
 
+	/* Disable Auto-Negotiation */
+	MVNETA_WRITE(sc, MVNETA_PANC,
+	    MVNETA_READ(sc, MVNETA_PANC) & ~(MVNETA_PANC_INBANDANEN |
+	    MVNETA_PANC_ANSPEEDEN | MVNETA_PANC_ANDUPLEXEN));
+	MVNETA_WRITE(sc, MVNETA_OMSCD,
+	    MVNETA_READ(sc, MVNETA_OMSCD) & ~MVNETA_OMSCD_1MS_CLOCK_ENABLE);
+	MVNETA_WRITE(sc, MVNETA_PMACC2,
+	    MVNETA_READ(sc, MVNETA_PMACC2) & ~MVNETA_PMACC2_INBANDAN);
+
 	/* clear uni-/multicast tables */
 	uint32_t dfut[MVNETA_NDFUT], dfsmt[MVNETA_NDFSMT], dfomt[MVNETA_NDFOMT];
 	memset(dfut, 0, sizeof(dfut));
@@ -519,73 +502,31 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 	MVNETA_WRITE(sc, MVNETA_EUIC, 0);
 
 	/* Setup phy. */
-	ctl0 = MVNETA_READ(sc, MVNETA_PMACC0);
-	ctl2 = MVNETA_READ(sc, MVNETA_PMACC2);
-	panc = MVNETA_READ(sc, MVNETA_PANC);
-
-	/* Force link down to change in-band settings. */
-	panc &= ~MVNETA_PANC_FORCELINKPASS;
-	panc |= MVNETA_PANC_FORCELINKFAIL;
-	MVNETA_WRITE(sc, MVNETA_PANC, panc);
-
-	ctl0 &= ~MVNETA_PMACC0_PORTTYPE;
-	ctl2 &= ~(MVNETA_PMACC2_PORTMACRESET | MVNETA_PMACC2_INBANDAN);
-	panc &= ~(MVNETA_PANC_INBANDANEN | MVNETA_PANC_INBANDRESTARTAN |
-	    MVNETA_PANC_SETMIISPEED | MVNETA_PANC_SETGMIISPEED |
-	    MVNETA_PANC_ANSPEEDEN | MVNETA_PANC_SETFCEN |
-	    MVNETA_PANC_PAUSEADV | MVNETA_PANC_ANFCEN |
-	    MVNETA_PANC_SETFULLDX | MVNETA_PANC_ANDUPLEXEN);
-
-	ctl2 |= MVNETA_PMACC2_RGMIIEN;
+	uint32_t ctrl = MVNETA_READ(sc, MVNETA_PMACC2);
 	switch (sc->sc_phy_mode) {
 	case PHY_MODE_QSGMII:
 		MVNETA_WRITE(sc, MVNETA_SERDESCFG,
 		    MVNETA_SERDESCFG_QSGMII_PROTO);
-		ctl2 |= MVNETA_PMACC2_PCSEN;
+		ctrl |= MVNETA_PMACC2_PCSEN | MVNETA_PMACC2_RGMIIEN;
 		break;
 	case PHY_MODE_SGMII:
 		MVNETA_WRITE(sc, MVNETA_SERDESCFG,
 		    MVNETA_SERDESCFG_SGMII_PROTO);
-		ctl2 |= MVNETA_PMACC2_PCSEN;
+		ctrl |= MVNETA_PMACC2_PCSEN | MVNETA_PMACC2_RGMIIEN;
 		break;
-	default:
+	case PHY_MODE_RGMII:
+	case PHY_MODE_RGMII_ID:
+		ctrl |= MVNETA_PMACC2_RGMIIEN;
 		break;
 	}
 
-	/* Use Auto-Negotiation for Inband Status only */
-	if (sc->sc_inband_status) {
-		panc &= ~(MVNETA_PANC_FORCELINKFAIL |
-		    MVNETA_PANC_FORCELINKPASS);
-		/* TODO: read mode from SFP */
-		if (1) {
-			/* 802.3z */
-			ctl0 |= MVNETA_PMACC0_PORTTYPE;
-			panc |= (MVNETA_PANC_INBANDANEN |
-			    MVNETA_PANC_SETGMIISPEED |
-			    MVNETA_PANC_SETFULLDX);
-		} else {
-			/* SGMII */
-			ctl2 |= MVNETA_PMACC2_INBANDAN;
-			panc |= (MVNETA_PANC_INBANDANEN |
-			    MVNETA_PANC_ANSPEEDEN |
-			    MVNETA_PANC_ANDUPLEXEN);
-		}
-		MVNETA_WRITE(sc, MVNETA_OMSCD,
-		    MVNETA_READ(sc, MVNETA_OMSCD) | MVNETA_OMSCD_1MS_CLOCK_ENABLE);
-	} else {
-		MVNETA_WRITE(sc, MVNETA_OMSCD,
-		    MVNETA_READ(sc, MVNETA_OMSCD) & ~MVNETA_OMSCD_1MS_CLOCK_ENABLE);
-	}
+	ctrl &= ~MVNETA_PMACC2_PORTMACRESET;
+	MVNETA_WRITE(sc, MVNETA_PMACC2, ctrl);
 
-	MVNETA_WRITE(sc, MVNETA_PMACC0, ctl0);
-	MVNETA_WRITE(sc, MVNETA_PMACC2, ctl2);
-	MVNETA_WRITE(sc, MVNETA_PANC, panc);
-
-	/* Port reset */
 	while (MVNETA_READ(sc, MVNETA_PMACC2) & MVNETA_PMACC2_PORTMACRESET)
 		;
 
-	fdt_intr_establish(faa->fa_node, IPL_NET, mvneta_intr, sc,
+	arm_intr_establish_fdt(faa->fa_node, IPL_NET, mvneta_intr, sc,
 	    sc->sc_dev.dv_xname);
 
 	ifp = &sc->sc_ac.ac_if;
@@ -648,13 +589,9 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 		ifmedia_set(&sc->sc_mii.mii_media,
 		    IFM_ETHER|IFM_MANUAL);
 
-		if (sc->sc_inband_status) {
-			mvneta_inband_statchg(sc);
-		} else {
-			sc->sc_mii.mii_media_status = IFM_AVALID|IFM_ACTIVE;
-			sc->sc_mii.mii_media_active = IFM_ETHER|IFM_1000_T|IFM_FDX;
-			mvneta_miibus_statchg(self);
-		}
+		sc->sc_mii.mii_media_status = IFM_AVALID|IFM_ACTIVE;
+		sc->sc_mii.mii_media_active = IFM_ETHER|IFM_1000_T|IFM_FDX;
+		mvneta_miibus_statchg(self);
 
 		ifp->if_baudrate = ifmedia_baudrate(sc->sc_mii.mii_media_active);
 		ifp->if_link_state = LINK_STATE_FULL_DUPLEX;
@@ -720,23 +657,12 @@ mvneta_intr(void *arg)
 {
 	struct mvneta_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	uint32_t ic, misc;
-
-	ic = MVNETA_READ(sc, MVNETA_PRXTXTIC);
-
-	if (ic & MVNETA_PRXTXTI_PMISCICSUMMARY) {
-		misc = MVNETA_READ(sc, MVNETA_PMIC);
-		MVNETA_WRITE(sc, MVNETA_PMIC, 0);
-		if (sc->sc_inband_status && (misc &
-		    (MVNETA_PMI_PHYSTATUSCHNG |
-		    MVNETA_PMI_LINKCHANGE |
-		    MVNETA_PMI_PSCSYNCCHNG))) {
-			mvneta_inband_statchg(sc);
-		}
-	}
+	uint32_t ic;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return 1;
+
+	ic = MVNETA_READ(sc, MVNETA_PRXTXTIC);
 
 	if (ic & MVNETA_PRXTXTI_TBTCQ(0))
 		mvneta_tx_proc(sc);
@@ -865,31 +791,6 @@ mvneta_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 }
 
 void
-mvneta_port_change(struct mvneta_softc *sc)
-{
-	if (!!(sc->sc_mii.mii_media_status & IFM_ACTIVE) != sc->sc_link) {
-		sc->sc_link = !sc->sc_link;
-
-		if (sc->sc_link) {
-			if (!sc->sc_inband_status) {
-				uint32_t panc = MVNETA_READ(sc, MVNETA_PANC);
-				panc &= ~MVNETA_PANC_FORCELINKFAIL;
-				panc |= MVNETA_PANC_FORCELINKPASS;
-				MVNETA_WRITE(sc, MVNETA_PANC, panc);
-			}
-			mvneta_port_up(sc);
-		} else {
-			if (!sc->sc_inband_status) {
-				uint32_t panc = MVNETA_READ(sc, MVNETA_PANC);
-				panc &= ~MVNETA_PANC_FORCELINKPASS;
-				panc |= MVNETA_PANC_FORCELINKFAIL;
-				MVNETA_WRITE(sc, MVNETA_PANC, panc);
-			}
-		}
-	}
-}
-
-void
 mvneta_port_up(struct mvneta_softc *sc)
 {
 	/* Enable port RX/TX. */
@@ -962,7 +863,6 @@ mvneta_up(struct mvneta_softc *sc)
 
 	/* TODO: correct frame size */
 	MVNETA_WRITE(sc, MVNETA_PMACC0,
-	    (MVNETA_READ(sc, MVNETA_PMACC0) & MVNETA_PMACC0_PORTTYPE) |
 	    MVNETA_PMACC0_FRAMESIZELIMIT(MCLBYTES - MVNETA_HWHEADER_SIZE));
 
 	/* set max MTU */
@@ -986,10 +886,9 @@ mvneta_up(struct mvneta_softc *sc)
 		mvneta_port_up(sc);
 
 	/* Enable interrupt masks */
-	MVNETA_WRITE(sc, MVNETA_PRXTXTIM, MVNETA_PRXTXTI_RBICTAPQ(0) |
-	    MVNETA_PRXTXTI_TBTCQ(0) | MVNETA_PRXTXTI_PMISCICSUMMARY);
-	MVNETA_WRITE(sc, MVNETA_PMIM, MVNETA_PMI_PHYSTATUSCHNG |
-	    MVNETA_PMI_LINKCHANGE | MVNETA_PMI_PSCSYNCCHNG);
+	MVNETA_WRITE(sc, MVNETA_PRXTXTIM,
+	    MVNETA_PRXTXTI_RBICTAPQ(0) |
+	    MVNETA_PRXTXTI_TBTCQ(0));
 
 	timeout_add_sec(&sc->sc_tick_ch, 1);
 
@@ -1077,13 +976,15 @@ mvneta_down(struct mvneta_softc *sc)
 	    MVNETA_READ(sc, MVNETA_PMACC0) & ~MVNETA_PMACC0_PORTEN);
 	delay(200);
 
-	/* mask all interrupts */
-	MVNETA_WRITE(sc, MVNETA_PRXTXTIM, MVNETA_PRXTXTI_PMISCICSUMMARY);
-	MVNETA_WRITE(sc, MVNETA_PRXTXIM, 0);
-
 	/* clear all cause registers */
 	MVNETA_WRITE(sc, MVNETA_PRXTXTIC, 0);
 	MVNETA_WRITE(sc, MVNETA_PRXTXIC, 0);
+	MVNETA_WRITE(sc, MVNETA_PMIC, 0);
+
+	/* mask all interrupts */
+	MVNETA_WRITE(sc, MVNETA_PRXTXTIM, 0);
+	MVNETA_WRITE(sc, MVNETA_PRXTXIM, 0);
+	MVNETA_WRITE(sc, MVNETA_PMIM, 0);
 
 	/* Free RX and TX mbufs still in the queues. */
 	for (i = 0; i < MVNETA_TX_RING_CNT; i++) {

@@ -28,7 +28,7 @@ class ThreadExitTestCase(TestBase):
     def test(self):
         """Test thread exit handling."""
         self.build(dictionary=self.getBuildFlags())
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # This should create a breakpoint with 1 location.

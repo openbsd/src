@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.129 2019/05/25 07:18:20 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.126 2018/01/01 11:19:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -17,7 +17,9 @@
  */
 
 #include <sys/types.h>
+#include <sys/file.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/un.h>
 #include <sys/wait.h>
 
@@ -215,13 +217,14 @@ client_exit_message(void)
 int
 client_main(struct event_base *base, int argc, char **argv, int flags)
 {
-	struct cmd_parse_result	*pr;
 	struct cmd		*cmd;
+	struct cmd_list		*cmdlist;
 	struct msg_command_data	*data;
 	int			 cmdflags, fd, i;
 	const char		*ttynam, *cwd;
 	pid_t			 ppid;
 	enum msgtype		 msg;
+	char			*cause, path[PATH_MAX];
 	struct termios		 tio, saved_tio;
 	size_t			 size;
 
@@ -247,15 +250,14 @@ client_main(struct event_base *base, int argc, char **argv, int flags)
 		 * later in server) but it is necessary to get the start server
 		 * flag.
 		 */
-		pr = cmd_parse_from_arguments(argc, argv, NULL);
-		if (pr->status == CMD_PARSE_SUCCESS) {
-			TAILQ_FOREACH(cmd, &pr->cmdlist->list, qentry) {
+		cmdlist = cmd_list_parse(argc, argv, NULL, 0, &cause);
+		if (cmdlist != NULL) {
+			TAILQ_FOREACH(cmd, &cmdlist->list, qentry) {
 				if (cmd->entry->flags & CMD_STARTSERVER)
 					cmdflags |= CMD_STARTSERVER;
 			}
-			cmd_list_free(pr->cmdlist);
-		} else
-			free(pr->error);
+			cmd_list_free(cmdlist);
+		}
 	}
 
 	/* Create client process structure (starts logging). */
@@ -277,7 +279,9 @@ client_main(struct event_base *base, int argc, char **argv, int flags)
 	client_peer = proc_add_peer(client_proc, fd, client_dispatch, NULL);
 
 	/* Save these before pledge(). */
-	if ((cwd = find_cwd()) == NULL && (cwd = find_home()) == NULL)
+	if ((cwd = getenv("PWD")) == NULL &&
+	    (cwd = getcwd(path, sizeof path)) == NULL &&
+	    (cwd = find_home()) == NULL)
 		cwd = "/";
 	if ((ttynam = ttyname(STDIN_FILENO)) == NULL)
 		ttynam = "";

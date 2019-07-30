@@ -31,7 +31,8 @@ class ConstantInitBuilderBase;
 }
 namespace llvm {
 template <>
-struct PointerLikeTypeTraits< ::clang::CodeGen::ConstantInitBuilderBase*> {
+class PointerLikeTypeTraits< ::clang::CodeGen::ConstantInitBuilderBase*> {
+public:
   using T = ::clang::CodeGen::ConstantInitBuilderBase*;
 
   static inline void *getAsVoidPointer(T p) { return p; }
@@ -92,7 +93,8 @@ public:
 namespace llvm {
 
 template <>
-struct PointerLikeTypeTraits< ::clang::CodeGen::ConstantInitFuture> {
+class PointerLikeTypeTraits< ::clang::CodeGen::ConstantInitFuture> {
+public:
   using T = ::clang::CodeGen::ConstantInitFuture;
 
   static inline void *getAsVoidPointer(T future) {

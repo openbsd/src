@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.c,v 1.33 2019/01/17 06:15:44 tedu Exp $
+ *	$OpenBSD: locate.c,v 1.31 2015/11/19 21:46:05 mmcc Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -31,6 +31,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *      $Id: locate.c,v 1.31 2015/11/19 21:46:05 mmcc Exp $
  */
 
 /*
@@ -71,6 +73,7 @@
 #include <fnmatch.h>
 #include <libgen.h>
 #include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -106,8 +109,10 @@ void	search_statistic(char *, char **);
 unsigned long cputime(void);
 
 extern char     **colon(char **, char*, char*);
+extern void     print_matches(u_int);
 extern int      getwm(caddr_t);
 extern int      getwf(FILE *);
+extern u_char   *tolower_word(u_char *);
 extern int	check_bigram_char(int);
 extern char 	*patprep(char *);
 
@@ -117,6 +122,7 @@ main(int argc, char *argv[])
 {
 	int ch;
 	char **dbv = NULL;
+	(void) setlocale(LC_ALL, "");
 
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
@@ -162,6 +168,10 @@ main(int argc, char *argv[])
 			dbv = colon(dbv, path_fcodes, _PATH_FCODES);
 	}
 
+	if (f_icase && UCHAR_MAX < 4096) /* init tolower lookup table */
+		for (ch = 0; ch < UCHAR_MAX + 1; ch++)
+			myctype[ch] = tolower(ch);
+
 	/* foreach database ... */
 	while ((path_fcodes = *dbv) != NULL) {
 		dbv++;
@@ -173,7 +183,7 @@ main(int argc, char *argv[])
 	}
 
 	if (f_silent)
-		printf("%u\n", counter);
+		print_matches(counter);
 	exit(0);
 }
 

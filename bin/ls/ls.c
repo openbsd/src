@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.51 2018/09/13 15:23:32 millert Exp $	*/
+/*	$OpenBSD: ls.c,v 1.50 2018/02/04 22:09:33 deraadt Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -431,9 +431,8 @@ display(FTSENT *p, FTSENT *list)
 	int bcfile, flen, glen, ulen, maxflags, maxgroup, maxuser, maxlen;
 	int entries, needstats;
 	int width;
-	const char *user, *group;
+	char *user, *group, buf[21];	/* 64 bits == 20 digits */
 	char nuser[12], ngroup[12];
-	char buf[21];	/* 64 bits == 20 digits */
 	char *flags = NULL;
 
 	/*

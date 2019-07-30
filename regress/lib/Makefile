@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2018/07/09 09:04:33 mpi Exp $
+#	$OpenBSD: Makefile,v 1.20 2017/07/03 16:24:51 bluhm Exp $
 
 SUBDIR+=	csu
 SUBDIR+=	libc
@@ -14,7 +14,6 @@ SUBDIR+=	libskey
 SUBDIR+=	libsndio
 SUBDIR+=	libssl
 SUBDIR+=	libtls
-SUBDIR+=	libusbhid
 SUBDIR+=	libutil
 
 install:

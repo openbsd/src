@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.22 2019/06/12 05:04:45 otto Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.20 2017/04/17 16:03:15 otto Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -20,8 +20,6 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
-#include <netinet/in.h>
-
 #include <err.h>
 #include <errno.h>
 #include <poll.h>
@@ -30,7 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#include <resolv.h>
 #include <unistd.h>
 
 #include "ntpd.h"
@@ -39,7 +36,7 @@ volatile sig_atomic_t	 quit_dns = 0;
 struct imsgbuf		*ibuf_dns;
 
 void	sighdlr_dns(int);
-int	dns_dispatch_imsg(struct ntpd_conf *);
+int	dns_dispatch_imsg(void);
 
 void
 sighdlr_dns(int sig)
@@ -58,14 +55,15 @@ ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 	struct pollfd		 pfd[1];
 	int			 nfds, nullfd;
 
-	res_init();
 	if (setpriority(PRIO_PROCESS, 0, 0) == -1)
 		log_warn("could not set priority");
 
-	log_init(nconf->debug, LOG_DAEMON);
-	log_setverbose(nconf->verbose);
-	if (!nconf->debug && setsid() == -1)
-		fatal("setsid");
+	/* in this case the parent didn't init logging and didn't daemonize */
+	if (nconf->settime && !nconf->debug) {
+		log_init(nconf->debug, LOG_DAEMON);
+		if (setsid() == -1)
+			fatal("setsid");
+	}
 	log_procinit("dns");
 
 	if ((nullfd = open("/dev/null", O_RDWR, 0)) == -1)
@@ -117,7 +115,7 @@ ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 
 		if (nfds > 0 && pfd[0].revents & POLLIN) {
 			nfds--;
-			if (dns_dispatch_imsg(nconf) == -1)
+			if (dns_dispatch_imsg() == -1)
 				quit_dns = 1;
 		}
 	}
@@ -128,7 +126,7 @@ ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 }
 
 int
-dns_dispatch_imsg(struct ntpd_conf *nconf)
+dns_dispatch_imsg(void)
 {
 	struct imsg		 imsg;
 	int			 n, cnt;
@@ -162,38 +160,25 @@ dns_dispatch_imsg(struct ntpd_conf *nconf)
 			if (name[len] != '\0' ||
 			    strlen(name) != len)
 				fatalx("invalid %s received", str);
-			if ((cnt = host_dns(name, nconf->status.synced,
-			    &hn)) == -1)
+			if ((cnt = host_dns(name, &hn)) == -1)
 				break;
 			buf = imsg_create(ibuf_dns, imsg.hdr.type,
 			    imsg.hdr.peerid, 0,
-			    cnt * (sizeof(struct sockaddr_storage) + sizeof(int)));
+			    cnt * sizeof(struct sockaddr_storage));
 			if (cnt > 0) {
 				if (buf) {
-					for (h = hn; h != NULL; h = h->next) {
+					for (h = hn; h != NULL; h = h->next)
 						if (imsg_add(buf, &h->ss,
 						    sizeof(h->ss)) == -1) {
 							buf = NULL;
 							break;
 						}
-						if (imsg_add(buf, &h->notauth,
-						    sizeof(int)) == -1) {
-							buf = NULL;
-							break;
-						}
-					}
 				}
 				host_dns_free(hn);
 				hn = NULL;
 			}
 			if (buf)
 				imsg_close(ibuf_dns, buf);
-			break;
-		case IMSG_SYNCED:
-			nconf->status.synced = 1;
-			break;
-		case IMSG_UNSYNCED:
-			nconf->status.synced = 0;
 			break;
 		default:
 			break;

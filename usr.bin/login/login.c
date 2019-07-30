@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.70 2018/08/15 19:38:47 fcambus Exp $	*/
+/*	$OpenBSD: login.c,v 1.69 2017/12/08 17:04:15 deraadt Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -405,8 +405,9 @@ main(int argc, char *argv[])
 		if ((instance = strchr(username, '/')) != NULL) {
 			if (strncmp(instance + 1, "root", 4) == 0)
 				rootlogin = 1;
-			*instance = '\0';
-		}
+			*instance++ = '\0';
+		} else
+			instance = "";
 
 		if (strlen(username) > UT_NAMESIZE)
 			username[UT_NAMESIZE] = '\0';

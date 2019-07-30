@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.49 2019/03/16 16:33:59 visa Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.43 2018/02/23 15:41:08 visa Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -21,11 +21,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/atomic.h>
+#include <sys/queue.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/mbuf.h>
-#include <sys/smr.h>
 
 #include <crypto/cryptodev.h>
 #include <crypto/aes.h>
@@ -34,6 +33,15 @@
 #include <crypto/cryptosoft.h>
 
 #include <machine/fpu.h>
+
+/* defines from crypto/xform.c */
+#define AESCTR_NONCESIZE	4
+#define AESCTR_IVSIZE		8
+#define AESCTR_BLOCKSIZE	16
+
+#define AES_XTS_BLOCKSIZE	16
+#define AES_XTS_IVSIZE		8
+#define AES_XTS_ALPHA		0x87	/* GF(2^128) generator polynomial */
 
 struct aesni_aes_ctx {
 	uint32_t		 aes_ekey[4 * (AES_MAXROUNDS + 1)];
@@ -55,18 +63,17 @@ struct aesni_session {
 	GHASH_CTX		*ses_ghash;
 	struct aesni_xts_ctx	*ses_xts;
 	struct swcr_data	*ses_swd;
-	SMR_LIST_ENTRY(aesni_session)
+	LIST_ENTRY(aesni_session)
 				 ses_entries;
 	uint8_t			*ses_buf;
 	size_t			 ses_buflen;
-	struct smr_entry	 ses_smr;
 };
 
 struct aesni_softc {
 	int32_t			 sc_cid;
 	uint32_t		 sc_sid;
 	struct mutex		 sc_mtx;
-	SMR_LIST_HEAD(, aesni_session)
+	LIST_HEAD(, aesni_session)
 				 sc_sessions;
 } *aesni_sc;
 
@@ -106,11 +113,6 @@ void	aesni_setup(void);
 int	aesni_newsession(u_int32_t *, struct cryptoini *);
 int	aesni_freesession(u_int64_t);
 int	aesni_process(struct cryptop *);
-
-struct aesni_session *
-	aesni_get(uint32_t);
-void	aesni_free(struct aesni_session *);
-void	aesni_free_smr(void *);
 
 int	aesni_swauth(struct cryptop *, struct cryptodesc *, struct swcr_data *,
 	    caddr_t);
@@ -158,7 +160,6 @@ aesni_setup(void)
 	aesni_sc->sc_cid = crypto_get_driverid(CRYPTOCAP_F_MPSAFE);
 	if (aesni_sc->sc_cid < 0) {
 		free(aesni_sc, M_DEVBUF, sizeof(*aesni_sc));
-		aesni_sc = NULL;
 		return;
 	}
 
@@ -188,11 +189,15 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	ses = pool_get(&aesnipl, PR_NOWAIT | PR_ZERO);
 	if (!ses)
 		return (ENOMEM);
-	smr_init(&ses->ses_smr);
 
 	ses->ses_buf = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (ses->ses_buf != NULL)
 		ses->ses_buflen = PAGE_SIZE;
+
+	mtx_enter(&aesni_sc->sc_mtx);
+	LIST_INSERT_HEAD(&aesni_sc->sc_sessions, ses, ses_entries);
+	mtx_leave(&aesni_sc->sc_mtx);
+	ses->ses_sid = ++aesni_sc->sc_sid;
 
 	for (c = cri; c != NULL; c = c->cri_next) {
 		switch (c->cri_alg) {
@@ -218,7 +223,7 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			ses->ses_xts = malloc(sizeof(struct aesni_xts_ctx),
 			    M_CRYPTO_DATA, M_NOWAIT | M_ZERO);
 			if (ses->ses_xts == NULL) {
-				aesni_free(ses);
+				aesni_freesession(ses->ses_sid);
 				return (ENOMEM);
 			}
 
@@ -242,14 +247,12 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			ses->ses_ghash = malloc(sizeof(GHASH_CTX),
 			    M_CRYPTO_DATA, M_NOWAIT | M_ZERO);
 			if (ses->ses_ghash == NULL) {
-				aesni_free(ses);
+				aesni_freesession(ses->ses_sid);
 				return (ENOMEM);
 			}
 
 			/* prepare a hash subkey */
-			fpu_kernel_enter();
 			aesni_enc(ses, ses->ses_ghash->H, ses->ses_ghash->H);
-			fpu_kernel_exit();
 			break;
 
 		case CRYPTO_MD5_HMAC:
@@ -273,7 +276,7 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			swd = malloc(sizeof(struct swcr_data), M_CRYPTO_DATA,
 			    M_NOWAIT|M_ZERO);
 			if (swd == NULL) {
-				aesni_free(ses);
+				aesni_freesession(ses->ses_sid);
 				return (ENOMEM);
 			}
 			ses->ses_swd = swd;
@@ -281,14 +284,14 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			swd->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,
 			    M_NOWAIT);
 			if (swd->sw_ictx == NULL) {
-				aesni_free(ses);
+				aesni_freesession(ses->ses_sid);
 				return (ENOMEM);
 			}
 
 			swd->sw_octx = malloc(axf->ctxsize, M_CRYPTO_DATA,
 			    M_NOWAIT);
 			if (swd->sw_octx == NULL) {
-				aesni_free(ses);
+				aesni_freesession(ses->ses_sid);
 				return (ENOMEM);
 			}
 
@@ -322,15 +325,10 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			break;
 
 		default:
-			aesni_free(ses);
+			aesni_freesession(ses->ses_sid);
 			return (EINVAL);
 		}
 	}
-
-	mtx_enter(&aesni_sc->sc_mtx);
-	ses->ses_sid = ++aesni_sc->sc_sid;
-	SMR_LIST_INSERT_HEAD_LOCKED(&aesni_sc->sc_sessions, ses, ses_entries);
-	mtx_leave(&aesni_sc->sc_mtx);
 
 	*sidp = ses->ses_sid;
 	return (0);
@@ -340,30 +338,23 @@ int
 aesni_freesession(u_int64_t tid)
 {
 	struct aesni_session *ses;
+	struct swcr_data *swd;
+	struct auth_hash *axf;
 	u_int32_t sid = (u_int32_t)tid;
 
 	mtx_enter(&aesni_sc->sc_mtx);
-	SMR_LIST_FOREACH_LOCKED(ses, &aesni_sc->sc_sessions, ses_entries) {
-		if (ses->ses_sid == sid) {
-			SMR_LIST_REMOVE_LOCKED(ses, ses_entries);
+	LIST_FOREACH(ses, &aesni_sc->sc_sessions, ses_entries) {
+		if (ses->ses_sid == sid)
 			break;
-		}
 	}
 	mtx_leave(&aesni_sc->sc_mtx);
 
 	if (ses == NULL)
 		return (EINVAL);
 
-	smr_call(&ses->ses_smr, aesni_free_smr, ses);
-
-	return (0);
-}
-
-void
-aesni_free(struct aesni_session *ses)
-{
-	struct swcr_data *swd;
-	struct auth_hash *axf;
+	mtx_enter(&aesni_sc->sc_mtx);
+	LIST_REMOVE(ses, ses_entries);
+	mtx_leave(&aesni_sc->sc_mtx);
 
 	if (ses->ses_ghash) {
 		explicit_bzero(ses->ses_ghash, sizeof(GHASH_CTX));
@@ -397,27 +388,8 @@ aesni_free(struct aesni_session *ses)
 
 	explicit_bzero(ses, sizeof (*ses));
 	pool_put(&aesnipl, ses);
-}
 
-void
-aesni_free_smr(void *arg)
-{
-	struct aesni_session *ses = arg;
-
-	aesni_free(ses);
-}
-
-struct aesni_session *
-aesni_get(uint32_t sid)
-{
-	struct aesni_session *ses = NULL;
-
-	SMR_ASSERT_CRITICAL();
-	SMR_LIST_FOREACH(ses, &aesni_sc->sc_sessions, ses_entries) {
-		if (ses->ses_sid == sid)
-			break;
-	}
-	return (ses);
+	return (0);
 }
 
 int
@@ -448,6 +420,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	aadlen = rlen = err = iskip = oskip = 0;
 
 	if (crd->crd_len > ses->ses_buflen) {
+		KERNEL_LOCK();
 		if (buf != NULL) {
 			explicit_bzero(buf, ses->ses_buflen);
 			free(buf, M_DEVBUF, ses->ses_buflen);
@@ -457,6 +430,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		rlen = roundup(crd->crd_len, EALG_MAX_BLOCK_LEN);
 		ses->ses_buf = buf = malloc(rlen, M_DEVBUF, M_NOWAIT |
 		    M_ZERO);
+		KERNEL_UNLOCK();
 		if (buf == NULL)
 			return (ENOMEM);
 		ses->ses_buflen = rlen;
@@ -644,8 +618,13 @@ aesni_process(struct cryptop *crp)
 	if (crp->crp_ndesc < 1)
 		return (EINVAL);
 
-	smr_read_enter();
-	ses = aesni_get(crp->crp_sid & 0xffffffff);
+	mtx_enter(&aesni_sc->sc_mtx);
+	LIST_FOREACH(ses, &aesni_sc->sc_sessions, ses_entries) {
+		if (ses->ses_sid == (crp->crp_sid & 0xffffffff))
+			break;
+	}
+	mtx_leave(&aesni_sc->sc_mtx);
+
 	if (!ses) {
 		err = EINVAL;
 		goto out;
@@ -700,7 +679,6 @@ aesni_process(struct cryptop *crp)
 	}
 
 out:
-	smr_read_leave();
 	crp->crp_etype = err;
 	crypto_done(crp);
 	return (err);

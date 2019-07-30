@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.55 2018/10/19 08:13:34 claudio Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.52 2017/07/04 12:48:36 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -256,8 +256,7 @@ __dead void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr,
-	    "usage: %s [-d] [-p path] [-s socket] [-U user] [-u user]\n",
+	fprintf(stderr, "usage: %s [-d] [-p path] [-s socket] [-u user]\n",
 	    __progname);
 	exit(1);
 }
@@ -277,7 +276,6 @@ main(int argc, char *argv[])
 	struct stat	 sb;
 	int		 c, fd;
 	const char	*chrootpath = NULL;
-	const char	*sock_user = SLOWCGI_USER;
 	const char	*slowcgi_user = SLOWCGI_USER;
 
 	/*
@@ -297,7 +295,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	while ((c = getopt(argc, argv, "dp:s:U:u:")) != -1) {
+	while ((c = getopt(argc, argv, "dp:s:u:")) != -1) {
 		switch (c) {
 		case 'd':
 			debug = 1;
@@ -307,9 +305,6 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			fcgi_socket = optarg;
-			break;
-		case 'U':
-			sock_user = optarg;
 			break;
 		case 'u':
 			slowcgi_user = optarg;
@@ -323,7 +318,7 @@ main(int argc, char *argv[])
 	if (geteuid() != 0)
 		errx(1, "need root privileges");
 
-	if (!debug && daemon(0, 0) == -1)
+	if (!debug && daemon(1, 0) == -1)
 		err(1, "daemon");
 
 	if (!debug) {
@@ -331,14 +326,13 @@ main(int argc, char *argv[])
 		logger = &syslogger;
 	}
 
-	ldebug("sock_user: %s", sock_user);
-	pw = getpwnam(sock_user);
+	pw = getpwnam(SLOWCGI_USER);
 	if (pw == NULL)
-		lerrx(1, "no %s user", sock_user);
+		lerrx(1, "no %s user", SLOWCGI_USER);
 
 	fd = slowcgi_listen(fcgi_socket, pw);
 
-	ldebug("slowcgi_user: %s", slowcgi_user);
+	lwarnx("slowcgi_user: %s", slowcgi_user);
 	pw = getpwnam(slowcgi_user);
 	if (pw == NULL)
 		lerrx(1, "no %s user", slowcgi_user);
@@ -437,7 +431,7 @@ accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
 {
 	int ret;
 	if (getdtablecount() + reserve +
-	    ((*counter + 1) * FD_NEEDED) >= getdtablesize()) {
+	    (*counter * FD_NEEDED) >= getdtablesize()) {
 		ldebug("inflight fds exceeded");
 		errno = EMFILE;
 		return -1;

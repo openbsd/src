@@ -2,8 +2,9 @@ package Encode::Unicode;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
-our $VERSION = do { my @r = ( q$Revision: 2.17 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.15 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 use XSLoader;
 XSLoader::load( __PACKAGE__, $VERSION );
@@ -12,7 +13,7 @@ XSLoader::load( __PACKAGE__, $VERSION );
 # Object Generator 8 transcoders all at once!
 #
 
-use Encode ();
+require Encode;
 
 our %BOM_Unknown = map { $_ => 1 } qw(UTF-16 UTF-32);
 
@@ -33,13 +34,12 @@ for my $name (
     $endian = ( $3 eq 'BE' ) ? 'n' : ( $3 eq 'LE' ) ? 'v' : '';
     $size == 4 and $endian = uc($endian);
 
-    my $obj = bless {
+    $Encode::Encoding{$name} = bless {
         Name   => $name,
         size   => $size,
         endian => $endian,
         ucs2   => $ucs2,
     } => __PACKAGE__;
-    Encode::define_encoding($obj, $name);
 }
 
 use parent qw(Encode::Encoding);
@@ -51,6 +51,12 @@ sub renew {
     $clone->{renewed}++;    # so the caller knows it is renewed.
     return $clone;
 }
+
+# There used to be a perl implementation of (en|de)code but with
+# XS version is ripe, perl version is zapped for optimal speed
+
+*decode = \&decode_xs;
+*encode = \&encode_xs;
 
 1;
 __END__

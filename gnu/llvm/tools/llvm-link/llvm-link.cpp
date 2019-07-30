@@ -26,12 +26,13 @@
 #include "llvm/Linker/Linker.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
-#include "llvm/Support/InitLLVM.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/Signals.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/ToolOutputFile.h"
-#include "llvm/Support/WithColor.h"
 #include "llvm/Transforms/IPO/FunctionImport.h"
 #include "llvm/Transforms/IPO/Internalize.h"
 #include "llvm/Transforms/Utils/FunctionImportUtils.h"
@@ -119,8 +120,7 @@ static std::unique_ptr<Module> loadFile(const char *argv0,
                                         LLVMContext &Context,
                                         bool MaterializeMetadata = true) {
   SMDiagnostic Err;
-  if (Verbose)
-    errs() << "Loading '" << FN << "'\n";
+  if (Verbose) errs() << "Loading '" << FN << "'\n";
   std::unique_ptr<Module> Result;
   if (DisableLazyLoad)
     Result = parseIRFile(FN, Err, Context);
@@ -182,30 +182,25 @@ Module &ModuleLazyLoaderCache::operator()(const char *argv0,
 }
 } // anonymous namespace
 
-namespace {
-struct LLVMLinkDiagnosticHandler : public DiagnosticHandler {
-  bool handleDiagnostics(const DiagnosticInfo &DI) override {
-    unsigned Severity = DI.getSeverity();
-    switch (Severity) {
-    case DS_Error:
-      WithColor::error();
-      break;
-    case DS_Warning:
-      if (SuppressWarnings)
-        return true;
-      WithColor::warning();
-      break;
-    case DS_Remark:
-    case DS_Note:
-      llvm_unreachable("Only expecting warnings and errors");
-    }
-
-    DiagnosticPrinterRawOStream DP(errs());
-    DI.print(DP);
-    errs() << '\n';
-    return true;
+static void diagnosticHandler(const DiagnosticInfo &DI, void *C) {
+  unsigned Severity = DI.getSeverity();
+  switch (Severity) {
+  case DS_Error:
+    errs() << "ERROR: ";
+    break;
+  case DS_Warning:
+    if (SuppressWarnings)
+      return;
+    errs() << "WARNING: ";
+    break;
+  case DS_Remark:
+  case DS_Note:
+    llvm_unreachable("Only expecting warnings and errors");
   }
-};
+
+  DiagnosticPrinterRawOStream DP(errs());
+  DI.print(DP);
+  errs() << '\n';
 }
 
 /// Import any functions requested via the -import option.
@@ -238,8 +233,8 @@ static bool importFunctions(const char *argv0, Module &DestModule) {
     auto &SrcModule = ModuleLoaderCache(argv0, FileName);
 
     if (verifyModule(SrcModule, &errs())) {
-      errs() << argv0 << ": " << FileName;
-      WithColor::error() << "input module is broken!\n";
+      errs() << argv0 << ": " << FileName
+             << ": error: input module is broken!\n";
       return false;
     }
 
@@ -262,7 +257,7 @@ static bool importFunctions(const char *argv0, Module &DestModule) {
       errs() << "Importing " << FunctionName << " from " << FileName << "\n";
 
     auto &Entry = ImportList[FileName];
-    Entry.insert(F->getGUID());
+    Entry.insert(std::make_pair(F->getGUID(), /* (Unused) threshold */ 1.0));
   }
   auto CachedModuleLoader = [&](StringRef Identifier) {
     return ModuleLoaderCache.takeModule(Identifier);
@@ -283,8 +278,7 @@ static bool linkFiles(const char *argv0, LLVMContext &Context, Linker &L,
   for (const auto &File : Files) {
     std::unique_ptr<Module> M = loadFile(argv0, File, Context);
     if (!M.get()) {
-      errs() << argv0 << ": ";
-      WithColor::error() << " loading file '" << File << "'\n";
+      errs() << argv0 << ": error loading file '" << File << "'\n";
       return false;
     }
 
@@ -292,8 +286,7 @@ static bool linkFiles(const char *argv0, LLVMContext &Context, Linker &L,
     // doing that debug metadata in the src module might already be pointing to
     // the destination.
     if (DisableDITypeMap && verifyModule(*M, &errs())) {
-      errs() << argv0 << ": " << File << ": ";
-      WithColor::error() << "input module is broken!\n";
+      errs() << argv0 << ": " << File << ": error: input module is broken!\n";
       return false;
     }
 
@@ -347,12 +340,16 @@ static bool linkFiles(const char *argv0, LLVMContext &Context, Linker &L,
 }
 
 int main(int argc, char **argv) {
-  InitLLVM X(argc, argv);
+  // Print a stack trace if we signal out.
+  sys::PrintStackTraceOnErrorSignal(argv[0]);
+  PrettyStackTraceProgram X(argc, argv);
+
   ExitOnErr.setBanner(std::string(argv[0]) + ": ");
 
   LLVMContext Context;
-  Context.setDiagnosticHandler(
-    llvm::make_unique<LLVMLinkDiagnosticHandler>(), true);
+  Context.setDiagnosticHandler(diagnosticHandler, nullptr, true);
+
+  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv, "llvm linker\n");
 
   if (!DisableDITypeMap)
@@ -378,28 +375,25 @@ int main(int argc, char **argv) {
   if (!importFunctions(argv[0], *Composite))
     return 1;
 
-  if (DumpAsm)
-    errs() << "Here's the assembly:\n" << *Composite;
+  if (DumpAsm) errs() << "Here's the assembly:\n" << *Composite;
 
   std::error_code EC;
-  ToolOutputFile Out(OutputFilename, EC, sys::fs::F_None);
+  tool_output_file Out(OutputFilename, EC, sys::fs::F_None);
   if (EC) {
-    WithColor::error() << EC.message() << '\n';
+    errs() << EC.message() << '\n';
     return 1;
   }
 
   if (verifyModule(*Composite, &errs())) {
-    errs() << argv[0] << ": ";
-    WithColor::error() << "linked module is broken!\n";
+    errs() << argv[0] << ": error: linked module is broken!\n";
     return 1;
   }
 
-  if (Verbose)
-    errs() << "Writing bitcode...\n";
+  if (Verbose) errs() << "Writing bitcode...\n";
   if (OutputAssembly) {
     Composite->print(Out.os(), nullptr, PreserveAssemblyUseListOrder);
   } else if (Force || !CheckBitcodeOutputToConsole(Out.os(), true))
-    WriteBitcodeToFile(*Composite, Out.os(), PreserveBitcodeUseListOrder);
+    WriteBitcodeToFile(Composite.get(), Out.os(), PreserveBitcodeUseListOrder);
 
   // Declare success.
   Out.keep();

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.95 2019/05/03 20:44:24 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.89 2018/03/16 15:15:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -40,10 +40,9 @@ const struct cmd_entry cmd_split_window_entry = {
 	.name = "split-window",
 	.alias = "splitw",
 
-	.args = { "bc:de:fF:hIl:p:Pt:v", 0, -1 },
-	.usage = "[-bdefhIPv] [-c start-directory] [-e environment] "
-		 "[-F format] [-p percentage|-l size] " CMD_TARGET_PANE_USAGE
-		 " [command]",
+	.args = { "bc:dfF:l:hp:Pt:v", 0, -1 },
+	.usage = "[-bdfhvP] [-c start-directory] [-F format] "
+		 "[-p percentage|-l size] " CMD_TARGET_PANE_USAGE " [command]",
 
 	.target = { 't', CMD_FIND_PANE, 0 },
 
@@ -54,106 +53,113 @@ const struct cmd_entry cmd_split_window_entry = {
 static enum cmd_retval
 cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		*args = self->args;
 	struct cmd_find_state	*current = &item->shared->current;
-	struct spawn_context	 sc;
+	struct args		*args = self->args;
 	struct client		*c = cmd_find_client(item, NULL, 1);
 	struct session		*s = item->target.s;
 	struct winlink		*wl = item->target.wl;
-	struct window_pane	*wp = item->target.wp, *new_wp;
+	struct window		*w = wl->window;
+	struct window_pane	*wp = item->target.wp, *new_wp = NULL;
+	struct environ		*env;
+	const char		*cmd, *path, *shell, *template, *tmp;
+	char		       **argv, *cause, *new_cause, *cp, *cwd;
+	u_int			 hlimit;
+	int			 argc, size, percentage, before;
 	enum layout_type	 type;
 	struct layout_cell	*lc;
-	struct cmd_find_state	 fs;
-	int			 size, percentage, flags, input;
-	const char		*template, *add;
-	char			*cause, *cp;
-	struct args_value	*value;
+	struct environ_entry	*envent;
+	struct cmd_find_state    fs;
 
+	server_unzoom_window(w);
+
+	if (args->argc == 0) {
+		cmd = options_get_string(s->options, "default-command");
+		if (cmd != NULL && *cmd != '\0') {
+			argc = 1;
+			argv = (char **)&cmd;
+		} else {
+			argc = 0;
+			argv = NULL;
+		}
+	} else {
+		argc = args->argc;
+		argv = args->argv;
+	}
+
+	if ((tmp = args_get(args, 'c')) != NULL)
+		cwd = format_single(item, tmp, c, s, NULL, NULL);
+	else if (item->client != NULL && item->client->session == NULL)
+		cwd = xstrdup(item->client->cwd);
+	else
+		cwd = xstrdup(s->cwd);
+
+	type = LAYOUT_TOPBOTTOM;
 	if (args_has(args, 'h'))
 		type = LAYOUT_LEFTRIGHT;
-	else
-		type = LAYOUT_TOPBOTTOM;
+	before = args_has(args, 'b');
+
+	size = -1;
 	if (args_has(args, 'l')) {
 		size = args_strtonum(args, 'l', 0, INT_MAX, &cause);
 		if (cause != NULL) {
-			cmdq_error(item, "create pane failed: -l %s", cause);
+			xasprintf(&new_cause, "size %s", cause);
 			free(cause);
-			return (CMD_RETURN_ERROR);
+			cause = new_cause;
+			goto error;
 		}
 	} else if (args_has(args, 'p')) {
 		percentage = args_strtonum(args, 'p', 0, INT_MAX, &cause);
 		if (cause != NULL) {
-			cmdq_error(item, "create pane failed: -p %s", cause);
+			xasprintf(&new_cause, "percentage %s", cause);
 			free(cause);
-			return (CMD_RETURN_ERROR);
+			cause = new_cause;
+			goto error;
 		}
 		if (type == LAYOUT_TOPBOTTOM)
 			size = (wp->sy * percentage) / 100;
 		else
 			size = (wp->sx * percentage) / 100;
-	} else
-		size = -1;
+	}
+	hlimit = options_get_number(s->options, "history-limit");
 
-	server_unzoom_window(wp->window);
-	input = (args_has(args, 'I') && args->argc == 0);
+	shell = options_get_string(s->options, "default-shell");
+	if (*shell == '\0' || areshell(shell))
+		shell = _PATH_BSHELL;
 
-	flags = 0;
-	if (args_has(args, 'b'))
-		flags |= SPAWN_BEFORE;
-	if (args_has(args, 'f'))
-		flags |= SPAWN_FULLSIZE;
-	if (input || (args->argc == 1 && *args->argv[0] == '\0'))
-		flags |= SPAWN_EMPTY;
-
-	lc = layout_split_pane(wp, type, size, flags);
+	lc = layout_split_pane(wp, type, size, before, args_has(args, 'f'));
 	if (lc == NULL) {
-		cmdq_error(item, "no space for new pane");
-		return (CMD_RETURN_ERROR);
+		cause = xstrdup("pane too small");
+		goto error;
 	}
+	new_wp = window_add_pane(w, wp, before, args_has(args, 'f'), hlimit);
+	layout_make_leaf(lc, new_wp);
 
-	memset(&sc, 0, sizeof sc);
-	sc.item = item;
-	sc.s = s;
-	sc.wl = wl;
+	path = NULL;
+	if (item->client != NULL && item->client->session == NULL)
+		envent = environ_find(item->client->environ, "PATH");
+	else
+		envent = environ_find(s->environ, "PATH");
+	if (envent != NULL)
+		path = envent->value;
 
-	sc.wp0 = wp;
-	sc.lc = lc;
-
-	sc.name = NULL;
-	sc.argc = args->argc;
-	sc.argv = args->argv;
-	sc.environ = environ_create();
-
-	add = args_first_value(args, 'e', &value);
-	while (add != NULL) {
-		environ_put(sc.environ, add);
-		add = args_next_value(&value);
+	env = environ_for_session(s, 0);
+	if (window_pane_spawn(new_wp, argc, argv, path, shell, cwd, env,
+	    s->tio, &cause) != 0) {
+		environ_free(env);
+		goto error;
 	}
+	environ_free(env);
 
-	sc.idx = -1;
-	sc.cwd = args_get(args, 'c');
+	layout_fix_panes(w, w->sx, w->sy);
+	server_redraw_window(w);
 
-	sc.flags = flags;
-	if (args_has(args, 'd'))
-		sc.flags |= SPAWN_DETACHED;
-
-	if ((new_wp = spawn_pane(&sc, &cause)) == NULL) {
-		layout_close_pane(new_wp);
-		cmdq_error(item, "create pane failed: %s", cause);
-		free(cause);
-		return (CMD_RETURN_ERROR);
-	}
-	if (input && window_pane_start_input(new_wp, item, &cause) != 0) {
-		layout_close_pane(new_wp);
-		window_remove_pane(wp->window, new_wp);
-		cmdq_error(item, "%s", cause);
-		free(cause);
-		return (CMD_RETURN_ERROR);
-	}
-	if (!args_has(args, 'd'))
-		cmd_find_from_winlink_pane(current, wl, new_wp, 0);
-	server_redraw_window(wp->window);
-	server_status_session(s);
+	if (!args_has(args, 'd')) {
+		window_set_active_pane(w, new_wp);
+		session_select(s, wl->idx);
+		cmd_find_from_session(current, s, 0);
+		server_redraw_session(s);
+	} else
+		server_status_session(s);
 
 	if (args_has(args, 'P')) {
 		if ((template = args_get(args, 'F')) == NULL)
@@ -162,12 +168,22 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 		cmdq_print(item, "%s", cp);
 		free(cp);
 	}
+	notify_window("window-layout-changed", w);
 
 	cmd_find_from_winlink_pane(&fs, wl, new_wp, 0);
-	cmdq_insert_hook(s, item, &fs, "after-split-window");
+	hooks_insert(s->hooks, item, &fs, "after-split-window");
 
-	environ_free(sc.environ);
-	if (input)
-		return (CMD_RETURN_WAIT);
+	free(cwd);
 	return (CMD_RETURN_NORMAL);
+
+error:
+	if (new_wp != NULL) {
+		layout_close_pane(new_wp);
+		window_remove_pane(w, new_wp);
+	}
+	cmdq_error(item, "create pane failed: %s", cause);
+	free(cause);
+
+	free(cwd);
+	return (CMD_RETURN_ERROR);
 }

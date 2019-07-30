@@ -11,12 +11,10 @@ our @EXPORT  = qw/ hostname /;
 
 our $VERSION;
 
-use warnings ();
-
 our $host;
 
 BEGIN {
-    $VERSION = '1.22';
+    $VERSION = '1.20';
     {
 	local $SIG{__DIE__};
 	eval {
@@ -29,7 +27,6 @@ BEGIN {
 
 
 sub hostname {
-  @_ and warnings::warnif("deprecated", "hostname() doesn't accept any arguments. This will become fatal in Perl 5.32");
 
   # method 1 - we already know it
   return $host if defined $host;

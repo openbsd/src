@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwnvar.h,v 1.15 2019/03/11 06:19:33 kevlo Exp $	*/
+/*	$OpenBSD: rtwnvar.h,v 1.10 2017/07/08 14:26:23 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -32,7 +32,6 @@ struct rtwn_ops {
 	int		(*dma_init)(void *);
 	int		(*fw_loadpage)(void *, int, uint8_t *, int);
 	int		(*load_firmware)(void *, u_char **fw, size_t *);
-	void		(*aggr_init)(void *);
 	void		(*mac_init)(void *);
 	void		(*bb_init)(void *);
 	int		(*alloc_buffers)(void *);
@@ -49,14 +48,10 @@ struct rtwn_ops {
 #define RTWN_LED_LINK	0
 #define RTWN_LED_DATA	1
 
-#define RTWN_92C_INT_ENABLE (R92C_IMR_ROK | R92C_IMR_VODOK | R92C_IMR_VIDOK | \
+#define RTWN_INT_ENABLE	(R92C_IMR_ROK | R92C_IMR_VODOK | R92C_IMR_VIDOK | \
 			R92C_IMR_BEDOK | R92C_IMR_BKDOK | R92C_IMR_MGNTDOK | \
 			R92C_IMR_HIGHDOK | R92C_IMR_BDOK | R92C_IMR_RDU | \
 			R92C_IMR_RXFOVW)
-#define RTWN_88E_INT_ENABLE (R88E_HIMR_PSTIMEOUT | R88E_HIMR_HSISR_IND_ON_INT | \
-			R88E_HIMR_C2HCMD | R88E_HIMR_ROK | R88E_HIMR_VODOK | \
-			R88E_HIMR_VIDOK | R88E_HIMR_BEDOK | R88E_HIMR_BKDOK | \
-			R88E_HIMR_MGNTDOK | R88E_HIMR_HIGHDOK | R88E_HIMR_RDU)
 
 struct rtwn_softc {
 	/* sc_ops must be initialized by the attachment driver! */
@@ -81,9 +76,6 @@ struct rtwn_softc {
 #define RTWN_CHIP_UMC_A_CUT	0x00000008
 #define RTWN_CHIP_88C		0x00000010
 #define RTWN_CHIP_88E		0x00000020
-#define RTWN_CHIP_92E		0x00000040
-#define RTWN_CHIP_23A		0x00000080
-#define RTWN_CHIP_23B		0x00000100
 
 #define RTWN_CHIP_PCI		0x40000000
 #define RTWN_CHIP_USB		0x80000000
@@ -103,14 +95,10 @@ struct rtwn_softc {
 	int				fwcur;
 	union {
 		struct r92c_rom		r92c_rom;
-		struct r92e_rom		r92e_rom;
 		struct r88e_rom		r88e_rom;
-		struct r23a_rom		r23a_rom;
 	} u;
 #define sc_r92c_rom	u.r92c_rom
-#define sc_r92e_rom	u.r92e_rom
 #define sc_r88e_rom	u.r88e_rom
-#define sc_r23a_rom	u.r23a_rom
 
 	uint32_t			rf_chnlbw[R92C_MAX_CHAINS];
 };

@@ -7,7 +7,6 @@
 #include <machine/asm.h>
 
 ENTRY(bzero)
-	RETGUARD_SETUP(bzero, r11)
 	movq	%rsi,%rdx
 
 	xorq	%rax,%rax		/* set fill data to 0 */
@@ -36,5 +35,5 @@ ENTRY(bzero)
 L1:	movq	%rdx,%rcx		/* zero remainder by bytes */
 	rep
 	stosb
-	RETGUARD_CHECK(bzero, r11)
+
 	ret

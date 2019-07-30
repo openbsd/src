@@ -11,7 +11,6 @@
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCFixup.h"
-#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cstdint>
 
@@ -44,7 +43,6 @@ unsigned BPFELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
     llvm_unreachable("invalid fixup kind!");
   case FK_SecRel_8:
     return ELF::R_BPF_64_64;
-  case FK_PCRel_4:
   case FK_SecRel_4:
     return ELF::R_BPF_64_32;
   case FK_Data_8:
@@ -54,7 +52,8 @@ unsigned BPFELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
   }
 }
 
-std::unique_ptr<MCObjectTargetWriter>
-llvm::createBPFELFObjectWriter(uint8_t OSABI) {
-  return llvm::make_unique<BPFELFObjectWriter>(OSABI);
+MCObjectWriter *llvm::createBPFELFObjectWriter(raw_pwrite_stream &OS,
+                                               uint8_t OSABI, bool IsLittleEndian) {
+  MCELFObjectTargetWriter *MOTW = new BPFELFObjectWriter(OSABI);
+  return createELFObjectWriter(MOTW, OS, IsLittleEndian);
 }

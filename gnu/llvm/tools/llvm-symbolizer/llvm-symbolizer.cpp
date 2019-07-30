@@ -22,8 +22,10 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileSystem.h"
-#include "llvm/Support/InitLLVM.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdio>
 #include <cstring>
@@ -67,10 +69,6 @@ ClBinaryName("obj", cl::init(""),
              cl::desc("Path to object file to be symbolized (if not provided, "
                       "object file should be specified for each input line)"));
 
-static cl::opt<std::string>
-    ClDwpName("dwp", cl::init(""),
-              cl::desc("Path to DWP file to be use for any split CUs"));
-
 static cl::list<std::string>
 ClDsymHint("dsym-hint", cl::ZeroOrMore,
            cl::desc("Path to .dSYM bundles to search for debug info for the "
@@ -101,19 +99,24 @@ static bool error(Expected<T> &ResOrErr) {
 
 static bool parseCommand(StringRef InputString, bool &IsData,
                          std::string &ModuleName, uint64_t &ModuleOffset) {
+  const char *kDataCmd = "DATA ";
+  const char *kCodeCmd = "CODE ";
   const char kDelimiters[] = " \n\r";
+  IsData = false;
   ModuleName = "";
-  if (InputString.consume_front("CODE ")) {
-    IsData = false;
-  } else if (InputString.consume_front("DATA ")) {
+  const char *pos = InputString.data();
+  if (strncmp(pos, kDataCmd, strlen(kDataCmd)) == 0) {
     IsData = true;
+    pos += strlen(kDataCmd);
+  } else if (strncmp(pos, kCodeCmd, strlen(kCodeCmd)) == 0) {
+    IsData = false;
+    pos += strlen(kCodeCmd);
   } else {
     // If no cmd, assume it's CODE.
     IsData = false;
   }
-  const char *pos = InputString.data();
   // Skip delimiters and parse input filename (if needed).
-  if (ClBinaryName.empty()) {
+  if (ClBinaryName == "") {
     pos += strspn(pos, kDelimiters);
     if (*pos == '"' || *pos == '\'') {
       char quote = *pos;
@@ -138,7 +141,10 @@ static bool parseCommand(StringRef InputString, bool &IsData,
 }
 
 int main(int argc, char **argv) {
-  InitLLVM X(argc, argv);
+  // Print stack trace if we signal out.
+  sys::PrintStackTraceOnErrorSignal(argv[0]);
+  PrettyStackTraceProgram X(argc, argv);
+  llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
   llvm::sys::InitializeCOMRAII COM(llvm::sys::COMThreadingMode::MultiThreaded);
 
@@ -178,20 +184,18 @@ int main(int argc, char **argv) {
     if (ClPrintAddress) {
       outs() << "0x";
       outs().write_hex(ModuleOffset);
-      StringRef Delimiter = ClPrettyPrint ? ": " : "\n";
+      StringRef Delimiter = (ClPrettyPrint == true) ? ": " : "\n";
       outs() << Delimiter;
     }
     if (IsData) {
       auto ResOrErr = Symbolizer.symbolizeData(ModuleName, ModuleOffset);
       Printer << (error(ResOrErr) ? DIGlobal() : ResOrErr.get());
     } else if (ClPrintInlining) {
-      auto ResOrErr =
-          Symbolizer.symbolizeInlinedCode(ModuleName, ModuleOffset, ClDwpName);
+      auto ResOrErr = Symbolizer.symbolizeInlinedCode(ModuleName, ModuleOffset);
       Printer << (error(ResOrErr) ? DIInliningInfo()
                                              : ResOrErr.get());
     } else {
-      auto ResOrErr =
-          Symbolizer.symbolizeCode(ModuleName, ModuleOffset, ClDwpName);
+      auto ResOrErr = Symbolizer.symbolizeCode(ModuleName, ModuleOffset);
       Printer << (error(ResOrErr) ? DILineInfo() : ResOrErr.get());
     }
     outs() << "\n";

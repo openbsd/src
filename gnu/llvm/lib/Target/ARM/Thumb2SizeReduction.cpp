@@ -25,7 +25,6 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineOperand.h"
-#include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Function.h"
 #include "llvm/MC/MCInstrDesc.h"
@@ -35,6 +34,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
@@ -45,7 +45,6 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "t2-reduce-size"
-#define THUMB2_SIZE_REDUCE_NAME "Thumb2 instruction size reduce pass"
 
 STATISTIC(NumNarrows,  "Number of 32-bit instrs reduced to 16-bit ones");
 STATISTIC(Num2Addrs,   "Number of 32-bit instrs reduced to 2addr 16-bit ones");
@@ -163,7 +162,7 @@ namespace {
     const Thumb2InstrInfo *TII;
     const ARMSubtarget *STI;
 
-    Thumb2SizeReduce(std::function<bool(const Function &)> Ftor = nullptr);
+    Thumb2SizeReduce(std::function<bool(const Function &)> Ftor);
 
     bool runOnMachineFunction(MachineFunction &MF) override;
 
@@ -173,7 +172,7 @@ namespace {
     }
 
     StringRef getPassName() const override {
-      return THUMB2_SIZE_REDUCE_NAME;
+      return "Thumb2 instruction size reduction pass";
     }
 
   private:
@@ -237,9 +236,6 @@ namespace {
   char Thumb2SizeReduce::ID = 0;
 
 } // end anonymous namespace
-
-INITIALIZE_PASS(Thumb2SizeReduce, DEBUG_TYPE, THUMB2_SIZE_REDUCE_NAME, false,
-                false)
 
 Thumb2SizeReduce::Thumb2SizeReduce(std::function<bool(const Function &)> Ftor)
     : MachineFunctionPass(ID), PredicateFtor(std::move(Ftor)) {
@@ -453,7 +449,7 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
     break;
   case ARM::t2LDR_POST:
   case ARM::t2STR_POST: {
-    if (!MBB.getParent()->getFunction().optForMinSize())
+    if (!MBB.getParent()->getFunction()->optForMinSize())
       return false;
 
     if (!MI->hasOneMemOperand() ||
@@ -610,8 +606,7 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
   // Transfer MI flags.
   MIB.setMIFlags(MI->getFlags());
 
-  LLVM_DEBUG(errs() << "Converted 32-bit: " << *MI
-                    << "       to 16-bit: " << *MIB);
+  DEBUG(errs() << "Converted 32-bit: " << *MI << "       to 16-bit: " << *MIB);
 
   MBB.erase_instr(MI);
   ++NumLdSts;
@@ -658,8 +653,7 @@ Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
     // Transfer MI flags.
     MIB.setMIFlags(MI->getFlags());
 
-    LLVM_DEBUG(errs() << "Converted 32-bit: " << *MI
-                      << "       to 16-bit: " << *MIB);
+    DEBUG(errs() << "Converted 32-bit: " << *MI << "       to 16-bit: " <<*MIB);
 
     MBB.erase_instr(MI);
     ++NumNarrows;
@@ -828,8 +822,7 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr *MI,
   // Transfer MI flags.
   MIB.setMIFlags(MI->getFlags());
 
-  LLVM_DEBUG(errs() << "Converted 32-bit: " << *MI
-                    << "       to 16-bit: " << *MIB);
+  DEBUG(errs() << "Converted 32-bit: " << *MI << "       to 16-bit: " << *MIB);
 
   MBB.erase_instr(MI);
   ++Num2Addrs;
@@ -936,8 +929,7 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
   // Transfer MI flags.
   MIB.setMIFlags(MI->getFlags());
 
-  LLVM_DEBUG(errs() << "Converted 32-bit: " << *MI
-                    << "       to 16-bit: " << *MIB);
+  DEBUG(errs() << "Converted 32-bit: " << *MI << "       to 16-bit: " << *MIB);
 
   MBB.erase_instr(MI);
   ++NumNarrows;
@@ -1037,7 +1029,7 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
       BundleMI = MI;
       continue;
     }
-    if (MI->isDebugInstr())
+    if (MI->isDebugValue())
       continue;
 
     LiveCPSR = UpdateCPSRUse(*MI, LiveCPSR);
@@ -1092,7 +1084,7 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
 }
 
 bool Thumb2SizeReduce::runOnMachineFunction(MachineFunction &MF) {
-  if (PredicateFtor && !PredicateFtor(MF.getFunction()))
+  if (PredicateFtor && !PredicateFtor(*MF.getFunction()))
     return false;
 
   STI = &static_cast<const ARMSubtarget &>(MF.getSubtarget());
@@ -1102,8 +1094,8 @@ bool Thumb2SizeReduce::runOnMachineFunction(MachineFunction &MF) {
   TII = static_cast<const Thumb2InstrInfo *>(STI->getInstrInfo());
 
   // Optimizing / minimizing size? Minimizing size implies optimizing for size.
-  OptimizeSize = MF.getFunction().optForSize();
-  MinimizeSize = MF.getFunction().optForMinSize();
+  OptimizeSize = MF.getFunction()->optForSize();
+  MinimizeSize = MF.getFunction()->optForMinSize();
 
   BlockInfo.clear();
   BlockInfo.resize(MF.getNumBlockIDs());

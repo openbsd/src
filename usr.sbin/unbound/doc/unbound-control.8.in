@@ -1,4 +1,4 @@
-.TH "unbound-control" "8" "Mar 12, 2019" "NLnet Labs" "unbound 1.9.1"
+.TH "unbound-control" "8" "Sep 18, 2017" "NLnet Labs" "unbound 1.6.6"
 .\"
 .\" unbound-control.8 -- unbound remote control manual
 .\"
@@ -144,9 +144,6 @@ Remove the name, type information from the cache.
 Remove all information at or below the name from the cache. 
 The rrsets and key entries are removed so that new lookups will be performed.
 This needs to walk and inspect the entire cache, and is a slow operation.
-The entries are set to expired in the implementation of this command (so,
-with serve\-expired enabled, it'll serve that information but schedule a
-prefetch for new information).
 .TP
 .B flush_bogus
 Remove all bogus data from the cache.
@@ -289,22 +286,6 @@ estimated qps and qps limit from config.  With +a it prints all ips, not
 just the ratelimited ips, with their estimated qps.  The ratelimited
 ips are dropped before checking the cache.
 .TP
-.B list_auth_zones
-List the auth zones that are configured.  Printed one per line with a
-status, indicating if the zone is expired and current serial number.
-.TP
-.B auth_zone_reload \fIzone\fR
-Reload the auth zone from zonefile.  The zonefile is read in overwriting
-the current contents of the zone in memory.  This changes the auth zone
-contents itself, not the cache contents.  Such cache contents exists if
-you set unbound to validate with for-upstream yes and that can be cleared
-with \fBflush_zone\fR \fIzone\fR.
-.TP
-.B auth_zone_transfer \fIzone\fR
-Transfer the auth zone from master.  The auth zone probe sequence is started,
-where the masters are probed to see if they have an updated zone (with the SOA
-serial check).  And then the zone is transferred for a newer zone version.
-.TP
 .B view_list_local_zones \fIview\fR
 \fIlist_local_zones\fR for given view.
 .TP
@@ -322,9 +303,6 @@ serial check).  And then the zone is transferred for a newer zone version.
 .TP
 .B view_local_data_remove \fIview\fR \fIname
 \fIlocal_data_remove\fR for given view.
-.TP
-.B view_local_datas \fIview\fR
-Add a list of \fIlocal_data\fR for given view from stdin.  Like local_datas.
 .SH "EXIT CODE"
 The unbound\-control program exits with status code 1 on error, 0 on success.
 .SH "SET UP"
@@ -499,10 +477,6 @@ Memory in bytes in use by the iterator module.
 Memory in bytes in use by the validator module. Includes the key cache and
 negative cache.
 .TP
-.I mem.streamwait
-Memory in bytes in used by the TCP and TLS stream wait buffers.  These are
-answers waiting to be written back to the clients.
-.TP
 .I histogram.<sec>.<usec>.to.<sec>.<usec>
 Shows a histogram, summed over all threads. Every element counts the
 recursive queries whose reply time fit between the lower and upper bound.
@@ -533,14 +507,6 @@ Number of queries that were made using TCP towards the unbound server.
 .I num.query.tcpout
 Number of queries that the unbound server made using TCP outgoing towards
 other servers.
-.TP
-.I num.query.tls
-Number of queries that were made using TLS towards the unbound server.
-These are also counted in num.query.tcp, because TLS uses TCP.
-.TP
-.I num.query.tls.resume
-Number of TLS session resumptions, these are queries over TLS towards
-the unbound server where the client negotiated a TLS session resumption key.
 .TP
 .I num.query.ipv6
 Number of queries that were made using IPv6 towards the unbound server.
@@ -632,34 +598,6 @@ dnscrypt queries replay. The client nonce must be unique for each client public
 key/server secret key pair. This cache should be able to host QPS * `replay
 window` interval keys to prevent replay of a query during `replay window`
 seconds.
-.TP
-.I num.query.authzone.up
-The number of queries answered from auth\-zone data, upstream queries.
-These queries would otherwise have been sent (with fallback enabled) to
-the internet, but are now answered from the auth zone.
-.TP
-.I num.query.authzone.down
-The number of queries for downstream answered from auth\-zone data.
-These queries are from downstream clients, and have had an answer from
-the data in the auth zone.
-.TP
-.I num.query.aggressive.NOERROR
-The number of queries answered using cached NSEC records with NODATA RCODE.
-These queries would otherwise have been sent to the internet, but are now
-answered using cached data.
-.TP
-.I num.query.aggressive.NXDOMAIN
-The number of queries answered using cached NSEC records with NXDOMAIN RCODE.
-These queries would otherwise have been sent to the internet, but are now
-answered using cached data.
-.TP
-.I num.query.subnet
-Number of queries that got an answer that contained EDNS client subnet data.
-.TP
-.I num.query.subnet_cache
-Number of queries answered from the edns client subnet cache.  These are
-counted as cachemiss by the main counters, but hit the client subnet
-specific cache, after getting processed by the edns client subnet module.
 .SH "FILES"
 .TP
 .I @ub_conf_file@

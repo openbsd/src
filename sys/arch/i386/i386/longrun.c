@@ -1,4 +1,4 @@
-/* $OpenBSD: longrun.c,v 1.17 2018/07/30 14:19:12 kettenis Exp $ */
+/* $OpenBSD: longrun.c,v 1.16 2014/09/14 14:17:23 jsg Exp $ */
 /*
  * Copyright (c) 2003 Ted Unangst
  * Copyright (c) 2001 Tamotsu Hattori
@@ -74,12 +74,13 @@ longrun_init(void)
 void
 longrun_update(void *arg)
 {
-	uint32_t regs[4];
-	u_long s;
+	uint32_t eflags, regs[4];
 
-	s = intr_disable();
+	eflags = read_eflags();
+	disable_intr();
 	cpuid(0x80860007, regs);
-	intr_restore(s);
+	enable_intr();
+	write_eflags(eflags);
 
 	cpuspeed = regs[0];
 
@@ -97,16 +98,16 @@ longrun_update(void *arg)
 void
 longrun_setperf(int high)
 {
+	uint32_t eflags, mode;
  	union msrinfo msrinfo;
-	uint32_t mode;
-	u_long s;
 
 	if (high >= 50)
 		mode = 1;	/* power */
 	else
 		mode = 0;	/* battery */
 
-	s = intr_disable();
+	eflags = read_eflags();
+	disable_intr();
 
 	msrinfo.msr = rdmsr(MSR_TMx86_LONGRUN);
 	msrinfo.regs[0] = LONGRUN_MODE_WRITE(msrinfo.regs[0], 0); /* low */
@@ -117,7 +118,8 @@ longrun_setperf(int high)
 	msrinfo.regs[0] = (msrinfo.regs[0] & ~0x01) | mode;
 	wrmsr(MSR_TMx86_LONGRUN_FLAGS, msrinfo.msr);
 
-	intr_restore(s);
+	enable_intr();
+	write_eflags(eflags);
 
 	longrun_update(NULL);
 }

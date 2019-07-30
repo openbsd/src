@@ -149,12 +149,6 @@ void WinEHStatePass::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool WinEHStatePass::runOnFunction(Function &F) {
-  // Don't insert state stores or exception handler thunks for
-  // available_externally functions. The handler needs to reference the LSDA,
-  // which will not be emitted in this case.
-  if (F.hasAvailableExternallyLinkage())
-    return false;
-
   // Check the personality. Do nothing if this personality doesn't use funclets.
   if (!F.hasPersonalityFn())
     return false;
@@ -407,8 +401,6 @@ Function *WinEHStatePass::generateLSDAInEAXThunk(Function *ParentFunc) {
                        Twine("__ehhandler$") + GlobalValue::dropLLVMManglingEscape(
                                                    ParentFunc->getName()),
                        TheModule);
-  if (auto *C = ParentFunc->getComdat())
-    Trampoline->setComdat(C);
   BasicBlock *EntryBB = BasicBlock::Create(Context, "entry", Trampoline);
   IRBuilder<> Builder(EntryBB);
   Value *LSDA = emitEHLSDA(Builder, ParentFunc);
@@ -695,10 +687,10 @@ void WinEHStatePass::addStateStores(Function &F, WinEHFuncInfo &FuncInfo) {
       Worklist.push_back(BB);
       continue;
     }
-    LLVM_DEBUG(dbgs() << "X86WinEHState: " << BB->getName()
-                      << " InitialState=" << InitialState << '\n');
-    LLVM_DEBUG(dbgs() << "X86WinEHState: " << BB->getName()
-                      << " FinalState=" << FinalState << '\n');
+    DEBUG(dbgs() << "X86WinEHState: " << BB->getName()
+                 << " InitialState=" << InitialState << '\n');
+    DEBUG(dbgs() << "X86WinEHState: " << BB->getName()
+                 << " FinalState=" << FinalState << '\n');
     InitialStates.insert({BB, InitialState});
     FinalStates.insert({BB, FinalState});
   }
@@ -743,8 +735,8 @@ void WinEHStatePass::addStateStores(Function &F, WinEHFuncInfo &FuncInfo) {
       continue;
 
     int PrevState = getPredState(FinalStates, F, ParentBaseState, BB);
-    LLVM_DEBUG(dbgs() << "X86WinEHState: " << BB->getName()
-                      << " PrevState=" << PrevState << '\n');
+    DEBUG(dbgs() << "X86WinEHState: " << BB->getName()
+                 << " PrevState=" << PrevState << '\n');
 
     for (Instruction &I : *BB) {
       CallSite CS(&I);

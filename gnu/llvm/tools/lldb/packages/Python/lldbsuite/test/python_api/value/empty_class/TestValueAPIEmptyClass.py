@@ -15,7 +15,7 @@ class ValueAPIEmptyClassTestCase(TestBase):
     @add_test_categories(['pyapi'])
     def test(self):
         self.build()
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), 'a.out')
         line = line_number('main.cpp', '// Break at this line')
 
         # Create a target by the debugger.

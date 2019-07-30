@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfconv.c,v 1.17 2018/08/08 20:15:17 mestre Exp $ */
+/*	$OpenBSD: ctfconv.c,v 1.16 2017/11/06 14:59:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -92,6 +92,9 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "pledge");
+
 	while ((ch = getopt(argc, argv, "dl:o:")) != -1) {
 		switch (ch) {
 		case 'd':
@@ -124,18 +127,6 @@ main(int argc, char *argv[])
 		usage();
 
 	filename = *argv;
-
-	if (unveil(filename, "r") == -1)
-		err(1, "unveil");
-
-	if (outfile != NULL) {
-		if (unveil(outfile, "wc") == -1)
-			err(1, "unveil");
-	}
-
-	if (pledge("stdio rpath wpath cpath", NULL) == -1)
-		err(1, "pledge");
-
 	error = convert(filename);
 	if (error != 0)
 		return error;

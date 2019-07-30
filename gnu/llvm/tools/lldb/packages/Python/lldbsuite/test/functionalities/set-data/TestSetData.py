@@ -21,7 +21,7 @@ class SetDataTestCase(TestBase):
     def test_set_data(self):
         """Test setting the contents of variables and registers using raw data."""
         self.build()
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         self.runCmd("br s -p First")

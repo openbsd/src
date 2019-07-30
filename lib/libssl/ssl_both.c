@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.15 2019/03/25 16:35:48 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.11 2017/10/08 16:24:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -146,7 +146,7 @@ ssl3_do_write(SSL *s, int type)
 		 * Should not be done for 'Hello Request's, but in that case
 		 * we'll ignore the result anyway.
 		 */
-		tls1_transcript_record(s,
+		tls1_finish_mac(s,
 		    (unsigned char *)&s->internal->init_buf->data[s->internal->init_off], ret);
 
 	if (ret == s->internal->init_num) {
@@ -191,12 +191,12 @@ ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 			S3I(s)->previous_server_finished_len = md_len;
 		}
 
-		if (!ssl3_handshake_msg_start(s, &cbb, &finished,
+		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &finished,
 		    SSL3_MT_FINISHED))
                         goto err;
 		if (!CBB_add_bytes(&finished, S3I(s)->tmp.finish_md, md_len))
 			goto err;
-		if (!ssl3_handshake_msg_finish(s, &cbb))
+		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
 			goto err;
 
 		S3I(s)->hs.state = b;
@@ -378,56 +378,60 @@ ssl3_add_cert(CBB *cbb, X509 *x)
 }
 
 int
-ssl3_output_cert_chain(SSL *s, CBB *cbb, CERT_PKEY *cpk)
+ssl3_output_cert_chain(SSL *s, CBB *cbb, X509 *x)
 {
-	X509_STORE_CTX *xs_ctx = NULL;
-	STACK_OF(X509) *chain;
+	int no_chain = 0;
 	CBB cert_list;
-	X509 *x;
 	int ret = 0;
 	int i;
 
 	if (!CBB_add_u24_length_prefixed(cbb, &cert_list))
 		goto err;
 
-	/* Send an empty certificate list when no certificate is available. */
-	if (cpk == NULL)
-		goto done;
+	if ((s->internal->mode & SSL_MODE_NO_AUTO_CHAIN) || s->ctx->extra_certs)
+		no_chain = 1;
 
-	if ((chain = cpk->chain) == NULL)
-		chain = s->ctx->extra_certs;
+	/* TLSv1 sends a chain with nothing in it, instead of an alert. */
+	if (x != NULL) {
+		if (no_chain) {
+			if (!ssl3_add_cert(&cert_list, x))
+				goto err;
+		} else {
+			X509_STORE_CTX xs_ctx;
 
-	if (chain != NULL || (s->internal->mode & SSL_MODE_NO_AUTO_CHAIN)) {
-		if (!ssl3_add_cert(&cert_list, cpk->x509))
-			goto err;
-	} else {
-		if ((xs_ctx = X509_STORE_CTX_new()) == NULL)
-			goto err;
-		if (!X509_STORE_CTX_init(xs_ctx, s->ctx->cert_store,
-		    cpk->x509, NULL)) {
-			SSLerror(s, ERR_R_X509_LIB);
-			goto err;
+			if (!X509_STORE_CTX_init(&xs_ctx, s->ctx->cert_store,
+			    x, NULL)) {
+				SSLerror(s, ERR_R_X509_LIB);
+				goto err;
+			}
+			X509_verify_cert(&xs_ctx);
+
+			/* Don't leave errors in the queue. */
+			ERR_clear_error();
+			for (i = 0; i < sk_X509_num(xs_ctx.chain); i++) {
+				x = sk_X509_value(xs_ctx.chain, i);
+				if (!ssl3_add_cert(&cert_list, x)) {
+					X509_STORE_CTX_cleanup(&xs_ctx);
+					goto err;
+				}
+			}
+			X509_STORE_CTX_cleanup(&xs_ctx);
 		}
-		X509_verify_cert(xs_ctx);
-		ERR_clear_error();
-		chain = xs_ctx->chain;
 	}
 
-	for (i = 0; i < sk_X509_num(chain); i++) {
-		x = sk_X509_value(chain, i);
+	/* Thawte special :-) */
+	for (i = 0; i < sk_X509_num(s->ctx->extra_certs); i++) {
+		x = sk_X509_value(s->ctx->extra_certs, i);
 		if (!ssl3_add_cert(&cert_list, x))
 			goto err;
 	}
 
- done:
 	if (!CBB_flush(cbb))
 		goto err;
 
 	ret = 1;
 
  err:
-	X509_STORE_CTX_free(xs_ctx);
-
 	return (ret);
 }
 
@@ -553,7 +557,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
 	/* Feed this message into MAC computation. */
 	if (s->internal->mac_packet) {
-		tls1_transcript_record(s, (unsigned char *)s->internal->init_buf->data,
+		tls1_finish_mac(s, (unsigned char *)s->internal->init_buf->data,
 		    s->internal->init_num + 4);
 
 		if (s->internal->msg_callback)
@@ -696,16 +700,16 @@ ssl3_setup_read_buffer(SSL *s)
 
 	align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
 
-	if (S3I(s)->rbuf.buf == NULL) {
+	if (s->s3->rbuf.buf == NULL) {
 		len = SSL3_RT_MAX_PLAIN_LENGTH +
 		    SSL3_RT_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
 		if ((p = malloc(len)) == NULL)
 			goto err;
-		S3I(s)->rbuf.buf = p;
-		S3I(s)->rbuf.len = len;
+		s->s3->rbuf.buf = p;
+		s->s3->rbuf.len = len;
 	}
 
-	s->internal->packet = &(S3I(s)->rbuf.buf[0]);
+	s->internal->packet = &(s->s3->rbuf.buf[0]);
 	return 1;
 
 err:
@@ -726,7 +730,7 @@ ssl3_setup_write_buffer(SSL *s)
 
 	align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
 
-	if (S3I(s)->wbuf.buf == NULL) {
+	if (s->s3->wbuf.buf == NULL) {
 		len = s->max_send_fragment +
 		    SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
 		if (!(s->internal->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
@@ -735,8 +739,8 @@ ssl3_setup_write_buffer(SSL *s)
 
 		if ((p = malloc(len)) == NULL)
 			goto err;
-		S3I(s)->wbuf.buf = p;
-		S3I(s)->wbuf.len = len;
+		s->s3->wbuf.buf = p;
+		s->s3->wbuf.len = len;
 	}
 
 	return 1;
@@ -759,15 +763,15 @@ ssl3_setup_buffers(SSL *s)
 int
 ssl3_release_write_buffer(SSL *s)
 {
-	free(S3I(s)->wbuf.buf);
-	S3I(s)->wbuf.buf = NULL;
+	free(s->s3->wbuf.buf);
+	s->s3->wbuf.buf = NULL;
 	return 1;
 }
 
 int
 ssl3_release_read_buffer(SSL *s)
 {
-	free(S3I(s)->rbuf.buf);
-	S3I(s)->rbuf.buf = NULL;
+	free(s->s3->rbuf.buf);
+	s->s3->rbuf.buf = NULL;
 	return 1;
 }

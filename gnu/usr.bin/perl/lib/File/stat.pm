@@ -10,16 +10,9 @@ BEGIN { *warnif = \&warnings::warnif }
 
 our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 
-our $VERSION = '1.08';
+our $VERSION = '1.07';
 
-our @fields;
-our ( $st_dev, $st_ino, $st_mode,
-    $st_nlink, $st_uid, $st_gid,
-    $st_rdev, $st_size,
-    $st_atime, $st_mtime, $st_ctime,
-    $st_blksize, $st_blocks
-);
-
+my @fields;
 BEGIN { 
     use Exporter   ();
     @EXPORT      = qw(stat lstat);
@@ -32,6 +25,7 @@ BEGIN {
     @EXPORT_OK   = ( @fields, "stat_cando" );
     %EXPORT_TAGS = ( FIELDS => [ @fields, @EXPORT ] );
 }
+use vars @fields;
 
 use Fcntl qw(S_IRUSR S_IWUSR S_IXUSR);
 

@@ -206,21 +206,6 @@ bfd_elf_hash (const char *namearg)
   return h & 0xffffffff;
 }
 
-/* DT_GNU_HASH hash function.  Do not change this function; you will
-   cause invalid hash tables to be generated.  */
-
-unsigned long
-bfd_elf_gnu_hash (const char *namearg)
-{
-  const unsigned char *name = (const unsigned char *) namearg;
-  unsigned long h = 5381;
-  unsigned char ch;
-
-  while ((ch = *name++) != '\0')
-    h = (h << 5) + h + ch;
-  return h & 0xffffffff;
-}
-
 bfd_boolean
 bfd_elf_mkobject (bfd *abfd)
 {
@@ -1257,7 +1242,6 @@ _bfd_elf_print_private_bfd_data (bfd *abfd, void *farg)
 	    case DT_AUXILIARY: name = "AUXILIARY"; stringp = TRUE; break;
 	    case DT_USED: name = "USED"; break;
 	    case DT_FILTER: name = "FILTER"; stringp = TRUE; break;
-	    case DT_GNU_HASH: name = "GNU_HASH"; break;
 	    }
 
 	  fprintf (f, "  %-11s ", name);
@@ -1841,7 +1825,6 @@ bfd_section_from_shdr (bfd *abfd, unsigned int shindex)
     case SHT_FINI_ARRAY:	/* .fini_array section.  */
     case SHT_PREINIT_ARRAY:	/* .preinit_array section.  */
     case SHT_GNU_LIBLIST:	/* .gnu.liblist section.  */
-    case SHT_GNU_HASH:		/* .gnu.hash section.  */
       return _bfd_elf_make_section_from_shdr (abfd, hdr, name, shindex);
 
     case SHT_DYNAMIC:	/* Dynamic linking information.  */
@@ -2177,10 +2160,6 @@ bfd_section_from_shdr (bfd *abfd, unsigned int shindex)
 	}
       break;
 
-    case SHT_LLVM_LINKER_OPTIONS:
-    case SHT_LLVM_ADDRSIG:
-      return TRUE;
-
     default:
       /* Check for any processor-specific section types.  */
       return bed->elf_backend_section_from_shdr (abfd, hdr, name,
@@ -2285,7 +2264,6 @@ static const struct bfd_elf_special_section special_sections_g[] =
   { ".gnu.version_r", 14,  0, SHT_GNU_verneed, 0 },
   { ".gnu.liblist",   12,  0, SHT_GNU_LIBLIST, SHF_ALLOC },
   { ".gnu.conflict",  13,  0, SHT_RELA,     SHF_ALLOC },
-  { ".gnu.hash",       9,  0, SHT_GNU_HASH, SHF_ALLOC },
   { NULL,              0,  0, 0,            0 }
 };
 
@@ -2807,10 +2785,6 @@ elf_fake_sections (bfd *abfd, asection *asect, void *failedptrarg)
     case SHT_GROUP:
       this_hdr->sh_entsize = 4;
       break;
-
-    case SHT_GNU_HASH:
-      this_hdr->sh_entsize = bed->s->arch_size == 64 ? 0 : 4;
-      break;
     }
 
   if ((asect->flags & SEC_ALLOC) != 0)
@@ -3256,7 +3230,6 @@ assign_section_numbers (bfd *abfd, struct bfd_link_info *link_info)
 	  break;
 
 	case SHT_HASH:
-	case SHT_GNU_HASH:
 	case SHT_GNU_versym:
 	  /* sh_link is the section header index of the symbol table
 	     this hash table or version table is for.  */
@@ -4883,15 +4856,12 @@ assign_file_positions_except_relocs (bfd *abfd,
 	    hdr->sh_offset = hdr->bfd_section->filepos;
 	  else if ((hdr->sh_flags & SHF_ALLOC) != 0)
 	    {
-	      if (hdr->bfd_section->size != 0)
-	        {
-		  ((*_bfd_error_handler)
-		   (_("%B: warning: allocated section `%s' not in segment"),
-		    abfd,
-		    (hdr->bfd_section == NULL
-		     ? "*unknown*"
-		     : hdr->bfd_section->name)));
-		}
+	      ((*_bfd_error_handler)
+	       (_("%B: warning: allocated section `%s' not in segment"),
+		abfd,
+		(hdr->bfd_section == NULL
+		 ? "*unknown*"
+		 : hdr->bfd_section->name)));
 	      if ((abfd->flags & D_PAGED) != 0)
 		off += vma_page_aligned_bias (hdr->sh_addr, off,
 					      bed->maxpagesize);

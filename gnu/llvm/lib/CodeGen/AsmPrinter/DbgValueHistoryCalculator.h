@@ -1,4 +1,4 @@
-//===- llvm/CodeGen/AsmPrinter/DbgValueHistoryCalculator.h ------*- C++ -*-===//
+//===-- llvm/CodeGen/AsmPrinter/DbgValueHistoryCalculator.h ----*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,11 +13,9 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/DebugInfoMetadata.h"
-#include <utility>
 
 namespace llvm {
 
-class DILocalVariable;
 class MachineFunction;
 class MachineInstr;
 class TargetRegisterInfo;
@@ -31,11 +29,11 @@ class DbgValueHistoryMap {
   // instruction of the next instruction range, or until the end of the
   // function.
 public:
-  using InstrRange = std::pair<const MachineInstr *, const MachineInstr *>;
-  using InstrRanges = SmallVector<InstrRange, 4>;
-  using InlinedVariable =
-      std::pair<const DILocalVariable *, const DILocation *>;
-  using InstrRangesMap = MapVector<InlinedVariable, InstrRanges>;
+  typedef std::pair<const MachineInstr *, const MachineInstr *> InstrRange;
+  typedef SmallVector<InstrRange, 4> InstrRanges;
+  typedef std::pair<const DILocalVariable *, const DILocation *>
+      InlinedVariable;
+  typedef MapVector<InlinedVariable, InstrRanges> InstrRangesMap;
 
 private:
   InstrRangesMap VarInstrRanges;
@@ -43,7 +41,6 @@ private:
 public:
   void startInstrRange(InlinedVariable Var, const MachineInstr &MI);
   void endInstrRange(InlinedVariable Var, const MachineInstr &MI);
-
   // Returns register currently describing @Var. If @Var is currently
   // unaccessible or is not described by a register, returns 0.
   unsigned getRegisterForVar(InlinedVariable Var) const;
@@ -52,16 +49,11 @@ public:
   void clear() { VarInstrRanges.clear(); }
   InstrRangesMap::const_iterator begin() const { return VarInstrRanges.begin(); }
   InstrRangesMap::const_iterator end() const { return VarInstrRanges.end(); }
-
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-  LLVM_DUMP_METHOD void dump() const;
-#endif
 };
 
 void calculateDbgValueHistory(const MachineFunction *MF,
                               const TargetRegisterInfo *TRI,
                               DbgValueHistoryMap &Result);
+}
 
-} // end namespace llvm
-
-#endif // LLVM_LIB_CODEGEN_ASMPRINTER_DBGVALUEHISTORYCALCULATOR_H
+#endif

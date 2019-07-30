@@ -43,7 +43,7 @@ bool BuiltinFunctionChecker::evalCall(const CallExpr *CE,
 
   case Builtin::BI__builtin_assume: {
     assert (CE->arg_begin() != CE->arg_end());
-    SVal ArgSVal = C.getSVal(CE->getArg(0));
+    SVal ArgSVal = state->getSVal(CE->getArg(0), LCtx);
     if (ArgSVal.isUndef())
       return true; // Return true to model purity.
 
@@ -68,7 +68,7 @@ bool BuiltinFunctionChecker::evalCall(const CallExpr *CE,
     // __builtin_addressof is going from a reference to a pointer, but those
     // are represented the same way in the analyzer.
     assert (CE->arg_begin() != CE->arg_end());
-    SVal X = C.getSVal(*(CE->arg_begin()));
+    SVal X = state->getSVal(*(CE->arg_begin()), LCtx);
     C.addTransition(state->BindExpr(CE, LCtx, X));
     return true;
   }
@@ -83,7 +83,8 @@ bool BuiltinFunctionChecker::evalCall(const CallExpr *CE,
     // Set the extent of the region in bytes. This enables us to use the
     // SVal of the argument directly. If we save the extent in bits, we
     // cannot represent values like symbol*8.
-    auto Size = C.getSVal(*(CE->arg_begin())).castAs<DefinedOrUnknownSVal>();
+    DefinedOrUnknownSVal Size =
+        state->getSVal(*(CE->arg_begin()), LCtx).castAs<DefinedOrUnknownSVal>();
 
     SValBuilder& svalBuilder = C.getSValBuilder();
     DefinedOrUnknownSVal Extent = R->getExtent(svalBuilder);
@@ -96,8 +97,7 @@ bool BuiltinFunctionChecker::evalCall(const CallExpr *CE,
     return true;
   }
 
-  case Builtin::BI__builtin_object_size:
-  case Builtin::BI__builtin_constant_p: {
+  case Builtin::BI__builtin_object_size: {
     // This must be resolvable at compile time, so we defer to the constant
     // evaluator for a value.
     SVal V = UnknownVal();

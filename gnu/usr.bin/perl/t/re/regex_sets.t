@@ -7,13 +7,12 @@
 
 BEGIN {
     chdir 't' if -d 't';
+    @INC = ('../lib','.','../ext/re');
     require './test.pl';
     require './charset_tools.pl';
     require './loc_tools.pl';
-    set_up_inc( '../lib','.','../ext/re' );
+    skip_all_without_unicode_tables();
 }
-
-skip_all_without_unicode_tables();
 
 use strict;
 use warnings;
@@ -158,13 +157,13 @@ for my $char ("٠", "٥", "٩") {
 	eval { $_ = '/(?[(\c]) /'; qr/$_/ };
 	like($@, qr/^Syntax error/, '/(?[(\c]) / should not panic');
 	eval { $_ = '(?[\c#]' . "\n])"; qr/$_/ };
-	like($@, qr/^Unexpected/, '/(?[(\c]) / should not panic');
+	like($@, qr/^Syntax error/, '/(?[(\c]) / should not panic');
 	eval { $_ = '(?[(\c])'; qr/$_/ };
 	like($@, qr/^Syntax error/, '/(?[(\c])/ should be a syntax error');
 	eval { $_ = '(?[(\c]) ]\b'; qr/$_/ };
-	like($@, qr/^Unexpected/, '/(?[(\c]) ]\b/ should be a syntax error');
+	like($@, qr/^Syntax error/, '/(?[(\c]) ]\b/ should be a syntax error');
 	eval { $_ = '(?[\c[]](])'; qr/$_/ };
-	like($@, qr/^Unexpected/, '/(?[\c[]](])/ should be a syntax error');
+	like($@, qr/^Syntax error/, '/(?[\c[]](])/ should be a syntax error');
 	like("\c#", qr/(?[\c#])/, '\c# should match itself');
 	like("\c[", qr/(?[\c[])/, '\c[ should match itself');
 	like("\c\ ", qr/(?[\c\])/, '\c\ should match itself');
@@ -176,7 +175,6 @@ for my $char ("٠", "٥", "٩") {
     fresh_perl_like('no warnings "experimental::regex_sets"; qr/(?[ ! ! (\w])/',
                     qr/^Unmatched \(/, {},
                     'qr/(?[ ! ! (\w])/ doesnt panic');
-
     # The following didn't panic before, but easy to add this here with a
     # paren between the !!
     fresh_perl_like('no warnings "experimental::regex_sets";qr/(?[ ! ( ! (\w)])/',
@@ -197,22 +195,6 @@ for my $char ("٠", "٥", "٩") {
     like("e", qr/$pat/, "'e' matches /$pat/");
     like("f", qr/$pat/, "'f' matches /$pat/");
     unlike("g", qr/$pat/, "'g' doesn't match /$pat/");
-}
-
-{   # [perl #129322 ]  This crashed perl, so keep after the ones that don't
-    my $pat = '(?[[!]&[0]^[!]&[0]+[a]])';
-    like("a", qr/$pat/, "/$pat/ compiles and matches 'a'");
-}
-
-{   # [perl #132167]
-    fresh_perl_is('no warnings "experimental::regex_sets";
-        print "c" =~ qr/(?[ ( \p{Uppercase} ) + (\p{Lowercase} - ([a] + [b]))  ])/;',
-        1, {},
-        'qr/(?[ ( \p{Uppercase} ) + (\p{Lowercase} - ([a] + [b]))  ]) compiles and properly matches');
-    fresh_perl_is('no warnings "experimental::regex_sets";
-        print "b" =~ qr/(?[ ( \p{Uppercase} ) + (\p{Lowercase} - ([a] + [b]))  ])/;',
-        "", {},
-        'qr/(?[ ( \p{Uppercase} ) + (\p{Lowercase} - ([a] + [b]))  ]) compiles and properly matches');
 }
 
 done_testing();

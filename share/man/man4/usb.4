@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.196 2019/06/07 20:52:13 jmc Exp $
+.\"	$OpenBSD: usb.4,v 1.186 2017/10/30 15:49:10 patrick Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 7 2019 $
+.Dd $Mdocdate: October 30 2017 $
 .Dt USB 4
 .Os
 .Sh NAME
@@ -121,8 +121,6 @@ CATC USB-EL1201A USB Ethernet device
 Kawasaki LSI KL5KUSB101B USB Ethernet device
 .It Xr mos 4
 MosChip MCS7730/7830/7832 10/100 USB Ethernet device
-.It Xr mue 4
-Microchip LAN75xx/LAN78xx 10/100/Gigabit USB Ethernet device
 .It Xr smsc 4
 SMSC LAN95xx 10/100 USB Ethernet device
 .It Xr udav 4
@@ -141,7 +139,7 @@ Atheros IEEE 802.11a/b/g/n wireless network device
 .It Xr atu 4
 Atmel AT76C50x IEEE 802.11b wireless network device
 .It Xr bwfm 4
-Broadcom and Cypress IEEE 802.11a/ac/b/g/n wireless network device
+Broadcom and Cypress wireless network device
 .It Xr otus 4
 Atheros USB IEEE 802.11a/b/g/n wireless network device
 .It Xr rsu 4
@@ -159,8 +157,7 @@ Ralink Technology/MediaTek USB IEEE 802.11b/g wireless network device
 .It Xr urtw 4
 Realtek RTL8187L/RTL8187B USB IEEE 802.11b/g wireless network device
 .It Xr urtwn 4
-Realtek RTL8188CU/RTL8188EU/RTL8192CU/RTL8192EU USB IEEE 802.11b/g/n wireless
-network device
+Realtek RTL8188CU/RTL8188EU/RTL8192CU USB IEEE 802.11b/g/n wireless network device
 .It Xr wi 4
 Intersil PRISM 2-3 IEEE 802.11b wireless network device
 .It Xr zyd 4
@@ -178,16 +175,12 @@ Belkin USB serial adapter
 WinChipHead CH341/340 based USB serial adapter
 .It Xr ucom 4
 USB tty support
-.It Xr ucrcom 4
-Chromebook USB serial console
 .It Xr ucycom 4
 Cypress microcontroller based USB serial adapter
 .It Xr uftdi 4
 FTDI USB serial adapter
 .It Xr uipaq 4
 iPAQ USB units
-.It Xr ukspan 4
-Keyspan USB serial adapter
 .It Xr ulpt 4
 USB printer support
 .It Xr umcs 4
@@ -212,8 +205,6 @@ Texas Instruments TUSB3410 USB serial adapter
 USB Handspring Visor
 .It Xr uvscom 4
 SUNTAC Slipper U VS-10U USB serial adapter
-.It Xr uxrcom 4
-Exar XR21V1410 USB serial adapter
 .El
 .Ss Audio devices
 .Bl -tag -width 12n -offset ind -compact
@@ -255,8 +246,6 @@ Base driver for all Human Interface Devices
 USB keyboards that follow the boot protocol
 .It Xr ums 4
 USB HID mouse, touchscreen and digitiser devices
-.It Xr umt 4
-USB HID multitouch touchpad devices
 .It Xr uoaklux 4
 Toradex OAK USB illuminance sensor
 .It Xr uoakrh 4
@@ -394,6 +383,11 @@ and defines:
 The
 .Pa /dev/usbN
 device can be opened and a few operations can be performed on it.
+The
+.Xr poll 2
+system call will say that I/O is possible on the controller device
+when a USB device has been connected or disconnected to the bus.
+.Pp
 The following
 .Xr ioctl 2
 commands are supported on the controller device:

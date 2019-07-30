@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.145 2018/08/31 04:20:37 visa Exp $	*/
+/*	$OpenBSD: conf.h,v 1.144 2018/01/13 13:03:42 robert Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -475,13 +475,6 @@ extern struct cdevsw cdevsw[];
 	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
 	(dev_type_mmap((*))) enodev, 0 }
 
-/* open, close, ioctl, mmap */
-#define cdev_kcov_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, selfalse, \
-	(dev_init(c,n,mmap)), 0, D_CLONE }
-
 #endif
 
 /*
@@ -614,7 +607,6 @@ cdev_decl(amdmsr);
 cdev_decl(fuse);
 cdev_decl(pvbus);
 cdev_decl(ipmi);
-cdev_decl(kcov);
 
 #endif
 

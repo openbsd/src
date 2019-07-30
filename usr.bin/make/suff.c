@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.95 2018/11/13 14:51:35 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.92 2017/07/24 12:07:46 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -180,7 +180,7 @@ static Suff *add_suffixi(const char *, const char *);
 
 static void SuffInsert(Lst, Suff *);
 static void SuffAddSrc(void *, void *);
-static bool SuffRemoveSrc(Lst);
+static int SuffRemoveSrc(Lst);
 static void SuffAddLevel(Lst, Src *);
 static Src *SuffFindThem(Lst, Lst);
 static Src *SuffFindCmds(Src *, Lst);
@@ -730,16 +730,21 @@ SuffAddLevel(
 /*-
  *----------------------------------------------------------------------
  * SuffRemoveSrc --
- *	Free Src structure with a zero reference count in a list
+ *	Free all src structures in list that don't have a reference count
  *
- *	returns true if a src was removed
+ * Results:
+ *	Ture if an src was removed
+ *
+ * Side Effects:
+ *	The memory is free'd.
  *----------------------------------------------------------------------
  */
-static bool
+static int
 SuffRemoveSrc(Lst l)
 {
 	LstNode ln;
 	Src *s;
+	int t = 0;
 
 #ifdef DEBUG_SRC
 	printf("cleaning %lx: ", (unsigned long)l);
@@ -768,6 +773,7 @@ SuffRemoveSrc(Lst l)
 #endif
 			Lst_Remove(l, ln);
 			free(s);
+			t |= 1;
 			return true;
 		}
 #ifdef DEBUG_SRC
@@ -779,7 +785,7 @@ SuffRemoveSrc(Lst l)
 #endif
 	}
 
-	return false;
+	return t;
 }
 
 /*-

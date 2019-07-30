@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.191 2019/04/01 07:00:52 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.187 2017/12/30 20:46:59 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -345,6 +345,15 @@ setregs(p, pack, stack, retval)
 	retval[1] = 0;
 }
 
+#ifdef DEBUG
+int sigdebug = 0;
+pid_t sigpid = 0;
+#define SDB_FOLLOW	0x01
+#define SDB_KSTACK	0x02
+#define SDB_FPSTATE	0x04
+#define SDB_DDB		0x08
+#endif
+
 struct sigframe {
 	int	sf_signo;		/* signal number */
 	int	sf_code;		/* signal code (unused) */
@@ -404,7 +413,8 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
  * Send an interrupt to process.
  */
 void
-sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
+sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
+    union sigval val)
 {
 	struct proc *p = curproc;
 	struct sigacts *psp = p->p_p->ps_sigacts;
@@ -422,8 +432,8 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	 */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(oldsp) && (psp->ps_sigonstack & sigmask(sig)))
-		fp = (struct sigframe *)
-		    trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
+		fp = (struct sigframe *)((caddr_t)p->p_sigstk.ss_sp +
+		    p->p_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)oldsp;
 	/* Allocate an aligned sigframe */
@@ -452,7 +462,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 
 	if (psp->ps_siginfo & sigmask(sig)) {
 		sf.sf_sip = &fp->sf_si;
-		sf.sf_si = *ksip;
+		initsiginfo(&sf.sf_si, sig, code, type, val);
 	}
 
 	/*
@@ -481,6 +491,13 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
 	}
+
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW) {
+		printf("sendsig: %s[%d] sig %d scp %p\n",
+		    p->p_p->ps_comm, p->p_p->ps_pid, sig, &fp->sf_sc);
+	}
+#endif
 
 	/*
 	 * Arrange to continue execution at the code copied out in exec().
@@ -596,9 +613,6 @@ boot(int howto)
 	int i;
 	static char str[128];
 
-	if ((howto & RB_RESET) != 0)
-		goto doreset;
-
 	if (cold) {
 		if ((howto & RB_USERREQ) == 0)
 			howto |= RB_HALT;
@@ -653,7 +667,6 @@ haltsys:
 		panic("PROM exit failed");
 	}
 
-doreset:
 	printf("rebooting\n\n");
 #if 0
 	if (user_boot_string && *user_boot_string) {

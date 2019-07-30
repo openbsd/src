@@ -106,14 +106,8 @@ def NoRedZone : EnumAttr<"noredzone">;
 /// Mark the function as not returning.
 def NoReturn : EnumAttr<"noreturn">;
 
-/// Disable Indirect Branch Tracking.
-def NoCfCheck : EnumAttr<"nocf_check">;
-
 /// Function doesn't unwind stack.
 def NoUnwind : EnumAttr<"nounwind">;
-
-/// Select optimizations for best fuzzing signal.
-def OptForFuzzing : EnumAttr<"optforfuzzing">;
 
 /// opt_size.
 def OptimizeForSize : EnumAttr<"optsize">;
@@ -136,9 +130,6 @@ def ReturnsTwice : EnumAttr<"returns_twice">;
 /// Safe Stack protection.
 def SafeStack : EnumAttr<"safestack">;
 
-/// Shadow Call Stack protection.
-def ShadowCallStack : EnumAttr<"shadowcallstack">;
-
 /// Sign extended before/after call.
 def SExt : EnumAttr<"signext">;
 
@@ -158,9 +149,6 @@ def StackProtectReq : EnumAttr<"sspreq">;
 /// Strong Stack protection.
 def StackProtectStrong : EnumAttr<"sspstrong">;
 
-/// Function was called in a scope requiring strict floating point semantics.
-def StrictFP : EnumAttr<"strictfp">;
-
 /// Hidden pointer to structure to return.
 def StructRet : EnumAttr<"sret">;
 
@@ -172,9 +160,6 @@ def SanitizeThread : EnumAttr<"sanitize_thread">;
 
 /// MemorySanitizer is on.
 def SanitizeMemory : EnumAttr<"sanitize_memory">;
-
-/// HWAddressSanitizer is on.
-def SanitizeHWAddress : EnumAttr<"sanitize_hwaddress">;
 
 /// Argument is swift error.
 def SwiftError : EnumAttr<"swifterror">;
@@ -197,7 +182,6 @@ def NoInfsFPMath : StrBoolAttr<"no-infs-fp-math">;
 def NoNansFPMath : StrBoolAttr<"no-nans-fp-math">;
 def UnsafeFPMath : StrBoolAttr<"unsafe-fp-math">;
 def NoJumpTables : StrBoolAttr<"no-jump-tables">;
-def ProfileSampleAccurate : StrBoolAttr<"profile-sample-accurate">;
 
 class CompatRule<string F> {
   // The name of the function called to check the attribute of the caller and
@@ -212,9 +196,7 @@ class CompatRule<string F> {
 def : CompatRule<"isEqual<SanitizeAddressAttr>">;
 def : CompatRule<"isEqual<SanitizeThreadAttr>">;
 def : CompatRule<"isEqual<SanitizeMemoryAttr>">;
-def : CompatRule<"isEqual<SanitizeHWAddressAttr>">;
 def : CompatRule<"isEqual<SafeStackAttr>">;
-def : CompatRule<"isEqual<ShadowCallStackAttr>">;
 
 class MergeRule<string F> {
   // The name of the function called to merge the attributes of the caller and
@@ -231,9 +213,6 @@ def : MergeRule<"setAND<NoNansFPMathAttr>">;
 def : MergeRule<"setAND<UnsafeFPMathAttr>">;
 def : MergeRule<"setOR<NoImplicitFloatAttr>">;
 def : MergeRule<"setOR<NoJumpTablesAttr>">;
-def : MergeRule<"setOR<ProfileSampleAccurateAttr>">;
 def : MergeRule<"adjustCallerSSPLevel">;
 def : MergeRule<"adjustCallerStackProbes">;
 def : MergeRule<"adjustCallerStackProbeSize">;
-def : MergeRule<"adjustMinLegalVectorWidth">;
-def : MergeRule<"adjustNullPointerValidAttr">;

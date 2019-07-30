@@ -1,4 +1,4 @@
-#!perl
+#!/usr/bin/perl
 
 # check that simple requiring BigRat works
 

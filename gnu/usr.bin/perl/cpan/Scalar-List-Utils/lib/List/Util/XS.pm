@@ -1,9 +1,8 @@
 package List::Util::XS;
 use strict;
-use warnings;
 use List::Util;
 
-our $VERSION = "1.50";       # FIXUP
+our $VERSION = "1.42_02";       # FIXUP
 $VERSION = eval $VERSION;    # FIXUP
 
 1;

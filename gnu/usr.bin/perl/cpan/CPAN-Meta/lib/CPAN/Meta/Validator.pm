@@ -3,7 +3,7 @@ use strict;
 use warnings;
 package CPAN::Meta::Validator;
 
-our $VERSION = '2.150010';
+our $VERSION = '2.150005';
 
 #pod =head1 SYNOPSIS
 #pod
@@ -669,8 +669,8 @@ sub check_list {
 #pod
 #pod boolean($self,$key,$value)
 #pod
-#pod Validates for a boolean value: a defined value that is either "1" or "0" or
-#pod stringifies to those values.
+#pod Validates for a boolean value. Currently these values are '1', '0', 'true',
+#pod 'false', however the latter 2 may be removed.
 #pod
 #pod =item *
 #pod
@@ -833,7 +833,7 @@ sub version {
 sub boolean {
     my ($self,$key,$value) = @_;
     if(defined $value) {
-        return 1    if($value =~ /^(0|1)$/);
+        return 1    if($value =~ /^(0|1|true|false)$/);
     } else {
         $value = '<undef>';
     }
@@ -996,7 +996,7 @@ CPAN::Meta::Validator - validate CPAN distribution metadata structures
 
 =head1 VERSION
 
-version 2.150010
+version 2.150005
 
 =head1 SYNOPSIS
 
@@ -1124,8 +1124,8 @@ are both valid. A leading 'v' like 'v1.2.3' is also valid.
 
 boolean($self,$key,$value)
 
-Validates for a boolean value: a defined value that is either "1" or "0" or
-stringifies to those values.
+Validates for a boolean value. Currently these values are '1', '0', 'true',
+'false', however the latter 2 may be removed.
 
 =item *
 
@@ -1193,15 +1193,11 @@ David Golden <dagolden@cpan.org>
 
 Ricardo Signes <rjbs@cpan.org>
 
-=item *
-
-Adam Kennedy <adamk@cpan.org>
-
 =back
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2010 by David Golden, Ricardo Signes, Adam Kennedy and Contributors.
+This software is copyright (c) 2010 by David Golden and Ricardo Signes.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.63 2018/05/27 06:02:14 visa Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.60 2018/03/28 16:34:28 visa Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -104,6 +104,7 @@ static struct denode *
 msdosfs_hashget(dev_t dev, uint32_t dirclust, uint32_t diroff)
 {
 	struct denode *dep;
+	struct proc *p = curproc; /* XXX */
 
 	for (;;)
 		for (dep = dehashtbl[DEHASH(dev, dirclust, diroff)]; ;
@@ -116,7 +117,7 @@ msdosfs_hashget(dev_t dev, uint32_t dirclust, uint32_t diroff)
 			    dep->de_refcnt != 0) {
 				struct vnode *vp = DETOV(dep);
 
-				if (!vget(vp, LK_EXCLUSIVE))
+				if (!vget(vp, LK_EXCLUSIVE, p))
 					return (dep);
 				break;
 			}
@@ -188,6 +189,7 @@ deget(struct msdosfsmount *pmp, uint32_t dirclust, uint32_t diroffset,
 	struct denode *ldep;
 	struct vnode *nvp;
 	struct buf *bp;
+	struct proc *p = curproc; /* XXX */
 
 #ifdef MSDOSFS_DEBUG
 	printf("deget(pmp %p, dirclust %d, diroffset %x, depp %p)\n",
@@ -247,7 +249,7 @@ retry:
 	 * can't be accessed until we've read it in and have done what we
 	 * need to it.
 	 */
-	vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = msdosfs_hashins(ldep);
 
 	if (error) {
@@ -659,7 +661,7 @@ msdosfs_inactive(void *v)
 	deupdat(dep, 0);
 
 out:
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, p);
 	/*
 	 * If we are done with the denode, reclaim it
 	 * so that it can be reused immediately.

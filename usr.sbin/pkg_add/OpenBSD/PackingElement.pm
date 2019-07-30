@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.270 2019/05/28 19:31:42 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.250 2018/02/06 15:17:26 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -183,11 +183,8 @@ sub finish
 	my ($class, $state) = @_;
 	OpenBSD::PackingElement::Fontdir->finish($state);
 	OpenBSD::PackingElement::RcScript->report($state);
-	if (defined $state->{readmes}) {
-		$state->say("New and changed readme(s):");
-		for my $file (sort @{$state->{readmes}}) {
-			$state->say("\t#1", $file);
-		}
+	if ($state->{readmes}) {
+		$state->say("Look in #1/share/doc/pkg-readmes for extra documentation.", $state->{localbase});
 	}
 }
 
@@ -306,6 +303,18 @@ sub compute_digest
 	require OpenBSD::md5;
 	$class = 'OpenBSD::sha' if !defined $class;
 	return $class->new($filename);
+}
+
+sub write
+{
+	my ($self, $fh) = @_;
+
+	$self->SUPER::write($fh);
+	if (defined $self->{tags}) {
+		for my $tag (sort keys %{$self->{tags}}) {
+			print $fh "\@tag ", $tag, "\n";
+		}
+	}
 }
 
 # exec/unexec and friends
@@ -475,8 +484,8 @@ sub add_object
 	my ($self, $plist) = @_;
 
 	$self->destate($plist->{state});
-	my $j = is_info_name($self->name);
-	if ($j && $self->cwd eq '.') {
+	my $j = is_info_name($self->fullname);
+	if ($j) {
 		bless $self, "OpenBSD::PackingElement::$j";
 		$self->add_object($plist);
 	} else {
@@ -544,6 +553,9 @@ sub destate
 {
 	my ($self, $state) = @_;
 	$self->compute_fullname($state);
+	if ($self->name =~ m/^\//) {
+		$state->set_cwd(dirname($self->name));
+	}
 	$state->{lastfile} = $self;
 	$state->{lastchecksummable} = $self;
 	$self->compute_modes($state);
@@ -640,25 +652,26 @@ sub format
 		mkdir($d);
 	}
 	if (my ($dir, $file) = $fname =~ m/^(.*)\/([^\/]+\/[^\/]+)$/) {
-		my $r = $state->system(sub {
+		$state->system(sub {
 		    open STDOUT, '>&', $destfh or
 			die "Can't write to $dest";
 		    close $destfh;
 		    chdir($dir) or die "Can't chdir to $dir";
 		    },
-		    $state->{groff} // OpenBSD::Paths->groff,
+		    OpenBSD::Paths->groff,
 		    qw(-mandoc -mtty-char -E -Ww -Tascii -P -c),
 		    @extra, '--', $file);
-		if ($r != 0) {
-			# system already displays an error message
-			return;
-		}
 	} else {
-		$state->error("Can't parse source name #1", $fname);
-		return;
+		die "Can't parse source name $fname";
 	}
 	return 1;
 }
+
+package OpenBSD::PackingElement::Mandoc;
+our @ISA=qw(OpenBSD::PackingElement::Manpage);
+
+sub keyword() { "mandoc" }
+__PACKAGE__->register_with_factory;
 
 package OpenBSD::PackingElement::Lib;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
@@ -725,8 +738,6 @@ sub add
 		return OpenBSD::PackingElement::CVSTag->add($plist, $args);
 	} elsif ($args =~ m/^(?:subdir|pkgpath)\=(.*?)\s+cdrom\=(.*?)\s+ftp\=(.*?)\s*$/o) {
 		return OpenBSD::PackingElement::ExtraInfo->add($plist, $1, $2, $3);
-	} elsif ($args =~ m/^(?:subdir|pkgpath)\=(.*?)\s+ftp\=(.*?)\s*$/o) {
-		return OpenBSD::PackingElement::ExtraInfo->add($plist, $1, undef, $2);
 	} elsif ($args eq 'no checksum') {
 		$plist->{state}->{nochecksum} = 1;
 		return;
@@ -760,6 +771,50 @@ sub add
 
 	$plist->{state}->{lastchecksummable}->add_digest(OpenBSD::sha->fromstring($args));
 	return;
+}
+
+package OpenBSD::PackingElement::tag;
+our @ISA=qw(OpenBSD::PackingElement::Annotation);
+
+__PACKAGE__->register_with_factory('tag');
+
+sub add
+{
+	my ($class, $plist, $args) = @_;
+
+	if ($args eq 'no checksum') {
+		$plist->{state}{lastfile}{nochecksum} = 1;
+	} else {
+		my $object = $plist->{state}{lastfileobject};
+		$object->{tags}{$args} = 1;
+		push(@{$plist->{tags}{$args}}, $object);
+	}
+	return undef;
+}
+
+package OpenBSD::PackingElement::DefineTag;
+our @ISA=qw(OpenBSD::PackingElement::Meta);
+
+sub category() { 'define-tag' }
+sub keyword() { 'define-tag' }
+__PACKAGE__->register_with_factory;
+
+sub new
+{
+	my ($class, $args) = @_;
+	my ($tag, $condition, @command) = split(/\s+/, $args);
+	bless {
+		name => $tag,
+		when => $condition,
+		command => join(' ', @command)
+	}, $class;
+}
+
+sub stringize
+{
+	my $self = shift;
+	return join(' ', map { $self->{$_}}
+		(qw(name when command)));
 }
 
 package OpenBSD::PackingElement::symlink;
@@ -909,17 +964,14 @@ sub new
 {
 	my ($class, $subdir, $cdrom, $ftp) = @_;
 
+	$cdrom =~ s/^\"(.*)\"$/$1/;
+	$cdrom =~ s/^\'(.*)\'$/$1/;
 	$ftp =~ s/^\"(.*)\"$/$1/;
 	$ftp =~ s/^\'(.*)\'$/$1/;
-	my $o = bless { subdir => $subdir,
-	    path => OpenBSD::PkgPath->new($subdir),
+	bless { subdir => $subdir,
+		path => OpenBSD::PkgPath->new($subdir),
+	    cdrom => $cdrom,
 	    ftp => $ftp}, $class;
-	if (defined $cdrom) {
-		$cdrom =~ s/^\"(.*)\"$/$1/;
-		$cdrom =~ s/^\'(.*)\'$/$1/;
-		$o->{cdrom} = $cdrom;
-	}
-	return $o;
 }
 
 sub subdir
@@ -940,13 +992,10 @@ sub may_quote
 sub stringize
 {
 	my $self = shift;
-	my @l = (
-	    "pkgpath=".$self->{subdir});
-	if (defined $self->{cdrom}) {
-		push @l, "cdrom=".may_quote($self->{cdrom});
-	}
-	push(@l, "ftp=".may_quote($self->{ftp}));
-	return join(' ', @l);
+	return join(' ',
+	    "pkgpath=".$self->{subdir},
+	    "cdrom=".may_quote($self->{cdrom}),
+	    "ftp=".may_quote($self->{ftp}));
 }
 
 package OpenBSD::PackingElement::Name;
@@ -1304,16 +1353,10 @@ use File::Basename;
 use OpenBSD::Error;
 our @ISA=qw(OpenBSD::PackingElement::Action);
 
-sub command
-{
-	my $self = shift;
-	return $self->name;
-}
-
 sub expand
 {
 	my ($self, $state) = @_;
-	my $e = $self->command;
+	my $e = $self->name;
 	if ($e =~ m/\%F/o) {
 		die "Bad expand" unless defined $state->{lastfile};
 		$e =~ s/\%F/$state->{lastfile}->{name}/g;
@@ -1341,198 +1384,13 @@ sub destate
 
 sub run
 {
-	my ($self, $state, $v) = @_;
-
-	$v //= $self->{expanded};
-	$state->ldconfig->ensure;
-	$state->say("#1 #2", $self->keyword, $v) if $state->verbose >= 2;
-	$state->log->system(OpenBSD::Paths->sh, '-c', $v) unless $state->{not};
-}
-
-# so tags are going to get triggered by packages we depend on.
-# turns out it's simpler to have them as "actions" because that's basically
-# what's going to happen, so destate is good for them, gives us access
-# to things like %D
-package OpenBSD::PackingElement::TagBase;
-our @ISA=qw(OpenBSD::PackingElement::ExeclikeAction);
-
-sub command
-{
-	my $self = shift;
-	return $self->{params};
-}
-
-package OpenBSD::PackingElement::Tag;
-our @ISA=qw(OpenBSD::PackingElement::TagBase);
-sub keyword() { 'tag' }
-
-__PACKAGE__->register_with_factory;
-
-sub new
-{
-	my ($class, $args) = @_;
-	my ($tag, $params) = split(/\s+/, $args, 2);
-	bless {
-		name => $tag,
-		params => $params // '',
-	    }, $class;
-}
-
-sub stringize
-{
-	my $self = shift;
-	if ($self->{params} ne '') {
-		return join(' ', $self->name, $self->{params});
-	} else {
-		return $self->name;
-	}
-}
-
-# tags are a kind of dependency, we have a special list for them, BUT
-# they're still part of the normal packing-list
-sub add_object
-{
-	my ($self, $plist) = @_;
-	push(@{$plist->{tags}}, $self);
-	$self->SUPER::add_object($plist);
-}
-
-# and the define tag thingy is very similar... the main difference being
-# how it's actually registered
-package OpenBSD::PackingElement::DefineTag;
-our @ISA=qw(OpenBSD::PackingElement::TagBase);
-
-sub category() {'define-tag'}
-sub keyword() { 'define-tag' }
-__PACKAGE__->register_with_factory;
-
-# define-tag may be parsed several times, but these objects must be
-# unique for tag accumulation to work correctly
-my $cache = {};
-
-my $subclass = {
-	'at-end' => 'Atend',
-	'supersedes' => 'Supersedes',
-	'cleanup' => 'Cleanup' };
-
-sub new
-{
-	my ($class, $args) = @_;
-	my ($tag, $mode, $params) = split(/\s+/, $args, 3);
-	$cache->{$args} //= bless {
-	    name => $tag,
-	    mode => $mode,
-	    params => $params,
-	    }, $class;
-}
-
-sub stringize
-{
-	my $self = shift;
-	return join(' ', $self->name, $self->{mode}, $self->{params});
-}
-
-sub add_object
-{
-	my ($self, $plist) = @_;
-	my $sub = $subclass->{$self->{mode}};
-	if (!defined $sub) {
-		die "unknown mode for \@define-tag";
-	}
-	bless $self, "OpenBSD::PackingElement::DefineTag::$sub";
-	push(@{$plist->{tags_definitions}{$self->name}}, $self);
-	$self->SUPER::add_object($plist);
-}
-
-sub destate
-{
-}
-
-package OpenBSD::PackingElement::DefineTag::Atend;
-our @ISA = qw(OpenBSD::PackingElement::DefineTag);
-
-sub add_tag
-{
-	my ($self, $tag, $mode, $state) = @_;
-	# add the tag contents if they exist
-	# they're stored in a hash because the order doesn't matter
-	if ($tag->{params} ne '') {
-		$self->{list}{$tag->{expanded}} = 1;
-	}
-	# special case: we have to run things *now* if deleting
-	if ($mode eq 'delete' && $tag->{found_in_self} && !$state->replacing) {
-		
-		$self->run_tag($state) 
-		    unless $state->{tags}{superseded}{$self->name};
-		delete $state->{tags}{atend}{$self->name};
-	} else {
-		$state->{tags}{atend}{$self->name} = $self;
-	}
-}
-
-sub run_tag
-{
 	my ($self, $state) = @_;
-	my $command = $self->command;
-	if ($command =~ m/\%D/) {
-		$command =~ s/\%D/$state->{localbase}/g;
-	}
 
-	if ($command =~ m/\%l/) {
-		my $l = join(' ', keys %{$self->{list}});
-		$command =~ s/\%l/$l/g;
-	}
-	if ($command =~ m/\%u/) {
-		for my $p (keys %{$self->{list}}) {
-			my $v = $command;
-			$v =~ s/\%u/$p/g;
-			$self->run($state, $v);
-			$state->say("Running #1", $v) 
-			    if $state->defines("TRACE_TAGS");
-		}
-	} else {
-		$self->run($state, $command);
-		$state->say("Running #1", $command)
-		    if $state->defines("TRACE_TAGS");
-	}
-}
-
-sub need_params
-{
-	my $self = shift;
-	return $self->{params} =~ m/\%[lu]/;
-}
-
-package OpenBSD::PackingElement::DefineTag::Cleanup;
-our @ISA = qw(OpenBSD::PackingElement::DefineTag);
-
-sub add_tag
-{
-	my ($self, $tag, $mode, $state) = @_;
-	# okay, we don't need to look at directories if we're not deleting
-	return unless $mode eq 'delete';
-	# this does not work at all like 'at-end'
-	# instead we record a hash of directories we may want to cleanup
-	push(@{$state->{tag_cleanup}{$tag->{expanded}}}, $self);
-}
-
-sub need_params
-{
-	1
-}
-
-package OpenBSD::PackingElement::DefineTag::Supersedes;
-our @ISA = qw(OpenBSD::PackingElement::DefineTag);
-
-sub add_tag
-{
-	my ($self, $tag, $mode, $state) = @_;
-	$state->{tags}{superseded}{$self->{params}} = 1;
-}
-
-sub need_params
-{
-	0
+	$state->ldconfig->ensure;
+	$state->say("#1 #2", $self->keyword, $self->{expanded})
+	    if $state->verbose >= 2;
+	$state->log->system(OpenBSD::Paths->sh, '-c', $self->{expanded})
+	    unless $state->{not};
 }
 
 package OpenBSD::PackingElement::Exec;

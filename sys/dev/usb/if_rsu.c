@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.44 2019/04/25 01:52:14 kevlo Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.42 2018/01/31 12:36:13 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -749,9 +749,9 @@ rsu_media_change(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 	    (IFF_UP | IFF_RUNNING)) {
 		rsu_stop(ifp);
-		error = rsu_init(ifp);
+		rsu_init(ifp);
 	}
-	return (error);
+	return (0);
 }
 
 void
@@ -2312,6 +2312,9 @@ rsu_stop(struct ifnet *ifp)
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
+
+	/* In case we were scanning, release the scan "lock". */
+	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 
 	s = splusb();
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);

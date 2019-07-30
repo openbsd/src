@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2019/04/01 11:05:41 yasuoka Exp $	*/
+/*	$OpenBSD: parse.y,v 1.4 2016/08/27 09:04:20 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -58,9 +58,7 @@ struct file	*pushfile(const char *);
 int		 popfile(void);
 int		 yyparse(void);
 int		 yylex(void);
-int		 yyerror(const char *, ...)
-    __attribute__((__format__ (printf, 1, 2)))
-    __attribute__((__nonnull__ (1)));
+int		 yyerror(const char *, ...);
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
 int		 lgetc(int);
@@ -170,11 +168,6 @@ optport		: { $$ = 0; }
 client		: CLIENT prefix optnl clientopts_b {
 			struct radiusd_client *client0;
 
-			if (client.secret[0] == '\0') {
-				yyerror("secret is required for client");
-				YYERROR;
-			}
-
 			client0 = calloc(1, sizeof(struct radiusd_client));
 			if (client0 == NULL)
 				goto outofmemory;
@@ -230,8 +223,8 @@ prefix		: STRING '/' NUMBER {
 			switch (res->ai_family) {
 			case AF_INET:
 				if ($3 < 0 || 32 < $3) {
-					yyerror("mask len %lld is out of range",
-					    (long long)$3);
+					yyerror("mask len %d is out of range",
+					    $3);
 					YYERROR;
 				}
 				$$.addr.addr.ipv4 = ((struct sockaddr_in *)
@@ -241,8 +234,8 @@ prefix		: STRING '/' NUMBER {
 				break;
 			case AF_INET6:
 				if ($3 < 0 || 128 < $3) {
-					yyerror("mask len %lld is out of range",
-					    (long long)$3);
+					yyerror("mask len %d is out of range",
+					    $3);
 					YYERROR;
 				}
 				$$.addr.addr.ipv6 = ((struct sockaddr_in6 *)
@@ -278,19 +271,17 @@ module		: MODULE LOAD STRING STRING {
 			module = find_module($3);
 			if (module == NULL) {
 				yyerror("module `%s' is not found", $3);
-setstrerr:
 				free($3);
 				free($4);
 				free_str_l(&$5);
 				YYERROR;
 			}
-			if ($4[0] == '_') {
-				yyerror("setting `%s' is not allowed", $4);
-				goto setstrerr;
-			}
 			if (radiusd_module_set(module, $4, $5.c, $5.v)) {
 				yyerror("syntax error by module `%s'", $3);
-				goto setstrerr;
+				free($3);
+				free($4);
+				free_str_l(&$5);
+				YYERROR;
 			}
 			free($3);
 			free($4);
@@ -450,9 +441,9 @@ lookup(char *s)
 
 #define MAXPUSHBACK	128
 
-u_char	*parsebuf;
+char	*parsebuf;
 int	 parseindex;
-u_char	 pushback_buffer[MAXPUSHBACK];
+char	 pushback_buffer[MAXPUSHBACK];
 int	 pushback_index = 0;
 
 int
@@ -545,8 +536,8 @@ findeol(void)
 int
 yylex(void)
 {
-	u_char	 buf[8096];
-	u_char	*p;
+	char	 buf[8096];
+	char	*p;
 	int	 quotec, next, c;
 	int	 token;
 
@@ -572,8 +563,7 @@ yylex(void)
 			} else if (c == '\\') {
 				if ((next = lgetc(quotec)) == EOF)
 					return (0);
-				if (next == quotec || next == ' ' ||
-				    next == '\t')
+				if (next == quotec || c == ' ' || c == '\t')
 					c = next;
 				else if (next == '\n') {
 					file->lineno++;
@@ -591,7 +581,7 @@ yylex(void)
 				yyerror("string too long");
 				return (findeol());
 			}
-			*p++ = c;
+			*p++ = (char)c;
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
@@ -605,7 +595,7 @@ yylex(void)
 	if (c == '-' || isdigit(c)) {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -644,7 +634,7 @@ nodigits:
 	if (isalnum(c) || c == ':' || c == '_' || c == '*') {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -671,16 +661,16 @@ pushfile(const char *name)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
-		log_warn("%s", __func__);
+		log_warn("malloc");
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		log_warn("%s", __func__);
+		log_warn("malloc");
 		free(nfile);
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		log_warn("%s: %s", __func__, nfile->name);
+		log_warn("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);

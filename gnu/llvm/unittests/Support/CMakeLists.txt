@@ -13,15 +13,12 @@ add_llvm_unittest(SupportTests
   CachePruningTest.cpp
   CrashRecoveryTest.cpp
   Casting.cpp
-  CheckedArithmeticTest.cpp
   Chrono.cpp
   CommandLineTest.cpp
   CompressionTest.cpp
   ConvertUTFTest.cpp
   DataExtractorTest.cpp
   DebugTest.cpp
-  DebugCounterTest.cpp
-  DJBTest.cpp
   EndianStreamTest.cpp
   EndianTest.cpp
   ErrnoTest.cpp
@@ -31,7 +28,6 @@ add_llvm_unittest(SupportTests
   FormatVariadicTest.cpp
   GlobPatternTest.cpp
   Host.cpp
-  JSONTest.cpp
   LEB128Test.cpp
   LineIteratorTest.cpp
   LockFileManagerTest.cpp
@@ -46,7 +42,6 @@ add_llvm_unittest(SupportTests
   ProcessTest.cpp
   ProgramTest.cpp
   RegexTest.cpp
-  ReverseIterationTest.cpp
   ReplaceFileTest.cpp
   ScaledNumberTest.cpp
   SourceMgrTest.cpp
@@ -55,17 +50,14 @@ add_llvm_unittest(SupportTests
   SwapByteOrderTest.cpp
   TarWriterTest.cpp
   TargetParserTest.cpp
-  TaskQueueTest.cpp
   ThreadLocalTest.cpp
   ThreadPool.cpp
   Threading.cpp
   TimerTest.cpp
   TypeNameTest.cpp
-  TypeTraitsTest.cpp
   TrailingObjectsTest.cpp
   TrigramIndexTest.cpp
   UnicodeTest.cpp
-  VersionTupleTest.cpp
   YAMLIOTest.cpp
   YAMLParserTest.cpp
   formatted_raw_ostream_test.cpp
@@ -75,14 +67,12 @@ add_llvm_unittest(SupportTests
   xxhashTest.cpp
   )
 
-target_link_libraries(SupportTests PRIVATE LLVMTestingSupport)
-
 # Disable all warning for AlignOfTest.cpp,
 # as it does things intentionally, and there is no reliable way of
 # disabling all warnings for all the compilers by using pragmas.
 set_source_files_properties(AlignOfTest.cpp PROPERTIES COMPILE_FLAGS -w)
 
 # ManagedStatic.cpp uses <pthread>.
-target_link_libraries(SupportTests PRIVATE LLVMTestingSupport ${LLVM_PTHREAD_LIB})
+target_link_libraries(SupportTests LLVMTestingSupport ${LLVM_PTHREAD_LIB})
 
 add_subdirectory(DynamicLibrary)

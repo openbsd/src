@@ -25,6 +25,7 @@
 #include "AArch64.h"
 #include "AArch64InstrInfo.h"
 #include "AArch64MachineFunctionInfo.h"
+#include "AArch64TargetMachine.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -42,7 +43,7 @@ struct LDTLSCleanup : public MachineFunctionPass {
   }
 
   bool runOnMachineFunction(MachineFunction &MF) override {
-    if (skipFunction(MF.getFunction()))
+    if (skipFunction(*MF.getFunction()))
       return false;
 
     AArch64FunctionInfo *AFI = MF.getInfo<AArch64FunctionInfo>();

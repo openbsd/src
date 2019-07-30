@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.244 2019/06/10 16:32:51 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.237 2018/03/27 15:03:52 dhill Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -897,7 +897,7 @@ ip6_insert_jumboopt(struct ip6_exthdrs *exthdrs, u_int32_t plen)
 		struct ip6_hbh *hbh;
 
 		mopt = exthdrs->ip6e_hbh;
-		if (m_trailingspace(mopt) < JUMBOOPTLEN) {
+		if (M_TRAILINGSPACE(mopt) < JUMBOOPTLEN) {
 			/*
 			 * XXX assumption:
 			 * - exthdrs->ip6e_hbh is not referenced from places
@@ -985,7 +985,7 @@ ip6_insertfraghdr(struct mbuf *m0, struct mbuf *m, int hlen,
 		;
 
 	if ((mlast->m_flags & M_EXT) == 0 &&
-	    m_trailingspace(mlast) >= sizeof(struct ip6_frag)) {
+	    M_TRAILINGSPACE(mlast) >= sizeof(struct ip6_frag)) {
 		/* use the trailing space of the last mbuf for the fragment hdr */
 		*frghdrp = (struct ip6_frag *)(mtod(mlast, caddr_t) +
 		    mlast->m_len);
@@ -1620,12 +1620,8 @@ ip6_raw_ctloutput(int op, struct socket *so, int level, int optname,
 				break;
 			}
 			optval = *mtod(m, int *);
-			if (optval < -1 ||
-			    (optval > 0 && (optval % 2) != 0)) {
-				/*
-				 * The API assumes non-negative even offset
-				 * values or -1 as a special value.
-				 */
+			if ((optval % 2) != 0) {
+				/* the API assumes even offset values */
 				error = EINVAL;
 			} else if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
 				if (optval != icmp6off)
@@ -1882,7 +1878,9 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m,
 		 * No multicast option buffer attached to the pcb;
 		 * allocate one and initialize to default values.
 		 */
-		im6o = malloc(sizeof(*im6o), M_IPMOPTS, M_WAITOK);
+		im6o = (struct ip6_moptions *)
+			malloc(sizeof(*im6o), M_IPMOPTS, M_WAITOK);
+
 		if (im6o == NULL)
 			return (ENOBUFS);
 		*im6op = im6o;
@@ -2136,7 +2134,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m,
 	    im6o->im6o_hlim == ip6_defmcasthlim &&
 	    im6o->im6o_loop == IPV6_DEFAULT_MULTICAST_LOOP &&
 	    LIST_EMPTY(&im6o->im6o_memberships)) {
-		free(*im6op, M_IPMOPTS, sizeof(**im6op));
+		free(*im6op, M_IPMOPTS, 0);
 		*im6op = NULL;
 	}
 
@@ -2200,7 +2198,7 @@ ip6_freemoptions(struct ip6_moptions *im6o)
 		LIST_REMOVE(imm, i6mm_chain);
 		in6_leavegroup(imm);
 	}
-	free(im6o, M_IPMOPTS, sizeof(*im6o));
+	free(im6o, M_IPMOPTS, 0);
 }
 
 /*
@@ -2573,13 +2571,13 @@ ip6_splithdr(struct mbuf *m, struct ip6_exthdrs *exthdrs)
 
 	ip6 = mtod(m, struct ip6_hdr *);
 	if (m->m_len > sizeof(*ip6)) {
-		MGET(mh, M_DONTWAIT, MT_HEADER);
+		MGETHDR(mh, M_DONTWAIT, MT_HEADER);
 		if (mh == NULL) {
 			m_freem(m);
 			return ENOBUFS;
 		}
 		M_MOVE_PKTHDR(mh, m);
-		m_align(mh, sizeof(*ip6));
+		MH_ALIGN(mh, sizeof(*ip6));
 		m->m_len -= sizeof(*ip6);
 		m->m_data += sizeof(*ip6);
 		mh->m_next = m;
@@ -2706,7 +2704,7 @@ in6_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 	if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_TCPv6) ||
 		    ip6->ip6_nxt != IPPROTO_TCP ||
-		    ifp->if_bridgeidx != 0) {
+		    ifp->if_bridgeport != NULL) {
 			tcpstat_inc(tcps_outswcsum);
 			in6_delayed_cksum(m, IPPROTO_TCP);
 			m->m_pkthdr.csum_flags &= ~M_TCP_CSUM_OUT; /* Clear */
@@ -2714,7 +2712,7 @@ in6_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 	} else if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_UDPv6) ||
 		    ip6->ip6_nxt != IPPROTO_UDP ||
-		    ifp->if_bridgeidx != 0) {
+		    ifp->if_bridgeport != NULL) {
 			udpstat_inc(udps_outswcsum);
 			in6_delayed_cksum(m, IPPROTO_UDP);
 			m->m_pkthdr.csum_flags &= ~M_UDP_CSUM_OUT; /* Clear */
@@ -2767,7 +2765,6 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, int tunalready, int fwd)
 #if NPF > 0
 	struct ifnet *encif;
 #endif
-	int error;
 
 #if NPF > 0
 	if ((encif = enc_getif(tdb->tdb_rdomain, tdb->tdb_tap)) == NULL ||
@@ -2789,11 +2786,6 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, int tunalready, int fwd)
 	m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
 
 	/* Callee frees mbuf */
-	error = ipsp_process_packet(m, tdb, AF_INET6, tunalready);
-	if (error) {
-		ipsecstat_inc(ipsec_odrops);
-		tdb->tdb_odrops++;
-	}
-	return error;
+	return ipsp_process_packet(m, tdb, AF_INET6, tunalready);
 }
 #endif /* IPSEC */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vipw.c,v 1.23 2019/03/25 15:45:18 robert Exp $	 */
+/*	$OpenBSD: vipw.c,v 1.21 2017/07/12 23:10:28 jca Exp $	 */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,6 @@
 
 #include <err.h>
 #include <fcntl.h>
-#include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,14 +62,6 @@ main(int argc, char *argv[])
 	if (argc != 0)
 		usage();
 
-	if (unveil(_PATH_MASTERPASSWD_LOCK, "rwc") == -1)
-		err(1, "unveil");
-	if (unveil(_PATH_MASTERPASSWD, "r") == -1)
-		err(1, "unveil");
-	if (unveil(_PATH_BSHELL, "x") == -1)
-		err(1, "unveil");
-	if (unveil(_PATH_PWD_MKDB, "x") == -1)
-		err(1, "unveil");
 	if (pledge("stdio rpath wpath cpath fattr proc exec", NULL) == -1)
 		err(1, "pledge");
 

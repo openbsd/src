@@ -462,7 +462,7 @@ nsec3_delete_rr_trigger(namedb_type* db, rr_type* rr, zone_type* zone,
 		/* clear trees, wipe hashes, wipe precompile */
 		nsec3_clear_precompile(db, zone);
 		/* pick up new nsec3param (from udb, or avoid deleted rr) */
-		nsec3_find_zone_param(db, zone, udbz, rr, 0);
+		nsec3_find_zone_param(db, zone, udbz, rr);
 		/* if no more NSEC3, done */
 		if(!zone->nsec3_param)
 			return;
@@ -568,7 +568,7 @@ nsec3_add_rr_trigger(namedb_type* db, rr_type* rr, zone_type* zone,
 		prehash_add(db->domains, rr->owner);
 	} else if(!zone->nsec3_param && rr->type == TYPE_NSEC3PARAM) {
 		/* see if this means NSEC3 chain can be used */
-		nsec3_find_zone_param(db, zone, udbz, NULL, 0);
+		nsec3_find_zone_param(db, zone, udbz, NULL);
 		if(!zone->nsec3_param)
 			return;
 		nsec3_zone_trees_create(db->region, zone);
@@ -1138,12 +1138,15 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 		if(*rr_count == 1 && type != TYPE_SOA) {
 			/* second RR: if not SOA: this is an AXFR; delete all zone contents */
 #ifdef NSEC3
-			nsec3_clear_precompile(db, zone_db);
-			zone_db->nsec3_param = NULL;
+			nsec3_hash_tree_clear(zone_db);
 #endif
 			delete_zone_rrs(db, zone_db);
 			if(db->udb)
 				udb_zone_clear(db->udb, udbz);
+#ifdef NSEC3
+			nsec3_clear_precompile(db, zone_db);
+			zone_db->nsec3_param = NULL;
+#endif /* NSEC3 */
 			/* add everything else (incl end SOA) */
 			*delete_mode = 0;
 			*is_axfr = 1;
@@ -1166,12 +1169,15 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 			if(thisserial == serialno) {
 				/* AXFR */
 #ifdef NSEC3
-				nsec3_clear_precompile(db, zone_db);
-				zone_db->nsec3_param = NULL;
+				nsec3_hash_tree_clear(zone_db);
 #endif
 				delete_zone_rrs(db, zone_db);
 				if(db->udb)
 					udb_zone_clear(db->udb, udbz);
+#ifdef NSEC3
+				nsec3_clear_precompile(db, zone_db);
+				zone_db->nsec3_param = NULL;
+#endif /* NSEC3 */
 				*delete_mode = 0;
 				*is_axfr = 1;
 			}
@@ -1271,7 +1277,6 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 	uint8_t committed;
 	uint32_t i;
 	int num_bytes = 0;
-	assert(zonedb);
 
 	/* read zone name and serial */
 	if(!diff_read_32(in, &type)) {
@@ -1358,7 +1363,6 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 				i, num_parts, &is_axfr, &delete_mode,
 				&rr_count, (nsd->db->udb?&z:NULL), &zonedb,
 				patname_buf, &num_bytes, &softfail);
-			assert(zonedb);
 			if(ret == 0) {
 				log_msg(LOG_ERR, "bad ixfr packet part %d in diff file for %s", (int)i, zone_buf);
 				xfrd_unlink_xfrfile(nsd, xfrfilenr);
@@ -1381,7 +1385,6 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 #endif /* NSEC3 */
 		zonedb->is_changed = 1;
 		if(nsd->db->udb) {
-			assert(z.base);
 			ZONE(&z)->is_changed = 1;
 			ZONE(&z)->mtime = time_end_0;
 			ZONE(&z)->mtime_nsec = time_end_1*1000;
@@ -1908,8 +1911,7 @@ task_process_del_zone(struct nsd* nsd, struct task_list_d* task)
 		return;
 
 #ifdef NSEC3
-	nsec3_clear_precompile(nsd->db, zone);
-	zone->nsec3_param = NULL;
+	nsec3_hash_tree_clear(zone);
 #endif
 	delete_zone_rrs(nsd->db, zone);
 	if(nsd->db->udb) {
@@ -1920,6 +1922,10 @@ task_process_del_zone(struct nsd* nsd, struct task_list_d* task)
 			udb_ptr_unlink(&udbz, nsd->db->udb);
 		}
 	}
+#ifdef NSEC3
+	nsec3_clear_precompile(nsd->db, zone);
+	zone->nsec3_param = NULL;
+#endif /* NSEC3 */
 
 	/* remove from zonetree, apex, soa */
 	zopt = zone->opts;

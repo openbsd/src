@@ -1,6 +1,5 @@
-.\" $OpenBSD: X509_STORE_set1_param.3,v 1.16 2019/06/06 01:06:59 schwarze Exp $
+.\" $OpenBSD: X509_STORE_set1_param.3,v 1.13 2018/03/27 17:35:50 schwarze Exp $
 .\" content checked up to:
-.\" OpenSSL man3/X509_STORE_add_cert b0edda11 Mar 20 13:00:17 2018 +0000
 .\" OpenSSL man3/X509_STORE_get0_param e90fc053 Jul 15 09:39:45 2017 -0400
 .\"
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -17,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt X509_STORE_SET1_PARAM 3
 .Os
 .Sh NAME
@@ -28,7 +27,6 @@
 .Nm X509_STORE_set_depth ,
 .Nm X509_STORE_add_cert ,
 .Nm X509_STORE_add_crl ,
-.Nm X509_STORE_get0_param ,
 .Nm X509_STORE_get0_objects ,
 .Nm X509_STORE_get_ex_new_index ,
 .Nm X509_STORE_set_ex_data ,
@@ -70,10 +68,6 @@
 .Fo X509_STORE_add_crl
 .Fa "X509_STORE *store"
 .Fa "X509_CRL *crl"
-.Fc
-.Ft X509_VERIFY_PARAM *
-.Fo X509_STORE_get0_param
-.Fa "X509_STORE *store"
 .Fc
 .Ft STACK_OF(X509_OBJECT) *
 .Fo X509_STORE_get0_objects
@@ -129,7 +123,6 @@ or the certificate revocation list
 to the
 .Fa store ,
 increasing its reference count by 1 in case of success.
-Untrusted objects should not be added in this way.
 .Pp
 .Fn X509_STORE_get_ex_new_index ,
 .Fn X509_STORE_set_ex_data ,
@@ -174,13 +167,11 @@ are already contained in the
 .Fa store ,
 or if memory allocation fails.
 .Pp
-.Fn X509_STORE_get0_param
-returns an internal pointer to the verification parameter object
-contained in the
-.Fa store ,
 .Fn X509_STORE_get0_objects
-to the stack of certificates, revocation lists, and private keys.
-The returned pointers must not be freed by the calling application.
+returns an internal pointer to the stack of certificates, revocation lists,
+and private keys contained in the
+.Fa store .
+The returned pointer must not be freed by the calling application.
 .Pp
 .Fn X509_STORE_get_ex_new_index
 returns a new index or \-1 on failure.
@@ -190,7 +181,6 @@ returns the application data or
 .Dv NULL
 on failure.
 .Sh SEE ALSO
-.Xr RSA_get_ex_new_index 3 ,
 .Xr SSL_set1_param 3 ,
 .Xr X509_OBJECT_get0_X509 3 ,
 .Xr X509_STORE_CTX_set0_param 3 ,
@@ -218,7 +208,6 @@ and
 first appeared in OpenSSL 0.9.8 and have been available since
 .Ox 4.5 .
 .Pp
-.Fn X509_STORE_get0_param ,
 .Fn X509_STORE_get0_objects ,
 .Fn X509_STORE_get_ex_new_index ,
 .Fn X509_STORE_set_ex_data ,

@@ -242,19 +242,22 @@ void StreamChecker::Fclose(CheckerContext &C, const CallExpr *CE) const {
 
 void StreamChecker::Fread(CheckerContext &C, const CallExpr *CE) const {
   ProgramStateRef state = C.getState();
-  if (!CheckNullStream(C.getSVal(CE->getArg(3)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(3), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Fwrite(CheckerContext &C, const CallExpr *CE) const {
   ProgramStateRef state = C.getState();
-  if (!CheckNullStream(C.getSVal(CE->getArg(3)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(3), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) const {
   ProgramStateRef state = C.getState();
-  if (!(state = CheckNullStream(C.getSVal(CE->getArg(0)), state, C)))
+  if (!(state = CheckNullStream(state->getSVal(CE->getArg(0),
+                                               C.getLocationContext()), state, C)))
     return;
   // Check the legality of the 'whence' argument of 'fseek'.
   SVal Whence = state->getSVal(CE->getArg(2), C.getLocationContext());
@@ -280,49 +283,57 @@ void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) const {
 
 void StreamChecker::Ftell(CheckerContext &C, const CallExpr *CE) const {
   ProgramStateRef state = C.getState();
-  if (!CheckNullStream(C.getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Rewind(CheckerContext &C, const CallExpr *CE) const {
   ProgramStateRef state = C.getState();
-  if (!CheckNullStream(C.getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Fgetpos(CheckerContext &C, const CallExpr *CE) const {
   ProgramStateRef state = C.getState();
-  if (!CheckNullStream(C.getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Fsetpos(CheckerContext &C, const CallExpr *CE) const {
   ProgramStateRef state = C.getState();
-  if (!CheckNullStream(C.getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Clearerr(CheckerContext &C, const CallExpr *CE) const {
   ProgramStateRef state = C.getState();
-  if (!CheckNullStream(C.getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Feof(CheckerContext &C, const CallExpr *CE) const {
   ProgramStateRef state = C.getState();
-  if (!CheckNullStream(C.getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Ferror(CheckerContext &C, const CallExpr *CE) const {
   ProgramStateRef state = C.getState();
-  if (!CheckNullStream(C.getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Fileno(CheckerContext &C, const CallExpr *CE) const {
   ProgramStateRef state = C.getState();
-  if (!CheckNullStream(C.getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0), C.getLocationContext()),
+                       state, C))
     return;
 }
 
@@ -352,7 +363,8 @@ ProgramStateRef StreamChecker::CheckNullStream(SVal SV, ProgramStateRef state,
 ProgramStateRef StreamChecker::CheckDoubleClose(const CallExpr *CE,
                                                ProgramStateRef state,
                                                CheckerContext &C) const {
-  SymbolRef Sym = C.getSVal(CE->getArg(0)).getAsSymbol();
+  SymbolRef Sym =
+    state->getSVal(CE->getArg(0), C.getLocationContext()).getAsSymbol();
   if (!Sym)
     return state;
 

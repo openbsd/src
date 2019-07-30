@@ -7,11 +7,13 @@
 package IO::Socket::UNIX;
 
 use strict;
+our(@ISA, $VERSION);
 use IO::Socket;
 use Carp;
 
-our @ISA = qw(IO::Socket);
-our $VERSION = "1.39";
+@ISA = qw(IO::Socket);
+$VERSION = "1.26";
+$VERSION = eval $VERSION;
 
 IO::Socket::UNIX->register_domain( AF_UNIX );
 

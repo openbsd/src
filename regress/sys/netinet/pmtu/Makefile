@@ -1,12 +1,19 @@
-#	$OpenBSD: Makefile,v 1.12 2019/05/10 02:22:34 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.11 2017/07/07 23:15:27 bluhm Exp $
 
 # The following ports must be installed:
 #
 # python-2.7          interpreted object-oriented programming language
+# py-libdnet          python interface to libdnet
 # scapy               powerful interactive packet manipulation in python
 
-.if ! exists(/usr/local/bin/python2.7) || ! exists(/usr/local/bin/scapy)
+.if ! (make(clean) || make(cleandir) || make(obj))
+# Check wether all required python packages are installed.  If some
+# are missing print a warning and skip the tests, but do not fail.
+PYTHON_IMPORT != python2.7 -c 'from scapy.all import *' 2>&1 || true
+.endif
+.if ! empty(PYTHON_IMPORT)
 regress:
+	@echo '${PYTHON_IMPORT}'
 	@echo install python and the scapy module for additional tests
 	@echo SKIPPED
 .endif
@@ -51,7 +58,7 @@ regress:
 	@echo SKIPPED
 
 .elif make (regress) || make (all)
-.BEGIN: addr.py
+.BEGIN: pf.conf addr.py
 	@echo
 	${SUDO} true
 	ssh -t ${REMOTE_SSH} ${SUDO} true
@@ -80,12 +87,10 @@ PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 -u ${.CURDIR}/
 .endif
 
 # Clear local and remote path mtu routes, set fake net route
-REGRESS_CLEANUP +=	reset-route
 reset-route:
 	@echo '\n======== $@ ========'
 	${SUDO} route -n delete -inet -host ${REMOTE_ADDR} || true
 	ssh ${REMOTE_SSH} ${SUDO} route -n delete -inet -host ${FAKE_NET_ADDR} || true
-REGRESS_CLEANUP +=	reset-route6
 reset-route6:
 	@echo '\n======== $@ ========'
 	${SUDO} route -n delete -inet6 -host ${REMOTE_ADDR6} || true
@@ -94,40 +99,38 @@ reset-route6:
 # Clear host routes and ping all addresses.  This ensures that
 # the IP addresses are configured and all routing table are set up
 # to allow bidirectional packet flow.
-REGRESS_TARGETS +=	run-ping
-run-ping: reset-route
+TARGETS +=	ping ping6
+run-regress-ping: reset-route
 	@echo '\n======== $@ ========'
 .for ip in LOCAL_ADDR REMOTE_ADDR
 	@echo Check ping ${ip}
 	ping -n -c 1 ${${ip}}
 .endfor
-REGRESS_TARGETS +=	run-ping6
-run-ping6: reset-route6
+run-regress-ping6: reset-route
 	@echo '\n======== $@ ========'
 .for ip in LOCAL_ADDR REMOTE_ADDR
 	@echo Check ping6 ${ip}6
 	ping6 -n -c 1 ${${ip}6}
 .endfor
 
-REGRESS_TARGETS +=	run-pmtu
-run-pmtu: addr.py reset-route
+TARGETS +=	pmtu pmtu6
+run-regress-pmtu: addr.py reset-route
 	@echo '\n======== $@ ========'
 	@echo Send ICMP fragmentation needed after fake TCP connect
 	${SUDO} ${PYTHON}tcp_connect.py
-REGRESS_TARGETS +=	run-pmtu6
-run-pmtu6: addr.py reset-route6
+run-regress-pmtu6: addr.py reset-route6
 	@echo '\n======== $@ ========'
 	@echo Send ICMP6 packet too big after fake TCP connect
 	${SUDO} ${PYTHON}tcp_connect6.py
 
-REGRESS_TARGETS +=	run-udp6
-run-udp6: addr.py reset-route6
+TARGETS +=	udp6
+run-regress-udp6: addr.py reset-route6
 	@echo '\n======== $@ ========'
 	@echo Send ICMP6 packet too big after UDP echo
 	${SUDO} ${PYTHON}udp_echo6.py
 
-REGRESS_TARGETS +=	run-gateway6
-run-gateway6: run-udp6
+TARGETS +=	gateway6
+run-regress-gateway6: run-regress-udp6
 	@echo '\n======== $@ ========'
 	@echo Remove gateway route of a dynamic PMTU route
 	ssh ${REMOTE_SSH} ${SUDO} route -n delete -inet6 -host ${LOCAL_ADDR6}
@@ -138,16 +141,18 @@ run-gateway6: run-udp6
 	grep -q 'flags: <UP,GATEWAY,HOST,DYNAMIC,DONE>' pmtu.route
 	${SUDO} ${PYTHON}udp_echo6.py
 
-REGRESS_TARGETS +=	run-tcpfrag6
-run-tcpfrag6: addr.py reset-route6
+TARGETS +=	tcpfrag6 udpfrag6
+run-regress-tcpfrag6: addr.py reset-route6
 	@echo '\n======== $@ ========'
 	@echo Send ICMP6 and try to trigger a short TCP segment
 	${SUDO} ${PYTHON}tcp_atomicfrag6.py
-REGRESS_TARGETS +=	run-udpfrag6
-run-udpfrag6: addr.py reset-route6
+run-regress-udpfrag6: addr.py reset-route6
 	@echo '\n======== $@ ========'
 	@echo Send ICMP6 and try to trigger an atomic UDP IPv6 fragment
 	${SUDO} ${PYTHON}udp_atomicfrag6.py
+
+
+REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
 CLEANFILES +=		addr.py *.pyc *.log *.route
 

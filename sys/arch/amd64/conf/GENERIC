@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.474 2019/06/17 18:28:17 patrick Exp $
+#	$OpenBSD: GENERIC,v 1.452 2018/03/27 21:11:16 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -47,7 +47,6 @@ acpicpu*	at acpi?
 acpicmos*	at acpi?
 acpidock*	at acpi?
 acpiec*		at acpi?
-acpipci*	at acpi?
 acpiprt*	at acpi?
 acpisbs*	at acpi?
 acpitz*		at acpi?
@@ -61,7 +60,6 @@ acpivideo*	at acpi?
 acpivout*	at acpivideo?
 acpipwrres*	at acpi?
 aibs*		at acpi?
-aplgpio*	at acpi?
 bytgpio*	at acpi?
 chvgpio*	at acpi?
 sdhc*		at acpi?
@@ -69,17 +67,13 @@ acpicbkbd*	at acpi?
 acpials*	at acpi?
 tpm*		at acpi?
 acpihve*	at acpi?
-acpisurface*	at acpi?
 ipmi0		at acpi? disable
-ccpmic*		at iic?
-tipmic*		at iic?
 
 mpbios0		at bios0
 
 ipmi0	at mainbus? disable	# IPMI
 
 vmt0	at pvbus?		# VMware Tools
-pvclock0 at pvbus?		# KVM pvclock
 
 xen0	at pvbus?		# Xen HVM domU
 xnf*	at xen?			# Xen Netfront
@@ -104,7 +98,6 @@ kate*	at pci?			# AMD K8 temperature sensor
 km*	at pci?			# AMD K10 temperature sensor
 amas*	at pci? disable		# AMD memory configuration
 pchtemp* at pci?		# Intel C610 termperature sensor
-ccp*	at pci?			# AMD Cryptographic Co-processor
 
 # National Semiconductor LM7[89] and compatible hardware monitors
 lm0	at isa? port 0x290
@@ -225,8 +218,6 @@ uvscom*	at uhub?		# SUNTAC Slipper U VS-10U serial
 ucom*	at uvscom?
 ubsa*	at uhub?		# Belkin serial adapter
 ucom*	at ubsa?
-ukspan* at uhub?		# Keyspan USA19HS serial adapter
-ucom*	at ukspan?
 uftdi*	at uhub?		# FTDI FT8U100AX serial adapter
 ucom*	at uftdi?
 uplcom* at uhub?		# I/O DATA USB-RSAQ2 serial adapter
@@ -235,10 +226,6 @@ umct*	at uhub?		# MCT USB-RS232 serial adapter
 ucom*	at umct?
 uslcom*	at uhub?		# Silicon Laboratories CP210x serial
 ucom*	at uslcom?
-uscom*	at uhub?		# Simple USB serial adapters
-ucom*	at uscom?
-ucrcom*	at uhub?		# Chromebook serial
-ucom*	at ucrcom?
 uark*	at uhub?		# Arkmicro ARK3116 serial
 ucom*	at uark?
 moscom*	at uhub?		# MosChip MCS7703 serial
@@ -253,8 +240,6 @@ uchcom*	at uhub?		# WinChipHead CH341/340 serial
 ucom*	at uchcom?
 uticom*	at uhub?		# TI serial
 ucom*	at uticom?
-uxrcom*	at uhub?		# Exar XR21V1410 serial
-ucom*	at uxrcom?
 uaudio* at uhub?		# USB Audio
 audio*	at uaudio?
 umidi*	at uhub?		# USB MIDI
@@ -266,8 +251,6 @@ wsmouse* at ubcmtp? mux 0
 uhidev*	at uhub?		# Human Interface Devices
 ums*	at uhidev?		# USB mouse
 wsmouse* at ums? mux 0
-umt*	at uhidev?		# USB multitouch touchpad
-wsmouse* at umt? mux 0
 uts*	at uhub?		# USB touchscreen
 wsmouse* at uts? mux 0
 uwacom*	at uhidev?		# USB Wacom tablet
@@ -293,7 +276,6 @@ upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 ugl*	at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
 udav*	at uhub?		# Davicom DM9601 based Ethernet
 mos*	at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
-mue*	at uhub?		# Microchip LAN75xx/LAN78xx Ethernet
 url*	at uhub?		# Realtek RTL8150L based adapters
 ure*	at uhub?		# Realtek RTL8152 based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
@@ -313,7 +295,6 @@ urtw*	at uhub?		# Realtek 8187
 rsu*	at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU
 urtwn*	at uhub?		# Realtek RTL8188CU/RTL8192CU
 udcf*	at uhub?		# Gude Expert mouseCLOCK
-umbg*	at uhub?		# Meinberg Funkuhren USB5131/DCF600USB
 umb*	at uhub?		# Mobile Broadband Interface Model
 uthum*	at uhidev?		# TEMPerHUM sensor
 ugold*	at uhidev?		# gold TEMPer sensor
@@ -331,7 +312,7 @@ video*	at utvfu?
 audio*	at utvfu?
 udl*	at uhub?		# DisplayLink USB displays
 wsdisplay* at udl?
-bwfm*	at uhub?		# Broadcom FullMAC
+#bwfm*	at uhub?		# Broadcom FullMAC
 
 puc*	at pci?			# PCI "universal" communication device
 com*	at cardbus?
@@ -340,7 +321,7 @@ sdhc*	at pci?			# SD Host Controller
 sdmmc*	at sdhc?		# SD/MMC bus
 rtsx*	at pci?			# Realtek SD Card Reader
 sdmmc*	at rtsx?		# SD/MMC bus
-bwfm*	at sdmmc?		# Broadcom FullMAC
+#bwfm*	at sdmmc?		# Broadcom FullMAC
 
 isadma0	at isa?
 
@@ -364,20 +345,15 @@ wsmouse*	at pms? mux 0
 inteldrm*	at pci? 	# Intel i915, i945 DRM driver
 intagp*		at inteldrm?
 agp*		at intagp?
-drm0		at inteldrm? primary 1
+drm0		at inteldrm? console 1
 drm*		at inteldrm?
-wsdisplay0	at inteldrm? primary 1
+wsdisplay0	at inteldrm? console 1
 wsdisplay*	at inteldrm? mux -1
 radeondrm*	at pci? 	# ATI Radeon DRM driver
-drm0		at radeondrm? primary 1
+drm0		at radeondrm? console 1
 drm*		at radeondrm?
-wsdisplay0	at radeondrm? primary 1
+wsdisplay0	at radeondrm? console 1
 wsdisplay*	at radeondrm? mux -1
-#amdgpu*	at pci?
-#drm0		at amdgpu? primary 1
-#drm*		at amdgpu?
-#wsdisplay0	at amdgpu? primary 1
-#wsdisplay*	at amdgpu? mux -1
 
 pcppi0		at isa?
 
@@ -399,7 +375,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt*	at puc?
 
 efifb0		at mainbus?		# EFI Framebuffer
-wsdisplay0	at efifb?
+wsdisplay0	at efifb? console ?
 
 ahc*	at pci?				# Adaptec 2940 SCSI controllers
 jmb*	at pci?				# JMicron JMB36x controllers
@@ -434,6 +410,7 @@ pcscp*	at pci?				# AMD 53c974 PCscsi-PCI SCSI
 #trm*	at pci?				# Tekram DC-3x5U SCSI Controllers
 vmwpvs*	at pci?				# VMware ParaVirtual SCSI
 nvme*	at pci?				# NVMe controllers
+#bwfm*	at pci?				# Broadcom FullMAC
 
 scsibus* at scsi?
 sd*	at scsibus?			# SCSI disk drives
@@ -530,9 +507,6 @@ alc*	at pci?				# Attansic L1C/L1D/L2C Ethernet
 ale*	at pci?				# Attansic L1E Ethernet
 lii*	at pci?				# Attansic L2 Ethernet
 jme*	at pci?				# JMicron JMC250/JMC260 Ethernet
-bnxt*	at pci?				# Broadcom BCM573xx, BCM574xx
-ixl*	at pci?				# Intel Ethernet 700 Series
-mcx*	at pci?				# Mellanox ConnectX-4
 
 # Wireless network cards
 acx*	at pci?				# TI ACX100/ACX111 (802.11b/g)
@@ -563,7 +537,6 @@ pgt*	at cardbus?			# Prism54 (only full-mac varients)
 malo*	at pci?				# Marvell Libertas
 malo*	at cardbus?			# Marvell Libertas
 malo*	at pcmcia?			# Marvell 88W8385
-bwfm*	at pci?				# Broadcom FullMAC
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii?				# 3Com internal PHYs

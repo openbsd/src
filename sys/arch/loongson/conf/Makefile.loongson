@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.loongson,v 1.75 2019/04/14 14:07:06 deraadt Exp $
+#	$OpenBSD: Makefile.loongson,v 1.70 2018/02/09 03:59:15 tb Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -28,9 +28,7 @@ S!=	cd ../../../..; pwd
 _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
-INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch \
-		-I$S/dev/pci/drm/include \
-		-I$S/dev/pci/drm/include/uapi
+INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__ -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-uninitialized -Wno-pointer-sign \
@@ -44,7 +42,6 @@ CMACHFLAGS+=	-fno-stack-protector
 .endif
 .if ${IDENT:M-DSMALL_KERNEL}
 SORTR=		cat
-COPTS?=		-Oz
 .endif
 
 DEBUG?=		-g
@@ -124,7 +121,7 @@ ld.script: ${_machdir}/conf/ld.script
 	cp ${_machdir}/conf/ld.script $@
 
 gapdummy.o:
-	echo '__asm(".section .rodata,\"a\"");' > gapdummy.c
+	echo 'const char gapdummy;' > gapdummy.c
 	${CC} -c ${CFLAGS} ${CPPFLAGS} gapdummy.c -o $@
 
 makegap.sh:
@@ -141,10 +138,14 @@ vers.o: ${SYSTEM_DEP:Ngap.o}
 
 clean:
 	rm -f *bsd *bsd.gdb *.[dio] [a-z]*.s assym.* \
-	    gap.link gapdummy.c ld.script lorder makegap.sh param.c
+	    gap.link ld.script lorder makegap.sh param.c
 
 cleandir: clean
 	rm -f Makefile *.h ioconf.c options machine ${_mach} vers.c
+
+symbols.sort: ${_machdir}/${_mach}/symbols.raw
+	grep -v '^#' ${_machdir}/${_mach}/symbols.raw \
+	    | sed 's/^	//' | sort -u > symbols.sort
 
 depend obj:
 

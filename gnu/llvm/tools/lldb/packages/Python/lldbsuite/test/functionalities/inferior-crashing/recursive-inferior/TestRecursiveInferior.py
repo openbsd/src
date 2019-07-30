@@ -16,6 +16,9 @@ class CrashingRecursiveInferiorTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    @expectedFailureAll(
+        oslist=['freebsd'],
+        bugnumber="llvm.org/pr23699 SIGSEGV is reported as exception, not signal")
     @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr24778")
     def test_recursive_inferior_crashing(self):
         """Test that lldb reliably catches the inferior crashing (command)."""
@@ -47,6 +50,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         self.build()
         self.recursive_inferior_crashing_step()
 
+    @expectedFailureAll(oslist=['freebsd'], bugnumber='llvm.org/pr24939')
     @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr24778")
     @skipIfTargetAndroid()  # debuggerd interferes with this test on Android
     def test_recursive_inferior_crashing_step_after_break(self):
@@ -57,7 +61,6 @@ class CrashingRecursiveInferiorTestCase(TestBase):
     # Inferior exits after stepping after a segfault. This is working as
     # intended IMHO.
     @skipIfLinux
-    @skipIfFreeBSD
     @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr24778")
     def test_recursive_inferior_crashing_expr_step_and_expr(self):
         """Test that lldb expressions work before and after stepping after a crash."""
@@ -83,7 +86,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
 
     def recursive_inferior_crashing(self):
         """Inferior crashes upon launching; lldb should catch the event and stop."""
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         self.runCmd("run", RUN_SUCCEEDED)
@@ -91,7 +94,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         # The exact stop reason depends on the platform
         if self.platformIsDarwin():
             stop_reason = 'stop reason = EXC_BAD_ACCESS'
-        elif self.getPlatform() == "linux" or self.getPlatform() == "freebsd":
+        elif self.getPlatform() == "linux":
             stop_reason = 'stop reason = signal SIGSEGV'
         else:
             stop_reason = 'stop reason = invalid address'
@@ -117,7 +120,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
 
     def recursive_inferior_crashing_python(self):
         """Inferior crashes upon launching; lldb should catch the event and stop."""
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
@@ -143,7 +146,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
 
     def recursive_inferior_crashing_registers(self):
         """Test that lldb can read registers after crashing."""
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         self.runCmd("run", RUN_SUCCEEDED)
@@ -155,7 +158,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
 
     def recursive_inferior_crashing_expr(self):
         """Test that the lldb expression interpreter can read symbols after crashing."""
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         self.runCmd("run", RUN_SUCCEEDED)
@@ -168,7 +171,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
 
     def recursive_inferior_crashing_step(self):
         """Test that lldb functions correctly after stepping through a crash."""
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         self.set_breakpoint(self.line)
@@ -196,7 +199,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
 
     def recursive_inferior_crashing_step_after_break(self):
         """Test that lldb behaves correctly when stepping after a crash."""
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         self.runCmd("run", RUN_SUCCEEDED)
@@ -221,7 +224,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
 
     def recursive_inferior_crashing_expr_step_expr(self):
         """Test that lldb expressions work before and after stepping after a crash."""
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         self.runCmd("run", RUN_SUCCEEDED)

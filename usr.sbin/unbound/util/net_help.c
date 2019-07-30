@@ -43,20 +43,14 @@
 #include "util/data/dname.h"
 #include "util/module.h"
 #include "util/regional.h"
-#include "util/config_file.h"
 #include "sldns/parseutil.h"
 #include "sldns/wire2str.h"
 #include <fcntl.h>
 #ifdef HAVE_OPENSSL_SSL_H
 #include <openssl/ssl.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
 #endif
 #ifdef HAVE_OPENSSL_ERR_H
 #include <openssl/err.h>
-#endif
-#ifdef USE_WINSOCK
-#include <wincrypt.h>
 #endif
 
 /** max length of an IP address (the address portion) that we allow */
@@ -69,15 +63,6 @@ int MINIMAL_RESPONSES = 0;
 
 /** rrset order roundrobin: default is no */
 int RRSET_ROUNDROBIN = 0;
-
-/** log tag queries with name instead of 'info' for filtering */
-int LOG_TAG_QUERYREPLY = 0;
-
-static struct tls_session_ticket_key {
-	unsigned char *key_name;
-	unsigned char *aes_key;
-	unsigned char *hmac_key;
-} *ticket_keys;
 
 /* returns true is string addr is an ip6 specced address */
 int
@@ -256,8 +241,7 @@ ipstrtoaddr(const char* ip, int port, struct sockaddr_storage* addr,
 int netblockstrtoaddr(const char* str, int port, struct sockaddr_storage* addr,
         socklen_t* addrlen, int* net)
 {
-	char buf[64];
-	char* s;
+	char* s = NULL;
 	*net = (str_is_ip6(str)?128:32);
 	if((s=strchr(str, '/'))) {
 		if(atoi(s+1) > *net) {
@@ -269,76 +253,22 @@ int netblockstrtoaddr(const char* str, int port, struct sockaddr_storage* addr,
 			log_err("cannot parse netblock: '%s'", str);
 			return 0;
 		}
-		strlcpy(buf, str, sizeof(buf));
-		s = strchr(buf, '/');
-		if(s) *s = 0;
-		s = buf;
+		if(!(s = strdup(str))) {
+			log_err("out of memory");
+			return 0;
+		}
+		*strchr(s, '/') = '\0';
 	}
 	if(!ipstrtoaddr(s?s:str, port, addr, addrlen)) {
+		free(s);
 		log_err("cannot parse ip address: '%s'", str);
 		return 0;
 	}
 	if(s) {
+		free(s);
 		addr_mask(addr, *addrlen, *net);
 	}
 	return 1;
-}
-
-int authextstrtoaddr(char* str, struct sockaddr_storage* addr, 
-	socklen_t* addrlen, char** auth_name)
-{
-	char* s;
-	int port = UNBOUND_DNS_PORT;
-	if((s=strchr(str, '@'))) {
-		char buf[MAX_ADDR_STRLEN];
-		size_t len = (size_t)(s-str);
-		char* hash = strchr(s+1, '#');
-		if(hash) {
-			*auth_name = hash+1;
-		} else {
-			*auth_name = NULL;
-		}
-		if(len >= MAX_ADDR_STRLEN) {
-			return 0;
-		}
-		(void)strlcpy(buf, str, sizeof(buf));
-		buf[len] = 0;
-		port = atoi(s+1);
-		if(port == 0) {
-			if(!hash && strcmp(s+1,"0")!=0)
-				return 0;
-			if(hash && strncmp(s+1,"0#",2)!=0)
-				return 0;
-		}
-		return ipstrtoaddr(buf, port, addr, addrlen);
-	}
-	if((s=strchr(str, '#'))) {
-		char buf[MAX_ADDR_STRLEN];
-		size_t len = (size_t)(s-str);
-		if(len >= MAX_ADDR_STRLEN) {
-			return 0;
-		}
-		(void)strlcpy(buf, str, sizeof(buf));
-		buf[len] = 0;
-		port = UNBOUND_DNS_OVER_TLS_PORT;
-		*auth_name = s+1;
-		return ipstrtoaddr(buf, port, addr, addrlen);
-	}
-	*auth_name = NULL;
-	return ipstrtoaddr(str, port, addr, addrlen);
-}
-
-/** store port number into sockaddr structure */
-void
-sockaddr_store_port(struct sockaddr_storage* addr, socklen_t addrlen, int port)
-{
-	if(addr_is_ip6(addr, addrlen)) {
-		struct sockaddr_in6* sa = (struct sockaddr_in6*)addr;
-		sa->sin6_port = (in_port_t)htons((uint16_t)port);
-	} else {
-		struct sockaddr_in* sa = (struct sockaddr_in*)addr;
-		sa->sin_port = (in_port_t)htons((uint16_t)port);
-	}
 }
 
 void
@@ -371,37 +301,6 @@ log_nametypeclass(enum verbosity_value v, const char* str, uint8_t* name,
 		cs = c;
 	}
 	log_info("%s %s %s %s", str, buf, ts, cs);
-}
-
-void
-log_query_in(const char* str, uint8_t* name, uint16_t type, uint16_t dclass)
-{
-	char buf[LDNS_MAX_DOMAINLEN+1];
-	char t[12], c[12];
-	const char *ts, *cs; 
-	dname_str(name, buf);
-	if(type == LDNS_RR_TYPE_TSIG) ts = "TSIG";
-	else if(type == LDNS_RR_TYPE_IXFR) ts = "IXFR";
-	else if(type == LDNS_RR_TYPE_AXFR) ts = "AXFR";
-	else if(type == LDNS_RR_TYPE_MAILB) ts = "MAILB";
-	else if(type == LDNS_RR_TYPE_MAILA) ts = "MAILA";
-	else if(type == LDNS_RR_TYPE_ANY) ts = "ANY";
-	else if(sldns_rr_descript(type) && sldns_rr_descript(type)->_name)
-		ts = sldns_rr_descript(type)->_name;
-	else {
-		snprintf(t, sizeof(t), "TYPE%d", (int)type);
-		ts = t;
-	}
-	if(sldns_lookup_by_id(sldns_rr_classes, (int)dclass) &&
-		sldns_lookup_by_id(sldns_rr_classes, (int)dclass)->name)
-		cs = sldns_lookup_by_id(sldns_rr_classes, (int)dclass)->name;
-	else {
-		snprintf(c, sizeof(c), "CLASS%d", (int)dclass);
-		cs = c;
-	}
-	if(LOG_TAG_QUERYREPLY)
-		log_query("%s %s %s %s", str, buf, ts, cs);
-	else	log_info("%s %s %s %s", str, buf, ts, cs);
 }
 
 void log_name_addr(enum verbosity_value v, const char* str, uint8_t* zone, 
@@ -453,7 +352,7 @@ void log_err_addr(const char* str, const char* err,
 	if(verbosity >= 4)
 		log_err("%s: %s for %s port %d (len %d)", str, err, dest,
 			(int)port, (int)addrlen);
-	else	log_err("%s: %s for %s port %d", str, err, dest, (int)port);
+	else	log_err("%s: %s for %s", str, err, dest);
 }
 
 int
@@ -842,97 +741,7 @@ void* listen_sslctx_create(char* key, char* pem, char* verifypem)
 #endif
 }
 
-#ifdef USE_WINSOCK
-/* For windows, the CA trust store is not read by openssl.
-   Add code to open the trust store using wincrypt API and add
-   the root certs into openssl trust store */
-static int
-add_WIN_cacerts_to_openssl_store(SSL_CTX* tls_ctx)
-{
-	HCERTSTORE      hSystemStore;
-	PCCERT_CONTEXT  pTargetCert = NULL;
-	X509_STORE*	store;
-
-	verbose(VERB_ALGO, "Adding Windows certificates from system root store to CA store");
-
-	/* load just once per context lifetime for this version
-	   TODO: dynamically update CA trust changes as they are available */
-	if (!tls_ctx)
-		return 0;
-
-	/* Call wincrypt's CertOpenStore to open the CA root store. */
-
-	if ((hSystemStore = CertOpenStore(
-		CERT_STORE_PROV_SYSTEM,
-		0,
-		0,
-		/* NOTE: mingw does not have this const: replace with 1 << 16 from code 
-		   CERT_SYSTEM_STORE_CURRENT_USER, */
-		1 << 16,
-		L"root")) == 0)
-	{
-		return 0;
-	}
-
-	store = SSL_CTX_get_cert_store(tls_ctx);
-	if (!store)
-		return 0;
-
-	/* failure if the CA store is empty or the call fails */
-	if ((pTargetCert = CertEnumCertificatesInStore(
-		hSystemStore, pTargetCert)) == 0) {
-		verbose(VERB_ALGO, "CA certificate store for Windows is empty.");
-		return 0;
-	}
-	/* iterate over the windows cert store and add to openssl store */
-	do
-	{
-		X509 *cert1 = d2i_X509(NULL,
-			(const unsigned char **)&pTargetCert->pbCertEncoded,
-			pTargetCert->cbCertEncoded);
-		if (!cert1) {
-			/* return error if a cert fails */
-			verbose(VERB_ALGO, "%s %d:%s",
-				"Unable to parse certificate in memory",
-				(int)ERR_get_error(), ERR_error_string(ERR_get_error(), NULL));
-			return 0;
-		}
-		else {
-			/* return error if a cert add to store fails */
-			if (X509_STORE_add_cert(store, cert1) == 0) {
-				unsigned long error = ERR_peek_last_error();
-
-				/* Ignore error X509_R_CERT_ALREADY_IN_HASH_TABLE which means the
-				* certificate is already in the store.  */
-				if(ERR_GET_LIB(error) != ERR_LIB_X509 ||
-				   ERR_GET_REASON(error) != X509_R_CERT_ALREADY_IN_HASH_TABLE) {
-					verbose(VERB_ALGO, "%s %d:%s\n",
-					    "Error adding certificate", (int)ERR_get_error(),
-					     ERR_error_string(ERR_get_error(), NULL));
-					X509_free(cert1);
-					return 0;
-				}
-			}
-			X509_free(cert1);
-		}
-	} while ((pTargetCert = CertEnumCertificatesInStore(
-		hSystemStore, pTargetCert)) != 0);
-
-	/* Clean up memory and quit. */
-	if (pTargetCert)
-		CertFreeCertificateContext(pTargetCert);
-	if (hSystemStore)
-	{
-		if (!CertCloseStore(
-			hSystemStore, 0))
-			return 0;
-	}
-	verbose(VERB_ALGO, "Completed adding Windows certificates to CA store successfully");
-	return 1;
-}
-#endif /* USE_WINSOCK */
-
-void* connect_sslctx_create(char* key, char* pem, char* verifypem, int wincert)
+void* connect_sslctx_create(char* key, char* pem, char* verifypem)
 {
 #ifdef HAVE_SSL
 	SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
@@ -972,30 +781,17 @@ void* connect_sslctx_create(char* key, char* pem, char* verifypem, int wincert)
 			return NULL;
 		}
 	}
-	if((verifypem && verifypem[0]) || wincert) {
-		if(verifypem && verifypem[0]) {
-			if(!SSL_CTX_load_verify_locations(ctx, verifypem, NULL)) {
-				log_crypto_err("error in SSL_CTX verify");
-				SSL_CTX_free(ctx);
-				return NULL;
-			}
+	if(verifypem && verifypem[0]) {
+		if(!SSL_CTX_load_verify_locations(ctx, verifypem, NULL)) {
+			log_crypto_err("error in SSL_CTX verify");
+			SSL_CTX_free(ctx);
+			return NULL;
 		}
-#ifdef USE_WINSOCK
-		if(wincert) {
-			if(!add_WIN_cacerts_to_openssl_store(ctx)) {
-				log_crypto_err("error in add_WIN_cacerts_to_openssl_store");
-				SSL_CTX_free(ctx);
-				return NULL;
-			}
-		}
-#else
-		(void)wincert;
-#endif
 		SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 	}
 	return ctx;
 #else
-	(void)key; (void)pem; (void)verifypem; (void)wincert;
+	(void)key; (void)pem; (void)verifypem;
 	return NULL;
 #endif
 }
@@ -1049,19 +845,11 @@ void* outgoing_ssl_fd(void* sslctx, int fd)
 static lock_basic_type *ub_openssl_locks = NULL;
 
 /** callback that gets thread id for openssl */
-#ifdef HAVE_CRYPTO_THREADID_SET_CALLBACK
-static void
-ub_crypto_id_cb(CRYPTO_THREADID *id)
-{
-	CRYPTO_THREADID_set_numeric(id, (unsigned long)log_thread_get());
-}
-#else
 static unsigned long
 ub_crypto_id_cb(void)
 {
 	return (unsigned long)log_thread_get();
 }
-#endif
 
 static void
 ub_crypto_lock_cb(int mode, int type, const char *ATTR_UNUSED(file),
@@ -1086,11 +874,7 @@ int ub_openssl_lock_init(void)
 	for(i=0; i<CRYPTO_num_locks(); i++) {
 		lock_basic_init(&ub_openssl_locks[i]);
 	}
-#  ifdef HAVE_CRYPTO_THREADID_SET_CALLBACK
-	CRYPTO_THREADID_set_callback(&ub_crypto_id_cb);
-#  else
 	CRYPTO_set_id_callback(&ub_crypto_id_cb);
-#  endif
 	CRYPTO_set_locking_callback(&ub_crypto_lock_cb);
 #endif /* OPENSSL_THREADS */
 	return 1;
@@ -1102,11 +886,7 @@ void ub_openssl_lock_delete(void)
 	int i;
 	if(!ub_openssl_locks)
 		return;
-#  ifdef HAVE_CRYPTO_THREADID_SET_CALLBACK
-	CRYPTO_THREADID_set_callback(NULL);
-#  else
 	CRYPTO_set_id_callback(NULL);
-#  endif
 	CRYPTO_set_locking_callback(NULL);
 	for(i=0; i<CRYPTO_num_locks(); i++) {
 		lock_basic_destroy(&ub_openssl_locks[i]);
@@ -1115,129 +895,3 @@ void ub_openssl_lock_delete(void)
 #endif /* OPENSSL_THREADS */
 }
 
-int listen_sslctx_setup_ticket_keys(void* sslctx, struct config_strlist* tls_session_ticket_keys) {
-#ifdef HAVE_SSL
-	size_t s = 1;
-	struct config_strlist* p;
-	struct tls_session_ticket_key *keys;
-	for(p = tls_session_ticket_keys; p; p = p->next) {
-		s++;
-	}
-	keys = calloc(s, sizeof(struct tls_session_ticket_key));
-	memset(keys, 0, s*sizeof(*keys));
-	ticket_keys = keys;
-
-	for(p = tls_session_ticket_keys; p; p = p->next) {
-		size_t n;
-		unsigned char *data = (unsigned char *)malloc(80);
-		FILE *f = fopen(p->str, "r");
-		if(!f) {
-			log_err("could not read tls-session-ticket-key %s: %s", p->str, strerror(errno));
-			free(data);
-			return 0;
-		}
-		n = fread(data, 1, 80, f);
-		fclose(f);
-
-		if(n != 80) {
-			log_err("tls-session-ticket-key %s is %d bytes, must be 80 bytes", p->str, (int)n);
-			free(data);
-			return 0;
-		}
-		verbose(VERB_OPS, "read tls-session-ticket-key: %s", p->str);
-
-		keys->key_name = data;
-		keys->aes_key = data + 16;
-		keys->hmac_key = data + 48;
-		keys++;
-	}
-	/* terminate array with NULL key name entry */
-	keys->key_name = NULL;
-	if(SSL_CTX_set_tlsext_ticket_key_cb(sslctx, tls_session_ticket_key_cb) == 0) {
-		log_err("no support for TLS session ticket");
-		return 0;
-	}
-	return 1;
-#else
-	(void)sslctx;
-	(void)tls_session_ticket_keys;
-	return 0;
-#endif
-
-}
-
-int tls_session_ticket_key_cb(void *ATTR_UNUSED(sslctx), unsigned char* key_name, unsigned char* iv, void *evp_sctx, void *hmac_ctx, int enc)
-{
-#ifdef HAVE_SSL
-	const EVP_MD *digest;
-	const EVP_CIPHER *cipher;
-	int evp_cipher_length;
-	digest = EVP_sha256();
-	cipher = EVP_aes_256_cbc();
-	evp_cipher_length = EVP_CIPHER_iv_length(cipher);
-	if( enc == 1 ) {
-		/* encrypt */
-		verbose(VERB_CLIENT, "start session encrypt");
-		memcpy(key_name, ticket_keys->key_name, 16);
-		if (RAND_bytes(iv, evp_cipher_length) != 1) {
-			verbose(VERB_CLIENT, "RAND_bytes failed");
-			return -1;
-		}
-		if (EVP_EncryptInit_ex(evp_sctx, cipher, NULL, ticket_keys->aes_key, iv) != 1) {
-			verbose(VERB_CLIENT, "EVP_EncryptInit_ex failed");
-			return -1;
-		}
-		if (HMAC_Init_ex(hmac_ctx, ticket_keys->hmac_key, 32, digest, NULL) != 1) {
-			verbose(VERB_CLIENT, "HMAC_Init_ex failed");
-			return -1;
-		}
-		return 1;
-	} else if (enc == 0) {
-		/* decrypt */
-		struct tls_session_ticket_key *key;
-		verbose(VERB_CLIENT, "start session decrypt");
-		for(key = ticket_keys; key->key_name != NULL; key++) {
-			if (!memcmp(key_name, key->key_name, 16)) {
-				verbose(VERB_CLIENT, "Found session_key");
-				break;
-			}
-		}
-		if(key->key_name == NULL) {
-			verbose(VERB_CLIENT, "Not found session_key");
-			return 0;
-		}
-
-		if (HMAC_Init_ex(hmac_ctx, key->hmac_key, 32, digest, NULL) != 1) {
-			verbose(VERB_CLIENT, "HMAC_Init_ex failed");
-			return -1;
-		}
-		if (EVP_DecryptInit_ex(evp_sctx, cipher, NULL, key->aes_key, iv) != 1) {
-			log_err("EVP_DecryptInit_ex failed");
-			return -1;
-		}
-
-		return (key == ticket_keys) ? 1 : 2;
-	}
-	return -1;
-#else
-	(void)key_name;
-	(void)iv;
-	(void)evp_sctx;
-	(void)hmac_ctx;
-	(void)enc;
-	return 0;
-#endif
-}
-
-void
-listen_sslctx_delete_ticket_keys(void)
-{
-	struct tls_session_ticket_key *key;
-	if(!ticket_keys) return;
-	for(key = ticket_keys; key->key_name != NULL; key++) {
-		memset(key->key_name, 0xdd, 80); /* wipe key data from memory*/
-		free(key->key_name);
-	}
-	free(ticket_keys);
-	ticket_keys = NULL;
-}

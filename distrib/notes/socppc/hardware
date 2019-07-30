@@ -1,0 +1,3 @@
+dnl	$OpenBSD: hardware,v 1.3 2009/10/02 08:14:32 jasper Exp $
+dnl When more than one model is supported, turn this into a list...
+OpenBSD/MACHINE runs on the Thecus N1200 and RouterBoard RB600A.

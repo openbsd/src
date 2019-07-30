@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.71 2019/02/13 22:57:08 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.61 2017/03/03 23:41:27 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -24,8 +24,6 @@
 
 %{
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <err.h>
@@ -35,8 +33,6 @@
 #include <limits.h>
 #include <stdio.h>
 #include <syslog.h>
-#include <errno.h>
-#include <netdb.h>
 
 #include "ldpd.h"
 #include "ldpe.h"
@@ -47,10 +43,6 @@ struct file {
 	TAILQ_ENTRY(file)	 entry;
 	FILE			*stream;
 	char			*name;
-	size_t			 ungetpos;
-	size_t			 ungetsize;
-	u_char			*ungetbuf;
-	int			 eof_reached;
 	int			 lineno;
 	int			 errors;
 };
@@ -80,20 +72,19 @@ typedef struct {
 	union {
 		int64_t		 number;
 		char		*string;
-		struct in_addr	 routerid;
-		struct ldp_auth	*auth;
 	} v;
 	int lineno;
 } YYSTYPE;
+
+#define MAXPUSHBACK	128
 
 static int		 yyerror(const char *, ...)
     __attribute__((__format__ (printf, 1, 2)))
     __attribute__((__nonnull__ (1)));
 static int		 kw_cmp(const void *, const void *);
 static int		 lookup(char *);
-static int		 igetc(void);
 static int		 lgetc(int);
-void			 lungetc(int);
+static int		 lungetc(int);
 static int		 findeol(void);
 static int		 yylex(void);
 static int		 check_file_secrecy(int, const char *);
@@ -113,7 +104,6 @@ static void		 clear_config(struct ldpd_conf *xconf);
 static uint32_t		 get_rtr_id(void);
 static int		 get_address(const char *, union ldpd_addr *);
 static int		 get_af_address(const char *, int *, union ldpd_addr *);
-static int		 str2key(char *, const char *, int);
 
 static struct file		*file, *topfile;
 static struct files		 files = TAILQ_HEAD_INITIALIZER(files);
@@ -137,15 +127,19 @@ static struct config_defaults	 tnbrdefs;
 static struct config_defaults	 pwdefs;
 static struct config_defaults	*defs;
 
+static unsigned char		*parsebuf;
+static int			 parseindex;
+static unsigned char		 pushback_buffer[MAXPUSHBACK];
+static int			 pushback_index;
+
 %}
 
 %token	INTERFACE TNEIGHBOR ROUTERID FIBUPDATE RDOMAIN EXPNULL
 %token	LHELLOHOLDTIME LHELLOINTERVAL
 %token	THELLOHOLDTIME THELLOINTERVAL
-%token	THELLOACCEPT AF IPV4 IPV6 INET INET6 GTSMENABLE GTSMHOPS
+%token	THELLOACCEPT AF IPV4 IPV6 GTSMENABLE GTSMHOPS
 %token	KEEPALIVE TRANSADDRESS TRANSPREFERENCE DSCISCOINTEROP
-%token	NEIGHBOR
-%token	TCP MD5SIG PASSWORD KEY
+%token	NEIGHBOR PASSWORD
 %token	L2VPN TYPE VPLS PWTYPE MTU BRIDGE
 %token	ETHERNET ETHERNETTAGGED STATUSTLV CONTROLWORD
 %token	PSEUDOWIRE NEIGHBORID NEIGHBORADDR PWID
@@ -157,8 +151,6 @@ static struct config_defaults	*defs;
 %token	<v.number>	NUMBER
 %type	<v.number>	yesno ldp_af l2vpn_type pw_type
 %type	<v.string>	string
-%type	<v.routerid>	routerid
-%type	<v.auth>	auth tcpmd5 optnbrprefix
 
 %%
 
@@ -176,8 +168,7 @@ grammar		: /* empty */
 include		: INCLUDE STRING		{
 			struct file	*nfile;
 
-			if ((nfile = pushfile($2,
-			    !(global.cmd_opts & LDPD_OPT_NOACTION))) == NULL) {
+			if ((nfile = pushfile($2, 1)) == NULL) {
 				yyerror("failed to include file %s", $2);
 				free($2);
 				YYERROR;
@@ -200,23 +191,6 @@ string		: string STRING	{
 			free($2);
 		}
 		| STRING
-		;
-
-routerid	: STRING {
-			if (!inet_aton($1, &$$)) {
-				yyerror("%s: error parsing router id", $1);
-				free($1);
-				YYERROR;
-			}
-			if (bad_addr_v4($$)) {
-				yyerror("%s: invalid router id", $1);
-				free($1);
-				YYERROR;
-			}
-			free($1);
-
-			break;
-		}
 		;
 
 yesno		: YES	{ $$ = 1; }
@@ -242,8 +216,6 @@ varset		: STRING '=' string {
 				if (isspace((unsigned char)*s)) {
 					yyerror("macro name cannot contain "
 					    "whitespace");
-					free($1);
-					free($3);
 					YYERROR;
 				}
 			}
@@ -254,8 +226,17 @@ varset		: STRING '=' string {
 		}
 		;
 
-conf_main	: ROUTERID routerid {
-			conf->rtr_id = $2;
+conf_main	: ROUTERID STRING {
+			if (!inet_aton($2, &conf->rtr_id)) {
+				yyerror("error parsing router-id");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			if (bad_addr_v4(conf->rtr_id)) {
+				yyerror("invalid router-id");
+				YYERROR;
+			}
 		}
 		| FIBUPDATE yesno {
 			if ($2 == 0)
@@ -290,9 +271,6 @@ conf_main	: ROUTERID routerid {
 				conf->flags |= F_LDPD_DS_CISCO_INTEROP;
 			else
 				conf->flags &= ~F_LDPD_DS_CISCO_INTEROP;
-		}
-		| auth {
-			LIST_INSERT_HEAD(&conf->auth_list, $1, entry);
 		}
 		| af_defaults
 		| iface_defaults
@@ -425,103 +403,6 @@ tnbr_defaults	: THELLOHOLDTIME NUMBER {
 		}
 		;
 
-tcpmd5		: TCP MD5SIG PASSWORD STRING {
-			size_t len;
-
-			$$ = calloc(1, sizeof(*$$));
-			if ($$ == NULL) {
-				free($4);
-				yyerror("unable to allocate md5 key");
-				YYERROR;
-			}
-
-			len = strlen($4);
-			if (len > sizeof($$->md5key)) {
-				free($$);
-				free($4);
-				yyerror("tcp md5sig password too long: "
-				    "max %zu", sizeof($$->md5key));
-				YYERROR;
-			}
-
-			memcpy($$->md5key, $4, len);
-			$$->md5key_len = len;
-
-			free($4);
-		}
-		| TCP MD5SIG KEY STRING {
-			int len;
-
-			$$ = calloc(1, sizeof(*$$));
-			if ($$ == NULL) {
-				free($4);
-				yyerror("unable to allocate md5 key");
-				YYERROR;
-			}
-
-			len = str2key($$->md5key, $4, sizeof($$->md5key));
-			if (len == -1) {
-				free($$);
-				free($4);
-				yyerror("invalid hex string");
-				YYERROR;
-			}
-			if ((size_t)len > sizeof($$->md5key_len)) {
-				free($$);
-				free($4);
-				yyerror("tcp md5sig key too long: %d "
-				    "max %zu", len, sizeof($$->md5key));
-				YYERROR;
-			}
-
-			$$->md5key_len = len;
-
-			free($4);
-		}
-		| NO TCP MD5SIG {
-			$$ = calloc(1, sizeof(*$$));
-			if ($$ == NULL) {
-				yyerror("unable to allocate no md5 key");
-				YYERROR;
-			}
-			$$->md5key_len = 0;
-		}
-		;
-
-optnbrprefix	: STRING {
-			$$ = calloc(1, sizeof(*$$));
-			if ($$ == NULL) {
-				yyerror("unable to allocate auth");
-				free($1);
-				YYERROR;
-			}
-
-			$$->idlen = inet_net_pton(AF_INET, $1,
-			    &$$->id, sizeof($$->id));
-			if ($$->idlen == -1) {
-				yyerror("%s: %s", $1, strerror(errno));
-				free($1);
-				YYERROR;
-			}
-		}
-		| /* empty */ {
-			$$ = NULL;
-		}
-		;
-
-auth		: tcpmd5 optnbrprefix {
-			$$ = $1;
-			if ($2 != NULL) {
-				$$->id = $2->id;
-				$$->idlen = $2->idlen;
-				free($2);
-			} else {
-				$$->id.s_addr = 0;
-				$$->idlen = 0;
-			}
-		}
-		;
-
 nbr_opts	: KEEPALIVE NUMBER {
 			if ($2 < MIN_KEEPALIVE || $2 > MAX_KEEPALIVE) {
 				yyerror("keepalive out of range (%d-%d)",
@@ -531,11 +412,18 @@ nbr_opts	: KEEPALIVE NUMBER {
 			nbrp->keepalive = $2;
 			nbrp->flags |= F_NBRP_KEEPALIVE;
 		}
-		| tcpmd5 {
-			/* this is syntactic sugar... */
-			$1->id = nbrp->lsr_id;
-			$1->idlen = 32;
-			LIST_INSERT_HEAD(&conf->auth_list, $1, entry);
+		| PASSWORD STRING {
+			if (strlcpy(nbrp->auth.md5key, $2,
+			    sizeof(nbrp->auth.md5key)) >=
+			    sizeof(nbrp->auth.md5key)) {
+				yyerror("tcp md5sig password too long: max %zu",
+				    sizeof(nbrp->auth.md5key) - 1);
+				free($2);
+				YYERROR;
+			}
+			nbrp->auth.md5key_len = strlen($2);
+			nbrp->auth.method = AUTH_MD5SIG;
+			free($2);
 		}
 		| GTSMENABLE yesno {
 			nbrp->flags |= F_NBRP_GTSM;
@@ -575,8 +463,21 @@ pwopts		: PWID NUMBER {
 
 			pw->pwid = $2;
 		}
-		| NEIGHBORID routerid {
-			pw->lsr_id = $2;
+		| NEIGHBORID STRING {
+			struct in_addr	 addr;
+
+			if (!inet_aton($2, &addr)) {
+				yyerror("error parsing neighbor-id");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			if (bad_addr_v4(addr)) {
+				yyerror("invalid neighbor-id");
+				YYERROR;
+			}
+
+			pw->lsr_id = addr;
 		}
 		| NEIGHBORADDR STRING {
 			int		 family;
@@ -615,8 +516,7 @@ pseudowire	: PSEUDOWIRE STRING {
 			}
 			free($2);
 
-			if (kif->if_type != IFT_MPLSTUNNEL &&
-			    kmpw_find(kif->ifname) == -1) {
+			if (kif->if_type != IFT_MPLSTUNNEL) {
 				yyerror("unsupported interface type on "
 				    "interface %s", kif->ifname);
 				YYERROR;
@@ -839,8 +739,21 @@ tneighboropts_l	: tneighboropts_l tnbr_defaults nl
 		| tnbr_defaults optnl
 		;
 
-neighbor	: NEIGHBOR routerid	{
-			nbrp = conf_get_nbrp($2);
+neighbor	: NEIGHBOR STRING	{
+			struct in_addr	 addr;
+
+			if (inet_aton($2, &addr) == 0) {
+				yyerror("error parsing neighbor-id");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			if (bad_addr_v4(addr)) {
+				yyerror("invalid neighbor-id");
+				YYERROR;
+			}
+
+			nbrp = conf_get_nbrp(addr);
 			if (nbrp == NULL)
 				YYERROR;
 		} neighbor_block {
@@ -921,17 +834,13 @@ lookup(char *s)
 		{"gtsm-enable",			GTSMENABLE},
 		{"gtsm-hops",			GTSMHOPS},
 		{"include",			INCLUDE},
-		{"inet",			INET},
-		{"inet6",			INET6},
 		{"interface",			INTERFACE},
 		{"ipv4",			IPV4},
 		{"ipv6",			IPV6},
 		{"keepalive",			KEEPALIVE},
-		{"key",				KEY},
 		{"l2vpn",			L2VPN},
 		{"link-hello-holdtime",		LHELLOHOLDTIME},
 		{"link-hello-interval",		LHELLOINTERVAL},
-		{"md5sig",			MD5SIG},
 		{"mtu",				MTU},
 		{"neighbor",			NEIGHBOR},
 		{"neighbor-addr",		NEIGHBORADDR},
@@ -948,7 +857,6 @@ lookup(char *s)
 		{"targeted-hello-holdtime",	THELLOHOLDTIME},
 		{"targeted-hello-interval",	THELLOINTERVAL},
 		{"targeted-neighbor",		TNEIGHBOR},
-		{"tcp",				TCP},
 		{"transport-address",		TRANSADDRESS},
 		{"transport-preference",	TRANSPREFERENCE},
 		{"type",			TYPE},
@@ -966,39 +874,27 @@ lookup(char *s)
 		return (STRING);
 }
 
-#define START_EXPAND	1
-#define DONE_EXPAND	2
-
-static int	expanding;
-
-int
-igetc(void)
-{
-	int	c;
-
-	while (1) {
-		if (file->ungetpos > 0)
-			c = file->ungetbuf[--file->ungetpos];
-		else
-			c = getc(file->stream);
-
-		if (c == START_EXPAND)
-			expanding = 1;
-		else if (c == DONE_EXPAND)
-			expanding = 0;
-		else
-			break;
-	}
-	return (c);
-}
-
 static int
 lgetc(int quotec)
 {
 	int		c, next;
 
+	if (parsebuf) {
+		/* Read character from the parsebuffer instead of input. */
+		if (parseindex >= 0) {
+			c = parsebuf[parseindex++];
+			if (c != '\0')
+				return (c);
+			parsebuf = NULL;
+		} else
+			parseindex++;
+	}
+
+	if (pushback_index)
+		return (pushback_buffer[--pushback_index]);
+
 	if (quotec) {
-		if ((c = igetc()) == EOF) {
+		if ((c = getc(file->stream)) == EOF) {
 			yyerror("reached end of file while parsing "
 			    "quoted string");
 			if (file == topfile || popfile() == EOF)
@@ -1008,8 +904,8 @@ lgetc(int quotec)
 		return (c);
 	}
 
-	while ((c = igetc()) == '\\') {
-		next = igetc();
+	while ((c = getc(file->stream)) == '\\') {
+		next = getc(file->stream);
 		if (next != '\n') {
 			c = next;
 			break;
@@ -1018,39 +914,28 @@ lgetc(int quotec)
 		file->lineno++;
 	}
 
-	if (c == EOF) {
-		/*
-		 * Fake EOL when hit EOF for the first time. This gets line
-		 * count right if last line in included file is syntactically
-		 * invalid and has no newline.
-		 */
-		if (file->eof_reached == 0) {
-			file->eof_reached = 1;
-			return ('\n');
-		}
-		while (c == EOF) {
-			if (file == topfile || popfile() == EOF)
-				return (EOF);
-			c = igetc();
-		}
+	while (c == EOF) {
+		if (file == topfile || popfile() == EOF)
+			return (EOF);
+		c = getc(file->stream);
 	}
 	return (c);
 }
 
-void
+static int
 lungetc(int c)
 {
 	if (c == EOF)
-		return;
-
-	if (file->ungetpos >= file->ungetsize) {
-		void *p = reallocarray(file->ungetbuf, file->ungetsize, 2);
-		if (p == NULL)
-			err(1, "%s", __func__);
-		file->ungetbuf = p;
-		file->ungetsize *= 2;
+		return (EOF);
+	if (parsebuf) {
+		parseindex--;
+		if (parseindex >= 0)
+			return (c);
 	}
-	file->ungetbuf[file->ungetpos++] = c;
+	if (pushback_index < MAXPUSHBACK-1)
+		return (pushback_buffer[pushback_index++] = c);
+	else
+		return (EOF);
 }
 
 static int
@@ -1058,9 +943,14 @@ findeol(void)
 {
 	int	c;
 
+	parsebuf = NULL;
+
 	/* skip to either EOF or the first real EOL */
 	while (1) {
-		c = lgetc(0);
+		if (pushback_index)
+			c = pushback_buffer[--pushback_index];
+		else
+			c = lgetc(0);
 		if (c == '\n') {
 			file->lineno++;
 			break;
@@ -1088,7 +978,7 @@ yylex(void)
 	if (c == '#')
 		while ((c = lgetc(0)) != '\n' && c != EOF)
 			; /* nothing */
-	if (c == '$' && !expanding) {
+	if (c == '$' && parsebuf == NULL) {
 		while (1) {
 			if ((c = lgetc(0)) == EOF)
 				return (0);
@@ -1110,13 +1000,8 @@ yylex(void)
 			yyerror("macro '%s' not defined", buf);
 			return (findeol());
 		}
-		p = val + strlen(val) - 1;
-		lungetc(DONE_EXPAND);
-		while (p >= val) {
-			lungetc(*p);
-			p--;
-		}
-		lungetc(START_EXPAND);
+		parsebuf = val;
+		parseindex = 0;
 		goto top;
 	}
 
@@ -1133,8 +1018,7 @@ yylex(void)
 			} else if (c == '\\') {
 				if ((next = lgetc(quotec)) == EOF)
 					return (0);
-				if (next == quotec || next == ' ' ||
-				    next == '\t')
+				if (next == quotec || c == ' ' || c == '\t')
 					c = next;
 				else if (next == '\n') {
 					file->lineno++;
@@ -1156,7 +1040,7 @@ yylex(void)
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			err(1, "%s", __func__);
+			err(1, "yylex: strdup");
 		return (STRING);
 	}
 
@@ -1166,7 +1050,7 @@ yylex(void)
 	if (c == '-' || isdigit(c)) {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -1205,7 +1089,7 @@ yylex(void)
 	if (isalnum(c) || c == ':' || c == '_') {
 		do {
 			*p++ = c;
-			if ((size_t)(p-buf) >= sizeof(buf)) {
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
 			}
@@ -1214,7 +1098,7 @@ yylex(void)
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
 			if ((yylval.v.string = strdup(buf)) == NULL)
-				err(1, "%s", __func__);
+				err(1, "yylex: strdup");
 		return (token);
 	}
 	if (c == '\n') {
@@ -1252,16 +1136,16 @@ pushfile(const char *name, int secret)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
-		log_warn("%s", __func__);
+		log_warn("calloc");
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		log_warn("%s", __func__);
+		log_warn("strdup");
 		free(nfile);
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		log_warn("%s: %s", __func__, nfile->name);
+		log_warn("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -1272,16 +1156,7 @@ pushfile(const char *name, int secret)
 		free(nfile);
 		return (NULL);
 	}
-	nfile->lineno = TAILQ_EMPTY(&files) ? 1 : 0;
-	nfile->ungetsize = 16;
-	nfile->ungetbuf = malloc(nfile->ungetsize);
-	if (nfile->ungetbuf == NULL) {
-		log_warn("%s", __func__);
-		fclose(nfile->stream);
-		free(nfile->name);
-		free(nfile);
-		return (NULL);
-	}
+	nfile->lineno = 1;
 	TAILQ_INSERT_TAIL(&files, nfile, entry);
 	return (nfile);
 }
@@ -1297,7 +1172,6 @@ popfile(void)
 	TAILQ_REMOVE(&files, file, entry);
 	fclose(file->stream);
 	free(file->name);
-	free(file->ungetbuf);
 	free(file);
 	file = prev;
 	return (file ? 0 : EOF);
@@ -1409,12 +1283,17 @@ cmdline_symset(char *s)
 {
 	char	*sym, *val;
 	int	ret;
+	size_t	len;
 
 	if ((val = strrchr(s, '=')) == NULL)
 		return (-1);
-	sym = strndup(s, val - s);
-	if (sym == NULL)
-		errx(1, "%s: strndup", __func__);
+
+	len = strlen(s) - strlen(val) + 1;
+	if ((sym = malloc(len)) == NULL)
+		errx(1, "cmdline_symset: malloc");
+
+	strlcpy(sym, s, len);
+
 	ret = symset(sym, val + 1, 1);
 	free(sym);
 
@@ -1692,48 +1571,4 @@ get_af_address(const char *s, int *family, union ldpd_addr *addr)
 	}
 
 	return (-1);
-}
-
-static int
-hexchar(int ch)
-{
-	if (ch >= '0' && ch <= '9')
-		return (ch - '0');
-	if (ch >= 'a' && ch <= 'f')
-		return (ch - 'a');
-	if (ch >= 'A' && ch <= 'F')
-		return (ch - 'A');
-
-	return (-1);
-}
-
-static int
-str2key(char *dst, const char *src, int dstlen)
-{
-	int		i = 0;
-	int		digit;
-
-	while (*src != '\0') {
-		digit = hexchar(*src);
-		if (digit == -1)
-			return (-1);
-
-		if (i < dstlen)
-			*dst = digit << 4;
-
-		src++;
-		if (*src == '\0')
-			return (-1);
-		digit = hexchar(*src);
-		if (digit == -1)
-			return (-1);
-
-		if (i < dstlen)
-			*dst |= digit;
-
-		src++;
-		i++;
-	}
-
-	return (i);
 }

@@ -1,4 +1,4 @@
-package SimpleCookieJar;
+package t::SimpleCookieJar;
 
 use strict;
 use warnings;

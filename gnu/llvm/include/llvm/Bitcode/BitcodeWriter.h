@@ -1,4 +1,4 @@
-//===- llvm/Bitcode/BitcodeWriter.h - Bitcode writers -----------*- C++ -*-===//
+//===-- llvm/Bitcode/BitcodeWriter.h - Bitcode writers ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,20 +14,14 @@
 #ifndef LLVM_BITCODE_BITCODEWRITER_H
 #define LLVM_BITCODE_BITCODEWRITER_H
 
-#include "llvm/ADT/StringRef.h"
 #include "llvm/IR/ModuleSummaryIndex.h"
 #include "llvm/MC/StringTableBuilder.h"
-#include "llvm/Support/Allocator.h"
-#include <map>
-#include <memory>
 #include <string>
-#include <vector>
 
 namespace llvm {
-
-class BitstreamWriter;
-class Module;
-class raw_ostream;
+  class BitstreamWriter;
+  class Module;
+  class raw_ostream;
 
   class BitcodeWriter {
     SmallVectorImpl<char> &Buffer;
@@ -45,7 +39,7 @@ class raw_ostream;
 
     std::vector<Module *> Mods;
 
-  public:
+   public:
     /// Create a BitcodeWriter that writes to Buffer.
     BitcodeWriter(SmallVectorImpl<char> &Buffer);
 
@@ -86,26 +80,16 @@ class raw_ostream;
     /// Can be used to produce the same module hash for a minimized bitcode
     /// used just for the thin link as in the regular full bitcode that will
     /// be used in the backend.
-    void writeModule(const Module &M, bool ShouldPreserveUseListOrder = false,
+    void writeModule(const Module *M, bool ShouldPreserveUseListOrder = false,
                      const ModuleSummaryIndex *Index = nullptr,
                      bool GenerateHash = false, ModuleHash *ModHash = nullptr);
-
-    /// Write the specified thin link bitcode file (i.e., the minimized bitcode
-    /// file) to the buffer specified at construction time. The thin link
-    /// bitcode file is used for thin link, and it only contains the necessary
-    /// information for thin link.
-    ///
-    /// ModHash is for use in ThinLTO incremental build, generated while the
-    /// IR bitcode file writing.
-    void writeThinLinkBitcode(const Module &M, const ModuleSummaryIndex &Index,
-                              const ModuleHash &ModHash);
 
     void writeIndex(
         const ModuleSummaryIndex *Index,
         const std::map<std::string, GVSummaryMapTy> *ModuleToSummariesForIndex);
   };
 
-  /// Write the specified module to the specified raw output stream.
+  /// \brief Write the specified module to the specified raw output stream.
   ///
   /// For streams where it matters, the given stream should be in "binary"
   /// mode.
@@ -126,22 +110,11 @@ class raw_ostream;
   /// Can be used to produce the same module hash for a minimized bitcode
   /// used just for the thin link as in the regular full bitcode that will
   /// be used in the backend.
-  void WriteBitcodeToFile(const Module &M, raw_ostream &Out,
+  void WriteBitcodeToFile(const Module *M, raw_ostream &Out,
                           bool ShouldPreserveUseListOrder = false,
                           const ModuleSummaryIndex *Index = nullptr,
                           bool GenerateHash = false,
                           ModuleHash *ModHash = nullptr);
-
-  /// Write the specified thin link bitcode file (i.e., the minimized bitcode
-  /// file) to the given raw output stream, where it will be written in a new
-  /// bitcode block. The thin link bitcode file is used for thin link, and it
-  /// only contains the necessary information for thin link.
-  ///
-  /// ModHash is for use in ThinLTO incremental build, generated while the IR
-  /// bitcode file writing.
-  void WriteThinLinkBitcodeToFile(const Module &M, raw_ostream &Out,
-                                  const ModuleSummaryIndex &Index,
-                                  const ModuleHash &ModHash);
 
   /// Write the specified module summary index to the given raw output stream,
   /// where it will be written in a new bitcode block. This is used when
@@ -151,7 +124,6 @@ class raw_ostream;
   void WriteIndexToFile(const ModuleSummaryIndex &Index, raw_ostream &Out,
                         const std::map<std::string, GVSummaryMapTy>
                             *ModuleToSummariesForIndex = nullptr);
+} // End llvm namespace
 
-} // end namespace llvm
-
-#endif // LLVM_BITCODE_BITCODEWRITER_H
+#endif

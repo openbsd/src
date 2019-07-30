@@ -282,9 +282,8 @@ T_ARRAY
         }
 T_STDIO
 	{
-	    GV *gv = (GV *)sv_newmortal();
+	    GV *gv = newGVgen("$Package");
 	    PerlIO *fp = PerlIO_importFILE($var,0);
-	    gv_init(gv, gv_stashpv("$Package",1),"__ANONIO__",10,0);
 	    if ( fp && do_open(gv, "+<&", 3, FALSE, 0, 0, fp) )
 		sv_setsv($arg, sv_bless(newRV((SV*)gv), gv_stashpv("$Package",1)));
 	    else
@@ -292,8 +291,7 @@ T_STDIO
 	}
 T_IN
 	{
-	    GV *gv = (GV *)sv_newmortal();
-	    gv_init(gv, gv_stashpv("$Package",1),"__ANONIO__",10,0);
+	    GV *gv = newGVgen("$Package");
 	    if ( do_open(gv, "<&", 2, FALSE, 0, 0, $var) )
 		sv_setsv($arg, sv_bless(newRV((SV*)gv), gv_stashpv("$Package",1)));
 	    else
@@ -301,8 +299,7 @@ T_IN
 	}
 T_INOUT
 	{
-	    GV *gv = (GV *)sv_newmortal();
-	    gv_init(gv, gv_stashpv("$Package",1),"__ANONIO__",10,0);
+	    GV *gv = newGVgen("$Package");
 	    if ( do_open(gv, "+<&", 3, FALSE, 0, 0, $var) )
 		sv_setsv($arg, sv_bless(newRV((SV*)gv), gv_stashpv("$Package",1)));
 	    else
@@ -310,8 +307,7 @@ T_INOUT
 	}
 T_OUT
 	{
-	    GV *gv = (GV *)sv_newmortal();
-	    gv_init(gv, gv_stashpv("$Package",1),"__ANONIO__",10,0);
+	    GV *gv = newGVgen("$Package");
 	    if ( do_open(gv, "+>&", 3, FALSE, 0, 0, $var) )
 		sv_setsv($arg, sv_bless(newRV((SV*)gv), gv_stashpv("$Package",1)));
 	    else

@@ -66,7 +66,7 @@ class FunctionTypesTestCase(TestBase):
                     startstr='(int) $2 = 12')
 
     def runToBreakpoint(self):
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break inside the main.

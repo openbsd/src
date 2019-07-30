@@ -7,11 +7,9 @@ add_llvm_library(LLVMMC
   MCAsmInfoDarwin.cpp
   MCAsmInfoELF.cpp
   MCAsmInfoWasm.cpp
-  MCAsmMacro.cpp
   MCAsmStreamer.cpp
   MCAssembler.cpp
   MCCodeEmitter.cpp
-  MCCodePadder.cpp
   MCCodeView.cpp
   MCContext.cpp
   MCDwarf.cpp

@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// This file implements a function that runs Clang format on a single
+/// \brief This file implements a function that runs Clang format on a single
 ///  input. This function is then linked into the Fuzzer library.
 ///
 //===----------------------------------------------------------------------===//
@@ -20,10 +20,7 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
   std::string s((const char *)data, size);
   auto Style = getGoogleStyle(clang::format::FormatStyle::LK_Cpp);
   Style.ColumnLimit = 60;
-  auto Replaces = reformat(Style, s, clang::tooling::Range(0, s.size()));
-  auto Result = applyAllReplacements(s, Replaces);
-
-  // Output must be checked, as otherwise we crash.
-  if (!Result) {}
+  applyAllReplacements(s, clang::format::reformat(
+                              Style, s, {clang::tooling::Range(0, s.size())}));
   return 0;
 }

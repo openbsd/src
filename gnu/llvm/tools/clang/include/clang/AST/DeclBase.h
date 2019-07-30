@@ -1,4 +1,4 @@
-//===- DeclBase.h - Base Classes for representing declarations --*- C++ -*-===//
+//===-- DeclBase.h - Base Classes for representing declarations -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,40 +16,33 @@
 
 #include "clang/AST/AttrIterator.h"
 #include "clang/AST/DeclarationName.h"
-#include "clang/Basic/LLVM.h"
-#include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/Specifiers.h"
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/PointerIntPair.h"
+#include "clang/Basic/VersionTuple.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
-#include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/VersionTuple.h"
-#include <algorithm>
-#include <cassert>
-#include <cstddef>
-#include <iterator>
-#include <string>
-#include <type_traits>
-#include <utility>
 
 namespace clang {
-
-class ASTContext;
 class ASTMutationListener;
-class Attr;
+class BlockDecl;
+class CXXRecordDecl;
+class CompoundStmt;
 class DeclContext;
+class DeclarationName;
+class DependentDiagnostic;
+class EnumDecl;
+class ExportDecl;
 class ExternalSourceSymbolAttr;
 class FunctionDecl;
 class FunctionType;
-class IdentifierInfo;
 enum Linkage : unsigned char;
+class LinkageComputer;
 class LinkageSpecDecl;
 class Module;
 class NamedDecl;
+class NamespaceDecl;
 class ObjCCategoryDecl;
 class ObjCCategoryImplDecl;
 class ObjCContainerDecl;
@@ -60,21 +53,23 @@ class ObjCMethodDecl;
 class ObjCProtocolDecl;
 struct PrintingPolicy;
 class RecordDecl;
-class SourceManager;
 class Stmt;
 class StoredDeclsMap;
 class TemplateDecl;
 class TranslationUnitDecl;
 class UsingDirectiveDecl;
+}
 
-/// Captures the result of checking the availability of a
-/// declaration.
-enum AvailabilityResult {
-  AR_Available = 0,
-  AR_NotYetIntroduced,
-  AR_Deprecated,
-  AR_Unavailable
-};
+namespace clang {
+
+  /// \brief Captures the result of checking the availability of a
+  /// declaration.
+  enum AvailabilityResult {
+    AR_Available = 0,
+    AR_NotYetIntroduced,
+    AR_Deprecated,
+    AR_Unavailable
+  };
 
 /// Decl - This represents one declaration (or definition), e.g. a variable,
 /// typedef, function, struct, etc.
@@ -83,9 +78,9 @@ enum AvailabilityResult {
 /// (and its subclasses) in its Decl::operator new(). Proper alignment
 /// of all subclasses (not requiring more than the alignment of Decl) is
 /// asserted in DeclBase.cpp.
-class alignas(8) Decl {
+class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) Decl {
 public:
-  /// Lists the kind of concrete classes of Decl.
+  /// \brief Lists the kind of concrete classes of Decl.
   enum Kind {
 #define DECL(DERIVED, BASE) DERIVED,
 #define ABSTRACT_DECL(DECL)
@@ -96,10 +91,10 @@ public:
 #include "clang/AST/DeclNodes.inc"
   };
 
-  /// A placeholder type used to construct an empty shell of a
+  /// \brief A placeholder type used to construct an empty shell of a
   /// decl-derived type that will be filled in later (e.g., by some
   /// deserialization method).
-  struct EmptyShell {};
+  struct EmptyShell { };
 
   /// IdentifierNamespace - The different namespaces in which
   /// declarations may appear.  According to C99 6.2.3, there are
@@ -213,25 +208,22 @@ public:
   enum class ModuleOwnershipKind : unsigned {
     /// This declaration is not owned by a module.
     Unowned,
-
     /// This declaration has an owning module, but is globally visible
     /// (typically because its owning module is visible and we know that
     /// modules cannot later become hidden in this compilation).
     /// After serialization and deserialization, this will be converted
     /// to VisibleWhenImported.
     Visible,
-
     /// This declaration has an owning module, and is visible when that
     /// module is imported.
     VisibleWhenImported,
-
     /// This declaration has an owning module, but is only visible to
     /// lookups that occur within that module.
     ModulePrivate
   };
 
 protected:
-  /// The next declaration within the same lexical
+  /// \brief The next declaration within the same lexical
   /// DeclContext. These pointers form the linked list that is
   /// traversed via DeclContext's decls_begin()/decls_end().
   ///
@@ -245,6 +237,7 @@ private:
     DeclContext *SemanticDC;
     DeclContext *LexicalDC;
   };
+
 
   /// DeclCtx - Holds either a DeclContext* or a MultipleDC*.
   /// For declarations that don't contain C++ scope specifiers, it contains
@@ -261,14 +254,12 @@ private:
   ///                // LexicalDC == global namespace
   llvm::PointerUnion<DeclContext*, MultipleDC*> DeclCtx;
 
-  bool isInSemaDC() const { return DeclCtx.is<DeclContext*>(); }
-  bool isOutOfSemaDC() const { return DeclCtx.is<MultipleDC*>(); }
-
-  MultipleDC *getMultipleDC() const {
+  inline bool isInSemaDC() const    { return DeclCtx.is<DeclContext*>(); }
+  inline bool isOutOfSemaDC() const { return DeclCtx.is<MultipleDC*>(); }
+  inline MultipleDC *getMultipleDC() const {
     return DeclCtx.get<MultipleDC*>();
   }
-
-  DeclContext *getSemanticDC() const {
+  inline DeclContext *getSemanticDC() const {
     return DeclCtx.get<DeclContext*>();
   }
 
@@ -288,48 +279,48 @@ private:
   /// the implementation rather than explicitly written by the user.
   unsigned Implicit : 1;
 
-  /// Whether this declaration was "used", meaning that a definition is
+  /// \brief Whether this declaration was "used", meaning that a definition is
   /// required.
   unsigned Used : 1;
 
-  /// Whether this declaration was "referenced".
+  /// \brief Whether this declaration was "referenced".
   /// The difference with 'Used' is whether the reference appears in a
   /// evaluated context or not, e.g. functions used in uninstantiated templates
   /// are regarded as "referenced" but not "used".
   unsigned Referenced : 1;
 
-  /// Whether this declaration is a top-level declaration (function,
+  /// \brief Whether this declaration is a top-level declaration (function,
   /// global variable, etc.) that is lexically inside an objc container
   /// definition.
   unsigned TopLevelDeclInObjCContainer : 1;
-
-  /// Whether statistic collection is enabled.
+  
+  /// \brief Whether statistic collection is enabled.
   static bool StatisticsEnabled;
 
 protected:
-  friend class ASTDeclReader;
-  friend class ASTDeclWriter;
-  friend class ASTNodeImporter;
-  friend class ASTReader;
-  friend class CXXClassMemberWrapper;
-  friend class LinkageComputer;
-  template<typename decl_type> friend class Redeclarable;
-
   /// Access - Used by C++ decls for the access specifier.
   // NOTE: VC++ treats enums as signed, avoid using the AccessSpecifier enum
   unsigned Access : 2;
+  friend class CXXClassMemberWrapper;
 
-  /// Whether this declaration was loaded from an AST file.
+  /// \brief Whether this declaration was loaded from an AST file.
   unsigned FromASTFile : 1;
 
   /// IdentifierNamespace - This specifies what IDNS_* namespace this lives in.
   unsigned IdentifierNamespace : 13;
 
-  /// If 0, we have not computed the linkage of this declaration.
+  /// \brief If 0, we have not computed the linkage of this declaration.
   /// Otherwise, it is the linkage + 1.
   mutable unsigned CacheValidAndLinkage : 3;
 
-  /// Allocate memory for a deserialized declaration.
+  friend class ASTDeclWriter;
+  friend class ASTDeclReader;
+  friend class ASTReader;
+  friend class LinkageComputer;
+
+  template<typename decl_type> friend class Redeclarable;
+
+  /// \brief Allocate memory for a deserialized declaration.
   ///
   /// This routine must be used to allocate memory for any declaration that is
   /// deserialized from a module file.
@@ -341,7 +332,7 @@ protected:
   void *operator new(std::size_t Size, const ASTContext &Ctx, unsigned ID,
                      std::size_t Extra = 0);
 
-  /// Allocate memory for a non-deserialized declaration.
+  /// \brief Allocate memory for a non-deserialized declaration.
   void *operator new(std::size_t Size, const ASTContext &Ctx,
                      DeclContext *Parent, std::size_t Extra = 0);
 
@@ -366,7 +357,7 @@ private:
 protected:
   Decl(Kind DK, DeclContext *DC, SourceLocation L)
       : NextInContextAndBits(nullptr, getModuleOwnershipKindForChildOf(DC)),
-        DeclCtx(DC), Loc(L), DeclKind(DK), InvalidDecl(false), HasAttrs(false),
+        DeclCtx(DC), Loc(L), DeclKind(DK), InvalidDecl(0), HasAttrs(false),
         Implicit(false), Used(false), Referenced(false),
         TopLevelDeclInObjCContainer(false), Access(AS_none), FromASTFile(0),
         IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
@@ -375,9 +366,9 @@ protected:
   }
 
   Decl(Kind DK, EmptyShell Empty)
-      : DeclKind(DK), InvalidDecl(false), HasAttrs(false), Implicit(false),
-        Used(false), Referenced(false), TopLevelDeclInObjCContainer(false),
-        Access(AS_none), FromASTFile(0),
+      : NextInContextAndBits(), DeclKind(DK), InvalidDecl(0), HasAttrs(false),
+        Implicit(false), Used(false), Referenced(false),
+        TopLevelDeclInObjCContainer(false), Access(AS_none), FromASTFile(0),
         IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
         CacheValidAndLinkage(0) {
     if (StatisticsEnabled) add(DK);
@@ -385,7 +376,7 @@ protected:
 
   virtual ~Decl();
 
-  /// Update a potentially out-of-date declaration.
+  /// \brief Update a potentially out-of-date declaration.
   void updateOutOfDate(IdentifierInfo &II) const;
 
   Linkage getCachedLinkage() const {
@@ -401,18 +392,15 @@ protected:
   }
 
 public:
-  /// Source range that this declaration covers.
+
+  /// \brief Source range that this declaration covers.
   virtual SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(getLocation(), getLocation());
   }
-
-  SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
-  SourceLocation getBeginLoc() const LLVM_READONLY {
+  SourceLocation getLocStart() const LLVM_READONLY {
     return getSourceRange().getBegin();
   }
-
-  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
-  SourceLocation getEndLoc() const LLVM_READONLY {
+  SourceLocation getLocEnd() const LLVM_READONLY {
     return getSourceRange().getEnd();
   }
 
@@ -465,22 +453,19 @@ public:
     return AccessSpecifier(Access);
   }
 
-  /// Retrieve the access specifier for this declaration, even though
+  /// \brief Retrieve the access specifier for this declaration, even though
   /// it may not yet have been properly set.
   AccessSpecifier getAccessUnsafe() const {
     return AccessSpecifier(Access);
   }
 
   bool hasAttrs() const { return HasAttrs; }
-
   void setAttrs(const AttrVec& Attrs) {
     return setAttrsImpl(Attrs, getASTContext());
   }
-
   AttrVec &getAttrs() {
     return const_cast<AttrVec&>(const_cast<const Decl*>(this)->getAttrs());
   }
-
   const AttrVec &getAttrs() const;
   void dropAttrs();
 
@@ -491,8 +476,8 @@ public:
       setAttrs(AttrVec(1, A));
   }
 
-  using attr_iterator = AttrVec::const_iterator;
-  using attr_range = llvm::iterator_range<attr_iterator>;
+  typedef AttrVec::const_iterator attr_iterator;
+  typedef llvm::iterator_range<attr_iterator> attr_range;
 
   attr_range attrs() const {
     return attr_range(attr_begin(), attr_end());
@@ -525,7 +510,6 @@ public:
   specific_attr_iterator<T> specific_attr_begin() const {
     return specific_attr_iterator<T>(attr_begin());
   }
-
   template <typename T>
   specific_attr_iterator<T> specific_attr_end() const {
     return specific_attr_iterator<T>(attr_end());
@@ -534,7 +518,6 @@ public:
   template<typename T> T *getAttr() const {
     return hasAttrs() ? getSpecificAttr<T>(getAttrs()) : nullptr;
   }
-
   template<typename T> bool hasAttr() const {
     return hasAttrs() && hasSpecificAttr<T>(getAttrs());
   }
@@ -554,7 +537,7 @@ public:
   bool isImplicit() const { return Implicit; }
   void setImplicit(bool I = true) { Implicit = I; }
 
-  /// Whether *any* (re-)declaration of the entity was used, meaning that
+  /// \brief Whether *any* (re-)declaration of the entity was used, meaning that
   /// a definition is required.
   ///
   /// \param CheckUsedAttr When true, also consider the "used" attribute
@@ -562,28 +545,28 @@ public:
   /// whether the function is used.
   bool isUsed(bool CheckUsedAttr = true) const;
 
-  /// Set whether the declaration is used, in the sense of odr-use.
+  /// \brief Set whether the declaration is used, in the sense of odr-use.
   ///
   /// This should only be used immediately after creating a declaration.
   /// It intentionally doesn't notify any listeners.
   void setIsUsed() { getCanonicalDecl()->Used = true; }
 
-  /// Mark the declaration used, in the sense of odr-use.
+  /// \brief Mark the declaration used, in the sense of odr-use.
   ///
   /// This notifies any mutation listeners in addition to setting a bit
   /// indicating the declaration is used.
   void markUsed(ASTContext &C);
 
-  /// Whether any declaration of this entity was referenced.
+  /// \brief Whether any declaration of this entity was referenced.
   bool isReferenced() const;
 
-  /// Whether this declaration was referenced. This should not be relied
+  /// \brief Whether this declaration was referenced. This should not be relied
   /// upon for anything other than debugging.
   bool isThisDeclarationReferenced() const { return Referenced; }
 
   void setReferenced(bool R = true) { Referenced = R; }
 
-  /// Whether this declaration is a top-level declaration (function,
+  /// \brief Whether this declaration is a top-level declaration (function,
   /// global variable, etc.) that is lexically inside an objc container
   /// definition.
   bool isTopLevelDeclInObjCContainer() const {
@@ -594,17 +577,17 @@ public:
     TopLevelDeclInObjCContainer = V;
   }
 
-  /// Looks on this and related declarations for an applicable
+  /// \brief Looks on this and related declarations for an applicable
   /// external source symbol attribute.
   ExternalSourceSymbolAttr *getExternalSourceSymbolAttr() const;
 
-  /// Whether this declaration was marked as being private to the
+  /// \brief Whether this declaration was marked as being private to the
   /// module in which it was defined.
   bool isModulePrivate() const {
     return getModuleOwnershipKind() == ModuleOwnershipKind::ModulePrivate;
   }
 
-  /// Whether this declaration is exported (by virtue of being lexically
+  /// \brief Whether this declaration is exported (by virtue of being lexically
   /// within an ExportDecl or by being a NamespaceDecl).
   bool isExported() const;
 
@@ -616,7 +599,7 @@ public:
   const Attr *getDefiningAttr() const;
 
 protected:
-  /// Specify that this declaration was marked as being private
+  /// \brief Specify that this declaration was marked as being private
   /// to the module in which it was defined.
   void setModulePrivate() {
     // The module-private specifier has no effect on unowned declarations.
@@ -626,14 +609,15 @@ protected:
     setModuleOwnershipKind(ModuleOwnershipKind::ModulePrivate);
   }
 
-  /// Set the owning module ID.
+  /// \brief Set the owning module ID.
   void setOwningModuleID(unsigned ID) {
     assert(isFromASTFile() && "Only works on a deserialized declaration");
     *((unsigned*)this - 2) = ID;
   }
-
+  
 public:
-  /// Determine the availability of the given declaration.
+  
+  /// \brief Determine the availability of the given declaration.
   ///
   /// This routine will determine the most restrictive availability of
   /// the given declaration (e.g., preferring 'unavailable' to
@@ -646,16 +630,11 @@ public:
   ///
   /// \param EnclosingVersion The version to compare with. If empty, assume the
   /// deployment target version.
-  ///
-  /// \param RealizedPlatform If non-NULL and the availability result is found
-  /// in an available attribute it will set to the platform which is written in
-  /// the available attribute.
   AvailabilityResult
   getAvailability(std::string *Message = nullptr,
-                  VersionTuple EnclosingVersion = VersionTuple(),
-                  StringRef *RealizedPlatform = nullptr) const;
+                  VersionTuple EnclosingVersion = VersionTuple()) const;
 
-  /// Retrieve the version of the target platform in which this
+  /// \brief Retrieve the version of the target platform in which this
   /// declaration was introduced.
   ///
   /// \returns An empty version tuple if this declaration has no 'introduced'
@@ -663,7 +642,7 @@ public:
   /// attribute otherwise.
   VersionTuple getVersionIntroduced() const;
 
-  /// Determine whether this declaration is marked 'deprecated'.
+  /// \brief Determine whether this declaration is marked 'deprecated'.
   ///
   /// \param Message If non-NULL and the declaration is deprecated,
   /// this will be set to the message describing why the declaration
@@ -672,7 +651,7 @@ public:
     return getAvailability(Message) == AR_Deprecated;
   }
 
-  /// Determine whether this declaration is marked 'unavailable'.
+  /// \brief Determine whether this declaration is marked 'unavailable'.
   ///
   /// \param Message If non-NULL and the declaration is unavailable,
   /// this will be set to the message describing why the declaration
@@ -681,7 +660,7 @@ public:
     return getAvailability(Message) == AR_Unavailable;
   }
 
-  /// Determine whether this is a weak-imported symbol.
+  /// \brief Determine whether this is a weak-imported symbol.
   ///
   /// Weak-imported symbols are typically marked with the
   /// 'weak_import' attribute, but may also be marked with an
@@ -689,7 +668,7 @@ public:
   /// the introduction of this feature.
   bool isWeakImported() const;
 
-  /// Determines whether this symbol can be weak-imported,
+  /// \brief Determines whether this symbol can be weak-imported,
   /// e.g., whether it would be well-formed to add the weak_import
   /// attribute.
   ///
@@ -697,11 +676,11 @@ public:
   /// declaration cannot be weak-imported because it has a definition.
   bool canBeWeakImported(bool &IsDefinition) const;
 
-  /// Determine whether this declaration came from an AST file (such as
+  /// \brief Determine whether this declaration came from an AST file (such as
   /// a precompiled header or module) rather than having been parsed.
   bool isFromASTFile() const { return FromASTFile; }
 
-  /// Retrieve the global declaration ID associated with this
+  /// \brief Retrieve the global declaration ID associated with this
   /// declaration, which specifies where this Decl was loaded from.
   unsigned getGlobalID() const {
     if (isFromASTFile())
@@ -709,7 +688,7 @@ public:
     return 0;
   }
 
-  /// Retrieve the global ID of the module that owns this particular
+  /// \brief Retrieve the global ID of the module that owns this particular
   /// declaration.
   unsigned getOwningModuleID() const {
     if (isFromASTFile())
@@ -719,12 +698,11 @@ public:
 
 private:
   Module *getOwningModuleSlow() const;
-
 protected:
   bool hasLocalOwningModuleStorage() const;
 
 public:
-  /// Get the imported owning module, if this decl is from an imported
+  /// \brief Get the imported owning module, if this decl is from an imported
   /// (non-local) module.
   Module *getImportedOwningModule() const {
     if (!isFromASTFile() || !hasOwningModule())
@@ -733,7 +711,7 @@ public:
     return getOwningModuleSlow();
   }
 
-  /// Get the local owning module, if known. Returns nullptr if owner is
+  /// \brief Get the local owning module, if known. Returns nullptr if owner is
   /// not yet known or declaration is not from a module.
   Module *getLocalOwningModule() const {
     if (isFromASTFile() || !hasOwningModule())
@@ -755,19 +733,12 @@ public:
     return getModuleOwnershipKind() != ModuleOwnershipKind::Unowned;
   }
 
-  /// Get the module that owns this declaration (for visibility purposes).
+  /// Get the module that owns this declaration.
   Module *getOwningModule() const {
     return isFromASTFile() ? getImportedOwningModule() : getLocalOwningModule();
   }
 
-  /// Get the module that owns this declaration for linkage purposes.
-  /// There only ever is such a module under the C++ Modules TS.
-  ///
-  /// \param IgnoreLinkage Ignore the linkage of the entity; assume that
-  /// all declarations in a global module fragment are unowned.
-  Module *getOwningModuleForLinkage(bool IgnoreLinkage = false) const;
-
-  /// Determine whether this declaration might be hidden from name
+  /// \brief Determine whether this declaration might be hidden from name
   /// lookup. Note that the declaration might be visible even if this returns
   /// \c false, if the owning module is visible within the query context.
   // FIXME: Rename this to make it clearer what it does.
@@ -782,12 +753,12 @@ public:
       setModuleOwnershipKind(ModuleOwnershipKind::Visible);
   }
 
-  /// Get the kind of module ownership for this declaration.
+  /// \brief Get the kind of module ownership for this declaration.
   ModuleOwnershipKind getModuleOwnershipKind() const {
     return NextInContextAndBits.getInt();
   }
 
-  /// Set whether this declaration is hidden from name lookup.
+  /// \brief Set whether this declaration is hidden from name lookup.
   void setModuleOwnershipKind(ModuleOwnershipKind MOK) {
     assert(!(getModuleOwnershipKind() == ModuleOwnershipKind::Unowned &&
              MOK != ModuleOwnershipKind::Unowned && !isFromASTFile() &&
@@ -799,17 +770,14 @@ public:
   unsigned getIdentifierNamespace() const {
     return IdentifierNamespace;
   }
-
   bool isInIdentifierNamespace(unsigned NS) const {
     return getIdentifierNamespace() & NS;
   }
-
   static unsigned getIdentifierNamespaceForKind(Kind DK);
 
   bool hasTagIdentifierNamespace() const {
     return isTagIdentifierNamespace(getIdentifierNamespace());
   }
-
   static bool isTagIdentifierNamespace(unsigned NS) {
     // TagDecls have Tag and Type set and may also have TagFriend.
     return (NS & ~IDNS_TagFriend) == (IDNS_Tag | IDNS_Type);
@@ -844,10 +812,6 @@ public:
 
   void setLexicalDeclContext(DeclContext *DC);
 
-  /// Determine whether this declaration is a templated entity (whether it is
-  // within the scope of a template parameter).
-  bool isTemplated() const;
-
   /// isDefinedOutsideFunctionOrMethod - This predicate returns true if this
   /// scoped decl is defined outside the current function or method.  This is
   /// roughly global variables and functions, but also handles enums (which
@@ -856,7 +820,7 @@ public:
     return getParentFunctionOrMethod() == nullptr;
   }
 
-  /// Returns true if this declaration lexically is inside a function.
+  /// \brief Returns true if this declaration lexically is inside a function.
   /// It recognizes non-defining declarations as well as members of local
   /// classes:
   /// \code
@@ -865,7 +829,7 @@ public:
   /// \endcode
   bool isLexicallyWithinFunctionOrMethod() const;
 
-  /// If this decl is defined inside a function/method/block it returns
+  /// \brief If this decl is defined inside a function/method/block it returns
   /// the corresponding DeclContext, otherwise it returns null.
   const DeclContext *getParentFunctionOrMethod() const;
   DeclContext *getParentFunctionOrMethod() {
@@ -873,46 +837,46 @@ public:
                     const_cast<const Decl*>(this)->getParentFunctionOrMethod());
   }
 
-  /// Retrieves the "canonical" declaration of the given declaration.
+  /// \brief Retrieves the "canonical" declaration of the given declaration.
   virtual Decl *getCanonicalDecl() { return this; }
   const Decl *getCanonicalDecl() const {
     return const_cast<Decl*>(this)->getCanonicalDecl();
   }
 
-  /// Whether this particular Decl is a canonical one.
+  /// \brief Whether this particular Decl is a canonical one.
   bool isCanonicalDecl() const { return getCanonicalDecl() == this; }
-
+  
 protected:
-  /// Returns the next redeclaration or itself if this is the only decl.
+  /// \brief Returns the next redeclaration or itself if this is the only decl.
   ///
   /// Decl subclasses that can be redeclared should override this method so that
   /// Decl::redecl_iterator can iterate over them.
   virtual Decl *getNextRedeclarationImpl() { return this; }
 
-  /// Implementation of getPreviousDecl(), to be overridden by any
+  /// \brief Implementation of getPreviousDecl(), to be overridden by any
   /// subclass that has a redeclaration chain.
   virtual Decl *getPreviousDeclImpl() { return nullptr; }
 
-  /// Implementation of getMostRecentDecl(), to be overridden by any
+  /// \brief Implementation of getMostRecentDecl(), to be overridden by any
   /// subclass that has a redeclaration chain.
   virtual Decl *getMostRecentDeclImpl() { return this; }
 
 public:
-  /// Iterates through all the redeclarations of the same decl.
+  /// \brief Iterates through all the redeclarations of the same decl.
   class redecl_iterator {
     /// Current - The current declaration.
-    Decl *Current = nullptr;
+    Decl *Current;
     Decl *Starter;
 
   public:
-    using value_type = Decl *;
-    using reference = const value_type &;
-    using pointer = const value_type *;
-    using iterator_category = std::forward_iterator_tag;
-    using difference_type = std::ptrdiff_t;
+    typedef Decl *value_type;
+    typedef const value_type &reference;
+    typedef const value_type *pointer;
+    typedef std::forward_iterator_tag iterator_category;
+    typedef std::ptrdiff_t difference_type;
 
-    redecl_iterator() = default;
-    explicit redecl_iterator(Decl *C) : Current(C), Starter(C) {}
+    redecl_iterator() : Current(nullptr) { }
+    explicit redecl_iterator(Decl *C) : Current(C), Starter(C) { }
 
     reference operator*() const { return Current; }
     value_type operator->() const { return Current; }
@@ -935,15 +899,14 @@ public:
     friend bool operator==(redecl_iterator x, redecl_iterator y) {
       return x.Current == y.Current;
     }
-
     friend bool operator!=(redecl_iterator x, redecl_iterator y) {
       return x.Current != y.Current;
     }
   };
 
-  using redecl_range = llvm::iterator_range<redecl_iterator>;
+  typedef llvm::iterator_range<redecl_iterator> redecl_range;
 
-  /// Returns an iterator range for all the redeclarations of the same
+  /// \brief Returns an iterator range for all the redeclarations of the same
   /// decl. It will iterate at least once (when this decl is the only one).
   redecl_range redecls() const {
     return redecl_range(redecls_begin(), redecls_end());
@@ -952,31 +915,30 @@ public:
   redecl_iterator redecls_begin() const {
     return redecl_iterator(const_cast<Decl *>(this));
   }
-
   redecl_iterator redecls_end() const { return redecl_iterator(); }
 
-  /// Retrieve the previous declaration that declares the same entity
+  /// \brief Retrieve the previous declaration that declares the same entity
   /// as this declaration, or NULL if there is no previous declaration.
   Decl *getPreviousDecl() { return getPreviousDeclImpl(); }
-
-  /// Retrieve the most recent declaration that declares the same entity
+  
+  /// \brief Retrieve the most recent declaration that declares the same entity
   /// as this declaration, or NULL if there is no previous declaration.
-  const Decl *getPreviousDecl() const {
+  const Decl *getPreviousDecl() const { 
     return const_cast<Decl *>(this)->getPreviousDeclImpl();
   }
 
-  /// True if this is the first declaration in its redeclaration chain.
+  /// \brief True if this is the first declaration in its redeclaration chain.
   bool isFirstDecl() const {
     return getPreviousDecl() == nullptr;
   }
 
-  /// Retrieve the most recent declaration that declares the same entity
+  /// \brief Retrieve the most recent declaration that declares the same entity
   /// as this declaration (which may be this declaration).
   Decl *getMostRecentDecl() { return getMostRecentDeclImpl(); }
 
-  /// Retrieve the most recent declaration that declares the same entity
+  /// \brief Retrieve the most recent declaration that declares the same entity
   /// as this declaration (which may be this declaration).
-  const Decl *getMostRecentDecl() const {
+  const Decl *getMostRecentDecl() const { 
     return const_cast<Decl *>(this)->getMostRecentDeclImpl();
   }
 
@@ -985,7 +947,7 @@ public:
   ///  top-level Stmt* of that body.  Otherwise this method returns null.
   virtual Stmt* getBody() const { return nullptr; }
 
-  /// Returns true if this \c Decl represents a declaration for a body of
+  /// \brief Returns true if this \c Decl represents a declaration for a body of
   /// code, such as a function or method definition.
   /// Note that \c hasBody can also return true if any redeclaration of this
   /// \c Decl represents a declaration for a body of code.
@@ -1008,24 +970,24 @@ public:
   /// template parameter pack.
   bool isTemplateParameterPack() const;
 
-  /// Whether this declaration is a parameter pack.
+  /// \brief Whether this declaration is a parameter pack.
   bool isParameterPack() const;
 
-  /// returns true if this declaration is a template
+  /// \brief returns true if this declaration is a template
   bool isTemplateDecl() const;
 
-  /// Whether this declaration is a function or function template.
+  /// \brief Whether this declaration is a function or function template.
   bool isFunctionOrFunctionTemplate() const {
     return (DeclKind >= Decl::firstFunction &&
             DeclKind <= Decl::lastFunction) ||
            DeclKind == FunctionTemplate;
   }
 
-  /// If this is a declaration that describes some template, this
+  /// \brief If this is a declaration that describes some template, this
   /// method returns that template declaration.
   TemplateDecl *getDescribedTemplate() const;
 
-  /// Returns the function itself, or the templated function if this is a
+  /// \brief Returns the function itself, or the templated function if this is a
   /// function template.
   FunctionDecl *getAsFunction() LLVM_READONLY;
 
@@ -1033,35 +995,33 @@ public:
     return const_cast<Decl *>(this)->getAsFunction();
   }
 
-  /// Changes the namespace of this declaration to reflect that it's
+  /// \brief Changes the namespace of this declaration to reflect that it's
   /// a function-local extern declaration.
   ///
   /// These declarations appear in the lexical context of the extern
   /// declaration, but in the semantic context of the enclosing namespace
   /// scope.
   void setLocalExternDecl() {
+    assert((IdentifierNamespace == IDNS_Ordinary ||
+            IdentifierNamespace == IDNS_OrdinaryFriend) &&
+           "namespace is not ordinary");
+
     Decl *Prev = getPreviousDecl();
     IdentifierNamespace &= ~IDNS_Ordinary;
-
-    // It's OK for the declaration to still have the "invisible friend" flag or
-    // the "conflicts with tag declarations in this scope" flag for the outer
-    // scope.
-    assert((IdentifierNamespace & ~(IDNS_OrdinaryFriend | IDNS_Tag)) == 0 &&
-           "namespace is not ordinary");
 
     IdentifierNamespace |= IDNS_LocalExtern;
     if (Prev && Prev->getIdentifierNamespace() & IDNS_Ordinary)
       IdentifierNamespace |= IDNS_Ordinary;
   }
 
-  /// Determine whether this is a block-scope declaration with linkage.
+  /// \brief Determine whether this is a block-scope declaration with linkage.
   /// This will either be a local variable declaration declared 'extern', or a
   /// local function declaration.
   bool isLocalExternDecl() {
     return IdentifierNamespace & IDNS_LocalExtern;
   }
 
-  /// Changes the namespace of this declaration to reflect that it's
+  /// \brief Changes the namespace of this declaration to reflect that it's
   /// the object of a friend declaration.
   ///
   /// These declarations appear in the lexical context of the friending
@@ -1103,7 +1063,7 @@ public:
     FOK_Undeclared ///< A friend of a previously-undeclared entity.
   };
 
-  /// Determines whether this declaration is the object of a
+  /// \brief Determines whether this declaration is the object of a
   /// friend declaration and, if so, what kind.
   ///
   /// There is currently no direct way to find the associated FriendDecl.
@@ -1134,16 +1094,13 @@ public:
   static void printGroup(Decl** Begin, unsigned NumDecls,
                          raw_ostream &Out, const PrintingPolicy &Policy,
                          unsigned Indentation = 0);
-
   // Debuggers don't usually respect default arguments.
   void dump() const;
-
   // Same as dump(), but forces color printing.
   void dumpColor() const;
-
   void dump(raw_ostream &Out, bool Deserialize = false) const;
 
-  /// Looks through the Decl's underlying type to extract a FunctionType
+  /// \brief Looks through the Decl's underlying type to extract a FunctionType
   /// when possible. Will return null if the type underlying the Decl does not
   /// have a FunctionType.
   const FunctionType *getFunctionType(bool BlocksToo = true) const;
@@ -1157,17 +1114,17 @@ protected:
   ASTMutationListener *getASTMutationListener() const;
 };
 
-/// Determine whether two declarations declare the same entity.
+/// \brief Determine whether two declarations declare the same entity.
 inline bool declaresSameEntity(const Decl *D1, const Decl *D2) {
   if (!D1 || !D2)
     return false;
-
+  
   if (D1 == D2)
     return true;
-
+  
   return D1->getCanonicalDecl() == D2->getCanonicalDecl();
 }
-
+  
 /// PrettyStackTraceDecl - If a crash occurs, indicate that it happened when
 /// doing something to a specific decl.
 class PrettyStackTraceDecl : public llvm::PrettyStackTraceEntry {
@@ -1175,47 +1132,42 @@ class PrettyStackTraceDecl : public llvm::PrettyStackTraceEntry {
   SourceLocation Loc;
   SourceManager &SM;
   const char *Message;
-
 public:
   PrettyStackTraceDecl(const Decl *theDecl, SourceLocation L,
                        SourceManager &sm, const char *Msg)
-      : TheDecl(theDecl), Loc(L), SM(sm), Message(Msg) {}
+  : TheDecl(theDecl), Loc(L), SM(sm), Message(Msg) {}
 
   void print(raw_ostream &OS) const override;
 };
 
-/// The results of name lookup within a DeclContext. This is either a
+/// \brief The results of name lookup within a DeclContext. This is either a
 /// single result (with no stable storage) or a collection of results (with
 /// stable storage provided by the lookup table).
 class DeclContextLookupResult {
-  using ResultTy = ArrayRef<NamedDecl *>;
-
+  typedef ArrayRef<NamedDecl *> ResultTy;
   ResultTy Result;
-
   // If there is only one lookup result, it would be invalidated by
   // reallocations of the name table, so store it separately.
-  NamedDecl *Single = nullptr;
+  NamedDecl *Single;
 
   static NamedDecl *const SingleElementDummyList;
 
 public:
-  DeclContextLookupResult() = default;
+  DeclContextLookupResult() : Result(), Single() {}
   DeclContextLookupResult(ArrayRef<NamedDecl *> Result)
-      : Result(Result) {}
+      : Result(Result), Single() {}
   DeclContextLookupResult(NamedDecl *Single)
       : Result(SingleElementDummyList), Single(Single) {}
 
   class iterator;
-
-  using IteratorBase =
-      llvm::iterator_adaptor_base<iterator, ResultTy::iterator,
-                                  std::random_access_iterator_tag,
-                                  NamedDecl *const>;
-
+  typedef llvm::iterator_adaptor_base<iterator, ResultTy::iterator,
+                                      std::random_access_iterator_tag,
+                                      NamedDecl *const> IteratorBase;
   class iterator : public IteratorBase {
     value_type SingleElement;
 
   public:
+    iterator() : IteratorBase(), SingleElement() {}
     explicit iterator(pointer Pos, value_type Single = nullptr)
         : IteratorBase(Pos), SingleElement(Single) {}
 
@@ -1223,10 +1175,9 @@ public:
       return SingleElement ? SingleElement : IteratorBase::operator*();
     }
   };
-
-  using const_iterator = iterator;
-  using pointer = iterator::pointer;
-  using reference = iterator::reference;
+  typedef iterator const_iterator;
+  typedef iterator::pointer pointer;
+  typedef iterator::reference reference;
 
   iterator begin() const { return iterator(Result.begin(), Single); }
   iterator end() const { return iterator(Result.end(), Single); }
@@ -1260,63 +1211,64 @@ public:
 ///   ExportDecl
 ///   BlockDecl
 ///   OMPDeclareReductionDecl
+///
 class DeclContext {
   /// DeclKind - This indicates which class this is.
   unsigned DeclKind : 8;
 
-  /// Whether this declaration context also has some external
+  /// \brief Whether this declaration context also has some external
   /// storage that contains additional declarations that are lexically
   /// part of this context.
   mutable bool ExternalLexicalStorage : 1;
 
-  /// Whether this declaration context also has some external
+  /// \brief Whether this declaration context also has some external
   /// storage that contains additional declarations that are visible
   /// in this context.
   mutable bool ExternalVisibleStorage : 1;
 
-  /// Whether this declaration context has had external visible
+  /// \brief Whether this declaration context has had external visible
   /// storage added since the last lookup. In this case, \c LookupPtr's
   /// invariant may not hold and needs to be fixed before we perform
   /// another lookup.
   mutable bool NeedToReconcileExternalVisibleStorage : 1;
 
-  /// If \c true, this context may have local lexical declarations
+  /// \brief If \c true, this context may have local lexical declarations
   /// that are missing from the lookup table.
   mutable bool HasLazyLocalLexicalLookups : 1;
 
-  /// If \c true, the external source may have lexical declarations
+  /// \brief If \c true, the external source may have lexical declarations
   /// that are missing from the lookup table.
   mutable bool HasLazyExternalLexicalLookups : 1;
 
-  /// If \c true, lookups should only return identifier from
+  /// \brief If \c true, lookups should only return identifier from
   /// DeclContext scope (for example TranslationUnit). Used in
   /// LookupQualifiedName()
   mutable bool UseQualifiedLookup : 1;
 
-  /// Pointer to the data structure used to lookup declarations
+  /// \brief Pointer to the data structure used to lookup declarations
   /// within this context (or a DependentStoredDeclsMap if this is a
   /// dependent context). We maintain the invariant that, if the map
   /// contains an entry for a DeclarationName (and we haven't lazily
   /// omitted anything), then it contains all relevant entries for that
   /// name (modulo the hasExternalDecls() flag).
-  mutable StoredDeclsMap *LookupPtr = nullptr;
+  mutable StoredDeclsMap *LookupPtr;
 
 protected:
-  friend class ASTDeclReader;
-  friend class ASTWriter;
-  friend class ExternalASTSource;
-
   /// FirstDecl - The first declaration stored within this declaration
   /// context.
-  mutable Decl *FirstDecl = nullptr;
+  mutable Decl *FirstDecl;
 
   /// LastDecl - The last declaration stored within this declaration
   /// context. FIXME: We could probably cache this value somewhere
   /// outside of the DeclContext, to reduce the size of DeclContext by
   /// another pointer.
-  mutable Decl *LastDecl = nullptr;
+  mutable Decl *LastDecl;
 
-  /// Build up a chain of declarations.
+  friend class ExternalASTSource;
+  friend class ASTDeclReader;
+  friend class ASTWriter;
+
+  /// \brief Build up a chain of declarations.
   ///
   /// \returns the first/last pair of declarations.
   static std::pair<Decl *, Decl *>
@@ -1327,7 +1279,8 @@ protected:
         ExternalVisibleStorage(false),
         NeedToReconcileExternalVisibleStorage(false),
         HasLazyLocalLexicalLookups(false), HasLazyExternalLexicalLookups(false),
-        UseQualifiedLookup(false) {}
+        UseQualifiedLookup(false),
+        LookupPtr(nullptr), FirstDecl(nullptr), LastDecl(nullptr) {}
 
 public:
   ~DeclContext();
@@ -1335,7 +1288,6 @@ public:
   Decl::Kind getDeclKind() const {
     return static_cast<Decl::Kind>(DeclKind);
   }
-
   const char *getDeclKindName() const;
 
   /// getParent - Returns the containing DeclContext.
@@ -1399,7 +1351,7 @@ public:
     }
   }
 
-  /// Test whether the context supports looking up names.
+  /// \brief Test whether the context supports looking up names.
   bool isLookupContext() const {
     return !isFunctionOrMethod() && DeclKind != Decl::LinkageSpec &&
            DeclKind != Decl::Export;
@@ -1425,7 +1377,7 @@ public:
 
   bool isInlineNamespace() const;
 
-  /// Determines whether this context is dependent on a
+  /// \brief Determines whether this context is dependent on a
   /// template parameter.
   bool isDependentContext() const;
 
@@ -1446,28 +1398,28 @@ public:
   /// C++0x scoped enums), and C++ linkage specifications.
   bool isTransparentContext() const;
 
-  /// Determines whether this context or some of its ancestors is a
+  /// \brief Determines whether this context or some of its ancestors is a
   /// linkage specification context that specifies C linkage.
   bool isExternCContext() const;
 
-  /// Retrieve the nearest enclosing C linkage specification context.
+  /// \brief Retrieve the nearest enclosing C linkage specification context.
   const LinkageSpecDecl *getExternCContext() const;
 
-  /// Determines whether this context or some of its ancestors is a
+  /// \brief Determines whether this context or some of its ancestors is a
   /// linkage specification context that specifies C++ linkage.
   bool isExternCXXContext() const;
 
-  /// Determine whether this declaration context is equivalent
+  /// \brief Determine whether this declaration context is equivalent
   /// to the declaration context DC.
   bool Equals(const DeclContext *DC) const {
     return DC && this->getPrimaryContext() == DC->getPrimaryContext();
   }
 
-  /// Determine whether this declaration context encloses the
+  /// \brief Determine whether this declaration context encloses the
   /// declaration context DC.
   bool Encloses(const DeclContext *DC) const;
 
-  /// Find the nearest non-closure ancestor of this context,
+  /// \brief Find the nearest non-closure ancestor of this context,
   /// i.e. the innermost semantic parent of this context which is not
   /// a closure.  A context may be its own non-closure ancestor.
   Decl *getNonClosureAncestor();
@@ -1494,19 +1446,19 @@ public:
     return const_cast<DeclContext *>(this)->getRedeclContext();
   }
 
-  /// Retrieve the nearest enclosing namespace context.
+  /// \brief Retrieve the nearest enclosing namespace context.
   DeclContext *getEnclosingNamespaceContext();
   const DeclContext *getEnclosingNamespaceContext() const {
     return const_cast<DeclContext *>(this)->getEnclosingNamespaceContext();
   }
 
-  /// Retrieve the outermost lexically enclosing record context.
+  /// \brief Retrieve the outermost lexically enclosing record context.
   RecordDecl *getOuterLexicalRecordContext();
   const RecordDecl *getOuterLexicalRecordContext() const {
     return const_cast<DeclContext *>(this)->getOuterLexicalRecordContext();
   }
 
-  /// Test if this context is part of the enclosing namespace set of
+  /// \brief Test if this context is part of the enclosing namespace set of
   /// the context NS, as defined in C++0x [namespace.def]p9. If either context
   /// isn't a namespace, this is equivalent to Equals().
   ///
@@ -1514,11 +1466,11 @@ public:
   /// inline, its enclosing namespace, recursively.
   bool InEnclosingNamespaceSetOf(const DeclContext *NS) const;
 
-  /// Collects all of the declaration contexts that are semantically
+  /// \brief Collects all of the declaration contexts that are semantically
   /// connected to this declaration context.
   ///
   /// For declaration contexts that have multiple semantically connected but
-  /// syntactically distinct contexts, such as C++ namespaces, this routine
+  /// syntactically distinct contexts, such as C++ namespaces, this routine 
   /// retrieves the complete set of such declaration contexts in source order.
   /// For example, given:
   ///
@@ -1543,20 +1495,19 @@ public:
   /// within this context.
   class decl_iterator {
     /// Current - The current declaration.
-    Decl *Current = nullptr;
+    Decl *Current;
 
   public:
-    using value_type = Decl *;
-    using reference = const value_type &;
-    using pointer = const value_type *;
-    using iterator_category = std::forward_iterator_tag;
-    using difference_type = std::ptrdiff_t;
+    typedef Decl *value_type;
+    typedef const value_type &reference;
+    typedef const value_type *pointer;
+    typedef std::forward_iterator_tag iterator_category;
+    typedef std::ptrdiff_t            difference_type;
 
-    decl_iterator() = default;
-    explicit decl_iterator(Decl *C) : Current(C) {}
+    decl_iterator() : Current(nullptr) { }
+    explicit decl_iterator(Decl *C) : Current(C) { }
 
     reference operator*() const { return Current; }
-
     // This doesn't meet the iterator requirements, but it's convenient
     value_type operator->() const { return Current; }
 
@@ -1574,13 +1525,12 @@ public:
     friend bool operator==(decl_iterator x, decl_iterator y) {
       return x.Current == y.Current;
     }
-
     friend bool operator!=(decl_iterator x, decl_iterator y) {
       return x.Current != y.Current;
     }
   };
 
-  using decl_range = llvm::iterator_range<decl_iterator>;
+  typedef llvm::iterator_range<decl_iterator> decl_range;
 
   /// decls_begin/decls_end - Iterate over the declarations stored in
   /// this context.
@@ -1619,16 +1569,16 @@ public:
     }
 
   public:
-    using value_type = SpecificDecl *;
-    // TODO: Add reference and pointer types (with some appropriate proxy type)
-    // if we ever have a need for them.
-    using reference = void;
-    using pointer = void;
-    using difference_type =
-        std::iterator_traits<DeclContext::decl_iterator>::difference_type;
-    using iterator_category = std::forward_iterator_tag;
+    typedef SpecificDecl *value_type;
+    // TODO: Add reference and pointer typedefs (with some appropriate proxy
+    // type) if we ever have a need for them.
+    typedef void reference;
+    typedef void pointer;
+    typedef std::iterator_traits<DeclContext::decl_iterator>::difference_type
+      difference_type;
+    typedef std::forward_iterator_tag iterator_category;
 
-    specific_decl_iterator() = default;
+    specific_decl_iterator() : Current() { }
 
     /// specific_decl_iterator - Construct a new iterator over a
     /// subset of the declarations the range [C,
@@ -1643,7 +1593,6 @@ public:
     }
 
     value_type operator*() const { return cast<SpecificDecl>(*Current); }
-
     // This doesn't meet the iterator requirements, but it's convenient
     value_type operator->() const { return **this; }
 
@@ -1670,7 +1619,7 @@ public:
     }
   };
 
-  /// Iterates over a filtered subrange of declarations stored
+  /// \brief Iterates over a filtered subrange of declarations stored
   /// in a DeclContext.
   ///
   /// This iterator visits only those declarations that are of type
@@ -1697,16 +1646,16 @@ public:
     }
 
   public:
-    using value_type = SpecificDecl *;
-    // TODO: Add reference and pointer types (with some appropriate proxy type)
-    // if we ever have a need for them.
-    using reference = void;
-    using pointer = void;
-    using difference_type =
-        std::iterator_traits<DeclContext::decl_iterator>::difference_type;
-    using iterator_category = std::forward_iterator_tag;
+    typedef SpecificDecl *value_type;
+    // TODO: Add reference and pointer typedefs (with some appropriate proxy
+    // type) if we ever have a need for them.
+    typedef void reference;
+    typedef void pointer;
+    typedef std::iterator_traits<DeclContext::decl_iterator>::difference_type
+      difference_type;
+    typedef std::forward_iterator_tag iterator_category;
 
-    filtered_decl_iterator() = default;
+    filtered_decl_iterator() : Current() { }
 
     /// filtered_decl_iterator - Construct a new iterator over a
     /// subset of the declarations the range [C,
@@ -1746,7 +1695,7 @@ public:
     }
   };
 
-  /// Add the declaration D into this context.
+  /// @brief Add the declaration D into this context.
   ///
   /// This routine should be invoked when the declaration D has first
   /// been declared, to place D into the context where it was
@@ -1760,7 +1709,7 @@ public:
   /// semantic context via makeDeclVisibleInContext.
   void addDecl(Decl *D);
 
-  /// Add the declaration D into this context, but suppress
+  /// @brief Add the declaration D into this context, but suppress
   /// searches for external declarations with the same name.
   ///
   /// Although analogous in function to addDecl, this removes an
@@ -1770,7 +1719,7 @@ public:
   /// See the ASTImporter for use cases.
   void addDeclInternal(Decl *D);
 
-  /// Add the declaration D to this context without modifying
+  /// @brief Add the declaration D to this context without modifying
   /// any lookup tables.
   ///
   /// This is useful for some operations in dependent contexts where
@@ -1778,18 +1727,14 @@ public:
   /// only happens with friends.
   void addHiddenDecl(Decl *D);
 
-  /// Removes a declaration from this context.
+  /// @brief Removes a declaration from this context.
   void removeDecl(Decl *D);
-
-  /// Checks whether a declaration is in this context.
+    
+  /// @brief Checks whether a declaration is in this context.
   bool containsDecl(Decl *D) const;
 
-  /// Checks whether a declaration is in this context.
-  /// This also loads the Decls from the external source before the check.
-  bool containsDeclAndLoad(Decl *D) const;
-
-  using lookup_result = DeclContextLookupResult;
-  using lookup_iterator = lookup_result::iterator;
+  typedef DeclContextLookupResult lookup_result;
+  typedef lookup_result::iterator lookup_iterator;
 
   /// lookup - Find the declarations (if any) with the given Name in
   /// this context. Returns a range of iterators that contains all of
@@ -1798,12 +1743,12 @@ public:
   /// routine will not look into parent contexts.
   lookup_result lookup(DeclarationName Name) const;
 
-  /// Find the declarations with the given name that are visible
+  /// \brief Find the declarations with the given name that are visible
   /// within this context; don't attempt to retrieve anything from an
   /// external source.
   lookup_result noload_lookup(DeclarationName Name);
 
-  /// A simplistic name lookup mechanism that performs name lookup
+  /// \brief A simplistic name lookup mechanism that performs name lookup
   /// into this declaration context without consulting the external source.
   ///
   /// This function should almost never be used, because it subverts the
@@ -1815,7 +1760,7 @@ public:
   void localUncachedLookup(DeclarationName Name,
                            SmallVectorImpl<NamedDecl *> &Results);
 
-  /// Makes a declaration visible within this context.
+  /// @brief Makes a declaration visible within this context.
   ///
   /// This routine makes the declaration D visible to name lookup
   /// within this context and, if this is a transparent context,
@@ -1835,50 +1780,43 @@ public:
   /// of looking up every possible name.
   class all_lookups_iterator;
 
-  using lookups_range = llvm::iterator_range<all_lookups_iterator>;
+  typedef llvm::iterator_range<all_lookups_iterator> lookups_range;
 
   lookups_range lookups() const;
-  // Like lookups(), but avoids loading external declarations.
-  // If PreserveInternalState, avoids building lookup data structures too.
-  lookups_range noload_lookups(bool PreserveInternalState) const;
+  lookups_range noload_lookups() const;
 
-  /// Iterators over all possible lookups within this context.
+  /// \brief Iterators over all possible lookups within this context.
   all_lookups_iterator lookups_begin() const;
   all_lookups_iterator lookups_end() const;
 
-  /// Iterators over all possible lookups within this context that are
+  /// \brief Iterators over all possible lookups within this context that are
   /// currently loaded; don't attempt to retrieve anything from an external
   /// source.
   all_lookups_iterator noload_lookups_begin() const;
   all_lookups_iterator noload_lookups_end() const;
 
   struct udir_iterator;
-
-  using udir_iterator_base =
-      llvm::iterator_adaptor_base<udir_iterator, lookup_iterator,
-                                  std::random_access_iterator_tag,
-                                  UsingDirectiveDecl *>;
-
+  typedef llvm::iterator_adaptor_base<udir_iterator, lookup_iterator,
+                                      std::random_access_iterator_tag,
+                                      UsingDirectiveDecl *> udir_iterator_base;
   struct udir_iterator : udir_iterator_base {
     udir_iterator(lookup_iterator I) : udir_iterator_base(I) {}
-
     UsingDirectiveDecl *operator*() const;
   };
 
-  using udir_range = llvm::iterator_range<udir_iterator>;
+  typedef llvm::iterator_range<udir_iterator> udir_range;
 
   udir_range using_directives() const;
 
   // These are all defined in DependentDiagnostic.h.
   class ddiag_iterator;
-
-  using ddiag_range = llvm::iterator_range<DeclContext::ddiag_iterator>;
+  typedef llvm::iterator_range<DeclContext::ddiag_iterator> ddiag_range;
 
   inline ddiag_range ddiags() const;
 
   // Low-level accessors
 
-  /// Mark that there are external lexical declarations that we need
+  /// \brief Mark that there are external lexical declarations that we need
   /// to include in our lookup table (and that are not available as external
   /// visible lookups). These extra lookup results will be found by walking
   /// the lexical declarations of this context. This should be used only if
@@ -1890,28 +1828,28 @@ public:
     HasLazyExternalLexicalLookups = true;
   }
 
-  /// Retrieve the internal representation of the lookup structure.
+  /// \brief Retrieve the internal representation of the lookup structure.
   /// This may omit some names if we are lazily building the structure.
   StoredDeclsMap *getLookupPtr() const { return LookupPtr; }
 
-  /// Ensure the lookup structure is fully-built and return it.
+  /// \brief Ensure the lookup structure is fully-built and return it.
   StoredDeclsMap *buildLookup();
 
-  /// Whether this DeclContext has external storage containing
+  /// \brief Whether this DeclContext has external storage containing
   /// additional declarations that are lexically in this context.
   bool hasExternalLexicalStorage() const { return ExternalLexicalStorage; }
 
-  /// State whether this DeclContext has external storage for
+  /// \brief State whether this DeclContext has external storage for
   /// declarations lexically in this context.
   void setHasExternalLexicalStorage(bool ES = true) {
     ExternalLexicalStorage = ES;
   }
 
-  /// Whether this DeclContext has external storage containing
+  /// \brief Whether this DeclContext has external storage containing
   /// additional declarations that are visible in this context.
   bool hasExternalVisibleStorage() const { return ExternalVisibleStorage; }
 
-  /// State whether this DeclContext has external storage for
+  /// \brief State whether this DeclContext has external storage for
   /// declarations visible in this context.
   void setHasExternalVisibleStorage(bool ES = true) {
     ExternalVisibleStorage = ES;
@@ -1919,10 +1857,10 @@ public:
       NeedToReconcileExternalVisibleStorage = true;
   }
 
-  /// Determine whether the given declaration is stored in the list of
+  /// \brief Determine whether the given declaration is stored in the list of
   /// declarations lexically within this context.
   bool isDeclInLexicalTraversal(const Decl *D) const {
-    return D && (D->NextInContextAndBits.getPointer() || D == FirstDecl ||
+    return D && (D->NextInContextAndBits.getPointer() || D == FirstDecl || 
                  D == LastDecl);
   }
 
@@ -1945,12 +1883,10 @@ public:
                    bool Deserialize = false) const;
 
 private:
-  friend class DependentDiagnostic;
-
   void reconcileExternalVisibleStorage() const;
   bool LoadLexicalDeclsFromExternalStorage() const;
 
-  /// Makes a declaration visible within this context, but
+  /// @brief Makes a declaration visible within this context, but
   /// suppresses searches for external declarations with the same
   /// name.
   ///
@@ -1958,9 +1894,9 @@ private:
   /// use of addDeclInternal().
   void makeDeclVisibleInContextInternal(NamedDecl *D);
 
+  friend class DependentDiagnostic;
   StoredDeclsMap *CreateStoredDeclsMap(ASTContext &C) const;
 
-  void loadLazyLocalLexicalLookups();
   void buildLookupImpl(DeclContext *DCtx, bool Internal);
   void makeDeclVisibleInContextWithFlags(NamedDecl *D, bool Internal,
                                          bool Rediscoverable);
@@ -1997,7 +1933,8 @@ struct cast_convert_decl_context<ToTy, true> {
   }
 };
 
-} // namespace clang
+
+} // end clang.
 
 namespace llvm {
 
@@ -2017,14 +1954,12 @@ struct cast_convert_val<ToTy,
     return *::clang::cast_convert_decl_context<ToTy>::doit(&Val);
   }
 };
-
 template<class ToTy>
 struct cast_convert_val<ToTy, ::clang::DeclContext, ::clang::DeclContext> {
   static ToTy &doit(::clang::DeclContext &Val) {
     return *::clang::cast_convert_decl_context<ToTy>::doit(&Val);
   }
 };
-
 template<class ToTy>
 struct cast_convert_val<ToTy,
                      const ::clang::DeclContext*, const ::clang::DeclContext*> {
@@ -2032,7 +1967,6 @@ struct cast_convert_val<ToTy,
     return ::clang::cast_convert_decl_context<ToTy>::doit(Val);
   }
 };
-
 template<class ToTy>
 struct cast_convert_val<ToTy, ::clang::DeclContext*, ::clang::DeclContext*> {
   static ToTy *doit(::clang::DeclContext *Val) {
@@ -2069,6 +2003,6 @@ struct cast_convert_val< const ::clang::DeclContext, FromTy*, FromTy*> {
   }
 };
 
-} // namespace llvm
+} // end namespace llvm
 
-#endif // LLVM_CLANG_AST_DECLBASE_H
+#endif

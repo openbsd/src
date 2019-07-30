@@ -85,7 +85,7 @@ public:
 
   const lldb::UnixSignalsSP &GetRemoteUnixSignals() override;
 
-  lldb_private::Environment GetEnvironment() override;
+  size_t GetEnvironment(lldb_private::StringList &environment) override;
 
   bool IsConnected() const override;
 
@@ -99,7 +99,8 @@ public:
                        // the process to exit
       std::string
           *command_output, // Pass nullptr if you don't want the command output
-      const lldb_private::Timeout<std::micro> &timeout) override;
+      uint32_t timeout_sec)
+      override; // Timeout in seconds to wait for shell program to finish
 
   lldb_private::Status ResolveExecutable(
       const lldb_private::ModuleSpec &module_spec, lldb::ModuleSP &module_sp,
@@ -165,9 +166,7 @@ public:
 
   uint32_t DoLoadImage(lldb_private::Process *process,
                        const lldb_private::FileSpec &remote_file,
-                       const std::vector<std::string> *paths,
-                       lldb_private::Status &error,
-                       lldb_private::FileSpec *loaded_image) override;
+                       lldb_private::Status &error) override;
 
   lldb_private::Status UnloadImage(lldb_private::Process *process,
                                    uint32_t image_token) override;
@@ -202,12 +201,7 @@ protected:
                           llvm::StringRef expr_prefix,
                           lldb::ValueObjectSP &result_valobj_sp);
 
-  std::unique_ptr<lldb_private::UtilityFunction>
-  MakeLoadImageUtilityFunction(lldb_private::ExecutionContext &exe_ctx,
-                               lldb_private::Status &error);
-
-  virtual
-  llvm::StringRef GetLibdlFunctionDeclarations(lldb_private::Process *process);
+  virtual llvm::StringRef GetLibdlFunctionDeclarations();
 
 private:
   DISALLOW_COPY_AND_ASSIGN(PlatformPOSIX);

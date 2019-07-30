@@ -1,4 +1,4 @@
-.\"	$OpenBSD: calendar.1,v 1.44 2019/01/29 22:28:30 tedu Exp $
+.\"	$OpenBSD: calendar.1,v 1.42 2016/01/20 19:12:28 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)calendar.1  8.1 (Berkeley) 6/29/93
 .\"
-.Dd $Mdocdate: January 29 2019 $
+.Dd $Mdocdate: January 20 2016 $
 .Dt CALENDAR 1
 .Os
 .Sh NAME
@@ -119,9 +119,7 @@ They may be entered in almost any format, either numeric or as character
 strings.
 If proper locale is set, national months and weekdays
 names can be used.
-A single asterisk
-.Pq Sq *
-matches every month.
+A single asterisk (`*') matches every month.
 A day without a month matches that day of every week.
 A month without a day matches the first of that month.
 Two numbers default to the month followed by the day.
@@ -229,7 +227,7 @@ obscure).
 Jewish holidays (should be updated yearly by the local system administrator
 so that roving holidays are set correctly for the current year).
 .It Pa calendar.music
-Musical events, births, and deaths (strongly oriented toward rock 'n' roll).
+Musical events, births, and deaths (strongly oriented toward rock n' roll).
 .It Pa calendar.nz
 New Zealand calendar.
 .It Pa calendar.openbsd

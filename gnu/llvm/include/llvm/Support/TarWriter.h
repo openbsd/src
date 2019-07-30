@@ -11,7 +11,6 @@
 #define LLVM_SUPPORT_TAR_WRITER_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -27,7 +26,6 @@ private:
   TarWriter(int FD, StringRef BaseDir);
   raw_fd_ostream OS;
   std::string BaseDir;
-  StringSet<> Files;
 };
 }
 

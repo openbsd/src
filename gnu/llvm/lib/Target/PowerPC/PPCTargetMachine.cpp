@@ -24,7 +24,6 @@
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
-#include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
@@ -41,10 +40,6 @@
 
 using namespace llvm;
 
-
-static cl::opt<bool>
-    EnableBranchCoalescing("enable-ppc-branch-coalesce", cl::Hidden,
-                           cl::desc("enable coalescing of duplicate branches for PPC"));
 static cl::
 opt<bool> DisableCTRLoops("disable-ppc-ctrloops", cl::Hidden,
                         cl::desc("Disable CTR loops for PPC"));
@@ -89,10 +84,6 @@ EnableMachineCombinerPass("ppc-machine-combiner",
                           cl::desc("Enable the machine combiner pass"),
                           cl::init(true), cl::Hidden);
 
-static cl::opt<bool>
-  ReduceCRLogical("ppc-reduce-cr-logicals",
-                  cl::desc("Expand eligible cr-logical binary ops to branches"),
-                  cl::init(false), cl::Hidden);
 extern "C" void LLVMInitializePowerPCTarget() {
   // Register the targets
   RegisterTargetMachine<PPCTargetMachine> A(getThePPC32Target());
@@ -102,9 +93,7 @@ extern "C" void LLVMInitializePowerPCTarget() {
   PassRegistry &PR = *PassRegistry::getPassRegistry();
   initializePPCBoolRetToIntPass(PR);
   initializePPCExpandISELPass(PR);
-  initializePPCPreEmitPeepholePass(PR);
   initializePPCTLSDynamicCallPass(PR);
-  initializePPCMIPeepholePass(PR);
 }
 
 /// Return the datalayout string of a subtarget.
@@ -219,17 +208,6 @@ static Reloc::Model getEffectiveRelocModel(const Triple &TT,
   return Reloc::Static;
 }
 
-static CodeModel::Model getEffectiveCodeModel(const Triple &TT,
-                                              Optional<CodeModel::Model> CM,
-                                              bool JIT) {
-  if (CM)
-    return *CM;
-  if (!TT.isOSDarwin() && !JIT &&
-      (TT.getArch() == Triple::ppc64 || TT.getArch() == Triple::ppc64le))
-    return CodeModel::Medium;
-  return CodeModel::Small;
-}
-
 // The FeatureString here is a little subtle. We are modifying the feature
 // string with what are (currently) non-function specific overrides as it goes
 // into the LLVMTargetMachine constructor and then using the stored value in the
@@ -238,12 +216,10 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, const Triple &TT,
                                    StringRef CPU, StringRef FS,
                                    const TargetOptions &Options,
                                    Optional<Reloc::Model> RM,
-                                   Optional<CodeModel::Model> CM,
-                                   CodeGenOpt::Level OL, bool JIT)
+                                   CodeModel::Model CM, CodeGenOpt::Level OL)
     : LLVMTargetMachine(T, getDataLayoutString(TT), TT, CPU,
                         computeFSAdditions(FS, OL, TT), Options,
-                        getEffectiveRelocModel(TT, RM),
-                        getEffectiveCodeModel(TT, CM, JIT), OL),
+                        getEffectiveRelocModel(TT, RM), CM, OL),
       TLOF(createTLOF(getTargetTriple())),
       TargetABI(computeTargetABI(TT, Options)) {
   initAsmInfo();
@@ -304,12 +280,7 @@ namespace {
 class PPCPassConfig : public TargetPassConfig {
 public:
   PPCPassConfig(PPCTargetMachine &TM, PassManagerBase &PM)
-    : TargetPassConfig(TM, PM) {
-    // At any optimization level above -O0 we use the Machine Scheduler and not
-    // the default Post RA List Scheduler.
-    if (TM.getOptLevel() != CodeGenOpt::None)
-      substitutePass(&PostRASchedulerID, &PostMachineSchedulerID);
-  }
+    : TargetPassConfig(TM, PM) {}
 
   PPCTargetMachine &getPPCTargetMachine() const {
     return getTM<PPCTargetMachine>();
@@ -349,7 +320,7 @@ void PPCPassConfig::addIRPasses() {
     // Call SeparateConstOffsetFromGEP pass to extract constants within indices
     // and lower a GEP with multiple indices to either arithmetic operations or
     // multiple GEPs with single index.
-    addPass(createSeparateConstOffsetFromGEPPass(true));
+    addPass(createSeparateConstOffsetFromGEPPass(TM, true));
     // Call EarlyCSE pass to find and remove subexpressions in the lowered
     // result.
     addPass(createEarlyCSEPass());
@@ -394,19 +365,12 @@ bool PPCPassConfig::addInstSelector() {
 }
 
 void PPCPassConfig::addMachineSSAOptimization() {
-  // PPCBranchCoalescingPass need to be done before machine sinking
-  // since it merges empty blocks.
-  if (EnableBranchCoalescing && getOptLevel() != CodeGenOpt::None)
-    addPass(createPPCBranchCoalescingPass());
   TargetPassConfig::addMachineSSAOptimization();
   // For little endian, remove where possible the vector swap instructions
   // introduced at code generation to normalize vector element order.
   if (TM->getTargetTriple().getArch() == Triple::ppc64le &&
       !DisableVSXSwapRemoval)
     addPass(createPPCVSXSwapRemovalPass());
-  // Reduce the number of cr-logical ops.
-  if (ReduceCRLogical && getOptLevel() != CodeGenOpt::None)
-    addPass(createPPCReduceCRLogicalsPass());
   // Target-specific peephole cleanups performed after instruction
   // selection.
   if (!DisableMIPeephole) {
@@ -448,7 +412,6 @@ void PPCPassConfig::addPreSched2() {
 }
 
 void PPCPassConfig::addPreEmitPass() {
-  addPass(createPPCPreEmitPeepholePass());
   addPass(createPPCExpandISELPass());
 
   if (getOptLevel() != CodeGenOpt::None)
@@ -457,7 +420,8 @@ void PPCPassConfig::addPreEmitPass() {
   addPass(createPPCBranchSelectionPass(), false);
 }
 
-TargetTransformInfo
-PPCTargetMachine::getTargetTransformInfo(const Function &F) {
-  return TargetTransformInfo(PPCTTIImpl(this, F));
+TargetIRAnalysis PPCTargetMachine::getTargetIRAnalysis() {
+  return TargetIRAnalysis([this](const Function &F) {
+    return TargetTransformInfo(PPCTTIImpl(this, F));
+  });
 }

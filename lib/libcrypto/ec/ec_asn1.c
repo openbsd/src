@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.31 2018/09/01 16:23:15 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.25 2018/03/12 13:14:21 inoguchi Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -86,7 +86,6 @@ EC_GROUP_get_basis_type(const EC_GROUP * group)
 		/* everything else is currently not supported */
 		return 0;
 }
-
 #ifndef OPENSSL_NO_EC2M
 int 
 EC_GROUP_get_trinomial_basis(const EC_GROUP * group, unsigned int *k)
@@ -105,7 +104,6 @@ EC_GROUP_get_trinomial_basis(const EC_GROUP * group, unsigned int *k)
 
 	return 1;
 }
-
 int 
 EC_GROUP_get_pentanomial_basis(const EC_GROUP * group, unsigned int *k1,
     unsigned int *k2, unsigned int *k3)
@@ -129,6 +127,7 @@ EC_GROUP_get_pentanomial_basis(const EC_GROUP * group, unsigned int *k1,
 	return 1;
 }
 #endif
+
 
 /* some structures needed for the asn1 encoding */
 typedef struct x9_62_pentanomial_st {
@@ -335,7 +334,6 @@ const ASN1_ITEM X9_62_CHARACTERISTIC_TWO_it = {
 	.size = sizeof(X9_62_CHARACTERISTIC_TWO),
 	.sname = "X9_62_CHARACTERISTIC_TWO",
 };
-
 X9_62_CHARACTERISTIC_TWO *X9_62_CHARACTERISTIC_TWO_new(void);
 void X9_62_CHARACTERISTIC_TWO_free(X9_62_CHARACTERISTIC_TWO *a);
 
@@ -350,7 +348,6 @@ X9_62_CHARACTERISTIC_TWO_free(X9_62_CHARACTERISTIC_TWO *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X9_62_CHARACTERISTIC_TWO_it);
 }
-
 static const ASN1_TEMPLATE fieldID_def_tt = {
 	.flags = 0,
 	.tag = 0,
@@ -509,7 +506,6 @@ const ASN1_ITEM ECPARAMETERS_it = {
 	.size = sizeof(ECPARAMETERS),
 	.sname = "ECPARAMETERS",
 };
-
 ECPARAMETERS *ECPARAMETERS_new(void);
 void ECPARAMETERS_free(ECPARAMETERS *a);
 
@@ -659,7 +655,6 @@ EC_PRIVATEKEY_free(EC_PRIVATEKEY *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &EC_PRIVATEKEY_it);
 }
-
 /* some declarations of internal function */
 
 /* ec_asn1_group2field() sets the values in a X9_62_FIELDID object */
@@ -679,6 +674,7 @@ static EC_GROUP *ec_asn1_pkparameters2group(const ECPKPARAMETERS *);
  * EC_GROUP object */
 static ECPKPARAMETERS *ec_asn1_group2pkparameters(const EC_GROUP *,
     ECPKPARAMETERS *);
+
 
 /* the function definitions */
 
@@ -793,7 +789,7 @@ ec_asn1_group2fieldid(const EC_GROUP * group, X9_62_FIELDID * field)
 
 	ok = 1;
 
- err:
+err:
 	BN_free(tmp);
 	return (ok);
 }
@@ -896,7 +892,7 @@ ec_asn1_group2curve(const EC_GROUP * group, X9_62_CURVE * curve)
 
 	ok = 1;
 
- err:
+err:
 	free(buffer_1);
 	free(buffer_2);
 	BN_free(tmp_1);
@@ -988,8 +984,7 @@ ec_asn1_group2parameters(const EC_GROUP * group, ECPARAMETERS * param)
 	}
 	ok = 1;
 
- err:
-	if (!ok) {
+err:	if (!ok) {
 		if (ret && !param)
 			ECPARAMETERS_free(ret);
 		ret = NULL;
@@ -1245,8 +1240,7 @@ ec_asn1_parameters2group(const ECPARAMETERS * params)
 	}
 	ok = 1;
 
- err:
-	if (!ok) {
+err:	if (!ok) {
 		EC_GROUP_clear_free(ret);
 		ret = NULL;
 	}
@@ -1314,7 +1308,7 @@ d2i_ECPKParameters(EC_GROUP ** a, const unsigned char **in, long len)
 		*a = group;
 	}
 
- err:
+err:
 	ECPKPARAMETERS_free(params);
 	return (group);
 }
@@ -1427,7 +1421,7 @@ d2i_ECPrivateKey(EC_KEY ** a, const unsigned char **in, long len)
 		*a = ret;
 	return (ret);
 
- err:
+err:
 	if (a == NULL || *a != ret)
 		EC_KEY_free(ret);
 	if (priv_key)
@@ -1512,7 +1506,7 @@ i2d_ECPrivateKey(EC_KEY * a, unsigned char **out)
 		goto err;
 	}
 	ok = 1;
- err:
+err:
 	free(buffer);
 	if (priv_key)
 		EC_PRIVATEKEY_free(priv_key);
@@ -1564,7 +1558,10 @@ o2i_ECPublicKey(EC_KEY ** a, const unsigned char **in, long len)
 	EC_KEY *ret = NULL;
 
 	if (a == NULL || (*a) == NULL || (*a)->group == NULL) {
-		/* An EC_GROUP structure is necessary to set the public key. */
+		/*
+		 * sorry, but a EC_GROUP-structur is necessary to set the
+		 * public key
+		 */
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
@@ -1585,7 +1582,7 @@ o2i_ECPublicKey(EC_KEY ** a, const unsigned char **in, long len)
 }
 
 int 
-i2o_ECPublicKey(const EC_KEY * a, unsigned char **out)
+i2o_ECPublicKey(EC_KEY * a, unsigned char **out)
 {
 	size_t buf_len = 0;
 	int new_buffer = 0;

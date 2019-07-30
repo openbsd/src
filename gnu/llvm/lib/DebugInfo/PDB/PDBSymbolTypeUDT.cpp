@@ -17,6 +17,7 @@
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeBaseClass.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeVTable.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeVTableShape.h"
+#include "llvm/DebugInfo/PDB/UDTLayout.h"
 
 #include <utility>
 

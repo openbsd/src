@@ -52,6 +52,16 @@ static bool checkSize(MemoryBufferRef M, std::error_code &EC, uint64_t Size) {
   return true;
 }
 
+static std::error_code checkOffset(MemoryBufferRef M, uintptr_t Addr,
+                                   const uint64_t Size) {
+  if (Addr + Size < Addr || Addr + Size < Size ||
+      Addr + Size > uintptr_t(M.getBufferEnd()) ||
+      Addr < uintptr_t(M.getBufferStart())) {
+    return object_error::unexpected_eof;
+  }
+  return std::error_code();
+}
+
 // Sets Obj unless any bytes in [addr, addr + size) fall outsize of m.
 // Returns unexpected_eof if error.
 template <typename T>
@@ -59,7 +69,7 @@ static std::error_code getObject(const T *&Obj, MemoryBufferRef M,
                                  const void *Ptr,
                                  const uint64_t Size = sizeof(T)) {
   uintptr_t Addr = uintptr_t(Ptr);
-  if (std::error_code EC = Binary::checkOffset(M, Addr, Size))
+  if (std::error_code EC = checkOffset(M, Addr, Size))
     return EC;
   Obj = reinterpret_cast<const T *>(Addr);
   return std::error_code();
@@ -217,10 +227,10 @@ uint32_t COFFObjectFile::getSymbolFlags(DataRefImpl Ref) const {
   if (Symb.isExternal() || Symb.isWeakExternal())
     Result |= SymbolRef::SF_Global;
 
-  if (const coff_aux_weak_external *AWE = Symb.getWeakExternal()) {
+  if (Symb.isWeakExternal()) {
     Result |= SymbolRef::SF_Weak;
-    if (AWE->Characteristics != COFF::IMAGE_WEAK_EXTERN_SEARCH_ALIAS)
-      Result |= SymbolRef::SF_Undefined;
+    // We use indirect to allow the archiver to write weak externs
+    Result |= SymbolRef::SF_Indirect;
   }
 
   if (Symb.getSectionNumber() == COFF::IMAGE_SYM_ABSOLUTE)
@@ -235,7 +245,7 @@ uint32_t COFFObjectFile::getSymbolFlags(DataRefImpl Ref) const {
   if (Symb.isCommon())
     Result |= SymbolRef::SF_Common;
 
-  if (Symb.isUndefined())
+  if (Symb.isAnyUndefined())
     Result |= SymbolRef::SF_Undefined;
 
   return Result;
@@ -339,7 +349,7 @@ unsigned COFFObjectFile::getSectionID(SectionRef Sec) const {
 
 bool COFFObjectFile::isSectionVirtual(DataRefImpl Ref) const {
   const coff_section *Sec = toSec(Ref);
-  // In COFF, a virtual section won't have any in-file
+  // In COFF, a virtual section won't have any in-file 
   // content, so the file pointer to the content will be zero.
   return Sec->PointerToRawData == 0;
 }
@@ -373,8 +383,7 @@ getFirstReloc(const coff_section *Sec, MemoryBufferRef M, const uint8_t *Base) {
     // relocations.
     begin++;
   }
-  if (Binary::checkOffset(M, uintptr_t(begin),
-                          sizeof(coff_relocation) * NumRelocs))
+  if (checkOffset(M, uintptr_t(begin), sizeof(coff_relocation) * NumRelocs))
     return nullptr;
   return begin;
 }
@@ -895,7 +904,7 @@ StringRef COFFObjectFile::getFileFormatName() const {
   }
 }
 
-Triple::ArchType COFFObjectFile::getArch() const {
+unsigned COFFObjectFile::getArch() const {
   switch (getMachine()) {
   case COFF::IMAGE_FILE_MACHINE_I386:
     return Triple::x86;
@@ -908,12 +917,6 @@ Triple::ArchType COFFObjectFile::getArch() const {
   default:
     return Triple::UnknownArch;
   }
-}
-
-Expected<uint64_t> COFFObjectFile::getStartAddress() const {
-  if (PE32Header)
-    return PE32Header->AddressOfEntryPoint;
-  return 0;
 }
 
 iterator_range<import_directory_iterator>
@@ -950,7 +953,7 @@ COFFObjectFile::getPE32PlusHeader(const pe32plus_header *&Res) const {
 std::error_code
 COFFObjectFile::getDataDirectory(uint32_t Index,
                                  const data_directory *&Res) const {
-  // Error if there's no data directory or the index is out of range.
+  // Error if if there's no data directory or the index is out of range.
   if (!DataDirectory) {
     Res = nullptr;
     return object_error::parse_failed;
@@ -975,21 +978,6 @@ std::error_code COFFObjectFile::getSection(int32_t Index,
     // We already verified the section table data, so no need to check again.
     Result = SectionTable + (Index - 1);
     return std::error_code();
-  }
-  return object_error::parse_failed;
-}
-
-std::error_code COFFObjectFile::getSection(StringRef SectionName,
-                                           const coff_section *&Result) const {
-  Result = nullptr;
-  StringRef SecName;
-  for (const SectionRef &Section : sections()) {
-    if (std::error_code E = Section.getName(SecName))
-      return E;
-    if (SecName == SectionName) {
-      Result = getCOFFSection(Section);
-      return std::error_code();
-    }
   }
   return object_error::parse_failed;
 }
@@ -1168,10 +1156,13 @@ COFFObjectFile::getCOFFRelocation(const RelocationRef &Reloc) const {
   return toRel(Reloc.getRawDataRefImpl());
 }
 
-ArrayRef<coff_relocation>
+iterator_range<const coff_relocation *>
 COFFObjectFile::getRelocations(const coff_section *Sec) const {
-  return {getFirstReloc(Sec, Data, base()),
-          getNumberOfRelocations(Sec, Data, base())};
+  const coff_relocation *I = getFirstReloc(Sec, Data, base());
+  const coff_relocation *E = I;
+  if (I)
+    E += getNumberOfRelocations(Sec, Data, base());
+  return make_range(I, E);
 }
 
 #define LLVM_COFF_SWITCH_RELOC_TYPE_NAME(reloc_type)                           \
@@ -1608,12 +1599,12 @@ std::error_code ImportedSymbolRef::getOrdinal(uint16_t &Result) const {
   return std::error_code();
 }
 
-Expected<std::unique_ptr<COFFObjectFile>>
+ErrorOr<std::unique_ptr<COFFObjectFile>>
 ObjectFile::createCOFFObjectFile(MemoryBufferRef Object) {
   std::error_code EC;
   std::unique_ptr<COFFObjectFile> Ret(new COFFObjectFile(Object, EC));
   if (EC)
-    return errorCodeToError(EC);
+    return EC;
   return std::move(Ret);
 }
 
@@ -1651,12 +1642,11 @@ std::error_code BaseRelocRef::getRVA(uint32_t &Result) const {
   return std::error_code();
 }
 
-#define RETURN_IF_ERROR(E)                                                     \
-  if (E)                                                                       \
-    return E;
+#define RETURN_IF_ERROR(X)                                                     \
+  if (auto EC = errorToErrorCode(X))                                           \
+    return EC;
 
-Expected<ArrayRef<UTF16>>
-ResourceSectionRef::getDirStringAtOffset(uint32_t Offset) {
+ErrorOr<ArrayRef<UTF16>> ResourceSectionRef::getDirStringAtOffset(uint32_t Offset) {
   BinaryStreamReader Reader = BinaryStreamReader(BBS);
   Reader.setOffset(Offset);
   uint16_t Length;
@@ -1666,12 +1656,12 @@ ResourceSectionRef::getDirStringAtOffset(uint32_t Offset) {
   return RawDirString;
 }
 
-Expected<ArrayRef<UTF16>>
+ErrorOr<ArrayRef<UTF16>>
 ResourceSectionRef::getEntryNameString(const coff_resource_dir_entry &Entry) {
   return getDirStringAtOffset(Entry.Identifier.getNameOffset());
 }
 
-Expected<const coff_resource_dir_table &>
+ErrorOr<const coff_resource_dir_table &>
 ResourceSectionRef::getTableAtOffset(uint32_t Offset) {
   const coff_resource_dir_table *Table = nullptr;
 
@@ -1682,11 +1672,11 @@ ResourceSectionRef::getTableAtOffset(uint32_t Offset) {
   return *Table;
 }
 
-Expected<const coff_resource_dir_table &>
+ErrorOr<const coff_resource_dir_table &>
 ResourceSectionRef::getEntrySubDir(const coff_resource_dir_entry &Entry) {
   return getTableAtOffset(Entry.Offset.value());
 }
 
-Expected<const coff_resource_dir_table &> ResourceSectionRef::getBaseTable() {
+ErrorOr<const coff_resource_dir_table &> ResourceSectionRef::getBaseTable() {
   return getTableAtOffset(0);
 }

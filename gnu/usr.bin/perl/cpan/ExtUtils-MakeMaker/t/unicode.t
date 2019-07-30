@@ -6,74 +6,27 @@ BEGIN {
 chdir 't';
 
 use strict;
-use ExtUtils::MM;
-use MakeMaker::Test::Utils qw(makefile_name make make_run run hash2files);
 use Test::More;
 use Config;
-use File::Path;
-use utf8;
 BEGIN {
   plan skip_all => 'Need perlio and perl 5.8+.'
     if $] < 5.008 or !$Config{useperlio};
-  plan skip_all => 'cross-compiling and make not available'
-    if !MM->can_run(make()) && $ENV{PERL_CORE} && $Config{'usecrosscompile'};
-
-  plan tests => 8;
+  plan tests => 9;
 }
+use ExtUtils::MM;
+use MakeMaker::Test::Setup::Unicode;
+use MakeMaker::Test::Utils qw(makefile_name make_run run);
 use TieOut;
 
 my $MM = bless { DIR => ['.'] }, 'MM';
 
-my $DIRNAME = 'Problem-Module';
-my %FILES = (
-    'Makefile.PL'   => <<'PL_END',
-use ExtUtils::MakeMaker;
-use utf8;
-WriteMakefile(
-    NAME          => 'Problem::Module',
-    ABSTRACT_FROM => 'lib/Problem/Module.pm',
-    AUTHOR        => q{Danijel Tašov},
-    EXE_FILES     => [ qw(bin/probscript) ],
-    INSTALLMAN1DIR => "some", # even if disabled in $Config{man1dir}
-    MAN1EXT       => 1, # set to 0 if man pages disabled
-);
-PL_END
-
-    'lib/Problem/Module.pm'  => <<'pm_END',
-use utf8;
-
-=pod
-
-=encoding utf8
-
-=head1 NAME
-
-Problem::Module - Danijel Tašov's great new module
-
-=cut
-
-1;
-pm_END
-
-    'bin/probscript'  => <<'pl_END',
-#!/usr/bin/perl
-use utf8;
-
-=encoding utf8
-
-=head1 NAME
-
-文档 - Problem script
-pl_END
-);
-
-hash2files($DIRNAME, \%FILES);
+ok( setup_recurs(), 'setup' );
 END {
     ok( chdir File::Spec->updir, 'chdir updir' );
-    ok( rmtree($DIRNAME), 'teardown' );
+    ok( teardown_recurs(), 'teardown' );
 }
 
-ok( chdir $DIRNAME, "chdir'd to $DIRNAME" ) ||
+ok( chdir 'Problem-Module', "chdir'd to Problem-Module" ) ||
   diag("chdir failed: $!");
 
 if ($] >= 5.008) {
@@ -99,7 +52,6 @@ if ($] >= 5.008) {
     my $json = do { local $/; <$json_fh> };
     close $json_fh;
 
-    no utf8; # leave the data below as bytes and let Encode sort it out
     require Encode;
     my $str = Encode::decode( 'utf8', "Danijel Tašov's" );
     like( $json, qr/$str/, 'utf8 abstract' );
@@ -108,8 +60,8 @@ if ($] >= 5.008) {
 }
 
 my $make = make_run();
-my $make_out = run($make);
-diag $make_out unless is $? >> 8, 0, 'Exit code of make == 0';
+my $make_out = run("$make");
+is $? >> 8, 0, 'Exit code of make == 0';
 
 my $manfile = File::Spec->catfile(qw(blib man1 probscript.1));
 SKIP: {
@@ -121,14 +73,13 @@ SKIP: {
   my $man = do { local $/; <$man_fh> };
   close $man_fh;
 
-  no utf8; # leave the data below as bytes and let Encode sort it out
   require Encode;
   my $str = Encode::decode( 'utf8', "文档" );
   like( $man, qr/$str/, 'utf8 man-snippet' );
 }
 
 $make_out = run("$make realclean");
-diag $make_out unless is $? >> 8, 0, 'Exit code of make == 0';
+is $? >> 8, 0, 'Exit code of make == 0';
 
 sub makefile_content {
   open my $fh, '<', makefile_name or die;

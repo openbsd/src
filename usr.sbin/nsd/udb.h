@@ -165,9 +165,7 @@ struct udb_glob_d {
 	volatile uint64_t rb_size;
 	/** segment of move rollback, for an XL chunk that overlaps. */
 	volatile uint64_t rb_seg;
-	/** linked list for content-listing, 0 if empty;
-	 * this pointer is unused; and could be removed if the database
-	 * format is modified or updated. */
+	/** linked list for content-listing, 0 if empty */
 	udb_rel_ptr content_list;
 	/** user global data pointer */
 	udb_rel_ptr user_global;

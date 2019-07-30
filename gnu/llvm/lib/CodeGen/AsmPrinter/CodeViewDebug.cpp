@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeViewDebug.h"
-#include "DwarfExpression.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
@@ -20,9 +19,9 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/Optional.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/ADT/Triple.h"
@@ -35,13 +34,9 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineOperand.h"
-#include "llvm/CodeGen/TargetFrameLowering.h"
-#include "llvm/CodeGen/TargetRegisterInfo.h"
-#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/DebugInfo/CodeView/CVTypeVisitor.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
-#include "llvm/DebugInfo/CodeView/ContinuationRecordBuilder.h"
 #include "llvm/DebugInfo/CodeView/DebugInlineeLinesSubsection.h"
 #include "llvm/DebugInfo/CodeView/Line.h"
 #include "llvm/DebugInfo/CodeView/SymbolRecord.h"
@@ -66,16 +61,17 @@
 #include "llvm/Support/BinaryByteStream.h"
 #include "llvm/Support/BinaryStreamReader.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FormatVariadic.h"
-#include "llvm/Support/SMLoc.h"
 #include "llvm/Support/ScopedPrinter.h"
+#include "llvm/Support/SMLoc.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <algorithm>
 #include <cassert>
 #include <cctype>
@@ -89,9 +85,6 @@
 
 using namespace llvm;
 using namespace llvm::codeview;
-
-static cl::opt<bool> EmitDebugGlobalHashes("emit-codeview-ghash-section",
-                                           cl::ReallyHidden, cl::init(false));
 
 CodeViewDebug::CodeViewDebug(AsmPrinter *AP)
     : DebugHandlerBase(AP), OS(*Asm->OutStreamer), TypeTable(Allocator) {
@@ -113,16 +106,6 @@ StringRef CodeViewDebug::getFullFilepath(const DIFile *File) {
     return Filepath;
 
   StringRef Dir = File->getDirectory(), Filename = File->getFilename();
-
-  // If this is a Unix-style path, just use it as is. Don't try to canonicalize
-  // it textually because one of the path components could be a symlink.
-  if (!Dir.empty() && Dir[0] == '/') {
-    Filepath = Dir;
-    if (Dir.back() != '/')
-      Filepath += '/';
-    Filepath += Filename;
-    return Filepath;
-  }
 
   // Clang emits directory and relative filename info into the IR, but CodeView
   // operates on full paths.  We could change Clang to emit full paths too, but
@@ -170,26 +153,12 @@ StringRef CodeViewDebug::getFullFilepath(const DIFile *File) {
 }
 
 unsigned CodeViewDebug::maybeRecordFile(const DIFile *F) {
-  StringRef FullPath = getFullFilepath(F);
   unsigned NextId = FileIdMap.size() + 1;
-  auto Insertion = FileIdMap.insert(std::make_pair(FullPath, NextId));
+  auto Insertion = FileIdMap.insert(std::make_pair(F, NextId));
   if (Insertion.second) {
     // We have to compute the full filepath and emit a .cv_file directive.
-    ArrayRef<uint8_t> ChecksumAsBytes;
-    FileChecksumKind CSKind = FileChecksumKind::None;
-    if (F->getChecksum()) {
-      std::string Checksum = fromHex(F->getChecksum()->Value);
-      void *CKMem = OS.getContext().allocate(Checksum.size(), 1);
-      memcpy(CKMem, Checksum.data(), Checksum.size());
-      ChecksumAsBytes = ArrayRef<uint8_t>(
-          reinterpret_cast<const uint8_t *>(CKMem), Checksum.size());
-      switch (F->getChecksum()->Kind) {
-      case DIFile::CSK_MD5:  CSKind = FileChecksumKind::MD5; break;
-      case DIFile::CSK_SHA1: CSKind = FileChecksumKind::SHA1; break;
-      }
-    }
-    bool Success = OS.EmitCVFileDirective(NextId, FullPath, ChecksumAsBytes,
-                                          static_cast<unsigned>(CSKind));
+    StringRef FullPath = getFullFilepath(F);
+    bool Success = OS.EmitCVFileDirective(NextId, FullPath);
     (void)Success;
     assert(Success && ".cv_file directive failed");
   }
@@ -301,7 +270,7 @@ TypeIndex CodeViewDebug::getScopeIndex(const DIScope *Scope) {
   // Build the fully qualified name of the scope.
   std::string ScopeName = getFullyQualifiedName(Scope);
   StringIdRecord SID(TypeIndex(), ScopeName);
-  auto TI = TypeTable.writeLeafType(SID);
+  auto TI = TypeTable.writeKnownType(SID);
   return recordTypeIndexForDINode(Scope, TI);
 }
 
@@ -326,12 +295,12 @@ TypeIndex CodeViewDebug::getFuncIdForSubprogram(const DISubprogram *SP) {
     TypeIndex ClassType = getTypeIndex(Class);
     MemberFuncIdRecord MFuncId(ClassType, getMemberFunctionType(SP, Class),
                                DisplayName);
-    TI = TypeTable.writeLeafType(MFuncId);
+    TI = TypeTable.writeKnownType(MFuncId);
   } else {
     // Otherwise, this must be a free function.
     TypeIndex ParentScope = getScopeIndex(Scope);
     FuncIdRecord FuncId(ParentScope, getTypeIndex(SP->getType()), DisplayName);
-    TI = TypeTable.writeLeafType(FuncId);
+    TI = TypeTable.writeKnownType(FuncId);
   }
 
   return recordTypeIndexForDINode(SP, TI);
@@ -355,9 +324,8 @@ TypeIndex CodeViewDebug::getMemberFunctionType(const DISubprogram *SP,
   // function type, as the complete class type is likely to reference this
   // member function type.
   TypeLoweringScope S(*this);
-  const bool IsStaticMethod = (SP->getFlags() & DINode::FlagStaticMember) != 0;
-  TypeIndex TI = lowerTypeMemberFunction(
-      SP->getType(), Class, SP->getThisAdjustment(), IsStaticMethod);
+  TypeIndex TI =
+      lowerTypeMemberFunction(SP->getType(), Class, SP->getThisAdjustment());
   return recordTypeIndexForDINode(SP, TI, Class);
 }
 
@@ -375,15 +343,15 @@ unsigned CodeViewDebug::getPointerSizeInBytes() {
 }
 
 void CodeViewDebug::recordLocalVariable(LocalVariable &&Var,
-                                        const LexicalScope *LS) {
-  if (const DILocation *InlinedAt = LS->getInlinedAt()) {
+                                        const DILocation *InlinedAt) {
+  if (InlinedAt) {
     // This variable was inlined. Associate it with the InlineSite.
     const DISubprogram *Inlinee = Var.DIVar->getScope()->getSubprogram();
     InlineSite &Site = getInlineSite(InlinedAt, Inlinee);
     Site.InlinedLocals.emplace_back(Var);
   } else {
-    // This variable goes into the corresponding lexical scope.
-    ScopeVariables[LS].emplace_back(Var);
+    // This variable goes in the main ProcSym.
+    CurFn->Locals.emplace_back(Var);
   }
 }
 
@@ -480,7 +448,7 @@ void CodeViewDebug::endModule() {
   // Emit per-function debug information.
   for (auto &P : FnDebugInfo)
     if (!P.first->isDeclarationForLinker())
-      emitDebugInfoForFunction(P.first, *P.second);
+      emitDebugInfoForFunction(P.first, P.second);
 
   // Emit global variable debug information.
   setCurrentSubprogram(nullptr);
@@ -508,22 +476,19 @@ void CodeViewDebug::endModule() {
   OS.AddComment("String table");
   OS.EmitCVStringTableDirective();
 
-  // Emit type information and hashes last, so that any types we translate while
-  // emitting function info are included.
+  // Emit type information last, so that any types we translate while emitting
+  // function info are included.
   emitTypeInformation();
-
-  if (EmitDebugGlobalHashes)
-    emitTypeGlobalHashes();
 
   clear();
 }
 
-static void emitNullTerminatedSymbolName(MCStreamer &OS, StringRef S,
-    unsigned MaxFixedRecordLength = 0xF00) {
+static void emitNullTerminatedSymbolName(MCStreamer &OS, StringRef S) {
   // The maximum CV record length is 0xFF00. Most of the strings we emit appear
   // after a fixed length portion of the record. The fixed length portion should
   // always be less than 0xF00 (3840) bytes, so truncate the string so that the
   // overall record size is less than the maximum allowed.
+  unsigned MaxFixedRecordLength = 0xF00;
   SmallString<32> NullTerminatedString(
       S.take_front(MaxRecordLength - MaxFixedRecordLength - 1));
   NullTerminatedString.push_back('\0');
@@ -531,10 +496,15 @@ static void emitNullTerminatedSymbolName(MCStreamer &OS, StringRef S,
 }
 
 void CodeViewDebug::emitTypeInformation() {
+  // Do nothing if we have no debug info or if no non-trivial types were emitted
+  // to TypeTable during codegen.
+  NamedMDNode *CU_Nodes = MMI->getModule()->getNamedMetadata("llvm.dbg.cu");
+  if (!CU_Nodes)
+    return;
   if (TypeTable.empty())
     return;
 
-  // Start the .debug$T or .debug$P section with 0x4.
+  // Start the .debug$T section with 0x4.
   OS.SwitchSection(Asm->getObjFileLowering().getCOFFDebugTypesSection());
   emitCodeViewMagicVersion();
 
@@ -575,39 +545,7 @@ void CodeViewDebug::emitTypeInformation() {
   }
 }
 
-void CodeViewDebug::emitTypeGlobalHashes() {
-  if (TypeTable.empty())
-    return;
-
-  // Start the .debug$H section with the version and hash algorithm, currently
-  // hardcoded to version 0, SHA1.
-  OS.SwitchSection(Asm->getObjFileLowering().getCOFFGlobalTypeHashesSection());
-
-  OS.EmitValueToAlignment(4);
-  OS.AddComment("Magic");
-  OS.EmitIntValue(COFF::DEBUG_HASHES_SECTION_MAGIC, 4);
-  OS.AddComment("Section Version");
-  OS.EmitIntValue(0, 2);
-  OS.AddComment("Hash Algorithm");
-  OS.EmitIntValue(uint16_t(GlobalTypeHashAlg::SHA1_8), 2);
-
-  TypeIndex TI(TypeIndex::FirstNonSimpleIndex);
-  for (const auto &GHR : TypeTable.hashes()) {
-    if (OS.isVerboseAsm()) {
-      // Emit an EOL-comment describing which TypeIndex this hash corresponds
-      // to, as well as the stringified SHA1 hash.
-      SmallString<32> Comment;
-      raw_svector_ostream CommentOS(Comment);
-      CommentOS << formatv("{0:X+} [{1}]", TI.getIndex(), GHR);
-      OS.AddComment(Comment);
-      ++TI;
-    }
-    assert(GHR.Hash.size() == 8);
-    StringRef S(reinterpret_cast<const char *>(GHR.Hash.data()),
-                GHR.Hash.size());
-    OS.EmitBinaryData(S);
-  }
-}
+namespace {
 
 static SourceLanguage MapDWLangToCVLang(unsigned DWLang) {
   switch (DWLang) {
@@ -634,8 +572,6 @@ static SourceLanguage MapDWLangToCVLang(unsigned DWLang) {
     return SourceLanguage::Cobol;
   case dwarf::DW_LANG_Java:
     return SourceLanguage::Java;
-  case dwarf::DW_LANG_D:
-    return SourceLanguage::D;
   default:
     // There's no CodeView representation for this language, and CV doesn't
     // have an "unknown" option for the language field, so we'll use MASM,
@@ -644,11 +580,9 @@ static SourceLanguage MapDWLangToCVLang(unsigned DWLang) {
   }
 }
 
-namespace {
 struct Version {
   int Part[4];
 };
-} // end anonymous namespace
 
 // Takes a StringRef like "clang 4.0.0.0 (other nonsense 123)" and parses out
 // the version number.
@@ -671,18 +605,19 @@ static Version parseVersion(StringRef Name) {
 
 static CPUType mapArchToCVCPUType(Triple::ArchType Type) {
   switch (Type) {
-  case Triple::ArchType::x86:
-    return CPUType::Pentium3;
-  case Triple::ArchType::x86_64:
-    return CPUType::X64;
-  case Triple::ArchType::thumb:
-    return CPUType::Thumb;
-  case Triple::ArchType::aarch64:
-    return CPUType::ARM64;
-  default:
-    report_fatal_error("target architecture doesn't map to a CodeView CPUType");
+    case Triple::ArchType::x86:
+      return CPUType::Pentium3;
+    case Triple::ArchType::x86_64:
+      return CPUType::X64;
+    case Triple::ArchType::thumb:
+      return CPUType::Thumb;
+    default:
+      report_fatal_error("target architecture doesn't map to a CodeView "
+                         "CPUType");
   }
 }
+
+} // end anonymous namespace
 
 void CodeViewDebug::emitCompilerInformation() {
   MCContext &Context = MMI->getContext();
@@ -743,10 +678,8 @@ void CodeViewDebug::emitInlineeLinesSubsection() {
   OS.AddComment("Inlinee lines subsection");
   MCSymbol *InlineEnd = beginCVSubsection(DebugSubsectionKind::InlineeLines);
 
-  // We emit the checksum info for files.  This is used by debuggers to
-  // determine if a pdb matches the source before loading it.  Visual Studio,
-  // for instance, will display a warning that the breakpoints are not valid if
-  // the pdb does not match the source.
+  // We don't provide any extra file info.
+  // FIXME: Find out if debuggers use this info.
   OS.AddComment("Inlinee lines signature");
   OS.EmitIntValue(unsigned(InlineeLinesSignature::Normal), 4);
 
@@ -759,10 +692,13 @@ void CodeViewDebug::emitInlineeLinesSubsection() {
     OS.AddComment("Inlined function " + SP->getName() + " starts at " +
                   SP->getFilename() + Twine(':') + Twine(SP->getLine()));
     OS.AddBlankLine();
+    // The filechecksum table uses 8 byte entries for now, and file ids start at
+    // 1.
+    unsigned FileOffset = (FileId - 1) * 8;
     OS.AddComment("Type index of inlined function");
     OS.EmitIntValue(InlineeIdx.getIndex(), 4);
     OS.AddComment("Offset into filechecksum table");
-    OS.EmitCVFileChecksumOffsetDirective(FileId);
+    OS.EmitIntValue(FileOffset, 4);
     OS.AddComment("Starting line number");
     OS.EmitIntValue(SP->getLine(), 4);
   }
@@ -838,61 +774,10 @@ void CodeViewDebug::switchToDebugSectionForSymbol(const MCSymbol *GVSym) {
     emitCodeViewMagicVersion();
 }
 
-// Emit an S_THUNK32/S_END symbol pair for a thunk routine.
-// The only supported thunk ordinal is currently the standard type.
-void CodeViewDebug::emitDebugInfoForThunk(const Function *GV,
-                                          FunctionInfo &FI,
-                                          const MCSymbol *Fn) {
-  std::string FuncName = GlobalValue::dropLLVMManglingEscape(GV->getName());
-  const ThunkOrdinal ordinal = ThunkOrdinal::Standard; // Only supported kind.
-
-  OS.AddComment("Symbol subsection for " + Twine(FuncName));
-  MCSymbol *SymbolsEnd = beginCVSubsection(DebugSubsectionKind::Symbols);
-
-  // Emit S_THUNK32
-  MCSymbol *ThunkRecordBegin = MMI->getContext().createTempSymbol(),
-           *ThunkRecordEnd   = MMI->getContext().createTempSymbol();
-  OS.AddComment("Record length");
-  OS.emitAbsoluteSymbolDiff(ThunkRecordEnd, ThunkRecordBegin, 2);
-  OS.EmitLabel(ThunkRecordBegin);
-  OS.AddComment("Record kind: S_THUNK32");
-  OS.EmitIntValue(unsigned(SymbolKind::S_THUNK32), 2);
-  OS.AddComment("PtrParent");
-  OS.EmitIntValue(0, 4);
-  OS.AddComment("PtrEnd");
-  OS.EmitIntValue(0, 4);
-  OS.AddComment("PtrNext");
-  OS.EmitIntValue(0, 4);
-  OS.AddComment("Thunk section relative address");
-  OS.EmitCOFFSecRel32(Fn, /*Offset=*/0);
-  OS.AddComment("Thunk section index");
-  OS.EmitCOFFSectionIndex(Fn);
-  OS.AddComment("Code size");
-  OS.emitAbsoluteSymbolDiff(FI.End, Fn, 2);
-  OS.AddComment("Ordinal");
-  OS.EmitIntValue(unsigned(ordinal), 1);
-  OS.AddComment("Function name");
-  emitNullTerminatedSymbolName(OS, FuncName);
-  // Additional fields specific to the thunk ordinal would go here.
-  OS.EmitLabel(ThunkRecordEnd);
-
-  // Local variables/inlined routines are purposely omitted here.  The point of
-  // marking this as a thunk is so Visual Studio will NOT stop in this routine.
-
-  // Emit S_PROC_ID_END
-  const unsigned RecordLengthForSymbolEnd = 2;
-  OS.AddComment("Record length");
-  OS.EmitIntValue(RecordLengthForSymbolEnd, 2);
-  OS.AddComment("Record kind: S_PROC_ID_END");
-  OS.EmitIntValue(unsigned(SymbolKind::S_PROC_ID_END), 2);
-
-  endCVSubsection(SymbolsEnd);
-}
-
 void CodeViewDebug::emitDebugInfoForFunction(const Function *GV,
                                              FunctionInfo &FI) {
-  // For each function there is a separate subsection which holds the PC to
-  // file:line table.
+  // For each function there is a separate subsection
+  // which holds the PC to file:line table.
   const MCSymbol *Fn = Asm->getSymbol(GV);
   assert(Fn);
 
@@ -904,11 +789,6 @@ void CodeViewDebug::emitDebugInfoForFunction(const Function *GV,
   assert(SP);
   setCurrentSubprogram(SP);
 
-  if (SP->isThunk()) {
-    emitDebugInfoForThunk(GV, FI, Fn);
-    return;
-  }
-
   // If we have a display name, build the fully qualified name by walking the
   // chain of scopes.
   if (!SP->getName().empty())
@@ -918,10 +798,6 @@ void CodeViewDebug::emitDebugInfoForFunction(const Function *GV,
   // If our DISubprogram name is empty, use the mangled name.
   if (FuncName.empty())
     FuncName = GlobalValue::dropLLVMManglingEscape(GV->getName());
-
-  // Emit FPO data, but only on 32-bit x86. No other platforms use it.
-  if (Triple(MMI->getModule()->getTargetTriple()).getArch() == Triple::x86)
-    OS.EmitCVFPOData(Fn);
 
   // Emit a symbol subsection, required by VS2012+ to find function boundaries.
   OS.AddComment("Symbol subsection for " + Twine(FuncName));
@@ -971,7 +847,6 @@ void CodeViewDebug::emitDebugInfoForFunction(const Function *GV,
     OS.EmitLabel(ProcRecordEnd);
 
     emitLocalVariableList(FI.Locals);
-    emitLexicalBlockList(FI.ChildBlocks, FI);
 
     // Emit inlined call site information. Only emit functions inlined directly
     // into the parent function. We'll emit the other sites recursively as part
@@ -981,30 +856,6 @@ void CodeViewDebug::emitDebugInfoForFunction(const Function *GV,
       assert(I != FI.InlineSites.end() &&
              "child site not in function inline site map");
       emitInlinedCallSite(FI, InlinedAt, I->second);
-    }
-
-    for (auto Annot : FI.Annotations) {
-      MCSymbol *Label = Annot.first;
-      MDTuple *Strs = cast<MDTuple>(Annot.second);
-      MCSymbol *AnnotBegin = MMI->getContext().createTempSymbol(),
-               *AnnotEnd = MMI->getContext().createTempSymbol();
-      OS.AddComment("Record length");
-      OS.emitAbsoluteSymbolDiff(AnnotEnd, AnnotBegin, 2);
-      OS.EmitLabel(AnnotBegin);
-      OS.AddComment("Record kind: S_ANNOTATION");
-      OS.EmitIntValue(SymbolKind::S_ANNOTATION, 2);
-      OS.EmitCOFFSecRel32(Label, /*Offset=*/0);
-      // FIXME: Make sure we don't overflow the max record size.
-      OS.EmitCOFFSectionIndex(Label);
-      OS.EmitIntValue(Strs->getNumOperands(), 2);
-      for (Metadata *MD : Strs->operands()) {
-        // MDStrings are null terminated, so we can do EmitBytes and get the
-        // nice .asciz directive.
-        StringRef Str = cast<MDString>(MD)->getString();
-        assert(Str.data()[Str.size()] == '\0' && "non-nullterminated MDString");
-        OS.EmitBytes(StringRef(Str.data(), Str.size() + 1));
-      }
-      OS.EmitLabel(AnnotEnd);
     }
 
     if (SP != nullptr)
@@ -1092,106 +943,7 @@ void CodeViewDebug::collectVariableInfoFromMFTable(
     LocalVariable Var;
     Var.DIVar = VI.Var;
     Var.DefRanges.emplace_back(std::move(DefRange));
-    recordLocalVariable(std::move(Var), Scope);
-  }
-}
-
-static bool canUseReferenceType(const DbgVariableLocation &Loc) {
-  return !Loc.LoadChain.empty() && Loc.LoadChain.back() == 0;
-}
-
-static bool needsReferenceType(const DbgVariableLocation &Loc) {
-  return Loc.LoadChain.size() == 2 && Loc.LoadChain.back() == 0;
-}
-
-void CodeViewDebug::calculateRanges(
-    LocalVariable &Var, const DbgValueHistoryMap::InstrRanges &Ranges) {
-  const TargetRegisterInfo *TRI = Asm->MF->getSubtarget().getRegisterInfo();
-
-  // Calculate the definition ranges.
-  for (auto I = Ranges.begin(), E = Ranges.end(); I != E; ++I) {
-    const InsnRange &Range = *I;
-    const MachineInstr *DVInst = Range.first;
-    assert(DVInst->isDebugValue() && "Invalid History entry");
-    // FIXME: Find a way to represent constant variables, since they are
-    // relatively common.
-    Optional<DbgVariableLocation> Location =
-        DbgVariableLocation::extractFromMachineInstruction(*DVInst);
-    if (!Location)
-      continue;
-
-    // CodeView can only express variables in register and variables in memory
-    // at a constant offset from a register. However, for variables passed
-    // indirectly by pointer, it is common for that pointer to be spilled to a
-    // stack location. For the special case of one offseted load followed by a
-    // zero offset load (a pointer spilled to the stack), we change the type of
-    // the local variable from a value type to a reference type. This tricks the
-    // debugger into doing the load for us.
-    if (Var.UseReferenceType) {
-      // We're using a reference type. Drop the last zero offset load.
-      if (canUseReferenceType(*Location))
-        Location->LoadChain.pop_back();
-      else
-        continue;
-    } else if (needsReferenceType(*Location)) {
-      // This location can't be expressed without switching to a reference type.
-      // Start over using that.
-      Var.UseReferenceType = true;
-      Var.DefRanges.clear();
-      calculateRanges(Var, Ranges);
-      return;
-    }
-
-    // We can only handle a register or an offseted load of a register.
-    if (Location->Register == 0 || Location->LoadChain.size() > 1)
-      continue;
-    {
-      LocalVarDefRange DR;
-      DR.CVRegister = TRI->getCodeViewRegNum(Location->Register);
-      DR.InMemory = !Location->LoadChain.empty();
-      DR.DataOffset =
-          !Location->LoadChain.empty() ? Location->LoadChain.back() : 0;
-      if (Location->FragmentInfo) {
-        DR.IsSubfield = true;
-        DR.StructOffset = Location->FragmentInfo->OffsetInBits / 8;
-      } else {
-        DR.IsSubfield = false;
-        DR.StructOffset = 0;
-      }
-
-      if (Var.DefRanges.empty() ||
-          Var.DefRanges.back().isDifferentLocation(DR)) {
-        Var.DefRanges.emplace_back(std::move(DR));
-      }
-    }
-
-    // Compute the label range.
-    const MCSymbol *Begin = getLabelBeforeInsn(Range.first);
-    const MCSymbol *End = getLabelAfterInsn(Range.second);
-    if (!End) {
-      // This range is valid until the next overlapping bitpiece. In the
-      // common case, ranges will not be bitpieces, so they will overlap.
-      auto J = std::next(I);
-      const DIExpression *DIExpr = DVInst->getDebugExpression();
-      while (J != E &&
-             !DIExpr->fragmentsOverlap(J->first->getDebugExpression()))
-        ++J;
-      if (J != E)
-        End = getLabelBeforeInsn(J->first);
-      else
-        End = Asm->getFunctionEnd();
-    }
-
-    // If the last range end is our begin, just extend the last range.
-    // Otherwise make a new range.
-    SmallVectorImpl<std::pair<const MCSymbol *, const MCSymbol *>> &R =
-        Var.DefRanges.back().Ranges;
-    if (!R.empty() && R.back().second == Begin)
-      R.back().second = End;
-    else
-      R.emplace_back(Begin, End);
-
-    // FIXME: Do more range combining.
+    recordLocalVariable(std::move(Var), VI.Loc->getInlinedAt());
   }
 }
 
@@ -1199,6 +951,8 @@ void CodeViewDebug::collectVariableInfo(const DISubprogram *SP) {
   DenseSet<InlinedVariable> Processed;
   // Grab the variable info that was squirreled away in the MMI side-table.
   collectVariableInfoFromMFTable(Processed);
+
+  const TargetRegisterInfo *TRI = Asm->MF->getSubtarget().getRegisterInfo();
 
   for (const auto &I : DbgValues) {
     InlinedVariable IV = I.first;
@@ -1222,16 +976,87 @@ void CodeViewDebug::collectVariableInfo(const DISubprogram *SP) {
     LocalVariable Var;
     Var.DIVar = DIVar;
 
-    calculateRanges(Var, Ranges);
-    recordLocalVariable(std::move(Var), Scope);
+    // Calculate the definition ranges.
+    for (auto I = Ranges.begin(), E = Ranges.end(); I != E; ++I) {
+      const InsnRange &Range = *I;
+      const MachineInstr *DVInst = Range.first;
+      assert(DVInst->isDebugValue() && "Invalid History entry");
+      const DIExpression *DIExpr = DVInst->getDebugExpression();
+      bool IsSubfield = false;
+      unsigned StructOffset = 0;
+
+      // Handle fragments.
+      auto Fragment = DIExpr->getFragmentInfo();
+      if (Fragment) {
+        IsSubfield = true;
+        StructOffset = Fragment->OffsetInBits / 8;
+      } else if (DIExpr->getNumElements() > 0) {
+        continue; // Ignore unrecognized exprs.
+      }
+
+      // Bail if operand 0 is not a valid register. This means the variable is a
+      // simple constant, or is described by a complex expression.
+      // FIXME: Find a way to represent constant variables, since they are
+      // relatively common.
+      unsigned Reg =
+          DVInst->getOperand(0).isReg() ? DVInst->getOperand(0).getReg() : 0;
+      if (Reg == 0)
+        continue;
+
+      // Handle the two cases we can handle: indirect in memory and in register.
+      unsigned CVReg = TRI->getCodeViewRegNum(Reg);
+      bool InMemory = DVInst->getOperand(1).isImm();
+      int Offset = InMemory ? DVInst->getOperand(1).getImm() : 0;
+      {
+        LocalVarDefRange DR;
+        DR.CVRegister = CVReg;
+        DR.InMemory = InMemory;
+        DR.DataOffset = Offset;
+        DR.IsSubfield = IsSubfield;
+        DR.StructOffset = StructOffset;
+
+        if (Var.DefRanges.empty() ||
+            Var.DefRanges.back().isDifferentLocation(DR)) {
+          Var.DefRanges.emplace_back(std::move(DR));
+        }
+      }
+
+      // Compute the label range.
+      const MCSymbol *Begin = getLabelBeforeInsn(Range.first);
+      const MCSymbol *End = getLabelAfterInsn(Range.second);
+      if (!End) {
+        // This range is valid until the next overlapping bitpiece. In the
+        // common case, ranges will not be bitpieces, so they will overlap.
+        auto J = std::next(I);
+        while (J != E &&
+               !fragmentsOverlap(DIExpr, J->first->getDebugExpression()))
+          ++J;
+        if (J != E)
+          End = getLabelBeforeInsn(J->first);
+        else
+          End = Asm->getFunctionEnd();
+      }
+
+      // If the last range end is our begin, just extend the last range.
+      // Otherwise make a new range.
+      SmallVectorImpl<std::pair<const MCSymbol *, const MCSymbol *>> &Ranges =
+          Var.DefRanges.back().Ranges;
+      if (!Ranges.empty() && Ranges.back().second == Begin)
+        Ranges.back().second = End;
+      else
+        Ranges.emplace_back(Begin, End);
+
+      // FIXME: Do more range combining.
+    }
+
+    recordLocalVariable(std::move(Var), InlinedAt);
   }
 }
 
 void CodeViewDebug::beginFunctionImpl(const MachineFunction *MF) {
-  const Function &GV = MF->getFunction();
-  auto Insertion = FnDebugInfo.insert({&GV, llvm::make_unique<FunctionInfo>()});
-  assert(Insertion.second && "function already has info");
-  CurFn = Insertion.first->second.get();
+  const Function *GV = MF->getFunction();
+  assert(FnDebugInfo.count(GV) == false);
+  CurFn = &FnDebugInfo[GV];
   CurFn->FuncId = NextFuncId++;
   CurFn->Begin = Asm->getFunctionBegin();
 
@@ -1262,39 +1087,9 @@ void CodeViewDebug::beginFunctionImpl(const MachineFunction *MF) {
   }
 }
 
-static bool shouldEmitUdt(const DIType *T) {
-  if (!T)
-    return false;
-
-  // MSVC does not emit UDTs for typedefs that are scoped to classes.
-  if (T->getTag() == dwarf::DW_TAG_typedef) {
-    if (DIScope *Scope = T->getScope().resolve()) {
-      switch (Scope->getTag()) {
-      case dwarf::DW_TAG_structure_type:
-      case dwarf::DW_TAG_class_type:
-      case dwarf::DW_TAG_union_type:
-        return false;
-      }
-    }
-  }
-
-  while (true) {
-    if (!T || T->isForwardDecl())
-      return false;
-
-    const DIDerivedType *DT = dyn_cast<DIDerivedType>(T);
-    if (!DT)
-      return true;
-    T = DT->getBaseType().resolve();
-  }
-  return true;
-}
-
-void CodeViewDebug::addToUDTs(const DIType *Ty) {
+void CodeViewDebug::addToUDTs(const DIType *Ty, TypeIndex TI) {
   // Don't record empty UDTs.
   if (Ty->getName().empty())
-    return;
-  if (!shouldEmitUdt(Ty))
     return;
 
   SmallVector<StringRef, 5> QualifiedNameComponents;
@@ -1304,11 +1099,10 @@ void CodeViewDebug::addToUDTs(const DIType *Ty) {
   std::string FullyQualifiedName =
       getQualifiedName(QualifiedNameComponents, getPrettyScopeName(Ty));
 
-  if (ClosestSubprogram == nullptr) {
-    GlobalUDTs.emplace_back(std::move(FullyQualifiedName), Ty);
-  } else if (ClosestSubprogram == CurrentSubprogram) {
-    LocalUDTs.emplace_back(std::move(FullyQualifiedName), Ty);
-  }
+  if (ClosestSubprogram == nullptr)
+    GlobalUDTs.emplace_back(std::move(FullyQualifiedName), TI);
+  else if (ClosestSubprogram == CurrentSubprogram)
+    LocalUDTs.emplace_back(std::move(FullyQualifiedName), TI);
 
   // TODO: What if the ClosestSubprogram is neither null or the current
   // subprogram?  Currently, the UDT just gets dropped on the floor.
@@ -1336,7 +1130,6 @@ TypeIndex CodeViewDebug::lowerType(const DIType *Ty, const DIType *ClassTy) {
     return lowerTypePointer(cast<DIDerivedType>(Ty));
   case dwarf::DW_TAG_ptr_to_member_type:
     return lowerTypeMemberPointer(cast<DIDerivedType>(Ty));
-  case dwarf::DW_TAG_restrict_type:
   case dwarf::DW_TAG_const_type:
   case dwarf::DW_TAG_volatile_type:
   // TODO: add support for DW_TAG_atomic_type here
@@ -1346,8 +1139,7 @@ TypeIndex CodeViewDebug::lowerType(const DIType *Ty, const DIType *ClassTy) {
       // The member function type of a member function pointer has no
       // ThisAdjustment.
       return lowerTypeMemberFunction(cast<DISubroutineType>(Ty), ClassTy,
-                                     /*ThisAdjustment=*/0,
-                                     /*IsStaticMethod=*/false);
+                                     /*ThisAdjustment=*/0);
     }
     return lowerTypeFunction(cast<DISubroutineType>(Ty));
   case dwarf::DW_TAG_enumeration_type:
@@ -1357,8 +1149,6 @@ TypeIndex CodeViewDebug::lowerType(const DIType *Ty, const DIType *ClassTy) {
     return lowerTypeClass(cast<DICompositeType>(Ty));
   case dwarf::DW_TAG_union_type:
     return lowerTypeUnion(cast<DICompositeType>(Ty));
-  case dwarf::DW_TAG_unspecified_type:
-    return TypeIndex::None();
   default:
     // Use the null type index.
     return TypeIndex();
@@ -1370,7 +1160,7 @@ TypeIndex CodeViewDebug::lowerTypeAlias(const DIDerivedType *Ty) {
   TypeIndex UnderlyingTypeIndex = getTypeIndex(UnderlyingTypeRef);
   StringRef TypeName = Ty->getName();
 
-  addToUDTs(Ty);
+  addToUDTs(Ty, UnderlyingTypeIndex);
 
   if (UnderlyingTypeIndex == TypeIndex(SimpleTypeKind::Int32Long) &&
       TypeName == "HRESULT")
@@ -1386,7 +1176,7 @@ TypeIndex CodeViewDebug::lowerTypeArray(const DICompositeType *Ty) {
   DITypeRef ElementTypeRef = Ty->getBaseType();
   TypeIndex ElementTypeIndex = getTypeIndex(ElementTypeRef);
   // IndexType is size_t, which depends on the bitness of the target.
-  TypeIndex IndexType = getPointerSizeInBytes() == 8
+  TypeIndex IndexType = Asm->TM.getPointerSize() == 8
                             ? TypeIndex(SimpleTypeKind::UInt64Quad)
                             : TypeIndex(SimpleTypeKind::UInt32Long);
 
@@ -1401,16 +1191,13 @@ TypeIndex CodeViewDebug::lowerTypeArray(const DICompositeType *Ty) {
     const DISubrange *Subrange = cast<DISubrange>(Element);
     assert(Subrange->getLowerBound() == 0 &&
            "codeview doesn't support subranges with lower bounds");
-    int64_t Count = -1;
-    if (auto *CI = Subrange->getCount().dyn_cast<ConstantInt*>())
-      Count = CI->getSExtValue();
+    int64_t Count = Subrange->getCount();
 
-    // Forward declarations of arrays without a size and VLAs use a count of -1.
-    // Emit a count of zero in these cases to match what MSVC does for arrays
-    // without a size. MSVC doesn't support VLAs, so it's not clear what we
-    // should do for them even if we could distinguish them.
+    // Variable Length Array (VLA) has Count equal to '-1'.
+    // Replace with Count '1', assume it is the minimum VLA length.
+    // FIXME: Make front-end support VLA subrange and emit LF_DIMVARLU.
     if (Count == -1)
-      Count = 0;
+      Count = 1;
 
     // Update the element size and element type index for subsequent subranges.
     ElementSize *= Count;
@@ -1422,7 +1209,7 @@ TypeIndex CodeViewDebug::lowerTypeArray(const DICompositeType *Ty) {
 
     StringRef Name = (i == 0) ? Ty->getName() : "";
     ArrayRecord AR(ElementTypeIndex, IndexType, ArraySize, Name);
-    ElementTypeIndex = TypeTable.writeLeafType(AR);
+    ElementTypeIndex = TypeTable.writeKnownType(AR);
   }
 
   return ElementTypeIndex;
@@ -1521,13 +1308,12 @@ TypeIndex CodeViewDebug::lowerTypeBasic(const DIBasicType *Ty) {
   return TypeIndex(STK);
 }
 
-TypeIndex CodeViewDebug::lowerTypePointer(const DIDerivedType *Ty,
-                                          PointerOptions PO) {
+TypeIndex CodeViewDebug::lowerTypePointer(const DIDerivedType *Ty) {
   TypeIndex PointeeTI = getTypeIndex(Ty->getBaseType());
 
-  // Pointers to simple types without any options can use SimpleTypeMode, rather
-  // than having a dedicated pointer type record.
-  if (PointeeTI.isSimple() && PO == PointerOptions::None &&
+  // Pointers to simple types can use SimpleTypeMode, rather than having a
+  // dedicated pointer type record.
+  if (PointeeTI.isSimple() &&
       PointeeTI.getSimpleMode() == SimpleTypeMode::Direct &&
       Ty->getTag() == dwarf::DW_TAG_pointer_type) {
     SimpleTypeMode Mode = Ty->getSizeInBits() == 64
@@ -1551,9 +1337,12 @@ TypeIndex CodeViewDebug::lowerTypePointer(const DIDerivedType *Ty,
     PM = PointerMode::RValueReference;
     break;
   }
-
+  // FIXME: MSVC folds qualifiers into PointerOptions in the context of a method
+  // 'this' pointer, but not normal contexts. Figure out what we're supposed to
+  // do.
+  PointerOptions PO = PointerOptions::None;
   PointerRecord PR(PointeeTI, PK, PM, PO, Ty->getSizeInBits() / 8);
-  return TypeTable.writeLeafType(PR);
+  return TypeTable.writeKnownType(PR);
 }
 
 static PointerToMemberRepresentation
@@ -1589,23 +1378,22 @@ translatePtrToMemberRep(unsigned SizeInBytes, bool IsPMF, unsigned Flags) {
   llvm_unreachable("invalid ptr to member representation");
 }
 
-TypeIndex CodeViewDebug::lowerTypeMemberPointer(const DIDerivedType *Ty,
-                                                PointerOptions PO) {
+TypeIndex CodeViewDebug::lowerTypeMemberPointer(const DIDerivedType *Ty) {
   assert(Ty->getTag() == dwarf::DW_TAG_ptr_to_member_type);
   TypeIndex ClassTI = getTypeIndex(Ty->getClassType());
   TypeIndex PointeeTI = getTypeIndex(Ty->getBaseType(), Ty->getClassType());
-  PointerKind PK = getPointerSizeInBytes() == 8 ? PointerKind::Near64
-                                                : PointerKind::Near32;
+  PointerKind PK = Asm->TM.getPointerSize() == 8 ? PointerKind::Near64
+                                                 : PointerKind::Near32;
   bool IsPMF = isa<DISubroutineType>(Ty->getBaseType());
   PointerMode PM = IsPMF ? PointerMode::PointerToMemberFunction
                          : PointerMode::PointerToDataMember;
-
+  PointerOptions PO = PointerOptions::None; // FIXME
   assert(Ty->getSizeInBits() / 8 <= 0xff && "pointer size too big");
   uint8_t SizeInBytes = Ty->getSizeInBits() / 8;
   MemberPointerInfo MPI(
       ClassTI, translatePtrToMemberRep(SizeInBytes, IsPMF, Ty->getFlags()));
   PointerRecord PR(PointeeTI, PK, PM, PO, SizeInBytes, MPI);
-  return TypeTable.writeLeafType(PR);
+  return TypeTable.writeKnownType(PR);
 }
 
 /// Given a DWARF calling convention, get the CodeView equivalent. If we don't
@@ -1624,7 +1412,6 @@ static CallingConvention dwarfCCToCodeView(unsigned DwarfCC) {
 
 TypeIndex CodeViewDebug::lowerTypeModifier(const DIDerivedType *Ty) {
   ModifierOptions Mods = ModifierOptions::None;
-  PointerOptions PO = PointerOptions::None;
   bool IsModifier = true;
   const DIType *BaseTy = Ty;
   while (IsModifier && BaseTy) {
@@ -1632,16 +1419,9 @@ TypeIndex CodeViewDebug::lowerTypeModifier(const DIDerivedType *Ty) {
     switch (BaseTy->getTag()) {
     case dwarf::DW_TAG_const_type:
       Mods |= ModifierOptions::Const;
-      PO |= PointerOptions::Const;
       break;
     case dwarf::DW_TAG_volatile_type:
       Mods |= ModifierOptions::Volatile;
-      PO |= PointerOptions::Volatile;
-      break;
-    case dwarf::DW_TAG_restrict_type:
-      // Only pointer types be marked with __restrict. There is no known flag
-      // for __restrict in LF_MODIFIER records.
-      PO |= PointerOptions::Restrict;
       break;
     default:
       IsModifier = false;
@@ -1650,33 +1430,9 @@ TypeIndex CodeViewDebug::lowerTypeModifier(const DIDerivedType *Ty) {
     if (IsModifier)
       BaseTy = cast<DIDerivedType>(BaseTy)->getBaseType().resolve();
   }
-
-  // Check if the inner type will use an LF_POINTER record. If so, the
-  // qualifiers will go in the LF_POINTER record. This comes up for types like
-  // 'int *const' and 'int *__restrict', not the more common cases like 'const
-  // char *'.
-  if (BaseTy) {
-    switch (BaseTy->getTag()) {
-    case dwarf::DW_TAG_pointer_type:
-    case dwarf::DW_TAG_reference_type:
-    case dwarf::DW_TAG_rvalue_reference_type:
-      return lowerTypePointer(cast<DIDerivedType>(BaseTy), PO);
-    case dwarf::DW_TAG_ptr_to_member_type:
-      return lowerTypeMemberPointer(cast<DIDerivedType>(BaseTy), PO);
-    default:
-      break;
-    }
-  }
-
   TypeIndex ModifiedTI = getTypeIndex(BaseTy);
-
-  // Return the base type index if there aren't any modifiers. For example, the
-  // metadata could contain restrict wrappers around non-pointer types.
-  if (Mods == ModifierOptions::None)
-    return ModifiedTI;
-
   ModifierRecord MR(ModifiedTI, Mods);
-  return TypeTable.writeLeafType(MR);
+  return TypeTable.writeKnownType(MR);
 }
 
 TypeIndex CodeViewDebug::lowerTypeFunction(const DISubroutineType *Ty) {
@@ -1684,11 +1440,6 @@ TypeIndex CodeViewDebug::lowerTypeFunction(const DISubroutineType *Ty) {
   for (DITypeRef ArgTypeRef : Ty->getTypeArray())
     ReturnAndArgTypeIndices.push_back(getTypeIndex(ArgTypeRef));
 
-  // MSVC uses type none for variadic argument.
-  if (ReturnAndArgTypeIndices.size() > 1 &&
-      ReturnAndArgTypeIndices.back() == TypeIndex::Void()) {
-    ReturnAndArgTypeIndices.back() = TypeIndex::None();
-  }
   TypeIndex ReturnTypeIndex = TypeIndex::Void();
   ArrayRef<TypeIndex> ArgTypeIndices = None;
   if (!ReturnAndArgTypeIndices.empty()) {
@@ -1698,19 +1449,18 @@ TypeIndex CodeViewDebug::lowerTypeFunction(const DISubroutineType *Ty) {
   }
 
   ArgListRecord ArgListRec(TypeRecordKind::ArgList, ArgTypeIndices);
-  TypeIndex ArgListIndex = TypeTable.writeLeafType(ArgListRec);
+  TypeIndex ArgListIndex = TypeTable.writeKnownType(ArgListRec);
 
   CallingConvention CC = dwarfCCToCodeView(Ty->getCC());
 
   ProcedureRecord Procedure(ReturnTypeIndex, CC, FunctionOptions::None,
                             ArgTypeIndices.size(), ArgListIndex);
-  return TypeTable.writeLeafType(Procedure);
+  return TypeTable.writeKnownType(Procedure);
 }
 
 TypeIndex CodeViewDebug::lowerTypeMemberFunction(const DISubroutineType *Ty,
                                                  const DIType *ClassTy,
-                                                 int ThisAdjustment,
-                                                 bool IsStaticMethod) {
+                                                 int ThisAdjustment) {
   // Lower the containing class type.
   TypeIndex ClassType = getTypeIndex(ClassTy);
 
@@ -1718,11 +1468,6 @@ TypeIndex CodeViewDebug::lowerTypeMemberFunction(const DISubroutineType *Ty,
   for (DITypeRef ArgTypeRef : Ty->getTypeArray())
     ReturnAndArgTypeIndices.push_back(getTypeIndex(ArgTypeRef));
 
-  // MSVC uses type none for variadic argument.
-  if (ReturnAndArgTypeIndices.size() > 1 &&
-      ReturnAndArgTypeIndices.back() == TypeIndex::Void()) {
-    ReturnAndArgTypeIndices.back() = TypeIndex::None();
-  }
   TypeIndex ReturnTypeIndex = TypeIndex::Void();
   ArrayRef<TypeIndex> ArgTypeIndices = None;
   if (!ReturnAndArgTypeIndices.empty()) {
@@ -1730,22 +1475,26 @@ TypeIndex CodeViewDebug::lowerTypeMemberFunction(const DISubroutineType *Ty,
     ReturnTypeIndex = ReturnAndArgTypesRef.front();
     ArgTypeIndices = ReturnAndArgTypesRef.drop_front();
   }
-  TypeIndex ThisTypeIndex;
-  if (!IsStaticMethod && !ArgTypeIndices.empty()) {
+  TypeIndex ThisTypeIndex = TypeIndex::Void();
+  if (!ArgTypeIndices.empty()) {
     ThisTypeIndex = ArgTypeIndices.front();
     ArgTypeIndices = ArgTypeIndices.drop_front();
   }
 
   ArgListRecord ArgListRec(TypeRecordKind::ArgList, ArgTypeIndices);
-  TypeIndex ArgListIndex = TypeTable.writeLeafType(ArgListRec);
+  TypeIndex ArgListIndex = TypeTable.writeKnownType(ArgListRec);
 
   CallingConvention CC = dwarfCCToCodeView(Ty->getCC());
 
-  // TODO: Need to use the correct values for FunctionOptions.
+  // TODO: Need to use the correct values for:
+  //       FunctionOptions
+  //       ThisPointerAdjustment.
   MemberFunctionRecord MFR(ReturnTypeIndex, ClassType, ThisTypeIndex, CC,
                            FunctionOptions::None, ArgTypeIndices.size(),
                            ArgListIndex, ThisAdjustment);
-  return TypeTable.writeLeafType(MFR);
+  TypeIndex TI = TypeTable.writeKnownType(MFR);
+
+  return TI;
 }
 
 TypeIndex CodeViewDebug::lowerTypeVFTableShape(const DIDerivedType *Ty) {
@@ -1754,7 +1503,7 @@ TypeIndex CodeViewDebug::lowerTypeVFTableShape(const DIDerivedType *Ty) {
   SmallVector<VFTableSlotKind, 4> Slots(VSlotCount, VFTableSlotKind::Near);
 
   VFTableShapeRecord VFTSR(Slots);
-  return TypeTable.writeLeafType(VFTSR);
+  return TypeTable.writeKnownType(VFTSR);
 }
 
 static MemberAccess translateAccessFlags(unsigned RecordTag, unsigned Flags) {
@@ -1781,9 +1530,6 @@ static MethodOptions translateMethodOptionFlags(const DISubprogram *SP) {
 
 static MethodKind translateMethodKindFlags(const DISubprogram *SP,
                                            bool Introduced) {
-  if (SP->getFlags() & DINode::FlagStaticMember)
-    return MethodKind::Static;
-
   switch (SP->getVirtuality()) {
   case dwarf::DW_VIRTUALITY_none:
     break;
@@ -1795,6 +1541,8 @@ static MethodKind translateMethodKindFlags(const DISubprogram *SP,
   default:
     llvm_unreachable("unhandled virtuality case");
   }
+
+  // FIXME: Get Clang to mark DISubprogram as static and do something with it.
 
   return MethodKind::Vanilla;
 }
@@ -1837,26 +1585,6 @@ static ClassOptions getCommonClassOptions(const DICompositeType *Ty) {
   return CO;
 }
 
-void CodeViewDebug::addUDTSrcLine(const DIType *Ty, TypeIndex TI) {
-  switch (Ty->getTag()) {
-  case dwarf::DW_TAG_class_type:
-  case dwarf::DW_TAG_structure_type:
-  case dwarf::DW_TAG_union_type:
-  case dwarf::DW_TAG_enumeration_type:
-    break;
-  default:
-    return;
-  }
-
-  if (const auto *File = Ty->getFile()) {
-    StringIdRecord SIDR(TypeIndex(0x0), getFullFilepath(File));
-    TypeIndex SIDI = TypeTable.writeLeafType(SIDR);
-
-    UdtSourceLineRecord USLR(TI, SIDI, Ty->getLine());
-    TypeTable.writeLeafType(USLR);
-  }
-}
-
 TypeIndex CodeViewDebug::lowerTypeEnum(const DICompositeType *Ty) {
   ClassOptions CO = getCommonClassOptions(Ty);
   TypeIndex FTI;
@@ -1865,8 +1593,9 @@ TypeIndex CodeViewDebug::lowerTypeEnum(const DICompositeType *Ty) {
   if (Ty->isForwardDecl()) {
     CO |= ClassOptions::ForwardReference;
   } else {
-    ContinuationRecordBuilder ContinuationBuilder;
-    ContinuationBuilder.begin(ContinuationRecordKind::FieldList);
+    FieldListRecordBuilder FLRB(TypeTable);
+
+    FLRB.begin();
     for (const DINode *Element : Ty->getElements()) {
       // We assume that the frontend provides all members in source declaration
       // order, which is what MSVC does.
@@ -1874,22 +1603,18 @@ TypeIndex CodeViewDebug::lowerTypeEnum(const DICompositeType *Ty) {
         EnumeratorRecord ER(MemberAccess::Public,
                             APSInt::getUnsigned(Enumerator->getValue()),
                             Enumerator->getName());
-        ContinuationBuilder.writeMemberType(ER);
+        FLRB.writeMemberType(ER);
         EnumeratorCount++;
       }
     }
-    FTI = TypeTable.insertRecord(ContinuationBuilder);
+    FTI = FLRB.end(true);
   }
 
   std::string FullName = getFullyQualifiedName(Ty);
 
   EnumRecord ER(EnumeratorCount, CO, FTI, FullName, Ty->getIdentifier(),
                 getTypeIndex(Ty->getBaseType()));
-  TypeIndex EnumTI = TypeTable.writeLeafType(ER);
-
-  addUDTSrcLine(Ty, EnumTI);
-
-  return EnumTI;
+  return TypeTable.writeKnownType(ER);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1918,7 +1643,7 @@ struct llvm::ClassInfo {
 
   TypeIndex VShapeTI;
 
-  std::vector<const DIType *> NestedTypes;
+  std::vector<const DICompositeType *> NestedClasses;
 };
 
 void CodeViewDebug::clear() {
@@ -1938,33 +1663,12 @@ void CodeViewDebug::collectMemberInfo(ClassInfo &Info,
     Info.Members.push_back({DDTy, 0});
     return;
   }
-
-  // An unnamed member may represent a nested struct or union. Attempt to
-  // interpret the unnamed member as a DICompositeType possibly wrapped in
-  // qualifier types. Add all the indirect fields to the current record if that
-  // succeeds, and drop the member if that fails.
+  // An unnamed member must represent a nested struct or union. Add all the
+  // indirect fields to the current record.
   assert((DDTy->getOffsetInBits() % 8) == 0 && "Unnamed bitfield member!");
   uint64_t Offset = DDTy->getOffsetInBits();
   const DIType *Ty = DDTy->getBaseType().resolve();
-  bool FullyResolved = false;
-  while (!FullyResolved) {
-    switch (Ty->getTag()) {
-    case dwarf::DW_TAG_const_type:
-    case dwarf::DW_TAG_volatile_type:
-      // FIXME: we should apply the qualifier types to the indirect fields
-      // rather than dropping them.
-      Ty = cast<DIDerivedType>(Ty)->getBaseType().resolve();
-      break;
-    default:
-      FullyResolved = true;
-      break;
-    }
-  }
-
-  const DICompositeType *DCTy = dyn_cast<DICompositeType>(Ty);
-  if (!DCTy)
-    return;
-
+  const DICompositeType *DCTy = cast<DICompositeType>(Ty);
   ClassInfo NestedInfo = collectClassInfo(DCTy);
   for (const ClassInfo::MemberInfo &IndirectField : NestedInfo.Members)
     Info.Members.push_back(
@@ -1990,42 +1694,19 @@ ClassInfo CodeViewDebug::collectClassInfo(const DICompositeType *Ty) {
       } else if (DDTy->getTag() == dwarf::DW_TAG_pointer_type &&
                  DDTy->getName() == "__vtbl_ptr_type") {
         Info.VShapeTI = getTypeIndex(DDTy);
-      } else if (DDTy->getTag() == dwarf::DW_TAG_typedef) {
-        Info.NestedTypes.push_back(DDTy);
       } else if (DDTy->getTag() == dwarf::DW_TAG_friend) {
         // Ignore friend members. It appears that MSVC emitted info about
         // friends in the past, but modern versions do not.
       }
     } else if (auto *Composite = dyn_cast<DICompositeType>(Element)) {
-      Info.NestedTypes.push_back(Composite);
+      Info.NestedClasses.push_back(Composite);
     }
     // Skip other unrecognized kinds of elements.
   }
   return Info;
 }
 
-static bool shouldAlwaysEmitCompleteClassType(const DICompositeType *Ty) {
-  // This routine is used by lowerTypeClass and lowerTypeUnion to determine
-  // if a complete type should be emitted instead of a forward reference.
-  return Ty->getName().empty() && Ty->getIdentifier().empty() &&
-      !Ty->isForwardDecl();
-}
-
 TypeIndex CodeViewDebug::lowerTypeClass(const DICompositeType *Ty) {
-  // Emit the complete type for unnamed structs.  C++ classes with methods
-  // which have a circular reference back to the class type are expected to
-  // be named by the front-end and should not be "unnamed".  C unnamed
-  // structs should not have circular references.
-  if (shouldAlwaysEmitCompleteClassType(Ty)) {
-    // If this unnamed complete type is already in the process of being defined
-    // then the description of the type is malformed and cannot be emitted
-    // into CodeView correctly so report a fatal error.
-    auto I = CompleteTypeIndices.find(Ty);
-    if (I != CompleteTypeIndices.end() && I->second == TypeIndex())
-      report_fatal_error("cannot debug circular reference to unnamed type");
-    return getCompleteTypeIndex(Ty);
-  }
-
   // First, construct the forward decl.  Don't look into Ty to compute the
   // forward decl options, since it might not be available in all TUs.
   TypeRecordKind Kind = getRecordKind(Ty);
@@ -2034,7 +1715,7 @@ TypeIndex CodeViewDebug::lowerTypeClass(const DICompositeType *Ty) {
   std::string FullName = getFullyQualifiedName(Ty);
   ClassRecord CR(Kind, 0, CO, TypeIndex(), TypeIndex(), TypeIndex(), 0,
                  FullName, Ty->getIdentifier());
-  TypeIndex FwdDeclTI = TypeTable.writeLeafType(CR);
+  TypeIndex FwdDeclTI = TypeTable.writeKnownType(CR);
   if (!Ty->isForwardDecl())
     DeferredCompleteTypes.push_back(Ty);
   return FwdDeclTI;
@@ -2060,25 +1741,26 @@ TypeIndex CodeViewDebug::lowerCompleteTypeClass(const DICompositeType *Ty) {
 
   ClassRecord CR(Kind, FieldCount, CO, FieldTI, TypeIndex(), VShapeTI,
                  SizeInBytes, FullName, Ty->getIdentifier());
-  TypeIndex ClassTI = TypeTable.writeLeafType(CR);
+  TypeIndex ClassTI = TypeTable.writeKnownType(CR);
 
-  addUDTSrcLine(Ty, ClassTI);
+  if (const auto *File = Ty->getFile()) {
+    StringIdRecord SIDR(TypeIndex(0x0), getFullFilepath(File));
+    TypeIndex SIDI = TypeTable.writeKnownType(SIDR);
+    UdtSourceLineRecord USLR(ClassTI, SIDI, Ty->getLine());
+    TypeTable.writeKnownType(USLR);
+  }
 
-  addToUDTs(Ty);
+  addToUDTs(Ty, ClassTI);
 
   return ClassTI;
 }
 
 TypeIndex CodeViewDebug::lowerTypeUnion(const DICompositeType *Ty) {
-  // Emit the complete type for unnamed unions.
-  if (shouldAlwaysEmitCompleteClassType(Ty))
-    return getCompleteTypeIndex(Ty);
-
   ClassOptions CO =
       ClassOptions::ForwardReference | getCommonClassOptions(Ty);
   std::string FullName = getFullyQualifiedName(Ty);
   UnionRecord UR(0, CO, TypeIndex(), 0, FullName, Ty->getIdentifier());
-  TypeIndex FwdDeclTI = TypeTable.writeLeafType(UR);
+  TypeIndex FwdDeclTI = TypeTable.writeKnownType(UR);
   if (!Ty->isForwardDecl())
     DeferredCompleteTypes.push_back(Ty);
   return FwdDeclTI;
@@ -2100,11 +1782,14 @@ TypeIndex CodeViewDebug::lowerCompleteTypeUnion(const DICompositeType *Ty) {
 
   UnionRecord UR(FieldCount, CO, FieldTI, SizeInBytes, FullName,
                  Ty->getIdentifier());
-  TypeIndex UnionTI = TypeTable.writeLeafType(UR);
+  TypeIndex UnionTI = TypeTable.writeKnownType(UR);
 
-  addUDTSrcLine(Ty, UnionTI);
+  StringIdRecord SIR(TypeIndex(0x0), getFullFilepath(Ty->getFile()));
+  TypeIndex SIRI = TypeTable.writeKnownType(SIR);
+  UdtSourceLineRecord USLR(UnionTI, SIRI, Ty->getLine());
+  TypeTable.writeKnownType(USLR);
 
-  addToUDTs(Ty);
+  addToUDTs(Ty, UnionTI);
 
   return UnionTI;
 }
@@ -2117,14 +1802,15 @@ CodeViewDebug::lowerRecordFieldList(const DICompositeType *Ty) {
   // list record.
   unsigned MemberCount = 0;
   ClassInfo Info = collectClassInfo(Ty);
-  ContinuationRecordBuilder ContinuationBuilder;
-  ContinuationBuilder.begin(ContinuationRecordKind::FieldList);
+  FieldListRecordBuilder FLBR(TypeTable);
+  FLBR.begin();
 
   // Create base classes.
   for (const DIDerivedType *I : Info.Inheritance) {
     if (I->getFlags() & DINode::FlagVirtual) {
       // Virtual base.
-      unsigned VBPtrOffset = I->getVBPtrOffset();
+      // FIXME: Emit VBPtrOffset when the frontend provides it.
+      unsigned VBPtrOffset = 0;
       // FIXME: Despite the accessor name, the offset is really in bytes.
       unsigned VBTableIndex = I->getOffsetInBits() / 4;
       auto RecordKind = (I->getFlags() & DINode::FlagIndirectVirtualBase) == DINode::FlagIndirectVirtualBase
@@ -2135,16 +1821,14 @@ CodeViewDebug::lowerRecordFieldList(const DICompositeType *Ty) {
           getTypeIndex(I->getBaseType()), getVBPTypeIndex(), VBPtrOffset,
           VBTableIndex);
 
-      ContinuationBuilder.writeMemberType(VBCR);
-      MemberCount++;
+      FLBR.writeMemberType(VBCR);
     } else {
       assert(I->getOffsetInBits() % 8 == 0 &&
              "bases must be on byte boundaries");
       BaseClassRecord BCR(translateAccessFlags(Ty->getTag(), I->getFlags()),
                           getTypeIndex(I->getBaseType()),
                           I->getOffsetInBits() / 8);
-      ContinuationBuilder.writeMemberType(BCR);
-      MemberCount++;
+      FLBR.writeMemberType(BCR);
     }
   }
 
@@ -2158,7 +1842,7 @@ CodeViewDebug::lowerRecordFieldList(const DICompositeType *Ty) {
 
     if (Member->isStaticMember()) {
       StaticDataMemberRecord SDMR(Access, MemberBaseType, MemberName);
-      ContinuationBuilder.writeMemberType(SDMR);
+      FLBR.writeMemberType(SDMR);
       MemberCount++;
       continue;
     }
@@ -2167,7 +1851,7 @@ CodeViewDebug::lowerRecordFieldList(const DICompositeType *Ty) {
     if ((Member->getFlags() & DINode::FlagArtificial) &&
         Member->getName().startswith("_vptr$")) {
       VFPtrRecord VFPR(getTypeIndex(Member->getBaseType()));
-      ContinuationBuilder.writeMemberType(VFPR);
+      FLBR.writeMemberType(VFPR);
       MemberCount++;
       continue;
     }
@@ -2184,12 +1868,12 @@ CodeViewDebug::lowerRecordFieldList(const DICompositeType *Ty) {
       StartBitOffset -= MemberOffsetInBits;
       BitFieldRecord BFR(MemberBaseType, Member->getSizeInBits(),
                          StartBitOffset);
-      MemberBaseType = TypeTable.writeLeafType(BFR);
+      MemberBaseType = TypeTable.writeKnownType(BFR);
     }
     uint64_t MemberOffsetInBytes = MemberOffsetInBits / 8;
     DataMemberRecord DMR(Access, MemberBaseType, MemberOffsetInBytes,
                          MemberName);
-    ContinuationBuilder.writeMemberType(DMR);
+    FLBR.writeMemberType(DMR);
     MemberCount++;
   }
 
@@ -2214,42 +1898,40 @@ CodeViewDebug::lowerRecordFieldList(const DICompositeType *Ty) {
     }
     assert(!Methods.empty() && "Empty methods map entry");
     if (Methods.size() == 1)
-      ContinuationBuilder.writeMemberType(Methods[0]);
+      FLBR.writeMemberType(Methods[0]);
     else {
-      // FIXME: Make this use its own ContinuationBuilder so that
-      // MethodOverloadList can be split correctly.
       MethodOverloadListRecord MOLR(Methods);
-      TypeIndex MethodList = TypeTable.writeLeafType(MOLR);
-
+      TypeIndex MethodList = TypeTable.writeKnownType(MOLR);
       OverloadedMethodRecord OMR(Methods.size(), MethodList, Name);
-      ContinuationBuilder.writeMemberType(OMR);
+      FLBR.writeMemberType(OMR);
     }
   }
 
   // Create nested classes.
-  for (const DIType *Nested : Info.NestedTypes) {
+  for (const DICompositeType *Nested : Info.NestedClasses) {
     NestedTypeRecord R(getTypeIndex(DITypeRef(Nested)), Nested->getName());
-    ContinuationBuilder.writeMemberType(R);
+    FLBR.writeMemberType(R);
     MemberCount++;
   }
 
-  TypeIndex FieldTI = TypeTable.insertRecord(ContinuationBuilder);
+  TypeIndex FieldTI = FLBR.end(true);
   return std::make_tuple(FieldTI, Info.VShapeTI, MemberCount,
-                         !Info.NestedTypes.empty());
+                         !Info.NestedClasses.empty());
 }
 
 TypeIndex CodeViewDebug::getVBPTypeIndex() {
   if (!VBPType.getIndex()) {
     // Make a 'const int *' type.
     ModifierRecord MR(TypeIndex::Int32(), ModifierOptions::Const);
-    TypeIndex ModifiedTI = TypeTable.writeLeafType(MR);
+    TypeIndex ModifiedTI = TypeTable.writeKnownType(MR);
 
     PointerKind PK = getPointerSizeInBytes() == 8 ? PointerKind::Near64
                                                   : PointerKind::Near32;
     PointerMode PM = PointerMode::Pointer;
     PointerOptions PO = PointerOptions::None;
     PointerRecord PR(ModifiedTI, PK, PM, PO, getPointerSizeInBytes());
-    VBPType = TypeTable.writeLeafType(PR);
+
+    VBPType = TypeTable.writeKnownType(PR);
   }
 
   return VBPType;
@@ -2275,16 +1957,6 @@ TypeIndex CodeViewDebug::getTypeIndex(DITypeRef TypeRef, DITypeRef ClassTyRef) {
   return recordTypeIndexForDINode(Ty, TI, ClassTy);
 }
 
-TypeIndex CodeViewDebug::getTypeIndexForReferenceTo(DITypeRef TypeRef) {
-  DIType *Ty = TypeRef.resolve();
-  PointerRecord PR(getTypeIndex(Ty),
-                   getPointerSizeInBytes() == 8 ? PointerKind::Near64
-                                                : PointerKind::Near32,
-                   PointerMode::LValueReference, PointerOptions::None,
-                   Ty->getSizeInBits() / 8);
-  return TypeTable.writeLeafType(PR);
-}
-
 TypeIndex CodeViewDebug::getCompleteTypeIndex(DITypeRef TypeRef) {
   const DIType *Ty = TypeRef.resolve();
 
@@ -2303,7 +1975,9 @@ TypeIndex CodeViewDebug::getCompleteTypeIndex(DITypeRef TypeRef) {
     return getTypeIndex(Ty);
   }
 
-  // Check if we've already translated the complete record type.
+  // Check if we've already translated the complete record type.  Lowering a
+  // complete type should never trigger lowering another complete type, so we
+  // can reuse the hash table lookup result.
   const auto *CTy = cast<DICompositeType>(Ty);
   auto InsertResult = CompleteTypeIndices.insert({CTy, TypeIndex()});
   if (!InsertResult.second)
@@ -2314,16 +1988,13 @@ TypeIndex CodeViewDebug::getCompleteTypeIndex(DITypeRef TypeRef) {
   // Make sure the forward declaration is emitted first. It's unclear if this
   // is necessary, but MSVC does it, and we should follow suit until we can show
   // otherwise.
-  // We only emit a forward declaration for named types.
-  if (!CTy->getName().empty() || !CTy->getIdentifier().empty()) {
-    TypeIndex FwdDeclTI = getTypeIndex(CTy);
+  TypeIndex FwdDeclTI = getTypeIndex(CTy);
 
-    // Just use the forward decl if we don't have complete type info. This
-    // might happen if the frontend is using modules and expects the complete
-    // definition to be emitted elsewhere.
-    if (CTy->isForwardDecl())
-      return FwdDeclTI;
-  }
+  // Just use the forward decl if we don't have complete type info. This might
+  // happen if the frontend is using modules and expects the complete definition
+  // to be emitted elsewhere.
+  if (CTy->isForwardDecl())
+    return FwdDeclTI;
 
   TypeIndex TI;
   switch (CTy->getTag()) {
@@ -2338,11 +2009,7 @@ TypeIndex CodeViewDebug::getCompleteTypeIndex(DITypeRef TypeRef) {
     llvm_unreachable("not a record");
   }
 
-  // Update the type index associated with this CompositeType.  This cannot
-  // use the 'InsertResult' iterator above because it is potentially
-  // invalidated by map insertions which can occur while lowering the class
-  // type above.
-  CompleteTypeIndices[CTy] = TI;
+  InsertResult.first->second = TI;
   return TI;
 }
 
@@ -2366,10 +2033,10 @@ void CodeViewDebug::emitLocalVariableList(ArrayRef<LocalVariable> Locals) {
   for (const LocalVariable &L : Locals)
     if (L.DIVar->isParameter())
       Params.push_back(&L);
-  llvm::sort(Params.begin(), Params.end(),
-             [](const LocalVariable *L, const LocalVariable *R) {
-               return L->DIVar->getArg() < R->DIVar->getArg();
-             });
+  std::sort(Params.begin(), Params.end(),
+            [](const LocalVariable *L, const LocalVariable *R) {
+              return L->DIVar->getArg() < R->DIVar->getArg();
+            });
   for (const LocalVariable *L : Params)
     emitLocalVariable(*L);
 
@@ -2397,9 +2064,7 @@ void CodeViewDebug::emitLocalVariable(const LocalVariable &Var) {
     Flags |= LocalSymFlags::IsOptimizedOut;
 
   OS.AddComment("TypeIndex");
-  TypeIndex TI = Var.UseReferenceType
-                     ? getTypeIndexForReferenceTo(Var.DIVar->getType())
-                     : getCompleteTypeIndex(Var.DIVar->getType());
+  TypeIndex TI = getCompleteTypeIndex(Var.DIVar->getType());
   OS.EmitIntValue(TI.getIndex(), 4);
   OS.AddComment("Flags");
   OS.EmitIntValue(static_cast<uint16_t>(Flags), 2);
@@ -2459,156 +2124,19 @@ void CodeViewDebug::emitLocalVariable(const LocalVariable &Var) {
   }
 }
 
-void CodeViewDebug::emitLexicalBlockList(ArrayRef<LexicalBlock *> Blocks,
-                                         const FunctionInfo& FI) {
-  for (LexicalBlock *Block : Blocks)
-    emitLexicalBlock(*Block, FI);
-}
-
-/// Emit an S_BLOCK32 and S_END record pair delimiting the contents of a
-/// lexical block scope.
-void CodeViewDebug::emitLexicalBlock(const LexicalBlock &Block,
-                                     const FunctionInfo& FI) {
-  MCSymbol *RecordBegin = MMI->getContext().createTempSymbol(),
-           *RecordEnd   = MMI->getContext().createTempSymbol();
-
-  // Lexical block symbol record.
-  OS.AddComment("Record length");
-  OS.emitAbsoluteSymbolDiff(RecordEnd, RecordBegin, 2);   // Record Length
-  OS.EmitLabel(RecordBegin);
-  OS.AddComment("Record kind: S_BLOCK32");
-  OS.EmitIntValue(SymbolKind::S_BLOCK32, 2);              // Record Kind
-  OS.AddComment("PtrParent");
-  OS.EmitIntValue(0, 4);                                  // PtrParent
-  OS.AddComment("PtrEnd");
-  OS.EmitIntValue(0, 4);                                  // PtrEnd
-  OS.AddComment("Code size");
-  OS.emitAbsoluteSymbolDiff(Block.End, Block.Begin, 4);   // Code Size
-  OS.AddComment("Function section relative address");
-  OS.EmitCOFFSecRel32(Block.Begin, /*Offset=*/0);         // Func Offset
-  OS.AddComment("Function section index");
-  OS.EmitCOFFSectionIndex(FI.Begin);                      // Func Symbol
-  OS.AddComment("Lexical block name");
-  emitNullTerminatedSymbolName(OS, Block.Name);           // Name
-  OS.EmitLabel(RecordEnd);
-
-  // Emit variables local to this lexical block.
-  emitLocalVariableList(Block.Locals);
-
-  // Emit lexical blocks contained within this block.
-  emitLexicalBlockList(Block.Children, FI);
-
-  // Close the lexical block scope.
-  OS.AddComment("Record length");
-  OS.EmitIntValue(2, 2);                                  // Record Length
-  OS.AddComment("Record kind: S_END");
-  OS.EmitIntValue(SymbolKind::S_END, 2);                  // Record Kind
-}
-
-/// Convenience routine for collecting lexical block information for a list
-/// of lexical scopes.
-void CodeViewDebug::collectLexicalBlockInfo(
-        SmallVectorImpl<LexicalScope *> &Scopes,
-        SmallVectorImpl<LexicalBlock *> &Blocks,
-        SmallVectorImpl<LocalVariable> &Locals) {
-  for (LexicalScope *Scope : Scopes)
-    collectLexicalBlockInfo(*Scope, Blocks, Locals);
-}
-
-/// Populate the lexical blocks and local variable lists of the parent with
-/// information about the specified lexical scope.
-void CodeViewDebug::collectLexicalBlockInfo(
-    LexicalScope &Scope,
-    SmallVectorImpl<LexicalBlock *> &ParentBlocks,
-    SmallVectorImpl<LocalVariable> &ParentLocals) {
-  if (Scope.isAbstractScope())
-    return;
-
-  auto LocalsIter = ScopeVariables.find(&Scope);
-  if (LocalsIter == ScopeVariables.end()) {
-    // This scope does not contain variables and can be eliminated.
-    collectLexicalBlockInfo(Scope.getChildren(), ParentBlocks, ParentLocals);
-    return;
-  }
-  SmallVectorImpl<LocalVariable> &Locals = LocalsIter->second;
-
-  const DILexicalBlock *DILB = dyn_cast<DILexicalBlock>(Scope.getScopeNode());
-  if (!DILB) {
-    // This scope is not a lexical block and can be eliminated, but keep any
-    // local variables it contains.
-    ParentLocals.append(Locals.begin(), Locals.end());
-    collectLexicalBlockInfo(Scope.getChildren(), ParentBlocks, ParentLocals);
-    return;
-  }
-
-  const SmallVectorImpl<InsnRange> &Ranges = Scope.getRanges();
-  if (Ranges.size() != 1 || !getLabelAfterInsn(Ranges.front().second)) {
-    // This lexical block scope has too many address ranges to represent in the
-    // current CodeView format or does not have a valid address range.
-    // Eliminate this lexical scope and promote any locals it contains to the
-    // parent scope.
-    //
-    // For lexical scopes with multiple address ranges you may be tempted to
-    // construct a single range covering every instruction where the block is
-    // live and everything in between.  Unfortunately, Visual Studio only
-    // displays variables from the first matching lexical block scope.  If the
-    // first lexical block contains exception handling code or cold code which
-    // is moved to the bottom of the routine creating a single range covering
-    // nearly the entire routine, then it will hide all other lexical blocks
-    // and the variables they contain.
-    //
-    ParentLocals.append(Locals.begin(), Locals.end());
-    collectLexicalBlockInfo(Scope.getChildren(), ParentBlocks, ParentLocals);
-    return;
-  }
-
-  // Create a new CodeView lexical block for this lexical scope.  If we've
-  // seen this DILexicalBlock before then the scope tree is malformed and
-  // we can handle this gracefully by not processing it a second time.
-  auto BlockInsertion = CurFn->LexicalBlocks.insert({DILB, LexicalBlock()});
-  if (!BlockInsertion.second)
-    return;
-
-  // Create a lexical block containing the local variables and collect the
-  // the lexical block information for the children.
-  const InsnRange &Range = Ranges.front();
-  assert(Range.first && Range.second);
-  LexicalBlock &Block = BlockInsertion.first->second;
-  Block.Begin = getLabelBeforeInsn(Range.first);
-  Block.End = getLabelAfterInsn(Range.second);
-  assert(Block.Begin && "missing label for scope begin");
-  assert(Block.End && "missing label for scope end");
-  Block.Name = DILB->getName();
-  Block.Locals = std::move(Locals);
-  ParentBlocks.push_back(&Block);
-  collectLexicalBlockInfo(Scope.getChildren(), Block.Children, Block.Locals);
-}
-
 void CodeViewDebug::endFunctionImpl(const MachineFunction *MF) {
-  const Function &GV = MF->getFunction();
-  assert(FnDebugInfo.count(&GV));
-  assert(CurFn == FnDebugInfo[&GV].get());
+  const Function *GV = MF->getFunction();
+  assert(FnDebugInfo.count(GV));
+  assert(CurFn == &FnDebugInfo[GV]);
 
-  collectVariableInfo(GV.getSubprogram());
-
-  // Build the lexical block structure to emit for this routine.
-  if (LexicalScope *CFS = LScopes.getCurrentFunctionScope())
-    collectLexicalBlockInfo(*CFS, CurFn->ChildBlocks, CurFn->Locals);
-
-  // Clear the scope and variable information from the map which will not be
-  // valid after we have finished processing this routine.  This also prepares
-  // the map for the subsequent routine.
-  ScopeVariables.clear();
+  collectVariableInfo(GV->getSubprogram());
 
   // Don't emit anything if we don't have any line tables.
-  // Thunks are compiler-generated and probably won't have source correlation.
-  if (!CurFn->HaveLineInfo && !GV.getSubprogram()->isThunk()) {
-    FnDebugInfo.erase(&GV);
+  if (!CurFn->HaveLineInfo) {
+    FnDebugInfo.erase(GV);
     CurFn = nullptr;
     return;
   }
-
-  CurFn->Annotations = MF->getCodeViewAnnotations();
 
   CurFn->End = Asm->getFunctionEnd();
 
@@ -2618,8 +2146,8 @@ void CodeViewDebug::endFunctionImpl(const MachineFunction *MF) {
 void CodeViewDebug::beginInstruction(const MachineInstr *MI) {
   DebugHandlerBase::beginInstruction(MI);
 
-  // Ignore DBG_VALUE and DBG_LABEL locations and function prologue.
-  if (!Asm || !CurFn || MI->isDebugInstr() ||
+  // Ignore DBG_VALUE locations and function prologue.
+  if (!Asm || !CurFn || MI->isDebugValue() ||
       MI->getFlag(MachineInstr::FrameSetup))
     return;
 
@@ -2628,8 +2156,6 @@ void CodeViewDebug::beginInstruction(const MachineInstr *MI) {
   DebugLoc DL = MI->getDebugLoc();
   if (!DL && MI->getParent() != PrevInstBB) {
     for (const auto &NextMI : *MI->getParent()) {
-      if (NextMI.isDebugInstr())
-        continue;
       DL = NextMI.getDebugLoc();
       if (DL)
         break;
@@ -2661,11 +2187,8 @@ void CodeViewDebug::endCVSubsection(MCSymbol *EndLabel) {
 }
 
 void CodeViewDebug::emitDebugInfoForUDTs(
-    ArrayRef<std::pair<std::string, const DIType *>> UDTs) {
-  for (const auto &UDT : UDTs) {
-    const DIType *T = UDT.second;
-    assert(shouldEmitUdt(T));
-
+    ArrayRef<std::pair<std::string, TypeIndex>> UDTs) {
+  for (const std::pair<std::string, codeview::TypeIndex> &UDT : UDTs) {
     MCSymbol *UDTRecordBegin = MMI->getContext().createTempSymbol(),
              *UDTRecordEnd = MMI->getContext().createTempSymbol();
     OS.AddComment("Record length");
@@ -2676,7 +2199,7 @@ void CodeViewDebug::emitDebugInfoForUDTs(
     OS.EmitIntValue(unsigned(SymbolKind::S_UDT), 2);
 
     OS.AddComment("Type");
-    OS.EmitIntValue(getCompleteTypeIndex(T).getIndex(), 4);
+    OS.EmitIntValue(UDT.second.getIndex(), 4);
 
     emitNullTerminatedSymbolName(OS, UDT.first);
     OS.EmitLabel(UDTRecordEnd);
@@ -2754,7 +2277,6 @@ void CodeViewDebug::emitDebugInfoForGlobal(const DIGlobalVariable *DIGV,
   // FIXME: Thread local data, etc
   MCSymbol *DataBegin = MMI->getContext().createTempSymbol(),
            *DataEnd = MMI->getContext().createTempSymbol();
-  const unsigned FixedLengthOfThisRecord = 12;
   OS.AddComment("Record length");
   OS.emitAbsoluteSymbolDiff(DataEnd, DataBegin, 2);
   OS.EmitLabel(DataBegin);
@@ -2782,6 +2304,6 @@ void CodeViewDebug::emitDebugInfoForGlobal(const DIGlobalVariable *DIGV,
   OS.AddComment("Segment");
   OS.EmitCOFFSectionIndex(GVSym);
   OS.AddComment("Name");
-  emitNullTerminatedSymbolName(OS, DIGV->getName(), FixedLengthOfThisRecord);
+  emitNullTerminatedSymbolName(OS, DIGV->getName());
   OS.EmitLabel(DataEnd);
 }

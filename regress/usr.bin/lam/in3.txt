@@ -1,7 +1,0 @@
-123456789
-ascii
-truncate
-end
-end
-and three
-three only

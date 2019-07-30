@@ -1,4 +1,4 @@
-/*	$OpenBSD: small.c,v 1.11 2019/05/16 12:44:18 florian Exp $	*/
+/*	$OpenBSD: small.c,v 1.9 2017/01/21 08:33:07 krw Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*

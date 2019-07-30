@@ -34,9 +34,11 @@ to the test script.
 use parent qw/ Exporter /;
 require XSLoader;
 
-our $VERSION = '0.16';
+use vars qw/ $VERSION @EXPORT /;
 
-our @EXPORT = (qw/
+$VERSION = '0.14';
+
+@EXPORT = (qw/
 	   T_SV
 	   T_SVREF
 	   T_SVREF_REFCOUNT_FIXED

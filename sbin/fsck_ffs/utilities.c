@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.52 2019/02/06 13:26:13 millert Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.51 2015/10/15 03:10:05 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -494,7 +494,7 @@ getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 			break;
 		len = strlen(namebuf);
 		cp -= len;
-		memmove(cp, namebuf, (size_t)len);
+		memcpy(cp, namebuf, (size_t)len);
 		*--cp = '/';
 		if (cp < &namebuf[MAXNAMLEN])
 			break;
@@ -503,7 +503,7 @@ getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 	busy = 0;
 	if (ino != ROOTINO)
 		*--cp = '?';
-	memmove(namebuf, cp, (size_t)(&namebuf[PATH_MAX] - cp));
+	memcpy(namebuf, cp, (size_t)(&namebuf[PATH_MAX] - cp));
 }
 
 /*ARGSUSED*/

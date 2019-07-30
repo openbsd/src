@@ -13,6 +13,7 @@
 
 // Support functions for the no-exceptions libc++ library
 
+#include "config.h"
 #include "cxxabi.h"
 
 #include <exception>        // for std::terminate
@@ -20,6 +21,8 @@
 #include "cxa_handlers.hpp"
 
 namespace __cxxabiv1 {
+
+#pragma GCC visibility push(default)
 
 extern "C" {
 
@@ -52,9 +55,6 @@ __cxa_uncaught_exceptions() throw() { return 0; }
 
 }  // extern "C"
 
-// provide dummy implementations for the 'no exceptions' case.
-uint64_t __getExceptionClass  (const _Unwind_Exception*)           { return 0; }
-void     __setExceptionClass  (      _Unwind_Exception*, uint64_t) {}
-bool     __isOurExceptionClass(const _Unwind_Exception*)           { return false; }
+#pragma GCC visibility pop
 
 }  // abi

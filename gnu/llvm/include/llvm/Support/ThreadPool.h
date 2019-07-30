@@ -14,7 +14,6 @@
 #ifndef LLVM_SUPPORT_THREAD_POOL_H
 #define LLVM_SUPPORT_THREAD_POOL_H
 
-#include "llvm/Config/llvm-config.h"
 #include "llvm/Support/thread.h"
 
 #include <future>
@@ -39,8 +38,8 @@ public:
   using TaskTy = std::function<void()>;
   using PackagedTaskTy = std::packaged_task<void()>;
 
-  /// Construct a pool with the number of threads found by
-  /// hardware_concurrency().
+  /// Construct a pool with the number of core available on the system (or
+  /// whatever the value returned by std::thread::hardware_concurrency() is).
   ThreadPool();
 
   /// Construct a pool of \p ThreadCount threads

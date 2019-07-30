@@ -1,12 +1,18 @@
-# $OpenBSD: Makefile,v 1.3 2019/03/05 09:44:40 jsg Exp $
+# $OpenBSD: Makefile,v 1.1 2017/10/04 20:57:09 patrick Exp $
 
 LIB=	LLVMBinaryFormat
+NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/BinaryFormat
 
-SRCS+=	Dwarf.cpp \
-	Magic.cpp \
-	Wasm.cpp
+.include <bsd.own.mk>
+SRCS=	Dwarf.cpp \
+	Magic.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/BinaryFormat
+
+install:
+	@# Nothing here so far ...
+
+.include <bsd.lib.mk>

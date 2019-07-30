@@ -9,7 +9,6 @@ BEGIN {
 }
 
 use Test::More tests => 6;
-BEGIN { push @INC, '.' }
 use t::Watchdog;
 
 my @one = Time::HiRes::gettimeofday();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.27 2018/05/02 02:24:55 visa Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.25 2017/12/30 20:47:00 guenther Exp $	*/
 /*	$NetBSD: cd9660_lookup.c,v 1.18 1997/05/08 16:19:59 mycroft Exp $	*/
 
 /*-
@@ -122,6 +122,7 @@ cd9660_lookup(v)
 	struct ucred *cred = cnp->cn_cred;
 	int flags;
 	int nameiop = cnp->cn_nameiop;
+	struct proc *p = cnp->cn_proc;
 
 	cnp->cn_flags &= ~PDIRUNLOCK;
 	flags = cnp->cn_flags;
@@ -375,17 +376,17 @@ found:
 	 */
 	if (flags & ISDOTDOT) {
 		brelse(bp);
-		VOP_UNLOCK(pdp);	/* race to get the inode */
+		VOP_UNLOCK(pdp, p);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
 		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
 			    dp->i_ino != ino, NULL);
 		if (error) {
-			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
+			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN)) {
-			if ((error = vn_lock(pdp, LK_EXCLUSIVE))) {
+			if ((error = vn_lock(pdp, LK_EXCLUSIVE, p))) {
 				vput(tdp);
 				return (error);
 			}
@@ -403,7 +404,7 @@ found:
 		if (error)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN)) {
-			VOP_UNLOCK(pdp);
+			VOP_UNLOCK(pdp, p);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		*vpp = tdp;

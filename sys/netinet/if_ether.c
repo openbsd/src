@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.239 2019/06/13 08:15:26 claudio Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.234 2018/03/13 16:42:22 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -67,9 +67,8 @@
 struct llinfo_arp {
 	LIST_ENTRY(llinfo_arp)	 la_list;
 	struct rtentry		*la_rt;		/* backpointer to rtentry */
+	long			 la_asked;	/* last time we QUERIED */
 	struct mbuf_list	 la_ml;		/* packet hold queue */
-	time_t			 la_refreshed;	/* when was refresh sent */
-	int			 la_asked;	/* number of queries sent */
 };
 #define LA_HOLD_QUEUE 10
 #define LA_HOLD_TOTAL 100
@@ -87,8 +86,7 @@ struct rtentry *arplookup(struct in_addr *, int, int, unsigned int);
 void in_arpinput(struct ifnet *, struct mbuf *);
 void in_revarpinput(struct ifnet *, struct mbuf *);
 int arpcache(struct ifnet *, struct ether_arp *, struct rtentry *);
-void arpreply(struct ifnet *, struct mbuf *, struct in_addr *, uint8_t *,
-    unsigned int);
+void arpreply(struct ifnet *, struct mbuf *, struct in_addr *, uint8_t *);
 
 struct niqueue arpinq = NIQUEUE_INITIALIZER(50, NETISR_ARP);
 
@@ -120,7 +118,7 @@ arptimer(void *arg)
 	LIST_FOREACH_SAFE(la, &arp_list, la_list, nla) {
 		struct rtentry *rt = la->la_rt;
 
-		if (rt->rt_expire && rt->rt_expire < time_uptime)
+		if (rt->rt_expire && rt->rt_expire <= time_uptime)
 			arptfree(rt); /* timer has expired; clear */
 	}
 	NET_UNLOCK();
@@ -131,6 +129,7 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
+	struct ifaddr *ifa;
 
 	if (!arpinit_done) {
 		static struct timeout arptimer_to;
@@ -140,22 +139,26 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		    IPL_SOFTNET, 0, "arp", NULL);
 
 		timeout_set_proc(&arptimer_to, arptimer, &arptimer_to);
-		timeout_add_sec(&arptimer_to, arpt_prune);
+		timeout_add_sec(&arptimer_to, 1);
 	}
 
-	if (ISSET(rt->rt_flags,
-	    RTF_GATEWAY|RTF_BROADCAST|RTF_MULTICAST|RTF_MPLS))
+	if (ISSET(rt->rt_flags, RTF_GATEWAY|RTF_BROADCAST|RTF_MULTICAST))
 		return;
 
 	switch (req) {
 
 	case RTM_ADD:
-		if (rt->rt_flags & RTF_CLONING) {
-			rt->rt_expire = 0;
-			break;
+		if (rt->rt_flags & RTF_CLONING ||
+		    ((rt->rt_flags & (RTF_LLINFO | RTF_LOCAL)) && !la)) {
+			/*
+			 * Give this route an expiration time, even though
+			 * it's a "permanent" route, so that routes cloned
+			 * from it do not need their expiration time set.
+			 */
+			rt->rt_expire = time_uptime;
+			if ((rt->rt_flags & RTF_CLONING) != 0)
+				break;
 		}
-		if ((rt->rt_flags & RTF_LOCAL) && !la)
-			rt->rt_expire = 0;
 		/*
 		 * Announce a new entry if requested or warn the user
 		 * if another station has this IP address.
@@ -175,7 +178,7 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		}
 		satosdl(gate)->sdl_type = ifp->if_type;
 		satosdl(gate)->sdl_index = ifp->if_index;
-		if (la != NULL)
+		if (la != 0)
 			break; /* This happens on a route change */
 		/*
 		 * Case 2:  This route may come from cloning, or a manual route
@@ -191,9 +194,18 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		ml_init(&la->la_ml);
 		la->la_rt = rt;
 		rt->rt_flags |= RTF_LLINFO;
-		if ((rt->rt_flags & RTF_LOCAL) == 0)
-			rt->rt_expire = time_uptime;
 		LIST_INSERT_HEAD(&arp_list, la, la_list);
+
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+			if ((ifa->ifa_addr->sa_family == AF_INET) &&
+			    ifatoia(ifa)->ia_addr.sin_addr.s_addr ==
+			    satosin(rt_key(rt))->sin_addr.s_addr)
+				break;
+		}
+		if (ifa) {
+			KASSERT(ifa == rt->rt_ifa);
+			rt->rt_expire = 0;
+		}
 		break;
 
 	case RTM_DELETE:
@@ -233,7 +245,7 @@ arprequest(struct ifnet *ifp, u_int32_t *sip, u_int32_t *tip, u_int8_t *enaddr)
 	m->m_pkthdr.len = sizeof(*ea);
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 	m->m_pkthdr.pf.prio = ifp->if_llprio;
-	m_align(m, sizeof(*ea));
+	MH_ALIGN(m, sizeof(*ea));
 	ea = mtod(m, struct ether_arp *);
 	eh = (struct ether_header *)sa.sa_data;
 	memset(ea, 0, sizeof(*ea));
@@ -255,15 +267,11 @@ arprequest(struct ifnet *ifp, u_int32_t *sip, u_int32_t *tip, u_int8_t *enaddr)
 }
 
 void
-arpreply(struct ifnet *ifp, struct mbuf *m, struct in_addr *sip, uint8_t *eaddr,
-    unsigned int rdomain)
+arpreply(struct ifnet *ifp, struct mbuf *m, struct in_addr *sip, uint8_t *eaddr)
 {
 	struct ether_header *eh;
 	struct ether_arp *ea;
 	struct sockaddr sa;
-
-	m_resethdr(m);
-	m->m_pkthdr.ph_rtableid = rdomain;
 
 	ea = mtod(m, struct ether_arp *);
 	ea->arp_op = htons(ARPOP_REPLY);
@@ -301,7 +309,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
     struct sockaddr *dst, u_char *desten)
 {
 	struct arpcom *ac = (struct arpcom *)ifp;
-	struct llinfo_arp *la;
+	struct llinfo_arp *la = NULL;
 	struct sockaddr_dl *sdl;
 	struct rtentry *rt = NULL;
 	char addr[INET_ADDRSTRLEN];
@@ -318,7 +326,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	rt = rt_getll(rt0);
 
 	if (ISSET(rt->rt_flags, RTF_REJECT) &&
-	    (rt->rt_expire == 0 || rt->rt_expire > time_uptime )) {
+	    (rt->rt_expire == 0 || time_uptime < rt->rt_expire)) {
 		m_freem(m);
 		return (rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
@@ -339,9 +347,6 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		goto bad;
 	}
 
-	la = (struct llinfo_arp *)rt->rt_llinfo;
-	KASSERT(la != NULL);
-
 	/*
 	 * Check the address family and length is valid, the address
 	 * is resolved; otherwise, try to resolve.
@@ -349,17 +354,6 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	if ((rt->rt_expire == 0 || rt->rt_expire > time_uptime) &&
 	    sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0) {
 		memcpy(desten, LLADDR(sdl), sdl->sdl_alen);
-
-		/* refresh ARP entry when timeout gets close */
-		if (rt->rt_expire != 0 &&
-		    rt->rt_expire - arpt_keep / 8 < time_uptime &&
-		    la->la_refreshed + 30 < time_uptime) {
-			la->la_refreshed = time_uptime;
-			arprequest(ifp,
-			    &satosin(rt->rt_ifa->ifa_addr)->sin_addr.s_addr,
-			    &satosin(dst)->sin_addr.s_addr,
-			    ac->ac_enaddr);
-		}
 		return (0);
 	}
 
@@ -371,7 +365,9 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	 * response yet. Insert mbuf in hold queue if below limit
 	 * if above the limit free the queue without queuing the new packet.
 	 */
-	if (la_hold_total < LA_HOLD_TOTAL) {
+	la = (struct llinfo_arp *)rt->rt_llinfo;
+	KASSERT(la != NULL);
+	if (la_hold_total < LA_HOLD_TOTAL && la_hold_total < nmbclust / 64) {
 		struct mbuf *mh;
 
 		if (ml_len(&la->la_ml) >= LA_HOLD_QUEUE) {
@@ -410,7 +406,6 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 				rt->rt_flags |= RTF_REJECT;
 				rt->rt_expire += arpt_down;
 				la->la_asked = 0;
-				la->la_refreshed = 0;
 				la_hold_total -= ml_purge(&la->la_ml);
 			}
 		}
@@ -579,7 +574,7 @@ in_arpinput(struct ifnet *ifp, struct mbuf *m)
 				goto out;
 			eaddr = LLADDR(satosdl(rt->rt_gateway));
 		}
-		arpreply(ifp, m, &itaddr, eaddr, rdomain);
+		arpreply(ifp, m, &itaddr, eaddr);
 		rtfree(rt);
 		return;
 	}
@@ -664,11 +659,12 @@ arpcache(struct ifnet *ifp, struct ether_arp *ea, struct rtentry *rt)
 
 	/* Notify userland that an ARP resolution has been done. */
 	if (la->la_asked || changed) {
+		KERNEL_LOCK();
 		rtm_send(rt, RTM_RESOLVE, 0, ifp->if_rdomain);
+		KERNEL_UNLOCK();
 	}
 
 	la->la_asked = 0;
-	la->la_refreshed = 0;
 	while ((len = ml_len(&la->la_ml)) != 0) {
 		struct mbuf *mh;
 
@@ -874,9 +870,8 @@ revarprequest(struct ifnet *ifp)
 		return;
 	m->m_len = sizeof(*ea);
 	m->m_pkthdr.len = sizeof(*ea);
-	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 	m->m_pkthdr.pf.prio = ifp->if_llprio;
-	m_align(m, sizeof(*ea));
+	MH_ALIGN(m, sizeof(*ea));
 	ea = mtod(m, struct ether_arp *);
 	eh = (struct ether_header *)sa.sa_data;
 	memset(ea, 0, sizeof(*ea));

@@ -1,11 +1,13 @@
-# $OpenBSD: Makefile,v 1.8 2019/03/05 09:44:40 jsg Exp $
+# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:35 espie Exp $
 
 LIB=	LLVMCore
+NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/IR
 
-SRCS+=	AsmWriter.cpp \
+.include <bsd.own.mk>
+SRCS=	AsmWriter.cpp \
 	Attributes.cpp \
 	AutoUpgrade.cpp \
 	BasicBlock.cpp \
@@ -13,18 +15,17 @@ SRCS+=	AsmWriter.cpp \
 	ConstantFold.cpp \
 	ConstantRange.cpp \
 	Constants.cpp \
-	CoreCore.cpp \
+	Core.cpp \
 	DIBuilder.cpp \
 	DataLayout.cpp \
 	DebugInfo.cpp \
 	DebugInfoMetadata.cpp \
 	DebugLoc.cpp \
-	DiagnosticHandler.cpp \
 	DiagnosticInfo.cpp \
 	DiagnosticPrinter.cpp \
-	DomTreeUpdater.cpp \
 	Dominators.cpp \
 	Function.cpp \
+	GCOV.cpp \
 	GVMaterializer.cpp \
 	Globals.cpp \
 	IRBuilder.cpp \
@@ -47,7 +48,6 @@ SRCS+=	AsmWriter.cpp \
 	PassManager.cpp \
 	PassRegistry.cpp \
 	ProfileSummary.cpp \
-	SafepointIRVerifier.cpp \
 	Statepoint.cpp \
 	Type.cpp \
 	TypeFinder.cpp \
@@ -55,10 +55,8 @@ SRCS+=	AsmWriter.cpp \
 	User.cpp \
 	Value.cpp \
 	ValueSymbolTable.cpp \
+	ValueTypes.cpp \
 	Verifier.cpp
-
-CoreCore.cpp:
-	ln -s ${LLVM_SRCS}/lib/IR/Core.cpp $@
 
 .PATH:	${.CURDIR}/../../../llvm/lib/IR
 
@@ -70,4 +68,7 @@ AttributesCompatFunc.inc: AttributesCompatFunc.td
 		-I${LLVM_SRCS}/include \
 		-o ${.TARGET} ${.ALLSRC}
 
-CLEANFILES+= CoreCore.cpp
+install:
+	@# Nothing here so far ...
+
+.include <bsd.lib.mk>

@@ -4,8 +4,7 @@ use strict;
 use warnings;
 
 use Test::More;
-use lib 't';
-use Util qw[tmpfile monkey_patch set_socket_source];
+use t::Util qw[tmpfile monkey_patch set_socket_source];
 
 use HTTP::Tiny;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.80 2019/03/01 08:13:11 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.73 2018/02/06 22:17:03 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -50,73 +50,6 @@ struct ieee80211_rateset {
 extern const struct ieee80211_rateset ieee80211_std_rateset_11a;
 extern const struct ieee80211_rateset ieee80211_std_rateset_11b;
 extern const struct ieee80211_rateset ieee80211_std_rateset_11g;
-
-/* Index into ieee80211_std_rateset_11n[] array. */
-#define IEEE80211_HT_RATESET_SISO	0
-#define IEEE80211_HT_RATESET_SISO_SGI	1
-#define IEEE80211_HT_RATESET_MIMO2	2
-#define IEEE80211_HT_RATESET_MIMO2_SGI	3
-#define IEEE80211_HT_RATESET_MIMO3	4
-#define IEEE80211_HT_RATESET_MIMO3_SGI	5
-#define IEEE80211_HT_RATESET_MIMO4	6
-#define IEEE80211_HT_RATESET_MIMO4_SGI	7
-#define IEEE80211_HT_NUM_RATESETS	8
-
-/* Maximum number of rates in a HT rateset. */
-#define IEEE80211_HT_RATESET_MAX_NRATES	8
-
-/* Number of MCS indices represented by struct ieee80211_ht_rateset. */
-#define IEEE80211_HT_RATESET_NUM_MCS 32
-
-struct ieee80211_ht_rateset {
-	uint32_t nrates;
-	uint32_t rates[IEEE80211_HT_RATESET_MAX_NRATES]; /* 500 kbit/s units */
-
-	/*
-	 * This bitmask can only express MCS 0 - MCS 31.
-	 * IEEE 802.11 defined 77 HT MCS in total but common hardware
-	 * implementations tend to support MCS index 0 through 31 only.
-	 */
-	uint32_t mcs_mask;
-
-	/* Range of MCS indices represented in this rateset. */
-	int min_mcs;
-	int max_mcs;
-
-	int sgi;
-};
-
-extern const struct ieee80211_ht_rateset ieee80211_std_ratesets_11n[];
-
-/* Index into ieee80211_std_rateset_11ac[] array. */
-#define IEEE80211_VHT_RATESET_SISO		0
-#define IEEE80211_VHT_RATESET_SISO_SGI		1
-#define IEEE80211_VHT_RATESET_MIMO2		2
-#define IEEE80211_VHT_RATESET_MIMO2_SGI		3
-#define IEEE80211_VHT_RATESET_SISO_40		4
-#define IEEE80211_VHT_RATESET_SISO_40_SGI	5
-#define IEEE80211_VHT_RATESET_MIMO2_40		6
-#define IEEE80211_VHT_RATESET_MIMO2_40_SGI	7
-#define IEEE80211_VHT_RATESET_SISO_80		8
-#define IEEE80211_VHT_RATESET_SISO_80_SGI	9
-#define IEEE80211_VHT_RATESET_MIMO2_80		10
-#define IEEE80211_VHT_RATESET_MIMO2_80_SGI	11
-#define IEEE80211_VHT_NUM_RATESETS		12
-
-/* Maximum number of rates in a HT rateset. */
-#define IEEE80211_VHT_RATESET_MAX_NRATES	10
-
-struct ieee80211_vht_rateset {
-	uint32_t nrates;
-	uint32_t rates[IEEE80211_VHT_RATESET_MAX_NRATES]; /* 500 kbit/s units */
-
-	/* Number of spatial streams used by rates in this rateset. */
-	int num_ss;
-
-	int sgi;
-};
-
-extern const struct ieee80211_vht_rateset ieee80211_std_ratesets_11ac[];
 
 enum ieee80211_node_state {
 	IEEE80211_STA_CACHE,	/* cached node */
@@ -335,7 +268,6 @@ struct ieee80211_node {
 	struct ieee80211_rx_ba	ni_rx_ba[IEEE80211_NUM_TID];
 
 	int			ni_txmcs;	/* current MCS used for TX */
-	int			ni_vht_ss;	/* VHT # spatial streams */
 
 	/* others */
 	u_int16_t		ni_associd;	/* assoc response */
@@ -348,7 +280,7 @@ struct ieee80211_node {
 	int			ni_txrate;	/* index to ni_rates[] */
 	int			ni_state;
 
-	u_int32_t		ni_flags;	/* special-purpose state */
+	u_int16_t		ni_flags;	/* special-purpose state */
 #define IEEE80211_NODE_ERP		0x0001
 #define IEEE80211_NODE_QOS		0x0002
 #define IEEE80211_NODE_REKEY		0x0004	/* GTK rekeying in progress */
@@ -365,10 +297,6 @@ struct ieee80211_node {
 #define IEEE80211_NODE_SA_QUERY		0x0800	/* SA Query in progress */
 #define IEEE80211_NODE_SA_QUERY_FAILED	0x1000	/* last SA Query failed */
 #define IEEE80211_NODE_RSN_NEW_PTK	0x2000	/* expecting a new PTK */
-#define IEEE80211_NODE_HT_SGI20		0x4000	/* SGI on 20 MHz negotiated */ 
-#define IEEE80211_NODE_HT_SGI40		0x8000	/* SGI on 40 MHz negotiated */ 
-#define IEEE80211_NODE_VHT		0x10000	/* VHT negotiated */
-#define IEEE80211_NODE_HTCAP		0x20000	/* claims to support HT */
 
 	/* If not NULL, this function gets called when ni_refcnt hits zero. */
 	void			(*ni_unref_cb)(struct ieee80211com *,
@@ -378,17 +306,6 @@ struct ieee80211_node {
 };
 
 RBT_HEAD(ieee80211_tree, ieee80211_node);
-
-struct ieee80211_ess_rbt {
-	RBT_ENTRY(ieee80211_ess_rbt)	 ess_rbt;
-	u_int8_t			 esslen;
-	u_int8_t			 essid[IEEE80211_NWID_LEN];
-	struct ieee80211_node		*ni2;
-	struct ieee80211_node		*ni5;
-	struct ieee80211_node		*ni;
-};
-
-RBT_HEAD(ieee80211_ess_tree, ieee80211_ess_rbt);
 
 static inline void
 ieee80211_node_incref(struct ieee80211_node *ni)
@@ -428,30 +345,13 @@ ieee80211_unref_node(struct ieee80211_node **ni)
 
 /* 
  * Check if the peer supports HT.
- * Require a HT capabilities IE and at least one of the mandatory MCS.
+ * Require at least one of the mandatory MCS.
  * MCS 0-7 are mandatory but some APs have particular MCS disabled.
  */
 static inline int
 ieee80211_node_supports_ht(struct ieee80211_node *ni)
 {
-	return ((ni->ni_flags & IEEE80211_NODE_HTCAP) &&
-	    ni->ni_rxmcs[0] & 0xff);
-}
-
-/* Check if the peer supports HT short guard interval (SGI) on 20 MHz. */
-static inline int
-ieee80211_node_supports_ht_sgi20(struct ieee80211_node *ni)
-{
-	return ieee80211_node_supports_ht(ni) &&
-	    (ni->ni_htcaps & IEEE80211_HTCAP_SGI20);
-}
-
-/* Check if the peer supports HT short guard interval (SGI) on 40 MHz. */
-static inline int
-ieee80211_node_supports_ht_sgi40(struct ieee80211_node *ni)
-{
-	return ieee80211_node_supports_ht(ni) &&
-	    (ni->ni_htcaps & IEEE80211_HTCAP_SGI40);
+	return (ni->ni_rxmcs[0] & 0xff);
 }
 
 struct ieee80211com;
@@ -482,7 +382,7 @@ struct ieee80211_node *
 		const char *, u_int8_t);
 void ieee80211_release_node(struct ieee80211com *,
 		struct ieee80211_node *);
-void ieee80211_free_allnodes(struct ieee80211com *, int);
+void ieee80211_free_allnodes(struct ieee80211com *);
 void ieee80211_iterate_nodes(struct ieee80211com *,
 		ieee80211_iter_func *, void *);
 void ieee80211_clean_cached(struct ieee80211com *);
@@ -491,7 +391,7 @@ void ieee80211_setup_htcaps(struct ieee80211_node *, const uint8_t *,
     uint8_t);
 void ieee80211_clear_htcaps(struct ieee80211_node *);
 int ieee80211_setup_htop(struct ieee80211_node *, const uint8_t *,
-    uint8_t, int);
+    uint8_t);
 int ieee80211_setup_rates(struct ieee80211com *,
 	    struct ieee80211_node *, const u_int8_t *, const u_int8_t *, int);
 int ieee80211_iserp_sta(const struct ieee80211_node *);
@@ -505,9 +405,6 @@ void ieee80211_node_leave(struct ieee80211com *,
 		struct ieee80211_node *);
 int ieee80211_match_bss(struct ieee80211com *,
 		struct ieee80211_node *);
-struct ieee80211_node *ieee80211_node_choose_bss(struct ieee80211com *, int,
-		struct ieee80211_node **);
-void ieee80211_node_join_bss(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_create_ibss(struct ieee80211com* ,
 		struct ieee80211_channel *);
 void ieee80211_notify_dtim(struct ieee80211com *);
@@ -515,9 +412,6 @@ void ieee80211_set_tim(struct ieee80211com *, int, int);
 
 int ieee80211_node_cmp(const struct ieee80211_node *,
 		const struct ieee80211_node *);
-int ieee80211_ess_cmp(const struct ieee80211_ess_rbt *,
-		const struct ieee80211_ess_rbt *);
 RBT_PROTOTYPE(ieee80211_tree, ieee80211_node, ni_node, ieee80211_node_cmp);
-RBT_PROTOTYPE(ieee80211_ess_tree, ieee80211_ess_rbt, ess_rbt, ieee80211_ess_cmp);
 
 #endif /* _NET80211_IEEE80211_NODE_H_ */

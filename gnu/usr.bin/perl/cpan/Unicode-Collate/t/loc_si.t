@@ -42,7 +42,8 @@ $objSi->change(level => 1);
 
 for my $h (0, 1) {
     no warnings 'utf8';
-    my $t = $h ? pack('U', 0xFFFF) : 'z';
+    my $t = $h ? pack('U', 0xFFFF) : "";
+    $objSi->change(highestFFFF => 1) if $h;
 
     ok($objSi->lt("\x{D95}$t", "\x{D96}"));
     ok($objSi->lt("\x{D96}$t", "\x{D82}"));
@@ -54,4 +55,3 @@ for my $h (0, 1) {
     ok($objSi->lt("\x{DA4}$t", "\x{DA6}"));
 }
 
-# 16

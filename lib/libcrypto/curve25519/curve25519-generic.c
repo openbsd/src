@@ -1,4 +1,3 @@
-/*	$OpenBSD: curve25519-generic.c,v 1.2 2019/05/11 15:55:52 tb Exp $ */
 /*
  * Copyright (c) 2015, Google Inc.
  *

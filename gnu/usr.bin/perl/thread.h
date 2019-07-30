@@ -16,7 +16,8 @@
 
 #ifdef WIN32
 #  include <win32thread.h>
-#elif defined(NETWARE)
+#else
+#ifdef NETWARE
 #  include <nw5thread.h>
 #else
 #  ifdef OLD_PTHREADS_API /* Here be dragons. */
@@ -70,6 +71,7 @@
 #    define pthread_mutexattr_default NULL
 #    define pthread_condattr_default  NULL
 #  endif
+#endif	/* NETWARE */
 #endif
 
 #ifndef PTHREAD_CREATE
@@ -145,7 +147,7 @@
     } STMT_END
 
 #define THREAD_CREATE(thr, f)	(thr->self = cthread_fork(f, thr), 0)
-#define THREAD_POST_CREATE(thr)	NOOP
+#define THREAD_POST_CREATE(thr)
 
 #define THREAD_RET_TYPE		any_t
 #define THREAD_RET_CAST(x)	((any_t) x)
@@ -167,12 +169,16 @@
 #ifndef YIELD
 #  ifdef SCHED_YIELD
 #    define YIELD SCHED_YIELD
-#  elif defined(HAS_SCHED_YIELD)
-#    define YIELD sched_yield()
-#  elif defined(HAS_PTHREAD_YIELD)
+#  else
+#    ifdef HAS_SCHED_YIELD
+#      define YIELD sched_yield()
+#    else
+#      ifdef HAS_PTHREAD_YIELD
     /* pthread_yield(NULL) platforms are expected
      * to have #defined YIELD for themselves. */
-#    define YIELD pthread_yield()
+#        define YIELD pthread_yield()
+#      endif
+#    endif
 #  endif
 #endif
 
@@ -372,47 +378,47 @@
 #endif /* USE_ITHREADS */
 
 #ifndef MUTEX_LOCK
-#  define MUTEX_LOCK(m)           NOOP
+#  define MUTEX_LOCK(m)
 #endif
 
 #ifndef MUTEX_UNLOCK
-#  define MUTEX_UNLOCK(m)         NOOP
+#  define MUTEX_UNLOCK(m)
 #endif
 
 #ifndef MUTEX_INIT
-#  define MUTEX_INIT(m)           NOOP
+#  define MUTEX_INIT(m)
 #endif
 
 #ifndef MUTEX_DESTROY
-#  define MUTEX_DESTROY(m)        NOOP
+#  define MUTEX_DESTROY(m)
 #endif
 
 #ifndef COND_INIT
-#  define COND_INIT(c)            NOOP
+#  define COND_INIT(c)
 #endif
 
 #ifndef COND_SIGNAL
-#  define COND_SIGNAL(c)          NOOP
+#  define COND_SIGNAL(c)
 #endif
 
 #ifndef COND_BROADCAST
-#  define COND_BROADCAST(c)       NOOP
+#  define COND_BROADCAST(c)
 #endif
 
 #ifndef COND_WAIT
-#  define COND_WAIT(c, m)         NOOP
+#  define COND_WAIT(c, m)
 #endif
 
 #ifndef COND_DESTROY
-#  define COND_DESTROY(c)         NOOP
+#  define COND_DESTROY(c)
 #endif
 
 #ifndef LOCK_DOLLARZERO_MUTEX
-#  define LOCK_DOLLARZERO_MUTEX   NOOP
+#  define LOCK_DOLLARZERO_MUTEX
 #endif
 
 #ifndef UNLOCK_DOLLARZERO_MUTEX
-#  define UNLOCK_DOLLARZERO_MUTEX NOOP
+#  define UNLOCK_DOLLARZERO_MUTEX
 #endif
 
 /* THR, SET_THR, and dTHR are there for compatibility with old versions */

@@ -3,15 +3,11 @@ package Encode::Encoding;
 # Base class for classes which implement encodings
 use strict;
 use warnings;
-our $VERSION = do { my @r = ( q$Revision: 2.8 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.7 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
-our @CARP_NOT = qw(Encode Encode::Encoder);
+require Encode;
 
-use Carp ();
-use Encode ();
-use Encode::MIME::Name;
-
-use constant DEBUG => !!$ENV{PERL_ENCODE_DEBUG};
+sub DEBUG { 0 }
 
 sub Define {
     my $obj       = shift;
@@ -24,9 +20,12 @@ sub Define {
 
 sub name { return shift->{'Name'} }
 
-sub mime_name {
+sub mime_name{
+    require Encode::MIME::Name;
     return Encode::MIME::Name::get_mime_name(shift->name);
 }
+
+# sub renew { return $_[0] }
 
 sub renew {
     my $self = shift;
@@ -43,7 +42,8 @@ sub renewed { return $_[0]->{renewed} || 0 }
 sub needs_lines { 0 }
 
 sub perlio_ok {
-    return eval { require PerlIO::encoding } ? 1 : 0;
+    eval { require PerlIO::encoding };
+    return $@ ? 0 : 1;
 }
 
 # (Temporary|legacy) methods
@@ -56,12 +56,14 @@ sub fromUnicode { shift->encode(@_) }
 #
 
 sub encode {
+    require Carp;
     my $obj = shift;
     my $class = ref($obj) ? ref($obj) : $obj;
     Carp::croak( $class . "->encode() not defined!" );
 }
 
 sub decode {
+    require Carp;
     my $obj = shift;
     my $class = ref($obj) ? ref($obj) : $obj;
     Carp::croak( $class . "->encode() not defined!" );
@@ -186,6 +188,7 @@ MUST return the string representing the canonical name of the encoding.
 Predefined As:
 
   sub mime_name{
+    require Encode::MIME::Name;
     return Encode::MIME::Name::get_mime_name(shift->name);
   }
 
@@ -223,7 +226,8 @@ unless the value is numeric so return 0 for false.
 Predefined As:
 
   sub perlio_ok { 
-    return eval { require PerlIO::encoding } ? 1 : 0;
+      eval{ require PerlIO::encoding };
+      return $@ ? 0 : 1;
   }
 
 If your encoding does not support PerlIO for some reasons, just;

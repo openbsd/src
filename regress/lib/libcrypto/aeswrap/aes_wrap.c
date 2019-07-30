@@ -1,4 +1,4 @@
-/*	$OpenBSD: aes_wrap.c,v 1.4 2018/07/17 17:06:49 tb Exp $	*/
+/* crypto/aes/aes_wrap.c */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */

@@ -12,8 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "X86ShuffleDecodeConstantPool.h"
 #include "Utils/X86ShuffleDecode.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/IR/Constants.h"
 
 //===----------------------------------------------------------------------===//

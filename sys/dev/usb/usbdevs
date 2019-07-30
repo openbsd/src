@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.700 2019/06/07 16:05:55 jcs Exp $
+$OpenBSD: usbdevs,v 1.683 2018/03/20 07:30:10 kevlo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -138,12 +138,11 @@ vendor MYSON		0x04cf	Myson Technology
 vendor DIGI2		0x04d0	Digi
 vendor ITTCANON		0x04d1	ITT Canon
 vendor ALTEC		0x04d2	Altec Lansing
-vendor MICROCHIP	0x04d8	Microchip Technology, Inc.
+vendor ITUNER		0x04d8	Ituner
 vendor HOLTEK		0x04d9	Holtek
 vendor PANASONIC	0x04da	Panasonic (Matsushita)
 vendor SHARP		0x04dd	Sharp
 vendor IIYAMA		0x04e1	Iiyama
-vendor EXAR		0x04e2	Exar
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor SAMSUNG2		0x04e8	Samsung Electronics
 vendor ANNABOOKS	0x04ed	Annabooks
@@ -576,7 +575,6 @@ vendor LENOVO		0x17ef	Lenovo
 vendor WAVESENSE	0x17f4	WaveSense
 vendor VAISALA		0x1843	VAISALA
 vendor AMIT		0x18c5	AMIT
-vendor GOOGLE		0x18d1	Google
 vendor QCOM		0x18e8	Qcom
 vendor ELV		0x18ef	ELV
 vendor LINKSYS3		0x1915	Linksys
@@ -628,8 +626,7 @@ vendor TPLINK		0x2357	TP-Link
 vendor WMR		0x2405	West Mountain Radio
 vendor TRIPPLITE	0x2478	Tripp-Lite
 vendor ARUBA		0x2626	Aruba
-vendor XIAOMI		0x2717	Xiaomi
-vendor NHJ		0x2770	NHJ
+vendor NHJ		0x2770  NHJ
 vendor ASUSTEK		0x2821	ASUSTeK Computer
 vendor PLANEX		0x2c02	Planex Communications
 vendor LINKINSTRUMENTS	0x3195	Link Instruments
@@ -723,7 +720,6 @@ product ABOCOM XX8		0x4102	XX8
 product ABOCOM XX9		0x4104	XX9
 product ABOCOM WL54		0x6001	WL54
 product ABOCOM RTL8192CU	0x8178	RTL8192CU
-product ABOCOM RTL8188EU	0x8179	RTL8188EU
 product ABOCOM RTL8188CU_1	0x8188	RTL8188CU
 product ABOCOM RTL8188CU_2	0x8189	RTL8188CU
 product ABOCOM XX10		0xabc1	XX10
@@ -1538,7 +1534,6 @@ product DLINK DWA123D1		0x3310	DWA-123 rev D1
 product DLINK DWA137A1		0x3317	DWA-137 rev A1
 product DLINK DWA131E1		0x3319	DWA-131 rev E1
 product DLINK DWA182D1		0x331c	DWA-182 rev D1
-product DLINK DWA171C1		0x331d	DWA-171 rev C1
 product DLINK DWL122		0x3700	DWL-122
 product DLINK DWLG120		0x3701	DWL-G120
 product DLINK DWL120F		0x3702	DWL-120 rev F
@@ -1642,8 +1637,6 @@ product DVICO RT3070		0xb307	RT3070
 product DYNASTREAM ANTDEVBOARD	0x1003	ANT dev board
 product DYNASTREAM ANT2USB	0x1004	ANT2USB
 product DYNASTREAM ANTDEVBOARD2	0x1006	ANT dev board
-product DYNASTREAM ANTUSB2	0x1008	ANTUSB-2 Stick
-product DYNASTREAM ANTUSBM	0x1009	ANTUSB-m Stick
 
 /* EasyDisk products */
 product EASYDISK EASYDISK	0x0005	Flash Disk
@@ -1761,9 +1754,6 @@ product EVOLUTION RCM4_2	0x0303	RCM4 interface
 
 /* Extended Systems products */
 product EXTENDED XTNDACCESS	0x0100	XTNDAccess IrDA
-
-/* Exar products */
-product EXAR XR21V1410		0x1410	XR21V1410
 
 /* Falcom Wireless Communications GmbH products */
 product FALCOM TWIST		0x0001	Twist
@@ -2200,7 +2190,6 @@ product HP R1500G2		0x1fe0	R1500 G2 UPS
 product HP T750G2		0x1fe1	T750 G2 UPS
 product HP 640C			0x2004	DeskJet 640c
 product HP 1020			0x2b17	LaserJet 1020
-product HP LD220		0x3524	LD220
 product HP P1100		0x3102	Photosmart P1100
 product HP 1018			0x4117	LaserJet 1018
 product HP HN210E		0x811c	HN210E Ethernet
@@ -2228,14 +2217,12 @@ product HUAWEI E182		0x1429	HUAWEI Mobile Modem
 product HUAWEI E3372		0x1442	HUAWEI Mobile Modem
 product HUAWEI E161		0x1446	HUAWEI Mobile Modem
 product HUAWEI K3765		0x1465	HUAWEI Mobile K3765
-product HUAWEI K3772		0x14cf	HUAWEI Mobile K3772
 product HUAWEI E1820		0x14ac	HUAWEI Mobile Modem
 product HUAWEI K4510		0x14c5	HUAWEI Mobile Modem
 product HUAWEI K4511		0x14b7	HUAWEI Mobile Modem K4511
 product HUAWEI E353_INIT	0x14fe	HUAWEI Mobile E353 Initial
 product HUAWEI E392_INIT	0x1505	HUAWEI Mobile E392 Initial
 product HUAWEI K3765_INIT	0x1520	HUAWEI Mobile K3765 Initial
-product HUAWEI K3772_INIT	0x1526	HUAWEI Mobile K3772 Initial
 product HUAWEI MU609		0x1573	HUAWEI Mobile ME906 
 product HUAWEI E173S		0x1c05	HUAWEI Mobile E173s
 product HUAWEI E173S_INIT	0x1c0b	HUAWEI Mobile E173s Initial
@@ -2383,9 +2370,9 @@ product IRIVER IFP_5XX		0x1105	iFP-5xx
 /* iTegno products */
 product ITEGNO WM1080A		0x1080	WM1080A
 
-/* Microchip Technology, Inc. products */
-product MICROCHIP USBLCD20x2	0x0002	USB-LCD-20x2
-product MICROCHIP USBLCD256x64	0xc002	USB-LCD-256x64
+/* Ituner (mini-box.com) products */
+product ITUNER USBLCD20x2	0x0002	USB-LCD-20x2
+product ITUNER USBLCD256x64	0xc002	USB-LCD-256x64
 
 /* Jablotron products */
 product JABLOTRON PC60B		0x0001	PC-60B
@@ -2454,7 +2441,6 @@ product KEYSPAN USA18XA_NF	0x0116	USA-18XA serial
 product KEYSPAN USA18XA		0x0117	USA-18XA serial
 product KEYSPAN USA19QW_NF	0x0118	USA-19WQ serial
 product KEYSPAN USA19QW		0x0119	USA-19WQ serial
-product KEYSPAN USA19HS		0x0121	USA-19HS serial
 product KEYSPAN UIA10		0x0201	UIA-10 remote control
 product KEYSPAN UIA11		0x0202	UIA-11 remote control
 
@@ -2584,13 +2570,10 @@ product LOGITECH M4848		0x0301	M4848 mouse
 product LOGITECH PAGESCAN	0x040f	PageScan
 product LOGITECH QUICKCAMWEB	0x0801	QuickCam Web
 product LOGITECH WEBCAMC200	0x0802	Webcam C200
-product LOGITECH WEBCAMC250	0x0804	Webcam C250
 product LOGITECH WEBCAMC500	0x0807	Webcam C500
 product LOGITECH QUICKCAMPRO	0x0810	QuickCam Pro
-product LOGITECH WEBCAMC210	0x0819	Webcam C210
 product LOGITECH WEBCAMC310	0x081b	Webcam C310
 product LOGITECH HDPROC910	0x0821	HD Pro Webcam C910
-product LOGITECH WEBCAMC270	0x0825	Webcam C270
 product LOGITECH QUICKCAMEXP	0x0840	QuickCam Express
 product LOGITECH QUICKCAM	0x0850	QuickCam
 product LOGITECH QUICKCAMNBDLX	0x08a9	QuickCam Notebook Deluxe
@@ -2930,7 +2913,6 @@ product MEI S2000		0x1101	Series 2000
 
 /* Meinberg Funkuhren products */
 product MEINBERG USB5131	0x0301	USB 5131 DCF77 - Radio Clock
-product MEINBERG DCF600USB	0x0302	DCF600USB - Radio Clock
 
 /* Melco, Inc products */
 product MELCO LUATX1		0x0001	LUA-TX Ethernet
@@ -3873,7 +3855,6 @@ product SIERRA AC881U		0x6856	881U
 product SIERRA AC885U		0x6880	885U
 product SIERRA C01SW		0x6890	C01SW
 product SIERRA USB305		0x68a3	USB305
-product SIERRA MC7304		0x68c0	MC7304
 product SIERRA MC8355		0x9013	MC8355
 product SIERRA AIRCARD_340U	0x9051	Aircard 340U
 product SIERRA AIRCARD_770S	0x9053	Aircard 770S
@@ -3945,7 +3926,6 @@ product SILABS DEKTEK_DTAPLUS	0x83d8	DekTec DTA Plus VHF/UHF Booster
 product SILABS KYOCERA_GPS	0x8411	Kyocera GPS
 product SILABS IRZ_SG10		0x8418	IRZ SG-10 GSM/GPRS Modem
 product SILABS BEI_VCP		0x846e	BEI USB Sensor (VCP)
-product SILABS JUNIPER_BX_CONS	0x8470	Juniper BX Console
 product SILABS BALLUFF_RFID	0x8477	Balluff RFID reader
 product SILABS AC_SERV_IBUS	0x85ea	AC-Services IBUS
 product SILABS AC_SERV_CIS	0x85eb	AC-Services CIS-IBUS
@@ -4042,11 +4022,6 @@ product SMC 2206USB		0x0201	EZ Connect Ethernet
 product SMC2 2020HUB		0x2020	Hub
 product SMC2 2504HUB		0x2504	Hub
 product SMC2 2513HUB		0x2513	Hub
-product SMC2 LAN7500		0x7500	LAN7500
-product SMC2 LAN7505		0x7505	LAN7505
-product SMC2 LAN7800		0x7800	LAN7800
-product SMC2 LAN7801		0x7801	LAN7801
-product SMC2 LAN7850		0x7850	LAN7850
 product SMC2 SMSC9500		0x9500	SMSC9500
 product SMC2 SMSC9505		0x9505	SMSC9505
 product SMC2 SMSC9500A		0x9e00	SMSC9500A
@@ -4282,7 +4257,6 @@ product TOSHIBA HSDPA		0x1302	HSDPA
 /* TP-Link products */
 product TPLINK RTL8192CU	0x0100	RTL8192CU
 product TPLINK RTL8812AU	0x0101	RTL8812AU
-product TPLINK RTL8192EU	0x0107	RTL8192EU
 product TPLINK RTL8188EUS	0x010C	RTL8188EUS
 
 /* Trek Technology products */
@@ -4478,9 +4452,6 @@ product WISTRONNEWEB AR5523_2_NF 0x0829	AR5523
 
 /* XIRING products */
 product	XIRING XIMAX		0x0005	Ximax CDC
-
-/* Xiaomi products */
-product	XIAOMI MT7601U		0x4106	MT7601U
 
 /* Xirlink products */
 product XIRLINK IMAGING		0x800d	Imaging Device

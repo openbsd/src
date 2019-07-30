@@ -11,7 +11,7 @@
 #include "MCTargetDesc/SparcMCExpr.h"
 #include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
-#include "llvm/CodeGen/TargetLowering.h"
+#include "llvm/Target/TargetLowering.h"
 
 using namespace llvm;
 

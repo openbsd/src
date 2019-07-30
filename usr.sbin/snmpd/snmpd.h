@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.85 2019/06/11 05:36:32 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.77 2018/02/08 00:21:10 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -31,10 +31,10 @@
 #include <net/pfvar.h>
 #include <net/route.h>
 
-#include <ber.h>
 #include <stdio.h>
 #include <imsg.h>
 
+#include "ber.h"
 #include "snmp.h"
 
 #ifndef nitems
@@ -59,7 +59,7 @@
 #define SNMPD_MAXUSERNAMELEN	32
 #define SNMPD_MAXCONTEXNAMELEN	32
 
-#define SNMP_USM_MAXDIGESTLEN	48
+#define SNMP_USM_DIGESTLEN	12
 #define SNMP_USM_SALTLEN	8
 #define SNMP_USM_KEYLEN		64
 #define SNMP_CIPHER_KEYLEN	16
@@ -404,8 +404,6 @@ struct snmp_message {
 	int			 sm_sock;
 	struct sockaddr_storage	 sm_ss;
 	socklen_t		 sm_slen;
-	int			 sm_sock_tcp;
-	struct event		 sm_sockev;
 	char			 sm_host[HOST_NAME_MAX+1];
 
 	struct sockaddr_storage	 sm_local_ss;
@@ -511,7 +509,6 @@ struct snmp_stats {
 struct address {
 	struct sockaddr_storage	 ss;
 	in_port_t		 port;
-	int			 ipproto;
 
 	TAILQ_ENTRY(address)	 entry;
 
@@ -524,9 +521,7 @@ TAILQ_HEAD(addresslist, address);
 
 struct listen_sock {
 	int				s_fd;
-	int				s_ipproto;
 	struct event			s_ev;
-	struct event			s_evt;
 	TAILQ_ENTRY(listen_sock)	entry;
 };
 TAILQ_HEAD(socklist, listen_sock);
@@ -534,11 +529,7 @@ TAILQ_HEAD(socklist, listen_sock);
 enum usmauth {
 	AUTH_NONE = 0,
 	AUTH_MD5,	/* HMAC-MD5-96, RFC3414 */
-	AUTH_SHA1,	/* HMAC-SHA-96, RFC3414 */
-	AUTH_SHA224,	/* usmHMAC128SHA224AuthProtocol. RFC7860 */
-	AUTH_SHA256,	/* usmHMAC192SHA256AuthProtocol. RFC7860 */
-	AUTH_SHA384,	/* usmHMAC256SHA384AuthProtocol. RFC7860 */
-	AUTH_SHA512	/* usmHMAC384SHA512AuthProtocol. RFC7860 */
+	AUTH_SHA1	/* HMAC-SHA-96, RFC3414 */
 };
 
 #define AUTH_DEFAULT	AUTH_SHA1	/* Default digest */
@@ -619,6 +610,7 @@ extern struct snmpd *snmpd_env;
 /* control.c */
 int		 control_init(struct privsep *, struct control_sock *);
 int		 control_listen(struct control_sock *);
+void		 control_cleanup(struct control_sock *);
 
 /* parse.y */
 struct snmpd	*parse_config(const char *, u_int);
@@ -728,7 +720,6 @@ int		 smi_init(void);
 u_long		 smi_getticks(void);
 void		 smi_mibtree(struct oid *);
 struct oid	*smi_find(struct oid *);
-struct oid	*smi_nfind(struct oid *);
 struct oid	*smi_findkey(char *);
 struct oid	*smi_next(struct oid *);
 struct oid	*smi_foreach(struct oid *, u_int);
@@ -740,7 +731,7 @@ void		 smi_delete(struct oid *);
 int		 smi_insert(struct oid *);
 int		 smi_oid_cmp(struct oid *, struct oid *);
 int		 smi_key_cmp(struct oid *, struct oid *);
-unsigned int	 smi_application(struct ber_element *);
+unsigned long	 smi_application(struct ber_element *);
 void		 smi_debug_elements(struct ber_element *);
 char		*smi_print_element(struct ber_element *);
 
@@ -748,7 +739,7 @@ char		*smi_print_element(struct ber_element *);
 void		 timer_init(void);
 
 /* snmpd.c */
-int		 snmpd_socket_af(struct sockaddr_storage *, in_port_t, int);
+int		 snmpd_socket_af(struct sockaddr_storage *, in_port_t);
 u_long		 snmpd_engine_time(void);
 char		*tohexstr(u_int8_t *, int);
 
@@ -767,7 +758,7 @@ void		 usm_make_report(struct snmp_message *);
 /* proc.c */
 enum privsep_procid
 	    proc_getid(struct privsep_proc *, unsigned int, const char *);
-void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int, int,
+void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int,
 	    int, char **, enum privsep_procid);
 void	 proc_kill(struct privsep *);
 void	 proc_connect(struct privsep *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: name2id.c,v 1.10 2018/06/29 11:45:50 claudio Exp $ */
+/*	$OpenBSD: name2id.c,v 1.9 2009/06/04 04:46:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -41,7 +41,7 @@ TAILQ_HEAD(n2id_labels, n2id_label);
 u_int16_t	 _name2id(struct n2id_labels *, const char *);
 const char	*_id2name(struct n2id_labels *, u_int16_t);
 void		 _unref(struct n2id_labels *, u_int16_t);
-u_int16_t	 _ref(struct n2id_labels *, u_int16_t);
+void		 _ref(struct n2id_labels *, u_int16_t);
 
 struct n2id_labels	rt_labels = TAILQ_HEAD_INITIALIZER(rt_labels);
 struct n2id_labels	pftable_labels = TAILQ_HEAD_INITIALIZER(pftable_labels);
@@ -64,10 +64,10 @@ rtlabel_unref(u_int16_t id)
 	_unref(&rt_labels, id);
 }
 
-u_int16_t
+void
 rtlabel_ref(u_int16_t id)
 {
-	return (_ref(&rt_labels, id));
+	_ref(&rt_labels, id);
 }
 
 u_int16_t
@@ -88,10 +88,10 @@ pftable_unref(u_int16_t id)
 	_unref(&pftable_labels, id);
 }
 
-u_int16_t
+void
 pftable_ref(u_int16_t id)
 {
-	return (_ref(&pftable_labels, id));
+	_ref(&pftable_labels, id);
 }
 
 u_int16_t
@@ -180,20 +180,17 @@ _unref(struct n2id_labels *head, u_int16_t id)
 	}
 }
 
-u_int16_t
+void
 _ref(struct n2id_labels *head, u_int16_t id)
 {
 	struct n2id_label	*label;
 
 	if (id == 0)
-		return (0);
+		return;
 
 	TAILQ_FOREACH(label, head, entry)
 		if (label->id == id) {
 			++label->ref;
-			return (id);
+			break;
 		}
-
-	/* id not found, treat like no id  */
-	return (0);
 }

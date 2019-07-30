@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_mult.c,v 1.13 2018/07/23 18:24:22 tb Exp $ */
+/* $OpenBSD: ec2_mult.c,v 1.9 2017/01/29 17:49:23 beck Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -71,7 +71,6 @@
 
 #include <openssl/err.h>
 
-#include "bn_lcl.h"
 #include "ec_lcl.h"
 
 #ifndef OPENSSL_NO_EC2M
@@ -112,7 +111,7 @@ gf2m_Mdouble(const EC_GROUP *group, BIGNUM *x, BIGNUM *z, BN_CTX *ctx)
 
 	ret = 1;
 
- err:
+err:
 	BN_CTX_end(ctx);
 	return ret;
 }
@@ -156,7 +155,7 @@ gf2m_Madd(const EC_GROUP *group, const BIGNUM *x, BIGNUM *x1, BIGNUM *z1,
 
 	ret = 1;
 
- err:
+err:
 	BN_CTX_end(ctx);
 	return ret;
 }
@@ -244,7 +243,7 @@ gf2m_Mxy(const EC_GROUP *group, const BIGNUM *x, const BIGNUM *y, BIGNUM *x1,
 
 	ret = 2;
 
- err:
+err:
 	BN_CTX_end(ctx);
 	return ret;
 }
@@ -325,18 +324,14 @@ ec_GF2m_montgomery_point_multiply(const EC_GROUP *group, EC_POINT *r,
 	for (; i >= 0; i--) {
 		word = scalar->d[i];
 		while (mask) {
-			if (!BN_swap_ct(word & mask, x1, x2, group->field.top))
-				goto err;
-			if (!BN_swap_ct(word & mask, z1, z2, group->field.top))
-				goto err;
+			BN_consttime_swap(word & mask, x1, x2, group->field.top);
+			BN_consttime_swap(word & mask, z1, z2, group->field.top);
 			if (!gf2m_Madd(group, &point->X, x2, z2, x1, z1, ctx))
 				goto err;
 			if (!gf2m_Mdouble(group, x1, z1, ctx))
 				goto err;
-			if (!BN_swap_ct(word & mask, x1, x2, group->field.top))
-				goto err;
-			if (!BN_swap_ct(word & mask, z1, z2, group->field.top))
-				goto err;
+			BN_consttime_swap(word & mask, x1, x2, group->field.top);
+			BN_consttime_swap(word & mask, z1, z2, group->field.top);
 			mask >>= 1;
 		}
 		mask = BN_TBIT;
@@ -361,7 +356,7 @@ ec_GF2m_montgomery_point_multiply(const EC_GROUP *group, EC_POINT *r,
 
 	ret = 1;
 
- err:
+err:
 	BN_CTX_end(ctx);
 	return ret;
 }
@@ -429,7 +424,7 @@ ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 
 	ret = 1;
 
- err:
+err:
 	EC_POINT_free(p);
 	EC_POINT_free(acc);
 	BN_CTX_free(new_ctx);

@@ -4,8 +4,7 @@ use strict;
 use warnings;
 
 use Test::More qw[no_plan];
-use lib 't';
-use Util    qw[tmpfile rewind $CRLF];
+use t::Util    qw[tmpfile rewind $CRLF];
 use HTTP::Tiny;
 
 {
@@ -15,29 +14,16 @@ use HTTP::Tiny;
 }
 
 {
-    my $fh      = tmpfile();
+    my $body    = join($CRLF, map { sprintf('%x', length $_) . $CRLF . $_ } 'A'..'Z', '') . $CRLF;
+    my $fh      = tmpfile($body);
     my $handle  = HTTP::Tiny::Handle->new(fh => $fh);
-
-    my $exp      = ['A'..'Z'];
-    my $got      = [];
-
-    {
-        my @chunks = @$exp;
-        my $request = {
-          cb => sub { shift @chunks },
-        };
-        $handle->write_chunked_body($request);
-    }
-
-    rewind($fh);
-
-    {
-        my $cb = sub { push @$got, $_[0] };
-        my $response = { headers => {} };
-        $handle->read_chunked_body($cb, $response);
-    }
-
-    is_deeply($got, $exp, "roundtrip chunked chunks w/o trailers");
+    my $exp     = ['A'..'Z'];
+    my $got     = [];
+    my $cb      = sub { push @$got, $_[0] };
+    my $response = { headers => {} };
+    $handle->read_chunked_body($cb, $response);
+    is_deeply($response->{headers}, {}, 'chunked trailers');
+    is_deeply($got, $exp, "chunked chunks");
 }
 
 {
@@ -66,7 +52,7 @@ use HTTP::Tiny;
         is_deeply($response->{headers}, $trailers, 'roundtrip chunked trailers');
     }
 
-    is_deeply($got, $exp, "roundtrip chunked chunks (with trailers)");
+    is_deeply($got, $exp, "roundtrip chunked chunks");
 }
 
 

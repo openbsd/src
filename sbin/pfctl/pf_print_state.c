@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.69 2019/02/02 15:43:18 yasuoka Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.64 2015/01/21 21:50:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -81,17 +81,31 @@ print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
 			printf("<%s>", addr->v.tblname);
 		return;
 	case PF_ADDR_RANGE: {
-		print_addr_str(af, &addr->v.a.addr);
-		printf(" - ");
-		print_addr_str(af, &addr->v.a.mask);
+		char buf[48];
+
+		if (inet_ntop(af, &addr->v.a.addr, buf, sizeof(buf)) == NULL)
+			printf("?");
+		else
+			printf("%s", buf);
+		if (inet_ntop(af, &addr->v.a.mask, buf, sizeof(buf)) == NULL)
+			printf(" - ?");
+		else
+			printf(" - %s", buf);
 		break;
 	}
 	case PF_ADDR_ADDRMASK:
 		if (PF_AZERO(&addr->v.a.addr, AF_INET6) &&
 		    PF_AZERO(&addr->v.a.mask, AF_INET6))
 			printf("any");
-		else
-			print_addr_str(af, &addr->v.a.addr);
+		else {
+			char buf[48];
+
+			if (inet_ntop(af, &addr->v.a.addr, buf,
+			    sizeof(buf)) == NULL)
+				printf("?");
+			else
+				printf("%s", buf);
+		}
 		break;
 	case PF_ADDR_NOROUTE:
 		printf("no-route");
@@ -111,7 +125,7 @@ print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
 	if (addr->type != PF_ADDR_RANGE &&
 	    !(PF_AZERO(&addr->v.a.addr, AF_INET6) &&
 	    PF_AZERO(&addr->v.a.mask, AF_INET6))) {
-		int bits = unmask(&addr->v.a.mask);
+		int bits = unmask(&addr->v.a.mask, af);
 
 		if (bits < (af == AF_INET ? 32 : 128))
 			printf("/%d", bits);
@@ -119,50 +133,44 @@ print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
 }
 
 void
-print_addr_str(sa_family_t af, struct pf_addr *addr)
-{
-	static char buf[48];
-
-	if (inet_ntop(af, addr, buf, sizeof(buf)) == NULL)
-		printf("?");
-	else
-		printf("%s", buf);
-}
-
-void
 print_name(struct pf_addr *addr, sa_family_t af)
 {
-	struct sockaddr_storage	 ss;
-	struct sockaddr_in	*sin;
-	struct sockaddr_in6	*sin6;
-	char			 host[NI_MAXHOST];
+	char host[NI_MAXHOST];
 
-	memset(&ss, 0, sizeof(ss));
-	ss.ss_family = af;
-	if (ss.ss_family == AF_INET) {
-		sin = (struct sockaddr_in *)&ss;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_addr = addr->v4;
-	} else {
-		sin6 = (struct sockaddr_in6 *)&ss;
-		sin6->sin6_len = sizeof(*sin6);
-		sin6->sin6_addr = addr->v6;
+	strlcpy(host, "?", sizeof(host));
+	switch (af) {
+	case AF_INET: {
+		struct sockaddr_in sin;
+
+		memset(&sin, 0, sizeof(sin));
+		sin.sin_len = sizeof(sin);
+		sin.sin_family = AF_INET;
+		sin.sin_addr = addr->v4;
+		getnameinfo((struct sockaddr *)&sin, sin.sin_len,
+		    host, sizeof(host), NULL, 0, NI_NOFQDN);
+		break;
 	}
+	case AF_INET6: {
+		struct sockaddr_in6 sin6;
 
-	if (getnameinfo((struct sockaddr *)&ss, ss.ss_len, host, sizeof(host),
-	    NULL, 0, NI_NOFQDN) != 0)
-		printf("?");
-	else
-		printf("%s", host);
+		memset(&sin6, 0, sizeof(sin6));
+		sin6.sin6_len = sizeof(sin6);
+		sin6.sin6_family = AF_INET6;
+		sin6.sin6_addr = addr->v6;
+		getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
+		    host, sizeof(host), NULL, 0, NI_NOFQDN);
+		break;
+	}
+	}
+	printf("%s", host);
 }
 
 void
 print_host(struct pf_addr *addr, u_int16_t port, sa_family_t af, u_int16_t rdom,
     const char *proto, int opts)
 {
-	struct pf_addr_wrap	 aw;
-	struct servent		*s = NULL;
-	char			 ps[6];
+	struct servent	*s = NULL;
+	char		ps[6];
 
 	if (rdom)
 		printf("(%u) ", ntohs(rdom));
@@ -170,9 +178,16 @@ print_host(struct pf_addr *addr, u_int16_t port, sa_family_t af, u_int16_t rdom,
 	if (opts & PF_OPT_USEDNS)
 		print_name(addr, af);
 	else {
+		struct pf_addr_wrap aw;
+
 		memset(&aw, 0, sizeof(aw));
 		aw.v.a.addr = *addr;
-		memset(&aw.v.a.mask, 0xff, sizeof(aw.v.a.mask));
+		if (af == AF_INET)
+			aw.v.a.mask.addr32[0] = 0xffffffff;
+		else {
+			memset(&aw.v.a.mask, 0xff, sizeof(aw.v.a.mask));
+			af = AF_INET6;
+		}
 		print_addr(&aw, af, opts & PF_OPT_VERBOSE2);
 	}
 
@@ -241,11 +256,6 @@ print_state(struct pfsync_state *s, int opts)
 		    sk->rdomain, pn, opts);
 		printf(")");
 	}
-	if (s->direction == PF_IN && !PF_AZERO(&s->rt_addr, sk->af)) {
-		printf(" {");
-		print_addr_str(sk->af, &s->rt_addr);
-		printf("}");
-	}
 	if (s->direction == PF_OUT || (afto && s->direction == PF_IN))
 		printf(" -> ");
 	else
@@ -259,11 +269,6 @@ print_state(struct pfsync_state *s, int opts)
 		print_host(&sk->addr[idx], sk->port[idx], sk->af,
 		    sk->rdomain, pn, opts);
 		printf(")");
-	}
-	if (s->direction == PF_OUT && !PF_AZERO(&s->rt_addr, nk->af)) {
-		printf(" {");
-		print_addr_str(nk->af, &s->rt_addr);
-		printf("}");
 	}
 
 	printf("    ");
@@ -360,7 +365,7 @@ print_state(struct pfsync_state *s, int opts)
 }
 
 int
-unmask(struct pf_addr *m)
+unmask(struct pf_addr *m, sa_family_t af)
 {
 	int i = 31, j = 0, b = 0;
 	u_int32_t tmp;

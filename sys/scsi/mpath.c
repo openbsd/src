@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.42 2019/02/10 16:42:35 phessler Exp $ */
+/*	$OpenBSD: mpath.c,v 1.41 2015/08/23 01:55:39 tedu Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -189,7 +189,7 @@ mpath_cmd(struct scsi_xfer *xs)
 
 #ifdef DIAGNOSTIC
 	if (d == NULL)
-		panic("mpath_cmd issued against nonexistent device");
+		panic("mpath_cmd issued against nonexistant device");
 #endif
 
 	if (ISSET(xs->flags, SCSI_POLL)) {
@@ -404,7 +404,7 @@ mpath_minphys(struct buf *bp, struct scsi_link *link)
 
 #ifdef DIAGNOSTIC
 	if (d == NULL)
-		panic("mpath_minphys against nonexistent device");
+		panic("mpath_minphys against nonexistant device");
 #endif
 
 	mtx_enter(&d->d_mtx);
@@ -548,7 +548,7 @@ mpath_path_detach(struct mpath_path *p)
 
 #ifdef DIAGNOSTIC
 	if (g == NULL)
-		panic("mpath: detaching a path from a nonexistent bus");
+		panic("mpath: detaching a path from a nonexistant bus");
 #endif
 	d = g->g_dev;
 	p->p_group = NULL;

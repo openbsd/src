@@ -1,76 +1,68 @@
-#	$OpenBSD: Makefile,v 1.16 2019/05/03 20:03:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2016/12/05 20:08:34 natano Exp $
 
-FS=		miniroot${OSrev}.fs
-FSSIZE=		24576
-FSDISKTYPE=	miniroot
-MOUNT_POINT=	/mnt
-MTREE=		${UTILS}/mtree.conf
-RAMDISK=	RAMDISK
+REV=		${OSrev}
 
+TOP=		${.CURDIR}/..
+
+BSD_RD=		bsd.rd
+IMAGE=		mr.fs
+CBIN?=		instbin
+CRUNCHCONF?=	${CBIN}.conf
+CRUNCHCONFS?=	${.CURDIR}/../common/crunch.conf
 LISTS=		${.CURDIR}/list
-UTILS=		${.CURDIR}/../../miniroot
+UTILS?=		${.CURDIR}/../../miniroot
 
-MRDISKTYPE=	rdroot
-MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
+MTREE=		${UTILS}/mtree.conf
 
-all: ${FS}
+DISKTYPE=	rdroot
+MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=4096
 
-${FS}: bsd.rd
-	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
-	vnconfig -v -t ${FSDISKTYPE} ${FS} > vnd
-	echo 'u\ne 0\nC\nn\n64\n22528\nf 0\nw\nq\n' | fdisk -e `cat vnd`
-	echo 'w\ny\nq\n' | disklabel -E `cat vnd` > /dev/null
-	newfs -t msdos /dev/r`cat vnd`i
-	mount /dev/`cat vnd`i ${MOUNT_POINT}
-	cp bsd.rd ${MOUNT_POINT}/bsd.rd
-	df -i ${MOUNT_POINT}
-	umount ${MOUNT_POINT}
-	vnconfig -u `cat vnd`
-	rm -f vnd
+# mix config is not needed.
+all:	${BSD_RD}
 
-bsd.rd: mr.fs bsd
-	cp bsd bsd.rd
-	rdsetroot bsd.rd mr.fs
+${BSD_RD}: ${IMAGE} bsd rdsetroot
+	cp bsd ${BSD_RD}
+	${.OBJDIR}/rdsetroot ${BSD_RD} ${IMAGE}
 
-bsd:
-	cd ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
-	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
-
-mr.fs: instbin
+${IMAGE}: ${CBIN}
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
-	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
-	rm $@.d/instbin
-	makefs ${MRMAKEFSARGS} $@ $@.d
+	rm $@.d/${CBIN}
+	makefs ${MAKEFSARGS_RD} $@ $@.d
 
-instbin.mk instbin.cache instbin.c: instbin.conf
-	crunchgen -E -M -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib \
-	    -c instbin.c -e instbin -m instbin.mk instbin.conf
+bsd:
+	cd ${TOP}/../../sys/arch/octeon/compile/RAMDISK && \
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
+	cp -p ${TOP}/../../sys/arch/octeon/compile/RAMDISK/obj/bsd bsd
 
-instbin: instbin.mk instbin.cache instbin.c
-	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
+rdsetroot:	${TOP}/../common/elfrdsetroot.c
+	${HOSTCC} ${HOSTCFLAGS} -o rdsetroot \
+	    ${TOP}/../common/elfrdsetroot.c ${TOP}/../common/elf32.c \
+	    ${TOP}/../common/elf64.c
 
-instbin.conf: ${LISTS}
-	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
+${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
+	crunchgen -M -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
+
+${CRUNCHCONF}: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
+
+clean cleandir:
+	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
+	    lib*.a lib*.olist ${CBIN}.map \
+	    *.o *.lo *.c bsd ${BSD_RD} rdsetroot
+	rm -rf cd-dir ${IMAGE}.d
 
 .ifdef RELEASEDIR
 install:
-	cp bsd.rd ${RELEASEDIR}/bsd.rd
-	chmod a+r ${RELEASEDIR}/bsd.rd
-	cp ${FS} ${RELEASEDIR}
+	cp ${BSD_RD} ${RELEASEDIR}
 .endif
 
-clean cleandir:
-	rm -f *.core mr.fs instbin instbin.mk instbin.cache \
-	    lib*.a lib*.olist instbin.map *.o *.lo *.c bsd bsd.rd
-	rm -rf cd-dir mr.fs.d
-
 .include <bsd.obj.mk>
+.include <bsd.subdir.mk>

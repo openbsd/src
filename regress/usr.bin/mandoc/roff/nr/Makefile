@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.12 2019/02/06 20:54:28 schwarze Exp $
+# $OpenBSD: Makefile,v 1.9 2015/01/23 00:38:43 schwarze Exp $
 
-REGRESS_TARGETS = argc divzero escname eval incr int predef rr scale tab undef
+REGRESS_TARGETS = argc divzero eval escname int predef rr scale
 LINT_TARGETS	= divzero escname
 
 .include <bsd.regress.mk>

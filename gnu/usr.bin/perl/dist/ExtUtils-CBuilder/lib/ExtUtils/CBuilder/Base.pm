@@ -1,4 +1,5 @@
 package ExtUtils::CBuilder::Base;
+$ExtUtils::CBuilder::Base::VERSION = '0.280225';
 use strict;
 use warnings;
 use File::Spec;
@@ -8,8 +9,6 @@ use Config;
 use Text::ParseWords;
 use IPC::Cmd qw(can_run);
 use File::Temp qw(tempfile);
-
-our $VERSION = '0.280230'; # VERSION
 
 # More details about C/C++ compilers:
 # http://developers.sun.com/sunstudio/documentation/product/compiler.jsp
@@ -46,26 +45,16 @@ sub new {
      if defined $ENV{LDFLAGS};
 
   unless ( exists $self->{config}{cxx} ) {
-
-    my ($ccbase, $ccpath, $ccsfx ) = fileparse($self->{config}{cc}, qr/\.[^.]*/);
-
-    ## If the path is just "cc", fileparse returns $ccpath as "./"
-    $ccpath = "" if $self->{config}{cc} =~ /^$ccbase$ccsfx$/;
-      
+    my ($ccpath, $ccbase, $ccsfx ) = fileparse($self->{config}{cc}, qr/\.[^.]*/);
     foreach my $cxx (@{$cc2cxx{$ccbase}}) {
-      my $cxx1 = File::Spec->catfile( $ccpath, $cxx . $ccsfx);
-
-      if( can_run( $cxx1 ) ) {
-        $self->{config}{cxx} = $cxx1;
+      if( can_run( File::Spec->catfile( $ccpath, $cxx, $ccsfx ) ) ) {
+        $self->{config}{cxx} = File::Spec->catfile( $ccpath, $cxx, $ccsfx );
 	last;
       }
-      my $cxx2 = $cxx . $ccsfx;
-
-      if( can_run( $cxx2 ) ) {
-        $self->{config}{cxx} = $cxx2;
+      if( can_run( File::Spec->catfile( $cxx, $ccsfx ) ) ) {
+        $self->{config}{cxx} = File::Spec->catfile( $cxx, $ccsfx );
 	last;
       }
-
       if( can_run( $cxx ) ) {
         $self->{config}{cxx} = $cxx;
 	last;

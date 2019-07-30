@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.45 2019/04/23 10:53:45 dlg Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.37 2018/02/19 00:29:29 dlg Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -71,7 +71,6 @@ struct etherip_tunnel {
 
 	unsigned int	t_rtableid;
 	sa_family_t	t_af;
-	uint8_t		t_tos;
 
 	TAILQ_ENTRY(etherip_tunnel)
 			t_entry;
@@ -86,8 +85,6 @@ struct etherip_softc {
 	struct etherip_tunnel	sc_tunnel; /* must be first */
 	struct arpcom		sc_ac;
 	struct ifmedia		sc_media;
-	int			sc_txhprio;
-	int			sc_rxhprio;
 	uint16_t		sc_df;
 	uint8_t			sc_ttl;
 };
@@ -113,7 +110,7 @@ int etherip_del_tunnel(struct etherip_softc *);
 int etherip_up(struct etherip_softc *);
 int etherip_down(struct etherip_softc *);
 struct etherip_softc *etherip_find(const struct etherip_tunnel *);
-int etherip_input(struct etherip_tunnel *, struct mbuf *, uint8_t, int);
+int etherip_input(struct etherip_tunnel *, struct mbuf *, int);
 
 struct if_clone	etherip_cloner = IF_CLONE_INITIALIZER("etherip",
     etherip_clone_create, etherip_clone_destroy);
@@ -140,12 +137,9 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 	    ifc->ifc_name, unit);
 
 	sc->sc_ttl = ip_defttl;
-	sc->sc_txhprio = IFQ_TOS2PRIO(IPTOS_PREC_ROUTINE); /* 0 */
-	sc->sc_rxhprio = IF_HDRPRIO_PACKET;
 	sc->sc_df = htons(0);
 
 	ifp->if_softc = sc;
-	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
 	ifp->if_ioctl = etherip_ioctl;
 	ifp->if_start = etherip_start;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -159,7 +153,6 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
-	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -289,28 +282,6 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = etherip_del_tunnel(sc);
 		break;
 
-	case SIOCSTXHPRIO:
-		error = if_txhprio_l2_check(ifr->ifr_hdrprio);
-		if (error != 0)
-			break;
-
-		sc->sc_txhprio = ifr->ifr_hdrprio;
-		break;
-	case SIOCGTXHPRIO:
-		ifr->ifr_hdrprio = sc->sc_txhprio;
-                break;
-
-	case SIOCSRXHPRIO:
-		error = if_rxhprio_l2_check(ifr->ifr_hdrprio);
-		if (error != 0)
-			break;
-
-		sc->sc_rxhprio = ifr->ifr_hdrprio;
-		break;
-	case SIOCGRXHPRIO:
-		ifr->ifr_hdrprio = sc->sc_rxhprio;
-                break;
-
 	case SIOCSLIFPHYTTL:
 		if (ifr->ifr_ttl < 1 || ifr->ifr_ttl > 0xff) {
 			error = EINVAL;
@@ -337,18 +308,9 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		break;
-
 	default:
 		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
 		break;
-	}
-
-	if (error == ENETRESET) {
-		/* no hardware to program */
-		error = 0;
 	}
 
 	return (error);
@@ -524,8 +486,7 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 
 	ip->ip_v = IPVERSION;
 	ip->ip_hl = sizeof(*ip) >> 2;
-	ip->ip_tos = IFQ_PRIO2TOS(sc->sc_txhprio == IF_HDRPRIO_PACKET ?
-	    m->m_pkthdr.pf.prio : sc->sc_txhprio);
+	ip->ip_tos = IPTOS_LOWDELAY;
 	ip->ip_len = htons(m->m_pkthdr.len);
 	ip->ip_id = htons(ip_randomid());
 	ip->ip_off = sc->sc_df;
@@ -566,7 +527,7 @@ ip_etherip_input(struct mbuf **mp, int *offp, int type, int af)
 	key.t_src4 = ip->ip_dst;
 	key.t_dst4 = ip->ip_src;
 
-	return (etherip_input(&key, m, ip->ip_tos, *offp));
+	return (etherip_input(&key, m, *offp));
 }
 
 struct etherip_softc *
@@ -590,13 +551,12 @@ etherip_find(const struct etherip_tunnel *key)
 }
 
 int
-etherip_input(struct etherip_tunnel *key, struct mbuf *m, uint8_t tos,
-    int hlen)
+etherip_input(struct etherip_tunnel *key, struct mbuf *m, int hlen)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct etherip_softc *sc;
 	struct ifnet *ifp;
 	struct etherip_header *eip;
-	int rxprio;
 
 	if (!etherip_allow && (m->m_flags & (M_AUTH|M_CONF)) == 0) {
 		etheripstat_inc(etherips_pdrops);
@@ -635,18 +595,6 @@ etherip_input(struct etherip_tunnel *key, struct mbuf *m, uint8_t tos,
 		return IPPROTO_DONE;
 	}
 
-	rxprio = sc->sc_rxhprio;
-	switch (rxprio) {
-	case IF_HDRPRIO_PACKET:
-		break;
-	case IF_HDRPRIO_OUTER:
-		m->m_pkthdr.pf.prio = IFQ_TOS2PRIO(tos);
-		break;
-	default:
-		m->m_pkthdr.pf.prio = rxprio;
-		break;
-	}
-
 	ifp = &sc->sc_ac.ac_if;
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
@@ -657,7 +605,8 @@ etherip_input(struct etherip_tunnel *key, struct mbuf *m, uint8_t tos,
 	pf_pkt_addr_changed(m);
 #endif
 
-	if_vinput(ifp, m);
+	ml_enqueue(&ml, m);
+	if_input(ifp, &ml);
 	return IPPROTO_DONE;
 
 drop:
@@ -673,7 +622,6 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	struct ip6_hdr *ip6;
 	struct etherip_header *eip;
 	uint16_t len;
-	uint32_t flow;
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&sc->sc_tunnel.t_dst6)) {
 		m_freem(m);
@@ -688,14 +636,12 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 		return ENOBUFS;
 	}
 
-	flow = IPV6_VERSION << 24;
-	flow |= IFQ_PRIO2TOS(sc->sc_txhprio == IF_HDRPRIO_PACKET ?
-	     m->m_pkthdr.pf.prio : sc->sc_txhprio) << 20;
-
 	ip6 = mtod(m, struct ip6_hdr *);
-	htobem32(&ip6->ip6_flow, flow);
+	ip6->ip6_flow = 0;
+	ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
+	ip6->ip6_vfc |= IPV6_VERSION;
 	ip6->ip6_nxt  = IPPROTO_ETHERIP;
-	ip6->ip6_hlim = sc->sc_ttl;
+	ip6->ip6_hlim = ip6_defhlim;
 	ip6->ip6_plen = htons(len);
 	memcpy(&ip6->ip6_src, &sc->sc_tunnel.t_src6, sizeof(ip6->ip6_src));
 	memcpy(&ip6->ip6_dst, &sc->sc_tunnel.t_dst6, sizeof(ip6->ip6_dst));
@@ -727,7 +673,6 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct mbuf *m = *mp;
 	struct etherip_tunnel key;
 	const struct ip6_hdr *ip6;
-	uint32_t flow;
 
 	ip6 = mtod(m, const struct ip6_hdr *);
 
@@ -735,9 +680,7 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto, int af)
 	key.t_src6 = ip6->ip6_dst;
 	key.t_dst6 = ip6->ip6_src;
 
-	flow = bemtoh32(&ip6->ip6_flow);
-
-	return (etherip_input(&key, m, flow >> 20, *offp));
+	return (etherip_input(&key, m, *offp));
 }
 #endif /* INET6 */
 

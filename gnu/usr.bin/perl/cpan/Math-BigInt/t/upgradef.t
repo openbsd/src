@@ -10,7 +10,7 @@ package Math::BigFloat::Test;
 
 use Math::BigFloat;
 require Exporter;
-our @ISA = qw/Math::BigFloat Exporter/;
+our @ISA = qw/Exporter Math::BigFloat/;
 
 use overload;
 

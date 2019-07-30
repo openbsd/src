@@ -32,7 +32,7 @@ class TestCPPExceptionBreakpoint (TestBase):
         self.main_source_spec = lldb.SBFileSpec(self.main_source)
 
     def do_cpp_exception_bkpt(self):
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         error = lldb.SBError()
 
         self.target = self.dbg.CreateTarget(exe)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.59 2019/03/31 06:40:26 jmc Exp $
+.\"	$OpenBSD: fstat.1,v 1.56 2018/03/16 16:58:26 schwarze Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
 .\"
-.Dd $Mdocdate: March 31 2019 $
+.Dd $Mdocdate: March 16 2018 $
 .Dt FSTAT 1
 .Os
 .Sh NAME
@@ -86,7 +86,6 @@ Useful for checking progress as a process works through a large file.
 This information is only visible to the user or superuser.
 .It Fl p Ar pid
 Report all files open by the specified process.
-This option may be specified multiple times.
 .It Fl s
 Report per file io statistics in two additional columns
 .Sq XFERS
@@ -95,7 +94,6 @@ and
 This information is only visible to the user or superuser.
 .It Fl u Ar user
 Report all files open by the specified user.
-This option may be specified multiple times.
 .It Fl v
 Verbose mode.
 Print error messages upon failures to locate particular
@@ -122,17 +120,12 @@ The process ID.
 .It Li FD
 The file number in the per-process open file table or one of the following
 special names:
-.Pp
-.Bl -tag -width "text" -offset indent -compact
-.It text
-executable text inode
-.It wd
-current working directory
-.It root
-root inode
-.It tr
-kernel trace file
-.El
+.Bd -literal -offset indent
+text	\- executable text inode
+wd	\- current working directory
+root	\- root inode
+tr	\- kernel trace file
+.Ed
 .Pp
 If the file number is followed by an asterisk
 .Pq Ql * ,
@@ -167,18 +160,11 @@ otherwise, the mode is printed
 as an octal number.
 .It Li R/W
 This column describes the properties of the file descriptor:
-.Pp
-.Bl -tag -width indent -compact
-.It r
-Open for reading
-.It w
-Open for writing
-.It e
-close-on-exec flag is set
-.It p
-Opened after
-.Xr pledge 2
-.El
+.Bd -literal -offset indent
+r	Open for reading
+w	Open for writing
+e	close-on-exec flag is set
+.Ed
 .Pp
 This field is useful when trying to find the processes that are
 preventing a file system from being downgraded to read-only.

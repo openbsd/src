@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.61 2019/02/04 21:40:52 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.56 2017/11/02 14:01:18 florian Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -157,6 +157,8 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 
 		error = ip_output(m, NULL, &inp->inp_route,
 		    IP_ALLOWBROADCAST | IP_RAWOUTPUT, NULL, NULL, 0);
+		if (error == EACCES)	/* translate pf(4) error for userland */
+			error = EHOSTUNREACH;
 	}
 
 	divstat_inc(divs_opackets);
@@ -240,13 +242,12 @@ divert_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
 
+	soassertlocked(so);
+
 	if (req == PRU_CONTROL) {
 		return (in_control(so, (u_long)m, (caddr_t)addr,
 		    (struct ifnet *)control));
 	}
-
-	soassertlocked(so);
-
 	if (inp == NULL) {
 		error = EINVAL;
 		goto release;
@@ -278,7 +279,7 @@ divert_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		break;
 
 	case PRU_SENSE:
-		break;
+		return (0);
 
 	case PRU_LISTEN:
 	case PRU_CONNECT:
@@ -290,20 +291,20 @@ divert_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
 	case PRU_PROTOSEND:
-	case PRU_RCVD:
-	case PRU_RCVOOB:
 		error =  EOPNOTSUPP;
 		break;
+
+	case PRU_RCVD:
+	case PRU_RCVOOB:
+		return (EOPNOTSUPP);	/* do not free mbuf's */
 
 	default:
 		panic("divert_usrreq");
 	}
 
 release:
-	if (req != PRU_RCVD && req != PRU_RCVOOB && req != PRU_SENSE) {
-		m_freem(control);
-		m_freem(m);
-	}
+	m_freem(control);
+	m_freem(m);
 	return (error);
 }
 

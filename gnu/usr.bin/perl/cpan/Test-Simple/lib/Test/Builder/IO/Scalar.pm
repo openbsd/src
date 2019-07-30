@@ -38,7 +38,7 @@ use IO::Handle;
 use 5.005;
 
 ### The package version, both in 1.23 style *and* usable by MakeMaker:
-$VERSION = "2.114";
+$VERSION = "2.113";
 
 ### Inheritance:
 @ISA = qw(IO::Handle);
@@ -562,7 +562,6 @@ sub CLOSE     { shift->close(@_); }
 sub SEEK      { shift->seek(@_); }
 sub TELL      { shift->tell(@_); }
 sub EOF       { shift->eof(@_); }
-sub FILENO    { -1 }
 
 #------------------------------------------------------------
 

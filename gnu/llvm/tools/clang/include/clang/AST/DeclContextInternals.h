@@ -1,4 +1,4 @@
-//===- DeclContextInternals.h - DeclContext Representation ------*- C++ -*-===//
+//===-- DeclContextInternals.h - DeclContext Representation -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,12 +11,10 @@
 //  of DeclContext.
 //
 //===----------------------------------------------------------------------===//
-
 #ifndef LLVM_CLANG_AST_DECLCONTEXTINTERNALS_H
 #define LLVM_CLANG_AST_DECLCONTEXTINTERNALS_H
 
 #include "clang/AST/Decl.h"
-#include "clang/AST/DeclBase.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclarationName.h"
 #include "llvm/ADT/DenseMap.h"
@@ -24,29 +22,29 @@
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/SmallVector.h"
 #include <algorithm>
-#include <cassert>
 
 namespace clang {
 
 class DependentDiagnostic;
 
-/// An array of decls optimized for the common case of only containing
+/// \brief An array of decls optimized for the common case of only containing
 /// one entry.
 struct StoredDeclsList {
-  /// When in vector form, this is what the Data pointer points to.
-  using DeclsTy = SmallVector<NamedDecl *, 4>;
 
-  /// A collection of declarations, with a flag to indicate if we have
+  /// \brief When in vector form, this is what the Data pointer points to.
+  typedef SmallVector<NamedDecl *, 4> DeclsTy;
+
+  /// \brief A collection of declarations, with a flag to indicate if we have
   /// further external declarations.
-  using DeclsAndHasExternalTy = llvm::PointerIntPair<DeclsTy *, 1, bool>;
+  typedef llvm::PointerIntPair<DeclsTy *, 1, bool> DeclsAndHasExternalTy;
 
-  /// The stored data, which will be either a pointer to a NamedDecl,
+  /// \brief The stored data, which will be either a pointer to a NamedDecl,
   /// or a pointer to a vector with a flag to indicate if there are further
   /// external declarations.
-  llvm::PointerUnion<NamedDecl *, DeclsAndHasExternalTy> Data;
+  llvm::PointerUnion<NamedDecl*, DeclsAndHasExternalTy> Data;
 
 public:
-  StoredDeclsList() = default;
+  StoredDeclsList() {}
 
   StoredDeclsList(StoredDeclsList &&RHS) : Data(RHS.Data) {
     RHS.Data = (NamedDecl *)nullptr;
@@ -122,7 +120,7 @@ public:
              == Vec.end() && "list still contains decl");
   }
 
-  /// Remove any declarations which were imported from an external
+  /// \brief Remove any declarations which were imported from an external
   /// AST source.
   void removeExternalDecls() {
     if (isNull()) {
@@ -188,6 +186,7 @@ public:
 
   /// AddSubsequentDecl - This is called on the second and later decl when it is
   /// not a redeclaration to merge it into the appropriate place in our list.
+  ///
   void AddSubsequentDecl(NamedDecl *D) {
     assert(!isNull() && "don't AddSubsequentDecl when we have no decls");
 
@@ -238,28 +237,28 @@ public:
 };
 
 class StoredDeclsMap
-    : public llvm::SmallDenseMap<DeclarationName, StoredDeclsList, 4> {
+  : public llvm::SmallDenseMap<DeclarationName, StoredDeclsList, 4> {
+
 public:
   static void DestroyAll(StoredDeclsMap *Map, bool Dependent);
 
 private:
   friend class ASTContext; // walks the chain deleting these
   friend class DeclContext;
-
   llvm::PointerIntPair<StoredDeclsMap*, 1> Previous;
 };
 
 class DependentStoredDeclsMap : public StoredDeclsMap {
 public:
-  DependentStoredDeclsMap() = default;
+  DependentStoredDeclsMap() : FirstDiagnostic(nullptr) {}
 
 private:
-  friend class DeclContext; // iterates over diagnostics
   friend class DependentDiagnostic;
+  friend class DeclContext; // iterates over diagnostics
 
-  DependentDiagnostic *FirstDiagnostic = nullptr;
+  DependentDiagnostic *FirstDiagnostic;
 };
 
-} // namespace clang
+} // end namespace clang
 
-#endif // LLVM_CLANG_AST_DECLCONTEXTINTERNALS_H
+#endif

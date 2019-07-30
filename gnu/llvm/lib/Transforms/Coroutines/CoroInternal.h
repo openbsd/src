@@ -76,6 +76,7 @@ struct LLVM_LIBRARY_VISIBILITY Shape {
     DestroyField,
     PromiseField,
     IndexField,
+    LastKnownField = IndexField
   };
 
   StructType *FrameTy;

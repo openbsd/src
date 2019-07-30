@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// Provides functionality for finding all instances of a USR in a given
+/// \brief Provides functionality for finding all instances of a USR in a given
 /// AST.
 ///
 //===----------------------------------------------------------------------===//
@@ -19,7 +19,6 @@
 #include "clang/AST/AST.h"
 #include "clang/Tooling/Core/Replacement.h"
 #include "clang/Tooling/Refactoring/AtomicChange.h"
-#include "clang/Tooling/Refactoring/Rename/SymbolOccurrences.h"
 #include "llvm/ADT/StringRef.h"
 #include <string>
 #include <vector>
@@ -39,13 +38,10 @@ std::vector<tooling::AtomicChange>
 createRenameAtomicChanges(llvm::ArrayRef<std::string> USRs,
                           llvm::StringRef NewName, Decl *TranslationUnitDecl);
 
-/// Finds the symbol occurrences for the symbol that's identified by the given
-/// USR set.
-///
-/// \return SymbolOccurrences that can be converted to AtomicChanges when
-/// renaming.
-SymbolOccurrences getOccurrencesOfUSRs(ArrayRef<std::string> USRs,
-                                       StringRef PrevName, Decl *Decl);
+// FIXME: make this an AST matcher. Wouldn't that be awesome??? I agree!
+std::vector<SourceLocation>
+getLocationsOfUSRs(const std::vector<std::string> &USRs,
+                   llvm::StringRef PrevName, Decl *Decl);
 
 } // end namespace tooling
 } // end namespace clang

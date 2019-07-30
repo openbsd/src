@@ -78,7 +78,7 @@ public:
   };
 
   struct VReg {
-    llvm::AlignedCharArray<16, 16> bytes;
+    uint8_t bytes[16];
   };
 
   // mirrors <mach/arm/thread_status.h> arm_neon_state64_t

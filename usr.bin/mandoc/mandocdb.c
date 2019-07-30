@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandocdb.c,v 1.212 2019/05/03 18:16:57 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.207 2018/02/23 18:24:41 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011-2019 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2016 Ed Maste <emaste@freebsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -41,7 +41,6 @@
 #include "roff.h"
 #include "mdoc.h"
 #include "man.h"
-#include "mandoc_parse.h"
 #include "manconf.h"
 #include "mansearch.h"
 #include "dba_array.h"
@@ -171,7 +170,7 @@ static	struct ohash	 names; /* table of all names */
 static	struct ohash	 strings; /* table of all strings */
 static	uint64_t	 name_mask;
 
-static	const struct mdoc_handler mdoc_handlers[MDOC_MAX - MDOC_Dd] = {
+static	const struct mdoc_handler __mdocs[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, 0, NODE_NOPRT },  /* Dd */
 	{ NULL, 0, NODE_NOPRT },  /* Dt */
 	{ NULL, 0, NODE_NOPRT },  /* Os */
@@ -293,6 +292,7 @@ static	const struct mdoc_handler mdoc_handlers[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, 0, 0 },  /* %U */
 	{ NULL, 0, 0 },  /* Ta */
 };
+static	const struct mdoc_handler *const mdocs = __mdocs - MDOC_Dd;
 
 
 int
@@ -323,7 +323,6 @@ mandocdb(int argc, char *argv[])
 		goto usage; \
 	} while (/*CONSTCOND*/0)
 
-	mparse_options = MPARSE_VALIDATE;
 	path_arg = NULL;
 	op = OP_DEFAULT;
 
@@ -397,7 +396,8 @@ mandocdb(int argc, char *argv[])
 
 	exitcode = (int)MANDOCLEVEL_OK;
 	mchars_alloc();
-	mp = mparse_alloc(mparse_options, MANDOC_OS_OTHER, NULL);
+	mp = mparse_alloc(mparse_options, MANDOCERR_MAX, NULL,
+	    MANDOC_OS_OTHER, NULL);
 	mandoc_ohash_init(&mpages, 6, offsetof(struct mpage, inodev));
 	mandoc_ohash_init(&mlinks, 6, offsetof(struct mlink, file));
 
@@ -1078,7 +1078,8 @@ mpages_merge(struct dba *dba, struct mparse *mp)
 {
 	struct mpage		*mpage, *mpage_dest;
 	struct mlink		*mlink, *mlink_dest;
-	struct roff_meta	*meta;
+	struct roff_man		*man;
+	char			*sodest;
 	char			*cp;
 	int			 fd;
 
@@ -1091,7 +1092,8 @@ mpages_merge(struct dba *dba, struct mparse *mp)
 		mandoc_ohash_init(&names, 4, offsetof(struct str, key));
 		mandoc_ohash_init(&strings, 6, offsetof(struct str, key));
 		mparse_reset(mp);
-		meta = NULL;
+		man = NULL;
+		sodest = NULL;
 
 		if ((fd = mparse_open(mp, mlink->file)) == -1) {
 			say(mlink->file, "&open");
@@ -1106,14 +1108,14 @@ mpages_merge(struct dba *dba, struct mparse *mp)
 			mparse_readfd(mp, fd, mlink->file);
 			close(fd);
 			fd = -1;
-			meta = mparse_result(mp);
+			mparse_result(mp, &man, &sodest);
 		}
 
-		if (meta != NULL && meta->sodest != NULL) {
+		if (sodest != NULL) {
 			mlink_dest = ohash_find(&mlinks,
-			    ohash_qlookup(&mlinks, meta->sodest));
+			    ohash_qlookup(&mlinks, sodest));
 			if (mlink_dest == NULL) {
-				mandoc_asprintf(&cp, "%s.gz", meta->sodest);
+				mandoc_asprintf(&cp, "%s.gz", sodest);
 				mlink_dest = ohash_find(&mlinks,
 				    ohash_qlookup(&mlinks, cp));
 				free(cp);
@@ -1148,43 +1150,41 @@ mpages_merge(struct dba *dba, struct mparse *mp)
 				mlink->next = mlink_dest->next;
 				mlink_dest->next = mpage->mlinks;
 				mpage->mlinks = NULL;
-				goto nextpage;
 			}
-			meta->macroset = MACROSET_NONE;
-		}
-		if (meta != NULL && meta->macroset == MACROSET_MDOC) {
+			goto nextpage;
+		} else if (man != NULL && man->macroset == MACROSET_MDOC) {
+			mdoc_validate(man);
 			mpage->form = FORM_SRC;
-			mpage->sec = meta->msec;
+			mpage->sec = man->meta.msec;
 			mpage->sec = mandoc_strdup(
 			    mpage->sec == NULL ? "" : mpage->sec);
-			mpage->arch = meta->arch;
+			mpage->arch = man->meta.arch;
 			mpage->arch = mandoc_strdup(
 			    mpage->arch == NULL ? "" : mpage->arch);
-			mpage->title = mandoc_strdup(meta->title);
-		} else if (meta != NULL && meta->macroset == MACROSET_MAN) {
-			if (*meta->msec != '\0' || *meta->title != '\0') {
+			mpage->title = mandoc_strdup(man->meta.title);
+		} else if (man != NULL && man->macroset == MACROSET_MAN) {
+			man_validate(man);
+			if (*man->meta.msec != '\0' ||
+			    *man->meta.title != '\0') {
 				mpage->form = FORM_SRC;
-				mpage->sec = mandoc_strdup(meta->msec);
+				mpage->sec = mandoc_strdup(man->meta.msec);
 				mpage->arch = mandoc_strdup(mlink->arch);
-				mpage->title = mandoc_strdup(meta->title);
+				mpage->title = mandoc_strdup(man->meta.title);
 			} else
-				meta = NULL;
+				man = NULL;
 		}
 
 		assert(mpage->desc == NULL);
-		if (meta == NULL || meta->sodest != NULL) {
+		if (man == NULL) {
+			mpage->form = FORM_CAT;
 			mpage->sec = mandoc_strdup(mlink->dsec);
 			mpage->arch = mandoc_strdup(mlink->arch);
 			mpage->title = mandoc_strdup(mlink->name);
-			if (meta == NULL) {
-				mpage->form = FORM_CAT;
-				parse_cat(mpage, fd);
-			} else
-				mpage->form = FORM_SRC;
-		} else if (meta->macroset == MACROSET_MDOC)
-			parse_mdoc(mpage, meta, meta->first);
+			parse_cat(mpage, fd);
+		} else if (man->macroset == MACROSET_MDOC)
+			parse_mdoc(mpage, &man->meta, man->first);
 		else
-			parse_man(mpage, meta, meta->first);
+			parse_man(mpage, &man->meta, man->first);
 		if (mpage->desc == NULL) {
 			mpage->desc = mandoc_strdup(mlink->name);
 			if (warnings)
@@ -1508,28 +1508,25 @@ static void
 parse_mdoc(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
-	const struct mdoc_handler *handler;
 
 	for (n = n->child; n != NULL; n = n->next) {
-		if (n->tok == TOKEN_NONE || n->tok < ROFF_MAX)
+		if (n->tok == TOKEN_NONE ||
+		    n->tok < ROFF_MAX ||
+		    n->flags & mdocs[n->tok].taboo)
 			continue;
 		assert(n->tok >= MDOC_Dd && n->tok < MDOC_MAX);
-		handler = mdoc_handlers + (n->tok - MDOC_Dd);
-		if (n->flags & handler->taboo)
-			continue;
-
 		switch (n->type) {
 		case ROFFT_ELEM:
 		case ROFFT_BLOCK:
 		case ROFFT_HEAD:
 		case ROFFT_BODY:
 		case ROFFT_TAIL:
-			if (handler->fp != NULL &&
-			    (*handler->fp)(mpage, meta, n) == 0)
+			if (mdocs[n->tok].fp != NULL &&
+			    (*mdocs[n->tok].fp)(mpage, meta, n) == 0)
 				break;
-			if (handler->mask)
+			if (mdocs[n->tok].mask)
 				putmdockey(mpage, n->child,
-				    handler->mask, handler->taboo);
+				    mdocs[n->tok].mask, mdocs[n->tok].taboo);
 			break;
 		default:
 			continue;

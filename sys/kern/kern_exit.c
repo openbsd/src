@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.177 2019/06/13 21:19:28 mpi Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.164 2018/02/10 10:32:51 mpi Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -70,15 +70,9 @@
 
 #include <uvm/uvm_extern.h>
 
-#include "kcov.h"
-#if NKCOV > 0
-#include <sys/kcov.h>
-#endif
-
 void	proc_finish_wait(struct proc *, struct proc *);
 void	process_zap(struct process *);
 void	proc_free(struct proc *);
-void	unveil_destroy(struct process *ps);
 
 /*
  * exit --
@@ -164,7 +158,7 @@ exit1(struct proc *p, int rv, int flags)
 	if ((p->p_flag & P_THREAD) == 0) {
 		/* main thread gotta wait because it has the pid, et al */
 		while (pr->ps_refcnt > 1)
-			tsleep(&pr->ps_threads, PWAIT, "thrdeath", 0);
+			tsleep(&pr->ps_threads, PUSER, "thrdeath", 0);
 		if (pr->ps_flags & PS_PROFIL)
 			stopprofclock(pr);
 	}
@@ -180,21 +174,12 @@ exit1(struct proc *p, int rv, int flags)
 		}
 	}
 	p->p_siglist = 0;
-	if ((p->p_flag & P_THREAD) == 0)
-		pr->ps_siglist = 0;
-
-#if NKCOV > 0
-	kcov_exit(p);
-#endif
 
 	if ((p->p_flag & P_THREAD) == 0) {
-		sigio_freelist(&pr->ps_sigiolst);
-
 		/* close open files and release open-file table */
 		fdfree(p);
 
 		timeout_del(&pr->ps_realit_to);
-		timeout_del(&pr->ps_rucheck_to);
 #ifdef SYSVSEM
 		semexit(pr);
 #endif
@@ -208,8 +193,6 @@ exit1(struct proc *p, int rv, int flags)
 		if (pr->ps_tracevp)
 			ktrcleartrace(pr);
 #endif
-
-		unveil_destroy(pr);
 
 		/*
 		 * If parent has the SAS_NOCLDWAIT flag set, we're not
@@ -354,7 +337,7 @@ exit1(struct proc *p, int rv, int flags)
  * proclist.  We use the p_hash member to linkup to deadproc.
  */
 struct mutex deadproc_mutex =
-    MUTEX_INITIALIZER_FLAGS(IPL_NONE, "deadproc", MTX_NOWITNESS);
+    MUTEX_INITIALIZER_FLAGS(IPL_NONE, NULL, MTX_NOWITNESS);
 struct proclist deadproc = LIST_HEAD_INITIALIZER(deadproc);
 
 /*
@@ -392,7 +375,7 @@ proc_free(struct proc *p)
  * a zombie, and the parent is allowed to read the undead's status.
  */
 void
-reaper(void *arg)
+reaper(void)
 {
 	struct proc *p;
 

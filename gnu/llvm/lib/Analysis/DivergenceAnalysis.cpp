@@ -71,13 +71,12 @@
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <vector>
 using namespace llvm;
-
-#define DEBUG_TYPE "divergence"
 
 namespace {
 
@@ -301,10 +300,6 @@ bool DivergenceAnalysis::runOnFunction(Function &F) {
                           PDT, DivergentValues);
   DP.populateWithSourcesOfDivergence();
   DP.propagate();
-  LLVM_DEBUG(
-    dbgs() << "\nAfter divergence analysis on " << F.getName() << ":\n";
-    print(dbgs(), F.getParent())
-  );
   return false;
 }
 
@@ -324,17 +319,12 @@ void DivergenceAnalysis::print(raw_ostream &OS, const Module *) const {
 
   // Dumps all divergent values in F, arguments and then instructions.
   for (auto &Arg : F->args()) {
-    OS << (DivergentValues.count(&Arg) ? "DIVERGENT: " : "           ");
-    OS << Arg << "\n";
+    if (DivergentValues.count(&Arg))
+      OS << "DIVERGENT:  " << Arg << "\n";
   }
   // Iterate instructions using instructions() to ensure a deterministic order.
-  for (auto BI = F->begin(), BE = F->end(); BI != BE; ++BI) {
-    auto &BB = *BI;
-    OS << "\n           " << BB.getName() << ":\n";
-    for (auto &I : BB.instructionsWithoutDebug()) {
-      OS << (DivergentValues.count(&I) ? "DIVERGENT:     " : "               ");
-      OS << I << "\n";
-    }
+  for (auto &I : instructions(F)) {
+    if (DivergentValues.count(&I))
+      OS << "DIVERGENT:" << I << "\n";
   }
-  OS << "\n";
 }

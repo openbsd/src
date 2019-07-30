@@ -203,8 +203,7 @@ int VDir::SetDirA(char const *pPath, int index)
 void VDir::FromEnvA(char *pEnv, int index)
 {   /* gets the directory for index from the environment variable. */
     while (*pEnv != '\0') {
-	if ((pEnv[0] == '=') && (DriveIndex(pEnv[1]) == index)
-            && pEnv[2] == ':' && pEnv[3] == '=') {
+	if ((pEnv[0] == '=') && (DriveIndex(pEnv[1]) == index)) {
 	    SetDirA(&pEnv[4], index);
 	    break;
 	}
@@ -216,8 +215,7 @@ void VDir::FromEnvA(char *pEnv, int index)
 void VDir::FromEnvW(WCHAR *pEnv, int index)
 {   /* gets the directory for index from the environment variable. */
     while (*pEnv != '\0') {
-	if ((pEnv[0] == '=') && (DriveIndex((char)pEnv[1]) == index)
-            && pEnv[2] == ':' && pEnv[3] == '=') {
+	if ((pEnv[0] == '=') && (DriveIndex((char)pEnv[1]) == index)) {
 	    SetDirW(&pEnv[4], index);
 	    break;
 	}

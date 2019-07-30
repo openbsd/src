@@ -165,13 +165,13 @@ namespace {
       }
     }
 
-    /// A check failed, so printout out the condition and the message.
+    /// \brief A check failed, so printout out the condition and the message.
     ///
     /// This provides a nice place to put a breakpoint if you want to see why
     /// something is not correct.
     void CheckFailed(const Twine &Message) { MessagesStr << Message << '\n'; }
 
-    /// A check failed (with values to print).
+    /// \brief A check failed (with values to print).
     ///
     /// This calls the Message-only version so that the above is easier to set
     /// a breakpoint on.
@@ -265,21 +265,13 @@ void Lint::visitCallSite(CallSite CS) {
         // Check that noalias arguments don't alias other arguments. This is
         // not fully precise because we don't know the sizes of the dereferenced
         // memory regions.
-        if (Formal->hasNoAliasAttr() && Actual->getType()->isPointerTy()) {
-          AttributeList PAL = CS.getAttributes();
-          unsigned ArgNo = 0;
-          for (CallSite::arg_iterator BI = CS.arg_begin(); BI != AE; ++BI) {
-            // Skip ByVal arguments since they will be memcpy'd to the callee's
-            // stack so we're not really passing the pointer anyway.
-            if (PAL.hasParamAttribute(ArgNo++, Attribute::ByVal))
-              continue;
+        if (Formal->hasNoAliasAttr() && Actual->getType()->isPointerTy())
+          for (CallSite::arg_iterator BI = CS.arg_begin(); BI != AE; ++BI)
             if (AI != BI && (*BI)->getType()->isPointerTy()) {
               AliasResult Result = AA->alias(*AI, *BI);
               Assert(Result != MustAlias && Result != PartialAlias,
                      "Unusual: noalias argument aliases another argument", &I);
             }
-          }
-        }
 
         // Check that an sret argument points to valid memory.
         if (Formal->hasStructRetAttr() && Actual->getType()->isPointerTy()) {
@@ -293,24 +285,15 @@ void Lint::visitCallSite(CallSite CS) {
     }
   }
 
-  if (CS.isCall()) {
-    const CallInst *CI = cast<CallInst>(CS.getInstruction());
-    if (CI->isTailCall()) {
-      const AttributeList &PAL = CI->getAttributes();
-      unsigned ArgNo = 0;
-      for (Value *Arg : CS.args()) {
-        // Skip ByVal arguments since they will be memcpy'd to the callee's
-        // stack anyway.
-        if (PAL.hasParamAttribute(ArgNo++, Attribute::ByVal))
-          continue;
-        Value *Obj = findValue(Arg, /*OffsetOk=*/true);
-        Assert(!isa<AllocaInst>(Obj),
-               "Undefined behavior: Call with \"tail\" keyword references "
-               "alloca",
-               &I);
-      }
+  if (CS.isCall() && cast<CallInst>(CS.getInstruction())->isTailCall())
+    for (CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
+         AI != AE; ++AI) {
+      Value *Obj = findValue(*AI, /*OffsetOk=*/true);
+      Assert(!isa<AllocaInst>(Obj),
+             "Undefined behavior: Call with \"tail\" keyword references "
+             "alloca",
+             &I);
     }
-  }
 
 
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(&I))
@@ -323,9 +306,9 @@ void Lint::visitCallSite(CallSite CS) {
       MemCpyInst *MCI = cast<MemCpyInst>(&I);
       // TODO: If the size is known, use it.
       visitMemoryReference(I, MCI->getDest(), MemoryLocation::UnknownSize,
-                           MCI->getDestAlignment(), nullptr, MemRef::Write);
+                           MCI->getAlignment(), nullptr, MemRef::Write);
       visitMemoryReference(I, MCI->getSource(), MemoryLocation::UnknownSize,
-                           MCI->getSourceAlignment(), nullptr, MemRef::Read);
+                           MCI->getAlignment(), nullptr, MemRef::Read);
 
       // Check that the memcpy arguments don't overlap. The AliasAnalysis API
       // isn't expressive enough for what we really want to do. Known partial
@@ -345,16 +328,16 @@ void Lint::visitCallSite(CallSite CS) {
       MemMoveInst *MMI = cast<MemMoveInst>(&I);
       // TODO: If the size is known, use it.
       visitMemoryReference(I, MMI->getDest(), MemoryLocation::UnknownSize,
-                           MMI->getDestAlignment(), nullptr, MemRef::Write);
+                           MMI->getAlignment(), nullptr, MemRef::Write);
       visitMemoryReference(I, MMI->getSource(), MemoryLocation::UnknownSize,
-                           MMI->getSourceAlignment(), nullptr, MemRef::Read);
+                           MMI->getAlignment(), nullptr, MemRef::Read);
       break;
     }
     case Intrinsic::memset: {
       MemSetInst *MSI = cast<MemSetInst>(&I);
       // TODO: If the size is known, use it.
       visitMemoryReference(I, MSI->getDest(), MemoryLocation::UnknownSize,
-                           MSI->getDestAlignment(), nullptr, MemRef::Write);
+                           MSI->getAlignment(), nullptr, MemRef::Write);
       break;
     }
 
@@ -700,7 +683,7 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
     if (Instruction::isCast(CE->getOpcode())) {
       if (CastInst::isNoopCast(Instruction::CastOps(CE->getOpcode()),
                                CE->getOperand(0)->getType(), CE->getType(),
-                               *DL))
+                               DL->getIntPtrType(V->getType())))
         return findValueImpl(CE->getOperand(0), OffsetOk, Visited);
     } else if (CE->getOpcode() == Instruction::ExtractValue) {
       ArrayRef<unsigned> Indices = CE->getIndices();

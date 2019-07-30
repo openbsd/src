@@ -12,7 +12,7 @@ use less;
 
 use lib './lib';
 use ExtUtils::MakeMaker;
-use Test::More tests => 4;
+use Test::More;
 use File::Spec;
 
 
@@ -43,3 +43,6 @@ sub path_is {
     my $want = $INC{"Test/More.pm"};
     path_is( MM->_installed_file_for_module("Test::More"), $want, "Foo::Bar style" );
 }
+
+
+done_testing(4);

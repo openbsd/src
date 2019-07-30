@@ -1,14 +1,14 @@
-# $OpenBSD: Makefile,v 1.4 2019/03/05 09:44:40 jsg Exp $
+# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:35 espie Exp $
 
 LIB=	LLVMInstCombine
+NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms/InstCombine
-CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/Transforms/InstCombine
 
-SRCS+=	AggressiveInstCombine.cpp \
-	InstructionCombining.cpp \
+.include <bsd.own.mk>
+SRCS=	InstructionCombining.cpp \
 	InstCombineAddSub.cpp \
 	InstCombineAndOrXor.cpp \
 	InstCombineCalls.cpp \
@@ -20,8 +20,11 @@ SRCS+=	AggressiveInstCombine.cpp \
 	InstCombineSelect.cpp \
 	InstCombineShifts.cpp \
 	InstCombineSimplifyDemanded.cpp \
-	InstCombineVectorOps.cpp \
-	TruncInstCombine.cpp
+	InstCombineVectorOps.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Transforms/InstCombine
-.PATH:	${.CURDIR}/../../../llvm/lib/Transforms/AggressiveInstCombine
+
+install:
+	@# Nothing here so far ...
+
+.include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.37 2019/05/03 18:42:40 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.31 2017/05/11 07:24:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -91,8 +91,9 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 		}
 	}
 
-	if (args_has(args, 'x')) {
-		x = args_strtonum(args, 'x', PANE_MINIMUM, INT_MAX, &cause);
+	if (args_has(self->args, 'x')) {
+		x = args_strtonum(self->args, 'x', PANE_MINIMUM, INT_MAX,
+		    &cause);
 		if (cause != NULL) {
 			cmdq_error(item, "width %s", cause);
 			free(cause);
@@ -100,8 +101,9 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 		}
 		layout_resize_pane_to(wp, LAYOUT_LEFTRIGHT, x);
 	}
-	if (args_has(args, 'y')) {
-		y = args_strtonum(args, 'y', PANE_MINIMUM, INT_MAX, &cause);
+	if (args_has(self->args, 'y')) {
+		y = args_strtonum(self->args, 'y', PANE_MINIMUM, INT_MAX,
+		    &cause);
 		if (cause != NULL) {
 			cmdq_error(item, "height %s", cause);
 			free(cause);
@@ -110,13 +112,13 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 		layout_resize_pane_to(wp, LAYOUT_TOPBOTTOM, y);
 	}
 
-	if (args_has(args, 'L'))
+	if (args_has(self->args, 'L'))
 		layout_resize_pane(wp, LAYOUT_LEFTRIGHT, -adjust, 1);
-	else if (args_has(args, 'R'))
+	else if (args_has(self->args, 'R'))
 		layout_resize_pane(wp, LAYOUT_LEFTRIGHT, adjust, 1);
-	else if (args_has(args, 'U'))
+	else if (args_has(self->args, 'U'))
 		layout_resize_pane(wp, LAYOUT_TOPBOTTOM, -adjust, 1);
-	else if (args_has(args, 'D'))
+	else if (args_has(self->args, 'D'))
 		layout_resize_pane(wp, LAYOUT_TOPBOTTOM, adjust, 1);
 	server_redraw_window(wl->window);
 
@@ -127,64 +129,57 @@ static void
 cmd_resize_pane_mouse_update(struct client *c, struct mouse_event *m)
 {
 	struct winlink		*wl;
-	struct window		*w;
-	u_int			 y, ly, x, lx;
-	static const int         offsets[][2] = {
-	    { 0, 0 }, { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 },
-	};
-	struct layout_cell	*cells[nitems(offsets)], *lc;
-	u_int			 ncells = 0, i, j, resizes = 0;
-	enum layout_type	 type;
+	struct window_pane	*loop, *wp_x, *wp_y;
+	u_int			 y, ly, x, lx, sx, sy, ex, ey;
 
 	wl = cmd_mouse_window(m, NULL);
 	if (wl == NULL) {
 		c->tty.mouse_drag_update = NULL;
 		return;
 	}
-	w = wl->window;
 
-	y = m->y + m->oy; x = m->x + m->ox;
+	y = m->y; x = m->x;
 	if (m->statusat == 0 && y > 0)
 		y--;
 	else if (m->statusat > 0 && y >= (u_int)m->statusat)
 		y = m->statusat - 1;
-	ly = m->ly + m->oy; lx = m->lx + m->ox;
+	ly = m->ly; lx = m->lx;
 	if (m->statusat == 0 && ly > 0)
 		ly--;
 	else if (m->statusat > 0 && ly >= (u_int)m->statusat)
 		ly = m->statusat - 1;
 
-	for (i = 0; i < nitems(cells); i++) {
-		lc = layout_search_by_border(w->layout_root, lx + offsets[i][0],
-		    ly + offsets[i][1]);
-		if (lc == NULL)
+	wp_x = wp_y = NULL;
+	TAILQ_FOREACH(loop, &wl->window->panes, entry) {
+		if (!window_pane_visible(loop))
 			continue;
 
-		for (j = 0; j < ncells; j++) {
-			if (cells[j] == lc) {
-				lc = NULL;
-				break;
-			}
-		}
-		if (lc == NULL)
-			continue;
+		sx = loop->xoff;
+		if (sx != 0)
+			sx--;
+		ex = loop->xoff + loop->sx;
 
-		cells[ncells] = lc;
-		ncells++;
+		sy = loop->yoff;
+		if (sy != 0)
+			sy--;
+		ey = loop->yoff + loop->sy;
+
+		if ((lx == sx || lx == ex) &&
+		    (ly >= sy && ly <= ey) &&
+		    (wp_x == NULL || loop->sy > wp_x->sy))
+			wp_x = loop;
+		if ((ly == sy || ly == ey) &&
+		    (lx >= sx && lx <= ex) &&
+		    (wp_y == NULL || loop->sx > wp_y->sx))
+			wp_y = loop;
 	}
-	if (ncells == 0)
+	if (wp_x == NULL && wp_y == NULL) {
+		c->tty.mouse_drag_update = NULL;
 		return;
-
-	for (i = 0; i < ncells; i++) {
-		type = cells[i]->parent->type;
-		if (y != ly && type == LAYOUT_TOPBOTTOM) {
-			layout_resize_layout(w, cells[i], type, y - ly, 0);
-			resizes++;
-		} else if (x != lx && type == LAYOUT_LEFTRIGHT) {
-			layout_resize_layout(w, cells[i], type, x - lx, 0);
-			resizes++;
-		}
 	}
-	if (resizes != 0)
-		server_redraw_window(w);
+	if (wp_x != NULL)
+		layout_resize_pane(wp_x, LAYOUT_LEFTRIGHT, x - lx, 0);
+	if (wp_y != NULL)
+		layout_resize_pane(wp_y, LAYOUT_TOPBOTTOM, y - ly, 0);
+	server_redraw_window(wl->window);
 }

@@ -1,4 +1,4 @@
-//===- MipsAnalyzeImmediate.h - Analyze Immediates -------------*- C++ -*--===//
+//===-- MipsAnalyzeImmediate.h - Analyze Immediates ------------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,12 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-
 #ifndef LLVM_LIB_TARGET_MIPS_MIPSANALYZEIMMEDIATE_H
 #define LLVM_LIB_TARGET_MIPS_MIPSANALYZEIMMEDIATE_H
 
 #include "llvm/ADT/SmallVector.h"
-#include <cstdint>
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 
@@ -19,18 +18,16 @@ namespace llvm {
   public:
     struct Inst {
       unsigned Opc, ImmOpnd;
-
       Inst(unsigned Opc, unsigned ImmOpnd);
     };
-    using InstSeq = SmallVector<Inst, 7>;
+    typedef SmallVector<Inst, 7 > InstSeq;
 
     /// Analyze - Get an instruction sequence to load immediate Imm. The last
     /// instruction in the sequence must be an ADDiu if LastInstrIsADDiu is
     /// true;
     const InstSeq &Analyze(uint64_t Imm, unsigned Size, bool LastInstrIsADDiu);
-
   private:
-    using InstSeqLs = SmallVector<InstSeq, 5>;
+    typedef SmallVector<InstSeq, 5> InstSeqLs;
 
     /// AddInstr - Add I to all instruction sequences in SeqLs.
     void AddInstr(InstSeqLs &SeqLs, const Inst &I);
@@ -61,7 +58,6 @@ namespace llvm {
     unsigned ADDiu, ORi, SLL, LUi;
     InstSeq Insts;
   };
+}
 
-} // end namespace llvm
-
-#endif // LLVM_LIB_TARGET_MIPS_MIPSANALYZEIMMEDIATE_H
+#endif

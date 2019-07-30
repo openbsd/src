@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile,v 1.3 2019/04/30 17:46:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2006/11/08 23:09:34 drahn Exp $
 
-SUBDIR= ramdisk
+# miniroot must build after ramdisk, it reaches over and uses bsd.rd
 
-unconfig:
-	cd ramdisk; ${MAKE} unconfig
+SUBDIR= ramdisk miniroot
 
 .include <bsd.subdir.mk>

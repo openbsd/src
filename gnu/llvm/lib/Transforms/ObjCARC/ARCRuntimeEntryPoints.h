@@ -1,4 +1,4 @@
-//===- ARCRuntimeEntryPoints.h - ObjC ARC Optimization ----------*- C++ -*-===//
+//===- ARCRuntimeEntryPoints.h - ObjC ARC Optimization --*- C++ -*---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,7 +6,6 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
 /// \file
 /// This file contains a class ARCRuntimeEntryPoints for use in
 /// creating/managing references to entry points to the arc objective c runtime.
@@ -17,25 +16,15 @@
 /// WARNING: This file knows about how certain Objective-C library functions are
 /// used. Naive LLVM IR transformations which would otherwise be
 /// behavior-preserving may break these assumptions.
-//
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_LIB_TRANSFORMS_OBJCARC_ARCRUNTIMEENTRYPOINTS_H
 #define LLVM_LIB_TRANSFORMS_OBJCARC_ARCRUNTIMEENTRYPOINTS_H
 
-#include "llvm/ADT/StringRef.h"
-#include "llvm/IR/Attributes.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/Type.h"
-#include "llvm/Support/ErrorHandling.h"
-#include <cassert>
+#include "ObjCARC.h"
 
 namespace llvm {
-
-class Constant;
-class LLVMContext;
-
 namespace objcarc {
 
 enum class ARCRuntimeEntryPointKind {
@@ -54,7 +43,16 @@ enum class ARCRuntimeEntryPointKind {
 /// lazily to avoid cluttering up the Module with unused declarations.
 class ARCRuntimeEntryPoints {
 public:
-  ARCRuntimeEntryPoints() = default;
+  ARCRuntimeEntryPoints() : TheModule(nullptr),
+                            AutoreleaseRV(nullptr),
+                            Release(nullptr),
+                            Retain(nullptr),
+                            RetainBlock(nullptr),
+                            Autorelease(nullptr),
+                            StoreStrong(nullptr),
+                            RetainRV(nullptr),
+                            RetainAutorelease(nullptr),
+                            RetainAutoreleaseRV(nullptr) { }
 
   void init(Module *M) {
     TheModule = M;
@@ -102,34 +100,26 @@ public:
 
 private:
   /// Cached reference to the module which we will insert declarations into.
-  Module *TheModule = nullptr;
+  Module *TheModule;
 
   /// Declaration for ObjC runtime function objc_autoreleaseReturnValue.
-  Constant *AutoreleaseRV = nullptr;
-
+  Constant *AutoreleaseRV;
   /// Declaration for ObjC runtime function objc_release.
-  Constant *Release = nullptr;
-
+  Constant *Release;
   /// Declaration for ObjC runtime function objc_retain.
-  Constant *Retain = nullptr;
-
+  Constant *Retain;
   /// Declaration for ObjC runtime function objc_retainBlock.
-  Constant *RetainBlock = nullptr;
-
+  Constant *RetainBlock;
   /// Declaration for ObjC runtime function objc_autorelease.
-  Constant *Autorelease = nullptr;
-
+  Constant *Autorelease;
   /// Declaration for objc_storeStrong().
-  Constant *StoreStrong = nullptr;
-
+  Constant *StoreStrong;
   /// Declaration for objc_retainAutoreleasedReturnValue().
-  Constant *RetainRV = nullptr;
-
+  Constant *RetainRV;
   /// Declaration for objc_retainAutorelease().
-  Constant *RetainAutorelease = nullptr;
-
+  Constant *RetainAutorelease;
   /// Declaration for objc_retainAutoreleaseReturnValue().
-  Constant *RetainAutoreleaseRV = nullptr;
+  Constant *RetainAutoreleaseRV;
 
   Constant *getVoidRetI8XEntryPoint(Constant *&Decl, StringRef Name) {
     if (Decl)
@@ -180,10 +170,10 @@ private:
 
     return Decl = TheModule->getOrInsertFunction(Name, Fty, Attr);
   }
-};
 
-} // end namespace objcarc
+}; // class ARCRuntimeEntryPoints
 
-} // end namespace llvm
+} // namespace objcarc
+} // namespace llvm
 
-#endif // LLVM_LIB_TRANSFORMS_OBJCARC_ARCRUNTIMEENTRYPOINTS_H
+#endif

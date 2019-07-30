@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/Archive.h"
-#include "llvm/Support/Error.h"
 #include "llvm/Support/FileSystem.h"
 
 namespace llvm {
@@ -38,10 +37,10 @@ struct NewArchiveMember {
                                             bool Deterministic);
 };
 
-Error writeArchive(StringRef ArcName, ArrayRef<NewArchiveMember> NewMembers,
-                   bool WriteSymtab, object::Archive::Kind Kind,
-                   bool Deterministic, bool Thin,
-                   std::unique_ptr<MemoryBuffer> OldArchiveBuf = nullptr);
+std::pair<StringRef, std::error_code>
+writeArchive(StringRef ArcName, std::vector<NewArchiveMember> &NewMembers,
+             bool WriteSymtab, object::Archive::Kind Kind, bool Deterministic,
+             bool Thin, std::unique_ptr<MemoryBuffer> OldArchiveBuf = nullptr);
 }
 
 #endif

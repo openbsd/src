@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.32 2018/09/16 02:44:06 millert Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.31 2016/09/09 15:37:14 tb Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -760,6 +760,7 @@ CMDFUNCSTART(chowner)
 	int rval = 1;
 	uid_t uid;
 	char *cp;
+	struct passwd *pwd;
 
 	if (!checkactive())
 		return 1;
@@ -767,7 +768,9 @@ CMDFUNCSTART(chowner)
 	uid = strtoul(argv[1], &cp, 0);
 	if (cp == argv[1] || *cp != '\0' ) {
 		/* try looking up name */
-		if (uid_from_user(argv[1], &uid) == -1) {
+		if ((pwd = getpwnam(argv[1]))) {
+			uid = pwd->pw_uid;
+		} else {
 			warnx("bad uid `%s'", argv[1]);
 			return 1;
 		}

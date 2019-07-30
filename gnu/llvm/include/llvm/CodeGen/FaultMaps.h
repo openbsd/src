@@ -39,9 +39,6 @@ public:
 
   void recordFaultingOp(FaultKind FaultTy, const MCSymbol *HandlerLabel);
   void serializeToFaultMapSection();
-  void reset() {
-    FunctionInfos.clear();
-  }
 
 private:
   static const char *WFMP;

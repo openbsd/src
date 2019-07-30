@@ -8,8 +8,10 @@ add_lld_library(lldCore
   File.cpp
   LinkingContext.cpp
   Reader.cpp
+  Reproduce.cpp
   Resolver.cpp
   SymbolTable.cpp
+  TargetOptionsCommandFlags.cpp
   Writer.cpp
 
   ADDITIONAL_HEADER_DIRS

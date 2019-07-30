@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.52 2019/05/16 13:52:47 visa Exp $	*/
+/*	$OpenBSD: sched.h,v 1.44 2017/12/14 23:21:04 dlg Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -83,22 +83,17 @@
 #define CP_USER		0
 #define CP_NICE		1
 #define CP_SYS		2
-#define CP_SPIN		3
-#define CP_INTR		4
-#define CP_IDLE		5
-#define CPUSTATES	6
+#define CP_INTR		3
+#define CP_IDLE		4
+#define CPUSTATES	5
 
 #define	SCHED_NQS	32			/* 32 run queues. */
 
-struct smr_entry;
-
 /*
  * Per-CPU scheduler state.
+ * XXX - expose to userland for now.
  */
 struct schedstate_percpu {
-	struct proc *spc_idleproc;	/* idle proc for this cpu */
-	TAILQ_HEAD(prochead, proc) spc_qs[SCHED_NQS];
-	LIST_HEAD(,proc) spc_deadproc;
 	struct timespec spc_runtime;	/* time curproc started running */
 	volatile int spc_schedflags;	/* flags; see below */
 	u_int spc_schedticks;		/* ticks for schedclock() */
@@ -107,26 +102,19 @@ struct schedstate_percpu {
 	int spc_rrticks;		/* ticks until roundrobin() */
 	int spc_pscnt;			/* prof/stat counter */
 	int spc_psdiv;			/* prof/stat divisor */	
+	struct proc *spc_idleproc;	/* idle proc for this cpu */
 
 	u_int spc_nrun;			/* procs on the run queues */
 	fixpt_t spc_ldavg;		/* shortest load avg. for this cpu */
 
+	TAILQ_HEAD(prochead, proc) spc_qs[SCHED_NQS];
 	volatile uint32_t spc_whichqs;
-	volatile u_int spc_spinning;	/* this cpu is currently spinning */
 
-	SIMPLEQ_HEAD(, smr_entry) spc_deferred; /* deferred smr calls */
-	u_int spc_ndeferred;		/* number of deferred smr calls */
-	u_int spc_smrdepth;		/* level of smr nesting */
-	u_char spc_smrexpedite;		/* if set, dispatch smr entries
-					 * without delay */
+#ifdef notyet
+	struct proc *spc_reaper;	/* dead proc reaper */
+#endif
+	LIST_HEAD(,proc) spc_deadproc;
 };
-
-struct cpustats {
-	uint64_t	cs_time[CPUSTATES];	/* CPU state statistics */
-	uint64_t	cs_flags;		/* see below */
-};
-
-#define CPUSTATS_ONLINE		0x0001	/* CPU is schedulable */
 
 #ifdef	_KERNEL
 
@@ -167,8 +155,6 @@ void sched_barrier(struct cpu_info *ci);
 
 int sysctl_hwsetperf(void *, size_t *, void *, size_t);
 int sysctl_hwperfpolicy(void *, size_t *, void *, size_t);
-int sysctl_hwsmt(void *, size_t *, void *, size_t);
-int sysctl_hwncpuonline(void);
 
 #ifdef MULTIPROCESSOR
 void sched_start_secondary_cpus(void);
@@ -176,7 +162,6 @@ void sched_stop_secondary_cpus(void);
 #endif
 
 #define cpu_is_idle(ci)	((ci)->ci_schedstate.spc_whichqs == 0)
-int	cpu_is_online(struct cpu_info *);
 
 void sched_init_runqueues(void);
 void setrunqueue(struct proc *);

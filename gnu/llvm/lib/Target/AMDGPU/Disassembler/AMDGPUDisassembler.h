@@ -1,4 +1,4 @@
-//===- AMDGPUDisassembler.hpp - Disassembler for AMDGPU ISA -----*- C++ -*-===//
+//===-- AMDGPUDisassembler.hpp - Disassembler for AMDGPU ISA ---*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -17,18 +17,16 @@
 #define LLVM_LIB_TARGET_AMDGPU_DISASSEMBLER_AMDGPUDISASSEMBLER_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCDisassembler/MCRelocationInfo.h"
 #include "llvm/MC/MCDisassembler/MCSymbolizer.h"
-
 #include <algorithm>
 #include <cstdint>
 #include <memory>
 
 namespace llvm {
 
+class MCContext;
 class MCInst;
 class MCOperand;
 class MCSubtargetInfo;
@@ -40,16 +38,13 @@ class Twine;
 
 class AMDGPUDisassembler : public MCDisassembler {
 private:
-  std::unique_ptr<MCInstrInfo const> const MCII;
-  const MCRegisterInfo &MRI;
   mutable ArrayRef<uint8_t> Bytes;
   mutable uint32_t Literal;
   mutable bool HasLiteral;
 
 public:
-  AMDGPUDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx,
-                     MCInstrInfo const *MCII) :
-    MCDisassembler(STI, Ctx), MCII(MCII), MRI(*Ctx.getRegisterInfo()) {}
+  AMDGPUDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx) :
+    MCDisassembler(STI, Ctx) {}
 
   ~AMDGPUDisassembler() override = default;
 
@@ -65,11 +60,12 @@ public:
 
   MCOperand errOperand(unsigned V, const Twine& ErrMsg) const;
 
-  DecodeStatus tryDecodeInst(const uint8_t* Table, MCInst &MI, uint64_t Inst,
-                             uint64_t Address) const;
+  DecodeStatus tryDecodeInst(const uint8_t* Table,
+                              MCInst &MI,
+                              uint64_t Inst,
+                              uint64_t Address) const;
 
   DecodeStatus convertSDWAInst(MCInst &MI) const;
-  DecodeStatus convertMIMGInst(MCInst &MI) const;
 
   MCOperand decodeOperand_VGPR_32(unsigned Val) const;
   MCOperand decodeOperand_VS_32(unsigned Val) const;
@@ -84,7 +80,6 @@ public:
 
   MCOperand decodeOperand_SReg_32(unsigned Val) const;
   MCOperand decodeOperand_SReg_32_XM0_XEXEC(unsigned Val) const;
-  MCOperand decodeOperand_SReg_32_XEXEC_HI(unsigned Val) const;
   MCOperand decodeOperand_SReg_64(unsigned Val) const;
   MCOperand decodeOperand_SReg_64_XEXEC(unsigned Val) const;
   MCOperand decodeOperand_SReg_128(unsigned Val) const;
@@ -95,8 +90,6 @@ public:
     OPW32,
     OPW64,
     OPW128,
-    OPW256,
-    OPW512,
     OPW16,
     OPWV216,
     OPW_LAST_,
@@ -112,7 +105,6 @@ public:
   MCOperand decodeLiteralConstant() const;
 
   MCOperand decodeSrcOp(const OpWidthTy Width, unsigned Val) const;
-  MCOperand decodeDstOp(const OpWidthTy Width, unsigned Val) const;
   MCOperand decodeSpecialReg32(unsigned Val) const;
   MCOperand decodeSpecialReg64(unsigned Val) const;
 
@@ -120,12 +112,7 @@ public:
   MCOperand decodeSDWASrc16(unsigned Val) const;
   MCOperand decodeSDWASrc32(unsigned Val) const;
   MCOperand decodeSDWAVopcDst(unsigned Val) const;
-
-  int getTTmpIdx(unsigned Val) const;
-
-  bool isVI() const;
-  bool isGFX9() const;
-  };
+};
 
 //===----------------------------------------------------------------------===//
 // AMDGPUSymbolizer

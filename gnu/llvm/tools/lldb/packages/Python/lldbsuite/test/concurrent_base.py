@@ -32,12 +32,13 @@ class ConcurrentEventsBase(TestBase):
         super(ConcurrentEventsBase, self).setUp()
         # Find the line number for our breakpoint.
         self.filename = 'main.cpp'
+        source_relpath = os.path.join(os.path.pardir, self.filename)
         self.thread_breakpoint_line = line_number(
-            self.filename, '// Set breakpoint here')
+            source_relpath, '// Set breakpoint here')
         self.setup_breakpoint_line = line_number(
-            self.filename, '// Break here and adjust num')
+            source_relpath, '// Break here and adjust num')
         self.finish_breakpoint_line = line_number(
-            self.filename, '// Break here and verify one thread is active')
+            source_relpath, '// Break here and verify one thread is active')
 
     def describe_threads(self):
         ret = []
@@ -113,7 +114,7 @@ class ConcurrentEventsBase(TestBase):
             watchpoint_func. The inferior is continued until exit or a crash takes place, and the number of events seen by LLDB
             is verified to match the expected number of events.
         """
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Get the target

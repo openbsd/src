@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.12 2019/01/10 18:59:56 sf Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.4 2018/01/19 14:23:52 ccardenas Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -17,7 +17,6 @@
  */
 
 #include <sys/types.h>
-#include <dev/pci/virtio_pcireg.h>
 #include <dev/pv/vioscsireg.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
@@ -89,7 +88,7 @@ vioscsi_next_ring_item(struct vioscsi_dev *dev, struct vring_avail *avail,
 static const char *
 vioscsi_op_names(uint8_t type)
 {
-	switch (type) {
+	switch(type) {
 	/* defined in scsi_all.h */
 	case TEST_UNIT_READY: return "TEST_UNIT_READY";
 	case REQUEST_SENSE: return "REQUEST_SENSE";
@@ -198,23 +197,20 @@ vioscsi_start_read(struct vioscsi_dev *dev, off_t block, ssize_t n_blocks)
 		goto nomem;
 	info->len = n_blocks * VIOSCSI_BLOCK_SIZE_CDROM;
 	info->offset = block * VIOSCSI_BLOCK_SIZE_CDROM;
-	info->file = &dev->file;
+	info->fd = dev->fd;
 
 	return info;
 
 nomem:
 	free(info);
-	log_warn("malloc error vioscsi read");
+	log_warn("malloc errror vioscsi read");
 	return (NULL);
 }
 
 static const uint8_t *
 vioscsi_finish_read(struct ioinfo *info)
 {
-	struct virtio_backing *f;
-
-	f = info->file;
-	if (f->pread(f->p, info->buf, info->len, info->offset) != info->len) {
+	if (pread(info->fd, info->buf, info->len, info->offset) != info->len) {
 		info->error = errno;
 		log_warn("vioscsi read error");
 		return NULL;
@@ -265,7 +261,7 @@ vioscsi_handle_inquiry(struct vioscsi_dev *dev,
 	inq = (struct scsi_inquiry *)(req->cdb);
 	inq_len = (uint16_t)_2btol(inq->length);
 
-	DPRINTF("%s: INQ - EVPD %d PAGE_CODE 0x%08x LEN %d", __func__,
+	log_debug("%s: INQ - EVPD %d PAGE_CODE 0x%08x LEN %d", __func__,
 	    inq->flags & SI_EVPD, inq->pagecode, inq_len);
 
 	vioscsi_prepare_resp(&resp,
@@ -291,7 +287,7 @@ vioscsi_handle_inquiry(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
 	    &(acct->resp_idx));
 
-	DPRINTF("%s: writing resp to 0x%llx size %d at local "
+	dprintf("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d", __func__, acct->resp_desc->addr,
 	    acct->resp_desc->len, acct->resp_idx, acct->req_idx, acct->idx);
 
@@ -305,7 +301,7 @@ vioscsi_handle_inquiry(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
 	    &(acct->resp_idx));
 
-	DPRINTF("%s: writing inq_data to 0x%llx size %d at "
+	dprintf("%s: writing inq_data to 0x%llx size %d at "
 	    "local idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -345,7 +341,7 @@ vioscsi_handle_mode_sense(struct vioscsi_dev *dev,
 	mode_page_ctl = mode_sense->page & SMS_PAGE_CTRL;
 	mode_page_code = mode_sense->page & SMS_PAGE_CODE;
 
-	DPRINTF("%s: M_SENSE - DBD %d Page Ctrl 0x%x Code 0x%x Len %u",
+	log_debug("%s: M_SENSE - DBD %d Page Ctrl 0x%x Code 0x%x Len %u",
 	    __func__, mode_sense->byte2 & SMS_DBD, mode_page_ctl,
 	    mode_page_code, mode_sense->length);
 
@@ -358,7 +354,7 @@ vioscsi_handle_mode_sense(struct vioscsi_dev *dev,
 		 * ERR_RECOVERY_PAGE is 12 bytes
 		 * CDVD_CAPABILITIES_PAGE is 27 bytes
 		 */
-		switch (mode_page_code) {
+		switch(mode_page_code) {
 		case ERR_RECOVERY_PAGE:
 			mode_reply_len = 16;
 			mode_reply =
@@ -401,7 +397,7 @@ vioscsi_handle_mode_sense(struct vioscsi_dev *dev,
 		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
 		    acct->req_desc, &(acct->resp_idx));
 
-		DPRINTF("%s: writing resp to 0x%llx size %d "
+		dprintf("%s: writing resp to 0x%llx size %d "
 		    "at local idx %d req_idx %d global_idx %d",
 		    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 		    acct->resp_idx, acct->req_idx, acct->idx);
@@ -419,7 +415,7 @@ vioscsi_handle_mode_sense(struct vioscsi_dev *dev,
 		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
 		    acct->resp_desc, &(acct->resp_idx));
 
-		DPRINTF("%s: writing mode_reply to 0x%llx "
+		dprintf("%s: writing mode_reply to 0x%llx "
 		    "size %d at local idx %d req_idx %d "
 		    "global_idx %d",__func__, acct->resp_desc->addr,
 		    acct->resp_desc->len, acct->resp_idx, acct->req_idx,
@@ -458,7 +454,7 @@ mode_sense_error:
 			    __func__, acct->resp_desc->addr);
 			goto mode_sense_out;
 		}
-
+	
 		ret = 1;
 		dev->cfg.isr_status = 1;
 		/* Move ring indexes */
@@ -488,7 +484,7 @@ vioscsi_handle_mode_sense_big(struct vioscsi_dev *dev,
 	mode_page_code = mode_sense_10->page & SMS_PAGE_CODE;
 	mode_sense_len = (uint16_t)_2btol(mode_sense_10->length);
 
-	DPRINTF("%s: M_SENSE_10 - DBD %d Page Ctrl 0x%x Code 0x%x Len %u",
+	log_debug("%s: M_SENSE_10 - DBD %d Page Ctrl 0x%x Code 0x%x Len %u",
 	    __func__, mode_sense_10->byte2 & SMS_DBD, mode_page_ctl,
 	    mode_page_code, mode_sense_len);
 
@@ -501,7 +497,7 @@ vioscsi_handle_mode_sense_big(struct vioscsi_dev *dev,
 		 * ERR_RECOVERY_PAGE is 12 bytes
 		 * CDVD_CAPABILITIES_PAGE is 27 bytes
 		 */
-		switch (mode_page_code) {
+		switch(mode_page_code) {
 		case ERR_RECOVERY_PAGE:
 			mode_reply_len = 20;
 			mode_reply =
@@ -544,7 +540,7 @@ vioscsi_handle_mode_sense_big(struct vioscsi_dev *dev,
 		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
 		    acct->req_desc, &(acct->resp_idx));
 
-		DPRINTF("%s: writing resp to 0x%llx size %d "
+		dprintf("%s: writing resp to 0x%llx size %d "
 		    "at local idx %d req_idx %d global_idx %d",
 		    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 		    acct->resp_idx, acct->req_idx, acct->idx);
@@ -562,7 +558,7 @@ vioscsi_handle_mode_sense_big(struct vioscsi_dev *dev,
 		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
 		    acct->resp_desc, &(acct->resp_idx));
 
-		DPRINTF("%s: writing mode_reply to 0x%llx "
+		dprintf("%s: writing mode_reply to 0x%llx "
 		    "size %d at local idx %d req_idx %d global_idx %d",
 		    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 		    acct->resp_idx, acct->req_idx, acct->idx);
@@ -600,14 +596,14 @@ mode_sense_big_error:
 			    __func__, acct->resp_desc->addr);
 			goto mode_sense_big_out;
 		}
-
+	
 		ret = 1;
 		dev->cfg.isr_status = 1;
 		/* Move ring indexes */
 		vioscsi_next_ring_item(dev, acct->avail, acct->used,
 		    acct->req_desc, acct->req_idx);
 	}
-mode_sense_big_out:
+mode_sense_big_out:	
 	return (ret);
 }
 
@@ -624,7 +620,7 @@ vioscsi_handle_read_capacity(struct vioscsi_dev *dev,
 	memset(&resp, 0, sizeof(resp));
 	r_cap = (struct scsi_read_capacity *)(req->cdb);
 	r_cap_addr = _4btol(r_cap->addr);
-	DPRINTF("%s: %s - Addr 0x%08x", __func__,
+	log_debug("%s: %s - Addr 0x%08x", __func__,
 	    vioscsi_op_names(r_cap->opcode), r_cap_addr);
 
 	vioscsi_prepare_resp(&resp,
@@ -637,7 +633,7 @@ vioscsi_handle_read_capacity(struct vioscsi_dev *dev,
 		goto read_capacity_out;
 	}
 
-	DPRINTF("%s: ISO has %lld bytes and %lld blocks",
+	log_debug("%s: ISO has %lld bytes and %lld blocks",
 	    __func__, dev->sz, dev->n_blocks);
 
 	/*
@@ -661,11 +657,11 @@ vioscsi_handle_read_capacity(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
 	    &(acct->resp_idx));
 
-	DPRINTF("%s: writing resp to 0x%llx size %d at local "
+	dprintf("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
-
+			
 	if (write_mem(acct->resp_desc->addr, &resp, acct->resp_desc->len)) {
 		log_warnx("%s: unable to write OK resp status data @ 0x%llx",
 		    __func__, acct->resp_desc->addr);
@@ -676,7 +672,7 @@ vioscsi_handle_read_capacity(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
 	    &(acct->resp_idx));
 
-	DPRINTF("%s: writing r_cap_data to 0x%llx size %d at "
+	dprintf("%s: writing r_cap_data to 0x%llx size %d at "
 	    "local idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -713,7 +709,7 @@ vioscsi_handle_read_capacity_16(struct vioscsi_dev *dev,
 	memset(&resp, 0, sizeof(resp));
 	r_cap_16 = (struct scsi_read_capacity_16 *)(req->cdb);
 	r_cap_addr_16 = _8btol(r_cap_16->addr);
-	DPRINTF("%s: %s - Addr 0x%016llx", __func__,
+	log_debug("%s: %s - Addr 0x%016llx", __func__,
 	    vioscsi_op_names(r_cap_16->opcode), r_cap_addr_16);
 
 	vioscsi_prepare_resp(&resp, VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
@@ -726,7 +722,7 @@ vioscsi_handle_read_capacity_16(struct vioscsi_dev *dev,
 		goto read_capacity_16_out;
 	}
 
-	DPRINTF("%s: ISO has %lld bytes and %lld blocks", __func__,
+	log_debug("%s: ISO has %lld bytes and %lld blocks", __func__,
 	    dev->sz, dev->n_blocks);
 
 	_lto8b(dev->n_blocks - 1, r_cap_data_16->addr);
@@ -736,7 +732,7 @@ vioscsi_handle_read_capacity_16(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
 	    &(acct->resp_idx));
 
-	DPRINTF("%s: writing resp to 0x%llx size %d at local "
+	dprintf("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -751,7 +747,7 @@ vioscsi_handle_read_capacity_16(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
 	    &(acct->resp_idx));
 
-	DPRINTF("%s: writing r_cap_data_16 to 0x%llx size %d "
+	dprintf("%s: writing r_cap_data_16 to 0x%llx size %d "
 	    "at local idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -789,11 +785,11 @@ vioscsi_handle_report_luns(struct vioscsi_dev *dev,
 	rpl = (struct scsi_report_luns *)(req->cdb);
 	rpl_length = _4btol(rpl->length);
 
-	DPRINTF("%s: REPORT_LUNS Report 0x%x Length %d", __func__,
+	log_debug("%s: REPORT_LUNS Report 0x%x Length %d", __func__,
 	    rpl->selectreport, rpl_length);
 
 	if (rpl_length < RPL_MIN_SIZE) {
-		DPRINTF("%s: RPL_Length %d < %d (RPL_MIN_SIZE)", __func__,
+		log_debug("%s: RPL_Length %d < %d (RPL_MIN_SIZE)", __func__,
 		    rpl_length, RPL_MIN_SIZE);
 
 		vioscsi_prepare_resp(&resp,
@@ -819,7 +815,7 @@ vioscsi_handle_report_luns(struct vioscsi_dev *dev,
 		goto rpl_out;
 
 	}
-
+	
 	reply_rpl = calloc(1, sizeof(*reply_rpl));
 
 	if (reply_rpl == NULL) {
@@ -837,7 +833,7 @@ vioscsi_handle_report_luns(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
 	    &(acct->resp_idx));
 
-	DPRINTF("%s: writing resp to 0x%llx size %d at local "
+	dprintf("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d", __func__, acct->resp_desc->addr,
 	    acct->resp_desc->len, acct->resp_idx, acct->req_idx, acct->idx);
 
@@ -851,7 +847,7 @@ vioscsi_handle_report_luns(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
 	    &(acct->resp_idx));
 
-	DPRINTF("%s: writing reply_rpl to 0x%llx size %d at "
+	dprintf("%s: writing reply_rpl to 0x%llx size %d at "
 	    "local idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -867,7 +863,7 @@ vioscsi_handle_report_luns(struct vioscsi_dev *dev,
 		vioscsi_next_ring_item(dev, acct->avail, acct->used,
 		    acct->req_desc, acct->req_idx);
 	}
-
+	
 free_rpl:
 	free(reply_rpl);
 rpl_out:
@@ -890,12 +886,12 @@ vioscsi_handle_read_6(struct vioscsi_dev *dev,
 	read_lba = ((read_6->addr[0] & SRW_TOPADDR) << 16 ) |
 	    (read_6->addr[1] << 8) | read_6->addr[2];
 
-	DPRINTF("%s: READ Addr 0x%08x Len %d (%d)",
+	log_debug("%s: READ Addr 0x%08x Len %d (%d)",
 	    __func__, read_lba, read_6->length, read_6->length * dev->max_xfer);
 
 	/* check if lba is in range */
 	if (read_lba > dev->n_blocks - 1) {
-		DPRINTF("%s: requested block out of range req: %ud max: %lld",
+		log_debug("%s: requested block out of range req: %ud max: %lld",
 		    __func__, read_lba, dev->n_blocks);
 
 		vioscsi_prepare_resp(&resp,
@@ -964,7 +960,7 @@ vioscsi_handle_read_6(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
 	    &(acct->resp_idx));
 
-	DPRINTF("%s: writing resp to 0x%llx size %d at local "
+	dprintf("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -979,7 +975,7 @@ vioscsi_handle_read_6(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
 	    &(acct->resp_idx));
 
-	DPRINTF("%s: writing read_buf to 0x%llx size %d at "
+	dprintf("%s: writing read_buf to 0x%llx size %d at "
 	    "local idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -1021,12 +1017,12 @@ vioscsi_handle_read_10(struct vioscsi_dev *dev,
 	read_10_len = _2btol(read_10->length);
 	chunk_offset = 0;
 
-	DPRINTF("%s: READ_10 Addr 0x%08x Len %d (%d)",
+	log_debug("%s: READ_10 Addr 0x%08x Len %d (%d)",
 	    __func__, read_lba, read_10_len, read_10_len * dev->max_xfer);
 
 	/* check if lba is in range */
 	if (read_lba > dev->n_blocks - 1) {
-		DPRINTF("%s: requested block out of range req: %ud max: %lld",
+		log_debug("%s: requested block out of range req: %ud max: %lld",
 		    __func__, read_lba, dev->n_blocks);
 
 		vioscsi_prepare_resp(&resp,
@@ -1083,7 +1079,7 @@ vioscsi_handle_read_10(struct vioscsi_dev *dev,
 			vioscsi_next_ring_item(dev, acct->avail, acct->used,
 			    acct->req_desc, acct->req_idx);
 		}
-
+	
 		goto free_read_10;
 	}
 
@@ -1093,7 +1089,7 @@ vioscsi_handle_read_10(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
 	    &(acct->resp_idx));
 
-	DPRINTF("%s: writing resp to 0x%llx size %d at local "
+	dprintf("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -1115,7 +1111,7 @@ vioscsi_handle_read_10(struct vioscsi_dev *dev,
 		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
 		    acct->resp_desc, &(acct->resp_idx));
 
-		DPRINTF("%s: writing read_buf to 0x%llx size "
+		dprintf("%s: writing read_buf to 0x%llx size "
 		    "%d at local idx %d req_idx %d global_idx %d",
 		    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 		    acct->resp_idx, acct->req_idx, acct->idx);
@@ -1157,9 +1153,9 @@ vioscsi_handle_prevent_allow(struct vioscsi_dev *dev,
 	vioscsi_prepare_resp(&resp, VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
 
 	if (dev->locked) {
-		DPRINTF("%s: unlocking medium", __func__);
+		log_debug("%s: unlocking medium", __func__);
 	} else {
-		DPRINTF("%s: locking medium", __func__);
+		log_debug("%s: locking medium", __func__);
 	}
 
 	dev->locked = dev->locked ? 0 : 1;
@@ -1191,7 +1187,7 @@ vioscsi_handle_mechanism_status(struct vioscsi_dev *dev,
 	memset(&resp, 0, sizeof(resp));
 	mech_status = (struct scsi_mechanism_status *)(req->cdb);
 	mech_status_len = (uint16_t)_2btol(mech_status->length);
-	DPRINTF("%s: MECH_STATUS Len %u", __func__, mech_status_len);
+	log_debug("%s: MECH_STATUS Len %u", __func__, mech_status_len);
 
 	mech_status_header = calloc(1, sizeof(*mech_status_header));
 
@@ -1251,7 +1247,7 @@ vioscsi_handle_read_toc(struct vioscsi_dev *dev,
 	memset(&resp, 0, sizeof(resp));
 	toc = (struct scsi_read_toc *)(req->cdb);
 	toc_len = (uint16_t)_2btol(toc->data_len);
-	DPRINTF("%s: %s - MSF %d Track 0x%02x Addr 0x%04x",
+	log_debug("%s: %s - MSF %d Track 0x%02x Addr 0x%04x",
 	    __func__, vioscsi_op_names(toc->opcode),
 	    ((toc->byte2 >> 1) & 1), toc->from_track, toc_len);
 
@@ -1261,7 +1257,7 @@ vioscsi_handle_read_toc(struct vioscsi_dev *dev,
 	if (toc->from_track > 1 &&
 	    toc->from_track != READ_TOC_LEAD_OUT_TRACK) {
 		/* illegal request */
-		log_warnx("%s: illegal request Track 0x%02x",
+		log_debug("%s: illegal request Track 0x%02x",
 		    __func__, toc->from_track);
 
 		vioscsi_prepare_resp(&resp,
@@ -1342,7 +1338,7 @@ vioscsi_handle_read_toc(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
 	    &(acct->resp_idx));
 
-	DPRINTF("%s: writing resp to 0x%llx size %d at local "
+	dprintf("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -1357,7 +1353,7 @@ vioscsi_handle_read_toc(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
 	    &(acct->resp_idx));
 
-	DPRINTF("%s: writing toc_data to 0x%llx size %d at "
+	dprintf("%s: writing toc_data to 0x%llx size %d at "
 	    "local idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -1389,7 +1385,7 @@ vioscsi_handle_read_disc_info(struct vioscsi_dev *dev,
 	memset(&resp, 0, sizeof(resp));
 	read_disc =
 	    (struct scsi_read_disc_information *)(req->cdb);
-	DPRINTF("%s: Disc Info %x", __func__, read_disc->byte2);
+	log_debug("%s: Disc Info %x", __func__, read_disc->byte2);
 
 	/* send back unsupported */
 	vioscsi_prepare_resp(&resp,
@@ -1428,7 +1424,7 @@ vioscsi_handle_gesn(struct vioscsi_dev *dev,
 
 	memset(&resp, 0, sizeof(resp));
 	gesn = (struct scsi_gesn *)(req->cdb);
-	DPRINTF("%s: GESN Method %s", __func__,
+	log_debug("%s: GESN Method %s", __func__,
 	    gesn->byte2 ? "Polling" : "Asynchronous");
 
 	if (gesn->byte2 == 0) {
@@ -1447,7 +1443,7 @@ vioscsi_handle_gesn(struct vioscsi_dev *dev,
 			    __func__, acct->resp_desc->addr);
 			goto gesn_out;
 		}
-
+	
 		ret = 1;
 		dev->cfg.isr_status = 1;
 		/* Move ring indexes */
@@ -1475,7 +1471,7 @@ vioscsi_handle_gesn(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
 	    &(acct->resp_idx));
 
-	DPRINTF("%s: writing resp to 0x%llx size %d at local "
+	dprintf("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -1490,7 +1486,7 @@ vioscsi_handle_gesn(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
 	    &(acct->resp_idx));
 
-	DPRINTF("%s: writing gesn_reply to 0x%llx size %d at "
+	dprintf("%s: writing gesn_reply to 0x%llx size %d at "
 	    "local idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -1534,7 +1530,7 @@ vioscsi_handle_get_config(struct vioscsi_dev *dev,
 	get_configuration = (struct scsi_get_configuration *)(req->cdb);
 	get_conf_feature = (uint16_t)_2btol(get_configuration->feature);
 	get_conf_len = (uint16_t)_2btol(get_configuration->length);
-	DPRINTF("%s: Conf RT %x Feature %d Len %d", __func__,
+	log_debug("%s: Conf RT %x Feature %d Len %d", __func__,
 	    get_configuration->byte2, get_conf_feature, get_conf_len);
 
 	get_conf_reply = (uint8_t*)calloc(G_CONFIG_REPLY_SIZE, sizeof(uint8_t));
@@ -1620,7 +1616,7 @@ vioscsi_handle_get_config(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
 	    acct->req_desc, &(acct->resp_idx));
 
-	DPRINTF("%s: writing resp to 0x%llx size %d at local "
+	dprintf("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -1636,7 +1632,7 @@ vioscsi_handle_get_config(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
 	    &(acct->resp_idx));
 
-	DPRINTF("%s: writing get_conf_reply to 0x%llx size %d "
+	dprintf("%s: writing get_conf_reply to 0x%llx size %d "
 	    "at local idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -1668,7 +1664,7 @@ vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 
 	*intr = 0xFF;
 
-	DPRINTF("%s: request %s reg %u,%s sz %u", __func__,
+	log_debug("%s: request %s reg %u,%s sz %u", __func__,
 	    dir ? "READ" : "WRITE", reg, vioscsi_reg_name(reg), sz);
 
 	if (dir == 0) {
@@ -1681,7 +1677,7 @@ vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		case VIRTIO_CONFIG_GUEST_FEATURES:
 			dev->cfg.guest_feature = *data;
-			DPRINTF("%s: guest feature set to %u",
+			log_debug("%s: guest feature set to %u",
 			    __func__, dev->cfg.guest_feature);
 			break;
 		case VIRTIO_CONFIG_QUEUE_ADDRESS:
@@ -1699,7 +1695,7 @@ vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		case VIRTIO_CONFIG_DEVICE_STATUS:
 			dev->cfg.device_status = *data;
-			DPRINTF("%s: device status set to %u",
+			log_debug("%s: device status set to %u",
 			    __func__, dev->cfg.device_status);
 			if (dev->cfg.device_status == 0) {
 				log_debug("%s: device reset", __func__);
@@ -1845,16 +1841,16 @@ vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			if (sz == 1) {
 				/* read third byte of cmd_per_lun */
 				*data &= 0xFFFFFF00;
-				*data |= (uint32_t)(VIOSCSI_CMD_PER_LUN >> 16)
-				    & 0xFF;
+				*data |=
+				    (uint32_t)(VIOSCSI_CMD_PER_LUN >> 16) & 0xFF;
 			}
 			break;
 		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 15:
 			if (sz == 1) {
 				/* read fourth byte of cmd_per_lun */
 				*data &= 0xFFFFFF00;
-				*data |= (uint32_t)(VIOSCSI_CMD_PER_LUN >> 24)
-				    & 0xFF;
+				*data |=
+				    (uint32_t)(VIOSCSI_CMD_PER_LUN >> 24) & 0xFF;
 			}
 			break;
 		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 16:
@@ -1931,13 +1927,10 @@ vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 28:
 			/* VIRTIO_SCSI_CONFIG_MAX_CHANNEL, 16bit */
-
-			/* defined by standard to be zero */
-			*data &= 0xFFFF0000;
+			*data &= 0xFFFF0000; /* defined by standard to be zero */
 			break;
 		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 29:
-			/* defined by standard to be zero */
-			*data &= 0xFFFF0000;
+			*data &= 0xFFFF0000; /* defined by standard to be zero */
 			break;
 		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 30:
 			/* VIRTIO_SCSI_CONFIG_MAX_TARGET, 16bit */
@@ -2046,7 +2039,7 @@ void
 vioscsi_update_qs(struct vioscsi_dev *dev)
 {
 	/* Invalid queue? */
-	if (dev->cfg.queue_select > VIRTIO_MAX_QUEUES) {
+	if(dev->cfg.queue_select > VIRTIO_MAX_QUEUES) {
 		dev->cfg.queue_size = 0;
 		return;
 	}
@@ -2060,7 +2053,7 @@ void
 vioscsi_update_qa(struct vioscsi_dev *dev)
 {
 	/* Invalid queue? */
-	if (dev->cfg.queue_select > VIRTIO_MAX_QUEUES)
+	if(dev->cfg.queue_select > VIRTIO_MAX_QUEUES)
 		return;
 
 	dev->vq[dev->cfg.queue_select].qa = dev->cfg.queue_address;
@@ -2160,7 +2153,7 @@ vioscsi_notifyq(struct vioscsi_dev *dev)
 		 * respond with a BAD_TARGET response.
 		 */
 		if (req.lun[1] >= VIOSCSI_MAX_TARGET || req.lun[3] > 0) {
-			DPRINTF("%s: Ignore CMD 0x%02x,%s on lun %u:%u:%u:%u",
+			log_debug("%s: Ignore CMD 0x%02x,%s on lun %u:%u:%u:%u",
 			    __func__, req.cdb[0], vioscsi_op_names(req.cdb[0]),
 			    req.lun[0], req.lun[1], req.lun[2], req.lun[3]);
 			/* Move index for response */
@@ -2191,14 +2184,14 @@ vioscsi_notifyq(struct vioscsi_dev *dev)
 			goto next_msg;
 		}
 
-		DPRINTF("%s: Queue %d id 0x%llx lun %u:%u:%u:%u"
+		log_debug("%s: Queue %d id 0x%llx lun %u:%u:%u:%u"
 		    " cdb OP 0x%02x,%s",
 		    __func__, dev->cfg.queue_notify, req.id,
 		    req.lun[0], req.lun[1], req.lun[2], req.lun[3],
 		    req.cdb[0], vioscsi_op_names(req.cdb[0]));
 
 		/* opcode is first byte */
-		switch (req.cdb[0]) {
+		switch(req.cdb[0]) {
 		case TEST_UNIT_READY:
 		case START_STOP:
 			ret = vioscsi_handle_tur(dev, &req, &acct);

@@ -18,8 +18,6 @@ def CycloneModel : SchedMachineModel {
   let LoadLatency = 4; // Optimistic load latency.
   let MispredictPenalty = 16; // 14-19 cycles are typical.
   let CompleteModel = 1;
-
-  list<Predicate> UnsupportedFeatures = [HasSVE];
 }
 
 //===----------------------------------------------------------------------===//

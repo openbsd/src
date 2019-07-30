@@ -15,12 +15,11 @@ from lldbsuite.test.lldbtest import *
 from lldbsuite.test import lldbutil
 
 
-class StepAvoidsNoDebugTestCase(TestBase):
+class ReturnValueTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
     @add_test_categories(['pyapi'])
-    @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr32343")
     def test_step_out_with_python(self):
         """Test stepping out using avoid-no-debug with dsyms."""
         self.build()
@@ -37,7 +36,6 @@ class StepAvoidsNoDebugTestCase(TestBase):
             "3.9"],
         archs=["i386"],
         bugnumber="llvm.org/pr28549")
-    @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr32343")
     def test_step_over_with_python(self):
         """Test stepping over using avoid-no-debug with dwarf."""
         self.build()
@@ -54,8 +52,6 @@ class StepAvoidsNoDebugTestCase(TestBase):
             "3.9"],
         archs=["i386"],
         bugnumber="llvm.org/pr28549")
-    @expectedFailureAll(oslist=["ios", "tvos", "bridgeos"], bugnumber="<rdar://problem/34026777>")  # lldb doesn't step past last source line in function on arm64
-    @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr32343")
     def test_step_in_with_python(self):
         """Test stepping in using avoid-no-debug with dwarf."""
         self.build()
@@ -95,7 +91,7 @@ class StepAvoidsNoDebugTestCase(TestBase):
             (name, pattern))
 
     def get_to_starting_point(self):
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         error = lldb.SBError()
 
         self.target = self.dbg.CreateTarget(exe)

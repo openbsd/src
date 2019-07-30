@@ -1,4 +1,4 @@
-//===- HexagonGenMux.cpp --------------------------------------------------===//
+//===--- HexagonGenMux.cpp ------------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -26,7 +26,6 @@
 #include "HexagonRegisterInfo.h"
 #include "HexagonSubtarget.h"
 #include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
@@ -40,10 +39,8 @@
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
-#include <cassert>
 #include <iterator>
 #include <limits>
 #include <utility>
@@ -56,11 +53,6 @@ namespace llvm {
   void initializeHexagonGenMuxPass(PassRegistry& Registry);
 
 } // end namespace llvm
-
-// Initialize this to 0 to always prefer generating mux by default.
-static cl::opt<unsigned> MinPredDist("hexagon-gen-mux-threshold", cl::Hidden,
-  cl::init(0), cl::desc("Minimum distance between predicate definition and "
-  "farther of the two predicated uses"));
 
 namespace {
 
@@ -117,9 +109,9 @@ namespace {
             Def2(&D2) {}
     };
 
-    using InstrIndexMap = DenseMap<MachineInstr *, unsigned>;
-    using DefUseInfoMap = DenseMap<unsigned, DefUseInfo>;
-    using MuxInfoList = SmallVector<MuxInfo, 4>;
+    typedef DenseMap<MachineInstr*,unsigned> InstrIndexMap;
+    typedef DenseMap<unsigned,DefUseInfo> DefUseInfoMap;
+    typedef SmallVector<MuxInfo,4> MuxInfoList;
 
     bool isRegPair(unsigned Reg) const {
       return Hexagon::DoubleRegsRegClass.contains(Reg);
@@ -137,9 +129,9 @@ namespace {
     bool genMuxInBlock(MachineBasicBlock &B);
   };
 
-} // end anonymous namespace
+  char HexagonGenMux::ID = 0;
 
-char HexagonGenMux::ID = 0;
+} // end anonymous namespace
 
 INITIALIZE_PASS(HexagonGenMux, "hexagon-gen-mux",
   "Hexagon generate mux instructions", false, false)
@@ -228,8 +220,7 @@ bool HexagonGenMux::genMuxInBlock(MachineBasicBlock &B) {
   DefUseInfoMap DUM;
   buildMaps(B, I2X, DUM);
 
-  using CondsetMap = DenseMap<unsigned, CondsetInfo>;
-
+  typedef DenseMap<unsigned,CondsetInfo> CondsetMap;
   CondsetMap CM;
   MuxInfoList ML;
 
@@ -275,13 +266,11 @@ bool HexagonGenMux::genMuxInBlock(MachineBasicBlock &B) {
     // There is now a complete definition of DR, i.e. we have the predicate
     // register, the definition if-true, and definition if-false.
 
-    // First, check if the definitions are far enough from the definition
+    // First, check if both definitions are far enough from the definition
     // of the predicate register.
     unsigned MinX = std::min(CI.TrueX, CI.FalseX);
     unsigned MaxX = std::max(CI.TrueX, CI.FalseX);
-    // Specifically, check if the predicate definition is within a prescribed
-    // distance from the farther of the two predicated instructions.
-    unsigned SearchX = (MaxX >= MinPredDist) ? MaxX-MinPredDist : 0;
+    unsigned SearchX = (MaxX > 4) ? MaxX-4 : 0;
     bool NearDef = false;
     for (unsigned X = SearchX; X < MaxX; ++X) {
       const DefUseInfo &DU = DUM.lookup(X);
@@ -356,7 +345,7 @@ bool HexagonGenMux::genMuxInBlock(MachineBasicBlock &B) {
     return false;
   };
   for (auto I = B.rbegin(), E = B.rend(); I != E; ++I) {
-    if (I->isDebugInstr())
+    if (I->isDebugValue())
       continue;
     // This isn't 100% accurate, but it's safe.
     // It won't detect (as a kill) a case like this
@@ -376,7 +365,7 @@ bool HexagonGenMux::genMuxInBlock(MachineBasicBlock &B) {
 }
 
 bool HexagonGenMux::runOnMachineFunction(MachineFunction &MF) {
-  if (skipFunction(MF.getFunction()))
+  if (skipFunction(*MF.getFunction()))
     return false;
   HII = MF.getSubtarget<HexagonSubtarget>().getInstrInfo();
   HRI = MF.getSubtarget<HexagonSubtarget>().getRegisterInfo();

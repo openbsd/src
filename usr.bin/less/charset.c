@@ -146,9 +146,21 @@ init_charset(void)
 }
 
 /*
+ * Is a given character a "binary" character?
+ */
+int
+binary_char(LWCHAR c)
+{
+	if (utf_mode)
+		return (is_ubin_char(c));
+	c &= 0377;
+	return (!isprint((unsigned char)c) && !iscntrl((unsigned char)c));
+}
+
+/*
  * Is a given character a "control" character?
  */
-static int
+int
 control_char(LWCHAR c)
 {
 	c &= 0377;
@@ -281,7 +293,7 @@ is_utf8_well_formed(const char *s)
 /*
  * Get the value of a UTF-8 character.
  */
-static LWCHAR
+LWCHAR
 get_wchar(const char *p)
 {
 	switch (utf_len(p[0])) {
@@ -325,6 +337,48 @@ get_wchar(const char *p)
 		    ((p[3] & 0x3F) << 12) |
 		    ((p[4] & 0x3F) << 6) |
 		    (p[5] & 0x3F));
+	}
+}
+
+/*
+ * Store a character into a UTF-8 string.
+ */
+void
+put_wchar(char **pp, LWCHAR ch)
+{
+	if (!utf_mode || ch < 0x80) {
+		/* 0xxxxxxx */
+		*(*pp)++ = (char)ch;
+	} else if (ch < 0x800) {
+		/* 110xxxxx 10xxxxxx */
+		*(*pp)++ = (char)(0xC0 | ((ch >> 6) & 0x1F));
+		*(*pp)++ = (char)(0x80 | (ch & 0x3F));
+	} else if (ch < 0x10000) {
+		/* 1110xxxx 10xxxxxx 10xxxxxx */
+		*(*pp)++ = (char)(0xE0 | ((ch >> 12) & 0x0F));
+		*(*pp)++ = (char)(0x80 | ((ch >> 6) & 0x3F));
+		*(*pp)++ = (char)(0x80 | (ch & 0x3F));
+	} else if (ch < 0x200000) {
+		/* 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx */
+		*(*pp)++ = (char)(0xF0 | ((ch >> 18) & 0x07));
+		*(*pp)++ = (char)(0x80 | ((ch >> 12) & 0x3F));
+		*(*pp)++ = (char)(0x80 | ((ch >> 6) & 0x3F));
+		*(*pp)++ = (char)(0x80 | (ch & 0x3F));
+	} else if (ch < 0x4000000) {
+		/* 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx */
+		*(*pp)++ = (char)(0xF0 | ((ch >> 24) & 0x03));
+		*(*pp)++ = (char)(0x80 | ((ch >> 18) & 0x3F));
+		*(*pp)++ = (char)(0x80 | ((ch >> 12) & 0x3F));
+		*(*pp)++ = (char)(0x80 | ((ch >> 6) & 0x3F));
+		*(*pp)++ = (char)(0x80 | (ch & 0x3F));
+	} else {
+		/* 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx */
+		*(*pp)++ = (char)(0xF0 | ((ch >> 30) & 0x01));
+		*(*pp)++ = (char)(0x80 | ((ch >> 24) & 0x3F));
+		*(*pp)++ = (char)(0x80 | ((ch >> 18) & 0x3F));
+		*(*pp)++ = (char)(0x80 | ((ch >> 12) & 0x3F));
+		*(*pp)++ = (char)(0x80 | ((ch >> 6) & 0x3F));
+		*(*pp)++ = (char)(0x80 | (ch & 0x3F));
 	}
 }
 

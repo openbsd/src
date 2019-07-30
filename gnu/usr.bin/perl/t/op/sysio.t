@@ -2,14 +2,13 @@
 
 BEGIN {
   chdir 't' if -d 't';
+  @INC = '../lib';
   require './test.pl';
-  set_up_inc('../lib');
 }
 
 plan tests => 48;
 
 open(I, 'op/sysio.t') || die "sysio.t: cannot find myself: $!";
-binmode I;
 
 $reopen = ($^O eq 'VMS' ||
            $^O eq 'os2' ||
@@ -56,7 +55,6 @@ is($a, "#!.\0\0erl");
 $outfile = tempfile();
 
 open(O, ">$outfile") || die "sysio.t: cannot write $outfile: $!";
-binmode O;
 
 select(O); $|=1; select(STDOUT);
 
@@ -84,7 +82,6 @@ syswrite(O, $x, 1, 3);
 # $outfile still intact
 if ($reopen) {  # must close file to update EOF marker for stat
   close O; open(O, ">>$outfile") || die "sysio.t: cannot write $outfile: $!";
-  binmode O;
 }
 ok(!-s $outfile);
 
@@ -99,7 +96,6 @@ is($x, 'abc');
 # $outfile still intact
 if ($reopen) {  # must close file to update EOF marker for stat
   close O; open(O, ">>$outfile") || die "sysio.t: cannot write $outfile: $!";
-  binmode O;
 }
 ok(!-s $outfile);
 
@@ -113,7 +109,6 @@ is($x, 'abc');
 # $outfile still intact
 if ($reopen) {  # must close file to update EOF marker for stat
   close O; open(O, ">>$outfile") || die "sysio.t: cannot write $outfile: $!";
-  binmode O;
 }
 ok(!-s $outfile);
 
@@ -126,7 +121,6 @@ is($x, 'abc');
 # $outfile still intact
 if ($reopen) {  # must close file to update EOF marker for stat
   close O; open(O, ">>$outfile") || die "sysio.t: cannot write $outfile: $!";
-  binmode O;
 }
 ok(!-s $outfile);
 
@@ -147,7 +141,6 @@ is($a, "#!.\0\0erl");
 # $outfile should have grown now
 if ($reopen) {  # must close file to update EOF marker for stat
   close O; open(O, ">>$outfile") || die "sysio.t: cannot write $outfile: $!";
-  binmode O;
 }
 is(-s $outfile, 2);
 
@@ -160,7 +153,6 @@ is($a, "#!.\0\0erl");
 # $outfile should have grown now
 if ($reopen) {  # must close file to update EOF marker for stat
   close O; open(O, ">>$outfile") || die "sysio.t: cannot write $outfile: $!";
-  binmode O;
 }
 is(-s $outfile, 4);
 
@@ -173,7 +165,6 @@ is($a, "#!.\0\0erl");
 # $outfile should have grown now
 if ($reopen) {  # must close file to update EOF marker for stat
   close O; open(O, ">>$outfile") || die "sysio.t: cannot write $outfile: $!";
-  binmode O;
 }
 is(-s $outfile, 7);
 
@@ -186,14 +177,12 @@ is($x, "abc");
 # $outfile should have grown now
 if ($reopen) {  # must close file to update EOF marker for stat
   close O; open(O, ">>$outfile") || die "sysio.t: cannot write $outfile: $!";
-  binmode O;
 }
 is(-s $outfile, 10);
 
 close(O);
 
 open(I, $outfile) || die "sysio.t: cannot read $outfile: $!";
-binmode I;
 
 $b = 'xyz';
 
@@ -222,29 +211,26 @@ close(I);
 unlink_all $outfile;
 
 # Check that utf8 IO doesn't upgrade the scalar
-{
-    no warnings 'deprecated';
-    open(I, ">$outfile") || die "sysio.t: cannot write $outfile: $!";
-    # Will skip harmlessly on stdioperl
-    eval {binmode STDOUT, ":utf8"};
-    die $@ if $@ and $@ !~ /^IO layers \(like ':utf8'\) unavailable/;
+open(I, ">$outfile") || die "sysio.t: cannot write $outfile: $!";
+# Will skip harmlessly on stdioperl
+eval {binmode STDOUT, ":utf8"};
+die $@ if $@ and $@ !~ /^IO layers \(like ':utf8'\) unavailable/;
 
-    # y diaresis is \w when UTF8
-    $a = chr 255;
+# y diaresis is \w when UTF8
+$a = chr 255;
 
-    unlike($a, qr/\w/);
+unlike($a, qr/\w/);
 
-    syswrite I, $a;
+syswrite I, $a;
 
-    # Should not be upgraded as a side effect of syswrite.
-    unlike($a, qr/\w/);
+# Should not be upgraded as a side effect of syswrite.
+unlike($a, qr/\w/);
 
-    # This should work
-    eval {syswrite I, 2;};
-    is($@, '');
+# This should work
+eval {syswrite I, 2;};
+is($@, '');
 
-    close(I);
-}
+close(I);
 unlink_all $outfile;
 
 chdir('..');

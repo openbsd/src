@@ -1,4 +1,4 @@
-//===- InterferenceCache.h - Caching per-block interference ----*- C++ -*--===//
+//===-- InterferenceCache.h - Caching per-block interference ---*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,53 +15,47 @@
 #ifndef LLVM_LIB_CODEGEN_INTERFERENCECACHE_H
 #define LLVM_LIB_CODEGEN_INTERFERENCECACHE_H
 
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/CodeGen/LiveIntervalUnion.h"
-#include "llvm/CodeGen/SlotIndexes.h"
-#include "llvm/Support/Compiler.h"
-#include <cassert>
-#include <cstddef>
-#include <cstdlib>
 
 namespace llvm {
 
 class LiveIntervals;
-class MachineFunction;
-class TargetRegisterInfo;
 
 class LLVM_LIBRARY_VISIBILITY InterferenceCache {
+  const TargetRegisterInfo *TRI;
+  LiveIntervalUnion *LIUArray;
+  MachineFunction *MF;
+
   /// BlockInterference - information about the interference in a single basic
   /// block.
   struct BlockInterference {
-    unsigned Tag = 0;
+    BlockInterference() : Tag(0) {}
+    unsigned Tag;
     SlotIndex First;
     SlotIndex Last;
-
-    BlockInterference() {}
   };
 
   /// Entry - A cache entry containing interference information for all aliases
   /// of PhysReg in all basic blocks.
   class Entry {
     /// PhysReg - The register currently represented.
-    unsigned PhysReg = 0;
+    unsigned PhysReg;
 
     /// Tag - Cache tag is changed when any of the underlying LiveIntervalUnions
     /// change.
-    unsigned Tag = 0;
+    unsigned Tag;
 
     /// RefCount - The total number of Cursor instances referring to this Entry.
-    unsigned RefCount = 0;
+    unsigned RefCount;
 
     /// MF - The current function.
     MachineFunction *MF;
 
     /// Indexes - Mapping block numbers to SlotIndex ranges.
-    SlotIndexes *Indexes = nullptr;
+    SlotIndexes *Indexes;
 
     /// LIS - Used for accessing register mask interference maps.
-    LiveIntervals *LIS = nullptr;
+    LiveIntervals *LIS;
 
     /// PrevPos - The previous position the iterators were moved to.
     SlotIndex PrevPos;
@@ -78,12 +72,13 @@ class LLVM_LIBRARY_VISIBILITY InterferenceCache {
       unsigned VirtTag;
 
       /// Fixed interference in RegUnit.
-      LiveRange *Fixed = nullptr;
+      LiveRange *Fixed;
 
       /// Iterator pointing into the fixed RegUnit interference.
       LiveInterval::iterator FixedI;
 
-      RegUnitInfo(LiveIntervalUnion &LIU) : VirtTag(LIU.getTag()) {
+      RegUnitInfo(LiveIntervalUnion &LIU)
+          : VirtTag(LIU.getTag()), Fixed(nullptr) {
         VirtI.setMap(LIU.getMap());
       }
     };
@@ -99,7 +94,7 @@ class LLVM_LIBRARY_VISIBILITY InterferenceCache {
     void update(unsigned MBBNum);
 
   public:
-    Entry() = default;
+    Entry() : PhysReg(0), Tag(0), RefCount(0), Indexes(nullptr), LIS(nullptr) {}
 
     void clear(MachineFunction *mf, SlotIndexes *indexes, LiveIntervals *lis) {
       assert(!hasRefs() && "Cannot clear cache entry with references");
@@ -139,17 +134,13 @@ class LLVM_LIBRARY_VISIBILITY InterferenceCache {
   // robin manner.
   enum { CacheEntries = 32 };
 
-  const TargetRegisterInfo *TRI = nullptr;
-  LiveIntervalUnion *LIUArray = nullptr;
-  MachineFunction *MF = nullptr;
-
   // Point to an entry for each physreg. The entry pointed to may not be up to
   // date, and it may have been reused for a different physreg.
-  unsigned char* PhysRegEntries = nullptr;
-  size_t PhysRegEntriesCount = 0;
+  unsigned char* PhysRegEntries;
+  size_t PhysRegEntriesCount;
 
   // Next round-robin entry to be picked.
-  unsigned RoundRobin = 0;
+  unsigned RoundRobin;
 
   // The actual cache entries.
   Entry Entries[CacheEntries];
@@ -158,9 +149,9 @@ class LLVM_LIBRARY_VISIBILITY InterferenceCache {
   Entry *get(unsigned PhysReg);
 
 public:
-  friend class Cursor;
-
-  InterferenceCache() = default;
+  InterferenceCache()
+    : TRI(nullptr), LIUArray(nullptr), MF(nullptr), PhysRegEntries(nullptr),
+      PhysRegEntriesCount(0), RoundRobin(0) {}
 
   ~InterferenceCache() {
     free(PhysRegEntries);
@@ -169,9 +160,8 @@ public:
   void reinitPhysRegEntries();
 
   /// init - Prepare cache for a new function.
-  void init(MachineFunction *mf, LiveIntervalUnion *liuarray,
-            SlotIndexes *indexes, LiveIntervals *lis,
-            const TargetRegisterInfo *tri);
+  void init(MachineFunction*, LiveIntervalUnion*, SlotIndexes*, LiveIntervals*,
+            const TargetRegisterInfo *);
 
   /// getMaxCursors - Return the maximum number of concurrent cursors that can
   /// be supported.
@@ -179,8 +169,8 @@ public:
 
   /// Cursor - The primary query interface for the block interference cache.
   class Cursor {
-    Entry *CacheEntry = nullptr;
-    const BlockInterference *Current = nullptr;
+    Entry *CacheEntry;
+    const BlockInterference *Current;
     static const BlockInterference NoInterference;
 
     void setEntry(Entry *E) {
@@ -196,9 +186,10 @@ public:
 
   public:
     /// Cursor - Create a dangling cursor.
-    Cursor() = default;
+    Cursor() : CacheEntry(nullptr), Current(nullptr) {}
+    ~Cursor() { setEntry(nullptr); }
 
-    Cursor(const Cursor &O) {
+    Cursor(const Cursor &O) : CacheEntry(nullptr), Current(nullptr) {
       setEntry(O.CacheEntry);
     }
 
@@ -206,8 +197,6 @@ public:
       setEntry(O.CacheEntry);
       return *this;
     }
-
-    ~Cursor() { setEntry(nullptr); }
 
     /// setPhysReg - Point this cursor to PhysReg's interference.
     void setPhysReg(InterferenceCache &Cache, unsigned PhysReg) {
@@ -240,8 +229,10 @@ public:
       return Current->Last;
     }
   };
+
+  friend class Cursor;
 };
 
-} // end namespace llvm
+} // namespace llvm
 
-#endif // LLVM_LIB_CODEGEN_INTERFERENCECACHE_H
+#endif

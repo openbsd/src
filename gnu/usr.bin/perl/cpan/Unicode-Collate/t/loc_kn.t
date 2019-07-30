@@ -42,7 +42,8 @@ $objKn->change(level => 1);
 
 for my $h (0, 1) {
     no warnings 'utf8';
-    my $t = $h ? pack('U', 0xFFFF) : 'z';
+    my $t = $h ? pack('U', 0xFFFF) : "";
+    $objKn->change(highestFFFF => 1) if $h;
 
     ok($objKn->lt("\x{C93}$t", "\x{C94}"));
     ok($objKn->lt("\x{C94}$t", "\x{C82}"));
@@ -52,4 +53,3 @@ for my $h (0, 1) {
     ok($objKn->lt("\x{CF2}$t", "\x{C95}"));
 }
 
-# 14

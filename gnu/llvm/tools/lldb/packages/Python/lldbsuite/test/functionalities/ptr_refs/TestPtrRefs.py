@@ -19,7 +19,8 @@ class TestPtrRefs(TestBase):
     def test_ptr_refs(self):
         """Test format string functionality."""
         self.build()
-        exe = self.getBuildArtifact("a.out")
+        exe_name = 'a.out'
+        exe = os.path.join(os.getcwd(), exe_name)
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)

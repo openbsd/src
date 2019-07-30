@@ -19,7 +19,7 @@ class BreakpointIDTestCase(TestBase):
     def test(self):
         self.build()
 
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         self.expect("file " + exe,
                     patterns=["Current executable set to .*a.out"])
 

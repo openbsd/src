@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
 #include <unistd.h>
 
 enum phase {
@@ -55,7 +54,7 @@ main(int argc, char *argv[])
 {
 	int ch;
 	FILE *conn;
-	const char *destination = "localhost";
+	const char *destination = "inet:localhost";
 	struct session	session;
 
 	if (! geteuid())
@@ -168,7 +167,7 @@ lmtp_connect_inet(const char *destination)
 
 	freeaddrinfo(res0);
 	if (s == -1)
-		errx(EX_TEMPFAIL, "%s", cause);
+		errx(1, "%s", cause);
 
 	return fdopen(s, "r+");
 }
@@ -192,7 +191,7 @@ lmtp_connect_unix(const char *destination)
 		errx(1, "unix: socket path is too long");
 
 	if (connect(s, (struct sockaddr *)&addr, sizeof addr) == -1)
-		err(EX_TEMPFAIL, "connect");
+		err(1, "connect");
 
 	return fdopen(s, "r+");
 }
@@ -200,9 +199,11 @@ lmtp_connect_unix(const char *destination)
 static FILE *
 lmtp_connect(const char *destination)
 {
-	if (destination[0] == '/')
-		return lmtp_connect_unix(destination);
-	return lmtp_connect_inet(destination);
+	if (strncasecmp(destination, "unix:", 5) == 0)
+		return lmtp_connect_unix(destination + 5);
+	if (strncasecmp(destination, "inet:", 5) == 0)
+		return lmtp_connect_inet(destination + 5);
+	errx(1, "invalid destination address, must start with 'unix:' or 'inet:'");
 }
 
 static void
@@ -214,11 +215,9 @@ lmtp_engine(FILE *conn, struct session *session)
 	enum phase phase = PHASE_BANNER;
 
 	do {
-		fflush(conn);
 		if ((linelen = getline(&line, &linesize, conn)) == -1)
 			err(1, "getline");
 		line[strcspn(line, "\n")] = '\0';
-		line[strcspn(line, "\r")] = '\0';
 
 		if (linelen < 4 ||
 		    !isdigit(line[0]) ||
@@ -273,10 +272,9 @@ lmtp_engine(FILE *conn, struct session *session)
 		case PHASE_QUIT:
 			exit(0);
 		}
+		if (ferror(stdin))
+			err(1, "getline");
 	} while (1);
-
-	if (ferror(conn))
-		err(1, "getline");
 }
 
 static void

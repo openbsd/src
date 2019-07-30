@@ -10,7 +10,6 @@ import time
 import re
 import lldb
 import lldbsuite.test.lldbutil as lldbutil
-from lldbsuite.test.decorators import *
 from lldbsuite.test.lldbtest import *
 
 
@@ -18,12 +17,11 @@ class TestFrameGuessLanguage(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    # If your test case doesn't stress debug info, the
+    # If your test case doesn't stress debug info, the 
     # set this to true.  That way it won't be run once for
     # each debug info format.
     NO_DEBUG_INFO_TESTCASE = True
 
-    @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr37658")
     def test_guess_language(self):
         """Test GuessLanguage for C and C++."""
         self.build()
@@ -41,7 +39,7 @@ class TestFrameGuessLanguage(TestBase):
 
     def do_test(self):
         """Test GuessLanguage for C & C++."""
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)
@@ -84,6 +82,6 @@ class TestFrameGuessLanguage(TestBase):
         self.check_language(thread, 0, c_frame_language)
         self.check_language(thread, 1, lldb.eLanguageTypeC_plus_plus)
         self.check_language(thread, 2, lldb.eLanguageTypeC_plus_plus)
-
-
+        
+        
 

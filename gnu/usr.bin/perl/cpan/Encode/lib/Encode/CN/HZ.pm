@@ -5,7 +5,7 @@ use warnings;
 use utf8 ();
 
 use vars qw($VERSION);
-$VERSION = do { my @r = ( q$Revision: 2.10 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.7 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 use Encode qw(:fallbacks);
 
@@ -21,7 +21,6 @@ sub needs_lines { 1 }
 
 sub decode ($$;$) {
     my ( $obj, $str, $chk ) = @_;
-    return undef unless defined $str;
 
     my $GB  = Encode::find_encoding('gb2312-raw');
     my $ret = substr($str, 0, 0); # to propagate taintedness
@@ -50,8 +49,7 @@ sub decode ($$;$) {
         else {        # GB mode; the byte ranges are as in RFC 1843.
             no warnings 'uninitialized';
             if ( $str =~ s/^((?:[\x21-\x77][\x21-\x7E])+)// ) {
-                my $prefix = $1;
-                $ret .= $GB->decode( $prefix, $chk );
+                $ret .= $GB->decode( $1, $chk );
             }
             elsif ( $str =~ s/^\x7E\x7D// ) {    # '~}'
                 $in_ascii = 1;
@@ -136,7 +134,6 @@ sub cat_decode {
 
 sub encode($$;$) {
      my ( $obj, $str, $chk ) = @_;
-    return undef unless defined $str;
 
     my $GB  = Encode::find_encoding('gb2312-raw');
     my $ret = substr($str, 0, 0); # to propagate taintedness;
@@ -156,7 +153,7 @@ sub encode($$;$) {
         }
         elsif ( $str =~ s/(.)// ) {
             my $s = $1;
-            my $tmp = $GB->encode( $s, $chk || 0 );
+            my $tmp = $GB->encode( $s, $chk );
             last if !defined $tmp;
             if ( length $tmp == 2 ) {    # maybe a valid GB char (XXX)
                 if ($in_ascii) {

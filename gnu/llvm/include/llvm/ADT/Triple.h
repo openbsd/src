@@ -50,7 +50,6 @@ public:
     armeb,          // ARM (big endian): armeb
     aarch64,        // AArch64 (little endian): aarch64
     aarch64_be,     // AArch64 (big endian): aarch64_be
-    arc,            // ARC: Synopsys ARC
     avr,            // AVR: Atmel AVR microcontroller
     bpfel,          // eBPF or extended BPF or 64-bit BPF (little endian)
     bpfeb,          // eBPF or extended BPF or 64-bit BPF (big endian)
@@ -101,8 +100,6 @@ public:
   enum SubArchType {
     NoSubArch,
 
-    ARMSubArch_v8_4a,
-    ARMSubArch_v8_3a,
     ARMSubArch_v8_2a,
     ARMSubArch_v8_1a,
     ARMSubArch_v8,
@@ -145,8 +142,7 @@ public:
     AMD,
     Mesa,
     SUSE,
-    OpenEmbedded,
-    LastVendorType = OpenEmbedded
+    LastVendorType = SUSE
   };
   enum OSType {
     UnknownOS,
@@ -171,6 +167,7 @@ public:
     RTEMS,
     NaCl,       // Native Client
     CNK,        // BG/P Compute-Node Kernel
+    Bitrig,
     AIX,
     CUDA,       // NVIDIA CUDA
     NVCL,       // NVIDIA OpenCL
@@ -181,14 +178,12 @@ public:
     WatchOS,    // Apple watchOS
     Mesa3D,
     Contiki,
-    AMDPAL,     // AMD PAL Runtime
-    LastOSType = AMDPAL
+    LastOSType = Contiki
   };
   enum EnvironmentType {
     UnknownEnvironment,
 
     GNU,
-    GNUABIN32,
     GNUABI64,
     GNUEABI,
     GNUEABIHF,
@@ -204,9 +199,10 @@ public:
     MSVC,
     Itanium,
     Cygnus,
+    AMDOpenCL,
     CoreCLR,
-    Simulator,  // Simulator variants of other systems, e.g., Apple's iOS
-    LastEnvironmentType = Simulator
+    OpenCL,
+    LastEnvironmentType = OpenCL
   };
   enum ObjectFormatType {
     UnknownObjectFormat,
@@ -471,10 +467,6 @@ public:
     return isMacOSX() || isiOS() || isWatchOS();
   }
 
-  bool isSimulatorEnvironment() const {
-    return getEnvironment() == Triple::Simulator;
-  }
-
   bool isOSNetBSD() const {
     return getOS() == Triple::NetBSD;
   }
@@ -497,26 +489,23 @@ public:
     return getOS() == Triple::Solaris;
   }
 
+  bool isOSBitrig() const {
+    return getOS() == Triple::Bitrig;
+  }
+
   bool isOSIAMCU() const {
     return getOS() == Triple::ELFIAMCU;
   }
 
-  bool isOSUnknown() const { return getOS() == Triple::UnknownOS; }
-
   bool isGNUEnvironment() const {
     EnvironmentType Env = getEnvironment();
-    return Env == Triple::GNU || Env == Triple::GNUABIN32 ||
-           Env == Triple::GNUABI64 || Env == Triple::GNUEABI ||
-           Env == Triple::GNUEABIHF || Env == Triple::GNUX32;
+    return Env == Triple::GNU || Env == Triple::GNUABI64 ||
+           Env == Triple::GNUEABI || Env == Triple::GNUEABIHF ||
+           Env == Triple::GNUX32;
   }
 
   bool isOSContiki() const {
     return getOS() == Triple::Contiki;
-  }
-
-  /// Tests whether the OS is Haiku.
-  bool isOSHaiku() const {
-    return getOS() == Triple::Haiku;
   }
 
   /// Checks if the environment could be MSVC.
@@ -645,45 +634,8 @@ public:
     return getArch() == Triple::nvptx || getArch() == Triple::nvptx64;
   }
 
-  /// Tests whether the target is Thumb (little and big endian).
-  bool isThumb() const {
-    return getArch() == Triple::thumb || getArch() == Triple::thumbeb;
-  }
-
-  /// Tests whether the target is ARM (little and big endian).
-  bool isARM() const {
-    return getArch() == Triple::arm || getArch() == Triple::armeb;
-  }
-
-  /// Tests whether the target is AArch64 (little and big endian).
-  bool isAArch64() const {
-    return getArch() == Triple::aarch64 || getArch() == Triple::aarch64_be;
-  }
-
-  /// Tests whether the target is MIPS 32-bit (little and big endian).
-  bool isMIPS32() const {
-    return getArch() == Triple::mips || getArch() == Triple::mipsel;
-  }
-
-  /// Tests whether the target is MIPS 64-bit (little and big endian).
-  bool isMIPS64() const {
-    return getArch() == Triple::mips64 || getArch() == Triple::mips64el;
-  }
-
-  /// Tests whether the target is MIPS (little and big endian, 32- or 64-bit).
-  bool isMIPS() const {
-    return isMIPS32() || isMIPS64();
-  }
-
-  /// Tests whether the target supports comdat
-  bool supportsCOMDAT() const {
-    return !isOSBinFormatMachO();
-  }
-
-  /// Tests whether the target uses emulated TLS as default.
-  bool hasDefaultEmulatedTLS() const {
-    return isAndroid() || isOSOpenBSD() || isWindowsCygwinEnvironment();
-  }
+  /// Tests wether the target supports comdat
+  bool supportsCOMDAT() const { return !isOSBinFormatMachO(); }
 
   /// @}
   /// @name Mutators

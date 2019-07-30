@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "NamespaceEndCommentsFixer.h"
 #include "UnwrappedLineFormatter.h"
 #include "WhitespaceManager.h"
 #include "llvm/Support/Debug.h"
@@ -27,7 +26,7 @@ bool startsExternCBlock(const AnnotatedLine &Line) {
          NextNext && NextNext->is(tok::l_brace);
 }
 
-/// Tracks the indent level of \c AnnotatedLines across levels.
+/// \brief Tracks the indent level of \c AnnotatedLines across levels.
 ///
 /// \c nextLine must be called for each \c AnnotatedLine, after which \c
 /// getIndent() will return the indent for the last line \c nextLine was called
@@ -46,10 +45,10 @@ public:
       IndentForLevel.push_back(Style.IndentWidth * i + AdditionalIndent);
   }
 
-  /// Returns the indent for the current line.
+  /// \brief Returns the indent for the current line.
   unsigned getIndent() const { return Indent; }
 
-  /// Update the indent state given that \p Line is going to be formatted
+  /// \brief Update the indent state given that \p Line is going to be formatted
   /// next.
   void nextLine(const AnnotatedLine &Line) {
     Offset = getIndentOffset(*Line.First);
@@ -67,14 +66,14 @@ public:
       Indent += Offset;
   }
 
-  /// Update the indent state given that \p Line indent should be
+  /// \brief Update the indent state given that \p Line indent should be
   /// skipped.
   void skipLine(const AnnotatedLine &Line) {
     while (IndentForLevel.size() <= Line.Level)
       IndentForLevel.push_back(Indent);
   }
 
-  /// Update the level indent to adapt to the given \p Line.
+  /// \brief Update the level indent to adapt to the given \p Line.
   ///
   /// When a line is not formatted, we move the subsequent lines on the same
   /// level to the same indent.
@@ -89,7 +88,7 @@ public:
   }
 
 private:
-  /// Get the offset of the line relatively to the level.
+  /// \brief Get the offset of the line relatively to the level.
   ///
   /// For example, 'public:' labels in classes are offset by 1 or 2
   /// characters to the left from their level.
@@ -105,7 +104,7 @@ private:
     return 0;
   }
 
-  /// Get the indent of \p Level from \p IndentForLevel.
+  /// \brief Get the indent of \p Level from \p IndentForLevel.
   ///
   /// \p IndentForLevel must contain the indent for the level \c l
   /// at \p IndentForLevel[l], or a value < 0 if the indent for
@@ -122,16 +121,16 @@ private:
   const AdditionalKeywords &Keywords;
   const unsigned AdditionalIndent;
 
-  /// The indent in characters for each level.
+  /// \brief The indent in characters for each level.
   std::vector<int> IndentForLevel;
 
-  /// Offset of the current line relative to the indent level.
+  /// \brief Offset of the current line relative to the indent level.
   ///
   /// For example, the 'public' keywords is often indented with a negative
   /// offset.
   int Offset = 0;
 
-  /// The current line's indent.
+  /// \brief The current line's indent.
   unsigned Indent = 0;
 };
 
@@ -158,14 +157,15 @@ public:
       : Style(Style), Keywords(Keywords), End(Lines.end()), Next(Lines.begin()),
         AnnotatedLines(Lines) {}
 
-  /// Returns the next line, merging multiple lines into one if possible.
+  /// \brief Returns the next line, merging multiple lines into one if possible.
   const AnnotatedLine *getNextMergedLine(bool DryRun,
                                          LevelIndentTracker &IndentTracker) {
     if (Next == End)
       return nullptr;
     const AnnotatedLine *Current = *Next;
     IndentTracker.nextLine(*Current);
-    unsigned MergedLines = tryFitMultipleLinesInOne(IndentTracker, Next, End);
+    unsigned MergedLines =
+        tryFitMultipleLinesInOne(IndentTracker, Next, End);
     if (MergedLines > 0 && Style.ColumnLimit == 0)
       // Disallow line merging if there is a break at the start of one of the
       // input lines.
@@ -180,7 +180,7 @@ public:
   }
 
 private:
-  /// Calculates how many lines can be merged into 1 starting at \p I.
+  /// \brief Calculates how many lines can be merged into 1 starting at \p I.
   unsigned
   tryFitMultipleLinesInOne(LevelIndentTracker &IndentTracker,
                            SmallVectorImpl<AnnotatedLine *>::const_iterator I,
@@ -228,16 +228,14 @@ private:
 
       if (Tok && Tok->getNamespaceToken())
         return !Style.BraceWrapping.SplitEmptyNamespace && EmptyBlock
-                   ? tryMergeSimpleBlock(I, E, Limit)
-                   : 0;
+            ? tryMergeSimpleBlock(I, E, Limit) : 0;
 
       if (Tok && Tok->is(tok::kw_typedef))
         Tok = Tok->getNextNonComment();
       if (Tok && Tok->isOneOf(tok::kw_class, tok::kw_struct, tok::kw_union,
-                              tok::kw_extern, Keywords.kw_interface))
+                              Keywords.kw_interface))
         return !Style.BraceWrapping.SplitEmptyRecord && EmptyBlock
-                   ? tryMergeSimpleBlock(I, E, Limit)
-                   : 0;
+            ? tryMergeSimpleBlock(I, E, Limit) : 0;
     }
 
     // FIXME: TheLine->Level != 0 might or might not be the right check to do.
@@ -252,9 +250,9 @@ private:
     if (Style.CompactNamespaces) {
       if (isNamespaceDeclaration(TheLine)) {
         int i = 0;
-        unsigned closingLine = TheLine->MatchingClosingBlockLineIndex - 1;
+        unsigned closingLine = TheLine->MatchingOpeningBlockLineIndex - 1;
         for (; I + 1 + i != E && isNamespaceDeclaration(I[i + 1]) &&
-               closingLine == I[i + 1]->MatchingClosingBlockLineIndex &&
+               closingLine == I[i + 1]->MatchingOpeningBlockLineIndex &&
                I[i + 1]->Last->TotalLength < Limit;
              i++, closingLine--) {
           // No extra indent for compacted namespaces
@@ -281,57 +279,15 @@ private:
       }
     }
 
-    // Try to merge a function block with left brace unwrapped
     if (TheLine->Last->is(TT_FunctionLBrace) &&
         TheLine->First != TheLine->Last) {
       return MergeShortFunctions ? tryMergeSimpleBlock(I, E, Limit) : 0;
     }
-    // Try to merge a control statement block with left brace unwrapped
-    if (TheLine->Last->is(tok::l_brace) && TheLine->First != TheLine->Last &&
-        TheLine->First->isOneOf(tok::kw_if, tok::kw_while, tok::kw_for)) {
-      return Style.AllowShortBlocksOnASingleLine
-                 ? tryMergeSimpleBlock(I, E, Limit)
-                 : 0;
-    }
-    // Try to merge a control statement block with left brace wrapped
-    if (I[1]->First->is(tok::l_brace) &&
-        TheLine->First->isOneOf(tok::kw_if, tok::kw_while, tok::kw_for)) {
-      return Style.BraceWrapping.AfterControlStatement
-                 ? tryMergeSimpleBlock(I, E, Limit)
-                 : 0;
-    }
-    // Try to merge either empty or one-line block if is precedeed by control
-    // statement token
-    if (TheLine->First->is(tok::l_brace) && TheLine->First == TheLine->Last &&
-        I != AnnotatedLines.begin() &&
-        I[-1]->First->isOneOf(tok::kw_if, tok::kw_while, tok::kw_for)) {
-      unsigned MergedLines = 0;
-      if (Style.AllowShortBlocksOnASingleLine) {
-        MergedLines = tryMergeSimpleBlock(I - 1, E, Limit);
-        // If we managed to merge the block, discard the first merged line
-        // since we are merging starting from I.
-        if (MergedLines > 0)
-          --MergedLines;
-      }
-      return MergedLines;
-    }
-    // Don't merge block with left brace wrapped after ObjC special blocks
-    if (TheLine->First->is(tok::l_brace) && I != AnnotatedLines.begin() &&
-        I[-1]->First->is(tok::at) && I[-1]->First->Next) {
-      tok::ObjCKeywordKind kwId = I[-1]->First->Next->Tok.getObjCKeywordID();
-      if (kwId == clang::tok::objc_autoreleasepool ||
-          kwId == clang::tok::objc_synchronized)
-        return 0;
-    }
-    // Try to merge a block with left brace wrapped that wasn't yet covered
     if (TheLine->Last->is(tok::l_brace)) {
-      return !Style.BraceWrapping.AfterFunction ||
-                     (I[1]->First->is(tok::r_brace) &&
-                      !Style.BraceWrapping.SplitEmptyRecord)
+      return !Style.BraceWrapping.AfterFunction
                  ? tryMergeSimpleBlock(I, E, Limit)
                  : 0;
     }
-    // Try to merge a function block with left brace wrapped
     if (I[1]->First->is(TT_FunctionLBrace) &&
         Style.BraceWrapping.AfterFunction) {
       if (I[1]->Last->is(TT_LineComment))
@@ -426,9 +382,7 @@ private:
       return 0;
     unsigned NumStmts = 0;
     unsigned Length = 0;
-    bool EndsWithComment = false;
     bool InPPDirective = I[0]->InPPDirective;
-    const unsigned Level = I[0]->Level;
     for (; NumStmts < 3; ++NumStmts) {
       if (I + 1 + NumStmts == E)
         break;
@@ -438,26 +392,9 @@ private:
       if (Line->First->isOneOf(tok::kw_case, tok::kw_default, tok::r_brace))
         break;
       if (Line->First->isOneOf(tok::kw_if, tok::kw_for, tok::kw_switch,
-                               tok::kw_while) ||
-          EndsWithComment)
+                               tok::kw_while, tok::comment) ||
+          Line->Last->is(tok::comment))
         return 0;
-      if (Line->First->is(tok::comment)) {
-        if (Level != Line->Level)
-          return 0;
-        SmallVectorImpl<AnnotatedLine *>::const_iterator J = I + 2 + NumStmts;
-        for (; J != E; ++J) {
-          Line = *J;
-          if (Line->InPPDirective != InPPDirective)
-            break;
-          if (Line->First->isOneOf(tok::kw_case, tok::kw_default, tok::r_brace))
-            break;
-          if (Line->First->isNot(tok::comment) || Level != Line->Level)
-            return 0;
-        }
-        break;
-      }
-      if (Line->Last->is(tok::comment))
-        EndsWithComment = true;
       Length += I[1 + NumStmts]->Last->TotalLength + 1; // 1 for the space.
     }
     if (NumStmts == 0 || NumStmts == 3 || Length > Limit)
@@ -488,27 +425,11 @@ private:
                             tok::kw_for, tok::r_brace, Keywords.kw___except)) {
       if (!Style.AllowShortBlocksOnASingleLine)
         return 0;
-      // Don't merge when we can't except the case when
-      // the control statement block is empty
       if (!Style.AllowShortIfStatementsOnASingleLine &&
-          Line.startsWith(tok::kw_if) &&
-          !Style.BraceWrapping.AfterControlStatement &&
-          !I[1]->First->is(tok::r_brace))
-        return 0;
-      if (!Style.AllowShortIfStatementsOnASingleLine &&
-          Line.startsWith(tok::kw_if) &&
-          Style.BraceWrapping.AfterControlStatement && I + 2 != E &&
-          !I[2]->First->is(tok::r_brace))
+          Line.startsWith(tok::kw_if))
         return 0;
       if (!Style.AllowShortLoopsOnASingleLine &&
-          Line.First->isOneOf(tok::kw_while, tok::kw_do, tok::kw_for) &&
-          !Style.BraceWrapping.AfterControlStatement &&
-          !I[1]->First->is(tok::r_brace))
-        return 0;
-      if (!Style.AllowShortLoopsOnASingleLine &&
-          Line.First->isOneOf(tok::kw_while, tok::kw_do, tok::kw_for) &&
-          Style.BraceWrapping.AfterControlStatement && I + 2 != E &&
-          !I[2]->First->is(tok::r_brace))
+          Line.First->isOneOf(tok::kw_while, tok::kw_do, tok::kw_for))
         return 0;
       // FIXME: Consider an option to allow short exception handling clauses on
       // a single line.
@@ -520,78 +441,52 @@ private:
         return 0;
     }
 
-    if (Line.Last->is(tok::l_brace)) {
-      FormatToken *Tok = I[1]->First;
-      if (Tok->is(tok::r_brace) && !Tok->MustBreakBefore &&
-          (Tok->getNextNonComment() == nullptr ||
-           Tok->getNextNonComment()->is(tok::semi))) {
-        // We merge empty blocks even if the line exceeds the column limit.
-        Tok->SpacesRequiredBefore = 0;
-        Tok->CanBreakBefore = true;
-        return 1;
-      } else if (Limit != 0 && !Line.startsWith(tok::kw_namespace) &&
-                 !startsExternCBlock(Line)) {
-        // We don't merge short records.
-        FormatToken *RecordTok = Line.First;
-        // Skip record modifiers.
-        while (RecordTok->Next &&
-               RecordTok->isOneOf(tok::kw_typedef, tok::kw_export,
-                                  Keywords.kw_declare, Keywords.kw_abstract,
-                                  tok::kw_default))
-          RecordTok = RecordTok->Next;
-        if (RecordTok &&
-            RecordTok->isOneOf(tok::kw_class, tok::kw_union, tok::kw_struct,
-                               Keywords.kw_interface))
-          return 0;
+    FormatToken *Tok = I[1]->First;
+    if (Tok->is(tok::r_brace) && !Tok->MustBreakBefore &&
+        (Tok->getNextNonComment() == nullptr ||
+         Tok->getNextNonComment()->is(tok::semi))) {
+      // We merge empty blocks even if the line exceeds the column limit.
+      Tok->SpacesRequiredBefore = 0;
+      Tok->CanBreakBefore = true;
+      return 1;
+    } else if (Limit != 0 && !Line.startsWith(tok::kw_namespace) &&
+               !startsExternCBlock(Line)) {
+      // We don't merge short records.
+      FormatToken *RecordTok =
+          Line.First->is(tok::kw_typedef) ? Line.First->Next : Line.First;
+      if (RecordTok &&
+          RecordTok->isOneOf(tok::kw_class, tok::kw_union, tok::kw_struct,
+                             Keywords.kw_interface))
+        return 0;
 
-        // Check that we still have three lines and they fit into the limit.
-        if (I + 2 == E || I[2]->Type == LT_Invalid)
-          return 0;
-        Limit = limitConsideringMacros(I + 2, E, Limit);
+      // Check that we still have three lines and they fit into the limit.
+      if (I + 2 == E || I[2]->Type == LT_Invalid)
+        return 0;
+      Limit = limitConsideringMacros(I + 2, E, Limit);
 
-        if (!nextTwoLinesFitInto(I, Limit))
-          return 0;
+      if (!nextTwoLinesFitInto(I, Limit))
+        return 0;
 
-        // Second, check that the next line does not contain any braces - if it
-        // does, readability declines when putting it into a single line.
-        if (I[1]->Last->is(TT_LineComment))
-          return 0;
-        do {
-          if (Tok->is(tok::l_brace) && Tok->BlockKind != BK_BracedInit)
-            return 0;
-          Tok = Tok->Next;
-        } while (Tok);
-
-        // Last, check that the third line starts with a closing brace.
-        Tok = I[2]->First;
-        if (Tok->isNot(tok::r_brace))
-          return 0;
-
-        // Don't merge "if (a) { .. } else {".
-        if (Tok->Next && Tok->Next->is(tok::kw_else))
-          return 0;
-
-        return 2;
-      }
-    } else if (I[1]->First->is(tok::l_brace)) {
+      // Second, check that the next line does not contain any braces - if it
+      // does, readability declines when putting it into a single line.
       if (I[1]->Last->is(TT_LineComment))
         return 0;
+      do {
+        if (Tok->is(tok::l_brace) && Tok->BlockKind != BK_BracedInit)
+          return 0;
+        Tok = Tok->Next;
+      } while (Tok);
 
-      // Check for Limit <= 2 to account for the " {".
-      if (Limit <= 2 || (Style.ColumnLimit == 0 && containsMustBreak(*I)))
+      // Last, check that the third line starts with a closing brace.
+      Tok = I[2]->First;
+      if (Tok->isNot(tok::r_brace))
         return 0;
-      Limit -= 2;
-      unsigned MergedLines = 0;
-      if (Style.AllowShortBlocksOnASingleLine ||
-          (I[1]->First == I[1]->Last && I + 2 != E &&
-           I[2]->First->is(tok::r_brace))) {
-        MergedLines = tryMergeSimpleBlock(I + 1, E, Limit);
-        // If we managed to merge the block, count the statement header, which
-        // is on a separate line.
-        if (MergedLines > 0)
-          ++MergedLines;
-      }
-      return MergedLines;
+
+      // Don't merge "if (a) { .. } else {".
+      if (Tok->Next && Tok->Next->is(tok::kw_else))
+        return 0;
+
+      return 2;
     }
     return 0;
   }
@@ -659,14 +554,14 @@ static void markFinalized(FormatToken *Tok) {
 static void printLineState(const LineState &State) {
   llvm::dbgs() << "State: ";
   for (const ParenState &P : State.Stack) {
-    llvm::dbgs() << (P.Tok ? P.Tok->TokenText : "F") << "|" << P.Indent << "|"
-                 << P.LastSpace << "|" << P.NestedBlockIndent << " ";
+    llvm::dbgs() << P.Indent << "|" << P.LastSpace << "|" << P.NestedBlockIndent
+                 << " ";
   }
   llvm::dbgs() << State.NextToken->TokenText << "\n";
 }
 #endif
 
-/// Base class for classes that format one \c AnnotatedLine.
+/// \brief Base class for classes that format one \c AnnotatedLine.
 class LineFormatter {
 public:
   LineFormatter(ContinuationIndenter *Indenter, WhitespaceManager *Whitespaces,
@@ -676,16 +571,14 @@ public:
         BlockFormatter(BlockFormatter) {}
   virtual ~LineFormatter() {}
 
-  /// Formats an \c AnnotatedLine and returns the penalty.
+  /// \brief Formats an \c AnnotatedLine and returns the penalty.
   ///
   /// If \p DryRun is \c false, directly applies the changes.
-  virtual unsigned formatLine(const AnnotatedLine &Line,
-                              unsigned FirstIndent,
-                              unsigned FirstStartColumn,
+  virtual unsigned formatLine(const AnnotatedLine &Line, unsigned FirstIndent,
                               bool DryRun) = 0;
 
 protected:
-  /// If the \p State's next token is an r_brace closing a nested block,
+  /// \brief If the \p State's next token is an r_brace closing a nested block,
   /// format the nested block before it.
   ///
   /// Returns \c true if all children could be placed successfully and adapts
@@ -752,8 +645,7 @@ protected:
           *Child->First, /*Newlines=*/0, /*Spaces=*/1,
           /*StartOfTokenColumn=*/State.Column, State.Line->InPPDirective);
     }
-    Penalty +=
-        formatLine(*Child, State.Column + 1, /*FirstStartColumn=*/0, DryRun);
+    Penalty += formatLine(*Child, State.Column + 1, DryRun);
 
     State.Column += 1 + Child->Last->TotalLength;
     return true;
@@ -767,7 +659,7 @@ private:
   UnwrappedLineFormatter *BlockFormatter;
 };
 
-/// Formatter that keeps the existing line breaks.
+/// \brief Formatter that keeps the existing line breaks.
 class NoColumnLimitLineFormatter : public LineFormatter {
 public:
   NoColumnLimitLineFormatter(ContinuationIndenter *Indenter,
@@ -776,13 +668,13 @@ public:
                              UnwrappedLineFormatter *BlockFormatter)
       : LineFormatter(Indenter, Whitespaces, Style, BlockFormatter) {}
 
-  /// Formats the line, simply keeping all of the input's line breaking
+  /// \brief Formats the line, simply keeping all of the input's line breaking
   /// decisions.
   unsigned formatLine(const AnnotatedLine &Line, unsigned FirstIndent,
-                      unsigned FirstStartColumn, bool DryRun) override {
+                      bool DryRun) override {
     assert(!DryRun);
-    LineState State = Indenter->getInitialState(FirstIndent, FirstStartColumn,
-                                                &Line, /*DryRun=*/false);
+    LineState State =
+        Indenter->getInitialState(FirstIndent, &Line, /*DryRun=*/false);
     while (State.NextToken) {
       bool Newline =
           Indenter->mustBreak(State) ||
@@ -795,7 +687,7 @@ public:
   }
 };
 
-/// Formatter that puts all tokens into a single line without breaks.
+/// \brief Formatter that puts all tokens into a single line without breaks.
 class NoLineBreakFormatter : public LineFormatter {
 public:
   NoLineBreakFormatter(ContinuationIndenter *Indenter,
@@ -803,12 +695,11 @@ public:
                        UnwrappedLineFormatter *BlockFormatter)
       : LineFormatter(Indenter, Whitespaces, Style, BlockFormatter) {}
 
-  /// Puts all tokens into a single line.
+  /// \brief Puts all tokens into a single line.
   unsigned formatLine(const AnnotatedLine &Line, unsigned FirstIndent,
-                      unsigned FirstStartColumn, bool DryRun) override {
+                      bool DryRun) override {
     unsigned Penalty = 0;
-    LineState State =
-        Indenter->getInitialState(FirstIndent, FirstStartColumn, &Line, DryRun);
+    LineState State = Indenter->getInitialState(FirstIndent, &Line, DryRun);
     while (State.NextToken) {
       formatChildren(State, /*Newline=*/false, DryRun, Penalty);
       Indenter->addTokenToState(
@@ -818,7 +709,7 @@ public:
   }
 };
 
-/// Finds the best way to break lines.
+/// \brief Finds the best way to break lines.
 class OptimizingLineFormatter : public LineFormatter {
 public:
   OptimizingLineFormatter(ContinuationIndenter *Indenter,
@@ -827,12 +718,11 @@ public:
                           UnwrappedLineFormatter *BlockFormatter)
       : LineFormatter(Indenter, Whitespaces, Style, BlockFormatter) {}
 
-  /// Formats the line by finding the best line breaks with line lengths
+  /// \brief Formats the line by finding the best line breaks with line lengths
   /// below the column limit.
   unsigned formatLine(const AnnotatedLine &Line, unsigned FirstIndent,
-                      unsigned FirstStartColumn, bool DryRun) override {
-    LineState State =
-        Indenter->getInitialState(FirstIndent, FirstStartColumn, &Line, DryRun);
+                      bool DryRun) override {
+    LineState State = Indenter->getInitialState(FirstIndent, &Line, DryRun);
 
     // If the ObjC method declaration does not fit on a line, we should format
     // it with one arg per line.
@@ -850,14 +740,14 @@ private:
     }
   };
 
-  /// A pair of <penalty, count> that is used to prioritize the BFS on.
+  /// \brief A pair of <penalty, count> that is used to prioritize the BFS on.
   ///
   /// In case of equal penalties, we want to prefer states that were inserted
   /// first. During state generation we make sure that we insert states first
   /// that break the line as late as possible.
   typedef std::pair<unsigned, unsigned> OrderedPenalty;
 
-  /// An edge in the solution space from \c Previous->State to \c State,
+  /// \brief An edge in the solution space from \c Previous->State to \c State,
   /// inserting a newline dependent on the \c NewLine.
   struct StateNode {
     StateNode(const LineState &State, bool NewLine, StateNode *Previous)
@@ -867,16 +757,15 @@ private:
     StateNode *Previous;
   };
 
-  /// An item in the prioritized BFS search queue. The \c StateNode's
+  /// \brief An item in the prioritized BFS search queue. The \c StateNode's
   /// \c State has the given \c OrderedPenalty.
   typedef std::pair<OrderedPenalty, StateNode *> QueueItem;
 
-  /// The BFS queue type.
+  /// \brief The BFS queue type.
   typedef std::priority_queue<QueueItem, std::vector<QueueItem>,
-                              std::greater<QueueItem>>
-      QueueType;
+                              std::greater<QueueItem>> QueueType;
 
-  /// Analyze the entire solution space starting from \p InitialState.
+  /// \brief Analyze the entire solution space starting from \p InitialState.
   ///
   /// This implements a variant of Dijkstra's algorithm on the graph that spans
   /// the solution space (\c LineStates are the nodes). The algorithm tries to
@@ -905,8 +794,7 @@ private:
       Penalty = Queue.top().first.first;
       StateNode *Node = Queue.top().second;
       if (!Node->State.NextToken) {
-        LLVM_DEBUG(llvm::dbgs()
-                   << "\n---\nPenalty for line: " << Penalty << "\n");
+        DEBUG(llvm::dbgs() << "\n---\nPenalty for line: " << Penalty << "\n");
         break;
       }
       Queue.pop();
@@ -930,7 +818,7 @@ private:
     if (Queue.empty()) {
       // We were unable to find a solution, do nothing.
       // FIXME: Add diagnostic?
-      LLVM_DEBUG(llvm::dbgs() << "Could not find a solution.\n");
+      DEBUG(llvm::dbgs() << "Could not find a solution.\n");
       return 0;
     }
 
@@ -938,14 +826,13 @@ private:
     if (!DryRun)
       reconstructPath(InitialState, Queue.top().second);
 
-    LLVM_DEBUG(llvm::dbgs()
-               << "Total number of analyzed states: " << Count << "\n");
-    LLVM_DEBUG(llvm::dbgs() << "---\n");
+    DEBUG(llvm::dbgs() << "Total number of analyzed states: " << Count << "\n");
+    DEBUG(llvm::dbgs() << "---\n");
 
     return Penalty;
   }
 
-  /// Add the following state to the analysis queue \c Queue.
+  /// \brief Add the following state to the analysis queue \c Queue.
   ///
   /// Assume the current state is \p PreviousNode and has been reached with a
   /// penalty of \p Penalty. Insert a line break if \p NewLine is \c true.
@@ -967,7 +854,7 @@ private:
     ++(*Count);
   }
 
-  /// Applies the best formatting by reconstructing the path in the
+  /// \brief Applies the best formatting by reconstructing the path in the
   /// solution space that leads to \c Best.
   void reconstructPath(LineState &State, StateNode *Best) {
     std::deque<StateNode *> Path;
@@ -982,7 +869,7 @@ private:
       formatChildren(State, (*I)->NewLine, /*DryRun=*/false, Penalty);
       Penalty += Indenter->addTokenToState(State, (*I)->NewLine, false);
 
-      LLVM_DEBUG({
+      DEBUG({
         printLineState((*I)->Previous->State);
         if ((*I)->NewLine) {
           llvm::dbgs() << "Penalty for placing "
@@ -1001,10 +888,7 @@ private:
 unsigned
 UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
                                bool DryRun, int AdditionalIndent,
-                               bool FixBadIndentation,
-                               unsigned FirstStartColumn,
-                               unsigned NextStartColumn,
-                               unsigned LastStartColumn) {
+                               bool FixBadIndentation) {
   LineJoiner Joiner(Style, Keywords, Lines);
 
   // Try to look up already computed penalty in DryRun-mode.
@@ -1024,10 +908,9 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
   // The minimum level of consecutive lines that have been formatted.
   unsigned RangeMinLevel = UINT_MAX;
 
-  bool FirstLine = true;
   for (const AnnotatedLine *Line =
            Joiner.getNextMergedLine(DryRun, IndentTracker);
-       Line; Line = NextLine, FirstLine = false) {
+       Line; Line = NextLine) {
     const AnnotatedLine &TheLine = *Line;
     unsigned Indent = IndentTracker.getIndent();
 
@@ -1035,12 +918,9 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
     // scope was added. However, we need to carefully stop doing this when we
     // exit the scope of affected lines to prevent indenting a the entire
     // remaining file if it currently missing a closing brace.
-    bool PreviousRBrace =
-        PreviousLine && PreviousLine->startsWith(tok::r_brace);
     bool ContinueFormatting =
         TheLine.Level > RangeMinLevel ||
-        (TheLine.Level == RangeMinLevel && !PreviousRBrace &&
-         !TheLine.startsWith(tok::r_brace));
+        (TheLine.Level == RangeMinLevel && !TheLine.startsWith(tok::r_brace));
 
     bool FixIndentation = (FixBadIndentation || ContinueFormatting) &&
                           Indent != TheLine.First->OriginalColumn;
@@ -1054,11 +934,8 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
     }
 
     if (ShouldFormat && TheLine.Type != LT_Invalid) {
-      if (!DryRun) {
-        bool LastLine = Line->First->is(tok::eof);
-        formatFirstToken(TheLine, PreviousLine, Lines, Indent,
-                         LastLine ? LastStartColumn : NextStartColumn + Indent);
-      }
+      if (!DryRun)
+        formatFirstToken(TheLine, PreviousLine, Indent);
 
       NextLine = Joiner.getNextMergedLine(DryRun, IndentTracker);
       unsigned ColumnLimit = getColumnLimit(TheLine.InPPDirective, NextLine);
@@ -1067,18 +944,16 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
           (TheLine.Type == LT_ImportStatement &&
            (Style.Language != FormatStyle::LK_JavaScript ||
             !Style.JavaScriptWrapImports));
+
       if (Style.ColumnLimit == 0)
         NoColumnLimitLineFormatter(Indenter, Whitespaces, Style, this)
-            .formatLine(TheLine, NextStartColumn + Indent,
-                        FirstLine ? FirstStartColumn : 0, DryRun);
+            .formatLine(TheLine, Indent, DryRun);
       else if (FitsIntoOneLine)
         Penalty += NoLineBreakFormatter(Indenter, Whitespaces, Style, this)
-                       .formatLine(TheLine, NextStartColumn + Indent,
-                                   FirstLine ? FirstStartColumn : 0, DryRun);
+                       .formatLine(TheLine, Indent, DryRun);
       else
         Penalty += OptimizingLineFormatter(Indenter, Whitespaces, Style, this)
-                       .formatLine(TheLine, NextStartColumn + Indent,
-                                   FirstLine ? FirstStartColumn : 0, DryRun);
+                       .formatLine(TheLine, Indent, DryRun);
       RangeMinLevel = std::min(RangeMinLevel, TheLine.Level);
     } else {
       // If no token in the current line is affected, we still need to format
@@ -1100,8 +975,7 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
                               TheLine.LeadingEmptyLinesAffected);
         // Format the first token.
         if (ReformatLeadingWhitespace)
-          formatFirstToken(TheLine, PreviousLine, Lines,
-                           TheLine.First->OriginalColumn,
+          formatFirstToken(TheLine, PreviousLine,
                            TheLine.First->OriginalColumn);
         else
           Whitespaces->addUntouchableToken(*TheLine.First,
@@ -1122,16 +996,14 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
   return Penalty;
 }
 
-void UnwrappedLineFormatter::formatFirstToken(
-    const AnnotatedLine &Line, const AnnotatedLine *PreviousLine,
-    const SmallVectorImpl<AnnotatedLine *> &Lines, unsigned Indent,
-    unsigned NewlineIndent) {
-  FormatToken &RootToken = *Line.First;
+void UnwrappedLineFormatter::formatFirstToken(const AnnotatedLine &Line,
+                                              const AnnotatedLine *PreviousLine,
+                                              unsigned Indent) {
+  FormatToken& RootToken = *Line.First;
   if (RootToken.is(tok::eof)) {
     unsigned Newlines = std::min(RootToken.NewlinesBefore, 1u);
-    unsigned TokenIndent = Newlines ? NewlineIndent : 0;
-    Whitespaces->replaceWhitespace(RootToken, Newlines, TokenIndent,
-                                   TokenIndent);
+    Whitespaces->replaceWhitespace(RootToken, Newlines, /*Spaces=*/0,
+                                   /*StartOfTokenColumn=*/0);
     return;
   }
   unsigned Newlines =
@@ -1139,12 +1011,7 @@ void UnwrappedLineFormatter::formatFirstToken(
   // Remove empty lines before "}" where applicable.
   if (RootToken.is(tok::r_brace) &&
       (!RootToken.Next ||
-       (RootToken.Next->is(tok::semi) && !RootToken.Next->Next)) &&
-      // Do not remove empty lines before namespace closing "}".
-      !getNamespaceToken(&Line, Lines))
-    Newlines = std::min(Newlines, 1u);
-  // Remove empty lines at the start of nested blocks (lambdas/arrow functions)
-  if (PreviousLine == nullptr && Line.Level > 0)
+       (RootToken.Next->is(tok::semi) && !RootToken.Next->Next)))
     Newlines = std::min(Newlines, 1u);
   if (Newlines == 0 && !RootToken.IsFirst)
     Newlines = 1;
@@ -1167,13 +1034,6 @@ void UnwrappedLineFormatter::formatFirstToken(
   if (PreviousLine && PreviousLine->First->isAccessSpecifier() &&
       (!PreviousLine->InPPDirective || !RootToken.HasUnescapedNewline))
     Newlines = std::min(1u, Newlines);
-
-  if (Newlines)
-    Indent = NewlineIndent;
-
-  // Preprocessor directives get indented after the hash, if indented.
-  if (Line.Type == LT_PreprocessorDirective || Line.Type == LT_ImportStatement)
-    Indent = 0;
 
   Whitespaces->replaceWhitespace(RootToken, Newlines, Indent, Indent,
                                  Line.InPPDirective &&

@@ -10,18 +10,13 @@ import lit.run
 from lit.TestingConfig import TestingConfig
 from lit import LitConfig, Test
 
-def chooseConfigFileFromDir(dir, config_names):
-    for name in config_names:
-        p = os.path.join(dir, name)
-        if os.path.exists(p):
-            return p
-    return None
-
 def dirContainsTestSuite(path, lit_config):
-    cfgpath = chooseConfigFileFromDir(path, lit_config.site_config_names)
-    if not cfgpath:
-        cfgpath = chooseConfigFileFromDir(path, lit_config.config_names)
-    return cfgpath
+    cfgpath = os.path.join(path, lit_config.site_config_name)
+    if os.path.exists(cfgpath):
+        return cfgpath
+    cfgpath = os.path.join(path, lit_config.config_name)
+    if os.path.exists(cfgpath):
+        return cfgpath
 
 def getTestSuite(item, litConfig, cache):
     """getTestSuite(item, litConfig, cache) -> (suite, relative_path)
@@ -45,20 +40,6 @@ def getTestSuite(item, litConfig, cache):
             ts, relative = search(parent)
             return (ts, relative + (base,))
 
-        # This is a private builtin parameter which can be used to perform
-        # translation of configuration paths.  Specifically, this parameter
-        # can be set to a dictionary that the discovery process will consult
-        # when it finds a configuration it is about to load.  If the given
-        # path is in the map, the value of that key is a path to the
-        # configuration to load instead.
-        config_map = litConfig.params.get('config_map')
-        if config_map:
-            cfgpath = os.path.realpath(cfgpath)
-            cfgpath = os.path.normcase(cfgpath)
-            target = config_map.get(cfgpath)
-            if target:
-                cfgpath = target
-
         # We found a test suite, create a new config for it and load it.
         if litConfig.debug:
             litConfig.note('loading suite config %r' % cfgpath)
@@ -71,14 +52,13 @@ def getTestSuite(item, litConfig, cache):
 
     def search(path):
         # Check for an already instantiated test suite.
-        real_path = os.path.realpath(path)
-        res = cache.get(real_path)
+        res = cache.get(path)
         if res is None:
-            cache[real_path] = res = search1(path)
+            cache[path] = res = search1(path)
         return res
 
     # Canonicalize the path.
-    item = os.path.normpath(os.path.join(os.getcwd(), item))
+    item = os.path.realpath(item)
 
     # Skip files and virtual components.
     components = []
@@ -103,10 +83,10 @@ def getLocalConfig(ts, path_in_suite, litConfig, cache):
 
         # Check if there is a local configuration file.
         source_path = ts.getSourcePath(path_in_suite)
-        cfgpath = chooseConfigFileFromDir(source_path, litConfig.local_config_names)
+        cfgpath = os.path.join(source_path, litConfig.local_config_name)
 
         # If not, just reuse the parent config.
-        if not cfgpath:
+        if not os.path.exists(cfgpath):
             return parent
 
         # Otherwise, copy the current config and load the local configuration
@@ -231,7 +211,7 @@ def find_tests_for_inputs(lit_config, inputs):
                 f.close()
         else:
             actual_inputs.append(input)
-
+                    
     # Load the tests from the inputs.
     tests = []
     test_suite_cache = {}
@@ -262,7 +242,6 @@ def load_test_suite(inputs):
                                     useValgrind = False,
                                     valgrindLeakCheck = False,
                                     valgrindArgs = [],
-                                    singleProcess=False,
                                     noExecute = False,
                                     debug = False,
                                     isWindows = (platform.system()=='Windows'),

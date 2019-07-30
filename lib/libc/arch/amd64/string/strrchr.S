@@ -1,4 +1,4 @@
-/*	$OpenBSD: strrchr.S,v 1.9 2018/07/03 23:14:05 mortimer Exp $	*/
+/*	$OpenBSD: strrchr.S,v 1.8 2015/11/14 21:53:03 guenther Exp $	*/
 /*	$NetBSD: strrchr.S,v 1.3 2014/03/22 19:16:34 jakllsch Exp $	*/
 
 /*
@@ -11,7 +11,6 @@
 WEAK_ALIAS(rindex, strrchr)
 
 ENTRY(strrchr)
-	RETGUARD_SETUP(strrchr, r11)
 	movzbq	%sil,%rcx
 
 	/* zero return value */
@@ -121,6 +120,5 @@ ENTRY(strrchr)
 	jne	.Lloop
 
 .Ldone:
-	RETGUARD_CHECK(strrchr, r11)
 	ret
 END_STRONG(strrchr)

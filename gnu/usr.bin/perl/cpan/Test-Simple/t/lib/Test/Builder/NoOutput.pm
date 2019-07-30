@@ -53,9 +53,6 @@ sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
 
-    require Test::Builder::Formatter;
-    $self->{Stack}->top->format(Test::Builder::Formatter->new);
-
     my %outputs = (
         all  => '',
         out  => '',

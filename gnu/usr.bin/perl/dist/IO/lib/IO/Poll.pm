@@ -10,24 +10,25 @@ package IO::Poll;
 use strict;
 use IO::Handle;
 use Exporter ();
+our(@ISA, @EXPORT_OK, @EXPORT, $VERSION);
 
-our @ISA = qw(Exporter);
-our $VERSION = "1.39";
+@ISA = qw(Exporter);
+$VERSION = "0.10";
 
-our @EXPORT = qw( POLLIN
+@EXPORT = qw( POLLIN
 	      POLLOUT
 	      POLLERR
 	      POLLHUP
 	      POLLNVAL
 	    );
 
-our @EXPORT_OK = qw(
- POLLPRI
+@EXPORT_OK = qw(
+ POLLPRI   
  POLLRDNORM
  POLLWRNORM
  POLLRDBAND
  POLLWRBAND
- POLLNORM
+ POLLNORM  
 	       );
 
 # [0] maps fd's to requested masks

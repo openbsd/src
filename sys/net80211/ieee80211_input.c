@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.206 2019/05/12 18:12:38 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.198 2017/12/12 15:57:11 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -210,29 +210,11 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		tid = 0;
 	}
 
-	if (ic->ic_state == IEEE80211_S_RUN &&
-	    type == IEEE80211_FC0_TYPE_DATA && hasqos &&
+	if (type == IEEE80211_FC0_TYPE_DATA && hasqos &&
 	    (subtype & IEEE80211_FC0_SUBTYPE_NODATA) == 0 &&
-	    !(rxi->rxi_flags & IEEE80211_RXI_AMPDU_DONE)
-#ifndef IEEE80211_STA_ONLY
-	    && (ic->ic_opmode == IEEE80211_M_STA || ni != ic->ic_bss)
-#endif
-	    ) {
+	    !(rxi->rxi_flags & IEEE80211_RXI_AMPDU_DONE)) {
 		int ba_state = ni->ni_rx_ba[tid].ba_state;
 
-#ifndef IEEE80211_STA_ONLY
-		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
-			if (!IEEE80211_ADDR_EQ(wh->i_addr1,
-			    ic->ic_bss->ni_bssid)) {
-				ic->ic_stats.is_rx_wrongbss++;
-				goto err;
-			}
-			if (ni->ni_state != IEEE80211_S_ASSOC) {
-				ic->ic_stats.is_rx_notassoc++;
-				goto err;
-			}
-		}
-#endif
 		/* 
 		 * If Block Ack was explicitly requested, check
 		 * if we have a BA agreement for this RA/TID.
@@ -286,13 +268,12 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		ni->ni_rstamp = rxi->rxi_tstamp;
 		ni->ni_inact = 0;
 
-		if (ic->ic_state == IEEE80211_S_RUN && ic->ic_bgscan_start) {
+		if (ic->ic_state == IEEE80211_S_RUN) {
 			/* Cancel or start background scan based on RSSI. */
 			if ((*ic->ic_node_checkrssi)(ic, ni))
 				timeout_del(&ic->ic_bgscan_timeout);
 			else if (!timeout_pending(&ic->ic_bgscan_timeout) &&
-			    (ic->ic_flags & IEEE80211_F_BGSCAN) == 0 &&
-			    (ic->ic_flags & IEEE80211_F_DESBSSID) == 0)
+			    (ic->ic_flags & IEEE80211_F_BGSCAN) == 0)
 				timeout_add_msec(&ic->ic_bgscan_timeout,
 				    500 * (ic->ic_bgscan_fail + 1));
 		}
@@ -420,13 +401,6 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 #endif	/* IEEE80211_STA_ONLY */
 		default:
 			/* can't get there */
-			goto out;
-		}
-
-		/* Do not process "no data" frames any further. */
-		if (subtype & IEEE80211_FC0_SUBTYPE_NODATA) {
-			if (ic->ic_rawbpf)
-				bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_IN);
 			goto out;
 		}
 
@@ -882,7 +856,7 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
 	m1 = NULL;
 #ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
-	    !(ic->ic_userflags & IEEE80211_F_NOBRIDGE) &&
+	    !(ic->ic_flags & IEEE80211_F_NOBRIDGE) &&
 	    eh->ether_type != htons(ETHERTYPE_PAE)) {
 		struct ieee80211_node *ni1;
 
@@ -1563,7 +1537,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 
 	if (htcaps)
 		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
-	if (htop && !ieee80211_setup_htop(ni, htop + 2, htop[1], 1))
+	if (htop && !ieee80211_setup_htop(ni, htop + 2, htop[1]))
 		htop = NULL; /* invalid HTOP */
 
 	ni->ni_dtimcount = dtim_count;
@@ -1583,9 +1557,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 			DPRINTF(("[%s] erp change: was 0x%x, now 0x%x\n",
 			    ether_sprintf((u_int8_t *)wh->i_addr2),
 			    ni->ni_erp, erp));
-			if ((ic->ic_curmode == IEEE80211_MODE_11G ||
-			    (ic->ic_curmode == IEEE80211_MODE_11N &&
-			    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))) &&
+			if (ic->ic_curmode == IEEE80211_MODE_11G &&
 			    (erp & IEEE80211_ERP_USE_PROTECTION))
 				ic->ic_flags |= IEEE80211_F_USEPROT;
 			else
@@ -1716,26 +1688,13 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		memcpy(ni->ni_essid, &ssid[2], ssid[1]);
 	}
 	IEEE80211_ADDR_COPY(ni->ni_bssid, wh->i_addr3);
-	/* XXX validate channel # */
-	ni->ni_chan = &ic->ic_channels[chan];
-	if (ic->ic_state == IEEE80211_S_SCAN &&
-	    IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) {
-		/*
-		 * During a scan on 5Ghz, prefer RSSI measured for probe
-		 * response frames. i.e. don't allow beacons to lower the
-		 * measured RSSI. Some 5GHz APs send beacons with much
-		 * less Tx power than they use for probe responses.
-		 */
-		 if (isprobe)
-			ni->ni_rssi = rxi->rxi_rssi;
-		else if (ni->ni_rssi < rxi->rxi_rssi)
-			ni->ni_rssi = rxi->rxi_rssi;
-	} else
-		ni->ni_rssi = rxi->rxi_rssi;
+	ni->ni_rssi = rxi->rxi_rssi;
 	ni->ni_rstamp = rxi->rxi_tstamp;
 	memcpy(ni->ni_tstamp, tstamp, sizeof(ni->ni_tstamp));
 	ni->ni_intval = bintval;
 	ni->ni_capinfo = capinfo;
+	/* XXX validate channel # */
+	ni->ni_chan = &ic->ic_channels[chan];
 	ni->ni_erp = erp;
 	/* NB: must be after ni_chan is setup */
 	ieee80211_setup_rates(ic, ni, rates, xrates, IEEE80211_F_DOSORT);
@@ -2341,7 +2300,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m,
 	if (htcaps)
 		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
 	if (htop)
-		ieee80211_setup_htop(ni, htop + 2, htop[1], 0);
+		ieee80211_setup_htop(ni, htop + 2, htop[1]);
 	ieee80211_ht_negotiate(ic, ni);
 
 	/* Hop into 11n mode after associating to an HT AP in a non-11n mode. */
@@ -2418,9 +2377,7 @@ ieee80211_recv_deauth(struct ieee80211com *ic, struct mbuf *m,
 	case IEEE80211_M_STA: {
 		int bgscan = ((ic->ic_flags & IEEE80211_F_BGSCAN) &&
 		    ic->ic_state == IEEE80211_S_RUN);
-		int stay_auth = ((ic->ic_userflags & IEEE80211_F_STAYAUTH) &&
-		    ic->ic_state >= IEEE80211_S_AUTH);
-		if (!(bgscan || stay_auth))
+		if (!bgscan) /* ignore deauth during bgscan */
 			ieee80211_new_state(ic, IEEE80211_S_AUTH,
 			    IEEE80211_FC0_SUBTYPE_DEAUTH);
 		}
@@ -2428,18 +2385,13 @@ ieee80211_recv_deauth(struct ieee80211com *ic, struct mbuf *m,
 #ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_HOSTAP:
 		if (ni != ic->ic_bss) {
-			int stay_auth =
-			    ((ic->ic_userflags & IEEE80211_F_STAYAUTH) &&
-			    (ni->ni_state == IEEE80211_STA_AUTH ||
-			    ni->ni_state == IEEE80211_STA_ASSOC));
 			if (ic->ic_if.if_flags & IFF_DEBUG)
 				printf("%s: station %s deauthenticated "
 				    "by peer (reason %d)\n",
 				    ic->ic_if.if_xname,
 				    ether_sprintf(ni->ni_macaddr),
 				    reason);
-			if (!stay_auth)
-				ieee80211_node_leave(ic, ni);
+			ieee80211_node_leave(ic, ni);
 		}
 		break;
 #endif

@@ -59,8 +59,9 @@ public:
 
   lldb::OptionValueSP DeepCopy() const override;
 
-  size_t AutoComplete(CommandInterpreter &interpreter,
-                      CompletionRequest &request) override;
+  size_t AutoComplete(CommandInterpreter &interpreter, llvm::StringRef s,
+                      int match_start_point, int max_return_elements,
+                      bool &word_complete, StringList &matches) override;
 
   //---------------------------------------------------------------------
   // Subclass specific functions

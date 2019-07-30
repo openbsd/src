@@ -1,4 +1,4 @@
-/*	$OpenBSD: octciu.c,v 1.16 2019/03/17 16:31:26 visa Exp $	*/
+/*	$OpenBSD: octciu.c,v 1.10 2018/02/24 11:42:31 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -38,7 +38,6 @@
 #include <sys/atomic.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 
@@ -70,21 +69,6 @@ struct intrbank {
 
 #define IS_WORKQ_IRQ(x)	((unsigned int)(x) < 16)
 
-struct octciu_intrhand {
-	SLIST_ENTRY(octciu_intrhand)
-				 ih_list;
-	int			(*ih_fun)(void *);
-	void			*ih_arg;
-	int			 ih_level;
-	int			 ih_irq;
-	struct evcount		 ih_count;
-	int			 ih_flags;
-	cpuid_t			 ih_cpuid;
-};
-
-/* ih_flags */
-#define CIH_MPSAFE	0x01
-
 struct octciu_cpu {
 	struct intrbank		 scpu_ibank[NBANKS];
 	uint64_t		 scpu_intem[NBANKS];
@@ -96,8 +80,7 @@ struct octciu_softc {
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_ioh;
 	struct octciu_cpu	 sc_cpu[MAXCPUS];
-	SLIST_HEAD(, octciu_intrhand)
-				 sc_intrhand[OCTCIU_NINTS];
+	struct intrhand		*sc_intrhand[OCTCIU_NINTS];
 	unsigned int		 sc_nbanks;
 
 	int			(*sc_ipi_handler)(void *);
@@ -119,7 +102,6 @@ void	*octciu_intr_establish(int, int, int (*)(void *), void *,
 void	*octciu_intr_establish_fdt_idx(void *, int, int, int,
 	    int (*)(void *), void *, const char *);
 void	 octciu_intr_disestablish(void *);
-void	 octciu_intr_barrier(void *);
 void	 octciu_splx(int);
 
 uint32_t octciu_ipi_intr(uint32_t, struct trapframe *);
@@ -150,7 +132,6 @@ octciu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 	struct octciu_softc *sc = (struct octciu_softc *)self;
-	int i;
 
 	if (faa->fa_nreg != 1) {
 		printf(": expected one IO space, got %d\n", faa->fa_nreg);
@@ -169,9 +150,6 @@ octciu_attach(struct device *parent, struct device *self, void *aux)
 	else
 		sc->sc_nbanks = 2;
 
-	for (i = 0; i < OCTCIU_NINTS; i++)
-		SLIST_INIT(&sc->sc_intrhand[i]);
-
 	printf("\n");
 
 	sc->sc_ic.ic_cookie = sc;
@@ -180,7 +158,6 @@ octciu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_establish = octciu_intr_establish;
 	sc->sc_ic.ic_establish_fdt_idx = octciu_intr_establish_fdt_idx;
 	sc->sc_ic.ic_disestablish = octciu_intr_disestablish;
-	sc->sc_ic.ic_intr_barrier = octciu_intr_barrier;
 #ifdef MULTIPROCESSOR
 	sc->sc_ic.ic_ipi_establish = octciu_ipi_establish;
 	sc->sc_ic.ic_ipi_set = octciu_ipi_set;
@@ -241,7 +218,7 @@ octciu_intr_establish(int irq, int level, int (*ih_fun)(void *),
     void *ih_arg, const char *ih_what)
 {
 	struct octciu_softc *sc = octciu_sc;
-	struct octciu_intrhand *ih, *last, *tmp;
+	struct intrhand **p, *q, *ih;
 	int cpuid = cpu_number();
 	int flags;
 	int s;
@@ -254,16 +231,17 @@ octciu_intr_establish(int irq, int level, int (*ih_fun)(void *),
 #ifdef MULTIPROCESSOR
 	/* Span work queue interrupts across CPUs. */
 	if (IS_WORKQ_IRQ(irq))
-		cpuid = irq % ncpus;
+		cpuid = irq % ncpusfound;
 #endif
 
-	flags = (level & IPL_MPSAFE) ? CIH_MPSAFE : 0;
+	flags = (level & IPL_MPSAFE) ? IH_MPSAFE : 0;
 	level &= ~IPL_MPSAFE;
 
 	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
 		return NULL;
 
+	ih->ih_next = NULL;
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
 	ih->ih_level = level;
@@ -274,14 +252,14 @@ octciu_intr_establish(int irq, int level, int (*ih_fun)(void *),
 
 	s = splhigh();
 
-	if (SLIST_EMPTY(&sc->sc_intrhand[irq])) {
-		SLIST_INSERT_HEAD(&sc->sc_intrhand[irq], ih, ih_list);
-	} else {
-		last = NULL;
-		SLIST_FOREACH(tmp, &sc->sc_intrhand[irq], ih_list)
-			last = tmp;
-		SLIST_INSERT_AFTER(last, ih, ih_list);
-	}
+	/*
+	 * Figure out where to put the handler.
+	 * This is O(N^2), but we want to preserve the order, and N is
+	 * generally small.
+	 */
+	for (p = &sc->sc_intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
+		continue;
+	*p = ih;
 
 	sc->sc_cpu[cpuid].scpu_intem[IRQ_TO_BANK(irq)] |=
 	    1UL << IRQ_TO_BIT(irq);
@@ -319,12 +297,11 @@ octciu_intr_establish_fdt_idx(void *cookie, int node, int idx, int level,
 void
 octciu_intr_disestablish(void *_ih)
 {
-	struct octciu_intrhand *ih = _ih;
-	struct octciu_intrhand *tmp;
+	struct intrhand *ih = _ih;
+	struct intrhand *p;
 	struct octciu_softc *sc = octciu_sc;
 	unsigned int irq = ih->ih_irq;
 	int cpuid = cpu_number();
-	int found = 0;
 	int s;
 
 	KASSERT(irq < sc->sc_nbanks * BANK_SIZE);
@@ -332,41 +309,27 @@ octciu_intr_disestablish(void *_ih)
 
 	s = splhigh();
 
-	SLIST_FOREACH(tmp, &sc->sc_intrhand[irq], ih_list) {
-		if (tmp == ih) {
-			found = 1;
-			break;
+	if (ih == sc->sc_intrhand[irq]) {
+		sc->sc_intrhand[irq] = ih->ih_next;
+
+		if (sc->sc_intrhand[irq] == NULL)
+			sc->sc_cpu[cpuid].scpu_intem[IRQ_TO_BANK(irq)] &=
+			    ~(1UL << IRQ_TO_BIT(irq));
+	} else {
+		for (p = sc->sc_intrhand[irq]; p != NULL; p = p->ih_next) {
+			if (p->ih_next == ih) {
+				p->ih_next = ih->ih_next;
+				break;
+			}
 		}
+		if (p == NULL)
+			panic("%s: intrhand %p has not been registered",
+			    __func__, ih);
 	}
-	if (found == 0)
-		panic("%s: intrhand %p not registered", __func__, ih);
-
-	SLIST_REMOVE(&sc->sc_intrhand[irq], ih, octciu_intrhand, ih_list);
-	evcount_detach(&ih->ih_count);
-
-	if (SLIST_EMPTY(&sc->sc_intrhand[irq])) {
-		sc->sc_cpu[cpuid].scpu_intem[IRQ_TO_BANK(irq)] &=
-		    ~(1UL << IRQ_TO_BIT(irq));
-	}
+	free(ih, M_DEVBUF, sizeof(*ih));
 
 	octciu_intr_makemasks(sc);
 	splx(s);	/* causes hw mask update */
-
-	free(ih, M_DEVBUF, sizeof(*ih));
-}
-
-void
-octciu_intr_barrier(void *_ih)
-{
-	struct cpu_info *ci = NULL;
-#ifdef MULTIPROCESSOR
-	struct octciu_intrhand *ih = _ih;
-
-	if (IS_WORKQ_IRQ(ih->ih_irq))
-		ci = get_cpu_info(ih->ih_irq % ncpus);
-#endif
-
-	sched_barrier(ci);
 }
 
 /*
@@ -377,14 +340,14 @@ octciu_intr_makemasks(struct octciu_softc *sc)
 {
 	cpuid_t cpuid = cpu_number();
 	struct octciu_cpu *scpu = &sc->sc_cpu[cpuid];
-	struct octciu_intrhand *q;
+	struct intrhand *q;
 	uint intrlevel[OCTCIU_NINTS];
 	int irq, level;
 
 	/* First, figure out which levels each IRQ uses. */
 	for (irq = 0; irq < OCTCIU_NINTS; irq++) {
 		uint levels = 0;
-		SLIST_FOREACH(q, &sc->sc_intrhand[irq], ih_list) {
+		for (q = sc->sc_intrhand[irq]; q != NULL; q = q->ih_next) {
 			if (q->ih_cpuid == cpuid)
 				levels |= 1 << q->ih_level;
 		}
@@ -462,7 +425,7 @@ octciu_intr_bank(struct octciu_softc *sc, struct intrbank *bank,
     struct trapframe *frame)
 {
 	struct cpu_info *ci = curcpu();
-	struct octciu_intrhand *ih;
+	struct intrhand *ih;
 	struct octciu_cpu *scpu = &sc->sc_cpu[ci->ci_cpuid];
 	uint64_t imr, isr, mask;
 	int handled, ipl, irq;
@@ -504,14 +467,14 @@ octciu_intr_bank(struct octciu_softc *sc, struct intrbank *bank,
 	while ((irq = octciu_next_irq(&isr)) >= 0) {
 		irq += bank->id * BANK_SIZE;
 		handled = 0;
-		SLIST_FOREACH(ih, &sc->sc_intrhand[irq], ih_list) {
+		for (ih = sc->sc_intrhand[irq]; ih != NULL; ih = ih->ih_next) {
 			splraise(ih->ih_level);
 #ifdef MULTIPROCESSOR
 			if (ih->ih_level < IPL_IPI) {
 				sr = getsr();
 				ENABLEIPI();
 			}
-			if (ih->ih_flags & CIH_MPSAFE)
+			if (ih->ih_flags & IH_MPSAFE)
 				need_lock = 0;
 			else
 				need_lock = 1;

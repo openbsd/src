@@ -1,4 +1,4 @@
-//===- IdentifierTable.h - Hash table for identifier lookup -----*- C++ -*-===//
+//===--- IdentifierTable.h - Hash table for identifier lookup ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,11 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
+///
 /// \file
-/// Defines the clang::IdentifierInfo, clang::IdentifierTable, and
+/// \brief Defines the clang::IdentifierInfo, clang::IdentifierTable, and
 /// clang::Selector interfaces.
-//
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_BASIC_IDENTIFIERTABLE_H
@@ -18,29 +18,35 @@
 
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/TokenKinds.h"
-#include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/PointerLikeTypeTraits.h"
-#include "llvm/Support/type_traits.h"
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <new>
 #include <string>
 #include <utility>
 
+namespace llvm {
+
+  template <typename T> struct DenseMapInfo;
+
+} // end namespace llvm
+
 namespace clang {
 
-class IdentifierInfo;
-class LangOptions;
-class MultiKeywordSelector;
-class SourceLocation;
+  class LangOptions;
+  class IdentifierInfo;
+  class IdentifierTable;
+  class SourceLocation;
+  class MultiKeywordSelector; // private class used by Selector
+  class DeclarationName;      // AST class that stores declaration names
 
-/// A simple pair of identifier info and location.
-using IdentifierLocPair = std::pair<IdentifierInfo *, SourceLocation>;
+  /// \brief A simple pair of identifier info and location.
+  typedef std::pair<IdentifierInfo*, SourceLocation> IdentifierLocPair;
 
 /// One of these records is kept for each identifier that
 /// is lexed.  This contains information about whether the token was \#define'd,
@@ -63,7 +69,7 @@ class IdentifierInfo {
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsCPPOperatorKeyword   : 1; // True if ident is a C++ operator keyword.
   bool NeedsHandleIdentifier  : 1; // See "RecomputeNeedsHandleIdentifier".
-  bool IsFromAST              : 1; // True if identifier was loaded (at least
+  bool IsFromAST              : 1; // True if identifier was loaded (at least 
                                    // partially) from an AST file.
   bool ChangedAfterLoad       : 1; // True if identifier has changed from the
                                    // definition loaded from an AST file.
@@ -79,17 +85,15 @@ class IdentifierInfo {
                                    // keyword.
   // 29 bit left in 64-bit word.
 
-  // Managed by the language front-end.
-  void *FETokenInfo = nullptr;
-
-  llvm::StringMapEntry<IdentifierInfo *> *Entry = nullptr;
+  void *FETokenInfo;               // Managed by the language front-end.
+  llvm::StringMapEntry<IdentifierInfo*> *Entry;
 
 public:
   IdentifierInfo();
   IdentifierInfo(const IdentifierInfo &) = delete;
   IdentifierInfo &operator=(const IdentifierInfo &) = delete;
 
-  /// Return true if this is the identifier for the specified string.
+  /// \brief Return true if this is the identifier for the specified string.
   ///
   /// This is intended to be used for string literals only: II->isStr("foo").
   template <std::size_t StrLen>
@@ -98,14 +102,9 @@ public:
            memcmp(getNameStart(), Str, StrLen-1) == 0;
   }
 
-  /// Return true if this is the identifier for the specified StringRef.
-  bool isStr(llvm::StringRef Str) const {
-    llvm::StringRef ThisStr(getNameStart(), getLength());
-    return ThisStr == Str;
-  }
-
-  /// Return the beginning of the actual null-terminated string for this
+  /// \brief Return the beginning of the actual null-terminated string for this
   /// identifier.
+  ///
   const char *getNameStart() const {
     if (Entry) return Entry->getKeyData();
     // FIXME: This is gross. It would be best not to embed specific details
@@ -113,12 +112,12 @@ public:
     // The 'this' pointer really points to a
     // std::pair<IdentifierInfo, const char*>, where internal pointer
     // points to the external string data.
-    using actualtype = std::pair<IdentifierInfo, const char *>;
-
+    typedef std::pair<IdentifierInfo, const char*> actualtype;
     return ((const actualtype*) this)->second;
   }
 
-  /// Efficiently return the length of this identifier info.
+  /// \brief Efficiently return the length of this identifier info.
+  ///
   unsigned getLength() const {
     if (Entry) return Entry->getKeyLength();
     // FIXME: This is gross. It would be best not to embed specific details
@@ -126,18 +125,17 @@ public:
     // The 'this' pointer really points to a
     // std::pair<IdentifierInfo, const char*>, where internal pointer
     // points to the external string data.
-    using actualtype = std::pair<IdentifierInfo, const char *>;
-
+    typedef std::pair<IdentifierInfo, const char*> actualtype;
     const char* p = ((const actualtype*) this)->second - 2;
     return (((unsigned) p[0]) | (((unsigned) p[1]) << 8)) - 1;
   }
 
-  /// Return the actual identifier string.
+  /// \brief Return the actual identifier string.
   StringRef getName() const {
     return StringRef(getNameStart(), getLength());
   }
 
-  /// Return true if this identifier is \#defined to some other value.
+  /// \brief Return true if this identifier is \#defined to some other value.
   /// \note The current definition may be in a module and not currently visible.
   bool hasMacroDefinition() const {
     return HasMacro;
@@ -153,7 +151,7 @@ public:
       RecomputeNeedsHandleIdentifier();
     }
   }
-  /// Returns true if this identifier was \#defined to some value at any
+  /// \brief Returns true if this identifier was \#defined to some value at any
   /// moment. In this case there should be an entry for the identifier in the
   /// macro history table in Preprocessor.
   bool hadMacroDefinition() const {
@@ -165,10 +163,10 @@ public:
   /// tokens.
   tok::TokenKind getTokenID() const { return (tok::TokenKind)TokenID; }
 
-  /// True if revertTokenIDToIdentifier() was called.
+  /// \brief True if revertTokenIDToIdentifier() was called.
   bool hasRevertedTokenIDToIdentifier() const { return RevertedTokenID; }
 
-  /// Revert TokenID to tok::identifier; used for GNU libstdc++ 4.2
+  /// \brief Revert TokenID to tok::identifier; used for GNU libstdc++ 4.2
   /// compatibility.
   ///
   /// TokenID is normally read-only but there are 2 instances where we revert it
@@ -185,12 +183,12 @@ public:
     RevertedTokenID = false;
   }
 
-  /// Return the preprocessor keyword ID for this identifier.
+  /// \brief Return the preprocessor keyword ID for this identifier.
   ///
   /// For example, "define" will return tok::pp_define.
   tok::PPKeywordKind getPPKeywordID() const;
 
-  /// Return the Objective-C keyword ID for the this identifier.
+  /// \brief Return the Objective-C keyword ID for the this identifier.
   ///
   /// For example, 'class' will return tok::objc_class if ObjC is enabled.
   tok::ObjCKeywordKind getObjCKeywordID() const {
@@ -201,19 +199,19 @@ public:
   }
   void setObjCKeywordID(tok::ObjCKeywordKind ID) { ObjCOrBuiltinID = ID; }
 
-  /// True if setNotBuiltin() was called.
+  /// \brief True if setNotBuiltin() was called.
   bool hasRevertedBuiltin() const {
     return ObjCOrBuiltinID == tok::NUM_OBJC_KEYWORDS;
   }
 
-  /// Revert the identifier to a non-builtin identifier. We do this if
+  /// \brief Revert the identifier to a non-builtin identifier. We do this if
   /// the name of a known builtin library function is used to declare that
   /// function, but an unexpected type is specified.
   void revertBuiltin() {
     setBuiltinID(0);
   }
 
-  /// Return a value indicating whether this is a builtin function.
+  /// \brief Return a value indicating whether this is a builtin function.
   ///
   /// 0 is not-built-in. 1+ are specific builtin functions.
   unsigned getBuiltinID() const {
@@ -267,7 +265,7 @@ public:
       RecomputeNeedsHandleIdentifier();
   }
 
-  /// Return true if this token has been poisoned.
+  /// \brief Return true if this token has been poisoned.
   bool isPoisoned() const { return IsPoisoned; }
 
   /// isCPlusPlusOperatorKeyword/setIsCPlusPlusOperatorKeyword controls whether
@@ -277,10 +275,10 @@ public:
   }
   bool isCPlusPlusOperatorKeyword() const { return IsCPPOperatorKeyword; }
 
-  /// Return true if this token is a keyword in the specified language.
+  /// \brief Return true if this token is a keyword in the specified language.
   bool isKeyword(const LangOptions &LangOpts) const;
 
-  /// Return true if this token is a C++ keyword in the specified
+  /// \brief Return true if this token is a C++ keyword in the specified
   /// language.
   bool isCPlusPlusKeyword(const LangOptions &LangOpts) const;
 
@@ -290,48 +288,48 @@ public:
   T *getFETokenInfo() const { return static_cast<T*>(FETokenInfo); }
   void setFETokenInfo(void *T) { FETokenInfo = T; }
 
-  /// Return true if the Preprocessor::HandleIdentifier must be called
+  /// \brief Return true if the Preprocessor::HandleIdentifier must be called
   /// on a token of this identifier.
   ///
   /// If this returns false, we know that HandleIdentifier will not affect
   /// the token.
   bool isHandleIdentifierCase() const { return NeedsHandleIdentifier; }
 
-  /// Return true if the identifier in its current state was loaded
+  /// \brief Return true if the identifier in its current state was loaded
   /// from an AST file.
   bool isFromAST() const { return IsFromAST; }
 
   void setIsFromAST() { IsFromAST = true; }
 
-  /// Determine whether this identifier has changed since it was loaded
+  /// \brief Determine whether this identifier has changed since it was loaded
   /// from an AST file.
   bool hasChangedSinceDeserialization() const {
     return ChangedAfterLoad;
   }
-
-  /// Note that this identifier has changed since it was loaded from
+  
+  /// \brief Note that this identifier has changed since it was loaded from
   /// an AST file.
   void setChangedSinceDeserialization() {
     ChangedAfterLoad = true;
   }
 
-  /// Determine whether the frontend token information for this
+  /// \brief Determine whether the frontend token information for this
   /// identifier has changed since it was loaded from an AST file.
   bool hasFETokenInfoChangedSinceDeserialization() const {
     return FEChangedAfterLoad;
   }
-
-  /// Note that the frontend token information for this identifier has
+  
+  /// \brief Note that the frontend token information for this identifier has
   /// changed since it was loaded from an AST file.
   void setFETokenInfoChangedSinceDeserialization() {
     FEChangedAfterLoad = true;
   }
 
-  /// Determine whether the information for this identifier is out of
+  /// \brief Determine whether the information for this identifier is out of
   /// date with respect to the external source.
   bool isOutOfDate() const { return OutOfDate; }
-
-  /// Set whether the information for this identifier is out of
+  
+  /// \brief Set whether the information for this identifier is out of
   /// date with respect to the external source.
   void setOutOfDate(bool OOD) {
     OutOfDate = OOD;
@@ -340,11 +338,11 @@ public:
     else
       RecomputeNeedsHandleIdentifier();
   }
-
-  /// Determine whether this is the contextual keyword \c import.
+  
+  /// \brief Determine whether this is the contextual keyword \c import.
   bool isModulesImport() const { return IsModulesImport; }
-
-  /// Set whether this identifier is the contextual keyword \c import.
+  
+  /// \brief Set whether this identifier is the contextual keyword \c import.
   void setModulesImport(bool I) {
     IsModulesImport = I;
     if (I)
@@ -366,7 +364,7 @@ public:
     return getName().startswith("<#") && getName().endswith("#>");
   }
 
-  /// Provide less than operator for lexicographical sorting.
+  /// \brief Provide less than operator for lexicographical sorting.
   bool operator<(const IdentifierInfo &RHS) const {
     return getName() < RHS.getName();
   }
@@ -385,7 +383,7 @@ private:
   }
 };
 
-/// An RAII object for [un]poisoning an identifier within a scope.
+/// \brief An RAII object for [un]poisoning an identifier within a scope.
 ///
 /// \p II is allowed to be null, in which case objects of this type have
 /// no effect.
@@ -406,7 +404,7 @@ public:
   }
 };
 
-/// An iterator that walks over all of the known identifiers
+/// \brief An iterator that walks over all of the known identifiers
 /// in the lookup table.
 ///
 /// Since this iterator uses an abstract interface via virtual
@@ -419,14 +417,14 @@ public:
 class IdentifierIterator {
 protected:
   IdentifierIterator() = default;
-
+  
 public:
   IdentifierIterator(const IdentifierIterator &) = delete;
   IdentifierIterator &operator=(const IdentifierIterator &) = delete;
 
   virtual ~IdentifierIterator();
 
-  /// Retrieve the next string in the identifier table and
+  /// \brief Retrieve the next string in the identifier table and
   /// advances the iterator for the following string.
   ///
   /// \returns The next string in the identifier table. If there is
@@ -434,19 +432,19 @@ public:
   virtual StringRef Next() = 0;
 };
 
-/// Provides lookups to, and iteration over, IdentiferInfo objects.
+/// \brief Provides lookups to, and iteration over, IdentiferInfo objects.
 class IdentifierInfoLookup {
 public:
   virtual ~IdentifierInfoLookup();
 
-  /// Return the IdentifierInfo for the specified named identifier.
+  /// \brief Return the IdentifierInfo for the specified named identifier.
   ///
   /// Unlike the version in IdentifierTable, this returns a pointer instead
   /// of a reference.  If the pointer is null then the IdentifierInfo cannot
   /// be found.
   virtual IdentifierInfo* get(StringRef Name) = 0;
 
-  /// Retrieve an iterator into the set of all identifiers
+  /// \brief Retrieve an iterator into the set of all identifiers
   /// known to this identifier lookup source.
   ///
   /// This routine provides access to all of the identifiers known to
@@ -459,7 +457,7 @@ public:
   virtual IdentifierIterator *getIdentifiers();
 };
 
-/// Implements an efficient mapping from strings to IdentifierInfo nodes.
+/// \brief Implements an efficient mapping from strings to IdentifierInfo nodes.
 ///
 /// This has no other purpose, but this is an extremely performance-critical
 /// piece of the code, as each occurrence of every identifier goes through
@@ -467,35 +465,32 @@ public:
 class IdentifierTable {
   // Shark shows that using MallocAllocator is *much* slower than using this
   // BumpPtrAllocator!
-  using HashTableTy = llvm::StringMap<IdentifierInfo *, llvm::BumpPtrAllocator>;
+  typedef llvm::StringMap<IdentifierInfo*, llvm::BumpPtrAllocator> HashTableTy;
   HashTableTy HashTable;
 
   IdentifierInfoLookup* ExternalLookup;
 
 public:
-  /// Create the identifier table.
-  explicit IdentifierTable(IdentifierInfoLookup *ExternalLookup = nullptr);
-
-  /// Create the identifier table, populating it with info about the
+  /// \brief Create the identifier table, populating it with info about the
   /// language keywords for the language specified by \p LangOpts.
-  explicit IdentifierTable(const LangOptions &LangOpts,
-                           IdentifierInfoLookup *ExternalLookup = nullptr);
+  IdentifierTable(const LangOptions &LangOpts,
+                  IdentifierInfoLookup* externalLookup = nullptr);
 
-  /// Set the external identifier lookup mechanism.
+  /// \brief Set the external identifier lookup mechanism.
   void setExternalIdentifierLookup(IdentifierInfoLookup *IILookup) {
     ExternalLookup = IILookup;
   }
 
-  /// Retrieve the external identifier lookup object, if any.
+  /// \brief Retrieve the external identifier lookup object, if any.
   IdentifierInfoLookup *getExternalIdentifierLookup() const {
     return ExternalLookup;
   }
-
+  
   llvm::BumpPtrAllocator& getAllocator() {
     return HashTable.getAllocator();
   }
 
-  /// Return the identifier token info for the specified named
+  /// \brief Return the identifier token info for the specified named
   /// identifier.
   IdentifierInfo &get(StringRef Name) {
     auto &Entry = *HashTable.insert(std::make_pair(Name, nullptr)).first;
@@ -528,7 +523,7 @@ public:
     return II;
   }
 
-  /// Gets an IdentifierInfo for the given name without consulting
+  /// \brief Gets an IdentifierInfo for the given name without consulting
   ///        external sources.
   ///
   /// This is a version of get() meant for external sources that want to
@@ -556,23 +551,21 @@ public:
     return *II;
   }
 
-  using iterator = HashTableTy::const_iterator;
-  using const_iterator = HashTableTy::const_iterator;
+  typedef HashTableTy::const_iterator iterator;
+  typedef HashTableTy::const_iterator const_iterator;
 
   iterator begin() const { return HashTable.begin(); }
   iterator end() const   { return HashTable.end(); }
   unsigned size() const  { return HashTable.size(); }
 
-  /// Print some statistics to stderr that indicate how well the
+  /// \brief Print some statistics to stderr that indicate how well the
   /// hashing is doing.
   void PrintStats() const;
 
-  /// Populate the identifier table with info about the language keywords
-  /// for the language specified by \p LangOpts.
   void AddKeywords(const LangOptions &LangOpts);
 };
 
-/// A family of Objective-C methods.
+/// \brief A family of Objective-C methods. 
 ///
 /// These families have no inherent meaning in the language, but are
 /// nonetheless central enough in the existing implementations to
@@ -590,7 +583,7 @@ public:
 /// explicitly change or remove a method's family.  Therefore the
 /// method's family should be considered the single source of truth.
 enum ObjCMethodFamily {
-  /// No particular method family.
+  /// \brief No particular method family.
   OMF_None,
 
   // Selectors in these families may have arbitrary arity, may be
@@ -622,10 +615,10 @@ enum ObjCMethodFamily {
 /// InvalidObjCMethodFamily.
 enum { ObjCMethodFamilyBitWidth = 4 };
 
-/// An invalid value of ObjCMethodFamily.
+/// \brief An invalid value of ObjCMethodFamily.
 enum { InvalidObjCMethodFamily = (1 << ObjCMethodFamilyBitWidth) - 1 };
 
-/// A family of Objective-C methods.
+/// \brief A family of Objective-C methods.
 ///
 /// These are family of methods whose result type is initially 'id', but
 /// but are candidate for the result type to be changed to 'instancetype'.
@@ -644,7 +637,7 @@ enum ObjCStringFormatFamily {
   SFF_CFString
 };
 
-/// Smart pointer class that efficiently represents Objective-C method
+/// \brief Smart pointer class that efficiently represents Objective-C method
 /// names.
 ///
 /// This class will either point to an IdentifierInfo or a
@@ -661,9 +654,7 @@ class Selector {
     MultiArg = 0x3,
     ArgFlags = ZeroArg|OneArg
   };
-
-  // a pointer to the MultiKeywordSelector or IdentifierInfo.
-  uintptr_t InfoPtr = 0;
+  uintptr_t InfoPtr; // a pointer to the MultiKeywordSelector or IdentifierInfo.
 
   Selector(IdentifierInfo *II, unsigned nArgs) {
     InfoPtr = reinterpret_cast<uintptr_t>(II);
@@ -671,7 +662,6 @@ class Selector {
     assert(nArgs < 2 && "nArgs not equal to 0/1");
     InfoPtr |= nArgs+1;
   }
-
   Selector(MultiKeywordSelector *SI) {
     InfoPtr = reinterpret_cast<uintptr_t>(SI);
     assert((InfoPtr & ArgFlags) == 0 &&"Insufficiently aligned IdentifierInfo");
@@ -687,13 +677,13 @@ class Selector {
   MultiKeywordSelector *getMultiKeywordSelector() const {
     return reinterpret_cast<MultiKeywordSelector *>(InfoPtr & ~ArgFlags);
   }
-
+  
   unsigned getIdentifierInfoFlag() const {
     return InfoPtr & ArgFlags;
   }
 
   static ObjCMethodFamily getMethodFamilyImpl(Selector sel);
-
+  
   static ObjCStringFormatFamily getStringFormatFamilyImpl(Selector sel);
 
 public:
@@ -702,7 +692,7 @@ public:
 
   /// The default ctor should only be used when creating data structures that
   ///  will contain selectors.
-  Selector() = default;
+  Selector() : InfoPtr(0) {}
   Selector(uintptr_t V) : InfoPtr(V) {}
 
   /// operator==/!= - Indicate whether the specified selectors are identical.
@@ -717,7 +707,7 @@ public:
     return reinterpret_cast<void*>(InfoPtr);
   }
 
-  /// Determine whether this is the empty selector.
+  /// \brief Determine whether this is the empty selector.
   bool isNull() const { return InfoPtr == 0; }
 
   // Predicates to identify the selector type.
@@ -730,11 +720,11 @@ public:
   }
 
   unsigned getNumArgs() const;
-
-  /// Retrieve the identifier at a given position in the selector.
+  
+  /// \brief Retrieve the identifier at a given position in the selector.
   ///
   /// Note that the identifier pointer returned may be NULL. Clients that only
-  /// care about the text of the identifier string, and not the specific,
+  /// care about the text of the identifier string, and not the specific, 
   /// uniqued identifier pointer, should use \c getNameForSlot(), which returns
   /// an empty string when the identifier pointer would be NULL.
   ///
@@ -745,8 +735,8 @@ public:
   /// \returns the uniqued identifier for this slot, or NULL if this slot has
   /// no corresponding identifier.
   IdentifierInfo *getIdentifierInfoForSlot(unsigned argIndex) const;
-
-  /// Retrieve the name at a given position in the selector.
+  
+  /// \brief Retrieve the name at a given position in the selector.
   ///
   /// \param argIndex The index for which we want to retrieve the name.
   /// This index shall be less than \c getNumArgs() unless this is a keyword
@@ -755,25 +745,23 @@ public:
   /// \returns the name for this slot, which may be the empty string if no
   /// name was supplied.
   StringRef getNameForSlot(unsigned argIndex) const;
-
-  /// Derive the full selector name (e.g. "foo:bar:") and return
+  
+  /// \brief Derive the full selector name (e.g. "foo:bar:") and return
   /// it as an std::string.
   std::string getAsString() const;
 
-  /// Prints the full selector name (e.g. "foo:bar:").
+  /// \brief Prints the full selector name (e.g. "foo:bar:").
   void print(llvm::raw_ostream &OS) const;
 
-  void dump() const;
-
-  /// Derive the conventional family of this method.
+  /// \brief Derive the conventional family of this method.
   ObjCMethodFamily getMethodFamily() const {
     return getMethodFamilyImpl(*this);
   }
-
+  
   ObjCStringFormatFamily getStringFormatFamily() const {
     return getStringFormatFamilyImpl(*this);
   }
-
+  
   static Selector getEmptyMarker() {
     return Selector(uintptr_t(-1));
   }
@@ -781,15 +769,14 @@ public:
   static Selector getTombstoneMarker() {
     return Selector(uintptr_t(-2));
   }
-
+  
   static ObjCInstanceTypeFamily getInstTypeMethodFamily(Selector sel);
 };
 
-/// This table allows us to fully hide how we implement
+/// \brief This table allows us to fully hide how we implement
 /// multi-keyword caching.
 class SelectorTable {
-  // Actually a SelectorTableImpl
-  void *Impl;
+  void *Impl;  // Actually a SelectorTableImpl
 
 public:
   SelectorTable();
@@ -797,7 +784,7 @@ public:
   SelectorTable &operator=(const SelectorTable &) = delete;
   ~SelectorTable();
 
-  /// Can create any sort of selector.
+  /// \brief Can create any sort of selector.
   ///
   /// \p NumArgs indicates whether this is a no argument selector "foo", a
   /// single argument selector "foo:" or multi-argument "foo:bar:".
@@ -806,30 +793,26 @@ public:
   Selector getUnarySelector(IdentifierInfo *ID) {
     return Selector(ID, 1);
   }
-
   Selector getNullarySelector(IdentifierInfo *ID) {
     return Selector(ID, 0);
   }
 
-  /// Return the total amount of memory allocated for managing selectors.
+  /// \brief Return the total amount of memory allocated for managing selectors.
   size_t getTotalMemory() const;
 
-  /// Return the default setter name for the given identifier.
+  /// \brief Return the default setter name for the given identifier.
   ///
   /// This is "set" + \p Name where the initial character of \p Name
   /// has been capitalized.
   static SmallString<64> constructSetterName(StringRef Name);
 
-  /// Return the default setter selector for the given identifier.
+  /// \brief Return the default setter selector for the given identifier.
   ///
   /// This is "set" + \p Name where the initial character of \p Name
   /// has been capitalized.
   static Selector constructSetterSelector(IdentifierTable &Idents,
                                           SelectorTable &SelTable,
                                           const IdentifierInfo *Name);
-
-  /// Return the property name for the given setter selector.
-  static std::string getPropertyNameFromSetterSelector(Selector Sel);
 };
 
 /// DeclarationNameExtra - Common base of the MultiKeywordSelector,
@@ -865,7 +848,7 @@ public:
   unsigned ExtraKindOrNumArgs;
 };
 
-}  // namespace clang
+}  // end namespace clang
 
 namespace llvm {
 
@@ -873,11 +856,11 @@ namespace llvm {
 /// DenseSets.
 template <>
 struct DenseMapInfo<clang::Selector> {
-  static clang::Selector getEmptyKey() {
+  static inline clang::Selector getEmptyKey() {
     return clang::Selector::getEmptyMarker();
   }
 
-  static clang::Selector getTombstoneKey() {
+  static inline clang::Selector getTombstoneKey() {
     return clang::Selector::getTombstoneMarker();
   }
 
@@ -891,28 +874,32 @@ struct DenseMapInfo<clang::Selector> {
 template <>
 struct isPodLike<clang::Selector> { static const bool value = true; };
 
+template <typename T> class PointerLikeTypeTraits;
+
 template<>
-struct PointerLikeTypeTraits<clang::Selector> {
-  static const void *getAsVoidPointer(clang::Selector P) {
+class PointerLikeTypeTraits<clang::Selector> {
+public:
+  static inline const void *getAsVoidPointer(clang::Selector P) {
     return P.getAsOpaquePtr();
   }
 
-  static clang::Selector getFromVoidPointer(const void *P) {
+  static inline clang::Selector getFromVoidPointer(const void *P) {
     return clang::Selector(reinterpret_cast<uintptr_t>(P));
   }
 
-  enum { NumLowBitsAvailable = 0 };
+  enum { NumLowBitsAvailable = 0 };  
 };
 
 // Provide PointerLikeTypeTraits for IdentifierInfo pointers, which
 // are not guaranteed to be 8-byte aligned.
 template<>
-struct PointerLikeTypeTraits<clang::IdentifierInfo*> {
-  static void *getAsVoidPointer(clang::IdentifierInfo* P) {
+class PointerLikeTypeTraits<clang::IdentifierInfo*> {
+public:
+  static inline void *getAsVoidPointer(clang::IdentifierInfo* P) {
     return P;
   }
 
-  static clang::IdentifierInfo *getFromVoidPointer(void *P) {
+  static inline clang::IdentifierInfo *getFromVoidPointer(void *P) {
     return static_cast<clang::IdentifierInfo*>(P);
   }
 
@@ -920,18 +907,19 @@ struct PointerLikeTypeTraits<clang::IdentifierInfo*> {
 };
 
 template<>
-struct PointerLikeTypeTraits<const clang::IdentifierInfo*> {
-  static const void *getAsVoidPointer(const clang::IdentifierInfo* P) {
+class PointerLikeTypeTraits<const clang::IdentifierInfo*> {
+public:
+  static inline const void *getAsVoidPointer(const clang::IdentifierInfo* P) {
     return P;
   }
 
-  static const clang::IdentifierInfo *getFromVoidPointer(const void *P) {
+  static inline const clang::IdentifierInfo *getFromVoidPointer(const void *P) {
     return static_cast<const clang::IdentifierInfo*>(P);
   }
 
   enum { NumLowBitsAvailable = 1 };
 };
 
-} // namespace llvm
+} // end namespace llvm
 
 #endif // LLVM_CLANG_BASIC_IDENTIFIERTABLE_H

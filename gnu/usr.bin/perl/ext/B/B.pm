@@ -6,21 +6,16 @@
 #      License or the Artistic License, as specified in the README file.
 #
 package B;
+use strict;
 
+require Exporter;
 @B::ISA = qw(Exporter);
-
-# If B is loaded without imports, we do not want to unnecessarily pollute the stash with Exporter.
-sub import {
-    return unless scalar @_ > 1; # Called as a method call.
-    require Exporter;
-    B->export_to_level(1, @_);
-}
 
 # walkoptree_slow comes from B.pm (you are there),
 # walkoptree comes from B.xs
 
 BEGIN {
-    $B::VERSION = '1.74';
+    $B::VERSION = '1.62';
     @B::EXPORT_OK = ();
 
     # Our BOOT code needs $VERSION set, and will append to @EXPORT_OK.
@@ -48,12 +43,12 @@ push @B::EXPORT_OK, (qw(minus_c ppname save_BEGINs
 @B::IV::ISA = 'B::SV';
 @B::NV::ISA = 'B::SV';
 # RV is eliminated with 5.11.0, but effectively is a specialisation of IV now.
-@B::RV::ISA = 'B::IV';
+@B::RV::ISA = $] >= 5.011 ? 'B::IV' : 'B::SV';
 @B::PVIV::ISA = qw(B::PV B::IV);
 @B::PVNV::ISA = qw(B::PVIV B::NV);
 @B::PVMG::ISA = 'B::PVNV';
-@B::REGEXP::ISA = 'B::PVMG';
-@B::INVLIST::ISA = 'B::PV';
+@B::REGEXP::ISA = 'B::PVMG' if $] >= 5.011;
+@B::INVLIST::ISA = 'B::PV'  if $] >= 5.019;
 @B::PVLV::ISA = 'B::GV';
 @B::BM::ISA = 'B::GV';
 @B::AV::ISA = 'B::PVMG';
@@ -79,14 +74,13 @@ push @B::EXPORT_OK, (qw(minus_c ppname save_BEGINs
 
 @B::SPECIAL::ISA = 'B::OBJECT';
 
-our @optype = qw(OP UNOP BINOP LOGOP LISTOP PMOP SVOP PADOP PVOP LOOP COP
+@B::optype = qw(OP UNOP BINOP LOGOP LISTOP PMOP SVOP PADOP PVOP LOOP COP
                 METHOP UNOP_AUX);
 # bytecode.pl contained the following comment:
 # Nullsv *must* come first in the following so that the condition
 # ($$sv == 0) can continue to be used to test (sv == Nullsv).
-our @specialsv_name = qw(Nullsv &PL_sv_undef &PL_sv_yes &PL_sv_no
-			(SV*)pWARN_ALL (SV*)pWARN_NONE (SV*)pWARN_STD
-                        &PL_sv_zero);
+@B::specialsv_name = qw(Nullsv &PL_sv_undef &PL_sv_yes &PL_sv_no
+			(SV*)pWARN_ALL (SV*)pWARN_NONE (SV*)pWARN_STD);
 
 {
     # Stop "-w" from complaining about the lack of a real B::OBJECT class
@@ -120,17 +114,15 @@ sub B::IV::int_value {
 }
 
 sub B::NULL::as_string() {""}
-*B::IV::as_string = *B::IV::as_string = \*B::IV::int_value;
-*B::PV::as_string = *B::PV::as_string = \*B::PV::PV;
+*B::IV::as_string = \*B::IV::int_value;
+*B::PV::as_string = \*B::PV::PV;
 
 #  The input typemap checking makes no distinction between different SV types,
 #  so the XS body will generate the same C code, despite the different XS
 #  "types". So there is no change in behaviour from doing "newXS" like this,
 #  compared with the old approach of having a (near) duplicate XS body.
 #  We should fix the typemap checking.
-
-#  Since perl 5.12.0
-*B::IV::RV = *B::IV::RV = \*B::PV::RV;
+*B::IV::RV = \*B::PV::RV if $] > 5.012;
 
 my $debug;
 my $op_count = 0;
@@ -264,12 +256,12 @@ sub walkoptree_exec {
 sub walksymtable {
     my ($symref, $method, $recurse, $prefix) = @_;
     my $sym;
+    my $ref;
     my $fullname;
     no strict 'refs';
     $prefix = '' unless defined $prefix;
     foreach my $sym ( sort keys %$symref ) {
-        my $dummy = $symref->{$sym}; # Copying the glob and incrementing
-                                     # the GPs refcnt clears cached methods
+        $ref= $symref->{$sym};
         $fullname = "*main::".$prefix.$sym;
 	if ($sym =~ /::$/) {
 	    $sym = $prefix . $sym;
@@ -549,10 +541,52 @@ give incomprehensible results, or worse.
 
 =head2 SV-RELATED CLASSES
 
-B::IV, B::NV, B::PV, B::PVIV, B::PVNV, B::PVMG,
-B::PVLV, B::AV, B::HV, B::CV, B::GV, B::FM, B::IO.  These classes
+B::IV, B::NV, B::RV, B::PV, B::PVIV, B::PVNV, B::PVMG, B::BM (5.9.5 and
+earlier), B::PVLV, B::AV, B::HV, B::CV, B::GV, B::FM, B::IO.  These classes
 correspond in the obvious way to the underlying C structures of similar names.
-The inheritance hierarchy mimics the underlying C "inheritance":
+The inheritance hierarchy mimics the underlying C "inheritance".  For the
+5.10.x branch, (I<ie> 5.10.0, 5.10.1 I<etc>) this is:
+
+                           B::SV
+                             |
+                +------------+------------+------------+
+                |            |            |            |
+              B::PV        B::IV        B::NV        B::RV
+                  \         /           /
+                   \       /           /
+                    B::PVIV           /
+                         \           /
+                          \         /
+                           \       /
+                            B::PVNV
+                               |
+                               |
+                            B::PVMG
+                               |
+                   +-----+-----+-----+-----+
+                   |     |     |     |     |
+                 B::AV B::GV B::HV B::CV B::IO
+                         |           |
+                         |           |
+                      B::PVLV      B::FM
+
+For 5.9.0 and earlier, PVLV is a direct subclass of PVMG, and BM is still
+present as a distinct type, so the base of this diagram is
+
+
+                               |
+                               |
+                            B::PVMG
+                               |
+            +------+-----+-----+-----+-----+-----+
+            |      |     |     |     |     |     |
+         B::PVLV B::BM B::AV B::GV B::HV B::CV B::IO
+                                           |
+                                           |
+                                         B::FM
+
+For 5.11.0 and later, B::RV is abolished, and IVs can be used to store
+references, and a new type B::REGEXP is introduced, giving this structure:
 
                            B::SV
                              |
@@ -916,6 +950,17 @@ IoIFP($io) == PerlIO_stderr().
 Like C<ARRAY>, but takes an index as an argument to get only one element,
 rather than a list of all of them.
 
+=item OFF
+
+This method is deprecated if running under Perl 5.8, and is no longer present
+if running under Perl 5.9
+
+=item AvFLAGS
+
+This method returns the AV specific
+flags.  In Perl 5.9 these are now stored
+in with the main SV flags, so this method is no longer present.
+
 =back
 
 =head2 B::CV Methods
@@ -936,7 +981,8 @@ rather than a list of all of them.
 
 =item PADLIST
 
-Returns a B::PADLIST object.
+Returns a B::PADLIST object under Perl 5.18 or higher, or a B::AV in
+earlier versions.
 
 =item OUTSIDE
 
@@ -973,6 +1019,11 @@ Returns the name of a lexical sub, otherwise C<undef>.
 =item NAME
 
 =item ARRAY
+
+=item PMROOT
+
+This method is not present if running under Perl 5.9, as the PMROOT
+information is no longer stored directly in the hash.
 
 =back
 
@@ -1116,7 +1167,15 @@ op is contained within.
 
 =item pmreplstart
 
+=item pmnext
+
+Only up to Perl 5.9.4
+
 =item pmflags
+
+=item extflags
+
+Since Perl 5.9.5
 
 =item precomp
 
@@ -1233,8 +1292,10 @@ Perl 5.22 introduced the B::PADNAMELIST and B::PADNAME classes.
 
 =item ARRAY
 
-A list of pads.  The first one is a B::PADNAMELIST containing the names.
-The rest are currently B::AV objects, but that could
+A list of pads.  The first one contains the names.
+
+The first one is a B::PADNAMELIST under Perl 5.22, and a B::AV under
+earlier versions.  The rest are currently B::AV objects, but that could
 change in future versions.
 
 =item ARRAYelt

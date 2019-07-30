@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_prn.c,v 1.20 2019/04/07 16:35:50 jsing Exp $ */
+/* $OpenBSD: tasn_prn.c,v 1.16 2017/01/29 17:49:22 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -105,7 +105,7 @@ ASN1_PCTX_free(ASN1_PCTX *p)
 }
 
 unsigned long
-ASN1_PCTX_get_flags(const ASN1_PCTX *p)
+ASN1_PCTX_get_flags(ASN1_PCTX *p)
 {
 	return p->flags;
 }
@@ -117,7 +117,7 @@ ASN1_PCTX_set_flags(ASN1_PCTX *p, unsigned long flags)
 }
 
 unsigned long
-ASN1_PCTX_get_nm_flags(const ASN1_PCTX *p)
+ASN1_PCTX_get_nm_flags(ASN1_PCTX *p)
 {
 	return p->nm_flags;
 }
@@ -129,7 +129,7 @@ ASN1_PCTX_set_nm_flags(ASN1_PCTX *p, unsigned long flags)
 }
 
 unsigned long
-ASN1_PCTX_get_cert_flags(const ASN1_PCTX *p)
+ASN1_PCTX_get_cert_flags(ASN1_PCTX *p)
 {
 	return p->cert_flags;
 }
@@ -141,7 +141,7 @@ ASN1_PCTX_set_cert_flags(ASN1_PCTX *p, unsigned long flags)
 }
 
 unsigned long
-ASN1_PCTX_get_oid_flags(const ASN1_PCTX *p)
+ASN1_PCTX_get_oid_flags(ASN1_PCTX *p)
 {
 	return p->oid_flags;
 }
@@ -153,7 +153,7 @@ ASN1_PCTX_set_oid_flags(ASN1_PCTX *p, unsigned long flags)
 }
 
 unsigned long
-ASN1_PCTX_get_str_flags(const ASN1_PCTX *p)
+ASN1_PCTX_get_str_flags(ASN1_PCTX *p)
 {
 	return p->str_flags;
 }
@@ -500,18 +500,13 @@ asn1_primitive_print(BIO *out, ASN1_VALUE **fld, const ASN1_ITEM *it,
 	ASN1_STRING *str;
 	int ret = 1, needlf = 1;
 	const char *pname;
+	const ASN1_PRIMITIVE_FUNCS *pf;
 
+	pf = it->funcs;
 	if (!asn1_print_fsname(out, indent, fname, sname, pctx))
 		return 0;
-
-	if (it != NULL && it->funcs != NULL) {
-		const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
-
-		if (pf->prim_print == NULL)
-			return 0;
-
+	if (pf && pf->prim_print)
 		return pf->prim_print(out, fld, it, indent, pctx);
-	}
 	str = (ASN1_STRING *)*fld;
 	if (it->itype == ASN1_ITYPE_MSTRING)
 		utype = str->type & ~V_ASN1_NEG;

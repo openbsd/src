@@ -1,18 +1,20 @@
-# $OpenBSD: Makefile,v 1.7 2019/03/05 09:44:41 jsg Exp $
+# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:09 patrick Exp $
 
 LIB=	LLVMObject
+NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Object
 
-SRCS+=	Archive.cpp \
+.include <bsd.own.mk>
+SRCS=	Archive.cpp \
 	ArchiveWriter.cpp \
 	Binary.cpp \
 	COFFObjectFile.cpp \
 	Decompressor.cpp \
 	ELF.cpp \
 	ELFObjectFile.cpp \
-	ObjectError.cpp \
+	Error.cpp \
 	IRObjectFile.cpp \
 	IRSymtab.cpp \
 	MachOObjectFile.cpp \
@@ -26,9 +28,9 @@ SRCS+=	Archive.cpp \
 	WasmObjectFile.cpp \
 	WindowsResource.cpp
 
-ObjectError.cpp:
-	ln -s ${LLVM_SRCS}/lib/Object/Error.cpp $@
-
 .PATH:	${.CURDIR}/../../../llvm/lib/Object
 
-CLEANFILES+= ObjectError.cpp
+install:
+	@# Nothing here so far ...
+
+.include <bsd.lib.mk>

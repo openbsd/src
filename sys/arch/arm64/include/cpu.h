@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.13 2019/06/04 14:03:21 patrick Exp $ */
+/* $OpenBSD: cpu.h,v 1.7 2018/01/30 15:46:12 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -75,7 +75,6 @@ void	arm32_vector_init(vaddr_t, int);
 
 #include <sys/device.h>
 #include <sys/sched.h>
-#include <sys/srp.h>
 
 struct cpu_info {
 	struct device		*ci_dev; /* Device corresponding to this CPU */
@@ -84,7 +83,6 @@ struct cpu_info {
 
 	u_int32_t		ci_cpuid;
 	uint64_t		ci_mpidr;
-	u_int			ci_acpi_proc_id;
 	int			ci_node;
 	struct cpu_info		*ci_self;
 
@@ -107,10 +105,6 @@ struct cpu_info {
 	int			ci_want_resched;
 
 	void			(*ci_flush_bp)(void);
-
-	struct opp_table	*ci_opp_table;
-	volatile int		ci_opp_idx;
-	uint32_t		ci_cpu_supply;
 
 #ifdef MULTIPROCESSOR
 	struct srp_hazard	ci_srp_hazards[SRP_HAZARD_NUM];
@@ -167,7 +161,7 @@ extern struct cpu_info *cpu_info_list;
 #define CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = cpu_info_list; \
 					    ci != NULL; ci = ci->ci_next)
 #define CPU_INFO_UNIT(ci)	((ci)->ci_dev ? (ci)->ci_dev->dv_unit : 0)
-#define MAXCPUS	32
+#define MAXCPUS	8
 
 extern struct cpu_info *cpu_info[MAXCPUS];
 
@@ -286,12 +280,6 @@ disable_irq_daif_ret()
 
 #define restore_interrupts(old_daif)					\
 	restore_daif(old_daif)
-
-static inline void
-intr_enable(void)
-{
-	enable_irq_daif();
-}
 
 static inline u_long
 intr_disable(void)

@@ -1,0 +1,83 @@
+.\"	$OpenBSD: vmm.4,v 1.2 2016/10/21 07:12:06 jmc Exp $
+.\"
+.\"Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
+.\"
+.\"Permission to use, copy, modify, and distribute this software for any
+.\"purpose with or without fee is hereby granted, provided that the above
+.\"copyright notice and this permission notice appear in all copies.
+.\"
+.\"THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\"WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\"MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\"ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: October 21 2016 $
+.Dt VMM 4 i386
+.Os
+.Sh NAME
+.Nm vmm
+.Nd virtual machine monitor
+.Sh SYNOPSIS
+.Cd "vmm0    at mainbus0"
+.Sh DESCRIPTION
+The
+.Nm
+driver implements a virtual machine monitor (VMM) suitable for executing
+.Em virtual machines
+(VMs).
+A VMM runs on the
+.Em host
+operating system and provides facilities to execute one or more
+VMs, each of which is provided with a suitable complement of
+virtual hardware.
+.Pp
+These VMs run independently of the host, but may interact with
+it as any other machine would (e.g. via network communications or
+other means).
+.Pp
+VMs are allocated hardware resources by the VMM during creation,
+including:
+.Pp
+.Bl -bullet -offset indent -compact
+.It
+Virtual CPUs
+.It
+Virtual network interfaces
+.It
+Virtual disk images
+.It
+Virtual serial ports
+.El
+.Pp
+Although VMs execute independently of each other and the host, they
+do consume host resources and, as such, the number of VMs (and their
+configurations) should be taken into consideration when planning
+host capacity.
+.Pp
+The
+.Nm
+driver requires suitable host CPU capabilities in order to provide
+VM services.
+The
+.Nm
+driver requires at least one CPU with hardware-assisted virtualization
+capabilities and nested or extended paging capabilities to be
+present on the host.
+For more information, consult the CPU vendor's documentation.
+.Sh SEE ALSO
+.Xr cpu 4 ,
+.Xr intro 4 ,
+.Xr virtio 4 ,
+.Xr vmctl 8 ,
+.Xr vmd 8
+.Sh HISTORY
+The
+.Nm
+driver
+appeared in
+.Ox 5.9 .
+.Sh AUTHORS
+.An Mike Larkin Aq Mt mlarkin@openbsd.org

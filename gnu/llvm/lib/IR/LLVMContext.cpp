@@ -59,8 +59,6 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
     {MD_section_prefix, "section_prefix"},
     {MD_absolute_symbol, "absolute_symbol"},
     {MD_associated, "associated"},
-    {MD_callees, "callees"},
-    {MD_irr_loop, "irr_loop"},
   };
 
   for (auto &MDKind : MDKinds) {
@@ -131,17 +129,11 @@ void *LLVMContext::getInlineAsmDiagnosticContext() const {
   return pImpl->InlineAsmDiagContext;
 }
 
-void LLVMContext::setDiagnosticHandlerCallBack(
-    DiagnosticHandler::DiagnosticHandlerTy DiagnosticHandler,
-    void *DiagnosticContext, bool RespectFilters) {
-  pImpl->DiagHandler->DiagHandlerCallback = DiagnosticHandler;
-  pImpl->DiagHandler->DiagnosticContext = DiagnosticContext;
-  pImpl->RespectDiagnosticFilters = RespectFilters;
-}
-
-void LLVMContext::setDiagnosticHandler(std::unique_ptr<DiagnosticHandler> &&DH,
-                                      bool RespectFilters) {
-  pImpl->DiagHandler = std::move(DH);
+void LLVMContext::setDiagnosticHandler(DiagnosticHandlerTy DiagnosticHandler,
+                                       void *DiagnosticContext,
+                                       bool RespectFilters) {
+  pImpl->DiagnosticHandler = DiagnosticHandler;
+  pImpl->DiagnosticContext = DiagnosticContext;
   pImpl->RespectDiagnosticFilters = RespectFilters;
 }
 
@@ -167,13 +159,12 @@ void LLVMContext::setDiagnosticsOutputFile(std::unique_ptr<yaml::Output> F) {
   pImpl->DiagnosticsOutputFile = std::move(F);
 }
 
-DiagnosticHandler::DiagnosticHandlerTy
-LLVMContext::getDiagnosticHandlerCallBack() const {
-  return pImpl->DiagHandler->DiagHandlerCallback;
+LLVMContext::DiagnosticHandlerTy LLVMContext::getDiagnosticHandler() const {
+  return pImpl->DiagnosticHandler;
 }
 
 void *LLVMContext::getDiagnosticContext() const {
-  return pImpl->DiagHandler->DiagnosticContext;
+  return pImpl->DiagnosticContext;
 }
 
 void LLVMContext::setYieldCallback(YieldCallbackTy Callback, void *OpaqueHandle)
@@ -201,12 +192,8 @@ static bool isDiagnosticEnabled(const DiagnosticInfo &DI) {
   // pattern, passed via one of the -pass-remarks* flags, matches the name of
   // the pass that is emitting the diagnostic. If there is no match, ignore the
   // diagnostic and return.
-  //
-  // Also noisy remarks are only enabled if we have hotness information to sort
-  // them.
   if (auto *Remark = dyn_cast<DiagnosticInfoOptimizationBase>(&DI))
-    return Remark->isEnabled() &&
-           (!Remark->isVerbose() || Remark->getHotness());
+    return Remark->isEnabled();
 
   return true;
 }
@@ -227,19 +214,12 @@ LLVMContext::getDiagnosticMessagePrefix(DiagnosticSeverity Severity) {
 }
 
 void LLVMContext::diagnose(const DiagnosticInfo &DI) {
-  if (auto *OptDiagBase = dyn_cast<DiagnosticInfoOptimizationBase>(&DI)) {
-    yaml::Output *Out = getDiagnosticsOutputFile();
-    if (Out) {
-      // For remarks the << operator takes a reference to a pointer.
-      auto *P = const_cast<DiagnosticInfoOptimizationBase *>(OptDiagBase);
-      *Out << P;
-    }
-  }
   // If there is a report handler, use it.
-  if (pImpl->DiagHandler &&
-      (!pImpl->RespectDiagnosticFilters || isDiagnosticEnabled(DI)) &&
-      pImpl->DiagHandler->handleDiagnostics(DI))
+  if (pImpl->DiagnosticHandler) {
+    if (!pImpl->RespectDiagnosticFilters || isDiagnosticEnabled(DI))
+      pImpl->DiagnosticHandler(DI, pImpl->DiagnosticContext);
     return;
+  }
 
   if (!isDiagnosticEnabled(DI))
     return;
@@ -332,18 +312,6 @@ void LLVMContext::setDiscardValueNames(bool Discard) {
   pImpl->DiscardValueNames = Discard;
 }
 
-OptPassGate &LLVMContext::getOptPassGate() const {
-  return pImpl->getOptPassGate();
-}
-
-void LLVMContext::setOptPassGate(OptPassGate& OPG) {
-  pImpl->setOptPassGate(OPG);
-}
-
-const DiagnosticHandler *LLVMContext::getDiagHandlerPtr() const {
-  return pImpl->DiagHandler.get();
-}
-
-std::unique_ptr<DiagnosticHandler> LLVMContext::getDiagnosticHandler() {
-  return std::move(pImpl->DiagHandler);
+OptBisect &LLVMContext::getOptBisect() {
+  return pImpl->getOptBisect();
 }

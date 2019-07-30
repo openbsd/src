@@ -46,7 +46,7 @@ class TestGoASTContext(TestBase):
             self.assertEqual(size, t.size)
 
     def launchProcess(self):
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)

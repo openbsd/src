@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.101 2019/04/16 13:15:32 yasuoka Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.91 2018/02/18 19:11:27 kettenis Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -166,11 +166,14 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_state = head->so_state | SS_NOFDREF;
 	so->so_proto = head->so_proto;
 	so->so_timeo = head->so_timeo;
+	so->so_pgid = head->so_pgid;
 	so->so_euid = head->so_euid;
 	so->so_ruid = head->so_ruid;
 	so->so_egid = head->so_egid;
 	so->so_rgid = head->so_rgid;
 	so->so_cpid = head->so_cpid;
+	so->so_siguid = head->so_siguid;
+	so->so_sigeuid = head->so_sigeuid;
 
 	/*
 	 * Inherit watermarks but those may get clamped in low mem situations.
@@ -186,13 +189,9 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_rcv.sb_lowat = head->so_rcv.sb_lowat;
 	so->so_rcv.sb_timeo = head->so_rcv.sb_timeo;
 
-	sigio_init(&so->so_sigio);
-	sigio_copy(&so->so_sigio, &head->so_sigio);
-
 	soqinsque(head, so, soqueue);
 	if ((*so->so_proto->pr_attach)(so, 0)) {
 		(void) soqremque(so, soqueue);
-		sigio_free(&so->so_sigio);
 		pool_put(&socket_pool, so);
 		return (NULL);
 	}
@@ -276,42 +275,23 @@ socantrcvmore(struct socket *so)
 int
 solock(struct socket *so)
 {
-	switch (so->so_proto->pr_domain->dom_family) {
-	case PF_INET:
-	case PF_INET6:
-		NET_LOCK();
-		break;
-	case PF_UNIX:
-	case PF_ROUTE:
-	case PF_KEY:
-	default:
-		KERNEL_LOCK();
-		break;
-	}
+	int s = 0;
 
-	return (SL_LOCKED);
+	if ((so->so_proto->pr_domain->dom_family != PF_LOCAL) &&
+	    (so->so_proto->pr_domain->dom_family != PF_ROUTE) &&
+	    (so->so_proto->pr_domain->dom_family != PF_KEY))
+		NET_LOCK();
+	else
+		s = -42;
+
+	return (s);
 }
 
 void
-sounlock(struct socket *so, int s)
+sounlock(int s)
 {
-	KASSERT(s == SL_LOCKED || s == SL_NOUNLOCK);
-
-	if (s != SL_LOCKED)
-		return;
-
-	switch (so->so_proto->pr_domain->dom_family) {
-	case PF_INET:
-	case PF_INET6:
+	if (s != -42)
 		NET_UNLOCK();
-		break;
-	case PF_UNIX:
-	case PF_ROUTE:
-	case PF_KEY:
-	default:
-		KERNEL_UNLOCK();
-		break;
-	}
 }
 
 void
@@ -322,7 +302,7 @@ soassertlocked(struct socket *so)
 	case PF_INET6:
 		NET_ASSERT_LOCKED();
 		break;
-	case PF_UNIX:
+	case PF_LOCAL:
 	case PF_ROUTE:
 	case PF_KEY:
 	default:
@@ -334,7 +314,7 @@ soassertlocked(struct socket *so)
 int
 sosleep(struct socket *so, void *ident, int prio, const char *wmesg, int timo)
 {
-	if ((so->so_proto->pr_domain->dom_family != PF_UNIX) &&
+	if ((so->so_proto->pr_domain->dom_family != PF_LOCAL) &&
 	    (so->so_proto->pr_domain->dom_family != PF_ROUTE) &&
 	    (so->so_proto->pr_domain->dom_family != PF_KEY)) {
 		return rwsleep(ident, &netlock, prio, wmesg, timo);
@@ -409,7 +389,7 @@ sowakeup(struct socket *so, struct sockbuf *sb)
 	}
 	KERNEL_LOCK();
 	if (so->so_state & SS_ASYNC)
-		pgsigio(&so->so_sigio, SIGIO, 0);
+		csignal(so->so_pgid, SIGIO, so->so_siguid, so->so_sigeuid);
 	selwakeup(&sb->sb_sel);
 	KERNEL_UNLOCK();
 }
@@ -484,7 +464,8 @@ sbreserve(struct socket *so, struct sockbuf *sb, u_long cc)
 	if (cc == 0 || cc > sb_max)
 		return (1);
 	sb->sb_hiwat = cc;
-	sb->sb_mbmax = max(3 * MAXMCLBYTES, cc * 8);
+	sb->sb_mbmax = max(3 * MAXMCLBYTES,
+	    min(cc * 2, sb_max + (sb_max / MCLBYTES) * MSIZE));
 	if (sb->sb_lowat > sb->sb_hiwat)
 		sb->sb_lowat = sb->sb_hiwat;
 	return (0);
@@ -779,7 +760,7 @@ sbinsertoob(struct sockbuf *sb, struct mbuf *m0)
  * Returns 0 if no space in sockbuf or insufficient mbufs.
  */
 int
-sbappendaddr(struct socket *so, struct sockbuf *sb, const struct sockaddr *asa,
+sbappendaddr(struct socket *so, struct sockbuf *sb, struct sockaddr *asa,
     struct mbuf *m0, struct mbuf *control)
 {
 	struct mbuf *m, *n, *nlast;
@@ -885,10 +866,9 @@ sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
 			continue;
 		}
 		if (n && (n->m_flags & M_EOR) == 0 &&
-		    /* m_trailingspace() checks buffer writeability */
-		    m->m_len <= ((n->m_flags & M_EXT)? n->m_ext.ext_size :
-		       MCLBYTES) / 4 && /* XXX Don't copy too much */
-		    m->m_len <= m_trailingspace(n) &&
+		    /* M_TRAILINGSPACE() checks buffer writeability */
+		    m->m_len <= MCLBYTES / 4 && /* XXX Don't copy too much */
+		    m->m_len <= M_TRAILINGSPACE(n) &&
 		    n->m_type == m->m_type) {
 			memcpy(mtod(n, caddr_t) + n->m_len, mtod(m, caddr_t),
 			    m->m_len);
@@ -1021,14 +1001,14 @@ sbdroprecord(struct sockbuf *sb)
  * with the specified type for presentation on a socket buffer.
  */
 struct mbuf *
-sbcreatecontrol(const void *p, size_t size, int type, int level)
+sbcreatecontrol(caddr_t p, int size, int type, int level)
 {
 	struct cmsghdr *cp;
 	struct mbuf *m;
 
 	if (CMSG_SPACE(size) > MCLBYTES) {
-		printf("sbcreatecontrol: message too large %zu\n", size);
-		return (NULL);
+		printf("sbcreatecontrol: message too large %d\n", size);
+		return NULL;
 	}
 
 	if ((m = m_get(M_DONTWAIT, MT_CONTROL)) == NULL)

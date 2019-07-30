@@ -1,9 +1,0 @@
-Routing tables
-
-Internet:
-Destination        Gateway            Flags   Refs      Use   Mtu  Prio Iface
-0.0.0.0            192.168.89.1       UGHS       0        0     -     8 vether99
-192.168.89/24      192.168.89.5       UCn        1        0     -     4 vether99
-192.168.89.1       link#              UHLch      1        2     -     3 vether99
-192.168.89.5       fe:e1:ba:d4:c8:1d  UHLl       0        0     -     1 vether99
-192.168.89.255     192.168.89.5       UHb        0        0     -     1 vether99

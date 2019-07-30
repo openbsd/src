@@ -21,8 +21,10 @@ namespace clang {
 namespace driver {
 namespace tools {
 
+bool isMipsArch(llvm::Triple::ArchType Arch);
+
 namespace mips {
-typedef enum { Legacy = 1, Std2008 = 2 } IEEE754Standard;
+typedef enum { NanLegacy = 1, Nan2008 = 2 } NanEncoding;
 
 enum class FloatABI {
   Invalid,
@@ -30,7 +32,7 @@ enum class FloatABI {
   Hard,
 };
 
-IEEE754Standard getIEEE754Standard(StringRef &CPU);
+NanEncoding getSupportedNanEncoding(StringRef &CPU);
 bool hasCompactBranches(StringRef &CPU);
 void getMipsCPUAndABI(const llvm::opt::ArgList &Args,
                       const llvm::Triple &Triple, StringRef &CPUName,
@@ -51,7 +53,6 @@ bool isFPXXDefault(const llvm::Triple &Triple, StringRef CPUName,
 bool shouldUseFPXX(const llvm::opt::ArgList &Args, const llvm::Triple &Triple,
                    StringRef CPUName, StringRef ABIName,
                    mips::FloatABI FloatABI);
-bool supportsIndirectJumpHazardBarrier(StringRef &CPU);
 
 } // end namespace mips
 } // end namespace target

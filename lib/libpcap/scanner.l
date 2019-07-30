@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.26 2018/12/09 15:07:06 denis Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.24 2017/07/09 15:32:09 espie Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -54,7 +54,7 @@ static inline int xdtoi(int);
 #undef YY_INPUT
 #define YY_INPUT(buf, result, max)\
  {\
-	const char *src = in_buffer;\
+	char *src = in_buffer;\
 	int i;\
 \
 	if (*src == 0)\
@@ -73,7 +73,7 @@ static inline int xdtoi(int);
 
 extern YYSTYPE yylval;
 
-static const char *in_buffer;
+static char *in_buffer;
 
 %}
 
@@ -224,7 +224,6 @@ inbound		return INBOUND;
 outbound	return OUTBOUND;
 
 vlan		return VLAN;
-mpls		return MPLS;
 
 on|ifname	return PF_IFNAME;
 rset|ruleset	return PF_RSET;
@@ -316,7 +315,7 @@ tcp-urg			{ yylval.i = 0x20; return NUM; }
 %%
 void
 lex_init(buf)
-	const char *buf;
+	char *buf;
 {
 	in_buffer = buf;
 	yyrestart(NULL);

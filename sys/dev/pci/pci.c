@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.113 2019/06/08 10:27:02 dlg Exp $	*/
+/*	$OpenBSD: pci.c,v 1.111 2015/11/27 15:28:22 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -659,15 +659,6 @@ pci_get_ht_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 	return (0);
 }
 
-uint16_t
-pci_requester_id(pci_chipset_tag_t pc, pcitag_t tag)
-{
-	int bus, dev, func;
-
-	pci_decompose_tag(pc, tag, &bus, &dev, &func);
-	return ((bus << 8) | (dev << 3) | func);
-}
-
 int
 pci_find_device(struct pci_attach_args *pa,
     int (*match)(struct pci_attach_args *))
@@ -911,7 +902,7 @@ pci_reserve_resources(struct pci_attach_args *pa)
 			    base, size, EX_NOWAIT) &&
 			    pa->pa_memex && extent_alloc_region(pa->pa_memex,
 			    base, size, EX_NOWAIT)) {
-				printf("%d:%d:%d: rom address conflict 0x%lx/0x%lx\n",
+				printf("%d:%d:%d: mem address conflict 0x%lx/0x%lx\n",
 				    bus, dev, func, base, size);
 				pci_conf_write(pc, tag, PCI_ROM_REG, 0);
 			}

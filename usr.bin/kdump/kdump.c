@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.138 2019/05/15 15:36:59 schwarze Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.133 2017/11/28 15:35:02 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -208,18 +208,14 @@ main(int argc, char *argv[])
 	if (argc > optind)
 		usage();
 
-	if (strcmp(tracefile, "-") != 0)
-		if (unveil(tracefile, "r") == -1)
-			err(1, "unveil");
 	if (pledge("stdio rpath getpw", NULL) == -1)
 		err(1, "pledge");
 
 	m = malloc(size = 1025);
 	if (m == NULL)
 		err(1, NULL);
-	if (strcmp(tracefile, "-") != 0)
-		if (!freopen(tracefile, "r", stdin))
-			err(1, "%s", tracefile);
+	if (!freopen(tracefile, "r", stdin))
+		err(1, "%s", tracefile);
 
 	if (fread_tail(&ktr_header, sizeof(struct ktr_header), 1) == 0 ||
 	    ktr_header.ktr_type != htobe32(KTR_START))
@@ -732,6 +728,7 @@ static const formatter scargs[][8] = {
     [SYS_utimes]	= { Ppath, Pptr },
     [SYS_futimes]	= { Pfd, Pptr },
     [SYS_kbind]		= { Pptr, Psize, Phexlonglong },
+    [SYS_mincore]	= { Pptr, Pbigsize, Pptr },
     [SYS_getgroups]	= { Pcount, Pptr },
     [SYS_setgroups]	= { Pcount, Pptr },
     [SYS_setpgid]	= { Ppid_t, Ppid_t },
@@ -1113,7 +1110,6 @@ doerr:
 			/* syscalls that return errno values */
 			case SYS_getlogin_r:
 			case SYS___thrsleep:
-			case SYS_futex:
 				if ((error = ret) != 0)
 					goto doerr;
 				/* FALLTHROUGH */
@@ -1390,8 +1386,9 @@ usage(void)
 
 	extern char *__progname;
 	fprintf(stderr, "usage: %s "
-	    "[-dHlnRTXx] [-f file] [-m maxdata] [-p pid] [-t trstr]\n",
-	    __progname);
+	    "[-dHlnRTXx] [-f file] [-m maxdata] [-p pid]\n"
+	    "%*s[-t [cinpstuxX+]]\n",
+	    __progname, (int)(sizeof("usage: ") + strlen(__progname)), "");
 	exit(1);
 }
 

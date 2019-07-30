@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.137 2019/05/28 18:17:01 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.114 2018/03/29 01:21:02 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -67,11 +67,9 @@
 #include "lapic.h"
 #include "ioapic.h"
 #include "vmm.h"
-#include "pctr.h"
 #include "pvbus.h"
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/timeout.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -79,7 +77,6 @@
 #include <sys/memrange.h>
 #include <dev/rndvar.h>
 #include <sys/atomic.h>
-#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -104,10 +101,6 @@
 
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
-#endif
-
-#if NPCTR > 0
-#include <machine/pctr.h>
 #endif
 
 #if NPVBUS > 0
@@ -145,8 +138,6 @@ struct cpu_softc {
 };
 
 void	replacesmap(void);
-void	replacemeltdown(void);
-void	replacemds(void);
 
 extern long _stac;
 extern long _clac;
@@ -167,160 +158,6 @@ replacesmap(void)
 	codepatch_replace(CPTAG_CLAC, &_clac, 3);
 
 	splx(s);
-}
-
-void
-replacemeltdown(void)
-{
-	static int replacedone = 0;
-	int s;
-
-	if (replacedone)
-		return;
-	replacedone = 1;
-
-	s = splhigh();
-	if (!cpu_meltdown)
-		codepatch_nop(CPTAG_MELTDOWN_NOP);
-	else if (pmap_use_pcid) {
-		extern long _pcid_set_reuse;
-		DPRINTF("%s: codepatching PCID use", __func__);
-		codepatch_replace(CPTAG_PCID_SET_REUSE, &_pcid_set_reuse,
-		    PCID_SET_REUSE_SIZE);
-	}
-	splx(s);
-}
-
-void
-replacemds(void)
-{
-	static int replacedone = 0;
-	extern long mds_handler_bdw, mds_handler_ivb, mds_handler_skl;
-	extern long mds_handler_skl_sse, mds_handler_skl_avx;
-	extern long mds_handler_silvermont, mds_handler_knights;
-	struct cpu_info *ci = &cpu_info_primary;
-	CPU_INFO_ITERATOR cii;
-	void *handler = NULL, *vmm_handler = NULL;
-	const char *type;
-	int has_verw, s;
-
-	/* ci_mds_tmp must be 32byte aligned for AVX instructions */
-	CTASSERT((offsetof(struct cpu_info, ci_mds_tmp) -
-		  offsetof(struct cpu_info, ci_PAGEALIGN)) % 32 == 0);
-
-	if (replacedone)
-		return;
-	replacedone = 1;
-
-	if (strcmp(cpu_vendor, "GenuineIntel") != 0 ||
-	    ((ci->ci_feature_sefflags_edx & SEFF0EDX_ARCH_CAP) &&
-	     (rdmsr(MSR_ARCH_CAPABILITIES) & ARCH_CAPABILITIES_MDS_NO))) {
-		/* Unaffected, nop out the handling code */
-		has_verw = 0;
-	} else if (ci->ci_feature_sefflags_edx & SEFF0EDX_MD_CLEAR) {
-		/* new firmware, use VERW */
-		has_verw = 1;
-	} else {
-		int family = ci->ci_family;
-		int model = ci->ci_model;
-		int stepping = CPUID2STEPPING(ci->ci_signature);
-
-		has_verw = 0;
-		if (family == 0x6 &&
-		    (model == 0x2e || model == 0x1e || model == 0x1f ||
-		     model == 0x1a || model == 0x2f || model == 0x25 ||
-		     model == 0x2c || model == 0x2d || model == 0x2a ||
-		     model == 0x3e || model == 0x3a)) {
-			/* Nehalem, SandyBridge, IvyBridge */
-			handler = vmm_handler = &mds_handler_ivb;
-			type = "IvyBridge";
-			CPU_INFO_FOREACH(cii, ci) {
-				ci->ci_mds_buf = malloc(672, M_DEVBUF,
-				    M_WAITOK);
-				memset(ci->ci_mds_buf, 0, 16);
-			}
-		} else if (family == 0x6 &&
-		    (model == 0x3f || model == 0x3c || model == 0x45 ||
-		     model == 0x46 || model == 0x56 || model == 0x4f ||
-		     model == 0x47 || model == 0x3d)) {
-			/* Haswell and Broadwell */
-			handler = vmm_handler = &mds_handler_bdw;
-			type = "Broadwell";
-			CPU_INFO_FOREACH(cii, ci) {
-				ci->ci_mds_buf = malloc(1536, M_DEVBUF,
-				    M_WAITOK);
-			}
-		} else if (family == 0x6 &&
-		    ((model == 0x55 && stepping <= 5) || model == 0x4e ||
-		    model == 0x5e || (model == 0x8e && stepping <= 0xb) ||
-		    (model == 0x9e && stepping <= 0xc))) {
-			/*
-			 * Skylake, KabyLake, CoffeeLake, WhiskeyLake,
-			 * CascadeLake
-			 */
-			/* XXX mds_handler_skl_avx512 */
-			if (xgetbv(0) & XCR0_AVX) {
-				handler = &mds_handler_skl_avx;
-				type = "Skylake AVX";
-			} else {
-				handler = &mds_handler_skl_sse;
-				type = "Skylake SSE";
-			}
-			vmm_handler = &mds_handler_skl;
-			CPU_INFO_FOREACH(cii, ci) {
-				vaddr_t b64;
-				b64 = (vaddr_t)malloc(6 * 1024 + 64 + 63,
-				    M_DEVBUF, M_WAITOK);
-				ci->ci_mds_buf = (void *)((b64 + 63) & ~63);
-				memset(ci->ci_mds_buf, 0, 64);
-			}
-		} else if (family == 0x6 &&
-		    (model == 0x37 || model == 0x4a || model == 0x4c ||
-		     model == 0x4d || model == 0x5a || model == 0x5d ||
-		     model == 0x6e || model == 0x65 || model == 0x75)) {
-			/* Silvermont, Airmont */
-			handler = vmm_handler = &mds_handler_silvermont;
-			type = "Silvermont";
-			CPU_INFO_FOREACH(cii, ci) {
-				ci->ci_mds_buf = malloc(256, M_DEVBUF,
-				    M_WAITOK);
-				memset(ci->ci_mds_buf, 0, 16);
-			}
-		} else if (family == 0x6 && (model == 0x85 || model == 0x57)) {
-			handler = vmm_handler = &mds_handler_knights;
-			type = "KnightsLanding";
-			CPU_INFO_FOREACH(cii, ci) {
-				vaddr_t b64;
-				b64 = (vaddr_t)malloc(1152 + 63, M_DEVBUF,
-				    M_WAITOK);
-				ci->ci_mds_buf = (void *)((b64 + 63) & ~63);
-			}
-		}
-	}
-
-	if (handler != NULL) {
-		printf("cpu0: using %s MDS workaround%s\n", type, "");
-		s = splhigh();
-		codepatch_call(CPTAG_MDS, handler);
-		codepatch_call(CPTAG_MDS_VMM, vmm_handler);
-		splx(s);
-	} else if (has_verw) {
-		/* The new firmware enhances L1D_FLUSH MSR to flush MDS too */
-		if (cpu_info_primary.ci_vmm_cap.vcc_vmx.vmx_has_l1_flush_msr == 1) {
-			s = splhigh();
-			codepatch_nop(CPTAG_MDS_VMM);
-			splx(s);
-			type = " (except on vmm entry)";
-		} else {
-			type = "";
-		}
-		printf("cpu0: using %s MDS workaround%s\n", "VERW", type);
-	} else {
-		s = splhigh();
-		codepatch_nop(CPTAG_MDS);
-		codepatch_nop(CPTAG_MDS_VMM);
-		splx(s);
-	}
 }
 
 #ifdef MULTIPROCESSOR
@@ -555,7 +392,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Allocate UPAGES contiguous pages for the idle PCB and stack.
 	 */
-	kstack = (vaddr_t)km_alloc(USPACE, &kv_any, &kp_dirty, &kd_nowait);
+	kstack = uvm_km_alloc (kernel_map, USPACE);
 	if (kstack == 0) {
 		if (caa->cpu_role != CPU_ROLE_AP) {
 			panic("cpu_attach: unable to allocate idle stack for"
@@ -571,6 +408,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	pcb->pcb_kstack = kstack + USPACE - 16;
 	pcb->pcb_rbp = pcb->pcb_rsp = kstack + USPACE - 16;
 	pcb->pcb_pmap = pmap_kernel();
+	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_cr3 = pcb->pcb_pmap->pm_pdirpa;
 #endif
 
@@ -628,8 +466,8 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 
 #if defined(MULTIPROCESSOR)
 		cpu_intr_init(ci);
-		cpu_start_secondary(ci);
 		sched_init_cpu(ci);
+		cpu_start_secondary(ci);
 		ncpus++;
 		if (ci->ci_flags & CPUF_PRESENT) {
 			ci->ci_next = cpu_info_list->ci_next;
@@ -658,28 +496,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #endif /* NVMM > 0 */
 }
 
-static void
-replacexsave(void)
-{
-	extern long _xrstor, _xsave, _xsaveopt;
-	u_int32_t eax, ebx, ecx, edx;
-	static int replacedone = 0;
-	int s;
-
-	if (replacedone)
-		return;
-	replacedone = 1;
-
-	/* find out whether xsaveopt is supported */
-	CPUID_LEAF(0xd, 1, eax, ebx, ecx, edx);
-	s = splhigh();
-	codepatch_replace(CPTAG_XRSTOR, &_xrstor, 4);
-	codepatch_replace(CPTAG_XSAVE,
-	    (eax & XSAVE_XSAVEOPT) ? &_xsaveopt : &_xsave, 4);
-	splx(s);
-}
-
-
 /*
  * Initialize the processor appropriately.
  */
@@ -687,13 +503,18 @@ replacexsave(void)
 void
 cpu_init(struct cpu_info *ci)
 {
-	struct savefpu *sfp;
 	u_int cr4;
 
 	/* configure the CPU if needed */
 	if (ci->cpu_setup != NULL)
 		(*ci->cpu_setup)(ci);
+	/*
+	 * We do this here after identifycpu() because errata may affect
+	 * what we do.
+	 */
+	patinit(ci);
 
+	lcr0(rcr0() | CR0_WP);
 	cr4 = rcr4() | CR4_DEFAULT;
 	if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMEP)
 		cr4 |= CR4_SMEP;
@@ -701,10 +522,8 @@ cpu_init(struct cpu_info *ci)
 		cr4 |= CR4_SMAP;
 	if (ci->ci_feature_sefflags_ecx & SEFF0ECX_UMIP)
 		cr4 |= CR4_UMIP;
-	if ((cpu_ecxfeature & CPUIDECX_XSAVE) && cpuid_level >= 0xd)
+	if (cpu_ecxfeature & CPUIDECX_XSAVE)
 		cr4 |= CR4_OSXSAVE;
-	if (pmap_use_pcid)
-		cr4 |= CR4_PCIDE;
 	lcr4(cr4);
 
 	if ((cpu_ecxfeature & CPUIDECX_XSAVE) && cpuid_level >= 0xd) {
@@ -716,27 +535,8 @@ cpu_init(struct cpu_info *ci)
 			xsave_mask |= XCR0_AVX;
 		xsetbv(0, xsave_mask);
 		CPUID_LEAF(0xd, 0, eax, ebx, ecx, edx);
-		if (CPU_IS_PRIMARY(ci)) {
-			fpu_save_len = ebx;
-			KASSERT(fpu_save_len <= sizeof(struct savefpu));
-		} else {
-			KASSERT(ebx == fpu_save_len);
-		}
-
-		replacexsave();
+		fpu_save_len = ebx;
 	}
-
-	/* Give proc0 a clean FPU save area */
-	sfp = &proc0.p_addr->u_pcb.pcb_savefpu;
-	memset(sfp, 0, fpu_save_len);
-	sfp->fp_fxsave.fx_fcw = __INITIAL_NPXCW__;
-	sfp->fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
-	fpureset();
-	if (xsave_mask) {
-		/* must not use xsaveopt here */
-		xsave(sfp, xsave_mask);
-	} else
-		fxsave(sfp);
 
 #if NVMM > 0
 	/* Re-enable VMM if needed */
@@ -747,7 +547,7 @@ cpu_init(struct cpu_info *ci)
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
 	/*
-	 * Big hammer: flush all TLB entries, including ones from PTEs
+	 * Big hammer: flush all TLB entries, including ones from PTE's
 	 * with the G bit set.  This should only be necessary if TLB
 	 * shootdown falls far behind.
 	 */
@@ -777,7 +577,7 @@ cpu_init_vmm(struct cpu_info *ci)
 		    M_DEVBUF, M_WAITOK | M_ZERO);
 		if (!pmap_extract(pmap_kernel(), (vaddr_t)ci->ci_vmxon_region,
 		    &ci->ci_vmxon_region_pa))
-			panic("Can't locate VMXON region in phys mem");
+			panic("Can't locate VMXON region in phys mem\n");
 	}
 }
 #endif /* NVMM > 0 */
@@ -801,6 +601,24 @@ cpu_boot_secondary_processors(void)
 			continue;
 		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 		cpu_boot_secondary(ci);
+	}
+}
+
+void
+cpu_init_idle_pcbs(void)
+{
+	struct cpu_info *ci;
+	u_long i;
+
+	for (i=0; i < MAXCPUS; i++) {
+		ci = cpu_info[i];
+		if (ci == NULL)
+			continue;
+		if (ci->ci_idle_pcb == NULL)
+			continue;
+		if ((ci->ci_flags & CPUF_PRESENT) == 0)
+			continue;
+		x86_64_init_pcb_tss_ldt(ci);
 	}
 }
 
@@ -834,7 +652,7 @@ cpu_start_secondary(struct cpu_info *ci)
 		atomic_setbits_int(&ci->ci_flags, CPUF_IDENTIFY);
 
 		/* wait for it to identify */
-		for (i = 2000000; (ci->ci_flags & CPUF_IDENTIFY) && i > 0; i--)
+		for (i = 100000; (ci->ci_flags & CPUF_IDENTIFY) && i > 0; i--)
 			delay(10);
 
 		if (ci->ci_flags & CPUF_IDENTIFY)
@@ -924,6 +742,7 @@ cpu_hatch(void *v)
 		panic("%s: already running!?", ci->ci_dev->dv_xname);
 #endif
 
+	lcr0(ci->ci_idle_pcb->pcb_cr0);
 	cpu_init_idt();
 	lapic_set_lvt();
 	gdt_init_cpu(ci);
@@ -942,7 +761,7 @@ cpu_hatch(void *v)
 
 	s = splhigh();
 	lcr8(0);
-	intr_enable();
+	enable_intr();
 
 	nanouptime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
@@ -965,14 +784,15 @@ cpu_debug_dump(void)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	db_printf("addr		dev	id	flags	ipis	curproc\n");
+	db_printf("addr		dev	id	flags	ipis	curproc		fpcurproc\n");
 	CPU_INFO_FOREACH(cii, ci) {
-		db_printf("%p	%s	%u	%x	%x	%10p\n",
+		db_printf("%p	%s	%u	%x	%x	%10p	%10p\n",
 		    ci,
 		    ci->ci_dev == NULL ? "BOOT" : ci->ci_dev->dv_xname,
 		    ci->ci_cpuid,
 		    ci->ci_flags, ci->ci_ipis,
-		    ci->ci_curproc);
+		    ci->ci_curproc,
+		    ci->ci_fpcurproc);
 	}
 }
 #endif
@@ -1038,37 +858,21 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 #endif	/* MULTIPROCESSOR */
 
 typedef void (vector)(void);
-extern vector Xsyscall_meltdown, Xsyscall, Xsyscall32;
+extern vector Xsyscall, Xsyscall32;
 
 void
 cpu_init_msrs(struct cpu_info *ci)
 {
-	uint64_t msr;
-	int family;
-
 	wrmsr(MSR_STAR,
 	    ((uint64_t)GSEL(GCODE_SEL, SEL_KPL) << 32) |
 	    ((uint64_t)GSEL(GUCODE32_SEL, SEL_UPL) << 48));
-	wrmsr(MSR_LSTAR, cpu_meltdown ? (uint64_t)Xsyscall_meltdown :
-	    (uint64_t)Xsyscall);
+	wrmsr(MSR_LSTAR, (uint64_t)Xsyscall);
 	wrmsr(MSR_CSTAR, (uint64_t)Xsyscall32);
 	wrmsr(MSR_SFMASK, PSL_NT|PSL_T|PSL_I|PSL_C|PSL_D|PSL_AC);
 
 	wrmsr(MSR_FSBASE, 0);
 	wrmsr(MSR_GSBASE, (u_int64_t)ci);
 	wrmsr(MSR_KERNELGSBASE, 0);
-
-	family = ci->ci_family;
-	if (strcmp(cpu_vendor, "GenuineIntel") == 0 &&
-	    (family > 6 || (family == 6 && ci->ci_model >= 0xd)) &&
-	    rdmsr_safe(MSR_MISC_ENABLE, &msr) == 0 &&
-	    (msr & MISC_ENABLE_FAST_STRINGS) == 0) {
-		msr |= MISC_ENABLE_FAST_STRINGS;
-		wrmsr(MSR_MISC_ENABLE, msr);
-		DPRINTF("%s: enabled fast strings\n", ci->ci_dev->dv_xname);
-	}
-
-	patinit(ci);
 }
 
 void
@@ -1077,14 +881,14 @@ patinit(struct cpu_info *ci)
 	extern int	pmap_pg_wc;
 	u_int64_t	reg;
 
-	if ((cpu_feature & CPUID_PAT) == 0)
+	if ((ci->ci_feature_flags & CPUID_PAT) == 0)
 		return;
 	/*
 	 * Set up PAT bits.
 	 * The default pat table is the following:
-	 * WB, WT, UC-, UC, WB, WT, UC-, UC
+	 * WB, WT, UC- UC, WB, WT, UC-, UC
 	 * We change it to:
-	 * WB, WC, UC-, UC, WB, WC, UC-, UC
+	 * WB, WC, UC-, UC, WB, WC, UC-, UC.
 	 * i.e change the WT bit to be WC.
 	 */
 	reg = PATENTRY(0, PAT_WB) | PATENTRY(1, PAT_WC) |
@@ -1125,8 +929,8 @@ rdrand(void *v)
 
 	if (valid)
 		t.u64 ^= r.u64;
-	enqueue_randomness(t.u32[0]);
-	enqueue_randomness(t.u32[1]);
+	add_true_randomness(t.u32[0]);
+	add_true_randomness(t.u32[1]);
 
 	if (tmo)
 		timeout_add_msec(tmo, 10);
@@ -1141,9 +945,6 @@ cpu_activate(struct device *self, int act)
 	case DVACT_RESUME:
 		if (sc->sc_info->ci_cpuid == 0)
 			rdrand(NULL);
-#if NPCTR > 0
-		pctr_resume(sc->sc_info);
-#endif
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.16 2019/06/11 05:36:32 martijn Exp $	*/
+/*	$OpenBSD: usm.c,v 1.12 2018/02/08 18:02:06 jca Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -45,9 +45,7 @@
 SLIST_HEAD(, usmuser)	usmuserlist;
 
 const EVP_MD		*usm_get_md(enum usmauth);
-size_t			 usm_get_digestlen(enum usmauth);
 const EVP_CIPHER	*usm_get_cipher(enum usmpriv);
-int			 usm_valid_digestlen(size_t digestlen);
 void			 usm_cb_digest(void *, size_t);
 int			 usm_valid_digest(struct snmp_message *, off_t, char *,
 			    size_t);
@@ -97,38 +95,9 @@ usm_get_md(enum usmauth ua)
 		return EVP_md5();
 	case AUTH_SHA1:
 		return EVP_sha1();
-	case AUTH_SHA224:
-		return EVP_sha224();
-	case AUTH_SHA256:
-		return EVP_sha256();
-	case AUTH_SHA384:
-		return EVP_sha384();
-	case AUTH_SHA512:
-		return EVP_sha512();
 	case AUTH_NONE:
 	default:
 		return NULL;
-	}
-}
-
-size_t
-usm_get_digestlen(enum usmauth ua)
-{
-	switch (ua) {
-	case AUTH_MD5:
-	case AUTH_SHA1:
-		return 12;
-	case AUTH_SHA224:
-		return 16;
-	case AUTH_SHA256:
-		return 24;
-	case AUTH_SHA384:
-		return 32;
-	case AUTH_SHA512:
-		return 48;
-	case AUTH_NONE:
-	default:
-		return 0;
 	}
 }
 
@@ -143,22 +112,6 @@ usm_get_cipher(enum usmpriv up)
 	case PRIV_NONE:
 	default:
 		return NULL;
-	}
-}
-
-int
-usm_valid_digestlen(size_t digestlen)
-{
-	switch (digestlen) {
-	case 0:
-	case 12:
-	case 16:
-	case 24:
-	case 32:
-	case 48:
-		return 1;
-	default:
-		return 0;
 	}
 }
 
@@ -224,18 +177,6 @@ usm_checkuser(struct usmuser *up, const char **errp)
 		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
 		auth = "HMAC-SHA1-96";
 		break;
-	case AUTH_SHA224:
-		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
-		auth = "usmHMAC128SHA224AuthProtocol";
-	case AUTH_SHA256:
-		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
-		auth = "usmHMAC192SHA256AuthProtocol";
-	case AUTH_SHA384:
-		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
-		auth = "usmHMAC256SHA384AuthProtocol";
-	case AUTH_SHA512:
-		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
-		auth = "usmHMAC384SHA512AuthProtocol";
 	}
 
 	switch (up->uu_priv) {
@@ -285,7 +226,6 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 
 	if (ber_get_nstring(elm, (void *)&usmparams, &len) < 0) {
 		*errp = "cannot decode security params";
-		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 		goto done;
 	}
 
@@ -293,7 +233,6 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 	usm = ber_read_elements(&ber, NULL);
 	if (usm == NULL) {
 		*errp = "cannot decode security params";
-		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 		goto done;
 	}
 
@@ -306,7 +245,6 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 	    &engine_boots, &engine_time, &user, &userlen, &offs2,
 	    &digest, &digestlen, &salt, &saltlen) != 0) {
 		*errp = "cannot decode USM params";
-		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 		goto done;
 	}
 
@@ -316,10 +254,9 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 
 	if (enginelen > SNMPD_MAXENGINEIDLEN ||
 	    userlen > SNMPD_MAXUSERNAMELEN ||
-	    !usm_valid_digestlen(digestlen) ||
+	    (digestlen != (MSG_HAS_AUTH(msg) ? SNMP_USM_DIGESTLEN : 0)) ||
 	    (saltlen != (MSG_HAS_PRIV(msg) ? SNMP_USM_SALTLEN : 0))) {
 		*errp = "bad field length";
-		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 		goto done;
 	}
 
@@ -328,8 +265,19 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 		*errp = "unknown engine id";
 		msg->sm_usmerr = OIDVAL_usmErrEngineId;
 		stats->snmp_usmnosuchengine++;
-		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 		goto done;
+	}
+
+	if (engine_boots != 0LL && engine_time != 0LL) {
+		now = snmpd_engine_time();
+		if (engine_boots != snmpd_env->sc_engine_boots ||
+		    engine_time < (long long)(now - SNMP_MAX_TIMEWINDOW) ||
+		    engine_time > (long long)(now + SNMP_MAX_TIMEWINDOW)) {
+			*errp = "out of time window";
+			msg->sm_usmerr = OIDVAL_usmErrTimeWindow;
+			stats->snmp_usmtimewindow++;
+			goto done;
+		}
 	}
 
 	msg->sm_engine_boots = (u_int32_t)engine_boots;
@@ -342,14 +290,12 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 		*errp = "no such user";
 		msg->sm_usmerr = OIDVAL_usmErrUserName;
 		stats->snmp_usmnosuchuser++;
-		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 		goto done;
 	}
 	if (MSG_SECLEVEL(msg) > msg->sm_user->uu_seclevel) {
 		*errp = "unsupported security model";
 		msg->sm_usmerr = OIDVAL_usmErrSecLevel;
 		stats->snmp_usmbadseclevel++;
-		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 		goto done;
 	}
 
@@ -361,7 +307,6 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 		*errp = "bad msg digest";
 		msg->sm_usmerr = OIDVAL_usmErrDigest;
 		stats->snmp_usmwrongdigest++;
-		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 		goto done;
 	}
 
@@ -371,22 +316,10 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 			*errp = "cannot decrypt msg";
 			msg->sm_usmerr = OIDVAL_usmErrDecrypt;
 			stats->snmp_usmdecrypterr++;
-			msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 			goto done;
 		}
 		ber_replace_elements(elm, decr);
 	}
-
-	now = snmpd_engine_time();
-	if (engine_boots != snmpd_env->sc_engine_boots ||
-	    engine_time < (long long)(now - SNMP_MAX_TIMEWINDOW) ||
-	    engine_time > (long long)(now + SNMP_MAX_TIMEWINDOW)) {
-		*errp = "out of time window";
-		msg->sm_usmerr = OIDVAL_usmErrTimeWindow;
-		stats->snmp_usmtimewindow++;
-		goto done;
-	}
-
 	next = elm->be_next;
 
 done:
@@ -402,9 +335,8 @@ usm_encode(struct snmp_message *msg, struct ber_element *e)
 	struct ber		 ber;
 	struct ber_element	*usm, *a, *res = NULL;
 	void			*ptr;
-	char			 digest[SNMP_USM_MAXDIGESTLEN];
-	size_t			 digestlen, saltlen;
-	ssize_t			 len;
+	char			 digest[SNMP_USM_DIGESTLEN];
+	size_t			 digestlen, saltlen, len;
 
 	msg->sm_digest_offs = 0;
 	bzero(&ber, sizeof(ber));
@@ -421,7 +353,7 @@ usm_encode(struct snmp_message *msg, struct ber_element *e)
 		assert(msg->sm_user != NULL);
 #endif
 		bzero(digest, sizeof(digest));
-		digestlen = usm_get_digestlen(msg->sm_user->uu_auth);
+		digestlen = sizeof(digest);
 	} else
 		digestlen = 0;
 
@@ -482,7 +414,8 @@ usm_encrypt(struct snmp_message *msg, struct ber_element *pdu)
 	struct ber		 ber;
 	struct ber_element	*encrpdu = NULL;
 	void			*ptr;
-	ssize_t			 elen, len;
+	int			 len;
+	ssize_t			 elen;
 	u_char			 encbuf[READ_BUF_SIZE];
 
 	if (!MSG_HAS_PRIV(msg))
@@ -515,7 +448,6 @@ usm_finalize_digest(struct snmp_message *msg, char *buf, ssize_t len)
 {
 	const EVP_MD	*md;
 	u_char		 digest[EVP_MAX_MD_SIZE];
-	size_t		 digestlen;
 	unsigned	 hlen;
 
 	if (msg->sm_resp == NULL ||
@@ -524,13 +456,10 @@ usm_finalize_digest(struct snmp_message *msg, char *buf, ssize_t len)
 	    msg->sm_digest_offs == 0 ||
 	    len <= 0)
 		return;
-
-	if ((digestlen = usm_get_digestlen(msg->sm_user->uu_auth)) == 0)
-		return;
-	bzero(digest, digestlen);
+	bzero(digest, SNMP_USM_DIGESTLEN);
 #ifdef DEBUG
-	assert(msg->sm_digest_offs + digestlen <= (size_t)len);
-	assert(!memcmp(buf + msg->sm_digest_offs, digest, digestlen));
+	assert(msg->sm_digest_offs + SNMP_USM_DIGESTLEN <= (size_t)len);
+	assert(!memcmp(buf + msg->sm_digest_offs, digest, SNMP_USM_DIGESTLEN));
 #endif
 
 	if ((md = usm_get_md(msg->sm_user->uu_auth)) == NULL)
@@ -539,7 +468,7 @@ usm_finalize_digest(struct snmp_message *msg, char *buf, ssize_t len)
 	HMAC(md, msg->sm_user->uu_authkey, (int)msg->sm_user->uu_authkeylen,
 	    (u_char*)buf, (size_t)len, digest, &hlen);
 
-	memcpy(buf + msg->sm_digest_offs, digest, digestlen);
+	memcpy(buf + msg->sm_digest_offs, digest, SNMP_USM_DIGESTLEN);
 	return;
 }
 
@@ -548,7 +477,10 @@ usm_make_report(struct snmp_message *msg)
 {
 	struct ber_oid		 usmstat = OID(MIB_usmStats, 0, 0);
 
+	/* Always send report in clear-text */
+	msg->sm_flags = 0;
 	msg->sm_context = SNMP_C_REPORT;
+	msg->sm_username[0] = '\0';
 	usmstat.bo_id[OIDIDX_usmStats] = msg->sm_usmerr;
 	usmstat.bo_n = OIDIDX_usmStats + 2;
 	if (msg->sm_varbindresp != NULL)
@@ -569,7 +501,7 @@ usm_valid_digest(struct snmp_message *msg, off_t offs,
 	if (!MSG_HAS_AUTH(msg))
 		return 1;
 
-	if (digestlen != usm_get_digestlen(msg->sm_user->uu_auth))
+	if (digestlen != SNMP_USM_DIGESTLEN)
 		return 0;
 
 #ifdef DEBUG

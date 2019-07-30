@@ -1,4 +1,4 @@
-/*	$Id: fileproc.c,v 1.16 2019/06/16 19:49:13 florian Exp $ */
+/*	$Id: fileproc.c,v 1.14 2017/01/24 13:32:55 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -15,8 +15,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/stat.h>
-
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -29,51 +27,37 @@
 #include "extern.h"
 
 static int
-serialise(const char *real, const char *v, size_t vsz, const char *v2, size_t v2sz)
+serialise(const char *tmp, const char *real,
+    const char *v, size_t vsz, const char *v2, size_t v2sz)
 {
-	int	  fd;
-	char	 *tmp;
+	int	 fd;
 
 	/*
 	 * Write into backup location, overwriting.
-	 * Then atomically do the rename.
+	 * Then atomically (?) do the rename.
 	 */
 
-	if (asprintf(&tmp, "%s.XXXXXXXXXX", real) == -1) {
-		warn("asprintf");
+	fd = open(tmp, O_WRONLY|O_CREAT|O_TRUNC, 0444);
+	if (fd == -1) {
+		warn("%s", tmp);
+		return 0;
+	} else if ((ssize_t)vsz != write(fd, v, vsz)) {
+		warnx("%s", tmp);
+		close(fd);
+		return 0;
+	} else if (v2 != NULL && write(fd, v2, v2sz) != (ssize_t)v2sz) {
+		warnx("%s", tmp);
+		close(fd);
+		return 0;
+	} else if (close(fd) == -1) {
+		warn("%s", tmp);
+		return 0;
+	} else if (rename(tmp, real) == -1) {
+		warn("%s", real);
 		return 0;
 	}
-	if ((fd = mkstemp(tmp)) == -1) {
-		warn("mkstemp");
-		goto out;
-	}
-	if (fchmod(fd, 0444) == -1) {
-		warn("fchmod");
-		goto out;
-	}
-	if ((ssize_t)vsz != write(fd, v, vsz)) {
-		warnx("write");
-		goto out;
-	}
-	if (v2 != NULL && write(fd, v2, v2sz) != (ssize_t)v2sz) {
-		warnx("write");
-		goto out;
-	}
-	if (close(fd) == -1)
-		goto out;
-	if (rename(tmp, real) == -1) {
-		warn("%s", real);
-		goto out;
-	}
 
-	free(tmp);
 	return 1;
-out:
-	if (fd != -1)
-		close(fd);
-	(void) unlink(tmp);
-	free(tmp);
-	return 0;
 }
 
 int
@@ -81,21 +65,29 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
     *chainfile, const char *fullchainfile)
 {
 	char		*csr = NULL, *ch = NULL;
+	char		*certfile_bak = NULL, *chainfile_bak = NULL;
+	char		*fullchainfile_bak = NULL;
 	size_t		 chsz, csz;
 	int		 rc = 0;
 	long		 lval;
 	enum fileop	 op;
 
-	if (unveil(certdir, "rwc") == -1) {
-		warn("unveil");
+	/* File-system and sandbox jailing. */
+
+	if (chroot(certdir) == -1) {
+		warn("chroot");
+		goto out;
+	}
+	if (chdir("/") == -1) {
+		warn("chdir");
 		goto out;
 	}
 
 	/*
 	 * rpath and cpath for rename, wpath and cpath for
-	 * writing to the temporary. fattr for fchmod.
+	 * writing to the temporary.
 	 */
-	if (pledge("stdio cpath wpath rpath fattr", NULL) == -1) {
+	if (pledge("stdio cpath wpath rpath", NULL) == -1) {
 		warn("pledge");
 		goto out;
 	}
@@ -125,26 +117,27 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
 	if (FILE_REMOVE == op) {
 		if (certfile) {
 			if (unlink(certfile) == -1 && errno != ENOENT) {
-				warn("%s", certfile);
+				warn("%s/%s", certdir, certfile);
 				goto out;
 			} else
-				dodbg("%s: unlinked", certfile);
+				dodbg("%s/%s: unlinked", certdir, certfile);
 		}
 
 		if (chainfile) {
 			if (unlink(chainfile) == -1 && errno != ENOENT) {
-				warn("%s", chainfile);
+				warn("%s/%s", certdir, chainfile);
 				goto out;
 			} else
-				dodbg("%s: unlinked", chainfile);
+				dodbg("%s/%s: unlinked", certdir, chainfile);
 		}
 
 		if (fullchainfile) {
 			if (unlink(fullchainfile) == -1 && errno != ENOENT) {
-				warn("%s", fullchainfile);
+				warn("%s/%s", certdir, fullchainfile);
 				goto out;
 			} else
-				dodbg("%s: unlinked", fullchainfile);
+				dodbg("%s/%s: unlinked", certdir,
+				    fullchainfile);
 		}
 
 		rc = 2;
@@ -155,15 +148,35 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
 	 * Start by downloading the chain PEM as a buffer.
 	 * This is not NUL-terminated, but we're just going to guess
 	 * that it's well-formed and not actually touch the data.
+	 * Once downloaded, dump it into CHAIN_BAK.
 	 */
+
+	if (certfile)
+		if (asprintf(&certfile_bak, "%s~", certfile) == -1) {
+			warn("asprintf");
+			goto out;
+		}
+
+	if (chainfile)
+		if (asprintf(&chainfile_bak, "%s~", chainfile) == -1) {
+			warn("asprintf");
+			goto out;
+		}
+
+	if (fullchainfile)
+		if (asprintf(&fullchainfile_bak, "%s~", fullchainfile) == -1) {
+			warn("asprintf");
+			goto out;
+		}
+
 	if ((ch = readbuf(certsock, COMM_CHAIN, &chsz)) == NULL)
 		goto out;
 
 	if (chainfile) {
-		if (!serialise(chainfile, ch, chsz, NULL, 0))
+		if (!serialise(chainfile_bak, chainfile, ch, chsz, NULL, 0))
 			goto out;
 
-		dodbg("%s: created", chainfile);
+		dodbg("%s/%s: created", certdir, chainfile);
 	}
 
 	/*
@@ -177,10 +190,10 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
 		goto out;
 
 	if (certfile) {
-		if (!serialise(certfile, csr, csz, NULL, 0))
+		if (!serialise(certfile_bak, certfile, csr, csz, NULL, 0))
 			goto out;
 
-		dodbg("%s: created", certfile);
+		dodbg("%s/%s: created", certdir, certfile);
 	}
 
 	/*
@@ -190,11 +203,11 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
 	 * on-file certificates were changed.
 	 */
 	if (fullchainfile) {
-		if (!serialise(fullchainfile, csr, csz, ch,
+		if (!serialise(fullchainfile_bak, fullchainfile, csr, csz, ch,
 		    chsz))
 			goto out;
 
-		dodbg("%s: created", fullchainfile);
+		dodbg("%s/%s: created", certdir, fullchainfile);
 	}
 
 	rc = 2;
@@ -202,5 +215,8 @@ out:
 	close(certsock);
 	free(csr);
 	free(ch);
+	free(certfile_bak);
+	free(chainfile_bak);
+	free(fullchainfile_bak);
 	return rc;
 }

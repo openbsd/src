@@ -1,23 +1,24 @@
 LEVEL = ../../../make
 
-LD_EXTRAS = -lobjc -framework Foundation
+CFLAGS = -g -O0
+LDFLAGS = $(CFLAGS) -lobjc -framework Foundation
 
-include $(LEVEL)/Makefile.rules
-
-all: a.out
+all: a.out libTest.dylib libTestExt.dylib
 
 libTest.dylib:	Test/Test.m
-	mkdir -p Test
-	$(MAKE) MAKE_DSYM=YES VPATH=$(SRCDIR) -I $(SRCDIR) -f $(SRCDIR)/Test/Test.mk all
+	$(CC) $(CFLAGS) -I. -c -o Test.o Test/Test.m
+	$(CC) $(LDFLAGS) -shared -o libTest.dylib Test.o
+	dsymutil libTest.dylib
 
 libTestExt.dylib: TestExt/TestExt.m
-	mkdir -p TestExt
-	$(MAKE) MAKE_DSYM=YES VPATH=$(SRCDIR) -I $(SRCDIR) -f $(SRCDIR)/TestExt/TestExt.mk all
+	$(CC) $(CFLAGS) -I. -c -o TestExt.o TestExt/TestExt.m
+	$(CC) $(LDFLAGS) -L. -lTest -shared -o libTestExt.dylib TestExt.o
+	dsymutil libTestExt.dylib
 
 a.out: main.m libTest.dylib libTestExt.dylib
-	$(CC) $(LDFLAGS) -I$(SRCDIR) -L. -lTest -lTestExt -o a.out $<
+	$(CC) $(LDFLAGS) -I. -L. -lTest -lTestExt -o a.out main.m 
 
-clean::
-	rm -rf libTest.dylib libTestExt.dylib a.out Test.o TestExt.o libTest.dylib.dSYM libTestExt.dylib.dSYM
-	$(MAKE) MAKE_DSYM=YES VPATH=$(SRCDIR) -I $(SRCDIR) -f $(SRCDIR)/Test/Test.mk clean
-	$(MAKE) MAKE_DSYM=YES VPATH=$(SRCDIR) -I $(SRCDIR) -f $(SRCDIR)/TestExt/TestExt.mk clean
+.PHONY: clean
+
+clean:
+	rm -rf libTest.dylib libTestExt.dylib a.out Test.o TestExt.o libTest.dylib.dSYM libTest.dylib.dSYM

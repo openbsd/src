@@ -13,19 +13,12 @@ add_clang_executable(diagtool
 )
 
 target_link_libraries(diagtool
-  PRIVATE
   clangBasic
   clangFrontend
   )
 
-if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
-  install(TARGETS diagtool
-    COMPONENT diagtool
-    RUNTIME DESTINATION bin)
-
-  if (NOT CMAKE_CONFIGURATION_TYPES)
-    add_llvm_install_targets(install-diagtool
-      DEPENDS diagtool
-      COMPONENT diagtool)
-  endif()
+if(UNIX)
+  set(CLANGXX_LINK_OR_COPY create_symlink)
+else()
+  set(CLANGXX_LINK_OR_COPY copy)
 endif()

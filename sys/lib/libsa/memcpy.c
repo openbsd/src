@@ -1,4 +1,4 @@
-/*	$OpenBSD: memcpy.c,v 1.6 2019/04/20 22:59:04 deraadt Exp $	*/
+/*	$OpenBSD: memcpy.c,v 1.5 2003/08/08 03:36:07 deraadt Exp $	*/
 /*	$NetBSD: bcopy.c,v 1.5 1995/04/22 13:46:50 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,13 @@ memcpy(void *s1, const void *s2, size_t n)
 	const char *f = s2;
 	char *t = s1;
 
-	while (n-- > 0)
-		*t++ = *f++;
+	if (f < t) {
+		f += n;
+		t += n;
+		while (n-- > 0)
+			*--t = *--f;
+	} else
+		while (n-- > 0)
+			*t++ = *f++;
 	return s1;
 }

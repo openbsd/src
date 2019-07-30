@@ -2,12 +2,12 @@
 
 BEGIN {
     chdir 't' if -d 't';
+    @INC = '../lib';
     require './test.pl';
-    set_up_inc('../lib');
 }
 use strict;
 
-plan tests => 2116;
+plan tests => 2564;
 
 open(FOO,'op/read.t') || open(FOO,'t/op/read.t') || open(FOO,':op:read.t') || die "Can't open op.read";
 seek(FOO,4,0) or die "Seek failed: $!";
@@ -33,8 +33,7 @@ my $has_perlio = !eval {
 
 my $tmpfile = tempfile();
 
-my @values  = ('');
-my @buffers = ('');
+my (@values, @buffers) = ('', '');
 
 foreach (65, 161, 253, 9786) {
     push @values, join "", map {chr $_} $_ .. $_ + 4;
@@ -60,7 +59,6 @@ foreach my $value (@values) {
 	    print FH $value;
 	    close FH;
 	    foreach my $offset (@offsets) {
-                next if !length($initial_buffer) && $offset != 0;
 		foreach my $length (@lengths) {
 		    # Will read the lesser of the length of the file and the
 		    # read length

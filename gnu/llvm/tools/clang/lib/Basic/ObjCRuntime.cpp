@@ -1,4 +1,4 @@
-//===- ObjCRuntime.cpp - Objective-C Runtime Handling ---------------------===//
+//===- ObjCRuntime.cpp - Objective-C Runtime Handling -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,13 +11,8 @@
 // target Objective-C runtime.
 //
 //===----------------------------------------------------------------------===//
-
 #include "clang/Basic/ObjCRuntime.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/Support/VersionTuple.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cstddef>
-#include <string>
 
 using namespace clang;
 
@@ -27,7 +22,7 @@ std::string ObjCRuntime::getAsString() const {
     llvm::raw_string_ostream Out(Result);
     Out << *this;
   }
-  return Result;
+  return Result;  
 }
 
 raw_ostream &clang::operator<<(raw_ostream &out, const ObjCRuntime &value) {

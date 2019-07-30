@@ -15,6 +15,7 @@
 
 #include "libunwind.h"
 
+#include "AddressSpace.hpp"
 #include "DwarfParser.hpp"
 
 namespace libunwind {
@@ -36,7 +37,7 @@ public:
     uint8_t table_enc;
   };
 
-  static bool decodeEHHdr(A &addressSpace, pint_t ehHdrStart, pint_t ehHdrEnd,
+  static void decodeEHHdr(A &addressSpace, pint_t ehHdrStart, pint_t ehHdrEnd,
                           EHHeaderInfo &ehHdrInfo);
   static bool findFDE(A &addressSpace, pint_t pc, pint_t ehHdrStart,
                       uint32_t sectionLength,
@@ -53,14 +54,12 @@ private:
 };
 
 template <typename A>
-bool EHHeaderParser<A>::decodeEHHdr(A &addressSpace, pint_t ehHdrStart,
+void EHHeaderParser<A>::decodeEHHdr(A &addressSpace, pint_t ehHdrStart,
                                     pint_t ehHdrEnd, EHHeaderInfo &ehHdrInfo) {
   pint_t p = ehHdrStart;
   uint8_t version = addressSpace.get8(p++);
-  if (version != 1) {
-    _LIBUNWIND_LOG0("Unsupported .eh_frame_hdr version");
-    return false;
-  }
+  if (version != 1)
+    _LIBUNWIND_ABORT("Unsupported .eh_frame_hdr version");
 
   uint8_t eh_frame_ptr_enc = addressSpace.get8(p++);
   uint8_t fde_count_enc = addressSpace.get8(p++);
@@ -69,12 +68,8 @@ bool EHHeaderParser<A>::decodeEHHdr(A &addressSpace, pint_t ehHdrStart,
   ehHdrInfo.eh_frame_ptr =
       addressSpace.getEncodedP(p, ehHdrEnd, eh_frame_ptr_enc, ehHdrStart);
   ehHdrInfo.fde_count =
-      fde_count_enc == DW_EH_PE_omit
-          ? 0
-          : addressSpace.getEncodedP(p, ehHdrEnd, fde_count_enc, ehHdrStart);
+      addressSpace.getEncodedP(p, ehHdrEnd, fde_count_enc, ehHdrStart);
   ehHdrInfo.table = p;
-
-  return true;
 }
 
 template <typename A>
@@ -90,7 +85,7 @@ bool EHHeaderParser<A>::decodeTableEntry(
   const char *message =
       CFI_Parser<A>::decodeFDE(addressSpace, fde, fdeInfo, cieInfo);
   if (message != NULL) {
-    _LIBUNWIND_DEBUG_LOG("EHHeaderParser::decodeTableEntry: bad fde: %s",
+    _LIBUNWIND_DEBUG_LOG("EHHeaderParser::decodeTableEntry: bad fde: %s\n",
                          message);
     return false;
   }
@@ -106,9 +101,7 @@ bool EHHeaderParser<A>::findFDE(A &addressSpace, pint_t pc, pint_t ehHdrStart,
   pint_t ehHdrEnd = ehHdrStart + sectionLength;
 
   EHHeaderParser<A>::EHHeaderInfo hdrInfo;
-  if (!EHHeaderParser<A>::decodeEHHdr(addressSpace, ehHdrStart, ehHdrEnd,
-                                      hdrInfo))
-    return false;
+  EHHeaderParser<A>::decodeEHHdr(addressSpace, ehHdrStart, ehHdrEnd, hdrInfo);
 
   if (hdrInfo.fde_count == 0)
     return false;

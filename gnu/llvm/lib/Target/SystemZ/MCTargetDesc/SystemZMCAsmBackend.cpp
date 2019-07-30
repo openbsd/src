@@ -14,7 +14,6 @@
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCObjectWriter.h"
-#include "llvm/MC/MCSubtargetInfo.h"
 
 using namespace llvm;
 
@@ -44,7 +43,7 @@ class SystemZMCAsmBackend : public MCAsmBackend {
   uint8_t OSABI;
 public:
   SystemZMCAsmBackend(uint8_t osABI)
-      : MCAsmBackend(support::big), OSABI(osABI) {}
+    : OSABI(osABI) {}
 
   // Override MCAsmBackend
   unsigned getNumFixupKinds() const override {
@@ -53,10 +52,8 @@ public:
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override;
   void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
                   const MCValue &Target, MutableArrayRef<char> Data,
-                  uint64_t Value, bool IsResolved,
-                  const MCSubtargetInfo *STI) const override;
-  bool mayNeedRelaxation(const MCInst &Inst,
-                         const MCSubtargetInfo &STI) const override {
+                  uint64_t Value, bool IsResolved) const override;
+  bool mayNeedRelaxation(const MCInst &Inst) const override {
     return false;
   }
   bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
@@ -68,10 +65,9 @@ public:
                         MCInst &Res) const override {
     llvm_unreachable("SystemZ does do not have assembler relaxation");
   }
-  bool writeNopData(raw_ostream &OS, uint64_t Count) const override;
-  std::unique_ptr<MCObjectTargetWriter>
-  createObjectTargetWriter() const override {
-    return createSystemZObjectWriter(OSABI);
+  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const override;
+  MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS) const override {
+    return createSystemZObjectWriter(OS, OSABI);
   }
 };
 } // end anonymous namespace
@@ -98,8 +94,7 @@ void SystemZMCAsmBackend::applyFixup(const MCAssembler &Asm,
                                      const MCFixup &Fixup,
                                      const MCValue &Target,
                                      MutableArrayRef<char> Data, uint64_t Value,
-                                     bool IsResolved,
-                                     const MCSubtargetInfo *STI) const {
+                                     bool IsResolved) const {
   MCFixupKind Kind = Fixup.getKind();
   unsigned Offset = Fixup.getOffset();
   unsigned BitSize = getFixupKindInfo(Kind).TargetSize;
@@ -118,17 +113,17 @@ void SystemZMCAsmBackend::applyFixup(const MCAssembler &Asm,
   }
 }
 
-bool SystemZMCAsmBackend::writeNopData(raw_ostream &OS, uint64_t Count) const {
+bool SystemZMCAsmBackend::writeNopData(uint64_t Count,
+                                       MCObjectWriter *OW) const {
   for (uint64_t I = 0; I != Count; ++I)
-    OS << '\x7';
+    OW->write8(7);
   return true;
 }
 
 MCAsmBackend *llvm::createSystemZMCAsmBackend(const Target &T,
-                                              const MCSubtargetInfo &STI,
                                               const MCRegisterInfo &MRI,
+                                              const Triple &TT, StringRef CPU,
                                               const MCTargetOptions &Options) {
-  uint8_t OSABI =
-      MCELFObjectTargetWriter::getOSABI(STI.getTargetTriple().getOS());
+  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TT.getOS());
   return new SystemZMCAsmBackend(OSABI);
 }

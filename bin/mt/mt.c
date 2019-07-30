@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.40 2019/01/22 21:20:13 krw Exp $	*/
+/*	$OpenBSD: mt.c,v 1.38 2015/12/30 14:59:10 tedu Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -50,7 +50,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
-#include <limits.h>
 
 #include "mt.h"
 
@@ -197,9 +196,6 @@ main(int argc, char *argv[])
 #endif
 	}
 
-	if (strlen(tape) >= PATH_MAX)
-		err(1, "tape name too long for protocol");
-
 	if (eject) {
 		if (insert)
 			comp = &com[COM_RETEN];
@@ -281,8 +277,6 @@ status(struct mtget *bp)
 	(void)putchar('\n');
 	(void)printf("blocksize: %d (%d)\n", bp->mt_blksiz, bp->mt_mblksiz);
 	(void)printf("density: %d (%d)\n", bp->mt_density, bp->mt_mdensity);
-	(void)printf("current file number: %d\n", bp->mt_fileno);
-	(void)printf("current block number: %d\n", bp->mt_blkno);
 }
 
 /*

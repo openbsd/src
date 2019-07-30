@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.46 2019/05/23 14:03:44 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.44 2017/05/01 12:20:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -60,8 +60,8 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 	struct args		*args = self->args;
 	struct key_table	*table;
 	struct key_binding	*bd;
-	const char		*tablename, *r;
-	char			*key, *cp, tmp[BUFSIZ];
+	const char		*key, *tablename, *r;
+	char			*cp, tmp[BUFSIZ];
 	int			 repeat, width, tablewidth, keywidth;
 
 	if (self->entry == &cmd_list_commands_entry)
@@ -75,15 +75,11 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 
 	repeat = 0;
 	tablewidth = keywidth = 0;
-	table = key_bindings_first_table ();
-	while (table != NULL) {
-		if (tablename != NULL && strcmp(table->name, tablename) != 0) {
-			table = key_bindings_next_table(table);
+	RB_FOREACH(table, key_tables, &key_tables) {
+		if (tablename != NULL && strcmp(table->name, tablename) != 0)
 			continue;
-		}
-		bd = key_bindings_first(table);
-		while (bd != NULL) {
-			key = args_escape(key_string_lookup_key(bd->key));
+		RB_FOREACH(bd, key_bindings, &table->key_bindings) {
+			key = key_string_lookup_key(bd->key);
 
 			if (bd->flags & KEY_BINDING_REPEAT)
 				repeat = 1;
@@ -94,22 +90,14 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 			width = utf8_cstrwidth(key);
 			if (width > keywidth)
 				keywidth = width;
-
-			free(key);
-			bd = key_bindings_next(table, bd);
 		}
-		table = key_bindings_next_table(table);
 	}
 
-	table = key_bindings_first_table ();
-	while (table != NULL) {
-		if (tablename != NULL && strcmp(table->name, tablename) != 0) {
-			table = key_bindings_next_table(table);
+	RB_FOREACH(table, key_tables, &key_tables) {
+		if (tablename != NULL && strcmp(table->name, tablename) != 0)
 			continue;
-		}
-		bd = key_bindings_first(table);
-		while (bd != NULL) {
-			key = args_escape(key_string_lookup_key(bd->key));
+		RB_FOREACH(bd, key_bindings, &table->key_bindings) {
+			key = key_string_lookup_key(bd->key);
 
 			if (!repeat)
 				r = "";
@@ -129,16 +117,12 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 			strlcat(tmp, " ", sizeof tmp);
 			free(cp);
 
-			cp = cmd_list_print(bd->cmdlist, 1);
+			cp = cmd_list_print(bd->cmdlist);
 			strlcat(tmp, cp, sizeof tmp);
 			free(cp);
 
 			cmdq_print(item, "bind-key %s", tmp);
-
-			free(key);
-			bd = key_bindings_next(table, bd);
 		}
-		table = key_bindings_next_table(table);
 	}
 
 	return (CMD_RETURN_NORMAL);

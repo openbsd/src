@@ -255,12 +255,6 @@ int sldns_wire2str_rr_buf(uint8_t* d, size_t dlen, char* s, size_t slen)
 	return sldns_wire2str_rr_scan(&d, &dlen, &s, &slen, NULL, 0);
 }
 
-int sldns_wire2str_rrquestion_buf(uint8_t* d, size_t dlen, char* s, size_t slen)
-{
-	/* use arguments as temporary variables */
-	return sldns_wire2str_rrquestion_scan(&d, &dlen, &s, &slen, NULL, 0);
-}
-
 int sldns_wire2str_rdata_buf(uint8_t* rdata, size_t rdata_len, char* str,
 	size_t str_len, uint16_t rrtype)
 {
@@ -1908,8 +1902,8 @@ int sldns_wire2str_edns_subnet_print(char** s, size_t* sl, uint8_t* data,
 	return w;
 }
 
-static int sldns_wire2str_edns_keepalive_print(char** s, size_t* sl,
-	uint8_t* data, size_t len)
+int sldns_wire2str_edns_keepalive_print(char** s, size_t* sl, uint8_t* data,
+	size_t len)
 {
 	int w = 0;
 	uint16_t timeout;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.190 2018/07/09 19:20:29 guenther Exp $	*/
+/*	$OpenBSD: locore.s,v 1.183 2018/03/22 19:30:18 bluhm Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -103,88 +103,25 @@
 /*
  * These are used on interrupt or trap entry or exit.
  */
-#define INTR_COPY_FROM_TRAMP_STACK	\
-	movl	TRF_SS(%ebp),%eax	; \
-	movl	%eax,IRF_SS(%esp)	; \
-	movl	TRF_ESP(%ebp),%eax	; \
-	movl	%eax,IRF_ESP(%esp)	; \
-	movl	TRF_EFLAGS(%ebp),%eax	; \
-	movl	%eax,IRF_EFLAGS(%esp)	; \
-	movl	TRF_CS(%ebp),%eax	; \
-	movl	%eax,IRF_CS(%esp)	; \
-	movl	TRF_EIP(%ebp),%eax	; \
-	movl	%eax,IRF_EIP(%esp)	; \
-	movl	TRF_ERR(%ebp),%eax	; \
-	movl	%eax,IRF_ERR(%esp)	; \
-	movl	TRF_TRAPNO(%ebp),%eax	; \
-	movl	%eax,IRF_TRAPNO(%esp)
-
-#define INTR_ENABLE_U_PLUS_K	\
-	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
-	movw	%ax,%fs			; \
-	movl	CPUVAR(KERN_CR3),%eax	; \
-	testl	%eax,%eax		; \
-	jz	100f			; \
-	movl	%eax,%cr3		; \
-	100:
-
-#define INTRENTRY_LABEL(label)	X##label##_untramp
-#define	INTRENTRY(label) \
-	/* we have an iretframe */	; \
-	testb	$SEL_RPL,IRF_CS(%esp)	; \
-	/* from kernel, stay on kernel stack, use iretframe */	; \
-	je	INTRENTRY_LABEL(label)	; \
-	/* entering from user space, map kernel */	; \
-	pushl	%ebp			; \
-	pushl	%eax			; \
-	pushl	%fs			; \
-	INTR_ENABLE_U_PLUS_K		; \
-	jmp	99f			; \
-	.text				; \
-	.global INTRENTRY_LABEL(label) ; \
-INTRENTRY_LABEL(label):	/* from kernel */	; \
-	jmp	98f			; \
-	/* from user space, build trampframe */	; \
-99:	movl	CPUVAR(KERN_ESP),%eax	; \
-	pushl	%eax			; \
-	pushl	$0xdeadbeef		; \
-	movl	%esp,%ebp		; \
-	movl	%eax,%esp		; \
-	subl	$SIZEOF_IRETFRAME,%esp	; \
-	/* we have a trampframe, copy to iretframe on kernel stack */	; \
-	INTR_COPY_FROM_TRAMP_STACK	; \
-	movl	TRF_FS(%ebp),%eax	; \
-	movw	%ax,%fs			; \
-	movl	TRF_EAX(%ebp),%eax	; \
-	movl	TRF_EBP(%ebp),%ebp	; \
-98:	INTR_SAVE_ALL
-
-#define INTR_SAVE_ALL \
-	cld				; \
-	SMAP_CLAC			; \
-	/* we have an iretframe, build trapframe */	; \
-	subl	$44,%esp		; \
-	movl	%eax,TF_EAX(%esp)	; \
-	/* the hardware puts err next to %eip, we move it elsewhere and */ ; \
-	/* later put %ebp in this slot to make it look like a call frame */ ; \
-	movl	(TF_EIP - 4)(%esp),%eax ; \
-	movl	%eax,TF_ERR(%esp)	; \
-	movl	%ecx,TF_ECX(%esp)	; \
-	movl	%edx,TF_EDX(%esp)	; \
-	movl	%ebx,TF_EBX(%esp)	; \
-	movl	%ebp,TF_EBP(%esp)	; \
-	leal	TF_EBP(%esp),%ebp	; \
-	movl	%esi,TF_ESI(%esp)	; \
-	movl	%edi,TF_EDI(%esp)	; \
-	movw	%ds,TF_DS(%esp)		; \
-	movw	%es,TF_ES(%esp)		; \
-	movw	%gs,TF_GS(%esp)		; \
+#define	INTRENTRY \
+	cld			; \
+	SMAP_CLAC		; \
+	pushl	%eax		; \
+	pushl	%ecx		; \
+	pushl	%edx		; \
+	pushl	%ebx		; \
+	pushl	%ebp		; \
+	pushl	%esi		; \
+	pushl	%edi		; \
+	pushl	%ds		; \
+	pushl	%es		; \
+	pushl	%gs		; \
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
-	movw	%ax,%ds			; \
-	movw	%ax,%es			; \
+	movw	%ax,%ds		; \
+	movw	%ax,%es		; \
 	xorl	%eax,%eax	; /* $GSEL(GNULL_SEL, SEL_KPL) == 0 */ \
-	movw	%ax,%gs			; \
-	movw	%fs,TF_FS(%esp)		; \
+	movw	%ax,%gs		; \
+	pushl	%fs		; \
 	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
 	movw	%ax,%fs
 
@@ -195,15 +132,16 @@ INTRENTRY_LABEL(label):	/* from kernel */	; \
 	popl	%ds		; \
 	popl	%edi		; \
 	popl	%esi		; \
-	addl	$4,%esp	/*err*/ ; \
+	popl	%ebp		; \
 	popl	%ebx		; \
 	popl	%edx		; \
 	popl	%ecx		; \
-	popl	%eax		; \
-	movl	4(%esp),%ebp
+	popl	%eax
 
 #define	INTRFASTEXIT \
-	jmp	intr_fast_exit
+	INTR_RESTORE_ALL	;\
+	addl	$8,%esp		; \
+	iret
 
 #define	INTR_FAKE_TRAP	0xbadabada
 
@@ -243,8 +181,6 @@ INTRENTRY_LABEL(label):	/* from kernel */	; \
 	.globl	_C_LABEL(gdt)
 	.globl	_C_LABEL(bootapiver), _C_LABEL(bootargc), _C_LABEL(bootargv)
 	.globl	_C_LABEL(lapic_tpr)
-	.globl	_C_LABEL(pg_g_kern)
-	.globl	_C_LABEL(cpu_meltdown)
 
 #if NLAPIC > 0
 	.align NBPG
@@ -298,10 +234,6 @@ _C_LABEL(bootdev):	.long	0	# device we booted from
 _C_LABEL(proc0paddr):	.long	0
 _C_LABEL(PTDpaddr):	.long	0	# paddr of PTD, for libkvm
 _C_LABEL(PTDsize):	.long	NBPG	# size of PTD, for libkvm
-_C_LABEL(pg_g_kern):	.long	0	# 0x100 if global pages should be used
-					# in kernel mappings, 0 otherwise (for
-					# insecure CPUs)
-_C_LABEL(cpu_meltdown): .long	0	# 1 if this CPU has Meltdown
 
 	.text
 
@@ -313,10 +245,8 @@ NENTRY(proc_trampoline)
 	pushl	%ebx
 	call	*%esi
 	addl	$4,%esp
-#ifdef DIAGNOSTIC
-	movl	$0xfe,%esi
-#endif
-	jmp	.Lsyscall_check_asts
+	INTRFASTEXIT
+	/* NOTREACHED */
 
 	/* This must come before any use of the CODEPATCH macros */
        .section .codepatch,"a"
@@ -848,11 +778,6 @@ switch_exited:
 	/* Record new pcb. */
 	movl	%ebx, CPUVAR(CURPCB)
 
-	/* record the bits needed for future U-->K transition */
-	movl	PCB_KSTACK(%ebx),%eax
-	subl	$FRAMESIZE,%eax
-	movl	%eax,CPUVAR(KERN_ESP)
-
 	/*
 	 * Activate the address space.  The pcb copy of %cr3 will
 	 * be refreshed from the pmap, and because we're
@@ -862,6 +787,14 @@ switch_exited:
 	pushl	%esi
 	call	_C_LABEL(pmap_switch)
 	addl	$8,%esp
+
+	/* Load TSS info. */
+	movl	CPUVAR(GDT),%eax
+	movl	P_MD_TSS_SEL(%edi),%edx
+
+	/* Switch TSS. */
+	andl	$~0x0200,4-SEL_KPL(%eax,%edx,1)
+	ltr	%dx
 
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%ebx),%ecx
@@ -942,10 +875,13 @@ ENTRY(savectx)
  * and only enable them again on the final `iret' or before calling the AST
  * handler.
  */
+#define	IDTVEC(name)	ALIGN_TEXT; .globl X##name; X##name:
 
 #define	TRAP(a)		pushl $(a) ; jmp _C_LABEL(alltraps)
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)
 
+
+	.text
 IDTVEC(div)
 	ZTRAP(T_DIVIDE)
 IDTVEC(dbg)
@@ -957,109 +893,8 @@ IDTVEC(dbg)
 	movl	%eax,%dr6
 	popl	%eax
 	TRAP(T_TRCTRAP)
-
 IDTVEC(nmi)
-	/*
-	 * we came through a task gate; now U+K of the idle thread is
-	 * enabled; NMIs are blocked until next iret; IRQs are disabled;
-	 * all segment descriptors are useable
-	 *
-	 * first of all, switch back to the U+K we were actually running
-	 * on before
-	 */
-	movl	CPUVAR(CURPMAP),%eax
-	movl	PM_PDIRPA(%eax),%eax
-	movl	%eax,%cr3
-
-	/*
-	 * when we came from within the kernel, iret will not
-	 * switch back to the stack we came from but will keep
-	 * running on the NMI stack. in that case we switch
-	 * manually back to the stack we were running on and
-	 * build the iretframe there.
-	 */
-
-	/* was there a ring transition? */
-	movl	CPUVAR(TSS),%eax
-	testb	$SEL_RPL,TSS_CS(%eax)
-	jne	1f
-
-	/*
-	 * no ring transition, switch back to original stack, build
-	 * frame from state saved in TSS.
-	 */
-	movl	TSS_ESP(%eax),%esp
-	subl	$12,%esp
-	movl	TSS_EFLAGS(%eax),%ebx
-	movl	%ebx,8(%esp)
-	movl	TSS_CS(%eax),%ebx
-	movl	%ebx,4(%esp)
-	movl	TSS_EIP(%eax),%ebx
-	movl	%ebx,0(%esp)
-	pushl	$0
-	pushl	$T_NMI
-	jmp	2f
-
-	/*
-	 * ring transition, stay on stack, build frame from state
-	 * saved in TSS.
-	 */
-1:	subl	$20,%esp
-	pushl	$0
-	pushl	$T_NMI
-	movl	TSS_SS(%eax),%ebx
-	movl	%ebx,IRF_SS(%esp)
-	movl	TSS_ESP(%eax),%ebx
-	movl	%ebx,IRF_ESP(%esp)
-	movl	TSS_EFLAGS(%eax),%ebx
-	movl	%ebx,IRF_EFLAGS(%esp)
-	movl	TSS_CS(%eax),%ebx
-	movl	%ebx,IRF_CS(%esp)
-	movl	TSS_EIP(%eax),%ebx
-	movl	%ebx,IRF_EIP(%esp)
-
-	/* clear PSL_NT */
-2:	pushfl
-	popl	%eax
-	andl	$~PSL_NT,%eax
-	pushl	%eax
-	popfl
-
-	/* clear CR0_TS XXX hshoexer: needed? */
-	movl	%cr0,%eax
-	andl	$~CR0_TS,%eax
-	movl	%eax,%cr0
-
-	/* unbusy descriptors and reload common TSS */
-	movl	CPUVAR(GDT),%eax
-	movl	$GSEL(GNMITSS_SEL, SEL_KPL),%ebx
-	andl	$~0x200,4-SEL_KPL(%eax,%ebx,1)
-	movl	$GSEL(GTSS_SEL, SEL_KPL),%ebx
-	andl	$~0x200,4-SEL_KPL(%eax,%ebx,1)
-	ltr	%bx
-
-	/* load GPRs and segment registers with saved values from common TSS */
-	movl	CPUVAR(TSS),%eax
-	movl	TSS_ECX(%eax),%ecx
-	movl	TSS_EDX(%eax),%edx
-	movl	TSS_ESI(%eax),%esi
-	movl	TSS_EDI(%eax),%edi
-	movl	TSS_EBP(%eax),%ebp
-	movw	TSS_FS(%eax),%fs
-	movw	TSS_GS(%eax),%gs
-	movw	TSS_ES(%eax),%es
-	/* saved %ds might be invalid, thus push now and pop later */
-	movl	TSS_DS(%eax),%ebx
-	pushl	%ebx
-	movl	TSS_EBX(%eax),%ebx
-	movl	TSS_EAX(%eax),%eax
-	popl	%ds
-
-	/*
-	 * we can now proceed and save everything on the stack as
-	 * if no task switch had happend.
-	 */
-	jmp alltraps
+	ZTRAP(T_NMI)
 IDTVEC(bpt)
 	ZTRAP(T_BPTFLT)
 IDTVEC(ofl)
@@ -1072,17 +907,16 @@ IDTVEC(dna)
 #if NNPX > 0
 	pushl	$0			# dummy error code
 	pushl	$T_DNA
-	INTRENTRY(dna)
-	sti
+	INTRENTRY
+#ifdef MULTIPROCESSOR
 	pushl	CPUVAR(SELF)
+#else
+	pushl	$_C_LABEL(cpu_info_primary)
+#endif
 	call	*_C_LABEL(npxdna_func)
 	addl	$4,%esp
 	testl	%eax,%eax
 	jz	calltrap
-#ifdef DIAGNOSTIC
-	movl	$0xfd,%esi
-#endif
-	cli
 	INTRFASTEXIT
 #else
 	ZTRAP(T_DNA)
@@ -1097,72 +931,11 @@ IDTVEC(missing)
 	TRAP(T_SEGNPFLT)
 IDTVEC(stk)
 	TRAP(T_STKFLT)
-
 IDTVEC(prot)
-	pushl	$T_PROTFLT
-	/* If iret faults, we'll get a trap at doreti_iret+3 with CPL == 0. */
-	pushl	%eax
-	leal	_C_LABEL(doreti_iret+3),%eax
-	cmpl	%eax,12(%esp)	/* over %eax, trapno and err to %eip */
-	popl	%eax
-	jne	97f
-	pushl	%ebp
-	pushl	%eax
-	pushl	%fs
-	INTR_ENABLE_U_PLUS_K
-	/*
-	 * we have an iretframe on trampoline stack, above it the
-	 * remainder of the original iretframe iret faulted on.
-	 */
-	movl	CPUVAR(KERN_ESP),%eax
-	pushl	%eax
-	pushl	$0xdeadbeef
-	/*
-	 * now we have a trampframe on trampoline stack, above it the
-	 * remainder of the original iretframe iret faulted on.
-	 */
-	movl	%esp,%ebp
-	movl	%eax,%esp
-	subl	$SIZEOF_IRETFRAME+(5*4),%esp
-	/* copy to iretframe on kernel stack */
-	movl	TRF_EFLAGS(%ebp),%eax
-	movl	%eax,IRF_EFLAGS(%esp)
-	movl	TRF_CS(%ebp),%eax
-	movl	%eax,IRF_CS(%esp)
-	movl	TRF_EIP(%ebp),%eax
-	movl	%eax,IRF_EIP(%esp)
-	movl	TRF_ERR(%ebp),%eax
-	movl	%eax,IRF_ERR(%esp)
-	movl	TRF_TRAPNO(%ebp),%eax
-	movl	%eax,IRF_TRAPNO(%esp)
-	/* copy remainder of faulted iretframe */
-	movl	40(%ebp),%eax		/* eip */
-	movl	%eax,20(%esp)
-	movl	44(%ebp),%eax		/* cs */
-	movl	%eax,24(%esp)
-	movl	48(%ebp),%eax		/* eflags */
-	movl	%eax,28(%esp)
-	movl	52(%ebp),%eax		/* esp */
-	movl	%eax,32(%esp)
-	movl	56(%ebp),%eax		/* ss */
-	movl	%eax,36(%esp)
-	movl	TRF_FS(%ebp),%eax
-	movw	%ax,%fs
-	movl	TRF_EAX(%ebp),%eax
-	movl	TRF_EBP(%ebp),%ebp
-	/*
-	 * we have an iretframe on kernel stack, above it the
-	 * remainder of the original iretframe iret faulted on.
-	 * for INTRENTRY(prot) it looks like the fault happend
-	 * on the kernel stack
-	 */
-97:	INTRENTRY(prot)
-	sti
-	jmp	calltrap
+	TRAP(T_PROTFLT)
 IDTVEC(f00f_redirect)
 	pushl	$T_PAGEFLT
-	INTRENTRY(f00f_redirect)
-	sti
+	INTRENTRY
 	testb	$PGEX_U,TF_ERR(%esp)
 	jnz	calltrap
 	movl	%cr2,%eax
@@ -1197,17 +970,12 @@ IDTVEC(fpu)
 	 * this is difficult for nested interrupts.
 	 */
 	subl	$8,%esp			/* space for tf_{err,trapno} */
-	INTRENTRY(fpu)
-	sti
+	INTRENTRY
 	pushl	CPL			# if_ppl in intrframe
 	pushl	%esp			# push address of intrframe
 	incl	_C_LABEL(uvmexp)+V_TRAP
 	call	_C_LABEL(npxintr)
 	addl	$8,%esp			# pop address and if_ppl
-#ifdef DIAGNOSTIC
-	movl	$0xfc,%esi
-#endif
-	cli
 	INTRFASTEXIT
 #else
 	ZTRAP(T_ARITHTRAP)
@@ -1222,7 +990,7 @@ IDTVEC(align)
  * necessary, and resume as if we were handling a general protection fault.
  * This will cause the process to get a SIGBUS.
  */
-KUENTRY(resume_iret)
+NENTRY(resume_iret)
 	ZTRAP(T_PROTFLT)
 NENTRY(resume_pop_ds)
 	pushl	%es
@@ -1245,8 +1013,8 @@ NENTRY(resume_pop_fs)
  * All traps go through here. Call the generic trap handler, and
  * check for ASTs afterwards.
  */
-KUENTRY(alltraps)
-	INTRENTRY(alltraps)
+NENTRY(alltraps)
+	INTRENTRY
 	sti
 calltrap:
 #ifdef DIAGNOSTIC
@@ -1267,26 +1035,28 @@ calltrap:
 	 * to emulate the patched instruction.
 	 */
 	movl	$INTR_FAKE_TRAP, TF_ERR(%esp)
-	jz	.Lalltraps_check_asts
+	jz	2f
 .Lreal_trap:
 #endif /* !defined(GPROF) && defined(DDBPROF) */
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
-
-.Lalltraps_check_asts:
-	/* Check for ASTs on exit to user mode. */
+2:	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%ecx)
 	je	1f
 	testb	$SEL_RPL,TF_CS(%esp)
+#ifdef VM86
+	jnz	5f
+	testl	$PSL_VM,TF_EFLAGS(%esp)
+#endif
 	jz	1f
 5:	CLEAR_ASTPENDING(%ecx)
 	sti
 	pushl	%esp
 	call	_C_LABEL(ast)
 	addl	$4,%esp
-	jmp	.Lalltraps_check_asts
+	jmp	2b
 1:
 #if !defined(GPROF) && defined(DDBPROF)
 	/*
@@ -1304,9 +1074,6 @@ calltrap:
 #else
 	cmpl	CPL,%ebx
 	jne	3f
-#ifdef DIAGNOSTIC
-	movl	$0xfb,%esi
-#endif
 	INTRFASTEXIT
 3:	sti
 	pushl	$spl_lowered
@@ -1316,7 +1083,7 @@ calltrap:
 	int	$3
 #endif /* DDB */
 	movl	%ebx,CPL
-	jmp	.Lalltraps_check_asts
+	jmp	2b
 
 	.section .rodata
 spl_lowered:
@@ -1351,49 +1118,16 @@ spl_lowered:
 	popl	%eax
 	iret
 #endif /* !defined(GPROF) && defined(DDBPROF) */
-
-	.text
-#ifdef DIAGNOSTIC
-.Lintr_exit_not_blocked:
-	movl	warn_once,%eax
-	testl	%eax,%eax
-	jnz	1f
-	incl	%eax
-	movl	%eax,warn_once
-	pushl	%esi		/* marker indicating where we came from */
-	pushl	%edx		/* EFLAGS are in %edx */
-	pushl	$.Lnot_blocked
-	call	_C_LABEL(printf)
-	addl	$12,%esp
-#ifdef DDB
-	int	$3
-#endif	/* DDB */
-1:	cli
-	jmp	intr_fast_exit
-
-	.data
-	.global warn_once
-warn_once:
-	.long	0
-	.section .rodata
-.Lnot_blocked:
-	.asciz	"WARNING: INTERRUPTS NOT BLOCKED ON INTERRUPT RETURN 0x%x 0x%x\n"
-	.text
-#endif
-
 /*
  * Trap gate entry for syscall
  */
 IDTVEC(syscall)
 	subl	$8,%esp			/* space for tf_{err,trapno} */
-	INTRENTRY(syscall)
-	sti
+	INTRENTRY
 	pushl	%esp
 	call	_C_LABEL(syscall)
 	addl	$4,%esp
-
-.Lsyscall_check_asts:
-	/* Check for ASTs on exit to user mode. */
+2:	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%ecx)
 	je	1f
@@ -1403,78 +1137,8 @@ IDTVEC(syscall)
 	pushl	%esp
 	call	_C_LABEL(ast)
 	addl	$4,%esp
-	jmp	.Lsyscall_check_asts
-1:
-#ifdef DIAGNOSTIC
-	movl	$0xff,%esi
-#endif
-	jmp intr_fast_exit
-
-NENTRY(intr_fast_exit)
-#ifdef DIAGNOSTIC
-	pushfl
-	popl	%edx
-	testl	$PSL_I,%edx
-	jnz	.Lintr_exit_not_blocked
-#endif
-	/* we have a full trapframe */
-	INTR_RESTORE_ALL
-	/* now we have an iretframe */
-	testb	$SEL_RPL,IRF_CS(%esp)
-	/* recursing into kernel: stay on kernel stack using iretframe */
-	je	doreti_iret
-
-	/* leaving kernel: build trampframe on cpu stack */
-	pushl	%ebp
-	pushl	%eax
-	pushl	%fs
-        movl	$GSEL(GCPU_SEL, SEL_KPL),%eax
-	movw	%ax,%fs
-	movl	CPUVAR(INTR_ESP),%eax
-	pushl	%eax
-	pushl	$0xcafecafe
-	/* now we have an trampframe, copy frame to cpu stack */
-	movl	%eax,%ebp
-	movl	TRF_EIP(%esp),%eax
-	movl	%eax,TRF_EIP(%ebp)
-	movl	TRF_CS(%esp),%eax
-	movl	%eax,TRF_CS(%ebp)
-	movl	TRF_EFLAGS(%esp),%eax
-	movl	%eax,TRF_EFLAGS(%ebp)
-	movl	TRF_ESP(%esp),%eax
-	movl	%eax,TRF_ESP(%ebp)
-	movl	TRF_SS(%esp),%eax
-	movl	%eax,TRF_SS(%ebp)
-	movl	TRF__DEADBEEF(%esp),%eax
-	movl	%eax,TRF__DEADBEEF(%ebp)
-	movl	TRF__KERN_ESP(%esp),%eax
-	movl	%eax,TRF__KERN_ESP(%ebp)
-	movl	TRF_FS(%esp),%eax
-	movl	%eax,TRF_FS(%ebp)
-	movl	TRF_EAX(%esp),%eax
-	movl	%eax,TRF_EAX(%ebp)
-	movl	TRF_EBP(%esp),%eax
-	movl	%eax,TRF_EBP(%ebp)
-	/* switch to cpu stack, where we copied the trampframe */
-	movl	%ebp,%esp
-	movl	CPUVAR(USER_CR3),%eax
-	testl	%eax,%eax
-	jz	1f
-	jmp	iret_tramp
-
-KUENTRY(iret_tramp)
-	movl	%eax,%cr3
-	/* we have a trampframe; restore registers and adjust to iretframe */
-1:	popl	%eax
-	popl	%eax
-	popl	%fs
-	popl	%eax
-	popl	%ebp
-	.globl	_C_LABEL(doreti_iret)
-_C_LABEL(doreti_iret):
-	/* we have an iretframe */
-	addl	$IRF_EIP,%esp
-	iret
+	jmp	2b
+1:	INTRFASTEXIT
 
 #include <i386/i386/vector.s>
 #include <i386/isa/icu.s>

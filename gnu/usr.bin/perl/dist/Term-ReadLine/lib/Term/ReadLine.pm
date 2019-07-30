@@ -75,8 +75,6 @@ history. Returns the old value.
 returns an array with two strings that give most appropriate names for
 files for input and output using conventions C<"E<lt>$in">, C<"E<gt>out">.
 
-The strings returned may not be useful for 3-argument open().
-
 =item Attribs
 
 returns a reference to a hash which describes internal configuration
@@ -231,17 +229,12 @@ sub readline {
 }
 sub addhistory {}
 
-# used for testing purpose
-sub devtty { return '/dev/tty' }
-
 sub findConsole {
     my $console;
     my $consoleOUT;
 
-    my $devtty = devtty();
-
-    if ($^O ne 'MSWin32' and -e $devtty) {
-	$console = $devtty;
+    if ($^O ne 'MSWin32' and -e "/dev/tty") {
+	$console = "/dev/tty";
     } elsif ($^O eq 'MSWin32' or $^O eq 'msys' or -e "con") {
        $console = 'CONIN$';
        $consoleOUT = 'CONOUT$';
@@ -255,7 +248,7 @@ sub findConsole {
 
     $consoleOUT = $console unless defined $consoleOUT;
     $console = "&STDIN" unless defined $console;
-    if ($console eq $devtty && !open(my $fh, "<", $console)) {
+    if ($console eq "/dev/tty" && !open(my $fh, "<", $console)) {
       $console = "&STDIN";
       undef($consoleOUT);
     }
@@ -273,10 +266,11 @@ sub new {
   if (@_==2) {
     my($console, $consoleOUT) = $_[0]->findConsole;
 
+
     # the Windows CONIN$ needs GENERIC_WRITE mode to allow
     # a SetConsoleMode() if we end up using Term::ReadKey
-    open FIN, (( $^O eq 'MSWin32' && $console eq 'CONIN$' ) ? '+<' : '<' ), $console;
-    # RT #132008:  Still need 2-arg open here
+    open FIN, (  $^O eq 'MSWin32' && $console eq 'CONIN$' ) ? "+<$console" :
+                                                              "<$console";
     open FOUT,">$consoleOUT";
 
     #OUT->autoflush(1);		# Conflicts with debugger?
@@ -326,7 +320,7 @@ sub Features { \%features }
 
 package Term::ReadLine;		# So late to allow the above code be defined?
 
-our $VERSION = '1.17';
+our $VERSION = '1.15';
 
 my ($which) = exists $ENV{PERL_RL} ? split /\s+/, $ENV{PERL_RL} : undef;
 if ($which) {

@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <string.h>
 #ifndef VMS
 #include <sys/file.h>
 #include <ndbm.h>
@@ -48,11 +47,16 @@
 
 char *optarg;			       /* Global argument pointer. */
 
+#ifdef VMS
+#define index  strchr
+#endif
+
 char
 getopt(int argc, char **argv, char *optstring)
 {
 	int c;
 	char *place;
+	extern char *index();
 	static int optind = 0;
 	static char *scan = NULL;
 
@@ -74,7 +78,7 @@ getopt(int argc, char **argv, char *optstring)
 	}
 
 	c = *scan++;
-	place = strchr(optstring, c);
+	place = index(optstring, c);
 	if (place == NULL || c == ':' || c == ';') {
 
 		(void) fprintf(stderr, "%s: unknown option %c\n", argv[0], c);

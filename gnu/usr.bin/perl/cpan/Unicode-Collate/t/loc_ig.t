@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..112\n"; }
+BEGIN { $| = 1; print "1..108\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -46,22 +46,18 @@ ok($objIg->gt("c", "ch"));
 ok($objIg->lt("g", "gb"));
 ok($objIg->lt("gz","gb"));
 ok($objIg->lt("gb","gh"));
-ok($objIg->lt("gbz","gh"));
 ok($objIg->lt("gh","gw"));
-ok($objIg->lt("ghz","gw"));
 ok($objIg->gt("h", "gw"));
 ok($objIg->lt("i", "i\x{323}"));
 ok($objIg->gt("j", "i\x{323}"));
 ok($objIg->lt("k", "kp"));
 ok($objIg->lt("kz","kp"));
 ok($objIg->lt("kp","kw"));
-ok($objIg->lt("kpz","kw"));
 ok($objIg->gt("l", "kw"));
 ok($objIg->lt("n", "n\x{307}"));
 ok($objIg->lt("nz","n\x{307}"));
 ok($objIg->gt("nw","n\x{307}"));
 ok($objIg->lt("nw", "ny"));
-ok($objIg->lt("nwz","ny"));
 ok($objIg->gt("o",  "ny"));
 ok($objIg->lt("o", "o\x{323}"));
 ok($objIg->gt("p", "o\x{323}"));
@@ -71,7 +67,7 @@ ok($objIg->gt("t", "sh"));
 ok($objIg->lt("u", "u\x{323}"));
 ok($objIg->gt("v", "u\x{323}"));
 
-# 32
+# 28
 
 $objIg->change(level => 2);
 
@@ -98,7 +94,7 @@ ok($objIg->eq("sh", "Sh"));
 ok($objIg->eq("Sh", "SH"));
 ok($objIg->eq("u\x{323}", "U\x{323}"));
 
-# 54
+# 50
 
 $objIg->change(level => 3);
 
@@ -125,7 +121,7 @@ ok($objIg->lt("sh", "Sh"));
 ok($objIg->lt("Sh", "SH"));
 ok($objIg->lt("u\x{323}", "U\x{323}"));
 
-# 76
+# 72
 
 ok($objIg->eq("i\x{323}", "\x{1ECB}"));
 ok($objIg->eq("I\x{323}", "\x{1ECA}"));
@@ -143,7 +139,7 @@ ok($objIg->eq("O\x{323}\x{31B}", "\x{1EE2}"));
 ok($objIg->eq("u\x{323}\x{31B}", "\x{1EF1}"));
 ok($objIg->eq("U\x{323}\x{31B}", "\x{1EF0}"));
 
-# 90
+# 86
 
 $objIg->change(upper_before_lower => 1);
 
@@ -170,4 +166,4 @@ ok($objIg->gt("sh", "Sh"));
 ok($objIg->gt("Sh", "SH"));
 ok($objIg->gt("u\x{323}", "U\x{323}"));
 
-# 112
+# 108

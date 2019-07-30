@@ -22,7 +22,7 @@ class ExprCharTestCase(TestBase):
         """These basic expression commands should work as expected."""
         self.build(dictionary=dictionary)
 
-        (target, process, thread, bkpt) = lldbutil.run_to_source_breakpoint(self,
+        (target, process, thread, bkpt) = lldbutil.run_to_source_breakpoint(self, 
                                           '// Break here', self.main_source_spec)
         frame = thread.GetFrameAtIndex(0)
 
@@ -49,7 +49,6 @@ class ExprCharTestCase(TestBase):
         archs=[
             "arm",
             "aarch64",
-            "powerpc64le",
             "s390x"],
         bugnumber="llvm.org/pr23069")
     @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr21765")
@@ -59,10 +58,7 @@ class ExprCharTestCase(TestBase):
     @expectedFailureAll(
         archs=[
             "i[3-6]86",
-            "x86_64",
-            "arm64",
-            'armv7',
-            'armv7k'],
+            "x86_64"],
         bugnumber="llvm.org/pr23069, <rdar://problem/28721938>")
     @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr21765")
     @expectedFailureAll(triple='mips*', bugnumber="llvm.org/pr23069")

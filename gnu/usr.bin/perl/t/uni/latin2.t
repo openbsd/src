@@ -3,7 +3,9 @@
 BEGIN {
     chdir 't' if -d 't';
     require './test.pl';
-    skip_all("encoding.pm is no longer supported by the perl core");
+    skip_all_without_dynamic_extension('Encode');
+    skip_all("no encoding pragma in EBCDIC") if $::IS_EBCDIC;
+    skip_all_without_perlio();
 }
 
 plan tests => 94;

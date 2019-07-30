@@ -23,28 +23,24 @@ namespace llvm {
 
 class MCAssembler;
 struct MCFixupKindInfo;
-class MCObjectWriter;
-class MCRegisterInfo;
-class MCSymbolELF;
 class Target;
+class MCObjectWriter;
 
 class MipsAsmBackend : public MCAsmBackend {
-  Triple TheTriple;
-  bool IsN32;
+  Triple::OSType OSType;
+  bool IsLittle; // Big or little endian
+  bool Is64Bit;  // 32 or 64 bit words
 
 public:
-  MipsAsmBackend(const Target &T, const MCRegisterInfo &MRI, const Triple &TT,
-                 StringRef CPU, bool N32)
-      : MCAsmBackend(TT.isLittleEndian() ? support::little : support::big),
-        TheTriple(TT), IsN32(N32) {}
+  MipsAsmBackend(const Target &T, Triple::OSType OSType, bool IsLittle,
+                 bool Is64Bit)
+      : MCAsmBackend(), OSType(OSType), IsLittle(IsLittle), Is64Bit(Is64Bit) {}
 
-  std::unique_ptr<MCObjectTargetWriter>
-  createObjectTargetWriter() const override;
+  MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS) const override;
 
   void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
                   const MCValue &Target, MutableArrayRef<char> Data,
-                  uint64_t Value, bool IsResolved,
-                  const MCSubtargetInfo *STI) const override;
+                  uint64_t Value, bool IsResolved) const override;
 
   Optional<MCFixupKind> getFixupKind(StringRef Name) const override;
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override;
@@ -60,8 +56,7 @@ public:
   /// relaxation.
   ///
   /// \param Inst - The instruction to test.
-  bool mayNeedRelaxation(const MCInst &Inst,
-                         const MCSubtargetInfo &STI) const override {
+  bool mayNeedRelaxation(const MCInst &Inst) const override {
     return false;
   }
 
@@ -86,12 +81,8 @@ public:
 
   /// @}
 
-  bool writeNopData(raw_ostream &OS, uint64_t Count) const override;
+  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const override;
 
-  bool shouldForceRelocation(const MCAssembler &Asm, const MCFixup &Fixup,
-                             const MCValue &Target) override;
-
-  bool isMicroMips(const MCSymbol *Sym) const override;
 }; // class MipsAsmBackend
 
 } // namespace

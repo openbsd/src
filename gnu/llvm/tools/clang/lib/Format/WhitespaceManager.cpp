@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// This file implements WhitespaceManager class.
+/// \brief This file implements WhitespaceManager class.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -67,11 +67,6 @@ void WhitespaceManager::addUntouchableToken(const FormatToken &Tok,
                            /*IsInsideToken=*/false));
 }
 
-llvm::Error
-WhitespaceManager::addReplacement(const tooling::Replacement &Replacement) {
-  return Replaces.add(Replacement);
-}
-
 void WhitespaceManager::replaceWhitespaceInToken(
     const FormatToken &Tok, unsigned Offset, unsigned ReplaceChars,
     StringRef PreviousPostfix, StringRef CurrentPrefix, bool InPPDirective,
@@ -90,7 +85,7 @@ const tooling::Replacements &WhitespaceManager::generateReplacements() {
   if (Changes.empty())
     return Replaces;
 
-  llvm::sort(Changes.begin(), Changes.end(), Change::IsBeforeInFile(SourceMgr));
+  std::sort(Changes.begin(), Changes.end(), Change::IsBeforeInFile(SourceMgr));
   calculateLineBreakInformation();
   alignConsecutiveDeclarations();
   alignConsecutiveAssignments();
@@ -171,15 +166,15 @@ void WhitespaceManager::calculateLineBreakInformation() {
         // BreakableLineCommentSection does comment reflow changes and here is
         // the aligning of trailing comments. Consider the case where we reflow
         // the second line up in this example:
-        //
+        // 
         // // line 1
         // // line 2
-        //
+        // 
         // That amounts to 2 changes by BreakableLineCommentSection:
         //  - the first, delimited by (), for the whitespace between the tokens,
         //  - and second, delimited by [], for the whitespace at the beginning
         //  of the second token:
-        //
+        // 
         // // line 1(
         // )[// ]line 2
         //
@@ -613,9 +608,8 @@ void WhitespaceManager::generateChanges() {
     if (C.CreateReplacement) {
       std::string ReplacementText = C.PreviousLinePostfix;
       if (C.ContinuesPPDirective)
-        appendEscapedNewlineText(ReplacementText, C.NewlinesBefore,
-                                 C.PreviousEndOfTokenColumn,
-                                 C.EscapedNewlineColumn);
+        appendNewlineText(ReplacementText, C.NewlinesBefore,
+                          C.PreviousEndOfTokenColumn, C.EscapedNewlineColumn);
       else
         appendNewlineText(ReplacementText, C.NewlinesBefore);
       appendIndentText(ReplacementText, C.Tok->IndentLevel,
@@ -627,7 +621,8 @@ void WhitespaceManager::generateChanges() {
   }
 }
 
-void WhitespaceManager::storeReplacement(SourceRange Range, StringRef Text) {
+void WhitespaceManager::storeReplacement(SourceRange Range,
+                                         StringRef Text) {
   unsigned WhitespaceLength = SourceMgr.getFileOffset(Range.getEnd()) -
                               SourceMgr.getFileOffset(Range.getBegin());
   // Don't create a replacement, if it does not change anything.
@@ -650,16 +645,16 @@ void WhitespaceManager::appendNewlineText(std::string &Text,
     Text.append(UseCRLF ? "\r\n" : "\n");
 }
 
-void WhitespaceManager::appendEscapedNewlineText(
-    std::string &Text, unsigned Newlines, unsigned PreviousEndOfTokenColumn,
-    unsigned EscapedNewlineColumn) {
+void WhitespaceManager::appendNewlineText(std::string &Text, unsigned Newlines,
+                                          unsigned PreviousEndOfTokenColumn,
+                                          unsigned EscapedNewlineColumn) {
   if (Newlines > 0) {
-    unsigned Spaces =
-        std::max<int>(1, EscapedNewlineColumn - PreviousEndOfTokenColumn - 1);
+    unsigned Offset =
+        std::min<int>(EscapedNewlineColumn - 2, PreviousEndOfTokenColumn);
     for (unsigned i = 0; i < Newlines; ++i) {
-      Text.append(Spaces, ' ');
+      Text.append(EscapedNewlineColumn - Offset - 1, ' ');
       Text.append(UseCRLF ? "\\\r\n" : "\\\n");
-      Spaces = std::max<int>(0, EscapedNewlineColumn - 1);
+      Offset = 0;
     }
   }
 }

@@ -52,13 +52,11 @@ enum ActionType {
   GenClangCommentCommandInfo,
   GenClangCommentCommandList,
   GenArmNeon,
-  GenArmFP16,
   GenArmNeonSema,
   GenArmNeonTest,
   GenAttrDocs,
   GenDiagDocs,
   GenOptDocs,
-  GenDataCollectors,
   GenTestPragmaAttributeSupportedAttributes
 };
 
@@ -140,7 +138,6 @@ cl::opt<ActionType> Action(
                    "Generate list of commands that are used in "
                    "documentation comments"),
         clEnumValN(GenArmNeon, "gen-arm-neon", "Generate arm_neon.h for clang"),
-        clEnumValN(GenArmFP16, "gen-arm-fp16", "Generate arm_fp16.h for clang"),
         clEnumValN(GenArmNeonSema, "gen-arm-neon-sema",
                    "Generate ARM NEON sema support for clang"),
         clEnumValN(GenArmNeonTest, "gen-arm-neon-test",
@@ -150,8 +147,6 @@ cl::opt<ActionType> Action(
         clEnumValN(GenDiagDocs, "gen-diag-docs",
                    "Generate diagnostic documentation"),
         clEnumValN(GenOptDocs, "gen-opt-docs", "Generate option documentation"),
-        clEnumValN(GenDataCollectors, "gen-clang-data-collectors",
-                   "Generate data collectors for AST nodes"),
         clEnumValN(GenTestPragmaAttributeSupportedAttributes,
                    "gen-clang-test-pragma-attribute-supported-attributes",
                    "Generate a list of attributes supported by #pragma clang "
@@ -252,9 +247,6 @@ bool ClangTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
   case GenArmNeon:
     EmitNeon(Records, OS);
     break;
-  case GenArmFP16:
-    EmitFP16(Records, OS);
-    break;
   case GenArmNeonSema:
     EmitNeonSema(Records, OS);
     break;
@@ -269,9 +261,6 @@ bool ClangTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
     break;
   case GenOptDocs:
     EmitClangOptDocs(Records, OS);
-    break;
-  case GenDataCollectors:
-    EmitClangDataCollectors(Records, OS);
     break;
   case GenTestPragmaAttributeSupportedAttributes:
     EmitTestPragmaAttributeSupportedAttributes(Records, OS);

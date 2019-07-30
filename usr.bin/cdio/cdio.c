@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.76 2019/04/01 03:57:07 naddy Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.74 2015/01/16 06:40:06 deraadt Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -53,6 +53,7 @@
  */
 
 #include <sys/param.h>	/* isset */
+#include <sys/file.h>
 #include <sys/cdio.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
@@ -62,7 +63,6 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -963,7 +963,7 @@ play_msf:
 	} else if (s1 > 59 || s2 > 59) {
 		printf("Seconds must be between 0 and 59\n");
 		return (0);
-	} else if (f1 > 74 || f2 > 74) {
+	} if (f1 > 74 || f2 > 74) {
 		printf("Frames number must be between 0 and 74\n");
 		return (0);
 	}

@@ -63,7 +63,7 @@ public:
 class EndOfTranslationUnit {
   template <typename CHECKER>
   static void _checkEndOfTranslationUnit(void *checker,
-                                         const TranslationUnitDecl *TU,
+                                         const TranslationUnitDecl *TU, 
                                          AnalysisManager& mgr,
                                          BugReporter &BR) {
     ((const CHECKER *)checker)->checkEndOfTranslationUnit(TU, mgr, BR);
@@ -254,9 +254,9 @@ public:
 
 class EndFunction {
   template <typename CHECKER>
-  static void _checkEndFunction(void *checker, const ReturnStmt *RS,
+  static void _checkEndFunction(void *checker,
                                 CheckerContext &C) {
-    ((const CHECKER *)checker)->checkEndFunction(RS, C);
+    ((const CHECKER *)checker)->checkEndFunction(C);
   }
 
 public:
@@ -280,22 +280,6 @@ public:
     mgr._registerForBranchCondition(
       CheckerManager::CheckBranchConditionFunc(checker,
                                                _checkBranchCondition<CHECKER>));
-  }
-};
-
-class NewAllocator {
-  template <typename CHECKER>
-  static void _checkNewAllocator(void *checker, const CXXNewExpr *NE,
-                                 SVal Target, CheckerContext &C) {
-    ((const CHECKER *)checker)->checkNewAllocator(NE, Target, C);
-  }
-
-public:
-  template <typename CHECKER>
-  static void _register(CHECKER *checker, CheckerManager &mgr) {
-    mgr._registerForNewAllocator(
-        CheckerManager::CheckNewAllocatorFunc(checker,
-                                              _checkNewAllocator<CHECKER>));
   }
 };
 
@@ -331,7 +315,7 @@ public:
 
 class RegionChanges {
   template <typename CHECKER>
-  static ProgramStateRef
+  static ProgramStateRef 
   _checkRegionChanges(void *checker,
                       ProgramStateRef state,
                       const InvalidatedSymbols *invalidated,
@@ -370,7 +354,7 @@ class PointerEscape {
                                                             Kind);
 
     InvalidatedSymbols RegularEscape;
-    for (InvalidatedSymbols::const_iterator I = Escaped.begin(),
+    for (InvalidatedSymbols::const_iterator I = Escaped.begin(), 
                                             E = Escaped.end(); I != E; ++I)
       if (!ETraits->hasTrait(*I,
               RegionAndSymbolInvalidationTraits::TK_PreserveContents) &&
@@ -410,7 +394,7 @@ class ConstPointerEscape {
       return State;
 
     InvalidatedSymbols ConstEscape;
-    for (InvalidatedSymbols::const_iterator I = Escaped.begin(),
+    for (InvalidatedSymbols::const_iterator I = Escaped.begin(), 
                                             E = Escaped.end(); I != E; ++I)
       if (ETraits->hasTrait(*I,
               RegionAndSymbolInvalidationTraits::TK_PreserveContents) &&
@@ -436,7 +420,7 @@ public:
   }
 };
 
-
+  
 template <typename EVENT>
 class Event {
   template <typename CHECKER>
@@ -504,7 +488,7 @@ public:
 /// Dump checker name to stream.
 raw_ostream& operator<<(raw_ostream &Out, const CheckerBase &Checker);
 
-/// Tag that can use a checker name as a message provider
+/// Tag that can use a checker name as a message provider 
 /// (see SimpleProgramPointTag).
 class CheckerProgramPointTag : public SimpleProgramPointTag {
 public:
@@ -548,7 +532,7 @@ public:
   }
 };
 
-/// We dereferenced a location that may be null.
+/// \brief We dereferenced a location that may be null.
 struct ImplicitNullDerefEvent {
   SVal Location;
   bool IsLoad;
@@ -560,7 +544,7 @@ struct ImplicitNullDerefEvent {
   bool IsDirectDereference;
 };
 
-/// A helper class which wraps a boolean value set to false by default.
+/// \brief A helper class which wraps a boolean value set to false by default.
 ///
 /// This class should behave exactly like 'bool' except that it doesn't need to
 /// be explicitly initialized.

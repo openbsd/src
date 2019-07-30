@@ -10,20 +10,14 @@ our @ISA = qw(Exporter);
 
 our @EXPORT  = qw(test_harness pod2man perllocal_install uninstall
                   warn_if_old_packlist test_s cp_nonempty);
-our $VERSION = '7.34';
-$VERSION = eval $VERSION;
+our $VERSION = '7.10_02';
 
 my $Is_VMS = $^O eq 'VMS';
 
-sub mtime {
-  no warnings 'redefine';
-  local $@;
-  *mtime = (eval { require Time::HiRes } && defined &Time::HiRes::stat)
-    ? sub { (Time::HiRes::stat($_[0]))[9] }
-    : sub { (             stat($_[0]))[9] }
-  ;
-  goto &mtime;
-}
+eval {  require Time::HiRes; die unless Time::HiRes->can("stat"); };
+*mtime = $@ ?
+ sub { [             stat($_[0])]->[9] } :
+ sub { [Time::HiRes::stat($_[0])]->[9] } ;
 
 =head1 NAME
 
@@ -205,7 +199,7 @@ Key/value pairs are extra information about the module.  Fields include:
     installed into      which directory your module was out into
     LINKTYPE            dynamic or static linking
     VERSION             module version number
-    EXE_FILES           any executables installed in a space separated
+    EXE_FILES           any executables installed in a space seperated
                         list
 
 =cut
@@ -219,9 +213,8 @@ sub perllocal_install {
                            : @ARGV;
 
     my $pod;
-    my $time = gmtime($ENV{SOURCE_DATE_EPOCH} || time);
-    $pod = sprintf <<'POD', scalar($time), $type, $name, $name;
- =head2 %s: C<%s> L<%s|%s>
+    $pod = sprintf <<POD, scalar localtime;
+ =head2 %s: C<$type> L<$name|$name>
 
  =over 4
 

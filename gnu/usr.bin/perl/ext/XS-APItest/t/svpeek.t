@@ -18,13 +18,11 @@ $| = 1;
   is (DPeek ($^),    'PVMG()',			'$^');
   is (DPeek ($=),    'PVMG()',			'$=');
   is (DPeek ($-),    'PVMG()',			'$-');
-
-  # This tests expects that $! will have been used as a string recently.
-  my $foo = "$!";
 like (DPeek ($!), qr'^PVMG\("',			'$!');
-
-{
-  local $?; # Reset anything Test::* has done to it.
+if ($^O eq 'VMS') {
+  # VMS defines COMPLEX_STATUS and upgrades $? to PVLV
+  is (DPeek ($?),    'PVLV()',			'$?');
+} else {
   is (DPeek ($?),    'PVMG()',			'$?');
 }
   is (DPeek ($|),    'PVMG(1)',			'$|');

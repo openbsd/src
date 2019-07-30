@@ -3,14 +3,16 @@ package File::Spec::Functions;
 use File::Spec;
 use strict;
 
-our $VERSION = '3.74';
+use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION);
+
+$VERSION = '3.63_01';
 $VERSION =~ tr/_//d;
 
 require Exporter;
 
-our @ISA = qw(Exporter);
+@ISA = qw(Exporter);
 
-our @EXPORT = qw(
+@EXPORT = qw(
 	canonpath
 	catdir
 	catfile
@@ -22,7 +24,7 @@ our @EXPORT = qw(
 	path
 );
 
-our @EXPORT_OK = qw(
+@EXPORT_OK = qw(
 	devnull
 	tmpdir
 	splitpath
@@ -33,7 +35,7 @@ our @EXPORT_OK = qw(
 	case_tolerant
 );
 
-our %EXPORT_TAGS = ( ALL => [ @EXPORT_OK, @EXPORT ] );
+%EXPORT_TAGS = ( ALL => [ @EXPORT_OK, @EXPORT ] );
 
 require File::Spec::Unix;
 my %udeps = (

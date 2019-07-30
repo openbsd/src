@@ -37,7 +37,7 @@ class AsanTestCase(TestBase):
         self.line_breakpoint = line_number('main.c', '// break line')
 
     def asan_tests(self):
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
         self.expect(
             "file " + exe,
             patterns=["Current executable set to .*a.out"])

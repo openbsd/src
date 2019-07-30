@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.61 2019/02/05 02:17:32 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.57 2016/09/01 14:12:07 tedu Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -171,24 +171,12 @@ main(int argc, char *argv[])
 	(void)time(&now);
 	kmem_setup();
 
-	if (!clear) {
-		if (unveil(dirn, "rwc") == -1) {
-			syslog(LOG_ERR, "unveil: %m");
-			exit(1);
-		}
-		if (unveil(kernel ? kernel : _PATH_UNIX, "r") == -1) {
-			syslog(LOG_ERR, "unveil: %m");
-			exit(1);
-		}
-		if (unveil(rawname(ddname), "r") == -1) {
-			syslog(LOG_ERR, "unveil: %m");
-			exit(1);
-		}
-		if (pledge("stdio rpath wpath cpath", NULL) == -1) {
-			syslog(LOG_ERR, "pledge: %m");
-			exit(1);
-		}
-	} else {
+	if (pledge("stdio rpath wpath cpath", NULL) == -1) {
+		syslog(LOG_ERR, "pledge: %m");
+		exit(1);
+	}
+
+	if (clear) {
 		clear_dump();
 		return (0);
 	}
@@ -379,11 +367,6 @@ dump_exists(void)
 void
 clear_dump(void)
 {
-	if (pledge("stdio", NULL) == -1) {
-		syslog(LOG_ERR, "pledge: %m");
-		exit(1);
-	}
-
 	if (kvm_dump_inval(kd_dump) == -1)
 		syslog(LOG_ERR, "%s: kvm_clear_dump: %s", ddname,
 			kvm_geterr(kd_dump));
@@ -584,7 +567,7 @@ find_dev(dev_t dev, int type)
 		}
 	}
 	closedir(dfd);
-	syslog(LOG_ERR, "can't find device %u/%u", major(dev), minor(dev));
+	syslog(LOG_ERR, "can't find device %d/%d", major(dev), minor(dev));
 	exit(1);
 }
 

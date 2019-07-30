@@ -10,7 +10,7 @@
 #include "llvm/Support/Process.h"
 #include "gtest/gtest.h"
 
-#ifdef _WIN32
+#ifdef LLVM_ON_WIN32
 #include <windows.h>
 #endif
 
@@ -42,18 +42,10 @@ TEST(ProcessTest, None) {
   Optional<std::string> val(
       Process::GetEnv("__LLVM_TEST_ENVIRON_NO_SUCH_VAR__"));
   EXPECT_FALSE(val.hasValue());
-} 
+}
 #endif
 
-#ifdef _WIN32
-
-TEST(ProcessTest, EmptyVal) {
-  SetEnvironmentVariableA("__LLVM_TEST_ENVIRON_VAR__", "");
-  Optional<std::string> val(Process::GetEnv("__LLVM_TEST_ENVIRON_VAR__"));
-  EXPECT_TRUE(val.hasValue());
-  EXPECT_STREQ("", val->c_str());
-}
-
+#ifdef LLVM_ON_WIN32
 TEST(ProcessTest, Wchar) {
   SetEnvironmentVariableW(L"__LLVM_TEST_ENVIRON_VAR__", L"abcdefghijklmnopqrs");
   Optional<std::string> val(Process::GetEnv("__LLVM_TEST_ENVIRON_VAR__"));

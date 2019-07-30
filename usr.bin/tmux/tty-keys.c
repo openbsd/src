@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.114 2019/05/09 14:09:32 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.102 2017/10/09 11:35:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -19,10 +19,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 
-#include <netinet/in.h>
-
 #include <limits.h>
-#include <resolv.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
@@ -46,10 +43,7 @@ static struct tty_key *tty_keys_find(struct tty *, const char *, size_t,
 static int	tty_keys_next1(struct tty *, const char *, size_t, key_code *,
 		    size_t *, int);
 static void	tty_keys_callback(int, short, void *);
-static int	tty_keys_mouse(struct tty *, const char *, size_t, size_t *,
-		    struct mouse_event *);
-static int	tty_keys_clipboard(struct tty *, const char *, size_t,
-		    size_t *);
+static int	tty_keys_mouse(struct tty *, const char *, size_t, size_t *);
 static int	tty_keys_device_attributes(struct tty *, const char *, size_t,
 		    size_t *);
 
@@ -177,12 +171,7 @@ static const struct tty_default_key_raw tty_default_raw_keys[] = {
 	{ "\033[201~", KEYC_PASTE_END },
 };
 
-/*
- * Default terminfo(5) keys. Any keys that have builtin modifiers
- * (that is, where the key itself contains the modifiers) has the
- * KEYC_XTERM flag set so a leading escape is not treated as meta (and
- * probably removed).
- */
+/* Default terminfo(5) keys. */
 struct tty_default_key_code {
 	enum tty_code_code	code;
 	key_code	 	key;
@@ -202,61 +191,61 @@ static const struct tty_default_key_code tty_default_code_keys[] = {
 	{ TTYC_KF11, KEYC_F11 },
 	{ TTYC_KF12, KEYC_F12 },
 
-	{ TTYC_KF13, KEYC_F1|KEYC_SHIFT|KEYC_XTERM },
-	{ TTYC_KF14, KEYC_F2|KEYC_SHIFT|KEYC_XTERM },
-	{ TTYC_KF15, KEYC_F3|KEYC_SHIFT|KEYC_XTERM },
-	{ TTYC_KF16, KEYC_F4|KEYC_SHIFT|KEYC_XTERM },
-	{ TTYC_KF17, KEYC_F5|KEYC_SHIFT|KEYC_XTERM },
-	{ TTYC_KF18, KEYC_F6|KEYC_SHIFT|KEYC_XTERM },
-	{ TTYC_KF19, KEYC_F7|KEYC_SHIFT|KEYC_XTERM },
-	{ TTYC_KF20, KEYC_F8|KEYC_SHIFT|KEYC_XTERM },
-	{ TTYC_KF21, KEYC_F9|KEYC_SHIFT|KEYC_XTERM },
-	{ TTYC_KF22, KEYC_F10|KEYC_SHIFT|KEYC_XTERM },
-	{ TTYC_KF23, KEYC_F11|KEYC_SHIFT|KEYC_XTERM },
-	{ TTYC_KF24, KEYC_F12|KEYC_SHIFT|KEYC_XTERM },
+	{ TTYC_KF13, KEYC_F1|KEYC_SHIFT },
+	{ TTYC_KF14, KEYC_F2|KEYC_SHIFT },
+	{ TTYC_KF15, KEYC_F3|KEYC_SHIFT },
+	{ TTYC_KF16, KEYC_F4|KEYC_SHIFT },
+	{ TTYC_KF17, KEYC_F5|KEYC_SHIFT },
+	{ TTYC_KF18, KEYC_F6|KEYC_SHIFT },
+	{ TTYC_KF19, KEYC_F7|KEYC_SHIFT },
+	{ TTYC_KF20, KEYC_F8|KEYC_SHIFT },
+	{ TTYC_KF21, KEYC_F9|KEYC_SHIFT },
+	{ TTYC_KF22, KEYC_F10|KEYC_SHIFT },
+	{ TTYC_KF23, KEYC_F11|KEYC_SHIFT },
+	{ TTYC_KF24, KEYC_F12|KEYC_SHIFT },
 
-	{ TTYC_KF25, KEYC_F1|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF26, KEYC_F2|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF27, KEYC_F3|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF28, KEYC_F4|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF29, KEYC_F5|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF30, KEYC_F6|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF31, KEYC_F7|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF32, KEYC_F8|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF33, KEYC_F9|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF34, KEYC_F10|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF35, KEYC_F11|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF36, KEYC_F12|KEYC_CTRL|KEYC_XTERM },
+	{ TTYC_KF25, KEYC_F1|KEYC_CTRL },
+	{ TTYC_KF26, KEYC_F2|KEYC_CTRL },
+	{ TTYC_KF27, KEYC_F3|KEYC_CTRL },
+	{ TTYC_KF28, KEYC_F4|KEYC_CTRL },
+	{ TTYC_KF29, KEYC_F5|KEYC_CTRL },
+	{ TTYC_KF30, KEYC_F6|KEYC_CTRL },
+	{ TTYC_KF31, KEYC_F7|KEYC_CTRL },
+	{ TTYC_KF32, KEYC_F8|KEYC_CTRL },
+	{ TTYC_KF33, KEYC_F9|KEYC_CTRL },
+	{ TTYC_KF34, KEYC_F10|KEYC_CTRL },
+	{ TTYC_KF35, KEYC_F11|KEYC_CTRL },
+	{ TTYC_KF36, KEYC_F12|KEYC_CTRL },
 
-	{ TTYC_KF37, KEYC_F1|KEYC_SHIFT|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF38, KEYC_F2|KEYC_SHIFT|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF39, KEYC_F3|KEYC_SHIFT|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF40, KEYC_F4|KEYC_SHIFT|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF41, KEYC_F5|KEYC_SHIFT|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF42, KEYC_F6|KEYC_SHIFT|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF43, KEYC_F7|KEYC_SHIFT|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF44, KEYC_F8|KEYC_SHIFT|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF45, KEYC_F9|KEYC_SHIFT|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF46, KEYC_F10|KEYC_SHIFT|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF47, KEYC_F11|KEYC_SHIFT|KEYC_CTRL|KEYC_XTERM },
-	{ TTYC_KF48, KEYC_F12|KEYC_SHIFT|KEYC_CTRL|KEYC_XTERM },
+	{ TTYC_KF37, KEYC_F1|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF38, KEYC_F2|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF39, KEYC_F3|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF40, KEYC_F4|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF41, KEYC_F5|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF42, KEYC_F6|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF43, KEYC_F7|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF44, KEYC_F8|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF45, KEYC_F9|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF46, KEYC_F10|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF47, KEYC_F11|KEYC_SHIFT|KEYC_CTRL },
+	{ TTYC_KF48, KEYC_F12|KEYC_SHIFT|KEYC_CTRL },
 
-	{ TTYC_KF49, KEYC_F1|KEYC_ESCAPE|KEYC_XTERM },
-	{ TTYC_KF50, KEYC_F2|KEYC_ESCAPE|KEYC_XTERM },
-	{ TTYC_KF51, KEYC_F3|KEYC_ESCAPE|KEYC_XTERM },
-	{ TTYC_KF52, KEYC_F4|KEYC_ESCAPE|KEYC_XTERM },
-	{ TTYC_KF53, KEYC_F5|KEYC_ESCAPE|KEYC_XTERM },
-	{ TTYC_KF54, KEYC_F6|KEYC_ESCAPE|KEYC_XTERM },
-	{ TTYC_KF55, KEYC_F7|KEYC_ESCAPE|KEYC_XTERM },
-	{ TTYC_KF56, KEYC_F8|KEYC_ESCAPE|KEYC_XTERM },
-	{ TTYC_KF57, KEYC_F9|KEYC_ESCAPE|KEYC_XTERM },
-	{ TTYC_KF58, KEYC_F10|KEYC_ESCAPE|KEYC_XTERM },
-	{ TTYC_KF59, KEYC_F11|KEYC_ESCAPE|KEYC_XTERM },
-	{ TTYC_KF60, KEYC_F12|KEYC_ESCAPE|KEYC_XTERM },
+	{ TTYC_KF49, KEYC_F1|KEYC_ESCAPE },
+	{ TTYC_KF50, KEYC_F2|KEYC_ESCAPE },
+	{ TTYC_KF51, KEYC_F3|KEYC_ESCAPE },
+	{ TTYC_KF52, KEYC_F4|KEYC_ESCAPE },
+	{ TTYC_KF53, KEYC_F5|KEYC_ESCAPE },
+	{ TTYC_KF54, KEYC_F6|KEYC_ESCAPE },
+	{ TTYC_KF55, KEYC_F7|KEYC_ESCAPE },
+	{ TTYC_KF56, KEYC_F8|KEYC_ESCAPE },
+	{ TTYC_KF57, KEYC_F9|KEYC_ESCAPE },
+	{ TTYC_KF58, KEYC_F10|KEYC_ESCAPE },
+	{ TTYC_KF59, KEYC_F11|KEYC_ESCAPE },
+	{ TTYC_KF60, KEYC_F12|KEYC_ESCAPE },
 
-	{ TTYC_KF61, KEYC_F1|KEYC_ESCAPE|KEYC_SHIFT|KEYC_XTERM },
-	{ TTYC_KF62, KEYC_F2|KEYC_ESCAPE|KEYC_SHIFT|KEYC_XTERM },
-	{ TTYC_KF63, KEYC_F3|KEYC_ESCAPE|KEYC_SHIFT|KEYC_XTERM },
+	{ TTYC_KF61, KEYC_F1|KEYC_ESCAPE|KEYC_SHIFT },
+	{ TTYC_KF62, KEYC_F2|KEYC_ESCAPE|KEYC_SHIFT },
+	{ TTYC_KF63, KEYC_F3|KEYC_ESCAPE|KEYC_SHIFT },
 
 	{ TTYC_KICH1, KEYC_IC },
 	{ TTYC_KDCH1, KEYC_DC },
@@ -272,7 +261,10 @@ static const struct tty_default_key_code tty_default_code_keys[] = {
 	{ TTYC_KCUB1, KEYC_LEFT },
 	{ TTYC_KCUF1, KEYC_RIGHT },
 
-	/* Key and modifier capabilities. */
+	/*
+	 * Key and modifier capabilities. We set the xterm flag to mark that
+	 * any leading escape means an escape key press and not the modifier.
+	 */
 	{ TTYC_KDC2, KEYC_DC|KEYC_SHIFT|KEYC_XTERM },
 	{ TTYC_KDC3, KEYC_DC|KEYC_ESCAPE|KEYC_XTERM },
 	{ TTYC_KDC4, KEYC_DC|KEYC_SHIFT|KEYC_ESCAPE|KEYC_XTERM },
@@ -399,11 +391,9 @@ tty_keys_build(struct tty *tty)
 {
 	const struct tty_default_key_raw	*tdkr;
 	const struct tty_default_key_code	*tdkc;
-	u_int		 			 i;
-	const char				*s;
+	u_int		 			 i, size;
+	const char				*s, *value;
 	struct options_entry			*o;
-	struct options_array_item		*a;
-	union options_value			*ov;
 
 	if (tty->key_tree != NULL)
 		tty_keys_free(tty);
@@ -426,13 +416,11 @@ tty_keys_build(struct tty *tty)
 	}
 
 	o = options_get(global_options, "user-keys");
-	if (o != NULL) {
-		a = options_array_first(o);
-		while (a != NULL) {
-			i = options_array_item_index(a);
-			ov = options_array_item_value(a);
-			tty_keys_add(tty, ov->string, KEYC_USER + i);
-			a = options_array_next(a);
+	if (o != NULL && options_array_size(o, &size) != -1) {
+		for (i = 0; i < size; i++) {
+			value = options_array_get(o, i);
+			if (value != NULL)
+				tty_keys_add(tty, value, KEYC_USER + i);
 		}
 	}
 }
@@ -469,10 +457,6 @@ tty_keys_find(struct tty *tty, const char *buf, size_t len, size_t *size)
 static struct tty_key *
 tty_keys_find1(struct tty_key *tk, const char *buf, size_t len, size_t *size)
 {
-	/* If no data, no match. */
-	if (len == 0)
-		return (NULL);
-
 	/* If the node is NULL, this is the end of the tree. No match. */
 	if (tk == NULL)
 		return (NULL);
@@ -562,39 +546,28 @@ tty_keys_next1(struct tty *tty, const char *buf, size_t len, key_code *key,
 	return (-1);
 }
 
-/* Process at least one key in the buffer. Return 0 if no keys present. */
-int
+/*
+ * Process at least one key in the buffer and invoke tty->key_callback. Return
+ * 0 if there are no further keys, or 1 if there could be more in the buffer.
+ */
+key_code
 tty_keys_next(struct tty *tty)
 {
-	struct client		*c = tty->client;
-	struct timeval		 tv;
-	const char		*buf;
-	size_t			 len, size;
-	cc_t			 bspace;
-	int			 delay, expired = 0, n;
-	key_code		 key;
-	struct mouse_event	 m = { 0 };
-	struct key_event	*event;
-
-	gettimeofday(&tv, NULL);
+	struct client	*c = tty->client;
+	struct timeval	 tv;
+	const char	*buf;
+	size_t		 len, size;
+	cc_t		 bspace;
+	int		 delay, expired = 0, n;
+	key_code	 key;
 
 	/* Get key buffer. */
 	buf = EVBUFFER_DATA(tty->in);
 	len = EVBUFFER_LENGTH(tty->in);
+
 	if (len == 0)
 		return (0);
 	log_debug("%s: keys are %zu (%.*s)", c->name, len, (int)len, buf);
-
-	/* Is this a clipboard response? */
-	switch (tty_keys_clipboard(tty, buf, len, &size)) {
-	case 0:		/* yes */
-		key = KEYC_UNKNOWN;
-		goto complete_key;
-	case -1:	/* no, or not valid */
-		break;
-	case 1:		/* partial */
-		goto partial_key;
-	}
 
 	/* Is this a device attributes response? */
 	switch (tty_keys_device_attributes(tty, buf, len, &size)) {
@@ -608,7 +581,7 @@ tty_keys_next(struct tty *tty)
 	}
 
 	/* Is this a mouse key press? */
-	switch (tty_keys_mouse(tty, buf, len, &size, &m)) {
+	switch (tty_keys_mouse(tty, buf, len, &size)) {
 	case 0:		/* yes */
 		key = KEYC_MOUSE;
 		goto complete_key;
@@ -633,7 +606,7 @@ first_key:
 	 * If not a complete key, look for key with an escape prefix (meta
 	 * modifier).
 	 */
-	if (*buf == '\033' && len > 1) {
+	if (*buf == '\033') {
 		/* Look for a key without the escape. */
 		n = tty_keys_next1(tty, buf + 1, len - 1, &key, &size, expired);
 		if (n == 0) {	/* found */
@@ -727,13 +700,8 @@ complete_key:
 	}
 
 	/* Fire the key. */
-	if (key != KEYC_UNKNOWN) {
-		event = xmalloc(sizeof *event);
-		event->key = key;
-		memcpy(&event->m, &m, sizeof event->m);
-		if (!server_client_handle_key(c, event))
-			free(event);
-	}
+	if (key != KEYC_UNKNOWN)
+		server_client_handle_key(tty->client, key);
 
 	return (1);
 
@@ -763,12 +731,12 @@ tty_keys_callback(__unused int fd, __unused short events, void *data)
  * (probably a mouse sequence but need more data).
  */
 static int
-tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size,
-    struct mouse_event *m)
+tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size)
 {
-	struct client	*c = tty->client;
-	u_int		 i, x, y, b, sgr_b;
-	u_char		 sgr_type, ch;
+	struct client		*c = tty->client;
+	struct mouse_event	*m = &tty->mouse;
+	u_int			 i, x, y, b, sgr_b;
+	u_char			 sgr_type, ch;
 
 	/*
 	 * Standard mouse sequences are \033[M followed by three characters
@@ -889,106 +857,14 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size,
 		return (-1);
 
 	/* Fill mouse event. */
-	m->lx = tty->mouse_last_x;
+	m->lx = m->x;
 	m->x = x;
-	m->ly = tty->mouse_last_y;
+	m->ly = m->y;
 	m->y = y;
-	m->lb = tty->mouse_last_b;
+	m->lb = m->b;
 	m->b = b;
 	m->sgr_type = sgr_type;
 	m->sgr_b = sgr_b;
-
-	/* Update last mouse state. */
-	tty->mouse_last_x = x;
-	tty->mouse_last_y = y;
-	tty->mouse_last_b = b;
-
-	return (0);
-}
-
-/*
- * Handle OSC 52 clipboard input. Returns 0 for success, -1 for failure, 1 for
- * partial.
- */
-static int
-tty_keys_clipboard(__unused struct tty *tty, const char *buf, size_t len,
-    size_t *size)
-{
-	size_t	 end, terminator, needed;
-	char	*copy, *out;
-	int	 outlen;
-
-	*size = 0;
-
-	/* First three bytes are always \033]52;. */
-	if (buf[0] != '\033')
-		return (-1);
-	if (len == 1)
-		return (1);
-	if (buf[1] != ']')
-		return (-1);
-	if (len == 2)
-		return (1);
-	if (buf[2] != '5')
-		return (-1);
-	if (len == 3)
-		return (1);
-	if (buf[3] != '2')
-		return (-1);
-	if (len == 4)
-		return (1);
-	if (buf[4] != ';')
-		return (-1);
-	if (len == 5)
-		return (1);
-
-	/* Find the terminator if any. */
-	for (end = 5; end < len; end++) {
-		if (buf[end] == '\007') {
-			terminator = 1;
-			break;
-		}
-		if (end > 5 && buf[end - 1] == '\033' && buf[end] == '\\') {
-			terminator = 2;
-			break;
-		}
-	}
-	if (end == len)
-		return (1);
-	*size = end + terminator;
-
-	/* Skip the initial part. */
-	buf += 5;
-	end -= 5;
-
-	/* Get the second argument. */
-	while (end != 0 && *buf != ';') {
-		buf++;
-		end--;
-	}
-	if (end == 0 || end == 1)
-		return (0);
-	buf++;
-	end--;
-
-	/* It has to be a string so copy it. */
-	copy = xmalloc(end + 1);
-	memcpy(copy, buf, end);
-	copy[end] = '\0';
-
-	/* Convert from base64. */
-	needed = (end / 4) * 3;
-	out = xmalloc(needed);
-	if ((outlen = b64_pton(copy, out, len)) == -1) {
-		free(out);
-		free(copy);
-		return (0);
-	}
-	free(copy);
-
-	/* Create a new paste buffer. */
-	log_debug("%s: %.*s", __func__, outlen, out);
-	paste_add(NULL, out, outlen);
 
 	return (0);
 }

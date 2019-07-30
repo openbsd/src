@@ -25,42 +25,27 @@ uint8_t *SectionMemoryManager::allocateDataSection(uintptr_t Size,
                                                    StringRef SectionName,
                                                    bool IsReadOnly) {
   if (IsReadOnly)
-    return allocateSection(SectionMemoryManager::AllocationPurpose::ROData,
-                           Size, Alignment);
-  return allocateSection(SectionMemoryManager::AllocationPurpose::RWData, Size,
-                         Alignment);
+    return allocateSection(RODataMem, Size, Alignment);
+  return allocateSection(RWDataMem, Size, Alignment);
 }
 
 uint8_t *SectionMemoryManager::allocateCodeSection(uintptr_t Size,
                                                    unsigned Alignment,
                                                    unsigned SectionID,
                                                    StringRef SectionName) {
-  return allocateSection(SectionMemoryManager::AllocationPurpose::Code, Size,
-                         Alignment);
+  return allocateSection(CodeMem, Size, Alignment);
 }
 
-uint8_t *SectionMemoryManager::allocateSection(
-    SectionMemoryManager::AllocationPurpose Purpose, uintptr_t Size,
-    unsigned Alignment) {
+uint8_t *SectionMemoryManager::allocateSection(MemoryGroup &MemGroup,
+                                               uintptr_t Size,
+                                               unsigned Alignment) {
   if (!Alignment)
     Alignment = 16;
 
   assert(!(Alignment & (Alignment - 1)) && "Alignment must be a power of two.");
 
-  uintptr_t RequiredSize = Alignment * ((Size + Alignment - 1) / Alignment + 1);
+  uintptr_t RequiredSize = Alignment * ((Size + Alignment - 1)/Alignment + 1);
   uintptr_t Addr = 0;
-
-  MemoryGroup &MemGroup = [&]() -> MemoryGroup & {
-    switch (Purpose) {
-    case AllocationPurpose::Code:
-      return CodeMem;
-    case AllocationPurpose::ROData:
-      return RODataMem;
-    case AllocationPurpose::RWData:
-      return RWDataMem;
-    }
-    llvm_unreachable("Unknown SectionMemoryManager::AllocationPurpose");
-  }();
 
   // Look in the list of free memory regions and use a block there if one
   // is available.
@@ -79,16 +64,13 @@ uint8_t *SectionMemoryManager::allocateSection(
         // modify it rather than creating a new one
         FreeMB.PendingPrefixIndex = MemGroup.PendingMem.size() - 1;
       } else {
-        sys::MemoryBlock &PendingMB =
-            MemGroup.PendingMem[FreeMB.PendingPrefixIndex];
-        PendingMB = sys::MemoryBlock(PendingMB.base(),
-                                     Addr + Size - (uintptr_t)PendingMB.base());
+        sys::MemoryBlock &PendingMB = MemGroup.PendingMem[FreeMB.PendingPrefixIndex];
+        PendingMB = sys::MemoryBlock(PendingMB.base(), Addr + Size - (uintptr_t)PendingMB.base());
       }
 
       // Remember how much free space is now left in this block
-      FreeMB.Free =
-          sys::MemoryBlock((void *)(Addr + Size), EndOfBlock - Addr - Size);
-      return (uint8_t *)Addr;
+      FreeMB.Free = sys::MemoryBlock((void *)(Addr + Size), EndOfBlock - Addr - Size);
+      return (uint8_t*)Addr;
     }
   }
 
@@ -102,9 +84,11 @@ uint8_t *SectionMemoryManager::allocateSection(
   // FIXME: Initialize the Near member for each memory group to avoid
   // interleaving.
   std::error_code ec;
-  sys::MemoryBlock MB = MMapper.allocateMappedMemory(
-      Purpose, RequiredSize, &MemGroup.Near,
-      sys::Memory::MF_READ | sys::Memory::MF_WRITE, ec);
+  sys::MemoryBlock MB = sys::Memory::allocateMappedMemory(RequiredSize,
+                                                          &MemGroup.Near,
+                                                          sys::Memory::MF_READ |
+                                                            sys::Memory::MF_WRITE,
+                                                          ec);
   if (ec) {
     // FIXME: Add error propagation to the interface.
     return nullptr;
@@ -126,19 +110,20 @@ uint8_t *SectionMemoryManager::allocateSection(
 
   // The allocateMappedMemory may allocate much more memory than we need. In
   // this case, we store the unused memory as a free memory block.
-  unsigned FreeSize = EndOfBlock - Addr - Size;
+  unsigned FreeSize = EndOfBlock-Addr-Size;
   if (FreeSize > 16) {
     FreeMemBlock FreeMB;
-    FreeMB.Free = sys::MemoryBlock((void *)(Addr + Size), FreeSize);
+    FreeMB.Free = sys::MemoryBlock((void*)(Addr + Size), FreeSize);
     FreeMB.PendingPrefixIndex = (unsigned)-1;
     MemGroup.FreeMem.push_back(FreeMB);
   }
 
   // Return aligned address
-  return (uint8_t *)Addr;
+  return (uint8_t*)Addr;
 }
 
-bool SectionMemoryManager::finalizeMemory(std::string *ErrMsg) {
+bool SectionMemoryManager::finalizeMemory(std::string *ErrMsg)
+{
   // FIXME: Should in-progress permissions be reverted if an error occurs?
   std::error_code ec;
 
@@ -182,8 +167,7 @@ static sys::MemoryBlock trimBlockToPageSize(sys::MemoryBlock M) {
   TrimmedSize -= StartOverlap;
   TrimmedSize -= TrimmedSize % PageSize;
 
-  sys::MemoryBlock Trimmed((void *)((uintptr_t)M.base() + StartOverlap),
-                           TrimmedSize);
+  sys::MemoryBlock Trimmed((void *)((uintptr_t)M.base() + StartOverlap), TrimmedSize);
 
   assert(((uintptr_t)Trimmed.base() % PageSize) == 0);
   assert((Trimmed.size() % PageSize) == 0);
@@ -192,11 +176,12 @@ static sys::MemoryBlock trimBlockToPageSize(sys::MemoryBlock M) {
   return Trimmed;
 }
 
+
 std::error_code
 SectionMemoryManager::applyMemoryGroupPermissions(MemoryGroup &MemGroup,
                                                   unsigned Permissions) {
   for (sys::MemoryBlock &MB : MemGroup.PendingMem)
-    if (std::error_code EC = MMapper.protectMappedMemory(MB, Permissions))
+    if (std::error_code EC = sys::Memory::protectMappedMemory(MB, Permissions))
       return EC;
 
   MemGroup.PendingMem.clear();
@@ -226,40 +211,8 @@ void SectionMemoryManager::invalidateInstructionCache() {
 SectionMemoryManager::~SectionMemoryManager() {
   for (MemoryGroup *Group : {&CodeMem, &RWDataMem, &RODataMem}) {
     for (sys::MemoryBlock &Block : Group->AllocatedMem)
-      MMapper.releaseMappedMemory(Block);
+      sys::Memory::releaseMappedMemory(Block);
   }
 }
-
-SectionMemoryManager::MemoryMapper::~MemoryMapper() {}
-
-void SectionMemoryManager::anchor() {}
-
-namespace {
-// Trivial implementation of SectionMemoryManager::MemoryMapper that just calls
-// into sys::Memory.
-class DefaultMMapper final : public SectionMemoryManager::MemoryMapper {
-public:
-  sys::MemoryBlock
-  allocateMappedMemory(SectionMemoryManager::AllocationPurpose Purpose,
-                       size_t NumBytes, const sys::MemoryBlock *const NearBlock,
-                       unsigned Flags, std::error_code &EC) override {
-    return sys::Memory::allocateMappedMemory(NumBytes, NearBlock, Flags, EC);
-  }
-
-  std::error_code protectMappedMemory(const sys::MemoryBlock &Block,
-                                      unsigned Flags) override {
-    return sys::Memory::protectMappedMemory(Block, Flags);
-  }
-
-  std::error_code releaseMappedMemory(sys::MemoryBlock &M) override {
-    return sys::Memory::releaseMappedMemory(M);
-  }
-};
-
-DefaultMMapper DefaultMMapperInstance;
-} // namespace
-
-SectionMemoryManager::SectionMemoryManager(MemoryMapper *MM)
-    : MMapper(MM ? *MM : DefaultMMapperInstance) {}
 
 } // namespace llvm

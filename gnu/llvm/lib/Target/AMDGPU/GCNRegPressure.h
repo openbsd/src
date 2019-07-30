@@ -1,4 +1,4 @@
-//===- GCNRegPressure.h -----------------------------------------*- C++ -*-===//
+//===---------------------- GCNRegPressure.h -*- C++ -*--------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,25 +6,19 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+/// \file
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_LIB_TARGET_AMDGPU_GCNREGPRESSURE_H
 #define LLVM_LIB_TARGET_AMDGPU_GCNREGPRESSURE_H
 
 #include "AMDGPUSubtarget.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/CodeGen/LiveIntervals.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/SlotIndexes.h"
-#include "llvm/MC/LaneBitmask.h"
-#include "llvm/Support/Debug.h"
-#include <algorithm>
+
 #include <limits>
 
 namespace llvm {
-
-class MachineRegisterInfo;
-class raw_ostream;
 
 struct GCNRegPressure {
   enum RegKind {
@@ -49,7 +43,7 @@ struct GCNRegPressure {
   unsigned getVGPRTuplesWeight() const { return Value[VGPR_TUPLE]; }
   unsigned getSGPRTuplesWeight() const { return Value[SGPR_TUPLE]; }
 
-  unsigned getOccupancy(const GCNSubtarget &ST) const {
+  unsigned getOccupancy(const SISubtarget &ST) const {
     return std::min(ST.getOccupancyWithNumSGPRs(getSGPRNum()),
                     ST.getOccupancyWithNumVGPRs(getVGPRNum()));
   }
@@ -59,11 +53,11 @@ struct GCNRegPressure {
            LaneBitmask NewMask,
            const MachineRegisterInfo &MRI);
 
-  bool higherOccupancy(const GCNSubtarget &ST, const GCNRegPressure& O) const {
+  bool higherOccupancy(const SISubtarget &ST, const GCNRegPressure& O) const {
     return getOccupancy(ST) > O.getOccupancy(ST);
   }
 
-  bool less(const GCNSubtarget &ST, const GCNRegPressure& O,
+  bool less(const SISubtarget &ST, const GCNRegPressure& O,
     unsigned MaxOccupancy = std::numeric_limits<unsigned>::max()) const;
 
   bool operator==(const GCNRegPressure &O) const {
@@ -74,7 +68,7 @@ struct GCNRegPressure {
     return !(*this == O);
   }
 
-  void print(raw_ostream &OS, const GCNSubtarget *ST = nullptr) const;
+  void print(raw_ostream &OS, const SISubtarget *ST=nullptr) const;
   void dump() const { print(dbgs()); }
 
 private:
@@ -95,7 +89,7 @@ inline GCNRegPressure max(const GCNRegPressure &P1, const GCNRegPressure &P2) {
 
 class GCNRPTracker {
 public:
-  using LiveRegSet = DenseMap<unsigned, LaneBitmask>;
+  typedef DenseMap<unsigned, LaneBitmask> LiveRegSet;
 
 protected:
   const LiveIntervals &LIS;
@@ -103,12 +97,7 @@ protected:
   GCNRegPressure CurPressure, MaxPressure;
   const MachineInstr *LastTrackedMI = nullptr;
   mutable const MachineRegisterInfo *MRI = nullptr;
-
   GCNRPTracker(const LiveIntervals &LIS_) : LIS(LIS_) {}
-
-  void reset(const MachineInstr &MI, const LiveRegSet *LiveRegsCopy,
-             bool After);
-
 public:
   // live regs for the current state
   const decltype(LiveRegs) &getLiveRegs() const { return LiveRegs; }
@@ -122,11 +111,9 @@ public:
     MaxPressure.clear();
     return Res;
   }
-
   decltype(LiveRegs) moveLiveRegs() {
     return std::move(LiveRegs);
   }
-
   static void printLiveRegs(raw_ostream &OS, const LiveRegSet& LiveRegs,
                             const MachineRegisterInfo &MRI);
 };
@@ -134,7 +121,6 @@ public:
 class GCNUpwardRPTracker : public GCNRPTracker {
 public:
   GCNUpwardRPTracker(const LiveIntervals &LIS_) : GCNRPTracker(LIS_) {}
-
   // reset tracker to the point just below MI
   // filling live regs upon this point using LIS
   void reset(const MachineInstr &MI, const LiveRegSet *LiveRegs = nullptr);
@@ -216,6 +202,6 @@ void printLivesAt(SlotIndex SI,
                   const LiveIntervals &LIS,
                   const MachineRegisterInfo &MRI);
 
-} // end namespace llvm
+} // End namespace llvm
 
 #endif // LLVM_LIB_TARGET_AMDGPU_GCNREGPRESSURE_H

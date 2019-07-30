@@ -1,4 +1,3 @@
-/*	$OpenBSD: rsa_test.c,v 1.3 2018/07/17 17:06:49 tb Exp $	*/
 /*
  * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
  *

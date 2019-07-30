@@ -6,8 +6,8 @@ NNAAMMEE
 DDEESSCCRRIIPPTTIIOONN
      preceding text
 
-            The text in this centered block is wide enough to not fit on one
-                                          line.
+                                 first line of the block
+                                       second line
      following text
 
-OpenBSD                         January 4, 2019                        OpenBSD
+OpenBSD                          July 4, 2017                          OpenBSD

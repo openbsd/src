@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.225 2019/04/06 02:56:16 jsg Exp $
+#	$OpenBSD: Makefile,v 1.222 2017/10/17 09:34:52 mpi Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -42,7 +42,7 @@ LDIRS=	crypto ddb dev isofs miscfs msdosfs net netinet netinet6 \
 PRDIRS=	../lib/libcrypto ../lib/librpcsvc
 
 # Directories with an includes target
-RDIRS=	../lib/libcurses ../lib/libedit ../lib/libelf \
+RDIRS=	../lib/libcurses ../lib/libedit \
 	../lib/libevent ../lib/libexpat ../lib/libform \
 	../lib/libfuse ../lib/libkeynote ../lib/libmenu \
 	../lib/libossaudio ../lib/libpanel ../lib/libpcap \
@@ -53,15 +53,15 @@ RDIRS=	../lib/libcurses ../lib/libedit ../lib/libelf \
 	../sys/arch/${MACHINE}
 
 .if ${BUILD_GCC3:L} == "yes"
-RDIRS+= ../gnu/usr.bin/gcc
+RDIRS+= ../gnu/usr.bin/gcc ../gnu/lib/libobjc
 PRDIRS+= ../gnu/lib/libstdc++
 .endif
 .if ${BUILD_GCC4:L} == "yes"
+RDIRS+= ../gnu/usr.bin/cc/libobjc
 PRDIRS+= ../gnu/lib/libstdc++-v3 ../gnu/usr.bin/cc/include
 .endif
 .if ${BUILD_CLANG:L} == "yes"
-RDIRS+= ../lib/libcxxabi ../lib/libcxx \
-	 ../gnu/usr.bin/clang/libLLVM
+RDIRS+= ../lib/libcxxabi ../lib/libcxx
 .endif
 
 # prereq implies includes

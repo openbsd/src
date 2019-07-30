@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.55 2019/05/24 06:05:38 anton Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.43 2018/01/13 11:54:01 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -121,9 +121,11 @@
 
 #if defined(WSMUX_DEBUG) && NWSMUX > 0
 #define	DPRINTF(x)	if (wsmuxdebug) printf x
+#define	DPRINTFN(n,x)	if (wsmuxdebug > (n)) printf x
 extern int wsmuxdebug;
 #else
 #define	DPRINTF(x)
+#define	DPRINTFN(n,x)
 #endif
 
 struct wsmouse_softc {
@@ -166,12 +168,8 @@ struct cfattach wsmouse_ca = {
 
 #if NWSMUX > 0
 struct wssrcops wsmouse_srcops = {
-	.type		= WSMUX_MOUSE,
-	.dopen		= wsmouse_mux_open,
-	.dclose		= wsmouse_mux_close,
-	.dioctl		= wsmousedoioctl,
-	.ddispioctl	= NULL,
-	.dsetdisplay	= NULL,
+	WSMUX_MOUSE,
+	wsmouse_mux_open, wsmouse_mux_close, wsmousedoioctl, NULL, NULL
 };
 #endif
 
@@ -256,14 +254,14 @@ wsmouse_detach(struct device *self, int flags)
 #if NWSMUX > 0
 	/* Tell parent mux we're leaving. */
 	if (sc->sc_base.me_parent != NULL) {
-		DPRINTF(("%s\n", __func__));
+		DPRINTF(("wsmouse_detach:\n"));
 		wsmux_detach_sc(&sc->sc_base);
 	}
 #endif
 
 	/* If we're open ... */
 	evar = sc->sc_base.me_evp;
-	if (evar != NULL) {
+	if (evar != NULL && evar->io != NULL) {
 		s = spltty();
 		if (--sc->sc_refcnt >= 0) {
 			/* Wake everyone by generating a dummy event. */
@@ -305,8 +303,8 @@ wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (ENXIO);
 
 #if NWSMUX > 0
-	DPRINTF(("%s: %s mux=%p\n", __func__, sc->sc_base.me_dv.dv_xname,
-		 sc->sc_base.me_parent));
+	DPRINTF(("wsmouseopen: %s mux=%p p=%p\n", sc->sc_base.me_dv.dv_xname,
+		 sc->sc_base.me_parent, p));
 #endif
 
 	if (sc->sc_dying)
@@ -319,7 +317,7 @@ wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 #if NWSMUX > 0
 	if (sc->sc_base.me_parent != NULL) {
 		/* Grab the mouse out of the greedy hands of the mux. */
-		DPRINTF(("%s: detach\n", __func__));
+		DPRINTF(("wsmouseopen: detach\n"));
 		wsmux_detach_sc(&sc->sc_base);
 	}
 #endif
@@ -328,12 +326,12 @@ wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (EBUSY);
 
 	evar = &sc->sc_base.me_evar;
-	if (wsevent_init(evar))
-		return (EBUSY);
+	wsevent_init(evar);
+	evar->io = p->p_p;
 
 	error = wsmousedoopen(sc, evar);
 	if (error) {
-		DPRINTF(("%s: %s open failed\n", __func__,
+		DPRINTF(("wsmouseopen: %s open failed\n",
 			 sc->sc_base.me_dv.dv_xname));
 		sc->sc_base.me_evp = NULL;
 		wsevent_fini(evar);
@@ -349,9 +347,11 @@ wsmouseclose(dev_t dev, int flags, int mode, struct proc *p)
 	struct wseventvar *evar = sc->sc_base.me_evp;
 
 	if ((flags & (FREAD | FWRITE)) == FWRITE)
-		/* Not open for read */
-		return (0);
+		return (0);			/* see wsmouseopen() */
 
+	if (evar == NULL)
+		/* not open for read */
+		return (0);
 	sc->sc_base.me_evp = NULL;
 	(*sc->sc_accessops->disable)(sc->sc_accesscookie);
 	wsevent_fini(evar);
@@ -360,7 +360,7 @@ wsmouseclose(dev_t dev, int flags, int mode, struct proc *p)
 	if (sc->sc_base.me_parent == NULL) {
 		int mux, error;
 
-		DPRINTF(("%s: attach\n", __func__));
+		DPRINTF(("wsmouseclose: attach\n"));
 		mux = sc->sc_base.me_dv.dv_cfdata->wsmousedevcf_mux;
 		if (mux >= 0) {
 			error = wsmux_attach_sc(wsmux_getmux(mux), &sc->sc_base);
@@ -471,7 +471,6 @@ int
 wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data, int flag,
     struct proc *p)
 {
-	struct wseventvar *evar;
 	int error;
 
 	if (sc->sc_dying)
@@ -483,6 +482,7 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data, int flag,
 
 	switch (cmd) {
 	case FIOASYNC:
+	case FIOSETOWN:
 	case TIOCSPGRP:
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
@@ -498,21 +498,20 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data, int flag,
 		sc->sc_base.me_evp->async = *(int *)data != 0;
 		return (0);
 
-	case TIOCGPGRP:
-		evar = sc->sc_base.me_evp;
-		if (evar == NULL)
+	case FIOSETOWN:
+		if (sc->sc_base.me_evp == NULL)
 			return (EINVAL);
-		*(int *)data = -sigio_getown(&evar->sigio);
+		if (-*(int *)data != sc->sc_base.me_evp->io->ps_pgid
+		    && *(int *)data != sc->sc_base.me_evp->io->ps_pid)
+			return (EPERM);
 		return (0);
 
 	case TIOCSPGRP:
-		if (*(int *)data < 0)
+		if (sc->sc_base.me_evp == NULL)
 			return (EINVAL);
-		evar = sc->sc_base.me_evp;
-		if (evar == NULL)
-			return (EINVAL);
-		return (sigio_setown(&evar->sigio, -*(int *)data));
-
+		if (*(int *)data != sc->sc_base.me_evp->io->ps_pgid)
+			return (EPERM);
+		return (0);
 	case WSMOUSEIO_GETPARAMS:
 	case WSMOUSEIO_SETPARAMS:
 		return (wsmouse_param_ioctl(sc, cmd,
@@ -626,10 +625,7 @@ set_x(struct position *pos, int x, u_int *sync, u_int mask)
 	}
 	if ((pos->dx = x - pos->x)) {
 		pos->x = x;
-		if ((pos->dx > 0) == (pos->acc_dx > 0))
-			pos->acc_dx += pos->dx;
-		else
-			pos->acc_dx = pos->dx;
+		pos->acc_dx += pos->dx;
 		*sync |= mask;
 	}
 }
@@ -645,10 +641,7 @@ set_y(struct position *pos, int y, u_int *sync, u_int mask)
 	}
 	if ((pos->dy = y - pos->y)) {
 		pos->y = y;
-		if ((pos->dy > 0) == (pos->acc_dy > 0))
-			pos->acc_dy += pos->dy;
-		else
-			pos->acc_dy = pos->dy;
+		pos->acc_dy += pos->dy;
 		*sync |= mask;
 	}
 }
@@ -711,6 +704,7 @@ wsmouse_mtstate(struct device *sc, int slot, int x, int y, int pressure)
 	struct mt_state *mt = &input->mt;
 	struct mt_slot *mts;
 	u_int bit;
+	int initial;
 
 	if (slot < 0 || slot >= mt->num_slots)
 		return;
@@ -718,17 +712,24 @@ wsmouse_mtstate(struct device *sc, int slot, int x, int y, int pressure)
 	bit = (1 << slot);
 	mt->frame |= bit;
 
+	/* Is this a new touch? */
+	initial = ((mt->touches & bit) == (mt->sync[MTS_TOUCH] & bit));
+
 	mts = &mt->slots[slot];
 
-	set_x(&mts->pos, x, mt->sync + MTS_X, bit);
-	set_y(&mts->pos, y, mt->sync + MTS_Y, bit);
-
-	/* Is this a new touch? */
-	if ((mt->touches & bit) == (mt->sync[MTS_TOUCH] & bit))
+	if (initial) {
+		mts->pos.x = x;
+		mts->pos.y = y;
 		cleardeltas(&mts->pos);
+		mt->sync[MTS_X] |= bit;
+		mt->sync[MTS_Y] |= bit;
+	} else {
+		set_x(&mts->pos, x, mt->sync + MTS_X, bit);
+		set_y(&mts->pos, y, mt->sync + MTS_Y, bit);
+	}
 
 	pressure = normalized_pressure(input, pressure);
-	if (pressure != mts->pressure) {
+	if (pressure != mts->pressure || initial) {
 		mts->pressure = pressure;
 		mt->sync[MTS_PRESSURE] |= bit;
 
@@ -737,9 +738,6 @@ wsmouse_mtstate(struct device *sc, int slot, int x, int y, int pressure)
 				mt->num_touches++;
 				mt->touches |= bit;
 				mt->sync[MTS_TOUCH] |= bit;
-
-				mt->sync[MTS_X] |= bit;
-				mt->sync[MTS_Y] |= bit;
 			}
 		} else if (mt->touches & bit) {
 			mt->num_touches--;
@@ -852,7 +850,7 @@ wsmouse_mt_update(struct wsmouseinput *input)
 	 * (pressure == 0). Clear the sync flags for touches that have
 	 * been released.
 	 */
-	if (input->mt.frame & ~input->mt.touches) {
+	if (input->mt.sync[MTS_TOUCH] & ~input->mt.touches) {
 		for (i = MTS_X; i < MTS_SIZE; i++)
 			input->mt.sync[i] &= input->mt.touches;
 	}
@@ -862,6 +860,18 @@ wsmouse_mt_update(struct wsmouseinput *input)
 int
 wsmouse_hysteresis(struct wsmouseinput *input, struct position *pos)
 {
+
+	if (!(input->filter.h.hysteresis && input->filter.v.hysteresis))
+		return (0);
+
+	if ((pos->dx > 0 && pos->dx > pos->acc_dx)
+	   || (pos->dx < 0 && pos->dx < pos->acc_dx))
+		pos->acc_dx = pos->dx;
+
+	if ((pos->dy > 0 && pos->dy > pos->acc_dy)
+	   || (pos->dy < 0 && pos->dy < pos->acc_dy))
+		pos->acc_dy = pos->dy;
+
 	return (abs(pos->acc_dx) < input->filter.h.hysteresis
 	    && abs(pos->acc_dy) < input->filter.v.hysteresis);
 }
@@ -886,14 +896,6 @@ wsmouse_ptr_ctrl(struct wsmouseinput *input)
 	u_int updates;
 	int select, slot;
 
-	mt->prev_ptr = mt->ptr;
-
-	if (mt->num_touches <= 1) {
-		mt->ptr = mt->touches;
-		mt->ptr_cycle = mt->ptr;
-		return;
-	}
-
 	updates = (mt->sync[MTS_X] | mt->sync[MTS_Y]) & ~mt->sync[MTS_TOUCH];
 	FOREACHBIT(updates, slot) {
 		/*
@@ -903,6 +905,14 @@ wsmouse_ptr_ctrl(struct wsmouseinput *input)
 		 */
 		if (wsmouse_hysteresis(input, &mt->slots[slot].pos))
 			updates ^= (1 << slot);
+	}
+
+	mt->prev_ptr = mt->ptr;
+
+	if (mt->num_touches <= 1) {
+		mt->ptr = mt->touches;
+		mt->ptr_cycle = mt->ptr;
+		return;
 	}
 
 	/*
@@ -1031,18 +1041,10 @@ wsmouse_motion_sync(struct wsmouseinput *input, struct evq_access *evq)
 			wsmouse_evq_put(evq, DELTA_X_EV(input), dx);
 		if (dy)
 			wsmouse_evq_put(evq, DELTA_Y_EV(input), dy);
-		if (motion->dz) {
-			if (IS_TOUCHPAD(input))
-				wsmouse_evq_put(evq, VSCROLL_EV, motion->dz);
-			else
-				wsmouse_evq_put(evq, DELTA_Z_EV, motion->dz);
-		}
-		if (motion->dw) {
-			if (IS_TOUCHPAD(input))
-				wsmouse_evq_put(evq, HSCROLL_EV, motion->dw);
-			else
-				wsmouse_evq_put(evq, DELTA_W_EV, motion->dw);
-		}
+		if (motion->dz)
+			wsmouse_evq_put(evq, DELTA_Z_EV, motion->dz);
+		if (motion->dw)
+			wsmouse_evq_put(evq, DELTA_W_EV, motion->dw);
 	}
 	if (motion->sync & SYNC_POSITION) {
 		if (motion->sync & SYNC_X) {
@@ -1072,53 +1074,6 @@ wsmouse_touch_sync(struct wsmouseinput *input, struct evq_access *evq)
 	if ((touch->sync & SYNC_TOUCH_WIDTH)
 	    && (input->flags & TPAD_NATIVE_MODE))
 		wsmouse_evq_put(evq, WSCONS_EVENT_TOUCH_WIDTH, touch->width);
-}
-
-void
-wsmouse_log_input(struct wsmouseinput *input, struct timespec *ts)
-{
-	struct motion_state *motion = &input->motion;
-	int t_sync, mt_sync;
-
-	t_sync = (input->touch.sync & SYNC_CONTACTS);
-	mt_sync = (input->mt.frame && (input->mt.sync[MTS_TOUCH]
-	    || input->mt.ptr != input->mt.prev_ptr));
-
-	if (motion->sync || mt_sync || t_sync || input->btn.sync)
-		printf("[%s-in][%04d]", DEVNAME(input), LOGTIME(ts));
-	else
-		return;
-
-	if (motion->sync & SYNC_POSITION)
-		printf(" abs:%d,%d", motion->pos.x, motion->pos.y);
-	if (motion->sync & SYNC_DELTAS)
-		printf(" rel:%d,%d,%d,%d", motion->dx, motion->dy,
-		    motion->dz, motion->dw);
-	if (mt_sync)
-		printf(" mt:0x%02x:%d", input->mt.touches,
-		    ffs(input->mt.ptr) - 1);
-	else if (t_sync)
-		printf(" t:%d", input->touch.contacts);
-	if (input->btn.sync)
-		printf(" btn:0x%02x", input->btn.buttons);
-	printf("\n");
-}
-
-void
-wsmouse_log_events(struct wsmouseinput *input, struct evq_access *evq)
-{
-	struct wscons_event *ev;
-	int n = evq->evar->put;
-
-	if (n != evq->put) {
-		printf("[%s-ev][%04d]", DEVNAME(input), LOGTIME(&evq->ts));
-		while (n != evq->put) {
-			ev = &evq->evar->q[n++];
-			n %= WSEVENT_QSIZE;
-			printf(" %d:%d", ev->type, ev->value);
-		}
-		printf("\n");
-	}
 }
 
 static inline void
@@ -1151,7 +1106,7 @@ wsmouse_input_sync(struct device *sc)
 	evq.result = EVQ_RESULT_NONE;
 	getnanotime(&evq.ts);
 
-	enqueue_randomness(input->btn.buttons
+	add_mouse_randomness(input->btn.buttons
 	    ^ input->motion.dx ^ input->motion.dy
 	    ^ input->motion.pos.x ^ input->motion.pos.y
 	    ^ input->motion.dz ^ input->motion.dw);
@@ -1162,9 +1117,6 @@ wsmouse_input_sync(struct device *sc)
 	}
 	if (input->touch.sync)
 		wsmouse_touch_update(input);
-
-	if (input->flags & LOG_INPUT)
-		wsmouse_log_input(input, &evq.ts);
 
 	if (input->flags & TPAD_COMPAT_MODE)
 		wstpad_compat_convert(input, &evq);
@@ -1187,9 +1139,6 @@ wsmouse_input_sync(struct device *sc)
 	if (evq.result == EVQ_RESULT_SUCCESS) {
 		wsmouse_evq_put(&evq, WSCONS_EVENT_SYNC, 0);
 		if (evq.result == EVQ_RESULT_SUCCESS) {
-			if (input->flags & LOG_EVENTS) {
-				wsmouse_log_events(input, &evq);
-			}
 			evq.evar->put = evq.put;
 			WSEVENT_WAKEUP(evq.evar);
 		}
@@ -1487,17 +1436,12 @@ wsmouse_get_params(struct device *sc,
 			params[i].value = input->filter.dclr;
 			break;
 		case WSMOUSECFG_STRONG_HYSTERESIS:
-			params[i].value = 0; /* The feature has been removed. */
+			params[i].value =
+			    !!(input->filter.mode & STRONG_HYSTERESIS);
 			break;
 		case WSMOUSECFG_SMOOTHING:
 			params[i].value =
 			    input->filter.mode & SMOOTHING_MASK;
-			break;
-		case WSMOUSECFG_LOG_INPUT:
-			params[i].value = !!(input->flags & LOG_INPUT);
-			break;
-		case WSMOUSECFG_LOG_EVENTS:
-			params[i].value = !!(input->flags & LOG_EVENTS);
 			break;
 		default:
 			error = wstpad_get_param(input, key, &params[i].value);
@@ -1567,21 +1511,15 @@ wsmouse_set_params(struct device *sc,
 		case WSMOUSECFG_DY_MAX:
 			input->filter.v.dmax = val;
 			break;
+		case WSMOUSECFG_STRONG_HYSTERESIS:
+			if (val)
+				input->filter.mode |= STRONG_HYSTERESIS;
+			else
+				input->filter.mode &= ~STRONG_HYSTERESIS;
+			break;
 		case WSMOUSECFG_SMOOTHING:
 			input->filter.mode &= ~SMOOTHING_MASK;
 			input->filter.mode |= (val & SMOOTHING_MASK);
-			break;
-		case WSMOUSECFG_LOG_INPUT:
-			if (val)
-				input->flags |= LOG_INPUT;
-			else
-				input->flags &= ~LOG_INPUT;
-			break;
-		case WSMOUSECFG_LOG_EVENTS:
-			if (val)
-				input->flags |= LOG_EVENTS;
-			else
-				input->flags &= ~LOG_EVENTS;
 			break;
 		default:
 			needreset = 1;

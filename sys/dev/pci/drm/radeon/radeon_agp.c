@@ -1,3 +1,4 @@
+/*	$OpenBSD: radeon_agp.c,v 1.5 2015/04/12 12:14:30 jsg Exp $	*/
 /*
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
@@ -24,11 +25,11 @@
  *    Dave Airlie
  *    Jerome Glisse <glisse@freedesktop.org>
  */
-#include <drm/drmP.h>
+#include <dev/pci/drm/drmP.h>
 #include "radeon.h"
-#include <drm/radeon_drm.h>
+#include <dev/pci/drm/radeon_drm.h>
 
-#if IS_ENABLED(CONFIG_AGP)
+#if __OS_HAS_AGP
 
 struct radeon_agpmode_quirk {
 	u32 hostbridge_vendor;
@@ -54,9 +55,6 @@ static struct radeon_agpmode_quirk radeon_agpmode_quirk_list[] = {
 	/* Intel 82855PM host bridge / Mobility 9600 M10 RV350 Needs AGPMode 1 (lp #195051) */
 	{ PCI_VENDOR_ID_INTEL, 0x3340, PCI_VENDOR_ID_ATI, 0x4e50,
 		PCI_VENDOR_ID_IBM, 0x0550, 1},
-	/* Intel 82855PM host bridge / RV250/M9 GL [Mobility FireGL 9000/Radeon 9000] needs AGPMode 1 (Thinkpad T40p) */
-	{ PCI_VENDOR_ID_INTEL, 0x3340, PCI_VENDOR_ID_ATI, 0x4c66,
-		PCI_VENDOR_ID_IBM, 0x054d, 1},
 	/* Intel 82855PM host bridge / Mobility M7 needs AGPMode 1 */
 	{ PCI_VENDOR_ID_INTEL, 0x3340, PCI_VENDOR_ID_ATI, 0x4c57,
 		PCI_VENDOR_ID_IBM, 0x0530, 1},
@@ -120,13 +118,16 @@ static struct radeon_agpmode_quirk radeon_agpmode_quirk_list[] = {
 	/* ATI Host Bridge / RV280 [M9+] Needs AGPMode 1 (phoronix forum) */
 	{ PCI_VENDOR_ID_ATI, 0xcbb2, PCI_VENDOR_ID_ATI, 0x5c61,
 		PCI_VENDOR_ID_SONY, 0x8175, 1},
+	/* HP Host Bridge / R300 [FireGL X1] Needs AGPMode 2 (fdo #7770) */
+	{ PCI_VENDOR_ID_HP, 0x122e, PCI_VENDOR_ID_ATI, 0x4e47,
+		PCI_VENDOR_ID_ATI, 0x0152, 2},
 	{ 0, 0, 0, 0, 0, 0, 0 },
 };
 #endif
 
 int radeon_agp_init(struct radeon_device *rdev)
 {
-#if IS_ENABLED(CONFIG_AGP)
+#if __OS_HAS_AGP
 	struct radeon_agpmode_quirk *p = radeon_agpmode_quirk_list;
 	struct drm_agp_mode mode;
 	struct drm_agp_info info;
@@ -139,9 +140,7 @@ int radeon_agp_init(struct radeon_device *rdev)
 	/* Acquire AGP. */
 	ret = drm_agp_acquire(rdev->ddev);
 	if (ret) {
-#ifdef __linux__
 		DRM_ERROR("Unable to acquire AGP: %d\n", ret);
-#endif
 		return ret;
 	}
 
@@ -269,7 +268,7 @@ int radeon_agp_init(struct radeon_device *rdev)
 
 void radeon_agp_resume(struct radeon_device *rdev)
 {
-#if IS_ENABLED(CONFIG_AGP)
+#if __OS_HAS_AGP
 	int r;
 	if (rdev->flags & RADEON_IS_AGP) {
 		r = radeon_agp_init(rdev);
@@ -281,7 +280,7 @@ void radeon_agp_resume(struct radeon_device *rdev)
 
 void radeon_agp_fini(struct radeon_device *rdev)
 {
-#if IS_ENABLED(CONFIG_AGP)
+#if __OS_HAS_AGP
 	if (rdev->ddev->agp && rdev->ddev->agp->acquired) {
 		drm_agp_release(rdev->ddev);
 	}

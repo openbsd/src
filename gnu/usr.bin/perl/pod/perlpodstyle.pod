@@ -276,7 +276,7 @@ section numbering conventions.
 
 This documentation is maintained as part of the podlators distribution.
 The current version is always available from its web site at
-L<http://www.eyrie.org/~eagle/software/podlators/>.
+<http://www.eyrie.org/~eagle/software/podlators/>.
 
 =head1 AUTHOR
 

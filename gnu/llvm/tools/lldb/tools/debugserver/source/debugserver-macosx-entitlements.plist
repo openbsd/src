@@ -4,7 +4,5 @@
 <dict>
     <key>com.apple.diagnosticd.diagnostic</key>
     <true/>
-    <key>com.apple.private.cs.debugger</key>
-    <true/>
 </dict>
 </plist>

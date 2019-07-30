@@ -16,7 +16,6 @@
 #define LLVM_XRAY_XRAY_RECORD_H
 
 #include <cstdint>
-#include <vector>
 
 namespace llvm {
 namespace xray {
@@ -54,7 +53,7 @@ struct XRayFileHeader {
 /// This may or may not correspond to actual record types in the raw trace (as
 /// the loader implementation may synthesize this information in the process of
 /// of loading).
-enum class RecordTypes { ENTER, EXIT, TAIL_EXIT, ENTER_ARG };
+enum class RecordTypes { ENTER, EXIT };
 
 struct XRayRecord {
   /// The type of record.
@@ -74,12 +73,6 @@ struct XRayRecord {
 
   /// The thread ID for the currently running thread.
   uint32_t TId;
-
-  /// The process ID for the currently running process.
-  uint32_t PId;
-
-  /// The function call arguments.
-  std::vector<uint64_t> CallArgs;
 };
 
 } // namespace xray

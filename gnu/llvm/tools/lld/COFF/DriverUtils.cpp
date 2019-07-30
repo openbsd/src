@@ -15,9 +15,9 @@
 
 #include "Config.h"
 #include "Driver.h"
+#include "Error.h"
+#include "Memory.h"
 #include "Symbols.h"
-#include "lld/Common/ErrorHandler.h"
-#include "lld/Common/Memory.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/BinaryFormat/COFF.h"
@@ -32,11 +32,12 @@
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/WindowsManifest/WindowsManifestMerger.h"
 #include <memory>
 
 using namespace llvm::COFF;
 using namespace llvm;
+using llvm::cl::ExpandResponseFiles;
+using llvm::cl::TokenizeWindowsCommandLine;
 using llvm::sys::Process;
 
 namespace lld {
@@ -57,11 +58,16 @@ public:
   void run() {
     ErrorOr<std::string> ExeOrErr = sys::findProgramByName(Prog);
     if (auto EC = ExeOrErr.getError())
-      fatal("unable to find " + Prog + " in PATH: " + EC.message());
+      fatal(EC, "unable to find " + Prog + " in PATH: ");
     StringRef Exe = Saver.save(*ExeOrErr);
     Args.insert(Args.begin(), Exe);
 
-    if (sys::ExecuteAndWait(Args[0], Args) != 0)
+    std::vector<const char *> Vec;
+    for (StringRef S : Args)
+      Vec.push_back(S.data());
+    Vec.push_back(nullptr);
+
+    if (sys::ExecuteAndWait(Args[0], Vec.data()) != 0)
       fatal("ExecuteAndWait failed: " +
             llvm::join(Args.begin(), Args.end(), " "));
   }
@@ -123,21 +129,6 @@ void parseVersion(StringRef Arg, uint32_t *Major, uint32_t *Minor) {
     fatal("invalid number: " + S2);
 }
 
-void parseGuard(StringRef FullArg) {
-  SmallVector<StringRef, 1> SplitArgs;
-  FullArg.split(SplitArgs, ",");
-  for (StringRef Arg : SplitArgs) {
-    if (Arg.equals_lower("no"))
-      Config->GuardCF = GuardCFLevel::Off;
-    else if (Arg.equals_lower("nolongjmp"))
-      Config->GuardCF = GuardCFLevel::NoLongJmp;
-    else if (Arg.equals_lower("cf") || Arg.equals_lower("longjmp"))
-      Config->GuardCF = GuardCFLevel::Full;
-    else
-      fatal("invalid argument to /guard: " + Arg);
-  }
-}
-
 // Parses a string in the form of "<subsystem>[,<integer>[.<integer>]]".
 void parseSubsystem(StringRef Arg, WindowsSubsystem *Sys, uint32_t *Major,
                     uint32_t *Minor) {
@@ -180,10 +171,6 @@ void parseMerge(StringRef S) {
   std::tie(From, To) = S.split('=');
   if (From.empty() || To.empty())
     fatal("/merge: invalid argument: " + S);
-  if (From == ".rsrc" || To == ".rsrc")
-    fatal("/merge: cannot merge '.rsrc' with any section");
-  if (From == ".reloc" || To == ".reloc")
-    fatal("/merge: cannot merge '.reloc' with any section");
   auto Pair = Config->Merge.insert(std::make_pair(From, To));
   bool Inserted = Pair.second;
   if (!Inserted) {
@@ -232,22 +219,6 @@ void parseSection(StringRef S) {
   if (Name.empty() || Attrs.empty())
     fatal("/section: invalid argument: " + S);
   Config->Section[Name] = parseSectionAttributes(Attrs);
-}
-
-// Parses /aligncomm option argument.
-void parseAligncomm(StringRef S) {
-  StringRef Name, Align;
-  std::tie(Name, Align) = S.split(',');
-  if (Name.empty() || Align.empty()) {
-    error("/aligncomm: invalid argument: " + S);
-    return;
-  }
-  int V;
-  if (Align.getAsInteger(0, V)) {
-    error("/aligncomm: invalid argument: " + S);
-    return;
-  }
-  Config->AlignComm[Name] = std::max(Config->AlignComm[Name], 1 << V);
 }
 
 // Parses a string in the form of "EMBED[,=<integer>]|NO".
@@ -302,14 +273,14 @@ public:
   TemporaryFile(StringRef Prefix, StringRef Extn, StringRef Contents = "") {
     SmallString<128> S;
     if (auto EC = sys::fs::createTemporaryFile("lld-" + Prefix, Extn, S))
-      fatal("cannot create a temporary file: " + EC.message());
+      fatal(EC, "cannot create a temporary file");
     Path = S.str();
 
     if (!Contents.empty()) {
       std::error_code EC;
       raw_fd_ostream OS(Path, EC, sys::fs::F_None);
       if (EC)
-        fatal("failed to open " + Path + ": " + EC.message());
+        fatal(EC, "failed to open " + Path);
       OS << Contents;
     }
   }
@@ -331,7 +302,7 @@ public:
   // is called (you cannot remove an opened file on Windows.)
   std::unique_ptr<MemoryBuffer> getMemoryBuffer() {
     // IsVolatileSize=true forces MemoryBuffer to not use mmap().
-    return CHECK(MemoryBuffer::getFile(Path, /*FileSize=*/-1,
+    return check(MemoryBuffer::getFile(Path, /*FileSize=*/-1,
                                        /*RequiresNullTerminator=*/false,
                                        /*IsVolatileSize=*/true),
                  "could not open " + Path);
@@ -341,9 +312,16 @@ public:
 };
 }
 
-static std::string createDefaultXml() {
-  std::string Ret;
-  raw_string_ostream OS(Ret);
+// Create the default manifest file as a temporary file.
+TemporaryFile createDefaultXml() {
+  // Create a temporary file.
+  TemporaryFile File("defaultxml", "manifest");
+
+  // Open the temporary file for writing.
+  std::error_code EC;
+  raw_fd_ostream OS(File.Path, EC, sys::fs::F_Text);
+  if (EC)
+    fatal(EC, "failed to open " + File.Path);
 
   // Emit the XML. Note that we do *not* verify that the XML attributes are
   // syntactically correct. This is intentional for link.exe compatibility.
@@ -359,88 +337,56 @@ static std::string createDefaultXml() {
        << "      </requestedPrivileges>\n"
        << "    </security>\n"
        << "  </trustInfo>\n";
-  }
-  if (!Config->ManifestDependency.empty()) {
-    OS << "  <dependency>\n"
-       << "    <dependentAssembly>\n"
-       << "      <assemblyIdentity " << Config->ManifestDependency << " />\n"
-       << "    </dependentAssembly>\n"
-       << "  </dependency>\n";
+    if (!Config->ManifestDependency.empty()) {
+      OS << "  <dependency>\n"
+         << "    <dependentAssembly>\n"
+         << "      <assemblyIdentity " << Config->ManifestDependency << " />\n"
+         << "    </dependentAssembly>\n"
+         << "  </dependency>\n";
+    }
   }
   OS << "</assembly>\n";
-  return OS.str();
-}
-
-static std::string createManifestXmlWithInternalMt(StringRef DefaultXml) {
-  std::unique_ptr<MemoryBuffer> DefaultXmlCopy =
-      MemoryBuffer::getMemBufferCopy(DefaultXml);
-
-  windows_manifest::WindowsManifestMerger Merger;
-  if (auto E = Merger.merge(*DefaultXmlCopy.get()))
-    fatal("internal manifest tool failed on default xml: " +
-          toString(std::move(E)));
-
-  for (StringRef Filename : Config->ManifestInput) {
-    std::unique_ptr<MemoryBuffer> Manifest =
-        check(MemoryBuffer::getFile(Filename));
-    if (auto E = Merger.merge(*Manifest.get()))
-      fatal("internal manifest tool failed on file " + Filename + ": " +
-            toString(std::move(E)));
-  }
-
-  return Merger.getMergedManifest().get()->getBuffer();
-}
-
-static std::string createManifestXmlWithExternalMt(StringRef DefaultXml) {
-  // Create the default manifest file as a temporary file.
-  TemporaryFile Default("defaultxml", "manifest");
-  std::error_code EC;
-  raw_fd_ostream OS(Default.Path, EC, sys::fs::F_Text);
-  if (EC)
-    fatal("failed to open " + Default.Path + ": " + EC.message());
-  OS << DefaultXml;
   OS.close();
+  return File;
+}
 
-  // Merge user-supplied manifests if they are given.  Since libxml2 is not
-  // enabled, we must shell out to Microsoft's mt.exe tool.
-  TemporaryFile User("user", "manifest");
+static std::string readFile(StringRef Path) {
+  std::unique_ptr<MemoryBuffer> MB =
+      check(MemoryBuffer::getFile(Path), "could not open " + Path);
+  return MB->getBuffer();
+}
+
+static std::string createManifestXml() {
+  // Create the default manifest file.
+  TemporaryFile File1 = createDefaultXml();
+  if (Config->ManifestInput.empty())
+    return readFile(File1.Path);
+
+  // If manifest files are supplied by the user using /MANIFESTINPUT
+  // option, we need to merge them with the default manifest.
+  TemporaryFile File2("user", "manifest");
 
   Executor E("mt.exe");
   E.add("/manifest");
-  E.add(Default.Path);
+  E.add(File1.Path);
   for (StringRef Filename : Config->ManifestInput) {
     E.add("/manifest");
     E.add(Filename);
   }
   E.add("/nologo");
-  E.add("/out:" + StringRef(User.Path));
+  E.add("/out:" + StringRef(File2.Path));
   E.run();
-
-  return CHECK(MemoryBuffer::getFile(User.Path), "could not open " + User.Path)
-      .get()
-      ->getBuffer();
+  return readFile(File2.Path);
 }
 
-static std::string createManifestXml() {
-  std::string DefaultXml = createDefaultXml();
-  if (Config->ManifestInput.empty())
-    return DefaultXml;
-
-  if (windows_manifest::isAvailable())
-    return createManifestXmlWithInternalMt(DefaultXml);
-
-  return createManifestXmlWithExternalMt(DefaultXml);
-}
-
-static std::unique_ptr<WritableMemoryBuffer>
+static std::unique_ptr<MemoryBuffer>
 createMemoryBufferForManifestRes(size_t ManifestSize) {
   size_t ResSize = alignTo(
       object::WIN_RES_MAGIC_SIZE + object::WIN_RES_NULL_ENTRY_SIZE +
           sizeof(object::WinResHeaderPrefix) + sizeof(object::WinResIDs) +
           sizeof(object::WinResHeaderSuffix) + ManifestSize,
       object::WIN_RES_DATA_ALIGNMENT);
-  return WritableMemoryBuffer::getNewMemBuffer(ResSize, Config->OutputFile +
-                                                            ".manifest.res");
+  return MemoryBuffer::getNewMemBuffer(ResSize);
 }
 
 static void writeResFileHeader(char *&Buf) {
@@ -479,16 +425,16 @@ static void writeResEntryHeader(char *&Buf, size_t ManifestSize) {
 std::unique_ptr<MemoryBuffer> createManifestRes() {
   std::string Manifest = createManifestXml();
 
-  std::unique_ptr<WritableMemoryBuffer> Res =
+  std::unique_ptr<MemoryBuffer> Res =
       createMemoryBufferForManifestRes(Manifest.size());
 
-  char *Buf = Res->getBufferStart();
+  char *Buf = const_cast<char *>(Res->getBufferStart());
   writeResFileHeader(Buf);
   writeResEntryHeader(Buf, Manifest.size());
 
   // Copy the manifest data into the .res file.
   std::copy(Manifest.begin(), Manifest.end(), Buf);
-  return std::move(Res);
+  return Res;
 }
 
 void createSideBySideManifest() {
@@ -498,7 +444,7 @@ void createSideBySideManifest() {
   std::error_code EC;
   raw_fd_ostream Out(Path, EC, sys::fs::F_Text);
   if (EC)
-    fatal("failed to create manifest: " + EC.message());
+    fatal(EC, "failed to create manifest");
   Out << createManifestXml();
 }
 
@@ -513,12 +459,12 @@ Export parseExport(StringRef Arg) {
   if (E.Name.empty())
     goto err;
 
-  if (E.Name.contains('=')) {
+  if (E.Name.find('=') != StringRef::npos) {
     StringRef X, Y;
     std::tie(X, Y) = E.Name.split("=");
 
     // If "<name>=<dllname>.<name>".
-    if (Y.contains(".")) {
+    if (Y.find(".") != StringRef::npos) {
       E.Name = X;
       E.ForwardTo = Y;
       return E;
@@ -572,33 +518,7 @@ err:
 static StringRef undecorate(StringRef Sym) {
   if (Config->Machine != I386)
     return Sym;
-  // In MSVC mode, a fully decorated stdcall function is exported
-  // as-is with the leading underscore (with type IMPORT_NAME).
-  // In MinGW mode, a decorated stdcall function gets the underscore
-  // removed, just like normal cdecl functions.
-  if (Sym.startswith("_") && Sym.contains('@') && !Config->MinGW)
-    return Sym;
   return Sym.startswith("_") ? Sym.substr(1) : Sym;
-}
-
-// Convert stdcall/fastcall style symbols into unsuffixed symbols,
-// with or without a leading underscore. (MinGW specific.)
-static StringRef killAt(StringRef Sym, bool Prefix) {
-  if (Sym.empty())
-    return Sym;
-  // Strip any trailing stdcall suffix
-  Sym = Sym.substr(0, Sym.find('@', 1));
-  if (!Sym.startswith("@")) {
-    if (Prefix && !Sym.startswith("_"))
-      return Saver.save("_" + Sym);
-    return Sym;
-  }
-  // For fastcall, remove the leading @ and replace it with an
-  // underscore, if prefixes are used.
-  Sym = Sym.substr(1);
-  if (Prefix)
-    Sym = Saver.save("_" + Sym);
-  return Sym;
 }
 
 // Performs error checking on all /export arguments.
@@ -614,7 +534,7 @@ void fixupExports() {
   }
 
   for (Export &E : Config->Exports) {
-    Symbol *Sym = E.Sym;
+    SymbolBody *Sym = E.Sym;
     if (!E.ForwardTo.empty() || !Sym) {
       E.SymbolName = E.Name;
     } else {
@@ -633,17 +553,8 @@ void fixupExports() {
     }
   }
 
-  if (Config->KillAt && Config->Machine == I386) {
-    for (Export &E : Config->Exports) {
-      E.Name = killAt(E.Name, true);
-      E.ExportName = killAt(E.ExportName, false);
-      E.ExtName = killAt(E.ExtName, true);
-      E.SymbolName = killAt(E.SymbolName, true);
-    }
-  }
-
   // Uniquefy by name.
-  DenseMap<StringRef, Export *> Map(Config->Exports.size());
+  std::map<StringRef, Export *> Map;
   std::vector<Export> V;
   for (Export &E : Config->Exports) {
     auto Pair = Map.insert(std::make_pair(E.ExportName, &E));
@@ -690,8 +601,10 @@ void checkFailIfMismatch(StringRef Arg) {
   Config->MustMatch[K] = V;
 }
 
-// Convert Windows resource files (.res files) to a .obj file.
-MemoryBufferRef convertResToCOFF(ArrayRef<MemoryBufferRef> MBs) {
+// Convert Windows resource files (.res files) to a .obj file
+// using cvtres.exe.
+std::unique_ptr<MemoryBuffer>
+convertResToCOFF(const std::vector<MemoryBufferRef> &MBs) {
   object::WindowsResourceParser Parser;
 
   for (MemoryBufferRef MB : MBs) {
@@ -700,17 +613,14 @@ MemoryBufferRef convertResToCOFF(ArrayRef<MemoryBufferRef> MBs) {
     if (!RF)
       fatal("cannot compile non-resource file as resource");
     if (auto EC = Parser.parse(RF))
-      fatal("failed to parse .res file: " + toString(std::move(EC)));
+      fatal(EC, "failed to parse .res file");
   }
 
   Expected<std::unique_ptr<MemoryBuffer>> E =
       llvm::object::writeWindowsResourceCOFF(Config->Machine, Parser);
   if (!E)
-    fatal("failed to write .res to COFF: " + toString(E.takeError()));
-
-  MemoryBufferRef MBRef = **E;
-  make<std::unique_ptr<MemoryBuffer>>(std::move(*E)); // take ownership
-  return MBRef;
+    fatal(errorToErrorCode(E.takeError()), "failed to write .res to COFF");
+  return std::move(E.get());
 }
 
 // Run MSVC link.exe for given in-memory object files.
@@ -741,7 +651,7 @@ void runMSVCLinker(std::string Rsp, ArrayRef<StringRef> Objects) {
 #undef PREFIX
 
 // Create table mapping all options defined in Options.td
-static const llvm::opt::OptTable::Info InfoTable[] = {
+static const llvm::opt::OptTable::Info infoTable[] = {
 #define OPTION(X1, X2, ID, KIND, GROUP, ALIAS, X7, X8, X9, X10, X11, X12)      \
   {X1, X2, X10,         X11,         OPT_##ID, llvm::opt::Option::KIND##Class, \
    X9, X8, OPT_##GROUP, OPT_##ALIAS, X7,       X12},
@@ -749,131 +659,51 @@ static const llvm::opt::OptTable::Info InfoTable[] = {
 #undef OPTION
 };
 
-COFFOptTable::COFFOptTable() : OptTable(InfoTable, true) {}
-
-// Set color diagnostics according to --color-diagnostics={auto,always,never}
-// or --no-color-diagnostics flags.
-static void handleColorDiagnostics(opt::InputArgList &Args) {
-  auto *Arg = Args.getLastArg(OPT_color_diagnostics, OPT_color_diagnostics_eq,
-                              OPT_no_color_diagnostics);
-  if (!Arg)
-    return;
-  if (Arg->getOption().getID() == OPT_color_diagnostics) {
-    errorHandler().ColorDiagnostics = true;
-  } else if (Arg->getOption().getID() == OPT_no_color_diagnostics) {
-    errorHandler().ColorDiagnostics = false;
-  } else {
-    StringRef S = Arg->getValue();
-    if (S == "always")
-      errorHandler().ColorDiagnostics = true;
-    else if (S == "never")
-      errorHandler().ColorDiagnostics = false;
-    else if (S != "auto")
-      error("unknown option: --color-diagnostics=" + S);
-  }
-}
-
-static cl::TokenizerCallback getQuotingStyle(opt::InputArgList &Args) {
-  if (auto *Arg = Args.getLastArg(OPT_rsp_quoting)) {
-    StringRef S = Arg->getValue();
-    if (S != "windows" && S != "posix")
-      error("invalid response file quoting: " + S);
-    if (S == "windows")
-      return cl::TokenizeWindowsCommandLine;
-    return cl::TokenizeGNUCommandLine;
-  }
-  // The COFF linker always defaults to Windows quoting.
-  return cl::TokenizeWindowsCommandLine;
-}
+class COFFOptTable : public llvm::opt::OptTable {
+public:
+  COFFOptTable() : OptTable(infoTable, true) {}
+};
 
 // Parses a given list of options.
-opt::InputArgList ArgParser::parse(ArrayRef<const char *> Argv) {
+opt::InputArgList ArgParser::parse(ArrayRef<const char *> ArgsArr) {
+  // First, replace respnose files (@<file>-style options).
+  std::vector<const char *> Argv = replaceResponseFiles(ArgsArr);
+
   // Make InputArgList from string vectors.
+  COFFOptTable Table;
   unsigned MissingIndex;
   unsigned MissingCount;
-
-  // We need to get the quoting style for response files before parsing all
-  // options so we parse here before and ignore all the options but
-  // --rsp-quoting.
   opt::InputArgList Args = Table.ParseArgs(Argv, MissingIndex, MissingCount);
 
-  // Expand response files (arguments in the form of @<filename>)
-  // and then parse the argument again.
-  SmallVector<const char *, 256> ExpandedArgv(Argv.data(), Argv.data() + Argv.size());
-  cl::ExpandResponseFiles(Saver, getQuotingStyle(Args), ExpandedArgv);
-  Args = Table.ParseArgs(makeArrayRef(ExpandedArgv).drop_front(), MissingIndex,
-                         MissingCount);
-
   // Print the real command line if response files are expanded.
-  if (Args.hasArg(OPT_verbose) && Argv.size() != ExpandedArgv.size()) {
+  if (Args.hasArg(OPT_verbose) && ArgsArr.size() != Argv.size()) {
     std::string Msg = "Command line:";
-    for (const char *S : ExpandedArgv)
+    for (const char *S : Argv)
       Msg += " " + std::string(S);
     message(Msg);
   }
 
-  // Save the command line after response file expansion so we can write it to
-  // the PDB if necessary.
-  Config->Argv = {ExpandedArgv.begin(), ExpandedArgv.end()};
-
-  // Handle /WX early since it converts missing argument warnings to errors.
-  errorHandler().FatalWarnings = Args.hasFlag(OPT_WX, OPT_WX_no, false);
-
   if (MissingCount)
     fatal(Twine(Args.getArgString(MissingIndex)) + ": missing argument");
-
-  handleColorDiagnostics(Args);
-
   for (auto *Arg : Args.filtered(OPT_UNKNOWN))
     warn("ignoring unknown argument: " + Arg->getSpelling());
-
-  if (Args.hasArg(OPT_lib))
-    warn("ignoring /lib since it's not the first argument");
-
   return Args;
-}
-
-// Tokenizes and parses a given string as command line in .drective section.
-// /EXPORT options are processed in fastpath.
-std::pair<opt::InputArgList, std::vector<StringRef>>
-ArgParser::parseDirectives(StringRef S) {
-  std::vector<StringRef> Exports;
-  SmallVector<const char *, 16> Rest;
-
-  for (StringRef Tok : tokenize(S)) {
-    if (Tok.startswith_lower("/export:") || Tok.startswith_lower("-export:"))
-      Exports.push_back(Tok.substr(strlen("/export:")));
-    else
-      Rest.push_back(Tok.data());
-  }
-
-  // Make InputArgList from unparsed string vectors.
-  unsigned MissingIndex;
-  unsigned MissingCount;
-
-  opt::InputArgList Args = Table.ParseArgs(Rest, MissingIndex, MissingCount);
-
-  if (MissingCount)
-    fatal(Twine(Args.getArgString(MissingIndex)) + ": missing argument");
-  for (auto *Arg : Args.filtered(OPT_UNKNOWN))
-    warn("ignoring unknown argument: " + Arg->getSpelling());
-  return {std::move(Args), std::move(Exports)};
 }
 
 // link.exe has an interesting feature. If LINK or _LINK_ environment
 // variables exist, their contents are handled as command line strings.
 // So you can pass extra arguments using them.
-opt::InputArgList ArgParser::parseLINK(std::vector<const char *> Argv) {
+opt::InputArgList ArgParser::parseLINK(std::vector<const char *> Args) {
   // Concatenate LINK env and command line arguments, and then parse them.
   if (Optional<std::string> S = Process::GetEnv("LINK")) {
     std::vector<const char *> V = tokenize(*S);
-    Argv.insert(std::next(Argv.begin()), V.begin(), V.end());
+    Args.insert(Args.begin(), V.begin(), V.end());
   }
   if (Optional<std::string> S = Process::GetEnv("_LINK_")) {
     std::vector<const char *> V = tokenize(*S);
-    Argv.insert(std::next(Argv.begin()), V.begin(), V.end());
+    Args.insert(Args.begin(), V.begin(), V.end());
   }
-  return parse(Argv);
+  return parse(Args);
 }
 
 std::vector<const char *> ArgParser::tokenize(StringRef S) {
@@ -882,8 +712,18 @@ std::vector<const char *> ArgParser::tokenize(StringRef S) {
   return std::vector<const char *>(Tokens.begin(), Tokens.end());
 }
 
+// Creates a new command line by replacing options starting with '@'
+// character. '@<filename>' is replaced by the file's contents.
+std::vector<const char *>
+ArgParser::replaceResponseFiles(std::vector<const char *> Argv) {
+  SmallVector<const char *, 256> Tokens(Argv.data(), Argv.data() + Argv.size());
+  ExpandResponseFiles(Saver, TokenizeWindowsCommandLine, Tokens);
+  return std::vector<const char *>(Tokens.begin(), Tokens.end());
+}
+
 void printHelp(const char *Argv0) {
-  COFFOptTable().PrintHelp(outs(), Argv0, "LLVM Linker", false);
+  COFFOptTable Table;
+  Table.PrintHelp(outs(), Argv0, "LLVM Linker", false);
 }
 
 } // namespace coff

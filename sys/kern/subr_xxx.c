@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_xxx.c,v 1.17 2019/05/17 03:53:08 visa Exp $	*/
+/*	$OpenBSD: subr_xxx.c,v 1.15 2015/12/05 10:11:53 tedu Exp $	*/
 /*	$NetBSD: subr_xxx.c,v 1.10 1996/02/04 02:16:51 christos Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
-#include <sys/smr.h>
 
 
 /*
@@ -156,11 +155,7 @@ blktochr(dev_t dev)
 void
 assertwaitok(void)
 {
-	if (panicstr || db_active)
-		return;
-
 	splassert(IPL_NONE);
-	SMR_ASSERT_NONCRITICAL();
 #ifdef DIAGNOSTIC
 	if (curcpu()->ci_mutex_level != 0)
 		panic("assertwaitok: non-zero mutex count: %d",

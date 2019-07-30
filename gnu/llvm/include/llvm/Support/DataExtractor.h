@@ -15,7 +15,7 @@
 
 namespace llvm {
 
-/// An auxiliary type to facilitate extraction of 3-byte entities.
+/// An auxiliary type to facilitate extraction of 3-byte entities. 
 struct Uint24 {
   uint8_t Bytes[3];
   Uint24(uint8_t U) {
@@ -51,13 +51,13 @@ public:
   DataExtractor(StringRef Data, bool IsLittleEndian, uint8_t AddressSize)
     : Data(Data), IsLittleEndian(IsLittleEndian), AddressSize(AddressSize) {}
 
-  /// Get the data pointed to by this extractor.
+  /// \brief Get the data pointed to by this extractor.
   StringRef getData() const { return Data; }
-  /// Get the endianness for this extractor.
+  /// \brief Get the endianness for this extractor.
   bool isLittleEndian() const { return IsLittleEndian; }
-  /// Get the address size for this extractor.
+  /// \brief Get the address size for this extractor.
   uint8_t getAddressSize() const { return AddressSize; }
-  /// Set the address size for this extractor.
+  /// \brief Set the address size for this extractor.
   void setAddressSize(uint8_t Size) { AddressSize = Size; }
 
   /// Extract a C string from \a *offset_ptr.

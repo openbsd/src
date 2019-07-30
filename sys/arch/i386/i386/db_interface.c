@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.41 2019/03/23 05:47:22 visa Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.39 2018/03/22 19:30:18 bluhm Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /*
@@ -127,10 +127,10 @@ db_ktrap(int type, int code, db_regs_t *regs)
 	}
 
 #ifdef MULTIPROCESSOR
-	db_mtx_enter(&ddb_mp_mutex);
+	mtx_enter(&ddb_mp_mutex);
 	if (ddb_state == DDB_STATE_EXITING)
 		ddb_state = DDB_STATE_NOT_RUNNING;
-	db_mtx_leave(&ddb_mp_mutex);
+	mtx_leave(&ddb_mp_mutex);
 	while (db_enter_ddb()) {
 #endif /* MULTIPROCESSOR */
 
@@ -229,7 +229,7 @@ db_cpuinfo_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	for (i = 0; i < MAXCPUS; i++) {
 		if (cpu_info[i] != NULL) {
 			db_printf("%c%4d: ", (i == cpu_number()) ? '*' : ' ',
-			    cpu_info[i]->ci_dev->dv_unit);
+			    cpu_info[i]->ci_dev.dv_unit);
 			switch(cpu_info[i]->ci_ddb_paused) {
 			case CI_DDB_RUNNING:
 				db_printf("running\n");

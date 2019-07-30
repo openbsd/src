@@ -29,21 +29,11 @@
 
 #include <stddef.h>
 
-#include "place.h"
-
-/*
- * Relevant places while we're processing a line:
- *   the place in the current line
- *   the beginning of the next line
- */
-struct lineplace {
-	struct place current;
-	struct place nextline;
-};
+struct place;
 
 void directive_init(void);
 void directive_cleanup(void);
 
-void directive_gotline(struct lineplace *lp, char *line, size_t len);
+void directive_gotline(struct place *p, char *line, size_t len);
 void directive_goteof(struct place *p);
 

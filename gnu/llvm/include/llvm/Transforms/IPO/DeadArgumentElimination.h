@@ -20,20 +20,14 @@
 #ifndef LLVM_TRANSFORMS_IPO_DEADARGUMENTELIMINATION_H
 #define LLVM_TRANSFORMS_IPO_DEADARGUMENTELIMINATION_H
 
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/Twine.h"
-#include "llvm/IR/Function.h"
+#include "llvm/IR/Module.h"
 #include "llvm/IR/PassManager.h"
+
 #include <map>
 #include <set>
 #include <string>
-#include <tuple>
 
 namespace llvm {
-
-class Module;
-class Use;
-class Value;
 
 /// Eliminate dead arguments (and return values) from functions.
 class DeadArgumentEliminationPass
@@ -43,12 +37,11 @@ public:
   /// argument.  Used so that arguments and return values can be used
   /// interchangeably.
   struct RetOrArg {
+    RetOrArg(const Function *F, unsigned Idx, bool IsArg)
+        : F(F), Idx(Idx), IsArg(IsArg) {}
     const Function *F;
     unsigned Idx;
     bool IsArg;
-
-    RetOrArg(const Function *F, unsigned Idx, bool IsArg)
-        : F(F), Idx(Idx), IsArg(IsArg) {}
 
     /// Make RetOrArg comparable, so we can put it into a map.
     bool operator<(const RetOrArg &O) const {
@@ -74,23 +67,16 @@ public:
   /// thus become dead in the end.
   enum Liveness { Live, MaybeLive };
 
-  DeadArgumentEliminationPass(bool ShouldHackArguments_ = false)
-      : ShouldHackArguments(ShouldHackArguments_) {}
-
-  PreservedAnalyses run(Module &M, ModuleAnalysisManager &);
-
   /// Convenience wrapper
   RetOrArg CreateRet(const Function *F, unsigned Idx) {
     return RetOrArg(F, Idx, false);
   }
-
   /// Convenience wrapper
   RetOrArg CreateArg(const Function *F, unsigned Idx) {
     return RetOrArg(F, Idx, true);
   }
 
-  using UseMap = std::multimap<RetOrArg, RetOrArg>;
-
+  typedef std::multimap<RetOrArg, RetOrArg> UseMap;
   /// This maps a return value or argument to any MaybeLive return values or
   /// arguments it uses. This allows the MaybeLive values to be marked live
   /// when any of its users is marked live.
@@ -107,20 +93,24 @@ public:
   ///    directly to F.
   UseMap Uses;
 
-  using LiveSet = std::set<RetOrArg>;
-  using LiveFuncSet = std::set<const Function *>;
+  typedef std::set<RetOrArg> LiveSet;
+  typedef std::set<const Function *> LiveFuncSet;
 
   /// This set contains all values that have been determined to be live.
   LiveSet LiveValues;
-
   /// This set contains all values that are cannot be changed in any way.
   LiveFuncSet LiveFunctions;
 
-  using UseVector = SmallVector<RetOrArg, 5>;
+  typedef SmallVector<RetOrArg, 5> UseVector;
 
   /// This allows this pass to do double-duty as the dead arg hacking pass
   /// (used only by bugpoint).
   bool ShouldHackArguments = false;
+
+public:
+  DeadArgumentEliminationPass(bool ShouldHackArguments_ = false)
+      : ShouldHackArguments(ShouldHackArguments_) {}
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &);
 
 private:
   Liveness MarkIfNotLive(RetOrArg Use, UseVector &MaybeLiveUses);
@@ -138,7 +128,6 @@ private:
   bool DeleteDeadVarargs(Function &Fn);
   bool RemoveDeadArgumentsFromCallers(Function &Fn);
 };
-
-} // end namespace llvm
+}
 
 #endif // LLVM_TRANSFORMS_IPO_DEADARGUMENTELIMINATION_H

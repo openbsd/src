@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.104 2019/05/16 12:44:17 florian Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.100 2016/08/22 16:27:00 millert Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*

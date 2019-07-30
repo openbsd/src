@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.70 2018/08/23 14:47:52 jsg Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.64 2018/03/22 19:30:18 bluhm Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -28,7 +28,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/biosvar.h>
 #include <machine/bus.h>
 #include <machine/conf.h>
 #include <machine/acpiapm.h>
@@ -39,11 +38,10 @@
 #include <machine/cpuvar.h>
 #include <machine/npx.h>
 
+#include <dev/isa/isareg.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidev.h>
-#include <dev/isa/isareg.h>
-#include <dev/pci/pcivar.h>
 
 #include "apm.h"
 #include "isa.h"
@@ -75,42 +73,6 @@ extern void intr_calculatemasks(void);
 
 u_int8_t	*acpi_scan(struct acpi_mem_map *, paddr_t, size_t);
 
-int	acpi_match(struct device *, void *, void *);
-void	acpi_attach(struct device *, struct device *, void *);
-
-struct cfattach acpi_ca = {
-	sizeof(struct acpi_softc), acpi_match, acpi_attach
-};
-
-int
-acpi_match(struct device *parent, void *match, void *aux)
-{
-	struct bios_attach_args	*ba = aux;
-	struct cfdata		*cf = match;
-
-	/* sanity */
-	if (strcmp(ba->ba_name, cf->cf_driver->cd_name))
-		return (0);
-
-	if (!acpi_probe(parent, cf, ba))
-		return (0);
-
-	return (1);
-}
-
-void
-acpi_attach(struct device *parent, struct device *self, void *aux)
-{
-	struct acpi_softc *sc = (struct acpi_softc *)self;
-	struct bios_attach_args *ba = aux;
-
-	sc->sc_iot = ba->ba_iot;
-	sc->sc_memt = ba->ba_memt;
-	sc->sc_dmat = &pci_bus_dma_tag;
-
-	acpi_attach_common(sc, ba->ba_acpipbase);
-}
-
 int
 acpi_map(paddr_t pa, size_t len, struct acpi_mem_map *handle)
 {
@@ -140,20 +102,6 @@ acpi_unmap(struct acpi_mem_map *handle)
 {
 	pmap_kremove(handle->baseva, handle->vsize);
 	uvm_km_free(kernel_map, handle->baseva, handle->vsize);
-}
-
-int
-acpi_bus_space_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
-    int flags, bus_space_handle_t *bshp)
-{
-	return _bus_space_map(t, addr, size, flags, bshp);
-}
-
-void
-acpi_bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
-    bus_size_t size)
-{
-	_bus_space_unmap(t, bsh, size, NULL);
 }
 
 u_int8_t *
@@ -445,7 +393,6 @@ acpi_resume_cpu(struct acpi_softc *sc)
 	npxinit(&cpu_info_primary);
 
 	cpu_init(&cpu_info_primary);
-	cpu_ucode_apply(&cpu_info_primary);
 	
 	/* Re-initialise memory range handling on BSP */
 	if (mem_range_softc.mr_op != NULL)
@@ -501,7 +448,7 @@ acpi_resume_mp(void)
 		p = ci->ci_schedstate.spc_idleproc;
 		pcb = &p->p_addr->u_pcb;
 
-		tf = (struct trapframe *)pcb->pcb_kstack - 1;
+		tf = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 		sf = (struct switchframe *)tf - 1;
 		sf->sf_esi = (int)sched_idle;
 		sf->sf_ebx = (int)ci;

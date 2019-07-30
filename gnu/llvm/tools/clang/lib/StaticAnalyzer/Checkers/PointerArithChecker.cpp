@@ -154,7 +154,8 @@ void PointerArithChecker::reportPointerArithMisuse(const Expr *E,
     return;
 
   ProgramStateRef State = C.getState();
-  const MemRegion *Region = C.getSVal(E).getAsRegion();
+  const MemRegion *Region =
+      State->getSVal(E, C.getLocationContext()).getAsRegion();
   if (!Region)
     return;
   if (PointedNeeded)
@@ -226,7 +227,7 @@ void PointerArithChecker::checkPostStmt(const CallExpr *CE,
   if (AllocFunctions.count(FunI) == 0)
     return;
 
-  SVal SV = C.getSVal(CE);
+  SVal SV = State->getSVal(CE, C.getLocationContext());
   const MemRegion *Region = SV.getAsRegion();
   if (!Region)
     return;
@@ -247,7 +248,7 @@ void PointerArithChecker::checkPostStmt(const CXXNewExpr *NE,
   AllocKind Kind = getKindOfNewOp(NE, FD);
 
   ProgramStateRef State = C.getState();
-  SVal AllocedVal = C.getSVal(NE);
+  SVal AllocedVal = State->getSVal(NE, C.getLocationContext());
   const MemRegion *Region = AllocedVal.getAsRegion();
   if (!Region)
     return;
@@ -262,7 +263,7 @@ void PointerArithChecker::checkPostStmt(const CastExpr *CE,
 
   const Expr *CastedExpr = CE->getSubExpr();
   ProgramStateRef State = C.getState();
-  SVal CastedVal = C.getSVal(CastedExpr);
+  SVal CastedVal = State->getSVal(CastedExpr, C.getLocationContext());
 
   const MemRegion *Region = CastedVal.getAsRegion();
   if (!Region)
@@ -280,7 +281,7 @@ void PointerArithChecker::checkPreStmt(const CastExpr *CE,
 
   const Expr *CastedExpr = CE->getSubExpr();
   ProgramStateRef State = C.getState();
-  SVal CastedVal = C.getSVal(CastedExpr);
+  SVal CastedVal = State->getSVal(CastedExpr, C.getLocationContext());
 
   const MemRegion *Region = CastedVal.getAsRegion();
   if (!Region)
@@ -303,14 +304,11 @@ void PointerArithChecker::checkPreStmt(const UnaryOperator *UOp,
 
 void PointerArithChecker::checkPreStmt(const ArraySubscriptExpr *SubsExpr,
                                        CheckerContext &C) const {
-  SVal Idx = C.getSVal(SubsExpr->getIdx());
+  ProgramStateRef State = C.getState();
+  SVal Idx = State->getSVal(SubsExpr->getIdx(), C.getLocationContext());
 
   // Indexing with 0 is OK.
   if (Idx.isZeroConstant())
-    return;
-
-  // Indexing vector-type expressions is also OK.
-  if (SubsExpr->getBase()->getType()->isVectorType())
     return;
   reportPointerArithMisuse(SubsExpr->getBase(), C);
 }
@@ -326,14 +324,14 @@ void PointerArithChecker::checkPreStmt(const BinaryOperator *BOp,
   ProgramStateRef State = C.getState();
 
   if (Rhs->getType()->isIntegerType() && Lhs->getType()->isPointerType()) {
-    SVal RHSVal = C.getSVal(Rhs);
+    SVal RHSVal = State->getSVal(Rhs, C.getLocationContext());
     if (State->isNull(RHSVal).isConstrainedTrue())
       return;
     reportPointerArithMisuse(Lhs, C, !BOp->isAdditiveOp());
   }
   // The int += ptr; case is not valid C++.
   if (Lhs->getType()->isIntegerType() && Rhs->getType()->isPointerType()) {
-    SVal LHSVal = C.getSVal(Lhs);
+    SVal LHSVal = State->getSVal(Lhs, C.getLocationContext());
     if (State->isNull(LHSVal).isConstrainedTrue())
       return;
     reportPointerArithMisuse(Rhs, C);

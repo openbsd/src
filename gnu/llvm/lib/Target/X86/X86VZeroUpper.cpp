@@ -1,4 +1,4 @@
-//===- X86VZeroUpper.cpp - AVX vzeroupper instruction inserter ------------===//
+//===-- X86VZeroUpper.cpp - AVX vzeroupper instruction inserter -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -17,25 +17,14 @@
 #include "X86.h"
 #include "X86InstrInfo.h"
 #include "X86Subtarget.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/TargetInstrInfo.h"
-#include "llvm/CodeGen/TargetRegisterInfo.h"
-#include "llvm/IR/CallingConv.h"
-#include "llvm/IR/DebugLoc.h"
-#include "llvm/IR/Function.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cassert>
-
+#include "llvm/Target/TargetInstrInfo.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "x86-vzeroupper"
@@ -46,25 +35,23 @@ namespace {
 
   class VZeroUpperInserter : public MachineFunctionPass {
   public:
+
     VZeroUpperInserter() : MachineFunctionPass(ID) {}
-
     bool runOnMachineFunction(MachineFunction &MF) override;
-
     MachineFunctionProperties getRequiredProperties() const override {
       return MachineFunctionProperties().set(
           MachineFunctionProperties::Property::NoVRegs);
     }
-
     StringRef getPassName() const override { return "X86 vzeroupper inserter"; }
 
   private:
+
     void processBasicBlock(MachineBasicBlock &MBB);
     void insertVZeroUpper(MachineBasicBlock::iterator I,
                           MachineBasicBlock &MBB);
     void addDirtySuccessor(MachineBasicBlock &MBB);
 
-    using BlockExitState = enum { PASS_THROUGH, EXITS_CLEAN, EXITS_DIRTY };
-
+    typedef enum { PASS_THROUGH, EXITS_CLEAN, EXITS_DIRTY } BlockExitState;
     static const char* getBlockExitStateName(BlockExitState ST);
 
     // Core algorithm state:
@@ -86,15 +73,13 @@ namespace {
     //                      to be guarded until we discover a predecessor that
     //                      is DIRTY_OUT.
     struct BlockState {
-      BlockExitState ExitState = PASS_THROUGH;
-      bool AddedToDirtySuccessors = false;
+      BlockState() : ExitState(PASS_THROUGH), AddedToDirtySuccessors(false) {}
+      BlockExitState ExitState;
+      bool AddedToDirtySuccessors;
       MachineBasicBlock::iterator FirstUnguardedCall;
-
-      BlockState() = default;
     };
-
-    using BlockStateMap = SmallVector<BlockState, 8>;
-    using DirtySuccessorsWorkList = SmallVector<MachineBasicBlock *, 8>;
+    typedef SmallVector<BlockState, 8> BlockStateMap;
+    typedef SmallVector<MachineBasicBlock*, 8> DirtySuccessorsWorkList;
 
     BlockStateMap BlockStates;
     DirtySuccessorsWorkList DirtySuccessors;
@@ -105,9 +90,8 @@ namespace {
     static char ID;
   };
 
-} // end anonymous namespace
-
-char VZeroUpperInserter::ID = 0;
+  char VZeroUpperInserter::ID = 0;
+}
 
 FunctionPass *llvm::createX86IssueVZeroUpperPass() {
   return new VZeroUpperInserter();
@@ -132,8 +116,9 @@ static bool isYmmOrZmmReg(unsigned Reg) {
 }
 
 static bool checkFnHasLiveInYmmOrZmm(MachineRegisterInfo &MRI) {
-  for (std::pair<unsigned, unsigned> LI : MRI.liveins())
-    if (isYmmOrZmmReg(LI.first))
+  for (MachineRegisterInfo::livein_iterator I = MRI.livein_begin(),
+       E = MRI.livein_end(); I != E; ++I)
+    if (isYmmOrZmmReg(I->first))
       return true;
 
   return false;
@@ -235,7 +220,7 @@ void VZeroUpperInserter::processBasicBlock(MachineBasicBlock &MBB) {
     // If the call has no RegMask, skip it as well. It usually happens on
     // helper function calls (such as '_chkstk', '_ftol2') where standard
     // calling convention is not used (RegMask is not used to mark register
-    // clobbered and register usage (def/implicit-def/use) is well-defined and
+    // clobbered and register usage (def/imp-def/use) is well-defined and
     // explicitly specified.
     if (IsCall && !callHasRegMask(MI))
       continue;
@@ -264,8 +249,8 @@ void VZeroUpperInserter::processBasicBlock(MachineBasicBlock &MBB) {
     }
   }
 
-  LLVM_DEBUG(dbgs() << "MBB #" << MBB.getNumber() << " exit state: "
-                    << getBlockExitStateName(CurState) << '\n');
+  DEBUG(dbgs() << "MBB #" << MBB.getNumber() << " exit state: "
+               << getBlockExitStateName(CurState) << '\n');
 
   if (CurState == EXITS_DIRTY)
     for (MachineBasicBlock::succ_iterator SI = MBB.succ_begin(),
@@ -285,7 +270,7 @@ bool VZeroUpperInserter::runOnMachineFunction(MachineFunction &MF) {
   TII = ST.getInstrInfo();
   MachineRegisterInfo &MRI = MF.getRegInfo();
   EverMadeChange = false;
-  IsX86INTR = MF.getFunction().getCallingConv() == CallingConv::X86_INTR;
+  IsX86INTR = MF.getFunction()->getCallingConv() == CallingConv::X86_INTR;
 
   bool FnHasLiveInYmmOrZmm = checkFnHasLiveInYmmOrZmm(MRI);
 
@@ -341,8 +326,8 @@ bool VZeroUpperInserter::runOnMachineFunction(MachineFunction &MF) {
     // successors need to be added to the worklist (if they haven't been
     // already).
     if (BBState.ExitState == PASS_THROUGH) {
-      LLVM_DEBUG(dbgs() << "MBB #" << MBB.getNumber()
-                        << " was Pass-through, is now Dirty-out.\n");
+      DEBUG(dbgs() << "MBB #" << MBB.getNumber()
+                   << " was Pass-through, is now Dirty-out.\n");
       for (MachineBasicBlock *Succ : MBB.successors())
         addDirtySuccessor(*Succ);
     }

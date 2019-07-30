@@ -26,7 +26,7 @@ class TestSafeFuncCalls(TestBase):
     def test_with_python_api(self):
         """Test function call thread safety."""
         self.build()
-        exe = self.getBuildArtifact("a.out")
+        exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)

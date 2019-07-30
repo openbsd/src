@@ -126,7 +126,6 @@ Boston, MA 02110-1301, USA.  */
    %{!static:-Bdynamic} \
    %{rdynamic:-export-dynamic} \
    %{assert*} \
-   %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so} \
-   %{!nostdlib:-L/usr/lib}"
+   %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}"
 
 #define OBSD_HAS_CORRECT_SPECS

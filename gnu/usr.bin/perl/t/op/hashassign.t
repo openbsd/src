@@ -2,8 +2,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
+    @INC = '../lib';
     require './test.pl';
-    set_up_inc('../lib');
 }
 
 # use strict;
@@ -376,7 +376,8 @@ SKIP: {
 	'hash+scalar assignment in scalar context' );
     ok( eq_hash( \%h, {1 => 2, 3 => 4} ), "correct hash" );
     is( $x, undef, "correct scalar" );
-    is( join(':', map $_ // 'undef', ((%h,$x) = (1,2,3,4))), '1:2:3:4:undef',
+    # this arguable, but this is how it works
+    is( join(':', (%h,$x) = (1,2,3,4)), '1:2:3:4',
 	'hash+scalar assignment in list context' );
     ok( eq_hash( \%h, {1 => 2, 3 => 4} ), "correct hash" );
     is( $x, undef, "correct scalar" );
@@ -409,7 +410,8 @@ SKIP: {
 	'hash+scalar assignment in scalar context' );
     ok( eq_hash( \%h, {1 => 4} ), "correct hash" );
     is( $x, undef, "correct scalar" );
-    is( join(':', map $_ // 'undef', ((%h,$x) = (1,2,1,4))), '1:4:undef',
+    # this arguable, but this is how it works
+    is( join(':', (%h,$x) = (1,2,1,4)), '1:4',
 	'hash+scalar assignment in list context' );
     ok( eq_hash( \%h, {1 => 4} ), "correct hash" );
     is( $x, undef, "correct scalar" );
@@ -443,7 +445,8 @@ SKIP: {
 	'hash+scalar assignment in scalar context' );
     ok( eq_hash( \%h, {1 => undef, 3 => 4} ), "correct hash" );
     is( $x, undef, "correct scalar" );
-    is( join(':', map $_//'undef', (%h,$x) = (1,2,3,4,1)), '1:undef:3:4:undef',
+    # this arguable, but this is how it works
+    is( join(':', map $_//'undef', (%h,$x) = (1,2,3,4,1)), '1:undef:3:4',
 	'hash+scalar assignment in list context' );
     ok( eq_hash( \%h, {1 => undef, 3 => 4} ), "correct hash" );
     is( $x, undef, "correct scalar" );
@@ -472,7 +475,7 @@ SKIP: {
 # ($x,$y,$z,...) = (1);
 {
     my ($x,$y,$z,@a,%h);
-    is( join(':', map $_ // 'undef', (($x, $y, %h) = (1))), '1:undef',
+    is( join(':', ($x, $y, %h) = (1)), '1',
         'only assigned elements are returned in list context');
     is( join(':', ($x, $y, %h) = (1,1)), '1:1',
         'only assigned elements are returned in list context');
@@ -482,11 +485,11 @@ SKIP: {
     is( join(':', ($x, $y, %h) = (1,1,1,1)), '1:1:1:1',
         'only assigned elements are returned in list context');
     is( join(':', map $_//'undef', ($x, %h, $y) = (1,2,3,4)),
-        '1:2:3:4:undef:undef',
+        '1:2:3:4:undef',
         'only assigned elements are returned in list context');
-    is( join(':', map $_//'undef', ($x, $y, @h) = (1)), '1:undef',
+    is( join(':', ($x, $y, @h) = (1)), '1',
         'only assigned elements are returned in list context');
-    is( join(':', map $_//'undef', ($x, @h, $y) = (1,2,3,4)), '1:2:3:4:undef',
+    is( join(':', ($x, @h, $y) = (1,2,3,4)), '1:2:3:4',
         'only assigned elements are returned in list context');
 }
 
@@ -520,14 +523,14 @@ SKIP: {
      "returned values are not aliased to RHS of assignment in lvalue sub");
 
     $_++ foreach ($x,$y,%h,$z) = (0);
-    ok( eq_array([$x,$y,%h,$z], [1,1,1]), "all assigned values are returned" );
+    ok( eq_array([$x,$y,%h,$z], [1,undef,undef]), "only assigned values are returned" );
 
     $_++ foreach ($x,$y,%h,$z) = (0,1);
-    ok( eq_array([$x,$y,%h,$z], [1,2,1]), "all assigned values are returned" );
+    ok( eq_array([$x,$y,%h,$z], [1,2,undef]), "only assigned values are returned" );
 
     no warnings 'misc'; # suppress oddball warnings
     $_++ foreach ($x,$y,%h,$z) = (0,1,2);
-    ok( eq_array([$x,$y,%h,$z], [1,2,2,1,1]), "all assigned values are returned" );
+    ok( eq_array([$x,$y,%h,$z], [1,2,2,1,undef]), "only assigned values are returned" );
 }
 
 

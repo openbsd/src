@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.10 2019/05/14 13:44:25 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.9 2011/10/02 22:20:49 edd Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -38,10 +38,13 @@
 extern int verbose;
 
 int
-parse_cmd(cmd_t *cmd, char *lbuf)
+ask_cmd(cmd_t *cmd)
 {
-	char *cp, *buf;
+	char lbuf[100], *cp, *buf;
 
+	/* Get input */
+	if (fgets(lbuf, sizeof lbuf, stdin) == NULL)
+		errx(1, "eof");
 	lbuf[strcspn(lbuf, "\n")] = '\0';
 	if (verbose)
 		printf("%s\n", lbuf);
@@ -56,17 +59,6 @@ parse_cmd(cmd_t *cmd, char *lbuf)
 	strlcpy(cmd->args, buf, sizeof cmd->args);
 
 	return (0);
-}
-
-int
-ask_cmd(cmd_t *cmd)
-{
-	char lbuf[100];
-
-	/* Get input */
-	if (fgets(lbuf, sizeof lbuf, stdin) == NULL)
-		errx(1, "eof");
-	return parse_cmd(cmd, lbuf);
 }
 
 int

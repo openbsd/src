@@ -13,6 +13,7 @@
 
 #include "DiffConsumer.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Debug.h"
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.32 2018/05/02 15:48:38 tb Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.30 2018/02/22 16:41:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -98,8 +98,10 @@ DH_set_method(DH *dh, const DH_METHOD *meth)
         if (mtmp->finish)
 		mtmp->finish(dh);
 #ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(dh->engine);
-	dh->engine = NULL;
+	if (dh->engine) {
+		ENGINE_finish(dh->engine);
+		dh->engine = NULL;
+	}
 #endif
         dh->meth = meth;
         if (meth->init)
@@ -137,7 +139,7 @@ DH_new_method(ENGINE *engine)
 		ret->engine = ENGINE_get_default_DH();
 	if(ret->engine) {
 		ret->meth = ENGINE_get_DH(ret->engine);
-		if (ret->meth == NULL) {
+		if (!ret->meth) {
 			DHerror(ERR_R_ENGINE_LIB);
 			ENGINE_finish(ret->engine);
 			free(ret);
@@ -164,7 +166,8 @@ DH_new_method(ENGINE *engine)
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
 	if (ret->meth->init != NULL && !ret->meth->init(ret)) {
 #ifndef OPENSSL_NO_ENGINE
-		ENGINE_finish(ret->engine);
+		if (ret->engine)
+			ENGINE_finish(ret->engine);
 #endif
 		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
 		free(ret);
@@ -187,7 +190,8 @@ DH_free(DH *r)
 	if (r->meth->finish)
 		r->meth->finish(r);
 #ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(r->engine);
+	if (r->engine)
+		ENGINE_finish(r->engine);
 #endif
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, r, &r->ex_data);
@@ -294,6 +298,10 @@ DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key)
 int
 DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
 {
+	if ((dh->pub_key == NULL && pub_key == NULL) ||
+	    (dh->priv_key == NULL && priv_key == NULL))
+		return 0;
+
 	if (pub_key != NULL) {
 		BN_free(dh->pub_key);
 		dh->pub_key = pub_key;

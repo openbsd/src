@@ -44,14 +44,12 @@ import inspect
 import io
 import os.path
 import re
-import shutil
 import signal
 from subprocess import *
 import sys
 import time
 import traceback
 import types
-import distutils.spawn
 
 # Third-party modules
 import unittest2
@@ -70,6 +68,15 @@ from . import lldbutil
 from . import test_categories
 from lldbsuite.support import encoded_file
 from lldbsuite.support import funcutils
+
+# dosep.py starts lots and lots of dotest instances
+# This option helps you find if two (or more) dotest instances are using the same
+# directory at the same time
+# Enable it to cause test failures and stderr messages if dotest instances try to run in
+# the same directory simultaneously
+# it is disabled by default because it litters the test directories with
+# ".dirlock" files
+debug_confirm_directory_exclusivity = False
 
 # See also dotest.parseOptionsAndInitTestdirs(), where the environment variables
 # LLDB_COMMAND_TRACE and LLDB_DO_CLEANUP are set from '-t' and '-r dir'
@@ -184,10 +191,9 @@ def CMD_MSG(str):
     return "Command '%s' returns successfully" % str
 
 
-def COMPLETION_MSG(str_before, str_after, completions):
+def COMPLETION_MSG(str_before, str_after):
     '''A generic message generator for the completion mechanism.'''
-    return ("'%s' successfully completes to '%s', but completions were:\n%s"
-           % (str_before, str_after, "\n".join(completions)))
+    return "'%s' successfully completes to '%s'" % (str_before, str_after)
 
 
 def EXP_MSG(str, actual, exe):
@@ -362,8 +368,8 @@ class _RemoteProcess(_BaseProcess):
     def launch(self, executable, args):
         if self._install_remote:
             src_path = executable
-            dst_path = lldbutil.join_remote_paths(
-                    lldb.remote_platform.GetWorkingDirectory(), os.path.basename(executable))
+            dst_path = lldbutil.append_to_process_working_directory(
+                os.path.basename(executable))
 
             dst_file_spec = lldb.SBFileSpec(dst_path, False)
             err = lldb.remote_platform.Install(
@@ -491,8 +497,6 @@ def getsource_if_available(obj):
 def builder_module():
     if sys.platform.startswith("freebsd"):
         return __import__("builder_freebsd")
-    if sys.platform.startswith("openbsd"):
-        return __import__("builder_openbsd")
     if sys.platform.startswith("netbsd"):
         return __import__("builder_netbsd")
     if sys.platform.startswith("linux"):
@@ -518,14 +522,11 @@ class Base(unittest2.TestCase):
 
     @staticmethod
     def compute_mydir(test_file):
-        '''Subclasses should call this function to correctly calculate the
-           required "mydir" attribute as follows:
+        '''Subclasses should call this function to correctly calculate the required "mydir" attribute as follows:
 
-            mydir = TestBase.compute_mydir(__file__)
-        '''
-        # /abs/path/to/packages/group/subdir/mytest.py -> group/subdir
-        rel_prefix = test_file[len(os.environ["LLDB_TEST"]) + 1:]
-        return os.path.dirname(rel_prefix)
+            mydir = TestBase.compute_mydir(__file__)'''
+        test_dir = os.path.dirname(test_file)
+        return test_dir[len(os.environ["LLDB_TEST"]) + 1:]
 
     def TraceOn(self):
         """Returns True if we are in trace mode (tracing detailed test execution)."""
@@ -547,11 +548,31 @@ class Base(unittest2.TestCase):
         # Change current working directory if ${LLDB_TEST} is defined.
         # See also dotest.py which sets up ${LLDB_TEST}.
         if ("LLDB_TEST" in os.environ):
-            full_dir = os.path.join(os.environ["LLDB_TEST"],
-                                    cls.mydir)
+            full_dir = os.path.join(os.environ["LLDB_TEST"], cls.mydir)
             if traceAlways:
                 print("Change dir to:", full_dir, file=sys.stderr)
-            os.chdir(full_dir)
+            os.chdir(os.path.join(os.environ["LLDB_TEST"], cls.mydir))
+
+        if debug_confirm_directory_exclusivity:
+            import lock
+            cls.dir_lock = lock.Lock(os.path.join(full_dir, ".dirlock"))
+            try:
+                cls.dir_lock.try_acquire()
+                # write the class that owns the lock into the lock file
+                cls.dir_lock.handle.write(cls.__name__)
+            except IOError as ioerror:
+                # nothing else should have this directory lock
+                # wait here until we get a lock
+                cls.dir_lock.acquire()
+                # read the previous owner from the lock file
+                lock_id = cls.dir_lock.handle.read()
+                print(
+                    "LOCK ERROR: {} wants to lock '{}' but it is already locked by '{}'".format(
+                        cls.__name__,
+                        full_dir,
+                        lock_id),
+                    file=sys.stderr)
+                raise ioerror
 
         # Set platform context.
         cls.platformContext = lldbplatformutil.createPlatformContext()
@@ -580,6 +601,10 @@ class Base(unittest2.TestCase):
                 except:
                     exc_type, exc_value, exc_tb = sys.exc_info()
                     traceback.print_exception(exc_type, exc_value, exc_tb)
+
+        if debug_confirm_directory_exclusivity:
+            cls.dir_lock.release()
+            del cls.dir_lock
 
         # Restore old working directory.
         if traceAlways:
@@ -667,7 +692,7 @@ class Base(unittest2.TestCase):
         if not lldb.remote_platform or not configuration.lldb_platform_working_dir:
             return
 
-        components = self.mydir.split(os.path.sep) + [str(self.test_number), self.getBuildDirBasename()]
+        components = [str(self.test_number)] + self.mydir.split(os.path.sep)
         remote_test_dir = configuration.lldb_platform_working_dir
         for c in components:
             remote_test_dir = lldbutil.join_remote_paths(remote_test_dir, c)
@@ -681,7 +706,7 @@ class Base(unittest2.TestCase):
 
         # This function removes all files from the current working directory while leaving
         # the directories in place. The cleaup is required to reduce the disk space required
-        # by the test suite while leaving the directories untouched is neccessary because
+        # by the test suit while leaving the directories untached is neccessary because
         # sub-directories might belong to an other test
         def clean_working_directory():
             # TODO: Make it working on Windows when we need it for remote debugging support
@@ -691,36 +716,6 @@ class Base(unittest2.TestCase):
                 "rm %s/*" % remote_test_dir)
             lldb.remote_platform.Run(shell_cmd)
         self.addTearDownHook(clean_working_directory)
-
-    def getSourceDir(self):
-        """Return the full path to the current test."""
-        return os.path.join(os.environ["LLDB_TEST"], self.mydir)
-
-    def getBuildDirBasename(self):
-        return self.__class__.__module__ + "." + self.testMethodName
-
-    def getBuildDir(self):
-        """Return the full path to the current test."""
-        return os.path.join(os.environ["LLDB_BUILD"], self.mydir,
-                            self.getBuildDirBasename())
-
-
-    def makeBuildDir(self):
-        """Create the test-specific working directory, deleting any previous
-        contents."""
-        # See also dotest.py which sets up ${LLDB_BUILD}.
-        bdir = self.getBuildDir()
-        if os.path.isdir(bdir):
-            shutil.rmtree(bdir)
-        lldbutil.mkdir_p(bdir)
-
-    def getBuildArtifact(self, name="a.out"):
-        """Return absolute path to an artifact in the test's build directory."""
-        return os.path.join(self.getBuildDir(), name)
-
-    def getSourcePath(self, name):
-        """Return absolute path to a file in the test's source directory."""
-        return os.path.join(self.getSourceDir(), name)
 
     def setUp(self):
         """Fixture for unittest test case setup.
@@ -830,6 +825,9 @@ class Base(unittest2.TestCase):
         self.setPlatformWorkingDir()
         self.enableLogChannelsForCurrentTest()
 
+        # Initialize debug_info
+        self.debug_info = None
+
         lib_dir = os.environ["LLDB_LIB_DIR"]
         self.dsym = None
         self.framework_dir = None
@@ -852,7 +850,6 @@ class Base(unittest2.TestCase):
                 self.framework_dir = None
                 self.dsym = None
                 self.darwinWithFramework = False
-        self.makeBuildDir()
 
     def setAsync(self, value):
         """ Sets async mode to True/False and ensures it is reset after the testcase completes."""
@@ -1239,13 +1236,6 @@ class Base(unittest2.TestCase):
             return True
         return False
 
-    def isPPC64le(self):
-        """Returns true if the architecture is PPC64LE."""
-        arch = self.getArchitecture()
-        if re.match("powerpc64le", arch):
-            return True
-        return False
-
     def getArchitecture(self):
         """Returns the architecture in effect the test suite is running with."""
         module = builder_module()
@@ -1381,16 +1371,13 @@ class Base(unittest2.TestCase):
         self.dumpSessionInfo()."""
         arch = self.getArchitecture()
         comp = self.getCompiler()
-        option_str = ""
         if arch:
             option_str = "-A " + arch
+        else:
+            option_str = ""
         if comp:
             option_str += " -C " + comp
         return option_str
-
-    def getDebugInfo(self):
-        method = getattr(self, self.testMethodName)
-        return getattr(method, "debug_info", None)
 
     # ==================================================
     # Build methods supported through a plugin interface
@@ -1398,7 +1385,7 @@ class Base(unittest2.TestCase):
 
     def getstdlibFlag(self):
         """ Returns the proper -stdlib flag, or empty if not required."""
-        if self.platformIsDarwin() or self.getPlatform() == "freebsd" or self.getPlatform() == "openbsd":
+        if self.platformIsDarwin() or self.getPlatform() == "freebsd":
             stdlibflag = "-stdlib=libc++"
         else:  # this includes NetBSD
             stdlibflag = ""
@@ -1416,6 +1403,7 @@ class Base(unittest2.TestCase):
         """ Platform-specific way to build a program that links with LLDB (via the liblldb.so
             or LLDB.framework).
         """
+
         stdflag = self.getstdFlag()
         stdlibflag = self.getstdlibFlag()
 
@@ -1427,6 +1415,16 @@ class Base(unittest2.TestCase):
                  'FRAMEWORK_INCLUDES': "-F%s" % self.framework_dir,
                  'LD_EXTRAS': "%s -Wl,-rpath,%s" % (self.dsym, self.framework_dir),
                  }
+        elif sys.platform.rstrip('0123456789') in ('freebsd', 'linux', 'netbsd', 'darwin') or os.environ.get('LLDB_BUILD_TYPE') == 'Makefile':
+            d = {
+                'CXX_SOURCES': sources,
+                'EXE': exe_name,
+                'CFLAGS_EXTRAS': "%s %s -I%s" % (stdflag,
+                                                 stdlibflag,
+                                                 os.path.join(
+                                                     os.environ["LLDB_SRC"],
+                                                     "include")),
+                'LD_EXTRAS': "-L%s/../lib -llldb -Wl,-rpath,%s/../lib" % (lib_dir, lib_dir)}
         elif sys.platform.startswith('win'):
             d = {
                 'CXX_SOURCES': sources,
@@ -1437,16 +1435,6 @@ class Base(unittest2.TestCase):
                                                      os.environ["LLDB_SRC"],
                                                      "include")),
                 'LD_EXTRAS': "-L%s -lliblldb" % os.environ["LLDB_IMPLIB_DIR"]}
-        else:
-            d = {
-                'CXX_SOURCES': sources,
-                'EXE': exe_name,
-                'CFLAGS_EXTRAS': "%s %s -I%s" % (stdflag,
-                                                 stdlibflag,
-                                                 os.path.join(
-                                                     os.environ["LLDB_SRC"],
-                                                     "include")),
-                'LD_EXTRAS': "-L%s/../lib -llldb -Wl,-rpath,%s/../lib" % (lib_dir, lib_dir)}
         if self.TraceOn():
             print(
                 "Building LLDB Driver (%s) from sources %s" %
@@ -1467,16 +1455,7 @@ class Base(unittest2.TestCase):
                  'FRAMEWORK_INCLUDES': "-F%s" % self.framework_dir,
                  'LD_EXTRAS': "%s -Wl,-rpath,%s -dynamiclib" % (self.dsym, self.framework_dir),
                  }
-        elif self.getPlatform() == 'windows':
-            d = {
-                'DYLIB_CXX_SOURCES': sources,
-                'DYLIB_NAME': lib_name,
-                'CFLAGS_EXTRAS': "%s -I%s " % (stdflag,
-                                               os.path.join(
-                                                   os.environ["LLDB_SRC"],
-                                                   "include")),
-                'LD_EXTRAS': "-shared -l%s\liblldb.lib" % self.os.environ["LLDB_IMPLIB_DIR"]}
-        else:
+        elif sys.platform.rstrip('0123456789') in ('freebsd', 'linux', 'netbsd', 'darwin') or os.environ.get('LLDB_BUILD_TYPE') == 'Makefile':
             d = {
                 'DYLIB_CXX_SOURCES': sources,
                 'DYLIB_NAME': lib_name,
@@ -1485,6 +1464,15 @@ class Base(unittest2.TestCase):
                                                         os.environ["LLDB_SRC"],
                                                         "include")),
                 'LD_EXTRAS': "-shared -L%s/../lib -llldb -Wl,-rpath,%s/../lib" % (lib_dir, lib_dir)}
+        elif self.getPlatform() == 'windows':
+            d = {
+                'DYLIB_CXX_SOURCES': sources,
+                'DYLIB_NAME': lib_name,
+                'CFLAGS_EXTRAS': "%s -I%s -fPIC" % (stdflag,
+                                                    os.path.join(
+                                                        os.environ["LLDB_SRC"],
+                                                        "include")),
+                'LD_EXTRAS': "-shared -l%s\liblldb.lib" % self.os.environ["LLDB_IMPLIB_DIR"]}
         if self.TraceOn():
             print(
                 "Building LLDB Library (%s) from sources %s" %
@@ -1502,91 +1490,89 @@ class Base(unittest2.TestCase):
             self,
             architecture=None,
             compiler=None,
-            dictionary=None):
+            dictionary=None,
+            clean=True):
         """Platform specific way to build the default binaries."""
-        testdir = self.mydir
-        testname = self.getBuildDirBasename()
-        if self.getDebugInfo():
-            raise Exception("buildDefault tests must set NO_DEBUG_INFO_TESTCASE")
         module = builder_module()
         dictionary = lldbplatformutil.finalize_build_dictionary(dictionary)
-        if not module.buildDefault(self, architecture, compiler,
-                                   dictionary, testdir, testname):
+        if not module.buildDefault(
+                self,
+                architecture,
+                compiler,
+                dictionary,
+                clean):
             raise Exception("Don't know how to build default binary")
 
     def buildDsym(
             self,
             architecture=None,
             compiler=None,
-            dictionary=None):
+            dictionary=None,
+            clean=True):
         """Platform specific way to build binaries with dsym info."""
-        testdir = self.mydir
-        testname = self.getBuildDirBasename()
-        if self.getDebugInfo() != "dsym":
-            raise Exception("NO_DEBUG_INFO_TESTCASE must build with buildDefault")
-
         module = builder_module()
-        dictionary = lldbplatformutil.finalize_build_dictionary(dictionary)
-        if not module.buildDsym(self, architecture, compiler,
-                                dictionary, testdir, testname):
+        if not module.buildDsym(
+                self,
+                architecture,
+                compiler,
+                dictionary,
+                clean):
             raise Exception("Don't know how to build binary with dsym")
 
     def buildDwarf(
             self,
             architecture=None,
             compiler=None,
-            dictionary=None):
+            dictionary=None,
+            clean=True):
         """Platform specific way to build binaries with dwarf maps."""
-        testdir = self.mydir
-        testname = self.getBuildDirBasename()
-        if self.getDebugInfo() != "dwarf":
-            raise Exception("NO_DEBUG_INFO_TESTCASE must build with buildDefault")
-
         module = builder_module()
         dictionary = lldbplatformutil.finalize_build_dictionary(dictionary)
-        if not module.buildDwarf(self, architecture, compiler,
-                                   dictionary, testdir, testname):
+        if not module.buildDwarf(
+                self,
+                architecture,
+                compiler,
+                dictionary,
+                clean):
             raise Exception("Don't know how to build binary with dwarf")
 
     def buildDwo(
             self,
             architecture=None,
             compiler=None,
-            dictionary=None):
+            dictionary=None,
+            clean=True):
         """Platform specific way to build binaries with dwarf maps."""
-        testdir = self.mydir
-        testname = self.getBuildDirBasename()
-        if self.getDebugInfo() != "dwo":
-            raise Exception("NO_DEBUG_INFO_TESTCASE must build with buildDefault")
-
         module = builder_module()
         dictionary = lldbplatformutil.finalize_build_dictionary(dictionary)
-        if not module.buildDwo(self, architecture, compiler,
-                                   dictionary, testdir, testname):
+        if not module.buildDwo(
+                self,
+                architecture,
+                compiler,
+                dictionary,
+                clean):
             raise Exception("Don't know how to build binary with dwo")
 
     def buildGModules(
             self,
             architecture=None,
             compiler=None,
-            dictionary=None):
+            dictionary=None,
+            clean=True):
         """Platform specific way to build binaries with gmodules info."""
-        testdir = self.mydir
-        testname = self.getBuildDirBasename()
-        if self.getDebugInfo() != "gmodules":
-            raise Exception("NO_DEBUG_INFO_TESTCASE must build with buildDefault")
-
         module = builder_module()
-        dictionary = lldbplatformutil.finalize_build_dictionary(dictionary)
-        if not module.buildGModules(self, architecture, compiler,
-                                    dictionary, testdir, testname):
+        if not module.buildGModules(
+                self,
+                architecture,
+                compiler,
+                dictionary,
+                clean):
             raise Exception("Don't know how to build binary with gmodules")
 
     def buildGo(self):
         """Build the default go binary.
         """
-        exe = self.getBuildArtifact("a.out")
-        system([[which('go'), 'build -gcflags "-N -l" -o %s main.go' % exe]])
+        system([[which('go'), 'build -gcflags "-N -l" -o a.out main.go']])
 
     def signBinary(self, binary_path):
         if sys.platform.startswith("darwin"):
@@ -1597,10 +1583,10 @@ class Base(unittest2.TestCase):
     def findBuiltClang(self):
         """Tries to find and use Clang from the build directory as the compiler (instead of the system compiler)."""
         paths_to_try = [
-            "llvm-build/Release+Asserts/x86_64/bin/clang",
-            "llvm-build/Debug+Asserts/x86_64/bin/clang",
-            "llvm-build/Release/x86_64/bin/clang",
-            "llvm-build/Debug/x86_64/bin/clang",
+            "llvm-build/Release+Asserts/x86_64/Release+Asserts/bin/clang",
+            "llvm-build/Debug+Asserts/x86_64/Debug+Asserts/bin/clang",
+            "llvm-build/Release/x86_64/Release/bin/clang",
+            "llvm-build/Debug/x86_64/Debug/bin/clang",
         ]
         lldb_root_path = os.path.join(
             os.path.dirname(__file__), "..", "..", "..", "..")
@@ -1610,37 +1596,11 @@ class Base(unittest2.TestCase):
                 return path
 
         # Tries to find clang at the same folder as the lldb
-        lldb_dir = os.path.dirname(lldbtest_config.lldbExec)
-        path = distutils.spawn.find_executable("clang", lldb_dir)
-        if path is not None:
+        path = os.path.join(os.path.dirname(lldbtest_config.lldbExec), "clang")
+        if os.path.exists(path):
             return path
 
         return os.environ["CC"]
-
-    def findYaml2obj(self):
-        """
-        Get the path to the yaml2obj executable, which can be used to create
-        test object files from easy to write yaml instructions.
-
-        Throws an Exception if the executable cannot be found.
-        """
-        # Tries to find yaml2obj at the same folder as clang
-        clang_dir = os.path.dirname(self.findBuiltClang())
-        path = distutils.spawn.find_executable("yaml2obj", clang_dir)
-        if path is not None:
-            return path
-        raise Exception("yaml2obj executable not found")
-
-
-    def yaml2obj(self, yaml_path, obj_path):
-        """
-        Create an object file at the given path from a yaml file.
-
-        Throws subprocess.CalledProcessError if the object could not be created.
-        """
-        yaml2obj = self.findYaml2obj()
-        command = [yaml2obj, "-o=%s" % obj_path, yaml_path]
-        system([command])
 
     def getBuildFlags(
             self,
@@ -1674,8 +1634,6 @@ class Base(unittest2.TestCase):
             else:
                 cflags += "c++11"
         if self.platformIsDarwin() or self.getPlatform() == "freebsd":
-            cflags += " -stdlib=libc++"
-        elif self.getPlatform() == "openbsd":
             cflags += " -stdlib=libc++"
         elif self.getPlatform() == "netbsd":
             cflags += " -stdlib=libstdc++"
@@ -1711,7 +1669,7 @@ class Base(unittest2.TestCase):
             return lib_dir
 
     def getLibcPlusPlusLibs(self):
-        if self.getPlatform() in ('freebsd', 'linux', 'netbsd', 'openbsd'):
+        if self.getPlatform() in ('freebsd', 'linux', 'netbsd'):
             return ['libc++.so.1']
         else:
             return ['libc++.1.dylib', 'libc++abi.dylib']
@@ -1737,11 +1695,14 @@ class LLDBTestCaseFactory(type):
         for attrname, attrvalue in attrs.items():
             if attrname.startswith("test") and not getattr(
                     attrvalue, "__no_debug_info_test__", False):
+                target_platform = lldb.DBG.GetSelectedPlatform(
+                ).GetTriple().split('-')[2]
 
                 # If any debug info categories were explicitly tagged, assume that list to be
                 # authoritative.  If none were specified, try with all debug
                 # info formats.
-                all_dbginfo_categories = set(test_categories.debug_info_categories)
+                all_dbginfo_categories = set(
+                    test_categories.debug_info_categories)
                 categories = set(
                     getattr(
                         attrvalue,
@@ -1750,16 +1711,48 @@ class LLDBTestCaseFactory(type):
                 if not categories:
                     categories = all_dbginfo_categories
 
-                for cat in categories:
-                    @decorators.add_test_categories([cat])
+                supported_categories = [
+                    x for x in categories if test_categories.is_supported_on_platform(
+                        x, target_platform, configuration.compiler)]
+                if "dsym" in supported_categories:
+                    @decorators.add_test_categories(["dsym"])
                     @wraps(attrvalue)
-                    def test_method(self, attrvalue=attrvalue):
+                    def dsym_test_method(self, attrvalue=attrvalue):
+                        self.debug_info = "dsym"
                         return attrvalue(self)
+                    dsym_method_name = attrname + "_dsym"
+                    dsym_test_method.__name__ = dsym_method_name
+                    newattrs[dsym_method_name] = dsym_test_method
 
-                    method_name = attrname + "_" + cat
-                    test_method.__name__ = method_name
-                    test_method.debug_info = cat
-                    newattrs[method_name] = test_method
+                if "dwarf" in supported_categories:
+                    @decorators.add_test_categories(["dwarf"])
+                    @wraps(attrvalue)
+                    def dwarf_test_method(self, attrvalue=attrvalue):
+                        self.debug_info = "dwarf"
+                        return attrvalue(self)
+                    dwarf_method_name = attrname + "_dwarf"
+                    dwarf_test_method.__name__ = dwarf_method_name
+                    newattrs[dwarf_method_name] = dwarf_test_method
+
+                if "dwo" in supported_categories:
+                    @decorators.add_test_categories(["dwo"])
+                    @wraps(attrvalue)
+                    def dwo_test_method(self, attrvalue=attrvalue):
+                        self.debug_info = "dwo"
+                        return attrvalue(self)
+                    dwo_method_name = attrname + "_dwo"
+                    dwo_test_method.__name__ = dwo_method_name
+                    newattrs[dwo_method_name] = dwo_test_method
+
+                if "gmodules" in supported_categories:
+                    @decorators.add_test_categories(["gmodules"])
+                    @wraps(attrvalue)
+                    def gmodules_test_method(self, attrvalue=attrvalue):
+                        self.debug_info = "gmodules"
+                        return attrvalue(self)
+                    gmodules_method_name = attrname + "_gmodules"
+                    gmodules_test_method.__name__ = gmodules_method_name
+                    newattrs[gmodules_method_name] = gmodules_test_method
 
             else:
                 newattrs[attrname] = attrvalue
@@ -1834,18 +1827,42 @@ class TestBase(Base):
 
     # Maximum allowed attempts when launching the inferior process.
     # Can be overridden by the LLDB_MAX_LAUNCH_COUNT environment variable.
-    maxLaunchCount = 1
+    maxLaunchCount = 3
 
     # Time to wait before the next launching attempt in second(s).
     # Can be overridden by the LLDB_TIME_WAIT_NEXT_LAUNCH environment variable.
     timeWaitNextLaunch = 1.0
 
+    # Returns the list of categories to which this test case belongs
+    # by default, look for a ".categories" file, and read its contents
+    # if no such file exists, traverse the hierarchy - we guarantee
+    # a .categories to exist at the top level directory so we do not end up
+    # looping endlessly - subclasses are free to define their own categories
+    # in whatever way makes sense to them
+    def getCategories(self):
+        import inspect
+        import os.path
+        folder = inspect.getfile(self.__class__)
+        folder = os.path.dirname(folder)
+        while folder != '/':
+            categories_file_name = os.path.join(folder, ".categories")
+            if os.path.exists(categories_file_name):
+                categories_file = open(categories_file_name, 'r')
+                categories = categories_file.readline()
+                categories_file.close()
+                categories = str.replace(categories, '\n', '')
+                categories = str.replace(categories, '\r', '')
+                return categories.split(',')
+            else:
+                folder = os.path.dirname(folder)
+                continue
+
     def generateSource(self, source):
         template = source + '.template'
-        temp = os.path.join(self.getSourceDir(), template)
+        temp = os.path.join(os.getcwd(), template)
         with open(temp, 'r') as f:
             content = f.read()
-
+            
         public_api_dir = os.path.join(
             os.environ["LLDB_SRC"], "include", "lldb", "API")
 
@@ -1861,7 +1878,7 @@ class TestBase(Base):
             header.startswith("SB") and header.endswith(".h"))]
         includes = '\n'.join(list)
         new_content = content.replace('%include_SB_APIs%', includes)
-        src = os.path.join(self.getBuildDir(), source)
+        src = os.path.join(os.getcwd(), source)
         with open(src, 'w') as f:
             f.write(new_content)
 
@@ -1874,19 +1891,6 @@ class TestBase(Base):
         # Works with the test driver to conditionally skip tests via
         # decorators.
         Base.setUp(self)
-
-        if self.child:
-            # Set the clang modules cache path.
-            assert(self.getDebugInfo() == 'default')
-            mod_cache = os.path.join(self.getBuildDir(), "module-cache")
-            self.runCmd('settings set symbols.clang-modules-cache-path "%s"'
-                        % mod_cache)
-
-            # Disable Spotlight lookup. The testsuite creates
-            # different binaries with the same UUID, because they only
-            # differ in the debug info, which is not being hashed.
-            self.runCmd('settings set symbols.enable-external-lookup false')
-
 
         if "LLDB_MAX_LAUNCH_COUNT" in os.environ:
             self.maxLaunchCount = int(os.environ["LLDB_MAX_LAUNCH_COUNT"])
@@ -1935,12 +1939,12 @@ class TestBase(Base):
             else:
                 # Check relative names
                 local_shlib_path = os.path.join(
-                    self.getBuildDir(), shlib_prefix + name + shlib_extension)
+                    os.getcwd(), shlib_prefix + name + shlib_extension)
                 if not os.path.exists(local_shlib_path):
                     local_shlib_path = os.path.join(
-                        self.getBuildDir(), name + shlib_extension)
+                        os.getcwd(), name + shlib_extension)
                     if not os.path.exists(local_shlib_path):
-                        local_shlib_path = os.path.join(self.getBuildDir(), name)
+                        local_shlib_path = os.path.join(os.getcwd(), name)
 
                 # Make sure we found the local shared library in the above code
                 self.assertTrue(os.path.exists(local_shlib_path))
@@ -1950,7 +1954,7 @@ class TestBase(Base):
             if lldb.remote_platform:
                 # We must set the remote install location if we want the shared library
                 # to get uploaded to the remote target
-                remote_shlib_path = lldbutil.append_to_process_working_directory(self,
+                remote_shlib_path = lldbutil.append_to_process_working_directory(
                     os.path.basename(local_shlib_path))
                 shlib_module.SetRemoteInstallFileSpec(
                     lldb.SBFileSpec(remote_shlib_path, False))
@@ -1987,7 +1991,7 @@ class TestBase(Base):
             return lldb.remote_platform.GetWorkingDirectory()
         else:
             # local tests change directory into each test subdirectory
-            return self.getBuildDir()
+            return os.getcwd()
 
     def tearDown(self):
         #import traceback
@@ -2268,23 +2272,24 @@ class TestBase(Base):
             self,
             architecture=None,
             compiler=None,
-            dictionary=None):
+            dictionary=None,
+            clean=True):
         """Platform specific way to build the default binaries."""
         module = builder_module()
-
         dictionary = lldbplatformutil.finalize_build_dictionary(dictionary)
-        if self.getDebugInfo() is None:
-            return self.buildDefault(architecture, compiler, dictionary)
-        elif self.getDebugInfo() == "dsym":
-            return self.buildDsym(architecture, compiler, dictionary)
-        elif self.getDebugInfo() == "dwarf":
-            return self.buildDwarf(architecture, compiler, dictionary)
-        elif self.getDebugInfo() == "dwo":
-            return self.buildDwo(architecture, compiler, dictionary)
-        elif self.getDebugInfo() == "gmodules":
-            return self.buildGModules(architecture, compiler, dictionary)
+        if self.debug_info is None:
+            return self.buildDefault(architecture, compiler, dictionary, clean)
+        elif self.debug_info == "dsym":
+            return self.buildDsym(architecture, compiler, dictionary, clean)
+        elif self.debug_info == "dwarf":
+            return self.buildDwarf(architecture, compiler, dictionary, clean)
+        elif self.debug_info == "dwo":
+            return self.buildDwo(architecture, compiler, dictionary, clean)
+        elif self.debug_info == "gmodules":
+            return self.buildGModules(
+                architecture, compiler, dictionary, clean)
         else:
-            self.fail("Can't build for debug info: %s" % self.getDebugInfo())
+            self.fail("Can't build for debug info: %s" % self.debug_info)
 
     def run_platform_command(self, cmd):
         platform = self.dbg.GetSelectedPlatform()

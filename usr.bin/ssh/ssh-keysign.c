@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keysign.c,v 1.58 2019/06/14 03:28:19 djm Exp $ */
+/* $OpenBSD: ssh-keysign.c,v 1.54 2018/02/23 15:58:38 markus Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -53,6 +53,9 @@
 #include "ssherr.h"
 
 extern char *__progname;
+
+/* XXX readconf.c needs these */
+uid_t original_real_uid;
 
 static int
 valid_request(struct passwd *pw, char *host, struct sshkey **ret,
@@ -166,6 +169,7 @@ main(int argc, char **argv)
 	char *host, *fp;
 	size_t slen, dlen;
 
+	ssh_malloc_init();	/* must be called before any mallocs */
 	if (pledge("stdio rpath getpw dns id", NULL) != 0)
 		fatal("%s: pledge: %s", __progname, strerror(errno));
 
@@ -184,7 +188,8 @@ main(int argc, char **argv)
 	key_fd[i++] = open(_PATH_HOST_XMSS_KEY_FILE, O_RDONLY);
 	key_fd[i++] = open(_PATH_HOST_RSA_KEY_FILE, O_RDONLY);
 
-	if ((pw = getpwuid(getuid())) == NULL)
+	original_real_uid = getuid();	/* XXX readconf.c needs this */
+	if ((pw = getpwuid(original_real_uid)) == NULL)
 		fatal("getpwuid failed");
 	pw = pwcopy(pw);
 
@@ -196,8 +201,7 @@ main(int argc, char **argv)
 
 	/* verify that ssh-keysign is enabled by the admin */
 	initialize_options(&options);
-	(void)read_config_file(_PATH_HOST_CONFIG_FILE, pw, "", "",
-	    &options, 0, NULL);
+	(void)read_config_file(_PATH_HOST_CONFIG_FILE, pw, "", "", &options, 0);
 	fill_default_options(&options);
 	if (options.enable_ssh_keysign != 1)
 		fatal("ssh-keysign not enabled in %s",
@@ -244,7 +248,7 @@ main(int argc, char **argv)
 	if ((r = sshbuf_get_u32(b, (u_int *)&fd)) != 0)
 		fatal("%s: buffer error: %s", __progname, ssh_err(r));
 	if (fd < 0 || fd == STDIN_FILENO || fd == STDOUT_FILENO)
-		fatal("bad fd = %d", fd);
+		fatal("bad fd");
 	if ((host = get_local_name(fd)) == NULL)
 		fatal("cannot get local name for fd");
 

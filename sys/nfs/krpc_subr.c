@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.36 2019/01/22 22:45:04 bluhm Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.32 2017/09/01 15:05:31 mpi Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	struct rpc_call *call;
 	struct rpc_reply *reply;
 	struct uio auio;
-	int s, error, rcvflg, timo, secs, len, authlen;
+	int s, error, rcvflg, timo, secs, len;
 	static u_int32_t xid = 0;
 	char addr[INET_ADDRSTRLEN];
 	int *ip;
@@ -241,7 +241,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	m->m_len = sizeof(tv);
 	s = solock(so);
 	error = sosetopt(so, SOL_SOCKET, SO_RCVTIMEO, m);
-	sounlock(so, s);
+	sounlock(s);
 	m_freem(m);
 	if (error)
 		goto out;
@@ -257,7 +257,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 		*on = 1;
 		s = solock(so);
 		error = sosetopt(so, SOL_SOCKET, SO_BROADCAST, m);
-		sounlock(so, s);
+		sounlock(s);
 		m_freem(m);
 		if (error)
 			goto out;
@@ -274,7 +274,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	*ip = IP_PORTRANGE_LOW;
 	s = solock(so);
 	error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
-	sounlock(so, s);
+	sounlock(s);
 	m_freem(mopt);
 	if (error)
 		goto out;
@@ -288,7 +288,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	sin->sin_port = htons(0);
 	s = solock(so);
 	error = sobind(so, m, &proc0);
-	sounlock(so, s);
+	sounlock(s);
 	m_freem(m);
 	if (error) {
 		printf("bind failed\n");
@@ -301,7 +301,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	*ip = IP_PORTRANGE_DEFAULT;
 	s = solock(so);
 	error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
-	sounlock(so, s);
+	sounlock(s);
 	m_freem(mopt);
 	if (error)
 		goto out;
@@ -339,7 +339,13 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	/*
 	 * Setup packet header
 	 */
-	m_calchdrlen(mhead);
+	len = 0;
+	m = mhead;
+	while (m) {
+		len += m->m_len;
+		m = m->m_next;
+	}
+	mhead->m_pkthdr.len = len;
 	mhead->m_pkthdr.ph_ifidx = 0;
 
 	/*
@@ -438,11 +444,6 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	 * get its length, then strip it off.
 	 */
 	len = sizeof(*reply);
-	KASSERT(m->m_flags & M_PKTHDR);
-	if (m->m_pkthdr.len < len) {
-		error = EBADRPC;
-		goto out;
-	}
 	if (m->m_len < len) {
 		m = m_pullup(m, len);
 		if (m == NULL) {
@@ -452,16 +453,8 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	}
 	reply = mtod(m, struct rpc_reply *);
 	if (reply->rp_auth.authtype != 0) {
-		authlen = fxdr_unsigned(u_int32_t, reply->rp_auth.authlen);
-		if (authlen < 0 || authlen > RPCAUTH_MAXSIZ) {
-			error = EBADRPC;
-			goto out;
-		}
-		len += (authlen + 3) & ~3; /* XXX? */
-	}
-	if (len < 0 || m->m_pkthdr.len < len) {
-		error = EBADRPC;
-		goto out;
+		len += fxdr_unsigned(u_int32_t, reply->rp_auth.authlen);
+		len = (len + 3) & ~3; /* XXX? */
 	}
 	m_adj(m, len);
 
@@ -476,7 +469,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	m_freem(nam);
 	m_freem(mhead);
 	m_freem(from);
-	soclose(so, 0);
+	soclose(so);
 	return error;
 }
 
@@ -530,28 +523,18 @@ xdr_string_decode(struct mbuf *m, char *str, int *len_p)
 	int mlen;	/* message length */
 	int slen;	/* string length */
 
-	mlen = sizeof(u_int32_t);
-	KASSERT(m->m_flags & M_PKTHDR);
-	if (m->m_pkthdr.len < mlen) {
-		m_freem(m);
-		return (NULL);
-	}
-	if (m->m_len < mlen) {
-		m = m_pullup(m, mlen);
+	if (m->m_len < 4) {
+		m = m_pullup(m, 4);
 		if (m == NULL)
 			return (NULL);
 	}
 	xs = mtod(m, struct xdr_string *);
 	slen = fxdr_unsigned(u_int32_t, xs->len);
-	if (slen < 0 || slen > INT_MAX - 3 - mlen) {
-		m_freem(m);
-		return (NULL);
-	}
-	mlen += (slen + 3) & ~3;
+	mlen = 4 + ((slen + 3) & ~3);
 
 	if (slen > *len_p)
 		slen = *len_p;
-	if (m->m_pkthdr.len < mlen) {
+	if (slen > m->m_pkthdr.len) {
 		m_freem(m);
 		return (NULL);
 	}

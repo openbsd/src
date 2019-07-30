@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouseinput.h,v 1.13 2019/03/24 18:04:02 bru Exp $ */
+/* $OpenBSD: wsmouseinput.h,v 1.10 2018/01/11 23:50:49 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -164,12 +164,12 @@ struct wsmouseinput {
 #define RESYNC			(1 << 16)
 #define TRACK_INTERVAL		(1 << 17)
 #define CONFIGURED		(1 << 18)
-#define LOG_INPUT		(1 << 19)
-#define LOG_EVENTS		(1 << 20)
 
-/* filter.mode (bit 0-2: smoothing factor, bit 3-n: unused) */
+/* filter.mode (bit 0-2: smoothing factor, bit 3: hysteresis type) */
+#define WEAK_HYSTERESIS		0
+#define STRONG_HYSTERESIS	(1 << 3)
 #define SMOOTHING_MASK		7
-#define FILTER_MODE_DEFAULT	0
+#define FILTER_MODE_DEFAULT	WEAK_HYSTERESIS
 
 struct evq_access {
 	struct wseventvar *evar;
@@ -183,7 +183,6 @@ struct evq_access {
 
 
 void wsmouse_evq_put(struct evq_access *, int, int);
-void wsmouse_log_events(struct wsmouseinput *, struct evq_access *);
 int wsmouse_hysteresis(struct wsmouseinput *, struct position *);
 void wsmouse_input_reset(struct wsmouseinput *);
 void wsmouse_input_cleanup(struct wsmouseinput *);
@@ -210,8 +209,6 @@ int wstpad_set_param(struct wsmouseinput *, int, int);
     WSCONS_EVENT_MOUSE_ABSOLUTE_X : WSCONS_EVENT_MOUSE_ABSOLUTE_Y)
 #define DELTA_Z_EV	WSCONS_EVENT_MOUSE_DELTA_Z
 #define DELTA_W_EV	WSCONS_EVENT_MOUSE_DELTA_W
-#define VSCROLL_EV	WSCONS_EVENT_VSCROLL
-#define HSCROLL_EV	WSCONS_EVENT_HSCROLL
 #define ABS_Z_EV	WSCONS_EVENT_TOUCH_PRESSURE
 #define ABS_W_EV	WSCONS_EVENT_TOUCH_CONTACTS
 #define BTN_DOWN_EV	WSCONS_EVENT_MOUSE_DOWN
@@ -224,14 +221,6 @@ int wstpad_set_param(struct wsmouseinput *, int, int);
 #define IS_TOUCHPAD(input)			\
     ((input)->hw.hw_type == WSMOUSEHW_TOUCHPAD	\
     || (input)->hw.hw_type == WSMOUSEHW_CLICKPAD)
-
-/* Extract a four-digit millisecond value from a timespec. */
-#define LOGTIME(tsp) \
-    ((int) (((tsp)->tv_sec % 10) * 1000 + ((tsp)->tv_nsec / 1000000)))
-
-#define DEVNAME(input) ((char *) (input)	\
-    - offsetof(struct wsmouse_softc, sc_input)	\
-    + offsetof(struct device, dv_xname))
 
 #endif /* _KERNEL */
 

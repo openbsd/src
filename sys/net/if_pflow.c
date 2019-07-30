@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.90 2018/07/30 12:22:14 mpi Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.87 2018/02/19 08:59:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -286,7 +286,7 @@ pflow_clone_destroy(struct ifnet *ifp)
 	mq_purge(&sc->sc_outputqueue);
 	m_freem(sc->send_nam);
 	if (sc->so != NULL) {
-		error = soclose(sc->so, MSG_DONTWAIT);
+		error = soclose(sc->so);
 		sc->so = NULL;
 	}
 	if (sc->sc_flowdst != NULL)
@@ -349,7 +349,7 @@ pflow_set(struct pflow_softc *sc, struct pflowreq *pflowr)
 			free(sc->sc_flowdst, M_DEVBUF, sc->sc_flowdst->sa_len);
 			sc->sc_flowdst = NULL;
 			if (sc->so != NULL) {
-				soclose(sc->so, MSG_DONTWAIT);
+				soclose(sc->so);
 				sc->so = NULL;
 			}
 		}
@@ -395,7 +395,7 @@ pflow_set(struct pflow_softc *sc, struct pflowreq *pflowr)
 			free(sc->sc_flowsrc, M_DEVBUF, sc->sc_flowsrc->sa_len);
 		sc->sc_flowsrc = NULL;
 		if (sc->so != NULL) {
-			soclose(sc->so, MSG_DONTWAIT);
+			soclose(sc->so);
 			sc->so = NULL;
 		}
 		switch(pflowr->flowsrc.ss_family) {
@@ -442,17 +442,17 @@ pflow_set(struct pflow_softc *sc, struct pflowreq *pflowr)
 
 				s = solock(so);
 				error = sobind(so, m, p);
-				sounlock(so, s);
+				sounlock(s);
 				m_freem(m);
 				if (error) {
-					soclose(so, MSG_DONTWAIT);
+					soclose(so);
 					return (error);
 				}
 			}
 			sc->so = so;
 		}
 	} else if (!pflowvalidsockaddr(sc->sc_flowdst, 0)) {
-		soclose(sc->so, MSG_DONTWAIT);
+		soclose(sc->so);
 		sc->so = NULL;
 	}
 
@@ -644,8 +644,7 @@ pflow_get_mbuf(struct pflow_softc *sc, u_int16_t set_id)
 	if (sc == NULL)		/* get only a new empty mbuf */
 		return (m);
 
-	switch (sc->sc_version) {
-	case PFLOW_PROTO_5:
+	if (sc->sc_version == PFLOW_PROTO_5) {
 		/* populate pflow_header */
 		h.reserved1 = 0;
 		h.reserved2 = 0;
@@ -658,15 +657,11 @@ pflow_get_mbuf(struct pflow_softc *sc, u_int16_t set_id)
 
 		sc->sc_count = 0;
 		timeout_add_sec(&sc->sc_tmo, PFLOW_TIMEOUT);
-		break;
-	case PFLOW_PROTO_10:
+	} else {
 		/* populate pflow_set_header */
 		set_hdr.set_length = 0;
 		set_hdr.set_id = htons(set_id);
 		m_copyback(m, 0, PFLOW_SET_HDRLEN, &set_hdr, M_NOWAIT);
-		break;
-	default: /* NOTREACHED */
-		break;
 	}
 
 	return (m);

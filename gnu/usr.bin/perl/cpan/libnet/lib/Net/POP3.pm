@@ -1,7 +1,9 @@
 # Net::POP3.pm
 #
-# Copyright (C) 1995-2004 Graham Barr.  All rights reserved.
-# Copyright (C) 2013-2016 Steve Hay.  All rights reserved.
+# Versions up to 2.29 Copyright (c) 1995-2004 Graham Barr <gbarr@pobox.com>.
+# All rights reserved.
+# Changes in Version 2.29_01 onwards Copyright (C) 2013-2015 Steve Hay.  All
+# rights reserved.
 # This module is free software; you can redistribute it and/or modify it under
 # the same terms as Perl itself, i.e. under the terms of either the GNU General
 # Public License or the Artistic License, as specified in the F<LICENCE> file.
@@ -18,7 +20,7 @@ use IO::Socket;
 use Net::Cmd;
 use Net::Config;
 
-our $VERSION = "3.11";
+our $VERSION = "3.08_01";
 
 # Code for detecting if we can use SSL
 my $ssl_class = eval {
@@ -36,7 +38,7 @@ my $family_key = 'Domain';
 my $inet6_class = eval {
   require IO::Socket::IP;
   no warnings 'numeric';
-  IO::Socket::IP->VERSION(0.25) || die;
+  IO::Socket::IP->VERSION(0.20) || die;
   $family_key = 'Family';
 } && 'IO::Socket::IP' || eval {
   require IO::Socket::INET6;
@@ -843,18 +845,16 @@ L<IO::Socket::SSL>
 
 =head1 AUTHOR
 
-Graham Barr E<lt>F<gbarr@pobox.com>E<gt>.
+Graham Barr E<lt>F<gbarr@pobox.com>E<gt>
 
 Steve Hay E<lt>F<shay@cpan.org>E<gt> is now maintaining libnet as of version
-1.22_02.
+1.22_02
 
 =head1 COPYRIGHT
 
-Copyright (C) 1995-2004 Graham Barr.  All rights reserved.
-
-Copyright (C) 2013-2016 Steve Hay.  All rights reserved.
-
-=head1 LICENCE
+Versions up to 2.29 Copyright (c) 1995-2004 Graham Barr. All rights reserved.
+Changes in Version 2.29_01 onwards Copyright (C) 2013-2015 Steve Hay.  All
+rights reserved.
 
 This module is free software; you can redistribute it and/or modify it under the
 same terms as Perl itself, i.e. under the terms of either the GNU General Public

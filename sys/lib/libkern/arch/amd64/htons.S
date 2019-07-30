@@ -41,11 +41,9 @@
 #include <machine/asm.h>
 
 _ENTRY(_C_LABEL(htons))
-_NENTRY(_C_LABEL(ntohs))
-_NENTRY(_C_LABEL(bswap16))
+_ENTRY(_C_LABEL(ntohs))
+_ENTRY(_C_LABEL(bswap16))
 _PROF_PROLOGUE
-	RETGUARD_SETUP(htons, r11)
 	movl	%edi,%eax
 	xchgb	%ah,%al
-	RETGUARD_CHECK(htons, r11)
 	ret

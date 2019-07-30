@@ -80,9 +80,9 @@ public:
     SmallString<32> RelTypeName;
     RelI->getTypeName(RelTypeName);
 #endif
-    LLVM_DEBUG(dbgs() << "\t\tIn Section " << SectionID << " Offset " << Offset
-                      << " RelType: " << RelTypeName << " TargetName: "
-                      << TargetName << " Addend " << Addend << "\n");
+    DEBUG(dbgs() << "\t\tIn Section " << SectionID << " Offset " << Offset
+                 << " RelType: " << RelTypeName << " TargetName: " << TargetName
+                 << " Addend " << Addend << "\n");
 
     unsigned TargetSectionID = -1;
     if (Section == Obj.section_end()) {
@@ -144,12 +144,14 @@ public:
               ? Value
               : Sections[RE.Sections.SectionA].getLoadAddressWithOffset(
                     RE.Addend);
-      assert(Result <= UINT32_MAX && "relocation overflow");
-      LLVM_DEBUG(dbgs() << "\t\tOffset: " << RE.Offset
-                        << " RelType: IMAGE_REL_I386_DIR32"
-                        << " TargetSection: " << RE.Sections.SectionA
-                        << " Value: " << format("0x%08" PRIx32, Result)
-                        << '\n');
+      assert(static_cast<int32_t>(Result) <= INT32_MAX &&
+             "relocation overflow");
+      assert(static_cast<int32_t>(Result) >= INT32_MIN &&
+             "relocation underflow");
+      DEBUG(dbgs() << "\t\tOffset: " << RE.Offset
+                   << " RelType: IMAGE_REL_I386_DIR32"
+                   << " TargetSection: " << RE.Sections.SectionA
+                   << " Value: " << format("0x%08" PRIx32, Result) << '\n');
       writeBytesUnaligned(Result, Target, 4);
       break;
     }
@@ -159,12 +161,14 @@ public:
       uint64_t Result =
           Sections[RE.Sections.SectionA].getLoadAddressWithOffset(RE.Addend) -
           Sections[0].getLoadAddress();
-      assert(Result <= UINT32_MAX && "relocation overflow");
-      LLVM_DEBUG(dbgs() << "\t\tOffset: " << RE.Offset
-                        << " RelType: IMAGE_REL_I386_DIR32NB"
-                        << " TargetSection: " << RE.Sections.SectionA
-                        << " Value: " << format("0x%08" PRIx32, Result)
-                        << '\n');
+      assert(static_cast<int32_t>(Result) <= INT32_MAX &&
+             "relocation overflow");
+      assert(static_cast<int32_t>(Result) >= INT32_MIN &&
+             "relocation underflow");
+      DEBUG(dbgs() << "\t\tOffset: " << RE.Offset
+                   << " RelType: IMAGE_REL_I386_DIR32NB"
+                   << " TargetSection: " << RE.Sections.SectionA
+                   << " Value: " << format("0x%08" PRIx32, Result) << '\n');
       writeBytesUnaligned(Result, Target, 4);
       break;
     }
@@ -174,35 +178,38 @@ public:
                             ? Value
                             : Sections[RE.Sections.SectionA].getLoadAddress();
       Result = Result - Section.getLoadAddress() + RE.Addend - 4 - RE.Offset;
-      assert(static_cast<int64_t>(Result) <= INT32_MAX &&
+      assert(static_cast<int32_t>(Result) <= INT32_MAX &&
              "relocation overflow");
-      assert(static_cast<int64_t>(Result) >= INT32_MIN &&
+      assert(static_cast<int32_t>(Result) >= INT32_MIN &&
              "relocation underflow");
-      LLVM_DEBUG(dbgs() << "\t\tOffset: " << RE.Offset
-                        << " RelType: IMAGE_REL_I386_REL32"
-                        << " TargetSection: " << RE.Sections.SectionA
-                        << " Value: " << format("0x%08" PRIx32, Result)
-                        << '\n');
+      DEBUG(dbgs() << "\t\tOffset: " << RE.Offset
+                   << " RelType: IMAGE_REL_I386_REL32"
+                   << " TargetSection: " << RE.Sections.SectionA
+                   << " Value: " << format("0x%08" PRIx32, Result) << '\n');
       writeBytesUnaligned(Result, Target, 4);
       break;
     }
     case COFF::IMAGE_REL_I386_SECTION:
       // 16-bit section index of the section that contains the target.
-      assert(static_cast<uint32_t>(RE.SectionID) <= UINT16_MAX &&
+      assert(static_cast<int32_t>(RE.SectionID) <= INT16_MAX &&
              "relocation overflow");
-      LLVM_DEBUG(dbgs() << "\t\tOffset: " << RE.Offset
-                        << " RelType: IMAGE_REL_I386_SECTION Value: "
-                        << RE.SectionID << '\n');
+      assert(static_cast<int32_t>(RE.SectionID) >= INT16_MIN &&
+             "relocation underflow");
+      DEBUG(dbgs() << "\t\tOffset: " << RE.Offset
+                   << " RelType: IMAGE_REL_I386_SECTION Value: " << RE.SectionID
+                   << '\n');
       writeBytesUnaligned(RE.SectionID, Target, 2);
       break;
     case COFF::IMAGE_REL_I386_SECREL:
       // 32-bit offset of the target from the beginning of its section.
-      assert(static_cast<uint64_t>(RE.Addend) <= UINT32_MAX &&
+      assert(static_cast<int32_t>(RE.Addend) <= INT32_MAX &&
              "relocation overflow");
-      LLVM_DEBUG(dbgs() << "\t\tOffset: " << RE.Offset
-                        << " RelType: IMAGE_REL_I386_SECREL Value: "
-                        << RE.Addend << '\n');
-      writeBytesUnaligned(RE.Addend, Target, 4);
+      assert(static_cast<int32_t>(RE.Addend) >= INT32_MIN &&
+             "relocation underflow");
+      DEBUG(dbgs() << "\t\tOffset: " << RE.Offset
+                   << " RelType: IMAGE_REL_I386_SECREL Value: " << RE.Addend
+                   << '\n');
+      writeBytesUnaligned(RE.Addend, Target, 2);
       break;
     default:
       llvm_unreachable("unsupported relocation type");

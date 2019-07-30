@@ -23,11 +23,11 @@ TAP::Formatter::Session - Abstract base class for harness output delegate
 
 =head1 VERSION
 
-Version 3.42
+Version 3.36
 
 =cut
 
-our $VERSION = '3.42';
+our $VERSION = '3.36_01';
 
 =head1 METHODS
 

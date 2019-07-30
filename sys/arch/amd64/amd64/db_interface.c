@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.34 2019/03/23 05:47:22 visa Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.30 2018/03/20 15:45:32 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <machine/db_machdep.h>
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
+#include <machine/i82489reg.h>
 #include <machine/atomic.h>
 
 #include <ddb/db_sym.h>
@@ -65,11 +66,12 @@
 #endif
 
 extern label_t *db_recover;
-extern const char * const trap_type[];
-extern const int trap_types;
+extern char *trap_type[];
+extern int trap_types;
 
 #ifdef MULTIPROCESSOR
-struct db_mutex ddb_mp_mutex = DB_MUTEX_INITIALIZER;
+struct mutex ddb_mp_mutex =
+    MUTEX_INITIALIZER_FLAGS(IPL_HIGH, "ddb_mp_mutex", MTX_NOWITNESS);
 volatile int ddb_state = DDB_STATE_NOT_RUNNING;
 volatile cpuid_t ddb_active_cpu;
 boolean_t	 db_switch_cpu;
@@ -116,6 +118,7 @@ db_ktrap(int type, int code, db_regs_t *regs)
 	case T_BPTFLT:	/* breakpoint */
 	case T_TRCTRAP:	/* single_step */
 	case T_NMI:	/* NMI */
+	case T_NMI|T_USER:
 	case -1:	/* keyboard interrupt */
 		break;
 	default:
@@ -130,10 +133,10 @@ db_ktrap(int type, int code, db_regs_t *regs)
 	}
 
 #ifdef MULTIPROCESSOR
-	db_mtx_enter(&ddb_mp_mutex);
+	mtx_enter(&ddb_mp_mutex);
 	if (ddb_state == DDB_STATE_EXITING)
 		ddb_state = DDB_STATE_NOT_RUNNING;
-	db_mtx_leave(&ddb_mp_mutex);
+	mtx_leave(&ddb_mp_mutex);
 	while (db_enter_ddb()) {
 #endif
 
@@ -257,14 +260,14 @@ db_enter_ddb(void)
 {
 	int i;
 
-	db_mtx_enter(&ddb_mp_mutex);
+	mtx_enter(&ddb_mp_mutex);
 
 	/* If we are first in, grab ddb and stop all other CPUs */
 	if (ddb_state == DDB_STATE_NOT_RUNNING) {
 		ddb_active_cpu = cpu_number();
 		ddb_state = DDB_STATE_RUNNING;
 		curcpu()->ci_ddb_paused = CI_DDB_INDDB;
-		db_mtx_leave(&ddb_mp_mutex);
+		mtx_leave(&ddb_mp_mutex);
 		for (i = 0; i < MAXCPUS; i++) {
 			if (cpu_info[i] != NULL && i != cpu_number() &&
 			    cpu_info[i]->ci_ddb_paused != CI_DDB_STOPPED) {
@@ -282,7 +285,7 @@ db_enter_ddb(void)
 				cpu_info[i]->ci_ddb_paused = CI_DDB_RUNNING;
 			}
 		}
-		db_mtx_leave(&ddb_mp_mutex);
+		mtx_leave(&ddb_mp_mutex);
 		return (0);
 	}
 
@@ -300,23 +303,23 @@ db_enter_ddb(void)
 	    curcpu()->ci_ddb_paused != CI_DDB_RUNNING) {
 		if (curcpu()->ci_ddb_paused == CI_DDB_SHOULDSTOP)
 			curcpu()->ci_ddb_paused = CI_DDB_STOPPED;
-		db_mtx_leave(&ddb_mp_mutex);
+		mtx_leave(&ddb_mp_mutex);
 
 		/* Busy wait without locking, we'll confirm with lock later */
 		while (ddb_active_cpu != cpu_number() &&
 		    curcpu()->ci_ddb_paused != CI_DDB_RUNNING)
 			CPU_BUSY_CYCLE();
 
-		db_mtx_enter(&ddb_mp_mutex);
+		mtx_enter(&ddb_mp_mutex);
 	}
 
 	/* Either enter ddb or exit */
 	if (ddb_active_cpu == cpu_number() && ddb_state == DDB_STATE_RUNNING) {
 		curcpu()->ci_ddb_paused = CI_DDB_INDDB;
-		db_mtx_leave(&ddb_mp_mutex);
+		mtx_leave(&ddb_mp_mutex);
 		return (1);
 	} else {
-		db_mtx_leave(&ddb_mp_mutex);
+		mtx_leave(&ddb_mp_mutex);
 		return (0);
 	}
 }
@@ -325,23 +328,23 @@ void
 db_startcpu(int cpu)
 {
 	if (cpu != cpu_number() && cpu_info[cpu] != NULL) {
-		db_mtx_enter(&ddb_mp_mutex);
+		mtx_enter(&ddb_mp_mutex);
 		cpu_info[cpu]->ci_ddb_paused = CI_DDB_RUNNING;
-		db_mtx_leave(&ddb_mp_mutex);
+		mtx_leave(&ddb_mp_mutex);
 	}
 }
 
 void
 db_stopcpu(int cpu)
 {
-	db_mtx_enter(&ddb_mp_mutex);
+	mtx_enter(&ddb_mp_mutex);
 	if (cpu != cpu_number() && cpu_info[cpu] != NULL &&
 	    cpu_info[cpu]->ci_ddb_paused != CI_DDB_STOPPED) {
 		cpu_info[cpu]->ci_ddb_paused = CI_DDB_SHOULDSTOP;
-		db_mtx_leave(&ddb_mp_mutex);
+		mtx_leave(&ddb_mp_mutex);
 		x86_send_ipi(cpu_info[cpu], X86_IPI_DDB);
 	} else {
-		db_mtx_leave(&ddb_mp_mutex);
+		mtx_leave(&ddb_mp_mutex);
 	}
 }
 

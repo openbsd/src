@@ -1,9 +1,7 @@
-/* $OpenBSD: disk.h,v 1.2 2019/01/31 14:35:06 patrick Exp $ */
+/* $OpenBSD: disk.h,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
 
 #ifndef _DISK_H
 #define _DISK_H
-
-#include <sys/queue.h>
 
 typedef struct efi_diskinfo {
 	EFI_BLOCK_IO		*blkio;
@@ -13,21 +11,10 @@ typedef struct efi_diskinfo {
 struct diskinfo {
 	struct efi_diskinfo ed;
 	struct disklabel disklabel;
-	struct sr_boot_volume *sr_vol;
 
-	u_int part;
-	u_int flags;
-#define DISKINFO_FLAG_GOODLABEL		(1 << 0)
-
-	int (*diskio)(int, struct diskinfo *, u_int, int, void *);
-	int (*strategy)(void *, int, daddr32_t, size_t, void *, size_t *);
-
-	TAILQ_ENTRY(diskinfo) list;
+	u_int sc_part;
 };
-TAILQ_HEAD(disklist_lh, diskinfo);
 
-extern struct diskinfo *bootdev_dip;
-
-extern struct disklist_lh disklist;
+extern struct diskinfo diskinfo;
 
 #endif /* _DISK_H */

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2019/05/10 15:58:22 visa Exp $
+#	$OpenBSD: Makefile,v 1.16 2017/07/18 23:00:31 bluhm Exp $
 
 PROG=		noexec
 SRCS=		noexec.c testfly.S
@@ -11,79 +11,62 @@ REGRESS_TARGETS=	nxtext-mmap	nxtext-mprotect \
 		nxheap	nxheap-mmap	nxheap-mprotect \
 		nxmmap			nxmmap-mprotect \
 		nxstack	nxstack-mmap	nxstack-mprotect
+REGRESS_SKIP_TARGETS+=	nxtext-mmap
 .PHONY: ${REGRESS_TARGETS}
 
 nxtext-mmap: ${PROG}
-	@echo '\n====== $@ ======'
-	./${PROG} -T -m
+	@./${PROG} -T -m
 
 nxtext-mprotect: ${PROG}
-	@echo '\n====== $@ ======'
-	./${PROG} -T -p
+	@./${PROG} -T -p
 
 nxdata: ${PROG}
-	@echo '\n====== $@ ======'
-	./${PROG} -D
+	@./${PROG} -D
 
 nxdata-mprotect: ${PROG}
-	@echo '\n====== $@ ======'
-	./${PROG} -D -p
+	@./${PROG} -D -p
 
 nxdata-mmap: ${PROG}
-	@echo '\n====== $@ ======'
-	./${PROG} -D -m
+	@./${PROG} -D -m
 
 nxbss: ${PROG}
-	@echo '\n====== $@ ======'
-	./${PROG} -B
+	@./${PROG} -B
 
 nxbss-mmap: ${PROG}
-	@echo '\n====== $@ ======'
-	./${PROG} -B -m
+	@./${PROG} -B -m
 
 nxbss-mprotect: ${PROG}
-	@echo '\n====== $@ ======'
-	./${PROG} -B -p
+	@./${PROG} -B -p
 
 nxheap: ${PROG}
-	@echo '\n====== $@ ======'
-	./${PROG} -H
+	@./${PROG} -H
 
 nxheap-mmap: ${PROG}
-	@echo '\n====== $@ ======'
-	./${PROG} -H -m
+	@./${PROG} -H -m
 
 nxheap-mprotect: ${PROG}
-	@echo '\n====== $@ ======'
-	./${PROG} -H -p
+	@./${PROG} -H -p
 
 nxstack: ${PROG}
-	@echo '\n====== $@ ======'
-	./${PROG} -S
+	@./${PROG} -S
 
 nxstack-mmap: ${PROG}
-	@echo '\n====== $@ ======'
-	./${PROG} -S -m
+	@./${PROG} -S -m
 
 nxstack-mprotect: ${PROG}
-	@echo '\n====== $@ ======'
-	./${PROG} -S -p
+	@./${PROG} -S -p
 
 nxmmap: ${PROG}
-	@echo '\n====== $@ ======'
-	./${PROG} -m
+	@./${PROG} -m
 
 nxmmap-mprotect: ${PROG}
-	@echo '\n====== $@ ======'
-	./${PROG} -m -p
+	@./${PROG} -m -p
 
 .if ${MACHINE} != "alpha" && \
     ${MACHINE} != "amd64" && \
-    ${MACHINE} != "arm64" && \
     ${MACHINE} != "armv7" && \
     ${MACHINE} != "hppa" && \
     ${MACHINE} != "i386" && \
-    ${MACHINE} != "octeon" && \
     ${MACHINE} != "sparc64"
 REGRESS_TARGETS=run-regress-skiparch
 run-regress-skiparch:

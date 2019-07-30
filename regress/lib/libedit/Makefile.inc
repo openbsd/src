@@ -1,10 +1,12 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2019/05/10 15:36:19 bluhm Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2017/07/05 15:31:45 bluhm Exp $
 
 TOPSRC=		${.CURDIR}/../../../../lib/libedit
 TOPOBJ!!=	${MAKE} -C ${TOPSRC} -V .OBJDIR
 CFLAGS+=	-I${TOPSRC} -I${TOPOBJ}
+CLEANFILES+=	stamp-generated
 
-${PROG} ${PROGS}: ${TOPOBJ}/common.h
+${PROG}: stamp-generated
 
-${TOPOBJ}/common.h:
+stamp-generated:
 	${MAKE} -C ${TOPSRC} generated
+	date >$@

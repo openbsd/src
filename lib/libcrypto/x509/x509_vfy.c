@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.72 2019/03/06 05:06:58 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.68 2018/02/22 17:11:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -159,7 +159,7 @@ x509_subject_cmp(X509 **a, X509 **b)
 }
 #endif
 
-/* Return 1 if a certificate is self signed */
+/* Return 1 is a certificate is self signed */
 static int
 cert_self_signed(X509 *x)
 {
@@ -182,10 +182,10 @@ check_id_error(X509_STORE_CTX *ctx, int errcode)
 static int
 check_hosts(X509 *x, X509_VERIFY_PARAM_ID *id)
 {
-	size_t i, n;
+	size_t i;
+	size_t n = sk_OPENSSL_STRING_num(id->hosts);
 	char *name;
 
-	n = sk_OPENSSL_STRING_num(id->hosts);
 	free(id->peername);
 	id->peername = NULL;
 
@@ -241,15 +241,6 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		/*
 		 * This X509_STORE_CTX has already been used to verify
 		 * a cert. We cannot do another one.
-		 */
-		X509error(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		ctx->error = X509_V_ERR_INVALID_CALL;
-		return -1;
-	}
-	if (ctx->param->id->poisoned) {
-		/*
-		 * This X509_STORE_CTX had failures setting
-		 * up verify parameters. We can not use it.
 		 */
 		X509error(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		ctx->error = X509_V_ERR_INVALID_CALL;
@@ -496,10 +487,9 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 			ctx->current_cert = x;
 		} else {
 			if (!sk_X509_push(ctx->chain, chain_ss)) {
+				X509_free(chain_ss);
 				X509error(ERR_R_MALLOC_FAILURE);
-				ctx->error = X509_V_ERR_OUT_OF_MEM;
-				ok = 0;
-				goto end;
+				return 0;
 			}
 			num++;
 			ctx->last_untrusted = num;
@@ -549,7 +539,8 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		ok = ctx->check_policy(ctx);
 
  end:
-	sk_X509_free(sktmp);
+	if (sktmp != NULL)
+		sk_X509_free(sktmp);
 	X509_free(chain_ss);
 
 	/* Safety net, error returns must set ctx->error */

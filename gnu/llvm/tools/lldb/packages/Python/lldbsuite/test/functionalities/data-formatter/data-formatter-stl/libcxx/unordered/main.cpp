@@ -1,4 +1,8 @@
 #include <string>
+#ifdef _LIBCPP_INLINE_VISIBILITY
+#undef _LIBCPP_INLINE_VISIBILITY
+#endif
+#define _LIBCPP_INLINE_VISIBILITY
 #include <unordered_map>
 #include <unordered_set>
 

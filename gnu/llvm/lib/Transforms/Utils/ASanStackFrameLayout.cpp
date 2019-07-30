@@ -36,11 +36,9 @@ static inline bool CompareVars(const ASanStackVariableDescription &a,
 // with e.g. alignment 1 and alignment 16 do not get reordered by CompareVars.
 static const size_t kMinAlignment = 16;
 
-// We want to add a full redzone after every variable.
 // The larger the variable Size the larger is the redzone.
 // The resulting frame size is a multiple of Alignment.
-static size_t VarAndRedzoneSize(size_t Size, size_t Granularity,
-                                size_t Alignment) {
+static size_t VarAndRedzoneSize(size_t Size, size_t Alignment) {
   size_t Res = 0;
   if (Size <= 4)  Res = 16;
   else if (Size <= 16) Res = 32;
@@ -48,7 +46,7 @@ static size_t VarAndRedzoneSize(size_t Size, size_t Granularity,
   else if (Size <= 512) Res = Size + 64;
   else if (Size <= 4096) Res = Size + 128;
   else                   Res = Size + 256;
-  return alignTo(std::max(Res, 2 * Granularity), Alignment);
+  return alignTo(Res, Alignment);
 }
 
 ASanStackFrameLayout
@@ -82,8 +80,7 @@ ComputeASanStackFrameLayout(SmallVectorImpl<ASanStackVariableDescription> &Vars,
     assert(Size > 0);
     size_t NextAlignment = IsLast ? Granularity
                    : std::max(Granularity, Vars[i + 1].Alignment);
-    size_t SizeWithRedzone = VarAndRedzoneSize(Size, Granularity,
-                                               NextAlignment);
+    size_t SizeWithRedzone = VarAndRedzoneSize(Size, NextAlignment);
     Vars[i].Offset = Offset;
     Offset += SizeWithRedzone;
   }

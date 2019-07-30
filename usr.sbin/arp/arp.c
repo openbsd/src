@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.82 2019/01/22 09:25:29 krw Exp $ */
+/*	$OpenBSD: arp.c,v 1.80 2017/12/23 20:53:07 cheloha Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -37,6 +37,7 @@
  * arp - display, set, delete arp table entries and wake up hosts.
  */
 
+#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/ioctl.h>
@@ -52,11 +53,11 @@
 #include <netdb.h>
 #include <errno.h>
 #include <err.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <paths.h>
 #include <unistd.h>
 #include <limits.h>
 #include <ifaddrs.h>
@@ -244,10 +245,10 @@ getsocket(void)
 
 	if (rtsock >= 0)
 		return;
-	rtsock = socket(AF_ROUTE, SOCK_RAW, 0);
+	rtsock = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (rtsock < 0)
 		err(1, "routing socket");
-	if (setsockopt(rtsock, AF_ROUTE, ROUTE_TABLEFILTER, &rdomain, len) < 0)
+	if (setsockopt(rtsock, PF_ROUTE, ROUTE_TABLEFILTER, &rdomain, len) < 0)
 		err(1, "ROUTE_TABLEFILTER");
 
 	if (pledge("stdio dns", NULL) == -1)

@@ -143,7 +143,7 @@ TEST(NamedDeclPrinter, TestNamedEnum) {
   ASSERT_TRUE(PrintedWrittenNamedDeclCXX11Matches(
     "enum X { A };",
     "A",
-    "A"));
+    "X::A"));
 }
 
 TEST(NamedDeclPrinter, TestScopedNamedEnum) {
@@ -164,7 +164,7 @@ TEST(NamedDeclPrinter, TestClassWithUnscopedNamedEnum) {
   ASSERT_TRUE(PrintedWrittenNamedDeclCXX11Matches(
     "class X { enum Y { A }; };",
     "A",
-    "X::A"));
+    "X::Y::A"));
 }
 
 TEST(NamedDeclPrinter, TestClassWithScopedNamedEnum) {
@@ -172,11 +172,4 @@ TEST(NamedDeclPrinter, TestClassWithScopedNamedEnum) {
     "class X { enum class Y { A }; };",
     "A",
     "X::Y::A"));
-}
-
-TEST(NamedDeclPrinter, TestLinkageInNamespace) {
-  ASSERT_TRUE(PrintedWrittenNamedDeclCXX11Matches(
-    "namespace X { extern \"C\" { int A; } }",
-    "A",
-    "X::A"));
 }

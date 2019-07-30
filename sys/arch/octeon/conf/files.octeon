@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.50 2019/04/23 13:53:46 visa Exp $
+#	$OpenBSD: files.octeon,v 1.43 2017/08/01 16:18:11 visa Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -13,6 +13,8 @@ major	{ octcf = 15 }
 major	{ amdcf = 19 }
 
 file	dev/cninit.c
+file	dev/ofw/fdt.c
+file	dev/ofw/ofw_misc.c
 file	arch/octeon/octeon/autoconf.c
 file	arch/octeon/octeon/bus_dma.c
 file	arch/octeon/octeon/conf.c
@@ -29,7 +31,6 @@ include	"dev/gpio/files.gpio"
 include	"dev/isa/files.isa"
 include	"dev/isa/files.isapnp"
 include	"dev/mii/files.mii"
-include	"dev/ofw/files.ofw"
 include	"dev/onewire/files.onewire"
 include	"dev/pci/files.pci"
 include	"dev/pckbc/files.pckbc"
@@ -52,11 +53,6 @@ attach	cpu at mainbus
 device	clock
 attach	clock at mainbus
 
-device	octcrypto: crypto
-attach	octcrypto at mainbus
-file	arch/octeon/dev/octcrypto.c			octcrypto
-file	arch/octeon/dev/octcrypto_asm.S			octcrypto
-
 # TOD clock
 device	octrtc
 attach	octrtc at mainbus
@@ -76,9 +72,8 @@ file	arch/octeon/dev/cn30xxpko.c			iobus
 file	arch/octeon/dev/cn30xxasx.c			iobus
 
 define	fdt {[early = 0]}
-define	fdt_octeon {[early = 0]}
 
-device	simplebus: fdt, fdt_octeon
+device	simplebus: fdt
 attach	simplebus at fdt, iobus
 file	arch/octeon/dev/simplebus.c			simplebus
 
@@ -123,7 +118,7 @@ device	cnmac: ether, ifnet, mii, ifmedia
 attach	cnmac at cn30xxgmx
 file	arch/octeon/dev/if_cnmac.c			cnmac
 
-attach	com at fdt_octeon with cn30xxuart
+attach	com at fdt with cn30xxuart
 file	arch/octeon/dev/cn30xxuart.c			cn30xxuart
 
 device	pcibus
@@ -144,14 +139,6 @@ file	arch/octeon/dev/octcit.c			octcit
 device	octciu
 attach	octciu at fdt
 file	arch/octeon/dev/octciu.c			octciu
-
-device	octgpio
-attach	octgpio at fdt
-file	arch/octeon/dev/octgpio.c			octgpio
-
-device	octiic: i2cbus
-attach	octiic at fdt
-file	arch/octeon/dev/octiic.c			octiic
 
 device	octmmc: sdmmcbus
 attach	octmmc at fdt

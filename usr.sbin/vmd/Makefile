@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.22 2019/01/18 01:24:07 pd Exp $
+#	$OpenBSD: Makefile,v 1.17 2018/01/03 05:39:56 ccardenas Exp $
 
-.if ${MACHINE} == "amd64"
+.if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
 
 PROG=		vmd
 SRCS=		vmd.c control.c log.c priv.c proc.c config.c vmm.c
 SRCS+=		vm.c loadfile_elf.c pci.c virtio.c i8259.c mc146818.c
 SRCS+=		ns8250.c i8253.c vmboot.c ufs.c disklabel.c dhcp.c packet.c
-SRCS+=		parse.y atomicio.c vioscsi.c vioraw.c vioqcow2.c fw_cfg.c
+SRCS+=		parse.y atomicio.c vioscsi.c
 
 CFLAGS+=	-Wall -I${.CURDIR}
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
@@ -15,7 +15,7 @@ CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare
 
 LDADD+=		-lutil -lpthread -levent
-DPADD+=		${LIBUTIL} ${LIBPTHREAD} ${LIBEVENT}
+DPADD+=		${LIBUTIL} ${LIBEVENT}
 
 YFLAGS=
 
