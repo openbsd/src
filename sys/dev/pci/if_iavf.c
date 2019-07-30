@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.2 2019/07/29 12:04:31 jmatthew Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.3 2019/07/30 21:41:47 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -183,6 +183,21 @@ struct iavf_aq_desc {
 #define IAVC_VC_LINK_SPEED_40GB		0x4
 #define IAVC_VC_LINK_SPEED_20GB		0x5
 #define IAVC_VC_LINK_SPEED_25GB		0x6
+
+struct iavf_link_speed {
+	uint64_t	baudrate;
+	uint64_t	media;
+};
+
+static const struct iavf_link_speed iavf_link_speeds[] = {
+	{ 0, 0 },
+	{ IF_Mbps(100), IFM_100_TX },
+	{ IF_Mbps(1000), IFM_1000_T },
+	{ IF_Gbps(10), IFM_10G_T },
+	{ IF_Gbps(40), IFM_40G_CR4 },
+	{ IF_Gbps(20), IFM_20G_KR2 },
+	{ IF_Gbps(25), IFM_25G_CR }
+};
 
 
 struct iavf_vc_version_info {
@@ -477,11 +492,6 @@ struct iavf_aq_regs {
 	uint32_t		arq_head_mask;
 };
 
-struct ixl_speed_type {
-	uint8_t		dev_speed;
-	uint64_t	net_speed;
-};
-
 struct iavf_aq_buf {
 	SIMPLEQ_ENTRY(iavf_aq_buf)
 				 aqb_entry;
@@ -630,7 +640,6 @@ static void	iavf_arq_task(void *);
 static int	iavf_match(struct device *, void *, void *);
 static void	iavf_attach(struct device *, struct device *, void *);
 
-static void	iavf_media_add(struct iavf_softc *);
 static int	iavf_media_change(struct ifnet *);
 static void	iavf_media_status(struct ifnet *, struct ifmediareq *);
 static void	iavf_watchdog(struct ifnet *);
@@ -667,17 +676,6 @@ struct cfattach iavf_ca = {
 	iavf_match,
 	iavf_attach,
 };
-
-#if 0
-static const struct ixl_speed_type ixl_speed_type_map[] = {
-	{ IAVF_AQ_PHY_LINK_SPEED_40GB,		IF_Gbps(40) },
-	{ IAVF_AQ_PHY_LINK_SPEED_25GB,		IF_Gbps(25) },
-	{ IAVF_AQ_PHY_LINK_SPEED_20GB,		IF_Gbps(20) },
-	{ IAVF_AQ_PHY_LINK_SPEED_10GB,		IF_Gbps(10) },
-	{ IAVF_AQ_PHY_LINK_SPEED_1000MB,	IF_Mbps(1000) },
-	{ IAVF_AQ_PHY_LINK_SPEED_100MB,		IF_Mbps(100) },
-};
-#endif
 
 static const struct iavf_aq_regs iavf_aq_regs = {
 	.atq_tail	= I40E_VF_ATQT1,
@@ -914,7 +912,6 @@ iavf_attach(struct device *parent, struct device *self, void *aux)
 
 	ifmedia_init(&sc->sc_media, 0, iavf_media_change, iavf_media_status);
 
-	iavf_media_add(sc);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
@@ -958,12 +955,6 @@ free_atq:
 unmap:
 	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
 	sc->sc_mems = 0;
-}
-
-static void
-iavf_media_add(struct iavf_softc *sc)
-{
-	/* just add a media type for each possible speed? */
 }
 
 static int
@@ -2090,20 +2081,49 @@ iavf_process_vf_resources(struct iavf_softc *sc, struct iavf_aq_desc *desc,
 	printf(", VF %d VSI %d", sc->sc_vf_id, sc->sc_vsi_id);
 }
 
+static const struct iavf_link_speed *
+iavf_find_link_speed(struct iavf_softc *sc, uint32_t link_speed)
+{
+	int i;
+	for (i = 0; i < nitems(iavf_link_speeds); i++) {
+		if (link_speed & (1 << i))
+			return (&iavf_link_speeds[i]);
+	}
+
+	return (NULL);
+}
+
 static void
 iavf_process_vc_event(struct iavf_softc *sc, struct iavf_aq_desc *desc,
     struct iavf_aq_buf *buf)
 {
 	struct iavf_vc_pf_event *event;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	const struct iavf_link_speed *speed;
+	int link;
 
 	event = buf->aqb_data;
 	switch (event->event) {
 	case IAVF_VC_EVENT_LINK_CHANGE:
-		/* update media things */
-		/*
-		printf(", link state %d, speed %d\n",
-		    event->link_status, event->link_speed);
-		*/
+		sc->sc_media_status = IFM_AVALID;
+		sc->sc_media_active = IFM_ETHER;
+		link = LINK_STATE_DOWN;
+		if (event->link_status) {
+			link = LINK_STATE_UP;
+			sc->sc_media_status |= IFM_ACTIVE;
+
+			ifp->if_baudrate = 0;
+			speed = iavf_find_link_speed(sc, event->link_speed);
+			if (speed != NULL) {
+				sc->sc_media_active |= speed->media;
+				ifp->if_baudrate = speed->baudrate;
+			}
+		}
+
+		if (ifp->if_link_state != link) {
+			ifp->if_link_state = link;
+			if_link_state_change(ifp);
+		}
 		break;
 
 	default:
@@ -2413,24 +2433,6 @@ iavf_config_irq_map(struct iavf_softc *sc)
 
 	return (0);
 }
-
-#if 0
-static uint64_t
-ixl_search_link_speed(uint8_t link_speed)
-{
-	const struct ixl_speed_type *type;
-	unsigned int i;
-
-	for (i = 0; i < nitems(ixl_speed_type_map); i++) {
-		type = &ixl_speed_type_map[i];
-
-		if (ISSET(type->dev_speed, link_speed))
-			return (type->net_speed);
-	}
-
-	return (0);
-}
-#endif
 
 static struct iavf_aq_buf *
 iavf_aqb_alloc(struct iavf_softc *sc)
