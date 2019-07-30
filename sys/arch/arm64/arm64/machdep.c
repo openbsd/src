@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.41 2019/06/01 11:45:01 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.42 2019/07/30 18:08:28 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -1160,6 +1160,8 @@ remap_efi_runtime(EFI_PHYSICAL_ADDRESS system_table)
 				     (phys_end - phys_start);
 				phys_end += src->NumberOfPages * PAGE_SIZE;
 			}
+			/* Mask address to make sure it fits in our pmap. */
+			src->VirtualStart &= ((1ULL << USER_SPACE_BITS) - 1);
 			memcpy(dst, src, mmap_desc_size);
 			dst = NextMemoryDescriptor(dst, mmap_desc_size);
 		}
