@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.116 2019/07/17 14:47:42 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.117 2019/07/31 12:38:04 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -903,6 +903,7 @@ dumpsys()
 boolean_t
 is_memory_range(paddr_t pa, psize_t len, psize_t limit)
 {
+	extern char start[];
 	struct phys_mem_desc *seg;
 	uint64_t fp, lp;
 	int i;
@@ -912,6 +913,11 @@ is_memory_range(paddr_t pa, psize_t len, psize_t limit)
 
 	if (limit != 0 && lp > atop(limit))
 		return FALSE;
+
+	/* The kernel is linked in CKSEG0. */
+	if (fp >= atop(trunc_page(CKSEG0_TO_PHYS((vaddr_t)start))) &&
+	    lp <= atop(round_page(CKSEG0_TO_PHYS((vaddr_t)ekern))))
+		return TRUE;
 
 	for (i = 0, seg = mem_layout; i < MAXMEMSEGS; i++, seg++)
 		if (fp >= seg->mem_first_page && lp <= seg->mem_last_page)
