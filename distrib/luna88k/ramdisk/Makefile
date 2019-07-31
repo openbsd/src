@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2019/05/03 20:03:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.28 2019/07/31 11:19:39 aoyama Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		8192
@@ -17,7 +17,7 @@ LDSTATIC=-static
 
 all: ${FS}
 
-${FS}: vn_up install_files showit vn_down
+${FS}: bsd.rd
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v ${FS} > vnd
 	disklabel -w `cat vnd` ${FSDISKTYPE}
@@ -52,7 +52,7 @@ mr.fs: instbin
 	makefs ${MRMAKEFSARGS} $@ $@.d
 
 instbin.mk instbin.cache instbin.c: instbin.conf
-	crunchgen -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib \
+	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib \
 	    -c instbin.c -e instbin -m instbin.mk instbin.conf
 
 instbin: instbin.mk instbin.cache instbin.c
