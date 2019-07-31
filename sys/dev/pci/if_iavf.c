@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.3 2019/07/30 21:41:47 jmatthew Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.4 2019/07/31 01:27:34 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1339,13 +1339,22 @@ static int
 iavf_iff(struct iavf_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	int unicast, multicast;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return (0);
 
 	rw_enter_write(&sc->sc_cfg_lock);
 
-	iavf_config_promisc_mode(sc, 0, 0);
+	unicast = 0;
+	multicast = 0;
+	if (ISSET(ifp->if_flags, IFF_PROMISC)) {
+		unicast = 1;
+		multicast = 1;
+	} else if (ISSET(ifp->if_flags, IFF_ALLMULTI)) {
+		multicast = 1;
+	}
+	iavf_config_promisc_mode(sc, unicast, multicast);
 
 	if (memcmp(sc->sc_enaddr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN) != 0) {
 		if (memcmp(sc->sc_enaddr, etheranyaddr, ETHER_ADDR_LEN) != 0)
