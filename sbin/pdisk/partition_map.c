@@ -1,4 +1,4 @@
-/*	$OpenBSD: partition_map.c,v 1.98 2016/02/01 12:53:37 krw Exp $	*/
+/*	$OpenBSD: partition_map.c,v 1.99 2019/07/31 00:14:10 krw Exp $	*/
 
 /*
  * partition_map.c - partition map routines
@@ -87,7 +87,7 @@ open_partition_map(int fd, char *name, uint64_t mediasz, uint32_t sectorsz)
 	}
 	if (map->sbSig == BLOCK0_SIGNATURE &&
 	    map->sbBlkSize == sectorsz &&
-	    map->sbBlkCount == mediasz) {
+	    map->sbBlkCount <= mediasz) {
 		if (read_partition_map(map) == 0)
 			return map;
 	} else {
@@ -98,8 +98,8 @@ open_partition_map(int fd, char *name, uint64_t mediasz, uint32_t sectorsz)
 		else if (map->sbBlkSize != sectorsz)
 			warnx("Block 0 sbBlkSize (%u) != sector size (%u)",
 			    map->sbBlkSize, sectorsz);
-		else if (map->sbBlkCount != mediasz)
-			warnx("Block 0 sbBlkCount (%u) != media size (%llu)",
+		else if (map->sbBlkCount > mediasz)
+			warnx("Block 0 sbBlkCount (%u) > media size (%llu)",
 			    map->sbBlkCount,
 			    (unsigned long long)mediasz);
 	}
