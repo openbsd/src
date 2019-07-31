@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.20 2019/07/22 14:37:06 jcs Exp $ */
+/* $OpenBSD: ihidev.c,v 1.21 2019/07/31 16:09:12 jcs Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -129,7 +129,7 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 			printf(", can't establish interrupt");
 	}
 
-	if (ia->ia_poll) {
+	if (ia->ia_poll || !sc->sc_ih) {
 		printf(" (polling)");
 		sc->sc_poll = 1;
 		sc->sc_fastpoll = 1;
