@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpclient.c,v 1.20 2019/05/11 17:46:02 rob Exp $	*/
+/*	$OpenBSD: snmpclient.c,v 1.21 2019/07/31 18:30:53 martijn Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -220,6 +220,15 @@ snmpc_request(struct snmpc *sc, unsigned int type)
 	if ((ret = snmpc_response(sc)) != 0) { 
 		if (ret == -1)
 			err(1, "response");
+		/*
+		 * We don't support getnext command, so abuse it so we don't
+		 * infinitely recurse on walks for mibs that don't exist.
+		 */
+		if (sc->sc_nresp == 0 && type == SNMP_C_GETNEXTREQ) {
+			bcopy(&sc->sc_root_oid, &sc->sc_oid,
+			    sizeof(sc->sc_oid));
+			snmpc_request(sc, SNMP_C_GETREQ);
+		}
 		return;
 	}	
 
@@ -235,7 +244,7 @@ snmpc_response(struct snmpc *sc)
 	char			 buf[BUFSIZ];
 	struct ber_element	*resp = NULL, *s, *e;
 	char			*value = NULL, *p;
-	int			 ret = 0;
+	int			 ret = 0, bercmp;
 
 	/* Receive response */
 	if (snmpc_recvresp(sc->sc_fd, sc->sc_version,
@@ -250,12 +259,12 @@ snmpc_response(struct snmpc *sc)
 			goto fail;
 
 		/* Break if the returned OID is not a child of the root. */
-		if (sc->sc_nresp &&
-		    (ber_oid_cmp(&sc->sc_root_oid, &sc->sc_oid) != 2 ||
+		bercmp = ber_oid_cmp(&sc->sc_root_oid, &sc->sc_oid);
+		if ((bercmp != 0 && bercmp != 2) ||
 		    e->be_class == BER_CLASS_CONTEXT ||
-		    e->be_type == BER_TYPE_NULL)) {
-			ret = 1; 
-			break;
+		    e->be_type == BER_TYPE_NULL) {
+			ber_free_elements(resp);
+			return 1;
 		}		
 
 		if ((value = smi_print_element(e)) != NULL) {
