@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.244 2019/01/10 18:50:32 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.245 2019/07/31 15:47:49 jcs Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -230,8 +230,8 @@ struct aml_opcode aml_table[] = {
 	/* Conversion operations */
 	{ AMLOP_TOINTEGER,	"ToInteger",	"tr",	},
 	{ AMLOP_TOBUFFER,	"ToBuffer",	"tr",	},
-	{ AMLOP_TODECSTRING,	"ToDecString",	"ir",	},
-	{ AMLOP_TOHEXSTRING,	"ToHexString",	"ir",	},
+	{ AMLOP_TODECSTRING,	"ToDecString",	"tr",	},
+	{ AMLOP_TOHEXSTRING,	"ToHexString",	"tr",	},
 	{ AMLOP_TOSTRING,	"ToString",	"tir",	},
 	{ AMLOP_MID,		"Mid",		"tiir",	},
 	{ AMLOP_FROMBCD,	"FromBCD",	"ir",	},
