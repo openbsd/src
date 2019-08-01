@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.672 2019/07/05 01:37:13 dlg Exp $
+#	$OpenBSD: files,v 1.673 2019/08/01 03:06:35 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -563,6 +563,7 @@ pseudo-device mobileip: ifnet
 pseudo-device crypto: ifnet
 pseudo-device trunk: ifnet, ether, ifmedia
 pseudo-device aggr: ifnet, ether, ifmedia
+pseudo-device tpmr: ifnet, ether, ifmedia
 pseudo-device mpe: ifnet, mpls
 pseudo-device mpw: ifnet, mpls, ether
 pseudo-device mpip: ifnet, mpls
@@ -818,6 +819,7 @@ file net/if_mobileip.c			mobileip		needs-count
 file net/if_trunk.c			trunk			needs-count
 file net/trunklacp.c			trunk
 file net/if_aggr.c			aggr
+file net/if_tpmr.c			tpmr
 file net/if_mpe.c			mpe			needs-count
 file net/if_mpw.c			mpw			needs-count
 file net/if_mpip.c			mpip
