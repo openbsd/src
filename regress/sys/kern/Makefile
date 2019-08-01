@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.82 2019/06/14 19:23:53 cheloha Exp $
+#	$OpenBSD: Makefile,v 1.83 2019/08/01 15:56:59 bluhm Exp $
 
 SUBDIR+= __syscall access accept cmsgsize clock_gettime
 SUBDIR+= dup2 dup2_accept dup2_self descrip
@@ -26,8 +26,9 @@ SUBDIR+= sosplice
 SUBDIR+= syscall sysvmsg sysvsem
 SUBDIR+= sysvshm unalign unfdpass wait
 SUBDIR+= sig-stop
-SUBDIR+= unveil
 SUBDIR+= unixsock bind
+SUBDIR+= unveil
+SUBDIR+= unveil-unmount
 
 # The setuid subtest creates set user/group id binaries in the obj directory.
 # Do not run this test by default, it may trigger alerts from daily security.
