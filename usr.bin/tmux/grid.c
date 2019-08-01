@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.98 2019/07/16 10:30:56 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.99 2019/08/01 07:08:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1219,10 +1219,6 @@ grid_reflow(struct grid *gd, u_int sx)
 	struct grid_line	*gl;
 	struct grid_cell	 gc;
 	u_int			 yy, width, i, at, first;
-
-	/* Do not reflow to the same size. */
-	if (sx == gd->sx)
-		return;
 
 	/*
 	 * Create a destination grid. This is just used as a container for the
