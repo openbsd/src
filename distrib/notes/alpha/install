@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.40 2014/12/13 15:45:53 miod Exp $
+dnl	$OpenBSD: install,v 1.41 2019/08/01 19:42:52 jmc Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk.  The easiest way is
@@ -50,7 +50,7 @@ Booting from Network:
 	OpenBSD machine as the necessary services are already installed,
 	although source code for such programs as dhcpd can be found in
 	OpenBSD's source tree, and should be reasonably portable to other
-	UN*X-like operating systems. More information on diskless booting
+	Unix-like operating systems. More information on diskless booting
 	can be found in the OpenBSD diskless(8) manual page.
 
 	Alpha systems can download their boot code over the network either

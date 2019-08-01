@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.127 2017/08/23 02:59:45 nayden Exp $
+dnl	$OpenBSD: m4.common,v 1.128 2019/08/01 19:42:51 jmc Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -194,7 +194,7 @@ define({:-OpenBSDfloppydesc-:},
 {:-Bootable installation/upgrade floppy image$3:
 
 	The $1 floppy image$3 can be copied to a floppy using rawrite.exe,
-	ntrw.exe, or `dd', as described later in this document.
+	ntrw.exe, or "dd", as described later in this document.
 	$2 floppy image is a bootable install floppy which can be used
 	both to install and to upgrade OpenBSD to the current version.
 	It is also useful for maintenance and disaster recovery.-:})dnl
@@ -274,7 +274,7 @@ If any question has a default answer, it will be displayed in brackets ("[]")
 after the question.  If you wish to stop the installation, you may hit
 Control-C at any time, but if you do, you'll have to begin the installation
 process again from scratch.  Using Control-Z to suspend the process may be a
-better option, or at any prompt enter `!' to get a shell, from which 'exit'
+better option, or at any prompt enter "!" to get a shell, from which "exit"
 will return you back to that prompt.
 -:})dnl
 dnl
@@ -290,8 +290,8 @@ define({:-OpenBSDInstallPart3-:},
 dnl dot.profile
 	After the kernel is done initializing, you will be asked whether
 	you wish to do an "(I)nstall", "(U)pgrade" or an "(A)utoinstall".
-	Enter 'I' for a fresh install or 'U' to upgrade an existing
-	installation.  Enter 'A' to start an unattended installation
+	Enter "I" for a fresh install or "U" to upgrade an existing
+	installation.  Enter "A" to start an unattended installation
 	where all of your answers are supplied in a response file (more
 	on that in "Preparing an unattended installation of OpenBSD").
 
@@ -308,8 +308,8 @@ ifelse(MDKBD,,,{:-
 	If you are connected using a glass console, you will next be
 	asked for your keyboard layout (the default being the US QWERTY
 	layout).  Depending on your keyboard type, not all international
-	layouts may be supported; answering `?' (which, on QWERTY layouts,
-	is the key to the left of the right `sh{:--:}ift' key, shifted) will
+	layouts may be supported; answering "?" (which, on QWERTY layouts,
+	is the key to the left of the right "sh{:--:}ift" key, shifted) will
 	display a list of supported layouts.
 	(If you do not need to change the keyboard layout, just press
 	enter.)-:})dnl
@@ -341,11 +341,11 @@ dnl XXX add a MDVLAN feature and document vlan setup
 	  beginning of the installation).
 
 	- the IPv4 settings: address and netmask.  If the IP address
-	  should be obtained from a DHCP server, simply enter ``dhcp''
+	  should be obtained from a DHCP server, simply enter "dhcp"
 	  when asked for the address.
 
 	- the IPv6 settings (address, prefix length, and default router).
-	  You may enter ``autoconf'' when asked for the address for the
+	  You may enter "autoconf" when asked for the address for the
 	  interface to configure automatically via router solicitation
 	  messages.
 
@@ -378,7 +378,7 @@ ifelse(MDXAPERTURE,,,{:-
 	System on your machine.  The install program needs to know
 	this, to change a configuration setting controlling whether
 	the X server will be able to access the xf86(4) driver; it
-	is not necessary to answer `y' to this question if you only
+	is not necessary to answer "y" to this question if you only
 	intend to run X client programs on a remote display.
 -:})dnl
 dnl install.sub (install) questions(): MDXDM
@@ -386,7 +386,7 @@ ifelse(MDXDM,,,
 {:-ifelse(MDXAPERTURE,,{:-
 	Since the X Window System can run on OpenBSD/MACHINE
 	without the need for a configuration file, you will get asked-:},
-{:-	If you answered `y' to this question, you will get asked-:})
+{:-	If you answered "y" to this question, you will get asked-:})
 	whether you want to start xenodm(1) on boot.
 -:})dnl
 dnl install.sub (install) questions(): serial console setup
@@ -401,15 +401,15 @@ ifelse(MDSERCONS,,,{:-
 dnl install.sub (install) user_setup()
 	You will now be given the possibility to setup a user account
 	on the forthcoming system.  This user will be added to the
-	`wheel' group.
+	"wheel" group.
 
-	Enter the desired login name, or `n' if you do not want to
+	Enter the desired login name, or "n" if you do not want to
 	add a user account at this point.  Valid login names are
 	sequences of digits and lowercase letters, and must start
 	with a lowercase letter.  If the login name matches this
 	criteria, and doesn't conflict with any of the administrative
-	user accounts (such as `root', `daemon' or `ftp'), you
-	will be prompted with the users descriptive name, as well
+	user accounts (such as "root", "daemon" or "ftp"), you
+	will be prompted for the user's descriptive name, as well
 	as its password, twice.
 
 	As for the root password earlier, the install program will only
@@ -422,13 +422,11 @@ dnl install.sub (install) user_setup()
 dnl install.sub (install) set_timezone
 ifelse(MDTZ,,,
 {:-
-	You may now be given the opportunity to configure the time zone
-	your system will be using (this depends on the installation
-	media you are using).
-
-	If the installation program skips this question, do not be
-	alarmed, the time zone will be configured at the end
-	of the installation.
+	Depending on the installation media you are using, you may now
+	be given the opportunity to configure the time zone your system
+	will use.  If the installation program skips this question, do
+	not be alarmed: the time zone will be configured at the end of
+	the installation.
 -:})dnl
 dnl install.sh ask whether to use DUIDs before the md_prep_disklabel loop
 	The installation program will now tell you which disks it can
@@ -442,8 +440,8 @@ dnl Describes MBR partitioning. So much to save four lines of text
 dnl duplicated 5 times.
 dnl
 define({:-OpenBSDInstallMBRPart1-:},
-{:-	Disks on OpenBSD/MACHINE are partitioned using either ``MBR''
-	or ``GPT'' partitioning schemes.  You will need to create one
+{:-	Disks on OpenBSD/MACHINE are partitioned using either "MBR"
+	or "GPT" partitioning schemes.  You will need to create one
 	disk partition in which the OpenBSD filesystems will be created.
 -:})dnl
 dnl
@@ -454,8 +452,8 @@ define({:-OpenBSDInstallMBRPart2-:},
 dnl install.md md_prep_fdisk
 {:-	The installation program will ask you if you want to use the
 	whole disk for OpenBSD.  If you don't need to or don't intend
-	to share the disk with other operating systems, answer `w'
-	here to use ``MBR'' partitioning or 'g' to use ``GPT''
+	to share the disk with other operating systems, answer "w"
+	here to use "MBR" partitioning or "g" to use "GPT"
 	partitioning. The installation program will then create a single
 	partition spanning the whole disk, dedicated to OpenBSD.
 
@@ -478,9 +476,9 @@ dnl Describes the disklabel operation
 dnl
 define({:-OpenBSDInstallPart5-:},
 {:-	The file system layout is stored in the OpenBSD disk label. Each
-	file system is stored in its own ``disk label partition'', which
+	file system is stored in its own "disk label partition", which
 	is a subdivision of the OpenBSD disk partition you created. In
-	the text below ``partition'' refers to these subdivisions.
+	the text below, "partition" refers to these subdivisions.
 
 	You will be shown a default layout with the recommended file
 	systems. This default layout is based on the disk size.
@@ -490,14 +488,14 @@ define({:-OpenBSDInstallPart5-:},
 	last two choices will invoke the disklabel(8) interactive editor,
 	allowing you to create your desired layout.
 
-	Within the editor, you will see at least a 'c' partition of
-	fstype 'unused'. This represents the whole disk and cannot be
+	Within the editor, you will see at least a "c" partition of
+	fstype "unused". This represents the whole disk and cannot be
 	modified.$1
 
-	You must create partition 'a' as a native OpenBSD partition, i.e.
+	You must create partition "a" as a native OpenBSD partition, i.e.
 	one with "4.2BSD" as the fstype, to hold the root file system.$2
 
-	In addition to partition 'a' you should create partition 'b' with
+	In addition to partition "a" you should create partition "b" with
 	fstype "swap", and native OpenBSD partitions to hold separate file
 	systems such as /usr, /tmp, /var, and /home.
 
@@ -506,21 +504,21 @@ define({:-OpenBSDInstallPart5-:},
 	4.2BSD fstype, will neither be formatted nor mounted during the
 	installation.
 
-	For quick help while in the interactive editor, enter '?'.  The
-	`z' command (which deletes all partitions and starts with a
-	clean label), the `A' command (which performs the automatic
-	partition layout) and the `n' command (to change mount points)
+	For quick help while in the interactive editor, enter "?".
+	The "z" command (which deletes all partitions and starts with a
+	clean label), the "A" command (which performs the automatic
+	partition layout) and the "n" command (to change mount points)
 	are of particular interest.
 
-	Although the partitions position and size are written in exact
+	Although the partitions' position and size are written in exact
 	sector values, you do not need a calculator to create your
-	partitions!  Human-friendly units can be specified by adding `k',
-	`m' or `g' after any numbers to have them converted to kilobytes,
+	partitions!  Human-friendly units can be specified by adding "k",
+	"m" or "g" after any numbers to have them converted to kilobytes,
 	megabytes or gigabytes. Or you may specify a percentage of the
-	disk size using `%' as the suffix.
+	disk size using "%" as the suffix.
 
-	Enter 'M' to view the entire manual page (see the info on the
-	``-E'' flag).  To exit the editor enter 'q'.-:})dnl
+	Enter "M" to view the entire manual page (see the info on the
+	"-E" flag).  To exit the editor enter "q".-:})dnl
 dnl
 dnl OpenBSDInstallPart6(other installation sources)
 define({:-OpenBSDInstallPart6-:},
@@ -602,7 +600,7 @@ define({:-OpenBSDNFSInstall-:},
 		You will also have to provide the relative path to the
 		directory on the file system where the distribution sets
 		are located.  Note that this path should not be prefixed
-		with a '/'.
+		with a "/".
 
 		Then refer to the section named "installation set selection"
 		below.-:})dnl
@@ -631,7 +629,7 @@ define({:-OpenBSDDISKInstall-:},
 		This is normally $1"sdN", where N is a number.
 		Next you will have to identify the partition within that disk
 		that holds the distribution; this is a single letter between
-		'a' and 'p'.
+		"a" and "p".
 
 		You will also have to identify the type of file system
 		residing in the partition identified.  Currently, you can
@@ -641,7 +639,7 @@ define({:-OpenBSDDISKInstall-:},
 		You will also have to provide the relative path to the
 		directory on the file system where the distribution sets
 		are located.  Note that this path should not be prefixed
-		with a '/'.
+		with a "/".
 
 dnl		Then refer to the section named "installation set selection"
 dnl		below.
@@ -652,19 +650,19 @@ define({:-OpenBSDCommonInstall-:},
 		A list of available distribution sets found on the
 		given location will be listed.
 
-		You may individually select distribution sets to install,
-		by entering their name, or wildcards (e.g. `*.tgz' or
-		`base*|comp*', or `all' to select all the sets (which
-		is what most users will want to do).
-		You may also enter `abort' to deselect everything and
+		You may individually select distribution sets to install
+		by entering their names or wildcards (e.g. "*.tgz" or
+		"base*|comp*"), or you may enter "all" to select all the
+		sets (which is what most users will want to do).
+		You may also enter "abort" to deselect everything and
 		restart the selection from scratch, or unselect sets
-		by entering their name prefixed with `-' (e.g. `-x*').
+		by entering their name prefixed with "-" (e.g. "-x*").
 
 		It is also possible to enter an arbitrary filename and
 		have it treated as a file set.
 
 		When you are done selecting distribution sets, enter
-		`done'.  The files will begin to extract.-:})dnl
+		"done".  The files will begin to extract.-:})dnl
 dnl
 dnl Description of the end of the installation procedure.
 dnl
@@ -698,9 +696,9 @@ dnl install.sh finish_up()
 	system, and will install bootblocks on the root disk.
 ifelse(MDSMP,,,{:-
 	On multiprocessor systems, if the bsd.mp kernel has been installed,
-	it will be renamed to `bsd', which is the default kernel the boot
-	blocks look for.  The single processor kernel, `bsd', will be
-	available as `bsd.sp'.
+	it will be renamed to "bsd", which is the default kernel the boot
+	blocks look for.  The single processor kernel, "bsd", will be
+	available as "bsd.sp".
 -:})
 	Finally, you will be asked whether you would like to install
 	non-free firmware files (which can't be tightly integrated to
@@ -710,8 +708,8 @@ dnl
 define({:-OpenBSDCongratulations-:},{:-
 Congratulations, you have successfully installed OpenBSD OSREV.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
-You should create yourself an account and protect it and the "root"
-account with good passwords.
+You should create yourself an account, if you skipped this step during
+installation, and protect it and the "root" account with good passwords.
 
 The install program leaves root an initial mail message.  We recommend
 you read it, as it contains answers to basic questions you might have
@@ -743,16 +741,16 @@ define({:-OpenBSDUnattendedInstallation-:},
 Preparing an unattended installation of OpenBSD:
 ------------------------------------------------
 
-If '(A)utoinstall' is chosen at the install prompt or if the
+If "(A)utoinstall" is chosen at the install prompt or if the
 installation system detects that it booted from the network, and
 isn't interrupted within 5 seconds, it attempts a fully-automatic
 installation.
 
 The installer runs dhclient(8) on the network interface the system
 booted from, or in case of multiple interfaces it will ask which one
-to use. Upon success it retrieves a response file via HTTP. If that
-fails, the installer asks for the response file location which can be
-either an url or a local path and retrieves the response file from
+to use. Upon success, it retrieves a response file via HTTP. If that
+fails, the installer asks for the response file location, which can be
+either a URL or a local path, and retrieves the response file from
 there.
 
 The "next-server" DHCP option specifies the hostname part of the URL,
@@ -762,10 +760,10 @@ architectures where this parameter is used for netbooting, create
 a symbolic link named "auto_install" pointing to the boot program.
 
 The response file contains lines with key/value pairs separated by
-an equals sign '=', where the key is a non-ambiguous part (up to the
+an equals sign "=", where the key is a non-ambiguous part (up to the
 question mark) of the installer question, consisting of whitespace
 separated words. The value is what would have been entered at the
-interactive prompt. Empty lines and lines beginning with a '#'
+interactive prompt. Empty lines and lines beginning with a "#"
 character are ignored. The installer uses default answers in case
 of missing answers.
 
@@ -813,7 +811,7 @@ releases, but might not execute some migration tasks that would be necessary
 for a proper upgrade.
 
 The best solution, whenever possible, is to backup your data and reinstall
-from scratch. As a minimum, if the toolchain (the ``comp'' set) was installed,
+from scratch. As a minimum, if the toolchain (the "comp" set) was installed,
 you should remove all files within /usr/{:-include-:} before attempting to
 upgrade.
 
@@ -839,7 +837,7 @@ However, it is strongly advised that you unpack the etc{:--:}.tgz and the
 xetc{:--:}.tgz files found in /var/sysmerge in a temporary
 directory and merge changes by hand, or with the help of the sysmerge(8)
 helper script, since all components of your system may not function
-correctly until your files in `/etc' are updated.-:})dnl
+correctly until your files in "/etc" are updated.-:})dnl
 dnl
 dnl
 dnl ========== Installation media preparation
@@ -1017,7 +1015,7 @@ the following:
 	is recommended that you upgrade the other sets, as well.-:})dnl
 dnl
 define({:-OpenBSDInstNFS-:},
-{:-Now you must populate the `/dev' directory for your client.  If the server
+{:-Now you must populate the "/dev" directory for your client.  If the server
 does not run OpenBSD you might save the MAKEDEV output:
 
 	eo=echo ksh MAKEDEV all > all.sh

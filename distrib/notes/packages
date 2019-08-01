@@ -1,12 +1,12 @@
-dnl	$OpenBSD: packages,v 1.50 2017/03/04 22:46:19 tj Exp $
+dnl	$OpenBSD: packages,v 1.51 2019/08/01 19:42:51 jmc Exp $
 As complete as your OpenBSD system is, you may want to add any of several
 excellent third party software applications.  There are several ways to do
 this.  You can:
 
-1) Use the OpenBSD ``package'' collection to grab a pre-compiled
+1) Use the OpenBSD package collection to grab a pre-compiled
    and tested version of the application for your hardware.
 
-2) Use the OpenBSD ``ports'' collection to automatically get any
+2) Use the OpenBSD ports collection to automatically get any
    needed source file, apply any required patches, create the
    application, and install it for you.
 
@@ -32,9 +32,9 @@ Installing applications from the ftp.OpenBSD.org package collection:
 
 	Installation of a package is very easy.
 	1) become the superuser (root)
-	2) use the ``pkg_add'' command to install the software
+	2) use the "pkg_add" command to install the software
 
-	``pkg_add'' is smart enough to know how to download the software
+	"pkg_add" is smart enough to know how to download the software
 	from the OpenBSD HTTP server.  Example:
 
     $ su

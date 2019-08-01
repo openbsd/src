@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.33 2017/03/04 22:46:20 tj Exp $
+dnl	$OpenBSD: xfer,v 1.34 2019/08/01 19:42:52 jmc Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
@@ -26,7 +26,7 @@ OpenBSDXferFloppyFromDOS
 
 OpenBSDXferFloppyFromUNIX
 
-Creating a bootable hard disk using SunOS, Solaris or other Un*x-like system:
+Creating a bootable hard disk using SunOS, Solaris or other Unix-like system:
 
 	If you don't have a floppy drive you can copy the miniroot
 	"miniroot{:--:}OSrev.fs" onto the hard disk you intend to boot on.
@@ -63,7 +63,7 @@ Creating a bootable hard disk using SunOS, Solaris or other Un*x-like system:
 	which can wipe out any pre-existing disklabels or partitioning for
 	the drive.
 
-Creating a network bootable setup using SunOS or other Un*x-like system:
+Creating a network bootable setup using SunOS or other Unix-like system:
 
 	The details of setting up a network bootable environment vary
 	considerably, depending on the network's host.  Extract the

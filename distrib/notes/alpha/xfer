@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.32 2015/06/10 06:38:39 jasper Exp $
+dnl	$OpenBSD: xfer,v 1.33 2019/08/01 19:42:52 jmc Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
@@ -20,7 +20,7 @@ If you neither have a floppy drive nor a CD-ROM drive on your alpha:
 	image onto the hard disk you intend to install OpenBSD on.
 	Doing so will overwrite the disk's old contents, however.
 
-	You must use a UN*X-like system to write the floppy image
+	You must use a Unix-like system to write the floppy image
 	to the hard disk you will be using for OpenBSD/MACHINE.  You
 	should use the "dd" command to copy the file system image
 	(floppy{:--:}OSrev.fs or floppyB{:--:}OSrev.fs) directly to the raw 'c'

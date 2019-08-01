@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.53 2019/06/24 01:21:46 rob Exp $
+dnl	$OpenBSD: INSTALL,v 1.54 2019/08/01 19:42:51 jmc Exp $
 include(INCLUDE/../m4.common)dnl
 includeit(features)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
@@ -11,10 +11,10 @@ OpenBSD is a fully functional, multi-platform UN*X-like Operating
 System based on Berkeley Networking Release 2 (Net/2) and 4.4BSD-Lite.
 There are several operating systems in this family, but OpenBSD
 differentiates itself by putting security and correctness first.  The
-OpenBSD team strives to achieve what is called a 'secure by default'
+OpenBSD team strives to achieve what is called a "secure by default"
 status.  This means that an OpenBSD user should feel safe that their
-newly installed machine will not be compromised.  This 'secure by
-default' goal is achieved by taking a proactive stance on security.
+newly installed machine will not be compromised.  This "secure by
+default" goal is achieved by taking a proactive stance on security.
 
 Since security flaws are essentially mistakes in design or implement-
 ation, the OpenBSD team puts as much importance on finding and fixing
@@ -138,7 +138,7 @@ Using online OpenBSD documentation:
 
 Documentation is available if you first install the manual pages
 distribution set.  Traditionally, the UN*X "man pages" (documentation)
-are denoted by 'name(section)'.  Some examples of this are
+are denoted by "name(section)".  Some examples of this are
 
 	intro(1),
 	man(1),
@@ -151,8 +151,8 @@ The section numbers group the topics into several categories, but three
 are of primary interest: user commands are in section 1, file formats
 are in section 5, and administrative information is in section 8.
 
-The 'man' command is used to view the documentation on a topic, and is
-started by entering 'man [section] topic'.  The brackets [] around the
+The "man" command is used to view the documentation on a topic, and is
+started by entering "man [section] topic".  The brackets [] around the
 section should not be entered, but rather indicate that the section is
 optional.  If you don't ask for a particular section, the topic with the
 least-numbered section name will be displayed.  For instance, after
@@ -175,7 +175,7 @@ where "subject-word" is your topic of interest; a list of possibly
 related man pages will be displayed.
 
 
-Adding third party software; ``packages'' and ``ports'':
+Adding third party software - packages and ports:
 --------------------------------------------------------
 
 includeit(packages)
@@ -194,7 +194,7 @@ netiquette is available at
 
 	https://www.OpenBSD.org/mail.html
 
-To report bugs, use the 'sendbug' command shipped with OpenBSD,
+To report bugs, use the "sendbug" command shipped with OpenBSD,
 and fill in as much information about the problem as you can.  Good
 bug reports {:-include-:} lots of details.  Additionally, bug reports can
 be sent by mail to:

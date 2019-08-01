@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.34 2015/06/10 06:38:39 jasper Exp $
+dnl	$OpenBSD: xfer,v 1.35 2019/08/01 19:42:52 jmc Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
@@ -21,7 +21,7 @@ OpenBSDXferFloppyFromUNIX
 
 OpenBSDXferUSBFromUNIX
 
-Creating a PXE network bootable setup using OpenBSD or other Un*x-like system:
+Creating a PXE network bootable setup using OpenBSD or other Unix-like system:
 
 	In order to start the install via PXE, you will need to set up a
 	DHCP server and a TFTP server.  The details of how to do this

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.26 2014/03/19 01:59:48 tedu Exp $
+dnl	$OpenBSD: install,v 1.27 2019/08/01 19:42:52 jmc Exp $
 dnl lots of texts coming from {mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -37,7 +37,7 @@ Booting from Network:
   act as a boot server. It is convenient if this is a second OpenBSD machine
   as the necessary services are already installed, although source code for
   such programs as dhcpd can be found in OpenBSD's source tree, and should be
-  reasonably portable to other UN*X-like operating systems. More information
+  reasonably portable to other Unix-like operating systems. More information
   on diskless booting can be found in the OpenBSD diskless(8) manual page.
 
   Your MACHINE expects to be able to download a LIF (``Logical
