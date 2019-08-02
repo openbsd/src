@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.327 2019/07/25 01:43:21 cheloha Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.328 2019/08/02 08:12:35 bluhm Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -90,11 +90,6 @@ int doutimensat(struct proc *, int, const char *, struct timespec [2], int);
 int dovutimens(struct proc *, struct vnode *, struct timespec [2]);
 int dofutimens(struct proc *, int, struct timespec [2]);
 int dounmount_leaf(struct mount *, int, struct proc *);
-int unveil_add(struct proc *, struct nameidata *, const char *);
-void unveil_removevnode(struct vnode *vp);
-void unveil_free_traversed_vnodes(struct nameidata *);
-ssize_t unveil_find_cover(struct vnode *, struct proc *);
-struct unveil *unveil_lookup(struct vnode *, struct proc *, ssize_t *);
 
 /*
  * Virtual File System System Calls
