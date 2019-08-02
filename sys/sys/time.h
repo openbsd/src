@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.44 2019/07/03 22:39:33 cheloha Exp $	*/
+/*	$OpenBSD: time.h,v 1.45 2019/08/02 03:33:15 deraadt Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -298,7 +298,7 @@ struct proc;
 int	clock_gettime(struct proc *, clockid_t, struct timespec *);
 
 int	itimerfix(struct timeval *);
-int	itimerdecr(struct itimerval *itp, int usec);
+int	itimerdecr(struct itimerspec *itp, long nsec);
 void	itimerround(struct timeval *);
 int	settime(const struct timespec *);
 int	ratecheck(struct timeval *, const struct timeval *);
