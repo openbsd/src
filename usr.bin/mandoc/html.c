@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.125 2019/04/30 15:52:42 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.126 2019/08/02 17:04:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -201,23 +201,18 @@ print_gen_head(struct html *h)
 	print_endline(h);
 	print_text(h, "td.head-vol { text-align: center; }");
 	print_endline(h);
-	print_text(h, "div.Pp { margin: 1ex 0ex; }");
+	print_text(h, ".Nd, .Bf, .Op { display: inline; }");
 	print_endline(h);
-	print_text(h, "div.Nd, div.Bf, div.Op { display: inline; }");
+	print_text(h, ".Pa, .Ad { font-style: italic; }");
 	print_endline(h);
-	print_text(h, "span.Pa, span.Ad { font-style: italic; }");
+	print_text(h, ".Ms { font-weight: bold; }");
 	print_endline(h);
-	print_text(h, "span.Ms { font-weight: bold; }");
-	print_endline(h);
-	print_text(h, "dl.Bl-diag ");
+	print_text(h, ".Bl-diag ");
 	print_byte(h, '>');
 	print_text(h, " dt { font-weight: bold; }");
 	print_endline(h);
-	print_text(h, "code.Nm, code.Fl, code.Cm, code.Ic, "
-	    "code.In, code.Fd, code.Fn,");
-	print_endline(h);
-	print_text(h, "code.Cd { font-weight: bold; "
-	    "font-family: inherit; }");
+	print_text(h, "code.Nm, .Fl, .Cm, .Ic, code.In, .Fd, .Fn, .Cd "
+	    "{ font-weight: bold; font-family: inherit; }");
 	print_tagq(h, t);
 }
 
