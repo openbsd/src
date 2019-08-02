@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.1,v 1.32 2019/06/02 06:16:37 bentley Exp $
+.\"	$OpenBSD: printf.1,v 1.33 2019/08/02 14:40:13 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	5.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: June 2 2019 $
+.Dd $Mdocdate: August 2 2019 $
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -319,6 +319,15 @@ respectively.
 Characters from the string
 .Ar argument
 are printed with backslash-escape sequences expanded.
+In the
+.Ar argument ,
+ASCII characters can be octally encoded either as
+.Cm \e0 Ns Ar num
+or as
+.Cm \e Ns Ar num
+like in the
+.Ar format
+string.
 If the
 .Ar argument
 contains the special escape sequence
@@ -373,7 +382,17 @@ and always operates as if
 .Ev LC_ALL Ns =C
 were set.
 .Pp
-The escape sequences \ee and \e' are extensions to that specification.
+The escape sequences
+.Cm \ee
+and
+.Cm \e' ,
+as well as omitting the leading digit
+.Cm 0
+from
+.Cm \e0 Ns Ar num
+octal escape sequences in
+.Cm %b
+arguments, are extensions to that specification.
 .Sh HISTORY
 The
 .Nm
