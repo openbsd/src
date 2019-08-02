@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1892 2019/07/28 11:01:10 jmatthew Exp 
+ *	OpenBSD: pcidevs,v 1.1893 2019/08/02 21:45:16 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -26880,6 +26880,38 @@ static const struct pci_known_product pci_known_products[] = {
 	    "B2C2 Sky2PC",
 	},
 	{
+	    PCI_VENDOR_AMPERE, PCI_PRODUCT_AMPERE_EMAG_PCIE_1,
+	    "eMAG PCIE",
+	},
+	{
+	    PCI_VENDOR_AMPERE, PCI_PRODUCT_AMPERE_EMAG_PCIE_2,
+	    "eMAG PCIE",
+	},
+	{
+	    PCI_VENDOR_AMPERE, PCI_PRODUCT_AMPERE_EMAG_PCIE_3,
+	    "eMAG PCIE",
+	},
+	{
+	    PCI_VENDOR_AMPERE, PCI_PRODUCT_AMPERE_EMAG_PCIE_4,
+	    "eMAG PCIE",
+	},
+	{
+	    PCI_VENDOR_AMPERE, PCI_PRODUCT_AMPERE_EMAG_PCIE_5,
+	    "eMAG PCIE",
+	},
+	{
+	    PCI_VENDOR_AMPERE, PCI_PRODUCT_AMPERE_EMAG_PCIE_6,
+	    "eMAG PCIE",
+	},
+	{
+	    PCI_VENDOR_AMPERE, PCI_PRODUCT_AMPERE_EMAG_PCIE_7,
+	    "eMAG PCIE",
+	},
+	{
+	    PCI_VENDOR_AMPERE, PCI_PRODUCT_AMPERE_EMAG_PCIE_8,
+	    "eMAG PCIE",
+	},
+	{
 	    PCI_VENDOR_TEHUTI, PCI_PRODUCT_TEHUTI_TN3009,
 	    "TN3009",
 	},
@@ -30374,6 +30406,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_TEKRAM2,
 	    "Tekram",
+	},
+	{
+	    PCI_VENDOR_AMPERE,
+	    "Ampere",
 	},
 	{
 	    PCI_VENDOR_TEHUTI,
