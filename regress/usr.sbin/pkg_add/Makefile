@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.73 2019/07/11 07:15:02 espie Exp $
+# $OpenBSD: Makefile,v 1.74 2019/08/02 14:57:53 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -11,7 +11,8 @@ REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	qttest gstest exotest inter1 manual1 oldlib1 \
 	usertest-1 usertest-2 usertest-3 cups-bug nettle-bug \
 	tying-1 tying-2 tag-delete setsprint temp-error1 \
-	temp-error2 temp-error2-as-root temp-error3 temp-error4
+	temp-error2 temp-error2-as-root temp-error3 temp-error4 \
+	cksum-error
 
 REGRESS_ROOT_TARGETS = temp-error2-as-root
 
@@ -20,8 +21,8 @@ REGRESS_EXPECTED_FAILURES = collision-check1 collision-check2 \
 	collision-check5 collision-check6 collision-check7 \
 	exotest tying-2
 
-ADD_PKG=perl -I${.CURDIR} ${.CURDIR}/my add
-DELETE_PKG=perl -I${.CURDIR} ${.CURDIR}/my delete
+ADD_PKG=perl -I${.CURDIR} ${.CURDIR}/my add -Dchecksum
+DELETE_PKG=perl -I${.CURDIR} ${.CURDIR}/my delete -Dchecksum
 INFO_PKG=perl -I${.CURDIR} ${.CURDIR}/my info
 CREATE_PKG=perl -I${.CURDIR} ${.CURDIR}/mycreate
 LONG1=iamareallongfilenamethatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
@@ -37,7 +38,7 @@ D$i ?= ${.OBJDIR}/dest$i
 DEST$i ?= ${D$i}/usr/local
 .endfor
 
-# current maxes (used): D41, SRC26, plist24, rep5
+# current maxes (used): D44, SRC27, plist24, rep5
 pkgnames:
 	perl ${.CURDIR}/check-name
 
@@ -799,7 +800,17 @@ temp-error4: rep0/qt-0.tgz rep1/qt-1.tgz
 	@echo zoinx >${D43}/usr/local/phonon/a
 	@{ INJECT=inject-temp4 PKG_PATH=${.OBJDIR}/rep1 SILENT=1 ROOT=${D43} ${ADD_PKG} -Dchecksum -u qt || echo $$?; } 2>&1|${SED_PIPE} >temp4.out
 
+rep5/a-0.tgz: plist19
+	@mkdir -p ${SRC27}
+	@echo "zoinx" > ${SRC27}/a
+	INJECT=inject-badsum ${CREATE_PKG} -B src27 -f plist19 $@
+
 .PHONY: ${REGRESS_TARGETS}
+
+cksum-error: rep5/a-0.tgz
+	@-rm -rf ${D44}
+	@ROOT=${D44} SILENT=1 ${ADD_PKG} rep5/a-0.tgz
+	@ROOT=${D44} SILENT=1 ${DELETE_PKG} a|fgrep 'Not deleting'
 
 clean:
 	-rm -rf rep* dest* plist* src* signatures.out *.ref *.out
