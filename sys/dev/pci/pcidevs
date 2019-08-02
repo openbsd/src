@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1892 2019/07/28 11:01:10 jmatthew Exp $
+$OpenBSD: pcidevs,v 1.1893 2019/08/02 21:45:16 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -338,6 +338,7 @@ vendor	WCH2		0x1c00	Nanjing QinHeng Electronics
 vendor	SYMPHONY2	0x1c1c	Symphony Labs
 vendor	ROCKCHIP	0x1d87	Rockchip
 vendor	TEKRAM2		0x1de1	Tekram
+vendor	AMPERE		0x1def	Ampere
 vendor	TEHUTI		0x1fc9	Tehuti Networks
 vendor	SUNIX2		0x1fd4	Sunix
 vendor	HINT		0x3388	Hint
@@ -7612,6 +7613,16 @@ product TAMARACK TC9021_ALT	0x9021	TC9021
 /* Techsan Electronics */
 product TECHSAN B2C2_SKY2PC	0x2104	B2C2 Sky2PC
 product TECHSAN B2C2_SKY2PC_2	0x2200	B2C2 Sky2PC
+
+/* Ampere Computing */
+product AMPERE EMAG_PCIE_1	0xe005	eMAG PCIE
+product AMPERE EMAG_PCIE_2	0xe006	eMAG PCIE
+product AMPERE EMAG_PCIE_3	0xe007	eMAG PCIE
+product AMPERE EMAG_PCIE_4	0xe008	eMAG PCIE
+product AMPERE EMAG_PCIE_5	0xe009	eMAG PCIE
+product AMPERE EMAG_PCIE_6	0xe00a	eMAG PCIE
+product AMPERE EMAG_PCIE_7	0xe00b	eMAG PCIE
+product AMPERE EMAG_PCIE_8	0xe00c	eMAG PCIE
 
 /* Tehuti Networks Ltd */
 product TEHUTI TN3009		0x3009	TN3009
