@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.138 2019/07/09 23:48:08 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.139 2019/08/02 07:41:13 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -158,6 +158,7 @@ ast(void)
 	 */
 	membar_enter();
 
+	refreshcreds(p);
 	atomic_inc_int(&uvmexp.softs);
 	mi_ast(p, ci->ci_want_resched);
 	userret(p);
