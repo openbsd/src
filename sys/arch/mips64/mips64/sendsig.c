@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.32 2019/05/06 12:57:56 visa Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.33 2019/08/02 07:41:57 visa Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@ void
 sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct cpu_info *ci = curcpu();
-	struct proc *p = curproc;
+	struct proc *p = ci->ci_curproc;
 	struct sigframe *fp;
 	struct trapframe *regs;
 	struct sigacts *psp = p->p_p->ps_sigacts;
