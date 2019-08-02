@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.121 2019/07/25 15:13:52 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.122 2019/08/02 02:17:35 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -507,18 +507,18 @@ sys_getitimer(struct proc *p, void *v, register_t *retval)
 		syscallarg(struct itimerval *) itv;
 	} */ *uap = v;
 	struct itimerval aitv;
+	struct itimerspec *itimer;
 	int which;
 
 	which = SCARG(uap, which);
 
 	if (which < ITIMER_REAL || which > ITIMER_PROF)
 		return (EINVAL);
+	itimer = &p->p_p->ps_timer[which];
 	memset(&aitv, 0, sizeof(aitv));
 	mtx_enter(&itimer_mtx);
-	aitv.it_interval.tv_sec  = p->p_p->ps_timer[which].it_interval.tv_sec;
-	aitv.it_interval.tv_usec = p->p_p->ps_timer[which].it_interval.tv_usec;
-	aitv.it_value.tv_sec     = p->p_p->ps_timer[which].it_value.tv_sec;
-	aitv.it_value.tv_usec    = p->p_p->ps_timer[which].it_value.tv_usec;
+	TIMESPEC_TO_TIMEVAL(&aitv.it_interval, &itimer->it_interval);
+	TIMESPEC_TO_TIMEVAL(&aitv.it_value, &itimer->it_value);
 	mtx_leave(&itimer_mtx);
 
 	if (which == ITIMER_REAL) {
@@ -552,6 +552,7 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 		syscallarg(struct itimerval *) oitv;
 	} */ *uap = v;
 	struct sys_getitimer_args getargs;
+	struct itimerspec aits;
 	struct itimerval aitv;
 	const struct itimerval *itvp;
 	struct itimerval *oitv;
@@ -579,21 +580,22 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 		return (0);
 	if (itimerfix(&aitv.it_value) || itimerfix(&aitv.it_interval))
 		return (EINVAL);
+	TIMEVAL_TO_TIMESPEC(&aitv.it_value, &aits.it_value);
+	TIMEVAL_TO_TIMESPEC(&aitv.it_interval, &aits.it_interval);
 	if (which == ITIMER_REAL) {
-		struct timeval ctv;
+		struct timespec cts;
 
 		timeout_del(&pr->ps_realit_to);
-		getmicrouptime(&ctv);
-		if (timerisset(&aitv.it_value)) {
-			timo = tvtohz(&aitv.it_value);
+		getnanouptime(&cts);
+		if (timespecisset(&aits.it_value)) {
+			timo = tstohz(&aits.it_value);
 			timeout_add(&pr->ps_realit_to, timo);
-			timeradd(&aitv.it_value, &ctv, &aitv.it_value);
+			timespecadd(&aits.it_value, &cts, &aits.it_value);
 		}
-		pr->ps_timer[ITIMER_REAL] = aitv;
+		pr->ps_timer[ITIMER_REAL] = aits;
 	} else {
-		itimerround(&aitv.it_interval);
 		mtx_enter(&itimer_mtx);
-		pr->ps_timer[which] = aitv;
+		pr->ps_timer[which] = aits;
 		mtx_leave(&itimer_mtx);
 	}
 
@@ -612,23 +614,23 @@ void
 realitexpire(void *arg)
 {
 	struct process *pr = arg;
-	struct itimerval *tp = &pr->ps_timer[ITIMER_REAL];
+	struct itimerspec *tp = &pr->ps_timer[ITIMER_REAL];
 
 	prsignal(pr, SIGALRM);
-	if (!timerisset(&tp->it_interval)) {
-		timerclear(&tp->it_value);
+	if (!timespecisset(&tp->it_interval)) {
+		timespecclear(&tp->it_value);
 		return;
 	}
 	for (;;) {
-		struct timeval ctv, ntv;
+		struct timespec cts, nts;
 		int timo;
 
-		timeradd(&tp->it_value, &tp->it_interval, &tp->it_value);
-		getmicrouptime(&ctv);
-		if (timercmp(&tp->it_value, &ctv, >)) {
-			ntv = tp->it_value;
-			timersub(&ntv, &ctv, &ntv);
-			timo = tvtohz(&ntv) - 1;
+		timespecadd(&tp->it_value, &tp->it_interval, &tp->it_value);
+		getnanouptime(&cts);
+		if (timespeccmp(&tp->it_value, &cts, >)) {
+			nts = tp->it_value;
+			timespecsub(&nts, &cts, &nts);
+			timo = tstohz(&nts) - 1;
 			if (timo <= 0)
 				timo = 1;
 			if ((pr->ps_flags & PS_EXITING) == 0)
@@ -668,32 +670,31 @@ itimerround(struct timeval *tv)
 }
 
 /*
- * Decrement an interval timer by the given number of microseconds.
+ * Decrement an interval timer by the given number of nanoseconds.
  * If the timer expires and it is periodic then reload it.  When reloading
  * the timer we subtract any overrun from the next period so that the timer
  * does not drift.
  */
 int
-itimerdecr(struct itimerval *itp, int usec)
+itimerdecr(struct itimerspec *itp, long nsec)
 {
-	struct timeval decrement;
+	struct timespec decrement;
 
-	decrement.tv_sec = usec / 1000000;
-	decrement.tv_usec = usec % 1000000;
+	NSEC_TO_TIMESPEC(nsec, &decrement);
 
 	mtx_enter(&itimer_mtx);
-	timersub(&itp->it_value, &decrement, &itp->it_value);
-	if (itp->it_value.tv_sec >= 0 && timerisset(&itp->it_value)) {
+	timespecsub(&itp->it_value, &decrement, &itp->it_value);
+	if (itp->it_value.tv_sec >= 0 && timespecisset(&itp->it_value)) {
 		mtx_leave(&itimer_mtx);
 		return (1);
 	}
-	if (!timerisset(&itp->it_interval)) {
-		timerclear(&itp->it_value);
+	if (!timespecisset(&itp->it_interval)) {
+		timespecclear(&itp->it_value);
 		mtx_leave(&itimer_mtx);
 		return (0);
 	}
-	while (itp->it_value.tv_sec < 0 || !timerisset(&itp->it_value))
-		timeradd(&itp->it_value, &itp->it_interval, &itp->it_value);
+	while (itp->it_value.tv_sec < 0 || !timespecisset(&itp->it_value))
+		timespecadd(&itp->it_value, &itp->it_interval, &itp->it_value);
 	mtx_leave(&itimer_mtx);
 	return (0);
 }

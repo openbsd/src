@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.42 2019/07/16 17:39:02 bluhm Exp $	*/
+/*	$OpenBSD: param.c,v 1.43 2019/08/02 02:17:35 cheloha Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -80,6 +80,7 @@
 #endif
 int	hz = HZ;
 int	tick = 1000000 / HZ;
+int	tick_nsec = 1000000000 / HZ;
 int	tickadj = 240000 / (60 * HZ);		/* can adjust 240ms in 60s */
 struct	timezone tz  __attribute__ ((section(".data"))) = { TIMEZONE, DST };
 #define	NPROCESS (30 + 16 * MAXUSERS)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.98 2019/01/28 11:49:04 mpi Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.99 2019/08/02 02:17:35 cheloha Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -153,13 +153,13 @@ hardclock(struct clockframe *frame)
 		 * Run current process's virtual and profile time, as needed.
 		 */
 		if (CLKF_USERMODE(frame) &&
-		    timerisset(&pr->ps_timer[ITIMER_VIRTUAL].it_value) &&
-		    itimerdecr(&pr->ps_timer[ITIMER_VIRTUAL], tick) == 0) {
+		    timespecisset(&pr->ps_timer[ITIMER_VIRTUAL].it_value) &&
+		    itimerdecr(&pr->ps_timer[ITIMER_VIRTUAL], tick_nsec) == 0) {
 			atomic_setbits_int(&p->p_flag, P_ALRMPEND);
 			need_proftick(p);
 		}
-		if (timerisset(&pr->ps_timer[ITIMER_PROF].it_value) &&
-		    itimerdecr(&pr->ps_timer[ITIMER_PROF], tick) == 0) {
+		if (timespecisset(&pr->ps_timer[ITIMER_PROF].it_value) &&
+		    itimerdecr(&pr->ps_timer[ITIMER_PROF], tick_nsec) == 0) {
 			atomic_setbits_int(&p->p_flag, P_PROFPEND);
 			need_proftick(p);
 		}

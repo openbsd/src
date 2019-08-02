@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.207 2019/07/15 04:11:03 visa Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.208 2019/08/02 02:17:35 cheloha Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -654,8 +654,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 		timeout_del(&pr->ps_realit_to);
 		for (i = 0; i < nitems(pr->ps_timer); i++) {
-			timerclear(&pr->ps_timer[i].it_interval);
-			timerclear(&pr->ps_timer[i].it_value);
+			timespecclear(&pr->ps_timer[i].it_interval);
+			timespecclear(&pr->ps_timer[i].it_value);
 		}
 		splx(s);
 	}
