@@ -1,7 +1,7 @@
-# $OpenBSD: files.arm64,v 1.28 2019/05/31 08:02:04 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.29 2019/08/03 23:29:46 deraadt Exp $
 
 maxpartitions	16
-maxusers	2 8 64
+maxusers	2 8 128
 
 major	{wd = 16}
 major	{sd = 24}
