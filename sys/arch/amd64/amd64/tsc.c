@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.11 2019/06/06 19:43:35 kettenis Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.12 2019/08/03 14:57:51 jcs Exp $	*/
 /*
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2017 Adam Steen <adam@adamsteen.com.au>
@@ -35,6 +35,11 @@ int		tsc_is_invariant;
 
 uint		tsc_get_timecount(struct timecounter *tc);
 
+#include "lapic.h"
+#if NLAPIC > 0
+extern u_int32_t lapic_per_second;
+#endif
+
 struct timecounter tsc_timecounter = {
 	tsc_get_timecount, NULL, ~0u, 0, "tsc", -1000, NULL
 };
@@ -68,8 +73,12 @@ tsc_freq_cpuid(struct cpu_info *ci)
 		}
 		if (ebx == 0 || eax == 0)
 			count = 0;
-		else if ((count = (uint64_t)khz * (uint64_t)ebx / eax) != 0)
+		else if ((count = (uint64_t)khz * (uint64_t)ebx / eax) != 0) {
+#if NLAPIC > 0
+			lapic_per_second = khz * 1000;
+#endif
 			return (count * 1000);
+		}
 	}
 
 	return (0);
