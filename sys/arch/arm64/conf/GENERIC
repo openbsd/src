@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.104 2019/06/07 04:03:04 jmatthew Exp $
+# $OpenBSD: GENERIC,v 1.105 2019/08/03 23:27:34 deraadt Exp $
 #
 # GENERIC machine description file
 #
@@ -20,7 +20,7 @@
 
 machine		arm64
 include		"../../../conf/GENERIC"
-maxusers	32
+maxusers	80
 
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight saving time used by RTC
