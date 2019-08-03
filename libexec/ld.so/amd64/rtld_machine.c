@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.30 2018/11/16 21:15:47 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.31 2019/08/03 19:56:40 guenther Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -359,7 +359,7 @@ _dl_bind(elf_object_t *object, int index)
 	if (this == NULL)
 		_dl_die("lazy binding failed!");
 
-	buf.newval = ooff + this->st_value + rel->r_addend;
+	buf.newval = ooff + this->st_value;
 
 	if (__predict_false(sobj->traced) && _dl_trace_plt(sobj, symn))
 		return (buf.newval);
