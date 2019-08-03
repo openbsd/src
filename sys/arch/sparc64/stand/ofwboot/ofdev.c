@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.27 2018/12/31 11:44:57 claudio Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.28 2019/08/03 18:25:42 deraadt Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -126,8 +126,6 @@ strategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
 	u_quad_t pos;
 	int n;
 
-	if (rw != F_READ)
-		return EPERM;
 #ifdef SOFTRAID
 	/* Intercept strategy for softraid volumes. */
 	if (dev->type == OFDEV_SOFTRAID)
@@ -149,7 +147,10 @@ strategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
 			break;
 		DNPRINTF(BOOT_D_OFDEV, "strategy: reading %lx at %p\n",
 		    (long)size, buf);
-		n = OF_read(dev->handle, buf, size);
+		if (rw == F_READ)
+			n = OF_read(dev->handle, buf, size);
+		else
+			n = OF_write(dev->handle, buf, size);
 		if (n == -2)
 			continue;
 		if (n < 0)
@@ -519,8 +520,6 @@ devopen(struct open_file *of, const char *name, char **file)
 
 	if (ofdev.handle != -1)
 		panic("devopen");
-	if (of->f_flags != F_READ)
-		return EPERM;
 	DNPRINTF(BOOT_D_OFDEV, "devopen: you want %s\n", name);
 	if (strlcpy(fname, name, sizeof fname) >= sizeof fname)
 		return ENAMETOOLONG;
