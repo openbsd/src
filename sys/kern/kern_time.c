@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.122 2019/08/02 02:17:35 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.123 2019/08/03 22:53:45 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -656,17 +656,6 @@ itimerfix(struct timeval *tv)
 		tv->tv_usec = tick;
 
 	return (0);
-}
-
-/*
- * Nonzero timer interval smaller than the resolution of the
- * system clock are rounded up.
- */
-void
-itimerround(struct timeval *tv)
-{
-	if (tv->tv_sec == 0 && tv->tv_usec != 0 && tv->tv_usec < tick)
-		tv->tv_usec = tick;
 }
 
 /*
