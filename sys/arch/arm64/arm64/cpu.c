@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.33 2019/07/02 20:13:50 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.34 2019/08/03 09:25:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -46,6 +46,7 @@
 /* CPU Identification */
 #define CPU_IMPL_ARM		0x41
 #define CPU_IMPL_CAVIUM		0x43
+#define CPU_IMPL_AMCC		0x50
 
 #define CPU_PART_CORTEX_A53	0xd03
 #define CPU_PART_CORTEX_A35	0xd04
@@ -65,6 +66,8 @@
 #define CPU_PART_THUNDERX_T81	0x0a2
 #define CPU_PART_THUNDERX_T83	0x0a3
 #define CPU_PART_THUNDERX2_T99	0x0af
+
+#define CPU_PART_X_GENE		0x000
 
 #define CPU_IMPL(midr)  (((midr) >> 24) & 0xff)
 #define CPU_PART(midr)  (((midr) >> 4) & 0xfff)
@@ -94,7 +97,7 @@ struct cpu_cores cpu_cores_arm[] = {
 	{ CPU_PART_CORTEX_A77, "Cortex-A77" },
 	{ CPU_PART_NEOVERSE_E1, "Neoverse E1" },
 	{ CPU_PART_NEOVERSE_N1, "Neoverse N1" },
-	{ 0 },
+	{ 0, NULL },
 };
 
 struct cpu_cores cpu_cores_cavium[] = {
@@ -102,7 +105,12 @@ struct cpu_cores cpu_cores_cavium[] = {
 	{ CPU_PART_THUNDERX_T81, "ThunderX T81" },
 	{ CPU_PART_THUNDERX_T83, "ThunderX T83" },
 	{ CPU_PART_THUNDERX2_T99, "ThunderX2 T99" },
-	{ 0 },
+	{ 0, NULL },
+};
+
+struct cpu_cores cpu_cores_amcc[] = {
+	{ CPU_PART_X_GENE, "X-Gene" },
+	{ 0, NULL },
 };
 
 /* arm cores makers */
@@ -113,7 +121,8 @@ const struct implementers {
 } cpu_implementers[] = {
 	{ CPU_IMPL_ARM,	"ARM", cpu_cores_arm },
 	{ CPU_IMPL_CAVIUM, "Cavium", cpu_cores_cavium },
-	{ 0 },
+	{ CPU_IMPL_AMCC, "Applied Micro", cpu_cores_amcc },
+	{ 0, NULL },
 };
 
 char cpu_model[64];
@@ -154,7 +163,7 @@ cpu_identify(struct cpu_info *ci)
 	impl = CPU_IMPL(midr);
 	part = CPU_PART(midr);
 
-	for (i = 0; cpu_implementers[i].id != 0; i++) {
+	for (i = 0; cpu_implementers[i].name; i++) {
 		if (impl == cpu_implementers[i].id) {
 			impl_name = cpu_implementers[i].name;
 			coreselecter = cpu_implementers[i].corelist;
@@ -162,7 +171,7 @@ cpu_identify(struct cpu_info *ci)
 		}
 	}
 
-	for (i = 0; coreselecter[i].id != 0; i++) {
+	for (i = 0; coreselecter[i].name; i++) {
 		if (part == coreselecter[i].id) {
 			part_name = coreselecter[i].name;
 			break;
