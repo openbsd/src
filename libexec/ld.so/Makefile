@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.75 2019/07/14 03:23:12 guenther Exp $
+#	$OpenBSD: Makefile,v 1.76 2019/08/03 19:36:55 guenther Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -70,12 +70,12 @@ $(test_prog):
 
 $(PROG): $(test_prog) ${VERSION_SCRIPT} $(OBJS) ${LD_SCRIPT}
 .if defined(SYSPATCH_PATH)
-	$(LD) ${DEBUG} -e _dl_start $(ELF_LDFLAGS) -o $(candidate) \
+	$(LD) -e _dl_start $(ELF_LDFLAGS) -o $(candidate) \
             `readelf -Ws ${SYSPATCH_PATH}/usr/libexec/${.TARGET} | \
             awk '/ FILE/{sub(".*/", "", $$NF); gsub(/\..*/, ".o", $$NF); print $$NF}' | \
             awk '!x[$$0]++'`
 .else
-	$(LD) ${DEBUG} -e _dl_start $(ELF_LDFLAGS) -o $(candidate) \
+	$(LD) -e _dl_start $(ELF_LDFLAGS) -o $(candidate) \
 	    `echo ${OBJS} | tr " " "\n" | sort -R`
 .endif
 .ifndef CROSSDIR
