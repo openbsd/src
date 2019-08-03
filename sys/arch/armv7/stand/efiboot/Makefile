@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2018/06/23 22:13:50 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.12 2019/08/03 15:22:20 deraadt Exp $
 
 NOMAN=		#
 
@@ -27,8 +27,8 @@ SRCS+=	boot.c cmd.c vars.c
 SRCS+=	alloc.c ctime.c exit.c getchar.c memcmp.c memcpy.c memmove.c memset.c \
 	printf.c putchar.c snprintf.c strchr.c strcmp.c strerror.c strncmp.c \
 	strncpy.c strtol.c
-SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
-	lseek.c open.c read.c readdir.c stat.c
+SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fchmod.c \
+	fstat.c lseek.c open.c read.c readdir.c stat.c
 SRCS+=	loadfile.c
 SRCS+=	ufs.c
 SRCS+=	arp.c ether.c globals.c in_cksum.c net.c netif.c netudp.c tftp.c

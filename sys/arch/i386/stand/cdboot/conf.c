@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.36 2019/04/10 04:19:32 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.37 2019/08/03 15:22:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -64,7 +64,7 @@ int nibprobes = nitems(probe_list);
 
 struct fs_ops file_system[] = {
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
-	  ufs_stat,    ufs_readdir    },
+	  ufs_stat,    ufs_readdir,  ufs_fchmod },
 	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
 	  cd9660_stat, cd9660_readdir },
 #ifdef notdef

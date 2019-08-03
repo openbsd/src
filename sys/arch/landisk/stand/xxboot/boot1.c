@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot1.c,v 1.7 2011/04/10 12:21:07 miod Exp $	*/
+/*	$OpenBSD: boot1.c,v 1.8 2019/08/03 15:22:21 deraadt Exp $	*/
 /*	$NetBSD: boot1.c,v 1.1 2006/09/01 21:26:19 uwe Exp $	*/
 
 /*-
@@ -53,7 +53,7 @@ extern struct disklabel ptn_disklabel;
 
 struct fs_ops file_system[] = {
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek,
-	  ufs_stat, ufs_readdir },
+	  ufs_stat, ufs_readdir, ufs_fchmod },
 };
 int nfsys = nitems(file_system);
 

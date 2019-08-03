@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.66 2019/04/20 22:59:04 deraadt Exp $	*/
+/*	$OpenBSD: stand.h,v 1.67 2019/08/03 15:22:17 deraadt Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -67,6 +67,7 @@ struct fs_ops {
 	off_t	(*seek)(struct open_file *f, off_t offset, int where);
 	int	(*stat)(struct open_file *f, struct stat *sb);
 	int	(*readdir)(struct open_file *f, char *);
+	int	(*fchmod)(struct open_file *f, mode_t);
 };
 
 extern struct fs_ops file_system[];

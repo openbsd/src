@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.48 2019/04/10 19:41:03 florian Exp $	*/
+/*	$OpenBSD: boot.c,v 1.49 2019/08/03 15:22:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -59,7 +59,7 @@ char	rnddata[BOOTRANDOM_MAX];
 void
 boot(dev_t bootdev)
 {
-	int fd;
+	int fd, isupgrade = 0;
 	int try = 0, st;
 	uint64_t marks[MARK_MAX];
 
@@ -79,6 +79,7 @@ boot(dev_t bootdev)
 	if (upgrade()) {
 		strlcpy(cmd.image, "/bsd.upgrade", sizeof(cmd.image));
 		printf("upgrade detected: switching to %s\n", cmd.image);
+		isupgrade = 1;
 	}
 
 	st = read_conf();
@@ -118,6 +119,18 @@ boot(dev_t bootdev)
 		printf("booting %s: ", cmd.path);
 		marks[MARK_START] = (u_long)cmd.addr;
 		if ((fd = loadfile(cmd.path, marks, LOAD_ALL)) != -1) {
+
+		        /* Prevent re-upgrade: chmod a-x bsd.upgrade */
+			if (isupgrade) {
+				struct stat st;
+
+				if (fstat(fd, &st) == 0) {
+					st.st_mode &= ~(S_IXUSR|S_IXGRP|S_IXOTH);
+					if (fchmod(fd, st.st_mode) == -1)
+						printf("fchmod a-x %s: failed\n",
+						    cmd.path);
+				}
+			}
 			close(fd);
 			break;
 		}

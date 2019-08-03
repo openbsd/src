@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2019/04/20 22:59:03 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 2019/08/03 15:22:21 deraadt Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -21,8 +21,8 @@ SRCS=	alloc.c cons.c ctime.c exit.c getchar.c getfile.c getln.c globals.c \
 	snprintf.c strchr.c strcmp.c strerror.c strncmp.c strncpy.c strtol.c
 
 # io routines
-SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c \
-	lseek.c open.c read.c readdir.c stat.c write.c
+SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fchmod.c fstat.c \
+	ioctl.c lseek.c open.c read.c readdir.c stat.c write.c
 #SRCS+=	nullfs.c
 
 #SRCS+=	cread.c

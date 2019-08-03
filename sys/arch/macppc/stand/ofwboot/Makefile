@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2019/04/20 22:59:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2019/08/03 15:22:21 deraadt Exp $
 #	$NetBSD: Makefile,v 1.2 1997/04/17 07:46:24 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -7,7 +7,7 @@ R=../
 PROG=		ofwboot
 CFLAGS+=	-D_STANDALONE
 SRCS=		Locore.c main.c ofdev.c net.c netif_of.c netudp.c
-SRCS+=		alloc.c cache.c hfs.c
+SRCS+=		alloc.c cache.c fchmod.c hfs.c
 SRCS+=		boot.c conf.c cmd.c vars.c ctime.c strtol.c
 .PATH:		${S}/arch/macppc/stand
 SRCS+=		ofwmagic.S

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.40 2019/05/15 06:52:33 mlarkin Exp $	*/
+/*	$OpenBSD: conf.c,v 1.41 2019/08/03 15:22:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -65,7 +65,7 @@ struct fs_ops file_system[] = {
 	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
 	  cd9660_stat, cd9660_readdir },
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
-	  ufs_stat,    ufs_readdir    },
+	  ufs_stat,    ufs_readdir,  ufs_fchmod },
 #ifdef notdef
 	{ tftp_open,   tftp_close,   tftp_read,   tftp_write,   tftp_seek,
 	  tftp_stat,   tftp_readdir   },

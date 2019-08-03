@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2019/05/15 06:52:33 mlarkin Exp $
+#	$OpenBSD: Makefile,v 1.42 2019/08/03 15:22:19 deraadt Exp $
 
 COPTS?=
 MAN?=	boot.8
@@ -35,8 +35,8 @@ SRCS+=	softraid_amd64.c
 SRCS+=	alloc.c ctime.c exit.c getchar.c memcmp.c memcpy.c memmove.c memset.c printf.c \
 	putchar.c snprintf.c strcmp.c strerror.c strlen.c strncmp.c strncpy.c \
 	strtol.c strtoll.c
-SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
-	lseek.c open.c read.c readdir.c stat.c
+SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fchmod.c \
+	fstat.c lseek.c open.c read.c readdir.c stat.c
 SRCS+=	elf32.c elf64.c loadfile.c
 SRCS+=	ufs.c
 .if ${SOFTRAID:L} == "yes"

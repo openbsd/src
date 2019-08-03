@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs.c,v 1.26 2016/11/25 17:00:33 reyk Exp $	*/
+/*	$OpenBSD: ufs.c,v 1.27 2019/08/03 15:22:17 deraadt Exp $	*/
 /*	$NetBSD: ufs.c,v 1.16 1996/09/30 16:01:22 ws Exp $	*/
 
 /*-
@@ -81,6 +81,7 @@ struct file {
 	off_t		f_seekp;	/* seek pointer */
 	struct fs	*f_fs;		/* pointer to super-block */
 	struct ufs1_dinode	f_di;		/* copy of on-disk inode */
+	ufsino_t	f_ino;		/* our inode number */
 	int		f_nindir[NIADDR];
 					/* number of blocks mapped by
 					   indirect block at level i */
@@ -95,6 +96,7 @@ struct file {
 };
 
 static int	read_inode(ufsino_t, struct open_file *);
+static int	chmod_inode(ufsino_t, struct open_file *, mode_t);
 static int	block_map(struct open_file *, daddr32_t, daddr32_t *);
 static int	buf_read_file(struct open_file *, char **, size_t *);
 static int	search_directory(char *, struct open_file *, ufsino_t *);
@@ -148,6 +150,50 @@ read_inode(ufsino_t inumber, struct open_file *f)
 		fp->f_buf_blkno = -1;
 		fp->f_seekp = 0;
 	}
+out:
+	free(buf, fs->fs_bsize);
+	return (rc);
+}
+
+/*
+ * Read a new inode into a file structure.
+ */
+static int
+chmod_inode(ufsino_t inumber, struct open_file *f, mode_t mode)
+{
+	struct file *fp = (struct file *)f->f_fsdata;
+	struct fs *fs = fp->f_fs;
+	char *buf;
+	size_t rsize;
+	int rc;
+
+	/*
+	 * Read inode and save it.
+	 */
+	buf = alloc(fs->fs_bsize);
+	twiddle();
+	rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
+	    fsbtodb(fs, (daddr32_t)ino_to_fsba(fs, inumber)), fs->fs_bsize,
+	    buf, &rsize);
+	if (rc)
+		goto out;
+	if (rsize != (size_t)fs->fs_bsize) {
+		rc = EIO;
+		goto out;
+	}
+
+	{
+		struct ufs1_dinode *dp;
+
+		dp = &((struct ufs1_dinode *)buf)[ino_to_fsbo(fs, inumber)];
+		dp->di_mode = mode;
+	}
+
+	twiddle();
+	rc = (f->f_dev->dv_strategy)(f->f_devdata, F_WRITE,
+	    fsbtodb(fs, (daddr32_t)ino_to_fsba(fs, inumber)), fs->fs_bsize,
+	    buf, NULL);
+
 out:
 	free(buf, fs->fs_bsize);
 	return (rc);
@@ -522,6 +568,7 @@ ufs_open(char *path, struct open_file *f)
 	/*
 	 * Found terminal component.
 	 */
+	fp->f_ino = inumber;
 	rc = 0;
 out:
 	if (buf)
@@ -637,6 +684,14 @@ ufs_stat(struct open_file *f, struct stat *sb)
 	sb->st_gid = fp->f_di.di_gid;
 	sb->st_size = fp->f_di.di_size;
 	return (0);
+}
+
+int
+ufs_fchmod(struct open_file *f, mode_t mode)
+{
+	struct file *fp = (struct file *)f->f_fsdata;
+
+	return chmod_inode(fp->f_ino, f, mode);
 }
 
 #ifndef	NO_READDIR

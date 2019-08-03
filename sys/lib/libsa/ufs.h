@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs.h,v 1.6 2003/06/02 23:28:10 millert Exp $	*/
+/*	$OpenBSD: ufs.h,v 1.7 2019/08/03 15:22:17 deraadt Exp $	*/
 /*	$NetBSD: ufs.h,v 1.5 1995/10/20 01:35:25 cgd Exp $	*/
 
 /*-
@@ -41,4 +41,5 @@ int	ufs_write(struct open_file *f, void *buf,
 off_t	ufs_seek(struct open_file *f, off_t offset, int where);
 int	ufs_stat(struct open_file *f, struct stat *sb);
 int	ufs_readdir(struct open_file *f, char *name);
+int	ufs_fchmod(struct open_file *f, mode_t mode);
 

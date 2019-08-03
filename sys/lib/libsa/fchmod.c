@@ -1,7 +1,8 @@
-/*	$OpenBSD: conf.c,v 1.11 2019/08/03 15:22:21 deraadt Exp $	*/
+/*	$OpenBSD: fchmod.c,v 1.1 2019/08/03 15:22:17 deraadt Exp $	*/
+/*	$NetBSD: stat.c,v 1.3 1994/10/26 05:45:07 cgd Exp $	*/
 
-/*
- * Copyright (c) 1982, 1986, 1990, 1993
+/*-
+ * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,54 +29,31 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)conf.c	8.1 (Berkeley) 6/10/93
+ *	@(#)stat.c	8.1 (Berkeley) 6/11/93
  */
 
-#include <sys/param.h>
+#include "stand.h"
 
-#include <dev/cons.h>
+int
+fchmod(int fd, mode_t m)
+{
+	struct open_file *f = &files[fd];
 
-#include "libsa.h"
-#include <lib/libsa/ufs.h>
-#include <lib/libsa/cd9660.h>
+	if (f->f_ops->fchmod == NULL) {
+		errno = EOPNOTSUPP;
+		return (-1);
+	}
+	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
+		errno = EBADF;
+		return (-1);
+	}
 
-const char version[] = "0.8";
-#if 0	/* network code not compiled in */
-int	debug = 0;
-#endif
+	/* operation not defined on raw devices */
+	if (f->f_flags & F_RAW) {
+		errno = EOPNOTSUPP;
+		return (-1);
+	}
 
-/*
- * Device configuration
- */
-struct devsw devsw[] = {
-	/* initrd */
-	{ "rd",		rd_iostrategy, rd_ioopen, rd_ioclose, noioctl },
-	/* ATA storage device */
-	{ "wd",		pmon_iostrategy, pmon_ioopen, pmon_ioclose, noioctl }
-};
-int ndevs = nitems(devsw);
-
-/*
- * Filesystem configuration
- */
-struct fs_ops file_system[] = {
-	/* initrd ``filesystem'' */
-	{	rdfs_open,	rdfs_close,	rdfs_read,	rdfs_write,
-		rdfs_seek,	rdfs_stat,	rdfs_readdir	},
-	/* ufs filesystem */
-	{	ufs_open,	ufs_close,	ufs_read,	ufs_write,
-		ufs_seek,	ufs_stat,	ufs_readdir,	ufs_fchmod },
-	/* cd9660 filesystem - in case a cd image is dd'ed on non USB media */
-	{	cd9660_open,	cd9660_close,	cd9660_read,	cd9660_write,
-		cd9660_seek,	cd9660_stat,	cd9660_readdir	}
-};
-int nfsys = nitems(file_system);
-
-/*
- * Console configuration
- */
-struct consdev constab[] = {
-	{ pmon_cnprobe, pmon_cninit, pmon_cngetc, pmon_cnputc },
-	{ NULL }
-};
-struct consdev *cn_tab;
+	errno = (f->f_ops->fchmod)(f, m);
+	return (0);
+}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.64 2019/04/08 13:55:46 florian Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.65 2019/08/03 15:22:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -530,5 +530,9 @@ upgrade(void)
 
 	if (stat(qualify(("/bsd.upgrade")), &sb) < 0)
 		return 0;
+	if ((sb.st_mode & S_IXUSR) == 0) {
+		printf("/bsd.upgrade is not u+x\n");
+		return 0;
+	}
 	return 1;
 }

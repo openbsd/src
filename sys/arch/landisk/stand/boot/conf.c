@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 2019/04/10 04:19:32 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.13 2019/08/03 15:22:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -34,7 +34,7 @@ int	debug = 1;
 
 struct fs_ops file_system[] = {
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
-	  ufs_stat,    ufs_readdir    },
+	  ufs_stat,    ufs_readdir,  ufs_fchmod },
 #ifdef notdef
 	{ fat_open,    fat_close,    fat_read,    fat_write,    fat_seek,
 	  fat_stat,    fat_readdir    },

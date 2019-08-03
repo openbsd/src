@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2019/04/20 22:59:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.30 2019/08/03 15:22:17 deraadt Exp $
 #	$NetBSD: Makefile,v 1.13 1996/10/02 16:19:51 ws Exp $
 
 LIB=	sa
@@ -34,7 +34,8 @@ SRCS+=	divdi3.c qdivrem.c
 
 # io routines
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c cons.c ioctl.c \
-	lseek.c open.c nullfs.c read.c stat.c fstat.c write.c readdir.c
+	lseek.c open.c nullfs.c read.c stat.c fchmod.c fstat.c \
+	write.c readdir.c
 
 # boot filesystems
 SRCS+=	ufs.c cd9660.c

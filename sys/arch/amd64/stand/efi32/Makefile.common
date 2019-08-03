@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.common,v 1.1 2019/05/11 02:33:34 mlarkin Exp $
+#	$OpenBSD: Makefile.common,v 1.2 2019/08/03 15:22:19 deraadt Exp $
 
 S=		${.CURDIR}/../../../../..
 SADIR=		${.CURDIR}/../..
@@ -35,8 +35,8 @@ SRCS+=	boot.c bootarg.c cmd.c vars.c
 SRCS+=	alloc.c ctime.c exit.c getchar.c memcmp.c memcpy.c memmove.c memset.c printf.c \
 	putchar.c snprintf.c strcmp.c strerror.c strlen.c strncmp.c strncpy.c \
 	strtol.c strtoll.c
-SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
-	lseek.c open.c read.c readdir.c stat.c
+SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fchmod.c \
+	fstat.c lseek.c open.c read.c readdir.c stat.c
 SRCS+=	ufs.c cd9660.c
 .if ${SOFTRAID:L} == "yes"
 SRCS+=	aes_xts.c bcrypt_pbkdf.c blowfish.c explicit_bzero.c hmac_sha1.c \
