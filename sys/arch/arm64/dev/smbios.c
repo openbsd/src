@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbios.c,v 1.1 2019/08/04 09:27:09 kettenis Exp $	*/
+/*	$OpenBSD: smbios.c,v 1.2 2019/08/04 10:00:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -95,13 +95,13 @@ smbios_attach(struct device *parent, struct device *self, void *aux)
 
 	hdr = bus_space_vaddr(sc->sc_iot, ioh);
 	if (strncmp(hdr->sig, "_SM3_", sizeof(hdr->sig)) != 0)
-		return;
+		goto fail;
 	if (hdr->len != sizeof(*hdr) || hdr->epr != 0x01)
-		return;
+		goto fail;
 	for (i = 0, p = (uint8_t *)hdr; i < hdr->len; i++)
 		checksum += p[i];
 	if (checksum != 0)
-		return;
+		goto fail;
 
 	printf(": SMBIOS %d.%d.%d", hdr->majrev, hdr->minrev, hdr->docrev);
 
@@ -109,7 +109,7 @@ smbios_attach(struct device *parent, struct device *self, void *aux)
 	smbios_entry.mjr = hdr->majrev;
 	smbios_entry.min = hdr->minrev;
 	smbios_entry.count = -1;
-	
+
 	addr = hdr->addr;
 	size = hdr->size;
 
@@ -148,7 +148,13 @@ smbios_attach(struct device *parent, struct device *self, void *aux)
 		smbios_info(sc->sc_dev.dv_xname);
 	}
 
+	bus_space_unmap(sc->sc_iot, ioh, size);
+
 	printf("\n");
+	return;
+
+fail:
+	bus_space_unmap(sc->sc_iot, ioh, sizeof(*hdr));
 }
 
 /*
