@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbiosvar.h,v 1.10 2019/08/04 14:28:58 kettenis Exp $	*/
+/*	$OpenBSD: smbiosvar.h,v 1.11 2019/08/04 16:15:58 kmos Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2005 Jordan Hargrave
@@ -182,7 +182,7 @@ struct smbios_board {
 	uint8_t		product;	/* string */
 	uint8_t		version;	/* string */
 	uint8_t		serial;		/* string */
-	uint8_t		asset;		/* stirng */
+	uint8_t		asset;		/* string */
 	uint8_t		feature;	/* feature flags */
 	uint8_t		location;	/* location in chassis */
 	uint16_t	handle;		/* chassis handle */
