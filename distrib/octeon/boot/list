@@ -1,9 +1,0 @@
-#	$OpenBSD: list,v 1.1 2019/07/17 14:36:32 visa Exp $
-
-SRCDIRS distrib/special
-
-COPY	${OBJDIR}/rdboot			sbin/init
-
-# copy the MAKEDEV script and make some devices
-SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
-SPECIAL	cd dev; sh MAKEDEV boot
