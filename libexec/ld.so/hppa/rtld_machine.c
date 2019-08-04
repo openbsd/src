@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.37 2018/11/16 21:15:47 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.38 2019/08/04 23:51:45 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -106,7 +106,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	Elf_RelA	*rela;
 	Elf_Addr	loff;
 	int	i, numrela, fails = 0;
-	size_t	size;
 	struct load_list *llist;
 
 	loff = object->obj_base;
@@ -167,9 +166,9 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		_hppa_dl_set_dp(object->dyn.pltgot);
 
 	for (i = 0; i < numrela; i++, rela++) {
-		const elf_object_t *sobj;
-		const Elf_Sym *sym, *this;
-		Elf_Addr *pt, ooff;
+		struct sym_res sr;
+		const Elf_Sym *sym;
+		Elf_Addr *pt;
 		const char *symn;
 		int type;
 
@@ -178,23 +177,21 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			continue;
 
 		sym = object->dyn.symtab + ELF_R_SYM(rela->r_info);
-		sobj = object;
 		symn = object->dyn.strtab + sym->st_name;
 		pt = (Elf_Addr *)(rela->r_offset + loff);
 
-		ooff = 0;
-		this = NULL;
 		if (ELF_R_SYM(rela->r_info) && sym->st_name) {
-			ooff = _dl_find_symbol_bysym(object,
-			    ELF_R_SYM(rela->r_info), &this,
-			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
-			    ((type == RELOC_IPLT) ? SYM_PLT: SYM_NOTPLT),
-			    sym, &sobj);
-			if (this == NULL) {
+			sr = _dl_find_symbol(symn,
+			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
+			    sym, object);
+			if (sr.sym == NULL) {
 				if (ELF_ST_BIND(sym->st_info) != STB_WEAK)
 					fails++;
 				continue;
 			}
+		} else {
+			sr.sym = NULL;
+			sr.obj = object;
 		}
 
 #ifdef DEBUG
@@ -205,16 +202,17 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		switch (type) {
 		case RELOC_DIR32:
 			if (ELF_R_SYM(rela->r_info) && sym->st_name) {
-				*pt = ooff + this->st_value + rela->r_addend;
+				*pt = sr.obj->obj_base + sr.sym->st_value +
+				    rela->r_addend;
 #ifdef DEBUG
 				DL_DEB(("[%x]DIR32: %s:%s -> 0x%x in %s\n",
 				    i, symn, object->load_name,
-				    *pt, sobj->load_name));
+				    *pt, sr.obj->load_name));
 #endif
 			} else {
 				/*
 				 * XXX should objects ever get their
-				 * sections loaded insequential this
+				 * sections loaded nonsequential this
 				 * would have to get a section number
 				 * (ELF_R_SYM(rela->r_info))-1 and then:
 				 *    *pt = sect->addr + rela->r_addend;
@@ -232,17 +230,17 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 		case RELOC_PLABEL32:
 			if (ELF_R_SYM(rela->r_info)) {
-				if (ELF_ST_TYPE(this->st_info) != STT_FUNC) {
+				if (ELF_ST_TYPE(sr.sym->st_info) != STT_FUNC) {
 					DL_DEB(("[%x]PLABEL32: bad\n", i));
 					break;
 				}
-				*pt = _dl_md_plabel(sobj->obj_base +
-				    this->st_value + rela->r_addend,
-				    sobj->dyn.pltgot);
+				*pt = _dl_md_plabel(sr.obj->obj_base +
+				    sr.sym->st_value + rela->r_addend,
+				    sr.obj->dyn.pltgot);
 #ifdef DEBUG
 				DL_DEB(("[%x]PLABEL32: %s:%s -> 0x%x in %s\n",
 				    i, symn, object->load_name,
-				    *pt, sobj->load_name));
+				    *pt, sr.obj->load_name));
 #endif
 			} else {
 				*pt = loff + rela->r_addend;
@@ -255,12 +253,13 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 		case RELOC_IPLT:
 			if (ELF_R_SYM(rela->r_info)) {
-				pt[0] = ooff + this->st_value + rela->r_addend;
-				pt[1] = (Elf_Addr)sobj->dyn.pltgot;
+				pt[0] = sr.obj->obj_base + sr.sym->st_value +
+				    rela->r_addend;
+				pt[1] = (Elf_Addr)sr.obj->dyn.pltgot;
 #ifdef DEBUG
 				DL_DEB(("[%x]IPLT: %s:%s -> 0x%x:0x%x in %s\n",
 				    i, symn, object->load_name,
-				    pt[0], pt[1], sobj->load_name));
+				    pt[0], pt[1], sr.obj->load_name));
 #endif
 			} else {
 				pt[0] = loff + rela->r_addend;
@@ -274,19 +273,17 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 		case RELOC_COPY:
 		{
-			const Elf32_Sym *cpysrc = NULL;
-			size = sym->st_size;
-			ooff = _dl_find_symbol(symn, &cpysrc,
+			sr = _dl_find_symbol(symn,
 			    SYM_SEARCH_OTHER|SYM_WARNNOTFOUND|SYM_NOTPLT,
-			    sym, object, NULL);
-			if (cpysrc) {
-				_dl_bcopy((void *)(ooff + cpysrc->st_value),
-				    pt, sym->st_size);
+			    sym, object);
+			if (sr.sym) {
+				_dl_bcopy((void *)(sr.obj->obj_base +
+				    sr.sym->st_value), pt, sym->st_size);
 #ifdef DEBUG
 				DL_DEB(("[%x]COPY: %s[%x]:%s -> %p[%x] in %s\n",
-				    i, symn, ooff + cpysrc->st_value,
-				    object->load_name, pt, sym->st_size,
-				    sobj->load_name));
+				    i, symn, sr.obj->obj_base +
+				    sr.sym->st_value, object->load_name,
+				    pt, sym->st_size, sr.obj->load_name));
 #endif
 			} else
 				DL_DEB(("[%x]COPY: no sym\n", i));
@@ -437,9 +434,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 uint64_t
 _dl_bind(elf_object_t *object, int reloff)
 {
-	const elf_object_t *sobj;
-	const Elf_Sym *sym, *this;
-	Elf_Addr ooff;
+	struct sym_res sr;
+	const Elf_Sym *sym;
 	const char *symn;
 	Elf_Addr value;
 	Elf_RelA *rela;
@@ -455,17 +451,16 @@ _dl_bind(elf_object_t *object, int reloff)
 	sym += ELF_R_SYM(rela->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
-	this = NULL;
-	ooff = _dl_find_symbol(symn, &this,
-	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
-	if (this == NULL)
+	sr = _dl_find_symbol(symn, SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT,
+	    sym, object);
+	if (sr.sym == NULL)
 		_dl_die("lazy binding failed!");
 
-	value = ooff + this->st_value + rela->r_addend;
+	value = sr.obj->obj_base + sr.sym->st_value + rela->r_addend;
 
-	buf.newval = ((uint64_t)value << 32) | (Elf_Addr)sobj->dyn.pltgot;
+	buf.newval = ((uint64_t)value << 32) | (Elf_Addr)sr.obj->dyn.pltgot;
 
-	if (__predict_false(sobj->traced) && _dl_trace_plt(sobj, symn))
+	if (__predict_false(sr.obj->traced) && _dl_trace_plt(sr.obj, symn))
 		return (buf.newval);
 
 	buf.param.kb_addr = (Elf_Addr *)(object->obj_base + rela->r_offset);

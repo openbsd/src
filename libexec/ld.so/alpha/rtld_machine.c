@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.65 2018/11/22 21:37:30 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.66 2019/08/04 23:51:45 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -111,8 +111,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	}
 	for (; i < numrela; i++, relas++) {
 		Elf64_Addr *r_addr;
-		Elf64_Addr ooff;
-		const Elf64_Sym *sym, *this;
+		struct sym_res sr;
+		const Elf64_Sym *sym;
 		const char *symn;
 
 		r_addr = (Elf64_Addr *)(relas->r_offset + loff);
@@ -125,16 +125,15 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		sym += ELF64_R_SYM(relas->r_info);
 		symn = object->dyn.strtab + sym->st_name;
 
-		this = NULL;
 		switch (ELF64_R_TYPE(relas->r_info)) {
 		case R_TYPE(REFQUAD):
-			ooff =  _dl_find_symbol_bysym(object,
-			    ELF64_R_SYM(relas->r_info), &this,
+			sr = _dl_find_symbol(symn,
 			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
-			    sym, NULL);
-			if (this == NULL)
+			    sym, object);
+			if (sr.sym == NULL)
 				goto resolve_failed;
-			*r_addr += ooff + this->st_value + relas->r_addend;
+			*r_addr += sr.obj->obj_base + sr.sym->st_value +
+			    relas->r_addend;
 			break;
 		case R_TYPE(RELATIVE):
 			/*
@@ -154,26 +153,26 @@ _dl_printf("unaligned RELATIVE: %p type: %d %s 0x%lx -> 0x%lx\n", r_addr,
 				*r_addr += loff;
 			break;
 		case R_TYPE(JMP_SLOT):
-			ooff = _dl_find_symbol(symn, &this,
+			sr = _dl_find_symbol(symn,
 			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT,
-			    sym, object, NULL);
-			if (this == NULL)
+			    sym, object);
+			if (sr.sym == NULL)
 				goto resolve_failed;
-			*r_addr = ooff + this->st_value + relas->r_addend;
+			*r_addr = sr.obj->obj_base + sr.sym->st_value +
+			    relas->r_addend;
 			break;
 		case R_TYPE(GLOB_DAT):
 			if (sym == prev_sym) {
 				*r_addr = prev_value + relas->r_addend;
 				break;
 			}
-			ooff =  _dl_find_symbol_bysym(object,
-			    ELF64_R_SYM(relas->r_info), &this,
+			sr = _dl_find_symbol(symn,
 			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
-			    sym, NULL);
-			if (this == NULL)
+			    sym, object);
+			if (sr.sym == NULL)
 				goto resolve_failed;
 			prev_sym = sym;
-			prev_value = ooff + this->st_value;
+			prev_value = sr.obj->obj_base + sr.sym->st_value;
 			*r_addr = prev_value + relas->r_addend;
 			break;
 		case R_TYPE(NONE):
@@ -208,10 +207,9 @@ Elf_Addr
 _dl_bind(elf_object_t *object, int reloff)
 {
 	Elf_RelA *rela;
-	Elf_Addr ooff;
-	const Elf_Sym *sym, *this;
+	struct sym_res sr;
+	const Elf_Sym *sym;
 	const char *symn;
-	const elf_object_t *sobj;
 	uint64_t cookie = pcookie;
 	struct {
 		struct __kbind param;
@@ -224,15 +222,14 @@ _dl_bind(elf_object_t *object, int reloff)
 	sym += ELF64_R_SYM(rela->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
-	this = NULL;
-	ooff = _dl_find_symbol(symn, &this,
-	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
-	if (this == NULL)
+	sr = _dl_find_symbol(symn, SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT,
+	    sym, object);
+	if (sr.sym == NULL)
 		_dl_die("lazy binding failed!");
 
-	buf.newval = ooff + this->st_value + rela->r_addend;
+	buf.newval = sr.obj->obj_base + sr.sym->st_value + rela->r_addend;
 
-	if (__predict_false(sobj->traced) && _dl_trace_plt(sobj, symn))
+	if (__predict_false(sr.obj->traced) && _dl_trace_plt(sr.obj, symn))
 		return (buf.newval);
 
 	buf.param.kb_addr = (Elf_Addr *)(object->obj_base + rela->r_offset);

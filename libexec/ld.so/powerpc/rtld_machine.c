@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.65 2018/11/16 21:15:47 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.66 2019/08/04 23:51:45 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -118,8 +118,7 @@ _dl_printf("object relocation size %x, numrela %x\n",
 	}
 	for (; i < numrela; i++, relas++) {
 		Elf32_Addr *r_addr = (Elf32_Addr *)(relas->r_offset + loff);
-		Elf32_Addr ooff;
-		const Elf32_Sym *sym, *this;
+		const Elf32_Sym *sym;
 		const char *symn;
 		int type;
 
@@ -135,31 +134,25 @@ _dl_printf("object relocation size %x, numrela %x\n",
 		sym += ELF32_R_SYM(relas->r_info);
 		symn = object->dyn.strtab + sym->st_name;
 
-		ooff = 0;
-		this = NULL;
 		if (ELF32_R_SYM(relas->r_info) &&
 		    !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
-		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
-			if (sym == prev_sym) {
-				this = sym;	/* XXX any non-NULL */
-				ooff = prev_ooff;
-			} else {
-				ooff = _dl_find_symbol_bysym(object,
-				    ELF32_R_SYM(relas->r_info), &this,
-				    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
-				    ((type == RELOC_JMP_SLOT) ?
-				    SYM_PLT:SYM_NOTPLT), sym, NULL);
+		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE) &&
+		    sym != prev_sym) {
+			struct sym_res sr;
 
-				if (this == NULL) {
-					if (ELF_ST_BIND(sym->st_info) !=
-					    STB_WEAK)
-						fails++;
-					continue;
-				}
-				prev_sym = sym;
-				prev_value = this->st_value;
-				prev_ooff = ooff;
+			sr = _dl_find_symbol(symn,
+			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
+			    ((type == RELOC_JMP_SLOT) ?
+			    SYM_PLT:SYM_NOTPLT), sym, object);
+
+			if (sr.sym == NULL) {
+				if (ELF_ST_BIND(sym->st_info) != STB_WEAK)
+					fails++;
+				continue;
 			}
+			prev_sym = sym;
+			prev_value = sr.sym->st_value;
+			prev_ooff = sr.obj->obj_base;
 		}
 
 		switch (type) {
@@ -167,9 +160,9 @@ _dl_printf("object relocation size %x, numrela %x\n",
 			if (ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
 			    (ELF32_ST_TYPE(sym->st_info) == STT_SECTION ||
 			    ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
-				*r_addr = ooff + relas->r_addend;
+				*r_addr = prev_ooff + relas->r_addend;
 			} else {
-				*r_addr = ooff + prev_value +
+				*r_addr = prev_ooff + prev_value +
 				    relas->r_addend;
 			}
 			break;
@@ -181,7 +174,7 @@ _dl_printf("object relocation size %x, numrela %x\n",
 
 #ifdef DL_PRINTF_DEBUG
 _dl_printf("rel1 r_addr %x val %x loff %x ooff %x addend %x\n", r_addr,
-    loff + relas->r_addend, loff, ooff, relas->r_addend);
+    loff + relas->r_addend, loff, prev_ooff, relas->r_addend);
 #endif
 
 			} else {
@@ -196,13 +189,13 @@ _dl_printf("rel1 r_addr %x val %x loff %x ooff %x addend %x\n", r_addr,
 		 */
 		case RELOC_JMP_SLOT:
 		case RELOC_GLOB_DAT:
-			*r_addr = ooff + prev_value + relas->r_addend;
+			*r_addr = prev_ooff + prev_value + relas->r_addend;
 			break;
 #if 1
 		/* should not be supported ??? */
 		case RELOC_REL24:
 		    {
-			Elf32_Addr val = ooff + prev_value +
+			Elf32_Addr val = prev_ooff + prev_value +
 			    relas->r_addend - (Elf32_Addr)r_addr;
 			if (!B24_VALID_RANGE(val)) {
 				/* invalid offset */
@@ -259,7 +252,7 @@ _dl_printf("rel1 r_addr %x val %x loff %x ooff %x addend %x\n", r_addr,
 		case RELOC_REL14:
 		case RELOC_REL14_NTAKEN:
 		    {
-			Elf32_Addr val = ooff + prev_value +
+			Elf32_Addr val = prev_ooff + prev_value +
 			    relas->r_addend - (Elf32_Addr)r_addr;
 			if (((val & 0xffff8000) != 0) &&
 			    ((val & 0xffff8000) != 0xffff8000)) {
@@ -280,10 +273,11 @@ _dl_printf("rel1 r_addr %x val %x loff %x ooff %x addend %x\n", r_addr,
 			break;
 		case RELOC_COPY:
 		{
+			struct sym_res sr;
 #ifdef DL_PRINTF_DEBUG
 			_dl_printf("copy r_addr %x, sym %x [%s] size %d val %x\n",
 			    r_addr, sym, symn, sym->st_size,
-			    (ooff + prev_value+
+			    (prev_ooff + prev_value+
 			    relas->r_addend));
 #endif
 			/*
@@ -292,28 +286,16 @@ _dl_printf("rel1 r_addr %x val %x loff %x ooff %x addend %x\n", r_addr,
 			 * searching all objects but _not_ the current object,
 			 * first one found wins.
 			 */
-			const Elf32_Sym *cpysrc = NULL;
-			Elf32_Addr src_loff;
-			int size;
-
-			src_loff = 0;
-			src_loff = _dl_find_symbol(symn, &cpysrc,
+			sr = _dl_find_symbol(symn,
 			    SYM_SEARCH_OTHER|SYM_WARNNOTFOUND| SYM_NOTPLT,
-			    sym, object, NULL);
-			if (cpysrc != NULL) {
-				size = sym->st_size;
-				if (sym->st_size != cpysrc->st_size) {
-					_dl_printf("symbols size differ [%s] \n",
-					    symn);
-					size = sym->st_size < cpysrc->st_size ?
-					    sym->st_size : cpysrc->st_size;
-				}
+			    sym, object);
+			if (sr.sym != NULL) {
 #ifdef DL_PRINTF_DEBUG
 _dl_printf(" found other symbol at %x size %d\n",
-    src_loff + cpysrc->st_value,  cpysrc->st_size);
+    sr.obj->obj_base + sr.sym->st_value,  sr.sym->st_size);
 #endif
-				_dl_bcopy((void *)(src_loff + cpysrc->st_value),
-				    r_addr, size);
+				_dl_bcopy((void *)(sr.obj->obj_base + sr.sym->st_value),
+				    r_addr, sym->st_size);
 			} else
 				fails++;
 		}
@@ -383,10 +365,9 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 Elf_Addr
 _dl_bind(elf_object_t *object, int reloff)
 {
-	const Elf_Sym *sym, *this;
-	Elf_Addr ooff;
+	const Elf_Sym *sym;
+	struct sym_res sr;
 	const char *symn;
-	const elf_object_t *sobj;
 	Elf_RelA *relas;
 	Elf32_Addr *plttable;
 	int64_t cookie = pcookie;
@@ -401,15 +382,14 @@ _dl_bind(elf_object_t *object, int reloff)
 	sym += ELF_R_SYM(relas->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
-	this = NULL;
-	ooff = _dl_find_symbol(symn, &this,
-	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
-	if (this == NULL)
+	sr = _dl_find_symbol(symn, SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT,
+	    sym, object);
+	if (sr.sym == NULL)
 		_dl_die("lazy binding failed!");
 
-	buf.newval = ooff + this->st_value;
+	buf.newval = sr.obj->obj_base + sr.sym->st_value;
 
-	if (__predict_false(sobj->traced) && _dl_trace_plt(sobj, symn))
+	if (__predict_false(sr.obj->traced) && _dl_trace_plt(sr.obj, symn))
 		return buf.newval;
 
 	plttable = (Elf32_Addr *)(Elf32_Rela *)(object->Dyn.info[DT_PLTGOT]);

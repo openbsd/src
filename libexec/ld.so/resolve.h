@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.93 2019/07/21 03:54:16 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.94 2019/08/04 23:51:45 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -249,12 +249,14 @@ elf_object_t *_dl_tryload_shlib(const char *libname, int type, int flags);
 int _dl_md_reloc(elf_object_t *object, int rel, int relsz);
 int _dl_md_reloc_got(elf_object_t *object, int lazy);
 
-Elf_Addr _dl_find_symbol(const char *name, const Elf_Sym **this,
-    int flags, const Elf_Sym *ref_sym, elf_object_t *object,
-    const elf_object_t **pobj);
-Elf_Addr _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
-    const Elf_Sym **ref, int flags, const Elf_Sym *ref_sym,
-    const elf_object_t **pobj);
+struct sym_res {
+	const Elf_Sym		*sym;
+	const elf_object_t	*obj;
+};
+
+struct sym_res _dl_find_symbol(const char *name, int flags,
+    const Elf_Sym *ref_sym, elf_object_t *object);
+
 /*
  * defines for _dl_find_symbol() flag field, three bits of meaning
  * myself	- clear: search all objects,	set: search only this object

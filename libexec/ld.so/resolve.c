@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.91 2019/07/21 03:54:16 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.92 2019/08/04 23:51:45 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -45,10 +45,8 @@ typedef enum {
 
 struct symlookup {
 	const char		*sl_name;
-	const elf_object_t	*sl_obj_out;
-	const Elf_Sym		*sl_sym_out;
-	const elf_object_t	*sl_weak_obj_out;
-	const Elf_Sym		*sl_weak_sym_out;
+	struct sym_res		sl_out;
+	struct sym_res		sl_weak_out;
 	unsigned long		sl_elf_hash;
 	uint32_t		sl_gnu_hash;
 	int			sl_flags;
@@ -517,22 +515,6 @@ _dl_remove_object(elf_object_t *object)
 	free_objects = object;
 }
 
-
-Elf_Addr
-_dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
-    const Elf_Sym **this, int flags, const Elf_Sym *ref_sym,
-    const elf_object_t **pobj)
-{
-	const Elf_Sym *sym;
-	const char *symn;
-
-	sym = req_obj->dyn.symtab;
-	sym += symidx;
-	symn = req_obj->dyn.strtab + sym->st_name;
-
-	return _dl_find_symbol(symn, this, flags, ref_sym, req_obj, pobj);
-}
-
 static int
 matched_symbol(elf_object_t *obj, const Elf_Sym *sym, struct symlookup *sl)
 {
@@ -564,18 +546,18 @@ matched_symbol(elf_object_t *obj, const Elf_Sym *sym, struct symlookup *sl)
 		return 0;
 	}
 
-	if (sym != sl->sl_sym_out &&
+	if (sym != sl->sl_out.sym &&
 	    _dl_strcmp(sl->sl_name, obj->dyn.strtab + sym->st_name))
 		return 0;
 
 	if (ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
-		sl->sl_sym_out = sym;
-		sl->sl_obj_out = obj;
+		sl->sl_out.sym = sym;
+		sl->sl_out.obj = obj;
 		return 1;
 	} else if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
-		if (sl->sl_weak_sym_out == NULL) {
-			sl->sl_weak_sym_out = sym;
-			sl->sl_weak_obj_out = obj;
+		if (sl->sl_weak_out.sym == NULL) {
+			sl->sl_weak_out.sym = sym;
+			sl->sl_weak_out.obj = obj;
 		}
 		/* done with this object, but need to check other objects */
 		return -1;
@@ -638,19 +620,17 @@ _dl_find_symbol_obj(elf_object_t *obj, struct symlookup *sl)
 	return 0;
 }
 
-Elf_Addr
-_dl_find_symbol(const char *name, const Elf_Sym **this,
-    int flags, const Elf_Sym *ref_sym, elf_object_t *req_obj,
-    const elf_object_t **pobj)
+struct sym_res
+_dl_find_symbol(const char *name, int flags, const Elf_Sym *ref_sym,
+    elf_object_t *req_obj)
 {
 	const unsigned char *p;
 	unsigned char c;
 	struct dep_node *n, *m;
 	struct symlookup sl = {
 		.sl_name = name,
-		.sl_obj_out = NULL,
-		.sl_weak_obj_out = NULL,
-		.sl_weak_sym_out = NULL,
+		.sl_out = { .sym = NULL },
+		.sl_weak_out = { .sym = NULL },
 		.sl_elf_hash = 0,
 		.sl_gnu_hash = 5381,
 		.sl_flags = flags,
@@ -675,7 +655,7 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 			goto found;
 
 		/* weak definition in the specified object is good enough */
-		if (sl.sl_weak_obj_out != NULL)
+		if (sl.sl_weak_out.sym != NULL)
 			goto found;
 
 		/* search dlopened obj and all children */
@@ -717,33 +697,29 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 	}
 
 found:
-	if (sl.sl_sym_out != NULL) {
-		*this = sl.sl_sym_out;
-	} else if (sl.sl_weak_obj_out != NULL) {
-		sl.sl_obj_out = sl.sl_weak_obj_out;
-		*this = sl.sl_weak_sym_out;
-	} else {
-		if ((ref_sym == NULL ||
-		    (ELF_ST_BIND(ref_sym->st_info) != STB_WEAK)) &&
-		    (flags & SYM_WARNNOTFOUND))
-			_dl_printf("%s:%s: undefined symbol '%s'\n",
-			    __progname, req_obj->load_name, name);
-		return (0);
+	if (sl.sl_out.sym == NULL) {
+		if (sl.sl_weak_out.sym != NULL)
+			sl.sl_out = sl.sl_weak_out;
+		else {
+			if ((ref_sym == NULL ||
+			    (ELF_ST_BIND(ref_sym->st_info) != STB_WEAK)) &&
+			    (flags & SYM_WARNNOTFOUND))
+				_dl_printf("%s:%s: undefined symbol '%s'\n",
+				    __progname, req_obj->load_name, name);
+			return (struct sym_res){ NULL, NULL };
+		}
 	}
 
 	if (ref_sym != NULL && ref_sym->st_size != 0 &&
-	    (ref_sym->st_size != (*this)->st_size)  &&
-	    (ELF_ST_TYPE((*this)->st_info) != STT_FUNC) ) {
+	    (ref_sym->st_size != sl.sl_out.sym->st_size) &&
+	    (ELF_ST_TYPE(sl.sl_out.sym->st_info) != STT_FUNC) ) {
 		_dl_printf("%s:%s: %s : WARNING: "
 		    "symbol(%s) size mismatch, relink your program\n",
-		    __progname, req_obj->load_name, sl.sl_obj_out->load_name,
+		    __progname, req_obj->load_name, sl.sl_out.obj->load_name,
 		    name);
 	}
 
-	if (pobj != NULL)
-		*pobj = sl.sl_obj_out;
-
-	return sl.sl_obj_out->obj_base;
+	return sl.sl_out;
 }
 
 void

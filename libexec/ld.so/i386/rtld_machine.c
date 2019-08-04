@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.39 2018/11/16 21:15:47 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.40 2019/08/04 23:51:45 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -214,9 +214,9 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		*where += loff;
 	}
 	for (; i < numrel; i++, rels++) {
-		Elf_Addr *where, value, ooff, mask;
+		Elf_Addr *where, value, mask;
 		Elf_Word type;
-		const Elf_Sym *sym, *this;
+		const Elf_Sym *sym;
 		const char *symn;
 
 		type = ELF_R_TYPE(rels->r_info);
@@ -247,14 +247,13 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 			} else if (sym == prev_sym) {
 				value += prev_value;
 			} else {
-				this = NULL;
-				ooff = _dl_find_symbol_bysym(object,
-				    ELF_R_SYM(rels->r_info), &this,
+				struct sym_res sr;
+
+				sr = _dl_find_symbol(symn,
 				    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
 				    ((type == R_TYPE(JUMP_SLOT))?
-					SYM_PLT:SYM_NOTPLT),
-				    sym, NULL);
-				if (this == NULL) {
+					SYM_PLT:SYM_NOTPLT), sym, object);
+				if (sr.sym == NULL) {
 resolve_failed:
 					if (ELF_ST_BIND(sym->st_info) !=
 					    STB_WEAK)
@@ -262,7 +261,8 @@ resolve_failed:
 					continue;
 				}
 				prev_sym = sym;
-				prev_value = (Elf_Addr)(ooff + this->st_value);
+				prev_value = (Elf_Addr)(sr.obj->obj_base +
+				    sr.sym->st_value);
 				value += prev_value;
 			}
 		}
@@ -275,18 +275,17 @@ resolve_failed:
 		if (type == R_TYPE(COPY)) {
 			void *dstaddr = where;
 			const void *srcaddr;
-			const Elf_Sym *dstsym = sym, *srcsym = NULL;
-			size_t size = dstsym->st_size;
-			Elf_Addr soff;
+			const Elf_Sym *dstsym = sym;
+			struct sym_res sr;
 
-			soff = _dl_find_symbol(symn, &srcsym,
+			sr = _dl_find_symbol(symn,
 			    SYM_SEARCH_OTHER|SYM_WARNNOTFOUND|SYM_NOTPLT,
-			    sym, object, NULL);
-			if (srcsym == NULL)
+			    dstsym, object);
+			if (sr.sym == NULL)
 				goto resolve_failed;
 
-			srcaddr = (void *)(soff + srcsym->st_value);
-			_dl_bcopy(srcaddr, dstaddr, size);
+			srcaddr = (void *)(sr.obj->obj_base + sr.sym->st_value);
+			_dl_bcopy(srcaddr, dstaddr, dstsym->st_size);
 			continue;
 		}
 
@@ -361,10 +360,9 @@ Elf_Addr
 _dl_bind(elf_object_t *object, int index)
 {
 	Elf_Rel *rel;
-	const Elf_Sym *sym, *this;
+	const Elf_Sym *sym;
 	const char *symn;
-	const elf_object_t *sobj;
-	Elf_Addr ooff;
+	struct sym_res sr;
 	uint64_t cookie = pcookie;
 	struct {
 		struct __kbind param;
@@ -379,15 +377,14 @@ _dl_bind(elf_object_t *object, int index)
 	sym += ELF_R_SYM(rel->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
-	this = NULL;
-	ooff = _dl_find_symbol(symn, &this,
-	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
-	if (this == NULL)
+	sr = _dl_find_symbol(symn, SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT,
+	    sym, object);
+	if (sr.sym == NULL)
 		_dl_die("lazy binding failed!");
 
-	buf.newval = ooff + this->st_value;
+	buf.newval = sr.obj->obj_base + sr.sym->st_value;
 
-	if (__predict_false(sobj->traced) && _dl_trace_plt(sobj, symn))
+	if (__predict_false(sr.obj->traced) && _dl_trace_plt(sr.obj, symn))
 		return (buf.newval);
 
 	buf.param.kb_addr = (Elf_Word *)(object->obj_base + rel->r_offset);
