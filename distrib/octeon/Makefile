@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.4 2019/07/28 15:45:30 visa Exp $
+#	$OpenBSD: Makefile,v 1.5 2019/08/04 08:53:14 visa Exp $
 
-SUBDIR= boot ramdisk
+SUBDIR= ramdisk
 
 unconfig:
-	cd boot; ${MAKE} unconfig
 	cd ramdisk; ${MAKE} unconfig
 
 .include <bsd.subdir.mk>
