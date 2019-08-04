@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi.c,v 1.6 2018/07/02 07:25:29 kettenis Exp $	*/
+/*	$OpenBSD: efi.c,v 1.7 2019/08/04 09:27:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -43,6 +43,7 @@ extern uint32_t mmap_desc_ver;
 extern EFI_MEMORY_DESCRIPTOR *mmap;
 
 uint64_t efi_acpi_table;
+uint64_t efi_smbios_table;
 
 struct efi_softc {
 	struct device	sc_dev;
@@ -185,12 +186,26 @@ efi_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < st->NumberOfTableEntries; i++) {
 		EFI_CONFIGURATION_TABLE *ct = &st->ConfigurationTable[i];
 		static EFI_GUID acpi_guid = EFI_ACPI_20_TABLE_GUID;
+		static EFI_GUID smbios_guid = SMBIOS3_TABLE_GUID;
 
 		if (efi_guidcmp(&acpi_guid, &ct->VendorGuid) == 0)
 			efi_acpi_table = (uint64_t)ct->VendorTable;
+		if (efi_guidcmp(&smbios_guid, &ct->VendorGuid) == 0)
+			efi_smbios_table = (uint64_t)ct->VendorTable;
 	}
 	efi_leave(sc);
 
+	if (efi_smbios_table != 0) {
+		struct fdt_reg reg = { .addr = efi_smbios_table };
+		struct fdt_attach_args fa;
+
+		fa.fa_name = "smbios";
+		fa.fa_iot = faa->fa_iot;
+		fa.fa_reg = &reg;
+		fa.fa_nreg = 1;
+		config_found(self, &fa, NULL);
+	}
+	
 	if (rs == NULL)
 		return;
 

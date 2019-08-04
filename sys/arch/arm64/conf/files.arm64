@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.29 2019/08/03 23:29:46 deraadt Exp $
+# $OpenBSD: files.arm64,v 1.30 2019/08/04 09:27:09 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -59,9 +59,13 @@ device	simplebus: fdt
 attach	simplebus at fdt
 file	arch/arm64/dev/simplebus.c		simplebus
 
-device	efi
+device	efi {}
 attach	efi at fdt
 file	arch/arm64/dev/efi.c			efi
+
+device	smbios
+attach	smbios at efi
+file	arch/arm64/dev/smbios.c			smbios
 
 # FDT support
 include "dev/ofw/files.ofw"
