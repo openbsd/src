@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcit.c,v 1.10 2019/03/17 16:31:26 visa Exp $	*/
+/*	$OpenBSD: octcit.c,v 1.11 2019/08/04 15:44:34 visa Exp $	*/
 
 /*
  * Copyright (c) 2017, 2019 Visa Hankala
@@ -484,8 +484,10 @@ octcit_splx(int newipl)
 
 	ci->ci_ipl = newipl;
 
-	if (newipl < sc->sc_minipl[ci->ci_cpuid])
+	if (newipl < sc->sc_minipl[ci->ci_cpuid]) {
 		CIU3_WR_8(sc, CIU3_IDT_PP(CIU3_IDT(core, 0)), 1ul << core);
+		(void)CIU3_RD_8(sc, CIU3_IDT_PP(CIU3_IDT(core, 0)));
+	}
 
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)
@@ -528,8 +530,10 @@ void
 octcit_ipi_set(cpuid_t cpuid)
 {
 	struct octcit_softc *sc = octcit_sc;
+	uint64_t reg = CIU3_ISC_W1S(MBOX_INTSN(cpuid));
 
-	CIU3_WR_8(sc, CIU3_ISC_W1S(MBOX_INTSN(cpuid)), CIU3_ISC_W1S_RAW);
+	CIU3_WR_8(sc, reg, CIU3_ISC_W1S_RAW);
+	(void)CIU3_RD_8(sc, reg);
 }
 
 void
