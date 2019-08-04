@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.70 2019/08/03 15:22:20 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.71 2019/08/04 13:45:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -41,7 +41,7 @@
 #include <dev/cons.h>
 #include "debug.h"
 
-const char version[] = "3.38";
+const char version[] = "3.39";
 int	debug = 1;
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.32 2019/08/03 15:22:20 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.33 2019/08/04 13:45:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -32,7 +32,7 @@
 #include <lib/libsa/cd9660.h>
 #include <dev/cons.h>
 
-const char version[] = "1.6";
+const char version[] = "1.7";
 int	debug = 0;
 
 struct fs_ops file_system[] = {
