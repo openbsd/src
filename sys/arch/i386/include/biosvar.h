@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.67 2018/08/23 14:47:52 jsg Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.68 2019/08/04 14:28:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -67,11 +67,11 @@
  */
 typedef
 struct bios_romheader {
-	u_int16_t	signature;	/* 0xaa55 */
-	u_int8_t	len;		/* length in pages (512 bytes) */
-	u_int32_t	entry;		/* initialization entry point */
-	u_int8_t	reserved[19];
-	u_int16_t	pnpheader;	/* offset to PnP expansion header */
+	uint16_t	signature;	/* 0xaa55 */
+	uint8_t		len;		/* length in pages (512 bytes) */
+	uint32_t	entry;		/* initialization entry point */
+	uint8_t		reserved[19];
+	uint16_t	pnpheader;	/* offset to PnP expansion header */
 } __packed *bios_romheader_t;
 
 /*
@@ -79,25 +79,25 @@ struct bios_romheader {
  */
 typedef
 struct bios32_header {
-	u_int32_t	signature;	/* 00: signature "_32_" */
-	u_int32_t	entry;		/* 04: entry point */
-	u_int8_t	rev;		/* 08: revision */
-	u_int8_t	length;		/* 09: header length */
-	u_int8_t	cksum;		/* 0a: modulo 256 checksum */
-	u_int8_t	reserved[5];
+	uint32_t	signature;	/* 00: signature "_32_" */
+	uint32_t	entry;		/* 04: entry point */
+	uint8_t		rev;		/* 08: revision */
+	uint8_t		length;		/* 09: header length */
+	uint8_t		cksum;		/* 0a: modulo 256 checksum */
+	uint8_t		reserved[5];
 } __packed *bios32_header_t;
 
 typedef
 struct bios32_entry_info {
-	u_int32_t	bei_base;
-	u_int32_t	bei_size;
-	u_int32_t	bei_entry;
+	uint32_t	bei_base;
+	uint32_t	bei_size;
+	uint32_t	bei_entry;
 } __packed *bios32_entry_info_t;
 
 typedef
 struct bios32_entry {
-	u_int32_t	offset;
-	u_int16_t	segment;
+	uint32_t	offset;
+	uint16_t	segment;
 } __packed *bios32_entry_t;
 
 #define	BIOS32_START	0xe0000
@@ -127,9 +127,9 @@ struct bios32_entry {
 
 #define	BOOTARG_MEMMAP 0
 typedef struct _bios_memmap {
-	u_int64_t addr;		/* Beginning of block */
-	u_int64_t size;		/* Size of block */
-	u_int32_t type;		/* Type of block */
+	uint64_t addr;		/* Beginning of block */
+	uint64_t size;		/* Size of block */
+	uint32_t type;		/* Type of block */
 } __packed bios_memmap_t;
 
 /* Info about disk from the bios, plus the mapping from
@@ -153,10 +153,10 @@ typedef struct _bios_diskinfo {
 	dev_t bsd_dev;		/* BSD device */
 
 	/* Checksum section */
-	u_int32_t checksum;	/* Checksum for drive */
+	uint32_t checksum;	/* Checksum for drive */
 
 	/* Misc. flags */
-	u_int32_t flags;
+	uint32_t flags;
 #define BDI_INVALID	0x00000001	/* I/O error during checksumming */
 #define BDI_GOODLABEL	0x00000002	/* Had SCSI or ST506/ESDI disklabel */
 #define BDI_BADLABEL	0x00000004	/* Had another disklabel */
@@ -179,15 +179,15 @@ typedef struct _bios_apminfo {
 	u_int	apm_code16_len;
 } __packed bios_apminfo_t;
 
-#define	BOOTARG_CKSUMLEN 3		/* u_int32_t */
+#define	BOOTARG_CKSUMLEN 3		/* uint32_t */
 
 #define	BOOTARG_PCIINFO 4
 typedef struct _bios_pciinfo {
 	/* PCI BIOS v2.0+ - Installation check values */
-	u_int32_t	pci_chars;	/* Characteristics (%eax) */
-	u_int32_t	pci_rev;	/* BCD Revision (%ebx) */
-	u_int32_t	pci_entry32;	/* PM entry point for PCI BIOS */
-	u_int32_t	pci_lastbus;	/* Number of last PCI bus */
+	uint32_t	pci_chars;	/* Characteristics (%eax) */
+	uint32_t	pci_rev;	/* BCD Revision (%ebx) */
+	uint32_t	pci_entry32;	/* PM entry point for PCI BIOS */
+	uint32_t	pci_lastbus;	/* Number of last PCI bus */
 } __packed bios_pciinfo_t;
 
 #define	BOOTARG_CONSDEV	5
@@ -219,8 +219,8 @@ typedef struct _bios_bootduid {
 #define BOOTSR_UUID_MAX 16
 #define BOOTSR_CRYPTO_MAXKEYBYTES 32
 typedef struct _bios_bootsr {
-	u_int8_t	uuid[BOOTSR_UUID_MAX];
-	u_int8_t	maskkey[BOOTSR_CRYPTO_MAXKEYBYTES];
+	uint8_t		uuid[BOOTSR_UUID_MAX];
+	uint8_t		maskkey[BOOTSR_CRYPTO_MAXKEYBYTES];
 } __packed bios_bootsr_t;
 
 #define	BOOTARG_EFIINFO 11
@@ -252,15 +252,15 @@ typedef struct _bios_ucode {
 #define	DOINT(n)	"int $0x20+(" #n ")"
 
 extern volatile struct BIOS_regs {
-	u_int32_t	biosr_ax;
-	u_int32_t	biosr_cx;
-	u_int32_t	biosr_dx;
-	u_int32_t	biosr_bx;
-	u_int32_t	biosr_bp;
-	u_int32_t	biosr_si;
-	u_int32_t	biosr_di;
-	u_int32_t	biosr_ds;
-	u_int32_t	biosr_es;
+	uint32_t	biosr_ax;
+	uint32_t	biosr_cx;
+	uint32_t	biosr_dx;
+	uint32_t	biosr_bx;
+	uint32_t	biosr_bp;
+	uint32_t	biosr_si;
+	uint32_t	biosr_di;
+	uint32_t	biosr_ds;
+	uint32_t	biosr_es;
 } __packed BIOS_regs;
 
 #ifdef _KERNEL
@@ -289,7 +289,7 @@ int bios_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 void bios_getopt(void);
 
 /* bios32.c */
-int  bios32_service(u_int32_t, bios32_entry_t, bios32_entry_info_t);
+int  bios32_service(uint32_t, bios32_entry_t, bios32_entry_info_t);
 void bios32_cleanup(void);
 
 extern u_int bootapiver;

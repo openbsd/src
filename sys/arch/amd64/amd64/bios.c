@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.39 2019/07/24 04:04:44 jsg Exp $	*/
+/*	$OpenBSD: bios.c,v 1.40 2019/08/04 14:28:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -39,7 +39,7 @@ struct bios_softc {
 	struct device sc_dev;
 };
 
-struct smbhdr *smbios_find(u_int8_t *);
+struct smbhdr *smbios_find(uint8_t *);
 void smbios_info(char *);
 int bios_match(struct device *, void *, void *);
 void bios_attach(struct device *, struct device *, void *);
@@ -89,19 +89,19 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 	char scratch[64];
 	vaddr_t va;
 	paddr_t pa, end;
-	u_int8_t *p;
+	uint8_t *p;
 	int smbiosrev = 0;
 	struct smbhdr *hdr = NULL;
 	char *sminfop;
 
 	if (bios_efiinfo != NULL && bios_efiinfo->config_smbios != 0)
 		hdr = smbios_find(PMAP_DIRECT_MAP(
-		    (u_int8_t *)bios_efiinfo->config_smbios));
+		    (uint8_t *)bios_efiinfo->config_smbios));
 
 	if (hdr == NULL) {
 		/* see if we have SMBIOS extentions */
 		for (p = ISA_HOLE_VADDR(SMBIOS_START);
-		    p < (u_int8_t *)ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
+		    p < (uint8_t *)ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
 			hdr = smbios_find(p);
 			if (hdr != NULL)
 				break;
@@ -115,7 +115,7 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 		if (va == 0)
 			goto out;
 
-		smbios_entry.addr = (u_int8_t *)(va + (hdr->addr & PGOFSET));
+		smbios_entry.addr = (uint8_t *)(va + (hdr->addr & PGOFSET));
 		smbios_entry.len = hdr->size;
 		smbios_entry.mjr = hdr->majrev;
 		smbios_entry.min = hdr->minrev;
@@ -165,7 +165,7 @@ out:
 		const char *signature = "Soekris Engineering";
 
 		for (p = ISA_HOLE_VADDR(SMBIOS_START);
-		    p <= (u_int8_t *)ISA_HOLE_VADDR(SMBIOS_END -
+		    p <= (uint8_t *)ISA_HOLE_VADDR(SMBIOS_END -
 		    (strlen(signature) - 1)); p++)
 			if (!memcmp(p, signature, strlen(signature))) {
 				hw_vendor = malloc(strlen(signature) + 1,
@@ -178,7 +178,7 @@ out:
 			}
 
 		for (; hw_vendor &&
-		    p <= (u_int8_t *)ISA_HOLE_VADDR(SMBIOS_END - 6); p++)
+		    p <= (uint8_t *)ISA_HOLE_VADDR(SMBIOS_END - 6); p++)
 			/*
 			 * Search only for "net6501" in the comBIOS as that's
 			 * the only Soekris platform that can run amd64
@@ -224,10 +224,10 @@ out:
 }
 
 struct smbhdr *
-smbios_find(u_int8_t *p)
+smbios_find(uint8_t *p)
 {
-	struct smbhdr * hdr = (struct smbhdr *)p;
-	u_int8_t chksum;
+	struct smbhdr *hdr = (struct smbhdr *)p;
+	uint8_t chksum;
 	int i;
 
 	if (hdr->sig != SMBIOS_SIGNATURE)
@@ -259,9 +259,9 @@ smbios_find(u_int8_t *p)
  * smbios_find_table with the same arguments.
  */
 int
-smbios_find_table(u_int8_t type, struct smbtable *st)
+smbios_find_table(uint8_t type, struct smbtable *st)
 {
-	u_int8_t *va, *end;
+	uint8_t *va, *end;
 	struct smbtblhdr *hdr;
 	int ret = 0, tcount = 1;
 
@@ -276,20 +276,20 @@ smbios_find_table(u_int8_t type, struct smbtable *st)
 	 * preceding that referenced by the handle is encoded in bits 15:31.
 	 */
 	if ((st->cookie & 0xfff) == type && st->cookie >> 16) {
-		if ((u_int8_t *)st->hdr >= va && (u_int8_t *)st->hdr < end) {
+		if ((uint8_t *)st->hdr >= va && (uint8_t *)st->hdr < end) {
 			hdr = st->hdr;
 			if (hdr->type == type) {
-				va = (u_int8_t *)hdr + hdr->size;
+				va = (uint8_t *)hdr + hdr->size;
 				for (; va + 1 < end; va++)
 					if (*va == 0 && *(va + 1) == 0)
 						break;
-				va+= 2;
+				va += 2;
 				tcount = st->cookie >> 16;
 			}
 		}
 	}
-	for (; va + sizeof(struct smbtblhdr) < end && tcount <=
-	    smbios_entry.count; tcount++) {
+	for (; va + sizeof(struct smbtblhdr) < end &&
+	    tcount <= smbios_entry.count; tcount++) {
 		hdr = (struct smbtblhdr *)va;
 		if (hdr->type == type) {
 			ret = 1;
@@ -300,23 +300,23 @@ smbios_find_table(u_int8_t type, struct smbtable *st)
 		}
 		if (hdr->type == SMBIOS_TYPE_EOT)
 			break;
-		va+= hdr->size;
+		va += hdr->size;
 		for (; va + 1 < end; va++)
 			if (*va == 0 && *(va + 1) == 0)
 				break;
-		va+=2;
+		va += 2;
 	}
 	return ret;
 }
 
 char *
-smbios_get_string(struct smbtable *st, u_int8_t indx, char *dest, size_t len)
+smbios_get_string(struct smbtable *st, uint8_t indx, char *dest, size_t len)
 {
-	u_int8_t *va, *end;
+	uint8_t *va, *end;
 	char *ret = NULL;
 	int i;
 
-	va = (u_int8_t *)st->hdr + st->hdr->size;
+	va = (uint8_t *)st->hdr + st->hdr->size;
 	end = smbios_entry.addr + smbios_entry.len;
 	for (i = 1; va < end && i < indx && *va; i++)
 		while (*va++)
@@ -325,7 +325,7 @@ smbios_get_string(struct smbtable *st, u_int8_t indx, char *dest, size_t len)
 		if (va + len < end) {
 			ret = dest;
 			memcpy(ret, va, len);
-			ret[len-1] = '\0';
+			ret[len - 1] = '\0';
 		}
 	}
 
@@ -340,7 +340,7 @@ fixstring(char *s)
 
 	for (i = 0; i < nitems(smbios_uninfo); i++)
 		if ((strncasecmp(s, smbios_uninfo[i],
-		    strlen(smbios_uninfo[i])))==0)
+		    strlen(smbios_uninfo[i]))) == 0)
 			return NULL;
 	/*
 	 * Remove leading and trailing whitespace
@@ -363,7 +363,7 @@ fixstring(char *s)
 }
 
 void
-smbios_info(char * str)
+smbios_info(char *str)
 {
 	char *sminfop, sminfo[64];
 	struct smbtable stbl, btbl;
@@ -387,11 +387,12 @@ smbios_info(char * str)
 	if (havebb)
 		board = (struct smbios_board *)btbl.tblhdr;
 	/*
-	 * Some smbios implementations have no system vendor or product strings,
-	 * some have very uninformative data which is harder to work around
-	 * and we must rely upon various heuristics to detect this. In both
-	 * cases we attempt to fall back on the base board information in the
-	 * perhaps naive belief that motherboard vendors will supply this
+	 * Some smbios implementations have no system vendor or
+	 * product strings, some have very uninformative data which is
+	 * harder to work around and we must rely upon various
+	 * heuristics to detect this. In both cases we attempt to fall
+	 * back on the base board information in the perhaps naive
+	 * belief that motherboard vendors will supply this
 	 * information.
 	 */
 	sminfop = NULL;
@@ -495,7 +496,6 @@ bios_print(void *aux, const char *pnp)
         struct bios_attach_args *ba = aux;
 
         if (pnp)
-                printf("%s at %s",
-                    ba->ba_name, pnp);
+                printf("%s at %s", ba->ba_name, pnp);
         return (UNCONF);
 }

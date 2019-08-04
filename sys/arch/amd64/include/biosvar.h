@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.25 2018/02/06 01:09:17 patrick Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.26 2019/08/04 14:28:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -41,7 +41,7 @@
 #define	BIOSF_BIOS32	0x0001
 #define	BIOSF_PCIBIOS	0x0002
 #define	BIOSF_PROMSCAN	0x0004
-#define BIOSF_SMBIOS	0x0006
+#define	BIOSF_SMBIOS	0x0006
 
 /* BIOS media ID */
 #define BIOSM_F320K	0xff	/* floppy ds/sd  8 spt */
@@ -69,11 +69,11 @@
  */
 typedef
 struct bios_romheader {
-	u_int16_t	signature;	/* 0xaa55 */
-	u_int8_t	len;		/* length in pages (512 bytes) */
-	u_int32_t	entry;		/* initialization entry point */
-	u_int8_t	reserved[19];
-	u_int16_t	pnpheader;	/* offset to PnP expansion header */
+	uint16_t	signature;	/* 0xaa55 */
+	uint8_t		len;		/* length in pages (512 bytes) */
+	uint32_t	entry;		/* initialization entry point */
+	uint8_t		reserved[19];
+	uint16_t	pnpheader;	/* offset to PnP expansion header */
 } __packed *bios_romheader_t;
 
 #define	BIOS32_MAKESIG(a, b, c, d) \
@@ -97,9 +97,9 @@ struct bios_romheader {
 
 #define	BOOTARG_MEMMAP 0
 typedef struct _bios_memmap {
-	u_int64_t addr;		/* Beginning of block */
-	u_int64_t size;		/* Size of block */
-	u_int32_t type;		/* Type of block */
+	uint64_t addr;		/* Beginning of block */
+	uint64_t size;		/* Size of block */
+	uint32_t type;		/* Type of block */
 } __packed bios_memmap_t;
 
 /* Info about disk from the bios, plus the mapping from
@@ -123,10 +123,10 @@ typedef struct _bios_diskinfo {
 	dev_t bsd_dev;		/* BSD device */
 
 	/* Checksum section */
-	u_int32_t checksum;	/* Checksum for drive */
+	uint32_t checksum;	/* Checksum for drive */
 
 	/* Misc. flags */
-	u_int32_t flags;
+	uint32_t flags;
 #define BDI_INVALID	0x00000001	/* I/O error during checksumming */
 #define BDI_GOODLABEL	0x00000002	/* Had SCSI or ST506/ESDI disklabel */
 #define BDI_BADLABEL	0x00000004	/* Had another disklabel */
@@ -149,15 +149,15 @@ typedef struct _bios_apminfo {
 	u_int	apm_code16_len;
 } __packed bios_apminfo_t;
 
-#define	BOOTARG_CKSUMLEN 3		/* u_int32_t */
+#define	BOOTARG_CKSUMLEN 3		/* uint32_t */
 
 #define	BOOTARG_PCIINFO 4
 typedef struct _bios_pciinfo {
 	/* PCI BIOS v2.0+ - Installation check values */
-	u_int32_t	pci_chars;	/* Characteristics (%eax) */
-	u_int32_t	pci_rev;	/* BCD Revision (%ebx) */
-	u_int32_t	pci_entry32;	/* PM entry point for PCI BIOS */
-	u_int32_t	pci_lastbus;	/* Number of last PCI bus */
+	uint32_t	pci_chars;	/* Characteristics (%eax) */
+	uint32_t	pci_rev;	/* BCD Revision (%ebx) */
+	uint32_t	pci_entry32;	/* PM entry point for PCI BIOS */
+	uint32_t	pci_lastbus;	/* Number of last PCI bus */
 } __packed bios_pciinfo_t;
 
 #define	BOOTARG_CONSDEV	5
@@ -187,8 +187,8 @@ typedef struct _bios_bootduid {
 #define BOOTSR_UUID_MAX 16
 #define BOOTSR_CRYPTO_MAXKEYBYTES 32
 typedef struct _bios_bootsr {
-	u_int8_t	uuid[BOOTSR_UUID_MAX];
-	u_int8_t	maskkey[BOOTSR_CRYPTO_MAXKEYBYTES];
+	uint8_t		uuid[BOOTSR_UUID_MAX];
+	uint8_t		maskkey[BOOTSR_CRYPTO_MAXKEYBYTES];
 } __packed bios_bootsr_t;
 
 #define	BOOTARG_EFIINFO 11
@@ -220,15 +220,15 @@ typedef struct _bios_ucode {
 #define	DOINT(n)	"int $0x20+(" #n ")"
 
 extern volatile struct BIOS_regs {
-	u_int32_t	biosr_ax;
-	u_int32_t	biosr_cx;
-	u_int32_t	biosr_dx;
-	u_int32_t	biosr_bx;
-	u_int32_t	biosr_bp;
-	u_int32_t	biosr_si;
-	u_int32_t	biosr_di;
-	u_int32_t	biosr_ds;
-	u_int32_t	biosr_es;
+	uint32_t	biosr_ax;
+	uint32_t	biosr_cx;
+	uint32_t	biosr_dx;
+	uint32_t	biosr_bx;
+	uint32_t	biosr_bp;
+	uint32_t	biosr_si;
+	uint32_t	biosr_di;
+	uint32_t	biosr_ds;
+	uint32_t	biosr_es;
 } __packed BIOS_regs;
 
 #ifdef _KERNEL
@@ -236,7 +236,7 @@ extern volatile struct BIOS_regs {
 
 struct bios_attach_args {
 	char		*ba_name;
-	u_int		ba_biosfunc;
+	u_int		ba_func;
 	bus_space_tag_t	ba_iot;
 	bus_space_tag_t	ba_memt;
 	union {
