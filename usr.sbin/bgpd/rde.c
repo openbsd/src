@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.479 2019/07/24 20:25:27 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.480 2019/08/05 08:36:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -354,9 +354,10 @@ rde_main(int debug, int verbose)
 	exit(0);
 }
 
-struct network_config	 netconf_s, netconf_p;
-struct filterstate	 netconf_state;
-struct filter_set_head	*session_set, *parent_set;
+struct network_config	netconf_s, netconf_p;
+struct filterstate	netconf_state;
+struct filter_set_head	session_set = TAILQ_HEAD_INITIALIZER(session_set);
+struct filter_set_head	parent_set = TAILQ_HEAD_INITIALIZER(parent_set);
 
 void
 rde_dispatch_imsg_session(struct imsgbuf *ibuf)
@@ -461,7 +462,6 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			}
 			memcpy(&netconf_s, imsg.data, sizeof(netconf_s));
 			TAILQ_INIT(&netconf_s.attrset);
-			session_set = &netconf_s.attrset;
 			rde_filterstate_prep(&netconf_state, NULL, NULL, NULL,
 			    0);
 			asp = &netconf_state.aspath;
@@ -518,7 +518,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
-			session_set = NULL;
+			TAILQ_CONCAT(&netconf_s.attrset, &session_set, entry);
 			switch (netconf_s.prefix.aid) {
 			case AID_INET:
 				if (netconf_s.prefixlen > 32)
@@ -582,17 +582,12 @@ badnetdel:
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
-			if (session_set == NULL) {
-				log_warnx("rde_dispatch: "
-				    "IMSG_FILTER_SET unexpected");
-				break;
-			}
 			if ((s = malloc(sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
 			memcpy(s, imsg.data, sizeof(struct filter_set));
 			if (s->type == ACTION_SET_NEXTHOP)
 				s->action.nh = nexthop_get(&s->action.nexthop);
-			TAILQ_INSERT_TAIL(session_set, s, entry);
+			TAILQ_INSERT_TAIL(&session_set, s, entry);
 			break;
 		case IMSG_CTL_SHOW_NETWORK:
 		case IMSG_CTL_SHOW_RIB:
@@ -752,10 +747,9 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			}
 			memcpy(&netconf_p, imsg.data, sizeof(netconf_p));
 			TAILQ_INIT(&netconf_p.attrset);
-			parent_set = &netconf_p.attrset;
 			break;
 		case IMSG_NETWORK_DONE:
-			parent_set = NULL;
+			TAILQ_CONCAT(&netconf_p.attrset, &parent_set, entry);
 
 			rde_filterstate_prep(&state, NULL, NULL, NULL, 0);
 			asp = &state.aspath;
@@ -871,15 +865,14 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				}
 			}
 			TAILQ_INIT(&r->set);
+			TAILQ_CONCAT(&r->set, &parent_set, entry);
 			if ((rib = rib_byid(rib_find(r->rib))) == NULL) {
 				log_warnx("IMSG_RECONF_FILTER: filter rule "
 				    "for nonexistent rib %s", r->rib);
-				parent_set = NULL;
 				free(r);
 				break;
 			}
 			r->peer.ribid = rib->id;
-			parent_set = &r->set;
 			if (r->dir == DIR_IN) {
 				nr = rib_desc(rib)->in_rules_tmp;
 				if (nr == NULL) {
@@ -990,7 +983,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				    "IMSG_RECONF_VPN_EXPORT unexpected");
 				break;
 			}
-			parent_set = &vpn->export;
+			TAILQ_CONCAT(&vpn->export, &parent_set, entry);
 			break;
 		case IMSG_RECONF_VPN_IMPORT:
 			if (vpn == NULL) {
@@ -998,10 +991,9 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				    "IMSG_RECONF_VPN_IMPORT unexpected");
 				break;
 			}
-			parent_set = &vpn->import;
+			TAILQ_CONCAT(&vpn->import, &parent_set, entry);
 			break;
 		case IMSG_RECONF_VPN_DONE:
-			parent_set = NULL;
 			break;
 		case IMSG_RECONF_DRAIN:
 			imsg_compose(ibuf_main, IMSG_RECONF_DRAIN, 0, 0,
@@ -1010,7 +1002,6 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 		case IMSG_RECONF_DONE:
 			if (nconf == NULL)
 				fatalx("got IMSG_RECONF_DONE but no config");
-			parent_set = NULL;
 			last_prefixset = NULL;
 
 			rde_reload_done();
@@ -1022,17 +1013,12 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (imsg.hdr.len > IMSG_HEADER_SIZE +
 			    sizeof(struct filter_set))
 				fatalx("IMSG_FILTER_SET bad len");
-			if (parent_set == NULL) {
-				log_warnx("rde_dispatch_imsg_parent: "
-				    "IMSG_FILTER_SET unexpected");
-				break;
-			}
 			if ((s = malloc(sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
 			memcpy(s, imsg.data, sizeof(struct filter_set));
 			if (s->type == ACTION_SET_NEXTHOP)
 				s->action.nh = nexthop_get(&s->action.nexthop);
-			TAILQ_INSERT_TAIL(parent_set, s, entry);
+			TAILQ_INSERT_TAIL(&parent_set, s, entry);
 			break;
 		case IMSG_MRT_OPEN:
 		case IMSG_MRT_REOPEN:
