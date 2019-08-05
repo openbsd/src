@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.1 2019/08/01 03:05:46 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.2 2019/08/05 01:55:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -58,6 +58,12 @@
 #if NVLAN > 0
 #include <net/if_vlan_var.h>
 #endif
+
+static const uint8_t	ether_8021_prefix[ETHER_ADDR_LEN - 1] =
+    { 0x01, 0x80, 0xc2, 0x00, 0x00 };
+
+#define ETHER_IS_8021_PREFIX(_m) \
+     (memcmp((_m), ether_8021_prefix, sizeof(ether_8021_prefix)) == 0)
 
 /*
  * tpmr interface
@@ -203,6 +209,30 @@ tpmr_clone_destroy(struct ifnet *ifp)
 }
 
 static int
+tpmr_8021q_filter(const struct mbuf *m)
+{
+	const struct ether_header *eh;
+
+	if (m->m_len < sizeof(*eh))
+		return (1);
+
+	eh = mtod(m, struct ether_header *);
+	if (ETHER_IS_8021_PREFIX(eh->ether_dhost)) {
+		switch (eh->ether_dhost[5]) {
+		case 0x01: /* IEEE MAC-specific Control Protocols */
+		case 0x02: /* IEEE 802.3 Slow Protocols */
+		case 0x04: /* IEEE MAC-specific Control Protocols */
+		case 0x0e: /* Individual LAN Scope, Nearest Bridge */
+			return (1);
+		default:
+			break;
+		}
+	}
+
+	return (0);
+}
+
+static int
 tpmr_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 {
 	struct tpmr_port *p = cookie;
@@ -233,6 +263,9 @@ tpmr_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 
 	len = m->m_pkthdr.len;
 	counters_pkt(ifp->if_counters, ifc_ipackets, ifc_ibytes, len);
+
+	if (!ISSET(ifp->if_flags, IFF_LINK0) && tpmr_8021q_filter(m))
+		goto drop;
 
 #if NBPFILTER > 0
         if_bpf = ifp->if_bpf;
