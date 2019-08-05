@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.331 2019/08/05 15:13:43 bluhm Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.332 2019/08/05 23:28:55 bluhm Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -869,7 +869,7 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) pathname;
 		syscallarg(char *) resolved;
 	} */ *uap = v;
-	char *pathname;
+	char *pathname, *c;
 	char *rpbuf;
 	struct nameidata nd;
 	size_t pathlen;
@@ -923,7 +923,13 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 		free(cwdbuf, M_TEMP, cwdlen);
 	}
 
-	if (pathlen == 2 && pathname[0] == '/')
+	/* find root "/" or "//" */
+	for (c = pathname; *c != '\0'; c++) {
+		if (*c != '/')
+			break;
+	}
+	if (*c == '\0')
+		/* root directory */
 		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | SAVENAME | REALPATH,
 		    UIO_SYSSPACE, pathname, p);
 	else
@@ -969,7 +975,7 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(const char *) permissions;
 	} */ *uap = v;
-	char pathname[MAXPATHLEN];
+	char pathname[MAXPATHLEN], *c;
 	struct nameidata nd;
 	size_t pathlen;
 	char permissions[5];
@@ -998,7 +1004,13 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 	if (pathlen < 2)
 		return EINVAL;
 
-	if (pathlen == 2 && pathname[0] == '/')
+	/* find root "/" or "//" */
+	for (c = pathname; *c != '\0'; c++) {
+		if (*c != '/')
+			break;
+	}
+	if (*c == '\0')
+		/* root directory */
 		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | SAVENAME,
 		    UIO_SYSSPACE, pathname, p);
 	else
