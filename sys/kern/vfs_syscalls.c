@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.330 2019/08/05 08:35:59 anton Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.331 2019/08/05 15:13:43 bluhm Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -943,10 +943,10 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 		VOP_UNLOCK(nd.ni_vp);
 		vrele(nd.ni_vp);
 	}
-	if (nd.ni_dvp && nd.ni_dvp != nd.ni_vp){
+	if (nd.ni_dvp && nd.ni_dvp != nd.ni_vp)
 		VOP_UNLOCK(nd.ni_dvp);
+	if (nd.ni_dvp)
 		vrele(nd.ni_dvp);
-	}
 
 	error = copyoutstr(nd.ni_cnd.cn_rpbuf, SCARG(uap, resolved),
 	    MAXPATHLEN, NULL);
