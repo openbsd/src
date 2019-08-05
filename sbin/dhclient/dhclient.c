@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.648 2019/07/30 12:48:27 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.649 2019/08/05 15:20:29 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -619,7 +619,7 @@ main(int argc, char *argv[])
 	read_lease_db(&ifi->lease_db);
 
 	if ((leaseFile = fopen(path_lease_db, "w")) == NULL)
-		fatal("fopen(%s)", path_lease_db);
+		log_warn("%s: fopen(%s)", log_procname, path_lease_db);
 	write_lease_db(&ifi->lease_db);
 
 	if (path_option_db != NULL) {
@@ -1809,6 +1809,9 @@ write_lease_db(struct client_lease_tq *lease_db)
 	struct client_lease	*lp;
 	char			*leasestr;
 	time_t			 cur_time;
+
+	if (leaseFile == NULL)
+		return;
 
 	rewind(leaseFile);
 
