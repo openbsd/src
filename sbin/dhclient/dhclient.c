@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.649 2019/08/05 15:20:29 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.650 2019/08/05 16:22:00 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -613,10 +613,8 @@ main(int argc, char *argv[])
 		fatal("setsockopt(ROUTE_TABLEFILTER)");
 
 	fd = take_charge(ifi, routefd, path_lease_db);
-	if (fd == -1)
-		fatalx("failed to take charge");
-
-	read_lease_db(&ifi->lease_db);
+	if (fd != -1)
+		read_lease_db(&ifi->lease_db);
 
 	if ((leaseFile = fopen(path_lease_db, "w")) == NULL)
 		log_warn("%s: fopen(%s)", log_procname, path_lease_db);
@@ -2485,7 +2483,7 @@ take_charge(struct interface_info *ifi, int routefd, char *leasespath)
 		if (time(&cur_time) == -1)
 			fatal("time");
 		if (cur_time - start_time >= MAXSECONDS)
-			break;
+			fatalx("failed to take charge");
 
 		if ((ifi->flags & IFI_IN_CHARGE) == 0) {
 			if ((cur_time - sent_time) >= SENTSECONDS) {
@@ -2514,7 +2512,7 @@ take_charge(struct interface_info *ifi, int routefd, char *leasespath)
 			fd = open(leasespath, O_NONBLOCK |
 			    O_RDONLY|O_EXLOCK|O_CREAT|O_NOFOLLOW, 0640);
 			if (fd == -1 && errno != EWOULDBLOCK)
-				fatal("open(%s)", leasespath);
+				break;
 		}
 	}
 
