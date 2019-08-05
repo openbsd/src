@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.2 2019/08/05 01:55:38 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.3 2019/08/05 03:56:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -24,6 +24,7 @@
  */
 
 #include "bpfilter.h"
+#include "pf.h"
 #include "vlan.h"
 
 #include <sys/param.h>
@@ -53,6 +54,10 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#if NPF > 0
+#include <net/pfvar.h>
 #endif
 
 #if NVLAN > 0
@@ -232,6 +237,46 @@ tpmr_8021q_filter(const struct mbuf *m)
 	return (0);
 }
 
+#if NPF > 0
+static struct mbuf *
+tpmr_pf(struct ifnet *ifp0, int dir, struct mbuf *m)
+{
+	struct ether_header *eh, copy;
+	sa_family_t af = AF_UNSPEC;
+
+	eh = mtod(m, struct ether_header *);
+	switch (ntohs(eh->ether_type)) {
+	case ETHERTYPE_IP:
+		af = AF_INET;
+		break;
+	case ETHERTYPE_IPV6:
+		af = AF_INET6;
+		break;
+	default:
+		return (m);
+	}
+
+	copy = *eh;
+	m_adj(m, sizeof(*eh));
+
+	if (pf_test(af, dir, ifp0, &m) != PF_PASS) {
+		m_freem(m);
+		return (NULL);
+	}
+
+	m = m_prepend(m, sizeof(*eh), M_DONTWAIT);
+	if (m == NULL)
+		return (NULL);
+
+	/* checksum? */
+
+	eh = mtod(m, struct ether_header *);
+	*eh = copy;
+
+	return (m);
+}
+#endif /* NPF > 0 */
+
 static int
 tpmr_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 {
@@ -261,11 +306,18 @@ tpmr_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 	}
 #endif
 
+	if (!ISSET(ifp->if_flags, IFF_LINK0) &&
+	    tpmr_8021q_filter(m))
+		goto drop;
+
+#if NPF > 0
+	if (!ISSET(ifp->if_flags, IFF_LINK1) &&
+	    (m = tpmr_pf(ifp0, PF_IN, m)) == NULL)
+		return (1);
+#endif
+
 	len = m->m_pkthdr.len;
 	counters_pkt(ifp->if_counters, ifc_ipackets, ifc_ibytes, len);
-
-	if (!ISSET(ifp->if_flags, IFF_LINK0) && tpmr_8021q_filter(m))
-		goto drop;
 
 #if NBPFILTER > 0
         if_bpf = ifp->if_bpf;
@@ -281,6 +333,13 @@ tpmr_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 		m_freem(m);
 	else {
 		struct ifnet *ifpn = pn->p_ifp0;
+
+#if NPF > 0
+		if (!ISSET(ifp->if_flags, IFF_LINK1) &&
+		    (m = tpmr_pf(ifpn, PF_OUT, m)) == NULL)
+			;
+		else
+#endif
 		if ((*ifpn->if_enqueue)(ifpn, m))
 			counters_inc(ifp->if_counters, ifc_oerrors);
 		else {
