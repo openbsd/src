@@ -1,4 +1,4 @@
-.\" $OpenBSD: tpmr.4,v 1.1 2019/08/01 03:08:43 dlg Exp $
+.\" $OpenBSD: tpmr.4,v 1.2 2019/08/05 04:06:10 dlg Exp $
 .\"
 .\" Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 1 2019 $
+.Dd $Mdocdate: August 5 2019 $
 .Dt TPMR 4
 .Os
 .Sh NAME
@@ -58,6 +58,21 @@ as a port.
 .It Cm -trunkport Ar child-iface
 Remove the port
 .Ar child-iface .
+.It Cm link0
+Disable the filtering of Ethernet frames destined for the TPMR
+component reserved addresses, as specified by IEEE 802.1Q.
+.It Cm -link0
+Enable the filtering of Ethernet frames destined for the TPMR
+component reserved addresses, as specified by IEEE 802.1Q.
+This is the default.
+.It Cm link1
+Disable the filtering of IPv4 and IPv6 packets with
+.Xr pf 4 .
+.It Cm -link1
+Enable the filtering of IPv4 and IPv6 packets with
+.Xr pf 4 .
+Packets will appear to enter or leave the member port interfaces.
+This is the default.
 .El
 .\" document the ioctls?
 .Pp
