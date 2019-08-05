@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.10 2019/08/05 12:30:50 martijn Exp $ */
+/*	$OpenBSD: ber.c,v 1.11 2019/08/05 12:38:14 martijn Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -456,23 +456,23 @@ int
 ber_oid_cmp(struct ber_oid *a, struct ber_oid *b)
 {
 	size_t	 i;
-	for (i = 0; i < BER_MAX_OID_LEN; i++) {
-		if (a->bo_id[i] != 0) {
-			if (a->bo_id[i] == b->bo_id[i])
-				continue;
-			else if (a->bo_id[i] < b->bo_id[i]) {
-				/* b is a successor of a */
-				return (1);
-			} else {
-				/* b is a predecessor of a */
-				return (-1);
-			}
-		} else if (b->bo_id[i] != 0) {
-			/* b is larger, but a child of a */
-			return (2);
-		} else
-			break;
+	for (i = 0; i < a->bo_n && i < b->bo_n; i++) {
+		if (a->bo_id[i] == b->bo_id[i])
+			continue;
+		else if (a->bo_id[i] < b->bo_id[i]) {
+			/* b is a successor of a */
+			return (1);
+		} else {
+			/* b is a predecessor of a */
+			return (-1);
+		}
 	}
+	/* b is larger, but a child of a */
+	if (a->bo_n < b->bo_n)
+		return (2);
+	/* b is a predecessor of a */
+	if (a->bo_n > b->bo_n)
+		return -1;
 
 	/* b and a are identical */
 	return (0);
