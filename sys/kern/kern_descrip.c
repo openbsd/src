@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.191 2019/07/15 04:11:03 visa Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.192 2019/08/05 08:35:59 anton Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -532,12 +532,14 @@ restart:
 			ktrflock(p, &fl);
 #endif
 		if (fl.l_whence == SEEK_CUR) {
+			off_t offset = foffset(fp);
+
 			if (fl.l_start == 0 && fl.l_len < 0) {
 				/* lockf(3) compliance hack */
 				fl.l_len = -fl.l_len;
-				fl.l_start = fp->f_offset - fl.l_len;
+				fl.l_start = offset - fl.l_len;
 			} else
-				fl.l_start += fp->f_offset;
+				fl.l_start += offset;
 		}
 		switch (fl.l_type) {
 
@@ -602,12 +604,14 @@ restart:
 		if (error)
 			break;
 		if (fl.l_whence == SEEK_CUR) {
+			off_t offset = foffset(fp);
+
 			if (fl.l_start == 0 && fl.l_len < 0) {
 				/* lockf(3) compliance hack */
 				fl.l_len = -fl.l_len;
-				fl.l_start = fp->f_offset - fl.l_len;
+				fl.l_start = offset - fl.l_len;
 			} else
-				fl.l_start += fp->f_offset;
+				fl.l_start += offset;
 		}
 		if (fl.l_type != F_RDLCK &&
 		    fl.l_type != F_WRLCK &&

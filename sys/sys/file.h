@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.57 2019/07/12 13:56:28 solene Exp $	*/
+/*	$OpenBSD: file.h,v 1.58 2019/08/05 08:35:59 anton Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -74,6 +74,7 @@ struct	fileops {
  *	F	global `fhdlk' mutex
  *	a	atomic operations
  *	f	per file `f_mtx'
+ *	v	vnode lock
  *	k	kernel lock
  */
 struct file {
@@ -89,7 +90,7 @@ struct file {
 	u_int	f_count;	/* [a] reference count */
 	struct	ucred *f_cred;	/* [I] credentials associated with descriptor */
 	struct	fileops *f_ops; /* [I] file operation pointers */
-	off_t	f_offset;	/* [k] */
+	off_t	f_offset;	/* [f,v] offset */
 	void 	*f_data;	/* [I] private data */
 	int	f_iflags;	/* [k] internal flags */
 	uint64_t f_rxfer;	/* [f] total number of read transfers */
@@ -115,6 +116,17 @@ struct file {
 #define FDUP_MAX_COUNT		(UINT_MAX - 2 * MAXCPUS)
 
 int	fdrop(struct file *, struct proc *);
+
+static inline off_t
+foffset(struct file *fp)
+{
+	off_t offset;
+
+	mtx_enter(&fp->f_mtx);
+	offset = fp->f_offset;
+	mtx_leave(&fp->f_mtx);
+	return (offset);
+}
 
 LIST_HEAD(filelist, file);
 extern int maxfiles;			/* kernel limit on number of open files */

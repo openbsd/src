@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.103 2019/07/23 19:07:31 anton Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.104 2019/08/05 08:35:59 anton Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -365,8 +365,11 @@ vn_read(struct file *fp, struct uio *uio, int fflags)
 
 	error = VOP_READ(vp, uio, (fp->f_flag & FNONBLOCK) ? IO_NDELAY : 0,
 	    cred);
-	if ((fflags & FO_POSITION) == 0)
+	if ((fflags & FO_POSITION) == 0) {
+		mtx_enter(&fp->f_mtx);
 		fp->f_offset += count - uio->uio_resid;
+		mtx_leave(&fp->f_mtx);
+	}
 done:
 	VOP_UNLOCK(vp);
 	KERNEL_UNLOCK();
@@ -401,10 +404,12 @@ vn_write(struct file *fp, struct uio *uio, int fflags)
 	count = uio->uio_resid;
 	error = VOP_WRITE(vp, uio, ioflag, cred);
 	if ((fflags & FO_POSITION) == 0) {
+		mtx_enter(&fp->f_mtx);
 		if (ioflag & IO_APPEND)
 			fp->f_offset = uio->uio_offset;
 		else
 			fp->f_offset += count - uio->uio_resid;
+		mtx_leave(&fp->f_mtx);
 	}
 	VOP_UNLOCK(vp);
 
@@ -504,7 +509,7 @@ vn_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				return (error);
-			*(int *)data = vattr.va_size - fp->f_offset;
+			*(int *)data = vattr.va_size - foffset(fp);
 			return (0);
 		}
 		if (com == FIONBIO || com == FIOASYNC)  /* XXX */
@@ -631,7 +636,10 @@ vn_seek(struct file *fp, off_t *offset, int whence, struct proc *p)
 		error = EINVAL;
 		goto out;
 	}
-	fp->f_offset = *offset = newoff;
+	mtx_enter(&fp->f_mtx);
+	fp->f_offset = newoff;
+	mtx_leave(&fp->f_mtx);
+	*offset = newoff;
 
 out:
 	VOP_UNLOCK(vp);
