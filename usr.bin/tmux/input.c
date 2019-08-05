@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.158 2019/06/27 15:17:41 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.159 2019/08/05 06:42:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -244,6 +244,7 @@ enum input_csi_type {
 	INPUT_CSI_RM,
 	INPUT_CSI_RM_PRIVATE,
 	INPUT_CSI_SCP,
+	INPUT_CSI_SD,
 	INPUT_CSI_SGR,
 	INPUT_CSI_SM,
 	INPUT_CSI_SM_PRIVATE,
@@ -270,6 +271,7 @@ static const struct input_table_entry input_csi_table[] = {
 	{ 'M', "",  INPUT_CSI_DL },
 	{ 'P', "",  INPUT_CSI_DCH },
 	{ 'S', "",  INPUT_CSI_SU },
+	{ 'T', "",  INPUT_CSI_SD },
 	{ 'X', "",  INPUT_CSI_ECH },
 	{ 'Z', "",  INPUT_CSI_CBT },
 	{ '`', "",  INPUT_CSI_HPA },
@@ -1524,6 +1526,11 @@ input_csi_dispatch(struct input_ctx *ictx)
 		n = input_get(ictx, 0, 1, 1);
 		if (n != -1)
 			screen_write_scrollup(sctx, n, bg);
+		break;
+	case INPUT_CSI_SD:
+		n = input_get(ictx, 0, 1, 1);
+		if (n != -1)
+			screen_write_scrolldown(sctx, n, bg);
 		break;
 	case INPUT_CSI_TBC:
 		switch (input_get(ictx, 0, 0, 0)) {
