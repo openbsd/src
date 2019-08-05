@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskmap.c,v 1.24 2018/08/20 14:59:02 visa Exp $	*/
+/*	$OpenBSD: diskmap.c,v 1.25 2019/08/05 08:46:46 anton Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
@@ -135,9 +135,7 @@ diskmapioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 bad:
 	fdpunlock(fdp);
-
-	if (vp)
-		vrele(vp);
+	(void)vn_close(vp, fp0->f_flag, p->p_ucred, p);
 invalid:
 	if (fp0)
 		FRELE(fp0, p);
