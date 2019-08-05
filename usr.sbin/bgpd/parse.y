@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.396 2019/07/24 20:25:27 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.397 2019/08/05 08:46:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1947,7 +1947,7 @@ filter_as_t	: filter_as_type filter_as			{
 				a->a.type = $1;
 		}
 		| filter_as_type ASSET STRING {
-			if (as_sets_lookup(conf->as_sets, $3) == NULL) {
+			if (as_sets_lookup(&conf->as_sets, $3) == NULL) {
 				yyerror("as-set \"%s\" not defined", $3);
 				free($3);
 				YYERROR;
@@ -4412,12 +4412,12 @@ new_as_set(char *name)
 {
 	struct as_set *aset;
 
-	if (as_sets_lookup(conf->as_sets, name) != NULL) {
+	if (as_sets_lookup(&conf->as_sets, name) != NULL) {
 		yyerror("as-set \"%s\" already exists", name);
 		return -1;
 	}
 
-	aset = as_sets_new(conf->as_sets, name, 0, sizeof(u_int32_t));
+	aset = as_sets_new(&conf->as_sets, name, 0, sizeof(u_int32_t));
 	if (aset == NULL)
 		fatal(NULL);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.390 2019/07/23 06:26:44 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.391 2019/08/05 08:46:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -284,7 +284,7 @@ struct bgpd_config {
 	struct rde_prefixset_head		 rde_prefixsets;
 	struct rde_prefixset_head		 rde_originsets;
 	struct rde_prefixset			 rde_roa;
-	struct as_set_head			*as_sets;
+	struct as_set_head			 as_sets;
 	char					*csock;
 	char					*rcsock;
 	int					 flags;
@@ -1170,6 +1170,7 @@ int	control_imsg_relay(struct imsg *);
 /* config.c */
 struct bgpd_config	*new_config(void);
 void		copy_config(struct bgpd_config *, struct bgpd_config *);
+void		free_l3vpns(struct l3vpn_head *);
 void		free_config(struct bgpd_config *);
 void		free_prefixsets(struct prefixset_head *);
 void		free_rde_prefixsets(struct rde_prefixset_head *);

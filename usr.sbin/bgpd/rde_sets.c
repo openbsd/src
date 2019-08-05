@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_sets.c,v 1.8 2019/02/14 10:23:28 claudio Exp $ */
+/*	$OpenBSD: rde_sets.c,v 1.9 2019/08/05 08:46:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -84,7 +84,6 @@ as_sets_free(struct as_set_head *as_sets)
 		set_free(aset->set);
 		free(aset);
 	}
-	free(as_sets);
 }
 
 void

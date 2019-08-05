@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.480 2019/08/05 08:36:19 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.481 2019/08/05 08:46:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -117,12 +117,7 @@ struct bgpd_config	*conf, *nconf;
 time_t			 reloadtime;
 struct rde_peer_head	 peerlist;
 struct rde_peer		*peerself;
-struct rde_prefixset_head prefixsets_old;
-struct rde_prefixset_head originsets_old;
-struct rde_prefixset	 roa_old;
-struct as_set_head	*as_sets_tmp, *as_sets_old;
 struct filter_head	*out_rules, *out_rules_tmp;
-struct l3vpn_head	*l3vpns_l, *newdomains;
 struct imsgbuf		*ibuf_se;
 struct imsgbuf		*ibuf_se_ctl;
 struct imsgbuf		*ibuf_main;
@@ -224,11 +219,6 @@ rde_main(int debug, int verbose)
 	if (out_rules == NULL)
 		fatal(NULL);
 	TAILQ_INIT(out_rules);
-
-	l3vpns_l = calloc(1, sizeof(struct l3vpn_head));
-	if (l3vpns_l == NULL)
-		fatal(NULL);
-	SIMPLEQ_INIT(l3vpns_l);
 
 	conf = new_config();
 	log_info("route decision engine ready");
@@ -776,19 +766,10 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			    sizeof(struct bgpd_config))
 				fatalx("IMSG_RECONF_CONF bad len");
 			reloadtime = time(NULL);
-			as_sets_tmp = calloc(1,
-			    sizeof(struct as_set_head));
-			if (as_sets_tmp == NULL)
-				fatal(NULL);
-			SIMPLEQ_INIT(as_sets_tmp);
 			out_rules_tmp = calloc(1, sizeof(struct filter_head));
 			if (out_rules_tmp == NULL)
 				fatal(NULL);
 			TAILQ_INIT(out_rules_tmp);
-			newdomains = calloc(1, sizeof(struct l3vpn_head));
-			if (newdomains == NULL)
-				fatal(NULL);
-			SIMPLEQ_INIT(newdomains);
 			nconf = new_config();
 			copy_config(nconf, imsg.data);
 
@@ -854,7 +835,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (r->match.as.flags & AS_FLAG_AS_SET_NAME) {
 				struct as_set * aset;
 
-				aset = as_sets_lookup(as_sets_tmp,
+				aset = as_sets_lookup(&nconf->as_sets,
 				    r->match.as.name);
 				if (aset == NULL) {
 					log_warnx("%s: no as-set for %s",
@@ -951,9 +932,9 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				fatalx("IMSG_RECONF_AS_SET bad len");
 			memcpy(&nmemb, imsg.data, sizeof(nmemb));
 			name = (char *)imsg.data + sizeof(nmemb);
-			if (as_sets_lookup(as_sets_tmp, name) != NULL)
+			if (as_sets_lookup(&nconf->as_sets, name) != NULL)
 				fatalx("duplicate as-set %s", name);
-			last_as_set = as_sets_new(as_sets_tmp, name, nmemb,
+			last_as_set = as_sets_new(&nconf->as_sets, name, nmemb,
 			    sizeof(u_int32_t));
 			break;
 		case IMSG_RECONF_AS_SET_ITEMS:
@@ -975,7 +956,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			memcpy(vpn, imsg.data, sizeof(struct l3vpn));
 			TAILQ_INIT(&vpn->import);
 			TAILQ_INIT(&vpn->export);
-			SIMPLEQ_INSERT_TAIL(newdomains, vpn, entry);
+			TAILQ_INIT(&vpn->net_l);
+			SIMPLEQ_INSERT_TAIL(&nconf->l3vpns, vpn, entry);
 			break;
 		case IMSG_RECONF_VPN_EXPORT:
 			if (vpn == NULL) {
@@ -2730,7 +2712,7 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 			/* not Loc-RIB, no update for VPNs */
 			break;
 
-		SIMPLEQ_FOREACH(vpn, l3vpns_l, entry) {
+		SIMPLEQ_FOREACH(vpn, &conf->l3vpns, entry) {
 			if (!rde_l3vpn_import(prefix_communities(p), vpn))
 				continue;
 			/* must send exit_nexthop so that correct MPLS tunnel
@@ -3016,9 +2998,12 @@ rde_send_nexthop(struct bgpd_addr *next, int valid)
 void
 rde_reload_done(void)
 {
-	struct l3vpn		*vpn;
 	struct rde_peer		*peer;
 	struct filter_head	*fh;
+	struct rde_prefixset_head prefixsets_old;
+	struct rde_prefixset_head originsets_old;
+	struct rde_prefixset	 roa_old;
+	struct as_set_head	 as_sets_old;
 	u_int16_t		 rid;
 	int			 reload = 0;
 
@@ -3033,19 +3018,25 @@ rde_reload_done(void)
 
 	SIMPLEQ_INIT(&prefixsets_old);
 	SIMPLEQ_INIT(&originsets_old);
+	SIMPLEQ_INIT(&as_sets_old);
 	SIMPLEQ_CONCAT(&prefixsets_old, &conf->rde_prefixsets);
 	SIMPLEQ_CONCAT(&originsets_old, &conf->rde_originsets);
+	SIMPLEQ_CONCAT(&as_sets_old, &conf->as_sets);
 	roa_old = conf->rde_roa;
-	as_sets_old = conf->as_sets;
 
 	copy_config(conf, nconf);
 	/* need to copy the sets and roa table and clear them in nconf */
 	SIMPLEQ_CONCAT(&conf->rde_prefixsets, &nconf->rde_prefixsets);
 	SIMPLEQ_CONCAT(&conf->rde_originsets, &nconf->rde_originsets);
+	SIMPLEQ_CONCAT(&conf->as_sets, &nconf->as_sets);
+
 	conf->rde_roa = nconf->rde_roa;
-	conf->as_sets = nconf->as_sets;
 	memset(&nconf->rde_roa, 0, sizeof(nconf->rde_roa));
-	nconf->as_sets = NULL;
+
+	/* apply new set of l3vpn, sync will be done later */
+	free_l3vpns(&conf->l3vpns);
+	SIMPLEQ_CONCAT(&conf->l3vpns, &nconf->l3vpns);
+	/* XXX WHERE IS THE SYNC ??? */
 
 	free_config(nconf);
 	nconf = NULL;
@@ -3059,17 +3050,6 @@ rde_reload_done(void)
 	peerself->conf.remote_masklen = 32;
 	peerself->short_as = conf->short_as;
 
-	/* apply new set of l3vpn, sync will be done later */
-	while ((vpn = SIMPLEQ_FIRST(l3vpns_l)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(l3vpns_l, entry);
-		filterset_free(&vpn->import);
-		filterset_free(&vpn->export);
-		free(vpn);
-	}
-	free(l3vpns_l);
-	l3vpns_l = newdomains;
-	/* XXX WHERE IS THE SYNC ??? */
-
 	/* check if roa changed */
 	if (trie_equal(&conf->rde_roa.th, &roa_old.th) == 0) {
 		log_debug("roa change: reloading Adj-RIB-In");
@@ -3080,11 +3060,7 @@ rde_reload_done(void)
 
 	rde_mark_prefixsets_dirty(&prefixsets_old, &conf->rde_prefixsets);
 	rde_mark_prefixsets_dirty(&originsets_old, &conf->rde_originsets);
-	as_sets_mark_dirty(as_sets_old, as_sets_tmp);
-
-	/* swap the as_sets */
-	conf->as_sets = as_sets_tmp;
-	as_sets_tmp = NULL;
+	as_sets_mark_dirty(&as_sets_old, &conf->as_sets);
 
 	/*
 	 * make the new filter rules the active one but keep the old for
@@ -3162,6 +3138,14 @@ rde_reload_done(void)
 		filterlist_free(ribs[rid].in_rules_tmp);
 		ribs[rid].in_rules_tmp = NULL;
 	}
+
+	filterlist_free(out_rules_tmp);
+	out_rules_tmp = NULL;
+	/* old filters removed, free all sets */
+	free_rde_prefixsets(&prefixsets_old);
+	free_rde_prefixsets(&originsets_old);
+	as_sets_free(&as_sets_old);
+
 	log_info("RDE reconfigured");
 
 	if (reload > 0) {
@@ -3253,18 +3237,11 @@ rde_softreconfig_done(void)
 {
 	u_int16_t	rid;
 
-	filterlist_free(out_rules_tmp);
-	out_rules_tmp = NULL;
 	for (rid = 0; rid < rib_size; rid++) {
 		if (!rib_valid(rid))
 			continue;
 		ribs[rid].state = RECONF_NONE;
 	}
-
-	free_rde_prefixsets(&prefixsets_old);
-	free_rde_prefixsets(&originsets_old);
-	as_sets_free(as_sets_old);
-	as_sets_old = NULL;
 
 	log_info("RDE soft reconfiguration done");
 	imsg_compose(ibuf_main, IMSG_RECONF_DONE, 0, 0,
@@ -3850,7 +3827,7 @@ network_add(struct network_config *nc, struct filterstate *state)
 	u_int16_t		 i;
 
 	if (nc->rd != 0) {
-		SIMPLEQ_FOREACH(vpn, l3vpns_l, entry) {
+		SIMPLEQ_FOREACH(vpn, &conf->l3vpns, entry) {
 			if (vpn->rd != nc->rd)
 				continue;
 			switch (nc->prefix.aid) {
@@ -3935,7 +3912,7 @@ network_delete(struct network_config *nc)
 	u_int32_t	 i;
 
 	if (nc->rd) {
-		SIMPLEQ_FOREACH(vpn, l3vpns_l, entry) {
+		SIMPLEQ_FOREACH(vpn, &conf->l3vpns, entry) {
 			if (vpn->rd != nc->rd)
 				continue;
 			switch (nc->prefix.aid) {
@@ -4064,7 +4041,6 @@ network_flush_upcall(struct rib_entry *re, void *ptr)
 void
 rde_shutdown(void)
 {
-	struct l3vpn		*vpn;
 	struct rde_peer		*p;
 	u_int32_t		 i;
 
@@ -4083,13 +4059,7 @@ rde_shutdown(void)
 	filterlist_free(out_rules_tmp);
 
 	/* kill the VPN configs */
-	while ((vpn = SIMPLEQ_FIRST(l3vpns_l)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(l3vpns_l, entry);
-		filterset_free(&vpn->import);
-		filterset_free(&vpn->export);
-		free(vpn);
-	}
-	free(l3vpns_l);
+	free_l3vpns(&conf->l3vpns);
 
 	/* now check everything */
 	rib_shutdown();

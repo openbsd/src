@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.90 2019/05/29 08:48:00 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.91 2019/08/05 08:46:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -33,7 +33,6 @@
 
 int		host_ip(const char *, struct bgpd_addr *, u_int8_t *);
 void		free_networks(struct network_head *);
-void		free_l3vpns(struct l3vpn_head *);
 
 struct bgpd_config *
 new_config(void)
@@ -43,8 +42,6 @@ new_config(void)
 	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
 		fatal(NULL);
 
-	if ((conf->as_sets = calloc(1, sizeof(struct as_set_head))) == NULL)
-		fatal(NULL);
 	if ((conf->filters = calloc(1, sizeof(struct filter_head))) == NULL)
 		fatal(NULL);
 	if ((conf->listen_addrs = calloc(1, sizeof(struct listen_addrs))) ==
@@ -62,7 +59,7 @@ new_config(void)
 	SIMPLEQ_INIT(&conf->rde_prefixsets);
 	SIMPLEQ_INIT(&conf->rde_originsets);
 	RB_INIT(&conf->roa);
-	SIMPLEQ_INIT(conf->as_sets);
+	SIMPLEQ_INIT(&conf->as_sets);
 
 	TAILQ_INIT(conf->filters);
 	TAILQ_INIT(conf->listen_addrs);
@@ -168,8 +165,8 @@ free_config(struct bgpd_config *conf)
 	free_prefixsets(&conf->originsets);
 	free_rde_prefixsets(&conf->rde_prefixsets);
 	free_rde_prefixsets(&conf->rde_originsets);
+	as_sets_free(&conf->as_sets);
 	free_prefixtree(&conf->roa);
-	as_sets_free(conf->as_sets);
 
 	while ((la = TAILQ_FIRST(conf->listen_addrs)) != NULL) {
 		TAILQ_REMOVE(conf->listen_addrs, la, entry);
@@ -250,9 +247,8 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 	SIMPLEQ_CONCAT(&xconf->originsets, &conf->originsets);
 
 	/* switch the as_sets, first remove the old ones */
-	as_sets_free(xconf->as_sets);
-	xconf->as_sets = conf->as_sets;
-	conf->as_sets = NULL;
+	as_sets_free(&xconf->as_sets);
+	SIMPLEQ_CONCAT(&xconf->as_sets, &conf->as_sets);
 
 	/* switch the network statements, but first remove the old ones */
 	free_networks(&xconf->networks);

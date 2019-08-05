@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.223 2019/08/05 08:36:19 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.224 2019/08/05 08:46:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -610,12 +610,12 @@ reconfigure(char *conffile, struct bgpd_config *conf)
 	}
 
 	/* as-sets for filters in the RDE */
-	while ((aset = SIMPLEQ_FIRST(conf->as_sets)) != NULL) {
+	while ((aset = SIMPLEQ_FIRST(&conf->as_sets)) != NULL) {
 		struct ibuf *wbuf;
 		u_int32_t *as;
 		size_t i, l, n;
 
-		SIMPLEQ_REMOVE_HEAD(conf->as_sets, entry);
+		SIMPLEQ_REMOVE_HEAD(&conf->as_sets, entry);
 
 		as = set_get(aset->set, &n);
 		if ((wbuf = imsg_create(ibuf_rde, IMSG_RECONF_AS_SET, 0, 0,
