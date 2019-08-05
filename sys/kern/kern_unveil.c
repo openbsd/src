@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.31 2019/08/02 08:12:35 bluhm Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.32 2019/08/05 13:31:07 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -436,7 +436,7 @@ unveil_setflags(u_char *flags, u_char nflags)
 }
 
 struct unveil *
-unveil_add_vnode(struct process *pr, struct vnode *vp, struct vnode *rootvnode)
+unveil_add_vnode(struct process *pr, struct vnode *vp)
 {
 	struct unveil *uv = NULL;
 	ssize_t i, j;
@@ -501,8 +501,7 @@ unveil_add_traversed_vnodes(struct proc *p, struct nameidata *ndp)
 			if (unveil_lookup(vp, p, NULL) == NULL) {
 				vref(vp);
 				vp->v_uvcount++;
-				uv = unveil_add_vnode(p->p_p, vp,
-				    ndp->ni_rootdir);
+				uv = unveil_add_vnode(p->p_p, vp);
 			}
 		}
 	}
@@ -597,7 +596,7 @@ unveil_add(struct proc *p, struct nameidata *ndp, const char *permissions)
 		/*
 		 * New unveil involving this directory vnode.
 		 */
-		uv = unveil_add_vnode(pr, vp, ndp->ni_rootdir);
+		uv = unveil_add_vnode(pr, vp);
 	}
 
 	/*
