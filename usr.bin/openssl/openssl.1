@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.112 2019/07/16 12:14:30 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.113 2019/08/05 12:01:51 inoguchi Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: July 16 2019 $
+.Dd $Mdocdate: August 5 2019 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -3941,7 +3941,6 @@ will be used.
 .Op Fl no_tmp_rsa
 .Op Fl nocert
 .Op Fl pass Ar arg
-.Op Fl port Ar port
 .Op Fl quiet
 .Op Fl servername Ar name
 .Op Fl servername_fatal
@@ -3994,7 +3993,7 @@ Print out some session cache status information.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl accept Ar port , Fl port Ar port
+.It Fl accept Ar port
 Listen on TCP
 .Ar port
 for connections.
