@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.26 2019/07/28 14:55:59 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.27 2019/08/05 19:27:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012, 2018 Mark Kettenis
@@ -2487,11 +2487,18 @@ guest_delete_cpu(struct guest *guest, uint64_t vid)
 }
 
 void
-guest_add_cpu(struct guest *guest)
+guest_add_cpu(struct guest *guest, uint64_t stride)
 {
 	struct cpu *cpu;
 
 	cpu = pri_alloc_cpu(-1);
+
+	/* 
+	 * Allocate (but don't assign) additional virtual CPUs if the
+	 * specified stride is bigger than one.
+	 */
+	while (stride-- > 1)
+		pri_alloc_cpu(-1);
 
 	if (cpu->resource_id == -1) {
 		uint64_t resource_id;
@@ -2768,6 +2775,7 @@ build_config(const char *filename)
 	struct var *var;
 	struct iodev *iodev;
 	uint64_t num_cpus, primary_num_cpus;
+	uint64_t primary_stride = 1;
 	uint64_t memory, primary_memory;
 
 	SIMPLEQ_INIT(&conf.domain_list);
@@ -2789,9 +2797,10 @@ build_config(const char *filename)
 	SIMPLEQ_FOREACH(domain, &conf.domain_list, entry) {
 		if (strcmp(domain->name, "primary") == 0) {
 			primary_num_cpus = domain->vcpu;
+			primary_stride = domain->vcpu_stride;
 			primary_memory = domain->memory;
 		}
-		num_cpus += domain->vcpu;
+		num_cpus += (domain->vcpu * domain->vcpu_stride);
 		memory += domain->memory;
 	}
 	if (primary_num_cpus == 0 && total_cpus > num_cpus)
@@ -2820,7 +2829,7 @@ build_config(const char *filename)
 	for (i = 0; i < max_cpus; i++)
 		guest_delete_cpu(primary, i);
 	for (i = 0; i < primary_num_cpus; i++)
-		guest_add_cpu(primary);
+		guest_add_cpu(primary, primary_stride);
 	guest_delete_memory(primary);
 	guest_add_memory(primary, -1, primary_memory);
 
@@ -2836,7 +2845,7 @@ build_config(const char *filename)
 			continue;
 		guest = guest_create(domain->name);
 		for (i = 0; i < domain->vcpu; i++)
-			guest_add_cpu(guest);
+			guest_add_cpu(guest, domain->vcpu_stride);
 		guest_add_memory(guest, -1, domain->memory);
 		i = 0;
 		SIMPLEQ_FOREACH(vdisk, &domain->vdisk_list, entry)

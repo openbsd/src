@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.h,v 1.8 2019/07/28 14:51:07 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.h,v 1.9 2019/08/05 19:27:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -178,7 +178,7 @@ struct iodev {
 struct domain {
 	SIMPLEQ_ENTRY(domain)	entry;
 	const char *name;
-	uint64_t vcpu;
+	uint64_t vcpu, vcpu_stride;
 	uint64_t memory;
 	SIMPLEQ_HEAD(, vdisk) vdisk_list;
 	SIMPLEQ_HEAD(, vnet) vnet_list;
