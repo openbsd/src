@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.18 2019/07/20 04:54:22 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.19 2019/08/05 10:42:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -176,6 +176,28 @@ struct lacp_du {
 	/* other TLVs go here */
 	struct lacp_tlv_hdr	lacp_terminator;
 	uint8_t			lacp_pad[50];
+} __packed __aligned(2);
+
+/* Marker TLV types */
+
+#define MARKER_T_INFORMATION		0x01
+#define MARKER_T_RESPONSE		0x02
+
+struct marker_info {
+	uint16_t		marker_requester_port;
+	uint8_t			marker_requester_system[ETHER_ADDR_LEN];
+	uint8_t			marker_requester_txid[4];
+	uint8_t			marker_pad[2];
+} __packed __aligned(2);
+
+struct marker_pdu {
+	struct ether_slowproto_hdr
+				marker_sph;
+
+	struct lacp_tlv_hdr	marker_info_tlv;
+	struct marker_info	marker_info;
+	struct lacp_tlv_hdr	marker_terminator;
+	uint8_t			marker_pad[90];
 } __packed __aligned(2);
 
 enum lacp_rxm_state {
@@ -1684,9 +1706,49 @@ aggr_recordpdu(struct aggr_port *p, const struct lacp_du *lacpdu, int sync)
 }
 
 static void
+aggr_marker_response(struct aggr_port *p, struct mbuf *m)
+{
+	struct aggr_softc *sc = p->p_aggr;
+	struct arpcom *ac = &sc->sc_ac;
+	struct ifnet *ifp0 = p->p_ifp0;
+	struct marker_pdu *mpdu;
+	struct ether_header *eh;
+
+	mpdu = mtod(m, struct marker_pdu *);
+	mpdu->marker_info_tlv.lacp_tlv_type = MARKER_T_RESPONSE;
+
+	m = m_prepend(m, sizeof(*eh), M_DONTWAIT);
+	if (m == NULL)
+		return;
+
+	eh = mtod(m, struct ether_header *);
+	memcpy(eh->ether_dhost, lacp_address_slow, sizeof(eh->ether_dhost));
+	memcpy(eh->ether_shost, ac->ac_enaddr, sizeof(eh->ether_shost));
+	eh->ether_type = htons(ETHERTYPE_SLOW);
+
+	(void)if_enqueue(ifp0, m);
+}
+
+static void
 aggr_input_marker(struct aggr_port *p, struct mbuf *m)
 {
-	m_freem(m);
+	struct marker_pdu *mpdu;
+
+	if (m->m_len < sizeof(*mpdu)) {
+		m = m_pullup(m, sizeof(*mpdu));
+		if (m == NULL)
+			return;
+	}
+
+	mpdu = mtod(m, struct marker_pdu *);
+	switch (mpdu->marker_info_tlv.lacp_tlv_type) {
+	case MARKER_T_INFORMATION:
+		aggr_marker_response(p, m);
+		break;
+	default:
+		m_freem(m);
+		break;
+	}
 }
 
 static void
