@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.48 2019/08/06 10:09:37 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.49 2019/08/06 10:15:27 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -158,6 +158,7 @@ void vmxnet3_link_state(struct vmxnet3_softc *);
 void vmxnet3_enable_all_intrs(struct vmxnet3_softc *);
 void vmxnet3_disable_all_intrs(struct vmxnet3_softc *);
 int vmxnet3_intr(void *);
+int vmxnet3_intr_intx(void *);
 void vmxnet3_evintr(struct vmxnet3_softc *);
 void vmxnet3_txintr(struct vmxnet3_softc *, struct vmxnet3_txqueue *);
 void vmxnet3_rxintr(struct vmxnet3_softc *, struct vmxnet3_rxqueue *);
@@ -203,8 +204,9 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	u_int memtype, ver, macl, mach;
+	u_int memtype, ver, macl, mach, intrcfg;
 	u_char enaddr[ETHER_ADDR_LEN];
+	int (*isr)(void *);
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, 0x10);
 	if (pci_mapreg_map(pa, 0x10, memtype, 0, &sc->sc_iot0, &sc->sc_ioh0,
@@ -239,15 +241,36 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (pci_intr_map(pa, &ih)) {
+	WRITE_CMD(sc, VMXNET3_CMD_GET_INTRCFG);
+	intrcfg = READ_BAR1(sc, VMXNET3_BAR1_CMD);
+	isr = vmxnet3_intr;
+
+	switch (intrcfg & VMXNET3_INTRCFG_TYPE_MASK) {
+	case VMXNET3_INTRCFG_TYPE_AUTO:
+		printf(", auto");
+	case VMXNET3_INTRCFG_TYPE_MSIX:
+		printf(", msix");
+		/* FALLTHROUGH */
+	case VMXNET3_INTRCFG_TYPE_MSI:
+		printf(", msi");
+		if (pci_intr_map_msi(pa, &ih) == 0)
+			break;
+
+		/* FALLTHROUGH */
+	case VMXNET3_INTRCFG_TYPE_INTX:
+		printf(", intx");
+		isr = vmxnet3_intr_intx;
+		if (pci_intr_map(pa, &ih) == 0)
+			break;
+
 		printf(": failed to map interrupt\n");
 		return;
 	}
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET | IPL_MPSAFE,
-	    vmxnet3_intr, sc, self->dv_xname);
+	    isr, sc, self->dv_xname);
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	if (intrstr)
-		printf(": %s", intrstr);
+		printf(": %x %s", intrcfg, intrstr);
 
 	WRITE_CMD(sc, VMXNET3_CMD_GET_MACL);
 	macl = READ_BAR1(sc, VMXNET3_BAR1_CMD);
@@ -611,13 +634,21 @@ vmxnet3_disable_all_intrs(struct vmxnet3_softc *sc)
 }
 
 int
+vmxnet3_intr_intx(void *arg)
+{
+	struct vmxnet3_softc *sc = arg;
+
+	if (READ_BAR1(sc, VMXNET3_BAR1_INTR) == 0)
+		return 0;
+
+	return (vmxnet3_intr(sc));
+}
+
+int
 vmxnet3_intr(void *arg)
 {
 	struct vmxnet3_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-
-	if (READ_BAR1(sc, VMXNET3_BAR1_INTR) == 0)
-		return 0;
 
 	if (sc->sc_ds->event) {
 		KERNEL_LOCK();
