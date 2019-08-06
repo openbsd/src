@@ -232,6 +232,7 @@
 ./etc/signify/openbsd-66-pkg.pub
 ./etc/signify/openbsd-66-syspatch.pub
 ./etc/signify/openbsd-67-base.pub
+./etc/signify/openbsd-67-pkg.pub
 ./etc/skel
 ./etc/skel/.ssh
 ./etc/ssh
