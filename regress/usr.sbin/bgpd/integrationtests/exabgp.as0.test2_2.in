@@ -1,0 +1,24 @@
+process reader {
+	run /bin/sh "##BGPDCONFIGDIR##/api-exabgp.sh";
+	encoder text;
+}
+
+neighbor 10.12.57.1 {
+	router-id 10.12.57.3;
+	local-address 10.12.57.3;
+	local-as 64502;
+	peer-as 64500;
+	group-updates;
+	adj-rib-in false;
+	passive false;
+
+	family {
+		ipv4 unicast;
+	}
+
+	static {
+		route 10.12.1.0/24 next-hop self ;
+		route 10.12.2.0/24 next-hop self as-path [ 64502 0 64505 ];
+		route 10.12.3.0/24 next-hop self as-path [ 64502 64505 ] aggregator 0:127.0.0.1;
+	}
+}
