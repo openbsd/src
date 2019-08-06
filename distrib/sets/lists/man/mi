@@ -1,4 +1,3 @@
-./usr/share/man/man4/arm64/smbios.4
 ./usr/share/doc/mg/tutorial
 ./usr/share/info/amdref.info
 ./usr/share/info/cvs.info
@@ -1224,6 +1223,7 @@
 ./usr/share/man/man4/arm64/apm.4
 ./usr/share/man/man4/arm64/efi.4
 ./usr/share/man/man4/arm64/intro.4
+./usr/share/man/man4/arm64/smbios.4
 ./usr/share/man/man4/armv7/agtimer.4
 ./usr/share/man/man4/armv7/amdisplay.4
 ./usr/share/man/man4/armv7/ampintc.4
@@ -1244,7 +1244,6 @@
 ./usr/share/man/man4/armv7/omwugen.4
 ./usr/share/man/man4/armv7/prcm.4
 ./usr/share/man/man4/armv7/sitaracm.4
-./usr/share/man/man4/arm64/smbios.4
 ./usr/share/man/man4/armv7/sxidog.4
 ./usr/share/man/man4/armv7/sxie.4
 ./usr/share/man/man4/armv7/sxiintc.4
