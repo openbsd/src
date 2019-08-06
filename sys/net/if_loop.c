@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.88 2018/09/09 10:11:41 henning Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.89 2019/08/06 22:57:54 bluhm Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -252,10 +252,10 @@ looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
 	}
 
-	/* Use the quick path only once to avoid stack overflow. */
-	if ((m->m_flags & M_LOOP) == 0)
-		return (if_input_local(ifp, m, dst->sa_family));
-
+	/*
+	 * Do not call if_input_local() directly.  Queue the packet to avoid
+	 * stack overflow and make TCP handshake over loopback work.
+	 */
 	return (if_output_local(ifp, m, dst->sa_family));
 }
 

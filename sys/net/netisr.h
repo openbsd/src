@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.50 2017/10/31 22:05:12 sashan Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.51 2019/08/06 22:57:54 bluhm Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -63,8 +63,6 @@ extern int	netisr;			/* scheduling bits for network */
 extern struct task if_input_task_locked;
 
 void	arpintr(void);
-void	ipintr(void);
-void	ip6intr(void);
 void	pppintr(void);
 void	bridgeintr(void);
 void	pppoeintr(void);

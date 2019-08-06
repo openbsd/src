@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.343 2019/06/10 23:48:21 dlg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.344 2019/08/06 22:57:54 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -109,8 +109,6 @@ int	ip_frags = 0;
 
 int *ipctl_vars[IPCTL_MAXID] = IPCTL_VARS;
 
-struct niqueue ipintrq = NIQUEUE_INITIALIZER(IPQ_MAXLEN, NETISR_IP);
-
 struct pool ipqent_pool;
 struct pool ipq_pool;
 
@@ -123,7 +121,6 @@ static struct mbuf_queue	ipsend_mq;
 extern struct niqueue		arpinq;
 
 int	ip_ours(struct mbuf **, int *, int, int);
-int	ip_local(struct mbuf **, int *, int, int);
 int	ip_dooptions(struct mbuf *, struct ifnet *);
 int	in_ouraddr(struct mbuf *, struct ifnet *, struct rtentry **);
 
@@ -202,43 +199,6 @@ ip_init(void)
 #ifdef IPSEC
 	ipsec_init();
 #endif
-}
-
-/*
- * Enqueue packet for local delivery.  Queuing is used as a boundary
- * between the network layer (input/forward path) running without
- * KERNEL_LOCK() and the transport layer still needing it.
- */
-int
-ip_ours(struct mbuf **mp, int *offp, int nxt, int af)
-{
-	/* We are already in a IPv4/IPv6 local deliver loop. */
-	if (af != AF_UNSPEC)
-		return ip_local(mp, offp, nxt, af);
-
-	niq_enqueue(&ipintrq, *mp);
-	*mp = NULL;
-	return IPPROTO_DONE;
-}
-
-/*
- * Dequeue and process locally delivered packets.
- */
-void
-ipintr(void)
-{
-	struct mbuf *m;
-	int off, nxt;
-
-	while ((m = niq_dequeue(&ipintrq)) != NULL) {
-#ifdef DIAGNOSTIC
-		if ((m->m_flags & M_PKTHDR) == 0)
-			panic("ipintr no HDR");
-#endif
-		off = 0;
-		nxt = ip_local(&m, &off, IPPROTO_IPV4, AF_UNSPEC);
-		KASSERT(nxt == IPPROTO_DONE);
-	}
 }
 
 /*
@@ -497,7 +457,7 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
  * If fragmented try to reassemble.  Pass to next level.
  */
 int
-ip_local(struct mbuf **mp, int *offp, int nxt, int af)
+ip_ours(struct mbuf **mp, int *offp, int nxt, int af)
 {
 	struct mbuf *m = *mp;
 	struct ip *ip = mtod(m, struct ip *);
@@ -1640,8 +1600,7 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		    newlen));
 #endif
 	case IPCTL_IFQUEUE:
-		return (sysctl_niq(name + 1, namelen - 1,
-		    oldp, oldlenp, newp, newlen, &ipintrq));
+		return (EOPNOTSUPP);
 	case IPCTL_ARPQUEUE:
 		return (sysctl_niq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &arpinq));
