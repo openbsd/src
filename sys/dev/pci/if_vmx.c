@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.47 2019/08/06 09:36:54 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.48 2019/08/06 10:09:37 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -70,7 +70,7 @@ struct vmxnet3_rxring {
 	struct mbuf *m[NRXDESC];
 	bus_dmamap_t dmap[NRXDESC];
 	struct if_rxring rxr;
-	struct timeoutgrefill;
+	struct timeout refill;
 	struct vmxnet3_rxdesc *rxd;
 	u_int fill;
 	u_int8_t gen;
