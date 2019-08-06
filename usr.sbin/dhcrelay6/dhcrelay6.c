@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay6.c,v 1.2 2017/03/17 16:45:27 jmc Exp $	*/
+/*	$OpenBSD: dhcrelay6.c,v 1.3 2019/08/06 11:07:37 krw Exp $	*/
 
 /*
  * Copyright (c) 2017 Rafael Zalamena <rzalamena@openbsd.org>
@@ -253,7 +253,7 @@ main(int argc, char *argv[])
 
 	if ((pw = getpwnam(DHCRELAY6_USER)) == NULL)
 		fatalx("user \"%s\" not found", DHCRELAY6_USER);
-	if (chroot(_PATH_VAREMPTY) == -1)
+	if (chroot(pw->pw_dir) == -1)
 		fatal("chroot");
 	if (chdir("/") == -1)
 		fatal("chdir(\"/\")");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.56 2017/02/16 00:24:43 krw Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.57 2019/08/06 11:07:37 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -48,7 +48,6 @@
 
 #include <err.h>
 #include <netdb.h>
-#include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -245,8 +244,8 @@ main(int argc, char *argv[])
 
 	icmp_startup(1, lease_pinged);
 
-	if (chroot(_PATH_VAREMPTY) == -1)
-		fatal("chroot %s", _PATH_VAREMPTY);
+	if (chroot(pw->pw_dir) == -1)
+		fatal("chroot %s", pw->pw_dir);
 	if (chdir("/") == -1)
 		fatal("chdir(\"/\")");
 	if (setgroups(1, &pw->pw_gid) ||
