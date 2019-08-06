@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.332 2019/08/05 23:28:55 bluhm Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.333 2019/08/06 22:45:02 bluhm Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -433,10 +433,10 @@ dounmount(struct mount *mp, int flags, struct proc *p)
 			if (error) {
 				if ((flags & MNT_DOOMED)) {
 					/*
-					 * If the mount point was busy due to 
+					 * If the mount point was busy due to
 					 * being unmounted, it has been removed
 					 * from the mount list already.
-					 * Restart the iteration from the last 
+					 * Restart the iteration from the last
 					 * collected busy entry.
 					 */
 					mp = SLIST_FIRST(&mplist);
@@ -449,7 +449,7 @@ dounmount(struct mount *mp, int flags, struct proc *p)
 		}
 	}
 
-	/* 
+	/*
 	 * Nested mount points cannot appear during this loop as mounting
 	 * requires a read lock for the parent mount point.
 	 */
@@ -3202,7 +3202,7 @@ sys_preadv(struct proc *p, void *v, register_t *retval)
 	error = dofilereadv(p, SCARG(uap, fd), &auio, FO_POSITION, retval);
  done:
 	iovec_free(iov, iovcnt);
- 	return (error);
+	return (error);
 }
 
 /*
@@ -3264,5 +3264,5 @@ sys_pwritev(struct proc *p, void *v, register_t *retval)
 	error = dofilewritev(p, SCARG(uap, fd), &auio, FO_POSITION, retval);
  done:
 	iovec_free(iov, iovcnt);
- 	return (error);
+	return (error);
 }
