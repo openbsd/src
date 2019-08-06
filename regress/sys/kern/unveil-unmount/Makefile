@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2019/08/05 23:32:04 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2019/08/06 11:38:16 bluhm Exp $
 
 # Call unveil(2) in combination with unlink(2), chroot(2), chdir(2).
 # Use umount(8) to check that the mountpoint leaks no vnode.
@@ -119,6 +119,22 @@ run-chroot-open-rootslash:
 	${SUDO} mkdir -p /mnt/regress-unveil
 	${SUDO} touch /mnt/regress-unveil/baz
 	${SUDO} ./unveil-chroot /mnt/regress-unveil / //baz
+	${SUDO} umount /mnt/regress-unveil
+
+REGRESS_TARGETS +=	run-chroot-unveil-rootdot-open
+run-chroot-unveil-rootdotdot-open:
+	@echo '\n======== $@ ========'
+	${SUDO} mkdir -p /mnt/regress-unveil
+	${SUDO} touch /mnt/regress-unveil/baz
+	${SUDO} ./unveil-chroot /mnt/regress-unveil /. /baz
+	${SUDO} umount /mnt/regress-unveil
+
+REGRESS_TARGETS +=	run-chroot-unveil-rootdotdot-open
+run-chroot-unveil-rootdotdot-open:
+	@echo '\n======== $@ ========'
+	${SUDO} mkdir -p /mnt/regress-unveil
+	${SUDO} touch /mnt/regress-unveil/baz
+	${SUDO} ./unveil-chroot /mnt/regress-unveil /.. /baz
 	${SUDO} umount /mnt/regress-unveil
 
 REGRESS_TARGETS +=	run-perm
