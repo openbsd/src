@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.155 2018/10/22 17:31:24 krw Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.156 2019/08/06 13:34:36 mestre Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -1518,15 +1518,6 @@ main(int argc, char *argv[])
 				_exit(1);
 			}
 			close(trappipe[1]);
-
-			if (chroot("/var/empty") == -1) {
-				syslog(LOG_ERR, "cannot chroot to /var/empty.");
-				exit(1);
-			}
- 			if (chdir("/") == -1) {
-				syslog(LOG_ERR, "cannot chdir to /");
-				exit(1);
-			}
 
 			if (setgroups(1, &pw->pw_gid) ||
 			    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
