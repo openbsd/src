@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.12 2019/05/26 15:22:31 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.13 2019/08/06 19:24:45 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -982,10 +982,7 @@ vio_populate_rx_mbufs(struct vio_softc *sc)
 
 	if (done)
 		virtio_notify(vsc, vq);
-	if (vq->vq_used_idx != vq->vq_avail_idx)
-		timeout_del(&sc->sc_rxtick);
-	else
-		timeout_add_sec(&sc->sc_rxtick, 1);
+	timeout_add_sec(&sc->sc_rxtick, 1);
 }
 
 /* dequeue received packets */
