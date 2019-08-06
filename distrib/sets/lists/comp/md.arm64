@@ -47,6 +47,7 @@
 ./usr/include/arm64/reloc.h
 ./usr/include/arm64/setjmp.h
 ./usr/include/arm64/signal.h
+./usr/include/arm64/smbiosvar.h
 ./usr/include/arm64/softintr.h
 ./usr/include/arm64/spinlock.h
 ./usr/include/arm64/stdarg.h
