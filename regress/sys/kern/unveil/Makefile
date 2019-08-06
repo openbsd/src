@@ -1,14 +1,16 @@
-#	$OpenBSD: Makefile,v 1.2 2018/07/07 23:16:24 beck Exp $
+#	$OpenBSD: Makefile,v 1.3 2019/08/06 20:21:36 bluhm Exp $
+
 PROG=	unveil_test
-SRCS+=	syscalls.c
+SRCS=	syscalls.c
+CFLAGS=	-Wall
 NOMAN=	yes
+LDADD=	-lutil
+DPADD=	${LIBUTIL}
 
-LDADD+=		-lutil
-CFLAGS+=	-Wall
-
-REGRESS_TARGETS+=	test_normal
+REGRESS_TARGETS =	test_normal
+REGRESS_ROOT_TARGETS =	test_normal
 
 test_normal: ${PROG}
-	./${PROG} 
+	${SUDO} ./${PROG}
 
 .include <bsd.regress.mk>
