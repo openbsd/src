@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.49 2019/08/06 10:15:27 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.50 2019/08/06 10:54:40 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -247,18 +247,14 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 
 	switch (intrcfg & VMXNET3_INTRCFG_TYPE_MASK) {
 	case VMXNET3_INTRCFG_TYPE_AUTO:
-		printf(", auto");
 	case VMXNET3_INTRCFG_TYPE_MSIX:
-		printf(", msix");
 		/* FALLTHROUGH */
 	case VMXNET3_INTRCFG_TYPE_MSI:
-		printf(", msi");
 		if (pci_intr_map_msi(pa, &ih) == 0)
 			break;
 
 		/* FALLTHROUGH */
 	case VMXNET3_INTRCFG_TYPE_INTX:
-		printf(", intx");
 		isr = vmxnet3_intr_intx;
 		if (pci_intr_map(pa, &ih) == 0)
 			break;
@@ -270,7 +266,7 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 	    isr, sc, self->dv_xname);
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	if (intrstr)
-		printf(": %x %s", intrcfg, intrstr);
+		printf(": %s", intrstr);
 
 	WRITE_CMD(sc, VMXNET3_CMD_GET_MACL);
 	macl = READ_BAR1(sc, VMXNET3_BAR1_CMD);
