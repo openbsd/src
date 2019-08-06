@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: mrt.sh,v 1.2 2019/06/28 05:47:28 claudio Exp $
+#	$OpenBSD: mrt.sh,v 1.3 2019/08/06 07:31:53 claudio Exp $
 
 set -e
 
@@ -21,12 +21,20 @@ error_notify() {
 	fi
 }
 
+if [ "$(id -u)" -ne 0 ]; then 
+	echo need root privileges >&2
+	exit 1
+fi
+
 trap 'error_notify $?' EXIT
 
 echo check if rdomains are busy
 if /sbin/ifconfig lo${RDOMAIN1} > /dev/null 2>&1; then
-    echo routing domain ${RDOMAIN1} is already used >&2; exit 1;
+    echo routing domain ${RDOMAIN1} is already used >&2
+    exit 1
 fi
+
+set -x
 
 echo setup
 ifconfig mpe${RDOMAIN1} rdomain ${RDOMAIN1} mplslabel 42
@@ -37,7 +45,7 @@ route -T ${RDOMAIN1} exec ${BGPD} \
 
 sleep 2
 
-pkill -USR1 -T ${RDOMAIN1} -U 0 bgpd
+pkill -USR1 -T ${RDOMAIN1} -u 0 bgpd
 
 sleep 2
 

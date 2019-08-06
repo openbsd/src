@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: ovs.sh,v 1.2 2019/05/29 08:52:50 claudio Exp $
+#	$OpenBSD: ovs.sh,v 1.3 2019/08/06 07:31:53 claudio Exp $
 
 set -e
 
@@ -44,12 +44,19 @@ error_notify() {
 	fi
 }
 
+if [ "$(id -u)" -ne 0 ]; then 
+	echo need root privileges >&2
+	exit 1
+fi
+
 trap 'error_notify $?' EXIT
 
 echo check if rdomains are busy
 for n in ${RDOMAINS}; do
-	if /sbin/ifconfig | grep -v "^lo${n}:" | grep " rdomain ${n} "; then \
-	    echo routing domain ${n} is already used >&2; exit 1; fi
+	if /sbin/ifconfig | grep -v "^lo${n}:" | grep " rdomain ${n} "; then
+		echo routing domain ${n} is already used >&2
+		exit 1
+	fi
 done
 
 echo check if interfaces are busy
@@ -57,6 +64,8 @@ for n in ${PAIRS}; do
 	/sbin/ifconfig "${n}" >/dev/null 2>&1 && \
 	    ( echo interface ${n} is already used >&2; exit 1 )
 done
+
+set -x
 
 echo setup
 ifconfig ${PAIR1} rdomain ${RDOMAIN1} ${PAIR1IP}/30 up
