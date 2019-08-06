@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.24 2019/08/04 23:51:45 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.25 2019/08/06 04:01:42 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -67,7 +67,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	int	numrela;
 	int	relrela;
 	int	fails = 0;
-	struct load_list *llist;
 	Elf32_Addr loff;
 	Elf32_Rela  *relas;
 	Elf32_Addr prev_value = 0, prev_ooff = 0;
@@ -89,21 +88,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 	if (relrela > numrela)
 		_dl_die("relacount > numrel: %d > %d", relrela, numrela);
-
-	/*
-	 * Change protection of all write protected segments in the object
-	 * so we can do relocations such as DISP26. After relocation,
-	 * restore protection.
-	 */
-	if (object->dyn.textrel == 1 && (rel == DT_REL || rel == DT_RELA)) {
-		for (llist = object->load_list; llist != NULL;
-		    llist = llist->next) {
-			if (!(llist->prot & PROT_WRITE)) {
-				_dl_mprotect(llist->start, llist->size,
-				    PROT_READ | PROT_WRITE);
-			}
-		}
-	}
 
 	/* tight loop for leading RELATIVE relocs */
 	for (i = 0; i < relrela; i++, relas++) {
@@ -228,16 +212,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		default:
 			_dl_die("%s: unsupported relocation '%s' %d at %p\n",
 			    object->load_name, symn, type, (void *)r_addr);
-		}
-	}
-
-	/* reprotect the unprotected segments */
-	if (object->dyn.textrel == 1 && (rel == DT_REL || rel == DT_RELA)) {
-		for (llist = object->load_list; llist != NULL;
-		    llist = llist->next) {
-			if (!(llist->prot & PROT_WRITE))
-				_dl_mprotect(llist->start, llist->size,
-				    llist->prot);
 		}
 	}
 

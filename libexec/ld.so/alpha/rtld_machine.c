@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.66 2019/08/04 23:51:45 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.67 2019/08/06 04:01:41 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -59,7 +59,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	Elf64_Addr prev_value = 0;
 	const Elf_Sym *prev_sym = NULL;
 	Elf64_Rela  *relas;
-	struct load_list *llist;
 
 	loff = object->obj_base;
 	numrela = object->Dyn.info[relasz] / sizeof(Elf64_Rela);
@@ -74,20 +73,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 	if (! object->Dyn.info[DT_PROC(DT_ALPHA_PLTRO)])
 		_dl_die("unsupported insecure PLT object");
-
-	/*
-	 * unprotect some segments if we need it.
-	 * XXX - we unprotect way to much. only the text can have cow
-	 * relocations.
-	 */
-	if ((object->dyn.textrel == 1) && (rel == DT_REL || rel == DT_RELA)) {
-		for (llist = object->load_list; llist != NULL; llist = llist->next) {
-			if (!(llist->prot & PROT_WRITE)) {
-				_dl_mprotect(llist->start, llist->size,
-				    PROT_READ | PROT_WRITE);
-			}
-		}
-	}
 
 	/* tight loop for leading RELATIVE relocs */
 	for (i = 0; i < relrel; i++, relas++) {
@@ -189,14 +174,6 @@ resolve_failed:
 	}
 	__asm volatile("imb" : : : "memory");
 
-	/* reprotect the unprotected segments */
-	if ((object->dyn.textrel == 1) && (rel == DT_REL || rel == DT_RELA)) {
-		for (llist = object->load_list; llist != NULL; llist = llist->next) {
-			if (!(llist->prot & PROT_WRITE))
-				_dl_mprotect(llist->start, llist->size,
-				    llist->prot);
-		}
-	}
 	return (fails);
 }
 

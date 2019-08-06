@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.30 2019/08/04 23:51:45 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.31 2019/08/06 04:01:42 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -65,7 +65,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	int	i;
 	int	numrel;
 	int	fails = 0;
-	struct load_list *load_list;
 	Elf64_Addr loff;
 	Elf64_Rel  *relocs;
 	const Elf64_Sym *sym, *this;
@@ -78,19 +77,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 
 	if (relocs == NULL)
 		return(0);
-
-	/*
-	 * Change protection of all write protected segments in the
-	 * object so we can do relocations in the .rodata section.
-	 * After relocation restore protection.
-	 */
-	if (object->dyn.textrel) {
-		for (load_list = object->load_list; load_list != NULL; load_list = load_list->next) {
-			if ((load_list->prot & PROT_WRITE) == 0)
-				_dl_mprotect(load_list->start, load_list->size,
-				    PROT_READ | PROT_WRITE);
-		}
-	}
 
 	DL_DEB(("relocating %d\n", numrel));
 	for (i = 0; i < numrel; i++, relocs++) {
@@ -149,14 +135,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 			    ELF64_R_TYPE(relocs->r_info));
 		}
 	}
+
 	DL_DEB(("done %d fails\n", fails));
-	if (object->dyn.textrel) {
-		for (load_list = object->load_list; load_list != NULL; load_list = load_list->next) {
-			if ((load_list->prot & PROT_WRITE) == 0)
-				_dl_mprotect(load_list->start, load_list->size,
-				    load_list->prot);
-		}
-	}
 	return(fails);
 }
 

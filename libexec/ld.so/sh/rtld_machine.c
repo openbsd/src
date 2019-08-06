@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.28 2019/08/04 23:51:45 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.29 2019/08/06 04:01:42 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -608,7 +608,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	Elf_Addr prev_value = 0;
 	const Elf_Sym *prev_sym = NULL;
 	Elf_RelA *rels;
-	struct load_list *llist;
 
 	loff = object->obj_base;
 	numrela = object->Dyn.info[relasz] / sizeof(Elf_RelA);
@@ -620,19 +619,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 	if (relrel > numrela)
 		_dl_die("relacount > numrel: %ld > %ld", relrel, numrela);
-
-	/*
-	 * unprotect some segments if we need it.
-	 */
-	if ((object->dyn.textrel == 1) && (rel == DT_REL || rel == DT_RELA)) {
-		for (llist = object->load_list;
-		    llist != NULL;
-		    llist = llist->next) {
-			if (!(llist->prot & PROT_WRITE))
-				_dl_mprotect(llist->start, llist->size,
-				    PROT_READ | PROT_WRITE);
-		}
-	}
 
 	/* tight loop for leading RELATIVE relocs */
 	for (i = 0; i < relrel; i++, rels++) {
@@ -759,17 +745,6 @@ resolve_failed:
 		} else {
 			*where &= ~mask;
 			*where |= value;
-		}
-	}
-
-	/* reprotect the unprotected segments */
-	if ((object->dyn.textrel == 1) && (rel == DT_REL || rel == DT_RELA)) {
-		for (llist = object->load_list;
-		    llist != NULL;
-		    llist = llist->next) {
-			if (!(llist->prot & PROT_WRITE))
-				_dl_mprotect(llist->start, llist->size,
-				    llist->prot);
 		}
 	}
 

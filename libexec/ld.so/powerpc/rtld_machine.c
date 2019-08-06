@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.66 2019/08/04 23:51:45 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.67 2019/08/06 04:01:42 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -58,7 +58,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	int	numrela;
 	long	relrel;
 	int	fails = 0;
-	struct load_list *llist;
 	Elf32_Addr loff;
 	Elf32_Rela  *relas;
 	/* for jmp table relocations */
@@ -83,20 +82,6 @@ _dl_printf("object relocation size %x, numrela %x\n",
 
 	if (object->Dyn.info[DT_PROC(DT_PPC_GOT)] == 0)
 		_dl_die("unsupported insecure BSS PLT object");
-
-	/*
-	 * Change protection of all write protected segments in the object
-	 * so we can do relocations such as REL24, REL16 etc. After
-	 * relocation restore protection.
-	 */
-	if ((object->dyn.textrel == 1) && (rel == DT_REL || rel == DT_RELA)) {
-		for (llist = object->load_list; llist != NULL; llist = llist->next) {
-			if (!(llist->prot & PROT_WRITE)) {
-				_dl_mprotect(llist->start, llist->size,
-				    PROT_READ | PROT_WRITE);
-			}
-		}
-	}
 
 	/* tight loop for leading RELATIVE relocs */
 	for (i = 0; i < relrel; i++, relas++) {
@@ -310,14 +295,6 @@ _dl_printf(" found other symbol at %x size %d\n",
 		}
 	}
 
-	/* reprotect the unprotected segments */
-	if ((object->dyn.textrel == 1) && (rel == DT_REL || rel == DT_RELA)) {
-		for (llist = object->load_list; llist != NULL; llist = llist->next) {
-			if (!(llist->prot & PROT_WRITE))
-				_dl_mprotect(llist->start, llist->size,
-				    llist->prot);
-		}
-	}
 	return(fails);
 }
 

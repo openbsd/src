@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.184 2019/08/04 23:51:45 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.185 2019/08/06 04:01:41 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -58,6 +58,8 @@ void _dl_fixup_user_env(void) __boot;
 void _dl_call_preinit(elf_object_t *) __boot;
 void _dl_call_init_recurse(elf_object_t *object, int initfirst);
 void _dl_clean_boot(void);
+static inline void unprotect_if_textrel(elf_object_t *_object);
+static inline void reprotect_if_textrel(elf_object_t *_object);
 
 int _dl_pagesz __relro = 4096;
 int _dl_bindnow __relro = 0;
@@ -702,8 +704,10 @@ _dl_rtld(elf_object_t *object)
 	/*
 	 * Do relocation information first, then GOT.
 	 */
+	unprotect_if_textrel(object);
 	fails =_dl_md_reloc(object, DT_REL, DT_RELSZ);
 	fails += _dl_md_reloc(object, DT_RELA, DT_RELASZ);
+	reprotect_if_textrel(object);
 	fails += _dl_md_reloc_got(object, !(_dl_bindnow ||
 	    object->obj_flags & DF_1_NOW));
 
@@ -888,4 +892,31 @@ _dl_cb_cb(int version)
 	if (version == 0)
 		return &callbacks_0;
 	return NULL;
+}
+
+static inline void
+unprotect_if_textrel(elf_object_t *object)
+{
+	struct load_list *ll;
+
+	if (__predict_false(object->dyn.textrel == 1)) {
+		for (ll = object->load_list; ll != NULL; ll = ll->next) {
+			if ((ll->prot & PROT_WRITE) == 0)
+				_dl_mprotect(ll->start, ll->size,
+				    PROT_READ | PROT_WRITE);
+		}
+	}
+}
+
+static inline void
+reprotect_if_textrel(elf_object_t *object)
+{
+	struct load_list *ll;
+
+	if (__predict_false(object->dyn.textrel == 1)) {
+		for (ll = object->load_list; ll != NULL; ll = ll->next) {
+			if ((ll->prot & PROT_WRITE) == 0)
+				_dl_mprotect(ll->start, ll->size, ll->prot);
+		}
+	}
 }
