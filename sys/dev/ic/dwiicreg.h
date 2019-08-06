@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiicreg.h,v 1.1 2017/11/16 18:12:27 jcs Exp $ */
+/* $OpenBSD: dwiicreg.h,v 1.2 2019/08/06 06:56:29 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -49,6 +49,8 @@
 #define DW_IC_TX_ABRT_SOURCE	0x80
 #define DW_IC_ENABLE_STATUS	0x9c
 #define DW_IC_COMP_PARAM_1	0xf4
+#define DW_IC_TX_FIFO_DEPTH(x)	((((x) >> 16) & 0xff) + 1)
+#define DW_IC_RX_FIFO_DEPTH(x)	((((x) >> 8) & 0xff) + 1)
 #define DW_IC_COMP_VERSION	0xf8
 #define DW_IC_SDA_HOLD_MIN_VERS	0x3131312A
 #define DW_IC_COMP_TYPE		0xfc

@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.5 2019/07/16 19:12:32 jcs Exp $ */
+/* $OpenBSD: dwiic.c,v 1.6 2019/08/06 06:56:29 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -128,6 +128,8 @@ int
 dwiic_init(struct dwiic_softc *sc)
 {
 	uint32_t reg;
+	uint8_t tx_fifo_depth;
+	uint8_t rx_fifo_depth;
 
 	/* make sure we're talking to a device we know */
 	reg = dwiic_read(sc, DW_IC_COMP_TYPE);
@@ -168,6 +170,14 @@ dwiic_init(struct dwiic_softc *sc)
 	/* FIFO threshold levels */
 	sc->tx_fifo_depth = 32;
 	sc->rx_fifo_depth = 32;
+	reg = dwiic_read(sc, DW_IC_COMP_PARAM_1);
+	tx_fifo_depth = DW_IC_TX_FIFO_DEPTH(reg);
+	rx_fifo_depth = DW_IC_RX_FIFO_DEPTH(reg);
+	if (tx_fifo_depth > 1 && tx_fifo_depth < sc->tx_fifo_depth)
+		sc->tx_fifo_depth = tx_fifo_depth;
+	if (rx_fifo_depth > 1 && rx_fifo_depth < sc->rx_fifo_depth)
+		sc->rx_fifo_depth = rx_fifo_depth;
+		
 	dwiic_write(sc, DW_IC_TX_TL, sc->tx_fifo_depth / 2);
 	dwiic_write(sc, DW_IC_RX_TL, 0);
 
