@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.18 2019/07/20 23:06:51 mpi Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.19 2019/08/06 18:06:32 kettenis Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
@@ -126,7 +126,10 @@ void
 sun4v_send_ipi(int itid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 {
 	struct cpu_info *ci = curcpu();
+	u_int64_t s;
 	int err, i;
+
+	s = intr_disable();
 
 	stha(ci->ci_cpuset, ASI_PHYS_CACHED, itid);
 	stxa(ci->ci_mondo, ASI_PHYS_CACHED, (vaddr_t)func);
@@ -139,6 +142,9 @@ sun4v_send_ipi(int itid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 			break;
 		delay(10);
 	}
+
+	intr_restore(s);
+
 	if (err != H_EOK)
 		panic("Unable to send mondo %llx to cpu %d: %d",
 		    (u_int64_t)func, itid, err);
