@@ -1,7 +1,7 @@
 #!/bin/ksh
-#  $OpenBSD: check_sym,v 1.6 2019/04/21 04:21:44 guenther Exp $
+#  $OpenBSD: check_sym,v 1.7 2019/08/07 21:31:03 guenther Exp $
 #
-# Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
+# Copyright (c) 2016,2019 Philip Guenther <guenther@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -51,7 +51,7 @@
 #
 #	The *basic* rules of thumb for library versions are: if you
 #	 * stop exporting a symbol, or
-#	 * change the size of a data symbol (not reported by check_sym)
+#	 * change the size of a data symbol
 #	 * start exporting a symbol that an inter-dependent library needs
 #	then you need to bump the MAJOR version of the library.
 #
@@ -71,8 +71,6 @@
 #	may result in meaningless results.
 #
 #  BUGS
-#	Should report changes in the size of exported data objects.
-#
 #	While the author stills find the intermediate files useful,
 #	most people won't.  By default they should be placed in a
 #	temp directory and removed.
@@ -116,7 +114,7 @@ $usage" >&2
 	exit 0
 }
 
-file_list=/tmp/{D{,S,W},J,S,U,d,j,r,s}{1,2}
+file_list=/tmp/{D{,S,W,O},J,S,U,d,j,r,s}{1,2}
 
 verbose=false
 while getopts :chv opt "$@"
@@ -234,16 +232,19 @@ dynamic_sym() {
 		$5 == "GLOBAL" {print $8 | ("sort -o /tmp/DS" s) }
 		$5 == "WEAK"   {print $8 | ("sort -o /tmp/DW" s) }
 		$5 != "LOCAL"  {print $8 | ("sort -o /tmp/D" s) }
+		$5 != "LOCAL" && $4 == "OBJECT" {
+				print $8, $3 | ("sort -o /tmp/DO" s) }
 		{print $4, $5, $6, $8}' /tmp/s$1 | sort -o /tmp/d$1
-#	awk -v s=$1 '$2 == "GLOBAL" {print $4 | ("sort -o /tmp/DS" s) }
-#		     $2 == "WEAK"   {print $4 | ("sort -o /tmp/DW" s) }
-#		     $1 != "SECTION"{print $4}' /tmp/d$1 | sort -o /tmp/D$1
 }
 
 static_sym() { 
 	awk '/^Symbol table ..symtab/{s=1}
 	     /LOCAL/{next}
 	     s&&/^ *[1-9]/{print $4, $5, $6, $8}' /tmp/s$1 | sort -o /tmp/S$1
+}
+
+data_sym_changes() {
+	join "$@" | awk '$2 != $3 { print $1 " " $2 " --> " $3 }'
 }
 
 output_if_not_empty() {
@@ -277,6 +278,7 @@ else
 	output_if_not_empty "weakened:" comm -12 /tmp/DS1 /tmp/DW2
 	output_if_not_empty "strengthened:" comm -12 /tmp/DW1 /tmp/DS2
 fi
+output_if_not_empty "Data object size changes:" data_sym_changes /tmp/DO[12]
 if ! cmp -s /tmp/U[12]
 then
 	printf "External reference changes:\n"
