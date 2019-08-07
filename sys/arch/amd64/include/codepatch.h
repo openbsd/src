@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.h,v 1.9 2019/05/17 19:07:16 guenther Exp $    */
+/*      $OpenBSD: codepatch.h,v 1.10 2019/08/07 18:53:12 guenther Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -30,7 +30,8 @@ __cptext void codepatch_unmaprw(vaddr_t nva);
 __cptext void codepatch_fill_nop(void *caddr, uint16_t len);
 __cptext void codepatch_nop(uint16_t tag);
 __cptext void codepatch_replace(uint16_t tag, void *code, size_t len);
-__cptext void codepatch_call(uint16_t tag, void *func);
+__cptext void codepatch_call(uint16_t _tag, void *_func);
+__cptext void codepatch_jmp(uint16_t _tag, void *_func);
 void codepatch_disable(void);
 
 #endif /* !_LOCORE */

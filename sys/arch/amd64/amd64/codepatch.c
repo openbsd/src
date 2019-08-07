@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.c,v 1.7 2018/07/13 08:30:34 sf Exp $    */
+/*      $OpenBSD: codepatch.c,v 1.8 2019/08/07 18:53:12 guenther Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -38,6 +38,9 @@ extern struct codepatch codepatch_begin;
 extern struct codepatch codepatch_end;
 extern char __cptext_start[];
 extern char __cptext_end[];
+
+void	codepatch_control_flow(uint16_t _tag, void *_func, int _opcode,
+	    const char *_op);
 
 void
 codepatch_fill_nop(void *caddr, uint16_t len)
@@ -149,9 +152,23 @@ codepatch_replace(uint16_t tag, void *code, size_t len)
 	DBGPRINT("patched %d places", i);
 }
 
-/* Patch with calls to func */
 void
 codepatch_call(uint16_t tag, void *func)
+{
+	/* 0xe8 == call near */
+	codepatch_control_flow(tag, func, 0xe8, "call");
+}
+
+void
+codepatch_jmp(uint16_t tag, void *func)
+{
+	/* 0xe9 == jmp near */
+	codepatch_control_flow(tag, func, 0xe9, "jmp");
+}
+
+/* Patch with call or jump to func */
+void
+codepatch_control_flow(uint16_t tag, void *func, int opcode, const char *op)
 {
 	struct codepatch *patch;
 	unsigned char *rwaddr;
@@ -159,18 +176,18 @@ codepatch_call(uint16_t tag, void *func)
 	int i = 0;
 	vaddr_t rwmap = 0;
 
-	DBGPRINT("patching tag %u with call %p", tag, func);
+	DBGPRINT("patching tag %u with %s %p", tag, op, func);
 
 	for (patch = &codepatch_begin; patch < &codepatch_end; patch++) {
 		if (patch->tag != tag)
 			continue;
 		if (patch->len < 5)
-			panic("%s: can't replace len %u with call at %#lx",
-			    __func__, patch->len, patch->addr);
+			panic("%s: can't replace len %u with %s at %#lx",
+			    __func__, patch->len, op, patch->addr);
 
 		offset = (vaddr_t)func - (patch->addr + 5);
 		rwaddr = codepatch_maprw(&rwmap, patch->addr);
-		rwaddr[0] = 0xe8; /* call near */
+		rwaddr[0] = opcode;
 		memcpy(rwaddr + 1, &offset, sizeof(offset));
 		codepatch_fill_nop(rwaddr + 5, patch->len - 5);
 		i++;
