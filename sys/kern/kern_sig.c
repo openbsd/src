@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.232 2019/07/10 15:52:17 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.233 2019/08/07 14:14:01 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1527,7 +1527,7 @@ coredump(struct proc *p)
 	struct vattr vattr;
 	struct coredump_iostate	io;
 	int error, len, incrash = 0;
-	char name[MAXPATHLEN];
+	char *name;
 	const char *dir = "/var/crash";
 
 	if (pr->ps_emul->e_coredump == NULL)
@@ -1551,20 +1551,24 @@ coredump(struct proc *p)
 	if (USPACE + ptoa(vm->vm_dsize + vm->vm_ssize) >= lim_cur(RLIMIT_CORE))
 		return (EFBIG);
 
+	name = pool_get(&namei_pool, PR_WAITOK);
+
 	if (incrash && nosuidcoredump == 3) {
 		/*
 		 * If the program directory does not exist, dumps of
 		 * that core will silently fail.
 		 */
-		len = snprintf(name, sizeof(name), "%s/%s/%u.core",
+		len = snprintf(name, MAXPATHLEN, "%s/%s/%u.core",
 		    dir, pr->ps_comm, pr->ps_pid);
 	} else if (incrash && nosuidcoredump == 2)
-		len = snprintf(name, sizeof(name), "%s/%s.core",
+		len = snprintf(name, MAXPATHLEN, "%s/%s.core",
 		    dir, pr->ps_comm);
 	else
-		len = snprintf(name, sizeof(name), "%s.core", pr->ps_comm);
-	if (len >= sizeof(name))
+		len = snprintf(name, MAXPATHLEN, "%s.core", pr->ps_comm);
+	if (len >= MAXPATHLEN) {
+		pool_put(&namei_pool, name);
 		return (EACCES);
+	}
 
 	/*
 	 * Control the UID used to write out.  The normal case uses
@@ -1631,6 +1635,7 @@ coredump(struct proc *p)
 	vrele(vp);
 out:
 	crfree(cred);
+	pool_put(&namei_pool, name);
 	return (error);
 #endif
 }
