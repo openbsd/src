@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.481 2019/08/05 08:46:55 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.482 2019/08/07 06:55:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1508,7 +1508,7 @@ rde_attr_parse(u_char *p, u_int16_t len, struct rde_peer *peer,
 	struct bgpd_addr nexthop;
 	struct rde_aspath *a = &state->aspath;
 	u_char		*op = p, *npath;
-	u_int32_t	 tmp32;
+	u_int32_t	 tmp32, zero = 0;
 	int		 error;
 	u_int16_t	 attr_len, nlen;
 	u_int16_t	 plen = 0;
@@ -1682,12 +1682,25 @@ bad_flags:
 			t[0] = t[1] = 0;
 			UPD_READ(&t[2], p, plen, 2);
 			UPD_READ(&t[4], p, plen, 4);
+			if (memcmp(t, &zero, sizeof(u_int32_t)) == 0) {
+				/* As per RFC7606 use "attribute discard". */
+				log_peer_warnx(&peer->conf, "bad AGGREGATOR, "
+				    "AS 0 not allowed, attribute discarded");
+				break;
+			}
 			if (attr_optadd(a, flags, type, t,
 			    sizeof(t)) == -1)
 				goto bad_list;
 			break;
 		}
 		/* 4-byte ready server take the default route */
+		if (memcmp(p, &zero, sizeof(u_int32_t)) == 0) {
+			/* As per RFC7606 use "attribute discard" here. */
+			log_peer_warnx(&peer->conf, "bad AGGREGATOR, "
+			    "AS 0 not allowed, attribute discarded");
+			plen += attr_len;
+			break;
+		}
 		goto optattr;
 	case ATTR_COMMUNITIES:
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
@@ -1793,6 +1806,13 @@ bad_flags:
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
+		if (memcmp(p, &zero, sizeof(u_int32_t)) == 0) {
+			/* As per RFC6793 use "attribute discard" here. */
+			log_peer_warnx(&peer->conf, "bad AS4_AGGREGATOR, "
+			    "AS 0 not allowed, attribute discarded");
+			plen += attr_len;
+			break;
+		}
 		a->flags |= F_ATTR_AS4BYTE_NEW;
 		goto optattr;
 	case ATTR_AS4_PATH:
