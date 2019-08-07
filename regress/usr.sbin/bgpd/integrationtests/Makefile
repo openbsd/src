@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.7 2019/08/06 15:49:57 claudio Exp $
+# $OpenBSD: Makefile,v 1.8 2019/08/07 07:57:48 claudio Exp $
 
-REGRESS_TARGETS	= 	network_statement md5 ovs mrt
+REGRESS_TARGETS	= 	network_statement md5 ovs mrt as0
 
 BGPD ?=			/usr/sbin/bgpd
 
