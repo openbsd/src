@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.139 2019/08/05 08:46:55 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.140 2019/08/07 10:26:41 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -385,9 +385,6 @@ print_mainconf(struct bgpd_config *conf)
 		printf("holdtime min %u\n", conf->min_holdtime);
 	if (conf->connectretry != INTERVAL_CONNECTRETRY)
 		printf("connect-retry %u\n", conf->connectretry);
-
-	if (conf->flags & BGPD_FLAG_NO_EVALUATE)
-		printf("route-collector yes\n");
 
 	if (conf->flags & BGPD_FLAG_DECISION_ROUTEAGE)
 		printf("rde route-age evaluate\n");

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.191 2019/06/17 14:00:45 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.192 2019/08/07 10:26:41 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 17 2019 $
+.Dd $Mdocdate: August 7 2019 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -333,16 +333,6 @@ more stable, route.
 In this case the decision process is no longer deterministic.
 The default is
 .Ic ignore .
-.Pp
-.It Xo
-.Ic route-collector
-.Pq Ic yes Ns | Ns Ic no
-.Xc
-If set to
-.Ic yes ,
-the route selection process is turned off.
-The default is
-.Ic no .
 .Pp
 .It Ic router-id Ar address
 Set the router ID to the given IP address, which must be local to the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.482 2019/08/07 06:55:53 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.483 2019/08/07 10:26:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -81,6 +81,9 @@ static void	 rde_softreconfig_out_done(void *, u_int8_t);
 static void	 rde_softreconfig_done(void);
 static void	 rde_softreconfig_out(struct rib_entry *, void *);
 static void	 rde_softreconfig_in(struct rib_entry *, void *);
+static void	 rde_softreconfig_sync_reeval(struct rib_entry *, void *);
+static void	 rde_softreconfig_sync_fib(struct rib_entry *, void *);
+static void	 rde_softreconfig_sync_done(void *, u_int8_t);
 int		 rde_update_queue_pending(void);
 void		 rde_update_queue_runner(void);
 void		 rde_update6_queue_runner(u_int8_t);
@@ -777,6 +780,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				if (!rib_valid(rid))
 					continue;
 				ribs[rid].state = RECONF_DELETE;
+				ribs[rid].fibstate = RECONF_NONE;
 			}
 			break;
 		case IMSG_RECONF_RIB:
@@ -785,29 +789,18 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				fatalx("IMSG_RECONF_RIB bad len");
 			memcpy(&rn, imsg.data, sizeof(rn));
 			rib = rib_byid(rib_find(rn.name));
-			if (rib == NULL)
+			if (rib == NULL) {
 				rib = rib_new(rn.name, rn.rtableid, rn.flags);
-			else if (
-			    (rib->flags & (F_RIB_NOFIB | F_RIB_NOEVALUATE)) !=
-			    (rn.flags & (F_RIB_NOFIB | F_RIB_NOEVALUATE)) ||
-			    (rib->rtableid != rn.rtableid &&
-			    !(rn.flags & (F_RIB_NOFIB | F_RIB_NOEVALUATE)))) {
-				struct filter_head	*in_rules;
-				struct rib_desc		*ribd = rib_desc(rib);
-				/*
-				 * Big hammer in the F_RIB_NOFIB case but
-				 * not often enough used to optimise it more.
-				 * Need to save the filters so that they're not
-				 * lost. If the rtableid changes but there is
-				 * no FIB no action is needed.
-				 */
-				in_rules = ribd->in_rules;
-				ribd->in_rules = NULL;
-				rib_free(rib);
-				rib = rib_new(rn.name, rn.rtableid, rn.flags);
-				ribd->in_rules = in_rules;
-			} else
+			} else if (rib->flags == rn.flags &&
+			    rib->rtableid == rn.rtableid) {
+				/* no change to rib apart from filters */
 				rib_desc(rib)->state = RECONF_KEEP;
+			} else {
+				/* reload rib because somehing changed */
+				rib->flags_tmp = rn.flags;
+				rib->rtableid_tmp = rn.rtableid;
+				rib_desc(rib)->state = RECONF_RELOAD;
+			}
 			break;
 		case IMSG_RECONF_FILTER:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -2686,6 +2679,14 @@ rde_l3vpn_import(struct rde_community *comm, struct l3vpn *rd)
 }
 
 void
+rde_send_kroute_flush(struct rib *rib)
+{
+	if (imsg_compose(ibuf_main, IMSG_KROUTE_FLUSH, rib->rtableid, 0, -1,
+	    NULL, 0) == -1)
+		fatal("%s %d imsg_compose error", __func__, __LINE__);
+}
+
+void
 rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 {
 	struct kroute_full	 kr;
@@ -2998,11 +2999,11 @@ rde_send_pftable_commit(void)
  * nexthop specific functions
  */
 void
-rde_send_nexthop(struct bgpd_addr *next, int valid)
+rde_send_nexthop(struct bgpd_addr *next, int insert)
 {
 	int			 type;
 
-	if (valid)
+	if (insert)
 		type = IMSG_NEXTHOP_ADD;
 	else
 		type = IMSG_NEXTHOP_REMOVE;
@@ -3029,13 +3030,6 @@ rde_reload_done(void)
 
 	softreconfig = 0;
 
-	/* first merge the main config */
-	if ((conf->flags & BGPD_FLAG_NO_EVALUATE) &&
-	    (nconf->flags & BGPD_FLAG_NO_EVALUATE) == 0) {
-		log_warnx("disabling of route-collector mode ignored");
-		nconf->flags |= BGPD_FLAG_NO_EVALUATE;
-	}
-
 	SIMPLEQ_INIT(&prefixsets_old);
 	SIMPLEQ_INIT(&originsets_old);
 	SIMPLEQ_INIT(&as_sets_old);
@@ -3044,7 +3038,9 @@ rde_reload_done(void)
 	SIMPLEQ_CONCAT(&as_sets_old, &conf->as_sets);
 	roa_old = conf->rde_roa;
 
+	/* merge the main config */
 	copy_config(conf, nconf);
+
 	/* need to copy the sets and roa table and clear them in nconf */
 	SIMPLEQ_CONCAT(&conf->rde_prefixsets, &nconf->rde_prefixsets);
 	SIMPLEQ_CONCAT(&conf->rde_originsets, &nconf->rde_originsets);
@@ -3111,6 +3107,7 @@ rde_reload_done(void)
 			    rde_softreconfig_in_done, NULL) == -1)
 				fatal("%s: prefix_dump_new", __func__);
 			log_peer_info(&peer->conf, "flushing Adj-RIB-Out");
+			softreconfig++;	/* account for the running flush */
 			continue;
 		}
 		if (!rde_filter_equal(out_rules, out_rules_tmp, peer)) {
@@ -3135,6 +3132,10 @@ rde_reload_done(void)
 		case RECONF_DELETE:
 			rib_free(&ribs[rid].rib);
 			break;
+		case RECONF_RELOAD:
+			rib_update(&ribs[rid].rib);
+			ribs[rid].state = RECONF_KEEP;
+			/* FALLTHROUGH */
 		case RECONF_KEEP:
 			if (rde_filter_equal(ribs[rid].in_rules,
 			    ribs[rid].in_rules_tmp, NULL))
@@ -3146,12 +3147,10 @@ rde_reload_done(void)
 			reload++;
 			break;
 		case RECONF_REINIT:
+			/* new rib */
 			ribs[rid].state = RECONF_RELOAD;
 			reload++;
 			break;
-		case RECONF_RELOAD:
-			log_warnx("Bad rib reload state");
-			/* FALLTHROUGH */
 		case RECONF_NONE:
 			break;
 		}
@@ -3195,12 +3194,29 @@ rde_softreconfig_in_done(void *arg, u_int8_t aid)
 		log_info("softreconfig in done");
 	}
 
-	/* now do the Adj-RIB-Out sync */
+	/* now do the Adj-RIB-Out sync and a possible FIB sync */
 	softreconfig = 0;
 	for (rid = 0; rid < rib_size; rid++) {
 		if (!rib_valid(rid))
 			continue;
 		ribs[rid].state = RECONF_NONE;
+		if (ribs[rid].fibstate == RECONF_RELOAD) {
+			if (rib_dump_new(rid, AID_UNSPEC, RDE_RUNNER_ROUNDS,
+			    &ribs[rid], rde_softreconfig_sync_fib,
+			    rde_softreconfig_sync_done, NULL) == -1)
+				fatal("%s: rib_dump_new", __func__);
+			softreconfig++;
+			log_info("starting fib sync for rib %s",
+			    ribs[rid].name);
+		} else if (ribs[rid].fibstate == RECONF_REINIT) {
+			if (rib_dump_new(rid, AID_UNSPEC, RDE_RUNNER_ROUNDS,
+			    &ribs[rid], rde_softreconfig_sync_reeval,
+			    rde_softreconfig_sync_done, NULL) == -1)
+				fatal("%s: rib_dump_new", __func__);
+			softreconfig++;
+			log_info("starting re-evaluation of rib %s",
+			    ribs[rid].name);
+		}
 	}
 
 	LIST_FOREACH(peer, &peerlist, peer_l) {
@@ -3242,14 +3258,11 @@ rde_softreconfig_out_done(void *arg, u_int8_t aid)
 	struct rib_desc		*rib = arg;
 
 	/* this RIB dump is done */
-	softreconfig--;
 	log_info("softreconfig out done for %s", rib->name);
 
-	/* but other dumps are still running */
-	if (softreconfig > 0)
-		return;
-
-	rde_softreconfig_done();
+	/* check if other dumps are still running */
+	if (--softreconfig == 0)
+		rde_softreconfig_done();
 }
 
 static void
@@ -3347,6 +3360,68 @@ rde_softreconfig_out(struct rib_entry *re, void *bula)
 	}
 }
 
+static void
+rde_softreconfig_sync_reeval(struct rib_entry *re, void *arg)
+{
+	struct prefix_list	prefixes;
+	struct prefix		*p, *next;
+	struct rib_desc		*rd = arg;
+
+	if (rd->rib.flags & F_RIB_NOEVALUATE) {
+		/*
+		 * evaluation process is turned off
+		 * so remove all prefixes from adj-rib-out
+		 * also unlink nexthop if it was linked
+		 */
+		LIST_FOREACH(p, &re->prefix_h, entry.list.rib) {
+			if (p->flags & PREFIX_NEXTHOP_LINKED)
+				nexthop_unlink(p);
+		}
+		if (re->active) {
+			rde_generate_updates(re_rib(re), NULL, re->active);
+			re->active = NULL;
+		}
+		return;
+	}
+
+	/* evaluation process is turned on, so evaluate all prefixes again */
+	re->active = NULL;
+	prefixes = re->prefix_h;
+	LIST_INIT(&re->prefix_h);
+
+	LIST_FOREACH_SAFE(p, &prefixes, entry.list.rib, next) {
+		/* need to re-link the nexthop if not already linked */
+		if ((p->flags & PREFIX_NEXTHOP_LINKED) == 0)
+			nexthop_link(p);
+		LIST_REMOVE(p, entry.list.rib);
+		prefix_evaluate(p, re);
+	}
+}
+
+static void
+rde_softreconfig_sync_fib(struct rib_entry *re, void *bula)
+{
+	if (re->active)
+		rde_send_kroute(re_rib(re), re->active, NULL);
+}
+
+static void
+rde_softreconfig_sync_done(void *arg, u_int8_t aid)
+{
+	struct rib_desc		*rd = arg;
+
+	/* this RIB dump is done */
+	if (rd->fibstate == RECONF_RELOAD)
+		log_info("fib sync done for %s", rd->name);
+	else
+		log_info("re-evaluation done for %s", rd->name);
+	rd->fibstate = RECONF_NONE;
+
+	/* check if other dumps are still running */
+	if (--softreconfig == 0)
+		rde_softreconfig_done();
+}
+
 /*
  * generic helper function
  */
@@ -3354,16 +3429,6 @@ u_int32_t
 rde_local_as(void)
 {
 	return (conf->as);
-}
-
-int
-rde_noevaluate(void)
-{
-	/* do not run while cleaning up */
-	if (rde_quit)
-		return (1);
-
-	return (conf->flags & BGPD_FLAG_NO_EVALUATE);
 }
 
 int
@@ -3601,13 +3666,6 @@ peer_up(u_int32_t id, struct session_up *sup)
 	}
 
 	peer->state = PEER_UP;
-
-	if (rde_noevaluate())
-		/*
-		 * no need to dump the table to the peer, there are no active
-		 * prefixes anyway. This is a speed up hack.
-		 */
-		return;
 
 	for (i = 0; i < AID_MAX; i++) {
 		if (peer->capa.mp[i])

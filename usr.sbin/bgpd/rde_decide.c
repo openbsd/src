@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.76 2019/07/22 07:34:16 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.77 2019/08/07 10:26:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -242,11 +242,20 @@ prefix_evaluate(struct prefix *p, struct rib_entry *re)
 {
 	struct prefix	*xp;
 
-	if (re_rib(re)->flags & F_RIB_NOEVALUATE || rde_noevaluate()) {
+	if (re_rib(re)->flags & F_RIB_NOEVALUATE) {
 		/* decision process is turned off */
 		if (p != NULL)
 			LIST_INSERT_HEAD(&re->prefix_h, p, entry.list.rib);
-		re->active = NULL;
+		if (re->active) {
+			/*
+			 * During reloads it is possible that the decision
+			 * process is turned off but prefixes are still
+			 * active. Clean up now to ensure that the RIB
+			 * is consistant.
+			 */
+			rde_generate_updates(re_rib(re), NULL, re->active);
+			re->active = NULL;
+		}
 		return;
 	}
 

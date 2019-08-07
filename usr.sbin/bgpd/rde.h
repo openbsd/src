@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.221 2019/07/22 07:32:16 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.222 2019/08/07 10:26:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -52,7 +52,9 @@ struct rib_entry {
 struct rib {
 	struct rib_tree		tree;
 	u_int			rtableid;
+	u_int			rtableid_tmp;
 	u_int16_t		flags;
+	u_int16_t		flags_tmp;
 	u_int16_t		id;
 };
 
@@ -65,7 +67,7 @@ struct rib_desc {
 	struct rib		rib;
 	struct filter_head	*in_rules;
 	struct filter_head	*in_rules_tmp;
-	enum reconf_action	state;
+	enum reconf_action	state, fibstate;
 };
 
 /*
@@ -356,6 +358,7 @@ int		mrt_dump_v2_hdr(struct mrt *, struct bgpd_config *,
 void		mrt_dump_upcall(struct rib_entry *, void *);
 
 /* rde.c */
+void		rde_send_kroute_flush(struct rib *);
 void		rde_send_kroute(struct rib *, struct prefix *, struct prefix *);
 void		rde_send_nexthop(struct bgpd_addr *, int);
 void		rde_send_pftable(u_int16_t, struct bgpd_addr *,
@@ -365,7 +368,6 @@ void		rde_send_pftable_commit(void);
 void		rde_generate_updates(struct rib *, struct prefix *,
 		    struct prefix *);
 u_int32_t	rde_local_as(void);
-int		rde_noevaluate(void);
 int		rde_decisionflags(void);
 int		rde_as4byte(struct rde_peer *);
 struct rde_peer	*peer_get(u_int32_t);
@@ -507,6 +509,7 @@ extern u_int16_t	 rib_size;
 extern struct rib_desc	*ribs;
 
 struct rib	*rib_new(char *, u_int, u_int16_t);
+void		 rib_update(struct rib *);
 struct rib	*rib_byid(u_int16_t);
 u_int16_t	 rib_find(char *);
 struct rib_desc	*rib_desc(struct rib *);

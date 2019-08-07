@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.201 2019/07/24 20:54:54 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.202 2019/08/07 10:26:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -178,6 +178,36 @@ rib_new(char *name, u_int rtableid, u_int16_t flags)
 	return (&ribs[id].rib);
 }
 
+/*
+ * This function is only called when the FIB information of a RIB changed.
+ * It will flush the FIB if there was one previously and change the fibstate
+ * from RECONF_NONE (nothing to do) to either RECONF_RELOAD (reload the FIB)
+ * or RECONF_REINIT (rerun the route decision process for every element)
+ * depending on the new flags.
+ */
+void
+rib_update(struct rib *rib)
+{
+	struct rib_desc *rd = rib_desc(rib);
+
+	/* flush fib first if there was one */
+	if ((rib->flags & (F_RIB_NOFIB | F_RIB_NOEVALUATE)) == 0)
+		rde_send_kroute_flush(rib);
+
+	/* if no evaluate changes then a full reinit is needed */
+	if ((rib->flags & F_RIB_NOEVALUATE) !=
+	    (rib->flags_tmp & F_RIB_NOEVALUATE))
+		rd->fibstate = RECONF_REINIT;
+
+	rib->flags = rib->flags_tmp;
+	rib->rtableid = rib->rtableid_tmp;
+
+	/* reload fib if there is no reinit pending and there will be a fib */
+	if (rd->fibstate != RECONF_REINIT &&
+	    (rib->flags & (F_RIB_NOFIB | F_RIB_NOEVALUATE)) == 0)
+		rd->fibstate = RECONF_RELOAD;
+}
+
 struct rib *
 rib_byid(u_int16_t rid)
 {
@@ -212,11 +242,19 @@ rib_desc(struct rib *rib)
 void
 rib_free(struct rib *rib)
 {
-	struct rib_desc *rd;
+	struct rib_desc *rd = rib_desc(rib);
 	struct rib_entry *re, *xre;
-	struct prefix *p, *np;
+	struct prefix *p;
 
 	rib_dump_abort(rib->id);
+
+	/*
+	 * flush the rib, disable route evaluation and fib sync to speed up
+	 * the prefix removal. Nothing depends on this data anymore.
+	 */
+	if ((rib->flags & (F_RIB_NOFIB | F_RIB_NOEVALUATE)) == 0)
+		rde_send_kroute_flush(rib);
+	rib->flags |= F_RIB_NOEVALUATE | F_RIB_NOFIB;
 
 	for (re = RB_MIN(rib_tree, rib_tree(rib)); re != NULL; re = xre) {
 		xre = RB_NEXT(rib_tree, rib_tree(rib), re);
@@ -229,7 +267,6 @@ rib_free(struct rib *rib)
 		 */
 		while ((p = LIST_FIRST(&re->prefix_h))) {
 			struct rde_aspath *asp = prefix_aspath(p);
-			np = LIST_NEXT(p, entry.list.rib);
 			if (asp && asp->pftableid) {
 				struct bgpd_addr addr;
 
@@ -239,13 +276,10 @@ rib_free(struct rib *rib)
 				    p->pt->prefixlen, 1);
 			}
 			prefix_destroy(p);
-			if (np == NULL)
-				break;
 		}
 	}
 	if (rib->id <= RIB_LOC_START)
 		return; /* never remove the default ribs */
-	rd = &ribs[rib->id];
 	filterlist_free(rd->in_rules_tmp);
 	filterlist_free(rd->in_rules);
 	memset(rd, 0, sizeof(struct rib_desc));
@@ -259,9 +293,10 @@ rib_shutdown(void)
 	for (id = 0; id < rib_size; id++) {
 		if (!rib_valid(id))
 			continue;
-		if (!RB_EMPTY(rib_tree(&ribs[id].rib)))
+		if (!RB_EMPTY(rib_tree(&ribs[id].rib))) {
 			log_warnx("%s: rib %s is not empty", __func__,
 			    ribs[id].name);
+		}
 		rib_free(&ribs[id].rib);
 	}
 	for (id = 0; id <= RIB_LOC_START; id++) {
@@ -1765,13 +1800,6 @@ nexthop_update(struct kroute_nexthop *msg)
 	memcpy(&nh->nexthop_net, &msg->net,
 	    sizeof(nh->nexthop_net));
 	nh->nexthop_netlen = msg->netlen;
-
-	if (rde_noevaluate())
-		/*
-		 * if the decision process is turned off there is no need
-		 * for the prefix list walk.
-		 */
-		return;
 
 	nh->next_prefix = LIST_FIRST(&nh->prefix_h);
 	TAILQ_INSERT_HEAD(&nexthop_runners, nh, runner_l);

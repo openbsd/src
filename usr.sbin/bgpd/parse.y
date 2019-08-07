@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.398 2019/08/07 06:53:48 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.399 2019/08/07 10:26:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -203,7 +203,7 @@ typedef struct {
 %token	ANNOUNCE CAPABILITIES REFRESH AS4BYTE CONNECTRETRY
 %token	DEMOTE ENFORCE NEIGHBORAS ASOVERRIDE REFLECTOR DEPEND DOWN
 %token	DUMP IN OUT SOCKET RESTRICTED
-%token	LOG ROUTECOLL TRANSPARENT
+%token	LOG TRANSPARENT
 %token	TCP MD5SIG PASSWORD KEY TTLSECURITY
 %token	ALLOW DENY MATCH
 %token	QUICK
@@ -613,12 +613,6 @@ conf_main	: AS as4number		{
 				rr->flags |= F_RIB_NOFIBSYNC;
 			else
 				rr->flags &= ~F_RIB_NOFIBSYNC;
-		}
-		| ROUTECOLL yesno	{
-			if ($2 == 1)
-				conf->flags |= BGPD_FLAG_NO_EVALUATE;
-			else
-				conf->flags &= ~BGPD_FLAG_NO_EVALUATE;
 		}
 		| TRANSPARENT yesno	{
 			if ($2 == 1)
@@ -2843,7 +2837,6 @@ lookup(char *s)
 		{ "restricted",		RESTRICTED},
 		{ "rib",		RIB},
 		{ "roa-set",		ROASET },
-		{ "route-collector",	ROUTECOLL},
 		{ "route-reflector",	REFLECTOR},
 		{ "router-id",		ROUTERID},
 		{ "rtable",		RTABLE},
