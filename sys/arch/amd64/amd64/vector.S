@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.79 2019/01/20 00:53:08 mlarkin Exp $	*/
+/*	$OpenBSD: vector.S,v 1.80 2019/08/07 18:53:28 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -141,6 +141,7 @@ calltrap_specstk:			# special stack path
 	.text
 	.globl	INTRENTRY_LABEL(calltrap_specstk)
 INTRENTRY_LABEL(calltrap_specstk):
+	lfence				# block speculation through jz above
 	cld
 	SMAP_CLAC
 	movq	%rsp,%rdi
@@ -183,6 +184,7 @@ IDTVEC(trap03)
 	.text
 	.global	INTRENTRY_LABEL(trap03)
 INTRENTRY_LABEL(trap03):
+	FENCE_NO_SAFE_SMAP
 	INTR_ENTRY_KERN
 	INTR_SAVE_MOST_GPRS_NO_ADJ
 	sti
@@ -313,7 +315,8 @@ IDTVEC(trap0d)
 .Lhandle_doreti:
 	/* iretq faulted; resume in a stub that acts like we got a #GP */
 	leaq	.Lhandle_doreti_resume(%rip),%rcx
-1:	movq	%rcx,24(%rsp)		/* over %r[cd]x and err to %rip */
+1:	lfence		/* block speculation through conditionals above */
+	movq	%rcx,24(%rsp)		/* over %r[cd]x and err to %rip */
 	popq	%rcx
 	popq	%rdx
 	addq	$8,%rsp			/* pop the err code */
@@ -388,12 +391,13 @@ KUTEXT_PAGE_START
 	 * the kernel page tables (thank you, Intel) will make us
 	 * continue at the "movq CPUVAR(KERN_RSP),%rax" after alltraps
 	 * below.  In case the CPU speculates past the mov to cr3,
-	 * we put a retpoline-style pause-jmp-to-pause loop.
+	 * we put a retpoline-style pause-lfence-jmp-to-pause loop.
 	 */
 Xalltraps:
 	swapgs
 	movq	%rax,CPUVAR(SCRATCH)
 	movq	CPUVAR(KERN_CR3),%rax
+	.byte	0x66, 0x90	/* space for FENCE_SWAPGS_MIS_TAKEN below */
 	movq	%rax,%cr3
 0:	pause
 	lfence
@@ -403,9 +407,12 @@ KUTEXT_PAGE_END
 KTEXT_PAGE_START
 	.align	NBPG, 0xcc
 GENTRY(alltraps)
+	CODEPATCH_START
 	testb	$SEL_RPL,24(%rsp)
 	je	alltraps_kern
 	swapgs
+	CODEPATCH_END(CPTAG_MELTDOWN_ALLTRAPS)
+	FENCE_SWAPGS_MIS_TAKEN
 	movq	%rax,CPUVAR(SCRATCH)
 	.space	(0b - Xalltraps) - (. - alltraps), 0x90
 
@@ -428,9 +435,15 @@ END(alltraps)
 
 /*
  * Traps from supervisor mode (kernel)
+ * If we're not mitigating Meltdown, then there's a conditional branch
+ * above and we may need a fence to mitigate CVE-2019-1225.  If we're
+ * doing Meltdown mitigation there's just an unconditional branch and
+ * can skip the fence.
  */
 	_ALIGN_TRAPS
 GENTRY(alltraps_kern)
+	FENCE_NO_SAFE_SMAP
+GENTRY(alltraps_kern_meltdown)
 	INTR_ENTRY_KERN
 	INTR_SAVE_MOST_GPRS_NO_ADJ
 	sti
@@ -467,6 +480,7 @@ spl_lowered:
 	.popsection
 #endif /* DIAGNOSTIC */
 END(alltraps_kern)
+END(alltraps_kern_meltdown)
 KTEXT_PAGE_END
 
 

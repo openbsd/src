@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.137 2019/05/28 18:17:01 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.138 2019/08/07 18:53:28 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -173,20 +173,66 @@ void
 replacemeltdown(void)
 {
 	static int replacedone = 0;
-	int s;
+	struct cpu_info *ci = &cpu_info_primary;
+	int swapgs_vuln = 0, s;
 
 	if (replacedone)
 		return;
 	replacedone = 1;
 
+	if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
+		int family = ci->ci_family;
+		int model = ci->ci_model;
+
+		swapgs_vuln = 1;
+		if (family == 0x6 &&
+		    (model == 0x37 || model == 0x4a || model == 0x4c ||
+		     model == 0x4d || model == 0x5a || model == 0x5d ||
+		     model == 0x6e || model == 0x65 || model == 0x75)) {
+			/* Silvermont, Airmont */
+			swapgs_vuln = 0;
+		} else if (family == 0x6 && (model == 0x85 || model == 0x57)) {
+			/* KnightsLanding */
+			swapgs_vuln = 0;
+		}
+	}
+
 	s = splhigh();
 	if (!cpu_meltdown)
 		codepatch_nop(CPTAG_MELTDOWN_NOP);
-	else if (pmap_use_pcid) {
-		extern long _pcid_set_reuse;
-		DPRINTF("%s: codepatching PCID use", __func__);
-		codepatch_replace(CPTAG_PCID_SET_REUSE, &_pcid_set_reuse,
-		    PCID_SET_REUSE_SIZE);
+	else {
+		extern long alltraps_kern_meltdown;
+
+		/* eliminate conditional branch in alltraps */
+		codepatch_jmp(CPTAG_MELTDOWN_ALLTRAPS, &alltraps_kern_meltdown);
+
+		/* enable reuse of PCID for U-K page tables */
+		if (pmap_use_pcid) {
+			extern long _pcid_set_reuse;
+			DPRINTF("%s: codepatching PCID use", __func__);
+			codepatch_replace(CPTAG_PCID_SET_REUSE,
+			    &_pcid_set_reuse, PCID_SET_REUSE_SIZE);
+		}
+	}
+
+	/*
+	 * CVE-2019-1125: if the CPU has SMAP and it's not vulnerable to
+	 * Meltdown, then it's protected both from speculatively mis-skipping
+	 * the swapgs during interrupts of userspace and from speculatively
+	 * mis-taking a swapgs during interrupts while already in the kernel
+	 * as the speculative path will fault from SMAP.  Warning: enabling
+	 * WRGSBASE would break this 'protection'.
+	 *
+	 * Otherwise, if the CPU's swapgs can't be speculated over and it
+	 * _is_ vulnerable to Meltdown then the %cr3 change will serialize
+	 * user->kern transitions, but we still need to mitigate the
+	 * already-in-kernel cases.
+	 */
+	if (!cpu_meltdown && (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMAP)) {
+		codepatch_nop(CPTAG_FENCE_SWAPGS_MIS_TAKEN);
+		codepatch_nop(CPTAG_FENCE_NO_SAFE_SMAP);
+	} else if (!swapgs_vuln && cpu_meltdown) {
+		codepatch_nop(CPTAG_FENCE_SWAPGS_MIS_TAKEN);
 	}
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.21 2019/05/12 21:27:47 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.22 2019/08/07 18:53:28 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -63,6 +63,7 @@
 	testb	$SEL_RPL,24(%rsp)	; \
 	je	INTRENTRY_LABEL(label)	; \
 	swapgs				; \
+	FENCE_SWAPGS_MIS_TAKEN 		; \
 	movq	%rax,CPUVAR(SCRATCH)	; \
 	CODEPATCH_START			; \
 	movq	CPUVAR(KERN_CR3),%rax	; \
@@ -73,6 +74,7 @@
 	_ALIGN_TRAPS			; \
 	.global	INTRENTRY_LABEL(label)	; \
 INTRENTRY_LABEL(label):	/* from kernel */ \
+	FENCE_NO_SAFE_SMAP		; \
 	INTR_ENTRY_KERN			; \
 	jmp	99f			; \
 	_ALIGN_TRAPS			; \
