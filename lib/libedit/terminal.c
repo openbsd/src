@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.18 2017/04/12 18:24:37 tb Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.19 2019/08/07 04:22:16 yasuoka Exp $	*/
 /*	$NetBSD: terminal.c,v 1.17 2016/02/15 15:35:03 christos Exp $	*/
 
 /*-
@@ -413,11 +413,11 @@ terminal_alloc_display(EditLine *el)
 	wchar_t **b;
 	coord_t *c = &el->el_terminal.t_size;
 
-	b = reallocarray(NULL, c->v + 1, sizeof(*b));
+	b = calloc(c->v + 1, sizeof(*b));
 	if (b == NULL)
 		goto done;
 	for (i = 0; i < c->v; i++) {
-		b[i] = reallocarray(NULL, c->h + 1, sizeof(**b));
+		b[i] = calloc(c->h + 1, sizeof(**b));
 		if (b[i] == NULL) {
 			while (--i >= 0)
 				free(b[i]);
@@ -428,11 +428,11 @@ terminal_alloc_display(EditLine *el)
 	b[c->v] = NULL;
 	el->el_display = b;
 
-	b = reallocarray(NULL, c->v + 1, sizeof(*b));
+	b = calloc(c->v + 1, sizeof(*b));
 	if (b == NULL)
 		goto done;
 	for (i = 0; i < c->v; i++) {
-		b[i] = reallocarray(NULL, c->h + 1, sizeof(**b));
+		b[i] = calloc(c->h + 1, sizeof(**b));
 		if (b[i] == NULL) {
 			while (--i >= 0)
 				free(b[i]);
