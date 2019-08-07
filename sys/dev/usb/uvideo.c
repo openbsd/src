@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.201 2019/07/10 08:21:43 patrick Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.202 2019/08/07 11:14:16 patrick Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -998,6 +998,7 @@ uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
 	struct usb_video_format_uncompressed_desc *d;
+	uint8_t guid_8bit_ir[16] = UVIDEO_FORMAT_GUID_KSMEDIA_L8_IR;
 	int i;
 
 	d = (struct usb_video_format_uncompressed_desc *)(uint8_t *)desc;
@@ -1030,6 +1031,9 @@ uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
 		sc->sc_fmtgrp[i].pixelformat = V4L2_PIX_FMT_NV12;
 	} else if (!strcmp(sc->sc_fmtgrp[i].format->u.uc.guidFormat, "UYVY")) {
 		sc->sc_fmtgrp[i].pixelformat = V4L2_PIX_FMT_UYVY;
+	} else if (!memcmp(sc->sc_fmtgrp[i].format->u.uc.guidFormat,
+	    guid_8bit_ir, 16)) {
+		sc->sc_fmtgrp[i].pixelformat = V4L2_PIX_FMT_GREY;
 	} else {
 		sc->sc_fmtgrp[i].pixelformat = 0;
 	}
