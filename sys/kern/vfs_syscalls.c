@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.333 2019/08/06 22:45:02 bluhm Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.334 2019/08/07 20:30:30 bluhm Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -975,7 +975,7 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(const char *) permissions;
 	} */ *uap = v;
-	char pathname[MAXPATHLEN], *c;
+	char *pathname, *c;
 	struct nameidata nd;
 	size_t pathlen;
 	char permissions[5];
@@ -992,17 +992,20 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 	error = copyinstr(SCARG(uap, permissions), permissions,
 	    sizeof(permissions), NULL);
 	if (error)
-		return(error);
-	error = copyinstr(SCARG(uap, path), pathname, sizeof(pathname), &pathlen);
+		return (error);
+	pathname = pool_get(&namei_pool, PR_WAITOK);
+	error = copyinstr(SCARG(uap, path), pathname, MAXPATHLEN, &pathlen);
 	if (error)
-		return(error);
+		goto end;
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_STRUCT))
 		ktrstruct(p, "unveil", permissions, strlen(permissions));
 #endif
-	if (pathlen < 2)
-		return EINVAL;
+	if (pathlen < 2) {
+		error = EINVAL;
+		goto end;
+	}
 
 	/* find root "/" or "//" */
 	for (c = pathname; *c != '\0'; c++) {
@@ -1019,7 +1022,7 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 
 	nd.ni_pledge = PLEDGE_UNVEIL;
 	if ((error = namei(&nd)) != 0)
-		goto end;
+		goto ndfree;
 
 	/*
 	 * XXX Any access to the file or directory will allow us to
@@ -1059,8 +1062,10 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 		vrele(nd.ni_dvp);
 
 	pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
-end:
+ndfree:
 	unveil_free_traversed_vnodes(&nd);
+end:
+	pool_put(&namei_pool, pathname);
 
 	return (error);
 }
