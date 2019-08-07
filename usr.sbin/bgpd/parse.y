@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.397 2019/08/05 08:46:55 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.398 2019/08/07 06:53:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4211,7 +4211,7 @@ neighbor_consistent(struct peer *p)
 	if (p->conf.enforce_local_as == ENFORCE_AS_UNDEF)
 		p->conf.enforce_local_as = ENFORCE_AS_ON;
 
-	if (p->conf.remote_as == 0 && p->conf.enforce_as != ENFORCE_AS_OFF) {
+	if (p->conf.remote_as == 0 && !p->conf.template) {
 		yyerror("peer AS may not be zero");
 		return (-1);
 	}
