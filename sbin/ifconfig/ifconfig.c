@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.408 2019/07/25 15:23:38 krw Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.409 2019/08/08 16:48:48 mestre Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -723,6 +723,7 @@ main(int argc, char *argv[])
 
 	/* If no args at all, print all interfaces.  */
 	if (argc < 2) {
+		/* no filesystem visibility */
 		if (unveil("/", "") == -1)
 			err(1, "unveil");
 		if (unveil(NULL, NULL) == -1)
