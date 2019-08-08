@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.224 2019/08/05 08:46:55 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.225 2019/08/08 11:33:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,6 +43,7 @@ int		main(int, char *[]);
 pid_t		start_child(enum bgpd_process, char *, int, int, int);
 int		send_filterset(struct imsgbuf *, struct filter_set_head *);
 int		reconfigure(char *, struct bgpd_config *);
+int		send_config(struct bgpd_config *);
 int		dispatch_imsg(struct imsgbuf *, int, struct bgpd_config *);
 int		control_setup(struct bgpd_config *);
 static void	getsockpair(int [2]);
@@ -195,6 +196,14 @@ main(int argc, char *argv[])
 	if (getpwnam(BGPD_USER) == NULL)
 		errx(1, "unknown user %s", BGPD_USER);
 
+	if ((conf = parse_config(conffile, NULL)) == NULL) {
+		log_warnx("config file %s has errors", conffile);
+		exit(1);
+	}
+
+	if (prepare_listeners(conf) == -1)
+		exit(1);
+
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(cmd_opts & BGPD_OPT_VERBOSE);
 
@@ -250,8 +259,11 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 
 	if (imsg_send_sockets(ibuf_se, ibuf_rde))
 		fatal("could not establish imsg links");
-	conf = new_config();
-	quit = reconfigure(conffile, conf);
+	/* control setup needs to happen late since it sends imsgs */
+	if (control_setup(conf) == -1)
+		quit = 1;
+	if (send_config(conf) != 0)
+		quit = 1;
 	if (pftable_clear_all() != 0)
 		quit = 1;
 
@@ -325,9 +337,12 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 				error = 0;
 				break;
 			case 2:
+				log_info("previous reload still running");
 				error = CTL_RES_PENDING;
 				break;
 			default:	/* parse error */
+				log_warnx("config file %s has errors, "
+				    "not reloading", conffile);
 				error = CTL_RES_PARSE_ERROR;
 				break;
 			}
@@ -456,6 +471,30 @@ int
 reconfigure(char *conffile, struct bgpd_config *conf)
 {
 	struct bgpd_config	*new_conf;
+
+	if (reconfpending)
+		return (2);
+
+	log_info("rereading config");
+	if ((new_conf = parse_config(conffile, &conf->peers)) == NULL)
+		return (1);
+
+	merge_config(conf, new_conf);
+
+	if (prepare_listeners(conf) == -1) {
+		return (1);
+	}
+
+	if (control_setup(conf) == -1) {
+		return (1);
+	}
+
+	return send_config(conf);
+}
+
+int
+send_config(struct bgpd_config *conf)
+{
 	struct peer		*p;
 	struct filter_rule	*r;
 	struct listen_addr	*la;
@@ -465,30 +504,7 @@ reconfigure(char *conffile, struct bgpd_config *conf)
 	struct prefixset	*ps;
 	struct prefixset_item	*psi, *npsi;
 
-	if (reconfpending) {
-		log_info("previous reload still running");
-		return (2);
-	}
 	reconfpending = 2;	/* one per child */
-
-	log_info("rereading config");
-	if ((new_conf = parse_config(conffile, &conf->peers)) == NULL) {
-		log_warnx("config file %s has errors, not reloading",
-		    conffile);
-		reconfpending = 0;
-		return (1);
-	}
-	merge_config(conf, new_conf);
-
-	if (prepare_listeners(conf) == -1) {
-		reconfpending = 0;
-		return (1);
-	}
-
-	if (control_setup(conf) == -1) {
-		reconfpending = 0;
-		return (1);
-	}
 
 	expand_networks(conf);
 
