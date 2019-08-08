@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.205 2019/06/28 13:35:02 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.206 2019/08/08 16:49:35 mestre Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -383,6 +383,7 @@ main(int argc, char *argv[])
 					err(1, "unveil");
 			}
 		} else {
+			/* no filesystem visibility */
 			if (unveil("/", "") == -1)
 				err(1, "unveil");
 		}
