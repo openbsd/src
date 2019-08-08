@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.243 2019/07/25 01:46:14 cheloha Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.244 2019/08/08 13:56:56 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -367,6 +367,8 @@ int	iwm_get_signal_strength(struct iwm_softc *, struct iwm_rx_phy_info *);
 void	iwm_rx_rx_phy_cmd(struct iwm_softc *, struct iwm_rx_packet *,
 	    struct iwm_rx_data *);
 int	iwm_get_noise(const struct iwm_statistics_rx_non_phy *);
+int	iwm_ccmp_decap(struct iwm_softc *, struct mbuf *,
+	    struct ieee80211_node *);
 void	iwm_rx_rx_mpdu(struct iwm_softc *, struct iwm_rx_packet *,
 	    struct iwm_rx_data *);
 void	iwm_enable_ht_cck_fallback(struct iwm_softc *, struct iwm_node *);
@@ -448,6 +450,10 @@ int	iwm_disassoc(struct iwm_softc *);
 int	iwm_run(struct iwm_softc *);
 int	iwm_run_stop(struct iwm_softc *);
 struct ieee80211_node *iwm_node_alloc(struct ieee80211com *);
+int	iwm_set_key(struct ieee80211com *, struct ieee80211_node *,
+	    struct ieee80211_key *);
+void	iwm_delete_key(struct ieee80211com *,
+	    struct ieee80211_node *, struct ieee80211_key *);
 void	iwm_calib_timeout(void *);
 int	iwm_media_change(struct ifnet *);
 void	iwm_newstate_task(void *);
@@ -3429,11 +3435,91 @@ iwm_get_noise(const struct iwm_statistics_rx_non_phy *stats)
 	return (nbant == 0) ? -127 : (total / nbant) - 107;
 }
 
+int
+iwm_ccmp_decap(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_key *k = &ni->ni_pairwise_key;
+	struct ieee80211_frame *wh;
+	struct ieee80211_rx_ba *ba;
+	uint64_t pn, *prsc;
+	uint8_t *ivp;
+	uint8_t tid;
+	int hdrlen, hasqos;
+
+	wh = mtod(m, struct ieee80211_frame *);
+	hdrlen = ieee80211_get_hdrlen(wh);
+	ivp = (uint8_t *)wh + hdrlen;
+
+	/* Check that ExtIV bit is be set. */
+	if (!(ivp[3] & IEEE80211_WEP_EXTIV)) {
+		DPRINTF(("CCMP decap ExtIV not set\n"));
+		return 1;
+	}
+	hasqos = ieee80211_has_qos(wh);
+	tid = hasqos ? ieee80211_get_qos(wh) & IEEE80211_QOS_TID : 0;
+	ba = hasqos ? &ni->ni_rx_ba[tid] : NULL;
+	prsc = &k->k_rsc[tid];
+
+	/* Extract the 48-bit PN from the CCMP header. */
+	pn = (uint64_t)ivp[0]       |
+	     (uint64_t)ivp[1] <<  8 |
+	     (uint64_t)ivp[4] << 16 |
+	     (uint64_t)ivp[5] << 24 |
+	     (uint64_t)ivp[6] << 32 |
+	     (uint64_t)ivp[7] << 40;
+	if (pn <= *prsc) {
+		if (hasqos && ba->ba_state == IEEE80211_BA_AGREED) {
+			/*
+			 * This is an A-MPDU subframe.
+			 * Such frames may be received out of order due to
+			 * legitimate retransmissions of failed subframes
+			 * in previous A-MPDUs. Duplicates will be handled
+			 * in ieee80211_input() as part of A-MPDU reordering.
+			 */
+		} else if (ieee80211_has_seq(wh)) {
+			/*
+			 * Not necessarily a replayed frame since we did not
+			 * check the sequence number of the 802.11 header yet.
+			 */
+			int nrxseq, orxseq;
+
+			nrxseq = letoh16(*(u_int16_t *)wh->i_seq) >>
+			    IEEE80211_SEQ_SEQ_SHIFT;
+			if (hasqos)
+				orxseq = ni->ni_qos_rxseqs[tid];
+			else
+				orxseq = ni->ni_rxseq;
+			if (nrxseq < orxseq) {
+				DPRINTF(("CCMP replayed (n=%d < o=%d)\n",
+				    nrxseq, orxseq));
+				ic->ic_stats.is_ccmp_replays++;
+				return 1;
+			}
+		} else {
+			DPRINTF(("CCMP replayed\n"));
+			ic->ic_stats.is_ccmp_replays++;
+			return 1;
+		}
+	}
+	/* Update last seen packet number. */
+	*prsc = pn;
+
+	/* Clear Protected bit and strip IV. */
+	wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
+	memmove(mtod(m, caddr_t) + IEEE80211_CCMP_HDRLEN, wh, hdrlen);
+	m_adj(m, IEEE80211_CCMP_HDRLEN);
+	/* Strip MIC. */
+	m_adj(m, -IEEE80211_CCMP_MICLEN);
+	return 0;
+}
+
 void
 iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
     struct iwm_rx_data *data)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = IC2IFP(ic);
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct ieee80211_rxinfo rxi;
@@ -3509,6 +3595,38 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	rxi.rxi_rssi = rssi;
 	rxi.rxi_tstamp = device_timestamp;
 
+	/* Handle hardware decryption. */
+	if (((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_CTL)
+	    && (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) &&
+	    !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    (ni->ni_flags & IEEE80211_NODE_RXPROT) &&
+	    ni->ni_pairwise_key.k_cipher == IEEE80211_CIPHER_CCMP) {
+		if ((rx_pkt_status & IWM_RX_MPDU_RES_STATUS_SEC_ENC_MSK) !=
+		    IWM_RX_MPDU_RES_STATUS_SEC_CCM_ENC) {
+			ic->ic_stats.is_ccmp_dec_errs++;
+			ifp->if_ierrors++;
+			m_freem(m);
+			goto done;
+		}
+		/* Check whether decryption was successful or not. */
+		if ((rx_pkt_status &
+		    (IWM_RX_MPDU_RES_STATUS_DEC_DONE |
+		    IWM_RX_MPDU_RES_STATUS_MIC_OK)) !=
+		    (IWM_RX_MPDU_RES_STATUS_DEC_DONE |
+		    IWM_RX_MPDU_RES_STATUS_MIC_OK)) {
+			ic->ic_stats.is_ccmp_dec_errs++;
+			ifp->if_ierrors++;
+			m_freem(m);
+			goto done;
+		}
+		if (iwm_ccmp_decap(sc, m, ni) != 0) {
+			ifp->if_ierrors++;
+			m_freem(m);
+			goto done;
+		}
+		rxi.rxi_flags |= IEEE80211_RXI_HWDEC;
+	}
+
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct mbuf mb;
@@ -3566,6 +3684,7 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	}
 #endif
 	ieee80211_input(IC2IFP(ic), m, ni, &rxi);
+done:
 	/*
 	 * ieee80211_input() might have changed our BSS.
 	 * Restore ic_bss's channel if we are still in the same BSS.
@@ -4212,6 +4331,7 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
 	const struct iwm_rate *rinfo;
+	uint8_t *ivp;
 	uint32_t flags;
 	u_int hdrlen;
 	bus_dma_segment_t *seg;
@@ -4278,15 +4398,47 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
 	}
 #endif
+	totlen = m->m_pkthdr.len;
 
 	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
-                k = ieee80211_get_txkey(ic, wh, ni);
-		if ((m = ieee80211_encrypt(ic, m, k)) == NULL)
-			return ENOBUFS;
-		/* 802.11 header may have moved. */
-		wh = mtod(m, struct ieee80211_frame *);
+		k = ieee80211_get_txkey(ic, wh, ni);
+		if  (k->k_cipher != IEEE80211_CIPHER_CCMP) {
+			if ((m = ieee80211_encrypt(ic, m, k)) == NULL)
+				return ENOBUFS;
+
+			/* 802.11 header may have moved. */
+			wh = mtod(m, struct ieee80211_frame *);
+			totlen = m->m_pkthdr.len;
+		} else {
+			/* HW appends CCMP MIC */
+			totlen += IEEE80211_CCMP_HDRLEN;
+		}
 	}
-	totlen = m->m_pkthdr.len;
+
+	/* Copy 802.11 header in TX command. */
+	memcpy(((uint8_t *)tx) + sizeof(*tx), wh, hdrlen);
+
+	if  (k != NULL && k->k_cipher == IEEE80211_CIPHER_CCMP) {
+		/* Trim 802.11 header and prepend CCMP IV. */
+		m_adj(m, hdrlen - IEEE80211_CCMP_HDRLEN);
+		ivp = mtod(m, u_int8_t *);
+		k->k_tsc++;	/* increment the 48-bit PN */
+		ivp[0] = k->k_tsc; /* PN0 */
+		ivp[1] = k->k_tsc >> 8; /* PN1 */
+		ivp[2] = 0;        /* Rsvd */
+		ivp[3] = k->k_id << 6 | IEEE80211_WEP_EXTIV;
+		ivp[4] = k->k_tsc >> 16; /* PN2 */
+		ivp[5] = k->k_tsc >> 24; /* PN3 */
+		ivp[6] = k->k_tsc >> 32; /* PN4 */
+		ivp[7] = k->k_tsc >> 40; /* PN5 */
+
+		tx->sec_ctl = IWM_TX_CMD_SEC_CCM;
+		memcpy(tx->key, k->k_key, k->k_len);
+	} else {
+		/* Trim 802.11 header. */
+		m_adj(m, hdrlen);
+		tx->sec_ctl = 0;
+	}
 
 	flags = 0;
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
@@ -4339,16 +4491,9 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	tx->dram_lsb_ptr = htole32(data->scratch_paddr);
 	tx->dram_msb_ptr = iwm_get_dma_hi_addr(data->scratch_paddr);
 
-	/* Copy 802.11 header in TX command. */
-	memcpy(((uint8_t *)tx) + sizeof(*tx), wh, hdrlen);
-
 	flags |= IWM_TX_CMD_FLG_BT_DIS | IWM_TX_CMD_FLG_SEQ_CTL;
 
-	tx->sec_ctl = 0;
 	tx->tx_flags |= htole32(flags);
-
-	/* Trim 802.11 header. */
-	m_adj(m, hdrlen);
 
 	err = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 	    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
@@ -5939,6 +6084,59 @@ iwm_node_alloc(struct ieee80211com *ic)
 	return malloc(sizeof (struct iwm_node), M_DEVBUF, M_NOWAIT | M_ZERO);
 }
 
+int
+iwm_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct ieee80211_key *k)
+{
+	struct iwm_softc *sc = ic->ic_softc;
+	struct iwm_add_sta_key_cmd cmd = { 0 };
+
+	if ((k->k_flags & IEEE80211_KEY_GROUP) ||
+	    k->k_cipher != IEEE80211_CIPHER_CCMP)  {
+		/* Fallback to software crypto for other ciphers. */
+		return (ieee80211_set_key(ic, ni, k));
+	}
+
+	cmd.key_flags = htole16(IWM_STA_KEY_FLG_CCM |
+	    IWM_STA_KEY_FLG_WEP_KEY_MAP |
+	    ((k->k_id << IWM_STA_KEY_FLG_KEYID_POS) &
+	    IWM_STA_KEY_FLG_KEYID_MSK));
+	if (k->k_flags & IEEE80211_KEY_GROUP)
+		cmd.key_flags |= htole16(IWM_STA_KEY_MULTICAST);
+
+	memcpy(cmd.key, k->k_key, k->k_len);
+	cmd.key_offset = 0;
+	cmd.sta_id = IWM_STATION_ID;
+
+	return iwm_send_cmd_pdu(sc, IWM_ADD_STA_KEY, IWM_CMD_ASYNC,
+	    sizeof(cmd), &cmd);
+}
+
+void
+iwm_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct ieee80211_key *k)
+{
+	struct iwm_softc *sc = ic->ic_softc;
+	struct iwm_add_sta_key_cmd cmd = { 0 };
+
+	if ((k->k_flags & IEEE80211_KEY_GROUP) ||
+	    (k->k_cipher != IEEE80211_CIPHER_CCMP)) {
+		/* Fallback to software crypto for other ciphers. */
+                ieee80211_delete_key(ic, ni, k);
+		return;
+	}
+
+	cmd.key_flags = htole16(IWM_STA_KEY_NOT_VALID |
+	    IWM_STA_KEY_FLG_NO_ENC | IWM_STA_KEY_FLG_WEP_KEY_MAP |
+	    ((k->k_id << IWM_STA_KEY_FLG_KEYID_POS) &
+	    IWM_STA_KEY_FLG_KEYID_MSK));
+	memcpy(cmd.key, k->k_key, k->k_len);
+	cmd.key_offset = 0;
+	cmd.sta_id = IWM_STATION_ID;
+
+	iwm_send_cmd_pdu(sc, IWM_ADD_STA_KEY, IWM_CMD_ASYNC, sizeof(cmd), &cmd);
+}
+
 void
 iwm_calib_timeout(void *arg)
 {
@@ -7132,6 +7330,7 @@ iwm_notif_intr(struct iwm_softc *sc)
 		case IWM_DTS_MEASUREMENT_NOTIFICATION:
 			break;
 
+		case IWM_ADD_STA_KEY:
 		case IWM_PHY_CONFIGURATION_CMD:
 		case IWM_TX_ANT_CONFIGURATION_CMD:
 		case IWM_ADD_STA:
@@ -7814,6 +8013,8 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 
 	ic->ic_node_alloc = iwm_node_alloc;
 	ic->ic_bgscan_start = iwm_bgscan;
+	ic->ic_set_key = iwm_set_key;
+	ic->ic_delete_key = iwm_delete_key;
 
 	/* Override 802.11 state transition machine. */
 	sc->sc_newstate = ic->ic_newstate;

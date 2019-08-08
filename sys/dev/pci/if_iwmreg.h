@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.28 2018/02/28 14:39:35 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.29 2019/08/08 13:56:56 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -641,11 +641,11 @@
 #define IWM_UCODE_TLV_API_LQ_SS_PARAMS		(1 << 18)
 #define IWM_UCODE_TLV_API_EXT_SCAN_PRIORITY	(1 << 24)
 #define IWM_UCODE_TLV_API_TX_POWER_CHAIN	(1 << 27)
-
+#define IWM_UCODE_TLV_API_TKIP_MIC_KEYS         (1 << 29)
 #define IWM_NUM_UCODE_TLV_API = 32
 
 #define IWM_UCODE_TLV_API_BITS \
-	"\020\10FRAGMENTED_SCAN\11WIFI_MCC_UPDATE\16WIDE_CMD_HDR\22LQ_SS_PARAMS\30EXT_SCAN_PRIO\33TX_POWER_CHAIN"
+	"\020\10FRAGMENTED_SCAN\11WIFI_MCC_UPDATE\16WIDE_CMD_HDR\22LQ_SS_PARAMS\30EXT_SCAN_PRIO\33TX_POWER_CHAIN\35TKIP_MIC_KEYS"
 
 /**
  * uCode capabilities
