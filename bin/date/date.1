@@ -1,4 +1,4 @@
-.\"	$OpenBSD: date.1,v 1.70 2019/01/22 06:53:30 jmc Exp $
+.\"	$OpenBSD: date.1,v 1.71 2019/08/08 02:17:51 cheloha Exp $
 .\"	$NetBSD: date.1,v 1.12 1996/03/12 04:32:37 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)date.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: January 22 2019 $
+.Dd $Mdocdate: August 8 2019 $
 .Dt DATE 1
 .Os
 .Sh NAME
@@ -42,10 +42,8 @@
 .Sh SYNOPSIS
 .Nm date
 .Op Fl aju
-.Op Fl d Ar dst
 .Op Fl f Ar pformat
 .Op Fl r Ar seconds
-.Op Fl t Ar minutes_west
 .Op Fl z Ar output_zone
 .Op Cm + Ns Ar format
 .Sm off
@@ -78,15 +76,6 @@ Use the
 .Xr adjtime 2
 call to gradually skew the local time to the
 desired time rather than just hopping.
-.It Fl d Ar dst
-Set the system's value for Daylight Saving Time.
-If
-.Ar dst
-is non-zero, future calls
-to
-.Xr gettimeofday 2
-will return a non-zero value for
-.Fa tz_dsttime .
 .It Fl f Ar pformat
 Parse the specified time using
 .Xr strptime 3
@@ -99,13 +88,6 @@ the clock.
 Print out (in specified format) the date and time represented by
 .Ar seconds
 from the Epoch.
-.It Fl t Ar minutes_west
-Set the system's value for minutes west of GMT.
-.Ar minutes_west
-specifies the number of minutes returned in
-.Fa tz_minuteswest
-by future calls to
-.Xr gettimeofday 2 .
 .It Fl u
 Display or set the date in UTC (Coordinated Universal) time.
 .It Fl z Ar output_zone
@@ -233,7 +215,7 @@ utility is compliant with the
 specification.
 .Pp
 The flags
-.Op Fl adfjrtz ,
+.Op Fl afjrz ,
 as well as the conversion specifiers
 .Ql \&%F ,
 .Ql \&%G ,

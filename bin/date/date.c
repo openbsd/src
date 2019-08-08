@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.55 2019/06/28 13:34:58 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.56 2019/08/08 02:17:51 cheloha Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -58,22 +58,17 @@ static void __dead usage(void);
 int
 main(int argc, char *argv[])
 {
-	struct timezone tz;
 	const char *errstr;
 	struct tm *tp;
 	int ch, rflag;
 	char *format, buf[1024], *outzone = NULL;
 	const char *pformat = NULL;
 
-	tz.tz_dsttime = tz.tz_minuteswest = 0;
 	rflag = 0;
-	while ((ch = getopt(argc, argv, "ad:f:jr:ut:z:")) != -1)
+	while ((ch = getopt(argc, argv, "af:jr:uz:")) != -1)
 		switch(ch) {
 		case 'a':
 			slidetime = 1;
-			break;
-		case 'd':		/* daylight saving time */
-			tz.tz_dsttime = atoi(optarg) ? 1 : 0;
 			break;
 		case 'f':		/* parse with strptime */
 			pformat = optarg;
@@ -91,11 +86,6 @@ main(int argc, char *argv[])
 			if (setenv("TZ", "UTC", 1) == -1)
 				err(1, "cannot unsetenv TZ");
 			break;
-		case 't':		/* minutes west of GMT */
-			tz.tz_minuteswest = strtonum(optarg, 0, 24*60-1, &errstr);
-			if (errstr)
-				errx(1, "-t %s: %s", optarg, errstr);
-			break;
 		case 'z':
 			outzone = optarg;
 			break;
@@ -104,14 +94,6 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
-
-	/*
-	 * If -d or -t, set the timezone or daylight saving time; this
-	 * doesn't belong here, the kernel should not know about either.
-	 */
-	if ((tz.tz_minuteswest || tz.tz_dsttime) &&
-	    settimeofday(NULL, &tz))
-		err(1, "settimeofday");
 
 	if (!rflag && time(&tval) == -1)
 		err(1, "time");
@@ -279,9 +261,8 @@ badformat(void)
 static void __dead
 usage(void)
 {
-	(void)fprintf(stderr,
-	    "usage: %s [-aju] [-d dst] [-f pformat] [-r seconds] "
-	    "[-t minutes_west]\n"
+	fprintf(stderr,
+	    "usage: %s [-aju] [-f pformat] [-r seconds]\n"
 	    "\t[-z output_zone] [+format] [[[[[[cc]yy]mm]dd]HH]MM[.SS]]\n",
 	    __progname);
 	exit(1);
