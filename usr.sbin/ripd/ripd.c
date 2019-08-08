@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.32 2018/12/31 20:34:16 remi Exp $ */
+/*	$OpenBSD: ripd.c,v 1.33 2019/08/08 16:50:15 mestre Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -211,6 +211,7 @@ main(int argc, char *argv[])
 	rde_pid = rde(conf, pipe_parent2rde, pipe_ripe2rde, pipe_parent2ripe);
 	ripe_pid = ripe(conf, pipe_parent2ripe, pipe_ripe2rde, pipe_parent2rde);
 
+	/* no filesystem visibility */
 	if (unveil("/", "") == -1)
 		fatal("unveil");
 	if (unveil(NULL, NULL) == -1)
