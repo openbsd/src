@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfutils.c,v 1.20 2019/06/28 13:32:47 deraadt Exp $ */
+/*	$OpenBSD: pfutils.c,v 1.21 2019/08/08 06:59:44 mestre Exp $ */
 /*
  * Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
  *
@@ -54,14 +54,17 @@ pftable_handler()
 
 	if ((fd = open(_PATH_DEV_PF, O_RDWR|O_NOFOLLOW, 0660)) == -1)
 		fatal("can't open pf device");
-	if (chroot(_PATH_VAREMPTY) == -1)
-		fatal("chroot %s", _PATH_VAREMPTY);
-	if (chdir("/") == -1)
-		fatal("chdir(\"/\")");
+
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
+
+	/* no filesystem visibility */
+	if (unveil("/", "") == -1)
+		fatal("unveil");
+	if (unveil(NULL, NULL) == -1)
+		fatal("unveil");
 
 	setproctitle("pf table handler");
 	l = sizeof(struct pf_cmd);
