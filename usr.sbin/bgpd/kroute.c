@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.237 2019/07/23 06:26:44 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.238 2019/08/08 20:06:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2886,7 +2886,7 @@ get_mpe_config(const char *name, u_int *rdomain, u_int *label)
 	*label = 0;
 	*rdomain = 0;
 
-	s = socket(AF_INET, SOCK_DGRAM, 0);
+	s = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
 	if (s == -1)
 		return (-1);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.99 2019/07/24 08:58:24 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.100 2019/08/08 20:06:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -908,7 +908,7 @@ mrt_open(struct mrt *mrt, time_t now)
 	}
 
 	fd = open(MRT2MC(mrt)->file,
-	    O_WRONLY|O_NONBLOCK|O_CREAT|O_TRUNC, 0644);
+	    O_WRONLY|O_NONBLOCK|O_CREAT|O_TRUNC|O_CLOEXEC, 0644);
 	if (fd == -1) {
 		log_warn("mrt_open %s", MRT2MC(mrt)->file);
 		return (1);
