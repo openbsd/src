@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Intro.pod,v 1.18 2019/05/26 15:34:25 espie Exp $
+$OpenBSD: OpenBSD::Intro.pod,v 1.19 2019/08/08 13:41:40 fcambus Exp $
 
 =head1 NAME
 
@@ -357,7 +357,7 @@ suitable candidates are found.
 
 =head1 BUGS AND LIMITATIONS
 
-There are a few desireable changes that will happen in the future:
+There are a few desirable changes that will happen in the future:
 
 =over
 

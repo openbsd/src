@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PackingElement.pod,v 1.13 2017/03/03 18:29:07 bluhm Exp $
+$OpenBSD: OpenBSD::PackingElement.pod,v 1.14 2019/08/08 13:41:40 fcambus Exp $
 
 =head1 NAME
 
@@ -134,7 +134,7 @@ package needed, with the following properties: C<pkgpath> is the path
 used to create the dependency, C<pattern> is the L<OpenBSD::PkgSpec(3p)>
 pattern used to match the dependency, C<def> is the default value of
 the dependency computed during build, to use for comparing package signatures
-and to fullfill default dependencies.
+and to fulfill default dependencies.
 
 =back
 
