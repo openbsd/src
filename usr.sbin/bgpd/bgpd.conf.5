@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.192 2019/08/07 10:26:41 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.193 2019/08/08 09:15:13 procter Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 7 2019 $
+.Dd $Mdocdate: August 8 2019 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -303,7 +303,8 @@ where the metric is only compared between peers belonging to the same AS.
 .Xc
 Create an additional RIB named
 .Ar name .
-It is possible to disable the decision process per RIB with the
+It may be excluded from the decision process that selects usable routes
+with the
 .Ic no Ic evaluate
 flag.
 If a
