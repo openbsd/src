@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.395 2019/07/04 18:09:17 bluhm Exp $ */
+/* $OpenBSD: softraid.c,v 1.396 2019/08/08 02:19:55 cheloha Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3057,7 +3057,8 @@ sr_hotspare_rebuild(struct sr_discipline *sd)
 			splx(s);
 
 			if (busy) {
-				tsleep(sd, PRIBIO, "sr_hotspare", hz);
+				tsleep_nsec(sd, PRIBIO, "sr_hotspare",
+				    SEC_TO_NSEC(1));
 				i++;
 			}
 
@@ -3894,7 +3895,7 @@ void
 sr_discipline_shutdown(struct sr_discipline *sd, int meta_save, int dying)
 {
 	struct sr_softc		*sc;
-	int			s;
+	int			ret, s;
 
 	if (!sd)
 		return;
@@ -3919,11 +3920,12 @@ sr_discipline_shutdown(struct sr_discipline *sd, int meta_save, int dying)
 
 	/* make sure there isn't a sync pending and yield */
 	wakeup(sd);
-	while (sd->sd_sync || sd->sd_must_flush)
-		if (tsleep(&sd->sd_sync, MAXPRI, "sr_down", 60 * hz) ==
-		    EWOULDBLOCK)
+	while (sd->sd_sync || sd->sd_must_flush) {
+		ret = tsleep_nsec(&sd->sd_sync, MAXPRI, "sr_down",
+		    SEC_TO_NSEC(60));
+		if (ret == EWOULDBLOCK)
 			break;
-
+	}
 	if (dying == -1) {
 		sd->sd_ready = 1;
 		splx(s);
@@ -4148,7 +4150,7 @@ int
 sr_raid_sync(struct sr_workunit *wu)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
-	int			s, rv = 0, ios;
+	int			s, ret, rv = 0, ios;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid_sync\n", DEVNAME(sd->sd_sc));
 
@@ -4158,7 +4160,8 @@ sr_raid_sync(struct sr_workunit *wu)
 	s = splbio();
 	sd->sd_sync = 1;
 	while (sd->sd_wu_pending > ios) {
-		if (tsleep(sd, PRIBIO, "sr_sync", 15 * hz) == EWOULDBLOCK) {
+		ret = tsleep_nsec(sd, PRIBIO, "sr_sync", SEC_TO_NSEC(15));
+		if (ret == EWOULDBLOCK) {
 			DNPRINTF(SR_D_DIS, "%s: sr_raid_sync timeout\n",
 			    DEVNAME(sd->sd_sc));
 			rv = 1;
@@ -4782,7 +4785,7 @@ sr_rebuild(struct sr_discipline *sd)
 		/* wait for write completion */
 		slept = 0;
 		while ((wu_w->swu_flags & SR_WUF_REBUILDIOCOMP) == 0) {
-			tsleep(wu_w, PRIBIO, "sr_rebuild", 0);
+			tsleep_nsec(wu_w, PRIBIO, "sr_rebuild", INFSLP);
 			slept = 1;
 		}
 		/* yield if we didn't sleep */
