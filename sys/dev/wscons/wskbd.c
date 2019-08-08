@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.98 2019/05/22 19:13:34 anton Exp $ */
+/* $OpenBSD: wskbd.c,v 1.99 2019/08/08 02:19:18 cheloha Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -613,7 +613,7 @@ wskbd_detach(struct device  *self, int flags)
 				evar->put = 0;
 			WSEVENT_WAKEUP(evar);
 			/* Wait for processes to go away. */
-			if (tsleep(sc, PZERO, "wskdet", hz * 60))
+			if (tsleep_nsec(sc, PZERO, "wskdet", SEC_TO_NSEC(60)))
 				printf("wskbd_detach: %s didn't detach\n",
 				       sc->sc_base.me_dv.dv_xname);
 		}

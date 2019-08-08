@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.55 2019/05/24 06:05:38 anton Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.56 2019/08/08 02:19:18 cheloha Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -271,7 +271,7 @@ wsmouse_detach(struct device *self, int flags)
 				evar->put = 0;
 			WSEVENT_WAKEUP(evar);
 			/* Wait for processes to go away. */
-			if (tsleep(sc, PZERO, "wsmdet", hz * 60))
+			if (tsleep_nsec(sc, PZERO, "wsmdet", SEC_TO_NSEC(60)))
 				printf("wsmouse_detach: %s didn't detach\n",
 				       sc->sc_base.me_dv.dv_xname);
 		}

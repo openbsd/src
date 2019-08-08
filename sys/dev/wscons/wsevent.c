@@ -1,4 +1,4 @@
-/* $OpenBSD: wsevent.c,v 1.20 2019/05/22 18:52:14 anton Exp $ */
+/* $OpenBSD: wsevent.c,v 1.21 2019/08/08 02:19:18 cheloha Exp $ */
 /* $NetBSD: wsevent.c,v 1.16 2003/08/07 16:31:29 agc Exp $ */
 
 /*
@@ -162,8 +162,8 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 			return (EWOULDBLOCK);
 		}
 		ev->wanted = 1;
-		error = tsleep(ev, PWSEVENT | PCATCH,
-		    "wsevent_read", 0);
+		error = tsleep_nsec(ev, PWSEVENT | PCATCH,
+		    "wsevent_read", INFSLP);
 		if (error) {
 			splx(s);
 			return (error);
