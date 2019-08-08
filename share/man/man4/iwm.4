@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwm.4,v 1.26 2019/03/29 17:16:35 jmc Exp $
+.\" $OpenBSD: iwm.4,v 1.27 2019/08/08 13:59:16 stsp Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 29 2019 $
+.Dd $Mdocdate: August 8 2019 $
 .Dt IWM 4
 .Os
 .Sh NAME
@@ -58,6 +58,10 @@ It is strongly recommended that WEP
 not be used as the sole mechanism
 to secure wireless communication,
 due to serious weaknesses in it.
+The
+.Nm
+driver offloads both encryption and decryption of unicast data frames to the
+hardware for the CCMP cipher.
 .Pp
 The
 .Nm
