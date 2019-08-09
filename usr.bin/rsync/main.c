@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.47 2019/06/03 15:37:48 naddy Exp $ */
+/*	$Id: main.c,v 1.48 2019/08/09 05:28:01 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -307,6 +307,7 @@ main(int argc, char *argv[])
 		{ "no-times",	no_argument,	&opts.preserve_times,	0 },
 		{ "verbose",	no_argument,	&verbose,		1 },
 		{ "no-verbose",	no_argument,	&verbose,		0 },
+		{ "address",	required_argument, NULL,		4 },
 		{ NULL,		0,		NULL,			0 }};
 
 	/* Global pledge. */
@@ -379,6 +380,9 @@ main(int argc, char *argv[])
 			exit(0);
 		case 3:
 			opts.port = optarg;
+			break;
+		case 4:
+			opts.address = optarg;
 			break;
 		case 'h':
 		default:
@@ -505,9 +509,9 @@ main(int argc, char *argv[])
 	exit(rc);
 usage:
 	fprintf(stderr, "usage: %s"
-	    " [-aDglnoprtvx] [-e program] [--del] [--numeric-ids]\n"
-	    "\t[--port=portnumber] [--rsync-path=program] [--version]\n"
-	    "\tsource ... directory\n",
+	    " [-aDglnoprtvx] [-e program] [--address=bind_address] [--del]\n"
+	    "\t[--numeric-ids] [--port=portnumber] [--rsync-path=program]\n"
+	    "\t[--version] source ... directory\n",
 	    getprogname());
 	exit(1);
 }

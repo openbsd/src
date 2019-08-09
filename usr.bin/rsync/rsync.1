@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.18 2019/05/06 15:44:34 schwarze Exp $
+.\"	$OpenBSD: rsync.1,v 1.19 2019/08/09 05:28:01 claudio Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 6 2019 $
+.Dd $Mdocdate: August 9 2019 $
 .Dt OPENRSYNC 1
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm openrsync
 .Op Fl aDglnoprtvx
 .Op Fl e Ar program
+.Op Fl -address Ns = Ns Ar bind_address
 .Op Fl -del
 .Op Fl -numeric-ids
 .Op Fl -port Ns = Ns Ar service
@@ -50,6 +51,12 @@ The arguments are as follows:
 .It Fl a , -archive
 Shorthand for
 .Fl Dgloprt .
+.It Fl -address Ns = Ns Ar bind_address
+Use
+.Ar bind_address
+on the local machine as the source address of the connection.
+Only useful when connecting to an rsync daemon and on systems with more than
+one address.
 .It Fl D
 Also transfer device and special files.
 Shorthand for

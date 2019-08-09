@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.25 2019/06/03 15:37:48 naddy Exp $ */
+/*	$Id: socket.c,v 1.26 2019/08/09 05:28:01 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -46,11 +46,34 @@ struct	source {
 };
 
 /*
+ * Try to bind to a local IP address matching the addres family passed.
+ * Return -1 on failure to bind to any address, 0 on success.
+ */
+static int
+inet_bind(int s, sa_family_t af, const struct source *bsrc, size_t bsrcsz)
+{
+	size_t i;
+
+	if (bsrc == NULL)
+		return 0;
+	for (i = 0; i < bsrcsz; i++) {
+		if (bsrc[i].family != af)
+			continue;
+		if (bind(s, (const struct sockaddr *)&bsrc[i].sa,
+		    bsrc[i].salen) == -1)
+			continue;
+		return 0;
+	}
+	return -1;
+}
+
+/*
  * Connect to an IP address representing a host.
  * Return <0 on failure, 0 on try another address, >0 on success.
  */
 static int
-inet_connect(int *sd, const struct source *src, const char *host)
+inet_connect(int *sd, const struct source *src, const char *host,
+    const struct source *bsrc, size_t bsrcsz)
 {
 	int	 c, flags;
 
@@ -61,6 +84,11 @@ inet_connect(int *sd, const struct source *src, const char *host)
 
 	if ((*sd = socket(src->family, SOCK_STREAM, 0)) == -1) {
 		ERR("socket");
+		return -1;
+	}
+
+	if (inet_bind(*sd, src->family, bsrc, bsrcsz) == -1) {
+		ERR("bind");
 		return -1;
 	}
 
@@ -102,11 +130,12 @@ inet_connect(int *sd, const struct source *src, const char *host)
  * in this case).
  */
 static struct source *
-inet_resolve(struct sess *sess, const char *host, size_t *sz)
+inet_resolve(struct sess *sess, const char *host, size_t *sz, int passive)
 {
 	struct addrinfo	 hints, *res0, *res;
 	struct sockaddr	*sa;
 	struct source	*src = NULL;
+	const char	*port = sess->opts->port;
 	size_t		 i, srcsz = 0;
 	int		 error;
 
@@ -115,8 +144,12 @@ inet_resolve(struct sess *sess, const char *host, size_t *sz)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
+	if (passive) {
+		hints.ai_flags = SOCK_STREAM;
+		port = NULL;
+	}
 
-	error = getaddrinfo(host, sess->opts->port, &hints, &res0);
+	error = getaddrinfo(host, port, &hints, &res0);
 
 	LOG2("resolving: %s", host);
 
@@ -239,8 +272,8 @@ int
 rsync_connect(const struct opts *opts, int *sd, const struct fargs *f)
 {
 	struct sess	  sess;
-	struct source	 *src = NULL;
-	size_t		  i, srcsz = 0;
+	struct source	 *src = NULL, *bsrc = NULL;
+	size_t		  i, srcsz = 0, bsrcsz = 0;
 	int		  c, rc = 1;
 
 	if (pledge("stdio unix rpath wpath cpath dpath inet fattr chown dns getpw unveil",
@@ -254,10 +287,16 @@ rsync_connect(const struct opts *opts, int *sd, const struct fargs *f)
 
 	/* Resolve all IP addresses from the host. */
 
-	if ((src = inet_resolve(&sess, f->host, &srcsz)) == NULL) {
+	if ((src = inet_resolve(&sess, f->host, &srcsz, 0)) == NULL) {
 		ERRX1("inet_resolve");
 		exit(1);
 	}
+	if (opts->address != NULL)
+		if ((bsrc = inet_resolve(&sess, opts->address, &bsrcsz, 1)) ==
+		    NULL) {
+			ERRX1("inet_resolve bind");
+			exit(1);
+		}
 
 	/* Drop the DNS pledge. */
 
@@ -274,7 +313,7 @@ rsync_connect(const struct opts *opts, int *sd, const struct fargs *f)
 
 	assert(srcsz);
 	for (i = 0; i < srcsz; i++) {
-		c = inet_connect(sd, &src[i], f->host);
+		c = inet_connect(sd, &src[i], f->host, bsrc, bsrcsz);
 		if (c < 0) {
 			ERRX1("inet_connect");
 			goto out;
@@ -297,9 +336,11 @@ rsync_connect(const struct opts *opts, int *sd, const struct fargs *f)
 	LOG2("connected: %s, %s", src[i].ip, f->host);
 
 	free(src);
+	free(bsrc);
 	return 0;
 out:
 	free(src);
+	free(bsrc);
 	if (*sd != -1)
 		close(*sd);
 	return rc;
