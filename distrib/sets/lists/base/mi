@@ -544,6 +544,7 @@
 ./usr/bin/skeyprune
 ./usr/bin/smtp
 ./usr/bin/sndiod
+./usr/bin/snmp
 ./usr/bin/sort
 ./usr/bin/spell
 ./usr/bin/splain
