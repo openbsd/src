@@ -23,7 +23,9 @@
  * Rob Clark <robdclark@gmail.com>
  */
 
+#ifdef __linux__
 #define DEBUG /* for pr_debug() */
+#endif
 
 #include <sys/stdarg.h>
 #include <linux/seq_file.h>
