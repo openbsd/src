@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 2019/06/28 13:32:50 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.12 2019/08/09 05:29:51 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -76,6 +76,7 @@ struct	repo {
  * of which process maps to which request.
  */
 struct	rsyncproc {
+	char	*uri; /* uri of this rsync proc */
 	size_t	 id; /* identity of request */
 	pid_t	 pid; /* pid of process or 0 if unassociated */
 };
@@ -604,20 +605,22 @@ proc_rsync(const char *prog, int fd, int noop)
 			if ((pid = waitpid(WAIT_ANY, &st, 0)) == -1)
 				err(EXIT_FAILURE, "waitpid");
 
-			if (!WIFEXITED(st)) {
-				warnx("rsync did not exit");
-				goto out;
-			} else if (WEXITSTATUS(st) != EXIT_SUCCESS) {
-				warnx("rsync failed");
-				goto out;
-			}
-
 			for (i = 0; i < idsz; i++)
 				if (ids[i].pid == pid)
 					break;
-
 			assert(i < idsz);
+
+			if (!WIFEXITED(st)) {
+				warnx("rsync %s did not exit", ids[i].uri);
+				goto out;
+			} else if (WEXITSTATUS(st) != EXIT_SUCCESS) {
+				warnx("rsync %s failed", ids[i].uri);
+				goto out;
+			}
+
 			io_simple_write(fd, &ids[i].id, sizeof(size_t));
+			free(ids[i].uri);
+			ids[i].uri = NULL;
 			ids[i].pid = 0;
 			ids[i].id = 0;
 			continue;
@@ -689,28 +692,24 @@ proc_rsync(const char *prog, int fd, int noop)
 		/* Augment the list of running processes. */
 
 		for (i = 0; i < idsz; i++)
-			if (ids[i].pid == 0) {
-				ids[i].id = id;
-				ids[i].pid = pid;
+			if (ids[i].pid == 0)
 				break;
-			}
-
 		if (i == idsz) {
-			ids = reallocarray(ids, idsz + 1,
-				sizeof(struct rsyncproc));
+			ids = reallocarray(ids, idsz + 1, sizeof(*ids));
 			if (ids == NULL)
 				err(EXIT_FAILURE, NULL);
-			ids[idsz].id = id;
-			ids[idsz].pid = pid;
 			idsz++;
 		}
+
+		ids[i].id = id;
+		ids[i].pid = pid;
+		ids[i].uri = uri;
 
 		/* Clean up temporary values. */
 
 		free(mod);
 		free(dst);
 		free(host);
-		free(uri);
 	}
 	rc = 1;
 out:
@@ -718,8 +717,10 @@ out:
 	/* No need for these to be hanging around. */
 
 	for (i = 0; i < idsz; i++)
-		if (ids[i].pid > 0)
+		if (ids[i].pid > 0) {
 			kill(ids[i].pid, SIGTERM);
+			free(ids[i].uri);
+		}
 
 	free(ids);
 	exit(rc ? EXIT_SUCCESS : EXIT_FAILURE);
