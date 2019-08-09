@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.36 2019/06/28 13:32:53 deraadt Exp $	*/
+/*	$OpenBSD: rstat_proc.c,v 1.37 2019/08/09 21:31:07 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -235,7 +235,7 @@ updatestat(void)
 	stats_all.s1.v_pswpout = 0;
 	stats_all.s1.v_intr = uvmexp.intrs;
 	stats_all.s2.v_swtch = uvmexp.swtch;
-	gettimeofday(&tm, (struct timezone *) 0);
+	gettimeofday(&tm, NULL);
 	stats_all.s1.v_intr -= hz*(tm.tv_sec - btm.tv_sec) +
 	    hz*(tm.tv_usec - btm.tv_usec)/1000000;
 	stats_all.s1.if_ipackets = 0;
