@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.77 2019/08/07 10:26:41 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.78 2019/08/09 13:44:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -94,8 +94,8 @@ int	prefix_cmp(struct prefix *, struct prefix *);
  * Ineligible routes are flagged as ineligible via nexthop_add().
  * Phase 3 is done together with Phase 2.
  * In following cases a prefix needs to be reevaluated:
- *  - update of a prefix (path_update)
- *  - withdraw of a prefix (prefix_remove)
+ *  - update of a prefix (prefix_update)
+ *  - withdraw of a prefix (prefix_withdraw)
  *  - state change of the nexthop (nexthop-{in}validate)
  *  - state change of session (session down)
  */

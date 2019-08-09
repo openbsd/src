@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.202 2019/08/07 10:26:41 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.203 2019/08/09 13:44:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -655,12 +655,11 @@ path_hash_stats(struct rde_hashstats *hs)
 }
 
 /*
- * Update a prefix belonging to a possible new aspath.
- * Return 1 if prefix was newly added, 0 if it was just changed or 2 if no
- * change happened at all.
+ * Update a prefix.
+ * Return 1 if prefix was newly added, 0 if it was just changed.
  */
 int
-path_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
+prefix_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
     struct bgpd_addr *prefix, int prefixlen, u_int8_t vstate)
 {
 	struct rde_aspath	*asp, *nasp = &state->aspath;
@@ -683,7 +682,7 @@ path_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
 			/* no change, update last change */
 			p->lastchange = time(NULL);
 			p->validation_state = vstate;
-			return (2);
+			return (0);
 		}
 	}
 
@@ -1099,12 +1098,12 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 }
 
 /*
- * Removes a prefix from all lists. If the parent objects -- path or
- * pt_entry -- become empty remove them too.
+ * Removes a prefix from the specified RIB. If the parent objects -- rib_entry
+ * or pt_entry -- become empty remove them too.
  */
 int
-prefix_remove(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
-    int prefixlen)
+prefix_withdraw(struct rib *rib, struct rde_peer *peer,
+    struct bgpd_addr *prefix, int prefixlen)
 {
 	struct prefix		*p;
 	struct rde_aspath	*asp;
@@ -1146,7 +1145,7 @@ prefix_add_eor(struct rde_peer *peer, u_int8_t aid)
  * Put a prefix from the Adj-RIB-Out onto the update queue.
  */
 int
-prefix_update(struct rde_peer *peer, struct filterstate *state,
+prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
     struct bgpd_addr *prefix, int prefixlen, u_int8_t vstate)
 {
 	struct prefix_tree *prefix_head = NULL;
@@ -1237,7 +1236,8 @@ prefix_update(struct rde_peer *peer, struct filterstate *state,
  * the prefix in the RIB linked to the peer withdraw list.
  */
 int
-prefix_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix, int prefixlen)
+prefix_adjout_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
+    int prefixlen)
 {
 	struct prefix		*p;
 
@@ -1531,7 +1531,7 @@ prefix_bypeer(struct rib_entry *re, struct rde_peer *peer)
 }
 
 static void
-prefix_updateall(struct prefix *p, enum nexthop_state state,
+prefix_evaluate_all(struct prefix *p, enum nexthop_state state,
     enum nexthop_state oldstate)
 {
 	/* Skip non local-RIBs or RIBs that are flagged as noeval. */
@@ -1745,7 +1745,7 @@ nexthop_runner(void)
 
 	p = nh->next_prefix;
 	for (j = 0; p != NULL && j < RDE_RUNNER_ROUNDS; j++) {
-		prefix_updateall(p, nh->state, nh->oldstate);
+		prefix_evaluate_all(p, nh->state, nh->oldstate);
 		p = LIST_NEXT(p, entry.list.nexthop);
 	}
 

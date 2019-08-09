@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.120 2019/07/17 10:13:26 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.121 2019/08/09 13:44:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -143,7 +143,8 @@ withdraw:
 
 		/* withdraw prefix */
 		pt_getaddr(old->pt, &addr);
-		if (prefix_withdraw(peer, &addr, old->pt->prefixlen) == 1)
+		if (prefix_adjout_withdraw(peer, &addr,
+		    old->pt->prefixlen) == 1)
 			peer->up_wcnt++;
 	} else {
 		switch (up_test_update(peer, new)) {
@@ -166,8 +167,8 @@ withdraw:
 		pt_getaddr(new->pt, &addr);
 
 		/* only send update if path changed */
-		if (prefix_update(peer, &state, &addr, new->pt->prefixlen,
-		    prefix_vstate(new)) == 1)
+		if (prefix_adjout_update(peer, &state, &addr,
+		    new->pt->prefixlen, prefix_vstate(new)) == 1)
 			peer->up_nlricnt++;
 
 		rde_filterstate_clean(&state);
@@ -226,7 +227,7 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 		return;
 	}
 
-	if (prefix_update(peer, &state, &addr, 0, ROA_NOTFOUND) == 1)
+	if (prefix_adjout_update(peer, &state, &addr, 0, ROA_NOTFOUND) == 1)
 		peer->up_nlricnt++;
 
 	/* no longer needed */
