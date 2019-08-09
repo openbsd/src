@@ -1,8 +1,10 @@
-/*	$OpenBSD: tsc.c,v 1.12 2019/08/03 14:57:51 jcs Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.13 2019/08/09 15:20:05 pirofti Exp $	*/
 /*
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2017 Adam Steen <adam@adamsteen.com.au>
  * Copyright (c) 2017 Mike Belopuhov <mike@openbsd.org>
+ * Copyright (c) 2019 Paul Irofti <pirofti@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +22,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
+#include <sys/atomic.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -32,6 +35,12 @@ int		tsc_recalibrate;
 
 uint64_t	tsc_frequency;
 int		tsc_is_invariant;
+
+#define	TSC_DRIFT_MAX			250
+int64_t	tsc_drift_observed;
+
+volatile int64_t	tsc_sync_val;
+volatile struct cpu_info	*tsc_sync_cpu;
 
 uint		tsc_get_timecount(struct timecounter *tc);
 
@@ -181,10 +190,8 @@ calibrate_tsc_freq(void)
 		return;
 	tsc_frequency = freq;
 	tsc_timecounter.tc_frequency = freq;
-#ifndef MULTIPROCESSOR
 	if (tsc_is_invariant)
 		tsc_timecounter.tc_quality = 2000;
-#endif
 }
 
 void
@@ -203,14 +210,13 @@ cpu_recalibrate_tsc(struct timecounter *tc)
 uint
 tsc_get_timecount(struct timecounter *tc)
 {
-	return rdtsc();
+	return rdtsc() + curcpu()->ci_tsc_skew;
 }
 
 void
 tsc_timecounter_init(struct cpu_info *ci, uint64_t cpufreq)
 {
-	if (!(ci->ci_flags & CPUF_PRIMARY) ||
-	    !(ci->ci_flags & CPUF_CONST_TSC) ||
+	if (!(ci->ci_flags & CPUF_CONST_TSC) ||
 	    !(ci->ci_flags & CPUF_INVAR_TSC))
 		return;
 
@@ -220,9 +226,7 @@ tsc_timecounter_init(struct cpu_info *ci, uint64_t cpufreq)
 	/* Newer CPUs don't require recalibration */
 	if (tsc_frequency > 0) {
 		tsc_timecounter.tc_frequency = tsc_frequency;
-#ifndef MULTIPROCESSOR
 		tsc_timecounter.tc_quality = 2000;
-#endif
 	} else {
 		tsc_recalibrate = 1;
 		tsc_frequency = cpufreq;
@@ -230,5 +234,103 @@ tsc_timecounter_init(struct cpu_info *ci, uint64_t cpufreq)
 		calibrate_tsc_freq();
 	}
 
-	tc_init(&tsc_timecounter);
+	if (tsc_drift_observed > TSC_DRIFT_MAX) {
+		printf("ERROR: %lld cycle TSC drift observed\n",
+		    (long long)tsc_drift_observed);
+		tsc_timecounter.tc_quality = -1000;
+		tsc_is_invariant = 0;
+	}
+
+	printf("%s: TSC skew=%lld observed drift=%lld\n", __func__,
+	    (long long)ci->ci_tsc_skew, (long long)tsc_drift_observed);
+
+	if (ci->ci_flags & CPUF_PRIMARY)
+		tc_init(&tsc_timecounter);
+}
+
+/*
+ * Record drift (in clock cycles).  Called during AP startup.
+ */
+void
+tsc_sync_drift(int64_t drift)
+{
+	if (drift < 0)
+		drift = -drift;
+	if (drift > tsc_drift_observed)
+		tsc_drift_observed = drift;
+}
+
+/*
+ * Called during startup of APs, by the boot processor.  Interrupts
+ * are disabled on entry.
+ */
+void
+tsc_read_bp(struct cpu_info *ci, uint64_t *bptscp, uint64_t *aptscp)
+{
+	uint64_t bptsc;
+
+	if (atomic_swap_ptr(&tsc_sync_cpu, ci) != NULL)
+		panic("tsc_sync_bp: 1");
+
+	/* Flag it and read our TSC. */
+	atomic_setbits_int(&ci->ci_flags, CPUF_SYNCTSC);
+	bptsc = (rdtsc() >> 1);
+
+	/* Wait for remote to complete, and read ours again. */
+	while ((ci->ci_flags & CPUF_SYNCTSC) != 0)
+		membar_consumer();
+	bptsc += (rdtsc() >> 1);
+
+	/* Wait for the results to come in. */
+	while (tsc_sync_cpu == ci)
+		CPU_BUSY_CYCLE();
+	if (tsc_sync_cpu != NULL)
+		panic("tsc_sync_bp: 2");
+
+	*bptscp = bptsc;
+	*aptscp = tsc_sync_val;
+}
+
+void
+tsc_sync_bp(struct cpu_info *ci)
+{
+	uint64_t bptsc, aptsc;
+
+	tsc_read_bp(ci, &bptsc, &aptsc); /* discarded - cache effects */
+	tsc_read_bp(ci, &bptsc, &aptsc);
+
+	/* Compute final value to adjust for skew. */
+	ci->ci_tsc_skew = bptsc - aptsc;
+}
+
+/*
+ * Called during startup of AP, by the AP itself.  Interrupts are
+ * disabled on entry.
+ */
+void
+tsc_post_ap(struct cpu_info *ci)
+{
+	uint64_t tsc;
+
+	/* Wait for go-ahead from primary. */
+	while ((ci->ci_flags & CPUF_SYNCTSC) == 0)
+		membar_consumer();
+	tsc = (rdtsc() >> 1);
+
+	/* Instruct primary to read its counter. */
+	atomic_clearbits_int(&ci->ci_flags, CPUF_SYNCTSC);
+	tsc += (rdtsc() >> 1);
+
+	/* Post result.  Ensure the whole value goes out atomically. */
+	(void)atomic_swap_64(&tsc_sync_val, tsc);
+
+	if (atomic_swap_ptr(&tsc_sync_cpu, NULL) != ci)
+		panic("tsc_sync_ap");
+}
+
+void
+tsc_sync_ap(struct cpu_info *ci)
+{
+	tsc_post_ap(ci);
+	tsc_post_ap(ci);
 }
