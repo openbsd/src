@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.26 2019/08/09 05:28:01 claudio Exp $ */
+/*	$Id: socket.c,v 1.27 2019/08/09 13:11:26 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -234,7 +234,7 @@ protocol_line(struct sess *sess, __attribute__((unused)) const char *host,
 	int	major, minor;
 
 	if (strncmp(cp, "@RSYNCD: ", 9)) {
-		LOG0("%s", cp);
+		LOG1("%s", cp);
 		return 0;
 	}
 
