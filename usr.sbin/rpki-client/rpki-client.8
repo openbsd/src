@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.3 2019/06/18 13:28:37 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.4 2019/08/09 09:50:44 claudio Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2019 $
+.Dd $Mdocdate: August 9 2019 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -25,6 +25,7 @@ for Origin Validation.
 .Sh SYNOPSIS
 .Nm
 .Op Fl fnqrv
+.Op Fl b Ar bind_addr
 .Op Fl e Ar rsync_prog
 .Ar tal1 tal2 ...
 .Sh DESCRIPTION
@@ -38,6 +39,10 @@ to fetch certificates, manifests, revocation lists, and route
 announcements themselves.
 Its arguments are as follows:
 .Bl -tag -width Ds
+.It Fl b Ar bind_addr
+Tell the rsync client to use the specified
+.Ar bind_addr
+as the source address for connections.
 .It Fl e Ar rsync_prog
 Use
 .Ar rsync_prog
@@ -45,7 +50,8 @@ instead of
 .Xr openrsync 1
 to fetch repositories.
 It must accept the
-.Fl rlt
+.Fl rlt ,
+.Fl -address
 and
 .Fl -delete
 flags and connect with rsync-protocol locations.

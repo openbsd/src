@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2019/08/09 05:29:51 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.13 2019/08/09 09:50:44 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -113,7 +113,7 @@ TAILQ_HEAD(entityq, entity);
  */
 static void	 proc_parser(int, int, int)
 			__attribute__((noreturn));
-static void	 proc_rsync(const char *, int, int)
+static void	 proc_rsync(const char *, const char *, int, int)
 			__attribute__((noreturn));
 static void	 logx(const char *fmt, ...)
 			__attribute__((format(printf, 1, 2)));
@@ -522,7 +522,7 @@ proc_child(int signal)
  * repositories and saturate our system.
  */
 static void
-proc_rsync(const char *prog, int fd, int noop)
+proc_rsync(const char *prog, const char *bind_addr, int fd, int noop)
 {
 	size_t			 id, i, idsz = 0;
 	ssize_t			 ssz;
@@ -678,10 +678,12 @@ proc_rsync(const char *prog, int fd, int noop)
 				err(EXIT_FAILURE, "pledge");
 			i = 0;
 			args[i++] = (char *)prog;
-			args[i++] = "-r";
-			args[i++] = "-l";
-			args[i++] = "-t";
+			args[i++] = "-rlt";
 			args[i++] = "--delete";
+			if (bind_addr != NULL) {
+				args[i++] = "--address";
+				args[i++] = (char *)bind_addr;
+			}
 			args[i++] = uri;
 			args[i++] = dst;
 			args[i] = NULL;
@@ -1270,12 +1272,16 @@ main(int argc, char *argv[])
 	struct stats	 stats;
 	struct roa	**out = NULL;
 	const char	*rsync_prog = "openrsync";
+	const char	*bind_addr = NULL;
 
 	if (pledge("stdio rpath proc exec cpath unveil", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
-	while ((c = getopt(argc, argv, "e:fnqrv")) != -1)
+	while ((c = getopt(argc, argv, "b:e:fnqrv")) != -1)
 		switch (c) {
+		case 'b':
+			bind_addr = optarg;
+			break;
 		case 'e':
 			rsync_prog = optarg;
 			break;
@@ -1350,7 +1356,7 @@ main(int argc, char *argv[])
 
 		if (noop && pledge("stdio", NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
-		proc_rsync(rsync_prog, fd[0], noop);
+		proc_rsync(rsync_prog, bind_addr, fd[0], noop);
 		/* NOTREACHED */
 	}
 
@@ -1505,6 +1511,7 @@ main(int argc, char *argv[])
 
 usage:
 	fprintf(stderr,
-	    "usage: rpki-client [-fnqrv] [-e rsync_prog] tal ...\n");
+	    "usage: rpki-client [-fnqrv] [-b bind_addr] [-e rsync_prog] "
+	    "tal ...\n");
 	return EXIT_FAILURE;
 }
