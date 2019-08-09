@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.19 2016/08/26 08:44:04 guenther Exp $	*/
+/*	$OpenBSD: table.c,v 1.20 2019/08/09 22:52:13 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -52,7 +52,6 @@
 #define MAX_ID 16000	/* << 2^15 so I don't have sign troubles */
 
 struct	timeval tp;
-struct	timezone txp;
 
 typedef struct table_entry TABLE_ENTRY;
 
@@ -84,7 +83,7 @@ find_match(CTL_MSG *request)
 	TABLE_ENTRY *ptr, *next;
 	time_t current_time;
 
-	gettimeofday(&tp, &txp);
+	gettimeofday(&tp, NULL);
 	current_time = tp.tv_sec;
 	if (debug)
 		print_request("find_match", request);
@@ -121,7 +120,7 @@ find_request(CTL_MSG *request)
 	TABLE_ENTRY *ptr, *next;
 	time_t current_time;
 
-	gettimeofday(&tp, &txp);
+	gettimeofday(&tp, NULL);
 	current_time = tp.tv_sec;
 	/*
 	 * See if this is a repeated message, and check for
@@ -161,7 +160,7 @@ insert_table(CTL_MSG *request, CTL_RESPONSE *response)
 
 	if (debug)
 		print_request( "insert_table", request );
-	gettimeofday(&tp, &txp);
+	gettimeofday(&tp, NULL);
 	current_time = tp.tv_sec;
 	request->id_num = new_id();
 	response->id_num = htonl(request->id_num);
