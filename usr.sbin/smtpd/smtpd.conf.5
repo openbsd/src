@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.214 2019/08/10 16:31:15 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.215 2019/08/10 18:11:52 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -329,6 +329,13 @@ or set using either
 or using the
 .Ic hostname
 directive.
+.It Ic filter Ar name Ic proc\-exec Ar command
+Register and execute
+.Qq proc
+filter
+.Ar name
+from
+.Ar command .
 .It Ic include Qq Ar pathname
 Replace this directive with the content of the additional configuration
 file at the absolute
@@ -380,6 +387,10 @@ use the CA certificate associated with
 .Ic ca
 directive)
 as the CA certificate when verifying client certificates.
+.It Ic filter Ar name
+Apply filter
+.Ar name
+on connections handled by this listener.
 .It Cm hostname Ar hostname
 Use
 .Ar hostname
