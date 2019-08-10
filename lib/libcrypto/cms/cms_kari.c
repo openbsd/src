@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_kari.c,v 1.3 2019/08/10 16:03:54 jsing Exp $ */
+/* $OpenBSD: cms_kari.c,v 1.4 2019/08/10 16:39:17 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -52,7 +52,7 @@
  * ====================================================================
  */
 
-#include "internal/cryptlib.h"
+#include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
@@ -60,7 +60,7 @@
 #include <openssl/cms.h>
 #include <openssl/aes.h>
 #include "cms_lcl.h"
-#include "internal/asn1_int.h"
+#include "asn1/asn1_locl.h"
 
 /* Key Agreement Recipient Info (KARI) routines */
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_sd.c,v 1.14 2019/08/10 16:03:54 jsing Exp $ */
+/* $OpenBSD: cms_sd.c,v 1.15 2019/08/10 16:39:17 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -52,7 +52,7 @@
  * ====================================================================
  */
 
-#include "internal/cryptlib.h"
+#include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
@@ -60,8 +60,8 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include "cms_lcl.h"
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
+#include "asn1/asn1_locl.h"
+#include "evp/evp_locl.h"
 
 /* CMS SignedData Utilities */
 

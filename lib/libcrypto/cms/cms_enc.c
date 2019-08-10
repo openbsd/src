@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_enc.c,v 1.11 2019/08/10 16:03:53 jsing Exp $ */
+/* $OpenBSD: cms_enc.c,v 1.12 2019/08/10 16:39:17 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -52,7 +52,7 @@
  * ====================================================================
  */
 
-#include "internal/cryptlib.h"
+#include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
