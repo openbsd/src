@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.165 2019/06/28 13:32:51 deraadt Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.166 2019/08/10 16:07:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -46,10 +46,19 @@ static void smtp_setup_events(void);
 static void smtp_pause(void);
 static void smtp_resume(void);
 static void smtp_accept(int, short, void *);
+static void smtp_dropped(struct listener *, int, const struct sockaddr_storage *);
 static int smtp_enqueue(void);
 static int smtp_can_accept(void);
 static void smtp_setup_listeners(void);
 static int smtp_sni_callback(SSL *, int *, void *);
+
+int
+proxy_session(struct listener *listener, int sock,
+    const struct sockaddr_storage *ss,
+    void (*accepted)(struct listener *, int,
+	const struct sockaddr_storage *, struct io *),
+    void (*dropped)(struct listener *, int,
+	const struct sockaddr_storage *));
 
 static void smtp_accepted(struct listener *, int, const struct sockaddr_storage *, struct io *);
 
@@ -266,6 +275,16 @@ smtp_accept(int fd, short event, void *p)
 		fatal("smtp_accept");
 	}
 
+	if (listener->flags & F_PROXY) {
+		io_set_nonblocking(sock);
+		if (proxy_session(listener, sock, &ss,
+			smtp_accepted, smtp_dropped) == -1) {
+			close(sock);
+			return;
+		}
+		return;
+	}
+
 	smtp_accepted(listener, sock, &ss, NULL);
 	return;
 
@@ -337,4 +356,11 @@ smtp_accepted(struct listener *listener, int sock, const struct sockaddr_storage
 		stat_increment("smtp.session.inet4", 1);
 	if (listener->ss.ss_family == AF_INET6)
 		stat_increment("smtp.session.inet6", 1);
+}
+
+static void
+smtp_dropped(struct listener *listener, int sock, const struct sockaddr_storage *ss)
+{
+	close(sock);
+	sessions--;
 }

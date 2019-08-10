@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.253 2019/06/28 13:32:50 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.254 2019/08/10 16:07:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -125,7 +125,8 @@ enum listen_options {
 	LO_SENDERS	= 0x000800,
 	LO_RECEIVEDAUTH = 0x001000,
 	LO_MASQUERADE	= 0x002000,
-	LO_CA		= 0x010000
+	LO_CA		= 0x004000,
+	LO_PROXY       	= 0x008000,
 };
 
 static struct listen_opts {
@@ -188,7 +189,7 @@ typedef struct {
 %token	MAIL_FROM MAILDIR MASK_SRC MASQUERADE MATCH MAX_MESSAGE_SIZE MAX_DEFERRED MBOX MDA MTA MX
 %token	NO_DSN NO_VERIFY NOOP
 %token	ON
-%token	PKI PORT PROC PROC_EXEC
+%token	PKI PORT PROC PROC_EXEC PROXY_V2
 %token	QUEUE QUIT
 %token	RCPT_TO RDNS RECIPIENT RECEIVEDAUTH REGEX RELAY REJECT REPORT REWRITE RSET
 %token	SCHEDULER SENDER SENDERS SMTP SMTP_IN SMTP_OUT SMTPS SOCKET SRC SUB_ADDR_DELIM
@@ -2056,6 +2057,14 @@ opt_if_listen : INET4 {
 			listen_opts.options |= LO_NODSN;
 			listen_opts.flags &= ~F_EXT_DSN;
 		}
+		| PROXY_V2	{
+			if (listen_opts.options & LO_PROXY) {
+				yyerror("proxy-v2 already specified");
+				YYERROR;
+			}
+			listen_opts.options |= LO_PROXY;
+			listen_opts.flags |= F_PROXY;
+		}
 		| SENDERS tables	{
 			struct table	*t = $2;
 
@@ -2302,6 +2311,7 @@ lookup(char *s)
 		{ "port",		PORT },
 		{ "proc",		PROC },
 		{ "proc-exec",		PROC_EXEC },
+		{ "proxy-v2",		PROXY_V2 },
 		{ "queue",		QUEUE },
 		{ "quit",		QUIT },
 		{ "rcpt-to",		RCPT_TO },

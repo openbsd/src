@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.403 2019/08/01 23:08:23 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.404 2019/08/10 16:07:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -592,7 +592,6 @@ smtp_session(struct listener *listener, int sock,
 	io_set_fd(s->io, sock);
 	io_set_timeout(s->io, SMTPD_SESSION_TIMEOUT * 1000);
 	io_set_write(s->io);
-
 	s->state = STATE_NEW;
 
 	(void)strlcpy(s->smtpname, listener->hostname, sizeof(s->smtpname));

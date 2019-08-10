@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.630 2019/08/10 13:38:01 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.631 2019/08/10 16:07:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -84,6 +84,7 @@
 #define	F_RECEIVEDAUTH		0x800
 #define	F_MASQUERADE		0x1000
 #define	F_FILTERED		0x2000
+#define	F_PROXY			0x4000
 
 #define RELAY_TLS_OPPORTUNISTIC	0
 #define RELAY_TLS_STARTTLS	1
