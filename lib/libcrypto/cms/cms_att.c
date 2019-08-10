@@ -1,3 +1,4 @@
+/* $OpenBSD: cms_att.c,v 1.7 2019/08/10 16:03:53 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.

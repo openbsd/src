@@ -1,3 +1,4 @@
+/* $OpenBSD: cms_asn1.c,v 1.12 2019/08/10 16:03:53 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
