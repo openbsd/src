@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_dd.c,v 1.10 2019/08/10 16:42:20 jsing Exp $ */
+/* $OpenBSD: cms_dd.c,v 1.11 2019/08/10 18:15:52 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -62,10 +62,12 @@
 
 /* CMS DigestedData Utilities */
 
-CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md)
+CMS_ContentInfo *
+cms_DigestedData_create(const EVP_MD *md)
 {
 	CMS_ContentInfo *cms;
 	CMS_DigestedData *dd;
+
 	cms = CMS_ContentInfo_new();
 	if (cms == NULL)
 		return NULL;
@@ -87,17 +89,22 @@ CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md)
 
  err:
 	CMS_ContentInfo_free(cms);
+
 	return NULL;
 }
 
-BIO *cms_DigestedData_init_bio(CMS_ContentInfo *cms)
+BIO *
+cms_DigestedData_init_bio(CMS_ContentInfo *cms)
 {
 	CMS_DigestedData *dd;
+
 	dd = cms->d.digestedData;
+
 	return cms_DigestAlgorithm_init_bio(dd->digestAlgorithm);
 }
 
-int cms_DigestedData_do_final(CMS_ContentInfo *cms, BIO *chain, int verify)
+int
+cms_DigestedData_do_final(CMS_ContentInfo *cms, BIO *chain, int verify)
 {
 	EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 	unsigned char md[EVP_MAX_MD_SIZE];
@@ -140,5 +147,4 @@ int cms_DigestedData_do_final(CMS_ContentInfo *cms, BIO *chain, int verify)
 	EVP_MD_CTX_free(mctx);
 
 	return r;
-
 }

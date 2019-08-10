@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_enc.c,v 1.13 2019/08/10 16:42:20 jsing Exp $ */
+/* $OpenBSD: cms_enc.c,v 1.14 2019/08/10 18:15:52 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -65,7 +65,8 @@
 
 /* Return BIO based on EncryptedContentInfo and key */
 
-BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
+BIO *
+cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 {
 	BIO *b;
 	EVP_CIPHER_CTX *ctx;
@@ -207,9 +208,9 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 	return NULL;
 }
 
-int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
-			                  const EVP_CIPHER *cipher,
-			                  const unsigned char *key, size_t keylen)
+int
+cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
+    const EVP_CIPHER *cipher, const unsigned char *key, size_t keylen)
 {
 	ec->cipher = cipher;
 	if (key) {
@@ -222,13 +223,16 @@ int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
 	ec->keylen = keylen;
 	if (cipher)
 		ec->contentType = OBJ_nid2obj(NID_pkcs7_data);
+
 	return 1;
 }
 
-int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
-			                   const unsigned char *key, size_t keylen)
+int
+CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
+    const unsigned char *key, size_t keylen)
 {
 	CMS_EncryptedContentInfo *ec;
+
 	if (!key || !keylen) {
 		CMSerr(CMS_F_CMS_ENCRYPTEDDATA_SET1_KEY, CMS_R_NO_KEY);
 		return 0;
@@ -246,13 +250,17 @@ int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
 		return 0;
 	}
 	ec = cms->d.encryptedData->encryptedContentInfo;
+
 	return cms_EncryptedContent_init(ec, ciph, key, keylen);
 }
 
-BIO *cms_EncryptedData_init_bio(CMS_ContentInfo *cms)
+BIO *
+cms_EncryptedData_init_bio(CMS_ContentInfo *cms)
 {
 	CMS_EncryptedData *enc = cms->d.encryptedData;
+
 	if (enc->encryptedContentInfo->cipher && enc->unprotectedAttrs)
 		enc->version = 2;
+
 	return cms_EncryptedContent_init_bio(enc->encryptedContentInfo);
 }

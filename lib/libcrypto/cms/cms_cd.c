@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_cd.c,v 1.12 2019/08/10 16:42:20 jsing Exp $ */
+/* $OpenBSD: cms_cd.c,v 1.13 2019/08/10 18:15:52 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -66,10 +66,12 @@
 
 /* CMS CompressedData Utilities */
 
-CMS_ContentInfo *cms_CompressedData_create(int comp_nid)
+CMS_ContentInfo *
+cms_CompressedData_create(int comp_nid)
 {
 	CMS_ContentInfo *cms;
 	CMS_CompressedData *cd;
+
 	/*
 	 * Will need something cleverer if there is ever more than one
 	 * compression algorithm or parameters have some meaning...
@@ -105,10 +107,12 @@ CMS_ContentInfo *cms_CompressedData_create(int comp_nid)
 	return NULL;
 }
 
-BIO *cms_CompressedData_init_bio(CMS_ContentInfo *cms)
+BIO *
+cms_CompressedData_init_bio(CMS_ContentInfo *cms)
 {
 	CMS_CompressedData *cd;
 	const ASN1_OBJECT *compoid;
+
 	if (OBJ_obj2nid(cms->contentType) != NID_id_smime_ct_compressedData) {
 		CMSerr(CMS_F_CMS_COMPRESSEDDATA_INIT_BIO,
 			   CMS_R_CONTENT_TYPE_NOT_COMPRESSED_DATA);

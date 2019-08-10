@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_pwri.c,v 1.16 2019/08/10 16:42:20 jsing Exp $ */
+/* $OpenBSD: cms_pwri.c,v 1.17 2019/08/10 18:15:52 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -63,10 +63,12 @@
 #include "cms_lcl.h"
 #include "asn1/asn1_locl.h"
 
-int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
-			                        unsigned char *pass, ossl_ssize_t passlen)
+int
+CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri, unsigned char *pass,
+    ossl_ssize_t passlen)
 {
 	CMS_PasswordRecipientInfo *pwri;
+
 	if (ri->type != CMS_RECIPINFO_PASS) {
 		CMSerr(CMS_F_CMS_RECIPIENTINFO_SET0_PASSWORD, CMS_R_NOT_PWRI);
 		return 0;
@@ -77,15 +79,14 @@ int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
 	if (pass && passlen < 0)
 		passlen = strlen((char *)pass);
 	pwri->passlen = passlen;
+
 	return 1;
 }
 
-CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
-			                                   int iter, int wrap_nid,
-			                                   int pbe_nid,
-			                                   unsigned char *pass,
-			                                   ossl_ssize_t passlen,
-			                                   const EVP_CIPHER *kekciph)
+CMS_RecipientInfo *
+CMS_add0_recipient_password(CMS_ContentInfo *cms, int iter, int wrap_nid,
+    int pbe_nid, unsigned char *pass, ossl_ssize_t passlen,
+    const EVP_CIPHER *kekciph)
 {
 	CMS_RecipientInfo *ri = NULL;
 	CMS_EnvelopedData *env;
@@ -115,7 +116,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
 	}
 	if (wrap_nid != NID_id_alg_PWRI_KEK) {
 		CMSerr(CMS_F_CMS_ADD0_RECIPIENT_PASSWORD,
-			   CMS_R_UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM);
+		   CMS_R_UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM);
 		return NULL;
 	}
 
@@ -147,7 +148,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
 		}
 		if (EVP_CIPHER_param_to_asn1(ctx, encalg->parameter) <= 0) {
 			CMSerr(CMS_F_CMS_ADD0_RECIPIENT_PASSWORD,
-			       CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
+			   CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
 			goto err;
 		}
 	}
@@ -179,8 +180,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
 		goto merr;
 
 	if (!ASN1_item_pack(encalg, ASN1_ITEM_rptr(X509_ALGOR),
-			            &pwri->keyEncryptionAlgorithm->parameter->
-			            value.sequence))
+	    &pwri->keyEncryptionAlgorithm->parameter->value.sequence))
 		 goto merr;
 	pwri->keyEncryptionAlgorithm->parameter->type = V_ASN1_SEQUENCE;
 
@@ -209,8 +209,8 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
 	if (ri)
 		M_ASN1_free_of(ri, CMS_RecipientInfo);
 	X509_ALGOR_free(encalg);
-	return NULL;
 
+	return NULL;
 }
 
 /*
@@ -218,13 +218,14 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
  * some point this should go into EVP.
  */
 
-static int kek_unwrap_key(unsigned char *out, size_t *outlen,
-			              const unsigned char *in, size_t inlen,
-			              EVP_CIPHER_CTX *ctx)
+static int
+kek_unwrap_key(unsigned char *out, size_t *outlen, const unsigned char *in,
+    size_t inlen, EVP_CIPHER_CTX *ctx)
 {
 	size_t blocklen = EVP_CIPHER_CTX_block_size(ctx);
 	unsigned char *tmp;
 	int outl, rv = 0;
+
 	if (inlen < 2 * blocklen) {
 		/* too small */
 		return 0;
@@ -237,16 +238,16 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
 		CMSerr(CMS_F_KEK_UNWRAP_KEY, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
+
 	/* setup IV by decrypting last two blocks */
 	if (!EVP_DecryptUpdate(ctx, tmp + inlen - 2 * blocklen, &outl,
-			               in + inlen - 2 * blocklen, blocklen * 2)
+	    in + inlen - 2 * blocklen, blocklen * 2)
 		/*
 		 * Do a decrypt of last decrypted block to set IV to correct value
 		 * output it to start of buffer so we don't corrupt decrypted block
 		 * this works because buffer is at least two block lengths long.
 		 */
-		|| !EVP_DecryptUpdate(ctx, tmp, &outl,
-			                  tmp + inlen - blocklen, blocklen)
+		|| !EVP_DecryptUpdate(ctx, tmp, &outl, tmp + inlen - blocklen, blocklen)
 		/* Can now decrypt first n - 1 blocks */
 		|| !EVP_DecryptUpdate(ctx, tmp, &outl, in, inlen - blocklen)
 
@@ -267,19 +268,21 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
 	*outlen = (size_t)tmp[0];
 	memcpy(out, tmp + 4, *outlen);
 	rv = 1;
+
  err:
 	OPENSSL_clear_free(tmp, inlen);
-	return rv;
 
+	return rv;
 }
 
-static int kek_wrap_key(unsigned char *out, size_t *outlen,
-			            const unsigned char *in, size_t inlen,
-			            EVP_CIPHER_CTX *ctx)
+static int
+kek_wrap_key(unsigned char *out, size_t *outlen, const unsigned char *in,
+    size_t inlen, EVP_CIPHER_CTX *ctx)
 {
 	size_t blocklen = EVP_CIPHER_CTX_block_size(ctx);
 	size_t olen;
 	int dummy;
+
 	/*
 	 * First decide length of output buffer: need header and round up to
 	 * multiple of block length.
@@ -302,12 +305,12 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
 		out[3] = in[2] ^ 0xFF;
 		memcpy(out + 4, in, inlen);
 		/* Add random padding to end */
-		if (olen > inlen + 4
-			&& RAND_bytes(out + 4 + inlen, olen - 4 - inlen) <= 0)
+		if (olen > inlen + 4 &&
+		    RAND_bytes(out + 4 + inlen, olen - 4 - inlen) <= 0)
 			return 0;
 		/* Encrypt twice */
-		if (!EVP_EncryptUpdate(ctx, out, &dummy, out, olen)
-			|| !EVP_EncryptUpdate(ctx, out, &dummy, out, olen))
+		if (!EVP_EncryptUpdate(ctx, out, &dummy, out, olen) ||
+		    !EVP_EncryptUpdate(ctx, out, &dummy, out, olen))
 			return 0;
 	}
 
@@ -318,8 +321,9 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
 
 /* Encrypt/Decrypt content key in PWRI recipient info */
 
-int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
-			                     int en_de)
+int
+cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
+    int en_de)
 {
 	CMS_EncryptedContentInfo *ec;
 	CMS_PasswordRecipientInfo *pwri;
@@ -342,21 +346,20 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 
 	if (!algtmp || OBJ_obj2nid(algtmp->algorithm) != NID_id_alg_PWRI_KEK) {
 		CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT,
-			   CMS_R_UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM);
+		   CMS_R_UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM);
 		return 0;
 	}
 
 	kekalg = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(X509_ALGOR),
-			                           algtmp->parameter);
+	    algtmp->parameter);
 
 	if (kekalg == NULL) {
 		CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT,
-			   CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER);
+		   CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER);
 		return 0;
 	}
 
 	kekcipher = EVP_get_cipherbyobj(kekalg->algorithm);
-
 	if (!kekcipher) {
 		CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT, CMS_R_UNKNOWN_CIPHER);
 		return 0;
@@ -373,7 +376,7 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 	EVP_CIPHER_CTX_set_padding(kekctx, 0);
 	if (EVP_CIPHER_asn1_to_param(kekctx, kekalg->parameter) <= 0) {
 		CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT,
-			   CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
+		   CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
 		goto err;
 	}
 
@@ -381,9 +384,8 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 
 	/* Finish password based key derivation to setup key in "ctx" */
 
-	if (EVP_PBE_CipherInit(algtmp->algorithm,
-			               (char *)pwri->pass, pwri->passlen,
-			               algtmp->parameter, kekctx, en_de) < 0) {
+	if (EVP_PBE_CipherInit(algtmp->algorithm, (char *)pwri->pass,
+	    pwri->passlen, algtmp->parameter, kekctx, en_de) < 0) {
 		CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT, ERR_R_EVP_LIB);
 		goto err;
 	}
@@ -391,12 +393,10 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 	/* Finally wrap/unwrap the key */
 
 	if (en_de) {
-
 		if (!kek_wrap_key(NULL, &keylen, ec->key, ec->keylen, kekctx))
 			goto err;
 
 		key = OPENSSL_malloc(keylen);
-
 		if (key == NULL)
 			goto err;
 
@@ -406,14 +406,12 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 		pwri->encryptedKey->length = keylen;
 	} else {
 		key = OPENSSL_malloc(pwri->encryptedKey->length);
-
 		if (key == NULL) {
 			CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT, ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
-		if (!kek_unwrap_key(key, &keylen,
-			                pwri->encryptedKey->data,
-			                pwri->encryptedKey->length, kekctx)) {
+		if (!kek_unwrap_key(key, &keylen, pwri->encryptedKey->data,
+		    pwri->encryptedKey->length, kekctx)) {
 			CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT, CMS_R_UNWRAP_FAILURE);
 			goto err;
 		}
@@ -421,19 +419,15 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 		OPENSSL_clear_free(ec->key, ec->keylen);
 		ec->key = key;
 		ec->keylen = keylen;
-
 	}
 
 	r = 1;
 
  err:
-
 	EVP_CIPHER_CTX_free(kekctx);
-
 	if (!r)
 		OPENSSL_free(key);
 	X509_ALGOR_free(kekalg);
 
 	return r;
-
 }
