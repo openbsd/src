@@ -1,0 +1,157 @@
+.\" $OpenBSD: CMS_compress.3,v 1.3 2019/08/10 23:41:22 schwarze Exp $
+.\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\"
+.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: August 10 2019 $
+.Dt CMS_COMPRESS 3
+.Os
+.Sh NAME
+.Nm CMS_compress
+.Nd create a CMS CompressedData structure
+.Sh SYNOPSIS
+.In openssl/cms.h
+.Ft CMS_ContentInfo *
+.Fo CMS_compress
+.Fa "BIO *in"
+.Fa "int comp_nid"
+.Fa "unsigned int flags"
+.Fc
+.Sh DESCRIPTION
+.Fn CMS_compress
+creates and returns a CMS CompressedData structure.
+.Fa comp_nid
+is the compression algorithm to use or
+.Dv NID_undef
+to use the default algorithm (zlib compression).
+.Fa in
+is the content to be compressed.
+.Fa flags
+is an optional set of flags.
+.Pp
+The only currently supported compression algorithm is zlib using the NID
+.Dv NID_zlib_compression .
+.Pp
+If zlib support is not compiled in, then
+.Fn CMS_compress
+will return an error.
+.Pp
+If the
+.Dv CMS_TEXT
+flag is set, MIME headers for type text/plain are prepended to the data.
+.Pp
+Normally the supplied content is translated into MIME canonical format
+(as required by the S/MIME specifications); if
+.Dv CMS_BINARY
+is set, no translation occurs.
+This option should be used if the supplied data is in binary format.
+Otherwise, the translation will corrupt it.
+If
+.Dv CMS_BINARY
+is set then
+.Dv CMS_TEXT
+is ignored.
+.Pp
+If the
+.Dv CMS_STREAM
+flag is set, a partial
+.Vt CMS_ContentInfo
+structure is returned suitable for streaming I/O: no data is read from
+the BIO
+.Fa in .
+.Pp
+The compressed data is included in the
+.Vt CMS_ContentInfo
+structure unless
+.Dv CMS_DETACHED
+is set, in which case it is omitted.
+This is rarely used in practice and is not supported by
+.Xr SMIME_write_CMS 3 .
+.Pp
+If the flag
+.Dv CMS_STREAM
+is set, the returned
+.Vt CMS_ContentInfo
+structure is
+.Em not
+complete and outputting its contents via a function that does not
+properly finalize the
+.Vt CMS_ContentInfo
+structure will give unpredictable results.
+.Pp
+Several functions including
+.Xr SMIME_write_CMS 3 ,
+.Xr i2d_CMS_bio_stream 3 ,
+and
+.Xr PEM_write_bio_CMS_stream 3
+finalize the structure.
+Alternatively finalization can be performed by obtaining the streaming
+ASN1
+.Vt BIO
+directly using
+.Xr BIO_new_CMS 3 .
+.Pp
+Additional compression parameters such as the zlib compression level
+cannot currently be set.
+.Sh RETURN VALUES
+.Fn CMS_compress
+returns either a
+.Vt CMS_ContentInfo
+structure or
+.Dv NULL
+if an error occurred.
+The error can be obtained from
+.Xr ERR_get_error 3 .
+.Sh SEE ALSO
+.Xr CMS_uncompress 3
+.Sh HISTORY
+.Fn CMS_compress
+was added to OpenSSL 0.9.8.
+The
+.Dv CMS_STREAM
+flag was added in OpenSSL 1.0.0.

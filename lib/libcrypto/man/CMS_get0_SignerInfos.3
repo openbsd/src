@@ -1,0 +1,180 @@
+.\" $OpenBSD: CMS_get0_SignerInfos.3,v 1.3 2019/08/10 23:41:22 schwarze Exp $
+.\" full merge up to: OpenSSL 83cf7abf May 29 13:07:08 2018 +0100
+.\"
+.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" Copyright (c) 2008, 2013 The OpenSSL Project.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: August 10 2019 $
+.Dt CMS_GET0_SIGNERINFOS 3
+.Os
+.Sh NAME
+.Nm CMS_get0_SignerInfos ,
+.Nm CMS_SignerInfo_get0_signer_id ,
+.Nm CMS_SignerInfo_get0_signature ,
+.Nm CMS_SignerInfo_cert_cmp ,
+.Nm CMS_SignerInfo_set1_signer_cert
+.Nd CMS signedData signer functions
+.Sh SYNOPSIS
+.In openssl/cms.h
+.Ft STACK_OF(CMS_SignerInfo) *
+.Fo CMS_get0_SignerInfos
+.Fa "CMS_ContentInfo *cms"
+.Fc
+.Ft int
+.Fo CMS_SignerInfo_get0_signer_id
+.Fa "CMS_SignerInfo *si"
+.Fa "ASN1_OCTET_STRING **keyid"
+.Fa "X509_NAME **issuer"
+.Fa "ASN1_INTEGER **sno"
+.Fc
+.Ft ASN1_OCTET_STRING *
+.Fo CMS_SignerInfo_get0_signature
+.Fa "CMS_SignerInfo *si"
+.Fc
+.Ft int
+.Fo CMS_SignerInfo_cert_cmp
+.Fa "CMS_SignerInfo *si"
+.Fa "X509 *cert"
+.Fc
+.Ft void
+.Fo CMS_SignerInfo_set1_signer_cert
+.Fa "CMS_SignerInfo *si"
+.Fa "X509 *signer"
+.Fc
+.Sh DESCRIPTION
+The function
+.Fn CMS_get0_SignerInfos
+returns all the
+.Vt CMS_SignerInfo
+structures associated with a CMS signedData structure.
+.Pp
+.Fn CMS_SignerInfo_get0_signer_id
+retrieves the certificate signer identifier associated with a specific
+.Vt CMS_SignerInfo
+structure
+.Fa si .
+Either the keyidentifier will be set in
+.Fa keyid
+or
+.Em both
+issuer name and serial number in
+.Fa issuer
+and
+.Fa sno .
+.Pp
+.Fn CMS_SignerInfo_get0_signature
+retrieves the signature associated with
+.Fa si
+in a pointer to an
+.Vt ASN1_OCTET_STRING
+structure.
+This pointer returned corresponds to the internal signature value of
+.Fa si
+so it may be read or modified.
+.Pp
+.Fn CMS_SignerInfo_cert_cmp
+compares the certificate
+.Fa cert
+against the signer identifier
+.Fa si .
+It returns zero if the comparison is successful or non-zero if not.
+.Pp
+.Fn CMS_SignerInfo_set1_signer_cert
+sets the signers certificate of
+.Fa si
+to
+.Fa signer .
+.Pp
+The main purpose of these functions is to enable an application to
+lookup signers certificates using any appropriate technique when the
+simpler method of
+.Xr CMS_verify 3
+is not appropriate.
+.Pp
+In typical usage an application will retrieve all
+.Vt CMS_SignerInfo
+structures using
+.Fn CMS_get0_SignerInfos
+and retrieve the identifier information using CMS.
+It will then obtain the signer certificate by some unspecified means
+(or return and error if it cannot be found) and set it using
+.Fn CMS_SignerInfo_set1_signer_cert .
+.Pp
+Once all signer certificates have been set,
+.Xr CMS_verify 3
+can be used.
+.Pp
+Although
+.Fn CMS_get0_SignerInfos
+can return
+.Dv NULL
+if an error occurs
+.Em or
+if there are no signers, this is not a problem in practice because the
+only error which can occur is if the
+.Fa cms
+structure is not of type signedData due to application error.
+.Sh RETURN VALUES
+.Fn CMS_get0_SignerInfos
+returns all
+.Vt CMS_SignerInfo
+structures, or
+.Dv NULL
+if there are no signers or an error occurs.
+.Pp
+.Fn CMS_SignerInfo_get0_signer_id
+returns 1 for success or 0 for failure.
+.Pp
+.Fn CMS_SignerInfo_cert_cmp
+returns 0 for a successful comparison or non-zero otherwise.
+.Pp
+Any error can be obtained from
+.Xr ERR_get_error 3 .
+.Sh SEE ALSO
+.Xr CMS_verify 3
+.Sh HISTORY
+These functions were first was added to OpenSSL 0.9.8.

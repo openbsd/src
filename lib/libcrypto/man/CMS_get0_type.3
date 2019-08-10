@@ -1,0 +1,174 @@
+.\" $OpenBSD: CMS_get0_type.3,v 1.3 2019/08/10 23:41:22 schwarze Exp $
+.\" full merge up to: OpenSSL 72a7a702 Feb 26 14:05:09 2019 +0000
+.\"
+.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" Copyright (c) 2008, 2015 The OpenSSL Project.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: August 10 2019 $
+.Dt CMS_GET0_TYPE 3
+.Os
+.Sh NAME
+.Nm CMS_get0_type ,
+.Nm CMS_set1_eContentType ,
+.Nm CMS_get0_eContentType ,
+.Nm CMS_get0_content
+.Nd get and set CMS content types and content
+.Sh SYNOPSIS
+.In openssl/cms.h
+.Ft const ASN1_OBJECT *
+.Fo CMS_get0_type
+.Fa "const CMS_ContentInfo *cms"
+.Fc
+.Ft int
+.Fo CMS_set1_eContentType
+.Fa "CMS_ContentInfo *cms"
+.Fa "const ASN1_OBJECT *oid"
+.Fc
+.Ft const ASN1_OBJECT *
+.Fo CMS_get0_eContentType
+.Fa "CMS_ContentInfo *cms"
+.Fc
+.Ft ASN1_OCTET_STRING **
+.Fo CMS_get0_content
+.Fa "CMS_ContentInfo *cms"
+.Fc
+.Sh DESCRIPTION
+.Fn CMS_get0_type
+returns the content type of a
+.Vt CMS_ContentInfo
+structure as an
+.Vt ASN1_OBJECT
+pointer.
+An application can then decide how to process the
+.Vt CMS_ContentInfo
+structure based on this value.
+.Pp
+.Fn CMS_set1_eContentType
+sets the embedded content type of a
+.Vt CMS_ContentInfo
+structure.
+It should be called with CMS functions (such as
+.Xr CMS_sign 3 ,
+.Xr CMS_encrypt 3 )
+with the
+.Dv CMS_PARTIAL
+flag and
+.Em before
+the structure is finalised, otherwise the results are undefined.
+.Pp
+.Fn CMS_get0_eContentType
+returns a pointer to the embedded content type.
+.Pp
+.Fn CMS_get0_content
+returns a pointer to the
+.Vt ASN1_OCTET_STRING
+pointer containing the embedded content.
+.Pp
+As the
+.Sq 0
+in the function names imply,
+.Fn CMS_get0_type ,
+.Fn CMS_get0_eContentType ,
+and
+.Fn CMS_get0_content
+return internal pointers which should
+.Em not
+be freed up.
+.Fn CMS_set1_eContentType
+copies the supplied OID and it
+.Em should
+be freed up after use.
+.Pp
+The
+.Vt ASN1_OBJECT
+values returned can be converted to an integer NID value using
+.Xr OBJ_obj2nid 3 .
+For the currently supported content types the following values are
+returned:
+.Dv NID_pkcs7_data ,
+.Dv NID_pkcs7_signed ,
+.Dv NID_pkcs7_digest ,
+.Dv NID_id_smime_ct_compressedData ,
+.Dv NID_pkcs7_encrypted ,
+.Dv NID_pkcs7_enveloped .
+.Pp
+The return value of
+.Fn CMS_get0_content
+is a pointer to the
+.Vt ASN1_OCTET_STRING
+content pointer.
+That means that for example after
+.Pp
+.Dl ASN1_OCTET_STRING **pconf = CMS_get0_content(cms);
+.Pp
+.Pf * Va pconf
+could be
+.Dv NULL
+if there is no embedded content.
+Applications can access, modify or create the embedded content in a
+.Vt CMS_ContentInfo
+structure using this function.
+Applications usually will not need to modify the embedded content as it
+is normally set by higher level functions.
+.Sh RETURN VALUES
+.Fn CMS_get0_type
+and
+.Fn CMS_get0_eContentType
+return an
+.Vt ASN1_OBJECT
+structure.
+.Pp
+.Fn CMS_set1_eContentType
+returns 1 for success or 0 if an error occurred.
+The error can be obtained from
+.Xr ERR_get_error 3 .
+.Sh HISTORY
+.Fn CMS_get0_type ,
+.Fn CMS_set1_eContentType ,
+and
+.Fn CMS_get0_eContentType
+were all first added to OpenSSL 0.9.8.
