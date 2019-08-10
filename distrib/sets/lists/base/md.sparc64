@@ -74,11 +74,11 @@
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
-./usr/lib/gcc-lib/sparc64-unknown-openbsd6.5
-./usr/lib/gcc-lib/sparc64-unknown-openbsd6.5/4.2.1
-./usr/lib/gcc-lib/sparc64-unknown-openbsd6.5/4.2.1/collect2
-./usr/lib/gcc-lib/sparc64-unknown-openbsd6.5/4.2.1/libgcc.a
-./usr/lib/gcc-lib/sparc64-unknown-openbsd6.5/4.2.1/specs
+./usr/lib/gcc-lib/sparc64-unknown-openbsd6.6
+./usr/lib/gcc-lib/sparc64-unknown-openbsd6.6/4.2.1
+./usr/lib/gcc-lib/sparc64-unknown-openbsd6.6/4.2.1/collect2
+./usr/lib/gcc-lib/sparc64-unknown-openbsd6.6/4.2.1/libgcc.a
+./usr/lib/gcc-lib/sparc64-unknown-openbsd6.6/4.2.1/specs
 ./usr/lib/libLLVM.so.1.0
 ./usr/lib/libc++.so.3.0
 ./usr/lib/libc++abi.so.1.0
