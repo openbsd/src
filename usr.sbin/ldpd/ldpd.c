@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.64 2019/03/31 03:36:18 yasuoka Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.65 2019/08/10 01:30:53 mestre Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -221,6 +221,11 @@ main(int argc, char *argv[])
 	ldpe_pid = start_child(PROC_LDP_ENGINE, saved_argv0,
 	    pipe_parent2ldpe[1], debug, global.cmd_opts & LDPD_OPT_VERBOSE,
 	    sockname);
+
+	if (unveil("/", "r") == -1)
+		fatal("unveil");
+	if (unveil(NULL, NULL) == -1)
+		fatal("unveil");
 
 	event_init();
 
