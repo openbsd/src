@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmp.1,v 1.1 2019/08/09 06:17:59 martijn Exp $
+.\" $OpenBSD: snmp.1,v 1.2 2019/08/10 19:09:05 schwarze Exp $
 .\"
 .\" Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 9 2019 $
+.Dd $Mdocdate: August 10 2019 $
 .Dt SNMP 1
 .Os
 .Sh NAME
@@ -160,6 +160,9 @@ this may cause an infinite loop.
 .It Cm E Ar endoid
 Walk the tree up to but excluding
 .Ar endoid .
+The blank before
+.Ar endoid
+is mandatory.
 .It Cm I
 If no branches are found during a
 .Cm walk ,
@@ -185,6 +188,8 @@ This causes the first
 arguments to only return a single MIB instead of
 .Ar maxrep .
 This value defaults to 0.
+No blank is allowed before
+.Ar nonrep .
 .It Cm p
 At the end of a
 .Cm walk
@@ -200,6 +205,8 @@ or
 .Cm bulkwalk
 this determines the amount of MIBs to return for each specified OID.
 This value defaults to 10.
+No blank is allowed before
+.Ar maxrep .
 .It Cm t
 Show how long it took to
 .Cm walk
