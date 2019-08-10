@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.213 2019/08/10 13:34:30 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.214 2019/08/10 16:31:15 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -411,6 +411,9 @@ to prove a mail server's identity.
 Listen on the given
 .Ar port
 instead of the default port 25.
+.It Cm proxy\-v2
+Support the PROXYv2 protocol,
+rewriting appropriately source address received from proxy.
 .It Cm received\-auth
 In
 .Dq Received
