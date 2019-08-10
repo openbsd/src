@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.62 2017/12/30 20:46:59 guenther Exp $ */
+/*	$OpenBSD: udcf.c,v 1.63 2019/08/10 23:29:59 cheloha Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -48,9 +48,6 @@ int udcfdebug = 0;
 #define FT232R_STATUS	0x05	/* get modem status USB request */
 #define FT232R_RI	0x40	/* ring indicator */
 
-#define DPERIOD1	((long) 5 * 60)		/* degrade OK -> WARN */
-#define DPERIOD2	((long) 15 * 60)	/* degrade WARN -> CRIT */
-
 /* max. skew of received time diff vs. measured time diff in percent. */
 #define MAX_SKEW	5
 
@@ -95,18 +92,15 @@ struct udcf_softc {
 	struct ksensordev	sc_sensordev;
 };
 
-/*
- * timeouts being used in hz:
- * t_bv		bit value detection (150ms)
- * t_sync	sync (950ms)
- * t_mg		minute gap detection (1500ms)
- * t_mgsync	resync after a minute gap (450ms)
- * t_sl		detect signal loss (3sec)
- * t_wait	wait (5sec)
- * t_warn	degrade sensor status to warning (5min)
- * t_crit	degrade sensor status to critical (15min)
- */
-static int t_bv, t_sync, t_mg, t_sl, t_mgsync, t_wait, t_warn, t_crit;
+/* timeouts in milliseconds: */
+#define	T_BV		150	/* bit value detection (150ms) */
+#define	T_SYNC		950	/* sync (950ms) */
+#define	T_MG		1500	/* minute gap detection (1500ms) */
+#define	T_MGSYNC	450	/* resync after a minute gap (450ms) */
+#define	T_SL		3000	/* detect signal loss (3sec) */
+#define	T_WAIT		5000	/* wait (5sec) */
+#define	T_WARN		300000	/* degrade sensor status to warning (5min) */
+#define	T_CRIT		900000	/* degrade sensor status to critical (15min) */
 
 void	udcf_intr(void *);
 void	udcf_probe(void *);
@@ -160,7 +154,6 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_attach_arg		*uaa = aux;
 	struct usbd_device		*dev = uaa->device;
 	struct usbd_interface		*iface;
-	struct timeval			 t;
 	usbd_status			 err;
 
 	switch (uaa->product) {
@@ -235,39 +228,11 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	/* convert timevals to hz */
-	t.tv_sec = 0L;
-	t.tv_usec = 150000L;
-	t_bv = tvtohz(&t);
-
-	t.tv_usec = 450000L;
-	t_mgsync = tvtohz(&t);
-
-	t.tv_usec = 950000L;
-	t_sync = tvtohz(&t);
-
-	t.tv_sec = 1L;
-	t.tv_usec = 500000L;
-	t_mg = tvtohz(&t);
-
-	t.tv_sec = 3L;
-	t.tv_usec = 0L;
-	t_sl = tvtohz(&t);
-	
-	t.tv_sec = 5L;
-	t_wait = tvtohz(&t);
-
-	t.tv_sec = DPERIOD1;
-	t_warn = tvtohz(&t);
-
-	t.tv_sec = DPERIOD2;
-	t_crit = tvtohz(&t);
-
 	/* Give the receiver some slack to stabilize */
-	timeout_add(&sc->sc_to, t_wait);
+	timeout_add_msec(&sc->sc_to, T_WAIT);
 
 	/* Detect signal loss */
-	timeout_add(&sc->sc_sl_to, t_wait + t_sl);
+	timeout_add_msec(&sc->sc_sl_to, T_WAIT + T_SL);
 
 	DPRINTF(("synchronizing\n"));
 	return;
@@ -488,20 +453,20 @@ udcf_probe(void *xsc)
 			 * during the next 5 minutes, the sensor state
 			 * will be degraded to SENSOR_S_WARN
 			 */
-			timeout_add(&sc->sc_it_to, t_warn);
+			timeout_add_msec(&sc->sc_it_to, T_WARN);
 		}
 		sc->sc_minute = 0;
 	}
 
-	timeout_add(&sc->sc_to, t_sync);	/* resync in 950 ms */
+	timeout_add_msec(&sc->sc_to, T_SYNC);	/* resync in 950 ms */
 
 	/* no clock and bit detection during sync */
 	if (!sc->sc_sync) {
 		/* detect bit value */
-		timeout_add(&sc->sc_bv_to, t_bv);
+		timeout_add_msec(&sc->sc_bv_to, T_BV);
 	}
-	timeout_add(&sc->sc_mg_to, t_mg);	/* detect minute gap */
-	timeout_add(&sc->sc_sl_to, t_sl);	/* detect signal loss */
+	timeout_add_msec(&sc->sc_mg_to, T_MG);	/* detect minute gap */
+	timeout_add_msec(&sc->sc_sl_to, T_SL);	/* detect signal loss */
 }
 
 /* detect the bit value */
@@ -656,7 +621,7 @@ udcf_mg_probe(void *xsc)
 	}
 
 cleanbits:
-	timeout_add(&sc->sc_to, t_mgsync);	/* re-sync in 450 ms */
+	timeout_add_msec(&sc->sc_to, T_MGSYNC);	/* re-sync in 450 ms */
 	sc->sc_last_mg = time_second;
 	sc->sc_tbits = 0LL;
 	sc->sc_mask = 1LL;
@@ -673,8 +638,8 @@ udcf_sl_probe(void *xsc)
 
 	DPRINTF(("no signal\n"));
 	sc->sc_sync = 1;
-	timeout_add(&sc->sc_to, t_wait);
-	timeout_add(&sc->sc_sl_to, t_wait + t_sl);
+	timeout_add_msec(&sc->sc_to, T_WAIT);
+	timeout_add_msec(&sc->sc_sl_to, T_WAIT + T_SL);
 }
 
 /* invalidate timedelta (called in an interrupt context) */
@@ -692,7 +657,7 @@ udcf_it_intr(void *xsc)
 		 * further degrade in 15 minutes if we dont receive any new
 		 * time information
 		 */
-		timeout_add(&sc->sc_it_to, t_crit);
+		timeout_add_msec(&sc->sc_it_to, T_CRIT);
 	} else {
 		sc->sc_sensor.status = SENSOR_S_CRIT;
 		sc->sc_nrecv = 0;
