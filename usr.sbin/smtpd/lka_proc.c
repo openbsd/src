@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_proc.c,v 1.7 2019/06/27 05:14:49 martijn Exp $	*/
+/*	$OpenBSD: lka_proc.c,v 1.8 2019/08/10 14:50:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -62,6 +62,13 @@ lka_proc_ready(void)
 	return 1;
 }
 
+static void
+lka_proc_config(struct processor_instance *pi)
+{
+	io_printf(pi->io, "config|smtp-session-timeout|%d\n", SMTPD_SESSION_TIMEOUT);
+	io_printf(pi->io, "config|ready\n");
+}
+
 void
 lka_proc_forked(const char *name, int fd)
 {
@@ -95,6 +102,8 @@ lka_proc_errfd(const char *name, int fd)
 	processor->errfd = io_new();
 	io_set_fd(processor->errfd, fd);
 	io_set_callback(processor->errfd, processor_errfd, processor->name);
+
+	lka_proc_config(processor);
 }
 
 struct io *
