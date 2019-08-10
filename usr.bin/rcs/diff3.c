@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.41 2016/10/18 21:06:52 millert Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.42 2019/08/10 16:13:46 stsp Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -496,7 +496,7 @@ ed_patch_lines(struct rcs_lines *dlines, struct rcs_lines *plines)
 				if (lp == NULL)
 					errx(1, "ed_patch_lines");
 
-				if (!memcmp(lp->l_line, ".", 1))
+				if (lp->l_len == 2 && lp->l_line[0] == '.')
 					break;
 
 				TAILQ_REMOVE(&(plines->l_lines), lp, l_list);
