@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.142 2019/07/03 03:24:03 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.143 2019/08/10 09:35:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -535,6 +535,9 @@ valid_domainpart(const char *s)
 	}
 
 	if (*s == '\0')
+		return 0;
+
+	if (s[strlen(s) - 1] == '.')
 		return 0;
 
 	return res_hnok(s);
