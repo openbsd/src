@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.23 2019/04/25 20:19:30 naddy Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.24 2019/08/10 13:08:21 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -340,10 +340,10 @@ efi_framebuffer(void)
 	/* We only support 32-bit pixel modes for now. */
 	switch (gop->Mode->Info->PixelFormat) {
 	case PixelRedGreenBlueReserved8BitPerColor:
-		format = "a8r8g8b8";
+		format = "x8b8g8r8";
 		break;
 	case PixelBlueGreenRedReserved8BitPerColor:
-		format = "a8b8g8r8";
+		format = "x8r8g8b8";
 		break;
 	default:
 		return;
