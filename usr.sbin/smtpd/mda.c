@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.138 2019/06/28 13:32:50 deraadt Exp $	*/
+/*	$OpenBSD: mda.c,v 1.139 2019/08/10 19:16:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -348,11 +348,8 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			error = out[0] ? out : parent_error;
 
 		syserror = NULL;
-		if (mda_sysexit) {
+		if (mda_sysexit)
 			syserror = mda_sysexit_to_str(mda_sysexit);
-			if (syserror)
-				error = syserror;
-		}
 		
 		/* update queue entry */
 		switch (mda_status) {
@@ -360,14 +357,20 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			mda_queue_tempfail(e->id, error,
 			    ESC_OTHER_MAIL_SYSTEM_STATUS);
 			(void)snprintf(buf, sizeof buf,
-			    "Error (%s)", error);
+			    "Error (%s%s%s)",
+				       syserror ? syserror : "",
+				       syserror ? ": " : "",
+				       error);
 			mda_log(e, "TempFail", buf);
 			break;
 		case MDA_PERMFAIL:
 			mda_queue_permfail(e->id, error,
 			    ESC_OTHER_MAIL_SYSTEM_STATUS);
 			(void)snprintf(buf, sizeof buf,
-			    "Error (%s)", error);
+			    "Error (%s%s%s)",
+				       syserror ? syserror : "",
+				       syserror ? ": " : "",
+				       error);
 			mda_log(e, "PermFail", buf);
 			break;
 		case MDA_OK:
