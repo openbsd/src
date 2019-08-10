@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.22 2017/12/27 11:40:14 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.23 2019/08/10 13:16:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -475,6 +475,21 @@ fdt_find_phandle(uint32_t phandle)
 	return fdt_find_phandle_recurse(fdt_next_node(0), phandle);
 }
 
+void
+fdt_get_cells(void *node, int *ac, int *sc)
+{
+	void *parent;
+
+	parent = fdt_parent_node(node);
+	if (parent == NULL)
+		*ac = *sc = 1;
+	else
+		fdt_get_cells(parent, ac, sc);
+
+	fdt_node_property_int(node, "#address-cells", ac);
+	fdt_node_property_int(node, "#size-cells", sc);
+}
+
 /*
  * Translate memory address depending on parent's range.
  *
@@ -498,7 +513,7 @@ int
 fdt_translate_reg(void *node, struct fdt_reg *reg)
 {
 	void *parent;
-	int pac, psc, ac, sc, ret, rlen, rone, *range;
+	int pac, psc, ac, sc, rlen, rone, *range;
 	uint64_t from, to, size;
 
 	/* No parent, no translation. */
@@ -517,28 +532,20 @@ fdt_translate_reg(void *node, struct fdt_reg *reg)
 	if (rlen <= 0)
 		return fdt_translate_reg(parent, reg);
 
-	/* We only support 32-bit (1), and 64-bit (2) wide addresses here. */
-	ret = fdt_node_property_int(parent, "#address-cells", &pac);
-	if (ret != 1 || pac <= 0 || pac > 2)
+	/*
+	 * Get parent address/size width.  We only support 32-bit (1)
+	 * and 64-bit (2) wide addresses and sizes here.
+	 */
+	fdt_get_cells(parent, &pac, &psc);
+	if (pac <= 0 || pac > 2 || psc <= 0 || psc > 2)
 		return EINVAL;
 
-	/* We only support 32-bit (1), and 64-bit (2) wide sizes here. */
-	ret = fdt_node_property_int(parent, "#size-cells", &psc);
-	if (ret != 1 || psc <= 0 || psc > 2)
-		return EINVAL;
-
-	/* We only support 32-bit (1), and 64-bit (2) wide addresses here. */
-	ret = fdt_node_property_int(node, "#address-cells", &ac);
-	if (ret <= 0)
-		ac = pac;
-	else if (ret > 1 || ac <= 0 || ac > 2)
-		return EINVAL;
-
-	/* We only support 32-bit (1), and 64-bit (2) wide sizes here. */
-	ret = fdt_node_property_int(node, "#size-cells", &sc);
-	if (ret <= 0)
-		sc = psc;
-	else if (ret > 1 || sc <= 0 || sc > 2)
+	/*
+	 * Get our own address/size width.  Again, we only support
+	 * 32-bit (1) and 64-bit (2) wide addresses and sizes here.
+	 */
+	fdt_get_cells(node, &ac, &sc);
+	if (ac <= 0 || ac > 2 || sc <= 0 || sc > 2)
 		return EINVAL;
 
 	/* Must have at least one range. */
@@ -581,7 +588,7 @@ int
 fdt_get_reg(void *node, int idx, struct fdt_reg *reg)
 {
 	void *parent;
-	int ac, sc, off, ret, *in, inlen;
+	int ac, sc, off, *in, inlen;
 
 	if (node == NULL || reg == NULL)
 		return EINVAL;
@@ -590,14 +597,12 @@ fdt_get_reg(void *node, int idx, struct fdt_reg *reg)
 	if (parent == NULL)
 		return EINVAL;
 
-	/* We only support 32-bit (1), and 64-bit (2) wide addresses here. */
-	ret = fdt_node_property_int(parent, "#address-cells", &ac);
-	if (ret != 1 || ac <= 0 || ac > 2)
-		return EINVAL;
-
-	/* We only support 32-bit (1), and 64-bit (2) wide sizes here. */
-	ret = fdt_node_property_int(parent, "#size-cells", &sc);
-	if (ret != 1 || sc <= 0 || sc > 2)
+	/*
+	 * Get parent address/size width.  We only support 32-bit (1)
+	 * and 64-bit (2) wide addresses and sizes here.
+	 */
+	fdt_get_cells(parent, &ac, &sc);
+	if (ac <= 0 || ac > 2 || sc <= 0 || sc > 2)
 		return EINVAL;
 
 	inlen = fdt_node_property(node, "reg", (char **)&in) / sizeof(int);
