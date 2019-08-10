@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.143 2019/08/10 09:35:43 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.144 2019/08/10 15:46:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -510,6 +510,7 @@ valid_domainpart(const char *s)
 	struct in6_addr	 ina6;
 	char		*c, domain[SMTPD_MAXDOMAINPARTSIZE];
 	const char	*p;
+	size_t		 dlen;
 
 	if (*s == '[') {
 		if (strncasecmp("[IPv6:", s, 6) == 0)
@@ -537,7 +538,11 @@ valid_domainpart(const char *s)
 	if (*s == '\0')
 		return 0;
 
-	if (s[strlen(s) - 1] == '.')
+	dlen = strlen(s);
+	if (dlen >= sizeof domain)
+		return 0;
+
+	if (s[dlen - 1] == '.')
 		return 0;
 
 	return res_hnok(s);
