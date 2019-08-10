@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.10 2014/02/27 18:48:15 deraadt Exp $
+dnl	$OpenBSD: hardware,v 1.11 2019/08/10 17:58:57 deraadt Exp $
 The following machines are supported by OpenBSD/MACHINE:
 
 	Lemote Fuloong 2F
@@ -21,5 +21,4 @@ The following machines are supported by OpenBSD/MACHINE:
 	  all onboard devices (keyboard, trackpad, display, SD card reader,
 	  USB ports, Ethernet adapter, wireless network adapter,
 	  battery information) are supported except for the audio controller;
-	  suspend/resume is not supported yet; keyboard actions involving
-	  the `Fn' key are not working either at the moment.
+	  suspend/resume is not supported yet.

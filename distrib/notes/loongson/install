@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.14 2014/03/19 01:59:48 tedu Exp $
+dnl	$OpenBSD: install,v 1.15 2019/08/10 17:58:57 deraadt Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
@@ -35,9 +35,12 @@ dnl you can boot the kernel from an usb key with:
 dnl 
 dnl    PMON> boot /dev/fs/fat@usb0:/bsd.rd
 
-Netbooting the installation kernel can be done as well:
+Netbooting the installation kernel can be done as well. First, check the name
+of the PMON device for the onboard interface using the ``devls'' command.
+This is likely to be either rtl0 (on Yeeloong) or rtk0 (on Fuloong). Then,
+assign it an address and fetch the installation kernel from a tftp server:
 
-    PMON> ifaddr rtl0 <your ip>
+    PMON> ifaddr <device name> <your ip>
     PMON> boot -k tftp://<server ip>/bsd.rd
 
 OpenBSDInstallPart2
