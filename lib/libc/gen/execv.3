@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exec.3,v 1.28 2015/11/10 23:48:18 jmc Exp $
+.\"	$OpenBSD: execv.3,v 1.1 2019/08/11 15:48:08 deraadt Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,8 +27,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 10 2015 $
-.Dt EXECL 3
+.Dd $Mdocdate: August 11 2019 $
+.Dt EXECV 3
 .Os
 .Sh NAME
 .Nm execl ,
@@ -54,9 +54,7 @@
 .Ft int
 .Fn execvpe "const char *file" "char *const argv[]" "char *const envp[]"
 .Sh DESCRIPTION
-The
-.Nm exec
-family of functions replace the current process image with a
+This family of functions replace the current process image with a
 new process image.
 The functions described in this manual page are front-ends for the
 .Xr execve 2
@@ -162,9 +160,7 @@ these functions will execute the shell with the path of
 the file as its first argument.
 (If this attempt fails, no further searching is done.)
 .Sh RETURN VALUES
-If any of the
-.Nm exec
-functions return, an error has occurred.
+If any of these functions return, an error has occurred.
 The return value is \-1, and the global variable
 .Va errno
 will be set to indicate the error.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getprocs.3,v 1.20 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: kvm_getprocs.3,v 1.21 2019/08/11 15:48:08 deraadt Exp $
 .\"	$NetBSD: kvm_getprocs.3,v 1.13 2003/08/07 16:44:37 agc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm_getprocs.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: August 11 2019 $
 .Dt KVM_GETPROCS 3
 .Os
 .Sh NAME
@@ -123,7 +123,7 @@ returns a null-terminated argument vector that corresponds to the
 command line arguments passed to process indicated by
 .Fa p .
 Most likely, these arguments correspond to the values passed to
-.Xr exec 3
+.Xr execve 2
 on process creation.
 This information is, however,
 deliberately under control of the process itself.

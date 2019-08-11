@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.80 2019/01/12 00:16:03 jca Exp $
+#	$OpenBSD: Makefile.inc,v 1.81 2019/08/11 15:48:08 deraadt Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -37,7 +37,7 @@ SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
 MAN+=	__tfork_thread.3 alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 \
 	clock_getcpuclockid.3 confstr.3 \
 	ctermid.3 daemon.3 devname.3 directory.3 dirname.3 err.3 \
-	exec.3 fabs.3 fnmatch.3 fpclassify.3 fpgetmask.3 frexp.3 ftok.3 fts.3 \
+	execv.3 fabs.3 fnmatch.3 fpclassify.3 fpgetmask.3 frexp.3 ftok.3 fts.3 \
 	ftw.3 getbsize.3 getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 \
 	getfsent.3 getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 \
 	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 getprogname.3 \
