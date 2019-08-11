@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.3 2019/08/11 14:41:49 deraadt Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.4 2019/08/11 17:22:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -880,28 +880,27 @@ usage(void)
 {
 	size_t i;
 
-	extern char *__progname;
-
 	if (snmp_app != NULL) {
-		fprintf(stderr, "usage: %s %s%s%s%s\n",
-		    __progname, snmp_app->name,
+		fprintf(stderr, "usage: snmp %s%s%s%s\n",
+		    snmp_app->name,
 		    snmp_app->usecommonopt ?
-		    " [-c community] [-r retries] [-t timeout] "
-		    "[-v protocol version] [-O afnqvxSQ]" : "",
+		    " [-c community] [-r retries] [-t timeout] [-v version]\n"
+		    "            [-O afnqvxSQ]" : "",
 		    snmp_app->usage == NULL ? "" : " ",
 		    snmp_app->usage == NULL ? "" : snmp_app->usage);
 		exit(1);
 	}
-	fprintf(stderr, "usage: \n");
 	for (i = 0; i < (sizeof(snmp_apps)/sizeof(*snmp_apps)); i++) {
-		fprintf(stderr, "%*s %s%s%s%s\n",
-		    (int) (sizeof("usage:") + strlen(__progname)),
-		    __progname, snmp_apps[i].name,
+		if (i == 0)
+			fprintf(stderr, "usage: ");
+		else
+			fprintf(stderr, "       ");
+		fprintf(stderr, "snmp %s%s %s\n",
+		    snmp_apps[i].name,
 		    snmp_apps[i].usecommonopt ?
-		    " [-c community] [-r retries] [-t timeout] "
-		    "[-v protocol version] [-O afnqvxSQ]" : "",
-		    snmp_apps[i].usage == NULL ? "" : " ",
-		    snmp_apps[i].usage == NULL ? "" : snmp_apps[i].usage);
+		    " [-c community] [-r retries] [-t timeout] [-v version]\n"
+	            "            [-O afnqvxSQ]" : "",
+		    snmp_apps[i].usage ? snmp_apps[i].usage : "");
 	}
 	exit(1);
 }
