@@ -2302,7 +2302,7 @@
 ./usr/share/man/man3/evbuffer_new.3
 ./usr/share/man/man3/event.3
 ./usr/share/man/man3/evp.3
-./usr/share/man/man3/exec.3
+./usr/share/man/man3/execv.3
 ./usr/share/man/man3/exit.3
 ./usr/share/man/man3/exp.3
 ./usr/share/man/man3/fabs.3
