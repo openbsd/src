@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_smime.c,v 1.22 2019/08/11 10:38:27 jsing Exp $ */
+/* $OpenBSD: cms_smime.c,v 1.23 2019/08/11 14:51:15 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -314,8 +314,8 @@ cms_signerinfo_verify_cert(CMS_SignerInfo *si, X509_STORE *store,
 	if (i <= 0) {
 		j = X509_STORE_CTX_get_error(ctx);
 		CMSerror(CMS_R_CERTIFICATE_VERIFY_ERROR);
-		ERR_add_error_data(2, "Verify error:",
-			               X509_verify_cert_error_string(j));
+		ERR_asprintf_error_data("Verify error: %s",
+		    X509_verify_cert_error_string(j));
 		goto err;
 	}
 	r = 1;
