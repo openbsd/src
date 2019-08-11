@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_lcl.h,v 1.9 2019/08/11 08:15:27 jsing Exp $ */
+/* $OpenBSD: cms_lcl.h,v 1.10 2019/08/11 10:15:30 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -386,14 +386,19 @@ struct CMS_Receipt_st {
 	ASN1_OCTET_STRING *originatorSignatureValue;
 };
 
-DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)
-DECLARE_ASN1_ITEM(CMS_SignerInfo)
-DECLARE_ASN1_ITEM(CMS_IssuerAndSerialNumber)
-DECLARE_ASN1_ITEM(CMS_Attributes_Sign)
-DECLARE_ASN1_ITEM(CMS_Attributes_Verify)
-DECLARE_ASN1_ITEM(CMS_RecipientInfo)
-DECLARE_ASN1_ITEM(CMS_PasswordRecipientInfo)
-DECLARE_ASN1_ALLOC_FUNCTIONS(CMS_IssuerAndSerialNumber)
+CMS_ContentInfo *CMS_ContentInfo_new(void);
+void CMS_ContentInfo_free(CMS_ContentInfo *a);
+CMS_ContentInfo *d2i_CMS_ContentInfo(CMS_ContentInfo **a, const unsigned char **in, long len);
+int i2d_CMS_ContentInfo(CMS_ContentInfo *a, unsigned char **out);
+extern const ASN1_ITEM CMS_ContentInfo_it;
+extern const ASN1_ITEM CMS_SignerInfo_it;
+extern const ASN1_ITEM CMS_IssuerAndSerialNumber_it;
+extern const ASN1_ITEM CMS_Attributes_Sign_it;
+extern const ASN1_ITEM CMS_Attributes_Verify_it;
+extern const ASN1_ITEM CMS_RecipientInfo_it;
+extern const ASN1_ITEM CMS_PasswordRecipientInfo_it;
+CMS_IssuerAndSerialNumber *CMS_IssuerAndSerialNumber_new(void);
+void CMS_IssuerAndSerialNumber_free(CMS_IssuerAndSerialNumber *a);
 
 #define CMS_SIGNERINFO_ISSUER_SERIAL    0
 #define CMS_SIGNERINFO_KEYIDENTIFIER    1
@@ -457,21 +462,21 @@ int cms_RecipientInfo_kari_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
 int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
     int en_de);
 
-DECLARE_ASN1_ITEM(CMS_CertificateChoices)
-DECLARE_ASN1_ITEM(CMS_DigestedData)
-DECLARE_ASN1_ITEM(CMS_EncryptedData)
-DECLARE_ASN1_ITEM(CMS_EnvelopedData)
-DECLARE_ASN1_ITEM(CMS_KEKRecipientInfo)
-DECLARE_ASN1_ITEM(CMS_KeyAgreeRecipientInfo)
-DECLARE_ASN1_ITEM(CMS_KeyTransRecipientInfo)
-DECLARE_ASN1_ITEM(CMS_OriginatorPublicKey)
-DECLARE_ASN1_ITEM(CMS_OtherKeyAttribute)
-DECLARE_ASN1_ITEM(CMS_Receipt)
-DECLARE_ASN1_ITEM(CMS_ReceiptRequest)
-DECLARE_ASN1_ITEM(CMS_RecipientEncryptedKey)
-DECLARE_ASN1_ITEM(CMS_RecipientKeyIdentifier)
-DECLARE_ASN1_ITEM(CMS_RevocationInfoChoice)
-DECLARE_ASN1_ITEM(CMS_SignedData)
-DECLARE_ASN1_ITEM(CMS_CompressedData)
+extern const ASN1_ITEM CMS_CertificateChoices_it;
+extern const ASN1_ITEM CMS_DigestedData_it;
+extern const ASN1_ITEM CMS_EncryptedData_it;
+extern const ASN1_ITEM CMS_EnvelopedData_it;
+extern const ASN1_ITEM CMS_KEKRecipientInfo_it;
+extern const ASN1_ITEM CMS_KeyAgreeRecipientInfo_it;
+extern const ASN1_ITEM CMS_KeyTransRecipientInfo_it;
+extern const ASN1_ITEM CMS_OriginatorPublicKey_it;
+extern const ASN1_ITEM CMS_OtherKeyAttribute_it;
+extern const ASN1_ITEM CMS_Receipt_it;
+extern const ASN1_ITEM CMS_ReceiptRequest_it;
+extern const ASN1_ITEM CMS_RecipientEncryptedKey_it;
+extern const ASN1_ITEM CMS_RecipientKeyIdentifier_it;
+extern const ASN1_ITEM CMS_RevocationInfoChoice_it;
+extern const ASN1_ITEM CMS_SignedData_it;
+extern const ASN1_ITEM CMS_CompressedData_it;
 
 #endif

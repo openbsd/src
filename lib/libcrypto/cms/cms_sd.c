@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_sd.c,v 1.17 2019/08/10 18:15:52 jsing Exp $ */
+/* $OpenBSD: cms_sd.c,v 1.18 2019/08/11 10:15:30 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -741,7 +741,7 @@ CMS_SignerInfo_sign(CMS_SignerInfo *si)
 	}
 
 	alen = ASN1_item_i2d((ASN1_VALUE *)si->signedAttrs, &abuf,
-	    ASN1_ITEM_rptr(CMS_Attributes_Sign));
+	    &CMS_Attributes_Sign_it);
 	if (!abuf)
 		goto err;
 	if (EVP_DigestSignUpdate(mctx, abuf, alen) <= 0)
@@ -802,7 +802,7 @@ CMS_SignerInfo_verify(CMS_SignerInfo *si)
 		goto err;
 
 	alen = ASN1_item_i2d((ASN1_VALUE *)si->signedAttrs, &abuf,
-	    ASN1_ITEM_rptr(CMS_Attributes_Verify));
+	    &CMS_Attributes_Verify_it);
 	if (!abuf)
 		goto err;
 	r = EVP_DigestVerifyUpdate(mctx, abuf, alen);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_ess.c,v 1.14 2019/08/10 18:15:52 jsing Exp $ */
+/* $OpenBSD: cms_ess.c,v 1.15 2019/08/11 10:15:30 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -61,7 +61,31 @@
 #include <openssl/cms.h>
 #include "cms_lcl.h"
 
-IMPLEMENT_ASN1_FUNCTIONS(CMS_ReceiptRequest)
+
+CMS_ReceiptRequest *
+d2i_CMS_ReceiptRequest(CMS_ReceiptRequest **a, const unsigned char **in, long len)
+{
+	return (CMS_ReceiptRequest *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &CMS_ReceiptRequest_it);
+}
+
+int
+i2d_CMS_ReceiptRequest(CMS_ReceiptRequest *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &CMS_ReceiptRequest_it);
+}
+
+CMS_ReceiptRequest *
+CMS_ReceiptRequest_new(void)
+{
+	return (CMS_ReceiptRequest *)ASN1_item_new(&CMS_ReceiptRequest_it);
+}
+
+void
+CMS_ReceiptRequest_free(CMS_ReceiptRequest *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &CMS_ReceiptRequest_it);
+}
 
 /* ESS services: for now just Signed Receipt related */
 
@@ -78,7 +102,7 @@ CMS_get1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest **prr)
 	if (!str)
 		return 0;
 
-	rr = ASN1_item_unpack(str, ASN1_ITEM_rptr(CMS_ReceiptRequest));
+	rr = ASN1_item_unpack(str, &CMS_ReceiptRequest_it);
 	if (!rr)
 		return -1;
 	if (prr)
@@ -185,7 +209,7 @@ cms_msgSigDigest(CMS_SignerInfo *si, unsigned char *dig, unsigned int *diglen)
 	md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm);
 	if (md == NULL)
 		return 0;
-	if (!ASN1_item_digest(ASN1_ITEM_rptr(CMS_Attributes_Verify), md,
+	if (!ASN1_item_digest(&CMS_Attributes_Verify_it, md,
 	    si->signedAttrs, dig, diglen))
 		return 0;
 
@@ -252,7 +276,7 @@ cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
 		goto err;
 	}
 
-	rct = ASN1_item_unpack(*pcont, ASN1_ITEM_rptr(CMS_Receipt));
+	rct = ASN1_item_unpack(*pcont, &CMS_Receipt_it);
 
 	if (!rct) {
 		CMSerr(CMS_F_CMS_RECEIPT_VERIFY, CMS_R_RECEIPT_DECODE_ERROR);
@@ -373,7 +397,7 @@ cms_encode_Receipt(CMS_SignerInfo *si)
 	rct.signedContentIdentifier = rr->signedContentIdentifier;
 	rct.originatorSignatureValue = si->signature;
 
-	os = ASN1_item_pack(&rct, ASN1_ITEM_rptr(CMS_Receipt), NULL);
+	os = ASN1_item_pack(&rct, &CMS_Receipt_it, NULL);
 
  err:
 	CMS_ReceiptRequest_free(rr);

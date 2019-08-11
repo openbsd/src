@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.h,v 1.14 2019/08/11 08:15:27 jsing Exp $ */
+/* $OpenBSD: cms.h,v 1.15 2019/08/11 10:15:30 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -78,9 +78,17 @@ DECLARE_STACK_OF(CMS_SignerInfo)
 DECLARE_STACK_OF(CMS_RecipientEncryptedKey)
 DECLARE_STACK_OF(CMS_RecipientInfo)
 DECLARE_STACK_OF(CMS_RevocationInfoChoice)
-DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)
-DECLARE_ASN1_FUNCTIONS(CMS_ReceiptRequest)
-DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
+CMS_ContentInfo *CMS_ContentInfo_new(void);
+void CMS_ContentInfo_free(CMS_ContentInfo *a);
+CMS_ContentInfo *d2i_CMS_ContentInfo(CMS_ContentInfo **a, const unsigned char **in, long len);
+int i2d_CMS_ContentInfo(CMS_ContentInfo *a, unsigned char **out);
+extern const ASN1_ITEM CMS_ContentInfo_it;
+CMS_ReceiptRequest *CMS_ReceiptRequest_new(void);
+void CMS_ReceiptRequest_free(CMS_ReceiptRequest *a);
+CMS_ReceiptRequest *d2i_CMS_ReceiptRequest(CMS_ReceiptRequest **a, const unsigned char **in, long len);
+int i2d_CMS_ReceiptRequest(CMS_ReceiptRequest *a, unsigned char **out);
+extern const ASN1_ITEM CMS_ReceiptRequest_it;
+int CMS_ContentInfo_print_ctx(BIO *out, CMS_ContentInfo *x, int indent, const ASN1_PCTX *pctx);
 
 #define CMS_SIGNERINFO_ISSUER_SERIAL    0
 #define CMS_SIGNERINFO_KEYIDENTIFIER    1
@@ -128,7 +136,12 @@ int CMS_is_detached(CMS_ContentInfo *cms);
 int CMS_set_detached(CMS_ContentInfo *cms, int detached);
 
 #ifdef HEADER_PEM_H
-DECLARE_PEM_rw_const(CMS, CMS_ContentInfo)
+CMS_ContentInfo *PEM_read_bio_CMS(BIO *bp, CMS_ContentInfo **x,
+    pem_password_cb *cb, void *u);
+CMS_ContentInfo *PEM_read_CMS(FILE *fp, CMS_ContentInfo **x,
+    pem_password_cb *cb, void *u);
+int PEM_write_bio_CMS(BIO *bp, const CMS_ContentInfo *x);
+int PEM_write_CMS(FILE *fp, const CMS_ContentInfo *x);
 #endif
 int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms);
 CMS_ContentInfo *d2i_CMS_bio(BIO *bp, CMS_ContentInfo **cms);

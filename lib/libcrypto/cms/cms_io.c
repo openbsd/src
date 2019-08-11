@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_io.c,v 1.9 2019/08/10 18:15:52 jsing Exp $ */
+/* $OpenBSD: cms_io.c,v 1.10 2019/08/11 10:15:30 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -82,22 +82,49 @@ CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)
 CMS_ContentInfo *
 d2i_CMS_bio(BIO *bp, CMS_ContentInfo **cms)
 {
-	return ASN1_item_d2i_bio(ASN1_ITEM_rptr(CMS_ContentInfo), bp, cms);
+	return ASN1_item_d2i_bio(&CMS_ContentInfo_it, bp, cms);
 }
 
 int
 i2d_CMS_bio(BIO *bp, CMS_ContentInfo *cms)
 {
-	return ASN1_item_i2d_bio(ASN1_ITEM_rptr(CMS_ContentInfo), bp, cms);
+	return ASN1_item_i2d_bio(&CMS_ContentInfo_it, bp, cms);
 }
 
-IMPLEMENT_PEM_rw_const(CMS, CMS_ContentInfo, PEM_STRING_CMS, CMS_ContentInfo)
+
+CMS_ContentInfo *
+PEM_read_bio_CMS(BIO *bp, CMS_ContentInfo **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read_bio((d2i_of_void *)d2i_CMS_ContentInfo, PEM_STRING_CMS, bp,
+	    (void **)x, cb, u);
+}
+
+CMS_ContentInfo *
+PEM_read_CMS(FILE *fp, CMS_ContentInfo **x, pem_password_cb *cb, void *u)
+{
+	return PEM_ASN1_read((d2i_of_void *)d2i_CMS_ContentInfo, PEM_STRING_CMS, fp,
+	    (void **)x, cb, u);
+}
+
+int
+PEM_write_bio_CMS(BIO *bp, const CMS_ContentInfo *x)
+{
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_CMS_ContentInfo, PEM_STRING_CMS, bp,
+	    (void *)x, NULL, NULL, 0, NULL, NULL);
+}
+
+int
+PEM_write_CMS(FILE *fp, const CMS_ContentInfo *x)
+{
+	return PEM_ASN1_write((i2d_of_void *)i2d_CMS_ContentInfo, PEM_STRING_CMS, fp,
+	    (void *)x, NULL, NULL, 0, NULL, NULL);
+}
 
 BIO *
 BIO_new_CMS(BIO *out, CMS_ContentInfo *cms)
 {
 	return BIO_new_NDEF(out, (ASN1_VALUE *)cms,
-	    ASN1_ITEM_rptr(CMS_ContentInfo));
+	    &CMS_ContentInfo_it);
 }
 
 /* CMS wrappers round generalised stream and MIME routines */
@@ -105,14 +132,14 @@ BIO_new_CMS(BIO *out, CMS_ContentInfo *cms)
 int i2d_CMS_bio_stream(BIO *out, CMS_ContentInfo *cms, BIO *in, int flags)
 {
 	return i2d_ASN1_bio_stream(out, (ASN1_VALUE *)cms, in, flags,
-			                   ASN1_ITEM_rptr(CMS_ContentInfo));
+			                   &CMS_ContentInfo_it);
 }
 
 int
 PEM_write_bio_CMS_stream(BIO *out, CMS_ContentInfo *cms, BIO *in, int flags)
 {
 	return PEM_write_bio_ASN1_stream(out, (ASN1_VALUE *)cms, in, flags,
-	    "CMS", ASN1_ITEM_rptr(CMS_ContentInfo));
+	    "CMS", &CMS_ContentInfo_it);
 }
 
 int
@@ -128,12 +155,12 @@ SMIME_write_CMS(BIO *bio, CMS_ContentInfo *cms, BIO *data, int flags)
 		mdalgs = NULL;
 
 	return SMIME_write_ASN1(bio, (ASN1_VALUE *)cms, data, flags, ctype_nid,
-	    econt_nid, mdalgs, ASN1_ITEM_rptr(CMS_ContentInfo));
+	    econt_nid, mdalgs, &CMS_ContentInfo_it);
 }
 
 CMS_ContentInfo *
 SMIME_read_CMS(BIO *bio, BIO **bcont)
 {
 	return (CMS_ContentInfo *)SMIME_read_ASN1(bio, bcont,
-	    ASN1_ITEM_rptr(CMS_ContentInfo));
+	    &CMS_ContentInfo_it);
 }

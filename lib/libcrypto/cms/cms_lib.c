@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_lib.c,v 1.10 2019/08/10 18:15:52 jsing Exp $ */
+/* $OpenBSD: cms_lib.c,v 1.11 2019/08/11 10:15:30 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -61,8 +61,38 @@
 #include <openssl/cms.h>
 #include "cms_lcl.h"
 
-IMPLEMENT_ASN1_FUNCTIONS(CMS_ContentInfo)
-IMPLEMENT_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
+
+CMS_ContentInfo *
+d2i_CMS_ContentInfo(CMS_ContentInfo **a, const unsigned char **in, long len)
+{
+	return (CMS_ContentInfo *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &CMS_ContentInfo_it);
+}
+
+int
+i2d_CMS_ContentInfo(CMS_ContentInfo *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &CMS_ContentInfo_it);
+}
+
+CMS_ContentInfo *
+CMS_ContentInfo_new(void)
+{
+	return (CMS_ContentInfo *)ASN1_item_new(&CMS_ContentInfo_it);
+}
+
+void
+CMS_ContentInfo_free(CMS_ContentInfo *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &CMS_ContentInfo_it);
+}
+
+int
+CMS_ContentInfo_print_ctx(BIO *out, CMS_ContentInfo *x, int indent, const ASN1_PCTX *pctx)
+{
+	return ASN1_item_print(out, (ASN1_VALUE *)x, indent,
+	    &CMS_ContentInfo_it, pctx);
+}
 
 const ASN1_OBJECT *
 CMS_get0_type(const CMS_ContentInfo *cms)
