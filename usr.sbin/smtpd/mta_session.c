@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.119 2019/06/28 13:32:50 deraadt Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.120 2019/08/11 11:11:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1549,10 +1549,10 @@ mta_tls_verified(struct mta_session *s)
 
 	x = SSL_get_peer_certificate(io_tls(s->io));
 	if (x) {
-		log_info("smtp-out: Server certificate verification %s "
-		    "on session %016"PRIx64,
-		    (s->flags & MTA_TLS_VERIFIED) ? "succeeded" : "failed",
-		    s->id);
+	  log_info("%016"PRIx64" mta "
+		   "server-cert-check result=\"%s\"",
+		   s->id,
+		   (s->flags & MTA_TLS_VERIFIED) ? "success" : "failure");
 		X509_free(x);
 	}
 
