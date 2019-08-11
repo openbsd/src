@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_pwri.c,v 1.20 2019/08/11 10:38:27 jsing Exp $ */
+/* $OpenBSD: cms_pwri.c,v 1.21 2019/08/11 10:41:49 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -232,7 +232,7 @@ kek_unwrap_key(unsigned char *out, size_t *outlen, const unsigned char *in,
 		/* Invalid size */
 		return 0;
 	}
-	if ((tmp = OPENSSL_malloc(inlen)) == NULL) {
+	if ((tmp = malloc(inlen)) == NULL) {
 		CMSerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
@@ -391,7 +391,7 @@ cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 		if (!kek_wrap_key(NULL, &keylen, ec->key, ec->keylen, kekctx))
 			goto err;
 
-		key = OPENSSL_malloc(keylen);
+		key = malloc(keylen);
 		if (key == NULL)
 			goto err;
 
@@ -400,7 +400,7 @@ cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 		pwri->encryptedKey->data = key;
 		pwri->encryptedKey->length = keylen;
 	} else {
-		key = OPENSSL_malloc(pwri->encryptedKey->length);
+		key = malloc(pwri->encryptedKey->length);
 		if (key == NULL) {
 			CMSerror(ERR_R_MALLOC_FAILURE);
 			goto err;
@@ -421,7 +421,7 @@ cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
  err:
 	EVP_CIPHER_CTX_free(kekctx);
 	if (!r)
-		OPENSSL_free(key);
+		free(key);
 	X509_ALGOR_free(kekalg);
 
 	return r;

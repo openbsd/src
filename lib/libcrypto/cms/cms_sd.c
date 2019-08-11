@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_sd.c,v 1.19 2019/08/11 10:38:27 jsing Exp $ */
+/* $OpenBSD: cms_sd.c,v 1.20 2019/08/11 10:41:49 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -650,13 +650,13 @@ cms_SignerInfo_content_sign(CMS_ContentInfo *cms, CMS_SignerInfo *si, BIO *chain
 		if (!EVP_DigestFinal_ex(mctx, md, &mdlen))
 			goto err;
 		siglen = EVP_PKEY_size(si->pkey);
-		sig = OPENSSL_malloc(siglen);
+		sig = malloc(siglen);
 		if (sig == NULL) {
 			CMSerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		if (EVP_PKEY_sign(pctx, sig, &siglen, md, mdlen) <= 0) {
-			OPENSSL_free(sig);
+			free(sig);
 			goto err;
 		}
 		ASN1_STRING_set0(si->signature, sig, siglen);
@@ -664,14 +664,14 @@ cms_SignerInfo_content_sign(CMS_ContentInfo *cms, CMS_SignerInfo *si, BIO *chain
 		unsigned char *sig;
 		unsigned int siglen;
 
-		sig = OPENSSL_malloc(EVP_PKEY_size(si->pkey));
+		sig = malloc(EVP_PKEY_size(si->pkey));
 		if (sig == NULL) {
 			CMSerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		if (!EVP_SignFinal(mctx, sig, &siglen, si->pkey)) {
 			CMSerror(CMS_R_SIGNFINAL_ERROR);
-			OPENSSL_free(sig);
+			free(sig);
 			goto err;
 		}
 		ASN1_STRING_set0(si->signature, sig, siglen);
@@ -746,8 +746,8 @@ CMS_SignerInfo_sign(CMS_SignerInfo *si)
 		goto err;
 	if (EVP_DigestSignFinal(mctx, NULL, &siglen) <= 0)
 		goto err;
-	OPENSSL_free(abuf);
-	abuf = OPENSSL_malloc(siglen);
+	free(abuf);
+	abuf = malloc(siglen);
 	if (abuf == NULL)
 		goto err;
 	if (EVP_DigestSignFinal(mctx, abuf, &siglen) <= 0)
@@ -766,7 +766,7 @@ CMS_SignerInfo_sign(CMS_SignerInfo *si)
 	return 1;
 
  err:
-	OPENSSL_free(abuf);
+	free(abuf);
 	EVP_MD_CTX_reset(mctx);
 
 	return 0;
@@ -804,7 +804,7 @@ CMS_SignerInfo_verify(CMS_SignerInfo *si)
 	if (!abuf)
 		goto err;
 	r = EVP_DigestVerifyUpdate(mctx, abuf, alen);
-	OPENSSL_free(abuf);
+	free(abuf);
 	if (r <= 0) {
 		r = -1;
 		goto err;
@@ -941,7 +941,7 @@ CMS_add_smimecap(CMS_SignerInfo *si, STACK_OF(X509_ALGOR) *algs)
 		return 0;
 	r = CMS_signed_add1_attr_by_NID(si, NID_SMIMECapabilities,
 	    V_ASN1_SEQUENCE, smder, smderlen);
-	OPENSSL_free(smder);
+	free(smder);
 
 	return r;
 }

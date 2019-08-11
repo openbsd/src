@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_ess.c,v 1.16 2019/08/11 10:38:27 jsing Exp $ */
+/* $OpenBSD: cms_ess.c,v 1.17 2019/08/11 10:41:49 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -172,7 +172,7 @@ CMS_add1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest *rr)
 	if (!r)
 		CMSerror(ERR_R_MALLOC_FAILURE);
 
-	OPENSSL_free(rrder);
+	free(rrder);
 
 	return r;
 }

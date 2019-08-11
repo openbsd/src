@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_env.c,v 1.17 2019/08/11 10:38:27 jsing Exp $ */
+/* $OpenBSD: cms_env.c,v 1.18 2019/08/11 10:41:49 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -392,7 +392,7 @@ cms_RecipientInfo_ktri_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 	if (EVP_PKEY_encrypt(pctx, NULL, &eklen, ec->key, ec->keylen) <= 0)
 		goto err;
 
-	ek = OPENSSL_malloc(eklen);
+	ek = malloc(eklen);
 
 	if (ek == NULL) {
 		CMSerror(ERR_R_MALLOC_FAILURE);
@@ -410,7 +410,7 @@ cms_RecipientInfo_ktri_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
  err:
 	EVP_PKEY_CTX_free(pctx);
 	ktri->pctx = NULL;
-	OPENSSL_free(ek);
+	free(ek);
 
 	return ret;
 }
@@ -454,7 +454,7 @@ cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 	    ktri->encryptedKey->length) <= 0)
 		goto err;
 
-	ek = OPENSSL_malloc(eklen);
+	ek = malloc(eklen);
 
 	if (ek == NULL) {
 		CMSerror(ERR_R_MALLOC_FAILURE);
@@ -477,7 +477,7 @@ cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 	EVP_PKEY_CTX_free(ktri->pctx);
 	ktri->pctx = NULL;
 	if (!ret)
-		OPENSSL_free(ek);
+		free(ek);
 
 	return ret;
 }
@@ -697,7 +697,7 @@ cms_RecipientInfo_kekri_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 		goto err;
 	}
 
-	wkey = OPENSSL_malloc(ec->keylen + 8);
+	wkey = malloc(ec->keylen + 8);
 	if (wkey == NULL) {
 		CMSerror(ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -715,7 +715,7 @@ cms_RecipientInfo_kekri_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 
  err:
 	if (!r)
-		OPENSSL_free(wkey);
+		free(wkey);
 	OPENSSL_cleanse(&actx, sizeof(actx));
 
 	return r;
@@ -759,7 +759,7 @@ cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 		goto err;
 	}
 
-	ukey = OPENSSL_malloc(kekri->encryptedKey->length - 8);
+	ukey = malloc(kekri->encryptedKey->length - 8);
 	if (ukey == NULL) {
 		CMSerror(ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -781,7 +781,7 @@ cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
  err:
 
 	if (!r)
-		OPENSSL_free(ukey);
+		free(ukey);
 	OPENSSL_cleanse(&actx, sizeof(actx));
 
 	return r;

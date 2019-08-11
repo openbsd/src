@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_kari.c,v 1.7 2019/08/11 10:38:27 jsing Exp $ */
+/* $OpenBSD: cms_kari.c,v 1.8 2019/08/11 10:41:49 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -256,7 +256,7 @@ cms_kek_cipher(unsigned char **pout, size_t *poutlen, const unsigned char *in,
 	/* obtain output length of ciphered key */
 	if (!EVP_CipherUpdate(kari->ctx, NULL, &outlen, in, inlen))
 		goto err;
-	out = OPENSSL_malloc(outlen);
+	out = malloc(outlen);
 	if (out == NULL)
 		goto err;
 	if (!EVP_CipherUpdate(kari->ctx, out, &outlen, in, inlen))
@@ -268,7 +268,7 @@ cms_kek_cipher(unsigned char **pout, size_t *poutlen, const unsigned char *in,
  err:
 	OPENSSL_cleanse(kek, keklen);
 	if (!rv)
-		OPENSSL_free(out);
+		free(out);
 	EVP_CIPHER_CTX_reset(kari->ctx);
 	/* FIXME: WHY IS kari->pctx freed here?  /RL */
 	EVP_PKEY_CTX_free(kari->pctx);
@@ -303,7 +303,7 @@ CMS_RecipientInfo_kari_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 	rv = 1;
 
  err:
-	OPENSSL_free(cek);
+	free(cek);
 
 	return rv;
 }

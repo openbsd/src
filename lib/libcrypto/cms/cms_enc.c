@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_enc.c,v 1.15 2019/08/11 10:38:27 jsing Exp $ */
+/* $OpenBSD: cms_enc.c,v 1.16 2019/08/11 10:41:49 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -128,7 +128,7 @@ cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 	tkeylen = EVP_CIPHER_CTX_key_length(ctx);
 	/* Generate random session key */
 	if (!enc || !ec->key) {
-		tkey = OPENSSL_malloc(tkeylen);
+		tkey = malloc(tkeylen);
 		if (tkey == NULL) {
 			CMSerror(ERR_R_MALLOC_FAILURE);
 			goto err;
@@ -209,7 +209,7 @@ cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
 {
 	ec->cipher = cipher;
 	if (key) {
-		if ((ec->key = OPENSSL_malloc(keylen)) == NULL) {
+		if ((ec->key = malloc(keylen)) == NULL) {
 			CMSerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
