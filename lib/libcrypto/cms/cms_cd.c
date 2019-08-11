@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_cd.c,v 1.14 2019/08/11 10:38:27 jsing Exp $ */
+/* $OpenBSD: cms_cd.c,v 1.15 2019/08/11 11:04:18 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -84,7 +84,7 @@ cms_CompressedData_create(int comp_nid)
 	if (cms == NULL)
 		return NULL;
 
-	cd = M_ASN1_new_of(CMS_CompressedData);
+	cd = (CMS_CompressedData *)ASN1_item_new(&CMS_CompressedData_it);
 
 	if (cd == NULL)
 		goto err;

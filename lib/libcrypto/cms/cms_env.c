@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_env.c,v 1.20 2019/08/11 10:43:57 jsing Exp $ */
+/* $OpenBSD: cms_env.c,v 1.21 2019/08/11 11:04:18 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -79,7 +79,7 @@ static CMS_EnvelopedData *
 cms_enveloped_data_init(CMS_ContentInfo *cms)
 {
 	if (cms->d.other == NULL) {
-		cms->d.envelopedData = M_ASN1_new_of(CMS_EnvelopedData);
+		cms->d.envelopedData = (CMS_EnvelopedData *)ASN1_item_new(&CMS_EnvelopedData_it);
 		if (!cms->d.envelopedData) {
 			CMSerror(ERR_R_MALLOC_FAILURE);
 			return NULL;
@@ -190,7 +190,7 @@ cms_RecipientInfo_ktri_init(CMS_RecipientInfo *ri, X509 *recip, EVP_PKEY *pk,
 	CMS_KeyTransRecipientInfo *ktri;
 	int idtype;
 
-	ri->d.ktri = M_ASN1_new_of(CMS_KeyTransRecipientInfo);
+	ri->d.ktri = (CMS_KeyTransRecipientInfo *)ASN1_item_new(&CMS_KeyTransRecipientInfo_it);
 	if (!ri->d.ktri)
 		return 0;
 	ri->type = CMS_RECIPINFO_TRANS;
@@ -247,7 +247,7 @@ CMS_add1_recipient_cert(CMS_ContentInfo *cms, X509 *recip, unsigned int flags)
 		goto err;
 
 	/* Initialize recipient info */
-	ri = M_ASN1_new_of(CMS_RecipientInfo);
+	ri = (CMS_RecipientInfo *)ASN1_item_new(&CMS_RecipientInfo_it);
 	if (!ri)
 		goto merr;
 
@@ -283,7 +283,7 @@ CMS_add1_recipient_cert(CMS_ContentInfo *cms, X509 *recip, unsigned int flags)
  merr:
 	CMSerror(ERR_R_MALLOC_FAILURE);
  err:
-	M_ASN1_free_of(ri, CMS_RecipientInfo);
+	ASN1_item_free((ASN1_VALUE *)ri, &CMS_RecipientInfo_it);
 	return NULL;
 }
 
@@ -573,11 +573,11 @@ CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid, unsigned char *key,
 	}
 
 	/* Initialize recipient info */
-	ri = M_ASN1_new_of(CMS_RecipientInfo);
+	ri = (CMS_RecipientInfo *)ASN1_item_new(&CMS_RecipientInfo_it);
 	if (!ri)
 		goto merr;
 
-	ri->d.kekri = M_ASN1_new_of(CMS_KEKRecipientInfo);
+	ri->d.kekri = (CMS_KEKRecipientInfo *)ASN1_item_new(&CMS_KEKRecipientInfo_it);
 	if (!ri->d.kekri)
 		goto merr;
 	ri->type = CMS_RECIPINFO_KEK;
@@ -585,7 +585,7 @@ CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid, unsigned char *key,
 	kekri = ri->d.kekri;
 
 	if (otherTypeId) {
-		kekri->kekid->other = M_ASN1_new_of(CMS_OtherKeyAttribute);
+		kekri->kekid->other = (CMS_OtherKeyAttribute *)ASN1_item_new(&CMS_OtherKeyAttribute_it);
 		if (kekri->kekid->other == NULL)
 			goto merr;
 	}
@@ -617,7 +617,7 @@ CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid, unsigned char *key,
  merr:
 	CMSerror(ERR_R_MALLOC_FAILURE);
  err:
-	M_ASN1_free_of(ri, CMS_RecipientInfo);
+	ASN1_item_free((ASN1_VALUE *)ri, &CMS_RecipientInfo_it);
 	return NULL;
 }
 

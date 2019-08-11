@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_kari.c,v 1.10 2019/08/11 10:43:57 jsing Exp $ */
+/* $OpenBSD: cms_kari.c,v 1.11 2019/08/11 11:04:18 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -349,7 +349,7 @@ cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, X509 *recip, EVP_PKEY *pk,
 	CMS_KeyAgreeRecipientInfo *kari;
 	CMS_RecipientEncryptedKey *rek = NULL;
 
-	ri->d.kari = M_ASN1_new_of(CMS_KeyAgreeRecipientInfo);
+	ri->d.kari = (CMS_KeyAgreeRecipientInfo *)ASN1_item_new(&CMS_KeyAgreeRecipientInfo_it);
 	if (!ri->d.kari)
 		return 0;
 	ri->type = CMS_RECIPINFO_AGREE;
@@ -357,18 +357,18 @@ cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, X509 *recip, EVP_PKEY *pk,
 	kari = ri->d.kari;
 	kari->version = 3;
 
-	rek = M_ASN1_new_of(CMS_RecipientEncryptedKey);
+	rek = (CMS_RecipientEncryptedKey *)ASN1_item_new(&CMS_RecipientEncryptedKey_it);
 	if (rek == NULL)
 		return 0;
 
 	if (!sk_CMS_RecipientEncryptedKey_push(kari->recipientEncryptedKeys, rek)) {
-		M_ASN1_free_of(rek, CMS_RecipientEncryptedKey);
+		ASN1_item_free((ASN1_VALUE *)rek, &CMS_RecipientEncryptedKey_it);
 		return 0;
 	}
 
 	if (flags & CMS_USE_KEYID) {
 		rek->rid->type = CMS_REK_KEYIDENTIFIER;
-		rek->rid->d.rKeyId = M_ASN1_new_of(CMS_RecipientKeyIdentifier);
+		rek->rid->d.rKeyId = (CMS_RecipientKeyIdentifier *)ASN1_item_new(&CMS_RecipientKeyIdentifier_it);
 		if (rek->rid->d.rKeyId == NULL)
 			return 0;
 		if (!cms_set1_keyid(&rek->rid->d.rKeyId->subjectKeyIdentifier, recip))
@@ -451,7 +451,7 @@ cms_RecipientInfo_kari_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 	if (kari->originator->type == -1) {
 		CMS_OriginatorIdentifierOrKey *oik = kari->originator;
 		oik->type = CMS_OIK_PUBKEY;
-		oik->d.originatorKey = M_ASN1_new_of(CMS_OriginatorPublicKey);
+		oik->d.originatorKey = (CMS_OriginatorPublicKey *)ASN1_item_new(&CMS_OriginatorPublicKey_it);
 		if (!oik->d.originatorKey)
 			return 0;
 	}

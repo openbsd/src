@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_enc.c,v 1.19 2019/08/11 10:54:11 jsing Exp $ */
+/* $OpenBSD: cms_enc.c,v 1.20 2019/08/11 11:04:18 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -234,7 +234,7 @@ CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
 		return 0;
 	}
 	if (ciph) {
-		cms->d.encryptedData = M_ASN1_new_of(CMS_EncryptedData);
+		cms->d.encryptedData = (CMS_EncryptedData *)ASN1_item_new(&CMS_EncryptedData_it);
 		if (!cms->d.encryptedData) {
 			CMSerror(ERR_R_MALLOC_FAILURE);
 			return 0;

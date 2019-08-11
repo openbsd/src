@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_pwri.c,v 1.24 2019/08/11 10:54:11 jsing Exp $ */
+/* $OpenBSD: cms_pwri.c,v 1.25 2019/08/11 11:04:18 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -158,11 +158,11 @@ CMS_add0_recipient_password(CMS_ContentInfo *cms, int iter, int wrap_nid,
 	ctx = NULL;
 
 	/* Initialize recipient info */
-	ri = M_ASN1_new_of(CMS_RecipientInfo);
+	ri = (CMS_RecipientInfo *)ASN1_item_new(&CMS_RecipientInfo_it);
 	if (ri == NULL)
 		goto merr;
 
-	ri->d.pwri = M_ASN1_new_of(CMS_PasswordRecipientInfo);
+	ri->d.pwri = (CMS_PasswordRecipientInfo *)ASN1_item_new(&CMS_PasswordRecipientInfo_it);
 	if (ri->d.pwri == NULL)
 		goto merr;
 	ri->type = CMS_RECIPINFO_PASS;
@@ -206,7 +206,7 @@ CMS_add0_recipient_password(CMS_ContentInfo *cms, int iter, int wrap_nid,
  err:
 	EVP_CIPHER_CTX_free(ctx);
 	if (ri)
-		M_ASN1_free_of(ri, CMS_RecipientInfo);
+		ASN1_item_free((ASN1_VALUE *)ri, &CMS_RecipientInfo_it);
 	X509_ALGOR_free(encalg);
 
 	return NULL;

@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_dd.c,v 1.13 2019/08/11 10:50:23 jsing Exp $ */
+/* $OpenBSD: cms_dd.c,v 1.14 2019/08/11 11:04:18 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -74,7 +74,7 @@ cms_DigestedData_create(const EVP_MD *md)
 	if (cms == NULL)
 		return NULL;
 
-	dd = M_ASN1_new_of(CMS_DigestedData);
+	dd = (CMS_DigestedData *)ASN1_item_new(&CMS_DigestedData_it);
 
 	if (dd == NULL)
 		goto err;

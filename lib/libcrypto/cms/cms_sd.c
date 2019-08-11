@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_sd.c,v 1.21 2019/08/11 10:50:23 jsing Exp $ */
+/* $OpenBSD: cms_sd.c,v 1.22 2019/08/11 11:04:18 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -81,7 +81,7 @@ static CMS_SignedData *
 cms_signed_data_init(CMS_ContentInfo *cms)
 {
 	if (cms->d.other == NULL) {
-		cms->d.signedData = M_ASN1_new_of(CMS_SignedData);
+		cms->d.signedData = (CMS_SignedData *)ASN1_item_new(&CMS_SignedData_it);
 		if (!cms->d.signedData) {
 			CMSerror(ERR_R_MALLOC_FAILURE);
 			return NULL;
@@ -288,7 +288,7 @@ CMS_add1_signer(CMS_ContentInfo *cms, X509 *signer, EVP_PKEY *pk,
 	sd = cms_signed_data_init(cms);
 	if (!sd)
 		goto err;
-	si = M_ASN1_new_of(CMS_SignerInfo);
+	si = (CMS_SignerInfo *)ASN1_item_new(&CMS_SignerInfo_it);
 	if (!si)
 		goto merr;
 	/* Call for side-effect of computing hash and caching extensions */
@@ -420,7 +420,7 @@ CMS_add1_signer(CMS_ContentInfo *cms, X509 *signer, EVP_PKEY *pk,
  merr:
 	CMSerror(ERR_R_MALLOC_FAILURE);
  err:
-	M_ASN1_free_of(si, CMS_SignerInfo);
+	ASN1_item_free((ASN1_VALUE *)si, &CMS_SignerInfo_it);
 
 	return NULL;
 }

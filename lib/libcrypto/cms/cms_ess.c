@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_ess.c,v 1.19 2019/08/11 10:54:11 jsing Exp $ */
+/* $OpenBSD: cms_ess.c,v 1.20 2019/08/11 11:04:18 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -357,7 +357,7 @@ cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
 
  err:
 	CMS_ReceiptRequest_free(rr);
-	M_ASN1_free_of(rct, CMS_Receipt);
+	ASN1_item_free((ASN1_VALUE *)rct, &CMS_Receipt_it);
 	return r;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_lib.c,v 1.12 2019/08/11 10:38:27 jsing Exp $ */
+/* $OpenBSD: cms_lib.c,v 1.13 2019/08/11 11:04:18 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -465,11 +465,11 @@ CMS_add0_CertificateChoices(CMS_ContentInfo *cms)
 		*pcerts = sk_CMS_CertificateChoices_new_null();
 	if (!*pcerts)
 		return NULL;
-	cch = M_ASN1_new_of(CMS_CertificateChoices);
+	cch = (CMS_CertificateChoices *)ASN1_item_new(&CMS_CertificateChoices_it);
 	if (!cch)
 		return NULL;
 	if (!sk_CMS_CertificateChoices_push(*pcerts, cch)) {
-		M_ASN1_free_of(cch, CMS_CertificateChoices);
+		ASN1_item_free((ASN1_VALUE *)cch, &CMS_CertificateChoices_it);
 		return NULL;
 	}
 
@@ -547,11 +547,11 @@ CMS_add0_RevocationInfoChoice(CMS_ContentInfo *cms)
 		*pcrls = sk_CMS_RevocationInfoChoice_new_null();
 	if (!*pcrls)
 		return NULL;
-	rch = M_ASN1_new_of(CMS_RevocationInfoChoice);
+	rch = (CMS_RevocationInfoChoice *)ASN1_item_new(&CMS_RevocationInfoChoice_it);
 	if (!rch)
 		return NULL;
 	if (!sk_CMS_RevocationInfoChoice_push(*pcrls, rch)) {
-		M_ASN1_free_of(rch, CMS_RevocationInfoChoice);
+		ASN1_item_free((ASN1_VALUE *)rch, &CMS_RevocationInfoChoice_it);
 		return NULL;
 	}
 
@@ -670,20 +670,20 @@ cms_set1_ias(CMS_IssuerAndSerialNumber **pias, X509 *cert)
 {
 	CMS_IssuerAndSerialNumber *ias;
 
-	ias = M_ASN1_new_of(CMS_IssuerAndSerialNumber);
+	ias = (CMS_IssuerAndSerialNumber *)ASN1_item_new(&CMS_IssuerAndSerialNumber_it);
 	if (!ias)
 		goto err;
 	if (!X509_NAME_set(&ias->issuer, X509_get_issuer_name(cert)))
 		goto err;
 	if (!ASN1_STRING_copy(ias->serialNumber, X509_get_serialNumber(cert)))
 		goto err;
-	M_ASN1_free_of(*pias, CMS_IssuerAndSerialNumber);
+	ASN1_item_free((ASN1_VALUE *)*pias, &CMS_IssuerAndSerialNumber_it);
 	*pias = ias;
 
 	return 1;
 
  err:
-	M_ASN1_free_of(ias, CMS_IssuerAndSerialNumber);
+	ASN1_item_free((ASN1_VALUE *)ias, &CMS_IssuerAndSerialNumber_it);
 	CMSerror(ERR_R_MALLOC_FAILURE);
 
 	return 0;
