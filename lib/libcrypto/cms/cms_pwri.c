@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_pwri.c,v 1.21 2019/08/11 10:41:49 jsing Exp $ */
+/* $OpenBSD: cms_pwri.c,v 1.22 2019/08/11 10:43:57 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -268,7 +268,7 @@ kek_unwrap_key(unsigned char *out, size_t *outlen, const unsigned char *in,
 	rv = 1;
 
  err:
-	OPENSSL_clear_free(tmp, inlen);
+	freezero(tmp, inlen);
 
 	return rv;
 }
@@ -411,7 +411,7 @@ cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 			goto err;
 		}
 
-		OPENSSL_clear_free(ec->key, ec->keylen);
+		freezero(ec->key, ec->keylen);
 		ec->key = key;
 		ec->keylen = keylen;
 	}

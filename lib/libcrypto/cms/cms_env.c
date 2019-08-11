@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_env.c,v 1.19 2019/08/11 10:43:24 jsing Exp $ */
+/* $OpenBSD: cms_env.c,v 1.20 2019/08/11 10:43:57 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -469,7 +469,7 @@ cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 
 	ret = 1;
 
-	OPENSSL_clear_free(ec->key, ec->keylen);
+	freezero(ec->key, ec->keylen);
 	ec->key = ek;
 	ec->keylen = eklen;
 
@@ -932,7 +932,7 @@ cms_EnvelopedData_init_bio(CMS_ContentInfo *cms)
 
  err:
 	ec->cipher = NULL;
-	OPENSSL_clear_free(ec->key, ec->keylen);
+	freezero(ec->key, ec->keylen);
 	ec->key = NULL;
 	ec->keylen = 0;
 	if (ok)

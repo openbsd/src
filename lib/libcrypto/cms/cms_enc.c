@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_enc.c,v 1.16 2019/08/11 10:41:49 jsing Exp $ */
+/* $OpenBSD: cms_enc.c,v 1.17 2019/08/11 10:43:57 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -160,7 +160,7 @@ cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 			    goto err;
 			} else {
 			    /* Use random key */
-			    OPENSSL_clear_free(ec->key, ec->keylen);
+			    freezero(ec->key, ec->keylen);
 			    ec->key = tkey;
 			    ec->keylen = tkeylen;
 			    tkey = NULL;
@@ -193,10 +193,10 @@ cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 
  err:
 	if (!keep_key || !ok) {
-		OPENSSL_clear_free(ec->key, ec->keylen);
+		freezero(ec->key, ec->keylen);
 		ec->key = NULL;
 	}
-	OPENSSL_clear_free(tkey, tkeylen);
+	freezero(tkey, tkeylen);
 	if (ok)
 		return b;
 	BIO_free(b);

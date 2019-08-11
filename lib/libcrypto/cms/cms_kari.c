@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_kari.c,v 1.9 2019/08/11 10:43:24 jsing Exp $ */
+/* $OpenBSD: cms_kari.c,v 1.10 2019/08/11 10:43:57 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -296,7 +296,7 @@ CMS_RecipientInfo_kari_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 	if (!cms_kek_cipher(&cek, &ceklen, enckey, enckeylen, ri->d.kari, 0))
 		goto err;
 	ec = cms->d.envelopedData->encryptedContentInfo;
-	OPENSSL_clear_free(ec->key, ec->keylen);
+	freezero(ec->key, ec->keylen);
 	ec->key = cek;
 	ec->keylen = ceklen;
 	cek = NULL;
