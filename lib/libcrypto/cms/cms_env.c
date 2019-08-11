@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_env.c,v 1.18 2019/08/11 10:41:49 jsing Exp $ */
+/* $OpenBSD: cms_env.c,v 1.19 2019/08/11 10:43:24 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -716,7 +716,7 @@ cms_RecipientInfo_kekri_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
  err:
 	if (!r)
 		free(wkey);
-	OPENSSL_cleanse(&actx, sizeof(actx));
+	explicit_bzero(&actx, sizeof(actx));
 
 	return r;
 }
@@ -782,7 +782,7 @@ cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 
 	if (!r)
 		free(ukey);
-	OPENSSL_cleanse(&actx, sizeof(actx));
+	explicit_bzero(&actx, sizeof(actx));
 
 	return r;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_kari.c,v 1.8 2019/08/11 10:41:49 jsing Exp $ */
+/* $OpenBSD: cms_kari.c,v 1.9 2019/08/11 10:43:24 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -266,7 +266,7 @@ cms_kek_cipher(unsigned char **pout, size_t *poutlen, const unsigned char *in,
 	rv = 1;
 
  err:
-	OPENSSL_cleanse(kek, keklen);
+	explicit_bzero(kek, keklen);
 	if (!rv)
 		free(out);
 	EVP_CIPHER_CTX_reset(kari->ctx);
