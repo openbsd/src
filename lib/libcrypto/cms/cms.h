@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.h,v 1.12 2019/08/10 18:24:33 jsing Exp $ */
+/* $OpenBSD: cms.h,v 1.13 2019/08/11 06:47:18 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -184,7 +184,7 @@ int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert);
 int CMS_decrypt_set1_key(CMS_ContentInfo *cms, unsigned char *key,
     size_t keylen, const unsigned char *id, size_t idlen);
 int CMS_decrypt_set1_password(CMS_ContentInfo *cms, unsigned char *pass,
-    ossl_ssize_t passlen);
+    ssize_t passlen);
 
 STACK_OF(CMS_RecipientInfo) *CMS_get0_RecipientInfos(CMS_ContentInfo *cms);
 int CMS_RecipientInfo_type(CMS_RecipientInfo *ri);
@@ -214,10 +214,10 @@ int CMS_RecipientInfo_kekri_id_cmp(CMS_RecipientInfo *ri,
     const unsigned char *id, size_t idlen);
 
 int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri, unsigned char *pass,
-    ossl_ssize_t passlen);
+    ssize_t passlen);
 
 CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms, int iter,
-    int wrap_nid, int pbe_nid, unsigned char *pass, ossl_ssize_t passlen,
+    int wrap_nid, int pbe_nid, unsigned char *pass, ssize_t passlen,
     const EVP_CIPHER *kekciph);
 
 int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);

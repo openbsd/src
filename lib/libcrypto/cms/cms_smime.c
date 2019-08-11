@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_smime.c,v 1.20 2019/08/10 18:15:52 jsing Exp $ */
+/* $OpenBSD: cms_smime.c,v 1.21 2019/08/11 06:47:18 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -786,7 +786,7 @@ CMS_decrypt_set1_key(CMS_ContentInfo *cms, unsigned char *key, size_t keylen,
 
 int
 CMS_decrypt_set1_password(CMS_ContentInfo *cms, unsigned char *pass,
-    ossl_ssize_t passlen)
+    ssize_t passlen)
 {
 	STACK_OF(CMS_RecipientInfo) *ris;
 	CMS_RecipientInfo *ri;

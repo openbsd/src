@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_pwri.c,v 1.17 2019/08/10 18:15:52 jsing Exp $ */
+/* $OpenBSD: cms_pwri.c,v 1.18 2019/08/11 06:47:18 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -65,7 +65,7 @@
 
 int
 CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri, unsigned char *pass,
-    ossl_ssize_t passlen)
+    ssize_t passlen)
 {
 	CMS_PasswordRecipientInfo *pwri;
 
@@ -85,7 +85,7 @@ CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri, unsigned char *pass,
 
 CMS_RecipientInfo *
 CMS_add0_recipient_password(CMS_ContentInfo *cms, int iter, int wrap_nid,
-    int pbe_nid, unsigned char *pass, ossl_ssize_t passlen,
+    int pbe_nid, unsigned char *pass, ssize_t passlen,
     const EVP_CIPHER *kekciph)
 {
 	CMS_RecipientInfo *ri = NULL;
