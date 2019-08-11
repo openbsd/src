@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.255 2019/08/11 12:17:06 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.256 2019/08/11 16:35:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1288,6 +1288,9 @@ REJECT STRING {
 | DISCONNECT STRING {
 	filter_config->disconnect = $2;
 }
+| REWRITE STRING {
+	filter_config->rewrite = $2;
+}
 ;
 
 filter_phase_check_fcrdns:
@@ -2321,6 +2324,7 @@ lookup(char *s)
 		{ "regex",		REGEX },
 		{ "reject",		REJECT },
 		{ "relay",		RELAY },
+		{ "rewrite",		REWRITE },
 		{ "rset",		RSET },
 		{ "scheduler",		SCHEDULER },
 		{ "senders",   		SENDERS },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.404 2019/08/10 16:07:01 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.405 2019/08/11 16:35:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1497,6 +1497,7 @@ smtp_check_mail_from(struct smtp_session *s, const char *args)
 {
 	char *copy;
 	char tmp[SMTP_LINE_MAX];
+	struct mailaddr	sender;
 
 	(void)strlcpy(tmp, args, sizeof tmp);
 	copy = tmp;  
@@ -1534,18 +1535,10 @@ smtp_check_mail_from(struct smtp_session *s, const char *args)
 		return 0;
 	}
 
-	if (!smtp_tx(s)) {
-		smtp_reply(s, "421 %s Temporary Error",
-		    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
-		smtp_enter_state(s, STATE_QUIT);
-		return 0;
-	}
-
-	if (smtp_mailaddr(&s->tx->evp.sender, copy, 1, &copy,
-		s->tx->session->smtpname) == 0) {
+	if (smtp_mailaddr(&sender, copy, 1, &copy,
+		s->smtpname) == 0) {
 		smtp_reply(s, "553 %s Sender address syntax error",
 		    esc_code(ESC_STATUS_PERMFAIL, ESC_OTHER_ADDRESS_STATUS));
-		smtp_tx_free(s->tx);
 		return 0;
 	}
 
@@ -1806,6 +1799,27 @@ smtp_proceed_starttls(struct smtp_session *s, const char *args)
 static void
 smtp_proceed_mail_from(struct smtp_session *s, const char *args)
 {
+	char *copy;
+	char tmp[SMTP_LINE_MAX];
+
+	(void)strlcpy(tmp, args, sizeof tmp);
+	copy = tmp;  
+
+       	if (!smtp_tx(s)) {
+		smtp_reply(s, "421 %s Temporary Error",
+		    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
+		smtp_enter_state(s, STATE_QUIT);
+		return;
+	}
+
+	if (smtp_mailaddr(&s->tx->evp.sender, copy, 1, &copy,
+		s->smtpname) == 0) {
+		smtp_reply(s, "553 %s Sender address syntax error",
+		    esc_code(ESC_STATUS_PERMFAIL, ESC_OTHER_ADDRESS_STATUS));
+		smtp_tx_free(s->tx);
+		return;
+	}
+
 	smtp_tx_mail_from(s->tx, args);
 }
 
