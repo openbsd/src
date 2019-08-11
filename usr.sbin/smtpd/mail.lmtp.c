@@ -59,7 +59,7 @@ main(int argc, char *argv[])
 	struct session	session;
 
 	if (! geteuid())
-		errx(1, "mail.lmtp: may not be executed as root");
+		errx(EX_TEMPFAIL, "mail.lmtp: may not be executed as root");
 
 	session.lhlo = "localhost";
 	session.mailfrom = NULL;
@@ -83,10 +83,10 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (session.mailfrom == NULL)
-		errx(1, "sender must be specified with -f");
+		errx(EX_TEMPFAIL, "sender must be specified with -f");
 
 	if (argc == 0)
-		errx(1, "no recipient was specified");
+		errx(EX_TEMPFAIL, "no recipient was specified");
 
 	session.rcpts = argv;
 	session.n_rcpts = argc;
@@ -109,14 +109,14 @@ lmtp_connect_inet(const char *destination)
 	int n, s = -1, save_errno;
 
 	if ((destcopy = strdup(destination)) == NULL)
-		err(1, NULL);
+		err(EX_TEMPFAIL, NULL);
 
 	servname = "25";
 	hostname = destcopy;
 	p = destcopy;
 	if (*p == '[') {
 		if ((p = strchr(destcopy, ']')) == NULL)
-			errx(1, "inet: invalid address syntax");
+			errx(EX_TEMPFAIL, "inet: invalid address syntax");
 
 		/* remove [ and ] */
 		*p = '\0';
@@ -132,7 +132,7 @@ lmtp_connect_inet(const char *destination)
 		case '\0':
 			break;
 		default:
-			errx(1, "inet: invalid address syntax");
+			errx(EX_TEMPFAIL, "inet: invalid address syntax");
 		}
 	}
 	else if ((p = strchr(destcopy, ':')) != NULL) {
@@ -146,7 +146,7 @@ lmtp_connect_inet(const char *destination)
 	hints.ai_flags = AI_NUMERICSERV;
 	n = getaddrinfo(hostname, servname, &hints, &res0);
 	if (n)
-		errx(1, "inet: %s", gai_strerror(n));
+		errx(EX_TEMPFAIL, "inet: %s", gai_strerror(n));
 
 	for (res = res0; res; res = res->ai_next) {
 		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -180,16 +180,16 @@ lmtp_connect_unix(const char *destination)
 	int s;
 
 	if (*destination != '/')
-		errx(1, "unix: path must be absolute");
+		errx(EX_TEMPFAIL, "unix: path must be absolute");
 	
 	if ((s = socket(PF_LOCAL, SOCK_STREAM, 0)) == -1)
-		err(1, NULL);
+		err(EX_TEMPFAIL, NULL);
 
 	memset(&addr, 0, sizeof addr);
 	addr.sun_family = AF_UNIX;
 	if (strlcpy(addr.sun_path, destination, sizeof addr.sun_path)
 	    >= sizeof addr.sun_path)
-		errx(1, "unix: socket path is too long");
+		errx(EX_TEMPFAIL, "unix: socket path is too long");
 
 	if (connect(s, (struct sockaddr *)&addr, sizeof addr) == -1)
 		err(EX_TEMPFAIL, "connect");
@@ -215,8 +215,12 @@ lmtp_engine(FILE *conn, struct session *session)
 
 	do {
 		fflush(conn);
-		if ((linelen = getline(&line, &linesize, conn)) == -1)
-			err(1, "getline");
+		if ((linelen = getline(&line, &linesize, conn)) == -1) {
+			if (ferror(conn))
+				err(EX_TEMPFAIL, "getline");
+			else
+				errx(EX_TEMPFAIL, "unexpected EOF from LMTP server");
+		}
 		line[strcspn(line, "\n")] = '\0';
 		line[strcspn(line, "\r")] = '\0';
 
@@ -225,10 +229,10 @@ lmtp_engine(FILE *conn, struct session *session)
 		    !isdigit(line[1]) ||
 		    !isdigit(line[2]) ||
 		    (line[3] != ' ' && line[3] != '-'))
-			errx(1, "LMTP server sent an invalid line");
+			errx(EX_TEMPFAIL, "LMTP server sent an invalid line");
 
 		if (line[0] != (phase == PHASE_DATA ? '3' : '2'))
-			errx(1, "LMTP server error: %s", line);
+			errx(EX_TEMPFAIL, "LMTP server error: %s", line);
 		
 		if (line[3] == '-')
 			continue;
@@ -274,9 +278,6 @@ lmtp_engine(FILE *conn, struct session *session)
 			exit(0);
 		}
 	} while (1);
-
-	if (ferror(conn))
-		err(1, "getline");
 }
 
 static void
@@ -294,5 +295,5 @@ stream_file(FILE *conn)
 	}
 	free(line);
 	if (ferror(stdin))
-		err(1, "getline");
+		err(EX_TEMPFAIL, "getline");
 }
