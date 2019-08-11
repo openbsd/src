@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.215 2019/08/10 18:11:52 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.216 2019/08/11 13:57:37 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: August 10 2019 $
+.Dd $Mdocdate: August 11 2019 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -329,11 +329,41 @@ or set using either
 or using the
 .Ic hostname
 directive.
-.It Ic filter Ar name Ic proc\-exec Ar command
+.It Ic filter Ar filter\-name Ic phase Ar phase\-name Ic match Ar conditions Ic disconnect Ar message
+Register builtin filter
+.Ar filter\-name
+matching
+.Ar conditions
+to disconnect session with
+.Ar message .
+Phase and matching conditions are documented in a specific section,
+see
+.Sx BUILTIN FILTERING .
+.It Ic filter Ar filter\-name Ic phase Ar phase\-name Ic match Ar conditions Ic reject Ar message
+Register builtin filter
+.Ar filter\-name
+matching
+.Ar conditions
+to reject session with
+.Ar message .
+Phase and matching conditions are documented in a specific section,
+see
+.Sx BUILTIN FILTERING .
+.It Ic filter Ar filter\-name Ic phase Ar phase\-name Ic match Ar conditions Ic rewrite Ar value
+Register builtin filter
+.Ar filter\-name
+matching
+.Ar conditions
+to rewrite phase parameter with new
+.Ar value .
+Phase and matching conditions are documented in a specific section,
+see
+.Sx BUILTIN FILTERING .
+.It Ic filter Ar filter\-name Ic proc\-exec Ar command
 Register and execute
 .Qq proc
 filter
-.Ar name
+.Ar filter\-name
 from
 .Ar command .
 .It Ic include Qq Ar pathname
@@ -793,6 +823,71 @@ pairs.
 The table must contain at least one key-value pair and may declare
 multiple pairs as a comma-separated (whitespace optional) list.
 .El
+.Ss BUILTIN FILTERING
+In a regular workflow,
+.Xr smtpd 8
+may accept or reject a message based only on the content of envelopes.
+Its decisions are about the handling of the message,
+not about the handling of an active session.
+.Pp
+Filtering extends the decision making process by allowing
+.Xr smtpd 8
+to stop at each phase of an SMTP session,
+check that conditions are met,
+then decide if a session is allowed to move forward.
+.Pp
+With filtering,
+a session may be interrupted at any phase before an envelope is complete.
+A message may also be rejected after being submitted,
+disregarding if the envelope was accepted or not.
+.Pp
+The following phases are currently supported:
+.Bl -column mail\-from -offset indent
+.It connect    Ta upon connection, before a banner is displayed
+.It helo       Ta after HELO command is submitted
+.It ehlo       Ta after EHLO command is submitted
+.It mail\-from Ta after MAIL FROM command is submitted
+.It rcpt\-to   Ta after RCPT TO command is submitted
+.It data       Ta after DATA command is submitted
+.It commit     Ta after message is fully is submitted
+.El
+.Pp
+At each phase,
+multiple criterias may be checked:
+.Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
+.It fcrdns                        Ta forward-confirmed reverse DNS is valid
+.It rdns                          Ta session has a reverse DNS
+.It rdns Pf < Ar table Ns >       Ta session has a reverse DNS in table
+.It src Pf < Ar table Ns >        Ta source address is in table
+.It helo Pf < Ar table Ns >       Ta helo name is in table
+.It mail\-from Pf < Ar table Ns > Ta sender address is in table
+.It rcpt\-to Pf < Ar table Ns >   Ta recipient address is in table
+.El
+.Pp
+All criterias from previous phases are available to subsequent phases,
+so while the helo criteria is not available before the helo or ehlo phase,
+the fcrdns criteria is available in all phases.
+.Pp
+Criterias may all be negated by prefixing them with an exclamation mark:
+.Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
+.It ! fcrdns                     Ta forward-confirmed reverse DNS is invalid
+.El
+.Pp
+Any criteria using a table may indicate that tables hold regex by
+prefixing the table name with the keyword regex.
+.Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
+.It helo regex Pf < Ar table Ns >       Ta helo name matches a regex in table
+.El
+Finally,
+three decisions may be taken at each phase:
+.Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
+.It disconnect Ar message Ta the session is disconnected with message
+.It reject Ar message     Ta the command is rejected with message
+.It rewrite Ar value      Ta the command parameter is rewritten with value
+.El
+.Pp
+Decisions that involve a message require that the message be RFC valid,
+meaning that they should either start with a 4xx or 5xx status code.
 .Ss FORMAT SPECIFIERS
 Some configuration directives support expansion of their parameters at runtime.
 Such directives (for example
