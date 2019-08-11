@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_kari.c,v 1.12 2019/08/11 11:07:40 jsing Exp $ */
+/* $OpenBSD: cms_kari.c,v 1.13 2019/08/11 14:27:01 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -411,9 +411,15 @@ cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari, const EVP_CIPHER *cipher)
 	 * DES3 wrap otherwise use AES wrap similar to key size.
 	 */
 #ifndef OPENSSL_NO_DES
+#if 0
+	/*
+	 * XXX - we do not currently support DES3 wrap and probably should just
+	 * drop this code.
+	 */
 	if (EVP_CIPHER_type(cipher) == NID_des_ede3_cbc)
 		kekcipher = EVP_des_ede3_wrap();
 	else
+#endif
 #endif
 	if (keylen <= 16)
 		kekcipher = EVP_aes_128_wrap();
