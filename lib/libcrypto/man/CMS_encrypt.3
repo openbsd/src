@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_encrypt.3,v 1.3 2019/08/10 23:41:22 schwarze Exp $
+.\" $OpenBSD: CMS_encrypt.3,v 1.4 2019/08/11 12:46:38 schwarze Exp $
 .\" full merge up to: OpenSSL 83cf7abf May 29 13:07:08 2018 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 10 2019 $
+.Dd $Mdocdate: August 11 2019 $
 .Dt CMS_ENCRYPT 3
 .Os
 .Sh NAME
@@ -184,7 +184,10 @@ The error can be obtained from
 .Xr CMS_decrypt 3
 .Sh HISTORY
 .Fn CMS_encrypt
-was added to OpenSSL 0.9.8.
+first appeared in OpenSSL 0.9.8h
+and has been available since
+.Ox 6.6 .
+.Pp
 The
-.Sy CMS_STREAM
-flag was first supported in OpenSSL 1.0.0.
+.Dv CMS_STREAM
+flag first appeared in OpenSSL 1.0.0.

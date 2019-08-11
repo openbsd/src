@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_uncompress.3,v 1.3 2019/08/10 23:41:22 schwarze Exp $
+.\" $OpenBSD: CMS_uncompress.3,v 1.4 2019/08/11 12:46:38 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 10 2019 $
+.Dd $Mdocdate: August 11 2019 $
 .Dt CMS_UNCOMPRESS 3
 .Os
 .Sh NAME
@@ -102,7 +102,9 @@ The error can be obtained from
 .Xr CMS_compress 3
 .Sh HISTORY
 .Fn CMS_uncompress
-was added to OpenSSL 0.9.8.
+first appeared in OpenSSL 0.9.8h
+and has been available since
+.Ox 6.6 .
 .Sh BUGS
 The lack of single pass processing and the need to hold all data in
 memory as mentioned in

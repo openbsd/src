@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_verify.3,v 1.3 2019/08/10 23:41:22 schwarze Exp $
+.\" $OpenBSD: CMS_verify.3,v 1.4 2019/08/11 12:46:38 schwarze Exp $
 .\" full merge up to: OpenSSL 35fd9953 May 28 14:49:38 2019 +0200
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 10 2019 $
+.Dd $Mdocdate: August 11 2019 $
 .Dt CMS_VERIFY 3
 .Os
 .Sh NAME
@@ -211,8 +211,9 @@ The error can be obtained from
 .Sh SEE ALSO
 .Xr CMS_sign 3
 .Sh HISTORY
-.Fn CMS_verify
-was added to OpenSSL 0.9.8.
+These functions first appeared in OpenSSL 0.9.8h
+and have been available since
+.Ox 6.6 .
 .Sh BUGS
 The trusted certificate store is not searched for the signing certificate.
 This is primarily due to the inadequacies of the current
