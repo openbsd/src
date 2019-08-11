@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_lcl.h,v 1.8 2019/08/10 18:27:49 jsing Exp $ */
+/* $OpenBSD: cms_lcl.h,v 1.9 2019/08/11 08:15:27 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -105,7 +105,7 @@ struct CMS_ContentInfo_st {
 	} d;
 };
 
-DEFINE_STACK_OF(CMS_CertificateChoices)
+DECLARE_STACK_OF(CMS_CertificateChoices)
 
 struct CMS_SignedData_st {
 	int32_t version;

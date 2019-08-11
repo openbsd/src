@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.h,v 1.13 2019/08/11 06:47:18 jsing Exp $ */
+/* $OpenBSD: cms.h,v 1.14 2019/08/11 08:15:27 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -74,10 +74,10 @@ typedef struct CMS_Receipt_st CMS_Receipt;
 typedef struct CMS_RecipientEncryptedKey_st CMS_RecipientEncryptedKey;
 typedef struct CMS_OtherKeyAttribute_st CMS_OtherKeyAttribute;
 
-DEFINE_STACK_OF(CMS_SignerInfo)
-DEFINE_STACK_OF(CMS_RecipientEncryptedKey)
-DEFINE_STACK_OF(CMS_RecipientInfo)
-DEFINE_STACK_OF(CMS_RevocationInfoChoice)
+DECLARE_STACK_OF(CMS_SignerInfo)
+DECLARE_STACK_OF(CMS_RecipientEncryptedKey)
+DECLARE_STACK_OF(CMS_RecipientInfo)
+DECLARE_STACK_OF(CMS_RevocationInfoChoice)
 DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)
 DECLARE_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
