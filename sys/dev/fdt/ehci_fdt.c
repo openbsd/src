@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_fdt.c,v 1.5 2019/05/10 18:20:41 patrick Exp $ */
+/*	$OpenBSD: ehci_fdt.c,v 1.6 2019/08/11 11:16:05 kettenis Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -220,11 +220,7 @@ ehci_init_phys(struct ehci_fdt_softc *sc)
 {
 	uint32_t *phys;
 	uint32_t *phy;
-	int len, idx;
-
-	idx = OF_getindex(sc->sc_node, "usb", "phy-names");
-	if (idx < 0)
-		return;
+	int len;
 
 	len = OF_getproplen(sc->sc_node, "phys");
 	if (len <= 0)
@@ -235,15 +231,10 @@ ehci_init_phys(struct ehci_fdt_softc *sc)
 
 	phy = phys;
 	while (phy && phy < phys + (len / sizeof(uint32_t))) {
-		if (idx == 0) {
-			ehci_init_phy(sc, phy);
-			free(phys, M_TEMP, len);
-			return;
-		}
-
+		ehci_init_phy(sc, phy);
 		phy = ehci_next_phy(phy);
-		idx--;
 	}
+
 	free(phys, M_TEMP, len);
 }
 
