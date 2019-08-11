@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.2 2019/08/11 14:41:20 deraadt Exp $	*/
+/*	$OpenBSD: smi.c,v 1.3 2019/08/11 15:52:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -181,7 +181,8 @@ smi_debug_elements(struct ber_element *root)
 	fprintf(stderr, "(%u) encoding %u ",
 	    root->be_type, root->be_encoding);
 
-	if ((value = smi_print_element(root, 1, smi_os_default, smi_oidl_numeric)) == NULL)
+	if ((value = smi_print_element(root, 1, smi_os_default,
+	    smi_oidl_numeric)) == NULL)
 		goto invalid;
 
 	switch (root->be_encoding) {
@@ -256,8 +257,7 @@ smi_print_element(struct ber_element *root, int print_hint,
 			if (asprintf(&str, "INTEGER: %s(%d)",
 			    d ? "true" : "false", d) == -1)
 				goto fail;
-		}
-		else
+		} else
 			if (asprintf(&str, "%s", d ? "true" : "false") == -1)
 				goto fail;
 		break;
@@ -329,8 +329,7 @@ smi_print_element(struct ber_element *root, int print_hint,
 			else if (root->be_type == SNMP_T_COUNTER64)
 				hint = "Counter64: ";
 		}
-		if (asprintf(&str, "%s%lld", print_hint ? hint : "", v)
-		    == -1)
+		if (asprintf(&str, "%s%lld", print_hint ? hint : "", v) == -1)
 			goto fail;
 		break;
 	case BER_TYPE_BITSTRING:
