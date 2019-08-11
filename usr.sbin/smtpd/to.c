@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.38 2019/08/11 10:54:44 gilles Exp $	*/
+/*	$OpenBSD: to.c,v 1.39 2019/08/11 17:23:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -460,6 +460,13 @@ rule_to_text(struct rule *r)
 			(void)strlcat(buf, "!", sizeof buf);
 		if (r->flag_from_socket)
 			(void)strlcat(buf, "from socket ", sizeof buf);
+		if (r->flag_from_rdns) {
+			(void)strlcat(buf, "from rdns ", sizeof buf);
+			if (r->table_from) {
+				(void)strlcat(buf, r->table_from, sizeof buf);
+				(void)strlcat(buf, " ", sizeof buf);
+			}
+		}
 		else if (strcmp(r->table_from, "<anyhost>") == 0)
 			(void)strlcat(buf, "from any ", sizeof buf);
 		else if (strcmp(r->table_from, "<localhost>") == 0)

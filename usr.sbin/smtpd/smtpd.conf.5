@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.218 2019/08/11 14:43:52 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.219 2019/08/11 17:23:12 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -568,6 +568,12 @@ Specify that session may originate from any source.
 Specify that session may only originate from a local IP address,
 or from the local enqueuer.
 This is the default, and may be omitted.
+.It Xo
+.Op Ic \&!
+.Cm from rdns
+.Xc
+Specify that session may only originate from an IP address that
+resolves to a reverse DNS.
 .It Xo
 .Op Ic \&!
 .Cm from rdns

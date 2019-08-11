@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.256 2019/08/11 16:35:10 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.257 2019/08/11 17:23:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1145,7 +1145,14 @@ negation TAG REGEX tables {
 	rule->flag_from_regex = 1;
 	rule->table_from = strdup(t->t_name);
 }
-
+| negation FROM RDNS {
+	if (rule->flag_from) {
+		yyerror("from already specified for this rule");
+		YYERROR;
+	}
+	rule->flag_from = $1 ? -1 : 1;
+	rule->flag_from_rdns = 1;
+}
 | negation FROM RDNS tables {
 	struct table   *t = $4;
 

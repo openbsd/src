@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.43 2019/08/11 10:54:44 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.44 2019/08/11 17:23:12 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -58,6 +58,7 @@ static int
 ruleset_match_from(struct rule *r, const struct envelope *evp)
 {
 	int		ret;
+	int		has_rdns;
 	const char	*key;
 	struct table	*table;
 	enum table_service service = K_NETADDR;
@@ -68,7 +69,10 @@ ruleset_match_from(struct rule *r, const struct envelope *evp)
 	if (evp->flags & EF_INTERNAL)
 		key = "local";
 	else if (r->flag_from_rdns) {
-		if (strcmp(evp->hostname, "<unknown>") == 0)
+		has_rdns = strcmp(evp->hostname, "<unknown>") != 0;
+		if (r->table_from == NULL)
+		  	return MATCH_RESULT(has_rdns, r->flag_from);
+		if (!has_rdns)
 			return 0;
 		key = evp->hostname;
 	}
