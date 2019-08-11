@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_pwri.c,v 1.23 2019/08/11 10:50:23 jsing Exp $ */
+/* $OpenBSD: cms_pwri.c,v 1.24 2019/08/11 10:54:11 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -136,8 +136,7 @@ CMS_add0_recipient_password(CMS_ContentInfo *cms, int iter, int wrap_nid,
 	ivlen = EVP_CIPHER_CTX_iv_length(ctx);
 
 	if (ivlen > 0) {
-		if (RAND_bytes(iv, ivlen) <= 0)
-			goto err;
+		arc4random_buf(iv, ivlen);
 		if (EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv) <= 0) {
 			CMSerror(ERR_R_EVP_LIB);
 			goto err;
@@ -305,9 +304,8 @@ kek_wrap_key(unsigned char *out, size_t *outlen, const unsigned char *in,
 		out[3] = in[2] ^ 0xFF;
 		memcpy(out + 4, in, inlen);
 		/* Add random padding to end */
-		if (olen > inlen + 4 &&
-		    RAND_bytes(out + 4 + inlen, olen - 4 - inlen) <= 0)
-			return 0;
+		if (olen > inlen + 4)
+			arc4random_buf(out + 4 + inlen, olen - 4 - inlen);
 		/* Encrypt twice */
 		if (!EVP_EncryptUpdate(ctx, out, &dummy, out, olen) ||
 		    !EVP_EncryptUpdate(ctx, out, &dummy, out, olen))

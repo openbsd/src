@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_ess.c,v 1.18 2019/08/11 10:50:23 jsing Exp $ */
+/* $OpenBSD: cms_ess.c,v 1.19 2019/08/11 10:54:11 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -129,8 +129,7 @@ CMS_ReceiptRequest_create0(unsigned char *id, int idlen, int allorfirst,
 	else {
 		if (!ASN1_STRING_set(rr->signedContentIdentifier, NULL, 32))
 			goto merr;
-		if (RAND_bytes(rr->signedContentIdentifier->data, 32) <= 0)
-			goto err;
+		arc4random_buf(rr->signedContentIdentifier->data, 32);
 	}
 
 	sk_GENERAL_NAMES_pop_free(rr->receiptsTo, GENERAL_NAMES_free);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_enc.c,v 1.18 2019/08/11 10:50:23 jsing Exp $ */
+/* $OpenBSD: cms_enc.c,v 1.19 2019/08/11 10:54:11 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -119,8 +119,7 @@ cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 		/* Generate a random IV if we need one */
 		ivlen = EVP_CIPHER_CTX_iv_length(ctx);
 		if (ivlen > 0) {
-			if (RAND_bytes(iv, ivlen) <= 0)
-			    goto err;
+			arc4random_buf(iv, ivlen);
 			piv = iv;
 		}
 	} else if (EVP_CIPHER_asn1_to_param(ctx, calg->parameter) <= 0) {
