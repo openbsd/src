@@ -1,4 +1,4 @@
-/*	$OpenBSD: axppmic.c,v 1.6 2018/02/10 22:32:01 kettenis Exp $	*/
+/*	$OpenBSD: axppmic.c,v 1.7 2019/08/11 14:38:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -35,6 +35,11 @@ extern void (*powerdownfn)(void);
 #define AXP209_ADC_EN1		0x82
 #define  AXP209_ADC_EN1_ACIN	(3 << 4)
 #define  AXP209_ADC_EN1_VBUS	(3 << 2)
+
+#define AXP803_BAT_CAP_WARN		0xe6
+#define  AXP803_BAT_CAP_WARN_LV1	0xf0
+#define  AXP803_BAT_CAP_WARN_LV1BASE	5
+#define  AXP803_BAT_CAP_WARN_LV2	0x0f
 
 #define AXP806_REG_ADDR_EXT			0xff
 #define  AXP806_REG_ADDR_EXT_MASTER_MODE	(0 << 4)
@@ -225,7 +230,7 @@ struct axppmic_regdata axp809_regdata[] = {
 
 /* Sensors for AXP209 and AXP221/AXP809. */
 
-#define AXPPMIC_NSENSORS 8
+#define AXPPMIC_NSENSORS 12
 
 struct axppmic_sensdata {
 	const char *name;
@@ -257,6 +262,21 @@ struct axppmic_sensdata axp803_sensdata[] = {
 	{ "ACIN", SENSOR_INDICATOR, 0x00, (1 << 7), (1 << 6) },
 	{ "VBUS", SENSOR_INDICATOR, 0x00, (1 << 5), (1 << 4) },
 	{ "", SENSOR_TEMP, 0x56, 5450000, 106250 },
+	{ NULL }
+};
+	
+struct axppmic_sensdata axp803_battery_sensdata[] = {
+	{ "ACIN", SENSOR_INDICATOR, 0x00, (1 << 7), (1 << 6) },
+	{ "VBUS", SENSOR_INDICATOR, 0x00, (1 << 5), (1 << 4) },
+	{ "", SENSOR_TEMP, 0x56, 5450000, 106250 },
+	{ "battery present", SENSOR_INDICATOR, 0x01, (1 << 5), (1 << 4) },
+	{ "battery charging", SENSOR_INDICATOR, 0x01, (1 << 6), (1 << 6) },
+	{ "battery percent", SENSOR_PERCENT, 0xb9, 0x7f, (1 << 7) },
+	{ "battery voltage", SENSOR_VOLTS_DC, 0x78, 0x00, 1100 },
+	{ "battery charging current", SENSOR_AMPS, 0x7a, 0x00, 1000 },
+	{ "battery discharging current", SENSOR_AMPS, 0x7c, 0x00, 1000 },
+	{ "battery maximum capacity", SENSOR_AMPHOUR, 0xe0, 0x00, 1456 },
+	{ "battery current capacity", SENSOR_AMPHOUR, 0xe2, 0x00, 1456 },
 	{ NULL }
 };
 
@@ -302,6 +322,9 @@ struct axppmic_softc {
 
 	struct ksensor	sc_sensor[AXPPMIC_NSENSORS];
 	struct ksensordev sc_sensordev;
+
+	uint8_t 	sc_warn;
+	uint8_t		sc_crit;
 };
 
 inline uint8_t
@@ -448,6 +471,7 @@ axppmic_rsb_write(struct axppmic_softc *sc, uint8_t reg, uint8_t value)
 
 /* Common code */
 
+void	axppmic_attach_node(struct axppmic_softc *, int);
 void	axppmic_attach_regulators(struct axppmic_softc *, int);
 void	axppmic_attach_sensors(struct axppmic_softc *);
 
@@ -458,6 +482,7 @@ void
 axppmic_attach_common(struct axppmic_softc *sc, const char *name, int node)
 {
 	const struct axppmic_device *device;
+	int child;
 
 	device = axppmic_lookup(name);
 	printf(": %s\n", device->chip);
@@ -487,6 +512,19 @@ axppmic_attach_common(struct axppmic_softc *sc, const char *name, int node)
 		axppmic_write_reg(sc, AXP209_ADC_EN1, reg);
 	}
 
+	/* Read battery warning levels on AXP803. */
+	if (strcmp(name, "x-powers,axp803") == 0) {
+		uint8_t value;
+
+		value = axppmic_read_reg(sc, AXP803_BAT_CAP_WARN);
+		sc->sc_warn = ((value & AXP803_BAT_CAP_WARN_LV1) >> 4);
+		sc->sc_warn += AXP803_BAT_CAP_WARN_LV1BASE;
+		sc->sc_crit = (value & AXP803_BAT_CAP_WARN_LV2);
+	}
+
+	for (child = OF_child(node); child; child = OF_peer(child))
+		axppmic_attach_node(sc, child);
+
 	if (sc->sc_regdata)
 		axppmic_attach_regulators(sc, node);
 
@@ -500,6 +538,19 @@ axppmic_attach_common(struct axppmic_softc *sc, const char *name, int node)
 		powerdownfn = axp209_powerdown;
 	}
 #endif
+}
+
+void
+axppmic_attach_node(struct axppmic_softc *sc, int node)
+{
+	char status[32];
+
+	if (OF_getprop(node, "status", status, sizeof(status)) > 0 &&
+	    strcmp(status, "disabled") == 0)
+		return;
+
+	if (OF_is_compatible(node, "x-powers,axp803-battery-power-supply"))
+		sc->sc_sensdata = axp803_battery_sensdata;
 }
 
 /* Regulators */
@@ -629,6 +680,8 @@ axppmic_enable(void *cookie, int on)
 
 void	axppmic_update_sensors(void *);
 void	axppmic_update_indicator(struct axppmic_softc *, int);
+void	axppmic_update_percent(struct axppmic_softc *, int);
+void	axppmic_update_amphour(struct axppmic_softc *, int);
 void	axppmic_update_sensor(struct axppmic_softc *, int);
 
 void
@@ -663,10 +716,20 @@ axppmic_update_sensors(void *arg)
 	int i;
 
 	for (i = 0; sc->sc_sensdata[i].name; i++) {
-		if (sc->sc_sensdata[i].type == SENSOR_INDICATOR)
+		switch (sc->sc_sensdata[i].type) {
+		case SENSOR_INDICATOR:
 			axppmic_update_indicator(sc, i);
-		else
+			break;
+		case SENSOR_PERCENT:
+			axppmic_update_percent(sc, i);
+			break;
+		case SENSOR_AMPHOUR:
+			axppmic_update_amphour(sc, 1);
+			break;
+		default:
 			axppmic_update_sensor(sc, i);
+			break;
+		}
 	}
 }
 
@@ -686,6 +749,43 @@ axppmic_update_indicator(struct axppmic_softc *sc, int i)
 	} else {
 		sc->sc_sensor[i].status = SENSOR_S_UNSPEC;
 	}
+}
+
+void
+axppmic_update_percent(struct axppmic_softc *sc, int i)
+{
+	uint8_t reg = sc->sc_sensdata[i].reg;
+	uint8_t mask = sc->sc_sensdata[i].base;
+	uint8_t mask_ok = sc->sc_sensdata[i].delta;
+	uint8_t value;
+
+	value = axppmic_read_reg(sc, reg);
+	sc->sc_sensor[i].value = (value & mask) * 1000;
+
+	if (value & mask_ok) {
+		if ((value & mask) <= sc->sc_crit)
+			sc->sc_sensor[i].status = SENSOR_S_CRIT;
+		else if ((value & mask) <= sc->sc_warn)
+			sc->sc_sensor[i].status = SENSOR_S_WARN;
+		else
+			sc->sc_sensor[i].status = SENSOR_S_OK;
+	} else {
+		sc->sc_sensor[i].status = SENSOR_S_UNSPEC;
+	}
+}
+
+void
+axppmic_update_amphour(struct axppmic_softc *sc, int i)
+{
+	uint8_t reg = sc->sc_sensdata[i].reg;
+	uint64_t base = sc->sc_sensdata[i].base;
+	uint64_t delta = sc->sc_sensdata[i].delta;
+	uint16_t value;
+
+	value = axppmic_read_reg(sc, reg);
+	sc->sc_sensor[i].status = (value & 0x80) ? SENSOR_S_OK : SENSOR_S_WARN;
+	value = ((value & 0x7f) << 8) | axppmic_read_reg(sc, reg + 1);
+	sc->sc_sensor[i].value = base + value * delta;
 }
 
 void
