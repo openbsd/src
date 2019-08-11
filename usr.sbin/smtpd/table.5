@@ -1,4 +1,4 @@
-.\"	$OpenBSD: table.5,v 1.10 2018/09/05 07:19:35 jmc Exp $
+.\"	$OpenBSD: table.5,v 1.11 2019/08/11 13:00:57 gilles Exp $
 .\"
 .\" Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
 .\" Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 5 2018 $
+.Dd $Mdocdate: August 11 2019 $
 .Dt TABLE 5
 .Os
 .Sh NAME
@@ -147,11 +147,9 @@ The passwords are to be encrypted using the
 encrypt subcommand.
 .Pp
 In a relay context, the credentials are a mapping of labels and
-username:password pairs,
-where the username may be omitted if identical to the label:
+username:password pairs:
 .Bd -literal -offset indent
 label1	user:password
-label2	password
 .Ed
 .Pp
 The label must be unique and is used as a selector for the proper credentials
