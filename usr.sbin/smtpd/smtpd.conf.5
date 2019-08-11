@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.217 2019/08/11 14:13:14 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.218 2019/08/11 14:43:52 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -368,6 +368,14 @@ to rewrite phase parameter with new
 Phase and matching conditions are documented in a specific section,
 see
 .Sx BUILTIN FILTERING .
+.It Ic filter Ar filter\-name Ic proc Ar proc\-name
+Register
+.Qq proc
+filter
+.Ar filter\-name
+backed by the
+.Ar proc\-name
+process.
 .It Ic filter Ar filter\-name Ic proc\-exec Ar command
 Register and execute
 .Qq proc
@@ -737,6 +745,12 @@ the key length is determined automatically.
 The default is
 .Cm none ,
 which disables DHE cipher suites.
+.It Ic proc Ar proc\-name Ar command
+Register an external process named
+.Ar proc\-name
+from
+.Ar command .
+Such processes may be used to share the same instance between multiple filters.
 .It Ic queue Cm compression
 Store queue files in a compressed format.
 This may be useful to save disk space.
