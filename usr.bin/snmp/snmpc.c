@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.4 2019/08/11 17:22:31 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.5 2019/08/11 18:11:10 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -554,7 +554,7 @@ snmpc_trap(int argc, char *argv[])
 				if (byte >= strl) {
 					if ((str = recallocarray(str, strl,
 					    byte + 1, 1)) == NULL)
-						err(1, NULL);
+						err(1, "malloc");
 					strl = byte + 1;
 				}
 				str[byte] |= 0x80 >> (lval % 8);
@@ -579,7 +579,7 @@ snmpc_trap(int argc, char *argv[])
 		case 'd':
 			/* String always shrinks */
 			if ((str = malloc(strlen(argv[i + 2]))) == NULL)
-				err(1, NULL);
+				err(1, "malloc");
 			tmpstr = argv[i + 2];
 			strl = 0;
 			do {
@@ -648,7 +648,7 @@ pastestring:
 		case 'x':
 			/* String always shrinks */
 			if ((str = malloc(strlen(argv[i + 2]))) == NULL)
-				err(1, NULL);
+				err(1, "malloc");
 			tmpstr = argv[i + 2];
 			strl = 0;
 			do {
