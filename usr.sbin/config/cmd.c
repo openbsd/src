@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.20 2013/11/23 17:38:15 deraadt Exp $ */
+/*	$OpenBSD: cmd.c,v 1.21 2019/08/11 17:08:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -58,8 +58,6 @@ cmd_table_t cmd_table[] = {
 	{"exit",   Xexit,	"",		"Exit, without saving changes"},
 	{"quit",   Xquit,	"",		"Quit, saving current changes"},
 	{"timezone", Xtimezone,	"[mins [dst]]",	"Show/change timezone"},
-	{"bufcachepercent", Xbufcachepct, "[number]",
-	 "Show/change BUFCACHEPERCENT"},
 	{"nkmempg", Xnkmempg,	"[number]",	"Show/change NKMEMPAGES"},
 	{NULL,     NULL,	NULL,		NULL}
 };
@@ -300,13 +298,6 @@ int_variable_adjust(const cmd_t *cmd, int idx, const char *name)
 	} else
 		printf("This kernel does not support modification of %s.\n",
 		    name);
-}
-
-int
-Xbufcachepct(cmd_t *cmd)
-{
-	int_variable_adjust(cmd, I_BUFCACHEPCT, "bufcachepercent");
-	return (CMD_CONT);
 }
 
 int

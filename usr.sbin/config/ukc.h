@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.h,v 1.14 2017/09/27 15:14:52 deraadt Exp $ */
+/*	$OpenBSD: ukc.h,v 1.15 2019/08/11 17:08:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -45,10 +45,8 @@
 #define P_PDEVNAMES	15
 #define I_PDEVSIZE	16
 #define S_PDEVINIT	17
-#define I_NMBCLUSTERS	18
-#define I_BUFCACHEPCT	19
-#define I_NKMEMPG	20
-#define NLENTRIES	21
+#define I_NKMEMPG	18
+#define NLENTRIES	19
 
 #ifdef UKC_MAIN
 struct nlist nl[] = {
@@ -70,8 +68,6 @@ struct nlist nl[] = {
 	{ "_pdevnames" },
 	{ "_pdevnames_size" },
 	{ "_pdevinit" },
-	{ "_nmbclust" },
-	{ "_bufcachepercent" },
 	{ "_nkmempages" },
 	{ NULL },
 };
@@ -94,8 +90,6 @@ struct nlist knl[] = {
 	{ "_pdevnames" },
 	{ "_pdevnames_size" },
 	{ "_pdevinit" },
-	{ "_nmbclust" },
-	{ "_bufcachepercent" },
 	{ "_nkmempages" },
 	{ NULL },
 };
