@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1136 2019/08/06 10:07:45 sthen Exp $
+#	$OpenBSD: install.sub,v 1.1137 2019/08/11 13:32:41 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1506,9 +1506,9 @@ install_files() {
 	# Fetch sets from local sources (disk, cdrom, nfs) as root.
 	[[ $_src == file://* ]] && _srclocal=true _unpriv=
 
-	# Based on the file list in $_files, create two list for select_sets().
+	# Based on the file list in $_files, create two lists for select_sets().
 	# _sets:     the list of files the user can select from
-	# _get_sets: the list of files that are shown as pre-selectd
+	# _get_sets: the list of files that are shown as pre-selected
 	#
 	# Sets will be installed in the order given in ALLSETS to ensure proper
 	# installation.  So, to minimize user confusion display the sets in the
@@ -1592,7 +1592,7 @@ install_files() {
 		! $_unpriv ftp -D "$_t" -Vmo - "$_src/SHA256.sig" >"$_cfile.sig" &&
 			_issue="Cannot fetch SHA256.sig" && break
 
-		# The bsd.rd only download/verify/install assumes that the sets
+		# The bsd.rd only download/verify/install assumes the sets
 		# location of the next release. So use the right signature file.
 		$UPGRADE_BSDRD &&
 			PUB_KEY=/mnt/etc/signify/openbsd-$((VERSION + 1))-base.pub
