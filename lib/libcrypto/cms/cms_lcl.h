@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_lcl.h,v 1.10 2019/08/11 10:15:30 jsing Exp $ */
+/* $OpenBSD: cms_lcl.h,v 1.11 2019/08/11 10:26:04 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -108,7 +108,7 @@ struct CMS_ContentInfo_st {
 DECLARE_STACK_OF(CMS_CertificateChoices)
 
 struct CMS_SignedData_st {
-	int32_t version;
+	long version;
 	STACK_OF(X509_ALGOR) *digestAlgorithms;
 	CMS_EncapsulatedContentInfo *encapContentInfo;
 	STACK_OF(CMS_CertificateChoices) *certificates;
@@ -124,7 +124,7 @@ struct CMS_EncapsulatedContentInfo_st {
 };
 
 struct CMS_SignerInfo_st {
-	int32_t version;
+	long version;
 	CMS_SignerIdentifier *sid;
 	X509_ALGOR *digestAlgorithm;
 	STACK_OF(X509_ATTRIBUTE) *signedAttrs;
@@ -148,7 +148,7 @@ struct CMS_SignerIdentifier_st {
 };
 
 struct CMS_EnvelopedData_st {
-	int32_t version;
+	long version;
 	CMS_OriginatorInfo *originatorInfo;
 	STACK_OF(CMS_RecipientInfo) *recipientInfos;
 	CMS_EncryptedContentInfo *encryptedContentInfo;
@@ -186,7 +186,7 @@ struct CMS_RecipientInfo_st {
 typedef CMS_SignerIdentifier CMS_RecipientIdentifier;
 
 struct CMS_KeyTransRecipientInfo_st {
-	int32_t version;
+	long version;
 	CMS_RecipientIdentifier *rid;
 	X509_ALGOR *keyEncryptionAlgorithm;
 	ASN1_OCTET_STRING *encryptedKey;
@@ -198,7 +198,7 @@ struct CMS_KeyTransRecipientInfo_st {
 };
 
 struct CMS_KeyAgreeRecipientInfo_st {
-	int32_t version;
+	long version;
 	CMS_OriginatorIdentifierOrKey *originator;
 	ASN1_OCTET_STRING *ukm;
 	X509_ALGOR *keyEncryptionAlgorithm;
@@ -245,7 +245,7 @@ struct CMS_RecipientKeyIdentifier_st {
 };
 
 struct CMS_KEKRecipientInfo_st {
-	int32_t version;
+	long version;
 	CMS_KEKIdentifier *kekid;
 	X509_ALGOR *keyEncryptionAlgorithm;
 	ASN1_OCTET_STRING *encryptedKey;
@@ -261,7 +261,7 @@ struct CMS_KEKIdentifier_st {
 };
 
 struct CMS_PasswordRecipientInfo_st {
-	int32_t version;
+	long version;
 	X509_ALGOR *keyDerivationAlgorithm;
 	X509_ALGOR *keyEncryptionAlgorithm;
 	ASN1_OCTET_STRING *encryptedKey;
@@ -276,20 +276,20 @@ struct CMS_OtherRecipientInfo_st {
 };
 
 struct CMS_DigestedData_st {
-	int32_t version;
+	long version;
 	X509_ALGOR *digestAlgorithm;
 	CMS_EncapsulatedContentInfo *encapContentInfo;
 	ASN1_OCTET_STRING *digest;
 };
 
 struct CMS_EncryptedData_st {
-	int32_t version;
+	long version;
 	CMS_EncryptedContentInfo *encryptedContentInfo;
 	STACK_OF(X509_ATTRIBUTE) *unprotectedAttrs;
 };
 
 struct CMS_AuthenticatedData_st {
-	int32_t version;
+	long version;
 	CMS_OriginatorInfo *originatorInfo;
 	STACK_OF(CMS_RecipientInfo) *recipientInfos;
 	X509_ALGOR *macAlgorithm;
@@ -301,7 +301,7 @@ struct CMS_AuthenticatedData_st {
 };
 
 struct CMS_CompressedData_st {
-	int32_t version;
+	long version;
 	X509_ALGOR *compressionAlgorithm;
 	STACK_OF(CMS_RecipientInfo) *recipientInfos;
 	CMS_EncapsulatedContentInfo *encapContentInfo;
@@ -373,14 +373,14 @@ struct CMS_ReceiptRequest_st {
 struct CMS_ReceiptsFrom_st {
 	int type;
 	union {
-		int32_t allOrFirstTier;
+		long allOrFirstTier;
 		STACK_OF(GENERAL_NAMES) *receiptList;
 	} d;
 };
 #endif
 
 struct CMS_Receipt_st {
-	int32_t version;
+	long version;
 	ASN1_OBJECT *contentType;
 	ASN1_OCTET_STRING *signedContentIdentifier;
 	ASN1_OCTET_STRING *originatorSignatureValue;

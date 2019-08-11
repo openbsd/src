@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_asn1.c,v 1.16 2019/08/11 10:24:15 jsing Exp $ */
+/* $OpenBSD: cms_asn1.c,v 1.17 2019/08/11 10:26:04 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -242,7 +242,7 @@ static const ASN1_TEMPLATE CMS_SignerInfo_seq_tt[] = {
 		.tag = 0,
 		.offset = offsetof(CMS_SignerInfo, version),
 		.field_name = "version",
-		.item = &INT32_it,
+		.item = &LONG_it,
 	},
 	{
 		.flags = 0,
@@ -358,7 +358,7 @@ static const ASN1_TEMPLATE CMS_SignedData_seq_tt[] = {
 		.tag = 0,
 		.offset = offsetof(CMS_SignedData, version),
 		.field_name = "version",
-		.item = &INT32_it,
+		.item = &LONG_it,
 	},
 	{
 		.flags = ASN1_TFLG_SET_OF,
@@ -474,7 +474,7 @@ static const ASN1_TEMPLATE CMS_KeyTransRecipientInfo_seq_tt[] = {
 		.tag = 0,
 		.offset = offsetof(CMS_KeyTransRecipientInfo, version),
 		.field_name = "version",
-		.item = &INT32_it,
+		.item = &LONG_it,
 	},
 	{
 		.flags = 0,
@@ -734,7 +734,7 @@ static const ASN1_TEMPLATE CMS_KeyAgreeRecipientInfo_seq_tt[] = {
 		.tag = 0,
 		.offset = offsetof(CMS_KeyAgreeRecipientInfo, version),
 		.field_name = "version",
-		.item = &INT32_it,
+		.item = &LONG_it,
 	},
 	{
 		.flags = ASN1_TFLG_EXPLICIT,
@@ -816,7 +816,7 @@ static const ASN1_TEMPLATE CMS_KEKRecipientInfo_seq_tt[] = {
 		.tag = 0,
 		.offset = offsetof(CMS_KEKRecipientInfo, version),
 		.field_name = "version",
-		.item = &INT32_it,
+		.item = &LONG_it,
 	},
 	{
 		.flags = 0,
@@ -857,7 +857,7 @@ static const ASN1_TEMPLATE CMS_PasswordRecipientInfo_seq_tt[] = {
 		.tag = 0,
 		.offset = offsetof(CMS_PasswordRecipientInfo, version),
 		.field_name = "version",
-		.item = &INT32_it,
+		.item = &LONG_it,
 	},
 	{
 		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
@@ -1003,7 +1003,7 @@ static const ASN1_TEMPLATE CMS_EnvelopedData_seq_tt[] = {
 		.tag = 0,
 		.offset = offsetof(CMS_EnvelopedData, version),
 		.field_name = "version",
-		.item = &INT32_it,
+		.item = &LONG_it,
 	},
 	{
 		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
@@ -1051,7 +1051,7 @@ static const ASN1_TEMPLATE CMS_DigestedData_seq_tt[] = {
 		.tag = 0,
 		.offset = offsetof(CMS_DigestedData, version),
 		.field_name = "version",
-		.item = &INT32_it,
+		.item = &LONG_it,
 	},
 	{
 		.flags = 0,
@@ -1092,7 +1092,7 @@ static const ASN1_TEMPLATE CMS_EncryptedData_seq_tt[] = {
 		.tag = 0,
 		.offset = offsetof(CMS_EncryptedData, version),
 		.field_name = "version",
-		.item = &INT32_it,
+		.item = &LONG_it,
 	},
 	{
 		.flags = 0,
@@ -1126,7 +1126,7 @@ static const ASN1_TEMPLATE CMS_AuthenticatedData_seq_tt[] = {
 		.tag = 0,
 		.offset = offsetof(CMS_AuthenticatedData, version),
 		.field_name = "version",
-		.item = &INT32_it,
+		.item = &LONG_it,
 	},
 	{
 		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
@@ -1202,7 +1202,7 @@ static const ASN1_TEMPLATE CMS_CompressedData_seq_tt[] = {
 		.tag = 0,
 		.offset = offsetof(CMS_CompressedData, version),
 		.field_name = "version",
-		.item = &INT32_it,
+		.item = &LONG_it,
 	},
 	{
 		.flags = 0,
@@ -1453,7 +1453,7 @@ static const ASN1_TEMPLATE CMS_ReceiptsFrom_ch_tt[] = {
 		.tag = 0,
 		.offset = offsetof(CMS_ReceiptsFrom, d.allOrFirstTier),
 		.field_name = "d.allOrFirstTier",
-		.item = &INT32_it,
+		.item = &LONG_it,
 	},
 	{
 		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_SEQUENCE_OF,
@@ -1514,7 +1514,7 @@ static const ASN1_TEMPLATE CMS_Receipt_seq_tt[] = {
 		.tag = 0,
 		.offset = offsetof(CMS_Receipt, version),
 		.field_name = "version",
-		.item = &INT32_it,
+		.item = &LONG_it,
 	},
 	{
 		.flags = 0,
