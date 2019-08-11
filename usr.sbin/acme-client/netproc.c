@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.24 2019/06/08 10:38:03 florian Exp $ */
+/*	$Id: netproc.c,v 1.25 2019/08/11 19:44:25 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -886,7 +886,7 @@ out:
 	free(c.kid);
 	free(c.buf.buf);
 	if (chngs != NULL)
-		for (i = 0; i < altsz; i++)
+		for (i = 0; i < order.authsz; i++)
 			json_free_challenge(&chngs[i]);
 	free(chngs);
 	json_free_capaths(&paths);
