@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirtc.c,v 1.3 2019/01/21 11:24:05 jsg Exp $	*/
+/*	$OpenBSD: sxirtc.c,v 1.4 2019/08/11 14:46:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2013 Artturi Alm
@@ -30,11 +30,16 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
+#include <dev/ofw/ofw_clock.h>
 
-#define	SXIRTC_YYMMDD		0x04
-#define	SXIRTC_HHMMSS		0x08
-#define	SXIRTC_YYMMDD_A31	0x10
-#define	SXIRTC_HHMMSS_A31	0x14
+#define SXIRTC_LOSC_CTRL		0x00
+#define  SXIRTC_LOSC_CTRL_KEY_FIELD	0x16aa0000
+#define  SXIRTC_LOSC_CTRL_SEL_EXT32K	0x00000001
+#define SXIRTC_YYMMDD_A10		0x04
+#define SXIRTC_HHMMSS_A10		0x08
+#define SXIRTC_YYMMDD_A31		0x10
+#define SXIRTC_HHMMSS_A31		0x14
+#define SXIRTC_LOSC_OUT_GATING		0x60
 
 #define LEAPYEAR(y)        \
     (((y) % 4 == 0 &&    \
@@ -48,6 +53,9 @@ struct sxirtc_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
+	struct clock_device	sc_cd;
+
 	bus_size_t		sc_yymmdd;
 	bus_size_t		sc_hhmmss;
 	uint32_t		base_year;
@@ -66,6 +74,8 @@ struct cfdriver sxirtc_cd = {
 	NULL, "sxirtc", DV_DULL
 };
 
+uint32_t sxirtc_get_frequency(void *, uint32_t *);
+void	sxirtc_enable(void *, uint32_t *, int);
 int	sxirtc_gettime(todr_chip_handle_t, struct timeval *);
 int	sxirtc_settime(todr_chip_handle_t, struct timeval *);
 
@@ -106,8 +116,8 @@ sxirtc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_yymmdd = SXIRTC_YYMMDD_A31;
 		sc->sc_hhmmss = SXIRTC_HHMMSS_A31;
 	} else {
-		sc->sc_yymmdd = SXIRTC_YYMMDD;
-		sc->sc_hhmmss = SXIRTC_HHMMSS;
+		sc->sc_yymmdd = SXIRTC_YYMMDD_A10;
+		sc->sc_hhmmss = SXIRTC_HHMMSS_A10;
 	}
 
 	if (OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-rtc")) {
@@ -120,6 +130,19 @@ sxirtc_attach(struct device *parent, struct device *self, void *aux)
 		sc->leap_shift = 22;
 	}
 
+	if (OF_is_compatible(faa->fa_node, "allwinner,sun8i-h3-rtc") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun50i-h5-rtc")) {
+		/* Switch to external oscillator. */
+		SXIWRITE4(sc, SXIRTC_LOSC_CTRL,
+		    SXIRTC_LOSC_CTRL_KEY_FIELD | SXIRTC_LOSC_CTRL_SEL_EXT32K);
+
+		sc->sc_cd.cd_node = faa->fa_node;
+		sc->sc_cd.cd_cookie = sc;
+		sc->sc_cd.cd_get_frequency = sxirtc_get_frequency;
+		sc->sc_cd.cd_enable = sxirtc_enable;
+		clock_register(&sc->sc_cd);
+	}
+
 	handle->cookie = self;
 	handle->todr_gettime = sxirtc_gettime;
 	handle->todr_settime = sxirtc_settime;
@@ -130,6 +153,47 @@ sxirtc_attach(struct device *parent, struct device *self, void *aux)
 	todr_handle = handle;
 
 	printf("\n");
+}
+
+uint32_t
+sxirtc_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct sxirtc_softc *sc = cookie;
+	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case 0:			/* osc32k */
+	case 1:			/* osc32k-out */
+		return clock_get_frequency_idx(sc->sc_cd.cd_node, 0);
+	case 2:			/* iosc */
+		return 16000000;
+	}
+
+	printf("%s: 0x%08x\n", __func__, idx);
+	return 0;
+}
+
+void
+sxirtc_enable(void *cookie, uint32_t *cells, int on)
+{
+	struct sxirtc_softc *sc = cookie;
+	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case 0:			/* osc32k */
+		break;
+	case 1:			/* osc32k-out */
+		if (on)
+			SXISET4(sc, SXIRTC_LOSC_OUT_GATING, 1);
+		else
+			SXICLR4(sc, SXIRTC_LOSC_OUT_GATING, 1);
+		break;
+	case 2:			/* iosc */
+		break;
+	default:
+		printf("%s: 0x%08x\n", __func__, idx);
+		break;
+	}
 }
 
 int

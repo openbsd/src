@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.89 2019/08/11 11:19:41 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.90 2019/08/11 14:46:18 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -167,7 +167,7 @@ sxipio*		at fdt? early 1	# GPIO pins for leds & PHYs
 gpio*		at sxipio?
 sxiccmu*	at fdt? early 1	# Clock Control Module/Unit
 sxirsb*		at fdt? early 1	# Reduced Serial Bus
-sxirtc*		at fdt?		# Real Time Clock
+sxirtc*		at fdt? early 1	# Real Time Clock
 sximmc*		at fdt?		# SD/MMC card controller
 sdmmc*		at sximmc?	# SD/MMC bus
 sxisyscon*	at fdt? early 1	# System controller
