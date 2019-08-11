@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.1 2019/08/09 06:17:59 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.2 2019/08/11 14:41:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -368,8 +368,7 @@ smi_print_element(struct ber_element *root, int print_hint,
 		} else if (root->be_class == BER_CLASS_CONTEXT &&
 		    root->be_type == BER_TYPE_EOC) {
 			str = strdup("No Such Object available on this agent at this OID");
-			
-		}else {
+		} else {
 			for (i = 0; i < root->be_len; i++) {
 				if (!isprint(buf[i])) {
 					if (output_string == smi_os_default)

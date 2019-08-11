@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.1 2019/08/09 06:17:59 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.2 2019/08/11 14:41:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -55,17 +55,17 @@ struct snmp_app {
 	const int usecommonopt;
 	const char *optstring;
 	const char *usage;
-        int (*exec)(int, char *[]);
+	int (*exec)(int, char *[]);
 };
 
 struct snmp_app snmp_apps[] = {
-	{"get", 1, NULL, "agent oid ...", snmpc_get},
-	{"getnext", 1, NULL, "agent oid ...", snmpc_get},
-	{"walk", 1, "C:", "[-C cIipt] [-C E OID] agent [oid]", snmpc_walk},
-	{"bulkget", 1, "C:", "[-C n<nonrep>r<maxrep>] agent oid ...", snmpc_get},
-	{"bulkwalk", 1, "C:", "[-C cipn<nonrep>r<maxrep>] agent [oid]", snmpc_walk},
-	{ "trap", 1, NULL, "agent uptime oid [oid type value] ...", snmpc_trap},
-	{"mibtree", 0, "O:", "[-O fnS]", snmpc_mibtree}
+	{ "get", 1, NULL, "agent oid ...", snmpc_get },
+	{ "getnext", 1, NULL, "agent oid ...", snmpc_get },
+	{ "walk", 1, "C:", "[-C cIipt] [-C E OID] agent [oid]", snmpc_walk },
+	{ "bulkget", 1, "C:", "[-C n<nonrep>r<maxrep>] agent oid ...", snmpc_get },
+	{ "bulkwalk", 1, "C:", "[-C cipn<nonrep>r<maxrep>] agent [oid]", snmpc_walk },
+	{ "trap", 1, NULL, "agent uptime oid [oid type value] ...", snmpc_trap },
+	{ "mibtree", 0, "O:", "[-O fnS]", snmpc_mibtree }
 };
 struct snmp_app *snmp_app = NULL;
 
@@ -99,7 +99,7 @@ main(int argc, char *argv[])
 
 	if (pledge("stdio inet dns", NULL) == -1)
 		err(1, "pledge");
-		
+
 	if (argc <= 1)
 		usage();
 
@@ -266,7 +266,7 @@ main(int argc, char *argv[])
 					smi_print_hint = 0;
 					break;
 				case 'v':
-					print_varbind_only = 1; 
+					print_varbind_only = 1;
 					break;
 				case 'x':
 					output_string = smi_os_hex;
@@ -418,7 +418,7 @@ snmpc_walk(int argc, char *argv[])
 			snmpc_printerror((enum snmp_error) errorstatus, oidstr);
 		}
 
-		for (;varbind != NULL; varbind = varbind->be_next) {
+		for (; varbind != NULL; varbind = varbind->be_next) {
 			(void) ber_scanf_elements(varbind, "{oe}", &noid,
 			    &value);
 			if (value->be_class == BER_CLASS_CONTEXT &&
@@ -719,15 +719,14 @@ snmpc_print(struct ber_element *elm)
 		printf("%s %s\n", oids, value);
 	}
 	free(value);
-	
+
 	return 1;
 }
 
 __dead void
 snmpc_printerror(enum snmp_error error, char *oid)
 {
-	switch (error)
-	{
+	switch (error) {
 	case SNMP_ERROR_NONE:
 		errx(1, "No error, how did I get here?");
 	case SNMP_ERROR_TOOBIG:
