@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.42 2018/12/28 11:40:29 eric Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.43 2019/08/11 10:54:44 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -65,11 +65,6 @@ ruleset_match_from(struct rule *r, const struct envelope *evp)
 	if (!r->flag_from)
 		return 1;
 
-	if (r->flag_from_socket) {
-		/* XXX - socket needs to be distinguished from "local" */
-		return -1;
-	}
-
 	if (evp->flags & EF_INTERNAL)
 		key = "local";
 	else if (r->flag_from_rdns) {
@@ -77,9 +72,12 @@ ruleset_match_from(struct rule *r, const struct envelope *evp)
 			return 0;
 		key = evp->hostname;
 	}
-	else
+	else {
 		key = ss_to_text(&evp->ss);
-
+		if (strcmp(key, "local") == 0)
+			if (r->flag_from_socket)
+				return MATCH_RESULT(1, r->flag_from);
+	}
 	if (r->flag_from_regex)
 		service = K_REGEX;
 
