@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.107 2019/08/04 15:44:17 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.108 2019/08/11 11:19:41 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -179,6 +179,7 @@ axppmic*	at rsb?
 sxirtc*		at fdt?		# Real Time Clock
 sximmc*		at fdt?		# SD/MMC card controller
 sdmmc*		at sximmc?	# SD/MMC bus
+sxisyscon*	at fdt? early 1	# System controller
 sxitemp*	at fdt?		# Temperature sensor
 sxitwi*		at fdt?		# I2C controller
 iic*		at sxitwi?	# I2C bus
