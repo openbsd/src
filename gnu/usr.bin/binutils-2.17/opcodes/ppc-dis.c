@@ -85,7 +85,7 @@ powerpc_dialect (struct disassemble_info *info)
 	dialect |= PPC_OPCODE_64;
     }
 
-  info->private_data = (char *) 0 + dialect;
+  info->private_data = (void *) dialect;
   return dialect;
 }
 
@@ -94,7 +94,7 @@ powerpc_dialect (struct disassemble_info *info)
 int
 print_insn_big_powerpc (bfd_vma memaddr, struct disassemble_info *info)
 {
-  int dialect = (char *) info->private_data - (char *) 0;
+  int dialect = (long) info->private_data;
   return print_insn_powerpc (memaddr, info, 1, dialect);
 }
 
@@ -103,7 +103,7 @@ print_insn_big_powerpc (bfd_vma memaddr, struct disassemble_info *info)
 int
 print_insn_little_powerpc (bfd_vma memaddr, struct disassemble_info *info)
 {
-  int dialect = (char *) info->private_data - (char *) 0;
+  int dialect = (long) info->private_data;
   return print_insn_powerpc (memaddr, info, 0, dialect);
 }
 

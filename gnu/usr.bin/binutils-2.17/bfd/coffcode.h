@@ -3162,7 +3162,7 @@ coff_compute_section_file_positions (bfd * abfd)
 	      sofar = BFD_ALIGN (sofar, 1 << current->alignment_power);
 
 	      align = 1 << current->alignment_power;
-	      pad = abs (current->vma - sofar) % align;
+	      pad = llabs (current->vma - sofar) % align;
 
 	      if (pad)
 		{

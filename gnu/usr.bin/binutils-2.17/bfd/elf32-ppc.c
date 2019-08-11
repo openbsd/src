@@ -3259,6 +3259,10 @@ ppc_elf_check_relocs (bfd *abfd,
 	case R_PPC_EMB_MRKREF:
 	case R_PPC_NONE:
 	case R_PPC_max:
+	case R_PPC_RELAX32:
+	case R_PPC_RELAX32PC:
+	case R_PPC_RELAX32_PLT:
+	case R_PPC_RELAX32PC_PLT:
 	  break;
 
 	  /* These should only appear in dynamic objects.  */
