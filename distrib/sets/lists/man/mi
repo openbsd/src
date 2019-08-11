@@ -1890,6 +1890,7 @@
 ./usr/share/man/man4/sxipio.4
 ./usr/share/man/man4/sxirsb.4
 ./usr/share/man/man4/sxirtc.4
+./usr/share/man/man4/sxisyscon.4
 ./usr/share/man/man4/sxitemp.4
 ./usr/share/man/man4/sxitwi.4
 ./usr/share/man/man4/sym.4
