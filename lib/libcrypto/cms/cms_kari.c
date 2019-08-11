@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_kari.c,v 1.6 2019/08/10 18:15:52 jsing Exp $ */
+/* $OpenBSD: cms_kari.c,v 1.7 2019/08/11 10:38:27 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -69,8 +69,7 @@ CMS_RecipientInfo_kari_get0_alg(CMS_RecipientInfo *ri, X509_ALGOR **palg,
     ASN1_OCTET_STRING **pukm)
 {
 	if (ri->type != CMS_RECIPINFO_AGREE) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KARI_GET0_ALG,
-			   CMS_R_NOT_KEY_AGREEMENT);
+		CMSerror(CMS_R_NOT_KEY_AGREEMENT);
 		return 0;
 	}
 	if (palg)
@@ -87,8 +86,7 @@ STACK_OF(CMS_RecipientEncryptedKey) *
 CMS_RecipientInfo_kari_get0_reks(CMS_RecipientInfo *ri)
 {
 	if (ri->type != CMS_RECIPINFO_AGREE) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KARI_GET0_REKS,
-			   CMS_R_NOT_KEY_AGREEMENT);
+		CMSerror(CMS_R_NOT_KEY_AGREEMENT);
 		return NULL;
 	}
 	return ri->d.kari->recipientEncryptedKeys;
@@ -102,8 +100,7 @@ CMS_RecipientInfo_kari_get0_orig_id(CMS_RecipientInfo *ri, X509_ALGOR **pubalg,
 	CMS_OriginatorIdentifierOrKey *oik;
 
 	if (ri->type != CMS_RECIPINFO_AGREE) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KARI_GET0_ORIG_ID,
-			   CMS_R_NOT_KEY_AGREEMENT);
+		CMSerror(CMS_R_NOT_KEY_AGREEMENT);
 		return 0;
 	}
 	oik = ri->d.kari->originator;
@@ -142,8 +139,7 @@ CMS_RecipientInfo_kari_orig_id_cmp(CMS_RecipientInfo *ri, X509 *cert)
 	CMS_OriginatorIdentifierOrKey *oik;
 
 	if (ri->type != CMS_RECIPINFO_AGREE) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KARI_ORIG_ID_CMP,
-		   CMS_R_NOT_KEY_AGREEMENT);
+		CMSerror(CMS_R_NOT_KEY_AGREEMENT);
 		return -2;
 	}
 	oik = ri->d.kari->originator;
@@ -439,7 +435,7 @@ cms_RecipientInfo_kari_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 	int i;
 
 	if (ri->type != CMS_RECIPINFO_AGREE) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KARI_ENCRYPT, CMS_R_NOT_KEY_AGREEMENT);
+		CMSerror(CMS_R_NOT_KEY_AGREEMENT);
 		return 0;
 	}
 	kari = ri->d.kari;

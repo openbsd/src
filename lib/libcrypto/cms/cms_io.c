@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_io.c,v 1.10 2019/08/11 10:15:30 jsing Exp $ */
+/* $OpenBSD: cms_io.c,v 1.11 2019/08/11 10:38:27 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -75,7 +75,7 @@ CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)
 		*boundary = &(*pos)->data;
 		return 1;
 	}
-	CMSerr(CMS_F_CMS_STREAM, ERR_R_MALLOC_FAILURE);
+	CMSerror(ERR_R_MALLOC_FAILURE);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_env.c,v 1.16 2019/08/10 18:15:52 jsing Exp $ */
+/* $OpenBSD: cms_env.c,v 1.17 2019/08/11 10:38:27 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -69,8 +69,7 @@ CMS_EnvelopedData *
 cms_get0_enveloped(CMS_ContentInfo *cms)
 {
 	if (OBJ_obj2nid(cms->contentType) != NID_pkcs7_enveloped) {
-		CMSerr(CMS_F_CMS_GET0_ENVELOPED,
-		   CMS_R_CONTENT_TYPE_NOT_ENVELOPED_DATA);
+		CMSerror(CMS_R_CONTENT_TYPE_NOT_ENVELOPED_DATA);
 		return NULL;
 	}
 	return cms->d.envelopedData;
@@ -82,7 +81,7 @@ cms_enveloped_data_init(CMS_ContentInfo *cms)
 	if (cms->d.other == NULL) {
 		cms->d.envelopedData = M_ASN1_new_of(CMS_EnvelopedData);
 		if (!cms->d.envelopedData) {
-			CMSerr(CMS_F_CMS_ENVELOPED_DATA_INIT, ERR_R_MALLOC_FAILURE);
+			CMSerror(ERR_R_MALLOC_FAILURE);
 			return NULL;
 		}
 		cms->d.envelopedData->version = 0;
@@ -116,12 +115,11 @@ cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
 		return 1;
 	i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_ENVELOPE, cmd, ri);
 	if (i == -2) {
-		CMSerr(CMS_F_CMS_ENV_ASN1_CTRL,
-		   CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+		CMSerror(CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
 		return 0;
 	}
 	if (i <= 0) {
-		CMSerr(CMS_F_CMS_ENV_ASN1_CTRL, CMS_R_CTRL_FAILURE);
+		CMSerror(CMS_R_CTRL_FAILURE);
 		return 0;
 	}
 
@@ -177,7 +175,7 @@ CMS_EnvelopedData_create(const EVP_CIPHER *cipher)
 
  merr:
 	CMS_ContentInfo_free(cms);
-	CMSerr(CMS_F_CMS_ENVELOPEDDATA_CREATE, ERR_R_MALLOC_FAILURE);
+	CMSerror(ERR_R_MALLOC_FAILURE);
 	return NULL;
 }
 
@@ -255,8 +253,7 @@ CMS_add1_recipient_cert(CMS_ContentInfo *cms, X509 *recip, unsigned int flags)
 
 	pk = X509_get0_pubkey(recip);
 	if (!pk) {
-		CMSerr(CMS_F_CMS_ADD1_RECIPIENT_CERT,
-		    CMS_R_ERROR_GETTING_PUBLIC_KEY);
+		CMSerror(CMS_R_ERROR_GETTING_PUBLIC_KEY);
 		goto err;
 	}
 
@@ -273,8 +270,7 @@ CMS_add1_recipient_cert(CMS_ContentInfo *cms, X509 *recip, unsigned int flags)
 		break;
 
 	default:
-		CMSerr(CMS_F_CMS_ADD1_RECIPIENT_CERT,
-		   CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+		CMSerror(CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
 		goto err;
 
 	}
@@ -285,7 +281,7 @@ CMS_add1_recipient_cert(CMS_ContentInfo *cms, X509 *recip, unsigned int flags)
 	return ri;
 
  merr:
-	CMSerr(CMS_F_CMS_ADD1_RECIPIENT_CERT, ERR_R_MALLOC_FAILURE);
+	CMSerror(ERR_R_MALLOC_FAILURE);
  err:
 	M_ASN1_free_of(ri, CMS_RecipientInfo);
 	return NULL;
@@ -298,7 +294,7 @@ CMS_RecipientInfo_ktri_get0_algs(CMS_RecipientInfo *ri, EVP_PKEY **pk,
 	CMS_KeyTransRecipientInfo *ktri;
 
 	if (ri->type != CMS_RECIPINFO_TRANS) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_GET0_ALGS, CMS_R_NOT_KEY_TRANSPORT);
+		CMSerror(CMS_R_NOT_KEY_TRANSPORT);
 		return 0;
 	}
 
@@ -321,8 +317,7 @@ CMS_RecipientInfo_ktri_get0_signer_id(CMS_RecipientInfo *ri,
 	CMS_KeyTransRecipientInfo *ktri;
 
 	if (ri->type != CMS_RECIPINFO_TRANS) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_GET0_SIGNER_ID,
-		   CMS_R_NOT_KEY_TRANSPORT);
+		CMSerror(CMS_R_NOT_KEY_TRANSPORT);
 		return 0;
 	}
 	ktri = ri->d.ktri;
@@ -334,8 +329,7 @@ int
 CMS_RecipientInfo_ktri_cert_cmp(CMS_RecipientInfo *ri, X509 *cert)
 {
 	if (ri->type != CMS_RECIPINFO_TRANS) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_CERT_CMP,
-		   CMS_R_NOT_KEY_TRANSPORT);
+		CMSerror(CMS_R_NOT_KEY_TRANSPORT);
 		return -2;
 	}
 
@@ -346,7 +340,7 @@ int
 CMS_RecipientInfo_set0_pkey(CMS_RecipientInfo *ri, EVP_PKEY *pkey)
 {
 	if (ri->type != CMS_RECIPINFO_TRANS) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_SET0_PKEY, CMS_R_NOT_KEY_TRANSPORT);
+		CMSerror(CMS_R_NOT_KEY_TRANSPORT);
 		return 0;
 	}
 	EVP_PKEY_free(ri->d.ktri->pkey);
@@ -369,7 +363,7 @@ cms_RecipientInfo_ktri_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 	int ret = 0;
 
 	if (ri->type != CMS_RECIPINFO_TRANS) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_ENCRYPT, CMS_R_NOT_KEY_TRANSPORT);
+		CMSerror(CMS_R_NOT_KEY_TRANSPORT);
 		return 0;
 	}
 	ktri = ri->d.ktri;
@@ -391,7 +385,7 @@ cms_RecipientInfo_ktri_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 
 	if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_ENCRYPT,
 			              EVP_PKEY_CTRL_CMS_ENCRYPT, 0, ri) <= 0) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_ENCRYPT, CMS_R_CTRL_ERROR);
+		CMSerror(CMS_R_CTRL_ERROR);
 		goto err;
 	}
 
@@ -401,7 +395,7 @@ cms_RecipientInfo_ktri_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 	ek = OPENSSL_malloc(eklen);
 
 	if (ek == NULL) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_ENCRYPT, ERR_R_MALLOC_FAILURE);
+		CMSerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
@@ -436,7 +430,7 @@ cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 	ec = cms->d.envelopedData->encryptedContentInfo;
 
 	if (ktri->pkey == NULL) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_DECRYPT, CMS_R_NO_PRIVATE_KEY);
+		CMSerror(CMS_R_NO_PRIVATE_KEY);
 		return 0;
 	}
 
@@ -452,7 +446,7 @@ cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 
 	if (EVP_PKEY_CTX_ctrl(ktri->pctx, -1, EVP_PKEY_OP_DECRYPT,
 	    EVP_PKEY_CTRL_CMS_DECRYPT, 0, ri) <= 0) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_DECRYPT, CMS_R_CTRL_ERROR);
+		CMSerror(CMS_R_CTRL_ERROR);
 		goto err;
 	}
 
@@ -463,13 +457,13 @@ cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 	ek = OPENSSL_malloc(eklen);
 
 	if (ek == NULL) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_DECRYPT, ERR_R_MALLOC_FAILURE);
+		CMSerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
 	if (EVP_PKEY_decrypt(ktri->pctx, ek, &eklen, ktri->encryptedKey->data,
 	    ktri->encryptedKey->length) <= 0) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_DECRYPT, CMS_R_CMS_LIB);
+		CMSerror(CMS_R_CMS_LIB);
 		goto err;
 	}
 
@@ -498,7 +492,7 @@ CMS_RecipientInfo_kekri_id_cmp(CMS_RecipientInfo *ri, const unsigned char *id,
 	CMS_KEKRecipientInfo *kekri;
 
 	if (ri->type != CMS_RECIPINFO_KEK) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_ID_CMP, CMS_R_NOT_KEK);
+		CMSerror(CMS_R_NOT_KEK);
 		return -2;
 	}
 	kekri = ri->d.kekri;
@@ -558,7 +552,7 @@ CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid, unsigned char *key,
 			break;
 
 		default:
-			CMSerr(CMS_F_CMS_ADD0_RECIPIENT_KEY, CMS_R_INVALID_KEY_LENGTH);
+			CMSerror(CMS_R_INVALID_KEY_LENGTH);
 			goto err;
 		}
 
@@ -567,13 +561,12 @@ CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid, unsigned char *key,
 		size_t exp_keylen = aes_wrap_keylen(nid);
 
 		if (!exp_keylen) {
-			CMSerr(CMS_F_CMS_ADD0_RECIPIENT_KEY,
-			       CMS_R_UNSUPPORTED_KEK_ALGORITHM);
+			CMSerror(CMS_R_UNSUPPORTED_KEK_ALGORITHM);
 			goto err;
 		}
 
 		if (keylen != exp_keylen) {
-			CMSerr(CMS_F_CMS_ADD0_RECIPIENT_KEY, CMS_R_INVALID_KEY_LENGTH);
+			CMSerror(CMS_R_INVALID_KEY_LENGTH);
 			goto err;
 		}
 
@@ -622,7 +615,7 @@ CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid, unsigned char *key,
 	return ri;
 
  merr:
-	CMSerr(CMS_F_CMS_ADD0_RECIPIENT_KEY, ERR_R_MALLOC_FAILURE);
+	CMSerror(ERR_R_MALLOC_FAILURE);
  err:
 	M_ASN1_free_of(ri, CMS_RecipientInfo);
 	return NULL;
@@ -636,7 +629,7 @@ CMS_RecipientInfo_kekri_get0_id(CMS_RecipientInfo *ri, X509_ALGOR **palg,
 	CMS_KEKIdentifier *rkid;
 
 	if (ri->type != CMS_RECIPINFO_KEK) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_GET0_ID, CMS_R_NOT_KEK);
+		CMSerror(CMS_R_NOT_KEK);
 		return 0;
 	}
 	rkid = ri->d.kekri->kekid;
@@ -669,7 +662,7 @@ CMS_RecipientInfo_set0_key(CMS_RecipientInfo *ri, unsigned char *key,
 	CMS_KEKRecipientInfo *kekri;
 
 	if (ri->type != CMS_RECIPINFO_KEK) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_SET0_KEY, CMS_R_NOT_KEK);
+		CMSerror(CMS_R_NOT_KEK);
 		return 0;
 	}
 
@@ -695,25 +688,24 @@ cms_RecipientInfo_kekri_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 	kekri = ri->d.kekri;
 
 	if (!kekri->key) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT, CMS_R_NO_KEY);
+		CMSerror(CMS_R_NO_KEY);
 		return 0;
 	}
 
 	if (AES_set_encrypt_key(kekri->key, kekri->keylen << 3, &actx)) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT,
-			   CMS_R_ERROR_SETTING_KEY);
+		CMSerror(CMS_R_ERROR_SETTING_KEY);
 		goto err;
 	}
 
 	wkey = OPENSSL_malloc(ec->keylen + 8);
 	if (wkey == NULL) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT, ERR_R_MALLOC_FAILURE);
+		CMSerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
 	wkeylen = AES_wrap_key(&actx, NULL, wkey, ec->key, ec->keylen);
 	if (wkeylen <= 0) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT, CMS_R_WRAP_ERROR);
+		CMSerror(CMS_R_WRAP_ERROR);
 		goto err;
 	}
 
@@ -745,34 +737,31 @@ cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 	kekri = ri->d.kekri;
 
 	if (!kekri->key) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT, CMS_R_NO_KEY);
+		CMSerror(CMS_R_NO_KEY);
 		return 0;
 	}
 
 	wrap_nid = OBJ_obj2nid(kekri->keyEncryptionAlgorithm->algorithm);
 	if (aes_wrap_keylen(wrap_nid) != kekri->keylen) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT,
-		   CMS_R_INVALID_KEY_LENGTH);
+		CMSerror(CMS_R_INVALID_KEY_LENGTH);
 		return 0;
 	}
 
 	/* If encrypted key length is invalid don't bother */
 
 	if (kekri->encryptedKey->length < 16) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT,
-		   CMS_R_INVALID_ENCRYPTED_KEY_LENGTH);
+		CMSerror(CMS_R_INVALID_ENCRYPTED_KEY_LENGTH);
 		goto err;
 	}
 
 	if (AES_set_decrypt_key(kekri->key, kekri->keylen << 3, &actx)) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT,
-		   CMS_R_ERROR_SETTING_KEY);
+		CMSerror(CMS_R_ERROR_SETTING_KEY);
 		goto err;
 	}
 
 	ukey = OPENSSL_malloc(kekri->encryptedKey->length - 8);
 	if (ukey == NULL) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT, ERR_R_MALLOC_FAILURE);
+		CMSerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
@@ -780,7 +769,7 @@ cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 	    kekri->encryptedKey->length);
 
 	if (ukeylen <= 0) {
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT, CMS_R_UNWRAP_ERROR);
+		CMSerror(CMS_R_UNWRAP_ERROR);
 		goto err;
 	}
 
@@ -812,8 +801,7 @@ CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 		return cms_RecipientInfo_pwri_crypt(cms, ri, 0);
 
 	default:
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_DECRYPT,
-		   CMS_R_UNSUPPORTED_RECIPIENTINFO_TYPE);
+		CMSerror(CMS_R_UNSUPPORTED_RECIPIENTINFO_TYPE);
 		return 0;
 	}
 }
@@ -835,8 +823,7 @@ CMS_RecipientInfo_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 		return cms_RecipientInfo_pwri_crypt(cms, ri, 1);
 
 	default:
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_ENCRYPT,
-		   CMS_R_UNSUPPORTED_RECIPIENT_TYPE);
+		CMSerror(CMS_R_UNSUPPORTED_RECIPIENT_TYPE);
 		return 0;
 	}
 }
@@ -935,8 +922,7 @@ cms_EnvelopedData_init_bio(CMS_ContentInfo *cms)
 	for (i = 0; i < sk_CMS_RecipientInfo_num(rinfos); i++) {
 		ri = sk_CMS_RecipientInfo_value(rinfos, i);
 		if (CMS_RecipientInfo_encrypt(cms, ri) <= 0) {
-			CMSerr(CMS_F_CMS_ENVELOPEDDATA_INIT_BIO,
-			       CMS_R_ERROR_SETTING_RECIPIENTINFO);
+			CMSerror(CMS_R_ERROR_SETTING_RECIPIENTINFO);
 			goto err;
 		}
 	}

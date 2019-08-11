@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_cd.c,v 1.13 2019/08/10 18:15:52 jsing Exp $ */
+/* $OpenBSD: cms_cd.c,v 1.14 2019/08/11 10:38:27 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -77,8 +77,7 @@ cms_CompressedData_create(int comp_nid)
 	 * compression algorithm or parameters have some meaning...
 	 */
 	if (comp_nid != NID_zlib_compression) {
-		CMSerr(CMS_F_CMS_COMPRESSEDDATA_CREATE,
-			   CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
+		CMSerror(CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
 		return NULL;
 	}
 	cms = CMS_ContentInfo_new();
@@ -114,15 +113,13 @@ cms_CompressedData_init_bio(CMS_ContentInfo *cms)
 	const ASN1_OBJECT *compoid;
 
 	if (OBJ_obj2nid(cms->contentType) != NID_id_smime_ct_compressedData) {
-		CMSerr(CMS_F_CMS_COMPRESSEDDATA_INIT_BIO,
-			   CMS_R_CONTENT_TYPE_NOT_COMPRESSED_DATA);
+		CMSerror(CMS_R_CONTENT_TYPE_NOT_COMPRESSED_DATA);
 		return NULL;
 	}
 	cd = cms->d.compressedData;
 	X509_ALGOR_get0(&compoid, NULL, NULL, cd->compressionAlgorithm);
 	if (OBJ_obj2nid(compoid) != NID_zlib_compression) {
-		CMSerr(CMS_F_CMS_COMPRESSEDDATA_INIT_BIO,
-			   CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
+		CMSerror(CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
 		return NULL;
 	}
 	return BIO_new(BIO_f_zlib());
