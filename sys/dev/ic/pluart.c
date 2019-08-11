@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.3 2019/07/19 00:17:15 cheloha Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.4 2019/08/11 10:03:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -188,25 +188,25 @@ pluart_intr(void *arg)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp = sc->sc_tty;
-	u_int16_t fr;
+	u_int16_t is;
 	u_int16_t *p;
 	u_int16_t c;
 
-	bus_space_write_4(iot, ioh, UART_ICR, -1);
+	is = bus_space_read_4(iot, ioh, UART_RIS);
+	bus_space_write_4(iot, ioh, UART_ICR, is);
 
 	if (sc->sc_tty == NULL)
-		return(0);
+		return 0;
 
-	fr = bus_space_read_4(iot, ioh, UART_FR);
-	if (ISSET(fr, UART_FR_TXFE) && ISSET(tp->t_state, TS_BUSY)) {
+	if (!ISSET(is, UART_IMSC_RXIM) && !ISSET(is, UART_IMSC_TXIM))
+		return 0;
+
+	if (ISSET(is, UART_IMSC_TXIM) && ISSET(tp->t_state, TS_BUSY)) {
 		CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 		if (sc->sc_halt > 0)
 			wakeup(&tp->t_outq);
 		(*linesw[tp->t_line].l_start)(tp);
 	}
-
-	if(!ISSET(bus_space_read_4(iot, ioh, UART_FR), UART_FR_RXFF))
-		return 0;
 
 	p = sc->sc_ibufp;
 
@@ -326,35 +326,22 @@ pluart_start(struct tty *tp)
 	struct pluart_softc *sc = pluart_cd.cd_devs[DEVUNIT(tp->t_dev)];
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-
+	u_int16_t fr;
 	int s;
+
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-		selwakeup(&tp->t_wsel);
-	}
+	ttwakeupwr(tp);
+	if (tp->t_outq.c_cc == 0)
+		goto out;
 	SET(tp->t_state, TS_BUSY);
 
-	if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
-		u_char buffer[64];	/* largest fifo */
-		int i, n;
-
-		n = q_to_b(&tp->t_outq, buffer,
-		    min(sc->sc_fifolen, sizeof buffer));
-		for (i = 0; i < n; i++) {
-			bus_space_write_4(iot, ioh, UART_DR, buffer[i]);
-		}
-		bzero(buffer, n);
-	} else if (tp->t_outq.c_cc != 0)
+	fr = bus_space_read_4(iot, ioh, UART_FR);
+	while (tp->t_outq.c_cc != 0 && ISSET(fr, UART_FR_TXFE)) {
 		bus_space_write_4(iot, ioh, UART_DR, getc(&tp->t_outq));
-
+		fr = bus_space_read_4(iot, ioh, UART_FR);
+	}
 out:
 	splx(s);
 }
