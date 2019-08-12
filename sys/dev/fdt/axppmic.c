@@ -1,4 +1,4 @@
-/*	$OpenBSD: axppmic.c,v 1.7 2019/08/11 14:38:20 kettenis Exp $	*/
+/*	$OpenBSD: axppmic.c,v 1.8 2019/08/12 20:06:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -724,7 +724,7 @@ axppmic_update_sensors(void *arg)
 			axppmic_update_percent(sc, i);
 			break;
 		case SENSOR_AMPHOUR:
-			axppmic_update_amphour(sc, 1);
+			axppmic_update_amphour(sc, i);
 			break;
 		default:
 			axppmic_update_sensor(sc, i);
