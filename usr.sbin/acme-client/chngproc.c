@@ -1,4 +1,4 @@
-/*	$Id: chngproc.c,v 1.14 2019/06/16 19:49:13 florian Exp $ */
+/*	$Id: chngproc.c,v 1.15 2019/08/12 18:01:44 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -104,7 +104,7 @@ chngproc(int netsock, const char *root)
 		 * Note: we use file descriptors instead of FILE
 		 * because we want to minimise our pledges.
 		 */
-		fd = open(fs[fsz - 1], O_WRONLY|O_EXCL|O_CREAT, 0444);
+		fd = open(fs[fsz - 1], O_WRONLY|O_CREAT|O_TRUNC, 0444);
 		if (fd == -1) {
 			warn("%s", fs[fsz - 1]);
 			goto out;
