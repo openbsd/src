@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_lib.c,v 1.13 2019/08/11 11:04:18 jsing Exp $ */
+/* $OpenBSD: cms_lib.c,v 1.14 2019/08/12 18:13:13 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -642,6 +642,14 @@ CMS_get1_crls(CMS_ContentInfo *cms)
 	return crls;
 }
 
+static const ASN1_OCTET_STRING *
+cms_X509_get0_subject_key_id(X509 *x)
+{
+	/* Call for side-effect of computing hash and caching extensions */
+	X509_check_purpose(x, -1, -1);
+	return x->skid;
+}
+
 int
 cms_ias_cert_cmp(CMS_IssuerAndSerialNumber *ias, X509 *cert)
 {
@@ -657,7 +665,7 @@ cms_ias_cert_cmp(CMS_IssuerAndSerialNumber *ias, X509 *cert)
 int
 cms_keyid_cert_cmp(ASN1_OCTET_STRING *keyid, X509 *cert)
 {
-	const ASN1_OCTET_STRING *cert_keyid = X509_get0_subject_key_id(cert);
+	const ASN1_OCTET_STRING *cert_keyid = cms_X509_get0_subject_key_id(cert);
 
 	if (cert_keyid == NULL)
 		return -1;
@@ -695,7 +703,7 @@ cms_set1_keyid(ASN1_OCTET_STRING **pkeyid, X509 *cert)
 	ASN1_OCTET_STRING *keyid = NULL;
 	const ASN1_OCTET_STRING *cert_keyid;
 
-	cert_keyid = X509_get0_subject_key_id(cert);
+	cert_keyid = cms_X509_get0_subject_key_id(cert);
 	if (cert_keyid == NULL) {
 		CMSerror(CMS_R_CERTIFICATE_HAS_NO_KEYID);
 		return 0;
