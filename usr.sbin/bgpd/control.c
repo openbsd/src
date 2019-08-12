@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.98 2019/08/08 20:06:29 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.99 2019/08/12 15:02:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -376,6 +376,9 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt,
 					bgp_fsm(p, EVNT_START);
 					p->conf.down = 0;
 					p->conf.shutcomm[0] = '\0';
+					p->IdleHoldTime =
+					    INTERVAL_IDLE_HOLD_INITIAL;
+					p->errcnt = 0;
 					control_result(c, CTL_RES_OK);
 					break;
 				case IMSG_CTL_NEIGHBOR_DOWN:
@@ -390,6 +393,9 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt,
 					strlcpy(p->conf.shutcomm,
 					    neighbor->shutcomm,
 					    sizeof(neighbor->shutcomm));
+					p->IdleHoldTime =
+					    INTERVAL_IDLE_HOLD_INITIAL;
+					p->errcnt = 0;
 					if (!p->conf.down) {
 						session_stop(p,
 						    ERR_CEASE_ADMIN_RESET);
