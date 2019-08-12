@@ -1,4 +1,4 @@
-/*	$Id: test-cert.c,v 1.1 2019/06/18 12:09:07 claudio Exp $ */
+/*	$Id: test-cert.c,v 1.2 2019/08/12 18:03:17 jsing Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -27,7 +27,8 @@
 #include <unistd.h>
 
 #include <openssl/err.h>
-#include <openssl/ssl.h>
+#include <openssl/evp.h>
+#include <openssl/x509v3.h>
 
 #include "extern.h"
 
@@ -90,8 +91,9 @@ main(int argc, char *argv[])
 	X509		*xp = NULL;
 	struct cert	*p;
 
-	SSL_library_init();
-	SSL_load_error_strings();
+	ERR_load_crypto_strings();
+	OpenSSL_add_all_ciphers();
+	OpenSSL_add_all_digests();
 
 	while ((c = getopt(argc, argv, "tv")) != -1)
 		switch (c) {

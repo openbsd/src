@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2019/08/09 09:50:44 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.14 2019/08/12 18:03:17 jsing Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -33,7 +33,8 @@
 #include <unistd.h>
 
 #include <openssl/err.h>
-#include <openssl/ssl.h>
+#include <openssl/evp.h>
+#include <openssl/x509v3.h>
 
 #include "extern.h"
 
@@ -980,8 +981,9 @@ proc_parser(int fd, int force, int norev)
 	struct auth	*auths = NULL;
 	int		 first_tals = 1;
 
-	SSL_library_init();
-	SSL_load_error_strings();
+	ERR_load_crypto_strings();
+	OpenSSL_add_all_ciphers();
+	OpenSSL_add_all_digests();
 
 	if ((store = X509_STORE_new()) == NULL)
 		cryptoerrx("X509_STORE_new");
@@ -1371,11 +1373,6 @@ main(int argc, char *argv[])
 	 * parsing process.
 	 */
 
-	/* Initialise SSL, errors, and our structures. */
-
-	SSL_library_init();
-	SSL_load_error_strings();
-
 	if (pledge("stdio", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
@@ -1503,10 +1500,6 @@ main(int argc, char *argv[])
 		roa_free(out[i]);
 	free(out);
 
-	EVP_cleanup();
-	CRYPTO_cleanup_all_ex_data();
-	ERR_remove_state(0);
-	ERR_free_strings();
 	return rc ? EXIT_SUCCESS : EXIT_FAILURE;
 
 usage:

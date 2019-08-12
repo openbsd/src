@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2019/06/19 12:33:36 claudio Exp $
+# $OpenBSD: Makefile,v 1.4 2019/08/12 18:03:17 jsing Exp $
 
 .PATH:		${.CURDIR}/../../../usr.sbin/rpki-client
 
@@ -20,8 +20,7 @@ REGRESS_TARGETS += run-regress-$p
 
 CFLAGS+=	-I${.CURDIR} -I${.CURDIR}/../../../usr.sbin/rpki-client \
 		-I/usr/local/include/eopenssl
-LDADD+=		/usr/local/lib/eopenssl/libssl.a \
-		/usr/local/lib/eopenssl/libcrypto.a	
+LDADD+=		/usr/local/lib/eopenssl/libcrypto.a	
 
 SRCS_test-ip=	test-ip.c ip.c io.c
 run-regress-test-ip: test-ip
