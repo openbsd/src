@@ -1,5 +1,7 @@
-.\"	$OpenBSD: PEM_read_bio_PrivateKey.3,v 1.14 2019/06/06 01:06:58 schwarze Exp $
-.\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" $OpenBSD: PEM_read_bio_PrivateKey.3,v 1.15 2019/08/12 11:36:12 schwarze Exp $
+.\" full merge up to:
+.\" OpenSSL man3/PEM_read_bio_PrivateKey.pod 18bad535 Apr 9 15:13:55 2019 +0100
+.\" OpenSSL man3/PEM_read_CMS.pod 83cf7abf May 29 13:07:08 2018 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2001-2004, 2009, 2013-2016 The OpenSSL Project.
@@ -49,10 +51,11 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: August 12 2019 $
 .Dt PEM_READ_BIO_PRIVATEKEY 3
 .Os
 .Sh NAME
+.Nm pem_password_cb ,
 .Nm PEM_read_bio_PrivateKey ,
 .Nm PEM_read_PrivateKey ,
 .Nm PEM_write_bio_PrivateKey ,
@@ -142,6 +145,13 @@
 .Nd PEM routines
 .Sh SYNOPSIS
 .In openssl/pem.h
+.Ft typedef int
+.Fo pem_password_cb
+.Fa "char *buf"
+.Fa "int size"
+.Fa "int rwflag"
+.Fa "void *u"
+.Fc
 .Ft EVP_PKEY *
 .Fo PEM_read_bio_PrivateKey
 .Fa "BIO *bp"
@@ -722,14 +732,14 @@ For more details about the meaning of arguments see the
 section.
 .Pp
 Each operation has four functions associated with it.
-For clarity the term
-.Dq Sy foobar No functions
+For brevity the term
+.Dq Ar TYPE No functions
 will be used to collectively refer to the
-.Fn PEM_read_bio_foobar ,
-.Fn PEM_read_foobar ,
-.Fn PEM_write_bio_foobar ,
+.Fn PEM_read_bio_TYPE ,
+.Fn PEM_read_TYPE ,
+.Fn PEM_write_bio_TYPE ,
 and
-.Fn PEM_write_foobar
+.Fn PEM_write_TYPE
 functions.
 .Pp
 The
@@ -1073,7 +1083,7 @@ parameter passed to the PEM routine.
 It allows arbitrary data to be passed to the callback by the application
 (for example a window handle in a GUI application).
 The callback must return the number of characters in the passphrase
-or 0 if an error occurred.
+or -1 if an error occurred.
 .Ss PEM encryption format
 This old
 .Sy PrivateKey
@@ -1193,18 +1203,24 @@ Skeleton pass phrase callback:
 int
 pass_cb(char *buf, int size, int rwflag, void *u)
 {
-	int len;
-	char *tmp;
+	char	*tmp;
+	size_t	 len;
 
 	/* We'd probably do something else if 'rwflag' is 1 */
 	printf("Enter pass phrase for \e"%s\e"\en", u);
 
-	/* get pass phrase, length 'len' into 'tmp' */
+	/*
+	 * Instead of the following line, get the passphrase
+	 * from the user in some way.
+	 */
 	tmp = "hello";
-	len = strlen(tmp);
+	if (tmp == NULL) /* An error occurred. */
+		return -1;
 
-	if (len == 0)
-		return 0;
+	len = strlen(tmp);
+	if (len == 0) /* Treat an empty passphrase as an error, too. */
+		return -1;
+
 	/* if too long, truncate */
 	if (len > size)
 		len = size;
@@ -1346,6 +1362,10 @@ PEM_read_bio_X509(bp, &x, 0, NULL);
 This is a bug because an attempt will be made to reuse the data at
 .Fa x ,
 which is an uninitialised pointer.
+.Pp
+These functions make no assumption regarding the pass phrase received
+from the password callback.
+It will simply be treated as a byte sequence.
 .Sh BUGS
 The PEM read routines in some versions of OpenSSL will not correctly
 reuse an existing structure.
