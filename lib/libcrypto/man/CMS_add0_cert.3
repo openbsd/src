@@ -1,7 +1,24 @@
-.\" $OpenBSD: CMS_add0_cert.3,v 1.4 2019/08/11 12:46:38 schwarze Exp $
+.\" $OpenBSD: CMS_add0_cert.3,v 1.5 2019/08/12 21:29:43 schwarze Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -48,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 11 2019 $
+.Dd $Mdocdate: August 12 2019 $
 .Dt CMS_ADD0_CERT 3
 .Os
 .Sh NAME
@@ -64,12 +81,12 @@
 .Ft int
 .Fo CMS_add0_cert
 .Fa "CMS_ContentInfo *cms"
-.Fa "X509 *cert"
+.Fa "X509 *certificate"
 .Fc
 .Ft int
 .Fo CMS_add1_cert
 .Fa "CMS_ContentInfo *cms"
-.Fa "X509 *cert"
+.Fa "X509 *certificate"
 .Fc
 .Ft STACK_OF(X509) *
 .Fo CMS_get1_certs
@@ -91,61 +108,67 @@
 .Fc
 .Sh DESCRIPTION
 .Fn CMS_add0_cert
-and
-.Fn CMS_add1_cert
-add the certificate
-.Fa cert
-to
-.Fa cms .
+adds the
+.Fa certificate
+to the
+.Fa certificates
+field of
 .Fa cms
-must be of type signed data or enveloped data.
+if it is of the type
+.Vt SignedData
+or to the
+.Fa originatorInfo.certs
+field if it is of the type
+.Vt EnvelopedData .
+.Fn CMS_add1_cert
+does the same and also increments the reference count of the
+.Fa certificate
+with
+.Xr X509_up_ref 3
+in case of success.
 .Pp
 .Fn CMS_get1_certs
 returns all certificates in
 .Fa cms .
 .Pp
 .Fn CMS_add0_crl
-and
-.Fn CMS_add1_crl
-add the CRL
+adds the
 .Fa crl
-to
-.Fa cms .
+to the
+.Fa crls
+field of
+.Fa cms
+if it is of the type
+.Vt SignedData
+or to the
+.Fa originatorInfo.crls
+field if it is of the type
+.Vt EnvelopedData .
+.Fn CMS_add1_crl
+does the same and also increments the reference count of the
+.Fa crl
+with
+.Xr X509_CRL_up_ref 3
+in case of success.
+.Pp
 .Fn CMS_get1_crls
 returns any CRLs in
 .Fa cms .
 .Pp
-The
-.Vt CMS_ContentInfo
-structure
+An error occurs if
 .Fa cms
-must be of type signed data or enveloped data or an error will be
-returned.
+is of any type other than
+.Vt SignedData
+or
+.Vt EnvelopedData .
 .Pp
-The signed data certificates and CRLs are added to the
-.Sy certificates
-and
-.Sy crls
-fields of the SignedData structure.
-For enveloped data, they are added to
-.Sy OriginatorInfo .
-.Pp
-As the
-.Sq 0
-in the function name implies,
-.Fn CMS_add0_cert
-adds
-.Fa cert
-internally to
+The same
+.Fa certificate
+or
+.Fa crl
+must not be added to the same
 .Fa cms
-and it must not be freed up after the call, as opposed to
-.Fn CMS_add1_cert
-where
-.Fa cert
-must be freed up.
-.Pp
-The same certificate or CRL must not be added to the same cms structure
-more than once.
+structure more than once.
 .Sh RETURN VALUES
 .Fn CMS_add0_cert ,
 .Fn CMS_add1_cert ,
@@ -167,6 +190,14 @@ type is invalid.
 .Xr CMS_encrypt 3 ,
 .Xr CMS_sign 3 ,
 .Xr ERR_get_error 3
+.Sh STANDARDS
+RFC 5652: Cryptographic Message Syntax
+.Bl -dash -compact -offset indent
+.It
+section 5.1: SignedData Type
+.It
+section 6.1: EnvelopedData Type
+.El
 .Sh HISTORY
 .Fn CMS_add0_cert ,
 .Fn CMS_add1_cert ,
