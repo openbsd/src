@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.171 2019/05/11 16:30:23 patrick Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.172 2019/08/12 07:40:45 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -366,6 +366,20 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 	return (0);
 }
 
+const char *
+ikev2_ikesa_info(uint64_t spi, const char *msg)
+{
+	static char buf[1024];
+	const char *spistr;
+	
+	spistr = print_spi(spi, 8);
+	if (msg)
+		snprintf(buf, sizeof(buf), "spi=%s: %s", spistr, msg);
+	else
+		snprintf(buf, sizeof(buf), "spi=%s: ", spistr);
+	return buf;
+}
+
 struct iked_sa *
 ikev2_getimsgdata(struct iked *env, struct imsg *imsg, struct iked_sahdr *sh,
     uint8_t *type, uint8_t **buf, size_t *size)
@@ -423,14 +437,15 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	if (policy_lookup(env, msg) != 0)
 		return;
 
-	log_info("%s: %s %s from %s %s to %s policy '%s' id %u, %ld bytes",
-	    __func__, print_map(hdr->ike_exchange, ikev2_exchange_map),
-	    msg->msg_response ? "response" : "request",
-	    initiator ? "responder" : "initiator",
+	log_info("%srecv %s %s %u peer %s local %s, %ld bytes, policy '%s'",
+	    SPI_IH(hdr),
+	    print_map(hdr->ike_exchange, ikev2_exchange_map),
+	    msg->msg_response ? "res" : "req",
+	    msg->msg_msgid,
 	    print_host((struct sockaddr *)&msg->msg_peer, NULL, 0),
 	    print_host((struct sockaddr *)&msg->msg_local, NULL, 0),
-	    msg->msg_policy->pol_name, msg->msg_msgid,
-	    ibuf_length(msg->msg_data));
+	    ibuf_length(msg->msg_data),
+	    msg->msg_policy->pol_name);
 	log_debug("%s: ispi %s rspi %s", __func__,
 	    print_spi(betoh64(hdr->ike_ispi), 8),
 	    print_spi(betoh64(hdr->ike_rspi), 8));

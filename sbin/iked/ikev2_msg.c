@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.55 2019/05/11 16:30:23 patrick Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.56 2019/08/12 07:40:45 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -319,12 +319,13 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 
 	exchange = hdr->ike_exchange;
 	flags = hdr->ike_flags;
-	log_info("%s: %s %s from %s to %s msgid %u, %ld bytes%s", __func__,
+	log_info("%ssend %s %s %u peer %s local %s, %ld bytes%s",
+	    SPI_IH(hdr),
 	    print_map(exchange, ikev2_exchange_map),
-	    (flags & IKEV2_FLAG_RESPONSE) ? "response" : "request",
-	    print_host((struct sockaddr *)&msg->msg_local, NULL, 0),
-	    print_host((struct sockaddr *)&msg->msg_peer, NULL, 0),
+	    (flags & IKEV2_FLAG_RESPONSE) ? "res" : "req",
 	    betoh32(hdr->ike_msgid),
+	    print_host((struct sockaddr *)&msg->msg_peer, NULL, 0),
+	    print_host((struct sockaddr *)&msg->msg_local, NULL, 0),
 	    ibuf_length(buf), isnatt ? ", NAT-T" : "");
 
 	if (isnatt) {

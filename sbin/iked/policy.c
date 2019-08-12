@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.47 2017/11/27 18:39:35 patrick Exp $	*/
+/*	$OpenBSD: policy.c,v 1.48 2019/08/12 07:40:45 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -240,14 +240,14 @@ sa_state(struct iked *env, struct iked_sa *sa, int state)
 	sa->sa_state = state;
 	if (ostate != IKEV2_STATE_INIT &&
 	    !sa_stateok(sa, state)) {
-		log_debug("%s: cannot switch: %s -> %s", __func__, a, b);
+		log_debug("%s: cannot switch: %s -> %s", SPI_SA(sa, __func__), a, b);
 		sa->sa_state = ostate;
 	} else if (ostate != sa->sa_state) {
 		switch (state) {
 		case IKEV2_STATE_ESTABLISHED:
 		case IKEV2_STATE_CLOSED:
 			log_info("%s: %s -> %s from %s to %s policy '%s'",
-			    __func__, a, b,
+			    SPI_SA(sa, __func__), a, b,
 			    print_host((struct sockaddr *)&sa->sa_peer.addr,
 			    NULL, 0),
 			    print_host((struct sockaddr *)&sa->sa_local.addr,

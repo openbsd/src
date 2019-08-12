@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.71 2019/05/11 16:30:23 patrick Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.72 2019/08/12 07:40:45 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1479,7 +1479,7 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 			}
 		}
 
-		log_warnx("%s: deleted %zu spis", __func__, found);
+		log_warnx("%s: deleted %zu spis", SPI_SA(sa, __func__), found);
 	}
 
 	if (found) {
