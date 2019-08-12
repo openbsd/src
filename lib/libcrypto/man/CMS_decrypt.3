@@ -1,7 +1,24 @@
-.\" $OpenBSD: CMS_decrypt.3,v 1.4 2019/08/11 12:46:38 schwarze Exp $
+.\" $OpenBSD: CMS_decrypt.3,v 1.5 2019/08/12 15:34:41 schwarze Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2008, 2014 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -48,36 +65,49 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 11 2019 $
+.Dd $Mdocdate: August 12 2019 $
 .Dt CMS_DECRYPT 3
 .Os
 .Sh NAME
-.Nm CMS_decrypt
+.Nm CMS_decrypt ,
+.Nm CMS_decrypt_set1_pkey ,
+.Nm CMS_decrypt_set1_key
 .Nd decrypt content from a CMS envelopedData structure
 .Sh SYNOPSIS
 .In openssl/cms.h
 .Ft int
 .Fo CMS_decrypt
 .Fa "CMS_ContentInfo *cms"
-.Fa "EVP_PKEY *pkey"
-.Fa "X509 *cert"
+.Fa "EVP_PKEY *private_key"
+.Fa "X509 *certificate"
 .Fa "BIO *dcont"
 .Fa "BIO *out"
 .Fa "unsigned int flags"
 .Fc
+.Ft int
+.Fo CMS_decrypt_set1_pkey
+.Fa "CMS_ContentInfo *cms"
+.Fa "EVP_PKEY *private_key"
+.Fa "X509 *certificate"
+.Fc
+.Ft int
+.Fo CMS_decrypt_set1_key
+.Fa "CMS_ContentInfo *cms"
+.Fa "unsigned char *symmetric_key"
+.Fa "size_t keylen"
+.Fa "const unsigned char *id"
+.Fa "size_t idlen"
+.Fc
 .Sh DESCRIPTION
 .Fn CMS_decrypt
-extracts and decrypts the content from a CMS EnvelopedData structure.
-.Fa pkey
-is the private key of the recipient,
-.Fa cert
-is the recipient's certificate,
-.Fa out
-is a
-.Vt BIO
-to write the content to and
-.Fa flags
-is an optional set of flags.
+extracts and decrypts the content from a CMS EnvelopedData structure
+using the
+.Fa private_key
+and the
+.Fa certificate
+of the recipient.
+It writes the decrypted content to
+.Fa out .
 .Pp
 The
 .Fa dcont
@@ -86,12 +116,13 @@ detached.
 It will normally be set to
 .Dv NULL .
 .Pp
-Although the recipients certificate is not needed to decrypt the data it
-is needed to locate the appropriate (of possible several) recipients in
-the CMS structure.
+Although the recipient's
+.Fa certificate
+is not needed to decrypt the data, it is needed to locate the
+appropriate (of possible several) recipients in the CMS structure.
 .Pp
-If
-.Fa cert
+If the
+.Fa certificate
 is set to
 .Dv NULL ,
 all possible recipients are tried.
@@ -116,18 +147,22 @@ Applications should use this flag with extreme caution
 especially in automated gateways as it can leave them open to attack.
 .Pp
 It is possible to determine the correct recipient key by other means
-(for example looking them up in a database) and setting them in the CMS
+(for example looking them up in a database) and setting them in the
+.Fa cms
 structure in advance using the CMS utility functions such as
-.Xr CMS_set1_pkey 3 .
+.Fn CMS_decrypt_set1_pkey .
 In this case both
-.Fa cert
+.Fa certificate
 and
-.Fa pkey
+.Fa private_key
 should be set to
-.Dv NULL .
+.Dv NULL
+when calling
+.Fn CMS_decrypt
+later on.
 .Pp
 To process KEKRecipientInfo types,
-.Xr CMS_set1_key 3
+.Fn CMS_decrypt_set1_key
 or
 .Xr CMS_RecipientInfo_set0_key 3
 and
@@ -135,33 +170,38 @@ and
 should be called before
 .Fn CMS_decrypt
 and
-.Fa cert
+.Fa certificate
 and
-.Fa pkey
+.Fa private_key
 set to
-.Dv NULL .
-.Pp
-The following flags can be passed in the
-.Fa flags
-parameter:
+.Dv NULL
+when calling
+.Fn CMS_decrypt
+later on.
 .Pp
 If the
 .Dv CMS_TEXT
-flag is set, MIME headers for type text/plain
-are deleted from the content.
-If the content is not of type text/plain,
-then an error is returned.
+bit is set in
+.Fa flags ,
+MIME headers for type text/plain are deleted from the content.
+If the content is not of type text/plain, an error occurs.
 .Sh RETURN VALUES
-.Fn CMS_decrypt
-returns either 1 for success or 0 for failure.
+.Fn CMS_decrypt ,
+.Fn CMS_decrypt_set1_pkey ,
+and
+.Fn CMS_decrypt_set1_key
+return 1 for success or 0 for failure.
 The error can be obtained from
 .Xr ERR_get_error 3 .
 .Sh SEE ALSO
 .Xr CMS_encrypt 3
 .Sh HISTORY
-.Fn CMS_decrypt
+.Fn CMS_decrypt ,
+.Fn CMS_decrypt_set1_pkey ,
+and
+.Fn CMS_decrypt_set1_key
 first appeared in OpenSSL 0.9.8h
-and has been available since
+and have been available since
 .Ox 6.6 .
 .Sh BUGS
 The lack of single pass processing and the need to hold all data in
