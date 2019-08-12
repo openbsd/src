@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.146 2019/06/28 13:35:05 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.147 2019/08/12 11:54:32 claudio Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -653,7 +653,7 @@ cpustats(void)
 	else
 		percent = 0;
 	(void)printf("%2.0f ", (cur.cp_time[CP_USER] + cur.cp_time[CP_NICE]) * percent);
-	(void)printf("%2.0f ", (cur.cp_time[CP_SYS] + cur.cp_time[CP_INTR]) * percent);
+	(void)printf("%2.0f ", (cur.cp_time[CP_SYS] + cur.cp_time[CP_SPIN] + cur.cp_time[CP_INTR]) * percent);
 	(void)printf("%2.0f", cur.cp_time[CP_IDLE] * percent);
 }
 
