@@ -1,4 +1,4 @@
-.\" $OpenBSD: starttls.8,v 1.26 2018/06/27 05:39:02 jmc Exp $
+.\" $OpenBSD: starttls.8,v 1.27 2019/08/12 19:49:14 tedu Exp $
 .\"
 .\" Copyright (c) 2001 Jose Nazario <jose@monkey.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 27 2018 $
+.Dd $Mdocdate: August 12 2019 $
 .Dt STARTTLS 8
 .Os
 .Sh NAME
@@ -101,18 +101,6 @@ You can verify that the newly-generated certificate has correct information
 with the following command:
 .Pp
 .Dl # openssl x509 -in /etc/ssl/mail.example.com.crt -text
-.Pp
-If you don't intend to use TLS for authentication (and if you are using
-self-signed certificates you probably don't) you can simply link
-your new certificate to
-.Pa cert.pem :
-.Pp
-.Dl # ln -s /etc/ssl/mail.example.com.crt /etc/ssl/cert.pem
-.Pp
-If, on the other hand, you intend to use TLS for authentication
-you should add your certificate authority bundle to
-.Pa /etc/ssl/cert.pem
-(or whatever your software expects).
 .Pp
 Because the private key files are unencrypted,
 MTAs can be picky about using tight permissions on those files.
