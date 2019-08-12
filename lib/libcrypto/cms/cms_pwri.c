@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_pwri.c,v 1.25 2019/08/11 11:04:18 jsing Exp $ */
+/* $OpenBSD: cms_pwri.c,v 1.26 2019/08/12 18:04:57 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -347,8 +347,11 @@ cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 		return 0;
 	}
 
-	kekalg = ASN1_TYPE_unpack_sequence(&X509_ALGOR_it,
-	    algtmp->parameter);
+	if (algtmp->parameter != NULL &&
+	    algtmp->parameter->type == V_ASN1_SEQUENCE &&
+	    algtmp->parameter->value.sequence != NULL)
+		kekalg = ASN1_item_unpack(algtmp->parameter->value.sequence,
+		    &X509_ALGOR_it);
 
 	if (kekalg == NULL) {
 		CMSerror(CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER);
