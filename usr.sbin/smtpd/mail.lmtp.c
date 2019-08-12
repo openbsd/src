@@ -289,7 +289,7 @@ stream_file(FILE *conn)
 
 	while ((linelen = getline(&line, &linesize, stdin)) != -1) {
 		line[strcspn(line, "\n")] = '\0';
-		if (strcmp(line, ".") == 0)
+		if (line[0] == '.')
 			fprintf(conn, ".");
 		fprintf(conn, "%s\r\n", line);
 	}
