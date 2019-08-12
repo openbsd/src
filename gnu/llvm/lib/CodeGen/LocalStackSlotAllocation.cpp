@@ -344,6 +344,10 @@ bool LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
     assert(MFI.isObjectPreAllocated(FrameIdx) &&
            "Only pre-allocated locals expected!");
 
+    int StackProtectorFI = MFI.getStackProtectorIndex();
+    if (StackProtectorFI >= 0 && StackProtectorFI == FrameIdx)
+      continue;
+
     LLVM_DEBUG(dbgs() << "Considering: " << MI);
 
     unsigned idx = 0;
