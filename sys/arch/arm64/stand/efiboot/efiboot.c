@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.24 2019/08/10 13:08:21 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.25 2019/08/12 19:17:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -104,11 +104,19 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 static SIMPLE_TEXT_OUTPUT_INTERFACE *conout;
 static SIMPLE_INPUT_INTERFACE *conin;
 
+/*
+ * The device majors for these don't match the ones used by the
+ * kernel.  That's fine.  They're just used as an index into the cdevs
+ * array and never passed on to the kernel.
+ */
+static dev_t serial = makedev(0, 0);
+static dev_t framebuffer = makedev(1, 0);
+
 void
 efi_cons_probe(struct consdev *cn)
 {
 	cn->cn_pri = CN_MIDPRI;
-	cn->cn_dev = makedev(12, 0);
+	cn->cn_dev = serial;
 }
 
 void
@@ -167,6 +175,32 @@ efi_cons_putc(dev_t dev, int c)
 	buf[1] = 0;
 
 	conout->OutputString(conout, buf);
+}
+
+void
+efi_fb_probe(struct consdev *cn)
+{
+	cn->cn_pri = CN_LOWPRI;
+	cn->cn_dev = framebuffer;
+}
+
+void
+efi_fb_init(struct consdev *cn)
+{
+	conin = ST->ConIn;
+	conout = ST->ConOut;
+}
+
+int
+efi_fb_getc(dev_t dev)
+{
+	return efi_cons_getc(dev);
+}
+
+void
+efi_fb_putc(dev_t dev, int c)
+{
+	efi_cons_putc(dev, c);
 }
 
 static void
@@ -310,6 +344,7 @@ efi_framebuffer(void)
 	uint32_t reg[4];
 	uint32_t width, height, stride;
 	char *format;
+	char *prop;
 
 	/*
 	 * Don't create a "simple-framebuffer" node if we already have
@@ -319,13 +354,19 @@ efi_framebuffer(void)
 	node = fdt_find_node("/chosen");
 	for (child = fdt_child_node(node); child;
 	     child = fdt_next_node(child)) {
-		if (fdt_node_is_compatible(child, "simple-framebuffer"))
+		if (!fdt_node_is_compatible(child, "simple-framebuffer"))
+			continue;
+		if (fdt_node_property(child, "status", &prop) &&
+		    strcmp(prop, "okay") == 0)
 			return;
 	}
 	node = fdt_find_node("/");
 	for (child = fdt_child_node(node); child;
 	     child = fdt_next_node(child)) {
-		if (fdt_node_is_compatible(child, "simple-framebuffer"))
+		if (!fdt_node_is_compatible(child, "simple-framebuffer"))
+			continue;
+		if (fdt_node_property(child, "status", &prop) &&
+		    strcmp(prop, "okay") == 0)
 			return;
 	}
 
@@ -385,6 +426,36 @@ efi_framebuffer(void)
 	fdt_node_add_property(child, "reg", reg, (acells + scells) * 4);
 	fdt_node_add_property(child, "compatible",
 	    "simple-framebuffer", strlen("simple-framebuffer") + 1);
+}
+
+
+void
+efi_console(void)
+{
+	char path[128];
+	void *node, *child;
+	char *prop;
+
+	if (cn_tab->cn_dev != framebuffer)
+		return;
+
+	/* Find the desired framebuffer node. */
+	node = fdt_find_node("/chosen");
+	for (child = fdt_child_node(node); child;
+	     child = fdt_next_node(child)) {
+		if (!fdt_node_is_compatible(child, "simple-framebuffer"))
+			continue;
+		if (fdt_node_property(child, "status", &prop) &&
+		    strcmp(prop, "okay") == 0)
+			break;
+	}
+	if (child == NULL)
+		return;
+
+	/* Point stdout-path at the framebuffer node. */
+	strlcpy(path, "/chosen/", sizeof(path));
+	strlcat(path, fdt_node_name(child), sizeof(path));
+	fdt_node_add_property(node, "stdout-path", path, strlen(path) + 1);
 }
 
 int acpi = 0;
@@ -463,6 +534,7 @@ efi_makebootargs(char *bootargs)
 	fdt_node_add_property(node, "openbsd,uefi-mmap-desc-ver", zero, 4);
 
 	efi_framebuffer();
+	efi_console();
 
 	fdt_finalize();
 
@@ -648,21 +720,39 @@ devboot(dev_t dev, char *p)
 	p[2] = '0' + sd_boot_vol;
 }
 
+const char cdevs[][4] = { "com", "fb" };
+const int ncdevs = nitems(cdevs);
+
 int
 cnspeed(dev_t dev, int sp)
 {
 	return 115200;
 }
 
+char ttyname_buf[8];
+
 char *
 ttyname(int fd)
 {
-	return "com0";
+	snprintf(ttyname_buf, sizeof ttyname_buf, "%s%d",
+	    cdevs[major(cn_tab->cn_dev)], minor(cn_tab->cn_dev));
+
+	return ttyname_buf;
 }
 
 dev_t
 ttydev(char *name)
 {
+	int i, unit = -1;
+	char *no = name + strlen(name) - 1;
+
+	while (no >= name && *no >= '0' && *no <= '9')
+		unit = (unit < 0 ? 0 : (unit * 10)) + *no-- - '0';
+	if (no < name || unit < 0)
+		return NODEV;
+	for (i = 0; i < ncdevs; i++)
+		if (strncmp(name, cdevs[i], no - name + 1) == 0)
+			return makedev(i, unit);
 	return NODEV;
 }
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2019/08/03 15:22:20 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2019/08/12 19:17:35 kettenis Exp $
 
 NOMAN=		#
 
@@ -36,7 +36,7 @@ SRCS+=	aes_xts.c bcrypt_pbkdf.c blowfish.c explicit_bzero.c hmac_sha1.c \
 	pkcs5_pbkdf2.c rijndael.c sha1.c sha2.c softraid.c
 
 .PATH:	${S}/lib/libkern/arch/arm64 ${S}/lib/libkern
-SRCS+=	divdi3.c moddi3.c qdivrem.c strlcpy.c strlen.c
+SRCS+=	divdi3.c moddi3.c qdivrem.c strlcat.c strlcpy.c strlen.c
 
 .PATH:	${S}/lib/libz
 SRCS+=	adler32.c crc32.c inflate.c inftrees.c
