@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.32 2019/07/15 18:26:39 remi Exp $ */
+/*	$OpenBSD: packet.c,v 1.33 2019/08/12 20:32:39 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -219,12 +219,16 @@ recv_packet(int fd, short event, void *bula)
 	/* switch OSPF packet type */
 	switch (ospf_hdr->type) {
 	case PACKET_TYPE_HELLO:
-		inet_aton(AllDRouters, &addr);
-		if (ip_hdr.ip_dst.s_addr == addr.s_addr) {
-			log_debug("recv_packet: invalid destination IP "
-			     "address");
-			break;
-		}
+		inet_aton(AllSPFRouters, &addr);
+		if (iface->type == IF_TYPE_BROADCAST ||
+		    iface->type == IF_TYPE_POINTOPOINT)
+			if (ip_hdr.ip_dst.s_addr != addr.s_addr) {
+				log_warnx("%s: hello ignored on interface %s, "
+				    "invalid destination IP address %s",
+				    __func__, iface->name,
+				    inet_ntoa(ip_hdr.ip_dst));
+				break;
+			}
 
 		recv_hello(iface, ip_hdr.ip_src, ospf_hdr->rtr_id, buf, len);
 		break;
