@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_sign.3,v 1.4 2019/08/11 12:46:38 schwarze Exp $
+.\" $OpenBSD: CMS_sign.3,v 1.5 2019/08/12 16:17:50 schwarze Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 11 2019 $
+.Dd $Mdocdate: August 12 2019 $
 .Dt CMS_SIGN 3
 .Os
 .Sh NAME
@@ -196,7 +196,7 @@ and the
 .Dv CMS_PARTIAL
 flag set.
 Then one or more signers can be added using the function
-.Xr CMS_sign_add1_signer 3 ,
+.Xr CMS_add1_signer 3 ,
 non default digests can be used and custom attributes added.
 .Xr CMS_final 3
 must then be called to finalize the structure if streaming is not
