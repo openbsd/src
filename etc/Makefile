@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.470 2019/06/19 16:20:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.471 2019/08/12 09:49:21 claudio Exp $
 
 .include <bsd.own.mk>
 
@@ -154,7 +154,7 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 600 pap-secrets \
 		    ${DESTDIR}/etc/ppp
 	cd rpki; \
-		${INSTALL} -c -o root -g wheel -m 600 \
+		${INSTALL} -c -o root -g wheel -m 644 \
 		    afrinic.tal apnic.tal lacnic.tal ripe.tal \
 		    ${DESTDIR}/etc/rpki
 	cd examples; \
