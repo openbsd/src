@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.25 2019/08/12 19:17:35 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.26 2019/08/12 20:04:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -427,7 +427,6 @@ efi_framebuffer(void)
 	fdt_node_add_property(child, "compatible",
 	    "simple-framebuffer", strlen("simple-framebuffer") + 1);
 }
-
 
 void
 efi_console(void)
