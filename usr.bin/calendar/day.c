@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.36 2019/02/01 16:22:53 millert Exp $	*/
+/*	$OpenBSD: day.c,v 1.37 2019/08/12 20:03:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -323,10 +323,12 @@ isnow(char *endp, int bodun)
 		if (month == -1) {
 			month = tp->tm_mon + 1;
 			interval = MONTHLY;
-		} else if (calendar)
-			adjust_calendar(&day, &month);
-		if ((month > 12) || (month < 1))
-			return (NULL);
+		} else {
+			if ((month > 12) || (month < 1))
+				return (NULL);
+			if (calendar)
+				adjust_calendar(&day, &month);
+		}
 	}
 
 	/* 2. {Monthname} XYZ ... */
@@ -371,6 +373,8 @@ isnow(char *endp, int bodun)
 		else {
 			/* F_ISDAY set, v2 > 12, or no way to tell */
 			month = v1;
+			if ((month > 12) || (month < 1))
+				return (NULL);
 			/* if no recognizable day, assume the first */
 			day = v2 ? v2 : 1;
 			if ((flags & F_ISDAY)) {
