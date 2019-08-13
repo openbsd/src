@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.29 2019/08/12 09:56:47 kettenis Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.30 2019/08/13 18:31:23 kettenis Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -165,32 +165,9 @@ struct ipmi_thread {
 #define	IPMI_GET_WDOG_PRECDM	7
 #define	IPMI_GET_WDOG_MAX	8
 
-void	ipmi_create_thread(void *);
-void	ipmi_poll_thread(void *);
-
-int	kcs_probe(struct ipmi_softc *);
-int	kcs_reset(struct ipmi_softc *);
-int	kcs_sendmsg(struct ipmi_cmd *);
-int	kcs_recvmsg(struct ipmi_cmd *);
-
-int	bt_probe(struct ipmi_softc *);
-int	bt_reset(struct ipmi_softc *);
-int	bt_sendmsg(struct ipmi_cmd *);
-int	bt_recvmsg(struct ipmi_cmd *);
-
-int	smic_probe(struct ipmi_softc *);
-int	smic_reset(struct ipmi_softc *);
-int	smic_sendmsg(struct ipmi_cmd *);
-int	smic_recvmsg(struct ipmi_cmd *);
-
-struct dmd_ipmi {
-	u_int8_t	dmd_sig[4];		/* Signature 'IPMI' */
-	u_int8_t	dmd_i2c_address;	/* Address of BMC */
-	u_int8_t	dmd_nvram_address;	/* Address of NVRAM */
-	u_int8_t	dmd_if_type;		/* IPMI Interface Type */
-	u_int8_t	dmd_if_rev;		/* IPMI Interface Revision */
-} __packed;
-
+int	ipmi_probe(void *);
+void	ipmi_attach_common(struct ipmi_softc *, struct ipmi_attach_args *);
+int	ipmi_activate(struct device *, int);
 
 #define APP_NETFN			0x06
 #define APP_GET_DEVICE_ID		0x01
@@ -315,7 +292,5 @@ struct sdrtype2 {
 	u_int8_t	typelen;
 	u_int8_t	name[1];
 } __packed;
-
-int ipmi_probe(void *);
 
 #endif				/* _IPMIVAR_H_ */

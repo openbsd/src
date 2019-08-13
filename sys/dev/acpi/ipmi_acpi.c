@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmi_acpi.c,v 1.1 2018/03/14 18:52:16 patrick Exp $ */
+/* $OpenBSD: ipmi_acpi.c,v 1.2 2019/08/13 18:31:23 kettenis Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -38,8 +38,6 @@
 int	ipmi_acpi_match(struct device *, void *, void *);
 void	ipmi_acpi_attach(struct device *, struct device *, void *);
 int	ipmi_acpi_parse_crs(int, union acpi_resource *, void *);
-
-extern void ipmi_attach(struct device *, struct device *, void *);
 
 struct ipmi_acpi_softc {
 	struct ipmi_softc	 sc;
@@ -111,6 +109,7 @@ ipmi_acpi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	memset(&ia, 0, sizeof(ia));
 	ia.iaa_iot = sc->sc_iot;
 	ia.iaa_memt = sc->sc_iot;
 	ia.iaa_if_type = sc->sc_ift;
@@ -121,7 +120,7 @@ ipmi_acpi_attach(struct device *parent, struct device *self, void *aux)
 	ia.iaa_if_iobase = sc->sc_iobase;
 	ia.iaa_if_iotype = sc->sc_iotype;
 
-	ipmi_attach(parent, self, &ia);
+	ipmi_attach_common(&sc->sc, &ia);
 }
 
 int

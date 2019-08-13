@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.103 2019/08/12 09:56:47 kettenis Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.104 2019/08/13 18:31:23 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -41,9 +41,6 @@
 #include <machine/bus.h>
 #include <machine/smbiosvar.h>
 
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-
 #include <dev/ipmivar.h>
 #include <dev/ipmi.h>
 
@@ -60,28 +57,7 @@ int	ipmi_enabled = 0;
 
 #define SENSOR_REFRESH_RATE (5 * hz)
 
-#define SMBIOS_TYPE_IPMI	0x26
-
 #define DEVNAME(s)  ((s)->sc_dev.dv_xname)
-
-/*
- * Format of SMBIOS IPMI Flags
- *
- * bit0: interrupt trigger mode (1=level, 0=edge)
- * bit1: interrupt polarity (1=active high, 0=active low)
- * bit2: reserved
- * bit3: address LSB (1=odd,0=even)
- * bit4: interrupt (1=specified, 0=not specified)
- * bit5: reserved
- * bit6/7: register spacing (1,4,2,err)
- */
-#define SMIPMI_FLAG_IRQLVL		(1L << 0)
-#define SMIPMI_FLAG_IRQEN		(1L << 3)
-#define SMIPMI_FLAG_ODDOFFSET		(1L << 4)
-#define SMIPMI_FLAG_IFSPACING(x)	(((x)>>6)&0x3)
-#define	 IPMI_IOSPACING_BYTE		 0
-#define	 IPMI_IOSPACING_WORD		 2
-#define	 IPMI_IOSPACING_DWORD		 1
 
 #define IPMI_BTMSG_LEN			0
 #define IPMI_BTMSG_NFLN			1
@@ -158,9 +134,6 @@ int	ipmi_watchdog(void *, int);
 void	ipmi_watchdog_tickle(void *);
 void	ipmi_watchdog_set(void *);
 
-int	ipmi_match(struct device *, void *, void *);
-void	ipmi_attach(struct device *, struct device *, void *);
-int	ipmi_activate(struct device *, int);
 struct ipmi_softc *ipmilookup(dev_t dev);
 
 int	ipmiopen(dev_t, int, int, struct proc *);
@@ -182,18 +155,33 @@ void	cmn_buildmsg(struct ipmi_cmd *);
 int	getbits(u_int8_t *, int, int);
 int	ipmi_sensor_type(int, int, int);
 
-void	ipmi_smbios_probe(struct smbios_ipmi *, struct ipmi_attach_args *);
 void	ipmi_refresh_sensors(struct ipmi_softc *sc);
 int	ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia);
 void	ipmi_unmap_regs(struct ipmi_softc *);
-
-void	*scan_sig(long, long, int, int, const void *);
 
 int	ipmi_sensor_status(struct ipmi_softc *, struct ipmi_sensor *,
     u_int8_t *);
 
 int	 add_child_sensors(struct ipmi_softc *, u_int8_t *, int, int, int,
     int, int, int, const char *);
+
+void	ipmi_create_thread(void *);
+void	ipmi_poll_thread(void *);
+
+int	kcs_probe(struct ipmi_softc *);
+int	kcs_reset(struct ipmi_softc *);
+int	kcs_sendmsg(struct ipmi_cmd *);
+int	kcs_recvmsg(struct ipmi_cmd *);
+
+int	bt_probe(struct ipmi_softc *);
+int	bt_reset(struct ipmi_softc *);
+int	bt_sendmsg(struct ipmi_cmd *);
+int	bt_recvmsg(struct ipmi_cmd *);
+
+int	smic_probe(struct ipmi_softc *);
+int	smic_reset(struct ipmi_softc *);
+int	smic_sendmsg(struct ipmi_cmd *);
+int	smic_recvmsg(struct ipmi_cmd *);
 
 struct ipmi_if kcs_if = {
 	"KCS",
@@ -822,31 +810,9 @@ struct ipmi_bmc_response {
 	u_int8_t	bmc_data[1];
 };
 
-struct cfattach ipmi_ca = {
-	sizeof(struct ipmi_softc), ipmi_match, ipmi_attach,
-	NULL, ipmi_activate
-};
-
 struct cfdriver ipmi_cd = {
 	NULL, "ipmi", DV_DULL
 };
-
-/* Scan memory for signature */
-void *
-scan_sig(long start, long end, int skip, int len, const void *data)
-{
-	void *va;
-
-	while (start < end) {
-		va = ISA_HOLE_VADDR(start);
-		if (memcmp(va, data, len) == 0)
-			return (va);
-
-		start += skip;
-	}
-
-	return (NULL);
-}
 
 void
 dumpb(const char *lbl, int len, const u_int8_t *data)
@@ -858,65 +824,6 @@ dumpb(const char *lbl, int len, const u_int8_t *data)
 		printf("%.2x ", data[idx]);
 
 	printf("\n");
-}
-
-void
-ipmi_smbios_probe(struct smbios_ipmi *pipmi, struct ipmi_attach_args *ia)
-{
-
-	dbg_printf(1, "ipmi_smbios_probe: %02x %02x %02x %02x %08llx %02x "
-	    "%02x\n",
-	    pipmi->smipmi_if_type,
-	    pipmi->smipmi_if_rev,
-	    pipmi->smipmi_i2c_address,
-	    pipmi->smipmi_nvram_address,
-	    pipmi->smipmi_base_address,
-	    pipmi->smipmi_base_flags,
-	    pipmi->smipmi_irq);
-
-	ia->iaa_if_type = pipmi->smipmi_if_type;
-	ia->iaa_if_rev = pipmi->smipmi_if_rev;
-	ia->iaa_if_irq = (pipmi->smipmi_base_flags & SMIPMI_FLAG_IRQEN) ?
-	    pipmi->smipmi_irq : -1;
-	ia->iaa_if_irqlvl = (pipmi->smipmi_base_flags & SMIPMI_FLAG_IRQLVL) ?
-	    IST_LEVEL : IST_EDGE;
-
-	switch (SMIPMI_FLAG_IFSPACING(pipmi->smipmi_base_flags)) {
-	case IPMI_IOSPACING_BYTE:
-		ia->iaa_if_iospacing = 1;
-		break;
-
-	case IPMI_IOSPACING_DWORD:
-		ia->iaa_if_iospacing = 4;
-		break;
-
-	case IPMI_IOSPACING_WORD:
-		ia->iaa_if_iospacing = 2;
-		break;
-
-	default:
-		ia->iaa_if_iospacing = 1;
-		printf("ipmi: unknown register spacing\n");
-	}
-
-	/* Calculate base address (PCI BAR format) */
-	if (pipmi->smipmi_base_address & 0x1) {
-		ia->iaa_if_iotype = 'i';
-		ia->iaa_if_iobase = pipmi->smipmi_base_address & ~0x1;
-	} else {
-		ia->iaa_if_iotype = 'm';
-		ia->iaa_if_iobase = pipmi->smipmi_base_address & ~0xF;
-	}
-	if (pipmi->smipmi_base_flags & SMIPMI_FLAG_ODDOFFSET)
-		ia->iaa_if_iobase++;
-
-	if (pipmi->smipmi_base_flags == 0x7f) {
-		/* IBM 325 eServer workaround */
-		ia->iaa_if_iospacing = 1;
-		ia->iaa_if_iobase = pipmi->smipmi_base_address;
-		ia->iaa_if_iotype = 'i';
-		return;
-	}
 }
 
 /*
@@ -1608,81 +1515,9 @@ ipmi_create_thread(void *arg)
 	}
 }
 
-int
-ipmi_probe(void *aux)
-{
-	struct ipmi_attach_args *ia = aux;
-	struct dmd_ipmi *pipmi;
-	struct smbtable tbl;
-
-	tbl.cookie = 0;
-	if (smbios_find_table(SMBIOS_TYPE_IPMIDEV, &tbl))
-		ipmi_smbios_probe(tbl.tblhdr, ia);
-	else {
-		pipmi = (struct dmd_ipmi *)scan_sig(0xC0000L, 0xFFFFFL, 16, 4,
-		    "IPMI");
-		/* XXX hack to find Dell PowerEdge 8450 */
-		if (pipmi == NULL) {
-			/* no IPMI found */
-			return (0);
-		}
-
-		/* we have an IPMI signature, fill in attach arg structure */
-		ia->iaa_if_type = pipmi->dmd_if_type;
-		ia->iaa_if_rev = pipmi->dmd_if_rev;
-	}
-
-	return (1);
-}
-
-int
-ipmi_match(struct device *parent, void *match, void *aux)
-{
-	struct ipmi_softc	*sc;
-	struct ipmi_attach_args *ia = aux;
-	struct cfdata		*cf = match;
-	u_int8_t		cmd[32];
-	int			rv = 0;
-
-	if (strcmp(ia->iaa_name, cf->cf_driver->cd_name))
-		return (0);
-
-	/* XXX local softc is wrong wrong wrong */
-	sc = malloc(sizeof(*sc), M_TEMP, M_WAITOK | M_ZERO);
-	strlcpy(sc->sc_dev.dv_xname, "ipmi0", sizeof(sc->sc_dev.dv_xname));
-
-	/* Map registers */
-	if (ipmi_map_regs(sc, ia) == 0) {
-		sc->sc_if->probe(sc);
-
-		/* Identify BMC device early to detect lying bios */
-		struct ipmi_cmd c;
-		c.c_sc = sc;
-		c.c_rssa = BMC_SA;
-		c.c_rslun = BMC_LUN;
-		c.c_netfn = APP_NETFN;
-		c.c_cmd = APP_GET_DEVICE_ID;
-		c.c_txlen = 0;
-		c.c_maxrxlen = sizeof(cmd);
-		c.c_rxlen = 0;
-		c.c_data = cmd;
-		ipmi_cmd(&c);
-
-		dbg_dump(1, "bmc data", c.c_rxlen, cmd);
-		rv = 1; /* GETID worked, we got IPMI */
-		ipmi_unmap_regs(sc);
-	}
-
-	free(sc, M_TEMP, sizeof(*sc));
-
-	return (rv);
-}
-
 void
-ipmi_attach(struct device *parent, struct device *self, void *aux)
+ipmi_attach_common(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 {
-	struct ipmi_softc	*sc = (void *) self;
-	struct ipmi_attach_args *ia = aux;
 	struct ipmi_cmd		*c = &sc->sc_ioctl.cmd;
 
 	/* Map registers */
@@ -1960,3 +1795,200 @@ ipmi_watchdog_set(void *arg)
 	c.c_data = wdog;
 	ipmi_cmd(&c);
 }
+
+#if defined(__amd64__) || defined(__i386__)
+
+#include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
+
+/*
+ * Format of SMBIOS IPMI Flags
+ *
+ * bit0: interrupt trigger mode (1=level, 0=edge)
+ * bit1: interrupt polarity (1=active high, 0=active low)
+ * bit2: reserved
+ * bit3: address LSB (1=odd,0=even)
+ * bit4: interrupt (1=specified, 0=not specified)
+ * bit5: reserved
+ * bit6/7: register spacing (1,4,2,err)
+ */
+#define SMIPMI_FLAG_IRQLVL		(1L << 0)
+#define SMIPMI_FLAG_IRQEN		(1L << 3)
+#define SMIPMI_FLAG_ODDOFFSET		(1L << 4)
+#define SMIPMI_FLAG_IFSPACING(x)	(((x)>>6)&0x3)
+#define	 IPMI_IOSPACING_BYTE		 0
+#define	 IPMI_IOSPACING_WORD		 2
+#define	 IPMI_IOSPACING_DWORD		 1
+
+struct dmd_ipmi {
+	u_int8_t	dmd_sig[4];		/* Signature 'IPMI' */
+	u_int8_t	dmd_i2c_address;	/* Address of BMC */
+	u_int8_t	dmd_nvram_address;	/* Address of NVRAM */
+	u_int8_t	dmd_if_type;		/* IPMI Interface Type */
+	u_int8_t	dmd_if_rev;		/* IPMI Interface Revision */
+} __packed;
+
+void	*scan_sig(long, long, int, int, const void *);
+
+void	ipmi_smbios_probe(struct smbios_ipmi *, struct ipmi_attach_args *);
+int	ipmi_match(struct device *, void *, void *);
+void	ipmi_attach(struct device *, struct device *, void *);
+
+struct cfattach ipmi_ca = {
+	sizeof(struct ipmi_softc), ipmi_match, ipmi_attach,
+	NULL, ipmi_activate
+};
+
+int
+ipmi_match(struct device *parent, void *match, void *aux)
+{
+	struct ipmi_softc	*sc;
+	struct ipmi_attach_args *ia = aux;
+	struct cfdata		*cf = match;
+	u_int8_t		cmd[32];
+	int			rv = 0;
+
+	if (strcmp(ia->iaa_name, cf->cf_driver->cd_name))
+		return (0);
+
+	/* XXX local softc is wrong wrong wrong */
+	sc = malloc(sizeof(*sc), M_TEMP, M_WAITOK | M_ZERO);
+	strlcpy(sc->sc_dev.dv_xname, "ipmi0", sizeof(sc->sc_dev.dv_xname));
+
+	/* Map registers */
+	if (ipmi_map_regs(sc, ia) == 0) {
+		sc->sc_if->probe(sc);
+
+		/* Identify BMC device early to detect lying bios */
+		struct ipmi_cmd c;
+		c.c_sc = sc;
+		c.c_rssa = BMC_SA;
+		c.c_rslun = BMC_LUN;
+		c.c_netfn = APP_NETFN;
+		c.c_cmd = APP_GET_DEVICE_ID;
+		c.c_txlen = 0;
+		c.c_maxrxlen = sizeof(cmd);
+		c.c_rxlen = 0;
+		c.c_data = cmd;
+		ipmi_cmd(&c);
+
+		dbg_dump(1, "bmc data", c.c_rxlen, cmd);
+		rv = 1; /* GETID worked, we got IPMI */
+		ipmi_unmap_regs(sc);
+	}
+
+	free(sc, M_TEMP, sizeof(*sc));
+
+	return (rv);
+}
+
+void
+ipmi_attach(struct device *parent, struct device *self, void *aux)
+{
+	ipmi_attach_common((struct ipmi_softc *)self, aux);
+}
+
+/* Scan memory for signature */
+void *
+scan_sig(long start, long end, int skip, int len, const void *data)
+{
+	void *va;
+
+	while (start < end) {
+		va = ISA_HOLE_VADDR(start);
+		if (memcmp(va, data, len) == 0)
+			return (va);
+
+		start += skip;
+	}
+
+	return (NULL);
+}
+
+void
+ipmi_smbios_probe(struct smbios_ipmi *pipmi, struct ipmi_attach_args *ia)
+{
+
+	dbg_printf(1, "ipmi_smbios_probe: %02x %02x %02x %02x %08llx %02x "
+	    "%02x\n",
+	    pipmi->smipmi_if_type,
+	    pipmi->smipmi_if_rev,
+	    pipmi->smipmi_i2c_address,
+	    pipmi->smipmi_nvram_address,
+	    pipmi->smipmi_base_address,
+	    pipmi->smipmi_base_flags,
+	    pipmi->smipmi_irq);
+
+	ia->iaa_if_type = pipmi->smipmi_if_type;
+	ia->iaa_if_rev = pipmi->smipmi_if_rev;
+	ia->iaa_if_irq = (pipmi->smipmi_base_flags & SMIPMI_FLAG_IRQEN) ?
+	    pipmi->smipmi_irq : -1;
+	ia->iaa_if_irqlvl = (pipmi->smipmi_base_flags & SMIPMI_FLAG_IRQLVL) ?
+	    IST_LEVEL : IST_EDGE;
+
+	switch (SMIPMI_FLAG_IFSPACING(pipmi->smipmi_base_flags)) {
+	case IPMI_IOSPACING_BYTE:
+		ia->iaa_if_iospacing = 1;
+		break;
+
+	case IPMI_IOSPACING_DWORD:
+		ia->iaa_if_iospacing = 4;
+		break;
+
+	case IPMI_IOSPACING_WORD:
+		ia->iaa_if_iospacing = 2;
+		break;
+
+	default:
+		ia->iaa_if_iospacing = 1;
+		printf("ipmi: unknown register spacing\n");
+	}
+
+	/* Calculate base address (PCI BAR format) */
+	if (pipmi->smipmi_base_address & 0x1) {
+		ia->iaa_if_iotype = 'i';
+		ia->iaa_if_iobase = pipmi->smipmi_base_address & ~0x1;
+	} else {
+		ia->iaa_if_iotype = 'm';
+		ia->iaa_if_iobase = pipmi->smipmi_base_address & ~0xF;
+	}
+	if (pipmi->smipmi_base_flags & SMIPMI_FLAG_ODDOFFSET)
+		ia->iaa_if_iobase++;
+
+	if (pipmi->smipmi_base_flags == 0x7f) {
+		/* IBM 325 eServer workaround */
+		ia->iaa_if_iospacing = 1;
+		ia->iaa_if_iobase = pipmi->smipmi_base_address;
+		ia->iaa_if_iotype = 'i';
+		return;
+	}
+}
+
+int
+ipmi_probe(void *aux)
+{
+	struct ipmi_attach_args *ia = aux;
+	struct dmd_ipmi *pipmi;
+	struct smbtable tbl;
+
+	tbl.cookie = 0;
+	if (smbios_find_table(SMBIOS_TYPE_IPMIDEV, &tbl))
+		ipmi_smbios_probe(tbl.tblhdr, ia);
+	else {
+		pipmi = (struct dmd_ipmi *)scan_sig(0xC0000L, 0xFFFFFL, 16, 4,
+		    "IPMI");
+		/* XXX hack to find Dell PowerEdge 8450 */
+		if (pipmi == NULL) {
+			/* no IPMI found */
+			return (0);
+		}
+
+		/* we have an IPMI signature, fill in attach arg structure */
+		ia->iaa_if_type = pipmi->dmd_if_type;
+		ia->iaa_if_rev = pipmi->dmd_if_rev;
+	}
+
+	return (1);
+}
+
+#endif
