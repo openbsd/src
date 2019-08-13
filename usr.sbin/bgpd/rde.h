@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.223 2019/08/09 13:44:27 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.224 2019/08/13 12:16:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -464,16 +464,17 @@ int	 community_to_rd(struct community *, u_int64_t *);
 void		 prefix_evaluate(struct prefix *, struct rib_entry *);
 
 /* rde_filter.c */
-void		 rde_filterstate_prep(struct filterstate *, struct rde_aspath *,
-		     struct rde_community *, struct nexthop *, u_int8_t);
-void		 rde_filterstate_clean(struct filterstate *);
+void	rde_apply_set(struct filter_set_head *, struct rde_peer *,
+	    struct rde_peer *, struct filterstate *, u_int8_t);
+void	rde_filterstate_prep(struct filterstate *, struct rde_aspath *,
+	    struct rde_community *, struct nexthop *, u_int8_t);
+void	rde_filterstate_clean(struct filterstate *);
+int	rde_filter_equal(struct filter_head *, struct filter_head *,
+	    struct rde_peer *);
+void	rde_filter_calc_skip_steps(struct filter_head *);
 enum filter_actions rde_filter(struct filter_head *, struct rde_peer *,
-		     struct prefix *, struct filterstate *);
-void		 rde_apply_set(struct filter_set_head *, struct filterstate *,
-		     u_int8_t, struct rde_peer *, struct rde_peer *);
-int		 rde_filter_equal(struct filter_head *, struct filter_head *,
-		     struct rde_peer *);
-void		 rde_filter_calc_skip_steps(struct filter_head *);
+	    struct rde_peer *, struct bgpd_addr *, u_int8_t, u_int8_t,
+	    struct filterstate *);
 
 /* rde_prefix.c */
 void	 pt_init(void);

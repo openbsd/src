@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.484 2019/08/09 13:44:27 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.485 2019/08/13 12:16:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1402,7 +1402,6 @@ rde_update_update(struct rde_peer *peer, struct filterstate *in,
     struct bgpd_addr *prefix, u_int8_t prefixlen)
 {
 	struct filterstate	 state;
-	struct prefix		*p;
 	enum filter_actions	 action;
 	u_int8_t		 vstate;
 	u_int16_t		 i;
@@ -1428,17 +1427,14 @@ rde_update_update(struct rde_peer *peer, struct filterstate *in,
 	if (in->aspath.flags & F_ATTR_PARSE_ERR)
 		wmsg = "path invalid, withdraw";
 
-	p = prefix_get(&ribs[RIB_ADJ_IN].rib, peer, prefix, prefixlen);
-	if (p == NULL)
-		fatalx("rde_update_update: no prefix in Adj-RIB-In");
-
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (!rib_valid(i))
 			continue;
 		rde_filterstate_prep(&state, &in->aspath, &in->communities,
 		    in->nexthop, in->nhflags);
 		/* input filter */
-		action = rde_filter(ribs[i].in_rules, peer, p, &state);
+		action = rde_filter(ribs[i].in_rules, peer, peer, prefix,
+		    prefixlen, vstate, &state);
 
 		if (action == ACTION_ALLOW) {
 			rde_update_log("update", i, peer,
@@ -3327,7 +3323,8 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 
 			rde_filterstate_prep(&state, asp, prefix_communities(p),
 			    prefix_nexthop(p), prefix_nhflags(p));
-			action = rde_filter(rib->in_rules, peer, p, &state);
+			action = rde_filter(rib->in_rules, peer, peer, &prefix,
+			    pt->prefixlen, p->validation_state, &state);
 
 			if (action == ACTION_ALLOW) {
 				/* update Local-RIB */
@@ -3959,10 +3956,10 @@ network_add(struct network_config *nc, struct filterstate *state)
 		}
 	}
 
-	rde_apply_set(&nc->attrset, state, nc->prefix.aid, peerself, peerself);
+	rde_apply_set(&nc->attrset, peerself, peerself, state, nc->prefix.aid);
 	if (vpnset)
-		rde_apply_set(vpnset, state, nc->prefix.aid, peerself,
-		    peerself);
+		rde_apply_set(vpnset, peerself, peerself, state,
+		    nc->prefix.aid);
 
 	vstate = rde_roa_validity(&conf->rde_roa, &nc->prefix,
 	    nc->prefixlen, aspath_origin(state->aspath.aspath));

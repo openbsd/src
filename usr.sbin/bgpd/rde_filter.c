@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.121 2019/07/01 07:07:08 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.122 2019/08/13 12:16:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -29,14 +29,11 @@
 #include "rde.h"
 #include "log.h"
 
-int	rde_filter_match(struct filter_rule *, struct rde_peer *,
-	    struct filterstate *, struct prefix *);
-int	rde_prefix_match(struct filter_prefix *, struct prefix *);
 int	filterset_equal(struct filter_set_head *, struct filter_set_head *);
 
 void
-rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
-    u_int8_t aid, struct rde_peer *from, struct rde_peer *peer)
+rde_apply_set(struct filter_set_head *sh, struct rde_peer *peer,
+    struct rde_peer *from, struct filterstate *state, u_int8_t aid)
 {
 	struct filter_set	*set;
 	u_char			*np;
@@ -178,9 +175,42 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 	}
 }
 
-int
+/* return 1 when prefix matches filter_prefix, 0 if not */
+static int
+rde_prefix_match(struct filter_prefix *fp, struct bgpd_addr *prefix,
+    u_int8_t plen)
+{
+	if (fp->addr.aid != prefix->aid)
+		/* don't use IPv4 rules for IPv6 and vice versa */
+		return (0);
+
+	if (prefix_compare(prefix, &fp->addr, fp->len))
+		return (0);
+
+	/* test prefixlen stuff too */
+	switch (fp->op) {
+	case OP_NONE: /* perfect match */
+		return (plen == fp->len);
+	case OP_EQ:
+		return (plen == fp->len_min);
+	case OP_NE:
+		return (plen != fp->len_min);
+	case OP_RANGE:
+		return ((plen >= fp->len_min) &&
+		    (plen <= fp->len_max));
+	case OP_XRANGE:
+		return ((plen < fp->len_min) ||
+		    (plen > fp->len_max));
+	default:
+		log_warnx("%s: unsupported prefix operation", __func__);
+		return (0);
+	}
+}
+
+static int
 rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
-    struct filterstate *state, struct prefix *p)
+    struct rde_peer *from, struct filterstate *state,
+    struct bgpd_addr *prefix, u_int8_t plen, u_int8_t vstate)
 {
 	struct rde_aspath *asp = &state->aspath;
 	int i;
@@ -191,7 +221,7 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 		return (0);
 
 	if (f->match.ovs.is_set) {
-		if (prefix_vstate(p) != f->match.ovs.validity)
+		if (vstate != f->match.ovs.validity)
 			return (0);
 	}
 
@@ -223,7 +253,7 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 		if (f->match.nexthop.flags == FILTER_NEXTHOP_ADDR)
 			cmpaddr = &f->match.nexthop.addr;
 		else
-			cmpaddr = &prefix_peer(p)->remote_addr;
+			cmpaddr = &from->remote_addr;
 		if (cmpaddr->aid != nexthop->aid)
 			/* don't use IPv4 rules for IPv6 and vice versa */
 			return (0);
@@ -245,11 +275,6 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 
 	/* origin-set lookups match only on ROA_VALID */
 	if (asp != NULL && f->match.originset.ps != NULL) {
-		struct bgpd_addr addr, *prefix = &addr;
-		u_int8_t plen;
-
-		pt_getaddr(p->pt, prefix);
-		plen = p->pt->prefixlen;
 		if (trie_roa_check(&f->match.originset.ps->th, prefix, plen,
 		    aspath_origin(asp->aspath)) != ROA_VALID)
 			return (0);
@@ -259,57 +284,15 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 	 * prefixset and prefix filter rules are mutual exclusive
 	 */
 	if (f->match.prefixset.flags != 0) {
-		struct bgpd_addr addr, *prefix = &addr;
-		u_int8_t plen;
-
-		pt_getaddr(p->pt, prefix);
-		plen = p->pt->prefixlen;
 		if (f->match.prefixset.ps == NULL ||
 		    !trie_match(&f->match.prefixset.ps->th, prefix, plen,
 		    (f->match.prefixset.flags & PREFIXSET_FLAG_LONGER)))
 			return (0);
 	} else if (f->match.prefix.addr.aid != 0)
-		return (rde_prefix_match(&f->match.prefix, p));
+		return (rde_prefix_match(&f->match.prefix, prefix, plen));
 
 	/* matched somewhen or is anymatch rule  */
 	return (1);
-}
-
-/* return 1 when prefix matches filter_prefix, 0 if not */
-int
-rde_prefix_match(struct filter_prefix *fp, struct prefix *p)
-{
-	struct bgpd_addr addr, *prefix = &addr;
-	u_int8_t plen;
-
-	pt_getaddr(p->pt, prefix);
-	plen = p->pt->prefixlen;
-
-	if (fp->addr.aid != prefix->aid)
-		/* don't use IPv4 rules for IPv6 and vice versa */
-		return (0);
-
-	if (prefix_compare(prefix, &fp->addr, fp->len))
-		return (0);
-
-	/* test prefixlen stuff too */
-	switch (fp->op) {
-	case OP_NONE: /* perfect match */
-		return (plen == fp->len);
-	case OP_EQ:
-		return (plen == fp->len_min);
-	case OP_NE:
-		return (plen != fp->len_min);
-	case OP_RANGE:
-		return ((plen >= fp->len_min) &&
-		    (plen <= fp->len_max));
-	case OP_XRANGE:
-		return ((plen < fp->len_min) ||
-		    (plen > fp->len_max));
-	default:
-		log_warnx("%s: unsupported prefix operation", __func__);
-		return (0);
-	}
 }
 
 /* return true when the rule f can never match for this peer */
@@ -753,7 +736,8 @@ rde_filter_calc_skip_steps(struct filter_head *rules)
 
 enum filter_actions
 rde_filter(struct filter_head *rules, struct rde_peer *peer,
-    struct prefix *p, struct filterstate *state)
+    struct rde_peer *from, struct bgpd_addr *prefix, u_int8_t plen,
+    u_int8_t vstate, struct filterstate *state)
 {
 	struct filter_rule	*f;
 	enum filter_actions	 action = ACTION_DENY; /* default deny */
@@ -783,9 +767,9 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
 		     f->peer.peerid != peer->conf.id),
 		     f->skip[RDE_FILTER_SKIP_PEERID]);
 
-		if (rde_filter_match(f, peer, state, p)) {
-			rde_apply_set(&f->set, state, p->pt->aid,
-			    prefix_peer(p), peer);
+		if (rde_filter_match(f, peer, from, state, prefix, plen,
+		    vstate)) {
+			rde_apply_set(&f->set, peer, from, state, prefix->aid);
 			if (f->action != ACTION_NONE)
 				action = f->action;
 			if (f->quick)

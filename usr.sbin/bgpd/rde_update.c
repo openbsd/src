@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.121 2019/08/09 13:44:27 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.122 2019/08/13 12:16:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -159,12 +159,13 @@ withdraw:
 		rde_filterstate_prep(&state, prefix_aspath(new),
 		    prefix_communities(new), prefix_nexthop(new),
 		    prefix_nhflags(new));
-		if (rde_filter(rules, peer, new, &state) == ACTION_DENY) {
+		pt_getaddr(new->pt, &addr);
+		if (rde_filter(rules, peer, prefix_peer(new), &addr,
+		    new->pt->prefixlen, prefix_vstate(new), &state) ==
+		    ACTION_DENY) {
 			rde_filterstate_clean(&state);
 			goto withdraw;
 		}
-
-		pt_getaddr(new->pt, &addr);
 
 		/* only send update if path changed */
 		if (prefix_adjout_update(peer, &state, &addr,
@@ -184,10 +185,9 @@ void
 up_generate_default(struct filter_head *rules, struct rde_peer *peer,
     u_int8_t aid)
 {
+	extern struct rde_peer	*peerself;
 	struct filterstate	 state;
 	struct rde_aspath	*asp;
-	struct prefix		 p;
-	struct pt_entry		*pte;
 	struct bgpd_addr	 addr;
 
 	if (peer->capa.mp[aid] == 0)
@@ -203,26 +203,13 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	 * XXX apply default overrides. Not yet possible, mainly a parse.y
 	 * problem.
 	 */
-	/* rde_apply_set(asp, set, af, &state, DIR_IN); */
+	/* rde_apply_set(asp, peerself, peerself, set, af); */
 
-	/*
-	 * XXX this is ugly because we need to have a prefix for rde_filter()
-	 * but it will be added after filtering. So fake it till we make it.
-	 * rde_filter() only accesses prefix_peer(), prefix_vstate() and the
-	 * pt pointer.
-	 */
-	bzero(&p, sizeof(p));
 	bzero(&addr, sizeof(addr));
 	addr.aid = aid;
-	pte = pt_get(&addr, 0);
-	if (pte == NULL)
-		pte = pt_add(&addr, 0);
-	p.pt = pt_ref(pte);
-	p.validation_state = ROA_NOTFOUND;
-	p.peer = peer;		/* XXX should be peerself */
-
 	/* outbound filter as usual */
-	if (rde_filter(rules, peer, &p, &state) == ACTION_DENY) {
+	if (rde_filter(rules, peer, peerself, &addr, 0, ROA_NOTFOUND,
+	    &state) == ACTION_DENY) {
 		rde_filterstate_clean(&state);
 		return;
 	}
@@ -232,8 +219,6 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 
 	/* no longer needed */
 	rde_filterstate_clean(&state);
-
-	pt_unref(pte);
 }
 
 /* only for IPv4 */
