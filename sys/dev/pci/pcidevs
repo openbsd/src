@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1893 2019/08/02 21:45:16 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1894 2019/08/13 03:17:11 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -336,6 +336,7 @@ vendor	ETRON		0x1b6f	Etron
 vendor	FRESCO		0x1b73	Fresco Logic
 vendor	WCH2		0x1c00	Nanjing QinHeng Electronics
 vendor	SYMPHONY2	0x1c1c	Symphony Labs
+vendor	UMIS		0x1cc4	Union Memory
 vendor	ROCKCHIP	0x1d87	Rockchip
 vendor	TEKRAM2		0x1de1	Tekram
 vendor	AMPERE		0x1def	Ampere
@@ -7814,6 +7815,9 @@ product TVIA CP5252		0x5252	CyberPro 5252
 /* Turtle Beach products */
 product TURTLEBEACH SANTA_CRUZ	0x3357	Santa Cruz
 
+/* ULSI Systems products */
+product ULSI US201		0x0201	US201
+
 /* UMC products */
 product UMC UM82C881		0x0001	UM82C881 486
 product UMC UM82C886		0x0002	UM82C886 ISA
@@ -7833,8 +7837,8 @@ product UMC UM8886E_OR_WHAT	0xe886	ISA
 product UMC UM8886N		0xe88a	UM8886N
 product UMC UM8891N		0xe891	UM8891N
 
-/* ULSI Systems products */
-product ULSI US201		0x0201	US201
+/* Shenzhen Unionmemory Information System products */
+product UMIS NVME		0x2263	NVMe
 
 /* US Robotics */
 product USR2 USR997902		0x0116	USR997902
