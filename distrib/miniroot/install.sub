@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1137 2019/08/11 13:32:41 kn Exp $
+#	$OpenBSD: install.sub,v 1.1138 2019/08/13 07:47:40 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1604,6 +1604,8 @@ install_files() {
 
 		# Fetch and verify the set files.
 		for _f in $_get_sets; do
+			$UU && reset_watchdog
+
 			rm -f /tmp/h /tmp/fail
 
 			# Fetch set file and create a checksum by piping through
@@ -3238,6 +3240,26 @@ check_unattendedupgrade() {
 	) > /dev/null 2>&1
 }
 
+WATCHDOG_PERIOD_SEC=$((45 * 60))
+
+# Restart the background timer.
+reset_watchdog() {
+	kill -KILL $WDPID 2>/dev/null
+	start_watchdog
+}
+
+# Start a co-process to reboot a stalled sysupgrade.
+# This mechanism is only used during non-interactive sysupgrade.
+start_watchdog() {
+	(
+		sleep $WATCHDOG_PERIOD_SEC && reboot
+	) |&
+	WDPID=$!
+
+	# Close standard input of the co-process.
+	exec 3>&p; exec 3>&-
+}
+
 # ------------------------------------------------------------------------------
 # Initial actions common to both installs and upgrades.
 #
@@ -3386,8 +3408,7 @@ elif $UU; then
 	MODE=upgrade
 	check_unattendedupgrade || exit 1
 
-	# trigger watchdog
-	(sleep 2700 && reboot) &
+	start_watchdog
 
 	cat <<__EOT > /auto_upgrade.conf
 Location of sets = disk
