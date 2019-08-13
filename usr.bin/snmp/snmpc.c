@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.5 2019/08/11 18:11:10 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.6 2019/08/13 12:28:03 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -343,7 +343,7 @@ snmpc_get(int argc, char *argv[])
 	    &varbind);
 	if (errorstatus != 0)
 		snmpc_printerror((enum snmp_error) errorstatus,
-		    argv[errorindex]);
+		    argv[errorindex - 1]);
 
 	for (; varbind != NULL; varbind = varbind->be_next) {
 		if (!snmpc_print(varbind))
@@ -394,7 +394,7 @@ snmpc_walk(int argc, char *argv[])
 		    &errorindex, &varbind);
 		if (errorstatus != 0)
 			snmpc_printerror((enum snmp_error) errorstatus,
-			    argv[errorindex]);
+			    argv[errorindex - 1]);
 
 		if (!snmpc_print(varbind))
 			err(1, "Can't print response");
@@ -451,7 +451,7 @@ snmpc_walk(int argc, char *argv[])
 		    &errorindex, &varbind);
 		if (errorstatus != 0)
 			snmpc_printerror((enum snmp_error) errorstatus,
-			    argv[errorindex]);
+			    argv[errorindex - 1]);
 
 		if (!snmpc_print(varbind))
 			err(1, "Can't print response");
