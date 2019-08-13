@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.42 2017/10/09 14:51:31 deraadt Exp $	*/
+/*	$OpenBSD: run.c,v 1.43 2019/08/13 10:41:33 fcambus Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -1217,13 +1217,13 @@ Cell *dopa2(Node **a, int n)	/* a[0], a[1] { a[2] } */
 Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 {
 	Cell *x = 0, *y, *ap;
-	char *s;
+	char *s, *origs;
 	int sep;
 	char *t, temp, num[50], *fs = 0;
 	int n, tempstat, arg3type;
 
 	y = execute(a[0]);	/* source string */
-	s = getsval(y);
+	origs = s = strdup(getsval(y));
 	arg3type = ptoi(a[3]);
 	if (a[2] == 0)		/* fs string */
 		fs = *FS;
@@ -1343,6 +1343,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 	}
 	tempfree(ap);
 	tempfree(y);
+	free(origs);
 	if (a[2] != 0 && arg3type == STRING) {
 		tempfree(x);
 	}
