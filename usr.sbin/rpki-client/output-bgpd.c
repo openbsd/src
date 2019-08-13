@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bgpd.c,v 1.8 2019/06/19 16:30:37 deraadt Exp $ */
+/*	$OpenBSD: output-bgpd.c,v 1.9 2019/08/13 13:53:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -44,8 +44,7 @@ output_bgpd(const struct roa **roas, size_t roasz,
 	*vrps = *unique = 0;
 
 	for (i = 0; i < roasz; i++)
-		for (j = 0; j < roas[i]->ipsz; j++)
-			(*vrps)++;
+		*vrps += roas[i]->ipsz;
 
 	if ((lines = calloc(*vrps, sizeof(char *))) == NULL)
 		err(EXIT_FAILURE, NULL);
