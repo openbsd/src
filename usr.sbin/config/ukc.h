@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.h,v 1.15 2019/08/11 17:08:33 deraadt Exp $ */
+/*	$OpenBSD: ukc.h,v 1.16 2019/08/13 21:36:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -50,28 +50,6 @@
 
 #ifdef UKC_MAIN
 struct nlist nl[] = {
-	{ "_locnames" },
-	{ "_locnamp" },
-	{ "_cfroots" },
-	{ "_cfroots_size" },
-	{ "_pv_size" },
-	{ "_pv" },
-	{ "_cfdata" },
-	{ "_kernel_text" },
-	{ "_version" },
-	{ "_extraloc" },
-	{ "_rextraloc" },
-	{ "_textraloc" },
-	{ "_userconf_histlen" },
-	{ "_userconf_history" },
-	{ "_tz" },
-	{ "_pdevnames" },
-	{ "_pdevnames_size" },
-	{ "_pdevinit" },
-	{ "_nkmempages" },
-	{ NULL },
-};
-struct nlist knl[] = {
 	{ "_locnames" },
 	{ "_locnamp" },
 	{ "_cfroots" },

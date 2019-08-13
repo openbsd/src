@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.c,v 1.24 2019/08/11 17:08:33 deraadt Exp $ */
+/*	$OpenBSD: ukc.c,v 1.25 2019/08/13 21:36:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -40,6 +40,7 @@
 #define UKC_MAIN
 #include "ukc.h"
 #include "exec.h"
+#include "config.h"
 
 void		init(void);
 __dead void	usage(void);
@@ -74,6 +75,11 @@ ukc(char *file, char *outfile, int uflag, int force)
 		errx(1, "nlist: %s", file);
 
 	if (uflag) {
+		struct nlist *knl;
+
+		knl = emalloc(sizeof(nl));
+		memcpy(knl, &nl, sizeof nl);
+
 		if ((kd = kvm_openfiles(NULL,NULL,NULL,O_RDONLY, errbuf)) == 0)
 			errx(1, "kvm_openfiles: %s", errbuf);
 
