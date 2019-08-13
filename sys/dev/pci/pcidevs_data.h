@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1893 2019/08/02 21:45:16 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1894 2019/08/13 03:17:11 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -27544,6 +27544,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Santa Cruz",
 	},
 	{
+	    PCI_VENDOR_ULSI, PCI_PRODUCT_ULSI_US201,
+	    "US201",
+	},
+	{
 	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM82C881,
 	    "UM82C881 486",
 	},
@@ -27612,8 +27616,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "UM8891N",
 	},
 	{
-	    PCI_VENDOR_ULSI, PCI_PRODUCT_ULSI_US201,
-	    "US201",
+	    PCI_VENDOR_UMIS, PCI_PRODUCT_UMIS_NVME,
+	    "NVMe",
 	},
 	{
 	    PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902,
@@ -30398,6 +30402,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SYMPHONY2,
 	    "Symphony Labs",
+	},
+	{
+	    PCI_VENDOR_UMIS,
+	    "Union Memory",
 	},
 	{
 	    PCI_VENDOR_ROCKCHIP,
