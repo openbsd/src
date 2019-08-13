@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.43 2019/08/13 10:41:33 fcambus Exp $	*/
+/*	$OpenBSD: run.c,v 1.44 2019/08/13 10:45:56 fcambus Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -1224,6 +1224,8 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 
 	y = execute(a[0]);	/* source string */
 	origs = s = strdup(getsval(y));
+	if (s == NULL)
+		FATAL("out of space in split");
 	arg3type = ptoi(a[3]);
 	if (a[2] == 0)		/* fs string */
 		fs = *FS;
