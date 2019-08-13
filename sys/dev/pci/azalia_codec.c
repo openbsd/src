@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.175 2019/08/07 22:03:43 jcs Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.176 2019/08/13 15:28:12 jcs Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -126,6 +126,8 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x10ec0285:
 		this->name = "Realtek ALC285";
+		if (this->subid == 0x229217aa)		 /* Thinkpad X1 Carbon 7 */
+			this->qrks |= AZ_QRK_WID_SPKR2_DAC;
 		break;
 	case 0x10ec0292:
 		this->name = "Realtek ALC292";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.249 2019/05/09 14:50:46 bcook Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.250 2019/08/13 15:28:12 jcs Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -453,6 +453,7 @@ azalia_configure_pci(azalia_t *az)
 	case PCI_PRODUCT_INTEL_100SERIES_LP_HDA:
 	case PCI_PRODUCT_INTEL_200SERIES_HDA:
 	case PCI_PRODUCT_INTEL_200SERIES_U_HDA:
+	case PCI_PRODUCT_INTEL_300SERIES_U_HDA:
 	case PCI_PRODUCT_INTEL_C600_HDA:
 	case PCI_PRODUCT_INTEL_C610_HDA:
 	case PCI_PRODUCT_INTEL_BSW_HDA:
@@ -2220,7 +2221,12 @@ azalia_codec_select_spkrdac(codec_t *this)
 		for (i = 0; i < w->nconnections; i++) {
 			conv = azalia_codec_find_defdac(this,
 			    w->connections[i], 1);
-			if (conv == this->spkr_dac) {
+			if (this->qrks & AZ_QRK_WID_SPKR2_DAC) {
+				if (conv != this->spkr_dac) {
+					conn = i;
+					break;
+				}
+			} else if (conv == this->spkr_dac) {
 				conn = i;
 				break;
 			}
