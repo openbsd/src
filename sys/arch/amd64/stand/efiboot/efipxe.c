@@ -1,4 +1,4 @@
-/*	$OpenBSD: efipxe.c,v 1.4 2019/04/25 20:19:30 naddy Exp $	*/
+/*	$OpenBSD: efipxe.c,v 1.5 2019/08/13 09:00:20 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -66,7 +66,7 @@ efi_pxeprobe(void)
 		return;
 
 	for (i = 0; i < nhandles; i++) {
-		EFI_PXE_BASE_CODE_DHCPV4_PACKET *dhcp = NULL;
+		EFI_PXE_BASE_CODE_DHCPV4_PACKET *dhcp;
 
 		status = EFI_CALL(BS->HandleProtocol, handles[i],
 		    &devp_guid, (void **)&dp0);
@@ -85,23 +85,13 @@ efi_pxeprobe(void)
 		if (pxe->Mode == NULL)
 			continue;
 
-		if (pxe->Mode->DhcpAckReceived) {
-			dhcp = (EFI_PXE_BASE_CODE_DHCPV4_PACKET *)
-			    &pxe->Mode->DhcpAck;
-		}
-		if (pxe->Mode->PxeReplyReceived) {
-			dhcp = (EFI_PXE_BASE_CODE_DHCPV4_PACKET *)
-			    &pxe->Mode->PxeReply;
-		}
-
-		if (dhcp) {
-			memcpy(&bootip, dhcp->BootpYiAddr, sizeof(bootip));
-			memcpy(&servip, dhcp->BootpSiAddr, sizeof(servip));
-			memcpy(boothw, dhcp->BootpHwAddr, sizeof(boothw));
-			bootmac = boothw;
-			PXE = pxe;
-			break;
-		}
+		dhcp = (EFI_PXE_BASE_CODE_DHCPV4_PACKET *)&pxe->Mode->DhcpAck;
+		memcpy(&bootip, dhcp->BootpYiAddr, sizeof(bootip));
+		memcpy(&servip, dhcp->BootpSiAddr, sizeof(servip));
+		memcpy(boothw, dhcp->BootpHwAddr, sizeof(boothw));
+		bootmac = boothw;
+		PXE = pxe;
+		break;
 	}
 }
 
