@@ -1337,10 +1337,23 @@ int amdgpu_debugfs_firmware_init(struct amdgpu_device *adev)
 int
 amdgpu_probe(struct device *parent, void *match, void *aux)
 {
+	struct pci_attach_args *pa = aux;
+	const struct drm_pcidev *id_entry;
+	unsigned long flags = 0;
+
 	if (amdgpu_fatal_error)
 		return 0;
-	if (drm_pciprobe(aux, amdgpu_pciidlist))
-		return 20;
+
+	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
+	    PCI_PRODUCT(pa->pa_id), amdgpu_pciidlist);
+	if (id_entry != NULL) {
+		flags = id_entry->driver_data;
+		if (flags & AMD_EXP_HW_SUPPORT)
+			return 0;
+		else
+			return 20;		
+	}
+	
 	return 0;
 }
 
