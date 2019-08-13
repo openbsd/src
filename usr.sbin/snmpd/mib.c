@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.95 2019/08/13 12:46:19 claudio Exp $	*/
+/*	$OpenBSD: mib.c,v 1.96 2019/08/13 12:52:41 sthen Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -1106,9 +1106,6 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	u_int32_t		 idx = 0;
 	struct kif		*kif;
 	long long		 i;
-	size_t			 len;
-	int			 ifq;
-	int			 mib[] = { CTL_NET, PF_INET, IPPROTO_IP, 0, 0 };
 
 	/* Get and verify the current row index */
 	idx = o->bo_id[OIDIDX_ifEntry];
@@ -1227,15 +1224,7 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
 		break;
 	case 21:
-		mib[3] = IPCTL_IFQUEUE;
-		mib[4] = IFQCTL_LEN;
-		len = sizeof(ifq);
-		if (sysctl(mib, sizeofa(mib), &ifq, &len, 0, 0) == -1) {
-			log_info("mib_iftable: %s: invalid ifq: %s",
-			    kif->if_name, strerror(errno));
-			return (-1);
-		}
-		ber = ber_add_integer(ber, ifq);
+		ber = ber_add_integer(ber, 0);
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_GAUGE32);
 		break;
 	case 22:
