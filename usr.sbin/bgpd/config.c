@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.91 2019/08/05 08:46:55 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.92 2019/08/13 07:39:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -305,13 +305,10 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 	/*
 	 * merge peers:
 	 * - need to know which peers are new, replaced and removed
-	 * - first mark all new peers as RECONF_REINIT
 	 * - walk over old peers and check if there is a corresponding new
 	 *   peer if so mark it RECONF_KEEP. Remove all old peers.
 	 * - swap lists (old peer list is actually empty).
 	 */
-	RB_FOREACH(p, peer_head, &conf->peers)
-		p->reconf_action = RECONF_REINIT;
 	RB_FOREACH_SAFE(p, peer_head, &xconf->peers, nextp) {
 		np = getpeerbyid(conf, p->conf.id);
 		if (np != NULL) {

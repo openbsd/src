@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.400 2019/08/08 11:30:46 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.401 2019/08/13 07:39:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3764,6 +3764,7 @@ alloc_peer(void)
 
 	/* some sane defaults */
 	p->state = STATE_NONE;
+	p->reconf_action = RECONF_REINIT;
 	p->conf.distance = 1;
 	p->conf.export_type = EXPORT_UNSET;
 	p->conf.announce_capa = 1;
