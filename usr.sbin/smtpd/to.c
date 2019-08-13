@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.39 2019/08/11 17:23:12 gilles Exp $	*/
+/*	$OpenBSD: to.c,v 1.40 2019/08/13 16:02:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -169,10 +169,9 @@ sa_to_text(const struct sockaddr *sa)
 		const struct in6_addr	*in6_addr;
 
 		in6 = (const struct sockaddr_in6 *)sa;
-		(void)strlcpy(buf, "IPv6:", sizeof(buf));
-		p = buf + 5;
+		p = buf;
 		in6_addr = &in6->sin6_addr;
-		(void)bsnprintf(p, NI_MAXHOST, "%s", in6addr_to_text(in6_addr));
+		(void)bsnprintf(p, NI_MAXHOST, "[%s]", in6addr_to_text(in6_addr));
 	}
 
 	return (buf);

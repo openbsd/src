@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.405 2019/08/11 16:35:10 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.406 2019/08/13 16:02:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -282,6 +282,22 @@ static struct tree wait_ssl_init;
 static struct tree wait_ssl_verify;
 static struct tree wait_filters;
 static struct tree wait_filter_fd;
+
+static const char *
+ss_to_helo_text(const struct sockaddr_storage *ss)
+{
+  	static char	 buf[NI_MAXHOST + 5];
+	static char	 helobuf[NI_MAXHOST + 5];
+
+	(void)strlcpy(buf, ss_to_text(ss), sizeof buf);
+
+	if (buf[0] != '[')
+		return buf;
+	buf[strlen(buf)-1] = '\0';
+
+	(void)snprintf(helobuf, sizeof helobuf, "IPv6:%s", buf+1);
+	return helobuf;
+}
 
 static void
 header_append_domain_buffer(char *buffer, char *domain, size_t len)
@@ -1732,7 +1748,7 @@ smtp_proceed_helo(struct smtp_session *s, const char *args)
 	smtp_reply(s, "250 %s Hello %s [%s], pleased to meet you",
 	    s->smtpname,
 	    s->helo,
-	    ss_to_text(&s->ss));
+	    ss_to_helo_text(&s->ss));
 }
 
 static void
@@ -1749,7 +1765,7 @@ smtp_proceed_ehlo(struct smtp_session *s, const char *args)
 	smtp_reply(s, "250-%s Hello %s [%s], pleased to meet you",
 	    s->smtpname,
 	    s->helo,
-	    ss_to_text(&s->ss));
+	    ss_to_helo_text(&s->ss));
 
 	smtp_reply(s, "250-8BITMIME");
 	smtp_reply(s, "250-ENHANCEDSTATUSCODES");
@@ -2819,7 +2835,7 @@ smtp_message_begin(struct smtp_tx *tx)
 		m_printf(tx, "from %s (%s [%s])",
 		    s->helo,
 		    s->rdns,
-		    ss_to_text(&s->ss));
+		    ss_to_helo_text(&s->ss));
 	}
 	m_printf(tx, "\n\tby %s (%s) with %sSMTP%s%s id %08x",
 	    s->smtpname,
