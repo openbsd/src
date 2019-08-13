@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2019/08/12 18:03:17 jsing Exp $ */
+/*	$OpenBSD: main.c,v 1.15 2019/08/13 13:27:26 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -119,7 +119,7 @@ static void	 proc_rsync(const char *, const char *, int, int)
 static void	 logx(const char *fmt, ...)
 			__attribute__((format(printf, 1, 2)));
 
-static int	 verbose;
+int	 verbose;
 
 /*
  * Log a message to stderr if and only if "verbose" is non-zero.

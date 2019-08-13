@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.4 2019/06/19 16:30:36 deraadt Exp $ */
+/*	$OpenBSD: cms.c,v 1.5 2019/08/13 13:27:26 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -57,7 +57,8 @@ cms_parse_validate(X509 **xp, const char *fn,
 	 */
 
 	if ((bio = BIO_new_file(fn, "rb")) == NULL) {
-		cryptowarnx("%s: BIO_new_file", fn);
+		if (verbose > 0)
+			cryptowarnx("%s: BIO_new_file", fn);
 		return NULL;
 	}
 

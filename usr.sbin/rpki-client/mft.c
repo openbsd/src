@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.6 2019/06/20 15:29:01 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.7 2019/08/13 13:27:26 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -310,11 +310,13 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p, int forc
 		ctime_r(&next, buf);
 		buf[strlen(buf) - 1] = '\0';
 		if (!force) {
-			warnx("%s: stale: expired %s", p->fn, buf);
+			if (verbose > 0)
+				warnx("%s: stale: expired %s", p->fn, buf);
 			rc = 0;
 			goto out;
 		}
-		warnx("%s: stale: expired %s (ignoring)", p->fn, buf);
+		if (verbose > 0)
+			warnx("%s: stale: expired %s (ignoring)", p->fn, buf);
 	}
 
 	/* File list algorithm. */
@@ -401,7 +403,7 @@ mft_parse(X509 **x509, const char *fn, int force)
 		free(p.res->files);
 		p.res->filesz = 0;
 		p.res->files = NULL;
-	} else if (c < 0)
+	} else if (c == -1)
 		goto out;
 
 	rc = 1;

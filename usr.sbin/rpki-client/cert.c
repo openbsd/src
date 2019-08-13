@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.6 2019/06/20 13:50:03 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.7 2019/08/13 13:27:26 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1109,7 +1109,8 @@ cert_parse_inner(X509 **xp, const char *fn, const unsigned char *dgst, int ta)
 	*xp = NULL;
 
 	if ((bio = BIO_new_file(fn, "rb")) == NULL) {
-		cryptowarnx("%s: BIO_new_file", fn);
+		if (verbose > 0)
+			cryptowarnx("%s: BIO_new_file", fn);
 		return NULL;
 	}
 
@@ -1155,7 +1156,8 @@ cert_parse_inner(X509 **xp, const char *fn, const unsigned char *dgst, int ta)
 		assert(sz == SHA256_DIGEST_LENGTH);
 
 		if (memcmp(mdbuf, dgst, SHA256_DIGEST_LENGTH)) {
-			warnx("%s: bad message digest", p.fn);
+			if (verbose > 0)
+				warnx("%s: bad message digest", p.fn);
 			goto out;
 		}
 	}
