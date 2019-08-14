@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.196 2017/09/08 05:36:53 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.197 2019/08/14 12:56:20 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -490,28 +490,28 @@ scsi_detach_lun(struct scsibus_softc *sb, int target, int lun, int flags)
 	if (((flags & DETACH_FORCE) == 0) && (link->flags & SDEV_OPEN))
 		return (EBUSY);
 
-	/* detaching a device from scsibus is a five step process... */
+	/* Detaching a device from scsibus is a five step process. */
 
-	/* 1. wake up processes sleeping for an xs */
+	/* 1. Wake up processes sleeping for an xs. */
 	scsi_link_shutdown(link);
 
-	/* 2. detach the device */
+	/* 2. Detach the device. */
 	rv = config_detach(link->device_softc, flags);
 
 	if (rv != 0)
 		return (rv);
 
-	/* 3. if its using the openings io allocator, clean it up */
+	/* 3. If it's using the openings io allocator, clean that up. */
 	if (ISSET(link->flags, SDEV_OWN_IOPL)) {
 		scsi_iopool_destroy(link->pool);
 		free(link->pool, M_DEVBUF, sizeof(*link->pool));
 	}
 
-	/* 4. free up its state in the adapter */
+	/* 4. Free up its state in the adapter. */
 	if (alink->adapter->dev_free != NULL)
 		alink->adapter->dev_free(link);
 
-	/* 5. free up its state in the midlayer */
+	/* 5. Free up its state in the midlayer. */
 	if (link->id != NULL)
 		devid_free(link->id);
 	scsi_remove_link(sb, link);
