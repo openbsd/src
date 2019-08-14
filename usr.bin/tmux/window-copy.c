@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.230 2019/08/01 14:31:39 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.231 2019/08/14 09:58:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1638,9 +1638,11 @@ window_copy_cmd_search_backward(struct window_copy_cmd_state *cs)
 	const char			*argument = cs->args->argv[1];
 
 	if (*argument != '\0') {
-		data->searchtype = WINDOW_COPY_SEARCHUP;
 		free(data->searchstr);
 		data->searchstr = xstrdup(argument);
+	}
+	if (data->searchstr != NULL) {
+		data->searchtype = WINDOW_COPY_SEARCHUP;
 		for (; np != 0; np--)
 			window_copy_search_up(wme);
 	}
@@ -1656,9 +1658,11 @@ window_copy_cmd_search_forward(struct window_copy_cmd_state *cs)
 	const char			*argument = cs->args->argv[1];
 
 	if (*argument != '\0') {
-		data->searchtype = WINDOW_COPY_SEARCHDOWN;
 		free(data->searchstr);
 		data->searchstr = xstrdup(argument);
+	}
+	if (data->searchstr != NULL) {
+		data->searchtype = WINDOW_COPY_SEARCHDOWN;
 		for (; np != 0; np--)
 			window_copy_search_down(wme);
 	}
@@ -2139,10 +2143,7 @@ window_copy_search_jump(struct window_mode_entry *wme, struct grid *gd,
 	return (0);
 }
 
-/*
- * Search in for text searchstr. If direction is 0 then search up, otherwise
- * down.
- */
+/* Search in text. If direction is 0 then search up, otherwise down. */
 static int
 window_copy_search(struct window_mode_entry *wme, int direction)
 {

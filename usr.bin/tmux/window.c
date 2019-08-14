@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.240 2019/06/30 19:21:53 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.241 2019/08/14 09:58:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -584,6 +584,28 @@ window_unzoom(struct window *w)
 	layout_fix_panes(w);
 	notify_window("window-layout-changed", w);
 
+	return (0);
+}
+
+int
+window_push_zoom(struct window *w, int flag)
+{
+	log_debug("%s: @%u %d", __func__, w->id,
+	    flag && (w->flags & WINDOW_ZOOMED));
+	if (flag && (w->flags & WINDOW_ZOOMED))
+		w->flags |= WINDOW_WASZOOMED;
+	else
+		w->flags &= ~WINDOW_WASZOOMED;
+	return (window_unzoom(w) == 0);
+}
+
+int
+window_pop_zoom(struct window *w)
+{
+	log_debug("%s: @%u %d", __func__, w->id,
+	    !!(w->flags & WINDOW_WASZOOMED));
+	if (w->flags & WINDOW_WASZOOMED)
+		return (window_zoom(w->active) == 0);
 	return (0);
 }
 
