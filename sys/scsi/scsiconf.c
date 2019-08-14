@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.197 2019/08/14 12:56:20 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.198 2019/08/14 20:53:55 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -525,9 +525,10 @@ scsi_get_link(struct scsibus_softc *sb, int target, int lun)
 {
 	struct scsi_link *link;
 
-	SLIST_FOREACH(link, &sb->sc_link_list, bus_list)
+	SLIST_FOREACH(link, &sb->sc_link_list, bus_list) {
 		if (link->target == target && link->lun == lun)
 			return (link);
+	}
 
 	return (NULL);
 }
@@ -909,7 +910,7 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun)
 	 */
 #ifdef SCSIDEBUG
 	if (((sb->sc_dev.dv_unit < 32) &&
-	     ((1U << sb->sc_dev.dv_unit) & scsidebug_buses)) &&
+	    ((1U << sb->sc_dev.dv_unit) & scsidebug_buses)) &&
 	    ((target < 32) && ((1U << target) & scsidebug_targets)) &&
 	    ((lun < 32) && ((1U << lun) & scsidebug_luns)))
 		link->flags |= scsidebug_level;
