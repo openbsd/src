@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.44 2019/08/13 16:02:33 gilles Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.45 2019/08/14 21:11:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -297,16 +297,7 @@ ascii_load_sockaddr(struct sockaddr_storage *ss, char *buf)
 		ss->ss_family = AF_LOCAL;
 	}
 	else if (strncasecmp("IPv6:", buf, 5) == 0) {
-	  	/* XXX - remove this after 6.6 release */
 		if (inet_pton(AF_INET6, buf + 5, &ssin6.sin6_addr) != 1)
-			return 0;
-		ssin6.sin6_family = AF_INET6;
-		memcpy(ss, &ssin6, sizeof(ssin6));
-		ss->ss_len = sizeof(struct sockaddr_in6);
-	}
-	else if (buf[0] == '[' && buf[strlen(buf)-1] == ']') {
-		buf[strlen(buf)-1] = '\0';
-		if (inet_pton(AF_INET6, buf+1, &ssin6.sin6_addr) != 1)
 			return 0;
 		ssin6.sin6_family = AF_INET6;
 		memcpy(ss, &ssin6, sizeof(ssin6));
