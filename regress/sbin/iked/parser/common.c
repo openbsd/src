@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.2 2019/05/11 16:30:23 patrick Exp $ */
+/*	$OpenBSD: common.c,v 1.3 2019/08/14 08:03:42 tobhe Exp $ */
 /*
  * A bunch of stub functions so we can compile and link ikev2_pld.c
  * in a standalone program for testing purposes.
@@ -74,6 +74,12 @@ ikev2_send_ike_e(struct iked *env, struct iked_sa *sa, struct ibuf *buf,
 void
 ikev2_ikesa_recv_delete(struct iked *env, struct iked_sa *sa)
 {
+}
+
+const char *
+ikev2_ikesa_info(uint64_t spi, const char *msg)
+{
+	return "";
 }
 
 struct iked_childsa *
