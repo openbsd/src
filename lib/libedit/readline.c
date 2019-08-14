@@ -1,4 +1,4 @@
-/*	$OpenBSD: readline.c,v 1.28 2019/06/28 13:32:42 deraadt Exp $	*/
+/*	$OpenBSD: readline.c,v 1.29 2019/08/14 08:31:00 asou Exp $	*/
 /*	$NetBSD: readline.c,v 1.91 2010/08/28 15:44:59 christos Exp $	*/
 
 /*-
@@ -2112,7 +2112,7 @@ _rl_event_read_char(EditLine *el, wchar_t *wc)
 		return -1;
 #endif
 
-		if (num_read < 0 && errno == EAGAIN)
+		if (num_read == -1 && errno == EAGAIN)
 			continue;
 		if (num_read == 0)
 			continue;
