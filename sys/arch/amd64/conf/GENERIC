@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.475 2019/06/24 21:33:27 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.476 2019/08/14 00:08:46 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -374,11 +374,11 @@ drm0		at radeondrm? primary 1
 drm*		at radeondrm?
 wsdisplay0	at radeondrm? primary 1
 wsdisplay*	at radeondrm? mux -1
-#amdgpu*	at pci?
-#drm0		at amdgpu? primary 1
-#drm*		at amdgpu?
-#wsdisplay0	at amdgpu? primary 1
-#wsdisplay*	at amdgpu? mux -1
+amdgpu*		at pci?
+drm0		at amdgpu? primary 1
+drm*		at amdgpu?
+wsdisplay0	at amdgpu? primary 1
+wsdisplay*	at amdgpu? mux -1
 
 pcppi0		at isa?
 
