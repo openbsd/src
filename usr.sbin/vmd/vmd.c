@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.114 2019/06/28 13:32:51 deraadt Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.115 2019/08/14 07:34:49 anton Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1373,8 +1373,13 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 
 	/* return without error if the parent is NULL (nothing to inherit) */
 	if ((vmc->vmc_flags & VMOP_CREATE_INSTANCE) == 0 ||
-	    (*vm_parent = vm_getbyname(vmc->vmc_instance)) == NULL)
+	    vmc->vmc_instance[0] == '\0')
 		return (0);
+
+	if ((*vm_parent = vm_getbyname(vmc->vmc_instance)) == NULL) {
+		errno = VMD_PARENT_INVALID;
+		return (-1);
+	}
 
 	errno = 0;
 	vmcp = &(*vm_parent)->vm_params;

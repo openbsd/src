@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.69 2019/05/22 16:19:21 jasper Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.70 2019/08/14 07:34:49 anton Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -248,6 +248,10 @@ vm_start_complete(struct imsg *imsg, int *ret, int autoconnect)
 				warnx("specified iso image is not a regular "
 				    "file");
 				*ret = ENOENT;
+				break;
+			case VMD_PARENT_INVALID:
+				warnx("invalid template");
+				*ret = EINVAL;
 				break;
 			default:
 				errno = res;

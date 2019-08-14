@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.95 2019/07/17 05:51:07 pd Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.96 2019/08/14 07:34:49 anton Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -72,6 +72,7 @@
 #define VMD_VM_STOP_INVALID	1004
 #define VMD_CDROM_MISSING	1005
 #define VMD_CDROM_INVALID	1006
+#define VMD_PARENT_INVALID	1007
 
 /* Image file signatures */
 #define VM_MAGIC_QCOW		"QFI\xfb"
