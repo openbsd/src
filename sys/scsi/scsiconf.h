@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.166 2017/05/29 07:47:13 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.167 2019/08/14 21:02:02 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -524,10 +524,6 @@ int	scsi_req_detach(struct scsibus_softc *, int, int, int);
 int	scsi_activate(struct scsibus_softc *, int, int, int);
 
 struct scsi_link *	scsi_get_link(struct scsibus_softc *, int, int);
-void			scsi_add_link(struct scsibus_softc *,
-			    struct scsi_link *);
-void			scsi_remove_link(struct scsibus_softc *,
-			    struct scsi_link *);
 
 extern const u_int8_t version_to_spc[];
 #define SCSISPC(x)	(version_to_spc[(x) & SID_ANSII])

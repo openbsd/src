@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.198 2019/08/14 20:53:55 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.199 2019/08/14 21:02:02 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -71,6 +71,8 @@
  * Declarations
  */
 int	scsi_probedev(struct scsibus_softc *, int, int);
+void	scsi_add_link(struct scsibus_softc *, struct scsi_link *);
+void	scsi_remove_link(struct scsibus_softc *, struct scsi_link *);
 
 void	scsi_devid(struct scsi_link *);
 int	scsi_devid_pg80(struct scsi_link *);
