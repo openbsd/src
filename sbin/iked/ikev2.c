@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.172 2019/08/12 07:40:45 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.173 2019/08/14 08:35:46 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -855,7 +855,7 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 	if (!ikev2_msg_frompeer(msg))
 		return;
 
-	if (sa->sa_udpencap && sa->sa_natt == 0 &&
+	if (sa && msg->msg_nat_detected && sa->sa_natt == 0 &&
 	    (sock = ikev2_msg_getsocket(env,
 	    sa->sa_local.addr_af, 1)) != NULL) {
 		/*
@@ -872,9 +872,10 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		msg->msg_fd = sa->sa_fd = sock->sock_fd;
 		msg->msg_sock = sock;
 		sa->sa_natt = 1;
+		sa->sa_udpencap = 1;
 
-		log_debug("%s: NAT detected, updated SA to "
-		    "peer %s local %s", __func__,
+		log_debug("%s: detected NAT, enabling UDP encapsulation,"
+		    " updated SA to peer %s local %s", __func__,
 		    print_host((struct sockaddr *)&sa->sa_peer.addr, NULL, 0),
 		    print_host((struct sockaddr *)&sa->sa_local.addr, NULL, 0));
 	}
@@ -2439,6 +2440,11 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 	if (sa->sa_hdr.sh_initiator) {
 		log_debug("%s: called by initiator", __func__);
 		return (-1);
+	}
+	if (msg->msg_nat_detected && sa->sa_udpencap == 0) {
+		log_debug("%s: detected NAT, enabling UDP encapsulation",
+		    __func__);
+		sa->sa_udpencap = 1;
 	}
 
 	if ((buf = ikev2_msg_init(env, &resp,
