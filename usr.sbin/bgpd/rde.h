@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.224 2019/08/13 12:16:20 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.225 2019/08/14 07:39:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -51,24 +51,20 @@ struct rib_entry {
 
 struct rib {
 	struct rib_tree		tree;
+	char			name[PEER_DESCR_LEN];
+	struct filter_head	*in_rules;
+	struct filter_head	*in_rules_tmp;
 	u_int			rtableid;
 	u_int			rtableid_tmp;
 	u_int16_t		flags;
 	u_int16_t		flags_tmp;
 	u_int16_t		id;
+	enum reconf_action	state, fibstate;
 };
 
 #define RIB_ADJ_IN	0
 #define RIB_LOC_START	1
 #define RIB_NOTFOUND	0xffff
-
-struct rib_desc {
-	char			name[PEER_DESCR_LEN];
-	struct rib		rib;
-	struct filter_head	*in_rules;
-	struct filter_head	*in_rules_tmp;
-	enum reconf_action	state, fibstate;
-};
 
 /*
  * How do we identify peers between the session handler and the rde?
@@ -507,13 +503,12 @@ pt_unref(struct pt_entry *pt)
 
 /* rde_rib.c */
 extern u_int16_t	 rib_size;
-extern struct rib_desc	*ribs;
+extern struct rib	*ribs;
 
 struct rib	*rib_new(char *, u_int, u_int16_t);
 void		 rib_update(struct rib *);
 struct rib	*rib_byid(u_int16_t);
 u_int16_t	 rib_find(char *);
-struct rib_desc	*rib_desc(struct rib *);
 void		 rib_free(struct rib *);
 void		 rib_shutdown(void);
 struct rib_entry *rib_get(struct rib *, struct bgpd_addr *, int);
