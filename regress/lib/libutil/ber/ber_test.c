@@ -1,4 +1,4 @@
-/* $OpenBSD: ber_test.c,v 1.17 2019/06/01 19:44:47 rob Exp $
+/* $OpenBSD: ber_test.c,v 1.18 2019/08/14 23:17:08 rob Exp $
 */
 /*
  * Copyright (c) Rob Pierce <rob@openbsd.org>
@@ -678,6 +678,47 @@ test_ber_printf_elements_snmp_v3_encode(void) {
 }
 
 int
+test_ber_null(void)
+{
+	long long		 val;
+	struct ber_element	*elm = NULL;
+
+	/* scanning into a null ber_element should fail */
+	if (ber_scanf_elements(elm, "0", &val) != -1) {
+		printf("failed (null ber_element) ber_scanf_elements empty\n");
+		goto fail;
+	}
+
+	if ((elm = ber_printf_elements(elm, "{d}", 1)) == NULL) {
+		printf("failed (null ber_element) ber_printf_elements\n");
+	}
+
+	/*
+	 * Scanning after the last valid element should be able to descent back
+	 * into the parent level.
+	 */
+	if (ber_scanf_elements(elm, "{i}", &val) != 0) {
+		printf("failed (null ber_element) ber_scanf_elements valid\n");
+		goto fail;
+	}
+	/*
+	 * Scanning for a non-existent element should fail, even if it's just a
+	 * skip.
+	 */
+	if (ber_scanf_elements(elm, "{lS}", &val) != -1) {
+		printf("failed (null ber_element) ber_scanf_elements invalid\n");
+		goto fail;
+	}
+
+	ber_free_elements(elm);
+	return 0;
+
+fail:
+	ber_free_elements(elm);
+	return 1;
+}
+
+int
 main(void)
 {
 	extern char *__progname;
@@ -723,6 +764,12 @@ main(void)
 		ret = 1;
 	} else
 		printf("SUCCESS: test_ber_printf_elements_snmpd_v3_encode\n");
+
+	if (test_ber_null() != 0) {
+		printf("FAILED: test_ber_null\n");
+		ret = 1;
+	} else
+		printf("SUCCESS: test_ber_null\n");
 
 	if (ret != 0) {
 		printf("FAILED: %s\n", __progname);
