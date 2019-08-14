@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.225 2019/08/14 07:39:04 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.226 2019/08/14 11:57:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -502,8 +502,7 @@ pt_unref(struct pt_entry *pt)
 }
 
 /* rde_rib.c */
-extern u_int16_t	 rib_size;
-extern struct rib	*ribs;
+extern u_int16_t	rib_size;
 
 struct rib	*rib_new(char *, u_int, u_int16_t);
 void		 rib_update(struct rib *);
@@ -525,14 +524,6 @@ static inline struct rib *
 re_rib(struct rib_entry *re)
 {
 	return rib_byid(re->rib_id);
-}
-
-static inline int
-rib_valid(u_int16_t rid)
-{
-	if (rid == RIB_NOTFOUND || rid >= rib_size || *ribs[rid].name == '\0')
-		return 0;
-	return 1;
 }
 
 void		 path_init(u_int32_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.486 2019/08/14 07:39:04 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.487 2019/08/14 11:57:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -777,10 +777,10 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			copy_config(nconf, imsg.data);
 
 			for (rid = 0; rid < rib_size; rid++) {
-				if (!rib_valid(rid))
+				if ((rib = rib_byid(rid)) == NULL)
 					continue;
-				ribs[rid].state = RECONF_DELETE;
-				ribs[rid].fibstate = RECONF_NONE;
+				rib->state = RECONF_DELETE;
+				rib->fibstate = RECONF_NONE;
 			}
 			break;
 		case IMSG_RECONF_RIB:
@@ -1412,7 +1412,7 @@ rde_update_update(struct rde_peer *peer, struct filterstate *in,
 	    aspath_origin(in->aspath.aspath));
 
 	/* add original path to the Adj-RIB-In */
-	if (prefix_update(&ribs[RIB_ADJ_IN], peer, in, prefix, prefixlen,
+	if (prefix_update(rib_byid(RIB_ADJ_IN), peer, in, prefix, prefixlen,
 	    vstate) == 1)
 		peer->prefix_cnt++;
 
@@ -1428,21 +1428,22 @@ rde_update_update(struct rde_peer *peer, struct filterstate *in,
 		wmsg = "path invalid, withdraw";
 
 	for (i = RIB_LOC_START; i < rib_size; i++) {
-		if (!rib_valid(i))
+		struct rib *rib = rib_byid(i);
+		if (rib == NULL)
 			continue;
 		rde_filterstate_prep(&state, &in->aspath, &in->communities,
 		    in->nexthop, in->nhflags);
 		/* input filter */
-		action = rde_filter(ribs[i].in_rules, peer, peer, prefix,
+		action = rde_filter(rib->in_rules, peer, peer, prefix,
 		    prefixlen, vstate, &state);
 
 		if (action == ACTION_ALLOW) {
 			rde_update_log("update", i, peer,
 			    &state.nexthop->exit_nexthop, prefix,
 			    prefixlen);
-			prefix_update(&ribs[i], peer, &state, prefix,
+			prefix_update(rib, peer, &state, prefix,
 			    prefixlen, vstate);
-		} else if (prefix_withdraw(&ribs[i], peer, prefix,
+		} else if (prefix_withdraw(rib, peer, prefix,
 		    prefixlen)) {
 			rde_update_log(wmsg, i, peer,
 			    NULL, prefix, prefixlen);
@@ -1461,15 +1462,16 @@ rde_update_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
 	u_int16_t i;
 
 	for (i = RIB_LOC_START; i < rib_size; i++) {
-		if (!rib_valid(i))
+		struct rib *rib = rib_byid(i);
+		if (rib == NULL)
 			continue;
-		if (prefix_withdraw(&ribs[i], peer, prefix, prefixlen))
+		if (prefix_withdraw(rib, peer, prefix, prefixlen))
 			rde_update_log("withdraw", i, peer, NULL, prefix,
 			    prefixlen);
 	}
 
 	/* remove original path form the Adj-RIB-In */
-	if (prefix_withdraw(&ribs[RIB_ADJ_IN], peer, prefix, prefixlen))
+	if (prefix_withdraw(rib_byid(RIB_ADJ_IN), peer, prefix, prefixlen))
 		peer->prefix_cnt--;
 
 	peer->prefix_rcvd_withdraw++;
@@ -2040,7 +2042,7 @@ rde_update_log(const char *message, u_int16_t rid,
 	if (asprintf(&p, "%s/%u", log_addr(prefix), prefixlen) == -1)
 		p = NULL;
 	l = log_fmt_peer(&peer->conf);
-	log_info("Rib %s: %s AS%s: %s %s%s", ribs[rid].name,
+	log_info("Rib %s: %s AS%s: %s %s%s", rib_byid(rid)->name,
 	    l, log_as(peer->conf.remote_as), message,
 	    p ? p : "out of memory", n ? n : "");
 
@@ -3115,43 +3117,44 @@ rde_reload_done(void)
 	}
 	/* bring ribs in sync */
 	for (rid = 0; rid < rib_size; rid++) {
-		if (!rib_valid(rid))
+		struct rib *rib = rib_byid(rid);
+		if (rib == NULL)
 			continue;
-		rde_filter_calc_skip_steps(ribs[rid].in_rules_tmp);
+		rde_filter_calc_skip_steps(rib->in_rules_tmp);
 
 		/* flip rules, make new active */
-		fh = ribs[rid].in_rules;
-		ribs[rid].in_rules = ribs[rid].in_rules_tmp;
-		ribs[rid].in_rules_tmp = fh;
+		fh = rib->in_rules;
+		rib->in_rules = rib->in_rules_tmp;
+		rib->in_rules_tmp = fh;
 
-		switch (ribs[rid].state) {
+		switch (rib->state) {
 		case RECONF_DELETE:
-			rib_free(&ribs[rid]);
+			rib_free(rib);
 			break;
 		case RECONF_RELOAD:
-			rib_update(&ribs[rid]);
-			ribs[rid].state = RECONF_KEEP;
+			rib_update(rib);
+			rib->state = RECONF_KEEP;
 			/* FALLTHROUGH */
 		case RECONF_KEEP:
-			if (rde_filter_equal(ribs[rid].in_rules,
-			    ribs[rid].in_rules_tmp, NULL))
+			if (rde_filter_equal(rib->in_rules,
+			    rib->in_rules_tmp, NULL))
 				/* rib is in sync */
 				break;
 			log_debug("in filter change: reloading RIB %s",
-			    ribs[rid].name);
-			ribs[rid].state = RECONF_RELOAD;
+			    rib->name);
+			rib->state = RECONF_RELOAD;
 			reload++;
 			break;
 		case RECONF_REINIT:
 			/* new rib */
-			ribs[rid].state = RECONF_RELOAD;
+			rib->state = RECONF_RELOAD;
 			reload++;
 			break;
 		case RECONF_NONE:
 			break;
 		}
-		filterlist_free(ribs[rid].in_rules_tmp);
-		ribs[rid].in_rules_tmp = NULL;
+		filterlist_free(rib->in_rules_tmp);
+		rib->in_rules_tmp = NULL;
 	}
 
 	filterlist_free(out_rules_tmp);
@@ -3165,8 +3168,8 @@ rde_reload_done(void)
 
 	if (reload > 0) {
 		softreconfig++;
-		if (rib_dump_new(RIB_ADJ_IN, AID_UNSPEC,
-		    RDE_RUNNER_ROUNDS, &ribs[RIB_ADJ_IN], rde_softreconfig_in,
+		if (rib_dump_new(RIB_ADJ_IN, AID_UNSPEC, RDE_RUNNER_ROUNDS,
+		    rib_byid(RIB_ADJ_IN), rde_softreconfig_in,
 		    rde_softreconfig_in_done, NULL) == -1)
 			fatal("%s: rib_dump_new", __func__);
 		log_info("running softreconfig in");
@@ -3176,10 +3179,10 @@ rde_reload_done(void)
 }
 
 static void
-rde_softreconfig_in_done(void *arg, u_int8_t aid)
+rde_softreconfig_in_done(void *arg, u_int8_t dummy)
 {
 	struct rde_peer	*peer;
-	u_int16_t	 rid;
+	u_int16_t	 i;
 
 	if (arg != NULL) {
 		softreconfig--;
@@ -3192,54 +3195,56 @@ rde_softreconfig_in_done(void *arg, u_int8_t aid)
 
 	/* now do the Adj-RIB-Out sync and a possible FIB sync */
 	softreconfig = 0;
-	for (rid = 0; rid < rib_size; rid++) {
-		if (!rib_valid(rid))
+	for (i = 0; i < rib_size; i++) {
+		struct rib *rib = rib_byid(i);
+		if (rib == NULL)
 			continue;
-		ribs[rid].state = RECONF_NONE;
-		if (ribs[rid].fibstate == RECONF_RELOAD) {
-			if (rib_dump_new(rid, AID_UNSPEC, RDE_RUNNER_ROUNDS,
-			    &ribs[rid], rde_softreconfig_sync_fib,
+		rib->state = RECONF_NONE;
+		if (rib->fibstate == RECONF_RELOAD) {
+			if (rib_dump_new(i, AID_UNSPEC, RDE_RUNNER_ROUNDS,
+			    rib, rde_softreconfig_sync_fib,
 			    rde_softreconfig_sync_done, NULL) == -1)
 				fatal("%s: rib_dump_new", __func__);
 			softreconfig++;
 			log_info("starting fib sync for rib %s",
-			    ribs[rid].name);
-		} else if (ribs[rid].fibstate == RECONF_REINIT) {
-			if (rib_dump_new(rid, AID_UNSPEC, RDE_RUNNER_ROUNDS,
-			    &ribs[rid], rde_softreconfig_sync_reeval,
+			    rib->name);
+		} else if (rib->fibstate == RECONF_REINIT) {
+			if (rib_dump_new(i, AID_UNSPEC, RDE_RUNNER_ROUNDS,
+			    rib, rde_softreconfig_sync_reeval,
 			    rde_softreconfig_sync_done, NULL) == -1)
 				fatal("%s: rib_dump_new", __func__);
 			softreconfig++;
 			log_info("starting re-evaluation of rib %s",
-			    ribs[rid].name);
+			    rib->name);
 		}
 	}
 
 	LIST_FOREACH(peer, &peerlist, peer_l) {
 		if (peer->reconf_out)
-			ribs[peer->loc_rib_id].state = RECONF_RELOAD;
+			rib_byid(peer->loc_rib_id)->state = RECONF_RELOAD;
 		else if (peer->reconf_rib) {
-			u_int8_t i;
+			u_int8_t aid;
 
 			/* dump the full table to neighbors that changed rib */
-			for (i = 0; i < AID_MAX; i++) {
-				if (peer->capa.mp[i])
-					peer_dump(peer->conf.id, i);
+			for (aid = 0; aid < AID_MAX; aid++) {
+				if (peer->capa.mp[aid])
+					peer_dump(peer->conf.id, aid);
 			}
 		}
 	}
 
-	for (rid = 0; rid < rib_size; rid++) {
-		if (!rib_valid(rid))
+	for (i = 0; i < rib_size; i++) {
+		struct rib *rib = rib_byid(i);
+		if (rib == NULL)
 			continue;
-		if (ribs[rid].state == RECONF_RELOAD) {
-			if (rib_dump_new(rid, AID_UNSPEC, RDE_RUNNER_ROUNDS,
-			    &ribs[rid], rde_softreconfig_out,
+		if (rib->state == RECONF_RELOAD) {
+			if (rib_dump_new(i, AID_UNSPEC, RDE_RUNNER_ROUNDS,
+			    rib, rde_softreconfig_out,
 			    rde_softreconfig_out_done, NULL) == -1)
 				fatal("%s: rib_dump_new", __func__);
 			softreconfig++;
 			log_info("starting softreconfig out for rib %s",
-			    ribs[rid].name);
+			    rib->name);
 		}
 	}
 
@@ -3264,12 +3269,13 @@ rde_softreconfig_out_done(void *arg, u_int8_t aid)
 static void
 rde_softreconfig_done(void)
 {
-	u_int16_t	rid;
+	u_int16_t	i;
 
-	for (rid = 0; rid < rib_size; rid++) {
-		if (!rib_valid(rid))
+	for (i = 0; i < rib_size; i++) {
+		struct rib *rib = rib_byid(i);
+		if (rib == NULL)
 			continue;
-		ribs[rid].state = RECONF_NONE;
+		rib->state = RECONF_NONE;
 	}
 
 	log_info("RDE soft reconfiguration done");
@@ -3314,10 +3320,10 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 			continue;
 
 		for (i = RIB_LOC_START; i < rib_size; i++) {
-			if (!rib_valid(i))
+			rib = rib_byid(i);
+			if (rib == NULL)
 				continue;
 
-			rib = &ribs[i];
 			if (rib->state != RECONF_RELOAD && !force_eval)
 				continue;
 
@@ -3724,9 +3730,10 @@ peer_flush_upcall(struct rib_entry *re, void *arg)
 			continue;
 
 		for (i = RIB_LOC_START; i < rib_size; i++) {
-			if (!rib_valid(i))
+			struct rib *rib = rib_byid(i);
+			if (rib == NULL)
 				continue;
-			rp = prefix_get(&ribs[i], peer, &addr, prefixlen);
+			rp = prefix_get(rib, peer, &addr, prefixlen);
 			if (rp) {
 				asp = prefix_aspath(rp);
 				if (asp->pftableid)
@@ -3963,16 +3970,17 @@ network_add(struct network_config *nc, struct filterstate *state)
 
 	vstate = rde_roa_validity(&conf->rde_roa, &nc->prefix,
 	    nc->prefixlen, aspath_origin(state->aspath.aspath));
-	if (prefix_update(&ribs[RIB_ADJ_IN], peerself, state, &nc->prefix,
+	if (prefix_update(rib_byid(RIB_ADJ_IN), peerself, state, &nc->prefix,
 	    nc->prefixlen, vstate) == 1)
 		peerself->prefix_cnt++;
 	for (i = RIB_LOC_START; i < rib_size; i++) {
-		if (!rib_valid(i))
+		struct rib *rib = rib_byid(i);
+		if (rib == NULL)
 			continue;
 		rde_update_log("announce", i, peerself,
 		    state->nexthop ? &state->nexthop->exit_nexthop : NULL,
 		    &nc->prefix, nc->prefixlen);
-		prefix_update(&ribs[i], peerself, state, &nc->prefix,
+		prefix_update(rib, peerself, state, &nc->prefix,
 		    nc->prefixlen, vstate);
 	}
 	filterset_free(&nc->attrset);
@@ -4031,14 +4039,15 @@ network_delete(struct network_config *nc)
 	}
 
 	for (i = RIB_LOC_START; i < rib_size; i++) {
-		if (!rib_valid(i))
+		struct rib *rib = rib_byid(i);
+		if (rib == NULL)
 			continue;
-		if (prefix_withdraw(&ribs[i], peerself, &nc->prefix,
+		if (prefix_withdraw(rib, peerself, &nc->prefix,
 		    nc->prefixlen))
 			rde_update_log("withdraw announce", i, peerself,
 			    NULL, &nc->prefix, nc->prefixlen);
 	}
-	if (prefix_withdraw(&ribs[RIB_ADJ_IN], peerself, &nc->prefix,
+	if (prefix_withdraw(rib_byid(RIB_ADJ_IN), peerself, &nc->prefix,
 	    nc->prefixlen))
 		peerself->prefix_cnt--;
 }
@@ -4097,9 +4106,10 @@ network_flush_upcall(struct rib_entry *re, void *ptr)
 			continue;
 
 		for (i = RIB_LOC_START; i < rib_size; i++) {
-			if (!rib_valid(i))
+			struct rib *rib = rib_byid(i);
+			if (rib == NULL)
 				continue;
-			rp = prefix_get(&ribs[i], peer, &addr, prefixlen);
+			rp = prefix_get(rib, peer, &addr, prefixlen);
 			if (rp) {
 				prefix_destroy(rp);
 				rde_update_log("flush announce", i, peer,
