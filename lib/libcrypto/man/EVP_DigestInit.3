@@ -1,8 +1,25 @@
-.\" $OpenBSD: EVP_DigestInit.3,v 1.16 2019/06/06 01:06:58 schwarze Exp $
+.\" $OpenBSD: EVP_DigestInit.3,v 1.17 2019/08/14 14:05:32 schwarze Exp $
 .\" full merge up to: OpenSSL 7f572e95 Dec 2 13:57:04 2015 +0000
 .\" selective merge up to: OpenSSL a95d7574 Jul 2 12:16:38 2017 -0400
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>
 .\" and Richard Levitte <levitte@openssl.org>.
 .\" Copyright (c) 2000-2004, 2009, 2012-2016 The OpenSSL Project.
 .\" All rights reserved.
@@ -51,7 +68,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: August 14 2019 $
 .Dt EVP_DIGESTINIT 3
 .Os
 .Sh NAME
@@ -66,6 +83,7 @@
 .Nm EVP_DigestInit_ex ,
 .Nm EVP_DigestUpdate ,
 .Nm EVP_DigestFinal_ex ,
+.Nm EVP_Digest ,
 .Nm EVP_MD_CTX_copy_ex ,
 .Nm EVP_DigestInit ,
 .Nm EVP_DigestFinal ,
@@ -144,6 +162,15 @@
 .Fa "EVP_MD_CTX *ctx"
 .Fa "unsigned char *md"
 .Fa "unsigned int *s"
+.Fc
+.Ft int
+.Fo EVP_Digest
+.Fa "const void *d"
+.Fa "size_t cnt"
+.Fa "unsigned char *md"
+.Fa "unsigned int *s"
+.Fa "const EVP_MD *type"
+.Fa "ENGINE *impl"
 .Fc
 .Ft int
 .Fo EVP_MD_CTX_copy_ex
@@ -335,6 +362,31 @@ can be made, but
 .Fn EVP_DigestInit_ex
 can be called to initialize a new digest operation.
 .Pp
+.Fn EVP_Digest
+is a simple wrapper function to hash
+.Fa cnt
+bytes of data at
+.Fa d
+using the digest
+.Fa type
+from
+.Vt ENGINE
+.Fa impl
+in a one-shot operation and place the digest value into
+.Fa md ,
+and, unless
+.Fa s
+is
+.Dv NULL ,
+the length of the digest in bytes into
+.Pf * Fa s .
+This wrapper uses a temporary digest context and passes its arguments to
+.Fn EVP_DigestInit_ex ,
+.Fn EVP_DigestUpdate ,
+and
+.Fn EVP_DigestFinal_ex
+internally.
+.Pp
 .Fn EVP_MD_CTX_copy_ex
 can be used to copy the message digest state from
 .Fa in
@@ -516,6 +568,7 @@ always return 1.
 .Fn EVP_DigestInit_ex ,
 .Fn EVP_DigestUpdate ,
 .Fn EVP_DigestFinal_ex ,
+.Fn EVP_Digest ,
 .Fn EVP_MD_CTX_copy_ex ,
 .Fn EVP_DigestInit ,
 .Fn EVP_DigestFinal ,
@@ -686,6 +739,7 @@ first appeared in OpenSSL 0.9.5 and has been available since
 .Fn EVP_MD_CTX_destroy ,
 .Fn EVP_DigestInit_ex ,
 .Fn EVP_DigestFinal_ex ,
+.Fn EVP_Digest ,
 and
 .Fn EVP_MD_CTX_copy_ex
 first appeared in OpenSSL 0.9.7 and have been available since
