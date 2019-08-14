@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.6 2019/08/13 12:28:03 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.7 2019/08/14 14:40:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -61,7 +61,7 @@ struct snmp_app {
 struct snmp_app snmp_apps[] = {
 	{ "get", 1, NULL, "agent oid ...", snmpc_get },
 	{ "getnext", 1, NULL, "agent oid ...", snmpc_get },
-	{ "walk", 1, "C:", "[-C cIipt] [-C E OID] agent [oid]", snmpc_walk },
+	{ "walk", 1, "C:", "[-C cIipt] [-C E endoid] agent [oid]", snmpc_walk },
 	{ "bulkget", 1, "C:", "[-C n<nonrep>r<maxrep>] agent oid ...", snmpc_get },
 	{ "bulkwalk", 1, "C:", "[-C cipn<nonrep>r<maxrep>] agent [oid]", snmpc_walk },
 	{ "trap", 1, NULL, "agent uptime oid [oid type value] ...", snmpc_trap },
