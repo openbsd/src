@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.3 2017/11/05 10:29:24 rpe Exp $
+$OpenBSD: README,v 1.4 2019/08/14 20:30:19 tb Exp $
 
 Notes about the syspatch(8) build process
 =========================================
@@ -28,7 +28,7 @@ and find differing files between patched releases.
 
 e.g.
 FAKEROOT=/fakeroot
-FAKE=${FAKEROOT}/syspatch/61-000_release
+FAKE=${FAKEROOT}/syspatch/64-000_release
 RELEASEDIR=/path/to/sets
 mkdir -p ${FAKE}
 install -m 0700 ${RELEASEDIR}/bsd{,.mp} ${FAKE}
@@ -38,6 +38,22 @@ done
 mkdir -m 700 -p ${FAKE}/usr/share/relink/kernel/GENERIC{,.MP}
 tar -C ${FAKE}/usr/share/relink/kernel -xzf ${FAKE}/usr/share/relink/kernel.tgz
 rm ${FAKE}/usr/share/relink/kernel.tgz
+
+Continuing syspatch builds
+--------------------------
+
+If syspatches were already built for this release on a different machine, the
+following additional steps are required. Prepare a ${SYSPATCHES} directory
+containing all the syspatches of the release. Make a copy of the ${FAKE}
+directory and extract all the syspatches in it.
+
+e.g.
+SYSPATCHES=/path/to/syspatches
+PATCHED=${FAKEROOT}/syspatch/64-018_mds
+cp -Rp ${FAKE} ${PATCHED}
+for _s in ${SYSPATCHES}/*.tgz; do tar -C ${PATCHED} -xzphf ${_s}; done
+
+Then apply all the errata patches to the source trees.
 
 Building a syspatch
 -------------------
