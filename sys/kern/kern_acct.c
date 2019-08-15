@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.39 2019/07/03 22:39:33 cheloha Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.40 2019/08/15 07:29:21 anton Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -53,6 +53,7 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/kthread.h>
+#include <sys/rwlock.h>
 
 #include <sys/syscallargs.h>
 
@@ -80,6 +81,11 @@ void	acct_shutdown(void);
  */
 struct	vnode *acctp;
 struct	vnode *savacctp;
+
+/*
+ * Lock protecting acctp and savacctp.
+ */
+struct	rwlock acct_lock = RWLOCK_INITIALIZER("acctlk");
 
 /*
  * Values associated with enabling and disabling accounting
@@ -123,18 +129,20 @@ sys_acct(struct proc *p, void *v, register_t *retval)
 		}
 	}
 
+	rw_enter_write(&acct_lock);
+
 	/*
 	 * If accounting was previously enabled, kill the old space-watcher,
 	 * close the file, and (if no new file was specified, leave).
 	 */
 	if (acctp != NULL || savacctp != NULL) {
 		wakeup(&acct_proc);
-		error = vn_close((acctp != NULL ? acctp : savacctp), FWRITE,
+		(void)vn_close((acctp != NULL ? acctp : savacctp), FWRITE,
 		    p->p_ucred, p);
 		acctp = savacctp = NULL;
 	}
 	if (SCARG(uap, path) == NULL)
-		return (0);
+		goto out;
 
 	/*
 	 * Save the new accounting file vnode, and schedule the new
@@ -144,9 +152,11 @@ sys_acct(struct proc *p, void *v, register_t *retval)
 	if ((error = acct_start()) != 0) {
 		acctp = NULL;
 		(void)vn_close(nd.ni_vp, FWRITE, p->p_ucred, p);
-		return (error);
 	}
-	return (0);
+
+out:
+	rw_exit_write(&acct_lock);
+	return (error);
 }
 
 /*
@@ -164,12 +174,21 @@ acct_process(struct proc *p)
 	struct timespec ut, st, tmp;
 	int t;
 	struct vnode *vp;
-	int error;
+	int error = 0;
 
 	/* If accounting isn't enabled, don't bother */
+	if (acctp == NULL)
+		return (0);
+
+	rw_enter_read(&acct_lock);
+
+	/*
+	 * Check the vnode again in case accounting got disabled while waiting
+	 * for the lock.
+	 */
 	vp = acctp;
 	if (vp == NULL)
-		return (0);
+		goto out;
 
 	/*
 	 * Get process accounting information.
@@ -222,7 +241,9 @@ acct_process(struct proc *p)
 	    (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT|IO_NOLIMIT,
 	    p->p_ucred, NULL, p);
 
-	return error;
+out:
+	rw_exit_read(&acct_lock);
+	return (error);
 }
 
 /*
@@ -285,6 +306,7 @@ acct_thread(void *arg)
 	struct statfs sb;
 	struct proc *p = curproc;
 
+	rw_enter_write(&acct_lock);
 	for (;;) {
 		if (savacctp != NULL) {
 			if (savacctp->v_type == VBAD) {
@@ -313,9 +335,11 @@ acct_thread(void *arg)
 		} else {
 			break;
 		}
-		tsleep_nsec(&acct_proc, PPAUSE, "acct", SEC_TO_NSEC(acctrate));
+		rwsleep_nsec(&acct_proc, &acct_lock, PPAUSE, "acct",
+		    SEC_TO_NSEC(acctrate));
 	}
 	acct_proc = NULL;
+	rw_exit_write(&acct_lock);
 	kthread_exit(0);
 }
 
@@ -325,9 +349,11 @@ acct_shutdown(void)
 
 	struct proc *p = curproc;
 
+	rw_enter_write(&acct_lock);
 	if (acctp != NULL || savacctp != NULL) {
 		vn_close((acctp != NULL ? acctp : savacctp), FWRITE,
 		    NOCRED, p);
 		acctp = savacctp = NULL;
 	}
+	rw_exit_write(&acct_lock);
 }
