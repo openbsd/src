@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.13 2019/08/14 17:20:41 martijn Exp $ */
+/*	$OpenBSD: ber.c,v 1.14 2019/08/15 06:11:18 martijn Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -711,7 +711,7 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 			e = va_arg(ap, struct ber_element **);
 			*e = ber;
 			ret++;
-			break;
+			continue;
 		case 'E':
 			i = va_arg(ap, long long *);
 			if (ber_get_enumerated(ber, i) == -1)
