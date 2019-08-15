@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.48 2019/01/26 22:51:13 landry Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.49 2019/08/15 15:08:14 otto Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -336,7 +336,7 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 	int64_t date_nano, time_nano, nmea_now;
 	int jumped = 0;
 
-	if (fldcnt != 12 && fldcnt != 13) {
+	if (fldcnt < 12 || fldcnt > 14) {
 		DPRINTF(("gprmc: field count mismatch, %d\n", fldcnt));
 		return;
 	}
@@ -373,9 +373,9 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 	np->time.tv.tv_sec = np->ts.tv_sec;
 	np->time.tv.tv_usec = np->ts.tv_nsec / 1000L;
 
-	if (fldcnt != 13)
+	if (fldcnt < 13)
 		strlcpy(np->time.desc, "GPS", sizeof(np->time.desc));
-	else if (fldcnt == 13 && *fld[12] != np->mode) {
+	else if (*fld[12] != np->mode) {
 		np->mode = *fld[12];
 		switch (np->mode) {
 		case 'S':
