@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.110 2018/10/27 01:01:34 miko Exp $	*/
+/*	$OpenBSD: auich.c,v 1.111 2019/08/15 09:38:56 miko Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -311,7 +311,7 @@ int auich_trigger_input(void *, void *, void *, int, void (*)(void *),
     void *, struct audio_params *);
 int auich_alloc_cdata(struct auich_softc *);
 int auich_allocmem(struct auich_softc *, size_t, size_t, struct auich_dma *);
-int auich_freemem(struct auich_softc *, struct auich_dma *);
+void auich_freemem(struct auich_softc *, struct auich_dma *);
 
 void auich_resume(struct auich_softc *);
 
@@ -1262,14 +1262,13 @@ auich_allocmem(struct auich_softc *sc, size_t size, size_t align,
 }
 
 
-int
+void
 auich_freemem(struct auich_softc *sc, struct auich_dma *p)
 {
 	bus_dmamap_unload(sc->dmat, p->map);
 	bus_dmamap_destroy(sc->dmat, p->map);
 	bus_dmamem_unmap(sc->dmat, p->addr, p->size);
 	bus_dmamem_free(sc->dmat, p->segs, p->nsegs);
-	return 0;
 }
 
 
@@ -1308,7 +1307,7 @@ auich_alloc_cdata(struct auich_softc *sc)
 
 	if ((error = bus_dmamap_load(sc->dmat, sc->sc_cddmamap, sc->sc_cdata,
 	    sizeof(struct auich_cdata), NULL, 0)) != 0) {
-		printf("%s: unable tp load control data DMA map, "
+		printf("%s: unable to load control data DMA map, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		goto fail_3;
 	}
