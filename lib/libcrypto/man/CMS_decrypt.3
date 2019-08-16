@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_decrypt.3,v 1.5 2019/08/12 15:34:41 schwarze Exp $
+.\" $OpenBSD: CMS_decrypt.3,v 1.6 2019/08/16 10:43:15 schwarze Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
 .\" This file is a derived work.
@@ -65,14 +65,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 12 2019 $
+.Dd $Mdocdate: August 16 2019 $
 .Dt CMS_DECRYPT 3
 .Os
 .Sh NAME
 .Nm CMS_decrypt ,
 .Nm CMS_decrypt_set1_pkey ,
 .Nm CMS_decrypt_set1_key
-.Nd decrypt content from a CMS envelopedData structure
+.Nd decrypt content from a CMS EnvelopedData structure
 .Sh SYNOPSIS
 .In openssl/cms.h
 .Ft int
@@ -100,7 +100,10 @@
 .Fc
 .Sh DESCRIPTION
 .Fn CMS_decrypt
-extracts and decrypts the content from a CMS EnvelopedData structure
+extracts and decrypts the content from the CMS
+.Vt EnvelopedData
+structure
+.Fa cms
 using the
 .Fa private_key
 and the
@@ -109,17 +112,17 @@ of the recipient.
 It writes the decrypted content to
 .Fa out .
 .Pp
-The
+In the rare case where the compressed content is detached, pass it in via
+.Fa dcont .
+For normal use, set
 .Fa dcont
-parameter is used in the rare case where the encrypted content is
-detached.
-It will normally be set to
+to
 .Dv NULL .
 .Pp
 Although the recipient's
 .Fa certificate
 is not needed to decrypt the data, it is needed to locate the
-appropriate (of possible several) recipients in the CMS structure.
+appropriate (of possibly several) recipients in the CMS structure.
 .Pp
 If the
 .Fa certificate
@@ -128,17 +131,17 @@ is set to
 all possible recipients are tried.
 This case however is problematic.
 To thwart the MMA attack (Bleichenbacher's attack on PKCS #1 v1.5 RSA
-padding) all recipients are tried whether they succeed or not.
-If no recipient succeeds then a random symmetric key is used to decrypt
+padding), all recipients are tried whether they succeed or not.
+If no recipient succeeds, a random symmetric key is used to decrypt
 the content: this will typically output garbage and may (but is not
 guaranteed to) ultimately return a padding error only.
 If
 .Fn CMS_decrypt
 just returned an error when all recipient encrypted keys failed to
-decrypt an attacker could use this in a timing attack.
+decrypt, an attacker could use this in a timing attack.
 If the special flag
 .Dv CMS_DEBUG_DECRYPT
-is set, then the above behaviour is modified and an error
+is set, the above behaviour is modified and an error
 .Em is
 returned if no recipient encrypted key can be decrypted
 .Em without
@@ -147,7 +150,7 @@ Applications should use this flag with extreme caution
 especially in automated gateways as it can leave them open to attack.
 .Pp
 It is possible to determine the correct recipient key by other means
-(for example looking them up in a database) and setting them in the
+(for example by looking them up in a database) and setting them in the
 .Fa cms
 structure in advance using the CMS utility functions such as
 .Fn CMS_decrypt_set1_pkey .
@@ -161,7 +164,9 @@ when calling
 .Fn CMS_decrypt
 later on.
 .Pp
-To process KEKRecipientInfo types,
+To process
+.Vt KEKRecipientInfo
+types,
 .Fn CMS_decrypt_set1_key
 or
 .Xr CMS_RecipientInfo_set0_key 3
@@ -195,6 +200,14 @@ The error can be obtained from
 .Xr ERR_get_error 3 .
 .Sh SEE ALSO
 .Xr CMS_encrypt 3
+.Sh STANDARDS
+RFC 5652: Cryptographic Message Syntax (CMS)
+.Bl -dash -compact -offset indent
+.It
+section 6.1: EnvelopedData Type
+.It
+section 6.2.3: KEKRecipientInfo Type
+.El
 .Sh HISTORY
 .Fn CMS_decrypt ,
 .Fn CMS_decrypt_set1_pkey ,
