@@ -1795,6 +1795,7 @@
 ./usr/share/man/man3/EC_GFp_simple_method.3
 ./usr/share/man/man3/EC_GROUP_copy.3
 ./usr/share/man/man3/EC_GROUP_new.3
+./usr/share/man/man3/EC_KEY_METHOD_new.3
 ./usr/share/man/man3/EC_KEY_new.3
 ./usr/share/man/man3/EC_POINT_add.3
 ./usr/share/man/man3/EC_POINT_new.3
@@ -3021,4 +3022,3 @@
 ./usr/share/misc/gprof.callg
 ./usr/share/misc/gprof.flat
 ./var/db/libc.tags
-./usr/share/man/man3/EC_KEY_METHOD_new.3
