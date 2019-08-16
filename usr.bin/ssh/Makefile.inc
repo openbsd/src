@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.67 2019/04/18 07:32:56 dtucker Exp $
+#	$OpenBSD: Makefile.inc,v 1.68 2019/08/16 06:35:27 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -39,6 +39,7 @@ CFLAGS+=	-DHAVE_DLOPEN
 
 SRCS_BASE+=	sshbuf.c
 SRCS_BASE+=	sshbuf-getput-basic.c
+SRCS_BASE+=	sshbuf-misc.c
 SRCS_BASE+=	ssherr.c
 SRCS_BASE+=	log.c
 SRCS_BASE+=	xmalloc.c
@@ -59,7 +60,6 @@ SRCS_KEX+=	kexsntrup4591761x25519.c
 SRCS_KEX+=	sntrup4591761.c
 
 SRCS_KEY+=	sshkey.c
-SRCS_KEY+=	sshbuf-misc.c
 SRCS_KEY+=	cipher.c
 SRCS_KEY+=	cipher-chachapoly.c
 SRCS_KEY+=	chacha.c
