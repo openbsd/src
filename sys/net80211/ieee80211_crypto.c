@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.74 2018/09/24 20:14:59 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.75 2019/08/16 19:53:32 procter Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -157,6 +157,10 @@ ieee80211_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 		/* should not get there */
 		error = EINVAL;
 	}
+
+	if (error == 0)
+		k->k_flags |= IEEE80211_KEY_SWCRYPTO;
+
 	return error;
 }
 
@@ -209,6 +213,9 @@ struct mbuf *
 ieee80211_encrypt(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_key *k)
 {
+	if ((k->k_flags & IEEE80211_KEY_SWCRYPTO) == 0)
+		panic("%s: key unset for sw crypto: %d", __func__, k->k_id);
+
 	switch (k->k_cipher) {
 	case IEEE80211_CIPHER_WEP40:
 	case IEEE80211_CIPHER_WEP104:
@@ -280,6 +287,12 @@ ieee80211_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 		}
 		k = &ic->ic_nw_keys[kid];
 	}
+
+	if ((k->k_flags & IEEE80211_KEY_SWCRYPTO) == 0) {
+		m_free(m0);
+		return NULL;
+	}
+
 	switch (k->k_cipher) {
 	case IEEE80211_CIPHER_WEP40:
 	case IEEE80211_CIPHER_WEP104:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.25 2017/08/18 17:30:12 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.26 2019/08/16 19:53:32 procter Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -78,6 +78,7 @@ struct ieee80211_key {
 #define IEEE80211_KEY_GROUP	0x00000001	/* group data key */
 #define IEEE80211_KEY_TX	0x00000002	/* Tx+Rx */
 #define IEEE80211_KEY_IGTK	0x00000004	/* integrity group key */
+#define IEEE80211_KEY_SWCRYPTO	0x00000080	/* loaded for software crypto */
 
 	u_int			k_len;
 	u_int64_t		k_rsc[IEEE80211_NUM_TID];
