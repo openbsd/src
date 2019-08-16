@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.81 2019/06/28 13:32:44 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.82 2019/08/16 07:42:13 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -750,8 +750,10 @@ transform	: AUTHXF STRING			{
 			    sizeof(struct ipsec_xf *));
 			if (xfs == NULL)
 				err(1, "transform: recallocarray");
-			if ((xfs[nxfs] = parse_xf($2, 0, authxfs)) == NULL)
+			if ((xfs[nxfs] = parse_xf($2, 0, authxfs)) == NULL) {
 				yyerror("%s not a valid transform", $2);
+				YYERROR;
+			}
 			ipsec_transforms->authxf = xfs;
 			ipsec_transforms->nauthxf++;
 		}
@@ -762,8 +764,10 @@ transform	: AUTHXF STRING			{
 			    sizeof(struct ipsec_xf *));
 			if (xfs == NULL)
 				err(1, "transform: recallocarray");
-			if ((xfs[nxfs] = parse_xf($2, 0, encxfs)) == NULL)
+			if ((xfs[nxfs] = parse_xf($2, 0, encxfs)) == NULL) {
 				yyerror("%s not a valid transform", $2);
+				YYERROR;
+			}
 			ipsec_transforms->encxf = xfs;
 			ipsec_transforms->nencxf++;
 		}
@@ -774,8 +778,10 @@ transform	: AUTHXF STRING			{
 			    sizeof(struct ipsec_xf *));
 			if (xfs == NULL)
 				err(1, "transform: recallocarray");
-			if ((xfs[nxfs] = parse_xf($2, 0, prfxfs)) == NULL)
+			if ((xfs[nxfs] = parse_xf($2, 0, prfxfs)) == NULL) {
 				yyerror("%s not a valid transform", $2);
+				YYERROR;
+			}
 			ipsec_transforms->prfxf = xfs;
 			ipsec_transforms->nprfxf++;
 		}
@@ -786,8 +792,10 @@ transform	: AUTHXF STRING			{
 			    sizeof(struct ipsec_xf *));
 			if (xfs == NULL)
 				err(1, "transform: recallocarray");
-			if ((xfs[nxfs] = parse_xf($2, 0, groupxfs)) == NULL)
+			if ((xfs[nxfs] = parse_xf($2, 0, groupxfs)) == NULL) {
 				yyerror("%s not a valid transform", $2);
+				YYERROR;
+			}
 			ipsec_transforms->groupxf = xfs;
 			ipsec_transforms->ngroupxf++;
 		}
