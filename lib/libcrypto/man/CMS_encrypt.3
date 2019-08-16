@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_encrypt.3,v 1.4 2019/08/11 12:46:38 schwarze Exp $
+.\" $OpenBSD: CMS_encrypt.3,v 1.5 2019/08/16 11:30:10 schwarze Exp $
 .\" full merge up to: OpenSSL 83cf7abf May 29 13:07:08 2018 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,46 +48,59 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 11 2019 $
+.Dd $Mdocdate: August 16 2019 $
 .Dt CMS_ENCRYPT 3
 .Os
 .Sh NAME
 .Nm CMS_encrypt
-.Nd create a CMS envelopedData structure
+.Nd create a CMS EnvelopedData structure
 .Sh SYNOPSIS
 .In openssl/cms.h
 .Ft CMS_ContentInfo *
 .Fo CMS_encrypt
-.Fa "STACK_OF(X509) *certs"
+.Fa "STACK_OF(X509) *certificates"
 .Fa "BIO *in"
 .Fa "const EVP_CIPHER *cipher"
 .Fa "unsigned int flags"
 .Fc
 .Sh DESCRIPTION
 .Fn CMS_encrypt
-creates and returns a CMS EnvelopedData structure.
-.Fa certs
-is a list of recipient certificates.
-.Fa in
-is the content to be encrypted.
-.Fa cipher
-is the symmetric cipher to use.
-.Fa flags
-is an optional set of flags.
+creates a CMS
+.Vt EnvelopedData
+structure, encrypting the content provided by
+.Fa in .
 .Pp
+The recipient
+.Fa certificates
+are added as
+.Vt KeyTransRecipientInfo
+structures by calling the function
+.Xr CMS_add1_recipient_cert 3
+internally.
 Only certificates carrying RSA, Diffie-Hellman or EC keys are supported
 by this function.
+The
+.Fa certificates
+argument can be set to
+.Dv NULL
+if the
+.Dv CMS_PARTIAL
+flag is set and recipients are added later using
+.Xr CMS_add1_recipient_cert 3
+or
+.Xr CMS_add0_recipient_key 3 .
 .Pp
+.Fa cipher
+is the symmetric cipher to use.
+It must support ASN.1 encoding of its parameters.
 .Xr EVP_des_ede3_cbc 3
 (triple DES) is the algorithm of choice for S/MIME use because most
-clients will support it.
-.Pp
-The algorithm passed in the
-.Fa cipher
-parameter must support ASN1 encoding of its parameters.
+clients support it.
 .Pp
 Many browsers implement a "sign and encrypt" option which is simply an
-S/MIME envelopedData containing an S/MIME signed message.
+S/MIME
+.Vt EnvelopedData
+containing an S/MIME signed message.
 This can be readily produced by storing the S/MIME signed message in a
 memory BIO and passing it to
 .Fn CMS_encrypt .
@@ -118,6 +131,21 @@ Return a partial
 .Vt CMS_ContentInfo
 structure suitable for streaming I/O: no data is read from the BIO
 .Fa in .
+Several functions including
+.Xr SMIME_write_CMS 3 ,
+.Xr i2d_CMS_bio_stream 3 ,
+or
+.Xr PEM_write_bio_CMS_stream 3
+can be used  to finalize the structure.
+Alternatively, finalization can be performed by obtaining the streaming
+ASN1
+.Vt BIO
+directly using
+.Xr BIO_new_CMS 3 .
+Outputting the content of the returned
+.Vt CMS_ContentInfo
+structure via a function that does not properly finalize it
+will give unpredictable results.
 .It Dv CMS_PARTIAL
 Return a partial
 .Vt CMS_ContentInfo
@@ -130,47 +158,6 @@ structure.
 This is rarely used in practice and is not supported by
 .Xr SMIME_write_CMS 3 .
 .El
-.Pp
-If the flag
-.Dv CMS_STREAM
-is set, the returned
-.Vt CMS_ContentInfo
-structure is
-.Em not
-complete and outputting its contents via a function that does not
-properly finalize the
-.Vt CMS_ContentInfo
-structure will give unpredictable results.
-.Pp
-Several functions including
-.Xr SMIME_write_CMS 3 ,
-.Xr i2d_CMS_bio_stream 3 ,
-.Xr PEM_write_bio_CMS_stream 3
-finalize the structure.
-Alternatively finalization can be performed by obtaining the streaming
-ASN1
-.Vt BIO
-directly using
-.Xr BIO_new_CMS 3 .
-.Pp
-The recipients specified in
-.Fa certs
-use a CMS KeyTransRecipientInfo info structure.
-KEKRecipientInfo is also supported using the flag
-.Dv CMS_PARTIAL
-and
-.Xr CMS_add0_recipient_key 3 .
-.Pp
-The parameter
-.Fa certs
-may be
-.Dv NULL
-if
-.Dv CMS_PARTIAL
-is set and recipients are added later using
-.Xr CMS_add1_recipient_cert 3
-or
-.Xr CMS_add0_recipient_key 3 .
 .Sh RETURN VALUES
 .Fn CMS_encrypt
 returns either a
@@ -182,6 +169,14 @@ The error can be obtained from
 .Xr ERR_get_error 3 .
 .Sh SEE ALSO
 .Xr CMS_decrypt 3
+.Sh STANDARDS
+RFC 5652: Cryptographic Message Syntax (CMS)
+.Bl -dash -compact -offset indent
+.It
+section 6.1: EnvelopedData Type
+.It
+section 6.2.1: KeyTransRecipientInfo Type
+.El
 .Sh HISTORY
 .Fn CMS_encrypt
 first appeared in OpenSSL 0.9.8h
