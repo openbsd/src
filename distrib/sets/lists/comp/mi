@@ -3021,3 +3021,4 @@
 ./usr/share/misc/gprof.callg
 ./usr/share/misc/gprof.flat
 ./var/db/libc.tags
+./usr/share/man/man3/EC_KEY_METHOD_new.3
