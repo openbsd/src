@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.77 2019/05/10 18:27:50 akoshibe Exp $
+.\"	$OpenBSD: bridge.4,v 1.78 2019/08/16 01:55:21 dlg Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 10 2019 $
+.Dd $Mdocdate: August 16 2019 $
 .Dt BRIDGE 4
 .Os
 .Sh NAME
@@ -121,9 +121,6 @@ can be used to force operation in the common Spanning Tree Protocol
 without rapid state transitions.
 Note that RSTP will be compatible with remote bridges running common STP.
 .Pp
-STP will not work on
-.Xr etherip 4
-members because they lack a hardware MAC address.
 .Sh SPAN PORTS
 The bridge can have interfaces added to it as span ports.
 Span ports transmit a copy of every frame received by the bridge.
