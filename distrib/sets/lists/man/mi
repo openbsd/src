@@ -2483,7 +2483,6 @@
 ./usr/share/man/man8/smtpctl.8
 ./usr/share/man/man8/smtpd.8
 ./usr/share/man/man8/sndiod.8
-./usr/share/man/man8/snmpctl.8
 ./usr/share/man/man8/snmpd.8
 ./usr/share/man/man8/spamd-setup.8
 ./usr/share/man/man8/spamd.8

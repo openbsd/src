@@ -2610,7 +2610,6 @@
 ./usr/sbin/smtpd
 ./usr/sbin/snkadm
 ./usr/sbin/snkinit
-./usr/sbin/snmpctl
 ./usr/sbin/snmpd
 ./usr/sbin/spamdb
 ./usr/sbin/sshd
