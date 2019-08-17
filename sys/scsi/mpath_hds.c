@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_hds.c,v 1.21 2018/08/09 01:41:48 jmatthew Exp $ */
+/*	$OpenBSD: mpath_hds.c,v 1.22 2019/08/17 15:31:41 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -187,7 +187,6 @@ int
 hds_activate(struct device *self, int act)
 {
 	struct hds_softc *sc = (struct hds_softc *)self;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
@@ -195,7 +194,7 @@ hds_activate(struct device *self, int act)
 			mpath_path_detach(&sc->sc_path);
 		break;
 	}
-	return (rv);
+	return (0);
 }
 
 void

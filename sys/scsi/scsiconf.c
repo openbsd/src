@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.199 2019/08/14 21:02:02 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.200 2019/08/17 15:31:41 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -214,7 +214,7 @@ scsi_activate(struct scsibus_softc *sb, int target, int lun, int act)
 int
 scsi_activate_bus(struct scsibus_softc *sb, int act)
 {
-	int target, rv = 0, r;
+	int target, r, rv = 0;
 
 	for (target = 0; target < sb->sc_buswidth; target++) {
 		r = scsi_activate_target(sb, target, act);
@@ -227,7 +227,7 @@ scsi_activate_bus(struct scsibus_softc *sb, int act)
 int
 scsi_activate_target(struct scsibus_softc *sb, int target, int act)
 {
-	int lun, rv = 0, r;
+	int lun, r, rv = 0;
 
 	for (lun = 0; lun < sb->adapter_link->luns; lun++) {
 		r = scsi_activate_lun(sb, target, lun, act);
@@ -424,12 +424,12 @@ int
 scsi_detach_bus(struct scsibus_softc *sb, int flags)
 {
 	struct scsi_link *alink = sb->adapter_link;
-	int i, err, rv = 0;
+	int target, r, rv = 0;
 
-	for (i = 0; i < alink->adapter_buswidth; i++) {
-		err = scsi_detach_target(sb, i, flags);
-		if (err != 0 && err != ENXIO)
-			rv = err;
+	for (target = 0; target < alink->adapter_buswidth; target++) {
+		r = scsi_detach_target(sb, target, flags);
+		if (r != 0 && r != ENXIO)
+			rv = r;
 	}
 
 	return (rv);
@@ -455,19 +455,19 @@ int
 scsi_detach_target(struct scsibus_softc *sb, int target, int flags)
 {
 	struct scsi_link *alink = sb->adapter_link;
-	int i, err, rv = 0;
+	int lun, r, rv = 0;
 
 	if (target < 0 || target >= alink->adapter_buswidth ||
 	    target == alink->adapter_target)
 		return (ENXIO);
 
-	for (i = 0; i < alink->luns; i++) { /* nicer backwards? */
-		if (scsi_get_link(sb, target, i) == NULL)
+	for (lun = 0; lun < alink->luns; lun++) { /* nicer backwards? */
+		if (scsi_get_link(sb, target, lun) == NULL)
 			continue;
 
-		err = scsi_detach_lun(sb, target, i, flags);
-		if (err != 0 && err != ENXIO)
-			rv = err;
+		r = scsi_detach_lun(sb, target, lun, flags);
+		if (r != 0 && r != ENXIO)
+			rv = r;
 	}
 
 	return (rv);

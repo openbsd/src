@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.135 2019/01/20 03:28:19 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.136 2019/08/17 15:31:41 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -352,7 +352,6 @@ int
 stactivate(struct device *self, int act)
 {
 	struct st_softc *st = (struct st_softc *)self;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
@@ -361,7 +360,7 @@ stactivate(struct device *self, int act)
 		break;
 	}
 
-	return (rv);
+	return (0);
 }
 
 int

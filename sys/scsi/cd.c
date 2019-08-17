@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.224 2019/01/20 20:28:37 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.225 2019/08/17 15:31:41 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -236,7 +236,6 @@ int
 cdactivate(struct device *self, int act)
 {
 	struct cd_softc *sc = (struct cd_softc *)self;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_RESUME:
@@ -254,7 +253,7 @@ cdactivate(struct device *self, int act)
 		scsi_xsh_del(&sc->sc_xsh);
 		break;
 	}
-	return (rv);
+	return (0);
 }
 
 int

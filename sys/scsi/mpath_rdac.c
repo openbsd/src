@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_rdac.c,v 1.23 2015/03/14 03:38:52 jsg Exp $ */
+/*	$OpenBSD: mpath_rdac.c,v 1.24 2019/08/17 15:31:41 krw Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -245,7 +245,6 @@ int
 rdac_activate(struct device *self, int act)
 {
 	struct rdac_softc *sc = (struct rdac_softc *)self;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
@@ -255,7 +254,7 @@ rdac_activate(struct device *self, int act)
 			mpath_path_detach(&sc->sc_path);
 		break;
 	}
-	return (rv);
+	return (0);
 }
 
 void
