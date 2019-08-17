@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.43 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.44 2019/08/17 14:25:06 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -289,10 +289,10 @@ set_signals(int reset)
 	if (!reset) {
 		hupval = signal(SIGHUP, SIG_IGN);
 		if (hupval != SIG_IGN)
-			hupval = (sig_t) my_exit;
+			hupval = my_sigexit;
 		intval = signal(SIGINT, SIG_IGN);
 		if (intval != SIG_IGN)
-			intval = (sig_t) my_exit;
+			intval = my_sigexit;
 	}
 	signal(SIGHUP, hupval);
 	signal(SIGINT, intval);
@@ -393,11 +393,8 @@ version(void)
 	my_exit(EXIT_SUCCESS);
 }
 
-/*
- * Exit with cleanup.
- */
 void
-my_exit(int status)
+my_cleanup(void)
 {
 	unlink(TMPINNAME);
 	if (!toutkeep)
@@ -405,5 +402,24 @@ my_exit(int status)
 	if (!trejkeep)
 		unlink(TMPREJNAME);
 	unlink(TMPPATNAME);
+}
+
+/*
+ * Exit with cleanup.
+ */
+void
+my_exit(int status)
+{
+	my_cleanup();
 	exit(status);
+}
+
+/*
+ * Exit with cleanup, from a signal handler.
+ */
+void
+my_sigexit(int signo)
+{
+	my_cleanup();
+	_exit(2);
 }
