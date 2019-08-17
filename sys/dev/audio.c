@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.178 2019/04/05 06:14:13 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.179 2019/08/17 04:57:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -625,11 +625,109 @@ audio_canstart(struct audio_softc *sc)
 }
 
 int
+audio_setpar_blksz(struct audio_softc *sc)
+{
+	unsigned int nr, np, max, min, mult;
+	unsigned int blk_mult, blk_max;
+
+	/*
+	 * get least multiplier of the number of frames per block
+	 */
+	if (sc->ops->round_blocksize) {
+		blk_mult = sc->ops->round_blocksize(sc->arg, 1);
+		if (blk_mult == 0) {
+			printf("%s: 0x%x: bad block size multiplier\n",
+			    DEVNAME(sc), blk_mult);
+			return ENODEV;
+		}
+	} else
+		blk_mult = 1;
+	DPRINTF("%s: hw block size multiplier: %u\n", DEVNAME(sc), blk_mult);
+	if (sc->mode & AUMODE_PLAY) {
+		np = blk_mult / audio_gcd(sc->pchan * sc->bps, blk_mult);
+		if (!(sc->mode & AUMODE_RECORD))
+			nr = np;
+		DPRINTF("%s: play number of frames multiplier: %u\n",
+		    DEVNAME(sc), np);
+	}
+	if (sc->mode & AUMODE_RECORD) {
+		nr = blk_mult / audio_gcd(sc->rchan * sc->bps, blk_mult);
+		if (!(sc->mode & AUMODE_PLAY))
+			np = nr;
+		DPRINTF("%s: record number of frames multiplier: %u\n",
+		    DEVNAME(sc), nr);
+	}
+	mult = nr * np / audio_gcd(nr, np);
+	DPRINTF("%s: least common number of frames multiplier: %u\n",
+	    DEVNAME(sc), mult);
+
+	/*
+	 * get minimum and maximum frames per block
+	 */
+	if (sc->ops->round_blocksize)
+		blk_max = sc->ops->round_blocksize(sc->arg, AUDIO_BUFSZ);
+	else
+		blk_max = AUDIO_BUFSZ;
+	if ((sc->mode & AUMODE_PLAY) && blk_max > sc->play.datalen / 2)
+		blk_max = sc->play.datalen / 2;
+	if ((sc->mode & AUMODE_RECORD) && blk_max > sc->rec.datalen / 2)
+		blk_max = sc->rec.datalen / 2;
+	if (sc->mode & AUMODE_PLAY) {
+		np = blk_max / (sc->pchan * sc->bps);
+		if (!(sc->mode & AUMODE_RECORD))
+			nr = np;
+	}
+	if (sc->mode & AUMODE_RECORD) {
+		nr = blk_max / (sc->rchan * sc->bps);
+		if (!(sc->mode & AUMODE_PLAY))
+			np = nr;
+	}
+	max = np < nr ? np : nr;
+	max -= max % mult;
+	min = sc->rate / 1000 + mult - 1;
+	min -= min % mult;
+	DPRINTF("%s: frame number range: %u..%u\n", DEVNAME(sc), min, max);
+	if (max < min) {
+		printf("%s: %u: bad max frame number\n", DEVNAME(sc), max);
+		return EIO;
+	}
+
+	/*
+	 * adjust the frame per block to match our constraints
+	 */
+	sc->round += mult / 2;
+	sc->round -= sc->round % mult;
+	if (sc->round > max)
+		sc->round = max;
+	else if (sc->round < min)
+		sc->round = min;
+
+	return 0;
+}
+
+int
+audio_setpar_nblks(struct audio_softc *sc)
+{
+	unsigned int max;
+
+	/*
+	 * set buffer size (number of blocks)
+	 */
+	if (sc->mode & AUMODE_PLAY) {
+		max = sc->play.datalen / (sc->round * sc->pchan * sc->bps);
+		if (sc->nblks > max)
+			sc->nblks = max;
+		else if (sc->nblks < 2)
+			sc->nblks = 2;
+	}
+
+	return 0;
+}
+
+int
 audio_setpar(struct audio_softc *sc)
 {
 	struct audio_params p, r;
-	unsigned int nr, np, max, min, mult;
-	unsigned int blk_mult, blk_max;
 	int error;
 
 	DPRINTF("%s: setpar: req enc=%d bits=%d, bps=%d, msb=%d "
@@ -768,90 +866,20 @@ audio_setpar(struct audio_softc *sc)
 	}
 	audio_calc_sil(sc);
 
-	/*
-	 * get least multiplier of the number of frames per block
-	 */
-	if (sc->ops->round_blocksize) {
-		blk_mult = sc->ops->round_blocksize(sc->arg, 1);
-		if (blk_mult == 0) {
-			printf("%s: 0x%x: bad block size multiplier\n",
-			    DEVNAME(sc), blk_mult);
-			return ENODEV;
-		}
-	} else
-		blk_mult = 1;
-	DPRINTF("%s: hw block size multiplier: %u\n", DEVNAME(sc), blk_mult);
-	if (sc->mode & AUMODE_PLAY) {
-		np = blk_mult / audio_gcd(sc->pchan * sc->bps, blk_mult);
-		if (!(sc->mode & AUMODE_RECORD))
-			nr = np;
-		DPRINTF("%s: play number of frames multiplier: %u\n",
-		    DEVNAME(sc), np);
-	}
-	if (sc->mode & AUMODE_RECORD) {
-		nr = blk_mult / audio_gcd(sc->rchan * sc->bps, blk_mult);
-		if (!(sc->mode & AUMODE_PLAY))
-			np = nr;
-		DPRINTF("%s: record number of frames multiplier: %u\n",
-		    DEVNAME(sc), nr);
-	}
-	mult = nr * np / audio_gcd(nr, np);
-	DPRINTF("%s: least common number of frames multiplier: %u\n",
-	    DEVNAME(sc), mult);
+	error = audio_setpar_blksz(sc);
+	if (error)
+		return error;
+
+	error = audio_setpar_nblks(sc);
+	if (error)
+		return error;
 
 	/*
-	 * get minimum and maximum frames per block
-	 */
-	if (sc->ops->round_blocksize)
-		blk_max = sc->ops->round_blocksize(sc->arg, AUDIO_BUFSZ);
-	else
-		blk_max = AUDIO_BUFSZ;
-	if ((sc->mode & AUMODE_PLAY) && blk_max > sc->play.datalen / 2)
-		blk_max = sc->play.datalen / 2;
-	if ((sc->mode & AUMODE_RECORD) && blk_max > sc->rec.datalen / 2)
-		blk_max = sc->rec.datalen / 2;
-	if (sc->mode & AUMODE_PLAY) {
-		np = blk_max / (sc->pchan * sc->bps);
-		if (!(sc->mode & AUMODE_RECORD))
-			nr = np;
-	}
-	if (sc->mode & AUMODE_RECORD) {
-		nr = blk_max / (sc->rchan * sc->bps);
-		if (!(sc->mode & AUMODE_PLAY))
-			np = nr;
-	}
-	max = np < nr ? np : nr;
-	max -= max % mult;
-	min = sc->rate / 1000 + mult - 1;
-	min -= min % mult;
-	DPRINTF("%s: frame number range: %u..%u\n", DEVNAME(sc), min, max);
-	if (max < min) {
-		printf("%s: %u: bad max frame number\n", DEVNAME(sc), max);
-		return EIO;
-	}
-
-	/*
-	 * adjust the frame per block to match our constraints
-	 */
-	sc->round += mult / 2;
-	sc->round -= sc->round % mult;
-	if (sc->round > max)
-		sc->round = max;
-	else if (sc->round < min)
-		sc->round = min;
-
-	/*
-	 * set buffer size (number of blocks)
+	 * set buffer
 	 */
 	if (sc->mode & AUMODE_PLAY) {
 		sc->play.blksz = sc->round * sc->pchan * sc->bps;
-		max = sc->play.datalen / sc->play.blksz;
-		if (sc->nblks > max)
-			sc->nblks = max;
-		else if (sc->nblks < 2)
-			sc->nblks = 2;
 		sc->play.len = sc->nblks * sc->play.blksz;
-		sc->nblks = sc->nblks;
 	}
 	if (sc->mode & AUMODE_RECORD) {
 		/*
