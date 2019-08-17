@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.4 2019/07/25 02:42:44 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.5 2019/08/17 06:07:22 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -370,17 +370,29 @@ find_next_bit(volatile void *p, int max, int b)
 	     (b) = find_next_zero_bit((p), (max), (b) + 1))
 
 #if defined(__i386__)
-#define rmb()	__asm __volatile("lock; addl $0,0(%%esp)" : : : "memory");
-#define wmb()	__asm __volatile("" : : : "memory");
-#define mb()	__asm __volatile("lock; addl $0,0(%%esp)" : : : "memory");
+#define rmb()	__asm __volatile("lock; addl $0,-4(%%esp)" : : : "memory", "cc")
+#define wmb()	__asm __volatile("lock; addl $0,-4(%%esp)" : : : "memory", "cc")
+#define mb()	__asm __volatile("lock; addl $0,-4(%%esp)" : : : "memory", "cc")
+#define smp_mb()	__asm __volatile("lock; addl $0,-4(%%esp)" : : : "memory", "cc")
+#define smp_rmb()	__asm __volatile("" : : : "memory")
+#define smp_wmb()	__asm __volatile("" : : : "memory")
+#define __smp_store_mb(var, value)	do { (void)xchg(&var, value); } while (0)
+#define smp_mb__after_atomic()	do { } while (0)
+#define smp_mb__before_atomic()	do { } while (0)
 #elif defined(__alpha__)
 #define rmb()	alpha_mb();
 #define wmb()	alpha_wmb();
 #define mb()	alpha_mb();
 #elif defined(__amd64__)
-#define rmb()	__asm __volatile("lock; addl $0,0(%%rsp)" : : : "memory");
-#define wmb()	__asm __volatile("" : : : "memory");
-#define mb()	__asm __volatile("lock; addl $0,0(%%rsp)" : : : "memory");
+#define rmb()	__asm __volatile("lfence" : : : "memory")
+#define wmb()	__asm __volatile("sfence" : : : "memory")
+#define mb()	__asm __volatile("mfence" : : : "memory")
+#define smp_mb()	__asm __volatile("lock; addl $0,-4(%%rsp)" : : : "memory", "cc");
+#define smp_rmb()	__asm __volatile("" : : : "memory")
+#define smp_wmb()	__asm __volatile("" : : : "memory")
+#define __smp_store_mb(var, value)	do { (void)xchg(&var, value); } while (0)
+#define smp_mb__after_atomic()	do { } while (0)
+#define smp_mb__before_atomic()	do { } while (0)
 #elif defined(__aarch64__)
 #define rmb()	__membar("dsb ld")
 #define wmb()	__membar("dsb st")
