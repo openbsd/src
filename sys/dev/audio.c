@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.179 2019/08/17 04:57:52 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.180 2019/08/17 05:04:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -74,6 +74,7 @@ struct audio_buf {
 	size_t start;			/* first byte used in the FIFO */
 	size_t used;			/* bytes used in the FIFO */
 	size_t blksz;			/* DMA block size */
+	unsigned int nblks;		/* number of blocks */
 	struct selinfo sel;		/* to record & wakeup poll(2) */
 	unsigned int pos;		/* bytes transferred */
 	unsigned int xrun;		/* bytes lost by xruns */
@@ -112,7 +113,6 @@ struct audio_softc {
 	unsigned int msb;		/* sample are MSB aligned */
 	unsigned int rate;		/* rate in Hz */
 	unsigned int round;		/* block size in frames */
-	unsigned int nblks;		/* number of play blocks */
 	unsigned int pchan, rchan;	/* number of channels */
 	unsigned char silence[4];	/* a sample of silence */
 	int pause;			/* not trying to start DMA */
@@ -715,12 +715,20 @@ audio_setpar_nblks(struct audio_softc *sc)
 	 */
 	if (sc->mode & AUMODE_PLAY) {
 		max = sc->play.datalen / (sc->round * sc->pchan * sc->bps);
-		if (sc->nblks > max)
-			sc->nblks = max;
-		else if (sc->nblks < 2)
-			sc->nblks = 2;
+		if (sc->play.nblks > max)
+			sc->play.nblks = max;
+		else if (sc->play.nblks < 2)
+			sc->play.nblks = 2;
 	}
-
+	if (sc->mode & AUMODE_RECORD) {
+		/*
+		 * for recording, buffer size is not the latency (it's
+		 * exactly one block), so let's get the maximum buffer
+		 * size of maximum reliability during xruns
+		 */
+		max = sc->rec.datalen / (sc->round * sc->rchan * sc->bps);
+		sc->rec.nblks = max;
+	}
 	return 0;
 }
 
@@ -733,7 +741,7 @@ audio_setpar(struct audio_softc *sc)
 	DPRINTF("%s: setpar: req enc=%d bits=%d, bps=%d, msb=%d "
 	    "rate=%d, pchan=%d, rchan=%d, round=%u, nblks=%d\n",
 	    DEVNAME(sc), sc->sw_enc, sc->bits, sc->bps, sc->msb,
-	    sc->rate, sc->pchan, sc->rchan, sc->round, sc->nblks);
+	    sc->rate, sc->pchan, sc->rchan, sc->round, sc->play.nblks);
 
 	/*
 	 * check if requested parameters are in the allowed ranges
@@ -879,23 +887,17 @@ audio_setpar(struct audio_softc *sc)
 	 */
 	if (sc->mode & AUMODE_PLAY) {
 		sc->play.blksz = sc->round * sc->pchan * sc->bps;
-		sc->play.len = sc->nblks * sc->play.blksz;
+		sc->play.len = sc->play.nblks * sc->play.blksz;
 	}
 	if (sc->mode & AUMODE_RECORD) {
-		/*
-		 * for recording, buffer size is not the latency (it's
-		 * exactly one block), so let's get the maximum buffer
-		 * size of maximum reliability during xruns
-		 */
 		sc->rec.blksz = sc->round * sc->rchan * sc->bps;
-		sc->rec.len = sc->rec.datalen;
-		sc->rec.len -= sc->rec.datalen % sc->rec.blksz;
+		sc->rec.len = sc->rec.nblks * sc->rec.blksz;
 	}
 
 	DPRINTF("%s: setpar: new enc=%d bits=%d, bps=%d, msb=%d "
 	    "rate=%d, pchan=%d, rchan=%d, round=%u, nblks=%d\n",
 	    DEVNAME(sc), sc->sw_enc, sc->bits, sc->bps, sc->msb,
-	    sc->rate, sc->pchan, sc->rchan, sc->round, sc->nblks);
+	    sc->rate, sc->pchan, sc->rchan, sc->round, sc->play.nblks);
 	return 0;
 }
 
@@ -944,7 +946,7 @@ audio_ioc_getpar(struct audio_softc *sc, struct audio_swpar *p)
 	p->msb = sc->msb;
 	p->pchan = sc->pchan;
 	p->rchan = sc->rchan;
-	p->nblks = sc->nblks;
+	p->nblks = sc->play.nblks;
 	p->round = sc->round;
 	return 0;
 }
@@ -997,7 +999,7 @@ audio_ioc_setpar(struct audio_softc *sc, struct audio_swpar *p)
 	if (p->round != ~0)
 		sc->round = p->round;
 	if (p->nblks != ~0)
-		sc->nblks = p->nblks;
+		sc->play.nblks = p->nblks;
 
 	/*
 	 * if the device is not opened for playback or recording don't
@@ -1110,7 +1112,7 @@ audio_attach(struct device *parent, struct device *self, void *aux)
 	sc->pchan = 2;
 	sc->rchan = 2;
 	sc->round = 960;
-	sc->nblks = 2;
+	sc->play.nblks = 2;
 	sc->play.pos = sc->play.xrun = sc->rec.pos = sc->rec.xrun = 0;
 	sc->record_enable = MIXER_RECORD_ENABLE_SYSCTL;
 
