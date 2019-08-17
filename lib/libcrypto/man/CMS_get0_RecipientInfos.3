@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_get0_RecipientInfos.3,v 1.4 2019/08/11 12:46:38 schwarze Exp $
+.\" $OpenBSD: CMS_get0_RecipientInfos.3,v 1.5 2019/08/17 14:41:01 schwarze Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 11 2019 $
+.Dd $Mdocdate: August 17 2019 $
 .Dt CMS_GET0_RECIPIENTINFOS 3
 .Os
 .Sh NAME
@@ -62,7 +62,7 @@
 .Nm CMS_RecipientInfo_set0_key ,
 .Nm CMS_RecipientInfo_decrypt ,
 .Nm CMS_RecipientInfo_encrypt
-.Nd CMS envelopedData RecipientInfo routines
+.Nd CMS EnvelopedData RecipientInfo routines
 .Sh SYNOPSIS
 .In openssl/cms.h
 .Ft STACK_OF(CMS_RecipientInfo) *
@@ -83,7 +83,7 @@
 .Ft int
 .Fo CMS_RecipientInfo_ktri_cert_cmp
 .Fa "CMS_RecipientInfo *ri"
-.Fa "X509 *cert"
+.Fa "X509 *certificate"
 .Fc
 .Ft int
 .Fo CMS_RecipientInfo_set0_pkey
@@ -122,138 +122,120 @@
 .Fa "CMS_RecipientInfo *ri"
 .Fc
 .Sh DESCRIPTION
-The function
 .Fn CMS_get0_RecipientInfos
 returns all the
-.Vt CMS_RecipientInfo
-structures associated with a CMS EnvelopedData structure.
+.Vt RecipientInfo
+structures associated with the
+.Vt EnvelopedData
+structure
+.Fa cms .
 .Pp
 .Fn CMS_RecipientInfo_type
-returns the type of the
-.Vt CMS_RecipientInfo
-structure
-.Fa ri .
-It will currently return
-.Dv CMS_RECIPINFO_TRANS ,
-.Dv CMS_RECIPINFO_AGREE ,
-.Dv CMS_RECIPINFO_KEK ,
-.Dv CMS_RECIPINFO_PASS ,
-or
-.Dv CMS_RECIPINFO_OTHER .
+returns the type of
+.Fa ri :
+.Bl -column CMS_RECIPINFO_TRANS for -compact
+.It Dv CMS_RECIPINFO_TRANS Ta for Ta Vt KeyTransRecipientInfo ,
+.It Dv CMS_RECIPINFO_AGREE Ta for Ta Vt KeyAgreeRecipientInfo ,
+.It Dv CMS_RECIPINFO_KEK   Ta for Ta Vt KEKRecipientInfo ,
+.It Dv CMS_RECIPINFO_PASS  Ta for Ta Vt PasswordRecipientinfo , No or
+.It Dv CMS_RECIPINFO_OTHER Ta for Ta Vt OtherRecipientInfo .
+.El
 .Pp
 .Fn CMS_RecipientInfo_ktri_get0_signer_id
-retrieves the certificate recipient identifier associated with a
-specific
-.Vt CMS_RecipientInfo
+retrieves the certificate
+.Vt RecipientIdentifier
+associated with the
+.Vt KeyTransRecipientInfo
 structure
-.Fa ri ,
-which must be of type
-.Dv CMS_RECIPINFO_TRANS .
-Either the keyidentifier will be set in
+.Fa ri .
+Either the
+.Vt SubjectKeyIdentifier
+will be set in
 .Fa keyid
-or
-.Em both
-issuer name and serial number in
+or both issuer name and serial number in
 .Fa issuer
 and
 .Fa sno .
 .Pp
 .Fn CMS_RecipientInfo_ktri_cert_cmp
-compares the certificate
-.Fa cert
+compares the
+.Fa certificate
 against the
-.Vt CMS_RecipientInfo
+.Vt KeyTransRecipientInfo
 structure
-.Fa ri ,
-which must be of type
-.Dv CMS_RECIPINFO_TRANS .
-It returns zero if the comparison is successful or non-zero if not.
+.Fa ri .
 .Pp
 .Fn CMS_RecipientInfo_set0_pkey
 associates the private key
 .Fa pkey
 with the
-.Vt CMS_RecipientInfo
+.Vt KeyTransRecipientInfo
 structure
-.Fa ri ,
-which must be of type
-.Dv CMS_RECIPINFO_TRANS .
+.Fa ri .
 .Pp
 .Fn CMS_RecipientInfo_kekri_get0_id
 retrieves the key information from the
-.Vt CMS_RecipientInfo
+.Vt KEKRecipientInfo
 structure
-.Fa ri
-which must be of type
-.Dv CMS_RECIPINFO_KEK .
-Any of the remaining parameters can be
-.Dv NULL
-if the application is not interested in the value of a field.
+.Fa ri .
+Fields are copied out as follows:
+.Bl -column keyEncryptionAlgorithm to -compact
+.It Fa keyEncryptionAlgorithm Ta to Ta Pf * Fa palg ,
+.It Fa keyIdentifier          Ta to Ta Pf * Fa pid ,
+.It Fa date                   Ta to Ta Pf * Fa pdate Pq optional ,
+.It Fa other.keyAttrId        Ta to Ta Pf * Fa potherid Pq optional ,
+.It Fa other.keyAttr          Ta to Ta Pf * Fa pothertype Pq optional .
+.El
 Where a field is optional and absent,
 .Dv NULL
-will be written to the corresponding parameter.
-The keyEncryptionAlgorithm field is written to
-.Fa palg ,
-the keyIdentifier field is written to
-.Fa pid ,
-the
-.Sy date
-field if present is written to
-.Fa pdate .
-If the
-.Sy other
-field is present the components
-.Sy keyAttrId
-and
-.Sy keyAttr
-are written to the parameters
-.Fa potherid
-and
-.Fa pothertype .
+is written to the corresponding parameter.
+Parameters the application is not interested in can be set to
+.Dv NULL .
 .Pp
 .Fn CMS_RecipientInfo_kekri_id_cmp
-compares the ID in the
+compares the identifier in the
 .Fa id
 and
 .Fa idlen
-parameters against the keyIdentifier
-.Vt CMS_RecipientInfo
+parameters against the
+.Fa keyIdentifier
+field of the
+.Vt KEKRecipientInfo
 structure
-.Fa ri ,
-which must be of type
-.Dv CMS_RECIPINFO_KEK .
-It returns zero if the comparison is successful or non-zero if not.
+.Fa ri .
 .Pp
 .Fn CMS_RecipientInfo_set0_key
-associates the symmetric key
+associates the symmetric
 .Fa key
 of length
 .Fa keylen
 with the
-.Vt CMS_RecipientInfo
+.Vt KEKRecipientInfo
 structure
-.Fa ri ,
-which must be of type
-.Dv CMS_RECIPINFO_KEK .
+.Fa ri .
 .Pp
 .Fn CMS_RecipientInfo_decrypt
 attempts to decrypt the
-.Vt CMS_RecipientInfo
+.Vt RecipientInfo
 structure
 .Fa ri
-in structure
+in
 .Fa cms .
-A key must have been associated with the structure first.
+A key must have been associated with
+.Fa ri
+first.
 .Pp
 .Fn CMS_RecipientInfo_encrypt
 attempts to encrypt the
-.Vt CMS_RecipientInfo
+.Vt RecipientInfo
 structure
 .Fa ri
-in structure
+in
 .Fa cms .
-A key must have been associated with the structure first and the content
-encryption key must be available: for example by a previous call to
+A key must have been associated with
+.Fa ri
+first and the content encryption key must be available,
+for example by a previous call to
 .Fn CMS_RecipientInfo_decrypt .
 .Pp
 The main purpose of these functions is to enable an application to
@@ -262,11 +244,11 @@ method of
 .Xr CMS_decrypt 3
 is not appropriate.
 .Pp
-In typical usage, an application will retrieve all
+In typical usage, an application retrieves all
 .Vt CMS_RecipientInfo
 structures using
 .Fn CMS_get0_RecipientInfos
-and check the type of each using
+and checks the type of each using
 .Fn CMS_RecipientInfo_type .
 Depending on the type, the
 .Vt CMS_RecipientInfo
@@ -289,17 +271,20 @@ structure.
 Typically an application will first decrypt an appropriate
 .Vt CMS_RecipientInfo
 structure to make the content encrypt key available.
-Ot will then add a new recipient using a function such as
+It will then add a new recipient using a function such as
 .Xr CMS_add1_recipient_cert 3
 and finally encrypt the content encryption key using
 .Fn CMS_RecipientInfo_encrypt .
 .Sh RETURN VALUES
 .Fn CMS_get0_RecipientInfos
-returns all
+returns an internal pointer to all the
 .Vt CMS_RecipientInfo
 structures, or
 .Dv NULL
 if an error occurs.
+.Pp
+.Fn CMS_RecipientInfo_type
+returns an integer constant.
 .Pp
 .Fn CMS_RecipientInfo_ktri_get0_signer_id ,
 .Fn CMS_RecipientInfo_set0_pkey ,
@@ -313,12 +298,26 @@ return 1 for success or 0 if an error occurs.
 .Fn CMS_RecipientInfo_ktri_cert_cmp
 and
 .Fn CMS_RecipientInfo_kekri_id_cmp
-return 0 for a successful comparison or non-zero otherwise.
+return 0 when
+.Fa ri
+matches or non-zero otherwise.
 .Pp
 Any error can be obtained from
 .Xr ERR_get_error 3 .
 .Sh SEE ALSO
 .Xr CMS_decrypt 3
+.Sh STANDARDS
+RFC 5652 Cryptographic Message Syntax (CMS):
+.Bl -dash -compact -offset indent
+.It
+section 6.1: EnvelopedData Type
+.It
+section 6.2: RecipientInfo Type
+.It
+section 6.2.1: KeyTransRecipientInfo Type
+.It
+section 6.2.3: KEKRecipientInfo Type
+.El
 .Sh HISTORY
 These functions first appeared in OpenSSL 0.9.8h,
 except that
