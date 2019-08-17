@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.220 2019/08/12 20:57:31 tim Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.221 2019/08/17 14:43:21 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: August 12 2019 $
+.Dd $Mdocdate: August 17 2019 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -110,12 +110,12 @@ The delivery
 .Ar method
 parameter may be one of the following:
 .Bl -tag -width Ds
-.It Cm expand\-only
+.It Cm expand-only
 Only accept the message if a delivery method was specified
 in an aliases or
 .Pa .forward
 file.
-.It Cm forward\-only
+.It Cm forward-only
 Only accept the message if the recipient results in a remote address
 after the processing of aliases or forward file.
 .It Cm lmtp Ar destination Op Ar rcpt-to
@@ -223,7 +223,7 @@ with higher priority than mail exchanger identified as
 Advertise
 .Ar heloname
 as the hostname to other mail exchangers during the HELO phase.
-.It Cm helo\-src Pf < Ar table Ns >
+.It Cm helo-src Pf < Ar table Ns >
 Use the mapping
 .Ar table
 to look up a hostname matching the source address,
@@ -288,7 +288,7 @@ This option is usable only with
 option.
 The credential table format is described in
 .Xr table 5 .
-.It Cm mail\-from Ar mailaddr
+.It Cm mail-from Ar mailaddr
 Use
 .Ar mailaddr
 as the MAIL FROM address within the SMTP transaction.
@@ -299,7 +299,7 @@ for the source IP address.
 If the list contains more than one address, all of them are used
 in such a way that traffic is routed as efficiently as possible.
 .El
-.It Ic bounce Cm warn\-interval Ar delay Op , Ar delay ...
+.It Ic bounce Cm warn-interval Ar delay Op , Ar delay ...
 Send warning messages to the envelope sender when temporary delivery
 failures cause a message to remain on the queue for longer than
 .Ar delay .
@@ -313,7 +313,7 @@ At most four
 .Ar delay
 parameters can be specified.
 The default is
-.Qq Ic bounce Cm warn\-interval No 4h ,
+.Qq Ic bounce Cm warn-interval No 4h ,
 sending a single warning after four hours.
 .It Ic ca Ar caname Cm cert Ar cafile
 Associate the Certificate Authority (CA) certificate file
@@ -329,18 +329,18 @@ or set using either
 or using the
 .Ic hostname
 directive.
-.It Ic filter Ar chain\-name Ic chain Brq Ar filter-name Op , Ar ...
+.It Ic filter Ar chain-name Ic chain Brq Ar filter-name Op , Ar ...
 Register a chain of filters named
-.Ar chain\-name
+.Ar chain-name
 and consisting of the filters listed from
 .Ar filter-name .
 Filters part of a filter chain are executed in order of declaration for
 each phase that they are registered for.
 A filter chain may be used in place of a filter for any directive but
 filter chains themselves.
-.It Ic filter Ar filter\-name Ic phase Ar phase\-name Ic match Ar conditions Ic disconnect Ar message
+.It Ic filter Ar filter-name Ic phase Ar phase-name Ic match Ar conditions Ic disconnect Ar message
 Register builtin filter
-.Ar filter\-name
+.Ar filter-name
 matching
 .Ar conditions
 to disconnect session with
@@ -348,9 +348,9 @@ to disconnect session with
 Phase and matching conditions are documented in a specific section,
 see
 .Sx BUILTIN FILTERING .
-.It Ic filter Ar filter\-name Ic phase Ar phase\-name Ic match Ar conditions Ic reject Ar message
+.It Ic filter Ar filter-name Ic phase Ar phase-name Ic match Ar conditions Ic reject Ar message
 Register builtin filter
-.Ar filter\-name
+.Ar filter-name
 matching
 .Ar conditions
 to reject session with
@@ -358,9 +358,9 @@ to reject session with
 Phase and matching conditions are documented in a specific section,
 see
 .Sx BUILTIN FILTERING .
-.It Ic filter Ar filter\-name Ic phase Ar phase\-name Ic match Ar conditions Ic rewrite Ar value
+.It Ic filter Ar filter-name Ic phase Ar phase-name Ic match Ar conditions Ic rewrite Ar value
 Register builtin filter
-.Ar filter\-name
+.Ar filter-name
 matching
 .Ar conditions
 to rewrite phase parameter with new
@@ -368,19 +368,19 @@ to rewrite phase parameter with new
 Phase and matching conditions are documented in a specific section,
 see
 .Sx BUILTIN FILTERING .
-.It Ic filter Ar filter\-name Ic proc Ar proc\-name
+.It Ic filter Ar filter-name Ic proc Ar proc-name
 Register
 .Qq proc
 filter
-.Ar filter\-name
+.Ar filter-name
 backed by the
-.Ar proc\-name
+.Ar proc-name
 process.
-.It Ic filter Ar filter\-name Ic proc\-exec Ar command
+.It Ic filter Ar filter-name Ic proc-exec Ar command
 Register and execute
 .Qq proc
 filter
-.Ar filter\-name
+.Ar filter-name
 from
 .Ar command .
 .It Ic include Qq Ar pathname
@@ -414,7 +414,7 @@ or a credentials table
 .Ar authtable ,
 the format of which is described in
 .Xr table 5 .
-.It Cm auth\-optional Op Pf < Ar authtable Ns >
+.It Cm auth-optional Op Pf < Ar authtable Ns >
 Support SMTPAUTH optionally:
 clients need not authenticate, but may do so.
 This allows a
@@ -449,13 +449,13 @@ The
 table contains a mapping of IP addresses to hostnames.
 If the address on which the connection arrives appears in the mapping,
 the associated hostname is used.
-.It Cm mask\-src
+.It Cm mask-src
 Omit the
 .Sy from
 part when prepending
 .Dq Received
 headers.
-.It Cm no\-dsn
+.It Cm no-dsn
 Disable the DSN (Delivery Status Notification) extension.
 .It Cm pki Ar pkiname
 For secure connections,
@@ -469,10 +469,10 @@ to prove a mail server's identity.
 Listen on the given
 .Ar port
 instead of the default port 25.
-.It Cm proxy\-v2
+.It Cm proxy-v2
 Support the PROXYv2 protocol,
 rewriting appropriately source address received from proxy.
-.It Cm received\-auth
+.It Cm received-auth
 In
 .Dq Received
 headers, report whether the session was authenticated
@@ -498,7 +498,7 @@ Clients connecting to the listener are tagged with the given
 Support STARTTLS, by default on port 25.
 Mutually exclusive with
 .Cm smtps .
-.It Cm tls\-require Op Cm verify
+.It Cm tls-require Op Cm verify
 Like
 .Cm tls ,
 but force clients to establish a secure connection
@@ -508,12 +508,12 @@ With the
 option, clients must also provide a valid certificate
 to establish an SMTP session.
 .El
-.It Ic listen on Cm socket Op Cm mask\-src
+.It Ic listen on Cm socket Op Cm mask-src
 Listen for incoming SMTP connections on the Unix domain socket
 .Pa /var/run/smtpd.sock .
 This is done by default, even if the directive is absent.
 If the
-.Cm mask\-src
+.Cm mask-src
 option is specified, printing of the HELO name, hostname, and IP
 address of the originating host is suppressed in Received: header lines.
 .\" XXX The option
@@ -636,28 +636,28 @@ Specify that session's HELO / EHLO should match the regex or regex table
 .Ar helo-name .
 .It Xo
 .Op Ic \&!
-.Cm mail\-from
+.Cm mail-from
 .Ar sender | Pf < Ar sender Ns >
 .Xc
 Specify that transactions's MAIL FROM should match the string or list table
 .Ar sender .
 .It Xo
 .Op Ic \&!
-.Cm mail\-from regex
+.Cm mail-from regex
 .Ar sender | Pf < Ar sender Ns >
 .Xc
 Specify that transactions's MAIL FROM should match the regex or regex table
 .Ar sender .
 .It Xo
 .Op Ic \&!
-.Cm rcpt\-to
+.Cm rcpt-to
 .Ar recipient | Pf < Ar recipient Ns >
 .Xc
 Specify that transaction's RCPT TO should match the string or list table
 .Ar recipient .
 .It Xo
 .Op Ic \&!
-.Cm rcpt\-to regex
+.Cm rcpt-to regex
 .Ar recipient | Pf < Ar recipient Ns >
 .Xc
 Specify that transaction's RCPT TO should match the regex or regex table
@@ -698,7 +698,7 @@ When a local delivery specifies a wrapper, the
 associated with the wrapper will be executed instead.
 The command may contain format specifiers
 .Pq see Sx FORMAT SPECIFIERS .
-.It Ic mta Cm max\-deferred Ar number
+.It Ic mta Cm max-deferred Ar number
 When delivery to a given host is suspended due to temporary failures,
 cache at most
 .Ar number
@@ -751,9 +751,9 @@ the key length is determined automatically.
 The default is
 .Cm none ,
 which disables DHE cipher suites.
-.It Ic proc Ar proc\-name Ar command
+.It Ic proc Ar proc-name Ar command
 Register an external process named
-.Ar proc\-name
+.Ar proc-name
 from
 .Ar command .
 Such processes may be used to share the same instance between multiple filters.
@@ -770,7 +770,7 @@ is specified, it is read with
 If the string
 .Cm stdin
 or a single dash
-.Pq Ql \-
+.Pq Ql -
 is given instead of a
 .Ar key ,
 the key is read from the standard input.
@@ -789,24 +789,24 @@ string for
 .Xr SSL_CTX_set_cipher_list 3 .
 The default is
 .Qq HIGH:!aNULL:!MD5 .
-.It Ic smtp limit Cm max\-mails Ar count
+.It Ic smtp limit Cm max-mails Ar count
 Limit the number of messages to
 .Ar count
 for each session.
 The default is 100.
-.It Ic smtp limit Cm max\-rcpt Ar count
+.It Ic smtp limit Cm max-rcpt Ar count
 Limit the number of recipients to
 .Ar count
 for each transaction.
 The default is 1000.
-.It Ic smtp Cm max\-message\-size Ar size
+.It Ic smtp Cm max-message-size Ar size
 Reject messages larger than
 .Ar size ,
 given as a positive number of bytes or as a string to be parsed with
 .Xr scan_scaled 3 .
 The default is
 .Qq 35M .
-.It Ic smtp Cm sub\-addr\-delim Ar character
+.It Ic smtp Cm sub-addr-delim Ar character
 When resolving the local part of a local email address, ignore the ASCII
 .Ar character
 and all characters following it.
@@ -871,12 +871,12 @@ A message may also be rejected after being submitted,
 disregarding if the envelope was accepted or not.
 .Pp
 The following phases are currently supported:
-.Bl -column mail\-from -offset indent
+.Bl -column mail-from -offset indent
 .It connect    Ta upon connection, before a banner is displayed
 .It helo       Ta after HELO command is submitted
 .It ehlo       Ta after EHLO command is submitted
-.It mail\-from Ta after MAIL FROM command is submitted
-.It rcpt\-to   Ta after RCPT TO command is submitted
+.It mail-from Ta after MAIL FROM command is submitted
+.It rcpt-to   Ta after RCPT TO command is submitted
 .It data       Ta after DATA command is submitted
 .It commit     Ta after message is fully is submitted
 .El
@@ -889,8 +889,8 @@ multiple criterias may be checked:
 .It rdns Pf < Ar table Ns >       Ta session has a reverse DNS in table
 .It src Pf < Ar table Ns >        Ta source address is in table
 .It helo Pf < Ar table Ns >       Ta helo name is in table
-.It mail\-from Pf < Ar table Ns > Ta sender address is in table
-.It rcpt\-to Pf < Ar table Ns >   Ta recipient address is in table
+.It mail-from Pf < Ar table Ns > Ta sender address is in table
+.It rcpt-to Pf < Ar table Ns >   Ta recipient address is in table
 .El
 .Pp
 All criterias from previous phases are available to subsequent phases,
@@ -945,13 +945,13 @@ Expansion formats also support partial expansion using the optional
 bracket notations with substring offset.
 For example, with recipient domain
 .Dq example.org :
-.Bl -column %{rcpt.domain[0:\-4]} -offset indent
+.Bl -column %{rcpt.domain[0:-4]} -offset indent
 .It %{rcpt.domain[0]}    Ta expands to Dq e
 .It %{rcpt.domain[1]}    Ta expands to Dq x
 .It %{rcpt.domain[8:]}   Ta expands to Dq org
-.It %{rcpt.domain[\-3:]} Ta expands to Dq org
+.It %{rcpt.domain[-3:]} Ta expands to Dq org
 .It %{rcpt.domain[0:6]}  Ta expands to Dq example
-.It %{rcpt.domain[0:\-4]} Ta expands to Dq example
+.It %{rcpt.domain[0:-4]} Ta expands to Dq example
 .El
 .Pp
 In addition, modifiers may be applied to the token.
