@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_get0_SignerInfos.3,v 1.4 2019/08/11 12:46:38 schwarze Exp $
+.\" $OpenBSD: CMS_get0_SignerInfos.3,v 1.5 2019/08/17 15:23:26 schwarze Exp $
 .\" full merge up to: OpenSSL 83cf7abf May 29 13:07:08 2018 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 11 2019 $
+.Dd $Mdocdate: August 17 2019 $
 .Dt CMS_GET0_SIGNERINFOS 3
 .Os
 .Sh NAME
@@ -57,7 +57,7 @@
 .Nm CMS_SignerInfo_get0_signature ,
 .Nm CMS_SignerInfo_cert_cmp ,
 .Nm CMS_SignerInfo_set1_signer_cert
-.Nd CMS signedData signer functions
+.Nd CMS SignedData signer functions
 .Sh SYNOPSIS
 .In openssl/cms.h
 .Ft STACK_OF(CMS_SignerInfo) *
@@ -78,7 +78,7 @@
 .Ft int
 .Fo CMS_SignerInfo_cert_cmp
 .Fa "CMS_SignerInfo *si"
-.Fa "X509 *cert"
+.Fa "X509 *certificate"
 .Fc
 .Ft void
 .Fo CMS_SignerInfo_set1_signer_cert
@@ -86,96 +86,98 @@
 .Fa "X509 *signer"
 .Fc
 .Sh DESCRIPTION
-The function
 .Fn CMS_get0_SignerInfos
 returns all the
-.Vt CMS_SignerInfo
-structures associated with a CMS signedData structure.
+.Vt SignerInfo
+structures associated with the
+.Vt SignedData
+structure
+.Fa cms .
 .Pp
 .Fn CMS_SignerInfo_get0_signer_id
-retrieves the certificate signer identifier associated with a specific
-.Vt CMS_SignerInfo
+retrieves the certificate
+.Vt SignerIdentifier
+associated with the
+.Vt SignerInfo
 structure
 .Fa si .
-Either the keyidentifier will be set in
+Either the
+.Vt SubjectKeyIdentifier
+will be set in
 .Fa keyid
-or
-.Em both
-issuer name and serial number in
+or both issuer name and serial number in
 .Fa issuer
 and
 .Fa sno .
 .Pp
 .Fn CMS_SignerInfo_get0_signature
-retrieves the signature associated with
-.Fa si
-in a pointer to an
-.Vt ASN1_OCTET_STRING
-structure.
-This pointer returned corresponds to the internal signature value of
-.Fa si
-so it may be read or modified.
+retrieves the
+.Fa signature
+field of
+.Fa si .
+The application program is allowed to modify the data pointed to.
 .Pp
 .Fn CMS_SignerInfo_cert_cmp
-compares the certificate
-.Fa cert
-against the signer identifier
+compares the
+.Fa certificate
+against the signer identifier of
 .Fa si .
-It returns zero if the comparison is successful or non-zero if not.
 .Pp
 .Fn CMS_SignerInfo_set1_signer_cert
-sets the signers certificate of
+sets the signer certificate of
 .Fa si
 to
 .Fa signer .
 .Pp
 The main purpose of these functions is to enable an application to
-lookup signers certificates using any appropriate technique when the
+look up signer certificates using any appropriate technique when the
 simpler method of
 .Xr CMS_verify 3
 is not appropriate.
 .Pp
-In typical usage an application will retrieve all
+In typical usage, an application retrieves all
 .Vt CMS_SignerInfo
 structures using
 .Fn CMS_get0_SignerInfos
-and retrieve the identifier information using CMS.
+and retrieves the identifier information using CMS.
 It will then obtain the signer certificate by some unspecified means
 (or return and error if it cannot be found) and set it using
 .Fn CMS_SignerInfo_set1_signer_cert .
-.Pp
 Once all signer certificates have been set,
 .Xr CMS_verify 3
 can be used.
-.Pp
-Although
-.Fn CMS_get0_SignerInfos
-can return
-.Dv NULL
-if an error occurs
-.Em or
-if there are no signers, this is not a problem in practice because the
-only error which can occur is if the
-.Fa cms
-structure is not of type signedData due to application error.
 .Sh RETURN VALUES
 .Fn CMS_get0_SignerInfos
-returns all
+returns an internal pointer to all the
 .Vt CMS_SignerInfo
 structures, or
 .Dv NULL
-if there are no signers or an error occurs.
+if there are no signers or if
+.Fa cms
+is not of the type
+.Vt SignedData .
 .Pp
 .Fn CMS_SignerInfo_get0_signer_id
 returns 1 for success or 0 for failure.
 .Pp
+.Fn CMS_SignerInfo_get0_signature
+returns an internal pointer to the signature.
+.Pp
 .Fn CMS_SignerInfo_cert_cmp
-returns 0 for a successful comparison or non-zero otherwise.
+returns 0 for a match or non-zero otherwise.
 .Pp
 Any error can be obtained from
 .Xr ERR_get_error 3 .
 .Sh SEE ALSO
 .Xr CMS_verify 3
+.Sh STANDARDS
+RFC 5652: Cryptographic Message Syntax (CMS)
+.Bl -dash -compact -offset indent
+.It
+section 5.1: SignedData Type
+.It
+section 5.3: SignerInfo Type
+.El
 .Sh HISTORY
 .Fn CMS_get0_SignerInfos ,
 .Fn CMS_SignerInfo_get0_signer_id ,
