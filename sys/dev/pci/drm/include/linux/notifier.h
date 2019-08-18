@@ -4,7 +4,8 @@
 #define _LINUX_NOTIFIER_H
 
 struct notifier_block {
-	void *notifier_call;
+	int (*notifier_call)(struct notifier_block *, unsigned long, void *);
+	SLIST_ENTRY(notifier_block) link;
 };
 
 #define ATOMIC_INIT_NOTIFIER_HEAD(x)

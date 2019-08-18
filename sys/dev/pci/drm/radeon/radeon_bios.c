@@ -42,10 +42,6 @@
 #include <machine/autoconf.h>
 #endif
 
-#ifdef __HAVE_ACPI
-#include "acpi.h"
-#endif
-
 /*
  * BIOS.
  */
@@ -737,10 +733,6 @@ static bool radeon_read_disabled_bios(struct radeon_device *rdev)
 	else
 		return legacy_read_disabled_bios(rdev);
 }
-
-#if NACPI > 0
-#define CONFIG_ACPI
-#endif
 
 #ifdef CONFIG_ACPI
 static bool radeon_acpi_vfct_bios(struct radeon_device *rdev)

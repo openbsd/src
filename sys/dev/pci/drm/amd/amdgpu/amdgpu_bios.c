@@ -37,10 +37,6 @@
 #include <dev/isa/isavar.h>
 #endif
 
-#ifdef __HAVE_ACPI
-#include "acpi.h"
-#endif
-
 /*
  * BIOS.
  */
@@ -476,10 +472,6 @@ static bool amdgpu_read_disabled_bios(struct amdgpu_device *adev)
 	else
 		return amdgpu_asic_read_disabled_bios(adev);
 }
-
-#if NACPI > 0
-#define CONFIG_ACPI
-#endif
 
 #ifdef CONFIG_ACPI
 static bool amdgpu_acpi_vfct_bios(struct amdgpu_device *adev)

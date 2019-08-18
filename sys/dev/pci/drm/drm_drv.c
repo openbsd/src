@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.164 2019/07/30 05:50:20 jsg Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.165 2019/08/18 13:11:47 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -54,6 +54,14 @@
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
+
+#include <machine/bus.h>
+
+#ifdef __HAVE_ACPI
+#include <dev/acpi/acpidev.h>
+#include <dev/acpi/acpivar.h>
+#include <dev/acpi/dsdt.h>
+#endif
 
 #include <drm/drmP.h>
 #include <drm/drm_gem.h>
@@ -256,6 +264,12 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	dev->bridgetag = da->bridgetag;
 	dev->pdev->tag = da->tag;
 	dev->pdev->pci = (struct pci_softc *)parent->dv_parent;
+
+#ifdef CONFIG_ACPI
+	dev->pdev->dev.node = acpi_find_pci(da->pc, da->tag);
+	aml_register_notify(dev->pdev->dev.node, NULL,
+	    drm_linux_acpi_notify, NULL, ACPIDEV_NOPOLL);
+#endif
 
 	rw_init(&dev->struct_mutex, "drmdevlk");
 	mtx_init(&dev->event_lock, IPL_TTY);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.2 2019/07/15 03:35:23 jsg Exp $	*/
+/*	$OpenBSD: pci.h,v 1.3 2019/08/18 13:11:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -39,6 +39,10 @@ struct pci_bus {
 	struct pci_dev	*self;
 };
 
+struct pci_acpi {
+	struct aml_node	*node;
+};
+
 struct pci_dev {
 	struct pci_bus	_bus;
 	struct pci_bus	*bus;
@@ -57,6 +61,8 @@ struct pci_dev {
 	int		irq;
 	int		msi_enabled;
 	uint8_t		no_64bit_msi;
+
+	struct pci_acpi dev;
 };
 #define PCI_ANY_ID (uint16_t) (~0U)
 
@@ -272,6 +278,17 @@ pci_set_power_state(struct pci_dev *dev, int state)
 {
 	return 0;
 }
+
+static inline struct pci_dev *
+pci_get_class(pcireg_t class, struct pci_dev *pdev)
+{
+	return NULL;
+}
+
+#define PCI_CLASS_DISPLAY_VGA \
+    (PCI_CLASS_DISPLAY | PCI_SUBCLASS_DISPLAY_VGA)
+#define PCI_CLASS_DISPLAY_OTHER \
+    (PCI_CLASS_DISPLAY | PCI_SUBCLASS_DISPLAY_MISC)
 
 #if defined(__amd64__) || defined(__i386__)
 

@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.45 2019/05/21 22:40:06 jsg Exp $
+# $OpenBSD: files.drm,v 1.46 2019/08/18 13:11:47 kettenis Exp $
 
 # direct rendering modules
 define drmbase {[primary = -1]}
@@ -235,7 +235,7 @@ file	dev/pci/drm/radeon/r600_cs.c			radeondrm
 file	dev/pci/drm/radeon/r600_dma.c			radeondrm
 file	dev/pci/drm/radeon/r600_dpm.c			radeondrm
 file	dev/pci/drm/radeon/r600_hdmi.c			radeondrm
-#file	dev/pci/drm/radeon/radeon_acpi.c		radeondrm
+file	dev/pci/drm/radeon/radeon_acpi.c		radeondrm & acpi
 file	dev/pci/drm/radeon/radeon_agp.c			radeondrm
 file	dev/pci/drm/radeon/radeon_asic.c		radeondrm
 file	dev/pci/drm/radeon/radeon_atombios.c		radeondrm
@@ -518,7 +518,7 @@ file	dev/pci/drm/amd/amdgpu/amdgpu_vce_v2_0.c	amdgpu_cik
 
 device	amdgpu: drmbase, ttm, wsemuldisplaydev, rasops8, rasops32, i2cbus, i2c_bitbang, drm_sched, chash, powerplay, amddal
 attach	amdgpu at pci
-#file	dev/pci/drm/amd/amdgpu/amdgpu_acpi.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/amdgpu_acpi.c		amdgpu & acpi
 file	dev/pci/drm/amd/amdgpu/amdgpu_afmt.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_amdkfd.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_atombios.c	amdgpu

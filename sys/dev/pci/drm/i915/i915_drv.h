@@ -55,11 +55,6 @@
 #include <drm/drm_gem.h>
 #include <drm/drm_cache.h>
 
-#include "acpi.h"
-#if NACPI > 0
-#define CONFIG_ACPI
-#endif
-
 #include "drm.h"
 #include "vga.h"
 

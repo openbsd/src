@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.47 2019/08/05 08:35:59 anton Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.48 2019/08/18 13:11:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -987,6 +987,8 @@ vga_put(struct pci_dev *pdev, int rsrc)
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/amltypes.h>
+#include <dev/acpi/dsdt.h>
 
 acpi_status
 acpi_get_table(const char *sig, int instance,
@@ -1008,6 +1010,131 @@ acpi_get_table(const char *sig, int instance,
 	}
 
 	return AE_NOT_FOUND;
+}
+
+acpi_status
+acpi_get_handle(acpi_handle node, const char *name, acpi_handle *rnode)
+{
+	node = aml_searchname(node, name);
+	if (node == NULL)
+		return AE_NOT_FOUND;
+
+	*rnode = node;
+	return 0;
+}
+
+acpi_status
+acpi_get_name(acpi_handle node, int type,  struct acpi_buffer *buffer)
+{
+	KASSERT(buffer->length != ACPI_ALLOCATE_BUFFER);
+	KASSERT(type == ACPI_FULL_PATHNAME);
+	strlcpy(buffer->pointer, aml_nodename(node), buffer->length);
+	return 0;
+}
+
+acpi_status
+acpi_evaluate_object(acpi_handle node, const char *name,
+    struct acpi_object_list *params, struct acpi_buffer *result)
+{
+	struct aml_value args[4], res;
+	union acpi_object *obj;
+	uint8_t *data;
+	int i;
+
+	KASSERT(params->count <= nitems(args));
+
+	for (i = 0; i < params->count; i++) {
+		args[i].type = params->pointer[i].type;
+		switch (args[i].type) {
+		case AML_OBJTYPE_INTEGER:
+			args[i].v_integer = params->pointer[i].integer.value;
+			break;
+		case AML_OBJTYPE_BUFFER:
+			args[i].length = params->pointer[i].buffer.length;
+			args[i].v_buffer = params->pointer[i].buffer.pointer;
+			break;
+		default:
+			printf("%s: arg type 0x%02x", __func__, args[i].type);
+			return AE_BAD_PARAMETER;
+		}
+	}
+
+	if (name) {
+		node = aml_searchname(node, name);
+		if (node == NULL)
+			return AE_NOT_FOUND;
+	}
+	if (aml_evalnode(acpi_softc, node, params->count, args, &res)) {
+		aml_freevalue(&res);
+		return AE_ERROR;
+	}
+
+	KASSERT(result->length == ACPI_ALLOCATE_BUFFER);
+
+	result->length = sizeof(union acpi_object);
+	switch (res.type) {
+	case AML_OBJTYPE_BUFFER:
+		result->length += res.length;
+		result->pointer = malloc(result->length, M_DRM, M_WAITOK);
+		obj = (union acpi_object *)result->pointer;
+		data = (uint8_t *)(obj + 1);
+		obj->type = res.type;
+		obj->buffer.length = res.length;
+		obj->buffer.pointer = data;
+		memcpy(data, res.v_buffer, res.length);
+		break;
+	default:
+		printf("%s: return type 0x%02x", __func__, res.type);
+		aml_freevalue(&res);
+		return AE_ERROR;
+	}
+
+	aml_freevalue(&res);
+	return 0;
+}
+
+SLIST_HEAD(, notifier_block) drm_linux_acpi_notify_list =
+	SLIST_HEAD_INITIALIZER(drm_linux_acpi_notify_list);
+
+int
+drm_linux_acpi_notify(struct aml_node *node, int notify, void *arg)
+{
+	struct acpi_bus_event event;
+	struct notifier_block *nb;
+
+	event.device_class = ACPI_VIDEO_CLASS;
+	event.type = notify;
+
+	SLIST_FOREACH(nb, &drm_linux_acpi_notify_list, link)
+		nb->notifier_call(nb, 0, &event);
+	return 0;
+}
+
+int
+register_acpi_notifier(struct notifier_block *nb)
+{
+	SLIST_INSERT_HEAD(&drm_linux_acpi_notify_list, nb, link);
+	return 0;
+}
+
+int
+unregister_acpi_notifier(struct notifier_block *nb)
+{
+	SLIST_REMOVE(&drm_linux_acpi_notify_list, nb, notifier_block, link);
+	return 0;
+}
+
+const char *
+acpi_format_exception(acpi_status status)
+{
+	switch (status) {
+	case AE_NOT_FOUND:
+		return "not found";
+	case AE_BAD_PARAMETER:
+		return "bad parameter";
+	default:
+		return "unknown";
+	}
 }
 
 #endif
