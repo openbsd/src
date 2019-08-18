@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.200 2019/08/17 15:31:41 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.201 2019/08/18 00:58:54 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -161,12 +161,11 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 	sb->adapter_link = sc_link_proto;
 	if (sb->adapter_link->adapter_buswidth == 0)
 		sb->adapter_link->adapter_buswidth = 8;
-	sb->sc_buswidth = sb->adapter_link->adapter_buswidth;
 	if (sb->adapter_link->luns == 0)
 		sb->adapter_link->luns = 8;
 
-	printf(": %d targets", sb->sc_buswidth);
-	if (sb->adapter_link->adapter_target < sb->sc_buswidth)
+	printf(": %d targets", sb->adapter_link->adapter_buswidth);
+	if (sb->adapter_link->adapter_target < sb->adapter_link->adapter_buswidth)
 		printf(", initiator %d", sb->adapter_link->adapter_target);
 	if (sb->adapter_link->port_wwn != 0x0 &&
 	    sb->adapter_link->node_wwn != 0x0) {
@@ -216,7 +215,7 @@ scsi_activate_bus(struct scsibus_softc *sb, int act)
 {
 	int target, r, rv = 0;
 
-	for (target = 0; target < sb->sc_buswidth; target++) {
+	for (target = 0; target < sb->adapter_link->adapter_buswidth; target++) {
 		r = scsi_activate_target(sb, target, act);
 		if (r)
 			rv = r;
