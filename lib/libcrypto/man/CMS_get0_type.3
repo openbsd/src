@@ -1,7 +1,24 @@
-.\" $OpenBSD: CMS_get0_type.3,v 1.4 2019/08/11 12:46:38 schwarze Exp $
+.\" $OpenBSD: CMS_get0_type.3,v 1.5 2019/08/18 10:19:17 schwarze Exp $
 .\" full merge up to: OpenSSL 72a7a702 Feb 26 14:05:09 2019 +0000
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2008, 2015 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -48,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 11 2019 $
+.Dd $Mdocdate: August 18 2019 $
 .Dt CMS_GET0_TYPE 3
 .Os
 .Sh NAME
@@ -78,69 +95,66 @@
 .Fc
 .Sh DESCRIPTION
 .Fn CMS_get0_type
-returns the content type of a
-.Vt CMS_ContentInfo
-structure as an
-.Vt ASN1_OBJECT
-pointer.
-An application can then decide how to process the
-.Vt CMS_ContentInfo
-structure based on this value.
-.Pp
-.Fn CMS_set1_eContentType
-sets the embedded content type of a
-.Vt CMS_ContentInfo
-structure.
-It should be called with CMS functions (such as
-.Xr CMS_sign 3 ,
-.Xr CMS_encrypt 3 )
-with the
-.Dv CMS_PARTIAL
-flag and
-.Em before
-the structure is finalised, otherwise the results are undefined.
-.Pp
-.Fn CMS_get0_eContentType
-returns a pointer to the embedded content type.
-.Pp
-.Fn CMS_get0_content
-returns a pointer to the
-.Vt ASN1_OCTET_STRING
-pointer containing the embedded content.
-.Pp
-As the
-.Sq 0
-in the function names imply,
-.Fn CMS_get0_type ,
-.Fn CMS_get0_eContentType ,
-and
-.Fn CMS_get0_content
-return internal pointers which should
-.Em not
-be freed up.
-.Fn CMS_set1_eContentType
-copies the supplied OID and it
-.Em should
-be freed up after use.
-.Pp
+returns the content type of the
+.Vt ContentInfo
+structure
+.Fa cms .
 The
 .Vt ASN1_OBJECT
-values returned can be converted to an integer NID value using
+value returned can be converted to an integer NID value using
 .Xr OBJ_obj2nid 3 .
-For the currently supported content types the following values are
-returned:
-.Dv NID_pkcs7_data ,
-.Dv NID_pkcs7_signed ,
-.Dv NID_pkcs7_digest ,
-.Dv NID_id_smime_ct_compressedData ,
-.Dv NID_pkcs7_encrypted ,
-.Dv NID_pkcs7_enveloped .
+The following content types are identified by the following NIDs:
 .Pp
-The return value of
+.Bl -column AuthenticatedData NID_id_smime_ct_compressedData -compact
+.It Vt SignedData        Ta Dv NID_pkcs7_signed
+.It Vt EnvelopedData     Ta Dv NID_pkcs7_enveloped
+.It Vt DigestedData      Ta Dv NID_pkcs7_digest
+.It Vt EncryptedData     Ta Dv NID_pkcs7_encrypted
+.It Vt AuthenticatedData Ta Dv NID_id_smime_ct_authData
+.It Vt CompressedData    Ta Dv NID_id_smime_ct_compressedData
+.It arbitrary data       Ta Dv NID_pkcs7_data
+.El
+.Pp
+The
+.Vt SignedData ,
+.Vt DigestedData ,
+.Vt AuthenticatedData ,
+and
+.Vt CompressedData
+types contain a field
+.Fa encapContentInfo
+to allow embedding content, and
+.Vt EnvelopedData
+and
+.Vt EncryptedData
+contain a field
+.Fa encryptedContentInfo
+for that purpose.
+The type of the embedded content to be stored in that field can be
+set with the function
+.Fn CMS_set1_eContentType ,
+to be called on
+.Fa cms
+structures returned from functions such as
+.Xr CMS_sign 3
+or
+.Xr CMS_encrypt 3
+with the
+.Dv CMS_PARTIAL
+flag set and
+.Em before
+the structure is finalised; otherwise the results are undefined.
+.Fn CMS_set1_eContentType
+copies the supplied
+.Fa oid ,
+so it should be freed up after use.
+.Pp
+.Fn CMS_get0_eContentType
+returns the type of the embedded content.
+.Pp
 .Fn CMS_get0_content
-is a pointer to the
-.Vt ASN1_OCTET_STRING
-content pointer.
+returns a pointer to the storage location where the pointer to the
+embedded content is stored.
 That means that for example after
 .Pp
 .Dl ASN1_OCTET_STRING **pconf = CMS_get0_content(cms);
@@ -158,14 +172,22 @@ is normally set by higher level functions.
 .Fn CMS_get0_type
 and
 .Fn CMS_get0_eContentType
-return an
-.Vt ASN1_OBJECT
-structure.
+return internal pointers to
+.Vt OBJECT IDENTIFIER
+structures.
+.Pp
+.Fn CMS_get0_content
+returns an internal pointer to the storage location where the pointer
+to the embedded content is stored.
 .Pp
 .Fn CMS_set1_eContentType
 returns 1 for success or 0 if an error occurred.
 The error can be obtained from
 .Xr ERR_get_error 3 .
+.Sh STANDARDS
+RFC 5652: Cryptographic Message Syntax
+.Pp
+RFC 3274: Compressed Data Content Type for Cryptographic Message Syntax (CMS)
 .Sh HISTORY
 These functions first appeared in OpenSSL 0.9.8h
 and have been available since
