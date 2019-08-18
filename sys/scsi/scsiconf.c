@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.202 2019/08/18 02:43:52 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.203 2019/08/18 16:21:32 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -344,24 +344,24 @@ int
 scsi_probe_target(struct scsibus_softc *sb, int target)
 {
 	struct scsi_link *alink = sb->adapter_link;
-	struct scsi_link *link;
+	struct scsi_link *link0;
 	struct scsi_report_luns_data *report;
 	int i, nluns, lun;
 
 	if (scsi_probe_lun(sb, target, 0) == EINVAL)
 		return (EINVAL);
 
-	link = scsi_get_link(sb, target, 0);
-	if (link == NULL)
+	link0 = scsi_get_link(sb, target, 0);
+	if (link0 == NULL)
 		return (ENXIO);
 
-	if ((link->flags & (SDEV_UMASS | SDEV_ATAPI)) == 0 &&
-	    SCSISPC(link->inqdata.version) > 2) {
+	if ((link0->flags & (SDEV_UMASS | SDEV_ATAPI)) == 0 &&
+	    SCSISPC(link0->inqdata.version) > 2) {
 		report = dma_alloc(sizeof(*report), PR_WAITOK);
 		if (report == NULL)
 			goto dumbscan;
 
-		if (scsi_report_luns(link, REPORT_NORMAL, report,
+		if (scsi_report_luns(link0, REPORT_NORMAL, report,
 		    sizeof(*report), scsi_autoconf | SCSI_SILENT |
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY |
 		    SCSI_IGNORE_MEDIA_CHANGE, 10000) != 0) {
@@ -384,9 +384,9 @@ scsi_probe_target(struct scsibus_softc *sb, int target)
 				continue;
 
 			/* Probe the provided LUN. Don't check LUN 0. */
-			scsi_remove_link(sb, link);
+			scsi_remove_link(sb, link0);
 			scsi_probe_lun(sb, target, lun);
-			scsi_add_link(sb, link);
+			scsi_add_link(sb, link0);
 		}
 
 		dma_free(report, sizeof(*report));
