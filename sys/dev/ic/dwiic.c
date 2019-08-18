@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.7 2019/08/18 15:51:18 kettenis Exp $ */
+/* $OpenBSD: dwiic.c,v 1.8 2019/08/18 15:52:45 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -350,7 +350,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 			    sc->sc_dev.dv_xname, __func__, tx_limit, x));
 
 			if (flags & I2C_F_POLL) {
-				for (retries = 100; retries > 0; retries--) {
+				for (retries = 1000; retries > 0; retries--) {
 					rx_avail = dwiic_read(sc, DW_IC_RXFLR);
 					if (rx_avail > 0)
 						break;
