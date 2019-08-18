@@ -1,4 +1,4 @@
-.\" $OpenBSD: d2i_CMS_ContentInfo.3,v 1.1 2019/08/12 14:24:38 schwarze Exp $
+.\" $OpenBSD: d2i_CMS_ContentInfo.3,v 1.2 2019/08/18 21:44:10 schwarze Exp $
 .\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 12 2019 $
+.Dd $Mdocdate: August 18 2019 $
 .Dt D2I_CMS_CONTENTINFO 3
 .Os
 .Sh NAME
@@ -114,6 +114,8 @@ For all functions, the error code can be obtained by
 .Sh SEE ALSO
 .Xr ASN1_item_d2i 3 ,
 .Xr CMS_ContentInfo_new 3 ,
+.Xr CMS_get0_type 3 ,
+.Xr CMS_ReceiptRequest_create0 3 ,
 .Xr i2d_CMS_bio_stream 3
 .Sh STANDARDS
 RFC 5652: Cryptographic Message Syntax, section 3: General Syntax

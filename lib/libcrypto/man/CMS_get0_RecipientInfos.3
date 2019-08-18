@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_get0_RecipientInfos.3,v 1.5 2019/08/17 14:41:01 schwarze Exp $
+.\" $OpenBSD: CMS_get0_RecipientInfos.3,v 1.6 2019/08/18 21:44:10 schwarze Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 17 2019 $
+.Dd $Mdocdate: August 18 2019 $
 .Dt CMS_GET0_RECIPIENTINFOS 3
 .Os
 .Sh NAME
@@ -305,6 +305,7 @@ matches or non-zero otherwise.
 Any error can be obtained from
 .Xr ERR_get_error 3 .
 .Sh SEE ALSO
+.Xr CMS_ContentInfo_new 3 ,
 .Xr CMS_decrypt 3
 .Sh STANDARDS
 RFC 5652 Cryptographic Message Syntax (CMS):

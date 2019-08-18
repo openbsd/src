@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_verify_receipt.3,v 1.5 2019/08/18 12:06:51 schwarze Exp $
+.\" $OpenBSD: CMS_verify_receipt.3,v 1.6 2019/08/18 21:44:10 schwarze Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -97,6 +97,8 @@ returns 1 for a successful verification or 0 if an error occurred.
 The error can be obtained from
 .Xr ERR_get_error 3 .
 .Sh SEE ALSO
+.Xr CMS_ContentInfo_new 3 ,
+.Xr CMS_get1_ReceiptRequest 3 ,
 .Xr CMS_sign_receipt 3 ,
 .Xr CMS_verify 3
 .Sh STANDARDS

@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_ContentInfo_new.3,v 1.1 2019/08/12 14:24:38 schwarze Exp $
+.\" $OpenBSD: CMS_ContentInfo_new.3,v 1.2 2019/08/18 21:44:10 schwarze Exp $
 .\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 12 2019 $
+.Dd $Mdocdate: August 18 2019 $
 .Dt CMS_CONTENTINFO_NEW 3
 .Os
 .Sh NAME
@@ -107,6 +107,7 @@ if an error occurs.
 .Xr CMS_uncompress 3 ,
 .Xr CMS_verify 3 ,
 .Xr CMS_verify_receipt 3 ,
+.Xr crypto 3 ,
 .Xr d2i_CMS_ContentInfo 3 ,
 .Xr i2d_CMS_bio_stream 3 ,
 .Xr PEM_read_bio_PrivateKey 3 ,
@@ -115,6 +116,8 @@ if an error occurs.
 .Xr SMIME_write_CMS 3
 .Sh STANDARDS
 RFC 5652: Cryptographic Message Syntax, section 3: General Syntax
+.Pp
+RFC 3274: Compressed Data Content Type for Cryptographic Message Syntax (CMS)
 .Pp
 RFC 2634: Enhanced Security Services for S/MIME,
 section 2.7: Receipt Request Syntax

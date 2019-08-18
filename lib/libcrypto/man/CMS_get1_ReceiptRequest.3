@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_get1_ReceiptRequest.3,v 1.5 2019/08/18 10:54:57 schwarze Exp $
+.\" $OpenBSD: CMS_get1_ReceiptRequest.3,v 1.6 2019/08/18 21:44:10 schwarze Exp $
 .\" full merge up to: OpenSSL 83cf7abf May 29 13:07:08 2018 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -178,6 +178,7 @@ returns 1 is a signed receipt request is found and decoded.
 It returns 0 if a signed receipt request is not present or -1 if it is
 present but malformed.
 .Sh SEE ALSO
+.Xr CMS_ContentInfo_new 3 ,
 .Xr CMS_sign 3 ,
 .Xr CMS_sign_receipt 3 ,
 .Xr CMS_verify 3 ,

@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_get0_type.3,v 1.5 2019/08/18 10:19:17 schwarze Exp $
+.\" $OpenBSD: CMS_get0_type.3,v 1.6 2019/08/18 21:44:10 schwarze Exp $
 .\" full merge up to: OpenSSL 72a7a702 Feb 26 14:05:09 2019 +0000
 .\"
 .\" This file is a derived work.
@@ -184,6 +184,10 @@ to the embedded content is stored.
 returns 1 for success or 0 if an error occurred.
 The error can be obtained from
 .Xr ERR_get_error 3 .
+.Sh SEE ALSO
+.Xr CMS_ContentInfo_new 3 ,
+.Xr d2i_CMS_ContentInfo 3 ,
+.Xr SMIME_read_CMS 3
 .Sh STANDARDS
 RFC 5652: Cryptographic Message Syntax
 .Pp
