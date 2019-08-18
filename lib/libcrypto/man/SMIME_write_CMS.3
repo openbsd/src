@@ -1,4 +1,4 @@
-.\" $OpenBSD: SMIME_write_CMS.3,v 1.2 2019/08/11 12:46:38 schwarze Exp $
+.\" $OpenBSD: SMIME_write_CMS.3,v 1.3 2019/08/18 13:02:37 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 11 2019 $
+.Dd $Mdocdate: August 18 2019 $
 .Dt SMIME_WRITE_CMS 3
 .Os
 .Sh NAME
@@ -65,38 +65,32 @@
 .Fc
 .Sh DESCRIPTION
 .Fn SMIME_write_CMS
-adds the appropriate MIME headers to a CMS structure to produce an
-S/MIME message.
-.Pp
-.Fa out
-is the
-.Vt BIO
-to write the data to.
+adds the appropriate MIME headers to the
 .Fa cms
-is the appropriate
-.Vt CMS_ContentInfo
-structure.
-If streaming is enabled, then the content must be supplied in the
+structure to produce an S/MIME message and writes it to
+.Fa out .
+If streaming is enabled, the content must be supplied in the
 .Fa data
 argument.
-.Fa flags
-is an optional set of flags.
 .Pp
-The following flags can be passed in the
+The following
 .Fa flags
-parameter:
+can be passed:
 .Bl -tag -width Ds
 .It Dv CMS_DETACHED
 Use cleartext signing.
-This option only makes sense for SignedData where
+This option only makes sense if
+.Fa cms
+is of the type
+.Vt SignedData
+and
 .Dv CMS_DETACHED
-is also set when
-.Xr CMS_sign 3
-is called.
+was also set when it was created with
+.Xr CMS_sign 3 .
 .Pp
-If cleartext signing is used and
+If
 .Dv CMS_STREAM
-is not set, then the data must be read twice:
+is not set, the data must be read twice:
 once to compute the signature in
 .Xr CMS_sign 3
 and once to output the S/MIME message.
@@ -109,12 +103,12 @@ is also set.
 Perform streaming.
 This flag should only be set if
 .Dv CMS_STREAM
-was also set in the previous call to a
-.Vt CMS_ContentInfo
-creation function.
+was also passed to the function that created
+.Fa cms .
 .Pp
-If streaming is performed, the content is output in BER format using
-indefinite length constructed encoding except in the case of signed data
+The content is output in BER format using indefinite length
+constructed encoding except in the case of
+.Vt SignedData
 with detached content where the content is absent and DER format is
 used.
 .El

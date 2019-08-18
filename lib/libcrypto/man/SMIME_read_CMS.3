@@ -1,4 +1,4 @@
-.\" $OpenBSD: SMIME_read_CMS.3,v 1.3 2019/08/12 16:00:05 schwarze Exp $
+.\" $OpenBSD: SMIME_read_CMS.3,v 1.4 2019/08/18 13:02:37 schwarze Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 12 2019 $
+.Dd $Mdocdate: August 18 2019 $
 .Dt SMIME_READ_CMS 3
 .Os
 .Sh NAME
@@ -63,40 +63,22 @@
 .Fc
 .Sh DESCRIPTION
 .Fn SMIME_read_CMS
-parses a message in S/MIME format.
+parses a message in S/MIME format from
+.Fa in .
 .Pp
-.Fa in
-is a
-.Vt BIO
-to read the message from.
-.Pp
-If cleartext signing is used, then the content is saved in a memory BIO
+If the message uses cleartext signing, the content is saved in a memory BIO
 which is written to
-.Pf * Fa bcont ;
-otherwise
 .Pf * Fa bcont
-is set to
-.Dv NULL .
-.Pp
-The parsed
-.Vt CMS_ContentInfo
-structure is returned, or
-.Dv NULL
-if an error occurred.
-.Pp
-If
-.Pf * Fa bcont
-is not
-.Dv NULL ,
-then the message is clear text signed.
-.Pf * Fa bcont
-can then be passed to
+and which can then be passed to
 .Xr CMS_verify 3
 with the
 .Dv CMS_DETACHED
 flag set.
-.Pp
-Otherwise the type of the returned structure can be determined using
+Otherwise,
+.Pf * Fa bcont
+is set to
+.Dv NULL
+and the type of the returned structure can be determined using
 .Xr CMS_get0_type 3 .
 .Pp
 To support future functionality if
@@ -105,13 +87,11 @@ is not
 .Dv NULL ,
 .Pf * Fa bcont
 should be initialized to
-.Dv NULL .
-For example:
+.Dv NULL ,
+for example:
 .Bd -literal -offset indent
 BIO *cont = NULL;
-CMS_ContentInfo *cms;
-
-cms = SMIME_read_CMS(in, &cont);
+CMS_ContentInfo *cms = SMIME_read_CMS(in, &cont);
 .Ed
 .Sh RETURN VALUES
 .Fn SMIME_read_CMS
@@ -147,5 +127,5 @@ structure is always base64 encoded and will not handle the case
 where it is in binary format or uses quoted printable format.
 .Pp
 The use of a memory BIO to hold the signed content limits the size of
-message which can be processed due to memory restraints: a streaming
+the message which can be processed due to memory restraints: a streaming
 single pass option should be available.
