@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.23 2019/08/11 17:35:27 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.24 2019/08/18 16:52:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -35,7 +35,7 @@
 #include "smtpd.h"
 #include "log.h"
 
-#define	PROTOCOL_VERSION	0
+#define	PROTOCOL_VERSION	"0.1"
 
 struct reporter_proc {
 	TAILQ_ENTRY(reporter_proc)	entries;
@@ -156,7 +156,7 @@ report_smtp_broadcast(uint64_t reqid, const char *direction, struct timeval *tv,
 			continue;
 
 		va_start(ap, format);
-		if (io_printf(lka_proc_get_io(rp->name), "report|%d|%lld.%06ld|%s|%s|",
+		if (io_printf(lka_proc_get_io(rp->name), "report|%s|%lld.%06ld|%s|%s|",
 			PROTOCOL_VERSION, tv->tv_sec, tv->tv_usec, direction, event) == -1 ||
 		    io_vprintf(lka_proc_get_io(rp->name), format, ap) == -1)
 			fatalx("failed to write to processor");
