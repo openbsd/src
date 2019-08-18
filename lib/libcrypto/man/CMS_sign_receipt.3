@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_sign_receipt.3,v 1.4 2019/08/11 12:46:38 schwarze Exp $
+.\" $OpenBSD: CMS_sign_receipt.3,v 1.5 2019/08/18 12:06:51 schwarze Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 11 2019 $
+.Dd $Mdocdate: August 18 2019 $
 .Dt CMS_SIGN_RECEIPT 3
 .Os
 .Sh NAME
@@ -66,10 +66,14 @@
 .Fc
 .Sh DESCRIPTION
 .Fn CMS_sign_receipt
-creates and returns a CMS signed receipt structure.
+creates a new CMS
+.Vt SignedData
+structure containing a signed
+.Vt Receipt
+as its embedded content.
 .Fa si
 is the
-.Vt CMS_SignerInfo
+.Vt SignerInfo
 structure containing the signed receipt request.
 .Fa signcert
 is the certificate to sign with,
@@ -79,12 +83,11 @@ is the corresponding private key.
 is an optional additional set of certificates to include in the CMS
 structure (for example any intermediate CAs in the chain).
 .Pp
-.Fa flags
-is an optional set of flags.
-.Pp
 This functions behaves in a similar way to
 .Xr CMS_sign 3
-except the flag values
+except that the
+.Fa flags
+values
 .Dv CMS_DETACHED ,
 .Dv CMS_BINARY ,
 .Dv CMS_NOATTR ,
@@ -105,6 +108,8 @@ The error can be obtained from
 .Sh SEE ALSO
 .Xr CMS_sign 3 ,
 .Xr CMS_verify_receipt 3
+.Sh STANDARDS
+RFC 2634: Enhanced Security Services for S/MIME, section 2.8: Receipt Syntax
 .Sh HISTORY
 .Fn CMS_sign_receipt
 first appeared in OpenSSL 0.9.8h
