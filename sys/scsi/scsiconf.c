@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.203 2019/08/18 16:21:32 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.204 2019/08/18 23:58:24 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -881,8 +881,11 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun)
 		return (0);
 
 	link = malloc(sizeof(*link), M_DEVBUF, M_NOWAIT);
-	if (link == NULL)
+	if (link == NULL) {
+		SC_DEBUG(link, SDEV_DB2, ("Bad LUN. can't allocate "
+		    "scsi_link.\n"));
 		return (EINVAL);
+	}
 
 	*link = *sb->adapter_link;
 	link->target = target;
@@ -896,8 +899,11 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun)
 	/* ask the adapter if this will be a valid device */
 	if (sb->adapter_link->adapter->dev_probe != NULL &&
 	    sb->adapter_link->adapter->dev_probe(link) != 0) {
-		if (lun == 0)
+		if (lun == 0) {
+			SC_DEBUG(link, SDEV_DB2, ("Bad LUN 0. dev_probe() "
+			    "failed.\n"));
 			rslt = EINVAL;
+		}
 		goto free;
 	}
 
@@ -909,6 +915,8 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun)
 		link->pool = malloc(sizeof(*link->pool),
 		    M_DEVBUF, M_NOWAIT);
 		if (link->pool == NULL) {
+			SC_DEBUG(link, SDEV_DB2, ("Bad LUN. can't allocate "
+			    "link->pool.\n"));
 			rslt = ENOMEM;
 			goto bad;
 		}
@@ -947,6 +955,7 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun)
 	/* Now go ask the device all about itself. */
 	inqbuf = dma_alloc(sizeof(*inqbuf), PR_NOWAIT | PR_ZERO);
 	if (inqbuf == NULL) {
+		SC_DEBUG(link, SDEV_DB2, ("Bad LUN. can't allocate inqbuf.\n"));
 		rslt = ENOMEM;
 		goto bad;
 	}
@@ -956,9 +965,11 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun)
 	dma_free(inqbuf, sizeof(*inqbuf));
 
 	if (rslt != 0) {
-		SC_DEBUG(link, SDEV_DB2, ("Bad LUN. rslt = %i\n", rslt));
-		if (lun == 0)
+		if (lun == 0) {
+			SC_DEBUG(link, SDEV_DB2, ("Bad LUN 0. inquiry rslt = "
+			    "%i\n", rslt));
 			rslt = EINVAL;
+		}
 		goto bad;
 	}
 	inqbuf = &link->inqdata;
@@ -994,7 +1005,7 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun)
 		;
 	else if (memcmp(inqbuf, &link0->inqdata, sizeof(*inqbuf)) == 0) {
 		/* The device doesn't distinguish between LUNs. */
-		SC_DEBUG(link, SDEV_DB1, ("IDENTIFY not supported.\n"));
+		SC_DEBUG(link, SDEV_DB1, ("Bad LUN. IDENTIFY not supported.\n"));
 		rslt = EINVAL;
 		goto free_devid;
 	}
