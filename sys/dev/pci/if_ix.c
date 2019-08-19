@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.157 2019/04/10 09:55:02 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.158 2019/08/19 07:07:35 jan Exp $	*/
 
 /******************************************************************************
 
@@ -1678,9 +1678,7 @@ ixgbe_setup_interface(struct ix_softc *sc)
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
-#ifdef IX_CSUM_OFFLOAD
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
-#endif
 
 	/*
 	 * Specify the media types supported by this sc and register
