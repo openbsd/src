@@ -1,4 +1,4 @@
-/*	$OpenBSD: mouse.c,v 1.19 2019/06/28 13:32:46 deraadt Exp $	*/
+/*	$OpenBSD: mouse.c,v 1.20 2019/08/19 21:42:33 bru Exp $	*/
 /*	$NetBSD: mouse.c,v 1.3 1999/11/15 13:47:30 ad Exp $ */
 
 /*-
@@ -53,7 +53,9 @@ struct field mouse_field_tab[] = {
     { "type",			&mstype,	FMT_MSTYPE,	FLG_RDONLY },
     { "rawmode",		&rawmode,	FMT_UINT,	FLG_MODIFY|FLG_INIT},
     { "scale",			&wmcoords,	FMT_SCALE,	FLG_MODIFY|FLG_INIT},
-    /* touchpad configuration (mousecfg): */
+    /* mouse and touchpad configuration (mousecfg): */
+    { "reverse_scrolling",	&cfg_revscroll, FMT_CFG,	FLG_NORDBACK },
+    /* touchpad-specific options: */
     { "tp.tapping",		&cfg_tapping,	FMT_CFG,	FLG_NORDBACK },
     { "tp.scaling",		&cfg_scaling,	FMT_CFG,	FLG_NORDBACK },
     { "tp.swapsides",		&cfg_swapsides,	FMT_CFG,	FLG_NORDBACK },
@@ -92,7 +94,8 @@ mouse_init(int devfd, int devidx) {
 	} else {
 		for (f = mouse_field_tab; f->name != NULL; f++)
 			if (f->format == FMT_CFG) {
-				if (f->valp != &cfg_param)
+				if (f->valp != &cfg_param
+				    && f->valp != &cfg_revscroll)
 					f->flags |= FLG_DEAD;
 				else
 					f->flags &= ~FLG_DEAD;
