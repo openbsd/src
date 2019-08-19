@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.52 2017/05/31 05:54:06 jmatthew Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.53 2019/08/19 17:16:55 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -392,9 +392,6 @@ struct atascsi_attach_args {
 
 struct atascsi	*atascsi_attach(struct device *, struct atascsi_attach_args *);
 int		atascsi_detach(struct atascsi *, int);
-
-int		atascsi_probe_dev(struct atascsi *, int, int);
-int		atascsi_detach_dev(struct atascsi *, int, int, int);
 
 void		ata_complete(struct ata_xfer *);
 
