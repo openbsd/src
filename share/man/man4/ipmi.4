@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipmi.4,v 1.13 2013/07/16 16:05:49 schwarze Exp $
+.\"	$OpenBSD: ipmi.4,v 1.14 2019/08/19 18:56:23 kettenis Exp $
 .\"
 .\" Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
 .\" Text was heavily borrowed from the IPMI spec V1.5
@@ -14,7 +14,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: August 19 2019 $
 .Dt IPMI 4
 .Os
 .Sh NAME
@@ -22,6 +22,8 @@
 .Nd Intelligent Platform Management Interface driver
 .Sh SYNOPSIS
 .Cd "ipmi0 at mainbus0"
+.Cd "ipmi0 at acpi?"
+.Cd "ipmi0 at iic?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -138,6 +140,8 @@ A typical implementation includes hardware buffers for holding
 upstream and downstream message blocks.
 The BT interface can be implemented using an ASIC or FPGA
 or may be built in to a custom-designed management controller.
+.It SMBus System Interface (SSIF)
+The SSIF interface provides access to the BMC over an SMBus interface.
 .El
 .Sh WATCHDOG
 IPMI provides
