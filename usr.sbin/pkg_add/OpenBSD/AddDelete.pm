@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.90 2019/07/21 14:05:30 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.91 2019/08/19 12:09:07 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -253,7 +253,7 @@ sub handle_options
 	$state->{extra} = $state->opt('c');
 	$state->{automatic} = $state->opt('a') // 0;
 	$ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
-	if ($state->{not}) {
+	if ($state->{not} || $state->defines('DONTLOG')) {
 		$state->{loglevel} = 0;
 	}
 	$state->{loglevel} //= 1;
