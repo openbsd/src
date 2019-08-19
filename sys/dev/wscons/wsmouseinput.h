@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouseinput.h,v 1.13 2019/03/24 18:04:02 bru Exp $ */
+/* $OpenBSD: wsmouseinput.h,v 1.14 2019/08/19 21:19:38 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -161,6 +161,7 @@ struct wsmouseinput {
 #define TPAD_COMPAT_MODE	(1 << 0)
 #define TPAD_NATIVE_MODE	(1 << 1)
 #define MT_TRACKING		(1 << 2)
+#define REVERSE_SCROLLING	(1 << 3)
 #define RESYNC			(1 << 16)
 #define TRACK_INTERVAL		(1 << 17)
 #define CONFIGURED		(1 << 18)

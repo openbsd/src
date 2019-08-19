@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.56 2019/08/08 02:19:18 cheloha Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.57 2019/08/19 21:19:38 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1018,7 +1018,7 @@ wsmouse_motion_sync(struct wsmouseinput *input, struct evq_access *evq)
 	struct motion_state *motion = &input->motion;
 	struct axis_filter *h = &input->filter.h;
 	struct axis_filter *v = &input->filter.v;
-	int x, y, dx, dy;
+	int x, y, dx, dy, dz, dw;
 
 	if (motion->sync & SYNC_DELTAS) {
 		dx = h->inv ? -motion->dx : motion->dx;
@@ -1032,16 +1032,20 @@ wsmouse_motion_sync(struct wsmouseinput *input, struct evq_access *evq)
 		if (dy)
 			wsmouse_evq_put(evq, DELTA_Y_EV(input), dy);
 		if (motion->dz) {
+			dz = (input->flags & REVERSE_SCROLLING)
+			    ? -motion->dz : motion->dz;
 			if (IS_TOUCHPAD(input))
-				wsmouse_evq_put(evq, VSCROLL_EV, motion->dz);
+				wsmouse_evq_put(evq, VSCROLL_EV, dz);
 			else
-				wsmouse_evq_put(evq, DELTA_Z_EV, motion->dz);
+				wsmouse_evq_put(evq, DELTA_Z_EV, dz);
 		}
 		if (motion->dw) {
+			dw = (input->flags & REVERSE_SCROLLING)
+			    ? -motion->dw : motion->dw;
 			if (IS_TOUCHPAD(input))
-				wsmouse_evq_put(evq, HSCROLL_EV, motion->dw);
+				wsmouse_evq_put(evq, HSCROLL_EV, dw);
 			else
-				wsmouse_evq_put(evq, DELTA_W_EV, motion->dw);
+				wsmouse_evq_put(evq, DELTA_W_EV, dw);
 		}
 	}
 	if (motion->sync & SYNC_POSITION) {
@@ -1471,6 +1475,9 @@ wsmouse_get_params(struct device *sc,
 		case WSMOUSECFG_Y_INV:
 			params[i].value = input->filter.v.inv;
 			break;
+		case WSMOUSECFG_REVERSE_SCROLLING:
+			params[i].value = !!(input->flags & REVERSE_SCROLLING);
+			break;
 		case WSMOUSECFG_DX_MAX:
 			params[i].value = input->filter.h.dmax;
 			break;
@@ -1560,6 +1567,12 @@ wsmouse_set_params(struct device *sc,
 			break;
 		case WSMOUSECFG_Y_INV:
 			input->filter.v.inv = val;
+			break;
+		case WSMOUSECFG_REVERSE_SCROLLING:
+			if (val)
+				input->flags |= REVERSE_SCROLLING;
+			else
+				input->flags &= ~REVERSE_SCROLLING;
 			break;
 		case WSMOUSECFG_DX_MAX:
 			input->filter.h.dmax = val;

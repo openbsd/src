@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.91 2019/03/24 17:55:39 bru Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.92 2019/08/19 21:19:38 bru Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -292,6 +292,8 @@ enum wsmousecfg {
 	WSMOUSECFG_SWAPXY,	/* swap X- and Y-axis */
 	WSMOUSECFG_X_INV,	/* map absolute coordinate X to (INV - X) */
 	WSMOUSECFG_Y_INV,	/* map absolute coordinate Y to (INV - Y) */
+	WSMOUSECFG_REVERSE_SCROLLING,
+				/* reverse scroll directions */
 
 	/*
 	 * Coordinate handling, applying only in WSMOUSE_COMPAT  mode.
@@ -343,7 +345,7 @@ enum wsmousecfg {
 	WSMOUSECFG_LOG_INPUT = 256,
 	WSMOUSECFG_LOG_EVENTS,
 };
-#define WSMOUSECFG_MAX	38	/* max size of param array per ioctl */
+#define WSMOUSECFG_MAX	39	/* max size of param array per ioctl */
 
 struct wsmouse_param {
 	enum wsmousecfg key;
