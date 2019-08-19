@@ -1,4 +1,4 @@
-.\" $OpenBSD: X25519.3,v 1.4 2018/08/10 17:28:48 jsing Exp $
+.\" $OpenBSD: X25519.3,v 1.5 2019/08/19 13:08:26 schwarze Exp $
 .\" contains some text from: BoringSSL curve25519.h, curve25519.c
 .\" content also checked up to: OpenSSL f929439f Mar 15 12:19:16 2018 +0000
 .\"
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 10 2018 $
+.Dd $Mdocdate: August 19 2019 $
 .Dt X25519 3
 .Os
 .Sh NAME
@@ -90,6 +90,7 @@ bytes each.
 returns 1 on success or 0 on error.
 Failure can occur when the input is a point of small order.
 .Sh SEE ALSO
+.Xr ECDH_compute_key 3
 .Rs
 .%A D. J. Bernstein
 .%R A state-of-the-art Diffie-Hellman function:\

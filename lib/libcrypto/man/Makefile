@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.149 2019/08/16 16:15:50 schwarze Exp $
+# $OpenBSD: Makefile,v 1.150 2019/08/19 13:08:26 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -91,6 +91,7 @@ MAN=	\
 	DSA_set_method.3 \
 	DSA_sign.3 \
 	DSA_size.3 \
+	ECDH_compute_key.3 \
 	ECDSA_SIG_new.3 \
 	EC_GFp_simple_method.3 \
 	EC_GROUP_copy.3 \
