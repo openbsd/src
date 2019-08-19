@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.88 2019/01/26 11:57:21 mglocker Exp $ */
+/* $OpenBSD: pms.c,v 1.89 2019/08/19 21:08:26 bru Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -143,6 +143,7 @@ struct elantech_softc {
 	int max_x, max_y;
 	int old_x, old_y;
 };
+#define ELANTECH_IS_CLICKPAD(sc) (((sc)->elantech->fw_version & 0x1000) != 0)
 
 struct pms_softc {		/* driver status information */
 	struct device sc_dev;
@@ -1945,9 +1946,7 @@ elantech_get_hwinfo_v4(struct pms_softc *sc)
 	if (synaptics_query(sc, ELANTECH_QUE_FW_VER, &fw_version))
 		return (-1);
 
-	if ((fw_version & 0x0f0000) >> 16 != 6
-	    && (fw_version & 0x0f0000) >> 16 != 8
-	    && (fw_version & 0x0f0000) >> 16 != 15)
+	if ((fw_version & 0x0f0000) >> 16 < 6)
 		return (-1);
 
 	elantech->fw_version = fw_version;
@@ -1975,7 +1974,8 @@ elantech_get_hwinfo_v4(struct pms_softc *sc)
 		elantech->flags |= ELANTECH_F_TRACKPOINT;
 
 	hw->type = WSMOUSE_TYPE_ELANTECH;
-	hw->hw_type = WSMOUSEHW_CLICKPAD;
+	hw->hw_type = (ELANTECH_IS_CLICKPAD(sc)
+	    ? WSMOUSEHW_CLICKPAD : WSMOUSEHW_TOUCHPAD);
 	hw->mt_slots = ELANTECH_MAX_FINGERS;
 
 	elantech->width = hw->x_max / (capabilities[1] - 1);
@@ -2179,8 +2179,9 @@ pms_enable_elantech_v4(struct pms_softc *sc)
 			goto err;
 		}
 
-		printf("%s: Elantech Clickpad, version %d, firmware 0x%x\n",
-		    DEVNAME(sc), 4, sc->elantech->fw_version);
+		printf("%s: Elantech %s, version 4, firmware 0x%x\n",
+		    DEVNAME(sc), (ELANTECH_IS_CLICKPAD(sc) ?  "Clickpad"
+		    : "Touchpad"), sc->elantech->fw_version);
 
 		if (sc->elantech->flags & ELANTECH_F_TRACKPOINT) {
 			a.accessops = &pms_sec_accessops;
