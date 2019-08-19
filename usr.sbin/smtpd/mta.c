@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.228 2019/06/14 19:55:25 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.229 2019/08/19 15:42:24 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1005,7 +1005,10 @@ mta_on_mx(void *tag, void *arg, void *data)
 		break;
 	case DNS_ENOTFOUND:
 		relay->fail = IMSG_MTA_DELIVERY_TEMPFAIL;
-		relay->failstr = "No MX found for domain";
+		if (relay->domain->as_host)
+			relay->failstr = "Host not found";
+		else
+			relay->failstr = "No MX found for domain";
 		break;
 	default:
 		fatalx("bad DNS lookup error code");
