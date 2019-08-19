@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.30 2019/08/13 18:31:23 kettenis Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.31 2019/08/19 18:31:02 kettenis Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -39,6 +39,7 @@
 #define IPMI_IF_KCS		1
 #define IPMI_IF_SMIC		2
 #define IPMI_IF_BT		3
+#define IPMI_IF_SSIF		4
 
 #define IPMI_IF_KCS_NREGS	2
 #define IPMI_IF_SMIC_NREGS	3
@@ -169,11 +170,18 @@ int	ipmi_probe(void *);
 void	ipmi_attach_common(struct ipmi_softc *, struct ipmi_attach_args *);
 int	ipmi_activate(struct device *, int);
 
+int	ipmi_sendcmd(struct ipmi_cmd *);
+int	ipmi_recvcmd(struct ipmi_cmd *);
+
+#define IPMI_MSG_DATASND		2
+#define IPMI_MSG_DATARCV		3
+
 #define APP_NETFN			0x06
 #define APP_GET_DEVICE_ID		0x01
 #define APP_RESET_WATCHDOG		0x22
 #define APP_SET_WATCHDOG_TIMER		0x24
 #define APP_GET_WATCHDOG_TIMER		0x25
+#define APP_GET_SYSTEM_INTERFACE_CAPS	0x57
 
 #define TRANSPORT_NETFN			0xC
 #define BRIDGE_NETFN			0x2

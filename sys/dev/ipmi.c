@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.104 2019/08/13 18:31:23 kettenis Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.105 2019/08/19 18:31:02 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -70,8 +70,6 @@ int	ipmi_enabled = 0;
 #define IPMI_MSG_NFLN			0
 #define IPMI_MSG_CMD			1
 #define IPMI_MSG_CCODE			2
-#define IPMI_MSG_DATASND		2
-#define IPMI_MSG_DATARCV		3
 
 #define IPMI_SENSOR_TYPE_TEMP		0x0101
 #define IPMI_SENSOR_TYPE_VOLT		0x0102
@@ -1435,6 +1433,9 @@ ipmi_refresh_sensors(struct ipmi_softc *sc)
 int
 ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 {
+	if (sc->sc_if && sc->sc_if->nregs == 0)
+		return (0);
+
 	sc->sc_if = ipmi_get_if(ia->iaa_if_type);
 	if (sc->sc_if == NULL)
 		return (-1);
@@ -1461,8 +1462,10 @@ ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 void
 ipmi_unmap_regs(struct ipmi_softc *sc)
 {
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh,
-	    sc->sc_if->nregs * sc->sc_if_iospacing);
+	if (sc->sc_if->nregs > 0) {
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_if->nregs * sc->sc_if_iospacing);
+	}
 }
 
 void
@@ -1534,10 +1537,13 @@ ipmi_attach_common(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 	/* Setup threads */
 	kthread_create_deferred(ipmi_create_thread, sc);
 
-	printf(": version %d.%d interface %s %sbase 0x%x/%x spacing %d",
-	    ia->iaa_if_rev >> 4, ia->iaa_if_rev & 0xF, sc->sc_if->name,
-	    ia->iaa_if_iotype == 'i' ? "io" : "mem", ia->iaa_if_iobase,
-	    ia->iaa_if_iospacing * sc->sc_if->nregs, ia->iaa_if_iospacing);
+	printf(": version %d.%d interface %s",
+	    ia->iaa_if_rev >> 4, ia->iaa_if_rev & 0xF, sc->sc_if->name);
+	if (sc->sc_if->nregs > 0)
+		printf(" %sbase 0x%x/%x spacing %d",
+		    ia->iaa_if_iotype == 'i' ? "io" : "mem", ia->iaa_if_iobase,
+		    ia->iaa_if_iospacing * sc->sc_if->nregs,
+		    ia->iaa_if_iospacing);
 	if (ia->iaa_if_irq != -1)
 		printf(" irq %d", ia->iaa_if_irq);
 	printf("\n");

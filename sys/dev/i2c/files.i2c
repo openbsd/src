@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.62 2019/01/02 21:15:47 patrick Exp $
+# $OpenBSD: files.i2c,v 1.63 2019/08/19 18:31:02 kettenis Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -229,3 +229,7 @@ file dev/i2c/isl1208.c				islrtc
 device	abcrtc
 attach	abcrtc at i2c
 file dev/i2c/abx80x.c				abcrtc
+
+# IPMI SMBus System Interface (SSIF)
+attach	ipmi at i2c with ipmi_i2c
+file dev/i2c/ipmi_i2c.c				ipmi_i2c
