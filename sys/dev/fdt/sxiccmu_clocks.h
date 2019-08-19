@@ -430,6 +430,9 @@ struct sxiccmu_ccu_bit sun8i_h3_r_gates[] = {
 #define R40_CLK_USB_PHY0	124
 #define R40_CLK_USB_PHY1	125
 #define R40_CLK_USB_PHY2	126
+#define R40_CLK_USB_OHCI0	127
+#define R40_CLK_USB_OHCI1	128
+#define R40_CLK_USB_OHCI2	129
 
 #define R40_CLK_HOSC		253
 #define R40_CLK_LOSC		254
@@ -471,6 +474,9 @@ struct sxiccmu_ccu_bit sun8i_r40_gates[] = {
 	[R40_CLK_USB_PHY0]  = { 0x00cc, 8 },
 	[R40_CLK_USB_PHY1]  = { 0x00cc, 9 },
 	[R40_CLK_USB_PHY2]  = { 0x00cc, 10 },
+	[R40_CLK_USB_OHCI0] = { 0x00cc, 16 },
+	[R40_CLK_USB_OHCI1] = { 0x00cc, 17 },
+	[R40_CLK_USB_OHCI2] = { 0x00cc, 18 },
 };
 
 /* V3s */
