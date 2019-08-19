@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.182 2019/07/10 11:15:15 espie Exp $
+# $OpenBSD: Add.pm,v 1.183 2019/08/19 12:25:40 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -311,10 +311,6 @@ sub prepare_for_addition
 {
 	my ($self, $state, $pkgname) = @_;
 
-	if ($state->{cdrom_only} && $self->{cdrom} ne 'yes') {
-	    $state->errsay("Package #1 is not for cdrom", $pkgname);
-	    $state->{problems}++;
-	}
 	if ($state->{ftp_only} && $self->{ftp} ne 'yes') {
 	    $state->errsay("Package #1 is not for ftp", $pkgname);
 	    $state->{problems}++;

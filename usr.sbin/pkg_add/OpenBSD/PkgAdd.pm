@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.114 2019/07/24 18:05:26 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.115 2019/08/19 12:25:40 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -119,10 +119,7 @@ sub handle_options
 	$state->{arch} = $state->opt('A');
 
 	if ($state->opt('P')) {
-		if ($state->opt('P') eq 'cdrom') {
-			$state->{cdrom_only} = 1;
-		}
-		elsif ($state->opt('P') eq 'ftp') {
+		if ($state->opt('P') eq 'ftp') {
 			$state->{ftp_only} = 1;
 		}
 		else {

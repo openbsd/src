@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.159 2019/07/04 15:25:16 tb Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.160 2019/08/19 12:25:40 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: July 4 2019 $
+.Dd $Mdocdate: August 19 2019 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -408,13 +408,8 @@ would be taken if it was.
 Will still copy packages to
 .Ev PKG_CACHE
 if applicable.
-.It Fl P Ar type
-Check permissions for distribution, where
-.Ar type
-can be
-.Sq cdrom
-or
-.Sq ftp .
+.It Fl P Ar ftp
+Check that package can be distributed on ftp.
 .It Fl qq
 Do not bother with checksums for configuration files.
 .It Fl r
