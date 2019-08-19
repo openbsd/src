@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiahci.c,v 1.14 2018/06/04 09:19:52 kettenis Exp $	*/
+/*	$OpenBSD: sxiahci.c,v 1.15 2019/08/19 07:27:11 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013,2014 Artturi Alm
@@ -87,7 +87,8 @@ sxiahci_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-ahci");
+	return OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-ahci") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun8i-r40-ahci");
 }
 
 void
