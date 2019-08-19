@@ -272,7 +272,7 @@ static int ttm_copy_io_page(void *dst, void *src, unsigned long page)
 	return 0;
 }
 
-#ifdef CONFIG_X86
+#if defined(CONFIG_X86) && defined(__linux__)
 #define __ttm_kmap_atomic_prot(__page, __prot) kmap_atomic_prot(__page, __prot)
 #define __ttm_kunmap_atomic(__addr) kunmap_atomic(__addr)
 #else

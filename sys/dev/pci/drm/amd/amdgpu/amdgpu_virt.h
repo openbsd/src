@@ -270,7 +270,7 @@ struct amdgpu_virt {
 
 static inline bool is_virtual_machine(void)
 {
-#if defined(__amd64__) || defined(__i386__)
+#ifdef CONFIG_X86
 	return boot_cpu_has(X86_FEATURE_HYPERVISOR);
 #else
 	return false;

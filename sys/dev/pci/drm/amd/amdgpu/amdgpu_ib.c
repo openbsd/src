@@ -187,7 +187,7 @@ int amdgpu_ib_schedule(struct amdgpu_ring *ring, unsigned num_ibs,
 	if (job && ring->funcs->init_cond_exec)
 		patch_offset = amdgpu_ring_init_cond_exec(ring);
 
-#ifdef __amd64__
+#ifdef CONFIG_X86_64
 	if (!(adev->flags & AMD_IS_APU))
 #endif
 	{
@@ -224,7 +224,7 @@ int amdgpu_ib_schedule(struct amdgpu_ring *ring, unsigned num_ibs,
 	if (ring->funcs->emit_tmz)
 		amdgpu_ring_emit_tmz(ring, false);
 
-#ifdef __amd64__
+#ifdef CONFIG_X86_64
 	if (!(adev->flags & AMD_IS_APU))
 #endif
 		amdgpu_asic_invalidate_hdp(adev, ring);

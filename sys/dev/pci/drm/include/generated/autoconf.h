@@ -35,3 +35,15 @@
 #if defined(__amd64__) || defined(__i386__)
 #define CONFIG_DMI				1
 #endif
+
+#ifdef __amd64__
+#define CONFIG_X86				1
+#define CONFIG_X86_64				1
+#define CONFIG_X86_PAT				1
+#endif
+
+#ifdef __i386__
+#define CONFIG_X86				1
+#define CONFIG_X86_32				1
+#define CONFIG_X86_PAT				1
+#endif

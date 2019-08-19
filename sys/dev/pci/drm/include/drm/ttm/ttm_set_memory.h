@@ -33,10 +33,6 @@
 
 #include <linux/mm.h>
 
-#if defined(__amd64__) || defined(__i386__)
-#define CONFIG_X86
-#endif
-
 #ifdef CONFIG_X86
 
 #include <asm/set_memory.h>

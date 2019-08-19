@@ -420,18 +420,6 @@ fail:
 	return false;
 }
 
-#ifdef __amd64__
-#define CONFIG_X86	1
-#define CONFIG_X86_64	1
-#define CONFIG_X86_PAT	1
-#endif
-
-#ifdef __i386__
-#define CONFIG_X86	1
-#define CONFIG_X86_32	1
-#define CONFIG_X86_PAT	1
-#endif
-
 static int amdgpu_bo_do_create(struct amdgpu_device *adev,
 			       struct amdgpu_bo_param *bp,
 			       struct amdgpu_bo **bo_ptr)

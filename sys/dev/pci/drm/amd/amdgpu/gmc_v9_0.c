@@ -746,7 +746,7 @@ static int gmc_v9_0_mc_init(struct amdgpu_device *adev)
 	adev->gmc.aper_base = adev->fb_aper_offset;
 	adev->gmc.aper_size = adev->fb_aper_size;
 
-#ifdef __amd64__
+#ifdef CONFIG_X86_64
 	if (adev->flags & AMD_IS_APU) {
 		adev->gmc.aper_base = gfxhub_v1_0_get_mc_fb_offset(adev);
 		adev->gmc.aper_size = adev->gmc.real_vram_size;

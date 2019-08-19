@@ -3033,7 +3033,7 @@ void amdgpu_vm_manager_init(struct amdgpu_device *adev)
 	/* If not overridden by the user, by default, only in large BAR systems
 	 * Compute VM tables will be updated by CPU
 	 */
-#ifdef __amd64__
+#ifdef CONFIG_X86_64
 	if (amdgpu_vm_update_mode == -1) {
 		if (amdgpu_gmc_vram_full_visible(&adev->gmc))
 			adev->vm_manager.vm_update_mode =
