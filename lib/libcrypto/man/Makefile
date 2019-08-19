@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.150 2019/08/19 13:08:26 schwarze Exp $
+# $OpenBSD: Makefile,v 1.151 2019/08/19 13:52:53 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -240,6 +240,7 @@ MAN=	\
 	X509_CRL_get0_by_serial.3 \
 	X509_CRL_new.3 \
 	X509_EXTENSION_set_object.3 \
+	X509_INFO_new.3 \
 	X509_LOOKUP_hash_dir.3 \
 	X509_NAME_ENTRY_get_object.3 \
 	X509_NAME_add_entry_by_txt.3 \
