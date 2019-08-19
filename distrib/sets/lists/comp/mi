@@ -1791,6 +1791,7 @@
 ./usr/share/man/man3/DSA_sign.3
 ./usr/share/man/man3/DSA_size.3
 ./usr/share/man/man3/DTLSv1_listen.3
+./usr/share/man/man3/ECDH_compute_key.3
 ./usr/share/man/man3/ECDSA_SIG_new.3
 ./usr/share/man/man3/EC_GFp_simple_method.3
 ./usr/share/man/man3/EC_GROUP_copy.3
@@ -2051,6 +2052,7 @@
 ./usr/share/man/man3/X509_CRL_get0_by_serial.3
 ./usr/share/man/man3/X509_CRL_new.3
 ./usr/share/man/man3/X509_EXTENSION_set_object.3
+./usr/share/man/man3/X509_INFO_new.3
 ./usr/share/man/man3/X509_LOOKUP_hash_dir.3
 ./usr/share/man/man3/X509_NAME_ENTRY_get_object.3
 ./usr/share/man/man3/X509_NAME_add_entry_by_txt.3

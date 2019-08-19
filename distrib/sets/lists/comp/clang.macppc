@@ -742,8 +742,8 @@
 ./usr/include/llvm/DebugInfo/PDB/DIA/DIAUtils.h
 ./usr/include/llvm/DebugInfo/PDB/GenericError.h
 ./usr/include/llvm/DebugInfo/PDB/IPDBDataStream.h
-./usr/include/llvm/DebugInfo/PDB/IPDBFrameData.h
 ./usr/include/llvm/DebugInfo/PDB/IPDBEnumChildren.h
+./usr/include/llvm/DebugInfo/PDB/IPDBFrameData.h
 ./usr/include/llvm/DebugInfo/PDB/IPDBInjectedSource.h
 ./usr/include/llvm/DebugInfo/PDB/IPDBLineNumber.h
 ./usr/include/llvm/DebugInfo/PDB/IPDBRawSymbol.h
