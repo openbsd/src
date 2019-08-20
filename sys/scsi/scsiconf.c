@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.204 2019/08/18 23:58:24 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.205 2019/08/20 13:40:37 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -328,7 +328,7 @@ scsibus_bioctl(struct device *dev, u_long cmd, caddr_t addr)
 }
 #endif
 
-int
+void
 scsi_probe_bus(struct scsibus_softc *sb)
 {
 	struct scsi_link *alink = sb->adapter_link;
@@ -336,8 +336,6 @@ scsi_probe_bus(struct scsibus_softc *sb)
 
 	for (i = 0; i < alink->adapter_buswidth; i++)
 		scsi_probe_target(sb, i);
-
-	return (0);
 }
 
 int
@@ -405,8 +403,10 @@ dumbscan:
 int
 scsi_probe(struct scsibus_softc *sb, int target, int lun)
 {
-	if (target == -1 && lun == -1)
-		return (scsi_probe_bus(sb));
+	if (target == -1 && lun == -1) {
+		scsi_probe_bus(sb);
+		return (0);
+	}
 
 	/* specific lun and wildcard target is bad */
 	if (target == -1)
