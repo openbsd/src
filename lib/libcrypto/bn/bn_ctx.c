@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_ctx.c,v 1.15 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bn_ctx.c,v 1.16 2019/08/20 10:59:09 schwarze Exp $ */
 /* Written by Ulf Moeller for the OpenSSL project. */
 /* ====================================================================
  * Copyright (c) 1998-2004 The OpenSSL Project.  All rights reserved.
@@ -283,6 +283,9 @@ BN_CTX_start(BN_CTX *ctx)
 void
 BN_CTX_end(BN_CTX *ctx)
 {
+	if (ctx == NULL)
+		return;
+
 	CTXDBG_ENTRY("BN_CTX_end", ctx);
 
 	if (ctx->err_stack)

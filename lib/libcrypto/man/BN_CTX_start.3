@@ -1,5 +1,5 @@
-.\"	$OpenBSD: BN_CTX_start.3,v 1.7 2018/03/22 16:06:33 schwarze Exp $
-.\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" $OpenBSD: BN_CTX_start.3,v 1.8 2019/08/20 10:59:09 schwarze Exp $
+.\" full merge up to: OpenSSL 35fd9953 May 28 14:49:38 2019 +0200
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
 .\" Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: August 20 2019 $
 .Dt BN_CTX_START 3
 .Os
 .Sh NAME
@@ -104,6 +104,11 @@ is called, the
 pointers obtained from
 .Fn BN_CTX_get
 become invalid.
+If
+.Fa ctx
+is
+.Dv NULL ,
+no action occurs.
 .Sh RETURN VALUES
 .Fn BN_CTX_get
 returns a pointer to the
