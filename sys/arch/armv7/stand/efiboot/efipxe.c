@@ -1,4 +1,4 @@
-/*	$OpenBSD: efipxe.c,v 1.3 2019/08/13 09:00:20 patrick Exp $	*/
+/*	$OpenBSD: efipxe.c,v 1.4 2019/08/20 23:38:19 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -96,8 +96,8 @@ efi_pxeprobe(void)
 		if (status != EFI_SUCCESS)
 			continue;
 
-		depth = efi_device_path_depth(efi_bootdp, MEDIA_DEVICE_PATH);
-		if (efi_device_path_ncmp(efi_bootdp, dp0, depth))
+		depth = efi_device_path_depth(efi_bootdp, MESSAGING_DEVICE_PATH);
+		if (depth == -1 || efi_device_path_ncmp(efi_bootdp, dp0, depth))
 			continue;
 
 		status = EFI_CALL(BS->HandleProtocol, handles[i], &net_guid,
