@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.109 2019/08/11 14:46:18 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.110 2019/08/20 17:16:43 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -50,6 +50,7 @@ ccp*		at acpi?		# AMD Cryptographic Co-processor
 com*		at acpi?
 dwiic*		at acpi?
 iic*		at dwiic?
+ipmi*		at acpi?
 pluart*		at acpi?
 xhci*		at acpi?
 simplebus*	at fdt?
@@ -346,6 +347,7 @@ uk*		at scsibus?
 # I2C devices
 abcrtc*		at iic?			# Abracon x80x RTC
 fanpwr*		at iic?			# FAN53555 regulator
+ipmi*		at iic?			# IPMI (SIIF)
 islrtc*		at iic?			# ISL1208 RTC
 rkpmic*		at iic?			# RK808 PMIC
 sypwr*		at iic?			# SY8106A regulator
