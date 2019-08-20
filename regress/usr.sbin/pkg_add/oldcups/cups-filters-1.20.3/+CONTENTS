@@ -1,6 +1,6 @@
-@comment $OpenBSD: +CONTENTS,v 1.1 2018/06/18 13:58:55 espie Exp $
+@comment $OpenBSD: +CONTENTS,v 1.2 2019/08/20 11:02:28 espie Exp $
 @name cups-filters-1.20.3
-@comment pkgpath=print/cups-filters cdrom=yes ftp=yes
+@comment pkgpath=print/cups-filters ftp=yes
 @arch *
 +DESC
 @sha KceUaybg6jfOy2zJMEkgvV82wLA3SDbdpTio00F574w=

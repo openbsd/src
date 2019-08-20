@@ -1,6 +1,6 @@
-@comment $OpenBSD: +CONTENTS,v 1.1 2018/06/18 13:58:55 espie Exp $
+@comment $OpenBSD: +CONTENTS,v 1.2 2019/08/20 11:02:28 espie Exp $
 @name cups-2.2.8
-@comment pkgpath=print/cups,-main cdrom=yes ftp=yes
+@comment pkgpath=print/cups,-main ftp=yes
 @arch *
 +DESC
 @sha E1oYPv8g+CY3SpbccC5PZJrndE1B84BWoI+zyvqvWRE=

@@ -1,6 +1,6 @@
-@comment $OpenBSD: +CONTENTS,v 1.1 2018/06/18 13:58:56 espie Exp $
+@comment $OpenBSD: +CONTENTS,v 1.2 2019/08/20 11:02:28 espie Exp $
 @name ghostscript-9.07p7
-@comment pkgpath=print/ghostscript/gnu cdrom=yes ftp=yes
+@comment pkgpath=print/ghostscript/gnu ftp=yes
 @arch *
 +DESC
 @sha QlcqzsJK9yj2Eq35ujZkkucSC7PKXuZXpbHKF3jTOwI=
