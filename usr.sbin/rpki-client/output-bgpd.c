@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bgpd.c,v 1.9 2019/08/13 13:53:49 claudio Exp $ */
+/*	$OpenBSD: output-bgpd.c,v 1.10 2019/08/20 16:01:52 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -34,8 +34,8 @@ cmp(const void *p1, const void *p2)
 }
 
 void
-output_bgpd(const struct roa **roas, size_t roasz,
-    int quiet, size_t *vrps, size_t *unique)
+output_bgpd(FILE *out, const struct roa **roas, size_t roasz,
+    size_t *vrps, size_t *unique)
 {
 	char		 buf1[64], buf2[32];
 	char		**lines = NULL;
@@ -67,16 +67,13 @@ output_bgpd(const struct roa **roas, size_t roasz,
 	assert(k == *vrps);
 	qsort(lines, *vrps, sizeof(char *), cmp);
 
-	if (!quiet)
-		puts("roa-set {");
+	fprintf(out, "roa-set {\n");
 	for (i = 0; i < *vrps; i++)
 		if (i == 0 || strcmp(lines[i], lines[i - 1])) {
-			if (!quiet)
-				printf("    %s\n", lines[i]);
+			fprintf(out, "\t%s\n", lines[i]);
 			(*unique)++;
 		}
-	if (!quiet)
-		puts("}");
+	fprintf(out, "}\n");
 
 	for (i = 0; i < *vrps; i++)
 		free(lines[i]);

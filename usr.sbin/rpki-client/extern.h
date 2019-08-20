@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 2019/08/13 13:27:26 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.7 2019/08/20 16:01:52 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -301,6 +301,7 @@ int		 x509_get_ski_aki(X509 *, const char *, char **, char **);
 
 /* Output! */
 
-void		 output_bgpd(const struct roa **, size_t, int, size_t *, size_t *);
+void		 output_bgpd(FILE *, const struct roa **, size_t,
+			size_t *, size_t *);
 
 #endif /* ! EXTERN_H */

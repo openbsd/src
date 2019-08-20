@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2019/08/13 13:27:26 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.16 2019/08/20 16:01:52 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -18,11 +18,14 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 
 #include <assert.h>
 #include <err.h>
+#include <dirent.h>
 #include <fcntl.h>
+#include <fnmatch.h>
 #include <fts.h>
 #include <inttypes.h>
 #include <poll.h>
@@ -1258,13 +1261,41 @@ entity_process(int proc, int rsync, struct stats *st,
 	}
 }
 
+#define	TALSZ_MAX	8
+
+size_t
+tal_load_default(const char *tals[], size_t max)
+{
+	static const char *basedir = "/etc/rpki";
+	size_t s = 0;
+	char *path;
+	DIR *dirp;
+	struct dirent *dp;
+
+	dirp = opendir(basedir);
+	if (dirp == NULL)
+		err(EXIT_FAILURE, "open %s", basedir);
+	while ((dp = readdir(dirp)) != NULL) {
+		if (fnmatch("*.tal", dp->d_name, FNM_PERIOD) == FNM_NOMATCH)
+			continue;
+		if (s >= max)
+			err(EXIT_FAILURE, "too many tal files found in %s",
+			    basedir);
+		if (asprintf(&path, "%s/%s", basedir, dp->d_name) == -1)
+			err(EXIT_FAILURE, "asprintf");
+		tals[s++] = path;
+	}
+	closedir (dirp);
+	return (s);
+}
+
 int
 main(int argc, char *argv[])
 {
 	int		 rc = 0, c, proc, st, rsync,
 			 fl = SOCK_STREAM | SOCK_CLOEXEC, noop = 0,
-			 force = 0, norev = 0, quiet = 0;
-	size_t		 i, j, eid = 1, outsz = 0, vrps, uniqs;
+			 force = 0, norev = 0;
+	size_t		 i, j, eid = 1, outsz = 0, talsz = 0, vrps, uniqs;
 	pid_t		 procpid, rsyncpid;
 	int		 fd[2];
 	struct entityq	 q;
@@ -1275,11 +1306,13 @@ main(int argc, char *argv[])
 	struct roa	**out = NULL;
 	const char	*rsync_prog = "openrsync";
 	const char	*bind_addr = NULL;
+	const char	*tals[TALSZ_MAX];
+	FILE		*output = NULL;
 
-	if (pledge("stdio rpath proc exec cpath unveil", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath proc exec unveil", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
-	while ((c = getopt(argc, argv, "b:e:fnqrv")) != -1)
+	while ((c = getopt(argc, argv, "b:e:fnrt:v")) != -1)
 		switch (c) {
 		case 'b':
 			bind_addr = optarg;
@@ -1293,11 +1326,14 @@ main(int argc, char *argv[])
 		case 'n':
 			noop = 1;
 			break;
-		case 'q':
-			quiet = 1;
-			break;
 		case 'r':
 			norev = 1;
+			break;
+		case 't':
+			if (talsz >= TALSZ_MAX)
+				err(EXIT_FAILURE,
+				    "too many tal files specified");
+			tals[talsz++] = optarg;
 			break;
 		case 'v':
 			verbose++;
@@ -1307,8 +1343,17 @@ main(int argc, char *argv[])
 		}
 
 	argv += optind;
-	if ((argc -= optind) == 0)
+	argc -= optind;
+	if (argc != 1)
 		goto usage;
+	output = fopen(argv[0], "we");
+	if (output == NULL)
+		err(EXIT_FAILURE, "failed to open %s", argv[0]);
+
+	if (talsz == 0)
+		talsz = tal_load_default(tals, TALSZ_MAX);
+	if (talsz == 0)
+		err(EXIT_FAILURE, "no TAL files found in %s", "/etc/rpki");
 
 	memset(&rt, 0, sizeof(struct repotab));
 	memset(&stats, 0, sizeof(struct stats));
@@ -1351,7 +1396,7 @@ main(int argc, char *argv[])
 	if (rsyncpid == 0) {
 		close(proc);
 		close(fd[1]);
-		if (pledge("stdio proc exec rpath cpath unveil", NULL) == -1)
+		if (pledge("stdio rpath cpath proc exec unveil", NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
 
 		/* If -n, we don't exec or mkdir. */
@@ -1382,8 +1427,8 @@ main(int argc, char *argv[])
 	 * can get the ball rolling.
 	 */
 
-	for (i = 0; i < (size_t)argc; i++)
-		queue_add_tal(proc, &q, argv[i], &eid);
+	for (i = 0; i < talsz; i++)
+		queue_add_tal(proc, &q, tals[i], &eid);
 
 	pfd[0].fd = rsync;
 	pfd[1].fd = proc;
@@ -1475,8 +1520,8 @@ main(int argc, char *argv[])
 
 	/* Output and statistics. */
 
-	output_bgpd((const struct roa **)out,
-	    outsz, quiet, &vrps, &uniqs);
+	output_bgpd(output, (const struct roa **)out,
+	    outsz, &vrps, &uniqs);
 	logx("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)",
 	    stats.roas, stats.roas_fail, stats.roas_invalid);
 	logx("Certificates: %zu (%zu failed parse, %zu invalid)",
@@ -1505,6 +1550,6 @@ main(int argc, char *argv[])
 usage:
 	fprintf(stderr,
 	    "usage: rpki-client [-fnqrv] [-b bind_addr] [-e rsync_prog] "
-	    "tal ...\n");
+	    "[-t tal] output\n");
 	return EXIT_FAILURE;
 }
