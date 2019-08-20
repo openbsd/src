@@ -1,4 +1,4 @@
-.\"	$OpenBSD: more.1,v 1.17 2014/04/25 22:28:42 jmc Exp $
+.\"	$OpenBSD: more.1,v 1.18 2019/08/20 11:34:18 jmc Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)more.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: April 25 2014 $
+.Dd $Mdocdate: August 20 2019 $
 .Dt MORE 1
 .Os
 .Sh NAME
@@ -64,17 +64,6 @@ to examine, if any.
 It then waits for input from the user.
 Scrolling forward switches to the next file,
 or exits if there is none.
-.Pp
-This version of
-.Nm
-is actually
-.Xr less 1
-in disguise.
-As such, it will also accept options documented in
-.Xr less 1 .
-This manual page describes only features
-relevant to a POSIX compliant
-.Nm .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -318,5 +307,8 @@ A
 .Nm
 command appeared in
 .Bx 3.0 .
+The present implementation is actually
+.Xr less 1
+in disguise.
 .Sh AUTHORS
-.An Mark Nudelman Aq Mt markn@greenwoodsoftware.com
+.An Mark Nudelman
