@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.56 2017/06/05 04:57:37 dlg Exp $ */
+/*	$OpenBSD: qla.c,v 1.57 2019/08/20 22:31:28 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -1776,7 +1776,8 @@ qla_do_update(void *xsc)
 				TAILQ_REMOVE(&detach, port, ports);
 				if (port->flags & QLA_PORT_FLAG_IS_TARGET) {
 					scsi_detach_target(sc->sc_scsibus,
-					    port->loopid, -1);
+					    port->loopid, DETACH_FORCE |
+					    DETACH_QUIET);
 				}
 				sc->sc_targets[port->loopid] = NULL;
 				if (port->location & QLA_LOCATION_FABRIC)
@@ -1992,7 +1993,8 @@ qla_do_update(void *xsc)
 				    DEVNAME(sc), port->loopid);
 				if (sc->sc_scsibus != NULL)
 					scsi_detach_target(sc->sc_scsibus,
-					    port->loopid, -1);
+					    port->loopid, DETACH_FORCE |
+					    DETACH_QUIET);
 
 				if (port->location & QLA_LOCATION_FABRIC)
 					qla_fabric_plogo(sc, port);
