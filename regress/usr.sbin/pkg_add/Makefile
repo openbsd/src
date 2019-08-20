@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.74 2019/08/02 14:57:53 espie Exp $
+# $OpenBSD: Makefile,v 1.75 2019/08/20 11:05:42 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -21,14 +21,24 @@ REGRESS_EXPECTED_FAILURES = collision-check1 collision-check2 \
 	collision-check5 collision-check6 collision-check7 \
 	exotest tying-2
 
-ADD_PKG=perl -I${.CURDIR} ${.CURDIR}/my add -Dchecksum
-DELETE_PKG=perl -I${.CURDIR} ${.CURDIR}/my delete -Dchecksum
-INFO_PKG=perl -I${.CURDIR} ${.CURDIR}/my info
-CREATE_PKG=perl -I${.CURDIR} ${.CURDIR}/mycreate
-LONG1=iamareallongfilenamethatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
-LONG2=iamanotherreallygfilenamethatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
-LONG3=iamanotherreallylonglinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
-LONG4=iamanotherreallylonghardlinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
+PERLSCRIPT = perl -I ${.CURDIR} ${.CURDIR}
+
+ADD_PKG = ${PERLSCRIPT}/my add -Dchecksum
+DELETE_PKG = ${PERLSCRIPT}/my delete -Dchecksum
+INFO_PKG = ${PERLSCRIPT}/my info
+CREATE_PKG = ${PERLSCRIPT}/mycreate
+MKPLIST = ${PERLSCRIPT}/mkplist
+POPULATE = ${PERLSCRIPT}/populate
+EMPTY = -f /dev/null
+
+# a lot of packages are populate/create_pkg with the same parameters.
+WITH = set -A args --
+CPKG = ; ${POPULATE} $${args[@]}; ${CREATE_PKG} $${args[@]}
+
+LONG1 = iamareallongfilenamethatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
+LONG2 = iamanotherreallygfilenamethatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
+LONG3 = iamanotherreallylonglinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
+LONG4 = iamanotherreallylonghardlinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
 
 NUMBERS != jot 50
 .for i in ${NUMBERS}
@@ -40,20 +50,20 @@ DEST$i ?= ${D$i}/usr/local
 
 # current maxes (used): D44, SRC27, plist24, rep5
 pkgnames:
-	perl ${.CURDIR}/check-name
+	${PERLSCRIPT}/check-name
 
 pkgcfl:
-	perl ${.CURDIR}/check-cfl
+	${PERLSCRIPT}/check-cfl
 
 setsprint:
-	perl ${.CURDIR}/check-beautify
+	${PERLSCRIPT}/check-beautify
 
 pkgpaths:
-	perl ${.CURDIR}/check-path
+	${PERLSCRIPT}/check-path
 
 signatures: 
 	-rm -f signatures.out
-	perl ${.CURDIR}/check-sig 2>signatures.out
+	${PERLSCRIPT}/check-sig 2>signatures.out
 	diff -u signatures.out ${.CURDIR}/signatures.ref
 
 depends-check: rep0/a-0.tgz rep0/b-0.tgz rep1/a-1.tgz rep1/b-1.tgz
@@ -245,121 +255,70 @@ inter1: rep0/inta-0.tgz rep0/intb-0.tgz
 	@ROOT=${D31} ${DELETE_PKG} inta intb
 
 plist1:
-	@echo "@owner "`id -un` >$@
-	@echo "@group "`id -gn` >>$@
-	@echo ${LONG1} >>$@
-	@echo ${LONG2} >>$@
-	@echo ${LONG3} >>$@
-	@echo ${LONG4} >>$@
+	@${MKPLIST} ${LONG1} ${LONG2} ${LONG3} ${LONG4} >$@
 
 plist2:
-	@echo "@owner "`id -un` >$@
-	@echo "@group "`id -gn` >>$@
-	@echo a >>$@
-	@echo b >>$@
-	@echo c >>$@
-	@echo f >>$@
-	@echo g >>$@
+	@${MKPLIST} a b c f g >$@
 
 plist3:
-	@echo "@owner "`id -un` >$@
-	@echo "@group "`id -gn` >>$@
-	@echo a >>$@
-	@echo c >>$@
-	@echo d >>$@
-	@echo f >>$@
-	@echo g >>$@
+	@${MKPLIST} a c d f g >$@
 
 plist4:
-	@echo "@option always-update" >$@
+	@${MKPLIST} "@option always-update" >$@
 
 plist5:
-	@echo "@ask-update gd-<1 Make sure yadada is backed up" >$@
+	@${MKPLIST} "@ask-update gd-<1 Make sure yadada is backed up" >$@
 
 plist6:
-	@echo "@conflict l-<1" >$@
+	@${MKPLIST} "@conflict l-<1" >$@
 
 plist7:
-	@echo "@conflict m-<1" >$@
-	@echo "@pkgpath t/m" >>$@
+	@${MKPLIST} "@conflict m-<1" "@pkgpath t/m" >$@
 
 plist8:
-	@echo "@conflict o-<1" >$@
-	@echo "@pkgpath t/o" >>$@
-	@echo "@owner "`id -un` >>$@
-	@echo "@group "`id -gn` >>$@
-	@echo '@lib lib/libcoincoin.so.$${LIBcoincoin_VERSION}' >>$@
+	@${MKPLIST} "@conflict o-<1" "@pkgpath t/o" '@lib lib/libcoincoin.so.$${LIBcoincoin_VERSION}' >$@
 
 plist9:
-	@echo "@conflict gamin-*" >$@
+	@${MKPLIST} "@conflict gamin-*" >$@
 
 plist10:
-	@echo "@conflict fam-*" >$@
-	@echo "@pkgpath t/fam" >>$@
+	@${MKPLIST} "@conflict fam-*" "@pkgpath t/fam" >$@
 
 plist11:
-	@echo "@conflict missc-*" >$@
+	@${MKPLIST} "@conflict missc-*" >$@
 
 plist12:
-	@echo "@owner "`id -un` >>$@
-	@echo "@group "`id -gn` >>$@
-	@echo '@lib lib/liba.so.$${LIBa_VERSION}' >>$@
+	@${MKPLIST} '@lib lib/liba.so.$${LIBa_VERSION}' >$@
 
 plist13:
-	@echo "@owner "`id -un` >>$@
-	@echo "@group "`id -gn` >>$@
-	@echo phonon/ >>$@
-	@echo phonon/a >>$@
+	@${MKPLIST} phonon/ phonon/a >$@
 
 plist14:
-	@echo "@owner "`id -un` >>$@
-	@echo "@group "`id -gn` >>$@
-	@echo phonon >>$@
+	@${MKPLIST} phonon >$@
 
 plist15:
-	@echo "@owner "`id -un` >>$@
-	@echo "@group "`id -gn` >>$@
-	@echo foo/ >>$@
-	@echo foo/a >>$@
-	@echo bar >>$@
+	@${MKPLIST} foo/ foo/a bar >$@
 
 plist16:
-	@echo "@owner "`id -un` >>$@
-	@echo "@group "`id -gn` >>$@
-	@echo foo/ >>$@
-	@echo foo/a >>$@
-	@echo bar/ >>$@
-	@echo bar/a >>$@
+	@${MKPLIST} foo/ foo/a bar/ bar/a >$@
 
 plist17:
-	@echo "@owner "`id -un` >>$@
-	@echo "@group "`id -gn` >>$@
-	@echo '@lib lib/libthunar-vfs.so.$${LIBthunar-vfs_VERSION}' >>$@
+	@${MKPLIST} '@lib lib/libthunar-vfs.so.$${LIBthunar-vfs_VERSION}' >$@
 
 plist18:
-	@echo "@owner "`id -un` >>$@
-	@echo "@group "`id -gn` >>$@
-	@echo "@conflict thunar-<1" >>$@
-	@echo '@lib lib/libthunar-vfs.so.$${LIBthunar-vfs_VERSION}' >>$@
+	@${MKPLIST} "@conflict thunar-<1" '@lib lib/libthunar-vfs.so.$${LIBthunar-vfs_VERSION}' >$@
 
 plist19:
-	@echo "@owner "`id -un` >>$@
-	@echo "@group "`id -gn` >>$@
-	@echo a >>$@
+	@${MKPLIST} a >$@
 
 plist20:
-	@echo "@owner "`id -un` >>$@
-	@echo "@group "`id -gn` >>$@
-	@echo "@conflict cola-<1" >>$@
-	@echo a >>$@
+	@${MKPLIST} "@conflict cola-<1" a >$@
 
 plist21:
-	@echo "@owner "`id -un` >$@
-	@echo "@group "`id -gn` >>$@
-	@echo '@lib lib/subdir/libol.so.$${LIBol_VERSION}' >>$@
+	@${MKPLIST} '@lib lib/subdir/libol.so.$${LIBol_VERSION}' >$@
 
 rep0/a-0.tgz:
-	@${CREATE_PKG} -P't/b:b-*:b-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/b:b-*:b-0' ${EMPTY} $@
 
 rep1/a-1.tgz rep0/b-0.tgz rep0/i-0.tgz rep0/j-0.tgz rep1/j-1.tgz \
 rep1/i-1.tgz rep0/k-0.tgz rep0/l-0.tgz rep1/l-1.tgz rep0/m-0.tgz \
@@ -370,76 +329,66 @@ rep0/gf-1.tgz rep1/gf-0.tgz \
 rep1/missc-0.tgz rep0/q5-0.tgz rep1/q5-1.tgz \
 rep0/ma-0.tgz rep1/ma-1.tgz rep0/mc-0.tgz rep1/me-1.tgz \
 rep0/tcl-8.5.7.tgz:
-	@${CREATE_PKG} -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} ${EMPTY} $@
 
 rep0/md-0.tgz:
-	@${CREATE_PKG} -P't/ma:ma-*:ma-0' -P't/mb:mb-*:mb-0' -P't/mc:mc-*:mc-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/ma:ma-*:ma-0' -P't/mb:mb-*:mb-0' -P't/mc:mc-*:mc-0' ${EMPTY} $@
 rep1/md-1.tgz:
-	@${CREATE_PKG} -P't/ma:ma-*:ma-1' -P't/mb:mb-*:mb-1' -P't/me:me-*:me-1' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/ma:ma-*:ma-1' -P't/mb:mb-*:mb-1' -P't/me:me-*:me-1' ${EMPTY} $@
 rep0/mb-0.tgz:
-	@${CREATE_PKG} -P't/ma:ma-*:ma-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/ma:ma-*:ma-0' ${EMPTY} $@
 rep1/mb-1.tgz:
-	@${CREATE_PKG} -P't/ma:ma-*:ma-1' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/ma:ma-*:ma-1' ${EMPTY} $@
 
 rep0/inta-0.tgz:
-	@${CREATE_PKG} -P't/intb:intb-*:intb-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/intb:intb-*:intb-0' ${EMPTY} $@
 rep0/intb-0.tgz:
-	@${CREATE_PKG} -P't/inta:inta-*:inta-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/inta:inta-*:inta-0' ${EMPTY} $@
  
 rep1/o-1.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -P't/p:p-*:p-0' -W'coincoin.0.0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -P't/p:p-*:p-0' -W'coincoin.0.0' ${EMPTY} $@
 
 rep1/o1-1.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -P't/p1:p1-*:p1-0' -W'coincoin.0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -P't/p1:p1-*:p1-0' -W'coincoin.0' ${EMPTY} $@
 
 rep1/o2-1.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -P't/p2:p2-*:p2-0' -W'coincoin.0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -P't/p2:p2-*:p2-0' -W'coincoin.0' ${EMPTY} $@
 
 rep0/o3-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -W'unlikelylibraryname.0.0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -W'unlikelylibraryname.0.0' ${EMPTY} $@
 
 rep1/p-0.tgz rep1/p1-0.tgz: plist8
-	@mkdir -p ${SRC13}/lib
-	@touch ${SRC13}/lib/libcoincoin.so.0.0
-	@${CREATE_PKG} -B src13 -DLIBcoincoin_VERSION=0.0 -f plist8 $@
+	@${WITH} -B src13 -DLIBcoincoin_VERSION=0.0 -f plist8 $@ ${CPKG}
 
 rep1/p2-0.tgz: plist8
-	@mkdir -p ${SRC14}/lib
-	@touch ${SRC14}/lib/libcoincoin.so.0
-	@${CREATE_PKG} -DREGRESSION_TESTING -B src14 -DLIBcoincoin_VERSION=0 -f plist8 $@
+	@${WITH} -DREGRESSION_TESTING -B src14 -DLIBcoincoin_VERSION=0 -f plist8 $@ ${CPKG}
 
 rep0/p4-0.tgz: plist12
-	@mkdir -p ${SRC15}/lib
-	@touch ${SRC15}/lib/liba.so.0.0
-	@${CREATE_PKG} -B src15 -DLIBa_VERSION=0.0 -f plist12 $@
+	@${WITH} -B src15 -DLIBa_VERSION=0.0 -f plist12 $@ ${CPKG}
 
 rep0/o4-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.1.0' -P't/p4:p4-*:p4-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.1.0' -P't/p4:p4-*:p4-0' ${EMPTY} $@
 
 rep0/o5-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.0.2' -P't/p4:p4-*:p4-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.0.2' -P't/p4:p4-*:p4-0' ${EMPTY} $@
 
 rep0/o6-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.0.0' -P't/p4:p4-*:p4-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.0.0' -P't/p4:p4-*:p4-0' ${EMPTY} $@
 
 rep0/oo6-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.0.0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.0.0' ${EMPTY} $@
 
 rep0/o7-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -W'dir/a.0.0' -P't/p4:p4-*:p4-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -W'dir/a.0.0' -P't/p4:p4-*:p4-0' ${EMPTY} $@
 
 rep1/b-1.tgz:
-	@${CREATE_PKG} -P't/a:a-*:a-1' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/a:a-*:a-1' ${EMPTY} $@
 
 rep0/qt-0.tgz: plist13
-	@mkdir -p ${SRC17}/phonon
-	touch ${SRC17}/phonon/a
-	@${CREATE_PKG} -B src17 -f plist13 $@
+	@${WITH} -B src17 -f plist13 $@ ${CPKG}
 
 rep1/qt-1.tgz: plist14
-	@mkdir -p ${SRC16}
-	touch ${SRC16}/phonon
-	@${CREATE_PKG} -B src16 -f plist14 $@
+	@${WITH} -B src16 -f plist14 $@ ${CPKG}
 
 rep0/exo-0.tgz: plist15
 	@mkdir -p ${SRC18}/foo
@@ -448,37 +397,31 @@ rep0/exo-0.tgz: plist15
 	@${CREATE_PKG} -B src18 -f plist15 $@
 
 rep1/exo-1.tgz: plist16
-	@mkdir -p ${SRC19}/{foo,bar}
-	touch ${SRC19}/{bar,foo}/a
-	@${CREATE_PKG} -B src19 -f plist16 $@
+	@${WITH} -B src19 -f plist16 $@ ${CPKG}
 
 rep0/thunar-0.tgz: plist17
-	@mkdir -p ${SRC20}/lib
-	@touch ${SRC20}/lib/libthunar-vfs.so.0.0
-	@${CREATE_PKG} -B src20 -DLIBthunar-vfs_VERSION=0.0 -f plist17 $@
+	@${WITH} -B src20 -DLIBthunar-vfs_VERSION=0.0 -f plist17 $@ ${CPKG}
 
 rep1/thunar-vfs-1.tgz: plist18
-	@mkdir -p ${SRC20}/lib
-	@touch ${SRC20}/lib/libthunar-vfs.so.0.0
-	@${CREATE_PKG} -B src20 -DLIBthunar-vfs_VERSION=0.0 -f plist18 $@
+	@${WITH} -B src20 -DLIBthunar-vfs_VERSION=0.0 -f plist18 $@ ${CPKG}
 
 rep1/thunar-1.tgz:
-	@${CREATE_PKG} -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} ${EMPTY} $@
 
 
 rep0/q-0.tgz:
-	@${CREATE_PKG} -P't/thunar:thunar-*:thunar-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/thunar:thunar-*:thunar-0' ${EMPTY} $@
 
 rep1/q-1.tgz:
-	@${CREATE_PKG} -P't/thunar-vfs:thunar-vfs-*:thunar-vfs-1' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/thunar-vfs:thunar-vfs-*:thunar-vfs-1' ${EMPTY} $@
 
 rep0/gs-0.tgz:
-	@${CREATE_PKG} -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} ${EMPTY} $@
 rep0/gs-0-no_x11.tgz:
-	@${CREATE_PKG} -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} ${EMPTY} $@
 
 rep0/purple-0.tgz:
-	@${CREATE_PKG} -P't/gs:gs-*-!no_x11:gs-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/gs:gs-*-!no_x11:gs-0' ${EMPTY} $@
 
 rep1/c-0.tgz: plist1
 	@mkdir -p ${SRC1}
@@ -509,7 +452,7 @@ rep1/e-0.tgz: plist3
 	@${CREATE_PKG} -B src3 -f plist3 $@
 
 rep1/f-0.tgz:
-	@${CREATE_PKG} -P't/d:d-*:d-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/d:d-*:d-0' ${EMPTY} $@
 
 rep0/g-0.tgz: plist4
 	@${CREATE_PKG} -f plist4 $@
@@ -527,34 +470,28 @@ rep1/gd-1.tgz rep1/ge-1.tgz: plist5
 	@${CREATE_PKG} -f plist5 $@
 
 rep1/ga-0.tgz:
-	@PACKAGE_COMMENT=updated ${CREATE_PKG} -f ${.CURDIR}/empty $@
+	@PACKAGE_COMMENT=updated ${CREATE_PKG} ${EMPTY} $@
 
 rep0/gc-0.tgz:
-	@${CREATE_PKG} -P't/ga:gb-*:gb-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/ga:gb-*:gb-0' ${EMPTY} $@
 
 rep1/gc-0.tgz:
-	@PACKAGE_COMMENT=updated ${CREATE_PKG} -P't/ga:gb-*:gb-0p0' -f ${.CURDIR}/empty $@
+	@PACKAGE_COMMENT=updated ${CREATE_PKG} -P't/ga:gb-*:gb-0p0' ${EMPTY} $@
 
 rep0/h-0.tgz:
-	@${CREATE_PKG} -P't/i:i-*:i-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/i:i-*:i-0' ${EMPTY} $@
 
 rep1/h-1.tgz:
-	@${CREATE_PKG} -P't/j:j->=1:j-1' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/j:j->=1:j-1' ${EMPTY} $@
 
 rep0/cola-0.tgz: plist19
-	@mkdir -p ${SRC22}
-	@touch ${SRC22}/a
-	@${CREATE_PKG} -B src22 -f plist19 $@
+	@${WITH} -B src22 -f plist19 $@ ${CPKG}
 
 rep1/cola-1.tgz: plist19
-	@mkdir -p ${SRC22}
-	@touch ${SRC22}/a
-	@${CREATE_PKG} -B src22 -P't/colb:colb-*:colb-0' -f plist19 $@
+	@${WITH} -B src22 -P't/colb:colb-*:colb-0' -f plist19 $@ ${CPKG}
 
 rep1/colb-0.tgz: plist20
-	@mkdir -p ${SRC22}
-	@touch ${SRC22}/a
-	@${CREATE_PKG} -B src22 -f plist20 $@
+	@${WITH} -B src22 -f plist20 $@ ${CPKG}
 
 depend_q1=-P't/q5:q5-*:q5-0'
 depend_q2=${depend_q1} -P't/q1:q1-*:q1-0'
@@ -571,25 +508,21 @@ rep1/$n-1.tgz: plist-rep1-$n
 	@${CREATE_PKG} ${depend_$n} -f plist-rep1-$n $@
 
 plist-rep1-$n:
-	@echo "@conflict q1-0" >$@
-	@echo "@conflict q2-0" >>$@
-	@echo "@conflict q3-0" >>$@
-	@echo "@conflict q4-0" >>$@
-	@echo "@exec echo 1>&2 'XXXrep1 $n'" >>$@
+	@${MKPLIST} "@conflict q1-0" "@conflict q2-0" "@conflict q3-0" "@conflict q4-0" "@exec echo 1>&2 'XXXrep1 $n'" >$@
 
 .endfor
 	
 rep0/q6-0.tgz:
-	@${CREATE_PKG} -P't/q3:q3-*:q3-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/q3:q3-*:q3-0' ${EMPTY} $@
 
 rep1/q6-1.tgz:
-	@${CREATE_PKG} -P't/q3:q3-*:q3-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/q3:q3-*:q3-0' ${EMPTY} $@
 
 rep0/glib-0.tgz:
-	@${CREATE_PKG} -P't/fam:fam-*:fam-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/fam:fam-*:fam-0' ${EMPTY} $@
 
 rep1/glib-1.tgz:
-	@${CREATE_PKG} -P't/gamin:gamin-*:gamin-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/gamin:gamin-*:gamin-0' ${EMPTY} $@
 
 rep1/fam-1.tgz: plist9
 	@${CREATE_PKG} -f plist9 $@
@@ -598,34 +531,30 @@ rep1/gamin-0.tgz: plist10
 	@${CREATE_PKG} -f plist10 $@
 
 rep1/missa-0.tgz:
-	@${CREATE_PKG} -P't/misse:misse-*:misse-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/misse:misse-*:misse-0' ${EMPTY} $@
 
 rep1/missb-0.tgz:
-	@${CREATE_PKG} -P't/missd:missd-*:missd-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/missd:missd-*:missd-0' ${EMPTY} $@
 
 rep1/missd-0.tgz: plist11
 	@${CREATE_PKG} -f plist11 $@
 
 rep1/missf-0.tgz:
-	@${CREATE_PKG} -P't/misse:misse-*:misse-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/misse:misse-*:misse-0' ${EMPTY} $@
 
 rep0/ocaml-3.11.1.tgz:
 	@${CREATE_PKG} -P'test/tcl:tcl->=8.5,<8.6:tcl-8.5.7' \
-		-P'test/tk:tk->=8.5,<8.6:tk-8.5.7' -f ${.CURDIR}/empty $@
+		-P'test/tk:tk->=8.5,<8.6:tk-8.5.7' ${EMPTY} $@
 
 rep0/tk-8.5.7.tgz:
 	@${CREATE_PKG} -P'test/tcl:tcl->=8.5.7,<8.5.8:tcl-8.5.7' \
-		-f ${.CURDIR}/empty $@
+		${EMPTY} $@
 
 rep0/ol-0.tgz: plist21
-	@mkdir -p ${SRC23}/lib/subdir
-	@touch ${SRC23}/lib/subdir/libol.so.0.0
-	@${CREATE_PKG} -B src23 -DLIBol_VERSION=0.0 -f plist21 $@
+	@${WITH} -B src23 -DLIBol_VERSION=0.0 -f plist21 $@ ${CPKG}
 
 rep1/ol-1.tgz: plist21
-	@mkdir -p ${SRC23}/lib/subdir
-	@touch ${SRC23}/lib/subdir/libol.so.1.0
-	@${CREATE_PKG} -B src23 -DLIBol_VERSION=1.0 -f plist21 $@
+	@${WITH} -B src23 -DLIBol_VERSION=1.0 -f plist21 $@ ${CPKG}
 
 .for o in cups-2.2.7p1 cups-filters-1.20.3 cups-libs-2.2.7 ghostscript-9.07p7
 CUPS_FILES += rep2/$o.tgz
@@ -649,7 +578,7 @@ cups-bug: ${CUPS_FILES}
 
 usertest-1:
 	@if ${CREATE_PKG} -u ${.CURDIR}/baduser1 \
-	    -f ${.CURDIR}/empty truc-0.tgz; then \
+	    ${EMPTY} truc-0.tgz; then \
 	    	exit 1; \
 	else \
 		exit 0; \
@@ -657,7 +586,7 @@ usertest-1:
 
 usertest-2:
 	@if ${CREATE_PKG} -u ${.CURDIR}/baduser2 \
-	    -f ${.CURDIR}/empty truc-0.tgz; then \
+	    ${EMPTY} truc-0.tgz; then \
 	    	exit 1; \
 	else \
 		exit 0; \
@@ -665,7 +594,7 @@ usertest-2:
 
 usertest-3:
 	@if ${CREATE_PKG} -u ${.CURDIR}/baduser3 \
-	    -f ${.CURDIR}/empty truc-0.tgz; then \
+	    ${EMPTY} truc-0.tgz; then \
 	    	exit 1; \
 	else \
 		exit 0; \
@@ -675,37 +604,31 @@ keys:
 	signify -G -n -s signify/test-pkg.sec -p signify/test-pkg.pub
 
 plist22:
-	@echo "@owner "`id -un` >$@
-	@echo "@group "`id -gn` >>$@
-	@echo '@lib lib/libnettle.so.$${LIBnettle_VERSION}' >>$@
+	${MKPLIST} '@lib lib/libnettle.so.$${LIBnettle_VERSION}' >$@
 
 rep4/libnettle-0.tgz: plist22
-	@mkdir -p ${SRC24}/lib
-	@touch ${SRC24}/lib/libnettle.so.0.0
-	@${CREATE_PKG} -B src24 -DLIBnettle_VERSION=0.0 -f plist22 $@
+	@${WITH} -B src24 -DLIBnettle_VERSION=0.0 -f plist22 $@ ${CPKG}
 
 rep4/cups-libs-0.tgz:
-	@${CREATE_PKG} -P't/gnutls:gnutls-*:gnutls-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/gnutls:gnutls-*:gnutls-0' ${EMPTY} $@
 
 rep5/cups-libs-0.tgz:
-	@${CREATE_PKG} -P't/gnutls:gnutls-*:gnutls-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/gnutls:gnutls-*:gnutls-0' ${EMPTY} $@
 
 rep4/gnutls-0.tgz:
-	@${CREATE_PKG} -P't/libnettle:libnettle-*:libnettle-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/libnettle:libnettle-*:libnettle-0' ${EMPTY} $@
 
 rep5/gnutls-0.tgz:
-	@${CREATE_PKG} -P't/libnettle:libnettle-*:libnettle-1' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -P't/libnettle:libnettle-*:libnettle-1' ${EMPTY} $@
 
 rep4/gtk+3-cups-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -W nettle.0.0 -P't/cups-libs:cups-libs-*:cups-libs-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -W nettle.0.0 -P't/cups-libs:cups-libs-*:cups-libs-0' ${EMPTY} $@
 
 rep5/gtk+3-cups-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -W nettle.1.0 -P't/cups-libs:cups-libs-*:cups-libs-0' -f ${.CURDIR}/empty $@
+	@${CREATE_PKG} -DREGRESSION_TESTING -W nettle.1.0 -P't/cups-libs:cups-libs-*:cups-libs-0' ${EMPTY} $@
 
 rep5/libnettle-1.tgz: plist22
-	@mkdir -p ${SRC24}/lib
-	@touch ${SRC24}/lib/libnettle.so.1.0
-	@${CREATE_PKG} -B src24 -DLIBnettle_VERSION=1.0 -f plist22 $@
+	@${WITH} -B src24 -DLIBnettle_VERSION=1.0 -f plist22 $@ ${CPKG}
 
 nettle-bug: rep4/cups-libs-0.tgz rep4/gtk+3-cups-0.tgz rep4/gnutls-0.tgz \
 	rep4/libnettle-0.tgz rep5/cups-libs-0.tgz rep5/gtk+3-cups-0.tgz \
@@ -715,34 +638,16 @@ nettle-bug: rep4/cups-libs-0.tgz rep4/gtk+3-cups-0.tgz rep4/gnutls-0.tgz \
 	@ROOT=${D37} PKG_PATH=${.OBJDIR}/rep5 ${ADD_PKG} -u gtk+3-cups
 
 plist23:
-	@echo "@owner "`id -un` >$@
-	@echo "@group "`id -gn` >>$@
-	@echo "share/" >>$@
-	@echo "share/bg/" >>$@
-	@echo "share/bg/portrait" >>$@
-	@echo "share/bg/pictures/" >>$@
-	@echo "share/bg/pictures/a/" >>$@
-	@echo "share/bg/pictures/a/zoinx" >>$@
+	@${MKPLIST} "share/" "share/bg/" "share/bg/portrait" "share/bg/pictures/" "share/bg/pictures/a/" "share/bg/pictures/a/zoinx" >$@
 
 plist24:
-	@echo "@owner "`id -un` >$@
-	@echo "@group "`id -gn` >>$@
-	@echo "share/" >>$@
-	@echo "share/bg/" >>$@
-	@echo "share/bg/portrait/" >>$@
-	@echo "share/bg/portrait/a/" >>$@
-	@echo "share/bg/portrait/a/zoinx" >>$@
+	${MKPLIST} "share/" "share/bg/" "share/bg/portrait/" "share/bg/portrait/a/" "share/bg/portrait/a/zoinx" >$@
 
 rep0/bg-0.tgz: plist23
-	@mkdir -p ${SRC25}/share/bg ${SRC25}/share/bg/pictures/a
-	@echo "a file" >${SRC25}/share/bg/portrait
-	@echo "zoinx" >${SRC25}/share/bg/pictures/a/zoinx
-	@${CREATE_PKG} -B src25 -f plist23 $@
+	@${WITH} -B src25 -f plist23 $@ ${CPKG}
 
 rep0/bg-1.tgz: plist24
-	@mkdir -p ${SRC26}/share/bg/portrait/a
-	@echo "zoinx" >${SRC26}/share/bg/portrait/a/zoinx
-	@${CREATE_PKG} -B src26 -f plist24 $@
+	@${WITH} -B src26 -f plist24 $@ ${CPKG}
 
 # these exemplify issues with directory moving around
 tying-1: rep0/bg-0.tgz rep0/bg-1.tgz
@@ -803,7 +708,7 @@ temp-error4: rep0/qt-0.tgz rep1/qt-1.tgz
 rep5/a-0.tgz: plist19
 	@mkdir -p ${SRC27}
 	@echo "zoinx" > ${SRC27}/a
-	INJECT=inject-badsum ${CREATE_PKG} -B src27 -f plist19 $@
+	@INJECT=inject-badsum ${CREATE_PKG} -B src27 -f plist19 $@
 
 .PHONY: ${REGRESS_TARGETS}
 
