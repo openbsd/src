@@ -1,0 +1,69 @@
+#! /usr/bin/perl
+
+# small script to fill files for creating packages...
+use strict;
+use warnings;
+
+use OpenBSD::AddCreateDelete;
+use OpenBSD::PackingList;
+
+package myState;
+our @ISA = qw(OpenBSD::AddCreateDelete::State);
+sub handle_options
+{
+	my $state = shift;
+	$state->SUPER::handle_options('f:B:P:');
+}
+
+package OpenBSD::PackingElement;
+use File::Basename;
+sub populate
+{
+}
+
+sub hierarchy
+{
+	my ($self, $o) = @_;
+	if (!-e $o) {
+		$self->hierarchy(dirname($o));
+		mkdir($o);
+	}
+}
+
+
+package OpenBSD::PackingElement::FileBase;
+use File::Basename;
+
+sub populate
+{
+	my ($self, $dir) = @_;
+	my $f = join('/', $dir, $self->fullname);
+	$self->hierarchy(dirname($f));
+	if (!-e $f) {
+		open(my $file, '>', $f) or die;
+		print $file $self->fullname, "\n";
+		close $file;
+	}
+}
+
+package OpenBSD::PackingElement::DirBase;
+sub populate
+{
+	my ($self, $dir) = @_;
+	$self->hierarchy(join('/', $dir, $self->fullname));
+}
+
+package main;
+
+my $state = myState->new;
+$state->handle_options;
+my $plist = OpenBSD::PackingList->fromfile($state->opt('f'),
+    sub {
+	my ($fh, $cont) = @_;
+	while (<$fh>) {
+		&$cont($state->{subst}->do($_));
+	}
+    });
+
+my $localbase = $state->opt('L') // OpenBSD::Paths->localbase;
+$plist->populate($state->opt('B').$localbase);
