@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.118 2019/07/07 11:17:36 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.119 2019/08/20 23:55:41 krw Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -898,7 +898,7 @@ mpii_scsi_probe(struct scsi_link *link)
 	if (ISSET(flags, MPII_DF_VOLUME))
 		return (0);
 
-	memset(&ehdr, 0, sizeof(ehdr));	
+	memset(&ehdr, 0, sizeof(ehdr));
 	ehdr.page_type = MPII_CONFIG_REQ_PAGE_TYPE_EXTENDED;
 	ehdr.page_number = 0;
 	ehdr.page_version = 0;
