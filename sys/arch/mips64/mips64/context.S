@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.60 2017/05/24 13:33:00 visa Exp $ */
+/*	$OpenBSD: context.S,v 1.61 2019/08/21 16:14:34 visa Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -153,19 +153,20 @@ NON_LEAF(cpu_switchto_asm, FRAMESZ(CF_SZ), ra)
 
 1:
 	/*
-	 * Disable interrupts
+	 * Switch to new context
 	 */
-	ori	v0, SR_INT_ENAB
-	xori	v0, SR_INT_ENAB
-	MTC0	v0, COP_0_STATUS_REG
-	MTC0_SR_IE_HAZARD
+	move	s0, a1				# save p
+	move	s1, v0				# save status register
+	jal	pmap_activate
+	 move	a0, s0
 
 	/*
-	 * Switch to new context
- 	*/
-	move	s0, a1				# save p
-	jal	pmap_activate
-	move	a0, s0
+	 * Disable interrupts
+	 */
+	ori	s1, SR_INT_ENAB
+	xori	s1, SR_INT_ENAB
+	MTC0	s1, COP_0_STATUS_REG
+	MTC0_SR_IE_HAZARD
 
 	PTR_L	t3, P_ADDR(s0)			# get uarea pointer.
 	GET_CPU_INFO(t1, t0)

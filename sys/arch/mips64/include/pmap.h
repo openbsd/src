@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.47 2018/10/22 17:31:25 krw Exp $ */
+/*      $OpenBSD: pmap.h,v 1.48 2019/08/21 16:14:34 visa Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -117,6 +117,7 @@ struct pmap_asid_info {
  */
 typedef struct pmap {
 	struct mutex		pm_mtx;		/* pmap lock */
+	struct mutex		pm_swmtx;	/* pmap switch lock */
 	int			pm_count;	/* pmap reference count */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */

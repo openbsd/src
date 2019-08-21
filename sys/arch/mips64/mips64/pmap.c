@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.112 2019/06/23 15:26:42 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.113 2019/08/21 16:14:34 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -217,6 +217,20 @@ pmap_unlock(pmap_t pmap)
 		mtx_leave(&pmap->pm_mtx);
 }
 
+static inline void
+pmap_swlock(pmap_t pmap)
+{
+	if (pmap != pmap_kernel())
+		mtx_enter(&pmap->pm_swmtx);
+}
+
+static inline void
+pmap_swunlock(pmap_t pmap)
+{
+	if (pmap != pmap_kernel())
+		mtx_leave(&pmap->pm_swmtx);
+}
+
 static inline pt_entry_t
 pmap_pte_cas(pt_entry_t *pte, pt_entry_t o, pt_entry_t n)
 {
@@ -240,11 +254,13 @@ pmap_invalidate_icache(pmap_t pmap, vaddr_t va, pt_entry_t entry)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
+	pmap_swlock(pmap);
 	CPU_INFO_FOREACH(cii, ci) {
 		if (cpuset_isset(&cpus_running, ci) &&
 		    pmap->pm_asid[ci->ci_cpuid].pma_asidgen != 0)
 			cpumask |= 1ul << ci->ci_cpuid;
 	}
+	pmap_swunlock(pmap);
 	if (cpumask != 0) {
 		ii_args.va = va;
 		ii_args.entry = entry;
@@ -279,6 +295,7 @@ pmap_shootdown_range(pmap_t pmap, vaddr_t sva, vaddr_t eva, boolean_t needisync)
 	vaddr_t va;
 	unsigned int cpumask = 0;
 
+	pmap_swlock(pmap);
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == self)
 			continue;
@@ -295,6 +312,7 @@ pmap_shootdown_range(pmap_t pmap, vaddr_t sva, vaddr_t eva, boolean_t needisync)
 		}
 		cpumask |= 1 << ci->ci_cpuid;
 	}
+	pmap_swunlock(pmap);
 	if (cpumask != 0) {
 		sr_arg.pmap = pmap;
 		for (va = sva; va < eva; va += SHOOTDOWN_MAX * PAGE_SIZE) {
@@ -332,6 +350,8 @@ pmap_shootdown_range_action(void *arg)
 #define PMAP_ASSERT_LOCKED(pm)	do { /* nothing */ } while (0)
 #define pmap_lock(pm)		do { /* nothing */ } while (0)
 #define pmap_unlock(pm)		do { /* nothing */ } while (0)
+#define pmap_swlock(pm)		do { /* nothing */ } while (0)
+#define pmap_swunlock(pm)	do { /* nothing */ } while (0)
 
 void
 pmap_invalidate_icache(pmap_t pmap, vaddr_t va, pt_entry_t entry)
@@ -515,6 +535,7 @@ pmap_create()
 	pmap->pm_segtab = pool_get(&pmap_pg_pool, PR_WAITOK | PR_ZERO);
 	pmap->pm_count = 1;
 	mtx_init(&pmap->pm_mtx, IPL_VM);
+	mtx_init(&pmap->pm_swmtx, IPL_SCHED);
 
 	return (pmap);
 }
@@ -652,11 +673,13 @@ pmap_activate(struct proc *p)
 	struct cpu_info *ci = curcpu();
 	uint id;
 
+	pmap_swlock(pmap);
 	ci->ci_curpmap = pmap;
 	p->p_addr->u_pcb.pcb_segtab = pmap->pm_segtab;
 	id = pmap_alloc_tlbpid(p);
 	if (p == ci->ci_curproc)
 		tlb_set_pid(id);
+	pmap_swunlock(pmap);
 }
 
 /*
