@@ -2077,6 +2077,7 @@
 ./usr/share/man/man3/X509_check_host.3
 ./usr/share/man/man3/X509_check_issued.3
 ./usr/share/man/man3/X509_check_private_key.3
+./usr/share/man/man3/X509_cmp.3
 ./usr/share/man/man3/X509_cmp_time.3
 ./usr/share/man/man3/X509_digest.3
 ./usr/share/man/man3/X509_get0_notBefore.3
