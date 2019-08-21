@@ -39,6 +39,7 @@
 
 #include <dev/pci/drm/i915/i915_devlist.h>
 #include <dev/pci/drm/radeon/radeon_devlist.h>
+#include <dev/pci/drm/amd/amdgpu/amdgpu_devlist.h>
 
 #ifdef RAMDISK_HOOKS
 static const struct pci_matchid aperture_blacklist[] = {
@@ -71,6 +72,10 @@ vga_aperture_needed(struct pci_attach_args *pa)
 	if (pci_matchbyid(pa, i915_devices, nitems(i915_devices)) ||
 	    pci_matchbyid(pa, radeon_devices, nitems(radeon_devices)) ||
 	    pci_matchbyid(pa, aperture_blacklist, nitems(aperture_blacklist)))
+		return (0);
+#endif
+#ifdef __amd64__
+	if (pci_matchbyid(pa, amdgpu_devices, nitems(amdgpu_devices)))
 		return (0);
 #endif
 	return (1);
