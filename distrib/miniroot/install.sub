@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1139 2019/08/14 19:32:41 naddy Exp $
+#	$OpenBSD: install.sub,v 1.1140 2019/08/21 17:39:30 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3239,7 +3239,7 @@ check_unattendedupgrade() {
 	) > /dev/null 2>&1
 }
 
-WATCHDOG_PERIOD_SEC=$((45 * 60))
+WATCHDOG_PERIOD_SEC=$((30 * 60))
 
 # Restart the background timer.
 reset_watchdog() {
