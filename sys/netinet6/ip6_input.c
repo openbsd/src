@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.218 2019/08/06 22:57:55 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.219 2019/08/21 15:32:18 florian Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1332,7 +1332,6 @@ ip6_sysctl_ip6stat(void *oldp, size_t *oldlenp, void *newp)
 int
 ip6_sysctl_soiikey(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
-	struct ifnet *ifp;
 	uint8_t oldkey[IP6_SOIIKEY_LEN];
 	int error;
 
@@ -1344,16 +1343,6 @@ ip6_sysctl_soiikey(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 
 	error = sysctl_struct(oldp, oldlenp, newp, newlen, ip6_soiikey,
 	    sizeof(ip6_soiikey));
-
-	if (!error && memcmp(ip6_soiikey, oldkey, sizeof(oldkey)) != 0) {
-		TAILQ_FOREACH(ifp, &ifnet, if_list) {
-			if (ifp->if_flags & IFF_LOOPBACK)
-				continue;
-			NET_LOCK();
-			in6_soiiupdate(ifp);
-			NET_UNLOCK();
-		}
-	}
 
 	return (error);
 }
