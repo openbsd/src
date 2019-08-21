@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.54 2019/05/23 19:00:52 jasper Exp $	*/
+/*	$OpenBSD: clock.c,v 1.55 2019/08/21 20:44:09 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -619,9 +619,7 @@ inittodr(time_t base)
 	dt.dt_mon = hexdectodec(rtclk[MC_MONTH]);
 	dt.dt_year = clock_expandyear(hexdectodec(rtclk[MC_YEAR]));
 
-	ts.tv_sec = clock_ymdhms_to_secs(&dt) + tz.tz_minuteswest * 60;
-	if (tz.tz_dsttime)
-		ts.tv_sec -= 3600;
+	ts.tv_sec = clock_ymdhms_to_secs(&dt) - utc_offset;
 
 	if (base < ts.tv_sec - 5*SECYR)
 		printf("WARNING: file system time much less than clock time\n");
@@ -666,10 +664,7 @@ resettodr(void)
 		bzero(&rtclk, sizeof(rtclk));
 	splx(s);
 
-	diff = tz.tz_minuteswest * 60;
-	if (tz.tz_dsttime)
-		diff -= 3600;
-	clock_secs_to_ymdhms(time_second - diff, &dt);
+	clock_secs_to_ymdhms(time_second + utc_offset, &dt);
 
 	rtclk[MC_SEC] = dectohexdec(dt.dt_sec);
 	rtclk[MC_MIN] = dectohexdec(dt.dt_min);

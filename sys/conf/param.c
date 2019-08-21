@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.43 2019/08/02 02:17:35 cheloha Exp $	*/
+/*	$OpenBSD: param.c,v 1.44 2019/08/21 20:44:09 cheloha Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -83,6 +83,7 @@ int	tick = 1000000 / HZ;
 int	tick_nsec = 1000000000 / HZ;
 int	tickadj = 240000 / (60 * HZ);		/* can adjust 240ms in 60s */
 struct	timezone tz  __attribute__ ((section(".data"))) = { TIMEZONE, DST };
+int	utc_offset = 0;
 #define	NPROCESS (30 + 16 * MAXUSERS)
 #define	NTEXT (80 + NPROCESS / 8)		/* actually the object cache */
 #define	NVNODE (NPROCESS * 2 + NTEXT + 100)

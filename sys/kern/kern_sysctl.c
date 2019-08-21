@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.365 2019/08/05 08:35:59 anton Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.366 2019/08/21 20:44:09 cheloha Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -142,6 +142,7 @@ int sysctl_cptime2(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_audio(int *, u_int, void *, size_t *, void *, size_t);
 #endif
 int sysctl_cpustats(int *, u_int, void *, size_t *, void *, size_t);
+int sysctl_utc_offset(void *, size_t *, void *, size_t);
 
 void fill_file(struct kinfo_file *, struct file *, struct filedesc *, int,
     struct vnode *, struct process *, struct proc *, struct socket *, int);
@@ -675,6 +676,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #endif
 	case KERN_TIMEOUT_STATS:
 		return (timeout_sysctl(oldp, oldlenp, newp, newlen));
+	case KERN_UTC_OFFSET:
+		return (sysctl_utc_offset(oldp, oldlenp, newp, newlen));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -2458,4 +2461,35 @@ sysctl_cpustats(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		cs.cs_flags |= CPUSTATS_ONLINE;
 
 	return (sysctl_rdstruct(oldp, oldlenp, newp, &cs, sizeof(cs)));
+}
+
+int
+sysctl_utc_offset(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+{
+	struct timespec adjusted, now;
+	int adjustment_seconds, error, new_offset_minutes, old_offset_minutes;
+
+	old_offset_minutes = utc_offset / 60;	/* seconds -> minutes */
+	if (securelevel > 0)
+		return sysctl_rdint(oldp, oldlenp, newp, old_offset_minutes);
+
+	new_offset_minutes = old_offset_minutes;
+	error = sysctl_int(oldp, oldlenp, newp, newlen, &new_offset_minutes);
+	if (error)
+		return error;
+	if (new_offset_minutes < -24 * 60 || new_offset_minutes > 24 * 60)
+		return EINVAL;
+	if (new_offset_minutes == old_offset_minutes)
+		return 0;
+
+	utc_offset = new_offset_minutes * 60;	/* minutes -> seconds */
+	adjustment_seconds = (new_offset_minutes - old_offset_minutes) * 60;
+
+	nanotime(&now);
+	adjusted = now;
+	adjusted.tv_sec -= adjustment_seconds;
+	tc_setrealtimeclock(&adjusted);
+	resettodr();
+
+	return 0;
 }

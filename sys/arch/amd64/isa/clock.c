@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.30 2019/07/19 14:50:43 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.31 2019/08/21 20:44:09 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -475,9 +475,7 @@ inittodr(time_t base)
 	dt.dt_mon = bcdtobin(rtclk[MC_MONTH]);
 	dt.dt_year = clock_expandyear(bcdtobin(rtclk[MC_YEAR]));
 
-	ts.tv_sec = clock_ymdhms_to_secs(&dt) + tz.tz_minuteswest * 60;
-	if (tz.tz_dsttime)
-		ts.tv_sec -= 3600;
+	ts.tv_sec = clock_ymdhms_to_secs(&dt) - utc_offset;
 
 	if (base != 0 && base < ts.tv_sec - 5*SECYR)
 		printf("WARNING: file system time much less than clock time\n");
@@ -506,7 +504,7 @@ resettodr(void)
 {
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
-	int century, diff, s;
+	int century, s;
 
 	/*
 	 * We might have been called by boot() due to a crash early
@@ -520,10 +518,7 @@ resettodr(void)
 		memset(&rtclk, 0, sizeof(rtclk));
 	splx(s);
 
-	diff = tz.tz_minuteswest * 60;
-	if (tz.tz_dsttime)
-		diff -= 3600;
-	clock_secs_to_ymdhms(time_second - diff, &dt);
+	clock_secs_to_ymdhms(time_second + utc_offset, &dt);
 
 	rtclk[MC_SEC] = bintobcd(dt.dt_sec);
 	rtclk[MC_MIN] = bintobcd(dt.dt_min);

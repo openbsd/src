@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.30 2019/08/21 15:32:18 florian Exp $
+.\"	$OpenBSD: sysctl.2,v 1.31 2019/08/21 20:44:09 cheloha Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -488,6 +488,7 @@ information.
 .It Dv KERN_TIMECOUNTER Ta "node" Ta "not applicable"
 .It Dv KERN_TTY Ta "node" Ta "not applicable"
 .It Dv KERN_TTYCOUNT Ta "integer" Ta "no"
+.It Dv KERN_UTC_OFFSET Ta "integer" Ta "yes"
 .It Dv KERN_VERSION Ta "string" Ta "no"
 .It Dv KERN_WATCHDOG Ta "node" Ta "not applicable"
 .It Dv KERN_WITNESS Ta "node" Ta "not applicable"
@@ -1079,6 +1080,22 @@ Returns the number of input characters in raw mode.
 Number of available
 .Xr tty 4
 devices.
+.It Dv KERN_UTC_OFFSET Pq Va kern.utc_offset
+The real-time clock's
+.Pq RTC
+offset from
+Coordinated Universal Time
+.Pq UTC
+expressed as minutes East of UTC+0.
+When set,
+time read from the RTC is adjusted to remove the offset
+and time written to the RTC is adjusted to reapply it.
+This may simplify multibooting with an operating system that
+does not run the RTC in UTC mode.
+When running with a
+.Xr securelevel 7
+greater than 0,
+this variable may not be changed.
 .It Dv KERN_VERSION Pq Va kern.version
 The system version string.
 .It Dv KERN_WATCHDOG Pq Va kern.watchdog

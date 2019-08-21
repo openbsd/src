@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernel.h,v 1.20 2019/08/02 02:17:35 cheloha Exp $	*/
+/*	$OpenBSD: kernel.h,v 1.21 2019/08/21 20:44:09 cheloha Exp $	*/
 /*	$NetBSD: kernel.h,v 1.11 1995/03/03 01:24:16 cgd Exp $	*/
 
 /*-
@@ -48,6 +48,7 @@ extern int domainnamelen;
 
 /* 1.2 */
 extern struct timezone tz;			/* XXX */
+extern int utc_offset;		/* seconds east of UTC */
 
 extern int tick;		/* usec per tick (1000000 / hz) */
 extern int tick_nsec;		/* nsec per tick */
