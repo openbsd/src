@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.26 2017/09/18 14:10:11 espie Exp $
+.\"	$OpenBSD: package.5,v 1.27 2019/08/21 19:21:57 danj Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +12,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: September 18 2017 $
+.Dd $Mdocdate: August 21 2019 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
@@ -114,11 +114,10 @@ This corresponds to
 of
 .Xr pkg_create 1
 .Pp
-.It Cm @comment pkgpath=path cdrom=yes/no ftp=yes/no
+.It Cm @comment pkgpath=path ftp=yes/no
 Historical accident.
 This specific comment encodes the actual
 .Fl D Ar FULLPKGPATH ,
-.Fl D Ar CDROM ,
 and
 .Fl D Ar FTP
 arguments to
