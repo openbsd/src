@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.93 2019/06/28 13:32:49 deraadt Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.94 2019/08/22 19:33:57 kn Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -257,8 +257,7 @@ file(char *name)
 	char line[100], arg[5][50], *args[5];
 
 	if ((fp = fopen(name, "r")) == NULL) {
-		fprintf(stderr, "ndp: cannot open %s\n", name);
-		exit(1);
+		err(1, "cannot open %s", name);
 	}
 	args[0] = &arg[0][0];
 	args[1] = &arg[1][0];
@@ -270,7 +269,7 @@ file(char *name)
 		i = sscanf(line, "%49s %49s %49s %49s %49s",
 		    arg[0], arg[1], arg[2], arg[3], arg[4]);
 		if (i < 2) {
-			fprintf(stderr, "ndp: bad line: %s\n", line);
+			warnx("bad line: %s", line);
 			retval = 1;
 			continue;
 		}
@@ -333,8 +332,7 @@ set(int argc, char **argv)
 	hints.ai_family = AF_INET6;
 	gai_error = getaddrinfo(host, NULL, &hints, &res);
 	if (gai_error) {
-		fprintf(stderr, "ndp: %s: %s\n", host,
-			gai_strerror(gai_error));
+		warnx("%s: %s", host, gai_strerror(gai_error));
 		return 1;
 	}
 	sin->sin6_addr = ((struct sockaddr_in6 *)res->ai_addr)->sin6_addr;
@@ -379,7 +377,7 @@ set(int argc, char **argv)
 		/*
 		 * IPv4 arp command retries with sin_other = SIN_PROXY here.
 		 */
-		fprintf(stderr, "set: cannot configure a new entry\n");
+		warnx("set: cannot configure a new entry");
 		return 1;
 	}
 
@@ -408,8 +406,7 @@ get(char *host)
 	hints.ai_family = AF_INET6;
 	gai_error = getaddrinfo(host, NULL, &hints, &res);
 	if (gai_error) {
-		fprintf(stderr, "ndp: %s: %s\n", host,
-		    gai_strerror(gai_error));
+		warnx("%s: %s", host, gai_strerror(gai_error));
 		return;
 	}
 	sin->sin6_addr = ((struct sockaddr_in6 *)res->ai_addr)->sin6_addr;
@@ -451,8 +448,7 @@ delete(char *host)
 		hints.ai_flags = AI_NUMERICHOST;
 	gai_error = getaddrinfo(host, NULL, &hints, &res);
 	if (gai_error) {
-		fprintf(stderr, "ndp: %s: %s\n", host,
-		    gai_strerror(gai_error));
+		warnx("%s: %s", host, gai_strerror(gai_error));
 		return 1;
 	}
 	sin->sin6_addr = ((struct sockaddr_in6 *)res->ai_addr)->sin6_addr;
@@ -478,7 +474,7 @@ delete(char *host)
 		/*
 		 * IPv4 arp command retries with sin_other = SIN_PROXY here.
 		 */
-		fprintf(stderr, "delete: cannot delete non-NDP entry\n");
+		warnx("delete: cannot delete non-NDP entry");
 		return 1;
 	}
 
@@ -741,7 +737,7 @@ ndp_ether_aton(char *a, u_char *n)
 	i = sscanf(a, "%x:%x:%x:%x:%x:%x", &o[0], &o[1], &o[2],
 	    &o[3], &o[4], &o[5]);
 	if (i != 6) {
-		fprintf(stderr, "ndp: invalid Ethernet address '%s'\n", a);
+		warnx("invalid Ethernet address '%s'", a);
 		return (1);
 	}
 	for (i = 0; i < 6; i++)
@@ -778,8 +774,7 @@ rtmsg(int cmd)
 
 	switch (cmd) {
 	default:
-		fprintf(stderr, "ndp: internal wrong cmd\n");
-		exit(1);
+		errx(1, "internal wrong cmd");
 	case RTM_ADD:
 		rtm->rtm_addrs |= RTA_GATEWAY;
 		if (expire_time) {
@@ -825,8 +820,7 @@ doit:
 	} while (l > 0 && (rtm->rtm_version != RTM_VERSION ||
 	    rtm->rtm_seq != seq || rtm->rtm_pid != pid));
 	if (l == -1)
-		(void) fprintf(stderr, "ndp: read from routing socket: %s\n",
-		    strerror(errno));
+		warn("read from routing socket");
 	return (0);
 }
 
