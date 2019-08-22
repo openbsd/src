@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.128 2019/01/31 10:27:28 espie Exp $
+.\"	$OpenBSD: make.1,v 1.129 2019/08/22 19:37:30 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: January 31 2019 $
+.Dd $Mdocdate: August 22 2019 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1495,8 +1495,7 @@ uses the following environment variables, if they exist:
 .Ev MACHINE_ARCH ,
 .Ev MACHINE_CPU ,
 .Ev MAKEFLAGS ,
-.Ev MAKEOBJDIR ,
-.Ev MAKEOBJDIRPREFIX ,
+.Ev MAKEOBJDIR
 and
 .Ev PWD .
 .Nm
@@ -1516,10 +1515,6 @@ does not exist
 system makefile
 .It Pa /usr/share/mk
 system makefile directory
-.It Pa /usr/obj
-default
-.Ev MAKEOBJDIRPREFIX
-directory
 .El
 .Sh EXIT STATUS
 If
