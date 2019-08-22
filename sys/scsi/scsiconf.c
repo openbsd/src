@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.205 2019/08/20 13:40:37 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.206 2019/08/22 22:35:29 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -121,11 +121,11 @@ const u_int8_t version_to_spc [] = {
 	0, /* 0x00: The device does not claim conformance to any standard. */
 	1, /* 0x01: (Obsolete) SCSI-1 in olden times. */
 	2, /* 0x02: (Obsolete) SCSI-2 in olden times. */
-	3, /* 0x03: The device complies to ANSI INCITS 301-1997 (SPC-3). */
+	3, /* 0x03: The device complies to ANSI INCITS 301-1997 (SPC). */
 	2, /* 0x04: The device complies to ANSI INCITS 351-2001 (SPC-2). */
 	3, /* 0x05: The device complies to ANSI INCITS 408-2005 (SPC-3). */
-	4, /* 0x06: The device complies to SPC-4. */
-	0, /* 0x07: RESERVED. */
+	4, /* 0x06: The device complies to ANSI INCITS 513-2015 (SPC-4). */
+	5, /* 0x07: The device complies to T10/BSR INCITS 503 (SPC-5). */
 };
 
 int
