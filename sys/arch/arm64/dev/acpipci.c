@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.12 2019/07/30 21:44:15 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.13 2019/08/22 17:14:21 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -253,8 +253,10 @@ acpipci_parse_resources(int crsidx, union acpi_resource *crs, void *arg)
 		sc->sc_mem_trans = at;
 		break;
 	case LR_TYPE_IO:
-		if ((tflags & LR_IO_TTP) == 0)
-			return 0;
+		/*
+		 * Don't check _TTP as various firmwares don't set it,
+		 * even though they should!!
+		 */
 		extent_free(sc->sc_ioex, min, len, EX_WAITOK);
 		at = malloc(sizeof(struct acpipci_trans), M_DEVBUF, M_WAITOK);
 		at->at_iot = sc->sc_iot;
