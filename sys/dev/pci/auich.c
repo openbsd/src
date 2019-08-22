@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.111 2019/08/15 09:38:56 miko Exp $	*/
+/*	$OpenBSD: auich.c,v 1.112 2019/08/22 09:47:29 miko Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -403,8 +403,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 			    PCI_MAPREG_TYPE_IO, 0, &sc->iot,
 			    &sc->aud_ioh, NULL, &aud_size, 0)) {
 				printf(": can't map device mem/io space\n");
-				bus_space_unmap(sc->iot_mix, sc->mix_ioh, mix_size);
-				return;
+				goto fail_unmap_mix;
 			}
 		}
 	} else {
@@ -417,8 +416,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		if (pci_mapreg_map(pa, AUICH_NABMBAR, PCI_MAPREG_TYPE_IO,
 		    0, &sc->iot, &sc->aud_ioh, NULL, &aud_size, 0)) {
 			printf(": can't map device i/o space\n");
-			bus_space_unmap(sc->iot_mix, sc->mix_ioh, mix_size);
-			return;
+			goto fail_unmap_mix;
 		}
 	}
 	sc->dmat = pa->pa_dmat;
@@ -426,9 +424,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");
-		bus_space_unmap(sc->iot, sc->aud_ioh, aud_size);
-		bus_space_unmap(sc->iot_mix, sc->mix_ioh, mix_size);
-		return;
+		goto fail_unmap;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO | IPL_MPSAFE,
@@ -438,9 +434,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr)
 			printf(" at %s", intrstr);
 		printf("\n");
-		bus_space_unmap(sc->iot, sc->aud_ioh, aud_size);
-		bus_space_unmap(sc->iot_mix, sc->mix_ioh, mix_size);
-		return;
+		goto fail_unmap;
 	}
 
 	for (i = nitems(auich_devices); i--;)
@@ -481,7 +475,8 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Set up DMA lists. */
 	sc->pcmo.qptr = sc->pcmi.qptr = sc->mici.qptr = 0;
-	auich_alloc_cdata(sc);
+	if (auich_alloc_cdata(sc) != 0)
+		goto fail_disestablish_intr;
 
 	DPRINTF(AUICH_DEBUG_DMA, ("auich_attach: lists %p %p %p\n",
 	    sc->pcmo.dmalist, sc->pcmi.dmalist, sc->mici.dmalist));
@@ -513,12 +508,8 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_dev.dv_cfdata->cf_flags & 0x0001)
 		sc->flags = AC97_HOST_SWAPPED_CHANNELS;
 
-	if (ac97_attach(&sc->host_if) != 0) {
-		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
-		bus_space_unmap(sc->iot, sc->aud_ioh, aud_size);
-		bus_space_unmap(sc->iot_mix, sc->mix_ioh, mix_size);
-		return;
-	}
+	if (ac97_attach(&sc->host_if) != 0)
+		goto fail_disestablish_intr;
 	sc->codec_if->vtbl->unlock(sc->codec_if);
 
 	audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
@@ -527,6 +518,14 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	sc->suspend = DVACT_RESUME;
 
 	sc->sc_ac97rate = -1;
+	return;
+
+fail_disestablish_intr:
+	pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
+fail_unmap:
+	bus_space_unmap(sc->iot, sc->aud_ioh, aud_size);
+fail_unmap_mix:
+	bus_space_unmap(sc->iot_mix, sc->mix_ioh, mix_size);
 }
 
 int
