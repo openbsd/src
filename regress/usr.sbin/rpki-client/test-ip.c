@@ -1,4 +1,4 @@
-/*	$Id: test-ip.c,v 1.3 2019/08/12 18:03:17 jsing Exp $ */
+/*	$Id: test-ip.c,v 1.4 2019/08/22 21:31:48 bluhm Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -30,6 +30,8 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
+
+int verbose;
 
 static void
 test(const char *res, uint16_t afiv, size_t sz, size_t unused, ...)
