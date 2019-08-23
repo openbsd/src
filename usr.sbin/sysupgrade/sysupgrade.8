@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysupgrade.8,v 1.8 2019/05/09 21:09:37 naddy Exp $
+.\"	$OpenBSD: sysupgrade.8,v 1.9 2019/08/23 13:05:42 schwarze Exp $
 .\"
 .\" Copyright (c) 2019 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 9 2019 $
+.Dd $Mdocdate: August 23 2019 $
 .Dt SYSUPGRADE 8
 .Os
 .Sh NAME
@@ -62,16 +62,10 @@ Fetch and verify the files and create
 but do not reboot.
 .It Fl r
 Upgrade to the next release.
-The default is to find out if the system is running a release or a snapshot.
-In case of release
-.Nm
-downloads the next release.
+This is the default if the system is currently running a release.
 .It Fl s
 Upgrade to a snapshot.
-The default is to find out if the system is running a release or a snapshot.
-In case of release
-.Nm
-downloads the next release.
+This is the default if the system is currently running a snapshot.
 .El
 .Sh FILES
 .Bl -tag -width "/home/_sysupgrade" -compact
