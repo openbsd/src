@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.257 2019/08/11 17:23:12 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.258 2019/08/23 19:05:01 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -108,7 +108,6 @@ struct rule		*rule;
 struct processor	*processor;
 struct filter_config	*filter_config;
 static uint32_t		 last_dynchain_id = 1;
-static uint32_t		 last_dynproc_id = 1;
 
 enum listen_options {
 	LO_FAMILY	= 0x000001,
@@ -1598,12 +1597,6 @@ FILTER STRING PROC STRING {
 }
 |
 FILTER STRING PROC_EXEC STRING {
-	char	buffer[128];
-
-	do {
-		(void)snprintf(buffer, sizeof buffer, "<dynproc:%08x>", last_dynproc_id++);
-	} while (dict_check(conf->sc_processors_dict, buffer));
-
 	if (dict_get(conf->sc_filters_dict, $2)) {
 		yyerror("filter already exists with that name: %s", $2);
 		free($2);
@@ -1617,7 +1610,7 @@ FILTER STRING PROC_EXEC STRING {
 	filter_config = xcalloc(1, sizeof *filter_config);
 	filter_config->filter_type = FILTER_TYPE_PROC;
 	filter_config->name = $2;
-	filter_config->proc = xstrdup(buffer);
+	filter_config->proc = xstrdup($2);
 	dict_set(conf->sc_filters_dict, $2, filter_config);
 } proc_params {
 	dict_set(conf->sc_processors_dict, filter_config->proc, processor);
