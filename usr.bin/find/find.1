@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.96 2018/12/06 17:45:14 tedu Exp $
+.\"	$OpenBSD: find.1,v 1.97 2019/08/23 12:48:14 kn Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: December 6 2018 $
+.Dd $Mdocdate: August 23 2019 $
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -581,9 +581,9 @@ ending in a dot and single digit, but skip directory
 Find and remove all *.jpg and *.gif files under the current working
 directory:
 .Pp
-.Dl "$ find . \e( -name \e*.jpg -o -name \e*.gif \e) -exec rm {} \e;"
+.Dl "$ find . \e( -name \e*.jpg -o -name \e*.gif \e) -exec rm {} +"
 or
-.Dl "$ find . \e( -name \e*.jpg -o -name \e*.gif \e) -print0 | xargs -0r rm"
+.Dl "$ find . \e( -name \e*.jpg -o -name \e*.gif \e) -delete"
 .Sh SEE ALSO
 .Xr chflags 1 ,
 .Xr chmod 1 ,
