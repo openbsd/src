@@ -1,5 +1,5 @@
-.\"	$OpenBSD: OCSP_sendreq_new.3,v 1.7 2018/03/23 04:34:23 schwarze Exp $
-.\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\" $OpenBSD: OCSP_sendreq_new.3,v 1.8 2019/08/23 12:23:39 schwarze Exp $
+.\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2014, 2016 The OpenSSL Project.  All rights reserved.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: August 23 2019 $
 .Dt OCSP_SENDREQ_NEW 3
 .Os
 .Sh NAME
@@ -227,7 +227,8 @@ Add a Host header for
 .Xr OCSP_request_add1_nonce 3 ,
 .Xr OCSP_REQUEST_new 3 ,
 .Xr OCSP_resp_find_status 3 ,
-.Xr OCSP_response_status 3
+.Xr OCSP_response_status 3 ,
+.Xr X509_get1_ocsp 3
 .Sh HISTORY
 .Fn OCSP_sendreq_bio
 first appeared in OpenSSL 0.9.7 and has been available since
