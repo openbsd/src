@@ -124,6 +124,22 @@
 #define CONFIG_CPU "__ppc64__"
 #elif defined(__ARM__)
 #define CONFIG_CPU "__ARM__"
+#elif defined(__AARCH64__)
+#define CONFIG_CPU "__AARCH64__"
+#elif defined(__aarch64__)
+#define CONFIG_CPU "__aarch64__"
+#elif defined(__RISCV__)
+#define CONFIG_CPU "__RISCV__"
+#elif defined(__riscv__)
+#define CONFIG_CPU "__riscv__"
+#elif defined(__RISCV64__)
+#define CONFIG_CPU "__RISCV64__"
+#elif defined(__riscv64__)
+#define CONFIG_CPU "__riscv64__"
+#elif defined(__riscv64)
+#define CONFIG_CPU "__riscv64"
+#elif defined(__ia64__)
+#define CONFIG_CPU "__ia64__"
 #else
 /* let it go */
 #endif

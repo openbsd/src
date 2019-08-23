@@ -156,7 +156,7 @@ commandline_def(const struct place *p, char *str)
 
 	if (val) {
 		p2 = *p;
-		p2.column += strlen(str);
+		place_addcolumns(&p2, strlen(str));
 	} else {
 		place_setbuiltin(&p2, 1);
 	}

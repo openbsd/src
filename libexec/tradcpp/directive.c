@@ -114,7 +114,7 @@ oneword(const char *what, struct place *p2, char *line)
 
 	pos = strcspn(line, ws);
 	if (line[pos] != '\0') {
-		p2->column += pos;
+		place_addcolumns(p2, pos);
 		complain(p2, "Garbage after %s argument", what);
 		complain_fail();
 		line[pos] = '\0';
@@ -348,13 +348,13 @@ d_define(struct lineplace *lp, struct place *p2, char *line)
 		argpos = pos;
 		pos = pos + strcspn(line+pos, "()");
 		if (line[pos] == '(') {
-			p2->column += pos;
+			place_addcolumns(p2, pos);
 			complain(p2, "Left parenthesis in macro parameters");
 			complain_fail();
 			return;
 		}
 		if (line[pos] != ')') {
-			p2->column += pos;
+			place_addcolumns(p2, pos);
 			complain(p2, "Unclosed macro parameter list");
 			complain_fail();
 			return;
@@ -378,10 +378,10 @@ d_define(struct lineplace *lp, struct place *p2, char *line)
 	pos += strspn(line+pos, ws);
 
 	p3 = *p2;
-	p3.column += argpos;
+	place_addcolumns(&p3, argpos);
 
 	p4 = *p2;
-	p4.column += pos;
+	place_addcolumns(&p4, pos);
 
 	if (argpos) {
 		debuglog(&lp->current, "Defining %s()", line);
@@ -490,7 +490,8 @@ d_line(struct lineplace *lp, struct place *p2, char *line)
 	errno = 0;
 	val = strtoul(text, &moretext, 10);
 	if (errno) {
-		complain(&lp->current, "No line number in #line directive");
+		complain(&lp->current,
+			 "Invalid line number in #line directive");
 		goto fail;
 	}
 #if UINT_MAX < ULONG_MAX
@@ -502,7 +503,7 @@ d_line(struct lineplace *lp, struct place *p2, char *line)
 #endif
 	moretext += strspn(moretext, ws);
 	moretextlen = strlen(moretext);
-	lp->current.column += (moretext - text);
+	place_addcolumns(&lp->current, moretext - text);
 
 	if (moretextlen > 2 &&
 	    moretext[0] == '"' && moretext[moretextlen-1] == '"') {
@@ -610,7 +611,7 @@ directive_gotdirective(struct lineplace *lp, char *line)
 				return;
 			}
 			skip = len + strspn(line+len, ws);
-			p2.column += skip;
+			place_addcolumns(&p2, skip);
 			line += skip;
 
 			len = strlen(line);
@@ -667,10 +668,10 @@ directive_scancomments(const struct lineplace *lp, char *line, size_t len)
 			pos++;
 		}
 		if (line[pos] == '\n') {
-			p2.line++;
+			place_addlines(&p2, 1);
 			p2.column = 0;
 		} else {
-			p2.column++;
+			place_addcolumns(&p2, 1);
 		}
 	}
 
@@ -692,13 +693,13 @@ directive_gotline(struct lineplace *lp, char *line, size_t len)
 	if (len > 0 && line[0] == '#') {
 		skip = 1 + strspn(line + 1, ws);
 		assert(skip <= len);
-		lp->current.column += skip;
+		place_addcolumns(&lp->current, skip);
 		assert(line[len] == '\0');
 		directive_gotdirective(lp, line+skip /*, length = len-skip */);
-		lp->current.column += len-skip;
+		place_addcolumns(&lp->current, len-skip);
 	} else if (ifstate->curtrue) {
 		macro_sendline(&lp->current, line, len);
-		lp->current.column += len;
+		place_addcolumns(&lp->current, len);
 	}
 }
 

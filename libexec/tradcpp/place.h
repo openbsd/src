@@ -53,6 +53,9 @@ void place_setbuiltin(struct place *p, unsigned num);
 void place_setcommandline(struct place *p, unsigned word, unsigned column);
 void place_setfilestart(struct place *p, const struct placefile *pf);
 
+void place_addcolumns(struct place *, unsigned cols);
+void place_addlines(struct place *, unsigned lines);
+
 const char *place_getname(const struct place *);
 const char *place_getparsedir(const struct place *incplace);
 bool place_eq(const struct place *, const struct place *);

@@ -163,6 +163,10 @@ countnls(const char *buf, size_t start, size_t limit)
 	for (i=start; i<limit; i++) {
 		if (buf[i] == '\n') {
 			count++;
+			if (count == 0) {
+				/* just return the max and error downstream */
+				return count - 1;
+			}
 		}
 	}
 	return count;
@@ -209,6 +213,12 @@ file_read(const struct placefile *pf, int fd, const char *name, bool toplevel)
 				/* need bigger buffer */
 				buf = dorealloc(buf, bufmax, bufmax*2);
 				bufmax = bufmax*2;
+				/* just in case someone's screwing around */
+				if (bufmax > 0xffffffff) {
+					complain(&places.current,
+						 "Input line too long");
+					die();
+				}
 			}
 
 			if (ateof) {
@@ -231,7 +241,7 @@ file_read(const struct placefile *pf, int fd, const char *name, bool toplevel)
 				/* eof in middle of line */
 				ateof = true;
 				ptmp = places.current;
-				ptmp.column += bufend - linestart;
+				place_addcolumns(&ptmp, bufend - linestart);
 				if (buf[bufend - 1] == '\n') {
 					complain(&ptmp, "Unclosed comment");
 					complain_fail();
@@ -257,7 +267,7 @@ file_read(const struct placefile *pf, int fd, const char *name, bool toplevel)
 		assert(buf[lineend] == '\n');
 		buf[lineend] = '\0';
 		nextlinestart = lineend+1;
-		places.nextline.line++;
+		place_addlines(&places.nextline, 1);
 
 		/* check for CR/NL */
 		if (lineend > 0 && buf[lineend-1] == '\r') {
@@ -284,7 +294,8 @@ file_read(const struct placefile *pf, int fd, const char *name, bool toplevel)
 		assert(buf[lineend] == '\0');
 
 		/* count how many commented-out newlines we swallowed */
-		places.nextline.line += countnls(buf, linestart, lineend);
+		place_addlines(&places.nextline,
+			       countnls(buf, linestart, lineend));
 
 		/* process the line (even if it's empty) */
 		directive_gotline(&places, buf+linestart, lineend-linestart);

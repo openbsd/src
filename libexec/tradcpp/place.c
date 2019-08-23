@@ -193,6 +193,34 @@ place_setfilestart(struct place *p, const struct placefile *pf)
 	p->column = 1;
 }
 
+void
+place_addcolumns(struct place *p, unsigned cols)
+{
+	unsigned newcol;
+
+	newcol = p->column + cols;
+	if (newcol < p->column) {
+		/* overflow (use the old place to complain) */
+		complain(p, "Column numbering overflow");
+		die();
+	}
+	p->column = newcol;
+}
+
+void
+place_addlines(struct place *p, unsigned lines)
+{
+	unsigned nextline;
+
+	nextline = p->line + lines;
+	if (nextline < p->line) {
+		/* overflow (use the old place to complain) */
+		complain(p, "Line numbering overflow");
+		die();
+	}
+	p->line = nextline;
+}
+
 const char *
 place_getname(const struct place *p)
 {

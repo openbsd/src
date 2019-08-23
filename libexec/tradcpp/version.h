@@ -29,5 +29,5 @@
 
 #define VERSION_MAJOR  "0"
 #define VERSION_MINOR  "5"
-#define VERSION_STRING "0.5.2"
-#define VERSION_LONG   "NetBSD tradcpp 0.5.2"
+#define VERSION_STRING "0.5.3"
+#define VERSION_LONG   "NetBSD tradcpp 0.5.3"

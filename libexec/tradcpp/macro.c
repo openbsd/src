@@ -523,7 +523,7 @@ macro_parse_parameters(struct macro *m, struct place *p, const char *params)
 	while (params != NULL) {
 		len = strspn(params, ws);
 		params += len;
-		p->column += len;
+		place_addcolumns(p, len);
 		s = strchr(params, ',');
 		if (s) {
 			len = s-params;
@@ -541,7 +541,7 @@ macro_parse_parameters(struct macro *m, struct place *p, const char *params)
 			stringarray_add(&m->params, param, NULL);
 		}
 		params = s;
-		p->column += len;
+		place_addcolumns(p, len);
 	}
 }
 
