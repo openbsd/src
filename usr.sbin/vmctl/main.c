@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.57 2019/07/05 22:22:40 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.58 2019/08/23 07:55:20 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -945,7 +945,10 @@ ctl_stop(struct parse_result *res, int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 1)
+	if (argc == 0) {
+		if (res->action != CMD_STOPALL)
+			ctl_usage(res->ctl);
+	} else if (argc > 1)
 		ctl_usage(res->ctl);
 	else if (argc == 1)
 		ret = parse_vmid(res, argv[0], 0);
