@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.94 2019/08/22 19:33:57 kn Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.95 2019/08/23 15:41:59 kn Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -330,6 +330,8 @@ set(int argc, char **argv)
 
 	bzero(&hints, sizeof(hints));
 	hints.ai_family = AF_INET6;
+	if (nflag)
+		hints.ai_flags = AI_NUMERICHOST;
 	gai_error = getaddrinfo(host, NULL, &hints, &res);
 	if (gai_error) {
 		warnx("%s: %s", host, gai_strerror(gai_error));
