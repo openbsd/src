@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1894 2019/08/13 03:17:11 jsg Exp $
+$OpenBSD: pcidevs,v 1.1895 2019/08/23 01:18:08 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -4831,6 +4831,14 @@ product INTEL CORE8G_S_D_HB_8C	0x3e30	Core 8G Host
 product INTEL CORE8G_S_W_HB_8C	0x3e31	Core 8G Host
 product INTEL CORE8G_S_S_HB_8C	0x3e32	Core 8G Host
 product INTEL CORE8G_S_S_HB_4C	0x3e33	Core 8G Host
+product INTEL CORE8G_WHLU_HB_4C	0x3e34	Core 8G Host
+product INTEL CORE8G_WHLU_HB_2C	0x3e35	Core 8G Host
+product INTEL CORE8G_S_PCIE_X16	0x3e81	Core 8G PCIE
+product INTEL CORE8G_S_PCIE_X8	0x3e85	Core 8G PCIE
+product INTEL CORE8G_S_PCIE_X4	0x3e89	Core 8G PCIE
+product INTEL CORE8G_S_GMM	0x3e91	Core 8G GMM
+product INTEL CORE8G_S_GT2_1	0x3e92	UHD Graphics 630
+product INTEL CORE8G_H_GT2	0x3e9b	UHD Graphics 630
 product INTEL CORE8G_U_GT2_1	0x3ea0	UHD Graphics 620
 product INTEL CORE8G_U_GT1	0x3ea1	UHD Graphics 610
 product INTEL CORE8G_U_GT3_1	0x3ea5	Iris Plus Graphics 655
@@ -4840,14 +4848,6 @@ product INTEL CORE8G_S_W_HB_6C	0x3ec6	Core 8G Host
 product INTEL CORE8G_S_S_HB_6C	0x3eca	Core 8G Host
 product INTEL CORE8G_U_HB_2C	0x3ecc	Core 8G Host
 product INTEL CORE8G_U_HB_4C	0x3ed0	Core 8G Host
-product INTEL CORE8G_S_HB_4C	0x3e1f	Core 8G Host
-product INTEL CORE8G_S_PCIE_X16	0x3e81	Core 8G PCIE
-product INTEL CORE8G_S_PCIE_X8	0x3e85	Core 8G PCIE
-product INTEL CORE8G_S_PCIE_X4	0x3e89	Core 8G PCIE
-product INTEL CORE8G_S_GMM	0x3e91	Core 8G GMM
-product INTEL CORE8G_S_GT2_1	0x3e92	UHD Graphics 630
-product INTEL CORE8G_H_GT2	0x3e9b	UHD Graphics 630
-product INTEL CORE8G_S_HB_6C	0x3ec2	Core 8G Host
 product INTEL 5400_HB		0x4000	5400 Host
 product INTEL 5400A_HB		0x4001	5400A Host
 product INTEL 5400B_HB		0x4003	5400B Host
@@ -5343,6 +5343,8 @@ product INTEL 100SERIES_LP_UART_1	0x9d27	100 Series UART
 product INTEL 100SERIES_LP_UART_2	0x9d28	100 Series UART
 product INTEL 100SERIES_LP_SPI_2	0x9d29	100 Series SPI
 product INTEL 100SERIES_LP_SPI_3	0x9d2a	100 Series SPI
+product INTEL 100SERIES_LP_EMMC	0x9d2b	100 Series eMMC
+product INTEL 100SERIES_LP_SDXC	0x9d2d	100 Series SDXC
 product INTEL 100SERIES_LP_XHCI	0x9d2f	100 Series xHCI
 product INTEL 100SERIES_LP_THERM	0x9d31	100 Series Thermal
 product INTEL 100SERIES_LP_ISH		0x9d35	100 Series ISH
