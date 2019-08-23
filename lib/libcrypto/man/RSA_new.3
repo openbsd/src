@@ -1,8 +1,26 @@
-.\"	$OpenBSD: RSA_new.3,v 1.14 2019/06/10 14:58:48 schwarze Exp $
-.\"	OpenSSL doc/man3/RSA_new.pod 99d63d46 Oct 26 13:56:48 2016 -0400
-.\"	OpenSSL doc/crypto/rsa.pod 35d2e327 Jun 3 16:19:49 2016 -0400
+.\" $OpenBSD: RSA_new.3,v 1.15 2019/08/23 15:18:13 schwarze Exp $
+.\" full merge up to:
+.\" OpenSSL doc/man3/RSA_new.pod e9b77246 Jan 20 19:58:49 2017 +0100
+.\" OpenSSL doc/crypto/rsa.pod 35d2e327 Jun 3 16:19:49 2016 -0400 (final)
 .\"
-.\" This file was written by Ulf Moeller <ulf@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2018, 2019 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Ulf Moeller <ulf@openssl.org>.
 .\" Copyright (c) 2000, 2002, 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -49,11 +67,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 10 2019 $
+.Dd $Mdocdate: August 23 2019 $
 .Dt RSA_NEW 3
 .Os
 .Sh NAME
 .Nm RSA_new ,
+.Nm RSAPrivateKey_dup ,
+.Nm RSAPublicKey_dup ,
 .Nm RSA_up_ref ,
 .Nm RSA_free
 .Nd allocate and free RSA objects
@@ -61,6 +81,14 @@
 .In openssl/rsa.h
 .Ft RSA *
 .Fn RSA_new void
+.Ft RSA *
+.Fo RSAPrivateKey_dup
+.Fa "RSA *rsa"
+.Fc
+.Ft RSA *
+.Fo RSAPublicKey_dup
+.Fa "RSA *rsa"
+.Fc
 .Ft int
 .Fo RSA_up_ref
 .Fa "RSA *rsa"
@@ -82,6 +110,15 @@ It is equivalent to calling
 with a
 .Dv NULL
 argument.
+.Pp
+.Fn RSAPrivateKey_dup
+calls
+.Fn RSA_new
+and copies the public and private key components from
+.Fa rsa
+into the new structure.
+.Fn RSAPublicKey_dup
+does the same except that it copies the public key components only.
 .Pp
 .Fn RSA_up_ref
 increments the reference count by 1.
@@ -162,13 +199,15 @@ For this reason, applications should generally avoid using
 structure elements directly and instead use API functions to query
 or modify keys.
 .Sh RETURN VALUES
-If the allocation fails,
-.Fn RSA_new
-returns
+.Fn RSA_new ,
+.Fn RSAPrivateKey_dup ,
+and
+.Fn RSAPublicKey_dup
+return a pointer to the newly allocated structure, or
 .Dv NULL
-and sets an error code that can be obtained by
+if an error occurs.
+An error code can be obtained by
 .Xr ERR_get_error 3 .
-Otherwise it returns a pointer to the newly allocated structure.
 .Pp
 .Fn RSA_up_ref
 returns 1 for success or 0 for failure.
@@ -202,7 +241,12 @@ RSA was covered by a US patent which expired in September 2000.
 .Fn RSA_new
 and
 .Fn RSA_free
-appeared in SSLeay 0.4 or earlier and have been available since
+appeared in SSLeay 0.4 or earlier.
+.Fn RSAPrivateKey_dup
+first appeared in SSLeay 0.5.1 and
+.Fn RSAPublicKey_dup
+in SSLeay 0.5.2.
+These functions have been available since
 .Ox 2.4 .
 .Pp
 .Fn RSA_up_ref
