@@ -229,6 +229,9 @@ dispatch_mx(struct dns_rr *rr)
 {
 	char buf[512];
 
+	if (rr->rr_type != T_MX)
+		return;
+
 	print_dname(rr->rr.mx.exchange, buf, sizeof(buf));
 	buf[strlen(buf) - 1] = '\0';
 	if (buf[strlen(buf) - 1] == '.')
@@ -243,6 +246,9 @@ dispatch_a(struct dns_rr *rr)
 	char buffer[512];
 	const char *ptr;
 
+	if (rr->rr_type != T_A)
+		return;
+
 	if ((ptr = inet_ntop(AF_INET, &rr->rr.in_a.addr,
 	    buffer, sizeof buffer)))
 		printf("%s\n", ptr);
@@ -253,6 +259,9 @@ dispatch_aaaa(struct dns_rr *rr)
 {
 	char buffer[512];
 	const char *ptr;
+
+	if (rr->rr_type != T_AAAA)
+		return;
 
 	if ((ptr = inet_ntop(AF_INET6, &rr->rr.in_aaaa.addr6,
 	    buffer, sizeof buffer)))
