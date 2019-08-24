@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.73 2019/08/14 08:35:46 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.74 2019/08/24 13:09:38 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1172,6 +1172,15 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			msg->msg_sa->sa_ipcomp = transform;
 			msg->msg_sa->sa_cpi_out = betoh16(cpi);
 		}
+		break;
+	case IKEV2_N_CHILD_SA_NOT_FOUND:
+		if (!msg->msg_e) {
+			log_debug("%s: N_CHILD_SA_NOT_FOUND not encrypted",
+			    __func__);
+			return (-1);
+		}
+		/* Stop expecting response */
+		msg->msg_sa->sa_stateflags &= ~IKED_REQ_CHILDSA;
 		break;
 	case IKEV2_N_MOBIKE_SUPPORTED:
 		if (!msg->msg_e) {

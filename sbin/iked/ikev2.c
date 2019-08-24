@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.173 2019/08/14 08:35:46 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.174 2019/08/24 13:09:38 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3740,6 +3740,15 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 		    print_map(protoid, ikev2_saproto_map));
 
 	if (protoid == IKEV2_SAPROTO_IKE) {
+		if ((sa->sa_stateflags & IKED_REQ_CHILDSA)
+		    && !(sa->sa_nexti)) {
+			log_debug("%s: Ignore IKE SA rekey: waiting for Child "
+			    "SA response.", __func__);
+			/* Ignore, don't send error */
+			msg->msg_valid = 0;
+			return (0);
+		}
+
 		/* IKE SA rekeying */
 		spi = &msg->msg_prop->prop_peerspi;
 
