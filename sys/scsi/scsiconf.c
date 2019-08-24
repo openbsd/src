@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.206 2019/08/22 22:35:29 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.207 2019/08/24 13:41:06 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -282,7 +282,7 @@ scsibusdetach(struct device *dev, int type)
 	bio_unregister(&sb->sc_dev);
 #endif
 
-	error = scsi_detach_bus(sb, type);
+	error = scsi_detach(sb, -1, -1, type);
 	if (error != 0)
 		return (error);
 
@@ -432,74 +432,65 @@ scsi_probe_lun(struct scsibus_softc *sb, int target, int lun)
 }
 
 int
-scsi_detach_bus(struct scsibus_softc *sb, int flags)
-{
-	struct scsi_link *alink = sb->adapter_link;
-	int target, r, rv = 0;
-
-	for (target = 0; target < alink->adapter_buswidth; target++) {
-		r = scsi_detach_target(sb, target, flags);
-		if (r != 0 && r != ENXIO)
-			rv = r;
-	}
-
-	return (rv);
-}
-
-int
 scsi_detach(struct scsibus_softc *sb, int target, int lun, int flags)
-{
-	if (target == -1 && lun == -1)
-		return (scsi_detach_bus(sb, flags));
-
-	/* specific lun and wildcard target is bad */
-	if (target == -1)
-		return (EINVAL);
-
-	if (lun == -1)
-		return (scsi_detach_target(sb, target, flags));
-
-	return (scsi_detach_lun(sb, target, lun, flags));
-}
-
-int
-scsi_detach_target(struct scsibus_softc *sb, int target, int flags)
 {
 	struct scsi_link *alink = sb->adapter_link;
 	struct scsi_link *link, *tmp;
 	int r, rv = 0;
 
-	if (target < 0 || target >= alink->adapter_buswidth ||
-	    target == alink->adapter_target)
-		return (ENXIO);
-
-	SLIST_FOREACH_SAFE(link, &sb->sc_link_list, bus_list, tmp) {
-		if (link->target == target) {
+	if (target == -1 && lun == -1) {
+		/* Detach all links from bus. */
+		while (!SLIST_EMPTY(&sb->sc_link_list)) {
+			link = SLIST_FIRST(&sb->sc_link_list);
 			r = scsi_detach_link(sb, link, flags);
 			if (r != 0 && r != ENXIO)
 				rv = r;
 		}
+		return rv;
 	}
 
-	return (rv);
+	if (target < 0 || target >= alink->adapter_buswidth ||
+	    target == alink->adapter_target)
+		return EINVAL;
+
+	if (lun == -1) {
+		/* Detach all links from target. */
+		SLIST_FOREACH_SAFE(link, &sb->sc_link_list, bus_list, tmp) {
+			if (link->target == target) {
+				r = scsi_detach_link(sb, link, flags);
+				if (r != 0 && r != ENXIO)
+					rv = r;
+			}
+		}
+		return rv;
+	}
+
+	/* Detach specific link from target. */
+	link = scsi_get_link(sb, target, lun);
+	if (link == NULL)
+		return EINVAL;
+	else
+		return scsi_detach_link(sb, link, flags);
+}
+
+int
+scsi_detach_target(struct scsibus_softc *sb, int target, int flags)
+{
+	/* Wildcard value is not allowed! */
+	if (target == -1)
+		return EINVAL;
+	else
+		return scsi_detach(sb, target, -1, flags);
 }
 
 int
 scsi_detach_lun(struct scsibus_softc *sb, int target, int lun, int flags)
 {
-	struct scsi_link *alink = sb->adapter_link;
-	struct scsi_link *link;
-
-	if (target < 0 || target >= alink->adapter_buswidth ||
-	    target == alink->adapter_target ||
-	    lun < 0 || lun >= alink->luns)
-		return (ENXIO);
-
-	link = scsi_get_link(sb, target, lun);
-	if (link == NULL)
-		return (ENXIO);
-
-	return (scsi_detach_link(sb, link, flags));
+	/* Wildcard values are not allowed! */
+	if (target == -1 || lun == -1)
+		return EINVAL;
+	else
+		return scsi_detach(sb, target, lun, flags);
 }
 
 int
