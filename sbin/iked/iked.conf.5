@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.56 2019/08/16 12:11:07 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.57 2019/08/24 13:24:49 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 16 2019 $
+.Dd $Mdocdate: August 24 2019 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -578,7 +578,12 @@ This option is provided for compatibility with legacy clients.
 .It Ic dhcp-server Ar address
 The address of an internal DHCP server for further configuration.
 .It Ic protected-subnet Ar address/prefix
-The address of the protected subnet within the internal network.
+The address of an additional IPv4 or IPv6 subnet reachable over the
+gateway.
+This option is used to notify the peer of a subnet behind the gateway (that
+might require a second SA).
+Networks specified in this SA's "from" or "to" options do not need to be
+included.
 .It Ic access-server Ar address
 The address of an internal remote access server.
 .El
