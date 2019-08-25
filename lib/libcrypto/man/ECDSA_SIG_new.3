@@ -1,6 +1,6 @@
-.\" $OpenBSD: ECDSA_SIG_new.3,v 1.14 2019/08/16 16:15:50 schwarze Exp $
+.\" $OpenBSD: ECDSA_SIG_new.3,v 1.15 2019/08/25 14:11:41 schwarze Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
-.\" selective merge up to: OpenSSL 6da34cfb Jun 2 16:17:32 2018 -0400
+.\" selective merge up to: OpenSSL da4ea0cf Aug 5 16:13:24 2019 +0100
 .\"
 .\" This file was written by Nils Larsch <nils@openssl.org>.
 .\" Copyright (c) 2004, 2005, 2013, 2016 The OpenSSL Project.
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 16 2019 $
+.Dd $Mdocdate: August 25 2019 $
 .Dt ECDSA_SIG_NEW 3
 .Os
 .Sh NAME
@@ -97,13 +97,13 @@
 .Fc
 .Ft int
 .Fo i2d_ECDSA_SIG
-.Fa "const ECDSA_SIG *sig"
-.Fa "unsigned char **pp"
+.Fa "const ECDSA_SIG *sig_in"
+.Fa "unsigned char **der_out"
 .Fc
 .Ft ECDSA_SIG*
 .Fo d2i_ECDSA_SIG
-.Fa "ECDSA_SIG **sig"
-.Fa "const unsigned char **pp"
+.Fa "ECDSA_SIG **sig_out"
+.Fa "const unsigned char **der_in"
 .Fa "long len"
 .Fc
 .Ft int
@@ -247,26 +247,18 @@ should not be freed by the caller.
 .Pp
 .Fn i2d_ECDSA_SIG
 creates the DER encoding of the ECDSA signature
-.Fa sig
+.Fa sig_in
 and writes the encoded signature to
-.Fa *pp
-(note: if
-.Fa pp
-is
-.Dv NULL ,
-.Fn i2d_ECDSA_SIG
-returns the expected length in bytes of the DER-encoded signature).
-.Fn i2d_ECDSA_SIG
-returns the length of the DER-encoded signature (or 0 on error).
-.Pp
+.Pf * Fa der_out .
 .Fn d2i_ECDSA_SIG
-decodes a DER-encoded ECDSA signature and returns the decoded signature
-in a newly allocated
-.Vt ECDSA_SIG
-structure.
-.Fa *sig
-points to the buffer containing the DER-encoded signature of size
-.Fa len .
+decodes the DER-encoded signature stored in the buffer
+.Pf * Fa der_in
+which is
+.Fa len
+bytes long into
+.Pf * Fa sig_out .
+For details about the semantics, examples, caveats, and bugs, see
+.Xr ASN1_item_d2i 3 .
 .Pp
 .Fn ECDSA_size
 returns the maximum length of a DER-encoded ECDSA signature created with
@@ -381,6 +373,17 @@ using the public key
 returns the new
 .Vt ECDSA_SIG
 object or
+.Dv NULL
+if an error occurs.
+.Pp
+.Fn i2d_ECDSA_SIG
+returns the number of bytes successfully encoded
+or a negative value if an error occurs.
+.Pp
+.Fn d2i_ECDSA_SIG
+returns a pointer to the decoded
+.Vt ECDSA_SIG
+structure or
 .Dv NULL
 if an error occurs.
 .Pp
