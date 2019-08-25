@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.95 2019/08/23 15:41:59 kn Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.96 2019/08/25 16:23:36 kn Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -121,6 +121,7 @@ char ifix_buf[IFNAMSIZ];		/* if_indextoname() */
 
 int file(char *);
 void getsocket(void);
+int parse_host(char *, struct in6_addr *);
 int set(int, char **);
 void get(char *);
 int delete(char *);
@@ -297,6 +298,36 @@ getsocket(void)
 		err(1, "pledge");
 }
 
+int
+parse_host(char *host, struct in6_addr *in6)
+{
+	struct addrinfo hints, *res;
+	struct sockaddr_in6 *sin6;
+	int gai_error;
+
+	bzero(&hints, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	if (nflag)
+		hints.ai_flags = AI_NUMERICHOST;
+
+	gai_error = getaddrinfo(host, NULL, &hints, &res);
+	if (gai_error) {
+		warnx("%s: %s", host, gai_strerror(gai_error));
+		return 1;
+	}
+
+	sin6 = (struct sockaddr_in6 *)res->ai_addr;
+	*in6 = sin6->sin6_addr;
+#ifdef __KAME__
+	if (IN6_IS_ADDR_LINKLOCAL(in6)) {
+		in6->s6_addr[2] = htons(sin6->sin6_scope_id);
+	}
+#endif
+
+	freeaddrinfo(res);
+	return 0;
+}
+
 struct	sockaddr_in6 so_mask = {sizeof(so_mask), AF_INET6 };
 struct	sockaddr_in6 blank_sin = {sizeof(blank_sin), AF_INET6 }, sin_m;
 struct	sockaddr_dl blank_sdl = {sizeof(blank_sdl), AF_LINK }, sdl_m;
@@ -317,8 +348,6 @@ set(int argc, char **argv)
 	struct sockaddr_in6 *sin = &sin_m;
 	struct sockaddr_dl *sdl;
 	struct rt_msghdr *rtm = &(m_rtmsg.m_rtm);
-	struct addrinfo hints, *res;
-	int gai_error;
 	u_char *ea;
 	char *host = argv[0], *eaddr = argv[1];
 
@@ -328,23 +357,8 @@ set(int argc, char **argv)
 	sdl_m = blank_sdl;
 	sin_m = blank_sin;
 
-	bzero(&hints, sizeof(hints));
-	hints.ai_family = AF_INET6;
-	if (nflag)
-		hints.ai_flags = AI_NUMERICHOST;
-	gai_error = getaddrinfo(host, NULL, &hints, &res);
-	if (gai_error) {
-		warnx("%s: %s", host, gai_strerror(gai_error));
+	if (parse_host(host, &sin->sin6_addr))
 		return 1;
-	}
-	sin->sin6_addr = ((struct sockaddr_in6 *)res->ai_addr)->sin6_addr;
-#ifdef __KAME__
-	if (IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr)) {
-		*(u_int16_t *)&sin->sin6_addr.s6_addr[2] =
-		    htons(((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id);
-	}
-#endif
-	freeaddrinfo(res);
 	ea = (u_char *)LLADDR(&sdl_m);
 	if (ndp_ether_aton(eaddr, ea) == 0)
 		sdl_m.sdl_alen = 6;
@@ -400,25 +414,11 @@ void
 get(char *host)
 {
 	struct sockaddr_in6 *sin = &sin_m;
-	struct addrinfo hints, *res;
-	int gai_error;
 
 	sin_m = blank_sin;
-	bzero(&hints, sizeof(hints));
-	hints.ai_family = AF_INET6;
-	gai_error = getaddrinfo(host, NULL, &hints, &res);
-	if (gai_error) {
-		warnx("%s: %s", host, gai_strerror(gai_error));
+	if (parse_host(host, &sin->sin6_addr))
 		return;
-	}
-	sin->sin6_addr = ((struct sockaddr_in6 *)res->ai_addr)->sin6_addr;
-#ifdef __KAME__
-	if (IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr)) {
-		*(u_int16_t *)&sin->sin6_addr.s6_addr[2] =
-		    htons(((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id);
-	}
-#endif
-	freeaddrinfo(res);
+
 	dump(&sin->sin6_addr, 0);
 	if (found_entry == 0) {
 		getnameinfo((struct sockaddr *)sin, sin->sin6_len, host_buf,
@@ -438,29 +438,11 @@ delete(char *host)
 	struct sockaddr_in6 *sin = &sin_m;
 	struct rt_msghdr *rtm = &m_rtmsg.m_rtm;
 	struct sockaddr_dl *sdl;
-	struct addrinfo hints, *res;
-	int gai_error;
 
 	getsocket();
 	sin_m = blank_sin;
-
-	bzero(&hints, sizeof(hints));
-	hints.ai_family = AF_INET6;
-	if (nflag)
-		hints.ai_flags = AI_NUMERICHOST;
-	gai_error = getaddrinfo(host, NULL, &hints, &res);
-	if (gai_error) {
-		warnx("%s: %s", host, gai_strerror(gai_error));
+	if (parse_host(host, &sin->sin6_addr))
 		return 1;
-	}
-	sin->sin6_addr = ((struct sockaddr_in6 *)res->ai_addr)->sin6_addr;
-#ifdef __KAME__
-	if (IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr)) {
-		*(u_int16_t *)&sin->sin6_addr.s6_addr[2] =
-		    htons(((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id);
-	}
-#endif
-	freeaddrinfo(res);
 	if (rtget(&sin, &sdl)) {
 		errx(1, "RTM_GET(%s) failed", host);
 		/* NOTREACHED */
