@@ -1768,6 +1768,7 @@
 ./usr/share/man/man3/CONF_modules_load_file.3
 ./usr/share/man/man3/CRYPTO_get_mem_functions.3
 ./usr/share/man/man3/CRYPTO_lock.3
+./usr/share/man/man3/CRYPTO_memcmp.3
 ./usr/share/man/man3/CRYPTO_set_ex_data.3
 ./usr/share/man/man3/DES_set_key.3
 ./usr/share/man/man3/DH_generate_key.3
@@ -1857,7 +1858,9 @@
 ./usr/share/man/man3/EVP_camellia_128_cbc.3
 ./usr/share/man/man3/EVP_des_cbc.3
 ./usr/share/man/man3/EVP_rc4.3
+./usr/share/man/man3/EVP_sm3.3
 ./usr/share/man/man3/EVP_sm4_cbc.3
+./usr/share/man/man3/EVP_whirlpool.3
 ./usr/share/man/man3/EXTENDED_KEY_USAGE_new.3
 ./usr/share/man/man3/GENERAL_NAME_new.3
 ./usr/share/man/man3/HMAC.3
