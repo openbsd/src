@@ -1,5 +1,5 @@
-.\" $OpenBSD: RIPEMD160.3,v 1.6 2018/03/21 07:16:31 schwarze Exp $
-.\" full merge up to: OpenSSL bbda8ce9 Oct 31 15:43:01 2017 +0800
+.\" $OpenBSD: RIPEMD160.3,v 1.7 2019/08/25 15:17:19 schwarze Exp $
+.\" full merge up to: OpenSSL 72a7a702 Feb 26 14:05:09 2019 +0000
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
 .\" Copyright (c) 2000, 2006, 2014 The OpenSSL Project.  All rights reserved.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: August 25 2019 $
 .Dt RIPEMD160 3
 .Os
 .Sh NAME
@@ -71,7 +71,7 @@
 .Fc
 .Ft int
 .Fo RIPEMD160_Update
-.Fa "RIPEMD_CTX *c"
+.Fa "RIPEMD160_CTX *c"
 .Fa "const void *data"
 .Fa "unsigned long len"
 .Fc
