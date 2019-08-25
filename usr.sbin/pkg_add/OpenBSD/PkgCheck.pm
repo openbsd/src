@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.69 2018/02/27 22:46:53 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.70 2019/08/25 19:06:36 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -54,7 +54,7 @@ sub install
 	my $state = $self->{state};
 	push(@{$state->{setlist}}, 
 	    $state->updateset->add_hints2($pkg));
-	$self->framework($state);
+	$self->try_and_run_command($state);
 	return $state->{bad} != 0;
 }
 
