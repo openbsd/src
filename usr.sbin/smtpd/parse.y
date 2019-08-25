@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.258 2019/08/23 19:05:01 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.259 2019/08/25 03:40:45 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1861,6 +1861,38 @@ opt_if_listen : INET4 {
 				YYERROR;
 			}
 			free($2);
+			listen_opts.port = ntohs(servent->s_port);
+		}
+		| PORT SMTP			{
+			struct servent *servent;
+
+			if (listen_opts.options & LO_PORT) {
+				yyerror("port already specified");
+				YYERROR;
+			}
+			listen_opts.options |= LO_PORT;
+
+			servent = getservbyname("smtp", "tcp");
+			if (servent == NULL) {
+				yyerror("invalid port: smtp");
+				YYERROR;
+			}
+			listen_opts.port = ntohs(servent->s_port);
+		}
+		| PORT SMTPS			{
+			struct servent *servent;
+
+			if (listen_opts.options & LO_PORT) {
+				yyerror("port already specified");
+				YYERROR;
+			}
+			listen_opts.options |= LO_PORT;
+
+			servent = getservbyname("smtps", "tcp");
+			if (servent == NULL) {
+				yyerror("invalid port: smtps");
+				YYERROR;
+			}
 			listen_opts.port = ntohs(servent->s_port);
 		}
 		| PORT NUMBER			{
