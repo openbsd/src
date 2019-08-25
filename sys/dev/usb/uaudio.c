@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.144 2019/05/09 07:09:04 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.145 2019/08/25 09:16:04 miko Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -3046,7 +3046,7 @@ uaudio_adjspf(struct uaudio_softc *sc)
 	s->spf = (uint64_t)(sc->rate - diff) * UAUDIO_SPF_DIV / sc->ufps;
 	if (s->spf > s->spf_max)
 		s->spf = s->spf_max;
-	if (s->spf < s->spf_min)
+	else if (s->spf < s->spf_min)
 		s->spf = s->spf_min;
 #ifdef UAUDIO_DEBUG
 	if (uaudio_debug >= 2)
