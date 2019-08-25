@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.154 2019/08/23 12:23:39 schwarze Exp $
+# $OpenBSD: Makefile,v 1.155 2019/08/25 06:20:22 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -69,6 +69,7 @@ MAN=	\
 	CONF_modules_load_file.3 \
 	CRYPTO_get_mem_functions.3 \
 	CRYPTO_lock.3 \
+	CRYPTO_memcmp.3 \
 	CRYPTO_set_ex_data.3 \
 	DES_set_key.3 \
 	DH_generate_key.3 \
