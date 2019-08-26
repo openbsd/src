@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.85 2018/09/10 16:14:08 bluhm Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.86 2019/08/26 18:47:53 bluhm Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -224,6 +224,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af)
 		q6->ip6q_ttl	= IPV6_FRAGTTL;
 		q6->ip6q_src	= ip6->ip6_src;
 		q6->ip6q_dst	= ip6->ip6_dst;
+		q6->ip6q_ecn	= (ntohl(ip6->ip6_flow) >> 20) & IPTOS_ECN_MASK;
 		q6->ip6q_unfrglen = -1;	/* The 1st fragment has not arrived. */
 		q6->ip6q_nfrag = 0;
 	}
@@ -299,7 +300,6 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af)
 		mtx_leave(&frag6_mutex);
 		goto dropfrag;
 	}
-	ip6af->ip6af_flow = ip6->ip6_flow;
 	ip6af->ip6af_mff = ip6f->ip6f_offlg & IP6F_MORE_FRAG;
 	ip6af->ip6af_off = fragoff;
 	ip6af->ip6af_frglen = frgpartlen;
@@ -316,9 +316,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af)
 	 * if CE is set, do not lose CE.
 	 * drop if CE and not-ECT are mixed for the same packet.
 	 */
-	af6 = LIST_FIRST(&q6->ip6q_asfrag);
 	ecn = (ntohl(ip6->ip6_flow) >> 20) & IPTOS_ECN_MASK;
-	ecn0 = (ntohl(af6->ip6af_flow) >> 20) & IPTOS_ECN_MASK;
+	ecn0 = q6->ip6q_ecn;
 	if (ecn == IPTOS_ECN_CE) {
 		if (ecn0 == IPTOS_ECN_NOTECT) {
 			mtx_leave(&frag6_mutex);
@@ -326,7 +325,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af)
 			goto dropfrag;
 		}
 		if (ecn0 != IPTOS_ECN_CE)
-			af6->ip6af_flow |= htonl(IPTOS_ECN_CE << 20);
+			q6->ip6q_ecn = IPTOS_ECN_CE;
 	}
 	if (ecn == IPTOS_ECN_NOTECT && ecn0 != IPTOS_ECN_NOTECT) {
 		mtx_leave(&frag6_mutex);
@@ -411,6 +410,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af)
 	ip6->ip6_plen = htons((u_short)next + offset - sizeof(struct ip6_hdr));
 	ip6->ip6_src = q6->ip6q_src;
 	ip6->ip6_dst = q6->ip6q_dst;
+	if (q6->ip6q_ecn == IPTOS_ECN_CE)
+		ip6->ip6_flow |= htonl(IPTOS_ECN_CE << 20);
 	nxt = q6->ip6q_nxt;
 
 	/* Delete frag6 header */
