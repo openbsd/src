@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.132 2019/07/30 12:11:42 dlg Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.133 2019/08/26 11:05:54 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -506,7 +506,6 @@ msk_newbuf(struct sk_if_softc *sc_if)
 
 		sc_if->sk_cdata.sk_rx_hiaddr = hiaddr;
 
-//printf("%s: addr64 @%u (%08x)\n", __func__, prod, hiaddr);
 		SK_INC(prod, MSK_RX_RING_CNT);
 	}
 
@@ -515,7 +514,6 @@ msk_newbuf(struct sk_if_softc *sc_if)
 	htolem16(&r->sk_len, map->dm_segs[0].ds_len);
 	r->sk_ctl = 0;
 	r->sk_opcode = SK_Y2_RXOPC_OWN | SK_Y2_RXOPC_PACKET;
-//printf("%s: packet @%u\n", __func__, prod);
 
 	sc_if->sk_cdata.sk_rx_maps[head] = sc_if->sk_cdata.sk_rx_maps[prod];
 	sc_if->sk_cdata.sk_rx_maps[prod] = map;
@@ -523,7 +521,6 @@ msk_newbuf(struct sk_if_softc *sc_if)
 	sc_if->sk_cdata.sk_rx_mbuf[prod] = m;
 
 	SK_INC(prod, MSK_RX_RING_CNT);
-//printf("%s: prod %u\n", __func__, prod);
 	sc_if->sk_cdata.sk_rx_prod = prod;
 
 	return (1);
@@ -1602,8 +1599,6 @@ msk_rxeof(struct sk_if_softc *sc_if, struct mbuf_list *ml,
 
 	prod = sc_if->sk_cdata.sk_rx_prod;
 	cons = sc_if->sk_cdata.sk_rx_cons;
-
-//printf("%s: prod %u cons %u\n", __func__, prod, cons);
 
 	while (cons != prod) {
 		tail = cons;
