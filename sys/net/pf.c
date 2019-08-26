@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1087 2019/07/18 20:45:10 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1088 2019/08/26 09:19:12 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1476,6 +1476,9 @@ pf_purge_expired_states(u_int32_t maxcheck)
 			pf_state_unref(cur);
 
 		cur = pf_state_ref(next);
+
+		if (cur == NULL)
+			break;
 	}
 	PF_STATE_EXIT_READ();
 
@@ -1485,7 +1488,7 @@ pf_purge_expired_states(u_int32_t maxcheck)
 		SLIST_REMOVE_HEAD(&gcl, gc_list);
 		if (next->timeout == PFTM_UNLINKED)
 			pf_free_state(next);
-		else if (pf_state_expires(next) <= time_uptime) {
+		else {
 			pf_remove_state(next);
 			pf_free_state(next);
 		}
