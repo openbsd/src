@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.82 2019/08/16 07:42:13 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.83 2019/08/26 16:41:08 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -66,7 +66,7 @@ static struct file {
 	int			 eof_reached;
 	int			 lineno;
 	int			 errors;
-} *file;
+} *file, *topfile;
 EVP_PKEY	*wrap_pubkey(FILE *);
 EVP_PKEY	*find_pubkey(const char *);
 int		 set_policy(char *, int, struct iked_policy *);
@@ -1268,7 +1268,7 @@ lgetc(int quotec)
 		if ((c = igetc()) == EOF) {
 			yyerror("reached end of file while parsing "
 			    "quoted string");
-			if (popfile() == EOF)
+			if (file == topfile || popfile() == EOF)
 				return (EOF);
 			return (quotec);
 		}
@@ -1296,7 +1296,7 @@ lgetc(int quotec)
 			return ('\n');
 		}
 		while (c == EOF) {
-			if (popfile() == EOF)
+			if (file == topfile || popfile() == EOF)
 				return (EOF);
 			c = igetc();
 		}
@@ -1566,17 +1566,17 @@ popfile(void)
 {
 	struct file	*prev;
 
-	if ((prev = TAILQ_PREV(file, files, entry)) != NULL) {
+	if ((prev = TAILQ_PREV(file, files, entry)) != NULL)
 		prev->errors += file->errors;
-		TAILQ_REMOVE(&files, file, entry);
-		fclose(file->stream);
-		free(file->name);
-		free(file->ungetbuf);
-		free(file);
-		file = prev;
-		return (0);
-	}
-	return (EOF);
+
+	TAILQ_REMOVE(&files, file, entry);
+	fclose(file->stream);
+	free(file->name);
+	free(file->ungetbuf);
+	free(file);
+	file = prev;
+
+	return (file ? 0 : EOF);
 }
 
 int
@@ -1590,6 +1590,7 @@ parse_config(const char *filename, struct iked *x_env)
 
 	if ((file = pushfile(filename, 1)) == NULL)
 		return (-1);
+	topfile = file;
 
 	free(ocsp_url);
 
