@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.h,v 1.6 2019/03/25 18:48:12 guenther Exp $	*/
+/*	$OpenBSD: pctr.h,v 1.7 2019/08/26 12:41:47 pirofti Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -50,13 +50,6 @@ struct pctrst {
 #define PCIOCS3 _IOW('c', 11, unsigned int)	/* Set counter 3 function */
 
 #define _PATH_PCTR	"/dev/pctr"
-
-#define rdtsc()							\
-({								\
-	u_int32_t hi, lo;					\
-	__asm volatile("rdtsc" : "=d" (hi), "=a" (lo));		\
-	((u_int64_t)hi << 32) | (u_int64_t)lo;			\
-})
 
 #define rdpmc(pmc)						\
 ({								\
