@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.37 2019/06/27 09:48:15 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.38 2019/08/26 18:50:04 pamela Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -528,11 +528,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			addr_proposal = find_address_proposal_by_addr(iface,
 			    &del_addr.addr);
 
-			if (addr_proposal) {
-				/* XXX should we inform netcfgd? */
-				free_address_proposal(addr_proposal);
-			}
-
+			free_address_proposal(addr_proposal);
 			break;
 		case IMSG_DEL_ROUTE:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(del_route))
@@ -2091,6 +2087,8 @@ withdraw_dfr(struct dfr_proposal *dfr_proposal)
 void
 free_dfr_proposal(struct dfr_proposal *dfr_proposal)
 {
+	if (dfr_proposal == NULL)
+		return;
 
 	LIST_REMOVE(dfr_proposal, entries);
 	evtimer_del(&dfr_proposal->timer);
