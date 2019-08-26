@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.14 2019/06/03 00:43:26 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.15 2019/08/26 11:24:03 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -599,15 +599,13 @@ dwpcie_imx8mq_init(struct dwpcie_softc *sc)
 {
 	uint32_t *clkreq_gpio, *disable_gpio, *reset_gpio;
 	ssize_t clkreq_gpiolen, disable_gpiolen, reset_gpiolen;
-	struct regmap *anatop, *gpc, *gpr;
+	struct regmap *anatop, *gpr;
 	uint32_t off, reg;
 	int timo;
 
 	anatop = regmap_bycompatible("fsl,imx8mq-anatop");
-	gpc = regmap_bycompatible("fsl,imx8mq-gpc");
 	gpr = regmap_bycompatible("fsl,imx8mq-iomuxc-gpr");
 	KASSERT(anatop != NULL);
-	KASSERT(gpc != NULL);
 	KASSERT(gpr != NULL);
 
 	clkreq_gpiolen = OF_getproplen(sc->sc_node, "clkreq-gpio");
