@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.23 2019/06/26 09:36:06 claudio Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.24 2019/08/26 15:23:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -186,8 +186,6 @@ void		 umb_decode_cid(struct umb_softc *, uint32_t, void *, int);
 void		 umb_decode_qmi(struct umb_softc *, uint8_t *, int);
 
 void		 umb_intr(struct usbd_xfer *, void *, usbd_status);
-
-char		*umb_ntop(struct sockaddr *);
 
 int		 umb_xfer_tout = USBD_DEFAULT_TIMEOUT;
 
@@ -907,7 +905,7 @@ umb_statechg_timeout(void *arg)
 	struct umb_softc *sc = arg;
 
 	if (sc->sc_info.regstate != MBIM_REGSTATE_ROAMING || sc->sc_roaming)
-		printf("%s: state change timeout\n",DEVNAM(sc));
+		printf("%s: state change timeout\n", DEVNAM(sc));
 	usb_add_task(sc->sc_udev, &sc->sc_umb_task);
 }
 
@@ -1617,6 +1615,7 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 	struct mbim_cid_ipv4_element ipv4elem;
 	struct in_aliasreq ifra;
 	struct sockaddr_in *sin;
+	struct in_addr addr;
 	int	 state = -1;
 	int	 rv;
 
@@ -1639,6 +1638,9 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 
 		if (n == 0 || off + sizeof (ipv4elem) > len)
 			goto done;
+		if (n != 1 && ifp->if_flags & IFF_DEBUG)
+			log(LOG_INFO, "%s: more than one IPv4 addr: %d\n",
+			    DEVNAM(ifp->if_softc), n);
 
 		/* Only pick the first one */
 		memcpy(&ipv4elem, data + off, sizeof (ipv4elem));
@@ -1665,12 +1667,17 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 
 		rv = in_ioctl(SIOCAIFADDR, (caddr_t)&ifra, ifp, 1);
 		if (rv == 0) {
-			if (ifp->if_flags & IFF_DEBUG)
+			if (ifp->if_flags & IFF_DEBUG) {
+				char str[3][INET_ADDRSTRLEN];
 				log(LOG_INFO, "%s: IPv4 addr %s, mask %s, "
 				    "gateway %s\n", DEVNAM(ifp->if_softc),
-				    umb_ntop(sintosa(&ifra.ifra_addr)),
-				    umb_ntop(sintosa(&ifra.ifra_mask)),
-				    umb_ntop(sintosa(&ifra.ifra_dstaddr)));
+				    sockaddr_ntop(sintosa(&ifra.ifra_addr),
+				    str[0], sizeof(str[0])),
+				    sockaddr_ntop(sintosa(&ifra.ifra_mask),
+				    str[1], sizeof(str[1])),
+				    sockaddr_ntop(sintosa(&ifra.ifra_dstaddr),
+				    str[2], sizeof(str[2])));
+			}
 			state = UMB_S_UP;
 		} else
 			printf("%s: unable to set IPv4 address, error %d\n",
@@ -1685,10 +1692,16 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 		while (n-- > 0) {
 			if (off + sizeof (uint32_t) > len)
 				break;
-			val = *((uint32_t *)(data + off));
+			memcpy(&addr, data + off, sizeof(addr));
 			if (i < UMB_MAX_DNSSRV)
-				sc->sc_info.ipv4dns[i++] = val;
-			off += sizeof (uint32_t);
+				sc->sc_info.ipv4dns[i++] = addr;
+			off += sizeof(addr);
+			if (ifp->if_flags & IFF_DEBUG) {
+				char str[INET_ADDRSTRLEN];
+				log(LOG_INFO, "%s: IPv4 nameserver %s\n",
+				    DEVNAM(ifp->if_softc), inet_ntop(AF_INET,
+				    &addr, str, sizeof(str)));
+			}
 		}
 	}
 
@@ -2601,31 +2614,6 @@ umb_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 /*
  * Diagnostic routines
  */
-char *
-umb_ntop(struct sockaddr *sa)
-{
-#define NUMBUFS		4
-	static char astr[NUMBUFS][INET_ADDRSTRLEN];
-	static unsigned nbuf = 0;
-	char	*s;
-
-	s = astr[nbuf++];
-	if (nbuf >= NUMBUFS)
-		nbuf = 0;
-
-	switch (sa->sa_family) {
-	case AF_INET:
-	default:
-		inet_ntop(AF_INET, &satosin(sa)->sin_addr, s, sizeof (astr[0]));
-		break;
-	case AF_INET6:
-		inet_ntop(AF_INET6, &satosin6(sa)->sin6_addr, s,
-		    sizeof (astr[0]));
-		break;
-	}
-	return s;
-}
-
 #ifdef UMB_DEBUG
 char *
 umb_uuid2str(uint8_t uuid[MBIM_UUID_LEN])
