@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.170 2019/07/29 10:50:09 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.171 2019/08/26 09:53:31 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1157,8 +1157,6 @@ ieee80211_node_join_bss(struct ieee80211com *ic, struct ieee80211_node *selbs)
 
 	(*ic->ic_node_copy)(ic, ic->ic_bss, selbs);
 	ni = ic->ic_bss;
-
-	ic->ic_curmode = ieee80211_chan2mode(ic, ni->ni_chan);
 
 	/* Make sure we send valid rates in an association request. */
 	if (ic->ic_opmode == IEEE80211_M_STA)
