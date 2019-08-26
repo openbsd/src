@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-window.c,v 1.24 2019/05/09 08:39:09 nicm Exp $ */
+/* $OpenBSD: cmd-swap-window.c,v 1.25 2019/08/26 16:35:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -77,10 +77,10 @@ cmd_swap_window_exec(struct cmd *self, struct cmdq_item *item)
 	wl_src->window = w_dst;
 	TAILQ_INSERT_TAIL(&w_dst->winlinks, wl_src, wentry);
 
-	if (!args_has(self->args, 'd')) {
-		session_select(src, wl_src->idx);
+	if (args_has(self->args, 'd')) {
+		session_select(dst, wl_dst->idx);
 		if (src != dst)
-			session_select(dst, wl_dst->idx);
+			session_select(src, wl_src->idx);
 	}
 	session_group_synchronize_from(src);
 	server_redraw_session_group(src);
