@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.697 2019/07/05 06:56:22 patrick Exp $	*/
+/*	$OpenBSD: parse.y,v 1.698 2019/08/26 18:53:58 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -77,7 +77,7 @@ static struct file {
 	int			 eof_reached;
 	int			 lineno;
 	int			 errors;
-} *file;
+} *file, *topfile;
 struct file	*pushfile(const char *, int);
 int		 popfile(void);
 int		 check_file_secrecy(int, const char *);
@@ -5191,7 +5191,7 @@ lgetc(int quotec)
 	if (quotec) {
 		if ((c = igetc()) == EOF) {
 			yyerror("reached end of file while parsing quoted string");
-			if (popfile() == EOF)
+			if (file == topfile || popfile() == EOF)
 				return (EOF);
 			return (quotec);
 		}
@@ -5219,7 +5219,7 @@ lgetc(int quotec)
 			return ('\n');
 		}
 		while (c == EOF) {
-			if (popfile() == EOF)
+			if (file == topfile || popfile() == EOF)
 				return (EOF);
 			c = igetc();
 		}
@@ -5511,17 +5511,17 @@ popfile(void)
 {
 	struct file	*prev;
 
-	if ((prev = TAILQ_PREV(file, files, entry)) != NULL) {
+	if ((prev = TAILQ_PREV(file, files, entry)) != NULL)
 		prev->errors += file->errors;
-		TAILQ_REMOVE(&files, file, entry);
-		fclose(file->stream);
-		free(file->name);
-		free(file->ungetbuf);
-		free(file);
-		file = prev;
-		return (0);
-	}
-	return (EOF);
+
+	TAILQ_REMOVE(&files, file, entry);
+	fclose(file->stream);
+	free(file->name);
+	free(file->ungetbuf);
+	free(file);
+	file = prev;
+
+	return (file ? 0 : EOF);
 }
 
 int
@@ -5540,6 +5540,7 @@ parse_config(char *filename, struct pfctl *xpf)
 		warn("cannot open the main config file!");
 		return (-1);
 	}
+	topfile = file;
 
 	yyparse();
 	errors = file->errors;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.176 2019/02/13 22:57:07 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.177 2019/08/26 18:53:58 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -54,7 +54,7 @@ static struct file {
 	char			*name;
 	int			 lineno;
 	int			 errors;
-} *file;
+} *file, *topfile;
 struct file	*pushfile(const char *, int);
 int		 popfile(void);
 int		 check_file_secrecy(int, const char *);
@@ -1061,7 +1061,7 @@ lgetc(int quotec)
 	if (quotec) {
 		if ((c = getc(file->stream)) == EOF) {
 			yyerror("reached end of file while parsing quoted string");
-			if (popfile() == EOF)
+			if (file == topfile || popfile() == EOF)
 				return (EOF);
 			return (quotec);
 		}
@@ -1079,7 +1079,7 @@ lgetc(int quotec)
 	}
 
 	while (c == EOF) {
-		if (popfile() == EOF)
+		if (file == topfile || popfile() == EOF)
 			return (EOF);
 		c = getc(file->stream);
 	}
@@ -1339,16 +1339,16 @@ popfile(void)
 {
 	struct file	*prev;
 
-	if ((prev = TAILQ_PREV(file, files, entry)) != NULL) {
+	if ((prev = TAILQ_PREV(file, files, entry)) != NULL)
 		prev->errors += file->errors;
-		TAILQ_REMOVE(&files, file, entry);
-		fclose(file->stream);
-		free(file->name);
-		free(file);
-		file = prev;
-		return (0);
-	}
-	return (EOF);
+
+	TAILQ_REMOVE(&files, file, entry);
+	fclose(file->stream);
+	free(file->name);
+	free(file);
+	file = prev;
+
+	return (file ? 0 : EOF);
 }
 
 int
@@ -1362,6 +1362,7 @@ parse_rules(const char *filename, struct ipsecctl *ipsecx)
 	if ((file = pushfile(filename, 1)) == NULL) {
 		return (-1);
 	}
+	topfile = file;
 
 	yyparse();
 	errors = file->errors;
