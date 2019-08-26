@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.409 2019/08/08 16:48:48 mestre Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.410 2019/08/26 15:23:49 claudio Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -5791,10 +5791,9 @@ umb_status(void)
 	}
 
 	for (i = 0, n = 0; i < UMB_MAX_DNSSRV; i++) {
-		if (mi.ipv4dns[i] == INADDR_ANY)
+		if (mi.ipv4dns[i].s_addr == INADDR_ANY)
 			break;
-		printf("%s %s", n++ ? "" : "\tdns",
-		    inet_ntoa(*(struct in_addr *)&mi.ipv4dns[i]));
+		printf("%s %s", n++ ? "" : "\tdns", inet_ntoa(mi.ipv4dns[i]));
 	}
 	if (n)
 		printf("\n");
