@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.106 2019/08/13 07:09:21 anton Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.107 2019/08/26 18:56:29 anton Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -558,9 +558,23 @@ vn_lock(struct vnode *vp, int flags)
 			tsleep(vp, PINOD, "vn_lock", 0);
 			error = ENOENT;
 		} else {
+			vp->v_lockcount++;
 			error = VOP_LOCK(vp, flags);
-			if (error == 0)
-				return (error);
+			vp->v_lockcount--;
+			if (error == 0) {
+				if ((vp->v_flag & VXLOCK) == 0)
+					return (0);
+
+				/*
+				 * The vnode was exclusively locked while
+				 * acquiring the requested lock. Release it and
+				 * try again.
+				 */
+				error = ENOENT;
+				VOP_UNLOCK(vp);
+				if (vp->v_lockcount == 0)
+					wakeup_one(&vp->v_lockcount);
+			}
 		}
 	} while (flags & LK_RETRY);
 	return (error);

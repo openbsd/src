@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.292 2019/07/25 01:43:21 cheloha Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.293 2019/08/26 18:56:29 anton Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -704,6 +704,9 @@ vputonfreelist(struct vnode *vp)
 #ifdef DIAGNOSTIC
 	if (vp->v_usecount != 0)
 		panic("Use count is not zero!");
+
+	if (vp->v_lockcount != 0)
+		panic("%s: lock count is not zero", __func__);
 
 	if (vp->v_bioflag & VBIOONFREELIST) {
 		vprint("vnode already on free list: ", vp);

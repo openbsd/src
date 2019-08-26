@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.152 2019/07/25 01:43:21 cheloha Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.153 2019/08/26 18:56:29 anton Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -96,6 +96,7 @@ struct vnode {
 	u_int   v_uvcount;			/* unveil references */
 	/* reference count of writers */
 	u_int   v_writecount;
+	u_int	v_lockcount;			/* # threads waiting on lock */
 	/* Flags that can be read/written in interrupts */
 	u_int   v_bioflag;
 	u_int   v_holdcnt;			/* buffer references */
