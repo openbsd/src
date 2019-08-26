@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.82 2019/08/26 09:10:22 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.83 2019/08/26 09:42:31 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -125,6 +125,10 @@ file	dev/fdt/xhci_fdt.c		xhci_fdt
 device	syscon: fdt
 attach	syscon at fdt
 file	dev/fdt/syscon.c		syscon
+
+device	amlreset
+attach	amlreset at fdt
+file	dev/fdt/amlreset.c		amlreset
 
 device	amluart
 attach	amluart at fdt
