@@ -1,11 +1,11 @@
-.\" $OpenBSD: OCSP_response_status.3,v 1.7 2019/06/06 01:06:58 schwarze Exp $
+.\" $OpenBSD: OCSP_response_status.3,v 1.8 2019/08/27 09:40:29 schwarze Exp $
 .\" full merge up to: OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
-.\" selective merge up to: OpenSSL e23ac625 Jan 24 12:27:19 2018 -0500
+.\" selective merge up to: OpenSSL 6738bf14 Feb 13 12:51:29 2018 +0000
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2016, 2019 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: August 27 2019 $
 .Dt OCSP_RESPONSE_STATUS 3
 .Os
 .Sh NAME
@@ -82,6 +82,7 @@
 .Nm OCSP_RESPID_free ,
 .Nm OCSP_response_create ,
 .Nm OCSP_response_status ,
+.Nm OCSP_response_status_str ,
 .Nm OCSP_response_get1_basic ,
 .Nm OCSP_basic_sign
 .Nd OCSP response functions
@@ -115,6 +116,10 @@
 .Ft int
 .Fo OCSP_response_status
 .Fa "OCSP_RESPONSE *resp"
+.Fc
+.Ft const char *
+.Fo OCSP_response_status_str
+.Fa "long code"
 .Fc
 .Ft OCSP_BASICRESP *
 .Fo OCSP_response_get1_basic
@@ -210,6 +215,13 @@ It returns one of the values
 or
 .Dv OCSP_RESPONSE_STATUS_UNAUTHORIZED .
 .Pp
+.Fn OCSP_response_status_str
+converts one of the
+.Fa status
+codes returned by
+.Fn OCSP_response_status
+to a string consisting of one word.
+.Pp
 .Fn OCSP_response_get1_basic
 decodes and returns the
 .Vt OCSP_BASICRESP
@@ -274,6 +286,9 @@ if an error occurred.
 .Pp
 .Fn OCSP_response_status
 returns a status value.
+.Pp
+.Fn OCSP_response_status_str
+returns a pointer to a static string.
 .Pp
 .Fn OCSP_basic_sign
 return 1 on success or 0 on failure.
