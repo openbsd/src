@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.14 2019/08/27 11:54:42 dlg Exp $ */
+/*	$OpenBSD: sff.c,v 1.15 2019/08/27 23:24:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -256,6 +256,13 @@ static const char *sff8024_con_names[] = {
 #define SFF8436_TX_BIAS(_i)	(SFF8436_TX_BIAS_BASE + ((_i) * 2))
 #define SFF8436_TX_POWER_BASE	50
 #define SFF8436_TX_POWER(_i)	(SFF8436_TX_POWER_BASE + ((_i) * 2))
+
+/* Upper Page 00h */
+
+#define SFF8436_MAXCASETEMP	190	/* C */
+#define SFF8436_MAXCASETEMP_DEFAULT	70 /* if SFF8436_MAXCASETEMP is 0 */
+
+/* Upper page 03h */
 
 #define SFF8436_AW_TEMP		128
 #define SFF8436_AW_VCC		144
@@ -693,7 +700,7 @@ if_sff8636_thresh(int s, const char *ifname, int dump,
 	}
 
 	printf("\ttemp: ");
-	if_sff_printalarm(" C", 0,
+	if_sff_printalarm(" C", 1,
 	    if_sff_int(&pg3, SFF8436_TEMP) / SFF_TEMP_FACTOR,
 	    temp.thresholds[SFF_THRESH_HI_ALARM],
 	    temp.thresholds[SFF_THRESH_LO_ALARM],
@@ -702,7 +709,7 @@ if_sff8636_thresh(int s, const char *ifname, int dump,
 	printf("\n");
 
 	printf("\tvoltage: ");
-	if_sff_printalarm(" V", 0,
+	if_sff_printalarm(" V", 1,
 	    if_sff_uint(&pg3, SFF8436_VCC) / SFF_VCC_FACTOR,
 	    vcc.thresholds[SFF_THRESH_HI_ALARM],
 	    vcc.thresholds[SFF_THRESH_LO_ALARM],
@@ -748,6 +755,7 @@ static int
 if_sff8636(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
 {
 	int16_t temp;
+	uint8_t maxcasetemp;
 	uint8_t flat;
 	unsigned int i;
 
@@ -757,6 +765,11 @@ if_sff8636(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
 		printf("\tmonitor data not ready\n");
 		return (0);
 	}
+
+	maxcasetemp = pg0->sff_data[SFF8436_MAXCASETEMP];
+	if (maxcasetemp == 0x00)
+		maxcasetemp = SFF8436_MAXCASETEMP_DEFAULT;
+	printf("\tmax case temp: %u C\n", maxcasetemp);
 
 	temp = if_sff_int(pg0, SFF8436_TEMP);
 	/* the temp reading look unset, assume the rest will be unset too */
