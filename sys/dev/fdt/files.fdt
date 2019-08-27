@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.85 2019/08/27 12:51:57 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.86 2019/08/27 22:21:52 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -133,6 +133,10 @@ file	dev/fdt/amlclock.c		amlclock
 device	amlreset
 attach	amlreset at fdt
 file	dev/fdt/amlreset.c		amlreset
+
+device	amlrng
+attach	amlrng at fdt
+file	dev/fdt/amlrng.c		amlrng
 
 device	amluart
 attach	amluart at fdt
