@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.1 2019/08/09 06:17:59 martijn Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.2 2019/08/27 06:14:28 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -254,26 +254,51 @@ snmp_resolve(struct snmp_agent *agent, struct ber_element *pdu, int reply)
 		if (ret <= 0)
 			goto fail;
 		ber_set_readbuf(&ber, buf, ret);
-		if ((message = ber_read_elements(&ber, NULL)) == NULL)
-			goto fail;
+		if ((message = ber_read_elements(&ber, NULL)) == NULL) {
+			direction = POLLOUT;
+			tries--;
+			continue;
+		}
 		if (ber_scanf_elements(message, "{ise", &version, &community,
-		    &pdu) != 0)
-			goto fail;
+		    &pdu) != 0) {
+			errno = EPROTO;
+			direction = POLLOUT;
+			tries--;
+			continue;
+		}
 		/* Skip invalid packets; should not happen */
 		if (version != agent->version ||
-		    strcmp(community, agent->community) != 0)
+		    strcmp(community, agent->community) != 0) {
+			errno = EPROTO;
+			direction = POLLOUT;
+			tries--;
 			continue;
+		}
 		/* Validate pdu format and check request id */
 		if (ber_scanf_elements(pdu, "{iSSe", &rreqid, &varbind) != 0 ||
-		    varbind->be_encoding != BER_TYPE_SEQUENCE)
-			goto fail;
-		if (rreqid != reqid)
+		    varbind->be_encoding != BER_TYPE_SEQUENCE) {
+			errno = EPROTO;
+			direction = POLLOUT;
+			tries--;
 			continue;
+		}
+		if (rreqid != reqid) {
+			errno = EPROTO;
+			direction = POLLOUT;
+			tries--;
+			continue;
+		}
 		for (varbind = varbind->be_sub; varbind != NULL;
 		    varbind = varbind->be_next) {
-			if (ber_scanf_elements(varbind, "{oS}", &oid) != 0)
-				goto fail;
+			if (ber_scanf_elements(varbind, "{oS}", &oid) != 0) {
+				errno = EPROTO;
+				direction = POLLOUT;
+				tries--;
+				break;
+			}
 		}
+		if (varbind != NULL)
+			continue;
 
 		ber_unlink_elements(message->be_sub->be_next);
 		ber_free_elements(message);
