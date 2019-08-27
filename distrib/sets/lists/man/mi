@@ -1480,6 +1480,7 @@
 ./usr/share/man/man4/imxiic.4
 ./usr/share/man/man4/imxrtc.4
 ./usr/share/man/man4/imxsrc.4
+./usr/share/man/man4/imxtmu.4
 ./usr/share/man/man4/imxuart.4
 ./usr/share/man/man4/inet.4
 ./usr/share/man/man4/inet6.4
