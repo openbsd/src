@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.12 2019/04/26 15:04:29 denis Exp $ */
+/*	$OpenBSD: sff.c,v 1.13 2019/08/27 00:33:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -227,6 +227,16 @@ static const char *sff8024_con_names[] = {
  * QSFP is defined by SFF-8436, but the management interface is
  * updated and maintained by SFF-8636.
  */
+
+#define SFF8436_STATUS1		1
+#define SFF8436_STATUS2		2
+#define SFF8436_STATUS2_DNR		(1 << 0) /* Data_Not_Ready */
+#define SFF8436_STATUS2_INTL		(1 << 1) /* Interrupt output state */
+#define SFF8436_STATUS2_FLAT_MEM	(1 << 2) /* Upper memory flat/paged */
+
+#define SFF8436_AW_TEMP			0
+#define SFF8436_TEMP		22
+#define SFF8436_VOLTAGE		26
 
 /*
  * XFP stuff is defined by INF-8077.
@@ -615,9 +625,63 @@ if_inf8077(int s, const char *ifname, int dump, const struct if_sffpage *pg1)
 }
 
 static int
+if_sff8636_thresh(int s, const char *ifname, int dump,
+    const struct if_sffpage *pg0)
+{
+	struct if_sffpage pg3;
+
+	if_sffpage_init(&pg3, ifname, IFSFF_ADDR_EEPROM, 3);
+	if (ioctl(s, SIOCGIFSFFPAGE, (caddr_t)&pg3) == -1) {
+		if (dump)
+			warn("%s SIOCGIFSFFPAGE page 3", ifname);
+		return (-1);
+	}
+
+	if (dump)
+		if_sffpage_dump(ifname, &pg3);
+
+	if (pg3.sff_data[0x7f] != 3) { /* just in case... */
+		if (dump) {
+			warnx("%s SIOCGIFSFFPAGE: page select unsupported",
+			    ifname);
+		}
+		return (-1);
+	}
+
+	return (-1); /* XXX not supported yet, fallthrough to pg0 values */
+}
+
+static int
 if_sff8636(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
 {
+	int16_t temp;
+	uint8_t flat;
+
 	if_upper_strings(pg0);
+
+	if (pg0->sff_data[SFF8436_STATUS2] & SFF8436_STATUS2_DNR) {
+		printf("\tmonitor data not ready\n");
+		return (0);
+	}
+
+	temp = if_sff_int(pg0, SFF8436_TEMP);
+	/* the temp reading look unset, assume the rest will be unset too */
+	if ((uint16_t)temp == 0 || (uint16_t)temp == 0xffffU) {
+		if (!dump)
+			return (0);
+	}
+
+	flat = pg0->sff_data[SFF8436_STATUS2] & SFF8436_STATUS2_FLAT_MEM;
+	if (!flat && if_sff8636_thresh(s, ifname, dump, pg0) == 0)
+		return (0);
+
+	printf("\t");
+	printf("temp: %.02f%s", temp / SFF_TEMP_FACTOR, " C");
+	printf(", ");
+	printf("voltage: %.02f%s",
+	    if_sff_uint(pg0, SFF8436_VOLTAGE) / SFF_VCC_FACTOR, " V");
+
+	printf("\n");
 
 	return (0);
 }
