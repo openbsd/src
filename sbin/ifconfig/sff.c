@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.13 2019/08/27 00:33:57 dlg Exp $ */
+/*	$OpenBSD: sff.c,v 1.14 2019/08/27 11:54:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -41,6 +41,18 @@
 #ifndef ISSET
 #define ISSET(_w, _m)	((_w) & (_m))
 #endif
+
+#define SFF_THRESH_HI_ALARM	0
+#define SFF_THRESH_LO_ALARM	1
+#define SFF_THRESH_HI_WARN	2
+#define SFF_THRESH_LO_WARN	3
+#define SFF_THRESH_COUNT	4
+
+#define SFF_THRESH_REG(_i)	((_i) * 2)
+
+struct sff_thresholds {
+	 float thresholds[SFF_THRESH_COUNT];
+};
 
 #define SFF8024_ID_UNKNOWN	0x00
 #define SFF8024_ID_GBIC		0x01
@@ -234,9 +246,22 @@ static const char *sff8024_con_names[] = {
 #define SFF8436_STATUS2_INTL		(1 << 1) /* Interrupt output state */
 #define SFF8436_STATUS2_FLAT_MEM	(1 << 2) /* Upper memory flat/paged */
 
-#define SFF8436_AW_TEMP			0
 #define SFF8436_TEMP		22
-#define SFF8436_VOLTAGE		26
+#define SFF8436_VCC		26
+
+#define SFF8436_CHANNELS	4	/* number of TX and RX channels */
+#define SFF8436_RX_POWER_BASE	34
+#define SFF8436_RX_POWER(_i)	(SFF8436_RX_POWER_BASE + ((_i) * 2))
+#define SFF8436_TX_BIAS_BASE	42
+#define SFF8436_TX_BIAS(_i)	(SFF8436_TX_BIAS_BASE + ((_i) * 2))
+#define SFF8436_TX_POWER_BASE	50
+#define SFF8436_TX_POWER(_i)	(SFF8436_TX_POWER_BASE + ((_i) * 2))
+
+#define SFF8436_AW_TEMP		128
+#define SFF8436_AW_VCC		144
+#define SFF8436_AW_RX_POWER	176
+#define SFF8436_AW_TX_BIAS	184
+#define SFF8436_AW_TX_POWER	192
 
 /*
  * XFP stuff is defined by INF-8077.
@@ -629,6 +654,8 @@ if_sff8636_thresh(int s, const char *ifname, int dump,
     const struct if_sffpage *pg0)
 {
 	struct if_sffpage pg3;
+	unsigned int i;
+	struct sff_thresholds temp, vcc, tx, rx, bias;
 
 	if_sffpage_init(&pg3, ifname, IFSFF_ADDR_EEPROM, 3);
 	if (ioctl(s, SIOCGIFSFFPAGE, (caddr_t)&pg3) == -1) {
@@ -648,7 +675,73 @@ if_sff8636_thresh(int s, const char *ifname, int dump,
 		return (-1);
 	}
 
-	return (-1); /* XXX not supported yet, fallthrough to pg0 values */
+	for (i = 0; i < SFF_THRESH_COUNT; i++) {
+		temp.thresholds[i] = if_sff_int(&pg3,
+		    SFF8436_AW_TEMP + SFF_THRESH_REG(i)) / SFF_TEMP_FACTOR;
+
+		vcc.thresholds[i] = if_sff_uint(&pg3,
+		    SFF8436_AW_VCC + SFF_THRESH_REG(i)) / SFF_VCC_FACTOR;
+
+		rx.thresholds[i] = if_sff_power2dbm(&pg3,
+		    SFF8436_AW_RX_POWER + SFF_THRESH_REG(i));
+
+		bias.thresholds[i] = if_sff_uint(&pg3,
+		    SFF8436_AW_TX_BIAS + SFF_THRESH_REG(i)) / SFF_BIAS_FACTOR;
+
+		tx.thresholds[i] = if_sff_power2dbm(&pg3,
+		    SFF8436_AW_TX_POWER + SFF_THRESH_REG(i));
+	}
+
+	printf("\ttemp: ");
+	if_sff_printalarm(" C", 0,
+	    if_sff_int(&pg3, SFF8436_TEMP) / SFF_TEMP_FACTOR,
+	    temp.thresholds[SFF_THRESH_HI_ALARM],
+	    temp.thresholds[SFF_THRESH_LO_ALARM],
+	    temp.thresholds[SFF_THRESH_HI_WARN],
+	    temp.thresholds[SFF_THRESH_LO_WARN]);
+	printf("\n");
+
+	printf("\tvoltage: ");
+	if_sff_printalarm(" V", 0,
+	    if_sff_uint(&pg3, SFF8436_VCC) / SFF_VCC_FACTOR,
+	    vcc.thresholds[SFF_THRESH_HI_ALARM],
+	    vcc.thresholds[SFF_THRESH_LO_ALARM],
+	    vcc.thresholds[SFF_THRESH_HI_WARN],
+	    vcc.thresholds[SFF_THRESH_LO_WARN]);
+	printf("\n");
+
+	for (i = 0; i < SFF8436_CHANNELS; i++) {
+		unsigned int channel = i + 1;
+
+		printf("\tchannel %u bias current: ", channel);
+		if_sff_printalarm(" mA", 1,
+		    if_sff_uint(&pg3, SFF8436_TX_BIAS(i)) / SFF_BIAS_FACTOR,
+		    bias.thresholds[SFF_THRESH_HI_ALARM],
+		    bias.thresholds[SFF_THRESH_LO_ALARM],
+		    bias.thresholds[SFF_THRESH_HI_WARN],
+		    bias.thresholds[SFF_THRESH_LO_WARN]);
+		printf("\n");
+
+		printf("\tchannel %u tx: ", channel);
+		if_sff_printalarm(" dBm", 1,
+		    if_sff_power2dbm(&pg3, SFF8436_TX_POWER(i)),
+		    tx.thresholds[SFF_THRESH_HI_ALARM],
+		    tx.thresholds[SFF_THRESH_LO_ALARM],
+		    tx.thresholds[SFF_THRESH_HI_WARN],
+		    tx.thresholds[SFF_THRESH_LO_WARN]);
+		printf("\n");
+
+		printf("\tchannel %u rx: ", channel);
+		if_sff_printalarm(" dBm", 1,
+		    if_sff_power2dbm(&pg3, SFF8436_RX_POWER(i)),
+		    rx.thresholds[SFF_THRESH_HI_ALARM],
+		    rx.thresholds[SFF_THRESH_LO_ALARM],
+		    rx.thresholds[SFF_THRESH_HI_WARN],
+		    rx.thresholds[SFF_THRESH_LO_WARN]);
+		printf("\n");
+	}
+
+	return (0);
 }
 
 static int
@@ -656,6 +749,7 @@ if_sff8636(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
 {
 	int16_t temp;
 	uint8_t flat;
+	unsigned int i;
 
 	if_upper_strings(pg0);
 
@@ -672,16 +766,31 @@ if_sff8636(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
 	}
 
 	flat = pg0->sff_data[SFF8436_STATUS2] & SFF8436_STATUS2_FLAT_MEM;
-	if (!flat && if_sff8636_thresh(s, ifname, dump, pg0) == 0)
-		return (0);
+	if (!flat && if_sff8636_thresh(s, ifname, dump, pg0) == 0) {
+		if (!dump)
+			return (0);
+	}
 
 	printf("\t");
 	printf("temp: %.02f%s", temp / SFF_TEMP_FACTOR, " C");
 	printf(", ");
 	printf("voltage: %.02f%s",
-	    if_sff_uint(pg0, SFF8436_VOLTAGE) / SFF_VCC_FACTOR, " V");
-
+	    if_sff_uint(pg0, SFF8436_VCC) / SFF_VCC_FACTOR, " V");
 	printf("\n");
+
+	for (i = 0; i < SFF8436_CHANNELS; i++) {
+		printf("\t");
+		printf("channel %u: ", i + 1);
+		printf("bias current: %.02f mA",
+		    if_sff_uint(pg0, SFF8436_TX_BIAS(i)) / SFF_BIAS_FACTOR);
+		printf(", ");
+		printf("rx: %.02f dBm",
+		    if_sff_power2dbm(pg0, SFF8436_RX_POWER(i)));
+		printf(", ");
+		printf("tx: %.02f dBm",
+		    if_sff_power2dbm(pg0, SFF8436_TX_POWER(i)));
+		printf("\n");
+	}
 
 	return (0);
 }
