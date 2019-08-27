@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.96 2019/08/25 16:23:36 kn Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.97 2019/08/27 20:42:40 kn Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -121,18 +121,18 @@ char ifix_buf[IFNAMSIZ];		/* if_indextoname() */
 
 int file(char *);
 void getsocket(void);
-int parse_host(char *, struct in6_addr *);
+int parse_host(const char *, struct in6_addr *);
 int set(int, char **);
-void get(char *);
-int delete(char *);
+void get(const char *);
+int delete(const char *);
 void dump(struct in6_addr *, int);
 static struct in6_nbrinfo *getnbrinfo(struct in6_addr *, int, int);
 static char *ether_str(struct sockaddr_dl *);
-int ndp_ether_aton(char *, u_char *);
+int ndp_ether_aton(const char *, u_char *);
 void usage(void);
 int rtmsg(int);
 int rtget(struct sockaddr_in6 **, struct sockaddr_dl **);
-void ifinfo(char *);
+void ifinfo(const char *);
 static char *sec2str(time_t);
 static void ts_print(const struct timeval *);
 static int rdomain;
@@ -158,7 +158,6 @@ main(int argc, char *argv[])
 		case 's':
 			if (mode) {
 				usage();
-				/*NOTREACHED*/
 			}
 			mode = ch;
 			arg = NULL;
@@ -168,7 +167,6 @@ main(int argc, char *argv[])
 		case 'i' :
 			if (mode) {
 				usage();
-				/*NOTREACHED*/
 			}
 			mode = ch;
 			arg = optarg;
@@ -182,13 +180,11 @@ main(int argc, char *argv[])
 		case 'A':
 			if (mode) {
 				usage();
-				/*NOTREACHED*/
 			}
 			mode = 'a';
 			repeat = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr) {
 				usage();
-				/*NOTREACHED*/
 			}
 			break;
 		case 'V':
@@ -196,7 +192,6 @@ main(int argc, char *argv[])
 			if (errstr != NULL) {
 				warn("bad rdomain: %s", errstr);
 				usage();
-				/*NOTREACHED*/
 			}
 			break;
 		default:
@@ -211,14 +206,12 @@ main(int argc, char *argv[])
 	case 'c':
 		if (argc != 0) {
 			usage();
-			/*NOTREACHED*/
 		}
 		dump(0, mode == 'c');
 		break;
 	case 'd':
 		if (argc != 0) {
 			usage();
-			/*NOTREACHED*/
 		}
 		delete(arg);
 		break;
@@ -239,7 +232,6 @@ main(int argc, char *argv[])
 	case 0:
 		if (argc != 1) {
 			usage();
-			/*NOTREACHED*/
 		}
 		get(argv[0]);
 		break;
@@ -299,7 +291,7 @@ getsocket(void)
 }
 
 int
-parse_host(char *host, struct in6_addr *in6)
+parse_host(const char *host, struct in6_addr *in6)
 {
 	struct addrinfo hints, *res;
 	struct sockaddr_in6 *sin6;
@@ -343,13 +335,13 @@ struct	{
  * Set an individual neighbor cache entry
  */
 int
-set(int argc, char **argv)
+set(int argc, char *argv[])
 {
 	struct sockaddr_in6 *sin = &sin_m;
 	struct sockaddr_dl *sdl;
 	struct rt_msghdr *rtm = &(m_rtmsg.m_rtm);
 	u_char *ea;
-	char *host = argv[0], *eaddr = argv[1];
+	const char *host = argv[0], *eaddr = argv[1];
 
 	getsocket();
 	argc -= 2;
@@ -377,7 +369,6 @@ set(int argc, char **argv)
 
 	if (rtget(&sin, &sdl)) {
 		errx(1, "RTM_GET(%s) failed", host);
-		/* NOTREACHED */
 	}
 
 	if (IN6_ARE_ADDR_EQUAL(&sin->sin6_addr, &sin_m.sin6_addr)) {
@@ -411,7 +402,7 @@ overwrite:
  * Display an individual neighbor cache entry
  */
 void
-get(char *host)
+get(const char *host)
 {
 	struct sockaddr_in6 *sin = &sin_m;
 
@@ -433,7 +424,7 @@ get(char *host)
  * Delete a neighbor cache entry
  */
 int
-delete(char *host)
+delete(const char *host)
 {
 	struct sockaddr_in6 *sin = &sin_m;
 	struct rt_msghdr *rtm = &m_rtmsg.m_rtm;
@@ -445,7 +436,6 @@ delete(char *host)
 		return 1;
 	if (rtget(&sin, &sdl)) {
 		errx(1, "RTM_GET(%s) failed", host);
-		/* NOTREACHED */
 	}
 
 	if (IN6_ARE_ADDR_EQUAL(&sin->sin6_addr, &sin_m.sin6_addr)) {
@@ -714,7 +704,7 @@ ether_str(struct sockaddr_dl *sdl)
 }
 
 int
-ndp_ether_aton(char *a, u_char *n)
+ndp_ether_aton(const char *a, u_char *n)
 {
 	int i, o[6];
 
@@ -796,7 +786,6 @@ doit:
 	if ((rlen = write(rtsock, (char *)&m_rtmsg, l)) == -1) {
 		if (errno != ESRCH || cmd != RTM_DELETE) {
 			err(1, "writing to routing socket");
-			/* NOTREACHED */
 		}
 	}
 	do {
@@ -851,14 +840,13 @@ rtget(struct sockaddr_in6 **sinp, struct sockaddr_dl **sdlp)
 }
 
 void
-ifinfo(char *ifname)
+ifinfo(const char *ifname)
 {
 	struct in6_ndireq nd;
 	int s;
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) == -1) {
 		err(1, "socket");
-		/* NOTREACHED */
 	}
 	bzero(&nd, sizeof(nd));
 	strlcpy(nd.ifname, ifname, sizeof(nd.ifname));
