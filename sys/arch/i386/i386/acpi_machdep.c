@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.70 2018/08/23 14:47:52 jsg Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.71 2019/08/27 22:39:53 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -338,35 +338,6 @@ acpi_sleep_clocks(struct acpi_softc *sc, int state)
 }
 
 /*
- * Start the clocks early because AML will be executed next
- * which might do DELAY.
- */ 
-void
-acpi_resume_clocks(struct acpi_softc *sc)
-{
-#if NISA > 0
-	isa_defaultirq();
-#endif
-	intr_calculatemasks();
-
-#if NIOAPIC > 0
-	ioapic_enable();
-#endif
-
-#if NLAPIC > 0
-	lapic_tpr = save_lapic_tpr;
-	lapic_enable();
-	if (initclock_func == lapic_initclocks)
-		lapic_startclock();
-	lapic_set_lvt();
-#endif
-
-	i8254_startclock();
-	if (initclock_func == i8254_initclocks)
-		rtcstart();		/* in i8254 mode, rtc is profclock */
-}
- 
-/*
  * This function may not have local variables due to a bug between
  * acpi_savecpu() and the resume path.
  */
@@ -439,9 +410,38 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 	return (0);
 }
 
+/*
+ * First repair the interrupt hardware so that any events which occur
+ * will cause the least number of unexpected side effects.  We re-start
+ * the clocks early because we will soon run AML whigh might do DELAY.
+ * Then PM, and then further system/CPU work for the BSP cpu.
+ */ 
 void
-acpi_resume_cpu(struct acpi_softc *sc)
+acpi_resume_cpu(struct acpi_softc *sc, int state)
 {
+#if NISA > 0
+	isa_defaultirq();
+#endif
+	intr_calculatemasks();
+
+#if NIOAPIC > 0
+	ioapic_enable();
+#endif
+
+#if NLAPIC > 0
+	lapic_tpr = save_lapic_tpr;
+	lapic_enable();
+	if (initclock_func == lapic_initclocks)
+		lapic_startclock();
+	lapic_set_lvt();
+#endif
+
+	i8254_startclock();
+	if (initclock_func == i8254_initclocks)
+		rtcstart();		/* in i8254 mode, rtc is profclock */
+
+	acpi_resume_pm(sc, state);
+
 	npxinit(&cpu_info_primary);
 
 	cpu_init(&cpu_info_primary);

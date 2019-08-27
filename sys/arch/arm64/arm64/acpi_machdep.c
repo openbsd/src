@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.2 2019/01/19 20:45:06 tedu Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.3 2019/08/27 22:39:53 deraadt Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -160,11 +160,6 @@ acpi_sleep_clocks(struct acpi_softc *sc, int state)
 {
 }
 
-void
-acpi_resume_clocks(struct acpi_softc *sc)
-{
-}
-
 int
 acpi_sleep_cpu(struct acpi_softc *sc, int state)
 {
@@ -172,7 +167,7 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 }
 
 void
-acpi_resume_cpu(struct acpi_softc *sc)
+acpi_resume_cpu(struct acpi_softc *sc, int state)
 {
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.139 2019/08/09 15:20:04 pirofti Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.140 2019/08/27 22:39:51 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -637,6 +637,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		mem_range_attach();
 #endif /* MTRR */
 		cpu_init(ci);
+		/* XXX SP fpuinit(ci) is done earlier */
 		cpu_init_mwait(sc);
 		break;
 
@@ -644,14 +645,10 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		printf("apid %d (boot processor)\n", caa->cpu_apicid);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
 		cpu_intr_init(ci);
-#ifndef SMALL_KERNEL
-		cpu_ucode_apply(ci);
-#endif
 		identifycpu(ci);
 #ifdef MTRR
 		mem_range_attach();
 #endif /* MTRR */
-		cpu_init(ci);
 
 #if NLAPIC > 0
 		/*
@@ -660,6 +657,9 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		lapic_enable();
 		lapic_calibrate_timer(ci);
 #endif
+		cpu_init(ci);
+		/* XXX BP fpuinit(ci) is done earlier */
+
 #if NIOAPIC > 0
 		ioapic_bsp_id = caa->cpu_apicid;
 #endif

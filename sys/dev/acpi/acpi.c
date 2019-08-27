@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.371 2019/07/02 21:17:24 jcs Exp $ */
+/* $OpenBSD: acpi.c,v 1.372 2019/08/27 22:39:53 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2686,9 +2686,7 @@ acpi_sleep_state(struct acpi_softc *sc, int sleepmode)
 	}
 #endif /* HIBERNATE */
 
-	acpi_resume_clocks(sc);		/* AML may need clocks */
-	acpi_resume_pm(sc, state);
-	acpi_resume_cpu(sc);
+	acpi_resume_cpu(sc, state);
 
 fail_pts:
 	config_suspend_all(DVACT_RESUME);

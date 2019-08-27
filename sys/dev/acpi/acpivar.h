@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.102 2019/07/02 21:17:24 jcs Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.103 2019/08/27 22:39:53 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -331,8 +331,7 @@ int	 acpi_sleep_cpu(struct acpi_softc *, int);
 void	 acpi_sleep_mp(void);
 void	 acpi_sleep_pm(struct acpi_softc *, int);
 void	 acpi_resume_pm(struct acpi_softc *, int);
-void	 acpi_resume_clocks(struct acpi_softc *);
-void	 acpi_resume_cpu(struct acpi_softc *);
+void	 acpi_resume_cpu(struct acpi_softc *, int);
 void	 acpi_resume_mp(void);
 void	 acpi_sleep_walk(struct acpi_softc *, int);
 

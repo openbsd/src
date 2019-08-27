@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.257 2019/05/12 22:23:38 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.258 2019/08/27 22:39:51 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1719,6 +1719,10 @@ init_x86_64(paddr_t first_avail)
 	cpu_init_idt();
 
 	intr_default_setup();
+
+#ifndef SMALL_KERNEL
+	cpu_ucode_apply(&cpu_info_primary);
+#endif
 	fpuinit(&cpu_info_primary);
 
 	softintr_init();

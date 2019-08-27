@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.87 2019/08/19 21:22:26 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.88 2019/08/27 22:39:51 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -375,37 +375,6 @@ acpi_sleep_clocks(struct acpi_softc *sc, int state)
 }
 
 /*
- * We repair the interrupt hardware so that any events which occur
- * will cause the least number of unexpected side effects.  We re-start
- * the clocks early because we will soon run AML whigh might do DELAY.
- */ 
-void
-acpi_resume_clocks(struct acpi_softc *sc)
-{
-	cpu_init_msrs(&cpu_info_primary);
-
-#if NISA > 0
-	i8259_default_setup();
-#endif
-	intr_calculatemasks(curcpu());
-
-#if NIOAPIC > 0
-	ioapic_enable();
-#endif
-
-#if NLAPIC > 0
-	lapic_enable();
-	if (initclock_func == lapic_initclocks)
-		lapic_startclock();
-	lapic_set_lvt();
-#endif
-
-	i8254_startclock();
-	if (initclock_func == i8254_initclocks)
-		rtcstart();		/* in i8254 mode, rtc is profclock */
-}
-
-/*
  * This function may not have local variables due to a bug between
  * acpi_savecpu() and the resume path.
  */
@@ -478,13 +447,42 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 	return (0);
 }
 
+/*
+ * First repair the interrupt hardware so that any events which occur
+ * will cause the least number of unexpected side effects.  We re-start
+ * the clocks early because we will soon run AML whigh might do DELAY.
+ * Then PM, and then further system/CPU work for the BSP cpu.
+ */ 
 void
-acpi_resume_cpu(struct acpi_softc *sc)
+acpi_resume_cpu(struct acpi_softc *sc, int state)
 {
-	fpuinit(&cpu_info_primary);
+	cpu_init_msrs(&cpu_info_primary);
 
-	cpu_init(&cpu_info_primary);
+#if NISA > 0
+	i8259_default_setup();
+#endif
+	intr_calculatemasks(curcpu());
+
+#if NIOAPIC > 0
+	ioapic_enable();
+#endif
+
+#if NLAPIC > 0
+	lapic_enable();
+	if (initclock_func == lapic_initclocks)
+		lapic_startclock();
+	lapic_set_lvt();
+#endif
+
+	i8254_startclock();
+	if (initclock_func == i8254_initclocks)
+		rtcstart();		/* in i8254 mode, rtc is profclock */
+
+	acpi_resume_pm(sc, state);
+
 	cpu_ucode_apply(&cpu_info_primary);
+	fpuinit(&cpu_info_primary);
+	cpu_init(&cpu_info_primary);
 
 	/* Re-initialise memory range handling on BSP */
 	if (mem_range_softc.mr_op != NULL)
