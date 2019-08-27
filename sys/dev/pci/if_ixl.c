@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.42 2019/08/27 00:40:26 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.43 2019/08/27 04:26:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -3501,7 +3501,6 @@ struct ixl_sff_ops {
 static int
 ixl_sfp_open(struct ixl_softc *sc, struct if_sffpage *sff, uint8_t *page)
 {
-	uint8_t npage;
 	int error;
 
 	if (sff->sff_addr != IFSFF_ADDR_EEPROM)
@@ -3515,13 +3514,6 @@ ixl_sfp_open(struct ixl_softc *sc, struct if_sffpage *sff, uint8_t *page)
 	error = ixl_sff_set_byte(sc, IFSFF_ADDR_EEPROM, 127, sff->sff_page);
 	if (error != 0)
 		return (error);
-
-	/* check if set worked */
-	error = ixl_sff_get_byte(sc, IFSFF_ADDR_EEPROM, 127, &npage);
-	if (error != 0)
-		return (error);
-	if (npage != sff->sff_page)
-		return (ENODEV);
 
 	return (0);
 }
@@ -3559,17 +3551,8 @@ static const struct ixl_sff_ops ixl_sfp_ops = {
 static int
 ixl_qsfp_open(struct ixl_softc *sc, struct if_sffpage *sff, uint8_t *page)
 {
-	uint8_t npage;
-	int error;
-
 	if (sff->sff_addr != IFSFF_ADDR_EEPROM)
 		return (EIO);
-
-	error = ixl_sff_get_byte(sc, sff->sff_page, 127, &npage);
-	if (error != 0)
-		return (error);
-	if (npage != sff->sff_page)
-		return (ENODEV);
 
 	return (0);
 }
