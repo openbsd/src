@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.207 2019/08/24 13:41:06 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.208 2019/08/27 14:41:45 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -70,7 +70,8 @@
 /*
  * Declarations
  */
-int	scsi_probedev(struct scsibus_softc *, int, int);
+void	scsi_get_target_luns(struct scsi_link *, struct scsi_lun_array *);
+int	scsi_probedev(struct scsibus_softc *, int, int, int);
 void	scsi_add_link(struct scsibus_softc *, struct scsi_link *);
 void	scsi_remove_link(struct scsibus_softc *, struct scsi_link *);
 int	scsi_activate_link(struct scsibus_softc *, struct scsi_link *, int);
@@ -186,7 +187,7 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 		printf("%s: unable to register bio\n", sb->sc_dev.dv_xname);
 #endif
 
-	scsi_probe_bus(sb);
+	scsi_probe(sb, -1, -1);
 }
 
 int
@@ -331,104 +332,121 @@ scsibus_bioctl(struct device *dev, u_long cmd, caddr_t addr)
 void
 scsi_probe_bus(struct scsibus_softc *sb)
 {
-	struct scsi_link *alink = sb->adapter_link;
-	int i;
+	scsi_probe(sb, -1, -1);
+}
 
-	for (i = 0; i < alink->adapter_buswidth; i++)
-		scsi_probe_target(sb, i);
+void
+scsi_get_target_luns(struct scsi_link *link0, struct scsi_lun_array *lunarray)
+{
+	struct scsi_report_luns_data	*report;
+	int				 i, nluns, rv = 0;
+
+	/* Initialize dumbscan result. Just in case. */
+	report = NULL;
+	for (i = 0; i < link0->luns; i++)
+		lunarray->luns[i] = i;
+	lunarray->count = link0->luns;
+	lunarray->dumbscan = 1;
+
+	if ((link0->flags & (SDEV_UMASS | SDEV_ATAPI)) != 0 ||
+	    SCSISPC(link0->inqdata.version) < 3)
+		goto dumbscan;
+
+	report = dma_alloc(sizeof(*report), PR_WAITOK);
+	if (report == NULL)
+		goto dumbscan;
+
+	rv = scsi_report_luns(link0, REPORT_NORMAL, report,
+	    sizeof(*report), scsi_autoconf | SCSI_SILENT |
+	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY |
+	    SCSI_IGNORE_MEDIA_CHANGE, 10000);
+	if (rv != 0)
+		goto dumbscan;
+
+	/*
+	 * XXX In theory we should check if data is full, which
+	 * would indicate it needs to be enlarged and REPORT
+	 * LUNS tried again. Solaris tries up to 3 times with
+	 * larger sizes for data.
+	 */
+
+	/* Return the reported Type-0 LUNs. Type-0 only! */
+	lunarray->count = 0;
+	lunarray->dumbscan = 0;
+	nluns = _4btol(report->length) / RPL_LUNDATA_SIZE;
+	for (i = 0; i < nluns; i++) {
+		if (report->luns[i].lundata[0] != 0)
+			continue;
+		lunarray->luns[lunarray->count++] =
+		    report->luns[i].lundata[RPL_LUNDATA_T0LUN];
+	}
+
+dumbscan:
+	if (report != NULL)
+		dma_free(report, sizeof(*report));
 }
 
 int
 scsi_probe_target(struct scsibus_softc *sb, int target)
 {
-	struct scsi_link *alink = sb->adapter_link;
-	struct scsi_link *link0;
-	struct scsi_report_luns_data *report;
-	int i, nluns, lun;
-
-	if (scsi_probe_lun(sb, target, 0) == EINVAL)
-		return (EINVAL);
-
-	link0 = scsi_get_link(sb, target, 0);
-	if (link0 == NULL)
-		return (ENXIO);
-
-	if ((link0->flags & (SDEV_UMASS | SDEV_ATAPI)) == 0 &&
-	    SCSISPC(link0->inqdata.version) > 2) {
-		report = dma_alloc(sizeof(*report), PR_WAITOK);
-		if (report == NULL)
-			goto dumbscan;
-
-		if (scsi_report_luns(link0, REPORT_NORMAL, report,
-		    sizeof(*report), scsi_autoconf | SCSI_SILENT |
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY |
-		    SCSI_IGNORE_MEDIA_CHANGE, 10000) != 0) {
-			dma_free(report, sizeof(*report));
-			goto dumbscan;
-		}
-
-		/*
-		 * XXX In theory we should check if data is full, which
-		 * would indicate it needs to be enlarged and REPORT
-		 * LUNS tried again. Solaris tries up to 3 times with
-		 * larger sizes for data.
-		 */
-		nluns = _4btol(report->length) / RPL_LUNDATA_SIZE;
-		for (i = 0; i < nluns; i++) {
-			if (report->luns[i].lundata[0] != 0)
-				continue;
-			lun = report->luns[i].lundata[RPL_LUNDATA_T0LUN];
-			if (lun == 0)
-				continue;
-
-			/* Probe the provided LUN. Don't check LUN 0. */
-			scsi_remove_link(sb, link0);
-			scsi_probe_lun(sb, target, lun);
-			scsi_add_link(sb, link0);
-		}
-
-		dma_free(report, sizeof(*report));
-		return (0);
-	}
-
-dumbscan:
-	for (i = 1; i < alink->luns; i++) {
-		if (scsi_probe_lun(sb, target, i) == EINVAL)
-			break;
-	}
-
-	return (0);
+	/* Wild card target not allowed. */
+	if (target == -1)
+		return EINVAL;
+	else
+		return scsi_probe(sb, target, -1);
 }
 
 int
 scsi_probe(struct scsibus_softc *sb, int target, int lun)
 {
+	struct scsi_lun_array lunarray;
+	struct scsi_link *alink = sb->adapter_link;
+	struct scsi_link *link0;
+	int i, r, rv = 0;
+
 	if (target == -1 && lun == -1) {
-		scsi_probe_bus(sb);
-		return (0);
+		/* Probe all luns on all targets on bus. */
+		for (i = 0; i < alink->adapter_buswidth; i++) {
+			r = scsi_probe(sb, i, -1);
+			if (r != 0 && r != EINVAL)
+				rv = r;
+		}
+		return rv;
 	}
 
-	/* specific lun and wildcard target is bad */
-	if (target == -1)
-		return (EINVAL);
+	if (target < 0 || target >= alink->adapter_buswidth ||
+	    target == alink->adapter_target)
+		return EINVAL;
 
-	if (lun == -1)
-		return (scsi_probe_target(sb, target));
+	if (lun == -1) {
+		/* Probe all luns on the target. */
+		scsi_probedev(sb, target, 0, 0);
+		link0 = scsi_get_link(sb, target, 0);
+		if (link0 == NULL)
+			return EINVAL;
+		scsi_get_target_luns(link0, &lunarray);
+		for (i = 0; i < lunarray.count; i++) {
+			r = scsi_probedev(sb, target, lunarray.luns[i],
+			    lunarray.dumbscan);
+			if (r == EINVAL && lunarray.dumbscan == 1)
+				return 0;
+			if (r != 0 && r != EINVAL)
+				rv = r;
+		}
+		return rv;
+	}
 
-	return (scsi_probe_lun(sb, target, lun));
+	/* Probe lun on target. *NOT* a dumbscan! */
+	return scsi_probedev(sb, target, lun, 0);
 }
 
 int
 scsi_probe_lun(struct scsibus_softc *sb, int target, int lun)
 {
-	struct scsi_link *alink = sb->adapter_link;
-
-	if (target < 0 || target >= alink->adapter_buswidth ||
-	    target == alink->adapter_target ||
-	    lun < 0 || lun >= alink->luns)
-		return (ENXIO);
-
-	return (scsi_probedev(sb, target, lun));
+	if (target == -1 || lun == -1)
+		return EINVAL;
+	else
+		return scsi_probe(sb, target, lun);
 }
 
 int
@@ -858,7 +876,7 @@ scsibusprint(void *aux, const char *pnp)
  * Return 0 if further LUNs are possible, EINVAL if not.
  */
 int
-scsi_probedev(struct scsibus_softc *sb, int target, int lun)
+scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 {
 	const struct scsi_quirk_inquiry_pattern *finger;
 	struct scsi_inquiry_data *inqbuf, *usbinqbuf;
@@ -994,7 +1012,8 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun)
 		;
 	else if (link->id != NULL && !DEVID_CMP(link0->id, link->id))
 		;
-	else if (memcmp(inqbuf, &link0->inqdata, sizeof(*inqbuf)) == 0) {
+	else if (dumbscan == 1 && memcmp(inqbuf, &link0->inqdata,
+	    sizeof(*inqbuf)) == 0) {
 		/* The device doesn't distinguish between LUNs. */
 		SC_DEBUG(link, SDEV_DB1, ("Bad LUN. IDENTIFY not supported.\n"));
 		rslt = EINVAL;

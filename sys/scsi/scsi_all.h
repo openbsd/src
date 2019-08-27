@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.55 2015/06/07 19:13:27 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.56 2019/08/27 14:41:45 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -474,6 +474,12 @@ struct scsi_report_luns_data {
 	} luns[256];		/* scsi_link->luns is u_int8_t. */
 };
 #define	RPL_LUNDATA_T0LUN	1	/* Type 0 LUN is in lundata[1] */
+
+struct scsi_lun_array {
+	uint8_t	luns[256];
+	int	count;
+	int	dumbscan;
+};
 
 /*
  * ATA PASS-THROUGH as per SAT2
