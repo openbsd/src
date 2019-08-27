@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arp.8,v 1.39 2016/04/05 18:18:42 jca Exp $
+.\"	$OpenBSD: arp.8,v 1.40 2019/08/27 20:50:36 kn Exp $
 .\"	$NetBSD: arp.8,v 1.7 1995/03/01 11:50:59 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)arp.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: April 5 2016 $
+.Dd $Mdocdate: August 27 2019 $
 .Dt ARP 8
 .Os
 .Sh NAME
@@ -131,9 +131,8 @@ option for a description of the file format and the effect of the
 .Fl F
 option.
 .It Fl n
-Show network addresses as numbers (normally
-.Nm
-attempts to display addresses symbolically).
+Do not perform domain name resolution.
+If a name cannot be resolved without DNS, an error will be reported.
 .It Xo
 .Fl s Ar hostname ether_addr
 .Op Cm temp | permanent
