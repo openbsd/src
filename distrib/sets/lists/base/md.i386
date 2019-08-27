@@ -78,16 +78,10 @@
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
-./usr/lib/gcc-lib/i386-unknown-openbsd6.6
-./usr/lib/gcc-lib/i386-unknown-openbsd6.6/4.2.1
-./usr/lib/gcc-lib/i386-unknown-openbsd6.6/4.2.1/collect2
-./usr/lib/gcc-lib/i386-unknown-openbsd6.6/4.2.1/libgcc.a
-./usr/lib/gcc-lib/i386-unknown-openbsd6.6/4.2.1/specs
 ./usr/lib/libLLVM.so.1.0
 ./usr/lib/libc++.so.3.0
 ./usr/lib/libc++abi.so.1.0
 ./usr/lib/libcompiler_rt.a
-./usr/lib/libstdc++.so.57.0
 ./usr/libdata/perl5/i386-openbsd
 ./usr/libdata/perl5/i386-openbsd/.packlist
 ./usr/libdata/perl5/i386-openbsd/B
