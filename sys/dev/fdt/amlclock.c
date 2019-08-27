@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlclock.c,v 1.1 2019/08/27 08:19:55 kettenis Exp $	*/
+/*	$OpenBSD: amlclock.c,v 1.2 2019/08/27 18:29:45 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -44,9 +44,9 @@
 #define HWRITE4(sc, reg, val)						\
 	regmap_write_4((sc)->sc_rm, (reg) << 2, (val))
 #define HSET4(sc, reg, bits)						\
-	HWRITE4((sc), (reg) << 2, HREAD4((sc), (reg) << 2) | (bits))
+	HWRITE4((sc), (reg), HREAD4((sc), (reg)) | (bits))
 #define HCLR4(sc, reg, bits)						\
-	HWRITE4((sc), (reg) << 2, HREAD4((sc), (reg) << 2) & ~(bits))
+	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
 
 struct amlclock_softc {
 	struct device		sc_dev;
