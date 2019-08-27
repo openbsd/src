@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.48 2019/08/18 13:11:47 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.49 2019/08/27 11:46:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -1120,8 +1120,17 @@ register_acpi_notifier(struct notifier_block *nb)
 int
 unregister_acpi_notifier(struct notifier_block *nb)
 {
-	SLIST_REMOVE(&drm_linux_acpi_notify_list, nb, notifier_block, link);
-	return 0;
+	struct notifier_block *tmp;
+
+	SLIST_FOREACH(tmp, &drm_linux_acpi_notify_list, link) {
+		if (tmp == nb) {
+			SLIST_REMOVE(&drm_linux_acpi_notify_list, nb,
+			    notifier_block, link);
+			return 0;
+		}
+	}
+
+	return -ENOENT;
 }
 
 const char *
