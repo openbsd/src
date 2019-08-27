@@ -1,4 +1,4 @@
-/* $OpenBSD: mpls_output.c,v 1.26 2015/12/02 08:47:00 claudio Exp $ */
+/* $OpenBSD: mpls_output.c,v 1.27 2019/08/27 00:49:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -162,41 +162,39 @@ mpls_do_cksum(struct mbuf *m)
 u_int8_t
 mpls_getttl(struct mbuf *m, sa_family_t af)
 {
-	struct shim_hdr *shim;
-	struct ip *ip;
-#ifdef INET6
-	struct ip6_hdr *ip6hdr;
-#endif
+	struct mbuf *n;
+	int loc, off;
 	u_int8_t ttl = mpls_defttl;
 
 	/* If the AF is MPLS then inherit the TTL from the present label. */
-	if (af == AF_MPLS) {
-		shim = mtod(m, struct shim_hdr *);
-		ttl = ntohl(shim->shim_label & MPLS_TTL_MASK);
-		return (ttl);
-	}
-	/* Else extract TTL from the encapsualted packet. */
-	switch (*mtod(m, u_char *) >> 4) {
-	case IPVERSION:
-		if (!mpls_mapttl_ip)
+	if (af == AF_MPLS)
+		loc = 3;
+	else {
+		switch (*mtod(m, uint8_t *) >> 4) {
+		case 4:
+			if (!mpls_mapttl_ip)
+				return (ttl);
+
+			loc = offsetof(struct ip, ip_ttl);
 			break;
-		if (m->m_len < sizeof(*ip))
-			break;			/* impossible */
-		ip = mtod(m, struct ip *);
-		ttl = ip->ip_ttl;
-		break;
 #ifdef INET6
-	case IPV6_VERSION >> 4:
-		if (!mpls_mapttl_ip6)
+		case 6:
+			if (!mpls_mapttl_ip6)
+				break;
+
+			loc = offsetof(struct ip6_hdr, ip6_hlim);
 			break;
-		if (m->m_len < sizeof(struct ip6_hdr))
-			break;			/* impossible */
-		ip6hdr = mtod(m, struct ip6_hdr *);
-		ttl = ip6hdr->ip6_hlim;
-		break;
 #endif
-	default:
-		break;
+		default:
+			return (ttl);
+		}
 	}
+
+	n = m_getptr(m, loc, &off);
+	if (n == NULL)
+		return (ttl);
+
+	ttl = *(mtod(n, uint8_t *) + off);
+
 	return (ttl);
 }
