@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.93 2018/04/28 16:05:56 phessler Exp $  */
+/*	$OpenBSD: pgt.c,v 1.94 2019/08/27 14:57:48 stsp Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -170,7 +170,7 @@ void	 node_mark_active_ap(void *, struct ieee80211_node *);
 void	 node_mark_active_adhoc(void *, struct ieee80211_node *);
 void	 pgt_watchdog(struct ifnet *);
 int	 pgt_init(struct ifnet *);
-void	 pgt_update_hw_from_sw(struct pgt_softc *, int, int);
+void	 pgt_update_hw_from_sw(struct pgt_softc *, int);
 void	 pgt_hostap_handle_mlme(struct pgt_softc *, uint32_t,
 	     struct pgt_obj_mlme *);
 void	 pgt_update_sw_from_hw(struct pgt_softc *,
@@ -544,8 +544,7 @@ trying_again:
 		sc->sc_flags &= ~flag;
 		if (ic->ic_if.if_flags & IFF_RUNNING)
 			pgt_update_hw_from_sw(sc,
-			    ic->ic_state != IEEE80211_S_INIT,
-			    ic->ic_opmode != IEEE80211_M_MONITOR);
+			    ic->ic_state != IEEE80211_S_INIT);
 	}
 
 	ic->ic_if.if_flags &= ~IFF_RUNNING;
@@ -2015,7 +2014,7 @@ pgt_media_change(struct ifnet *ifp)
 
         error = ieee80211_media_change(ifp);
         if (error == ENETRESET) {
-                pgt_update_hw_from_sw(sc, 0, 0);
+                pgt_update_hw_from_sw(sc, 0);
                 error = 0;
         }
 
@@ -2367,7 +2366,7 @@ pgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t req)
 	}
 
 	if (error == ENETRESET) {
-		pgt_update_hw_from_sw(sc, 0, 0);
+		pgt_update_hw_from_sw(sc, 0);
 		error = 0;
 	}
 	splx(s);
@@ -2501,8 +2500,7 @@ pgt_init(struct ifnet *ifp)
 
 	if (!(sc->sc_flags & (SC_DYING | SC_UNINITIALIZED)))
 		pgt_update_hw_from_sw(sc,
-		    ic->ic_state != IEEE80211_S_INIT,
-		    ic->ic_opmode != IEEE80211_M_MONITOR);
+		    ic->ic_state != IEEE80211_S_INIT);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
@@ -2522,7 +2520,7 @@ pgt_init(struct ifnet *ifp)
  * back to the BSS had before.
  */
 void
-pgt_update_hw_from_sw(struct pgt_softc *sc, int keepassoc, int keepnodes)
+pgt_update_hw_from_sw(struct pgt_softc *sc, int keepassoc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct arpcom *ac = &ic->ic_ac;
@@ -2769,8 +2767,6 @@ badopmode:
 	splx(s);
 
 	if (success) {
-		if (shouldbeup && keepnodes)
-			sc->sc_flags |= SC_NOFREE_ALLNODES;
 		if (shouldbeup)
 			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		else
@@ -2942,11 +2938,7 @@ pgt_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_SCAN:
 		ic->ic_if.if_timer = 1;
 		ic->ic_mgt_timer = 0;
-		if (sc->sc_flags & SC_NOFREE_ALLNODES)
-			sc->sc_flags &= ~SC_NOFREE_ALLNODES;
-		else
-			ieee80211_free_allnodes(ic, 1);
-
+		ieee80211_node_cleanup(ic, ic->ic_bss);
 		ieee80211_set_link_state(ic, LINK_STATE_DOWN);
 #ifndef IEEE80211_STA_ONLY
 		/* Just use any old channel; we override it anyway. */
@@ -3262,7 +3254,7 @@ pgt_activate(struct device *self, int act)
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING) {
 			pgt_stop(sc, SC_NEEDS_RESET);
-			pgt_update_hw_from_sw(sc, 0, 0);
+			pgt_update_hw_from_sw(sc, 0);
 		}
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, act);
@@ -3283,10 +3275,10 @@ pgt_wakeup(struct pgt_softc *sc)
 		(*sc->sc_power)(sc, DVACT_RESUME);
 
 	pgt_stop(sc, SC_NEEDS_RESET);
-	pgt_update_hw_from_sw(sc, 0, 0);
+	pgt_update_hw_from_sw(sc, 0);
 
 	if (ifp->if_flags & IFF_UP) {
 		pgt_init(ifp);
-		pgt_update_hw_from_sw(sc, 0, 0);
+		pgt_update_hw_from_sw(sc, 0);
 	}
 }

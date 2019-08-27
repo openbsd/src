@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.145 2019/07/25 01:46:15 cheloha Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.146 2019/08/27 14:57:48 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1058,7 +1058,7 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			    ieee80211_state_name[ic->ic_state],
 			    ieee80211_state_name[nstate]);
 		ieee80211_set_link_state(ic, LINK_STATE_DOWN);
-		ieee80211_free_allnodes(ic, 1);
+		ieee80211_node_cleanup(ic, ic->ic_bss);
 		ic->ic_state = nstate;
 		return 0;
 

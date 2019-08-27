@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.81 2019/07/29 10:50:09 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.82 2019/08/27 14:57:48 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -41,6 +41,7 @@
 #define	IEEE80211_INACT_MAX	(300/IEEE80211_INACT_WAIT)
 #define	IEEE80211_CACHE_SIZE	100
 #define	IEEE80211_CACHE_WAIT	30
+#define	IEEE80211_INACT_SCAN	10		/* for station mode */
 
 struct ieee80211_rateset {
 	u_int8_t		rs_nrates;
@@ -491,6 +492,7 @@ struct ieee80211_node *
 		const char *, u_int8_t);
 void ieee80211_release_node(struct ieee80211com *,
 		struct ieee80211_node *);
+void ieee80211_node_cleanup(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_free_allnodes(struct ieee80211com *, int);
 void ieee80211_iterate_nodes(struct ieee80211com *,
 		ieee80211_iter_func *, void *);

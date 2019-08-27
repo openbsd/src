@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.244 2019/08/08 13:56:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.245 2019/08/27 14:57:48 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5701,7 +5701,7 @@ iwm_scan(struct iwm_softc *sc)
 		    ieee80211_state_name[IEEE80211_S_SCAN]);
 	if ((sc->sc_flags & IWM_FLAG_BGSCAN) == 0) {
 		ieee80211_set_link_state(ic, LINK_STATE_DOWN);
-		ieee80211_free_allnodes(ic, 1);
+		ieee80211_node_cleanup(ic, ic->ic_bss);
 	}
 	ic->ic_state = IEEE80211_S_SCAN;
 	iwm_led_blink_start(sc);

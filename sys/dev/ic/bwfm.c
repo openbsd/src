@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.63 2019/07/05 12:35:16 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.64 2019/08/27 14:57:48 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2610,7 +2610,7 @@ bwfm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			return 0;
 		}
 		ieee80211_set_link_state(ic, LINK_STATE_DOWN);
-		ieee80211_free_allnodes(ic, 1);
+		ieee80211_node_cleanup(ic, ic->ic_bss);
 		ic->ic_state = nstate;
 		splx(s);
 		return 0;
