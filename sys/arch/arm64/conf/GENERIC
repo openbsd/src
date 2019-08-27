@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.113 2019/08/27 08:19:55 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.114 2019/08/27 12:51:57 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -128,6 +128,7 @@ imxspi*		at fdt?
 ssdfb*		at iic?
 ssdfb*		at spi?
 wsdisplay*	at ssdfb?
+imxtmu*		at fdt?
 
 # Raspberry Pi 3
 bcmaux*		at fdt?
