@@ -1,7 +1,24 @@
-.\" $OpenBSD: OCSP_sendreq_new.3,v 1.8 2019/08/23 12:23:39 schwarze Exp $
+.\" $OpenBSD: OCSP_sendreq_new.3,v 1.9 2019/08/27 10:48:41 schwarze Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2018, 2019 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2014, 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -48,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 23 2019 $
+.Dd $Mdocdate: August 27 2019 $
 .Dt OCSP_SENDREQ_NEW 3
 .Os
 .Sh NAME
@@ -57,6 +74,7 @@
 .Nm OCSP_REQ_CTX_free ,
 .Nm OCSP_REQ_CTX_add1_header ,
 .Nm OCSP_REQ_CTX_set1_req ,
+.Nm OCSP_parse_url ,
 .Nm OCSP_sendreq_bio
 .Nd OCSP responder query functions
 .Sh SYNOPSIS
@@ -87,6 +105,14 @@
 .Fo OCSP_REQ_CTX_set1_req
 .Fa "OCSP_REQ_CTX *rctx"
 .Fa "OCSP_REQUEST *req"
+.Fc
+.Ft int
+.Fo OCSP_parse_url
+.Fa "const char *url"
+.Fa "char **phost"
+.Fa "char **pport"
+.Fa "char **ppath"
+.Fa "int *pssl"
 .Fc
 .Ft OCSP_RESPONSE *
 .Fo OCSP_sendreq_bio
@@ -182,6 +208,46 @@ to
 This function should be called after any calls to
 .Fn OCSP_REQ_CTX_add1_header .
 .Pp
+.Fn OCSP_parse_url
+is a utility function to parse a
+.Fa url
+of the form
+.Sm off
+.Sy http Op Sy s
+.Pf :// Ar host
+.Op : Ar port
+.Op / Ar path
+.Sm on
+and store pointers to newly allocated copies of the strings
+.Ar host ,
+.Ar port ,
+and
+.Ar path
+in
+.Pf * phost ,
+.Pf * pport ,
+and
+.Pf * ppath ,
+respectively.
+By default,
+.Pf * ppath
+is set to
+.Qq /
+and
+.Pf * pport
+to
+.Qq 443
+for
+.Sy https
+or
+.Qq 80
+for
+.Sy http .
+For
+.Sy https ,
+.Pf * Fa pssl
+is set to 1; otherwise, to 0.
+.Pp
 .Fn OCSP_sendreq_bio
 performs an OCSP request using the responder
 .Fa io ,
@@ -206,9 +272,10 @@ returns 1 if the operation was completed successfully,
 -1 if the operation should be retried,
 or 0 if an error occurred.
 .Pp
-.Fn OCSP_REQ_CTX_add1_header
+.Fn OCSP_REQ_CTX_add1_header ,
+.Fn OCSP_REQ_CTX_set1_req ,
 and
-.Fn OCSP_REQ_CTX_set1_req
+.Fn OCSP_parse_url
 return 1 for success or 0 for failure.
 .Pp
 .Fn OCSP_sendreq_bio
@@ -230,8 +297,10 @@ Add a Host header for
 .Xr OCSP_response_status 3 ,
 .Xr X509_get1_ocsp 3
 .Sh HISTORY
+.Fn OCSP_parse_url
+and
 .Fn OCSP_sendreq_bio
-first appeared in OpenSSL 0.9.7 and has been available since
+first appeared in OpenSSL 0.9.7 and have been available since
 .Ox 3.2 .
 .Pp
 .Fn OCSP_sendreq_new ,
