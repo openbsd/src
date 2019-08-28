@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.61 2019/08/20 23:55:41 krw Exp $ */
+/* $OpenBSD: mfii.c,v 1.62 2019/08/28 04:55:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -28,6 +28,7 @@
 #include <sys/atomic.h>
 #include <sys/sensors.h>
 #include <sys/rwlock.h>
+#include <sys/syslog.h>
 
 #include <dev/biovar.h>
 #include <dev/pci/pcidevs.h>
@@ -47,7 +48,7 @@
 #define	MFII_PCI_MEMSIZE	0x2000 /* 8k */
 
 #define MFII_OSTS_INTR_VALID	0x00000009
-#define MFII_RPI		0x6c /* reply post host index */
+#define MFII_RPI		0x30c /* reply post host index */
 #define MFII_OSP2		0xb4 /* outbound scratch pad 2 */
 #define MFII_OSP3		0xb8 /* outbound scratch pad 3 */
 
@@ -356,12 +357,14 @@ uint32_t	mfii_debug = 0
 int		mfii_match(struct device *, void *, void *);
 void		mfii_attach(struct device *, struct device *, void *);
 int		mfii_detach(struct device *, int);
+int		mfii_activate(struct device *, int);
 
 struct cfattach mfii_ca = {
 	sizeof(struct mfii_softc),
 	mfii_match,
 	mfii_attach,
-	mfii_detach
+	mfii_detach,
+	mfii_activate,
 };
 
 struct cfdriver mfii_cd = {
@@ -973,6 +976,73 @@ mfii_detach(struct device *self, int flags)
 	return (0);
 }
 
+static void
+mfii_flush_cache(struct mfii_softc *sc, struct mfii_ccb *ccb)
+{
+	union mfi_mbox mbox = {
+		.b[0] = MR_FLUSH_CTRL_CACHE | MR_FLUSH_DISK_CACHE,
+	};
+	int rv;
+
+	mfii_scrub_ccb(ccb);
+	rv = mfii_do_mgmt(sc, ccb, MR_DCMD_CTRL_CACHE_FLUSH, &mbox,
+	    NULL, 0, SCSI_NOSLEEP);
+	if (rv != 0) {
+		printf("%s: unable to flush cache\n", DEVNAME(sc));
+		return;
+	}
+}
+
+static void
+mfii_shutdown(struct mfii_softc *sc, struct mfii_ccb *ccb)
+{
+	int rv;
+
+	mfii_scrub_ccb(ccb);
+	rv = mfii_do_mgmt(sc, ccb, MR_DCMD_CTRL_SHUTDOWN, NULL,
+	    NULL, 0, SCSI_POLL);
+	if (rv != 0) {
+		printf("%s: unable to shutdown controller\n", DEVNAME(sc));
+		return;
+	}
+}
+
+static void
+mfii_powerdown(struct mfii_softc *sc)
+{
+	struct mfii_ccb *ccb;
+
+	ccb = scsi_io_get(&sc->sc_iopool, SCSI_NOSLEEP);
+	if (ccb == NULL) {
+		printf("%s: unable to allocate ccb for shutdown\n",
+		    DEVNAME(sc));
+		return;
+	}
+
+	mfii_flush_cache(sc, ccb);
+	mfii_shutdown(sc, ccb);
+	scsi_io_put(&sc->sc_iopool, ccb);
+}
+
+int
+mfii_activate(struct device *self, int act)
+{
+	struct mfii_softc *sc = (struct mfii_softc *)self;
+	int rv;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(&sc->sc_dev, act);
+		mfii_powerdown(sc);
+		break;
+	default:
+		rv = config_activate_children(&sc->sc_dev, act);
+		break;
+	}
+
+	return (rv);
+}
+
 u_int32_t
 mfii_read(struct mfii_softc *sc, bus_size_t r)
 {
@@ -1154,29 +1224,31 @@ mfii_aen(void *arg)
 	struct mfii_ccb *ccb = sc->sc_aen_ccb;
 	struct mfii_dmamem *mdm = ccb->ccb_cookie;
 	const struct mfi_evt_detail *med = MFII_DMA_KVA(mdm);
+	uint32_t code;
 
 	mfii_dcmd_sync(sc, ccb,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_sync(sc->sc_dmat, MFII_DMA_MAP(mdm),
 	    0, MFII_DMA_LEN(mdm), BUS_DMASYNC_POSTREAD);
 
+	code = lemtoh32(&med->med_code);
+
 #if 0
-	printf("%s: %u %08x %02x %s\n", DEVNAME(sc),
-	    lemtoh32(&med->med_seq_num), lemtoh32(&med->med_code),
-	    med->med_arg_type, med->med_description);
+	log(LOG_DEBUG, "%s (seq %u, code %08x) %s\n", DEVNAME(sc),
+	    lemtoh32(&med->med_seq_num), code, med->med_description);
 #endif
 
-	switch (lemtoh32(&med->med_code)) {
+	switch (code) {
 	case MFI_EVT_PD_INSERTED_EXT:
 		if (med->med_arg_type != MFI_EVT_ARGS_PD_ADDRESS)
 			break;
-
+		
 		mfii_aen_pd_insert(sc, &med->args.pd_address);
 		break;
  	case MFI_EVT_PD_REMOVED_EXT:
 		if (med->med_arg_type != MFI_EVT_ARGS_PD_ADDRESS)
 			break;
-
+		
 		mfii_aen_pd_remove(sc, &med->args.pd_address);
 		break;
 
@@ -1291,7 +1363,7 @@ mfii_aen_ld_update(struct mfii_softc *sc)
 	for (i = 0; i < MFI_MAX_LD; i++) {
 		old = sc->sc_target_lds[i];
 		nld = newlds[i];
-
+		
 		if (old == -1 && nld != -1) {
 			DNPRINTF(MFII_D_MISC, "%s: attaching target %d\n",
 			    DEVNAME(sc), i);
@@ -1685,15 +1757,17 @@ mfii_do_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb, uint32_t opc,
 	struct mfii_sge *sge = (struct mfii_sge *)(ctx + 1);
 	struct mfi_dcmd_frame *dcmd = ccb->ccb_mfi;
 	struct mfi_frame_header *hdr = &dcmd->mdf_header;
-	u_int8_t *dma_buf;
+	u_int8_t *dma_buf = NULL;
 	int rv = EIO;
 
 	if (cold)
 		flags |= SCSI_NOSLEEP;
 
-	dma_buf = dma_alloc(len, PR_WAITOK);
-	if (dma_buf == NULL)
-		return (ENOMEM);
+	if (buf != NULL) {
+		dma_buf = dma_alloc(len, PR_WAITOK);
+		if (dma_buf == NULL)
+			return (ENOMEM);
+	}
 
 	ccb->ccb_data = dma_buf;
 	ccb->ccb_len = len;
@@ -1722,7 +1796,7 @@ mfii_do_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb, uint32_t opc,
 	hdr->mfh_cmd = MFI_CMD_DCMD;
 	hdr->mfh_context = ccb->ccb_smid;
 	hdr->mfh_data_len = htole32(len);
-	hdr->mfh_sg_count = ccb->ccb_dmamap->dm_nsegs;
+	hdr->mfh_sg_count = len ? ccb->ccb_dmamap->dm_nsegs : 0;
 
 	dcmd->mdf_opcode = opc;
 	/* handle special opcodes */
@@ -1730,12 +1804,15 @@ mfii_do_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb, uint32_t opc,
 		memcpy(&dcmd->mdf_mbox, mbox, sizeof(dcmd->mdf_mbox));
 
 	io->function = MFII_FUNCTION_PASSTHRU_IO;
-	io->sgl_offset0 = ((u_int8_t *)sge - (u_int8_t *)io) / 4;
-	io->chain_offset = ((u_int8_t *)sge - (u_int8_t *)io) / 16;
 
-	htolem64(&sge->sg_addr, ccb->ccb_mfi_dva);
-	htolem32(&sge->sg_len, MFI_FRAME_SIZE);
-	sge->sg_flags = MFII_SGE_CHAIN_ELEMENT | MFII_SGE_ADDR_IOCPLBNTA;
+	if (len) {
+		io->sgl_offset0 = ((u_int8_t *)sge - (u_int8_t *)io) / 4;
+		io->chain_offset = ((u_int8_t *)sge - (u_int8_t *)io) / 16;
+		htolem64(&sge->sg_addr, ccb->ccb_mfi_dva);
+		htolem32(&sge->sg_len, MFI_FRAME_SIZE);
+		sge->sg_flags =
+		    MFII_SGE_CHAIN_ELEMENT | MFII_SGE_ADDR_IOCPLBNTA;
+	}
 
 	ccb->ccb_req.flags = MFII_REQ_TYPE_SCSI;
 	ccb->ccb_req.smid = letoh16(ccb->ccb_smid);
@@ -1754,7 +1831,8 @@ mfii_do_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb, uint32_t opc,
 	}
 
 done:
-	dma_free(dma_buf, len);
+	if (buf != NULL)
+		dma_free(dma_buf, len);
 
 	return (rv);
 }
@@ -3718,7 +3796,7 @@ mfii_refresh_ld_sensor(struct mfii_softc *sc, int ld)
 
 	target = sc->sc_ld_list.mll_list[ld].mll_ld.mld_target;
 	sensor = &sc->sc_sensors[target];
-
+	
 	switch(sc->sc_ld_list.mll_list[ld].mll_state) {
 	case MFI_LD_OFFLINE:
 		sensor->value = SENSOR_DRIVE_FAIL;
