@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.60 2018/11/14 17:52:48 mpi Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.61 2019/08/28 22:22:43 kettenis Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -964,6 +964,7 @@ extent_free(struct extent *ex, u_long start, u_long size, int flags)
 	struct extent_region *rp, *nrp = NULL;
 	u_long end = start + (size - 1);
 	int exflags;
+	int error = 0;
 
 #ifdef DIAGNOSTIC
 	/* Check arguments. */
@@ -1081,6 +1082,11 @@ extent_free(struct extent *ex, u_long start, u_long size, int flags)
 		}
 	}
 
+	if (flags & EX_CONFLICTOK) {
+		error = EINVAL;
+		goto done;
+	}
+
 	/* Region not found, or request otherwise invalid. */
 #if defined(DIAGNOSTIC) || defined(DDB)
 	extent_print(ex);
@@ -1095,7 +1101,7 @@ extent_free(struct extent *ex, u_long start, u_long size, int flags)
 		ex->ex_flags &= ~EXF_WANTED;
 		wakeup(ex);
 	}
-	return (0);
+	return (error);
 }
 
 static struct extent_region *
