@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.241 2019/08/14 09:58:31 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.242 2019/08/28 07:34:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -953,7 +953,7 @@ window_pane_resize(struct window_pane *wp, u_int sx, u_int sy)
 	if (wme != NULL && wme->mode->resize != NULL)
 		wme->mode->resize(wme, sx, sy);
 
-	wp->flags |= PANE_RESIZE;
+	wp->flags |= (PANE_RESIZE|PANE_RESIZED);
 }
 
 /*
