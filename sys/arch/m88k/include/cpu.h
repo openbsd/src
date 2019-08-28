@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.66 2018/12/05 10:28:21 jsg Exp $ */
+/*	$OpenBSD: cpu.h,v 1.67 2019/08/28 13:48:40 aoyama Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -97,10 +97,6 @@ struct cpu_info {
 
 	u_int		 ci_cpuid;		/* cpu number */
 
-#if defined(MULTIPROCESSOR)
-	struct srp_hazard ci_srp_hazards[SRP_HAZARD_NUM];
-#endif
-
 	/*
 	 * Function pointers used within mplock to ensure
 	 * non-interruptability.
@@ -172,6 +168,9 @@ struct cpu_info {
 #define	CI_IPI_DMA_CACHECTL	0x00000100
 	void		(*ci_softipi_cb)(void);	/* 88110 softipi callback */
 
+#if defined(MULTIPROCESSOR)
+	struct srp_hazard ci_srp_hazards[SRP_HAZARD_NUM];
+#endif
 #ifdef DIAGNOSTIC
 	int	ci_mutex_level;
 #endif
