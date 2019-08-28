@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.17 2019/08/28 01:50:48 dlg Exp $ */
+/*	$OpenBSD: sff.c,v 1.18 2019/08/28 01:52:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -176,7 +176,7 @@ static const char *sff8024_con_names[] = {
 	[SFF8024_CON_Cu_PIGTAIL]
 				= "DAC",
 	[SFF8024_CON_RJ45]	= "RJ45",
-	[SFF8024_CON_NO]	= "No separable connector",
+	[SFF8024_CON_NO]	= "No connector",
 	[SFF8024_CON_MXC_2x16]	= "MXC 2x16",
 };
 
