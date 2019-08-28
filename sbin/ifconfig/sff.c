@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.16 2019/08/28 01:47:20 dlg Exp $ */
+/*	$OpenBSD: sff.c,v 1.17 2019/08/28 01:50:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -342,9 +342,6 @@ static const struct sff_media_map upper_media_map = {
 	.scale_om3		= 2,
 	.dist_cu		= UPPER_DIST_CU,
 };
-
-#define inf8077_media_map upper_media_map
-#define sff8436_media_map upper_media_map
 
 static void	hexdump(const void *, size_t);
 static int	if_sff8472(int, const char *, int, const struct if_sffpage *);
