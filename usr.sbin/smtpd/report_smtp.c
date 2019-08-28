@@ -1,4 +1,4 @@
-/*	$OpenBSD: report_smtp.c,v 1.8 2019/07/26 06:30:13 gilles Exp $	*/
+/*	$OpenBSD: report_smtp.c,v 1.9 2019/08/28 15:50:36 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -60,6 +60,22 @@ report_smtp_link_connect(const char *direction, uint64_t qid, const char *rdns, 
 	m_add_int(p_lka, fcrdns);
 	m_add_sockaddr(p_lka, (const struct sockaddr *)ss_src);
 	m_add_sockaddr(p_lka, (const struct sockaddr *)ss_dest);
+	m_close(p_lka);
+}
+
+void
+report_smtp_link_greeting(const char *direction, uint64_t qid,
+    const char *domain)
+{
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
+	m_create(p_lka, IMSG_REPORT_SMTP_LINK_GREETING, 0, 0, -1);
+	m_add_string(p_lka, direction);
+	m_add_timeval(p_lka, &tv);
+	m_add_id(p_lka, qid);
+	m_add_string(p_lka, domain);
 	m_close(p_lka);
 }
 

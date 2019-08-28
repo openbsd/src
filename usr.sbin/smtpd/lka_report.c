@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.25 2019/08/28 15:37:28 martijn Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.26 2019/08/28 15:50:36 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -35,7 +35,7 @@
 #include "smtpd.h"
 #include "log.h"
 
-#define	PROTOCOL_VERSION	"0.1"
+#define	PROTOCOL_VERSION	"0.2"
 
 struct reporter_proc {
 	TAILQ_ENTRY(reporter_proc)	entries;
@@ -51,6 +51,7 @@ static struct smtp_events {
 } smtp_events[] = {
 	{ "link-connect" },
 	{ "link-disconnect" },
+	{ "link-greeting" },
 	{ "link-identify" },
 	{ "link-tls" },
 	{ "link-auth" },
@@ -216,6 +217,14 @@ lka_report_smtp_link_disconnect(const char *direction, struct timeval *tv, uint6
 {
 	report_smtp_broadcast(reqid, direction, tv, "link-disconnect",
 	    "%016"PRIx64"\n", reqid);
+}
+
+void
+lka_report_smtp_link_greeting(const char *direction, uint64_t reqid,
+    struct timeval *tv, const char *domain)
+{
+	report_smtp_broadcast(reqid, direction, tv, "link-greeting", "%s\n",
+	    domain);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.239 2019/07/26 06:30:13 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.240 2019/08/28 15:50:36 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -84,6 +84,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	const char		*response;
 	const char		*ciphers;
 	const char		*address;
+	const char		*domain;
 	const char		*helomethod;
 	const char		*heloname;
 	const char		*filter_name;
@@ -391,6 +392,17 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_end(&m);
 
 		lka_report_smtp_link_connect(direction, &tv, reqid, rdns, fcrdns, &ss_src, &ss_dest);
+		return;
+
+	case IMSG_REPORT_SMTP_LINK_GREETING:
+		m_msg(&m, imsg);
+		m_get_string(&m, &direction);
+		m_get_timeval(&m, &tv);
+		m_get_id(&m, &reqid);
+		m_get_string(&m, &domain);
+		m_end(&m);
+
+		lka_report_smtp_link_greeting(direction, reqid, &tv, domain);
 		return;
 
 	case IMSG_REPORT_SMTP_LINK_DISCONNECT:

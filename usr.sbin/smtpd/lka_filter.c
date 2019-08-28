@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.42 2019/08/28 15:37:28 martijn Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.43 2019/08/28 15:50:36 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -35,7 +35,7 @@
 #include "smtpd.h"
 #include "log.h"
 
-#define	PROTOCOL_VERSION	"0.1"
+#define	PROTOCOL_VERSION	"0.2"
 
 struct filter;
 struct filter_session;

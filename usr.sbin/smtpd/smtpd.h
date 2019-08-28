@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.632 2019/08/23 07:09:52 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.633 2019/08/28 15:50:36 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -310,6 +310,7 @@ enum imsg_type {
 
 	IMSG_REPORT_SMTP_LINK_CONNECT,
 	IMSG_REPORT_SMTP_LINK_DISCONNECT,
+	IMSG_REPORT_SMTP_LINK_GREETING,
 	IMSG_REPORT_SMTP_LINK_IDENTIFY,
 	IMSG_REPORT_SMTP_LINK_TLS,
 	IMSG_REPORT_SMTP_LINK_AUTH,
@@ -1332,6 +1333,8 @@ void lka_report_register_hook(const char *, const char *);
 void lka_report_smtp_link_connect(const char *, struct timeval *, uint64_t, const char *, int,
     const struct sockaddr_storage *, const struct sockaddr_storage *);
 void lka_report_smtp_link_disconnect(const char *, struct timeval *, uint64_t);
+void lka_report_smtp_link_greeting(const char *, uint64_t, struct timeval *,
+    const char *);
 void lka_report_smtp_link_identify(const char *, struct timeval *, uint64_t, const char *, const char *);
 void lka_report_smtp_link_tls(const char *, struct timeval *, uint64_t, const char *);
 void lka_report_smtp_link_auth(const char *, struct timeval *, uint64_t, const char *, const char *);
@@ -1501,6 +1504,7 @@ int queue_message_walk(struct envelope *, uint32_t, int *, void **);
 void report_smtp_link_connect(const char *, uint64_t, const char *, int,
     const struct sockaddr_storage *, const struct sockaddr_storage *);
 void report_smtp_link_disconnect(const char *, uint64_t);
+void report_smtp_link_greeting(const char *, uint64_t, const char *);
 void report_smtp_link_identify(const char *, uint64_t, const char *, const char *);
 void report_smtp_link_tls(const char *, uint64_t, const char *);
 void report_smtp_link_auth(const char *, uint64_t, const char *, const char *);
