@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.24 2019/08/18 16:52:02 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.25 2019/08/28 15:37:28 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -102,16 +102,16 @@ lka_report_register_hook(const char *name, const char *hook)
 	void *iter;
 	size_t	i;
 
-	if (strncasecmp(hook, "smtp-in|", 8) == 0) {
+	if (strncmp(hook, "smtp-in|", 8) == 0) {
 		subsystem = &smtp_in;
 		hook += 8;
 	}
-	else if (strncasecmp(hook, "smtp-out|", 9) == 0) {
+	else if (strncmp(hook, "smtp-out|", 9) == 0) {
 		subsystem = &smtp_out;
 		hook += 9;
 	}
 	else
-		return;
+		fatalx("Invalid message direction: %s", hook);
 
 	if (strcmp(hook, "*") == 0) {
 		iter = NULL;
@@ -127,7 +127,7 @@ lka_report_register_hook(const char *name, const char *hook)
 		if (strcmp(hook, smtp_events[i].event) == 0)
 			break;
 	if (i == nitems(smtp_events))
-		return;
+		fatalx("Unrecognized report name: %s", hook);
 
 	tailq = dict_get(subsystem, hook);
 	rp = xcalloc(1, sizeof *rp);

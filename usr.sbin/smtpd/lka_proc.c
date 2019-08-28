@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_proc.c,v 1.8 2019/08/10 14:50:58 gilles Exp $	*/
+/*	$OpenBSD: lka_proc.c,v 1.9 2019/08/28 15:37:28 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -47,7 +47,7 @@ struct processor_instance {
 
 static void	processor_io(struct io *, int, void *);
 static void	processor_errfd(struct io *, int, void *);
-int		lka_filter_process_response(const char *, const char *);
+void		lka_filter_process_response(const char *, const char *);
 
 int
 lka_proc_ready(void)
@@ -123,43 +123,50 @@ processor_register(const char *name, const char *line)
 
 	processor = dict_xget(&processors, name);
 
-	if (strcasecmp(line, "register|ready") == 0) {
+	if (strcmp(line, "register|ready") == 0) {
 		processor->ready = 1;
 		return;
 	}
 
-	if (strncasecmp(line, "register|report|", 16) == 0) {
+	if (strncmp(line, "register|report|", 16) == 0) {
 		lka_report_register_hook(name, line+16);
 		return;
 	}
 
-	if (strncasecmp(line, "register|filter|", 16) == 0) {
+	if (strncmp(line, "register|filter|", 16) == 0) {
 		lka_filter_register_hook(name, line+16);
 		return;
 	}
+
+	fatalx("Invalid register line received: %s", line);
 }
 
 static void
 processor_io(struct io *io, int evt, void *arg)
 {
+	struct processor_instance *processor;
 	const char		*name = arg;
 	char			*line = NULL;
 	ssize_t			 len;
 
 	switch (evt) {
 	case IO_DATAIN:
-	    nextline:
-		line = io_getline(io, &len);
-		/* No complete line received */
-		if (line == NULL)
-			return;
-
-		if (strncasecmp("register|", line, 9) == 0)
-			processor_register(name, line);
-		else if (! lka_filter_process_response(name, line))
-			fatalx("misbehaving filter");
-
-		goto nextline;
+		while ((line = io_getline(io, &len)) != NULL) {
+			if (strncmp("register|", line, 9) == 0) {
+				processor_register(name, line);
+				continue;
+			}
+			
+			processor = dict_xget(&processors, name);
+			if (!processor->ready)
+				fatalx("Non-register message before register|"
+				    "ready: %s", line);
+			else if (strncmp(line, "filter-result|", 14) == 0 ||
+			    strncmp(line, "filter-dataline|", 16) || 0)
+				lka_filter_process_response(name, line);
+			else
+				fatalx("Invalid filter message type: %s", line);
+		}
 	}
 }
 
