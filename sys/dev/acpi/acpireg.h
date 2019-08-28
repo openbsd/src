@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.44 2019/06/10 14:38:06 kettenis Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.45 2019/08/28 22:39:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -150,6 +150,7 @@ struct acpi_fadt {
 #define	FADT_LEGACY_DEVICES		0x0001	/* Legacy devices supported */
 #define	FADT_i8042			0x0002	/* Keyboard controller present */
 #define	FADT_NO_VGA			0x0004	/* Do not probe VGA */
+#define	FADT_NO_MSI			0x0008	/* Do not enable MSI */
 	uint8_t		reserved1;
 	uint32_t	flags;
 #define	FADT_WBINVD			0x00000001

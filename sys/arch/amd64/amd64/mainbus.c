@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.47 2019/05/17 19:07:15 guenther Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.48 2019/08/28 22:39:09 kettenis Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -231,6 +231,9 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 #if NPCI > 0
+#if NACPI > 0
+	if (!acpi_haspci)
+#endif
 	{
 		pci_init_extents();
 
@@ -244,6 +247,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		mba.mba_pba.pba_busex = pcibus_ex;
 		mba.mba_pba.pba_domain = pci_ndomains++;
 		mba.mba_pba.pba_bus = 0;
+		mba.mba_pba.pba_flags = PCI_FLAGS_MSI_ENABLED;
 		config_found(self, &mba.mba_pba, mainbus_print);
 #if NACPI > 0
 		acpi_pciroots_attach(self, &mba.mba_pba, mainbus_print);
