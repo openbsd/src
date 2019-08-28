@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.3 2018/04/02 17:42:15 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.4 2019/08/28 07:03:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -18,6 +18,8 @@
 #ifndef _DEV_OFW_MISC_H_
 #define _DEV_OFW_MISC_H_
 
+/* Register maps */
+
 void	regmap_register(int, bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 struct regmap;
@@ -27,5 +29,29 @@ struct regmap *regmap_byphandle(uint32_t);
 
 uint32_t regmap_read_4(struct regmap *, bus_size_t);
 void	regmap_write_4(struct regmap *, bus_size_t, uint32_t);
+
+/* PHY support */
+
+#define PHY_NONE	0
+#define PHY_TYPE_SATA	1
+#define PHY_TYPE_PCIE	2
+#define PHY_TYPE_USB2	3
+#define PHY_TYPE_USB3	4
+#define PHY_TYPE_UFS	5
+
+struct phy_device {
+	int	pd_node;
+	void	*pd_cookie;
+	int	(*pd_enable)(void *, uint32_t *);
+
+	LIST_ENTRY(phy_device) pd_list;
+	uint32_t pd_phandle;
+	uint32_t pd_cells;
+};
+
+void	phy_register(struct phy_device *);
+
+int	phy_enable_idx(int, int);
+int	phy_enable(int, const char *);
 
 #endif /* _DEV_OFW_MISC_H_ */

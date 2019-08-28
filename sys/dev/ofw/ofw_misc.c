@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.5 2018/04/02 17:42:15 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.6 2019/08/28 07:03:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -102,4 +102,95 @@ regmap_read_4(struct regmap *rm, bus_size_t offset)
 {
 	KASSERT(offset <= rm->rm_size - sizeof(uint32_t));
 	return bus_space_read_4(rm->rm_tag, rm->rm_handle, offset);
+}
+
+
+/*
+ * PHY support.
+ */
+
+LIST_HEAD(, phy_device) phy_devices =
+	LIST_HEAD_INITIALIZER(phy_devices);
+
+void
+phy_register(struct phy_device *pd)
+{
+	pd->pd_cells = OF_getpropint(pd->pd_node, "#phy-cells", 0);
+	pd->pd_phandle = OF_getpropint(pd->pd_node, "phandle", 0);
+	if (pd->pd_phandle == 0)
+		return;
+
+	LIST_INSERT_HEAD(&phy_devices, pd, pd_list);
+}
+
+int
+phy_enable_cells(uint32_t *cells)
+{
+	struct phy_device *pd;
+	uint32_t phandle = cells[0];
+
+	LIST_FOREACH(pd, &phy_devices, pd_list) {
+		if (pd->pd_phandle == phandle)
+			break;
+	}
+
+	if (pd && pd->pd_enable)
+		return pd->pd_enable(pd->pd_cookie, &cells[1]);
+
+	return -1;
+}
+
+uint32_t *
+phy_next_phy(uint32_t *cells)
+{
+	uint32_t phandle = cells[0];
+	int node, ncells;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return NULL;
+
+	ncells = OF_getpropint(node, "#phy-cells", 0);
+	return cells + ncells + 1;
+}
+
+int
+phy_enable_idx(int node, int idx)
+{
+	uint32_t *phys;
+	uint32_t *phy;
+	int rv = -1;
+	int len;
+
+	len = OF_getproplen(node, "phys");
+	if (len <= 0)
+		return -1;
+
+	phys = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "phys", phys, len);
+
+	phy = phys;
+	while (phy && phy < phys + (len / sizeof(uint32_t))) {
+		if (idx <= 0)
+			rv = phy_enable_cells(phy);
+		if (idx == 0)
+			break;
+		phy = phy_next_phy(phy);
+		idx--;
+	}
+
+	free(phys, M_TEMP, len);
+	return rv;
+}
+
+int
+phy_enable(int node, const char *name)
+{
+	int idx;
+
+	idx = OF_getindex(node, name, "phy-names");
+	if (idx == -1)
+		return -1;
+
+	return phy_enable_idx(node, idx);
 }
