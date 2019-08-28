@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.146 2019/08/23 12:09:41 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.147 2019/08/28 19:46:20 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -548,40 +548,44 @@ valid_domainpart(const char *s)
 	return res_hnok(s);
 }
 
-#define charok(c) ((c) == '-' || (c) == '_' || isalpha((int)(c)) || isdigit((int)(c)))
-
-#define MAXLABELSIZE 64
-#define MAXDNAMESIZE 254
+#define LABELCHR(c) ((c) == '-' || (c) == '_' || isalpha((int)(c)) || isdigit((int)(c)))
+#define LABELMAX 63
+#define DNAMEMAX 253
 
 int
-valid_domainname(const char *dname)
+valid_domainname(const char *str)
 {
-	const char *label, *s = dname;
+	const char *label, *s;
 
-	/* read a sequence of dot-separated label */
-	for (;;) {
+	/*
+	 * Expect a sequence of dot-separated labels, possibly with a trailing
+	 * dot. The empty string is rejected, as well a single dot.
+	 */
+	for (s = str; *s; s++) {
 
-		/* label must have at least one char */
-		if (!charok(*s))
-			return 0;
+		/* Start of a new label. */
 		label = s;
-		s++;
-
-		/* read all chars */
-		while (charok(*s))
+		while (LABELCHR(*s))
 			s++;
-		if (s - label >= MAXLABELSIZE)
+
+		/* Must have at least one char and at most LABELMAX. */
+		if (s == label || s - label > LABELMAX)
 			return 0;
 
-		if (*s == '\0') {
-			if (s - dname >= MAXDNAMESIZE)
-				return 0;
-			return 1;
-		}
+		/* If last label, stop here. */
+		if (*s == '\0')
+			break;
+
+		/* Expect a dot as label separator or last char. */
 		if (*s != '.')
 			return 0;
-		s++;
 	}
+
+	/* Must have at leat one label and no more than DNAMEMAX chars. */
+	if (s == str || s - str > DNAMEMAX)
+		return 0;
+
+	return 1;
 }
 
 int
