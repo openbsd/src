@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.237 2019/07/20 00:49:54 cheloha Exp $	*/
+/*	$OpenBSD: ping.c,v 1.238 2019/08/28 20:03:51 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -263,6 +263,12 @@ main(int argc, char *argv[])
 	gid_t gid;
 	u_int rtableid = 0;
 	extern char *__progname;
+
+	/* Cannot pledge due to special setsockopt()s below */
+	if (unveil("/", "r") == -1)
+		err(1, "unveil");
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
 
 	if (strcmp("ping6", __progname) == 0) {
 		v6flag = 1;

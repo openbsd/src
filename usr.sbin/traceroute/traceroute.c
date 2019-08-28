@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.161 2019/06/28 13:32:51 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.162 2019/08/28 20:03:51 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -326,6 +326,12 @@ main(int argc, char *argv[])
 
 	uid_t		 ouid, uid;
 	gid_t		 gid;
+
+	/* Cannot pledge due to special setsockopt()s below */
+	if (unveil("/", "r") == -1)
+		err(1, "unveil");
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
 
 	if ((conf = calloc(1, sizeof(*conf))) == NULL)
 		err(1,NULL);
