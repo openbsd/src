@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.46 2019/08/18 13:11:47 kettenis Exp $
+# $OpenBSD: files.drm,v 1.47 2019/08/28 10:17:59 kettenis Exp $
 
 # direct rendering modules
 define drmbase {[primary = -1]}
@@ -376,9 +376,9 @@ file	dev/pci/drm/amd/display/dc/bios/dce80/command_table_helper_dce80.c	amddal
 file	dev/pci/drm/amd/display/dc/calcs/bw_fixed.c			amddal
 file	dev/pci/drm/amd/display/dc/calcs/custom_float.c			amddal
 file	dev/pci/drm/amd/display/dc/calcs/dce_calcs.c			amddal
-file	dev/pci/drm/amd/display/dc/calcs/dcn_calc_auto.c		amddal
-file	dev/pci/drm/amd/display/dc/calcs/dcn_calc_math.c		amddal
-file	dev/pci/drm/amd/display/dc/calcs/dcn_calcs.c			amddal
+file	dev/pci/drm/amd/display/dc/calcs/dcn_calc_auto.c		amddal & bios
+file	dev/pci/drm/amd/display/dc/calcs/dcn_calc_math.c		amddal & bios
+file	dev/pci/drm/amd/display/dc/calcs/dcn_calcs.c			amddal & bios
 file	dev/pci/drm/amd/display/dc/core/amdgpu_dc.c			amddal
 file	dev/pci/drm/amd/display/dc/core/dc_debug.c			amddal
 file	dev/pci/drm/amd/display/dc/core/dc_hw_sequencer.c		amddal
@@ -426,32 +426,32 @@ file	dev/pci/drm/amd/display/dc/dce120/dce120_timing_generator.c	amddal
 file	dev/pci/drm/amd/display/dc/dce80/dce80_hw_sequencer.c		amddal
 file	dev/pci/drm/amd/display/dc/dce80/dce80_resource.c		amddal
 file	dev/pci/drm/amd/display/dc/dce80/dce80_timing_generator.c	amddal
-file	dev/pci/drm/amd/display/dc/dcn10/dcn10_cm_common.c		amddal
-file	dev/pci/drm/amd/display/dc/dcn10/dcn10_dpp.c			amddal
-file	dev/pci/drm/amd/display/dc/dcn10/dcn10_dpp_cm.c			amddal
-file	dev/pci/drm/amd/display/dc/dcn10/dcn10_dpp_dscl.c		amddal
-file	dev/pci/drm/amd/display/dc/dcn10/dcn10_hubbub.c			amddal
-file	dev/pci/drm/amd/display/dc/dcn10/dcn10_hubp.c			amddal
-file	dev/pci/drm/amd/display/dc/dcn10/dcn10_hw_sequencer.c		amddal
-file	dev/pci/drm/amd/display/dc/dcn10/dcn10_ipp.c			amddal
-file	dev/pci/drm/amd/display/dc/dcn10/dcn10_link_encoder.c		amddal
-file	dev/pci/drm/amd/display/dc/dcn10/dcn10_mpc.c			amddal
-file	dev/pci/drm/amd/display/dc/dcn10/dcn10_opp.c			amddal
-file	dev/pci/drm/amd/display/dc/dcn10/dcn10_optc.c			amddal
-file	dev/pci/drm/amd/display/dc/dcn10/dcn10_resource.c		amddal
-file	dev/pci/drm/amd/display/dc/dcn10/dcn10_stream_encoder.c		amddal
-file	dev/pci/drm/amd/display/dc/dml/display_mode_lib.c		amddal
-file	dev/pci/drm/amd/display/dc/dml/display_rq_dlg_helpers.c		amddal
-file	dev/pci/drm/amd/display/dc/dml/dml1_display_rq_dlg_calc.c	amddal
-file	dev/pci/drm/amd/display/dc/dml/dml_common_defs.c		amddal
+file	dev/pci/drm/amd/display/dc/dcn10/dcn10_cm_common.c		amddal & bios
+file	dev/pci/drm/amd/display/dc/dcn10/dcn10_dpp.c			amddal & bios
+file	dev/pci/drm/amd/display/dc/dcn10/dcn10_dpp_cm.c			amddal & bios
+file	dev/pci/drm/amd/display/dc/dcn10/dcn10_dpp_dscl.c		amddal & bios
+file	dev/pci/drm/amd/display/dc/dcn10/dcn10_hubbub.c			amddal & bios
+file	dev/pci/drm/amd/display/dc/dcn10/dcn10_hubp.c			amddal & bios
+file	dev/pci/drm/amd/display/dc/dcn10/dcn10_hw_sequencer.c		amddal & bios
+file	dev/pci/drm/amd/display/dc/dcn10/dcn10_ipp.c			amddal & bios
+file	dev/pci/drm/amd/display/dc/dcn10/dcn10_link_encoder.c		amddal & bios
+file	dev/pci/drm/amd/display/dc/dcn10/dcn10_mpc.c			amddal & bios
+file	dev/pci/drm/amd/display/dc/dcn10/dcn10_opp.c			amddal & bios
+file	dev/pci/drm/amd/display/dc/dcn10/dcn10_optc.c			amddal & bios
+file	dev/pci/drm/amd/display/dc/dcn10/dcn10_resource.c		amddal & bios
+file	dev/pci/drm/amd/display/dc/dcn10/dcn10_stream_encoder.c		amddal & bios
+file	dev/pci/drm/amd/display/dc/dml/display_mode_lib.c		amddal & bios
+file	dev/pci/drm/amd/display/dc/dml/display_rq_dlg_helpers.c		amddal & bios
+file	dev/pci/drm/amd/display/dc/dml/dml1_display_rq_dlg_calc.c	amddal & bios
+file	dev/pci/drm/amd/display/dc/dml/dml_common_defs.c		amddal & bios
 file	dev/pci/drm/amd/display/dc/gpio/dce110/hw_factory_dce110.c	amddal
 file	dev/pci/drm/amd/display/dc/gpio/dce110/hw_translate_dce110.c	amddal
 file	dev/pci/drm/amd/display/dc/gpio/dce120/hw_factory_dce120.c	amddal
 file	dev/pci/drm/amd/display/dc/gpio/dce120/hw_translate_dce120.c	amddal
 file	dev/pci/drm/amd/display/dc/gpio/dce80/hw_factory_dce80.c	amddal
 file	dev/pci/drm/amd/display/dc/gpio/dce80/hw_translate_dce80.c	amddal
-file	dev/pci/drm/amd/display/dc/gpio/dcn10/hw_factory_dcn10.c	amddal
-file	dev/pci/drm/amd/display/dc/gpio/dcn10/hw_translate_dcn10.c	amddal
+file	dev/pci/drm/amd/display/dc/gpio/dcn10/hw_factory_dcn10.c	amddal & bios
+file	dev/pci/drm/amd/display/dc/gpio/dcn10/hw_translate_dcn10.c	amddal & bios
 file	dev/pci/drm/amd/display/dc/gpio/diagnostics/hw_factory_diag.c	amddal
 file	dev/pci/drm/amd/display/dc/gpio/diagnostics/hw_translate_diag.c	amddal
 file	dev/pci/drm/amd/display/dc/gpio/gpio_base.c			amddal
@@ -472,7 +472,7 @@ file	dev/pci/drm/amd/display/dc/i2caux/dce120/i2caux_dce120.c	amddal
 file	dev/pci/drm/amd/display/dc/i2caux/dce80/i2c_hw_engine_dce80.c	amddal
 file	dev/pci/drm/amd/display/dc/i2caux/dce80/i2c_sw_engine_dce80.c	amddal
 file	dev/pci/drm/amd/display/dc/i2caux/dce80/i2caux_dce80.c		amddal
-file	dev/pci/drm/amd/display/dc/i2caux/dcn10/i2caux_dcn10.c		amddal
+file	dev/pci/drm/amd/display/dc/i2caux/dcn10/i2caux_dcn10.c		amddal & bios
 file	dev/pci/drm/amd/display/dc/i2caux/diagnostics/i2caux_diag.c	amddal
 file	dev/pci/drm/amd/display/dc/i2caux/engine_base.c			amddal
 file	dev/pci/drm/amd/display/dc/i2caux/i2c_engine.c			amddal
@@ -483,7 +483,7 @@ file	dev/pci/drm/amd/display/dc/i2caux/i2caux.c			amddal
 file	dev/pci/drm/amd/display/dc/irq/dce110/irq_service_dce110.c	amddal
 file	dev/pci/drm/amd/display/dc/irq/dce120/irq_service_dce120.c	amddal
 file	dev/pci/drm/amd/display/dc/irq/dce80/irq_service_dce80.c	amddal
-file	dev/pci/drm/amd/display/dc/irq/dcn10/irq_service_dcn10.c	amddal
+file	dev/pci/drm/amd/display/dc/irq/dcn10/irq_service_dcn10.c	amddal & bios
 file	dev/pci/drm/amd/display/dc/irq/irq_service.c			amddal
 file	dev/pci/drm/amd/display/dc/virtual/virtual_link_encoder.c	amddal
 file	dev/pci/drm/amd/display/dc/virtual/virtual_stream_encoder.c	amddal

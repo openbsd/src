@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.116 2019/08/28 07:12:37 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.117 2019/08/28 10:17:59 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -110,6 +110,9 @@ wsdisplay*	at simplefb?
 radeondrm*	at pci?
 drm*		at radeondrm?
 wsdisplay*	at radeondrm?
+amdgpu*		at pci?
+drm*		at amdgpu?
+wsdisplay*	at amdgpu?
 
 # iMX
 imxccm*		at fdt? early 1
