@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.15 2019/08/27 23:24:35 dlg Exp $ */
+/*	$OpenBSD: sff.c,v 1.16 2019/08/28 01:47:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -51,7 +51,22 @@
 #define SFF_THRESH_REG(_i)	((_i) * 2)
 
 struct sff_thresholds {
-	 float thresholds[SFF_THRESH_COUNT];
+	 float		thresholds[SFF_THRESH_COUNT];
+};
+
+struct sff_media_map {
+	float		factor_wavelength;
+	int		scale_om1;
+	int		scale_om2;
+	int		scale_om3;
+	uint8_t		connector_type;
+	uint8_t		wavelength;
+	uint8_t		dist_smf_m;
+	uint8_t		dist_smf_km;
+	uint8_t		dist_om1;
+	uint8_t		dist_om2;
+	uint8_t		dist_om3;
+	uint8_t		dist_cu;
 };
 
 #define SFF8024_ID_UNKNOWN	0x00
@@ -208,6 +223,21 @@ static const char *sff8024_con_names[] = {
 #define SFF8472_COMPLIANCE_11_4			0x07 /* SFF-8472 Rev 11.4 */
 #define SFF8472_COMPLIANCE_12_3			0x08 /* SFF-8472 Rev 12.3 */
 
+static const struct sff_media_map sff8472_media_map = {
+	.connector_type		= SFF8472_CON,
+	.wavelength		= SFF8472_WAVELENGTH,
+	.factor_wavelength	= 1.0,
+	.dist_smf_m		= SFF8472_DIST_SMF_M,
+	.dist_smf_km		= SFF8472_DIST_SMF_KM,
+	.dist_om1		= SFF8472_DIST_OM1,
+	.scale_om1		= 10,
+	.dist_om2		= SFF8472_DIST_OM2,
+	.scale_om2		= 10,
+	.dist_om3		= SFF8472_DIST_OM3,
+	.scale_om3		= 20,
+	.dist_cu		= SFF8472_DIST_CU,
+};
+
 /*
  * page 0xa2
  */
@@ -278,6 +308,14 @@ static const char *sff8024_con_names[] = {
 
 /* SFF-8636 and INF-8077 share a layout for various strings */
 
+#define UPPER_CON			130 /* connector type */
+#define UPPER_DIST_SMF			142
+#define UPPER_DIST_OM3			143
+#define UPPER_DIST_OM2			144
+#define UPPER_DIST_OM1			145
+#define UPPER_DIST_CU			146
+#define UPPER_WAVELENGTH		186
+
 #define UPPER_VENDOR_START		148
 #define UPPER_VENDOR_END		163
 #define UPPER_PRODUCT_START		168
@@ -289,6 +327,24 @@ static const char *sff8024_con_names[] = {
 #define UPPER_DATECODE			212
 #define UPPER_LOT_START			218
 #define UPPER_LOT_END			219
+
+static const struct sff_media_map upper_media_map = {
+	.connector_type		= UPPER_CON,
+	.wavelength		= UPPER_WAVELENGTH,
+	.factor_wavelength	= 20.0,
+	.dist_smf_m		= 0,
+	.dist_smf_km		= UPPER_DIST_SMF,
+	.dist_om1		= UPPER_DIST_OM1,
+	.scale_om1		= 1,
+	.dist_om2		= UPPER_DIST_OM1,
+	.scale_om2		= 1,
+	.dist_om3		= UPPER_DIST_OM3,
+	.scale_om3		= 2,
+	.dist_cu		= UPPER_DIST_CU,
+};
+
+#define inf8077_media_map upper_media_map
+#define sff8436_media_map upper_media_map
 
 static void	hexdump(const void *, size_t);
 static int	if_sff8472(int, const char *, int, const struct if_sffpage *);
@@ -522,38 +578,48 @@ if_sff_printdist(const char *type, int value, int scale)
 		    distance / 1000.0, type);
 }
 
-static int
-if_sff8472(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
+static void
+if_sff_printmedia(const struct if_sffpage *pg, const struct sff_media_map *m)
 {
-	struct if_sffpage ddm;
-	uint8_t con, ddm_types;
-	int i;
+	uint8_t con, dist;
+	unsigned int wavelength;
 
-	con = pg0->sff_data[SFF8472_CON];
+	con = pg->sff_data[m->connector_type];
 	printf("%s", sff_con_name(con));
 
-	i = if_sff_int(pg0, SFF8472_WAVELENGTH);
-	switch (i) {
+	wavelength = if_sff_uint(pg, m->wavelength);
+	switch (wavelength) {
+	case 0x0000:
+		/* not known or is unavailable */
+		break;
 	/* Copper Cable */
 	case 0x0100: /* SFF-8431 Appendix E */
 	case 0x0400: /* SFF-8431 limiting */
 	case 0x0c00: /* SFF-8431 limiting and FC-PI-4 limiting */
 		break;
 	default:
-		printf(", %.02u nm", i);
+		printf(", %.f nm", wavelength / m->factor_wavelength);
 	}
 
-	if (pg0->sff_data[SFF8472_DIST_SMF_M] > 0 &&
-	    pg0->sff_data[SFF8472_DIST_SMF_M] < 255)
-		if_sff_printdist("m SMF",
-		    pg0->sff_data[SFF8472_DIST_SMF_M], 100);
+	if (m->dist_smf_m != 0 &&
+	    pg->sff_data[m->dist_smf_m] < 0 &&
+	    pg->sff_data[m->dist_smf_m] < 255)
+		if_sff_printdist("m SMF", pg->sff_data[m->dist_smf_m], 100);
 	else
-		if_sff_printdist("km SMF",
-		    pg0->sff_data[SFF8472_DIST_SMF_KM], 1);
-	if_sff_printdist("m OM2", pg0->sff_data[SFF8472_DIST_OM2], 10);
-	if_sff_printdist("m OM1", pg0->sff_data[SFF8472_DIST_OM1], 10);
-	if_sff_printdist("m OM3", pg0->sff_data[SFF8472_DIST_OM3], 10);
-	if_sff_printdist("m", pg0->sff_data[SFF8472_DIST_CU], 1);
+		if_sff_printdist("km SMF", pg->sff_data[m->dist_smf_km], 1);
+	if_sff_printdist("m OM2", pg->sff_data[m->dist_om2], m->scale_om2);
+	if_sff_printdist("m OM1", pg->sff_data[m->dist_om1], m->scale_om1);
+	if_sff_printdist("m OM3", pg->sff_data[m->dist_om3], m->scale_om3);
+	if_sff_printdist("m", pg->sff_data[m->dist_cu], 1);
+}
+
+static int
+if_sff8472(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
+{
+	struct if_sffpage ddm;
+	uint8_t ddm_types;
+
+	if_sff_printmedia(pg0, &sff8472_media_map);
 
 	printf("\n\tmodel: ");
 	if_sff_ascii_print(pg0, "",
@@ -631,6 +697,8 @@ if_sff8472(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
 static void
 if_upper_strings(const struct if_sffpage *pg)
 {
+	if_sff_printmedia(pg, &upper_media_map);
+
 	printf("\n\tmodel: ");
 	if_sff_ascii_print(pg, "",
 	    UPPER_VENDOR_START, UPPER_VENDOR_END, " ");
