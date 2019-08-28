@@ -1211,6 +1211,7 @@
 ./usr/share/man/man4/amdpm.4
 ./usr/share/man/man4/ami.4
 ./usr/share/man/man4/amlclock.4
+./usr/share/man/man4/amlpinctrl.4
 ./usr/share/man/man4/amlreset.4
 ./usr/share/man/man4/amlrng.4
 ./usr/share/man/man4/amluart.4
