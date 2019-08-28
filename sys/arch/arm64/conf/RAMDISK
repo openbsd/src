@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.94 2019/08/27 22:21:52 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.95 2019/08/28 07:12:37 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -134,6 +134,7 @@ usb*		at dwctwo?
 
 # Amlogic SoCs
 amlclock*	at fdt? early 1
+amlpinctrl*	at fdt? early 1
 amlreset*	at fdt? early 1
 amlrng*		at fdt?
 amluart*	at fdt?
