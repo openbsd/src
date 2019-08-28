@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.289 2019/07/17 19:57:32 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.290 2019/08/28 20:54:24 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -977,8 +977,7 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		 * If RTAX_GATEWAY is the argument we're trying to
 		 * change, try to find a compatible route.
 		 */
-		if ((rt == NULL) && (info->rti_info[RTAX_GATEWAY] != NULL) &&
-		    (rtm->rtm_type == RTM_CHANGE)) {
+		if ((rt == NULL) && (info->rti_info[RTAX_GATEWAY] != NULL)) {
 			rt = rtable_lookup(tableid, info->rti_info[RTAX_DST],
 			    info->rti_info[RTAX_NETMASK], NULL, prio);
 			/* Ensure we don't pick a multipath one. */
@@ -1003,7 +1002,7 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		}
 
 		/*
-		 * RTM_CHANGE/LOCK need a perfect match.
+		 * RTM_CHANGE needs a perfect match.
 		 */
 		plen = rtable_satoplen(info->rti_info[RTAX_DST]->sa_family,
 		    info->rti_info[RTAX_NETMASK]);
@@ -1012,124 +1011,120 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 			break;
 		}
 
-		switch (rtm->rtm_type) {
-		case RTM_CHANGE:
-			if (info->rti_info[RTAX_GATEWAY] != NULL)
-				if (rt->rt_gateway == NULL ||
-				    bcmp(rt->rt_gateway,
-				    info->rti_info[RTAX_GATEWAY],
-				    info->rti_info[RTAX_GATEWAY]->sa_len)) {
-					newgate = 1;
-				}
-			/*
-			 * Check reachable gateway before changing the route.
-			 * New gateway could require new ifaddr, ifp;
-			 * flags may also be different; ifp may be specified
-			 * by ll sockaddr when protocol address is ambiguous.
-			 */
-			if (newgate || info->rti_info[RTAX_IFP] != NULL ||
-			    info->rti_info[RTAX_IFA] != NULL) {
-				struct ifaddr	*ifa = NULL;
-
-				NET_LOCK();
-				if ((error = rtm_getifa(info, tableid)) != 0) {
-					NET_UNLOCK();
-					break;
-				}
-				ifa = info->rti_ifa;
-				if (rt->rt_ifa != ifa) {
-					ifp = if_get(rt->rt_ifidx);
-					KASSERT(ifp != NULL);
-					ifp->if_rtrequest(ifp, RTM_DELETE, rt);
-					ifafree(rt->rt_ifa);
-					if_put(ifp);
-
-					ifa->ifa_refcnt++;
-					rt->rt_ifa = ifa;
-					rt->rt_ifidx = ifa->ifa_ifp->if_index;
-					/* recheck link state after ifp change*/
-					rt_if_linkstate_change(rt, ifa->ifa_ifp,
-					    tableid);
-				}
-				NET_UNLOCK();
+		if (info->rti_info[RTAX_GATEWAY] != NULL)
+			if (rt->rt_gateway == NULL ||
+			    bcmp(rt->rt_gateway,
+			    info->rti_info[RTAX_GATEWAY],
+			    info->rti_info[RTAX_GATEWAY]->sa_len)) {
+				newgate = 1;
 			}
+		/*
+		 * Check reachable gateway before changing the route.
+		 * New gateway could require new ifaddr, ifp;
+		 * flags may also be different; ifp may be specified
+		 * by ll sockaddr when protocol address is ambiguous.
+		 */
+		if (newgate || info->rti_info[RTAX_IFP] != NULL ||
+		    info->rti_info[RTAX_IFA] != NULL) {
+			struct ifaddr	*ifa = NULL;
+
+			NET_LOCK();
+			if ((error = rtm_getifa(info, tableid)) != 0) {
+				NET_UNLOCK();
+				break;
+			}
+			ifa = info->rti_ifa;
+			if (rt->rt_ifa != ifa) {
+				ifp = if_get(rt->rt_ifidx);
+				KASSERT(ifp != NULL);
+				ifp->if_rtrequest(ifp, RTM_DELETE, rt);
+				ifafree(rt->rt_ifa);
+				if_put(ifp);
+
+				ifa->ifa_refcnt++;
+				rt->rt_ifa = ifa;
+				rt->rt_ifidx = ifa->ifa_ifp->if_index;
+				/* recheck link state after ifp change*/
+				rt_if_linkstate_change(rt, ifa->ifa_ifp,
+				    tableid);
+			}
+			NET_UNLOCK();
+		}
 change:
-			if (info->rti_info[RTAX_GATEWAY] != NULL) {
-				/*
-				 * When updating the gateway, make sure it's
-				 * valid.
-				 */
-				if (!newgate && rt->rt_gateway->sa_family !=
-				    info->rti_info[RTAX_GATEWAY]->sa_family) {
-					error = EINVAL;
-					break;
-				}
+		if (info->rti_info[RTAX_GATEWAY] != NULL) {
+			/*
+			 * When updating the gateway, make sure it's
+			 * valid.
+			 */
+			if (!newgate && rt->rt_gateway->sa_family !=
+			    info->rti_info[RTAX_GATEWAY]->sa_family) {
+				error = EINVAL;
+				break;
+			}
 
-				NET_LOCK();
-				error = rt_setgate(rt,
-				    info->rti_info[RTAX_GATEWAY], tableid);
-				NET_UNLOCK();
-				if (error)
-					break;
-			}
+			NET_LOCK();
+			error = rt_setgate(rt,
+			    info->rti_info[RTAX_GATEWAY], tableid);
+			NET_UNLOCK();
+			if (error)
+				break;
+		}
 #ifdef MPLS
-			if (rtm->rtm_flags & RTF_MPLS) {
-				NET_LOCK();
-				error = rt_mpls_set(rt,
-				    info->rti_info[RTAX_SRC], info->rti_mpls);
-				NET_UNLOCK();
-				if (error)
-					break;
-			} else if (newgate || (rtm->rtm_fmask & RTF_MPLS)) {
-				NET_LOCK();
-				/* if gateway changed remove MPLS information */
-				rt_mpls_clear(rt);
-				NET_UNLOCK();
-			}
+		if (rtm->rtm_flags & RTF_MPLS) {
+			NET_LOCK();
+			error = rt_mpls_set(rt,
+			    info->rti_info[RTAX_SRC], info->rti_mpls);
+			NET_UNLOCK();
+			if (error)
+				break;
+		} else if (newgate || (rtm->rtm_fmask & RTF_MPLS)) {
+			NET_LOCK();
+			/* if gateway changed remove MPLS information */
+			rt_mpls_clear(rt);
+			NET_UNLOCK();
+		}
 #endif
 
 #ifdef BFD
-			if (ISSET(rtm->rtm_flags, RTF_BFD)) {
-				if ((error = bfdset(rt)))
-					break;
-			} else if (!ISSET(rtm->rtm_flags, RTF_BFD) &&
-			    ISSET(rtm->rtm_fmask, RTF_BFD)) {
-				bfdclear(rt);
-			}
+		if (ISSET(rtm->rtm_flags, RTF_BFD)) {
+			if ((error = bfdset(rt)))
+				break;
+		} else if (!ISSET(rtm->rtm_flags, RTF_BFD) &&
+		    ISSET(rtm->rtm_fmask, RTF_BFD)) {
+			bfdclear(rt);
+		}
 #endif
 
-			NET_LOCK();
-			/* Hack to allow some flags to be toggled */
-			if (rtm->rtm_fmask) {
-				/* MPLS flag it is set by rt_mpls_set() */
-				rtm->rtm_fmask &= ~RTF_MPLS;
-				rtm->rtm_flags &= ~RTF_MPLS;
-				rt->rt_flags =
-				    (rt->rt_flags & ~rtm->rtm_fmask) |
-				    (rtm->rtm_flags & rtm->rtm_fmask);
-			}
-			rtm_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
-			    &rt->rt_rmx);
-
-			ifp = if_get(rt->rt_ifidx);
-			KASSERT(ifp != NULL);
-			ifp->if_rtrequest(ifp, RTM_ADD, rt);
-			if_put(ifp);
-
-			if (info->rti_info[RTAX_LABEL] != NULL) {
-				char *rtlabel = ((struct sockaddr_rtlabel *)
-				    info->rti_info[RTAX_LABEL])->sr_label;
-				rtlabel_unref(rt->rt_labelid);
-				rt->rt_labelid = rtlabel_name2id(rtlabel);
-			}
-			if_group_routechange(info->rti_info[RTAX_DST],
-			    info->rti_info[RTAX_NETMASK]);
-			rt->rt_locks &= ~(rtm->rtm_inits);
-			rt->rt_locks |=
-			    (rtm->rtm_inits & rtm->rtm_rmx.rmx_locks);
-			NET_UNLOCK();
-			break;
+		NET_LOCK();
+		/* Hack to allow some flags to be toggled */
+		if (rtm->rtm_fmask) {
+			/* MPLS flag it is set by rt_mpls_set() */
+			rtm->rtm_fmask &= ~RTF_MPLS;
+			rtm->rtm_flags &= ~RTF_MPLS;
+			rt->rt_flags =
+			    (rt->rt_flags & ~rtm->rtm_fmask) |
+			    (rtm->rtm_flags & rtm->rtm_fmask);
 		}
+		rtm_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
+		    &rt->rt_rmx);
+
+		ifp = if_get(rt->rt_ifidx);
+		KASSERT(ifp != NULL);
+		ifp->if_rtrequest(ifp, RTM_ADD, rt);
+		if_put(ifp);
+
+		if (info->rti_info[RTAX_LABEL] != NULL) {
+			char *rtlabel = ((struct sockaddr_rtlabel *)
+			    info->rti_info[RTAX_LABEL])->sr_label;
+			rtlabel_unref(rt->rt_labelid);
+			rt->rt_labelid = rtlabel_name2id(rtlabel);
+		}
+		if_group_routechange(info->rti_info[RTAX_DST],
+		    info->rti_info[RTAX_NETMASK]);
+		rt->rt_locks &= ~(rtm->rtm_inits);
+		rt->rt_locks |=
+		    (rtm->rtm_inits & rtm->rtm_rmx.rmx_locks);
+		NET_UNLOCK();
 		break;
 	case RTM_GET:
 		rt = rtable_lookup(tableid, info->rti_info[RTAX_DST],
