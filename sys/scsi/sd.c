@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.277 2019/01/20 20:28:37 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.278 2019/08/28 15:17:23 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -182,8 +182,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Note if this device is ancient.  This is used in sdminphys().
 	 */
-	if (!(link->flags & SDEV_ATAPI) &&
-	    SCSISPC(sa->sa_inqbuf->version) == 0)
+	if (!(link->flags & SDEV_ATAPI) && SCSI0(sa->sa_inqbuf->version))
 		sc->flags |= SDF_ANCIENT;
 
 	/*
@@ -1535,7 +1534,7 @@ sd_size(struct sd_softc *sc, int flags)
 
 	if (sc->flags & SDF_DYING)
 		return (ENXIO);
-	if (SCSISPC(sc->sc_link->inqdata.version) >= 3) {
+	if (SCSI3(sc->sc_link->inqdata.version)) {
 		rv = sd_read_cap_16(sc, flags);
 		if (rv != 0)
 			rv = sd_read_cap_10(sc, flags);

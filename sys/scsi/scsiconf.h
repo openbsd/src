@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.170 2019/08/24 13:41:06 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.171 2019/08/28 15:17:23 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -525,6 +525,9 @@ struct scsi_link *	scsi_get_link(struct scsibus_softc *, int, int);
 
 extern const u_int8_t version_to_spc[];
 #define SCSISPC(x)	(version_to_spc[(x) & SID_ANSII])
+#define SCSI0(x)	(SCSISPC(x) == 0)
+#define SCSI2(x)	(SCSISPC(x) >= 2)
+#define SCSI3(x)	(SCSISPC(x) >= 3)
 
 struct scsi_xfer *	scsi_xs_get(struct scsi_link *, int);
 void			scsi_xs_exec(struct scsi_xfer *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.208 2019/08/27 14:41:45 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.209 2019/08/28 15:17:23 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -349,7 +349,7 @@ scsi_get_target_luns(struct scsi_link *link0, struct scsi_lun_array *lunarray)
 	lunarray->dumbscan = 1;
 
 	if ((link0->flags & (SDEV_UMASS | SDEV_ATAPI)) != 0 ||
-	    SCSISPC(link0->inqdata.version) < 3)
+	    !SCSI3(link0->inqdata.version))
 		goto dumbscan;
 
 	report = dma_alloc(sizeof(*report), PR_WAITOK);
@@ -1029,7 +1029,7 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	 * Based upon the inquiry flags we got back, and if we're
 	 * at SCSI-2 or better, remove some limiting quirks.
 	 */
-	if (SCSISPC(inqbuf->version) >= 2) {
+	if (SCSI2(inqbuf->version)) {
 		if ((inqbuf->flags & SID_CmdQue) != 0)
 			link->quirks &= ~SDEV_NOTAGS;
 		if ((inqbuf->flags & SID_Sync) != 0)
@@ -1186,7 +1186,7 @@ scsi_devid(struct scsi_link *link)
 
 	pg = dma_alloc(sizeof(*pg), PR_WAITOK | PR_ZERO);
 
-	if (SCSISPC(link->inqdata.version) >= 2) {
+	if (SCSI2(link->inqdata.version)) {
 		if (scsi_inquire_vpd(link, pg, sizeof(*pg), SI_PG_SUPPORTED,
 		    scsi_autoconf) != 0)
 			goto wwn;

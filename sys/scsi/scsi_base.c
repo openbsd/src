@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.227 2017/09/08 05:36:53 deraadt Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.228 2019/08/28 15:17:23 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1110,10 +1110,10 @@ scsi_do_mode_sense(struct scsi_link *link, int page,
 	 * a big header in size (6 additional bytes).
 	 */
 	if ((link->flags & (SDEV_ATAPI | SDEV_UMASS)) == 0 &&
-	    SCSISPC(link->inqdata.version) < 2) {
+	    !SCSI2(link->inqdata.version)) {
 		/*
 		 * The 10 byte MODE_SENSE request appeared with SCSI-2,
-		 * so don't bother trying it on SCSI-1 devices, they are
+		 * so don't bother trying it on SCSI-[01] devices, they are
 		 * not supposed to understand it.
 		 */
 		return (0);

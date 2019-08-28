@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.225 2019/08/17 15:31:41 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.226 2019/08/28 15:17:23 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -216,8 +216,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Note if this device is ancient.  This is used in cdminphys().
 	 */
-	if (!(link->flags & SDEV_ATAPI) &&
-	    SCSISPC(sa->sa_inqbuf->version) == 0)
+	if (!(link->flags & SDEV_ATAPI) && SCSI0(sa->sa_inqbuf->version))
 		sc->sc_flags |= CDF_ANCIENT;
 
 	printf("\n");
@@ -2163,7 +2162,7 @@ cd_size(struct scsi_link *link, int flags, u_int32_t *blksize)
 		*blksize = _4btol(rdcap->length);
 	dma_free(rdcap, sizeof(*rdcap));
 
-	if (SCSISPC(link->inqdata.version) < 3 && max_addr != 0xffffffff)
+	if (!SCSI3(link->inqdata.version) && max_addr != 0xffffffff)
 		goto exit;
 
 	/*
