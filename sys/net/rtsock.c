@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.290 2019/08/28 20:54:24 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.291 2019/08/28 22:36:41 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -322,7 +322,8 @@ route_attach(struct socket *so, int proto)
 	so->so_options |= SO_USELOOPBACK;
 
 	rw_enter(&rtptable.rtp_lk, RW_WRITE);
-	SRPL_INSERT_HEAD_LOCKED(&rtptable.rtp_rc, &rtptable.rtp_list, rop, rop_list);
+	SRPL_INSERT_HEAD_LOCKED(&rtptable.rtp_rc, &rtptable.rtp_list, rop,
+	    rop_list);
 	rtptable.rtp_count++;
 	rw_exit(&rtptable.rtp_lk);
 
@@ -432,7 +433,7 @@ void
 rtm_senddesync_timer(void *xso)
 {
 	struct socket	*so = xso;
-	int 		 s;
+	int		 s;
 
 	s = solock(so);
 	rtm_senddesync(so);
@@ -1044,7 +1045,7 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 				ifa->ifa_refcnt++;
 				rt->rt_ifa = ifa;
 				rt->rt_ifidx = ifa->ifa_ifp->if_index;
-				/* recheck link state after ifp change*/
+				/* recheck link state after ifp change */
 				rt_if_linkstate_change(rt, ifa->ifa_ifp,
 				    tableid);
 			}
@@ -1052,10 +1053,7 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		}
 change:
 		if (info->rti_info[RTAX_GATEWAY] != NULL) {
-			/*
-			 * When updating the gateway, make sure it's
-			 * valid.
-			 */
+			/* When updating the gateway, make sure it is valid. */
 			if (!newgate && rt->rt_gateway->sa_family !=
 			    info->rti_info[RTAX_GATEWAY]->sa_family) {
 				error = EINVAL;
@@ -1105,8 +1103,7 @@ change:
 			    (rt->rt_flags & ~rtm->rtm_fmask) |
 			    (rtm->rtm_flags & rtm->rtm_fmask);
 		}
-		rtm_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
-		    &rt->rt_rmx);
+		rtm_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx, &rt->rt_rmx);
 
 		ifp = if_get(rt->rt_ifidx);
 		KASSERT(ifp != NULL);
@@ -1122,8 +1119,7 @@ change:
 		if_group_routechange(info->rti_info[RTAX_DST],
 		    info->rti_info[RTAX_NETMASK]);
 		rt->rt_locks &= ~(rtm->rtm_inits);
-		rt->rt_locks |=
-		    (rtm->rtm_inits & rtm->rtm_rmx.rmx_locks);
+		rt->rt_locks |= (rtm->rtm_inits & rtm->rtm_rmx.rmx_locks);
 		NET_UNLOCK();
 		break;
 	case RTM_GET:
