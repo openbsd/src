@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.246 2019/08/29 07:48:45 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.247 2019/08/29 07:49:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3545,7 +3545,7 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 		IC2IFP(ic)->if_ierrors++;
 		return;
 	}
-	if (len > IWM_RBUF_SIZE) {
+	if (len > IWM_RBUF_SIZE - sizeof(*rx_res)) {
 		IC2IFP(ic)->if_ierrors++;
 		return;
 	}
