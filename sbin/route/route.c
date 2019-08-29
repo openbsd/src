@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.230 2019/03/31 11:30:35 kn Exp $	*/
+/*	$OpenBSD: route.c,v 1.231 2019/08/29 14:28:34 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -579,7 +579,7 @@ newroute(int argc, char **argv)
 			case K_IFP:
 				if (!--argc)
 					usage(1+*argv);
-				getaddr(RTA_IFP, af, *++argv, NULL);
+				getaddr(RTA_IFP, AF_LINK, *++argv, NULL);
 				break;
 			case K_GATEWAY:
 				if (!--argc)
@@ -798,7 +798,7 @@ getaddr(int which, int af, char *s, struct hostent **hpp)
 {
 	sup su = NULL;
 	struct hostent *hp;
-	int afamily, bits;
+	int aflength, afamily, bits;
 
 	if (af == AF_UNSPEC) {
 		if (strchr(s, ':') != NULL) {
@@ -809,7 +809,9 @@ getaddr(int which, int af, char *s, struct hostent **hpp)
 			aflen = sizeof(struct sockaddr_in);
 		}
 	}
-	afamily = af;	/* local copy of af so we can change it */
+	/* local copy of len and af so we can change it */
+	aflength = aflen;
+	afamily = af;
 
 	rtm_addrs |= which;
 	switch (which) {
@@ -824,6 +826,7 @@ getaddr(int which, int af, char *s, struct hostent **hpp)
 		break;
 	case RTA_IFP:
 		su = &so_ifp;
+		aflength = sizeof(struct sockaddr_dl);
 		afamily = AF_LINK;
 		break;
 	case RTA_IFA:
@@ -833,7 +836,7 @@ getaddr(int which, int af, char *s, struct hostent **hpp)
 		errx(1, "internal error");
 		/* NOTREACHED */
 	}
-	su->sa.sa_len = aflen;
+	su->sa.sa_len = aflength;
 	su->sa.sa_family = afamily;
 
 	if (strcmp(s, "default") == 0) {
