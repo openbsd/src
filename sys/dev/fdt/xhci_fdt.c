@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_fdt.c,v 1.14 2019/08/29 11:51:48 kettenis Exp $	*/
+/*	$OpenBSD: xhci_fdt.c,v 1.15 2019/08/29 20:18:11 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -384,7 +384,7 @@ void
 imx8mq_usb_init(struct xhci_fdt_softc *sc, uint32_t *cells)
 {
 	uint32_t phy_reg[2], reg;
-	int node;
+	int node, vbus_supply;
 
 	node = OF_getnodebyphandle(cells[0]);
 	KASSERT(node != 0);
@@ -419,6 +419,10 @@ imx8mq_usb_init(struct xhci_fdt_softc *sc, uint32_t *cells)
 	reg = bus_space_read_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL1);
 	reg &= ~(IMX8MQ_PHY_CTRL1_RESET | IMX8MQ_PHY_CTRL1_ATERESET);
 	bus_space_write_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL1, reg);
+
+	vbus_supply = OF_getpropint(node, "vbus-supply", 0);
+	if (vbus_supply)
+		regulator_enable(vbus_supply);
 }
 
 void
