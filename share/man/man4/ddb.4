@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.93 2018/05/19 17:51:15 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.94 2019/08/29 21:21:18 kn Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: May 19 2018 $
+.Dd $Mdocdate: August 29 2019 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -393,19 +393,10 @@ allows the breakpoint to be silently hit
 .Ar ( count No \- 1 )
 times before stopping at the
 break point.
-.Pp
-If the break point is successfully set, a break point number is
-displayed, in the form
-.Ic # Ns Ar number .
-This can later be used in deleting the break point
-or for adding conditions to it.
 .\" --------------------
-.\" .It Xo Ic d
-.\" .Op Ar addr | Ic # Ns Ar number
-.\" .Xc
 .It Xo
 .Ic d Ns Op Ic elete
-.Op Ar addr | Ic # Ns Ar number
+.Op Ar addr
 .Xc
 Delete the break point set with the
 .Ic break
