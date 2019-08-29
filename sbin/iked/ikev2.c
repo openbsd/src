@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.174 2019/08/24 13:09:38 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.175 2019/08/29 14:56:23 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -833,9 +833,6 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		break;
 	case IKEV2_EXCHANGE_IKE_AUTH:
 	case IKEV2_EXCHANGE_CREATE_CHILD_SA:
-		if (ikev2_msg_valid_ike_sa(env, hdr, msg) == -1)
-			return;
-		break;
 	case IKEV2_EXCHANGE_INFORMATIONAL:
 		break;
 	default:
