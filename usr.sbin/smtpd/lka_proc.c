@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_proc.c,v 1.9 2019/08/28 15:37:28 martijn Exp $	*/
+/*	$OpenBSD: lka_proc.c,v 1.10 2019/08/29 09:24:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -162,7 +162,7 @@ processor_io(struct io *io, int evt, void *arg)
 				fatalx("Non-register message before register|"
 				    "ready: %s", line);
 			else if (strncmp(line, "filter-result|", 14) == 0 ||
-			    strncmp(line, "filter-dataline|", 16) || 0)
+			    strncmp(line, "filter-dataline|", 16) == 0)
 				lka_filter_process_response(name, line);
 			else
 				fatalx("Invalid filter message type: %s", line);
