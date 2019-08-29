@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.19 2019/08/29 02:05:58 dlg Exp $ */
+/*	$OpenBSD: sff.c,v 1.20 2019/08/29 03:08:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -599,7 +599,7 @@ if_sff_printmedia(const struct if_sffpage *pg, const struct sff_media_map *m)
 	}
 
 	if (m->dist_smf_m != 0 &&
-	    pg->sff_data[m->dist_smf_m] < 0 &&
+	    pg->sff_data[m->dist_smf_m] > 0 &&
 	    pg->sff_data[m->dist_smf_m] < 255)
 		if_sff_printdist("m SMF", pg->sff_data[m->dist_smf_m], 100);
 	else
