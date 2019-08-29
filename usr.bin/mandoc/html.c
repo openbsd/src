@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.126 2019/08/02 17:04:55 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.127 2019/08/29 17:57:25 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -40,34 +40,31 @@
 struct	htmldata {
 	const char	 *name;
 	int		  flags;
-#define	HTML_NOSTACK	 (1 << 0)
-#define	HTML_AUTOCLOSE	 (1 << 1)
-#define	HTML_NLBEFORE	 (1 << 2)
-#define	HTML_NLBEGIN	 (1 << 3)
-#define	HTML_NLEND	 (1 << 4)
-#define	HTML_NLAFTER	 (1 << 5)
+#define	HTML_INPHRASE	 (1 << 0)  /* Can appear in phrasing context. */
+#define	HTML_TOPHRASE	 (1 << 1)  /* Establishes phrasing context. */
+#define	HTML_NOSTACK	 (1 << 2)  /* Does not have an end tag. */
+#define	HTML_NLBEFORE	 (1 << 3)  /* Output line break before opening. */
+#define	HTML_NLBEGIN	 (1 << 4)  /* Output line break after opening. */
+#define	HTML_NLEND	 (1 << 5)  /* Output line break before closing. */
+#define	HTML_NLAFTER	 (1 << 6)  /* Output line break after closing. */
 #define	HTML_NLAROUND	 (HTML_NLBEFORE | HTML_NLAFTER)
 #define	HTML_NLINSIDE	 (HTML_NLBEGIN | HTML_NLEND)
 #define	HTML_NLALL	 (HTML_NLAROUND | HTML_NLINSIDE)
-#define	HTML_INDENT	 (1 << 6)
-#define	HTML_NOINDENT	 (1 << 7)
+#define	HTML_INDENT	 (1 << 7)  /* Indent content by two spaces. */
+#define	HTML_NOINDENT	 (1 << 8)  /* Exception: never indent content. */
 };
 
 static	const struct htmldata htmltags[TAG_MAX] = {
 	{"html",	HTML_NLALL},
 	{"head",	HTML_NLALL | HTML_INDENT},
-	{"body",	HTML_NLALL},
-	{"meta",	HTML_NOSTACK | HTML_AUTOCLOSE | HTML_NLALL},
+	{"meta",	HTML_NOSTACK | HTML_NLALL},
+	{"link",	HTML_NOSTACK | HTML_NLALL},
+	{"style",	HTML_NLALL | HTML_INDENT},
 	{"title",	HTML_NLAROUND},
+	{"body",	HTML_NLALL},
 	{"div",		HTML_NLAROUND},
 	{"div",		0},
 	{"section",	HTML_NLALL},
-	{"h1",		HTML_NLAROUND},
-	{"h2",		HTML_NLAROUND},
-	{"span",	0},
-	{"link",	HTML_NOSTACK | HTML_AUTOCLOSE | HTML_NLALL},
-	{"br",		HTML_NOSTACK | HTML_AUTOCLOSE | HTML_NLALL},
-	{"a",		0},
 	{"table",	HTML_NLALL | HTML_INDENT},
 	{"tr",		HTML_NLALL | HTML_INDENT},
 	{"td",		HTML_NLAROUND},
@@ -77,16 +74,20 @@ static	const struct htmldata htmltags[TAG_MAX] = {
 	{"dl",		HTML_NLALL | HTML_INDENT},
 	{"dt",		HTML_NLAROUND},
 	{"dd",		HTML_NLAROUND | HTML_INDENT},
-	{"p",		HTML_NLAROUND | HTML_INDENT},
-	{"pre",		HTML_NLALL | HTML_NOINDENT},
-	{"var",		0},
-	{"cite",	0},
-	{"b",		0},
-	{"i",		0},
-	{"code",	0},
-	{"small",	0},
-	{"style",	HTML_NLALL | HTML_INDENT},
-	{"math",	HTML_NLALL | HTML_INDENT},
+	{"h1",		HTML_TOPHRASE | HTML_NLAROUND},
+	{"h2",		HTML_TOPHRASE | HTML_NLAROUND},
+	{"p",		HTML_TOPHRASE | HTML_NLAROUND | HTML_INDENT},
+	{"pre",		HTML_TOPHRASE | HTML_NLALL | HTML_NOINDENT},
+	{"a",		HTML_INPHRASE | HTML_TOPHRASE},
+	{"b",		HTML_INPHRASE | HTML_TOPHRASE},
+	{"cite",	HTML_INPHRASE | HTML_TOPHRASE},
+	{"code",	HTML_INPHRASE | HTML_TOPHRASE},
+	{"i",		HTML_INPHRASE | HTML_TOPHRASE},
+	{"small",	HTML_INPHRASE | HTML_TOPHRASE},
+	{"span",	HTML_INPHRASE | HTML_TOPHRASE},
+	{"var",		HTML_INPHRASE | HTML_TOPHRASE},
+	{"br",		HTML_INPHRASE | HTML_NOSTACK | HTML_NLALL},
+	{"math",	HTML_INPHRASE | HTML_NLALL | HTML_INDENT},
 	{"mrow",	0},
 	{"mi",		0},
 	{"mn",		0},
@@ -582,6 +583,17 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 
 	tflags = htmltags[tag].flags;
 
+	/* Flow content is not allowed in phrasing context. */
+
+	if ((tflags & HTML_INPHRASE) == 0) {
+		for (t = h->tag; t != NULL; t = t->next) {
+			if (t->closed)
+				continue;
+			assert((htmltags[t->tag].flags & HTML_TOPHRASE) == 0);
+			break;
+		}
+	}
+
 	/* Push this tag onto the stack of open scopes. */
 
 	if ((tflags & HTML_NOSTACK) == 0) {
@@ -699,7 +711,7 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 
 	/* Accommodate for "well-formed" singleton escaping. */
 
-	if (HTML_AUTOCLOSE & htmltags[tag].flags)
+	if (htmltags[tag].flags & HTML_NOSTACK)
 		print_byte(h, '/');
 
 	print_byte(h, '>');
