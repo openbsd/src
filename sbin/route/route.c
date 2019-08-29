@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.231 2019/08/29 14:28:34 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.232 2019/08/29 22:42:16 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 const struct if_status_description
 			if_status_descriptions[] = LINK_STATE_DESCRIPTIONS;
 
-union sockunion so_dst, so_gate, so_mask, so_ifa, so_ifp, so_label, so_src;
+union sockunion so_dst, so_gate, so_mask, so_ifa, so_ifp, so_src, so_label;
 
 typedef union sockunion *sup;
 pid_t	pid;
@@ -1087,13 +1087,14 @@ rtmsg(int cmd, int flags, int fmask, uint8_t prio)
 
 	if (rtm_addrs & RTA_NETMASK)
 		mask_addr(&so_dst, &so_mask, RTA_DST);
+	/* store addresses in ascending order of RTA values */
 	NEXTADDR(RTA_DST, so_dst);
 	NEXTADDR(RTA_GATEWAY, so_gate);
 	NEXTADDR(RTA_NETMASK, so_mask);
 	NEXTADDR(RTA_IFP, so_ifp);
 	NEXTADDR(RTA_IFA, so_ifa);
-	NEXTADDR(RTA_LABEL, so_label);
 	NEXTADDR(RTA_SRC, so_src);
+	NEXTADDR(RTA_LABEL, so_label);
 	rtm.rtm_msglen = l = cp - (char *)&m_rtmsg;
 	if (verbose)
 		print_rtmsg(&rtm, l);
