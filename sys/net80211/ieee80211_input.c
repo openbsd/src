@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.207 2019/07/29 10:50:08 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.208 2019/08/29 09:13:56 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1676,7 +1676,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		 */
 		if (rsnie != NULL &&
 		    (ni->ni_supported_rsnprotos & IEEE80211_PROTO_RSN) &&
-		    (ic->ic_rsnprotos & IEEE80211_PROTO_RSN)) {
+		    (ic->ic_caps & IEEE80211_C_RSN)) {
 			if (ieee80211_save_ie(rsnie, &ni->ni_rsnie) == 0
 #ifndef IEEE80211_STA_ONLY
 	    		&& ic->ic_opmode != IEEE80211_M_HOSTAP
@@ -1692,7 +1692,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 			}
 		} else if (wpaie != NULL &&
 		    (ni->ni_supported_rsnprotos & IEEE80211_PROTO_WPA) &&
-		    (ic->ic_rsnprotos & IEEE80211_PROTO_WPA)) {
+		    (ic->ic_caps & IEEE80211_C_RSN)) {
 			if (ieee80211_save_ie(wpaie, &ni->ni_rsnie) == 0
 #ifndef IEEE80211_STA_ONLY
 	    		&& ic->ic_opmode != IEEE80211_M_HOSTAP
