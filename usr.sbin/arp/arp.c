@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.84 2019/08/27 20:50:36 kn Exp $ */
+/*	$OpenBSD: arp.c,v 1.85 2019/08/29 19:11:15 bluhm Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -91,8 +91,9 @@ static int rdomain;
 extern int h_errno;
 
 /* ROUNDUP() is nasty, but it is identical to what's in the kernel. */
-#define ROUNDUP(a)					\
+#define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 /* which function we're supposed to do */
 #define F_GET		1
@@ -282,7 +283,7 @@ parse_host(const char *host, struct in_addr *in)
 struct sockaddr_in	so_mask = { 8, 0, 0, { 0xffffffff } };
 struct sockaddr_inarp	blank_sin = { sizeof(blank_sin), AF_INET }, sin_m;
 struct sockaddr_dl	blank_sdl = { sizeof(blank_sdl), AF_LINK }, sdl_m;
-struct sockaddr_dl	ifp_m = { sizeof(&ifp_m), AF_LINK };
+struct sockaddr_dl	ifp_m = { sizeof(ifp_m), AF_LINK };
 time_t			expire_time;
 int			flags, export_only, doing_proxy, found_entry;
 struct	{
@@ -672,10 +673,11 @@ rtmsg(int cmd)
 		rtm->rtm_addrs |= (RTA_DST | RTA_IFP);
 	}
 
-#define NEXTADDR(w, s)					\
-	if (rtm->rtm_addrs & (w)) {			\
-		memcpy(cp, &s, sizeof(s));		\
-		cp += ROUNDUP(sizeof(s));		\
+#define NEXTADDR(w, s)							\
+	if (rtm->rtm_addrs & (w)) {					\
+		l = ROUNDUP(((struct sockaddr *)&(s))->sa_len);		\
+		memcpy(cp, &(s), l);					\
+		cp += l;						\
 	}
 
 	NEXTADDR(RTA_DST, sin_m);
@@ -732,7 +734,7 @@ rtget(struct sockaddr_inarp **sinp, struct sockaddr_dl **sdlp)
 				default:
 					break;
 				}
-				cp += ROUNDUP(sa->sa_len);
+				ADVANCE(cp, sa);
 			}
 		}
 	}
