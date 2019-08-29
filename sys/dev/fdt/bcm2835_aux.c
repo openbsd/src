@@ -1,6 +1,6 @@
-/*	$OpenBSD: bcm2835_aux.c,v 1.3 2018/08/06 10:52:30 patrick Exp $	*/
+/*	$OpenBSD: bcm2835_aux.c,v 1.4 2019/08/29 11:51:48 kettenis Exp $	*/
 /*
- * Copyright (c) 2017 Mark kettenis <kettenis@openbsd.org>
+ * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
