@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.20 2019/08/29 07:10:27 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.21 2019/08/29 07:19:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -521,7 +521,7 @@ port_open(struct port *c)
 {
 	if (!port_mio_open(c)) {
 		if (log_level >= 1) {
-			log_puts(c->path);
+			port_log(c);
 			log_puts(": failed to open midi port\n");
 		}
 		return 0;
