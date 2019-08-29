@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.19 2019/05/10 04:45:47 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.20 2019/08/29 07:10:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,6 +32,7 @@ void port_imsg(void *, unsigned char *, int);
 void port_omsg(void *, unsigned char *, int);
 void port_fill(void *, int);
 void port_exit(void *);
+void port_exitall(struct port *);
 
 struct midiops port_midiops = {
 	port_imsg,
@@ -529,11 +530,23 @@ port_open(struct port *c)
 	return 1;
 }
 
-int
-port_close(struct port *c)
+void
+port_exitall(struct port *c)
 {
 	int i;
 	struct midi *ep;
+
+	for (i = 0; i < MIDI_NEP; i++) {
+		ep = midi_ep + i;
+		if ((ep->txmask & c->midi->self) ||
+		    (c->midi->txmask & ep->self))
+			ep->ops->exit(ep->arg);
+	}
+}
+
+int
+port_close(struct port *c)
+{
 #ifdef DEBUG
 	if (c->state == PORT_CFG) {
 		port_log(c);
@@ -544,12 +557,7 @@ port_close(struct port *c)
 	c->state = PORT_CFG;
 	port_mio_close(c);
 
-	for (i = 0; i < MIDI_NEP; i++) {
-		ep = midi_ep + i;
-		if ((ep->txmask & c->midi->self) ||
-		    (c->midi->txmask & ep->self))
-			ep->ops->exit(ep->arg);
-	}
+	port_exitall(c);
 	return 1;
 }
 

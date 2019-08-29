@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.55 2019/08/29 07:07:33 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.56 2019/08/29 07:10:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -58,6 +58,7 @@ struct dev *dev_new(char *, struct aparams *, unsigned int, unsigned int,
     unsigned int, unsigned int, unsigned int, unsigned int);
 void dev_adjpar(struct dev *, int, int, int);
 int dev_open(struct dev *);
+void dev_exitall(struct dev *);
 void dev_close(struct dev *);
 int dev_ref(struct dev *);
 void dev_unref(struct dev *);
