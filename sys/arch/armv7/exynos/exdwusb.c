@@ -1,6 +1,6 @@
-/*	$OpenBSD: exdwusb.c,v 1.1 2017/03/10 12:05:28 kettenis Exp $	*/
+/*	$OpenBSD: exdwusb.c,v 1.2 2019/08/29 14:19:27 kettenis Exp $	*/
 /*
- * Copyright (c) 2017 Mark kettenis <kettenis@openbsd.org>
+ * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
