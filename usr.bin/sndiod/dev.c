@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.57 2019/08/29 07:35:25 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.58 2019/08/29 07:38:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -60,6 +60,7 @@ void dev_adjpar(struct dev *, int, int, int);
 int dev_open_do(struct dev *);
 int dev_open(struct dev *);
 void dev_exitall(struct dev *);
+void dev_close_do(struct dev *);
 void dev_close(struct dev *);
 int dev_ref(struct dev *);
 void dev_unref(struct dev *);
@@ -1140,7 +1141,7 @@ dev_exitall(struct dev *d)
  * ensure buffers are drained
  */
 void
-dev_close(struct dev *d)
+dev_close_do(struct dev *d)
 {
 #ifdef DEBUG
 	if (log_level >= 3) {
@@ -1149,7 +1150,6 @@ dev_close(struct dev *d)
 	}
 #endif
 	d->pstate = DEV_CFG;
-	dev_exitall(d);
 	dev_sio_close(d);
 	if (d->mode & MODE_PLAY) {
 		if (d->encbuf != NULL)
@@ -1161,6 +1161,16 @@ dev_close(struct dev *d)
 			xfree(d->decbuf);
 		xfree(d->rbuf);
 	}
+}
+
+/*
+ * Close the device and exit all slots
+ */
+void
+dev_close(struct dev *d)
+{
+	dev_exitall(d);
+	dev_close_do(d);
 }
 
 int
