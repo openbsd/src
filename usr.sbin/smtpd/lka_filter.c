@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.43 2019/08/28 15:50:36 martijn Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.44 2019/08/29 08:49:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -934,7 +934,7 @@ filter_check_fcrdns(struct filter *filter, int fcrdns)
 	if (!filter->config->fcrdns)
 		return 0;
 
-	ret = fcrdns == 0;
+	ret = fcrdns == 1;
 	return filter->config->not_fcrdns < 0 ? !ret : ret;
 }
 
