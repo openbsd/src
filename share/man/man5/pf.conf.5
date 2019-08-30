@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.580 2019/05/26 01:16:08 naddy Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.581 2019/08/30 17:51:47 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 26 2019 $
+.Dd $Mdocdate: August 30 2019 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -249,9 +249,7 @@ pflog0 is monitored by the
 .Xr pflogd 8
 logging daemon which logs to the file
 .Pa /var/log/pflog
-in
-.Xr pcap 3
-binary format.
+in pcap binary format.
 .Pp
 The keywords
 .Cm all , matches , to ,
