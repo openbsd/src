@@ -1,4 +1,4 @@
-/* $OpenBSD: dgst.c,v 1.16 2019/08/30 11:43:34 inoguchi Exp $ */
+/* $OpenBSD: dgst.c,v 1.17 2019/08/30 12:09:05 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -371,7 +371,8 @@ dgst_main(int argc, char **argv)
 	argv += dgst_config.argsused;
 
 	if (dgst_config.do_verify && !dgst_config.sigfile) {
-		BIO_printf(bio_err, "No signature to verify: use the -signature option\n");
+		BIO_printf(bio_err,
+		    "No signature to verify: use the -signature option\n");
 		goto end;
 	}
 
@@ -413,17 +414,19 @@ dgst_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if ((!!dgst_config.mac_name + !!dgst_config.keyfile + !!dgst_config.hmac_key) > 1) {
-		BIO_printf(bio_err, "MAC and Signing key cannot both be specified\n");
+	if ((!!dgst_config.mac_name + !!dgst_config.keyfile +
+	    !!dgst_config.hmac_key) > 1) {
+		BIO_printf(bio_err,
+		    "MAC and Signing key cannot both be specified\n");
 		goto end;
 	}
 	if (dgst_config.keyfile) {
 		if (dgst_config.want_pub)
-			sigkey = load_pubkey(bio_err, dgst_config.keyfile, dgst_config.keyform, 0, NULL,
-			    "key file");
+			sigkey = load_pubkey(bio_err, dgst_config.keyfile,
+			    dgst_config.keyform, 0, NULL, "key file");
 		else
-			sigkey = load_key(bio_err, dgst_config.keyfile, dgst_config.keyform, 0, passin,
-			    "key file");
+			sigkey = load_key(bio_err, dgst_config.keyfile,
+			    dgst_config.keyform, 0, passin, "key file");
 		if (!sigkey) {
 			/*
 			 * load_[pub]key() has already printed an appropriate
@@ -439,8 +442,10 @@ dgst_main(int argc, char **argv)
 			goto mac_end;
 		if (dgst_config.macopts) {
 			char *macopt;
-			for (i = 0; i < sk_OPENSSL_STRING_num(dgst_config.macopts); i++) {
-				macopt = sk_OPENSSL_STRING_value(dgst_config.macopts, i);
+			for (i = 0; i < sk_OPENSSL_STRING_num(
+			    dgst_config.macopts); i++) {
+				macopt = sk_OPENSSL_STRING_value(
+				    dgst_config.macopts, i);
 				if (pkey_ctrl_string(mac_ctx, macopt) <= 0) {
 					BIO_printf(bio_err,
 					    "MAC parameter error \"%s\"\n",
@@ -456,7 +461,7 @@ dgst_main(int argc, char **argv)
 			goto mac_end;
 		}
 		r = 1;
-mac_end:
+ mac_end:
 		if (mac_ctx)
 			EVP_PKEY_CTX_free(mac_ctx);
 		if (r == 0)
@@ -478,9 +483,11 @@ mac_end:
 			goto end;
 		}
 		if (dgst_config.do_verify)
-			r = EVP_DigestVerifyInit(mctx, &pctx, dgst_config.md, NULL, sigkey);
+			r = EVP_DigestVerifyInit(mctx, &pctx, dgst_config.md,
+			    NULL, sigkey);
 		else
-			r = EVP_DigestSignInit(mctx, &pctx, dgst_config.md, NULL, sigkey);
+			r = EVP_DigestSignInit(mctx, &pctx, dgst_config.md,
+			    NULL, sigkey);
 		if (!r) {
 			BIO_printf(bio_err, "Error setting context\n");
 			ERR_print_errors(bio_err);
@@ -488,8 +495,10 @@ mac_end:
 		}
 		if (dgst_config.sigopts) {
 			char *sigopt;
-			for (i = 0; i < sk_OPENSSL_STRING_num(dgst_config.sigopts); i++) {
-				sigopt = sk_OPENSSL_STRING_value(dgst_config.sigopts, i);
+			for (i = 0; i < sk_OPENSSL_STRING_num(
+			    dgst_config.sigopts); i++) {
+				sigopt = sk_OPENSSL_STRING_value(
+				    dgst_config.sigopts, i);
 				if (pkey_ctrl_string(pctx, sigopt) <= 0) {
 					BIO_printf(bio_err,
 					    "parameter error \"%s\"\n",
@@ -545,8 +554,9 @@ mac_end:
 	}
 	if (argc == 0) {
 		BIO_set_fp(in, stdin, BIO_NOCLOSE);
-		err = do_fp(out, buf, inp, dgst_config.separator, dgst_config.out_bin, sigkey, sigbuf,
-		    siglen, NULL, NULL, "stdin", bmd);
+		err = do_fp(out, buf, inp, dgst_config.separator,
+		    dgst_config.out_bin, sigkey, sigbuf, siglen, NULL, NULL,
+		    "stdin", bmd);
 	} else {
 		const char *md_name = NULL, *sig_name = NULL;
 		if (!dgst_config.out_bin) {
@@ -567,9 +577,9 @@ mac_end:
 				err++;
 				continue;
 			} else {
-				r = do_fp(out, buf, inp, dgst_config.separator, dgst_config.out_bin,
-				    sigkey, sigbuf, siglen, sig_name, md_name,
-				    argv[i], bmd);
+				r = do_fp(out, buf, inp, dgst_config.separator,
+				    dgst_config.out_bin, sigkey, sigbuf, siglen,
+				    sig_name, md_name, argv[i], bmd);
 			}
 			if (r)
 				err = r;
