@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.38 2019/06/28 13:32:46 deraadt Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.39 2019/08/30 17:25:37 pamela Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -65,6 +65,7 @@ void	main_dispatch_frontend(int, short, void *);
 void	main_dispatch_engine(int, short, void *);
 void	handle_proposal(struct imsg_proposal *);
 void	configure_interface(struct imsg_configure_address *);
+void	delete_address(struct imsg_configure_address *);
 void	configure_gateway(struct imsg_configure_dfr *, uint8_t);
 void	add_gateway(struct imsg_configure_dfr *);
 void	delete_gateway(struct imsg_configure_dfr *);
@@ -519,6 +520,14 @@ main_dispatch_engine(int fd, short event, void *bula)
 			memcpy(&address, imsg.data, sizeof(address));
 			configure_interface(&address);
 			break;
+		case IMSG_WITHDRAW_ADDRESS:
+			if (IMSG_DATA_SIZE(imsg) != sizeof(address))
+				fatalx("%s: IMSG_WITHDRAW_ADDRESS wrong "
+				    "length: %lu", __func__,
+				    IMSG_DATA_SIZE(imsg));
+			memcpy(&address, imsg.data, sizeof(address));
+			delete_address(&address);
+			break;	
 		case IMSG_CONFIGURE_DFR:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(dfr))
 				fatalx("%s: IMSG_CONFIGURE_DFR wrong "
@@ -768,6 +777,32 @@ configure_interface(struct imsg_configure_address *address)
 		if (ioctl(ioctl_sock, SIOCSIFMTU, &ifr) == -1)
 		    log_warn("failed to set MTU");
 	}
+}
+
+void
+delete_address(struct imsg_configure_address *address)
+{
+
+	struct in6_ifreq	 in6_ridreq;
+	char			*if_name;
+
+	memset(&in6_ridreq, 0, sizeof(in6_ridreq));
+
+	if_name = if_indextoname(address->if_index, in6_ridreq.ifr_name);
+	if (if_name == NULL) {
+		log_warnx("%s: cannot find interface %d", __func__,
+		    address->if_index);
+		return;
+	}
+
+	memcpy(&in6_ridreq.ifr_ifru, &address->addr,
+	    sizeof(in6_ridreq.ifr_ifru));
+
+	log_debug("%s: %s", __func__, if_name);
+
+	if (ioctl(ioctl_sock, SIOCDIFADDR_IN6, &in6_ridreq) == -1)
+		log_warn("%s: cannot remove address", __func__);
+
 }
 
 void

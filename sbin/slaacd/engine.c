@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.38 2019/08/26 18:50:04 pamela Exp $	*/
+/*	$OpenBSD: engine.c,v 1.39 2019/08/30 17:25:37 pamela Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -91,6 +91,7 @@ enum if_state {
 	IF_DELAY,
 	IF_PROBE,
 	IF_IDLE,
+	IF_DEAD,
 };
 
 const char* if_state_name[] = {
@@ -98,6 +99,7 @@ const char* if_state_name[] = {
 	"IF_DELAY",
 	"IF_PROBE",
 	"IF_IDLE",
+	"IF_DEAD",
 };
 
 enum proposal_state {
@@ -107,6 +109,7 @@ enum proposal_state {
 	PROPOSAL_NEARLY_EXPIRED,
 	PROPOSAL_WITHDRAWN,
 	PROPOSAL_DUPLICATED,
+	PROPOSAL_STALE,
 };
 
 const char* proposal_state_name[] = {
@@ -116,6 +119,7 @@ const char* proposal_state_name[] = {
 	"NEARLY_EXPIRED",
 	"WITHDRAWN",
 	"DUPLICATED",
+	"STALE",
 };
 
 const char* rpref_name[] = {
@@ -245,6 +249,7 @@ void			 gen_addr(struct slaacd_iface *, struct radv_prefix *,
 void			 gen_address_proposal(struct slaacd_iface *, struct
 			     radv *, struct radv_prefix *, int);
 void			 free_address_proposal(struct address_proposal *);
+void			 withdraw_addr(struct address_proposal *);
 void			 timeout_from_lifetime(struct address_proposal *);
 void			 configure_address(struct address_proposal *);
 void			 in6_prefixlen2mask(struct in6_addr *, int len);
@@ -1996,7 +2001,28 @@ free_address_proposal(struct address_proposal *addr_proposal)
 
 	LIST_REMOVE(addr_proposal, entries);
 	evtimer_del(&addr_proposal->timer);
+	switch (addr_proposal->state) {
+	case PROPOSAL_STALE:
+		withdraw_addr(addr_proposal);
+		break;
+	default:
+		break;
+	}
 	free(addr_proposal);
+}
+
+void
+withdraw_addr(struct address_proposal *addr_proposal)
+{
+	struct imsg_configure_address	address;
+
+	log_debug("%s: %d", __func__, addr_proposal->if_index);
+	memset(&address, 0, sizeof(address));
+	address.if_index = addr_proposal->if_index;
+	memcpy(&address.addr, &addr_proposal->addr, sizeof(address.addr));
+
+	engine_imsg_compose_main(IMSG_WITHDRAW_ADDRESS, 0, &address,
+	    sizeof(address));
 }
 
 void
@@ -2095,6 +2121,7 @@ free_dfr_proposal(struct dfr_proposal *dfr_proposal)
 	switch (dfr_proposal->state) {
 	case PROPOSAL_CONFIGURED:
 	case PROPOSAL_NEARLY_EXPIRED:
+	case PROPOSAL_STALE:	
 		withdraw_dfr(dfr_proposal);
 		break;
 	default:
@@ -2235,6 +2262,8 @@ address_proposal_timeout(int fd, short events, void *arg)
 		log_debug("%s: address duplicated",
 		    __func__);
 		break;
+	case PROPOSAL_STALE:
+		break;
 	default:
 		log_debug("%s: unhandled state: %s", __func__,
 		    proposal_state_name[addr_proposal->state]);
@@ -2327,6 +2356,8 @@ iface_timeout(int fd, short events, void *arg)
 {
 	struct slaacd_iface	*iface = (struct slaacd_iface *)arg;
 	struct timeval		 tv;
+	struct address_proposal	*addr_proposal;
+	struct dfr_proposal	*dfr_proposal;
 
 	log_debug("%s[%d]: %s", __func__, iface->if_index,
 	    if_state_name[iface->state]);
@@ -2338,12 +2369,26 @@ iface_timeout(int fd, short events, void *arg)
 			engine_imsg_compose_frontend(
 			    IMSG_CTL_SEND_SOLICITATION, 0, &iface->if_index,
 			    sizeof(iface->if_index));
-			if (++iface->probes >= MAX_RTR_SOLICITATIONS)
-				iface->state = IF_IDLE;
-			else {
+			if (++iface->probes >= MAX_RTR_SOLICITATIONS) {
+				iface->state = IF_DEAD;
+				tv.tv_sec = 0;
+			} else
 				tv.tv_sec = RTR_SOLICITATION_INTERVAL;
-				tv.tv_usec = arc4random_uniform(1000000);
-				evtimer_add(&iface->timer, &tv);
+			tv.tv_usec = arc4random_uniform(1000000);
+			evtimer_add(&iface->timer, &tv);
+			break;
+		case IF_DEAD:
+			while(!LIST_EMPTY(&iface->addr_proposals)) {
+				addr_proposal =
+				    LIST_FIRST(&iface->addr_proposals);
+				addr_proposal->state = PROPOSAL_STALE;
+				free_address_proposal(addr_proposal);
+			}
+			while(!LIST_EMPTY(&iface->dfr_proposals)) {
+				dfr_proposal =
+				    LIST_FIRST(&iface->dfr_proposals);
+				dfr_proposal->state = PROPOSAL_STALE;
+				free_dfr_proposal(dfr_proposal);
 			}
 			break;
 		case IF_DOWN:

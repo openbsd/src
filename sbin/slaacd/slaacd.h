@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.21 2019/03/02 05:34:59 pamela Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.22 2019/08/30 17:25:37 pamela Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -72,6 +72,7 @@ enum imsg_type {
 	IMSG_PROPOSAL,
 	IMSG_PROPOSAL_ACK,
 	IMSG_CONFIGURE_ADDRESS,
+	IMSG_WITHDRAW_ADDRESS,
 	IMSG_DEL_ADDRESS,
 	IMSG_DEL_ROUTE,
 	IMSG_FAKE_ACK,
