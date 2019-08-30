@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge_fdt.c,v 1.9 2018/12/04 11:25:48 kettenis Exp $	*/
+/*	$OpenBSD: if_dwge_fdt.c,v 1.10 2019/08/30 19:35:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -77,6 +77,7 @@ dwge_fdt_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return (OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-gmac") ||
+	    OF_is_compatible(faa->fa_node, "amlogic,meson-axg-dwmac") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3288-gmac") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-gmac") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-gmac"));
