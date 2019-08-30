@@ -1,4 +1,4 @@
-/* $OpenBSD: dgst.c,v 1.17 2019/08/30 12:09:05 inoguchi Exp $ */
+/* $OpenBSD: dgst.c,v 1.18 2019/08/30 12:32:14 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -462,8 +462,7 @@ dgst_main(int argc, char **argv)
 		}
 		r = 1;
  mac_end:
-		if (mac_ctx)
-			EVP_PKEY_CTX_free(mac_ctx);
+		EVP_PKEY_CTX_free(mac_ctx);
 		if (r == 0)
 			goto end;
 	}
@@ -589,18 +588,14 @@ dgst_main(int argc, char **argv)
 
  end:
 	freezero(buf, BUFSIZE);
-	if (in != NULL)
-		BIO_free(in);
+	BIO_free(in);
 	free(passin);
 	BIO_free_all(out);
 	EVP_PKEY_free(sigkey);
-	if (dgst_config.sigopts)
-		sk_OPENSSL_STRING_free(dgst_config.sigopts);
-	if (dgst_config.macopts)
-		sk_OPENSSL_STRING_free(dgst_config.macopts);
+	sk_OPENSSL_STRING_free(dgst_config.sigopts);
+	sk_OPENSSL_STRING_free(dgst_config.macopts);
 	free(sigbuf);
-	if (bmd != NULL)
-		BIO_free(bmd);
+	BIO_free(bmd);
 
 	return (err);
 }
