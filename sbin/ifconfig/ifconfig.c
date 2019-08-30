@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.410 2019/08/26 15:23:49 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.411 2019/08/30 03:52:20 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2515,7 +2515,7 @@ join_status(void)
 		ja.ja_node = jn;
 		ja.ja_size = jsz * sizeof(*jn);
 		strlcpy(ja.ja_ifname, name, sizeof(ja.ja_ifname));
-		
+
 		if ((r = ioctl(s, SIOCG80211JOINALL, &ja)) != 0) {
 			if (errno == E2BIG) {
 				jsz += 100;
@@ -6336,7 +6336,7 @@ unsetrdomain(const char *ignored, int alsoignored)
 {
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_rdomainid = 0;
-	if (ioctl(s, SIOCSIFRDOMAIN, (caddr_t)&ifr) == -1) 	
+	if (ioctl(s, SIOCSIFRDOMAIN, (caddr_t)&ifr) == -1)
 		warn("SIOCSIFRDOMAIN");
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.20 2019/08/29 03:08:50 dlg Exp $ */
+/*	$OpenBSD: sff.c,v 1.21 2019/08/30 03:52:21 deraadt Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -93,8 +93,8 @@ struct sff_media_map {
 				     /* using SFF-8665 et al */
 #define SFF8024_ID_CXP2		0x12 /* aka CXP28, or later */
 #define SFF8024_ID_CDFP		0x13 /* style 1/style 2 */
-#define SFF8024_ID_HD4X_FAN	0x14 /* shielded mini multilane HD 4X fanout */ 
-#define SFF8024_ID_HD8X_FAN	0x15 /* shielded mini multilane HD 8X fanout */ 
+#define SFF8024_ID_HD4X_FAN	0x14 /* shielded mini multilane HD 4X fanout */
+#define SFF8024_ID_HD8X_FAN	0x15 /* shielded mini multilane HD 8X fanout */
 #define SFF8024_ID_CDFP3	0x16 /* style 3 */
 #define SFF8024_ID_uQSFP	0x17 /* microQSFP */
 #define SFF8024_ID_QSFP_DD	0x18 /* QSFP-DD double density 8x */
