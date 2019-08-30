@@ -1867,6 +1867,7 @@
 ./usr/share/man/man3/GENERAL_NAME_new.3
 ./usr/share/man/man3/HMAC.3
 ./usr/share/man/man3/MD5.3
+./usr/share/man/man3/MD5Init.3
 ./usr/share/man/man3/NAME_CONSTRAINTS_new.3
 ./usr/share/man/man3/OBJ_nid2obj.3
 ./usr/share/man/man3/OCSP_CRLID_new.3
@@ -1913,6 +1914,7 @@
 ./usr/share/man/man3/RAND_set_rand_method.3
 ./usr/share/man/man3/RC4.3
 ./usr/share/man/man3/RIPEMD160.3
+./usr/share/man/man3/RMD160Init.3
 ./usr/share/man/man3/RSA_PSS_PARAMS_new.3
 ./usr/share/man/man3/RSA_blinding_on.3
 ./usr/share/man/man3/RSA_check_key.3
@@ -1930,6 +1932,8 @@
 ./usr/share/man/man3/RSA_sign_ASN1_OCTET_STRING.3
 ./usr/share/man/man3/RSA_size.3
 ./usr/share/man/man3/SHA1.3
+./usr/share/man/man3/SHA1Init.3
+./usr/share/man/man3/SHA256Init.3
 ./usr/share/man/man3/SMIME_read_PKCS7.3
 ./usr/share/man/man3/SMIME_write_PKCS7.3
 ./usr/share/man/man3/SSL_CIPHER_get_name.3
@@ -2043,7 +2047,7 @@
 ./usr/share/man/man3/SSL_write.3
 ./usr/share/man/man3/STACK_OF.3
 ./usr/share/man/man3/SXNET_new.3
-./usr/share/man/man3/SipHash24.3
+./usr/share/man/man3/SipHash24_Init.3
 ./usr/share/man/man3/TS_REQ_new.3
 ./usr/share/man/man3/UI_UTIL_read_pw.3
 ./usr/share/man/man3/UI_create_method.3
@@ -2535,7 +2539,6 @@
 ./usr/share/man/man3/mbsrtowcs.3
 ./usr/share/man/man3/mbstowcs.3
 ./usr/share/man/man3/mbtowc.3
-./usr/share/man/man3/md5.3
 ./usr/share/man/man3/memccpy.3
 ./usr/share/man/man3/memchr.3
 ./usr/share/man/man3/memcmp.3
@@ -2694,7 +2697,6 @@
 ./usr/share/man/man3/res_init.3
 ./usr/share/man/man3/resizeterm.3
 ./usr/share/man/man3/rint.3
-./usr/share/man/man3/rmd160.3
 ./usr/share/man/man3/round.3
 ./usr/share/man/man3/rpc.3
 ./usr/share/man/man3/scalbn.3
@@ -2715,8 +2717,6 @@
 ./usr/share/man/man3/setvbuf.3
 ./usr/share/man/man3/sgi/cacheflush.3
 ./usr/share/man/man3/sgi/get_fpc_csr.3
-./usr/share/man/man3/sha1.3
-./usr/share/man/man3/sha2.3
 ./usr/share/man/man3/shm_open.3
 ./usr/share/man/man3/sigaddset.3
 ./usr/share/man/man3/sigblock.3
