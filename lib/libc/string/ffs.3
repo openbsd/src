@@ -27,9 +27,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: ffs.3,v 1.10 2015/11/24 09:14:35 daniel Exp $
+.\"	$OpenBSD: ffs.3,v 1.11 2019/08/30 18:35:03 deraadt Exp $
 .\"
-.Dd $Mdocdate: November 24 2015 $
+.Dd $Mdocdate: August 30 2019 $
 .Dt FFS 3
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ and returns the index of that bit.
 Bits are numbered starting from 1, starting at the rightmost bit.
 A return value of 0 means that the argument was zero.
 .Sh SEE ALSO
-.Xr bitstring 3
+.Xr bit_ffs 3
 .Sh STANDARDS
 The
 .Fn ffs
