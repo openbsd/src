@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.103 2019/08/30 17:51:47 jmc Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.104 2019/08/30 19:34:04 deraadt Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -534,7 +534,7 @@ True if the Ethernet destination address is
 may be either a name from
 .Pa /etc/ethers
 or a number (see
-.Xr ethers 3
+.Xr ether_aton 3
 for a numeric format).
 .It Cm ether src Ar ehost
 True if the Ethernet source address is
