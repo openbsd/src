@@ -2131,12 +2131,11 @@
 ./usr/share/man/man3/ber_read_elements.3
 ./usr/share/man/man3/ber_set_header.3
 ./usr/share/man/man3/bindresvport.3
-./usr/share/man/man3/bitstring.3
+./usr/share/man/man3/bit_alloc.3
 ./usr/share/man/man3/blowfish.3
 ./usr/share/man/man3/bsearch.3
 ./usr/share/man/man3/btowc.3
 ./usr/share/man/man3/btree.3
-./usr/share/man/man3/byteorder.3
 ./usr/share/man/man3/bzero.3
 ./usr/share/man/man3/cacos.3
 ./usr/share/man/man3/cacosh.3
@@ -2309,7 +2308,7 @@
 ./usr/share/man/man3/end.3
 ./usr/share/man/man3/erf.3
 ./usr/share/man/man3/err.3
-./usr/share/man/man3/ethers.3
+./usr/share/man/man3/ether_aton.3
 ./usr/share/man/man3/evbuffer_new.3
 ./usr/share/man/man3/event.3
 ./usr/share/man/man3/evp.3
@@ -2456,6 +2455,7 @@
 ./usr/share/man/man3/glob.3
 ./usr/share/man/man3/hash.3
 ./usr/share/man/man3/hcreate.3
+./usr/share/man/man3/htobe64.3
 ./usr/share/man/man3/htonl.3
 ./usr/share/man/man3/hypot.3
 ./usr/share/man/man3/i2d_PKCS7_bio_stream.3
@@ -2468,7 +2468,7 @@
 ./usr/share/man/man3/inet6_rth_space.3
 ./usr/share/man/man3/inet_addr.3
 ./usr/share/man/man3/inet_lnaof.3
-./usr/share/man/man3/inet_net.3
+./usr/share/man/man3/inet_net_ntop.3
 ./usr/share/man/man3/inet_ntop.3
 ./usr/share/man/man3/initgroups.3
 ./usr/share/man/man3/insque.3
@@ -2691,8 +2691,8 @@
 ./usr/share/man/man3/regex.3
 ./usr/share/man/man3/remainder.3
 ./usr/share/man/man3/remove.3
+./usr/share/man/man3/res_init.3
 ./usr/share/man/man3/resizeterm.3
-./usr/share/man/man3/resolver.3
 ./usr/share/man/man3/rint.3
 ./usr/share/man/man3/rmd160.3
 ./usr/share/man/man3/round.3
@@ -2736,7 +2736,6 @@
 ./usr/share/man/man3/sqrt.3
 ./usr/share/man/man3/ssl.3
 ./usr/share/man/man3/statvfs.3
-./usr/share/man/man3/stdarg.3
 ./usr/share/man/man3/stdio.3
 ./usr/share/man/man3/stpcpy.3
 ./usr/share/man/man3/strcasecmp.3
@@ -2821,7 +2820,8 @@
 ./usr/share/man/man3/usleep.3
 ./usr/share/man/man3/utime.3
 ./usr/share/man/man3/uu_lock.3
-./usr/share/man/man3/uuid.3
+./usr/share/man/man3/uuid_compare.3
+./usr/share/man/man3/va_start.3
 ./usr/share/man/man3/valloc.3
 ./usr/share/man/man3/vis.3
 ./usr/share/man/man3/wcrtomb.3
