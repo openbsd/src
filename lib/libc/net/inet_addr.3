@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet_addr.3,v 1.3 2018/04/28 16:03:43 schwarze Exp $
+.\"	$OpenBSD: inet_addr.3,v 1.4 2019/08/30 18:33:17 deraadt Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)inet.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: April 28 2018 $
+.Dd $Mdocdate: August 30 2019 $
 .Dt INET_ADDR 3
 .Os
 .Sh NAME
@@ -144,7 +144,7 @@ in the C language (i.e., a leading 0x or 0X implies
 hexadecimal; a leading 0 implies octal;
 otherwise, the number is interpreted as decimal).
 .Sh SEE ALSO
-.Xr byteorder 3 ,
+.Xr htonl 3 ,
 .Xr gethostbyname 3 ,
 .Xr inet_lnaof 3 ,
 .Xr inet_net 3 ,

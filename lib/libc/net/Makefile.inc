@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.59 2016/03/30 06:38:41 jmc Exp $
+#	$OpenBSD: Makefile.inc,v 1.60 2019/08/30 18:33:17 deraadt Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/net ${LIBCSRCDIR}/net
@@ -28,9 +28,9 @@ SRCS+=	ip6opt.c rthdr.c vars6.c
 
 .include "${LIBCSRCDIR}/arch/${MACHINE_CPU}/net/Makefile.inc"
 
-MAN+=	byteorder.3 ethers.3 gai_strerror.3 getaddrinfo.3 gethostbyname.3 \
+MAN+=	htobe64.3 ether_aton.3 gai_strerror.3 getaddrinfo.3 gethostbyname.3 \
 	getifaddrs.3 getnameinfo.3 getnetent.3 getpeereid.3 getprotoent.3 \
 	getrrsetbyname.3 getservent.3 htonl.3 if_indextoname.3 \
-	inet_addr.3 inet_lnaof.3 inet_net.3 inet_ntop.3 \
+	inet_addr.3 inet_lnaof.3 inet_net_ntop.3 inet_ntop.3 \
 	inet6_opt_init.3 inet6_rth_space.3 link_ntoa.3 \
-	rcmd.3 rcmdsh.3 resolver.3 sockatmark.3
+	rcmd.3 rcmdsh.3 res_init.3 sockatmark.3
