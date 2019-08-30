@@ -1,4 +1,4 @@
-/* $OpenBSD: dgst.c,v 1.15 2019/08/30 11:19:00 inoguchi Exp $ */
+/* $OpenBSD: dgst.c,v 1.16 2019/08/30 11:43:34 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -122,10 +122,10 @@ dgst_opt_md(int argc, char **argv, int *argsused)
 	if (*name++ != '-')
 		return (1);
 
-	if ((dgst_config.m = EVP_get_digestbyname(name)) != NULL)
-		dgst_config.md = dgst_config.m;
-	else
+	if ((dgst_config.m = EVP_get_digestbyname(name)) == NULL)
 		return (1);
+
+	dgst_config.md = dgst_config.m;
 
 	*argsused = 1;
 	return (0);
@@ -173,21 +173,21 @@ dgst_opt_verify(char *arg)
 static const struct option dgst_options[] = {
 	{
 		.name = "binary",
-		.desc = "Output in binary form",
+		.desc = "Output the digest or signature in binary form",
 		.type = OPTION_VALUE,
 		.opt.value = &dgst_config.out_bin,
 		.value = 1,
 	},
 	{
 		.name = "c",
-		.desc = "To output the digest with separating colons",
+		.desc = "Print the digest in two-digit groups separated by colons",
 		.type = OPTION_VALUE,
 		.opt.value = &dgst_config.separator,
 		.value = 1,
 	},
 	{
 		.name = "d",
-		.desc = "To output debug info",
+		.desc = "Print BIO debugging information",
 		.type = OPTION_FLAG,
 		.opt.flag = &dgst_config.debug,
 	},
@@ -249,7 +249,7 @@ static const struct option dgst_options[] = {
 	},
 	{
 		.name = "r",
-		.desc = "To output the digest in coreutils format",
+		.desc = "Output the digest in coreutils format",
 		.type = OPTION_VALUE,
 		.opt.value = &dgst_config.separator,
 		.value = 2,
