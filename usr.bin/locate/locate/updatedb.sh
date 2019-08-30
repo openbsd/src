@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: updatedb.sh,v 1.14 2019/01/17 06:15:44 tedu Exp $
+#	$OpenBSD: updatedb.sh,v 1.15 2019/08/30 02:49:35 kmos Exp $
 #
 # Copyright (c) September 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -28,6 +28,11 @@
 #
 # updatedb - update locate database for local mounted filesystems
 #
+
+if [ $( id -u ) != 0 ]; then
+	echo "$0: must be root"
+	exit 1
+fi
 
 LOCATE_CONFIG="/etc/locate.rc"
 if [ -f "$LOCATE_CONFIG" -a -r "$LOCATE_CONFIG" ]; then
