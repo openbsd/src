@@ -2590,7 +2590,7 @@
 ./usr/share/man/man3/panel.3
 ./usr/share/man/man3/pause.3
 ./usr/share/man/man3/pcap-filter.3
-./usr/share/man/man3/pcap.3
+./usr/share/man/man3/pcap_open_live.3
 ./usr/share/man/man3/perror.3
 ./usr/share/man/man3/pidfile.3
 ./usr/share/man/man3/pkcs5_pbkdf2.3
@@ -2820,7 +2820,7 @@
 ./usr/share/man/man3/uselocale.3
 ./usr/share/man/man3/usleep.3
 ./usr/share/man/man3/utime.3
-./usr/share/man/man3/uucplock.3
+./usr/share/man/man3/uu_lock.3
 ./usr/share/man/man3/uuid.3
 ./usr/share/man/man3/valloc.3
 ./usr/share/man/man3/vis.3
