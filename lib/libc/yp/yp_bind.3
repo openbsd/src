@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypclnt.3,v 1.27 2015/11/10 23:48:18 jmc Exp $
+.\"	$OpenBSD: yp_bind.3,v 1.1 2019/08/30 22:41:51 deraadt Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: August 30 2019 $
 .Dt YP_BIND 3
 .Os
 .Sh NAME
@@ -74,9 +74,7 @@
 .Ft int
 .Fn ypprot_err "unsigned int incode"
 .Sh DESCRIPTION
-The
-.Nm ypclnt
-suite provides an interface to the YP subsystem.
+This function suite provides an interface to the YP subsystem.
 For a general description of the YP subsystem, see
 .Xr yp 8 .
 .Pp
@@ -147,18 +145,14 @@ which frees all per-process and per-node resources to bind the domain and
 marks the domain unbound.
 .Pp
 If, during a YP lookup, an RPC failure occurs, the domain used in the lookup
-is automatically marked unbound and the
-.Nm ypclnt
-layer retries the lookup as long as
+is automatically marked unbound and the layer retries the lookup as long as
 .Xr ypbind 8
 is running and either the client process cannot bind to a server for the domain
 specified in the lookup, or RPC requests to the YP server process fail.
 If an error is not RPC-related, one of the YP error codes described below
 is returned and control given back to the user code.
 .Pp
-The
-.Nm ypclnt
-suite provides the following functionality:
+The suite provides the following functionality:
 .Bl -tag -width "yperr_string()"
 .It Fn yp_match
 Provides the value associated with the given key.
@@ -209,9 +203,7 @@ map.
 .It Fn yp_all
 This function provides a way to transfer an entire map from
 the server to the client process with a single request.
-This transfer uses TCP, unlike all other functions in the
-.Nm ypclnt
-suite, which use UDP.
+This transfer method uses TCP, unlike all other functions which use UDP.
 The entire transaction occurs in a single RPC request-response.
 The third argument to this function provides a way to supply the name
 of a function to process each key-value pair in the map.
@@ -257,8 +249,7 @@ Holds one of the return status values described in
 see
 .Fn ypprot_err
 below for a function that will translate YP protocol errors into a
-.Nm ypclnt
-layer error code as described in
+error code as described in
 .In rpcsvc/ypclnt.h .
 .It Fa inkey , inval
 The key and value arguments are somewhat different here than described
@@ -313,15 +304,11 @@ Returns a pointer to a NUL-terminated error string that does not contain a
 or
 .Ql \en .
 .It Fn ypprot_err
-Converts a YP protocol error code to a
-.Nm ypclnt
-error code suitable for
+Converts a YP protocol error code to a error code suitable for
 .Fn yperr_string .
 .El
 .Sh RETURN VALUES
-All functions in the
-.Nm ypclnt
-suite which are of type
+All functions which are of type
 .Em int
 return 0 upon success or one of the following error codes upon failure:
 .Bl -tag -width "YPERR_BADARGS   "
