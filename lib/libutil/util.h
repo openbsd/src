@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.35 2017/04/20 17:48:30 nicm Exp $	*/
+/*	$OpenBSD: util.h,v 1.36 2019/08/30 03:57:56 deraadt Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
 #define OPENDEV_BLCK	0x04		/* Open block, not character device. */
 
 /*
- * uucplock(3) specific flags.
+ * uu_lock(3) specific flags.
  */
 #define UU_LOCK_INUSE (1)
 #define UU_LOCK_OK (0)
