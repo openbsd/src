@@ -16,9 +16,9 @@
 .\" If we meet some day, and you think this stuff is worth it, you
 .\" can buy me a beer in return. Poul-Henning Kamp
 .\"
-.\" 	$OpenBSD: md5.3,v 1.7 2017/06/13 19:41:55 deraadt Exp $
+.\" 	$OpenBSD: MD5Init.3,v 1.1 2019/08/30 22:20:43 deraadt Exp $
 .\"
-.Dd $Mdocdate: June 13 2017 $
+.Dd $Mdocdate: August 30 2019 $
 .Dt MD5INIT 3
 .Os
 .Sh NAME
@@ -162,9 +162,9 @@ characters of buffer space.
 .Sh SEE ALSO
 .Xr cksum 1 ,
 .Xr md5 1 ,
-.Xr rmd160 3 ,
-.Xr sha1 3 ,
-.Xr sha2 3
+.Xr RMD160Init 3 ,
+.Xr SHA1INIT 3 ,
+.Xr SHA256INIT 3
 .Rs
 .%A H. Dobbertin
 .%D 1995
@@ -210,6 +210,5 @@ helper functions are derived from code written by
 .An Poul-Henning Kamp .
 .Sh BUGS
 Collisions have been found for the full version of MD5.
-The use of
-.Xr sha2 3
-is recommended instead.
+The use of the SHA2 functions is recommended instead.
+
