@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wprintf.3,v 1.7 2019/01/16 12:55:49 schwarze Exp $
+.\"	$OpenBSD: wprintf.3,v 1.8 2019/08/30 20:27:25 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 16 2019 $
+.Dd $Mdocdate: August 30 2019 $
 .Dt WPRINTF 3
 .Os
 .Sh NAME
@@ -109,7 +109,7 @@ These functions write the output under the control of a
 .Fa format
 string that specifies how subsequent arguments
 (or arguments accessed via the variable-length argument facilities of
-.Xr stdarg 3 )
+.Xr va_start 3 )
 are converted for output.
 .Pp
 These functions return the number of characters printed

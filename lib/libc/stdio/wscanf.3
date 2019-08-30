@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wscanf.3,v 1.4 2019/01/16 12:55:49 schwarze Exp $
+.\"	$OpenBSD: wscanf.3,v 1.5 2019/08/30 20:27:25 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 .\"     @(#)scanf.3	8.2 (Berkeley) 12/11/93
 .\" FreeBSD: src/lib/libc/stdio/scanf.3,v 1.24 2003/06/28 09:03:25 das Exp
 .\"
-.Dd $Mdocdate: January 16 2019 $
+.Dd $Mdocdate: August 30 2019 $
 .Dt WSCANF 3
 .Os
 .Sh NAME
@@ -91,7 +91,7 @@ function is analogous to
 and reads input from the stream pointer
 .Fa stream
 using a variable argument list of pointers (see
-.Xr stdarg 3 ) .
+.Xr va_start 3 ) .
 The
 .Fn vwscanf
 function scans a variable argument list from the standard input and the
