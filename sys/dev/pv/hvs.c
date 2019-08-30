@@ -610,7 +610,7 @@ fixup_inquiry(struct scsi_xfer *xs, struct hvs_srb *srb)
 		scsi_strvis(vendor, inq->vendor, sizeof(vendor));
 		if ((sc->sc_proto == HVS_PROTO_VERSION_WIN8_1 ||
 		    sc->sc_proto == HVS_PROTO_VERSION_WIN8) &&
-		    SCSISPC(inq->version) == 2 &&
+		    ((inq->version & SID_ANSII) == 0x04) &&
 		    !strncmp(vendor, "Msft", 4))
 			inq->version = 0x05; /* SPC-3 */
 	}
