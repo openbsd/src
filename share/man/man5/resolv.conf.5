@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.56 2019/06/17 05:51:25 otto Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.57 2019/08/30 20:20:51 jmc Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: June 17 2019 $
+.Dd $Mdocdate: August 30 2019 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -39,9 +39,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-file specifies how the
-.Xr resolver 3
-routines in the C library
+file specifies how the resolver routines in the C library
 (which provide access to the Internet Domain Name System) should operate.
 The resolver configuration file contains information that is read
 by the resolver routines the first time they are invoked by a process.
@@ -81,7 +79,6 @@ even if
 exists.
 .Nm resolv.conf.tail
 is normally used to specify
-.Xr resolver 3
 options that are not available via DHCP
 e.g. lookup or family.
 .Pp
@@ -264,7 +261,7 @@ or with tunnels.
 .It Cm inet6
 Enables support for IPv6-only applications, by setting RES_USE_INET6 in
 _res.options (see
-.Xr resolver 3 ) .
+.Xr res_init 3 ) .
 On
 .Ox
 this option does nothing.
@@ -325,7 +322,7 @@ file.
 .El
 .Sh SEE ALSO
 .Xr gethostbyname 3 ,
-.Xr resolver 3 ,
+.Xr res_init 3 ,
 .Xr hosts 5 ,
 .Xr hostname 7 ,
 .Xr dhclient 8 ,

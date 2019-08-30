@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.66 2018/07/15 10:46:48 phessler Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.67 2019/08/30 20:20:51 jmc Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: July 15 2018 $
+.Dd $Mdocdate: August 30 2019 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -142,9 +142,7 @@ The optional address that belongs to the interface, such as
 It is also feasible to use a hostname as specified in
 .Pa /etc/hosts .
 It is recommended that an address be used instead of symbolic information,
-since the latter might activate
-.Xr resolver 3
-library routines.
+since the latter might activate resolver library routines.
 .Pp
 If no address is specified, the
 .Va netmask ,
@@ -194,9 +192,7 @@ The destination address to be set on the interface, such as
 It is also feasible to use a hostname as specified in
 .Pa /etc/hosts .
 It is recommended that an address be used instead of symbolic information
-which might activate
-.Xr resolver 3
-library routines.
+which might activate resolver library routines.
 .It Va prefixlen
 The prefixlen number, or number of bits in the netmask, to be set on
 the interface, such as 64.
