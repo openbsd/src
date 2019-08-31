@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.24 2019/03/24 20:45:34 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.25 2019/08/31 13:48:45 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -776,21 +776,26 @@ wstpad_tap(struct wsmouseinput *input, u_int *cmds)
 			tp->tap.contacts = tp->contacts;
 
 		if (t) {
-			if (!wstpad_is_tap(tp, t))
-				tp->tap.state = TAP_IGNORE;
-			else if (tap_finished(tp, nmasked))
-				tp->tap.state = (tp->tap.centered
-				    ? TAP_LIFTED : TAP_IGNORE);
-
-			if (tp->tap.state != TAP_DETECT) {
-				if (tp->tap.state == TAP_LIFTED) {
-					tp->tap.button = tap_btn(tp, nmasked);
-					*cmds |= 1 << TAPBUTTON_DOWN;
-					err = !timeout_add_msec(&tp->tap.to,
-					    tp->tap.clicktime);
+			if (wstpad_is_tap(tp, t)) {
+				if (tap_finished(tp, nmasked)) {
+					if (tp->tap.centered) {
+						tp->tap.state = TAP_LIFTED;
+						tp->tap.button =
+						    tap_btn(tp, nmasked);
+					}
+					tp->tap.contacts = 0;
+					tp->tap.centered = 0;
 				}
+			} else {
+				if (tp->contacts > nmasked)
+					tp->tap.state = TAP_IGNORE;
 				tp->tap.contacts = 0;
 				tp->tap.centered = 0;
+			}
+			if (tp->tap.state == TAP_LIFTED) {
+				*cmds |= 1 << TAPBUTTON_DOWN;
+				err = !timeout_add_msec(&tp->tap.to,
+				    tp->tap.clicktime);
 			}
 		}
 		break;
