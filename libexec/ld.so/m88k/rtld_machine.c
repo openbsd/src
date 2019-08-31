@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.25 2019/08/06 04:01:42 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.26 2019/08/31 04:22:12 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -126,7 +126,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 			sr = _dl_find_symbol(symn,
 			    SYM_SEARCH_OTHER | SYM_WARNNOTFOUND | SYM_NOTPLT,
-			    sym, object, NULL);
+			    sym, object);
 			if (sr.sym != NULL) {
 				_dl_bcopy((void *)(sr.obj->obj_base +
 				    sr.sym->st_value), r_addr, sym->st_size);
@@ -151,7 +151,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 				sr = _dl_find_symbol(symn,
 				    SYM_SEARCH_ALL | SYM_WARNNOTFOUND |
 				    ((type == RELOC_GOTP_ENT) ?
-				    SYM_PLT : SYM_NOTPLT), sym, object, NULL);
+				    SYM_PLT : SYM_NOTPLT), sym, object);
 
 				if (sr.sym == NULL) {
 					if (ELF_ST_BIND(sym->st_info) !=
