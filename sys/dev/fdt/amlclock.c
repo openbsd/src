@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlclock.c,v 1.3 2019/08/31 19:20:29 kettenis Exp $	*/
+/*	$OpenBSD: amlclock.c,v 1.4 2019/08/31 20:59:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -29,6 +29,10 @@
 #include <dev/ofw/fdt.h>
 
 #define G12A_FCLK_DIV2		2
+#define G12A_FCLK_DIV3		3
+#define G12A_FCLK_DIV4		4
+#define G12A_FCLK_DIV5		5
+#define G12A_FCLK_DIV7		6
 #define G12A_SD_EMMC_A		33
 #define G12A_SD_EMMC_B		34
 #define G12A_SD_EMMC_C		35
@@ -36,6 +40,7 @@
 #define G12A_SD_EMMC_B_CLK0	61
 #define G12A_SD_EMMC_C_CLK0	62
 #define G12A_USB		47
+#define G12A_FCLK_DIV2P5	99
 #define G12A_PCIE_PLL		201
 
 #define HHI_PCIE_PLL_CNTL0	0x26
@@ -77,6 +82,7 @@ struct amlclock_gate aml_g12a_gates[] = {
 struct amlclock_softc {
 	struct device		sc_dev;
 	struct regmap		*sc_rm;
+	int			sc_node;
 
 	struct amlclock_gate	*sc_gates;
 	int			sc_ngates;
@@ -120,6 +126,7 @@ amlclock_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_node = faa->fa_node;
 	printf("\n");
 
 	sc->sc_gates = aml_g12a_gates;
@@ -136,8 +143,97 @@ amlclock_attach(struct device *parent, struct device *self, void *aux)
 uint32_t
 amlclock_get_frequency(void *cookie, uint32_t *cells)
 {
+	struct amlclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
+	uint32_t reg, mux, div;
 
+	switch (idx) {
+	case G12A_FCLK_DIV2:
+		return 1000000000;
+	case G12A_FCLK_DIV3:
+		return 666666666;
+	case G12A_FCLK_DIV4:
+		return 500000000;
+	case G12A_FCLK_DIV5:
+		return 400000000;
+	case G12A_FCLK_DIV7:
+		return 285714285;
+	case G12A_FCLK_DIV2P5:
+		return 800000000;
+
+	case G12A_SD_EMMC_A_CLK0:
+		reg = HREAD4(sc, HHI_SD_EMMC_CLK_CNTL);
+		mux = (reg >> 9) & 0x7;
+		div = ((reg >> 0) & 0x7f) + 1;
+		switch (mux) {
+		case 0:
+			return clock_get_frequency(sc->sc_node, "xtal") / div;
+		case 1:
+			idx = G12A_FCLK_DIV2;
+			break;
+		case 2:
+			idx = G12A_FCLK_DIV3;
+			break;
+		case 3:
+			idx = G12A_FCLK_DIV5;
+			break;
+		case 4:
+			idx = G12A_FCLK_DIV7;
+			break;
+		default:
+			goto fail;
+		}
+		return amlclock_get_frequency(sc, &idx) / div;
+	case G12A_SD_EMMC_B_CLK0:
+		reg = HREAD4(sc, HHI_SD_EMMC_CLK_CNTL);
+		mux = (reg >> 25) & 0x7;
+		div = ((reg >> 16) & 0x7f) + 1;
+		switch (mux) {
+		case 0:
+			return clock_get_frequency(sc->sc_node, "xtal") / div;
+		case 1:
+			idx = G12A_FCLK_DIV2;
+			break;
+		case 2:
+			idx = G12A_FCLK_DIV3;
+			break;
+		case 3:
+			idx = G12A_FCLK_DIV5;
+			break;
+		case 4:
+			idx = G12A_FCLK_DIV7;
+			break;
+		default:
+			goto fail;
+		}
+		return amlclock_get_frequency(sc, &idx) / div;
+	case G12A_SD_EMMC_C_CLK0:
+		reg = HREAD4(sc, HHI_NAND_CLK_CNTL);
+		mux = (reg >> 9) & 0x7;
+		div = ((reg >> 0) & 0x7f) + 1;
+		switch (mux) {
+		case 0:
+			return clock_get_frequency(sc->sc_node, "xtal") / div;
+		case 1:
+			idx = G12A_FCLK_DIV2;
+			break;
+		case 2:
+			idx = G12A_FCLK_DIV3;
+			break;
+		case 3:
+			idx = G12A_FCLK_DIV5;
+			break;
+		case 4:
+			idx = G12A_FCLK_DIV7;
+			break;
+		default:
+			goto fail;
+		}
+		return amlclock_get_frequency(sc, &idx) / div;
+		return reg;
+	}
+
+fail:
 	printf("%s: 0x%08x\n", __func__, idx);
 	return 0;
 }
