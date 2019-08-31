@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.232 2019/08/29 22:42:16 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.233 2019/08/31 13:46:14 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -484,7 +484,7 @@ newroute(int argc, char **argv)
 				break;
 			case K_SA:
 				af = PF_ROUTE;
-				aflen = sizeof(union sockunion);
+				aflen = sizeof(struct sockaddr_storage) - 1;
 				break;
 			case K_MPLS:
 				af = AF_MPLS;
@@ -908,7 +908,7 @@ getaddr(int which, int af, char *s, struct hostent **hpp)
 	case AF_MPLS:
 		errx(1, "mpls labels require -in or -out switch");
 	case PF_ROUTE:
-		su->sa.sa_len = sizeof(*su);
+		su->sa.sa_len = sizeof(struct sockaddr_storage) - 1;
 		sockaddr(s, &su->sa);
 		return (1);
 

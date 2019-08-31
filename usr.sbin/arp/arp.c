@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.85 2019/08/29 19:11:15 bluhm Exp $ */
+/*	$OpenBSD: arp.c,v 1.86 2019/08/31 13:46:14 bluhm Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -675,9 +675,8 @@ rtmsg(int cmd)
 
 #define NEXTADDR(w, s)							\
 	if (rtm->rtm_addrs & (w)) {					\
-		l = ROUNDUP(((struct sockaddr *)&(s))->sa_len);		\
-		memcpy(cp, &(s), l);					\
-		cp += l;						\
+		memcpy(cp, &(s), sizeof(s));				\
+		ADVANCE(cp, (struct sockaddr *)&(s));			\
 	}
 
 	NEXTADDR(RTA_DST, sin_m);

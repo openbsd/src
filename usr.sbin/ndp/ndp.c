@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.97 2019/08/27 20:42:40 kn Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.98 2019/08/31 13:46:14 bluhm Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -108,6 +108,7 @@
 /* packing rule for routing socket */
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 static pid_t pid;
 static int nflag;
@@ -323,7 +324,7 @@ parse_host(const char *host, struct in6_addr *in6)
 struct	sockaddr_in6 so_mask = {sizeof(so_mask), AF_INET6 };
 struct	sockaddr_in6 blank_sin = {sizeof(blank_sin), AF_INET6 }, sin_m;
 struct	sockaddr_dl blank_sdl = {sizeof(blank_sdl), AF_LINK }, sdl_m;
-struct	sockaddr_dl ifp_m = { sizeof(&ifp_m), AF_LINK };
+struct	sockaddr_dl ifp_m = { sizeof(ifp_m), AF_LINK };
 time_t	expire_time;
 int	flags, found_entry;
 struct	{
@@ -766,9 +767,12 @@ rtmsg(int cmd)
 	case RTM_GET:
 		rtm->rtm_addrs |= (RTA_DST | RTA_IFP);
 	}
-#define NEXTADDR(w, s) \
-	if (rtm->rtm_addrs & (w)) { \
-		bcopy((char *)&s, cp, sizeof(s)); cp += ROUNDUP(sizeof(s));}
+
+#define NEXTADDR(w, s)							\
+	if (rtm->rtm_addrs & (w)) {					\
+		memcpy(cp, &(s), sizeof(s));				\
+		ADVANCE(cp, (struct sockaddr *)&(s));			\
+	}
 
 	NEXTADDR(RTA_DST, sin_m);
 	NEXTADDR(RTA_GATEWAY, sdl_m);
@@ -825,7 +829,7 @@ rtget(struct sockaddr_in6 **sinp, struct sockaddr_dl **sdlp)
 				default:
 					break;
 				}
-				cp += ROUNDUP(sa->sa_len);
+				ADVANCE(cp, sa);
 			}
 		}
 	}
