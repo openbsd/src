@@ -55,6 +55,7 @@ void ch_set_eof(void);
 void ch_init(int, int);
 void ch_close(void);
 int ch_getflags(void);
+int mbtowc_left(wchar_t *, const char *, size_t);
 void init_charset(void);
 char *prchar(LWCHAR);
 char *prutfchar(LWCHAR);

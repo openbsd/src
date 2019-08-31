@@ -146,6 +146,27 @@ init_charset(void)
 }
 
 /*
+ * Like mbtowc(3), except that it converts the multibyte character
+ * preceding ps rather than the one starting at ps.
+ */
+int
+mbtowc_left(wchar_t *pwc, const char *ps, size_t psz)
+{
+	size_t sz = 0;
+	int len;
+
+	do {
+		if (++sz > psz)
+			return -1;
+	} while (utf_mode && IS_UTF8_TRAIL(ps[-sz]));
+	if ((len = mbtowc(pwc, ps - sz, sz)) == -1) {
+		(void)mbtowc(NULL, NULL, 0);
+		return -1;
+	}
+	return len == sz || (len == 0 && sz == 1) ? len : -1;
+}
+
+/*
  * Is a given character a "control" character?
  */
 static int
