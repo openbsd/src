@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlclock.c,v 1.2 2019/08/27 18:29:45 kettenis Exp $	*/
+/*	$OpenBSD: amlclock.c,v 1.3 2019/08/31 19:20:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,6 +28,13 @@
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
+#define G12A_FCLK_DIV2		2
+#define G12A_SD_EMMC_A		33
+#define G12A_SD_EMMC_B		34
+#define G12A_SD_EMMC_C		35
+#define G12A_SD_EMMC_A_CLK0	60
+#define G12A_SD_EMMC_B_CLK0	61
+#define G12A_SD_EMMC_C_CLK0	62
 #define G12A_USB		47
 #define G12A_PCIE_PLL		201
 
@@ -37,7 +44,10 @@
 #define HHI_PCIE_PLL_CNTL3	0x29
 #define HHI_PCIE_PLL_CNTL4	0x2a
 #define HHI_PCIE_PLL_CNTL5	0x2b
+#define HHI_GCLK_MPEG0		0x50
 #define HHI_GCLK_MPEG1		0x51
+#define HHI_NAND_CLK_CNTL	0x97
+#define HHI_SD_EMMC_CLK_CNTL	0x99
 
 #define HREAD4(sc, reg)							\
 	(regmap_read_4((sc)->sc_rm, (reg) << 2))
@@ -48,9 +58,28 @@
 #define HCLR4(sc, reg, bits)						\
 	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
 
+struct amlclock_gate {
+	uint8_t reg;
+	uint8_t bit;
+};
+
+struct amlclock_gate aml_g12a_gates[] = {
+	[G12A_SD_EMMC_A] = { HHI_GCLK_MPEG0, 24 },
+	[G12A_SD_EMMC_B] = { HHI_GCLK_MPEG0, 25 },
+	[G12A_SD_EMMC_C] = { HHI_GCLK_MPEG0, 26 },
+	[G12A_USB] = { HHI_GCLK_MPEG1, 26 },
+
+	[G12A_SD_EMMC_A_CLK0] = { HHI_SD_EMMC_CLK_CNTL, 7 },
+	[G12A_SD_EMMC_B_CLK0] = { HHI_SD_EMMC_CLK_CNTL, 23 },
+	[G12A_SD_EMMC_C_CLK0] = { HHI_NAND_CLK_CNTL, 7 },
+};
+
 struct amlclock_softc {
 	struct device		sc_dev;
 	struct regmap		*sc_rm;
+
+	struct amlclock_gate	*sc_gates;
+	int			sc_ngates;
 
 	struct clock_device	sc_cd;
 };
@@ -92,6 +121,9 @@ amlclock_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+	sc->sc_gates = aml_g12a_gates;
+	sc->sc_ngates = nitems(aml_g12a_gates);
 
 	sc->sc_cd.cd_node = faa->fa_node;
 	sc->sc_cd.cd_cookie = sc;
@@ -149,13 +181,18 @@ amlclock_enable(void *cookie, uint32_t *cells, int on)
 	struct amlclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
 
-	switch (idx) {
-	case G12A_USB:
+	if (idx < sc->sc_ngates && sc->sc_gates[idx].reg != 0) {
 		if (on)
-			HSET4(sc, HHI_GCLK_MPEG1, (1 << 26));
+			HSET4(sc, sc->sc_gates[idx].reg,
+			    (1U << sc->sc_gates[idx].bit));
 		else
-			HCLR4(sc, HHI_GCLK_MPEG1, (1 << 26));
+			HCLR4(sc, sc->sc_gates[idx].reg,
+			    (1U << sc->sc_gates[idx].bit));
 		return;
+	}
+
+	switch (idx) {
+	case G12A_FCLK_DIV2:
 	case G12A_PCIE_PLL:
 		/* Already enabled. */
 		return;
