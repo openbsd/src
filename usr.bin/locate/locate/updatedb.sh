@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: updatedb.sh,v 1.15 2019/08/30 02:49:35 kmos Exp $
+#	$OpenBSD: updatedb.sh,v 1.16 2019/08/31 16:03:28 kmos Exp $
 #
 # Copyright (c) September 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -28,11 +28,6 @@
 #
 # updatedb - update locate database for local mounted filesystems
 #
-
-if [ $( id -u ) != 0 ]; then
-	echo "$0: must be root"
-	exit 1
-fi
 
 LOCATE_CONFIG="/etc/locate.rc"
 if [ -f "$LOCATE_CONFIG" -a -r "$LOCATE_CONFIG" ]; then
@@ -74,6 +69,12 @@ while test $# != 0; do
 	esac
 	shift
 done
+
+FCODESDIR=$( dirname "${FCODES}" )
+if [ ! -w "${FCODESDIR}" ]; then
+	echo "$0: no permission to create $FCODES"
+	exit 1
+fi
 
 case X"$SEARCHPATHS" in 
 	X) echo "$0: empty variable SEARCHPATHS"; exit 1;; esac
