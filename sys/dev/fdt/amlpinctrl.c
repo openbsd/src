@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlpinctrl.c,v 1.1 2019/08/28 07:12:37 kettenis Exp $	*/
+/*	$OpenBSD: amlpinctrl.c,v 1.2 2019/08/31 21:00:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
@@ -27,20 +28,98 @@
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
+#define BIAS_DISABLE	0x00
+#define BIAS_PULL_UP	0x01
+#define BIAS_PULL_DOWN	0x02
+
+#define GPIOH_0		16
+#define BOOT_0		25
+#define BOOT_1		26
+#define BOOT_2		27
+#define BOOT_3		28
+#define BOOT_4		29
+#define BOOT_5		30
+#define BOOT_6		31
+#define BOOT_7		32
+#define BOOT_8		33
+#define BOOT_10		35
+#define BOOT_13		38
+#define GPIOC_0		41
+#define GPIOC_1		42
+#define GPIOC_2		43
+#define GPIOC_3		44
+#define GPIOC_4		45
+#define GPIOC_5		46
+
 #define PERIPHS_PIN_MUX_0		0xb0
+#define PERIPHS_PIN_MUX_9		0xb9
 #define PERIPHS_PIN_MUX_B		0xbb
 #define PREG_PAD_GPIO0_EN_N		0x10
+#define PREG_PAD_GPIO1_EN_N		0x13
 #define PREG_PAD_GPIO3_EN_N		0x19
+#define PAD_PULL_UP_EN_0		0x48
+#define PAD_PULL_UP_EN_1		0x49
+#define PAD_PULL_UP_EN_3		0x4b
+#define PAD_PULL_UP_0			0x3a
+#define PAD_PULL_UP_1			0x3b
+#define PAD_PULL_UP_3			0x3d
+#define PAD_DS_0A			0xd0
+#define PAD_DS_1A			0xd1
+#define PAD_DS_3A			0xd4
 
 struct aml_gpio_bank {
 	uint8_t first_pin, num_pins;
 	uint8_t mux_reg;
 	uint8_t gpio_reg;
+	uint8_t pull_reg;
+	uint8_t pull_en_reg;
+	uint8_t ds_reg;
+};
+
+struct aml_pin_group {
+	const char *name;
+	uint8_t	pin;
+	uint8_t func;
+	const char *function;
 };
 
 struct aml_gpio_bank aml_g12a_gpio_banks[] = {
-	{ 16, 9, PERIPHS_PIN_MUX_B - PERIPHS_PIN_MUX_0, /* GPIOH */
-	  PREG_PAD_GPIO3_EN_N - PREG_PAD_GPIO0_EN_N },
+	/* BOOT */
+	{ BOOT_0, 16, PERIPHS_PIN_MUX_0 - PERIPHS_PIN_MUX_0,
+	  PREG_PAD_GPIO0_EN_N - PREG_PAD_GPIO0_EN_N,
+	  PAD_PULL_UP_0 - PAD_PULL_UP_0,
+	  PAD_PULL_UP_EN_0 - PAD_PULL_UP_EN_0, PAD_DS_0A - PAD_DS_0A },
+	/* GPIOC */
+	{ GPIOC_0, 8, PERIPHS_PIN_MUX_9 - PERIPHS_PIN_MUX_0,
+	  PREG_PAD_GPIO1_EN_N - PREG_PAD_GPIO0_EN_N,
+	  PAD_PULL_UP_1 - PAD_PULL_UP_0,
+	  PAD_PULL_UP_EN_1 - PAD_PULL_UP_EN_0, PAD_DS_1A - PAD_DS_0A },
+	/* GPIOH */
+	{ GPIOH_0, 9, PERIPHS_PIN_MUX_B - PERIPHS_PIN_MUX_0,
+	  PREG_PAD_GPIO3_EN_N - PREG_PAD_GPIO0_EN_N,
+	  PAD_PULL_UP_3 - PAD_PULL_UP_0,
+	  PAD_PULL_UP_EN_3 - PAD_PULL_UP_EN_0, PAD_DS_3A - PAD_DS_0A },
+	{ }
+};
+
+struct aml_pin_group aml_g12a_pin_groups[] = {
+	{ "sdcard_d0_c", GPIOC_0, 1, "sdcard" },
+	{ "sdcard_d1_c", GPIOC_1, 1, "sdcard" },
+	{ "sdcard_d2_c", GPIOC_2, 1, "sdcard" },
+	{ "sdcard_d3_c", GPIOC_3, 1, "sdcard" },
+	{ "sdcard_clk_c", GPIOC_4, 1, "sdcard" },
+	{ "sdcard_cmd_c", GPIOC_5, 1, "sdcard" },
+	{ "emmc_nand_d0", BOOT_0, 1, "emmc" },
+	{ "emmc_nand_d1", BOOT_1, 1, "emmc" },
+	{ "emmc_nand_d2", BOOT_2, 1, "emmc" },
+	{ "emmc_nand_d3", BOOT_3, 1, "emmc" },
+	{ "emmc_nand_d4", BOOT_4, 1, "emmc" },
+	{ "emmc_nand_d5", BOOT_5, 1, "emmc" },
+	{ "emmc_nand_d6", BOOT_6, 1, "emmc" },
+	{ "emmc_nand_d7", BOOT_7, 1, "emmc" },
+	{ "emmc_clk", BOOT_8, 1, "emmc" },
+	{ "emmc_cmd", BOOT_10, 1, "emmc" },
+	{ "emmc_nand_ds", BOOT_13, 1, "emmc" },
 	{ }
 };
 
@@ -48,9 +127,14 @@ struct amlpinctrl_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_gpio_ioh;
+	bus_space_handle_t	sc_pull_ioh;
+	bus_space_handle_t	sc_pull_en_ioh;
 	bus_space_handle_t	sc_mux_ioh;
+	bus_space_handle_t	sc_ds_ioh;
 
 	struct aml_gpio_bank	*sc_gpio_banks;
+	struct aml_pin_group	*sc_pin_groups;
+
 	struct gpio_controller	sc_gc;
 };
 
@@ -128,14 +212,27 @@ amlpinctrl_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map gpio registers\n");
 		return;
 	}
+	if (bus_space_map(sc->sc_iot, addr[1], size[1], 0, &sc->sc_pull_ioh)) {
+		printf(": can't map pull registers\n");
+		return;
+	}
+	if (bus_space_map(sc->sc_iot, addr[2], size[2], 0, &sc->sc_pull_en_ioh)) {
+		printf(": can't map pull-enable registers\n");
+		return;
+	}
 	if (bus_space_map(sc->sc_iot, addr[3], size[3], 0, &sc->sc_mux_ioh)) {
 		printf(": can't map mux registers\n");
+		return;
+	}
+	if (bus_space_map(sc->sc_iot, addr[4], size[4], 0, &sc->sc_ds_ioh)) {
+		printf(": can't map ds registers\n");
 		return;
 	}
 
 	printf("\n");
 
 	sc->sc_gpio_banks = aml_g12a_gpio_banks;
+	sc->sc_pin_groups = aml_g12a_pin_groups;
 
 	pinctrl_register(faa->fa_node, amlpinctrl_pinctrl, sc);
 
@@ -161,10 +258,143 @@ amlpinctrl_lookup_bank(struct amlpinctrl_softc *sc, uint32_t pin)
 	return NULL;
 }
 
+struct aml_pin_group *
+amlpinctrl_lookup_group(struct amlpinctrl_softc *sc, const char *name)
+{
+	struct aml_pin_group *group;
+
+	for (group = sc->sc_pin_groups; group->name; group++) {
+		if (strcmp(name, group->name) == 0)
+			return group;
+	}
+
+	return NULL;
+}
+
+void
+amlpinctrl_config_func(struct amlpinctrl_softc *sc, const char *name,
+    const char *function, int bias, int ds)
+{
+	struct aml_pin_group *group;
+	struct aml_gpio_bank *bank;
+	bus_addr_t off;
+	uint32_t pin;
+	uint32_t reg;
+
+	group = amlpinctrl_lookup_group(sc, name);
+	if (group == NULL) {
+		printf("%s: %s\n", __func__, name);
+		return;
+	}
+	if (strcmp(function, group->function) != 0) {
+		printf("%s: mismatched function %s\n", __func__, function);
+		return;
+	}
+
+	bank = amlpinctrl_lookup_bank(sc, group->pin);
+	KASSERT(bank);
+
+	pin = group->pin - bank->first_pin;
+
+	/* mux */
+	off = (bank->mux_reg + pin / 8) << 2;
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_mux_ioh, off);
+	reg &= ~(0xf << ((pin % 8) * 4));
+	reg |= (group->func << ((pin % 8) * 4));
+	bus_space_write_4(sc->sc_iot, sc->sc_mux_ioh, off, reg);
+	
+
+	/* pull */
+	off = bank->pull_reg << 2;
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_pull_ioh, off);
+	if (bias == BIAS_PULL_UP)
+		reg |= (1 << pin);
+	else
+		reg &= ~(1 << pin);
+	bus_space_write_4(sc->sc_iot, sc->sc_pull_ioh, off, reg);
+
+	/* pull-enable */
+	off = bank->pull_en_reg << 2;
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_pull_en_ioh, off);
+	if (bias != BIAS_DISABLE)
+		reg |= (1 << pin);
+	else
+		reg &= ~(1 << pin);
+	bus_space_write_4(sc->sc_iot, sc->sc_pull_en_ioh, off, reg);
+
+	if (ds < 0)
+		return;
+	else if (ds <= 500)
+		ds = 0;
+	else if (ds <= 2500)
+		ds = 1;
+	else if (ds <= 3000)
+		ds = 2;
+	else if (ds <= 4000)
+		ds = 3;
+	else {
+		printf("%s: invalid drive-strength %d\n", __func__, ds);
+		ds = 3;
+	}
+
+	/* ds */
+	off = (bank->ds_reg + pin / 16) << 2;
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_ds_ioh, off);
+	reg &= ~(0x3 << ((pin % 16) * 2));
+	reg |= (ds << ((pin % 16) * 2));
+	bus_space_write_4(sc->sc_iot, sc->sc_ds_ioh, off, reg);
+}
+
 int
 amlpinctrl_pinctrl(uint32_t phandle, void *cookie)
 {
-	printf("%s: 0x%08x\n", __func__, phandle);
+	struct amlpinctrl_softc *sc = cookie;
+	int node, child;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return -1;
+
+	for (child = OF_child(node); child; child = OF_peer(child)) {
+		char function[16];
+		char *groups;
+		char *group;
+		int bias, ds;
+		int len;
+
+		memset(function, 0, sizeof(function));
+		OF_getprop(child, "function", function, sizeof(function));
+		function[sizeof(function) - 1] = 0;
+
+		/* Bias */
+		if (OF_getproplen(child, "bias-pull-up") == 0)
+			bias = BIAS_PULL_UP;
+		else if (OF_getproplen(child, "bias-pull-down") == 0)
+			bias = BIAS_PULL_DOWN;
+		else
+			bias = BIAS_DISABLE;
+
+		/* Drive-strength */
+		ds = OF_getpropint(child, "drive-strength-microamp", -1);
+
+		len = OF_getproplen(child, "groups");
+		if (len <= 0) {
+			printf("%s: 0x%08x\n", __func__, phandle);
+			continue;
+		}
+
+		groups = malloc(len, M_TEMP, M_WAITOK);
+		OF_getprop(child, "groups", groups, len);
+
+		group = groups;
+		while (group < groups + len) {
+			amlpinctrl_config_func(sc, group, function, bias, ds);
+			group += strlen(group) + 1;
+		}
+
+		free(groups, M_TEMP, len);
+	}
+
 	return 0;
 }
 
