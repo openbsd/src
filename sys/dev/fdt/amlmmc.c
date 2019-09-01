@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlmmc.c,v 1.1 2019/09/01 16:01:43 kettenis Exp $	*/
+/*	$OpenBSD: amlmmc.c,v 1.2 2019/09/01 17:23:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -51,6 +51,8 @@
 #define SD_EMMC_DELAY2		0x0008
 #define SD_EMMC_ADJUST		0x000c
 #define SD_EMMC_START		0x0040
+#define  SD_EMMC_START_START		(1 << 1)
+#define  SD_EMMC_START_STOP		(0 << 1)
 #define SD_EMMC_CFG		0x0044
 #define  SD_EMMC_CFG_AUTO_CLK		(1 << 23)
 #define  SD_EMMC_CFG_SDCLK_ALWAYS_ON	(1 << 18)
@@ -78,6 +80,7 @@
 #define  SD_EMMC_CMD_CFG_TIMEOUT_1024	(10 << 12)
 #define  SD_EMMC_CMD_CFG_TIMEOUT_4096	(12 << 12)
 #define  SD_EMMC_CMD_CFG_NO_RESP	(1 << 16)
+#define  SD_EMMC_CMD_CFG_NO_CMD		(1 << 17)
 #define  SD_EMMC_CMD_CFG_DATA_IO	(1 << 18)
 #define  SD_EMMC_CMD_CFG_DATA_WR	(1 << 19)
 #define  SD_EMMC_CMD_CFG_RESP_NOCRC	(1 << 20)
@@ -107,7 +110,7 @@ struct amlmmc_desc {
 	uint32_t resp_addr;
 };
 
-#define AMLMMC_NDESC		1
+#define AMLMMC_NDESC		(PAGE_SIZE / sizeof(struct amlmmc_desc))
 #define AMLMMC_MAXSEGSZ		0x20000
 
 struct amlmmc_softc {
@@ -446,21 +449,58 @@ amlmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	uint32_t data_addr = 0;
 	int timeout;
 
+	/* Setup descriptor flags. */
 	cmd_cfg = cmd->c_opcode << SD_EMMC_CMD_CFG_CMD_INDEX_SHIFT;
-	if ((cmd->c_flags & SCF_RSP_PRESENT) == 0)
+	if (!ISSET(cmd->c_flags, SCF_RSP_PRESENT))
 		cmd_cfg |= SD_EMMC_CMD_CFG_NO_RESP;
-	if (cmd->c_flags & SCF_RSP_136)
+	if (ISSET(cmd->c_flags, SCF_RSP_136))
 		cmd_cfg |= SD_EMMC_CMD_CFG_RESP_128;
-	if (cmd->c_flags & SCF_RSP_BSY)
+	if (ISSET(cmd->c_flags, SCF_RSP_BSY))
 		cmd_cfg |= SD_EMMC_CMD_CFG_R1B;
-	if ((cmd->c_flags & SCF_RSP_CRC) == 0)
+	if (!ISSET(cmd->c_flags, SCF_RSP_CRC))
 		cmd_cfg |= SD_EMMC_CMD_CFG_RESP_NOCRC;
-	if (cmd->c_datalen > 0)
+	if (cmd->c_datalen > 0) {
+		cmd_cfg |= SD_EMMC_CMD_CFG_DATA_IO;
+		if (cmd->c_datalen >= cmd->c_blklen)
+			cmd_cfg |= SD_EMMC_CMD_CFG_BLOCK_MODE;
+		if (!ISSET(cmd->c_flags, SCF_CMD_READ))
+			cmd_cfg |= SD_EMMC_CMD_CFG_DATA_WR;
 		cmd_cfg |= SD_EMMC_CMD_CFG_TIMEOUT_4096;
-	else
+	} else {
 		cmd_cfg |= SD_EMMC_CMD_CFG_TIMEOUT_1024;
-	cmd_cfg |= SD_EMMC_CMD_CFG_END_OF_CHAIN | SD_EMMC_CMD_CFG_OWNER;
+	}
+	cmd_cfg |= SD_EMMC_CMD_CFG_OWNER;
 
+	/* If we have multiple DMA segments we need to use descriptors. */
+	if (cmd->c_datalen > 0 &&
+	    cmd->c_dmamap && cmd->c_dmamap->dm_nsegs > 1) {
+		struct amlmmc_desc *desc = (struct amlmmc_desc *)sc->sc_desc;
+		int seg;
+
+		for (seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
+			bus_addr_t addr = cmd->c_dmamap->dm_segs[seg].ds_addr;
+			bus_size_t len = cmd->c_dmamap->dm_segs[seg].ds_len;
+
+			if (seg == cmd->c_dmamap->dm_nsegs - 1)
+				cmd_cfg |= SD_EMMC_CMD_CFG_END_OF_CHAIN;
+
+			KASSERT((addr & 0x7) == 0);
+			desc[seg].cmd_cfg = cmd_cfg | (len / cmd->c_blklen);
+			desc[seg].cmd_arg = cmd->c_arg;
+			desc[seg].data_addr = addr;
+			desc[seg].resp_addr = 0;
+			cmd_cfg |= SD_EMMC_CMD_CFG_NO_CMD;
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_desc_map, 0,
+		    cmd->c_dmamap->dm_nsegs * sizeof(struct amlmmc_desc),
+		    BUS_DMASYNC_PREWRITE);
+		HWRITE4(sc, SD_EMMC_START, SD_EMMC_START_START |
+		    sc->sc_desc_map->dm_segs[0].ds_addr);
+		goto wait;
+	}
+
+	/* Bounce if we don't have a DMA map. */
 	if (cmd->c_datalen > 0 && !cmd->c_dmamap) {
 		/* Abuse DMA descriptor memory as bounce buffer. */
 		KASSERT(cmd->c_datalen <= PAGE_SIZE);
@@ -477,15 +517,10 @@ amlmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	if (cmd->c_datalen > 0) {
 		if (cmd->c_datalen >= cmd->c_blklen) {
 			amlmmc_set_blklen(sc, cmd->c_blklen);
-			cmd_cfg |= SD_EMMC_CMD_CFG_BLOCK_MODE;
 			cmd_cfg |= cmd->c_datalen / cmd->c_blklen;
 		} else {
 			cmd_cfg |= cmd->c_datalen;
 		}
-
-		if (!ISSET(cmd->c_flags, SCF_CMD_READ))
-			cmd_cfg |= SD_EMMC_CMD_CFG_DATA_WR;
-		cmd_cfg |= SD_EMMC_CMD_CFG_DATA_IO;
 
 		if (cmd->c_dmamap)
 			data_addr = cmd->c_dmamap->dm_segs[0].ds_addr;
@@ -493,6 +528,9 @@ amlmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 			data_addr = sc->sc_desc_map->dm_segs[0].ds_addr;
 	}
 
+	cmd_cfg |= SD_EMMC_CMD_CFG_END_OF_CHAIN;
+
+	KASSERT((data_addr & 0x7) == 0);
 	HWRITE4(sc, SD_EMMC_CMD_CFG, cmd_cfg);
 	HWRITE4(sc, SD_EMMC_CMD_DAT, data_addr);
 	HWRITE4(sc, SD_EMMC_CMD_RSP, 0);
@@ -500,28 +538,29 @@ amlmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	    SD_EMMC_CMD_RSP1 - SD_EMMC_CMD_CFG, BUS_SPACE_BARRIER_WRITE);
 	HWRITE4(sc, SD_EMMC_CMD_ARG, cmd->c_arg);
 
+wait:
 	for (timeout = 10000; timeout > 0; timeout--) {
 		status = HREAD4(sc, SD_EMMC_STATUS);
-		if (status & SD_EMMC_STATUS_END_OF_CHAIN)
+		if (ISSET(status, SD_EMMC_STATUS_END_OF_CHAIN))
 			break;
 		delay(1000);
 	}
-	printf("%s: cmd %d status 0x%08x, timeout %d\n", __func__, cmd->c_opcode, status, timeout);
+
 	HWRITE4(sc, SD_EMMC_STATUS, status);
-	if ((status & SD_EMMC_STATUS_END_OF_CHAIN) == 0)
+	if (!ISSET(status, SD_EMMC_STATUS_END_OF_CHAIN))
 		cmd->c_error = ETIMEDOUT;
-	else if (status & SD_EMMC_STATUS_RESP_TIMEOUT)
+	else if (ISSET(status, SD_EMMC_STATUS_RESP_TIMEOUT))
 		cmd->c_error = ETIMEDOUT;
-	else if(status & SD_EMMC_STATUS_ERR_MASK)
+	else if (ISSET(status, SD_EMMC_STATUS_ERR_MASK))
 		cmd->c_error = EIO;
 
-	if (cmd->c_flags & SCF_RSP_PRESENT) {
-		if (cmd->c_flags & SCF_RSP_136) {
+	if (ISSET(cmd->c_flags, SCF_RSP_PRESENT)) {
+		if (ISSET(cmd->c_flags, SCF_RSP_136)) {
 			cmd->c_resp[0] = HREAD4(sc, SD_EMMC_CMD_RSP);
 			cmd->c_resp[1] = HREAD4(sc, SD_EMMC_CMD_RSP1);
 			cmd->c_resp[2] = HREAD4(sc, SD_EMMC_CMD_RSP2);
 			cmd->c_resp[3] = HREAD4(sc, SD_EMMC_CMD_RSP3);
-			if (cmd->c_flags & SCF_RSP_CRC) {
+			if (ISSET(cmd->c_flags, SCF_RSP_CRC)) {
 				cmd->c_resp[0] = (cmd->c_resp[0] >> 8) |
 				    (cmd->c_resp[1] << 24);
 				cmd->c_resp[1] = (cmd->c_resp[1] >> 8) |
@@ -535,6 +574,7 @@ amlmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		}
 	}
 
+	/* Unbounce if we don't have a DMA map. */
 	if (cmd->c_datalen > 0 && !cmd->c_dmamap) {
 		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_desc_map, 0,
@@ -546,5 +586,14 @@ amlmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		}
 	}
 
-	cmd->c_flags |= SCF_ITSDONE;
+	/* Cleanup descriptors. */
+	if (cmd->c_datalen > 0 &&
+	    cmd->c_dmamap && cmd->c_dmamap->dm_nsegs > 1) {
+		HWRITE4(sc, SD_EMMC_START, SD_EMMC_START_STOP);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_desc_map, 0,
+		    cmd->c_dmamap->dm_nsegs * sizeof(struct amlmmc_desc),
+		    BUS_DMASYNC_POSTWRITE);
+	}
+
+	SET(cmd->c_flags, SCF_ITSDONE);
 }
