@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.88 2019/08/29 17:20:03 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.89 2019/09/01 16:01:43 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -133,6 +133,10 @@ file	dev/fdt/amlclock.c		amlclock
 device	amldwusb: fdt
 attach	amldwusb at fdt
 file	dev/fdt/amldwusb.c		amldwusb
+
+device	amlmmc: sdmmcbus
+attach	amlmmc at fdt
+file	dev/fdt/amlmmc.c		amlmmc
 
 device	amlpciephy
 attach	amlpciephy at fdt
