@@ -1,8 +1,24 @@
-.\" $OpenBSD: EVP_PKEY_set1_RSA.3,v 1.15 2019/03/18 04:01:53 schwarze Exp $
-.\" full merge up to: OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
-.\" selective merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" $OpenBSD: EVP_PKEY_set1_RSA.3,v 1.16 2019/09/01 09:10:09 schwarze Exp $
+.\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2002, 2015, 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -49,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 18 2019 $
+.Dd $Mdocdate: September 1 2019 $
 .Dt EVP_PKEY_SET1_RSA 3
 .Os
 .Sh NAME
@@ -66,10 +82,14 @@
 .Nm EVP_PKEY_get0_DH ,
 .Nm EVP_PKEY_get0_EC_KEY ,
 .Nm EVP_PKEY_get0_hmac ,
+.Nm EVP_PKEY_get0 ,
 .Nm EVP_PKEY_assign_RSA ,
 .Nm EVP_PKEY_assign_DSA ,
 .Nm EVP_PKEY_assign_DH ,
 .Nm EVP_PKEY_assign_EC_KEY ,
+.Nm EVP_PKEY_assign_GOST ,
+.Nm EVP_PKEY_assign ,
+.Nm EVP_PKEY_set_type ,
 .Nm EVP_PKEY_base_id ,
 .Nm EVP_PKEY_id ,
 .Nm EVP_PKEY_type
@@ -133,6 +153,10 @@
 .Fa "const EVP_PKEY *pkey"
 .Fa "size_t *len"
 .Fc
+.Ft void *
+.Fo EVP_PKEY_get0
+.Fa "const EVP_PKEY *pkey"
+.Fc
 .Ft int
 .Fo EVP_PKEY_assign_RSA
 .Fa "EVP_PKEY *pkey"
@@ -152,6 +176,22 @@
 .Fo EVP_PKEY_assign_EC_KEY
 .Fa "EVP_PKEY *pkey"
 .Fa "EC_KEY *key"
+.Fc
+.Ft int
+.Fo EVP_PKEY_assign_GOST
+.Fa "EVP_PKEY *pkey"
+.Fa "GOST_KEY *key"
+.Fc
+.Ft int
+.Fo EVP_PKEY_assign
+.Fa "EVP_PKEY *pkey"
+.Fa "int type"
+.Fa "void *key"
+.Fc
+.Ft int
+.Fo EVP_PKEY_set_type
+.Fa "EVP_PKEY *pkey"
+.Fa "int type"
 .Fc
 .Ft int
 .Fo EVP_PKEY_base_id
@@ -174,7 +214,10 @@ and
 set the key referenced by
 .Fa pkey
 to
-.Fa key .
+.Fa key
+and increment the reference count of
+.Fa key
+by 1 in case of success.
 .Pp
 .Fn EVP_PKEY_get1_RSA ,
 .Fn EVP_PKEY_get1_DSA ,
@@ -190,8 +233,9 @@ if the key is not of the correct type.
 .Fn EVP_PKEY_get0_RSA ,
 .Fn EVP_PKEY_get0_DSA ,
 .Fn EVP_PKEY_get0_DH ,
+.Fn EVP_PKEY_get0_EC_KEY ,
 and
-.Fn EVP_PKEY_get0_EC_KEY
+.Fn EVP_PKEY_get0
 are identical except that they do not increment the reference count.
 Consequently, the returned key must not be freed by the caller.
 .Pp
@@ -213,17 +257,45 @@ becomes unspecified.
 .Fn EVP_PKEY_assign_RSA ,
 .Fn EVP_PKEY_assign_DSA ,
 .Fn EVP_PKEY_assign_DH ,
+.Fn EVP_PKEY_assign_EC_KEY ,
+.Fn EVP_PKEY_assign_GOST ,
 and
-.Fn EVP_PKEY_assign_EC_KEY
+.Fn EVP_PKEY_assign
 also set the referenced key to
 .Fa key ;
 however these use the supplied
 .Fa key
-internally and so
+internally without incrementing its reference count, such that
 .Fa key
 will be freed when the parent
 .Fa pkey
 is freed.
+If the
+.Fa key
+is of the wrong type, these functions report success even though
+.Fa pkey
+ends up in a corrupted state.
+Even the functions explicitly containing the type in their name are
+.Em not
+type safe because they are implemented as macros.
+The following types are supported:
+.Dv EVP_PKEY_RSA ,
+.Dv EVP_PKEY_DSA ,
+.Dv EVP_PKEY_DH ,
+.Dv EVP_PKEY_EC ,
+and
+.Dv EVP_PKEY_GOSTR01 .
+.Pp
+.Fn EVP_PKEY_set_type
+frees the key referenced in
+.Fa pkey ,
+if any, and sets the key type of
+.Fa pkey
+to
+.Fa type
+without referencing a new key from
+.Fa pkey
+yet.
 .Pp
 .Fn EVP_PKEY_base_id
 returns the type of
@@ -267,19 +339,19 @@ using the
 .Sy 1
 functions must be freed as well as
 .Fa pkey .
-.Pp
-.Fn EVP_PKEY_assign_RSA ,
-.Fn EVP_PKEY_assign_DSA ,
-.Fn EVP_PKEY_assign_DH ,
-and
-.Fn EVP_PKEY_assign_EC_KEY
-are implemented as macros.
 .Sh RETURN VALUES
 .Fn EVP_PKEY_set1_RSA ,
 .Fn EVP_PKEY_set1_DSA ,
 .Fn EVP_PKEY_set1_DH ,
+.Fn EVP_PKEY_set1_EC_KEY ,
+.Fn EVP_PKEY_assign_RSA ,
+.Fn EVP_PKEY_assign_DSA ,
+.Fn EVP_PKEY_assign_DH ,
+.Fn EVP_PKEY_assign_EC_KEY ,
+.Fn EVP_PKEY_assign_GOST ,
+.Fn EVP_PKEY_assign ,
 and
-.Fn EVP_PKEY_set1_EC_KEY
+.Fn EVP_PKEY_set_type
 return 1 for success or 0 for failure.
 .Pp
 .Fn EVP_PKEY_get1_RSA ,
@@ -290,18 +362,24 @@ return 1 for success or 0 for failure.
 .Fn EVP_PKEY_get0_DSA ,
 .Fn EVP_PKEY_get0_DH ,
 .Fn EVP_PKEY_get0_EC_KEY ,
+.Fn EVP_PKEY_get0_hmac ,
 and
-.Fn EVP_PKEY_get0_hmac
+.Fn EVP_PKEY_get0
 return the referenced key or
 .Dv NULL
 if an error occurred.
-.Pp
-.Fn EVP_PKEY_assign_RSA ,
-.Fn EVP_PKEY_assign_DSA ,
-.Fn EVP_PKEY_assign_DH ,
-and
-.Fn EVP_PKEY_assign_EC_KEY
-return 1 for success and 0 for failure.
+For
+.Fn EVP_PKEY_get0 ,
+the return value points to an
+.Vt RSA ,
+.Vt DSA ,
+.Vt DH ,
+.Vt EC_KEY ,
+.Vt GOST_KEY ,
+or
+.Vt ASN1_OCTET_STRING
+object depending on the type of
+.Fa pkey .
 .Pp
 .Fn EVP_PKEY_base_id ,
 .Fn EVP_PKEY_id ,
@@ -323,6 +401,7 @@ on error.
 .Fn EVP_PKEY_assign_RSA ,
 .Fn EVP_PKEY_assign_DSA ,
 .Fn EVP_PKEY_assign_DH ,
+.Fn EVP_PKEY_assign ,
 and
 .Fn EVP_PKEY_type
 first appeared in SSLeay 0.8.0 and have been available since
@@ -345,11 +424,17 @@ and
 first appeared in OpenSSL 0.9.8 and have been available since
 .Ox 4.5 .
 .Pp
-.Fn EVP_PKEY_id
+.Fn EVP_PKEY_get0 ,
+.Fn EVP_PKEY_set_type ,
+.Fn EVP_PKEY_base_id ,
 and
-.Fn EVP_PKEY_base_id
+.Fn EVP_PKEY_id
 first appeared in OpenSSL 1.0.0 and have been available since
 .Ox 4.9 .
+.Pp
+.Fn EVP_PKEY_assign_GOST
+first appeared in
+.Ox 5.7 .
 .Pp
 .Fn EVP_PKEY_get0_RSA ,
 .Fn EVP_PKEY_get0_DSA ,
