@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcib.c,v 1.4 2019/03/17 05:25:06 visa Exp $	*/
+/*	$OpenBSD: octcib.c,v 1.5 2019/09/01 12:16:01 visa Exp $	*/
 
 /*
  * Copyright (c) 2017, 2019 Visa Hankala
@@ -318,8 +318,10 @@ octcib_intr(void *arg)
 		}
 
 		if (handled == 0)
-			printf("%s: spurious interrupt %u (bit %u)\n",
-			    sc->sc_dev.dv_xname, CIB_IRQNUM(sc, bit), bit);
+			printf("%s: spurious interrupt %u (bit %u) "
+			    "on cpu %lu\n",
+			    sc->sc_dev.dv_xname, CIB_IRQNUM(sc, bit), bit,
+			    cpu_number());
 	}
 
 	return 1;

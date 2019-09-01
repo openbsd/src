@@ -1,4 +1,4 @@
-/*	$OpenBSD: octciu.c,v 1.16 2019/03/17 16:31:26 visa Exp $	*/
+/*	$OpenBSD: octciu.c,v 1.17 2019/09/01 12:16:01 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -531,7 +531,8 @@ octciu_intr_bank(struct octciu_softc *sc, struct intrbank *bank,
 #endif
 		}
 		if (!handled)
-			printf("spurious interrupt %d\n", irq);
+			printf("%s: spurious interrupt %d on cpu %lu\n",
+			    sc->sc_dev.dv_xname, irq, ci->ci_cpuid);
 	}
 
 	ci->ci_ipl = ipl;

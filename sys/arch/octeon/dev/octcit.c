@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcit.c,v 1.11 2019/08/04 15:44:34 visa Exp $	*/
+/*	$OpenBSD: octcit.c,v 1.12 2019/09/01 12:16:01 visa Exp $	*/
 
 /*
  * Copyright (c) 2017, 2019 Visa Hankala
@@ -469,8 +469,8 @@ octcit_intr(uint32_t hwpend, struct trapframe *frame)
 
 spurious:
 	if (handled == 0)
-		printf("cpu%lu: spurious interrupt: dest 0x%016llx\n",
-		    ci->ci_cpuid, destpp);
+		printf("%s: spurious interrupt 0x%016llx on cpu %lu\n",
+		    sc->sc_dev.dv_xname, destpp, ci->ci_cpuid);
 
 	return hwpend;
 }
