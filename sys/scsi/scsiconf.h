@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.171 2019/08/28 15:17:23 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.172 2019/09/01 15:03:32 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -523,11 +523,16 @@ int	scsi_activate(struct scsibus_softc *, int, int, int);
 
 struct scsi_link *	scsi_get_link(struct scsibus_softc *, int, int);
 
-extern const u_int8_t version_to_spc[];
-#define SCSISPC(x)	(version_to_spc[(x) & SID_ANSII])
-#define SCSI0(x)	(SCSISPC(x) == 0)
-#define SCSI2(x)	(SCSISPC(x) >= 2)
-#define SCSI3(x)	(SCSISPC(x) >= 3)
+#define SID_ANSII_REV(x)	((x)->version & SID_ANSII)
+
+#define SCSI_REV_0	0x00	/* No conformance to any standard. */
+#define SCSI_REV_1	0x01	/* (Obsolete) SCSI-1 in olden times. */
+#define SCSI_REV_2	0x02	/* (Obsolete) SCSI-2 in olden times. */
+#define SCSI_REV_SPC	0x03	/* ANSI INCITS 301-1997 (SPC).	*/
+#define SCSI_REV_SPC2	0x04	/* ANSI INCITS 351-2001 (SPC-2)	*/
+#define SCSI_REV_SPC3	0x05	/* ANSI INCITS 408-2005 (SPC-3)	*/
+#define SCSI_REV_SPC4	0x06	/* ANSI INCITS 513-2015 (SPC-4)	*/
+#define SCSI_REV_SPC5	0x07	/* T10/BSR INCITS 503   (SPC-5)	*/
 
 struct scsi_xfer *	scsi_xs_get(struct scsi_link *, int);
 void			scsi_xs_exec(struct scsi_xfer *);

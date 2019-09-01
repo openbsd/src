@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_cam.h,v 1.7 2015/07/17 21:42:49 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_cam.h,v 1.8 2019/09/01 15:03:32 krw Exp $	*/
 /*	$NetBSD: aic7xxx_cam.h,v 1.3 2003/04/20 11:17:20 fvdl Exp $	*/
 
 /*
@@ -39,8 +39,6 @@
 
 #ifndef _AIC7XXX_CAM_H
 #define _AIC7XXX_CAM_H
-
-#define SCSI_REV_2	2
 
 #define	CAM_BUS_WILDCARD ((u_int)~0)
 #define	CAM_TARGET_WILDCARD ((u_int)~0)

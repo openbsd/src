@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.210 2019/08/30 16:48:04 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.211 2019/09/01 15:03:32 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -117,17 +117,6 @@ void scsibus_printlink(struct scsi_link *);
 int scsi_activate_bus(struct scsibus_softc *, int);
 int scsi_activate_target(struct scsibus_softc *, int, int);
 int scsi_activate_lun(struct scsibus_softc *, int, int, int);
-
-const u_int8_t version_to_spc [] = {
-	0, /* 0x00: The device does not claim conformance to any standard. */
-	1, /* 0x01: (Obsolete) SCSI-1 in olden times. */
-	2, /* 0x02: (Obsolete) SCSI-2 in olden times. */
-	3, /* 0x03: The device complies to ANSI INCITS 301-1997 (SPC). */
-	3, /* 0x04: The device complies to ANSI INCITS 351-2001 (SPC-2). */
-	3, /* 0x05: The device complies to ANSI INCITS 408-2005 (SPC-3). */
-	4, /* 0x06: The device complies to ANSI INCITS 513-2015 (SPC-4). */
-	5, /* 0x07: The device complies to T10/BSR INCITS 503 (SPC-5). */
-};
 
 int
 scsiprint(void *aux, const char *pnp)
@@ -348,8 +337,12 @@ scsi_get_target_luns(struct scsi_link *link0, struct scsi_lun_array *lunarray)
 	lunarray->count = link0->luns;
 	lunarray->dumbscan = 1;
 
+	/*
+	 * ATAPI, USB and pre-SPC (i.e. pre-SCSI-3) devices can't ask
+	 * for a report of valid LUNs.
+	 */
 	if ((link0->flags & (SDEV_UMASS | SDEV_ATAPI)) != 0 ||
-	    !SCSI3(link0->inqdata.version))
+	    SID_ANSII_REV(&link0->inqdata) < SCSI_REV_SPC)
 		goto dumbscan;
 
 	report = dma_alloc(sizeof(*report), PR_WAITOK);
@@ -798,7 +791,7 @@ scsibus_printlink(struct scsi_link *link)
 	if (link->flags & SDEV_ATAPI)
 		printf("ATAPI");
 	else
-		printf("SCSI%d", SCSISPC(inqbuf->version));
+		printf("SCSI%d", SID_ANSII_REV(inqbuf));
 	printf(" %d/%s %s%s", type, dtype, removable ? "removable" : "fixed",
 	    qtype);
 
@@ -1029,7 +1022,7 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	 * Based upon the inquiry flags we got back, and if we're
 	 * at SCSI-2 or better, remove some limiting quirks.
 	 */
-	if (SCSI2(inqbuf->version)) {
+	if (SID_ANSII_REV(inqbuf) >= SCSI_REV_2) {
 		if ((inqbuf->flags & SID_CmdQue) != 0)
 			link->quirks &= ~SDEV_NOTAGS;
 		if ((inqbuf->flags & SID_Sync) != 0)
@@ -1186,7 +1179,7 @@ scsi_devid(struct scsi_link *link)
 
 	pg = dma_alloc(sizeof(*pg), PR_WAITOK | PR_ZERO);
 
-	if (SCSI2(link->inqdata.version)) {
+	if (SID_ANSII_REV(&link->inqdata) >= SCSI_REV_2) {
 		if (scsi_inquire_vpd(link, pg, sizeof(*pg), SI_PG_SUPPORTED,
 		    scsi_autoconf) != 0)
 			goto wwn;

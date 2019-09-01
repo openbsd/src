@@ -600,7 +600,7 @@ fixup_inquiry(struct scsi_xfer *xs, struct hvs_srb *srb)
 	    sc->sc_proto == HVS_PROTO_VERSION_WIN7) &&
 	    !is_inquiry_valid(inq) && datalen >= 4 &&
 	    (inq->version == 0 || inq->response_format == 0)) {
-		inq->version = 0x05; /* SPC-3 */
+		inq->version = SCSI_REV_SPC3;
 		inq->response_format = 2;
 	} else if (datalen >= SID_INQUIRY_HDR + SID_SCSI2_ALEN) {
 		/*
@@ -610,9 +610,9 @@ fixup_inquiry(struct scsi_xfer *xs, struct hvs_srb *srb)
 		scsi_strvis(vendor, inq->vendor, sizeof(vendor));
 		if ((sc->sc_proto == HVS_PROTO_VERSION_WIN8_1 ||
 		    sc->sc_proto == HVS_PROTO_VERSION_WIN8) &&
-		    ((inq->version & SID_ANSII) == 0x04) &&
+		    (SID_ANSII_REV(inq) == SCSI_REV_SPC2) &&
 		    !strncmp(vendor, "Msft", 4))
-			inq->version = 0x05; /* SPC-3 */
+			inq->version = SCSI_REV_SPC3;
 	}
 }
 

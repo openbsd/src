@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.228 2019/08/28 15:17:23 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.229 2019/09/01 15:03:32 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1105,19 +1105,15 @@ scsi_do_mode_sense(struct scsi_link *link, int page,
 	}
 
 	/*
-	 * Try 10 byte mode sense request. Don't bother with SMS_DBD or
-	 * SMS_LLBAA. Bail out if the returned information is less than
-	 * a big header in size (6 additional bytes).
+	 * non-ATAPI, non-USB devices that don't support SCSI-2 commands are done.
 	 */
 	if ((link->flags & (SDEV_ATAPI | SDEV_UMASS)) == 0 &&
-	    !SCSI2(link->inqdata.version)) {
-		/*
-		 * The 10 byte MODE_SENSE request appeared with SCSI-2,
-		 * so don't bother trying it on SCSI-[01] devices, they are
-		 * not supposed to understand it.
-		 */
+	    SID_ANSII_REV(&link->inqdata) < SCSI_REV_2)
 		return (0);
-	}
+
+	/*
+	 * Try 10 byte mode sense request.
+	*/
 	error = scsi_mode_sense_big(link, 0, page, &buf->hdr_big,
 	    sizeof(*buf), flags, 20000);
 	if (error != 0)
