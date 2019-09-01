@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlpinctrl.c,v 1.2 2019/08/31 21:00:17 kettenis Exp $	*/
+/*	$OpenBSD: amlpinctrl.c,v 1.3 2019/09/01 19:13:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -482,7 +482,7 @@ amlpinctrl_set_pin(void *cookie, uint32_t *cells, int val)
 	pin = pin - bank->first_pin;
 
 	/* gpio */
-	off = (bank->gpio_reg + 2) << 2;
+	off = (bank->gpio_reg + 1) << 2;
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_gpio_ioh, off);
 	if (val)
 		reg |= (1 << pin);
