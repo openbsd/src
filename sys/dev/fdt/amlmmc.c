@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlmmc.c,v 1.2 2019/09/01 17:23:47 kettenis Exp $	*/
+/*	$OpenBSD: amlmmc.c,v 1.3 2019/09/01 17:59:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -69,10 +69,12 @@
 #define  SD_EMMC_CFG_BUS_WIDTH_8	(0x2 << 0)
 #define SD_EMMC_STATUS		0x0048
 #define  SD_EMMC_STATUS_END_OF_CHAIN	(1 << 13)
+#define  SD_EMMC_STATUS_DESC_TIMEOUT	(1 << 12)
 #define  SD_EMMC_STATUS_RESP_TIMEOUT	(1 << 11)
 #define  SD_EMMC_STATUS_MASK		0x00003fff
-#define  SD_EMMC_STATUS_ERR_MASK	0x000003ff
+#define  SD_EMMC_STATUS_ERR_MASK	0x000007ff
 #define SD_EMMC_IRQ_EN		0x004c
+#define  SD_EMMC_IRQ_EN_MASK		SD_EMMC_STATUS_MASK
 #define SD_EMMC_CMD_CFG		0x0050
 #define  SD_EMMC_CMD_CFG_BLOCK_MODE	(1 << 9)
 #define  SD_EMMC_CMD_CFG_R1B		(1 << 10)
@@ -120,6 +122,9 @@ struct amlmmc_softc {
 	bus_dma_tag_t		sc_dmat;
 	bus_dmamap_t		sc_dmap;
 
+	void			*sc_ih;
+	uint32_t		sc_status;
+
 	bus_dmamap_t		sc_desc_map;
 	bus_dma_segment_t	sc_desc_segs[1];
 	int			sc_desc_nsegs;
@@ -147,6 +152,7 @@ struct cfdriver amlmmc_cd = {
 
 int	amlmmc_alloc_descriptors(struct amlmmc_softc *);
 void	amlmmc_free_descriptors(struct amlmmc_softc *);
+int	amlmmc_intr(void *);
 	
 int	amlmmc_host_reset(sdmmc_chipset_handle_t);
 uint32_t amlmmc_host_ocr(sdmmc_chipset_handle_t);
@@ -210,6 +216,13 @@ amlmmc_attach(struct device *parent, struct device *self, void *aux)
 		goto free;
 	}
 
+	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_BIO,
+	    amlmmc_intr, sc, sc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL) {
+		printf(": can't establish interrupt\n");
+		goto destroy;
+	}
+
 	sc->sc_node = faa->fa_node;
 	printf("\n");
 
@@ -226,12 +239,6 @@ amlmmc_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_gpio[0])
 		gpio_controller_config_pin(sc->sc_gpio, GPIO_CONFIG_INPUT);
 	
-	/* Clear status bits. */
-	HWRITE4(sc, SD_EMMC_STATUS, SD_EMMC_STATUS_MASK);
-
-	/* Mask interrupts. */
-	HWRITE4(sc, SD_EMMC_IRQ_EN, 0);
-
 	/* Configure clock mode. */
 	cfg = HREAD4(sc, SD_EMMC_CFG);
 	cfg &= ~SD_EMMC_CFG_SDCLK_ALWAYS_ON;
@@ -249,6 +256,10 @@ amlmmc_attach(struct device *parent, struct device *self, void *aux)
 	cfg &= ~SD_EMMC_CFG_BL_LEN_MASK;
 	cfg |= SD_EMMC_CFG_BL_LEN_512;
 	HWRITE4(sc, SD_EMMC_CFG, cfg);
+
+	/* Clear status bits & enable interrupts. */
+	HWRITE4(sc, SD_EMMC_STATUS, SD_EMMC_STATUS_MASK);
+	HWRITE4(sc, SD_EMMC_IRQ_EN, SD_EMMC_IRQ_EN_MASK);
 
 	memset(&saa, 0, sizeof(saa));
 	saa.saa_busname = "sdmmc";
@@ -273,6 +284,8 @@ amlmmc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sdmmc = config_found(self, &saa, NULL);
 	return;
 
+destroy:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmap);
 free:
 	amlmmc_free_descriptors(sc);
 unmap:
@@ -323,6 +336,22 @@ amlmmc_free_descriptors(struct amlmmc_softc *sc)
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_desc_map);
 	bus_dmamem_unmap(sc->sc_dmat, sc->sc_desc, PAGE_SIZE);
 	bus_dmamem_free(sc->sc_dmat, sc->sc_desc_segs, sc->sc_desc_nsegs);
+}
+
+int
+amlmmc_intr(void *arg)
+{
+	struct amlmmc_softc *sc = arg;
+	uint32_t status;
+
+	status = HREAD4(sc, SD_EMMC_STATUS);
+	if ((status & SD_EMMC_STATUS_MASK) == 0)
+		return 0;
+
+	HWRITE4(sc, SD_EMMC_STATUS, status);
+	sc->sc_status = status & SD_EMMC_STATUS_MASK;
+	wakeup(sc);
+	return 1;
 }
 
 void
@@ -447,7 +476,9 @@ amlmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	struct amlmmc_softc *sc = sch;
 	uint32_t cmd_cfg, status;
 	uint32_t data_addr = 0;
-	int timeout;
+	int s;
+
+	KASSERT(sc->sc_status == 0);
 
 	/* Setup descriptor flags. */
 	cmd_cfg = cmd->c_opcode << SD_EMMC_CMD_CFG_CMD_INDEX_SHIFT;
@@ -539,15 +570,18 @@ amlmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	HWRITE4(sc, SD_EMMC_CMD_ARG, cmd->c_arg);
 
 wait:
-	for (timeout = 10000; timeout > 0; timeout--) {
-		status = HREAD4(sc, SD_EMMC_STATUS);
-		if (ISSET(status, SD_EMMC_STATUS_END_OF_CHAIN))
+	s = splbio();
+	while (sc->sc_status == 0) {
+		if (tsleep_nsec(sc, PWAIT, "amlmmc", 10000000000))
 			break;
-		delay(1000);
 	}
+	status = sc->sc_status;
+	sc->sc_status = 0;
+	splx(s);
 
-	HWRITE4(sc, SD_EMMC_STATUS, status);
 	if (!ISSET(status, SD_EMMC_STATUS_END_OF_CHAIN))
+		cmd->c_error = ETIMEDOUT;
+	else if (ISSET(status, SD_EMMC_STATUS_DESC_TIMEOUT))
 		cmd->c_error = ETIMEDOUT;
 	else if (ISSET(status, SD_EMMC_STATUS_RESP_TIMEOUT))
 		cmd->c_error = ETIMEDOUT;
