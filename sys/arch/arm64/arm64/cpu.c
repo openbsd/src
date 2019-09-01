@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.34 2019/08/03 09:25:09 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.35 2019/09/01 15:34:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -150,7 +150,7 @@ void
 cpu_identify(struct cpu_info *ci)
 {
 	uint64_t midr, impl, part;
-	uint64_t clidr;
+	uint64_t clidr, id_aa64pfr0;
 	uint32_t ctr, ccsidr, sets, ways, line;
 	const char *impl_name = NULL;
 	const char *part_name = NULL;
@@ -259,25 +259,15 @@ cpu_identify(struct cpu_info *ci)
 		case CPU_PART_CORTEX_A35:
 		case CPU_PART_CORTEX_A53:
 		case CPU_PART_CORTEX_A55:
-		case CPU_PART_CORTEX_A65:
-		case CPU_PART_CORTEX_A76:
-		case CPU_PART_CORTEX_A76AE:
-		case CPU_PART_CORTEX_A77:
-		case CPU_PART_NEOVERSE_E1:
-		case CPU_PART_NEOVERSE_N1:
 			/* Not vulnerable. */
 			ci->ci_flush_bp = cpu_flush_bp_noop;
 			break;
-		case CPU_PART_CORTEX_A57:
-		case CPU_PART_CORTEX_A72:
-		case CPU_PART_CORTEX_A73:
-		case CPU_PART_CORTEX_A75:
 		default:
 			/*
-			 * Vulnerable; call into the firmware and hope
-			 * we're running on top of Arm Trusted
-			 * Firmware with a fix for Security Advisory
-			 * TFV 6.
+			 * Potentially vulnerable; call into the
+			 * firmware and hope we're running on top of
+			 * Arm Trusted Firmware with a fix for
+			 * Security Advisory TFV 6.
 			 */
 			ci->ci_flush_bp = cpu_flush_bp_psci;
 			break;
@@ -288,6 +278,15 @@ cpu_identify(struct cpu_info *ci)
 		ci->ci_flush_bp = cpu_flush_bp_noop;
 		break;
 	}
+
+	/*
+	 * The architecture has been updated to explicitly tell us if
+	 * we're not vulnerable.
+	 */
+	id_aa64pfr0 = READ_SPECIALREG(id_aa64pfr0_el1);
+	if (ID_AA64PFR0_CSV2(id_aa64pfr0) == ID_AA64PFR0_CSV2_IMPL ||
+	    ID_AA64PFR0_CSV2(id_aa64pfr0) == ID_AA64PFR0_CSV2_SCXT)
+		ci->ci_flush_bp = cpu_flush_bp_noop;
 }
 
 int	cpu_hatch_secondary(struct cpu_info *ci, int, uint64_t);

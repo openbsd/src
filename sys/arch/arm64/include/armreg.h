@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.8 2019/05/13 03:13:29 patrick Exp $ */
+/* $OpenBSD: armreg.h,v 1.9 2019/09/01 15:34:15 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -392,6 +392,12 @@
 #define	ID_AA64PFR0_GIC(x)		((x) & ID_AA64PFR0_GIC_MASK)
 #define	 ID_AA64PFR0_GIC_CPUIF_NONE	(0x0 << ID_AA64PFR0_GIC_SHIFT)
 #define	 ID_AA64PFR0_GIC_CPUIF_EN	(0x1 << ID_AA64PFR0_GIC_SHIFT)
+#define	ID_AA64PFR0_CSV2_SHIFT		56
+#define	ID_AA64PFR0_CSV2_MASK		(0xfULL << ID_AA64PFR0_CSV2_SHIFT)
+#define	ID_AA64PFR0_CSV2(x)		((x) & ID_AA64PFR0_CSV2_MASK)
+#define	 ID_AA64PFR0_CSV2_UNKNOWN	(0x0ULL << ID_AA64PFR0_CSV2_SHIFT)
+#define	 ID_AA64PFR0_CSV2_IMPL		(0x1ULL << ID_AA64PFR0_CSV2_SHIFT)
+#define	 ID_AA64PFR0_CSV2_SCXT		(0x2ULL << ID_AA64PFR0_CSV2_SHIFT)
 
 /* MAIR_EL1 - Memory Attribute Indirection Register */
 #define	MAIR_ATTR_MASK(idx)	(0xff << ((n)* 8))
