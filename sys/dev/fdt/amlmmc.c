@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlmmc.c,v 1.3 2019/09/01 17:59:02 kettenis Exp $	*/
+/*	$OpenBSD: amlmmc.c,v 1.4 2019/09/02 08:21:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -27,6 +28,7 @@
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/sdmmc/sdmmcvar.h>
@@ -55,6 +57,7 @@
 #define  SD_EMMC_START_STOP		(0 << 1)
 #define SD_EMMC_CFG		0x0044
 #define  SD_EMMC_CFG_AUTO_CLK		(1 << 23)
+#define  SD_EMMC_CFG_STOP_CLOCK		(1 << 22)
 #define  SD_EMMC_CFG_SDCLK_ALWAYS_ON	(1 << 18)
 #define  SD_EMMC_CFG_RC_CC_MASK		(0xf << 12)
 #define  SD_EMMC_CFG_RC_CC_16		(0x4 << 12)
@@ -63,6 +66,7 @@
 #define  SD_EMMC_CFG_BL_LEN_MASK	(0xf << 4)
 #define  SD_EMMC_CFG_BL_LEN_SHIFT	4
 #define  SD_EMMC_CFG_BL_LEN_512		(0x9 << 4)
+#define  SD_EMMC_CFG_DDR		(1 << 2)
 #define  SD_EMMC_CFG_BUS_WIDTH_MASK	(0x3 << 0)
 #define  SD_EMMC_CFG_BUS_WIDTH_1	(0x0 << 0)
 #define  SD_EMMC_CFG_BUS_WIDTH_4	(0x1 << 0)
@@ -134,6 +138,10 @@ struct amlmmc_softc {
 	uint32_t		sc_clkin0;
 	uint32_t		sc_clkin1;
 	uint32_t		sc_gpio[4];
+	uint32_t		sc_vmmc;
+	uint32_t		sc_vqmmc;
+	uint32_t		sc_pwrseq;
+	uint32_t		sc_vdd;
 
 	int			sc_blklen;
 	struct device		*sc_sdmmc;
@@ -153,7 +161,9 @@ struct cfdriver amlmmc_cd = {
 int	amlmmc_alloc_descriptors(struct amlmmc_softc *);
 void	amlmmc_free_descriptors(struct amlmmc_softc *);
 int	amlmmc_intr(void *);
-	
+
+void	amlmmc_pwrseq_reset(uint32_t);
+
 int	amlmmc_host_reset(sdmmc_chipset_handle_t);
 uint32_t amlmmc_host_ocr(sdmmc_chipset_handle_t);
 int	amlmmc_host_maxblklen(sdmmc_chipset_handle_t);
@@ -162,6 +172,7 @@ int	amlmmc_bus_power(sdmmc_chipset_handle_t, uint32_t);
 int	amlmmc_bus_clock(sdmmc_chipset_handle_t, int, int);
 int	amlmmc_bus_width(sdmmc_chipset_handle_t, int);
 void	amlmmc_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
+int	amlmmc_signal_voltage(sdmmc_chipset_handle_t, int);
 
 struct sdmmc_chip_functions amlmmc_chip_functions = {
 	.host_reset = amlmmc_host_reset,
@@ -172,6 +183,7 @@ struct sdmmc_chip_functions amlmmc_chip_functions = {
 	.bus_clock = amlmmc_bus_clock,
 	.bus_width = amlmmc_bus_width,
 	.exec_command = amlmmc_exec_command,
+	.signal_voltage = amlmmc_signal_voltage,
 };
 
 int
@@ -238,7 +250,11 @@ amlmmc_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_gpio));
 	if (sc->sc_gpio[0])
 		gpio_controller_config_pin(sc->sc_gpio, GPIO_CONFIG_INPUT);
-	
+
+	sc->sc_vmmc = OF_getpropint(sc->sc_node, "vmmc-supply", 0);
+	sc->sc_vqmmc = OF_getpropint(sc->sc_node, "vqmmc-supply", 0);
+	sc->sc_pwrseq = OF_getpropint(sc->sc_node, "mmc-pwrseq", 0);
+
 	/* Configure clock mode. */
 	cfg = HREAD4(sc, SD_EMMC_CFG);
 	cfg &= ~SD_EMMC_CFG_SDCLK_ALWAYS_ON;
@@ -261,6 +277,10 @@ amlmmc_attach(struct device *parent, struct device *self, void *aux)
 	HWRITE4(sc, SD_EMMC_STATUS, SD_EMMC_STATUS_MASK);
 	HWRITE4(sc, SD_EMMC_IRQ_EN, SD_EMMC_IRQ_EN_MASK);
 
+	/* Reset eMMC. */
+	if (sc->sc_pwrseq)
+		amlmmc_pwrseq_reset(sc->sc_pwrseq);
+
 	memset(&saa, 0, sizeof(saa));
 	saa.saa_busname = "sdmmc";
 	saa.sct = &amlmmc_chip_functions;
@@ -274,6 +294,8 @@ amlmmc_attach(struct device *parent, struct device *self, void *aux)
 		saa.caps |= SMC_CAPS_MMC_HIGHSPEED;
 	if (OF_getproplen(sc->sc_node, "cap-sd-highspeed") == 0)
 		saa.caps |= SMC_CAPS_SD_HIGHSPEED;
+	if (OF_getproplen(sc->sc_node, "mmc-ddr-1_8v") == 0)
+		saa.caps |= SMC_CAPS_MMC_DDR52;
 
 	width = OF_getpropint(faa->fa_node, "bus-width", 1);
 	if (width >= 8)
@@ -369,6 +391,40 @@ amlmmc_set_blklen(struct amlmmc_softc *sc, int blklen)
 	sc->sc_blklen = blklen;
 }
 
+void
+amlmmc_pwrseq_reset(uint32_t phandle)
+{
+	uint32_t *gpios, *gpio;
+	int node;
+	int len;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return;
+
+	if (!OF_is_compatible(node, "mmc-pwrseq-emmc"))
+		return;
+
+	len = OF_getproplen(node, "reset-gpios");
+	if (len <= 0)
+		return;
+
+	gpios = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "reset-gpios", gpios, len);
+
+	gpio = gpios;
+	while (gpio && gpio < gpios + (len / sizeof(uint32_t))) {
+		gpio_controller_config_pin(gpio, GPIO_CONFIG_OUTPUT);
+		gpio_controller_set_pin(gpio, 1);
+		delay(1);
+		gpio_controller_set_pin(gpio, 0);
+		delay(200);
+		gpio = gpio_controller_next_pin(gpio);
+	}
+
+	free(gpios, M_TEMP, len);
+}
+
 int
 amlmmc_host_reset(sdmmc_chipset_handle_t sch)
 {
@@ -411,6 +467,22 @@ amlmmc_card_detect(sdmmc_chipset_handle_t sch)
 int
 amlmmc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 {
+	struct amlmmc_softc *sc = sch;
+	uint32_t vdd = 0;
+
+	if (ISSET(ocr, MMC_OCR_3_2V_3_3V|MMC_OCR_3_3V_3_4V))
+		vdd = 3300000;
+
+	/* enable mmc power */
+	if (sc->sc_vmmc && vdd > 0)
+		regulator_enable(sc->sc_vmmc);
+
+	if (sc->sc_vqmmc && vdd > 0)
+		regulator_enable(sc->sc_vqmmc);
+
+	delay(10000);
+
+	sc->sc_vdd = vdd;
 	return 0;
 }
 
@@ -420,6 +492,8 @@ amlmmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 	struct amlmmc_softc *sc = sch;
 	uint32_t div, clock;
 
+	pinctrl_byname(sc->sc_node, "clk-gate");
+	
 	if (freq == 0)
 		return 0;
 
@@ -436,11 +510,22 @@ amlmmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 	if (div > SD_EMMC_CLOCK_DIV_MAX)
 		return EINVAL;
 
+	HSET4(sc, SD_EMMC_CFG, SD_EMMC_CFG_STOP_CLOCK);
+
+	if (timing == SDMMC_TIMING_MMC_DDR52)
+		HSET4(sc, SD_EMMC_CFG, SD_EMMC_CFG_DDR);
+	else
+		HCLR4(sc, SD_EMMC_CFG, SD_EMMC_CFG_DDR);
+
 	clock |= SD_EMMC_CLOCK_CO_PHASE_180;
-	clock |= SD_EMMC_CLOCK_TX_PHASE_180;
+	clock |= SD_EMMC_CLOCK_TX_PHASE_0;
 	clock |= SD_EMMC_CLOCK_RX_PHASE_0;
 	HWRITE4(sc, SD_EMMC_CLOCK, clock);
 
+	HCLR4(sc, SD_EMMC_CFG, SD_EMMC_CFG_STOP_CLOCK);
+
+	pinctrl_byname(sc->sc_node, "default");
+	
 	return 0;
 }
 
@@ -630,4 +715,11 @@ wait:
 	}
 
 	SET(cmd->c_flags, SCF_ITSDONE);
+}
+
+int
+amlmmc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
+{
+	/* XXX Check/set signaling voltage. */
+	return 0;
 }
