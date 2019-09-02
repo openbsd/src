@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.41 2019/08/14 21:11:25 gilles Exp $	*/
+/*	$OpenBSD: to.c,v 1.42 2019/09/02 21:59:27 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -446,93 +446,86 @@ rule_to_text(struct rule *r)
 	static char buf[4096];
 
 	memset(buf, 0, sizeof buf);
-	(void)strlcpy(buf, "match ", sizeof buf);
+	(void)strlcpy(buf, "match", sizeof buf);
 	if (r->flag_tag) {
 		if (r->flag_tag < 0)
-			(void)strlcat(buf, "!", sizeof buf);
-		(void)strlcat(buf, "tag ", sizeof buf);
+			(void)strlcat(buf, " !", sizeof buf);
+		(void)strlcat(buf, " tag ", sizeof buf);
 		(void)strlcat(buf, r->table_tag, sizeof buf);
-		(void)strlcat(buf, " ", sizeof buf);
 	}
 
 	if (r->flag_from) {
 		if (r->flag_from < 0)
-			(void)strlcat(buf, "!", sizeof buf);
+			(void)strlcat(buf, " !", sizeof buf);
 		if (r->flag_from_socket)
-			(void)strlcat(buf, "from socket ", sizeof buf);
+			(void)strlcat(buf, " from socket", sizeof buf);
 		if (r->flag_from_rdns) {
-			(void)strlcat(buf, "from rdns ", sizeof buf);
+			(void)strlcat(buf, " from rdns", sizeof buf);
 			if (r->table_from) {
-				(void)strlcat(buf, r->table_from, sizeof buf);
 				(void)strlcat(buf, " ", sizeof buf);
+				(void)strlcat(buf, r->table_from, sizeof buf);
 			}
 		}
 		else if (strcmp(r->table_from, "<anyhost>") == 0)
-			(void)strlcat(buf, "from any ", sizeof buf);
+			(void)strlcat(buf, " from any", sizeof buf);
 		else if (strcmp(r->table_from, "<localhost>") == 0)
-			(void)strlcat(buf, "from local", sizeof buf);
+			(void)strlcat(buf, " from local", sizeof buf);
 		else {
-			(void)strlcat(buf, "from src ", sizeof buf);
+			(void)strlcat(buf, " from src ", sizeof buf);
 			(void)strlcat(buf, r->table_from, sizeof buf);
-			(void)strlcat(buf, " ", sizeof buf);
 		}
 	}
 
 	if (r->flag_for) {
 		if (r->flag_for < 0)
-			(void)strlcat(buf, "!", sizeof buf);
+			(void)strlcat(buf, " !", sizeof buf);
 		if (strcmp(r->table_for, "<anydestination>") == 0)
-			(void)strlcat(buf, "for any ", sizeof buf);
+			(void)strlcat(buf, " for any", sizeof buf);
 		else if (strcmp(r->table_for, "<localnames>") == 0)
-			(void)strlcat(buf, "for local ", sizeof buf);
+			(void)strlcat(buf, " for local", sizeof buf);
 		else {
-			(void)strlcat(buf, "for domain ", sizeof buf);
+			(void)strlcat(buf, " for domain ", sizeof buf);
 			(void)strlcat(buf, r->table_for, sizeof buf);
-			(void)strlcat(buf, " ", sizeof buf);
 		}
 	}
 
 	if (r->flag_smtp_helo) {
 		if (r->flag_smtp_helo < 0)
-			(void)strlcat(buf, "!", sizeof buf);
-		(void)strlcat(buf, "helo ", sizeof buf);
+			(void)strlcat(buf, " !", sizeof buf);
+		(void)strlcat(buf, " helo ", sizeof buf);
 		(void)strlcat(buf, r->table_smtp_helo, sizeof buf);
-		(void)strlcat(buf, " ", sizeof buf);
 	}
 
 	if (r->flag_smtp_auth) {
 		if (r->flag_smtp_auth < 0)
-			(void)strlcat(buf, "!", sizeof buf);
-		(void)strlcat(buf, "auth ", sizeof buf);
+			(void)strlcat(buf, " !", sizeof buf);
+		(void)strlcat(buf, " auth", sizeof buf);
 		if (r->table_smtp_auth) {
-			(void)strlcat(buf, r->table_smtp_auth, sizeof buf);
 			(void)strlcat(buf, " ", sizeof buf);
+			(void)strlcat(buf, r->table_smtp_auth, sizeof buf);
 		}
 	}
 
 	if (r->flag_smtp_starttls) {
 		if (r->flag_smtp_starttls < 0)
-			(void)strlcat(buf, "!", sizeof buf);
-		(void)strlcat(buf, "tls ", sizeof buf);
-		(void)strlcat(buf, " ", sizeof buf);
+			(void)strlcat(buf, " !", sizeof buf);
+		(void)strlcat(buf, " tls", sizeof buf);
 	}
 
 	if (r->flag_smtp_mail_from) {
 		if (r->flag_smtp_mail_from < 0)
-			(void)strlcat(buf, "!", sizeof buf);
-		(void)strlcat(buf, "mail-from ", sizeof buf);
+			(void)strlcat(buf, " !", sizeof buf);
+		(void)strlcat(buf, " mail-from ", sizeof buf);
 		(void)strlcat(buf, r->table_smtp_mail_from, sizeof buf);
-		(void)strlcat(buf, " ", sizeof buf);
 	}
 
 	if (r->flag_smtp_rcpt_to) {
 		if (r->flag_smtp_rcpt_to < 0)
-			(void)strlcat(buf, "!", sizeof buf);
-		(void)strlcat(buf, "rcpt-to ", sizeof buf);
+			(void)strlcat(buf, " !", sizeof buf);
+		(void)strlcat(buf, " rcpt-to ", sizeof buf);
 		(void)strlcat(buf, r->table_smtp_rcpt_to, sizeof buf);
-		(void)strlcat(buf, " ", sizeof buf);
 	}
-	(void)strlcat(buf, "=> ", sizeof buf);
+	(void)strlcat(buf, " action ", sizeof buf);
 	if (r->reject)
 		(void)strlcat(buf, "reject", sizeof buf);
 	else
