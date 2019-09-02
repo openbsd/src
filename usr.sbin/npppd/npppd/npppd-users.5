@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd-users.5,v 1.8 2019/02/20 17:47:12 denis Exp $
+.\"	$OpenBSD: npppd-users.5,v 1.9 2019/09/02 21:18:41 deraadt Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: February 20 2019 $
+.Dd $Mdocdate: September 2 2019 $
 .Dt NPPPD-USERS 5
 .Os
 .Sh NAME
@@ -27,7 +27,7 @@ The
 file describes
 the various attributes of users.
 Refer to
-.Xr getcap 3
+.Xr cgetent 3
 for a description of the file layout.
 Each entry in the database is used to describe one user.
 The record name is the username.
@@ -38,7 +38,7 @@ The following attributes can be specified:
 User's password.
 Some characters are needed to be represented by the escape sequence.
 See
-.Xr getcap 3
+.Xr cgetent 3
 for the escape sequence.
 .It framed-ip-address Ta
 IPv4 address to be assigned for the user.
@@ -63,7 +63,7 @@ hana:\\
     :framed-ip-address=192.168.0.102:
 .Ed
 .Sh SEE ALSO
-.Xr getcap 3 ,
+.Xr cgetent 3 ,
 .Xr npppd.conf 5 ,
 .Xr npppd 8
 .Sh BUGS

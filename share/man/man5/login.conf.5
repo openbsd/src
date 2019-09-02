@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.65 2019/01/06 17:34:08 jmc Exp $
+.\" $OpenBSD: login.conf.5,v 1.66 2019/09/02 21:18:41 deraadt Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd $Mdocdate: January 6 2019 $
+.Dd $Mdocdate: September 2 2019 $
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -82,7 +82,7 @@ must be run after each edit of
 to keep the database version in sync with the plain file.
 .Sh CAPABILITIES
 Refer to
-.Xr getcap 3
+.Xr cgetent 3
 for a description of the file layout.
 All entries in the
 .Nm
@@ -291,7 +291,7 @@ environment variable will contain the shell specified in the password file.
 Interpolate/expands records from corresponding
 .Pa login.conf .
 See
-.Xr getcap 3 .
+.Xr cgetent 3 .
 .\"
 .Pp
 .It term Ta string Ta Dv su Ta
@@ -917,7 +917,7 @@ Login class capability database.
 .Xr login 1 ,
 .Xr auth_subr 3 ,
 .Xr authenticate 3 ,
-.Xr getcap 3 ,
+.Xr cgetent 3 ,
 .Xr login_cap 3 ,
 .Xr passwd 5 ,
 .Xr ttys 5 ,

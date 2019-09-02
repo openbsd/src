@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftw.3,v 1.13 2019/01/25 00:19:25 millert Exp $
+.\"	$OpenBSD: ftw.3,v 1.14 2019/09/02 21:18:41 deraadt Exp $
 .\"
 .\" Copyright (c) 2003 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: January 25 2019 $
+.Dd $Mdocdate: September 2 2019 $
 .Dt FTW 3
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@
 .Bf -symbolic
 These functions are provided for compatibility with legacy code.
 New code should use the
-.Xr fts 3
+.Xr fts_open 3
 functions.
 .Ef
 .Pp
@@ -195,7 +195,7 @@ only, greater than
 .Xr close 2 ,
 .Xr open 2 ,
 .Xr stat 2 ,
-.Xr fts 3 ,
+.Xr fts_open 3 ,
 .Xr malloc 3 ,
 .Xr opendir 3 ,
 .Xr readdir 3

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fts.3,v 1.36 2016/06/28 17:25:08 millert Exp $
+.\"	$OpenBSD: fts_open.3,v 1.1 2019/09/02 21:18:41 deraadt Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fts.3	8.5 (Berkeley) 4/16/94
 .\"
-.Dd $Mdocdate: June 28 2016 $
+.Dd $Mdocdate: September 2 2019 $
 .Dt FTS_OPEN 3
 .Os
 .Sh NAME
@@ -54,8 +54,7 @@
 .Ft int
 .Fn fts_close "FTS *ftsp"
 .Sh DESCRIPTION
-The
-.Nm fts
+These
 functions are provided for traversing
 .Ux
 file hierarchies.
@@ -64,9 +63,7 @@ The
 function returns a
 .Dq handle
 on a file hierarchy, which is then supplied to
-the other
-.Nm fts
-functions.
+the other functions.
 The function
 .Fn fts_read
 returns a pointer to a structure describing one of the files in the file
@@ -249,9 +246,7 @@ Note that while
 .Fa fts_level
 cannot hold a number of levels greater than
 .Dv FTS_MAXLEVEL ,
-the
-.Nm fts
-functions themselves are not limited to a fixed number
+the functions themselves are not limited to a fixed number
 of levels.
 Application code that inspects
 .Fa fts_level
@@ -280,15 +275,11 @@ Otherwise, the contents of the
 field are undefined.
 .It Fa fts_number
 This field is provided for the use of the application program and is
-not modified by the
-.Nm fts
-functions.
+not modified by the functions.
 It is initialized to 0.
 .It Fa fts_pointer
 This field is provided for the use of the application program and is
-not modified by the
-.Nm fts
-functions.
+not modified by the functions.
 It is initialized to
 .Dv NULL .
 .It Fa fts_parent
@@ -384,9 +375,7 @@ followed immediately whether or not
 .Dv FTS_LOGICAL
 is also specified.
 .It Dv FTS_LOGICAL
-This option causes the
-.Nm fts
-routines to return
+This option causes the routines to return
 .Li FTSENT
 structures for the targets of symbolic links
 instead of the symbolic links themselves.
@@ -403,16 +392,14 @@ be provided to the
 .Fn fts_open
 function.
 .It Dv FTS_NOCHDIR
-As a performance optimization, the
-.Nm fts
-functions change directories as they walk the file hierarchy.
+As a performance optimization, the functions change directories as they walk
+the file hierarchy.
 This has the side-effect that an application cannot rely on being
 in any particular directory during the traversal.
 The
 .Dv FTS_NOCHDIR
-option turns off this optimization, and the
-.Nm fts
-functions will not change the current directory.
+option turns off this optimization, and the functions will not change
+the current directory.
 Note that applications should not themselves change their current directory
 and try to access files unless
 .Dv FTS_NOCHDIR
@@ -426,9 +413,7 @@ structures reference file characteristic information (the
 .Fa statp
 field) for each file visited.
 This option relaxes that requirement as a performance optimization,
-allowing the
-.Nm fts
-functions to set the
+allowing the functions to set the
 .Fa fts_info
 field to
 .Dv FTS_NSOK
@@ -436,9 +421,7 @@ and leave the contents of the
 .Fa statp
 field undefined.
 .It Dv FTS_PHYSICAL
-This option causes the
-.Nm fts
-routines to return
+This option causes the routines to return
 .Li FTSENT
 structures for symbolic links themselves instead
 of the target files they point to.
@@ -462,16 +445,12 @@ any files named
 or
 .Dq ..
 encountered in the file hierarchy are ignored.
-This option causes the
-.Nm fts
-routines to return
+This option causes the routines to return
 .Li FTSENT
 structures for them.
 .It Dv FTS_XDEV
-This option prevents
-.Nm fts
-from descending into directories that have a different device number
-than the file from which the descent began.
+This option prevents from descending into directories that have
+a different device number than the file from which the descent began.
 .El
 .Pp
 The
@@ -772,9 +751,7 @@ is empty.
 .Xr stat 2 ,
 .Xr qsort 3
 .Sh HISTORY
-The
-.Nm fts
-functions first appeared in
+These functions first appeared in
 .Bx 4.3 Reno .
 The interface was revised in
 .Bx 4.4 .

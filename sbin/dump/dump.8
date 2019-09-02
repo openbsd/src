@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dump.8,v 1.52 2018/06/07 11:37:21 jmc Exp $
+.\"	$OpenBSD: dump.8,v 1.53 2019/09/02 21:18:41 deraadt Exp $
 .\"	$NetBSD: dump.8,v 1.17 1997/06/05 11:15:06 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)dump.8	8.1 (Berkeley) 6/16/93
 .\"
-.Dd $Mdocdate: June 7 2018 $
+.Dd $Mdocdate: September 2 2019 $
 .Dt DUMP 8
 .Os
 .Sh NAME
@@ -436,7 +436,7 @@ Many, and verbose.
 .Sh SEE ALSO
 .Xr chflags 1 ,
 .Xr stty 1 ,
-.Xr fts 3 ,
+.Xr fts_open 3 ,
 .Xr rcmd 3 ,
 .Xr st 4 ,
 .Xr fstab 5 ,
@@ -472,7 +472,7 @@ even if listed in
 .Pp
 When dumping a list of files or subdirectories, access privileges are
 required to scan the directory (as this is done via the
-.Xr fts 3
+.Xr fts_open 3
 routines rather than directly accessing the filesystem).
 .Pp
 It would be nice if

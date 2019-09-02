@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.conf.5,v 1.22 2018/07/22 17:09:43 jmc Exp $
+.\"	$OpenBSD: spamd.conf.5,v 1.23 2019/09/02 21:18:41 deraadt Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" Copyright (c) 2003 Bob Beck
@@ -24,7 +24,7 @@
 .\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 22 2018 $
+.Dd $Mdocdate: September 2 2019 $
 .Dt SPAMD.CONF 5
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@ and tarpitted.
 .Pp
 .Nm
 follows the syntax of configuration databases as documented in
-.Xr getcap 3 .
+.Xr cgetent 3 .
 Here is an example:
 .Bd -literal -offset indent
 all:\e
@@ -172,7 +172,7 @@ If the
 .Ar msg
 string is enclosed in double quotes, the characters in the quoted string
 are escaped as specified in
-.Xr getcap 3
+.Xr cgetent 3
 with the exception that a colon (:) is allowed in the quoted string.
 The resulting string is used as the message.
 Alternatively, if the

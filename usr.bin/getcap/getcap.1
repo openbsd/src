@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getcap.1,v 1.5 2019/01/25 00:19:26 millert Exp $
+.\"	$OpenBSD: getcap.1,v 1.6 2019/09/02 21:18:41 deraadt Exp $
 .\"
 .\" Copyright (c) 2005 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 25 2019 $
+.Dd $Mdocdate: September 2 2019 $
 .Dt GETCAP 1
 .Os
 .Sh NAME
@@ -36,7 +36,7 @@ utility provides a simple method for querying a capability database such as
 or
 .Pa /etc/printcap
 and as described by
-.Xr getcap 3 .
+.Xr cgetent 3 .
 .Pp
 The following query types are supported:
 .Bl -tag -width "capability"
@@ -55,7 +55,7 @@ query instead.
 .It string
 A string capability (key=value).
 Note that the value printed has escape sequences expanded: see
-.Xr getcap 3
+.Xr cgetent 3
 for a list of valid escape sequences.
 To print the string exactly as it is listed in the
 capabilities database, use a
@@ -90,7 +90,7 @@ which must include the type as the last character, e.g.\&
 for the string
 .Sq foo .
 See
-.Xr getcap 3
+.Xr cgetent 3
 for more information on capability types.
 .It Fl f Ar path
 A colon-separated list of database filenames to be searched for records.
@@ -164,7 +164,7 @@ as a boolean flag instead of a key/value pair.
 .Dl "$ getcap -f /etc/printcap -a -b lp=/dev/lp"
 .Sh SEE ALSO
 .Xr cap_mkdb 1 ,
-.Xr getcap 3 ,
+.Xr cgetent 3 ,
 .Xr login.conf 5 ,
 .Xr printcap 5 ,
 .Xr termcap 5
