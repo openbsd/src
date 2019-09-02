@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.25 2015/02/12 23:31:12 claudio Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.26 2019/09/02 12:48:44 bluhm Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ mroutepr(void)
 	for (vifi = 0; vifi < numvifs; ++vifi, ++v) {
 		if (!banner_printed) {
 			printf("\nVirtual Interface Table\n %s%s",
-			    "Vif  Thresh  Limit  Local-Address    ",
+			    "Vif  Thresh  Local-Address    ",
 			    "Remote-Address   Pkt_in  Pkt_out\n");
 			banner_printed = 1;
 		}
@@ -137,7 +137,7 @@ mroutepr(void)
 		fmt_scaled(m->mfc_pkt_cnt, fmtbuf);
 		printf("  %-15.15s  %7s     %3u ",
 		    routename4(m->mfc_mcastgrp.s_addr),
-		    buf, m->mfc_parent);
+		    fmtbuf, m->mfc_parent);
 		for (vifi = 0; vifi <= maxvif; ++vifi)
 			if (m->mfc_ttls[vifi])
 				printf(" %zu/%u", vifi, m->mfc_ttls[vifi]);
