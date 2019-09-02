@@ -2155,6 +2155,7 @@
 ./usr/share/man/man3/ccosh.3
 ./usr/share/man/man3/ceil.3
 ./usr/share/man/man3/cexp.3
+./usr/share/man/man3/cgetent.3
 ./usr/share/man/man3/check_expire.3
 ./usr/share/man/man3/cimag.3
 ./usr/share/man/man3/clock.3
@@ -2273,7 +2274,6 @@
 ./usr/share/man/man3/define_key.3
 ./usr/share/man/man3/des_read_pw.3
 ./usr/share/man/man3/devname.3
-./usr/share/man/man3/directory.3
 ./usr/share/man/man3/dirname.3
 ./usr/share/man/man3/div.3
 ./usr/share/man/man3/dl_iterate_phdr.3
@@ -2374,7 +2374,7 @@
 ./usr/share/man/man3/frexp.3
 ./usr/share/man/man3/fseek.3
 ./usr/share/man/man3/ftok.3
-./usr/share/man/man3/fts.3
+./usr/share/man/man3/fts_open.3
 ./usr/share/man/man3/ftw.3
 ./usr/share/man/man3/funopen.3
 ./usr/share/man/man3/fuse_chan_fd.3
@@ -2418,7 +2418,6 @@
 ./usr/share/man/man3/getbsize.3
 ./usr/share/man/man3/getc.3
 ./usr/share/man/man3/getc_unlocked.3
-./usr/share/man/man3/getcap.3
 ./usr/share/man/man3/getcwd.3
 ./usr/share/man/man3/getdelim.3
 ./usr/share/man/man3/getdiskbyname.3
@@ -2587,6 +2586,7 @@
 ./usr/share/man/man3/ohash_interval.3
 ./usr/share/man/man3/open_memstream.3
 ./usr/share/man/man3/opendev.3
+./usr/share/man/man3/opendir.3
 ./usr/share/man/man3/opendisk.3
 ./usr/share/man/man3/openpty.3
 ./usr/share/man/man3/ossaudio.3
@@ -2675,7 +2675,6 @@
 ./usr/share/man/man3/pw_dup.3
 ./usr/share/man/man3/pw_init.3
 ./usr/share/man/man3/pw_lock.3
-./usr/share/man/man3/pwcache.3
 ./usr/share/man/man3/qsort.3
 ./usr/share/man/man3/queue.3
 ./usr/share/man/man3/radius_new_request_packet.3
@@ -2817,6 +2816,7 @@
 ./usr/share/man/man3/unvis.3
 ./usr/share/man/man3/usbhid.3
 ./usr/share/man/man3/uselocale.3
+./usr/share/man/man3/user_from_uid.3
 ./usr/share/man/man3/usleep.3
 ./usr/share/man/man3/utime.3
 ./usr/share/man/man3/uu_lock.3
