@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.23 2017/08/27 21:59:52 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.24 2019/09/02 12:43:54 mortimer Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -41,6 +41,15 @@
 FRAMESZ= MKFSIZ(4,16)
 GPOFF= FRAMESZ-2*REGSZ
 RAOFF= FRAMESZ-1*REGSZ
+A0OFF= FRAMESZ-3*REGSZ
+A1OFF= FRAMESZ-4*REGSZ
+A2OFF= FRAMESZ-5*REGSZ
+A3OFF= FRAMESZ-6*REGSZ
+A4OFF= FRAMESZ-7*REGSZ
+A5OFF= FRAMESZ-8*REGSZ
+A6OFF= FRAMESZ-9*REGSZ
+A7OFF= FRAMESZ-10*REGSZ
+S0OFF= FRAMESZ-11*REGSZ
 
 LEAF(_dl_start, FRAMESZ)		/* Not really LEAF, but we simplify */
 	PTR_SUBU sp, FRAMESZ		# Some space.
@@ -76,19 +85,6 @@ LEAF(_dl_start, FRAMESZ)		/* Not really LEAF, but we simplify */
 	move	ra, zero		# Mark last stack frame.
 	j	t9			# Go execute the 'real' program.
 END(_dl_start)
-
-FRAMESZ= MKFSIZ(4,16)
-GPOFF= FRAMESZ-2*REGSZ
-RAOFF= FRAMESZ-1*REGSZ
-A0OFF= FRAMESZ-3*REGSZ
-A1OFF= FRAMESZ-4*REGSZ
-A2OFF= FRAMESZ-5*REGSZ
-A3OFF= FRAMESZ-6*REGSZ
-A4OFF= FRAMESZ-7*REGSZ
-A5OFF= FRAMESZ-8*REGSZ
-A6OFF= FRAMESZ-9*REGSZ
-A7OFF= FRAMESZ-10*REGSZ
-S0OFF= FRAMESZ-11*REGSZ
 
 	.globl	_dl_bind_start
 	.ent	_dl_bind_start, 0
