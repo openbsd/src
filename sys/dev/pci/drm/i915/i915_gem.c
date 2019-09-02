@@ -2347,12 +2347,18 @@ i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 				   I915_WAIT_INTERRUPTIBLE,
 				   MAX_SCHEDULE_TIMEOUT,
 				   NULL);
-	if (ret)
+	if (ret) {
+		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL, NULL);
+		mutex_unlock(&dev->struct_mutex);
 		goto err;
+	}
 
 	ret = i915_gem_object_pin_pages(obj);
-	if (ret)
+	if (ret) {
+		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL, NULL);
+		mutex_unlock(&dev->struct_mutex);
 		goto err;
+	}
 
 	intel_runtime_pm_get(dev_priv);
 
