@@ -474,13 +474,6 @@ static struct wchar_range comp_table[] = {
 };
 
 /*
- * Special pairs, not ranges.
- */
-static struct wchar_range comb_table[] = {
-	{0x0644, 0x0622}, {0x0644, 0x0623}, {0x0644, 0x0625}, {0x0644, 0x0627},
-};
-
-/*
  * Characters with general category values
  *	Cc: Other, Control
  *	Cf: Other, Format
@@ -825,22 +818,4 @@ is_wide_char(LWCHAR ch)
 {
 	return (is_in_table(ch, wide_table,
 	    (sizeof (wide_table) / sizeof (*wide_table))));
-}
-
-/*
- * Is a character a UTF-8 combining character?
- * A combining char acts like an ordinary char, but if it follows
- * a specific char (not any char), the two combine into one glyph.
- */
-int
-is_combining_char(LWCHAR ch1, LWCHAR ch2)
-{
-	/* The table is small; use linear search. */
-	int i;
-	for (i = 0; i < sizeof (comb_table) / sizeof (*comb_table); i++) {
-		if (ch1 == comb_table[i].first &&
-		    ch2 == comb_table[i].last)
-			return (1);
-	}
-	return (0);
 }

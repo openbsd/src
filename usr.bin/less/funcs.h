@@ -65,7 +65,6 @@ LWCHAR step_char(char **, int, char *);
 int is_composing_char(LWCHAR);
 int is_ubin_char(LWCHAR);
 int is_wide_char(LWCHAR);
-int is_combining_char(LWCHAR, LWCHAR);
 void cmd_reset(void);
 void clear_cmd(void);
 void cmd_putstr(char *);

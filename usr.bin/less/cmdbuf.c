@@ -179,19 +179,10 @@ cmd_step_common(char *p, LWCHAR ch, int len, int *pwidth, int *bswidth)
 				if (bswidth != NULL)
 					*bswidth = prlen;
 			} else {
-				LWCHAR prev_ch = step_char(&p, -1, cmdbuf);
-				if (is_combining_char(prev_ch, ch)) {
-					if (pwidth != NULL)
-						*pwidth = 0;
-					if (bswidth != NULL)
-						*bswidth = 0;
-				} else {
-					if (pwidth != NULL)
-						*pwidth	= is_wide_char(ch)
-						    ? 2 : 1;
-					if (bswidth != NULL)
-						*bswidth = 1;
-				}
+				if (pwidth != NULL)
+					*pwidth	= is_wide_char(ch) ? 2 : 1;
+				if (bswidth != NULL)
+					*bswidth = 1;
 			}
 		}
 	}
