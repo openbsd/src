@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.h,v 1.2 2018/09/20 11:42:28 eric Exp $	*/
+/*	$OpenBSD: smtp.h,v 1.3 2019/09/02 20:05:21 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -45,7 +45,6 @@ struct smtp_params {
 
 	/* TLS options */
 	int			 tls_req;	/* requested TLS mode */
-	void			*tls_ctx;	/* TLS ctx to use */
 	int			 tls_verify;	/* need valid server certificate */
 
 	/* SMTP options */
@@ -82,11 +81,13 @@ struct smtp_client;
 /* smtp_client.c */
 struct smtp_client *smtp_connect(const struct smtp_params *, void *);
 void smtp_cert_verified(struct smtp_client *, int);
+void smtp_set_tls(struct smtp_client *, void *);
 void smtp_quit(struct smtp_client *);
 void smtp_sendmail(struct smtp_client *, struct smtp_mail *);
 
 /* callbacks */
 void smtp_verify_server_cert(void *, struct smtp_client *, void *);
+void smtp_require_tls(void *, struct smtp_client *);
 void smtp_ready(void *, struct smtp_client *);
 void smtp_failed(void *, struct smtp_client *, int, const char *);
 void smtp_closed(void *, struct smtp_client *);
