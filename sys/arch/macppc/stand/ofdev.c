@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.22 2015/03/23 20:18:52 miod Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.23 2019/09/02 23:40:29 kettenis Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <hfs.h>
 
 #include <macppc/stand/ofdev.h>
+#include <macppc/stand/openfirm.h>
 
 extern char bootdev[];
 
@@ -371,7 +372,7 @@ devopen(struct open_file *of, const char *name, char **file)
 		of->f_devdata = ofdev;
 		bcopy(&file_system_nfs, file_system, sizeof file_system[0]);
 		nfsys = 1;
-		if (error = net_open(ofdev))
+		if ((error = net_open(ofdev)))
 			goto bad;
 		return 0;
 	}

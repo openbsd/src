@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2019/04/10 04:17:36 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2019/09/02 23:40:29 kettenis Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -52,20 +52,19 @@
 #include <sys/disklabel.h>
 
 #include <lib/libkern/libkern.h>
-#include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
 #include <stand/boot/cmd.h>
-
 
 #include <machine/cpu.h>
 
 #include <macppc/stand/ofdev.h>
 #include <macppc/stand/openfirm.h>
 
+#include "libsa.h"
+
 char bootdev[128];
 int boothowto;
 int debug;
-
 
 void
 get_alt_bootdev(char *, size_t, char *, size_t);
@@ -126,8 +125,9 @@ chain(void (*entry)(), char *args, void *ssym, void *esym)
 char bootline[512];
 
 extern char *kernelfile;
+
 int
-main()
+main(void)
 {
 	int chosen;
 
@@ -176,7 +176,7 @@ devboot(dev_t dev, char *p)
 	strlcpy(p, bootdev, BOOTDEVLEN);
 }
 
-int
+void
 run_loadfile(uint64_t *marks, int howto)
 {
 	char bootline[512];		/* Should check size? */
@@ -213,7 +213,6 @@ run_loadfile(uint64_t *marks, int howto)
 	chain((void *)entry, bootline, ssym, esym);
 
 	_rtt();
-	return 0;
 }
 
 int

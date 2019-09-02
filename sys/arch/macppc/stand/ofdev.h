@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.h,v 1.1 2001/09/01 15:39:02 drahn Exp $	*/
+/*	$OpenBSD: ofdev.h,v 1.2 2019/09/02 23:40:29 kettenis Exp $	*/
 /*	$NetBSD: ofdev.h,v 1.1 1997/04/16 20:29:22 thorpej Exp $	*/
 
 /*
@@ -49,5 +49,8 @@ struct of_dev {
 #define	DEFAULT_KERNEL	"/bsd"
 
 extern char opened_name[];
+
+int net_open(struct of_dev *);
+void net_close(struct of_dev *);
 
 #endif

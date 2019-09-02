@@ -1,4 +1,4 @@
-/*	$OpenBSD: fixcoff.c,v 1.2 2013/07/16 08:03:18 mpi Exp $ */
+/*	$OpenBSD: fixcoff.c,v 1.3 2019/09/02 23:40:29 kettenis Exp $ */
 /*	$NetBSD: fixcoff.c,v 1.10 2006/04/07 02:34:55 gdamore Exp $ */
 
 /*
@@ -42,10 +42,12 @@
  * Partially inspired by hack-coff, written by Paul Mackerras.
  */
 
+#include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
 
 #include <sys/endian.h>
 
@@ -120,6 +122,7 @@ help(char *prog)
 	exit(0);
 }
 
+int
 main(int argc, char *argv[])
 {
 	int	fd, i, n, ch;

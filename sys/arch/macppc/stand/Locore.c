@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.16 2014/07/12 21:54:58 jasper Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.17 2019/09/02 23:40:29 kettenis Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 1997/04/16 20:29:11 thorpej Exp $	*/
 
 /*
@@ -41,8 +41,14 @@
 #include "machine/cpu.h"
 */
 
+int main(void);
+void syncicache(void *, int);
+
 #define ENABLE_DECREMENTER_WORKAROUND
-void patch_dec_intr();
+void bat_init(void);
+void patch_dec_intr(void);
+
+__dead void exit(void);
 
 static int (*openfirmware)(void *);
 
@@ -104,14 +110,13 @@ _start(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
 	patch_dec_intr();
 #endif
 	setup();
-	main(arg, argl);
+	main();
 	exit();
 }
 
 #ifdef ENABLE_DECREMENTER_WORKAROUND
 void handle_decr_intr();
 __asm (	"	.globl handle_decr_intr\n"
-	"	.type handle_decr_intr@function\n"
 	"handle_decr_intr:\n"
 	"	rfi\n");
 
