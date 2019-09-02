@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.77 2019/07/29 10:50:08 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.78 2019/09/02 12:50:12 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -1035,11 +1035,20 @@ ieee80211_next_mode(struct ifnet *ifp)
 
 	/*
 	 * Indicate a wrap-around if we're running in a fixed, user-specified
-	 * phy mode or if the driver scans all bands in one scan iteration.
+	 * phy mode.
 	 */
-	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) != IFM_AUTO ||
-	    (ic->ic_caps & IEEE80211_C_SCANALLBAND))
+	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) != IFM_AUTO)
 		return (IEEE80211_MODE_AUTO);
+
+	/*
+	 * Always scan in AUTO mode if the driver scans all bands.
+	 * The current mode might have changed during association
+	 * so we must reset it here.
+	 */
+	if (ic->ic_caps & IEEE80211_C_SCANALLBAND) {
+		ieee80211_setmode(ic, IEEE80211_MODE_AUTO);
+		return (ic->ic_curmode);
+	}
 
 	/*
 	 * Get the next supported mode; effectively, this alternates between

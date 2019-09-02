@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.247 2019/08/29 07:49:15 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.248 2019/09/02 12:50:12 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5692,6 +5692,13 @@ iwm_scan(struct iwm_softc *sc)
 		printf("%s: could not initiate scan\n", DEVNAME(sc));
 		return err;
 	}
+
+	/*
+	 * The current mode might have been fixed during association.
+	 * Ensure all channels get scanned.
+	 */
+	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) == IFM_AUTO)
+		ieee80211_setmode(ic, IEEE80211_MODE_AUTO);
 
 	sc->sc_flags |= IWM_FLAG_SCANNING;
 	if (ifp->if_flags & IFF_DEBUG)
