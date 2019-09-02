@@ -140,9 +140,12 @@ struct sxiccmu_ccu_bit sun8i_a23_gates[] = {
 
 /* A64 */
 
+#define A64_CLK_PLL_CPUX	1
+
 #define A64_CLK_PLL_PERIPH0	11
 #define A64_CLK_PLL_PERIPH0_2X	12
 
+#define A64_CLK_CPUX		21
 #define A64_CLK_AXI		22
 #define A64_CLK_APB		23
 #define A64_CLK_AHB1		24
