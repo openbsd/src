@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlpinctrl.c,v 1.3 2019/09/01 19:13:17 kettenis Exp $	*/
+/*	$OpenBSD: amlpinctrl.c,v 1.4 2019/09/02 08:16:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -109,6 +109,7 @@ struct aml_pin_group aml_g12a_pin_groups[] = {
 	{ "sdcard_d3_c", GPIOC_3, 1, "sdcard" },
 	{ "sdcard_clk_c", GPIOC_4, 1, "sdcard" },
 	{ "sdcard_cmd_c", GPIOC_5, 1, "sdcard" },
+	{ "GPIOC_4", GPIOC_4, 0, "gpio_periphs" },
 	{ "emmc_nand_d0", BOOT_0, 1, "emmc" },
 	{ "emmc_nand_d1", BOOT_1, 1, "emmc" },
 	{ "emmc_nand_d2", BOOT_2, 1, "emmc" },
@@ -120,6 +121,7 @@ struct aml_pin_group aml_g12a_pin_groups[] = {
 	{ "emmc_clk", BOOT_8, 1, "emmc" },
 	{ "emmc_cmd", BOOT_10, 1, "emmc" },
 	{ "emmc_nand_ds", BOOT_13, 1, "emmc" },
+	{ "BOOT_8", BOOT_8, 0, "gpio_periphs" },
 	{ }
 };
 
