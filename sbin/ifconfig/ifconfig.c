@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.411 2019/08/30 03:52:20 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.412 2019/09/02 12:54:21 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2348,10 +2348,25 @@ print_cipherset(u_int32_t cipherset)
 }
 
 void
+print_assoc_failures(uint32_t assoc_fail)
+{
+	/* Filter out the most obvious failure cases. */
+	assoc_fail &= ~IEEE80211_NODEREQ_ASSOCFAIL_ESSID;
+	if (assoc_fail & IEEE80211_NODEREQ_ASSOCFAIL_PRIVACY)
+		assoc_fail &= ~IEEE80211_NODEREQ_ASSOCFAIL_WPA_PROTO;
+	assoc_fail &= ~IEEE80211_NODEREQ_ASSOCFAIL_PRIVACY;
+
+	if (assoc_fail == 0)
+		return;
+
+	printb_status(assoc_fail, IEEE80211_NODEREQ_ASSOCFAIL_BITS);
+}
+
+void
 ieee80211_status(void)
 {
 	int len, inwid, ijoin, inwkey, ipsk, ichan, ipwr;
-	int ibssid, iwpa;
+	int ibssid, iwpa, assocfail = 0;
 	struct ieee80211_nwid nwid;
 	struct ieee80211_join join;
 	struct ieee80211_nwkey nwkey;
@@ -2431,11 +2446,15 @@ ieee80211_status(void)
 		bzero(&nr, sizeof(nr));
 		bcopy(bssid.i_bssid, &nr.nr_macaddr, sizeof(nr.nr_macaddr));
 		strlcpy(nr.nr_ifname, name, sizeof(nr.nr_ifname));
-		if (ioctl(s, SIOCG80211NODE, &nr) == 0 && nr.nr_rssi) {
-			if (nr.nr_max_rssi)
-				printf(" %u%%", IEEE80211_NODEREQ_RSSI(&nr));
-			else
-				printf(" %ddBm", nr.nr_rssi);
+		if (ioctl(s, SIOCG80211NODE, &nr) == 0) {
+			if (nr.nr_rssi) {
+				if (nr.nr_max_rssi)
+					printf(" %u%%",
+					    IEEE80211_NODEREQ_RSSI(&nr));
+				else
+					printf(" %ddBm", nr.nr_rssi);
+			}
+			assocfail = nr.nr_assoc_fail;
 		}
 	}
 
@@ -2477,6 +2496,11 @@ ieee80211_status(void)
 	    ifr.ifr_flags) {
 		putchar(' ');
 		printb_status(ifr.ifr_flags, IEEE80211_F_USERBITS);
+	}
+
+	if (assocfail) {
+		putchar(' ');
+		print_assoc_failures(assocfail);
 	}
 	putchar('\n');
 	if (show_join)
@@ -2751,6 +2775,8 @@ ieee80211_printnode(struct ieee80211_nodereq *nr)
 	if ((nr->nr_flags & IEEE80211_NODEREQ_AP) == 0)
 		printb_status(IEEE80211_NODEREQ_STATE(nr->nr_state),
 		    IEEE80211_NODEREQ_STATE_BITS);
+	else if (nr->nr_assoc_fail)
+		print_assoc_failures(nr->nr_assoc_fail);
 }
 
 void

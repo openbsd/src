@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.74 2019/05/12 18:12:38 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.75 2019/09/02 12:54:21 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -104,6 +104,7 @@ ieee80211_node2req(struct ieee80211com *ic, const struct ieee80211_node *ni,
 	nr->nr_txseq = ni->ni_txseq;
 	nr->nr_rxseq = ni->ni_rxseq;
 	nr->nr_fails = ni->ni_fails;
+	nr->nr_assoc_fail = ni->ni_assoc_fail; /* flag values are the same */
 	nr->nr_inact = ni->ni_inact;
 	nr->nr_txrate = ni->ni_txrate;
 	nr->nr_state = ni->ni_state;
@@ -821,7 +822,11 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCG80211NODE:
 		nr = (struct ieee80211_nodereq *)data;
-		ni = ieee80211_find_node(ic, nr->nr_macaddr);
+		if (ic->ic_bss &&
+		    IEEE80211_ADDR_EQ(nr->nr_macaddr, ic->ic_bss->ni_macaddr))
+			ni = ic->ic_bss;
+		else
+			ni = ieee80211_find_node(ic, nr->nr_macaddr);
 		if (ni == NULL) {
 			error = ENOENT;
 			break;

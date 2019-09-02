@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.82 2019/08/27 14:57:48 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.83 2019/09/02 12:54:21 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -353,6 +353,16 @@ struct ieee80211_node {
 	u_int16_t		ni_qos_txseqs[IEEE80211_NUM_TID];
 	u_int16_t		ni_qos_rxseqs[IEEE80211_NUM_TID];
 	int			ni_fails;	/* failure count to associate */
+	uint32_t		ni_assoc_fail;	/* assoc failure reasons */
+#define IEEE80211_NODE_ASSOCFAIL_CHAN		0x01
+#define IEEE80211_NODE_ASSOCFAIL_IBSS		0x02
+#define IEEE80211_NODE_ASSOCFAIL_PRIVACY	0x04
+#define IEEE80211_NODE_ASSOCFAIL_BASIC_RATE	0x08
+#define IEEE80211_NODE_ASSOCFAIL_ESSID		0x10
+#define IEEE80211_NODE_ASSOCFAIL_BSSID		0x20
+#define IEEE80211_NODE_ASSOCFAIL_WPA_PROTO	0x40
+#define IEEE80211_NODE_ASSOCFAIL_WPA_KEY	0x80
+
 	int			ni_inact;	/* inactivity mark count */
 	int			ni_txrate;	/* index to ni_rates[] */
 	int			ni_state;
@@ -515,8 +525,7 @@ void ieee80211_node_join(struct ieee80211com *,
 		struct ieee80211_node *, int);
 void ieee80211_node_leave(struct ieee80211com *,
 		struct ieee80211_node *);
-int ieee80211_match_bss(struct ieee80211com *,
-		struct ieee80211_node *);
+int ieee80211_match_bss(struct ieee80211com *, struct ieee80211_node *, int);
 struct ieee80211_node *ieee80211_node_choose_bss(struct ieee80211com *, int,
 		struct ieee80211_node **);
 void ieee80211_node_join_bss(struct ieee80211com *, struct ieee80211_node *);

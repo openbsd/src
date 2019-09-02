@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.38 2019/05/12 18:12:38 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.39 2019/09/02 12:54:21 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -359,6 +359,8 @@ struct ieee80211_nodereq {
 
 	/* VHT */
 	uint8_t			nr_vht_ss;
+
+	u_int32_t	nr_assoc_fail;	/* association failure reasons */
 };
 
 #define IEEE80211_NODEREQ_STATE(_s)	(1 << _s)
@@ -378,6 +380,18 @@ struct ieee80211_nodereq {
 #define SIOCG80211NODE		_IOWR('i', 211, struct ieee80211_nodereq)
 #define SIOCS80211NODE		 _IOW('i', 212, struct ieee80211_nodereq)
 #define SIOCS80211DELNODE	 _IOW('i', 213, struct ieee80211_nodereq)
+
+#define IEEE80211_NODEREQ_ASSOCFAIL_CHAN	0x01
+#define IEEE80211_NODEREQ_ASSOCFAIL_IBSS	0x02
+#define IEEE80211_NODEREQ_ASSOCFAIL_PRIVACY	0x04
+#define IEEE80211_NODEREQ_ASSOCFAIL_BASIC_RATE	0x08
+#define IEEE80211_NODEREQ_ASSOCFAIL_ESSID	0x10
+#define IEEE80211_NODEREQ_ASSOCFAIL_BSSID	0x20
+#define IEEE80211_NODEREQ_ASSOCFAIL_WPA_PROTO	0x40
+#define IEEE80211_NODEREQ_ASSOCFAIL_WPA_KEY	0x80
+#define IEEE80211_NODEREQ_ASSOCFAIL_BITS	\
+	"\20\1!CHAN\2!IBSS\3!PRIVACY\4!BASICRATE\5!ESSID\6!BSSID\7!WPAPROTO" \
+	"\10!WPAKEY"
 
 /* get the entire node cache */
 struct ieee80211_nodereq_all {

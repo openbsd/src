@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.172 2019/08/27 14:57:48 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.173 2019/09/02 12:54:21 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -523,28 +523,40 @@ ieee80211_match_ess(struct ieee80211_ess *ess, struct ieee80211_node *ni)
 {
 	if (ess->esslen != 0 &&
 	    (ess->esslen != ni->ni_esslen ||
-	    memcmp(ess->essid, ni->ni_essid, ess->esslen) != 0))
+	    memcmp(ess->essid, ni->ni_essid, ess->esslen) != 0)) {
+		ni->ni_assoc_fail |= IEEE80211_NODE_ASSOCFAIL_ESSID;
 		return 0;
+	}
 
 	if (ess->flags & (IEEE80211_F_PSK | IEEE80211_F_RSNON)) {
 		/* Ensure same WPA version. */
 		if ((ni->ni_rsnprotos & IEEE80211_PROTO_RSN) &&
-		    (ess->rsnprotos & IEEE80211_PROTO_RSN) == 0)
+		    (ess->rsnprotos & IEEE80211_PROTO_RSN) == 0) {
+			ni->ni_assoc_fail |= IEEE80211_NODE_ASSOCFAIL_WPA_PROTO;
 			return 0;
+		}
 		if ((ni->ni_rsnprotos & IEEE80211_PROTO_WPA) &&
-		    (ess->rsnprotos & IEEE80211_PROTO_WPA) == 0)
+		    (ess->rsnprotos & IEEE80211_PROTO_WPA) == 0) {
+			ni->ni_assoc_fail |= IEEE80211_NODE_ASSOCFAIL_WPA_PROTO;
 			return 0;
+		}
 	} else if (ess->flags & IEEE80211_F_WEPON) {
-		if ((ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) == 0)
+		if ((ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) == 0) {
+			ni->ni_assoc_fail |= IEEE80211_NODE_ASSOCFAIL_PRIVACY;
 			return 0;
+		}
 	} else {
-		if ((ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) != 0)
+		if ((ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) != 0) {
+			ni->ni_assoc_fail |= IEEE80211_NODE_ASSOCFAIL_PRIVACY;
 			return 0;
+		}
 	}
 
 	if (ess->esslen == 0 &&
-	    (ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) != 0)
+	    (ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) != 0) {
+		ni->ni_assoc_fail |= IEEE80211_NODE_ASSOCFAIL_PRIVACY;
 		return 0;
+	}
 
 	return 1;
 }
@@ -780,7 +792,7 @@ ieee80211_reset_scan(struct ifnet *ifp)
 }
 
 /*
- * Increase a node's inactitivy counter.
+ * Increase a node's inactivity counter.
  * This counter get reset to zero if a frame is received.
  * This function is intended for station mode only.
  * See ieee80211_node_cache_timeout() for hostap mode.
@@ -993,48 +1005,49 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 #endif	/* IEEE80211_STA_ONLY */
 
 int
-ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
+ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni,
+    int bgscan)
 {
 	u_int8_t rate;
 	int fail;
 
 	fail = 0;
 	if (isclr(ic->ic_chan_active, ieee80211_chan2ieee(ic, ni->ni_chan)))
-		fail |= 0x01;
+		fail |= IEEE80211_NODE_ASSOCFAIL_CHAN;
 	if (ic->ic_des_chan != IEEE80211_CHAN_ANYC &&
 	    ni->ni_chan != ic->ic_des_chan)
-		fail |= 0x01;
+		fail |= IEEE80211_NODE_ASSOCFAIL_CHAN;
 #ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_IBSS) {
 		if ((ni->ni_capinfo & IEEE80211_CAPINFO_IBSS) == 0)
-			fail |= 0x02;
+			fail |= IEEE80211_NODE_ASSOCFAIL_IBSS;
 	} else
 #endif
 	{
 		if ((ni->ni_capinfo & IEEE80211_CAPINFO_ESS) == 0)
-			fail |= 0x02;
+			fail |= IEEE80211_NODE_ASSOCFAIL_IBSS;
 	}
 	if (ic->ic_flags & (IEEE80211_F_WEPON | IEEE80211_F_RSNON)) {
 		if ((ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) == 0)
-			fail |= 0x04;
+			fail |= IEEE80211_NODE_ASSOCFAIL_PRIVACY;
 	} else {
 		if (ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY)
-			fail |= 0x04;
+			fail |= IEEE80211_NODE_ASSOCFAIL_PRIVACY;
 	}
 
 	rate = ieee80211_fix_rate(ic, ni, IEEE80211_F_DONEGO);
 	if (rate & IEEE80211_RATE_BASIC)
-		fail |= 0x08;
+		fail |= IEEE80211_NODE_ASSOCFAIL_BASIC_RATE;
 	if (ISSET(ic->ic_flags, IEEE80211_F_AUTO_JOIN) &&
 	    ic->ic_des_esslen == 0)
-		fail |= 0x10;
+		fail |= IEEE80211_NODE_ASSOCFAIL_ESSID;
 	if (ic->ic_des_esslen != 0 &&
 	    (ni->ni_esslen != ic->ic_des_esslen ||
 	     memcmp(ni->ni_essid, ic->ic_des_essid, ic->ic_des_esslen) != 0))
-		fail |= 0x10;
+		fail |= IEEE80211_NODE_ASSOCFAIL_ESSID;
 	if ((ic->ic_flags & IEEE80211_F_DESBSSID) &&
 	    !IEEE80211_ADDR_EQ(ic->ic_des_bssid, ni->ni_bssid))
-		fail |= 0x20;
+		fail |= IEEE80211_NODE_ASSOCFAIL_BSSID;
 
 	if (ic->ic_flags & IEEE80211_F_RSNON) {
 		/*
@@ -1043,65 +1056,75 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 		 * decline to associate with that AP.
 		 */
 		if ((ni->ni_rsnprotos & ic->ic_rsnprotos) == 0)
-			fail |= 0x40;
+			fail |= IEEE80211_NODE_ASSOCFAIL_WPA_PROTO;
 		if ((ni->ni_rsnakms & ic->ic_rsnakms) == 0)
-			fail |= 0x40;
+			fail |= IEEE80211_NODE_ASSOCFAIL_WPA_PROTO;
 		if ((ni->ni_rsnakms & ic->ic_rsnakms &
 		     ~(IEEE80211_AKM_PSK | IEEE80211_AKM_SHA256_PSK)) == 0) {
 			/* AP only supports PSK AKMPs */
 			if (!(ic->ic_flags & IEEE80211_F_PSK))
-				fail |= 0x40;
+				fail |= IEEE80211_NODE_ASSOCFAIL_WPA_PROTO;
 		}
 		if (ni->ni_rsngroupcipher != IEEE80211_CIPHER_WEP40 &&
 		    ni->ni_rsngroupcipher != IEEE80211_CIPHER_TKIP &&
 		    ni->ni_rsngroupcipher != IEEE80211_CIPHER_CCMP &&
 		    ni->ni_rsngroupcipher != IEEE80211_CIPHER_WEP104)
-			fail |= 0x40;
+			fail |= IEEE80211_NODE_ASSOCFAIL_WPA_PROTO;
 		if ((ni->ni_rsnciphers & ic->ic_rsnciphers) == 0)
-			fail |= 0x40;
+			fail |= IEEE80211_NODE_ASSOCFAIL_WPA_PROTO;
 
 		/* we only support BIP as the IGTK cipher */
 		if ((ni->ni_rsncaps & IEEE80211_RSNCAP_MFPC) &&
 		    ni->ni_rsngroupmgmtcipher != IEEE80211_CIPHER_BIP)
-			fail |= 0x40;
+			fail |= IEEE80211_NODE_ASSOCFAIL_WPA_PROTO;
 
 		/* we do not support MFP but AP requires it */
 		if (!(ic->ic_caps & IEEE80211_C_MFP) &&
 		    (ni->ni_rsncaps & IEEE80211_RSNCAP_MFPR))
-			fail |= 0x40;
+			fail |= IEEE80211_NODE_ASSOCFAIL_WPA_PROTO;
 
 		/* we require MFP but AP does not support it */
 		if ((ic->ic_caps & IEEE80211_C_MFP) &&
 		    (ic->ic_flags & IEEE80211_F_MFPR) &&
 		    !(ni->ni_rsncaps & IEEE80211_RSNCAP_MFPC))
-			fail |= 0x40;
+			fail |= IEEE80211_NODE_ASSOCFAIL_WPA_PROTO;
 	}
 
 	if (ic->ic_if.if_flags & IFF_DEBUG) {
 		printf("%s: %c %s%c", ic->ic_if.if_xname, fail ? '-' : '+',
 		    ether_sprintf(ni->ni_bssid),
-		    fail & 0x20 ? '!' : ' ');
+		    fail & IEEE80211_NODE_ASSOCFAIL_BSSID ? '!' : ' ');
 		printf(" %3d%c", ieee80211_chan2ieee(ic, ni->ni_chan),
-			fail & 0x01 ? '!' : ' ');
+			fail & IEEE80211_NODE_ASSOCFAIL_CHAN ? '!' : ' ');
 		printf(" %+4d", ni->ni_rssi);
 		printf(" %2dM%c", (rate & IEEE80211_RATE_VAL) / 2,
-		    fail & 0x08 ? '!' : ' ');
+		    fail & IEEE80211_NODE_ASSOCFAIL_BASIC_RATE ? '!' : ' ');
 		printf(" %4s%c",
 		    (ni->ni_capinfo & IEEE80211_CAPINFO_ESS) ? "ess" :
 		    (ni->ni_capinfo & IEEE80211_CAPINFO_IBSS) ? "ibss" :
 		    "????",
-		    fail & 0x02 ? '!' : ' ');
+		    fail & IEEE80211_NODE_ASSOCFAIL_IBSS ? '!' : ' ');
 		printf(" %7s%c ",
 		    (ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) ?
 		    "privacy" : "no",
-		    fail & 0x04 ? '!' : ' ');
+		    fail & IEEE80211_NODE_ASSOCFAIL_PRIVACY ? '!' : ' ');
 		printf(" %3s%c ",
 		    (ic->ic_flags & IEEE80211_F_RSNON) ?
 		    "rsn" : "no",
-		    fail & 0x40 ? '!' : ' ');
+		    fail & IEEE80211_NODE_ASSOCFAIL_WPA_PROTO ? '!' : ' ');
 		ieee80211_print_essid(ni->ni_essid, ni->ni_esslen);
-		printf("%s\n", fail & 0x10 ? "!" : "");
+		printf("%s\n",
+		    fail & IEEE80211_NODE_ASSOCFAIL_ESSID ? "!" : "");
 	}
+
+	/* We don't care about unrelated networks during background scans. */
+	if (bgscan) {
+		if ((fail & IEEE80211_NODE_ASSOCFAIL_ESSID) == 0)
+			ni->ni_assoc_fail = fail;
+	} else
+		ni->ni_assoc_fail = fail;
+	if ((fail & IEEE80211_NODE_ASSOCFAIL_ESSID) == 0)
+		ic->ic_bss->ni_assoc_fail = ni->ni_assoc_fail;
 
 	return fail;
 }
@@ -1160,14 +1183,24 @@ ieee80211_node_join_bss(struct ieee80211com *ic, struct ieee80211_node *selbs)
 {
 	enum ieee80211_phymode mode;
 	struct ieee80211_node *ni;
+	uint32_t assoc_fail = 0;
 
 	/* Reinitialize media mode and channels if needed. */
 	mode = ieee80211_chan2mode(ic, selbs->ni_chan);
 	if (mode != ic->ic_curmode)
 		ieee80211_setmode(ic, mode);
 
+	/* Keep recorded association failures for this BSS/ESS intact. */
+	if (IEEE80211_ADDR_EQ(ic->ic_bss->ni_macaddr, selbs->ni_macaddr) ||
+	    (ic->ic_des_esslen > 0 && ic->ic_des_esslen == selbs->ni_esslen &&
+	    memcmp(ic->ic_des_essid, selbs->ni_essid, selbs->ni_esslen) == 0))
+		assoc_fail = ic->ic_bss->ni_assoc_fail;
+
 	(*ic->ic_node_copy)(ic, ic->ic_bss, selbs);
 	ni = ic->ic_bss;
+	ni->ni_assoc_fail |= assoc_fail;
+
+	ic->ic_curmode = ieee80211_chan2mode(ic, ni->ni_chan);
 
 	/* Make sure we send valid rates in an association request. */
 	if (ic->ic_opmode == IEEE80211_M_STA)
@@ -1249,7 +1282,7 @@ ieee80211_node_choose_bss(struct ieee80211com *ic, int bgscan,
 		if (curbs && ieee80211_node_cmp(ic->ic_bss, ni) == 0)
 			*curbs = ni;
 
-		if (ieee80211_match_bss(ic, ni) != 0)
+		if (ieee80211_match_bss(ic, ni, bgscan) != 0)
 			continue;
 
 		if (ic->ic_caps & IEEE80211_C_SCANALLBAND) {
@@ -2822,7 +2855,7 @@ ieee80211_ibss_merge(struct ieee80211com *ic, struct ieee80211_node *ni,
 	if (sign < 0)
 		return 0;
 
-	if (ieee80211_match_bss(ic, ni) != 0)
+	if (ieee80211_match_bss(ic, ni, 0) != 0)
 		return 0;
 
 	if (ieee80211_do_slow_print(ic, &did_print)) {
