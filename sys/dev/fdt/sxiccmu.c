@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.22 2019/02/12 21:34:11 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.23 2019/09/02 13:08:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -971,13 +971,55 @@ sxiccmu_a23_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 	return 0;
 }
 
+#define A64_PLL_CPUX_CTRL_REG		0x0000
+#define A64_PLL_CPUX_LOCK		(1 << 28)
+#define A64_PLL_CPUX_OUT_EXT_DIVP(x)	(((x) >> 16) & 0x3)
+#define A64_PLL_CPUX_OUT_EXT_DIVP_MASK	(0x3 << 16)
+#define A64_PLL_CPUX_FACTOR_N(x)		(((x) >> 8) & 0x1f)
+#define A64_PLL_CPUX_FACTOR_N_MASK	(0x1f << 8)
+#define A64_PLL_CPUX_FACTOR_N_SHIFT	8
+#define A64_PLL_CPUX_FACTOR_K(x)		(((x) >> 4) & 0x3)
+#define A64_PLL_CPUX_FACTOR_K_MASK	(0x3 << 4)
+#define A64_PLL_CPUX_FACTOR_K_SHIFT	4
+#define A64_PLL_CPUX_FACTOR_M(x)		(((x) >> 0) & 0x3)
+#define A64_PLL_CPUX_FACTOR_M_MASK	(0x3 << 0)
+#define A64_CPUX_AXI_CFG_REG		0x0050
+#define A64_CPUX_CLK_SRC_SEL		(0x3 << 16)
+#define A64_CPUX_CLK_SRC_SEL_LOSC	(0x0 << 16)
+#define A64_CPUX_CLK_SRC_SEL_OSC24M	(0x1 << 16)
+#define A64_CPUX_CLK_SRC_SEL_PLL_CPUX	(0x2 << 16)
+
 uint32_t
 sxiccmu_a64_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 {
 	uint32_t parent;
 	uint32_t reg, div;
+	uint32_t k, m, n, p;
 
 	switch (idx) {
+	case A64_CLK_PLL_CPUX:
+		reg = SXIREAD4(sc, A64_PLL_CPUX_CTRL_REG);
+		k = A64_PLL_CPUX_FACTOR_K(reg) + 1;
+		m = A64_PLL_CPUX_FACTOR_M(reg) + 1;
+		n = A64_PLL_CPUX_FACTOR_N(reg) + 1;
+		p = 1 << A64_PLL_CPUX_OUT_EXT_DIVP(reg);
+		return (24000000 * n * k) / (m * p);
+	case A64_CLK_CPUX:
+		reg = SXIREAD4(sc, A64_CPUX_AXI_CFG_REG);
+		switch (reg & A64_CPUX_CLK_SRC_SEL) {
+		case A64_CPUX_CLK_SRC_SEL_LOSC:
+			parent = A64_CLK_LOSC;
+			break;
+		case A64_CPUX_CLK_SRC_SEL_OSC24M:
+			parent = A64_CLK_HOSC;
+			break;
+		case A64_CPUX_CLK_SRC_SEL_PLL_CPUX:
+			parent = A64_CLK_PLL_CPUX;
+			break;
+		default:
+			return 0;
+		}
+		return sxiccmu_ccu_get_frequency(sc, &parent);
 	case A64_CLK_LOSC:
 		return clock_get_frequency(sc->sc_node, "losc");
 	case A64_CLK_HOSC:
@@ -1369,8 +1411,49 @@ sxiccmu_a64_set_frequency(struct sxiccmu_softc *sc, uint32_t idx, uint32_t freq)
 {
 	struct sxiccmu_clock clock;
 	uint32_t parent, parent_freq;
+	uint32_t reg;
+	int k, n;
+	int error;
 
 	switch (idx) {
+	case A64_CLK_PLL_CPUX:
+		k = 1; n = 32;
+		while (k <= 4 && (24000000 * n * k) < freq)
+			k++;
+		while (n >= 1 && (24000000 * n * k) > freq)
+			n--;
+
+		reg = SXIREAD4(sc, A64_PLL_CPUX_CTRL_REG);
+		reg &= ~A64_PLL_CPUX_OUT_EXT_DIVP_MASK;
+		reg &= ~A64_PLL_CPUX_FACTOR_N_MASK;
+		reg &= ~A64_PLL_CPUX_FACTOR_K_MASK;
+		reg &= ~A64_PLL_CPUX_FACTOR_M_MASK;
+		reg |= ((n - 1) << A64_PLL_CPUX_FACTOR_N_SHIFT);
+		reg |= ((k - 1) << A64_PLL_CPUX_FACTOR_K_SHIFT);
+		SXIWRITE4(sc, A64_PLL_CPUX_CTRL_REG, reg);
+
+		/* Wait for PLL to lock. */
+		while ((SXIREAD4(sc, A64_PLL_CPUX_CTRL_REG) &
+		    A64_PLL_CPUX_LOCK) == 0) {
+			delay(200);
+		}
+
+		return 0;
+	case A64_CLK_CPUX:
+		/* Switch to 24 MHz clock. */
+		reg = SXIREAD4(sc, A64_CPUX_AXI_CFG_REG);
+		reg &= ~A64_CPUX_CLK_SRC_SEL;
+		reg |= A64_CPUX_CLK_SRC_SEL_OSC24M;
+		SXIWRITE4(sc, A64_CPUX_AXI_CFG_REG, reg);
+
+		error = sxiccmu_a64_set_frequency(sc, A64_CLK_PLL_CPUX, freq);
+
+		/* Switch back to PLL. */
+		reg = SXIREAD4(sc, A64_CPUX_AXI_CFG_REG);
+		reg &= ~A64_CPUX_CLK_SRC_SEL;
+		reg |= A64_CPUX_CLK_SRC_SEL_PLL_CPUX;
+		SXIWRITE4(sc, A64_CPUX_AXI_CFG_REG, reg);
+		return error;
 	case A64_CLK_MMC0:
 	case A64_CLK_MMC1:
 	case A64_CLK_MMC2:
