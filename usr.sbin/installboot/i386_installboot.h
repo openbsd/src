@@ -1,7 +1,6 @@
-/*	$OpenBSD: i386_installboot.h,v 1.4 2015/10/25 21:21:15 stsp Exp $	*/
+/*	$OpenBSD: i386_installboot.h,v 1.5 2019/09/02 16:36:12 otto Exp $	*/
 /*
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
- * Copyright (c) 2010 Otto Moerbeek <otto@openbsd.org>
  * Copyright (c) 2003 Tom Cosgrove <tom.cosgrove@arches-consulting.com>
  * Copyright (c) 1997 Michael Shalayeff
  * Copyright (c) 1994 Paul Kranenburg

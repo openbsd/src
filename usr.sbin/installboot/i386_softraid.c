@@ -1,6 +1,7 @@
-/*	$OpenBSD: i386_softraid.c,v 1.11 2019/06/28 13:32:48 deraadt Exp $	*/
+/*	$OpenBSD: i386_softraid.c,v 1.12 2019/09/02 16:36:12 otto Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
