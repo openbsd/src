@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.56 2017/06/13 01:44:29 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.57 2019/09/03 14:34:53 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -428,7 +428,7 @@ _C_LABEL(tlbimiss):
 	mtctr	%r1			/* load counter */
 2:
 	lwzu	%r1,8(%r2)		/* get next pte */
-	cmpl	0,%r1,%r3		/* see if found pte */
+	cmplw	0,%r1,%r3		/* see if found pte */
 	bdneq	2b			/* loop if not eq */
 	bne	3f			/* not found */
 	lwz	%r1,4(%r2)		/* load tlb entry lower word */
@@ -486,7 +486,7 @@ _C_LABEL(tlbdlmiss):
 	mtctr	%r1			/* load counter */
 2:
 	lwzu	%r1,8(%r2)		/* get next pte */
-	cmpl	0,%r1,%r3		/* see if found pte */
+	cmplw	0,%r1,%r3		/* see if found pte */
 	bdneq	2b			/* loop if not eq */
 	bne	3f			/* not found */
 	lwz	%r1,4(%r2)		/* load tlb entry lower word */
@@ -539,7 +539,7 @@ _C_LABEL(tlbdsmiss):
 	mtctr	%r1			/* load counter */
 2:
 	lwzu	%r1,8(%r2)		/* get next pte */
-	cmpl	0,%r1,%r3		/* see if found pte */
+	cmplw	0,%r1,%r3		/* see if found pte */
 	bdneq	2b			/* loop if not eq */
 	bne	3f			/* not found */
 	lwz	%r1,4(%r2)		/* load tlb entry lower word */
