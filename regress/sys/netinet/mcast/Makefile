@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2019/09/02 22:17:28 bluhm Exp $
+# $OpenBSD: Makefile,v 1.2 2019/09/03 00:00:04 bluhm Exp $
 
 PROGS =			mcsend mcrecv mcroute
 WARNINGS =		Yes
@@ -83,8 +83,8 @@ run-remoteaddr:
 	@echo '\n======== $@ ========'
 	# send over a local physical interface
 	./mcrecv -f recv.log -i ${LOCAL_ADDR} -r 5 -- \
-	ssh ${REMOTE_SSH} ${.OBJDIR}/mcsend \
-	    -f send.log -i ${REMOTE_ADDR} -m '${MSG}'
+	ssh ${REMOTE_SSH} ${.OBJDIR}/mcsend -f ${.OBJDIR}/send.log \
+	    -i ${REMOTE_ADDR} -m '${MSG}'
 	grep '< ${MSG}$$' recv.log
 
 REGRESS_TARGETS +=	run-remoteaddr-loop0
@@ -92,8 +92,8 @@ run-remoteaddr-loop0:
 	@echo '\n======== $@ ========'
 	# send over a local physical interface
 	./mcrecv -f recv.log -i ${LOCAL_ADDR} -r 5 -- \
-	ssh ${REMOTE_SSH} ${.OBJDIR}/mcsend \
-	    -f send.log -i ${REMOTE_ADDR} -l 0 -m '${MSG}'
+	ssh ${REMOTE_SSH} ${.OBJDIR}/mcsend -f ${.OBJDIR}/send.log \
+	    -i ${REMOTE_ADDR} -l 0 -m '${MSG}'
 	grep '< ${MSG}$$' recv.log
 
 REGRESS_TARGETS +=	run-remoteaddr-ttl0
@@ -101,7 +101,7 @@ run-remoteaddr-ttl0:
 	@echo '\n======== $@ ========'
 	# send over a local physical interface
 	./mcrecv -f recv.log -i ${LOCAL_ADDR} -n 2 -- \
-	ssh ${REMOTE_SSH} ${.OBJDIR}/mcsend -f send.log \
+	ssh ${REMOTE_SSH} ${.OBJDIR}/mcsend -f ${.OBJDIR}/send.log \
 	    -i ${REMOTE_ADDR} -m '${MSG}' -t 0
 	! grep '< ' recv.log
 
@@ -110,8 +110,8 @@ run-forward:
 	@echo '\n======== $@ ========'
 	# start multicast router, start receiver, start sender
 	ssh ${REMOTE_SSH} ${SUDO} pkill mcroute || true
-	ssh ${REMOTE_SSH} ${SUDO} ${.OBJDIR}/mcroute -b -f route.log \
-	    -g 224.0.1.123 -i ${OTHER_ADDR} -o ${REMOTE_ADDR} -r 5
+	ssh ${REMOTE_SSH} ${SUDO} ${.OBJDIR}/mcroute -f ${.OBJDIR}/route.log \
+	    -b -g 224.0.1.123 -i ${OTHER_ADDR} -o ${REMOTE_ADDR} -r 5
 .if empty(TARGET_SSH)
 	./mcrecv -f recv.log -g 224.0.1.123 -i ${LOCAL_ADDR} -r 5 -- \
 	./mcsend -f send.log \
@@ -119,7 +119,7 @@ run-forward:
 	grep '> ${MSG}$$' send.log
 .else
 	./mcrecv -f recv.log -g 224.0.1.123 -i ${LOCAL_ADDR} -r 5 -- \
-	ssh ${TARGET_SSH} ${.OBJDIR}/mcsend -f send.log \
+	ssh ${TARGET_SSH} ${.OBJDIR}/mcsend -f ${.OBJDIR}/send.log \
 	    -g 224.0.1.123 -i ${TARGET_ADDR} -l 0 -m '${MSG}' -t 2
 .endif
 	grep '< ${MSG}$$' recv.log
@@ -129,8 +129,8 @@ run-forward-ttl1:
 	@echo '\n======== $@ ========'
 	# try to get ttl 1 over multicast router, must fail
 	ssh ${REMOTE_SSH} ${SUDO} pkill mcroute || true
-	ssh ${REMOTE_SSH} ${SUDO} ${.OBJDIR}/mcroute -b -f route.log \
-	    -g 224.0.1.123 -i ${OTHER_ADDR} -o ${REMOTE_ADDR} -n 3
+	ssh ${REMOTE_SSH} ${SUDO} ${.OBJDIR}/mcroute -f ${.OBJDIR}/route.log \
+	    -b -g 224.0.1.123 -i ${OTHER_ADDR} -o ${REMOTE_ADDR} -n 3
 .if empty(TARGET_SSH)
 	./mcrecv -f recv.log -g 224.0.1.123 -i ${LOCAL_ADDR} -n 2 -- \
 	./mcsend -f send.log \
@@ -138,7 +138,7 @@ run-forward-ttl1:
 	grep '> ${MSG}$$' send.log
 .else
 	./mcrecv -f recv.log -g 224.0.1.123 -i ${LOCAL_ADDR} -n 2 -- \
-	ssh ${TARGET_SSH} ${.OBJDIR}/mcsend -f send.log \
+	ssh ${TARGET_SSH} ${.OBJDIR}/mcsend -f ${.OBJDIR}/send.log \
 	    -g 224.0.1.123 -i ${TARGET_ADDR} -l 0 -m '${MSG}' -t 1
 .endif
 	! grep '< ' recv.log
@@ -148,8 +148,8 @@ run-forward-local:
 	@echo '\n======== $@ ========'
 	# try to get local multicast group over router, must fail
 	ssh ${REMOTE_SSH} ${SUDO} pkill mcroute || true
-	ssh ${REMOTE_SSH} ${SUDO} ${.OBJDIR}/mcroute -b -f route.log \
-	    -g 224.0.0.123 -i ${OTHER_ADDR} -o ${REMOTE_ADDR} -n 3
+	ssh ${REMOTE_SSH} ${SUDO} ${.OBJDIR}/mcroute -f ${.OBJDIR}/route.log \
+	    -b -g 224.0.0.123 -i ${OTHER_ADDR} -o ${REMOTE_ADDR} -n 3
 .if empty(TARGET_SSH)
 	./mcrecv -f recv.log -g 224.0.0.123 -i ${LOCAL_ADDR} -n 2 -- \
 	./mcsend -f send.log \
@@ -157,7 +157,7 @@ run-forward-local:
 	grep '> ${MSG}$$' send.log
 .else
 	./mcrecv -f recv.log -g 224.0.0.123 -i ${LOCAL_ADDR} -n 2 -- \
-	ssh ${TARGET_SSH} ${.OBJDIR}/mcsend -f send.log \
+	ssh ${TARGET_SSH} ${.OBJDIR}/mcsend -f ${.OBJDIR}/send.log \
 	    -g 224.0.0.123 -i ${TARGET_ADDR} -l 0 -m '${MSG}' -t 2
 .endif
 	! grep '< ' recv.log
