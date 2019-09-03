@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.29 2019/07/20 23:06:51 mpi Exp $	*/
+/*	$OpenBSD: zs.c,v 1.30 2019/09/03 04:48:00 deraadt Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -446,8 +446,7 @@ zshard(void *arg)
  * Similar scheme as for zshard (look at all of them)
  */
 void
-zssoft(arg)
-	void *arg;
+zssoft(void *arg)
 {
 	struct zsc_softc *zsc;
 	int unit;
@@ -472,8 +471,7 @@ zssoft(arg)
 
 #ifdef ZS_TXDMA
 int
-zs_txdma_int(arg)
-	void *arg;
+zs_txdma_int(void *arg)
 {
 	int ch = (int)arg;
 	struct zsc_softc *zsc;
@@ -498,10 +496,7 @@ zs_txdma_int(arg)
 }
 
 void
-zs_dma_setup(cs, pa, len)
-	struct zs_chanstate *cs;
-	caddr_t pa;
-	int len;
+zs_dma_setup(struct zs_chanstate *cs, caddr_t pa, int len)
 {
 	struct zsc_softc *zsc;
 	dbdma_command_t *cmdp;
@@ -527,8 +522,7 @@ zs_dma_setup(cs, pa, len)
  * XXX Assume internal BRG.
  */
 int
-zs_get_speed(cs)
-	struct zs_chanstate *cs;
+zs_get_speed(struct zs_chanstate *cs)
 {
 	int tconst;
 
@@ -555,9 +549,7 @@ zs_get_speed(cs)
  * By Bill Studenmund, 1996-05-12
  */
 int
-zs_set_speed(cs, bps)
-	struct zs_chanstate *cs;
-	int bps;	/* bits per second */
+zs_set_speed(struct zs_chanstate *cs, int bps)
 {
 	struct xzs_chanstate *xcs = (void *)cs;
 	int i, tc, tc0 = 0, tc1, s, sf = 0;
@@ -696,9 +688,7 @@ zs_set_speed(cs, bps)
 }
 
 int
-zs_set_modes(cs, cflag)
-	struct zs_chanstate *cs;
-	int cflag;
+zs_set_modes(struct zs_chanstate *cs, int cflag)
 {
 	struct xzs_chanstate *xcs = (void*)cs;
 	int s;
@@ -785,9 +775,7 @@ zs_set_modes(cs, cflag)
 #define	ZS_DELAY()
 
 u_char
-zs_read_reg(cs, reg)
-	struct zs_chanstate *cs;
-	u_char reg;
+zs_read_reg(struct zs_chanstate *cs, u_char reg)
 {
 	u_char val;
 
@@ -799,9 +787,7 @@ zs_read_reg(cs, reg)
 }
 
 void
-zs_write_reg(cs, reg, val)
-	struct zs_chanstate *cs;
-	u_char reg, val;
+zs_write_reg(struct zs_chanstate *cs, u_char reg, u_char val)
 {
 	out8(cs->cs_reg_csr, reg);
 	ZS_DELAY();
@@ -810,8 +796,7 @@ zs_write_reg(cs, reg, val)
 }
 
 u_char
-zs_read_csr(cs)
-	struct zs_chanstate *cs;
+zs_read_csr(struct zs_chanstate *cs)
 {
 	u_char val;
 
@@ -823,9 +808,7 @@ zs_read_csr(cs)
 }
 
 void
-zs_write_csr(cs, val)
-	struct zs_chanstate *cs;
-	u_char val;
+zs_write_csr(struct zs_chanstate *cs, u_char val)
 {
 	/* Note, the csr does not write CTS... */
 	out8(cs->cs_reg_csr, val);
@@ -833,8 +816,7 @@ zs_write_csr(cs, val)
 }
 
 u_char
-zs_read_data(cs)
-	struct zs_chanstate *cs;
+zs_read_data(struct zs_chanstate *cs)
 {
 	u_char val;
 
@@ -844,9 +826,7 @@ zs_read_data(cs)
 }
 
 void
-zs_write_data(cs, val)
-	struct zs_chanstate *cs;
-	u_char val;
+zs_write_data(struct zs_chanstate *cs, u_char val)
 {
 	out8(cs->cs_reg_data, val);
 	ZS_DELAY();
@@ -860,8 +840,7 @@ zs_write_data(cs, val)
 void macobio_modem_power(int enable);
 
 int
-zs_enable(cs)
-	struct zs_chanstate *cs;
+zs_enable(struct zs_chanstate *cs)
 {
 	macobio_modem_power(1); /* Whee */
 	cs->enabled = 1;
@@ -869,8 +848,7 @@ zs_enable(cs)
 }
  
 void
-zs_disable(cs)
-	struct zs_chanstate *cs;
+zs_disable(struct zs_chanstate *cs)
 {
 	macobio_modem_power(0); /* Whee */
 	cs->enabled = 0;
@@ -915,8 +893,7 @@ static int stdin, stdout;
  * Polled input char.
  */
 int
-zs_getc(zc)
-	register volatile struct zschan *zc;
+zs_getc(volatile struct zschan *zc)
 {
 	register int s, c, rr0;
 
@@ -938,9 +915,7 @@ zs_getc(zc)
  * Polled output char.
  */
 void
-zs_putc(zc, c)
-	register volatile struct zschan *zc;
-	int c;
+zs_putc(volatile struct zschan *zc, int c)
 {
 	register int s, rr0;
 	register long wait = 0;
@@ -964,8 +939,7 @@ zs_putc(zc, c)
  * Polled console input putchar.
  */
 int
-zscngetc(dev)
-	dev_t dev;
+zscngetc(dev_t dev)
 {
 	register volatile struct zschan *zc = zs_conschan;
 	register int c;
@@ -984,9 +958,7 @@ zscngetc(dev)
  * Polled console output putchar.
  */
 void
-zscnputc(dev, c)
-	dev_t dev;
-	int c;
+zscnputc(dev_t dev, int c)
 {
 	register volatile struct zschan *zc = zs_conschan;
 
@@ -999,8 +971,7 @@ zscnputc(dev, c)
 }
 
 void
-zscnprobe(cp)
-	struct consdev *cp;
+zscnprobe(struct consdev *cp)
 {
 	int chosen, pkg;
 	int unit = 0;
@@ -1043,8 +1014,7 @@ zscnprobe(cp)
 
 
 void
-zscninit(cp)
-	struct consdev *cp;
+zscninit(struct consdev *cp)
 {
 	int escc, escc_ch, obio;
 	unsigned int zs_offset, zs_size;
@@ -1098,9 +1068,7 @@ zs_abort(struct zs_chanstate *channel)
 
 /* copied from sparc - XXX? */
 void
-zscnpollc(dev, on)
-        dev_t dev;
-	int on;  
+zscnpollc(dev_t dev, int on)
 {
 	/*
 	 * Need to tell zs driver to acknowledge all interrupts or we get
