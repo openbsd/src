@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.33 2017/06/22 11:34:51 tom Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.34 2019/09/03 04:47:47 deraadt Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -570,8 +570,9 @@ mesh_error(struct mesh_softc *sc, struct mesh_scb *scb, int error,
 		printf("%s: SCSI RESET\n", sc->sc_dev.dv_xname);
 
 		/* Wait until the RST signal is deasserted. */
-		while (mesh_read_reg(sc, MESH_BUS_STATUS1) & MESH_STATUS1_RST);
-			mesh_reset(sc);
+		while (mesh_read_reg(sc, MESH_BUS_STATUS1) & MESH_STATUS1_RST)
+			;
+		mesh_reset(sc);
 		return;
 	}
 
