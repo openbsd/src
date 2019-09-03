@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.204 2019/09/01 15:12:03 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.205 2019/09/03 15:09:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -651,7 +651,6 @@ mdoc_nd_pre(MDOC_ARGS)
 {
 	switch (n->type) {
 	case ROFFT_BLOCK:
-		html_close_paragraph(h);
 		return 1;
 	case ROFFT_HEAD:
 		return 0;
@@ -661,8 +660,7 @@ mdoc_nd_pre(MDOC_ARGS)
 		abort();
 	}
 	print_text(h, "\\(em");
-	/* Cannot use TAG_SPAN because it may contain blocks. */
-	print_otag(h, TAG_DIV, "c", "Nd");
+	print_otag(h, TAG_SPAN, "c", "Nd");
 	return 1;
 }
 
