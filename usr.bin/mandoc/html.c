@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.130 2019/09/03 12:30:34 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.131 2019/09/03 18:07:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -588,7 +588,15 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 			assert((htmltags[t->tag].flags & HTML_TOPHRASE) == 0);
 			break;
 		}
-	}
+
+	/*
+	 * Always wrap phrasing elements in a paragraph
+	 * unless already contained in some flow container;
+	 * never put them directly into a section.
+	 */
+
+	} else if (tflags & HTML_TOPHRASE && h->tag->tag == TAG_SECTION)
+		print_otag(h, TAG_P, "c", "Pp");
 
 	/* Push this tag onto the stack of open scopes. */
 
@@ -794,6 +802,16 @@ print_gen_comment(struct html *h, struct roff_node *n)
 void
 print_text(struct html *h, const char *word)
 {
+	/*
+	 * Always wrap text in a paragraph unless already contained in
+	 * some flow container; never put it directly into a section.
+	 */
+
+	if (h->tag->tag == TAG_SECTION)
+		print_otag(h, TAG_P, "c", "Pp");
+
+	/* Output whitespace before this text? */
+
 	if (h->col && (h->flags & HTML_NOSPACE) == 0) {
 		if ( ! (HTML_KEEP & h->flags)) {
 			if (HTML_PREKEEP & h->flags)
@@ -802,6 +820,11 @@ print_text(struct html *h, const char *word)
 		} else
 			print_word(h, "&#x00A0;");
 	}
+
+	/*
+	 * Print the text, optionally surrounded by HTML whitespace,
+	 * optionally manually switching fonts before and after.
+	 */
 
 	assert(h->metaf == NULL);
 	print_metaf(h);
