@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.128 2019/09/01 15:12:03 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.129 2019/09/03 12:03:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -269,21 +269,17 @@ print_metaf(struct html *h)
 void
 html_close_paragraph(struct html *h)
 {
-	struct tag	*t;
+	struct tag	*this, *next;
 
-	for (t = h->tag; t != NULL && t->closed == 0; t = t->next) {
-		switch(t->tag) {
-		case TAG_P:
-		case TAG_PRE:
-			print_tagq(h, t);
+	this = h->tag;
+	for (;;) {
+		next = this->next;
+		if (htmltags[this->tag].flags &
+		    (HTML_INPHRASE | HTML_TOPHRASE))
+			print_ctag(h, this);
+		if ((htmltags[this->tag].flags & HTML_INPHRASE) == 0)
 			break;
-		case TAG_A:
-			print_tagq(h, t);
-			continue;
-		default:
-			continue;
-		}
-		break;
+		this = next;
 	}
 }
 
