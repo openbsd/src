@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.20 2019/04/24 10:09:49 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.21 2019/09/03 09:00:44 sf Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -102,6 +102,7 @@
 #define BNXT_FLAG_NPAR          0x0002
 #define BNXT_FLAG_WOL_CAP       0x0004
 #define BNXT_FLAG_SHORT_CMD     0x0008
+#define BNXT_FLAG_MSIX          0x0010
 
 /* NVRam stuff has a five minute timeout */
 #define BNXT_NVM_TIMEO	(5 * 60 * 1000)
@@ -507,7 +508,9 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 	 * devices advertise msi support, but there's no way to tell a
 	 * completion queue to use msi mode, only legacy or msi-x.
 	 */
-	if (/*pci_intr_map_msi(pa, &ih) != 0 && */ pci_intr_map(pa, &ih) != 0) {
+	if (pci_intr_map_msix(pa, 0, &ih) == 0) {
+		sc->sc_flags |= BNXT_FLAG_MSIX;
+	} else if (pci_intr_map(pa, &ih) != 0) {
 		printf(": unable to map interrupt\n");
 		goto free_resp;
 	}
@@ -2658,7 +2661,9 @@ bnxt_hwrm_ring_alloc(struct bnxt_softc *softc, uint8_t type,
 	req.logical_id = htole16(ring->id);
 	req.cmpl_ring_id = htole16(cmpl_ring_id);
 	req.queue_id = htole16(softc->sc_q_info[0].id);
-	req.int_mode = 0;
+	req.int_mode = (softc->sc_flags & BNXT_FLAG_MSIX) ?
+	    HWRM_RING_ALLOC_INPUT_INT_MODE_MSIX :
+	    HWRM_RING_ALLOC_INPUT_INT_MODE_LEGACY;
 	BNXT_HWRM_LOCK(softc);
 	rc = _hwrm_send_message(softc, &req, sizeof(req));
 	if (rc)
