@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.103 2019/07/16 03:21:54 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.104 2019/09/03 08:37:45 djm Exp $
 
 .ifndef SKIP_UNIT
 SUBDIR=		unittests
@@ -77,7 +77,8 @@ LTESTS= 	connect \
 		cert-file \
 		cfginclude \
 		allow-deny-users \
-		authinfo
+		authinfo \
+		sshsig
 
 INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex conch-ciphers
 #INTEROP_TESTS+=ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
