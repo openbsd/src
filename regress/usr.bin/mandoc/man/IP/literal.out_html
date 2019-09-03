@@ -1,4 +1,3 @@
-BEGINTEST before indentation
 <dl class="Bl-tag">
   <dt>tag</dt>
   <dd>indented regular text</dd>
@@ -27,7 +26,7 @@ regular text
 <section class="Ss">
 <h2 class="Ss" id="literal_into_indented_paragraph"><a class="permalink" href="#literal_into_indented_paragraph">literal
   into indented paragraph</a></h2>
-regular text
+<p class="Pp">regular text</p>
 <pre>
 literal
 text
@@ -47,7 +46,7 @@ text
 <section class="Ss">
 <h2 class="Ss" id="literal_out_of_indented_paragraph"><a class="permalink" href="#literal_out_of_indented_paragraph">literal
   out of indented paragraph</a></h2>
-regular text
+<p class="Pp">regular text</p>
 <dl class="Bl-tag">
   <dt>tag</dt>
   <dd>indented regular text
@@ -65,4 +64,3 @@ paragraph
 </pre>
 regular text
 <br/>
-ENDTEST

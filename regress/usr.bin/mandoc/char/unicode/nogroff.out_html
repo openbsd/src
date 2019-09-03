@@ -1,4 +1,3 @@
-BEGINTEST
 &#xFFFD;&#xFFFD;	&lt;control&gt; NULL
 &#xFFFD;&#xFFFD;	&lt;control&gt; START OF HEADING
 &#xFFFD;&#xFFFD;	&lt;control&gt; BELL
@@ -34,4 +33,3 @@ BEGINTEST
 &#x10FFFD;	&lt;Plane 16 Private Use, Last&gt;
 &#x10FFFE;	&lt;undefined&gt;
 &#x10FFFF;	&lt;undefined&gt;
-ENDTEST

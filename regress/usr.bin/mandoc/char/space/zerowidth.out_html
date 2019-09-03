@@ -1,6 +1,4 @@
-BEGINTEST
 zero width space \&amp; between A and B: AB
 hyphenation allowed \% between A and B: AB
 half-narrow (1/12) space \^ between A and B: AB
 narrow space (1/6) \| between A and B: AB
-ENDTEST

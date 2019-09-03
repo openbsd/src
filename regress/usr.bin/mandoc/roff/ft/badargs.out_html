@@ -1,8 +1,6 @@
-BEGINTEST
-<br/>
-default font <i>italic</i> <b><i>bold italic</i></b>
-  <span class="Li">typeqriter</span> <span class="Li">roman</span> <b>bold</b>
-  <i>italic</i> <b>bold</b> <b>still bold</b> <i>italic</i> <i>back to bold</i>
-  <i>back to italic</i>
-<br/>
-ENDTEST
+  <br/>
+  default font <i>italic</i> <b><i>bold italic</i></b>
+    <span class="Li">typeqriter</span> <span class="Li">roman</span> <b>bold</b>
+    <i>italic</i> <b>bold</b> <b>still bold</b> <i>italic</i> <i>back to
+    bold</i> <i>back to italic</i>
+  <br/>

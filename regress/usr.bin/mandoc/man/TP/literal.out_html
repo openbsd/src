@@ -1,4 +1,3 @@
-BEGINTEST before indentation
 <dl class="Bl-tag">
   <dt>tag</dt>
   <dd>regular indented text</dd>
@@ -24,4 +23,3 @@ paragraph
 </pre>
 regular text
 <br/>
-ENDTEST

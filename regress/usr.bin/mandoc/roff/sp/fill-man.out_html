@@ -1,4 +1,3 @@
-BEGINTEST in fill mode:
 <p class="Pp">switch to no-fill mode:</p>
 <pre>
 in no-fill mode:
@@ -6,4 +5,3 @@ in no-fill mode:
 back to
 fill mode:
 </pre>
-ENDTEST

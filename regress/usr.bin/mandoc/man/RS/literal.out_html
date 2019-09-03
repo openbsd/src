@@ -1,6 +1,5 @@
-BEGINTEST
-<br/>
-initial regular text
+  <br/>
+  initial regular text</p>
 <pre>
 literal text
 before display
@@ -15,6 +14,5 @@ This is a very long line that would wrap if it weren't in literal context.
 literal text
 after display
 </pre>
-final regular text
-<br/>
-ENDTEST
+<p class="Pp">final regular text
+  <br/>

@@ -1,9 +1,8 @@
-BEGINTEST initial text
 <pre>
 after .nf
 request
 </pre>
-after .fi request
+<p class="Pp">after .fi request</p>
 <div class="Bd Pp">
 <pre>
 in unfilled
@@ -19,4 +18,3 @@ in filled block
 </div>
 after end of filled block
 <br/>
-ENDTEST

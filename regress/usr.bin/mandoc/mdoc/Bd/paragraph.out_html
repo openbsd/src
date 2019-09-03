@@ -1,4 +1,3 @@
-BEGINTEST initial text
 <p class="Pp">normal paragraph</p>
 <div class="Bd Pp">filled display
 <p class="Pp">paragraph in display</p>
@@ -16,4 +15,3 @@ paragraph
 </div>
 again back to normal
 <br/>
-ENDTEST

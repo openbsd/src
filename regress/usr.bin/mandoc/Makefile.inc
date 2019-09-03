@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.24 2017/07/04 14:53:23 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.25 2019/09/03 18:17:50 schwarze Exp $
 
 .include "Makefile.sub"
 
@@ -89,7 +89,7 @@ htmlval: ${_HTMLVALS}
 
 .in.mandoc_html:
 	@${MANDOC} ${MOPTS} -Thtml ${.IMPSRC} | \
-		sed -n '/^BEGINTEST/,/^ENDTEST/p' > ${.TARGET}
+		sed -n '/BEGINTEST/,/ENDTEST/p' | sed '1d;$$d' > ${.TARGET}
 
 .mandoc_html.diff_html:
 	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_html$/out_html/} ${.IMPSRC}
@@ -277,7 +277,7 @@ ${t}.out_utf8:
 .for t in ${HTML_TARGETS}
 ${t}.out_html: ${t}.in
 	${MANDOC} ${MOPTS} -Thtml ${.ALLSRC} | \
-		sed -n '/^BEGINTEST/,/^ENDTEST/p' > ${.TARGET}
+		sed -n '/BEGINTEST/,/ENDTEST/p' | sed '1d;$$d' > ${.TARGET}
 .endfor
 
 .for t in ${REGRESS_TARGETS}
