@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.27 2019/06/28 13:32:46 deraadt Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.28 2019/09/03 07:55:07 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -466,8 +466,10 @@ get_flags(char *if_name)
 	struct ifreq		 ifr;
 
 	(void) strlcpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
-	if (ioctl(ioctlsock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1)
-		fatal("SIOCGIFFLAGS");
+	if (ioctl(ioctlsock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1) {
+		log_warn("SIOCGIFFLAGS");
+		return -1;
+	}
 	return ifr.ifr_flags;
 }
 
@@ -477,8 +479,10 @@ get_xflags(char *if_name)
 	struct ifreq		 ifr;
 
 	(void) strlcpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
-	if (ioctl(ioctlsock, SIOCGIFXFLAGS, (caddr_t)&ifr) == -1)
-		fatal("SIOCGIFXFLAGS");
+	if (ioctl(ioctlsock, SIOCGIFXFLAGS, (caddr_t)&ifr) == -1) {
+		log_warn("SIOCGIFXFLAGS");
+		return -1;
+	}
 	return ifr.ifr_flags;
 }
 
@@ -488,8 +492,9 @@ update_iface(uint32_t if_index, char* if_name)
 	struct imsg_ifinfo	 imsg_ifinfo;
 	int			 flags, xflags;
 
-	flags = get_flags(if_name);
-	xflags = get_xflags(if_name);
+	if ((flags = get_flags(if_name)) == -1 || (xflags =
+	    get_xflags(if_name)) == -1)
+		return;
 
 	if (!(xflags & IFXF_AUTOCONF6))
 		return;
@@ -523,7 +528,8 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 	time_t			 t;
 	int			 xflags;
 
-	xflags = get_xflags(if_name);
+	if ((xflags = get_xflags(if_name)) == -1)
+		return;
 
 	if (!(xflags & IFXF_AUTOCONF6))
 		return;
@@ -747,7 +753,7 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 			    &if_index, sizeof(if_index));
 		} else {
 			xflags = get_xflags(if_name);
-			if (!(xflags & IFXF_AUTOCONF6)) {
+			if (xflags == -1 || !(xflags & IFXF_AUTOCONF6)) {
 				log_debug("RTM_IFINFO: %s(%d) no(longer) "
 				   "autoconf6", if_name, ifm->ifm_index);
 				if_index = ifm->ifm_index;
