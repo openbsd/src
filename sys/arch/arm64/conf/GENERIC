@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.118 2019/08/29 17:20:03 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.119 2019/09/03 20:24:22 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -145,6 +145,8 @@ usb*		at dwctwo?
 # Amlogic SoCs
 amlclock*	at fdt? early 1
 amldwusb*	at fdt?
+amlmmc*		at fdt?
+sdmmc*		at amlmmc?
 amlpciephy*	at fdt?
 amlpinctrl*	at fdt? early 1
 amlreset*	at fdt? early 1
