@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armv7,v 1.45 2019/06/21 15:34:07 deraadt Exp $
+#	$OpenBSD: Makefile.armv7,v 1.46 2019/09/03 15:12:32 naddy Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -25,14 +25,10 @@ INCLUDES=	-nostdinc -I$S -I. -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__ -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-uninitialized -Wno-pointer-sign \
+		-Wno-constant-conversion -Wno-address-of-packed-member \
 		-Wframe-larger-than=2047
 
-CMACHFLAGS=	-msoft-float
-.if ${COMPILER_VERSION:Mgcc4}
-CMACHFLAGS+=	-march=armv6 -Wa,-march=armv7a
-.else
-CMACHFLAGS+=	-march=armv7a
-.endif
+CMACHFLAGS=	-msoft-float -march=armv7a
 CMACHFLAGS+=	-ffreestanding ${NOPIE_FLAGS}
 SORTR=		sort -R
 .if ${IDENT:M-DNO_PROPOLICE}
@@ -41,10 +37,6 @@ CMACHFLAGS+=	-fno-stack-protector
 .if ${IDENT:M-DSMALL_KERNEL}
 SORTR=		cat
 COPTS?=		-Oz
-.endif
-.if ${COMPILER_VERSION:Mclang}
-NO_INTEGR_AS=	-no-integrated-as
-CWARNFLAGS+=	-Wno-address-of-packed-member -Wno-constant-conversion
 .endif
 
 DEBUG?=		-g
@@ -103,7 +95,7 @@ LINKFLAGS+=	-S
 assym.h: $S/kern/genassym.sh Makefile \
 	 ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf
 	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
-	    sh $S/kern/genassym.sh ${CC} ${NO_INTEGR_AS} ${CFLAGS} ${CPPFLAGS} -MF assym.P > assym.h.tmp
+	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} -no-integrated-as -MF assym.P > assym.h.tmp
 	sed '1s/.*/assym.h: \\/' assym.P > assym.d
 	sort -u assym.h.tmp > assym.h
 
