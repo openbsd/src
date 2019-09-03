@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlclock.c,v 1.5 2019/09/03 04:55:01 jsg Exp $	*/
+/*	$OpenBSD: amlclock.c,v 1.6 2019/09/03 22:31:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,6 +28,7 @@
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
+#define G12A_SYS_PLL		0
 #define G12A_FCLK_DIV2		2
 #define G12A_FCLK_DIV3		3
 #define G12A_FCLK_DIV4		4
@@ -41,7 +42,10 @@
 #define G12A_SD_EMMC_C_CLK0	62
 #define G12A_USB		47
 #define G12A_FCLK_DIV2P5	99
+#define G12A_CPU_CLK		187
 #define G12A_PCIE_PLL		201
+#define G12A_SYS1_PLL		214
+#define G12A_CPUB_CLK		224
 
 #define HHI_PCIE_PLL_CNTL0	0x26
 #define HHI_PCIE_PLL_CNTL1	0x27
@@ -51,8 +55,12 @@
 #define HHI_PCIE_PLL_CNTL5	0x2b
 #define HHI_GCLK_MPEG0		0x50
 #define HHI_GCLK_MPEG1		0x51
+#define HHI_SYS_CPU_CLK_CNTL0	0x67
+#define HHI_SYS_CPUB_CLK_CNTL	0x82
 #define HHI_NAND_CLK_CNTL	0x97
 #define HHI_SD_EMMC_CLK_CNTL	0x99
+#define HHI_SYS_PLL_CNTL0	0xbd
+#define HHI_SYS1_PLL_CNTL0	0xe0
 
 #define HREAD4(sc, reg)							\
 	(regmap_read_4((sc)->sc_rm, (reg) << 2))
@@ -88,6 +96,7 @@ struct amlclock_softc {
 	int			sc_ngates;
 
 	struct clock_device	sc_cd;
+	uint32_t		sc_xtal;
 };
 
 int amlclock_match(struct device *, void *, void *);
@@ -132,6 +141,8 @@ amlclock_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gates = aml_g12a_gates;
 	sc->sc_ngates = nitems(aml_g12a_gates);
 
+	sc->sc_xtal = clock_get_frequency(sc->sc_node, "xtal");
+
 	sc->sc_cd.cd_node = faa->fa_node;
 	sc->sc_cd.cd_cookie = sc;
 	sc->sc_cd.cd_get_frequency = amlclock_get_frequency;
@@ -141,13 +152,64 @@ amlclock_attach(struct device *parent, struct device *self, void *aux)
 }
 
 uint32_t
+amlclock_get_cpu_frequency(struct amlclock_softc *sc, bus_size_t offset)
+{
+	uint32_t reg, mux, div;
+	uint32_t idx;
+
+	reg = HREAD4(sc, offset);
+	mux = (reg >> 11) & 1;
+	if (mux) {
+		if (offset == HHI_SYS_CPU_CLK_CNTL0)
+			idx = G12A_SYS1_PLL;
+		else
+			idx = G12A_SYS_PLL;
+		return amlclock_get_frequency(sc, &idx);
+	}
+	mux = (reg >> 10) & 1;
+	if (mux) {
+		div = ((reg >> 18) & 1) ? ((reg & 0x3f) >> 20) : 1;
+		mux = (reg >> 16) & 3;
+	} else {
+		div = ((reg >> 2) & 1) ? ((reg & 0x3f) >> 4) : 1;
+		mux = (reg >> 0) & 3;
+	}
+	switch (mux) {
+	case 0:
+		return sc->sc_xtal / div;
+	case 1:
+		idx = G12A_FCLK_DIV2;
+		break;
+	case 2:
+		idx = G12A_FCLK_DIV3;
+		break;
+	case 3:
+		return 0;
+	}
+	return amlclock_get_frequency(sc, &idx) / div;
+}
+
+uint32_t
 amlclock_get_frequency(void *cookie, uint32_t *cells)
 {
 	struct amlclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
 	uint32_t reg, mux, div;
+	uint32_t m, n;
 
 	switch (idx) {
+	case G12A_SYS_PLL:
+		reg = HREAD4(sc, HHI_SYS_PLL_CNTL0);
+		div = 1 << ((reg >> 16) & 0x7);
+		m = (reg >> 0) & 0xff;
+		n = (reg >> 10) & 0x1f;
+		return (((uint64_t)sc->sc_xtal * m) / n) / div;
+	case G12A_SYS1_PLL:
+		reg = HREAD4(sc, HHI_SYS1_PLL_CNTL0);
+		div = 1 << ((reg >> 16) & 0x7);
+		m = (reg >> 0) & 0xff;
+		n = (reg >> 10) & 0x1f;
+		return (((uint64_t)sc->sc_xtal * m) / n) / div;
 	case G12A_FCLK_DIV2:
 		return 1000000000;
 	case G12A_FCLK_DIV3:
@@ -167,7 +229,7 @@ amlclock_get_frequency(void *cookie, uint32_t *cells)
 		div = ((reg >> 0) & 0x7f) + 1;
 		switch (mux) {
 		case 0:
-			return clock_get_frequency(sc->sc_node, "xtal") / div;
+			return sc->sc_xtal / div;
 		case 1:
 			idx = G12A_FCLK_DIV2;
 			break;
@@ -190,7 +252,7 @@ amlclock_get_frequency(void *cookie, uint32_t *cells)
 		div = ((reg >> 16) & 0x7f) + 1;
 		switch (mux) {
 		case 0:
-			return clock_get_frequency(sc->sc_node, "xtal") / div;
+			return sc->sc_xtal / div;
 		case 1:
 			idx = G12A_FCLK_DIV2;
 			break;
@@ -213,7 +275,7 @@ amlclock_get_frequency(void *cookie, uint32_t *cells)
 		div = ((reg >> 0) & 0x7f) + 1;
 		switch (mux) {
 		case 0:
-			return clock_get_frequency(sc->sc_node, "xtal") / div;
+			return sc->sc_xtal / div;
 		case 1:
 			idx = G12A_FCLK_DIV2;
 			break;
@@ -230,6 +292,10 @@ amlclock_get_frequency(void *cookie, uint32_t *cells)
 			goto fail;
 		}
 		return amlclock_get_frequency(sc, &idx) / div;
+	case G12A_CPU_CLK:
+		return amlclock_get_cpu_frequency(sc, HHI_SYS_CPU_CLK_CNTL0);
+	case G12A_CPUB_CLK:
+		return amlclock_get_cpu_frequency(sc, HHI_SYS_CPUB_CLK_CNTL);
 	}
 
 fail:
