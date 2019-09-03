@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.23 2019/05/14 03:16:55 sunil Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.24 2019/09/03 10:32:15 mpi Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -213,23 +213,23 @@ elf_dump(uint8_t flags)
 	Elf_Data	*data;
 	char		*name;
 	size_t		 shstrndx;
-	int		 error = 1;
+	int		 error = 0;
 
 	if (elf_getshdrstrndx(e, &shstrndx) != 0) {
 		warnx("elf_getshdrstrndx: %s", elf_errmsg(-1));
-		return error;
+		return 1;
 	}
 
 	scn = scnctf = NULL;
 	while ((scn = elf_nextscn(e, scn)) != NULL) {
 		if (gelf_getshdr(scn, &shdr) != &shdr) {
 			warnx("elf_getshdr: %s", elf_errmsg(-1));
-			return error;
+			return 1;
 		}
 
 		if ((name = elf_strptr(e, shstrndx, shdr.sh_name)) == NULL) {
 			warnx("elf_strptr: %s", elf_errmsg(-1));
-			return error;
+			return 1;
 		}
 
 		if (strcmp(name, ELF_CTF) == 0)
@@ -250,7 +250,7 @@ elf_dump(uint8_t flags)
 
 	if (scnctf == NULL) {
 		warnx("%s section not found", ELF_CTF);
-		return error;
+		return 1;
 	}
 
 	if (scnsymtab == NULL)
@@ -260,7 +260,7 @@ elf_dump(uint8_t flags)
 	while ((data = elf_rawdata(scnctf, data)) != NULL) {
 		if (data->d_buf == NULL) {
 			warnx("%s section size is zero", ELF_CTF);
-			return error;
+			return 1;
 		}
 
 		if (isctf(data->d_buf, data->d_size))
