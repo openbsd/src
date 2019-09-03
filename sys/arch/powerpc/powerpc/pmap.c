@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.169 2019/01/02 23:08:35 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.170 2019/09/03 14:34:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -437,12 +437,6 @@ static inline u_int32_t
 PTED_MANAGED(struct pte_desc *pted)
 {
 	return (pted->pted_va & PTED_VA_MANAGED_M); 
-}
-
-static inline u_int32_t
-PTED_WIRED(struct pte_desc *pted)
-{
-	return (pted->pted_va & PTED_VA_WIRED_M); 
 }
 
 static inline u_int32_t
@@ -971,7 +965,7 @@ pmap_test_attrs(struct vm_page *pg, u_int flagbit)
 	/* PTE_REF_32 == PTE_REF_64 */
 
 	bits = pg->pg_flags & flagbit;
-	if ((bits == flagbit))
+	if (bits == flagbit)
 		return bits;
 
 	mtx_enter(&pg->mdpage.pv_mtx);
