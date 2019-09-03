@@ -25,7 +25,6 @@ extern int squeeze;
 extern int chopline;
 extern int hshift;
 extern int quit_if_one_screen;
-extern volatile sig_atomic_t sigs;
 extern int ignore_eoi;
 extern int status_col;
 extern off_t start_attnpos;
@@ -75,7 +74,7 @@ get_forw_line:
 	 */
 	base_pos = curr_pos;
 	for (;;) {
-		if (ABORT_SIGS()) {
+		if (abort_sigs()) {
 			null_line();
 			return (-1);
 		}
@@ -97,7 +96,7 @@ get_forw_line:
 	(void) ch_seek(base_pos);
 	new_pos = base_pos;
 	while (new_pos < curr_pos) {
-		if (ABORT_SIGS()) {
+		if (abort_sigs()) {
 			null_line();
 			return (-1);
 		}
@@ -128,7 +127,7 @@ get_forw_line:
 	 * Read each character in the line and append to the line buffer.
 	 */
 	for (;;) {
-		if (ABORT_SIGS()) {
+		if (abort_sigs()) {
 			null_line();
 			return (-1);
 		}
@@ -160,7 +159,7 @@ get_forw_line:
 			 */
 			if (chopline || hshift > 0) {
 				do {
-					if (ABORT_SIGS()) {
+					if (abort_sigs()) {
 						null_line();
 						return (-1);
 					}
@@ -199,7 +198,7 @@ get_forw_line:
 		 * and pretend it is the one which we are returning.
 		 */
 		while ((c = ch_forw_get()) == '\n' || c == '\r')
-			if (ABORT_SIGS()) {
+			if (abort_sigs()) {
 				null_line();
 				return (-1);
 			}
@@ -255,7 +254,7 @@ get_back_line:
 			 * since we skipped them in forw_line().
 			 */
 			while ((c = ch_back_get()) == '\n' || c == '\r')
-				if (ABORT_SIGS()) {
+				if (abort_sigs()) {
 					null_line();
 					return (-1);
 				}
@@ -271,7 +270,7 @@ get_back_line:
 	 * Scan backwards until we hit the beginning of the line.
 	 */
 	for (;;) {
-		if (ABORT_SIGS()) {
+		if (abort_sigs()) {
 			null_line();
 			return (-1);
 		}
@@ -318,7 +317,7 @@ loop:
 
 	do {
 		c = ch_forw_get();
-		if (c == EOI || ABORT_SIGS()) {
+		if (c == EOI || abort_sigs()) {
 			null_line();
 			return (-1);
 		}

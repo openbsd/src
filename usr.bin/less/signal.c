@@ -22,9 +22,11 @@
 #include "less.h"
 
 /*
- * "sigs" contains bits indicating signals which need to be processed.
+ * signals which need to be processed.
  */
-volatile sig_atomic_t sigs;
+volatile sig_atomic_t signal_intr;
+volatile sig_atomic_t signal_stop;
+volatile sig_atomic_t signal_winch;
 
 extern int sc_width, sc_height;
 extern int screen_trashed;
@@ -39,7 +41,7 @@ extern long jump_sline_fraction;
 static void
 u_interrupt(int type)
 {
-	sigs |= S_INTERRUPT;
+	signal_intr = 1;
 }
 
 /*
@@ -48,7 +50,7 @@ u_interrupt(int type)
 static void
 stop(int type)
 {
-	sigs |= S_STOP;
+	signal_stop = 1;
 }
 
 /*
@@ -57,7 +59,7 @@ stop(int type)
 void
 sigwinch(int type)
 {
-	sigs |= S_WINCH;
+	signal_winch = 1;
 }
 
 /*
@@ -87,18 +89,12 @@ init_signals(int on)
 
 /*
  * Process any signals we have received.
- * A received signal cause a bit to be set in "sigs".
  */
 void
 psignals(void)
 {
-	int tsignals;
-
-	if ((tsignals = sigs) == 0)
-		return;
-	sigs = 0;
-
-	if (tsignals & S_STOP) {
+	if (signal_stop) {
+		signal_stop = 0;
 		/*
 		 * Clean up the terminal.
 		 */
@@ -120,9 +116,10 @@ psignals(void)
 		raw_mode(1);
 		init();
 		screen_trashed = 1;
-		tsignals |= S_WINCH;
+		signal_winch = 1;
 	}
-	if (tsignals & S_WINCH) {
+	if (signal_winch) {
+		signal_winch = 0;
 		int old_width, old_height;
 		/*
 		 * Re-execute scrsize() to read the new window size.
@@ -137,7 +134,8 @@ psignals(void)
 			screen_trashed = 1;
 		}
 	}
-	if (tsignals & S_INTERRUPT) {
+	if (signal_intr) {
+		signal_intr = 0;
 		ring_bell();
 		if (quit_on_intr)
 			quit(QUIT_INTERRUPT);
@@ -159,3 +157,16 @@ lsignal(int s, void (*a)(int))
 		return (SIG_ERR);
 	return (osa.sa_handler);
 }
+
+int
+any_sigs(void)
+{
+	return (signal_intr || signal_stop || signal_winch);
+}
+
+int
+abort_sigs(void)
+{
+	return (signal_intr || signal_stop);
+}
+

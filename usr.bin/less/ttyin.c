@@ -16,7 +16,6 @@
 #include "less.h"
 
 int tty;
-extern volatile sig_atomic_t sigs;
 extern int utf_mode;
 
 /*

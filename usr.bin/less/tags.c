@@ -19,7 +19,6 @@ static int total;
 static int curseq;
 
 extern int linenums;
-extern volatile sig_atomic_t sigs;
 
 enum tag_result {
 	TAG_FOUND,
@@ -331,7 +330,7 @@ ctagsearch(void)
 		 * Get lines until we find a matching one or
 		 * until we hit end-of-file.
 		 */
-		if (ABORT_SIGS())
+		if (abort_sigs())
 			return (-1);
 
 		/*

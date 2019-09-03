@@ -17,7 +17,6 @@
 
 int errmsgs;	/* Count of messages displayed by error() */
 
-extern volatile sig_atomic_t sigs;
 extern int sc_width;
 extern int so_s_width, so_e_width;
 extern int screen_trashed;
@@ -37,7 +36,7 @@ put_line(void)
 	int i;
 	int a;
 
-	if (ABORT_SIGS()) {
+	if (abort_sigs()) {
 		/*
 		 * Don't output if a signal is pending.
 		 */

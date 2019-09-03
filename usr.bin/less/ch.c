@@ -122,7 +122,6 @@ static int ch_ungotchar = -1;
 static int maxbufs = -1;
 
 extern int autobuf;
-extern volatile sig_atomic_t sigs;
 extern int secure;
 extern int screen_trashed;
 extern int follow_mode;
@@ -304,7 +303,7 @@ read_more:
 				}
 			}
 		}
-		if (sigs)
+		if (any_sigs())
 			return (EOI);
 	}
 
@@ -361,7 +360,7 @@ end_logfile(void)
 		tried = TRUE;
 		ierror("Finishing logfile", NULL);
 		while (ch_forw_get() != EOI)
-			if (ABORT_SIGS())
+			if (abort_sigs())
 				break;
 	}
 	close(logfile);
@@ -447,7 +446,7 @@ ch_seek(off_t pos)
 		while (ch_fpos < pos) {
 			if (ch_forw_get() == EOI)
 				return (1);
-			if (ABORT_SIGS())
+			if (abort_sigs())
 				return (1);
 		}
 		return (0);
@@ -482,7 +481,7 @@ ch_end_seek(void)
 	 * Do it the slow way: read till end of data.
 	 */
 	while (ch_forw_get() != EOI)
-		if (ABORT_SIGS())
+		if (abort_sigs())
 			return (1);
 	return (0);
 }

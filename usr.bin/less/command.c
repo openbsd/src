@@ -19,7 +19,6 @@
 #include "position.h"
 
 extern int erase_char, erase2_char, kill_char;
-extern volatile sig_atomic_t sigs;
 extern int quit_if_one_screen;
 extern int less_is_more;
 extern int squished;
@@ -885,7 +884,7 @@ forw_loop(int until_hilite)
 	curr_len = ch_length();
 	highest_hilite = until_hilite ? curr_len : -1;
 	ignore_eoi = 1;
-	while (!sigs) {
+	while (!any_sigs()) {
 		if (until_hilite && highest_hilite > curr_len) {
 			ring_bell();
 			break;
@@ -900,7 +899,7 @@ forw_loop(int until_hilite)
 	 * This gets us back in "F mode" after processing
 	 * a non-abort signal (e.g. window-change).
 	 */
-	if (sigs && !ABORT_SIGS())
+	if (any_sigs() && !abort_sigs())
 		return (until_hilite ? A_F_UNTIL_HILITE : A_F_FOREVER);
 
 	return (A_NOACTION);
@@ -938,7 +937,7 @@ commands(void)
 		/*
 		 * See if any signals need processing.
 		 */
-		if (sigs) {
+		if (any_sigs()) {
 			psignals();
 			if (quitting)
 				quit(QUIT_SAVED_STATUS);
@@ -949,13 +948,13 @@ commands(void)
 		 */
 		cmd_reset();
 		prompt();
-		if (sigs)
+		if (any_sigs())
 			continue;
 		if (newaction == A_NOACTION)
 			c = getcc();
 
 again:
-		if (sigs)
+		if (any_sigs())
 			continue;
 
 		if (newaction != A_NOACTION) {

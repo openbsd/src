@@ -21,7 +21,6 @@ extern char *every_first_cmd;
 extern int any_display;
 extern int force_open;
 extern int is_tty;
-extern volatile sig_atomic_t sigs;
 extern IFILE curr_ifile;
 extern IFILE old_ifile;
 extern struct scrpos initial_scrpos;
@@ -478,7 +477,7 @@ edit_istep(IFILE h, int n, int dir)
 			 */
 			return (1);
 		}
-		if (ABORT_SIGS()) {
+		if (abort_sigs()) {
 			/*
 			 * Interrupt breaks out, if we're in a long
 			 * list of files that can't be opened.

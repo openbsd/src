@@ -46,7 +46,6 @@ static int attr_swidth(int);
 static int attr_ewidth(int);
 static int do_append(LWCHAR, char *, off_t);
 
-extern volatile sig_atomic_t sigs;
 extern int bs_mode;
 extern int linenums;
 extern int ctldisp;
@@ -685,7 +684,7 @@ pappend(char c, off_t pos)
 			mbc_buf[mbc_buf_index++] = c;
 			memset(&mbs, 0, sizeof(mbs));
 			sz = mbrtowc(&ch, mbc_buf, mbc_buf_index, &mbs);
-			
+
 			/* Incomplete UTF-8: wait for more bytes. */
 			if (sz == (size_t)-2)
 				return (0);
@@ -1034,7 +1033,7 @@ forw_raw_line(off_t curr_pos, char **linep, int *line_lenp)
 
 	n = 0;
 	for (;;) {
-		if (c == '\n' || c == EOI || ABORT_SIGS()) {
+		if (c == '\n' || c == EOI || abort_sigs()) {
 			new_pos = ch_tell();
 			break;
 		}
@@ -1077,7 +1076,7 @@ back_raw_line(off_t curr_pos, char **linep, int *line_lenp)
 	linebuf[--n] = '\0';
 	for (;;) {
 		c = ch_back_get();
-		if (c == '\n' || ABORT_SIGS()) {
+		if (c == '\n' || abort_sigs()) {
 			/*
 			 * This is the newline ending the previous line.
 			 * We have hit the beginning of the line.

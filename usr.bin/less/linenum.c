@@ -69,7 +69,6 @@ static struct linenum_info pool[NPOOL];	/* The pool itself */
 static struct linenum_info *spare;	/* We always keep one spare entry */
 
 extern int linenums;
-extern volatile sig_atomic_t sigs;
 extern int sc_height;
 extern int screen_trashed;
 
@@ -308,7 +307,7 @@ find_linenum(off_t pos)
 			 * Allow a signal to abort this loop.
 			 */
 			cpos = forw_raw_line(cpos, NULL, NULL);
-			if (ABORT_SIGS()) {
+			if (abort_sigs()) {
 				abort_long();
 				return (0);
 			}
@@ -338,7 +337,7 @@ find_linenum(off_t pos)
 			 * Allow a signal to abort this loop.
 			 */
 			cpos = back_raw_line(cpos, NULL, NULL);
-			if (ABORT_SIGS()) {
+			if (abort_sigs()) {
 				abort_long();
 				return (0);
 			}
@@ -395,7 +394,7 @@ find_pos(off_t linenum)
 			 * Allow a signal to abort this loop.
 			 */
 			cpos = forw_raw_line(cpos, NULL, NULL);
-			if (ABORT_SIGS())
+			if (abort_sigs())
 				return (-1);
 			if (cpos == -1)
 				return (-1);
@@ -413,7 +412,7 @@ find_pos(off_t linenum)
 			 * Allow a signal to abort this loop.
 			 */
 			cpos = back_raw_line(cpos, (char **)NULL, (int *)NULL);
-			if (ABORT_SIGS())
+			if (abort_sigs())
 				return (-1);
 			if (cpos == -1)
 				return (-1);

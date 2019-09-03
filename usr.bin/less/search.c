@@ -21,7 +21,6 @@
 #define	MINPOS(a, b)	(((a) < (b)) ? (a) : (b))
 #define	MAXPOS(a, b)	(((a) > (b)) ? (a) : (b))
 
-extern volatile sig_atomic_t sigs;
 extern int how_search;
 extern int caseless;
 extern int linenums;
@@ -677,7 +676,7 @@ search_range(off_t pos, off_t endpos, int search_type, int matches,
 		 * we hit end-of-file (or beginning-of-file if we're
 		 * going backwards), or until we hit the end position.
 		 */
-		if (ABORT_SIGS()) {
+		if (abort_sigs()) {
 			/*
 			 * A signal aborts the search.
 			 */
