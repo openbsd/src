@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.129 2019/09/03 12:03:05 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.130 2019/09/03 12:30:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -270,14 +270,15 @@ void
 html_close_paragraph(struct html *h)
 {
 	struct tag	*this, *next;
+	int		 flags;
 
 	this = h->tag;
 	for (;;) {
 		next = this->next;
-		if (htmltags[this->tag].flags &
-		    (HTML_INPHRASE | HTML_TOPHRASE))
+		flags = htmltags[this->tag].flags;
+		if (flags & (HTML_INPHRASE | HTML_TOPHRASE))
 			print_ctag(h, this);
-		if ((htmltags[this->tag].flags & HTML_INPHRASE) == 0)
+		if ((flags & HTML_INPHRASE) == 0)
 			break;
 		this = next;
 	}
