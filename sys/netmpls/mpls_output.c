@@ -1,4 +1,4 @@
-/* $OpenBSD: mpls_output.c,v 1.27 2019/08/27 00:49:48 dlg Exp $ */
+/* $OpenBSD: mpls_output.c,v 1.28 2019/09/03 10:39:08 jsg Exp $ */
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -180,7 +180,7 @@ mpls_getttl(struct mbuf *m, sa_family_t af)
 #ifdef INET6
 		case 6:
 			if (!mpls_mapttl_ip6)
-				break;
+				return (ttl);
 
 			loc = offsetof(struct ip6_hdr, ip6_hlim);
 			break;
