@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofwreal.S,v 1.4 2015/11/15 17:11:29 miod Exp $	*/
+/*	$OpenBSD: ofwreal.S,v 1.5 2019/09/03 14:37:22 deraadt Exp $	*/
 /*	$NetBSD: ofwreal.S,v 1.1 1996/09/30 16:34:51 ws Exp $	*/
 
 /*
@@ -406,7 +406,7 @@ _ENTRY(_C_LABEL(openfirmware))
  * }
  */
 .lcomm	firmstk,NBPG,16
-.comm	_C_LABEL(OF_buf),NBPG,PGOFSET
+.comm	_C_LABEL(OF_buf),NBPG
 
 _ENTRY(_C_LABEL(ofw_stack))
 	mfmsr	%r8			/* turn off interrupts */

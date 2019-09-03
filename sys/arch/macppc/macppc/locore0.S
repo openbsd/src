@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.1 2017/06/13 01:44:29 deraadt Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.2 2019/09/03 14:37:22 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -68,7 +68,6 @@ fwargsave:
  * Startup entry
  */
 _ENTRY(_C_LABEL(kernel_text))
-_ENTRY(_ASM_LABEL(start))
 /* arguments to start
  * r1 - stack provided by firmware/bootloader
  * r3 - unused
