@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi_i2c.c,v 1.1 2019/08/19 18:31:03 kettenis Exp $	*/
+/*	$OpenBSD: ipmi_i2c.c,v 1.2 2019/09/03 09:17:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -167,9 +167,9 @@ ssif_sendmsg(struct ipmi_cmd *c)
 
 	iic_acquire_bus(sc->sc_tag, 0);
 
-	while (retry--) {
-		cmd[0] = 2;
-		cmd[1] = c->c_txlen;
+	cmd[0] = 2;
+	cmd[1] = c->c_txlen;
+	for (retry = 0; retry < 5; retry++) {
 		error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
 		    sc->sc_addr, cmd, sizeof(cmd), buf, c->c_txlen, 0);
 		if (!error)
