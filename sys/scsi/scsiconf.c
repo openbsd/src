@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.211 2019/09/01 15:03:32 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.212 2019/09/03 21:28:45 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -703,139 +703,76 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 void
 scsibus_printlink(struct scsi_link *link)
 {
-	char				vendor[33], product[65], revision[17];
+	char				 visbuf[65];
 	struct scsi_inquiry_data	*inqbuf;
-	u_int8_t			type;
-	int				removable;
-	char				*dtype = NULL, *qtype = NULL;
+	u_int8_t			*id;
+	int				 i;
+
+	printf(" targ %d lun %d: ", link->target, link->lun);
 
 	inqbuf = &link->inqdata;
 
-	type = inqbuf->device & SID_TYPE;
-	removable = inqbuf->dev_qual2 & SID_REMOVABLE ? 1 : 0;
+	scsi_strvis(visbuf, inqbuf->vendor, 8);
+	printf("<%s, ", visbuf);
+	scsi_strvis(visbuf, inqbuf->product, 16);
+	printf("%s, ", visbuf);
+	scsi_strvis(visbuf, inqbuf->revision, 4);
+	printf("%s>", visbuf);
 
-	/*
-	 * Figure out basic device type and qualifier.
-	 */
-	switch (inqbuf->device & SID_QUAL) {
-	case SID_QUAL_LU_OK:
-		qtype = "";
-		break;
-
-	case SID_QUAL_LU_OFFLINE:
-		qtype = " offline";
-		break;
-
-	case SID_QUAL_RSVD:
-		panic("scsibusprint: qualifier == SID_QUAL_RSVD");
-	case SID_QUAL_BAD_LU:
-		panic("scsibusprint: qualifier == SID_QUAL_BAD_LU");
-
-	default:
-		qtype = "";
-		dtype = "vendor-unique";
-		break;
-	}
-	if (dtype == NULL) {
-		switch (type) {
-		case T_DIRECT:
-			dtype = "direct";
-			break;
-		case T_SEQUENTIAL:
-			dtype = "sequential";
-			break;
-		case T_PRINTER:
-			dtype = "printer";
-			break;
-		case T_PROCESSOR:
-			dtype = "processor";
-			break;
-		case T_CDROM:
-			dtype = "cdrom";
-			break;
-		case T_WORM:
-			dtype = "worm";
-			break;
-		case T_SCANNER:
-			dtype = "scanner";
-			break;
-		case T_OPTICAL:
-			dtype = "optical";
-			break;
-		case T_CHANGER:
-			dtype = "changer";
-			break;
-		case T_COMM:
-			dtype = "communication";
-			break;
-		case T_ENCLOSURE:
-			dtype = "enclosure services";
-			break;
-		case T_RDIRECT:
-			dtype = "simplified direct";
-			break;
-		case T_NODEVICE:
-			panic("scsibusprint: device type T_NODEVICE");
-		default:
-			dtype = "unknown";
-			break;
-		}
-	}
-
-	scsi_strvis(vendor, inqbuf->vendor, 8);
-	scsi_strvis(product, inqbuf->product, 16);
-	scsi_strvis(revision, inqbuf->revision, 4);
-
-	printf(" targ %d lun %d: <%s, %s, %s> ", link->target, link->lun,
-	    vendor, product, revision);
+#ifdef SCSIDEBUG
 	if (link->flags & SDEV_ATAPI)
-		printf("ATAPI");
+		printf(" ATAPI");
+	else if (SID_ANSII_REV(inqbuf) < SCSI_REV_SPC)
+		printf(" SCSI/%d", SID_ANSII_REV(inqbuf));
+	else if (SID_ANSII_REV(inqbuf) == SCSI_REV_SPC)
+		printf(" SCSI/SPC");
 	else
-		printf("SCSI%d", SID_ANSII_REV(inqbuf));
-	printf(" %d/%s %s%s", type, dtype, removable ? "removable" : "fixed",
-	    qtype);
+		printf(" SCSI/SPC-%d", SID_ANSII_REV(inqbuf) - 2);
+#endif /* SCSIDEBUG */
 
-	if (link->id != NULL && link->id->d_type != DEVID_NONE) {
-		u_int8_t *id = (u_int8_t *)(link->id + 1);
-		int i;
+	if ((link->flags & SDEV_REMOVABLE) != 0)
+		printf(" removable");
 
-		switch (link->id->d_type) {
-		case DEVID_NAA:
-			printf(" naa.");
-			break;
-		case DEVID_EUI:
-			printf(" eui.");
-			break;
-		case DEVID_T10:
-			printf(" t10.");
-			break;
-		case DEVID_SERIAL:
-			printf(" serial.");
-			break;
-		case DEVID_WWN:
-			printf(" wwn.");
-			break;
-		}
+	if (link->id == NULL || link->id->d_type == DEVID_NONE)
+		return;
 
-		if (ISSET(link->id->d_flags, DEVID_F_PRINT)) {
-			for (i = 0; i < link->id->d_len; i++) {
-				if (id[i] == '\0' || id[i] == ' ') {
-					/* skip leading blanks */
-					/* collapse multiple blanks into one */
-					if (i > 0 && id[i-1] != id[i])
-						printf("_");
-				} else if (id[i] < 0x20 || id[i] >= 0x80) {
-					/* non-printable characters */
-					printf("~");
-				} else {
-					/* normal characters */
-					printf("%c", id[i]);
-				}
+	id = (u_int8_t *)(link->id + 1);
+	switch (link->id->d_type) {
+	case DEVID_NAA:
+		printf(" naa.");
+		break;
+	case DEVID_EUI:
+		printf(" eui.");
+		break;
+	case DEVID_T10:
+		printf(" t10.");
+		break;
+	case DEVID_SERIAL:
+		printf(" serial.");
+		break;
+	case DEVID_WWN:
+		printf(" wwn.");
+		break;
+	}
+
+	if (ISSET(link->id->d_flags, DEVID_F_PRINT)) {
+		for (i = 0; i < link->id->d_len; i++) {
+			if (id[i] == '\0' || id[i] == ' ') {
+				/* skip leading blanks */
+				/* collapse multiple blanks into one */
+				if (i > 0 && id[i-1] != id[i])
+					printf("_");
+			} else if (id[i] < 0x20 || id[i] >= 0x80) {
+				/* non-printable characters */
+				printf("~");
+			} else {
+				/* normal characters */
+				printf("%c", id[i]);
 			}
-		} else {
-			for (i = 0; i < link->id->d_len; i++)
-				printf("%02x", id[i]);
 		}
+	} else {
+		for (i = 0; i < link->id->d_len; i++)
+			printf("%02x", id[i]);
 	}
 }
 
@@ -985,15 +922,18 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 		goto bad;
 
 	case SID_QUAL_LU_OK:
-		if ((inqbuf->device & SID_TYPE) == T_NODEVICE) {
-			SC_DEBUG(link, SDEV_DB1,
-			    ("Bad LUN. SID_TYPE = T_NODEVICE\n"));
-			goto bad;
-		}
 		break;
 
 	default:
+		SC_DEBUG(link, SDEV_DB1, ("Vendor-specific SID_QUAL = 0x%02x\n",
+		    inqbuf->device & SID_QUAL));
 		break;
+	}
+
+	if ((inqbuf->device & SID_TYPE) == T_NODEVICE) {
+		SC_DEBUG(link, SDEV_DB1,
+		    ("Bad LUN. SID_TYPE = T_NODEVICE\n"));
+		goto bad;
 	}
 
 	scsi_devid(link);
@@ -1119,20 +1059,18 @@ const void *
 scsi_inqmatch(struct scsi_inquiry_data *inqbuf, const void *_base,
     int nmatches, int matchsize, int *bestpriority)
 {
-	u_int8_t			type;
-	int				removable;
-	const void			*bestmatch;
 	const unsigned char		*base = (const unsigned char *)_base;
+	const void			*bestmatch;
+	int				 removable;
 
 	/* Include the qualifier to catch vendor-unique types. */
-	type = inqbuf->device;
 	removable = inqbuf->dev_qual2 & SID_REMOVABLE ? T_REMOV : T_FIXED;
 
 	for (*bestpriority = 0, bestmatch = 0; nmatches--; base += matchsize) {
 		struct scsi_inquiry_pattern *match = (void *)base;
 		int priority, len;
 
-		if (type != match->type)
+		if (inqbuf->device != match->type)
 			continue;
 		if (removable != match->removable)
 			continue;
@@ -1151,10 +1089,66 @@ scsi_inqmatch(struct scsi_inquiry_data *inqbuf, const void *_base,
 		priority += len;
 
 #ifdef SCSIDEBUG
-		printf("scsi_inqmatch: %d/%d/%d <%s, %s, %s>\n",
-		    priority, match->type, match->removable,
+		printf("scsi_inqmatch: ");
+		if (_base == &scsi_quirk_patterns)
+			printf(" quirk ");
+		else
+			printf(" match ");
+		printf("priority %d. ", priority);
+
+		switch (match->type & SID_TYPE) {
+		case T_DIRECT:
+			printf("T_DIRECT");
+			break;
+		case T_SEQUENTIAL:
+			printf("T_SEQUENTIAL");
+			break;
+		case T_PRINTER:
+			printf("T_PRINTER");
+			break;
+		case T_PROCESSOR:
+			printf("T_PROCESSOR");
+			break;
+		case T_CDROM:
+			printf("T_CDROM");
+			break;
+		case T_WORM:
+			printf("T_WORM");
+			break;
+		case T_SCANNER:
+			printf("T_SCANNER");
+			break;
+		case T_OPTICAL:
+			printf("T_OPTICAL");
+			break;
+		case T_CHANGER:
+			printf("T_CHANGER");
+			break;
+		case T_COMM:
+			printf("T_COMM");
+			break;
+		case T_ENCLOSURE:
+			printf("T_ENCLOSURE");
+			break;
+		case T_RDIRECT:
+			printf("T_RDIRECT");
+			break;
+		default:
+			printf("%d/<unknown>", match->type & SID_TYPE);
+			break;
+		}
+
+		printf(" %s", (match->removable == T_FIXED) ? "T_FIXED" : "T_REMOV");
+
+		printf(" <\"%s\", \"%s\", \"%s\">",
 		    match->vendor, match->product, match->revision);
-#endif
+
+		if (_base == &scsi_quirk_patterns)
+			printf(" quirks: 0x%04x",
+			    ((struct scsi_quirk_inquiry_pattern *)match)->quirks);
+
+		printf("\n");
+#endif /* SCSIDEBUG */
 		if (priority > *bestpriority) {
 			*bestpriority = priority;
 			bestmatch = base;
