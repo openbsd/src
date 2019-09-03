@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.54 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.55 2019/09/03 17:51:52 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -216,7 +216,7 @@ macintr_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-macintr_collect_preconf_intr()
+macintr_collect_preconf_intr(void)
 {
 	int i;
 	for (i = 0; i < ppc_configed_intr_cnt; i++) {
@@ -381,7 +381,7 @@ macintr_disestablish(void *lcp, void *arg)
  * happen very much anyway.
  */
 void
-macintr_calc_mask()
+macintr_calc_mask(void)
 {
 	int irq;
 	struct intrhand *ih;
@@ -439,7 +439,7 @@ macintr_calc_mask()
  * external interrupt handler
  */
 void
-mac_ext_intr()
+mac_ext_intr(void)
 {
 	int irq = 0;
 	int pcpl, ret;
@@ -492,7 +492,7 @@ macintr_eoi(int irq)
 }
 
 int
-macintr_read_irq()
+macintr_read_irq(void)
 {
 	struct cpu_info *ci = curcpu();
 	u_int32_t state0, state1, irq_mask;

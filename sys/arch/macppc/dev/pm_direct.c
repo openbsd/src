@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.29 2019/09/03 14:35:23 deraadt Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.30 2019/09/03 17:51:52 deraadt Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -418,7 +418,7 @@ pmgrop(PMData *pmdata)
  * My PM interrupt routine for the PB Duo series and the PB 5XX series
  */
 void
-pm_intr()
+pm_intr(void)
 {
 	int s;
 	int rval;
@@ -664,7 +664,7 @@ pm_adb_get_ADB_data(PMData *pmdata)
 }
 
 void
-pm_adb_restart()
+pm_adb_restart(void)
 {
 	PMData p;
 
@@ -676,7 +676,7 @@ pm_adb_restart()
 }
 
 void
-pm_adb_poweroff()
+pm_adb_poweroff(void)
 {
 	PMData p;
 

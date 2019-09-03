@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.56 2017/07/22 18:33:38 anton Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.57 2019/09/03 17:51:52 deraadt Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -274,7 +274,7 @@ int fbnode;
 void of_display_console(void);
 
 void
-ofwconprobe()
+ofwconprobe(void)
 {
 	char type[32];
 	int stdout_node;
@@ -361,7 +361,7 @@ ofw_recurse_keyboard(int pnode)
 }
 
 void
-ofw_find_keyboard()
+ofw_find_keyboard(void)
 {
 	int stdin_node;
 	char iname[32];

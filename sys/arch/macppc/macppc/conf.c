@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.67 2016/09/04 10:51:24 naddy Exp $ */
+/*	$OpenBSD: conf.c,v 1.68 2019/09/03 17:51:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -256,7 +256,7 @@ iszerodev(dev_t dev)
 }
 
 dev_t
-getnulldev()
+getnulldev(void)
 {
 	return makedev(mem_no, 2);
 }

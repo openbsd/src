@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd_machdep.c,v 1.1 2006/01/18 23:21:17 miod Exp $	*/
+/*	$OpenBSD: akbd_machdep.c,v 1.2 2019/09/03 17:51:52 deraadt Exp $	*/
 /*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
@@ -60,13 +60,13 @@ struct wskbd_consops akbd_consops = {
 static int _akbd_is_console;
 
 int
-akbd_is_console()
+akbd_is_console(void)
 {
 	return (_akbd_is_console);
 }
 
 int
-akbd_cnattach()
+akbd_cnattach(void)
 {
 	_akbd_is_console = 1;
 	wskbd_cnattach(&akbd_consops, NULL, &akbd_keymapdata);

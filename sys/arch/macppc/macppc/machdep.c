@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.185 2019/04/01 07:00:52 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.186 2019/09/03 17:51:52 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -134,9 +134,7 @@ struct extent *devio_ex;
 void initppc(u_int startkernel, u_int endkernel, char *args);
 
 void
-initppc(startkernel, endkernel, args)
-	u_int startkernel, endkernel;
-	char *args;
+initppc(u_int startkernel, u_int endkernel, char *args)
 {
 	extern void *trapcode; extern int trapsize;
 	extern void *dsitrap; extern int dsisize;
@@ -359,7 +357,7 @@ int   safepri = 0;
  * Machine dependent startup code.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 
@@ -400,7 +398,7 @@ cpu_startup()
  * Initialize system console.
  */
 void
-consinit()
+consinit(void)
 {
 	static int cons_initted = 0;
 
@@ -622,7 +620,7 @@ reserve_dumppages(caddr_t p)
  */
 int cpu_dump(void);
 int
-cpu_dump()
+cpu_dump(void)
 {
 	int (*dump) (dev_t, daddr_t, caddr_t, size_t);
 	long buf[dbtob(1) / sizeof (long)];
@@ -642,7 +640,7 @@ cpu_dump()
 }
 
 void
-dumpsys()
+dumpsys(void)
 {
 #if 0
 	u_int npg;
@@ -801,7 +799,7 @@ void_f *pending_int_f = NULL;
  * instead of being in each of the specific handler code
  */
 void
-do_pending_int()
+do_pending_int(void)
 {
 	if (pending_int_f != NULL) {
 		(*pending_int_f)();

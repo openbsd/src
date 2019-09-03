@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.41 2016/03/14 23:08:05 krw Exp $	*/
+/*	$OpenBSD: adb.c,v 1.42 2019/09/03 17:51:52 deraadt Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -252,8 +252,7 @@ void 	adb_cuda_fileserver_mode(void);
  * is in [0].
  */
 void
-print_single(str)
-	u_char *str;
+print_single(u_char *str)
 {
 	int x;
 
@@ -533,8 +532,8 @@ switch_start:
 
 
 int
-send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
-	command)
+send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data,
+    int command)
 {
 	int s, len;
 
@@ -1476,7 +1475,7 @@ adb_poweroff(void)
 }
 
 void
-setsoftadb()
+setsoftadb(void)
 {
 	if (!timeout_initialized(&adb_softintr_timeout))
 		timeout_set(&adb_softintr_timeout, (void *)adb_soft_intr, NULL);
@@ -1484,7 +1483,7 @@ setsoftadb()
 }
 
 void
-adb_cuda_autopoll()
+adb_cuda_autopoll(void)
 {
 	volatile int flag = 0;
 	int result;
@@ -1503,7 +1502,7 @@ adb_cuda_autopoll()
 }
 
 void
-adb_cuda_fileserver_mode()
+adb_cuda_fileserver_mode(void)
 {
 	volatile int flag = 0;
 	int result;
@@ -1523,7 +1522,7 @@ adb_cuda_fileserver_mode()
 }
 
 void
-adb_restart()
+adb_restart(void)
 {
 	int result;
 	u_char output[16];

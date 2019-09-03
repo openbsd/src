@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.41 2019/08/21 20:44:09 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.42 2019/09/03 17:51:52 deraadt Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -254,7 +254,7 @@ decr_intr(struct clockframe *frame)
 void cpu_startclock(void);
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	int intrstate;
 	int minint;
@@ -317,7 +317,7 @@ cpu_initclocks()
 }
 
 void
-cpu_startclock()
+cpu_startclock(void)
 {
 	struct cpu_info *ci = curcpu();
 	u_int64_t nextevent;

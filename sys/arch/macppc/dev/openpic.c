@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.85 2018/01/22 09:08:43 mpi Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.86 2019/09/03 17:51:52 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -391,7 +391,7 @@ openpic_splx(int newcpl)
 }
 
 void
-openpic_collect_preconf_intr()
+openpic_collect_preconf_intr(void)
 {
 	int i;
 	for (i = 0; i < ppc_configed_intr_cnt; i++) {
@@ -513,7 +513,7 @@ openpic_intr_disestablish(void *lcp, void *arg)
  */
 
 void
-openpic_calc_mask()
+openpic_calc_mask(void)
 {
 	struct cpu_info *ci = curcpu();
 	int irq;
