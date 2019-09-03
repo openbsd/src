@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlclock.c,v 1.4 2019/08/31 20:59:17 kettenis Exp $	*/
+/*	$OpenBSD: amlclock.c,v 1.5 2019/09/03 04:55:01 jsg Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -230,7 +230,6 @@ amlclock_get_frequency(void *cookie, uint32_t *cells)
 			goto fail;
 		}
 		return amlclock_get_frequency(sc, &idx) / div;
-		return reg;
 	}
 
 fail:
