@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.34 2019/09/03 04:47:47 deraadt Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.35 2019/09/03 12:13:41 kettenis Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -571,7 +571,7 @@ mesh_error(struct mesh_softc *sc, struct mesh_scb *scb, int error,
 
 		/* Wait until the RST signal is deasserted. */
 		while (mesh_read_reg(sc, MESH_BUS_STATUS1) & MESH_STATUS1_RST)
-			;
+			continue;
 		mesh_reset(sc);
 		return;
 	}
