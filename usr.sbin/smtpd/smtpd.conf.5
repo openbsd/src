@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.221 2019/08/17 14:43:21 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.222 2019/09/03 04:48:20 martijn Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: August 17 2019 $
+.Dd $Mdocdate: September 3 2019 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -383,6 +383,11 @@ filter
 .Ar filter-name
 from
 .Ar command .
+If
+.Ar command
+starts with a slash it is executed with an absolute path,
+else it will be run from
+.Dq /usr/local/libexec/smtpd/ .
 .It Ic include Qq Ar pathname
 Replace this directive with the content of the additional configuration
 file at the absolute
@@ -757,6 +762,11 @@ Register an external process named
 from
 .Ar command .
 Such processes may be used to share the same instance between multiple filters.
+If
+.Ar command
+starts with a slash it is executed with an absolute path,
+else it will be run from
+.Dq /usr/local/libexec/smtpd/ .
 .It Ic queue Cm compression
 Store queue files in a compressed format.
 This may be useful to save disk space.

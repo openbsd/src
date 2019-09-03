@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.324 2019/07/26 07:08:34 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.325 2019/09/03 04:48:20 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1277,6 +1277,8 @@ fork_processor(const char *name, const char *command, const char *user, const ch
 	int		 sp[2], errfd[2];
 	struct passwd	*pw;
 	struct group	*gr;
+	char		 exec[_POSIX_ARG_MAX];
+	int		 execr;
 
 	if (user == NULL)
 		user = SMTPD_USER;
@@ -1340,6 +1342,14 @@ fork_processor(const char *name, const char *command, const char *user, const ch
 	    signal(SIGHUP, SIG_DFL) == SIG_ERR)
 		err(1, "signal");
 
+	if (command[0] == '/')
+		execr = snprintf(exec, sizeof(exec), "exec %s", command);
+	else
+		execr = snprintf(exec, sizeof(exec), "exec %s/%s", 
+		    PATH_LIBEXEC, command);
+	if (execr >= (int) sizeof(exec))
+		errx(1, "%s: exec path too long", name);
+
 	/*
 	 * Wait for lka to acknowledge that it received the fd.
 	 * This prevents a race condition between the filter sending an error
@@ -1350,7 +1360,7 @@ fork_processor(const char *name, const char *command, const char *user, const ch
 	 */
 	if (read(STDERR_FILENO, &buf, 1) != 0)
 		errx(1, "lka didn't properly close write end of error socket");
-	if (system(command) == -1)
+	if (system(exec) == -1)
 		err(1, NULL);
 
 	/* there's no successful exit from a processor */
