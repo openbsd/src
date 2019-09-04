@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.136 2019/08/17 15:31:41 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.137 2019/09/04 17:15:56 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -105,7 +105,6 @@ struct quirkdata {
 #define	ST_Q_FORCE_BLKSIZE	0x0001
 #define	ST_Q_SENSE_HELP		0x0002	/* must do READ for good MODE SENSE */
 #define	ST_Q_IGNORE_LOADS	0x0004
-#define	ST_Q_BLKSIZE		0x0008	/* variable-block media_blksize > 0 */
 #define	ST_Q_UNIMODAL		0x0010	/* unimode drive rejects mode select */
 	struct modes modes;
 };
@@ -763,10 +762,7 @@ st_decide_mode(struct st_softc *st, int first_read)
 	 * fixed or variable-length blocks and block size according to
 	 * what the drive found on the tape.
 	 */
-	if (first_read &&
-	    (!(st->quirks & ST_Q_BLKSIZE) || (st->media_blksize == 0) ||
-	    (st->media_blksize == DEF_FIXED_BSIZE) ||
-	    (st->media_blksize == 1024))) {
+	if (first_read) {
 		if (st->media_blksize > 0)
 			st->flags |= ST_FIXEDBLOCKS;
 		else
