@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.6 2019/08/28 07:03:51 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.7 2019/09/04 11:25:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -23,6 +23,10 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_misc.h>
+
+/*
+ * Register maps.
+ */
 
 struct regmap {
 	int			rm_node;
