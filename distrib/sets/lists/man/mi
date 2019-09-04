@@ -1212,6 +1212,7 @@
 ./usr/share/man/man4/ami.4
 ./usr/share/man/man4/amlclock.4
 ./usr/share/man/man4/amldwusb.4
+./usr/share/man/man4/amlmmc.4
 ./usr/share/man/man4/amlpciephy.4
 ./usr/share/man/man4/amlpinctrl.4
 ./usr/share/man/man4/amlreset.4
