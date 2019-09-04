@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.123 2019/08/03 22:53:45 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.124 2019/09/04 14:27:55 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -323,6 +323,7 @@ sys_gettimeofday(struct proc *p, void *v, register_t *retval)
 		syscallarg(struct timezone *) tzp;
 	} */ *uap = v;
 	struct timeval atv;
+	static const struct timezone zerotz = { 0, 0 };
 	struct timeval *tp;
 	struct timezone *tzp;
 	int error = 0;
@@ -341,7 +342,7 @@ sys_gettimeofday(struct proc *p, void *v, register_t *retval)
 #endif
 	}
 	if (tzp)
-		error = copyout(&tz, tzp, sizeof (tz));
+		error = copyout(&zerotz, tzp, sizeof(zerotz));
 	return (error);
 }
 
@@ -377,8 +378,7 @@ sys_settimeofday(struct proc *p, void *v, register_t *retval)
 		if ((error = settime(&ts)) != 0)
 			return (error);
 	}
-	if (tzp)
-		tz = atz;
+
 	return (0);
 }
 
