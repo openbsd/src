@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.45 2019/09/04 07:28:27 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.46 2019/09/04 07:38:20 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -483,6 +483,8 @@ lka_filter_process_response(const char *name, const char *line)
 	} else if (strcmp(response, "junk") == 0) {
 		if (parameter != NULL)
 			fatalx("Unexpected parameter after junk: %s", line);
+		if (fs->phase == FILTER_COMMIT)
+			fatalx("filter-reponse junk after DATA");
 		filter_result_junk(reqid);
 		return;
 	} else {
