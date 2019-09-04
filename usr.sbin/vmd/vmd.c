@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.115 2019/08/14 07:34:49 anton Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.116 2019/09/04 07:02:03 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1197,6 +1197,7 @@ vm_claimid(const char *name, int uid, uint32_t *id)
 	n2i->uid = uid;
 	if (strlcpy(n2i->name, name, sizeof(n2i->name)) >= sizeof(n2i->name)) {
 		log_warnx("vm name too long");
+		free(n2i);
 		return -1;
 	}
 	TAILQ_INSERT_TAIL(env->vmd_known, n2i, entry);
