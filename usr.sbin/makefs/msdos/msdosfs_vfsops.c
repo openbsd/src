@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.11 2016/12/17 16:43:30 krw Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.12 2019/09/04 14:40:22 cheloha Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/time.h>
 
 #include "ffs/buf.h"
 
@@ -87,7 +86,6 @@ msdosfs_mount(struct mkfsvnode *devvp, int flags)
 	uint8_t SecPerClust;
 	int	ronly = 0, error;
 	int	bsize;
-	struct timezone tz;
 	unsigned secsize = 512;
 
 	DPRINTF(("%s(bread 0)\n", __func__));
@@ -125,12 +123,7 @@ msdosfs_mount(struct mkfsvnode *devvp, int flags)
 	pmp->pm_SecPerTrack = getushort(b50->bpbSecPerTrack);
 	pmp->pm_Heads = getushort(b50->bpbHeads);
 	pmp->pm_Media = b50->bpbMedia;
-
-	if (gettimeofday(NULL, &tz) == -1) {
-		error = errno;
-		goto error_exit;
-	}
-	pmp->pm_minuteswest = tz.tz_minuteswest;
+	pmp->pm_minuteswest = 0;
 
 	DPRINTF(("%s(BytesPerSec=%u, ResSectors=%u, FATs=%d, RootDirEnts=%u, "
 	    "Sectors=%u, FATsecs=%lu, SecPerTrack=%u, Heads=%u, Media=%u)\n",

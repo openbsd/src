@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_conv.c,v 1.19 2015/10/23 10:45:31 krw Exp $	*/
+/*	$OpenBSD: msdosfs_conv.c,v 1.20 2019/09/04 14:40:22 cheloha Exp $	*/
 /*	$NetBSD: msdosfs_conv.c,v 1.24 1997/10/17 11:23:54 ws Exp $	*/
 
 /*-
@@ -108,8 +108,7 @@ unix2dostime(struct timespec *tsp, u_int16_t *ddp, u_int16_t *dtp, u_int8_t *dhp
 	 * If the time from the last conversion is the same as now, then
 	 * skip the computations and use the saved result.
 	 */
-	t = tsp->tv_sec - (tz.tz_minuteswest * 60)
-	     /* +- daylight saving time correction */ ;
+	t = tsp->tv_sec;
 	t &= ~1;
 	/*
 	 * Before 1/1/1980 there is only a timeless void. After 12/31/2107
@@ -228,8 +227,7 @@ dos2unixtime(u_int dd, u_int dt, u_int dh, struct timespec *tsp)
 		days += ((dd & DD_DAY_MASK) >> DD_DAY_SHIFT) - 1;
 		lastseconds = (days * 24 * 60 * 60) + SECONDSTO1980;
 	}
-	tsp->tv_sec = seconds + lastseconds + (tz.tz_minuteswest * 60)
-	     /* -+ daylight saving time correction */ ;
+	tsp->tv_sec = seconds + lastseconds;
 	tsp->tv_nsec = (dh % 100) * 10000000;
 }
 
