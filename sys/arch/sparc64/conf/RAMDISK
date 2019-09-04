@@ -1,10 +1,8 @@
-#	$OpenBSD: RAMDISK,v 1.123 2019/07/10 00:17:53 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.124 2019/09/04 14:29:42 cheloha Exp $
 
 machine		sparc64
 maxusers	4
 
-option		TIMEZONE=0
-option		DST=0
 option		SMALL_KERNEL
 option		NO_PROPOLICE
 option		BOOT_CONFIG

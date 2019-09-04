@@ -1,10 +1,8 @@
-#	$OpenBSD: RAMDISK,v 1.25 2016/06/28 04:41:37 jmatthew Exp $
+#	$OpenBSD: RAMDISK,v 1.26 2019/09/04 14:29:41 cheloha Exp $
 
 machine		landisk	sh
 maxusers	4
 
-option		TIMEZONE=0
-option		DST=0
 option		SMALL_KERNEL
 option		NO_PROPOLICE
 option		BOOT_CONFIG

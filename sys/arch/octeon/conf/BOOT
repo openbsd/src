@@ -1,10 +1,8 @@
-#	$OpenBSD: BOOT,v 1.4 2019/07/28 15:41:52 visa Exp $
+#	$OpenBSD: BOOT,v 1.5 2019/09/04 14:29:42 cheloha Exp $
 
 machine		octeon mips64
 maxusers	4
 
-option		TIMEZONE=0
-option		DST=0
 option		SMALL_KERNEL
 option		NO_PROPOLICE
 

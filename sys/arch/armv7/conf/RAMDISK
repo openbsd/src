@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.109 2019/08/11 14:46:18 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.110 2019/09/04 14:29:41 cheloha Exp $
 
 machine		armv7 arm
 
@@ -7,8 +7,6 @@ makeoptions	KERNEL_BASE_VIRT="0xc0300000"
 maxusers	4			# estimated number of users
 option		CPU_ARMv7		# Support the ARMv7
 
-option		TIMEZONE=0
-option		DST=0
 option		SMALL_KERNEL
 option		NO_PROPOLICE
 option		BOOT_CONFIG

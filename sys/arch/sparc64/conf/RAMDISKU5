@@ -1,10 +1,7 @@
-#	$OpenBSD: RAMDISKU5,v 1.20 2015/07/17 22:52:29 tedu Exp $
+#	$OpenBSD: RAMDISKU5,v 1.21 2019/09/04 14:29:42 cheloha Exp $
 
 machine		sparc64
 maxusers	4
-
-option		TIMEZONE=0
-option		DST=0
 
 option		SMALL_KERNEL
 option		NO_PROPOLICE

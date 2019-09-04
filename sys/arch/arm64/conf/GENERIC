@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.119 2019/09/03 20:24:22 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.120 2019/09/04 14:29:41 cheloha Exp $
 #
 # GENERIC machine description file
 #
@@ -22,8 +22,6 @@ machine		arm64
 include		"../../../conf/GENERIC"
 maxusers	80
 
-option		TIMEZONE=0	# time zone to adjust RTC time by
-option		DST=0		# daylight saving time used by RTC
 option		PCIVERBOSE
 option		USER_PCICONF	# user-space PCI configuration
 option		USBVERBOSE

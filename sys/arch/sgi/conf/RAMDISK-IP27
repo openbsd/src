@@ -1,12 +1,10 @@
-#	$OpenBSD: RAMDISK-IP27,v 1.39 2016/06/28 04:41:37 jmatthew Exp $
+#	$OpenBSD: RAMDISK-IP27,v 1.40 2019/09/04 14:29:42 cheloha Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 
 machine		sgi mips64
 maxusers	4
 
-option		TIMEZONE=0
-option		DST=0
 option		SMALL_KERNEL
 option		NO_PROPOLICE
 option		BOOT_CONFIG

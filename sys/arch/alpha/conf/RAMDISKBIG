@@ -1,10 +1,8 @@
-#	$OpenBSD: RAMDISKBIG,v 1.101 2017/11/02 14:04:24 mpi Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.102 2019/09/04 14:29:41 cheloha Exp $
 
 machine		alpha
 maxusers	4
 
-option		TIMEZONE=0
-option		DST=0
 option		SMALL_KERNEL
 option		NO_PROPOLICE
 option		BOOT_CONFIG
