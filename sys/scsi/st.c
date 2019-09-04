@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.140 2019/09/04 20:03:12 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.141 2019/09/04 23:40:28 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -197,7 +197,6 @@ struct st_softc {
 
 	int blkmin;		/* min blk size                       */
 	int blkmax;		/* max blk size                       */
-	const struct quirkdata *quirkdata;	/* if we have a rogue entry */
 
 	u_int64_t numblks;		/* nominal blocks capacity            */
 	u_int32_t media_blksize;	/* 0 if not ST_FIXEDBLOCKS            */
@@ -223,14 +222,13 @@ int	stmatch(struct device *, void *, void *);
 void	stattach(struct device *, struct device *, void *);
 int	stactivate(struct device *, int);
 int	stdetach(struct device *, int);
-
 void	stminphys(struct buf *);
+void	ststart(struct scsi_xfer *);
+
 void	st_identify_drive(struct st_softc *, struct scsi_inquiry_data *);
-void	st_loadquirks(struct st_softc *);
 int	st_mount_tape(dev_t, int);
 void	st_unmount(struct st_softc *, int, int);
 int	st_decide_mode(struct st_softc *, int);
-void	ststart(struct scsi_xfer *);
 void	st_buf_done(struct scsi_xfer *);
 int	st_read(struct st_softc *, char *, int, int);
 int	st_read_block_limits(struct st_softc *, int);
@@ -394,36 +392,15 @@ st_identify_drive(struct st_softc *st, struct scsi_inquiry_data *inqbuf)
 	    nitems(st_quirk_patterns),
 	    sizeof(st_quirk_patterns[0]), &priority);
 	if (priority != 0) {
-		st->quirkdata = &finger->quirkdata;
 		st->quirks = finger->quirkdata.quirks;
-		st_loadquirks(st);
-	}
-}
-
-/*
- * initialise the subdevices to the default (QUIRK) state.
- * this will remove any setting made by the system operator or previous
- * operations.
- */
-void
-st_loadquirks(struct st_softc *st)
-{
-	const struct	modes *mode;
-	struct	modes *mode2;
-
-	mode = &st->quirkdata->modes;
-	mode2 = &st->modes;
-	bzero(mode2, sizeof(struct modes));
-	st->modeflags &= ~(BLKSIZE_SET_BY_QUIRK |
-	    DENSITY_SET_BY_QUIRK | BLKSIZE_SET_BY_USER |
-	    DENSITY_SET_BY_USER);
-	if (st->quirks & ST_Q_FORCE_BLKSIZE) {
-		mode2->blksize = mode->blksize;
-		st->modeflags |= BLKSIZE_SET_BY_QUIRK;
-	}
-	if (mode->density) {
-		mode2->density = mode->density;
-		st->modeflags |= DENSITY_SET_BY_QUIRK;
+		st->modes = finger->quirkdata.modes;
+		st->modeflags &= ~(BLKSIZE_SET_BY_QUIRK |
+		    DENSITY_SET_BY_QUIRK | BLKSIZE_SET_BY_USER |
+		    DENSITY_SET_BY_USER);
+		if (st->quirks & ST_Q_FORCE_BLKSIZE)
+			st->modeflags |= BLKSIZE_SET_BY_QUIRK;
+		if (st->modes.density != 0)
+			st->modeflags |= DENSITY_SET_BY_QUIRK;
 	}
 }
 
