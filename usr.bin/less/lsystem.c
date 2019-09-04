@@ -131,7 +131,7 @@ lsystem(const char *cmd, const char *donemsg)
 	/*
 	 * Since we were ignoring window change signals while we executed
 	 * the system command, we must assume the window changed.
-	 * Warning: this leaves a signal pending (in "sigs"),
+	 * Warning: this leaves a signal pending (in "signal_winch"),
 	 * so psignals() should be called soon after lsystem().
 	 */
 	sigwinch(0);
