@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.138 2019/09/04 18:41:33 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.139 2019/09/04 19:09:41 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -95,7 +95,6 @@
  * and note how they are bad, so we can correct for them
  */
 struct modes {
-	u_int quirks;			/* same definitions as in quirkdata */
 	int blksize;
 	u_int8_t density;
 };
@@ -116,66 +115,66 @@ struct st_quirk_inquiry_pattern {
 
 const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 	{{T_SEQUENTIAL, T_REMOV,
-		 "        ", "                ", "    "}, {0,
-							   {ST_Q_FORCE_BLKSIZE, 512, 0}}},
+		 "        ", "                ", "    "}, {ST_Q_FORCE_BLKSIZE,
+							   {512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
 		 "TANDBERG", " TDC 3600       ", ""},     {0,
-							   {0, 0, 0}}},
+							   {0, 0}}},
  	{{T_SEQUENTIAL, T_REMOV,
-		 "TANDBERG", " TDC 3800       ", ""},     {0,
-							   {ST_Q_FORCE_BLKSIZE, 512, 0}}},
+		 "TANDBERG", " TDC 3800       ", ""},     {ST_Q_FORCE_BLKSIZE,
+							   {512, 0}}},
 	/*
 	 * At least -005 and -007 need this.  I'll assume they all do unless I
 	 * hear otherwise.  - mycroft, 31MAR1994
 	 */
 	{{T_SEQUENTIAL, T_REMOV,
-		 "ARCHIVE ", "VIPER 2525 25462", ""},     {0,
-							   {ST_Q_SENSE_HELP, 0, 0}}},
+		 "ARCHIVE ", "VIPER 2525 25462", ""},     {ST_Q_SENSE_HELP,
+							   {0, 0}}},
 	/*
 	 * One user reports that this works for his tape drive.  It probably
 	 * needs more work.  - mycroft, 09APR1994
 	 */
 	{{T_SEQUENTIAL, T_REMOV,
-		 "SANKYO  ", "CP525           ", ""},    {0,
-							  {ST_Q_FORCE_BLKSIZE, 512, 0}}},
+		 "SANKYO  ", "CP525           ", ""},    {ST_Q_FORCE_BLKSIZE,
+							  {512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-		 "ANRITSU ", "DMT780          ", ""},     {0,
-							   {ST_Q_FORCE_BLKSIZE, 512, 0}}},
+		 "ANRITSU ", "DMT780          ", ""},     {ST_Q_FORCE_BLKSIZE,
+							   {512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
 		 "ARCHIVE ", "VIPER 150  21247", ""},     {0,
-							   {0, 0, 0}}},
+							   {0, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-		 "ARCHIVE ", "VIPER 150  21531", ""},     {0,
-							   {ST_Q_SENSE_HELP, 0, 0}}},
+		 "ARCHIVE ", "VIPER 150  21531", ""},     {ST_Q_SENSE_HELP,
+							   {0, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-		 "WANGTEK ", "5099ES SCSI", ""},          {0,
-							   {ST_Q_FORCE_BLKSIZE, 512, 0}}},
+		 "WANGTEK ", "5099ES SCSI", ""},          {ST_Q_FORCE_BLKSIZE,
+							   {512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-		 "WANGTEK ", "5150ES SCSI", ""},          {0,
-							   {ST_Q_FORCE_BLKSIZE, 512, 0}}},
+		 "WANGTEK ", "5150ES SCSI", ""},          {ST_Q_FORCE_BLKSIZE,
+							   {512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
 		 "WANGTEK ", "5525ES SCSI REV7", ""},     {0,
-							   {0, 0, 0}}},
+							   {0, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
 		 "WangDAT ", "Model 1300      ", ""},     {0,
-							   {0, 0, 0}}},
+							   {0, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
 		 "EXABYTE ", "EXB-8200        ", "263H"}, {0,
-							   {0, 0, 0}}},
+							   {0, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
 		 "HP      ", "T4000s          ", ""},     {ST_Q_UNIMODAL,
-							   {0, 0, QIC_3095}}},
+							   {0, QIC_3095}}},
 #if 0
 	{{T_SEQUENTIAL, T_REMOV,
 		 "EXABYTE ", "EXB-8200        ", ""},     {0,
-							   {0, 0, 0}}},
+							   {0, 0}}},
 #endif
 	{{T_SEQUENTIAL, T_REMOV,
-		 "WANGTEK ", "5150ES SCSI FA15\0""01 A", "????"}, {0,
-								   {ST_Q_IGNORE_LOADS, 0, 0}}},
+		 "WANGTEK ", "5150ES SCSI FA15\0""01 A", "????"}, {ST_Q_IGNORE_LOADS,
+								   {0, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
 		 "TEAC    ", "MT-2ST/N50      ", ""},     {ST_Q_IGNORE_LOADS,
-							   {0, 0, 0}}},
+							   {0, 0}}},
 };
 
 #define NOEJECT 0
@@ -421,7 +420,7 @@ st_loadquirks(struct st_softc *st)
 	st->modeflags &= ~(BLKSIZE_SET_BY_QUIRK |
 	    DENSITY_SET_BY_QUIRK | BLKSIZE_SET_BY_USER |
 	    DENSITY_SET_BY_USER);
-	if ((mode->quirks | st->drive_quirks) & ST_Q_FORCE_BLKSIZE) {
+	if (st->drive_quirks & ST_Q_FORCE_BLKSIZE) {
 		mode2->blksize = mode->blksize;
 		st->modeflags |= BLKSIZE_SET_BY_QUIRK;
 	}
@@ -587,7 +586,7 @@ st_mount_tape(dev_t dev, int flags)
 	if (st->flags & ST_MOUNTED)
 		goto done;
 
-	st->quirks = st->drive_quirks | st->modes.quirks;
+	st->quirks = st->drive_quirks;
 	/*
 	 * If the media is new, then make sure we give it a chance to
 	 * to do a 'load' instruction.  (We assume it is new.)
