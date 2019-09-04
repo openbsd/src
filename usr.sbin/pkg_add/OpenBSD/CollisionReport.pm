@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.47 2018/02/27 22:46:53 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.48 2019/09/04 12:27:38 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -57,6 +57,9 @@ sub find_collisions
 	}
 	for my $pkg (installed_packages()) {
 		$state->say("Looking for collisions in #1", $pkg) if $verbose;
+		# XXX in -n mode, some stuff is not really there
+		# avoid warnings
+		next unless -d installed_info($pkg);
 		my $plist = OpenBSD::PackingList->from_installation($pkg,
 		    \&OpenBSD::PackingList::FilesOnly);
 		next if !defined $plist;
