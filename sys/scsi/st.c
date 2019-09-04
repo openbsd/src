@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.137 2019/09/04 17:15:56 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.138 2019/09/04 18:41:33 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -116,66 +116,66 @@ struct st_quirk_inquiry_pattern {
 
 const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 	{{T_SEQUENTIAL, T_REMOV,
-	 "        ", "                ", "    "}, {0,
-		{ST_Q_FORCE_BLKSIZE, 512, 0}}},		/* minor 0-3 */
+		 "        ", "                ", "    "}, {0,
+							   {ST_Q_FORCE_BLKSIZE, 512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "TANDBERG", " TDC 3600       ", ""},     {0,
-		{0, 0, 0}}},				/* minor 0-3 */
+		 "TANDBERG", " TDC 3600       ", ""},     {0,
+							   {0, 0, 0}}},
  	{{T_SEQUENTIAL, T_REMOV,
- 	 "TANDBERG", " TDC 3800       ", ""},     {0,
-		{ST_Q_FORCE_BLKSIZE, 512, 0}}},		/* minor 0-3 */
+		 "TANDBERG", " TDC 3800       ", ""},     {0,
+							   {ST_Q_FORCE_BLKSIZE, 512, 0}}},
 	/*
 	 * At least -005 and -007 need this.  I'll assume they all do unless I
 	 * hear otherwise.  - mycroft, 31MAR1994
 	 */
 	{{T_SEQUENTIAL, T_REMOV,
-	 "ARCHIVE ", "VIPER 2525 25462", ""},     {0,
-		{ST_Q_SENSE_HELP, 0, 0}}},		/* minor 0-3 */
+		 "ARCHIVE ", "VIPER 2525 25462", ""},     {0,
+							   {ST_Q_SENSE_HELP, 0, 0}}},
 	/*
 	 * One user reports that this works for his tape drive.  It probably
 	 * needs more work.  - mycroft, 09APR1994
 	 */
 	{{T_SEQUENTIAL, T_REMOV,
-	 "SANKYO  ", "CP525           ", ""},    {0,
-		{ST_Q_FORCE_BLKSIZE, 512, 0}}},		/* minor 0-3 */
+		 "SANKYO  ", "CP525           ", ""},    {0,
+							  {ST_Q_FORCE_BLKSIZE, 512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "ANRITSU ", "DMT780          ", ""},     {0,
-		{ST_Q_FORCE_BLKSIZE, 512, 0}}},		/* minor 0-3 */
+		 "ANRITSU ", "DMT780          ", ""},     {0,
+							   {ST_Q_FORCE_BLKSIZE, 512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "ARCHIVE ", "VIPER 150  21247", ""},     {0,
-		{0, 0, 0}}},				/* minor 0-3 */
+		 "ARCHIVE ", "VIPER 150  21247", ""},     {0,
+							   {0, 0, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "ARCHIVE ", "VIPER 150  21531", ""},     {0,
-		{ST_Q_SENSE_HELP, 0, 0}}},		/* minor 0-3 */
+		 "ARCHIVE ", "VIPER 150  21531", ""},     {0,
+							   {ST_Q_SENSE_HELP, 0, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "WANGTEK ", "5099ES SCSI", ""},          {0,
-		{ST_Q_FORCE_BLKSIZE, 512, 0}}},		/* minor 0-3 */
+		 "WANGTEK ", "5099ES SCSI", ""},          {0,
+							   {ST_Q_FORCE_BLKSIZE, 512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "WANGTEK ", "5150ES SCSI", ""},          {0,
-		{ST_Q_FORCE_BLKSIZE, 512, 0}}},		/* minor 0-3 */
+		 "WANGTEK ", "5150ES SCSI", ""},          {0,
+							   {ST_Q_FORCE_BLKSIZE, 512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "WANGTEK ", "5525ES SCSI REV7", ""},     {0,
-		{0, 0, 0}}},				/* minor 0-3 */
+		 "WANGTEK ", "5525ES SCSI REV7", ""},     {0,
+							   {0, 0, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "WangDAT ", "Model 1300      ", ""},     {0,
-		{0, 0, 0}}},				/* minor 0-3 */
+		 "WangDAT ", "Model 1300      ", ""},     {0,
+							   {0, 0, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "EXABYTE ", "EXB-8200        ", "263H"}, {0,
-		{0, 0, 0}}},				/* minor 0-3 */
+		 "EXABYTE ", "EXB-8200        ", "263H"}, {0,
+							   {0, 0, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "HP      ", "T4000s          ", ""},     {ST_Q_UNIMODAL,
-		{0, 0, QIC_3095}}},			/* minor 0-3 */
+		 "HP      ", "T4000s          ", ""},     {ST_Q_UNIMODAL,
+							   {0, 0, QIC_3095}}},
 #if 0
 	{{T_SEQUENTIAL, T_REMOV,
-	 "EXABYTE ", "EXB-8200        ", ""},     {0,
-		{0, 0, 0}}},				/* minor 0-3 */
+		 "EXABYTE ", "EXB-8200        ", ""},     {0,
+							   {0, 0, 0}}},
 #endif
 	{{T_SEQUENTIAL, T_REMOV,
-	 "WANGTEK ", "5150ES SCSI FA15\0""01 A", "????"}, {0,
-		{ST_Q_IGNORE_LOADS, 0, 0}}},		/* minor 0-3 */
+		 "WANGTEK ", "5150ES SCSI FA15\0""01 A", "????"}, {0,
+								   {ST_Q_IGNORE_LOADS, 0, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "TEAC    ", "MT-2ST/N50      ", ""},     {ST_Q_IGNORE_LOADS,
-		{0, 0, 0}}},				/* minor 0-3 */
+		 "TEAC    ", "MT-2ST/N50      ", ""},     {ST_Q_IGNORE_LOADS,
+							   {0, 0, 0}}},
 };
 
 #define NOEJECT 0
@@ -854,7 +854,7 @@ ststrategy(struct buf *bp)
 	 * as are out-of-range requests on variable drives.
 	 */
 	else if (bp->b_bcount < st->blkmin ||
-		 (st->blkmax && bp->b_bcount > st->blkmax)) {
+	    (st->blkmax && bp->b_bcount > st->blkmax)) {
 		printf("%s: bad request, must be between %d and %d\n",
 		    st->sc_dev.dv_xname, st->blkmin, st->blkmax);
 		bp->b_error = EIO;
@@ -1075,7 +1075,7 @@ st_buf_done(struct scsi_xfer *xs)
 		goto retry;
 
 	case XS_TIMEOUT:
-retry:
+ retry:
 		if (xs->retries--) {
 			scsi_xs_exec(xs);
 			return;
@@ -1548,7 +1548,7 @@ st_mode_select(struct st_softc *st, int flags)
 		page0_size = _2btol(inbuf->hdr_big.data_length) +
 		    sizeof(inbuf->hdr_big.data_length) -
 		    sizeof(inbuf->hdr_big) -
-		   _2btol(inbuf->hdr_big.blk_desc_len);
+		    _2btol(inbuf->hdr_big.blk_desc_len);
 		memcpy(&outbuf->buf[sizeof(outbuf->hdr_big) + sizeof(general)],
 		    page0, page0_size);
 	}
@@ -1653,7 +1653,7 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 					 * right file mark count.
 					 */
 					error = st_space(st, 0, SP_FILEMARKS,
-						flags);
+					    flags);
 					if (error)
 						return error;
 				}
