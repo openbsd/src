@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.139 2019/09/04 19:09:41 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.140 2019/09/04 20:03:12 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -206,8 +206,6 @@ struct st_softc {
 	int media_blkno;		/* relative to BOF. -1 means unknown. */
 	int media_eom;			/* relative to BOT. -1 means unknown. */
 
-	u_int drive_quirks;	/* quirks of this drive               */
-
 	struct modes modes;	/* plus more for each mode            */
 	u_int8_t  modeflags;	/* flags for the modes                */
 #define DENSITY_SET_BY_USER	0x01
@@ -397,8 +395,7 @@ st_identify_drive(struct st_softc *st, struct scsi_inquiry_data *inqbuf)
 	    sizeof(st_quirk_patterns[0]), &priority);
 	if (priority != 0) {
 		st->quirkdata = &finger->quirkdata;
-		st->drive_quirks = finger->quirkdata.quirks;
-		st->quirks = finger->quirkdata.quirks;	/* start value */
+		st->quirks = finger->quirkdata.quirks;
 		st_loadquirks(st);
 	}
 }
@@ -420,7 +417,7 @@ st_loadquirks(struct st_softc *st)
 	st->modeflags &= ~(BLKSIZE_SET_BY_QUIRK |
 	    DENSITY_SET_BY_QUIRK | BLKSIZE_SET_BY_USER |
 	    DENSITY_SET_BY_USER);
-	if (st->drive_quirks & ST_Q_FORCE_BLKSIZE) {
+	if (st->quirks & ST_Q_FORCE_BLKSIZE) {
 		mode2->blksize = mode->blksize;
 		st->modeflags |= BLKSIZE_SET_BY_QUIRK;
 	}
@@ -586,7 +583,6 @@ st_mount_tape(dev_t dev, int flags)
 	if (st->flags & ST_MOUNTED)
 		goto done;
 
-	st->quirks = st->drive_quirks;
 	/*
 	 * If the media is new, then make sure we give it a chance to
 	 * to do a 'load' instruction.  (We assume it is new.)
