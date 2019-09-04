@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.27 2019/08/29 07:23:18 martijn Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.28 2019/09/04 07:28:27 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -427,6 +427,9 @@ lka_report_smtp_filter_response(const char *direction, struct timeval *tv, uint6
 	switch (response) {
 	case FILTER_PROCEED:
 		response_name = "proceed";
+		break;
+	case FILTER_JUNK:
+		response_name = "junk";
 		break;
 	case FILTER_REWRITE:
 		response_name = "rewrite";

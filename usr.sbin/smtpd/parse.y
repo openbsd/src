@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.259 2019/08/25 03:40:45 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.260 2019/09/04 07:28:27 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1297,6 +1297,21 @@ REJECT STRING {
 | REWRITE STRING {
 	filter_config->rewrite = $2;
 }
+| JUNK {
+	filter_config->junk = 1;
+}
+;
+
+filter_action_builtin_nojunk:
+REJECT STRING {
+	filter_config->reject = $2;
+}
+| DISCONNECT STRING {
+	filter_config->disconnect = $2;
+}
+| REWRITE STRING {
+	filter_config->rewrite = $2;
+}
 ;
 
 filter_phase_check_fcrdns:
@@ -1508,7 +1523,7 @@ NOOP {
 filter_phase_commit:
 COMMIT {
 	filter_config->phase = FILTER_COMMIT;
-} MATCH filter_phase_commit_options filter_action_builtin
+} MATCH filter_phase_commit_options filter_action_builtin_nojunk
 ;
 
 

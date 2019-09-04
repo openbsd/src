@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.633 2019/08/28 15:50:36 martijn Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.634 2019/09/04 07:28:27 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1046,6 +1046,7 @@ struct filter_config {
 	char                           *reject;
 	char                           *disconnect;
 	char                           *rewrite;
+	uint8_t				junk;
 	char                           *proc;
 
 	const char		      **chain;
@@ -1095,6 +1096,7 @@ enum filter_status {
 	FILTER_REWRITE,
 	FILTER_REJECT,
 	FILTER_DISCONNECT,
+	FILTER_JUNK,
 };
 
 enum ca_resp_status {
