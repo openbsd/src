@@ -6,7 +6,7 @@ import os
 from addr import *
 from scapy.all import *
 
-arp=ARP(op='who-has', hwsrc=LOCAL_MAC, psrc=OTHERFAKE_ADDR,
+arp=ARP(op='who-has', hwsrc=LOCAL_MAC, psrc=OTHER_FAKE_ADDR,
     hwdst="ff:ff:ff:ff:ff:ff", pdst=REMOTE_ADDR)
 eth=Ether(src=LOCAL_MAC, dst="ff:ff:ff:ff:ff:ff")/arp
 

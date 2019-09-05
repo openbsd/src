@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2019/05/10 02:22:34 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.12 2019/09/05 12:54:00 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -17,7 +17,7 @@ regress:
 # REMOTE is running OpenBSD with ARP to test the Address Resolution Protocol.
 # FAKE is an non existing machine, its IP is used in the tests.
 # OTHER is an IP on REMOTE, but configured on another interface.
-# OTHERFAKE is an non existing IP on another interface.
+# OTHER_FAKE is an non existing IP on another interface.
 # REMOTE_SSH is the hostname to log in on the REMOTE machine.
 
 # Configure Addresses on the machines.
@@ -34,16 +34,16 @@ LOCAL_ADDR ?= 10.188.70.17
 REMOTE_ADDR ?= 10.188.70.70
 FAKE_ADDR ?= 10.188.70.188
 OTHER_ADDR ?= 10.188.211.70
-OTHERFAKE_ADDR ?= 10.188.211.188
+OTHER_FAKE_ADDR ?= 10.188.211.188
 
 .if empty (LOCAL_IF) || empty (LOCAL_MAC) || empty (REMOTE_MAC) || \
     empty (FAKE_MAC) || empty (REMOTE_SSH) || empty (LOCAL_ADDR) || \
     empty (REMOTE_ADDR) || empty (FAKE_ADDR) || empty (OTHER_ADDR) || \
-    empty (OTHERFAKE_ADDR)
+    empty (OTHER_FAKE_ADDR)
 regress:
 	@echo this tests needs a remote machine to operate on
 	@echo LOCAL_IF LOCAL_MAC REMOTE_MAC FAKE_MAC REMOTE_SSH LOCAL_ADDR
-	@echo REMOTE_ADDR FAKE_ADDR OTHER_ADDR OTHERFAKE_ADDR are empty
+	@echo REMOTE_ADDR FAKE_ADDR OTHER_ADDR OTHER_FAKE_ADDR are empty
 	@echo fill out these variables for additional tests
 	@echo SKIPPED
 .endif
@@ -64,7 +64,7 @@ addr.py: Makefile
 .for var in LOCAL REMOTE FAKE
 	echo '${var}_MAC = "${${var}_MAC}"' >>$@.tmp
 .endfor
-.for var in LOCAL REMOTE FAKE OTHER OTHERFAKE
+.for var in LOCAL REMOTE FAKE OTHER OTHER_FAKE
 	echo '${var}_ADDR = "${${var}_ADDR}"' >>$@.tmp
 .endfor
 	mv $@.tmp $@
@@ -241,15 +241,15 @@ run-arp-temporary: addr.py
 	@echo '\n======== $@ ========'
 	@echo Send ARP Request to change temporary entry on other interface
 	ssh ${REMOTE_SSH} logger -t "arp-regress[$$$$]" $@
-	ssh ${REMOTE_SSH} ${SUDO} arp -s ${OTHERFAKE_ADDR} ${FAKE_MAC} temp
+	ssh ${REMOTE_SSH} ${SUDO} arp -s ${OTHER_FAKE_ADDR} ${FAKE_MAC} temp
 	scp ${REMOTE_SSH}:/var/log/messages old.log
 	${SUDO} ${PYTHON}arp_otherfake.py
 	scp ${REMOTE_SSH}:/var/log/messages new.log
 	ssh ${REMOTE_SSH} ${SUDO} arp -an >arp.log
-	ssh ${REMOTE_SSH} ${SUDO} arp -d ${OTHERFAKE_ADDR}
+	ssh ${REMOTE_SSH} ${SUDO} arp -d ${OTHER_FAKE_ADDR}
 	diff old.log new.log | grep '^> ' >diff.log
-	grep 'bsd: arp: attempt to overwrite entry for ${OTHERFAKE_ADDR} on .* by ${LOCAL_MAC} on .*' diff.log
-	grep '^${OTHERFAKE_ADDR} .* ${FAKE_MAC} ' arp.log
+	grep 'bsd: arp: attempt to overwrite entry for ${OTHER_FAKE_ADDR} on .* by ${LOCAL_MAC} on .*' diff.log
+	grep '^${OTHER_FAKE_ADDR} .* ${FAKE_MAC} ' arp.log
 
 # The remote machine has a second address on another interface.  Create
 # an incomplete ARP entry for a fake address in this network on the
@@ -263,15 +263,15 @@ run-arp-incomplete: addr.py
 	@echo '\n======== $@ ========'
 	@echo Send ARP Request filling an incomplete entry on other interface
 	ssh ${REMOTE_SSH} logger -t "arp-regress[$$$$]" $@
-	ssh ${REMOTE_SSH} ${SUDO} ping -n -w 1 -c 1 ${OTHERFAKE_ADDR} || true
+	ssh ${REMOTE_SSH} ${SUDO} ping -n -w 1 -c 1 ${OTHER_FAKE_ADDR} || true
 	scp ${REMOTE_SSH}:/var/log/messages old.log
 	${SUDO} ${PYTHON}arp_otherfake.py
 	scp ${REMOTE_SSH}:/var/log/messages new.log
 	ssh ${REMOTE_SSH} ${SUDO} arp -an >arp.log
-	ssh ${REMOTE_SSH} ${SUDO} arp -d ${OTHERFAKE_ADDR}
+	ssh ${REMOTE_SSH} ${SUDO} arp -d ${OTHER_FAKE_ADDR}
 	diff old.log new.log | grep '^> ' >diff.log
-	grep 'bsd: arp: attempt to add entry for ${OTHERFAKE_ADDR} on .* by ${LOCAL_MAC} on .*' diff.log
-	grep '^${OTHERFAKE_ADDR} .* (incomplete) ' arp.log
+	grep 'bsd: arp: attempt to add entry for ${OTHER_FAKE_ADDR} on .* by ${LOCAL_MAC} on .*' diff.log
+	grep '^${OTHER_FAKE_ADDR} .* (incomplete) ' arp.log
 
 # Publish a proxy ARP entry on the remote machine for a fake address.
 # The local machine requests this IP as a the target.
@@ -313,11 +313,11 @@ REGRESS_TARGETS +=	run-arp-otherproxy
 run-arp-otherproxy: addr.py
 	@echo '\n======== $@ ========'
 	@echo Send ARP Request for address proxied on another interface
-	ssh ${REMOTE_SSH} ${SUDO} arp -s ${OTHERFAKE_ADDR} ${FAKE_MAC} pub
+	ssh ${REMOTE_SSH} ${SUDO} arp -s ${OTHER_FAKE_ADDR} ${FAKE_MAC} pub
 	${SUDO} ${PYTHON}arp_otherproxy.py
 	ssh ${REMOTE_SSH} ${SUDO} arp -an >arp.log
-	ssh ${REMOTE_SSH} ${SUDO} arp -d ${OTHERFAKE_ADDR}
-	grep '^${OTHERFAKE_ADDR} .* ${FAKE_MAC} .* static * p$$' arp.log
+	ssh ${REMOTE_SSH} ${SUDO} arp -d ${OTHER_FAKE_ADDR}
+	grep '^${OTHER_FAKE_ADDR} .* ${FAKE_MAC} .* static * p$$' arp.log
 
 CLEANFILES +=		addr.py *.pyc *.log
 

@@ -7,7 +7,7 @@ from addr import *
 from scapy.all import *
 
 arp=ARP(op='who-has', hwsrc=LOCAL_MAC, psrc=LOCAL_ADDR,
-    hwdst="ff:ff:ff:ff:ff:ff", pdst=OTHERFAKE_ADDR)
+    hwdst="ff:ff:ff:ff:ff:ff", pdst=OTHER_FAKE_ADDR)
 eth=Ether(src=LOCAL_MAC, dst="ff:ff:ff:ff:ff:ff")/arp
 
 e=srp1(eth, iface=LOCAL_IF, timeout=2)
