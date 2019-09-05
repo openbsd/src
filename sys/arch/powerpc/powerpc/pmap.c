@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.170 2019/09/03 14:34:41 deraadt Exp $ */
+/*	$OpenBSD: pmap.c,v 1.171 2019/09/05 03:08:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1633,13 +1633,18 @@ pmap_enable_mmu(void)
 	int i;
 
 	if (!ppc_nobat) {
+		extern caddr_t etext;
+
 		/* DBAT0 used for initial segment */
 		ppc_mtdbat0l(battable[0].batl);
 		ppc_mtdbat0u(battable[0].batu);
 
 		/* IBAT0 only covering the kernel .text */
 		ppc_mtibat0l(battable[0].batl);
-		ppc_mtibat0u(BATU(0x00000000, BAT_BL_8M));
+		if (round_page((vaddr_t)&etext) < 8*1024*1024)
+			ppc_mtibat0u(BATU(0x00000000, BAT_BL_8M));
+		else
+			ppc_mtibat0u(BATU(0x00000000, BAT_BL_16M));
 	}
 
 	for (i = 0; i < 16; i++)
