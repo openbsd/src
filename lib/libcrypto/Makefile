@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.33 2019/03/17 17:42:37 tb Exp $
+# $OpenBSD: Makefile,v 1.34 2019/09/05 16:16:05 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -134,7 +134,7 @@ SRCS+= ecp_nistp224.c ecp_nistp256.c ecp_nistp521.c ecp_nistputil.c
 SRCS+= ecp_oct.c ec2_oct.c ec_oct.c
 
 # ecdh/
-SRCS+= ech_lib.c ech_key.c ech_err.c
+SRCS+= ech_lib.c ech_key.c ech_err.c ecdh_kdf.c
 
 # ecdsa/
 SRCS+= ecs_lib.c ecs_asn1.c ecs_ossl.c ecs_sign.c ecs_vrf.c ecs_err.c
