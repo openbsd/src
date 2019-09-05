@@ -977,3 +977,15 @@ sm4_cfb128	976
 sm4_cfb1	977
 sm4_cfb8	978
 sm4_ctr		979
+dhSinglePass_stdDH_sha1kdf_scheme		980
+dhSinglePass_stdDH_sha224kdf_scheme		981
+dhSinglePass_stdDH_sha256kdf_scheme		982
+dhSinglePass_stdDH_sha384kdf_scheme		983
+dhSinglePass_stdDH_sha512kdf_scheme		984
+dhSinglePass_cofactorDH_sha1kdf_scheme		985
+dhSinglePass_cofactorDH_sha224kdf_scheme	986
+dhSinglePass_cofactorDH_sha256kdf_scheme	987
+dhSinglePass_cofactorDH_sha384kdf_scheme	988
+dhSinglePass_cofactorDH_sha512kdf_scheme	989
+dh_std_kdf	990
+dh_cofactor_kdf	991
