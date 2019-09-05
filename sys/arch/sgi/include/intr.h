@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.51 2018/08/20 15:02:07 visa Exp $ */
+/*	$OpenBSD: intr.h,v 1.52 2019/09/05 05:06:33 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -48,16 +48,20 @@
 /* Interrupt priority `levels'; not mutually exclusive. */
 #define	IPL_NONE	0	/* nothing */
 #define	IPL_SOFTINT	1	/* soft interrupts */
-#define	IPL_BIO		2	/* block I/O */
-#define IPL_AUDIO	IPL_BIO
-#define	IPL_NET		3	/* network */
-#define	IPL_TTY		4	/* terminal */
-#define	IPL_VM		5	/* memory allocation */
-#define	IPL_CLOCK	6	/* clock */
+#define	IPL_SOFTCLOCK	1	/* soft clock interrupts */
+#define	IPL_SOFTNET	2	/* soft network interrupts */
+#define	IPL_SOFTTTY	3	/* soft terminal interrupts */
+#define	IPL_SOFTHIGH	IPL_SOFTTTY	/* highest level of soft interrupts */
+#define	IPL_BIO		4	/* block I/O */
+#define	IPL_AUDIO	IPL_BIO
+#define	IPL_NET		5	/* network */
+#define	IPL_TTY		6	/* terminal */
+#define	IPL_VM		7	/* memory allocation */
+#define	IPL_CLOCK	8	/* clock */
 #define	IPL_SCHED	IPL_CLOCK
-#define	IPL_HIGH	7	/* everything */
-#define	IPL_IPI         8       /* interprocessor interrupt */
-#define	NIPLS		9	/* Number of levels */
+#define	IPL_HIGH	9	/* everything */
+#define	IPL_IPI		10	/* interprocessor interrupt */
+#define	NIPLS		11	/* number of levels */
 
 #define IPL_MPFLOOR	IPL_TTY
 
@@ -75,17 +79,11 @@
 
 /* Soft interrupt masks. */
 
-#define	IPL_SOFT	0
-#define	IPL_SOFTCLOCK	1
-#define	IPL_SOFTNET	2
-#define	IPL_SOFTTTY	3
+#define	SI_SOFTCLOCK	0	/* for IPL_SOFTCLOCK */
+#define	SI_SOFTNET	1	/* for IPL_SOFTNET */
+#define	SI_SOFTTTY	2	/* for IPL_SOFTTTY */
 
-#define	SI_SOFT		0	/* for IPL_SOFT */
-#define	SI_SOFTCLOCK	1	/* for IPL_SOFTCLOCK */
-#define	SI_SOFTNET	2	/* for IPL_SOFTNET */
-#define	SI_SOFTTTY	3	/* for IPL_SOFTTTY */
-
-#define	SI_NQUEUES	4
+#define	SI_NQUEUES	3
 
 #ifndef _LOCORE
 
@@ -112,7 +110,6 @@ void	*softintr_establish(int, void (*)(void *), void *);
 void	 softintr_init(void);
 void	 softintr_schedule(void *);
 
-#define	splsoft()	splraise(IPL_SOFTINT)
 #define splbio()	splraise(IPL_BIO)
 #define splnet()	splraise(IPL_NET)
 #define spltty()	splraise(IPL_TTY)
@@ -122,8 +119,8 @@ void	 softintr_schedule(void *);
 #define splsched()	splraise(IPL_SCHED)
 #define splhigh()	splraise(IPL_HIGH)
 
-#define splsoftclock()	splsoft()
-#define splsoftnet()	splsoft()
+#define splsoftclock()	splraise(IPL_SOFTCLOCK)
+#define splsoftnet()	splraise(IPL_SOFTNET)
 #define splstatclock()	splhigh()
 
 #define spl0()		spllower(0)
