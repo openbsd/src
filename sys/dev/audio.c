@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.180 2019/08/17 05:04:56 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.181 2019/09/05 05:33:57 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -191,6 +191,31 @@ audio_gcd(unsigned int a, unsigned int b)
 		b = r;
 	}
 	return a;
+}
+
+/*
+ * Calculate the least block size (in frames) such that both the
+ * corresponding play and/or record block sizes (in bytes) are multiple
+ * of the given number of bytes.
+ */
+int
+audio_blksz_bytes(int mode,
+	struct audio_params *p, struct audio_params *r, int bytes)
+{
+	unsigned int np, nr;
+
+	if (mode & AUMODE_PLAY) {
+		np = bytes / audio_gcd(p->bps * p->channels, bytes);
+		if (!(mode & AUMODE_RECORD))
+			nr = np;
+	}
+	if (mode & AUMODE_RECORD) {
+		nr = bytes / audio_gcd(r->bps * r->channels, bytes);
+		if (!(mode & AUMODE_PLAY))
+			np = nr;
+	}
+
+	return nr * np / audio_gcd(nr, np);
 }
 
 int
@@ -625,10 +650,18 @@ audio_canstart(struct audio_softc *sc)
 }
 
 int
-audio_setpar_blksz(struct audio_softc *sc)
+audio_setpar_blksz(struct audio_softc *sc,
+    struct audio_params *p, struct audio_params *r)
 {
 	unsigned int nr, np, max, min, mult;
 	unsigned int blk_mult, blk_max;
+
+	if (sc->ops->set_blksz) {
+		sc->round = sc->ops->set_blksz(sc->arg, sc->mode,
+		    p, r, sc->round);
+		DPRINTF("%s: block size set to: %u\n", DEVNAME(sc), sc->round);
+		return 0;
+	}
 
 	/*
 	 * get least multiplier of the number of frames per block
@@ -706,7 +739,8 @@ audio_setpar_blksz(struct audio_softc *sc)
 }
 
 int
-audio_setpar_nblks(struct audio_softc *sc)
+audio_setpar_nblks(struct audio_softc *sc,
+    struct audio_params *p, struct audio_params *r)
 {
 	unsigned int max;
 
@@ -719,6 +753,12 @@ audio_setpar_nblks(struct audio_softc *sc)
 			sc->play.nblks = max;
 		else if (sc->play.nblks < 2)
 			sc->play.nblks = 2;
+		if (sc->ops->set_nblks) {
+			sc->play.nblks = sc->ops->set_nblks(sc->arg, sc->mode,
+			    p, sc->round, sc->play.nblks);
+			DPRINTF("%s: play nblks -> %u\n", DEVNAME(sc),
+			    sc->play.nblks);
+		}
 	}
 	if (sc->mode & AUMODE_RECORD) {
 		/*
@@ -727,6 +767,11 @@ audio_setpar_nblks(struct audio_softc *sc)
 		 * size of maximum reliability during xruns
 		 */
 		max = sc->rec.datalen / (sc->round * sc->rchan * sc->bps);
+		if (sc->ops->set_nblks) {
+			max = sc->ops->set_nblks(sc->arg, sc->mode,
+			    r, sc->round, max);
+			DPRINTF("%s: rec nblks -> %u\n", DEVNAME(sc), max);
+		}
 		sc->rec.nblks = max;
 	}
 	return 0;
@@ -874,11 +919,11 @@ audio_setpar(struct audio_softc *sc)
 	}
 	audio_calc_sil(sc);
 
-	error = audio_setpar_blksz(sc);
+	error = audio_setpar_blksz(sc, &p, &r);
 	if (error)
 		return error;
 
-	error = audio_setpar_nblks(sc);
+	error = audio_setpar_nblks(sc, &p, &r);
 	if (error)
 		return error;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.35 2019/03/12 08:16:29 ratchov Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.36 2019/09/05 05:33:57 ratchov Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -133,6 +133,10 @@ struct audio_hw_if {
 		    void (*)(void *), void *, struct audio_params *);
 	void	(*copy_output)(void *, size_t);
 	void	(*underrun)(void *);
+	unsigned int (*set_blksz)(void *, int,
+	    struct audio_params *, struct audio_params *, unsigned int);
+	unsigned int (*set_nblks)(void *, int,
+	    struct audio_params *, unsigned int, unsigned int);
 };
 
 struct audio_attach_args {
@@ -149,6 +153,8 @@ struct audio_attach_args {
 /* Attach the MI driver(s) to the MD driver. */
 struct device *audio_attach_mi(struct audio_hw_if *, void *, struct device *);
 int	       audioprint(void *, const char *);
+int	       audio_blksz_bytes(int,
+		   struct audio_params *, struct audio_params *, int);
 
 extern struct mutex audio_lock;
 
