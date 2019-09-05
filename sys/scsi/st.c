@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.142 2019/09/05 02:37:17 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.143 2019/09/05 03:04:45 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -219,7 +219,6 @@ struct st_softc {
 	int blkmin;		/* min blk size                       */
 	int blkmax;		/* max blk size                       */
 
-	u_int64_t numblks;		/* nominal blocks capacity            */
 	u_int32_t media_blksize;	/* 0 if not ST_FIXEDBLOCKS            */
 	u_int32_t media_density;	/* this is what it said when asked    */
 	int media_fileno;		/* relative to BOT. -1 means unknown. */
@@ -586,7 +585,7 @@ st_mount_tape(dev_t dev, int flags)
 
 	/*
 	 * Load the media dependent parameters
-	 * includes: media_blksize,media_density,numblks
+	 * includes: media_blksize,media_density
 	 * As we have a tape in, it should be reflected here.
 	 * If not you may need the "quirk" above.
 	 */
@@ -1426,7 +1425,6 @@ st_mode_sense(struct st_softc *st, int flags)
 	else
 		CLR(link->flags, SDEV_READONLY);
 
-	st->numblks = block_count;
 	st->media_blksize = block_size;
 	st->media_density = density;
 
