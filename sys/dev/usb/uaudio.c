@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.145 2019/08/25 09:16:04 miko Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.146 2019/09/05 05:38:40 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -403,7 +403,8 @@ int uaudio_open(void *, int);
 void uaudio_close(void *);
 int uaudio_set_params(void *, int, int, struct audio_params *,
     struct audio_params *);
-int uaudio_round_blocksize(void *, int);
+unsigned int uaudio_set_blksz(void *, int,
+    struct audio_params *, struct audio_params *, unsigned int);
 int uaudio_trigger_output(void *, void *, void *, int,
     void (*)(void *), void *, struct audio_params *);
 int uaudio_trigger_input(void *, void *, void *, int,
@@ -457,7 +458,7 @@ struct audio_hw_if uaudio_hw_if = {
 	uaudio_open,		/* open */
 	uaudio_close,		/* close */
 	uaudio_set_params,	/* set_params */
-	uaudio_round_blocksize,	/* round_blocksize */
+	NULL,			/* round_blocksize */
 	NULL,			/* commit_settings */
 	NULL,			/* init_output */
 	NULL,			/* init_input */
@@ -477,7 +478,8 @@ struct audio_hw_if uaudio_hw_if = {
 	uaudio_trigger_output,	/* trigger_output */
 	uaudio_trigger_input,	/* trigger_input */
 	uaudio_copy_output,	/* copy_output */
-	uaudio_underrun		/* underrun */
+	uaudio_underrun,	/* underrun */
+	uaudio_set_blksz	/* set_blksz */
 };
 
 /*
@@ -3962,57 +3964,43 @@ uaudio_set_params(void *self, int setmode, int usemode,
 	return 0;
 }
 
-int
-uaudio_round_blocksize(void *self, int blksz)
+unsigned int
+uaudio_set_blksz(void *self, int mode,
+    struct audio_params *p, struct audio_params *r, unsigned int blksz)
 {
 	struct uaudio_softc *sc = self;
-	struct uaudio_alt *a;
-	unsigned int rbpf, pbpf;
-	unsigned int blksz_max;
+	unsigned int fps, fps_min;
+	unsigned int blksz_max, blksz_min;
 
 	/*
-	 * XXX: We don't know if we're called for the play or record
-	 * direction, so we can't calculate maximum blksz. This would
-	 * require a change in the audio(9) interface. Meanwhile, we
-	 * use the direction with the greatest sample size; it gives
-	 * the correct result: indeed, if we return:
-	 *
-	 *	blksz_max = max(pbpf, rbpf) * nsamp_max
-	 *
-	 * in turn the audio(4) layer will use:
-	 *
-	 *	min(blksz_max / pbpf, blksz_max / rbpf)
-	 *
-	 * which is exactly nsamp_max.
+	 * minimum block size is two transfers, see uaudio_stream_open()
 	 */
-
-	if (sc->mode & AUMODE_PLAY) {
-		a = sc->params->palt;
-		pbpf = a->bps * a->nch;
-	} else
-		pbpf = 1;
-
-	if (sc->mode & AUMODE_RECORD) {
-		a = sc->params->ralt;
-		rbpf = a->bps * a->nch;
-	} else
-		rbpf = 1;
+	fps_min = sc->ufps;
+	if (mode & AUMODE_PLAY) {
+		fps = sc->params->palt->fps;
+		if (fps_min > fps)
+			fps_min = fps;
+	}
+	if (mode & AUMODE_RECORD) {
+		fps = sc->params->ralt->fps;
+		if (fps_min > fps)
+			fps_min = fps;
+	}
+	blksz_min = (sc->rate * 2 + fps_min - 1) / fps_min;
 
 	/*
-	 * Limit the block size to (slightly more than):
-	 *
-	 *	sc->host_nframes / UAUDIO_NXFERS_MIN
-	 *
-	 * (micro-)frames of audio. Transfers are slightly larger than
-	 * the audio block size (few bytes to make the "safe" block
-	 * size plus one extra millisecond). We reserve an extra 15%
-	 * for that.
+	 * max block size is only limited by the number of frames the
+	 * host can schedule
 	 */
-	blksz_max = (pbpf > rbpf ? pbpf : rbpf) *
-	    sc->rate * (sc->host_nframes / UAUDIO_NXFERS_MIN) / sc->ufps *
-	    85 / 100;
+	blksz_max = sc->rate * (sc->host_nframes / UAUDIO_NXFERS_MIN) /
+	    sc->ufps * 85 / 100;
 
-	return blksz < blksz_max ? blksz : blksz_max;
+	if (blksz > blksz_max)
+		blksz = blksz_max;
+	else if (blksz < blksz_min)
+		blksz = blksz_min;
+
+	return blksz;
 }
 
 int
