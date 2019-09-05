@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.21 2019/09/05 05:06:33 visa Exp $ */
+/*	$OpenBSD: intr.h,v 1.22 2019/09/05 05:31:38 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -127,8 +127,24 @@ void	 softintr_schedule(void *);
 
 void	splinit(void);
 
+#ifdef DIAGNOSTIC
+/*
+ * Although this function is implemented in MI code, it must be in this MD
+ * header because we don't want this header to include MI includes.
+ */
+void splassert_fail(int, int, const char *);
+extern int splassert_ctl;
+void splassert_check(int, const char *);
+#define	splassert(__wantipl) do {				\
+	if (splassert_ctl > 0) {				\
+		splassert_check(__wantipl, __func__);		\
+	}							\
+} while (0)
+#define	splsoftassert(wantipl)	splassert(wantipl)
+#else
 #define	splassert(X)
 #define	splsoftassert(X)
+#endif
 
 void	register_splx_handler(void (*)(int));
 int	splraise(int);

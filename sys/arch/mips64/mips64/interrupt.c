@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.72 2019/09/05 05:06:33 visa Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.73 2019/09/05 05:31:38 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -247,3 +247,17 @@ spllower(int newipl)
 	splx(newipl);
 	return oldipl;
 }
+
+#ifdef DIAGNOSTIC
+void
+splassert_check(int wantipl, const char *func)
+{
+	struct cpu_info *ci = curcpu();
+
+	if (ci->ci_ipl < wantipl)
+		splassert_fail(wantipl, ci->ci_ipl, func);
+
+	if (wantipl == IPL_NONE && ci->ci_intrdepth != 0)
+		splassert_fail(-1, ci->ci_intrdepth, func);
+}
+#endif
