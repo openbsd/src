@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2019/09/05 02:44:36 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2019/09/05 18:27:19 bluhm Exp $
 
 PROGS =			mcsend mcrecv mcroute
 WARNINGS =		Yes
@@ -15,14 +15,14 @@ OTHER =		${OTHER_ADDR}
 TARGET =	${TARGET_ADDR}
 GROUP_LOCAL =	224.0.0.123
 
-REGRESS_SETUP_ONCE =	setup-sudo
-setup-sudo:
-	${SUDO} true
-.if ! empty(REMOTE_SSH)
+.if make (regress) || make (all)
+.BEGIN:
+.if ! empty (REMOTE_SSH)
 	ssh -t ${REMOTE_SSH} ${SUDO} true
 .endif
 .if ! empty(TARGET_SSH)
 	ssh -t ${TARGET_SSH} ${SUDO} true
+.endif
 .endif
 
 REGRESS_TARGETS +=	run-localhost

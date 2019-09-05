@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/09/05 02:44:36 bluhm Exp $
+# $OpenBSD: Makefile,v 1.3 2019/09/05 18:27:19 bluhm Exp $
 
 PROGS =			mc6send mc6recv mc6route
 WARNINGS =		Yes
@@ -19,14 +19,14 @@ GROUP_LOCAL =	ff02::123
 # due to wrong scope id.  This has to be investigated.
 REGRESS_EXPECTED_FAILURES = run-localhost-local
 
-REGRESS_SETUP_ONCE =	setup-sudo
-setup-sudo:
-	${SUDO} true
-.if ! empty(REMOTE_SSH)
+.if make (regress) || make (all)
+.BEGIN:
+.if ! empty (REMOTE_SSH)
 	ssh -t ${REMOTE_SSH} ${SUDO} true
 .endif
 .if ! empty(TARGET_SSH)
 	ssh -t ${TARGET_SSH} ${SUDO} true
+.endif
 .endif
 
 REGRESS_TARGETS +=	run-localhost
