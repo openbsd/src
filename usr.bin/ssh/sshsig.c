@@ -656,7 +656,7 @@ sshsigopt_parse(const char *opts, const char *path, u_long linenum,
  fail:
 	if (errstrp != NULL)
 		*errstrp = errstr;
-	free(ret);
+	sshsigopt_free(ret);
 	return NULL;
 }
 
