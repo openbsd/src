@@ -1,3 +1,4 @@
+/*	$OpenBSD: bcm2835_dog.c,v 1.2 2019/09/05 16:58:36 patrick Exp $	*/
 /*
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
  *
