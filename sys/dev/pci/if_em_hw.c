@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.103 2019/09/05 08:41:20 sf Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.104 2019/09/05 20:47:49 kettenis Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -5734,7 +5734,7 @@ em_match_gig_phy(struct em_hw *hw)
 STATIC int32_t
 em_detect_gig_phy(struct em_hw *hw)
 {
-	int32_t ret_val;
+	int32_t ret_val, i;
 	DEBUGFUNC("em_detect_gig_phy");
 
 	if (hw->phy_id != 0)
@@ -5810,7 +5810,7 @@ em_detect_gig_phy(struct em_hw *hw)
 	}
 
 	/* Read the PHY ID Registers to identify which PHY is onboard. */
-	for (int i = 1; i < 4; i++) {
+	for (i = 1; i < 4; i++) {
 		/*
 		 * hw->phy_addr may be modified down in the call stack,
 		 * we can't use it as loop variable.
