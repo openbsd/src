@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.141 2019/09/04 23:40:28 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.142 2019/09/05 02:37:17 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -186,7 +186,28 @@ const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 struct st_softc {
 	struct device sc_dev;
 
-	int flags;		/* see below                          */
+	int flags;
+#define	ST_INFO_VALID		0x00000001
+#define	ST_BLOCK_SET		0x00000002
+#define	ST_WRITTEN		0x00000004
+#define	ST_FIXEDBLOCKS		0x00000008
+#define	ST_AT_FILEMARK		0x00000010
+#define	ST_EIO_PENDING		0x00000020
+#define	ST_EOM_PENDING  	0x00000040
+#define	ST_EOD_DETECTED		0x00000080
+#define	ST_FM_WRITTEN		0x00000100
+#define	ST_BLANK_READ		0x00000200
+#define	ST_2FM_AT_EOD		0x00000400
+#define	ST_MOUNTED		0x00000800
+#define	ST_DONTBUFFER		0x00001000
+#define	ST_WAITING		0x00002000
+#define	ST_DYING		0x00004000
+#define	ST_BOD_DETECTED		0x00008000
+#define	ST_USER_DENSITY		0x00010000
+#define	ST_QUIRK_DENSITY	0x00020000
+#define	ST_USER_BLKSIZE		0x00040000
+#define	ST_QUIRK_BLKSIZE	0x00080000
+
 	u_int quirks;		/* quirks for the open mode           */
 	int blksize;		/* blksize we are using               */
 	u_int8_t density;	/* present density                    */
@@ -205,13 +226,7 @@ struct st_softc {
 	int media_blkno;		/* relative to BOF. -1 means unknown. */
 	int media_eom;			/* relative to BOT. -1 means unknown. */
 
-	struct modes modes;	/* plus more for each mode            */
-	u_int8_t  modeflags;	/* flags for the modes                */
-#define DENSITY_SET_BY_USER	0x01
-#define DENSITY_SET_BY_QUIRK	0x02
-#define BLKSIZE_SET_BY_USER	0x04
-#define BLKSIZE_SET_BY_QUIRK	0x08
-
+	struct modes modes;
 	struct bufq sc_bufq;
 	struct timeout sc_timeout;
 	struct scsi_xshandler sc_xsh;
@@ -251,27 +266,6 @@ struct cfattach st_ca = {
 struct cfdriver st_cd = {
 	NULL, "st", DV_TAPE
 };
-
-#define	ST_INFO_VALID	0x0001
-#define	ST_BLOCK_SET	0x0002	/* block size, mode set by ioctl      */
-#define	ST_WRITTEN	0x0004	/* data have been written, EOD needed */
-#define	ST_FIXEDBLOCKS	0x0008
-#define	ST_AT_FILEMARK	0x0010
-#define	ST_EIO_PENDING	0x0020	/* we couldn't report it then (had data) */
-#define	ST_EOM_PENDING	0x0040	/* we couldn't report it then (had data) */
-#define ST_EOD_DETECTED	0x0080
-#define	ST_FM_WRITTEN	0x0100	/*
-				 * EOF file mark written  -- used with
-				 * ~ST_WRITTEN to indicate that multiple file
-				 * marks have been written
-				 */
-#define	ST_BLANK_READ	0x0200	/* BLANK CHECK encountered already */
-#define	ST_2FM_AT_EOD	0x0400	/* write 2 file marks at EOD */
-#define	ST_MOUNTED	0x0800	/* Device is presently mounted */
-#define	ST_DONTBUFFER	0x1000	/* Disable buffering/caching */
-#define ST_WAITING	0x2000
-#define	ST_DYING	0x4000	/* dying, when deactivated */
-#define ST_BOD_DETECTED	0x8000
 
 #define	ST_PER_ACTION	(ST_AT_FILEMARK | ST_EIO_PENDING | ST_EOM_PENDING | \
 			 ST_BLANK_READ)
@@ -394,13 +388,12 @@ st_identify_drive(struct st_softc *st, struct scsi_inquiry_data *inqbuf)
 	if (priority != 0) {
 		st->quirks = finger->quirkdata.quirks;
 		st->modes = finger->quirkdata.modes;
-		st->modeflags &= ~(BLKSIZE_SET_BY_QUIRK |
-		    DENSITY_SET_BY_QUIRK | BLKSIZE_SET_BY_USER |
-		    DENSITY_SET_BY_USER);
+		st->flags &= ~(ST_QUIRK_BLKSIZE | ST_QUIRK_DENSITY |
+		    ST_USER_BLKSIZE | ST_USER_DENSITY);
 		if (st->quirks & ST_Q_FORCE_BLKSIZE)
-			st->modeflags |= BLKSIZE_SET_BY_QUIRK;
+			st->flags |= ST_QUIRK_BLKSIZE;
 		if (st->modes.density != 0)
-			st->modeflags |= DENSITY_SET_BY_QUIRK;
+			st->flags |= ST_QUIRK_DENSITY;
 	}
 }
 
@@ -605,7 +598,7 @@ st_mount_tape(dev_t dev, int flags)
 	 * then use it in preference to the one supplied by
 	 * default by the driver.
 	 */
-	if (st->modeflags & (DENSITY_SET_BY_QUIRK | DENSITY_SET_BY_USER))
+	if (st->flags & (ST_QUIRK_DENSITY | ST_USER_DENSITY))
 		st->density = st->modes.density;
 	else
 		st->density = st->media_density;
@@ -615,7 +608,7 @@ st_mount_tape(dev_t dev, int flags)
 	 * default by the driver.
 	 */
 	st->flags &= ~ST_FIXEDBLOCKS;
-	if (st->modeflags & (BLKSIZE_SET_BY_QUIRK | BLKSIZE_SET_BY_USER)) {
+	if (st->flags & (ST_QUIRK_BLKSIZE | ST_USER_BLKSIZE)) {
 		st->blksize = st->modes.blksize;
 		if (st->blksize)
 			st->flags |= ST_FIXEDBLOCKS;
@@ -1289,11 +1282,11 @@ try_new_value:
 	switch (mt->mt_op) {
 	case MTSETBSIZ:
 		st->modes.blksize = st->blksize;
-		st->modeflags |= BLKSIZE_SET_BY_USER;
+		st->flags |= ST_USER_BLKSIZE;
 		break;
 	case MTSETDNSTY:
 		st->modes.density = st->density;
-		st->modeflags |= DENSITY_SET_BY_USER;
+		st->flags |= ST_USER_DENSITY;
 		break;
 	}
 
