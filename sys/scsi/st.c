@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.144 2019/09/05 17:35:28 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.145 2019/09/05 18:49:03 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -120,20 +120,12 @@ const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
  	{{T_SEQUENTIAL, T_REMOV,
 		 "TANDBERG", " TDC 3800       ", ""},     {ST_Q_FORCE_BLKSIZE,
 							   {512, 0}}},
-	/*
-	 * At least -005 and -007 need this.  I'll assume they all do unless I
-	 * hear otherwise.  - mycroft, 31MAR1994
-	 */
 	{{T_SEQUENTIAL, T_REMOV,
 		 "ARCHIVE ", "VIPER 2525 25462", ""},     {ST_Q_SENSE_HELP,
 							   {0, 0}}},
-	/*
-	 * One user reports that this works for his tape drive.  It probably
-	 * needs more work.  - mycroft, 09APR1994
-	 */
 	{{T_SEQUENTIAL, T_REMOV,
-		 "SANKYO  ", "CP525           ", ""},    {ST_Q_FORCE_BLKSIZE,
-							  {512, 0}}},
+		 "SANKYO  ", "CP525           ", ""},     {ST_Q_FORCE_BLKSIZE,
+							   {512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
 		 "ANRITSU ", "DMT780          ", ""},     {ST_Q_FORCE_BLKSIZE,
 							   {512, 0}}},
@@ -141,17 +133,17 @@ const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		 "ARCHIVE ", "VIPER 150  21531", ""},     {ST_Q_SENSE_HELP,
 							   {0, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-		 "WANGTEK ", "5099ES SCSI", ""},          {ST_Q_FORCE_BLKSIZE,
+		 "WANGTEK ", "5099ES SCSI",	 ""},     {ST_Q_FORCE_BLKSIZE,
 							   {512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-		 "WANGTEK ", "5150ES SCSI", ""},          {ST_Q_FORCE_BLKSIZE,
+		 "WANGTEK ", "5150ES SCSI",	 ""},     {ST_Q_FORCE_BLKSIZE,
 							   {512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
 		 "HP      ", "T4000s          ", ""},     {ST_Q_UNIMODAL,
 							   {0, QIC_3095}}},
 	{{T_SEQUENTIAL, T_REMOV,
-		 "WANGTEK ", "5150ES SCSI FA15\0""01 A", "????"}, {ST_Q_IGNORE_LOADS,
-								   {0, 0}}},
+		 "WANGTEK ", "5150ES SCSI FA15", "01 A"}, {ST_Q_IGNORE_LOADS,
+							   {0, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
 		 "TEAC    ", "MT-2ST/N50      ", ""},     {ST_Q_IGNORE_LOADS,
 							   {0, 0}}},
