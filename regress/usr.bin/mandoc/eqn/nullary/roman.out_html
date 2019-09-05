@@ -1,15 +1,5 @@
 <mrow><mrow><mi>unquoted
-words:</mi></mrow><mi>sin</mi><mi>cos</mi><mi>tan</mi>
-<mi>sec</mi><mi>csc</mi>
-<mi>asin</mi><mi>acos</mi><mi>atan</mi><mi>asec</mi>
-<mi>acsc</mi><mi>sinh</mi>
-<mi>cosh</mi><mi>tanh</mi><mi>coth</mi><mi>arc</mi>
-<mi>max</mi><mi>min</mi><mi>lim</mi><mi>log</mi><mi>ln</mi><mi>exp</mi><mi>Re</mi><mi>Im</mi><mi>and</mi><mi>if</mi><mi>for</mi><mi>det</mi><mo>&#x2014;</mo><mrow><mi>quoted
-words:</mi></mrow>
-<mi fontstyle="italic">sin</mi><mi fontstyle="italic">cos</mi>
-<mi fontstyle="italic">tan</mi><mi fontstyle="italic">sec</mi><mi fontstyle="italic">csc</mi><mi fontstyle="italic">asin</mi><mi fontstyle="italic">acos</mi><mi fontstyle="italic">atan</mi><mi fontstyle="italic">asec</mi><mi fontstyle="italic">acsc</mi><mi fontstyle="italic">sinh</mi><mi fontstyle="italic">cosh</mi><mi fontstyle="italic">tanh</mi><mi fontstyle="italic">coth</mi><mi fontstyle="italic">arc</mi><mi fontstyle="italic">max</mi><mi fontstyle="italic">min</mi><mi fontstyle="italic">lim</mi><mi fontstyle="italic">log</mi><mi fontstyle="italic">ln</mi><mi fontstyle="italic">exp</mi><mi fontstyle="italic">Re</mi><mi fontstyle="italic">Im</mi><mi fontstyle="italic">and</mi><mi fontstyle="italic">if</mi><mi fontstyle="italic">for</mi><mi fontstyle="italic">det</mi><mo>&#x2014;</mo><mrow><mi>font
-operations:</mi></mrow>
-<mrow><mi>sin</mi></mrow><mrow><mi fontweight="bold">sin</mi></mrow><mo>&#x2014;</mo><mrow><mi>superstring:</mi></mrow><mi fontstyle="italic">sinus</mi><mo>&#x2014;</mo><mrow><mi>composite
-word:</mi></mrow>
-<mi>tan</mi><mo>=</mo><mi fontstyle="italic">sin</mi><mo>/</mo>
-<mi fontstyle="italic">cos</mi></mrow>
+words:</mi></mrow><mi>sin</mi><mi>cos</mi><mi>tan</mi><mi>sec</mi><mi>csc</mi><mi>asin</mi><mi>acos</mi><mi>atan</mi><mi>asec</mi><mi>acsc</mi><mi>sinh</mi><mi>cosh</mi><mi>tanh</mi><mi>coth</mi><mi>arc</mi><mi>max</mi><mi>min</mi><mi>lim</mi><mi>log</mi><mi>ln</mi><mi>exp</mi><mi>Re</mi><mi>Im</mi><mi>and</mi><mi>if</mi><mi>for</mi><mi>det</mi><mo>&#x2014;</mo><mrow><mi>quoted
+words:</mi></mrow><mi fontstyle="italic">sin</mi><mi fontstyle="italic">cos</mi><mi fontstyle="italic">tan</mi><mi fontstyle="italic">sec</mi><mi fontstyle="italic">csc</mi><mi fontstyle="italic">asin</mi><mi fontstyle="italic">acos</mi><mi fontstyle="italic">atan</mi><mi fontstyle="italic">asec</mi><mi fontstyle="italic">acsc</mi><mi fontstyle="italic">sinh</mi><mi fontstyle="italic">cosh</mi><mi fontstyle="italic">tanh</mi><mi fontstyle="italic">coth</mi><mi fontstyle="italic">arc</mi><mi fontstyle="italic">max</mi><mi fontstyle="italic">min</mi><mi fontstyle="italic">lim</mi><mi fontstyle="italic">log</mi><mi fontstyle="italic">ln</mi><mi fontstyle="italic">exp</mi><mi fontstyle="italic">Re</mi><mi fontstyle="italic">Im</mi><mi fontstyle="italic">and</mi><mi fontstyle="italic">if</mi><mi fontstyle="italic">for</mi><mi fontstyle="italic">det</mi><mo>&#x2014;</mo><mrow><mi>font
+operations:</mi></mrow><mrow><mi>sin</mi></mrow><mrow><mi fontweight="bold">sin</mi></mrow><mo>&#x2014;</mo><mrow><mi>superstring:</mi></mrow><mi fontstyle="italic">sinus</mi><mo>&#x2014;</mo><mrow><mi>composite
+word:</mi></mrow><mi>tan</mi><mo>=</mo><mi fontstyle="italic">sin</mi><mo>/</mo><mi fontstyle="italic">cos</mi></mrow>
