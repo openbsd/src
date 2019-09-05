@@ -106,7 +106,7 @@ ecdh_KDF_X9_63(unsigned char *out, size_t outlen, const unsigned char *Z,
 			if (!EVP_DigestFinal(mctx, mtmp, NULL))
 				goto err;
 			memcpy(out, mtmp, outlen);
-			OPENSSL_cleanse(mtmp, mdlen);
+			explicit_bzero(mtmp, mdlen);
 			break;
 		}
 	}
