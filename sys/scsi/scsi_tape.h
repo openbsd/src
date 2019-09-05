@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_tape.h,v 1.9 2015/06/07 19:13:27 krw Exp $	*/
+/*	$OpenBSD: scsi_tape.h,v 1.10 2019/09/05 13:22:31 krw Exp $	*/
 /*	$NetBSD: scsi_tape.h,v 1.9 1996/05/24 02:04:47 thorpej Exp $	*/
 
 /*
@@ -173,17 +173,6 @@ struct scsi_tape_dev_conf_page {
 #define	SMH_DSP_BUFF_MODE_OFF	0x00
 #define	SMH_DSP_BUFF_MODE_ON	0x10
 #define	SMH_DSP_BUFF_MODE_MLTI	0x20
-
-/* A special for the CIPHER ST150S(old drive) */
-struct block_desc_cipher {
-	u_int8_t density;
-	u_int8_t nblocks[3];
-	u_int8_t reserved;
-	u_int8_t blklen[3];
-	u_int8_t other;
-#define ST150_SEC		0x01	/* soft error count */
-#define	SR150_AUI		0x02	/* autoload inhibit */
-};
 
 /**********************************************************************
 			from the scsi2 spec
