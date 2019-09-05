@@ -1,9 +1,19 @@
-# $OpenBSD: Makefile,v 1.2 2019/09/03 00:00:04 bluhm Exp $
+# $OpenBSD: Makefile,v 1.3 2019/09/05 02:44:36 bluhm Exp $
 
 PROGS =			mcsend mcrecv mcroute
 WARNINGS =		Yes
 CLEANFILES =		stamp-* *.log
 MSG !!=			echo $$RANDOM
+
+SEND =		${.OBJDIR}/mcsend
+RECV =		${.OBJDIR}/mcrecv
+ROUTE =		${.OBJDIR}/mcroute
+LOCALHOST =	127.0.0.1
+LOCAL =		${LOCAL_ADDR}
+REMOTE =	${REMOTE_ADDR}
+OTHER =		${OTHER_ADDR}
+TARGET =	${TARGET_ADDR}
+GROUP_LOCAL =	224.0.0.123
 
 REGRESS_SETUP_ONCE =	setup-sudo
 setup-sudo:
@@ -19,8 +29,8 @@ REGRESS_TARGETS +=	run-localhost
 run-localhost:
 	@echo '\n======== $@ ========'
 	# send over localhost interface
-	./mcrecv -f recv.log -i 127.0.0.1 -r 5 -- \
-	./mcsend -f send.log -i 127.0.0.1 -m '${MSG}'
+	${RECV} -f recv.log -i ${LOCALHOST} -r 5 -- \
+	${SEND} -f send.log -i ${LOCALHOST} -m '${MSG}'
 	grep '> ${MSG}$$' send.log
 	grep '< ${MSG}$$' recv.log
 
@@ -28,8 +38,8 @@ REGRESS_TARGETS +=	run-localhost-loop
 run-localhost-loop:
 	@echo '\n======== $@ ========'
 	# explicitly enable loop back on multicast interface
-	./mcrecv -f recv.log -i 127.0.0.1 -r 5 -- \
-	./mcsend -f send.log -i 127.0.0.1 -l 1 -m '${MSG}'
+	${RECV} -f recv.log -i ${LOCALHOST} -r 5 -- \
+	${SEND} -f send.log -i ${LOCALHOST} -l 1 -m '${MSG}'
 	grep '> ${MSG}$$' send.log
 	grep '< ${MSG}$$' recv.log
 
@@ -37,8 +47,8 @@ REGRESS_TARGETS +=	run-localhost-loop0
 run-localhost-loop0:
 	@echo '\n======== $@ ========'
 	# disable loop back on multicast interface, must fail
-	./mcrecv -f recv.log -i 127.0.0.1 -n 1 -- \
-	./mcsend -f send.log -i 127.0.0.1 -l 0 -m '${MSG}'
+	${RECV} -f recv.log -i ${LOCALHOST} -n 1 -- \
+	${SEND} -f send.log -i ${LOCALHOST} -l 0 -m '${MSG}'
 	grep '> ${MSG}$$' send.log
 	! grep '< ' recv.log
 
@@ -46,8 +56,17 @@ REGRESS_TARGETS +=	run-localhost-ttl0
 run-localhost-ttl0:
 	@echo '\n======== $@ ========'
 	# send over localhost interface
-	./mcrecv -f recv.log -i 127.0.0.1 -r 5 -- \
-	./mcsend -f send.log -i 127.0.0.1 -m '${MSG}' -t 0
+	${RECV} -f recv.log -i ${LOCALHOST} -r 5 -- \
+	${SEND} -f send.log -i ${LOCALHOST} -m '${MSG}' -t 0
+	grep '> ${MSG}$$' send.log
+	grep '< ${MSG}$$' recv.log
+
+REGRESS_TARGETS +=	run-localhost-local
+run-localhost-local:
+	@echo '\n======== $@ ========'
+	# send over localhost interface
+	${RECV} -f recv.log -g ${GROUP_LOCAL} -i ${LOCALHOST} -r 5 -- \
+	${SEND} -f send.log -g ${GROUP_LOCAL} -i ${LOCALHOST} -m '${MSG}' -t 0
 	grep '> ${MSG}$$' send.log
 	grep '< ${MSG}$$' recv.log
 
@@ -55,8 +74,8 @@ REGRESS_TARGETS +=	run-localaddr
 run-localaddr:
 	@echo '\n======== $@ ========'
 	# send over a local physical interface
-	./mcrecv -f recv.log -i ${LOCAL_ADDR} -r 5 -- \
-	./mcsend -f send.log -i ${LOCAL_ADDR} -m '${MSG}'
+	${RECV} -f recv.log -i ${LOCAL} -r 5 -- \
+	${SEND} -f send.log -i ${LOCAL} -m '${MSG}'
 	grep '> ${MSG}$$' send.log
 	grep '< ${MSG}$$' recv.log
 
@@ -64,8 +83,8 @@ REGRESS_TARGETS +=	run-localaddr-loop0
 run-localaddr-loop0:
 	@echo '\n======== $@ ========'
 	# send over physical interface to loopback, ttl is 0
-	./mcrecv -f recv.log -i ${LOCAL_ADDR} -n 1 -- \
-	./mcsend -f send.log -i ${LOCAL_ADDR} -l 0 -m '${MSG}'
+	${RECV} -f recv.log -i ${LOCAL} -n 1 -- \
+	${SEND} -f send.log -i ${LOCAL} -l 0 -m '${MSG}'
 	grep '> ${MSG}$$' send.log
 	! grep '< ' recv.log
 
@@ -73,8 +92,17 @@ REGRESS_TARGETS +=	run-localaddr-ttl0
 run-localaddr-ttl0:
 	@echo '\n======== $@ ========'
 	# send over physical interface to loopback, ttl is 0
-	./mcrecv -f recv.log -i ${LOCAL_ADDR} -r 5 -- \
-	./mcsend -f send.log -i ${LOCAL_ADDR} -m '${MSG}' -t 0
+	${RECV} -f recv.log -i ${LOCAL} -r 5 -- \
+	${SEND} -f send.log -i ${LOCAL} -m '${MSG}' -t 0
+	grep '> ${MSG}$$' send.log
+	grep '< ${MSG}$$' recv.log
+
+REGRESS_TARGETS +=	run-localaddr-local
+run-localaddr-local:
+	@echo '\n======== $@ ========'
+	# send over physical interface to loopback, ttl is 0
+	${RECV} -f recv.log -g ${GROUP_LOCAL} -i ${LOCAL} -r 5 -- \
+	${SEND} -f send.log -g ${GROUP_LOCAL} -i ${LOCAL} -m '${MSG}' -t 0
 	grep '> ${MSG}$$' send.log
 	grep '< ${MSG}$$' recv.log
 
@@ -82,45 +110,45 @@ REGRESS_TARGETS +=	run-remoteaddr
 run-remoteaddr:
 	@echo '\n======== $@ ========'
 	# send over a local physical interface
-	./mcrecv -f recv.log -i ${LOCAL_ADDR} -r 5 -- \
-	ssh ${REMOTE_SSH} ${.OBJDIR}/mcsend -f ${.OBJDIR}/send.log \
-	    -i ${REMOTE_ADDR} -m '${MSG}'
+	${RECV} -f recv.log -i ${LOCAL} -r 5 -- \
+	ssh ${REMOTE_SSH} ${SEND} -f ${.OBJDIR}/send.log \
+	    -i ${REMOTE} -m '${MSG}'
 	grep '< ${MSG}$$' recv.log
 
 REGRESS_TARGETS +=	run-remoteaddr-loop0
 run-remoteaddr-loop0:
 	@echo '\n======== $@ ========'
 	# send over a local physical interface
-	./mcrecv -f recv.log -i ${LOCAL_ADDR} -r 5 -- \
-	ssh ${REMOTE_SSH} ${.OBJDIR}/mcsend -f ${.OBJDIR}/send.log \
-	    -i ${REMOTE_ADDR} -l 0 -m '${MSG}'
+	${RECV} -f recv.log -i ${LOCAL} -r 5 -- \
+	ssh ${REMOTE_SSH} ${SEND} -f ${.OBJDIR}/send.log \
+	    -i ${REMOTE} -l 0 -m '${MSG}'
 	grep '< ${MSG}$$' recv.log
 
 REGRESS_TARGETS +=	run-remoteaddr-ttl0
 run-remoteaddr-ttl0:
 	@echo '\n======== $@ ========'
 	# send over a local physical interface
-	./mcrecv -f recv.log -i ${LOCAL_ADDR} -n 2 -- \
-	ssh ${REMOTE_SSH} ${.OBJDIR}/mcsend -f ${.OBJDIR}/send.log \
-	    -i ${REMOTE_ADDR} -m '${MSG}' -t 0
+	${RECV} -f recv.log -i ${LOCAL} -n 2 -- \
+	ssh ${REMOTE_SSH} ${SEND} -f ${.OBJDIR}/send.log \
+	    -i ${REMOTE} -m '${MSG}' -t 0
 	! grep '< ' recv.log
 
 REGRESS_TARGETS +=	run-forward
 run-forward:
 	@echo '\n======== $@ ========'
 	# start multicast router, start receiver, start sender
-	ssh ${REMOTE_SSH} ${SUDO} pkill mcroute || true
-	ssh ${REMOTE_SSH} ${SUDO} ${.OBJDIR}/mcroute -f ${.OBJDIR}/route.log \
-	    -b -g 224.0.1.123 -i ${OTHER_ADDR} -o ${REMOTE_ADDR} -r 5
+	ssh ${REMOTE_SSH} ${SUDO} pkill mcroute mc6route || true
+	ssh ${REMOTE_SSH} ${SUDO} ${ROUTE} -f ${.OBJDIR}/route.log \
+	    -b -i ${OTHER} -o ${REMOTE} -r 5
 .if empty(TARGET_SSH)
-	./mcrecv -f recv.log -g 224.0.1.123 -i ${LOCAL_ADDR} -r 5 -- \
-	./mcsend -f send.log \
-	    -g 224.0.1.123 -i ${TARGET_ADDR} -l 0 -m '${MSG}' -t 2
+	${RECV} -f recv.log -i ${LOCAL} -r 5 -- \
+	${SEND} -f send.log \
+	    -i ${TARGET} -l 0 -m '${MSG}' -t 2
 	grep '> ${MSG}$$' send.log
 .else
-	./mcrecv -f recv.log -g 224.0.1.123 -i ${LOCAL_ADDR} -r 5 -- \
-	ssh ${TARGET_SSH} ${.OBJDIR}/mcsend -f ${.OBJDIR}/send.log \
-	    -g 224.0.1.123 -i ${TARGET_ADDR} -l 0 -m '${MSG}' -t 2
+	${RECV} -f recv.log -i ${LOCAL} -r 5 -- \
+	ssh ${TARGET_SSH} ${SEND} -f ${.OBJDIR}/send.log \
+	    -i ${TARGET} -l 0 -m '${MSG}' -t 2
 .endif
 	grep '< ${MSG}$$' recv.log
 
@@ -128,18 +156,18 @@ REGRESS_TARGETS +=	run-forward-ttl1
 run-forward-ttl1:
 	@echo '\n======== $@ ========'
 	# try to get ttl 1 over multicast router, must fail
-	ssh ${REMOTE_SSH} ${SUDO} pkill mcroute || true
-	ssh ${REMOTE_SSH} ${SUDO} ${.OBJDIR}/mcroute -f ${.OBJDIR}/route.log \
-	    -b -g 224.0.1.123 -i ${OTHER_ADDR} -o ${REMOTE_ADDR} -n 3
+	ssh ${REMOTE_SSH} ${SUDO} pkill mcroute mc6route || true
+	ssh ${REMOTE_SSH} ${SUDO} ${ROUTE} -f ${.OBJDIR}/route.log \
+	    -b -i ${OTHER} -o ${REMOTE} -n 3
 .if empty(TARGET_SSH)
-	./mcrecv -f recv.log -g 224.0.1.123 -i ${LOCAL_ADDR} -n 2 -- \
-	./mcsend -f send.log \
-	    -g 224.0.1.123 -i ${TARGET_ADDR} -l 0 -m '${MSG}' -t 1
+	${RECV} -f recv.log -i ${LOCAL} -n 2 -- \
+	${SEND} -f send.log \
+	    -i ${TARGET} -l 0 -m '${MSG}' -t 1
 	grep '> ${MSG}$$' send.log
 .else
-	./mcrecv -f recv.log -g 224.0.1.123 -i ${LOCAL_ADDR} -n 2 -- \
-	ssh ${TARGET_SSH} ${.OBJDIR}/mcsend -f ${.OBJDIR}/send.log \
-	    -g 224.0.1.123 -i ${TARGET_ADDR} -l 0 -m '${MSG}' -t 1
+	${RECV} -f recv.log -i ${LOCAL} -n 2 -- \
+	ssh ${TARGET_SSH} ${SEND} -f ${.OBJDIR}/send.log \
+	    -i ${TARGET} -l 0 -m '${MSG}' -t 1
 .endif
 	! grep '< ' recv.log
 
@@ -147,18 +175,18 @@ REGRESS_TARGETS +=	run-forward-local
 run-forward-local:
 	@echo '\n======== $@ ========'
 	# try to get local multicast group over router, must fail
-	ssh ${REMOTE_SSH} ${SUDO} pkill mcroute || true
-	ssh ${REMOTE_SSH} ${SUDO} ${.OBJDIR}/mcroute -f ${.OBJDIR}/route.log \
-	    -b -g 224.0.0.123 -i ${OTHER_ADDR} -o ${REMOTE_ADDR} -n 3
+	ssh ${REMOTE_SSH} ${SUDO} pkill mcroute mc6route || true
+	ssh ${REMOTE_SSH} ${SUDO} ${ROUTE} -f ${.OBJDIR}/route.log \
+	    -b -g ${GROUP_LOCAL} -i ${OTHER} -o ${REMOTE} -n 3
 .if empty(TARGET_SSH)
-	./mcrecv -f recv.log -g 224.0.0.123 -i ${LOCAL_ADDR} -n 2 -- \
-	./mcsend -f send.log \
-	    -g 224.0.0.123 -i ${TARGET_ADDR} -l 0 -m '${MSG}' -t 2
+	${RECV} -f recv.log -g ${GROUP_LOCAL} -i ${LOCAL} -n 2 -- \
+	${SEND} -f send.log \
+	    -g ${GROUP_LOCAL} -i ${TARGET} -l 0 -m '${MSG}' -t 2
 	grep '> ${MSG}$$' send.log
 .else
-	./mcrecv -f recv.log -g 224.0.0.123 -i ${LOCAL_ADDR} -n 2 -- \
-	ssh ${TARGET_SSH} ${.OBJDIR}/mcsend -f ${.OBJDIR}/send.log \
-	    -g 224.0.0.123 -i ${TARGET_ADDR} -l 0 -m '${MSG}' -t 2
+	${RECV} -f recv.log -g ${GROUP_LOCAL} -i ${LOCAL} -n 2 -- \
+	ssh ${TARGET_SSH} ${SEND} -f ${.OBJDIR}/send.log \
+	    -g ${GROUP_LOCAL} -i ${TARGET} -l 0 -m '${MSG}' -t 2
 .endif
 	! grep '< ' recv.log
 
@@ -177,11 +205,16 @@ ${REGRESS_TARGETS:M*-forward*}: stamp-remote-build
 ${REGRESS_TARGETS:M*-forward*}: stamp-target-build
 .endif
 
-.if empty(LOCAL_ADDR)
+.if empty(LOCAL)
 REGRESS_SKIP_TARGETS +=	${REGRESS_TARGETS:M*-localaddr*}
-.endif
-.if empty(REMOTE_ADDR) || empty(REMOTE_SSH)
 REGRESS_SKIP_TARGETS +=	${REGRESS_TARGETS:M*-remoteaddr*}
+REGRESS_SKIP_TARGETS +=	${REGRESS_TARGETS:M*-forward*}
+.endif
+.if empty(REMOTE) || empty(REMOTE_SSH)
+REGRESS_SKIP_TARGETS +=	${REGRESS_TARGETS:M*-remoteaddr*}
+REGRESS_SKIP_TARGETS +=	${REGRESS_TARGETS:M*-forward*}
+.endif
+.if empty(OTHER) || empty(TARGET)
 REGRESS_SKIP_TARGETS +=	${REGRESS_TARGETS:M*-forward*}
 .endif
 

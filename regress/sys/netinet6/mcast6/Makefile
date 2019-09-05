@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2019/09/05 01:50:34 bluhm Exp $
+# $OpenBSD: Makefile,v 1.2 2019/09/05 02:44:36 bluhm Exp $
 
 PROGS =			mc6send mc6recv mc6route
 WARNINGS =		Yes
@@ -15,7 +15,7 @@ OTHER =		${OTHER_IF}
 TARGET =	${TARGET_IF}
 GROUP_LOCAL =	ff02::123
 
-# Currently sending link-local packets via loopback does not work
+# Currently receiving link-local packets via loopback does not work
 # due to wrong scope id.  This has to be investigated.
 REGRESS_EXPECTED_FAILURES = run-localhost-local
 
@@ -224,7 +224,6 @@ REGRESS_SKIP_TARGETS +=	${REGRESS_TARGETS:M*-forward*}
 
 check-setup:
 	! ssh ${REMOTE_SSH} route -n get 224/4
-	ssh ${REMOTE_SSH} sysctl net.inet.ip.mforwarding | fgrep =1
 	ssh ${REMOTE_SSH} sysctl net.inet6.ip6.mforwarding | fgrep =1
 
 .include <bsd.regress.mk>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcsend.c,v 1.1.1.1 2019/09/02 22:17:28 bluhm Exp $	*/
+/*	$OpenBSD: mcsend.c,v 1.2 2019/09/05 02:44:36 bluhm Exp $	*/
 /*
  * Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -47,7 +47,6 @@ int
 main(int argc, char *argv[])
 {
 	struct sockaddr_in sin;
-	struct in_addr addr;
 	FILE *log;
 	const char *errstr, *file, *group, *ifaddr, *msg;
 	size_t len;
@@ -56,7 +55,7 @@ main(int argc, char *argv[])
 
 	log = stdout;
 	file = NULL;
-	group = "224.0.0.123";
+	group = "224.0.1.123";
 	ifaddr = NULL;
 	loop = -1;
 	msg = "foo";
@@ -110,6 +109,8 @@ main(int argc, char *argv[])
 	if (s == -1)
 		err(1, "socket");
 	if (ifaddr != NULL) {
+		struct in_addr addr;
+
 		if (inet_pton(AF_INET, ifaddr, &addr) == -1)
 			err(1, "inet_pton %s", ifaddr);
 		if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF, &addr,
@@ -131,6 +132,7 @@ main(int argc, char *argv[])
 			err(1, "setsockopt ttl %d", ttl);
 	}
 
+	memset(&sin, 0, sizeof(sin));
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port);

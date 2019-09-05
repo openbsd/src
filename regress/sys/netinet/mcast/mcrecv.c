@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcrecv.c,v 1.1.1.1 2019/09/02 22:17:28 bluhm Exp $	*/
+/*	$OpenBSD: mcrecv.c,v 1.2 2019/09/05 02:44:36 bluhm Exp $	*/
 /*
  * Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -26,6 +26,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 void __dead usage(void);
@@ -62,7 +63,7 @@ main(int argc, char *argv[])
 
 	log = stdout;
 	file = NULL;
-	group = "224.0.0.123";
+	group = "224.0.1.123";
 	ifaddr = "0.0.0.0";
 	norecv = 0;
 	port = 12345;
@@ -118,6 +119,7 @@ main(int argc, char *argv[])
 	    sizeof(mreq)) == -1)
 		err(1, "setsockopt IP_ADD_MEMBERSHIP %s %s", group, ifaddr);
 
+	memset(&sin, 0, sizeof(sin));
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port);
