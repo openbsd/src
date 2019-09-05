@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2019/04/13 22:06:31 tb Exp $
+#	$OpenBSD: Makefile,v 1.6 2019/09/05 00:59:36 bluhm Exp $
 
 .include "../../Makefile.inc"
 
@@ -9,14 +9,22 @@ LDADD =		${CRYPTO_INT}
 DPADD =		${LIBCRYPTO}
 WARNINGS =	Yes
 CFLAGS +=	-Werror
+CLEANFILES =	bntest.out bc.out
 
-.for p in ${PROGS}
-REGRESS_TARGETS += run-$p
+REGRESS_TARGETS += run-bntest
+run-bntest bntest.out: bntest
+	@echo '\n======== $@ ========'
+	./bntest -out bntest.out
 
-run-$p: $p
-	./$p
+REGRESS_TARGETS += run-bc
+run-bc: bntest.out
+	@echo '\n======== $@ ========'
+	bc < bntest.out | tee bc.out | grep -v '^0$$'
+	! grep -v '^test ' <bc.out | grep -v '^0$$'
 
-.PHONY: run-$p
-.endfor
+REGRESS_TARGETS += run-bn_to_string
+run-bn_to_string: bn_to_string
+	@echo '\n======== $@ ========'
+	./bn_to_string
 
 .include <bsd.regress.mk>

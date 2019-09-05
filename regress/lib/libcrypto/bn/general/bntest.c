@@ -1,4 +1,4 @@
-/*	$OpenBSD: bntest.c,v 1.20 2018/07/17 17:06:49 tb Exp $	*/
+/*	$OpenBSD: bntest.c,v 1.21 2019/09/05 00:59:36 bluhm Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2028,7 +2028,6 @@ genprime_cb(int p, int n, BN_GENCB *arg)
 	if (p == 3)
 		c = '\n';
 	putc(c, stderr);
-	fflush(stderr);
 	return (1);
 }
 
@@ -2116,11 +2115,9 @@ test_kron(BIO *bp, BN_CTX *ctx)
 		}
 
 		putc('.', stderr);
-		fflush(stderr);
 	}
 
 	putc('\n', stderr);
-	fflush(stderr);
 	rc = 1;
 err:
 	BN_free(a);
@@ -2207,11 +2204,9 @@ test_sqrt(BIO *bp, BN_CTX *ctx)
 			}
 
 			putc('.', stderr);
-			fflush(stderr);
 		}
 
 		putc('\n', stderr);
-		fflush(stderr);
 	}
 	rc = 1;
 err:
