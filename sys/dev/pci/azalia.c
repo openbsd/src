@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.250 2019/08/13 15:28:12 jcs Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.251 2019/09/05 05:36:31 ratchov Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -252,7 +252,10 @@ int	azalia_open(void *, int);
 void	azalia_close(void *);
 int	azalia_set_params(void *, int, int, audio_params_t *,
 	audio_params_t *);
-int	azalia_round_blocksize(void *, int);
+unsigned int azalia_set_blksz(void *, int,
+	struct audio_params *, struct audio_params *, unsigned int);
+unsigned int azalia_set_nblks(void *, int,
+	struct audio_params *, unsigned int, unsigned int);
 int	azalia_halt_output(void *);
 int	azalia_halt_input(void *);
 int	azalia_set_port(void *, mixer_ctrl_t *);
@@ -290,7 +293,7 @@ struct audio_hw_if azalia_hw_if = {
 	azalia_open,
 	azalia_close,
 	azalia_set_params,
-	azalia_round_blocksize,
+	NULL,			/* round_blocksize */
 	NULL,			/* commit_settings */
 	NULL,			/* init_output */
 	NULL,			/* init_input */
@@ -308,7 +311,11 @@ struct audio_hw_if azalia_hw_if = {
 	azalia_round_buffersize,
 	azalia_get_props,
 	azalia_trigger_output,
-	azalia_trigger_input
+	azalia_trigger_input,
+	NULL,			/* copy_output */
+	NULL,			/* underrun */
+	azalia_set_blksz,
+	azalia_set_nblks
 };
 
 static const char *pin_devices[16] = {
@@ -3962,25 +3969,30 @@ azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
 	return (0);
 }
 
-int
-azalia_round_blocksize(void *v, int blk)
+unsigned int
+azalia_set_blksz(void *v, int mode,
+	struct audio_params *p, struct audio_params *r, unsigned int blksz)
 {
-	azalia_t *az;
-	size_t size;
+	int mult;
 
-	blk &= ~0x7f;		/* must be multiple of 128 */
-	if (blk <= 0)
-		blk = 128;
+	/* must be multiple of 128 bytes */
+	mult = audio_blksz_bytes(mode, p, r, 128);
+
+	blksz += mult - 1;
+	blksz -= blksz % mult;
+
+	return blksz;
+}
+
+unsigned int
+azalia_set_nblks(void *v, int mode,
+	struct audio_params *params, unsigned int blksz, unsigned int nblks)
+{
 	/* number of blocks must be <= HDA_BDL_MAX */
-	az = v;
-	size = az->pstream.buffer.size;
-	if (size > HDA_BDL_MAX * blk) {
-		blk = size / HDA_BDL_MAX;
-		if (blk & 0x7f)
-			blk = (blk + 0x7f) & ~0x7f;
-	}
-	DPRINTFN(1,("%s: resultant block size = %d\n", __func__, blk));
-	return blk;
+	if (nblks > HDA_BDL_MAX)
+		nblks = HDA_BDL_MAX;
+
+	return nblks;
 }
 
 int
