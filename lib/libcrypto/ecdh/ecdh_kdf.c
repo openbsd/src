@@ -55,7 +55,7 @@
 #include <openssl/ec.h>
 #include <openssl/evp.h>
 
-#include "ec_lcl.h"
+#include "ech_locl.h"
 
 /*
  * Key derivation function from X9.63/SECG.
