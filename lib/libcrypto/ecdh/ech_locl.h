@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_locl.h,v 1.5 2016/12/21 15:49:29 jsing Exp $ */
+/* $OpenBSD: ech_locl.h,v 1.6 2019/09/05 16:12:36 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -87,6 +87,12 @@ typedef struct ecdh_data_st {
 } ECDH_DATA;
 
 ECDH_DATA *ecdh_check(EC_KEY *);
+
+/*
+ * ECDH Key Derivation Function as defined in ANSI X9.63.
+ */
+int ecdh_KDF_X9_63(unsigned char *out, size_t outlen, const unsigned char *Z,
+    size_t Zlen, const unsigned char *sinfo, size_t sinfolen, const EVP_MD *md);
 
 __END_HIDDEN_DECLS
 
