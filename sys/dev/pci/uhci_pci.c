@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.33 2014/05/16 18:17:03 mpi Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.34 2019/09/05 17:59:12 bluhm Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.24 2002/10/02 16:51:58 thorpej Exp $	*/
 
 /*
@@ -85,6 +85,9 @@ int
 uhci_pci_activate(struct device *self, int act)
 {
 	struct uhci_pci_softc *sc = (struct uhci_pci_softc *)self;
+
+	if (sc->sc.sc_size == 0)
+		return 0;
 
 	/* On resume, set legacy support attribute and enable intrs */
 	switch (act) {
@@ -190,6 +193,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 unmap_ret:
 	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+	sc->sc.sc_size = 0;
 	splx(s);
 }
 
@@ -218,6 +222,7 @@ uhci_pci_attach_deferred(struct device *self)
 unmap_ret:
 	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+	sc->sc.sc_size = 0;
 	splx(s);
 }
 
