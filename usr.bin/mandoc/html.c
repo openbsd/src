@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.131 2019/09/03 18:07:57 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.132 2019/09/05 13:34:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -966,15 +966,12 @@ print_indent(struct html *h)
 {
 	size_t	 i;
 
-	if (h->col)
+	if (h->col || h->noindent)
 		return;
 
-	if (h->noindent == 0) {
-		h->col = h->indent * 2;
-		for (i = 0; i < h->col; i++)
-			putchar(' ');
-	}
-	h->flags &= ~HTML_NOSPACE;
+	h->col = h->indent * 2;
+	for (i = 0; i < h->col; i++)
+		putchar(' ');
 }
 
 /*
