@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.90 2019/09/05 18:38:30 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.91 2019/09/06 08:45:37 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -245,6 +245,10 @@ file	dev/fdt/mvgpio.c		mvgpio
 device	mvicu
 attach	mvicu at fdt
 file	dev/fdt/mvicu.c			mvicu
+
+device	mviic: i2cbus
+attach	mviic at fdt
+file	dev/fdt/mviic.c			mviic
 
 device	mvpinctrl
 attach	mvpinctrl at fdt

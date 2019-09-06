@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.99 2019/09/05 18:38:30 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.100 2019/09/06 08:45:37 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -154,6 +154,8 @@ mvicu*		at fdt? early 1
 mvpinctrl*	at fdt? early 1
 mvdog*		at fdt?
 mvgpio*		at fdt?
+mviic*		at fdt?
+iic*		at mviic?
 mvmdio*		at fdt?
 mvneta*		at fdt?
 mvrng*		at fdt?
