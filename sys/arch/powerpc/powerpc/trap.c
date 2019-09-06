@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.113 2019/09/06 12:55:26 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.114 2019/09/06 13:45:04 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -232,6 +232,15 @@ trap(struct trapframe *frame)
 	union sigval sv;
 	char *name;
 	db_expr_t offset;
+	faultbuf *fb;
+	struct vm_map *map;
+	vaddr_t va;
+	int ftype, vftype;
+	struct sysent *callp;
+	size_t argsize;
+	register_t code, error;
+	register_t *params, rval[2], args[10];
+	int nsys, n;
 
 	if (frame->srr1 & PSL_PR) {
 		type |= EXC_USER;
@@ -244,130 +253,103 @@ trap(struct trapframe *frame)
 
 	switch (type) {
 	case EXC_TRC|EXC_USER:		
-		{
-			sv.sival_int = frame->srr0;
-			KERNEL_LOCK();
-			trapsignal(p, SIGTRAP, type, TRAP_TRACE, sv);
-			KERNEL_UNLOCK();
-		}
+		sv.sival_int = frame->srr0;
+		KERNEL_LOCK();
+		trapsignal(p, SIGTRAP, type, TRAP_TRACE, sv);
+		KERNEL_UNLOCK();
 		break;
-
 	case EXC_MCHK:
-		{
-			faultbuf *fb;
-
-			if ((fb = p->p_addr->u_pcb.pcb_onfault)) {
-				p->p_addr->u_pcb.pcb_onfault = 0;
-				frame->srr0 = fb->pc;		/* PC */
-				frame->fixreg[1] = fb->sp;	/* SP */
-				frame->fixreg[3] = 1;		/* != 0 */
-				frame->cr = fb->cr;
-				bcopy(&fb->regs[0], &frame->fixreg[13], 19*4);
-				return;
-			}
+		if ((fb = p->p_addr->u_pcb.pcb_onfault)) {
+			p->p_addr->u_pcb.pcb_onfault = 0;
+			frame->srr0 = fb->pc;		/* PC */
+			frame->fixreg[1] = fb->sp;	/* SP */
+			frame->fixreg[3] = 1;		/* != 0 */
+			frame->cr = fb->cr;
+			bcopy(&fb->regs[0], &frame->fixreg[13], 19*4);
+			return;
 		}
 		goto brain_damage;
 
 	case EXC_DSI:
-		{
-			struct vm_map *map;
-			vaddr_t va;
-			int ftype;
-			faultbuf *fb;
-			
-			map = kernel_map;
-			va = frame->dar;
-			if ((va >> ADDR_SR_SHIFT) == PPC_USER_SR) {
-				sr_t user_sr;
-				
-				asm ("mfsr %0, %1"
-				     : "=r"(user_sr) : "K"(PPC_USER_SR));
-				va &= ADDR_PIDX | ADDR_POFF;
-				va |= user_sr << ADDR_SR_SHIFT;
-				map = &p->p_vmspace->vm_map;
-				if (pte_spill_v(map->pmap, va, frame->dsisr, 0))
-					return;
-			}
-			if (frame->dsisr & DSISR_STORE)
-				ftype = PROT_READ | PROT_WRITE;
-			else
-				ftype = PROT_READ;
-			KERNEL_LOCK();
-			if (uvm_fault(map, trunc_page(va), 0, ftype) == 0) {
-				KERNEL_UNLOCK();
-				return;
-			}
-			KERNEL_UNLOCK();
+		map = kernel_map;
+		va = frame->dar;
+		if ((va >> ADDR_SR_SHIFT) == PPC_USER_SR) {
+			sr_t user_sr;
 
-			if ((fb = p->p_addr->u_pcb.pcb_onfault)) {
-				p->p_addr->u_pcb.pcb_onfault = 0;
-				frame->srr0 = fb->pc;		/* PC */
-				frame->fixreg[1] = fb->sp;	/* SP */
-				frame->fixreg[3] = 1;		/* != 0 */
-				frame->cr = fb->cr;
-				bcopy(&fb->regs[0], &frame->fixreg[13], 19*4);
+			asm ("mfsr %0, %1" : "=r"(user_sr) : "K"(PPC_USER_SR));
+			va &= ADDR_PIDX | ADDR_POFF;
+			va |= user_sr << ADDR_SR_SHIFT;
+			map = &p->p_vmspace->vm_map;
+			if (pte_spill_v(map->pmap, va, frame->dsisr, 0))
 				return;
-			}
-			map = kernel_map;
 		}
-printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
+		if (frame->dsisr & DSISR_STORE)
+			ftype = PROT_READ | PROT_WRITE;
+		else
+			ftype = PROT_READ;
+		KERNEL_LOCK();
+		if (uvm_fault(map, trunc_page(va), 0, ftype) == 0) {
+			KERNEL_UNLOCK();
+			return;
+		}
+		KERNEL_UNLOCK();
+
+		if ((fb = p->p_addr->u_pcb.pcb_onfault)) {
+			p->p_addr->u_pcb.pcb_onfault = 0;
+			frame->srr0 = fb->pc;		/* PC */
+			frame->fixreg[1] = fb->sp;	/* SP */
+			frame->fixreg[3] = 1;		/* != 0 */
+			frame->cr = fb->cr;
+			bcopy(&fb->regs[0], &frame->fixreg[13], 19*4);
+			return;
+		}
+		map = kernel_map;
 		goto brain_damage;
+
 	case EXC_DSI|EXC_USER:
-		{
-			int ftype, vftype;
-			
-			/* Try spill handler first */
-			if (pte_spill_v(p->p_vmspace->vm_map.pmap,
-			    frame->dar, frame->dsisr, 0))
-				break;
+		/* Try spill handler first */
+		if (pte_spill_v(p->p_vmspace->vm_map.pmap,
+		    frame->dar, frame->dsisr, 0))
+			break;
 
-			KERNEL_LOCK();
-			if (frame->dsisr & DSISR_STORE) {
-				ftype = PROT_READ | PROT_WRITE;
-				vftype = PROT_WRITE;
-			} else
-				vftype = ftype = PROT_READ;
-			if (uvm_fault(&p->p_vmspace->vm_map,
-				     trunc_page(frame->dar), 0, ftype) == 0) {
-				uvm_grow(p, trunc_page(frame->dar));
-				KERNEL_UNLOCK();
-				break;
-			}
-
-#if 0
-printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
-#endif
-/*
- * keep this for later in case we want it later.
-*/
-			sv.sival_int = frame->dar;
-			trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
+		KERNEL_LOCK();
+		if (frame->dsisr & DSISR_STORE) {
+			ftype = PROT_READ | PROT_WRITE;
+			vftype = PROT_WRITE;
+		} else
+			vftype = ftype = PROT_READ;
+		if (uvm_fault(&p->p_vmspace->vm_map,
+		     trunc_page(frame->dar), 0, ftype) == 0) {
+			uvm_grow(p, trunc_page(frame->dar));
 			KERNEL_UNLOCK();
+			break;
 		}
+
+		/*
+		 * keep this for later in case we want it later.
+		*/
+		sv.sival_int = frame->dar;
+		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
+		KERNEL_UNLOCK();
 		break;
-	case EXC_ISI|EXC_USER:
-		{
-			int ftype;
-			
-			/* Try spill handler */
-			if (pte_spill_v(p->p_vmspace->vm_map.pmap,
-			    frame->srr0, 0, 1))
-				break;
 
-			KERNEL_LOCK();
-			ftype = PROT_READ | PROT_EXEC;
-			if (uvm_fault(&p->p_vmspace->vm_map,
-			    trunc_page(frame->srr0), 0, ftype) == 0) {
-				uvm_grow(p, trunc_page(frame->srr0));
-				KERNEL_UNLOCK();
-				break;
-			}
+	case EXC_ISI|EXC_USER:
+		/* Try spill handler */
+		if (pte_spill_v(p->p_vmspace->vm_map.pmap,
+		    frame->srr0, 0, 1))
+			break;
+
+		KERNEL_LOCK();
+		ftype = PROT_READ | PROT_EXEC;
+		if (uvm_fault(&p->p_vmspace->vm_map,
+		    trunc_page(frame->srr0), 0, ftype) == 0) {
+			uvm_grow(p, trunc_page(frame->srr0));
 			KERNEL_UNLOCK();
+			break;
 		}
-#if 0
-printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
-#endif
+		KERNEL_UNLOCK();
 		/* FALLTHROUGH */
+
 	case EXC_MCHK|EXC_USER:
 /* XXX Likely that returning from this trap is bogus... */
 /* XXX Have to make sure that sigreturn does the right thing. */
@@ -376,94 +358,85 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 		trapsignal(p, SIGSEGV, PROT_EXEC, SEGV_MAPERR, sv);
 		KERNEL_UNLOCK();
 		break;
+
 	case EXC_SC|EXC_USER:
-		{
-			struct sysent *callp;
-			size_t argsize;
-			register_t code, error;
-			register_t *params, rval[2];
-			int nsys, n;
-			register_t args[10];
-			
-			uvmexp.syscalls++;
-			
-			nsys = p->p_p->ps_emul->e_nsysent;
-			callp = p->p_p->ps_emul->e_sysent;
-			
-			code = frame->fixreg[0];
-			params = frame->fixreg + FIRSTARG;
-			
-			switch (code) {
-			case SYS_syscall:
-				/*
-				 * code is first argument,
-				 * followed by actual args.
-				 */
-				code = *params++;
-				break;
-			case SYS___syscall:
-				/*
-				 * Like syscall, but code is a quad,
-				 * so as to maintain quad alignment
-				 * for the rest of the args.
-				 */
-				if (callp != sysent)
-					break;
-				params++;
-				code = *params++;
-				break;
-			default:
-				break;
-			}
-			if (code < 0 || code >= nsys)
-				callp += p->p_p->ps_emul->e_nosys;
-			else
-				callp += code;
-			argsize = callp->sy_argsize;
-			n = NARGREG - (params - (frame->fixreg + FIRSTARG));
-			if (argsize > n * sizeof(register_t)) {
-				bcopy(params, args, n * sizeof(register_t));
+		uvmexp.syscalls++;
 
-				if ((error = copyin(MOREARGS(frame->fixreg[1]),
-				   args + n,
-				   argsize - n * sizeof(register_t))))
-					goto bad;
-				params = args;
-			}
+		nsys = p->p_p->ps_emul->e_nsysent;
+		callp = p->p_p->ps_emul->e_sysent;
 
-			rval[0] = 0;
-			rval[1] = frame->fixreg[FIRSTARG + 1];
+		code = frame->fixreg[0];
+		params = frame->fixreg + FIRSTARG;
 
-			error = mi_syscall(p, code, callp, params, rval);
-
-			switch (error) {
-			case 0:
-				frame->fixreg[0] = error;
-				frame->fixreg[FIRSTARG] = rval[0];
-				frame->fixreg[FIRSTARG + 1] = rval[1];
-				frame->cr &= ~0x10000000;
+		switch (code) {
+		case SYS_syscall:
+			/*
+			 * code is first argument,
+			 * followed by actual args.
+			 */
+			code = *params++;
+			break;
+		case SYS___syscall:
+			/*
+			 * Like syscall, but code is a quad,
+			 * so as to maintain quad alignment
+			 * for the rest of the args.
+			 */
+			if (callp != sysent)
 				break;
-			case ERESTART:
-				/*
-				 * Set user's pc back to redo the system call.
-				 */
-				frame->srr0 -= 4;
-				break;
-			case EJUSTRETURN:
-				/* nothing to do */
-				break;
-			default:
-			bad:
-				frame->fixreg[0] = error;
-				frame->fixreg[FIRSTARG] = error;
-				frame->fixreg[FIRSTARG + 1] = rval[1];
-				frame->cr |= 0x10000000;
-				break;
-			}
-
-			mi_syscall_return(p, code, error, rval);
-			goto finish;
+			params++;
+			code = *params++;
+			break;
+		default:
+			break;
 		}
+		if (code < 0 || code >= nsys)
+			callp += p->p_p->ps_emul->e_nosys;
+		else
+			callp += code;
+		argsize = callp->sy_argsize;
+		n = NARGREG - (params - (frame->fixreg + FIRSTARG));
+		if (argsize > n * sizeof(register_t)) {
+			bcopy(params, args, n * sizeof(register_t));
+
+			if ((error = copyin(MOREARGS(frame->fixreg[1]),
+			   args + n, argsize - n * sizeof(register_t))))
+				goto bad;
+			params = args;
+		}
+
+		rval[0] = 0;
+		rval[1] = frame->fixreg[FIRSTARG + 1];
+
+		error = mi_syscall(p, code, callp, params, rval);
+
+		switch (error) {
+		case 0:
+			frame->fixreg[0] = error;
+			frame->fixreg[FIRSTARG] = rval[0];
+			frame->fixreg[FIRSTARG + 1] = rval[1];
+			frame->cr &= ~0x10000000;
+			break;
+		case ERESTART:
+			/*
+			 * Set user's pc back to redo the system call.
+			 */
+			frame->srr0 -= 4;
+			break;
+		case EJUSTRETURN:
+			/* nothing to do */
+			break;
+		default:
+		bad:
+			frame->fixreg[0] = error;
+			frame->fixreg[FIRSTARG] = error;
+			frame->fixreg[FIRSTARG + 1] = rval[1];
+			frame->cr |= 0x10000000;
+			break;
+		}
+
+		mi_syscall_return(p, code, error, rval);
+		goto finish;
 
 	case EXC_FPU|EXC_USER:
 		if (ci->ci_fpuproc)
@@ -483,8 +456,7 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 		else {
 			sv.sival_int = frame->srr0;
 			KERNEL_LOCK();
-			trapsignal(p, SIGBUS, PROT_EXEC, BUS_ADRALN,
-				sv);
+			trapsignal(p, SIGBUS, PROT_EXEC, BUS_ADRALN, sv);
 			KERNEL_UNLOCK();
 		}
 		break;
@@ -492,10 +464,6 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 	default:
 	
 brain_damage:
-/*
-mpc_print_pci_stat();
-*/
-
 #ifdef DDB
 		/* set up registers */
 		db_save_regs(frame);
@@ -507,64 +475,23 @@ mpc_print_pci_stat();
 			name = "0";
 			offset = frame->srr0;
 		}
-		panic ("trap type %x at %x (%s+0x%lx) lr %lx",
-			type, frame->srr0, name, offset, frame->lr);
-
+		panic("trap type %x srr1 %x at %x (%s+0x%lx) lr %lx",
+		    type, frame->srr1, frame->srr0, name, offset, frame->lr);
 
 	case EXC_PGM|EXC_USER:
-	{
-#if 0
-		char *errstr[8];
-		int errnum = 0;
-
-		if (frame->srr1 & (1<<(31-11))) { 
-			/* floating point enabled program exception */
-			errstr[errnum] = "floating point";
-			errnum++;
-		} 
-		if (frame->srr1 & (1<<(31-12))) {
-			/* illegal instruction program exception */
-			errstr[errnum] = "illegal instruction";
-			errnum++;
-		}
-		if (frame->srr1 & (1<<(31-13))) {
-			/* privileged instruction exception */
-			errstr[errnum] = "privileged instr";
-			errnum++;
-		}
-#endif
 		if (frame->srr1 & (1<<(31-14))) {
-#if 0
-			errstr[errnum] = "trap instr";
-			errnum++;
-#endif
 			sv.sival_int = frame->srr0;
 			KERNEL_LOCK();
 			trapsignal(p, SIGTRAP, type, TRAP_BRKPT, sv);
 			KERNEL_UNLOCK();
 			break;
 		}
-#if 0
-		if (frame->srr1 & (1<<(31-15))) {
-			errstr[errnum] = "previous address";
-			errnum++;
-		}
-#endif
-#if 0
-printf("pgm iar %x srr1 %x\n", frame->srr0, frame->srr1);
-{ 
-int i;
-for (i = 0; i < errnum; i++) {
-	printf("\t[%s]\n", errstr[i]);
-}
-}
-#endif
 		sv.sival_int = frame->srr0;
 		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
 		KERNEL_UNLOCK();
 		break;
-	}
+
 	case EXC_PGM:
 		/* should check for correct byte here or panic */
 #ifdef DDB
@@ -693,38 +620,37 @@ fix_unaligned(struct proc *p, struct trapframe *frame)
 {
 	int indicator = EXC_ALI_OPCODE_INDICATOR(frame->dsisr);
 	struct cpu_info *ci = curcpu();
+	int reg;
+	double *fpr;
 
 	switch (indicator) {
 	case EXC_ALI_LFD:
 	case EXC_ALI_STFD:
-		{
-			int reg = EXC_ALI_RST(frame->dsisr);
-			double *fpr = &p->p_addr->u_pcb.pcb_fpu.fpr[reg];
+		reg = EXC_ALI_RST(frame->dsisr);
+		fpr = &p->p_addr->u_pcb.pcb_fpu.fpr[reg];
 
-			/* Juggle the FPU to ensure that we've initialized
-			 * the FPRs, and that their current state is in
-			 * the PCB.
-			 */
-			if (ci->ci_fpuproc != p) {
-				if (ci->ci_fpuproc)
-					save_fpu();
-				enable_fpu(p);
-			}
-			save_fpu();
-
-			if (indicator == EXC_ALI_LFD) {
-				if (copyin((void *)frame->dar, fpr,
-				    sizeof(double)) != 0)
-					return -1;
-			} else {
-				if (copyout(fpr, (void *)frame->dar,
-				    sizeof(double)) != 0)
-					return -1;
-			}
+		/* Juggle the FPU to ensure that we've initialized
+		 * the FPRs, and that their current state is in
+		 * the PCB.
+		 */
+		if (ci->ci_fpuproc != p) {
+			if (ci->ci_fpuproc)
+				save_fpu();
 			enable_fpu(p);
-			return 0;
 		}
-		break;
+		save_fpu();
+
+		if (indicator == EXC_ALI_LFD) {
+			if (copyin((void *)frame->dar, fpr,
+			    sizeof(double)) != 0)
+				return -1;
+		} else {
+			if (copyout(fpr, (void *)frame->dar,
+			    sizeof(double)) != 0)
+				return -1;
+		}
+		enable_fpu(p);
+		return 0;
 	}
 	return -1;
 }
