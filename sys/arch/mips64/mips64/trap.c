@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.140 2019/09/06 12:22:01 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.141 2019/09/06 16:06:30 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1513,8 +1513,9 @@ db_save_stack_trace(struct db_stack_trace *st)
 		db_symbol_values(sym, &name, NULL);
 		subr = pc - (vaddr_t)diff;
 
-		if (subr == (vaddr_t)k_general || subr == (vaddr_t)k_intr ||
-		    subr == (vaddr_t)u_general || subr == (vaddr_t)u_intr) {
+		if (subr == (vaddr_t)u_general || subr == (vaddr_t)u_intr)
+			break;
+		if (subr == (vaddr_t)k_general || subr == (vaddr_t)k_intr) {
 			tf = (struct trapframe *)*(register_t *)sp;
 			pc = tf->pc;
 			ra = tf->ra;
