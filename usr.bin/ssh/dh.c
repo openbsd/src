@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.c,v 1.70 2019/09/06 05:23:55 djm Exp $ */
+/* $OpenBSD: dh.c,v 1.71 2019/09/06 06:08:11 djm Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
@@ -23,6 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,7 +32,6 @@
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 
-#include <errno.h>
 #include "dh.h"
 #include "pathnames.h"
 #include "log.h"
