@@ -1607,6 +1607,7 @@
 ./usr/share/man/man4/maxrtc.4
 ./usr/share/man/man4/maxtmp.4
 ./usr/share/man/man4/mbg.4
+./usr/share/man/man4/mcprtc.4
 ./usr/share/man/man4/mcx.4
 ./usr/share/man/man4/mfi.4
 ./usr/share/man/man4/mfii.4
@@ -1635,6 +1636,7 @@
 ./usr/share/man/man4/mvgicp.4
 ./usr/share/man/man4/mvgpio.4
 ./usr/share/man/man4/mvicu.4
+./usr/share/man/man4/mviic.4
 ./usr/share/man/man4/mvneta.4
 ./usr/share/man/man4/mvpinctrl.4
 ./usr/share/man/man4/mvrng.4
