@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.12 2019/09/06 06:40:54 jsg Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.13 2019/09/06 15:22:24 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -1263,7 +1263,7 @@ dwxe_reset(struct dwxe_softc *sc)
 	for (n = 0; n < 1000; n++) {
 		if ((dwxe_read(sc, DWXE_BASIC_CTL1) &
 		    DWXE_BASIC_CTL1_SOFT_RST) == 0)
-			return
+			return;
 		delay(10);
 	}
 
