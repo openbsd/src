@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.32 2018/11/10 11:54:03 anton Exp $
+.\"	$OpenBSD: fcntl.2,v 1.33 2019/09/06 08:39:27 asou Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd $Mdocdate: November 10 2018 $
+.Dd $Mdocdate: September 6 2019 $
 .Dt FCNTL 2
 .Os
 .Sh NAME
@@ -465,14 +465,16 @@ and a deadlock condition was detected.
 .It Bq Er EINTR
 The argument
 .Fa cmd
-is invalid.
-.Pp
-The argument
-.Fa cmd
 is
+.Dv F_SETLK
+or
 .Dv F_SETLKW ,
 and the function was interrupted by a signal.
 .It Bq Er EINVAL
+The argument
+.Fa cmd
+is invalid.
+.Pp
 .Fa cmd
 is
 .Dv F_DUPFD
