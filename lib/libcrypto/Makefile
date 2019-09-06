@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.34 2019/09/05 16:16:05 jsing Exp $
+# $OpenBSD: Makefile,v 1.35 2019/09/06 17:59:24 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -34,6 +34,7 @@ CFLAGS+= -I${LCRYPTO_SRC}/modes
 # XXX FIXME ecdsa and ec should be merged
 CFLAGS+= -I${LCRYPTO_SRC}/ecdsa
 CFLAGS+= -I${LCRYPTO_SRC}/ec
+CFLAGS+= -I${LCRYPTO_SRC}/ecdh
 
 VERSION_SCRIPT=	Symbols.map
 SYMBOL_LIST=	${.CURDIR}/Symbols.list
