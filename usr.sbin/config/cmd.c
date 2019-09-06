@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.21 2019/08/11 17:08:33 deraadt Exp $ */
+/*	$OpenBSD: cmd.c,v 1.22 2019/09/06 21:30:31 cheloha Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,6 @@
 
 #include <sys/types.h>
 #include <sys/device.h>
-#include <sys/time.h>
 
 #include <ctype.h>
 #include <limits.h>
@@ -57,7 +56,6 @@ cmd_table_t cmd_table[] = {
 	{"show",   Xshow,	"[attr [val]]",	"Show attribute"},
 	{"exit",   Xexit,	"",		"Exit, without saving changes"},
 	{"quit",   Xquit,	"",		"Quit, saving current changes"},
-	{"timezone", Xtimezone,	"[mins [dst]]",	"Show/change timezone"},
 	{"nkmempg", Xnkmempg,	"[number]",	"Show/change NKMEMPAGES"},
 	{NULL,     NULL,	NULL,		NULL}
 };
@@ -243,37 +241,6 @@ Xexit(cmd_t *cmd)
 {
 	/* Nothing to do here */
 	return (CMD_EXIT);
-}
-
-int
-Xtimezone(cmd_t *cmd)
-{
-	struct timezone *tz;
-	int	num;
-	char	*c;
-
-	ukc_mod_kernel = 1;
-	tz = (struct timezone *)adjust((caddr_t)(nl[TZ_TZ].n_value));
-
-	if (strlen(cmd->args) == 0) {
-		printf("timezone = %d, dst = %d\n",
-		    tz->tz_minuteswest, tz->tz_dsttime);
-	} else {
-		if (number(cmd->args, &num) == 0) {
-			tz->tz_minuteswest = num;
-			c = cmd->args;
-			while ((*c != '\0') && !isspace((unsigned char)*c))
-				c++;
-			while (isspace((unsigned char)*c))
-				c++;
-			if (strlen(c) != 0 && number(c, &num) == 0)
-				tz->tz_dsttime = num;
-			printf("timezone = %d, dst = %d\n",
-			    tz->tz_minuteswest, tz->tz_dsttime);
-		} else
-			printf("Unknown argument\n");
-	}
-	return (CMD_CONT);
 }
 
 void

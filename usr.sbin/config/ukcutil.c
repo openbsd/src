@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.24 2019/05/14 13:44:25 tedu Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.25 2019/09/06 21:30:31 cheloha Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/device.h>
 
 #include <ctype.h>
@@ -1398,7 +1397,6 @@ process_history(int len, char *buf)
 	char *c;
 	int devno, newno;
 	short unit, state;
-	struct timezone *tz;
 
 	if (len == 0) {
 		printf("History is empty\n");
@@ -1468,21 +1466,6 @@ process_history(int len, char *buf)
 			while (*c != '\n')
 				c++;
 			c++;
-			break;
-		case 't':
-			c++;
-			c++;
-			tz = (struct timezone *)adjust((caddr_t)nl[TZ_TZ].
-			    n_value);
-			tz->tz_minuteswest = atoi(c);
-			while (*c != ' ')
-				c++;
-			c++;
-			tz->tz_dsttime = atoi(c);
-			while (*c != '\n')
-				c++;
-			c++;
-			ukc_mod_kernel = 1;
 			break;
 		case 'q':
 			while (*c != '\0')

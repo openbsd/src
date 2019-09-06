@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.45 2017/04/30 16:45:46 mpi Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.46 2019/09/06 21:30:31 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -40,7 +40,6 @@ extern short cfroots[];
 extern int cfroots_size;
 extern int pv_size;
 extern short pv[];
-extern struct timezone tz;
 extern char *pdevnames[];
 extern int pdevnames_size;
 extern struct pdevinit pdevinit[];
@@ -107,7 +106,6 @@ char *userconf_cmds[] = {
 	"lines",	"L",
 	"quit",		"q",
 	"show",		"s",
-	"timezone",	"t",
 	"verbose",	"v",
 	"?",		"h",
 	"",		 "",
@@ -736,9 +734,6 @@ userconf_help(void)
 			printf("[attr [val]]        "
 			   "show attributes (or devices with an attribute)");
 			break;
-		case 't':
-			printf("[mins [dst]]        set timezone/dst");
-			break;
 		case 'v':
 			printf("                    toggle verbose booting");
 			break;
@@ -1313,29 +1308,6 @@ userconf_parse(char *cmd)
 				userconf_show();
 			else
 				userconf_show_attr(c);
-			break;
-		case 't':
-			if (*c == '\0' ||
-			    userconf_number(c, &a, INT_MAX) == 0) {
-				if (*c != '\0') {
-					tz.tz_minuteswest = a;
-					while (*c != '\n' && *c != '\t' &&
-					    *c != ' ' && *c != '\0')
-						c++;
-					while (*c == '\t' || *c == ' ')
-						c++;
-					if (*c != '\0' && userconf_number(c,
-					    &a, INT_MAX) == 0)
-						tz.tz_dsttime = a;
-					userconf_hist_cmd('t');
-					userconf_hist_int(tz.tz_minuteswest);
-					userconf_hist_int(tz.tz_dsttime);
-					userconf_hist_eoc();
-				}
-				printf("timezone = %d, dst = %d\n",
-				    tz.tz_minuteswest, tz.tz_dsttime);
-			} else
-				printf("Unknown argument\n");
 			break;
 		case 'v':
 			autoconf_verbose = !autoconf_verbose;
