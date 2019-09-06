@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.68 2019/08/16 06:35:27 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.69 2019/09/06 05:59:41 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -107,9 +107,13 @@ SRCS_UTL+=	addrmatch.c
 SRCS_UTL+=	match.c
 
 .if (${OPENSSL:L} == "yes")
-SRCS_PKCS11+=	ssh-pkcs11.c
+SRCS_PKCS11+=		ssh-pkcs11.c
+SRCS_PKCS11_CLIENT+=	ssh-pkcs11-client.c
+SRCS_MODULI+=		moduli.c
 .else
 SRCS_PKCS11+=
+SRCS_PKCS11_CLIENT+=
+SRCS_MODULI+=
 .endif
 
 WITH_XMSS?=	no
