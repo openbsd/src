@@ -105,8 +105,6 @@
 ./usr/include/armv7/trap.h
 ./usr/include/armv7/vmparam.h
 ./usr/include/ieeefp.h
-./usr/include/mmintrin.h
-./usr/include/unwind.h
 ./usr/lib/libarm.a
 ./usr/lib/libarm_p.a
 ./usr/libdata/ldscripts
