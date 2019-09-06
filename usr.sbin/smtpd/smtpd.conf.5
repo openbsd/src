@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.223 2019/09/04 07:28:27 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.224 2019/09/06 08:23:56 martijn Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 4 2019 $
+.Dd $Mdocdate: September 6 2019 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -364,6 +364,17 @@ matching
 .Ar conditions
 to reject session with
 .Ar message .
+Phase and matching conditions are documented in a specific section,
+see
+.Sx BUILTIN FILTERING .
+.It Ic filter Ar filter-name Ic phase Ar phase-name Ic match Ar conditions Ic report Ar message
+Register builtin filter
+.Ar filter-name
+matching
+.Ar conditions
+to report on session with
+.Ar message
+and proceed with the transaction.
 Phase and matching conditions are documented in a specific section,
 see
 .Sx BUILTIN FILTERING .

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_proc.c,v 1.10 2019/08/29 09:24:30 gilles Exp $	*/
+/*	$OpenBSD: lka_proc.c,v 1.11 2019/09/06 08:23:56 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -164,6 +164,8 @@ processor_io(struct io *io, int evt, void *arg)
 			else if (strncmp(line, "filter-result|", 14) == 0 ||
 			    strncmp(line, "filter-dataline|", 16) == 0)
 				lka_filter_process_response(name, line);
+			else if (strncmp(line, "report|", 7) == 0)
+				lka_report_proc(name, line);
 			else
 				fatalx("Invalid filter message type: %s", line);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.47 2019/09/04 08:30:36 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.48 2019/09/06 08:23:56 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -35,7 +35,7 @@
 #include "smtpd.h"
 #include "log.h"
 
-#define	PROTOCOL_VERSION	"0.3"
+#define	PROTOCOL_VERSION	"0.4"
 
 struct filter;
 struct filter_session;
@@ -514,6 +514,7 @@ filter_protocol_internal(struct filter_session *fs, uint64_t *token, uint64_t re
 	struct filter_chain	*filter_chain;
 	struct filter_entry	*filter_entry;
 	struct filter		*filter;
+	struct timeval		 tv;
 	const char		*phase_name = filter_execs[phase].phase_name;
 	int			 resume = 1;
 
@@ -590,8 +591,17 @@ filter_protocol_internal(struct filter_session *fs, uint64_t *token, uint64_t re
 			    param);
 			filter_result_junk(reqid);
 			return;
-		}
-		else {
+		} else if (filter->config->report) {
+			log_trace(TRACE_FILTERS, "%016"PRIx64" filters protocol phase=%s, "
+			    "resume=%s, action=report, filter=%s, query=%s response=%s",
+			    fs->id, phase_name, resume ? "y" : "n",
+			    filter->name,
+			    param, filter->config->report);
+
+			gettimeofday(&tv, NULL);
+			lka_report_filter_report(fs->id, filter->name, 1,
+			    "smtp-in", &tv, filter->config->report);
+		} else {
 			log_trace(TRACE_FILTERS, "%016"PRIx64" filters protocol phase=%s, "
 			    "resume=%s, action=reject, filter=%s, query=%s, response=%s",
 			    fs->id, phase_name, resume ? "y" : "n",

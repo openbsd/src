@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.29 2019/09/04 08:30:36 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.30 2019/09/06 08:23:56 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -35,7 +35,7 @@
 #include "smtpd.h"
 #include "log.h"
 
-#define	PROTOCOL_VERSION	"0.3"
+#define	PROTOCOL_VERSION	"0.4"
 
 struct reporter_proc {
 	TAILQ_ENTRY(reporter_proc)	entries;
@@ -68,6 +68,7 @@ static struct smtp_events {
 	{ "protocol-client" },
 	{ "protocol-server" },
 
+	{ "filter-report" },
 	{ "filter-response" },
 
 	{ "timeout" },
@@ -455,4 +456,55 @@ lka_report_smtp_timeout(const char *direction, struct timeval *tv, uint64_t reqi
 	report_smtp_broadcast(reqid, direction, tv, "timeout",
 	    "%016"PRIx64"\n",
 	    reqid);
+}
+
+void
+lka_report_filter_report(uint64_t reqid, const char *name, int builtin,
+    const char *direction, struct timeval *tv, const char *message)
+{
+	report_smtp_broadcast(reqid, direction, tv, "filter-report",
+	    "%016"PRIx64"|%s|%s|%s\n", reqid, builtin ? "builtin" : "proc",
+	    name, message);
+}
+
+void
+lka_report_proc(const char *name, const char *line)
+{
+	char buffer[LINE_MAX];
+	struct timeval tv;
+	char *ep, *sp, *direction;
+	uint64_t reqid;
+
+	if (strlcpy(buffer, line + 7, sizeof(buffer)) >= sizeof(buffer))
+		fatalx("Invalid report: line too long: %s", line);
+
+	errno = 0;
+	tv.tv_sec = strtoll(buffer, &ep, 10);
+	if (ep[0] != '.' || errno != 0)
+		fatalx("Invalid report: invalid time: %s", line);
+	sp = ep + 1;
+	tv.tv_usec = strtol(sp, &ep, 10);
+	if (ep[0] != '|' || errno != 0)
+		fatalx("Invalid report: invalid time: %s", line);
+	if (ep - sp != 6)
+		fatalx("Invalid report: invalid time: %s", line);
+
+	direction = ep + 1;
+	if (strncmp(direction, "smtp-in|", 8) == 0) {
+		direction[7] = '\0';
+		direction += 7;
+#if 0
+	} else if (strncmp(direction, "smtp-out|", 9) == 0) {
+		direction[8] = '\0';
+		direction += 8;
+#endif
+	} else
+		fatalx("Invalid report: invalid direction: %s", line);
+
+	reqid = strtoull(sp, &ep, 16);
+	if (ep[0] != '|' || errno != 0)
+		fatalx("Invalid report: invalid reqid: %s", line);
+	sp = ep + 1;
+
+	lka_report_filter_report(reqid, name, 0, direction, &tv, sp);
 }
