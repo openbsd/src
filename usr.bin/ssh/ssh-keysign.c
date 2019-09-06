@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keysign.c,v 1.59 2019/09/06 04:53:27 djm Exp $ */
+/* $OpenBSD: ssh-keysign.c,v 1.60 2019/09/06 05:23:55 djm Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -25,8 +25,9 @@
 
 #include <sys/types.h>
 
+#ifdef WITH_OPENSSL
 #include <openssl/evp.h>
-#include <openssl/rsa.h>
+#endif
 
 #include <fcntl.h>
 #include <paths.h>
@@ -211,8 +212,9 @@ main(int argc, char **argv)
 	if (found == 0)
 		fatal("could not open any host key");
 
+#ifdef WITH_OPENSSL
 	OpenSSL_add_all_algorithms();
-
+#endif
 	found = 0;
 	for (i = 0; i < NUM_KEYTYPES; i++) {
 		keys[i] = NULL;

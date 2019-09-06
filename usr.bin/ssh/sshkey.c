@@ -1,4 +1,4 @@
-/* $OpenBSD: sshkey.c,v 1.82 2019/09/03 08:31:20 djm Exp $ */
+/* $OpenBSD: sshkey.c,v 1.83 2019/09/06 05:23:55 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Alexander von Gernler.  All rights reserved.
@@ -1824,12 +1824,14 @@ sshkey_from_private(const struct sshkey *k, struct sshkey **pkp)
 	r = 0;
  out:
 	sshkey_free(n);
+#ifdef WITH_OPENSSL
 	BN_clear_free(rsa_n_dup);
 	BN_clear_free(rsa_e_dup);
 	BN_clear_free(dsa_p_dup);
 	BN_clear_free(dsa_q_dup);
 	BN_clear_free(dsa_g_dup);
 	BN_clear_free(dsa_pub_key_dup);
+#endif /* WITH_OPENSSL */
 
 	return r;
 }
@@ -2172,6 +2174,7 @@ cert_parse(struct sshbuf *b, struct sshkey *key, struct sshbuf *certbuf)
 	return ret;
 }
 
+#ifdef WITH_OPENSSL
 static int
 check_rsa_length(const RSA *rsa)
 {
@@ -2182,6 +2185,7 @@ check_rsa_length(const RSA *rsa)
 		return SSH_ERR_KEY_LENGTH;
 	return 0;
 }
+#endif /* WITH_OPENSSL */
 
 static int
 sshkey_from_blob_internal(struct sshbuf *b, struct sshkey **keyp,

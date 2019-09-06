@@ -1,4 +1,4 @@
-/* $OpenBSD: packet.h,v 1.90 2019/01/21 10:35:09 djm Exp $ */
+/* $OpenBSD: packet.h,v 1.91 2019/09/06 05:23:55 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -18,10 +18,18 @@
 
 #include <termios.h>
 
-#include <openssl/bn.h>
-#include <openssl/ec.h>
 #include <sys/signal.h>
 #include <sys/queue.h>
+
+#ifdef WITH_OPENSSL
+#include <openssl/bn.h>
+#include <openssl/ec.h>
+#include <openssl/ecdsa.h>
+#else /* OPENSSL */
+#define BIGNUM		void
+#define EC_GROUP	void
+#define EC_POINT	void
+#endif /* WITH_OPENSSL */
 
 struct kex;
 struct sshkey;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshbuf.h,v 1.17 2019/07/30 05:04:49 djm Exp $	*/
+/*	$OpenBSD: sshbuf.h,v 1.18 2019/09/06 05:23:55 djm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -21,8 +21,17 @@
 #include <sys/types.h>
 #include <stdarg.h>
 #include <stdio.h>
+
+#ifdef WITH_OPENSSL
 #include <openssl/bn.h>
 #include <openssl/ec.h>
+#include <openssl/ecdsa.h>
+#else /* OPENSSL */
+#define BIGNUM		void
+#define EC_KEY		void
+#define EC_GROUP	void
+#define EC_POINT	void
+#endif /* WITH_OPENSSL */
 
 #define SSHBUF_SIZE_MAX		0x8000000	/* Hard maximum size */
 #define SSHBUF_REFS_MAX		0x100000	/* Max child buffers */
