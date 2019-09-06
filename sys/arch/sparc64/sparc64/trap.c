@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.101 2019/07/09 23:48:08 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.102 2019/09/06 12:22:01 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -429,8 +429,7 @@ trap(struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate)
 	if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
 	    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 	    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
-		return;
-
+		goto out;
 
 	switch (type) {
 
@@ -707,6 +706,7 @@ dopanic:
 		KERNEL_UNLOCK();
 		break;
 	}
+out:
 	userret(p);
 	share_fpu(p, tf);
 #undef ADVANCE

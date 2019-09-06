@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.109 2019/07/09 23:48:08 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.110 2019/09/06 12:22:01 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -242,7 +242,7 @@ m88100_trap(u_int type, struct trapframe *frame)
 		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
 		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
-			return;
+			goto userexit;
 	}
 	fault_type = SI_NOINFO;
 	fault_code = 0;
@@ -686,7 +686,7 @@ m88110_trap(u_int type, struct trapframe *frame)
 		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
 		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
-			return;
+			goto userexit;
 	}
 
 	if (sig != 0)

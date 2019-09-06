@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.145 2019/07/09 23:48:07 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.146 2019/09/06 12:22:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -218,7 +218,7 @@ trap(int type, struct trapframe *frame)
 		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
 		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
-			return;
+			goto out;
 	}
 
 	switch (type) {
@@ -653,6 +653,7 @@ datalign_user:
 	if ((type & T_USER) && !(frame->tf_iisq_head == HPPA_SID_KERNEL &&
 	    (frame->tf_iioq_head & ~PAGE_MASK) == SYSCALLGATE)) {
 		ast(p);
+out:
 		userret(p);
 	}
 }

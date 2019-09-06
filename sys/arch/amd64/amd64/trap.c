@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.76 2019/07/09 23:48:07 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.77 2019/09/06 12:22:01 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -331,7 +331,7 @@ usertrap(struct trapframe *frame)
 	if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
 	    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 	    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
-		return;
+		goto out;
 
 	switch (type) {
 	case T_PROTFLT:			/* protection fault */

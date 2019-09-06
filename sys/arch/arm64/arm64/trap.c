@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.24 2019/07/09 23:48:07 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.25 2019/09/06 12:22:01 deraadt Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -245,9 +245,9 @@ do_el0_sync(struct trapframe *frame)
 	if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
 	    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 	    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
-		return;
+		goto out;
 
-	switch(exception) {
+	switch (exception) {
 	case EXCP_UNKNOWN:
 		vfp_save();
 		curcpu()->ci_flush_bp();
@@ -316,7 +316,7 @@ do_el0_sync(struct trapframe *frame)
 		sigexit(p, SIGILL);
 		KERNEL_UNLOCK();
 	}
-
+out:
 	userret(p);
 }
 
