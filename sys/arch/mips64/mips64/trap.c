@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.141 2019/09/06 16:06:30 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.142 2019/09/06 16:22:40 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1531,8 +1531,7 @@ db_save_stack_trace(struct db_stack_trace *st)
 		framesize = 0;
 		for (va = subr; va < pc && !done; va += 4) {
 			inst.word = kdbpeek(va);
-			if (inst_branch(inst.word) || inst_call(inst.word) ||
-			    inst_return(inst.word)) {
+			if (inst_call(inst.word) || inst_return(inst.word)) {
 				/* Check the delay slot and stop. */
 				va += 4;
 				inst.word = kdbpeek(va);
