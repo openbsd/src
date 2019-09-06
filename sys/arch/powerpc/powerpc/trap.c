@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.112 2019/09/06 12:23:49 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.113 2019/09/06 12:55:26 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -239,7 +239,7 @@ trap(struct trapframe *frame)
 		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
 		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
-			goto done;
+			goto out;
 	}
 
 	switch (type) {
