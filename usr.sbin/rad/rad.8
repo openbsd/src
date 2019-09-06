@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.8,v 1.4 2019/01/02 07:45:17 jmc Exp $
+.\"	$OpenBSD: rad.8,v 1.5 2019/09/06 09:40:59 benno Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 2 2019 $
+.Dd $Mdocdate: September 6 2019 $
 .Dt RAD 8
 .Os
 .Sh NAME
@@ -146,15 +146,3 @@ The
 .Nm
 program was written by
 .An Florian Obser Aq Mt florian@openbsd.org .
-.Sh CAVEATS
-When running
-.Nm
-on a
-.Xr carp 4
-interface, it is recommended to either disable SOIIs (persistent Semantically
-Opaque Interface Identifiers) on the interface with
-.Xr ifconfig 8 ,
-or ensure that all CARP peers have the same SOII key stored in
-.Pa /etc/soii.key .
-Otherwise the default IPv6 router's link-local address will change during CARP
-failover, which temporarily disrupts connectivity of IPv6 autoconf clients.
