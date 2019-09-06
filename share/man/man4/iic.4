@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.98 2019/05/11 16:00:12 patrick Exp $
+.\"	$OpenBSD: iic.4,v 1.99 2019/09/06 19:18:24 patrick Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 11 2019 $
+.Dd $Mdocdate: September 6 2019 $
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -37,8 +37,12 @@
 .Cd "iic* at gpioiic?               # i386"
 .Cd "iic* at gdiumiic?              # loongson"
 .Cd "iic* at tsciic?                # alpha"
-.Cd "iic* at dwiic?                 # amd64"
+.Cd "iic* at dwiic?                 # amd64 arm64"
 .Cd "iic* at octiic?                # octeon"
+.Cd "iic* at imxiic?                # arm64 armv7"
+.Cd "iic* at mviic?                 # arm64"
+.Cd "iic* at rkiic?                 # arm64 armv7"
+.Cd "iic* at sxitwi?                # arm64 armv7"
 .Sh DESCRIPTION
 .Tn I2C
 is a two-wire bus developed by Philips used for connecting
@@ -93,8 +97,12 @@ GPIO I2C controller
 National Semiconductor Geode SC1100 I2C controller
 .It Xr ichiic 4
 Intel ICH SMBus controller
+.It Xr imxiic 4
+Freescale i.MX I2C controller
 .It Xr kiic 4
 Apple Kauai I2C controller
+.It Xr mviic 4
+Marvell Armada 3700 I2C Controller
 .It Xr nviic 4
 NVIDIA nForce2/3/4 SMBus controller
 .It Xr octiic 4
@@ -105,8 +113,12 @@ Phillips PCF8584 I2C controller
 Apple via-pmu I2C controller
 .It Xr piixpm 4
 Intel PIIX SMBus controller
+.It Xr rkiic 4
+Rockchip I2C controller
 .It Xr smu 4
 Apple System Management Unit
+.It Xr sxitwi 4
+Allwinner Two Wire Interface controller
 .It Xr tsciic 4
 DECchip 21272 and 21274 Core Logic chipset I2C controller
 .It Xr viapm 4
@@ -180,6 +192,8 @@ Maxim DS1624/DS1631/DS1721 temperature sensor
 Maxim DS1307 real-time clock
 .It Xr maxtmp 4
 Maxim MAX6642/MAX6690 temperature sensor
+.It Xr mcprtc 4
+Microchip MCP79400 real-time clock
 .It Xr mfokclock 4
 M41T8x real-time clock
 .It Xr nvt 4
