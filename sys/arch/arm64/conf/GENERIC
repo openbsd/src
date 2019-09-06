@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.122 2019/09/06 08:45:37 patrick Exp $
+# $OpenBSD: GENERIC,v 1.123 2019/09/06 09:38:19 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -366,6 +366,7 @@ abcrtc*		at iic?			# Abracon x80x RTC
 fanpwr*		at iic?			# FAN53555 regulator
 ipmi*		at iic?			# IPMI (SIIF)
 islrtc*		at iic?			# ISL1208 RTC
+mcprtc*		at iic?			# MCP794XX RTC
 rkpmic*		at iic?			# RK808 PMIC
 sypwr*		at iic?			# SY8106A regulator
 fusbtc*		at iic?			# USB Type-C controller
