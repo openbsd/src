@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.11 2019/01/03 00:59:58 dlg Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.12 2019/09/06 06:40:54 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -1152,12 +1152,12 @@ dwxe_iff(struct dwxe_softc *sc)
 	reg = 0;
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
+	bzero(hash, sizeof(hash));
 	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		reg |= DWXE_RX_FRM_FLT_RX_ALL_MULTICAST;
 		if (ifp->if_flags & IFF_PROMISC)
 			reg |= DWXE_RX_FRM_FLT_DIS_ADDR_FILTER;
-		bzero(hash, sizeof(hash));
 	} else {
 		reg |= DWXE_RX_FRM_FLT_HASH_MULTICAST;
 		ETHER_FIRST_MULTI(step, ac, enm);
