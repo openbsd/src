@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.149 2019/09/07 02:07:08 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.150 2019/09/07 02:30:40 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1169,7 +1169,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 		case MTERASE:	/* erase volume */
 			error = st_erase(st, number, flags);
 			break;
-		case MTSETBSIZ:	/* Set block size for device */
+		case MTSETBSIZ:	/* Set block size for device and mode. */
 			if (number == 0) {
 				st->flags &= ~ST_FIXEDBLOCKS;
 			} else {
@@ -1184,12 +1184,12 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 			st->blksize = number;
 			goto try_new_value;
 
-		case MTSETDNSTY:	/* Set density for device and mode */
+		case MTSETDNSTY:	/* Set density for device and mode. */
 			if (number < 0 || number > SCSI_MAX_DENSITY_CODE) {
 				error = EINVAL;
 				break;
-			} else
-				st->density = number;
+			}
+			st->density = number;
 			goto try_new_value;
 
 		default:
