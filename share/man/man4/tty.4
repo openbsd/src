@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.52 2018/06/16 18:01:08 deraadt Exp $
+.\"	$OpenBSD: tty.4,v 1.53 2019/09/07 10:28:27 schwarze Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tty.4	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: June 16 2018 $
+.Dd $Mdocdate: September 7 2019 $
 .Dt TTY 4
 .Os
 .Sh NAME
@@ -505,4 +505,10 @@ controlling terminal, if any
 .Xr ttys 5 ,
 .Xr getty 8
 .Sh HISTORY
+A console typewriter device
+.Pa /dev/tty
+and asynchronous communication interfaces
+.Pa /dev/tty[0-5]
+first appeared in
+.At v1 .
 The cua support is inspired by similar support in SunOS.

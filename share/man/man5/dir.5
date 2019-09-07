@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dir.5,v 1.19 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: dir.5,v 1.20 2019/09/07 10:28:27 schwarze Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)dir.5	8.4 (Berkeley) 5/3/95
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: September 7 2019 $
 .Dt DIR 5
 .Os
 .Sh NAME
@@ -111,7 +111,15 @@ struct dirent {
 A
 .Nm dir
 file format appeared in
+.At v1 .
+A predecessor
+.Vt struct direct
+first appeared in
 .At v7 .
+The
+.Vt dirent
+structure first appeared in
+.Bx 4.3 Reno .
 The
 .Fa d_off
 member was added in
