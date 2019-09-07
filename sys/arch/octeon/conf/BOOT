@@ -1,4 +1,4 @@
-#	$OpenBSD: BOOT,v 1.5 2019/09/04 14:29:42 cheloha Exp $
+#	$OpenBSD: BOOT,v 1.6 2019/09/07 13:58:58 visa Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -38,6 +38,11 @@ octcit*		at fdt?		# Interrupt controller v3
 octciu*		at fdt?		# Interrupt controller v1
 octmmc*		at fdt?		# MMC host controller
 sdmmc*		at octmmc?	# SD/MMC bus
+
+octpcie*	at iobus0
+pci*		at octpcie?
+ppb*		at pci?
+pci*		at ppb?
 
 # AHCI controllers
 octsctl*	at fdt?

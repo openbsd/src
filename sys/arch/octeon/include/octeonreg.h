@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonreg.h,v 1.9 2018/12/18 14:24:02 visa Exp $	*/
+/*	$OpenBSD: octeonreg.h,v 1.10 2019/09/07 13:58:58 visa Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -177,10 +177,16 @@
 #define MIO_RST_BOOT_PNR_MUL_SHIFT	24
 #define MIO_RST_BOOT_PNR_MUL_MASK	0x3f
 
+#define MIO_RST_CTL(x)		(0x1180000001618ULL + 8 * (x))
+#define MIO_RST_CTL_PRTMODE		0x0000000000000030ULL
+
 /* OCTEON III */
 #define RST_BOOT		0x1180006001600ULL
 #define RST_BOOT_PNR_MUL_SHIFT		24
 #define RST_BOOT_PNR_MUL_MASK		0x3f
+#define RST_CTL(x)		(0x1180006001640ULL + 8 * (x))
+#define RST_CTL_RST_DONE		0x0000000000000100ULL
+#define RST_CTL_HOST_MODE		0x0000000000000040ULL
 #define RST_SOFT_RST		0x1180006001680ULL
 
 #define OCTEON_IO_REF_CLOCK	50000000	/* 50MHz */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.23 2017/09/06 16:18:27 visa Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.24 2019/09/07 13:58:58 visa Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -258,6 +258,15 @@ iobusattach(struct device *parent, struct device *self, void *aux)
 		aa.aa_addr = GMX0_BASE_PORT0 + GMX_BLOCK_SIZE * i;
 		aa.aa_irq = -1;
 		aa.aa_unitno = i;
+		config_found_sm(self, &aa, iobusprint, iobussubmatch);
+	}
+
+	if (octeon_ver == OCTEON_2 || octeon_ver == OCTEON_3) {
+		memset(&aa, 0, sizeof(aa));
+		aa.aa_name = "octpcie";
+		aa.aa_bust = &iobus_tag;
+		aa.aa_dmat = &iobus_bus_dma_tag;
+		aa.aa_irq = -1;
 		config_found_sm(self, &aa, iobusprint, iobussubmatch);
 	}
 }
