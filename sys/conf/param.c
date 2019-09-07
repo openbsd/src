@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.44 2019/08/21 20:44:09 cheloha Exp $	*/
+/*	$OpenBSD: param.c,v 1.45 2019/09/07 01:23:23 cheloha Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -66,15 +66,9 @@
  * the kernel; it should be modified there to suit local taste
  * if necessary.
  *
- * Compiled with -DHZ=xx -DTIMEZONE=x -DDST=x -DMAXUSERS=xx
+ * Compiled with -DHZ=xx -DMAXUSERS=xx
  */
 
-#ifndef TIMEZONE
-# define TIMEZONE 0
-#endif
-#ifndef DST
-# define DST 0
-#endif
 #ifndef HZ
 #define	HZ 100
 #endif
@@ -82,7 +76,6 @@ int	hz = HZ;
 int	tick = 1000000 / HZ;
 int	tick_nsec = 1000000000 / HZ;
 int	tickadj = 240000 / (60 * HZ);		/* can adjust 240ms in 60s */
-struct	timezone tz  __attribute__ ((section(".data"))) = { TIMEZONE, DST };
 int	utc_offset = 0;
 #define	NPROCESS (30 + 16 * MAXUSERS)
 #define	NTEXT (80 + NPROCESS / 8)		/* actually the object cache */
