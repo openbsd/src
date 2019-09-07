@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.148 2019/09/07 01:47:48 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.149 2019/09/07 02:07:08 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -173,10 +173,8 @@ struct st_softc {
 #define	ST_WAITING		0x00002000
 #define	ST_DYING		0x00004000
 #define	ST_BOD_DETECTED		0x00008000
-#define	ST_USER_DENSITY		0x00010000
-#define	ST_QUIRK_DENSITY	0x00020000
-#define	ST_USER_BLKSIZE		0x00040000
-#define	ST_QUIRK_BLKSIZE	0x00080000
+#define	ST_MODE_DENSITY		0x00010000
+#define	ST_MODE_BLKSIZE		0x00040000
 
 	u_int quirks;		/* quirks for the open mode           */
 	int blksize;		/* blksize we are using               */
@@ -357,12 +355,11 @@ st_identify_drive(struct st_softc *st, struct scsi_inquiry_data *inqbuf)
 	if (priority != 0) {
 		st->quirks = finger->quirkdata.quirks;
 		st->mode = finger->quirkdata.mode;
-		st->flags &= ~(ST_QUIRK_BLKSIZE | ST_QUIRK_DENSITY |
-		    ST_USER_BLKSIZE | ST_USER_DENSITY);
+		st->flags &= ~(ST_MODE_BLKSIZE | ST_MODE_DENSITY);
 		if (st->mode.blksize != 0)
-			st->flags |= ST_QUIRK_BLKSIZE;
+			st->flags |= ST_MODE_BLKSIZE;
 		if (st->mode.density != 0)
-			st->flags |= ST_QUIRK_DENSITY;
+			st->flags |= ST_MODE_DENSITY;
 	}
 }
 
@@ -567,7 +564,7 @@ st_mount_tape(dev_t dev, int flags)
 	 * then use it in preference to the one supplied by
 	 * default by the driver.
 	 */
-	if (st->flags & (ST_QUIRK_DENSITY | ST_USER_DENSITY))
+	if (st->flags & ST_MODE_DENSITY)
 		st->density = st->mode.density;
 	else
 		st->density = st->media_density;
@@ -577,7 +574,7 @@ st_mount_tape(dev_t dev, int flags)
 	 * default by the driver.
 	 */
 	st->flags &= ~ST_FIXEDBLOCKS;
-	if (st->flags & (ST_QUIRK_BLKSIZE | ST_USER_BLKSIZE)) {
+	if (st->flags & ST_MODE_BLKSIZE) {
 		st->blksize = st->mode.blksize;
 		if (st->blksize)
 			st->flags |= ST_FIXEDBLOCKS;
@@ -1250,11 +1247,11 @@ try_new_value:
 	switch (mt->mt_op) {
 	case MTSETBSIZ:
 		st->mode.blksize = st->blksize;
-		st->flags |= ST_USER_BLKSIZE;
+		st->flags |= ST_MODE_BLKSIZE;
 		break;
 	case MTSETDNSTY:
 		st->mode.density = st->density;
-		st->flags |= ST_USER_DENSITY;
+		st->flags |= ST_MODE_DENSITY;
 		break;
 	}
 
