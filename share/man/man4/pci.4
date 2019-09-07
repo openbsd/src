@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.372 2019/08/04 06:55:42 jmc Exp $
+.\"	$OpenBSD: pci.4,v 1.373 2019/09/07 14:02:31 visa Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 4 2019 $
+.Dd $Mdocdate: September 7 2019 $
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -74,6 +74,9 @@
 .Cd "pci* at mpcpcibr?"
 .Cd "pci* at ht?"
 .Cd "pci* at hpb?"
+.Pp
+.Cd "# octeon"
+.Cd "pci* at octpcie?"
 .Pp
 .Cd "# sgi"
 .Cd "pci* at macepcibr?"
