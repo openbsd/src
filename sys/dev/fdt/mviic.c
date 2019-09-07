@@ -1,4 +1,4 @@
-/* $OpenBSD: mviic.c,v 1.1 2019/09/06 08:45:37 patrick Exp $ */
+/* $OpenBSD: mviic.c,v 1.2 2019/09/07 13:27:40 patrick Exp $ */
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -28,6 +28,7 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
 /* registers */
@@ -62,6 +63,7 @@ struct mviic_softc {
 
 	struct rwlock		sc_buslock;
 	struct i2c_controller	sc_ic;
+	struct i2c_bus		sc_ib;
 };
 
 int mviic_match(struct device *, void *, void *);
@@ -165,6 +167,10 @@ mviic_attach(struct device *parent, struct device *self, void *aux)
 	iba.iba_bus_scan = mviic_bus_scan;
 	iba.iba_bus_scan_arg = &sc->sc_node;
 	config_found(&sc->sc_dev, &iba, iicbus_print);
+
+	sc->sc_ib.ib_node = sc->sc_node;
+	sc->sc_ib.ib_ic = &sc->sc_ic;
+	i2c_register(&sc->sc_ib);
 }
 
 int
