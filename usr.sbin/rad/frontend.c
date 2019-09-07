@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.30 2019/06/28 13:32:49 deraadt Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.31 2019/09/07 18:57:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -104,6 +104,7 @@ struct ra_iface {
 	char				conf_name[IF_NAMESIZE];
 	uint32_t			if_index;
 	int				removed;
+	int				link_state;
 	int				prefix_count;
 	size_t				datalen;
 	uint8_t				data[RA_MAX_SIZE];
@@ -117,6 +118,7 @@ void			 frontend_startup(void);
 void			 icmp6_receive(int, short, void *);
 void			 join_all_routers_mcast_group(struct ra_iface *);
 void			 leave_all_routers_mcast_group(struct ra_iface *);
+int			 get_link_state(char *);
 void			 merge_ra_interface(char *, char *);
 void			 merge_ra_interfaces(void);
 struct ra_iface		*find_ra_iface_by_id(uint32_t);
@@ -720,21 +722,59 @@ find_ra_iface_conf(struct ra_iface_conf_head *head, char *if_name)
 	return (NULL);
 }
 
+int
+get_link_state(char *if_name)
+{
+	struct ifaddrs	*ifap, *ifa;
+	int		 ls = LINK_STATE_UNKNOWN;
+
+	if (getifaddrs(&ifap) != 0) {
+		log_warn("getifaddrs");
+		return LINK_STATE_UNKNOWN;
+	}
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family != AF_LINK)
+			continue;
+		if (strcmp(if_name, ifa->ifa_name) != 0)
+			continue;
+
+		ls = ((struct if_data*)ifa->ifa_data)->ifi_link_state;
+		break;
+	}
+	freeifaddrs(ifap);
+	return ls;
+}
+
 void
 merge_ra_interface(char *name, char *conf_name)
 {
 	struct ra_iface		*ra_iface;
 	uint32_t		 if_index;
+	int			 link_state;
+
+	link_state = get_link_state(name);
 
 	if ((ra_iface = find_ra_iface_by_name(name)) != NULL) {
-		log_debug("keeping interface %s", name);
-		ra_iface->removed = 0;
+		ra_iface->link_state = link_state;
+		if (!LINK_STATE_IS_UP(link_state)) {
+			log_debug("%s down, ignoring", name);
+			ra_iface->removed = 1;
+		} else {
+			log_debug("keeping interface %s", name);
+			ra_iface->removed = 0;
+		}
+		return;
+	}
+
+	if (!LINK_STATE_IS_UP(link_state)) {
+		log_debug("%s down, ignoring", name);
 		return;
 	}
 
 	log_debug("new interface %s", name);
 	if ((if_index = if_nametoindex(name)) == 0)
 		return;
+
 	log_debug("adding interface %s", name);
 	if ((ra_iface = calloc(1, sizeof(*ra_iface))) == NULL)
 		fatal("%s", __func__);
@@ -1134,6 +1174,9 @@ ra_output(struct ra_iface *ra_iface, struct sockaddr_in6 *to)
 	struct in6_pktinfo	*pi;
 	ssize_t			 len;
 	int			 hoplimit = 255;
+
+	if (!LINK_STATE_IS_UP(ra_iface->link_state))
+		return;
 
 	sndmhdr.msg_name = to;
 	sndmhdr.msg_iov[0].iov_base = ra_iface->data;
