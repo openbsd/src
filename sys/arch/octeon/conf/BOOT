@@ -1,4 +1,4 @@
-#	$OpenBSD: BOOT,v 1.6 2019/09/07 13:58:58 visa Exp $
+#	$OpenBSD: BOOT,v 1.7 2019/09/07 14:03:52 visa Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -47,6 +47,9 @@ pci*		at ppb?
 # AHCI controllers
 octsctl*	at fdt?
 ahci*		at octsctl?
+
+# NVMe controllers
+nvme*		at pci?
 
 dwctwo0		at iobus0 irq 56
 octuctl*	at fdt?

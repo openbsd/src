@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.48 2019/09/07 13:58:58 visa Exp $
+#	$OpenBSD: GENERIC,v 1.49 2019/09/07 14:03:52 visa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -77,6 +77,9 @@ wd*		at pciide? flags 0x0000
 # AHCI controllers
 octsctl*	at fdt?
 ahci*		at octsctl?
+
+# NVMe controllers
+nvme*		at pci?
 
 # USB Controllers
 dwctwo0 	at iobus? irq 56
