@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.147 2019/09/07 01:27:02 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.148 2019/09/07 01:47:48 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -101,10 +101,9 @@ struct mode {
 
 struct quirkdata {
 	u_int quirks;
-#define	ST_Q_FORCE_BLKSIZE	0x0001
-#define	ST_Q_SENSE_HELP		0x0002	/* must do READ for good MODE SENSE */
-#define	ST_Q_IGNORE_LOADS	0x0004
-#define	ST_Q_UNIMODAL		0x0010	/* unimode drive rejects mode select */
+#define	ST_Q_SENSE_HELP		0x0001	/* must do READ for good MODE SENSE */
+#define	ST_Q_IGNORE_LOADS	0x0002
+#define	ST_Q_UNIMODAL		0x0004	/* unimode drive rejects mode select */
 	struct mode mode;
 };
 
@@ -115,28 +114,28 @@ struct st_quirk_inquiry_pattern {
 
 const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 	{{T_SEQUENTIAL, T_REMOV,
-		 "        ", "                ", "    "}, {ST_Q_FORCE_BLKSIZE,
+		 "        ", "                ", "    "}, {0,
 							   {512, 0}}},
  	{{T_SEQUENTIAL, T_REMOV,
-		 "TANDBERG", " TDC 3800       ", ""},     {ST_Q_FORCE_BLKSIZE,
+		 "TANDBERG", " TDC 3800       ", ""},     {0,
 							   {512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
 		 "ARCHIVE ", "VIPER 2525 25462", ""},     {ST_Q_SENSE_HELP,
 							   {0, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-		 "SANKYO  ", "CP525           ", ""},     {ST_Q_FORCE_BLKSIZE,
+		 "SANKYO  ", "CP525           ", ""},     {0,
 							   {512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-		 "ANRITSU ", "DMT780          ", ""},     {ST_Q_FORCE_BLKSIZE,
+		 "ANRITSU ", "DMT780          ", ""},     {0,
 							   {512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
 		 "ARCHIVE ", "VIPER 150  21531", ""},     {ST_Q_SENSE_HELP,
 							   {0, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-		 "WANGTEK ", "5099ES SCSI",	 ""},     {ST_Q_FORCE_BLKSIZE,
+		 "WANGTEK ", "5099ES SCSI",	 ""},     {0,
 							   {512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
-		 "WANGTEK ", "5150ES SCSI",	 ""},     {ST_Q_FORCE_BLKSIZE,
+		 "WANGTEK ", "5150ES SCSI",	 ""},     {0,
 							   {512, 0}}},
 	{{T_SEQUENTIAL, T_REMOV,
 		 "HP      ", "T4000s          ", ""},     {ST_Q_UNIMODAL,
@@ -360,7 +359,7 @@ st_identify_drive(struct st_softc *st, struct scsi_inquiry_data *inqbuf)
 		st->mode = finger->quirkdata.mode;
 		st->flags &= ~(ST_QUIRK_BLKSIZE | ST_QUIRK_DENSITY |
 		    ST_USER_BLKSIZE | ST_USER_DENSITY);
-		if (st->quirks & ST_Q_FORCE_BLKSIZE)
+		if (st->mode.blksize != 0)
 			st->flags |= ST_QUIRK_BLKSIZE;
 		if (st->mode.density != 0)
 			st->flags |= ST_QUIRK_DENSITY;
