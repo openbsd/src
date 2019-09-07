@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.146 2019/09/07 01:15:41 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.147 2019/09/07 01:27:02 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -160,7 +160,6 @@ struct st_softc {
 
 	int flags;
 #define	ST_INFO_VALID		0x00000001
-#define	ST_BLOCK_SET		0x00000002
 #define	ST_WRITTEN		0x00000004
 #define	ST_FIXEDBLOCKS		0x00000008
 #define	ST_AT_FILEMARK		0x00000010
@@ -1187,7 +1186,6 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 				st->flags |= ST_FIXEDBLOCKS;
 			}
 			st->blksize = number;
-			st->flags |= ST_BLOCK_SET;	/*XXX */
 			goto try_new_value;
 
 		case MTSETDNSTY:	/* Set density for device and mode */
