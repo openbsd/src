@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.96 2019/08/14 07:34:49 anton Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.97 2019/09/07 09:11:14 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -68,7 +68,7 @@
 /* vmd -> vmctl error codes */
 #define VMD_BIOS_MISSING	1001
 #define VMD_DISK_MISSING	1002
-#define VMD_DISK_INVALID	1003
+					/* 1003 is obsolete VMD_DISK_INVALID */
 #define VMD_VM_STOP_INVALID	1004
 #define VMD_CDROM_MISSING	1005
 #define VMD_CDROM_INVALID	1006
