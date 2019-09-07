@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.8 2019/09/07 13:27:23 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.9 2019/09/07 13:29:08 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -240,4 +240,34 @@ i2c_byphandle(uint32_t phandle)
 	}
 
 	return NULL;
+}
+
+/*
+ * SFP support.
+ */
+
+LIST_HEAD(, sfp_device) sfp_devices =
+	LIST_HEAD_INITIALIZER(sfp_devices);
+
+void
+sfp_register(struct sfp_device *sd)
+{
+	sd->sd_phandle = OF_getpropint(sd->sd_node, "phandle", 0);
+	if (sd->sd_phandle == 0)
+		return;
+
+	LIST_INSERT_HEAD(&sfp_devices, sd, sd_list);
+}
+
+int
+sfp_get_sffpage(uint32_t phandle, struct if_sffpage *sff)
+{
+	struct sfp_device *sd;
+
+	LIST_FOREACH(sd, &sfp_devices, sd_list) {
+		if (sd->sd_phandle == phandle)
+			return sd->sd_get_sffpage(sd->sd_cookie, sff);
+	}
+
+	return ENXIO;
 }
