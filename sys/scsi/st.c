@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.150 2019/09/07 02:30:40 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.151 2019/09/07 15:26:07 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -207,7 +207,6 @@ int	stdetach(struct device *, int);
 void	stminphys(struct buf *);
 void	ststart(struct scsi_xfer *);
 
-void	st_identify_drive(struct st_softc *, struct scsi_inquiry_data *);
 int	st_mount_tape(dev_t, int);
 void	st_unmount(struct st_softc *, int, int);
 int	st_decide_mode(struct st_softc *, int);
@@ -258,14 +257,16 @@ stmatch(struct device *parent, void *match, void *aux)
 
 /*
  * The routine called by the low level scsi routine when it discovers
- * A device suitable for this driver
+ * a device suitable for this driver.
  */
 void
 stattach(struct device *parent, struct device *self, void *aux)
 {
+	const struct st_quirk_inquiry_pattern *finger;
 	struct st_softc *st = (void *)self;
 	struct scsi_attach_args *sa = aux;
 	struct scsi_link *link = sa->sa_sc_link;
+	int priority;
 
 	SC_DEBUG(link, SDEV_DB2, ("stattach:\n"));
 
@@ -276,11 +277,21 @@ stattach(struct device *parent, struct device *self, void *aux)
 	link->interpret_sense = st_interpret_sense;
 	link->device_softc = st;
 
-	/*
-	 * Check if the drive is a known criminal and take
-	 * Any steps needed to bring it into line
-	 */
-	st_identify_drive(st, sa->sa_inqbuf);
+	/* Get any quirks and mode information. */
+	finger = (const struct st_quirk_inquiry_pattern *)scsi_inqmatch(
+	    &link->inqdata,
+	    st_quirk_patterns,
+	    nitems(st_quirk_patterns),
+	    sizeof(st_quirk_patterns[0]), &priority);
+	if (finger != NULL) {
+		st->quirks = finger->quirkdata.quirks;
+		st->mode = finger->quirkdata.mode;
+		st->flags &= ~(ST_MODE_BLKSIZE | ST_MODE_DENSITY);
+		if (st->mode.blksize != 0)
+			st->flags |= ST_MODE_BLKSIZE;
+		if (st->mode.density != 0)
+			st->flags |= ST_MODE_DENSITY;
+	}
 	printf("\n");
 
 	scsi_xsh_set(&st->sc_xsh, link, ststart);
@@ -336,31 +347,6 @@ stdetach(struct device *self, int flags)
 	bufq_destroy(&st->sc_bufq);
 
 	return (0);
-}
-
-/*
- * Use the inquiry routine in 'scsi_base' to get drive info so we can
- * Further tailor our behaviour.
- */
-void
-st_identify_drive(struct st_softc *st, struct scsi_inquiry_data *inqbuf)
-{
-	const struct st_quirk_inquiry_pattern *finger;
-	int priority;
-
-	finger = (const struct st_quirk_inquiry_pattern *)scsi_inqmatch(inqbuf,
-	    st_quirk_patterns,
-	    nitems(st_quirk_patterns),
-	    sizeof(st_quirk_patterns[0]), &priority);
-	if (priority != 0) {
-		st->quirks = finger->quirkdata.quirks;
-		st->mode = finger->quirkdata.mode;
-		st->flags &= ~(ST_MODE_BLKSIZE | ST_MODE_DENSITY);
-		if (st->mode.blksize != 0)
-			st->flags |= ST_MODE_BLKSIZE;
-		if (st->mode.density != 0)
-			st->flags |= ST_MODE_DENSITY;
-	}
 }
 
 /*
