@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.258 2019/08/27 22:39:51 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.259 2019/09/07 19:05:44 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -314,7 +314,9 @@ cpu_startup(void)
 
 #ifndef SMALL_KERNEL
 	cpu_ucode_setup();
+	cpu_ucode_apply(&cpu_info_primary);
 #endif
+
 	/* enter the IDT and trampoline code in the u-k maps */
 	enter_shared_special_pages();
 
@@ -1720,9 +1722,6 @@ init_x86_64(paddr_t first_avail)
 
 	intr_default_setup();
 
-#ifndef SMALL_KERNEL
-	cpu_ucode_apply(&cpu_info_primary);
-#endif
 	fpuinit(&cpu_info_primary);
 
 	softintr_init();
