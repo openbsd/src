@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.123 2019/09/06 09:38:19 patrick Exp $
+# $OpenBSD: GENERIC,v 1.124 2019/09/07 13:32:36 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -173,6 +173,7 @@ mvrng*		at fdt?
 mvrtc*		at fdt?
 mvtemp*		at fdt?
 mvuart*		at fdt?
+sfp*		at fdt?
 
 # Rockchip SoCs
 rkclock*	at fdt? early 1
