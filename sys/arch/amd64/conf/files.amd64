@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.103 2019/08/28 22:39:09 kettenis Exp $
+#	$OpenBSD: files.amd64,v 1.104 2019/09/07 13:46:19 kettenis Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -237,7 +237,7 @@ attach	acpi at bios
 file	arch/amd64/amd64/acpi_machdep.c		acpi
 file	arch/amd64/amd64/acpi_wakecode.S	acpi & !small_kernel
 
-device	acpipci: pcibus
+device	acpipci
 attach	acpipci at acpi
 file	arch/amd64/pci/acpipci.c		acpipci
 
