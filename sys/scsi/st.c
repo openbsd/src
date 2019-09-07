@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.145 2019/09/05 18:49:03 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.146 2019/09/07 01:15:41 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -94,7 +94,7 @@
  * Define various devices that we know mis-behave in some way,
  * and note how they are bad, so we can correct for them
  */
-struct modes {
+struct mode {
 	int blksize;
 	u_int8_t density;
 };
@@ -105,7 +105,7 @@ struct quirkdata {
 #define	ST_Q_SENSE_HELP		0x0002	/* must do READ for good MODE SENSE */
 #define	ST_Q_IGNORE_LOADS	0x0004
 #define	ST_Q_UNIMODAL		0x0010	/* unimode drive rejects mode select */
-	struct modes modes;
+	struct mode mode;
 };
 
 struct st_quirk_inquiry_pattern {
@@ -197,7 +197,7 @@ struct st_softc {
 	int media_blkno;		/* relative to BOF. -1 means unknown. */
 	int media_eom;			/* relative to BOT. -1 means unknown. */
 
-	struct modes modes;
+	struct mode mode;
 	struct bufq sc_bufq;
 	struct timeout sc_timeout;
 	struct scsi_xshandler sc_xsh;
@@ -358,12 +358,12 @@ st_identify_drive(struct st_softc *st, struct scsi_inquiry_data *inqbuf)
 	    sizeof(st_quirk_patterns[0]), &priority);
 	if (priority != 0) {
 		st->quirks = finger->quirkdata.quirks;
-		st->modes = finger->quirkdata.modes;
+		st->mode = finger->quirkdata.mode;
 		st->flags &= ~(ST_QUIRK_BLKSIZE | ST_QUIRK_DENSITY |
 		    ST_USER_BLKSIZE | ST_USER_DENSITY);
 		if (st->quirks & ST_Q_FORCE_BLKSIZE)
 			st->flags |= ST_QUIRK_BLKSIZE;
-		if (st->modes.density != 0)
+		if (st->mode.density != 0)
 			st->flags |= ST_QUIRK_DENSITY;
 	}
 }
@@ -570,7 +570,7 @@ st_mount_tape(dev_t dev, int flags)
 	 * default by the driver.
 	 */
 	if (st->flags & (ST_QUIRK_DENSITY | ST_USER_DENSITY))
-		st->density = st->modes.density;
+		st->density = st->mode.density;
 	else
 		st->density = st->media_density;
 	/*
@@ -580,7 +580,7 @@ st_mount_tape(dev_t dev, int flags)
 	 */
 	st->flags &= ~ST_FIXEDBLOCKS;
 	if (st->flags & (ST_QUIRK_BLKSIZE | ST_USER_BLKSIZE)) {
-		st->blksize = st->modes.blksize;
+		st->blksize = st->mode.blksize;
 		if (st->blksize)
 			st->flags |= ST_FIXEDBLOCKS;
 	} else {
@@ -1105,8 +1105,8 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 		g->mt_type = 0x7;	/* Ultrix compat *//*? */
 		g->mt_blksiz = st->blksize;
 		g->mt_density = st->density;
-		g->mt_mblksiz = st->modes.blksize;
-		g->mt_mdensity = st->modes.density;
+		g->mt_mblksiz = st->mode.blksize;
+		g->mt_mdensity = st->mode.density;
 		if (st->sc_link->flags & SDEV_READONLY)
 			g->mt_dsreg |= MT_DS_RDONLY;
 		if (st->flags & ST_MOUNTED)
@@ -1252,11 +1252,11 @@ try_new_value:
 	 */
 	switch (mt->mt_op) {
 	case MTSETBSIZ:
-		st->modes.blksize = st->blksize;
+		st->mode.blksize = st->blksize;
 		st->flags |= ST_USER_BLKSIZE;
 		break;
 	case MTSETDNSTY:
-		st->modes.density = st->density;
+		st->mode.density = st->density;
 		st->flags |= ST_USER_DENSITY;
 		break;
 	}
@@ -1417,7 +1417,7 @@ done:
 
 /*
  * Send a filled out parameter structure to the drive to
- * set it into the desire modes etc.
+ * set it into the desire mode etc.
  */
 int
 st_mode_select(struct st_softc *st, int flags)
