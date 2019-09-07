@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.131 2019/03/21 15:10:27 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.132 2019/09/07 10:02:19 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -266,7 +266,7 @@ rc_cmd() {
 	esac
 }
 
-_name=$(basename $0)
+_name=${0##*/}
 _rc_check_name "${_name}" || _rc_err "invalid rc.d script name: ${_name}"
 
 [ -n "${daemon}" ] || _rc_err "$0: daemon is not set"
