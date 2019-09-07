@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.7 2019/04/30 20:26:02 patrick Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.8 2019/09/07 13:33:00 patrick Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -45,6 +45,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
@@ -164,6 +165,7 @@ struct mvneta_softc {
 	int			 sc_inband_status;
 	int			 sc_phy;
 	int			 sc_link;
+	int			 sc_sfp;
 };
 
 
@@ -203,6 +205,8 @@ struct mvneta_dmamem *mvneta_dmamem_alloc(struct mvneta_softc *,
     bus_size_t, bus_size_t);
 void mvneta_dmamem_free(struct mvneta_softc *, struct mvneta_dmamem *);
 void mvneta_fill_rx_ring(struct mvneta_softc *);
+
+static struct rwlock mvneta_sff_lock = RWLOCK_INITIALIZER("mvnetasff");
 
 struct cfdriver mvneta_cd = {
 	NULL, "mvneta", DV_IFNET
@@ -444,6 +448,8 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 		} else
 			ether_fakeaddr(&sc->sc_ac.ac_if);
 	}
+
+	sc->sc_sfp = OF_getpropint(faa->fa_node, "sfp", 0);
 
 	printf("%s: Ethernet address %s\n", self->dv_xname,
 	    ether_sprintf(sc->sc_enaddr));
@@ -846,6 +852,14 @@ mvneta_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	case SIOCGIFRXR:
 		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
 		    NULL, MCLBYTES, &sc->sc_rx_ring);
+		break;
+	case SIOCGIFSFFPAGE:
+		error = rw_enter(&mvneta_sff_lock, RW_WRITE|RW_INTR);
+		if (error != 0)
+			break;
+
+		error = sfp_get_sffpage(sc->sc_sfp, (struct if_sffpage *)addr);
+		rw_exit(&mvneta_sff_lock);
 		break;
 	default:
 		DPRINTFN(2, ("mvneta_ioctl ETHER\n"));
