@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.4 2019/08/28 07:03:51 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.5 2019/09/07 13:27:23 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -53,5 +53,21 @@ void	phy_register(struct phy_device *);
 
 int	phy_enable_idx(int, int);
 int	phy_enable(int, const char *);
+
+/* I2C support */
+
+struct i2c_controller;
+struct i2c_bus {
+	int			ib_node;
+	struct i2c_controller	*ib_ic;
+
+	LIST_ENTRY(i2c_bus) ib_list;
+	uint32_t ib_phandle;
+};
+
+void	i2c_register(struct i2c_bus *);
+
+struct i2c_controller *i2c_bynode(int);
+struct i2c_controller *i2c_byphandle(uint32_t);
 
 #endif /* _DEV_OFW_MISC_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.7 2019/09/04 11:25:54 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.8 2019/09/07 13:27:23 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -197,4 +197,47 @@ phy_enable(int node, const char *name)
 		return -1;
 
 	return phy_enable_idx(node, idx);
+}
+
+/*
+ * I2C support.
+ */
+
+LIST_HEAD(, i2c_bus) i2c_busses =
+	LIST_HEAD_INITIALIZER(i2c_bus);
+
+void
+i2c_register(struct i2c_bus *ib)
+{
+	ib->ib_phandle = OF_getpropint(ib->ib_node, "phandle", 0);
+	if (ib->ib_phandle == 0)
+		return;
+
+	LIST_INSERT_HEAD(&i2c_busses, ib, ib_list);
+}
+
+struct i2c_controller *
+i2c_bynode(int node)
+{
+	struct i2c_bus *ib;
+
+	LIST_FOREACH(ib, &i2c_busses, ib_list) {
+		if (ib->ib_node == node)
+			return ib->ib_ic;
+	}
+
+	return NULL;
+}
+
+struct i2c_controller *
+i2c_byphandle(uint32_t phandle)
+{
+	struct i2c_bus *ib;
+
+	LIST_FOREACH(ib, &i2c_busses, ib_list) {
+		if (ib->ib_phandle == phandle)
+			return ib->ib_ic;
+	}
+
+	return NULL;
 }
