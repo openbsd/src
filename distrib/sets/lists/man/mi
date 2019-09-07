@@ -1670,6 +1670,7 @@
 ./usr/share/man/man4/octeon/octgpio.4
 ./usr/share/man/man4/octeon/octiic.4
 ./usr/share/man/man4/octeon/octmmc.4
+./usr/share/man/man4/octeon/octpcie.4
 ./usr/share/man/man4/octeon/octrng.4
 ./usr/share/man/man4/octeon/octrtc.4
 ./usr/share/man/man4/octeon/octsctl.4
