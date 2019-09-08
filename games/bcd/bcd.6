@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bcd.6,v 1.21 2014/11/20 01:35:47 schwarze Exp $
+.\"	$OpenBSD: bcd.6,v 1.22 2019/09/08 22:43:46 schwarze Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)bcd.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: November 20 2014 $
+.Dd $Mdocdate: September 8 2019 $
 .Dt BCD 6
 .Os
 .Sh NAME
@@ -45,7 +45,9 @@
 .Sh DESCRIPTION
 The
 .Nm bcd
-command reads the given input and reformats it in the form of punched cards.
+command reads the given input and reformats it as an ASCII art
+representation of punched cards for the GE 635 and GE 645 computers
+used at Bell Labs in the late 1960s and early 1970s.
 Acceptable input are command line arguments or the standard input.
 .Pp
 The options are as follows:
@@ -71,5 +73,5 @@ The default is 48 columns.
 .Sh HISTORY
 The
 .Nm
-command first appeared in
-.Bx 3 .
+game first appeared in
+.At v6 .
