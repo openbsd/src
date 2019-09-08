@@ -387,6 +387,59 @@ struct sxiccmu_ccu_bit sun8i_h3_r_gates[] = {
 	[H3_R_CLK_APB0_I2C] = { 0x0028, 6, H3_R_CLK_APB0 },
 };
 
+/* H6 */
+
+#define H6_CLK_PLL_PERIPH0	3
+#define H6_CLK_PLL_PERIPH0_2X	4
+#define H6_CLK_APB1		26
+#define H6_CLK_APB2		27
+#define H6_CLK_MMC0		64
+#define H6_CLK_MMC1		65
+#define H6_CLK_MMC2		66
+#define H6_CLK_BUS_MMC0		67
+#define H6_CLK_BUS_MMC1		68
+#define H6_CLK_BUS_MMC2		69
+#define H6_CLK_BUS_UART0	70
+#define H6_CLK_BUS_UART1	71
+#define H6_CLK_BUS_UART2	72
+#define H6_CLK_BUS_UART3	73
+#define H6_CLK_USB_OHCI0	104
+#define H6_CLK_USB_OHCI3	107
+#define H6_CLK_BUS_OHCI0	111
+#define H6_CLK_BUS_OHCI3	112
+#define H6_CLK_BUS_EHCI0	113
+#define H6_CLK_BUS_EHCI3	115
+
+struct sxiccmu_ccu_bit sun50i_h6_gates[] = {
+	[H6_CLK_PLL_PERIPH0] = { 0x0020, 31 },
+	[H6_CLK_APB1] = { 0xffff, 0xff },
+	[H6_CLK_MMC0] = { 0x0830, 31 },
+	[H6_CLK_MMC1] = { 0x0834, 31 },
+	[H6_CLK_MMC2] = { 0x0838, 31 },
+	[H6_CLK_BUS_MMC0] = { 0x084c, 0 },
+	[H6_CLK_BUS_MMC1] = { 0x084c, 1 },
+	[H6_CLK_BUS_MMC2] = { 0x084c, 2 },
+	[H6_CLK_BUS_UART0] = { 0x090c, 0, H6_CLK_APB2 },
+	[H6_CLK_BUS_UART1] = { 0x090c, 1, H6_CLK_APB2 },
+	[H6_CLK_BUS_UART2] = { 0x090c, 2, H6_CLK_APB2 },
+	[H6_CLK_BUS_UART3] = { 0x090c, 3, H6_CLK_APB2 },
+	[H6_CLK_USB_OHCI0] = { 0x0a70, 31 },
+	[H6_CLK_USB_OHCI3] = { 0x0a7c, 31 },
+	[H6_CLK_BUS_OHCI0] = { 0x0a8c, 0 },
+	[H6_CLK_BUS_OHCI3] = { 0x0a8c, 3 },
+	[H6_CLK_BUS_EHCI0] = { 0x0a8c, 4 },
+	[H6_CLK_BUS_EHCI3] = { 0x0a8c, 7 },
+};
+
+#define H6_R_CLK_APB1		2
+#define H6_R_CLK_APB2		3
+#define H6_R_CLK_APB2_I2C	8
+
+struct sxiccmu_ccu_bit sun50i_h6_r_gates[] = {
+	[H6_R_CLK_APB1] = { 0xffff, 0xff },
+	[H6_R_CLK_APB2_I2C] = { 0x019c, 1, H6_R_CLK_APB2 },
+};
+
 /* R40 */
 
 #define R40_CLK_PLL_PERIPH0	11
@@ -722,6 +775,40 @@ struct sxiccmu_ccu_bit sun8i_h3_resets[] = {
 struct sxiccmu_ccu_bit sun8i_h3_r_resets[] = {
 	[H3_R_RST_APB0_RSB] = { 0x00b0, 3 },
 	[H3_R_RST_APB0_I2C] = { 0x00b0, 6 },
+};
+
+/* H6 */
+
+#define H6_RST_BUS_MMC0		18
+#define H6_RST_BUS_MMC1		19
+#define H6_RST_BUS_MMC2		20
+#define H6_RST_BUS_UART0	21
+#define H6_RST_BUS_UART1	22
+#define H6_RST_BUS_UART2	23
+#define H6_RST_BUS_UART3	24
+#define H6_RST_BUS_OHCI0	48
+#define H6_RST_BUS_OHCI3	49
+#define H6_RST_BUS_EHCI0	50
+#define H6_RST_BUS_EHCI3	52
+
+struct sxiccmu_ccu_bit sun50i_h6_resets[] = {
+	[H6_RST_BUS_MMC0] = { 0x084c, 16 },
+	[H6_RST_BUS_MMC1] = { 0x084c, 17 },
+	[H6_RST_BUS_MMC2] = { 0x084c, 18 },
+	[H6_RST_BUS_UART0] = { 0x090c, 16 },
+	[H6_RST_BUS_UART1] = { 0x090c, 17 },
+	[H6_RST_BUS_UART2] = { 0x090c, 18 },
+	[H6_RST_BUS_UART3] = { 0x090c, 19 },
+	[H6_RST_BUS_OHCI0] = { 0x0a8c, 16 },
+	[H6_RST_BUS_OHCI3] = { 0x0a8c, 19 },
+	[H6_RST_BUS_EHCI0] = { 0x0a8c, 20 },
+	[H6_RST_BUS_EHCI3] = { 0x0a8c, 23 },
+};
+
+#define H6_R_RST_APB2_I2C	4
+
+struct sxiccmu_ccu_bit sun50i_h6_r_resets[] = {
+	[H6_R_RST_APB2_I2C] = { 0x019c, 16 },
 };
 
 /* R40 */
