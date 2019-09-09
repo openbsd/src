@@ -1,4 +1,4 @@
-/* $OpenBSD: err_all.c,v 1.24 2018/03/17 16:20:01 beck Exp $ */
+/* $OpenBSD: err_all.c,v 1.25 2019/09/09 17:56:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,6 +66,7 @@
 #include <openssl/bn.h>
 #include <openssl/buffer.h>
 #include <openssl/conf.h>
+#include <openssl/cms.h>
 #include <openssl/dso.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -153,6 +154,9 @@ ERR_load_crypto_strings_internal(void)
 	ERR_load_UI_strings();
 #ifndef OPENSSL_NO_GOST
 	ERR_load_GOST_strings();
+#endif
+#ifndef OPENSSL_NO_CMS
+	ERR_load_CMS_strings();
 #endif
 #endif
 }
