@@ -1,4 +1,4 @@
-/* $OpenBSD: imxsrc.c,v 1.1 2019/01/11 08:02:19 patrick Exp $ */
+/* $OpenBSD: imxsrc.c,v 1.2 2019/09/09 20:00:27 patrick Exp $ */
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -100,7 +100,10 @@ imxsrc_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "fsl,imx8mq-src");
+	if (OF_is_compatible(faa->fa_node, "fsl,imx8mq-src"))
+		return 10;	/* Must beat syscon(4). */
+
+	return 0;
 }
 
 void
