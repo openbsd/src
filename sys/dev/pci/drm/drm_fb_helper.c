@@ -2002,15 +2002,23 @@ static int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
 	}
 
 	if (crtc_count == 0 || sizes.fb_width == -1 || sizes.fb_height == -1) {
+#ifdef __linux__
 		DRM_INFO("Cannot find any crtc or sizes\n");
 
 		/* First time: disable all crtc's.. */
-#ifdef notyet
 		/* XXX calling this hangs boot with no connected outputs */
 		if (!fb_helper->deferred_setup /* && SPLAY_EMPTY(fb_helper->dev->files) */)
 			restore_fbdev_mode(fb_helper);
-#endif
 		return -EAGAIN;
+#else
+		/*
+		 * hmm everyone went away - assume VGA cable just fell out
+		 * and will come back later.
+		 */
+		DRM_INFO("Cannot find any crtc or sizes - going 1024x768\n");
+		sizes.fb_width = sizes.surface_width = 1024;
+		sizes.fb_height = sizes.surface_height = 768;
+#endif
 	}
 
 	/* Handle our overallocation */
