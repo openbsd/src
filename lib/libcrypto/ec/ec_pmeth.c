@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_pmeth.c,v 1.11 2019/09/06 17:59:25 jsing Exp $ */
+/* $OpenBSD: ec_pmeth.c,v 1.12 2019/09/09 18:06:25 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -390,6 +390,10 @@ pkey_ec_ctrl(EVP_PKEY_CTX * ctx, int type, int p1, void *p2)
 			return 0;
 		}
 		dctx->md = p2;
+		return 1;
+
+	case EVP_PKEY_CTRL_GET_MD:
+		*(const EVP_MD **)p2 = dctx->md;
 		return 1;
 
 	case EVP_PKEY_CTRL_PEER_KEY:

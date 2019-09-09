@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.21 2018/09/05 00:55:33 djm Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.22 2019/09/09 18:06:26 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -421,6 +421,10 @@ bad_pad:
 		if (!check_padding_md(p2, rctx->pad_mode))
 			return 0;
 		rctx->md = p2;
+		return 1;
+
+	case EVP_PKEY_CTRL_GET_MD:
+		*(const EVP_MD **)p2 = rctx->md;
 		return 1;
 
 	case EVP_PKEY_CTRL_RSA_MGF1_MD:
