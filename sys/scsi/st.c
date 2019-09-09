@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.151 2019/09/07 15:26:07 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.152 2019/09/09 01:37:27 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 #define STUNIT(z)	((minor(z) >> 4)       )
 
 #define STMINOR(unit, mode)	(((unit) << 4) + (mode))
-#define MAXSTMODES	16
+#define MAXSTMODES	16	/* Old max retained so minor's don't change. */
 
 #define	ST_IO_TIME	(3 * 60 * 1000)		/* 3 minutes */
 #define	ST_CTL_TIME	(30 * 1000)		/* 30 seconds */
@@ -455,19 +455,17 @@ stclose(dev_t dev, int flags, int mode, struct proc *p)
 		st_write_filemarks(st, 1, 0);
 
 	switch (STMODE(dev)) {
-	case 0:		/* normal */
+	case 0:		/* /dev/rstN */
 		st_unmount(st, NOEJECT, DOREWIND);
 		break;
-	case 3:		/* eject, no rewind */
-		st_unmount(st, EJECT, NOREWIND);
+	case 1:		/* /dev/nrstN */
+		st_unmount(st, NOEJECT, NOREWIND);
 		break;
-	case 1:		/* no rewind */
-		/* leave mounted unless media seems to have been removed */
-		if (!(link->flags & SDEV_MEDIA_LOADED))
-			st_unmount(st, NOEJECT, NOREWIND);
-		break;
-	case 2:		/* rewind, eject */
+	case 2:		/* /dev/erstN */
 		st_unmount(st, EJECT, DOREWIND);
+		break;
+	case 3:		/* /dev/enrstN */
+		st_unmount(st, EJECT, NOREWIND);
 		break;
 	}
 	link->flags &= ~SDEV_OPEN;
@@ -597,6 +595,11 @@ st_unmount(struct st_softc *st, int eject, int rewind)
 	struct scsi_link *link = st->sc_link;
 	int nmarks;
 
+	if (eject == NOEJECT && rewind == NOREWIND) {
+		if (ISSET(link->flags, SDEV_MEDIA_LOADED))
+			return;
+	}
+
 	st->media_fileno = -1;
 	st->media_blkno = -1;
 
@@ -604,11 +607,11 @@ st_unmount(struct st_softc *st, int eject, int rewind)
 		return;
 	SC_DEBUG(link, SDEV_DB1, ("unmounting\n"));
 	st_check_eod(st, 0, &nmarks, SCSI_IGNORE_NOT_READY);
-	if (rewind)
+	if (rewind == DOREWIND)
 		st_rewind(st, 0, SCSI_IGNORE_NOT_READY);
 	scsi_prevent(link, PR_ALLOW,
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
-	if (eject)
+	if (eject == EJECT)
 		st_load(st, LD_UNLOAD, SCSI_IGNORE_NOT_READY);
 	st->flags &= ~ST_MOUNTED;
 	link->flags &= ~SDEV_MEDIA_LOADED;
