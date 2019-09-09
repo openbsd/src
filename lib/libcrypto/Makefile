@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.35 2019/09/06 17:59:24 jsing Exp $
+# $OpenBSD: Makefile,v 1.36 2019/09/09 16:49:03 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -289,6 +289,7 @@ SRCS+= pcy_cache.c pcy_node.c pcy_data.c pcy_map.c pcy_tree.c pcy_lib.c
 	${LCRYPTO_SRC}/cast \
 	${LCRYPTO_SRC}/chacha \
 	${LCRYPTO_SRC}/cmac \
+	${LCRYPTO_SRC}/cms \
 	${LCRYPTO_SRC}/comp \
 	${LCRYPTO_SRC}/conf \
 	${LCRYPTO_SRC}/curve25519 \
@@ -346,6 +347,7 @@ HDRS=\
 	${LCRYPTO_SRC}/cast/cast.h \
 	${LCRYPTO_SRC}/chacha/chacha.h \
 	${LCRYPTO_SRC}/cmac/cmac.h \
+	${LCRYPTO_SRC}/cms/cms.h \
 	${LCRYPTO_SRC}/comp/comp.h \
 	${LCRYPTO_SRC}/conf/conf.h \
 	${LCRYPTO_SRC}/conf/conf_api.h \
