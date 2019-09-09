@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.31 2019/06/22 08:36:55 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.32 2019/09/09 02:57:20 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2911,7 +2911,7 @@ mcx_set_issi(struct mcx_softc *sc, struct mcx_cmdq_entry *cqe, unsigned int slot
 	mcx_cmdq_init(sc, cqe, sizeof(*in), sizeof(*out), mcx_cmdq_token(sc));
 
 	in = mcx_cmdq_in(cqe);
-	in->cmd_opcode = htobe16(MCX_CMD_QUERY_ISSI);
+	in->cmd_opcode = htobe16(MCX_CMD_SET_ISSI);
 	in->cmd_op_mod = htobe16(0);
 	in->cmd_current_issi = htobe16(MCX_ISSI);
 
