@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.154 2019/09/09 18:25:47 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.155 2019/09/09 18:59:20 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -288,9 +288,9 @@ stattach(struct device *parent, struct device *self, void *aux)
 		st->mode = finger->quirkdata.mode;
 		CLR(st->flags, ST_MODE_BLKSIZE | ST_MODE_DENSITY);
 		if (st->mode.blksize != 0)
-			st->flags |= ST_MODE_BLKSIZE;
+			SET(st->flags, ST_MODE_BLKSIZE);
 		if (st->mode.density != 0)
-			st->flags |= ST_MODE_DENSITY;
+			SET(st->flags, ST_MODE_DENSITY);
 	}
 	printf("\n");
 
@@ -321,7 +321,7 @@ stactivate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		st->flags |= ST_DYING;
+		SET(st->flags, ST_DYING);
 		scsi_xsh_del(&st->sc_xsh);
 		break;
 	}
@@ -421,7 +421,7 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 	 * This is for SUN compatibility
 	 */
 	if ((flags & O_ACCMODE) == FWRITE)
-		st->flags |= ST_WRITTEN;
+		SET(st->flags, ST_WRITTEN);
 
 done:
 	SC_DEBUG(link, SDEV_DB2, ("open complete\n"));
@@ -561,7 +561,7 @@ st_mount_tape(dev_t dev, int flags)
 	if (ISSET(st->flags, ST_MODE_BLKSIZE)) {
 		st->blksize = st->mode.blksize;
 		if (st->blksize)
-			st->flags |= ST_FIXEDBLOCKS;
+			SET(st->flags, ST_FIXEDBLOCKS);
 	} else {
 		if ((error = st_decide_mode(st, 0)) != 0)
 			goto done;
@@ -572,7 +572,7 @@ st_mount_tape(dev_t dev, int flags)
 	}
 	scsi_prevent(link, PR_PREVENT,
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
-	st->flags |= ST_MOUNTED;
+	SET(st->flags, ST_MOUNTED);
 	link->flags |= SDEV_MEDIA_LOADED;	/* move earlier? */
 	st->media_fileno = 0;
 	st->media_blkno = 0;
@@ -631,7 +631,7 @@ st_decide_mode(struct st_softc *st, int first_read)
 
 	/* ATAPI tapes are always fixed blocksize. */
 	if (link->flags & SDEV_ATAPI) {
-		st->flags |= ST_FIXEDBLOCKS;
+		SET(st->flags, ST_FIXEDBLOCKS);
 		if (st->media_blksize > 0)
 			st->blksize = st->media_blksize;
 		else
@@ -644,7 +644,7 @@ st_decide_mode(struct st_softc *st, int first_read)
 	 * one size, perhaps we should just do that.
 	 */
 	if (st->blkmin && (st->blkmin == st->blkmax)) {
-		st->flags |= ST_FIXEDBLOCKS;
+		SET(st->flags, ST_FIXEDBLOCKS);
 		st->blksize = st->blkmin;
 		SC_DEBUG(link, SDEV_DB3,
 		    ("blkmin == blkmax of %d\n", st->blkmin));
@@ -669,7 +669,7 @@ st_decide_mode(struct st_softc *st, int first_read)
 	case QIC_150:
 	case QIC_525:
 	case QIC_1320:
-		st->flags |= ST_FIXEDBLOCKS;
+		SET(st->flags, ST_FIXEDBLOCKS);
 		if (st->media_blksize > 0)
 			st->blksize = st->media_blksize;
 		else
@@ -684,7 +684,7 @@ st_decide_mode(struct st_softc *st, int first_read)
 	 */
 	if (first_read) {
 		if (st->media_blksize > 0)
-			st->flags |= ST_FIXEDBLOCKS;
+			SET(st->flags, ST_FIXEDBLOCKS);
 		else
 			CLR(st->flags, ST_FIXEDBLOCKS);
 		st->blksize = st->media_blksize;
@@ -721,7 +721,7 @@ done:
 		CLR(st->flags, ST_2FM_AT_EOD);
 		break;
 	default:
-		st->flags |= ST_2FM_AT_EOD;
+		SET(st->flags, ST_2FM_AT_EOD);
 	}
 	return 0;
 }
@@ -911,7 +911,7 @@ ststart(struct scsi_xfer *xs)
 	if ((bp->b_flags & B_READ) == B_WRITE) {
 		cmd->opcode = WRITE;
 		CLR(st->flags, ST_FM_WRITTEN);
-		st->flags |= ST_WRITTEN;
+		SET(st->flags, ST_WRITTEN);
 		xs->flags |= SCSI_DATA_OUT;
 	} else {
 		cmd->opcode = READ;
@@ -1153,7 +1153,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 			CLR(st->flags, ST_DONTBUFFER);
 			goto try_new_value;
 		case MTNOCACHE:	/* disable controller cache */
-			st->flags |= ST_DONTBUFFER;
+			SET(st->flags, ST_DONTBUFFER);
 			goto try_new_value;
 		case MTERASE:	/* erase volume */
 			error = st_erase(st, number, flags);
@@ -1168,7 +1168,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 					error = EINVAL;
 					break;
 				}
-				st->flags |= ST_FIXEDBLOCKS;
+				SET(st->flags, ST_FIXEDBLOCKS);
 			}
 			st->blksize = number;
 			goto try_new_value;
@@ -1224,7 +1224,7 @@ try_new_value:
 		st->density = hold_density;
 		st->blksize = hold_blksize;
 		if (st->blksize)
-			st->flags |= ST_FIXEDBLOCKS;
+			SET(st->flags, ST_FIXEDBLOCKS);
 		else
 			CLR(st->flags, ST_FIXEDBLOCKS);
 		goto done;
@@ -1236,11 +1236,11 @@ try_new_value:
 	switch (mt->mt_op) {
 	case MTSETBSIZ:
 		st->mode.blksize = st->blksize;
-		st->flags |= ST_MODE_BLKSIZE;
+		SET(st->flags, ST_MODE_BLKSIZE);
 		break;
 	case MTSETDNSTY:
 		st->mode.density = st->density;
-		st->flags |= ST_MODE_DENSITY;
+		SET(st->flags, ST_MODE_DENSITY);
 		break;
 	}
 
@@ -1705,7 +1705,7 @@ st_write_filemarks(struct st_softc *st, int number, int flags)
 		if (ISSET(st->flags, ST_FM_WRITTEN))	/* already have one down */
 			CLR(st->flags, ST_WRITTEN);
 		else
-			st->flags |= ST_FM_WRITTEN;
+			SET(st->flags, ST_FM_WRITTEN);
 		CLR(st->flags, ST_PER_ACTION);
 		break;
 	default:
@@ -1902,7 +1902,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 		    xs->cmd->opcode == SPACE) {
 			switch (ASC_ASCQ(sense)) {
 			case SENSE_END_OF_DATA_DETECTED:
-				st->flags |= ST_EOD_DETECTED;
+				SET(st->flags, ST_EOD_DETECTED);
 				space = (struct scsi_space *)xs->cmd;
 				number = _3btol(space->number);
 				st->media_fileno = number - info;
@@ -1910,7 +1910,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 				return (0);
 			case SENSE_BEGINNING_OF_MEDIUM_DETECTED:
 				/* Standard says: Position is undefined! */
-				st->flags |= ST_BOD_DETECTED;
+				SET(st->flags, ST_BOD_DETECTED);
 				st->media_fileno = -1;
 				st->media_blkno = -1;
 				return (0);
@@ -1961,11 +1961,11 @@ st_interpret_sense(struct scsi_xfer *xs)
 		}
 		if ((st->flags & ST_FIXEDBLOCKS) == 0)
 			return 0;
-		st->flags |= ST_AT_FILEMARK;
+		SET(st->flags, ST_AT_FILEMARK);
 	}
 
 	if (sense->flags & SSD_EOM) {
-		st->flags |= ST_EOM_PENDING;
+		SET(st->flags, ST_EOM_PENDING);
 		xs->resid = 0;
 		if (ISSET(st->flags, ST_FIXEDBLOCKS))
 			return (0);
@@ -1987,7 +1987,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 			if ((xs->flags & SCSI_SILENT) == 0)
 				printf("%s: block wrong size, %d blocks "
 				    "residual\n", st->sc_dev.dv_xname, resid);
-		st->flags |= ST_EIO_PENDING;
+		SET(st->flags, ST_EIO_PENDING);
 		/*
                  * This quirk code helps the drive read the first tape block,
 		 * regardless of format.  That is required for these drives to
@@ -2016,8 +2016,8 @@ st_interpret_sense(struct scsi_xfer *xs)
 			/* still starting */
 			st->blksize -= 512;
 		} else if (!(st->flags & (ST_2FM_AT_EOD | ST_BLANK_READ))) {
-			st->flags |= ST_BLANK_READ;
-			st->flags |= ST_EOM_PENDING;
+			SET(st->flags, ST_BLANK_READ);
+			SET(st->flags, ST_EOM_PENDING);
 			xs->resid = xs->datalen;
 			return (0);
 		}
@@ -2063,7 +2063,7 @@ st_touch_tape(struct st_softc *st)
 		case 512:
 		case 1024:
 			readsize = st->blksize;
-			st->flags |= ST_FIXEDBLOCKS;
+			SET(st->flags, ST_FIXEDBLOCKS);
 			break;
 		default:
 			readsize = 1;
