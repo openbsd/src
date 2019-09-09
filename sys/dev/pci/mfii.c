@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.62 2019/08/28 04:55:51 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.63 2019/09/09 09:38:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -48,7 +48,7 @@
 #define	MFII_PCI_MEMSIZE	0x2000 /* 8k */
 
 #define MFII_OSTS_INTR_VALID	0x00000009
-#define MFII_RPI		0x30c /* reply post host index */
+#define MFII_RPI		0x6c /* reply post host index */
 #define MFII_OSP2		0xb4 /* outbound scratch pad 2 */
 #define MFII_OSP3		0xb8 /* outbound scratch pad 3 */
 
