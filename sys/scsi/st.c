@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.152 2019/09/09 01:37:27 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.153 2019/09/09 18:02:12 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -364,7 +364,7 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 		return (ENXIO);
 	link = st->sc_link;
 
-	if (st->flags & ST_DYING) {
+	if (ISSET(st->flags, ST_DYING)) {
 		error = ENXIO;
 		goto done;
 	}
@@ -443,7 +443,7 @@ stclose(dev_t dev, int flags, int mode, struct proc *p)
 	st = stlookup(STUNIT(dev));
 	if (st == NULL)
 		return (ENXIO);
-	if (st->flags & ST_DYING) {
+	if (ISSET(st->flags, ST_DYING)) {
 		error = ENXIO;
 		goto done;
 	}
@@ -492,7 +492,7 @@ st_mount_tape(dev_t dev, int flags)
 	st = stlookup(STUNIT(dev));
 	if (st == NULL)
 		return (ENXIO);
-	if (st->flags & ST_DYING) {
+	if (ISSET(st->flags, ST_DYING)) {
 		error = ENXIO;
 		goto done;
 	}
@@ -500,7 +500,7 @@ st_mount_tape(dev_t dev, int flags)
 
 	SC_DEBUG(link, SDEV_DB1, ("mounting\n"));
 
-	if (st->flags & ST_MOUNTED)
+	if (ISSET(st->flags, ST_MOUNTED))
 		goto done;
 
 	/*
@@ -548,7 +548,7 @@ st_mount_tape(dev_t dev, int flags)
 	 * then use it in preference to the one supplied by
 	 * default by the driver.
 	 */
-	if (st->flags & ST_MODE_DENSITY)
+	if (ISSET(st->flags, ST_MODE_DENSITY))
 		st->density = st->mode.density;
 	else
 		st->density = st->media_density;
@@ -558,7 +558,7 @@ st_mount_tape(dev_t dev, int flags)
 	 * default by the driver.
 	 */
 	st->flags &= ~ST_FIXEDBLOCKS;
-	if (st->flags & ST_MODE_BLKSIZE) {
+	if (ISSET(st->flags, ST_MODE_BLKSIZE)) {
 		st->blksize = st->mode.blksize;
 		if (st->blksize)
 			st->flags |= ST_FIXEDBLOCKS;
@@ -744,7 +744,7 @@ ststrategy(struct buf *bp)
 		bp->b_error = ENXIO;
 		goto bad;
 	}
-	if (st->flags & ST_DYING) {
+	if (ISSET(st->flags, ST_DYING)) {
 		bp->b_error = ENXIO;
 		goto bad;
 	}
@@ -762,7 +762,7 @@ ststrategy(struct buf *bp)
 	/*
 	 * Odd sized request on fixed drives are verboten
 	 */
-	if (st->flags & ST_FIXEDBLOCKS) {
+	if (ISSET(st->flags, ST_FIXEDBLOCKS)) {
 		if (bp->b_bcount % st->blksize) {
 			printf("%s: bad request, must be multiple of %d\n",
 			    st->sc_dev.dv_xname, st->blksize);
@@ -820,7 +820,7 @@ ststart(struct scsi_xfer *xs)
 
 	SC_DEBUG(link, SDEV_DB2, ("ststart\n"));
 
-	if (st->flags & ST_DYING) {
+	if (ISSET(st->flags, ST_DYING)) {
 		scsi_xs_put(xs);
 		return;
 	}
@@ -849,12 +849,12 @@ ststart(struct scsi_xfer *xs)
 		 * Only FIXEDBLOCK devices have pending I/O or space
 		 * operations.
 		 */
-		if (st->flags & ST_FIXEDBLOCKS) {
+		if (ISSET(st->flags, ST_FIXEDBLOCKS)) {
 			/*
 			 * If we are at a filemark but have not reported it yet
 			 * then we should report it now
 			 */
-			if (st->flags & ST_AT_FILEMARK) {
+			if (ISSET(st->flags, ST_AT_FILEMARK)) {
 				if ((bp->b_flags & B_READ) == B_WRITE) {
 					/*
 					 * Handling of ST_AT_FILEMARK in
@@ -888,9 +888,9 @@ ststart(struct scsi_xfer *xs)
 		 * If we are at EIO or EOM but have not reported it
 		 * yet then we should report it now.
 		 */
-		if (st->flags & (ST_EOM_PENDING | ST_EIO_PENDING)) {
+		if (ISSET(st->flags, ST_EOM_PENDING | ST_EIO_PENDING)) {
 			bp->b_resid = bp->b_bcount;
-			if (st->flags & ST_EIO_PENDING) {
+			if (ISSET(st->flags, ST_EIO_PENDING)) {
 				bp->b_error = EIO;
 				SET(bp->b_flags, B_ERROR);
 			}
@@ -922,7 +922,7 @@ ststart(struct scsi_xfer *xs)
 	 * Handle "fixed-block-mode" tape drives by using the
 	 * block count instead of the length.
 	 */
-	if (st->flags & ST_FIXEDBLOCKS) {
+	if (ISSET(st->flags, ST_FIXEDBLOCKS)) {
 		cmd->byte2 |= SRW_FIXED;
 		_lto3b(bp->b_bcount / st->blksize, cmd->len);
 	} else
@@ -930,7 +930,7 @@ ststart(struct scsi_xfer *xs)
 
 	if (st->media_blkno != -1) {
 		/* Update block count now, errors will set it to -1. */
-		if (st->flags & ST_FIXEDBLOCKS)
+		if (ISSET(st->flags, ST_FIXEDBLOCKS))
 			st->media_blkno += _3btol(cmd->len);
 		else if (_3btol(cmd->len) != 0)
 			st->media_blkno++;
@@ -1064,7 +1064,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 	if (st == NULL)
 		return (ENXIO);
 
-	if (st->flags & ST_DYING) {
+	if (ISSET(st->flags, ST_DYING)) {
 		error = ENXIO;
 		goto done;
 	}
@@ -1093,7 +1093,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 		g->mt_mdensity = st->mode.density;
 		if (st->sc_link->flags & SDEV_READONLY)
 			g->mt_dsreg |= MT_DS_RDONLY;
-		if (st->flags & ST_MOUNTED)
+		if (ISSET(st->flags, ST_MOUNTED))
 			g->mt_dsreg |= MT_DS_MOUNTED;
 		g->mt_resid = st->mt_resid;
 		g->mt_erreg = st->mt_erreg;
@@ -1273,7 +1273,7 @@ st_read(struct st_softc *st, char *buf, int size, int flags)
 
 	cmd = (struct scsi_rw_tape *)xs->cmd;
 	cmd->opcode = READ;
-	if (st->flags & ST_FIXEDBLOCKS) {
+	if (ISSET(st->flags, ST_FIXEDBLOCKS)) {
 		cmd->byte2 |= SRW_FIXED;
 		_lto3b(size / (st->blksize ? st->blksize : DEF_FIXED_BSIZE),
 		    cmd->len);
@@ -1443,7 +1443,7 @@ st_mode_select(struct st_softc *st, int flags)
 	bzero(&general, sizeof(general));
 
 	general.density = st->density;
-	if (st->flags & ST_FIXEDBLOCKS)
+	if (ISSET(st->flags, ST_FIXEDBLOCKS))
 		_lto3b(st->blksize, general.blklen);
 
 	/*
@@ -1559,12 +1559,12 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 
 	switch (what) {
 	case SP_BLKS:
-		if (st->flags & ST_PER_ACTION) {
+		if (ISSET(st->flags, ST_PER_ACTION)) {
 			if (number > 0) {
 				st->flags &= ~ST_PER_ACTION;
 				return EIO;
 			} else if (number < 0) {
-				if (st->flags & ST_AT_FILEMARK) {
+				if (ISSET(st->flags, ST_AT_FILEMARK)) {
 					/*
 					 * Handling of ST_AT_FILEMARK
 					 * in st_space will fill in the
@@ -1575,7 +1575,7 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 					if (error)
 						return error;
 				}
-				if (st->flags & ST_BLANK_READ) {
+				if (ISSET(st->flags, ST_BLANK_READ)) {
 					st->flags &= ~ST_BLANK_READ;
 					return EIO;
 				}
@@ -1584,7 +1584,7 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 		}
 		break;
 	case SP_FILEMARKS:
-		if (st->flags & ST_EIO_PENDING) {
+		if (ISSET(st->flags,  ST_EIO_PENDING)) {
 			if (number > 0) {
 				/* pretend we just discovered the error */
 				st->flags &= ~ST_EIO_PENDING;
@@ -1594,28 +1594,28 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 				st->flags &= ~ST_EIO_PENDING;
 			}
 		}
-		if (st->flags & ST_AT_FILEMARK) {
+		if (ISSET(st->flags, ST_AT_FILEMARK)) {
 			st->flags &= ~ST_AT_FILEMARK;
 			number--;
 		}
-		if ((st->flags & ST_BLANK_READ) && (number < 0)) {
+		if (ISSET(st->flags, ST_BLANK_READ) && (number < 0)) {
 			/* back away from unwritten tape */
 			st->flags &= ~ST_BLANK_READ;
 			number++;	/* XXX dubious */
 		}
 		break;
 	case SP_EOM:
-		if (st->flags & ST_EOM_PENDING) {
+		if (ISSET(st->flags, ST_EOM_PENDING)) {
 			/* We are already there. */
 			st->flags &= ~ST_EOM_PENDING;
 			return (0);
 		}
-		if (st->flags & ST_EIO_PENDING) {
+		if (ISSET(st->flags, ST_EIO_PENDING)) {
 			/* pretend we just discovered the error */
 			st->flags &= ~ST_EIO_PENDING;
 			return EIO;
 		}
-		if (st->flags & ST_AT_FILEMARK)
+		if (ISSET(st->flags, ST_AT_FILEMARK))
 			st->flags &= ~ST_AT_FILEMARK;
 		break;
 	}
@@ -1702,7 +1702,7 @@ st_write_filemarks(struct st_softc *st, int number, int flags)
 	case 0:		/* really a command to sync the drive's buffers */
 		break;
 	case 1:
-		if (st->flags & ST_FM_WRITTEN)	/* already have one down */
+		if (ISSET(st->flags, ST_FM_WRITTEN))	/* already have one down */
 			st->flags &= ~ST_WRITTEN;
 		else
 			st->flags |= ST_FM_WRITTEN;
@@ -1933,7 +1933,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 	 * xs->resid to be in bytes.
 	 */
 	if (sense->error_code & SSD_ERRCODE_VALID) {
-		if (st->flags & ST_FIXEDBLOCKS)
+		if (ISSET(st->flags, ST_FIXEDBLOCKS))
 			resid = info * st->blksize; /* XXXX overflow? */
 		else
 			resid = info;
@@ -1947,7 +1947,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 		xs->resid = resid;
 
 	datalen = xs->datalen;
-	if (st->flags & ST_FIXEDBLOCKS) {
+	if (ISSET(st->flags, ST_FIXEDBLOCKS)) {
 		resid /= st->blksize;
 		datalen /= st->blksize;
 	}
@@ -1967,7 +1967,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 	if (sense->flags & SSD_EOM) {
 		st->flags |= ST_EOM_PENDING;
 		xs->resid = 0;
-		if (st->flags & ST_FIXEDBLOCKS)
+		if (ISSET(st->flags, ST_FIXEDBLOCKS))
 			return (0);
 	}
 
@@ -1998,10 +1998,10 @@ st_interpret_sense(struct scsi_xfer *xs)
 			st->blksize -= 512;
 	}
 
-	if ((st->flags & ST_FIXEDBLOCKS) && xs->resid == xs->datalen) {
-		if (st->flags & ST_EIO_PENDING)
+	if (ISSET(st->flags, ST_FIXEDBLOCKS) && xs->resid == xs->datalen) {
+		if (ISSET(st->flags, ST_EIO_PENDING))
 			return EIO;
-		if (st->flags & ST_AT_FILEMARK)
+		if (ISSET(st->flags, ST_AT_FILEMARK))
 			return 0;
 	}
 
