@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.155 2019/09/09 18:59:20 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.156 2019/09/09 23:28:41 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -311,7 +311,7 @@ stattach(struct device *parent, struct device *self, void *aux)
 	 * acquired at boot time is not quite accurate.  This
 	 * will be checked again at the first open.
 	 */
-	link->flags &= ~SDEV_MEDIA_LOADED;
+	CLR(link->flags, SDEV_MEDIA_LOADED);
 }
 
 int
@@ -379,14 +379,14 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 	/*
 	 * Tape is an exclusive media. Only one open at a time.
 	 */
-	if (link->flags & SDEV_OPEN) {
+	if (ISSET(link->flags, SDEV_OPEN)) {
 		SC_DEBUG(link, SDEV_DB4, ("already open\n"));
 		error = EBUSY;
 		goto done;
 	}
 
 	/* Use st_interpret_sense() now. */
-	link->flags |= SDEV_OPEN;
+	SET(link->flags, SDEV_OPEN);
 
 	/*
 	 * Check the unit status. This clears any outstanding errors and
@@ -403,14 +403,14 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 		st_unmount(st, NOEJECT, DOREWIND);
 
 	if (error) {
-		link->flags &= ~SDEV_OPEN;
+		CLR(link->flags, SDEV_OPEN);
 		goto done;
 	}
 
 	if ((st->flags & ST_MOUNTED) == 0) {
 		error = st_mount_tape(dev, flags);
 		if (error) {
-			link->flags &= ~SDEV_OPEN;
+			CLR(link->flags, SDEV_OPEN);
 			goto done;
 		}
 	}
@@ -468,7 +468,7 @@ stclose(dev_t dev, int flags, int mode, struct proc *p)
 		st_unmount(st, EJECT, NOREWIND);
 		break;
 	}
-	link->flags &= ~SDEV_OPEN;
+	CLR(link->flags, SDEV_OPEN);
 	timeout_del(&st->sc_timeout);
 	scsi_xsh_del(&st->sc_xsh);
 
@@ -573,7 +573,7 @@ st_mount_tape(dev_t dev, int flags)
 	scsi_prevent(link, PR_PREVENT,
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 	SET(st->flags, ST_MOUNTED);
-	link->flags |= SDEV_MEDIA_LOADED;	/* move earlier? */
+	SET(link->flags, SDEV_MEDIA_LOADED);	/* move earlier? */
 	st->media_fileno = 0;
 	st->media_blkno = 0;
 	st->media_eom = -1;
@@ -614,7 +614,7 @@ st_unmount(struct st_softc *st, int eject, int rewind)
 	if (eject == EJECT)
 		st_load(st, LD_UNLOAD, SCSI_IGNORE_NOT_READY);
 	CLR(st->flags, ST_MOUNTED);
-	link->flags &= ~SDEV_MEDIA_LOADED;
+	CLR(link->flags, SDEV_MEDIA_LOADED);
 }
 
 /*
@@ -630,7 +630,7 @@ st_decide_mode(struct st_softc *st, int first_read)
 	SC_DEBUG(link, SDEV_DB2, ("starting block mode decision\n"));
 
 	/* ATAPI tapes are always fixed blocksize. */
-	if (link->flags & SDEV_ATAPI) {
+	if (ISSET(link->flags, SDEV_ATAPI)) {
 		SET(st->flags, ST_FIXEDBLOCKS);
 		if (st->media_blksize > 0)
 			st->blksize = st->media_blksize;
@@ -832,7 +832,7 @@ ststart(struct scsi_xfer *xs)
 	if (!(st->flags & ST_MOUNTED) ||
 	    !(link->flags & SDEV_MEDIA_LOADED)) {
 		/* make sure that one implies the other.. */
-		link->flags &= ~SDEV_MEDIA_LOADED;
+		CLR(link->flags, SDEV_MEDIA_LOADED);
 		bufq_drain(&st->sc_bufq);
 		scsi_xs_put(xs);
 		return;
@@ -1091,7 +1091,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 		g->mt_density = st->density;
 		g->mt_mblksiz = st->mode.blksize;
 		g->mt_mdensity = st->mode.density;
-		if (st->sc_link->flags & SDEV_READONLY)
+		if (ISSET(st->sc_link->flags, SDEV_READONLY))
 			g->mt_dsreg |= MT_DS_RDONLY;
 		if (ISSET(st->flags, ST_MOUNTED))
 			g->mt_dsreg |= MT_DS_MOUNTED;
@@ -1298,7 +1298,7 @@ st_read_block_limits(struct st_softc *st, int flags)
 	struct scsi_xfer *xs;
 	int error = 0;
 
-	if ((link->flags & SDEV_MEDIA_LOADED))
+	if (ISSET(link->flags, SDEV_MEDIA_LOADED))
 		return (0);
 
 	block_limits = dma_alloc(sizeof(*block_limits), PR_NOWAIT);
@@ -1386,11 +1386,11 @@ st_mode_sense(struct st_softc *st, int flags)
 	SC_DEBUG(link, SDEV_DB3,
 	    ("density code 0x%x, %d-byte blocks, write-%s, ",
 	    st->media_density, st->media_blksize,
-	    link->flags & SDEV_READONLY ? "protected" : "enabled"));
+	    ISSET(link->flags, SDEV_READONLY) ? "protected" : "enabled"));
 	SC_DEBUGN(link, SDEV_DB3,
 	    ("%sbuffered\n", dev_spec & SMH_DSP_BUFF_MODE ? "" : "un"));
 
-	link->flags |= SDEV_MEDIA_LOADED;
+	SET(link->flags, SDEV_MEDIA_LOADED);
 
 done:
 	if (data)
@@ -1435,7 +1435,7 @@ st_mode_select(struct st_softc *st, int flags)
 		goto done;
 	}
 
-	if (link->flags & SDEV_ATAPI) {
+	if (ISSET(link->flags, SDEV_ATAPI)) {
 		error = 0;
 		goto done;
 	}
