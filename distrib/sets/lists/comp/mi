@@ -1073,6 +1073,7 @@
 ./usr/include/openssl/cast.h
 ./usr/include/openssl/chacha.h
 ./usr/include/openssl/cmac.h
+./usr/include/openssl/cms.h
 ./usr/include/openssl/comp.h
 ./usr/include/openssl/conf.h
 ./usr/include/openssl/conf_api.h
