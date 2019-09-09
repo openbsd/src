@@ -1,4 +1,4 @@
-/*	$OpenBSD: acct.h,v 1.8 2019/07/25 09:37:32 bluhm Exp $	*/
+/*	$OpenBSD: acct.h,v 1.9 2019/09/09 20:02:26 bluhm Exp $	*/
 /*	$NetBSD: acct.h,v 1.16 1995/03/26 20:23:52 jtc Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@ struct acct {
 
 #define	AFORK	0x01		/* fork'd but not exec'd */
 #define	ASU	0x02		/* used super-user permissions */
-#define	ACOMPAT	0x04		/* used compatibility mode */
+#define	AMAP	0x04		/* system call or stack mapping violation */
 #define	ACORE	0x08		/* dumped core */
 #define	AXSIG	0x10		/* killed by a signal */
 #define	APLEDGE	0x20		/* killed due to pledge violation */

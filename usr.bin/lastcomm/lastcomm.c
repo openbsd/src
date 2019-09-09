@@ -1,4 +1,4 @@
-/*	$OpenBSD: lastcomm.c,v 1.28 2019/07/25 13:13:53 bluhm Exp $	*/
+/*	$OpenBSD: lastcomm.c,v 1.29 2019/09/09 20:02:27 bluhm Exp $	*/
 /*	$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ flagbits(int f)
 
 	p = flags + 1;
 	BIT(AFORK, 'F');
-	BIT(ACOMPAT, 'C');
+	BIT(AMAP, 'M');
 	BIT(ACORE, 'D');
 	BIT(AXSIG, 'X');
 	BIT(APLEDGE, 'P');
