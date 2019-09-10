@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.208 2019/07/09 14:03:12 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.209 2019/09/10 07:50:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -945,7 +945,6 @@ format_each(struct format_tree *ft, void (*cb)(const char *, const char *,
 		}
 	}
 }
-
 
 /* Add a key-value pair. */
 void

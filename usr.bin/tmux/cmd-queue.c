@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.74 2019/06/18 11:08:42 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.75 2019/09/10 07:50:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -101,7 +101,6 @@ cmdq_insert_after(struct cmdq_item *after, struct cmdq_item *item)
 		item = next;
 	} while (item != NULL);
 }
-
 
 /* Insert a hook. */
 void

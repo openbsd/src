@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.98 2019/05/28 10:27:11 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.99 2019/09/10 07:50:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -68,7 +68,6 @@
 	" 'Respawn' 'R' {respawn-pane -k}" \
 	" '#{?pane_marked,Unmark,Mark}' 'm' {select-pane -m}" \
 	" '#{?window_zoomed_flag,Unzoom,Zoom}' 'z' {resize-pane -Z}"
-
 
 static int key_bindings_cmp(struct key_binding *, struct key_binding *);
 RB_GENERATE_STATIC(key_bindings, key_binding, entry, key_bindings_cmp);
