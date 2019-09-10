@@ -20,6 +20,8 @@ our %args = (
 	    my $self = shift;
 	    setsockopt(STDOUT, SOL_SOCKET, SO_LINGER, pack('ii', 1, 0))
 		or die ref($self), " set socket linger failed: $!";
+	    ${$self->{syslogd}}->loggrep("tcp logger .* accept", 5)
+		or die ref($self), " no accept in syslogd.log";
 	},
 	loggrep => {
 	    qr/connect sock: 127.0.0.1 \d+/ => 1,

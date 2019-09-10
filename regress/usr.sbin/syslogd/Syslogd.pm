@@ -1,6 +1,6 @@
-#	$OpenBSD: Syslogd.pm,v 1.23 2018/04/11 19:00:54 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.24 2019/09/10 19:58:13 bluhm Exp $
 
-# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2019 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -100,7 +100,10 @@ sub new {
 
 sub create_out {
 	my $self = shift;
+	my $timeout = shift || 10;
 	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : ();
+
+	my $end = time() + $timeout;
 
 	open(my $fh, '>', $self->{outfile})
 	    or die ref($self), " create log file $self->{outfile} failed: $!";
@@ -128,6 +131,19 @@ sub create_out {
 		    or die ref($self), " pipe to @cmd failed: $!";
 		# remember until object is destroyed, autoclose will send EOF
 		$self->{"ctl$dev"} = $ctl;
+	}
+
+	foreach my $dev (qw(console user)) {
+		my $file = $self->{"out$dev"};
+		while ($self->{"ctl$dev"}) {
+			open(my $fh, '<', $file) or die ref($self),
+			    " open $file for reading failed: $!";
+			last if grep { /ttylog: started/ } <$fh>;
+			time() < $end
+			    or croak ref($self), " no 'started' in $file ".
+			    "after $timeout seconds";
+			sleep .1;
+		}
 	}
 
 	return $self;
@@ -211,19 +227,6 @@ sub up {
 		    or croak ref($self), " no 'kqueue' in $self->{fstatfile} ".
 		    "after $timeout seconds";
 		sleep .1;
-	}
-
-	foreach my $dev (qw(console user)) {
-		my $file = $self->{"out$dev"};
-		while ($self->{"ctl$dev"}) {
-			open(my $fh, '<', $file) or die ref($self),
-			    " open $file for reading failed: $!";
-			last if grep { /ttylog: started/ } <$fh>;
-			time() < $end
-			    or croak ref($self), " no 'started' in $file ".
-			    "after $timeout seconds";
-			sleep .1;
-		}
 	}
 
 	return $self;
