@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.251 2019/09/05 05:36:31 ratchov Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.252 2019/09/10 07:49:15 ratchov Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -3978,8 +3978,9 @@ azalia_set_blksz(void *v, int mode,
 	/* must be multiple of 128 bytes */
 	mult = audio_blksz_bytes(mode, p, r, 128);
 
-	blksz += mult - 1;
 	blksz -= blksz % mult;
+	if (blksz == 0)
+		blksz = mult;
 
 	return blksz;
 }
