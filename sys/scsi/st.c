@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.158 2019/09/10 14:16:36 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.159 2019/09/10 15:44:43 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -451,7 +451,7 @@ stclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	SC_DEBUG(link, SDEV_DB1, ("closing\n"));
 
-	if ((st->flags & (ST_WRITTEN | ST_FM_WRITTEN)) == ST_WRITTEN)
+	if (ISSET(st->flags, ST_WRITTEN) && !ISSET(st->flags, ST_FM_WRITTEN))
 		st_write_filemarks(st, 1, 0);
 
 	switch (STMODE(dev)) {
