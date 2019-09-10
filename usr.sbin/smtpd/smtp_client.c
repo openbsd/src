@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_client.c,v 1.11 2019/09/02 20:05:21 eric Exp $	*/
+/*	$OpenBSD: smtp_client.c,v 1.12 2019/09/10 12:08:26 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -168,7 +168,7 @@ smtp_cert_verified(struct smtp_client *proto, int verified)
 
 	else if (proto->params.tls_verify) {
 		errno = EAUTH;
-		smtp_client_cancel(proto, FAIL_CONN,
+		smtp_client_abort(proto, FAIL_CONN,
 		    "Invalid server certificate");
 		return;
 	}
