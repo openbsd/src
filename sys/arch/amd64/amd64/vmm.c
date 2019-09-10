@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.251 2019/07/30 06:21:23 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.252 2019/09/10 19:36:12 anton Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1183,7 +1183,6 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 		if ((ret = vcpu_init(vcpu)) != 0) {
 			printf("failed to init vcpu %d for vm 0x%p\n", i, vm);
 			vm_teardown(vm);
-			vmm_softc->vm_ct--;
 			vmm_softc->vm_idx--;
 			rw_exit_write(&vmm_softc->vm_lock);
 			return (ret);
@@ -3425,9 +3424,11 @@ vm_teardown(struct vm *vm)
 		vm->vm_map = NULL;
 	}
 
-	vmm_softc->vm_ct--;
-	if (vmm_softc->vm_ct < 1)
-		vmm_stop();
+	if (vm->vm_id > 0) {
+		vmm_softc->vm_ct--;
+		if (vmm_softc->vm_ct < 1)
+			vmm_stop();
+	}
 	rw_exit_write(&vm->vm_vcpu_lock);
 	pool_put(&vm_pool, vm);
 }
