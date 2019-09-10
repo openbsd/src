@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.163 2019/09/10 19:04:36 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.164 2019/09/10 22:39:13 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -207,7 +207,7 @@ int	stdetach(struct device *, int);
 void	stminphys(struct buf *);
 void	ststart(struct scsi_xfer *);
 
-int	st_mount_tape(dev_t, int);
+int	st_mount_tape(struct st_softc *, int);
 void	st_unmount(struct st_softc *, int, int);
 int	st_decide_mode(struct st_softc *, int);
 void	st_buf_done(struct scsi_xfer *);
@@ -407,12 +407,10 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 		goto done;
 	}
 
-	if (!ISSET(st->flags, ST_MOUNTED)) {
-		error = st_mount_tape(dev, flags);
-		if (error != 0) {
-			CLR(link->flags, SDEV_OPEN);
-			goto done;
-		}
+	error = st_mount_tape(st, flags);
+	if (error != 0) {
+		CLR(link->flags, SDEV_OPEN);
+		goto done;
 	}
 
 	/*
@@ -478,34 +476,22 @@ done:
 }
 
 /*
- * Start a new mount session.
- * Copy in all the default parameters from the selected device mode.
- * and try guess any that seem to be defaulted.
+ * Start a new mount session if needed.
  */
 int
-st_mount_tape(dev_t dev, int flags)
+st_mount_tape(struct st_softc *st, int flags)
 {
-	struct st_softc *st;
-	struct scsi_link *link;
+	struct scsi_link *link = st->sc_link;
 	int error = 0;
 
-	st = stlookup(STUNIT(dev));
-	if (st == NULL)
-		return ENXIO;
-	if (ISSET(st->flags, ST_DYING)) {
-		error = ENXIO;
-		goto done;
-	}
-	link = st->sc_link;
+	if (ISSET(st->flags, ST_MOUNTED))
+		return 0;
 
 	SC_DEBUG(link, SDEV_DB1, ("mounting\n"));
 
-	if (ISSET(st->flags, ST_MOUNTED))
-		goto done;
-
 	/*
-	 * If the media is new, then make sure we give it a chance to
-	 * to do a 'load' instruction.  (We assume it is new.)
+	 * Assume the media is new and give it a chance to
+	 * to do a 'load' instruction.
 	 */
 	if ((error = st_load(st, LD_LOAD, 0)) != 0)
 		goto done;
@@ -579,7 +565,6 @@ st_mount_tape(dev_t dev, int flags)
 	st->media_eom = -1;
 
 done:
-	device_unref(&st->sc_dev);
 	return error;
 }
 
