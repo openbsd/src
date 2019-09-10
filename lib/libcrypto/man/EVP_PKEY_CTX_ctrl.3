@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.13 2019/06/06 01:06:58 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.14 2019/09/10 19:44:32 schwarze Exp $
 .\" full merge up to: OpenSSL e03af178 Dec 11 17:05:57 2014 -0500
 .\" selective merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
@@ -50,13 +50,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: September 10 2019 $
 .Dt EVP_PKEY_CTX_CTRL 3
 .Os
 .Sh NAME
 .Nm EVP_PKEY_CTX_ctrl ,
 .Nm EVP_PKEY_CTX_ctrl_str ,
 .Nm EVP_PKEY_CTX_set_signature_md ,
+.Nm EVP_PKEY_CTX_get_signature_md ,
 .Nm EVP_PKEY_CTX_set_rsa_padding ,
 .Nm EVP_PKEY_CTX_get_rsa_padding ,
 .Nm EVP_PKEY_CTX_set_rsa_pss_saltlen ,
@@ -91,6 +92,11 @@
 .Fo EVP_PKEY_CTX_set_signature_md
 .Fa "EVP_PKEY_CTX *ctx"
 .Fa "const EVP_MD *md"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_get_signature_md
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "const EVP_MD **pmd"
 .Fc
 .In openssl/rsa.h
 .Ft int
@@ -202,8 +208,10 @@ All the remaining "functions" are implemented as macros.
 .Pp
 The
 .Fn EVP_PKEY_CTX_set_signature_md
-macro sets the message digest type used in a signature.
-It can be used with the RSA, DSA, and ECDSA algorithms.
+and
+.Fn EVP_PKEY_CTX_get_signature_md
+macros set and get the message digest type used in a signature.
+They can be used with the RSA, DSA, and ECDSA algorithms.
 .Ss RSA parameters
 The
 .Fn EVP_PKEY_CTX_set_rsa_padding
@@ -350,3 +358,8 @@ supported by the public key algorithm.
 These functions first appeared in OpenSSL 1.0.0
 and have been available since
 .Ox 4.9 .
+.Pp
+As an exception,
+.Fn EVP_PKEY_CTX_get_signature_md
+first appeared in OpenSSL 1.0.2 and has been available since
+.Ox 6.6 .
