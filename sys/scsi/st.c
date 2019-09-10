@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.164 2019/09/10 22:39:13 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.165 2019/09/10 23:07:46 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -362,12 +362,12 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 	st = stlookup(STUNIT(dev));
 	if (st == NULL)
 		return ENXIO;
-	link = st->sc_link;
-
 	if (ISSET(st->flags, ST_DYING)) {
 		error = ENXIO;
 		goto done;
 	}
+	link = st->sc_link;
+
 	if (ISSET(flags, FWRITE) && ISSET(link->flags, SDEV_READONLY)) {
 		error = EACCES;
 		goto done;
@@ -733,7 +733,6 @@ ststrategy(struct buf *bp)
 		bp->b_error = ENXIO;
 		goto bad;
 	}
-
 	link = st->sc_link;
 
 	SC_DEBUG(link, SDEV_DB2, ("ststrategy: %ld bytes @ blk %lld\n",
