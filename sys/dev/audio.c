@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.181 2019/09/05 05:33:57 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.182 2019/09/10 07:39:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -657,8 +657,23 @@ audio_setpar_blksz(struct audio_softc *sc,
 	unsigned int blk_mult, blk_max;
 
 	if (sc->ops->set_blksz) {
+		/*
+		 * Don't allow block size of exceed half the buffer size
+		 */
+		if (sc->mode & AUMODE_PLAY) {
+			max = sc->play.datalen / 2 / (sc->pchan * sc->bps);
+			if (sc->round > max)
+				sc->round = max;
+		}
+		if (sc->mode & AUMODE_RECORD) {
+			max = sc->rec.datalen / 2 / (sc->rchan * sc->bps);
+			if (sc->round > max)
+				sc->round = max;
+		}
+
 		sc->round = sc->ops->set_blksz(sc->arg, sc->mode,
 		    p, r, sc->round);
+
 		DPRINTF("%s: block size set to: %u\n", DEVNAME(sc), sc->round);
 		return 0;
 	}
