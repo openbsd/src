@@ -1,4 +1,4 @@
-/*	$OpenBSD: aldap.c,v 1.7 2019/01/17 06:18:27 tedu Exp $ */
+/*	$OpenBSD: aldap.c,v 1.8 2019/09/10 14:35:32 martijn Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -407,12 +407,14 @@ aldap_parse(struct aldap *ldap)
 	case LDAP_RES_MODRDN:
 	case LDAP_RES_COMPARE:
 	case LDAP_RES_SEARCH_RESULT:
-		if (ber_scanf_elements(m->protocol_op, "{EeSeSe",
-		    &m->body.res.rescode, &m->dn, &m->body.res.diagmsg, &a) != 0)
+		if (ber_scanf_elements(m->protocol_op, "{EeSe",
+		    &m->body.res.rescode, &m->dn, &m->body.res.diagmsg) != 0)
 			goto parsefail;
-		if (m->body.res.rescode == LDAP_REFERRAL)
+		if (m->body.res.rescode == LDAP_REFERRAL) {
+			a = m->body.res.diagmsg->be_next;
 			if (ber_scanf_elements(a, "{e", &m->references) != 0)
 				goto parsefail;
+		}
 		if (m->msg->be_sub) {
 			for (ep = m->msg->be_sub; ep != NULL; ep = ep->be_next) {
 				ber_scanf_elements(ep, "t", &class, &type);
