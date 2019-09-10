@@ -1,4 +1,4 @@
-#	$OpenBSD: RSyslogd.pm,v 1.6 2018/10/06 11:56:26 bluhm Exp $
+#	$OpenBSD: RSyslogd.pm,v 1.7 2019/09/10 22:35:07 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -115,6 +115,18 @@ sub new {
 
 sub child {
 	my $self = shift;
+	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : "env";
+
+	my @pkill = (@sudo, "pkill", "-KILL", "-x", "rsyslogd");
+	my @pgrep = ("pgrep", "-x", "rsyslogd");
+	system(@pkill) && $? != 256
+	    and die ref($self), " system '@pkill' failed: $?";
+	while ($? == 0) {
+		print STDERR "rsyslogd still running\n";
+		system(@pgrep) && $? != 256
+		    and die ref($self), " system '@pgrep' failed: $?";
+	}
+	print STDERR "rsyslogd not running\n";
 
 	my @cmd = ("rsyslogd", "-dn", "-f", $self->{conffile},
 	    "-i", $self->{pidfile});
