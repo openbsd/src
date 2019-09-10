@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.242 2019/08/28 07:34:32 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.243 2019/09/10 19:35:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1572,6 +1572,10 @@ window_pane_input_callback(struct client *c, int closed, void *data)
 
 	wp = window_pane_find_by_id(cdata->wp);
 	if (wp == NULL || closed || c->flags & CLIENT_DEAD) {
+		if (wp == NULL)
+			c->flags |= CLIENT_EXIT;
+		evbuffer_drain(evb, len);
+
 		c->stdin_callback = NULL;
 		server_client_unref(c);
 
