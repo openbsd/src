@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.156 2019/09/09 23:28:41 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.157 2019/09/10 12:58:55 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -523,7 +523,7 @@ st_mount_tape(dev_t dev, int flags)
 	 * Some devices can't tell you much until they have been
 	 * asked to look at the media. This quirk does this.
 	 */
-	if (st->quirks & ST_Q_SENSE_HELP)
+	if (ISSET(st->quirks, ST_Q_SENSE_HELP))
 		if ((error = st_touch_tape(st)) != 0)
 			return error;
 	/*
@@ -912,10 +912,10 @@ ststart(struct scsi_xfer *xs)
 		cmd->opcode = WRITE;
 		CLR(st->flags, ST_FM_WRITTEN);
 		SET(st->flags, ST_WRITTEN);
-		xs->flags |= SCSI_DATA_OUT;
+		SET(xs->flags, SCSI_DATA_OUT);
 	} else {
 		cmd->opcode = READ;
-		xs->flags |= SCSI_DATA_IN;
+		SET(xs->flags, SCSI_DATA_IN);
 	}
 
 	/*
@@ -923,7 +923,7 @@ ststart(struct scsi_xfer *xs)
 	 * block count instead of the length.
 	 */
 	if (ISSET(st->flags, ST_FIXEDBLOCKS)) {
-		cmd->byte2 |= SRW_FIXED;
+		SET(cmd->byte2, SRW_FIXED);
 		_lto3b(bp->b_bcount / st->blksize, cmd->len);
 	} else
 		_lto3b(bp->b_bcount, cmd->len);
@@ -1092,9 +1092,9 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 		g->mt_mblksiz = st->mode.blksize;
 		g->mt_mdensity = st->mode.density;
 		if (ISSET(st->sc_link->flags, SDEV_READONLY))
-			g->mt_dsreg |= MT_DS_RDONLY;
+			SET(g->mt_dsreg, MT_DS_RDONLY);
 		if (ISSET(st->flags, ST_MOUNTED))
-			g->mt_dsreg |= MT_DS_MOUNTED;
+			SET(g->mt_dsreg, MT_DS_MOUNTED);
 		g->mt_resid = st->mt_resid;
 		g->mt_erreg = st->mt_erreg;
 		g->mt_fileno = st->media_fileno;
@@ -1274,7 +1274,7 @@ st_read(struct st_softc *st, char *buf, int size, int flags)
 	cmd = (struct scsi_rw_tape *)xs->cmd;
 	cmd->opcode = READ;
 	if (ISSET(st->flags, ST_FIXEDBLOCKS)) {
-		cmd->byte2 |= SRW_FIXED;
+		SET(cmd->byte2, SRW_FIXED);
 		_lto3b(size / (st->blksize ? st->blksize : DEF_FIXED_BSIZE),
 		    cmd->len);
 	} else
@@ -1388,7 +1388,7 @@ st_mode_sense(struct st_softc *st, int flags)
 	    st->media_density, st->media_blksize,
 	    ISSET(link->flags, SDEV_READONLY) ? "protected" : "enabled"));
 	SC_DEBUGN(link, SDEV_DB3,
-	    ("%sbuffered\n", dev_spec & SMH_DSP_BUFF_MODE ? "" : "un"));
+	    ("%sbuffered\n", ISSET(dev_spec, SMH_DSP_BUFF_MODE) ? "" : "un"));
 
 	SET(link->flags, SDEV_MEDIA_LOADED);
 
@@ -1427,7 +1427,7 @@ st_mode_select(struct st_softc *st, int flags)
 	 * this gives them license to reject all mode selects, even if the
 	 * selected mode is the one that is supported.
 	 */
-	if (st->quirks & ST_Q_UNIMODAL) {
+	if (ISSET(st->quirks, ST_Q_UNIMODAL)) {
 		SC_DEBUG(link, SDEV_DB3,
 		    ("not setting density 0x%x blksize 0x%x\n",
 		    st->density, st->blksize));
@@ -1783,7 +1783,7 @@ st_load(struct st_softc *st, u_int type, int flags)
 			return (error);
 	}
 
-	if (st->quirks & ST_Q_IGNORE_LOADS) {
+	if (ISSET(st->quirks, ST_Q_IGNORE_LOADS)) {
 		if (type == LD_LOAD) {
 			/*
 			 * If we ignore loads, at least we should try a rewind.
@@ -1884,7 +1884,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 	 */
 
 	case SKEY_NOT_READY:
-		if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
+		if (ISSET(xs->flags, SCSI_IGNORE_NOT_READY))
 			return (0);
 		switch (ASC_ASCQ(sense)) {
 		case SENSE_NOT_READY_BECOMING_READY:
@@ -1993,7 +1993,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 		 * regardless of format.  That is required for these drives to
 		 * return proper MODE SENSE information.
 		 */
-		if ((st->quirks & ST_Q_SENSE_HELP) &&
+		if (ISSET(st->quirks, ST_Q_SENSE_HELP) &&
 		    !(link->flags & SDEV_MEDIA_LOADED))
 			st->blksize -= 512;
 	}
@@ -2011,7 +2011,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 		 * regardless of format.  That is required for these drives to
 		 * return proper MODE SENSE information.
 		 */
-		if ((st->quirks & ST_Q_SENSE_HELP) &&
+		if (ISSET(st->quirks, ST_Q_SENSE_HELP) &&
 		    !(link->flags & SDEV_MEDIA_LOADED)) {
 			/* still starting */
 			st->blksize -= 512;
