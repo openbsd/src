@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.162 2019/09/10 18:45:45 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.163 2019/09/10 19:04:36 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ stmatch(struct device *parent, void *match, void *aux)
 	(void)scsi_inqmatch(sa->sa_inqbuf,
 	    st_patterns, nitems(st_patterns),
 	    sizeof(st_patterns[0]), &priority);
-	return (priority);
+	return priority;
 }
 
 /*
@@ -326,7 +326,7 @@ stactivate(struct device *self, int act)
 		break;
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -346,7 +346,7 @@ stdetach(struct device *self, int flags)
 
 	bufq_destroy(&st->sc_bufq);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -361,7 +361,7 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 
 	st = stlookup(STUNIT(dev));
 	if (st == NULL)
-		return (ENXIO);
+		return ENXIO;
 	link = st->sc_link;
 
 	if (ISSET(st->flags, ST_DYING)) {
@@ -426,7 +426,7 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 done:
 	SC_DEBUG(link, SDEV_DB2, ("open complete\n"));
 	device_unref(&st->sc_dev);
-	return (error);
+	return error;
 }
 
 /*
@@ -442,7 +442,7 @@ stclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	st = stlookup(STUNIT(dev));
 	if (st == NULL)
-		return (ENXIO);
+		return ENXIO;
 	if (ISSET(st->flags, ST_DYING)) {
 		error = ENXIO;
 		goto done;
@@ -474,7 +474,7 @@ stclose(dev_t dev, int flags, int mode, struct proc *p)
 
 done:
 	device_unref(&st->sc_dev);
-	return (error);
+	return error;
 }
 
 /*
@@ -491,7 +491,7 @@ st_mount_tape(dev_t dev, int flags)
 
 	st = stlookup(STUNIT(dev));
 	if (st == NULL)
-		return (ENXIO);
+		return ENXIO;
 	if (ISSET(st->flags, ST_DYING)) {
 		error = ENXIO;
 		goto done;
@@ -580,7 +580,7 @@ st_mount_tape(dev_t dev, int flags)
 
 done:
 	device_unref(&st->sc_dev);
-	return (error);
+	return error;
 }
 
 /*
@@ -1032,13 +1032,13 @@ stminphys(struct buf *bp)
 int
 stread(dev_t dev, struct uio *uio, int iomode)
 {
-	return (physio(ststrategy, dev, B_READ, stminphys, uio));
+	return physio(ststrategy, dev, B_READ, stminphys, uio);
 }
 
 int
 stwrite(dev_t dev, struct uio *uio, int iomode)
 {
-	return (physio(ststrategy, dev, B_WRITE, stminphys, uio));
+	return physio(ststrategy, dev, B_WRITE, stminphys, uio);
 }
 
 /*
@@ -1062,7 +1062,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 	 */
 	st = stlookup(STUNIT(dev));
 	if (st == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	if (ISSET(st->flags, ST_DYING)) {
 		error = ENXIO;
@@ -1246,7 +1246,7 @@ try_new_value:
 
 done:
 	device_unref(&st->sc_dev);
-	return (error);
+	return error;
 }
 
 /*
@@ -1264,7 +1264,7 @@ st_read(struct st_softc *st, char *buf, int size, int flags)
 
 	xs = scsi_xs_get(st->sc_link, flags | SCSI_DATA_IN);
 	if (xs == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = buf;
 	xs->datalen = size;
@@ -1283,7 +1283,7 @@ st_read(struct st_softc *st, char *buf, int size, int flags)
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
 
-	return (error);
+	return error;
 }
 
 /*
@@ -1299,11 +1299,11 @@ st_read_block_limits(struct st_softc *st, int flags)
 	int error = 0;
 
 	if (ISSET(link->flags, SDEV_MEDIA_LOADED))
-		return (0);
+		return 0;
 
 	block_limits = dma_alloc(sizeof(*block_limits), PR_NOWAIT);
 	if (block_limits == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	xs = scsi_xs_get(link, flags | SCSI_DATA_IN);
 	if (xs == NULL) {
@@ -1332,7 +1332,7 @@ st_read_block_limits(struct st_softc *st, int flags)
 done:
 	if (block_limits)
 		dma_free(block_limits, sizeof(*block_limits));
-	return (error);
+	return error;
 }
 
 /*
@@ -1358,7 +1358,7 @@ st_mode_sense(struct st_softc *st, int flags)
 
 	data = dma_alloc(sizeof(*data), PR_NOWAIT);
 	if (data == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	/*
 	 * Ask for page 0 (vendor specific) mode sense data.
@@ -1395,7 +1395,7 @@ st_mode_sense(struct st_softc *st, int flags)
 done:
 	if (data)
 		dma_free(data, sizeof(*data));
-	return (error);
+	return error;
 }
 
 /*
@@ -1504,7 +1504,7 @@ done:
 		dma_free(inbuf, sizeof(*inbuf));
 	if (outbuf)
 		dma_free(outbuf, sizeof(*outbuf));
-	return (error);
+	return error;
 }
 
 /*
@@ -1519,7 +1519,7 @@ st_erase(struct st_softc *st, int full, int flags)
 
 	xs = scsi_xs_get(st->sc_link, flags);
 	if (xs == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 	xs->cmdlen = sizeof(*cmd);
 
 	/*
@@ -1544,7 +1544,7 @@ st_erase(struct st_softc *st, int full, int flags)
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
 
-	return (error);
+	return error;
 }
 
 /*
@@ -1608,7 +1608,7 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 		if (ISSET(st->flags, ST_EOM_PENDING)) {
 			/* We are already there. */
 			CLR(st->flags, ST_EOM_PENDING);
-			return (0);
+			return 0;
 		}
 		if (ISSET(st->flags, ST_EIO_PENDING)) {
 			/* pretend we just discovered the error */
@@ -1624,7 +1624,7 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 
 	xs = scsi_xs_get(st->sc_link, flags);
 	if (xs == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	cmd = (struct scsi_space *)xs->cmd;
 	cmd->opcode = SPACE;
@@ -1675,7 +1675,7 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 		}
 	}
 
-	return (error);
+	return error;
 }
 
 /*
@@ -1689,11 +1689,11 @@ st_write_filemarks(struct st_softc *st, int number, int flags)
 	int error;
 
 	if (number < 0)
-		return (EINVAL);
+		return EINVAL;
 
 	xs = scsi_xs_get(st->sc_link, flags);
 	if (xs == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = ST_IO_TIME * 4;
@@ -1730,7 +1730,7 @@ st_write_filemarks(struct st_softc *st, int number, int flags)
 		st->media_blkno = 0;
 	}
 
-	return (error);
+	return error;
 }
 
 /*
@@ -1780,7 +1780,7 @@ st_load(struct st_softc *st, u_int type, int flags)
 	if (type != LD_LOAD) {
 		error = st_check_eod(st, 0, &nmarks, flags);
 		if (error != 0)
-			return (error);
+			return error;
 	}
 
 	if (ISSET(st->quirks, ST_Q_IGNORE_LOADS)) {
@@ -1788,15 +1788,15 @@ st_load(struct st_softc *st, u_int type, int flags)
 			/*
 			 * If we ignore loads, at least we should try a rewind.
 			 */
-			return (st_rewind(st, 0, flags));
+			return st_rewind(st, 0, flags);
 		}
-		return (0);
+		return 0;
 	}
 
 
 	xs = scsi_xs_get(st->sc_link, flags);
 	if (xs == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = ST_SPC_TIME;
 
@@ -1807,7 +1807,7 @@ st_load(struct st_softc *st, u_int type, int flags)
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
 
-	return (error);
+	return error;
 }
 
 /*
@@ -1822,12 +1822,12 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 
 	error = st_check_eod(st, 0, &nmarks, flags);
 	if (error != 0)
-		return (error);
+		return error;
 	CLR(st->flags, ST_PER_ACTION);
 
 	xs = scsi_xs_get(st->sc_link, flags);
 	if (xs == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = immediate ? ST_CTL_TIME : ST_SPC_TIME;
 
@@ -1843,7 +1843,7 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 		st->media_blkno = 0;
 	}
 
-	return (error);
+	return error;
 }
 
 /*
@@ -1865,7 +1865,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 
 	if (!ISSET(link->flags, SDEV_OPEN) ||
 	    (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED))
-		return (scsi_interpret_sense(xs));
+		return scsi_interpret_sense(xs);
 
 	info = (int32_t)_4btol(sense->info);
 
@@ -1885,16 +1885,16 @@ st_interpret_sense(struct scsi_xfer *xs)
 
 	case SKEY_NOT_READY:
 		if (ISSET(xs->flags, SCSI_IGNORE_NOT_READY))
-			return (0);
+			return 0;
 		switch (ASC_ASCQ(sense)) {
 		case SENSE_NOT_READY_BECOMING_READY:
 			SC_DEBUG(link, SDEV_DB1, ("not ready: busy (%#x)\n",
 			    sense->add_sense_code_qual));
 			/* don't count this as a retry */
 			xs->retries++;
-			return (scsi_delay(xs, 1));
+			return scsi_delay(xs, 1);
 		default:
-			return (scsi_interpret_sense(xs));
+			return scsi_interpret_sense(xs);
 		}
 		break;
 	case SKEY_BLANK_CHECK:
@@ -1907,13 +1907,13 @@ st_interpret_sense(struct scsi_xfer *xs)
 				number = _3btol(space->number);
 				st->media_fileno = number - info;
 				st->media_eom = st->media_fileno;
-				return (0);
+				return 0;
 			case SENSE_BEGINNING_OF_MEDIUM_DETECTED:
 				/* Standard says: Position is undefined! */
 				SET(st->flags, ST_BOD_DETECTED);
 				st->media_fileno = -1;
 				st->media_blkno = -1;
-				return (0);
+				return 0;
 			}
 		}
 		break;
@@ -1923,7 +1923,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 	case SKEY_VOLUME_OVERFLOW:
 		break;
 	default:
-		return (scsi_interpret_sense(xs));
+		return scsi_interpret_sense(xs);
 	}
 
 	/*
@@ -1968,18 +1968,18 @@ st_interpret_sense(struct scsi_xfer *xs)
 		SET(st->flags, ST_EOM_PENDING);
 		xs->resid = 0;
 		if (ISSET(st->flags, ST_FIXEDBLOCKS))
-			return (0);
+			return 0;
 	}
 
 	if (ISSET(sense->flags, SSD_ILI)) {
 		if (!ISSET(st->flags, ST_FIXEDBLOCKS)) {
 			if (resid >= 0 && resid <= datalen)
-				return (0);
+				return 0;
 			if (!ISSET(xs->flags, SCSI_SILENT))
 				printf( "%s: bad residual %d out of "
 				    "%d\n", st->sc_dev.dv_xname, resid,
 				    datalen);
-			return (EIO);
+			return EIO;
 		}
 
 		/* Fixed size blocks. */
@@ -2019,11 +2019,11 @@ st_interpret_sense(struct scsi_xfer *xs)
 			SET(st->flags, ST_BLANK_READ);
 			SET(st->flags, ST_EOM_PENDING);
 			xs->resid = xs->datalen;
-			return (0);
+			return 0;
 		}
 	}
 
-	return (scsi_interpret_sense(xs));
+	return scsi_interpret_sense(xs);
 }
 
 /*
@@ -2077,5 +2077,5 @@ st_touch_tape(struct st_softc *st)
 	} while (readsize != 1 && readsize > st->blksize);
 done:
 	dma_free(buf, maxblksize);
-	return (error);
+	return error;
 }
