@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.159 2019/09/10 15:44:43 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.160 2019/09/10 16:08:43 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1120,7 +1120,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 			number = -number;
 		case MTFSF:	/* forward space file */
 			error = st_check_eod(st, 0, &nmarks, flags);
-			if (!error)
+			if (error == 0)
 				error = st_space(st, number - nmarks,
 				    SP_FILEMARKS, flags);
 			break;
@@ -1128,7 +1128,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 			number = -number;
 		case MTFSR:	/* forward space record */
 			error = st_check_eod(st, 1, &nmarks, flags);
-			if (!error)
+			if (error == 0)
 				error = st_space(st, number, SP_BLKS, flags);
 			break;
 		case MTREW:	/* rewind */
@@ -1141,12 +1141,12 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 			break;
 		case MTRETEN:	/* retension the tape */
 			error = st_load(st, LD_RETENSION, flags);
-			if (!error)
+			if (error == 0)
 				error = st_load(st, LD_LOAD, flags);
 			break;
 		case MTEOM:	/* forward space to end of media */
 			error = st_check_eod(st, 0, &nmarks, flags);
-			if (!error)
+			if (error == 0)
 				error = st_space(st, 1, SP_EOM, flags);
 			break;
 		case MTCACHE:	/* enable controller cache */
@@ -1758,7 +1758,7 @@ st_check_eod(struct st_softc *st, int position, int *nmarks, int flags)
 		*nmarks = 2;
 	}
 	error = st_write_filemarks(st, *nmarks, flags);
-	if (position && !error)
+	if (error == 0 && position != 0)
 		error = st_space(st, -*nmarks, SP_FILEMARKS, flags);
 	return error;
 }
@@ -2052,7 +2052,7 @@ st_touch_tape(struct st_softc *st)
 	if ((error = st_mode_sense(st, 0)) != 0)
 		goto done;
 	buf = dma_alloc(maxblksize, PR_NOWAIT);
-	if (!buf) {
+	if (buf == NULL) {
 		error = ENOMEM;
 		goto done;
 	}
