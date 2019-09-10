@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.48 2019/09/06 08:23:56 martijn Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.49 2019/09/10 19:30:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -460,7 +460,10 @@ lka_filter_process_response(const char *name, const char *line)
 
 	response = ep+1;
 
-	fs = tree_xget(&sessions, reqid);
+	/* session can legitimately disappear on a resume */
+	if ((fs = tree_xget(&sessions, reqid)) == NULL)
+		return;
+
 	if (strcmp(kind, "filter-dataline") == 0) {
 		if (fs->phase != FILTER_DATA_LINE)
 			fatalx("filter-dataline out of dataline phase");
