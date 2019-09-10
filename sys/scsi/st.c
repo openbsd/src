@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.157 2019/09/10 12:58:55 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.158 2019/09/10 14:16:36 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -530,7 +530,7 @@ st_mount_tape(dev_t dev, int flags)
 	 * Load the physical device parameters
 	 * loads: blkmin, blkmax
 	 */
-	if (!(link->flags & SDEV_ATAPI) &&
+	if (!ISSET(link->flags, SDEV_ATAPI) &&
 	    (error = st_read_block_limits(st, 0)) != 0)
 		goto done;
 
@@ -603,7 +603,7 @@ st_unmount(struct st_softc *st, int eject, int rewind)
 	st->media_fileno = -1;
 	st->media_blkno = -1;
 
-	if (!(st->flags & ST_MOUNTED))
+	if (!ISSET(st->flags, ST_MOUNTED))
 		return;
 	SC_DEBUG(link, SDEV_DB1, ("unmounting\n"));
 	st_check_eod(st, 0, &nmarks, SCSI_IGNORE_NOT_READY);
@@ -829,8 +829,8 @@ ststart(struct scsi_xfer *xs)
 	 * if the device has been unmounted by the user
 	 * then throw away all requests until done
 	 */
-	if (!(st->flags & ST_MOUNTED) ||
-	    !(link->flags & SDEV_MEDIA_LOADED)) {
+	if (!ISSET(st->flags, ST_MOUNTED) ||
+	    !ISSET(link->flags, SDEV_MEDIA_LOADED)) {
 		/* make sure that one implies the other.. */
 		CLR(link->flags, SDEV_MEDIA_LOADED);
 		bufq_drain(&st->sc_bufq);
@@ -1994,7 +1994,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 		 * return proper MODE SENSE information.
 		 */
 		if (ISSET(st->quirks, ST_Q_SENSE_HELP) &&
-		    !(link->flags & SDEV_MEDIA_LOADED))
+		    !ISSET(link->flags, SDEV_MEDIA_LOADED))
 			st->blksize -= 512;
 	}
 
@@ -2012,10 +2012,10 @@ st_interpret_sense(struct scsi_xfer *xs)
 		 * return proper MODE SENSE information.
 		 */
 		if (ISSET(st->quirks, ST_Q_SENSE_HELP) &&
-		    !(link->flags & SDEV_MEDIA_LOADED)) {
+		    !ISSET(link->flags, SDEV_MEDIA_LOADED)) {
 			/* still starting */
 			st->blksize -= 512;
-		} else if (!(st->flags & (ST_2FM_AT_EOD | ST_BLANK_READ))) {
+		} else if (!ISSET(st->flags, ST_2FM_AT_EOD | ST_BLANK_READ)) {
 			SET(st->flags, ST_BLANK_READ);
 			SET(st->flags, ST_EOM_PENDING);
 			xs->resid = xs->datalen;
