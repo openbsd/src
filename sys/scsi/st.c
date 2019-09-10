@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.161 2019/09/10 16:55:42 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.162 2019/09/10 18:45:45 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -402,14 +402,14 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 	if (!ISSET(link->flags, SDEV_MEDIA_LOADED))
 		st_unmount(st, NOEJECT, DOREWIND);
 
-	if (error) {
+	if (error != 0) {
 		CLR(link->flags, SDEV_OPEN);
 		goto done;
 	}
 
 	if (!ISSET(st->flags, ST_MOUNTED)) {
 		error = st_mount_tape(dev, flags);
-		if (error) {
+		if (error != 0) {
 			CLR(link->flags, SDEV_OPEN);
 			goto done;
 		}
@@ -1081,7 +1081,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 		 * (to get the current state of READONLY)
 		 */
 		error = st_mode_sense(st, SCSI_SILENT);
-		if (error)
+		if (error != 0)
 			break;
 
 		SC_DEBUG(st->sc_link, SDEV_DB1, ("[ioctl: get status]\n"));
@@ -1572,7 +1572,7 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 					 */
 					error = st_space(st, 0, SP_FILEMARKS,
 					    flags);
-					if (error)
+					if (error != 0)
 						return error;
 				}
 				if (ISSET(st->flags, ST_BLANK_READ)) {
@@ -1779,7 +1779,7 @@ st_load(struct st_softc *st, u_int type, int flags)
 
 	if (type != LD_LOAD) {
 		error = st_check_eod(st, 0, &nmarks, flags);
-		if (error)
+		if (error != 0)
 			return (error);
 	}
 
@@ -1821,7 +1821,7 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 	int error, nmarks;
 
 	error = st_check_eod(st, 0, &nmarks, flags);
-	if (error)
+	if (error != 0)
 		return (error);
 	CLR(st->flags, ST_PER_ACTION);
 
