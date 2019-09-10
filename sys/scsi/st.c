@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.160 2019/09/10 16:08:43 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.161 2019/09/10 16:55:42 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -399,7 +399,7 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 	/*
 	 * Terminate any exising mount session if there is no media.
 	 */
-	if ((link->flags & SDEV_MEDIA_LOADED) == 0)
+	if (!ISSET(link->flags, SDEV_MEDIA_LOADED))
 		st_unmount(st, NOEJECT, DOREWIND);
 
 	if (error) {
@@ -407,7 +407,7 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 		goto done;
 	}
 
-	if ((st->flags & ST_MOUNTED) == 0) {
+	if (!ISSET(st->flags, ST_MOUNTED)) {
 		error = st_mount_tape(dev, flags);
 		if (error) {
 			CLR(link->flags, SDEV_OPEN);
@@ -1478,7 +1478,7 @@ st_mode_select(struct st_softc *st, int flags)
 		outbuf->hdr.data_length = sizeof(outbuf->hdr) +
 		    sizeof(general) + page0_size -
 		    sizeof(outbuf->hdr.data_length);
-		if ((st->flags & ST_DONTBUFFER) == 0)
+		if (!ISSET(st->flags, ST_DONTBUFFER))
 			outbuf->hdr.dev_spec = SMH_DSP_BUFF_MODE_ON;
 		outbuf->hdr.blk_desc_len = sizeof(general);
 		memcpy(&outbuf->buf[sizeof(outbuf->hdr)],
@@ -1491,7 +1491,7 @@ st_mode_select(struct st_softc *st, int flags)
 	/* MODE SENSE (10) header was returned, so use MODE SELECT (10). */
 	_lto2b((sizeof(outbuf->hdr_big) + sizeof(general) + page0_size -
 	    sizeof(outbuf->hdr_big.data_length)), outbuf->hdr_big.data_length);
-	if ((st->flags & ST_DONTBUFFER) == 0)
+	if (!ISSET(st->flags, ST_DONTBUFFER))
 		outbuf->hdr_big.dev_spec = SMH_DSP_BUFF_MODE_ON;
 	_lto2b(sizeof(general), outbuf->hdr_big.blk_desc_len);
 	memcpy(&outbuf->buf[sizeof(outbuf->hdr_big)], &general,
@@ -1863,7 +1863,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 	int32_t resid, info, number;
 	int datalen;
 
-	if (((link->flags & SDEV_OPEN) == 0) ||
+	if (!ISSET(link->flags, SDEV_OPEN) ||
 	    (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED))
 		return (scsi_interpret_sense(xs));
 
@@ -1952,30 +1952,30 @@ st_interpret_sense(struct scsi_xfer *xs)
 		datalen /= st->blksize;
 	}
 
-	if (sense->flags & SSD_FILEMARK) {
+	if (ISSET(sense->flags, SSD_FILEMARK)) {
 		if (st->media_fileno != -1) {
 			st->media_fileno++;
 			if (st->media_fileno > st->media_eom)
 				st->media_eom = st->media_fileno;
 			st->media_blkno = 0;
 		}
-		if ((st->flags & ST_FIXEDBLOCKS) == 0)
+		if (!ISSET(st->flags, ST_FIXEDBLOCKS))
 			return 0;
 		SET(st->flags, ST_AT_FILEMARK);
 	}
 
-	if (sense->flags & SSD_EOM) {
+	if (ISSET(sense->flags, SSD_EOM)) {
 		SET(st->flags, ST_EOM_PENDING);
 		xs->resid = 0;
 		if (ISSET(st->flags, ST_FIXEDBLOCKS))
 			return (0);
 	}
 
-	if (sense->flags & SSD_ILI) {
-		if ((st->flags & ST_FIXEDBLOCKS) == 0) {
+	if (ISSET(sense->flags, SSD_ILI)) {
+		if (!ISSET(st->flags, ST_FIXEDBLOCKS)) {
 			if (resid >= 0 && resid <= datalen)
 				return (0);
-			if ((xs->flags & SCSI_SILENT) == 0)
+			if (!ISSET(xs->flags, SCSI_SILENT))
 				printf( "%s: bad residual %d out of "
 				    "%d\n", st->sc_dev.dv_xname, resid,
 				    datalen);
@@ -1983,13 +1983,13 @@ st_interpret_sense(struct scsi_xfer *xs)
 		}
 
 		/* Fixed size blocks. */
-		if (sense->error_code & SSD_ERRCODE_VALID)
-			if ((xs->flags & SCSI_SILENT) == 0)
+		if (ISSET(sense->error_code, SSD_ERRCODE_VALID))
+			if (!ISSET(xs->flags, SCSI_SILENT))
 				printf("%s: block wrong size, %d blocks "
 				    "residual\n", st->sc_dev.dv_xname, resid);
 		SET(st->flags, ST_EIO_PENDING);
 		/*
-                 * This quirk code helps the drive read the first tape block,
+		 * This quirk code helps the drive read the first tape block,
 		 * regardless of format.  That is required for these drives to
 		 * return proper MODE SENSE information.
 		 */
