@@ -1,6 +1,7 @@
-/*	$OpenBSD: crash.c,v 1.2 2019/09/10 19:01:24 bluhm Exp $	*/
+/*	$OpenBSD: stackmap.c,v 1.1 2019/09/10 19:01:24 bluhm Exp $	*/
 /*
- * Copyright (c) 2017-2019 Alexander Bluhm <bluhm@openbsd.org>
+ * Copyright (c) 2018 Todd Mortimer <mortimer@openbsd.org>
+ * Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,22 +21,50 @@
 #include <signal.h>
 #include <unistd.h>
 
+#include "pivot.h"
+
 void handler(int);
+void doexit(void);
 
 int
 main(int argc, char *argv[])
 {
-	int *i;
+	stack_t ss;
+	struct sigaction act;
+	void (**newstack)(void);
 
-	if (signal(SIGSEGV, handler) == SIG_ERR)
-		err(1, "signal");
-	i = (void *)0x10UL;
-	(*i)++;
-	return *i;
+	ss.ss_sp = malloc(SIGSTKSZ);
+	if (ss.ss_sp == NULL)
+		err(1, "malloc sigstack");
+	ss.ss_size = SIGSTKSZ;
+	ss.ss_flags = 0;
+	if (sigaltstack(&ss, NULL) == -1)
+		err(1, "sigaltstack");
+
+	act.sa_handler = handler;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = SA_ONSTACK;
+
+	/* set up an alt stack on the heap that just calls doexit */
+	newstack = malloc(SIGSTKSZ);
+	if (newstack == NULL)
+		err(1, "malloc newstack");
+	newstack[0] = doexit;
+
+	if (sigaction(SIGSEGV, &act, NULL) == -1)
+		err(1, "sigaction");
+	pivot(newstack);
+	return 3;
 }
 
 void
 handler(int signum)
 {
-	_exit(0);
+        _exit(0);
+}
+
+void
+doexit(void)
+{
+	exit(2);
 }
