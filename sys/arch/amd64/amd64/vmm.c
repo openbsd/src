@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.252 2019/09/10 19:36:12 anton Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.253 2019/09/11 16:55:53 anton Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1161,14 +1161,16 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 	vm->vm_memory_size = memsize;
 	strncpy(vm->vm_name, vcp->vcp_name, VMM_MAX_NAME_LEN);
 
+	rw_enter_write(&vmm_softc->vm_lock);
+
 	if (vm_impl_init(vm, p)) {
 		printf("failed to init arch-specific features for vm 0x%p\n",
 		    vm);
 		vm_teardown(vm);
+		rw_exit_write(&vmm_softc->vm_lock);
 		return (ENOMEM);
 	}
 
-	rw_enter_write(&vmm_softc->vm_lock);
 	vmm_softc->vm_ct++;
 	vmm_softc->vm_idx++;
 
@@ -3408,6 +3410,8 @@ vm_teardown(struct vm *vm)
 {
 	struct vcpu *vcpu, *tmp;
 
+	rw_assert_wrlock(&vmm_softc->vm_lock);
+
 	/* Free VCPUs */
 	rw_enter_write(&vm->vm_vcpu_lock);
 	SLIST_FOREACH_SAFE(vcpu, &vm->vm_vcpu_list, vc_vcpu_link, tmp) {
@@ -3910,8 +3914,11 @@ vm_run(struct vm_run_params *vrp)
 	if (vcpu->vc_state == VCPU_STATE_REQTERM) {
 		vrp->vrp_exit_reason = VM_EXIT_TERMINATED;
 		vcpu->vc_state = VCPU_STATE_TERMINATED;
-		if (vm->vm_vcpus_running == 0)
+		if (vm->vm_vcpus_running == 0) {
+			rw_enter_write(&vmm_softc->vm_lock);
 			vm_teardown(vm);
+			rw_exit_write(&vmm_softc->vm_lock);
+		}
 		ret = 0;
 	} else if (ret == EAGAIN) {
 		/* If we are exiting, populate exit data so vmd can help. */
