@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.82 2019/07/29 12:35:19 bluhm Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.83 2019/09/11 15:01:40 beck Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ fail:
 	} else if (ndp->ni_dirfd == AT_FDCWD) {
 		dp = fdp->fd_cdir;
 		vref(dp);
-		unveil_start_relative(p, ndp);
+		unveil_start_relative(p, ndp, NULL);
 		unveil_check_component(p, ndp, dp);
 	} else {
 		struct file *fp = fd_getfile(fdp, ndp->ni_dirfd);
@@ -232,6 +232,7 @@ fail:
 			return (ENOTDIR);
 		}
 		vref(dp);
+		unveil_start_relative(p, ndp, dp);
 		unveil_check_component(p, ndp, dp);
 		FRELE(fp, p);
 	}

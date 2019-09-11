@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.24 2019/09/08 22:43:14 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.25 2019/09/11 15:01:40 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -172,8 +172,7 @@ test_openat(int do_uv)
 	UV_SHOULD_SUCCEED((openat(dirfd2after, "../derp", O_RDWR|O_CREAT) == -1), "openat");
 	UV_SHOULD_ENOENT((openat(dirfd2after, "../../derpyluvs", O_RDWR|O_CREAT) == -1), "openat");
 	UV_SHOULD_ENOENT((openat(dirfd2after, "/etc/hosts", O_RDONLY) == -1), "openat");
-	/* XXX won't work until fix in */
-	/* UV_SHOULD_SUCCEED((openat(dirfd2after, "hooray", O_RDWR|O_CREAT) == -1), "openat"); */
+	UV_SHOULD_SUCCEED((openat(dirfd2after, "hooray", O_RDWR|O_CREAT) == -1), "openat");
 	UV_SHOULD_SUCCEED((openat(dirfd2after, uv_file1, O_RDWR|O_CREAT) == -1), "openat");
 	UV_SHOULD_ENOENT((openat(dirfd2after, uv_file2, O_RDWR|O_CREAT) == -1), "openat");
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.32 2019/08/05 13:31:07 bluhm Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.33 2019/09/11 15:01:40 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -711,21 +711,49 @@ unveil_covered(struct unveil *uv, struct vnode *dvp, struct process *pr) {
 
 
 /*
- * Start a relative path lookup from current working directory unveil.
+ * Start a relative path lookup. Ensure we find whatever unveil covered
+ * where we start from, either by having a saved current working directory
+ * unveil, or by walking up and finding a cover the hard way if we are
+ * doing a non AT_FDCWD relative lookup. Caller passes a NULL dp
+ * if we are using AT_FDCWD.
  */
 void
-unveil_start_relative(struct proc *p, struct nameidata *ni)
+unveil_start_relative(struct proc *p, struct nameidata *ni, struct vnode *dp)
 {
-	struct unveil *uv = p->p_p->ps_uvpcwd;
+	struct unveil *uv = NULL;
+
+	if (dp != NULL && p->p_p->ps_uvpaths != NULL) {
+		ssize_t uvi;
+		/*
+		 * XXX
+		 * This is a non AT_FDCWD relative lookup starting
+		 * from a file descriptor. As such, we can't use the
+		 * saved current working directory unveil. We walk up
+		 * and find what we are covered by.
+		 */
+		uv = unveil_lookup(dp, p, NULL);
+		if (uv == NULL) {
+			uvi = unveil_find_cover(dp, p);
+			if (uvi >= 0) {
+				KASSERT(uvi < p->p_p->ps_uvvcount);
+				uv = &p->p_p->ps_uvpaths[uvi];
+			}
+		}
+	} else {
+		/*
+		 * Check saved cwd unveil match.
+		 *
+		 * Since ps_uvpcwd is set on chdir (UNVEIL_READ) we
+		 * don't need to go up any further as in the above
+		 * case.
+		 */
+		uv = p->p_p->ps_uvpcwd;
+	}
 
 	/*
-	 * Check saved cwd unveil match.
-	 *
-	 * Since ps_uvpcwd is set on chdir (UNVEIL_READ)
-	 * we don't need to go up any further, if the flags
-	 * don't match, the cwd is not a match, and unless
-	 * we find a matching unveil later on a later component
-	 * of this lookup, we'll be out of luck
+	 * If the flags don't match, we have no match from our
+	 * starting point. If we do not find a matching unveil later
+	 * on a later component of this lookup, we'll be out of luck
 	 */
 	if (uv && (unveil_flagmatch(ni, uv->uv_flags))) {
 #ifdef DEBUG_UNVEIL
