@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.49 2019/09/10 19:30:12 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.50 2019/09/11 20:06:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -461,7 +461,7 @@ lka_filter_process_response(const char *name, const char *line)
 	response = ep+1;
 
 	/* session can legitimately disappear on a resume */
-	if ((fs = tree_xget(&sessions, reqid)) == NULL)
+	if ((fs = tree_get(&sessions, reqid)) == NULL)
 		return;
 
 	if (strcmp(kind, "filter-dataline") == 0) {
