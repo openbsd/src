@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-cdp.c,v 1.7 2019/04/05 00:57:59 dlg Exp $	*/
+/*	$OpenBSD: print-cdp.c,v 1.8 2019/09/11 15:20:30 martijn Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -80,6 +80,7 @@ cdp_print(const u_char *p, u_int length, u_int caplen, int i)
 			return;
 		}
 
+		/* http://www.cisco.com/c/en/us/support/docs/switches/catalyst-4500-series-switches/13414-103.html#cdp */
 		switch(type) {
 		case 0x01:
 			printf(" DevID '%.*s'", len - 4, p + i + 4);
@@ -109,15 +110,15 @@ cdp_print(const u_char *p, u_int length, u_int caplen, int i)
 		case 0x07:
 			cdp_print_prefixes(p+i+4, len-4);
 			break;
-		case 0x09:		/* guess - not documented */
+		case 0x09:
 			printf(" VTP-Management-Domain '%.*s'", len-4, p+i+4 );
 			break;
-		case 0x0a:		/* guess - not documented */
+		case 0x0a:
 			if (len < 6)
 				goto error;
-			printf(" Native-VLAN-ID %d", (p[i+4]<<8) + p[i+4+1] - 1 );
+			printf(" Native-VLAN-ID %d", (p[i+4]<<8) + p[i+4+1]);
 			break;
-		case 0x0b:		/* guess - not documented */
+		case 0x0b:
 			if (len < 5)
 				goto error;
 			printf(" Duplex %s", p[i+4] ? "full": "half" );
