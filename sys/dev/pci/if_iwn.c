@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.214 2019/09/02 12:50:12 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.215 2019/09/11 08:59:12 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2673,6 +2673,9 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	struct iwn_tx_ring *ring = &sc->txq[qid];
 	struct iwn_tx_data *data = &ring->data[desc->idx];
 	struct iwn_node *wn = (void *)data->ni;
+
+	if (data->ni == NULL)
+		return;
 
 	/* Update rate control statistics. */
 	if (data->ni->ni_flags & IEEE80211_NODE_HT) {
