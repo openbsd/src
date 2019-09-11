@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.409 2019/09/04 07:28:27 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.410 2019/09/11 04:19:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -215,8 +215,10 @@ static void smtp_filter_fd(struct smtp_tx *, int);
 static int  smtp_message_fd(struct smtp_tx *, int);
 static void smtp_message_begin(struct smtp_tx *);
 static void smtp_message_end(struct smtp_tx *);
-static int  smtp_filter_printf(struct smtp_tx *, const char *, ...);
-static int  smtp_message_printf(struct smtp_tx *, const char *, ...);
+static int  smtp_filter_printf(struct smtp_tx *, const char *, ...)
+    __attribute__((__format__ (printf, 2, 3)));
+static int  smtp_message_printf(struct smtp_tx *, const char *, ...)
+    __attribute__((__format__ (printf, 2, 3)));
 
 static int  smtp_check_rset(struct smtp_session *, const char *);
 static int  smtp_check_helo(struct smtp_session *, const char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.31 2019/09/10 07:03:16 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.32 2019/09/11 04:19:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -74,6 +74,9 @@ static struct smtp_events {
 	{ "timeout" },
 };
 
+static void
+report_smtp_broadcast(uint64_t, const char *, struct timeval *, const char *,
+    const char *, ...) __attribute__((__format__ (printf, 5, 6)));
 
 void
 lka_report_init(void)
