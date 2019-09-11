@@ -1,4 +1,4 @@
-.TH "unbound.conf" "5" "Jun 17, 2019" "NLnet Labs" "unbound 1.9.2"
+.TH "unbound.conf" "5" "Aug 27, 2019" "NLnet Labs" "unbound 1.9.3"
 .\"
 .\" unbound.conf.5 -- unbound.conf manual
 .\"
@@ -593,7 +593,9 @@ In the last case the path is adjusted to remove the unused portion.
 The pidfile can be either a relative path to the working directory, or
 an absolute path relative to the original root. It is written just prior
 to chroot and dropping permissions. This allows the pidfile to be
-/var/run/unbound.pid and the chroot to be /var/unbound, for example.
+/var/run/unbound.pid and the chroot to be /var/unbound, for example. Note that
+Unbound is not able to remove the pidfile after termination when it is located
+outside of the chroot directory.
 .IP
 Additionally, unbound may need to access /dev/random (for entropy)
 from inside the chroot.
@@ -1723,7 +1725,8 @@ clause gives the settings for the \fIpython\fR(1) script module.  This module
 acts like the iterator and validator modules do, on queries and answers.
 To enable the script module it has to be compiled into the daemon,
 and the word "python" has to be put in the \fBmodule\-config:\fR option
-(usually first, or between the validator and iterator).
+(usually first, or between the validator and iterator). Multiple instances of
+the python module are supported by adding the word "python" more than once.
 .LP
 If the \fBchroot:\fR option is enabled, you should make sure Python's
 library directory structure is bind mounted in the new root environment, see
@@ -1732,7 +1735,8 @@ absolute path relative to the new root, or as a relative path to the working
 directory.
 .TP
 .B python\-script: \fI<python file>\fR
-The script file to load.
+The script file to load. Repeat this option for every python module instance
+added to the \fBmodule\-config:\fR option.
 .SS "DNS64 Module Options"
 .LP
 The dns64 module must be configured in the \fBmodule\-config:\fR "dns64

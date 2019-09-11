@@ -11,14 +11,14 @@ sinclude(dnscrypt/dnscrypt.m4)
 # must be numbers. ac_defun because of later processing
 m4_define([VERSION_MAJOR],[1])
 m4_define([VERSION_MINOR],[9])
-m4_define([VERSION_MICRO],[2])
-AC_INIT(unbound, m4_defn([VERSION_MAJOR]).m4_defn([VERSION_MINOR]).m4_defn([VERSION_MICRO]), unbound-bugs@nlnetlabs.nl, unbound)
+m4_define([VERSION_MICRO],[3])
+AC_INIT(unbound, m4_defn([VERSION_MAJOR]).m4_defn([VERSION_MINOR]).m4_defn([VERSION_MICRO]), unbound-bugs@nlnetlabs.nl or https://github.com/NLnetLabs/unbound/issues, unbound)
 AC_SUBST(UNBOUND_VERSION_MAJOR, [VERSION_MAJOR])
 AC_SUBST(UNBOUND_VERSION_MINOR, [VERSION_MINOR])
 AC_SUBST(UNBOUND_VERSION_MICRO, [VERSION_MICRO])
 
 LIBUNBOUND_CURRENT=9
-LIBUNBOUND_REVISION=2
+LIBUNBOUND_REVISION=3
 LIBUNBOUND_AGE=1
 # 1.0.0 had 0:12:0
 # 1.0.1 had 0:13:0
@@ -88,6 +88,7 @@ LIBUNBOUND_AGE=1
 # 1.9.0 had 9:0:1 # add ub_ctx_set_tls
 # 1.9.1 had 9:1:1
 # 1.9.2 had 9:2:1
+# 1.9.3 had 9:3:1
 
 #   Current  -- the number of the binary API that we're implementing
 #   Revision -- which iteration of the implementation of the binary
@@ -110,6 +111,10 @@ LIBUNBOUND_AGE=1
 AC_SUBST(LIBUNBOUND_CURRENT)
 AC_SUBST(LIBUNBOUND_REVISION)
 AC_SUBST(LIBUNBOUND_AGE)
+
+
+cmdln="`echo $@ | sed -e 's/\\\\/\\\\\\\\/g' | sed -e 's/"/\\\\"/'g`"
+AC_DEFINE_UNQUOTED(CONFCMDLINE, ["$cmdln"], [Command line arguments used with configure])
 
 CFLAGS="$CFLAGS"
 AC_AIX
@@ -474,6 +479,10 @@ if echo "$host" | grep -i -e linux -e dragonfly >/dev/null; then
 else
 	AC_DEFINE(REUSEPORT_DEFAULT, 0, [if REUSEPORT is enabled by default])
 fi
+
+# Include systemd.m4 - begin
+sinclude(systemd.m4)
+# Include systemd.m4 - end
 
 # set memory allocation checking if requested
 AC_ARG_ENABLE(alloc-checks, AC_HELP_STRING([--enable-alloc-checks],
@@ -1296,10 +1305,6 @@ if test x_$enable_static_exe = x_yes; then
 	fi
 fi
 
-# Include systemd.m4 - begin
-sinclude(systemd.m4)
-# Include systemd.m4 - end
-
 # set lock checking if requested
 AC_ARG_ENABLE(lock_checks, AC_HELP_STRING([--enable-lock-checks],
 	[ enable to check lock and unlock calls, for debug purposes ]), 
@@ -1600,6 +1605,47 @@ case "$enable_ipsecmod" in
 		;;
 	no|*)
 		# nothing
+		;;
+esac
+
+# check for ipset if requested
+AC_ARG_ENABLE(ipset, AC_HELP_STRING([--enable-ipset], [enable ipset module]))
+case "$enable_ipset" in
+    yes)
+		AC_DEFINE([USE_IPSET], [1], [Define to 1 to use ipset support])
+		IPSET_SRC="ipset/ipset.c"
+		AC_SUBST(IPSET_SRC)
+		IPSET_OBJ="ipset.lo"
+		AC_SUBST(IPSET_OBJ)
+
+		# mnl
+		AC_ARG_WITH(libmnl, AC_HELP_STRING([--with-libmnl=path],
+			[specify explicit path for libmnl.]),
+			[ ],[ withval="yes" ])
+		found_libmnl="no"
+		AC_MSG_CHECKING(for libmnl)
+		if test x_$withval = x_ -o x_$withval = x_yes; then
+			withval="/usr/local /opt/local /usr/lib /usr/pkg /usr/sfw /usr"
+		fi
+		for dir in $withval ; do
+			if test -f "$dir/include/libmnl/libmnl.h"; then
+				found_libmnl="yes"
+				dnl assume /usr is in default path.
+				if test "$dir" != "/usr"; then
+					CPPFLAGS="$CPPFLAGS -I$dir/include"
+					LDFLAGS="$LDFLAGS -L$dir/lib"
+				fi
+				AC_MSG_RESULT(found in $dir)
+				LIBS="$LIBS -lmnl"
+				break;
+			fi
+		done
+		if test x_$found_libmnl != x_yes; then
+			AC_ERROR([Could not find libmnl, libmnl.h])
+		fi
+		;;
+    no|*)
+    	# nothing
 		;;
 esac
 

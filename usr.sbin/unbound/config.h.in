@@ -15,6 +15,9 @@
 /* Do sha512 definitions in config.h */
 #undef COMPAT_SHA512
 
+/* Command line arguments used with configure */
+#undef CONFCMDLINE
+
 /* Pathname to the Unbound configuration file */
 #undef CONFIGFILE
 
@@ -774,6 +777,9 @@
 
 /* Define to 1 to use ipsecmod support. */
 #undef USE_IPSECMOD
+
+/* Define to 1 to use ipset support */
+#undef USE_IPSET
 
 /* Define if you want to use internal select based events */
 #undef USE_MINI_EVENT
