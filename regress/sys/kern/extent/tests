@@ -1,4 +1,4 @@
-# $OpenBSD: tests,v 1.5 2009/10/13 20:53:40 miod Exp $
+# $OpenBSD: tests,v 1.6 2019/09/11 12:30:35 kettenis Exp $
 # $NetBSD: tests,v 1.9 2005/03/15 18:27:23 bouyer Exp $
 
 #fill up an extent, should coalesce into one allocation
@@ -135,4 +135,20 @@ print
 # extent does not trigger an infinite loop
 extent test17 0x00000000 -1L EX_FILLED
 alloc_region 0 0x4000 EX_CONFLICTOK
+print
+
+# Check freeing overkapping regions from a filled extent
+extent test18 0x0000 0xffff EX_FILLED
+free 0x164e 0x2
+free 0x0d00 0xe300 EX_CONFLICTOK
+print
+
+extent test19 0x0000 0xffff EX_FILLED
+free 0x164e 0x2
+free 0x0d00 0xf300 EX_CONFLICTOK
+print
+
+extent test20 0x0000 0xffff EX_FILLED
+free 0x164e 0x2
+free 0x0000 0xf000 EX_CONFLICTOK
 print

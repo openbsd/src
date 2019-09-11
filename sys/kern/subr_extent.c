@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.61 2019/08/28 22:22:43 kettenis Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.62 2019/09/11 12:30:34 kettenis Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -962,6 +962,7 @@ int
 extent_free(struct extent *ex, u_long start, u_long size, int flags)
 {
 	struct extent_region *rp, *nrp = NULL;
+	struct extent_region *tmp;
 	u_long end = start + (size - 1);
 	int exflags;
 	int error = 0;
@@ -1019,8 +1020,12 @@ extent_free(struct extent *ex, u_long start, u_long size, int flags)
 	 *
 	 * Cases 2, 3, and 4 require that the EXF_NOCOALESCE flag
 	 * is not set.
+	 *
+	 * If the EX_CONFLICTOK flag is set, partially overlapping
+	 * regions are allowed.  This is handled in cases 1a, 2a and
+	 * 3a below.
 	 */
-	LIST_FOREACH(rp, &ex->ex_regions, er_link) {
+	LIST_FOREACH_SAFE(rp, &ex->ex_regions, er_link, tmp) {
 		/*
 		 * Save ourselves some comparisons; does the current
 		 * region end before chunk to be freed begins?  If so,
@@ -1080,12 +1085,28 @@ extent_free(struct extent *ex, u_long start, u_long size, int flags)
 			nrp = NULL;
 			goto done;
 		}
+
+		if ((flags & EX_CONFLICTOK) == 0)
+			continue;
+
+		/* Case 1a. */
+		if ((start <= rp->er_start && end >= rp->er_end)) {
+			LIST_REMOVE(rp, er_link);
+			extent_free_region_descriptor(ex, rp);
+			continue;
+		}
+
+		/* Case 2a. */
+		if ((start <= rp->er_start) && (end >= rp->er_start))
+			rp->er_start = (end + 1);
+
+		/* Case 3a. */
+		if ((start <= rp->er_end) && (end >= rp->er_end))
+			rp->er_end = (start - 1);
 	}
 
-	if (flags & EX_CONFLICTOK) {
-		error = EINVAL;
+	if (flags & EX_CONFLICTOK)
 		goto done;
-	}
 
 	/* Region not found, or request otherwise invalid. */
 #if defined(DIAGNOSTIC) || defined(DDB)

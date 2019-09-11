@@ -1,4 +1,4 @@
-# $OpenBSD: extest.awk,v 1.2 2009/04/10 20:57:04 kettenis Exp $
+# $OpenBSD: extest.awk,v 1.3 2019/09/11 12:30:34 kettenis Exp $
 # $NetBSD: extest.awk,v 1.6 2002/02/21 03:59:25 mrg Exp $
 
 BEGIN {
@@ -67,7 +67,12 @@ $1 == "alloc_subregion" {
 }
 
 $1 == "free" {
-	printf("error = extent_free(ex, %s, %s, 0);\n", $2, $3)
+	if ($4 == "") {
+		flags = "0";
+	} else {
+		flags = $4;
+	}
+	printf("error = extent_free(ex, %s, %s, %s);\n", $2, $3, flags)
 	printf("if (error)\n\tprintf(\"error: %%s\\n\", strerror(error));\n")
 }
 
