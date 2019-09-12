@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpiireg.h,v 1.13 2018/06/19 10:32:41 jmatthew Exp $	*/
+/*	$OpenBSD: mpiireg.h,v 1.14 2019/09/12 22:22:53 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -464,7 +464,7 @@ struct mpii_msg_iocfacts_reply {
 	u_int8_t		fw_version_maj;
 
 	u_int16_t		ioc_request_frame_size;
-	u_int16_t		reserved3;
+	u_int16_t		ioc_max_chain_seg_size;
 
 	u_int16_t		max_initiators;
 	u_int16_t		max_targets;

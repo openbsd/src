@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.120 2019/08/30 00:38:12 jmatthew Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.121 2019/09/12 22:22:53 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -188,6 +188,7 @@ struct mpii_softc {
 
 	ushort			sc_chain_sge;
 	ushort			sc_max_sgl;
+	int			sc_max_chain;
 
 	u_int8_t		sc_ioc_event_replay;
 
@@ -762,7 +763,6 @@ mpii_load_xs_sas3(struct mpii_ccb *ccb)
 
 	/* Request frame structure is described in the mpii_iocfacts */
 	nsge = (struct mpii_ieee_sge *)(io + 1);
-	csge = nsge + sc->sc_chain_sge;
 
 	/* zero length transfer still requires an SGE */
 	if (xs->datalen == 0) {
@@ -777,23 +777,36 @@ mpii_load_xs_sas3(struct mpii_ccb *ccb)
 		return (1);
 	}
 
+	csge = NULL;
+	if (dmap->dm_nsegs > sc->sc_chain_sge) {
+		csge = nsge + sc->sc_chain_sge;
+
+		/* offset to the chain sge from the beginning */
+		io->chain_offset = ((caddr_t)csge - (caddr_t)io) / sizeof(*sge);
+	}
+
 	for (i = 0; i < dmap->dm_nsegs; i++, nsge++) {
 		if (nsge == csge) {
 			nsge++;
-			/* offset to the chain sge from the beginning */
-			io->chain_offset = ((caddr_t)csge - (caddr_t)io) /
-			    sizeof(*sge);
-			csge->sg_flags = MPII_IEEE_SGE_CHAIN_ELEMENT |
-			    MPII_IEEE_SGE_ADDR_SYSTEM;
+
 			/* address of the next sge */
 			htolem64(&csge->sg_addr, ccb->ccb_cmd_dva +
 			    ((caddr_t)nsge - (caddr_t)io));
 			htolem32(&csge->sg_len, (dmap->dm_nsegs - i) *
 			    sizeof(*sge));
+			csge->sg_next_chain_offset = 0;
+			csge->sg_flags = MPII_IEEE_SGE_CHAIN_ELEMENT |
+			    MPII_IEEE_SGE_ADDR_SYSTEM;
+
+			if ((dmap->dm_nsegs - i) > sc->sc_max_chain) {
+				csge->sg_next_chain_offset = sc->sc_max_chain;
+				csge += sc->sc_max_chain;
+			}
 		}
 
 		sge = nsge;
 		sge->sg_flags = MPII_IEEE_SGE_ADDR_SYSTEM;
+		sge->sg_next_chain_offset = 0;
 		htolem32(&sge->sg_len, dmap->dm_segs[i].ds_len);
 		htolem64(&sge->sg_addr, dmap->dm_segs[i].ds_addr);
 	}
@@ -1337,6 +1350,10 @@ mpii_iocfacts(struct mpii_softc *sc)
 	 * +-------------------+ <- sc_request_size - sizeof(scsi_sense_data)
 	 * | scsi_sense_data   |
 	 * +-------------------+
+	 *
+	 * If the controller gives us a maximum chain size, there can be
+	 * multiple chain sges, each of which points to the sge following it.
+	 * Otherwise, there will only be one chain sge.
 	 */
 
 	/* both sizes are in 32-bit words */
@@ -1359,13 +1376,19 @@ mpii_iocfacts(struct mpii_softc *sc)
 	sc->sc_chain_sge = (irs - sizeof(struct mpii_msg_scsi_io)) /
 	    sge_size - 1;
 
+	sc->sc_max_chain = lemtoh16(&ifp.ioc_max_chain_seg_size);
+
 	/*
 	 * A number of simple scatter-gather elements we can fit into the
-	 * request buffer after the I/O command minus the chain element.
+	 * request buffer after the I/O command minus the chain element(s).
 	 */
 	sc->sc_max_sgl = (sc->sc_request_size -
  	    sizeof(struct mpii_msg_scsi_io) - sizeof(struct scsi_sense_data)) /
 	    sge_size - 1;
+	if (sc->sc_max_chain > 0) {
+		sc->sc_max_sgl -= (sc->sc_max_sgl - sc->sc_chain_sge) /
+		    sc->sc_max_chain;
+	}
 
 	return (0);
 }
