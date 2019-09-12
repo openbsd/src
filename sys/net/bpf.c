@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.177 2019/06/13 21:14:53 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.178 2019/09/12 01:17:38 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1367,7 +1367,7 @@ bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction)
  * it or keep a pointer to it.
  */
 int
-bpf_mtap_hdr(caddr_t arg, caddr_t data, u_int dlen, const struct mbuf *m,
+bpf_mtap_hdr(caddr_t arg, const void *data, u_int dlen, const struct mbuf *m,
     u_int direction, void (*cpfn)(const void *, void *, size_t))
 {
 	struct m_hdr mh;
@@ -1377,7 +1377,7 @@ bpf_mtap_hdr(caddr_t arg, caddr_t data, u_int dlen, const struct mbuf *m,
 		mh.mh_flags = 0;
 		mh.mh_next = (struct mbuf *)m;
 		mh.mh_len = dlen;
-		mh.mh_data = data;
+		mh.mh_data = (void *)data;
 		m0 = (struct mbuf *)&mh;
 	} else 
 		m0 = m;
