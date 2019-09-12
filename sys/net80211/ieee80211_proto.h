@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.45 2019/07/29 10:50:09 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.46 2019/09/12 12:55:07 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -66,6 +66,9 @@ struct ieee80211_rsnparams;
 extern	void ieee80211_set_link_state(struct ieee80211com *, int);
 extern	u_int ieee80211_get_hdrlen(const struct ieee80211_frame *);
 extern	int ieee80211_classify(struct ieee80211com *, struct mbuf *);
+extern	void ieee80211_inputm(struct ifnet *, struct mbuf *,
+		struct ieee80211_node *, struct ieee80211_rxinfo *,
+		struct mbuf_list *);
 extern	void ieee80211_input(struct ifnet *, struct mbuf *,
 		struct ieee80211_node *, struct ieee80211_rxinfo *);
 extern	int ieee80211_output(struct ifnet *, struct mbuf *, struct sockaddr *,

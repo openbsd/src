@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.94 2017/10/26 15:00:28 mpi Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.95 2019/09/12 12:55:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1153,6 +1153,7 @@ rt2661_tx_dma_intr(struct rt2661_softc *sc, struct rt2661_tx_ring *txq)
 void
 rt2661_rx_intr(struct rt2661_softc *sc)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
@@ -1279,7 +1280,7 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 		rxi.rxi_flags = 0;
 		rxi.rxi_rssi = desc->rssi;
 		rxi.rxi_tstamp = 0;	/* unused */
-		ieee80211_input(ifp, m, ni, &rxi);
+		ieee80211_inputm(ifp, m, ni, &rxi, &ml);
 
 		/*-
 		 * Keep track of the average RSSI using an Exponential Moving
@@ -1302,6 +1303,7 @@ skip:		desc->flags |= htole32(RT2661_RX_BUSY);
 
 		sc->rxq.cur = (sc->rxq.cur + 1) % RT2661_RX_RING_COUNT;
 	}
+	if_input(ifp, &ml);
 }
 
 #ifndef IEEE80211_STA_ONLY

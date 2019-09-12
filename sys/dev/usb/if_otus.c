@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.63 2019/01/15 22:08:32 stsp Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.64 2019/09/12 12:55:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -124,7 +124,8 @@ void		otus_newassoc(struct ieee80211com *, struct ieee80211_node *,
 		    int);
 void		otus_intr(struct usbd_xfer *, void *, usbd_status);
 void		otus_cmd_rxeof(struct otus_softc *, uint8_t *, int);
-void		otus_sub_rxeof(struct otus_softc *, uint8_t *, int);
+void		otus_sub_rxeof(struct otus_softc *, uint8_t *, int,
+		    struct mbuf_list *);
 void		otus_rxeof(struct usbd_xfer *, void *, usbd_status);
 void		otus_txeof(struct usbd_xfer *, void *, usbd_status);
 int		otus_tx(struct otus_softc *, struct mbuf *,
@@ -1064,7 +1065,8 @@ otus_cmd_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 }
 
 void
-otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
+otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len,
+    struct mbuf_list *ml)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
@@ -1195,7 +1197,7 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 	rxi.rxi_flags = 0;
 	rxi.rxi_rssi = tail->rssi;
 	rxi.rxi_tstamp = 0;	/* unused */
-	ieee80211_input(ifp, m, ni, &rxi);
+	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 
 	/* Node is no longer needed. */
 	ieee80211_release_node(ic, ni);
@@ -1205,6 +1207,7 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 void
 otus_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct otus_rx_data *data = priv;
 	struct otus_softc *sc = data->sc;
 	caddr_t buf = data->buf;
@@ -1234,13 +1237,14 @@ otus_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			break;
 		}
 		/* Process sub-xfer. */
-		otus_sub_rxeof(sc, (uint8_t *)&head[1], hlen);
+		otus_sub_rxeof(sc, (uint8_t *)&head[1], hlen, &ml);
 
 		/* Next sub-xfer is aligned on a 32-bit boundary. */
 		hlen = (sizeof (*head) + hlen + 3) & ~3;
 		buf += hlen;
 		len -= hlen;
 	}
+	if_input(&sc->sc_ic.ic_if, &ml);
 
  resubmit:
 	usbd_setup_xfer(xfer, sc->data_rx_pipe, data, data->buf, OTUS_RXBUFSZ,

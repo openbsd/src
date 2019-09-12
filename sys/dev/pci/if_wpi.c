@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.146 2019/08/27 14:57:48 stsp Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.147 2019/09/12 12:55:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -103,7 +103,7 @@ void		wpi_calib_timeout(void *);
 int		wpi_ccmp_decap(struct wpi_softc *, struct mbuf *,
 		    struct ieee80211_key *);
 void		wpi_rx_done(struct wpi_softc *, struct wpi_rx_desc *,
-		    struct wpi_rx_data *);
+		    struct wpi_rx_data *, struct mbuf_list *);
 void		wpi_tx_done(struct wpi_softc *, struct wpi_rx_desc *);
 void		wpi_cmd_done(struct wpi_softc *, struct wpi_rx_desc *);
 void		wpi_notif_intr(struct wpi_softc *);
@@ -1180,7 +1180,7 @@ wpi_ccmp_decap(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_key *k)
 
 void
 wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
-    struct wpi_rx_data *data)
+    struct wpi_rx_data *data, struct mbuf_list *ml)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
@@ -1344,7 +1344,7 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	/* Send the frame to the 802.11 layer. */
 	rxi.rxi_rssi = stat->rssi;
 	rxi.rxi_tstamp = 0;	/* unused */
-	ieee80211_input(ifp, m, ni, &rxi);
+	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 
 	/* Node is no longer needed. */
 	ieee80211_release_node(ic, ni);
@@ -1412,6 +1412,7 @@ wpi_cmd_done(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 void
 wpi_notif_intr(struct wpi_softc *sc)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	uint32_t hw;
@@ -1438,7 +1439,7 @@ wpi_notif_intr(struct wpi_softc *sc)
 		switch (desc->type) {
 		case WPI_RX_DONE:
 			/* An 802.11 frame has been received. */
-			wpi_rx_done(sc, desc, data);
+			wpi_rx_done(sc, desc, data, &ml);
 			break;
 
 		case WPI_TX_DONE:
@@ -1527,6 +1528,7 @@ wpi_notif_intr(struct wpi_softc *sc)
 
 		sc->rxq.cur = (sc->rxq.cur + 1) % WPI_RX_RING_COUNT;
 	}
+	if_input(&ic->ic_if, &ml);
 
 	/* Tell the firmware what we have processed. */
 	hw = (hw == 0) ? WPI_RX_RING_COUNT - 1 : hw - 1;

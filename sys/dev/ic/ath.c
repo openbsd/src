@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.116 2018/01/31 11:27:03 stsp Exp $  */
+/*      $OpenBSD: ath.c,v 1.117 2019/09/12 12:55:06 stsp Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1795,6 +1795,7 @@ ath_rxbuf_init(struct ath_softc *sc, struct ath_buf *bf)
 void
 ath_rx_proc(void *arg, int npending)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 #define	PA2DESC(_sc, _pa) \
 	((struct ath_desc *)((caddr_t)(_sc)->sc_desc + \
 		((_pa) - (_sc)->sc_desc_paddr)))
@@ -1946,7 +1947,7 @@ ath_rx_proc(void *arg, int npending)
 		if (!ath_softcrypto && (wh->i_fc[1] & IEEE80211_FC1_WEP)) {
 			/*
 			 * WEP is decrypted by hardware. Clear WEP bit
-			 * and trim WEP header for ieee80211_input().
+			 * and trim WEP header for ieee80211_inputm().
 			 */
 			wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
 			bcopy(wh, &whbuf, sizeof(whbuf));
@@ -1988,7 +1989,7 @@ ath_rx_proc(void *arg, int npending)
 		 */
 		rxi.rxi_rssi = ds->ds_rxstat.rs_rssi;
 		rxi.rxi_tstamp = ds->ds_rxstat.rs_tstamp;
-		ieee80211_input(ifp, m, ni, &rxi);
+		ieee80211_inputm(ifp, m, ni, &rxi, &ml);
 
 		/* Handle the rate adaption */
 		ieee80211_rssadapt_input(ic, ni, &an->an_rssadapt,
@@ -2004,6 +2005,8 @@ ath_rx_proc(void *arg, int npending)
 	rx_next:
 		TAILQ_INSERT_TAIL(&sc->sc_rxbuf, bf, bf_list);
 	} while (ath_rxbuf_init(sc, bf) == 0);
+
+	if_input(ifp, &ml);
 
 	ath_hal_set_rx_signal(ah);		/* rx signal state monitoring */
 	ath_hal_start_rx(ah);			/* in case of RXEOL */

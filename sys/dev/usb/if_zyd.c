@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.120 2019/04/25 01:52:14 kevlo Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.121 2019/09/12 12:55:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -217,7 +217,8 @@ void		zyd_set_chan(struct zyd_softc *, struct ieee80211_channel *);
 int		zyd_set_beacon_interval(struct zyd_softc *, int);
 uint8_t		zyd_plcp_signal(int);
 void		zyd_intr(struct usbd_xfer *, void *, usbd_status);
-void		zyd_rx_data(struct zyd_softc *, const uint8_t *, uint16_t);
+void		zyd_rx_data(struct zyd_softc *, const uint8_t *, uint16_t,
+		    struct mbuf_list *);
 void		zyd_rxeof(struct usbd_xfer *, void *, usbd_status);
 void		zyd_txeof(struct usbd_xfer *, void *, usbd_status);
 int		zyd_tx(struct zyd_softc *, struct mbuf *,
@@ -1894,7 +1895,8 @@ zyd_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 }
 
 void
-zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len)
+zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len,
+    struct mbuf_list *ml)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
@@ -1980,7 +1982,7 @@ zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len)
 	rxi.rxi_flags = 0;
 	rxi.rxi_rssi = stat->rssi;
 	rxi.rxi_tstamp = 0;	/* unused */
-	ieee80211_input(ifp, m, ni, &rxi);
+	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 
 	/* node is no longer needed */
 	ieee80211_release_node(ic, ni);
@@ -1991,6 +1993,7 @@ zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len)
 void
 zyd_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct zyd_rx_data *data = priv;
 	struct zyd_softc *sc = data->sc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2030,15 +2033,16 @@ zyd_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			if (len == 0 || p + len >= end)
 				break;
 
-			zyd_rx_data(sc, p, len);
+			zyd_rx_data(sc, p, len, &ml);
 			/* next frame is aligned on a 32-bit boundary */
 			p += (len + 3) & ~3;
 		}
 	} else {
 		DPRINTFN(3, ("received single-frame transfer\n"));
 
-		zyd_rx_data(sc, data->buf, len);
+		zyd_rx_data(sc, data->buf, len, &ml);
 	}
+	if_input(ifp, &ml);
 
 skip:	/* setup a new transfer */
 	usbd_setup_xfer(xfer, sc->zyd_ep[ZYD_ENDPT_BIN], data, NULL,

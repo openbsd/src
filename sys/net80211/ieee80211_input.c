@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.208 2019/08/29 09:13:56 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.209 2019/09/12 12:55:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -61,21 +61,22 @@
 struct	mbuf *ieee80211_defrag(struct ieee80211com *, struct mbuf *, int);
 void	ieee80211_defrag_timeout(void *);
 void	ieee80211_input_ba(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *, int, struct ieee80211_rxinfo *);
+	    struct ieee80211_node *, int, struct ieee80211_rxinfo *,
+	    struct mbuf_list *);
 void	ieee80211_input_ba_flush(struct ieee80211com *, struct ieee80211_node *,
-	    struct ieee80211_rx_ba *);
+	    struct ieee80211_rx_ba *, struct mbuf_list *);
 void	ieee80211_input_ba_gap_timeout(void *arg);
 void	ieee80211_ba_move_window(struct ieee80211com *,
-	    struct ieee80211_node *, u_int8_t, u_int16_t);
+	    struct ieee80211_node *, u_int8_t, u_int16_t, struct mbuf_list *);
 void	ieee80211_input_ba_seq(struct ieee80211com *,
-	    struct ieee80211_node *, uint8_t, uint16_t);
+	    struct ieee80211_node *, uint8_t, uint16_t, struct mbuf_list *);
 struct	mbuf *ieee80211_align_mbuf(struct mbuf *);
 void	ieee80211_decap(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *, int);
+	    struct ieee80211_node *, int, struct mbuf_list *);
 void	ieee80211_amsdu_decap(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *, int);
-void	ieee80211_deliver_data(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *, int);
+	    struct ieee80211_node *, int, struct mbuf_list *);
+void	ieee80211_enqueue_data(struct ieee80211com *, struct mbuf *,
+	    struct ieee80211_node *, int, struct mbuf_list *);
 int	ieee80211_parse_edca_params_body(struct ieee80211com *,
 	    const u_int8_t *);
 int	ieee80211_parse_edca_params(struct ieee80211com *, const u_int8_t *);
@@ -155,10 +156,16 @@ ieee80211_get_hdrlen(const struct ieee80211_frame *wh)
  * any units so long as values have consistent units and higher values
  * mean ``better signal''.  The receive timestamp is currently not used
  * by the 802.11 layer.
+ *
+ * This function acts on management frames immediately and queues data frames
+ * on the specified mbuf list. Delivery of queued data frames to upper layers
+ * must be triggered with if_input(). Drivers should call if_input() only once
+ * per Rx interrupt to avoid triggering the input ifq pressure drop mechanism
+ * unnecessarily.
  */
 void
-ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
-    struct ieee80211_rxinfo *rxi)
+ieee80211_inputm(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
+    struct ieee80211_rxinfo *rxi, struct mbuf_list *ml)
 {
 	struct ieee80211com *ic = (void *)ifp;
 	struct ieee80211_frame *wh;
@@ -259,7 +266,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		    (qos & IEEE80211_QOS_ACK_POLICY_MASK) ==
 		    IEEE80211_QOS_ACK_POLICY_NORMAL)) {
 			/* go through A-MPDU reordering */
-			ieee80211_input_ba(ic, m, ni, tid, rxi);
+			ieee80211_input_ba(ic, m, ni, tid, rxi, ml);
 			return;	/* don't free m! */
 		}
 	}
@@ -463,9 +470,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 
 		if ((ni->ni_flags & IEEE80211_NODE_HT) &&
 		    hasqos && (qos & IEEE80211_QOS_AMSDU))
-			ieee80211_amsdu_decap(ic, m, ni, hdrlen);
+			ieee80211_amsdu_decap(ic, m, ni, hdrlen, ml);
 		else
-			ieee80211_decap(ic, m, ni, hdrlen);
+			ieee80211_decap(ic, m, ni, hdrlen, ml);
 		return;
 
 	case IEEE80211_FC0_TYPE_MGT:
@@ -558,6 +565,17 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 #endif
 		m_freem(m);
 	}
+}
+
+/* Input handler for drivers which only receive one frame per interrupt. */
+void
+ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
+    struct ieee80211_rxinfo *rxi)
+{
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+
+	ieee80211_inputm(ifp, m, ni, rxi, &ml);
+	if_input(ifp, &ml);
 }
 
 /*
@@ -656,7 +674,8 @@ ieee80211_defrag_timeout(void *arg)
  */
 void
 ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
-    struct ieee80211_node *ni, int tid, struct ieee80211_rxinfo *rxi)
+    struct ieee80211_node *ni, int tid, struct ieee80211_rxinfo *rxi,
+    struct mbuf_list *ml)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_rx_ba *ba = &ni->ni_rx_ba[tid];
@@ -699,12 +718,12 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 			ic->ic_stats.is_ht_rx_ba_window_jump++;
 			ba->ba_winmiss = 0;
 			ba->ba_missedsn = 0;
-			ieee80211_ba_move_window(ic, ni, tid, sn);
+			ieee80211_ba_move_window(ic, ni, tid, sn, ml);
 		} else {
 			ic->ic_stats.is_ht_rx_ba_window_slide++;
 			ieee80211_input_ba_seq(ic, ni, tid,
-			    (ba->ba_winstart + count) & 0xfff);
-			ieee80211_input_ba_flush(ic, ni, ba);
+			    (ba->ba_winstart + count) & 0xfff, ml);
+			ieee80211_input_ba_flush(ic, ni, ba, ml);
 		}
 	}
 	/* WinStartB <= SN <= WinEndB */
@@ -730,7 +749,7 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 	else if (timeout_pending(&ba->ba_gap_to))
 		timeout_del(&ba->ba_gap_to);
 
-	ieee80211_input_ba_flush(ic, ni, ba);
+	ieee80211_input_ba_flush(ic, ni, ba, ml);
 }
 
 /* 
@@ -739,7 +758,7 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
  */
 void
 ieee80211_input_ba_seq(struct ieee80211com *ic, struct ieee80211_node *ni,
-    uint8_t tid, uint16_t max_seq)
+    uint8_t tid, uint16_t max_seq, struct mbuf_list *ml)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_rx_ba *ba = &ni->ni_rx_ba[tid];
@@ -757,8 +776,8 @@ ieee80211_input_ba_seq(struct ieee80211com *ic, struct ieee80211_node *ni,
 			    IEEE80211_SEQ_SEQ_SHIFT;
 			if (!SEQ_LT(seq, max_seq))
 				return;
-			ieee80211_input(ifp, ba->ba_buf[ba->ba_head].m,
-			    ni, &ba->ba_buf[ba->ba_head].rxi);
+			ieee80211_inputm(ifp, ba->ba_buf[ba->ba_head].m,
+			    ni, &ba->ba_buf[ba->ba_head].rxi, ml);
 			ba->ba_buf[ba->ba_head].m = NULL;
 		} else
 			ic->ic_stats.is_ht_rx_ba_frame_lost++;
@@ -769,15 +788,15 @@ ieee80211_input_ba_seq(struct ieee80211com *ic, struct ieee80211_node *ni,
 /* Flush a consecutive sequence of frames from the reorder buffer. */
 void
 ieee80211_input_ba_flush(struct ieee80211com *ic, struct ieee80211_node *ni,
-    struct ieee80211_rx_ba *ba)
+    struct ieee80211_rx_ba *ba, struct mbuf_list *ml)
 
 {
 	struct ifnet *ifp = &ic->ic_if;
 
 	/* pass reordered MPDUs up to the next MAC process */
 	while (ba->ba_buf[ba->ba_head].m != NULL) {
-		ieee80211_input(ifp, ba->ba_buf[ba->ba_head].m, ni,
-		    &ba->ba_buf[ba->ba_head].rxi);
+		ieee80211_inputm(ifp, ba->ba_buf[ba->ba_head].m, ni,
+		    &ba->ba_buf[ba->ba_head].rxi, ml);
 		ba->ba_buf[ba->ba_head].m = NULL;
 
 		ba->ba_head = (ba->ba_head + 1) % IEEE80211_BA_MAX_WINSZ;
@@ -796,6 +815,7 @@ ieee80211_input_ba_flush(struct ieee80211com *ic, struct ieee80211_node *ni,
 void
 ieee80211_input_ba_gap_timeout(void *arg)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ieee80211_rx_ba *ba = arg;
 	struct ieee80211_node *ni = ba->ba_ni;
 	struct ieee80211com *ic = ni->ni_ic;
@@ -816,7 +836,8 @@ ieee80211_input_ba_gap_timeout(void *arg)
 	if (skipped > 0)
 		ba->ba_winend = (ba->ba_winstart + ba->ba_winsize - 1) & 0xfff;
 
-	ieee80211_input_ba_flush(ic, ni, ba);
+	ieee80211_input_ba_flush(ic, ni, ba, &ml);
+	if_input(&ic->ic_if, &ml);
 
 	splx(s);	
 }
@@ -828,7 +849,7 @@ ieee80211_input_ba_gap_timeout(void *arg)
  */
 void
 ieee80211_ba_move_window(struct ieee80211com *ic, struct ieee80211_node *ni,
-    u_int8_t tid, u_int16_t ssn)
+    u_int8_t tid, u_int16_t ssn, struct mbuf_list *ml)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_rx_ba *ba = &ni->ni_rx_ba[tid];
@@ -842,8 +863,8 @@ ieee80211_ba_move_window(struct ieee80211com *ic, struct ieee80211_node *ni,
 	while (count-- > 0) {
 		/* gaps may exist */
 		if (ba->ba_buf[ba->ba_head].m != NULL) {
-			ieee80211_input(ifp, ba->ba_buf[ba->ba_head].m, ni,
-			    &ba->ba_buf[ba->ba_head].rxi);
+			ieee80211_inputm(ifp, ba->ba_buf[ba->ba_head].m, ni,
+			    &ba->ba_buf[ba->ba_head].rxi, ml);
 			ba->ba_buf[ba->ba_head].m = NULL;
 		} else
 			ic->ic_stats.is_ht_rx_ba_frame_lost++;
@@ -852,12 +873,12 @@ ieee80211_ba_move_window(struct ieee80211com *ic, struct ieee80211_node *ni,
 	/* move window forward */
 	ba->ba_winstart = ssn;
 
-	ieee80211_input_ba_flush(ic, ni, ba);
+	ieee80211_input_ba_flush(ic, ni, ba, ml);
 }
 
 void
-ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
-    struct ieee80211_node *ni, int mcast)
+ieee80211_enqueue_data(struct ieee80211com *ic, struct mbuf *m,
+    struct ieee80211_node *ni, int mcast, struct mbuf_list *ml)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct ether_header *eh;
@@ -920,16 +941,14 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
 #endif
 			ieee80211_eapol_key_input(ic, m, ni);
 		} else {
-			struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-			ml_enqueue(&ml, m);
-			if_input(ifp, &ml);
+			ml_enqueue(ml, m);
 		}
 	}
 }
 
 void
 ieee80211_decap(struct ieee80211com *ic, struct mbuf *m,
-    struct ieee80211_node *ni, int hdrlen)
+    struct ieee80211_node *ni, int hdrlen, struct mbuf_list *ml)
 {
 	struct ether_header eh;
 	struct ieee80211_frame *wh;
@@ -985,7 +1004,7 @@ ieee80211_decap(struct ieee80211com *ic, struct mbuf *m,
 			return;
 		}
 	}
-	ieee80211_deliver_data(ic, m, ni, mcast);
+	ieee80211_enqueue_data(ic, m, ni, mcast, ml);
 }
 
 /*
@@ -993,7 +1012,7 @@ ieee80211_decap(struct ieee80211com *ic, struct mbuf *m,
  */
 void
 ieee80211_amsdu_decap(struct ieee80211com *ic, struct mbuf *m,
-    struct ieee80211_node *ni, int hdrlen)
+    struct ieee80211_node *ni, int hdrlen, struct mbuf_list *ml)
 {
 	struct mbuf *n;
 	struct ether_header *eh;
@@ -1059,7 +1078,7 @@ ieee80211_amsdu_decap(struct ieee80211com *ic, struct mbuf *m,
 			m_freem(m);
 			break;
 		}
-		ieee80211_deliver_data(ic, m, ni, mcast);
+		ieee80211_enqueue_data(ic, m, ni, mcast, ml);
 
 		if (n->m_pkthdr.len == 0) {
 			m_freem(n);
@@ -2564,8 +2583,11 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, struct mbuf *m,
 			return;	/* not a PBAC, ignore */
 
 		/* PBAC: treat the ADDBA Request like a BlockAckReq */
-		if (SEQ_LT(ba->ba_winstart, ssn))
-			ieee80211_ba_move_window(ic, ni, tid, ssn);
+		if (SEQ_LT(ba->ba_winstart, ssn)) {
+			struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+			ieee80211_ba_move_window(ic, ni, tid, ssn, &ml);
+			if_input(&ic->ic_if, &ml);
+		}
 		return;
 	}
 
@@ -3174,6 +3196,9 @@ ieee80211_bar_tid(struct ieee80211com *ic, struct ieee80211_node *ni,
 	if (ba->ba_timeout_val != 0)
 		timeout_add_usec(&ba->ba_to, ba->ba_timeout_val);
 
-	if (SEQ_LT(ba->ba_winstart, ssn))
-		ieee80211_ba_move_window(ic, ni, tid, ssn);
+	if (SEQ_LT(ba->ba_winstart, ssn)) {
+		struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+		ieee80211_ba_move_window(ic, ni, tid, ssn, &ml);
+		if_input(&ic->ic_if, &ml);
+	}
 }

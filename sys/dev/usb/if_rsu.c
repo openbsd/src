@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.44 2019/04/25 01:52:14 kevlo Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.45 2019/09/12 12:55:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -161,7 +161,8 @@ void		rsu_event_join_bss(struct rsu_softc *, uint8_t *, int);
 void		rsu_rx_event(struct rsu_softc *, uint8_t, uint8_t *, int);
 void		rsu_rx_multi_event(struct rsu_softc *, uint8_t *, int);
 int8_t		rsu_get_rssi(struct rsu_softc *, int, void *);
-void		rsu_rx_frame(struct rsu_softc *, uint8_t *, int);
+void		rsu_rx_frame(struct rsu_softc *, uint8_t *, int,
+		    struct mbuf_list *);
 void		rsu_rx_multi_frame(struct rsu_softc *, uint8_t *, int);
 void		rsu_rxeof(struct usbd_xfer *, void *, usbd_status);
 void		rsu_txeof(struct usbd_xfer *, void *, usbd_status);
@@ -1261,7 +1262,8 @@ rsu_get_rssi(struct rsu_softc *sc, int rate, void *physt)
 }
 
 void
-rsu_rx_frame(struct rsu_softc *sc, uint8_t *buf, int pktlen)
+rsu_rx_frame(struct rsu_softc *sc, uint8_t *buf, int pktlen,
+    struct mbuf_list *ml)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
@@ -1371,7 +1373,7 @@ rsu_rx_frame(struct rsu_softc *sc, uint8_t *buf, int pktlen)
 	rxi.rxi_flags = 0;
 	rxi.rxi_rssi = rssi;
 	rxi.rxi_tstamp = 0;	/* Unused. */
-	ieee80211_input(ifp, m, ni, &rxi);
+	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 	/* Node is no longer needed. */
 	ieee80211_release_node(ic, ni);
 	splx(s);
@@ -1380,6 +1382,7 @@ rsu_rx_frame(struct rsu_softc *sc, uint8_t *buf, int pktlen)
 void
 rsu_rx_multi_frame(struct rsu_softc *sc, uint8_t *buf, int len)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct r92s_rx_stat *stat;
 	uint32_t rxdw0;
 	int totlen, pktlen, infosz, npkts;
@@ -1408,13 +1411,14 @@ rsu_rx_multi_frame(struct rsu_softc *sc, uint8_t *buf, int len)
 			break;
 
 		/* Process 802.11 frame. */
-		rsu_rx_frame(sc, buf, pktlen);
+		rsu_rx_frame(sc, buf, pktlen, &ml);
 
 		/* Next chunk is 128-byte aligned. */
 		totlen = (totlen + 127) & ~127;
 		buf += totlen;
 		len -= totlen;
 	}
+	if_input(&sc->sc_ic.ic_if, &ml);
 }
 
 void

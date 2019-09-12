@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.96 2017/09/22 13:44:00 kevlo Exp $	*/
+/*	$OpenBSD: atw.c,v 1.97 2019/09/12 12:55:07 stsp Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -3029,6 +3029,7 @@ atw_hw_decrypted(struct atw_softc *sc, struct ieee80211_frame *wh)
 void
 atw_rxintr(struct atw_softc *sc)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	static int rate_tbl[] = {2, 4, 11, 22, 44};
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_rxinfo rxi;
@@ -3183,7 +3184,7 @@ atw_rxintr(struct atw_softc *sc)
 #endif
 		rxi.rxi_rssi = (int)rssi;
 		rxi.rxi_tstamp = 0;
-		ieee80211_input(ifp, m, ni, &rxi);
+		ieee80211_inputm(ifp, m, ni, &rxi, &ml);
 		/*
 		 * The frame may have caused the node to be marked for
 		 * reclamation (e.g. in response to a DEAUTH message)
@@ -3191,6 +3192,7 @@ atw_rxintr(struct atw_softc *sc)
 		 */
 		ieee80211_release_node(ic, ni);
 	}
+	if_input(ifp, &ml);
 
 	/* Update the receive pointer. */
 	sc->sc_rxptr = i;

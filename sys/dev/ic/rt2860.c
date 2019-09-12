@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.96 2018/10/02 02:05:34 kevlo Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.97 2019/09/12 12:55:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1260,6 +1260,7 @@ rt2860_maxrssi_chain(struct rt2860_softc *sc, const struct rt2860_rxwi *rxwi)
 void
 rt2860_rx_intr(struct rt2860_softc *sc)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
@@ -1419,7 +1420,7 @@ skipbpf:
 		/* send the frame to the 802.11 layer */
 		rxi.rxi_rssi = rssi;
 		rxi.rxi_tstamp = 0;	/* unused */
-		ieee80211_input(ifp, m, ni, &rxi);
+		ieee80211_inputm(ifp, m, ni, &rxi, &ml);
 
 		/* node is no longer needed */
 		ieee80211_release_node(ic, ni);
@@ -1432,6 +1433,7 @@ skip:		rxd->sdl0 &= ~htole16(RT2860_RX_DDONE);
 
 		sc->rxq.cur = (sc->rxq.cur + 1) % RT2860_RX_RING_COUNT;
 	}
+	if_input(ifp, &ml);
 
 	/* tell HW what we have processed */
 	RAL_WRITE(sc, RT2860_RX_CALC_IDX,

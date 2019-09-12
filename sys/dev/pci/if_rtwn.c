@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.35 2018/10/01 22:36:08 jmatthew Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.36 2019/09/12 12:55:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -248,7 +248,8 @@ uint8_t		rtwn_pci_read_1(void *, uint16_t);
 uint16_t	rtwn_pci_read_2(void *, uint16_t);
 uint32_t	rtwn_pci_read_4(void *, uint16_t);
 void		rtwn_rx_frame(struct rtwn_pci_softc *,
-		    struct r92c_rx_desc_pci *, struct rtwn_rx_data *, int);
+		    struct r92c_rx_desc_pci *, struct rtwn_rx_data *, int,
+		    struct mbuf_list *);
 int		rtwn_tx(void *, struct mbuf *, struct ieee80211_node *);
 void		rtwn_tx_done(struct rtwn_pci_softc *, int);
 int		rtwn_alloc_buffers(void *);
@@ -813,7 +814,7 @@ rtwn_pci_read_4(void *cookie, uint16_t addr)
 
 void
 rtwn_rx_frame(struct rtwn_pci_softc *sc, struct r92c_rx_desc_pci *rx_desc,
-    struct rtwn_rx_data *rx_data, int desc_idx)
+    struct rtwn_rx_data *rx_data, int desc_idx, struct mbuf_list *ml)
 {
 	struct ieee80211com *ic = &sc->sc_sc.sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
@@ -974,7 +975,7 @@ rtwn_rx_frame(struct rtwn_pci_softc *sc, struct r92c_rx_desc_pci *rx_desc,
 	rxi.rxi_flags = 0;
 	rxi.rxi_rssi = rssi;
 	rxi.rxi_tstamp = 0;	/* Unused. */
-	ieee80211_input(ifp, m, ni, &rxi);
+	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 	/* Node is no longer needed. */
 	ieee80211_release_node(ic, ni);
 }
@@ -1480,6 +1481,7 @@ rtwn_pci_stop(void *cookie)
 int
 rtwn_88e_intr(struct rtwn_pci_softc *sc)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	u_int32_t status, estatus;
 	int i;
 
@@ -1511,6 +1513,8 @@ rtwn_88e_intr(struct rtwn_pci_softc *sc)
 		rtwn_tx_done(sc, RTWN_VO_QUEUE);
 	if ((status & (R88E_HIMR_ROK | R88E_HIMR_RDU)) ||
 	    (estatus & R88E_HIMRE_RXFOVW)) {
+		struct ieee80211com *ic = &sc->sc_sc.sc_ic;
+
 		bus_dmamap_sync(sc->sc_dmat, sc->rx_ring.map, 0,
 		    sizeof(struct r92c_rx_desc_pci) * RTWN_RX_LIST_COUNT,
 		    BUS_DMASYNC_POSTREAD);
@@ -1522,8 +1526,9 @@ rtwn_88e_intr(struct rtwn_pci_softc *sc)
 			if (letoh32(rx_desc->rxdw0) & R92C_RXDW0_OWN)
 				continue;
 
-			rtwn_rx_frame(sc, rx_desc, rx_data, i);
+			rtwn_rx_frame(sc, rx_desc, rx_data, i, &ml);
 		}
+		if_input(&ic->ic_if, &ml);
 	}
 
 	if (status & R88E_HIMR_HSISR_IND_ON_INT) {
@@ -1543,6 +1548,7 @@ int
 rtwn_intr(void *xsc)
 {
 	struct rtwn_pci_softc *sc = xsc;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	u_int32_t status;
 	int i;
 
@@ -1561,6 +1567,8 @@ rtwn_intr(void *xsc)
 
 	/* Vendor driver treats RX errors like ROK... */
 	if (status & (R92C_IMR_ROK | R92C_IMR_RXFOVW | R92C_IMR_RDU)) {
+		struct ieee80211com *ic = &sc->sc_sc.sc_ic;
+
 		bus_dmamap_sync(sc->sc_dmat, sc->rx_ring.map, 0,
 		    sizeof(struct r92c_rx_desc_pci) * RTWN_RX_LIST_COUNT,
 		    BUS_DMASYNC_POSTREAD);
@@ -1572,8 +1580,9 @@ rtwn_intr(void *xsc)
 			if (letoh32(rx_desc->rxdw0) & R92C_RXDW0_OWN)
 				continue;
 
-			rtwn_rx_frame(sc, rx_desc, rx_data, i);
+			rtwn_rx_frame(sc, rx_desc, rx_data, i, &ml);
 		}
+		if_input(&ic->ic_if, &ml);
 	}
 
 	if (status & R92C_IMR_BDOK)

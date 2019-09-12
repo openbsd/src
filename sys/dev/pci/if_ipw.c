@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.123 2019/07/25 01:46:14 cheloha Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.124 2019/09/12 12:55:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -71,7 +71,8 @@ uint16_t	ipw_read_prom_word(struct ipw_softc *, uint8_t);
 void		ipw_command_intr(struct ipw_softc *, struct ipw_soft_buf *);
 void		ipw_newstate_intr(struct ipw_softc *, struct ipw_soft_buf *);
 void		ipw_data_intr(struct ipw_softc *, struct ipw_status *,
-		    struct ipw_soft_bd *, struct ipw_soft_buf *);
+		    struct ipw_soft_bd *, struct ipw_soft_buf *,
+		    struct mbuf_list *);
 void		ipw_notification_intr(struct ipw_softc *,
 		    struct ipw_soft_buf *);
 void		ipw_rx_intr(struct ipw_softc *);
@@ -816,7 +817,7 @@ ipw_newstate_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 
 void
 ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
-    struct ipw_soft_bd *sbd, struct ipw_soft_buf *sbuf)
+    struct ipw_soft_bd *sbd, struct ipw_soft_buf *sbuf, struct mbuf_list *ml)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
@@ -903,7 +904,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 	rxi.rxi_flags = 0;
 	rxi.rxi_rssi = status->rssi;
 	rxi.rxi_tstamp = 0;	/* unused */
-	ieee80211_input(ifp, m, ni, &rxi);
+	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 
 	ieee80211_release_node(ic, ni);
 }
@@ -917,6 +918,7 @@ ipw_notification_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 void
 ipw_rx_intr(struct ipw_softc *sc)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ipw_status *status;
 	struct ipw_soft_bd *sbd;
 	struct ipw_soft_buf *sbuf;
@@ -949,7 +951,7 @@ ipw_rx_intr(struct ipw_softc *sc)
 
 		case IPW_STATUS_CODE_DATA_802_3:
 		case IPW_STATUS_CODE_DATA_802_11:
-			ipw_data_intr(sc, status, sbd, sbuf);
+			ipw_data_intr(sc, status, sbd, sbuf, &ml);
 			break;
 
 		case IPW_STATUS_CODE_NOTIFICATION:
@@ -966,6 +968,7 @@ ipw_rx_intr(struct ipw_softc *sc)
 		    i * sizeof (struct ipw_bd), sizeof (struct ipw_bd),
 		    BUS_DMASYNC_PREWRITE);
 	}
+	if_input(&sc->sc_ic.ic_if, &ml);
 
 	/* tell the firmware what we have processed */
 	sc->rxcur = (r == 0) ? IPW_NRBD - 1 : r - 1;

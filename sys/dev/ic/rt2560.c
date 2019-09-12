@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.84 2017/10/26 15:00:28 mpi Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.85 2019/09/12 12:55:07 stsp Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1076,6 +1076,7 @@ rt2560_prio_intr(struct rt2560_softc *sc)
 void
 rt2560_decryption_intr(struct rt2560_softc *sc)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
@@ -1204,7 +1205,7 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 		rxi.rxi_flags = 0;
 		rxi.rxi_rssi = desc->rssi;
 		rxi.rxi_tstamp = 0;	/* unused */
-		ieee80211_input(ifp, m, ni, &rxi);
+		ieee80211_inputm(ifp, m, ni, &rxi, &ml);
 
 		/* node is no longer needed */
 		ieee80211_release_node(ic, ni);
@@ -1220,6 +1221,7 @@ skip:		desc->flags = htole32(RT2560_RX_BUSY);
 		sc->rxq.cur_decrypt =
 		    (sc->rxq.cur_decrypt + 1) % RT2560_RX_RING_COUNT;
 	}
+	if_input(ifp, &ml);
 }
 
 /*

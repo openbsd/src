@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.140 2019/07/25 01:46:14 cheloha Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.141 2019/09/12 12:55:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -87,7 +87,7 @@ int		iwi_find_txnode(struct iwi_softc *, const uint8_t *);
 int		iwi_newstate(struct ieee80211com *, enum ieee80211_state, int);
 uint8_t		iwi_rate(int);
 void		iwi_frame_intr(struct iwi_softc *, struct iwi_rx_data *,
-		    struct iwi_frame *);
+		    struct iwi_frame *, struct mbuf_list *);
 void		iwi_notification_intr(struct iwi_softc *, struct iwi_rx_data *,
 		    struct iwi_notif *);
 void		iwi_rx_intr(struct iwi_softc *);
@@ -854,7 +854,7 @@ iwi_rate(int plcp)
 
 void
 iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data,
-    struct iwi_frame *frame)
+    struct iwi_frame *frame, struct mbuf_list *ml)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
@@ -954,7 +954,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data,
 	rxi.rxi_flags = 0;
 	rxi.rxi_rssi = frame->rssi_dbm;
 	rxi.rxi_tstamp = 0;	/* unused */
-	ieee80211_input(ifp, m, ni, &rxi);
+	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 
 	/* node is no longer needed */
 	ieee80211_release_node(ic, ni);
@@ -1073,6 +1073,7 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_data *data,
 void
 iwi_rx_intr(struct iwi_softc *sc)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct iwi_rx_data *data;
 	struct iwi_hdr *hdr;
 	uint32_t hw;
@@ -1090,7 +1091,7 @@ iwi_rx_intr(struct iwi_softc *sc)
 		switch (hdr->type) {
 		case IWI_HDR_TYPE_FRAME:
 			iwi_frame_intr(sc, data,
-			    (struct iwi_frame *)(hdr + 1));
+			    (struct iwi_frame *)(hdr + 1), &ml);
 			break;
 
 		case IWI_HDR_TYPE_NOTIF:
@@ -1105,6 +1106,7 @@ iwi_rx_intr(struct iwi_softc *sc)
 
 		sc->rxq.cur = (sc->rxq.cur + 1) % IWI_RX_RING_COUNT;
 	}
+	if_input(&sc->sc_ic.ic_if, &ml);
 
 	/* tell the firmware what we have processed */
 	hw = (hw == 0) ? IWI_RX_RING_COUNT - 1 : hw - 1;

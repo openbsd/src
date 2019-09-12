@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.118 2018/11/09 14:14:31 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.119 2019/09/12 12:55:07 stsp Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1593,6 +1593,7 @@ malo_tx_setup_desc(struct malo_softc *sc, struct malo_tx_desc *desc,
 void
 malo_rx_intr(struct malo_softc *sc)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct malo_rx_desc *desc;
@@ -1711,7 +1712,7 @@ malo_rx_intr(struct malo_softc *sc)
 		rxi.rxi_flags = 0;
 		rxi.rxi_rssi = desc->rssi;
 		rxi.rxi_tstamp = 0;	/* unused */
-		ieee80211_input(ifp, m, ni, &rxi);
+		ieee80211_inputm(ifp, m, ni, &rxi, &ml);
 
 		/* node is no longer needed */
 		ieee80211_release_node(ic, ni);
@@ -1727,6 +1728,7 @@ skip:
 		sc->sc_rxring.cur = (sc->sc_rxring.cur + 1) %
 		    MALO_RX_RING_COUNT;
 	}
+	if_input(ifp, &ml);
 
 	malo_mem_write4(sc, sc->sc_RxPdRdPtr, rxRdPtr);
 }

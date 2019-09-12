@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.249 2019/09/05 16:28:06 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.250 2019/09/12 12:55:07 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -368,7 +368,7 @@ void	iwm_rx_rx_phy_cmd(struct iwm_softc *, struct iwm_rx_packet *,
 	    struct iwm_rx_data *);
 int	iwm_get_noise(const struct iwm_statistics_rx_non_phy *);
 void	iwm_rx_rx_mpdu(struct iwm_softc *, struct iwm_rx_packet *,
-	    struct iwm_rx_data *);
+	    struct iwm_rx_data *, struct mbuf_list *);
 void	iwm_enable_ht_cck_fallback(struct iwm_softc *, struct iwm_node *);
 void	iwm_rx_tx_cmd_single(struct iwm_softc *, struct iwm_rx_packet *,
 	    struct iwm_node *);
@@ -3431,7 +3431,7 @@ iwm_get_noise(const struct iwm_statistics_rx_non_phy *stats)
 
 void
 iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
-    struct iwm_rx_data *data)
+    struct iwm_rx_data *data, struct mbuf_list *ml)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_frame *wh;
@@ -3564,9 +3564,9 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
 	}
 #endif
-	ieee80211_input(IC2IFP(ic), m, ni, &rxi);
+	ieee80211_inputm(IC2IFP(ic), m, ni, &rxi, ml);
 	/*
-	 * ieee80211_input() might have changed our BSS.
+	 * ieee80211_inputm() might have changed our BSS.
 	 * Restore ic_bss's channel if we are still in the same BSS.
 	 */
 	if (ni == ic->ic_bss && IEEE80211_ADDR_EQ(saved_bssid, ni->ni_macaddr))
@@ -7005,6 +7005,7 @@ do {									\
 void
 iwm_notif_intr(struct iwm_softc *sc)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	uint16_t hw;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->rxq.stat_dma.map,
@@ -7042,7 +7043,7 @@ iwm_notif_intr(struct iwm_softc *sc)
 			break;
 
 		case IWM_REPLY_RX_MPDU_CMD:
-			iwm_rx_rx_mpdu(sc, pkt, data);
+			iwm_rx_rx_mpdu(sc, pkt, data, &ml);
 			break;
 
 		case IWM_TX_CMD:
@@ -7289,6 +7290,7 @@ iwm_notif_intr(struct iwm_softc *sc)
 
 		ADVANCE_RXQ(sc);
 	}
+	if_input(&sc->sc_ic.ic_if, &ml);
 
 	/*
 	 * Tell the firmware what we have processed.

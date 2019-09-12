@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.100 2017/09/22 13:44:00 kevlo Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.101 2019/09/12 12:55:07 stsp Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -1081,6 +1081,7 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 	static const int ratetbl[4] = {2, 4, 11, 22};	/* convert rates:
 							 * hardware -> net80211
 							 */
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	u_int next, nproc = 0;
 	int hwrate, len, rate, rssi, sq;
 	u_int32_t hrssi, hstat, htsfth, htsftl;
@@ -1289,11 +1290,12 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 		rxi.rxi_flags = 0;
 		rxi.rxi_rssi = rssi;
 		rxi.rxi_tstamp = htsftl;
-		ieee80211_input(&sc->sc_if, m, ni, &rxi);
+		ieee80211_inputm(&sc->sc_if, m, ni, &rxi, &ml);
 		ieee80211_release_node(&sc->sc_ic, ni);
 next:
 		rtw_rxdesc_init(rdb, rs, next, 0);
 	}
+	if_input(&sc->sc_if, &ml);
 	rdb->rdb_next = next;
 
 	KASSERT(rdb->rdb_next < rdb->rdb_ndesc);

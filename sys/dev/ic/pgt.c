@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.94 2019/08/27 14:57:48 stsp Exp $  */
+/*	$OpenBSD: pgt.c,v 1.95 2019/09/12 12:55:07 stsp Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -899,6 +899,7 @@ void
 pgt_input_frames(struct pgt_softc *sc, struct mbuf *m)
 {
 	struct ether_header eh;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ifnet *ifp;
 	struct ieee80211_channel *chan;
 	struct ieee80211_rxinfo rxi;
@@ -1022,7 +1023,7 @@ input:
 			rxi.rxi_flags = 0;
 			ni->ni_rssi = rxi.rxi_rssi = rssi;
 			ni->ni_rstamp = rxi.rxi_tstamp = rstamp;
-			ieee80211_input(ifp, m, ni, &rxi);
+			ieee80211_inputm(ifp, m, ni, &rxi, &ml);
 			/*
 			 * The frame may have caused the node to be marked for
 			 * reclamation (e.g. in response to a DEAUTH message)
@@ -1036,6 +1037,7 @@ input:
 			ifp->if_ierrors++;
 		}
 	}
+	if_input(ifp, &ml);
 }
 
 void

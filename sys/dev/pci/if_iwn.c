@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.215 2019/09/11 08:59:12 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.216 2019/09/12 12:55:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -156,7 +156,7 @@ int		iwn_ccmp_decap(struct iwn_softc *, struct mbuf *,
 void		iwn_rx_phy(struct iwn_softc *, struct iwn_rx_desc *,
 		    struct iwn_rx_data *);
 void		iwn_rx_done(struct iwn_softc *, struct iwn_rx_desc *,
-		    struct iwn_rx_data *);
+		    struct iwn_rx_data *, struct mbuf_list *);
 void		iwn_rx_compressed_ba(struct iwn_softc *, struct iwn_rx_desc *,
 		    struct iwn_rx_data *);
 void		iwn5000_rx_calib_results(struct iwn_softc *,
@@ -1937,7 +1937,7 @@ iwn_ccmp_decap(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 			 * Such frames may be received out of order due to
 			 * legitimate retransmissions of failed subframes
 			 * in previous A-MPDUs. Duplicates will be handled
-			 * in ieee80211_input() as part of A-MPDU reordering.
+			 * in ieee80211_inputm() as part of A-MPDU reordering.
 			 */
 		} else if (ieee80211_has_seq(wh)) {
 			/*
@@ -2007,7 +2007,7 @@ iwn_rx_phy(struct iwn_softc *sc, struct iwn_rx_desc *desc,
  */
 void
 iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
-    struct iwn_rx_data *data)
+    struct iwn_rx_data *data, struct mbuf_list *ml)
 {
 	struct iwn_ops *ops = &sc->ops;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2240,7 +2240,7 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	/* Send the frame to the 802.11 layer. */
 	rxi.rxi_rssi = rssi;
 	rxi.rxi_tstamp = 0;	/* unused */
-	ieee80211_input(ifp, m, ni, &rxi);
+	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 
 	/* Restore BSS channel. */
 	if (ni == ic->ic_bss)
@@ -2740,6 +2740,7 @@ iwn_cmd_done(struct iwn_softc *sc, struct iwn_rx_desc *desc)
 void
 iwn_notif_intr(struct iwn_softc *sc)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct iwn_ops *ops = &sc->ops;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
@@ -2771,7 +2772,7 @@ iwn_notif_intr(struct iwn_softc *sc)
 		case IWN_RX_DONE:		/* 4965AGN only. */
 		case IWN_MPDU_RX_DONE:
 			/* An 802.11 frame has been received. */
-			iwn_rx_done(sc, desc, data);
+			iwn_rx_done(sc, desc, data, &ml);
 			break;
 		case IWN_RX_COMPRESSED_BA:
 			/* A Compressed BlockAck has been received. */
@@ -2916,6 +2917,7 @@ iwn_notif_intr(struct iwn_softc *sc)
 
 		sc->rxq.cur = (sc->rxq.cur + 1) % IWN_RX_RING_COUNT;
 	}
+	if_input(&sc->sc_ic.ic_if, &ml);
 
 	/* Tell the firmware what we have processed. */
 	hw = (hw == 0) ? IWN_RX_RING_COUNT - 1 : hw - 1;

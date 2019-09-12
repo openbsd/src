@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.52 2018/12/06 07:50:38 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.53 2019/09/12 12:55:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -176,7 +176,8 @@ void		athn_usb_intr(struct usbd_xfer *, void *,
 		    usbd_status);
 void		athn_usb_rx_radiotap(struct athn_softc *, struct mbuf *,
 		    struct ar_rx_status *);
-void		athn_usb_rx_frame(struct athn_usb_softc *, struct mbuf *);
+void		athn_usb_rx_frame(struct athn_usb_softc *, struct mbuf *,
+		    struct mbuf_list *);
 void		athn_usb_rxeof(struct usbd_xfer *, void *,
 		    usbd_status);
 void		athn_usb_txeof(struct usbd_xfer *, void *,
@@ -1994,7 +1995,8 @@ athn_usb_rx_radiotap(struct athn_softc *sc, struct mbuf *m,
 #endif
 
 void
-athn_usb_rx_frame(struct athn_usb_softc *usc, struct mbuf *m)
+athn_usb_rx_frame(struct athn_usb_softc *usc, struct mbuf *m,
+    struct mbuf_list *ml)
 {
 	struct athn_softc *sc = &usc->sc_sc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2060,7 +2062,7 @@ athn_usb_rx_frame(struct athn_usb_softc *usc, struct mbuf *m)
 	rxi.rxi_flags = 0;
 	rxi.rxi_rssi = rs->rs_rssi + AR_USB_DEFAULT_NF;
 	rxi.rxi_tstamp = betoh64(rs->rs_tstamp);
-	ieee80211_input(ifp, m, ni, &rxi);
+	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 
 	/* Node is no longer needed. */
 	ieee80211_release_node(ic, ni);
@@ -2074,6 +2076,7 @@ void
 athn_usb_rxeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct athn_usb_rx_data *data = priv;
 	struct athn_usb_softc *usc = data->sc;
 	struct athn_softc *sc = &usc->sc_sc;
@@ -2101,7 +2104,7 @@ athn_usb_rxeof(struct usbd_xfer *xfer, void *priv,
 			if (__predict_true(stream->m != NULL)) {
 				memcpy(mtod(stream->m, uint8_t *) +
 				    stream->moff, buf, stream->left);
-				athn_usb_rx_frame(usc, stream->m);
+				athn_usb_rx_frame(usc, stream->m, &ml);
 				stream->m = NULL;
 			}
 			/* Next header is 32-bit aligned. */
@@ -2167,7 +2170,7 @@ athn_usb_rxeof(struct usbd_xfer *xfer, void *priv,
 		if (__predict_true(m != NULL)) {
 			/* We have all the pktlen bytes in this xfer. */
 			memcpy(mtod(m, uint8_t *), buf, pktlen);
-			athn_usb_rx_frame(usc, m);
+			athn_usb_rx_frame(usc, m, &ml);
 		}
 
 		/* Next header is 32-bit aligned. */
@@ -2175,6 +2178,7 @@ athn_usb_rxeof(struct usbd_xfer *xfer, void *priv,
 		buf += off;
 		len -= off;
 	}
+	if_input(ifp, &ml);
 
  resubmit:
 	/* Setup a new transfer. */
