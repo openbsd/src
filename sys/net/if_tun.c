@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.188 2019/09/12 01:27:02 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.189 2019/09/12 01:28:29 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -1043,16 +1043,16 @@ tun_dev_kqfilter(struct tun_softc *tp, struct knote *kn)
 	TUNDEBUG(("%s: tunkqfilter\n", ifp->if_xname));
 
 	switch (kn->kn_filter) {
-		case EVFILT_READ:
-			klist = &tp->tun_rsel.si_note;
-			kn->kn_fop = &tunread_filtops;
-			break;
-		case EVFILT_WRITE:
-			klist = &tp->tun_wsel.si_note;
-			kn->kn_fop = &tunwrite_filtops;
-			break;
-		default:
-			return (EINVAL);
+	case EVFILT_READ:
+		klist = &tp->tun_rsel.si_note;
+		kn->kn_fop = &tunread_filtops;
+		break;
+	case EVFILT_WRITE:
+		klist = &tp->tun_wsel.si_note;
+		kn->kn_fop = &tunwrite_filtops;
+		break;
+	default:
+		return (EINVAL);
 	}
 
 	kn->kn_hook = (caddr_t)tp;
