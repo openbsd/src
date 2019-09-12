@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.187 2019/06/10 21:55:16 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.188 2019/09/12 01:27:02 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -838,8 +838,8 @@ tun_dev_write(struct tun_softc *tp, struct uio *uio, int ioflag)
 	ifp = &tp->tun_if;
 	TUNDEBUG(("%s: tunwrite\n", ifp->if_xname));
 
-	if (uio->uio_resid == 0 || uio->uio_resid > ifp->if_mtu +
-	    (tp->tun_flags & TUN_LAYER2 ? ETHER_HDR_LEN : sizeof(*th))) {
+	if (uio->uio_resid < ifp->if_hdrlen ||
+	    uio->uio_resid > (ifp->if_hdrlen + ifp->if_hardmtu)) {
 		TUNDEBUG(("%s: len=%d!\n", ifp->if_xname, uio->uio_resid));
 		return (EMSGSIZE);
 	}
