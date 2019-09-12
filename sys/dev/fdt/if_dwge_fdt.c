@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge_fdt.c,v 1.10 2019/08/30 19:35:55 kettenis Exp $	*/
+/*	$OpenBSD: if_dwge_fdt.c,v 1.11 2019/09/12 03:17:13 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -113,6 +113,8 @@ dwge_fdt_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Lookup PHY. */
 	phy = OF_getpropint(faa->fa_node, "phy", 0);
+	if (phy == 0)
+		phy = OF_getpropint(faa->fa_node, "phy-handle", 0);
 	node = OF_getnodebyphandle(phy);
 	if (node)
 		phyloc = OF_getpropint(node, "reg", phyloc);

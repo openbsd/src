@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.27 2017/12/10 04:21:55 jsg Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.28 2019/09/12 03:17:12 jsg Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -213,7 +213,7 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	struct mii_data *mii;
 	struct ifnet *ifp;
-	int node, phy_supply, phy = MII_PHY_ANY;
+	int phy, node, phy_supply, phyloc = MII_PHY_ANY;
 	int s;
 
 	if (faa->fa_nreg < 1)
@@ -233,16 +233,19 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 	clock_enable_all(faa->fa_node);
 
 	/* Lookup PHY. */
-	node = OF_getnodebyphandle(OF_getpropint(faa->fa_node, "phy", 0));
+	phy = OF_getpropint(faa->fa_node, "phy", 0);
+	if (phy == 0)
+		phy = OF_getpropint(faa->fa_node, "phy-handle", 0);
+	node = OF_getnodebyphandle(phy);
 	if (node) {
-		phy = OF_getpropint(node, "reg", MII_PHY_ANY);
+		phyloc = OF_getpropint(node, "reg", MII_PHY_ANY);
 
 		/* Power up PHY. */
 		phy_supply = OF_getpropint(OF_parent(node), "phy-supply", 0);
 		if (phy_supply)
 			regulator_enable(phy_supply);
 	}
-	sc->sc_phyno = phy == MII_PHY_ANY ? 1 : phy;
+	sc->sc_phyno = phyloc == MII_PHY_ANY ? 1 : phyloc;
 
 	sxie_socware_init(sc);
 	sc->txf_inuse = 0;
@@ -274,7 +277,7 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 	mii->mii_statchg = sxie_miibus_statchg;
 
 	ifmedia_init(&mii->mii_media, 0, sxie_ifm_change, sxie_ifm_status);
-	mii_attach(self, mii, 0xffffffff, phy, MII_OFFSET_ANY, 0);
+	mii_attach(self, mii, 0xffffffff, phyloc, MII_OFFSET_ANY, 0);
 
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
