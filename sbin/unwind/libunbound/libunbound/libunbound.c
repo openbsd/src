@@ -79,6 +79,9 @@
 #include <iphlpapi.h>
 #endif /* UB_ON_WINDOWS */
 
+/** store that the logfile has a debug override */
+int ctx_logfile_overridden = 0;
+
 /** create context functionality, but no pipes */
 static struct ub_ctx* ub_ctx_create_nopipe(void)
 {
@@ -90,7 +93,8 @@ static struct ub_ctx* ub_ctx_create_nopipe(void)
 #endif
 	
 	checklock_start();
-	log_init(NULL, 0, NULL); /* logs to stderr */
+	if(!ctx_logfile_overridden)
+		log_init(NULL, 0, NULL); /* logs to stderr */
 	log_ident_set("libunbound");
 #ifdef USE_WINSOCK
 	if((r = WSAStartup(MAKEWORD(2,2), &wsa_data)) != 0) {
@@ -328,6 +332,10 @@ ub_ctx_delete(struct ub_ctx* ctx)
 	ub_randfree(ctx->seed_rnd);
 	alloc_clear(&ctx->superalloc);
 	traverse_postorder(&ctx->queries, delq, NULL);
+	if(ctx_logfile_overridden) {
+		log_file(NULL);
+		ctx_logfile_overridden = 0;
+	}
 	free(ctx);
 #ifdef USE_WINSOCK
 	WSACleanup();
@@ -469,6 +477,7 @@ int ub_ctx_debugout(struct ub_ctx* ctx, void* out)
 {
 	lock_basic_lock(&ctx->cfglock);
 	log_file((FILE*)out);
+	ctx_logfile_overridden = 1;
 	ctx->logfile_override = 1;
 	ctx->log_out = out;
 	lock_basic_unlock(&ctx->cfglock);
@@ -1150,7 +1159,7 @@ int
 ub_ctx_hosts(struct ub_ctx* ctx, const char* fname)
 {
 	FILE* in;
-	char buf[1024], ldata[1024];
+	char buf[1024], ldata[2048];
 	char* parse, *addr, *name, *ins;
 	lock_basic_lock(&ctx->cfglock);
 	if(ctx->finalized) {

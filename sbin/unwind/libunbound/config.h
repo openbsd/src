@@ -16,6 +16,9 @@
 /* Do sha512 definitions in config.h */
 /* #undef COMPAT_SHA512 */
 
+/* Command line arguments used with configure */
+#define CONFCMDLINE "--enable-allsymbols --with-ssl=/usr --with-libevent=/usr --with-libexpat=/usr --without-pythonmodule --with-chroot-dir=/var/unbound --with-pidfile= --with-rootkey-file=/var/unbound/db/root.key --with-conf-file=/var/unbound/etc/unbound.conf --with-username=_unbound --disable-shared --without-pthreads"
+
 /* Pathname to the Unbound configuration file */
 #define CONFIGFILE "/var/unbound/etc/unbound.conf"
 
@@ -665,13 +668,13 @@
 /* #undef OMITTED__D__EXTENSIONS__ */
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "unbound-bugs@nlnetlabs.nl"
+#define PACKAGE_BUGREPORT "unbound-bugs@nlnetlabs.nl or https://github.com/NLnetLabs/unbound/issues"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.9.2"
+#define PACKAGE_STRING "unbound 1.9.3"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -680,7 +683,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.9.2"
+#define PACKAGE_VERSION "1.9.3"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -702,7 +705,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,9,2,0
+#define RSRC_PACKAGE_VERSION 1,9,3,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"
@@ -775,6 +778,9 @@
 
 /* Define to 1 to use ipsecmod support. */
 /* #undef USE_IPSECMOD */
+
+/* Define to 1 to use ipset support */
+/* #undef USE_IPSET */
 
 /* Define if you want to use internal select based events */
 /* #undef USE_MINI_EVENT */
