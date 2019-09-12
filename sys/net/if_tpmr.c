@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.3 2019/08/05 03:56:31 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.4 2019/09/12 02:02:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -263,6 +263,8 @@ tpmr_pf(struct ifnet *ifp0, int dir, struct mbuf *m)
 		m_freem(m);
 		return (NULL);
 	}
+	if (m == NULL)
+		return (NULL);
 
 	m = m_prepend(m, sizeof(*eh), M_DONTWAIT);
 	if (m == NULL)
