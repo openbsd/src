@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.32 2019/09/09 02:57:20 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.33 2019/09/12 04:23:59 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -98,6 +98,8 @@
 #define MCX_CQ_DOORBELL_SIZE	 16
 #define MCX_RQ_DOORBELL_OFFSET	 64
 #define MCX_SQ_DOORBELL_OFFSET	 64
+
+#define MCX_WQ_DOORBELL_MASK	 0xffff
 
 /* uar registers */
 #define MCX_UAR_CQ_DOORBELL	 0x20
@@ -1893,8 +1895,8 @@ struct mcx_cq {
 	int			 cq_n;
 	struct mcx_dmamem	 cq_mem;
 	uint32_t		*cq_doorbell;
-	int			 cq_cons;
-	int			 cq_count;
+	uint32_t		 cq_cons;
+	uint32_t		 cq_count;
 };
 
 struct mcx_calibration {
@@ -1978,8 +1980,7 @@ struct mcx_softc {
 	struct mcx_slot		*sc_rx_slots;
 	uint32_t		*sc_rx_doorbell;
 
-	int			 sc_rx_cons;
-	int			 sc_rx_prod;
+	uint32_t		 sc_rx_prod;
 	struct timeout		 sc_rx_refill;
 	struct if_rxring	 sc_rxr;
 
@@ -1992,8 +1993,8 @@ struct mcx_softc {
 	int			 sc_bf_size;
 	int			 sc_bf_offset;
 
-	int			 sc_tx_cons;
-	int			 sc_tx_prod;
+	uint32_t		 sc_tx_cons;
+	uint32_t		 sc_tx_prod;
 
 	uint64_t		 sc_last_cq_db;
 	uint64_t		 sc_last_srq_db;
@@ -5533,7 +5534,7 @@ mcx_rx_fill_slots(struct mcx_softc *sc, void *ring, struct mcx_slot *slots,
 	}
 
 	if (fills != 0) {
-		*sc->sc_rx_doorbell = htobe32(p);
+		*sc->sc_rx_doorbell = htobe32(p & MCX_WQ_DOORBELL_MASK);
 		/* barrier? */
 	}
 
@@ -5564,7 +5565,7 @@ mcx_refill(void *xsc)
 
 	mcx_rx_fill(sc);
 
-	if (sc->sc_rx_cons == sc->sc_rx_prod)
+	if (if_rxr_inuse(&sc->sc_rxr) == 0)
 		timeout_add(&sc->sc_rx_refill, 1);
 }
 
@@ -5716,7 +5717,7 @@ mcx_arm_cq(struct mcx_softc *sc, struct mcx_cq *cq)
 	val = ((cq->cq_count) & 3) << MCX_CQ_DOORBELL_ARM_CMD_SN_SHIFT;
 	val |= (cq->cq_cons & MCX_CQ_DOORBELL_ARM_CI_MASK);
 
-	cq->cq_doorbell[0] = htobe32(cq->cq_cons);
+	cq->cq_doorbell[0] = htobe32(cq->cq_cons & MCX_CQ_DOORBELL_ARM_CI_MASK);
 	cq->cq_doorbell[1] = htobe32(val);
 
 	uval = val;
@@ -5778,7 +5779,8 @@ mcx_process_cq(struct mcx_softc *sc, struct mcx_cq *cq)
 			if_rxr_livelocked(&sc->sc_rxr);
 
 		mcx_rx_fill(sc);
-		/* timeout if full somehow */
+		if (if_rxr_inuse(&sc->sc_rxr) == 0)
+			timeout_add(&sc->sc_rx_refill, 1);
 	}
 	if (txfree > 0) {
 		sc->sc_tx_cons += txfree;
@@ -6000,7 +6002,6 @@ mcx_up(struct mcx_softc *sc)
 		goto down;
 
 	if_rxr_init(&sc->sc_rxr, 1, (1 << MCX_LOG_RQ_SIZE));
-	sc->sc_rx_cons = 0;
 	sc->sc_rx_prod = 0;
 	mcx_rx_fill(sc);
 
@@ -6393,7 +6394,7 @@ mcx_start(struct ifqueue *ifq)
 	}
 
 	if (used) {
-		*sc->sc_tx_doorbell = htobe32(sc->sc_tx_prod);
+		*sc->sc_tx_doorbell = htobe32(sc->sc_tx_prod & MCX_WQ_DOORBELL_MASK);
 
 		membar_sync();
 
