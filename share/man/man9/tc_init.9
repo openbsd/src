@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tc_init.9,v 1.8 2014/11/15 14:41:03 bentley Exp $
+.\"	$OpenBSD: tc_init.9,v 1.9 2019/09/13 15:47:47 schwarze Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 15 2014 $
+.Dd $Mdocdate: September 13 2019 $
 .Dt TC_INIT 9
 .Os
 .Sh NAME
@@ -60,11 +60,11 @@ The fields of the
 .Va timecounter
 structure are described below.
 .Bl -tag -width indent
-.It Fn "u_int (*tc_get_timecount)" "struct timecounter *"
+.It Ft u_int Fn (*tc_get_timecount) "struct timecounter *"
 This function reads the counter.
 It is not required to mask any unimplemented bits out, as long as they
 are constant.
-.It Fn "void (*tc_poll_pps)" "struct timecounter *"
+.It Ft void Fn (*tc_poll_pps) "struct timecounter *"
 This function is optional and can be set to NULL.
 It will be called whenever the timecounter is rewound, and is intended
 to check for PPS events.

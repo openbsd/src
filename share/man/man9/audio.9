@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.9,v 1.28 2019/09/05 05:33:57 ratchov Exp $
+.\"	$OpenBSD: audio.9,v 1.29 2019/09/13 15:47:47 schwarze Exp $
 .\"	$NetBSD: audio.9,v 1.14 2000/02/11 22:56:15 kleink Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 5 2019 $
+.Dd $Mdocdate: September 13 2019 $
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -137,7 +137,7 @@ Some fields are optional and can be set to
 .Dv NULL
 if not needed.
 .Bl -tag -width indent
-.It Fn "int (*open)" "void *hdl" "int flags"
+.It Ft int Fn (*open) "void *hdl" "int flags"
 This function is called when the audio device is opened, with
 .Fa flags
 the kernel representation of flags passed to the
@@ -157,9 +157,9 @@ Every successful call to
 is matched by a call to
 .Fn close .
 This function returns 0 on success, otherwise an error code.
-.It Fn "void (*close)" "void *hdl"
+.It Ft void Fn (*close) "void *hdl"
 This function is called when the audio device is closed.
-.It Fn "int (*set_params)" "void *hdl" "int setmode" "int usemode" \
+.It Ft int Fn (*set_params) "void *hdl" "int setmode" "int usemode" \
 "struct audio_params *play" "struct audio_params *rec"
 This function is called to set the audio encoding mode.
 .Fa setmode
@@ -196,14 +196,14 @@ to
 .Dv AUDIO_ENCODING_[US]LINEAR_{LE,BE} .
 .Pp
 This function returns 0 on success, otherwise an error code.
-.It Fn "int (*round_blocksize)" "void *hdl" "int bs"
+.It Ft int Fn (*round_blocksize) "void *hdl" "int bs"
 This function is optional.
 If supplied, it is called with the block size,
 .Fa bs ,
 which has been computed by the upper layer.
 It returns a block size, possibly changed according to the needs of the
 hardware driver.
-.It Fn "int (*commit_settings)" "void *hdl"
+.It Ft int Fn (*commit_settings) "void *hdl"
 This function is optional.
 If supplied, it is called after all calls to
 .Fn set_params
@@ -214,7 +214,7 @@ A hardware driver that needs to get the hardware in
 and out of command mode for each change can save all the changes
 during previous calls and do them all here.
 This function returns 0 on success, otherwise an error code.
-.It Fn "int (*init_output)" "void *hdl" "void *buffer" "int size"
+.It Ft int Fn (*init_output) "void *hdl" "void *buffer" "int size"
 This function is optional.
 If supplied, it is called before any output starts, but only after the total
 .Fa size
@@ -223,7 +223,7 @@ of the output
 has been determined.
 It can be used to initialize looping DMA for hardware that needs it.
 This function returns 0 on success, otherwise an error code.
-.It Fn "int (*init_input)" "void *hdl" "void *buffer" "int size"
+.It Ft int Fn (*init_input) "void *hdl" "void *buffer" "int size"
 This function is optional.
 If supplied, it is called before any input starts, but only after the total
 .Fa size
@@ -232,7 +232,7 @@ of the input
 has been determined.
 It can be used to initialize looping DMA for hardware that needs it.
 This function returns 0 on success, otherwise an error code.
-.It Fn "int (*start_output)" "void *hdl" "void *block" "int bsize" \
+.It Ft int Fn (*start_output) "void *hdl" "void *block" "int bsize" \
 "void (*intr)(void *)" "void *intrarg"
 This function is called to start the transfer of
 .Fa bsize
@@ -250,7 +250,7 @@ Calling
 will normally initiate another call to
 .Fn start_output .
 This function returns 0 on success, otherwise an error code.
-.It Fn "int (*start_input)" "void *hdl" "void *block" "int bsize" \
+.It Ft int Fn (*start_input) "void *hdl" "void *block" "int bsize" \
 "void (*intr)(void *)" "void *intrarg"
 This function is called to start the transfer of
 .Fa bsize
@@ -268,30 +268,30 @@ Calling
 will normally initiate another call to
 .Fn start_input .
 This function returns 0 on success, otherwise an error code.
-.It Fn "int (*halt_output)" "void *hdl"
+.It Ft int Fn (*halt_output) "void *hdl"
 This function is called to abort the output transfer (started by
 .Fn start_output )
 in progress.
 This function returns 0 on success, otherwise an error code.
-.It Fn "int (*halt_input)" "void *hdl"
+.It Ft int Fn (*halt_input) "void *hdl"
 This function is called to abort the input transfer (started by
 .Fn start_input )
 in progress.
 This function returns 0 on success, otherwise an error code.
-.It Fn "int (*speaker_ctl)" "void *hdl" "int on"
+.It Ft int Fn (*speaker_ctl) "void *hdl" "int on"
 This function is optional.
 If supplied, it is called when a half duplex device changes between
 playing and recording.
 It can, e.g., be used to turn the speaker on and off.
 This function returns 0 on success, otherwise an error code.
-.It Fn "int (*setfd)" "void *hdl" "int fd"
+.It Ft int Fn (*setfd) "void *hdl" "int fd"
 This function is optional.
 If supplied, it is called when the device is opened in full-duplex mode,
 but only if the device has
 .Dv AUDIO_PROP_FULLDUPLEX
 set.
 This function returns 0 on success, otherwise an error code.
-.It Fn "int (*set_port)" "void *hdl" "struct mixer_ctrl *mc"
+.It Ft int Fn (*set_port) "void *hdl" "struct mixer_ctrl *mc"
 This function is called when the
 .Dv AUDIO_MIXER_WRITE
 .Xr ioctl 2
@@ -300,7 +300,7 @@ It takes data from
 .Fa mc
 and sets the corresponding mixer values.
 This function returns 0 on success, otherwise an error code.
-.It Fn "int (*get_port)" "void *hdl" "struct mixer_ctrl *mc"
+.It Ft int Fn (*get_port) "void *hdl" "struct mixer_ctrl *mc"
 This function is called when the
 .Dv AUDIO_MIXER_READ
 .Xr ioctl 2
@@ -308,7 +308,7 @@ is used.
 It fills
 .Fa mc
 and returns 0 on success, or it returns an error code on failure.
-.It Fn "int (*query_devinfo)" "void *hdl" "struct mixer_devinfo *di"
+.It Ft int Fn (*query_devinfo) "void *hdl" "struct mixer_devinfo *di"
 This function is called when the
 .Dv AUDIO_MIXER_DEVINFO
 .Xr ioctl 2
@@ -316,7 +316,7 @@ is used.
 It fills
 .Fa di
 and returns 0 on success, or it returns an error code on failure.
-.It Fn "void *(*allocm)" "void *hdl" "int direction" "size_t size" "int type" \
+.It Ft void * Fn (*allocm) "void *hdl" "int direction" "size_t size" "int type" \
 "int flags"
 This function is optional.
 If supplied, it is called to allocate the device buffers.
@@ -332,7 +332,7 @@ is
 or
 .Dv AUMODE_RECORD .
 This function returns the address of the buffer on success, or 0 on failure.
-.It Fn "void (*freem)" "void *hdl" "void *addr" "int type"
+.It Ft void Fn (*freem) "void *hdl" "void *addr" "int type"
 This function is optional.
 If supplied, it is called to free memory allocated by
 .Fn allocm .
@@ -340,7 +340,7 @@ If not supplied,
 .Xr free 9
 is used instead.
 .\" XXX: code passes int instead of size_t, but decl is size_t
-.It Fn "size_t (*round_buffersize)" "void *hdl" "int direction" \
+.It Ft size_t Fn (*round_buffersize) "void *hdl" "int direction" \
 "size_t bufsize"
 This function is optional.
 If supplied, it is called at startup to determine the audio buffer size.
@@ -353,11 +353,11 @@ Note that the buffer size is always a multiple of the block size, so
 and
 .Fn round_buffersize
 must be consistent.
-.It Fn "int (*get_props)" "void *hdl"
+.It Ft int Fn (*get_props) "void *hdl"
 This function returns a combination of
 .Dv AUDIO_PROP_xxx
 properties.
-.It Fn "int (*trigger_output)" "void *hdl" "void *start" "void *end" "int blksize" \
+.It Ft int Fn (*trigger_output) "void *hdl" "void *start" "void *end" "int blksize" \
 "void (*intr)(void *)" "void *intrarg" "struct audio_params *param"
 This function is optional.
 If supplied, it is called to start the transfer of data from the circular
@@ -379,7 +379,7 @@ will be called with the argument
 Once started, the transfer may be stopped using
 .Fn halt_output .
 This function returns 0 on success, otherwise an error code.
-.It Fn "int (*trigger_input)" "void *hdl" "void *start" "void *end" "int blksize" \
+.It Ft int Fn (*trigger_input) "void *hdl" "void *start" "void *end" "int blksize" \
 "void (*intr)(void *)" "void *intrarg" "struct audio_params *param"
 This function is optional.
 If supplied, it is called to start the transfer of data from the audio
@@ -401,7 +401,7 @@ will be called with the argument
 Once started, the transfer may be stopped using
 .Fn halt_input .
 This function returns 0 on success, otherwise an error code.
-.It Fn "void (*copy_output)" "void *hdl" "size_t bytes"
+.It Ft void Fn (*copy_output) "void *hdl" "size_t bytes"
 This function is called whenever the given amount of bytes was
 appended to the play ring buffer, typically during a
 .Xr write 2
@@ -412,7 +412,7 @@ to copy the given amount of bytes into their bounce buffers.
 There's no analogue function for recording as data is
 produced by the device and could simply be copied upon
 transfer completion.
-.It Fn "void (*underrun)" "void *hdl"
+.It Ft void Fn (*underrun) "void *hdl"
 This function is called at interrupt context whenever a
 play block was skipped by the
 .Xr audio 4
@@ -421,7 +421,7 @@ Drivers using bounce buffers for transfers between the audio
 ring buffer and the device must implement this method to skip
 one block from the audio ring buffer and transfer the
 corresponding amount of silence to the device.
-.It Fn "int (*set_blksz)" "void *hdl" "int mode" \
+.It Ft int Fn (*set_blksz) "void *hdl" "int mode" \
 "struct audio_params *play" "struct audio_params *rec" "int blksz"
 This function is called to set the audio block size.
 .Fa mode
@@ -443,7 +443,7 @@ function.
 is the desired block size in frames.
 It may be adjusted to match hardware constraints.
 This function returns the adjusted block size.
-.It Fn "int (*set_nblks)" "void *hdl" "int dir" "int blksz" \
+.It Ft int Fn (*set_nblks) "void *hdl" "int dir" "int blksz" \
 "struct audio_params *params" "int nblks"
 This function is called to set the number of audio blocks in
 the ring buffer.
