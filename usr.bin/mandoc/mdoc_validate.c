@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.289 2019/06/27 15:05:14 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.290 2019/09/13 19:18:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -1171,11 +1171,17 @@ post_fname(POST_ARGS)
 	size_t			 pos;
 
 	n = mdoc->last->child;
-	pos = strcspn(n->string, "()");
-	cp = n->string + pos;
-	if ( ! (cp[0] == '\0' || (cp[0] == '(' && cp[1] == '*')))
-		mandoc_msg(MANDOCERR_FN_PAREN, n->line, n->pos + pos,
-		    "%s", n->string);
+	cp = n->string;
+	if (*cp == '(') {
+		if (cp[strlen(cp + 1)] == ')')
+			return;
+		pos = 0;
+	} else {
+		pos = strcspn(cp, "()");
+		if (cp[pos] == '\0')
+			return;
+	}
+	mandoc_msg(MANDOCERR_FN_PAREN, n->line, n->pos + pos, "%s", cp);
 }
 
 static void

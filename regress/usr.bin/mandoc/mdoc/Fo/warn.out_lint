@@ -1,2 +1,7 @@
 mandoc: warn.in:10:8: WARNING: parenthesis in function name: sin()
 mandoc: warn.in:14:19: WARNING: comma in function argument: double y, double x
+mandoc: warn.in:16:10: WARNING: unusual character in function name: )
+mandoc: warn.in:22:5: WARNING: unusual character in function name: (open
+mandoc: warn.in:24:5: WARNING: unusual character in function name: (*popen
+mandoc: warn.in:26:12: WARNING: unusual character in function name: x
+mandoc: warn.in:28:5: WARNING: unusual character in function name: *star

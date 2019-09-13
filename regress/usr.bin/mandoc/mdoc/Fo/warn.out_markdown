@@ -12,4 +12,25 @@ FO-WARN(1) - General Commands Manual
 *double*  
 **atan2**(*double y, double x*);
 
-OpenBSD - July 4, 2017
+*int*  
+**close)**(*int fd*);
+
+*typedef void*  
+**(handler)**(*int*);
+
+*typedef void*  
+**(\*fp)**(*int*);
+
+*int*  
+**(open**(*const char \*path*);
+
+*FILE \*&zwnj;*  
+**(\*popen**(*const char \*cmd*);
+
+*void*  
+**(trail)x**(*void*);
+
+*void*  
+**\*star**(*void*);
+
+OpenBSD - September 13, 2019

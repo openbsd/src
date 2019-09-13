@@ -10,4 +10,25 @@ SSYYNNOOPPSSIISS
      _d_o_u_b_l_e
      aattaann22(_d_o_u_b_l_e _y_, _d_o_u_b_l_e _x);
 
-OpenBSD                          July 4, 2017                          OpenBSD
+     _i_n_t
+     cclloossee))(_i_n_t _f_d);
+
+     _t_y_p_e_d_e_f _v_o_i_d
+     ((hhaannddlleerr))(_i_n_t);
+
+     _t_y_p_e_d_e_f _v_o_i_d
+     ((**ffpp))(_i_n_t);
+
+     _i_n_t
+     ((ooppeenn(_c_o_n_s_t _c_h_a_r _*_p_a_t_h);
+
+     _F_I_L_E _*
+     ((**ppooppeenn(_c_o_n_s_t _c_h_a_r _*_c_m_d);
+
+     _v_o_i_d
+     ((ttrraaiill))xx(_v_o_i_d);
+
+     _v_o_i_d
+     **ssttaarr(_v_o_i_d);
+
+OpenBSD                       September 13, 2019                       OpenBSD
