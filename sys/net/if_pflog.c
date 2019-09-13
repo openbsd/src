@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.83 2019/06/13 21:12:52 mpi Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.84 2019/09/13 01:47:51 dlg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -81,7 +81,7 @@ int	pflogioctl(struct ifnet *, u_long, caddr_t);
 void	pflogstart(struct ifnet *);
 int	pflog_clone_create(struct if_clone *, int);
 int	pflog_clone_destroy(struct ifnet *);
-void	pflog_bpfcopy(const void *, void *, size_t);
+void	pflog_mtap(caddr_t, struct pfloghdr *, struct mbuf *);
 
 struct if_clone	pflog_cloner =
     IF_CLONE_INITIALIZER("pflog", pflog_clone_create, pflog_clone_destroy);
@@ -226,6 +226,7 @@ pflog_packet(struct pf_pdesc *pd, u_int8_t reason, struct pf_rule *rm,
 {
 #if NBPFILTER > 0
 	struct ifnet *ifn;
+	caddr_t if_bpf;
 	struct pfloghdr hdr;
 
 	if (rm == NULL || pd == NULL || pd->kif == NULL || pd->m == NULL)
@@ -233,8 +234,13 @@ pflog_packet(struct pf_pdesc *pd, u_int8_t reason, struct pf_rule *rm,
 	if (trigger == NULL)
 		trigger = rm;
 
-	if (trigger->logif >= npflogifs || (ifn = pflogifs[trigger->logif]) ==
-	    NULL || !ifn->if_bpf)
+	if (trigger->logif >= npflogifs)
+		return (0);
+	ifn = pflogifs[trigger->logif];
+	if (ifn == NULL)
+		return (0);
+	if_bpf = ifn->if_bpf;
+	if (!if_bpf)
 		return (0);
 
 	bzero(&hdr, sizeof(hdr));
@@ -276,52 +282,28 @@ pflog_packet(struct pf_pdesc *pd, u_int8_t reason, struct pf_rule *rm,
 	ifn->if_opackets++;
 	ifn->if_obytes += pd->m->m_pkthdr.len;
 
-	bpf_mtap_hdr(ifn->if_bpf, (caddr_t)&hdr, PFLOG_HDRLEN, pd->m,
-	    BPF_DIRECTION_OUT, pflog_bpfcopy);
+	pflog_mtap(if_bpf, &hdr, pd->m);
 #endif
 
 	return (0);
 }
 
 void
-pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
+pflog_mtap(caddr_t if_bpf, struct pfloghdr *pfloghdr, struct mbuf *m)
 {
-	struct mbuf		*m, *mp, *mhdr, *mptr;
-	struct pfloghdr		*pfloghdr;
-	u_int			 count;
-	u_char			*dst, *mdst;
-	int			 afto, hlen, mlen, off;
+	struct mbuf		*mp, *mhdr, *mptr;
+	u_char			*mdst;
+	int			 afto, hlen, off;
 
 	struct pf_pdesc		 pd;
 	struct pf_addr		 osaddr, odaddr;
 	u_int16_t		 osport = 0, odport = 0;
 	u_int8_t		 proto = 0;
 
-	m = (struct mbuf *)src_arg;
-	dst = dst_arg;
-
 	mhdr = pflog_mhdr;
 	mptr = pflog_mptr;
 
-	if (m == NULL)
-		panic("pflog_bpfcopy got no mbuf");
-
-	/* first mbuf holds struct pfloghdr */
-	pfloghdr = mtod(m, struct pfloghdr *);
 	afto = pfloghdr->af != pfloghdr->naf;
-	count = min(m->m_len, len);
-	bcopy(pfloghdr, dst, count);
-	pfloghdr = (struct pfloghdr *)dst;
-	dst += count;
-	len -= count;
-	m = m->m_next;
-
-	if (len <= 0)
-		return;
-
-	/* second mbuf is pkthdr */
-	if (m == NULL)
-		panic("no second mbuf");
 
 	/*
 	 * temporary mbuf will hold an ip/ip6 header and 8 bytes
@@ -426,7 +408,6 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 		pfloghdr->dport = odport;
 	}
 
-	pd.tot_len = min(pd.tot_len, len);
 	pd.tot_len -= pd.m->m_data - pd.m->m_pktdat;
 
 #ifdef INET6
@@ -436,9 +417,6 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 
 	m = pd.m;
  copy:
-	mlen = min(m->m_pkthdr.len, len);
-	m_copydata(m, 0, mlen, dst);
-	len -= mlen;
-	if (len > 0)
-		bzero(dst + mlen, len);
+	bpf_mtap_hdr(if_bpf, pfloghdr, sizeof(*pfloghdr), m,
+	    BPF_DIRECTION_OUT, NULL);
 }
