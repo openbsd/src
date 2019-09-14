@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.76 2019/06/28 13:35:04 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.77 2019/09/14 17:47:01 semarie Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -161,6 +161,8 @@ main(int argc, char **argv)
 	}
 
 	if (unveil(_PATH_LOGIN_CONF, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_LOGIN_CONF ".db", "r") == -1)
 		err(1, "unveil");
 	if (unveil(_PATH_AUTHPROGDIR, "x") == -1)
 		err(1, "unveil");

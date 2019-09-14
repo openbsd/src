@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.49 2018/08/03 04:47:56 deraadt Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.50 2019/09/14 17:47:00 semarie Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -95,7 +95,8 @@ main(int argc, char **argv)
 	char *extra = NULL;	/* Store login class or number of rounds */
 	const char *errstr;
 
-	if (unveil(_PATH_LOGIN_CONF, "r") == -1)
+	if (unveil(_PATH_LOGIN_CONF, "r") == -1 ||
+	    unveil(_PATH_LOGIN_CONF ".db", "r") == -1)
 		err(1, "unveil");
 	if (pledge("stdio rpath tty", NULL) == -1)
 		err(1, "pledge");

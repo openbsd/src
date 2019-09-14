@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.56 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.57 2019/09/14 17:47:01 semarie Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,11 +72,13 @@ local_passwd(char *uname, int authenticated)
 		return(1);
 	}
 
-	if (unveil(_PATH_MASTERPASSWD_LOCK, "wc") == -1)
+	if (unveil(_PATH_MASTERPASSWD_LOCK, "rwc") == -1)
 		err(1, "unveil");
 	if (unveil(_PATH_MASTERPASSWD, "r") == -1)
 		err(1, "unveil");
 	if (unveil(_PATH_LOGIN_CONF, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_LOGIN_CONF ".db", "r") == -1)
 		err(1, "unveil");
 	if (unveil(_PATH_BSHELL, "x") == -1)
 		err(1, "unveil");
