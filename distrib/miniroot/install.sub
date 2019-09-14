@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1140 2019/08/21 17:39:30 kn Exp $
+#	$OpenBSD: install.sub,v 1.1141 2019/09/14 11:38:46 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1171,10 +1171,9 @@ v6_config() {
 
 # Perform an 802.11 network scan on interface $1 and cache the result a file.
 ieee80211_scan() {
-	# N.B. Skipping quoted nwid's for now.
 	[[ -f $WLANLIST ]] ||
 		ifconfig $1 scan |
-		sed -n 's/^		nwid \([^"]\)/\1/p' >$WLANLIST
+			sed -n 's/^[[:space:]]*nwid \(.*\) chan [0-9]* bssid \([[:xdigit:]:]*\).*/\1 (\2)/p' >$WLANLIST
 	cat $WLANLIST
 }
 
@@ -1194,12 +1193,12 @@ ieee80211_config() {
 		ask_until "Access point? (ESSID, 'any', list# or '?')" "any"
 		case "$resp" in
 		+([0-9]))
-			_nwid=$(ieee80211_scan $_if | sed -n "${resp}s/ .*//p")
+			_nwid=$(ieee80211_scan $_if |
+			    sed -n ${resp}'{s/ ([[:xdigit:]:]*)$//p;q;}')
 			[[ -z $_nwid ]] && echo "There is no line $resp."
+			[[ $_nwid = \"*\" ]] && _nwid=${_nwid#\"} _nwid=${_nwid%\"}
 			;;
-		\?)	ieee80211_scan $_if |
-				sed -n 's/^\([^ ]*\) chan .* bssid \([^ ]*\) .*$/	\1 (\2)/p' |
-				cat -n | more -c
+		\?)	ieee80211_scan $_if | cat -n | more -c
 			;;
 		*)	_nwid=$resp
 			;;
