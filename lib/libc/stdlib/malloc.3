@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.125 2019/05/19 15:30:21 schwarze Exp $
+.\"	$OpenBSD: malloc.3,v 1.126 2019/09/14 13:16:50 otto Exp $
 .\"
-.Dd $Mdocdate: May 19 2019 $
+.Dd $Mdocdate: September 14 2019 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -332,6 +332,7 @@ is called, even if the initial allocation was big enough.
 .\"for all operations.
 .\"Consult the source for this one.
 .It Cm S
+.\" Malloc option S is vaguely documented on purpose.
 Enable all options suitable for security auditing.
 .It Cm U
 .Dq Free unmap .
