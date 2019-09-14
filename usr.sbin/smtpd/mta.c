@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.229 2019/08/19 15:42:24 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.230 2019/09/14 06:20:27 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -2039,6 +2039,10 @@ mta_relay_cmp(const struct mta_relay *a, const struct mta_relay *b)
 		return (1);
 	if (a->authtable && ((r = strcmp(a->authtable, b->authtable))))
 		return (r);
+	if (a->authlabel == NULL && b->authlabel)
+		return (-1);
+	if (a->authlabel && b->authlabel == NULL)
+		return (1);
 	if (a->authlabel && ((r = strcmp(a->authlabel, b->authlabel))))
 		return (r);
 	if (a->sourcetable == NULL && b->sourcetable)
@@ -2074,6 +2078,10 @@ mta_relay_cmp(const struct mta_relay *a, const struct mta_relay *b)
 	if (a->ca_name && ((r = strcmp(a->ca_name, b->ca_name))))
 		return (r);
 
+	if (a->backupname == NULL && b->backupname)
+		return (-1);
+	if (a->backupname && b->backupname == NULL)
+		return (1);
 	if (a->backupname && ((r = strcmp(a->backupname, b->backupname))))
 		return (r);
 
