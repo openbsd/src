@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.6 2019/08/07 22:34:25 jmatthew Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.7 2019/09/15 01:57:19 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -387,6 +387,9 @@ struct iavf_tx_desc {
 #define IAVF_TX_DESC_BSIZE_MAX		0x3fffULL
 #define IAVF_TX_DESC_BSIZE_MASK		\
 	(IAVF_TX_DESC_BSIZE_MAX << IAVF_TX_DESC_BSIZE_SHIFT)
+
+#define IAVF_TX_DESC_L2TAG1_SHIFT	48
+#define IAVF_TX_DESC_L2TAG1_MASK	(0xffff << IAVF_TX_DESC_L2TAG1_SHIFT)
 } __packed __aligned(16);
 
 struct iavf_rx_rd_desc_16 {
@@ -403,6 +406,8 @@ struct iavf_rx_rd_desc_32 {
 
 struct iavf_rx_wb_desc_16 {
 	uint64_t		qword0;
+#define IAVF_RX_DESC_L2TAG1_SHIFT	16
+#define IAVF_RX_DESC_L2TAG1_MASK	(0xffff << IAVF_RX_DESC_L2TAG1_SHIFT)
 	uint64_t		qword1;
 #define IAVF_RX_DESC_DD			(1 << 0)
 #define IAVF_RX_DESC_EOP		(1 << 1)
@@ -887,9 +892,8 @@ iavf_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	IFQ_SET_MAXLEN(&ifp->if_snd, 1);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_VLAN_HWTAGGING;
 #if 0
-	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
 	    IFCAP_CSUM_UDPv4;
 #endif
@@ -1665,6 +1669,7 @@ iavf_start(struct ifqueue *ifq)
 	bus_dmamap_t map;
 	struct mbuf *m;
 	uint64_t cmd;
+	uint64_t vlan_cmd;
 	unsigned int prod, free, last, i;
 	unsigned int mask;
 	int post = 0;
@@ -1711,12 +1716,20 @@ iavf_start(struct ifqueue *ifq)
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
+		vlan_cmd = 0;
+		if (m->m_flags & M_VLANTAG) {
+			vlan_cmd = IAVF_TX_DESC_CMD_IL2TAG1 |
+			    (((uint64_t)m->m_pkthdr.ether_vtag) <<
+			    IAVF_TX_DESC_L2TAG1_SHIFT);
+		}
+
 		for (i = 0; i < map->dm_nsegs; i++) {
 			txd = &ring[prod];
 
 			cmd = (uint64_t)map->dm_segs[i].ds_len <<
 			    IAVF_TX_DESC_BSIZE_SHIFT;
-			cmd |= IAVF_TX_DESC_DTYPE_DATA | IAVF_TX_DESC_CMD_ICRC;
+			cmd |= IAVF_TX_DESC_DTYPE_DATA | IAVF_TX_DESC_CMD_ICRC |
+			    vlan_cmd;
 
 			htolem64(&txd->addr, map->dm_segs[i].ds_addr);
 			htolem64(&txd->cmd, cmd);
@@ -1939,6 +1952,7 @@ iavf_rxeof(struct iavf_softc *sc, struct ifiqueue *ifiq)
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	uint64_t word;
+	uint16_t vlan;
 	unsigned int len;
 	unsigned int mask;
 	int done = 0;
@@ -1990,6 +2004,13 @@ iavf_rxeof(struct iavf_softc *sc, struct ifiqueue *ifiq)
 		m->m_pkthdr.len += len;
 
 		if (ISSET(word, IAVF_RX_DESC_EOP)) {
+			if (ISSET(word, IAVF_RX_DESC_L2TAG1P)) {
+				vlan = (lemtoh64(&rxd->qword0) &
+				    IAVF_RX_DESC_L2TAG1_MASK)
+				    >> IAVF_RX_DESC_L2TAG1_SHIFT;
+				m->m_pkthdr.ether_vtag = vlan;
+				m->m_flags |= M_VLANTAG;
+			}
 			if (!ISSET(word,
 			    IAVF_RX_DESC_RXE | IAVF_RX_DESC_OVERSIZE)) {
 				ml_enqueue(&ml, m);
