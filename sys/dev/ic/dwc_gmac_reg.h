@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc_gmac_reg.h,v 1.1 2016/08/13 20:35:57 kettenis Exp $	*/
+/*	$OpenBSD: dwc_gmac_reg.h,v 1.2 2019/09/15 15:52:14 kettenis Exp $	*/
 /* $NetBSD: dwc_gmac_reg.h,v 1.15 2015/11/21 16:04:11 martin Exp $ */
 
 /*-
@@ -80,6 +80,10 @@
 #define	AWIN_GMAC_MAC_FLOWCTRL_RFE	(1 << 2)
 #define	AWIN_GMAC_MAC_FLOWCTRL_TFE	(1 << 1)
 #define	AWIN_GMAC_MAC_FLOWCTRL_BUSY	(1 << 0)
+
+#define	AWIN_GMAC_MMC_RX_INT_MSK	0x010c
+#define	AWIN_GMAC_MMC_TX_INT_MSK	0x0110
+#define	AWIN_GMAC_MMC_IPC_INT_MSK	0x0200
 
 #define	AWIN_GMAC_DMA_BUSMODE		0x1000
 #define	AWIN_GMAC_DMA_TXPOLL		0x1004

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc_gmac.c,v 1.11 2018/12/30 20:11:59 kettenis Exp $	*/
+/*	$OpenBSD: dwc_gmac.c,v 1.12 2019/09/15 15:52:14 kettenis Exp $	*/
 /* $NetBSD: dwc_gmac.c,v 1.34 2015/08/21 20:12:29 jmcneill Exp $ */
 
 /*-
@@ -118,6 +118,8 @@ static uint32_t	bitrev32(uint32_t);
 				GMAC_DMA_INT_RWE|GMAC_DMA_INT_RUE| \
 				GMAC_DMA_INT_UNE|GMAC_DMA_INT_OVE| \
 				GMAC_DMA_INT_TJE)
+
+#define	GMAC_DEF_MMC_INT_MASK	0xffffffff
 
 #define	AWIN_DEF_MAC_INTRMASK	\
 	(AWIN_GMAC_MAC_INT_TSI | AWIN_GMAC_MAC_INT_ANEG |	\
@@ -247,6 +249,12 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk, int phyloc)
 	    AWIN_DEF_MAC_INTRMASK);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_INTENABLE,
 	    GMAC_DEF_DMA_INT_MASK);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MMC_RX_INT_MSK,
+	    GMAC_DEF_MMC_INT_MASK);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MMC_TX_INT_MSK,
+	    GMAC_DEF_MMC_INT_MASK);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MMC_IPC_INT_MSK,
+	    GMAC_DEF_MMC_INT_MASK);
 	splx(s);
 
 	return;
