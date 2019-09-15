@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.24 2019/09/07 13:58:58 visa Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.25 2019/09/15 07:15:14 visa Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -51,7 +51,6 @@
 #include <machine/octeon_model.h>
 
 #include <octeon/dev/iobusvar.h>
-#include <octeon/dev/cn30xxgmxreg.h>
 #include <octeon/dev/octhcireg.h>	/* USBN_BASE */
 
 int	iobusmatch(struct device *, void *, void *);
@@ -207,7 +206,7 @@ iobusattach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args fa;
 	struct octeon_config oc;
 	struct device *sc = self;
-	int chipid, i, ngmx, soc;
+	int soc;
 
 	iobus_found = 1;
 
@@ -235,31 +234,6 @@ iobusattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	config_search(iobussearch, self, sc);
-
-	chipid = octeon_get_chipid();
-	switch (octeon_model_family(chipid)) {
-	case OCTEON_MODEL_FAMILY_CN30XX:
-	case OCTEON_MODEL_FAMILY_CN50XX:
-	default:
-		ngmx = 1;
-		break;
-	case OCTEON_MODEL_FAMILY_CN61XX:
-	case OCTEON_MODEL_FAMILY_CN71XX:
-		ngmx = 2;
-		break;
-	case OCTEON_MODEL_FAMILY_CN73XX:
-		ngmx = 0;
-		break;
-	}
-	for (i = 0; i < ngmx; i++) {
-		aa.aa_name = "cn30xxgmx";
-		aa.aa_bust = &iobus_tag;
-		aa.aa_dmat = &iobus_bus_dma_tag;
-		aa.aa_addr = GMX0_BASE_PORT0 + GMX_BLOCK_SIZE * i;
-		aa.aa_irq = -1;
-		aa.aa_unitno = i;
-		config_found_sm(self, &aa, iobusprint, iobussubmatch);
-	}
 
 	if (octeon_ver == OCTEON_2 || octeon_ver == OCTEON_3) {
 		memset(&aa, 0, sizeof(aa));

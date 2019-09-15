@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.40 2017/11/20 15:13:08 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.41 2019/09/15 07:15:14 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -161,8 +161,6 @@ cn30xxgmx_match(struct device *parent, void *match, void *aux)
 	struct iobus_attach_args *aa = aux;
 
 	if (strcmp(cf->cf_driver->cd_name, aa->aa_name) != 0)
-		return 0;
-	if (cf->cf_unit != aa->aa_unitno)
 		return 0;
 	return 1;
 }
