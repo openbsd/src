@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.192 2019/07/05 13:42:06 robert Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.193 2019/09/15 19:23:29 rob Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 5 2019 $
+.Dd $Mdocdate: September 15 2019 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -368,6 +368,33 @@ then nothing is sent on the connection and data is immediately
 read.
 This can be useful with protocols that output a banner like
 SMTP, NNTP, and FTP.
+If the
+.Ic tls
+keyword is present,
+the transaction will occur in a TLS tunnel.
+.It Xo
+.Ic check binary send
+.Ar data
+.Ic expect
+.Ar data
+.Op Ic tls
+.Xc
+For each host in the table, a TCP connection is established on the
+port specified, then the
+.Ic send
+.Ar data
+is converted into binary and sent.
+Incoming (binary)
+data is then read and is expected to match against a binary
+conversion of the
+.Ic expect
+.Ar data
+using
+.Xr memcmp 3 .
+.Ar data
+must be populated with a string containing an even number of hexadecimal
+single-byte characters and must not be empty.
+This can be useful with binary protocols such as LDAP and SNMP.
 If the
 .Ic tls
 keyword is present,

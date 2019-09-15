@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.259 2019/06/26 12:13:47 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.260 2019/09/15 19:23:29 rob Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -504,7 +504,8 @@ struct table_config {
 	char			 name[TABLE_NAME_SIZE];
 	size_t			 name_len;
 	char			 path[PATH_MAX];
-	char			 exbuf[64];
+	unsigned char		 exbinbuf[128];
+	char			 exbuf[256];
 	char			 digest[41]; /* length of sha1 digest * 2 */
 	u_int8_t		 digest_type;
 	enum forwardmode	 fwdmode;
@@ -517,6 +518,7 @@ struct table {
 	int			 skipped;
 	struct hostlist		 hosts;
 	struct tls_config	*tls_cfg;
+	struct ibuf		*sendbinbuf;
 	char			*sendbuf;
 };
 TAILQ_HEAD(tablelist, table);
@@ -527,8 +529,9 @@ enum table_check {
 	CHECK_TCP		= 2,
 	CHECK_HTTP_CODE		= 3,
 	CHECK_HTTP_DIGEST	= 4,
-	CHECK_SEND_EXPECT	= 5,
-	CHECK_SCRIPT		= 6
+	CHECK_BINSEND_EXPECT	= 5,
+	CHECK_SEND_EXPECT	= 6,
+	CHECK_SCRIPT		= 7
 };
 
 struct rdr_config {
@@ -1169,6 +1172,9 @@ const char *print_host(struct sockaddr_storage *, char *, size_t);
 const char *print_time(struct timeval *, struct timeval *, char *, size_t);
 const char *printb_flags(const u_int32_t, const char *);
 void	 getmonotime(struct timeval *);
+struct ibuf	*string2binary(const char *);
+void		 print_hex(uint8_t *, off_t, size_t);
+void		 print_debug(const char *, ...);
 
 /* pfe.c */
 void	 pfe(struct privsep *, struct privsep_proc *);

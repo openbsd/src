@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 2019/05/13 09:54:07 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.3 2019/09/15 19:23:29 rob Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -168,6 +168,7 @@ table_check(enum table_check check)
 		return ("http code");
 	case CHECK_HTTP_DIGEST:
 		return ("http digest");
+	case CHECK_BINSEND_EXPECT:
 	case CHECK_SEND_EXPECT:
 		return ("send expect");
 	case CHECK_SCRIPT:
@@ -283,4 +284,79 @@ getmonotime(struct timeval *tv)
 		fatal("clock_gettime");
 
 	TIMESPEC_TO_TIMEVAL(tv, &ts);
+}
+
+struct ibuf *
+string2binary(const char *string)
+{
+	unsigned long	 i, j, x;
+	unsigned char	*binary = NULL;
+	struct ibuf	*ibuf = NULL;
+	char		 hex[3];
+	int		 len;
+
+	if (strlen(string) % 2 != 0) {
+		return NULL;
+	}
+
+	binary = calloc(strlen(string), sizeof(unsigned char));
+	if (binary == NULL) {
+		return NULL;
+	}
+
+	hex[2] = '\0';
+	j = 0;
+	for (i = 0; i < strlen(string); i++) {
+		if (isxdigit(string[i]) == 0 || isxdigit(string[i+1]) == 0) {
+			free(binary);
+			return NULL;
+		} else {
+			hex[0] = string[i];
+			hex[1] = string[i+1];
+			x = strtoul(hex, NULL, 16);
+			binary[j++] = (unsigned char)x;
+			i++;
+		}
+	}
+	len = strlen(string) / 2;
+	if ((ibuf = ibuf_open(len)) == NULL ||
+	    ibuf_add(ibuf, binary, len) == -1) {
+		ibuf_free(ibuf);
+		free(binary);
+		return NULL;
+	}
+	free(binary);
+	return ibuf;
+}
+
+void
+print_hex(uint8_t *buf, off_t offset, size_t length)
+{
+	unsigned int	 i;
+
+	if (log_getverbose() < 3 || !length)
+		return;
+
+	for (i = 0; i < length; i++) {
+		if (i && (i % 4) == 0) {
+			if ((i % 32) == 0)
+				print_debug("\n");
+			else
+				print_debug(" ");
+		}
+		print_debug("%02x", buf[offset + i]);
+	}
+	print_debug("\n");
+}
+
+void
+print_debug(const char *emsg, ...)
+{
+	va_list	 ap;
+
+	if (log_getverbose() > 2) {
+		va_start(ap, emsg);
+		vfprintf(stderr, emsg, ap);
+		va_end(ap);
+	}
 }

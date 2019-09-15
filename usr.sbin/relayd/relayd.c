@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.181 2019/08/30 16:54:20 sthen Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.182 2019/09/15 19:23:29 rob Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -530,6 +530,7 @@ purge_table(struct relayd *env, struct tablelist *head, struct table *table)
 		free(host);
 	}
 	free(table->sendbuf);
+	ibuf_free(table->sendbinbuf);
 	tls_config_free(table->tls_cfg);
 
 	if (head != NULL)

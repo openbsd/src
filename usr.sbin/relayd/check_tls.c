@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tls.c,v 1.1 2017/05/27 08:33:25 claudio Exp $	*/
+/*	$OpenBSD: check_tls.c,v 1.2 2019/09/15 19:23:29 rob Exp $	*/
 
 /*
  * Copyright (c) 2017 Claudio Jeker <claudio@openbsd.org>
@@ -93,6 +93,7 @@ check_tls_write(int s, short event, void *arg)
 	int			 retry_flag = EV_WRITE;
 	int			 len;
 	int			 ret;
+	void			*buf;
 
 	if (event == EV_TIMEOUT) {
 		cte->host->up = HOST_DOWN;
@@ -101,9 +102,19 @@ check_tls_write(int s, short event, void *arg)
 		return;
 	}
 
-	len = strlen(cte->table->sendbuf);
+	if (cte->table->sendbinbuf != NULL) {
+		len = ibuf_size(cte->table->sendbinbuf);
+		buf = cte->table->sendbinbuf->buf;
+		log_debug("%s: table %s sending binary", __func__,
+		    cte->table->conf.name);
+		print_hex(cte->table->sendbinbuf->buf, 0, len);
+	} else {
+		len = strlen(cte->table->sendbuf);
+		buf = cte->table->sendbuf;
+	}
 
-	ret = tls_write(cte->tls, cte->table->sendbuf, len);
+	ret = tls_write(cte->tls, buf, len);
+
 	if (ret > 0) {
 		if ((cte->buf = ibuf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) ==
 		    NULL)

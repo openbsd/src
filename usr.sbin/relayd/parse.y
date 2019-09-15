@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.241 2019/07/13 06:54:45 chrisz Exp $	*/
+/*	$OpenBSD: parse.y,v 1.242 2019/09/15 19:23:29 rob Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -168,7 +168,7 @@ typedef struct {
 
 %}
 
-%token	ALL APPEND BACKLOG BACKUP BUFFER CA CACHE SET CHECK CIPHERS CODE
+%token	ALL APPEND BACKLOG BACKUP BINARY BUFFER CA CACHE SET CHECK CIPHERS CODE
 %token	COOKIE DEMOTE DIGEST DISABLE ERROR EXPECT PASS BLOCK EXTERNAL FILENAME
 %token	FORWARD FROM HASH HEADER HEADERLEN HOST HTTP ICMP INCLUDE INET INET6
 %token	INTERFACE INTERVAL IP KEYPAIR LABEL LISTEN VALUE LOADBALANCE LOG LOOKUP
@@ -385,6 +385,25 @@ sendbuf		: NOTHING		{
 			table->sendbuf = strdup($1);
 			if (table->sendbuf == NULL)
 				fatal("out of memory");
+			free($1);
+		}
+		;
+
+sendbinbuf	: NOTHING		{
+			table->sendbinbuf = NULL;
+		}
+		| STRING		{
+			if (strlen($1) == 0) {
+				yyerror("empty binary send data");
+				free($1);
+				YYERROR;
+			}
+			table->sendbuf = strdup($1);
+			if (table->sendbuf == NULL)
+				fatal("out of memory");
+			table->sendbinbuf = string2binary($1);
+			if (table->sendbinbuf == NULL)
+				fatal("failed in binary send data");
 			free($1);
 		}
 		;
@@ -950,6 +969,36 @@ tablecheck	: ICMP			{ table->conf.check = CHECK_ICMP; }
 			}
 			translate_string(table->conf.exbuf);
 			free($4);
+		}
+		| BINARY SEND sendbinbuf EXPECT STRING opttls {
+			table->conf.check = CHECK_BINSEND_EXPECT;
+			if ($6) {
+				conf->sc_conf.flags |= F_TLS;
+				table->conf.flags |= F_TLS;
+			}
+			if (strlen($5) == 0) {
+				yyerror("empty binary expect data");
+				free($5);
+				YYERROR;
+			}
+			if (strlcpy(table->conf.exbuf, $5,
+			    sizeof(table->conf.exbuf))
+			    >= sizeof(table->conf.exbuf)) {
+				yyerror("expect buffer truncated");
+				free($5);
+				YYERROR;
+			}
+			struct ibuf *ibuf = string2binary($5);
+			if (ibuf == NULL) {
+				yyerror("failed in binary expect data buffer");
+				ibuf_free(ibuf);
+				free($5);
+				YYERROR;
+			}
+			memcpy(table->conf.exbinbuf, ibuf->buf,
+			    ibuf_size(ibuf));
+			ibuf_free(ibuf);
+			free($5);
 		}
 		| SCRIPT STRING {
 			table->conf.check = CHECK_SCRIPT;
@@ -2309,6 +2358,7 @@ lookup(char *s)
 		{ "append",		APPEND },
 		{ "backlog",		BACKLOG },
 		{ "backup",		BACKUP },
+		{ "binary",		BINARY },
 		{ "block",		BLOCK },
 		{ "buffer",		BUFFER },
 		{ "ca",			CA },
@@ -2890,6 +2940,8 @@ load_config(const char *filename, struct relayd *x_conf)
 			}
 			if (table->sendbuf != NULL)
 				free(table->sendbuf);
+			if (table->sendbinbuf != NULL)
+				ibuf_free(table->sendbinbuf);
 			free(table);
 			continue;
 		}
