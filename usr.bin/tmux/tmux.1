@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.687 2019/09/11 06:43:17 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.688 2019/09/15 21:42:57 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 11 2019 $
+.Dd $Mdocdate: September 15 2019 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4333,7 +4333,9 @@ and
 .Pp
 A style may be the single term
 .Ql default
-to specify the default style (which may inherit from another option) or a space
+to specify the default style (which may come from an option, for example
+.Ic status-style
+in the status line) or a space
 or comma separated list of the following:
 .Bl -tag -width Ds
 .It Ic fg=colour
@@ -4412,6 +4414,20 @@ and
 .Ic list=right-marker
 mark the text to be used to mark that text has been trimmed from the left or
 right of the list if there is not enough space.
+.It Xo Ic push-default ,
+.Ic pop-default
+.Xc
+Store the current colours and attributes as the default or reset to the previous
+default.
+A
+.Ic push-default
+affects any subsequent use of the
+.Ic default
+term until a
+.Ic pop-default .
+Only one default may be pushed (each
+.Ic push-default
+replaces the previous saved default).
 .It Xo Ic range=left ,
 .Ic range=right ,
 .Ic range=window|X ,

@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.109 2019/06/26 13:03:47 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.110 2019/09/15 21:42:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -92,7 +92,9 @@ static const char *options_table_window_size_list[] = {
 				"}" \
 			"}" \
 		"]" \
+		"#[push-default]" \
 		"#{T:window-status-format}" \
+		"#[pop-default]" \
 		"#[norange default]" \
 		"#{?window_end_flag,,#{window-status-separator}}" \
 	"," \
@@ -117,7 +119,9 @@ static const char *options_table_window_size_list[] = {
 				"}" \
 			"}" \
 		"]" \
+		"#[push-default]" \
 		"#{T:window-status-current-format}" \
+		"#[pop-default]" \
 		"#[norange list=on default]" \
 		"#{?window_end_flag,,#{window-status-separator}}" \
 	"}" \
