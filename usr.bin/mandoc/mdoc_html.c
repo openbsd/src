@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.205 2019/09/03 15:09:39 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.206 2019/09/15 00:08:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -349,26 +349,34 @@ print_mdoc_node(MDOC_ARGS)
 	if (n->type == ROFFT_COMMENT || n->flags & NODE_NOPRT)
 		return;
 
-	html_fillmode(h, n->flags & NODE_NOFILL ? ROFF_nf : ROFF_fi);
+	if (n->flags & NODE_NOFILL) {
+		html_fillmode(h, ROFF_nf);
+		if (n->flags & NODE_LINE)
+			print_endline(h);
+	} else
+		html_fillmode(h, ROFF_fi);
 
 	child = 1;
 	n->flags &= ~NODE_ENDED;
 	switch (n->type) {
 	case ROFFT_TEXT:
+		if (n->flags & NODE_LINE) {
+			switch (*n->string) {
+			case '\0':
+				h->col = 1;
+				print_endline(h);
+				return;
+			case ' ':
+				if ((h->flags & HTML_NONEWLINE) == 0 &&
+				    (n->flags & NODE_NOFILL) == 0)
+					print_otag(h, TAG_BR, "");
+				break;
+			default:
+				break;
+			}
+		}
 		t = h->tag;
 		t->refcnt++;
-
-		/* No tables in this mode... */
-		assert(NULL == h->tblt);
-
-		/*
-		 * Make sure that if we're in a literal mode already
-		 * (i.e., within a <PRE>) don't print the newline.
-		 */
-		if (*n->string == ' ' && n->flags & NODE_LINE &&
-		    (h->flags & HTML_NONEWLINE) == 0 &&
-		    (n->flags & NODE_NOFILL) == 0)
-			print_otag(h, TAG_BR, "");
 		if (NODE_DELIMC & n->flags)
 			h->flags |= HTML_NOSPACE;
 		print_text(h, n->string);
@@ -436,12 +444,6 @@ print_mdoc_node(MDOC_ARGS)
 		if (n->end != ENDBODY_NOT)
 			n->body->flags |= NODE_ENDED;
 		break;
-	}
-
-	if (n->flags & NODE_NOFILL &&
-	    (n->next == NULL || n->next->flags & NODE_LINE)) {
-		h->col++;
-		print_endline(h);
 	}
 }
 
@@ -1268,7 +1270,11 @@ mdoc_skip_pre(MDOC_ARGS)
 static int
 mdoc_pp_pre(MDOC_ARGS)
 {
-	if ((n->flags & NODE_NOFILL) == 0) {
+	if (n->flags & NODE_NOFILL) {
+		print_endline(h);
+		h->col = 1;
+		print_endline(h);
+	} else {
 		html_close_paragraph(h);
 		print_otag(h, TAG_P, "c", "Pp");
 	}
