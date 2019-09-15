@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.280 2019/09/14 13:30:48 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.281 2019/09/15 15:00:30 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1537,13 +1537,13 @@ sd_size(struct sd_softc *sc, int flags)
 		return (ENXIO);
 
 	/*
-	 * post-SPC (i.e. post-SCSI-3)) devices can start with 16 byte
-	 * read capacity commands. Older devices start with then 10 byte
+	 * post-SPC2 (i.e. post-SCSI-3) devices can start with 16 byte
+	 * read capacity commands. Older devices start with the 10 byte
 	 * version and move up to the 16 byte version if the device
 	 * says it has more sectors than can be reported via the 10 byte
 	 * read capacity.
 	 */
-	if (SID_ANSII_REV(&sc->sc_link->inqdata) >= SCSI_REV_SPC) {
+	if (SID_ANSII_REV(&sc->sc_link->inqdata) > SCSI_REV_SPC2) {
 		rv = sd_read_cap_16(sc, flags);
 		if (rv != 0)
 			rv = sd_read_cap_10(sc, flags);
