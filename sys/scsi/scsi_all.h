@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.56 2019/08/27 14:41:45 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.57 2019/09/16 16:34:14 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -201,22 +201,30 @@ struct scsi_report_luns {
 #define GENRETRY		1
 
 /*
- * sense data format
+ * Device Types
  */
-#define T_DIRECT	0
-#define T_SEQUENTIAL	1
-#define T_PRINTER	2
-#define T_PROCESSOR	3
-#define T_WORM		4
-#define T_CDROM		5
-#define T_SCANNER	6
-#define T_OPTICAL	7
-#define T_RDIRECT	14
-#define T_NODEVICE	0x1F
-
-#define T_CHANGER	8
-#define T_COMM		9
-#define	T_ENCLOSURE	13
+#define T_DIRECT	0x00	/* Direct access block device (SBC-4) */
+#define T_SEQUENTIAL	0x01	/* Sequential access device (SSC-3) */
+#define T_PRINTER	0x02	/* Printer device (SSC) */
+#define T_PROCESSOR	0x03	/* Processor device (SPC-2) */
+#define T_WORM		0x04	/* Write once device (SBC) */
+#define T_CDROM		0x05	/* CD/DVD device (MMC-5) */
+#define T_SCANNER	0x06	/* Scanner device (Obsolete) */
+#define T_OPTICAL	0x07	/* Optical memory device (SBC) */
+#define T_CHANGER	0x08	/* Media changer device (SMC-3) */
+#define T_COMM		0x09	/* Communications device (Obsolete) */
+#define T_ASC0		0x0a	/* Obsolete */
+#define T_ASC1		0x0b	/* Obsolete */
+#define T_STORARRAY	0x0c	/* Storage Array controller device (RAID) */
+#define T_ENCLOSURE	0x0d	/* Enclosure services device (SES) */
+#define T_RDIRECT	0x0e	/* Simplified direct access device (RBC) */
+#define T_OCRW		0x0f	/* Optical card reader/writer (OCRW) */
+#define T_BCC		0x10	/* Bridge Controller Commands (BCC) */
+#define T_OSD		0x11	/* Object-based Storage device (OSD) */
+#define T_ADC		0x12	/* Automation/Drive Interface (ADC-2) */
+/* 0x13 - 0x1d RESERVED */
+#define T_WELL_KNOWN_LU	0x1e	/* Well known logial unut */
+#define T_NODEVICE	0x1F	/* Unknown or no device type */
 
 #define T_REMOV		1
 #define	T_FIXED		0

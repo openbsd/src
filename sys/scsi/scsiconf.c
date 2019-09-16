@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.212 2019/09/03 21:28:45 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.213 2019/09/16 16:34:14 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -1062,6 +1062,42 @@ scsi_inqmatch(struct scsi_inquiry_data *inqbuf, const void *_base,
 	const unsigned char		*base = (const unsigned char *)_base;
 	const void			*bestmatch;
 	int				 removable;
+#ifdef SCSIDEBUG
+	static char *device_type[32] = {
+		"T_DIRECT",
+		"T_SEQUENTIAL",
+		"T_PRINTER",
+		"T_PROCESSOR",
+		"T_WORM",
+		"T_CDROM",
+		"T_SCANNER",
+		"T_OPTICAL",
+		"T_CHANGER",
+		"T_COMM",
+		"T_ASC0",
+		"T_ASC1",
+		"T_STROARRAY",
+		"T_ENCLOSURE",
+		"T_RDIRECT",
+		"T_OCRW",
+		"T_BCC",
+		"T_OSD",
+		"T_ADC",
+		"T_RESERVED",
+		"T_RESERVED",
+		"T_RESERVED",
+		"T_RESERVED",
+		"T_RESERVED",
+		"T_RESERVED",
+		"T_RESERVED",
+		"T_RESERVED",
+		"T_RESERVED",
+		"T_RESERVED",
+		"T_RESERVED",
+		"T_WELL_KNOWN_LU",
+		"T_NODEVICE"
+	};
+#endif
 
 	/* Include the qualifier to catch vendor-unique types. */
 	removable = inqbuf->dev_qual2 & SID_REMOVABLE ? T_REMOV : T_FIXED;
@@ -1094,53 +1130,10 @@ scsi_inqmatch(struct scsi_inquiry_data *inqbuf, const void *_base,
 			printf(" quirk ");
 		else
 			printf(" match ");
-		printf("priority %d. ", priority);
 
-		switch (match->type & SID_TYPE) {
-		case T_DIRECT:
-			printf("T_DIRECT");
-			break;
-		case T_SEQUENTIAL:
-			printf("T_SEQUENTIAL");
-			break;
-		case T_PRINTER:
-			printf("T_PRINTER");
-			break;
-		case T_PROCESSOR:
-			printf("T_PROCESSOR");
-			break;
-		case T_CDROM:
-			printf("T_CDROM");
-			break;
-		case T_WORM:
-			printf("T_WORM");
-			break;
-		case T_SCANNER:
-			printf("T_SCANNER");
-			break;
-		case T_OPTICAL:
-			printf("T_OPTICAL");
-			break;
-		case T_CHANGER:
-			printf("T_CHANGER");
-			break;
-		case T_COMM:
-			printf("T_COMM");
-			break;
-		case T_ENCLOSURE:
-			printf("T_ENCLOSURE");
-			break;
-		case T_RDIRECT:
-			printf("T_RDIRECT");
-			break;
-		default:
-			printf("%d/<unknown>", match->type & SID_TYPE);
-			break;
-		}
-
-		printf(" %s", (match->removable == T_FIXED) ? "T_FIXED" : "T_REMOV");
-
-		printf(" <\"%s\", \"%s\", \"%s\">",
+		printf("priority %d. %s %s <\"%s\", \"%s\", \"%s\">", priority,
+		    device_type[(match->type & SID_TYPE)],
+		    (match->removable == T_FIXED) ? "T_FIXED" : "T_REMOV",
 		    match->vendor, match->product, match->revision);
 
 		if (_base == &scsi_quirk_patterns)
