@@ -1980,8 +1980,13 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	 * pages from.
 	 */
 	if (!obj->base.filp) {
-		i915_gem_object_put(obj);
-		return -ENXIO;
+		addr = -ENXIO;
+		goto err;
+	}
+
+	if (range_overflows(args->offset, args->size, (u64)obj->base.size)) {
+		addr = -EINVAL;
+		goto err;
 	}
 
 #ifdef __linux__
@@ -1996,8 +2001,8 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 		struct vm_area_struct *vma;
 
 		if (down_write_killable(&mm->mmap_sem)) {
-			i915_gem_object_put(obj);
-			return -EINTR;
+			addr = -EINTR;
+			goto err;
 		}
 		vma = find_vma(mm, addr);
 		if (vma && __vma_matches(vma, obj->base.filp, addr, args->size))
@@ -2013,15 +2018,6 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 		WRITE_ONCE(obj->frontbuffer_ggtt_origin, ORIGIN_CPU);
 	}
 	i915_gem_object_put(obj);
-
-	args->addr_ptr = (uint64_t) addr;
-
-	return 0;
-
-err:
-	i915_gem_object_put(obj);
-
-	return addr;
 #else
 	addr = 0;
 	ret = -uvm_map(&curproc->p_vmspace->vm_map, &addr, size,
@@ -2037,11 +2033,14 @@ err:
 	i915_gem_object_put(obj);
 	if (ret)
 		return ret;
+#endif
 
 	args->addr_ptr = (uint64_t) addr;
-
 	return 0;
-#endif
+
+err:
+	i915_gem_object_put(obj);
+	return addr;
 }
 
 static unsigned int tile_row_pages(struct drm_i915_gem_object *obj)
