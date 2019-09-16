@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.11 2019/07/09 12:44:47 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.12 2019/09/16 13:27:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -185,8 +185,11 @@ menu_key_cb(struct client *c, struct key_event *event)
 	const char			*name;
 
 	if (KEYC_IS_MOUSE(event->key)) {
-		if (md->flags & MENU_NOMOUSE)
+		if (md->flags & MENU_NOMOUSE) {
+			if (MOUSE_BUTTONS(m->b) != 0)
+				return (1);
 			return (0);
+		}
 		if (m->x < md->px ||
 		    m->x > md->px + 4 + menu->width ||
 		    m->y < md->py + 1 ||
