@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.87 2019/09/16 19:39:47 kn Exp $ */
+/*	$OpenBSD: arp.c,v 1.88 2019/09/16 20:49:28 kn Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -87,8 +87,6 @@ static int nflag;	/* no reverse dns lookups */
 static int aflag;	/* do it for all entries */
 static int rtsock = -1;
 static int rdomain;
-
-extern int h_errno;
 
 /* ROUNDUP() is nasty, but it is identical to what's in the kernel. */
 #define ROUNDUP(a) \
