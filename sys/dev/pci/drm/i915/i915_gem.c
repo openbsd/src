@@ -1988,6 +1988,9 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	addr = vm_mmap(obj->base.filp, 0, args->size,
 		       PROT_READ | PROT_WRITE, MAP_SHARED,
 		       args->offset);
+	if (IS_ERR_VALUE(addr))
+		goto err;
+
 	if (args->flags & I915_MMAP_WC) {
 		struct mm_struct *mm = current->mm;
 		struct vm_area_struct *vma;
@@ -2003,13 +2006,22 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 		else
 			addr = -ENOMEM;
 		up_write(&mm->mmap_sem);
+		if (IS_ERR_VALUE(addr))
+			goto err;
 
 		/* This may race, but that's ok, it only gets set */
 		WRITE_ONCE(obj->frontbuffer_ggtt_origin, ORIGIN_CPU);
 	}
 	i915_gem_object_put(obj);
-	if (IS_ERR((void *)addr))
-		return addr;
+
+	args->addr_ptr = (uint64_t) addr;
+
+	return 0;
+
+err:
+	i915_gem_object_put(obj);
+
+	return addr;
 #else
 	addr = 0;
 	ret = -uvm_map(&curproc->p_vmspace->vm_map, &addr, size,
@@ -2025,11 +2037,11 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	i915_gem_object_put(obj);
 	if (ret)
 		return ret;
-#endif
 
 	args->addr_ptr = (uint64_t) addr;
 
 	return 0;
+#endif
 }
 
 static unsigned int tile_row_pages(struct drm_i915_gem_object *obj)
