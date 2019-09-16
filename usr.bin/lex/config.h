@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.5 2015/11/19 23:48:06 tedu Exp $	*/
+/*	$OpenBSD: config.h,v 1.6 2019/09/16 17:30:16 espie Exp $	*/
 
 /* config.h.  Generated from conf.in by configure.  */
 /* conf.in.  Generated from configure.ac by autoheader.  */
@@ -133,6 +133,8 @@
 
 /* Define to 1 if `vfork' works. */
 #define HAVE_WORKING_VFORK 1
+
+#define HAVE_ASSERT_H 1
 
 /* Define to 1 if the system has the type `_Bool'. */
 #define HAVE__BOOL 1
