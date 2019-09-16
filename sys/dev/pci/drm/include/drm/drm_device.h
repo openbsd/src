@@ -113,6 +113,27 @@ struct drm_device {
 	struct mutex vblank_time_lock;    /**< Protects vblank count and time updates during vblank enable/disable */
 	struct mutex vbl_lock;
 
+	/**
+	 * @max_vblank_count:
+	 *
+	 * Maximum value of the vblank registers. This value +1 will result in a
+	 * wrap-around of the vblank register. It is used by the vblank core to
+	 * handle wrap-arounds.
+	 *
+	 * If set to zero the vblank core will try to guess the elapsed vblanks
+	 * between times when the vblank interrupt is disabled through
+	 * high-precision timestamps. That approach is suffering from small
+	 * races and imprecision over longer time periods, hence exposing a
+	 * hardware vblank counter is always recommended.
+	 *
+	 * This is the statically configured device wide maximum. The driver
+	 * can instead choose to use a runtime configurable per-crtc value
+	 * &drm_vblank_crtc.max_vblank_count, in which case @max_vblank_count
+	 * must be left at zero. See drm_crtc_set_max_vblank_count() on how
+	 * to use the per-crtc value.
+	 *
+	 * If non-zero, &drm_crtc_funcs.get_vblank_counter must be set.
+	 */
 	u32 max_vblank_count;           /**< size of vblank counter register */
 
 	/**
