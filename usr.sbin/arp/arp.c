@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.86 2019/08/31 13:46:14 bluhm Exp $ */
+/*	$OpenBSD: arp.c,v 1.87 2019/09/16 19:39:47 kn Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -95,13 +95,6 @@ extern int h_errno;
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
-/* which function we're supposed to do */
-#define F_GET		1
-#define F_SET		2
-#define F_FILESET	3
-#define F_DELETE	4
-#define F_WAKE		5
-
 int
 main(int argc, char *argv[])
 {
@@ -120,22 +113,15 @@ main(int argc, char *argv[])
 			nflag = 1;
 			break;
 		case 'd':
-			if (func)
-				usage();
-			func = F_DELETE;
-			break;
 		case 's':
+		case 'f':
+		case 'W':
 			if (func)
 				usage();
-			func = F_SET;
+			func = ch;
 			break;
 		case 'F':
 			replace = 1;
-			break;
-		case 'f':
-			if (func)
-				usage();
-			func = F_FILESET;
 			break;
 		case 'V':
 			rdomain = strtonum(optarg, 0, RT_TABLEID_MAX, &errstr);
@@ -143,11 +129,6 @@ main(int argc, char *argv[])
 				warn("bad rdomain: %s", errstr);
 				usage();
 			}
-			break;
-		case 'W':
-			if (func)
-				usage();
-			func = F_WAKE;
 			break;
 		default:
 			usage();
@@ -157,11 +138,8 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (!func)
-		func = F_GET;
-
 	switch (func) {
-	case F_GET:
+	case 0:
 		if (aflag && argc == 0)
 			dump();
 		else if (!aflag && argc == 1)
@@ -169,14 +147,14 @@ main(int argc, char *argv[])
 		else
 			usage();
 		break;
-	case F_SET:
+	case 's':
 		if (argc < 2 || argc > 5)
 			usage();
 		if (replace)
 			delete(argv[0]);
 		error = set(argc, argv) ? 1 : 0;
 		break;
-	case F_DELETE:
+	case 'd':
 		if (aflag && argc == 0)
 			search(0, nuke_entry);
 		else if (!aflag && argc == 1)
@@ -184,12 +162,12 @@ main(int argc, char *argv[])
 		else
 			usage();
 		break;
-	case F_FILESET:
+	case 'f':
 		if (argc != 1)
 			usage();
 		error = file(argv[0]);
 		break;
-	case F_WAKE:
+	case 'W':
 		if (aflag || nflag || replace || rdomain > 0)
 			usage();
 		if (argc == 1)
