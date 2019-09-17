@@ -289,6 +289,13 @@ xfrd_read_state(struct xfrd_state* xfrd)
 			zone->state = xfrd_zone_refreshing;
 			xfrd_set_refresh_now(zone);
 		}
+		if(timeout != 0 && filetime + timeout < (uint32_t)xfrd_time()) {
+			/* timeout is in the past, refresh the zone */
+			timeout = 0;
+			if(zone->state == xfrd_zone_ok)
+				zone->state = xfrd_zone_refreshing;
+			xfrd_set_refresh_now(zone);
+		}
 
 		/* There is a soa && current time is past expiry point */
 		if(soa_disk_acquired_read!=0 &&

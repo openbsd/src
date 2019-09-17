@@ -76,6 +76,14 @@
 /* if time.h provides ctime_r prototype */
 #undef HAVE_CTIME_R_PROTO
 
+/* Define to 1 if you have the declaration of `SSL_CTX_set_ecdh_auto', and to
+   0 if you don't. */
+#undef HAVE_DECL_SSL_CTX_SET_ECDH_AUTO
+
+/* Define to 1 if you have the declaration of `SSL_CTX_set_tmp_ecdh', and to 0
+   if you don't. */
+#undef HAVE_DECL_SSL_CTX_SET_TMP_ECDH
+
 /* Define to 1 if you have the `dup2' function. */
 #undef HAVE_DUP2
 
@@ -221,6 +229,9 @@
 /* Define to 1 if you have the `OPENSSL_init_ssl' function. */
 #undef HAVE_OPENSSL_INIT_SSL
 
+/* Define to 1 if you have the <openssl/ocsp.h> header file. */
+#undef HAVE_OPENSSL_OCSP_H
+
 /* Define to 1 if you have the <openssl/rand.h> header file. */
 #undef HAVE_OPENSSL_RAND_H
 
@@ -239,7 +250,7 @@
 /* Define to 1 if you have the `pwrite' function. */
 #undef HAVE_PWRITE
 
-/* Define to 1 if you have the `reallocarray' function. */
+/* If we have reallocarray(3) */
 #undef HAVE_REALLOCARRAY
 
 /* Define if recvmmsg is implemented */
@@ -280,6 +291,9 @@
 
 /* Define if you have the SSL libraries installed. */
 #undef HAVE_SSL
+
+/* Define to 1 if you have the `SSL_CTX_set_security_level' function. */
+#undef HAVE_SSL_CTX_SET_SECURITY_LEVEL
 
 /* Define to 1 if you have the <stdarg.h> header file. */
 #undef HAVE_STDARG_H
@@ -507,6 +521,9 @@
 /* Define to the default tcp timeout. */
 #undef TCP_TIMEOUT
 
+/* Define to the default DNS over TLS port. */
+#undef TLS_PORT
+
 /* Define to the default maximum udp message length. */
 #undef UDP_MAX_MESSAGE_LEN
 
@@ -549,6 +566,9 @@
 # undef __EXTENSIONS__
 #endif
 
+
+/* Define this to enable TCP fast open. */
+#undef USE_TCP_FASTOPEN
 
 /* Define this to enable per-zone statistics gathering. */
 #undef USE_ZONE_STATS
@@ -687,6 +707,9 @@
 #  endif
 #  ifndef _BSD_SOURCE
 #    define _BSD_SOURCE 1
+#  endif
+#  ifndef _OPENBSD_SOURCE
+#    define _OPENBSD_SOURCE 1
 #  endif
 #  ifndef _DEFAULT_SOURCE
 #    define _DEFAULT_SOURCE 1

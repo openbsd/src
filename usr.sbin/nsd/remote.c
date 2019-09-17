@@ -252,48 +252,13 @@ timeval_subtract(struct timeval* d, const struct timeval* end,
 static int
 remote_setup_ctx(struct daemon_remote* rc, struct nsd_options* cfg)
 {
-	char* s_cert;
-	char* s_key;
-	rc->ctx = SSL_CTX_new(SSLv23_server_method());
+	char* s_cert = cfg->server_cert_file;
+	char* s_key = cfg->server_key_file;
+	rc->ctx = server_tls_ctx_setup(s_key, s_cert, s_cert);
 	if(!rc->ctx) {
-		log_crypto_err("could not SSL_CTX_new");
+		log_msg(LOG_ERR, "could not setup remote control TLS context");
 		return 0;
 	}
-	/* no SSLv2, SSLv3 because has defects */
-	if((SSL_CTX_set_options(rc->ctx, SSL_OP_NO_SSLv2) & SSL_OP_NO_SSLv2)
-		!= SSL_OP_NO_SSLv2){
-		log_crypto_err("could not set SSL_OP_NO_SSLv2");
-		return 0;
-	}
-	if((SSL_CTX_set_options(rc->ctx, SSL_OP_NO_SSLv3) & SSL_OP_NO_SSLv3)
-		!= SSL_OP_NO_SSLv3){
-		log_crypto_err("could not set SSL_OP_NO_SSLv3");
-		return 0;
-	}
-	s_cert = cfg->server_cert_file;
-	s_key = cfg->server_key_file;
-	VERBOSITY(2, (LOG_INFO, "setup SSL certificates"));
-	if (!SSL_CTX_use_certificate_file(rc->ctx,s_cert,SSL_FILETYPE_PEM)) {
-		log_msg(LOG_ERR, "Error for server-cert-file: %s", s_cert);
-		log_crypto_err("Error in SSL_CTX use_certificate_file");
-		return 0;
-	}
-	if(!SSL_CTX_use_PrivateKey_file(rc->ctx,s_key,SSL_FILETYPE_PEM)) {
-		log_msg(LOG_ERR, "Error for server-key-file: %s", s_key);
-		log_crypto_err("Error in SSL_CTX use_PrivateKey_file");
-		return 0;
-	}
-	if(!SSL_CTX_check_private_key(rc->ctx)) {
-		log_msg(LOG_ERR, "Error for server-key-file: %s", s_key);
-		log_crypto_err("Error in SSL_CTX check_private_key");
-		return 0;
-	}
-	if(!SSL_CTX_load_verify_locations(rc->ctx, s_cert, NULL)) {
-		log_crypto_err("Error setting up SSL_CTX verify locations");
-		return 0;
-	}
-	SSL_CTX_set_client_CA_list(rc->ctx, SSL_load_client_CA_file(s_cert));
-	SSL_CTX_set_verify(rc->ctx, SSL_VERIFY_PEER, NULL);
 	return 1;
 }
 
@@ -304,38 +269,6 @@ daemon_remote_create(struct nsd_options* cfg)
 		sizeof(*rc));
 	rc->max_active = 10;
 	assert(cfg->control_enable);
-
-	/* init SSL library */
-#ifdef HAVE_ERR_LOAD_CRYPTO_STRINGS
-	ERR_load_crypto_strings();
-#endif
-	ERR_load_SSL_strings();
-#if OPENSSL_VERSION_NUMBER < 0x10100000 || !defined(HAVE_OPENSSL_INIT_CRYPTO)
-	OpenSSL_add_all_algorithms();
-#else
-	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS
-		| OPENSSL_INIT_ADD_ALL_DIGESTS
-		| OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
-#endif
-#if OPENSSL_VERSION_NUMBER < 0x10100000 || !defined(HAVE_OPENSSL_INIT_SSL)
-	(void)SSL_library_init();
-#else
-	OPENSSL_init_ssl(0, NULL);
-#endif
-
-	if(!RAND_status()) {
-		/* try to seed it */
-		unsigned char buf[256];
-		unsigned int v, seed=(unsigned)time(NULL) ^ (unsigned)getpid();
-		size_t i;
-		v = seed;
-		for(i=0; i<256/sizeof(v); i++) {
-			memmove(buf+i*sizeof(v), &v, sizeof(v));
-			v = v*seed + (unsigned int)i;
-		}
-		RAND_seed(buf, 256);
-		log_msg(LOG_WARNING, "warning: no entropy, seeding openssl PRNG with time");
-	}
 
 	if(options_remote_is_address(cfg)) {
 		if(!remote_setup_ctx(rc, cfg)) {
@@ -593,6 +526,7 @@ daemon_remote_attach(struct daemon_remote* rc, struct xfrd_state* xfrd)
 	for(p = rc->accept_list; p; p = p->next) {
 		/* add event */
 		fd = p->c.ev_fd;
+		memset(&p->c, 0, sizeof(p->c));
 		event_set(&p->c, fd, EV_PERSIST|EV_READ, remote_accept_callback,
 			p);
 		if(event_base_set(xfrd->event_base, &p->c) != 0)
@@ -670,6 +604,7 @@ remote_accept_callback(int fd, short event, void* arg)
 	n->tval.tv_usec = 0L;
 	n->fd = newfd;
 
+	memset(&n->c, 0, sizeof(n->c));
 	event_set(&n->c, newfd, EV_PERSIST|EV_TIMEOUT|EV_READ,
 		remote_control_callback, n);
 	if(event_base_set(xfrd->event_base, &n->c) != 0) {
@@ -2372,6 +2307,7 @@ remote_handshake_later(struct daemon_remote* rc, struct rc_state* s, int fd,
 		}
 		s->shake_state = rc_hs_read;
 		event_del(&s->c);
+		memset(&s->c, 0, sizeof(s->c));
 		event_set(&s->c, fd, EV_PERSIST|EV_TIMEOUT|EV_READ,
 			remote_control_callback, s);
 		if(event_base_set(xfrd->event_base, &s->c) != 0)
@@ -2386,6 +2322,7 @@ remote_handshake_later(struct daemon_remote* rc, struct rc_state* s, int fd,
 		}
 		s->shake_state = rc_hs_write;
 		event_del(&s->c);
+		memset(&s->c, 0, sizeof(s->c));
 		event_set(&s->c, fd, EV_PERSIST|EV_TIMEOUT|EV_WRITE,
 			remote_control_callback, s);
 		if(event_base_set(xfrd->event_base, &s->c) != 0)
@@ -2553,6 +2490,12 @@ print_stat_block(RES* ssl, char* n, char* d, struct nsdst* st)
 	/* ctcp6 */
 	if(!ssl_printf(ssl, "%s%snum.tcp6=%lu\n", n, d, (unsigned long)st->ctcp6))
 		return;
+	/* ctls */
+	if(!ssl_printf(ssl, "%s%snum.tls=%lu\n", n, d, (unsigned long)st->ctls))
+		return;
+	/* ctls6 */
+	if(!ssl_printf(ssl, "%s%snum.tls6=%lu\n", n, d, (unsigned long)st->ctls6))
+		return;
 
 	/* nona */
 	if(!ssl_printf(ssl, "%s%snum.answer_wo_aa=%lu\n", n, d,
@@ -2640,7 +2583,7 @@ zonestat_print(RES* ssl, xfrd_state_type* xfrd, int clear)
 		/* stat0 contains the details that we want to print */
 		if(!ssl_printf(ssl, "%s%snum.queries=%lu\n", name, ".",
 			(unsigned long)(stat0.qudp + stat0.qudp6 + stat0.ctcp +
-				stat0.ctcp6)))
+				stat0.ctcp6 + stat0.ctls + stat0.ctls6)))
 			return;
 		print_stat_block(ssl, name, ".", &stat0);
 	}

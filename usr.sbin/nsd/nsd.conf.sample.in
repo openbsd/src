@@ -33,6 +33,14 @@ server:
 	# use the reuseport socket option for performance. Default no.
 	# reuseport: no
 
+	# override maximum socket send buffer size.  Default of 0 results in
+	# send buffer size being set to 1048576 (bytes).
+	# send-buffer-size: 1048576
+
+	# override maximum socket receive buffer size. Default of 0 results in
+	# receive buffer size being set to 1048576 (bytes).
+	# receive-buffer-size: 1048576
+
 	# enable debug mode, does not fork daemon process into the background.
 	# debug-mode: no
 
@@ -85,6 +93,9 @@ server:
 	# don't answer VERSION.BIND and VERSION.SERVER CHAOS class queries
 	# hide-version: no
 
+	# don't answer HOSTNAME.BIND and ID.SERVER CHAOS class queries
+	# hide-identity: no
+
 	# version string the server responds with for chaos queries.
 	# default is 'NSD x.y.z' with the server's version number.
 	# version: "NSD"
@@ -97,6 +108,11 @@ server:
 
 	# Maximum number of concurrent TCP connections per server.
 	# tcp-count: 100
+
+	# Accept (and immediately close) TCP connections after maximum number
+	# of connections is reached to prevent kernel connection queue from
+	# growing.
+	# tcp-reject-overflow: no
 
 	# Maximum number of queries served on a single TCP connection.
 	# By default 0, which means no maximum.
@@ -188,6 +204,14 @@ server:
 	# dnstap-version: ""
 	# dnstap-log-auth-query-messages: no
 	# dnstap-log-auth-response-messages: no
+
+	# Service clients over TLS (on the TCP sockets), with plain DNS inside
+	# the TLS stream. Give the certificate to use and private key.
+	# Default is "" (disabled). Requires restart to take effect.
+	# tls-service-key: "path/to/privatekeyfile.key"
+	# tls-service-pem: "path/to/publiccertfile.pem"
+	# tls-service-ocsp: "path/to/ocsp.pem"
+	# tls-port: 853
 
 # Remote control config section. 
 remote-control:

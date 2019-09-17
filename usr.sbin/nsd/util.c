@@ -1087,6 +1087,35 @@ addr2str(
 }
 
 void
+addrport2str(
+#ifdef INET6
+	struct sockaddr_storage *addr
+#else
+	struct sockaddr_in *addr
+#endif
+	, char* str, size_t len)
+{
+	char ip[256];
+#ifdef INET6
+	if (addr->ss_family == AF_INET6) {
+		if (!inet_ntop(AF_INET6,
+			&((struct sockaddr_in6 *)addr)->sin6_addr, ip, sizeof(ip)))
+			strlcpy(ip, "[unknown ip6, inet_ntop failed]", sizeof(ip));
+		/* append port number */
+		snprintf(str, len, "%s@%u", ip,
+			(unsigned)ntohs(((struct sockaddr_in6 *)addr)->sin6_port));
+		return;
+	} else
+#endif
+	if (!inet_ntop(AF_INET, &((struct sockaddr_in *)addr)->sin_addr,
+		ip, sizeof(ip)))
+		strlcpy(ip, "[unknown ip4, inet_ntop failed]", sizeof(ip));
+	/* append port number */
+	snprintf(str, len, "%s@%u", ip,
+		(unsigned)ntohs(((struct sockaddr_in *)addr)->sin_port));
+}
+
+void
 append_trailing_slash(const char** dirname, region_type* region)
 {
 	int l = strlen(*dirname);

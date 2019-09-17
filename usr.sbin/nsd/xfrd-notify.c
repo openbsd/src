@@ -382,6 +382,8 @@ notify_setup_event(struct notify_zone* zone)
 			event_del(&zone->notify_send_handler);
 		}
 		zone->notify_timeout.tv_sec = XFRD_NOTIFY_RETRY_TIMOUT;
+		memset(&zone->notify_send_handler, 0,
+			sizeof(zone->notify_send_handler));
 		event_set(&zone->notify_send_handler, fd, EV_READ | EV_TIMEOUT,
 			xfrd_handle_notify_send, zone);
 		if(event_base_set(xfrd->event_base, &zone->notify_send_handler) != 0)
@@ -396,6 +398,8 @@ notify_setup_event(struct notify_zone* zone)
 			event_del(&zone->notify_send6_handler);
 		}
 		zone->notify_timeout.tv_sec = XFRD_NOTIFY_RETRY_TIMOUT;
+		memset(&zone->notify_send6_handler, 0,
+			sizeof(zone->notify_send6_handler));
 		event_set(&zone->notify_send6_handler, fd, EV_READ | EV_TIMEOUT,
 			xfrd_handle_notify_send, zone);
 		if(event_base_set(xfrd->event_base, &zone->notify_send6_handler) != 0)
@@ -465,6 +469,8 @@ setup_notify_active(struct notify_zone* zone)
 
 	if(zone->notify_send_enable)
 		notify_send_disable(zone);
+	memset(&zone->notify_send_handler, 0,
+		sizeof(zone->notify_send_handler));
 	event_set(&zone->notify_send_handler, -1, EV_TIMEOUT,
 		xfrd_handle_notify_send, zone);
 	if(event_base_set(xfrd->event_base, &zone->notify_send_handler) != 0)

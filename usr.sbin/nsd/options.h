@@ -61,9 +61,12 @@ struct nsd_options {
 
 	int ip_transparent;
 	int ip_freebind;
+	int send_buffer_size;
+	int receive_buffer_size;
 	int debug_mode;
 	int verbosity;
 	int hide_version;
+	int hide_identity;
 	int do_ip4;
 	int do_ip6;
 	const char* database;
@@ -72,6 +75,7 @@ struct nsd_options {
 	const char* logfile;
 	int server_count;
 	int tcp_count;
+	int tcp_reject_overflow;
 	int tcp_query_count;
 	int tcp_timeout;
 	int tcp_mss;
@@ -96,6 +100,15 @@ struct nsd_options {
 	int minimal_responses;
 	int refuse_any;
 	int reuseport;
+
+	/* private key file for TLS */
+	char* tls_service_key;
+	/* ocsp stapling file for TLS */
+	char* tls_service_ocsp;
+	/* certificate file for TLS */
+	char* tls_service_pem;
+	/* TLS dedicated port */
+	const char* tls_port;
 
         /** remote control section. enable toggle. */
 	int control_enable;

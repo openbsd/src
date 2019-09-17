@@ -16,6 +16,9 @@
 #include <sys/wait.h>
 
 #include <netinet/in.h>
+#ifdef USE_TCP_FASTOPEN
+  #include <netinet/tcp.h>
+#endif
 #include <arpa/inet.h>
 
 #include <assert.h>
@@ -39,6 +42,15 @@
 #endif /* HAVE_MMAP */
 #ifdef HAVE_OPENSSL_RAND_H
 #include <openssl/rand.h>
+#endif
+#ifdef HAVE_OPENSSL_SSL_H
+#include <openssl/ssl.h>
+#endif
+#ifdef HAVE_OPENSSL_ERR_H
+#include <openssl/err.h>
+#endif
+#ifdef HAVE_OPENSSL_OCSP_H
+#include <openssl/ocsp.h>
 #endif
 #ifndef USE_MINI_EVENT
 #  ifdef HAVE_EVENT_H
@@ -71,6 +83,11 @@
 
 #define RELOAD_SYNC_TIMEOUT 25 /* seconds */
 
+#ifdef USE_TCP_FASTOPEN
+  #define TCP_FASTOPEN_FILE "/proc/sys/net/ipv4/tcp_fastopen"
+  #define TCP_FASTOPEN_SERVER_BIT_MASK 0x2
+#endif
+
 /*
  * Data for the UDP handlers.
  */
@@ -86,6 +103,10 @@ struct tcp_accept_handler_data {
 	struct nsd_socket  *socket;
 	int event_added;
 	struct event       event;
+#ifdef HAVE_SSL
+	/* handler accepts TLS connections on the dedicated port */
+	int tls_accept;
+#endif
 };
 
 /*
@@ -98,6 +119,11 @@ static struct tcp_accept_handler_data*	tcp_accept_handlers;
 
 static struct event slowaccept_event;
 static int slowaccept;
+
+#ifdef HAVE_SSL
+static unsigned char *ocspdata = NULL;
+static long ocspdata_len = 0;
+#endif
 
 #ifndef NONBLOCKING_IS_BROKEN
 #  define NUM_RECV_PER_SELECT 100
@@ -170,7 +196,23 @@ struct tcp_handler_data
 	 * The timeout in msec for this tcp connection
 	 */
 	int	tcp_timeout;
+#ifdef HAVE_SSL
+	/*
+	 * TLS object.
+	 */
+	SSL* tls;
+
+	/*
+	 * TLS handshake state.
+	 */
+	enum { tls_hs_none, tls_hs_read, tls_hs_write,
+		tls_hs_read_event, tls_hs_write_event } shake_state;
+#endif
+	/* list of connections, for service of remaining tcp channels */
+	struct tcp_handler_data *prev, *next;
 };
+/* global that is the list of active tcp channels */
+static struct tcp_handler_data *tcp_active_list = NULL;
 
 /*
  * Handle incoming queries on the UDP server sockets.
@@ -202,6 +244,29 @@ static void handle_tcp_reading(int fd, short event, void* arg);
  */
 static void handle_tcp_writing(int fd, short event, void* arg);
 
+#ifdef HAVE_SSL
+/* Create SSL object and associate fd */
+static SSL* incoming_ssl_fd(SSL_CTX* ctx, int fd);
+/*
+ * Handle TLS handshake. May be called multiple times if incomplete.
+ */
+static int tls_handshake(struct tcp_handler_data* data, int fd, int writing);
+
+/*
+ * Handle incoming queries on a TLS over TCP connection.  The TLS
+ * connections are configured to be non-blocking and the handler may
+ * be called multiple times before a complete query is received.
+ */
+static void handle_tls_reading(int fd, short event, void* arg);
+
+/*
+ * Handle outgoing responses on a TLS over TCP connection.  The TLS
+ * connections are configured to be non-blocking and the handler may
+ * be called multiple times before a complete response is sent.
+ */
+static void handle_tls_writing(int fd, short event, void* arg);
+#endif
+
 /*
  * Send all children the quit nonblocking, then close pipe.
  */
@@ -223,6 +288,34 @@ static uint16_t *compressed_dname_offsets = 0;
 static uint32_t compression_table_capacity = 0;
 static uint32_t compression_table_size = 0;
 static domain_type* compressed_dnames[MAXRRSPP];
+
+#ifdef USE_TCP_FASTOPEN
+/* Checks to see if the kernel value must be manually changed in order for
+   TCP Fast Open to support server mode */
+static void report_tcp_fastopen_config() {
+
+	int tcp_fastopen_fp;
+	uint8_t tcp_fastopen_value;
+
+	if ( (tcp_fastopen_fp = open(TCP_FASTOPEN_FILE, O_RDONLY)) == -1 ) {
+		log_msg(LOG_INFO,"Error opening " TCP_FASTOPEN_FILE ": %s\n", strerror(errno));
+	}
+	if (read(tcp_fastopen_fp, &tcp_fastopen_value, 1) == -1 ) {
+		log_msg(LOG_INFO,"Error reading " TCP_FASTOPEN_FILE ": %s\n", strerror(errno));
+		close(tcp_fastopen_fp);
+	}
+	if (!(tcp_fastopen_value & TCP_FASTOPEN_SERVER_BIT_MASK)) {
+		log_msg(LOG_WARNING, "Error: TCP Fast Open support is available and configured in NSD by default.\n");
+		log_msg(LOG_WARNING, "However the kernel paramenters are not configured to support TCP_FASTOPEN in server mode.\n");
+		log_msg(LOG_WARNING, "To enable TFO use the command:");
+		log_msg(LOG_WARNING, "  'sudo sysctl -w net.ipv4.tcp_fastopen=2' for pure server mode or\n");
+		log_msg(LOG_WARNING, "  'sudo sysctl -w net.ipv4.tcp_fastopen=3' for both client and server mode\n");
+		log_msg(LOG_WARNING, "NSD will not have TCP Fast Open available until this change is made.\n");
+		close(tcp_fastopen_fp);
+	}
+	close(tcp_fastopen_fp);
+}
+#endif
 
 /*
  * Remove the specified pid from the list of child pids.  Returns -1 if
@@ -577,6 +670,9 @@ server_init_ifs(struct nsd *nsd, size_t from, size_t to, int* reuseport_works)
 #if defined(SO_REUSEPORT) || defined(SO_REUSEADDR) || (defined(INET6) && (defined(IPV6_V6ONLY) || defined(IPV6_USE_MIN_MTU) || defined(IPV6_MTU) || defined(IP_TRANSPARENT)) || defined(IP_FREEBIND) || defined(SO_BINDANY))
 	int on = 1;
 #endif
+#ifdef USE_TCP_FASTOPEN
+	int qlen;
+#endif
 
 	/* UDP */
 
@@ -638,59 +734,61 @@ server_init_ifs(struct nsd *nsd, size_t from, size_t to, int* reuseport_works)
 #else
 		(void)reuseport_works;
 #endif /* SO_REUSEPORT */
-#if defined(SO_RCVBUF) || defined(SO_SNDBUF)
-	if(1) {
-	int rcv = 1*1024*1024;
-	int snd = 1*1024*1024;
-
-#ifdef SO_RCVBUF
+#if defined(SO_RCVBUF)
+	{
+		int rcv = 1*1024*1024;
+		if (nsd->options->receive_buffer_size > 0) {
+			rcv = nsd->options->receive_buffer_size;
+		}
 #  ifdef SO_RCVBUFFORCE
-	if(setsockopt(nsd->udp[i].s, SOL_SOCKET, SO_RCVBUFFORCE, (void*)&rcv,
-		(socklen_t)sizeof(rcv)) < 0) {
-		if(errno != EPERM && errno != ENOBUFS) {
-			log_msg(LOG_ERR, "setsockopt(..., SO_RCVBUFFORCE, "
+		if(setsockopt(nsd->udp[i].s, SOL_SOCKET, SO_RCVBUFFORCE, (void*)&rcv,
+			(socklen_t)sizeof(rcv)) < 0) {
+			if(errno != EPERM && errno != ENOBUFS) {
+				log_msg(LOG_ERR, "setsockopt(..., SO_RCVBUFFORCE, "
                                         "...) failed: %s", strerror(errno));
-			return -1;
-		} 
+				return -1;
+			}
+		}
 #  else
-	if(1) {
-#  endif /* SO_RCVBUFFORCE */
 		if(setsockopt(nsd->udp[i].s, SOL_SOCKET, SO_RCVBUF, (void*)&rcv,
-			 (socklen_t)sizeof(rcv)) < 0) {
+			(socklen_t)sizeof(rcv)) < 0) {
 			if(errno != ENOBUFS && errno != ENOSYS) {
 				log_msg(LOG_ERR, "setsockopt(..., SO_RCVBUF, "
                                         "...) failed: %s", strerror(errno));
 				return -1;
 			}
 		}
+#  endif /* SO_RCVBUFFORCE */
 	}
 #endif /* SO_RCVBUF */
 
 #ifdef SO_SNDBUF
+	{
+		int snd = 1*1024*1024;
+		if (nsd->options->send_buffer_size > 0) {
+			snd = nsd->options->send_buffer_size;
+		}
 #  ifdef SO_SNDBUFFORCE
-	if(setsockopt(nsd->udp[i].s, SOL_SOCKET, SO_SNDBUFFORCE, (void*)&snd,
-		(socklen_t)sizeof(snd)) < 0) {
-		if(errno != EPERM && errno != ENOBUFS) {
-			log_msg(LOG_ERR, "setsockopt(..., SO_SNDBUFFORCE, "
+		if(setsockopt(nsd->udp[i].s, SOL_SOCKET, SO_SNDBUFFORCE, (void*)&snd,
+			(socklen_t)sizeof(snd)) < 0) {
+			if(errno != EPERM && errno != ENOBUFS) {
+				log_msg(LOG_ERR, "setsockopt(..., SO_SNDBUFFORCE, "
                                         "...) failed: %s", strerror(errno));
-			return -1;
-		} 
+				return -1;
+			}
+		}
 #  else
-	if(1) {
-#  endif /* SO_SNDBUFFORCE */
 		if(setsockopt(nsd->udp[i].s, SOL_SOCKET, SO_SNDBUF, (void*)&snd,
-			 (socklen_t)sizeof(snd)) < 0) {
+			(socklen_t)sizeof(snd)) < 0) {
 			if(errno != ENOBUFS && errno != ENOSYS) {
 				log_msg(LOG_ERR, "setsockopt(..., SO_SNDBUF, "
                                         "...) failed: %s", strerror(errno));
 				return -1;
 			}
 		}
+#  endif /* SO_SNDBUFFFORCE */
 	}
 #endif /* SO_SNDBUF */
-
-	}
-#endif /* defined(SO_RCVBUF) || defined(SO_SNDBUF) */
 
 #if defined(INET6)
 		if (addr->ai_family == AF_INET6) {
@@ -837,12 +935,18 @@ server_init_ifs(struct nsd *nsd, size_t from, size_t to, int* reuseport_works)
 
 		if (
 			bind(nsd->udp[i].s, (struct sockaddr *) addr->ai_addr, addr->ai_addrlen) != 0) {
-			log_msg(LOG_ERR, "can't bind udp socket: %s", strerror(errno));
+			char buf[256];
+			addrport2str((void*)addr->ai_addr, buf, sizeof(buf));
+			log_msg(LOG_ERR, "can't bind udp socket %s: %s", buf, strerror(errno));
 			return -1;
 		}
 	}
 
 	/* TCP */
+
+#ifdef USE_TCP_FASTOPEN
+	report_tcp_fastopen_config();
+#endif
 
 	/* Make a socket... */
 	for (i = from; i < to; i++) {
@@ -974,9 +1078,39 @@ server_init_ifs(struct nsd *nsd, size_t from, size_t to, int* reuseport_works)
 
 		if(
 			bind(nsd->tcp[i].s, (struct sockaddr *) addr->ai_addr, addr->ai_addrlen) != 0) {
-			log_msg(LOG_ERR, "can't bind tcp socket: %s", strerror(errno));
+			char buf[256];
+			addrport2str((void*)addr->ai_addr, buf, sizeof(buf));
+			log_msg(LOG_ERR, "can't bind tcp socket %s: %s", buf, strerror(errno));
 			return -1;
 		}
+
+#ifdef USE_TCP_FASTOPEN
+		/* qlen specifies how many outstanding TFO requests to allow. Limit is a defense
+		   against IP spoofing attacks as suggested in RFC7413 */
+#ifdef __APPLE__
+		/* OS X implementation only supports qlen of 1 via this call. Actual
+		   value is configured by the net.inet.tcp.fastopen_backlog kernel parm. */
+		qlen = 1;
+#else
+		/* 5 is recommended on linux */
+		qlen = 5;
+#endif
+		if ((setsockopt(nsd->tcp[i].s, IPPROTO_TCP, TCP_FASTOPEN, &qlen, sizeof(qlen))) == -1 ) {
+#ifdef ENOPROTOOPT
+                /* squelch ENOPROTOOPT: freebsd server mode with kernel support
+                   disabled, except when verbosity enabled for debugging */
+                    if(errno != ENOPROTOOPT || verbosity >= 3) {
+#endif
+			if(errno == EPERM) {
+				log_msg(LOG_ERR, "Setting TCP Fast Open as server failed: %s ; this could likely be because sysctl net.inet.tcp.fastopen.enabled, net.inet.tcp.fastopen.server_enable, or net.ipv4.tcp_fastopen is disabled", strerror(errno));
+			} else {
+				log_msg(LOG_ERR, "Setting TCP Fast Open as server failed: %s", strerror(errno));
+			}
+#ifdef ENOPROTOOPT
+		    }
+#endif
+		}
+#endif
 
 		/* Listen to it... */
 		if (listen(nsd->tcp[i].s, TCP_BACKLOG) == -1) {
@@ -1039,9 +1173,12 @@ server_prepare(struct nsd *nsd)
 #else
 	uint32_t v = getpid() ^ time(NULL);
 	srandom((unsigned long)v);
+#  ifdef HAVE_SSL
 	if(RAND_status() && RAND_bytes((unsigned char*)&v, sizeof(v)) > 0)
 		hash_set_raninit(v);
-	else	hash_set_raninit(random());
+	else
+#  endif
+		hash_set_raninit(random());
 #endif
 	rrl_mmap_init(nsd->child_count, nsd->options->rrl_size,
 		nsd->options->rrl_ratelimit,
@@ -1149,6 +1286,8 @@ server_shutdown(struct nsd *nsd)
 	tsig_finalize();
 #ifdef HAVE_SSL
 	daemon_remote_delete(nsd->rc); /* ssl-delete secret keys */
+	if (nsd->tls_ctx)
+		SSL_CTX_free(nsd->tls_ctx);
 #endif
 
 #ifdef MEMCLEAN /* OS collects memory pages */
@@ -1380,6 +1519,306 @@ server_send_soa_xfrd(struct nsd* nsd, int shortsoa)
 		}
 	}
 }
+
+#ifdef HAVE_SSL
+void
+log_crypto_err(const char* str)
+{
+	/* error:[error code]:[library name]:[function name]:[reason string] */
+	char buf[128];
+	unsigned long e;
+	ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
+	log_msg(LOG_ERR, "%s crypto %s", str, buf);
+	while( (e=ERR_get_error()) ) {
+		ERR_error_string_n(e, buf, sizeof(buf));
+		log_msg(LOG_ERR, "and additionally crypto %s", buf);
+	}
+}
+
+void
+perform_openssl_init(void)
+{
+	/* init SSL library */
+#ifdef HAVE_ERR_LOAD_CRYPTO_STRINGS
+	ERR_load_crypto_strings();
+#endif
+	ERR_load_SSL_strings();
+#if OPENSSL_VERSION_NUMBER < 0x10100000 || !defined(HAVE_OPENSSL_INIT_CRYPTO)
+	OpenSSL_add_all_algorithms();
+#else
+	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS
+		| OPENSSL_INIT_ADD_ALL_DIGESTS
+		| OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+#endif
+#if OPENSSL_VERSION_NUMBER < 0x10100000 || !defined(HAVE_OPENSSL_INIT_SSL)
+	(void)SSL_library_init();
+#else
+	OPENSSL_init_ssl(0, NULL);
+#endif
+
+	if(!RAND_status()) {
+		/* try to seed it */
+		unsigned char buf[256];
+		unsigned int v, seed=(unsigned)time(NULL) ^ (unsigned)getpid();
+		size_t i;
+		v = seed;
+		for(i=0; i<256/sizeof(v); i++) {
+			memmove(buf+i*sizeof(v), &v, sizeof(v));
+			v = v*seed + (unsigned int)i;
+		}
+		RAND_seed(buf, 256);
+		log_msg(LOG_WARNING, "warning: no entropy, seeding openssl PRNG with time");
+	}
+}
+
+static int
+get_ocsp(char *filename, unsigned char **ocsp)
+{
+	BIO *bio;
+	OCSP_RESPONSE *response;
+	int len = -1;
+	unsigned char *p, *buf;
+	assert(filename);
+
+	if ((bio = BIO_new_file(filename, "r")) == NULL) {
+		log_crypto_err("get_ocsp: BIO_new_file failed");
+		return -1;
+	}
+
+	if ((response = d2i_OCSP_RESPONSE_bio(bio, NULL)) == NULL) {
+		log_crypto_err("get_ocsp: d2i_OCSP_RESPONSE_bio failed");
+		BIO_free(bio);
+		return -1;
+	}
+
+	if ((len = i2d_OCSP_RESPONSE(response, NULL)) <= 0) {
+		log_crypto_err("get_ocsp: i2d_OCSP_RESPONSE #1 failed");
+		OCSP_RESPONSE_free(response);
+		BIO_free(bio);
+		return -1;
+	}
+
+	if ((buf = malloc((size_t) len)) == NULL) {
+		log_msg(LOG_ERR, "get_ocsp: malloc failed");
+		OCSP_RESPONSE_free(response);
+		BIO_free(bio);
+		return -1;
+	}
+
+	p = buf;
+	if ((len = i2d_OCSP_RESPONSE(response, &p)) <= 0) {
+		log_crypto_err("get_ocsp: i2d_OCSP_RESPONSE #2 failed");
+		free(buf);
+		OCSP_RESPONSE_free(response);
+		BIO_free(bio);
+		return -1;
+	}
+
+	OCSP_RESPONSE_free(response);
+	BIO_free(bio);
+
+	*ocsp = buf;
+	return len;
+}
+
+/* further setup ssl ctx after the keys are loaded */
+static void
+listen_sslctx_setup_2(void* ctxt)
+{
+	SSL_CTX* ctx = (SSL_CTX*)ctxt;
+	(void)ctx;
+#if HAVE_DECL_SSL_CTX_SET_ECDH_AUTO
+	if(!SSL_CTX_set_ecdh_auto(ctx,1)) {
+		log_crypto_err("Error in SSL_CTX_ecdh_auto, not enabling ECDHE");
+	}
+#elif defined(HAVE_DECL_SSL_CTX_SET_TMP_ECDH) && defined(NID_X9_62_prime256v1)
+	if(1) {
+		EC_KEY *ecdh = EC_KEY_new_by_curve_name (NID_X9_62_prime256v1);
+		if (!ecdh) {
+			log_crypto_err("could not find p256, not enabling ECDHE");
+		} else {
+			if (1 != SSL_CTX_set_tmp_ecdh (ctx, ecdh)) {
+				log_crypto_err("Error in SSL_CTX_set_tmp_ecdh, not enabling ECDHE");
+			}
+			EC_KEY_free (ecdh);
+		}
+	}
+#endif
+}
+
+static int
+add_ocsp_data_cb(SSL *s, void* ATTR_UNUSED(arg))
+{
+	if(ocspdata) {
+		unsigned char *p;
+		if ((p=malloc(ocspdata_len)) == NULL) {
+			log_msg(LOG_ERR, "add_ocsp_data_cb: malloc failure");
+			return SSL_TLSEXT_ERR_NOACK;
+		}
+		memcpy(p, ocspdata, ocspdata_len);
+		if ((SSL_set_tlsext_status_ocsp_resp(s, p, ocspdata_len)) != 1) {
+			log_crypto_err("Error in SSL_set_tlsext_status_ocsp_resp");
+			free(p);
+			return SSL_TLSEXT_ERR_NOACK;
+		}
+		return SSL_TLSEXT_ERR_OK;
+	} else {
+		return SSL_TLSEXT_ERR_NOACK;
+	}
+}
+
+SSL_CTX*
+server_tls_ctx_setup(char* key, char* pem, char* verifypem)
+{
+	SSL_CTX *ctx = SSL_CTX_new(SSLv23_server_method());
+	if(!ctx) {
+		log_crypto_err("could not SSL_CTX_new");
+		return NULL;
+	}
+	/* no SSLv2, SSLv3 because has defects */
+	if((SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2) & SSL_OP_NO_SSLv2) != SSL_OP_NO_SSLv2){
+		log_crypto_err("could not set SSL_OP_NO_SSLv2");
+		SSL_CTX_free(ctx);
+		return NULL;
+	}
+	if((SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3) & SSL_OP_NO_SSLv3)
+		!= SSL_OP_NO_SSLv3){
+		log_crypto_err("could not set SSL_OP_NO_SSLv3");
+		SSL_CTX_free(ctx);
+		return 0;
+	}
+#if defined(SSL_OP_NO_TLSv1) && defined(SSL_OP_NO_TLSv1_1)
+	/* if we have tls 1.1 disable 1.0 */
+	if((SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1) & SSL_OP_NO_TLSv1)
+		!= SSL_OP_NO_TLSv1){
+		log_crypto_err("could not set SSL_OP_NO_TLSv1");
+		SSL_CTX_free(ctx);
+		return 0;
+	}
+#endif
+#if defined(SSL_OP_NO_TLSv1_1) && defined(SSL_OP_NO_TLSv1_2)
+	/* if we have tls 1.2 disable 1.1 */
+	if((SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1) & SSL_OP_NO_TLSv1_1)
+		!= SSL_OP_NO_TLSv1_1){
+		log_crypto_err("could not set SSL_OP_NO_TLSv1_1");
+		SSL_CTX_free(ctx);
+		return 0;
+	}
+#endif
+#if defined(SSL_OP_NO_RENEGOTIATION)
+	/* disable client renegotiation */
+	if((SSL_CTX_set_options(ctx, SSL_OP_NO_RENEGOTIATION) &
+		SSL_OP_NO_RENEGOTIATION) != SSL_OP_NO_RENEGOTIATION) {
+		log_crypto_err("could not set SSL_OP_NO_RENEGOTIATION");
+		SSL_CTX_free(ctx);
+		return 0;
+	}
+#endif
+#if defined(SHA256_DIGEST_LENGTH) && defined(SSL_TXT_CHACHA20)
+	/* if we have sha256, set the cipher list to have no known vulns */
+	if(!SSL_CTX_set_cipher_list(ctx, "ECDHE+AESGCM:ECDHE+CHACHA20"))
+		log_crypto_err("could not set cipher list with SSL_CTX_set_cipher_list");
+#endif
+	if((SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE) &
+		SSL_OP_CIPHER_SERVER_PREFERENCE) !=
+		SSL_OP_CIPHER_SERVER_PREFERENCE) {
+		log_crypto_err("could not set SSL_OP_CIPHER_SERVER_PREFERENCE");
+		SSL_CTX_free(ctx);
+		return 0;
+	}
+#ifdef HAVE_SSL_CTX_SET_SECURITY_LEVEL
+	SSL_CTX_set_security_level(ctx, 0);
+#endif
+	if(!SSL_CTX_use_certificate_chain_file(ctx, pem)) {
+		log_msg(LOG_ERR, "error for cert file: %s", pem);
+		log_crypto_err("error in SSL_CTX use_certificate_chain_file");
+		SSL_CTX_free(ctx);
+		return NULL;
+	}
+	if(!SSL_CTX_use_PrivateKey_file(ctx, key, SSL_FILETYPE_PEM)) {
+		log_msg(LOG_ERR, "error for private key file: %s", key);
+		log_crypto_err("Error in SSL_CTX use_PrivateKey_file");
+		SSL_CTX_free(ctx);
+		return NULL;
+	}
+	if(!SSL_CTX_check_private_key(ctx)) {
+		log_msg(LOG_ERR, "error for key file: %s", key);
+		log_crypto_err("Error in SSL_CTX check_private_key");
+		SSL_CTX_free(ctx);
+		return NULL;
+	}
+	listen_sslctx_setup_2(ctx);
+	if(verifypem && verifypem[0]) {
+		if(!SSL_CTX_load_verify_locations(ctx, verifypem, NULL)) {
+			log_crypto_err("Error in SSL_CTX verify locations");
+			SSL_CTX_free(ctx);
+			return NULL;
+		}
+		SSL_CTX_set_client_CA_list(ctx, SSL_load_client_CA_file(verifypem));
+		SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+	}
+	return ctx;
+}
+
+SSL_CTX*
+server_tls_ctx_create(struct nsd* nsd, char* verifypem, char* ocspfile)
+{
+	char *key, *pem;
+	SSL_CTX *ctx;
+
+	key = nsd->options->tls_service_key;
+	pem = nsd->options->tls_service_pem;
+	if(!key || key[0] == 0) {
+		log_msg(LOG_ERR, "error: no tls-service-key file specified");
+		return NULL;
+	}
+	if(!pem || pem[0] == 0) {
+		log_msg(LOG_ERR, "error: no tls-service-pem file specified");
+		return NULL;
+	}
+
+	/* NOTE:This mimics the existing code in Unbound 1.5.1 by supporting SSL but
+	 * raft-ietf-uta-tls-bcp-08 recommends only using TLSv1.2*/
+	ctx = server_tls_ctx_setup(key, pem, verifypem);
+	if(!ctx) {
+		log_msg(LOG_ERR, "could not setup server TLS context");
+		return NULL;
+	}
+	if(ocspfile && ocspfile[0]) {
+		if ((ocspdata_len = get_ocsp(ocspfile, &ocspdata)) < 0) {
+			log_crypto_err("Error reading OCSPfile");
+			SSL_CTX_free(ctx);
+			return NULL;
+		} else {
+			VERBOSITY(2, (LOG_INFO, "ocspfile %s loaded", ocspfile));
+			if(!SSL_CTX_set_tlsext_status_cb(ctx, add_ocsp_data_cb)) {
+				log_crypto_err("Error in SSL_CTX_set_tlsext_status_cb");
+				SSL_CTX_free(ctx);
+				return NULL;
+			}
+		}
+	}
+	return ctx;
+}
+
+/* check if tcp_handler_accept_data created for TLS dedicated port */
+int
+using_tls_port(struct sockaddr* addr, const char* tls_port)
+{
+	in_port_t port = 0;
+
+	if (addr->sa_family == AF_INET)
+		port = ((struct sockaddr_in*)addr)->sin_port;
+#ifndef HAVE_STRUCT_SOCKADDR_IN6
+	else
+		port = ((struct sockaddr_in6*)addr)->sin6_port;
+#endif /* HAVE_STRUCT_SOCKADDR_IN6 */
+	if (atoi(tls_port) == ntohs(port))
+		return 1;
+
+	return 0;
+}
+#endif
 
 /* pass timeout=-1 for blocking. Returns size, 0, -1(err), or -2(timeout) */
 ssize_t
@@ -2108,6 +2547,7 @@ server_child(struct nsd *nsd)
 
 		handler = (struct event*) region_alloc(
 			server_region, sizeof(*handler));
+		memset(handler, 0, sizeof(*handler));
 		event_set(handler, nsd->this_child->parent_fd, EV_PERSIST|
 			EV_READ, child_handle_parent_command, user_data);
 		if(event_base_set(event_base, handler) != 0)
@@ -2162,6 +2602,7 @@ server_child(struct nsd *nsd)
 
 			handler = (struct event*) region_alloc(
 				server_region, sizeof(*handler));
+			memset(handler, 0, sizeof(*handler));
 			event_set(handler, nsd->udp[i].s, EV_PERSIST|EV_READ,
 				handle_udp, data);
 			if(event_base_set(event_base, handler) != 0)
@@ -2187,6 +2628,20 @@ server_child(struct nsd *nsd)
 				&tcp_accept_handlers[i-from];
 			data->nsd = nsd;
 			data->socket = &nsd->tcp[i];
+#ifdef HAVE_SSL
+			if (nsd->tls_ctx && nsd->options->tls_port && using_tls_port(
+			    data->socket->addr->ai_addr, nsd->options->tls_port)) {
+				data->tls_accept = 1;
+				if(verbosity >= 2) {
+					char buf[48];
+					addrport2str((struct sockaddr_storage*)data->socket->addr->ai_addr, buf, sizeof(buf));
+					VERBOSITY(2, (LOG_NOTICE, "setup TCP for TLS service on interface %s", buf));
+				}
+			}
+			else
+				data->tls_accept = 0;
+#endif
+			memset(handler, 0, sizeof(*handler));
 			event_set(handler, nsd->tcp[i].s, EV_PERSIST|EV_READ,
 				handle_tcp_accept, data);
 			if(event_base_set(event_base, handler) != 0)
@@ -2247,6 +2702,7 @@ server_child(struct nsd *nsd)
 		}
 	}
 
+	service_remaining_tcp(nsd);
 #ifdef	BIND8_STATS
 	bind8_stats(nsd);
 #endif /* BIND8_STATS */
@@ -2259,6 +2715,114 @@ server_child(struct nsd *nsd)
 	region_destroy(server_region);
 #endif
 	server_shutdown(nsd);
+}
+
+static void remaining_tcp_timeout(int ATTR_UNUSED(fd), short event, void* arg)
+{
+	int* timed_out = (int*)arg;
+        assert(event & EV_TIMEOUT);
+	/* wake up the service tcp thread, note event is no longer
+	 * registered */
+	*timed_out = 1;
+}
+
+void
+service_remaining_tcp(struct nsd* nsd)
+{
+	struct tcp_handler_data* p;
+	struct event_base* event_base;
+	/* check if it is needed */
+	if(nsd->current_tcp_count == 0 || tcp_active_list == NULL)
+		return;
+	VERBOSITY(4, (LOG_INFO, "service remaining TCP connections"));
+
+	/* setup event base */
+	event_base = nsd_child_event_base();
+	if(!event_base) {
+		log_msg(LOG_ERR, "nsd remain tcp could not create event base");
+		return;
+	}
+	/* register tcp connections */
+	for(p = tcp_active_list; p != NULL; p = p->next) {
+		struct timeval timeout;
+		int fd = p->event.ev_fd;
+#ifdef USE_MINI_EVENT
+		short event = p->event.ev_flags & (EV_READ|EV_WRITE);
+#else
+		short event = p->event.ev_events & (EV_READ|EV_WRITE);
+#endif
+		void (*fn)(int, short, void*);
+#ifdef HAVE_SSL
+		if(p->tls) {
+			if((event&EV_READ))
+				fn = handle_tls_reading;
+			else	fn = handle_tls_writing;
+		} else {
+#endif
+			if((event&EV_READ))
+				fn = handle_tcp_reading;
+			else	fn = handle_tcp_writing;
+#ifdef HAVE_SSL
+		}
+#endif
+
+		/* set timeout to 1/10 second */
+		if(p->tcp_timeout > 100)
+			p->tcp_timeout = 100;
+		timeout.tv_sec = p->tcp_timeout / 1000;
+		timeout.tv_usec = (p->tcp_timeout % 1000)*1000;
+		event_del(&p->event);
+		memset(&p->event, 0, sizeof(p->event));
+		event_set(&p->event, fd, EV_PERSIST | event | EV_TIMEOUT,
+			fn, p);
+		if(event_base_set(event_base, &p->event) != 0)
+			log_msg(LOG_ERR, "event base set failed");
+		if(event_add(&p->event, &timeout) != 0)
+			log_msg(LOG_ERR, "event add failed");
+	}
+
+	/* handle it */
+	while(nsd->current_tcp_count > 0) {
+		mode_t m = server_signal_mode(nsd);
+		struct event timeout;
+		struct timeval tv;
+		int timed_out = 0;
+		if(m == NSD_QUIT || m == NSD_SHUTDOWN ||
+			m == NSD_REAP_CHILDREN) {
+			/* quit */
+			break;
+		}
+		/* timer */
+		/* have to do something every second */
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+		memset(&timeout, 0, sizeof(timeout));
+		event_set(&timeout, -1, EV_TIMEOUT, remaining_tcp_timeout,
+			&timed_out);
+		if(event_base_set(event_base, &timeout) != 0)
+			log_msg(LOG_ERR, "remaintcp timer: event_base_set failed");
+		if(event_add(&timeout, &tv) != 0)
+			log_msg(LOG_ERR, "remaintcp timer: event_add failed");
+
+		/* service loop */
+		if(event_base_loop(event_base, EVLOOP_ONCE) == -1) {
+			if (errno != EINTR) {
+				log_msg(LOG_ERR, "dispatch failed: %s", strerror(errno));
+				break;
+			}
+		}
+		if(!timed_out) {
+			event_del(&timeout);
+		} else {
+			/* timed out, quit */
+			VERBOSITY(4, (LOG_INFO, "service remaining TCP connections: timed out, quit"));
+			break;
+		}
+	}
+#ifdef MEMCLEAN
+	event_base_free(event_base);
+#endif
+	/* continue to quit after return */
 }
 
 #if defined(HAVE_SENDMMSG) && !defined(NONBLOCKING_IS_BROKEN) && defined(HAVE_RECVMMSG)
@@ -2552,12 +3116,48 @@ handle_udp(int fd, short event, void* arg)
 }
 #endif /* defined(HAVE_SENDMMSG) && !defined(NONBLOCKING_IS_BROKEN) && defined(HAVE_RECVMMSG) */
 
+#ifdef HAVE_SSL
+/*
+ * Setup an event for the tcp handler.
+ */
+static void
+tcp_handler_setup_event(struct tcp_handler_data* data, void (*fn)(int, short, void *),
+       int fd, short event)
+{
+	struct timeval timeout;
+	struct event_base* ev_base;
+
+	timeout.tv_sec = data->nsd->tcp_timeout;
+	timeout.tv_usec = 0L;
+
+	ev_base = data->event.ev_base;
+	event_del(&data->event);
+	memset(&data->event, 0, sizeof(data->event));
+	event_set(&data->event, fd, event, fn, data);
+	if(event_base_set(ev_base, &data->event) != 0)
+		log_msg(LOG_ERR, "event base set failed");
+	if(event_add(&data->event, &timeout) != 0)
+		log_msg(LOG_ERR, "event add failed");
+}
+#endif /* HAVE_SSL */
 
 static void
 cleanup_tcp_handler(struct tcp_handler_data* data)
 {
 	event_del(&data->event);
+#ifdef HAVE_SSL
+	if(data->tls) {
+		SSL_shutdown(data->tls);
+		SSL_free(data->tls);
+		data->tls = NULL;
+	}
+#endif
 	close(data->event.ev_fd);
+	if(data->prev)
+		data->prev->next = data->next;
+	else	tcp_active_list = data->next;
+	if(data->next)
+		data->next->prev = data->prev;
 
 	/*
 	 * Enable the TCP accept handlers when the current number of
@@ -2593,7 +3193,7 @@ handle_tcp_reading(int fd, short event, void* arg)
 
 	if (data->nsd->tcp_query_count > 0 &&
 		data->query_count >= data->nsd->tcp_query_count) {
-		/* No more queries allowed on this tcp connection.  */
+		/* No more queries allowed on this tcp connection. */
 		cleanup_tcp_handler(data);
 		return;
 	}
@@ -2770,6 +3370,15 @@ handle_tcp_reading(int fd, short event, void* arg)
 	/* Switch to the tcp write handler.  */
 	buffer_flip(data->query->packet);
 	data->query->tcplen = buffer_remaining(data->query->packet);
+#ifdef BIND8_STATS
+	/* Account the rcode & TC... */
+	STATUP2(data->nsd, rcode, RCODE(data->query->packet));
+	ZTATUP2(data->nsd, data->query->zone, rcode, RCODE(data->query->packet));
+	if (TC(data->query->packet)) {
+		STATUP(data->nsd, truncated);
+		ZTATUP(data->nsd, data->query->zone, truncated);
+	}
+#endif /* BIND8_STATS */
 #ifdef USE_DNSTAP
 	dt_collector_submit_auth_response(data->nsd, &data->query->addr,
 		data->query->addrlen, data->query->tcp, data->query->packet,
@@ -2782,8 +3391,9 @@ handle_tcp_reading(int fd, short event, void* arg)
 
 	ev_base = data->event.ev_base;
 	event_del(&data->event);
-	event_set(&data->event, fd, EV_PERSIST | EV_WRITE | EV_TIMEOUT,
-		handle_tcp_writing, data);
+	memset(&data->event, 0, sizeof(data->event));
+	event_set(&data->event, fd, EV_PERSIST | EV_READ | EV_TIMEOUT,
+		handle_tcp_reading, data);
 	if(event_base_set(ev_base, &data->event) != 0)
 		log_msg(LOG_ERR, "event base set tcpr failed");
 	if(event_add(&data->event, &timeout) != 0)
@@ -2914,6 +3524,7 @@ handle_tcp_writing(int fd, short event, void* arg)
 			timeout.tv_usec = (data->tcp_timeout % 1000)*1000;
 			ev_base = data->event.ev_base;
 			event_del(&data->event);
+			memset(&data->event, 0, sizeof(data->event));
 			event_set(&data->event, fd, EV_PERSIST | EV_WRITE | EV_TIMEOUT,
 				handle_tcp_writing, data);
 			if(event_base_set(ev_base, &data->event) != 0)
@@ -2945,6 +3556,7 @@ handle_tcp_writing(int fd, short event, void* arg)
 	timeout.tv_usec = (data->tcp_timeout % 1000)*1000;
 	ev_base = data->event.ev_base;
 	event_del(&data->event);
+	memset(&data->event, 0, sizeof(data->event));
 	event_set(&data->event, fd, EV_PERSIST | EV_READ | EV_TIMEOUT,
 		handle_tcp_reading, data);
 	if(event_base_set(ev_base, &data->event) != 0)
@@ -2953,6 +3565,428 @@ handle_tcp_writing(int fd, short event, void* arg)
 		log_msg(LOG_ERR, "event add tcpw failed");
 }
 
+#ifdef HAVE_SSL
+/** create SSL object and associate fd */
+static SSL*
+incoming_ssl_fd(SSL_CTX* ctx, int fd)
+{
+	SSL* ssl = SSL_new((SSL_CTX*)ctx);
+	if(!ssl) {
+		log_crypto_err("could not SSL_new");
+		return NULL;
+	}
+	SSL_set_accept_state(ssl);
+	(void)SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
+	if(!SSL_set_fd(ssl, fd)) {
+		log_crypto_err("could not SSL_set_fd");
+		SSL_free(ssl);
+		return NULL;
+	}
+	return ssl;
+}
+
+/** TLS handshake to upgrade TCP connection */
+static int
+tls_handshake(struct tcp_handler_data* data, int fd, int writing)
+{
+	int r;
+	if(data->shake_state == tls_hs_read_event) {
+		/* read condition satisfied back to writing */
+		tcp_handler_setup_event(data, handle_tls_writing, fd, EV_PERSIST|EV_TIMEOUT|EV_WRITE);
+		data->shake_state = tls_hs_none;
+		return 1;
+	}
+	if(data->shake_state == tls_hs_write_event) {
+		/* write condition satisfied back to reading */
+		tcp_handler_setup_event(data, handle_tls_reading, fd, EV_PERSIST|EV_TIMEOUT|EV_READ);
+		data->shake_state = tls_hs_none;
+		return 1;
+	}
+
+	/* (continue to) setup the TLS connection */
+	ERR_clear_error();
+	r = SSL_do_handshake(data->tls);
+
+	if(r != 1) {
+		int want = SSL_get_error(data->tls, r);
+		if(want == SSL_ERROR_WANT_READ) {
+			if(data->shake_state == tls_hs_read) {
+				/* try again later */
+				return 1;
+			}
+			data->shake_state = tls_hs_read;
+			/* switch back to reading mode */
+			tcp_handler_setup_event(data, handle_tls_reading, fd, EV_PERSIST|EV_TIMEOUT|EV_READ);
+			return 1;
+		} else if(want == SSL_ERROR_WANT_WRITE) {
+			if(data->shake_state == tls_hs_write) {
+				/* try again later */
+				return 1;
+			}
+			data->shake_state = tls_hs_write;
+			/* switch back to writing mode */
+			tcp_handler_setup_event(data, handle_tls_writing, fd, EV_PERSIST|EV_TIMEOUT|EV_WRITE);
+			return 1;
+		} else {
+			if(r == 0)
+				VERBOSITY(3, (LOG_ERR, "TLS handshake: connection closed prematurely"));
+			cleanup_tcp_handler(data);
+			VERBOSITY(3, (LOG_ERR, "TLS handshake failed"));
+			return 0;
+		}
+	}
+
+	/* Use to log successful upgrade for testing - could be removed*/
+	VERBOSITY(3, (LOG_INFO, "TLS handshake succeeded."));
+	/* set back to the event we need to have when reading (or writing) */
+	if(data->shake_state == tls_hs_read && writing) {
+		tcp_handler_setup_event(data, handle_tls_writing, fd, EV_PERSIST|EV_TIMEOUT|EV_WRITE);
+	} else if(data->shake_state == tls_hs_write && !writing) {
+		tcp_handler_setup_event(data, handle_tls_reading, fd, EV_PERSIST|EV_TIMEOUT|EV_READ);
+	}
+	data->shake_state = tls_hs_none;
+	return 1;
+}
+
+/** handle TLS reading of incoming query */
+static void
+handle_tls_reading(int fd, short event, void* arg)
+{
+	struct tcp_handler_data *data = (struct tcp_handler_data *) arg;
+	ssize_t received;
+
+	if ((event & EV_TIMEOUT)) {
+		/* Connection timed out.  */
+		cleanup_tcp_handler(data);
+		return;
+	}
+
+	if (data->nsd->tcp_query_count > 0 &&
+	    data->query_count >= data->nsd->tcp_query_count) {
+		/* No more queries allowed on this tcp connection. */
+		cleanup_tcp_handler(data);
+		return;
+	}
+
+	assert((event & EV_READ));
+
+	if (data->bytes_transmitted == 0) {
+		query_reset(data->query, TCP_MAX_MESSAGE_LEN, 1);
+	}
+
+	if(data->shake_state != tls_hs_none) {
+		if(!tls_handshake(data, fd, 0))
+			return;
+		if(data->shake_state != tls_hs_none)
+			return;
+	}
+
+	/*
+	 * Check if we received the leading packet length bytes yet.
+	 */
+	if(data->bytes_transmitted < sizeof(uint16_t)) {
+		ERR_clear_error();
+		if((received=SSL_read(data->tls, (char *) &data->query->tcplen
+		    + data->bytes_transmitted,
+		    sizeof(uint16_t) - data->bytes_transmitted)) <= 0) {
+			int want = SSL_get_error(data->tls, received);
+			if(want == SSL_ERROR_ZERO_RETURN) {
+				cleanup_tcp_handler(data);
+				return; /* shutdown, closed */
+			} else if(want == SSL_ERROR_WANT_READ) {
+				/* wants to be called again */
+				return;
+			}
+			else if(want == SSL_ERROR_WANT_WRITE) {
+				/* switch to writing */
+				data->shake_state = tls_hs_write_event;
+				tcp_handler_setup_event(data, handle_tls_writing, fd, EV_PERSIST | EV_WRITE | EV_TIMEOUT);
+				return;
+			}
+			cleanup_tcp_handler(data);
+			log_crypto_err("could not SSL_read");
+			return;
+		}
+
+		data->bytes_transmitted += received;
+		if (data->bytes_transmitted < sizeof(uint16_t)) {
+			/*
+			 * Not done with the tcplen yet, wait for more
+			 * data to become available.
+			 */
+			return;
+		}
+
+		assert(data->bytes_transmitted == sizeof(uint16_t));
+
+		data->query->tcplen = ntohs(data->query->tcplen);
+
+		/*
+		 * Minimum query size is:
+		 *
+		 *     Size of the header (12)
+		 *   + Root domain name   (1)
+		 *   + Query class        (2)
+		 *   + Query type         (2)
+		 */
+		if (data->query->tcplen < QHEADERSZ + 1 + sizeof(uint16_t) + sizeof(uint16_t)) {
+			VERBOSITY(2, (LOG_WARNING, "packet too small, dropping tcp connection"));
+			cleanup_tcp_handler(data);
+			return;
+		}
+
+		if (data->query->tcplen > data->query->maxlen) {
+			VERBOSITY(2, (LOG_WARNING, "insufficient tcp buffer, dropping connection"));
+			cleanup_tcp_handler(data);
+			return;
+		}
+
+		buffer_set_limit(data->query->packet, data->query->tcplen);
+	}
+
+	assert(buffer_remaining(data->query->packet) > 0);
+
+	/* Read the (remaining) query data.  */
+	ERR_clear_error();
+	received = SSL_read(data->tls, (void*)buffer_current(data->query->packet),
+			    (int)buffer_remaining(data->query->packet));
+	if(received <= 0) {
+		int want = SSL_get_error(data->tls, received);
+		if(want == SSL_ERROR_ZERO_RETURN) {
+			cleanup_tcp_handler(data);
+			return; /* shutdown, closed */
+		} else if(want == SSL_ERROR_WANT_READ) {
+			/* wants to be called again */
+			return;
+		}
+		else if(want == SSL_ERROR_WANT_WRITE) {
+			/* switch back writing */
+			data->shake_state = tls_hs_write_event;
+			tcp_handler_setup_event(data, handle_tls_writing, fd, EV_PERSIST | EV_WRITE | EV_TIMEOUT);
+			return;
+		}
+		cleanup_tcp_handler(data);
+		log_crypto_err("could not SSL_read");
+		return;
+	}
+
+	data->bytes_transmitted += received;
+	buffer_skip(data->query->packet, received);
+	if (buffer_remaining(data->query->packet) > 0) {
+		/*
+		 * Message not yet complete, wait for more data to
+		 * become available.
+		 */
+		return;
+	}
+
+	assert(buffer_position(data->query->packet) == data->query->tcplen);
+
+	/* Account... */
+#ifndef INET6
+	STATUP(data->nsd, ctls);
+#else
+	if (data->query->addr.ss_family == AF_INET) {
+		STATUP(data->nsd, ctls);
+	} else if (data->query->addr.ss_family == AF_INET6) {
+		STATUP(data->nsd, ctls6);
+	}
+#endif
+
+	/* We have a complete query, process it.  */
+
+	/* tcp-query-count: handle query counter ++ */
+	data->query_count++;
+
+	buffer_flip(data->query->packet);
+#ifdef USE_DNSTAP
+	dt_collector_submit_auth_query(data->nsd, &data->query->addr,
+		data->query->addrlen, data->query->tcp, data->query->packet);
+#endif /* USE_DNSTAP */
+	data->query_state = server_process_query(data->nsd, data->query);
+	if (data->query_state == QUERY_DISCARDED) {
+		/* Drop the packet and the entire connection... */
+		STATUP(data->nsd, dropped);
+		ZTATUP(data->nsd, data->query->zone, dropped);
+		cleanup_tcp_handler(data);
+		return;
+	}
+
+#ifdef BIND8_STATS
+	if (RCODE(data->query->packet) == RCODE_OK
+	    && !AA(data->query->packet))
+	{
+		STATUP(data->nsd, nona);
+		ZTATUP(data->nsd, data->query->zone, nona);
+	}
+#endif /* BIND8_STATS */
+
+#ifdef USE_ZONE_STATS
+#ifndef INET6
+	ZTATUP(data->nsd, data->query->zone, ctls);
+#else
+	if (data->query->addr.ss_family == AF_INET) {
+		ZTATUP(data->nsd, data->query->zone, ctls);
+	} else if (data->query->addr.ss_family == AF_INET6) {
+		ZTATUP(data->nsd, data->query->zone, ctls6);
+	}
+#endif
+#endif /* USE_ZONE_STATS */
+
+	query_add_optional(data->query, data->nsd);
+
+	/* Switch to the tcp write handler.  */
+	buffer_flip(data->query->packet);
+	data->query->tcplen = buffer_remaining(data->query->packet);
+#ifdef BIND8_STATS
+	/* Account the rcode & TC... */
+	STATUP2(data->nsd, rcode, RCODE(data->query->packet));
+	ZTATUP2(data->nsd, data->query->zone, rcode, RCODE(data->query->packet));
+	if (TC(data->query->packet)) {
+		STATUP(data->nsd, truncated);
+		ZTATUP(data->nsd, data->query->zone, truncated);
+	}
+#endif /* BIND8_STATS */
+#ifdef USE_DNSTAP
+	dt_collector_submit_auth_response(data->nsd, &data->query->addr,
+		data->query->addrlen, data->query->tcp, data->query->packet,
+		data->query->zone);
+#endif /* USE_DNSTAP */
+	data->bytes_transmitted = 0;
+
+	tcp_handler_setup_event(data, handle_tls_writing, fd, EV_PERSIST | EV_WRITE | EV_TIMEOUT);
+
+	/* see if we can write the answer right away(usually so,EAGAIN ifnot)*/
+	handle_tls_writing(fd, EV_WRITE, data);
+}
+
+/** handle TLS writing of outgoing response */
+static void
+handle_tls_writing(int fd, short event, void* arg)
+{
+	struct tcp_handler_data *data = (struct tcp_handler_data *) arg;
+	ssize_t sent;
+	struct query *q = data->query;
+	/* static variable that holds reassembly buffer used to put the
+	 * TCP length in front of the packet, like writev. */
+	static buffer_type* global_tls_temp_buffer = NULL;
+	buffer_type* write_buffer;
+
+	if ((event & EV_TIMEOUT)) {
+		/* Connection timed out.  */
+		cleanup_tcp_handler(data);
+		return;
+	}
+
+	assert((event & EV_WRITE));
+
+	if(data->shake_state != tls_hs_none) {
+		if(!tls_handshake(data, fd, 1))
+			return;
+		if(data->shake_state != tls_hs_none)
+			return;
+	}
+
+	(void)SSL_set_mode(data->tls, SSL_MODE_ENABLE_PARTIAL_WRITE);
+
+	/* If we are writing the start of a message, we must include the length
+	 * this is done with a copy into write_buffer. */
+	write_buffer = NULL;
+	if (data->bytes_transmitted == 0) {
+		if(!global_tls_temp_buffer) {
+			/* gets deallocated when nsd shuts down from
+			 * nsd.region */
+			global_tls_temp_buffer = buffer_create(nsd.region,
+				QIOBUFSZ + sizeof(q->tcplen));
+			if (!global_tls_temp_buffer) {
+				return;
+			}
+		}
+		write_buffer = global_tls_temp_buffer;
+		buffer_clear(write_buffer);
+		buffer_write_u16(write_buffer, q->tcplen);
+		buffer_write(write_buffer, buffer_current(q->packet),
+			(int)buffer_remaining(q->packet));
+		buffer_flip(write_buffer);
+	} else {
+		write_buffer = q->packet;
+	}
+
+	/* Write the response */
+	ERR_clear_error();
+	sent = SSL_write(data->tls, buffer_current(write_buffer), buffer_remaining(write_buffer));
+	if(sent <= 0) {
+		int want = SSL_get_error(data->tls, sent);
+		if(want == SSL_ERROR_ZERO_RETURN) {
+			cleanup_tcp_handler(data);
+			/* closed */
+		} else if(want == SSL_ERROR_WANT_READ) {
+			/* switch back to reading */
+			data->shake_state = tls_hs_read_event;
+			tcp_handler_setup_event(data, handle_tls_reading, fd, EV_PERSIST | EV_READ | EV_TIMEOUT);
+		} else if(want != SSL_ERROR_WANT_WRITE) {
+			cleanup_tcp_handler(data);
+			log_crypto_err("could not SSL_write");
+		}
+		return;
+	}
+
+	buffer_skip(write_buffer, sent);
+	if(buffer_remaining(write_buffer) != 0) {
+		/* If not all sent, sync up the real buffer if it wasn't used.*/
+		if (data->bytes_transmitted == 0 && (ssize_t)sent > (ssize_t)sizeof(q->tcplen)) {
+			buffer_skip(q->packet, (ssize_t)sent - (ssize_t)sizeof(q->tcplen));
+		}
+	}
+
+	data->bytes_transmitted += sent;
+	if (data->bytes_transmitted < q->tcplen + sizeof(q->tcplen)) {
+		/*
+		 * Still more data to write when socket becomes
+		 * writable again.
+		 */
+		return;
+	}
+
+	assert(data->bytes_transmitted == q->tcplen + sizeof(q->tcplen));
+
+	if (data->query_state == QUERY_IN_AXFR) {
+		/* Continue processing AXFR and writing back results.  */
+		buffer_clear(q->packet);
+		data->query_state = query_axfr(data->nsd, q);
+		if (data->query_state != QUERY_PROCESSED) {
+			query_add_optional(data->query, data->nsd);
+
+			/* Reset data. */
+			buffer_flip(q->packet);
+			q->tcplen = buffer_remaining(q->packet);
+			data->bytes_transmitted = 0;
+			/* Reset to writing mode.  */
+			tcp_handler_setup_event(data, handle_tls_writing, fd, EV_PERSIST | EV_WRITE | EV_TIMEOUT);
+
+			/*
+			 * Write data if/when the socket is writable
+			 * again.
+			 */
+			return;
+		}
+	}
+
+	/*
+	 * Done sending, wait for the next request to arrive on the
+	 * TCP socket by installing the TCP read handler.
+	 */
+	if (data->nsd->tcp_query_count > 0 &&
+		data->query_count >= data->nsd->tcp_query_count) {
+
+		(void) shutdown(fd, SHUT_WR);
+	}
+
+	data->bytes_transmitted = 0;
+
+	tcp_handler_setup_event(data, handle_tls_reading, fd, EV_PERSIST | EV_READ | EV_TIMEOUT);
+}
+#endif
 
 static void
 handle_slowaccept_timeout(int ATTR_UNUSED(fd), short ATTR_UNUSED(event),
@@ -2962,6 +3996,26 @@ handle_slowaccept_timeout(int ATTR_UNUSED(fd), short ATTR_UNUSED(event),
 		configure_handler_event_types(EV_PERSIST | EV_READ);
 		slowaccept = 0;
 	}
+}
+
+static int perform_accept(int fd, struct sockaddr *addr, socklen_t *addrlen)
+{
+#ifndef HAVE_ACCEPT4
+	int s = accept(fd, addr, addrlen);
+	if (s != -1) {
+		if (fcntl(s, F_SETFL, O_NONBLOCK) == -1) {
+			log_msg(LOG_ERR, "fcntl failed: %s", strerror(errno));
+			close(s);
+			s = -1;
+			errno=EINTR; /* stop error printout as error in accept4
+				by setting this errno, it omits printout, in
+				later code that calls nsd_accept4 */
+		}
+	}
+	return s;
+#else
+	return accept4(fd, addr, addrlen, SOCK_NONBLOCK);
+#endif /* HAVE_ACCEPT4 */
 }
 
 /*
@@ -2975,6 +4029,7 @@ handle_tcp_accept(int fd, short event, void* arg)
 	struct tcp_accept_handler_data *data
 		= (struct tcp_accept_handler_data *) arg;
 	int s;
+	int reject = 0;
 	struct tcp_handler_data *tcp_data;
 	region_type *tcp_region;
 #ifdef INET6
@@ -2990,16 +4045,15 @@ handle_tcp_accept(int fd, short event, void* arg)
 	}
 
 	if (data->nsd->current_tcp_count >= data->nsd->maximum_tcp_count) {
-		return;
+		reject = data->nsd->options->tcp_reject_overflow;
+		if (!reject) {
+			return;
+		}
 	}
 
 	/* Accept it... */
 	addrlen = sizeof(addr);
-#ifndef HAVE_ACCEPT4
-	s = accept(fd, (struct sockaddr *) &addr, &addrlen);
-#else
-	s = accept4(fd, (struct sockaddr *) &addr, &addrlen, SOCK_NONBLOCK);
-#endif
+	s = perform_accept(fd, (struct sockaddr *) &addr, &addrlen);
 	if (s == -1) {
 		/**
 		 * EMFILE and ENFILE is a signal that the limit of open
@@ -3014,6 +4068,8 @@ handle_tcp_accept(int fd, short event, void* arg)
 				configure_handler_event_types(0);
 				tv.tv_sec = SLOW_ACCEPT_TIMEOUT;
 				tv.tv_usec = 0L;
+				memset(&slowaccept_event, 0,
+					sizeof(slowaccept_event));
 				event_set(&slowaccept_event, -1, EV_TIMEOUT,
 					handle_slowaccept_timeout, NULL);
 				(void)event_base_set(data->event.ev_base,
@@ -3036,13 +4092,11 @@ handle_tcp_accept(int fd, short event, void* arg)
 		return;
 	}
 
-#ifndef HAVE_ACCEPT4
-	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1) {
-		log_msg(LOG_ERR, "fcntl failed: %s", strerror(errno));
+	if (reject) {
+		shutdown(s, SHUT_RDWR);
 		close(s);
 		return;
 	}
-#endif
 
 	/*
 	 * This region is deallocated when the TCP connection is
@@ -3056,6 +4110,12 @@ handle_tcp_accept(int fd, short event, void* arg)
 		compression_table_size, compressed_dnames);
 	tcp_data->nsd = data->nsd;
 	tcp_data->query_count = 0;
+#ifdef HAVE_SSL
+	tcp_data->shake_state = tls_hs_none;
+	tcp_data->tls = NULL;
+#endif
+	tcp_data->prev = NULL;
+	tcp_data->next = NULL;
 
 	tcp_data->query_state = QUERY_PROCESSED;
 	tcp_data->bytes_transmitted = 0;
@@ -3067,11 +4127,29 @@ handle_tcp_accept(int fd, short event, void* arg)
 		/* very busy, give smaller timeout */
 		tcp_data->tcp_timeout = 200;
 	}
+	memset(&tcp_data->event, 0, sizeof(tcp_data->event));
 	timeout.tv_sec = tcp_data->tcp_timeout / 1000;
 	timeout.tv_usec = (tcp_data->tcp_timeout % 1000)*1000;
 
-	event_set(&tcp_data->event, s, EV_PERSIST | EV_READ | EV_TIMEOUT,
-		handle_tcp_reading, tcp_data);
+#ifdef HAVE_SSL
+	if (data->tls_accept) {
+		tcp_data->tls = incoming_ssl_fd(tcp_data->nsd->tls_ctx, s);
+		if(!tcp_data->tls) {
+			close(s);
+			return;
+		}
+		tcp_data->shake_state = tls_hs_read;
+		memset(&tcp_data->event, 0, sizeof(tcp_data->event));
+		event_set(&tcp_data->event, s, EV_PERSIST | EV_READ | EV_TIMEOUT,
+			  handle_tls_reading, tcp_data);
+	} else {
+#endif
+		memset(&tcp_data->event, 0, sizeof(tcp_data->event));
+		event_set(&tcp_data->event, s, EV_PERSIST | EV_READ | EV_TIMEOUT,
+			  handle_tcp_reading, tcp_data);
+#ifdef HAVE_SSL
+	}
+#endif
 	if(event_base_set(data->event.ev_base, &tcp_data->event) != 0) {
 		log_msg(LOG_ERR, "cannot set tcp event base");
 		close(s);
@@ -3084,14 +4162,26 @@ handle_tcp_accept(int fd, short event, void* arg)
 		region_destroy(tcp_region);
 		return;
 	}
+	if(tcp_active_list) {
+		tcp_active_list->prev = tcp_data;
+		tcp_data->next = tcp_active_list;
+	}
+	tcp_active_list = tcp_data;
 
 	/*
 	 * Keep track of the total number of TCP handlers installed so
 	 * we can stop accepting connections when the maximum number
 	 * of simultaneous TCP connections is reached.
+	 *
+	 * If tcp-reject-overflow is enabled, however, then we do not
+	 * change the handler event type; we keep it as-is and accept
+	 * overflow TCP connections only so that we can forcibly kill
+	 * them off.
 	 */
 	++data->nsd->current_tcp_count;
-	if (data->nsd->current_tcp_count == data->nsd->maximum_tcp_count) {
+	if (!data->nsd->options->tcp_reject_overflow &&
+	     data->nsd->current_tcp_count == data->nsd->maximum_tcp_count)
+	{
 		configure_handler_event_types(0);
 	}
 }
@@ -3165,6 +4255,7 @@ configure_handler_event_types(short event_types)
 			struct event_base* base = handler->ev_base;
 			if(tcp_accept_handlers[i].event_added)
 				event_del(handler);
+			memset(handler, 0, sizeof(*handler));
 			event_set(handler, fd, event_types,
 				handle_tcp_accept, &tcp_accept_handlers[i]);
 			if(event_base_set(base, handler) != 0)

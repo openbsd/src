@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Mar 25, 2019" "NLnet Labs" "nsd 4.1.27"
+.TH "nsd.conf" "5" "Aug 19, 2019" "NLnet Labs" "nsd 4.2.2"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -149,7 +149,7 @@ clause. There may only be one
 clause.
 .TP
 .B ip\-address:\fR <ip4 or ip6>[@port]
-NSD will bind to the listed ip\-address. Can be give multiple times 
+NSD will bind to the listed ip\-address. Can be given multiple times 
 to bind multiple ip\-addresses. Optionally, a port number can be given.
 If none are given NSD listens to the wildcard interface. Same as commandline option 
 .BR \-a.
@@ -180,6 +180,12 @@ stack.  Only really useful if you also configure a server\-count higher
 than 1 (such as, equal to the number of cpus).  The default is no. 
 It works on Linux, but does not work on FreeBSD, and likely does not
 work on other systems.
+.TP
+.B send\-buffer\-size:\fR <number>
+Set the send buffer size for query-servicing sockets.  Set to 0 to use the default settings.
+.TP
+.B receive\-buffer\-size:\fR <number>
+Set the receive buffer size for query-servicing sockets.  Set to 0 to use the default settings.
 .TP
 .B debug\-mode:\fR <yes or no>
 Turns on debugging mode for nsd, does not fork a daemon process. 
@@ -217,6 +223,7 @@ Returns the specified identity when asked for CH TXT ID.SERVER.
 Default is the name as returned by gethostname(3). Same as 
 commandline option 
 .BR \-i .
+See hide\-identity to set the server to not respond to such queries.
 .TP
 .B version:\fR <string>
 Returns the specified version string when asked for CH TXT version.server,
@@ -243,6 +250,10 @@ option
 The maximum number of concurrent, active TCP connections by each server. 
 Default is 100. Same as commandline option
 .BR \-n .
+.TP
+.B tcp\-reject\-overflow:\fR <yes or no>
+If set to yes, TCP connections made beyond the maximum set by tcp-count will
+be dropped immediately (accepted and closed).  Default is no.
 .TP
 .B tcp\-query\-count:\fR <number>
 The maximum number of queries served on a single TCP connection.
@@ -359,6 +370,10 @@ And notify refusal, and axfr request refusals.
 Prevent NSD from replying with the version string on CHAOS class 
 queries.  Default is no.
 .TP
+.B hide\-identity:\fR <yes or no>
+Prevent NSD from replying with the identity string on CHAOS class 
+queries.  Default is no.
+.TP
 .B log\-time\-ascii:\fR <yes or no>
 Log time in ascii, if "no" then in seconds epoch.  Default is yes.
 This chooses the format when logging to file.  The printout via syslog
@@ -436,6 +451,38 @@ whitelisted. Default @ratelimit_default@ (with a suggested 2000 qps). With the r
 specific queries to receive this qps limit instead of the normal limit.
 With the value 0 the rate is unlimited.
 .\" rrlend
+.TP
+.B tls\-service\-key:\fR <filename>
+If enabled, the server provides TLS service on TCP sockets with the TLS
+service port number.  The port number (853) is configured with tls\-port.
+To turn it on, create an interface: option line in config with @port
+appended to the IP-address.  This creates the extra socket on which the
+DNS over TLS service is provided.
+.IP
+The file is the private key for the TLS session. The public certificate is
+in the tls-service-pem file. Default is "", turned off. Requires a
+restart (a reload is not enough) if changed, because the private key is
+read while root permissions are held and before chroot (if any).
+.TP
+.B tls\-service\-pem:\fR <filename>
+The public key certificate pem file for the tls service. Default is "", turned off.
+.TP
+.B tls\-service\-ocsp:\fR <filename>
+The ocsp pem file for the tls service, for OCSP stapling.  Default is "",
+turned off.  An external process prepares and updates the OCSP stapling data.
+Like this,
+.RS 9
+openssl ocsp -no_nonce \\
+   -respout /path/to/ocsp.pem \\
+   -CAfile /path/to/ca_and_any_intermediate.pem \\
+   -issuer /path/to/direct_issuer.pem \\
+   -cert /path/to/cert.pem \\
+   -url "$( openssl x509 -noout -text -in /path/to/cert.pem | grep 'OCSP - URI:' | cut -d: -f2,3 )"
+.RE
+.TP
+.B tls\-port:\fR <number>
+The port number on which to provide TCP TLS service, default is 853, only
+interfaces configured with that port number as @number get DNS over TLS service.
 .SS "Remote Control"
 The
 .B remote\-control:

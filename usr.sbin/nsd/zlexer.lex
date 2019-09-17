@@ -58,6 +58,10 @@ push_parser_state(FILE *input)
 static void
 pop_parser_state(void)
 {
+	if (parser->filename)
+		region_recycle(parser->region, (void *)parser->filename,
+			strlen(parser->filename)+1);
+
 	--include_stack_ptr;
 	parser->filename = zparser_stack[include_stack_ptr].filename;
 	parser->line = zparser_stack[include_stack_ptr].line;

@@ -1409,8 +1409,10 @@ process_rr(void)
 	assert(zone);
 	if (rr->type == TYPE_SOA) {
 		if (rr->owner != zone->apex) {
+			char s[MAXDOMAINLEN*5];
+			snprintf(s, sizeof(s), "%s", domain_to_string(zone->apex));
 			zc_error_prev_line(
-				"SOA record with invalid domain name");
+				"SOA record with invalid domain name, '%s' is not '%s'", domain_to_string(rr->owner), s);
 			return 0;
 		}
 		if(has_soa(rr->owner)) {
@@ -1425,10 +1427,12 @@ process_rr(void)
 
 	if (!domain_is_subdomain(rr->owner, zone->apex))
 	{
+		char s[MAXDOMAINLEN*5];
+		snprintf(s, sizeof(s), "%s", domain_to_string(zone->apex));
 		if(zone_is_slave(zone->opts))
-			zc_warning_prev_line("out of zone data");
+			zc_warning_prev_line("out of zone data: %s is outside the zone for fqdn %s", domain_to_string(rr->owner), s);
 		else
-			zc_error_prev_line("out of zone data");
+			zc_error_prev_line("out of zone data: %s is outside the zone for fqdn %s", domain_to_string(rr->owner), s);
 		return 0;
 	}
 
@@ -1464,6 +1468,16 @@ process_rr(void)
 
 		/* Discard the duplicates... */
 		if (i < rrset->rr_count) {
+			/* add rdatas to recycle bin. */
+			size_t i;
+			for (i = 0; i < rr->rdata_count; i++) {
+				if(!rdata_atom_is_domain(rr->type, i))
+					region_recycle(parser->region, rr->rdatas[i].data,
+						rdata_atom_size(rr->rdatas[i])
+						+ sizeof(uint16_t));
+			}
+			region_recycle(parser->region, rr->rdatas,
+				sizeof(rdata_atom_type)*rr->rdata_count);
 			return 0;
 		}
 		if(rrset->rr_count == 65535) {
@@ -1731,4 +1745,33 @@ zonec_parse_string(region_type* region, domain_table_type* domains,
 	zonec_desetup_string_parser();
 	parser_flush();
 	return errors;
+}
+
+/** check SSHFP type for failures and emit warnings */
+void check_sshfp(void)
+{
+	uint8_t hash;
+	uint16_t size;
+	if(parser->current_rr.rdata_count < 3)
+		return; /* cannot check it, too few rdata elements */
+	if(!parser->current_rr.rdatas[0].data ||
+		!parser->current_rr.rdatas[1].data ||
+		!parser->current_rr.rdatas[2].data ||
+		!parser->current_rr.owner)
+		return; /* cannot check, NULLs (due to earlier errors) */
+	if(rdata_atom_size(parser->current_rr.rdatas[1]) != 1)
+		return; /* wrong size of the hash type rdata element */
+	hash = rdata_atom_data(parser->current_rr.rdatas[1])[0];
+	size = rdata_atom_size(parser->current_rr.rdatas[2]);
+	if(hash == 1 && size != 20) {
+		zc_warning_prev_line("SSHFP %s of type SHA1 has hash of "
+			"wrong length, %d bytes, should be 20",
+			domain_to_string(parser->current_rr.owner),
+			(int)size);
+	} else if(hash == 2 && size != 32) {
+		zc_warning_prev_line("SSHFP %s of type SHA256 has hash of "
+			"wrong length, %d bytes, should be 32",
+			domain_to_string(parser->current_rr.owner),
+			(int)size);
+	}
 }

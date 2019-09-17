@@ -410,6 +410,15 @@ void addr2str(
 #endif
 	, char* str, size_t len);
 
+/* print addr@port */
+void addrport2str(
+#ifdef INET6
+	struct sockaddr_storage *addr
+#else
+	struct sockaddr_in *addr
+#endif
+	, char* str, size_t len);
+
 /** copy dirname string and append slash.  Previous dirname is leaked,
  * but it is to be used once, at startup, for chroot */
 void append_trailing_slash(const char** dirname, struct region* region);

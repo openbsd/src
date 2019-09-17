@@ -61,6 +61,10 @@ check_zone(struct nsd* nsd, const char* name, const char* fname)
 	errors = zonec_read(name, fname, zone);
 	if(errors > 0) {
 		printf("zone %s file %s has %u errors\n", name, fname, errors);
+#ifdef MEMCLEAN /* otherwise, the OS collects memory pages */
+		namedb_close(nsd->db);
+		region_destroy(nsd->options->region);
+#endif
 		exit(1);
 	}
 	printf("zone %s is ok\n", name);

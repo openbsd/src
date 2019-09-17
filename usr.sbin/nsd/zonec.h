@@ -47,7 +47,6 @@ struct zparser {
 	zone_type *current_zone;
 	domain_type *origin;
 	domain_type *prev_dname;
-	domain_type *default_apex;
 
 	int error_occurred;
 	unsigned int errors;
@@ -143,5 +142,7 @@ unsigned int zonec_read(const char *name, const char *zonefile, zone_type* zone)
  * The string must end with a newline after the RR. */
 int zonec_parse_string(region_type* region, domain_table_type* domains,
 	zone_type* zone, char* str, domain_type** parsed, int* num_rrs);
+/** check SSHFP type for failures and emit warnings */
+void check_sshfp(void);
 
 #endif /* _ZONEC_H_ */

@@ -37,6 +37,7 @@ ipc_child_quit(struct nsd* nsd)
 {
 	/* call shutdown and quit routines */
 	nsd->mode = NSD_QUIT;
+	service_remaining_tcp(nsd);
 #ifdef	BIND8_STATS
 	bind8_stats(nsd);
 #endif /* BIND8_STATS */
@@ -267,6 +268,8 @@ stats_add(struct nsdst* total, struct nsdst* s)
 	total->qudp6 += s->qudp6;
 	total->ctcp += s->ctcp;
 	total->ctcp6 += s->ctcp6;
+	total->ctls += s->ctls;
+	total->ctls6 += s->ctls6;
 	for(i=0; i<sizeof(total->rcode)/sizeof(stc_type); i++)
 		total->rcode[i] += s->rcode[i];
 	for(i=0; i<sizeof(total->opcode)/sizeof(stc_type); i++)
@@ -298,6 +301,8 @@ stats_subtract(struct nsdst* total, struct nsdst* s)
 	total->qudp6 -= s->qudp6;
 	total->ctcp -= s->ctcp;
 	total->ctcp6 -= s->ctcp6;
+	total->ctls -= s->ctls;
+	total->ctls6 -= s->ctls6;
 	for(i=0; i<sizeof(total->rcode)/sizeof(stc_type); i++)
 		total->rcode[i] -= s->rcode[i];
 	for(i=0; i<sizeof(total->opcode)/sizeof(stc_type); i++)
@@ -324,7 +329,8 @@ read_child_stats(struct nsd* nsd, struct nsd_child* child, int fd)
 			"%d: %s", (int)child->pid, strerror(errno));
 	} else {
 		stats_add(&nsd->st, &s);
-		child->query_count = s.qudp + s.qudp6 + s.ctcp + s.ctcp6;
+		child->query_count = s.qudp + s.qudp6 + s.ctcp + s.ctcp6
+			+ s.ctls + s.ctls6;
 		/* we know that the child is going to close the connection
 		 * now (this is an ACK of the QUIT_W_STATS so we know the
 		 * child is done, no longer sending e.g. NOTIFY contents) */
@@ -593,6 +599,7 @@ ipc_xfrd_set_listening(struct xfrd_state* xfrd, short mode)
 	int fd = xfrd->ipc_handler.ev_fd;
 	struct event_base* base = xfrd->event_base;
 	event_del(&xfrd->ipc_handler);
+	memset(&xfrd->ipc_handler, 0, sizeof(xfrd->ipc_handler));
 	event_set(&xfrd->ipc_handler, fd, mode, xfrd_handle_ipc, xfrd);
 	if(event_base_set(base, &xfrd->ipc_handler) != 0)
 		log_msg(LOG_ERR, "ipc: cannot set event_base");

@@ -330,6 +330,7 @@ tcp_pipe_reset_timeout(struct xfrd_tcp_pipeline* tp)
 	tv.tv_usec = 0;
 	if(tp->handler_added)
 		event_del(&tp->handler);
+	memset(&tp->handler, 0, sizeof(tp->handler));
 	event_set(&tp->handler, fd, EV_PERSIST|EV_TIMEOUT|EV_READ|
 		(tp->tcp_send_first?EV_WRITE:0), xfrd_handle_tcp_pipe, tp);
 	if(event_base_set(xfrd->event_base, &tp->handler) != 0)
@@ -575,6 +576,7 @@ xfrd_tcp_open(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 	/* set the tcp pipe event */
 	if(tp->handler_added)
 		event_del(&tp->handler);
+	memset(&tp->handler, 0, sizeof(tp->handler));
 	event_set(&tp->handler, fd, EV_PERSIST|EV_TIMEOUT|EV_READ|EV_WRITE,
 		xfrd_handle_tcp_pipe, tp);
 	if(event_base_set(xfrd->event_base, &tp->handler) != 0)

@@ -530,13 +530,17 @@ answer_chaos(struct nsd *nsd, query_type *q)
 		    (q->qname->name_size ==  15
 		     && memcmp(dname_name(q->qname), "\010hostname\004bind", 15) == 0))
 		{
-			/* Add ID */
-			query_addtxt(q,
+			if(!nsd->options->hide_identity) {
+				/* Add ID */
+				query_addtxt(q,
 				     buffer_begin(q->packet) + QHEADERSZ,
 				     CLASS_CH,
 				     0,
 				     nsd->identity);
-			ANCOUNT_SET(q->packet, ANCOUNT(q->packet) + 1);
+				ANCOUNT_SET(q->packet, ANCOUNT(q->packet) + 1);
+			} else {
+				RCODE_SET(q->packet, RCODE_REFUSE);
+			}
 		} else if ((q->qname->name_size == 16
 			    && memcmp(dname_name(q->qname), "\007version\006server", 16) == 0) ||
 			   (q->qname->name_size == 14

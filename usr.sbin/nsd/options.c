@@ -52,9 +52,12 @@ nsd_options_create(region_type* region)
 	opt->ip_addresses = NULL;
 	opt->ip_transparent = 0;
 	opt->ip_freebind = 0;
+	opt->send_buffer_size = 0;
+	opt->receive_buffer_size = 0;
 	opt->debug_mode = 0;
 	opt->verbosity = 0;
 	opt->hide_version = 0;
+	opt->hide_identity = 0;
 	opt->do_ip4 = 1;
 	opt->do_ip6 = 1;
 	opt->database = DBFILE;
@@ -68,6 +71,7 @@ nsd_options_create(region_type* region)
 	opt->refuse_any = 1;
 	opt->server_count = 1;
 	opt->tcp_count = 100;
+	opt->tcp_reject_overflow = 0;
 	opt->tcp_query_count = 0;
 	opt->tcp_timeout = TCP_TIMEOUT;
 	opt->tcp_mss = 0;
@@ -113,6 +117,10 @@ nsd_options_create(region_type* region)
 		opt->zonefiles_write = ZONEFILES_WRITE_INTERVAL;
 	else	opt->zonefiles_write = 0;
 	opt->xfrd_reload_timeout = 1;
+	opt->tls_service_key = NULL;
+	opt->tls_service_ocsp = NULL;
+	opt->tls_service_pem = NULL;
+	opt->tls_port = TLS_PORT;
 	opt->control_enable = 0;
 	opt->control_interface = NULL;
 	opt->control_port = NSD_CONTROL_PORT;

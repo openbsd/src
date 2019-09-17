@@ -170,6 +170,7 @@ xfrd_init(int socket, struct nsd* nsd, int shortsoa, int reload_active,
 	xfrd->child_timer_added = 0;
 
 	xfrd->ipc_send_blocked = 0;
+	memset(&xfrd->ipc_handler, 0, sizeof(xfrd->ipc_handler));
 	event_set(&xfrd->ipc_handler, socket, EV_PERSIST|EV_READ,
 		xfrd_handle_ipc, xfrd);
 	if(event_base_set(xfrd->event_base, &xfrd->ipc_handler) != 0)
@@ -294,6 +295,7 @@ xfrd_sig_process(void)
 		struct timeval tv;
 		tv.tv_sec = XFRD_CHILD_REAP_TIMEOUT;
 		tv.tv_usec = 0;
+		memset(&xfrd->child_timer, 0, sizeof(xfrd->child_timer));
 		event_set(&xfrd->child_timer, -1, EV_TIMEOUT,
 			xfrd_handle_child_timer, xfrd);
 		if(event_base_set(xfrd->event_base, &xfrd->child_timer) != 0)
@@ -400,6 +402,8 @@ xfrd_shutdown()
 	xfrd_del_tempdir(xfrd->nsd);
 #ifdef HAVE_SSL
 	daemon_remote_delete(xfrd->nsd->rc); /* ssl-delete secret keys */
+	if (xfrd->nsd->tls_ctx)
+		SSL_CTX_free(xfrd->nsd->tls_ctx);
 #endif
 #ifdef USE_DNSTAP
 	dt_collector_close(nsd.dt_collector, &nsd);
@@ -1038,6 +1042,8 @@ xfrd_udp_obtain(xfrd_zone_type* zone)
 		else {
 			if(zone->event_added)
 				event_del(&zone->zone_handler);
+			memset(&zone->zone_handler, 0,
+				sizeof(zone->zone_handler));
 			event_set(&zone->zone_handler, fd,
 				EV_PERSIST|EV_READ|EV_TIMEOUT,
 				xfrd_handle_zone, zone);
@@ -1174,6 +1180,7 @@ xfrd_set_timer(xfrd_zone_type* zone, time_t t)
 	else	fd = -1;
 	zone->timeout.tv_sec = t;
 	zone->timeout.tv_usec = 0;
+	memset(&zone->zone_handler, 0, sizeof(zone->zone_handler));
 	event_set(&zone->zone_handler, fd, fl, xfrd_handle_zone, zone);
 	if(event_base_set(xfrd->event_base, &zone->zone_handler) != 0)
 		log_msg(LOG_ERR, "xfrd timer: event_base_set failed");
@@ -1200,7 +1207,7 @@ xfrd_handle_incoming_soa(xfrd_zone_type* zone,
 	if(zone->soa_disk_acquired && soa->serial == zone->soa_disk.serial)
 	{
 		/* soa in disk has been loaded in memory */
-		log_msg(LOG_INFO, "zone %s serial %u is updated to %u.",
+		log_msg(LOG_INFO, "zone %s serial %u is updated to %u",
 			zone->apex_str, (unsigned)ntohl(zone->soa_nsd.serial),
 			(unsigned)ntohl(soa->serial));
 		zone->soa_nsd = zone->soa_disk;
@@ -1324,6 +1331,8 @@ xfrd_udp_release(xfrd_zone_type* zone)
 				if(fd != -1) {
 					if(wz->event_added)
 						event_del(&wz->zone_handler);
+					memset(&wz->zone_handler, 0,
+						sizeof(wz->zone_handler));
 					event_set(&wz->zone_handler, fd,
 						EV_READ|EV_TIMEOUT|EV_PERSIST,
 						xfrd_handle_zone, wz);
@@ -2216,6 +2225,7 @@ xfrd_set_reload_timeout()
 		tv.tv_usec = 0;
 		if(tv.tv_sec > xfrd->nsd->options->xfrd_reload_timeout)
 			tv.tv_sec = xfrd->nsd->options->xfrd_reload_timeout;
+		memset(&xfrd->reload_handler, 0, sizeof(xfrd->reload_handler));
 		event_set(&xfrd->reload_handler, -1, EV_TIMEOUT,
 			xfrd_handle_reload, xfrd);
 		if(event_base_set(xfrd->event_base, &xfrd->reload_handler) != 0)
@@ -2567,6 +2577,7 @@ static void xfrd_write_timer_set()
 		return;
 	tv.tv_sec = xfrd->nsd->options->zonefiles_write;
 	tv.tv_usec = 0;
+	memset(&xfrd->write_timer, 0, sizeof(xfrd->write_timer));
 	event_set(&xfrd->write_timer, -1, EV_TIMEOUT,
 		xfrd_handle_write_timer, xfrd);
 	if(event_base_set(xfrd->event_base, &xfrd->write_timer) != 0)

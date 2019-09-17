@@ -201,9 +201,12 @@ ip-address{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IP_ADDRESS;}
 interface{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IP_ADDRESS;}
 ip-transparent{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IP_TRANSPARENT;}
 ip-freebind{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IP_FREEBIND;}
+send-buffer-size{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_SEND_BUFFER_SIZE;}
+receive-buffer-size{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_RECEIVE_BUFFER_SIZE;}
 debug-mode{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DEBUG_MODE;}
 use-systemd{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_USE_SYSTEMD;}
 hide-version{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_HIDE_VERSION;}
+hide-identity{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_HIDE_IDENTITY;}
 ip4-only{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_IP4_ONLY;}
 ip6-only{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_IP6_ONLY;}
 do-ip4{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_DO_IP4;}
@@ -215,6 +218,7 @@ nsid{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_NSID;}
 logfile{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_LOGFILE;}
 server-count{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_SERVER_COUNT;}
 tcp-count{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TCP_COUNT;}
+tcp-reject-overflow{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TCP_REJECT_OVERFLOW;}
 tcp-query-count{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TCP_QUERY_COUNT;}
 tcp-timeout{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TCP_TIMEOUT;}
 tcp-mss{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TCP_MSS;}
@@ -287,6 +291,10 @@ min-refresh-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MIN_REFRESH_TIM
 max-retry-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MAX_RETRY_TIME;}
 min-retry-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MIN_RETRY_TIME;}
 multi-master-check{COLON}      { LEXOUT(("v(%s) ", yytext)); return VAR_MULTI_MASTER_CHECK;}
+tls-service-key{COLON} { LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_KEY;}
+tls-service-ocsp{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_OCSP;}
+tls-service-pem{COLON} { LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_PEM;}
+tls-port{COLON}        { LEXOUT(("v(%s) ", yytext)); return VAR_TLS_PORT;}
 {NEWLINE}		{ LEXOUT(("NL\n")); cfg_parser->line++;}
 
 	/* Quoted strings. Strip leading and ending quotes */

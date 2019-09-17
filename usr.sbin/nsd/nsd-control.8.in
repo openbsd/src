@@ -1,4 +1,4 @@
-.TH "nsd\-control" "8" "Mar 25, 2019" "NLnet Labs" "nsd 4.1.27"
+.TH "nsd\-control" "8" "Aug 19, 2019" "NLnet Labs" "nsd 4.2.2"
 .\" Copyright (c) 2011, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -192,7 +192,7 @@ After running the script as root, turn on \fBcontrol\-enable\fR in
 The \fIstats\fR command shows a number of statistic counters.
 .TP
 .I num.queries
-number of queries received (the tcp and udp queries added up).
+number of queries received (the tls, tcp and udp queries added up).
 .TP
 .I serverX.queries
 number of queries handled by the server process.  The number of
@@ -252,6 +252,12 @@ number of connections over TCP ip4.
 .TP
 .I num.tcp6
 number of connections over TCP ip6.
+.TP
+.I num.tls
+number of connections over TLS ip4.  TLS queries are not part of num.tcp.
+.TP
+.I num.tls6
+number of connections over TLS ip6.  TLS queries are not part of num.tcp6.
 .TP
 .I num.answer_wo_aa
 number of answers with NOERROR rcode and without AA flag, this includes the referrals.

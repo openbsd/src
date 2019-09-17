@@ -661,6 +661,9 @@ main(int argc, char *argv[])
 	nsd.outgoing_tcp_mss = nsd.options->outgoing_tcp_mss;
 	nsd.ipv4_edns_size = nsd.options->ipv4_edns_size;
 	nsd.ipv6_edns_size = nsd.options->ipv6_edns_size;
+#ifdef HAVE_SSL
+	nsd.tls_ctx = NULL;
+#endif
 
 	if(udp_port == 0)
 	{
@@ -942,10 +945,19 @@ main(int argc, char *argv[])
 			"not be started", argv0);
 	}
 #if defined(HAVE_SSL)
+	if(nsd.options->control_enable || (nsd.options->tls_service_key && nsd.options->tls_service_key[0])) {
+		perform_openssl_init();
+	}
 	if(nsd.options->control_enable) {
 		/* read ssl keys while superuser and outside chroot */
 		if(!(nsd.rc = daemon_remote_create(nsd.options)))
 			error("could not perform remote control setup");
+	}
+	if(nsd.options->tls_service_key && nsd.options->tls_service_key[0]
+	   && nsd.options->tls_service_pem && nsd.options->tls_service_pem[0]) {
+		if(!(nsd.tls_ctx = server_tls_ctx_create(&nsd, NULL,
+			nsd.options->tls_service_ocsp)))
+			error("could not set up tls SSL_CTX");
 	}
 #endif /* HAVE_SSL */
 

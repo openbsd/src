@@ -19,6 +19,61 @@
 #include "query.h"
 #include "rbtree.h"
 
+#ifndef HAVE_SSL
+/* we need fixed time compare */
+#define CRYPTO_memcmp memcmp_fixedtime
+int memcmp_fixedtime(const void *s1, const void *s2, size_t n)
+{
+	size_t i;
+	const uint8_t* u1 = (const uint8_t*)s1;
+	const uint8_t* u2 = (const uint8_t*)s2;
+	int ret = 0, haveit = 0, bret = 0, bhaveit = 0;
+	/* this routine loops for every byte in the strings.
+	 * every loop, it tests ==, < and >.  All three.  One succeeds,
+	 * as every time it must be equal, smaller or larger.  The one
+	 * that succeeds has one if-comparison and two assignments. */
+	for(i=0; i<n; i++) {
+		if(u1[i] == u2[i]) {
+			/* waste time equal to < and > statements */
+			if(haveit) {
+				bret = -1; /* waste time */
+				bhaveit = 1;
+			} else {
+				bret = 1; /* waste time */
+				bhaveit = 1;
+			}
+		}
+		if(u1[i] < u2[i]) {
+			if(haveit) {
+				bret = -1; /* waste time equal to the else */
+				bhaveit = 1;
+			} else {
+				ret = -1;
+				haveit = 1;
+			}
+		}
+		if(u1[i] > u2[i]) {
+			if(haveit) {
+				bret = 1; /* waste time equal to the else */
+				bhaveit = 1;
+			} else {
+				ret = 1;
+				haveit = 1;
+			}
+		}
+	}
+	/* use the variables to stop the compiler from excluding them */
+	if(bhaveit) {
+		if(bret == -2)
+			ret = 0; /* never happens */
+	} else {
+		if(bret == -2)
+			ret = 0; /* never happens */
+	}
+	return ret;
+}
+#endif
+
 static region_type *tsig_region;
 
 struct tsig_key_table

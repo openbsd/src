@@ -59,7 +59,7 @@ extern config_parser_state_type* cfg_parser;
 %token VAR_KEY
 %token VAR_ALGORITHM VAR_SECRET
 %token VAR_AXFR VAR_UDP
-%token VAR_VERBOSITY VAR_HIDE_VERSION
+%token VAR_VERBOSITY VAR_HIDE_VERSION VAR_HIDE_IDENTITY
 %token VAR_PATTERN VAR_INCLUDEPATTERN VAR_ZONELISTFILE
 %token VAR_REMOTE_CONTROL VAR_CONTROL_ENABLE VAR_CONTROL_INTERFACE
 %token VAR_CONTROL_PORT VAR_SERVER_KEY_FILE VAR_SERVER_CERT_FILE
@@ -76,6 +76,9 @@ extern config_parser_state_type* cfg_parser;
 %token VAR_DNSTAP_SEND_IDENTITY VAR_DNSTAP_SEND_VERSION VAR_DNSTAP_IDENTITY
 %token VAR_DNSTAP_VERSION VAR_DNSTAP_LOG_AUTH_QUERY_MESSAGES
 %token VAR_DNSTAP_LOG_AUTH_RESPONSE_MESSAGES
+%token VAR_TLS_SERVICE_KEY VAR_TLS_SERVICE_OCSP VAR_TLS_SERVICE_PEM VAR_TLS_PORT
+%token VAR_SEND_BUFFER_SIZE VAR_RECEIVE_BUFFER_SIZE
+%token VAR_TCP_REJECT_OVERFLOW
 
 %%
 toplevelvars: /* empty */ | toplevelvars toplevelvar ;
@@ -107,7 +110,11 @@ content_server: server_ip_address | server_ip_transparent | server_debug_mode | 
 	server_zonefiles_check | server_do_ip4 | server_do_ip6 |
 	server_zonefiles_write | server_log_time_ascii | server_round_robin |
 	server_reuseport | server_version | server_ip_freebind |
-	server_minimal_responses | server_refuse_any | server_use_systemd;
+	server_tls_service_key | server_tls_service_pem | server_tls_port |
+	server_minimal_responses | server_refuse_any | server_use_systemd |
+	server_hide_identity | server_tls_service_ocsp |
+	server_send_buffer_size | server_receive_buffer_size |
+	server_tcp_reject_overflow;
 server_ip_address: VAR_IP_ADDRESS STRING 
 	{ 
 		OUTYY(("P(server_ip_address:%s)\n", $2)); 
@@ -138,12 +145,30 @@ server_ip_transparent: VAR_IP_TRANSPARENT STRING
 		else cfg_parser->opt->ip_transparent = (strcmp($2, "yes")==0);
 	}
 	;
-server_ip_freebind: VAR_IP_FREEBIND STRING 
-	{ 
-		OUTYY(("P(server_ip_freebind:%s)\n", $2)); 
+server_ip_freebind: VAR_IP_FREEBIND STRING
+	{
+		OUTYY(("P(server_ip_freebind:%s)\n", $2));
 		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
 			yyerror("expected yes or no.");
 		else cfg_parser->opt->ip_freebind = (strcmp($2, "yes")==0);
+	}
+	;
+server_send_buffer_size: VAR_SEND_BUFFER_SIZE STRING
+	{
+		int sz = atoi($2);
+		OUTYY(("P(server_send_buffer_size:%s)\n", $2));
+		if(sz < 0)
+			yyerror("non-negative number expected");
+		else cfg_parser->opt->send_buffer_size = sz;
+	}
+	;
+server_receive_buffer_size: VAR_RECEIVE_BUFFER_SIZE STRING
+	{
+		int sz = atoi($2);
+		OUTYY(("P(server_receive_buffer_size:%s)\n", $2));
+		if(sz < 0)
+			yyerror("non-negative number expected");
+		else cfg_parser->opt->receive_buffer_size = sz;
 	}
 	;
 server_debug_mode: VAR_DEBUG_MODE STRING 
@@ -173,6 +198,14 @@ server_hide_version: VAR_HIDE_VERSION STRING
 		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
 			yyerror("expected yes or no.");
 		else cfg_parser->opt->hide_version = (strcmp($2, "yes")==0);
+	}
+	;
+server_hide_identity: VAR_HIDE_IDENTITY STRING 
+	{ 
+		OUTYY(("P(server_hide_identity:%s)\n", $2)); 
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else cfg_parser->opt->hide_identity = (strcmp($2, "yes")==0);
 	}
 	;
 server_ip4_only: VAR_IP4_ONLY STRING 
@@ -337,6 +370,17 @@ server_tcp_count: VAR_TCP_COUNT STRING
 		if(atoi($2) <= 0)
 			yyerror("number greater than zero expected");
 		else cfg_parser->opt->tcp_count = atoi($2);
+	}
+	;
+server_tcp_reject_overflow: VAR_TCP_REJECT_OVERFLOW STRING
+	{
+		OUTYY(("P(server_reject_overflow_tcp:%s)\n", $2));
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0) {
+			yyerror("tcp-reject-overflow: expected yes or no.");
+		} else {
+			cfg_parser->opt->tcp_reject_overflow =
+				(strcmp($2, "yes")==0);
+		}
 	}
 	;
 server_pidfile: VAR_PIDFILE STRING
@@ -529,7 +573,30 @@ server_zonefiles_write: VAR_ZONEFILES_WRITE STRING
 		else cfg_parser->opt->zonefiles_write = atoi($2);
 	}
 	;
-
+server_tls_service_key: VAR_TLS_SERVICE_KEY STRING
+	{
+		OUTYY(("P(server_tls_service_key:%s)\n", $2));
+		cfg_parser->opt->tls_service_key = region_strdup(cfg_parser->opt->region, $2);
+	}
+	;
+server_tls_service_ocsp: VAR_TLS_SERVICE_OCSP STRING
+	{
+		OUTYY(("P(server_tls_service_ocsp:%s)\n", $2));
+		cfg_parser->opt->tls_service_ocsp = region_strdup(cfg_parser->opt->region, $2);
+	}
+	;
+server_tls_service_pem: VAR_TLS_SERVICE_PEM STRING
+	{
+		OUTYY(("P(server_tls_service_pem:%s)\n", $2));
+		cfg_parser->opt->tls_service_pem = region_strdup(cfg_parser->opt->region, $2);
+	}
+	;
+server_tls_port: VAR_TLS_PORT STRING
+	{
+		OUTYY(("P(server_tls_port:%s)\n", $2));
+		cfg_parser->opt->tls_port = region_strdup(cfg_parser->opt->region, $2);
+	}
+	;
 rcstart: VAR_REMOTE_CONTROL
 	{
 		OUTYY(("\nP(remote-control:)\n"));
@@ -714,7 +781,7 @@ zone_config_item: zone_zonefile | zone_allow_notify | zone_request_xfr |
 	zone_outgoing_interface | zone_allow_axfr_fallback | include_pattern |
 	zone_rrl_whitelist | zone_zonestats | zone_max_refresh_time |
 	zone_min_refresh_time | zone_max_retry_time | zone_min_retry_time |
-       zone_size_limit_xfr | zone_multi_master_check;
+	zone_size_limit_xfr | zone_multi_master_check;
 pattern_name: VAR_NAME STRING
 	{ 
 		OUTYY(("P(pattern_name:%s)\n", $2)); 
