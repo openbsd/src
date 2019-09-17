@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: syslogd.pl,v 1.10 2018/05/22 15:01:16 bluhm Exp $
+#	$OpenBSD: syslogd.pl,v 1.11 2019/09/17 22:24:08 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -125,6 +125,7 @@ foreach (@m) {
 $c->run->up if !$args{client}{noclient} && !$c->{early};
 $rc->run->up if $args{rsyslogd}{connect};
 
+$rc->down if $args{rsyslogd}{connect};
 $c->down if !$args{client}{noclient} && !$c->{early};
 $s->down unless $args{server}{noserver};
 foreach (@m) {
