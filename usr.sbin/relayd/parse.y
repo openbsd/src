@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.242 2019/09/15 19:23:29 rob Exp $	*/
+/*	$OpenBSD: parse.y,v 1.243 2019/09/18 20:27:53 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -168,7 +168,7 @@ typedef struct {
 
 %}
 
-%token	ALL APPEND BACKLOG BACKUP BINARY BUFFER CA CACHE SET CHECK CIPHERS CODE
+%token	APPEND BACKLOG BACKUP BINARY BUFFER CA CACHE SET CHECK CIPHERS CODE
 %token	COOKIE DEMOTE DIGEST DISABLE ERROR EXPECT PASS BLOCK EXTERNAL FILENAME
 %token	FORWARD FROM HASH HEADER HEADERLEN HOST HTTP ICMP INCLUDE INET INET6
 %token	INTERFACE INTERVAL IP KEYPAIR LABEL LISTEN VALUE LOADBALANCE LOG LOOKUP
@@ -176,7 +176,7 @@ typedef struct {
 %token	PREFORK PRIORITY PROTO QUERYSTR REAL REDIRECT RELAY REMOVE REQUEST
 %token	RESPONSE RETRY QUICK RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION
 %token	SNMP SOCKET SPLICE SSL STICKYADDR STYLE TABLE TAG TAGGED TCP TIMEOUT TLS
-%token	TO ROUTER RTLABEL TRANSPARENT TRAP UPDATES URL WITH TTL RTABLE
+%token	TO ROUTER RTLABEL TRANSPARENT TRAP URL WITH TTL RTABLE
 %token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDHE
 %token	EDH TICKETS CONNECTION CONNECTIONS ERRORS STATE CHANGES CHECKS
 %token	WEBSOCKETS
@@ -455,20 +455,8 @@ main		: INTERVAL NUMBER	{
 trap		: /* nothing */		{ $$ = 0; }
 		| TRAP			{ $$ = 1; }
 
-loglevel	: UPDATES		{ /* remove 6.4-current */
-					  $$ = RELAYD_OPT_LOGUPDATE;
-					  log_warnx("log updates deprecated, "
-					      "update configuration");
-					}
-		| STATE CHANGES		{ $$ = RELAYD_OPT_LOGUPDATE; }
+loglevel	: STATE CHANGES		{ $$ = RELAYD_OPT_LOGUPDATE; }
 		| HOST CHECKS		{ $$ = RELAYD_OPT_LOGHOSTCHECK; }
-		| ALL			{ /* remove 6.4-current */
-					  $$ = (RELAYD_OPT_LOGHOSTCHECK|
-						RELAYD_OPT_LOGCON|
-						RELAYD_OPT_LOGCONERR);
-					  log_warnx("log all deprecated, "
-					      "update configuration");
-					}
 		| CONNECTION		{ $$ = (RELAYD_OPT_LOGCON |
 						RELAYD_OPT_LOGCONERR); }
 		| CONNECTION ERRORS	{ $$ = RELAYD_OPT_LOGCONERR; }
@@ -2354,7 +2342,6 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
-		{ "all",		ALL },
 		{ "append",		APPEND },
 		{ "backlog",		BACKLOG },
 		{ "backup",		BACKUP },
@@ -2462,7 +2449,6 @@ lookup(char *s)
 		{ "transparent",	TRANSPARENT },
 		{ "trap",		TRAP },
 		{ "ttl",		TTL },
-		{ "updates",		UPDATES },
 		{ "url",		URL },
 		{ "value",		VALUE },
 		{ "websockets",		WEBSOCKETS },
