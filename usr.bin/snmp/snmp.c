@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.2 2019/08/27 06:14:28 martijn Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.3 2019/09/18 09:44:38 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -32,6 +32,10 @@
 
 static struct ber_element *
     snmp_resolve(struct snmp_agent *, struct ber_element *, int);
+static char *
+    snmp_package(struct snmp_agent *, struct ber_element *, size_t *);
+static struct ber_element *
+    snmp_unpackage(struct snmp_agent *, char *, size_t);
 
 struct snmp_agent *
 snmp_connect_v12(int fd, enum snmp_version version, const char *community)
@@ -171,19 +175,16 @@ fail:
 static struct ber_element *
 snmp_resolve(struct snmp_agent *agent, struct ber_element *pdu, int reply)
 {
-	struct ber_element *message, *varbind;
+	struct ber_element *varbind;
 	struct ber_oid oid;
 	struct timespec start, now;
 	struct pollfd pfd;
-	struct ber ber;
+	char *message;
 	ssize_t len;
 	long long reqid, rreqid;
-	long long version;
-	char *community;
 	short direction;
 	int to, nfds, ret;
 	int tries;
-	void *ptr;
 	char buf[READ_BUF_SIZE];
 
 	if (ber_scanf_elements(pdu, "{i", &reqid) != 0) {
@@ -192,23 +193,8 @@ snmp_resolve(struct snmp_agent *agent, struct ber_element *pdu, int reply)
 		return NULL;
 	}
 
-	if ((message = ber_add_sequence(NULL)) == NULL) {
-		ber_free_elements(pdu);
+	if ((message = snmp_package(agent, pdu, &len)) == NULL)
 		return NULL;
-	}
-	if (ber_printf_elements(message, "dse", agent->version,
-	    agent->community, pdu) == NULL) {
-		ber_free_elements(pdu);
-		ber_free_elements(message);
-		return NULL;
-	}
-	memset(&ber, 0, sizeof(ber));
-	ber_set_application(&ber, smi_application);
-	len = ber_write_elements(&ber, message);
-	ber_free_elements(message);
-	message = NULL;
-	if (ber_get_writebuf(&ber, &ptr) < 1)
-		goto fail;
 
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	memcpy(&now, &start, sizeof(now));
@@ -236,7 +222,7 @@ snmp_resolve(struct snmp_agent *agent, struct ber_element *pdu, int reply)
 				goto fail;
 		}
 		if (direction == POLLOUT) {
-			ret = send(agent->fd, ptr, len, MSG_DONTWAIT);
+			ret = send(agent->fd, message, len, MSG_DONTWAIT);
 			if (ret == -1)
 				goto fail;
 			if (ret < len) {
@@ -253,25 +239,10 @@ snmp_resolve(struct snmp_agent *agent, struct ber_element *pdu, int reply)
 			errno = ECONNRESET;
 		if (ret <= 0)
 			goto fail;
-		ber_set_readbuf(&ber, buf, ret);
-		if ((message = ber_read_elements(&ber, NULL)) == NULL) {
-			direction = POLLOUT;
+		if ((pdu = snmp_unpackage(agent, buf, ret)) == NULL) {
 			tries--;
-			continue;
-		}
-		if (ber_scanf_elements(message, "{ise", &version, &community,
-		    &pdu) != 0) {
+			direction = POLLOUT;
 			errno = EPROTO;
-			direction = POLLOUT;
-			tries--;
-			continue;
-		}
-		/* Skip invalid packets; should not happen */
-		if (version != agent->version ||
-		    strcmp(community, agent->community) != 0) {
-			errno = EPROTO;
-			direction = POLLOUT;
-			tries--;
 			continue;
 		}
 		/* Validate pdu format and check request id */
@@ -297,17 +268,112 @@ snmp_resolve(struct snmp_agent *agent, struct ber_element *pdu, int reply)
 				break;
 			}
 		}
-		if (varbind != NULL)
-			continue;
 
-		ber_unlink_elements(message->be_sub->be_next);
-		ber_free_elements(message);
-		ber_free(&ber);
+		free(message);
 		return pdu;
 	}
 
 fail:
-	ber_free_elements(message);
-	ber_free(&ber);
+	free(message);
 	return NULL;
+}
+
+static char *
+snmp_package(struct snmp_agent *agent, struct ber_element *pdu, size_t *len)
+{
+	struct ber ber;
+	struct ber_element *message;
+	ssize_t ret;
+	char *packet = NULL;
+
+	bzero(&ber, sizeof(ber));
+	ber_set_application(&ber, smi_application);
+
+	if ((message = ber_add_sequence(NULL)) == NULL) {
+		ber_free_elements(pdu);
+		goto fail;
+	}
+
+	switch (agent->version) {
+	case SNMP_V1:
+	case SNMP_V2C:
+		if (ber_printf_elements(message, "dse", agent->version,
+		    agent->community, pdu) == NULL) {
+			ber_free_elements(pdu);
+			goto fail;
+		}
+		break;
+	case SNMP_V3:
+		break;
+	}
+
+	if (ber_write_elements(&ber, message) == -1)
+		goto fail;
+	ret = ber_copy_writebuf(&ber, (void **)&packet);
+
+	*len = (size_t) ret;
+	ber_free(&ber);
+
+fail:
+	ber_free_elements(message);
+	return packet;
+}
+
+static struct ber_element *
+snmp_unpackage(struct snmp_agent *agent, char *buf, size_t buflen)
+{
+	struct ber ber;
+	enum snmp_version version;
+	char *community;
+	struct ber_element *pdu;
+	struct ber_element *message = NULL, *payload;
+
+	bzero(&ber, sizeof(ber));
+	ber_set_application(&ber, smi_application);
+
+	ber_set_readbuf(&ber, buf, buflen);
+	if ((message = ber_read_elements(&ber, NULL)) == NULL)
+		return NULL;
+	ber_free(&ber);
+
+	if (ber_scanf_elements(message, "{de", &version, &payload) != 0)
+		goto fail;
+
+	if (version != agent->version)
+		goto fail;
+
+	switch (version)
+	{
+	case SNMP_V1:
+	case SNMP_V2C:
+		if (ber_scanf_elements(payload, "se", &community, &pdu) == -1)
+			goto fail;
+		if (strcmp(community, agent->community) != 0)
+			goto fail;
+		ber_unlink_elements(payload);
+		ber_free_elements(message);
+		return pdu;
+	case SNMP_V3:
+		break;
+	}
+	/* NOTREACHED */
+
+fail:
+	ber_free_elements(message);
+	return NULL;
+}
+
+ssize_t
+ber_copy_writebuf(struct ber *ber, void **buf)
+{
+	char *bbuf;
+	ssize_t ret;
+
+	*buf = NULL;
+	if ((ret = ber_get_writebuf(ber, (void **)&bbuf)) == -1)
+		return -1;
+	if ((*buf = malloc(ret)) == NULL)
+		return -1;
+	memcpy(*buf, bbuf, ret);
+	return  ret;
 }

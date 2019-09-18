@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.7 2019/08/14 14:40:23 deraadt Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.8 2019/09/18 09:44:38 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -45,6 +45,7 @@ int snmpc_get(int, char *[]);
 int snmpc_walk(int, char *[]);
 int snmpc_trap(int, char *[]);
 int snmpc_mibtree(int, char *[]);
+struct snmp_agent *snmpc_connect(char *, char *);
 int snmpc_parseagent(char *, char *);
 int snmpc_print(struct ber_element *);
 __dead void snmpc_printerror(enum snmp_error, char *);
@@ -304,9 +305,7 @@ snmpc_get(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	agent = snmp_connect_v12(snmpc_parseagent(argv[0], "161"), version,
-	    community);
-	if (agent == NULL)
+	if ((agent = snmpc_connect(argv[0], "161")) == NULL)
 		err(1, "%s", snmp_app->name);
 	agent->timeout = timeout;
 	agent->retries = retries;
@@ -372,8 +371,7 @@ snmpc_walk(int argc, char *argv[])
 		usage();
 	oids = argc == 1 ? mib : argv[1];
 
-	agent = snmp_connect_v12(snmpc_parseagent(argv[0], "161"), version, community);
-	if (agent == NULL)
+	if ((agent = snmpc_connect(argv[0], "161"))== NULL)
 		err(1, "%s", snmp_app->name);
 	agent->timeout = timeout;
 	agent->retries = retries;
@@ -495,9 +493,7 @@ snmpc_trap(int argc, char *argv[])
 	if (version == SNMP_V1)
 		errx(1, "trap is not supported for snmp v1");
 
-	agent = snmp_connect_v12(snmpc_parseagent(argv[0], "162"),
-	    version, community);
-	if (agent == NULL)
+	if ((agent = snmpc_connect(argv[0], "162")) == NULL)
 		err(1, "%s", snmp_app->name);
 
 	if (pledge("stdio", NULL) == -1)
@@ -691,6 +687,18 @@ snmpc_mibtree(int argc, char *argv[])
 		printf("%s\n", buf);
 	}
 	return 0;
+}
+
+struct snmp_agent *
+snmpc_connect(char *host, char *port)
+{
+	switch (version) {
+	case SNMP_V1:
+	case SNMP_V2C:
+		return snmp_connect_v12(snmpc_parseagent(host, port), version,
+		    community);
+	}
+	return NULL;
 }
 
 int

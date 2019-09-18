@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.1 2019/08/09 06:17:59 martijn Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.2 2019/09/18 09:44:38 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -132,5 +132,7 @@ struct ber_element *
     snmp_getbulk(struct snmp_agent *, struct ber_oid *, size_t, int, int);
 int snmp_trap(struct snmp_agent *, struct timespec *, struct ber_oid *,
     struct ber_element *);
+
+ssize_t ber_copy_writebuf(struct ber *, void **);
 
 #endif /* SNMPD_SNMP_H */
