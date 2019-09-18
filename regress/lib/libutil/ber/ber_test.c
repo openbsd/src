@@ -1,4 +1,4 @@
-/* $OpenBSD: ber_test.c,v 1.18 2019/08/14 23:17:08 rob Exp $
+/* $OpenBSD: ber_test.c,v 1.19 2019/09/18 11:00:46 rob Exp $
 */
 /*
  * Copyright (c) Rob Pierce <rob@openbsd.org>
@@ -694,7 +694,7 @@ test_ber_null(void)
 	}
 
 	/*
-	 * Scanning after the last valid element should be able to descent back
+	 * Scanning after the last valid element should be able to descend back
 	 * into the parent level.
 	 */
 	if (ber_scanf_elements(elm, "{i}", &val) != 0) {
