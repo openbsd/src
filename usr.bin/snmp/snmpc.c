@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.10 2019/09/18 09:52:47 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.11 2019/09/18 09:54:36 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -42,7 +42,7 @@
 #include "snmp.h"
 #include "usm.h"
 
-#define GETOPT_COMMON		"A:a:c:E:e:k:l:n:O:r:t:u:v:Z:"
+#define GETOPT_COMMON		"A:a:c:E:e:K:k:l:n:O:r:t:u:v:X:x:Z:"
 
 int snmpc_get(int, char *[]);
 int snmpc_walk(int, char *[]);
@@ -98,11 +98,15 @@ int
 main(int argc, char *argv[])
 {
 	const EVP_MD *md = NULL;
+	const EVP_CIPHER *cipher = NULL;
 	struct snmp_sec *sec;
 	char *user = NULL;
 	enum usm_key_level authkeylevel;
 	char *authkey = NULL;
 	size_t authkeylen = 0;
+	enum usm_key_level privkeylevel;
+	char *privkey = NULL;
+	size_t privkeylen = 0;
 	int seclevel = SNMP_MSGFLAG_REPORT;
 	char *ctxname = NULL;
 	char *ctxengineid = NULL, *secengineid = NULL;
@@ -193,6 +197,16 @@ main(int argc, char *argv[])
 				err(1, "-3e");
 			}
 			break;
+		case 'K':
+			privkey = snmpc_hex2bin(optarg, &privkeylen);
+			if (privkey == NULL) {
+				if (errno == EINVAL)
+					errx(1, "Bad key value after "
+					    "-3K flag.");
+				errx(1, "-3K");
+			}
+			privkeylevel = USM_KEY_LOCALIZED;
+				break;
 		case 'k':
 			authkey = snmpc_hex2bin(optarg, &authkeylen);
 			if (authkey == NULL) {
@@ -208,6 +222,9 @@ main(int argc, char *argv[])
 			else if (strcasecmp(optarg, "authNoPriv") == 0)
 				seclevel = SNMP_MSGFLAG_AUTH |
 				    SNMP_MSGFLAG_REPORT;
+			else if (strcasecmp(optarg, "authPriv") == 0)
+				seclevel = SNMP_MSGFLAG_AUTH |
+				    SNMP_MSGFLAG_PRIV | SNMP_MSGFLAG_REPORT;
 			else
 				errx(1, "Invalid security level specified "
 				    "after -l flag: %s", optarg);
@@ -369,6 +386,21 @@ main(int argc, char *argv[])
 				}
 			}
 			break;
+		case 'X':
+			privkey = optarg;
+			privkeylen = strlen(privkey);
+			privkeylevel = USM_KEY_PASSWORD;
+			break;
+		case 'x':
+			if (strcasecmp(optarg, "DES") == 0)
+				cipher = EVP_des_cbc();
+			else if (strcasecmp(optarg, "AES") == 0)
+				cipher = EVP_aes_128_cfb128();
+			else
+				errx(1, "Invalid privacy protocol "
+				    "specified after -3x flag: %s",
+				    optarg);
+			break;
 		case 'Z':
 			boots = strtoll(optarg, &strtolp, 10);
 			if (boots < 0 || strtolp == optarg || strtolp[0] != ',')
@@ -401,6 +433,15 @@ main(int argc, char *argv[])
 				errx(1, "No authKey or authPassword specified");
 			if (usm_setauth(sec, md, authkey, authkeylen,
 			    authkeylevel) == -1)
+				err(1, "Can't set authkey");
+		}
+		if (seclevel & SNMP_MSGFLAG_PRIV) {
+			if (cipher == NULL)
+				cipher = EVP_des_cbc();
+			if (privkey == NULL)
+				errx(1, "No privKey or privPassword specified");
+			if (usm_setpriv(sec, cipher, privkey, privkeylen,
+			    privkeylevel) == -1)
 				err(1, "Can't set authkey");
 		}
 		if (secengineid != NULL) {
@@ -1087,9 +1128,9 @@ usage(void)
 		    snmp_app->name,
 		    snmp_app->usecommonopt ?
 		    " [-A authpass] [-a digest] [-c community] [-e secengineid]\n"
-		    "            [-E ctxengineid] [-k localauth] [-l seclevel] [-n ctxname]\n"
-		    "            [-O afnqvxSQ] [-r retries] [-t timeout] [-u user] [-v version]\n"
-		    "            [-Z boots,time]\n"
+		    "            [-E ctxengineid] [-K localpriv] [-k localauth] [-l seclevel]\n"
+		    "            [-n ctxname] [-O afnqvxSQ] [-r retries] [-t timeout] [-u user]\n"
+		    "            [-v version] [-X privpass] [-x cipher] [-Z boots,time]\n"
 		    "            " : "",
 		    snmp_app->usage == NULL ? "" : snmp_app->usage);
 		exit(1);

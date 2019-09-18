@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmp.1,v 1.5 2019/09/18 09:52:47 martijn Exp $
+.\" $OpenBSD: snmp.1,v 1.6 2019/09/18 09:54:36 martijn Exp $
 .\"
 .\" Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -28,6 +28,7 @@
 .Op Fl c Ar community
 .Op Fl E Ar ctxengineid
 .Op Fl e Ar secengineid
+.Op Fl K Ar localpriv
 .Op Fl k Ar localauth
 .Op Fl l Ar seclevel
 .Op Fl n Ar ctxname
@@ -36,6 +37,8 @@
 .Op Fl t Ar timeout
 .Op Fl u Ar user
 .Op Fl v Ar version
+.Op Fl X Ar privpass
+.Op Fl x Ar cipher
 .Op Fl Z Ar boots , Ns Ar time
 .Ar agent
 .Ar oid ...
@@ -46,6 +49,7 @@
 .Op Fl c Ar community
 .Op Fl E Ar ctxengineid
 .Op Fl e Ar secengineid
+.Op Fl K Ar localpriv
 .Op Fl k Ar localauth
 .Op Fl l Ar seclevel
 .Op Fl n Ar ctxname
@@ -54,6 +58,8 @@
 .Op Fl t Ar timeout
 .Op Fl u Ar user
 .Op Fl v Ar version
+.Op Fl X Ar privpass
+.Op Fl x Ar cipher
 .Op Fl Z Ar boots , Ns Ar time
 .Op Fl C Cm cIipt
 .Op Fl C Cm E Ar endoid
@@ -66,6 +72,7 @@
 .Op Fl c Ar community
 .Op Fl E Ar ctxengineid
 .Op Fl e Ar secengineid
+.Op Fl K Ar localpriv
 .Op Fl k Ar localauth
 .Op Fl l Ar seclevel
 .Op Fl n Ar ctxname
@@ -74,6 +81,8 @@
 .Op Fl t Ar timeout
 .Op Fl u Ar user
 .Op Fl v Ar version
+.Op Fl X Ar privpass
+.Op Fl x Ar cipher
 .Op Fl Z Ar boots , Ns Ar time
 .Op Fl C Cm n Ns Ar nonrep Ns Cm r Ns Ar maxrep
 .Ar agent
@@ -85,6 +94,7 @@
 .Op Fl c Ar community
 .Op Fl E Ar ctxengineid
 .Op Fl e Ar secengineid
+.Op Fl K Ar localpriv
 .Op Fl k Ar localauth
 .Op Fl l Ar seclevel
 .Op Fl n Ar ctxname
@@ -93,6 +103,8 @@
 .Op Fl t Ar timeout
 .Op Fl u Ar user
 .Op Fl v Ar version
+.Op Fl X Ar privpass
+.Op Fl x Ar cipher
 .Op Fl Z Ar boots , Ns Ar time
 .Op Fl C Cm cipn Ns Ar nonrep Ns Cm r Ns Ar maxrep
 .Ar agent
@@ -104,6 +116,7 @@
 .Op Fl c Ar community
 .Op Fl E Ar ctxengineid
 .Op Fl e Ar secengineid
+.Op Fl K Ar localpriv
 .Op Fl k Ar localauth
 .Op Fl l Ar seclevel
 .Op Fl n Ar ctxname
@@ -111,6 +124,8 @@
 .Op Fl t Ar timeout
 .Op Fl u Ar user
 .Op Fl v Ar version
+.Op Fl X Ar privpass
+.Op Fl x Ar cipher
 .Op Fl Z Ar boots , Ns Ar time
 .Ar agent uptime trapoid
 .Oo Ar varoid type value Oc ...
@@ -302,6 +317,14 @@ The snmpv3 context engine id.
 Most of the time this value can be safely ignored.
 This option is only used by
 .Fl v Cm 3 .
+.It Fl K Ar localpriv
+The localized privacy password for the user in hexadecimal format
+.Po
+optionally prefixed with a
+.Cm 0x
+.Pc .
+This option is only used by
+.Fl v Cm 3 .
 .It Fl k Ar localauth
 The localized authentication password for the user in hexadecimal format
 .Po
@@ -313,14 +336,24 @@ This option is only used by
 .It Fl l Ar seclevel
 The security level.
 Values can be
-.Cm noAuthNoPriv Pq default
-or
+.Cm noAuthNoPriv Pq default ,
 .Cm authNoPriv
 .Po
 requires either
 .Fl A
 or
 .Fl k
+.Pc
+or
+.Cm authPriv
+.Po
+requires either
+.Fl X
+or
+.Fl K
+in addition to the
+.Cm authNoPriv
+requirements
 .Pc .
 This option is only used by
 .Fl v Cm 3 .
@@ -382,6 +415,22 @@ or
 .Cm 3 .
 Currently defaults to
 .Cm 2c .
+.It Fl X Ar privpass
+The privacy password for the user.
+This will be tansformed to
+.Ar localpriv .
+This option is only used by
+.Fl v Cm 3 .
+.It Fl x Ar cipher
+Sets the cipher
+.Pq privacy
+protocol.
+Options are
+.Cm DES
+and
+.Cm AES .
+This option is only used by
+.Fl v Cm 3 .
 .It Fl Z Ar boots , Ns Ar time
 Set the engine boots and engine time.
 Under normal circumstances this value is discovered via snmpv3 discovery and

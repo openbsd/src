@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.h,v 1.2 2019/09/18 09:52:47 martijn Exp $	*/
+/*	$OpenBSD: usm.h,v 1.3 2019/09/18 09:54:36 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -27,6 +27,8 @@ enum usm_key_level {
 
 struct snmp_sec *usm_init(const char *, size_t);
 int usm_setauth(struct snmp_sec *, const EVP_MD *, const char *, size_t,
+    enum usm_key_level);
+int usm_setpriv(struct snmp_sec *, const EVP_CIPHER *, const char *, size_t,
     enum usm_key_level);
 int usm_setengineid(struct snmp_sec *, char *, size_t);
 int usm_setbootstime(struct snmp_sec *, uint32_t, uint32_t);

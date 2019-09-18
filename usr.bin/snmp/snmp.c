@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.5 2019/09/18 09:52:47 martijn Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.6 2019/09/18 09:54:36 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -359,7 +359,7 @@ static char *
 snmp_package(struct snmp_agent *agent, struct ber_element *pdu, size_t *len)
 {
 	struct ber ber;
-	struct ber_element *message, *scopedpdu = NULL, *secparams;
+	struct ber_element *message, *scopedpdu = NULL, *secparams, *encpdu;
 	ssize_t securitysize, ret;
 	size_t secparamsoffset;
 	char *securityparams = NULL, *packet = NULL;
@@ -401,6 +401,13 @@ snmp_package(struct snmp_agent *agent, struct ber_element *pdu, size_t *len)
 		    &securitysize, &cookie)) == NULL) {
 			ber_free_elements(scopedpdu);
 			goto fail;
+		}
+		if (agent->v3->level & SNMP_MSGFLAG_PRIV) {
+			if ((encpdu = agent->v3->sec->encpdu(agent, scopedpdu,
+			    cookie)) == NULL)
+				goto fail;
+			ber_free_elements(scopedpdu);
+			scopedpdu = encpdu;
 		}
 		if (ber_printf_elements(message, "d{idxd}xe",
 		    agent->version, msgid, UDP_MAXPACKET, &(agent->v3->level),
@@ -450,8 +457,9 @@ snmp_unpackage(struct snmp_agent *agent, char *buf, size_t buflen)
 	size_t msgflagslen, secparamslen;
 	struct ber_element *message = NULL, *payload, *scopedpdu, *ctxname;
 	off_t secparamsoffset;
-	char *engineid;
-	size_t engineidlen;
+	char *encpdu, *engineid;
+	size_t encpdulen, engineidlen;
+	void *cookie = NULL;
 
 	bzero(&ber, sizeof(ber));
 	ber_set_application(&ber, smi_application);
@@ -485,9 +493,19 @@ snmp_unpackage(struct snmp_agent *agent, char *buf, size_t buflen)
 		if (msgflagslen != 1)
 			goto fail;
 		if (agent->v3->sec->parseparams(agent, buf, buflen,
-		    secparamsoffset, secparams, secparamslen,
-		    msgflags[0]) == -1)
+		    secparamsoffset, secparams, secparamslen, msgflags[0],
+		    &cookie) == -1) {
+			cookie = NULL;
 			goto fail;
+		}
+		if (msgflags[0] & SNMP_MSGFLAG_PRIV) {
+			if (ber_scanf_elements(scopedpdu, "x", &encpdu,
+			    &encpdulen) == -1)
+				goto fail;
+			if ((scopedpdu = agent->v3->sec->decpdu(agent, encpdu,
+			    encpdulen, cookie)) == NULL)
+				goto fail;
+		}
 		if (ber_scanf_elements(scopedpdu, "{xeS{", &engineid,
 		    &engineidlen, &ctxname) == -1)
 			goto fail;
@@ -505,11 +523,14 @@ snmp_unpackage(struct snmp_agent *agent, char *buf, size_t buflen)
 		}
 
 		ber_free_elements(message);
+		agent->v3->sec->freecookie(cookie);
 		return pdu;
 	}
 	/* NOTREACHED */
 
 fail:
+	if (version == SNMP_V3)
+		agent->v3->sec->freecookie(cookie);
 	ber_free_elements(message);
 	return NULL;
 }

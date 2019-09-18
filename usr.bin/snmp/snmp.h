@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.4 2019/09/18 09:52:47 martijn Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.5 2019/09/18 09:54:36 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -114,9 +114,13 @@ struct snmp_sec {
 	enum snmp_security_model model;
 	int (*init)(struct snmp_agent *);
 	char *(*genparams)(struct snmp_agent *, size_t *, void **);
+	struct ber_element *(*encpdu)(struct snmp_agent *,
+	    struct ber_element *, void *);
 	int (*finalparams)(struct snmp_agent *, char *, size_t, size_t, void *);
 	int (*parseparams)(struct snmp_agent *, char *, size_t, off_t, char *,
-	    size_t, uint8_t);
+	    size_t, uint8_t, void **);
+	struct ber_element *(*decpdu)(struct snmp_agent *, char *, size_t,
+	    void *);
 	void (*free)(void *);
 	void (*freecookie)(void *);
 	void *data;
