@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.57 2019/09/16 16:34:14 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.58 2019/09/18 11:45:49 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -231,41 +231,57 @@ struct scsi_report_luns {
 
 struct scsi_inquiry_data {
 	u_int8_t device;
-#define	SID_TYPE	0x1F
-#define	SID_QUAL	0xE0
-#define	SID_QUAL_LU_OK	0x00
-#define	SID_QUAL_LU_OFFLINE	0x20
-#define	SID_QUAL_RSVD	0x40
-#define	SID_QUAL_BAD_LU	0x60
+#define	SID_TYPE		0x1f
+#define	SID_QUAL		0xe0
+#define		SID_QUAL_LU_OK		0x00
+#define		SID_QUAL_LU_OFFLINE	0x20
+#define		SID_QUAL_RSVD		0x40
+#define		SID_QUAL_BAD_LU		0x60
 	u_int8_t dev_qual2;
-#define	SID_QUAL2	0x7F
-#define	SID_REMOVABLE	0x80
+#define	SID_QUAL2		0x7f
+#define	SID_REMOVABLE		0x80
 	u_int8_t version;
-#define SID_ANSII	0x07
-#define SID_ECMA	0x38
-#define SID_ISO		0xC0
+#define SID_ANSII		0x07
+#define SID_ECMA		0x38
+#define SID_ISO			0xc0
 	u_int8_t response_format;
+#define SID_RESPONSE_DATA_FMT	0x0f	/* < 2 == obsolete, > 2 reserved! */
+#define SID_HiSup		0x10	/* Hierarchical LUNs */
+#define SID_NormACA		0x20	/* Normal ACA bit in CCB supported */
+#define SID_TrmIOP		0x40	/* obsolete */
+#define SID_AENC		0x80	/* obsolete */
 	u_int8_t additional_length;
 #define SID_INQUIRY_HDR	5	/* Bytes up to & including additional_length */
 #define SID_SCSI2_ALEN	31	/* Additional bytes of basic SCSI2 info */
-	u_int8_t unused[2];
+	u_int8_t spc3_flags;
+#define SPC3_SID_PROTECT	0x01	/* 0 == Type 0, 1 == Type 1, 2 or 3 */
+#define SPC3_SID_RESERVED	0x06
+#define SPC3_SID_3PC		0x08	/* 3rd party copy */
+#define SPC3_SID_TPGS_IMPLICIT	0x10	/* Implicit asymmetric LU access */
+#define SPC3_SID_TPGS_EXPLICIT	0x20	/* Explicit asymmetric LU access */
+#define SPC3_SID_ACC		0x40	/* Access controls controller */
+#define SPC3_SID_SCCS		0x80	/* Embedded storage array controller */
+	u_int8_t spc2_flags;
+#define SPC2_SID_ADDR16		0x01	/* obsolete */
+#define SPC2_RESERVED		0x06
+#define SPC2_SID_NChngr		0x08	/* obsolete */
+#define SPC2_SID_MultiP		0x10	/* multi-port target */
+#define SPC2_VS			0x20	/* ??? */
+#define SPC2_SID_EncServ	0x40	/* Embedded enclosure services */
+#define SPC2_SID_BQueue		0x80	/* obsolete */
 	u_int8_t flags;
-#define	SID_SftRe	0x01
-#define	SID_CmdQue	0x02
-#define	SID_Linked	0x08
-#define	SID_Sync	0x10
-#define	SID_WBus16	0x20
-#define	SID_WBus32	0x40
-#define	SID_RelAdr	0x80
+#define	SID_VS			0x01	/* ??? */
+#define	SID_CmdQue		0x02	/* Task manageent mode supported */
+#define	SID_Linked		0x08	/* obsolete */
+#define	SID_Sync		0x10	/* obsolete */
+#define	SID_WBus16		0x20	/* obsolete */
+#define	SID_WBus32		0x40	/* obsolete */
+#define	SID_RelAdr		0x80	/* obsolete */
 	char	vendor[8];
 	char	product[16];
 	char	revision[4];
 	u_int8_t extra[20];
-	u_int8_t flags2;
-#define SID_IUS		0x01
-#define SID_QAS		0x02
-#define SID_CLOCKING	0x0c /* 0 == ST only, 1 == DT only, 3 == both */
-	u_int8_t reserved;
+	u_int8_t reserved[2];
 };
 
 struct scsi_vpd_hdr {
