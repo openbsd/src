@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.1 2019/09/18 09:48:14 martijn Exp $	*/
+/*	$OpenBSD: usm.c,v 1.2 2019/09/18 09:52:47 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -41,6 +41,9 @@ struct usm_sec {
 	int engineidset;
 	char *engineid;
 	size_t engineidlen;
+	enum usm_key_level authlevel;
+	const EVP_MD *digest;
+	char *authkey;
 	int bootsset;
 	uint32_t boots;
 	int timeset;
@@ -48,11 +51,20 @@ struct usm_sec {
 	struct timespec timecheck;
 };
 
+struct usm_cookie {
+	size_t digestoffset;
+};
+
 static int usm_doinit(struct snmp_agent *);
-static char *usm_genparams(struct snmp_agent *, size_t *);
+static char *usm_genparams(struct snmp_agent *, size_t *, void **);
+static int usm_finalparams(struct snmp_agent *, char *, size_t, size_t, void *);
 static int usm_parseparams(struct snmp_agent *, char *, size_t, off_t, char *,
     size_t, uint8_t);
+static void usm_digest_pos(void *, size_t);
 static void usm_free(void *);
+static char *usm_passwd2mkey(const EVP_MD *, const char *);
+static char *usm_mkey2lkey(struct usm_sec *, const EVP_MD *, const char *);
+static size_t usm_digestlen(const EVP_MD *);
 
 struct snmp_sec *
 usm_init(const char *user, size_t userlen)
@@ -84,7 +96,9 @@ usm_init(const char *user, size_t userlen)
 	sec->init = usm_doinit;
 	sec->genparams = usm_genparams;
 	sec->parseparams = usm_parseparams;
+	sec->finalparams = usm_finalparams;
 	sec->free = usm_free;
+	sec->freecookie = free;
 	sec->data = usm;
 	return sec;
 }
@@ -119,29 +133,51 @@ usm_doinit(struct snmp_agent *agent)
 }
 
 static char *
-usm_genparams(struct snmp_agent *agent, size_t *len)
+usm_genparams(struct snmp_agent *agent, size_t *len, void **cookie)
 {
 	struct ber ber;
-	struct ber_element *params;
+	struct ber_element *params, *digestelm;
 	struct usm_sec *usm = agent->v3->sec->data;
+	char digest[USM_MAX_DIGESTLEN];
+	size_t digestlen = 0;
 	char *secparams = NULL;
 	ssize_t berlen = 0;
+	struct usm_cookie *usmcookie;
 	struct timespec now, timediff;
 	uint32_t boots, time;
 
+	bzero(digest, sizeof(digest));
+
+	if ((usmcookie = calloc(1, sizeof(*usmcookie))) == NULL)
+		return NULL;
+	*cookie = usmcookie;
+
 	if (usm->timeset) {
-		if (clock_gettime(CLOCK_MONOTONIC, &now) == -1)
+		if (clock_gettime(CLOCK_MONOTONIC, &now) == -1) {
+			free(usmcookie);
 			return NULL;
+		}
 		timespecsub(&now, &(usm->timecheck), &timediff);
 		time = usm->time + timediff.tv_sec;
 	} else
 		time = 0;
 	boots = usm->boots;
-
+	if (agent->v3->level & SNMP_MSGFLAG_AUTH)
+		digestlen = usm_digestlen(usm->digest);
 	if ((params = ber_printf_elements(NULL, "{xddxxx}", usm->engineid,
-	    usm->engineidlen, boots, time, usm->user, usm->userlen, NULL,
-	    (size_t) 0, NULL, (size_t) 0)) == NULL)
+	    usm->engineidlen, boots, time, usm->user, usm->userlen, digest,
+	    digestlen, NULL, (size_t) 0)) == NULL) {
+		free(usmcookie);
 		return NULL;
+	}
+
+	if (ber_scanf_elements(params, "{SSSSe",  &digestelm) == -1) {
+		ber_free_element(params);
+		free(usmcookie);
+		return NULL;
+	}
+
+	ber_set_writecallback(digestelm, usm_digest_pos, usmcookie);
 
 	bzero(&ber, sizeof(ber));
 	ber_set_application(&ber, smi_application);
@@ -155,18 +191,44 @@ usm_genparams(struct snmp_agent *agent, size_t *len)
 }
 
 static int
+usm_finalparams(struct snmp_agent *agent, char *buf, size_t buflen,
+    size_t secparamsoffset, void *cookie)
+{
+	struct usm_sec *usm = agent->v3->sec->data;
+	struct usm_cookie *usmcookie = cookie;
+	u_char digest[EVP_MAX_MD_SIZE];
+
+	if ((agent->v3->level & SNMP_MSGFLAG_AUTH) == 0)
+		return 0;
+
+	if (usm->authlevel != USM_KEY_LOCALIZED)
+		return -1;
+
+	if (HMAC(usm->digest, usm->authkey, EVP_MD_size(usm->digest), buf,
+	    buflen, digest, NULL) == NULL)
+		return -1;
+
+	memcpy(buf + secparamsoffset + usmcookie->digestoffset, digest,
+	    usm_digestlen(usm->digest));
+	return 0;
+}
+
+static int
 usm_parseparams(struct snmp_agent *agent, char *packet, size_t packetlen,
     off_t secparamsoffset, char *buf, size_t buflen, uint8_t level)
 {
 	struct usm_sec *usm = agent->v3->sec->data;
 	struct ber ber;
 	struct ber_element *secparams;
-	char *engineid, *user;
-	size_t engineidlen, userlen;
+	char *engineid, *user, *digest;
+	size_t engineidlen, userlen, digestlen;
 	struct timespec now, timediff;
+	off_t digestoffset;
+	char exp_digest[EVP_MAX_MD_SIZE];
 	uint32_t boots, time;
 
 	bzero(&ber, sizeof(ber));
+	bzero(exp_digest, sizeof(exp_digest));
 
 	ber_set_application(&ber, smi_application);
 	ber_set_readbuf(&ber, buf, buflen);
@@ -174,8 +236,9 @@ usm_parseparams(struct snmp_agent *agent, char *packet, size_t packetlen,
 		return -1;
 	ber_free(&ber);
 
-	if (ber_scanf_elements(secparams, "{xddxSS}", &engineid, &engineidlen,
-	    &boots, &time, &user, &userlen) == -1)
+	if (ber_scanf_elements(secparams, "{xddxpxS}", &engineid, &engineidlen,
+	    &boots, &time, &user, &userlen, &digestoffset, &digest,
+	    &digestlen) == -1)
 		goto fail;
 
 	if (!usm->engineidset) {
@@ -225,6 +288,22 @@ usm_parseparams(struct snmp_agent *agent, char *packet, size_t packetlen,
 	    memcmp(user, usm->user, userlen) != 0)
 		goto fail;
 
+	if (level & SNMP_MSGFLAG_AUTH) {
+		if (digestlen != usm_digestlen(usm->digest))
+			goto fail;
+	}
+	if ((agent->v3->level & SNMP_MSGFLAG_AUTH)) {
+		bzero(packet + secparamsoffset + digestoffset, digestlen);
+		if (HMAC(usm->digest, usm->authkey, EVP_MD_size(usm->digest), packet,
+		    packetlen, exp_digest, NULL) == NULL)
+			goto fail;
+
+		if (memcmp(exp_digest, digest, digestlen) != 0)
+			goto fail;
+	} else
+		if (digestlen != 0)
+			goto fail;
+
 	ber_free_element(secparams);
 	return 0;
 
@@ -234,19 +313,62 @@ fail:
 }
 
 static void
+usm_digest_pos(void *data, size_t offset)
+{
+	struct usm_cookie *usmcookie = data;
+
+	usmcookie->digestoffset = offset;
+}
+
+static void
 usm_free(void *data)
 {
 	struct usm_sec *usm = data;
 
 	free(usm->user);
+	free(usm->authkey);
 	free(usm->engineid);
 	free(usm);
+}
+
+int
+usm_setauth(struct snmp_sec *sec, const EVP_MD *digest, const char *key,
+    size_t keylen, enum usm_key_level level)
+{
+	struct usm_sec *usm = sec->data;
+	char *lkey;
+
+	/*
+	 * We could transform a master key to a local key here if we already
+	 * have usm_setengineid called. Sine snmpc.c is the only caller at
+	 * the moment there's no need, since it always calls this function
+	 * first.
+	 */
+	if (level == USM_KEY_PASSWORD) {
+		if ((usm->authkey = usm_passwd2mkey(digest, key)) == NULL)
+			return -1;
+		level = USM_KEY_MASTER;
+		keylen = EVP_MD_size(digest);
+	} else {
+		if (keylen != (size_t)EVP_MD_size(digest)) {
+			errno = EINVAL;
+			return -1;
+		}
+		if ((lkey = malloc(keylen)) == NULL)
+			return -1;
+		memcpy(lkey, key, keylen);
+		usm->authkey = lkey;
+	}
+	usm->digest = digest;
+	usm->authlevel = level;
+	return 0;
 }
 
 int
 usm_setengineid(struct snmp_sec *sec, char *engineid, size_t engineidlen)
 {
 	struct usm_sec *usm = sec->data;
+	char *mkey;
 
 	if (usm->engineid != NULL)
 		free(usm->engineid);
@@ -255,6 +377,17 @@ usm_setengineid(struct snmp_sec *sec, char *engineid, size_t engineidlen)
 	memcpy(usm->engineid, engineid, engineidlen);
 	usm->engineidlen = engineidlen;
 	usm->engineidset = 1;
+
+	if (usm->authlevel == USM_KEY_MASTER) {
+		mkey = usm->authkey;
+		if ((usm->authkey = usm_mkey2lkey(usm, usm->digest,
+		    mkey)) == NULL) {
+			usm->authkey = mkey;
+			return -1;
+		}
+		free(mkey);
+		usm->authlevel = USM_KEY_LOCALIZED;
+	}
 
 	return 0;
 }
@@ -272,4 +405,80 @@ usm_setbootstime(struct snmp_sec *sec, uint32_t boots, uint32_t time)
 	usm->time = time;
 	usm->timeset = 1;
 	return 0;
+}
+
+static char *
+usm_passwd2mkey(const EVP_MD *md, const char *passwd)
+{
+	EVP_MD_CTX ctx;
+	int i, count;
+	const u_char *pw;
+	u_char *c;
+	u_char keybuf[EVP_MAX_MD_SIZE];
+	unsigned dlen;
+	char *key;
+
+	bzero(&ctx, sizeof(ctx));
+	EVP_DigestInit_ex(&ctx, md, NULL);
+	pw = (const u_char *)passwd;
+	for (count = 0; count < 1048576; count += 64) {
+		c = keybuf;
+		for (i = 0; i < 64; i++) {
+			if (*pw == '\0')
+				pw = (const u_char *)passwd;
+			*c++ = *pw++;
+		}
+		EVP_DigestUpdate(&ctx, keybuf, 64);
+	}
+	EVP_DigestFinal_ex(&ctx, keybuf, &dlen);
+	EVP_MD_CTX_cleanup(&ctx);
+
+	if ((key = malloc(dlen)) == NULL)
+		return NULL;
+	memcpy(key, keybuf, dlen);
+	return key;
+}
+
+static char *
+usm_mkey2lkey(struct usm_sec *usm, const EVP_MD *md, const char *mkey)
+{
+	EVP_MD_CTX ctx;
+	u_char buf[EVP_MAX_MD_SIZE];
+	u_char *lkey;
+	unsigned lklen;
+
+	bzero(&ctx, sizeof(ctx));
+	EVP_DigestInit_ex(&ctx, md, NULL);
+
+	EVP_DigestUpdate(&ctx, mkey, EVP_MD_size(md));
+	EVP_DigestUpdate(&ctx, usm->engineid, usm->engineidlen);
+	EVP_DigestUpdate(&ctx, mkey, EVP_MD_size(md));
+
+	EVP_DigestFinal_ex(&ctx, buf, &lklen);
+	EVP_MD_CTX_cleanup(&ctx);
+
+	if ((lkey = malloc(lklen)) == NULL)
+		return NULL;
+	memcpy(lkey, buf, lklen);
+	return lkey;
+}
+
+static size_t
+usm_digestlen(const EVP_MD *md)
+{
+	switch (EVP_MD_type(md)) {
+	case NID_md5:
+	case NID_sha1:
+		return 12;
+	case NID_sha224:
+		return 16;
+	case NID_sha256:
+		return 24;
+	case NID_sha384:
+		return 32;
+	case NID_sha512:
+		return 48;
+	default:
+		return 0;
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.4 2019/09/18 09:48:14 martijn Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.5 2019/09/18 09:52:47 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -39,6 +39,7 @@ static char *
 static struct ber_element *
     snmp_unpackage(struct snmp_agent *, char *, size_t);
 static void snmp_v3_free(struct snmp_v3 *);
+static void snmp_v3_secparamsoffset(void *, size_t);
 
 struct snmp_v3 *
 snmp_v3_init(int level, const char *ctxname, size_t ctxnamelen,
@@ -358,10 +359,12 @@ static char *
 snmp_package(struct snmp_agent *agent, struct ber_element *pdu, size_t *len)
 {
 	struct ber ber;
-	struct ber_element *message, *scopedpdu = NULL;
+	struct ber_element *message, *scopedpdu = NULL, *secparams;
 	ssize_t securitysize, ret;
+	size_t secparamsoffset;
 	char *securityparams = NULL, *packet = NULL;
 	long long msgid;
+	void *cookie = NULL;
 
 	bzero(&ber, sizeof(ber));
 	ber_set_application(&ber, smi_application);
@@ -395,7 +398,7 @@ snmp_package(struct snmp_agent *agent, struct ber_element *pdu, size_t *len)
 		}
 		pdu = NULL;
 		if ((securityparams = agent->v3->sec->genparams(agent,
-		    &securitysize)) == NULL) {
+		    &securitysize, &cookie)) == NULL) {
 			ber_free_elements(scopedpdu);
 			goto fail;
 		}
@@ -404,6 +407,10 @@ snmp_package(struct snmp_agent *agent, struct ber_element *pdu, size_t *len)
 		    (size_t) 1, agent->v3->sec->model, securityparams,
 		    securitysize, scopedpdu) == NULL)
 			goto fail;
+		if (ber_scanf_elements(message, "{SSe", &secparams) == -1)
+			goto fail;
+		ber_set_writecallback(secparams, snmp_v3_secparamsoffset,
+		    &secparamsoffset);
 		break;
 	}
 
@@ -414,7 +421,17 @@ snmp_package(struct snmp_agent *agent, struct ber_element *pdu, size_t *len)
 	*len = (size_t) ret;
 	ber_free(&ber);
 
+	if (agent->version == SNMP_V3 && packet != NULL) {
+		if (agent->v3->sec->finalparams(agent, packet,
+		    ret, secparamsoffset, cookie) == -1) {
+			free(packet);
+			packet = NULL;
+		}
+	}
+
 fail:
+	if (agent->version == SNMP_V3)
+		agent->v3->sec->freecookie(cookie);
 	ber_free_elements(message);
 	free(securityparams);
 	return packet;
@@ -495,6 +512,14 @@ snmp_unpackage(struct snmp_agent *agent, char *buf, size_t buflen)
 fail:
 	ber_free_elements(message);
 	return NULL;
+}
+
+static void
+snmp_v3_secparamsoffset(void *cookie, size_t offset)
+{
+	size_t *spoffset = cookie;
+
+	*spoffset = offset;
 }
 
 ssize_t

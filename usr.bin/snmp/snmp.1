@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmp.1,v 1.4 2019/09/18 09:48:14 martijn Exp $
+.\" $OpenBSD: snmp.1,v 1.5 2019/09/18 09:52:47 martijn Exp $
 .\"
 .\" Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -23,9 +23,13 @@
 .Sh SYNOPSIS
 .Nm
 .Cm get | getnext
+.Op Fl A Ar authpass
+.Op Fl a Ar digest
 .Op Fl c Ar community
 .Op Fl E Ar ctxengineid
 .Op Fl e Ar secengineid
+.Op Fl k Ar localauth
+.Op Fl l Ar seclevel
 .Op Fl n Ar ctxname
 .Op Fl O Cm afnQqSvx
 .Op Fl r Ar retries
@@ -37,9 +41,13 @@
 .Ar oid ...
 .Nm
 .Cm walk
+.Op Fl A Ar authpass
+.Op Fl a Ar digest
 .Op Fl c Ar community
 .Op Fl E Ar ctxengineid
 .Op Fl e Ar secengineid
+.Op Fl k Ar localauth
+.Op Fl l Ar seclevel
 .Op Fl n Ar ctxname
 .Op Fl O Cm afnQqSvx
 .Op Fl r Ar retries
@@ -53,9 +61,13 @@
 .Op Ar oid
 .Nm
 .Cm bulkget
+.Op Fl A Ar authpass
+.Op Fl a Ar digest
 .Op Fl c Ar community
 .Op Fl E Ar ctxengineid
 .Op Fl e Ar secengineid
+.Op Fl k Ar localauth
+.Op Fl l Ar seclevel
 .Op Fl n Ar ctxname
 .Op Fl O Cm afnQqSvx
 .Op Fl r Ar retries
@@ -68,9 +80,13 @@
 .Ar oid ...
 .Nm
 .Cm bulkwalk
+.Op Fl A Ar authpass
+.Op Fl a Ar digest
 .Op Fl c Ar community
 .Op Fl E Ar ctxengineid
 .Op Fl e Ar secengineid
+.Op Fl k Ar localauth
+.Op Fl l Ar seclevel
 .Op Fl n Ar ctxname
 .Op Fl O Cm afnQqSvx
 .Op Fl r Ar retries
@@ -83,9 +99,13 @@
 .Op Ar oid
 .Nm
 .Cm trap
+.Op Fl A Ar authpass
+.Op Fl a Ar digest
 .Op Fl c Ar community
 .Op Fl E Ar ctxengineid
 .Op Fl e Ar secengineid
+.Op Fl k Ar localauth
+.Op Fl l Ar seclevel
 .Op Fl n Ar ctxname
 .Op Fl r Ar retries
 .Op Fl t Ar timeout
@@ -170,6 +190,28 @@ Dump the tree of compiled-in MIB objects.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A Ar authpass
+The authentication password for the user.
+This will be transformed to
+.Ar localauth .
+This option is only used by
+.Fl v Cm 3 .
+.It Fl a Ar digest
+Set the digest
+.Pq authentication
+protocol.
+Options are
+.Cm MD5 ,
+.Cm SHA ,
+.Cm SHA-224 ,
+.Cm SHA-256 ,
+.Cm SHA-384
+or
+.Cm SHA-512 .
+This option defaults to
+.Cm MD5 .
+This option is only used by
+.Fl v Cm 3 .
 .It Fl C Ar appopt
 Set the application specific
 .Ar appopt
@@ -258,6 +300,28 @@ This option is only used by
 .It Fl E Ar ctxengineid
 The snmpv3 context engine id.
 Most of the time this value can be safely ignored.
+This option is only used by
+.Fl v Cm 3 .
+.It Fl k Ar localauth
+The localized authentication password for the user in hexadecimal format
+.Po
+optionally prefixed with a
+.Cm 0x
+.Pc .
+This option is only used by
+.Fl v Cm 3 .
+.It Fl l Ar seclevel
+The security level.
+Values can be
+.Cm noAuthNoPriv Pq default
+or
+.Cm authNoPriv
+.Po
+requires either
+.Fl A
+or
+.Fl k
+.Pc .
 This option is only used by
 .Fl v Cm 3 .
 .It Fl n Ar ctxname

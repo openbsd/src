@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.9 2019/09/18 09:48:14 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.10 2019/09/18 09:52:47 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/un.h>
 
 #include <arpa/inet.h>
+#include <openssl/evp.h>
 
 #include <ber.h>
 #include <ctype.h>
@@ -41,7 +42,7 @@
 #include "snmp.h"
 #include "usm.h"
 
-#define GETOPT_COMMON		"c:E:e:n:O:r:t:u:v:Z:"
+#define GETOPT_COMMON		"A:a:c:E:e:k:l:n:O:r:t:u:v:Z:"
 
 int snmpc_get(int, char *[]);
 int snmpc_walk(int, char *[]);
@@ -96,8 +97,12 @@ enum smi_output_string output_string = smi_os_default;
 int
 main(int argc, char *argv[])
 {
+	const EVP_MD *md = NULL;
 	struct snmp_sec *sec;
 	char *user = NULL;
+	enum usm_key_level authkeylevel;
+	char *authkey = NULL;
+	size_t authkeylen = 0;
 	int seclevel = SNMP_MSGFLAG_REPORT;
 	char *ctxname = NULL;
 	char *ctxengineid = NULL, *secengineid = NULL;
@@ -143,6 +148,28 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv, optstr)) != -1) {
 		switch (ch) {
+		case 'A':
+			authkey = optarg;
+			authkeylen = strlen(authkey);
+			authkeylevel = USM_KEY_PASSWORD;
+			break;
+		case 'a':
+			if (strcasecmp(optarg, "MD5") == 0)
+				md = EVP_md5();
+			else if (strcasecmp(optarg, "SHA") == 0)
+				md = EVP_sha1();
+			else if (strcasecmp(optarg, "SHA-224") == 0)
+				md = EVP_sha224();
+			else if (strcasecmp(optarg, "SHA-256") == 0)
+				md = EVP_sha256();
+			else if (strcasecmp(optarg, "SHA-384") == 0)
+				md = EVP_sha384();
+			else if (strcasecmp(optarg, "SHA-512") == 0)
+				md = EVP_sha512();
+			else
+				errx(1, "Invalid authentication protocol "
+				    "specified after -a flag: %s", optarg);
+			break;
 		case 'c':
 			community = optarg;
 			break;
@@ -165,6 +192,25 @@ main(int argc, char *argv[])
 					    "after -3e flag.");
 				err(1, "-3e");
 			}
+			break;
+		case 'k':
+			authkey = snmpc_hex2bin(optarg, &authkeylen);
+			if (authkey == NULL) {
+				if (errno == EINVAL)
+					errx(1, "Bad key value after -k flag.");
+				err(1, "-k");
+			}
+			authkeylevel = USM_KEY_LOCALIZED;
+			break;
+		case 'l':
+			if (strcasecmp(optarg, "noAuthNoPriv") == 0)
+				seclevel = SNMP_MSGFLAG_REPORT;
+			else if (strcasecmp(optarg, "authNoPriv") == 0)
+				seclevel = SNMP_MSGFLAG_AUTH |
+				    SNMP_MSGFLAG_REPORT;
+			else
+				errx(1, "Invalid security level specified "
+				    "after -l flag: %s", optarg);
 			break;
 		case 'n':
 			ctxname = optarg;
@@ -348,6 +394,15 @@ main(int argc, char *argv[])
 			errx(1, "No securityName specified");
 		if ((sec = usm_init(user, strlen(user))) == NULL)
 			err(1, "usm_init");
+		if (seclevel & SNMP_MSGFLAG_AUTH) {
+			if (md == NULL)
+				md = EVP_md5();
+			if (authkey == NULL)
+				errx(1, "No authKey or authPassword specified");
+			if (usm_setauth(sec, md, authkey, authkeylen,
+			    authkeylevel) == -1)
+				err(1, "Can't set authkey");
+		}
 		if (secengineid != NULL) {
 			if (usm_setengineid(sec, secengineid,
 			    secengineidlen) == -1)
@@ -1031,7 +1086,8 @@ usage(void)
 		fprintf(stderr, "usage: snmp %s%s%s\n",
 		    snmp_app->name,
 		    snmp_app->usecommonopt ?
-		    " [-c community] [-e secengineid] [-E ctxengineid] [-n ctxname]\n"
+		    " [-A authpass] [-a digest] [-c community] [-e secengineid]\n"
+		    "            [-E ctxengineid] [-k localauth] [-l seclevel] [-n ctxname]\n"
 		    "            [-O afnqvxSQ] [-r retries] [-t timeout] [-u user] [-v version]\n"
 		    "            [-Z boots,time]\n"
 		    "            " : "",
