@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.h,v 1.20 2016/04/21 14:27:41 jsing Exp $	*/
+/*	$OpenBSD: ssl.h,v 1.21 2019/09/18 11:26:30 eric Exp $	*/
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
  *
@@ -65,3 +65,6 @@ int		ssl_ctx_fake_private_key(SSL_CTX *, const void *, size_t,
 
 /* ssl_privsep.c */
 int		ssl_by_mem_ctrl(X509_LOOKUP *, int, const char *, long, char **);
+
+/* ssl_verify.c */
+int ssl_check_name(X509 *, const char *, int *);

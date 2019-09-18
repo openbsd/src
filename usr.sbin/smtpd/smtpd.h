@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.636 2019/09/11 04:19:19 martijn Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.637 2019/09/18 11:26:30 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -679,6 +679,7 @@ struct mta_host {
 struct mta_mx {
 	TAILQ_ENTRY(mta_mx)	 entry;
 	struct mta_host		*host;
+	char			*mxname;
 	int			 preference;
 };
 
@@ -1475,7 +1476,7 @@ const char *mta_relay_to_text(struct mta_relay *);
 
 
 /* mta_session.c */
-void mta_session(struct mta_relay *, struct mta_route *);
+void mta_session(struct mta_relay *, struct mta_route *, const char *);
 void mta_session_imsg(struct mproc *, struct imsg *);
 
 

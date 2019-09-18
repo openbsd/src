@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.230 2019/09/14 06:20:27 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.231 2019/09/18 11:26:30 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -76,7 +76,7 @@ static void mta_drain(struct mta_relay *);
 static void mta_delivery_flush_event(int, short, void *);
 static void mta_flush(struct mta_relay *, int, const char *);
 static struct mta_route *mta_find_route(struct mta_connector *, time_t, int*,
-    time_t*);
+    time_t*, struct mta_mx **);
 static void mta_log(const struct mta_envelope *, const char *, const char *,
     const char *, const char *);
 
@@ -255,11 +255,13 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_MTA_DNS_HOST:
 		m_msg(&m, imsg);
 		m_get_id(&m, &reqid);
+		m_get_string(&m, &hostname);
 		m_get_sockaddr(&m, (struct sockaddr*)&ss);
 		m_get_int(&m, &preference);
 		m_end(&m);
 		domain = tree_xget(&wait_mx, reqid);
 		mx = xcalloc(1, sizeof *mx);
+		mx->mxname = xstrdup(hostname);
 		mx->host = mta_host((struct sockaddr*)&ss);
 		mx->preference = preference;
 		TAILQ_FOREACH(imx, &domain->mxs, entry) {
@@ -1146,6 +1148,7 @@ static void
 mta_connect(struct mta_connector *c)
 {
 	struct mta_route	*route;
+	struct mta_mx		*mx;
 	struct mta_limits	*l = c->relay->limits;
 	int			 limits;
 	time_t			 nextconn, now;
@@ -1234,7 +1237,7 @@ mta_connect(struct mta_connector *c)
 
 	/* We can connect now, find a route */
 	if (!limits && nextconn <= now)
-		route = mta_find_route(c, now, &limits, &nextconn);
+		route = mta_find_route(c, now, &limits, &nextconn, &mx);
 	else
 		route = NULL;
 
@@ -1281,7 +1284,7 @@ mta_connect(struct mta_connector *c)
 	route->dst->nconn += 1;
 	route->dst->lastconn = c->lastconn;
 
-	mta_session(c->relay, route);	/* this never fails synchronously */
+	mta_session(c->relay, route, mx->mxname);	/* this never fails synchronously */
 	mta_relay_ref(c->relay);
 
     goto again;
@@ -1510,7 +1513,7 @@ mta_flush(struct mta_relay *relay, int fail, const char *error)
  */
 static struct mta_route *
 mta_find_route(struct mta_connector *c, time_t now, int *limits,
-    time_t *nextconn)
+    time_t *nextconn, struct mta_mx **pmx)
 {
 	struct mta_route	*route, *best;
 	struct mta_limits	*l = c->relay->limits;
@@ -1654,6 +1657,7 @@ mta_find_route(struct mta_connector *c, time_t now, int *limits,
 		if (best)
 			mta_route_unref(best); /* from here */
 		best = route;
+		*pmx = mx;
 		log_debug("debug: mta-routing: selecting candidate route %s",
 		    mta_route_to_text(route));
 	}
@@ -2197,6 +2201,7 @@ mta_domain_unref(struct mta_domain *d)
 	while ((mx = TAILQ_FIRST(&d->mxs))) {
 		TAILQ_REMOVE(&d->mxs, mx, entry);
 		mta_host_unref(mx->host); /* from IMSG_DNS_HOST */
+		free(mx->mxname);
 		free(mx);
 	}
 

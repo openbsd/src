@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpc.c,v 1.8 2019/09/02 20:05:21 eric Exp $	*/
+/*	$OpenBSD: smtpc.c,v 1.9 2019/09/18 11:26:30 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/socket.h>
 
 #include <event.h>
+#include <limits.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <resolv.h>
@@ -30,11 +31,11 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#include "smtp.h"
-#include "log.h"
+#include <openssl/ssl.h>
 
-void ssl_init(void);
-void *ssl_mta_init(void *, char *, off_t, const char *);
+#include "smtp.h"
+#include "ssl.h"
+#include "log.h"
 
 static void parse_server(char *);
 static void parse_message(FILE *);
@@ -46,6 +47,9 @@ static int noaction = 0;
 static struct addrinfo *res0, *ai;
 static struct smtp_params params;
 static struct smtp_mail mail;
+static const char *servname = NULL;
+
+static SSL_CTX *ssl_ctx;
 
 static void
 usage(void)
@@ -53,7 +57,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-Chnv] [-F from] [-H helo] [-s server] rcpt ...\n",
+	    "usage: %s [-Chnv] [-F from] [-H helo] [-s server] [-S name] rcpt ...\n",
 	    __progname);
 	exit(1);
 }
@@ -87,7 +91,7 @@ main(int argc, char **argv)
 	memset(&mail, 0, sizeof(mail));
 	mail.from = pw->pw_name;
 
-	while ((ch = getopt(argc, argv, "CF:H:hns:v")) != -1) {
+	while ((ch = getopt(argc, argv, "CF:H:S:hns:v")) != -1) {
 		switch (ch) {
 		case 'C':
 			params.tls_verify = 0;
@@ -97,6 +101,9 @@ main(int argc, char **argv)
 			break;
 		case 'H':
 			params.helo = optarg;
+			break;
+		case 'S':
+			servname = optarg;
 			break;
 		case 'h':
 			usage();
@@ -131,6 +138,14 @@ main(int argc, char **argv)
 
 	ssl_init();
 	event_init();
+
+	ssl_ctx = ssl_ctx_create(NULL, NULL, 0, NULL);
+	if (!SSL_CTX_load_verify_locations(ssl_ctx,
+	    X509_get_default_cert_file(), NULL))
+		fatal("SSL_CTX_load_verify_locations");
+	if (!SSL_CTX_set_ssl_version(ssl_ctx, SSLv23_client_method()))
+		fatal("SSL_CTX_set_ssl_version");
+	SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_NONE , NULL);
 
 	if (pledge("stdio inet dns tmppath", NULL) == -1)
 		fatal("pledge");
@@ -245,6 +260,9 @@ parse_server(char *server)
 	if (port == NULL)
 		port = "smtp";
 
+	if (servname == NULL)
+		servname = host;
+
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
@@ -330,20 +348,42 @@ log_trace(int lvl, const char *emsg, ...)
 void
 smtp_verify_server_cert(void *tag, struct smtp_client *proto, void *ctx)
 {
-	log_debug("validating server certificate...");
+	SSL *ssl = ctx;
+	X509 *cert;
+	long res;
+	int r, match;
 
-	/* Not implemented for now. */
-	smtp_cert_verified(proto, CERT_UNKNOWN);
+	if ((cert = SSL_get_peer_certificate(ssl))) {
+		r = ssl_check_name(cert, servname, &match);
+		X509_free(cert);
+		res = SSL_get_verify_result(ssl);
+		if (res == X509_V_OK) {
+			if (match) {
+				log_debug("valid certificate");
+				smtp_cert_verified(proto, CERT_OK);
+			}
+			else {
+				log_debug("certificate does not match hostname");
+				smtp_cert_verified(proto, CERT_INVALID);
+			}
+			return;
+		}
+		log_debug("certificate validation error %ld", res);
+	}
+	else
+		log_debug("no certificate provided");
+
+	smtp_cert_verified(proto, CERT_INVALID);
 }
 
 void
 smtp_require_tls(void *tag, struct smtp_client *proto)
 {
-	void *ctx;
+	SSL *ssl = NULL;
 
-	ctx = ssl_mta_init(NULL, NULL, 0, NULL);
-
-	smtp_set_tls(proto, ctx);
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		fatal("SSL_new");
+	smtp_set_tls(proto, ssl);
 }
 
 void
