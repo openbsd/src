@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.3 2019/09/18 09:54:36 martijn Exp $	*/
+/*	$OpenBSD: usm.c,v 1.4 2019/09/18 09:59:05 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -142,6 +142,16 @@ usm_doinit(struct snmp_agent *agent)
 	agent->v3->level = level;
 	usm->userlen = userlen;
 
+	 /*
+	  * Ugly hack for HP Laserjet:
+	  * This device returns the engineid on probing, but only returns boots
+	  * and time after a packet has been sent with full auth/enc.
+	  */
+	if (!usm->engineidset || !usm->bootsset || !usm->timeset) {
+		if ((ber = snmp_get(agent, NULL, 0)) == NULL)
+			return -1;
+		ber_free_element(ber);
+	}
 	return 0;
 }
 
@@ -397,6 +407,14 @@ usm_parseparams(struct snmp_agent *agent, char *packet, size_t packetlen,
 			usm_doinit(agent);
 			goto fail;
 		}
+	}
+	/*
+	 * Don't assume these are set if both are zero.
+	 * Ugly hack for HP Laserjet
+	 */
+	if (usm->boots == 0 && usm->time == 0) {
+		usm->bootsset = 0;
+		usm->timeset = 0;
 	}
 
 	if (userlen != usm->userlen ||
