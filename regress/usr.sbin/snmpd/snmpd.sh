@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: snmpd.sh,v 1.9 2019/08/09 07:58:26 martijn Exp $
+# $OpenBSD: snmpd.sh,v 1.10 2019/09/18 10:03:55 martijn Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@openbsd.org>
 # *
@@ -198,10 +198,10 @@ fi
 # get with SHA authentication
 
 os="$(uname -s)"
-snmpget_command="snmpget -Oq -l authNoPriv -u hans -a SHA -A password123 \
+snmp_command="snmp get -v3 -Oq -l authNoPriv -u hans -a SHA -A password123 \
    localhost system.sysDescr.0"
-echo ======= $snmpget_command
-system="$(eval $snmpget_command | awk '{ print $2 }')"
+echo ======= $snmp_command
+system="$(eval $snmp_command | awk '{ print $2 }')"
 if [ "$system" != "$os" ]
 then
 	echo "Retrieval test with seclevel auth and SHA failed."
@@ -234,10 +234,10 @@ sleep ${SLEEP}
 # get with SHA authentication and AES encryption
 
 os="$(uname -s)"
-snmpget_command="snmpget -Oq -l authPriv -u hans -a SHA -A password123 -x AES \
+snmp_command="snmp get -v3 -Oq -l authPriv -u hans -a SHA -A password123 -x AES \
    -X 321drowssap localhost system.sysDescr.0"
-echo ======= $snmpget_command
-system="$(eval $snmpget_command | awk '{ print $2 }')"
+echo ======= $snmp_command
+system="$(eval $snmp_command | awk '{ print $2 }')"
 if [ "$system" != "$os" ]
 then
 	echo "seclevel auth with SHA failed"
