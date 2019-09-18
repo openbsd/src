@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 2019/08/09 06:17:59 martijn Exp $
+#	$OpenBSD: Makefile,v 1.2 2019/09/18 09:48:14 martijn Exp $
 
 PROG=		snmp
-SRCS=		mib.c smi.c snmp.c snmpc.c
+SRCS=		mib.c smi.c snmp.c snmpc.c usm.c
 LDADD+=		-lutil
 DPADD+=		${LIBUTIL}
 

@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmp.1,v 1.3 2019/08/14 14:40:23 deraadt Exp $
+.\" $OpenBSD: snmp.1,v 1.4 2019/09/18 09:48:14 martijn Exp $
 .\"
 .\" Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2019 $
+.Dd $Mdocdate: September 18 2019 $
 .Dt SNMP 1
 .Os
 .Sh NAME
@@ -24,19 +24,29 @@
 .Nm
 .Cm get | getnext
 .Op Fl c Ar community
+.Op Fl E Ar ctxengineid
+.Op Fl e Ar secengineid
+.Op Fl n Ar ctxname
+.Op Fl O Cm afnQqSvx
 .Op Fl r Ar retries
 .Op Fl t Ar timeout
+.Op Fl u Ar user
 .Op Fl v Ar version
-.Op Fl O Cm afnQqSvx
+.Op Fl Z Ar boots , Ns Ar time
 .Ar agent
 .Ar oid ...
 .Nm
 .Cm walk
 .Op Fl c Ar community
+.Op Fl E Ar ctxengineid
+.Op Fl e Ar secengineid
+.Op Fl n Ar ctxname
+.Op Fl O Cm afnQqSvx
 .Op Fl r Ar retries
 .Op Fl t Ar timeout
+.Op Fl u Ar user
 .Op Fl v Ar version
-.Op Fl O Cm afnQqSvx
+.Op Fl Z Ar boots , Ns Ar time
 .Op Fl C Cm cIipt
 .Op Fl C Cm E Ar endoid
 .Ar agent
@@ -44,29 +54,44 @@
 .Nm
 .Cm bulkget
 .Op Fl c Ar community
+.Op Fl E Ar ctxengineid
+.Op Fl e Ar secengineid
+.Op Fl n Ar ctxname
+.Op Fl O Cm afnQqSvx
 .Op Fl r Ar retries
 .Op Fl t Ar timeout
+.Op Fl u Ar user
 .Op Fl v Ar version
-.Op Fl O Cm afnQqSvx
+.Op Fl Z Ar boots , Ns Ar time
 .Op Fl C Cm n Ns Ar nonrep Ns Cm r Ns Ar maxrep
 .Ar agent
 .Ar oid ...
 .Nm
 .Cm bulkwalk
 .Op Fl c Ar community
+.Op Fl E Ar ctxengineid
+.Op Fl e Ar secengineid
+.Op Fl n Ar ctxname
+.Op Fl O Cm afnQqSvx
 .Op Fl r Ar retries
 .Op Fl t Ar timeout
+.Op Fl u Ar user
 .Op Fl v Ar version
-.Op Fl O Cm afnQqSvx
+.Op Fl Z Ar boots , Ns Ar time
 .Op Fl C Cm cipn Ns Ar nonrep Ns Cm r Ns Ar maxrep
 .Ar agent
 .Op Ar oid
 .Nm
 .Cm trap
 .Op Fl c Ar community
+.Op Fl E Ar ctxengineid
+.Op Fl e Ar secengineid
+.Op Fl n Ar ctxname
 .Op Fl r Ar retries
 .Op Fl t Ar timeout
+.Op Fl u Ar user
 .Op Fl v Ar version
+.Op Fl Z Ar boots , Ns Ar time
 .Ar agent uptime trapoid
 .Oo Ar varoid type value Oc ...
 .Nm
@@ -220,6 +245,26 @@ Set the
 string.
 Defaults to
 .Cm public .
+This option is only used by
+.Fl v Cm 1
+and
+.Fl v Cm 2c .
+.It Fl e Ar secengineid
+The USM security engine id.
+Under normal circumstances this value is discovered via snmpv3 discovery and
+does not need to be specified.
+This option is only used by
+.Fl v Cm 3 .
+.It Fl E Ar ctxengineid
+The snmpv3 context engine id.
+Most of the time this value can be safely ignored.
+This option is only used by
+.Fl v Cm 3 .
+.It Fl n Ar ctxname
+Sets the context name.
+Defaults to an empty string.
+This option is only used by
+.Fl v Cm 3 .
 .It Fl O Ar output
 Set the
 .Ar output
@@ -256,15 +301,29 @@ Set the
 .Ar timeout
 to wait for a reply, in seconds.
 Defaults to 1.
+.It Fl u Ar user
+Sets the username.
+If
+.Fl v Cm 3
+is used this option is required.
+This option is only used by
+.Fl v Cm 3 .
 .It Fl v Ar version
 Set the snmp protocol
 .Ar version
 to either
-.Cm 1
+.Cm 1 ,
+.Cm 2c
 or
-.Cm 2c .
+.Cm 3 .
 Currently defaults to
 .Cm 2c .
+.It Fl Z Ar boots , Ns Ar time
+Set the engine boots and engine time.
+Under normal circumstances this value is discovered via snmpv3 discovery and
+does not need to be specified.
+This option is only used by
+.Fl v Cm 3 .
 .El
 .Pp
 The syntax for the

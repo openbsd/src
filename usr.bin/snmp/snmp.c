@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.3 2019/09/18 09:44:38 martijn Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.4 2019/09/18 09:48:14 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -30,12 +30,55 @@
 #include "smi.h"
 #include "snmp.h"
 
+#define UDP_MAXPACKET 65535
+
 static struct ber_element *
     snmp_resolve(struct snmp_agent *, struct ber_element *, int);
 static char *
     snmp_package(struct snmp_agent *, struct ber_element *, size_t *);
 static struct ber_element *
     snmp_unpackage(struct snmp_agent *, char *, size_t);
+static void snmp_v3_free(struct snmp_v3 *);
+
+struct snmp_v3 *
+snmp_v3_init(int level, const char *ctxname, size_t ctxnamelen,
+    struct snmp_sec *sec)
+{
+	struct snmp_v3 *v3;
+
+	if ((level & (SNMP_MSGFLAG_SECMASK | SNMP_MSGFLAG_REPORT)) != level ||
+	    sec == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+	if ((v3 = calloc(1, sizeof(*v3))) == NULL)
+		return NULL;
+
+	v3->level = level | SNMP_MSGFLAG_REPORT;
+	v3->ctxnamelen = ctxnamelen;
+	if (ctxnamelen != 0) {
+		if ((v3->ctxname = malloc(ctxnamelen)) == NULL) {
+			free(v3);
+			return NULL;
+		}
+		memcpy(v3->ctxname, ctxname, ctxnamelen);
+	}
+	v3->sec = sec;
+	return v3;
+}
+
+int
+snmp_v3_setengineid(struct snmp_v3 *v3, char *engineid, size_t engineidlen)
+{
+	if (v3->engineidset)
+		free(v3->engineid);
+	if ((v3->engineid = malloc(engineidlen)) == NULL)
+		return -1;
+	memcpy(v3->engineid, engineid, engineidlen);
+	v3->engineidlen = engineidlen;
+	v3->engineidset = 1;
+	return 0;
+}
 
 struct snmp_agent *
 snmp_connect_v12(int fd, enum snmp_version version, const char *community)
@@ -54,19 +97,52 @@ snmp_connect_v12(int fd, enum snmp_version version, const char *community)
 		goto fail;
 	agent->timeout = 1;
 	agent->retries = 5;
+	agent->v3 = NULL;
 	return agent;
 
 fail:
-	free(agent->community);
 	free(agent);
 	return NULL;
+}
+
+struct snmp_agent *
+snmp_connect_v3(int fd, struct snmp_v3 *v3)
+{
+	struct snmp_agent *agent;
+
+	if ((agent = malloc(sizeof(*agent))) == NULL)
+		return NULL;
+	agent->fd = fd;
+	agent->version = SNMP_V3;
+	agent->v3 = v3;
+	agent->timeout = 1;
+	agent->retries = 5;
+	agent->community = NULL;
+
+	if (v3->sec->init(agent) == -1) {
+		snmp_free_agent(agent);
+		return NULL;
+	}
+	return agent;
 }
 
 void
 snmp_free_agent(struct snmp_agent *agent)
 {
 	free(agent->community);
+	if (agent->v3 != NULL)
+		snmp_v3_free(agent->v3);
 	free(agent);
+}
+
+static void
+snmp_v3_free(struct snmp_v3 *v3)
+{
+	v3->sec->free(v3->sec->data);
+	free(v3->sec);
+	free(v3->ctxname);
+	free(v3->engineid);
+	free(v3);
 }
 
 struct ber_element *
@@ -253,7 +329,7 @@ snmp_resolve(struct snmp_agent *agent, struct ber_element *pdu, int reply)
 			tries--;
 			continue;
 		}
-		if (rreqid != reqid) {
+		if (rreqid != reqid && rreqid != 0) {
 			errno = EPROTO;
 			direction = POLLOUT;
 			tries--;
@@ -265,7 +341,7 @@ snmp_resolve(struct snmp_agent *agent, struct ber_element *pdu, int reply)
 				errno = EPROTO;
 				direction = POLLOUT;
 				tries--;
-				break;
+				continue;
 			}
 		}
 
@@ -282,9 +358,10 @@ static char *
 snmp_package(struct snmp_agent *agent, struct ber_element *pdu, size_t *len)
 {
 	struct ber ber;
-	struct ber_element *message;
-	ssize_t ret;
-	char *packet = NULL;
+	struct ber_element *message, *scopedpdu = NULL;
+	ssize_t securitysize, ret;
+	char *securityparams = NULL, *packet = NULL;
+	long long msgid;
 
 	bzero(&ber, sizeof(ber));
 	ber_set_application(&ber, smi_application);
@@ -304,6 +381,29 @@ snmp_package(struct snmp_agent *agent, struct ber_element *pdu, size_t *len)
 		}
 		break;
 	case SNMP_V3:
+		msgid = arc4random_uniform(2147483647);
+		if ((scopedpdu = ber_add_sequence(NULL)) == NULL) {
+			ber_free_elements(pdu);
+			goto fail;
+		}
+		if (ber_printf_elements(scopedpdu, "xxe",
+		    agent->v3->engineid, agent->v3->engineidlen,
+		    agent->v3->ctxname, agent->v3->ctxnamelen, pdu) == NULL) {
+			ber_free_elements(pdu);
+			ber_free_elements(scopedpdu);
+			goto fail;
+		}
+		pdu = NULL;
+		if ((securityparams = agent->v3->sec->genparams(agent,
+		    &securitysize)) == NULL) {
+			ber_free_elements(scopedpdu);
+			goto fail;
+		}
+		if (ber_printf_elements(message, "d{idxd}xe",
+		    agent->version, msgid, UDP_MAXPACKET, &(agent->v3->level),
+		    (size_t) 1, agent->v3->sec->model, securityparams,
+		    securitysize, scopedpdu) == NULL)
+			goto fail;
 		break;
 	}
 
@@ -316,6 +416,7 @@ snmp_package(struct snmp_agent *agent, struct ber_element *pdu, size_t *len)
 
 fail:
 	ber_free_elements(message);
+	free(securityparams);
 	return packet;
 }
 
@@ -326,7 +427,14 @@ snmp_unpackage(struct snmp_agent *agent, char *buf, size_t buflen)
 	enum snmp_version version;
 	char *community;
 	struct ber_element *pdu;
-	struct ber_element *message = NULL, *payload;
+	long long msgid, model;
+	int msgsz;
+	char *msgflags, *secparams;
+	size_t msgflagslen, secparamslen;
+	struct ber_element *message = NULL, *payload, *scopedpdu, *ctxname;
+	off_t secparamsoffset;
+	char *engineid;
+	size_t engineidlen;
 
 	bzero(&ber, sizeof(ber));
 	ber_set_application(&ber, smi_application);
@@ -342,8 +450,7 @@ snmp_unpackage(struct snmp_agent *agent, char *buf, size_t buflen)
 	if (version != agent->version)
 		goto fail;
 
-	switch (version)
-	{
+	switch (version) {
 	case SNMP_V1:
 	case SNMP_V2C:
 		if (ber_scanf_elements(payload, "se", &community, &pdu) == -1)
@@ -354,7 +461,34 @@ snmp_unpackage(struct snmp_agent *agent, char *buf, size_t buflen)
 		ber_free_elements(message);
 		return pdu;
 	case SNMP_V3:
-		break;
+		if (ber_scanf_elements(payload, "{idxi}pxe", &msgid, &msgsz,
+		    &msgflags, &msgflagslen, &model, &secparamsoffset,
+		    &secparams, &secparamslen, &scopedpdu) == -1)
+			goto fail;
+		if (msgflagslen != 1)
+			goto fail;
+		if (agent->v3->sec->parseparams(agent, buf, buflen,
+		    secparamsoffset, secparams, secparamslen,
+		    msgflags[0]) == -1)
+			goto fail;
+		if (ber_scanf_elements(scopedpdu, "{xeS{", &engineid,
+		    &engineidlen, &ctxname) == -1)
+			goto fail;
+		if (!agent->v3->engineidset) {
+			if (snmp_v3_setengineid(agent->v3, engineid,
+			    engineidlen) == -1)
+				goto fail;
+		}
+		pdu = ber_unlink_elements(ctxname);
+		/* Accept reports, so we can continue if possible */
+		if (pdu->be_type != SNMP_C_REPORT) {
+			if ((msgflags[0] & SNMP_MSGFLAG_SECMASK) !=
+			    (agent->v3->level & SNMP_MSGFLAG_SECMASK))
+				goto fail;
+		}
+
+		ber_free_elements(message);
+		return pdu;
 	}
 	/* NOTREACHED */
 

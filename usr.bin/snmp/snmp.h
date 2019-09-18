@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.2 2019/09/18 09:44:38 martijn Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.3 2019/09/18 09:48:14 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -108,12 +108,37 @@ enum snmp_security_model {
 	SNMP_SEC_TSM		= 4
 };
 
+struct snmp_agent;
+
+struct snmp_sec {
+	enum snmp_security_model model;
+	int (*init)(struct snmp_agent *);
+	char *(*genparams)(struct snmp_agent *, size_t *);
+	int (*parseparams)(struct snmp_agent *, char *, size_t, off_t, char *,
+	    size_t, uint8_t);
+	void (*free)(void *);
+	void *data;
+};
+
+struct snmp_v3 {
+	uint8_t level;
+	char *ctxname;
+	size_t ctxnamelen;
+	int engineidset;
+	char *engineid;
+	size_t engineidlen;
+	struct snmp_sec *sec;
+};
+
 struct snmp_agent {
 	int fd;
-	enum snmp_version version;
-	char *community;
 	int timeout;
 	int retries;
+	enum snmp_version version;
+/* SNMP_V1 & SNMP_V2C */
+	char *community;
+/* SNMP_V3 */
+	struct snmp_v3 *v3;
 };
 
 #define SNMP_MSGFLAG_AUTH	0x01
@@ -123,7 +148,10 @@ struct snmp_agent {
 
 #define SNMP_MAX_TIMEWINDOW	150	/* RFC3414 */
 
+struct snmp_v3 *snmp_v3_init(int, const char *, size_t, struct snmp_sec *);
+int snmp_v3_setengineid(struct snmp_v3 *, char *, size_t);
 struct snmp_agent *snmp_connect_v12(int, enum snmp_version, const char *);
+struct snmp_agent *snmp_connect_v3(int, struct snmp_v3 *);
 void snmp_free_agent(struct snmp_agent *);
 struct ber_element *
     snmp_get(struct snmp_agent *agent, struct ber_oid *oid, size_t len);
