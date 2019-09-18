@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.216 2019/09/12 12:55:07 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.217 2019/09/18 23:52:32 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2189,7 +2189,6 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
-		struct mbuf mb;
 		struct iwn_rx_radiotap_header *tap = &sc->sc_rxtap;
 		uint16_t chan_flags;
 
@@ -2227,13 +2226,8 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 			}
 		}
 
-		mb.m_data = (caddr_t)tap;
-		mb.m_len = sc->sc_rxtap_len;
-		mb.m_next = m;
-		mb.m_nextpkt = NULL;
-		mb.m_type = 0;
-		mb.m_flags = 0;
-		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
+		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_rxtap_len,
+		    m, BPF_DIRECTION_IN, NULL);
 	}
 #endif
 
@@ -3262,7 +3256,6 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	rinfo = &iwn_rates[ridx];
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
-		struct mbuf mb;
 		struct iwn_tx_radiotap_header *tap = &sc->sc_txtap;
 		uint16_t chan_flags;
 
@@ -3283,13 +3276,8 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		    (wh->i_fc[1] & IEEE80211_FC1_PROTECTED))
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
-		mb.m_data = (caddr_t)tap;
-		mb.m_len = sc->sc_txtap_len;
-		mb.m_next = m;
-		mb.m_nextpkt = NULL;
-		mb.m_type = 0;
-		mb.m_flags = 0;
-		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
+		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_txtap_len,
+		    m, BPF_DIRECTION_OUT, NULL);
 	}
 #endif
 
