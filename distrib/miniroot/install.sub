@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1141 2019/09/14 11:38:46 kn Exp $
+#	$OpenBSD: install.sub,v 1.1142 2019/09/19 12:18:46 semarie Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1655,6 +1655,7 @@ install_files() {
 
 	# Install the set files.
 	for _f in $_get_sets; do
+		$UU && reset_watchdog
 		_fsrc="$_src/$_f"
 
 		# Take the set file from the prefetch area if possible.
@@ -1702,6 +1703,8 @@ install_files() {
 	elif $_srclocal && [[ -f ${_src#file://}/SHA256 ]]; then
 		cp ${_src#file://}/SHA256 /mnt/var/db/installed.SHA256
 	fi
+
+	$UU && reset_watchdog
 }
 
 # Fetch install sets from an HTTP server possibly using a proxy.
