@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.42 2019/09/16 11:49:05 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.43 2019/09/19 19:50:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -26,6 +26,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
 /* RK3288 registers */
@@ -81,6 +82,9 @@
 #define  RK3328_CRU_VOP_DCLK_SRC_SEL_SHIFT	1
 #define RK3328_CRU_CLKGATE_CON(i)	(0x0200 + (i) * 4)
 #define RK3328_CRU_SOFTRST_CON(i)	(0x0300 + (i) * 4)
+
+#define RK3328_GRF_MAC_CON1		0x0904
+#define  RK3328_GRF_GMAC2IO_RMII_EXTCLK_SEL	(1 << 11)
 
 /* RK3399 registers */
 #define RK3399_CRU_LPLL_CON(i)		(0x0000 + (i) * 4)
@@ -159,6 +163,7 @@ struct rkclock_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	struct regmap		*sc_grf;
 
 	uint32_t		sc_phandle;
 	struct rkclock		*sc_clocks;
@@ -260,6 +265,7 @@ rkclock_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rkclock_softc *sc = (struct rkclock_softc *)self;
 	struct fdt_attach_args *faa = aux;
+	uint32_t grf;
 	int i;
 
 	if (faa->fa_nreg < 1) {
@@ -273,6 +279,9 @@ rkclock_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map registers\n");
 		return;
 	}
+
+	grf = OF_getpropint(faa->fa_node, "rockchip,grf", 0);
+	sc->sc_grf = regmap_byphandle(grf);
 
 	printf("\n");
 
@@ -883,6 +892,11 @@ struct rkclock rk3328_clocks[] = {
 		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL }
 	},
 	{
+		RK3328_CLK_MAC2IO_SRC, RK3328_CRU_CLKSEL_CON(27),
+		SEL(7, 7), DIV(4, 0),
+		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL }
+	},
+	{
 		RK3328_DCLK_LCDC, RK3328_CRU_CLKSEL_CON(40),
 		SEL(1, 1), 0,
 		{ RK3328_HDMIPHY, RK3328_DCLK_LCDC_SRC }
@@ -1303,6 +1317,7 @@ rk3328_get_frequency(void *cookie, uint32_t *cells)
 {
 	struct rkclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
+	uint32_t reg;
 
 	switch (idx) {
 	case RK3328_PLL_APLL:
@@ -1324,6 +1339,8 @@ rk3328_get_frequency(void *cookie, uint32_t *cells)
 		return rk3328_get_armclk(sc);
 	case RK3328_XIN24M:
 		return 24000000;
+	case RK3328_GMAC_CLKIN:
+		return 125000000;
 	/*
 	 * XXX The HDMIPHY and USB480M clocks are external.  Returning
 	 * zero here will cause them to be ignored for reparenting
@@ -1333,6 +1350,13 @@ rk3328_get_frequency(void *cookie, uint32_t *cells)
 		return 0;
 	case RK3328_USB480M:
 		return 0;
+	case RK3328_CLK_MAC2IO:
+		reg = regmap_read_4(sc->sc_grf, RK3328_GRF_MAC_CON1);
+		if (reg & RK3328_GRF_GMAC2IO_RMII_EXTCLK_SEL)
+			idx = RK3328_GMAC_CLKIN;
+		else
+			idx = RK3328_CLK_MAC2IO_SRC;
+		break;
 	default:
 		break;
 	}
@@ -1398,10 +1422,25 @@ rk3328_set_parent(void *cookie, uint32_t *cells, uint32_t *pcells)
 		name[0] = 0;
 		OF_getprop(node, "clock-output-names", name, sizeof(name));
 		name[sizeof(name) - 1] = 0;
-		if (strcmp(name, "xin24m") != 0)
+		if (strcmp(name, "xin24m") == 0)
+			parent = RK3328_XIN24M;
+		else if (strcmp(name, "gmac_clkin") == 0)
+			parent = RK3328_GMAC_CLKIN;
+		else
 			return -1;
+	}
 
-		parent = RK3328_XIN24M;
+	switch (idx) {
+	case RK3328_CLK_MAC2IO:
+		if (parent == RK3328_GMAC_CLKIN) {
+			regmap_write_4(sc->sc_grf, RK3328_GRF_MAC_CON1,
+			    RK3328_GRF_GMAC2IO_RMII_EXTCLK_SEL << 16 |
+			    RK3328_GRF_GMAC2IO_RMII_EXTCLK_SEL);
+		} else {
+			regmap_write_4(sc->sc_grf, RK3328_GRF_MAC_CON1,
+			    RK3328_GRF_GMAC2IO_RMII_EXTCLK_SEL << 16);
+		}
+		return 0;
 	}
 
 	return rkclock_set_parent(sc, idx, parent);

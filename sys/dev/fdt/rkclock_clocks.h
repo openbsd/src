@@ -66,6 +66,8 @@
 #define RK3328_CLK_VENC_DSP		67
 #define RK3328_CLK_VENC_CORE		68
 #define RK3328_CLK_TSP			92
+#define RK3328_CLK_MAC2IO_SRC		99
+#define RK3328_CLK_MAC2IO		100
 
 #define RK3328_DCLK_LCDC		120
 #define RK3328_HDMIPHY			122
@@ -89,6 +91,7 @@
 
 #define RK3328_XIN24M			1023
 #define RK3328_CLK_24M			1022
+#define RK3328_GMAC_CLKIN		1021
 
 /*
  * RK3399 clocks.
