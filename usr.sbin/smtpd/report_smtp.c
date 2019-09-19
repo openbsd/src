@@ -1,4 +1,4 @@
-/*	$OpenBSD: report_smtp.c,v 1.9 2019/08/28 15:50:36 martijn Exp $	*/
+/*	$OpenBSD: report_smtp.c,v 1.10 2019/09/19 14:40:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -174,6 +174,15 @@ void
 report_smtp_tx_mail(const char *direction, uint64_t qid, uint32_t msgid, const char *address, int ok)
 {
 	struct timeval	tv;
+	char buffer[SMTPD_MAXMAILADDRSIZE];
+	char *p;
+
+	if ((p = strchr(address, '<')) == NULL)
+		return;
+	(void)strlcpy(buffer, p + 1, sizeof buffer);
+	if ((p = strchr(buffer, '>')) == NULL)
+		return;
+	*p = '\0';
 
 	gettimeofday(&tv, NULL);
 
@@ -182,7 +191,7 @@ report_smtp_tx_mail(const char *direction, uint64_t qid, uint32_t msgid, const c
 	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
 	m_add_u32(p_lka, msgid);
-	m_add_string(p_lka, address);
+	m_add_string(p_lka, buffer);
 	m_add_int(p_lka, ok);
 	m_close(p_lka);
 }
@@ -191,6 +200,15 @@ void
 report_smtp_tx_rcpt(const char *direction, uint64_t qid, uint32_t msgid, const char *address, int ok)
 {
 	struct timeval	tv;
+	char buffer[SMTPD_MAXMAILADDRSIZE];
+	char *p;
+
+	if ((p = strchr(address, '<')) == NULL)
+		return;
+	(void)strlcpy(buffer, p + 1, sizeof buffer);
+	if ((p = strchr(buffer, '>')) == NULL)
+		return;
+	*p = '\0';
 
 	gettimeofday(&tv, NULL);
 
@@ -199,7 +217,7 @@ report_smtp_tx_rcpt(const char *direction, uint64_t qid, uint32_t msgid, const c
 	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
 	m_add_u32(p_lka, msgid);
-	m_add_string(p_lka, address);
+	m_add_string(p_lka, buffer);
 	m_add_int(p_lka, ok);
 	m_close(p_lka);
 }
