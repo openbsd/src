@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.637 2019/09/18 11:26:30 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.638 2019/09/19 07:35:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -69,7 +69,7 @@
  * potentially dangerous and need to be escaped.
  */
 #define	MAILADDR_ALLOWED       	"!#$%&'*/?^`{|}~+-=_"
-#define	MAILADDR_ESCAPE		"!#$%&'*/?^`{|}~"
+#define	MAILADDR_ESCAPE		"!#$%&'*?`{|}~"
 
 
 #define F_STARTTLS		0x01

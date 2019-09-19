@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda_variables.c,v 1.5 2018/12/06 12:32:11 gilles Exp $	*/
+/*	$OpenBSD: mda_variables.c,v 1.6 2019/09/19 07:35:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011-2017 Gilles Chehade <gilles@poolp.org>
@@ -235,7 +235,7 @@ mda_expand_token(char *dest, size_t len, const char *token,
 
 	string += begoff;
 	for (; i; i--) {
-		*dest = (replace && *string == '/') ? ':' : *string;
+		*dest = *string;
 		dest++;
 		string++;
 	}
