@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.59 2019/09/19 05:02:27 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.60 2019/09/19 05:04:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -82,6 +82,7 @@ void slot_attach(struct slot *);
 void slot_ready(struct slot *);
 void slot_allocbufs(struct slot *);
 void slot_freebufs(struct slot *);
+void slot_initconv(struct slot *);
 void slot_start(struct slot *);
 void slot_detach(struct slot *);
 void slot_stop(struct slot *);
@@ -1425,23 +1426,17 @@ dev_mmcloc(struct dev *d, unsigned int origin)
 		dev_mmcstart(d);
 }
 
-
 /*
  * allocate buffers & conversion chain
  */
 void
-slot_allocbufs(struct slot *s)
+slot_initconv(struct slot *s)
 {
 	unsigned int dev_nch;
 	struct dev *d = s->dev;
 
 	if (s->mode & MODE_PLAY) {
-		s->mix.bpf = s->par.bps * s->mix.nch;
-		abuf_init(&s->mix.buf, s->appbufsz * s->mix.bpf);
-
 		dev_nch = s->opt->pmax - s->opt->pmin + 1;
-		s->mix.decbuf = NULL;
-		s->mix.resampbuf = NULL;
 		s->mix.join = 1;
 		s->mix.expand = 1;
 		if (s->opt->dup) {
@@ -1457,24 +1452,15 @@ slot_allocbufs(struct slot *s)
 		    s->opt->pmin, s->opt->pmax);
 		if (!aparams_native(&s->par)) {
 			dec_init(&s->mix.dec, &s->par, s->mix.nch);
-			s->mix.decbuf =
-			    xmalloc(s->round * s->mix.nch * sizeof(adata_t));
 		}
 		if (s->rate != d->rate) {
 			resamp_init(&s->mix.resamp, s->round, d->round,
 			    s->mix.nch);
-			s->mix.resampbuf =
-			    xmalloc(d->round * s->mix.nch * sizeof(adata_t));
 		}
 	}
 
 	if (s->mode & MODE_RECMASK) {
-		s->sub.bpf = s->par.bps * s->sub.nch;
-		abuf_init(&s->sub.buf, s->appbufsz * s->sub.bpf);
-
 		dev_nch = s->opt->rmax - s->opt->rmin + 1;
-		s->sub.encbuf = NULL;
-		s->sub.resampbuf = NULL;
 		s->sub.join = 1;
 		s->sub.expand = 1;
 		if (s->opt->dup) {
@@ -1491,13 +1477,9 @@ slot_allocbufs(struct slot *s)
 		if (s->rate != d->rate) {
 			resamp_init(&s->sub.resamp, d->round, s->round,
 			    s->sub.nch);
-			s->sub.resampbuf =
-			    xmalloc(d->round * s->sub.nch * sizeof(adata_t));
 		}
 		if (!aparams_native(&s->par)) {
 			enc_init(&s->sub.enc, &s->par, s->sub.nch);
-			s->sub.encbuf =
-			    xmalloc(s->round * s->sub.nch * sizeof(adata_t));
 		}
 
 		/*
@@ -1517,6 +1499,49 @@ slot_allocbufs(struct slot *s)
 			    s->appbufsz * s->sub.nch * sizeof(adata_t));
 		}
 	}
+}
+
+/*
+ * allocate buffers & conversion chain
+ */
+void
+slot_allocbufs(struct slot *s)
+{
+	struct dev *d = s->dev;
+
+	if (s->mode & MODE_PLAY) {
+		s->mix.bpf = s->par.bps * s->mix.nch;
+		abuf_init(&s->mix.buf, s->appbufsz * s->mix.bpf);
+
+		s->mix.decbuf = NULL;
+		s->mix.resampbuf = NULL;
+		if (!aparams_native(&s->par)) {
+			s->mix.decbuf =
+			    xmalloc(s->round * s->mix.nch * sizeof(adata_t));
+		}
+		if (s->rate != d->rate) {
+			s->mix.resampbuf =
+			    xmalloc(d->round * s->mix.nch * sizeof(adata_t));
+		}
+	}
+
+	if (s->mode & MODE_RECMASK) {
+		s->sub.bpf = s->par.bps * s->sub.nch;
+		abuf_init(&s->sub.buf, s->appbufsz * s->sub.bpf);
+
+		s->sub.encbuf = NULL;
+		s->sub.resampbuf = NULL;
+		if (s->rate != d->rate) {
+			s->sub.resampbuf =
+			    xmalloc(d->round * s->sub.nch * sizeof(adata_t));
+		}
+		if (!aparams_native(&s->par)) {
+			s->sub.encbuf =
+			    xmalloc(s->round * s->sub.nch * sizeof(adata_t));
+		}
+	}
+
+	slot_initconv(s);
 
 #ifdef DEBUG
 	if (log_level >= 3) {
