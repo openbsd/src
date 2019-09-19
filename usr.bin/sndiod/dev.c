@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.58 2019/08/29 07:38:15 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.59 2019/09/19 05:02:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -57,10 +57,10 @@ int dev_getpos(struct dev *);
 struct dev *dev_new(char *, struct aparams *, unsigned int, unsigned int,
     unsigned int, unsigned int, unsigned int, unsigned int);
 void dev_adjpar(struct dev *, int, int, int);
-int dev_open_do(struct dev *);
+int dev_allocbufs(struct dev *);
 int dev_open(struct dev *);
 void dev_exitall(struct dev *);
-void dev_close_do(struct dev *);
+void dev_freebufs(struct dev *);
 void dev_close(struct dev *);
 int dev_ref(struct dev *);
 void dev_unref(struct dev *);
@@ -1031,15 +1031,8 @@ dev_adjpar(struct dev *d, int mode,
  * monitor, midi control, and any necessary conversions.
  */
 int
-dev_open_do(struct dev *d)
+dev_allocbufs(struct dev *d)
 {
-	if (!dev_sio_open(d)) {
-		if (log_level >= 1) {
-			dev_log(d);
-			log_puts(": failed to open audio device\n");
-		}
-		return 0;
-	}
 	if (d->mode & MODE_REC) {
 		/*
 		 * Create device <-> demuxer buffer
@@ -1073,7 +1066,6 @@ dev_open_do(struct dev *d)
 		} else
 			d->encbuf = NULL;
 	}
-	d->pstate = DEV_INIT;
 	if (log_level >= 2) {
 		dev_log(d);
 		log_puts(": ");
@@ -1114,8 +1106,16 @@ dev_open(struct dev *d)
 		d->pchan = 2;
 	if (d->rchan == 0)
 		d->rchan = 2;
-	if (!dev_open_do(d))
+	if (!dev_sio_open(d)) {
+		if (log_level >= 1) {
+			dev_log(d);
+			log_puts(": failed to open audio device\n");
+		}
 		return 0;
+	}
+	if (!dev_allocbufs(d))
+		return 0;
+	d->pstate = DEV_INIT;
 	return 1;
 }
 
@@ -1141,7 +1141,7 @@ dev_exitall(struct dev *d)
  * ensure buffers are drained
  */
 void
-dev_close_do(struct dev *d)
+dev_freebufs(struct dev *d)
 {
 #ifdef DEBUG
 	if (log_level >= 3) {
@@ -1149,8 +1149,6 @@ dev_close_do(struct dev *d)
 		log_puts(": closing\n");
 	}
 #endif
-	d->pstate = DEV_CFG;
-	dev_sio_close(d);
 	if (d->mode & MODE_PLAY) {
 		if (d->encbuf != NULL)
 			xfree(d->encbuf);
@@ -1170,7 +1168,9 @@ void
 dev_close(struct dev *d)
 {
 	dev_exitall(d);
-	dev_close_do(d);
+	d->pstate = DEV_CFG;
+	dev_sio_close(d);
+	dev_freebufs(d);
 }
 
 int
