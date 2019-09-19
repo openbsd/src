@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.410 2019/09/11 04:19:19 martijn Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.411 2019/09/19 16:00:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1744,10 +1744,13 @@ smtp_proceed_helo(struct smtp_session *s, const char *args)
 	report_smtp_link_identify("smtp-in", s->id, "HELO", s->helo);
 
 	smtp_enter_state(s, STATE_HELO);
-	smtp_reply(s, "250 %s Hello %s [%s], pleased to meet you",
+
+	smtp_reply(s, "250 %s Hello %s %s%s%s, pleased to meet you",
 	    s->smtpname,
 	    s->helo,
-	    ss_to_text(&s->ss));
+	    s->ss.ss_family == AF_INET6 ? "" : "[",
+	    ss_to_text(&s->ss),
+	    s->ss.ss_family == AF_INET6 ? "" : "]");
 }
 
 static void
@@ -1761,10 +1764,12 @@ smtp_proceed_ehlo(struct smtp_session *s, const char *args)
 	report_smtp_link_identify("smtp-in", s->id, "EHLO", s->helo);
 
 	smtp_enter_state(s, STATE_HELO);
-	smtp_reply(s, "250-%s Hello %s [%s], pleased to meet you",
+	smtp_reply(s, "250-%s Hello %s %s%s%s, pleased to meet you",
 	    s->smtpname,
 	    s->helo,
-	    ss_to_text(&s->ss));
+	    s->ss.ss_family == AF_INET6 ? "" : "[",
+	    ss_to_text(&s->ss),
+	    s->ss.ss_family == AF_INET6 ? "" : "]");
 
 	smtp_reply(s, "250-8BITMIME");
 	smtp_reply(s, "250-ENHANCEDSTATUSCODES");
@@ -2835,10 +2840,12 @@ smtp_message_begin(struct smtp_tx *tx)
 
 	m_printf(tx, "Received: ");
 	if (!(s->listener->flags & F_MASK_SOURCE)) {
-		m_printf(tx, "from %s (%s [%s])",
+		m_printf(tx, "from %s (%s %s%s%s)",
 		    s->helo,
 		    s->rdns,
-		    ss_to_text(&s->ss));
+		    s->ss.ss_family == AF_INET6 ? "" : "[",
+		    ss_to_text(&s->ss),
+		    s->ss.ss_family == AF_INET6 ? "" : "]");
 	}
 	m_printf(tx, "\n\tby %s (%s) with %sSMTP%s%s id %08x",
 	    s->smtpname,

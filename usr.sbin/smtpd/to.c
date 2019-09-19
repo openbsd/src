@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.42 2019/09/02 21:59:27 gilles Exp $	*/
+/*	$OpenBSD: to.c,v 1.43 2019/09/19 16:00:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -169,10 +169,9 @@ sa_to_text(const struct sockaddr *sa)
 		const struct in6_addr	*in6_addr;
 
 		in6 = (const struct sockaddr_in6 *)sa;
-		(void)strlcpy(buf, "IPv6:", sizeof(buf));
-		p = buf + 5;
+		p = buf;
 		in6_addr = &in6->sin6_addr;
-		(void)bsnprintf(p, NI_MAXHOST, "%s", in6addr_to_text(in6_addr));
+		(void)bsnprintf(p, NI_MAXHOST, "[%s]", in6addr_to_text(in6_addr));
 	}
 
 	return (buf);
@@ -270,6 +269,8 @@ text_to_netaddr(struct netaddr *netaddr, const char *s)
 	struct sockaddr_in	ssin;
 	struct sockaddr_in6	ssin6;
 	int			bits;
+	char			buf[NI_MAXHOST];
+	size_t			len;
 
 	memset(&ssin, 0, sizeof(struct sockaddr_in));
 	memset(&ssin6, 0, sizeof(struct sockaddr_in6));
@@ -284,7 +285,21 @@ text_to_netaddr(struct netaddr *netaddr, const char *s)
 		memcpy(&ss, &ssin, sizeof(ssin));
 		ss.ss_len = sizeof(struct sockaddr_in);
 	} else {
-		bits = inet_net_pton(AF_INET6, s, &ssin6.sin6_addr,
+		if (s[0] != '[') {
+			if ((len = strlcpy(buf, s, sizeof buf)) >= sizeof buf)
+				return 0;
+		}
+		else {
+			s++;
+			if (strncasecmp("IPv6:", s, 5) == 0)
+				s += 5;
+			if ((len = strlcpy(buf, s, sizeof buf)) >= sizeof buf)
+				return 0;
+			if (buf[len-1] != ']')
+				return 0;
+			buf[len-1] = 0;
+		}
+		bits = inet_net_pton(AF_INET6, buf, &ssin6.sin6_addr,
 		    sizeof(struct in6_addr));
 		if (bits == -1)
 			return 0;
