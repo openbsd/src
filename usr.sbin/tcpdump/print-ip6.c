@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.28 2018/10/22 16:12:45 kn Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.29 2019/09/19 23:23:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -117,7 +117,7 @@ ip6_print(const u_char *bp, u_int length)
 #endif
 		if (cp == (u_char *)(ip6 + 1) &&
 		    nh != IPPROTO_TCP && nh != IPPROTO_UDP &&
-		    nh != IPPROTO_ESP && nh != IPPROTO_AH &&
+		    nh != IPPROTO_AH &&
 		    (vflag || (nh != IPPROTO_IPV4 && nh != IPPROTO_IPV6))) {
 			(void)printf("%s > %s: ", ip6addr_string(&ip6->ip6_src),
 				     ip6addr_string(&ip6->ip6_dst));

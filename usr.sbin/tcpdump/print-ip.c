@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.51 2018/10/22 16:12:45 kn Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.52 2019/09/19 23:23:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -472,6 +472,9 @@ ip_print(const u_char *bp, u_int length)
 #define IPPROTO_ESP 50
 #endif
 		case IPPROTO_ESP:
+			(void)printf("%s > %s: ",
+			    ipaddr_string(&ip->ip_src),
+			    ipaddr_string(&ip->ip_dst));
 			esp_print(cp, len, (const u_char *)ip);
 			break;
 
