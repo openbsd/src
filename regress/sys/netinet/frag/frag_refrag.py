@@ -57,7 +57,7 @@ for a in ans:
 		print "reply cksum=%#x" % (reply_cksum)
 		# change request checksum incrementaly and check with reply
 		diff_cksum=~(~reply_cksum+~(~request_cksum+~0x0800+0x0000))
-		if diff_cksum != -1:
+		if diff_cksum & 0xffff != 0xffff and diff_cksum & 0xffff != 0:
 			print "CHECKSUM ERROR diff cksum=%#x" % (diff_cksum)
 			exit(1)
 		exit(0)
