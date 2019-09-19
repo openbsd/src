@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.110 2019/09/15 21:42:57 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.111 2019/09/19 09:02:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -64,7 +64,7 @@ static const char *options_table_set_clipboard_list[] = {
 	"off", "external", "on", NULL
 };
 static const char *options_table_window_size_list[] = {
-	"largest", "smallest", "manual", NULL
+	"largest", "smallest", "manual", "latest", NULL
 };
 
 /* Status line format. */

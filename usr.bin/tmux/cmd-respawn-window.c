@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-window.c,v 1.39 2019/04/28 20:05:50 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-window.c,v 1.40 2019/09/19 09:02:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -59,6 +59,7 @@ cmd_respawn_window_exec(struct cmd *self, struct cmdq_item *item)
 	sc.item = item;
 	sc.s = s;
 	sc.wl = wl;
+	sc.c = cmd_find_client(item, NULL, 1);
 
 	sc.name = NULL;
 	sc.argc = args->argc;

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.79 2019/04/28 20:05:50 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.80 2019/09/19 09:02:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -72,6 +72,7 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 	memset(&sc, 0, sizeof sc);
 	sc.item = item;
 	sc.s = s;
+	sc.c = c;
 
 	sc.name = args_get(args, 'n');
 	sc.argc = args->argc;

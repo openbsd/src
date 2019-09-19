@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.688 2019/09/15 21:42:57 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.689 2019/09/19 09:02:30 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 15 2019 $
+.Dd $Mdocdate: September 19 2019 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3659,7 +3659,7 @@ see the
 section.
 .Pp
 .It Xo Ic window-size
-.Ar largest | Ar smallest | Ar manual
+.Ar largest | Ar smallest | Ar manual | Ar latest
 .Xc
 Configure how
 .Nm
@@ -3674,6 +3674,10 @@ If
 the size of a new window is set from the
 .Ic default-size
 option and windows are resized automatically.
+With
+.Ar latest ,
+.Nm
+uses the size of the client that had the most recent activity.
 See also the
 .Ic resize-window
 command and the
