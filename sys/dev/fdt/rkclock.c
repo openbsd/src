@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.43 2019/09/19 19:50:49 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.44 2019/09/20 06:43:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -83,8 +83,10 @@
 #define RK3328_CRU_CLKGATE_CON(i)	(0x0200 + (i) * 4)
 #define RK3328_CRU_SOFTRST_CON(i)	(0x0300 + (i) * 4)
 
+#define RK3328_GRF_SOC_CON4		0x0410
+#define  RK3328_GRF_GMAC2IO_MAC_CLK_OUTPUT_EN	(1 << 14)
 #define RK3328_GRF_MAC_CON1		0x0904
-#define  RK3328_GRF_GMAC2IO_RMII_EXTCLK_SEL	(1 << 11)
+#define  RK3328_GRF_GMAC2IO_RMII_EXTCLK_SEL	(1 << 10)
 
 /* RK3399 registers */
 #define RK3399_CRU_LPLL_CON(i)		(0x0000 + (i) * 4)
@@ -1356,7 +1358,7 @@ rk3328_get_frequency(void *cookie, uint32_t *cells)
 			idx = RK3328_GMAC_CLKIN;
 		else
 			idx = RK3328_CLK_MAC2IO_SRC;
-		break;
+		return rk3328_get_frequency(sc, &idx);
 	default:
 		break;
 	}
@@ -1439,6 +1441,16 @@ rk3328_set_parent(void *cookie, uint32_t *cells, uint32_t *pcells)
 		} else {
 			regmap_write_4(sc->sc_grf, RK3328_GRF_MAC_CON1,
 			    RK3328_GRF_GMAC2IO_RMII_EXTCLK_SEL << 16);
+		}
+		return 0;
+	case RK3328_CLK_MAC2IO_EXT:
+		if (parent == RK3328_GMAC_CLKIN) {
+			regmap_write_4(sc->sc_grf, RK3328_GRF_SOC_CON4,
+			    RK3328_GRF_GMAC2IO_MAC_CLK_OUTPUT_EN << 16 |
+			    RK3328_GRF_GMAC2IO_MAC_CLK_OUTPUT_EN);
+		} else {
+			regmap_write_4(sc->sc_grf, RK3328_GRF_SOC_CON4,
+			    RK3328_GRF_GMAC2IO_MAC_CLK_OUTPUT_EN << 16);
 		}
 		return 0;
 	}
