@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmap_4g.c,v 1.3 2010/06/20 17:56:07 phessler Exp $	*/
+/*	$OpenBSD: mmap_4g.c,v 1.4 2019/09/20 12:52:30 bluhm Exp $	*/
 
 /*
  * Public domain. 2005, Otto Moerbeek <otto@drijf.net>
@@ -20,9 +20,9 @@
 int
 main()
 {
-	int fd, i;
+	int fd;
 	off_t offset;
-	size_t sz;
+	size_t i, sz;
 	char *p, buf[100];
 	const char * file = "foo";
 
@@ -60,7 +60,7 @@ main()
 		err(1, "read");
 	for (i = 0; i < sz; i++)
 		if (buf[i])
-			errx(1, "nonzero byte 0x%02x found at offset %zu", 
+			errx(1, "nonzero byte 0x%02x found at offset %zu",
 			    buf[i], i);
 
 	if (lseek(fd, offset, SEEK_SET) != offset)
