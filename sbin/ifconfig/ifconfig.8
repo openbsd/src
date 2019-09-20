@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.341 2019/08/21 15:32:18 florian Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.342 2019/09/20 12:37:04 stsp Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: August 21 2019 $
+.Dd $Mdocdate: September 20 2019 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1110,6 +1110,13 @@ Disable 802.11 power saving mode.
 .It Cm scan
 Show the results of an access point scan.
 In Host AP mode, this will dump the list of known nodes without scanning.
+In station mode, this will list each access point's SSID, channel,
+MAC address (BSSID), received signal strength indicator, maximum data
+transfer rate, and supported feature flags.
+If an access point cannot be selected due to incompatibilities with the
+interface configuration,
+.Nm
+indicates mismatching configuration items with an exclamation mark.
 .It Cm wpa
 Enable Wi-Fi Protected Access.
 WPA is a Wi-Fi Alliance protocol based on the IEEE 802.11i standard.
