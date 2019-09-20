@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.261 2019/09/06 08:23:56 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.262 2019/09/20 17:46:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -191,7 +191,7 @@ typedef struct {
 %token	PHASE PKI PORT PROC PROC_EXEC PROXY_V2
 %token	QUEUE QUIT
 %token	RCPT_TO RDNS RECIPIENT RECEIVEDAUTH REGEX RELAY REJECT REPORT REWRITE RSET
-%token	SCHEDULER SENDER SENDERS SMTP SMTP_IN SMTP_OUT SMTPS SOCKET SRC SUB_ADDR_DELIM
+%token	SCHEDULER SENDER SENDERS SMTP SMTP_IN SMTP_OUT SMTPS SOCKET SRC SRS SUB_ADDR_DELIM
 %token	TABLE TAG TAGGED TLS TLS_REQUIRE TTL
 %token	USER USERBASE
 %token	VERIFY VIRTUAL
@@ -217,6 +217,7 @@ grammar		: /* empty */
 		| grammar queue '\n'
 		| grammar scheduler '\n'
 		| grammar smtp '\n'
+		| grammar srs '\n'
 		| grammar listen '\n'
 		| grammar table '\n'
 		| grammar dispatcher '\n'
@@ -537,6 +538,31 @@ SMTP LIMIT limits_smtp
 }
 ;
 
+srs:
+SRS KEY STRING {
+	conf->sc_srs_key = $3;
+}
+SRS KEY BACKUP STRING {
+	conf->sc_srs_key_backup = $3;
+}
+| SRS TTL STRING {
+	conf->sc_srs_ttl = delaytonum($3);
+	if (conf->sc_srs_ttl == -1) {
+		yyerror("ttl delay \"%s\" is invalid", $3);
+		free($3);
+		YYERROR;
+	}
+
+	conf->sc_srs_ttl /= 86400;
+	if (conf->sc_srs_ttl == 0) {
+		yyerror("ttl delay \"%s\" is too short", $3);
+		free($3);
+		YYERROR;
+	}
+	free($3);
+}
+;
+
 
 dispatcher_local_option:
 USER STRING {
@@ -829,6 +855,18 @@ HELO STRING {
 	}
 
 	dispatcher->u.remote.auth = strdup(t->t_name);
+}
+| SRS {
+	if (conf->sc_srs_key == NULL) {
+		yyerror("an srs key is required for srs to be specified in an action");
+		YYERROR;
+	}
+	if (dispatcher->u.remote.srs == 1) {
+		yyerror("srs already specified for this dispatcher");
+		YYERROR;
+	}
+
+	dispatcher->u.remote.srs = 1;
 }
 ;
 
@@ -2377,6 +2415,7 @@ lookup(char *s)
 		{ "smtps",		SMTPS },
 		{ "socket",		SOCKET },
 		{ "src",		SRC },
+		{ "srs",		SRS },
 		{ "sub-addr-delim",	SUB_ADDR_DELIM },
 		{ "table",		TABLE },
 		{ "tag",		TAG },

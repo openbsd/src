@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.49 2018/12/28 14:21:02 eric Exp $	*/
+/*	$OpenBSD: config.c,v 1.50 2019/09/20 17:46:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -60,6 +60,7 @@ config_default(void)
 	conf->sc_maxsize = DEFAULT_MAX_BODY_SIZE;
 	conf->sc_subaddressing_delim = SUBADDRESSING_DELIMITER;
 	conf->sc_ttl = SMTPD_QUEUE_EXPIRY;
+	conf->sc_srs_ttl = SMTPD_QUEUE_EXPIRY / 86400;
 
 	conf->sc_mta_max_deferred = 100;
 	conf->sc_scheduler_max_inflight = 5000;

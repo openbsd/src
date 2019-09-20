@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.638 2019/09/19 07:35:36 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.639 2019/09/20 17:46:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -618,6 +618,10 @@ struct smtpd {
 	char				       *sc_tls_ciphers;
 
 	char				       *sc_subaddressing_delim;
+
+	char				       *sc_srs_key;
+	char				       *sc_srs_key_backup;
+	int				        sc_srs_ttl;
 };
 
 #define	TRACE_DEBUG	0x0001
@@ -804,6 +808,7 @@ struct mta_relay {
 	char			*helotable;
 	char			*heloname;
 	char			*secret;
+	int			 srs;
 
 	int			 state;
 	size_t			 ntask;
@@ -1162,6 +1167,8 @@ struct dispatcher_remote {
 
 	int	 backup;
 	char	*backupmx;
+
+	int	 srs;
 };
 
 struct dispatcher_bounce {
@@ -1585,6 +1592,11 @@ const char *proc_title(enum smtp_proc_type);
 const char *imsg_to_str(int);
 void log_imsg(int, int, struct imsg *);
 int fork_proc_backend(const char *, const char *, const char *);
+
+
+/* srs.c */
+const char *srs_encode(const char *, const char *);
+const char *srs_decode(const char *);
 
 
 /* ssl_smtpd.c */

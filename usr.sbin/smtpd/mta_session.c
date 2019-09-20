@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.121 2019/09/18 11:26:30 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.122 2019/09/20 17:46:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -529,8 +529,9 @@ mta_enter_state(struct mta_session *s, int newstate)
 	char			 ibuf[LINE_MAX];
 	char			 obuf[LINE_MAX];
 	int			 offset;
+	const char     		*srs_sender;
 
-    again:
+again:
 	oldstate = s->state;
 
 	log_trace(TRACE_MTA, "mta: %p: %s -> %s", s,
@@ -728,6 +729,25 @@ mta_enter_state(struct mta_session *s, int newstate)
 		s->hangon = 0;
 		s->msgtried++;
 		envid_sz = strlen(e->dsn_envid);
+
+		/* SRS-encode if requested for the relay action, AND we're not
+		 * bouncing, AND we have an RCPT which means we are forwarded,
+		 * AND the RCPT has a '@' just for sanity check (will always).
+		 */
+		if (env->sc_srs_key != NULL &&
+		    s->relay->srs &&
+		    strchr(s->task->sender, '@') &&
+		    e->rcpt &&
+		    strchr(e->rcpt, '@')) {
+			/* encode and replace task sender with new SRS-sender */
+			srs_sender = srs_encode(s->task->sender,
+			    strchr(e->rcpt, '@') + 1);
+			if (srs_sender) {
+				free(s->task->sender);
+				s->task->sender = xstrdup(srs_sender);
+			}
+		}
+
 		if (s->ext & MTA_EXT_DSN) {
 			mta_send(s, "MAIL FROM:<%s>%s%s%s%s",
 			    s->task->sender,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.231 2019/09/18 11:26:30 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.232 2019/09/20 17:46:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1735,6 +1735,7 @@ mta_relay(struct envelope *e, struct relayhost *relayh)
 	key.sourcetable = dispatcher->u.remote.source;
 	key.helotable = dispatcher->u.remote.helo_source;
 	key.heloname = dispatcher->u.remote.helo;
+	key.srs = dispatcher->u.remote.srs;
 
 	if (relayh->hostname[0]) {
 		key.domain = mta_domain(relayh->hostname, 1);
@@ -1782,6 +1783,7 @@ mta_relay(struct envelope *e, struct relayhost *relayh)
 			r->helotable = xstrdup(key.helotable);
 		if (key.heloname)
 			r->heloname = xstrdup(key.heloname);
+		r->srs = key.srs;
 		SPLAY_INSERT(mta_relay_tree, &relays, r);
 		stat_increment("mta.relay", 1);
 	} else {
@@ -2088,6 +2090,11 @@ mta_relay_cmp(const struct mta_relay *a, const struct mta_relay *b)
 		return (1);
 	if (a->backupname && ((r = strcmp(a->backupname, b->backupname))))
 		return (r);
+
+	if (a->srs < b->srs)
+		return (-1);
+	if (a->srs > b->srs)
+		return (1);
 
 	return (0);
 }

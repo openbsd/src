@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.92 2018/12/28 11:40:29 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.93 2019/09/20 17:46:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -267,7 +267,8 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 	int			r;
 	union lookup		lk;
 	char		       *tag;
-	
+	const char	       *srs_decoded;
+
 	if (xn->depth >= EXPAND_DEPTH) {
 		log_trace(TRACE_EXPAND, "expand: lka_expand: node too deep.");
 		lks->error = LKA_PERMFAIL;
@@ -287,12 +288,32 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		    "[depth=%d]",
 		    xn->u.mailaddr.user, xn->u.mailaddr.domain, xn->depth);
 
-		/* Pass the node through the ruleset */
+
 		ep = lks->envelope;
 		ep.dest = xn->u.mailaddr;
 		if (xn->parent) /* nodes with parent are forward addresses */
 			ep.flags |= EF_INTERNAL;
 
+		/* handle SRS */
+		if (env->sc_srs_key != NULL &&
+		    ep.sender.user[0] == '\0' &&
+		    (strncasecmp(ep.rcpt.user, "SRS0=", 5) == 0 ||
+			strncasecmp(ep.rcpt.user, "SRS1=", 5) == 0)) {
+			srs_decoded = srs_decode(mailaddr_to_text(&ep.rcpt));
+			if (srs_decoded &&
+			    text_to_mailaddr(&ep.rcpt, srs_decoded)) {
+				/* flag envelope internal and override rcpt */
+				ep.flags |= EF_INTERNAL;
+				xn->u.mailaddr = ep.rcpt;
+				lks->envelope = ep;
+			}
+			else {
+				log_warn("SRS failed to decode: %s",
+				    mailaddr_to_text(&ep.rcpt));
+			}
+		}
+
+		/* Pass the node through the ruleset */
 		rule = ruleset_match(&ep);
 		if (rule == NULL || rule->reject) {
 			lks->error = (errno == EAGAIN) ?

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.224 2019/09/06 08:23:56 martijn Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.225 2019/09/20 17:46:05 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 6 2019 $
+.Dd $Mdocdate: September 20 2019 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -270,6 +270,9 @@ and
 .Dq smtps
 protocols for authentication.
 Server certificates for those protocols are verified by default.
+.It Cm srs
+When relaying a mail resulting from a forward,
+use the Sender Rewriting Scheme to rewrite sender address.
 .It Cm tls Op Cm no-verify
 Require TLS to be used when relaying, using mandatory STARTTLS by default.
 When used with a smarthost, the protocol must not be
@@ -842,6 +845,19 @@ When resolving the local part of a local email address, ignore the ASCII
 and all characters following it.
 The default is
 .Ql + .
+.It Ic srs Cm key Ar secret
+Set the secret key to use for SRS,
+the Sender Rewriting Scheme.
+.It Ic srs Cm key backup Ar secret
+Set a backup secret key to use as a fallback for SRS.
+This can be used to implementation SRS key rotation.
+.It Ic srs Cm ttl Ar delay
+Set the time-to-live delay for SRS envelopes.
+After this delay,
+a bounce reply to the SRS address will be discarded to limit risks of forged addresses.
+The default is four days
+.Pq 4d .
+The delay
 .It Ic table Ar name Oo Ar type : Oc Ns Ar pathname
 Tables provide additional configuration information for
 .Xr smtpd 8
