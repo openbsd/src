@@ -37,6 +37,8 @@
 #define RK3288_HCLK_HOST0		450
 #define RK3288_HCLK_SDMMC		456
 
+#define RK3288_XIN24M			1023
+
 /*
  * RK3328 clocks.
  */

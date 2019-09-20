@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.45 2019/09/20 19:58:43 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.46 2019/09/20 20:45:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -485,6 +485,14 @@ rkclock_set_parent(struct rkclock_softc *sc, uint32_t idx, uint32_t parent)
  * Rockchip RK3288
  */
 
+struct rkclock rk3288_clocks[] = {
+	{
+		RK3288_CLK_SDMMC, RK3288_CRU_CLKSEL_CON(11),
+		SEL(7, 6), DIV(5, 0),
+		{ RK3288_PLL_CPLL, RK3288_PLL_GPLL, RK3288_XIN24M }
+	}
+};
+
 void
 rk3288_init(struct rkclock_softc *sc)
 {
@@ -507,6 +515,8 @@ rk3288_init(struct rkclock_softc *sc)
 		idx = RK3288_ARMCLK;
 		rk3288_set_frequency(sc, &idx, 1200000000);
 	}
+
+	sc->sc_clocks = rk3288_clocks;
 }
 
 uint32_t
@@ -628,23 +638,8 @@ rk3288_get_frequency(void *cookie, uint32_t *cells)
 		div_con = (reg >> 8) & 0x1f;
 		idx = (mux == 0) ? RK3288_PLL_APLL : RK3288_PLL_GPLL;
 		return rk3288_get_frequency(sc, &idx) / (div_con + 1);
-	case RK3288_CLK_SDMMC:
-		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(11));
-		mux = (reg >> 6) & 0x3;
-		div_con = reg & 0x3f;
-		switch (mux) {
-		case 0:
-			idx = RK3288_PLL_CPLL;
-			break;
-		case 1:
-			idx = RK3288_PLL_GPLL;
-			break;
-		case 2:
-			return 24000000 / (div_con + 1);
-		default:
-			return 0;
-		}
-		return rk3288_get_frequency(sc, &idx) / (div_con + 1);
+	case RK3288_XIN24M:
+		return 24000000;
 	case RK3288_CLK_UART0:
 		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(13));
 		mux = (reg >> 8) & 0x3;
@@ -731,8 +726,7 @@ rk3288_get_frequency(void *cookie, uint32_t *cells)
 		break;
 	}
 
-	printf("%s: 0x%08x\n", __func__, idx);
-	return 0;
+	return rkclock_get_frequency(sc, idx);
 }
 
 int
@@ -753,10 +747,11 @@ rk3288_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 			    ((1 << 15) | (0x1f << 8)) << 16);
 		}
 		return error;
+	default:
+		break;
 	}
 
-	printf("%s: 0x%08x\n", __func__, idx);
-	return -1;
+	return rkclock_set_frequency(sc, idx, freq);
 }
 
 void
