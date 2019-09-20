@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.44 2019/09/20 06:43:46 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.45 2019/09/20 19:58:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -33,6 +33,7 @@
 #define RK3288_CRU_APLL_CON(i)		(0x0000 + (i) * 4)
 #define RK3288_CRU_CPLL_CON(i)		(0x0020 + (i) * 4)
 #define RK3288_CRU_GPLL_CON(i)		(0x0030 + (i) * 4)
+#define RK3288_CRU_NPLL_CON(i)		(0x0040 + (i) * 4)
 #define  RK3288_CRU_PLL_CLKR_MASK		(0x3f << 8)
 #define  RK3288_CRU_PLL_CLKR_SHIFT		8
 #define  RK3288_CRU_PLL_CLKOD_MASK		(0xf << 0)
@@ -619,6 +620,8 @@ rk3288_get_frequency(void *cookie, uint32_t *cells)
 		return rk3288_get_pll(sc, RK3288_CRU_CPLL_CON(0));
 	case RK3288_PLL_GPLL:
 		return rk3288_get_pll(sc, RK3288_CRU_GPLL_CON(0));
+	case RK3288_PLL_NPLL:
+		return rk3288_get_pll(sc, RK3288_CRU_NPLL_CON(0));
 	case RK3288_ARMCLK:
 		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(0));
 		mux = (reg >> 15) & 0x1;
@@ -642,7 +645,6 @@ rk3288_get_frequency(void *cookie, uint32_t *cells)
 			return 0;
 		}
 		return rk3288_get_frequency(sc, &idx) / (div_con + 1);
-		break;
 	case RK3288_CLK_UART0:
 		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(13));
 		mux = (reg >> 8) & 0x3;
@@ -678,6 +680,26 @@ rk3288_get_frequency(void *cookie, uint32_t *cells)
 		if (mux == 2)
 			return 24000000 / (div_con + 1);
 		break;
+	case RK3288_CLK_MAC:
+		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(21));
+		if (reg & 0x10)
+			return 125000000;;
+		mux = (reg >> 0) & 0x3;
+		div_con = (reg >> 8) & 0x1f;
+		switch (mux) {
+		case 0:
+			idx = RK3288_PLL_NPLL;
+			break;
+		case 1:
+			idx = RK3288_PLL_CPLL;
+			break;
+		case 2:
+			idx = RK3288_PLL_GPLL;
+			break;
+		default:
+			return 0;
+		}
+		return rk3288_get_frequency(sc, &idx) / (div_con + 1);
 	case RK3288_PCLK_I2C0:
 	case RK3288_PCLK_I2C2:
 		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(1));
