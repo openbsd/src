@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.41 2019/09/15 07:15:14 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.42 2019/09/20 14:58:52 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -166,7 +166,7 @@ cn30xxgmx_match(struct device *parent, void *match, void *aux)
 }
 
 int
-cn30xxgmx_get_phy_phandle(int port)
+cn30xxgmx_get_phy_phandle(int interface, int port)
 {
 	char name[64];
 	int node;
@@ -174,7 +174,7 @@ cn30xxgmx_get_phy_phandle(int port)
 
 	snprintf(name, sizeof(name),
 	    "/soc/pip@11800a0000000/interface@%x/ethernet@%x",
-	    port / 16, port % 16);
+	    interface, port);
 	node = OF_finddevice(name);
 	if (node != - 1)
 		phandle = OF_getpropint(node, "phy-handle", 0);
@@ -215,8 +215,8 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; i < sc->sc_nports; i++) {
 		port = GMX_PORT_NUM(sc->sc_unitno, i);
-		if (cn30xxsmi_get_phy(cn30xxgmx_get_phy_phandle(port), port,
-		    &smi, &phy_addr))
+		if (cn30xxsmi_get_phy(cn30xxgmx_get_phy_phandle(sc->sc_unitno,
+		    i), port, &smi, &phy_addr))
 			continue;
 
 		port_sc = &sc->sc_ports[i];
