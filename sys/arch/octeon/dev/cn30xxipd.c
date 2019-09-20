@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxipd.c,v 1.11 2017/11/05 04:57:28 visa Exp $	*/
+/*	$OpenBSD: cn30xxipd.c,v 1.12 2019/09/20 15:01:30 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -161,17 +161,4 @@ cn30xxipd_offload(uint64_t word2, uint16_t *rcflags)
 		SET(cflags, M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK);
 
 	*rcflags = cflags;
-}
-
-void
-cn30xxipd_sub_port_fcs(struct cn30xxipd_softc *sc, int enable)
-{
-	uint64_t sub_port_fcs;
-
-	sub_port_fcs = _IPD_RD8(sc, IPD_SUB_PORT_FCS_OFFSET);
-	if (enable == 0)
-		CLR(sub_port_fcs, 1 << sc->sc_port);
-	else
-		SET(sub_port_fcs, 1 << sc->sc_port);
-	_IPD_WR8(sc, IPD_SUB_PORT_FCS_OFFSET, sub_port_fcs);
 }

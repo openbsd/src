@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxipdvar.h,v 1.5 2017/11/05 04:57:28 visa Exp $	*/
+/*	$OpenBSD: cn30xxipdvar.h,v 1.6 2019/09/20 15:01:30 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -50,7 +50,6 @@ void			cn30xxipd_init(struct cn30xxipd_attach_args *,
 			    struct cn30xxipd_softc **);
 int			cn30xxipd_enable(struct cn30xxipd_softc *);
 int			cn30xxipd_config(struct cn30xxipd_softc *);
-void			cn30xxipd_sub_port_fcs(struct cn30xxipd_softc *, int);
 void			cn30xxipd_offload(uint64_t, uint16_t *);
 
 #endif /* !_CN30XXIPDVAR_H_ */
