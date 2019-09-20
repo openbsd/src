@@ -1,16 +1,28 @@
-#	$OpenBSD: Makefile,v 1.5 2017/07/07 23:15:27 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2019/09/20 14:07:13 bluhm Exp $
 
-MOUNT_NOSUID != mount | grep ^$$(df -P /tmp | tail -1 | awk '{ print $$1 }') |\
-    grep nosuid || true
+.if ! (make(clean) || make(cleandir) || make(obj))
 
-.if ! empty (MOUNT_NOSUID)
+MOUNT_TMP !!= mount | grep ^$$(df -P /tmp | tail -1 | awk '{ print $$1 }')
+
+.if "${MOUNT_TMP:M*nosuid*}" != ""
 regress:
-	echo '${MOUNT_NOSUID}'
+	echo '${MOUNT_TMP}'
 	echo temporary directory is mounted nosuid, test needs set user id
 	echo SKIPPED
 .endif
 
-CFLAGS			+= -Wall -Wformat -pedantic
+DIR !?=		mktemp -d -t regress-setuid-XXXXXXXXXX
+MAKE +=		DIR=${DIR}
+REGRESS_SETUP =		setup-dir
+setup-dir:
+	chmod 755 ${DIR}
+REGRESS_CLEANUP =	cleanup-dir
+cleanup-dir:
+	rm -rf -- ${DIR}
+
+.endif
+
+CFLAGS+=		-Wall -Wformat -pedantic
 
 REGRESS_TARGETS+=	run-regress-setuid_none
 REGRESS_TARGETS+=	run-regress-setgid_none
@@ -64,14 +76,6 @@ BINFILES+=	setgid_exec_inherit
 
 CLEANFILES+=	*.o ${BINFILES}
 
-.ifmake !clean && !cleandir && !obj
-DIR !!=		mktemp -d -t setuid-regress-XXXXXXXXXX
-.BEGIN:
-	@chmod 755 ${DIR}
-.END:
-	@rm -rf -- ${DIR}
-.endif
-
 run-regress-setuid_none: install-setuid_none
 	cd ${DIR} && ./setuid_none
 run-regress-setgid_none: install-setgid_none
@@ -123,14 +127,17 @@ run-regress-sgidexec-effective-exec-inherit: install
 run-regress-sgidexec-saved-exec-inherit: install
 	cd ${DIR} && ${SUDO} ./setresgid_saved_exec ./setgid_exec_inherit
 
-install-suidexec: suidexec
-	@${INSTALL} -o nobody -m 4555 suidexec ${DIR}
-install-sgidexec: sgidexec
-	@${INSTALL} -g nobody -m 2555 sgidexec ${DIR}
+install-suidexec: ${DIR}/suidexec
+${DIR}/suidexec: suidexec
+	${SUDO} ${INSTALL} -o nobody -m 4555 suidexec ${DIR}
+install-sgidexec: ${DIR}/sgidexec
+${DIR}/sgidexec: sgidexec
+	${SUDO} ${INSTALL} -g nobody -m 2555 sgidexec ${DIR}
 .for f in ${BINFILES}
 install: install-${f}
-install-${f}: ${f}
-	@${INSTALL} $f ${DIR}
+install-${f}: ${DIR}/${f}
+${DIR}/${f}: ${f}
+	${SUDO} ${INSTALL} $f ${DIR}
 .endfor
 
 .include <bsd.regress.mk>
