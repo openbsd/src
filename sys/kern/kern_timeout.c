@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.58 2019/09/20 02:59:18 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.59 2019/09/20 16:44:32 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -497,19 +497,17 @@ softclock(void *arg)
 			bucket = &BUCKET(delta, to->to_time);
 			CIRCQ_INSERT(&to->to_list, bucket);
 			tostat.tos_rescheduled++;
-		} else if (ISSET(to->to_flags, TIMEOUT_NEEDPROCCTX)) {
+			continue;
+		}
+		if (delta < 0)
+			tostat.tos_late++;
+		if (ISSET(to->to_flags, TIMEOUT_NEEDPROCCTX)) {
 			CIRCQ_INSERT(&to->to_list, &timeout_proc);
 			needsproc = 1;
-		} else {
-			if (delta < 0) {
-				tostat.tos_late++;
-#ifdef DEBUG
-				printf("timeout delayed %d\n", delta);
-#endif
-			}
-			timeout_run(to);
-			tostat.tos_run_softclock++;
+			continue;
 		}
+		timeout_run(to);
+		tostat.tos_run_softclock++;
 	}
 	tostat.tos_softclocks++;
 	mtx_leave(&timeout_mutex);
