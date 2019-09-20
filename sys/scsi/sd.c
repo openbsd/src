@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.281 2019/09/15 15:00:30 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.282 2019/09/20 15:35:42 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1462,6 +1462,11 @@ sd_read_cap_10(struct sd_softc *sc, int flags)
 	scsi_xs_put(xs);
 
 	if (rv == 0) {
+#ifdef SCSIDEBUG
+		sc_print_addr(sc->sc_link);
+		printf(" read Capacity 10 data:\n");
+		scsi_show_mem((u_char *)rdcap, sizeof(*rdcap));
+#endif /* SCSIDEBUG */
 		sc->params.disksize = _4btol(rdcap->addr) + 1ll;
 		sc->params.secsize = _4btol(rdcap->length);
 		CLR(sc->flags, SDF_THIN);
@@ -1515,6 +1520,11 @@ sd_read_cap_16(struct sd_softc *sc, int flags)
 			goto done;
 		}
 
+#ifdef SCSIDEBUG
+		sc_print_addr(sc->sc_link);
+		printf(" read Capacity 16 data:\n");
+		scsi_show_mem((u_char *)rdcap, sizeof(*rdcap));
+#endif /* SCSIDEBUG */
 		sc->params.disksize = _8btol(rdcap->addr) + 1;
 		sc->params.secsize = _4btol(rdcap->length);
 		if (ISSET(_2btol(rdcap->lowest_aligned), READ_CAP_16_TPE))

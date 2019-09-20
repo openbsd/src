@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.229 2019/09/01 15:03:32 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.230 2019/09/20 15:35:42 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -852,6 +852,13 @@ scsi_inquire(struct scsi_link *link, struct scsi_inquiry_data *inqbuf,
 
 	scsi_xs_put(xs);
 
+#ifdef SCSIDEBUG
+	sc_print_addr(link);
+	printf("got %d of %u bytes of inquiry data:\n",
+	    SID_INQUIRY_HDR + SID_SCSI2_ALEN,
+	    inqbuf->additional_length + 4);
+	scsi_show_mem((u_char *)inqbuf, SID_INQUIRY_HDR + SID_SCSI2_ALEN);
+#endif /* SCSIDEBUG */
 	return (error);
 }
 
