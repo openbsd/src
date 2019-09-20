@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.20 2018/12/31 21:24:37 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.21 2019/09/20 20:46:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -410,6 +410,7 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 	saa.sch = sc;
 	saa.dmat = sc->sc_dmat;
 	saa.dmap = sc->sc_dmap;
+	saa.caps |= SMC_CAPS_DMA;
 
 	if (OF_getproplen(sc->sc_node, "cap-mmc-highspeed") == 0)
 		saa.caps |= SMC_CAPS_MMC_HIGHSPEED;
@@ -421,14 +422,6 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 		saa.caps |= SMC_CAPS_8BIT_MODE;
 	if (width >= 4)
 		saa.caps |= SMC_CAPS_4BIT_MODE;
-
-	/* XXX DMA doesn't work on all variants yet. */
-	if (OF_is_compatible(faa->fa_node, "hisilicon,hi3660-dw-mshc") ||
-	    OF_is_compatible(faa->fa_node, "hisilicon,hi3670-dw-mshc") ||
-	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-dw-mshc") ||
-	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-dw-mshc") ||
-	    OF_is_compatible(faa->fa_node, "samsung,exynos5420-dw-mshc"))
-		saa.caps |= SMC_CAPS_DMA;
 
 	sc->sc_sdmmc = config_found(self, &saa, NULL);
 	return;
