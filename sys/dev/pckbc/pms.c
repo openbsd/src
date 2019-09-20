@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.89 2019/08/19 21:08:26 bru Exp $ */
+/* $OpenBSD: pms.c,v 1.90 2019/09/20 21:21:47 bru Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -922,6 +922,17 @@ pms_sec_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	return (0);
 }
 
+static inline void
+pms_print_packet(struct pms_softc *sc)
+{
+	int i, state, size;
+
+	state = sc->inputstate;
+	size = sc->protocol->packetsize;
+	for (i = 0; i < size; i++)
+		printf(i == state ? " %02x |" : " %02x", sc->packet[i]);
+}
+
 void
 pmsinput(void *vsc, int data)
 {
@@ -937,8 +948,10 @@ pmsinput(void *vsc, int data)
 	if (sc->protocol->sync(sc, data)) {
 #ifdef DIAGNOSTIC
 		printf("%s: not in sync yet, discard input "
-		    "(state = %d, data = %#x)\n",
-		    DEVNAME(sc), sc->inputstate, data);
+		    "(state = %d,",
+		    DEVNAME(sc), sc->inputstate);
+		pms_print_packet(sc);
+		printf(")\n");
 #endif
 
 		sc->inputstate = 0;
@@ -1952,6 +1965,9 @@ elantech_get_hwinfo_v4(struct pms_softc *sc)
 	elantech->fw_version = fw_version;
 	elantech->flags |= ELANTECH_F_REPORTS_PRESSURE;
 
+	if ((fw_version & 0x4000) == 0x4000)
+		elantech->flags |= ELANTECH_F_CRC_ENABLED;
+
 	if (elantech_set_absolute_mode_v4(sc))
 		return (-1);
 
@@ -2351,28 +2367,33 @@ pms_sync_elantech_v3(struct pms_softc *sc, int data)
 
 /* Extract the type bits from packet[3]. */
 static inline int
-elantech_packet_type(u_char b)
+elantech_packet_type(struct elantech_softc *elantech, u_char b)
 {
-	return ((b & 4) ? (b & 0xcf) : (b & 0x1f));
+	/*
+	 * This looks dubious, but in the "crc-enabled" format bit 2 may
+	 * be set even in MOTION packets.
+	 */
+	if ((elantech->flags & ELANTECH_F_TRACKPOINT) && ((b & 0x0f) == 0x06))
+		return (ELANTECH_PKT_TRACKPOINT);
+	else
+		return (b & 0x03);
 }
 
 int
 pms_sync_elantech_v4(struct pms_softc *sc, int data)
 {
-	if (sc->inputstate == 0) {
-		if ((data & 0x0c) == 0x04)
-			return (0);
-		if ((sc->elantech->flags & ELANTECH_F_TRACKPOINT)
-		    && (data & 0xc8) == 0)
-			return (0);
-		return (-1);
-	}
+	if (sc->inputstate == 0)
+		return ((data & 0x08) == 0 ? 0 : -1);
+
 	if (sc->inputstate == 3) {
-		switch (elantech_packet_type(data)) {
+		switch (elantech_packet_type(sc->elantech, data)) {
 		case ELANTECH_V4_PKT_STATUS:
 		case ELANTECH_V4_PKT_HEAD:
 		case ELANTECH_V4_PKT_MOTION:
-			return ((sc->packet[0] & 4) ? 0 : -1);
+			if (sc->elantech->flags & ELANTECH_F_CRC_ENABLED)
+				return ((data & 0x08) == 0 ? 0 : -1);
+			else
+				return ((data & 0x1c) == 0x10 ? 0 : -1);
 		case ELANTECH_PKT_TRACKPOINT:
 			return ((sc->packet[0] & 0xc8) == 0
 			    && sc->packet[1] == ((data & 0x10) << 3)
@@ -2522,7 +2543,7 @@ pms_proc_elantech_v4(struct pms_softc *sc)
 	int id, weight, n, x, y, z;
 	u_int buttons, slots;
 
-	switch (elantech_packet_type(sc->packet[3])) {
+	switch (elantech_packet_type(elantech, sc->packet[3])) {
 	case ELANTECH_V4_PKT_STATUS:
 		slots = elantech->mt_slots;
 		elantech->mt_slots = sc->packet[1] & 0x1f;

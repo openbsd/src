@@ -1,4 +1,4 @@
-/* $OpenBSD: pmsreg.h,v 1.16 2018/05/13 14:48:19 bru Exp $ */
+/* $OpenBSD: pmsreg.h,v 1.17 2019/09/20 21:21:47 bru Exp $ */
 /* $NetBSD: psmreg.h,v 1.1 1998/03/22 15:41:28 drochner Exp $ */
 
 #ifndef SYS_DEV_PCKBC_PMSREG_H
@@ -207,9 +207,9 @@
 #define ELANTECH_MAX_FINGERS			5
 #define ELANTECH_V4_WEIGHT_VALUE		5
 
-#define ELANTECH_V4_PKT_STATUS			0x10
-#define ELANTECH_V4_PKT_HEAD			0x11
-#define ELANTECH_V4_PKT_MOTION			0x12
+#define ELANTECH_V4_PKT_STATUS			0
+#define ELANTECH_V4_PKT_HEAD			0x01
+#define ELANTECH_V4_PKT_MOTION			0x02
 
 /* V3 and V4 may be coupled with trackpoints, pms supports them for V4. */
 #define ELANTECH_PKT_TRACKPOINT			0x06
