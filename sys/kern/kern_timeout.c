@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.57 2019/07/19 00:11:38 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.58 2019/09/20 02:59:18 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -223,7 +223,7 @@ void
 timeout_set_proc(struct timeout *new, void (*fn)(void *), void *arg)
 {
 	timeout_set(new, fn, arg);
-	new->to_flags |= TIMEOUT_NEEDPROCCTX;
+	SET(new->to_flags, TIMEOUT_NEEDPROCCTX);
 }
 
 int
@@ -232,25 +232,22 @@ timeout_add(struct timeout *new, int to_ticks)
 	int old_time;
 	int ret = 1;
 
-#ifdef DIAGNOSTIC
-	if (!(new->to_flags & TIMEOUT_INITIALIZED))
-		panic("timeout_add: not initialized");
-	if (to_ticks < 0)
-		panic("timeout_add: to_ticks (%d) < 0", to_ticks);
-#endif
+	KASSERT(ISSET(new->to_flags, TIMEOUT_INITIALIZED));
+	KASSERT(to_ticks >= 0);
 
 	mtx_enter(&timeout_mutex);
+
 	/* Initialize the time here, it won't change. */
 	old_time = new->to_time;
 	new->to_time = to_ticks + ticks;
-	new->to_flags &= ~TIMEOUT_TRIGGERED;
+	CLR(new->to_flags, TIMEOUT_TRIGGERED);
 
 	/*
 	 * If this timeout already is scheduled and now is moved
 	 * earlier, reschedule it now. Otherwise leave it in place
 	 * and let it be rescheduled later.
 	 */
-	if (new->to_flags & TIMEOUT_ONQUEUE) {
+	if (ISSET(new->to_flags, TIMEOUT_ONQUEUE)) {
 		if (new->to_time - ticks < old_time - ticks) {
 			CIRCQ_REMOVE(&new->to_list);
 			CIRCQ_INSERT(&new->to_list, &timeout_todo);
@@ -258,7 +255,7 @@ timeout_add(struct timeout *new, int to_ticks)
 		tostat.tos_readded++;
 		ret = 0;
 	} else {
-		new->to_flags |= TIMEOUT_ONQUEUE;
+		SET(new->to_flags, TIMEOUT_ONQUEUE);
 		CIRCQ_INSERT(&new->to_list, &timeout_todo);
 	}
 	tostat.tos_added++;
@@ -364,13 +361,13 @@ timeout_del(struct timeout *to)
 	int ret = 0;
 
 	mtx_enter(&timeout_mutex);
-	if (to->to_flags & TIMEOUT_ONQUEUE) {
+	if (ISSET(to->to_flags, TIMEOUT_ONQUEUE)) {
 		CIRCQ_REMOVE(&to->to_list);
-		to->to_flags &= ~TIMEOUT_ONQUEUE;
+		CLR(to->to_flags, TIMEOUT_ONQUEUE);
 		tostat.tos_cancelled++;
 		ret = 1;
 	}
-	to->to_flags &= ~TIMEOUT_TRIGGERED;
+	CLR(to->to_flags, TIMEOUT_TRIGGERED);
 	tostat.tos_deleted++;
 	mtx_leave(&timeout_mutex);
 
@@ -411,7 +408,7 @@ timeout_barrier(struct timeout *to)
 		timeout_set_proc(&barrier, timeout_proc_barrier, &c);
 
 		mtx_enter(&timeout_mutex);
-		barrier.to_flags |= TIMEOUT_ONQUEUE;
+		SET(barrier.to_flags, TIMEOUT_ONQUEUE);
 		CIRCQ_INSERT(&barrier.to_list, &timeout_proc);
 		mtx_leave(&timeout_mutex);
 
@@ -464,8 +461,8 @@ timeout_run(struct timeout *to)
 
 	MUTEX_ASSERT_LOCKED(&timeout_mutex);
 
-	to->to_flags &= ~TIMEOUT_ONQUEUE;
-	to->to_flags |= TIMEOUT_TRIGGERED;
+	CLR(to->to_flags, TIMEOUT_ONQUEUE);
+	SET(to->to_flags, TIMEOUT_TRIGGERED);
 
 	fn = to->to_func;
 	arg = to->to_arg;
@@ -500,7 +497,7 @@ softclock(void *arg)
 			bucket = &BUCKET(delta, to->to_time);
 			CIRCQ_INSERT(&to->to_list, bucket);
 			tostat.tos_rescheduled++;
-		} else if (to->to_flags & TIMEOUT_NEEDPROCCTX) {
+		} else if (ISSET(to->to_flags, TIMEOUT_NEEDPROCCTX)) {
 			CIRCQ_INSERT(&to->to_list, &timeout_proc);
 			needsproc = 1;
 		} else {
