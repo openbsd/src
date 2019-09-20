@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.24 2019/09/08 16:45:21 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.25 2019/09/20 22:42:05 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -887,12 +887,15 @@ sxiccmu_ccu_get_frequency(void *cookie, uint32_t *cells)
 #define A10_CPU_CLK_SRC_SEL_OSC24M	(0x1 << 16)
 #define A10_CPU_CLK_SRC_SEL_PLL1	(0x2 << 16)
 #define A10_CPU_CLK_SRC_SEL_200MHZ	(0x3 << 16)
+#define A10_AHB_CLK_DIV_RATIO(x)	(((x) >> 8) & 0x3)
+#define A10_AXI_CLK_DIV_RATIO(x)	(((x) >> 0) & 0x3)
 
 uint32_t
 sxiccmu_a10_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 {
 	uint32_t parent;
-	uint32_t reg, k, m, n, p;
+	uint32_t reg, div;
+	uint32_t k, m, n, p;
 
 	switch (idx) {
 	case A10_CLK_LOSC:
@@ -927,6 +930,16 @@ sxiccmu_a10_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 			return 200000000;
 		}
 		return sxiccmu_ccu_get_frequency(sc, &parent);
+	case A10_CLK_AXI:
+		reg = SXIREAD4(sc, A10_CPU_AHB_APB0_CFG_REG);
+		div = 1 << A10_AXI_CLK_DIV_RATIO(reg);
+		parent = A10_CLK_CPU;
+		return sxiccmu_ccu_get_frequency(sc, &parent) / div;
+	case A10_CLK_AHB:
+		reg = SXIREAD4(sc, A10_CPU_AHB_APB0_CFG_REG);
+		div = 1 << A10_AHB_CLK_DIV_RATIO(reg);
+		parent = A10_CLK_AXI;
+		return sxiccmu_ccu_get_frequency(sc, &parent) / div;
 	case A10_CLK_APB1:
 		/* XXX Controlled by a MUX. */
 		return 24000000;
