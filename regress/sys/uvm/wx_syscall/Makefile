@@ -1,11 +1,25 @@
-#	$OpenBSD: Makefile,v 1.1 2019/05/30 18:11:06 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2019/09/20 12:45:43 bluhm Exp $
 
 # The regression test binary must be run on a wxallowed filesystem
 # to verify correct behaviour (it should crash)
-# Doing that isn't simple.  Place the binary temporarily in /usr/local
-# if it has wxneeded?  Maybe make a vnd with a filesystem, and mount that?
 
-LDFLAGS+=-z wxneeded
-PROG=	wx_syscall
+.if ! (make(clean) || make(cleandir) || make(obj))
+
+MOUNT_OBJ !!= mount | grep ^$$(df -P . | tail -1 | awk '{ print $$1 }')
+
+.if "${MOUNT_OBJ:M*wxallowed*}" == ""
+regress:
+	echo '${MOUNT_OBJ}'
+	echo object directory needs mount option wxallowed
+	echo SKIPPED
+.endif
+
+.endif
+
+PROG=		wx_syscall
+LDFLAGS=	-z wxneeded
+
+run-regress-wx_syscall: wx_syscall
+	! ./wx_syscall
 
 .include <bsd.regress.mk>
