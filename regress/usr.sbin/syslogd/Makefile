@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2019/09/17 22:24:08 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.29 2019/09/20 13:20:12 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -33,7 +33,7 @@ PERLS =			Client.pm Proc.pm RSyslogd.pm Server.pm \
 ARGS !=			cd ${.CURDIR} && ls args-*.pl
 REGRESS_TARGETS =	${ARGS:S/^/run-/}
 .if ! exists(/usr/local/sbin/rsyslogd)
-SKIP_REGRESS_TARGETS =	${REGRESS_TARGETS:Mrun-args-rsyslog*}
+REGRESS_SKIP_TARGETS =	${REGRESS_TARGETS:Mrun-args-rsyslog*}
 .endif
 LDFLAGS +=		-lutil
 CLEANFILES +=		*.log *.log.? *.conf ktrace.out stamp-* *.pid
