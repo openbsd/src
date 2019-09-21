@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpc.c,v 1.9 2019/09/18 11:26:30 eric Exp $	*/
+/*	$OpenBSD: smtpc.c,v 1.10 2019/09/21 09:04:08 semarie Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -351,10 +351,10 @@ smtp_verify_server_cert(void *tag, struct smtp_client *proto, void *ctx)
 	SSL *ssl = ctx;
 	X509 *cert;
 	long res;
-	int r, match;
+	int match;
 
 	if ((cert = SSL_get_peer_certificate(ssl))) {
-		r = ssl_check_name(cert, servname, &match);
+		(void)ssl_check_name(cert, servname, &match);
 		X509_free(cert);
 		res = SSL_get_verify_result(ssl);
 		if (res == X509_V_OK) {
