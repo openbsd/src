@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxits.c,v 1.1 2018/01/06 13:04:47 kettenis Exp $	*/
+/*	$OpenBSD: sxits.c,v 1.2 2019/09/21 15:55:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -25,6 +25,7 @@
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_thermal.h>
 #include <dev/ofw/fdt.h>
 
 /* Registers */
@@ -57,6 +58,8 @@ struct sxits_softc {
 
 	struct ksensor		sc_sensor;
 	struct ksensordev	sc_sensordev;
+
+	struct thermal_sensor	sc_ts;
 };
 
 int	sxits_match(struct device *, void *, void *);
@@ -71,6 +74,7 @@ struct cfdriver sxits_cd = {
 };
 
 void	sxits_refresh_sensors(void *);
+int32_t sxits_get_temperature(void *, uint32_t *);
 
 int
 sxits_match(struct device *parent, void *match, void *aux)
@@ -124,6 +128,11 @@ sxits_attach(struct device *parent, struct device *self, void *aux)
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
 	sensordev_install(&sc->sc_sensordev);
 	sensor_task_register(sc, sxits_refresh_sensors, 5);
+
+	sc->sc_ts.ts_node = faa->fa_node;
+	sc->sc_ts.ts_cookie = sc;
+	sc->sc_ts.ts_get_temperature = sxits_get_temperature;
+	thermal_sensor_register(&sc->sc_ts);
 }
 
 void
@@ -141,4 +150,17 @@ sxits_refresh_sensors(void *arg)
 	temp = (data - sc->sc_offset) * sc->sc_scale;
 	sc->sc_sensor.value = temp * 1000 + 273150000;
 	sc->sc_sensor.flags &= ~SENSOR_FINVALID;
+}
+
+int32_t
+sxits_get_temperature(void *cookie, uint32_t *cells)
+{
+	struct sxits_softc *sc = cookie;
+	uint32_t data;
+
+	data = HREAD4(sc, TEMP_DATA);
+	if (data == 0)
+		return THERMAL_SENSOR_MAX;
+
+	return (data - sc->sc_offset) * sc->sc_scale;
 }
