@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.35 2019/07/23 08:05:44 gilles Exp $	*/
+/*	$OpenBSD: ca.c,v 1.36 2019/09/21 07:46:53 semarie Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -705,8 +705,10 @@ ecdsa_engine_init(void)
 	ENGINE		*e;
 	const char	*errstr, *name;
 
-	if ((ecdsae_method = ECDSA_METHOD_new_temporary("ECDSA privsep engine", 0)) == NULL)
+	if ((ecdsae_method = ECDSA_METHOD_new_temporary("ECDSA privsep engine", 0)) == NULL) {
+		errstr = "ECDSA_METHOD_new_temporary";
 		goto fail;
+	}
 
 	ecdsae_method->ecdsa_do_sign = ecdsae_do_sign;
 	ecdsae_method->ecdsa_sign_setup = ecdsae_sign_setup;
