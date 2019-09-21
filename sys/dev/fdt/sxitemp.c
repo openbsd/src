@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitemp.c,v 1.4 2018/05/27 21:59:26 kettenis Exp $	*/
+/*	$OpenBSD: sxitemp.c,v 1.5 2019/09/21 15:36:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,6 +28,7 @@
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_thermal.h>
 #include <dev/ofw/fdt.h>
 
 /* Registers */
@@ -63,6 +64,8 @@ struct sxitemp_softc {
 
 	struct ksensor		sc_sensors[3];
 	struct ksensordev	sc_sensordev;
+
+	struct thermal_sensor	sc_ts;
 };
 
 int	sxitemp_match(struct device *, void *, void *);
@@ -82,6 +85,7 @@ uint64_t sxitemp_a64_calc_temp(int64_t);
 uint64_t sxitemp_h5_calc_temp0(int64_t);
 uint64_t sxitemp_h5_calc_temp1(int64_t);
 void	sxitemp_refresh_sensors(void *);
+int32_t sxitemp_get_temperature(void *, uint32_t *);
 
 int
 sxitemp_match(struct device *parent, void *match, void *aux)
@@ -172,6 +176,11 @@ sxitemp_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sensordev_install(&sc->sc_sensordev);
 	sensor_task_register(sc, sxitemp_refresh_sensors, 5);
+
+	sc->sc_ts.ts_node = node;
+	sc->sc_ts.ts_cookie = sc;
+	sc->sc_ts.ts_get_temperature = sxitemp_get_temperature;
+	thermal_sensor_register(&sc->sc_ts);
 }
 
 uint64_t
@@ -236,4 +245,25 @@ sxitemp_refresh_sensors(void *arg)
 		sc->sc_sensors[2].value = sc->sc_calc_temp2(data) + 273150000;
 		sc->sc_sensors[2].flags &= ~SENSOR_FINVALID;
 	}
+}
+
+int32_t
+sxitemp_get_temperature(void *cookie, uint32_t *cells)
+{
+	struct sxitemp_softc *sc = cookie;
+	uint32_t idx = cells[0];
+	uint32_t data;
+
+	if (idx == 0 && sc->sc_calc_temp0) {
+		data = HREAD4(sc, THS0_DATA);
+		return sc->sc_calc_temp0(data);
+	} else if (idx == 1 && sc->sc_calc_temp1) {
+		data = HREAD4(sc, THS1_DATA);
+		return sc->sc_calc_temp1(data);
+	} else if (idx == 2 && sc->sc_calc_temp2) {
+		data = HREAD4(sc, THS2_DATA);
+		return sc->sc_calc_temp2(data);
+	}
+
+	return THERMAL_SENSOR_MAX;
 }
