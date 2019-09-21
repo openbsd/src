@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.411 2019/09/19 16:00:59 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.412 2019/09/21 09:01:52 semarie Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -298,7 +298,6 @@ header_append_domain_buffer(char *buffer, char *domain, size_t len)
 	int	pos_bracket, pos_component, pos_insert;
 	char	copy[APPEND_DOMAIN_BUFFER_SIZE];
 
-	i = 0;
 	escape = quote = comment = bracket = 0;
 	has_domain = has_bracket = has_group = 0;
 	pos_bracket = pos_insert = pos_component = 0;
