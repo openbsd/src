@@ -1,4 +1,4 @@
-/*	$OpenBSD: srs.c,v 1.1 2019/09/20 17:46:05 gilles Exp $	*/
+/*	$OpenBSD: srs.c,v 1.2 2019/09/21 06:40:48 semarie Exp $	*/
 
 /*
  * Copyright (c) 2019 Gilles Chehade <gilles@poolp.org>
@@ -144,11 +144,7 @@ srs1_encode_srs0(const char *sender, const char *rcpt_domain)
 	char tmp[SMTPD_MAXMAILADDRSIZE];
 	char md[SHA_DIGEST_LENGTH*4+1];
 	struct mailaddr maddr;
-	uint16_t timestamp;
 	int ret;
-
-	/* compute 10 bits timestamp according to spec */
-	timestamp = (time(NULL) / (60 * 60 * 24)) % 1024;
 
 	/* parse sender into user and domain */
 	if (! text_to_mailaddr(&maddr, sender))
@@ -180,11 +176,7 @@ srs1_encode_srs1(const char *sender, const char *rcpt_domain)
 	char tmp[SMTPD_MAXMAILADDRSIZE];
 	char md[SHA_DIGEST_LENGTH*4+1];
 	struct mailaddr maddr;
-	uint16_t timestamp;
 	int ret;
-
-	/* compute 10 bits timestamp according to spec */
-	timestamp = (time(NULL) / (60 * 60 * 24)) % 1024;
 
 	/* parse sender into user and domain */
 	if (! text_to_mailaddr(&maddr, sender))
