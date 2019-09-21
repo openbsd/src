@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.36 2019/09/21 04:42:46 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.37 2019/09/21 04:52:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -75,7 +75,7 @@
  * block size if neither ``-z'' nor ``-b'' is used
  */
 #ifndef DEFAULT_ROUND
-#define DEFAULT_ROUND	960
+#define DEFAULT_ROUND	480
 #endif
 
 /*
