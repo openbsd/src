@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.230 2019/09/20 15:35:42 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.231 2019/09/21 00:12:15 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -830,17 +830,24 @@ scsi_inquire(struct scsi_link *link, struct scsi_inquiry_data *inqbuf,
     int flags)
 {
 	struct scsi_xfer *xs;
+	size_t bytes;
 	int error;
 
+	/*
+	 * Start by asking for only the basic 36 bytes of SCSI2 inquiry
+	 * information. This avoids problems with devices that choke trying to
+	 * supply more.
+	 */
+	bytes = 36;
+
+#ifdef SCSIDEBUG
+again:
+#endif /* SCSIDEBUG */
 	xs = scsi_xs_get(link, flags);
 	if (xs == NULL)
 		return (EBUSY);
 
-	/*
-	 * Ask for only the basic 36 bytes of SCSI2 inquiry information. This
-	 * avoids problems with devices that choke trying to supply more.
-	 */
-	scsi_init_inquiry(xs, 0, 0, inqbuf, SID_INQUIRY_HDR + SID_SCSI2_ALEN);
+	scsi_init_inquiry(xs, 0, 0, inqbuf, bytes);
 
 	bzero(inqbuf, sizeof(*inqbuf));
 	memset(&inqbuf->vendor, ' ', sizeof inqbuf->vendor);
@@ -854,10 +861,17 @@ scsi_inquire(struct scsi_link *link, struct scsi_inquiry_data *inqbuf,
 
 #ifdef SCSIDEBUG
 	sc_print_addr(link);
-	printf("got %d of %u bytes of inquiry data:\n",
-	    SID_INQUIRY_HDR + SID_SCSI2_ALEN,
-	    inqbuf->additional_length + 4);
-	scsi_show_mem((u_char *)inqbuf, SID_INQUIRY_HDR + SID_SCSI2_ALEN);
+	if (bytes > inqbuf->additional_length + 4)
+		bytes = inqbuf->additional_length + 4;
+	printf("got %zu of %u bytes of inquiry data:\n",
+	    bytes, inqbuf->additional_length + 4);
+	scsi_show_mem((u_char *)inqbuf, bytes);
+	if (bytes == 36 && bytes < inqbuf->additional_length + 4) {
+		bytes = inqbuf->additional_length + 4;
+		if (bytes > sizeof(*inqbuf))
+			bytes = sizeof(*inqbuf);
+		goto again;
+	}
 #endif /* SCSIDEBUG */
 	return (error);
 }
@@ -871,6 +885,9 @@ scsi_inquire_vpd(struct scsi_link *link, void *buf, u_int buflen,
 {
 	struct scsi_xfer *xs;
 	int error;
+#ifdef SCSIDEBUG
+	u_int32_t bytes;
+#endif /* SCSIDEBUG */
 
 	if (link->flags & SDEV_UMASS)
 		return (EJUSTRETURN);
@@ -887,7 +904,13 @@ scsi_inquire_vpd(struct scsi_link *link, void *buf, u_int buflen,
 	error = scsi_xs_sync(xs);
 
 	scsi_xs_put(xs);
-
+#ifdef SCSIDEBUG
+	bytes = _2btol(((struct scsi_vpd_hdr *)buf)->page_length);
+	sc_print_addr(link);
+	printf("got %u bytes of VPD inquiry page %u data:\n", bytes,
+	    page);
+	scsi_show_mem(buf, bytes);
+#endif /* SCSIDEBUG */
 	return (error);
 }
 

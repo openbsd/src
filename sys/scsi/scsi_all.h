@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.58 2019/09/18 11:45:49 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.59 2019/09/21 00:12:15 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -282,6 +282,15 @@ struct scsi_inquiry_data {
 	char	revision[4];
 	u_int8_t extra[20];
 	u_int8_t reserved[2];
+	u_int8_t version_descriptor0[2];
+	u_int8_t version_descriptor1[2];
+	u_int8_t version_descriptor2[2];
+	u_int8_t version_descriptor3[2];
+	u_int8_t version_descriptor4[2];
+	u_int8_t version_descriptor5[2];
+	u_int8_t version_descriptor6[2];
+	u_int8_t version_descriptor7[2];
+	u_int8_t reserved2[22];
 };
 
 struct scsi_vpd_hdr {
