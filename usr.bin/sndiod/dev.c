@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.61 2019/09/19 05:10:19 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.62 2019/09/21 04:42:46 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -969,7 +969,8 @@ dev_new(char *path, struct aparams *par,
 		return NULL;
 	}
 	d = xmalloc(sizeof(struct dev));
-	d->path = xstrdup(path);
+	d->path_list = NULL;
+	namelist_add(&d->path_list, path);
 	d->num = dev_sndnum++;
 	d->opt_list = NULL;
 
@@ -1174,6 +1175,74 @@ dev_close(struct dev *d)
 	dev_freebufs(d);
 }
 
+/*
+ * Close the device, but attempt to migrate everything to a new sndio
+ * device.
+ */
+int
+dev_reopen(struct dev *d)
+{
+	struct slot *s;
+	long long pos;
+	unsigned int pstate;
+	int delta;
+
+	/* not opened */
+	if (d->pstate == DEV_CFG)
+		return 1;
+
+	/* save state */
+	delta = d->delta;
+	pstate = d->pstate;
+
+	if (!dev_sio_reopen(d))
+		return 0;
+
+	/* reopen returns a stopped device */
+	d->pstate = DEV_INIT;
+
+	/* reallocate new buffers, with new parameters */
+	dev_freebufs(d);
+	dev_allocbufs(d);
+
+	/*
+	 * adjust time positions, make anything go back delta ticks, so
+	 * that the new device can start at zero
+	 */
+	for (s = d->slot_list; s != NULL; s = s->next) {
+		pos = (long long)s->delta * d->round + s->delta_rem;
+		pos -= (long long)delta * s->round;
+		s->delta_rem = pos % (int)d->round;
+		s->delta = pos / (int)d->round;
+		if (log_level >= 3) {
+			slot_log(s);
+			log_puts(": adjusted: delta -> ");
+			log_puti(s->delta);
+			log_puts(", delta_rem -> ");
+			log_puti(s->delta_rem);
+			log_puts("\n");
+		}
+
+		/* reinitilize the format conversion chain */
+		slot_initconv(s);
+	}
+	if (d->tstate == MMC_RUN) {
+		d->mtc.delta -= delta * MTC_SEC;
+		if (log_level >= 2) {
+			dev_log(d);
+			log_puts(": adjusted mtc: delta ->");
+			log_puti(d->mtc.delta);
+			log_puts("\n");
+		}
+	}
+
+	/* start the device if needed */
+	if (pstate == DEV_RUN)
+		dev_wakeup(d);
+
+	return 1;
+}
+
 int
 dev_ref(struct dev *d)
 {
@@ -1280,7 +1349,7 @@ dev_del(struct dev *d)
 	}
 	midi_del(d->midi);
 	*p = d->next;
-	xfree(d->path);
+	namelist_clear(&d->path_list);
 	xfree(d);
 }
 

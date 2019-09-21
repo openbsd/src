@@ -1,4 +1,4 @@
-/*	$OpenBSD: miofile.c,v 1.4 2015/12/20 11:38:33 ratchov Exp $	*/
+/*	$OpenBSD: miofile.c,v 1.5 2019/09/21 04:42:46 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -51,7 +51,34 @@ port_mio_open(struct port *p)
 	p->mio.hdl = fdpass_mio_open(p->num, p->midi->mode);
 	if (p->mio.hdl == NULL)
 		return 0;
-	p->mio.file = file_new(&port_mio_ops, p, p->path, mio_nfds(p->mio.hdl));
+	p->mio.file = file_new(&port_mio_ops, p, "port", mio_nfds(p->mio.hdl));
+	return 1;
+}
+
+/*
+ * Open an alternate port. Upon success, close the old port
+ * and continue using the new one.
+ */
+int
+port_mio_reopen(struct port *p)
+{
+	struct mio_hdl *hdl;
+
+	hdl = fdpass_mio_open(p->num, p->midi->mode);
+	if (hdl == NULL) {
+		if (log_level >= 1) {
+			port_log(p);
+			log_puts(": couldn't open an alternate port\n");
+		}
+		return 0;
+	}
+
+	/* close unused device */
+	file_del(p->mio.file);
+	mio_close(p->mio.hdl);
+
+	p->mio.hdl = hdl;
+	p->mio.file = file_new(&port_mio_ops, p, "port", mio_nfds(hdl));
 	return 1;
 }
 
@@ -129,5 +156,6 @@ port_mio_hup(void *arg)
 {
 	struct port *p = arg;
 
-	port_close(p);
+	if (!port_reopen(p))
+		port_close(p);
 }

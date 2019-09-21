@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.35 2019/06/29 21:23:18 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.36 2019/09/21 04:42:46 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -93,6 +93,7 @@
 #endif
 
 void sigint(int);
+void sighup(int);
 void opt_ch(int *, int *);
 void opt_enc(struct aparams *);
 int opt_mmc(void);
@@ -109,12 +110,13 @@ struct opt *mkopt(char *, struct dev *,
     int, int, int, int, int, int, int, int);
 
 unsigned int log_level = 0;
-volatile sig_atomic_t quit_flag = 0;
+volatile sig_atomic_t quit_flag = 0, reopen_flag = 0;
 
 char usagestr[] = "usage: sndiod [-d] [-a flag] [-b nframes] "
-    "[-C min:max] [-c min:max] [-e enc]\n\t"
-    "[-f device] [-j flag] [-L addr] [-m mode] [-q port] [-r rate]\n\t"
-    "[-s name] [-t mode] [-U unit] [-v volume] [-w flag] [-z nframes]\n";
+    "[-C min:max] [-c min:max]\n\t"
+    "[-e enc] [-F device] [-f device] [-j flag] [-L addr] [-m mode]\n\t"
+    "[-Q port] [-q port] [-r rate] [-s name] [-t mode] [-U unit]\n\t"
+    "[-v volume] [-w flag] [-z nframes]\n";
 
 /*
  * SIGINT handler, it raises the quit flag. If the flag is already set,
@@ -127,6 +129,16 @@ sigint(int s)
 	if (quit_flag)
 		_exit(1);
 	quit_flag = 1;
+}
+
+/*
+ * SIGHUP handler, it raises the reopen flag, which requests devices
+ * to be reopened.
+ */
+void
+sighup(int s)
+{
+	reopen_flag = 1;
 }
 
 void
@@ -231,6 +243,7 @@ setsig(void)
 	struct sigaction sa;
 
 	quit_flag = 0;
+	reopen_flag = 0;
 	sigfillset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = sigint;
@@ -238,6 +251,7 @@ setsig(void)
 		err(1, "sigaction(int) failed");
 	if (sigaction(SIGTERM, &sa, NULL) == -1)
 		err(1, "sigaction(term) failed");
+	sa.sa_handler = sighup;
 	if (sigaction(SIGHUP, &sa, NULL) == -1)
 		err(1, "sigaction(hup) failed");
 }
@@ -294,7 +308,8 @@ mkdev(char *path, struct aparams *par,
 	struct dev *d;
 
 	for (d = dev_list; d != NULL; d = d->next) {
-		if (strcmp(d->path, path) == 0)
+		if (d->path_list->next == NULL &&
+		    strcmp(d->path_list->str, path) == 0)
 			return d;
 	}
 	if (!bufsz && !round) {
@@ -316,7 +331,8 @@ mkport(char *path, int hold)
 	struct port *c;
 
 	for (c = port_list; c != NULL; c = c->next) {
-		if (strcmp(c->path, path) == 0)
+		if (c->path_list->next == NULL &&
+		    strcmp(c->path_list->str, path) == 0)
 			return c;
 	}
 	c = port_new(path, MODE_MIDIMASK, hold);
@@ -361,6 +377,7 @@ start_helper(int background)
 	struct dev *d;
 	struct port *p;
 	struct passwd *pw;
+	struct name *n;
 	int s[2];
 	pid_t pid;
 
@@ -395,10 +412,14 @@ start_helper(int background)
 			    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 				err(1, "cannot drop privileges");
 		}
-		for (d = dev_list; d != NULL; d = d->next)
-			dounveil(d->path, "rsnd/", "/dev/audio");
-		for (p = port_list; p != NULL; p = p->next)
-			dounveil(p->path, "rmidi/", "/dev/rmidi");
+		for (d = dev_list; d != NULL; d = d->next) {
+			for (n = d->path_list; n != NULL; n = n->next)
+				dounveil(n->str, "rsnd/", "/dev/audio");
+		}
+		for (p = port_list; p != NULL; p = p->next) {
+			for (n = p->path_list; n != NULL; n = n->next)
+				dounveil(n->str, "rmidi/", "/dev/rmidi");
+		}
 		if (pledge("stdio sendfd rpath wpath", NULL) == -1)
 			err(1, "pledge");
 		while (file_poll())
@@ -461,7 +482,8 @@ main(int argc, char **argv)
 	mode = MODE_PLAY | MODE_REC;
 	tcpaddr_list = NULL;
 
-	while ((c = getopt(argc, argv, "a:b:c:C:de:f:j:L:m:q:r:s:t:U:v:w:x:z:")) != -1) {
+	while ((c = getopt(argc, argv,
+	    "a:b:c:C:de:F:f:j:L:m:Q:q:r:s:t:U:v:w:x:z:")) != -1) {
 		switch (c) {
 		case 'd':
 			log_level++;
@@ -518,6 +540,11 @@ main(int argc, char **argv)
 		case 'q':
 			mkport(optarg, hold);
 			break;
+		case 'Q':
+			if (port_list == NULL)
+				errx(1, "-Q %s: no ports defined", optarg);
+			namelist_add(&port_list->path_list, optarg);
+			break;
 		case 'a':
 			hold = opt_onoff();
 			break;
@@ -537,6 +564,11 @@ main(int argc, char **argv)
 		case 'f':
 			mkdev(optarg, &par, 0, bufsz, round,
 			    rate, hold, autovol);
+			break;
+		case 'F':
+			if (dev_list == NULL)
+				errx(1, "-F %s: no devices defined", optarg);
+			namelist_add(&dev_list->path_list, optarg);
 			break;
 		default:
 			fputs(usagestr, stderr);
@@ -617,6 +649,13 @@ main(int argc, char **argv)
 	for (;;) {
 		if (quit_flag)
 			break;
+		if (reopen_flag) {
+			reopen_flag = 0;
+			for (d = dev_list; d != NULL; d = d->next)
+				dev_reopen(d);
+			for (p = port_list; p != NULL; p = p->next)
+				port_reopen(p);
+		}
 		if (!fdpass_peer)
 			break;
 		if (!file_poll())

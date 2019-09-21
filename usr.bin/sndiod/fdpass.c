@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdpass.c,v 1.6 2019/06/28 13:35:03 deraadt Exp $	*/
+/*	$OpenBSD: fdpass.c,v 1.7 2019/09/21 04:42:46 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -300,6 +300,7 @@ fdpass_in_helper(void *arg)
 	struct fdpass *f = arg;
 	struct dev *d;
 	struct port *p;
+	struct name *path;
 
 	if (!fdpass_recv(f, &cmd, &num, &mode, &fd))
 		return;
@@ -314,7 +315,11 @@ fdpass_in_helper(void *arg)
 			fdpass_close(f);
 			return;
 		}
-		fd = sio_sun_getfd(d->path, mode, 1);
+		for (path = d->path_list; path != NULL; path = path->next) {
+			fd = sio_sun_getfd(path->str, mode, 1);
+			if (fd != -1)
+				break;
+		}
 		break;
 	case FDPASS_OPEN_MIDI:
 		p = port_bynum(num);
@@ -326,7 +331,11 @@ fdpass_in_helper(void *arg)
 			fdpass_close(f);
 			return;
 		}
-		fd = mio_rmidi_getfd(p->path, mode, 1);
+		for (path = p->path_list; path != NULL; path = path->next) {
+			fd = mio_rmidi_getfd(path->str, mode, 1);
+			if (fd != -1)
+				break;
+		}
 		break;
 	default:
 		fdpass_close(f);
