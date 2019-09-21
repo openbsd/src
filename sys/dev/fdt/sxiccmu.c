@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.25 2019/09/20 22:42:05 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.26 2019/09/21 15:01:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -877,10 +877,18 @@ sxiccmu_ccu_get_frequency(void *cookie, uint32_t *cells)
 
 /* Allwinner A10/A20 */
 #define A10_PLL1_CFG_REG		0x0000
+#define A10_PLL1_OUT_EXT_DIVP_MASK	(0x3 << 16)
+#define A10_PLL1_OUT_EXT_DIVP_SHIFT	16
 #define A10_PLL1_OUT_EXT_DIVP(x)	(((x) >> 16) & 0x3)
 #define A10_PLL1_FACTOR_N(x)		(((x) >> 8) & 0x1f)
+#define A10_PLL1_FACTOR_N_MASK		(0x1f << 8)
+#define A10_PLL1_FACTOR_N_SHIFT		8
 #define A10_PLL1_FACTOR_K(x)		(((x) >> 4) & 0x3)
+#define A10_PLL1_FACTOR_K_MASK		(0x3 << 4)
+#define A10_PLL1_FACTOR_K_SHIFT		4
 #define A10_PLL1_FACTOR_M(x)		(((x) >> 0) & 0x3)
+#define A10_PLL1_FACTOR_M_MASK		(0x3 << 0)
+#define A10_PLL1_FACTOR_M_SHIFT		0
 #define A10_CPU_AHB_APB0_CFG_REG	0x0054
 #define A10_CPU_CLK_SRC_SEL		(0x3 << 16)
 #define A10_CPU_CLK_SRC_SEL_LOSC	(0x0 << 16)
@@ -1433,8 +1441,45 @@ sxiccmu_a10_set_frequency(struct sxiccmu_softc *sc, uint32_t idx, uint32_t freq)
 {
 	struct sxiccmu_clock clock;
 	uint32_t parent, parent_freq;
+	uint32_t reg;
+	int k, n;
+	int error;
 
 	switch (idx) {
+	case A10_CLK_PLL_CORE:
+		k = 1; n = 32;
+		while (k <= 4 && (24000000 * n * k) < freq)
+			k++;
+		while (n >= 1 && (24000000 * n * k) > freq)
+			n--;
+
+		reg = SXIREAD4(sc, A10_PLL1_CFG_REG);
+		reg &= ~A10_PLL1_OUT_EXT_DIVP_MASK;
+		reg &= ~A10_PLL1_FACTOR_N_MASK;
+		reg &= ~A10_PLL1_FACTOR_K_MASK;
+		reg &= ~A10_PLL1_FACTOR_M_MASK;
+		reg |= (n << A10_PLL1_FACTOR_N_SHIFT);
+		reg |= ((k - 1) << A10_PLL1_FACTOR_K_SHIFT);
+		SXIWRITE4(sc, A10_PLL1_CFG_REG, reg);
+
+		/* No need to wait PLL to lock? */
+
+		return 0;
+	case A10_CLK_CPU:
+		/* Switch to 24 MHz clock. */
+		reg = SXIREAD4(sc, A10_CPU_AHB_APB0_CFG_REG);
+		reg &= ~A10_CPU_CLK_SRC_SEL;
+		reg |= A10_CPU_CLK_SRC_SEL_OSC24M;
+		SXIWRITE4(sc, A10_CPU_AHB_APB0_CFG_REG, reg);
+
+		error = sxiccmu_a10_set_frequency(sc, A10_CLK_PLL_CORE, freq);
+
+		/* Switch back to PLL. */
+		reg = SXIREAD4(sc, A10_CPU_AHB_APB0_CFG_REG);
+		reg &= ~A10_CPU_CLK_SRC_SEL;
+		reg |= A10_CPU_CLK_SRC_SEL_PLL1;
+		SXIWRITE4(sc, A10_CPU_AHB_APB0_CFG_REG, reg);
+		return error;
 	case A10_CLK_MMC0:
 	case A10_CLK_MMC1:
 	case A10_CLK_MMC2:
