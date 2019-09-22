@@ -3,7 +3,7 @@
  * DONT EDIT THIS FILE
  */
 
-/*	$OpenBSD: cn30xxpipreg.h,v 1.6 2016/08/06 04:32:24 visa Exp $	*/
+/*	$OpenBSD: cn30xxpipreg.h,v 1.7 2019/09/22 05:13:59 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -137,6 +137,7 @@
 #define	PIP_PRT_TAG32_OFFSET				0x500ULL
 #define	PIP_QOS_DIFF0_OFFSET				0x600ULL
 /* PIP_QOS_DIFF[1-63] */
+#define	PIP_STAT0_PRT_OFFSET(i)				(0x800ULL + (i) * 0x50)
 #define	PIP_STAT0_PRT0_OFFSET				0x800ULL
 #define	PIP_STAT0_PRT1_OFFSET				0x850ULL
 #define	PIP_STAT0_PRT2_OFFSET				0x8a0ULL

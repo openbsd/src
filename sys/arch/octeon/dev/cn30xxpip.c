@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpip.c,v 1.7 2017/11/05 04:57:28 visa Exp $	*/
+/*	$OpenBSD: cn30xxpip.c,v 1.8 2019/09/22 05:13:59 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -201,8 +201,7 @@ cn30xxpip_prt_cfg_enable(struct cn30xxpip_softc *sc, uint64_t prt_cfg,
 void
 cn30xxpip_stats(struct cn30xxpip_softc *sc, struct ifnet *ifp, int gmx_port)
 {
-	const struct cn30xxpip_dump_reg_ *reg;
-	uint64_t tmp, pkts, octs;
+	uint64_t tmp, pkts;
 	uint64_t pip_stat_ctl;
 
 	if (sc == NULL || ifp == NULL)
@@ -216,9 +215,7 @@ cn30xxpip_stats(struct cn30xxpip_softc *sc, struct ifnet *ifp, int gmx_port)
 
 	pip_stat_ctl = _PIP_RD8(sc, PIP_STAT_CTL_OFFSET);
 	_PIP_WR8(sc, PIP_STAT_CTL_OFFSET, pip_stat_ctl | PIP_STAT_CTL_RDCLR);
-	reg = &cn30xxpip_dump_stats_[gmx_port];
-	tmp = _PIP_RD8(sc, reg->offset);
-	octs = (tmp & 0x00000000ffffffffULL); /* XXX: no counter in ifp?? */
+	tmp = _PIP_RD8(sc, PIP_STAT0_PRT_OFFSET(gmx_port));
 	pkts = (tmp & 0xffffffff00000000ULL) >> 32;
 	ifp->if_iqdrops += pkts;
 
