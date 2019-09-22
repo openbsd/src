@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.246 2019/07/12 00:04:59 cheloha Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.247 2019/09/22 01:16:39 krw Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -262,9 +262,9 @@ main(int argc, char *argv[])
 
 	ctime(&boottime); /* satisfy potential $TZ expansion before unveil() */
 
-	if (unveil(_PATH_DEVDB, "r") == -1)
+	if (unveil(_PATH_DEVDB, "r") == -1 && errno != ENOENT)
 		err(1,"unveil");
-	if (unveil("/dev", "r") == -1)
+	if (unveil("/dev", "r") == -1 && errno != ENOENT)
 		err(1, "unveil");
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");
