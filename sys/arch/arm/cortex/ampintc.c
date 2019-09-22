@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.23 2018/12/07 21:33:28 patrick Exp $ */
+/* $OpenBSD: ampintc.c,v 1.24 2019/09/22 15:17:03 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -16,8 +16,8 @@
  */
 
 /*
- * This driver implements the interrupt controller as specified in 
- * DDI0407E_cortex_a9_mpcore_r2p0_trm with the 
+ * This driver implements the interrupt controller as specified in
+ * DDI0407E_cortex_a9_mpcore_r2p0_trm with the
  * IHI0048A_gic_architecture_spec_v1_0 underlying specification
  */
 #include <sys/param.h>
@@ -129,7 +129,7 @@
 #define ICPIIR				0xFC
 
 /*
- * what about periph_id and component_id 
+ * what about periph_id and component_id
  */
 
 #define IRQ_ENABLE	1
@@ -137,7 +137,7 @@
 
 struct ampintc_softc {
 	struct simplebus_softc	 sc_sbus;
-	struct intrq 		*sc_ampintc_handler;
+	struct intrq 		*sc_handler;
 	int			 sc_nintr;
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_d_ioh, sc_p_ioh;
@@ -174,10 +174,10 @@ void		 ampintc_splx(int);
 int		 ampintc_splraise(int);
 void		 ampintc_setipl(int);
 void		 ampintc_calc_mask(void);
-void		*ampintc_intr_establish(int, int, int, int (*)(void *), void *,
-		    char *);
-void		*ampintc_intr_establish_ext(int, int, int (*)(void *), void *,
-		    char *);
+void		*ampintc_intr_establish(int, int, int, int (*)(void *),
+		    void *, char *);
+void		*ampintc_intr_establish_ext(int, int, int (*)(void *),
+		    void *, char *);
 void		*ampintc_intr_establish_fdt(void *, int *, int,
 		    int (*)(void *), void *, char *);
 void		 ampintc_intr_disestablish(void *);
@@ -189,7 +189,7 @@ void		 ampintc_set_priority(int, int);
 void		 ampintc_intr_enable(int);
 void		 ampintc_intr_disable(int);
 void		 ampintc_intr_config(int, int);
-void		 ampintc_route(int, int , struct cpu_info *);
+void		 ampintc_route(int, int, struct cpu_info *);
 
 struct cfattach	ampintc_ca = {
 	sizeof (struct ampintc_softc), ampintc_match, ampintc_attach
@@ -280,10 +280,10 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX - check power saving bit */
 
-	sc->sc_ampintc_handler = mallocarray(nintr,
-	    sizeof(*sc->sc_ampintc_handler), M_DEVBUF, M_ZERO | M_NOWAIT);
+	sc->sc_handler = mallocarray(nintr, sizeof(*sc->sc_handler), M_DEVBUF,
+	    M_ZERO | M_NOWAIT);
 	for (i = 0; i < nintr; i++) {
-		TAILQ_INIT(&sc->sc_ampintc_handler[i].iq_list);
+		TAILQ_INIT(&sc->sc_handler[i].iq_list);
 	}
 
 	ampintc_setipl(IPL_HIGH);  /* XXX ??? */
@@ -316,7 +316,7 @@ ampintc_set_priority(int irq, int pri)
 	uint32_t		 prival;
 
 	/*
-	 * We only use 16 (13 really) interrupt priorities, 
+	 * We only use 16 (13 really) interrupt priorities,
 	 * and a CPU is only required to implement bit 4-7 of each field
 	 * so shift into the top bits.
 	 * also low values are higher priority thus IPL_HIGH - pri
@@ -393,8 +393,7 @@ ampintc_calc_mask(void)
 	for (irq = 0; irq < sc->sc_nintr; irq++) {
 		int max = IPL_NONE;
 		int min = IPL_HIGH;
-		TAILQ_FOREACH(ih, &sc->sc_ampintc_handler[irq].iq_list,
-		    ih_list) {
+		TAILQ_FOREACH(ih, &sc->sc_handler[irq].iq_list, ih_list) {
 			if (ih->ih_ipl > max)
 				max = ih->ih_ipl;
 
@@ -402,12 +401,12 @@ ampintc_calc_mask(void)
 				min = ih->ih_ipl;
 		}
 
-		if (sc->sc_ampintc_handler[irq].iq_irq_max == max &&
-		    sc->sc_ampintc_handler[irq].iq_irq_min == min)
+		if (sc->sc_handler[irq].iq_irq_max == max &&
+		    sc->sc_handler[irq].iq_irq_min == min)
 			continue;
 
-		sc->sc_ampintc_handler[irq].iq_irq_max = max;
-		sc->sc_ampintc_handler[irq].iq_irq_min = min;
+		sc->sc_handler[irq].iq_irq_max = max;
+		sc->sc_handler[irq].iq_irq_min = min;
 
 		if (max == IPL_NONE)
 			min = IPL_NONE;
@@ -469,7 +468,7 @@ ampintc_splraise(int new)
 }
 
 
-uint32_t 
+uint32_t
 ampintc_iack(void)
 {
 	uint32_t intid;
@@ -540,9 +539,9 @@ ampintc_irq_handler(void *frame)
 	if (irq >= sc->sc_nintr)
 		return;
 
-	pri = sc->sc_ampintc_handler[irq].iq_irq_max;
+	pri = sc->sc_handler[irq].iq_irq_max;
 	s = ampintc_splraise(pri);
-	TAILQ_FOREACH(ih, &sc->sc_ampintc_handler[irq].iq_list, ih_list) {
+	TAILQ_FOREACH(ih, &sc->sc_handler[irq].iq_list, ih_list) {
 #ifdef MULTIPROCESSOR
 		int need_lock;
 
@@ -638,7 +637,7 @@ ampintc_intr_establish(int irqno, int type, int level, int (*func)(void *),
 
 	psw = disable_interrupts(PSR_I);
 
-	TAILQ_INSERT_TAIL(&sc->sc_ampintc_handler[irqno].iq_list, ih, ih_list);
+	TAILQ_INSERT_TAIL(&sc->sc_handler[irqno].iq_list, ih, ih_list);
 
 	if (name != NULL)
 		evcount_attach(&ih->ih_count, name, &ih->ih_irq);
@@ -669,7 +668,7 @@ ampintc_intr_disestablish(void *cookie)
 
 	psw = disable_interrupts(PSR_I);
 
-	TAILQ_REMOVE(&sc->sc_ampintc_handler[ih->ih_irq].iq_list, ih, ih_list);
+	TAILQ_REMOVE(&sc->sc_handler[ih->ih_irq].iq_list, ih, ih_list);
 	if (ih->ih_name != NULL)
 		evcount_detach(&ih->ih_count);
 	free(ih, M_DEVBUF, sizeof(*ih));
