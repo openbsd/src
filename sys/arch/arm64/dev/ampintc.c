@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.15 2018/12/07 21:33:28 patrick Exp $ */
+/* $OpenBSD: ampintc.c,v 1.16 2019/09/22 15:05:37 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -573,7 +573,7 @@ ampintc_route(int irq, int enable, struct cpu_info *ci)
 }
 
 void
-ampintc_cpuinit()
+ampintc_cpuinit(void)
 {
 	struct ampintc_softc    *sc = ampintc;
 	int			 i;
