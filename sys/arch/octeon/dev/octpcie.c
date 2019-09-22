@@ -1,4 +1,4 @@
-/*	$OpenBSD: octpcie.c,v 1.1 2019/09/07 13:58:58 visa Exp $	*/
+/*	$OpenBSD: octpcie.c,v 1.2 2019/09/22 04:43:24 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -362,11 +362,8 @@ octpcie_port_attach(struct octpcie_port *port)
 		goto error_pem;
 	}
 
-	if (octpcie_port_is_host(port) == 0) {
-		printf("%s port %d: not in host mode\n",
-		    sc->sc_dev.dv_xname, port->port_index);
+	if (octpcie_port_is_host(port) == 0)
 		goto error_pciecfg;
-	}
 
 	if (octpcie_port_reset(port) != 0) {
 		/* Error has been printed already. */
