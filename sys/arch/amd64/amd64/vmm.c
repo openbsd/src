@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.253 2019/09/11 16:55:53 anton Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.254 2019/09/22 08:47:54 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -430,7 +430,15 @@ vmm_attach(struct device *parent, struct device *self, void *aux)
 /*
  * vmmopen
  *
- * Called during open of /dev/vmm. Presently unused.
+ * Called during open of /dev/vmm.
+ *
+ * Parameters:
+ *  dev, flag, mode, p: These come from the character device and are
+ *   all unused for this function
+ *
+ * Return values:
+ *  ENODEV: if vmm(4) didn't attach or no supported CPUs detected
+ *  0: successful open
  */
 int
 vmmopen(dev_t dev, int flag, int mode, struct proc *p)
