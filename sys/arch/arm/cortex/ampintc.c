@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.24 2019/09/22 15:17:03 kettenis Exp $ */
+/* $OpenBSD: ampintc.c,v 1.25 2019/09/22 19:13:45 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -401,15 +401,15 @@ ampintc_calc_mask(void)
 				min = ih->ih_ipl;
 		}
 
+		if (max == IPL_NONE)
+			min = IPL_NONE;
+
 		if (sc->sc_handler[irq].iq_irq_max == max &&
 		    sc->sc_handler[irq].iq_irq_min == min)
 			continue;
 
 		sc->sc_handler[irq].iq_irq_max = max;
 		sc->sc_handler[irq].iq_irq_min = min;
-
-		if (max == IPL_NONE)
-			min = IPL_NONE;
 
 		/* Enable interrupts at lower levels, clear -> enable */
 		/* Set interrupt priority/enable */
