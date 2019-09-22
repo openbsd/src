@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan.l,v 1.12 2015/11/19 23:34:56 mmcc Exp $	*/
+/*	$OpenBSD: scan.l,v 1.13 2019/09/22 00:47:12 miko Exp $	*/
 
 /* scan.l - scanner for flex input -*-C-*- */
 
@@ -741,7 +741,13 @@ nmstr[yyleng - 2 - end_is_ws] = '\0';  /* chop trailing brace */
                     return '(';
                 }
     "("         sf_push(); return '(';
-    ")"         sf_pop(); return ')';
+    ")"         {
+                    if (_sf_top_ix > 0) {
+                        sf_pop();
+                        return ')';
+                    } else
+                        synerr(_("unbalanced parenthesis"));
+                }
 
 	[/|*+?.(){}]	return (unsigned char) yytext[0];
 	.		RETURNCHAR;
