@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.53 2018/12/05 10:28:21 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.54 2019/09/23 18:10:43 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -156,6 +156,8 @@ struct cpu_info {
 	struct cpu_info *ci_next;
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 
+	int			ci_node;
+	
 	struct proc *ci_curproc;
 	struct proc *ci_fpuproc;
 	u_int32_t ci_cpuid;
@@ -175,6 +177,11 @@ struct cpu_info {
 #ifdef DIAGNOSTIC
 	int	ci_mutex_level;
 #endif
+
+	struct opp_table	*ci_opp_table;
+	volatile int		ci_opp_idx;
+	volatile int		ci_opp_max;
+	uint32_t		ci_cpu_supply;
 
 #ifdef MULTIPROCESSOR
 	struct srp_hazard	ci_srp_hazards[SRP_HAZARD_NUM];
