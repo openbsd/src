@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.231 2019/09/21 00:12:15 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.232 2019/09/23 15:21:17 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -2551,6 +2551,25 @@ scsi_show_mem(u_char *address, int num)
 		printf("%02x ", *address++);
 	}
 	printf("\n------------------------------\n");
+}
+
+void
+scsi_show_flags(u_int16_t flags, const char **names)
+{
+	int i, first;
+
+	first = 1;
+	printf("<");
+	for (i = 0; i < 16; i++) {
+		if (ISSET(flags, 1 << i)) {
+			if (first == 0)
+				printf(", ");
+			else
+				first = 0;
+			printf("%s", names[i]);
+		}
+	}
+	printf(">");
 }
 #endif /* SCSIDEBUG */
 

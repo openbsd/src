@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.213 2019/09/16 16:34:14 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.214 2019/09/23 15:21:17 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -699,6 +699,45 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
          "UJDCD8730", "", "1.14"},              ADEV_NODOORLOCK}, /* Acer */
 };
 
+#ifdef SCSIDEBUG
+const char *flagnames[16] = {
+	"REMOVABLE",
+	"MEDIA LOADED",
+	"READONLY",
+	"OPEN",
+	"DB1",
+	"DB2",
+	"DB3",
+	"DB4",
+	"EJECTING",
+	"ATAPI",
+	"2NDBUS",
+	"UMASS",
+	"VIRTUAL",
+	"OWN",
+	"FLAG0x4000",
+	"FLAG0x8000"
+};
+
+const char *quirknames[16] = {
+	"AUTOSAVE",
+	"NOSYNC",
+	"NOWIDE",
+	"NOTAGS",
+	"QUIRKx0010",
+	"QUIRKx0020",
+	"QUIRKx0040",
+	"QUIRKx0080",
+	"NOSYNCCACHE",
+	"NOSENSE",
+	"LITTLETOC",
+	"NOCAPACITY",
+	"QUIRK0x1000",
+	"NODOORLOCK",
+	"ONLYBIG",
+	"QUIRKx8000",
+};
+#endif /* SCSIDEBUG */
 
 void
 scsibus_printlink(struct scsi_link *link)
@@ -733,47 +772,61 @@ scsibus_printlink(struct scsi_link *link)
 	if ((link->flags & SDEV_REMOVABLE) != 0)
 		printf(" removable");
 
-	if (link->id == NULL || link->id->d_type == DEVID_NONE)
-		return;
-
-	id = (u_int8_t *)(link->id + 1);
-	switch (link->id->d_type) {
-	case DEVID_NAA:
-		printf(" naa.");
-		break;
-	case DEVID_EUI:
-		printf(" eui.");
-		break;
-	case DEVID_T10:
-		printf(" t10.");
-		break;
-	case DEVID_SERIAL:
-		printf(" serial.");
-		break;
-	case DEVID_WWN:
-		printf(" wwn.");
-		break;
-	}
-
-	if (ISSET(link->id->d_flags, DEVID_F_PRINT)) {
-		for (i = 0; i < link->id->d_len; i++) {
-			if (id[i] == '\0' || id[i] == ' ') {
-				/* skip leading blanks */
-				/* collapse multiple blanks into one */
-				if (i > 0 && id[i-1] != id[i])
-					printf("_");
-			} else if (id[i] < 0x20 || id[i] >= 0x80) {
-				/* non-printable characters */
-				printf("~");
-			} else {
-				/* normal characters */
-				printf("%c", id[i]);
-			}
+	if (link->id != NULL && link->id->d_type != DEVID_NONE) {
+		id = (u_int8_t *)(link->id + 1);
+		switch (link->id->d_type) {
+		case DEVID_NAA:
+			printf(" naa.");
+			break;
+		case DEVID_EUI:
+			printf(" eui.");
+			break;
+		case DEVID_T10:
+			printf(" t10.");
+			break;
+		case DEVID_SERIAL:
+			printf(" serial.");
+			break;
+		case DEVID_WWN:
+			printf(" wwn.");
+			break;
 		}
-	} else {
-		for (i = 0; i < link->id->d_len; i++)
-			printf("%02x", id[i]);
+
+		if (ISSET(link->id->d_flags, DEVID_F_PRINT)) {
+			for (i = 0; i < link->id->d_len; i++) {
+				if (id[i] == '\0' || id[i] == ' ') {
+					/* skip leading blanks */
+					/* collapse multiple blanks into one */
+					if (i > 0 && id[i-1] != id[i])
+						printf("_");
+				} else if (id[i] < 0x20 || id[i] >= 0x80) {
+					/* non-printable characters */
+					printf("~");
+				} else {
+					/* normal characters */
+					printf("%c", id[i]);
+				}
+			}
+		} else {
+			for (i = 0; i < link->id->d_len; i++)
+				printf("%02x", id[i]);
+		}
 	}
+#ifdef SCSIDEBUG
+	printf("\n");
+	sc_print_addr(link);
+	printf("state %u, luns %u, openings %u\n",
+	    link->state, link->luns, link->openings);
+
+	sc_print_addr(link);
+	printf("flags (0x%04x) ", link->flags);
+	scsi_show_flags(link->flags, flagnames);
+	printf("\n");
+
+	sc_print_addr(link);
+	printf("quirks (0x%04x) ", link->quirks);
+	scsi_show_flags(link->quirks, quirknames);
+#endif /* SCSIDEBUG */
 }
 
 /*

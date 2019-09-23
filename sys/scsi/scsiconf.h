@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.173 2019/09/19 17:48:21 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.174 2019/09/23 15:21:17 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -501,9 +501,13 @@ int	scsi_report_luns(struct scsi_link *, int,
 void	scsi_minphys(struct buf *, struct scsi_link *);
 int	scsi_interpret_sense(struct scsi_xfer *);
 
+#ifdef SCSIDEBUG
 void	scsi_xs_show(struct scsi_xfer *);
-void	scsi_print_sense(struct scsi_xfer *);
 void	scsi_show_mem(u_char *, int);
+void	scsi_show_flags(u_int16_t, const char **);
+#endif /* SCSIDEBUG */
+
+void	scsi_print_sense(struct scsi_xfer *);
 void	scsi_strvis(u_char *, u_char *, int);
 int	scsi_delay(struct scsi_xfer *, int);
 
