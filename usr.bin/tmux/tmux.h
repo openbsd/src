@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.928 2019/09/19 09:02:30 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.929 2019/09/23 15:41:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2196,8 +2196,8 @@ void	 status_prompt_save_history(void);
 
 /* resize.c */
 void	 resize_window(struct window *, u_int, u_int);
-void	 default_window_size(struct session *, struct window *, u_int *,
-	     u_int *, int);
+void	 default_window_size(struct client *, struct session *, struct window *,
+	     u_int *, u_int *, int);
 void	 recalculate_size(struct window *);
 void	 recalculate_sizes(void);
 
