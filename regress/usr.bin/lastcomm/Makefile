@@ -1,13 +1,29 @@
-# $OpenBSD: Makefile,v 1.5 2019/09/10 19:01:24 bluhm Exp $
+# $OpenBSD: Makefile,v 1.6 2019/09/23 08:34:07 bluhm Exp $
 
 # Start with a clean /var/account/acct accounting file and turn on
 # process accounting with accton(8).  Each test executes a command
 # with a unique name and checks the flags in the lastcomm(1) output.
 # Run tests with fork, map, core, xsig, pledge, trap accounting.
 
-PROGS=		crash stackmap
-WARNINGS=	Yes
-CLEANFILES=	regress-*
+.if ! (make(clean) || make(cleandir) || make(obj))
+
+MOUNT_OBJ !!= mount | grep ^$$(df -P . | tail -1 | awk '{ print $$1 }')
+
+.if "${MOUNT_OBJ:M*wxallowed*}" == ""
+REGRESS_SKIP_TARGETS +=	run-syscallwx
+.endif
+
+.endif
+
+.if ${MACHINE} == amd64 || ${MACHINE} == armv7
+# calling trapsignal() from syscall path does not work on amd64
+REGRESS_EXPECTED_FAILURES +=	run-callstack run-syscallwx
+.endif
+
+PROGS=			crash trapstack callstack syscallwx
+WARNINGS=		Yes
+LDADD_syscallwx=	-z wxneeded
+CLEANFILES=		regress-*
 
 REGRESS_SETUP_ONCE =	setup-rotate
 # Rotate accouting files and keep statistics, from /etc/daily.
@@ -29,13 +45,29 @@ run-fork:
 	./regress-fork -c '( : ) &'
 	lastcomm regress-fork | grep -q ' -F '
 
-REGRESS_TARGETS +=	run-stackmap
-run-stackmap: stackmap
+REGRESS_TARGETS +=	run-trapstack
+run-trapstack: trapstack
 	@echo '\n======== $@ ========'
-	# Use invalid stack pointer, run SIGSEGV handler, check the -M flag.
-	cp -f stackmap regress-stackmap
-	./regress-stackmap
-	lastcomm regress-stackmap | grep -q ' -MT '
+	# Use invalid stack pointer, trap, SIGSEGV handler, check -M flag.
+	cp -f trapstack regress-trapstack
+	./regress-trapstack
+	lastcomm regress-trapstack | grep -q ' -MT '
+
+REGRESS_TARGETS +=	run-callstack
+run-callstack: callstack
+	@echo '\n======== $@ ========'
+	# Use invalid stack pointer, syscall, SIGSEGV handler, check -M flag.
+	cp -f callstack regress-callstack
+	./regress-callstack
+	lastcomm regress-callstack | grep -q ' -MT '
+
+REGRESS_TARGETS +=	run-syscallwx
+run-syscallwx: syscallwx
+	@echo '\n======== $@ ========'
+	# Use writable syscall code, run SIGSEGV handler, check -M flag.
+	cp -f syscallwx regress-syscallwx
+	./regress-syscallwx
+	lastcomm regress-syscallwx | grep -q ' -MT '
 
 REGRESS_TARGETS +=	run-core
 run-core:
