@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.291 2019/08/28 22:36:41 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.292 2019/09/23 11:00:42 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1350,6 +1350,11 @@ rtm_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
 	struct sockaddr	*sa;
 	int		 i;
 
+	/*
+	 * Parse address bits, split address storage in chunks, and
+	 * set info pointers.  Use sa_len for traversing the memory
+	 * and check that we stay within in the limit.
+	 */
 	bzero(rtinfo->rti_info, sizeof(rtinfo->rti_info));
 	for (i = 0; i < sizeof(rtinfo->rti_addrs) * 8; i++) {
 		if ((rtinfo->rti_addrs & (1 << i)) == 0)
@@ -1361,6 +1366,109 @@ rtm_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
 			return (EINVAL);
 		rtinfo->rti_info[i] = sa;
 		ADVANCE(cp, sa);
+	}
+	/*
+	 * Check that the address family is suitable for the route address
+	 * type.  Check that each address has a size that fits its family
+	 * and its length is within the size.  Strings within addresses must
+	 * be NUL terminated.
+	 */
+	for (i = 0; i < RTAX_MAX; i++) {
+		size_t len, maxlen, size;
+
+		sa = rtinfo->rti_info[i];
+		if (sa == NULL)
+			continue;
+		maxlen = size = 0;
+		switch (i) {
+		case RTAX_DST:
+		case RTAX_GATEWAY:
+		case RTAX_SRC:
+			switch (sa->sa_family) {
+			case AF_INET:
+				size = sizeof(struct sockaddr_in);
+				break;
+			case AF_LINK:
+				size = sizeof(struct sockaddr_dl);
+				break;
+#ifdef INET6
+			case AF_INET6:
+				size = sizeof(struct sockaddr_in6);
+				break;
+#endif
+#ifdef MPLS
+			case AF_MPLS:
+				size = sizeof(struct sockaddr_mpls);
+				break;
+#endif
+			}
+			break;
+		case RTAX_IFP:
+			if (sa->sa_family != AF_LINK)
+				return (EAFNOSUPPORT);
+			/*
+			 * XXX Should be sizeof(struct sockaddr_dl), but
+			 * route(8) has a bug and provides less memory.
+			 * arp(8) has another bug and uses sizeof pointer.
+			 */
+			size = 4;
+			break;
+		case RTAX_IFA:
+			switch (sa->sa_family) {
+			case AF_INET:
+				size = sizeof(struct sockaddr_in);
+				break;
+#ifdef INET6
+			case AF_INET6:
+				size = sizeof(struct sockaddr_in6);
+				break;
+#endif
+			default:
+				return (EAFNOSUPPORT);
+			}
+			break;
+		case RTAX_LABEL:
+			sa->sa_family = AF_UNSPEC;
+			maxlen = RTLABEL_LEN;
+			size = sizeof(struct sockaddr_rtlabel);
+			break;
+#ifdef BFD
+		case RTAX_BFD:
+			sa->sa_family = AF_UNSPEC;
+			size = sizeof(struct sockaddr_bfd);
+			break;
+#endif
+		case RTAX_DNS:
+			sa->sa_family = AF_UNSPEC;
+			maxlen = RTDNS_LEN;
+			size = sizeof(struct sockaddr_rtdns);
+			break;
+		case RTAX_STATIC:
+			sa->sa_family = AF_UNSPEC;
+			maxlen = RTSTATIC_LEN;
+			size = sizeof(struct sockaddr_rtstatic);
+			break;
+		case RTAX_SEARCH:
+			sa->sa_family = AF_UNSPEC;
+			maxlen = RTSEARCH_LEN;
+			size = sizeof(struct sockaddr_rtsearch);
+			break;
+		}
+		if (size) {
+			/* memory for the full struct must be provided */
+			if (sa->sa_len < size)
+				return (EINVAL);
+		}
+		if (maxlen) {
+			/* this should not happen */
+			if (2 + maxlen > size)
+				return (EINVAL);
+			/* strings must be NUL terminated within the struct */
+			len = strnlen(sa->sa_data, maxlen);
+			if (len >= maxlen || 2 + len >= sa->sa_len)
+				return (EINVAL);
+			break;
+		}
 	}
 	return (0);
 }
