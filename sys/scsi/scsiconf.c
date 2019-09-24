@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.214 2019/09/23 15:21:17 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.215 2019/09/24 12:30:00 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -724,10 +724,10 @@ const char *quirknames[16] = {
 	"NOSYNC",
 	"NOWIDE",
 	"NOTAGS",
-	"QUIRKx0010",
-	"QUIRKx0020",
-	"QUIRKx0040",
-	"QUIRKx0080",
+	"QUIRK0x0010",
+	"QUIRK0x0020",
+	"QUIRK0x0040",
+	"QUIRK0x0080",
 	"NOSYNCCACHE",
 	"NOSENSE",
 	"LITTLETOC",
@@ -735,7 +735,7 @@ const char *quirknames[16] = {
 	"QUIRK0x1000",
 	"NODOORLOCK",
 	"ONLYBIG",
-	"QUIRKx8000",
+	"QUIRK0x8000",
 };
 #endif /* SCSIDEBUG */
 
