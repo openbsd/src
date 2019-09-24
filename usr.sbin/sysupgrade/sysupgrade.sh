@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.22 2019/06/21 16:50:26 florian Exp $
+# $OpenBSD: sysupgrade.sh,v 1.23 2019/09/24 15:21:26 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -181,6 +181,13 @@ if [[ -n ${DL} ]]; then
 fi
 
 ${KEEP} && > keep
+
+cat <<__EOT >/auto_upgrade.conf
+Location of sets = disk
+Pathname to the sets = /home/_sysupgrade/
+Set name(s) = done
+Directory does not contain SHA256.sig. Continue without verification = yes
+__EOT
 
 install -F -m 700 bsd.rd /bsd.upgrade
 sync
