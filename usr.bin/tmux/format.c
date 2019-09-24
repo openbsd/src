@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.210 2019/09/11 06:43:17 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.211 2019/09/24 14:50:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -722,6 +722,8 @@ format_cb_mouse_word(struct format_tree *ft, struct format_entry *fe)
 	wp = cmd_mouse_pane(&ft->m, NULL, NULL);
 	if (wp == NULL)
 		return;
+	if (!TAILQ_EMPTY (&wp->modes))
+		return;
 	if (cmd_mouse_at(wp, &ft->m, &x, &y, 0) != 0)
 		return;
 	gd = wp->base.grid;
@@ -797,6 +799,8 @@ format_cb_mouse_line(struct format_tree *ft, struct format_entry *fe)
 		return;
 	wp = cmd_mouse_pane(&ft->m, NULL, NULL);
 	if (wp == NULL)
+		return;
+	if (!TAILQ_EMPTY (&wp->modes))
 		return;
 	if (cmd_mouse_at(wp, &ft->m, &x, &y, 0) != 0)
 		return;
