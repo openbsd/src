@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.25 2017/06/04 08:25:57 nicm Exp $ */
+/* $OpenBSD: log.c,v 1.26 2019/09/24 20:44:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -130,6 +130,9 @@ void
 log_debug(const char *msg, ...)
 {
 	va_list	ap;
+
+	if (log_file == NULL)
+		return;
 
 	va_start(ap, msg);
 	log_vwrite(msg, ap);

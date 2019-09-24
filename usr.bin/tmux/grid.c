@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.99 2019/08/01 07:08:13 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.100 2019/09/24 20:44:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -186,17 +186,19 @@ grid_clear_cell(struct grid *gd, u_int px, u_int py, u_int bg)
 	struct grid_cell	*gc;
 
 	memcpy(gce, &grid_cleared_entry, sizeof *gce);
-	if (bg & COLOUR_FLAG_RGB) {
-		grid_get_extended_cell(gl, gce, gce->flags);
-		gl->flags |= GRID_LINE_EXTENDED;
+	if (bg != 8) {
+		if (bg & COLOUR_FLAG_RGB) {
+			grid_get_extended_cell(gl, gce, gce->flags);
+			gl->flags |= GRID_LINE_EXTENDED;
 
-		gc = &gl->extddata[gce->offset];
-		memcpy(gc, &grid_cleared_cell, sizeof *gc);
-		gc->bg = bg;
-	} else {
-		if (bg & COLOUR_FLAG_256)
-			gce->flags |= GRID_FLAG_BG256;
-		gce->data.bg = bg;
+			gc = &gl->extddata[gce->offset];
+			memcpy(gc, &grid_cleared_cell, sizeof *gc);
+			gc->bg = bg;
+		} else {
+			if (bg & COLOUR_FLAG_256)
+				gce->flags |= GRID_FLAG_BG256;
+			gce->data.bg = bg;
+		}
 	}
 }
 
