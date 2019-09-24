@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.50 2019/09/15 07:15:14 visa Exp $
+#	$OpenBSD: GENERIC,v 1.51 2019/09/24 14:38:14 visa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -66,6 +66,7 @@ cnmac*		at cn30xxgmx?
 rgephy*		at mii?
 ukphy*		at mii?
 atphy*		at mii?
+eephy*		at mii?
 brswphy*	at mii?
 brgphy*		at mii?
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.43 2019/09/15 07:15:14 visa Exp $
+#	$OpenBSD: RAMDISK,v 1.44 2019/09/24 14:38:14 visa Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -119,6 +119,7 @@ sd*		at scsibus?
 rgephy*		at mii?
 ukphy*		at mii?
 atphy*		at mii?
+eephy*		at mii?
 brswphy*	at mii?
 brgphy*		at mii?
 
