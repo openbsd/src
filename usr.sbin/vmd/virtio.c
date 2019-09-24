@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.78 2019/09/24 12:12:46 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.79 2019/09/24 12:14:54 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1533,6 +1533,9 @@ vionet_notify_tx(struct vionet_dev *dev)
 		num_enq++;
 
 		idx = dev->vq[TXQ].last_avail & VIONET_QUEUE_MASK;
+
+		free(pkt);
+		pkt = NULL;
 	}
 
 	if (write_mem(q_gpa, vr, vr_sz)) {
