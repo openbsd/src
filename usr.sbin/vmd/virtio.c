@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.77 2019/01/22 10:12:36 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.78 2019/09/24 12:12:46 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1766,7 +1766,7 @@ static int
 virtio_init_disk(struct virtio_backing *file, off_t *sz,
     int *fd, size_t nfd, int type)
 {
-	/* 
+	/*
 	 * probe disk types in order of preference, first one to work wins.
 	 * TODO: provide a way of specifying the type and options.
 	 */
