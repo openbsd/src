@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.243 2019/08/05 12:51:32 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.244 2019/09/24 14:46:09 sthen Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -601,12 +601,26 @@ int
 show_neighbor_terse(struct imsg *imsg)
 {
 	struct peer		*p;
+	char			*s;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
+		if ((p->conf.remote_addr.aid == AID_INET &&
+		    p->conf.remote_masklen != 32) ||
+		    (p->conf.remote_addr.aid == AID_INET6 &&
+		    p->conf.remote_masklen != 128)) {
+			if (asprintf(&s, "%s/%u",
+			    log_addr(&p->conf.remote_addr),
+			    p->conf.remote_masklen) == -1)
+				err(1, NULL);
+		} else
+			if ((s = strdup(log_addr(&p->conf.remote_addr))) ==
+			    NULL)
+				err(1, "strdup");
+
 		printf("%llu %llu %llu %llu %llu %llu %llu "
-		    "%llu %llu %llu %u %u %llu %llu %llu %llu\n",
+		    "%llu %llu %llu %u %u %llu %llu %llu %llu %s\n",
 		    p->stats.msg_sent_open, p->stats.msg_rcvd_open,
 		    p->stats.msg_sent_notification,
 		    p->stats.msg_rcvd_notification,
@@ -616,7 +630,8 @@ show_neighbor_terse(struct imsg *imsg)
 		    p->stats.prefix_cnt, p->conf.max_prefix,
 		    p->stats.prefix_sent_update, p->stats.prefix_rcvd_update,
 		    p->stats.prefix_sent_withdraw,
-		    p->stats.prefix_rcvd_withdraw);
+		    p->stats.prefix_rcvd_withdraw, s);
+		free(s);
 		break;
 	case IMSG_CTL_END:
 		return (1);
