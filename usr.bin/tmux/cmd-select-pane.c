@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.52 2019/08/14 09:58:31 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.53 2019/09/24 09:58:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -154,6 +154,8 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 				cmdq_error(item, "bad style: %s", style);
 				return (CMD_RETURN_ERROR);
 			}
+			options_set_style(wp->options, "window-active-style", 0,
+			    style);
 			wp->flags |= (PANE_REDRAW|PANE_STYLECHANGED);
 		}
 		if (args_has(self->args, 'g')) {
