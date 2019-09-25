@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.23 2019/09/24 15:21:26 florian Exp $
+# $OpenBSD: sysupgrade.sh,v 1.24 2019/09/25 14:42:52 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -188,6 +188,13 @@ Pathname to the sets = /home/_sysupgrade/
 Set name(s) = done
 Directory does not contain SHA256.sig. Continue without verification = yes
 __EOT
+
+if ! ${KEEP}; then
+	CLEAN=$(echo SHA256 ${SETS} | sed -e 's/ /,/g')
+	cat <<__EOT > /etc/rc.firsttime
+rm -f /home/_sysupgrade/{${CLEAN}}
+__EOT
+fi
 
 install -F -m 700 bsd.rd /bsd.upgrade
 sync
