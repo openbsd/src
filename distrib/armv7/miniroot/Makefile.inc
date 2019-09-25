@@ -1,13 +1,13 @@
-#	$OpenBSD: Makefile.inc,v 1.23 2019/05/03 20:03:58 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.24 2019/09/25 06:20:22 jsg Exp $
 
 FS=		miniroot-${BOARD}-${OSrev}.fs
-FSSIZE=		36864	# ffs+msdos, actually
+FSSIZE=		67584	# ffs+msdos, actually
 MOUNT_POINT=	/mnt
 
 MKUBOOT?=	mkuboot
 
 DISKTYPE=	miniroot
-MSDOSSTART=	2048
+MSDOSSTART=	32768
 MSDOSSIZE=	4096
 FFSSTART!=	expr ${MSDOSSTART} + ${MSDOSSIZE}
 
