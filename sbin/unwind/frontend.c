@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.23 2019/09/25 14:40:59 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.24 2019/09/25 14:41:40 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1018,6 +1018,7 @@ parse_dhcp_lease(int fd)
 			if (strcmp(toks[1], "domain-name-servers") == 0) {
 				if((p = strchr(toks[2], ';')) != NULL) {
 					*p='\0';
+					free(cur_ns);
 					cur_ns = strdup(toks[2]);
 				}
 			}
@@ -1041,11 +1042,16 @@ parse_dhcp_lease(int fd)
 			if (epoch + lease_time > now ) {
 				free(ns);
 				ns = cur_ns;
-			} else /* expired lease */
+				cur_ns = NULL;
+			} else {
+				/* expired lease */
 				free(cur_ns);
+				cur_ns = NULL;
+			}
 		}
 	}
 	free(line);
+	free(cur_ns);
 
 	if (ferror(f))
 		log_warn("getline");
