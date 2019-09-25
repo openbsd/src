@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.25 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: ti.c,v 1.26 2019/09/25 09:30:28 kevlo Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -576,7 +576,7 @@ ti_newbuf_std(struct ti_softc *sc, int i, struct mbuf *m,
 	sc->ti_cdata.ti_rx_std_map[i] = dmamap;
 
 	if (m == NULL) {
-		m_new = MCLGETI(NULL, MCLBYTES, NULL, M_DONTWAIT);
+		m_new = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
 		if (m_new == NULL)
 			return (ENOBUFS);
 
@@ -695,7 +695,7 @@ ti_newbuf_jumbo(struct ti_softc *sc, int i, struct mbuf *m,
 		bus_dmamap_unload(sc->sc_dmatag, dmamap);
 
 	if (m == NULL) {
-		m_new = MCLGETI(NULL, TI_JUMBO_FRAMELEN, NULL, M_DONTWAIT);
+		m_new = MCLGETI(NULL, M_DONTWAIT, NULL, TI_JUMBO_FRAMELEN);
 		if (m_new == NULL)
 			return (ENOBUFS);
 
