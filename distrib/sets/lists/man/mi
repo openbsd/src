@@ -2139,6 +2139,7 @@
 ./usr/share/man/man5/ospfd.conf.5
 ./usr/share/man/man5/package.5
 ./usr/share/man/man5/passwd.5
+./usr/share/man/man5/pcap-filter.5
 ./usr/share/man/man5/pf.conf.5
 ./usr/share/man/man5/pf.os.5
 ./usr/share/man/man5/port-modules.5

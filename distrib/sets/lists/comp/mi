@@ -2862,7 +2862,6 @@
 ./usr/share/man/man3/wscanf.3
 ./usr/share/man/man3/xdr.3
 ./usr/share/man/man3/yp_bind.3
-./usr/share/man/man7/pcap-filter.7
 ./usr/share/man/man9/KASSERT.9
 ./usr/share/man/man9/RBT_INIT.9
 ./usr/share/man/man9/SMR_LIST_INIT.9
