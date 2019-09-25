@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.160 2019/09/24 20:44:58 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.161 2019/09/25 19:05:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -923,7 +923,8 @@ input_parse_buffer(struct window_pane *wp, u_char *buf, size_t len)
 		    ictx->ch > itr->last) {
 			itr = ictx->state->transitions;
 			while (itr->first != -1 && itr->last != -1) {
-				if (ictx->ch >= itr->first && ictx->ch <= itr->last)
+				if (ictx->ch >= itr->first &&
+				    ictx->ch <= itr->last)
 					break;
 				itr++;
 			}
