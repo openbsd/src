@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.244 2019/09/24 14:46:09 sthen Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.245 2019/09/25 15:35:50 sthen Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -619,8 +619,8 @@ show_neighbor_terse(struct imsg *imsg)
 			    NULL)
 				err(1, "strdup");
 
-		printf("%llu %llu %llu %llu %llu %llu %llu "
-		    "%llu %llu %llu %u %u %llu %llu %llu %llu %s\n",
+		printf("%llu %llu %llu %llu %llu %llu %llu %llu %llu "
+		    "%llu %u %u %llu %llu %llu %llu %s %s \"%s\"\n",
 		    p->stats.msg_sent_open, p->stats.msg_rcvd_open,
 		    p->stats.msg_sent_notification,
 		    p->stats.msg_rcvd_notification,
@@ -630,7 +630,8 @@ show_neighbor_terse(struct imsg *imsg)
 		    p->stats.prefix_cnt, p->conf.max_prefix,
 		    p->stats.prefix_sent_update, p->stats.prefix_rcvd_update,
 		    p->stats.prefix_sent_withdraw,
-		    p->stats.prefix_rcvd_withdraw, s);
+		    p->stats.prefix_rcvd_withdraw, s,
+		    log_as(p->conf.remote_as), p->conf.descr);
 		free(s);
 		break;
 	case IMSG_CTL_END:

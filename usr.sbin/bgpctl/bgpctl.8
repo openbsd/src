@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.90 2019/09/24 14:46:09 sthen Exp $
+.\" $OpenBSD: bgpctl.8,v 1.91 2019/09/25 15:35:50 sthen Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 24 2019 $
+.Dd $Mdocdate: September 25 2019 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -290,7 +290,8 @@ The printed numbers are the sent and received open, sent and received
 notifications, sent and received updates, sent and received keepalives, and
 sent and received route refresh messages plus the current and maximum
 prefix count, the number of sent and received updates, sent and
-received withdraws, and finally the neighbor's address.
+received withdraws, the neighbor's address (or subnet, for a template),
+AS number, and finally description.
 .It Cm timers
 Show the BGP timers.
 .El
