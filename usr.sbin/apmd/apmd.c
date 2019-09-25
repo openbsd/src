@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.88 2019/07/25 07:29:44 kn Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.89 2019/09/25 20:34:11 bluhm Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -145,7 +145,7 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 {
 	struct apm_power_info bstate;
 	static struct apm_power_info last;
-	int acon = 0;
+	int acon = 0, priority = LOG_NOTICE;
 
 	if (fd == -1) {
 		if (pinfo) {
@@ -164,6 +164,9 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 	 * enough since last report, or asked to force a print */
 		if (bstate.ac_state == APM_AC_ON)
 			acon = 1;
+		if (bstate.battery_state == APM_BATT_CRITICAL &&
+		    bstate.battery_state != last.battery_state)
+			priority = LOG_EMERG;
 		if (force ||
 		    bstate.ac_state != last.ac_state ||
 		    bstate.battery_state != last.battery_state ||
@@ -182,7 +185,7 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 #else
 			if ((int)bstate.minutes_left > 0)
 #endif
-				logmsg(LOG_NOTICE, "battery status: %s. "
+				logmsg(priority, "battery status: %s. "
 				    "external power status: %s. "
 				    "estimated battery life %d%% (%u minutes)",
 				    battstate(bstate.battery_state),
@@ -190,7 +193,7 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 				    bstate.battery_life,
 				    bstate.minutes_left);
 			else
-				logmsg(LOG_NOTICE, "battery status: %s. "
+				logmsg(priority, "battery status: %s. "
 				    "external power status: %s. "
 				    "estimated battery life %d%%",
 				    battstate(bstate.battery_state),
