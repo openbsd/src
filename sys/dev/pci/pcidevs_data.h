@@ -29219,7 +29219,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    PCI_VENDOR_ZEINET, PCI_PRODUCT_ZEINET_1221,
 	    "1221",
 	},
-        {
+	{
 	    PCI_VENDOR_MEM_BALLOON, PCI_PRODUCT_MEM_BALLOON_MEMBALL,
 	    "MEMBALL",
 	},
