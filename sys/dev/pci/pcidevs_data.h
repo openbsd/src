@@ -29736,6 +29736,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Ziatech",
 	},
 	{
+	    PCI_VENDOR_MEM_BALLOON,
+	    "Memory Ballooning",
+	},
+	{
 	    PCI_VENDOR_CYCLONE,
 	    "Cyclone",
 	},
