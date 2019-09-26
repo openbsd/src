@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1895 2019/08/23 01:18:08 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1896 2019/09/26 12:55:53 brynet Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -758,6 +758,7 @@
 #define	PCI_PRODUCT_AMD_AMD64_17_CCP_2	0x1468		/* AMD64 17h Crypto */
 #define	PCI_PRODUCT_AMD_AMD64_17_PCIE_4	0x1470		/* AMD64 17h PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_17_PCIE_5	0x1471		/* AMD64 17h PCIE */
+#define	PCI_PRODUCT_AMD_AMD64_17_3X_RC	0x1480		/* AMD64 17h/3xh Root Complex */
 #define	PCI_PRODUCT_AMD_AMD64_14_HB	0x1510		/* AMD64 14h Host */
 #define	PCI_PRODUCT_AMD_AMD64_14_PCIE_1	0x1512		/* AMD64 14h PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_14_PCIE_2	0x1513		/* AMD64 14h PCIE */
