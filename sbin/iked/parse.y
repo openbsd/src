@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.83 2019/08/26 16:41:08 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.84 2019/09/26 07:33:36 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -354,10 +354,13 @@ int			 get_id_type(char *);
 uint8_t			 x2i(unsigned char *);
 int			 parsekey(unsigned char *, size_t, struct iked_auth *);
 int			 parsekeyfile(char *, struct iked_auth *);
+void			 iaw_free(struct ipsec_addr_wrap *);
 
 struct ipsec_transforms *ipsec_transforms;
 struct ipsec_filters *ipsec_filters;
 struct ipsec_mode *ipsec_mode;
+/* interface lookup routintes */
+struct ipsec_addr_wrap	*iftab;
 
 typedef struct {
 	union {
@@ -1630,6 +1633,9 @@ parse_config(const char *filename, struct iked *x_env)
 		free(sym);
 	}
 
+	iaw_free(iftab);
+	iftab = NULL;
+
 	return (errors ? -1 : 0);
 }
 
@@ -2183,10 +2189,6 @@ host_any(void)
 	ipa->tail = ipa;
 	return (ipa);
 }
-
-/* interface lookup routintes */
-
-struct ipsec_addr_wrap	*iftab;
 
 void
 ifa_load(void)
@@ -3040,7 +3042,17 @@ done:
 			free(p->prop_xforms);
 		free(p);
 	}
-
+	if (peers != NULL) {
+		iaw_free(peers->src);
+		iaw_free(peers->dst);
+		/* peers is static, cannot be freed */
+	}
+	if (hosts != NULL) {
+		iaw_free(hosts->src);
+		iaw_free(hosts->dst);
+		free(hosts);
+	}
+	iaw_free(ikecfg);
 	return (ret);
 }
 
@@ -3066,4 +3078,24 @@ create_user(const char *user, const char *pass)
 
 	rules++;
 	return (0);
+}
+
+void
+iaw_free(struct ipsec_addr_wrap *head)
+{
+	struct ipsec_addr_wrap *n, *cur;
+
+	if (head == NULL)
+		return;
+
+	for (n = head; n != NULL; ) {
+		cur = n;
+		n = n->next;
+		if (cur->srcnat != NULL) {
+			free(cur->srcnat->name);
+			free(cur->srcnat);
+		}
+		free(cur->name);
+		free(cur);
+	}
 }
