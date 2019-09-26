@@ -29220,10 +29220,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "1221",
 	},
 	{
-	    PCI_VENDOR_MEM_BALLOON, PCI_PRODUCT_MEM_BALLOON_MEMBALL,
-	    "MEMBALL",
-	},
-	{
 	    PCI_VENDOR_ZIATECH, PCI_PRODUCT_ZIATECH_ZT8905,
 	    "PCI-ST32",
 	},
@@ -29734,10 +29730,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ZIATECH,
 	    "Ziatech",
-	},
-	{
-	    PCI_VENDOR_MEM_BALLOON,
-	    "Memory Ballooning",
 	},
 	{
 	    PCI_VENDOR_CYCLONE,
