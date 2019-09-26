@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2019/08/20 16:01:52 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.17 2019/09/26 17:07:30 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -770,7 +770,9 @@ proc_parser_roa(struct entity *entp, int norev,
 	if (X509_verify_cert(ctx) <= 0) {
 		c = X509_STORE_CTX_get_error(ctx);
 		X509_STORE_CTX_cleanup(ctx);
-		warnx("%s: %s", entp->uri, X509_verify_cert_error_string(c));
+		if (verbose > 0 || c != X509_V_ERR_UNABLE_TO_GET_CRL)
+			warnx("%s: %s", entp->uri,
+			    X509_verify_cert_error_string(c));
 		X509_free(x509);
 		roa_free(roa);
 		return NULL;
