@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.479 2019/09/26 03:00:30 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.480 2019/09/26 12:59:01 brynet Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -103,6 +103,7 @@ amdpcib* at pci?		# AMD 8111 LPC bridge
 tcpcib*	at pci?			# Intel Atom E600 LPC bridge
 kate*	at pci?			# AMD K8 temperature sensor
 km*	at pci?			# AMD K10 temperature sensor
+ksmn*	at pci?			# AMD K17 temperature sensor
 amas*	at pci? disable		# AMD memory configuration
 pchtemp* at pci?		# Intel C610 termperature sensor
 ccp*	at pci?			# AMD Cryptographic Co-processor

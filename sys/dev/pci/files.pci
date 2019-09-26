@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.338 2019/08/05 08:33:38 stsp Exp $
+#	$OpenBSD: files.pci,v 1.339 2019/09/26 12:59:01 brynet Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -773,6 +773,11 @@ file	dev/pci/kate.c			kate
 device	km
 attach	km at pci
 file	dev/pci/km.c			km
+
+# AMD Family 15h/17h Temperature sensor over SMN
+device	ksmn
+attach	ksmn at pci
+file	dev/pci/ksmn.c			ksmn
 
 # Intel SOC GCU
 device	gcu
