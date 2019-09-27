@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.487 2019/08/14 11:57:21 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.488 2019/09/27 10:33:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2353,11 +2353,21 @@ rde_dump_prefix_upcall(struct rib_entry *re, void *ptr)
 	pt_getaddr(pt, &addr);
 	if (addr.aid != ctx->req.prefix.aid)
 		return;
-	if (ctx->req.prefixlen > pt->prefixlen)
-		return;
-	if (!prefix_compare(&ctx->req.prefix, &addr, ctx->req.prefixlen))
-		LIST_FOREACH(p, &re->prefix_h, entry.list.rib)
-			rde_dump_filter(p, &ctx->req);
+	if (ctx->req.flags & F_LONGER) {
+		if (ctx->req.prefixlen > pt->prefixlen)
+			return;
+		if (!prefix_compare(&ctx->req.prefix, &addr,
+		    ctx->req.prefixlen))
+			LIST_FOREACH(p, &re->prefix_h, entry.list.rib)
+				rde_dump_filter(p, &ctx->req);
+	} else {
+		if (ctx->req.prefixlen < pt->prefixlen)
+			return;
+		if (!prefix_compare(&addr, &ctx->req.prefix,
+		    pt->prefixlen))
+			LIST_FOREACH(p, &re->prefix_h, entry.list.rib)
+				rde_dump_filter(p, &ctx->req);
+	}
 }
 
 static void
@@ -2382,10 +2392,19 @@ rde_dump_adjout_prefix_upcall(struct prefix *p, void *ptr)
 	pt_getaddr(p->pt, &addr);
 	if (addr.aid != ctx->req.prefix.aid)
 		return;
-	if (ctx->req.prefixlen > p->pt->prefixlen)
-		return;
-	if (!prefix_compare(&ctx->req.prefix, &addr, ctx->req.prefixlen))
-		rde_dump_filter(p, &ctx->req);
+	if (ctx->req.flags & F_LONGER) {
+		if (ctx->req.prefixlen > p->pt->prefixlen)
+			return;
+		if (!prefix_compare(&ctx->req.prefix, &addr,
+		    ctx->req.prefixlen))
+			rde_dump_filter(p, &ctx->req);
+	} else {
+		if (ctx->req.prefixlen < p->pt->prefixlen)
+			return;
+		if (!prefix_compare(&addr, &ctx->req.prefix,
+		    p->pt->prefixlen))
+			rde_dump_filter(p, &ctx->req);
+	}
 }
 
 static int
@@ -2489,7 +2508,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 				goto nomem;
 			break;
 		case IMSG_CTL_SHOW_RIB_PREFIX:
-			if (req->flags & F_LONGER) {
+			if (req->flags & (F_LONGER|F_SHORTER)) {
 				if (prefix_dump_new(peer, ctx->req.aid,
 				    CTL_MSG_HIGH_MARK, ctx,
 				    rde_dump_adjout_prefix_upcall,
@@ -2553,7 +2572,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 			goto nomem;
 		break;
 	case IMSG_CTL_SHOW_RIB_PREFIX:
-		if (req->flags & F_LONGER) {
+		if (req->flags & (F_LONGER|F_SHORTER)) {
 			if (rib_dump_new(rid, ctx->req.aid,
 			    CTL_MSG_HIGH_MARK, ctx, rde_dump_prefix_upcall,
 			    rde_dump_done, rde_dump_throttled) == -1)
