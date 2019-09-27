@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.53 2019/01/20 20:28:37 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.54 2019/09/27 17:22:31 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -680,7 +680,7 @@ ch_get_params(struct ch_softc *sc, int flags)
 #ifdef CHANGER_DEBUG
 		printf("%s: could not sense element address page\n",
 		    sc->sc_dev.dv_xname);
-#endif
+#endif /* CHANGER_DEBUG */
 		dma_free(data, sizeof(*data));
 		return (error);
 	}
@@ -707,7 +707,7 @@ ch_get_params(struct ch_softc *sc, int flags)
 #ifdef CHANGER_DEBUG
 		printf("%s: could not sense capabilities page\n",
 		    sc->sc_dev.dv_xname);
-#endif
+#endif /* CHANGER_DEBUG */
 		dma_free(data, sizeof(*data));
 		return (error);
 	}

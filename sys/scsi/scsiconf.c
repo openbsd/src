@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.216 2019/09/27 16:03:45 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.217 2019/09/27 17:22:31 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 #include <sys/ioctl.h>
 #include <sys/scsiio.h>
 #include <dev/biovar.h>
-#endif
+#endif /* NBIO > 0 */
 
 /*
  * Declarations
@@ -91,7 +91,7 @@ int	scsibussubmatch(struct device *, void *, void *);
 
 #if NBIO > 0
 int	scsibus_bioctl(struct device *, u_long, caddr_t);
-#endif
+#endif /* NBIO > 0 */
 
 struct cfattach scsibus_ca = {
 	sizeof(struct scsibus_softc), scsibusmatch, scsibusattach,
@@ -167,7 +167,7 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 #if NBIO > 0
 	if (bio_register(&sb->sc_dev, scsibus_bioctl) != 0)
 		printf("%s: unable to register bio\n", sb->sc_dev.dv_xname);
-#endif
+#endif /* NBIO > 0 */
 
 	scsi_probe(sb, -1, -1);
 }
@@ -263,7 +263,7 @@ scsibusdetach(struct device *dev, int type)
 
 #if NBIO > 0
 	bio_unregister(&sb->sc_dev);
-#endif
+#endif /* NBIO > 0 */
 
 	error = scsi_detach(sb, -1, -1, type);
 	if (error != 0)
@@ -309,7 +309,7 @@ scsibus_bioctl(struct device *dev, u_long cmd, caddr_t addr)
 		return (ENOTTY);
 	}
 }
-#endif
+#endif /* NBIO > 0 */
 
 void
 scsi_probe_bus(struct scsibus_softc *sb)

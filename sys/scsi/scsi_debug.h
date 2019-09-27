@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_debug.h,v 1.14 2019/09/27 16:03:45 krw Exp $	*/
+/*	$OpenBSD: scsi_debug.h,v 1.15 2019/09/27 17:22:31 krw Exp $	*/
 /*	$NetBSD: scsi_debug.h,v 1.7 1996/10/12 23:23:16 christos Exp $	*/
 
 /*
@@ -22,16 +22,16 @@
 /* targets and LUNs we want to debug */
 #ifndef SCSIDEBUG_BUSES
 #define SCSIDEBUG_BUSES		0
-#endif
+#endif /* ~SCSIDBUG_BUSES */
 #ifndef SCSIDEBUG_TARGETS
 #define	SCSIDEBUG_TARGETS	0
-#endif
+#endif /* ~SCSIDEBUG_TARGETS */
 #ifndef SCSIDEBUG_LUNS
 #define	SCSIDEBUG_LUNS		0
-#endif
+#endif /* ~SCSIDEBUG_LUNS */
 #ifndef SCSIDEBUG_LEVEL
 #define	SCSIDEBUG_LEVEL		(SDEV_DB1|SDEV_DB2)
-#endif
+#endif /* ~SCSIDEBUG_LEVEL */
 
 extern u_int32_t scsidebug_buses, scsidebug_targets, scsidebug_luns;
 extern int scsidebug_level;

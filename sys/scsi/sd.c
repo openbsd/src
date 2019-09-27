@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.282 2019/09/20 15:35:42 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.283 2019/09/27 17:22:31 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -243,7 +243,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	default:
 		panic("sdattach: unknown result (%#x) from get_parms", result);
 		break;
-#endif
+#endif /* DIAGNOSTIC */
 	}
 
 	/*
@@ -767,7 +767,7 @@ sd_buf_done(struct scsi_xfer *xs)
 	case XS_SHORTSENSE:
 #ifdef SCSIDEBUG
 		scsi_sense_print_debug(xs);
-#endif
+#endif /* SCSIDEBUG */
 		error = sd_interpret_sense(xs);
 		if (error == 0) {
 			bp->b_error = 0;
@@ -1345,7 +1345,7 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	/* Make sure it was initialized. */
 	if ((sc->sc_link->flags & SDEV_MEDIA_LOADED) != SDEV_MEDIA_LOADED)
 		return ENXIO;
-#endif
+#endif /* 0 */
 
 	/* Convert to disk sectors.  Request must be a multiple of size. */
 	lp = sc->sc_dk.dk_label;
@@ -1394,7 +1394,7 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 		printf("sd%d: dump addr 0x%x, blk %lld\n", unit, va,
 		    (long long)blkno);
 		delay(500 * 1000);	/* half a second */
-#endif	/* SD_DUMP_NOT_TRUSTED */
+#endif	/* ~SD_DUMP_NOT_TRUSTED */
 
 		/* update block count */
 		totwrt -= nwrt;
@@ -1688,7 +1688,7 @@ sd_vpd_thin(struct sd_softc *sc, int flags)
 		sc->params.unmap_descs = 1; /* WRITE SAME 16 only does one */
 	} else
 		rv = EOPNOTSUPP;
-#endif
+#endif /* notyet */
 
 done:
 	dma_free(pg, sizeof(*pg));

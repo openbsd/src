@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.233 2019/09/27 16:03:45 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.234 2019/09/27 17:22:31 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ scsi_init(void)
 #if defined(SCSI_DELAY) && SCSI_DELAY > 0
 	/* Historical. Older buses may need a moment to stabilize. */
 	delay(1000000 * SCSI_DELAY);
-#endif
+#endif /* SCSI_DELAY && SCSI_DELAY > 0 */
 
 	/* Initialize the scsi_xfer pool. */
 	pool_init(&scsi_xfer_pool, sizeof(struct scsi_xfer), 0, IPL_BIO, 0,
@@ -274,7 +274,7 @@ scsi_iopool_destroy(struct scsi_iopool *iopl)
 #ifdef DIAGNOSTIC
 		else
 			panic("scsi_iopool_destroy: scsi_iohandler on pool");
-#endif
+#endif /* DIAGNOSTIC */
 	}
 	mtx_leave(&iopl->mtx);
 
@@ -296,7 +296,7 @@ scsi_default_put(void *iocookie, void *io)
 #ifdef DIAGNOSTIC
 	if (io != SCSI_IOPOOL_POISON)
 		panic("unexpected opening returned");
-#endif
+#endif /* DIAGNOSTIC */
 }
 
 /*
@@ -331,7 +331,7 @@ scsi_ioh_add(struct scsi_iohandler *ioh)
 		break;
 	default:
 		panic("scsi_ioh_add: unexpected state %u", ioh->q_state);
-#endif
+#endif /* DIAGNOSTIC */
 	}
 	mtx_leave(&iopl->mtx);
 
@@ -359,7 +359,7 @@ scsi_ioh_del(struct scsi_iohandler *ioh)
 		break;
 	default:
 		panic("scsi_ioh_del: unexpected state %u", ioh->q_state);
-#endif
+#endif /* DIAGNOSTIC */
 	}
 	mtx_leave(&iopl->mtx);
 
@@ -681,7 +681,7 @@ scsi_link_shutdown(struct scsi_link *link)
 #ifdef DIAGNOSTIC
 		else
 			panic("scsi_link_shutdown: scsi_xshandler on link");
-#endif
+#endif /* DIAGNOSTIC */
 	}
 
 	ioh = TAILQ_FIRST(&iopl->queue);
@@ -693,7 +693,7 @@ scsi_link_shutdown(struct scsi_link *link)
 		if (xsh->ioh.handler == scsi_xsh_ioh &&
 		    xsh->link == link)
 			panic("scsi_link_shutdown: scsi_xshandler on pool");
-#endif
+#endif /* DIAGNOSTIC */
 
 		if (xsh->ioh.handler == scsi_xs_get_done &&
 		    xsh->link == link) {
@@ -1307,7 +1307,7 @@ scsi_xs_exec(struct scsi_xfer *xs)
 		if (xs->datalen && (xs->flags & SCSI_DATA_OUT))
 			scsi_show_mem(xs->data, min(64, xs->datalen));
 	}
-#endif
+#endif /* SCSIDEBUG */
 
 	/* The adapter's scsi_cmd() is responsible for calling scsi_done(). */
 	KERNEL_LOCK();
@@ -1345,7 +1345,7 @@ scsi_xs_sync(struct scsi_xfer *xs)
 		panic("xs->cookie != NULL in scsi_xs_sync");
 	if (xs->done != NULL)
 		panic("xs->done != NULL in scsi_xs_sync");
-#endif
+#endif /* DIAGNOSTIC */
 
 	/*
 	 * If we cant sleep while waiting for completion, get the adapter to
@@ -1407,7 +1407,7 @@ scsi_xs_error(struct scsi_xfer *xs)
 	case XS_SHORTSENSE:
 #ifdef SCSIDEBUG
 		scsi_sense_print_debug(xs);
-#endif
+#endif /* SCSIDEBUG */
 		error = xs->sc_link->interpret_sense(xs);
 		SC_DEBUG(xs->sc_link, SDEV_DB3,
 		    ("scsi_interpret_sense returned %#x\n", error));
@@ -1606,7 +1606,7 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 	/* SCSIDEBUG would mean it has already been printed. */
 	if (skey && (xs->flags & SCSI_SILENT) == 0)
 		scsi_print_sense(xs);
-#endif /* SCSIDEBUG */
+#endif /* ~SCSIDEBUG */
 
 	return (error);
 }

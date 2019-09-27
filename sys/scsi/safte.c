@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.57 2019/09/19 17:48:21 krw Exp $ */
+/*	$OpenBSD: safte.c,v 1.58 2019/09/27 17:22:31 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -30,7 +30,7 @@
 
 #if NBIO > 0
 #include <dev/biovar.h>
-#endif
+#endif /* NBIO > 0 */
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -42,7 +42,7 @@
 int	safte_debug = 1;
 #else
 #define DPRINTF(x)	/* x */
-#endif
+#endif /* SAFTE_DEBUG */
 
 
 int	safte_match(struct device *, void *, void *);
@@ -82,7 +82,7 @@ struct safte_softc {
 #if NBIO > 0
 	int			sc_nslots;
 	u_int8_t		*sc_slots;
-#endif
+#endif /* NBIO > 0 */
 };
 
 struct cfattach safte_ca = {
@@ -101,7 +101,7 @@ void	safte_read_encstat(void *);
 #if NBIO > 0
 int	safte_ioctl(struct device *, u_long, caddr_t);
 int	safte_bio_blink(struct safte_softc *, struct bioc_blink *);
-#endif
+#endif /* NBIO > 0 */
 
 int64_t	safte_temp2uK(u_int8_t, int);
 
@@ -185,7 +185,7 @@ safte_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_nsensors = 0;
 #if NBIO > 0
 	sc->sc_nslots = 0;
-#endif
+#endif /* NBIO > 0 */
 
 	if (safte_read_config(sc) != 0) {
 		printf("%s: unable to read enclosure configuration\n",
@@ -217,7 +217,7 @@ safte_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_nslots = 0;
 	} else
 		i++;
-#endif
+#endif /* NBIO > 0 */
 
 	if (i) /* if we're doing something, then preinit encbuf and sensors */
 		safte_read_encstat(sc);
@@ -238,7 +238,7 @@ safte_detach(struct device *self, int flags)
 #if NBIO > 0
 	if (sc->sc_nslots > 0)
 		bio_unregister(self);
-#endif
+#endif /* NBIO > 0 */
 
 	if (sc->sc_nsensors > 0) {
 		sensordev_deinstall(&sc->sc_sensordev);
@@ -362,7 +362,7 @@ safte_read_config(struct safte_softc *sc)
 #if NBIO > 0
 	sc->sc_nslots = config->nslots;
 	sc->sc_slots = (u_int8_t *)(sc->sc_encbuf + j);
-#endif
+#endif /* NBIO > 0 */
 	j += config->nslots;
 
 	if (config->doorlock) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.165 2019/09/10 23:07:46 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.166 2019/09/27 17:22:31 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -959,7 +959,7 @@ st_buf_done(struct scsi_xfer *xs)
 	case XS_SHORTSENSE:
 #ifdef SCSIDEBUG
 		scsi_sense_print_debug(xs);
-#endif
+#endif /* SCSIDEBUG */
 		error = st_interpret_sense(xs);
 		if (error == 0) {
 			bp->b_error = 0;
@@ -1190,7 +1190,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 	case MTIOCHLOCATE:
 		error = st_setpos(st, 1, (u_int32_t *) arg);
 		break;
-#endif
+#endif /* 0 */
 
 	default:
 		error = scsi_do_ioctl(st->sc_link, cmd, arg, flag);

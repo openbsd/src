@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.36 2019/09/19 16:07:33 krw Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.37 2019/09/27 17:22:31 krw Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ struct scsi_initialization_pattern_descriptor {
 	u_int8_t pattern_length[2];
 #if 0
 	u_int8_t pattern[...];
-#endif
+#endif /* 0 */
 };
 
 /*

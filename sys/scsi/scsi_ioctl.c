@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.54 2018/04/27 08:08:06 guenther Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.55 2019/09/27 17:22:31 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 	case XS_SENSE:
 #ifdef SCSIDEBUG
 		scsi_sense_print_debug(xs);
-#endif
+#endif /* SCSIDEBUG */
 		screq->senselen_used = min(sizeof(xs->sense),
 		    sizeof(screq->sense));
 		memcpy(screq->sense, &xs->sense, screq->senselen_used);
@@ -159,7 +159,7 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 	case XS_SHORTSENSE:
 #ifdef SCSIDEBUG
 		scsi_sense_print_debug(xs);
-#endif
+#endif /* SCSIDEBUG */
 		printf("XS_SHORTSENSE\n");
 		screq->senselen_used = min(sizeof(xs->sense),
 		    sizeof(screq->sense));
@@ -267,7 +267,7 @@ scsi_ioc_ata_cmd(struct scsi_link *link, atareq_t *atareq)
 	case XS_SHORTSENSE:
 #ifdef SCSIDEBUG
 		scsi_sense_print_debug(xs);
-#endif
+#endif /* SCSIDEBUG */
 		/* XXX this is not right */
 	case XS_NOERROR:
 		atareq->retsts = ATACMD_OK;
@@ -356,7 +356,7 @@ scsi_do_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 	default:
 #ifdef DIAGNOSTIC
 		panic("scsi_do_ioctl: impossible cmd (%#lx)", cmd);
-#endif
+#endif /* DIAGNOSTIC */
 		return (0);
 	}
 }

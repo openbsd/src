@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.57 2019/09/01 15:03:32 krw Exp $ */
+/*	$OpenBSD: ses.c,v 1.58 2019/09/27 17:22:31 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -30,7 +30,7 @@
 
 #if NBIO > 0
 #include <dev/biovar.h>
-#endif
+#endif /* NBIO > 0 */
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -44,7 +44,7 @@ int	sesdebug = 2;
 #else
 #define DPRINTF(x...)		/* x */
 #define DPRINTFN(n,x...)	/* n: x */
-#endif
+#endif /* SES_DEBUG */
 
 int	ses_match(struct device *, void *, void *);
 void	ses_attach(struct device *, struct device *, void *);
@@ -64,7 +64,7 @@ struct ses_slot {
 
 	TAILQ_ENTRY(ses_slot)	sl_entry;
 };
-#endif
+#endif /* NBIO > 0 */
 
 struct ses_softc {
 	struct device		sc_dev;
@@ -81,7 +81,7 @@ struct ses_softc {
 
 #if NBIO > 0
 	TAILQ_HEAD(, ses_slot)	sc_slots;
-#endif
+#endif /* NBIO > 0 */
 	TAILQ_HEAD(, ses_sensor) sc_sensors;
 	struct ksensordev	sc_sensordev;
 	struct sensor_task	*sc_sensortask;
@@ -108,7 +108,7 @@ void	ses_refresh_sensors(void *);
 int	ses_ioctl(struct device *, u_long, caddr_t);
 int	ses_write_config(struct ses_softc *);
 int	ses_bio_blink(struct ses_softc *, struct bioc_blink *);
-#endif
+#endif /* NBIO > 0 */
 
 void	ses_psu2sensor(struct ses_softc *, struct ses_sensor *);
 void	ses_cool2sensor(struct ses_softc *, struct ses_sensor *);
@@ -117,7 +117,7 @@ void	ses_temp2sensor(struct ses_softc *, struct ses_sensor *);
 #ifdef SES_DEBUG
 void	ses_dump_enc_desc(struct ses_enc_desc *);
 char	*ses_dump_enc_string(u_char *, ssize_t);
-#endif
+#endif /* SES_DEBUG */
 
 int
 ses_match(struct device *parent, void *match, void *aux)
@@ -149,7 +149,7 @@ ses_attach(struct device *parent, struct device *self, void *aux)
 	struct ses_sensor		*sensor;
 #if NBIO > 0
 	struct ses_slot			*slot;
-#endif
+#endif /* NBIO > 0 */
 
 	sc->sc_link = sa->sa_sc_link;
 	sa->sa_sc_link->device_softc = sc;
@@ -200,12 +200,12 @@ ses_attach(struct device *parent, struct device *self, void *aux)
 			free(slot, M_DEVBUF, sizeof(*slot));
 		}
 	}
-#endif
+#endif /* NBIO > 0 */
 
 	if (TAILQ_EMPTY(&sc->sc_sensors)
 #if NBIO > 0
 	    && TAILQ_EMPTY(&sc->sc_slots)
-#endif
+#endif /* NBIO > 0 */
 	    ) {
 		dma_free(sc->sc_buf, sc->sc_buflen);
 		sc->sc_buf = NULL;
@@ -219,7 +219,7 @@ ses_detach(struct device *self, int flags)
 	struct ses_sensor		*sensor;
 #if NBIO > 0
 	struct ses_slot			*slot;
-#endif
+#endif /* NBIO > 0 */
 
 	rw_enter_write(&sc->sc_lock);
 
@@ -232,7 +232,7 @@ ses_detach(struct device *self, int flags)
 			free(slot, M_DEVBUF, sizeof(*slot));
 		}
 	}
-#endif
+#endif /* NBIO > 0 */
 
 	if (!TAILQ_EMPTY(&sc->sc_sensors)) {
 		sensordev_deinstall(&sc->sc_sensordev);
@@ -262,7 +262,7 @@ ses_read_config(struct ses_softc *sc)
 	struct ses_type_desc *tdh, *tdlist;
 #ifdef SES_DEBUG
 	struct ses_enc_desc *desc;
-#endif
+#endif /* SES_DEBUG */
 	struct ses_enc_hdr *enc;
 	struct scsi_xfer *xs;
 	u_char *buf, *p;
@@ -406,7 +406,7 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 	struct ses_sensor		*sensor;
 #if NBIO > 0
 	struct ses_slot			*slot;
-#endif
+#endif /* NBIO > 0 */
 	enum sensor_type		stype;
 	char				*fmt;
 	int				i, j;
@@ -420,7 +420,7 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 	TAILQ_INIT(&sc->sc_sensors);
 #if NBIO > 0
 	TAILQ_INIT(&sc->sc_slots);
-#endif
+#endif /* NBIO > 0 */
 
 	status = (struct ses_status *)(sc->sc_buf + SES_STAT_HDRLEN);
 	for (i = 0; i < ntypes; i++) {
@@ -454,7 +454,7 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 				    sl_entry);
 
 				continue;
-#endif
+#endif /* NBIO > 0 */
 
 			case SES_T_POWERSUPPLY:
 				stype = SENSOR_INDICATOR;
@@ -501,7 +501,7 @@ error:
 		TAILQ_REMOVE(&sc->sc_slots, slot, sl_entry);
 		free(slot, M_DEVBUF, sizeof(*slot));
 	}
-#endif
+#endif /* NBIO > 0 */
 	while (!TAILQ_EMPTY(&sc->sc_sensors)) {
 		sensor = TAILQ_FIRST(&sc->sc_sensors);
 		TAILQ_REMOVE(&sc->sc_sensors, sensor, se_entry);
@@ -686,7 +686,7 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 
 	return (0);
 }
-#endif
+#endif /* NBIO > 0 */
 
 void
 ses_psu2sensor(struct ses_softc *sc, struct ses_sensor *s)
@@ -763,7 +763,7 @@ ses_dump_enc_desc(struct ses_enc_desc *desc)
 	memset(str, 0, sizeof(str));
 	memcpy(str, desc->logical_id, sizeof(desc->logical_id));
 	DPRINTF("logical_id: %s", str);
-#endif
+#endif /* 0 */
 
 	memset(str, 0, sizeof(str));
 	memcpy(str, desc->vendor_id, sizeof(desc->vendor_id));

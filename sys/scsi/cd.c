@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.227 2019/09/01 15:03:32 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.228 2019/09/27 17:22:31 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ int	dvd_read_struct(struct cd_softc *, union dvd_struct *);
 
 #if defined(__macppc__)
 int	cd_eject(void);
-#endif
+#endif /* __macppc__ */
 
 struct cfattach cd_ca = {
 	sizeof(struct cd_softc), cdmatch, cdattach,
@@ -168,7 +168,7 @@ const struct scsi_inquiry_pattern cd_patterns[] = {
 #if 0
 	{T_CDROM, T_REMOV, /* more luns */
 	 "PIONEER ", "CD-ROM DRM-600  ", ""},
-#endif
+#endif /* 0 */
 };
 
 #define cdlookup(unit) (struct cd_softc *)disk_lookup(&cd_cd, (unit))
@@ -623,7 +623,7 @@ cd_buf_done(struct scsi_xfer *xs)
 	case XS_SHORTSENSE:
 #ifdef SCSIDEBUG
 		scsi_sense_print_debug(xs);
-#endif
+#endif /* SCSIDEBUG */
 		error = cd_interpret_sense(xs);
 		if (error == 0) {
 			bp->b_error = 0;
@@ -920,7 +920,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 #if BYTE_ORDER == BIG_ENDIAN
 					swap16_multi((u_int16_t *)&cte->addr,
 					    sizeof(cte->addr) / 2);
-#endif
+#endif /* BYTE_ORDER == BIG_ENDIAN */
 				} else
 					cte->addr.lba = betoh32(cte->addr.lba);
 			}
@@ -961,7 +961,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 #if BYTE_ORDER == BIG_ENDIAN
 			swap16_multi((u_int16_t *)&cte->addr,
 			    sizeof(cte->addr) / 2);
-#endif
+#endif /* BYTE_ORDER == BIG_ENDIAN */
 		} else
 			cte->addr.lba = betoh32(cte->addr.lba);
 		if (sc->sc_link->quirks & ADEV_LITTLETOC)
@@ -2246,4 +2246,4 @@ cd_eject(void)
 
 	return (error);
 }
-#endif
+#endif /* __macppc__ */
