@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsi.h,v 1.8 2011/04/26 21:30:14 claudio Exp $ */
+/*	$OpenBSD: iscsi.h,v 1.9 2019/09/27 23:07:42 krw Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _SYS_SCSI_ISCSI_H
-#define _SYS_SCSI_ISCSI_H
+#ifndef _SCSI_ISCSI_H
+#define _SCSI_ISCSI_H
 
 struct iscsi_pdu {
 	u_int8_t	opcode;
@@ -567,4 +567,4 @@ struct iscsi_pdu_nop_in {
 	u_int8_t	_reserved2[12];
 } __packed;
 
-#endif /* _SYS_SCSI_ISCSI_H */
+#endif /* _SCSI_ISCSI_H */

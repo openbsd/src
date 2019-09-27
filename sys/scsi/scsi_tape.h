@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_tape.h,v 1.10 2019/09/05 13:22:31 krw Exp $	*/
+/*	$OpenBSD: scsi_tape.h,v 1.11 2019/09/27 23:07:42 krw Exp $	*/
 /*	$NetBSD: scsi_tape.h,v 1.9 1996/05/24 02:04:47 thorpej Exp $	*/
 
 /*
@@ -51,8 +51,8 @@
  * SCSI tape interface description
  */
 
-#ifndef	_SCSI_TAPE_H_
-#define _SCSI_TAPE_H_ 1
+#ifndef	_SCSI_SCSI_TAPE_H
+#define _SCSI_SCSI_TAPE_H
 
 /*
  * SCSI command formats
@@ -237,4 +237,4 @@ struct scsi_tape_dev_conf_page {
 #define QIC_3080	0x29
 #define QIC_3095	0x45
 
-#endif /* _SCSI_TAPE_H_ */
+#endif /* _SCSI_SCSI_TAPE_H */

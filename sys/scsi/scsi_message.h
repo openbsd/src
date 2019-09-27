@@ -1,4 +1,7 @@
-/*	$OpenBSD: scsi_message.h,v 1.9 2009/11/01 23:06:03 fgsch Exp $	*/
+/*	$OpenBSD: scsi_message.h,v 1.10 2019/09/27 23:07:42 krw Exp $	*/
+
+#ifndef _SCSI_SCSI_MESSAGE_H
+#define _SCSI_SCSI_MESSAGE_H
 
 #define IS1BYTEMSG(m)	(((m) != 0x01 && (m) < 0x20) || (m) >= 0x80)
 #define IS2BYTEMSG(m)	(((m) & 0xf0) == 0x20)
@@ -60,3 +63,5 @@
 #define MSG_EXT_PPR_PROT_QAS	0x04
 #define MSG_EXT_PPR_PROT_DT	0x02
 #define MSG_EXT_PPR_PROT_IUS	0x01
+
+#endif /* _SCSI_SCSI_MESSAGE_H */

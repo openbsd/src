@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_changer.h,v 1.6 2015/06/07 19:13:27 krw Exp $	*/
+/*	$OpenBSD: scsi_changer.h,v 1.7 2019/09/27 23:07:42 krw Exp $	*/
 /*	$NetBSD: scsi_changer.h,v 1.7 1996/04/03 00:25:48 thorpej Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #ifndef _SCSI_SCSI_CHANGER_H
-#define _SCSI_SCSI_CHANGER_H 1
+#define _SCSI_SCSI_CHANGER_H
 
 /*
  * SCSI command format

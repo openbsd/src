@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.59 2019/09/21 00:12:15 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.60 2019/09/27 23:07:42 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #ifndef	_SCSI_SCSI_ALL_H
-#define _SCSI_SCSI_ALL_H 1
+#define _SCSI_SCSI_ALL_H
 
 /*
  * SCSI command format

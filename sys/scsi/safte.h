@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.h,v 1.7 2019/09/27 17:22:31 krw Exp $ */
+/*	$OpenBSD: safte.h,v 1.8 2019/09/27 23:07:42 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _SCSI_SAFTE_H_
-#define _SCSI_SAFTE_H_
+#ifndef _SCSI_SAFTE_H
+#define _SCSI_SAFTE_H
 
 #define SAFTE_EXTRA_OFFSET	0x05
 /* scsi_inquiry_data.extra */
@@ -174,4 +174,4 @@ struct safte_slotop {
 	u_int8_t	reserved[61];	/* zero these */
 } __packed;
 
-#endif /* _SCSI_SAFTE_H_ */
+#endif /* _SCSI_SAFTE_H */

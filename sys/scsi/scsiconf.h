@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.175 2019/09/27 16:03:45 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.176 2019/09/27 23:07:42 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -47,8 +47,8 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
 
-#ifndef	SCSI_SCSICONF_H
-#define SCSI_SCSICONF_H
+#ifndef	_SCSI_SCSICONF_H
+#define _SCSI_SCSICONF_H
 
 #include <sys/queue.h>
 #include <sys/timeout.h>
@@ -582,4 +582,4 @@ int	scsi_pending_finish(struct mutex *, u_int *);
 void	scsi_cmd_rw_decode(struct scsi_generic *, u_int64_t *, u_int32_t *);
 
 #endif /* _KERNEL */
-#endif /* SCSI_SCSICONF_H */
+#endif /* _SCSI_SCSICONF_H */

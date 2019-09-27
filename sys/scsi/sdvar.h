@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.42 2013/10/02 18:59:04 krw Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.43 2019/09/27 23:07:42 krw Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -47,6 +47,9 @@
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  */
 
+#ifndef _SCSI_SDVAR_H
+#define _SCSI_SDVAR_H
+
 #ifdef _KERNEL
 struct sd_softc {
 	struct device		sc_dev;
@@ -79,3 +82,4 @@ struct sd_softc {
 #define	SDGP_RESULT_OFFLINE	1	/* no media, or otherwise losing */
 
 #endif /* _KERNEL */
+#endif /* _SCSI_SDVAR_H */

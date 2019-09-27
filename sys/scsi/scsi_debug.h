@@ -1,11 +1,11 @@
-/*	$OpenBSD: scsi_debug.h,v 1.15 2019/09/27 17:22:31 krw Exp $	*/
+/*	$OpenBSD: scsi_debug.h,v 1.16 2019/09/27 23:07:42 krw Exp $	*/
 /*	$NetBSD: scsi_debug.h,v 1.7 1996/10/12 23:23:16 christos Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
  */
 #ifndef	_SCSI_SCSI_DEBUG_H
-#define _SCSI_SCSI_DEBUG_H 1
+#define _SCSI_SCSI_DEBUG_H
 #ifdef _KERNEL
 
 /*

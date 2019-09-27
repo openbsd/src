@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.37 2019/09/27 17:22:31 krw Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.38 2019/09/27 23:07:42 krw Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #ifndef	_SCSI_SCSI_DISK_H
-#define _SCSI_SCSI_DISK_H 1
+#define _SCSI_SCSI_DISK_H
 
 /*
  * XXX Is this also used by ATAPI?

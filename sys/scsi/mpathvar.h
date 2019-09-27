@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpathvar.h,v 1.9 2013/08/27 00:53:10 dlg Exp $ */
+/*	$OpenBSD: mpathvar.h,v 1.10 2019/09/27 23:07:42 krw Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _SYS_SCSI_MPATH_H_
-#define _SYS_SCSI_MPATH_H_
+#ifndef _SCSI_MPATHVAR_H
+#define _SCSI_MPATHVAR_H
 
 struct mpath_group;
 
@@ -56,4 +56,4 @@ void			 mpath_start(struct mpath_path *, struct scsi_xfer *);
 
 struct device		*mpath_bootdv(struct device *);
 
-#endif /* _SYS_SCSI_MPATH_H_ */
+#endif /* _SCSI_MPATHVAR_H */
