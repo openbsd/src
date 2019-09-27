@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.206 2019/08/14 11:57:21 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.207 2019/09/27 14:50:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -256,7 +256,7 @@ rib_free(struct rib *rib)
 				struct bgpd_addr addr;
 
 				pt_getaddr(p->pt, &addr);
-				/* Commit is done in peer_down() */
+				/* Commit is done in rde_reload_done() */
 				rde_send_pftable(asp->pftableid, &addr,
 				    p->pt->prefixlen, 1);
 			}
@@ -971,10 +971,8 @@ prefix_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
 	struct rde_community	*comm, *ncomm = &state->communities;
 	struct prefix		*p;
 
-	if (nasp->pftableid) {
+	if (nasp->pftableid)
 		rde_send_pftable(nasp->pftableid, prefix, prefixlen, 0);
-		rde_send_pftable_commit();
-	}
 
 	/*
 	 * First try to find a prefix in the specified RIB.
@@ -1113,11 +1111,9 @@ prefix_withdraw(struct rib *rib, struct rde_peer *peer,
 		return (0);
 
 	asp = prefix_aspath(p);
-	if (asp && asp->pftableid) {
+	if (asp && asp->pftableid)
 		/* only prefixes in the local RIB were pushed into pf */
 		rde_send_pftable(asp->pftableid, prefix, prefixlen, 1);
-		rde_send_pftable_commit();
-	}
 
 	prefix_destroy(p);
 
