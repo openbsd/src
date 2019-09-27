@@ -1,5 +1,5 @@
-/* $OpenBSD: viomb.c,v 1.5 2019/05/26 15:20:04 sf Exp $	 */
-/* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
+/* $OpenBSD: memball.c,v 1.5 2019/05/26 15:20:04 sf Exp $	 */
+/* $NetBSD: memball.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 
 /*
  * Copyright (c) 2012 Talypov Dinar <dinar@i-nk.ru>
@@ -46,11 +46,11 @@
 
 #define	DEVNAME(sc)	sc->sc_dev.dv_xname
 #if VIRTIO_DEBUG
-#define VIOMBDEBUG(sc, format, args...)					  \
+#define MEMBALLDEBUG(sc, format, args...)					  \
 		do { printf("%s: " format, sc->sc_dev.dv_xname, ##args);} \
 		while (0)
 #else
-#define VIOMBDEBUG(...)
+#define MEMBALLDEBUG(...)
 #endif
 
 /* flags used to specify kind of operation,
@@ -71,7 +71,7 @@
 #define VIRTIO_BALLOON_F_MUST_TELL_HOST (1ULL<<0)
 #define VIRTIO_BALLOON_F_STATS_VQ	(1ULL<<1)
 
-static const struct virtio_feature_name viomb_feature_names[] = {
+static const struct virtio_feature_name memball_feature_names[] = {
 #if VIRTIO_DEBUG
 	{VIRTIO_BALLOON_F_MUST_TELL_HOST, "TellHost"},
 	{VIRTIO_BALLOON_F_STATS_VQ, "StatVQ"},
@@ -89,7 +89,7 @@ struct balloon_req {
 	u_int32_t	*bl_pages;
 };
 
-struct viomb_softc {
+struct memball_softc {
 	struct device		sc_dev;
 	struct virtio_softc	*sc_virtio;
 	struct virtqueue	sc_vq[2];
@@ -103,27 +103,27 @@ struct viomb_softc {
 	struct ksensordev	sc_sensdev;
 };
 
-int	viomb_match(struct device *, void *, void *);
-void	viomb_attach(struct device *, struct device *, void *);
-void	viomb_worker(void *);
-void	viomb_inflate(struct viomb_softc *);
-void	viomb_deflate(struct viomb_softc *);
-int	viomb_config_change(struct virtio_softc *);
-void	viomb_read_config(struct viomb_softc *);
-int	viomb_vq_dequeue(struct virtqueue *);
-int	viomb_inflate_intr(struct virtqueue *);
-int	viomb_deflate_intr(struct virtqueue *);
+int	memball_match(struct device *, void *, void *);
+void	memball_attach(struct device *, struct device *, void *);
+void	memball_worker(void *);
+void	memball_inflate(struct memball_softc *);
+void	memball_deflate(struct memball_softc *);
+int	memball_config_change(struct virtio_softc *);
+void	memball_read_config(struct memball_softc *);
+int	memball_vq_dequeue(struct virtqueue *);
+int	memball_inflate_intr(struct virtqueue *);
+int	memball_deflate_intr(struct virtqueue *);
 
-struct cfattach viomb_ca = {
-	sizeof(struct viomb_softc), viomb_match, viomb_attach
+struct cfattach memball_ca = {
+	sizeof(struct memball_softc), memball_match, memball_attach
 };
 
-struct cfdriver viomb_cd = {
-	NULL, "viomb", DV_DULL
+struct cfdriver memball_cd = {
+	NULL, "memball", DV_DULL
 };
 
 int
-viomb_match(struct device *parent, void *match, void *aux)
+memball_match(struct device *parent, void *match, void *aux)
 {
 	struct virtio_softc *va = aux;
 	if (va->sc_childdevid == PCI_PRODUCT_VIRTIO_BALLOON)
@@ -132,9 +132,9 @@ viomb_match(struct device *parent, void *match, void *aux)
 }
 
 void
-viomb_attach(struct device *parent, struct device *self, void *aux)
+memball_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct viomb_softc *sc = (struct viomb_softc *)self;
+	struct memball_softc *sc = (struct memball_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
 	int i;
 
@@ -156,10 +156,10 @@ viomb_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_nvqs = 0;
 	vsc->sc_child = self;
 	vsc->sc_ipl = IPL_BIO;
-	vsc->sc_config_change = viomb_config_change;
+	vsc->sc_config_change = memball_config_change;
 
 	vsc->sc_driver_features = VIRTIO_BALLOON_F_MUST_TELL_HOST;
-	if (virtio_negotiate_features(vsc, viomb_feature_names) != 0)
+	if (virtio_negotiate_features(vsc, memball_feature_names) != 0)
 		goto err;
 
 	if ((virtio_alloc_vq(vsc, &sc->sc_vq[VQ_INFLATE], VQ_INFLATE,
@@ -171,12 +171,12 @@ viomb_attach(struct device *parent, struct device *self, void *aux)
 		goto err;
 	vsc->sc_nvqs++;
 
-	sc->sc_vq[VQ_INFLATE].vq_done = viomb_inflate_intr;
-	sc->sc_vq[VQ_DEFLATE].vq_done = viomb_deflate_intr;
+	sc->sc_vq[VQ_INFLATE].vq_done = memball_inflate_intr;
+	sc->sc_vq[VQ_DEFLATE].vq_done = memball_deflate_intr;
 	virtio_start_vq_intr(vsc, &sc->sc_vq[VQ_INFLATE]);
 	virtio_start_vq_intr(vsc, &sc->sc_vq[VQ_DEFLATE]);
 
-	viomb_read_config(sc);
+	memball_read_config(sc);
 	TAILQ_INIT(&sc->sc_balloon_pages);
 
 	if ((sc->sc_req.bl_pages = dma_alloc(sizeof(u_int32_t) * PGS_PER_REQ,
@@ -198,10 +198,10 @@ viomb_attach(struct device *parent, struct device *self, void *aux)
 		goto err_dmamap;
 	}
 
-	sc->sc_taskq = taskq_create("viomb", 1, IPL_BIO, 0);
+	sc->sc_taskq = taskq_create("memball", 1, IPL_BIO, 0);
 	if (sc->sc_taskq == NULL)
 		goto err_dmamap;
-	task_set(&sc->sc_task, viomb_worker, sc);
+	task_set(&sc->sc_task, memball_worker, sc);
 
 	strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensdev.xname));
@@ -237,9 +237,9 @@ err:
  * Config change
  */
 int
-viomb_config_change(struct virtio_softc *vsc)
+memball_config_change(struct virtio_softc *vsc)
 {
-	struct viomb_softc *sc = (struct viomb_softc *)vsc->sc_child;
+	struct memball_softc *sc = (struct memball_softc *)vsc->sc_child;
 
 	task_add(sc->sc_taskq, &sc->sc_task);
 
@@ -247,22 +247,22 @@ viomb_config_change(struct virtio_softc *vsc)
 }
 
 void
-viomb_worker(void *arg1)
+memball_worker(void *arg1)
 {
-	struct viomb_softc *sc = (struct viomb_softc *)arg1;
+	struct memball_softc *sc = (struct memball_softc *)arg1;
 	int s;
 
 	s = splbio();
-	viomb_read_config(sc);
+	memball_read_config(sc);
 	if (sc->sc_npages > sc->sc_actual){
-		VIOMBDEBUG(sc, "inflating balloon from %u to %u.\n",
+		MEMBALLDEBUG(sc, "inflating balloon from %u to %u.\n",
 			   sc->sc_actual, sc->sc_npages);
-		viomb_inflate(sc);
+		memball_inflate(sc);
 		}
 	else if (sc->sc_npages < sc->sc_actual){
-		VIOMBDEBUG(sc, "deflating balloon from %u to %u.\n",
+		MEMBALLDEBUG(sc, "deflating balloon from %u to %u.\n",
 			   sc->sc_actual, sc->sc_npages);
-		viomb_deflate(sc);
+		memball_deflate(sc);
 	}
 
 	sc->sc_sens[0].value = sc->sc_npages << PAGE_SHIFT;
@@ -272,7 +272,7 @@ viomb_worker(void *arg1)
 }
 
 void
-viomb_inflate(struct viomb_softc *sc)
+memball_inflate(struct memball_softc *sc)
 {
 	struct virtio_softc *vsc = (struct virtio_softc *)sc->sc_virtio;
 	struct balloon_req *b;
@@ -323,7 +323,7 @@ err:
 }
 
 void
-viomb_deflate(struct viomb_softc *sc)
+memball_deflate(struct memball_softc *sc)
 {
 	struct virtio_softc *vsc = (struct virtio_softc *)sc->sc_virtio;
 	struct balloon_req *b;
@@ -379,7 +379,7 @@ err:
 }
 
 void
-viomb_read_config(struct viomb_softc *sc)
+memball_read_config(struct memball_softc *sc)
 {
 	struct virtio_softc *vsc = (struct virtio_softc *)sc->sc_virtio;
 	u_int32_t reg;
@@ -389,15 +389,15 @@ viomb_read_config(struct viomb_softc *sc)
 	sc->sc_npages = letoh32(reg);
 	reg = virtio_read_device_config_4(vsc, VIRTIO_BALLOON_CONFIG_ACTUAL);
 	sc->sc_actual = letoh32(reg);
-	VIOMBDEBUG(sc, "sc->sc_npages %u, sc->sc_actual %u\n",
+	MEMBALLDEBUG(sc, "sc->sc_npages %u, sc->sc_actual %u\n",
 		   sc->sc_npages, sc->sc_actual);
 }
 
 int
-viomb_vq_dequeue(struct virtqueue *vq)
+memball_vq_dequeue(struct virtqueue *vq)
 {
 	struct virtio_softc *vsc = vq->vq_owner;
-	struct viomb_softc *sc = (struct viomb_softc *)vsc->sc_child;
+	struct memball_softc *sc = (struct memball_softc *)vsc->sc_child;
 	int r, slot;
 
 	r = virtio_dequeue(vsc, vq, &slot, NULL);
@@ -413,15 +413,15 @@ viomb_vq_dequeue(struct virtqueue *vq)
  * interrupt handling for vq's
  */
 int
-viomb_inflate_intr(struct virtqueue *vq)
+memball_inflate_intr(struct virtqueue *vq)
 {
 	struct virtio_softc *vsc = vq->vq_owner;
-	struct viomb_softc *sc = (struct viomb_softc *)vsc->sc_child;
+	struct memball_softc *sc = (struct memball_softc *)vsc->sc_child;
 	struct balloon_req *b;
 	struct vm_page *p;
 	u_int64_t nvpages;
 
-	if (viomb_vq_dequeue(vq))
+	if (memball_vq_dequeue(vq))
 		return(1);
 
 	b = &sc->sc_req;
@@ -434,11 +434,11 @@ viomb_inflate_intr(struct virtqueue *vq)
 		TAILQ_REMOVE(&b->bl_pglist, p, pageq);
 		TAILQ_INSERT_TAIL(&sc->sc_balloon_pages, p, pageq);
 	}
-	VIOMBDEBUG(sc, "updating sc->sc_actual from %u to %llu\n",
+	MEMBALLDEBUG(sc, "updating sc->sc_actual from %u to %llu\n",
 		   sc->sc_actual, sc->sc_actual + nvpages);
 	virtio_write_device_config_4(vsc, VIRTIO_BALLOON_CONFIG_ACTUAL,
 				     sc->sc_actual + nvpages);
-	viomb_read_config(sc);
+	memball_read_config(sc);
 
 	/* if we have more work to do, add it to the task list */
 	if (sc->sc_npages > sc->sc_actual)
@@ -448,14 +448,14 @@ viomb_inflate_intr(struct virtqueue *vq)
 }
 
 int
-viomb_deflate_intr(struct virtqueue *vq)
+memball_deflate_intr(struct virtqueue *vq)
 {
 	struct virtio_softc *vsc = vq->vq_owner;
-	struct viomb_softc *sc = (struct viomb_softc *)vsc->sc_child;
+	struct memball_softc *sc = (struct memball_softc *)vsc->sc_child;
 	struct balloon_req *b;
 	u_int64_t nvpages;
 
-	if (viomb_vq_dequeue(vq))
+	if (memball_vq_dequeue(vq))
 		return(1);
 
 	b = &sc->sc_req;
@@ -467,11 +467,11 @@ viomb_deflate_intr(struct virtqueue *vq)
 	if (virtio_has_feature(vsc, VIRTIO_BALLOON_F_MUST_TELL_HOST))
 		uvm_pglistfree(&b->bl_pglist);
 
-	VIOMBDEBUG(sc, "updating sc->sc_actual from %u to %llu\n",
+	MEMBALLDEBUG(sc, "updating sc->sc_actual from %u to %llu\n",
 		sc->sc_actual, sc->sc_actual - nvpages);
 	virtio_write_device_config_4(vsc, VIRTIO_BALLOON_CONFIG_ACTUAL,
 				     sc->sc_actual - nvpages);
-	viomb_read_config(sc);
+	memball_read_config(sc);
 
 	/* if we have more work to do, add it to tasks list */
 	if (sc->sc_npages < sc->sc_actual)
