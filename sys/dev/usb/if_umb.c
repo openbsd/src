@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.24 2019/08/26 15:23:01 claudio Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.25 2019/09/27 14:58:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -37,6 +37,7 @@
 #include <net/if.h>
 #include <net/if_var.h>
 #include <net/if_types.h>
+#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -153,6 +154,9 @@ int		 umb_decode_pin(struct umb_softc *, void *, int);
 int		 umb_decode_packet_service(struct umb_softc *, void *, int);
 int		 umb_decode_signal_state(struct umb_softc *, void *, int);
 int		 umb_decode_connect_info(struct umb_softc *, void *, int);
+void		 umb_clear_addr(struct umb_softc *);
+int		 umb_add_inet_config(struct umb_softc *, struct in_addr, u_int,
+		    struct in_addr);
 int		 umb_decode_ip_configuration(struct umb_softc *, void *, int);
 void		 umb_rx(struct umb_softc *);
 void		 umb_rxeof(struct usbd_xfer *, void *, usbd_status);
@@ -932,8 +936,6 @@ umb_state_task(void *arg)
 {
 	struct umb_softc *sc = arg;
 	struct ifnet *ifp = GET_IFP(sc);
-	struct ifreq ifr;
-	struct in_aliasreq ifra;
 	int	 s;
 	int	 state;
 
@@ -961,21 +963,6 @@ umb_state_task(void *arg)
 			    ? "up" : "down",
 			    LINK_STATE_IS_UP(state) ? "up" : "down");
 		ifp->if_link_state = state;
-		if (!LINK_STATE_IS_UP(state)) {
-			/*
-			 * Purge any existing addresses
-			 */
-			memset(sc->sc_info.ipv4dns, 0,
-			    sizeof (sc->sc_info.ipv4dns));
-			if (in_ioctl(SIOCGIFADDR, (caddr_t)&ifr, ifp, 1) == 0 &&
-			    satosin(&ifr.ifr_addr)->sin_addr.s_addr !=
-			    INADDR_ANY) {
-				memset(&ifra, 0, sizeof (ifra));
-				memcpy(&ifra.ifra_addr, &ifr.ifr_addr,
-				    sizeof (ifra.ifra_addr));
-				in_ioctl(SIOCDIFADDR, (caddr_t)&ifra, ifp, 1);
-			}
-		}
 		if_link_state_change(ifp);
 	}
 	splx(s);
@@ -1060,6 +1047,8 @@ umb_down(struct umb_softc *sc, int force)
 
 	switch (sc->sc_state) {
 	case UMB_S_UP:
+		umb_clear_addr(sc);
+		/*FALLTHROUGH*/
 	case UMB_S_CONNECTED:
 		DPRINTF("%s: stop: disconnecting ...\n", DEVNAM(sc));
 		umb_disconnect(sc);
@@ -1602,6 +1591,90 @@ umb_decode_connect_info(struct umb_softc *sc, void *data, int len)
 	return 1;
 }
 
+void
+umb_clear_addr(struct umb_softc *sc)
+{
+	struct ifnet *ifp = GET_IFP(sc);
+
+	NET_LOCK();
+	in_ifdetach(ifp);
+	NET_UNLOCK();
+}
+
+int
+umb_add_inet_config(struct umb_softc *sc, struct in_addr ip, u_int prefixlen,
+    struct in_addr gw)
+{
+	struct ifnet *ifp = GET_IFP(sc);
+	struct in_aliasreq ifra;
+	struct sockaddr_in *sin, default_sin;
+	struct rt_addrinfo info;
+	struct rtentry *rt;
+	int	 rv;
+
+	memset(&ifra, 0, sizeof (ifra));
+	sin = &ifra.ifra_addr;
+	sin->sin_family = AF_INET;
+	sin->sin_len = sizeof (*sin);
+	sin->sin_addr = ip;
+
+	sin = &ifra.ifra_dstaddr;
+	sin->sin_family = AF_INET;
+	sin->sin_len = sizeof (*sin);
+	sin->sin_addr = gw;
+
+	sin = &ifra.ifra_mask;
+	sin->sin_family = AF_INET;
+	sin->sin_len = sizeof (*sin);
+	in_len2mask(&sin->sin_addr, prefixlen);
+
+	rv = in_ioctl(SIOCAIFADDR, (caddr_t)&ifra, ifp, 1);
+	if (rv != 0) {
+		printf("%s: unable to set IPv4 address, error %d\n",
+		    DEVNAM(ifp->if_softc), rv);
+		return rv;
+	}
+
+	memset(&default_sin, 0, sizeof(default_sin));
+	default_sin.sin_family = AF_INET;
+	default_sin.sin_len = sizeof (default_sin);
+
+	memset(&info, 0, sizeof(info));
+	info.rti_flags = RTF_GATEWAY /* maybe | RTF_STATIC */;
+	info.rti_ifa = ifa_ifwithaddr(sintosa(&ifra.ifra_addr),
+	    ifp->if_rdomain);
+	info.rti_info[RTAX_DST] = sintosa(&default_sin);
+	info.rti_info[RTAX_NETMASK] = sintosa(&default_sin);
+	info.rti_info[RTAX_GATEWAY] = sintosa(&ifra.ifra_dstaddr);
+
+	NET_LOCK();
+	rv = rtrequest(RTM_ADD, &info, 0, &rt, ifp->if_rdomain);
+	NET_UNLOCK();
+	if (rv) {
+		printf("%s: unable to set IPv4 default route, "
+		    "error %d\n", DEVNAM(ifp->if_softc), rv);
+		rtm_miss(RTM_MISS, &info, 0, RTP_NONE, 0, rv,
+		    ifp->if_rdomain);
+	} else {
+		/* Inform listeners of the new route */
+		rtm_send(rt, RTM_ADD, rv, ifp->if_rdomain);
+		rtfree(rt);
+	}
+
+	if (ifp->if_flags & IFF_DEBUG) {
+		char str[3][INET_ADDRSTRLEN];
+		log(LOG_INFO, "%s: IPv4 addr %s, mask %s, gateway %s\n",
+		    DEVNAM(ifp->if_softc),
+		    sockaddr_ntop(sintosa(&ifra.ifra_addr), str[0],
+		    sizeof(str[0])),
+		    sockaddr_ntop(sintosa(&ifra.ifra_mask), str[1],
+		    sizeof(str[1])),
+		    sockaddr_ntop(sintosa(&ifra.ifra_dstaddr), str[2],
+		    sizeof(str[2])));
+	}
+	return rv;
+}
+
 int
 umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 {
@@ -1613,9 +1686,7 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 	int	 n, i;
 	int	 off;
 	struct mbim_cid_ipv4_element ipv4elem;
-	struct in_aliasreq ifra;
-	struct sockaddr_in *sin;
-	struct in_addr addr;
+	struct in_addr addr, gw;
 	int	 state = -1;
 	int	 rv;
 
@@ -1645,43 +1716,17 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 		/* Only pick the first one */
 		memcpy(&ipv4elem, data + off, sizeof (ipv4elem));
 		ipv4elem.prefixlen = letoh32(ipv4elem.prefixlen);
+		addr.s_addr = ipv4elem.addr;
 
-		memset(&ifra, 0, sizeof (ifra));
-		sin = (struct sockaddr_in *)&ifra.ifra_addr;
-		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof (ifra.ifra_addr);
-		sin->sin_addr.s_addr = ipv4elem.addr;
-
-		sin = (struct sockaddr_in *)&ifra.ifra_dstaddr;
-		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof (ifra.ifra_dstaddr);
 		if (avail & MBIM_IPCONF_HAS_GWINFO) {
 			off = letoh32(ic->ipv4_gwoffs);
-			sin->sin_addr.s_addr = *((uint32_t *)(data + off));
+			memcpy(&gw, data + off, sizeof(gw));
 		}
 
-		sin = (struct sockaddr_in *)&ifra.ifra_mask;
-		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof (ifra.ifra_mask);
-		in_len2mask(&sin->sin_addr, ipv4elem.prefixlen);
-
-		rv = in_ioctl(SIOCAIFADDR, (caddr_t)&ifra, ifp, 1);
-		if (rv == 0) {
-			if (ifp->if_flags & IFF_DEBUG) {
-				char str[3][INET_ADDRSTRLEN];
-				log(LOG_INFO, "%s: IPv4 addr %s, mask %s, "
-				    "gateway %s\n", DEVNAM(ifp->if_softc),
-				    sockaddr_ntop(sintosa(&ifra.ifra_addr),
-				    str[0], sizeof(str[0])),
-				    sockaddr_ntop(sintosa(&ifra.ifra_mask),
-				    str[1], sizeof(str[1])),
-				    sockaddr_ntop(sintosa(&ifra.ifra_dstaddr),
-				    str[2], sizeof(str[2])));
-			}
+		rv = umb_add_inet_config(sc, addr, ipv4elem.prefixlen, gw);
+		if (rv == 0) 
 			state = UMB_S_UP;
-		} else
-			printf("%s: unable to set IPv4 address, error %d\n",
-			    DEVNAM(ifp->if_softc), rv);
+
 	}
 
 	memset(sc->sc_info.ipv4dns, 0, sizeof (sc->sc_info.ipv4dns));
