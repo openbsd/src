@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksmn.c,v 1.1 2019/09/26 12:59:01 brynet Exp $	*/
+/*	$OpenBSD: ksmn.c,v 1.2 2019/09/27 01:26:46 brynet Exp $	*/
 
 /*
  * Copyright (c) 2019 Bryan Steele <brynet@openbsd.org>
@@ -162,5 +162,5 @@ ksmn_refresh(void *arg)
 		c -= CURTMP_17H_RANGE_ADJUST;
 	if (c > sc->sc_tctl_offset)
 		c -= sc->sc_tctl_offset;
-	s->value = c * 125000 + 273150000;
+	s->value = c * 100000 + 273150000;
 }
