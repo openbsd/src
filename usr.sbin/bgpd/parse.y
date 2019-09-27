@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.401 2019/08/13 07:39:57 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.402 2019/09/27 10:26:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3331,6 +3331,10 @@ errors:
 		free_config(conf);
 		return (NULL);
 	} else {
+		/* update clusterid in case it was not set explicitly */
+		if ((conf->flags & BGPD_FLAG_REFLECTOR) && conf->clusterid == 0)
+			conf->clusterid = conf->bgpid;
+
 		/*
 		 * Concatenate filter list and static group and peer filtersets
 		 * together. Static group sets come first then peer sets

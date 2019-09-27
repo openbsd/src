@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.92 2019/08/13 07:39:57 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.93 2019/09/27 10:26:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -201,8 +201,6 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 	/*
 	 * merge the freshly parsed conf into the running xconf
 	 */
-	if ((conf->flags & BGPD_FLAG_REFLECTOR) && conf->clusterid == 0)
-		conf->clusterid = conf->bgpid;
 
 	/* adjust FIB priority if changed */
 	/* if xconf is uninitialized we get RTP_NONE */
