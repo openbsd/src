@@ -8294,5 +8294,3 @@
 #define	PCI_PRODUCT_ZYDAS_ZD1202	0x2102		/* ZD1202 */
 #define	PCI_PRODUCT_ZYDAS_ZD1205	0x2105		/* ZD1205 */
 
-/* Memory Ballooning product */
-#define	PCI_PRODUCT_MEM_BALLOON_MEMBALL	0x0001		/* MEMBALL */

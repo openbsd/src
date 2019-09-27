@@ -8285,9 +8285,6 @@ product ZORAN ZR36057		0x6057	TV
 product ZORAN ZR36120		0x6120	DVD
 
 /* ZyDAS Technology products */
-product ZYDAS ZD1201		0x2100	ZD1201
+product	ZYDAS ZD1201		0x2100	ZD1201
 product ZYDAS ZD1202		0x2102	ZD1202
 product ZYDAS ZD1205		0x2105	ZD1205
-
-/* Memory Ballooning products */
-product MEM_BALLOON MEMBALL	0x0001	MEMBALL

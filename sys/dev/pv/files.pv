@@ -80,3 +80,7 @@ file	dev/pv/vioscsi.c		vioscsi
 device	vmmci
 attach	vmmci at virtio
 file	dev/pv/vmmci.c			vmmci
+
+device	memball
+attach	memball at virtio
+file	dev/pv/memball.c			memball
