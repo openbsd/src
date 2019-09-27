@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.91 2019/09/25 15:35:50 sthen Exp $
+.\" $OpenBSD: bgpctl.8,v 1.92 2019/09/27 10:34:54 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 25 2019 $
+.Dd $Mdocdate: September 27 2019 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -223,7 +223,7 @@ Show routes from an MRT table dump file.
 .Ar filter
 can be an IP address, a CIDR prefix, an AS filter, a combination or nothing:
 .Pp
-.Bl -tag -width "address/len all" -compact
+.Bl -tag -width "address/len or-shorter" -compact
 .It Ar address
 Show best matching route for address.
 .It Ar address Ns Li / Ns Ar len
@@ -234,6 +234,11 @@ Show RIB entry for this CIDR prefix.
 .Xc
 Show all entries in the specified range.
 .\".It Ar address/len Cm longer-prefixes
+.It Xo
+.Ar address Ns Li / Ns Ar len
+.Cm or-shorter
+.Xc
+Show all entries covering and including the specified prefix.
 .It Cm as Ar as
 Show all entries with
 .Ar as
@@ -312,7 +317,7 @@ Routing Information Base.
 .Ar filter
 can be an IP address, a CIDR prefix, an AS filter or nothing:
 .Pp
-.Bl -tag -width "address/len all" -compact
+.Bl -tag -width "address/len or-shorter" -compact
 .It Ar address
 Show best matching route for address.
 .It Ar address Ns Li / Ns Ar len
@@ -323,6 +328,11 @@ Show RIB entry for this CIDR prefix.
 .Xc
 Show all entries in the specified range.
 .\".It Ar address/len Cm longer-prefixes
+.It Xo
+.Ar address Ns Li / Ns Ar len
+.Cm or-shorter
+.Xc
+Show all entries covering and including the specified prefix.
 .It Cm as Ar as
 Show all entries with
 .Ar as

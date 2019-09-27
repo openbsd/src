@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.245 2019/09/25 15:35:50 sthen Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.246 2019/09/27 10:34:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -2132,15 +2132,25 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 			return;
 		/* filter by prefix */
 		if (req->prefix.aid != AID_UNSPEC) {
-			if (!prefix_compare(&req->prefix, &ctl.prefix,
-			    req->prefixlen)) {
-				if (req->flags & F_LONGER) {
-					if (req->prefixlen > ctl.prefixlen)
-						return;
-				} else if (req->prefixlen != ctl.prefixlen)
+			if (req->flags & F_LONGER) {
+				if (req->prefixlen > ctl.prefixlen)
 					return;
-			} else
-				return;
+				if (prefix_compare(&req->prefix, &ctl.prefix,
+				    req->prefixlen))
+					return;
+			} else if (req->flags & F_SHORTER) {
+				if (req->prefixlen < ctl.prefixlen)
+					return;
+				if (prefix_compare(&req->prefix, &ctl.prefix,
+				    ctl.prefixlen))
+					return;
+			} else {
+				if (req->prefixlen != ctl.prefixlen)
+					return;
+				if (prefix_compare(&req->prefix, &ctl.prefix,
+				    req->prefixlen))
+					return;
+			}
 		}
 		/* filter by AS */
 		if (req->as.type != AS_UNDEF &&

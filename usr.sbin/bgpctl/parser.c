@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.98 2019/06/28 12:12:06 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.99 2019/09/27 10:34:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -305,6 +305,8 @@ static const struct token t_show_prefix[] = {
 	{ NOTOKEN,	"",		NONE,		NULL},
 	{ FLAG,		"all",		F_LONGER,	NULL},
 	{ FLAG,		"longer-prefixes", F_LONGER,	NULL},
+	{ FLAG,		"or-longer", 	F_LONGER,	NULL},
+	{ FLAG,		"or-shorter", 	F_SHORTER,	NULL},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
