@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.215 2019/09/24 12:30:00 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.216 2019/09/27 16:03:45 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -101,13 +101,6 @@ struct cfattach scsibus_ca = {
 struct cfdriver scsibus_cd = {
 	NULL, "scsibus", DV_DULL
 };
-
-#ifdef SCSIDEBUG
-u_int32_t scsidebug_buses = SCSIDEBUG_BUSES;
-u_int32_t scsidebug_targets = SCSIDEBUG_TARGETS;
-u_int32_t scsidebug_luns = SCSIDEBUG_LUNS;
-int scsidebug_level = SCSIDEBUG_LEVEL;
-#endif
 
 int scsi_autoconf = SCSI_AUTOCONF;
 
@@ -699,46 +692,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
          "UJDCD8730", "", "1.14"},              ADEV_NODOORLOCK}, /* Acer */
 };
 
-#ifdef SCSIDEBUG
-const char *flagnames[16] = {
-	"REMOVABLE",
-	"MEDIA LOADED",
-	"READONLY",
-	"OPEN",
-	"DB1",
-	"DB2",
-	"DB3",
-	"DB4",
-	"EJECTING",
-	"ATAPI",
-	"2NDBUS",
-	"UMASS",
-	"VIRTUAL",
-	"OWN",
-	"FLAG0x4000",
-	"FLAG0x8000"
-};
-
-const char *quirknames[16] = {
-	"AUTOSAVE",
-	"NOSYNC",
-	"NOWIDE",
-	"NOTAGS",
-	"QUIRK0x0010",
-	"QUIRK0x0020",
-	"QUIRK0x0040",
-	"QUIRK0x0080",
-	"NOSYNCCACHE",
-	"NOSENSE",
-	"LITTLETOC",
-	"NOCAPACITY",
-	"QUIRK0x1000",
-	"NODOORLOCK",
-	"ONLYBIG",
-	"QUIRK0x8000",
-};
-#endif /* SCSIDEBUG */
-
 void
 scsibus_printlink(struct scsi_link *link)
 {
@@ -1115,42 +1068,6 @@ scsi_inqmatch(struct scsi_inquiry_data *inqbuf, const void *_base,
 	const unsigned char		*base = (const unsigned char *)_base;
 	const void			*bestmatch;
 	int				 removable;
-#ifdef SCSIDEBUG
-	static char *device_type[32] = {
-		"T_DIRECT",
-		"T_SEQUENTIAL",
-		"T_PRINTER",
-		"T_PROCESSOR",
-		"T_WORM",
-		"T_CDROM",
-		"T_SCANNER",
-		"T_OPTICAL",
-		"T_CHANGER",
-		"T_COMM",
-		"T_ASC0",
-		"T_ASC1",
-		"T_STROARRAY",
-		"T_ENCLOSURE",
-		"T_RDIRECT",
-		"T_OCRW",
-		"T_BCC",
-		"T_OSD",
-		"T_ADC",
-		"T_RESERVED",
-		"T_RESERVED",
-		"T_RESERVED",
-		"T_RESERVED",
-		"T_RESERVED",
-		"T_RESERVED",
-		"T_RESERVED",
-		"T_RESERVED",
-		"T_RESERVED",
-		"T_RESERVED",
-		"T_RESERVED",
-		"T_WELL_KNOWN_LU",
-		"T_NODEVICE"
-	};
-#endif
 
 	/* Include the qualifier to catch vendor-unique types. */
 	removable = inqbuf->dev_qual2 & SID_REMOVABLE ? T_REMOV : T_FIXED;
@@ -1185,7 +1102,7 @@ scsi_inqmatch(struct scsi_inquiry_data *inqbuf, const void *_base,
 			printf(" match ");
 
 		printf("priority %d. %s %s <\"%s\", \"%s\", \"%s\">", priority,
-		    device_type[(match->type & SID_TYPE)],
+		    devicetypenames[(match->type & SID_TYPE)],
 		    (match->removable == T_FIXED) ? "T_FIXED" : "T_REMOV",
 		    match->vendor, match->product, match->revision);
 
