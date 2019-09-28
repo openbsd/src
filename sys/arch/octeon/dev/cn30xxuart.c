@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxuart.c,v 1.11 2017/09/21 12:50:20 visa Exp $	*/
+/*	$OpenBSD: cn30xxuart.c,v 1.12 2019/09/28 22:20:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -54,13 +54,13 @@ int	cn30xxuart_probe(struct device *, void *, void *);
 void	cn30xxuart_attach(struct device *, struct device *, void *);
 int	cn30xxuart_intr(void *);
 
-struct cfattach cn30xxuart_ca = {
+struct cfattach octuart_ca = {
 	sizeof(struct com_softc), cn30xxuart_probe, cn30xxuart_attach
 };
 
 extern struct cfdriver com_cd;
 
-cons_decl(cn30xxuart);
+cons_decl(octuart);
 
 #define  USR_TXFIFO_NOTFULL		2
 
@@ -189,22 +189,22 @@ cn30xxuart_wait_txhr_empty(int d)
 }
 
 void
-cn30xxuartcninit(struct consdev *consdev)
+octuartcninit(struct consdev *consdev)
 {
 }
 
 void
-cn30xxuartcnprobe(struct consdev *consdev)
+octuartcnprobe(struct consdev *consdev)
 {
 }
 
 void
-cn30xxuartcnpollc(dev_t dev, int c)
+octuartcnpollc(dev_t dev, int c)
 {
 }
 
 void
-cn30xxuartcnputc(dev_t dev, int c)
+octuartcnputc(dev_t dev, int c)
 {
 	int d;
 
@@ -216,7 +216,7 @@ cn30xxuartcnputc(dev_t dev, int c)
 }
 
 int
-cn30xxuartcngetc(dev_t dev)
+octuartcngetc(dev_t dev)
 {
 	int c, d;
 

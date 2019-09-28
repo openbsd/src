@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.44 2019/09/24 14:38:14 visa Exp $
+#	$OpenBSD: RAMDISK,v 1.45 2019/09/28 22:20:24 deraadt Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -48,7 +48,7 @@ pci*		at pcibus?
 ppb*		at pci?
 pci*		at ppb?
 
-cn30xxsmi*	at fdt?		# MDIO controller
+octsmi*		at fdt?		# MDIO controller
 com*		at fdt_octeon?
 octcib*		at fdt?		# Interrupt controller
 octcit*		at fdt?		# Interrupt controller v3
@@ -58,8 +58,8 @@ octmmc*		at fdt?		# MMC host controller
 octpip*		at fdt?		# Packet input processing unit
 sdmmc*		at octmmc?	# SD/MMC bus
 
-cn30xxgmx*	at octpip?
-cnmac*		at cn30xxgmx?
+octgmx*		at octpip?
+cnmac*		at octgmx?
 
 pciide*		at pci? flags 0x0000
 wd*		at pciide? flags 0x0000

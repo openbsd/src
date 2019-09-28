@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.117 2019/07/31 12:38:04 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.118 2019/09/28 22:20:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -138,8 +138,8 @@ void		octeon_tlb_init(void);
 static void	process_bootargs(void);
 static uint64_t	get_ncpusfound(void);
 
-cons_decl(cn30xxuart);
-struct consdev uartcons = cons_init(cn30xxuart);
+cons_decl(octuart);
+struct consdev uartcons = cons_init(octuart);
 
 u_int		ioclock_get_timecount(struct timecounter *);
 

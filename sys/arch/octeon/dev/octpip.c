@@ -1,4 +1,4 @@
-/*	$OpenBSD: octpip.c,v 1.1 2019/09/15 06:57:05 visa Exp $	*/
+/*	$OpenBSD: octpip.c,v 1.2 2019/09/28 22:20:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -69,7 +69,7 @@ octpip_attach(struct device *parent, struct device *self, void *aux)
 		if (ifindex >= 16)
 			continue;
 		memset(&iaa, 0, sizeof(iaa));
-		iaa.aa_name = "cn30xxgmx";
+		iaa.aa_name = "octgmx";
 		iaa.aa_bust = faa->fa_iot;
 		iaa.aa_dmat = faa->fa_dmat;
 		iaa.aa_addr = GMX0_BASE_PORT0 + GMX_BLOCK_SIZE * ifindex;

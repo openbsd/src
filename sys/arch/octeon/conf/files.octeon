@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.54 2019/09/15 07:15:14 visa Exp $
+#	$OpenBSD: files.octeon,v 1.55 2019/09/28 22:20:24 deraadt Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -111,21 +111,21 @@ device	octrng
 attach	octrng at iobus
 file	arch/octeon/dev/octrng.c			octrng
 
-device	cn30xxsmi {}
-attach	cn30xxsmi at fdt
-file	arch/octeon/dev/cn30xxsmi.c			cn30xxsmi
+device	octsmi {}
+attach	octsmi at fdt
+file	arch/octeon/dev/cn30xxsmi.c			octsmi
 
 define	octpip {}
-device	cn30xxgmx {}
-attach	cn30xxgmx at octpip
-file	arch/octeon/dev/cn30xxgmx.c			cn30xxgmx
+device	octgmx {}
+attach	octgmx at octpip
+file	arch/octeon/dev/cn30xxgmx.c			octgmx
 
 device	cnmac: ether, ifnet, mii, ifmedia
-attach	cnmac at cn30xxgmx
+attach	cnmac at octgmx
 file	arch/octeon/dev/if_cnmac.c			cnmac
 
-attach	com at fdt_octeon with cn30xxuart
-file	arch/octeon/dev/cn30xxuart.c			cn30xxuart
+attach	com at fdt_octeon with octuart
+file	arch/octeon/dev/cn30xxuart.c			octuart
 
 device	pcibus
 attach	pcibus at iobus

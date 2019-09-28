@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxsmi.c,v 1.6 2017/11/20 15:13:09 visa Exp $	*/
+/*	$OpenBSD: cn30xxsmi.c,v 1.7 2019/09/28 22:20:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -44,12 +44,12 @@ void	cn30xxsmi_attach(struct device *, struct device *, void *);
 
 void	cn30xxsmi_enable(struct cn30xxsmi_softc *);
 
-const struct cfattach cn30xxsmi_ca = {
+const struct cfattach octsmi_ca = {
 	sizeof(struct cn30xxsmi_softc), cn30xxsmi_match, cn30xxsmi_attach
 };
 
-struct cfdriver cn30xxsmi_cd = {
-	NULL, "cn30xxsmi", DV_DULL
+struct cfdriver octsmi_cd = {
+	NULL, "octsmi", DV_DULL
 };
 
 static SLIST_HEAD(, cn30xxsmi_softc) smi_list =

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.42 2019/09/20 14:58:52 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.43 2019/09/28 22:20:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -149,10 +149,10 @@ struct cn30xxgmx_port_ops *cn30xxgmx_port_ops[] = {
 	[GMX_SPI42_PORT] = &cn30xxgmx_port_ops_spi42
 };
 
-struct cfattach cn30xxgmx_ca = {sizeof(struct cn30xxgmx_softc),
+struct cfattach octgmx_ca = {sizeof(struct cn30xxgmx_softc),
     cn30xxgmx_match, cn30xxgmx_attach, NULL, NULL};
 
-struct cfdriver cn30xxgmx_cd = {NULL, "cn30xxgmx", DV_DULL};
+struct cfdriver octgmx_cd = {NULL, "octgmx", DV_DULL};
 
 int
 cn30xxgmx_match(struct device *parent, void *match, void *aux)
