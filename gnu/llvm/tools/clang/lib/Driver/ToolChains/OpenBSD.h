@@ -74,6 +74,9 @@ public:
       const llvm::opt::ArgList &DriverArgs,
       llvm::opt::ArgStringList &CC1Args) const override;
 
+  std::string getCompilerRT(const llvm::opt::ArgList &Args, StringRef Component,
+                            bool Shared = false) const override;
+
   unsigned GetDefaultStackProtectorLevel(bool KernelOrKext) const override {
     return 2;
   }
