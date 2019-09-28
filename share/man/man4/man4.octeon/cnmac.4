@@ -1,4 +1,4 @@
-.\" $OpenBSD: cnmac.4,v 1.7 2019/09/15 07:28:04 visa Exp $
+.\" $OpenBSD: cnmac.4,v 1.8 2019/09/28 22:20:45 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Visa Hankala
 .\"
@@ -15,14 +15,14 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 15 2019 $
+.Dd $Mdocdate: September 28 2019 $
 .Dt CNMAC 4 octeon
 .Os
 .Sh NAME
 .Nm cnmac
 .Nd Cavium OCTEON built-in Ethernet device
 .Sh SYNOPSIS
-.Cd "cnmac* at cn30xxgmx?"
+.Cd "cnmac* at octgmx?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -63,7 +63,7 @@ transmission, and IPv4 checksum offload on reception.
 The driver additionally supports jumbo frames.
 .Sh SEE ALSO
 .Xr arp 4 ,
-.Xr cn30xxgmx 4 ,
+.Xr octgmx 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: octpip.4,v 1.1 2019/09/15 07:23:38 visa Exp $
+.\"	$OpenBSD: octpip.4,v 1.2 2019/09/28 22:20:45 deraadt Exp $
 .\"
 .\" Copyright (c) 2019 Visa Hankala
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 15 2019 $
+.Dd $Mdocdate: September 28 2019 $
 .Dt OCTPIP 4 octeon
 .Os
 .Sh NAME
@@ -22,13 +22,13 @@
 .Nd OCTEON packet input processing unit
 .Sh SYNOPSIS
 .Cd "octpip* at fdt?"
-.Cd "cn30xxgmx* at octpip?"
+.Cd "octgmx* at octpip?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides an attachment point for OCTEON packet interfaces.
 .Sh SEE ALSO
-.Xr cn30xxgmx 4 ,
+.Xr octgmx 4 ,
 .Xr intro 4
 .Sh HISTORY
 The
