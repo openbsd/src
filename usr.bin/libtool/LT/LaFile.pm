@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.23 2014/09/05 10:36:39 espie Exp $
+# $OpenBSD: LaFile.pm,v 1.24 2019/09/28 06:25:57 semarie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -186,6 +186,18 @@ sub install
 		unlink("$dstdir/$n");
 		symlink($sharedlib, "$dstdir/$n");
 	}
+}
+
+sub parse
+{
+	my ($class, $filename) = @_;
+
+	my $info = $class->SUPER::parse($filename);
+
+	$info->{deplib_list} //= LT::UList->new;
+	$info->{libdir} //= '';
+
+	return $info;
 }
 
 1;
