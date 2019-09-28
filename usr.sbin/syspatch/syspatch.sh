@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.149 2019/07/07 11:11:22 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.150 2019/09/28 17:30:07 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -18,6 +18,7 @@
 
 set -e
 umask 0022
+export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
 sp_err()
 {

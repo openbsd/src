@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.24 2019/09/25 14:42:52 florian Exp $
+# $OpenBSD: sysupgrade.sh,v 1.25 2019/09/28 17:30:07 ajacoutot Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -22,6 +22,7 @@
 
 set -e
 umask 0022
+export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
 ARCH=$(uname -m)
 SETSDIR=/home/_sysupgrade

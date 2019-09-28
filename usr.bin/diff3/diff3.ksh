@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: diff3.ksh,v 1.5 2019/01/25 00:19:26 millert Exp $
+# $OpenBSD: diff3.ksh,v 1.6 2019/09/28 17:30:07 ajacoutot Exp $
 #
 # Copyright (c) 2003 Todd C. Miller <millert@openbsd.org>
 #
@@ -24,7 +24,7 @@
 set -o posix		# set POSIX mode to prevent +foo in getopts
 OPTIND=1		# force getopts to reset itself
 
-export PATH=/bin:/usr/bin
+export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 diff3prog=/usr/libexec/diff3prog
 USAGE="usage: diff3 [-3aEeXx] file1 file2 file3"
 
