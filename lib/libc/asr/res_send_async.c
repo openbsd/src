@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.38 2019/01/14 06:49:42 otto Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.39 2019/09/28 11:21:07 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -578,10 +578,17 @@ tcp_read(struct asr_query *as)
 		pos = (char *)(&as->as.dns.pktlen) + as->as.dns.datalen;
 		len = sizeof(as->as.dns.pktlen) - as->as.dns.datalen;
 
+    read_again0:
 		n = read(as->as_fd, pos, len);
-		if (n == -1)
+		if (n == -1) {
+			if (errno == EINTR)
+				goto read_again0;
 			goto close; /* errno set */
-
+		}
+		if (n == 0) {
+			errno = ECONNRESET;
+			goto close;
+		}
 		as->as.dns.datalen += n;
 		if (as->as.dns.datalen < sizeof(as->as.dns.pktlen))
 			return (1); /* need more data */
