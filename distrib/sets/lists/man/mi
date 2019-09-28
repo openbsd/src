@@ -1662,13 +1662,13 @@
 ./usr/share/man/man4/nvt.4
 ./usr/share/man/man4/oce.4
 ./usr/share/man/man4/octeon/amdcf.4
-./usr/share/man/man4/octeon/cn30xxgmx.4
 ./usr/share/man/man4/octeon/cnmac.4
 ./usr/share/man/man4/octeon/octcf.4
 ./usr/share/man/man4/octeon/octcib.4
 ./usr/share/man/man4/octeon/octcit.4
 ./usr/share/man/man4/octeon/octciu.4
 ./usr/share/man/man4/octeon/octcrypto.4
+./usr/share/man/man4/octeon/octgmx.4
 ./usr/share/man/man4/octeon/octgpio.4
 ./usr/share/man/man4/octeon/octiic.4
 ./usr/share/man/man4/octeon/octmmc.4
