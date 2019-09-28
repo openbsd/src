@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomd.c,v 1.7 2016/08/28 00:51:48 guenther Exp $	*/
+/*	$OpenBSD: ldomd.c,v 1.8 2019/09/28 16:12:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -192,7 +192,7 @@ main(int argc, char **argv)
 
 	TAILQ_FOREACH(guest, &guests, link) {
 		struct ds_conn *dc;
-		char path[64];
+		char path[PATH_MAX];
 
 		if (strcmp(guest->name, "primary") == 0)
 			continue;
@@ -212,7 +212,7 @@ main(int argc, char **argv)
 	 * to keep track of the file descriptors.
 	 */
 	for (i = 0; i < 256; i++) {
-		char path[64];
+		char path[PATH_MAX];
 
 		snprintf(path, sizeof(path), "/dev/vdsp%d", i);
 		if (open(path, O_RDWR, 0) == -1)
