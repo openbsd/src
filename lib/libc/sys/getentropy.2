@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getentropy.2,v 1.8 2015/01/31 00:20:12 schwarze Exp $
+.\"	$OpenBSD: getentropy.2,v 1.9 2019/09/28 14:55:12 deraadt Exp $
 .\"
 .\" Copyright (c) 2014 Theo de Raadt
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 31 2015 $
+.Dd $Mdocdate: September 28 2019 $
 .Dt GETENTROPY 2
 .Os
 .Sh NAME
@@ -31,16 +31,15 @@ as input for process-context pseudorandom generators like
 .Xr arc4random 3 .
 .Pp
 The maximum buffer size permitted is 256 bytes.
-If
-.Fa buflen
-exceeds this, an error of
-.Er EIO
-will be indicated.
 .Pp
 .Fn getentropy
 is not intended for regular code; please use the
 .Xr arc4random 3
 family of functions instead.
+.Pp
+The high-quality entropy data is provided by the
+.Xr random 4
+subsystem.
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
