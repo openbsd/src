@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.46 2019/07/17 14:36:32 visa Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.47 2019/09/29 04:28:52 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -74,6 +74,10 @@ struct octeon_config {
 	bus_dma_tag_t mc_iobus_dmat;
 	bus_dma_tag_t mc_bootbus_dmat;
 };
+
+#define	GPIO_CONFIG_MD_OUTPUT_SEL_MASK	(GPIO_CONFIG_MD0 | GPIO_CONFIG_MD1)
+#define	GPIO_CONFIG_MD_USB0_VBUS_CTRL	GPIO_CONFIG_MD0
+#define	GPIO_CONFIG_MD_USB1_VBUS_CTRL	GPIO_CONFIG_MD1
 
 /*
  * FPA map

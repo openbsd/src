@@ -1,4 +1,4 @@
-/*	$OpenBSD: octgpio.c,v 1.1 2019/01/12 16:59:38 visa Exp $	*/
+/*	$OpenBSD: octgpio.c,v 1.2 2019/09/29 04:28:52 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -30,9 +30,12 @@
 #include <dev/ofw/openfirm.h>
 
 #include <machine/fdt.h>
+#include <machine/octeonvar.h>
 #include <machine/octeon_model.h>
 
 #define GPIO_BIT_CFG(x)		(0x0000u + (x) * 8)
+#define   GPIO_BIT_CFG_OUTPUT_SEL_M	0x00000000001f0000ull
+#define   GPIO_BIT_CFG_OUTPUT_SEL_S	16
 #define   GPIO_BIT_CFG_INT_EN		0x0000000000000004ull
 #define   GPIO_BIT_CFG_RX_XOR		0x0000000000000002ull
 #define   GPIO_BIT_CFG_TX_OE		0x0000000000000001ull
@@ -136,7 +139,7 @@ void
 octgpio_config_pin(void *cookie, uint32_t *cells, int config)
 {
 	struct octgpio_softc *sc = cookie;
-	uint64_t reg, value;
+	uint64_t output_sel, reg, value;
 	uint32_t pin = cells[0];
 
 	if (pin >= sc->sc_npins)
@@ -147,9 +150,23 @@ octgpio_config_pin(void *cookie, uint32_t *cells, int config)
 		reg = GPIO_BIT_CFG(pin);
 
 	value = GPIO_RD_8(sc, reg);
-	if (config & GPIO_CONFIG_OUTPUT)
+	if (config & GPIO_CONFIG_OUTPUT) {
 		value |= GPIO_BIT_CFG_TX_OE;
-	else
+
+		switch (config & GPIO_CONFIG_MD_OUTPUT_SEL_MASK) {
+		case GPIO_CONFIG_MD_USB0_VBUS_CTRL:
+			output_sel = 0x14;
+			break;
+		case GPIO_CONFIG_MD_USB1_VBUS_CTRL:
+			output_sel = 0x19;
+			break;
+		default:
+			output_sel = 0;
+			break;
+		}
+		value &= ~GPIO_BIT_CFG_OUTPUT_SEL_M;
+		value |= output_sel << GPIO_BIT_CFG_OUTPUT_SEL_S;
+	} else
 		value &= ~(GPIO_BIT_CFG_TX_OE | GPIO_BIT_CFG_RX_XOR);
 	/* There is no INT_EN bit on true XBIT pins. */
 	value &= ~GPIO_BIT_CFG_INT_EN;
