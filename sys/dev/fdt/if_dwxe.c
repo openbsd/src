@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.13 2019/09/06 15:22:24 deraadt Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.14 2019/09/29 13:04:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -372,7 +372,8 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 	struct dwxe_softc *sc = (void *)self;
 	struct fdt_attach_args *faa = aux;
 	struct ifnet *ifp;
-	int phy, phy_supply, node;
+	uint32_t phy, phy_supply;
+	int node;
 
 	sc->sc_node = faa->fa_node;
 	sc->sc_iot = faa->fa_iot;
@@ -772,12 +773,10 @@ dwxe_mii_statchg(struct device *self)
 	case IFM_1000_LX:
 	case IFM_1000_CX:
 	case IFM_1000_T:
-		basicctrl &= ~DWXE_BASIC_CTL0_SPEED_MASK;
 		basicctrl |= DWXE_BASIC_CTL0_SPEED_1000;
 		sc->sc_link = 1;
 		break;
 	case IFM_100_TX:
-		basicctrl &= ~DWXE_BASIC_CTL0_SPEED_MASK;
 		basicctrl |= DWXE_BASIC_CTL0_SPEED_100;
 		sc->sc_link = 1;
 		break;

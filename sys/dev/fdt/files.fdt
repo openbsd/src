@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.92 2019/09/07 13:32:36 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.93 2019/09/29 13:04:03 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -107,8 +107,10 @@ file	dev/fdt/virtio_mmio.c		virtio_mmio
 attach	ahci at fdt with ahci_fdt
 file	dev/fdt/ahci_fdt.c		ahci_fdt
 
-attach	dwge at fdt with dwge_fdt
-file	dev/fdt/if_dwge_fdt.c		dwge_fdt
+# Synopsis Designware GMAC core
+device	dwge: ether, ifnet, mii, ifmedia
+attach	dwge at fdt
+file	dev/fdt/if_dwge.c		dwge
 
 attach	ehci at fdt with ehci_fdt
 file	dev/fdt/ehci_fdt.c		ehci_fdt
