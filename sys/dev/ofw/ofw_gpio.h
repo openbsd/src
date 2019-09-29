@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_gpio.h,v 1.2 2016/07/27 21:13:49 kettenis Exp $	*/
+/*	$OpenBSD: ofw_gpio.h,v 1.3 2019/09/29 04:25:08 visa Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -37,6 +37,10 @@ void	gpio_controller_register(struct gpio_controller *);
 
 #define GPIO_CONFIG_INPUT	0x0000
 #define GPIO_CONFIG_OUTPUT	0x0001
+#define GPIO_CONFIG_MD0		0x1000
+#define GPIO_CONFIG_MD1		0x2000
+#define GPIO_CONFIG_MD2		0x4000
+#define GPIO_CONFIG_MD3		0x8000
 void	gpio_controller_config_pin(uint32_t *, int);
 
 int	gpio_controller_get_pin(uint32_t *);
