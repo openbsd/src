@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.234 2019/09/27 17:22:31 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.235 2019/09/29 15:47:29 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1303,7 +1303,7 @@ scsi_xs_exec(struct scsi_xfer *xs)
 
 #ifdef SCSIDEBUG
 	if (xs->sc_link->flags & SDEV_DB1) {
-		scsi_xs_show(xs);
+		scsi_show_xs(xs);
 		if (xs->datalen && (xs->flags & SCSI_DATA_OUT))
 			scsi_show_mem(xs->data, min(64, xs->datalen));
 	}
@@ -1406,7 +1406,7 @@ scsi_xs_error(struct scsi_xfer *xs)
 	case XS_SENSE:
 	case XS_SHORTSENSE:
 #ifdef SCSIDEBUG
-		scsi_sense_print_debug(xs);
+		scsi_show_sense(xs);
 #endif /* SCSIDEBUG */
 		error = xs->sc_link->interpret_sense(xs);
 		SC_DEBUG(xs->sc_link, SDEV_DB3,
@@ -2597,7 +2597,7 @@ const char *devicetypenames[32] = {
  * Print out sense data details.
  */
 void
-scsi_sense_print_debug(struct scsi_xfer *xs)
+scsi_show_sense(struct scsi_xfer *xs)
 {
 	struct scsi_sense_data *sense = &xs->sense;
 	struct scsi_link *link = xs->sc_link;
@@ -2622,7 +2622,7 @@ scsi_sense_print_debug(struct scsi_xfer *xs)
  * Given a scsi_xfer, dump the request, in all its glory
  */
 void
-scsi_xs_show(struct scsi_xfer *xs)
+scsi_show_xs(struct scsi_xfer *xs)
 {
 	u_char *b = (u_char *)xs->cmd;
 	int i = 0;

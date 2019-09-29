@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.55 2019/09/27 17:22:31 krw Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.56 2019/09/29 15:47:29 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 		break;
 	case XS_SENSE:
 #ifdef SCSIDEBUG
-		scsi_sense_print_debug(xs);
+		scsi_show_sense(xs);
 #endif /* SCSIDEBUG */
 		screq->senselen_used = min(sizeof(xs->sense),
 		    sizeof(screq->sense));
@@ -158,7 +158,7 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 		break;
 	case XS_SHORTSENSE:
 #ifdef SCSIDEBUG
-		scsi_sense_print_debug(xs);
+		scsi_show_sense(xs);
 #endif /* SCSIDEBUG */
 		printf("XS_SHORTSENSE\n");
 		screq->senselen_used = min(sizeof(xs->sense),
@@ -266,7 +266,7 @@ scsi_ioc_ata_cmd(struct scsi_link *link, atareq_t *atareq)
 	case XS_SENSE:
 	case XS_SHORTSENSE:
 #ifdef SCSIDEBUG
-		scsi_sense_print_debug(xs);
+		scsi_show_sense(xs);
 #endif /* SCSIDEBUG */
 		/* XXX this is not right */
 	case XS_NOERROR:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_debug.h,v 1.16 2019/09/27 23:07:42 krw Exp $	*/
+/*	$OpenBSD: scsi_debug.h,v 1.17 2019/09/29 15:47:29 krw Exp $	*/
 /*	$NetBSD: scsi_debug.h,v 1.7 1996/10/12 23:23:16 christos Exp $	*/
 
 /*
@@ -42,24 +42,24 @@ extern const char *devicetypenames[32];
 
 struct scsi_xfer;
 
-void	scsi_sense_print_debug(struct scsi_xfer *);
-void	scsi_xs_show(struct scsi_xfer *);
+void	scsi_show_sense(struct scsi_xfer *);
+void	scsi_show_xs(struct scsi_xfer *);
 void	scsi_show_mem(u_char *, int);
 void	scsi_show_flags(u_int16_t, const char **);
 
 /*
  * This is the usual debug macro for use with the above bits
  */
-#define	SC_DEBUG(link,Level,Printstuff) do {\
-	if ((link)->flags & (Level)) {	\
+#define	SC_DEBUG(link,Level,Printstuff) do {	\
+	if ((link)->flags & (Level)) {		\
 		sc_print_addr(link);		\
 		printf Printstuff;		\
-	} \
+	}					\
 } while (0)
-#define	SC_DEBUGN(link,Level,Printstuff) do {\
-	if ((link)->flags & (Level)) {	\
+#define	SC_DEBUGN(link,Level,Printstuff) do {	\
+	if ((link)->flags & (Level)) {		\
 		printf Printstuff;		\
-	} \
+	}					\
 } while (0)
 #else
 #define SC_DEBUG(A,B,C)
