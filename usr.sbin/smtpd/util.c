@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.147 2019/08/28 19:46:20 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.148 2019/09/29 10:03:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -858,6 +858,26 @@ int
 base64_decode(char const *src, unsigned char *dest, size_t destsize)
 {
 	return __b64_pton(src, dest, destsize);
+}
+
+int
+base64_encode_rfc3548(unsigned char const *src, size_t srclen,
+	      char *dest, size_t destsize)
+{
+	size_t i;
+	int ret;
+
+	if ((ret = base64_encode(src, srclen, dest, destsize)) == -1)
+		return -1;
+
+	for (i = 0; i < destsize; ++i) {
+		if (dest[i] == '/')
+			dest[i] = '_';
+		else if (dest[i] == '+')
+			dest[i] = '-';
+	}
+
+	return ret;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.639 2019/09/20 17:46:05 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.640 2019/09/29 10:03:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1708,6 +1708,8 @@ int session_socket_error(int);
 int getmailname(char *, size_t);
 int base64_encode(unsigned char const *, size_t, char *, size_t);
 int base64_decode(char const *, unsigned char *, size_t);
+int base64_encode_rfc3548(unsigned char const *, size_t,
+		      char *, size_t);
 
 void log_trace_verbose(int);
 void log_trace(int, const char *, ...)
