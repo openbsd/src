@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.25 2019/09/27 14:58:07 claudio Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.26 2019/09/29 15:31:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -2572,11 +2572,11 @@ umb_decode_qmi(struct umb_softc *sc, uint8_t *data, int len)
 				break;
 			case 0x555f:	/* Send FCC Authentication */
 				if (val == 0)
-					log(LOG_INFO, "%s: send FCC "
+					DPRINTF("%s: send FCC "
 					    "Authentication succeeded\n",
 					    DEVNAM(sc));
 				else if (val == 0x001a0001)
-					log(LOG_INFO, "%s: FCC Authentication "
+					DPRINTF("%s: FCC Authentication "
 					    "not required\n", DEVNAM(sc));
 				else
 					log(LOG_INFO, "%s: send FCC "
