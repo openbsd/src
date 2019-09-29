@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.31 2018/11/06 07:02:33 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.32 2019/09/29 10:09:09 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -68,6 +68,7 @@
 #include <openssl/err.h>
 #include <openssl/opensslv.h>
 
+#include "bn_lcl.h"
 #include "ec_lcl.h"
 
 /* functions for EC_GROUP objects */
@@ -252,6 +253,80 @@ EC_METHOD_get_field_type(const EC_METHOD *meth)
 	return meth->field_type;
 }
 
+/*
+ * Try computing the cofactor from generator order n and field cardinality q.
+ * This works for all curves of cryptographic interest.
+ *
+ * Hasse's theorem: | h * n - (q + 1) | <= 2 * sqrt(q)
+ *
+ * So: h_min = (q + 1 - 2*sqrt(q)) / n and h_max = (q + 1 + 2*sqrt(q)) / n and
+ * therefore h_max - h_min = 4*sqrt(q) / n. So if n > 4*sqrt(q) holds, there is
+ * only one possible value for h:
+ *
+ *	h = \lfloor (h_min + h_max)/2 \rceil = \lfloor (q + 1)/n \rceil
+ *
+ * Otherwise, zero cofactor and return success.
+ */
+static int
+ec_guess_cofactor(EC_GROUP *group)
+{
+	BN_CTX *ctx = NULL;
+	BIGNUM *q = NULL;
+	int ret = 0;
+
+	/*
+	 * If the cofactor is too large, we cannot guess it and default to zero.
+	 * The RHS of below is a strict overestimate of log(4 * sqrt(q)).
+	 */
+	if (BN_num_bits(&group->order) <=
+	    (BN_num_bits(&group->field) + 1) / 2 + 3) {
+		BN_zero(&group->cofactor);
+		return 1;
+	}
+
+	if ((ctx = BN_CTX_new()) == NULL)
+		goto err;
+
+	BN_CTX_start(ctx);
+	if ((q = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	/* Set q = 2**m for binary fields; q = p otherwise. */
+	if (group->meth->field_type == NID_X9_62_characteristic_two_field) {
+		BN_zero(q);
+		if (!BN_set_bit(q, BN_num_bits(&group->field) - 1))
+			goto err;
+	} else {
+		if (!BN_copy(q, &group->field))
+			goto err;
+	}
+	
+	/*
+	 * Compute
+	 *     h = \lfloor (q + 1)/n \rceil = \lfloor (q + 1 + n/2) / n \rfloor.
+	 */
+
+	/* h = n/2 */
+	if (!BN_rshift1(&group->cofactor, &group->order))
+		goto err;
+	/* h = 1 + n/2 */
+	if (!BN_add(&group->cofactor, &group->cofactor, BN_value_one()))
+		goto err;
+	/* h = q + 1 + n/2 */
+	if (!BN_add(&group->cofactor, &group->cofactor, q))
+		goto err;
+	/* h = (q + 1 + n/2) / n */
+	if (!BN_div_ct(&group->cofactor, NULL, &group->cofactor, &group->order,
+	    ctx))
+		goto err;
+
+	ret = 1;
+ err:
+	BN_CTX_end(ctx);
+	BN_CTX_free(ctx);
+	BN_zero(&group->cofactor);
+	return ret;
+}
 
 int 
 EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
@@ -261,6 +336,33 @@ EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
+
+	/* Require group->field >= 1. */
+	if (BN_is_zero(&group->field) || BN_is_negative(&group->field)) {
+		ECerror(EC_R_INVALID_FIELD);
+		return 0;
+	}
+
+	/*
+	 * Require order >= 1 and enforce an upper bound of at most one bit more
+	 * than the field cardinality due to Hasse's theorem.
+	 */
+	if (order == NULL || BN_is_zero(order) || BN_is_negative(order) ||
+	    BN_num_bits(order) > BN_num_bits(&group->field) + 1) {
+		ECerror(EC_R_INVALID_GROUP_ORDER);
+		return 0;
+	}
+
+	/*
+	 * Unfortunately, the cofactor is an optional field in many standards.
+	 * Internally, the library uses a 0 cofactor as a marker for "unknown
+	 * cofactor".  So accept cofactor == NULL or cofactor >= 0.
+	 */
+	if (cofactor != NULL && BN_is_negative(cofactor)) {
+		ECerror(EC_R_UNKNOWN_COFACTOR);
+		return 0;
+	}
+
 	if (group->generator == NULL) {
 		group->generator = EC_POINT_new(group);
 		if (group->generator == NULL)
@@ -269,17 +371,15 @@ EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
 	if (!EC_POINT_copy(group->generator, generator))
 		return 0;
 
-	if (order != NULL) {
-		if (!BN_copy(&group->order, order))
-			return 0;
-	} else
-		BN_zero(&group->order);
+	if (!BN_copy(&group->order, order))
+		return 0;
 
-	if (cofactor != NULL) {
+	/* Either take the provided positive cofactor, or try to compute it. */
+	if (cofactor != NULL && !BN_is_zero(cofactor)) {
 		if (!BN_copy(&group->cofactor, cofactor))
 			return 0;
-	} else
-		BN_zero(&group->cofactor);
+	} else if (!ec_guess_cofactor(group))
+		return 0;
 
 	return 1;
 }
