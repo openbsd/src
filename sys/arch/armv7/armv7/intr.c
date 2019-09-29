@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.15 2019/09/29 10:36:52 kettenis Exp $ */
+/* $OpenBSD: intr.c,v 1.16 2019/09/29 11:25:25 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -28,7 +28,7 @@
 #include <dev/ofw/openfirm.h>
 
 uint32_t arm_intr_get_parent(int);
-uint32_t arm_intr_msi_get_parent(int);
+uint32_t arm_intr_map_msi(int, uint64_t *);
 
 void *arm_intr_prereg_establish_fdt(void *, int *, int, int (*)(void *),
     void *, char *);
@@ -105,15 +105,67 @@ arm_intr_get_parent(int node)
 }
 
 uint32_t
-arm_intr_msi_get_parent(int node)
+arm_intr_map_msi(int node, uint64_t *data)
 {
+	uint64_t msi_base;
 	uint32_t phandle = 0;
+	uint32_t *cell;
+	uint32_t *map;
+	uint32_t mask, rid_base, rid;
+	int i, len, length, mcells, ncells;
 
-	while (node && !phandle) {
-		phandle = OF_getpropint(node, "msi-parent", 0);
-		node = OF_parent(node);
+	len = OF_getproplen(node, "msi-map");
+	if (len <= 0) {
+		while (node && !phandle) {
+			phandle = OF_getpropint(node, "msi-parent", 0);
+			node = OF_parent(node);
+		}
+
+		return phandle;
 	}
 
+	map = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "msi-map", map, len);
+
+	mask = OF_getpropint(node, "msi-map-mask", 0xffff);
+	rid = *data & mask;
+
+	cell = map;
+	ncells = len / sizeof(uint32_t);
+	while (ncells > 1) {
+		node = OF_getnodebyphandle(cell[1]);
+		if (node == 0)
+			goto out;
+
+		/*
+		 * Some device trees (e.g. those for the Rockchip
+		 * RK3399 boards) are missing a #msi-cells property.
+		 * Assume the msi-specifier uses a single cell in that
+		 * case.
+		 */
+		mcells = OF_getpropint(node, "#msi-cells", 1);
+		if (ncells < mcells + 3)
+			goto out;
+
+		rid_base = cell[0];
+		length = cell[2 + mcells];
+		msi_base = cell[2];
+		for (i = 1; i < mcells; i++) {
+			msi_base <<= 32;
+			msi_base |= cell[2 + i];
+		}
+		if (rid >= rid_base && rid < rid_base + length) {
+			*data = msi_base + (rid - rid_base);
+			phandle = cell[1];
+			break;
+		}
+
+		cell += (3 + mcells);
+		ncells -= (3 + mcells);
+	}
+
+out:
+	free(map, M_TEMP, len);
 	return phandle;
 }
 
@@ -339,7 +391,7 @@ arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int level,
 	struct arm_intr_handle *ih;
 	uint32_t *cell;
 	uint32_t map_mask[4], *map;
-	int i, len, acells, ncells;
+	int len, acells, ncells;
 	void *val = NULL;
 
 	if (nreg != sizeof(map_mask))
@@ -358,7 +410,7 @@ arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int level,
 
 	cell = map;
 	ncells = len / sizeof(uint32_t);
-	for (i = 0; ncells > 0; i++) {
+	while (ncells > 5) {
 		LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
 			if (ic->ic_phandle == cell[4])
 				break;
@@ -405,7 +457,7 @@ arm_intr_establish_fdt_msi(int node, uint64_t *addr, uint64_t *data,
 	uint32_t phandle;
 	void *val = NULL;
 
-	phandle = arm_intr_msi_get_parent(node);
+	phandle = arm_intr_map_msi(node, data);
 	LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
 		if (ic->ic_phandle == phandle)
 			break;
