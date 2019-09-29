@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.29 2019/06/28 13:32:46 deraadt Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.30 2019/09/29 13:18:39 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -964,7 +964,7 @@ resolve_captive_portal(void)
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_INET;
-	hints.ai_socktype = SOCK_STREAM;	
+	hints.ai_socktype = SOCK_STREAM;
 
 	log_debug("%s: %s", __func__, main_conf->captive_portal_host);
 
