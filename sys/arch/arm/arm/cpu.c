@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.48 2019/09/23 18:10:43 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.49 2019/09/29 10:36:52 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -400,12 +400,6 @@ cpu_alloc_idle_pcb(struct cpu_info *ci)
 	return 0;
 }
 #endif /* MULTIPROCESSOR */
-
-void
-intr_barrier(void *ih)
-{
-	sched_barrier(NULL);
-}
 
 /*
  * Dynamic voltage and frequency scaling implementation.

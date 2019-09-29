@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.14 2018/08/08 11:06:33 patrick Exp $ */
+/* $OpenBSD: intr.c,v 1.15 2019/09/29 10:36:52 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -507,6 +507,16 @@ arm_intr_route(void *cookie, int enable, struct cpu_info *ci)
 		ic->ic_route(ih->ih_ih, enable, ci);
 }
 
+void
+arm_intr_cpu_enable(void)
+{
+	struct interrupt_controller *ic;
+
+	LIST_FOREACH(ic, &interrupt_controllers, ic_list)
+		if (ic->ic_cpu_enable)
+			ic->ic_cpu_enable();
+}
+
 int
 arm_dflt_splraise(int newcpl)
 {
@@ -754,6 +764,15 @@ cpu_initclocks(void)
 }
 
 void
+cpu_startclock(void)
+{
+	if (arm_clock_func.mpstartclock == NULL)
+		panic("startclock function not initialized yet");
+
+	arm_clock_func.mpstartclock();
+}
+
+void
 arm_dflt_delay(u_int usecs)
 {
 	int j;
@@ -857,4 +876,29 @@ setstatclockrate(int new)
 		panic("arm_clock_func.setstatclockrate not intialized");
 	}
 	arm_clock_func.setstatclockrate(new);
+}
+
+void
+intr_barrier(void *ih)
+{
+	sched_barrier(NULL);
+}
+
+/*
+ * IPI implementation
+ */
+
+void arm_no_send_ipi(struct cpu_info *ci, int id);
+void (*intr_send_ipi_func)(struct cpu_info *, int) = arm_no_send_ipi;
+
+void
+arm_send_ipi(struct cpu_info *ci, int id)
+{
+	(*intr_send_ipi_func)(ci, id);
+}
+
+void
+arm_no_send_ipi(struct cpu_info *ci, int id)
+{
+	panic("arm_send_ipi() called: no ipi function");
 }

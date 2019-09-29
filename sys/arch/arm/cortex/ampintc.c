@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.26 2019/09/25 09:21:49 kettenis Exp $ */
+/* $OpenBSD: ampintc.c,v 1.27 2019/09/29 10:36:52 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -144,6 +144,8 @@ struct ampintc_softc {
 	uint8_t			 sc_cpu_mask[ICD_ICTR_CPU_M + 1];
 	struct evcount		 sc_spur;
 	struct interrupt_controller sc_ic;
+	int			 sc_ipi_reason[ICD_ICTR_CPU_M + 1];
+	int			 sc_ipi_num[2];
 };
 struct ampintc_softc *ampintc;
 
@@ -169,6 +171,7 @@ struct intrq {
 
 int		 ampintc_match(struct device *, void *, void *);
 void		 ampintc_attach(struct device *, struct device *, void *);
+void		 ampintc_cpuinit(void);
 int		 ampintc_spllower(int);
 void		 ampintc_splx(int);
 int		 ampintc_splraise(int);
@@ -190,6 +193,12 @@ void		 ampintc_intr_enable(int);
 void		 ampintc_intr_disable(int);
 void		 ampintc_intr_config(int, int);
 void		 ampintc_route(int, int, struct cpu_info *);
+void		 ampintc_route_irq(void *, int, struct cpu_info *);
+
+int		 ampintc_ipi_combined(void *);
+int		 ampintc_ipi_nop(void *);
+int		 ampintc_ipi_ddb(void *);
+void		 ampintc_send_ipi(struct cpu_info *, int);
 
 struct cfattach	ampintc_ca = {
 	sizeof (struct ampintc_softc), ampintc_match, ampintc_attach
@@ -227,6 +236,9 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	int i, nintr, ncpu;
 	uint32_t ictr;
+#ifdef MULTIPROCESSOR
+	int nipi, ipiirq[2];
+#endif
 
 	ampintc = sc;
 
@@ -294,6 +306,66 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 	    ampintc_setipl, ampintc_intr_establish_ext,
 	    ampintc_intr_disestablish, ampintc_intr_string, ampintc_irq_handler);
 
+#ifdef MULTIPROCESSOR
+	/* setup IPI interrupts */
+
+	/*
+	 * Ideally we want two IPI interrupts, one for NOP and one for
+	 * DDB, however we can survive if only one is available it is
+	 * possible that most are not available to the non-secure OS.
+	 */
+	nipi = 0;
+	for (i = 0; i < 16; i++) {
+		int reg, oldreg;
+
+		oldreg = bus_space_read_1(sc->sc_iot, sc->sc_d_ioh,
+		    ICD_IPRn(i));
+		bus_space_write_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPRn(i),
+		    oldreg ^ 0x20);
+
+		/* if this interrupt is not usable, route will be zero */
+		reg = bus_space_read_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPRn(i));
+		if (reg == oldreg)
+			continue;
+
+		/* return to original value, will be set when used */
+		bus_space_write_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPRn(i),
+		    oldreg);
+
+		if (nipi == 0)
+			printf(" ipi: %d", i);
+		else
+			printf(", %d", i);
+		ipiirq[nipi++] = i;
+		if (nipi == 2)
+			break;
+	}
+
+	if (nipi == 0)
+		panic ("no irq available for IPI");
+
+	switch (nipi) {
+	case 1:
+		ampintc_intr_establish(ipiirq[0], IST_EDGE_RISING,
+		    IPL_IPI|IPL_MPSAFE, ampintc_ipi_combined, sc, "ipi");
+		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
+		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[0];
+		break;
+	case 2:
+		ampintc_intr_establish(ipiirq[0], IST_EDGE_RISING,
+		    IPL_IPI|IPL_MPSAFE, ampintc_ipi_nop, sc, "ipinop");
+		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
+		ampintc_intr_establish(ipiirq[1], IST_EDGE_RISING,
+		    IPL_IPI|IPL_MPSAFE, ampintc_ipi_ddb, sc, "ipiddb");
+		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[1];
+		break;
+	default:
+		panic("nipi unexpected number %d", nipi);
+	}
+
+	intr_send_ipi_func = ampintc_send_ipi;
+#endif
+
 	/* enable interrupts */
 	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_DCR, 3);
 	bus_space_write_4(sc->sc_iot, sc->sc_p_ioh, ICPICR, 1);
@@ -303,6 +375,8 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_cookie = self;
 	sc->sc_ic.ic_establish = ampintc_intr_establish_fdt;
 	sc->sc_ic.ic_disestablish = ampintc_intr_disestablish;
+	sc->sc_ic.ic_route = ampintc_route_irq;
+	sc->sc_ic.ic_cpu_enable = ampintc_cpuinit;
 	arm_intr_register_fdt(&sc->sc_ic);
 
 	/* attach GICv2M frame controller */
@@ -505,6 +579,47 @@ ampintc_route(int irq, int enable, struct cpu_info *ci)
 }
 
 void
+ampintc_cpuinit(void)
+{
+	struct ampintc_softc    *sc = ampintc;
+	int			 i;
+
+	/* XXX - this is the only cpu specific call to set this */
+	if (sc->sc_cpu_mask[cpu_number()] == 0) {
+		for (i = 0; i < 32; i++) {
+			int cpumask =
+			    bus_space_read_1(sc->sc_iot, sc->sc_d_ioh,
+			        ICD_IPTRn(i));
+
+			if (cpumask != 0) {
+				sc->sc_cpu_mask[cpu_number()] = cpumask;
+				break;
+			}
+		}
+	}
+
+	if (sc->sc_cpu_mask[cpu_number()] == 0)
+		panic("could not determine cpu target mask");
+}
+
+void
+ampintc_route_irq(void *v, int enable, struct cpu_info *ci)
+{
+	struct ampintc_softc    *sc = ampintc;
+	struct intrhand         *ih = v;
+
+	bus_space_write_4(sc->sc_iot, sc->sc_p_ioh, ICPICR, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_ICRn(ih->ih_irq), 0);
+	if (enable) {
+		ampintc_set_priority(ih->ih_irq,
+		    sc->sc_handler[ih->ih_irq].iq_irq_min);
+		ampintc_intr_enable(ih->ih_irq);
+	}
+
+	ampintc_route(ih->ih_irq, enable, ci);
+}
+
+void
 ampintc_irq_handler(void *frame)
 {
 	struct ampintc_softc	*sc = ampintc;
@@ -634,7 +749,8 @@ ampintc_intr_establish(int irqno, int type, int level, int (*func)(void *),
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
-	ih->ih_ipl = level;
+	ih->ih_ipl = level & IPL_IRQMASK;
+	ih->ih_flags = level & IPL_FLAGMASK;
 	ih->ih_irq = irqno;
 	ih->ih_name = name;
 
@@ -803,3 +919,53 @@ ampintc_intr_disestablish_msi(void *cookie)
 	ampintc_intr_disestablish(*(void **)cookie);
 	*(void **)cookie = NULL;
 }
+
+#ifdef MULTIPROCESSOR
+int
+ampintc_ipi_ddb(void *v)
+{
+	/* XXX */
+	db_enter();
+	return 1;
+}
+
+int
+ampintc_ipi_nop(void *v)
+{
+	/* Nothing to do here, just enough to wake up from WFI */
+	return 1;
+}
+
+int
+ampintc_ipi_combined(void *v)
+{
+	struct ampintc_softc *sc = (struct ampintc_softc *)v;
+
+	if (sc->sc_ipi_reason[cpu_number()] == ARM_IPI_DDB) {
+		sc->sc_ipi_reason[cpu_number()] = ARM_IPI_NOP;
+		return ampintc_ipi_ddb(v);
+	} else {
+		return ampintc_ipi_nop(v);
+	}
+}
+
+void
+ampintc_send_ipi(struct cpu_info *ci, int id)
+{
+	struct ampintc_softc	*sc = ampintc;
+	int sendmask;
+
+	if (ci == curcpu() && id == ARM_IPI_NOP)
+		return;
+
+	/* never overwrite IPI_DDB with IPI_NOP */
+	if (id == ARM_IPI_DDB)
+		sc->sc_ipi_reason[ci->ci_cpuid] = id;
+
+	/* currently will only send to one cpu */
+	sendmask = 1 << (16 + ci->ci_cpuid);
+	sendmask |= sc->sc_ipi_num[id];
+
+	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_SGIR, sendmask);
+}
+#endif
