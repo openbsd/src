@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.236 2019/09/29 16:10:30 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.237 2019/09/29 17:57:36 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1401,9 +1401,7 @@ scsi_xs_error(struct scsi_xfer *xs)
 
 	case XS_SENSE:
 	case XS_SHORTSENSE:
-#ifdef SCSIDEBUG
-		scsi_show_sense(xs);
-#endif /* SCSIDEBUG */
+		SC_DEBUG_SENSE(xs);
 		error = xs->sc_link->interpret_sense(xs);
 		SC_DEBUG(xs->sc_link, SDEV_DB3,
 		    ("scsi_interpret_sense returned %#x\n", error));

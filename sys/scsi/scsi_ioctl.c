@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.56 2019/09/29 15:47:29 krw Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.57 2019/09/29 17:57:36 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -148,18 +148,14 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 		screq->retsts = SCCMD_OK;
 		break;
 	case XS_SENSE:
-#ifdef SCSIDEBUG
-		scsi_show_sense(xs);
-#endif /* SCSIDEBUG */
+		SC_DEBUG_SENSE(xs);
 		screq->senselen_used = min(sizeof(xs->sense),
 		    sizeof(screq->sense));
 		memcpy(screq->sense, &xs->sense, screq->senselen_used);
 		screq->retsts = SCCMD_SENSE;
 		break;
 	case XS_SHORTSENSE:
-#ifdef SCSIDEBUG
-		scsi_show_sense(xs);
-#endif /* SCSIDEBUG */
+		SC_DEBUG_SENSE(xs);
 		printf("XS_SHORTSENSE\n");
 		screq->senselen_used = min(sizeof(xs->sense),
 		    sizeof(screq->sense));
@@ -265,9 +261,7 @@ scsi_ioc_ata_cmd(struct scsi_link *link, atareq_t *atareq)
 	switch (xs->error) {
 	case XS_SENSE:
 	case XS_SHORTSENSE:
-#ifdef SCSIDEBUG
-		scsi_show_sense(xs);
-#endif /* SCSIDEBUG */
+		SC_DEBUG_SENSE(xs);
 		/* XXX this is not right */
 	case XS_NOERROR:
 		atareq->retsts = ATACMD_OK;
