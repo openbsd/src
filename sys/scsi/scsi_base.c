@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.235 2019/09/29 15:47:29 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.236 2019/09/29 16:10:30 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1302,11 +1302,7 @@ scsi_xs_exec(struct scsi_xfer *xs)
 	CLR(xs->flags, ITSDONE);
 
 #ifdef SCSIDEBUG
-	if (xs->sc_link->flags & SDEV_DB1) {
-		scsi_show_xs(xs);
-		if (xs->datalen && (xs->flags & SCSI_DATA_OUT))
-			scsi_show_mem(xs->data, min(64, xs->datalen));
-	}
+	scsi_show_xs(xs);
 #endif /* SCSIDEBUG */
 
 	/* The adapter's scsi_cmd() is responsible for calling scsi_done(). */
@@ -2627,6 +2623,9 @@ scsi_show_xs(struct scsi_xfer *xs)
 	u_char *b = (u_char *)xs->cmd;
 	int i = 0;
 
+	if (!ISSET(xs->sc_link->flags, SDEV_DB1))
+		return;
+
 	sc_print_addr(xs->sc_link);
 	printf("xs  (%p): ", xs);
 
@@ -2651,6 +2650,9 @@ scsi_show_xs(struct scsi_xfer *xs)
 		printf("-[%d bytes]\n", xs->datalen);
 	} else
 		printf("-RESET-\n");
+
+	if (xs->datalen && (xs->flags & SCSI_DATA_OUT))
+		scsi_show_mem(xs->data, min(64, xs->datalen));
 }
 
 void
