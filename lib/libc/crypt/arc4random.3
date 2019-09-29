@@ -1,4 +1,4 @@
-.\" $OpenBSD: arc4random.3,v 1.36 2019/09/28 15:00:44 deraadt Exp $
+.\" $OpenBSD: arc4random.3,v 1.37 2019/09/29 16:30:35 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: September 28 2019 $
+.Dd $Mdocdate: September 29 2019 $
 .Dt ARC4RANDOM 3
 .Os
 .Sh NAME
@@ -69,7 +69,7 @@ to generate a new result.
 One data pool is used for all consumers in a process, so that consumption
 under program flow can act as additional stirring.
 The subsystem is re-seeded from the kernel
-.Xr random 4 
+.Xr random 4
 subsystem using
 .Xr getentropy 2
 on a regular basis, and also upon
