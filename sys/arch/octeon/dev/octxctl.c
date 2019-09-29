@@ -1,4 +1,4 @@
-/*	$OpenBSD: octxctl.c,v 1.3 2018/03/02 15:44:39 visa Exp $	*/
+/*	$OpenBSD: octxctl.c,v 1.4 2019/09/29 04:32:23 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -29,6 +29,7 @@
 #include <machine/octeonvar.h>
 
 #include <dev/ofw/fdt.h>
+#include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/openfirm.h>
 
 #include <octeon/dev/iobusvar.h>
@@ -43,6 +44,8 @@ struct octxctl_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	int			sc_power_gpio[3];
+	int			sc_unit;
 };
 
 int	 octxctl_match(struct device *, void *, void *);
@@ -141,6 +144,10 @@ octxctl_attach(struct device *parent, struct device *self, void *aux)
 	if (strcmp(clock_type_hs, "pll_ref_clk") == 0)
 		clock_sel |= 2;
 
+	OF_getpropintarray(faa->fa_node, "power", sc->sc_power_gpio,
+	    sizeof(sc->sc_power_gpio));
+
+	sc->sc_unit = (faa->fa_reg[0].addr >> 24) & 0x1;
 	sc->sc_iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr, faa->fa_reg[0].size,
 	    0, &sc->sc_ioh)) {
@@ -184,6 +191,7 @@ octxctl_uctl_init(struct octxctl_softc *sc, uint64_t clock_freq,
 	uint64_t ioclock = octeon_ioclock_speed();
 	uint64_t mpll_mult;
 	uint64_t refclk_fsel;
+	int output_sel;
 
 	/*
 	 * Put the bridge controller, USB core, PHY, and clock divider
@@ -260,10 +268,28 @@ octxctl_uctl_init(struct octxctl_softc *sc, uint64_t clock_freq,
 
 	delay(100);
 
-	/* Disable port power control. */
-	val = XCTL_RD_8(sc, XCTL_HOST_CFG);
-	val &= ~XCTL_HOST_CFG_PPC_EN;
-	XCTL_WR_8(sc, XCTL_HOST_CFG, val);
+	if (sc->sc_power_gpio[0] != 0) {
+		if (sc->sc_unit == 0)
+			output_sel = GPIO_CONFIG_MD_USB0_VBUS_CTRL;
+		else
+			output_sel = GPIO_CONFIG_MD_USB1_VBUS_CTRL;
+		gpio_controller_config_pin(sc->sc_power_gpio,
+		    GPIO_CONFIG_OUTPUT | output_sel);
+
+		/* Enable port power control. */
+		val = XCTL_RD_8(sc, XCTL_HOST_CFG);
+		val |= XCTL_HOST_CFG_PPC_EN;
+		if (sc->sc_power_gpio[2] & GPIO_ACTIVE_LOW)
+			val &= ~XCTL_HOST_CFG_PPC_ACTIVE_HIGH_EN;
+		else
+			val |= XCTL_HOST_CFG_PPC_ACTIVE_HIGH_EN;
+		XCTL_WR_8(sc, XCTL_HOST_CFG, val);
+	} else {
+		/* Disable port power control. */
+		val = XCTL_RD_8(sc, XCTL_HOST_CFG);
+		val &= ~XCTL_HOST_CFG_PPC_EN;
+		XCTL_WR_8(sc, XCTL_HOST_CFG, val);
+	}
 
 	/* Enable host-only mode. */
 	val = XCTL_RD_8(sc, XCTL_CTL);
