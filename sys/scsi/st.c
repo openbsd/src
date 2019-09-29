@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.167 2019/09/29 15:47:29 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.168 2019/09/29 17:23:24 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1368,15 +1368,14 @@ st_mode_sense(struct st_softc *st, int flags)
 	st->media_density = density;
 
 	SC_DEBUG(link, SDEV_DB3,
-	    ("density code 0x%x, %d-byte blocks, write-%s, ",
+	    ("density code 0x%x, %d-byte blocks, write-%s, %sbuffered\n",
 	    st->media_density, st->media_blksize,
-	    ISSET(link->flags, SDEV_READONLY) ? "protected" : "enabled"));
-	SC_DEBUGN(link, SDEV_DB3,
-	    ("%sbuffered\n", ISSET(dev_spec, SMH_DSP_BUFF_MODE) ? "" : "un"));
+	    ISSET(link->flags, SDEV_READONLY) ? "protected" : "enabled",
+	    ISSET(dev_spec, SMH_DSP_BUFF_MODE) ? "" : "un"));
 
 	SET(link->flags, SDEV_MEDIA_LOADED);
 
-done:
+ done:
 	if (data)
 		dma_free(data, sizeof(*data));
 	return error;

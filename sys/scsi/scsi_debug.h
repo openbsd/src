@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_debug.h,v 1.17 2019/09/29 15:47:29 krw Exp $	*/
+/*	$OpenBSD: scsi_debug.h,v 1.18 2019/09/29 17:23:24 krw Exp $	*/
 /*	$NetBSD: scsi_debug.h,v 1.7 1996/10/12 23:23:16 christos Exp $	*/
 
 /*
@@ -56,14 +56,8 @@ void	scsi_show_flags(u_int16_t, const char **);
 		printf Printstuff;		\
 	}					\
 } while (0)
-#define	SC_DEBUGN(link,Level,Printstuff) do {	\
-	if ((link)->flags & (Level)) {		\
-		printf Printstuff;		\
-	}					\
-} while (0)
 #else
 #define SC_DEBUG(A,B,C)
-#define SC_DEBUGN(A,B,C)
 #endif /* SCSIDEBUG */
 
 #endif /* _KERNEL */
