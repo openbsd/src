@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.43 2019/08/27 04:26:50 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.44 2019/09/30 06:25:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -629,6 +629,10 @@ struct ixl_aq_link_status { /* this occupies the iaq_param space */
 #define IXL_AQ_LSE_IS_ENABLED		0x1 /* only set in response */
 	uint8_t		phy_type;
 	uint8_t		link_speed;
+#define IXL_AQ_LINK_SPEED_1GB		(1 << 2)
+#define IXL_AQ_LINK_SPEED_10GB		(1 << 3)
+#define IXL_AQ_LINK_SPEED_40GB		(1 << 4)
+#define IXL_AQ_LINK_SPEED_25GB		(1 << 6)
 	uint8_t		link_info;
 #define IXL_AQ_LINK_UP_FUNCTION		0x01
 #define IXL_AQ_LINK_FAULT		0x02
@@ -1289,12 +1293,10 @@ static const struct ixl_phy_type ixl_phy_type_map[] = {
 };
 
 static const struct ixl_speed_type ixl_speed_type_map[] = {
-	{ IXL_AQ_PHY_LINK_SPEED_40GB,		IF_Gbps(40) },
-	{ IXL_AQ_PHY_LINK_SPEED_25GB,		IF_Gbps(25) },
-	{ IXL_AQ_PHY_LINK_SPEED_20GB,		IF_Gbps(20) },
-	{ IXL_AQ_PHY_LINK_SPEED_10GB,		IF_Gbps(10) },
-	{ IXL_AQ_PHY_LINK_SPEED_1000MB,		IF_Mbps(1000) },
-	{ IXL_AQ_PHY_LINK_SPEED_100MB,		IF_Mbps(100) },
+	{ IXL_AQ_LINK_SPEED_40GB,		IF_Gbps(40) },
+	{ IXL_AQ_LINK_SPEED_25GB,		IF_Gbps(25) },
+	{ IXL_AQ_LINK_SPEED_10GB,		IF_Gbps(10) },
+	{ IXL_AQ_LINK_SPEED_1GB,		IF_Gbps(1) },
 };
 
 static const struct ixl_aq_regs ixl_pf_aq_regs = {
