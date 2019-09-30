@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.67 2019/09/12 01:17:38 dlg Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.68 2019/09/30 01:53:04 dlg Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -315,8 +315,7 @@ struct mbuf;
 
 int	 bpf_validate(struct bpf_insn *, int);
 int	 bpf_mtap(caddr_t, const struct mbuf *, u_int);
-int	 bpf_mtap_hdr(caddr_t, const void *, u_int, const struct mbuf *, u_int,
-	    void (*)(const void *, void *, size_t));
+int	 bpf_mtap_hdr(caddr_t, const void *, u_int, const struct mbuf *, u_int);
 int	 bpf_mtap_af(caddr_t, u_int32_t, const struct mbuf *, u_int);
 int	 bpf_mtap_ether(caddr_t, const struct mbuf *, u_int);
 int	 bpf_tap_hdr(caddr_t, const void *, u_int, const void *, u_int, u_int);

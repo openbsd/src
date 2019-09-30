@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.66 2018/09/13 12:29:43 mpi Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.67 2019/09/30 01:53:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -337,7 +337,7 @@ ipcomp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			hdr.spi = tdb->tdb_spi;
 
 			bpf_mtap_hdr(encif->if_bpf, (char *)&hdr,
-			    ENC_HDRLEN, m, BPF_DIRECTION_OUT, NULL);
+			    ENC_HDRLEN, m, BPF_DIRECTION_OUT);
 		}
 	}
 #endif

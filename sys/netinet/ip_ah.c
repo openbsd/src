@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.143 2018/08/28 15:15:02 mpi Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.144 2019/09/30 01:53:05 dlg Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -914,7 +914,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			hdr.flags |= M_AUTH;
 
 			bpf_mtap_hdr(encif->if_bpf, (char *)&hdr,
-			    ENC_HDRLEN, m, BPF_DIRECTION_OUT, NULL);
+			    ENC_HDRLEN, m, BPF_DIRECTION_OUT);
 		}
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.142 2019/09/18 23:52:32 dlg Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.143 2019/09/30 01:53:05 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -937,7 +937,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data,
 			tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
 
 		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_rxtap_len,
-		    m, BPF_DIRECTION_IN, NULL);
+		    m, BPF_DIRECTION_IN);
 	}
 #endif
 
@@ -1268,7 +1268,7 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 
 		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_txtap_len,
-		    m0, BPF_DIRECTION_OUT, NULL);
+		    m0, BPF_DIRECTION_OUT);
 	}
 #endif
 

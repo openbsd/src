@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.251 2019/09/18 23:52:32 dlg Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.252 2019/09/30 01:53:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3555,7 +3555,7 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 		}
 
 		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_rxtap_len,
-		    m, BPF_DIRECTION_IN, NULL);
+		    m, BPF_DIRECTION_IN);
 	}
 #endif
 	ieee80211_inputm(IC2IFP(ic), m, ni, &rxi, ml);
@@ -4262,7 +4262,7 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
 		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_txtap_len,
-		    m, BPF_DIRECTION_OUT, NULL);
+		    m, BPF_DIRECTION_OUT);
 	}
 #endif
 

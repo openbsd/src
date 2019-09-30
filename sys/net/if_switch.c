@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.28 2019/05/12 16:24:44 akoshibe Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.29 2019/09/30 01:53:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1494,7 +1494,7 @@ switch_mtap(caddr_t arg, struct mbuf *m, int dir, uint64_t datapath_id)
 	of.of_direction = htonl(dir == BPF_DIRECTION_IN ?
 	    DLT_OPENFLOW_TO_SWITCH : DLT_OPENFLOW_TO_CONTROLLER);
 
-	return (bpf_mtap_hdr(arg, (caddr_t)&of, sizeof(of), m, dir, NULL));
+	return (bpf_mtap_hdr(arg, (caddr_t)&of, sizeof(of), m, dir));
 }
 
 int

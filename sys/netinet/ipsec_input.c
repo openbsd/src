@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.168 2018/11/09 13:26:12 claudio Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.169 2019/09/30 01:53:05 dlg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -677,7 +677,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 			hdr.flags = m->m_flags & (M_AUTH|M_CONF);
 
 			bpf_mtap_hdr(encif->if_bpf, (char *)&hdr,
-			    ENC_HDRLEN, m, BPF_DIRECTION_IN, NULL);
+			    ENC_HDRLEN, m, BPF_DIRECTION_IN);
 		}
 	}
 #endif

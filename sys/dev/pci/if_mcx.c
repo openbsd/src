@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.33 2019/09/12 04:23:59 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.34 2019/09/30 01:53:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -6352,7 +6352,7 @@ mcx_start(struct ifqueue *ifq)
 		if (ifp->if_bpf)
 			bpf_mtap_hdr(ifp->if_bpf,
 			    (caddr_t)sqe->sqe_inline_headers,
-			    MCX_SQ_INLINE_SIZE, m, BPF_DIRECTION_OUT, NULL);
+			    MCX_SQ_INLINE_SIZE, m, BPF_DIRECTION_OUT);
 #endif
 		map = ms->ms_map;
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,

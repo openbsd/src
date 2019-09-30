@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.179 2019/09/12 01:25:14 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.180 2019/09/30 01:53:05 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1368,7 +1368,7 @@ bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction)
  */
 int
 bpf_mtap_hdr(caddr_t arg, const void *data, u_int dlen, const struct mbuf *m,
-    u_int direction, void (*cpfn)(const void *, void *, size_t))
+    u_int direction)
 {
 	struct m_hdr mh;
 	const struct mbuf *m0;
@@ -1382,7 +1382,7 @@ bpf_mtap_hdr(caddr_t arg, const void *data, u_int dlen, const struct mbuf *m,
 	} else 
 		m0 = m;
 
-	return _bpf_mtap(arg, m0, direction, cpfn);
+	return _bpf_mtap(arg, m0, direction, NULL);
 }
 
 /*
@@ -1401,7 +1401,7 @@ bpf_mtap_af(caddr_t arg, u_int32_t af, const struct mbuf *m, u_int direction)
 
 	afh = htonl(af);
 
-	return bpf_mtap_hdr(arg, &afh, sizeof(afh), m, direction, NULL);
+	return bpf_mtap_hdr(arg, &afh, sizeof(afh), m, direction);
 }
 
 /*
@@ -1446,7 +1446,7 @@ bpf_mtap_ether(caddr_t arg, const struct mbuf *m, u_int direction)
 	mh.mh_next = m->m_next;
 
 	return bpf_mtap_hdr(arg, &evh, sizeof(evh),
-	    (struct mbuf *)&mh, direction, NULL);
+	    (struct mbuf *)&mh, direction);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.217 2019/09/18 23:52:32 dlg Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.218 2019/09/30 01:53:05 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2227,7 +2227,7 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		}
 
 		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_rxtap_len,
-		    m, BPF_DIRECTION_IN, NULL);
+		    m, BPF_DIRECTION_IN);
 	}
 #endif
 
@@ -3277,7 +3277,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
 		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_txtap_len,
-		    m, BPF_DIRECTION_OUT, NULL);
+		    m, BPF_DIRECTION_OUT);
 	}
 #endif
 

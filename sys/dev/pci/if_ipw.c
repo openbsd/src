@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.125 2019/09/18 23:52:32 dlg Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.126 2019/09/30 01:53:05 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -887,7 +887,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 		tap->wr_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 
 		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_rxtap_len,
-		    m, BPF_DIRECTION_IN, NULL);
+		    m, BPF_DIRECTION_IN);
 	}
 #endif
 
@@ -1157,7 +1157,7 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 
 		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_txtap_len,
-		    m, BPF_DIRECTION_OUT, NULL);
+		    m, BPF_DIRECTION_OUT);
 	}
 #endif
 
