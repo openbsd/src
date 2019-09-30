@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.42 2017/08/20 04:22:57 jsg Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.43 2019/09/30 21:48:32 kettenis Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -39,6 +39,41 @@
 
 #ifndef _ARM_ARMREG_H
 #define _ARM_ARMREG_H
+
+/* CCSIDR - Current Cache Size ID Register */
+#define	CCSIDR_SETS_MASK	0x0fffe000
+#define	CCSIDR_SETS_SHIFT	13
+#define	CCSIDR_SETS(reg)	\
+    ((((reg) & CCSIDR_SETS_MASK) >> CCSIDR_SETS_SHIFT) + 1)
+#define	CCSIDR_WAYS_MASK	0x00001ff8
+#define	CCSIDR_WAYS_SHIFT	3
+#define	CCSIDR_WAYS(reg)	\
+    ((((reg) & CCSIDR_WAYS_MASK) >> CCSIDR_WAYS_SHIFT) + 1)
+#define	CCSIDR_LINE_MASK	0x00000007
+#define	CCSIDR_LINE_SIZE(reg)	(1 << (((reg) & CCSIDR_LINE_MASK) + 4))
+
+/* CLIDR - Cache Level ID Register */
+#define	CLIDR_CTYPE_MASK	0x7
+#define	CLIDR_CTYPE_INSN	0x1
+#define	CLIDR_CTYPE_DATA	0x2
+#define	CLIDR_CTYPE_UNIFIED	0x4
+
+/* CSSELR - Cache Size Selection Register */
+#define	CSSELR_IND		(1 << 0)
+#define	CSSELR_LEVEL_SHIFT	1
+
+/* CTR - Cache Type Register */
+#define	CTR_DLINE_SHIFT		16
+#define	CTR_DLINE_MASK		(0xf << CTR_DLINE_SHIFT)
+#define	CTR_DLINE_SIZE(reg)	(((reg) & CTR_DLINE_MASK) >> CTR_DLINE_SHIFT)
+#define	CTR_IL1P_SHIFT		14
+#define	CTR_IL1P_MASK		(0x3 << CTR_IL1P_SHIFT)
+#define	CTR_IL1P_AIVIVT		(0x1 << CTR_IL1P_SHIFT)
+#define	CTR_IL1P_VIPT		(0x2 << CTR_IL1P_SHIFT)
+#define	CTR_IL1P_PIPT		(0x3 << CTR_IL1P_SHIFT)
+#define	CTR_ILINE_SHIFT		0
+#define	CTR_ILINE_MASK		(0xf << CTR_ILINE_SHIFT)
+#define	CTR_ILINE_SIZE(reg)	(((reg) & CTR_ILINE_MASK) >> CTR_ILINE_SHIFT)
 
 /*
  * ARM Process Status Register

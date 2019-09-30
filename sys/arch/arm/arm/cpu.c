@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.50 2019/09/30 20:47:38 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.51 2019/09/30 21:48:32 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -44,7 +44,6 @@
  */
 
 #include <sys/param.h>
-
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
@@ -71,7 +70,83 @@
 #include <dev/ofw/ofw_thermal.h>
 #include <dev/ofw/fdt.h>
 
-char cpu_model[256];
+#include "psci.h"
+#if NPSCI > 0
+#include <dev/fdt/pscivar.h>
+#endif
+
+/* CPU Identification */
+#define CPU_IMPL_ARM		0x41
+#define CPU_IMPL_AMCC		0x50
+
+#define CPU_PART_CORTEX_A5	0xc05
+#define CPU_PART_CORTEX_A7	0xc07
+#define CPU_PART_CORTEX_A8	0xc08
+#define CPU_PART_CORTEX_A9	0xc09
+#define CPU_PART_CORTEX_A12	0xc0d
+#define CPU_PART_CORTEX_A15	0xc0f
+#define CPU_PART_CORTEX_A17	0xc0e
+#define CPU_PART_CORTEX_A32	0xd01	
+#define CPU_PART_CORTEX_A53	0xd03
+#define CPU_PART_CORTEX_A35	0xd04
+#define CPU_PART_CORTEX_A55	0xd05
+#define CPU_PART_CORTEX_A57	0xd07
+#define CPU_PART_CORTEX_A72	0xd08
+#define CPU_PART_CORTEX_A73	0xd09
+#define CPU_PART_CORTEX_A75	0xd0a
+
+#define CPU_PART_X_GENE		0x000
+
+#define CPU_IMPL(midr)  (((midr) >> 24) & 0xff)
+#define CPU_PART(midr)  (((midr) >> 4) & 0xfff)
+#define CPU_VAR(midr)   (((midr) >> 20) & 0xf)
+#define CPU_REV(midr)   (((midr) >> 0) & 0xf)
+
+struct cpu_cores {
+	int	id;
+	char	*name;
+};
+
+struct cpu_cores cpu_cores_none[] = {
+	{ 0, NULL },
+};
+
+struct cpu_cores cpu_cores_arm[] = {
+	{ CPU_PART_CORTEX_A5, "Cortex-A5" },
+	{ CPU_PART_CORTEX_A7, "Cortex-A7" },
+	{ CPU_PART_CORTEX_A8, "Cortex-A8" },
+	{ CPU_PART_CORTEX_A9, "Cortex-A9" },
+	{ CPU_PART_CORTEX_A12, "Cortex-A12" },
+	{ CPU_PART_CORTEX_A15, "Cortex-A15" },
+	{ CPU_PART_CORTEX_A17, "Cortex-A17" },
+	{ CPU_PART_CORTEX_A32, "Cortex-A32" },
+	{ CPU_PART_CORTEX_A35, "Cortex-A35" },
+	{ CPU_PART_CORTEX_A53, "Cortex-A53" },
+	{ CPU_PART_CORTEX_A55, "Cortex-A55" },
+	{ CPU_PART_CORTEX_A57, "Cortex-A57" },
+	{ CPU_PART_CORTEX_A72, "Cortex-A72" },
+	{ CPU_PART_CORTEX_A73, "Cortex-A73" },
+	{ CPU_PART_CORTEX_A75, "Cortex-A75" },
+	{ 0, NULL },
+};
+
+struct cpu_cores cpu_cores_amcc[] = {
+	{ CPU_PART_X_GENE, "X-Gene" },
+	{ 0, NULL },
+};
+
+/* arm cores makers */
+const struct implementers {
+	int			id;
+	char			*name;
+	struct cpu_cores	*corelist;
+} cpu_implementers[] = {
+	{ CPU_IMPL_ARM,	"ARM", cpu_cores_arm },
+	{ CPU_IMPL_AMCC, "Applied Micro", cpu_cores_amcc },
+	{ 0, NULL },
+};
+
+char cpu_model[64];
 int cpu_node;
 
 int	cpu_match(struct device *, void *, void *);
@@ -88,17 +163,183 @@ struct cfdriver cpu_cd = {
 void	cpu_opp_init_legacy(struct cpu_info *);
 void	cpu_opp_init(struct cpu_info *, uint32_t);
 
-void	identify_arm_cpu(struct device *, struct cpu_info *);
+void	cpu_flush_bp_noop(void);
+
+void
+cpu_identify(struct cpu_info *ci)
+{
+	uint32_t midr, impl, part;
+	uint32_t clidr;
+	uint32_t ctr, ccsidr, sets, ways, line;
+	const char *impl_name = NULL;
+	const char *part_name = NULL;
+	const char *il1p_name = NULL;
+	const char *sep;
+	struct cpu_cores *coreselecter = cpu_cores_none;
+	int i;
+
+	__asm volatile("mrc p15, 0, %0, c0, c0, 0" : "=r"(midr));
+	impl = CPU_IMPL(midr);
+	part = CPU_PART(midr);
+
+	for (i = 0; cpu_implementers[i].name; i++) {
+		if (impl == cpu_implementers[i].id) {
+			impl_name = cpu_implementers[i].name;
+			coreselecter = cpu_implementers[i].corelist;
+			break;
+		}
+	}
+
+	for (i = 0; coreselecter[i].name; i++) {
+		if (part == coreselecter[i].id) {
+			part_name = coreselecter[i].name;
+			break;
+		}
+	}
+
+	if (impl_name && part_name) {
+		printf(" %s %s r%up%u", impl_name, part_name, CPU_VAR(midr),
+		    CPU_REV(midr));
+
+		if (CPU_IS_PRIMARY(ci))
+			snprintf(cpu_model, sizeof(cpu_model),
+			    "%s %s r%up%u", impl_name, part_name,
+			    CPU_VAR(midr), CPU_REV(midr));
+	} else {
+		printf(" Unknown, MIDR 0x%x", midr);
+
+		if (CPU_IS_PRIMARY(ci))
+			snprintf(cpu_model, sizeof(cpu_model), "Unknown");
+	}
+
+	/* Print cache information. */
+
+	__asm volatile("mrc p15, 0, %0, c0, c0, 1" : "=r"(ctr));
+	switch (ctr & CTR_IL1P_MASK) {
+	case CTR_IL1P_AIVIVT:
+		il1p_name = "AIVIVT ";
+		break;
+	case CTR_IL1P_VIPT:
+		il1p_name = "VIPT ";
+		break;
+	case CTR_IL1P_PIPT:
+		il1p_name = "PIPT ";
+		break;
+	}
+
+	__asm volatile("mrc p15, 1, %0, c0, c0, 1" : "=r"(clidr));
+	for (i = 0; i < 7; i++) {
+		if ((clidr & CLIDR_CTYPE_MASK) == 0)
+			break;
+		printf("\n%s:", ci->ci_dev->dv_xname);
+		sep = "";
+		if (clidr & CLIDR_CTYPE_INSN) {
+			__asm volatile("mcr p15, 2, %0, c0, c0, 0" ::
+			    "r"(i << CSSELR_LEVEL_SHIFT | CSSELR_IND));
+			__asm volatile("mrc p15, 1, %0, c0, c0, 0" : "=r"(ccsidr));
+			sets = CCSIDR_SETS(ccsidr);
+			ways = CCSIDR_WAYS(ccsidr);
+			line = CCSIDR_LINE_SIZE(ccsidr);
+			printf("%s %dKB %db/line %d-way L%d %sI-cache", sep,
+			    (sets * ways * line) / 1024, line, ways, (i + 1),
+			    il1p_name);
+			il1p_name = "";
+			sep = ",";
+		}
+		if (clidr & CLIDR_CTYPE_DATA) {
+			__asm volatile("mcr p15, 2, %0, c0, c0, 0" ::
+			    "r"(i << CSSELR_LEVEL_SHIFT));
+			__asm volatile("mrc p15, 1, %0, c0, c0, 0" : "=r"(ccsidr));
+			sets = CCSIDR_SETS(ccsidr);
+			ways = CCSIDR_WAYS(ccsidr);
+			line = CCSIDR_LINE_SIZE(ccsidr);
+			printf("%s %dKB %db/line %d-way L%d D-cache", sep,
+			    (sets * ways * line) / 1024, line, ways, (i + 1));
+			sep = ",";
+		}
+		if (clidr & CLIDR_CTYPE_UNIFIED) {
+			__asm volatile("mcr p15, 2, %0, c0, c0, 0" ::
+			    "r"(i << CSSELR_LEVEL_SHIFT));
+			__asm volatile("mrc p15, 1, %0, c0, c0, 0" : "=r"(ccsidr));
+			sets = CCSIDR_SETS(ccsidr);
+			ways = CCSIDR_WAYS(ccsidr);
+			line = CCSIDR_LINE_SIZE(ccsidr);
+			printf("%s %dKB %db/line %d-way L%d cache", sep,
+			    (sets * ways * line) / 1024, line, ways, (i + 1));
+		}
+		clidr >>= 3;
+	}
+
+	/*
+	 * Some ARM processors are vulnerable to branch target
+	 * injection attacks (CVE-2017-5715).
+	 */
+	switch (impl) {
+	case CPU_IMPL_ARM:
+		switch (part) {
+		case CPU_PART_CORTEX_A5:
+		case CPU_PART_CORTEX_A7:
+		case CPU_PART_CORTEX_A32:
+		case CPU_PART_CORTEX_A35:
+		case CPU_PART_CORTEX_A53:
+		case CPU_PART_CORTEX_A55:
+			/* Not vulnerable. */
+			ci->ci_flush_bp = cpu_flush_bp_noop;
+			break;
+		case CPU_PART_CORTEX_A8:
+		case CPU_PART_CORTEX_A9:
+		case CPU_PART_CORTEX_A12:
+		case CPU_PART_CORTEX_A17:
+		case CPU_PART_CORTEX_A73:
+		case CPU_PART_CORTEX_A75:
+		default:
+			/* Vulnerable; flush BP cache. */
+			ci->ci_flush_bp = armv7_flush_bp;
+			break;
+		case CPU_PART_CORTEX_A15:
+		case CPU_PART_CORTEX_A72:
+			/*
+			 * Vulnerable; BPIALL is "not effective" so
+			 * must use ICIALLU and hope the firmware set
+			 * the magic bit in the ACTLR that actually
+			 * forces a BTB flush.
+			 */
+			ci->ci_flush_bp = cortex_a15_flush_bp;
+			break;
+		case CPU_PART_CORTEX_A57:
+			/*
+			 * Vulnerable; must disable and enable the MMU
+			 * which can be done by a PSCI call on
+			 * firmware with the appropriate fixes.  Punt
+			 * for now.
+			 */
+			ci->ci_flush_bp = cpu_flush_bp_noop;
+		}
+		break;
+	default:
+		/* Not much we can do for an unknown processor.  */
+		ci->ci_flush_bp = cpu_flush_bp_noop;
+		break;
+	}
+}
+
+int	cpu_hatch_secondary(struct cpu_info *ci, int, uint64_t);
 int	cpu_clockspeed(int *);
 
 int
 cpu_match(struct device *parent, void *cfdata, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
+	uint32_t mpidr;
 	char buf[32];
 
-	if (OF_getprop(faa->fa_node, "device_type", buf, sizeof(buf)) > 0 &&
-	    strcmp(buf, "cpu") == 0)
+	__asm volatile("mrc p15, 0, %0, c0, c0, 5" : "=r"(mpidr));
+
+	if (OF_getprop(faa->fa_node, "device_type", buf, sizeof(buf)) <= 0 ||
+	    strcmp(buf, "cpu") != 0)
+		return 0;
+
+	if (ncpus < MAXCPUS || faa->fa_reg[0].addr == (mpidr & MPIDR_AFF))
 		return 1;
 
 	return 0;
@@ -109,244 +350,97 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 	struct cpu_info *ci;
+	uint32_t mpidr;
 	uint32_t opp;
 
-	if (dev->dv_unit == 0) {
-		ci = curcpu();
-		ci->ci_dev = dev;
+	__asm volatile("mrc p15, 0, %0, c0, c0, 5" : "=r"(mpidr));
+	KASSERT(faa->fa_nreg > 0);
 
-		/* Get the CPU ID from coprocessor 15 */
-		ci->ci_arm_cpuid = cpu_id();
-		ci->ci_arm_cputype =
-		    ci->ci_arm_cpuid & CPU_ID_CPU_MASK;
-		ci->ci_arm_cpurev =
-		    ci->ci_arm_cpuid & CPU_ID_REVISION_MASK;
+	if (faa->fa_reg[0].addr == (mpidr & MPIDR_AFF)) {
+		ci = &cpu_info_primary;
+#ifdef MULTIPROCESSOR
+		ci->ci_flags |= CPUF_RUNNING | CPUF_PRESENT | CPUF_PRIMARY;
+#endif
+	}
+#ifdef MULTIPROCESSOR
+	else {
+		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK | M_ZERO);
+		cpu_info[dev->dv_unit] = ci;
+		ci->ci_next = cpu_info_list->ci_next;
+		cpu_info_list->ci_next = ci;
+		ci->ci_flags |= CPUF_AP;
+		ncpus++;
+	}
+#endif
 
-		identify_arm_cpu(dev, ci);
+	ci->ci_dev = dev;
+	ci->ci_cpuid = dev->dv_unit;
+	ci->ci_mpidr = faa->fa_reg[0].addr;
+	ci->ci_node = faa->fa_node;
+	ci->ci_self = ci;
+
+	printf(" mpidr %llx:", ci->ci_mpidr);
+
+#ifdef MULTIPROCESSOR
+	if (ci->ci_flags & CPUF_AP) {
+		char buf[32];
+		uint64_t spinup_data = 0;
+		int spinup_method = 0;
+		int timeout = 10000;
+		int len;
+
+		len = OF_getprop(ci->ci_node, "enable-method",
+		    buf, sizeof(buf));
+		if (strcmp(buf, "psci") == 0) {
+			spinup_method = 1;
+		} else if (strcmp(buf, "spin-table") == 0) {
+			spinup_method = 2;
+			spinup_data = OF_getpropint64(ci->ci_node,
+			    "cpu-release-addr", 0);
+		}
+
+		sched_init_cpu(ci);
+		if (cpu_hatch_secondary(ci, spinup_method, spinup_data)) {
+			atomic_setbits_int(&ci->ci_flags, CPUF_IDENTIFY);
+			__asm volatile("dsb sy; sev");
+
+			while ((ci->ci_flags & CPUF_IDENTIFIED) == 0 &&
+			    --timeout)
+				delay(1000);
+			if (timeout == 0) {
+				printf(" failed to identify");
+				ci->ci_flags = 0;
+			}
+		} else {
+			printf(" failed to spin up");
+			ci->ci_flags = 0;
+		}
+	} else {
+#endif
+		cpu_identify(ci);
 
 		vfp_init();
 
-		if (OF_getproplen(faa->fa_node, "clocks") > 0) {
-			cpu_node = faa->fa_node;
+		if (OF_getproplen(ci->ci_node, "clocks") > 0) {
+			cpu_node = ci->ci_node;
 			cpu_cpuspeed = cpu_clockspeed;
 		}
-	} else {
-		printf(": not configured");
-		return;
+#ifdef MULTIPROCESSOR
 	}
-
-	ci->ci_node = faa->fa_node;
+#endif
 
 	opp = OF_getpropint(ci->ci_node, "operating-points-v2", 0);
 	if (opp)
 		cpu_opp_init(ci, opp);
 	else
 		cpu_opp_init_legacy(ci);
-}
-
-enum cpu_class {
-	CPU_CLASS_NONE,
-	CPU_CLASS_ARMv7,
-	CPU_CLASS_ARMv8
-};
-
-struct cpuidtab {
-	u_int32_t	cpuid;
-	enum		cpu_class cpu_class;
-	const char	*cpu_name;
-};
-
-const struct cpuidtab cpuids[] = {
-	{ CPU_ID_CORTEX_A5,	CPU_CLASS_ARMv7,	"ARM Cortex-A5" },
-	{ CPU_ID_CORTEX_A7,	CPU_CLASS_ARMv7,	"ARM Cortex-A7" },
-	{ CPU_ID_CORTEX_A8,	CPU_CLASS_ARMv7,	"ARM Cortex-A8" },
-	{ CPU_ID_CORTEX_A9,	CPU_CLASS_ARMv7,	"ARM Cortex-A9" },
-	{ CPU_ID_CORTEX_A12,	CPU_CLASS_ARMv7,	"ARM Cortex-A12" },
-	{ CPU_ID_CORTEX_A15,	CPU_CLASS_ARMv7,	"ARM Cortex-A15" },
-	{ CPU_ID_CORTEX_A17,	CPU_CLASS_ARMv7,	"ARM Cortex-A17" },
-
-	{ CPU_ID_CORTEX_A32,	CPU_CLASS_ARMv8,	"ARM Cortex-A32" },
-	{ CPU_ID_CORTEX_A35,	CPU_CLASS_ARMv8,	"ARM Cortex-A35" },
-	{ CPU_ID_CORTEX_A53,	CPU_CLASS_ARMv8,	"ARM Cortex-A53" },
-	{ CPU_ID_CORTEX_A55,	CPU_CLASS_ARMv8,	"ARM Cortex-A55" },
-	{ CPU_ID_CORTEX_A57,	CPU_CLASS_ARMv8,	"ARM Cortex-A57" },
-	{ CPU_ID_CORTEX_A72,	CPU_CLASS_ARMv8,	"ARM Cortex-A72" },
-	{ CPU_ID_CORTEX_A73,	CPU_CLASS_ARMv8,	"ARM Cortex-A73" },
-	{ CPU_ID_CORTEX_A75,	CPU_CLASS_ARMv8,	"ARM Cortex-A75" },
-
-	{ 0, CPU_CLASS_NONE, NULL }
-};
-
-struct cpu_classtab {
-	const char	*class_name;
-	const char	*class_option;
-};
-
-const char *cpu_classes[] = {
-	"unknown",		/* CPU_CLASS_NONE */
-	"ARMv7",		/* CPU_CLASS_ARMv7 */
-	"ARMv8"			/* CPU_CLASS_ARMv8 */
-};
-
-/*
- * Report the type of the specified arm processor. This uses the generic and
- * arm specific information in the cpu structure to identify the processor.
- * The remaining fields in the cpu structure are filled in appropriately.
- */
-
-static const char * const wtnames[] = {
-	"wr-thru",
-	"wr-back",
-	"wr-back",
-	"**unknown 3**",
-	"**unknown 4**",
-	"wr-back-lock",		/* XXX XScale-specific? */
-	"wr-back-lock-A",
-	"wr-back-lock-B",
-	"**unknown 8**",
-	"**unknown 9**",
-	"**unknown 10**",
-	"**unknown 11**",
-	"**unknown 12**",
-	"**unknown 13**",
-	"**unknown 14**",
-	"**unknown 15**"
-};
-
-void
-identify_arm_cpu(struct device *dv, struct cpu_info *ci)
-{
-	u_int cpuid;
-	enum cpu_class cpu_class = CPU_CLASS_NONE;
-	int i;
-
-	cpuid = ci->ci_arm_cpuid;
-
-	if (cpuid == 0) {
-		printf("Processor failed probe - no CPU ID\n");
-		return;
-	}
-
-	for (i = 0; cpuids[i].cpuid != 0; i++)
-		if (cpuids[i].cpuid == (cpuid & CPU_ID_CORTEX_MASK)) {
-			cpu_class = cpuids[i].cpu_class;
-			snprintf(cpu_model, sizeof(cpu_model),
-			    "%s r%dp%d (%s)", cpuids[i].cpu_name,
-			    (cpuid & CPU_ID_VARIANT_MASK) >> 20,
-			    cpuid & CPU_ID_REVISION_MASK,
-			    cpu_classes[cpu_class]);
-			break;
-		}
-
-	if (cpuids[i].cpuid == 0)
-		snprintf(cpu_model, sizeof(cpu_model),
-		    "unknown CPU (ID = 0x%x)", cpuid);
-
-	printf(": %s\n", cpu_model);
-
-	printf("%s:", dv->dv_xname);
-
-	switch (cpu_class) {
-	case CPU_CLASS_ARMv7:
-	case CPU_CLASS_ARMv8:
-		if ((ci->ci_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
-			printf(" DC disabled");
-		else
-			printf(" DC enabled");
-		if ((ci->ci_ctrl & CPU_CONTROL_IC_ENABLE) == 0)
-			printf(" IC disabled");
-		else
-			printf(" IC enabled");
-		break;
-	default:
-		break;
-	}
-	if ((ci->ci_ctrl & CPU_CONTROL_WBUF_ENABLE) == 0)
-		printf(" WB disabled");
-	else
-		printf(" WB enabled");
-
-	if (ci->ci_ctrl & CPU_CONTROL_LABT_ENABLE)
-		printf(" LABT");
-	else
-		printf(" EABT");
-
-	if (ci->ci_ctrl & CPU_CONTROL_BPRD_ENABLE)
-		printf(" branch prediction enabled");
 
 	printf("\n");
+}
 
-	/*
-	 * Some ARM processors are vulnerable to branch target
-	 * injection attacks.
-	 */
-	switch (cpuid & CPU_ID_CORTEX_MASK) {
-	case CPU_ID_CORTEX_A5:
-	case CPU_ID_CORTEX_A7:
-	case CPU_ID_CORTEX_A32:
-	case CPU_ID_CORTEX_A35:
-	case CPU_ID_CORTEX_A53:
-	case CPU_ID_CORTEX_A55:
-		/* Not vulnerable; no need to flush. */
-		ci->ci_flush_bp = cpufunc_nullop;
-		break;
-	case CPU_ID_CORTEX_A8:
-	case CPU_ID_CORTEX_A9:
-	case CPU_ID_CORTEX_A12:
-	case CPU_ID_CORTEX_A17:
-	case CPU_ID_CORTEX_A73:
-	case CPU_ID_CORTEX_A75:
-	default:
-		/* Vulnerable; flush BP cache. */
-		ci->ci_flush_bp = armv7_flush_bp;
-		break;
-	case CPU_ID_CORTEX_A15:
-	case CPU_ID_CORTEX_A72:
-		/*
-		 * Vulnerable; BPIALL is "not effective" so must use
-		 * ICIALLU and hope the firmware set the magic bit in
-		 * the ACTLR that actually forces a BTB flush.
-		 */
-		ci->ci_flush_bp = cortex_a15_flush_bp;
-		break;
-	case CPU_ID_CORTEX_A57:
-		/*
-		 * Vulnerable; must disable and enable the MMU which
-		 * can be done by a PSCI call on firmware with the
-		 * appropriate fixes.  Punt for now.
-		 */
-		ci->ci_flush_bp = cpufunc_nullop;
-		break;
-	}
-
-	/* Print cache info. */
-	if (arm_picache_line_size == 0 && arm_pdcache_line_size == 0)
-		goto skip_pcache;
-
-	if (arm_pcache_unified) {
-		printf("%s: %dKB/%dB %d-way %s unified cache\n",
-		    dv->dv_xname, arm_pdcache_size / 1024,
-		    arm_pdcache_line_size, arm_pdcache_ways,
-		    wtnames[arm_pcache_type]);
-	} else {
-		printf("%s: %dKB(%db/l,%dway) I-cache, %dKB(%db/l,%dway) %s D-cache\n",
-		    dv->dv_xname, arm_picache_size / 1024,
-		    arm_picache_line_size, arm_picache_ways,
-		    arm_pdcache_size / 1024, arm_pdcache_line_size, 
-		    arm_pdcache_ways, wtnames[arm_pcache_type]);
-	}
-
- skip_pcache:
-
-	switch (cpu_class) {
-	case CPU_CLASS_ARMv7:
-	case CPU_CLASS_ARMv8:
-		break;
-	default:
-		printf("%s: %s does not fully support this CPU."
-		       "\n", dv->dv_xname, ostype);
-		break;
-	}
+void
+cpu_flush_bp_noop(void)
+{
 }
 
 int
@@ -355,51 +449,6 @@ cpu_clockspeed(int *freq)
 	*freq = clock_get_frequency(cpu_node, NULL) / 1000000;
 	return 0;
 }
-
-#ifdef MULTIPROCESSOR
-
-void
-cpu_boot_secondary_processors(void)
-{
-}
-
-int
-cpu_alloc_idle_pcb(struct cpu_info *ci)
-{
-	vaddr_t uaddr;
-	struct pcb *pcb;
-	struct trapframe *tf;
-
-	/*
-	 * Generate a kernel stack and PCB (in essence, a u-area) for the
-	 * new CPU.
-	 */
-	uaddr = (vaddr_t)km_alloc(USPACE, &kv_any, &kp_zero, &kd_nowait);
-	if (uaddr == 0) {
-		printf("%s: unable to allocate idle stack\n",
-		    __func__);
-		return ENOMEM;
-	}
-	ci->ci_idle_pcb = pcb = (struct pcb *)uaddr;
-
-	/*
-	 * This code is largely derived from cpu_fork(), with which it
-	 * should perhaps be shared.
-	 */
-
-	/* Copy the pcb */
-	*pcb = proc0.p_addr->u_pcb;
-
-	/* Set up the undefined stack for the process. */
-	pcb->pcb_un.un_32.pcb32_und_sp = uaddr + USPACE_UNDEF_STACK_TOP;
-	pcb->pcb_un.un_32.pcb32_sp = uaddr + USPACE_SVC_STACK_TOP;
-
-	pcb->pcb_tf = tf =
-	    (struct trapframe *)pcb->pcb_un.un_32.pcb32_sp - 1;
-	*tf = *proc0.p_addr->u_pcb.pcb_tf;
-	return 0;
-}
-#endif /* MULTIPROCESSOR */
 
 /*
  * Dynamic voltage and frequency scaling implementation.
