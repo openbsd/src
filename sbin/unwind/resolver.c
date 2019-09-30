@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.44 2019/09/29 17:52:02 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.45 2019/09/30 18:07:09 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -67,6 +67,11 @@
 
 #define	TRUST_ANCHOR_RETRY_INTERVAL	8640
 #define	TRUST_ANCHOR_QUERY_INTERVAL	43200
+
+/* in libworker_event_done_cb() enum sec_status gets mapped to 0, 1 and 2 */
+#define	INSECURE	0
+#define	BOGUS		1
+#define	SECURE		2
 
 struct uw_resolver {
 	struct event		 check_ev;
@@ -687,7 +692,7 @@ resolve_done(void *arg, int rcode, void *answer_packet, int answer_len,
 	query_imsg->err = 0;
 
 	if (res->state == VALIDATING)
-		query_imsg->bogus = sec == 1;
+		query_imsg->bogus = sec == BOGUS;
 	else
 		query_imsg->bogus = 0;
 	resolver_imsg_compose_frontend(IMSG_ANSWER_HEADER, 0, query_imsg,
@@ -1002,7 +1007,7 @@ check_resolver_done(void *arg, int rcode, void *answer_packet, int answer_len,
 		free(str);
 	}
 
-	if (sec == 2) {
+	if (sec == SECURE) {
 		data->res->state = VALIDATING;
 		if (!(evtimer_pending(&trust_anchor_timer, NULL)))
 			evtimer_add(&trust_anchor_timer, &tv);
@@ -1422,7 +1427,7 @@ trust_anchor_resolve_done(void *arg, int rcode, void *answer_packet,
 
 	log_debug("%s: rcode: %d", __func__, rcode);
 
-	if (!sec) {
+	if (sec != SECURE) {
 		log_debug("%s: sec: %d", __func__, sec);
 		goto out;
 	}
