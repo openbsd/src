@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.49 2019/09/29 10:36:52 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.50 2019/09/30 20:47:38 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -612,6 +612,9 @@ cpu_opp_mountroot(struct device *self)
 		/* Skip if this table is shared and we're not the master. */
 		if (ot->ot_master && ot->ot_master != ci)
 			continue;
+
+		/* PWM regulators may need to be explicitly enabled. */
+		regulator_enable(ci->ci_cpu_supply);
 
 		curr_hz = clock_get_frequency(ci->ci_node, NULL);
 		curr_microvolt = regulator_get_voltage(ci->ci_cpu_supply);
