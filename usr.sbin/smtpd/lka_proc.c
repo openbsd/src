@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_proc.c,v 1.11 2019/09/06 08:23:56 martijn Exp $	*/
+/*	$OpenBSD: lka_proc.c,v 1.12 2019/09/30 13:27:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -65,6 +65,7 @@ lka_proc_ready(void)
 static void
 lka_proc_config(struct processor_instance *pi)
 {
+	io_printf(pi->io, "config|smtpd-version|%s\n", SMTPD_VERSION);
 	io_printf(pi->io, "config|smtp-session-timeout|%d\n", SMTPD_SESSION_TIMEOUT);
 	io_printf(pi->io, "config|ready\n");
 }
