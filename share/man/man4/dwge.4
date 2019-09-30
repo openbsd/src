@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dwge.4,v 1.3 2017/08/04 12:44:50 kettenis Exp $
+.\"	$OpenBSD: dwge.4,v 1.4 2019/09/30 11:37:38 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 4 2017 $
+.Dd $Mdocdate: September 30 2019 $
 .Dt DWGE 4
 .Os
 .Sh NAME
@@ -59,11 +59,14 @@ Use 100baseTX, half duplex
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
-.Ox
-support for
+The
 .Nm
-first appeared in
-.Ox 6.1 .
+driver first appeared in
+.Nx 7.0 .
+It was ported to
+.Ox 6.1
+and rewritten for
+.Ox 6.6 .
 .Sh AUTHORS
 .An -nosplit
 The
@@ -74,9 +77,7 @@ and
 .An Martin Husemann
 for
 .Nx
-and ported to
-.Ox
-by
-.An Patrick Wildt Aq Mt patrick@openbsd.org
+and rewritten by
+.An Mark Kettenis Aq Mt kettenis@openbsd.org
 and
-.An Mark Kettenis Aq Mt kettenis@openbsd.org .
+.An Patrick Wildt Aq Mt patrick@openbsd.org .
