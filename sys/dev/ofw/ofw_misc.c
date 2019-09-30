@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.9 2019/09/07 13:29:08 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.10 2019/09/30 20:40:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -267,6 +267,72 @@ sfp_get_sffpage(uint32_t phandle, struct if_sffpage *sff)
 	LIST_FOREACH(sd, &sfp_devices, sd_list) {
 		if (sd->sd_phandle == phandle)
 			return sd->sd_get_sffpage(sd->sd_cookie, sff);
+	}
+
+	return ENXIO;
+}
+
+/*
+ * PWM support.
+ */
+
+LIST_HEAD(, pwm_device) pwm_devices =
+	LIST_HEAD_INITIALIZER(pwm_devices);
+
+void
+pwm_register(struct pwm_device *pd)
+{
+	pd->pd_cells = OF_getpropint(pd->pd_node, "#pwm-cells", 0);
+	pd->pd_phandle = OF_getpropint(pd->pd_node, "phandle", 0);
+	if (pd->pd_phandle == 0)
+		return;
+
+	LIST_INSERT_HEAD(&pwm_devices, pd, pd_list);
+
+}
+
+int
+pwm_init_state(uint32_t *cells, struct pwm_state *ps)
+{
+	struct pwm_device *pd;
+
+	LIST_FOREACH(pd, &pwm_devices, pd_list) {
+		if (pd->pd_phandle == cells[0]) {
+			memset(ps, 0, sizeof(struct pwm_state));
+			pd->pd_get_state(pd->pd_cookie, &cells[1], ps);
+			ps->ps_pulse_width = 0;
+			if (pd->pd_cells > 2)
+				ps->ps_period = cells[2];
+			if (pd->pd_cells > 3)
+				ps->ps_flags = cells[3];
+			return 0;
+		}
+	}
+
+	return ENXIO;
+}
+
+int
+pwm_get_state(uint32_t *cells, struct pwm_state *ps)
+{
+	struct pwm_device *pd;
+
+	LIST_FOREACH(pd, &pwm_devices, pd_list) {
+		if (pd->pd_phandle == cells[0])
+			return pd->pd_get_state(pd->pd_cookie, &cells[1], ps);
+	}
+
+	return ENXIO;
+}
+
+int
+pwm_set_state(uint32_t *cells, struct pwm_state *ps)
+{
+	struct pwm_device *pd;
+
+	LIST_FOREACH(pd, &pwm_devices, pd_list) {
+		if (pd->pd_phandle == cells[0])
+			return pd->pd_set_state(pd->pd_cookie, &cells[1], ps);
 	}
 
 	return ENXIO;

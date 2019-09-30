@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.6 2019/09/07 13:29:08 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.7 2019/09/30 20:40:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -85,5 +85,33 @@ struct sfp_device {
 void	sfp_register(struct sfp_device *);
 
 int	sfp_get_sffpage(uint32_t, struct if_sffpage *);
+
+/* PWM support */
+
+#define PWM_POLARITY_INVERTED	0x00000001
+
+struct pwm_state {
+	uint32_t ps_period;
+	uint32_t ps_pulse_width;
+	uint32_t ps_flags;
+	int ps_enabled;
+};
+
+struct pwm_device {
+	int	pd_node;
+	void	*pd_cookie;
+	int	(*pd_get_state)(void *, uint32_t *, struct pwm_state *);
+	int	(*pd_set_state)(void *, uint32_t *, struct pwm_state *);
+
+	LIST_ENTRY(pwm_device) pd_list;
+	uint32_t pd_phandle;
+	uint32_t pd_cells;
+};
+
+void	pwm_register(struct pwm_device *);
+
+int	pwm_init_state(uint32_t *cells, struct pwm_state *ps);
+int	pwm_get_state(uint32_t *cells, struct pwm_state *ps);
+int	pwm_set_state(uint32_t *cells, struct pwm_state *ps);
 
 #endif /* _DEV_OFW_MISC_H_ */
