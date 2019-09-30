@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.94 2019/09/30 20:42:45 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.95 2019/09/30 20:44:13 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -127,6 +127,10 @@ file	dev/fdt/xhci_fdt.c		xhci_fdt
 device	syscon: fdt
 attach	syscon at fdt
 file	dev/fdt/syscon.c		syscon
+
+device	pwmreg
+attach	pwmreg at fdt
+file	dev/fdt/pwmreg.c		pwmreg
 
 device	amlclock
 attach	amlclock at fdt
