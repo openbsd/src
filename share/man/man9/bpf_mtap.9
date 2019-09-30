@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf_mtap.9,v 1.15 2019/09/12 01:17:38 dlg Exp $
+.\"	$OpenBSD: bpf_mtap.9,v 1.16 2019/09/30 01:55:26 dlg Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 12 2019 $
+.Dd $Mdocdate: September 30 2019 $
 .Dt BPF_MTAP 9
 .Os
 .Sh NAME
@@ -70,7 +70,6 @@
 .Fa "u_int hdrlen"
 .Fa "const struct mbuf *m"
 .Fa "u_int direction"
-.Fa "void (*cpfn)(const void *, void *, size_t)"
 .Fc
 .Ft int
 .Fo bpf_mtap_af
@@ -188,13 +187,6 @@ against the packet in mbuf chain
 The header referenced by
 .Fa hdr
 will be prefixed to the packet during filter evaluation.
-A custom packet copy function may be provided via
-.Fa cpfn .
-If
-.Fa cpfn
-is
-.Dv NULL
-an internal function for copying mbuf payloads will be used.
 .Pp
 .Fn bpf_mtap_af
 runs the filters on the BPF interface referenced by
