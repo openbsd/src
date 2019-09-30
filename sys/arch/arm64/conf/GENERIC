@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.125 2019/09/09 20:00:27 patrick Exp $
+# $OpenBSD: GENERIC,v 1.126 2019/09/30 20:48:15 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -88,6 +88,7 @@ plgpio*		at fdt? early 1
 plrtc*		at fdt?
 pluart*		at fdt?
 psci*		at fdt? early 1
+pwmreg*		at fdt? early 1
 syscon*		at fdt? early 1
 
 virtio*		at fdt?
@@ -147,6 +148,7 @@ amlmmc*		at fdt?
 sdmmc*		at amlmmc?
 amlpciephy*	at fdt?
 amlpinctrl*	at fdt? early 1
+amlpwm*		at fdt?
 amlreset*	at fdt? early 1
 amlrng*		at fdt?
 amluart*	at fdt?
