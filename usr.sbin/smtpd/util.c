@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.148 2019/09/29 10:03:49 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.149 2019/09/30 08:31:41 martijn Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -182,65 +182,6 @@ bsnprintf(char *str, size_t size, const char *format, ...)
 	return 1;
 }
 
-
-static int
-mkdirs_component(char *path, mode_t mode)
-{
-	struct stat	sb;
-
-	if (stat(path, &sb) == -1) {
-		if (errno != ENOENT)
-			return 0;
-		if (mkdir(path, mode | S_IWUSR | S_IXUSR) == -1)
-			return 0;
-	}
-	else if (!S_ISDIR(sb.st_mode))
-		return 0;
-
-	return 1;
-}
-
-int
-mkdirs(char *path, mode_t mode)
-{
-	char	 buf[PATH_MAX];
-	int	 i = 0;
-	int	 done = 0;
-	char	*p;
-
-	/* absolute path required */
-	if (*path != '/')
-		return 0;
-
-	/* make sure we don't exceed PATH_MAX */
-	if (strlen(path) >= sizeof buf)
-		return 0;
-
-	memset(buf, 0, sizeof buf);
-	for (p = path; *p; p++) {
-		if (*p == '/') {
-			if (buf[0] != '\0')
-				if (!mkdirs_component(buf, mode))
-					return 0;
-			while (*p == '/')
-				p++;
-			buf[i++] = '/';
-			buf[i++] = *p;
-			if (*p == '\0' && ++done)
-				break;
-			continue;
-		}
-		buf[i++] = *p;
-	}
-	if (!done)
-		if (!mkdirs_component(buf, mode))
-			return 0;
-
-	if (chmod(path, mode) == -1)
-		return 0;
-
-	return 1;
-}
 
 int
 ckdir(const char *path, mode_t mode, uid_t owner, gid_t group, int create)
