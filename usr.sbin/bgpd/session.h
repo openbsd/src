@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.139 2019/05/27 09:14:33 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.140 2019/09/30 12:10:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -285,7 +285,7 @@ int	pfkey_remove(struct peer *);
 int	pfkey_init(void);
 int	tcp_md5_check(int, struct peer *);
 int	tcp_md5_set(int, struct peer *);
-int	tcp_md5_listen(int, struct peer_head *);
+int	tcp_md5_listen(struct listen_addr *, struct peer_head *);
 
 /* printconf.c */
 void	print_config(struct bgpd_config *, struct rib_names *);

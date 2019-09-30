@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.58 2019/06/25 21:32:08 benno Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.59 2019/09/30 12:10:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -851,11 +851,11 @@ tcp_md5_set(int fd, struct peer *p)
 }
 
 int
-tcp_md5_listen(int fd, struct peer_head *p)
+tcp_md5_listen(struct listen_addr *la, struct peer_head *p)
 {
 	int opt = 1;
 
-	if (setsockopt(fd, IPPROTO_TCP, TCP_MD5SIG,
+	if (setsockopt(la->fd, IPPROTO_TCP, TCP_MD5SIG,
 	    &opt, sizeof(opt)) == -1) {
 		if (errno == ENOPROTOOPT) {	/* system w/o md5sig */
 			log_warnx("md5sig not available, disabling");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.390 2019/08/13 12:13:26 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.391 2019/09/30 12:10:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -152,7 +152,7 @@ setup_listeners(u_int *la_cnt)
 			continue;
 		}
 
-		if (tcp_md5_listen(la->fd, &conf->peers) == -1)
+		if (tcp_md5_listen(la, &conf->peers) == -1)
 			fatal("tcp_md5_listen");
 
 		/* set ttl to 255 so that ttl-security works */
