@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_debug.h,v 1.20 2019/09/29 23:08:57 krw Exp $	*/
+/*	$OpenBSD: scsi_debug.h,v 1.21 2019/09/30 11:27:37 krw Exp $	*/
 /*	$NetBSD: scsi_debug.h,v 1.7 1996/10/12 23:23:16 christos Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ void	scsi_show_flags(u_int16_t, const char **);
 } while (0)
 #else
 #define SC_DEBUG(link,level,Printstuff)
-#define SCSI_DEBUGN()
+#define SC_DEBUGN(link,level,Printstuff)
 #define SC_DEBUG_SENSE(xs)
 #endif /* SCSIDEBUG */
 
