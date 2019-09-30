@@ -1,4 +1,4 @@
-/*      $OpenBSD: malloc.c,v 1.29 2018/11/02 07:26:25 otto Exp $       */
+/*      $OpenBSD: malloc.c,v 1.30 2019/09/30 03:35:09 guenther Exp $       */
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1053,7 +1053,7 @@ orealloc(void *p, size_t newsz)
 		oldsz -= MALLOC_GUARD;
 	}
 	_dl_bcopy(p, q, oldsz < newsz ? oldsz : newsz);
-	_dl_free(p);
+	ofree(p);
 	return q;
 }
 
