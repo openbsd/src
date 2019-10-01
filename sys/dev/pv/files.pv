@@ -83,4 +83,4 @@ file	dev/pv/vmmci.c			vmmci
 
 device	memball
 attach	memball at virtio
-file	dev/pv/memball.c			memball
+file	dev/pv/memball.c		memball
