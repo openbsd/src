@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.392 2019/10/01 08:59:43 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.393 2019/10/01 09:03:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -3169,7 +3169,7 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 {
 	struct peer *p, *np, *next;
 
-	RB_FOREACH(p, peer_head, &conf->peers) {
+	RB_FOREACH(p, peer_head, &c->peers) {
 		/* templates are handled specially */
 		if (p->template != NULL)
 			continue;
@@ -3202,7 +3202,7 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 		/* apply the config to all clones of a template */
 		if (p->conf.template) {
 			struct peer *xp;
-			RB_FOREACH(xp, peer_head, &conf->peers) {
+			RB_FOREACH(xp, peer_head, &c->peers) {
 				if (xp->template != p)
 					continue;
 				session_template_clone(xp, NULL, xp->conf.id,
@@ -3217,7 +3217,7 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 	/* pfkeys of new peers already loaded by the parent process */
 	RB_FOREACH_SAFE(np, peer_head, &nc->peers, next) {
 		RB_REMOVE(peer_head, &nc->peers, np);
-		if (RB_INSERT(peer_head, &conf->peers, np) != NULL)
+		if (RB_INSERT(peer_head, &c->peers, np) != NULL)
 			fatalx("%s: peer tree is corrupt", __func__);
 	}
 }
