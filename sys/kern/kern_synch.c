@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.151 2019/07/10 15:52:17 mpi Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.152 2019/10/01 15:08:27 cheloha Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ tsleep_nsec(const volatile void *ident, int priority, const char *wmesg,
 		return tsleep(ident, priority, wmesg, 0);
 #ifdef DIAGNOSTIC
 	if (nsecs == 0) {
-		log(LOG_WARNING, "%s: %s: trying to sleep for zero nanoseconds",
+		log(LOG_WARNING, "%s: %s: trying to sleep zero nanoseconds\n",
 		    __func__, wmesg);
 	}
 #endif
@@ -264,7 +264,7 @@ msleep_nsec(const volatile void *ident, struct mutex *mtx, int priority,
 		return msleep(ident, mtx, priority, wmesg, 0);
 #ifdef DIAGNOSTIC
 	if (nsecs == 0) {
-		log(LOG_WARNING, "%s: %s: trying to sleep for zero nanoseconds",
+		log(LOG_WARNING, "%s: %s: trying to sleep zero nanoseconds\n",
 		    __func__, wmesg);
 	}
 #endif
@@ -315,7 +315,7 @@ rwsleep_nsec(const volatile void *ident, struct rwlock *rwl, int priority,
 		return rwsleep(ident, rwl, priority, wmesg, 0);
 #ifdef DIAGNOSTIC
 	if (nsecs == 0) {
-		log(LOG_WARNING, "%s: %s: trying to sleep for zero nanoseconds",
+		log(LOG_WARNING, "%s: %s: trying to sleep zero nanoseconds\n",
 		    __func__, wmesg);
 	}
 #endif
