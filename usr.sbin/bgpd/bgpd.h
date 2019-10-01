@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.393 2019/09/27 10:33:06 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.394 2019/10/01 08:57:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1185,7 +1185,7 @@ int		prefixset_cmp(struct prefixset_item *, struct prefixset_item *);
 RB_PROTOTYPE(prefixset_tree, prefixset_item, entry, prefixset_cmp);
 
 /* kroute.c */
-int		 kr_init(void);
+int		 kr_init(int *);
 int		 ktable_update(u_int, char *, int, u_int8_t);
 void		 ktable_preload(void);
 void		 ktable_postload(u_int8_t);

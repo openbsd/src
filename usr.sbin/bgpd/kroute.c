@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.238 2019/08/08 20:06:29 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.239 2019/10/01 08:57:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -213,7 +213,7 @@ RB_GENERATE(kif_tree, kif_node, entry, kif_compare)
  */
 
 int
-kr_init(void)
+kr_init(int *fd)
 {
 	int		opt = 0, rcvbuf, default_rcvbuf;
 	unsigned int	tid = RTABLE_ANY;
@@ -257,7 +257,8 @@ kr_init(void)
 	if (fetchifs(0) == -1)
 		return (-1);
 
-	return (kr_state.fd);
+	*fd = kr_state.fd;
+	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.225 2019/08/08 11:33:08 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.226 2019/10/01 08:57:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -234,7 +234,7 @@ main(int argc, char *argv[])
 	imsg_init(ibuf_se, pipe_m2s[0]);
 	imsg_init(ibuf_rde, pipe_m2r[0]);
 	mrt_init(ibuf_rde, ibuf_se);
-	if ((rfd = kr_init()) == -1)
+	if (kr_init(&rfd) == -1)
 		quit = 1;
 	keyfd = pfkey_init();
 
