@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.180 2019/09/30 01:53:05 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.181 2019/10/01 11:51:13 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -94,8 +94,6 @@ LIST_HEAD(, bpf_d) bpf_d_list;
 
 int	bpf_allocbufs(struct bpf_d *);
 void	bpf_ifname(struct bpf_if*, struct ifreq *);
-int	_bpf_mtap(caddr_t, const struct mbuf *, u_int,
-	    void (*)(const void *, void *, size_t));
 void	bpf_mcopy(const void *, void *, size_t);
 int	bpf_movein(struct uio *, struct bpf_d *, struct mbuf **,
 	    struct sockaddr *);
@@ -105,7 +103,7 @@ int	bpfkqfilter(dev_t, struct knote *);
 void	bpf_wakeup(struct bpf_d *);
 void	bpf_wakeup_cb(void *);
 void	bpf_catchpacket(struct bpf_d *, u_char *, size_t, size_t,
-	    void (*)(const void *, void *, size_t), struct timeval *);
+	    struct timeval *);
 int	bpf_getdltlist(struct bpf_d *, struct bpf_dltlist *);
 int	bpf_setdlt(struct bpf_d *, u_int);
 
@@ -1241,12 +1239,8 @@ bpf_mcopy(const void *src_arg, void *dst_arg, size_t len)
 	}
 }
 
-/*
- * like bpf_mtap, but copy fn can be given. used by various bpf_mtap*
- */
 int
-_bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction,
-    void (*cpfn)(const void *, void *, size_t))
+bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction)
 {
 	struct bpf_if *bp = (struct bpf_if *)arg;
 	struct bpf_d *d;
@@ -1258,9 +1252,6 @@ _bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction,
 
 	if (m == NULL)
 		return (0);
-
-	if (cpfn == NULL)
-		cpfn = bpf_mcopy;
 
 	if (bp == NULL)
 		return (0);
@@ -1299,8 +1290,7 @@ _bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction,
 			}
 
 			mtx_enter(&d->bd_mtx);
-			bpf_catchpacket(d, (u_char *)m, pktlen, slen, cpfn,
-			    &tv);
+			bpf_catchpacket(d, (u_char *)m, pktlen, slen, &tv);
 			mtx_leave(&d->bd_mtx);
 		}
 	}
@@ -1345,16 +1335,7 @@ bpf_tap_hdr(caddr_t arg, const void *hdr, unsigned int hdrlen,
 		*mp = (struct mbuf *)&md;
 	}
 
-	return _bpf_mtap(arg, m0, direction, bpf_mcopy);
-}
-
-/*
- * Incoming linkage from device drivers, when packet is in an mbuf chain.
- */
-int
-bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction)
-{
-	return _bpf_mtap(arg, m, direction, NULL);
+	return bpf_mtap(arg, m0, direction);
 }
 
 /*
@@ -1382,7 +1363,7 @@ bpf_mtap_hdr(caddr_t arg, const void *data, u_int dlen, const struct mbuf *m,
 	} else 
 		m0 = m;
 
-	return _bpf_mtap(arg, m0, direction, NULL);
+	return bpf_mtap(arg, m0, direction);
 }
 
 /*
@@ -1460,7 +1441,7 @@ bpf_mtap_ether(caddr_t arg, const struct mbuf *m, u_int direction)
  */
 void
 bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
-    void (*cpfn)(const void *, void *, size_t), struct timeval *tv)
+    struct timeval *tv)
 {
 	struct bpf_hdr *hp;
 	int totlen, curlen;
@@ -1513,10 +1494,12 @@ bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
 	hp->bh_tstamp.tv_usec = tv->tv_usec;
 	hp->bh_datalen = pktlen;
 	hp->bh_hdrlen = hdrlen;
+
 	/*
 	 * Copy the packet data into the store buffer and update its length.
 	 */
-	(*cpfn)(pkt, (u_char *)hp + hdrlen, (hp->bh_caplen = totlen - hdrlen));
+	bpf_mcopy(pkt, (u_char *)hp + hdrlen,
+	    (hp->bh_caplen = totlen - hdrlen));
 	d->bd_slen = curlen + totlen;
 
 	if (d->bd_immediate) {
