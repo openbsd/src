@@ -1215,6 +1215,7 @@
 ./usr/share/man/man4/amlmmc.4
 ./usr/share/man/man4/amlpciephy.4
 ./usr/share/man/man4/amlpinctrl.4
+./usr/share/man/man4/amlpwm.4
 ./usr/share/man/man4/amlreset.4
 ./usr/share/man/man4/amlrng.4
 ./usr/share/man/man4/amluart.4
@@ -1731,6 +1732,7 @@
 ./usr/share/man/man4/pvbus.4
 ./usr/share/man/man4/pvclock.4
 ./usr/share/man/man4/pwdog.4
+./usr/share/man/man4/pwmreg.4
 ./usr/share/man/man4/qla.4
 ./usr/share/man/man4/qle.4
 ./usr/share/man/man4/qlw.4
