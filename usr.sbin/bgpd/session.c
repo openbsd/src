@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.393 2019/10/01 09:03:43 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.394 2019/10/01 11:05:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -152,8 +152,8 @@ setup_listeners(u_int *la_cnt)
 			continue;
 		}
 
-		if (tcp_md5_listen(la, &conf->peers) == -1)
-			fatal("tcp_md5_listen");
+		if (tcp_md5_prep_listener(la, &conf->peers) == -1)
+			fatal("tcp_md5_prep_listener");
 
 		/* set ttl to 255 so that ttl-security works */
 		if (la->sa.ss_family == AF_INET && setsockopt(la->fd,
@@ -276,6 +276,7 @@ session_main(int debug, int verbose)
 					log_peer_warnx(&p->conf, "removed");
 					RB_REMOVE(peer_head, &conf->peers, p);
 					timer_remove_all(p);
+					tcp_md5_del_listener(conf, p);
 					free(p);
 					peer_cnt--;
 					continue;
@@ -3179,6 +3180,13 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 			continue;
 		}
 
+		/* peer no longer uses TCP MD5SIG so deconfigure */
+		if (p->conf.auth.method == AUTH_MD5SIG &&
+		    np->conf.auth.method != AUTH_MD5SIG)
+			tcp_md5_del_listener(c, p);
+		else if (np->conf.auth.method == AUTH_MD5SIG)
+			tcp_md5_add_listener(c, np);
+
 		memcpy(&p->conf, &np->conf, sizeof(p->conf));
 		RB_REMOVE(peer_head, &nc->peers, np);
 		free(np);
@@ -3219,5 +3227,7 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 		RB_REMOVE(peer_head, &nc->peers, np);
 		if (RB_INSERT(peer_head, &c->peers, np) != NULL)
 			fatalx("%s: peer tree is corrupt", __func__);
+		if (np->conf.auth.method == AUTH_MD5SIG)
+			tcp_md5_add_listener(c, np);
 	}
 }
