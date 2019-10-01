@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1143 2019/09/22 08:38:57 ajacoutot Exp $
+#	$OpenBSD: install.sub,v 1.1144 2019/10/01 02:11:41 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1649,8 +1649,20 @@ install_files() {
 		return
 	fi
 
-	if [[ $MODE == upgrade ]] && isin base$VERSION.tgz $_get_sets; then
-		rm -f /mnt/usr/share/relink/usr/lib/*
+	# We are committed to installing new files.  Attempt to cope with
+	# potential space shortage in /usr by deleting a few versioned
+	# areas which will be replaced from the new sets
+	if [[ $MODE == upgrade ]]; then
+		if isin base$VERSION.tgz $_get_sets; then
+			rm -f /mnt/usr/share/relink/usr/lib/*
+			rm -rf /mnt/usr/lib/libLLVM.so.0.0
+			rm -rf /mnt/usr/libdata/perl5
+		fi
+		if isin comp$VERSION.tgz $_get_sets; then
+			rm -rf /mnt/usr/lib/{gcc-lib,clang}
+			rm -rf /mnt/usr/include/g++
+		fi
+		rm -rf /mnt/var/syspatch/*
 	fi
 
 	# Install the set files.
@@ -2861,16 +2873,6 @@ __EOT
 	$AI && >/tmp/ai/ai.done
 }
 
-clean_old() {
-	local _cver
-
-	rm -rf /mnt/usr/lib/gcc-lib/!(*$VNAME)
-	set -A _cver -- /mnt/usr/lib/clang/* &&
-		unset _cver[${#_cver[@]}-1] &&
-		rm -rf "${_cver[@]}"
-	rm -rf /mnt/var/syspatch/*
-}	
-
 do_autoinstall() {
 	rm -f /tmp/ai/ai.done
 
@@ -3217,9 +3219,6 @@ do_upgrade() {
 	# selected.
 	install_sets
 
-	# cleanup old bits
-	clean_old
-	
 	# Perform final steps common to both an install and an upgrade.
 	finish_up
 }
