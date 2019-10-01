@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.36 2019/09/30 20:47:38 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.37 2019/10/01 03:53:26 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -48,6 +48,7 @@
 #define CPU_IMPL_CAVIUM		0x43
 #define CPU_IMPL_AMCC		0x50
 
+#define CPU_PART_CORTEX_A34	0xd02
 #define CPU_PART_CORTEX_A53	0xd03
 #define CPU_PART_CORTEX_A35	0xd04
 #define CPU_PART_CORTEX_A55	0xd05
@@ -60,6 +61,7 @@
 #define CPU_PART_NEOVERSE_N1	0xd0c
 #define CPU_PART_CORTEX_A77	0xd0d
 #define CPU_PART_CORTEX_A76AE	0xd0e
+#define CPU_PART_CORTEX_A65AE	0xd43
 #define CPU_PART_NEOVERSE_E1	0xd4a
 
 #define CPU_PART_THUNDERX_T88	0x0a1
@@ -84,11 +86,13 @@ struct cpu_cores cpu_cores_none[] = {
 };
 
 struct cpu_cores cpu_cores_arm[] = {
+	{ CPU_PART_CORTEX_A34, "Cortex-A34" },
 	{ CPU_PART_CORTEX_A35, "Cortex-A35" },
 	{ CPU_PART_CORTEX_A53, "Cortex-A53" },
 	{ CPU_PART_CORTEX_A55, "Cortex-A55" },
 	{ CPU_PART_CORTEX_A57, "Cortex-A57" },
 	{ CPU_PART_CORTEX_A65, "Cortex-A65" },
+	{ CPU_PART_CORTEX_A65AE, "Cortex-A65AE" },
 	{ CPU_PART_CORTEX_A72, "Cortex-A72" },
 	{ CPU_PART_CORTEX_A73, "Cortex-A73" },
 	{ CPU_PART_CORTEX_A75, "Cortex-A75" },
