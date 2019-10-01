@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.33 2019/09/11 15:01:40 beck Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.34 2019/10/01 18:51:02 anton Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -121,24 +121,32 @@ unveil_delete_names(struct unveil *uv)
 	return ret;
 }
 
-void
+int
 unveil_add_name_unlocked(struct unveil *uv, char *name, u_char flags)
 {
 	struct unvname *unvn;
 
 	unvn = unvname_new(name, strlen(name) + 1, flags);
-	RBT_INSERT(unvname_rbt, &uv->uv_names, unvn);
+	if (RBT_INSERT(unvname_rbt, &uv->uv_names, unvn) != NULL) {
+		/* Name already present. */
+		unvname_delete(unvn);
+		return 0;
+	}
 #ifdef DEBUG_UNVEIL
 	printf("added name %s underneath vnode %p\n", name, uv->uv_vp);
 #endif
+	return 1;
 }
 
-void
+int
 unveil_add_name(struct unveil *uv, char *name, u_char flags)
 {
+	int ret;
+
 	rw_enter_write(&uv->uv_lock);
-	unveil_add_name_unlocked(uv, name, flags);
+	ret = unveil_add_name_unlocked(uv, name, flags);
 	rw_exit_write(&uv->uv_lock);
+	return ret;
 }
 
 struct unvname *
@@ -232,9 +240,9 @@ unveil_copy(struct process *parent, struct process *child)
 		RBT_INIT(unvname_rbt, &to->uv_names);
 		rw_enter_read(&from->uv_lock);
 		RBT_FOREACH_SAFE(unvn, unvname_rbt, &from->uv_names, next) {
-			unveil_add_name_unlocked(&child->ps_uvpaths[i],
-			    unvn->un_name, unvn->un_flags);
-			child->ps_uvncount++;
+			if (unveil_add_name_unlocked(&child->ps_uvpaths[i],
+				    unvn->un_name, unvn->un_flags))
+				child->ps_uvncount++;
 		}
 		rw_exit_read(&from->uv_lock);
 		to->uv_flags = from->uv_flags;
@@ -617,8 +625,8 @@ unveil_add(struct proc *p, struct nameidata *ndp, const char *permissions)
 		goto done;
 	}
 
-	unveil_add_name(uv, ndp->ni_cnd.cn_nameptr, flags);
-	pr->ps_uvncount++;
+	if (unveil_add_name(uv, ndp->ni_cnd.cn_nameptr, flags))
+		pr->ps_uvncount++;
 	ret = 0;
 
 #ifdef DEBUG_UNVEIL
