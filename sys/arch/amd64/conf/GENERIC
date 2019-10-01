@@ -687,7 +687,7 @@ virtio*		at pci?		# Virtio PCI device
 vioblk*		at virtio?	# Virtio block device
 vio*		at virtio?	# Virtio network device
 viomb*		at virtio?	# Virtio memory ballooning device
-memball*		at virtio?	# Virtio custom memory ballooning device
+memball*	at virtio?	# Virtio custom memory ballooning device
 viornd*		at virtio?	# Virtio entropy device
 vioscsi*	at virtio?	# Virtio SCSI device
 #viocon*	at virtio?	# Virtio console device
