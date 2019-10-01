@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.391 2019/09/30 12:10:38 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.392 2019/10/01 08:59:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -276,7 +276,6 @@ session_main(int debug, int verbose)
 					log_peer_warnx(&p->conf, "removed");
 					RB_REMOVE(peer_head, &conf->peers, p);
 					timer_remove_all(p);
-					pfkey_remove(p);
 					free(p);
 					peer_cnt--;
 					continue;
