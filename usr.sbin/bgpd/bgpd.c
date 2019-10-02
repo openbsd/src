@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.226 2019/10/01 08:57:47 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.227 2019/10/02 08:58:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -812,13 +812,12 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
 				rv = -1;
 			break;
 		case IMSG_PFKEY_RELOAD:
-			if (idx != PFD_PIPE_SESSION)
+			if (idx != PFD_PIPE_SESSION) {
 				log_warnx("pfkey reload request not from SE");
-			else if ((p = getpeerbyid(conf, imsg.hdr.peerid)) ==
-			    NULL)
-				log_warnx("pfkey reload: no such peer: id=%u",
-				    imsg.hdr.peerid);
-			else {
+				break;
+			}
+			p = getpeerbyid(conf, imsg.hdr.peerid);
+			if (p != NULL) {
 				if (pfkey_establish(p) == -1)
 					log_peer_warnx(&p->conf,
 					    "pfkey setup failed");
