@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.44 2019/09/30 06:25:01 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.45 2019/10/02 04:51:34 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2961,6 +2961,7 @@ ixl_arq(void *xsc)
 		iaq = &arq[cons];
 
 		aqb = SIMPLEQ_FIRST(&sc->sc_arq_live);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_arq_live, aqb_entry);
 		bus_dmamap_sync(sc->sc_dmat, aqb->aqb_map, 0, IXL_AQ_BUFLEN,
 		    BUS_DMASYNC_POSTREAD);
 
