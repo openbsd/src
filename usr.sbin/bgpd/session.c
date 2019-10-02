@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.394 2019/10/01 11:05:30 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.395 2019/10/02 08:57:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -273,10 +273,10 @@ session_main(int debug, int verbose)
 						session_demote(p, -1);
 					p->conf.demote_group[0] = 0;
 					session_stop(p, ERR_CEASE_PEER_UNCONF);
-					log_peer_warnx(&p->conf, "removed");
-					RB_REMOVE(peer_head, &conf->peers, p);
 					timer_remove_all(p);
 					tcp_md5_del_listener(conf, p);
+					log_peer_warnx(&p->conf, "removed");
+					RB_REMOVE(peer_head, &conf->peers, p);
 					free(p);
 					peer_cnt--;
 					continue;
