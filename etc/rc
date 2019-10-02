@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.537 2019/05/10 13:29:21 guenther Exp $
+#	$OpenBSD: rc,v 1.538 2019/10/02 17:15:40 sthen Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -445,6 +445,7 @@ sh /etc/netstart
 
 # Any write triggers a rekey.
 dmesg >/dev/random
+sysctl hw >/dev/random
 
 # Load pf rules and bring up pfsync interface.
 if [[ $pf != NO ]]; then
