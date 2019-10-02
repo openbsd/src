@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.31 2019/04/29 03:54:52 dlg Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.32 2019/10/02 22:31:08 dlg Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -919,7 +919,7 @@ lacp_select_active_aggregator(struct lacp_softc *lsc)
 		 *  or, the total aggregated speed is higher
 		 *  or, it is already the chosen aggregator
 		 */
-		if ((best_la != NULL && LACP_SYS_PRI(la->la_partner) <
+		if ((best_la == NULL || LACP_SYS_PRI(la->la_partner) <
 		     LACP_SYS_PRI(best_la->la_partner)) ||
 		    speed > best_speed ||
 		    (speed == best_speed &&
