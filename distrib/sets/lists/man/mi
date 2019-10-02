@@ -1678,6 +1678,7 @@
 ./usr/share/man/man4/octeon/octrng.4
 ./usr/share/man/man4/octeon/octrtc.4
 ./usr/share/man/man4/octeon/octsctl.4
+./usr/share/man/man4/octeon/octsmi.4
 ./usr/share/man/man4/octeon/octuctl.4
 ./usr/share/man/man4/octeon/octxctl.4
 ./usr/share/man/man4/ohci.4
