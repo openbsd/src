@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp.c,v 1.194 2019/07/10 07:04:27 tb Exp $ */
+/* $OpenBSD: sftp.c,v 1.195 2019/10/02 00:42:30 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -37,7 +37,6 @@
 #include <unistd.h>
 #include <limits.h>
 #include <util.h>
-#include <stdarg.h>
 
 #include "xmalloc.h"
 #include "log.h"
