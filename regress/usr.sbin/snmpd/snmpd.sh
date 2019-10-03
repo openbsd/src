@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: snmpd.sh,v 1.10 2019/09/18 10:03:55 martijn Exp $
+# $OpenBSD: snmpd.sh,v 1.11 2019/10/03 11:05:54 martijn Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@openbsd.org>
 # *
@@ -148,9 +148,9 @@ fi
 # system.sysContact set with default rw community string
 
 puffy="puffy@openbsd.org"
-snmpset_command="snmpset -c private -v 1 localhost system.sysContact.0 s $puffy"
-echo ======= $snmpset_command
-eval $snmpset_command > /dev/null 2>&1
+snmp_command="snmp set -c private -v 1 localhost system.sysContact.0 s $puffy"
+echo ======= $snmp_command
+eval $snmp_command > /dev/null 2>&1
 snmp_command="snmp get -v2c -cpublic localhost 1.3.6.1.2.1.1.4.0"
 echo ======= $snmp_command
 contact="$(eval $snmp_command)"
@@ -287,10 +287,10 @@ fi
 # system.sysContact set with non-default rw/ro community strings
 
 puffy="puffy@openbsd.org"
-snmpset_command="snmpset -c non-default-rw -v 1 localhost system.sysContact.0 \
+snmp_command="snmp set -c non-default-rw -v 1 localhost system.sysContact.0 \
    s $puffy"
-echo ======= $snmpset_command
-eval $snmpset_command > /dev/null 2>&1
+echo ======= $snmp_command
+eval $snmp_command > /dev/null 2>&1
 snmp_command="snmp get -Oqv -v2c -cnon-default-ro localhost 1.3.6.1.2.1.1.4.0"
 echo ======= $snmp_command
 contact="$(eval $snmp_command)"
@@ -322,10 +322,10 @@ then
 	FAILED=1
 fi
 
-snmpset_command="snmpset -c non-default-rw -v 1 localhost \
+snmp_command="snmp set -c non-default-rw -v 1 localhost \
    1.3.6.1.4.1.30155.42.1.0 s \"bula\""
-echo ======= $snmpset_command
-eval $snmpset_command > /dev/null 2>&1
+echo ======= $snmp_command
+eval $snmp_command > /dev/null 2>&1
 if [ $? -eq 0  ]
 then
 	echo "Setting of a ro custom oid test unexpectedly succeeded."
