@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.33 2019/09/21 08:10:44 semarie Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.34 2019/10/03 05:42:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -88,11 +88,11 @@ lka_report_init(void)
 	dict_init(&smtp_out);
 
 	for (i = 0; i < nitems(smtp_events); ++i) {
-		tailq = xcalloc(1, sizeof (struct reporters *));
+		tailq = xcalloc(1, sizeof (struct reporters));
 		TAILQ_INIT(tailq);
 		dict_xset(&smtp_in, smtp_events[i].event, tailq);
 
-		tailq = xcalloc(1, sizeof (struct reporters *));
+		tailq = xcalloc(1, sizeof (struct reporters));
 		TAILQ_INIT(tailq);
 		dict_xset(&smtp_out, smtp_events[i].event, tailq);
 	}
