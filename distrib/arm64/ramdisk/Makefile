@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2019/06/23 14:34:09 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.16 2019/10/03 10:26:38 jsg Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		67584
@@ -53,7 +53,7 @@ ${FS}: bsd.rd
 	mkdir -p ${MOUNT_POINT}/efi/boot
 	cp /usr/mdec/BOOTAA64.EFI ${MOUNT_POINT}/efi/boot/bootaa64.efi
 	echo bootaa64.efi > ${MOUNT_POINT}/efi/boot/startup.nsh
-	echo 'arm_64bit=1\nenable_uart=1\ndevice_tree_address=0x02600000\nkernel=u-boot.bin' > ${MOUNT_POINT}/config.txt
+	echo 'arm_64bit=1\nenable_uart=1\nkernel=u-boot.bin' > ${MOUNT_POINT}/config.txt
 	dd if=${PUBOOT}/pine64_plus/u-boot-sunxi-with-spl.bin \
 	    of=/dev/r`cat vnd`c bs=1024 seek=8
 	umount ${MOUNT_POINT}

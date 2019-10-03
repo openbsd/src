@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.12 2019/06/23 14:34:09 kettenis Exp $
+#	$OpenBSD: install.md,v 1.13 2019/10/03 10:26:38 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,7 +63,6 @@ md_installboot() {
 		cat > /mnt/mnt/config.txt<<-__EOT
 			arm_64bit=1
 			enable_uart=1
-			device_tree_address=0x02600000
 			kernel=u-boot.bin
 		__EOT
 		;;
