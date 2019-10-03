@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-custom.c,v 1.15 2019/07/15 18:25:07 nicm Exp $ */
+/* $OpenBSD: layout-custom.c,v 1.16 2019/10/03 10:24:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -60,7 +60,7 @@ layout_checksum(const char *layout)
 char *
 layout_dump(struct layout_cell *root)
 {
-	char	layout[BUFSIZ], *out;
+	char	layout[8192], *out;
 
 	*layout = '\0';
 	if (layout_append(root, layout, sizeof layout) != 0)

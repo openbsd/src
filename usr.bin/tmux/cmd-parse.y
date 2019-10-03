@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.18 2019/09/10 07:50:33 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.19 2019/10/03 10:24:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1245,7 +1245,7 @@ yylex_token_variable(char **buf, size_t *len)
 {
 	struct environ_entry	*envent;
 	int			 ch, brackets = 0;
-	char			 name[BUFSIZ];
+	char			 name[1024];
 	size_t			 namelen = 0;
 	const char		*value;
 
@@ -1297,7 +1297,7 @@ yylex_token_tilde(char **buf, size_t *len)
 {
 	struct environ_entry	*envent;
 	int			 ch;
-	char			 name[BUFSIZ];
+	char			 name[1024];
 	size_t			 namelen = 0;
 	struct passwd		*pw;
 	const char		*home = NULL;

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.46 2019/05/23 14:03:44 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.47 2019/10/03 10:24:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -61,7 +61,7 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 	struct key_table	*table;
 	struct key_binding	*bd;
 	const char		*tablename, *r;
-	char			*key, *cp, tmp[BUFSIZ];
+	char			*key, *cp, tmp[8192];
 	int			 repeat, width, tablewidth, keywidth;
 
 	if (self->entry == &cmd_list_commands_entry)

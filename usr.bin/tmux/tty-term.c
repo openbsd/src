@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.67 2019/08/05 06:42:02 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.68 2019/10/03 10:24:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -278,7 +278,7 @@ static char *
 tty_term_strip(const char *s)
 {
 	const char     *ptr;
-	static char	buf[BUFSIZ];
+	static char	buf[8192];
 	size_t		len;
 
 	/* Ignore strings with no padding. */
@@ -306,7 +306,7 @@ tty_term_strip(const char *s)
 static char *
 tty_term_override_next(const char *s, size_t *offset)
 {
-	static char	value[BUFSIZ];
+	static char	value[8192];
 	size_t		n = 0, at = *offset;
 
 	if (s[at] == '\0')
