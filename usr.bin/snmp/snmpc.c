@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.12 2019/10/03 07:23:46 semarie Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.13 2019/10/03 11:02:26 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -46,6 +46,7 @@
 
 int snmpc_get(int, char *[]);
 int snmpc_walk(int, char *[]);
+int snmpc_set(int, char *[]);
 int snmpc_trap(int, char *[]);
 int snmpc_mibtree(int, char *[]);
 struct snmp_agent *snmpc_connect(char *, char *);
@@ -53,6 +54,7 @@ int snmpc_parseagent(char *, char *);
 int snmpc_print(struct ber_element *);
 __dead void snmpc_printerror(enum snmp_error, char *);
 char *snmpc_hex2bin(char *, size_t *);
+struct ber_element *snmpc_varbindparse(int, char *[]);
 void usage(void);
 
 struct snmp_app {
@@ -69,6 +71,7 @@ struct snmp_app snmp_apps[] = {
 	{ "walk", 1, "C:", "[-C cIipt] [-C E endoid] agent [oid]", snmpc_walk },
 	{ "bulkget", 1, "C:", "[-C n<nonrep>r<maxrep>] agent oid ...", snmpc_get },
 	{ "bulkwalk", 1, "C:", "[-C cipn<nonrep>r<maxrep>] agent [oid]", snmpc_walk },
+	{ "set", 1, NULL, "agent oid type value [oid type value] ...", snmpc_set },
 	{ "trap", 1, NULL, "agent uptime oid [oid type value] ...", snmpc_trap },
 	{ "mibtree", 0, "O:", "[-O fnS]", snmpc_mibtree }
 };
@@ -666,22 +669,52 @@ snmpc_walk(int argc, char *argv[])
 }
 
 int
+snmpc_set(int argc, char *argv[])
+{
+	struct snmp_agent *agent;
+	struct ber_element *pdu, *varbind;
+	int errorstatus, errorindex;
+	int class;
+	unsigned type;
+
+	if (argc < 4)
+		usage();
+	if ((agent = snmpc_connect(argv[0], "161")) == NULL)
+		err(1, "%s", snmp_app->name);
+	argc--;
+	argv++;
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
+	pdu = snmp_set(agent, snmpc_varbindparse(argc, argv));
+
+	(void) ber_scanf_elements(pdu, "t{Sdd{e", &class, &type, &errorstatus,
+	    &errorindex, &varbind);
+	if (errorstatus != 0)
+		snmpc_printerror((enum snmp_error) errorstatus,
+		    argv[errorindex - 1]);
+
+	if (class == BER_CLASS_CONTEXT && type == SNMP_C_REPORT)
+		printf("Received report:\n");
+	for (; varbind != NULL; varbind = varbind->be_next) {
+		if (!snmpc_print(varbind))
+			err(1, "Can't print response");
+	}
+	ber_free_elements(pdu);
+	snmp_free_agent(agent);
+	return 0;
+}
+
+int
 snmpc_trap(int argc, char *argv[])
 {
 	struct snmp_agent *agent;
 	struct timespec ts;
-	struct ber_oid trapoid, oid, oidval;
-	struct in_addr addr4;
-	char *addr = (char *)&addr4;
-	char *str = NULL, *tmpstr, *endstr;
+	struct ber_oid trapoid;
 	const char *errstr = NULL;
-	struct ber_element *varbind = NULL, *pdu = NULL;
 	long long lval;
-	int i, ret;
-	size_t strl, byte;
 
-	if (argc < 3 || argc % 3 != 0)
-		usage();
 	if (version == SNMP_V1)
 		errx(1, "trap is not supported for snmp v1");
 
@@ -706,164 +739,8 @@ snmpc_trap(int argc, char *argv[])
 
 	argc -= 3;
 	argv += 3;
-	for (i = 0; i < argc; i += 3) {
-		if (smi_string2oid(argv[i], &oid) == -1)
-			errx(1, "Invalid oid: %s\n", argv[i]);
-		switch (argv[i + 1][0]) {
-		case 'a':
-			ret = inet_pton(AF_INET, argv[i + 2], &addr4);
-			if (ret == -1)
-				err(1, "inet_pton");
-			if (ret == 0)
-				errx(1, "%s: Bad value notation (%s)", argv[i],
-				    argv[i + 2]);
-			if ((varbind = ber_printf_elements(varbind, "{Oxt}",
-			    &oid, addr, sizeof(addr4), BER_CLASS_APPLICATION,
-			    SNMP_T_IPADDR)) == NULL)
-				err(1, "ber_printf_elements");
-			break;
-		case 'b':
-			tmpstr = argv[i + 2];
-			strl = 0;
-			do {
-				lval = strtoll(tmpstr, &endstr, 10);
-				if (endstr[0] != ' ' && endstr[0] != '\t' &&
-				    endstr[0] != ',' && endstr[0] != '\0')
-					errx(1, "%s: Bad value notation (%s)",
-					    argv[i], argv[i + 2]);
-				if (tmpstr == endstr) {
-					tmpstr++;
-					continue;
-				}
-				if (lval < 0)
-					errx(1, "%s: Bad value notation (%s)",
-					    argv[i], argv[i + 2]);
-				byte = lval / 8;
-				if (byte >= strl) {
-					if ((str = recallocarray(str, strl,
-					    byte + 1, 1)) == NULL)
-						err(1, "malloc");
-					strl = byte + 1;
-				}
-				str[byte] |= 0x80 >> (lval % 8);
-				tmpstr = endstr + 1;
-			} while (endstr[0] != '\0');
-			/*
-			 * RFC3416 Section 2.5
-			 * A BITS value is encoded as an OCTET STRING
-			 */
-			goto pastestring;
-		case 'c':
-			lval = strtonum(argv[i + 2], INT32_MIN, INT32_MAX,
-			    &errstr);
-			if (errstr != NULL)
-				errx(1, "%s: Bad value notation (%s)", argv[i],
-				    argv[i + 2]);
-			if ((varbind = ber_printf_elements(varbind, "{Oit}",
-			    &oid, lval, BER_CLASS_APPLICATION,
-			    SNMP_T_COUNTER32)) == NULL)
-				err(1, "ber_printf_elements");
-			break;
-		case 'd':
-			/* String always shrinks */
-			if ((str = malloc(strlen(argv[i + 2]))) == NULL)
-				err(1, "malloc");
-			tmpstr = argv[i + 2];
-			strl = 0;
-			do {
-				lval = strtoll(tmpstr, &endstr, 10);
-				if (endstr[0] != ' ' && endstr[0] != '\t' &&
-				    endstr[0] != '\0')
-					errx(1, "%s: Bad value notation (%s)",
-					    argv[i], argv[i + 2]);
-				if (tmpstr == endstr) {
-					tmpstr++;
-					continue;
-				}
-				if (lval < 0 || lval > 0xff)
-					errx(1, "%s: Bad value notation (%s)",
-					    argv[i], argv[i + 2]);
-				str[strl++] = (unsigned char) lval;
-				tmpstr = endstr + 1;
-			} while (endstr[0] != '\0');
-			goto pastestring;
-		case 'u':
-		case 'i':
-			lval = strtonum(argv[i + 2], LLONG_MIN, LLONG_MAX,
-			    &errstr);
-			if (errstr != NULL)
-				errx(1, "%s: Bad value notation (%s)", argv[i],
-				    argv[i + 2]);
-			if ((varbind = ber_printf_elements(varbind, "{Oi}",
-			    &oid, lval)) == NULL)
-				err(1, "ber_printf_elements");
-			break;
-		case 'n':
-			if ((varbind = ber_printf_elements(varbind, "{O0}",
-			    &oid)) == NULL)
-				err(1, "ber_printf_elements");
-			break;
-		case 'o':
-			if (smi_string2oid(argv[i + 2], &oidval) == -1)
-				errx(1, "%s: Unknown Object Identifier (Sub-id "
-				    "not found: (top) -> %s)", argv[i],
-				    argv[i + 2]);
-			if ((varbind = ber_printf_elements(varbind, "{OO}",
-			    &oid, &oidval)) == NULL)
-				err(1, "ber_printf_elements");
-			break;
-		case 's':
-			if ((str = strdup(argv[i + 2])) == NULL)
-				err(1, NULL);
-			strl = strlen(argv[i + 2]);
-pastestring:
-			if ((varbind = ber_printf_elements(varbind, "{Ox}",
-			    &oid, str, strl)) == NULL)
-				err(1, "ber_printf_elements");
-			free(str);
-			break;
-		case 't':
-			lval = strtonum(argv[i + 2], LLONG_MIN, LLONG_MAX,
-			    &errstr);
-			if (errstr != NULL)
-				errx(1, "%s: Bad value notation (%s)", argv[i],
-				    argv[i + 2]);
-			if ((varbind = ber_printf_elements(varbind, "{Oit}",
-			    &oid, lval, BER_CLASS_APPLICATION,
-			    SNMP_T_TIMETICKS)) == NULL)
-				err(1, "ber_printf_elements");
-			break;
-		case 'x':
-			/* String always shrinks */
-			if ((str = malloc(strlen(argv[i + 2]))) == NULL)
-				err(1, "malloc");
-			tmpstr = argv[i + 2];
-			strl = 0;
-			do {
-				lval = strtoll(tmpstr, &endstr, 16);
-				if (endstr[0] != ' ' && endstr[0] != '\t' &&
-				    endstr[0] != '\0')
-					errx(1, "%s: Bad value notation (%s)",
-					    argv[i], argv[i + 2]);
-				if (tmpstr == endstr) {
-					tmpstr++;
-					continue;
-				}
-				if (lval < 0 || lval > 0xff)
-					errx(1, "%s: Bad value notation (%s)",
-					    argv[i], argv[i + 2]);
-				str[strl++] = (unsigned char) lval;
-				tmpstr = endstr + 1;
-			} while (endstr[0] != '\0');
-			goto pastestring;
-		default:
-			usage();
-		}
-		if (pdu == NULL)
-			pdu = varbind;
-	}
 
-	snmp_trap(agent, &ts, &trapoid, pdu);
+	snmp_trap(agent, &ts, &trapoid, snmpc_varbindparse(argc, argv));
 
 	return 0;
 }
@@ -1116,6 +993,181 @@ fail:
 	errno = EINVAL;
 	free(decstr);
 	return NULL;
+}
+
+struct ber_element *
+snmpc_varbindparse(int argc, char *argv[])
+{
+	struct ber_oid oid, oidval;
+	struct in_addr addr4;
+	char *addr = (char *)&addr4;
+	char *str = NULL, *tmpstr, *endstr;
+	const char *errstr = NULL;
+	struct ber_element *varbind = NULL, *vblist = NULL;
+	int i, ret;
+	size_t strl, byte;
+	long long lval;
+
+	if (argc % 3 != 0)
+		usage();
+	for (i = 0; i < argc; i += 3) {
+		if (smi_string2oid(argv[i], &oid) == -1)
+			errx(1, "Invalid oid: %s\n", argv[i]);
+		switch (argv[i + 1][0]) {
+		case 'a':
+			ret = inet_pton(AF_INET, argv[i + 2], &addr4);
+			if (ret == -1)
+				err(1, "inet_pton");
+			if (ret == 0)
+				errx(1, "%s: Bad value notation (%s)", argv[i],
+				    argv[i + 2]);
+			if ((varbind = ber_printf_elements(varbind, "{Oxt}",
+			    &oid, addr, sizeof(addr4), BER_CLASS_APPLICATION,
+			    SNMP_T_IPADDR)) == NULL)
+				err(1, "ber_printf_elements");
+			break;
+		case 'b':
+			tmpstr = argv[i + 2];
+			strl = 0;
+			do {
+				lval = strtoll(tmpstr, &endstr, 10);
+				if (endstr[0] != ' ' && endstr[0] != '\t' &&
+				    endstr[0] != ',' && endstr[0] != '\0')
+					errx(1, "%s: Bad value notation (%s)",
+					    argv[i], argv[i + 2]);
+				if (tmpstr == endstr) {
+					tmpstr++;
+					continue;
+				}
+				if (lval < 0)
+					errx(1, "%s: Bad value notation (%s)",
+					    argv[i], argv[i + 2]);
+				byte = lval / 8;
+				if (byte >= strl) {
+					if ((str = recallocarray(str, strl,
+					    byte + 1, 1)) == NULL)
+						err(1, "malloc");
+					strl = byte + 1;
+				}
+				str[byte] |= 0x80 >> (lval % 8);
+				tmpstr = endstr + 1;
+			} while (endstr[0] != '\0');
+			/*
+			 * RFC3416 Section 2.5
+			 * A BITS value is encoded as an OCTET STRING
+			 */
+			goto pastestring;
+		case 'c':
+			lval = strtonum(argv[i + 2], INT32_MIN, INT32_MAX,
+			    &errstr);
+			if (errstr != NULL)
+				errx(1, "%s: Bad value notation (%s)", argv[i],
+				    argv[i + 2]);
+			if ((varbind = ber_printf_elements(varbind, "{Oit}",
+			    &oid, lval, BER_CLASS_APPLICATION,
+			    SNMP_T_COUNTER32)) == NULL)
+				err(1, "ber_printf_elements");
+			break;
+		case 'd':
+			/* String always shrinks */
+			if ((str = malloc(strlen(argv[i + 2]))) == NULL)
+				err(1, "malloc");
+			tmpstr = argv[i + 2];
+			strl = 0;
+			do {
+				lval = strtoll(tmpstr, &endstr, 10);
+				if (endstr[0] != ' ' && endstr[0] != '\t' &&
+				    endstr[0] != '\0')
+					errx(1, "%s: Bad value notation (%s)",
+					    argv[i], argv[i + 2]);
+				if (tmpstr == endstr) {
+					tmpstr++;
+					continue;
+				}
+				if (lval < 0 || lval > 0xff)
+					errx(1, "%s: Bad value notation (%s)",
+					    argv[i], argv[i + 2]);
+				str[strl++] = (unsigned char) lval;
+				tmpstr = endstr + 1;
+			} while (endstr[0] != '\0');
+			goto pastestring;
+		case 'u':
+		case 'i':
+			lval = strtonum(argv[i + 2], LLONG_MIN, LLONG_MAX,
+			    &errstr);
+			if (errstr != NULL)
+				errx(1, "%s: Bad value notation (%s)", argv[i],
+				    argv[i + 2]);
+			if ((varbind = ber_printf_elements(varbind, "{Oi}",
+			    &oid, lval)) == NULL)
+				err(1, "ber_printf_elements");
+			break;
+		case 'n':
+			if ((varbind = ber_printf_elements(varbind, "{O0}",
+			    &oid)) == NULL)
+				err(1, "ber_printf_elements");
+			break;
+		case 'o':
+			if (smi_string2oid(argv[i + 2], &oidval) == -1)
+				errx(1, "%s: Unknown Object Identifier (Sub-id "
+				    "not found: (top) -> %s)", argv[i],
+				    argv[i + 2]);
+			if ((varbind = ber_printf_elements(varbind, "{OO}",
+			    &oid, &oidval)) == NULL)
+				err(1, "ber_printf_elements");
+			break;
+		case 's':
+			if ((str = strdup(argv[i + 2])) == NULL)
+				err(1, NULL);
+			strl = strlen(argv[i + 2]);
+pastestring:
+			if ((varbind = ber_printf_elements(varbind, "{Ox}",
+			    &oid, str, strl)) == NULL)
+				err(1, "ber_printf_elements");
+			free(str);
+			break;
+		case 't':
+			lval = strtonum(argv[i + 2], LLONG_MIN, LLONG_MAX,
+			    &errstr);
+			if (errstr != NULL)
+				errx(1, "%s: Bad value notation (%s)", argv[i],
+				    argv[i + 2]);
+			if ((varbind = ber_printf_elements(varbind, "{Oit}",
+			    &oid, lval, BER_CLASS_APPLICATION,
+			    SNMP_T_TIMETICKS)) == NULL)
+				err(1, "ber_printf_elements");
+			break;
+		case 'x':
+			/* String always shrinks */
+			if ((str = malloc(strlen(argv[i + 2]))) == NULL)
+				err(1, "malloc");
+			tmpstr = argv[i + 2];
+			strl = 0;
+			do {
+				lval = strtoll(tmpstr, &endstr, 16);
+				if (endstr[0] != ' ' && endstr[0] != '\t' &&
+				    endstr[0] != '\0')
+					errx(1, "%s: Bad value notation (%s)",
+					    argv[i], argv[i + 2]);
+				if (tmpstr == endstr) {
+					tmpstr++;
+					continue;
+				}
+				if (lval < 0 || lval > 0xff)
+					errx(1, "%s: Bad value notation (%s)",
+					    argv[i], argv[i + 2]);
+				str[strl++] = (unsigned char) lval;
+				tmpstr = endstr + 1;
+			} while (endstr[0] != '\0');
+			goto pastestring;
+		default:
+			usage();
+		}
+		if (vblist == NULL)
+			vblist = varbind;
+	}
+
+	return vblist;
 }
 
 __dead void

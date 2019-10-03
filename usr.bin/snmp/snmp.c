@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.6 2019/09/18 09:54:36 martijn Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.7 2019/10/03 11:02:26 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -247,6 +247,22 @@ snmp_getbulk(struct snmp_agent *agent, struct ber_oid *oid, size_t len,
 fail:
 	ber_free_elements(pdu);
 	return NULL;
+}
+
+struct ber_element *
+snmp_set(struct snmp_agent *agent, struct ber_element *vblist)
+{
+	struct ber_element *pdu;
+
+	if ((pdu = ber_add_sequence(NULL)) == NULL)
+		return NULL;
+	if (ber_printf_elements(pdu, "tddd{e", BER_CLASS_CONTEXT,
+	    SNMP_C_SETREQ, arc4random() & 0x7fffffff, 0, 0, vblist) == NULL) {
+		ber_free_elements(pdu);
+		return NULL;
+	}
+
+	return snmp_resolve(agent, pdu, 1);
 }
 
 static struct ber_element *

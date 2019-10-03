@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.5 2019/09/18 09:54:36 martijn Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.6 2019/10/03 11:02:26 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -164,6 +164,7 @@ struct ber_element *
 struct ber_element *snmp_getnext(struct snmp_agent *, struct ber_oid *, size_t);
 struct ber_element *
     snmp_getbulk(struct snmp_agent *, struct ber_oid *, size_t, int, int);
+struct ber_element *snmp_set(struct snmp_agent *, struct ber_element *);
 int snmp_trap(struct snmp_agent *, struct timespec *, struct ber_oid *,
     struct ber_element *);
 

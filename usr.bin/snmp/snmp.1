@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmp.1,v 1.6 2019/09/18 09:54:36 martijn Exp $
+.\" $OpenBSD: snmp.1,v 1.7 2019/10/03 11:02:26 martijn Exp $
 .\"
 .\" Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2019 $
+.Dd $Mdocdate: October 3 2019 $
 .Dt SNMP 1
 .Os
 .Sh NAME
@@ -110,6 +110,28 @@
 .Ar agent
 .Op Ar oid
 .Nm
+.Cm set
+.Op Fl A Ar authpass
+.Op Fl a Ar digest
+.Op Fl c Ar community
+.Op Fl E Ar ctxengineid
+.Op Fl e Ar secengineid
+.Op Fl K Ar localpriv
+.Op Fl k Ar localauth
+.Op Fl l Ar seclevel
+.Op Fl n Ar ctxname
+.Op Fl O Cm afnQqSvx
+.Op Fl r Ar retries
+.Op Fl t Ar timeout
+.Op Fl u Ar user
+.Op Fl v Ar version
+.Op Fl X Ar privpass
+.Op Fl x Ar cipher
+.Op Fl Z Ar boots , Ns Ar time
+.Ar agent
+.Ar varoid type value
+.Oo Ar varoid type value Oc ...
+.Nm
 .Cm trap
 .Op Fl A Ar authpass
 .Op Fl a Ar digest
@@ -182,6 +204,12 @@ This uses the
 subcommand internally to retrieve multiple MIBs at a time.
 This command is not available for
 .Fl v Cm 1 .
+.It Cm set
+Set one or more OIDs to a new value.
+The triple
+.Ar varoid , type , value
+is described in
+.Sx Data types .
 .It Cm trap
 Send a trap message to the
 .Ar agent .
@@ -194,8 +222,8 @@ The
 .Ar trapoid
 is the identification OID used by the trap handler to determine its action.
 The triple
-.Op Ar varoid , type, value
-is described below
+.Op Ar varoid , type , value
+is described in
 .Sx Data types .
 This command is not available for
 .Fl v Cm 1 .
