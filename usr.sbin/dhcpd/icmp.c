@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp.c,v 1.18 2017/02/13 23:04:05 krw Exp $ */
+/*	$OpenBSD: icmp.c,v 1.19 2019/10/03 13:36:15 claudio Exp $ */
 
 /*
  * Copyright (c) 1997, 1998 The Internet Software Consortium.
@@ -107,10 +107,8 @@ icmp_echorequest(struct iaddr *addr)
 	to.sin_family = AF_INET;
 	memcpy(&to.sin_addr, addr->iabuf, sizeof to.sin_addr);	/* XXX */
 
+	memset(&icmp, 0, sizeof(icmp));
 	icmp.icmp_type = ICMP_ECHO;
-	icmp.icmp_code = 0;
-	icmp.icmp_cksum = 0;
-	icmp.icmp_seq = 0;
 	icmp.icmp_id = getpid() & 0xffff;
 
 	icmp.icmp_cksum = wrapsum(checksum((unsigned char *)&icmp,
