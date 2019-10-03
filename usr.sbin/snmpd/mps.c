@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.25 2019/05/16 05:00:00 martijn Exp $	*/
+/*	$OpenBSD: mps.c,v 1.26 2019/10/03 12:00:40 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -208,7 +208,20 @@ mps_getnextreq(struct snmp_message *msg, struct ber_element *root,
 	bzero(&key, sizeof(key));
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
 	smi_oidlen(&key.o_id);	/* Strip off any trailing .0. */
-	value = smi_nfind(&key);
+	do {
+		value = smi_find(&key);
+		if (value->o_flags == 0)
+			value = NULL;
+		if (key.o_id.bo_n != 0)
+			key.o_id.bo_n--;
+	} while (value == NULL && key.o_id.bo_n > 0);
+	if (value == NULL || !(value->o_flags & OID_REGISTERED)) {
+		bcopy(o, &key.o_id, sizeof(struct ber_oid));
+		smi_oidlen(&key.o_id);	/* Strip off any trailing .0. */
+		value = smi_nfind(&key);
+		while (value != NULL && value->o_flags == 0)
+			value = smi_nfind(value);
+	}
 	if (value == NULL)
 		goto fail;
 
