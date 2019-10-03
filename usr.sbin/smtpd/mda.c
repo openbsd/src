@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.140 2019/10/03 05:48:33 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.141 2019/10/03 08:50:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -241,8 +241,6 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			mda_done(s);
 			return;
 		}
-
-		n = 0;
 
 		/* start queueing delivery headers */
 		if (e->sender[0])
