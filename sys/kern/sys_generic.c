@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.125 2019/06/22 06:48:25 semarie Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.126 2019/10/03 18:47:19 cheloha Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -664,7 +664,7 @@ retry:
 	error = selscan(p, pibits[0], pobits[0], nd, ni, retval);
 	if (error || *retval)
 		goto done;
-	while (timeout == NULL || timespecisset(timeout)) {
+	if (timeout == NULL || timespecisset(timeout)) {
 		timo = (timeout == NULL) ? 0 : tstohz(timeout);
 		if (timeout != NULL)
 			getnanouptime(&start);
@@ -683,10 +683,8 @@ retry:
 			if (timeout->tv_sec < 0)
 				timespecclear(timeout);
 		}
-		if (error == 0)
+		if (error == 0 || error == EWOULDBLOCK)
 			goto retry;
-		if (error != EWOULDBLOCK)
-			break;
 	}
 done:
 	atomic_clearbits_int(&p->p_flag, P_SELECT);
@@ -968,7 +966,7 @@ retry:
 	pollscan(p, pl, nfds, retval);
 	if (*retval)
 		goto done;
-	while (timeout == NULL || timespecisset(timeout)) {
+	if (timeout == NULL || timespecisset(timeout)) {
 		timo = (timeout == NULL) ? 0 : tstohz(timeout);
 		if (timeout != NULL)
 			getnanouptime(&start);
@@ -987,10 +985,8 @@ retry:
 			if (timeout->tv_sec < 0)
 				timespecclear(timeout);
 		}
-		if (error == 0)
+		if (error == 0 || error == EWOULDBLOCK)
 			goto retry;
-		if (error != EWOULDBLOCK)
-			break;
 	}
 
 done:
