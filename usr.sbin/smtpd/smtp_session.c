@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.413 2019/10/03 05:04:45 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.414 2019/10/03 05:08:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2105,14 +2105,18 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 
 	switch (buf[0]) {
 	case '2':
-		if (s->last_cmd == CMD_MAIL_FROM)
-			report_smtp_tx_mail("smtp-in", s->id, s->tx->msgid, s->cmd + 10, 1);
-		else if (s->last_cmd == CMD_RCPT_TO)
-			report_smtp_tx_rcpt("smtp-in", s->id, s->tx->msgid, s->cmd + 8, 1);
+		if (s->tx) {
+			if (s->last_cmd == CMD_MAIL_FROM)
+				report_smtp_tx_mail("smtp-in", s->id, s->tx->msgid, s->cmd + 10, 1);
+			else if (s->last_cmd == CMD_RCPT_TO)
+				report_smtp_tx_rcpt("smtp-in", s->id, s->tx->msgid, s->cmd + 8, 1);
+		}
 		break;
 	case '3':
-		if (s->last_cmd == CMD_DATA)
-			report_smtp_tx_data("smtp-in", s->id, s->tx->msgid, 1);
+		if (s->tx) {
+			if (s->last_cmd == CMD_DATA)
+				report_smtp_tx_data("smtp-in", s->id, s->tx->msgid, 1);
+		}
 		break;
 	case '5':
 	case '4':
