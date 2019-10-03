@@ -78,9 +78,6 @@ spfwalk(int argc, struct parameter *argv)
 			errx(1, "invalid ip_family");
 	}
 
-	argv += optind;
-	argc -= optind;
-
 	dict_init(&seen);
   	event_init();
 
