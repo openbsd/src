@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.104 2019/08/04 23:51:45 guenther Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.105 2019/10/03 06:10:53 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -90,12 +90,9 @@ dlopen(const char *libname, int flags)
 	_dl_link_dlopen(object);
 
 	if (OBJECT_REF_CNT(object) > 1) {
-		/* if opened but grpsym_list has not been created */
-		if (OBJECT_DLREF_CNT(object) == 1) {
-			/* add first object manually */
-			_dl_link_grpsym(object, 1);
-			_dl_cache_grpsym_list(object);
-		}
+		/* if opened but grpsym_vec has not been filled in */
+		if (object->grpsym_vec.len == 0)
+			_dl_cache_grpsym_list_setup(object);
 		goto loaded;
 	}
 

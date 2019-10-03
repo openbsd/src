@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.185 2019/08/06 04:01:41 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.186 2019/10/03 06:10:54 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -397,8 +397,6 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 		dynobj = dynobj->next;
 	}
 
-	/* add first object manually */
-	_dl_link_grpsym(object, 1);
 	_dl_cache_grpsym_list_setup(object);
 
 	return(0);
@@ -585,7 +583,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	_dl_add_object(dyn_obj);
 
 	dyn_obj->refcount++;
-	_dl_link_grpsym(dyn_obj, 1);
+	_dl_link_grpsym(dyn_obj);
 
 	dyn_obj->status |= STAT_RELOC_DONE;
 	_dl_set_sod(dyn_obj->load_name, &dyn_obj->sod);

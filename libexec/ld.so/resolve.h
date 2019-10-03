@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.94 2019/08/04 23:51:45 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.95 2019/10/03 06:10:54 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -68,12 +68,20 @@ typedef uint64_t Elf_Hash_Word;
 typedef uint32_t Elf_Hash_Word;
 #endif
 
+typedef struct elf_object elf_object_t;
+
+struct object_vector {
+	int		len;
+	int		alloc;
+	elf_object_t 	**vec;
+};
+void	object_vec_grow(struct object_vector *_vec, int _more);
+
 /*
  *  Structure describing a loaded object.
  *  The head of this struct must be compatible
  *  with struct link_map in sys/link.h
  */
-typedef struct elf_object elf_object_t;
 struct elf_object {
 	Elf_Addr obj_base;		/* object's address '0' base */
 	char	*load_name;		/* Pointer to object name */
@@ -182,7 +190,7 @@ struct elf_object {
 #define symndx_gnu	hash_u.u_gnu.symndx
 
 	TAILQ_HEAD(,dep_node)	child_list;	/* direct dep libs of object */
-	TAILQ_HEAD(,dep_node)	grpsym_list;	/* ordered complete dep list */
+	struct object_vector	grpsym_vec;	/* ordered complete dep list */
 	TAILQ_HEAD(,dep_node)	grpref_list;	/* refs to other load groups */
 
 	int		refcount;	/* dep libs only */
@@ -288,9 +296,8 @@ int _dl_load_dep_libs(elf_object_t *object, int flags, int booting);
 int _dl_rtld(elf_object_t *object);
 void _dl_call_init(elf_object_t *object);
 void _dl_link_child(elf_object_t *dep, elf_object_t *p);
-void _dl_link_grpsym(elf_object_t *object, int checklist);
-void _dl_cache_grpsym_list(elf_object_t *object);
-void _dl_cache_grpsym_list_setup(elf_object_t *object);
+void _dl_link_grpsym(elf_object_t *object);
+void _dl_cache_grpsym_list_setup(elf_object_t *_object);
 void _dl_link_grpref(elf_object_t *load_group, elf_object_t *load_object);
 void _dl_link_dlopen(elf_object_t *dep);
 void _dl_unlink_dlopen(elf_object_t *dep);
@@ -323,7 +330,7 @@ void	_dl_set_tls(elf_object_t *_object, Elf_Phdr *_ptls, Elf_Addr _libaddr,
 extern int _dl_tib_static_done;
 
 extern elf_object_t *_dl_objects;
-extern elf_object_t *_dl_last_object;
+extern int object_count;	/* how many objects are currently loaded */
 
 extern elf_object_t *_dl_loading_object;
 

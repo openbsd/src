@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.92 2019/08/04 23:51:45 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.93 2019/10/03 06:10:54 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -53,7 +53,8 @@ struct symlookup {
 };
 
 elf_object_t *_dl_objects;
-elf_object_t *_dl_last_object;
+int object_count;
+static elf_object_t *_dl_last_object;
 elf_object_t *_dl_loading_object;
 
 /*
@@ -87,10 +88,13 @@ _dl_add_object(elf_object_t *object)
 
 	if (_dl_objects == NULL) {			/* First object ? */
 		_dl_last_object = _dl_objects = object;
+		object_count = 2;			/* count ld.so early */
 	} else {
 		_dl_last_object->next = object;
 		object->prev = _dl_last_object;
 		_dl_last_object = object;
+		if (object->obj_type != OBJTYPE_LDR)	/* see above */
+			object_count++;
 	}
 }
 
@@ -434,7 +438,6 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 	object->dev = 0;
 	object->inode = 0;
 	object->grpsym_gen = 0;
-	TAILQ_INIT(&object->grpsym_list);
 	TAILQ_INIT(&object->grpref_list);
 
 	if (object->dyn.runpath)
@@ -492,7 +495,7 @@ _dl_cleanup_objects()
 		_dl_free((char *)head->sod.sod_name);
 		_dl_free_path(head->runpath);
 		_dl_free_path(head->rpath);
-		_dl_tailq_free(TAILQ_FIRST(&head->grpsym_list));
+		_dl_free(head->grpsym_vec.vec);
 		_dl_tailq_free(TAILQ_FIRST(&head->child_list));
 		_dl_tailq_free(TAILQ_FIRST(&head->grpref_list));
 		nobj = head->next;
@@ -510,6 +513,7 @@ _dl_remove_object(elf_object_t *object)
 
 	if (_dl_last_object == object)
 		_dl_last_object = object->prev;
+	object_count--;
 
 	object->next = free_objects;
 	free_objects = object;
@@ -626,7 +630,6 @@ _dl_find_symbol(const char *name, int flags, const Elf_Sym *ref_sym,
 {
 	const unsigned char *p;
 	unsigned char c;
-	struct dep_node *n, *m;
 	struct symlookup sl = {
 		.sl_name = name,
 		.sl_out = { .sym = NULL },
@@ -651,6 +654,9 @@ _dl_find_symbol(const char *name, int flags, const Elf_Sym *ref_sym,
 			goto found;
 
 	if (flags & SYM_DLSYM) {
+		struct object_vector vec;
+		int i;
+
 		if (_dl_find_symbol_obj(req_obj, &sl))
 			goto found;
 
@@ -659,28 +665,34 @@ _dl_find_symbol(const char *name, int flags, const Elf_Sym *ref_sym,
 			goto found;
 
 		/* search dlopened obj and all children */
-		TAILQ_FOREACH(n, &req_obj->load_object->grpsym_list, next_sib) {
-			if (_dl_find_symbol_obj(n->data, &sl))
+		vec = req_obj->load_object->grpsym_vec;
+		for (i = 0; i < vec.len; i++) {
+			if (vec.vec[i] == req_obj)
+				continue;		/* already searched */
+			if (_dl_find_symbol_obj(vec.vec[i], &sl))
 				goto found;
 		}
 	} else {
-		int skip = 0;
+		struct dep_node *n;
+		struct object_vector vec;
+		int i, skip = 0;
 
 		if ((flags & SYM_SEARCH_SELF) || (flags & SYM_SEARCH_NEXT))
 			skip = 1;
 
 		/*
 		 * search dlopened objects: global or req_obj == dlopened_obj
-		 * and and it's children
+		 * and its children
 		 */
 		TAILQ_FOREACH(n, &_dlopened_child_list, next_sib) {
 			if (((n->data->obj_flags & DF_1_GLOBAL) == 0) &&
 			    (n->data != req_obj->load_object))
 				continue;
 
-			TAILQ_FOREACH(m, &n->data->grpsym_list, next_sib) {
+			vec = n->data->grpsym_vec;
+			for (i = 0; i < vec.len; i++) {
 				if (skip == 1) {
-					if (m->data == req_obj) {
+					if (vec.vec[i] == req_obj) {
 						skip = 0;
 						if (flags & SYM_SEARCH_NEXT)
 							continue;
@@ -688,9 +700,9 @@ _dl_find_symbol(const char *name, int flags, const Elf_Sym *ref_sym,
 						continue;
 				}
 				if ((flags & SYM_SEARCH_OTHER) &&
-				    (m->data == req_obj))
+				    (vec.vec[i] == req_obj))
 					continue;
-				if (_dl_find_symbol_obj(m->data, &sl))
+				if (_dl_find_symbol_obj(vec.vec[i], &sl))
 					goto found;
 			}
 		}
