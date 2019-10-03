@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.34 2019/06/28 13:32:50 deraadt Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.35 2019/10/03 05:50:28 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -365,7 +365,8 @@ m_flush(struct mproc *p)
 
 	p->m_pos = 0;
 
-	imsg_flush(&p->imsgbuf);
+	if (imsg_flush(&p->imsgbuf) == -1)
+		fatal("imsg_flush");
 }
 
 static struct imsg * current;
