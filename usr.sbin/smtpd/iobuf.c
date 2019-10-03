@@ -1,4 +1,4 @@
-/*	$OpenBSD: iobuf.c,v 1.11 2019/06/12 17:42:53 eric Exp $	*/
+/*	$OpenBSD: iobuf.c,v 1.12 2019/10/03 07:03:23 gilles Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -420,8 +420,6 @@ iobuf_write_tls(struct iobuf *io, void *tls)
 		case SSL_ERROR_SYSCALL:
 			if (ERR_peek_last_error())
 				return (IOBUF_TLSERROR);
-			if (r == 0)
-				errno = EPIPE;
 			return (IOBUF_ERROR);
 		default:
 			return (IOBUF_TLSERROR);
@@ -448,8 +446,6 @@ iobuf_read_tls(struct iobuf *io, void *tls)
 		case SSL_ERROR_SYSCALL:
 			if (ERR_peek_last_error())
 				return (IOBUF_TLSERROR);
-			if (r == 0)
-				errno = EPIPE;
 			return (IOBUF_ERROR);
 		default:
 			return (IOBUF_TLSERROR);
