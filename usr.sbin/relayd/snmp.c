@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.29 2017/05/28 10:39:15 benno Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.30 2019/10/03 12:03:49 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -321,21 +321,27 @@ snmp_agentx_process(struct agentx_handle *h, struct agentx_pdu *pdu, void *arg)
 
 			bcopy(&sr.start, &oid, sizeof(oid));
 
-			/*
-			 * If the requested OID is not part of the registered
-			 * MIB, return "no such object", per RFC
-			 */
 			if (snmp_oid_cmp(&relaydinfooid, &oid) == -1) {
-				if (snmp_agentx_varbind(resp, &sr.start,
-				    AGENTX_NO_SUCH_OBJECT, NULL, 0) == -1) {
-					log_warn("%s: unable to generate"
-					    " response", __func__);
-					snmp_agentx_pdu_free(resp);
-					resp = NULL;
+				/*
+				 * If the requested OID is not part of the registered
+				 * MIB, return "no such object", per RFC
+				 */
+				if (pdu->hdr->type == AGENTX_GET) {
+					if (snmp_agentx_varbind(resp, &sr.start,
+					    AGENTX_NO_SUCH_OBJECT, NULL, 0) == -1) {
+						log_warn("%s: unable to generate"
+						    " response", __func__);
+						snmp_agentx_pdu_free(resp);
+						resp = NULL;
+					}
+					goto reply;
 				}
-				goto reply;
+				bcopy(&relaydinfooid, &oid, sizeof(oid));
 			}
-
+			if (oid.o_n == 9) {
+				oid.o_id[9] = 1;
+				oid.o_n++;
+			}
 			if (oid.o_n != OIDIDX_relaydInfo + 2 + 1) {
 				/* GET requests require the exact OID */
 				if (pdu->hdr->type == AGENTX_GET)
