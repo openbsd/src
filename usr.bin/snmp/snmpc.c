@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.11 2019/09/18 09:54:36 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.12 2019/10/03 07:23:46 semarie Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -496,7 +496,7 @@ snmpc_get(int argc, char *argv[])
 		err(1, "malloc");
 	for (i = 0; i < argc; i++) {
 		if (smi_string2oid(argv[i], &oid[i]) == -1)
-			errx(1, "%s: Unknown object identifier", argv[0]);
+			errx(1, "%s: Unknown object identifier", argv[i]);
 	}
 	if (strcmp(snmp_app->name, "getnext") == 0) {
 		if ((pdu = snmp_getnext(agent, oid, argc)) == NULL)
