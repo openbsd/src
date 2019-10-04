@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.127 2019/04/19 07:39:37 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.128 2019/10/04 05:00:49 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/ip_ether.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_ipip.h>
 #include <netinet/ip_ecn.h>

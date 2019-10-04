@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.h,v 1.10 2017/06/20 11:12:13 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.h,v 1.11 2019/10/04 05:00:49 dlg Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -103,6 +103,8 @@ ipipstat_add(enum ipipstat_counters c, uint64_t v)
 {
 	counters_add(ipipcounters, c, v);
 }
+
+struct tdb;
 
 void	ipip_init(void);
 int	ipip_input(struct mbuf **, int *, int, int);
