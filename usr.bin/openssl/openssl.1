@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.113 2019/08/05 12:01:51 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.114 2019/10/04 06:22:51 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: August 5 2019 $
+.Dd $Mdocdate: October 4 2019 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -201,8 +201,9 @@ or
 .Cm no- Ns Ar command
 itself.
 .Sh ASN1PARSE
-.nr nS 1
-.Nm "openssl asn1parse"
+.Bl -hang -width "openssl asn1parse"
+.It Nm openssl asn1parse
+.Bk -words
 .Op Fl i
 .Op Fl dlimit Ar number
 .Op Fl dump
@@ -216,7 +217,8 @@ itself.
 .Op Fl oid Ar file
 .Op Fl out Ar file
 .Op Fl strparse Ar offset
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm asn1parse
@@ -295,8 +297,9 @@ This option can be used multiple times to
 into a nested structure.
 .El
 .Sh CA
-.nr nS 1
-.Nm "openssl ca"
+.Bl -hang -width "openssl ca"
+.It Nm openssl ca
+.Bk -words
 .Op Fl batch
 .Op Fl cert Ar file
 .Op Fl config Ar file
@@ -341,7 +344,8 @@ into a nested structure.
 .Op Fl updatedb
 .Op Fl utf8
 .Op Fl verbose
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm ca
@@ -874,8 +878,9 @@ Like
 but without cipher suite codes.
 .El
 .Sh CRL
-.nr nS 1
-.Nm "openssl crl"
+.Bl -hang -width "openssl crl"
+.It Nm openssl crl
+.Bk -words
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar dir
 .Op Fl crlnumber
@@ -893,7 +898,8 @@ but without cipher suite codes.
 .Op Fl outform Cm der | pem
 .Op Fl text
 .Op Fl verify
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm crl
@@ -948,15 +954,17 @@ Print the CRL in plain text.
 Verify the signature on the CRL.
 .El
 .Sh CRL2PKCS7
-.nr nS 1
-.Nm "openssl crl2pkcs7"
+.Bl -hang -width "openssl crl2pkcs7"
+.It Nm openssl crl2pkcs7
+.Bk -words
 .Op Fl certfile Ar file
 .Op Fl in Ar file
 .Op Fl inform Cm der | pem
 .Op Fl nocrl
 .Op Fl out Ar file
 .Op Fl outform Cm der | pem
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm crl2pkcs7
@@ -991,8 +999,9 @@ or standard output if not specified.
 The output format.
 .El
 .Sh DGST
-.nr nS 1
-.Nm "openssl dgst"
+.Bl -hang -width "openssl dgst"
+.It Nm openssl dgst
+.Bk -words
 .Op Fl cdr
 .Op Fl binary
 .Op Fl Ar digest
@@ -1009,7 +1018,8 @@ The output format.
 .Op Fl sigopt Ar nm : Ns Ar v
 .Op Fl verify Ar file
 .Op Ar
-.nr nS 0
+.Ek
+.El
 .Pp
 The digest functions output the message digest of a supplied
 .Ar file
@@ -1103,8 +1113,9 @@ File or files to digest.
 If no files are specified then standard input is used.
 .El
 .Sh DHPARAM
-.nr nS 1
-.Nm "openssl dhparam"
+.Bl -hang -width "openssl dhparam"
+.It Nm openssl dhparam
+.Bk -words
 .Op Fl 2 | 5
 .Op Fl C
 .Op Fl check
@@ -1116,7 +1127,8 @@ If no files are specified then standard input is used.
 .Op Fl outform Cm der | pem
 .Op Fl text
 .Op Ar numbits
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm dhparam
@@ -1177,8 +1189,9 @@ If this value is present, the input file is ignored and
 parameters are generated instead.
 .El
 .Sh DSA
-.nr nS 1
-.Nm "openssl dsa"
+.Bl -hang -width "openssl dsa"
+.It Nm openssl dsa
+.Bk -words
 .Oo
 .Fl aes128 | aes192 | aes256 |
 .Fl des | des3
@@ -1195,7 +1208,8 @@ parameters are generated instead.
 .Op Fl pubout
 .Op Fl pvk-none | pvk-strong | pvk-weak
 .Op Fl text
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm dsa
@@ -1263,8 +1277,9 @@ The default is
 Print the public/private key in plain text.
 .El
 .Sh DSAPARAM
-.nr nS 1
-.Nm "openssl dsaparam"
+.Bl -hang -width "openssl dsaparam"
+.It Nm openssl dsaparam
+.Bk -words
 .Op Fl C
 .Op Fl genkey
 .Op Fl in Ar file
@@ -1274,7 +1289,8 @@ Print the public/private key in plain text.
 .Op Fl outform Cm der | pem
 .Op Fl text
 .Op Ar numbits
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm dsaparam
@@ -1313,8 +1329,9 @@ Generate a parameter set of size
 If this option is included, the input file is ignored.
 .El
 .Sh EC
-.nr nS 1
-.Nm "openssl ec"
+.Bl -hang -width "openssl ec"
+.It Nm openssl ec
+.Bk -words
 .Op Fl conv_form Ar arg
 .Op Fl des
 .Op Fl des3
@@ -1330,7 +1347,8 @@ If this option is included, the input file is ignored.
 .Op Fl pubin
 .Op Fl pubout
 .Op Fl text
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm ec
@@ -1423,8 +1441,9 @@ Automatically set if the input is a public key.
 Print the public/private key in plain text.
 .El
 .Sh ECPARAM
-.nr nS 1
-.Nm "openssl ecparam"
+.Bl -hang -width "openssl ecparam"
+.It Nm openssl ecparam
+.Bk -words
 .Op Fl C
 .Op Fl check
 .Op Fl conv_form Ar arg
@@ -1439,7 +1458,8 @@ Print the public/private key in plain text.
 .Op Fl outform Cm der | pem
 .Op Fl param_enc Ar arg
 .Op Fl text
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm ecparam
@@ -1516,8 +1536,9 @@ is currently not implemented.
 Print the EC parameters in plain text.
 .El
 .Sh ENC
-.nr nS 1
-.Nm "openssl enc"
+.Bl -hang -width "openssl enc"
+.It Nm openssl enc
+.Bk -words
 .Fl ciphername
 .Op Fl AadePpv
 .Op Fl base64
@@ -1538,7 +1559,8 @@ Print the EC parameters in plain text.
 .Op Fl pbkdf2
 .Op Fl S Ar salt
 .Op Fl salt
-.nr nS 0
+.Ek
+.El
 .Pp
 The symmetric cipher commands allow data to be encrypted or decrypted
 using various block and stream ciphers using keys based on passwords
@@ -1710,8 +1732,9 @@ The options are as follows:
 Print debugging statistics about various aspects of the hash table.
 .El
 .Sh GENDSA
-.nr nS 1
-.Nm "openssl gendsa"
+.Bl -hang -width "openssl gendsa"
+.It Nm openssl gendsa
+.Bk -words
 .Oo
 .Fl aes128 | aes192 | aes256 | camellia128 |
 .Fl camellia192 | camellia256 | des | des3 | idea
@@ -1719,7 +1742,8 @@ Print debugging statistics about various aspects of the hash table.
 .Op Fl out Ar file
 .Op Fl passout Ar arg
 .Ar paramfile
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm gendsa
@@ -1754,8 +1778,9 @@ Specify the DSA parameter file to use.
 The parameters in this file determine the size of the private key.
 .El
 .Sh GENPKEY
-.nr nS 1
-.Nm "openssl genpkey"
+.Bl -hang -width "openssl genpkey"
+.It Nm openssl genpkey
+.Bk -words
 .Op Fl algorithm Ar alg
 .Op Ar cipher
 .Op Fl genparam
@@ -1765,7 +1790,8 @@ The parameters in this file determine the size of the private key.
 .Op Fl pass Ar arg
 .Op Fl pkeyopt Ar opt : Ns Ar value
 .Op Fl text
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm genpkey
@@ -1856,8 +1882,9 @@ The EC curve to use.
 Print the private/public key in plain text.
 .El
 .Sh GENRSA
-.nr nS 1
-.Nm "openssl genrsa"
+.Bl -hang -width "openssl genrsa"
+.It Nm openssl genrsa
+.Bk -words
 .Op Fl 3 | f4
 .Oo
 .Fl aes128 | aes192 | aes256 | camellia128 |
@@ -1866,7 +1893,8 @@ Print the private/public key in plain text.
 .Op Fl out Ar file
 .Op Fl passout Ar arg
 .Op Ar numbits
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm genrsa
@@ -1941,8 +1969,9 @@ option the situation is reversed:
 a Netscape certificate sequence is created from a file of certificates.
 .El
 .Sh OCSP
-.nr nS 1
-.Nm "openssl ocsp"
+.Bl -hang -width "openssl ocsp"
+.It Nm openssl ocsp
+.Bk -words
 .Op Fl CA Ar file
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar directory
@@ -1992,7 +2021,8 @@ a Netscape certificate sequence is created from a file of certificates.
 .Op Fl VAfile Ar file
 .Op Fl validity_period Ar nsec
 .Op Fl verify_other Ar file
-.nr nS 0
+.Ek
+.El
 .Pp
 The Online Certificate Status Protocol (OCSP)
 enables applications to determine the (revocation) state
@@ -2291,8 +2321,9 @@ with the
 .Fl VAfile
 option.
 .Sh PASSWD
-.nr nS 1
-.Nm "openssl passwd"
+.Bl -hang -width "openssl passwd"
+.It Nm openssl passwd
+.Bk -words
 .Op Fl 1 | apr1 | crypt
 .Op Fl in Ar file
 .Op Fl noverify
@@ -2302,7 +2333,8 @@ option.
 .Op Fl stdin
 .Op Fl table
 .Op Ar password
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm passwd
@@ -2352,8 +2384,9 @@ In the output list, prepend the cleartext password and a TAB character
 to each password hash.
 .El
 .Sh PKCS7
-.nr nS 1
-.Nm "openssl pkcs7"
+.Bl -hang -width "openssl pkcs7"
+.It Nm openssl pkcs7
+.Bk -words
 .Op Fl in Ar file
 .Op Fl inform Cm der | pem
 .Op Fl noout
@@ -2362,7 +2395,8 @@ to each password hash.
 .Op Fl print
 .Op Fl print_certs
 .Op Fl text
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm pkcs7
@@ -2395,8 +2429,9 @@ preceded by their subject and issuer names in a one-line format.
 Print certificate details in full rather than just subject and issuer names.
 .El
 .Sh PKCS8
-.nr nS 1
-.Nm "openssl pkcs8"
+.Bl -hang -width "openssl pkcs8"
+.It Nm openssl pkcs8
+.Bk -words
 .Op Fl in Ar file
 .Op Fl inform Cm der | pem
 .Op Fl nocrypt
@@ -2408,7 +2443,8 @@ Print certificate details in full rather than just subject and issuer names.
 .Op Fl topk8
 .Op Fl v1 Ar alg
 .Op Fl v2 Ar alg
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm pkcs8
@@ -2476,8 +2512,9 @@ valid values include des, des3, and rc2.
 It is recommended that des3 is used.
 .El
 .Sh PKCS12
-.nr nS 1
-.Nm "openssl pkcs12"
+.Bl -hang -width "openssl pkcs12"
+.It Nm openssl pkcs12
+.Bk -words
 .Oo
 .Fl aes128 | aes192 | aes256 | camellia128 |
 .Fl camellia192 | camellia256 | des | des3 | idea
@@ -2516,7 +2553,8 @@ It is recommended that des3 is used.
 .Op Fl passout Ar arg
 .Op Fl password Ar arg
 .Op Fl twopass
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm pkcs12
@@ -2691,8 +2729,9 @@ is equivalent to
 .Fl passin .
 .El
 .Sh PKEY
-.nr nS 1
-.Nm "openssl pkey"
+.Bl -hang -width "openssl pkey"
+.It Nm openssl pkey
+.Bk -words
 .Op Ar cipher
 .Op Fl in Ar file
 .Op Fl inform Cm der | pem
@@ -2705,7 +2744,8 @@ is equivalent to
 .Op Fl pubout
 .Op Fl text
 .Op Fl text_pub
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm pkey
@@ -2777,8 +2817,9 @@ or standard output if not specified.
 Print the parameters in plain text.
 .El
 .Sh PKEYUTL
-.nr nS 1
-.Nm "openssl pkeyutl"
+.Bl -hang -width "openssl pkeyutl"
+.It Nm openssl pkeyutl
+.Bk -words
 .Op Fl asn1parse
 .Op Fl certin
 .Op Fl decrypt
@@ -2799,7 +2840,8 @@ Print the parameters in plain text.
 .Op Fl sign
 .Op Fl verify
 .Op Fl verifyrecover
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm pkeyutl
@@ -2971,13 +3013,15 @@ Test if number
 is prime.
 .El
 .Sh RAND
-.nr nS 1
-.Nm "openssl rand"
+.Bl -hang -width "openssl rand"
+.It Nm openssl rand
+.Bk -words
 .Op Fl base64
 .Op Fl hex
 .Op Fl out Ar file
 .Ar num
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm rand
@@ -2996,8 +3040,9 @@ The output file to write to,
 or standard output if not specified.
 .El
 .Sh REQ
-.nr nS 1
-.Nm "openssl req"
+.Bl -hang -width "openssl req"
+.It Nm openssl req
+.Bk -words
 .Op Fl asn1-kludge
 .Op Fl batch
 .Op Fl config Ar file
@@ -3035,7 +3080,8 @@ or standard output if not specified.
 .Op Fl verbose
 .Op Fl verify
 .Op Fl x509
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm req
@@ -3435,8 +3481,9 @@ options in the configuration file.
 Any additional fields will be treated as though they were a
 .Cm DirectoryString .
 .Sh RSA
-.nr nS 1
-.Nm "openssl rsa"
+.Bl -hang -width "openssl rsa"
+.It Nm openssl rsa
+.Bk -words
 .Op Fl aes128 | aes192 | aes256 | des | des3
 .Op Fl check
 .Op Fl in Ar file
@@ -3454,7 +3501,8 @@ Any additional fields will be treated as though they were a
 .Op Fl RSAPublicKey_out
 .Op Fl sgckey
 .Op Fl text
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm rsa
@@ -3530,8 +3578,9 @@ and SGC keys.
 Print the public/private key components in plain text.
 .El
 .Sh RSAUTL
-.nr nS 1
-.Nm "openssl rsautl"
+.Bl -hang -width "openssl rsautl"
+.It Nm openssl rsautl
+.Bk -words
 .Op Fl asn1parse
 .Op Fl certin
 .Op Fl decrypt
@@ -3547,7 +3596,8 @@ Print the public/private key components in plain text.
 .Op Fl rev
 .Op Fl sign
 .Op Fl verify
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm rsautl
@@ -3602,8 +3652,9 @@ This requires an RSA private key.
 Verify the input data and output the recovered data.
 .El
 .Sh S_CLIENT
-.nr nS 1
-.Nm "openssl s_client"
+.Bl -hang -width "openssl s_client"
+.It Nm openssl s_client
+.Bk -words
 .Op Fl 4 | 6
 .Op Fl alpn Ar protocols
 .Op Fl bugs
@@ -3667,7 +3718,8 @@ Verify the input data and output the recovered data.
 .Op Fl verify_return_error
 .Op Fl x509_strict
 .Op Fl xmpphost Ar host
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm s_client
@@ -3896,8 +3948,9 @@ If this option is not specified then the host specified with
 will be used.
 .El
 .Sh S_SERVER
-.nr nS 1
-.Nm "openssl s_server"
+.Bl -hang -width "openssl s_server"
+.It Nm openssl s_server
+.Bk -words
 .Op Fl accept Ar port
 .Op Fl alpn Ar protocols
 .Op Fl bugs
@@ -3961,7 +4014,8 @@ will be used.
 .Op Fl verify_return_error
 .Op Fl WWW
 .Op Fl www
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm s_server
@@ -4199,8 +4253,9 @@ with
 a certificate is requested but the client does not have to send one.
 .El
 .Sh S_TIME
-.nr nS 1
-.Nm "openssl s_time"
+.Bl -hang -width "openssl s_time"
+.It Nm openssl s_time
+.Bk -words
 .Op Fl bugs
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar directory
@@ -4215,7 +4270,8 @@ a certificate is requested but the client does not have to send one.
 .Op Fl time Ar seconds
 .Op Fl verify Ar depth
 .Op Fl www Ar page
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm s_time
@@ -4307,8 +4363,9 @@ will only perform the handshake to establish SSL connections
 but not transfer any payload data.
 .El
 .Sh SESS_ID
-.nr nS 1
-.Nm "openssl sess_id"
+.Bl -hang -width "openssl sess_id"
+.It Nm openssl sess_id
+.Bk -words
 .Op Fl cert
 .Op Fl context Ar ID
 .Op Fl in Ar file
@@ -4317,7 +4374,8 @@ but not transfer any payload data.
 .Op Fl out Ar file
 .Op Fl outform Cm der | pem
 .Op Fl text
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm sess_id
@@ -4397,8 +4455,9 @@ application.
 This is, however, strongly discouraged and should only be used for
 debugging purposes.
 .Sh SMIME
-.nr nS 1
-.Nm "openssl smime"
+.Bl -hang -width "openssl smime"
+.It Nm openssl smime
+.Bk -words
 .Oo
 .Fl aes128 | aes192 | aes256 | des |
 .Fl des3 | rc2-40 | rc2-64 | rc2-128
@@ -4448,7 +4507,8 @@ debugging purposes.
 .Op Fl verify
 .Op Fl x509_strict
 .Op Ar cert.pem ...
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm smime
@@ -4691,15 +4751,17 @@ An error occurred decrypting or verifying the message.
 An error occurred writing certificates.
 .El
 .Sh SPEED
-.nr nS 1
-.Nm "openssl speed"
+.Bl -hang -width "openssl speed"
+.It Nm openssl speed
+.Bk -words
 .Op Ar algorithm
 .Op Fl decrypt
 .Op Fl elapsed
 .Op Fl evp Ar algorithm
 .Op Fl mr
 .Op Fl multi Ar number
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm speed
@@ -4726,8 +4788,9 @@ Run
 benchmarks in parallel.
 .El
 .Sh SPKAC
-.nr nS 1
-.Nm "openssl spkac"
+.Bl -hang -width "openssl spkac"
+.It Nm openssl spkac
+.Bk -words
 .Op Fl challenge Ar string
 .Op Fl in Ar file
 .Op Fl key Ar keyfile
@@ -4738,7 +4801,8 @@ benchmarks in parallel.
 .Op Fl spkac Ar spkacname
 .Op Fl spksect Ar section
 .Op Fl verify
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm spkac
@@ -4785,8 +4849,9 @@ containing the SPKAC.
 Verify the digital signature on the supplied SPKAC.
 .El
 .Sh TS
-.nr nS 1
-.Nm "openssl ts"
+.Bk -words
+.Bl -hang -width "openssl ts"
+.It Nm openssl ts
 .Fl query
 .Op Fl md4 | md5 | ripemd160 | sha1
 .Op Fl cert
@@ -4798,10 +4863,7 @@ Verify the digital signature on the supplied SPKAC.
 .Op Fl out Ar request.tsq
 .Op Fl policy Ar object_id
 .Op Fl text
-.nr nS 0
-.Pp
-.nr nS 1
-.Nm "openssl ts"
+.It Nm openssl ts
 .Fl reply
 .Op Fl chain Ar certs_file.pem
 .Op Fl config Ar configfile
@@ -4816,10 +4878,7 @@ Verify the digital signature on the supplied SPKAC.
 .Op Fl text
 .Op Fl token_in
 .Op Fl token_out
-.nr nS 0
-.Pp
-.nr nS 1
-.Nm "openssl ts"
+.It Nm openssl ts
 .Fl verify
 .Op Fl CAfile Ar trusted_certs.pem
 .Op Fl CApath Ar trusted_cert_path
@@ -4829,7 +4888,8 @@ Verify the digital signature on the supplied SPKAC.
 .Op Fl queryfile Ar request.tsq
 .Op Fl token_in
 .Op Fl untrusted Ar cert_file.pem
-.nr nS 0
+.El
+.Ek
 .Pp
 The
 .Nm ts
@@ -5151,8 +5211,9 @@ only the signing certificate identifier is included.
 The default is no.
 .El
 .Sh VERIFY
-.nr nS 1
-.Nm "openssl verify"
+.Bl -hang -width "openssl verify"
+.It Nm openssl verify
+.Bk -words
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar directory
 .Op Fl check_ss_sig
@@ -5173,7 +5234,8 @@ The default is no.
 .Op Fl verbose
 .Op Fl x509_strict
 .Op Ar certificates
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm verify
@@ -5507,8 +5569,9 @@ The current
 version.
 .El
 .Sh X509
-.nr nS 1
-.Nm "openssl x509"
+.Bl -hang -width "openssl x509"
+.It Nm openssl x509
+.Bk -words
 .Op Fl C
 .Op Fl addreject Ar arg
 .Op Fl addtrust Ar arg
@@ -5563,7 +5626,8 @@ version.
 .Op Fl text
 .Op Fl trustout
 .Op Fl x509toreq
-.nr nS 0
+.Ek
+.El
 .Pp
 The
 .Nm x509
