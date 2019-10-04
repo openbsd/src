@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_smime.c,v 1.23 2019/08/11 14:51:15 jsing Exp $ */
+/* $OpenBSD: cms_smime.c,v 1.24 2019/10/04 18:03:56 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -823,6 +823,10 @@ CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert, BIO *dcont,
 		cms->d.envelopedData->encryptedContentInfo->debug = 1;
 	else
 		cms->d.envelopedData->encryptedContentInfo->debug = 0;
+	if (!cert)
+		cms->d.envelopedData->encryptedContentInfo->havenocert = 1;
+	else
+		cms->d.envelopedData->encryptedContentInfo->havenocert = 0;
 	if (!pk && !cert && !dcont && !out)
 		return 1;
 	if (pk && !CMS_decrypt_set1_pkey(cms, pk, cert))

@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_env.c,v 1.22 2019/08/11 11:07:40 jsing Exp $ */
+/* $OpenBSD: cms_env.c,v 1.23 2019/10/04 18:03:56 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -426,6 +426,7 @@ cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 	EVP_PKEY *pkey = ktri->pkey;
 	unsigned char *ek = NULL;
 	size_t eklen;
+	size_t fixlen = 0;
 	int ret = 0;
 	CMS_EncryptedContentInfo *ec;
 
@@ -434,6 +435,19 @@ cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 	if (ktri->pkey == NULL) {
 		CMSerror(CMS_R_NO_PRIVATE_KEY);
 		return 0;
+	}
+
+	if (cms->d.envelopedData->encryptedContentInfo->havenocert &&
+	    !cms->d.envelopedData->encryptedContentInfo->debug) {
+		X509_ALGOR *calg = ec->contentEncryptionAlgorithm;
+		const EVP_CIPHER *ciph;
+
+		if ((ciph = EVP_get_cipherbyobj(calg->algorithm)) == NULL) {
+			CMSerror(CMS_R_UNKNOWN_CIPHER);
+			return 0;
+		}
+
+		fixlen = EVP_CIPHER_key_length(ciph);
 	}
 
 	ktri->pctx = EVP_PKEY_CTX_new(pkey, NULL);
@@ -453,8 +467,11 @@ cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 	}
 
 	if (EVP_PKEY_decrypt(ktri->pctx, NULL, &eklen, ktri->encryptedKey->data,
-	    ktri->encryptedKey->length) <= 0)
+	    ktri->encryptedKey->length) <= 0 || eklen == 0 ||
+	    (fixlen != 0 && eklen != fixlen)) {
+		CMSerror(CMS_R_CMS_LIB);
 		goto err;
+	}
 
 	ek = malloc(eklen);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.43 2019/03/13 20:34:00 tb Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.44 2019/10/04 18:03:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -191,7 +191,7 @@ err:
 
 static int
 pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen, PKCS7_RECIP_INFO *ri,
-    EVP_PKEY *pkey)
+    EVP_PKEY *pkey, size_t fixlen)
 {
 	EVP_PKEY_CTX *pctx = NULL;
 	unsigned char *ek = NULL;
@@ -222,8 +222,9 @@ pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen, PKCS7_RECIP_INFO *ri,
 		goto err;
 	}
 
-	if (EVP_PKEY_decrypt(pctx, ek, &eklen,
-	    ri->enc_key->data, ri->enc_key->length) <= 0) {
+	if (EVP_PKEY_decrypt(pctx, ek, &eklen, ri->enc_key->data,
+	    ri->enc_key->length) <= 0 || eklen == 0 ||
+	    (fixlen != 0 && eklen != fixlen)) {
 		ret = 0;
 		PKCS7error(ERR_R_EVP_LIB);
 		goto err;
@@ -535,14 +536,14 @@ PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 			for (i = 0; i < sk_PKCS7_RECIP_INFO_num(rsk); i++) {
 				ri = sk_PKCS7_RECIP_INFO_value(rsk, i);
 
-				if (pkcs7_decrypt_rinfo(&ek, &eklen,
-				    ri, pkey) < 0)
+				if (pkcs7_decrypt_rinfo(&ek, &eklen, ri, pkey,
+				    EVP_CIPHER_key_length(evp_cipher)) < 0)
 					goto err;
 				ERR_clear_error();
 			}
 		} else {
 			/* Only exit on fatal errors, not decrypt failure */
-			if (pkcs7_decrypt_rinfo(&ek, &eklen, ri, pkey) < 0)
+			if (pkcs7_decrypt_rinfo(&ek, &eklen, ri, pkey, 0) < 0)
 				goto err;
 			ERR_clear_error();
 		}
