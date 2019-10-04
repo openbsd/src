@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.82 2017/12/08 05:25:20 deraadt Exp $ */
+/*	$OpenBSD: library.c,v 1.83 2019/10/04 17:42:16 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -64,7 +64,7 @@ _dl_unload_shlib(elf_object_t *object)
 	 * If our load object has become unreferenced then we lost the
 	 * last group reference to it, so the entire group should be taken
 	 * down.  The current object is somewhere below load_object in
-	 * the child_list tree, so it'll get cleaned up by the recursion.
+	 * the child_vec tree, so it'll get cleaned up by the recursion.
 	 * That means we can just switch here to the load object.
 	 */
 	if (load_object != object && OBJECT_REF_CNT(load_object) == 0 &&
@@ -78,10 +78,12 @@ _dl_unload_shlib(elf_object_t *object)
 	DL_DEB(("unload_shlib called on %s\n", object->load_name));
 	if (OBJECT_REF_CNT(object) == 0 &&
 	    (object->status & STAT_UNLOADED) == 0) {
+		struct object_vector vec;
+		int i;
 unload:
 		object->status |= STAT_UNLOADED;
-		TAILQ_FOREACH(n, &object->child_list, next_sib)
-			_dl_unload_shlib(n->data);
+		for (vec = object->child_vec, i = 0; i < vec.len; i++)
+			_dl_unload_shlib(vec.vec[i]);
 		TAILQ_FOREACH(n, &object->grpref_list, next_sib)
 			_dl_unload_shlib(n->data);
 		DL_DEB(("unload_shlib unloading on %s\n", object->load_name));

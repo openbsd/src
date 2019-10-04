@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.186 2019/10/03 06:10:54 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.187 2019/10/04 17:42:16 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -127,7 +127,6 @@ void
 _dl_run_all_dtors(void)
 {
 	elf_object_t *node;
-	struct dep_node *dnode;
 	int fini_complete;
 	int skip_initfirst;
 	int initfirst_skipped;
@@ -160,10 +159,13 @@ _dl_run_all_dtors(void)
 			    (node->status & STAT_INIT_DONE) &&
 			    ((node->status & STAT_FINI_DONE) == 0) &&
 			    (!skip_initfirst ||
-			    (node->obj_flags & DF_1_INITFIRST) == 0))
-				TAILQ_FOREACH(dnode, &node->child_list,
-				    next_sib)
-					dnode->data->status &= ~STAT_FINI_READY;
+			    (node->obj_flags & DF_1_INITFIRST) == 0)) {
+				struct object_vector vec = node->child_vec;
+				int i;
+
+				for (i = 0; i < vec.len; i++)
+					vec.vec[i]->status &= ~STAT_FINI_READY;
+			}
 		}
 
 
@@ -227,11 +229,20 @@ _dl_dopreload(char *paths)
 {
 	char		*cp, *dp;
 	elf_object_t	*shlib;
+	int		count;
 
 	dp = paths = _dl_strdup(paths);
 	if (dp == NULL)
 		_dl_oom();
 
+	/* preallocate child_vec for the LD_PRELOAD objects */
+	count = 1;
+	while (*dp++ != '\0')
+		if (*dp == ':')
+			count++;
+	object_vec_grow(&_dl_objects->child_vec, count);
+
+	dp = paths;
 	while ((cp = _dl_strsep(&dp, ":")) != NULL) {
 		shlib = _dl_load_shlib(cp, _dl_objects, OBJTYPE_LIB,
 		    _dl_objects->obj_flags);
@@ -387,6 +398,7 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 				liblist[randomlist[loop]].depobj = depobj;
 			}
 
+			object_vec_grow(&dynobj->child_vec, libcount);
 			for (loop = 0; loop < libcount; loop++) {
 				_dl_add_object(liblist[loop].depobj);
 				_dl_link_child(liblist[loop].depobj, dynobj);
@@ -573,7 +585,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	/*
 	 * Now add the dynamic loader itself last in the object list
 	 * so we can use the _dl_ code when serving dl.... calls.
-	 * Intentionally left off the exe child_list.
+	 * Intentionally left off the exe child_vec.
 	 */
 	dynp = (Elf_Dyn *)((void *)_DYNAMIC);
 	ehdr = (Elf_Ehdr *)dl_data[AUX_base];
@@ -765,15 +777,16 @@ _dl_relro(elf_object_t *object)
 void
 _dl_call_init_recurse(elf_object_t *object, int initfirst)
 {
-	struct dep_node *n;
+	struct object_vector vec;
 	int visited_flag = initfirst ? STAT_VISIT_INITFIRST : STAT_VISIT_INIT;
+	int i;
 
 	object->status |= visited_flag;
 
-	TAILQ_FOREACH(n, &object->child_list, next_sib) {
-		if (n->data->status & visited_flag)
+	for (vec = object->child_vec, i = 0; i < vec.len; i++) {
+		if (vec.vec[i]->status & visited_flag)
 			continue;
-		_dl_call_init_recurse(n->data, initfirst);
+		_dl_call_init_recurse(vec.vec[i], initfirst);
 	}
 
 	if (object->status & STAT_INIT_DONE)

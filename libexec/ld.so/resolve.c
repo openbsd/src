@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.93 2019/10/03 06:10:54 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.94 2019/10/04 17:42:16 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -431,7 +431,6 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 	DL_DEB(("obj %s has %s as head\n", object->load_name,
 	    _dl_loading_object->load_name ));
 	object->refcount = 0;
-	TAILQ_INIT(&object->child_list);
 	object->opencount = 0;	/* # dlopen() & exe */
 	object->grprefcount = 0;
 	/* default dev, inode for dlopen-able objects. */
@@ -496,7 +495,7 @@ _dl_cleanup_objects()
 		_dl_free_path(head->runpath);
 		_dl_free_path(head->rpath);
 		_dl_free(head->grpsym_vec.vec);
-		_dl_tailq_free(TAILQ_FIRST(&head->child_list));
+		_dl_free(head->child_vec.vec);
 		_dl_tailq_free(TAILQ_FIRST(&head->grpref_list));
 		nobj = head->next;
 		_dl_free(head);

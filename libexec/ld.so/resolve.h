@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.95 2019/10/03 06:10:54 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.96 2019/10/04 17:42:16 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -189,7 +189,7 @@ struct elf_object {
 #define shift2_gnu	hash_u.u_gnu.shift2
 #define symndx_gnu	hash_u.u_gnu.symndx
 
-	TAILQ_HEAD(,dep_node)	child_list;	/* direct dep libs of object */
+	struct object_vector	child_vec;	/* direct dep libs of object */
 	struct object_vector	grpsym_vec;	/* ordered complete dep list */
 	TAILQ_HEAD(,dep_node)	grpref_list;	/* refs to other load groups */
 

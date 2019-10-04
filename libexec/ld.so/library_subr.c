@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.49 2019/10/03 06:10:54 guenther Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.50 2019/10/04 17:42:16 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -448,22 +448,25 @@ _dl_link_dlopen(elf_object_t *dep)
 static void
 _dl_child_refcnt_decrement(elf_object_t *object)
 {
-	struct dep_node *n;
+	struct object_vector vec;
+	int i;
 
 	object->refcount--;
 	if (OBJECT_REF_CNT(object) == 0)
-		TAILQ_FOREACH(n, &object->child_list, next_sib)
-			_dl_child_refcnt_decrement(n->data);
+		for (vec = object->child_vec, i = 0; i < vec.len; i++)
+			_dl_child_refcnt_decrement(vec.vec[i]);
 }
 
 void
 _dl_notify_unload_shlib(elf_object_t *object)
 {
+	struct object_vector vec;
 	struct dep_node *n;
+	int i;
 
 	if (OBJECT_REF_CNT(object) == 0)
-		TAILQ_FOREACH(n, &object->child_list, next_sib)
-			_dl_child_refcnt_decrement(n->data);
+		for (vec = object->child_vec, i = 0; i < vec.len; i++)
+			_dl_child_refcnt_decrement(vec.vec[i]);
 
 	if (OBJECT_DLREF_CNT(object) == 0) {
 		while ((n = TAILQ_FIRST(&object->grpref_list)) != NULL) {
@@ -509,13 +512,13 @@ _dl_link_grpref(elf_object_t *load_group, elf_object_t *load_object)
 void
 _dl_link_child(elf_object_t *dep, elf_object_t *p)
 {
-	struct dep_node *n;
+	int i;
 
-	n = _dl_malloc(sizeof *n);
-	if (n == NULL)
-		_dl_oom();
-	n->data = dep;
-	TAILQ_INSERT_TAIL(&p->child_list, n, next_sib);
+	i = p->child_vec.len++;
+	if (i == p->child_vec.alloc)
+		_dl_die("child appeared  %d > %d", p->child_vec.len,
+		    p->child_vec.alloc);
+	p->child_vec.vec[i] = dep;
 
 	dep->refcount++;
 
@@ -589,10 +592,11 @@ _dl_cache_grpsym_list_setup(elf_object_t *object)
 	_dl_link_grpsym(object);
 
 	while (next < vec->len) {
-		struct dep_node *n;
+		struct object_vector child_vec;
+		int i;
 
-		object = vec->vec[next++];
-		TAILQ_FOREACH(n, &object->child_list, next_sib)
-			_dl_link_grpsym(n->data);
+		child_vec = vec->vec[next++]->child_vec;
+		for (i = 0; i < child_vec.len; i++)
+			_dl_link_grpsym(child_vec.vec[i]);
 	}
 }
