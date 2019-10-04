@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftable.c,v 1.14 2019/08/08 20:06:29 claudio Exp $ */
+/*	$OpenBSD: pftable.c,v 1.15 2019/10/04 11:40:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller <djm@openbsd.org>
@@ -191,10 +191,13 @@ pftable_add_work(const char *table, struct bgpd_addr *addr,
 		return (-1);
 	}
 
-	/* Only one type of work on the list at a time */
+	/*
+	 * Only one type of work on the list at a time,
+	 * commit pending work first before adding new work
+	 */
 	what = del ? DIOCRDELADDRS : DIOCRADDADDRS;
 	if (pft->naddrs != 0 && pft->what != what)
-		fatal("attempt to mix pf table additions/deletions");
+		pftable_commit();
 
 	if (pft->nalloc <= pft->naddrs)
 		pft->nalloc = pft->nalloc == 0 ? 1 : pft->nalloc * 2;
