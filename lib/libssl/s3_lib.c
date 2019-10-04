@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.186 2019/04/04 15:03:21 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.187 2019/10/04 17:21:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1682,7 +1682,8 @@ ssl_ctrl_get_server_tmp_key(SSL *s, EVP_PKEY **pkey_tmp)
 		ret = EVP_PKEY_set1_EC_KEY(pkey, sc->peer_ecdh_tmp);
 	} else if (sc->peer_x25519_tmp != NULL) {
 		/* Fudge up an EC_KEY that looks like X25519... */
-		if ((group = EC_GROUP_new(EC_GFp_mont_method())) == NULL)
+		if ((group = EC_GROUP_new_by_curve_name(
+		    NID_X9_62_prime256v1)) == NULL)
 			goto err;
 		if ((point = EC_POINT_new(group)) == NULL)
 			goto err;
