@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.31 2019/06/28 13:35:02 deraadt Exp $ */
+/* $OpenBSD: s_server.c,v 1.32 2019/10/04 09:47:34 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1839,11 +1839,11 @@ www_body(char *hostname, int s, unsigned char *context)
 					dot = (e[0] == '.') ? 3 : 0;
 					break;
 				case 3:
-					dot = (e[0] == '/') ? -1 : 0;
+					dot = (e[0] == '/' || e[0] == '\\') ? -1 : 0;
 					break;
 				}
 				if (dot == 0)
-					dot = (e[0] == '/') ? 1 : 0;
+					dot = (e[0] == '/' || e[0] == '\\') ? 1 : 0;
 			}
 			dot = (dot == 3) || (dot == -1);	/* filename contains
 								 * ".." component */
