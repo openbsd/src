@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.414 2019/10/03 05:08:21 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.415 2019/10/04 08:34:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1108,15 +1108,6 @@ smtp_io(struct io *io, int evt, void *arg)
 		/* No complete line received */
 		if (line == NULL)
 			return;
-
-		if (strchr(line, '\r')) {
-			s->flags |= SF_BADINPUT;
-			smtp_reply(s, "500 %s <CR> is only allowed before <LF>",
-			    esc_code(ESC_STATUS_PERMFAIL, ESC_OTHER_STATUS));
-			smtp_enter_state(s, STATE_QUIT);
-			io_set_write(io);
-			return;
-		}
 
 		/* Message body */
 		eom = 0;
