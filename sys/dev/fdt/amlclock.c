@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlclock.c,v 1.6 2019/09/03 22:31:52 kettenis Exp $	*/
+/*	$OpenBSD: amlclock.c,v 1.7 2019/10/04 20:01:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -56,10 +56,41 @@
 #define HHI_GCLK_MPEG0		0x50
 #define HHI_GCLK_MPEG1		0x51
 #define HHI_SYS_CPU_CLK_CNTL0	0x67
+#define  HHI_SYS_CPU_CLK_DYN_ENABLE		(1 << 26)
+#define  HHI_SYS_CPU_CLK_MUX1_DIVN_TCNT(x)	(((x) >> 20) & 0x3f)
+#define  HHI_SYS_CPU_CLK_MUX1_DIVN_TCNT_MASK	(0x3f << 20)
+#define  HHI_SYS_CPU_CLK_MUX1_DIVN_TCNT_SHIFT	20
+#define  HHI_SYS_CPU_CLK_POSTMUX1		(1 << 18)
+#define  HHI_SYS_CPU_CLK_PREMUX1(x)		(((x) >> 16) & 0x3)
+#define  HHI_SYS_CPU_CLK_PREMUX1_MASK		(0x3 << 16)
+#define  HHI_SYS_CPU_CLK_PREMUX1_FCLK_DIV2	(0x1 << 16)
+#define  HHI_SYS_CPU_CLK_PREMUX1_FCLK_DIV3	(0x2 << 16)
+#define  HHI_SYS_CPU_CLK_FINAL_MUX_SEL		(1 << 11)
+#define  HHI_SYS_CPU_CLK_FINAL_DYN_MUX_SEL	(1 << 10)
+#define  HHI_SYS_CPU_CLK_MUX0_DIVN_TCNT(x)	(((x) >> 4) & 0x3f)
+#define  HHI_SYS_CPU_CLK_MUX0_DIVN_TCNT_MASK	(0x3f << 4)
+#define  HHI_SYS_CPU_CLK_MUX0_DIVN_TCNT_SHIFT	4
+#define  HHI_SYS_CPU_CLK_POSTMUX0		(1 << 2)
+#define  HHI_SYS_CPU_CLK_PREMUX0(x)		(((x) >> 0) & 0x3)
+#define  HHI_SYS_CPU_CLK_PREMUX0_MASK		(0x3 << 0)
+#define  HHI_SYS_CPU_CLK_PREMUX0_FCLK_DIV2	(0x1 << 0)
+#define  HHI_SYS_CPU_CLK_PREMUX0_FCLK_DIV3	(0x2 << 0)
 #define HHI_SYS_CPUB_CLK_CNTL	0x82
 #define HHI_NAND_CLK_CNTL	0x97
 #define HHI_SD_EMMC_CLK_CNTL	0x99
 #define HHI_SYS_PLL_CNTL0	0xbd
+#define  HHI_SYS_DPLL_LOCK	(1 << 31)
+#define  HHI_SYS_DPLL_RESET	(1 << 29)
+#define  HHI_SYS_DPLL_EN	(1 << 28)
+#define  HHI_SYS_DPLL_OD(x)	(((x) >> 16) & 0x7)
+#define  HHI_SYS_DPLL_OD_MASK	(0x7 << 16)
+#define  HHI_SYS_DPLL_OD_SHIFT	16
+#define  HHI_SYS_DPLL_N(x)	(((x) >> 10) & 0x1f)
+#define  HHI_SYS_DPLL_N_MASK	(0x1f << 10)
+#define  HHI_SYS_DPLL_N_SHIFT	10
+#define  HHI_SYS_DPLL_M(x)	(((x) >> 0) & 0xff)
+#define  HHI_SYS_DPLL_M_MASK	(0xff << 0)
+#define  HHI_SYS_DPLL_M_SHIFT	0
 #define HHI_SYS1_PLL_CNTL0	0xe0
 
 #define HREAD4(sc, reg)							\
@@ -152,27 +183,27 @@ amlclock_attach(struct device *parent, struct device *self, void *aux)
 }
 
 uint32_t
-amlclock_get_cpu_frequency(struct amlclock_softc *sc, bus_size_t offset)
+amlclock_get_cpu_freq(struct amlclock_softc *sc, bus_size_t offset)
 {
 	uint32_t reg, mux, div;
 	uint32_t idx;
 
 	reg = HREAD4(sc, offset);
-	mux = (reg >> 11) & 1;
-	if (mux) {
+	if (reg & HHI_SYS_CPU_CLK_FINAL_MUX_SEL) {
 		if (offset == HHI_SYS_CPU_CLK_CNTL0)
 			idx = G12A_SYS1_PLL;
 		else
 			idx = G12A_SYS_PLL;
 		return amlclock_get_frequency(sc, &idx);
 	}
-	mux = (reg >> 10) & 1;
-	if (mux) {
-		div = ((reg >> 18) & 1) ? ((reg & 0x3f) >> 20) : 1;
-		mux = (reg >> 16) & 3;
+	if (reg & HHI_SYS_CPU_CLK_FINAL_DYN_MUX_SEL) {
+		div = (reg & HHI_SYS_CPU_CLK_POSTMUX1) ?
+		    (HHI_SYS_CPU_CLK_MUX1_DIVN_TCNT(reg) + 1) : 1;
+		mux = HHI_SYS_CPU_CLK_PREMUX1(reg);
 	} else {
-		div = ((reg >> 2) & 1) ? ((reg & 0x3f) >> 4) : 1;
-		mux = (reg >> 0) & 3;
+		div = (reg & HHI_SYS_CPU_CLK_POSTMUX0) ?
+		    (HHI_SYS_CPU_CLK_MUX0_DIVN_TCNT(reg) + 1) : 1;
+		mux = HHI_SYS_CPU_CLK_PREMUX0(reg);
 	}
 	switch (mux) {
 	case 0:
@@ -189,6 +220,178 @@ amlclock_get_cpu_frequency(struct amlclock_softc *sc, bus_size_t offset)
 	return amlclock_get_frequency(sc, &idx) / div;
 }
 
+int
+amlclock_set_cpu_freq(struct amlclock_softc *sc, bus_size_t offset,
+    uint32_t freq)
+{
+	uint32_t reg, div;
+	uint32_t parent_freq;
+	uint32_t idx;
+
+	/*
+	 * For clock frequencies above 1GHz we have to use
+	 * SYS_PLL/SYS1_PLL.
+	 */
+	reg = HREAD4(sc, offset);
+	if (freq > 1000000000) {
+		/* 
+		 * Switch to a fixed clock if we're currently using
+		 * SYS_PLL/SYS1_PLL.  Doesn't really matter which one.
+		 */
+		if (reg & HHI_SYS_CPU_CLK_FINAL_MUX_SEL) {
+			reg &= ~HHI_SYS_CPU_CLK_FINAL_MUX_SEL;
+			HWRITE4(sc, offset, reg);
+			delay(100);
+		}
+
+		if (offset == HHI_SYS_CPU_CLK_CNTL0)
+			idx = G12A_SYS1_PLL;
+		else
+			idx = G12A_SYS_PLL;
+		amlclock_set_frequency(sc, &idx, freq);
+
+		/* Switch to SYS_PLL/SYS1_PLL. */
+		reg |= HHI_SYS_CPU_CLK_FINAL_MUX_SEL;
+		HWRITE4(sc, offset, reg);
+		delay(100);
+
+		return 0;
+	}
+
+	/*
+	 * There are two signal paths for frequencies up to 1GHz.  If
+	 * we're using one, we can program the dividers for the other
+	 * one and switch to it.  The pre-divider can be either 2 or 3
+	 * and can't be bypassed, so take this into account and only
+	 * allow frequencies that include such a divider.
+	 */
+	div = 2;
+	parent_freq = 2000000000;
+	while (parent_freq / div > freq)
+		div++;
+	while ((div % 2) != 0 && (div % 3) != 0)
+		div++;
+	if (div > 32)
+		return EINVAL;
+	if ((div % 2) == 0) {
+		parent_freq /= 2;
+		div /= 2;
+	} else {	
+		parent_freq /= 3;
+		div /= 3;
+	}
+
+	if (reg & HHI_SYS_CPU_CLK_FINAL_DYN_MUX_SEL) {
+		/* premux0 */
+		reg = HREAD4(sc, offset);
+		reg &= ~HHI_SYS_CPU_CLK_PREMUX0_MASK;
+		if (parent_freq == 1000000000)
+			reg |= HHI_SYS_CPU_CLK_PREMUX0_FCLK_DIV2;
+		else
+			reg |= HHI_SYS_CPU_CLK_PREMUX0_FCLK_DIV3;
+		HWRITE4(sc, offset, reg);
+		delay(100);
+
+		/* mux0 divider */
+		HSET4(sc, offset, HHI_SYS_CPU_CLK_DYN_ENABLE);
+		reg = HREAD4(sc, offset);
+		reg &= ~HHI_SYS_CPU_CLK_DYN_ENABLE;
+		reg &= ~HHI_SYS_CPU_CLK_MUX0_DIVN_TCNT_MASK;
+		reg |= ((div - 1) << HHI_SYS_CPU_CLK_MUX0_DIVN_TCNT_SHIFT);
+		HWRITE4(sc, offset, reg);
+
+		/* postmux0 */
+		if (div != 1)
+			HSET4(sc, offset, HHI_SYS_CPU_CLK_POSTMUX0);
+		else
+			HCLR4(sc, offset, HHI_SYS_CPU_CLK_POSTMUX0);
+
+		/* final_dyn_mux_sel and final_mux_sel */
+		reg = HREAD4(sc, offset);
+		reg &= ~HHI_SYS_CPU_CLK_FINAL_DYN_MUX_SEL;
+		reg &= ~HHI_SYS_CPU_CLK_FINAL_MUX_SEL;
+		HWRITE4(sc, offset, reg);
+		delay(100);
+	} else {
+		/* premux1 */
+		reg = HREAD4(sc, offset);
+		reg &= ~HHI_SYS_CPU_CLK_PREMUX1_MASK;
+		if (parent_freq == 1000000000)
+			reg |= HHI_SYS_CPU_CLK_PREMUX1_FCLK_DIV2;
+		else
+			reg |= HHI_SYS_CPU_CLK_PREMUX1_FCLK_DIV3;
+		HWRITE4(sc, offset, reg);
+		delay(100);
+
+		/* mux1 divider */
+		HSET4(sc, offset, HHI_SYS_CPU_CLK_DYN_ENABLE);
+		reg = HREAD4(sc, offset);
+		reg &= ~HHI_SYS_CPU_CLK_DYN_ENABLE;
+		reg &= ~HHI_SYS_CPU_CLK_MUX1_DIVN_TCNT_MASK;
+		reg |= ((div - 1) << HHI_SYS_CPU_CLK_MUX1_DIVN_TCNT_SHIFT);
+		HWRITE4(sc, offset, reg);
+
+		/* postmux1 */
+		if (div != 1)
+			HSET4(sc, offset, HHI_SYS_CPU_CLK_POSTMUX1);
+		else
+			HCLR4(sc, offset, HHI_SYS_CPU_CLK_POSTMUX1);
+
+		/* final_dyn_mux_sel and final_mux_sel */
+		reg = HREAD4(sc, offset);
+		reg |= HHI_SYS_CPU_CLK_FINAL_DYN_MUX_SEL;
+		reg &= ~HHI_SYS_CPU_CLK_FINAL_MUX_SEL;
+		HWRITE4(sc, offset, reg);
+		delay(100);
+	}
+
+	return 0;
+}
+
+int
+amlclock_set_pll_freq(struct amlclock_softc *sc, bus_size_t offset,
+    uint32_t freq)
+{
+	uint32_t reg, div;
+	uint32_t m, n = 1;
+	int timo;
+
+	/*
+	 * The multiplier should be between 128 and 255.  If
+	 * necessary, adjust the divider to achieve this.
+	 */
+	div = 1;
+	while ((div * (uint64_t)freq) / sc->sc_xtal < 128)
+		div *= 2;
+	if (div > 128)
+		return EINVAL;
+	m = (div * (uint64_t)freq) / sc->sc_xtal;
+	if (m > 255)
+		return EINVAL;
+
+	HSET4(sc, offset, HHI_SYS_DPLL_RESET);
+	HCLR4(sc, offset, HHI_SYS_DPLL_EN);
+
+	reg = HREAD4(sc, offset);
+	reg &= ~HHI_SYS_DPLL_OD_MASK;
+	reg |= ((fls(div) - 1) << HHI_SYS_DPLL_OD_SHIFT);
+	reg &= ~(HHI_SYS_DPLL_M_MASK | HHI_SYS_DPLL_N_MASK);
+	reg |= (m << HHI_SYS_DPLL_M_SHIFT);
+	reg |= (n << HHI_SYS_DPLL_N_SHIFT);
+	HWRITE4(sc, offset, reg);
+
+	HSET4(sc, offset, HHI_SYS_DPLL_RESET);
+	HSET4(sc, offset, HHI_SYS_DPLL_EN);
+	HCLR4(sc, offset, HHI_SYS_DPLL_RESET);
+
+	for (timo = 24000000; timo > 0; timo--) {
+		if (HREAD4(sc, offset) & HHI_SYS_DPLL_LOCK)
+			return 0;
+	}
+
+	return ETIMEDOUT;
+}
+
 uint32_t
 amlclock_get_frequency(void *cookie, uint32_t *cells)
 {
@@ -200,15 +403,15 @@ amlclock_get_frequency(void *cookie, uint32_t *cells)
 	switch (idx) {
 	case G12A_SYS_PLL:
 		reg = HREAD4(sc, HHI_SYS_PLL_CNTL0);
-		div = 1 << ((reg >> 16) & 0x7);
-		m = (reg >> 0) & 0xff;
-		n = (reg >> 10) & 0x1f;
+		div = 1 << HHI_SYS_DPLL_OD(reg);
+		m = HHI_SYS_DPLL_M(reg);
+		n = HHI_SYS_DPLL_N(reg);
 		return (((uint64_t)sc->sc_xtal * m) / n) / div;
 	case G12A_SYS1_PLL:
 		reg = HREAD4(sc, HHI_SYS1_PLL_CNTL0);
-		div = 1 << ((reg >> 16) & 0x7);
-		m = (reg >> 0) & 0xff;
-		n = (reg >> 10) & 0x1f;
+		div = 1 << HHI_SYS_DPLL_OD(reg);
+		m = HHI_SYS_DPLL_M(reg);
+		n = HHI_SYS_DPLL_N(reg);
 		return (((uint64_t)sc->sc_xtal * m) / n) / div;
 	case G12A_FCLK_DIV2:
 		return 1000000000;
@@ -293,9 +496,9 @@ amlclock_get_frequency(void *cookie, uint32_t *cells)
 		}
 		return amlclock_get_frequency(sc, &idx) / div;
 	case G12A_CPU_CLK:
-		return amlclock_get_cpu_frequency(sc, HHI_SYS_CPU_CLK_CNTL0);
+		return amlclock_get_cpu_freq(sc, HHI_SYS_CPU_CLK_CNTL0);
 	case G12A_CPUB_CLK:
-		return amlclock_get_cpu_frequency(sc, HHI_SYS_CPUB_CLK_CNTL);
+		return amlclock_get_cpu_freq(sc, HHI_SYS_CPUB_CLK_CNTL);
 	}
 
 fail:
@@ -310,6 +513,10 @@ amlclock_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 	uint32_t idx = cells[0];
 
 	switch (idx) {
+	case G12A_SYS_PLL:
+		return amlclock_set_pll_freq(sc, HHI_SYS_PLL_CNTL0, freq);
+	case G12A_SYS1_PLL:
+		return amlclock_set_pll_freq(sc, HHI_SYS1_PLL_CNTL0, freq);
 	case G12A_PCIE_PLL:
 		/* Fixed at 100 MHz. */
 		if (freq != 100000000)
@@ -330,7 +537,11 @@ amlclock_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 		delay(10);
 		HWRITE4(sc, HHI_PCIE_PLL_CNTL2, 0x00001000);
 		return 0;
-	};
+	case G12A_CPU_CLK:
+		return amlclock_set_cpu_freq(sc, HHI_SYS_CPU_CLK_CNTL0, freq);
+	case G12A_CPUB_CLK:
+		return amlclock_set_cpu_freq(sc, HHI_SYS_CPUB_CLK_CNTL, freq);
+	}
 
 	printf("%s: 0x%08x\n", __func__, idx);
 	return -1;
