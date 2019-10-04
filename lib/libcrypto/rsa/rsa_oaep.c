@@ -1,6 +1,57 @@
-/* $OpenBSD: rsa_oaep.c,v 1.30 2019/10/03 17:45:27 jsing Exp $ */
-/* Written by Ulf Moeller. This software is distributed on an "AS IS"
-   basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. */
+/* $OpenBSD: rsa_oaep.c,v 1.31 2019/10/04 16:51:31 jsing Exp $ */
+/*
+ * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 /* EME-OAEP as defined in RFC 2437 (PKCS #1 v2.0) */
 
@@ -32,20 +83,32 @@
 #include <openssl/rsa.h>
 #include <openssl/sha.h>
 
+#include "rsa_locl.h"
+
 int
 RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
     const unsigned char *from, int flen, const unsigned char *param, int plen)
+{
+	return RSA_padding_add_PKCS1_OAEP_mgf1(to, tlen, from, flen, param,
+	    plen, NULL, NULL);
+}
+
+int
+RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
+    const unsigned char *from, int flen, const unsigned char *param, int plen,
+    const EVP_MD *md, const EVP_MD *mgf1md)
 {
 	int i, emlen = tlen - 1;
 	unsigned char *db, *seed;
 	unsigned char *dbmask = NULL;
 	unsigned char seedmask[EVP_MAX_MD_SIZE];
-	const EVP_MD *md, *mgf1md;
 	int mdlen, dbmask_len = 0;
 	int rv = 0;
 
-	md = EVP_sha1();
-	mgf1md = EVP_sha1();
+	if (md == NULL)
+		md = EVP_sha1();
+	if (mgf1md == NULL)
+		mgf1md = md;
 
 	if ((mdlen = EVP_MD_size(md)) <= 0)
 		goto err;
@@ -101,6 +164,15 @@ RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
     const unsigned char *from, int flen, int num, const unsigned char *param,
     int plen)
 {
+	return RSA_padding_check_PKCS1_OAEP_mgf1(to, tlen, from, flen, num,
+	    param, plen, NULL, NULL);
+}
+
+int
+RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
+    const unsigned char *from, int flen, int num, const unsigned char *param,
+    int plen, const EVP_MD *md, const EVP_MD *mgf1md)
+{
 	int i, dblen, mlen = -1;
 	const unsigned char *maskeddb;
 	int lzero;
@@ -108,11 +180,12 @@ RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 	unsigned char seed[SHA_DIGEST_LENGTH], phash[SHA_DIGEST_LENGTH];
 	unsigned char *padded_from;
 	int bad = 0;
-	const EVP_MD *md, *mgf1md;
 	int mdlen;
 
-	md = EVP_sha1();
-	mgf1md = EVP_sha1();
+	if (md == NULL)
+		md = EVP_sha1();
+	if (mgf1md == NULL)
+		mgf1md = md;
 
 	if ((mdlen = EVP_MD_size(md)) <= 0)
 		goto err;
