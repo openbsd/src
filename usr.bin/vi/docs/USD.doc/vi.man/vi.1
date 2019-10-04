@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.76 2019/05/21 09:24:58 martijn Exp $
+.\"	$OpenBSD: vi.1,v 1.77 2019/10/04 20:12:01 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: May 21 2019 $
+.Dd $Mdocdate: October 4 2019 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -2089,7 +2089,8 @@ in a line, not just the first.
 .Op option? ...
 .Op Ar all
 .Xc
-Display or set editor options.
+Display or set the editor options described in
+.Sx SET OPTIONS .
 .Pp
 .It Cm sh Ns Op Cm ell
 Run a shell program.
@@ -2273,9 +2274,11 @@ This feature is only available in
 not in
 .Nm ex .
 .Sh SET OPTIONS
-There are a large number of options that may be set
-.Pq or unset
-to change the editor's behavior.
+There are a large number of options that can
+change the editor's behavior,
+using the
+.Cm set
+command.
 This section describes the options, their abbreviations and their
 default values.
 .Pp
