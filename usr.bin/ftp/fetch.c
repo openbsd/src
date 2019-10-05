@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.170 2019/06/28 13:35:01 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.171 2019/10/05 20:54:20 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -97,6 +97,7 @@ static const char at_encoding_warning[] =
 jmp_buf	httpabort;
 
 static int	redirect_loop;
+static int	retried;
 
 /*
  * Determine whether the character needs encoding, per RFC1738:
@@ -782,7 +783,7 @@ noslash:
 		cp++;
 
 	strlcpy(ststr, cp, sizeof(ststr));
-	status = strtonum(ststr, 200, 416, &errstr);
+	status = strtonum(ststr, 200, 503, &errstr);
 	if (errstr) {
 		warnx("Error retrieving file: %s", cp);
 		goto cleanup_url_get;
@@ -821,6 +822,15 @@ noslash:
 		warnx("File is already fully retrieved.");
 		goto cleanup_url_get;
 #endif /* !SMALL */
+	case 503:
+		if (retried++) {
+			warnx("Error retrieving file: %s", cp);
+			goto cleanup_url_get;
+		}
+		if (verbose)
+			fprintf(ttyout, "Retrying %s\n", origline);
+		rval = url_get(origline, proxyenv, savefile, lastfile);
+		goto cleanup_url_get;
 	default:
 		warnx("Error retrieving file: %s", cp);
 		goto cleanup_url_get;
@@ -1166,6 +1176,7 @@ auto_fetch(int argc, char *argv[], char *outfile)
 #endif /* !NOSSL */
 		    strncasecmp(url, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
 			redirect_loop = 0;
+			retried = 0;
 			if (url_get(url, httpproxy, outfile, lastfile) == -1)
 				rval = argpos + 1;
 			continue;
