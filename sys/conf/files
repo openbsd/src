@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.674 2019/09/29 13:04:03 kettenis Exp $
+#	$OpenBSD: files,v 1.675 2019/10/05 05:33:14 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -866,7 +866,6 @@ file netinet/ip_gre.c
 file netinet/ip_ipsp.c			ipsec | tcp_signature
 file netinet/ip_spd.c			ipsec | tcp_signature
 file netinet/ip_ipip.c
-file netinet/ip_ether.c			gif
 file netinet/ipsec_input.c		ipsec
 file netinet/ipsec_output.c		ipsec
 file netinet/ip_esp.c			ipsec
