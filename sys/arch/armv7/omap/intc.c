@@ -1,4 +1,4 @@
-/* $OpenBSD: intc.c,v 1.8 2019/05/06 03:45:58 mlarkin Exp $ */
+/* $OpenBSD: intc.c,v 1.9 2019/10/05 15:44:57 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -367,7 +367,7 @@ intc_intr_establish(int irqno, int level, int (*func)(void *),
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
-	ih->ih_ipl = level;
+	ih->ih_ipl = level & IPL_IRQMASK;
 	ih->ih_irq = irqno;
 	ih->ih_name = name;
 

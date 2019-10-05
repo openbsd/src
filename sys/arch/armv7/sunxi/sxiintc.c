@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiintc.c,v 1.5 2019/05/06 03:49:53 mlarkin Exp $	*/
+/*	$OpenBSD: sxiintc.c,v 1.6 2019/10/05 15:44:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -390,7 +390,7 @@ sxiintc_intr_establish(int irq, int level, int (*func)(void *),
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
-	ih->ih_ipl = level;
+	ih->ih_ipl = level & IPL_IRQMASK;
 	ih->ih_irq = irq;
 	ih->ih_name = name;
 
