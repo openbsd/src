@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.39 2019/08/06 04:01:42 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.40 2019/10/05 20:49:48 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -105,10 +105,12 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 {
 	Elf_RelA	*rela;
 	Elf_Addr	loff;
+	int	num_relative;
 	int	i, numrela, fails = 0;
 
 	loff = object->obj_base;
 	numrela = object->Dyn.info[relasz] / sizeof(Elf_RelA);
+	num_relative = rel == DT_RELA ? object->relacount : 0;
 	rela = (Elf_RelA *)(object->Dyn.info[rel]);
 
 #ifdef DEBUG
@@ -153,7 +155,12 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	if (object->obj_type == OBJTYPE_EXE)
 		_hppa_dl_set_dp(object->dyn.pltgot);
 
-	for (i = 0; i < numrela; i++, rela++) {
+	/* tight loop for leading relative relocs */
+	for (i = 0; i < num_relative; i++, rela++) {
+		Elf_Addr *where = (Elf_Addr *)(rela->r_offset + loff);
+		*where = rela->r_addend + loff;
+	}
+	for (; i < numrela; i++, rela++) {
 		struct sym_res sr;
 		const Elf_Sym *sym;
 		Elf_Addr *pt;
@@ -199,16 +206,10 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 #endif
 			} else {
 				/*
-				 * XXX should objects ever get their
-				 * sections loaded nonsequential this
-				 * would have to get a section number
-				 * (ELF_R_SYM(rela->r_info))-1 and then:
-				 *    *pt = sect->addr + rela->r_addend;
+				 * Either a relative relocation (symbol 0)
+				 * or a relocation against a local section
 				 */
-				if (ELF_R_SYM(rela->r_info))
-					*pt += loff;
-				else
-					*pt += loff + rela->r_addend;
+				*pt = loff + sym->st_value + rela->r_addend;
 #ifdef DEBUG
 				DL_DEB(("[%x]DIR32: %s @ 0x%x\n", i,
 				    object->load_name, *pt));
