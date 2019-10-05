@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pctr.4,v 1.7 2013/07/16 16:05:49 schwarze Exp $
+.\"	$OpenBSD: pctr.4,v 1.8 2019/10/05 20:53:49 matthieu Exp $
 .\"
 .\" Pentium performance counter driver for OpenBSD.
 .\" Copyright 1996 David Mazieres <dm@lcs.mit.edu>.
@@ -7,7 +7,7 @@
 .\" permitted provided that due credit is given to the author and the
 .\" OpenBSD project by leaving this copyright notice intact.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: October 5 2019 $
 .Dt PCTR 4 amd64
 .Os
 .Sh NAME
@@ -81,29 +81,7 @@ The time stamp counter is available on most of the AMD and Intel CPUs.
 It is set to zero at boot time, and then increments with each cycle.
 Because the counter is 64-bits wide, it does not overflow.
 .Pp
-The time stamp counter can be read directly from user-mode using
-the
-.Fn rdtsc
-macro, which returns a 64-bit value of type
-.Em pctrval .
-The following example illustrates a simple use of
-.Fn rdtsc
-to measure the execution time of a hypothetical subroutine called
-.Fn functionx :
-.Bd -literal -offset indent
-void
-time_functionx(void)
-{
-	pctrval tsc;
-
-	tsc = rdtsc();
-	functionx();
-	tsc = rdtsc() - tsc;
-	printf("Functionx took %llu cycles.\en", tsc);
-}
-.Ed
-.Pp
-The value of the time stamp counter is also returned by the
+The value of the time stamp counter is returned by the
 .Dv PCIOCRD
 .Em ioctl ,
 so that one can get an exact timestamp on readings of the hardware
@@ -253,6 +231,4 @@ Some of the functions may not make any sense at all.
 Also you should be aware of the possibility of an interrupt between
 invocations of
 .Fn rdpmc
-and/or
-.Fn rdtsc
 that can potentially decrease the accuracy of measurements.
