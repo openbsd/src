@@ -1,5 +1,5 @@
 #!/bin/ksh
-#  $OpenBSD: check_sym,v 1.8 2019/08/09 05:02:19 guenther Exp $
+#  $OpenBSD: check_sym,v 1.9 2019/10/05 00:59:24 guenther Exp $
 #
 # Copyright (c) 2016,2019 Philip Guenther <guenther@openbsd.org>
 #
@@ -204,8 +204,13 @@ readelf -sW $old | filt_symtab > /tmp/s1
 readelf -sW $new | filt_symtab > /tmp/s2
 
 
-cpu=$(uname -p)
-if [[ $cpu = mips64* ]]
+case $(readelf -h $new | grep '^ *Machine:') in
+*MIPS*)	cpu=mips64;;
+*HPPA*)	cpu=hppa;;
+*)	cpu=dontcare;;
+esac
+
+if [[ $cpu = mips64 ]]
 then
 	gotsym1=$(readelf -d $old | awk '$2 ~ /MIPS_GOTSYM/{print $3}')
 	gotsym2=$(readelf -d $new | awk '$2 ~ /MIPS_GOTSYM/{print $3}')
@@ -213,9 +218,9 @@ fi
 
 jump_slots() { 
 	case $cpu in
-	hppa*)	awk '/IPLT/ && $5 != ""{print $5}' /tmp/r$1
+	hppa)	awk '/IPLT/ && $5 != ""{print $5}' /tmp/r$1
 		;;
-	mips*)	# the $((gotsym$1)) converts hex to decimal
+	mips64)	# the $((gotsym$1)) converts hex to decimal
 		awk -v g=$((gotsym$1)) \
 			'/^Symbol table ..symtab/{exit}
 			$1+0 >= g && $4 == "FUNC" {print $8}' /tmp/s$1
