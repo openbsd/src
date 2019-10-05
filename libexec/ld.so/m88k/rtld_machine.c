@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.26 2019/08/31 04:22:12 aoyama Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.27 2019/10/05 00:08:50 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -77,11 +77,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	relrela = rel == DT_RELA ? object->relacount : 0;
 
 	relas = (Elf32_Rela *)(object->Dyn.info[rel]);
-
-#ifdef DL_PRINTF_DEBUG
-	_dl_printf("object relocation size %x, numrela %x\n",
-	    object->Dyn.info[relasz], numrela);
-#endif
 
 	if (relas == NULL)
 		return(0);

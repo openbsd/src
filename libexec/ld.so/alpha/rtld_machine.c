@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.67 2019/08/06 04:01:41 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.68 2019/10/05 00:08:50 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -77,11 +77,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	/* tight loop for leading RELATIVE relocs */
 	for (i = 0; i < relrel; i++, relas++) {
 		Elf_Addr *r_addr;
-
-#ifdef DEBUG
-		if (ELF64_R_TYPE(relas->r_info) != R_TYPE(RELATIVE))
-			_dl_die("RELACOUNT wrong");
-#endif
 
 		r_addr = (Elf64_Addr *)(relas->r_offset + loff);
 

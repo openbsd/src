@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.67 2019/08/06 04:01:42 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.68 2019/10/05 00:08:50 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -69,11 +69,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	relrel = rel == DT_RELA ? object->relacount : 0;
 	relas = (Elf32_Rela *)(object->Dyn.info[rel]);
 
-#ifdef DL_PRINTF_DEBUG
-_dl_printf("object relocation size %x, numrela %x\n",
-	object->Dyn.info[relasz], numrela);
-#endif
-
 	if (relas == NULL)
 		return(0);
 
@@ -86,18 +81,7 @@ _dl_printf("object relocation size %x, numrela %x\n",
 	/* tight loop for leading RELATIVE relocs */
 	for (i = 0; i < relrel; i++, relas++) {
 		Elf_Addr *r_addr;
-#ifdef DEBUG
-		const Elf32_Sym *sym;
 
-		if (ELF32_R_TYPE(relas->r_info) != RELOC_RELATIVE)
-			_dl_die("RELCOUNT wrong");
-		sym = object->dyn.symtab;
-		sym += ELF32_R_SYM(relas->r_info);
-		if (ELF32_ST_BIND(sym->st_info) != STB_LOCAL ||
-		    (ELF32_ST_TYPE(sym->st_info) != STT_SECTION &&
-		    ELF32_ST_TYPE(sym->st_info) != STT_NOTYPE))
-			_dl_die("RELATIVE relocation against symbol");
-#endif
 		r_addr = (Elf_Addr *)(relas->r_offset + loff);
 		*r_addr = loff + relas->r_addend;
 	}
@@ -156,12 +140,6 @@ _dl_printf("object relocation size %x, numrela %x\n",
 			    (ELF32_ST_TYPE(sym->st_info) == STT_SECTION ||
 			    ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
 				*r_addr = loff + relas->r_addend;
-
-#ifdef DL_PRINTF_DEBUG
-_dl_printf("rel1 r_addr %x val %x loff %x ooff %x addend %x\n", r_addr,
-    loff + relas->r_addend, loff, prev_ooff, relas->r_addend);
-#endif
-
 			} else {
 				*r_addr = loff + prev_value +
 				    relas->r_addend;
@@ -249,22 +227,12 @@ _dl_printf("rel1 r_addr %x val %x loff %x ooff %x addend %x\n", r_addr,
 			val &= ~0xffff0003;
 			val |= (*r_addr & 0xffff0003);
 			*r_addr = val;
-#ifdef DL_PRINTF_DEBUG
-			_dl_printf("rel 14 %x val %x\n", r_addr, val);
-#endif
-
 			_dl_dcbf(r_addr);
 		    }
 			break;
 		case RELOC_COPY:
 		{
 			struct sym_res sr;
-#ifdef DL_PRINTF_DEBUG
-			_dl_printf("copy r_addr %x, sym %x [%s] size %d val %x\n",
-			    r_addr, sym, symn, sym->st_size,
-			    (prev_ooff + prev_value+
-			    relas->r_addend));
-#endif
 			/*
 			 * we need to find a symbol, that is not in the current
 			 * object, start looking at the beginning of the list,
@@ -275,10 +243,6 @@ _dl_printf("rel1 r_addr %x val %x loff %x ooff %x addend %x\n", r_addr,
 			    SYM_SEARCH_OTHER|SYM_WARNNOTFOUND| SYM_NOTPLT,
 			    sym, object);
 			if (sr.sym != NULL) {
-#ifdef DL_PRINTF_DEBUG
-_dl_printf(" found other symbol at %x size %d\n",
-    sr.obj->obj_base + sr.sym->st_value,  sr.sym->st_size);
-#endif
 				_dl_bcopy((void *)(sr.obj->obj_base + sr.sym->st_value),
 				    r_addr, sym->st_size);
 			} else

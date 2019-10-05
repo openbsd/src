@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.33 2019/08/06 04:01:41 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.34 2019/10/05 00:08:50 guenther Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -194,10 +194,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	for (i = 0; i < relrel; i++, rels++) {
 		Elf_Addr *where;
 
-#ifdef DEBUG
-		if (ELF_R_TYPE(rels->r_info) != R_TYPE(RELATIVE))
-			_dl_die("RELACOUNT wrong");
-#endif
 		where = (Elf_Addr *)(rels->r_offset + loff);
 		*where = rels->r_addend + loff;
 	}
