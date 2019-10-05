@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.10 2018/08/11 10:41:08 kettenis Exp $ */
+/* $OpenBSD: agtimer.c,v 1.11 2019/10/05 11:27:02 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -92,12 +92,18 @@ struct cfdriver agtimer_cd = {
 uint64_t
 agtimer_readcnt64(void)
 {
-	uint64_t val;
+	uint64_t val0, val1;
 
+	/*
+	 * Work around Cortex-A73 errata 858921, where there is a
+	 * one-cycle window where the read might return the old value
+	 * for the low 32 bits and the new value for the high 32 bits
+	 * upon roll-over of the low 32 bits.
+	 */
 	__asm volatile("isb" : : : "memory");
-	__asm volatile("MRS %x0, CNTVCT_EL0" : "=r" (val));
-
-	return (val);
+	__asm volatile("mrs %x0, CNTVCT_EL0" : "=r" (val0));
+	__asm volatile("mrs %x0, CNTVCT_EL0" : "=r" (val1));
+	return ((val0 ^ val1) & 0x100000000ULL) ? val0 : val1;
 }
 
 static inline uint64_t
@@ -105,7 +111,7 @@ agtimer_get_freq(void)
 {
 	uint64_t val;
 
-	__asm volatile("MRS %x0, CNTFRQ_EL0" : "=r" (val));
+	__asm volatile("mrs %x0, CNTFRQ_EL0" : "=r" (val));
 
 	return (val);
 }
@@ -115,7 +121,7 @@ agtimer_get_ctrl(void)
 {
 	uint32_t val;
 
-	__asm volatile("MRS %x0, CNTV_CTL_EL0" : "=r" (val));
+	__asm volatile("mrs %x0, CNTV_CTL_EL0" : "=r" (val));
 
 	return (val);
 }
@@ -123,7 +129,7 @@ agtimer_get_ctrl(void)
 static inline int
 agtimer_set_ctrl(uint32_t val)
 {
-	__asm volatile("MSR CNTV_CTL_EL0, %x0" : : "r" (val));
+	__asm volatile("msr CNTV_CTL_EL0, %x0" : : "r" (val));
 	__asm volatile("isb" : : : "memory");
 
 	return (0);
@@ -132,7 +138,7 @@ agtimer_set_ctrl(uint32_t val)
 static inline int
 agtimer_set_tval(uint32_t val)
 {
-	__asm volatile("MSR CNTV_TVAL_EL0, %x0" : : "r" (val));
+	__asm volatile("msr CNTV_TVAL_EL0, %x0" : : "r" (val));
 	__asm volatile("isb" : : : "memory");
 
 	return (0);
