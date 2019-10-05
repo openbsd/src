@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.70 2017/04/11 14:43:49 dhill Exp $	*/
+/*	$OpenBSD: aac.c,v 1.71 2019/10/05 20:41:27 jan Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -2129,7 +2129,7 @@ aac_internal_cache_cmd(struct scsi_xfer *xs)
 	struct scsi_read_cap_data rcd;
 	u_int8_t target = link->target;
 
-	AAC_DPRINTF(AAC_D_CMD, ("aac_internal_cache_cmd: ",
+	AAC_DPRINTF(AAC_D_CMD, ("%s: aac_internal_cache_cmd: ",
 				sc->aac_dev.dv_xname));
 
 	switch (xs->cmd->opcode) {
@@ -2277,7 +2277,7 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 			blockcnt = _2btol(rwb->length);
 		}
 
-		AAC_DPRINTF(AAC_D_CMD, ("blkno=%d bcount=%d ",
+		AAC_DPRINTF(AAC_D_CMD, ("opcode=%d blkno=%d bcount=%d ",
 					xs->cmd->opcode, blockno, blockcnt));
 
 		if (blockno >= sc->aac_hdr[target].hd_size ||

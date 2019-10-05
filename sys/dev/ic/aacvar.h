@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacvar.h,v 1.13 2016/04/01 04:16:27 jsg Exp $	*/
+/*	$OpenBSD: aacvar.h,v 1.14 2019/10/05 20:41:27 jan Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -429,11 +429,6 @@ int	aac_attach(struct aac_softc *);
 int	aac_intr(void *);
 
 /* These all require correctly aligned buffers */
-static __inline__ void aac_enc16(u_int8_t *, u_int16_t);
-static __inline__ void aac_enc32(u_int8_t *, u_int32_t);
-static __inline__ u_int16_t aac_dec16(u_int8_t *);
-static __inline__ u_int32_t aac_dec32(u_int8_t *);
-
 static __inline__ void
 aac_enc16(addr, value)
 	u_int8_t *addr;
