@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlpinctrl.c,v 1.4 2019/09/02 08:16:49 kettenis Exp $	*/
+/*	$OpenBSD: amlpinctrl.c,v 1.5 2019/10/06 16:17:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -32,7 +32,18 @@
 #define BIAS_PULL_UP	0x01
 #define BIAS_PULL_DOWN	0x02
 
+#define GPIOZ_0		0
+#define GPIOZ_1		1
+#define GPIOZ_7		7
+#define GPIOZ_8		8
+#define GPIOZ_14	14
+#define GPIOZ_15	15
 #define GPIOH_0		16
+#define GPIOH_1		17
+#define GPIOH_2		18
+#define GPIOH_3		19
+#define GPIOH_6		22
+#define GPIOH_7		23
 #define BOOT_0		25
 #define BOOT_1		26
 #define BOOT_2		27
@@ -50,22 +61,46 @@
 #define GPIOC_3		44
 #define GPIOC_4		45
 #define GPIOC_5		46
+#define GPIOC_6		47
+#define GPIOA_0		49
+#define GPIOA_14	63
+#define GPIOA_15	64
+#define GPIOX_0		65
+#define GPIOX_10	75
+#define GPIOX_11	76
+#define GPIOX_17	82
+#define GPIOX_18	83
 
 #define PERIPHS_PIN_MUX_0		0xb0
+#define PERIPHS_PIN_MUX_3		0xb3
+#define PERIPHS_PIN_MUX_6		0xb6
 #define PERIPHS_PIN_MUX_9		0xb9
 #define PERIPHS_PIN_MUX_B		0xbb
+#define PERIPHS_PIN_MUX_D		0xbd
 #define PREG_PAD_GPIO0_EN_N		0x10
 #define PREG_PAD_GPIO1_EN_N		0x13
+#define PREG_PAD_GPIO2_EN_N		0x16
 #define PREG_PAD_GPIO3_EN_N		0x19
+#define PREG_PAD_GPIO4_EN_N		0x1c
+#define PREG_PAD_GPIO5_EN_N		0x20
 #define PAD_PULL_UP_EN_0		0x48
 #define PAD_PULL_UP_EN_1		0x49
+#define PAD_PULL_UP_EN_2		0x4a
 #define PAD_PULL_UP_EN_3		0x4b
+#define PAD_PULL_UP_EN_4		0x4c
+#define PAD_PULL_UP_EN_5		0x4d
 #define PAD_PULL_UP_0			0x3a
 #define PAD_PULL_UP_1			0x3b
+#define PAD_PULL_UP_2			0x3c
 #define PAD_PULL_UP_3			0x3d
+#define PAD_PULL_UP_4			0x3e
+#define PAD_PULL_UP_5			0x3f
 #define PAD_DS_0A			0xd0
 #define PAD_DS_1A			0xd1
+#define PAD_DS_2A			0xd2
 #define PAD_DS_3A			0xd4
+#define PAD_DS_4A			0xd5
+#define PAD_DS_5A			0xd6
 
 struct aml_gpio_bank {
 	uint8_t first_pin, num_pins;
@@ -89,27 +124,54 @@ struct aml_gpio_bank aml_g12a_gpio_banks[] = {
 	  PREG_PAD_GPIO0_EN_N - PREG_PAD_GPIO0_EN_N,
 	  PAD_PULL_UP_0 - PAD_PULL_UP_0,
 	  PAD_PULL_UP_EN_0 - PAD_PULL_UP_EN_0, PAD_DS_0A - PAD_DS_0A },
+
 	/* GPIOC */
 	{ GPIOC_0, 8, PERIPHS_PIN_MUX_9 - PERIPHS_PIN_MUX_0,
 	  PREG_PAD_GPIO1_EN_N - PREG_PAD_GPIO0_EN_N,
 	  PAD_PULL_UP_1 - PAD_PULL_UP_0,
 	  PAD_PULL_UP_EN_1 - PAD_PULL_UP_EN_0, PAD_DS_1A - PAD_DS_0A },
+
+	/* GPIOX */
+	{ GPIOX_0, 20, PERIPHS_PIN_MUX_3 - PERIPHS_PIN_MUX_0,
+	  PREG_PAD_GPIO2_EN_N - PREG_PAD_GPIO0_EN_N,
+	  PAD_PULL_UP_2 - PAD_PULL_UP_0,
+	  PAD_PULL_UP_EN_2 - PAD_PULL_UP_EN_0, PAD_DS_2A - PAD_DS_0A },
+
 	/* GPIOH */
 	{ GPIOH_0, 9, PERIPHS_PIN_MUX_B - PERIPHS_PIN_MUX_0,
 	  PREG_PAD_GPIO3_EN_N - PREG_PAD_GPIO0_EN_N,
 	  PAD_PULL_UP_3 - PAD_PULL_UP_0,
 	  PAD_PULL_UP_EN_3 - PAD_PULL_UP_EN_0, PAD_DS_3A - PAD_DS_0A },
+
+	/* GPIOZ */
+	{ GPIOZ_0, 16, PERIPHS_PIN_MUX_6 - PERIPHS_PIN_MUX_0,
+	  PREG_PAD_GPIO4_EN_N - PREG_PAD_GPIO0_EN_N,
+	  PAD_PULL_UP_4 - PAD_PULL_UP_0,
+	  PAD_PULL_UP_EN_4 - PAD_PULL_UP_EN_0, PAD_DS_4A - PAD_DS_0A },
+
+	/* GPIOA */
+	{ GPIOA_0, 16, PERIPHS_PIN_MUX_D - PERIPHS_PIN_MUX_0,
+	  PREG_PAD_GPIO5_EN_N - PREG_PAD_GPIO0_EN_N,
+	  PAD_PULL_UP_5 - PAD_PULL_UP_0,
+	  PAD_PULL_UP_EN_5 - PAD_PULL_UP_EN_0, PAD_DS_5A - PAD_DS_0A },
+
 	{ }
 };
 
 struct aml_pin_group aml_g12a_pin_groups[] = {
-	{ "sdcard_d0_c", GPIOC_0, 1, "sdcard" },
-	{ "sdcard_d1_c", GPIOC_1, 1, "sdcard" },
-	{ "sdcard_d2_c", GPIOC_2, 1, "sdcard" },
-	{ "sdcard_d3_c", GPIOC_3, 1, "sdcard" },
-	{ "sdcard_clk_c", GPIOC_4, 1, "sdcard" },
-	{ "sdcard_cmd_c", GPIOC_5, 1, "sdcard" },
-	{ "GPIOC_4", GPIOC_4, 0, "gpio_periphs" },
+	/* GPIOZ */
+	{ "i2c0_sda_z0", GPIOZ_0, 4, "i2c0" },
+	{ "i2c0_sck_z1", GPIOZ_1, 4, "i2c0" },
+	{ "i2c0_sda_z7", GPIOZ_7, 7, "i2c0" },
+	{ "i2c0_sck_z8", GPIOZ_8, 7, "i2c0" },
+	{ "i2c2_sda_z", GPIOZ_14, 3, "i2c2" },
+	{ "i2c2_sck_z", GPIOZ_15, 3, "i2c2" },
+
+	/* GPIOA */
+	{ "i2c3_sda_a", GPIOA_14, 2, "i2c3" },
+	{ "i2c3_sck_a", GPIOA_15, 2, "i2c3" },
+
+	/* BOOT */
 	{ "emmc_nand_d0", BOOT_0, 1, "emmc" },
 	{ "emmc_nand_d1", BOOT_1, 1, "emmc" },
 	{ "emmc_nand_d2", BOOT_2, 1, "emmc" },
@@ -118,10 +180,36 @@ struct aml_pin_group aml_g12a_pin_groups[] = {
 	{ "emmc_nand_d5", BOOT_5, 1, "emmc" },
 	{ "emmc_nand_d6", BOOT_6, 1, "emmc" },
 	{ "emmc_nand_d7", BOOT_7, 1, "emmc" },
+	{ "BOOT_8", BOOT_8, 0, "gpio_periphs" },
 	{ "emmc_clk", BOOT_8, 1, "emmc" },
 	{ "emmc_cmd", BOOT_10, 1, "emmc" },
 	{ "emmc_nand_ds", BOOT_13, 1, "emmc" },
-	{ "BOOT_8", BOOT_8, 0, "gpio_periphs" },
+
+	/* GPIOC */
+	{ "sdcard_d0_c", GPIOC_0, 1, "sdcard" },
+	{ "sdcard_d1_c", GPIOC_1, 1, "sdcard" },
+	{ "sdcard_d2_c", GPIOC_2, 1, "sdcard" },
+	{ "sdcard_d3_c", GPIOC_3, 1, "sdcard" },
+	{ "GPIOC_4", GPIOC_4, 0, "gpio_periphs" },
+	{ "sdcard_clk_c", GPIOC_4, 1, "sdcard" },
+	{ "sdcard_cmd_c", GPIOC_5, 1, "sdcard" },
+	{ "i2c0_sda_c", GPIOC_5, 3, "i2c0" },
+	{ "i2c0_sck_c", GPIOC_6, 3, "i2c0" },
+
+	/* GPIOX */
+	{ "i2c1_sda_x", GPIOX_10, 5, "i2c1" },
+	{ "i2c1_sck_x", GPIOX_11, 5, "i2c1" },
+	{ "i2c2_sda_x", GPIOX_17, 1, "i2c2" },
+	{ "i2c2_sck_x", GPIOX_18, 1, "i2c2" },
+
+	/* GPIOH */
+	{ "i2c3_sda_h", GPIOH_0, 2, "i2c3" },
+	{ "i2c3_sck_h", GPIOH_1, 2, "i2c3" },
+	{ "i2c1_sda_h2", GPIOH_2, 2, "i2c1" },
+	{ "i2c1_sck_h3", GPIOH_3, 2, "i2c1" },
+	{ "i2c1_sda_h6", GPIOH_6, 4, "i2c1" },
+	{ "i2c1_sck_h7", GPIOH_7, 4, "i2c1" },
+
 	{ }
 };
 
@@ -305,7 +393,6 @@ amlpinctrl_config_func(struct amlpinctrl_softc *sc, const char *name,
 	reg |= (group->func << ((pin % 8) * 4));
 	bus_space_write_4(sc->sc_iot, sc->sc_mux_ioh, off, reg);
 	
-
 	/* pull */
 	off = bank->pull_reg << 2;
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_pull_ioh, off);
