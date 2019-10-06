@@ -15,9 +15,12 @@ struct backlight_properties {
 };
 
 struct backlight_ops {
+	int options;
 	int (*update_status)(struct backlight_device *);
 	int (*get_brightness)(struct backlight_device *);
 };
+
+#define BL_CORE_SUSPENDRESUME	1
 
 struct backlight_device {
 	const struct backlight_ops *ops;
