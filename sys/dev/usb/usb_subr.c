@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.149 2019/06/24 06:45:06 claudio Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.150 2019/10/06 17:11:51 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -343,12 +343,11 @@ usb_delay_ms(struct usbd_bus *bus, u_int ms)
 {
 	static int usb_delay_wchan;
 
-	/* Wait at least two clock ticks so we know the time has passed. */
 	if (bus->use_polling || cold)
 		delay((ms+1) * 1000);
 	else
-		tsleep(&usb_delay_wchan, PRIBIO, "usbdly",
-		    (ms*hz+999)/1000 + 1);
+		tsleep_nsec(&usb_delay_wchan, PRIBIO, "usbdly",
+		    MSEC_TO_NSEC(ms));
 }
 
 /* Delay given a device handle. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.43 2018/11/18 16:33:26 mpi Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.44 2019/10/06 17:11:51 mpi Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -269,7 +269,7 @@ void
 usb_detach_wait(struct device *dv)
 {
 	DPRINTF(("%s: waiting for %s\n", __func__, dv->dv_xname));
-	if (tsleep(dv, PZERO, "usbdet", hz * 60))
+	if (tsleep_nsec(dv, PZERO, "usbdet", SEC_TO_NSEC(60)))
 		printf("%s: %s didn't detach\n", __func__, dv->dv_xname);
 	DPRINTF(("%s: %s done\n", __func__, dv->dv_xname));
 }

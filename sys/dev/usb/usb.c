@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.123 2019/01/09 12:10:37 mpi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.124 2019/10/06 17:11:51 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -381,7 +381,7 @@ usb_wait_task(struct usbd_device *dev, struct usb_task *task)
 	s = splusb();
 	while (task->state != USB_TASK_STATE_NONE) {
 		DPRINTF(("%s: waiting for task to complete\n", __func__));
-		tsleep(task, PWAIT, "endtask", 0);
+		tsleep_nsec(task, PWAIT, "endtask", INFSLP);
 	}
 	splx(s);
 }
@@ -408,7 +408,7 @@ usb_task_thread(void *arg)
 		else if ((task = TAILQ_FIRST(&usb_generic_tasks)) != NULL)
 			TAILQ_REMOVE(&usb_generic_tasks, task, next);
 		else {
-			tsleep(&usb_run_tasks, PWAIT, "usbtsk", 0);
+			tsleep_nsec(&usb_run_tasks, PWAIT, "usbtsk", INFSLP);
 			continue;
 		}
 		/*
@@ -452,7 +452,8 @@ usb_abort_task_thread(void *arg)
 		if ((task = TAILQ_FIRST(&usb_abort_tasks)) != NULL)
 			TAILQ_REMOVE(&usb_abort_tasks, task, next);
 		else {
-			tsleep(&usb_run_abort_tasks, PWAIT, "usbatsk", 0);
+			tsleep_nsec(&usb_run_abort_tasks, PWAIT, "usbatsk",
+			    INFSLP);
 			continue;
 		}
 		/*

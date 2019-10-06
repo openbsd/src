@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.100 2018/11/18 16:33:26 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.101 2019/10/06 17:11:51 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -88,7 +88,7 @@ void
 usbd_ref_wait(struct usbd_device *dev)
 {
 	while (dev->ref_cnt > 0)
-		tsleep(&dev->ref_cnt, PWAIT, "usbref", hz * 60);
+		tsleep_nsec(&dev->ref_cnt, PWAIT, "usbref", SEC_TO_NSEC(60));
 }
 
 int
@@ -364,7 +364,7 @@ usbd_transfer(struct usbd_xfer *xfer)
 		while (!xfer->done) {
 			flags = PRIBIO|(xfer->flags & USBD_CATCH ? PCATCH : 0);
 
-			err = tsleep(xfer, flags, "usbsyn", 0);
+			err = tsleep_nsec(xfer, flags, "usbsyn", INFSLP);
 			if (err && !xfer->done) {
 				usbd_abort_pipe(pipe);
 				if (err == EINTR)
