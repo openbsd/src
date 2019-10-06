@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.105 2019/06/13 21:03:48 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.106 2019/10/06 17:30:00 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -1804,8 +1804,7 @@ xhci_command_submit(struct xhci_softc *sc, struct xhci_trb *trb0, int timeout)
 	s = splusb();
 	sc->sc_cmd_trb = trb;
 	XDWRITE4(sc, XHCI_DOORBELL(0), 0);
-	error = tsleep(&sc->sc_cmd_trb, PZERO, "xhcicmd",
-	    (timeout*hz+999)/ 1000 + 1);
+	error = tsleep_nsec(&sc->sc_cmd_trb, PZERO, "xhcicmd", timeout);
 	if (error) {
 #ifdef XHCI_DEBUG
 		printf("%s: tsleep() = %d\n", __func__, error);
@@ -2219,7 +2218,7 @@ xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	 */
 	xhci_cmd_set_tr_deq_async(sc, xp->slot, xp->dci,
 	    DEQPTR(xp->ring) | xp->ring.toggle);
-	error = tsleep(xp, PZERO, "xhciab", (XHCI_CMD_TIMEOUT*hz+999)/1000 + 1);
+	error = tsleep_nsec(xp, PZERO, "xhciab", XHCI_CMD_TIMEOUT);
 	if (error)
 		printf("%s: timeout aborting transfer\n", DEVNAME(sc));
 }
