@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.25 2019/09/29 13:18:39 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.26 2019/10/06 09:25:21 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -736,7 +736,7 @@ udp_receive(int fd, short events, void *arg)
 	}
 
 	if (strlcpy(query_imsg->qname, buf, sizeof(query_imsg->qname)) >=
-	    sizeof(buf)) {
+	    sizeof(query_imsg->qname)) {
 		log_warnx("qname too long");
 		free(query_imsg);
 		/* XXX SERVFAIL */
