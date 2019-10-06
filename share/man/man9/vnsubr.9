@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnsubr.9,v 1.15 2019/10/06 16:24:14 beck Exp $
+.\"     $OpenBSD: vnsubr.9,v 1.16 2019/10/06 16:32:56 jmc Exp $
 .\"     $NetBSD: vnsubr.9,v 1.21 2004/05/25 14:54:56 hannken Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -158,11 +158,12 @@ When initializing the nameidata structure for
 .Fn vn_open
 with
 .Xr NDINIT 9 ,
-The
+the
 .Fa op
 must be specified as 0, and the
 .Fa flags
-may only be 0, or KERNELPATH.
+may only be 0, or
+.Dv KERNELPATH .
 The lookup mode and flags are set internally
 by
 .Fn vn_open .
