@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.210 2019/09/25 05:51:24 tobhe Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.211 2019/10/06 16:11:17 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -535,7 +535,6 @@ ieee80211_inputm(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		return;
 
 	case IEEE80211_FC0_TYPE_CTL:
-		ic->ic_stats.is_rx_ctl++;
 		switch (subtype) {
 #ifndef IEEE80211_STA_ONLY
 		case IEEE80211_FC0_SUBTYPE_PS_POLL:
@@ -546,6 +545,7 @@ ieee80211_inputm(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			ieee80211_recv_bar(ic, m, ni);
 			break;
 		default:
+			ic->ic_stats.is_rx_ctl++;
 			break;
 		}
 		goto out;
