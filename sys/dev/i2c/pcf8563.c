@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8563.c,v 1.1 2017/07/24 20:25:29 kettenis Exp $	*/
+/*	$OpenBSD: pcf8563.c,v 1.2 2019/10/06 15:45:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Kimihiro Nonaka
@@ -71,7 +71,7 @@
 #define PCF8563_HOURS_MASK	0x3f
 #define PCF8563_DAY_MASK	0x3f
 #define PCF8563_WDAY_MASK	0x07
-#define PCF8563_MONTH_MASK	0x0f
+#define PCF8563_MONTH_MASK	0x1f
 #define PCF8563_MONTH_C		(1 << 7)
 
 struct pcxrtc_softc {
