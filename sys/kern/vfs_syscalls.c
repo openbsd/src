@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.335 2019/08/31 17:59:33 beck Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.336 2019/10/06 16:24:14 beck Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1146,7 +1146,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	cmode = ((mode &~ fdp->fd_cmask) & ALLPERMS) &~ S_ISTXT;
 	if ((p->p_p->ps_flags & PS_PLEDGE))
 		cmode &= ACCESSPERMS;
-	NDINITAT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fd, path, p);
+	NDINITAT(&nd, 0, 0, UIO_USERSPACE, fd, path, p);
 	nd.ni_pledge = ni_pledge;
 	nd.ni_unveil = ni_unveil;
 	p->p_dupfd = -1;			/* XXX check for fdopen */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.107 2019/08/26 18:56:29 anton Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.108 2019/10/06 16:24:14 beck Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -91,13 +91,26 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	struct cloneinfo *cip;
 	int error;
 
-	if ((fmode & (FREAD|FWRITE)) == 0)
+	/*
+	 * The only valid flag to pass in here from NDINIT is
+	 * KERNELPATH, This function will override the nameiop based
+	 * on the fmode and cmode flags, So validate that our caller
+	 * has not set other flags or operations in the nameidata
+	 * structure.
+	 */
+	/* XXX consider changing to KASSERT after release */
+	if (!(ndp->ni_cnd.cn_flags == 0 || ndp->ni_cnd.cn_flags == KERNELPATH))
+		return EINVAL;
+	if (!(ndp->ni_cnd.cn_nameiop == 0))
+		return EINVAL;
+
+        if ((fmode & (FREAD|FWRITE)) == 0)
 		return (EINVAL);
 	if ((fmode & (O_TRUNC | FWRITE)) == O_TRUNC)
 		return (EINVAL);
 	if (fmode & O_CREAT) {
 		ndp->ni_cnd.cn_nameiop = CREATE;
-		ndp->ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
+		ndp->ni_cnd.cn_flags |= LOCKPARENT | LOCKLEAF;
 		if ((fmode & O_EXCL) == 0 && (fmode & O_NOFOLLOW) == 0)
 			ndp->ni_cnd.cn_flags |= FOLLOW;
 		if ((error = namei(ndp)) != 0)
@@ -132,8 +145,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 		}
 	} else {
 		ndp->ni_cnd.cn_nameiop = LOOKUP;
-		ndp->ni_cnd.cn_flags =
-		    ((fmode & O_NOFOLLOW) ? NOFOLLOW : FOLLOW) | LOCKLEAF;
+		ndp->ni_cnd.cn_flags |= ((fmode & O_NOFOLLOW) ? NOFOLLOW : FOLLOW) | LOCKLEAF;
 		if ((error = namei(ndp)) != 0)
 			return (error);
 		vp = ndp->ni_vp;

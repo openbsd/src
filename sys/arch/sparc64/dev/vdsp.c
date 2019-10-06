@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.45 2018/05/02 02:24:55 visa Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.46 2019/10/06 16:24:14 beck Exp $	*/
 /*
  * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
@@ -918,7 +918,7 @@ vdsp_open(void *arg1)
 		if (name == NULL)
 			return;
 
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, name, p);
+		NDINIT(&nd, 0, 0, UIO_SYSSPACE, name, p);
 		error = vn_open(&nd, FREAD | FWRITE, 0);
 		if (error) {
 			printf("VOP_OPEN: %s, %d\n", name, error);

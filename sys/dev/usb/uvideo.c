@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.203 2019/08/07 11:16:02 patrick Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.204 2019/10/06 16:24:14 beck Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2885,7 +2885,7 @@ uvideo_debug_file_open(struct uvideo_softc *sc)
 	char name[] = "/tmp/uvideo.mjpeg";
 	int error;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
+	NDINIT(&nd, 0, 0, UIO_SYSSPACE, name, p);
 	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW, S_IRUSR | S_IWUSR);
 	if (error) {
 		DPRINTF(1, "%s: %s: can't create debug file %s!\n",

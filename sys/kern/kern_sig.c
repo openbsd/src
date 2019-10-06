@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.234 2019/10/03 13:58:59 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.235 2019/10/06 16:24:14 beck Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1593,7 +1593,8 @@ coredump(struct proc *p)
 		cred->cr_gid = 0;
 	}
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
+	/* incrash should be 0 or KERNELPATH only */
+	NDINIT(&nd, 0, incrash, UIO_SYSSPACE, name, p);
 
 	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW | O_NONBLOCK,
 	    S_IRUSR | S_IWUSR);

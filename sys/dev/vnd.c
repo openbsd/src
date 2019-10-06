@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.168 2018/04/28 03:13:04 visa Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.169 2019/10/06 16:24:14 beck Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -444,7 +444,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		 * directories, sockets, etc. so we don't have to worry about
 		 * them.
 		 */
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, p);
+		NDINIT(&nd, 0, 0, UIO_USERSPACE, vio->vnd_file, p);
 		sc->sc_flags &= ~VNF_READONLY;
 		error = vn_open(&nd, FREAD|FWRITE, 0);
 		if (error == EROFS) {

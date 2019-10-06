@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.44 2018/05/27 06:02:15 visa Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.45 2019/10/06 16:24:14 beck Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -494,7 +494,7 @@ quotaon(struct proc *p, struct mount *mp, int type, caddr_t fname)
 #endif
 
 	vpp = &ump->um_quotas[type];
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fname, p);
+	NDINIT(&nd, 0, 0, UIO_USERSPACE, fname, p);
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
 		return (error);
 	vp = nd.ni_vp;
