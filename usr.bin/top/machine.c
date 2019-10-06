@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.98 2019/10/06 15:05:35 kn Exp $	 */
+/* $OpenBSD: machine.c,v 1.99 2019/10/06 15:08:54 kn Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -422,7 +422,7 @@ cmd_matches(struct kinfo_proc *proc, char *term)
 	return 0;
 }
 
-caddr_t
+struct handle *
 get_process_info(struct system_info *si, struct process_select *sel,
     int (*compare) (const void *, const void *))
 {
@@ -501,7 +501,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	/* pass back a handle */
 	handle.next_proc = pref;
 	handle.remaining = active_procs;
-	return ((caddr_t) & handle);
+	return &handle;
 }
 
 char fmt[MAX_COLS];	/* static area where result is built */
@@ -546,20 +546,18 @@ format_comm(struct kinfo_proc *kp)
 }
 
 char *
-format_next_process(caddr_t hndl, const char *(*get_userid)(uid_t, int),
+format_next_process(struct handle *hndl, const char *(*get_userid)(uid_t, int),
     pid_t *pid, int show_threads)
 {
 	char *p_wait;
 	struct kinfo_proc *pp;
-	struct handle *hp;
 	int cputime;
 	double pct;
 	char buf[16];
 
 	/* find and remember the next proc structure */
-	hp = (struct handle *) hndl;
-	pp = *(hp->next_proc++);
-	hp->remaining--;
+	pp = *(hndl->next_proc++);
+	hndl->remaining--;
 
 	cputime = pp->p_rtime_sec + ((pp->p_rtime_usec + 500000) / 1000000);
 

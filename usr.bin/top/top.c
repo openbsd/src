@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.98 2018/11/28 22:00:30 kn Exp $	*/
+/*	$OpenBSD: top.c,v 1.99 2019/10/06 15:08:54 kn Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -336,7 +336,7 @@ main(int argc, char *argv[])
 	int preset_argc = 0, ac = argc, active_procs, i, ncpuonline_now;
 	sigset_t mask, oldmask;
 	time_t curr_time;
-	caddr_t processes;
+	struct handle *processes;
 
 	/* set the buffer for stdout */
 #ifdef DEBUG
