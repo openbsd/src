@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlclock.c,v 1.7 2019/10/04 20:01:59 kettenis Exp $	*/
+/*	$OpenBSD: amlclock.c,v 1.8 2019/10/06 16:18:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -34,6 +34,9 @@
 #define G12A_FCLK_DIV4		4
 #define G12A_FCLK_DIV5		5
 #define G12A_FCLK_DIV7		6
+#define G12A_MPLL1		12
+#define G12A_MPLL2		13
+#define G12A_I2C		24
 #define G12A_SD_EMMC_A		33
 #define G12A_SD_EMMC_B		34
 #define G12A_SD_EMMC_C		35
@@ -55,6 +58,7 @@
 #define HHI_PCIE_PLL_CNTL5	0x2b
 #define HHI_GCLK_MPEG0		0x50
 #define HHI_GCLK_MPEG1		0x51
+#define HHI_MPEG_CLK_CNTL	0x5d
 #define HHI_SYS_CPU_CLK_CNTL0	0x67
 #define  HHI_SYS_CPU_CLK_DYN_ENABLE		(1 << 26)
 #define  HHI_SYS_CPU_CLK_MUX1_DIVN_TCNT(x)	(((x) >> 20) & 0x3f)
@@ -108,6 +112,7 @@ struct amlclock_gate {
 };
 
 struct amlclock_gate aml_g12a_gates[] = {
+	[G12A_I2C] = { HHI_GCLK_MPEG0, 9 },
 	[G12A_SD_EMMC_A] = { HHI_GCLK_MPEG0, 24 },
 	[G12A_SD_EMMC_B] = { HHI_GCLK_MPEG0, 25 },
 	[G12A_SD_EMMC_C] = { HHI_GCLK_MPEG0, 26 },
@@ -426,6 +431,35 @@ amlclock_get_frequency(void *cookie, uint32_t *cells)
 	case G12A_FCLK_DIV2P5:
 		return 800000000;
 
+	case G12A_I2C:
+		reg = HREAD4(sc, HHI_MPEG_CLK_CNTL);
+		mux = (reg >> 12) & 0x7;
+		div = ((reg >> 0) & 0x7f) + 1;
+		switch (mux) {
+		case 0:
+			return sc->sc_xtal / div;
+		case 2:
+			idx = G12A_FCLK_DIV7;
+			break;
+		case 3:
+			idx = G12A_MPLL1;
+			break;
+		case 4:
+			idx = G12A_MPLL2;
+			break;
+		case 5:
+			idx = G12A_FCLK_DIV4;
+			break;
+		case 6:
+			idx = G12A_FCLK_DIV3;
+			break;
+		case 7:
+			idx = G12A_FCLK_DIV5;
+			break;
+		default:
+			goto fail;
+		}
+		return amlclock_get_frequency(sc, &idx) / div;
 	case G12A_SD_EMMC_A_CLK0:
 		reg = HREAD4(sc, HHI_SD_EMMC_CLK_CNTL);
 		mux = (reg >> 9) & 0x7;
