@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.97 2019/06/28 13:35:05 deraadt Exp $	 */
+/* $OpenBSD: machine.c,v 1.98 2019/10/06 15:05:35 kn Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -636,11 +636,11 @@ extern int rev_order;
 /* remove one level of indirection and set sort order */
 #define SETORDER do { \
 		if (rev_order) { \
-			p1 = *(struct kinfo_proc **) pp2; \
-			p2 = *(struct kinfo_proc **) pp1; \
+			p1 = *(struct kinfo_proc **) v2; \
+			p2 = *(struct kinfo_proc **) v1; \
 		} else { \
-			p1 = *(struct kinfo_proc **) pp1; \
-			p2 = *(struct kinfo_proc **) pp2; \
+			p1 = *(struct kinfo_proc **) v1; \
+			p2 = *(struct kinfo_proc **) v2; \
 		} \
 	} while (0)
 
@@ -648,8 +648,6 @@ extern int rev_order;
 static int
 compare_cpu(const void *v1, const void *v2)
 {
-	struct proc **pp1 = (struct proc **) v1;
-	struct proc **pp2 = (struct proc **) v2;
 	struct kinfo_proc *p1, *p2;
 	int result;
 
@@ -669,8 +667,6 @@ compare_cpu(const void *v1, const void *v2)
 static int
 compare_size(const void *v1, const void *v2)
 {
-	struct proc **pp1 = (struct proc **) v1;
-	struct proc **pp2 = (struct proc **) v2;
 	struct kinfo_proc *p1, *p2;
 	int result;
 
@@ -690,8 +686,6 @@ compare_size(const void *v1, const void *v2)
 static int
 compare_res(const void *v1, const void *v2)
 {
-	struct proc **pp1 = (struct proc **) v1;
-	struct proc **pp2 = (struct proc **) v2;
 	struct kinfo_proc *p1, *p2;
 	int result;
 
@@ -711,8 +705,6 @@ compare_res(const void *v1, const void *v2)
 static int
 compare_time(const void *v1, const void *v2)
 {
-	struct proc **pp1 = (struct proc **) v1;
-	struct proc **pp2 = (struct proc **) v2;
 	struct kinfo_proc *p1, *p2;
 	int result;
 
@@ -732,8 +724,6 @@ compare_time(const void *v1, const void *v2)
 static int
 compare_prio(const void *v1, const void *v2)
 {
-	struct proc   **pp1 = (struct proc **) v1;
-	struct proc   **pp2 = (struct proc **) v2;
 	struct kinfo_proc *p1, *p2;
 	int result;
 
@@ -752,8 +742,6 @@ compare_prio(const void *v1, const void *v2)
 static int
 compare_pid(const void *v1, const void *v2)
 {
-	struct proc **pp1 = (struct proc **) v1;
-	struct proc **pp2 = (struct proc **) v2;
 	struct kinfo_proc *p1, *p2;
 	int result;
 
@@ -773,8 +761,6 @@ compare_pid(const void *v1, const void *v2)
 static int
 compare_cmd(const void *v1, const void *v2)
 {
-	struct proc **pp1 = (struct proc **) v1;
-	struct proc **pp2 = (struct proc **) v2;
 	struct kinfo_proc *p1, *p2;
 	int result;
 
