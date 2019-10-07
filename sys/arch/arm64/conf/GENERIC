@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.127 2019/10/07 18:55:20 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.128 2019/10/07 19:30:12 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -175,6 +175,7 @@ mvmdio*		at fdt?
 mvneta*		at fdt?
 mvrng*		at fdt?
 mvrtc*		at fdt?
+mvspi*		at fdt?
 mvtemp*		at fdt?
 mvuart*		at fdt?
 sfp*		at fdt?
