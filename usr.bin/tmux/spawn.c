@@ -1,4 +1,4 @@
-/* $OpenBSD: spawn.c,v 1.9 2019/09/23 15:41:11 nicm Exp $ */
+/* $OpenBSD: spawn.c,v 1.10 2019/10/07 07:14:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -253,7 +253,7 @@ spawn_pane(struct spawn_context *sc, char **cause)
 	 * Now we have a pane with nothing running in it ready for the new
 	 * process. Work out the command and arguments.
 	 */
-	if (sc->argc == 0) {
+	if (sc->argc == 0 && (~sc->flags & SPAWN_RESPAWN)) {
 		cmd = options_get_string(s->options, "default-command");
 		if (cmd != NULL && *cmd != '\0') {
 			argc = 1;
