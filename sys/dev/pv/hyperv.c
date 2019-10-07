@@ -805,6 +805,7 @@ int
 hv_vmbus_connect(struct hv_softc *sc)
 {
 	const uint32_t versions[] = {
+		VMBUS_VERSION_WIN10,
 		VMBUS_VERSION_WIN8_1, VMBUS_VERSION_WIN8,
 		VMBUS_VERSION_WIN7, VMBUS_VERSION_WS2008
 	};
