@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.734 2019/10/07 18:56:58 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.735 2019/10/07 19:43:00 patrick Exp $
 
 MAN=	aac.4 abcrtc.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
@@ -37,8 +37,8 @@ MAN=	aac.4 abcrtc.4 ac97.4 acphy.4 acrtc.4 \
 	hvn.4 hvs.4 hyperv.4 \
 	iatp.4 iavf.4 ichiic.4 ichwdt.4 icmp.4 icmp6.4 icsphy.4 ifmedia.4 \
 	iha.4 ihidev.4 iic.4 ikbd.4 ims.4 imt.4 imxanatop.4 \
-	imxesdhc.4 imxgpc.4 imxgpio.4 imxiic.4 imxrtc.4 imxsrc.4 imxtmu.4 \
-	imxuart.4 inet.4 inet6.4 inphy.4 iophy.4 \
+	imxesdhc.4 imxgpc.4 imxgpio.4 imxiic.4 imxrtc.4 imxspi.4 imxsrc.4 \
+	imxtmu.4 imxuart.4 inet.4 inet6.4 inphy.4 iophy.4 \
 	ip.4 ip6.4 ipcomp.4 ipgphy.4 ipmi.4 ips.4 ipsec.4 ipw.4 \
 	isa.4 isagpio.4 isapnp.4 islrtc.4 it.4 itherm.4 iwi.4 iwn.4 iwm.4 \
 	ix.4 ixgb.4 ixl.4 jmb.4 jme.4 jmphy.4 \
@@ -49,7 +49,7 @@ MAN=	aac.4 abcrtc.4 ac97.4 acphy.4 acrtc.4 \
 	mfii.4 mlphy.4 mobileip.4 moscom.4 mos.4 mpe.4 mpath.4 mpi.4 mpii.4 \
 	mpip.4 mpu.4 msk.4 mpw.4 msts.4 mtd.4 mtdphy.4 mtio.4 mue.4 \
 	multicast.4 mvclock.4 mvdog.4 mvgicp.4 mvgpio.4 mvicu.4 mviic.4 \
-	mvneta.4 mvpinctrl.4 mvrng.4 mvrtc.4 mvtemp.4 mvuart.4 myx.4 \
+	mvneta.4 mvpinctrl.4 mvrng.4 mvrtc.4 mvspi.4 mvtemp.4 mvuart.4 myx.4 \
 	ne.4 neo.4 nep.4 netintro.4 nfe.4 nge.4 nmea.4 \
 	nsclpcsio.4 nsgphy.4 nsphy.4 nsphyter.4 null.4 nviic.4 nvme.4 nvt.4 \
 	oce.4 ohci.4 onewire.4 oosiop.4 openprom.4 options.4 osiop.4 otus.4 \
