@@ -1,4 +1,4 @@
-.\"	$OpenBSD: grep.1,v 1.47 2019/07/18 15:32:50 schwarze Exp $
+.\"	$OpenBSD: grep.1,v 1.48 2019/10/07 17:47:32 tedu Exp $
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"	@(#)grep.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: July 18 2019 $
+.Dd $Mdocdate: October 7 2019 $
 .Dt GREP 1
 .Os
 .Sh NAME
@@ -47,6 +47,7 @@
 .Op Fl m Ar num
 .Op Fl -binary-files Ns = Ns Ar value
 .Op Fl -context Ns Op = Ns Ar num
+.Op Fl -label Ar name
 .Op Fl -line-buffered
 .Op Ar pattern
 .Op Ar
@@ -283,6 +284,10 @@ do not search binary files;
 and
 .Ar text :
 treat all files as text.
+.It Fl -label Ar name
+Print
+.Ar name
+instead of the filename before lines.
 .It Fl -line-buffered
 Force output to be line buffered.
 By default, output is line buffered when standard output is a terminal

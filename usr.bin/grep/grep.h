@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.h,v 1.26 2019/01/23 23:00:54 tedu Exp $	*/
+/*	$OpenBSD: grep.h,v 1.27 2019/10/07 17:47:32 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -70,6 +70,7 @@ extern int	 Aflag, Bflag, Eflag, Fflag, Hflag, Lflag,
 		 bflag, cflag, hflag, iflag, lflag, mflag, nflag, oflag, qflag,
 		 sflag, vflag, wflag, xflag;
 extern int	 binbehave;
+extern const char *labelname;
 
 extern int	 first, matchall, patterns, tail, file_err;
 extern char    **pattern;
