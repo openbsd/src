@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvclock.c,v 1.4 2019/09/06 08:44:21 patrick Exp $	*/
+/*	$OpenBSD: mvclock.c,v 1.5 2019/10/07 19:28:43 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -247,6 +247,7 @@ cp110_enable(void *cookie, uint32_t *cells, int on)
 /* Armada 3700 Periph block */
 
 #define PERIPH_NB_MMC			0x0
+#define PERIPH_NB_SQF			0x7
 #define PERIPH_NB_I2C2			0x9
 #define PERIPH_NB_I2C1			0xa
 #define PERIPH_SB_GBE1_CORE		0x7
@@ -277,6 +278,8 @@ a3700_periph_nb_enable(void *cookie, uint32_t *cells, int on)
 	switch (idx) {
 	case PERIPH_NB_MMC:
 		return a3700_periph_enable(sc, 2, on);
+	case PERIPH_NB_SQF:
+		return a3700_periph_enable(sc, 12, on);
 	case PERIPH_NB_I2C2:
 		return a3700_periph_enable(sc, 16, on);
 	case PERIPH_NB_I2C1:
@@ -300,6 +303,11 @@ a3700_periph_nb_get_frequency(void *cookie, uint32_t *cells)
 		freq = a3700_periph_tbg_get_frequency(sc, 0);
 		freq /= a3700_periph_get_double_div(sc,
 		    PERIPH_DIV_SEL2, 16, 13);
+		return freq;
+	case PERIPH_NB_SQF:
+		freq = a3700_periph_tbg_get_frequency(sc, 12);
+		freq /= a3700_periph_get_double_div(sc,
+		    PERIPH_DIV_SEL1, 27, 24);
 		return freq;
 	default:
 		break;
