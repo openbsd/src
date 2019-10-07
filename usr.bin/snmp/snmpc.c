@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.13 2019/10/03 11:02:26 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.14 2019/10/07 07:39:50 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -128,6 +128,7 @@ main(int argc, char *argv[])
 	if (argc <= 1)
 		usage();
 
+	optstr[0] = '\0';
 	for (i = 0; i < sizeof(snmp_apps)/sizeof(*snmp_apps); i++) {
 		if (strcmp(snmp_apps[i].name, argv[1]) == 0) {
 			snmp_app = &snmp_apps[i];
