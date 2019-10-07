@@ -1,4 +1,4 @@
-/*	$OpenBSD: octmmc.c,v 1.13 2019/01/13 16:45:44 visa Exp $	*/
+/*	$OpenBSD: octmmc.c,v 1.14 2019/10/07 22:40:35 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Visa Hankala
@@ -965,7 +965,7 @@ octmmc_get_response(struct octmmc_softc *sc, struct sdmmc_command *cmd)
 }
 
 int
-octmmc_wait_intr(struct octmmc_softc *sc, uint64_t mask, int timeout)
+octmmc_wait_intr(struct octmmc_softc *sc, uint64_t mask, int secs)
 {
 	MUTEX_ASSERT_LOCKED(&sc->sc_intr_mtx);
 
@@ -973,8 +973,8 @@ octmmc_wait_intr(struct octmmc_softc *sc, uint64_t mask, int timeout)
 
 	sc->sc_intr_status = 0;
 	while ((sc->sc_intr_status & mask) == 0) {
-		if (msleep(&sc->sc_intr_status, &sc->sc_intr_mtx, PWAIT,
-		    "hcintr", timeout * hz) == EWOULDBLOCK)
+		if (msleep_nsec(&sc->sc_intr_status, &sc->sc_intr_mtx, PWAIT,
+		    "hcintr", SEC_TO_NSEC(secs)) == EWOULDBLOCK)
 			return ETIMEDOUT;
 	}
 	return 0;
