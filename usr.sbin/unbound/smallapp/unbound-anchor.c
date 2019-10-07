@@ -116,6 +116,7 @@
  */
 
 #include <err.h>
+#include <libgen.h>
 #include <unistd.h>
 
 #include "config.h"
@@ -2284,7 +2285,8 @@ int main(int argc, char* argv[])
 	const char* res_conf = NULL;
 	const char* root_hints = NULL;
 	const char* debugconf = NULL;
-	char* root_anchor_tempfile;
+	char* root_anchor_temppath;
+	char* s;
 	int dolist=0, ip4only=0, ip6only=0, force=0, port = HTTPS_PORT;
 	int res_conf_fallback = 0;
 	/* parse the options */
@@ -2370,16 +2372,16 @@ int main(int argc, char* argv[])
 
 	if(dolist) do_list_builtin();
 
-	if (asprintf(&root_anchor_tempfile, "%s.%d-0", root_anchor_file,
-	    getpid()) == -1) {
+	s = strdup(root_anchor_file);
+	if (s == NULL ||
+	    asprintf(&root_anchor_temppath, "%s", dirname(s)) == -1) {
 		if(verb) printf("out of memory\n");
 		exit(0);
 	}
-
-	if (unveil(root_anchor_file, "rwc") == -1)
+	if (unveil(root_anchor_temppath, "rwc") == -1)
 		err(1, "unveil");
-	if (unveil(root_anchor_tempfile, "rwc") == -1)
-		err(1, "unveil");
+	free(root_anchor_temppath);
+	free(s);
 	if (unveil(root_cert_file, "r") == -1)
 		err(1, "unveil");
 	if (res_conf != NULL && unveil(res_conf, "r") == -1)
