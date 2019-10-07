@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.182 2019/09/10 07:39:39 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.183 2019/10/07 10:47:08 mpi Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1528,7 +1528,7 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 
 	/* block if quiesced */
 	while (sc->quiesce)
-		tsleep(&sc->quiesce, 0, "au_qrd", 0);
+		tsleep_nsec(&sc->quiesce, 0, "au_qrd", INFSLP);
 
 	/* start automatically if audio_ioc_start() was never called */
 	if (audio_canstart(sc)) {
@@ -1590,7 +1590,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 
 	/* block if quiesced */
 	while (sc->quiesce)
-		tsleep(&sc->quiesce, 0, "au_qwr", 0);
+		tsleep_nsec(&sc->quiesce, 0, "au_qwr", INFSLP);
 
 	/*
 	 * if IO_NDELAY flag is set then check if there is enough room
@@ -1679,7 +1679,7 @@ audio_ioctl(struct audio_softc *sc, unsigned long cmd, void *addr)
 
 	/* block if quiesced */
 	while (sc->quiesce)
-		tsleep(&sc->quiesce, 0, "au_qio", 0);
+		tsleep_nsec(&sc->quiesce, 0, "au_qio", INFSLP);
 
 	switch (cmd) {
 	case FIONBIO:
@@ -1815,7 +1815,7 @@ audio_ioctl_mixer(struct audio_softc *sc, unsigned long cmd, void *addr,
 {
 	/* block if quiesced */
 	while (sc->quiesce)
-		tsleep(&sc->quiesce, 0, "mix_qio", 0);
+		tsleep_nsec(&sc->quiesce, 0, "mix_qio", INFSLP);
 
 	switch (cmd) {
 	case FIONBIO:
