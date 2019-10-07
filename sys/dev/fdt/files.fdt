@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.97 2019/10/07 19:30:12 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.98 2019/10/07 19:35:07 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -240,6 +240,11 @@ device	dwpcie: pcibus
 attach	dwpcie at fdt
 file	dev/fdt/dwpcie.c		dwpcie
 
+define	spi {}
+device	moxtet
+attach	moxtet at spi
+file	dev/fdt/moxtet.c		moxtet
+
 device	mvclock
 attach	mvclock at fdt
 file	dev/fdt/mvclock.c		mvclock
@@ -284,7 +289,6 @@ device	mvrtc
 attach	mvrtc at fdt
 file	dev/fdt/mvrtc.c			mvrtc
 
-define	spi {}
 device	mvspi: spi
 attach	mvspi at fdt
 file	dev/fdt/mvspi.c			mvspi
