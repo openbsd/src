@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.14 2019/09/29 13:04:03 kettenis Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.15 2019/10/07 00:40:04 jmatthew Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -870,12 +870,13 @@ dwxe_tx_proc(struct dwxe_softc *sc)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct dwxe_desc *txd;
 	struct dwxe_buf *txb;
-	int idx;
+	int idx, txfree;
 
 	bus_dmamap_sync(sc->sc_dmat, DWXE_DMA_MAP(sc->sc_txring), 0,
 	    DWXE_DMA_LEN(sc->sc_txring),
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
+	txfree = 0;
 	while (sc->sc_tx_cnt > 0) {
 		idx = sc->sc_tx_cons;
 		KASSERT(idx < DWXE_NTXDESC);
@@ -894,8 +895,7 @@ dwxe_tx_proc(struct dwxe_softc *sc)
 			txb->tb_m = NULL;
 		}
 
-		ifq_clr_oactive(&ifp->if_snd);
-
+		txfree++;
 		sc->sc_tx_cnt--;
 
 		if (sc->sc_tx_cons == (DWXE_NTXDESC - 1))
@@ -908,6 +908,11 @@ dwxe_tx_proc(struct dwxe_softc *sc)
 
 	if (sc->sc_tx_cnt == 0)
 		ifp->if_timer = 0;
+
+	if (txfree) {
+		if (ifq_is_oactive(&ifp->if_snd))
+			ifq_restart(&ifp->if_snd);
+	}
 }
 
 void
