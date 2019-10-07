@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.103 2019/09/09 20:00:27 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.104 2019/10/07 18:55:20 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -133,6 +133,8 @@ usb*		at dwctwo?
 # Amlogic SoCs
 amlclock*	at fdt? early 1
 amldwusb*	at fdt?
+amliic*		at fdt?
+iic*		at amliic?
 amlmmc*		at fdt?
 sdmmc*		at amlmmc?
 amlpciephy*	at fdt?
@@ -272,10 +274,11 @@ uk*		at scsibus?
 
 # I2C devices
 abcrtc*		at iic?			# Abracon x80x RTC
+fusbtc*		at iic?			# USB Type-C controller
 islrtc*		at iic?			# ISL1208 RTC
 mcprtc*		at iic?			# MCP794XX RTC
+pcxrtc*		at iic?			# PCF8563 RTC
 rkpmic*		at iic?			# RK808 PMIC
-fusbtc*		at iic?			# USB Type-C controller
 
 pseudo-device	loop 1
 pseudo-device	vlan

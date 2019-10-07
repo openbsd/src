@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.126 2019/09/30 20:48:15 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.127 2019/10/07 18:55:20 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -144,6 +144,8 @@ usb*		at dwctwo?
 # Amlogic SoCs
 amlclock*	at fdt? early 1
 amldwusb*	at fdt?
+amliic*		at fdt?
+iic*		at amliic?
 amlmmc*		at fdt?
 sdmmc*		at amlmmc?
 amlpciephy*	at fdt?
@@ -367,12 +369,13 @@ uk*		at scsibus?
 # I2C devices
 abcrtc*		at iic?			# Abracon x80x RTC
 fanpwr*		at iic?			# FAN53555 regulator
+fusbtc*		at iic?			# USB Type-C controller
 ipmi*		at iic?			# IPMI (SIIF)
 islrtc*		at iic?			# ISL1208 RTC
 mcprtc*		at iic?			# MCP794XX RTC
+pcxrtc*		at iic?			# PCF8563 RTC
 rkpmic*		at iic?			# RK808 PMIC
 sypwr*		at iic?			# SY8106A regulator
-fusbtc*		at iic?			# USB Type-C controller
 
 # GPIO "pin bus" drivers
 gpioiic*	at gpio?		# I2C bus bit-banging
