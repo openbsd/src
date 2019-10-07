@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.108 2019/04/01 06:40:05 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.109 2019/10/07 17:44:45 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -1325,7 +1325,7 @@ main(int argc, char **argv)
 	argc -= optind;
 
 	if (worker) {
-		int conffd;
+		int conffd = -1;
 
 		/* rewind "--" argument */
 		argv--;
@@ -1350,6 +1350,8 @@ main(int argc, char **argv)
 				break;
 			}
 		}
+		if (conffd == -1)
+			logerr("never received conffd");
 		argv += optind;
 		argc -= optind;
 		if (argc)
