@@ -1,4 +1,4 @@
-.\"	$OpenBSD: octpcie.4,v 1.1 2019/09/07 14:00:32 visa Exp $
+.\"	$OpenBSD: octpcie.4,v 1.2 2019/10/07 14:59:59 visa Exp $
 .\"
 .\" Copyright (c) 2019 Visa Hankala
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 7 2019 $
+.Dd $Mdocdate: October 7 2019 $
 .Dt OCTPCIE 4 octeon
 .Os
 .Sh NAME
@@ -36,8 +36,6 @@ bus.
 .It "octpcie0 port N: link timeout"
 The PCIe link did not establish.
 This happens if the PCIe slot is empty.
-.It "octpcie0 port N: not in host mode"
-The PCIe port is not in host mode and is ignored by the driver.
 .It "octpcie0 port N: reset timeout"
 The PCIe port failed to reset.
 This can happen if the PCIe port has not been wired.
