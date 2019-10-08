@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.99 2019/10/06 15:08:54 kn Exp $	 */
+/* $OpenBSD: machine.c,v 1.100 2019/10/08 20:51:03 kn Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -237,15 +237,12 @@ machine_init(struct statics *statics)
 }
 
 char *
-format_header(char *second_field, int show_threads)
+format_header(char *second_field)
 {
 	char *field_name, *thread_field = "     TID";
 	char *ptr;
 
-	if (show_threads)
-		field_name = thread_field;
-	else
-		field_name = second_field;
+	field_name = second_field ? second_field : thread_field;
 
 	ptr = header + UNAME_START;
 	while (*field_name != '\0')
@@ -547,7 +544,7 @@ format_comm(struct kinfo_proc *kp)
 
 char *
 format_next_process(struct handle *hndl, const char *(*get_userid)(uid_t, int),
-    pid_t *pid, int show_threads)
+    pid_t *pid)
 {
 	char *p_wait;
 	struct kinfo_proc *pp;
@@ -569,7 +566,7 @@ format_next_process(struct handle *hndl, const char *(*get_userid)(uid_t, int),
 	else
 		p_wait = "-";
 
-	if (show_threads)
+	if (get_userid == NULL)
 		snprintf(buf, sizeof(buf), "%8d", pp->p_tid);
 	else
 		snprintf(buf, sizeof(buf), "%s", (*get_userid)(pp->p_ruid, 0));

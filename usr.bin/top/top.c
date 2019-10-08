@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.100 2019/10/08 07:26:59 kn Exp $	*/
+/*	$OpenBSD: top.c,v 1.101 2019/10/08 20:51:03 kn Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -531,7 +531,7 @@ restart:
 		i_message();
 
 		/* get the string to use for the process area header */
-		header_text = format_header(uname_field, ps.threads);
+		header_text = format_header(ps.threads ? NULL : uname_field);
 
 		/* update the header area */
 		i_header(header_text);
@@ -562,8 +562,8 @@ restart:
 				pid_t pid;
 				char * s;
 
-				s = format_next_process(processes, get_userid,
-				    &pid, ps.threads);
+				s = format_next_process(processes,
+				    ps.threads ? NULL : get_userid, &pid);
 				i_process(i, s, pid == hlpid);
 			}
 		}
