@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.21 2017/03/15 04:24:14 deraadt Exp $	 */
+/* $OpenBSD: screen.c,v 1.22 2019/10/08 07:26:59 kn Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -46,17 +46,17 @@
 #include <stdlib.h>
 #include <term.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "top.h"
 #include "screen.h"
 #include "layout.h"
-#include "boolean.h"
 
 int	screen_length, screen_width;
 char	ch_erase, ch_kill, smart_terminal;
 
 static struct termios old_settings, new_settings;
-static char is_a_terminal = No;
+static char is_a_terminal = false;
 
 void
 init_termcap(int interactive)
@@ -70,11 +70,11 @@ init_termcap(int interactive)
 
 	if (!interactive) {
 		/* pretend we have a dumb terminal */
-		smart_terminal = No;
+		smart_terminal = false;
 		return;
 	}
 	/* assume we have a smart terminal until proven otherwise */
-	smart_terminal = Yes;
+	smart_terminal = true;
 
 	/* get the terminal name */
 	term_name = getenv("TERM");
@@ -82,7 +82,7 @@ init_termcap(int interactive)
 	/* if there is no TERM, assume it's a dumb terminal */
 	/* patch courtesy of Sam Horrocks at telegraph.ics.uci.edu */
 	if (term_name == NULL) {
-		smart_terminal = No;
+		smart_terminal = false;
 		return;
 	}
 
@@ -94,13 +94,13 @@ init_termcap(int interactive)
 			warnx("no termcap entry for a `%s' terminal", term_name);
 
 		/* pretend it's dumb and proceed */
-		smart_terminal = No;
+		smart_terminal = false;
 		return;
 	}
 
 	/* "hardcopy" immediately indicates a very stupid terminal */
 	if (tgetflag("hc")) {
-		smart_terminal = No;
+		smart_terminal = false;
 		return;
 	}
 
@@ -118,7 +118,7 @@ init_termcap(int interactive)
 
 	/* get necessary capabilities */
 	if (tgetstr("cl", NULL) == NULL || tgetstr("cm", NULL) == NULL) {
-		smart_terminal = No;
+		smart_terminal = false;
 		return;
 	}
 
@@ -131,7 +131,7 @@ init_termcap(int interactive)
 
 	/* if stdout is not a terminal, pretend we are a dumb terminal */
 	if (tcgetattr(STDOUT_FILENO, &old_settings) == -1)
-		smart_terminal = No;
+		smart_terminal = false;
 }
 
 void
@@ -152,7 +152,7 @@ init_screen(void)
 		ch_erase = old_settings.c_cc[VERASE];
 		ch_kill = old_settings.c_cc[VKILL];
 
-		is_a_terminal = Yes;
+		is_a_terminal = true;
 #if 0
 		/* send the termcap initialization string */
 		putcap(terminal_init);
@@ -160,7 +160,7 @@ init_screen(void)
 	}
 	if (!is_a_terminal) {
 		/* not a terminal at all---consider it dumb */
-		smart_terminal = No;
+		smart_terminal = false;
 	}
 
 	if (smart_terminal)

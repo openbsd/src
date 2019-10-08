@@ -1,4 +1,4 @@
-/* $OpenBSD: commands.c,v 1.32 2017/03/15 04:24:14 deraadt Exp $	 */
+/* $OpenBSD: commands.c,v 1.33 2019/10/08 07:26:59 kn Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -46,10 +46,10 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <stdbool.h>
 
 #include "top.h"
 
-#include "boolean.h"
 #include "utils.h"
 #include "machine.h"
 
@@ -158,7 +158,7 @@ static char    *err_listem =
 static char *
 err_string(void)
 {
-	int cnt = 0, first = Yes, currerr = -1;
+	int cnt = 0, first = true, currerr = -1;
 	static char string[STRMAX];
 	struct errs *errp;
 
@@ -186,13 +186,13 @@ err_string(void)
 				(void) strlcat(string, "; ", sizeof string);
 			}
 			currerr = errp->err;
-			first = Yes;
+			first = true;
 		}
 		if (str_addarg(string, sizeof string, errp->arg, first) >=
 		    sizeof string)
 			return (err_listem);
 
-		first = No;
+		first = false;
 	}
 
 	/* add final message */

@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.59 2019/07/03 03:24:02 deraadt Exp $	 */
+/* $OpenBSD: display.c,v 1.60 2019/10/08 07:26:59 kn Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -57,12 +57,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "screen.h"		/* interface to screen package */
 #include "layout.h"		/* defines for screen position layout */
 #include "display.h"
 #include "top.h"
-#include "boolean.h"
 #include "machine.h"		/* we should eliminate this!!! */
 #include "utils.h"
 
@@ -104,7 +104,7 @@ extern int ncpuonline;
 extern int combine_cpus;
 extern struct process_select ps;
 
-int header_status = Yes;
+int header_status = true;
 
 static int
 empty(void)
@@ -309,10 +309,7 @@ i_procstates(int total, int *states, int threads)
 		move(1, 0);
 		clrtoeol();
 		/* write current number of procs and remember the value */
-		if (threads == Yes)
-			printwp("%d threads: ", total);
-		else
-			printwp("%d processes: ", total);
+		printwp("%d %s: ", total, threads ? "threads" : "processes");
 
 		/* format and print the process state summary */
 		summary_format(procstates_buffer, sizeof(procstates_buffer),
@@ -518,7 +515,7 @@ i_message(void)
 void
 i_header(char *text)
 {
-	if (header_status == Yes && (screen_length > y_header
+	if (header_status && (screen_length > y_header
               || !smart_terminal)) {
 		if (!smart_terminal) {
 			putn();
