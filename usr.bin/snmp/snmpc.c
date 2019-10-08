@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.14 2019/10/07 07:39:50 bluhm Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.15 2019/10/08 08:41:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -52,7 +52,8 @@ int snmpc_mibtree(int, char *[]);
 struct snmp_agent *snmpc_connect(char *, char *);
 int snmpc_parseagent(char *, char *);
 int snmpc_print(struct ber_element *);
-__dead void snmpc_printerror(enum snmp_error, char *);
+__dead void snmpc_printerror(enum snmp_error, struct ber_element *, int,
+    const char *);
 char *snmpc_hex2bin(char *, size_t *);
 struct ber_element *snmpc_varbindparse(int, char *[]);
 void usage(void);
@@ -481,6 +482,7 @@ snmpc_get(int argc, char *argv[])
 	int i;
 	int class;
 	unsigned type;
+	char *hint = NULL;
 
 	if (argc < 2)
 		usage();
@@ -520,9 +522,12 @@ snmpc_get(int argc, char *argv[])
 
 	(void) ber_scanf_elements(pdu, "t{Sdd{e", &class, &type, &errorstatus,
 	    &errorindex, &varbind);
-	if (errorstatus != 0)
-		snmpc_printerror((enum snmp_error) errorstatus,
-		    argv[errorindex - 1]);
+	if (errorstatus != 0) {
+		if (errorindex >= 1 && errorindex <= argc)
+			hint = argv[errorindex - 1];
+		snmpc_printerror((enum snmp_error) errorstatus, varbind,
+		    errorindex, hint);
+	}
 
 	if (class == BER_CLASS_CONTEXT && type == SNMP_C_REPORT)
 		printf("Received report:\n");
@@ -543,7 +548,6 @@ snmpc_walk(int argc, char *argv[])
 	struct timespec start, finish;
 	struct snmp_agent *agent;
 	const char *oids;
-	char oidstr[SNMP_MAX_OID_STRLEN];
 	int n = 0, prev_cmp;
 	int errorstatus, errorindex;
 	int class;
@@ -575,8 +579,8 @@ snmpc_walk(int argc, char *argv[])
 		(void) ber_scanf_elements(pdu, "t{Sdd{e", &class, &type,
 		    &errorstatus, &errorindex, &varbind);
 		if (errorstatus != 0)
-			snmpc_printerror((enum snmp_error) errorstatus,
-			    argv[errorindex - 1]);
+			snmpc_printerror((enum snmp_error) errorstatus, varbind,
+			    errorindex, oids);
 
 		if (class == BER_CLASS_CONTEXT && type == SNMP_C_REPORT)
 			printf("Received report:\n");
@@ -601,9 +605,8 @@ snmpc_walk(int argc, char *argv[])
 		(void) ber_scanf_elements(pdu, "t{Sdd{e", &class, &type,
 		    &errorstatus, &errorindex, &varbind);
 		if (errorstatus != 0) {
-			smi_oid2string(&noid, oidstr, sizeof(oidstr),
-			    oid_lookup);
-			snmpc_printerror((enum snmp_error) errorstatus, oidstr);
+			snmpc_printerror((enum snmp_error) errorstatus, varbind,
+			    errorindex, NULL);
 		}
 
 		if (class == BER_CLASS_CONTEXT && type == SNMP_C_REPORT)
@@ -640,8 +643,8 @@ snmpc_walk(int argc, char *argv[])
 		(void) ber_scanf_elements(pdu, "t{Sdd{e", &class, &type,
 		    &errorstatus, &errorindex, &varbind);
 		if (errorstatus != 0)
-			snmpc_printerror((enum snmp_error) errorstatus,
-			    argv[errorindex - 1]);
+			snmpc_printerror((enum snmp_error) errorstatus, varbind,
+			    errorindex, oids);
 
 		if (class == BER_CLASS_CONTEXT && type == SNMP_C_REPORT)
 			printf("Received report:\n");
@@ -677,6 +680,7 @@ snmpc_set(int argc, char *argv[])
 	int errorstatus, errorindex;
 	int class;
 	unsigned type;
+	char *hint = NULL;
 
 	if (argc < 4)
 		usage();
@@ -688,13 +692,17 @@ snmpc_set(int argc, char *argv[])
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	pdu = snmp_set(agent, snmpc_varbindparse(argc, argv));
+	if ((pdu = snmp_set(agent, snmpc_varbindparse(argc, argv))) == NULL)
+		err(1, "set");
 
 	(void) ber_scanf_elements(pdu, "t{Sdd{e", &class, &type, &errorstatus,
 	    &errorindex, &varbind);
-	if (errorstatus != 0)
-		snmpc_printerror((enum snmp_error) errorstatus,
-		    argv[errorindex - 1]);
+	if (errorstatus != 0) {
+		if (errorindex >= 1 && errorindex <= argc / 3)
+			hint = argv[(errorindex - 1) * 3];
+		snmpc_printerror((enum snmp_error) errorstatus, varbind,
+		    errorindex, hint);
+	}
 
 	if (class == BER_CLASS_CONTEXT && type == SNMP_C_REPORT)
 		printf("Received report:\n");
@@ -806,8 +814,34 @@ snmpc_print(struct ber_element *elm)
 }
 
 __dead void
-snmpc_printerror(enum snmp_error error, char *oid)
+snmpc_printerror(enum snmp_error error, struct ber_element *varbind,
+    int index, const char *hint)
 {
+	struct ber_oid hoid, vboid;
+	char oids[SNMP_MAX_OID_STRLEN];
+	const char *oid = NULL;
+	int i;
+
+	if (index >= 1) {
+		/* Only print if the index is in the reply */
+		for (i = 1; varbind != NULL && i <= index;
+		    varbind = varbind->be_next)
+			i++;
+		if (varbind != NULL &&
+		    ber_get_oid(varbind->be_sub, &vboid) == 0) {
+			/* If user and reply conform print user input */
+			if (hint != NULL &&
+			    smi_string2oid(hint, &hoid) == 0 &&
+			    ber_oid_cmp(&hoid, &vboid) == 0)
+				oid = hint;
+			else
+				oid = smi_oid2string(&vboid, oids,
+				    sizeof(oids), oid_lookup);
+		}
+	}
+	if (oid == NULL)
+		oid = "?";
+
 	switch (error) {
 	case SNMP_ERROR_NONE:
 		errx(1, "No error, how did I get here?");
