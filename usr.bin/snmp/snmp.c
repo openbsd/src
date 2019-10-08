@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.7 2019/10/03 11:02:26 martijn Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.8 2019/10/08 10:00:42 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -259,6 +259,7 @@ snmp_set(struct snmp_agent *agent, struct ber_element *vblist)
 	if (ber_printf_elements(pdu, "tddd{e", BER_CLASS_CONTEXT,
 	    SNMP_C_SETREQ, arc4random() & 0x7fffffff, 0, 0, vblist) == NULL) {
 		ber_free_elements(pdu);
+		ber_free_elements(vblist);
 		return NULL;
 	}
 
@@ -428,8 +429,10 @@ snmp_package(struct snmp_agent *agent, struct ber_element *pdu, size_t *len)
 		if (ber_printf_elements(message, "d{idxd}xe",
 		    agent->version, msgid, UDP_MAXPACKET, &(agent->v3->level),
 		    (size_t) 1, agent->v3->sec->model, securityparams,
-		    securitysize, scopedpdu) == NULL)
+		    securitysize, scopedpdu) == NULL) {
+			ber_free_elements(scopedpdu);
 			goto fail;
+		}
 		if (ber_scanf_elements(message, "{SSe", &secparams) == -1)
 			goto fail;
 		ber_set_writecallback(secparams, snmp_v3_secparamsoffset,
