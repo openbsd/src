@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.4 2019/06/19 16:30:37 deraadt Exp $ */
+/*	$OpenBSD: validate.c,v 1.5 2019/10/08 10:04:36 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -234,7 +234,7 @@ valid_cert(const char *fn, const struct auth *auths,
  * the IP prefix is also contained.
  * Returns zero if not valid, non-zero if valid.
  */
-int
+ssize_t
 valid_roa(const char *fn, const struct auth *auths,
     size_t authsz, const struct roa *roa)
 {
@@ -244,7 +244,7 @@ valid_roa(const char *fn, const struct auth *auths,
 
 	c = valid_ski_aki(fn, auths, authsz, roa->ski, roa->aki);
 	if (c < 0)
-		return 0;
+		return -1;
 
 	for (i = 0; i < roa->ipsz; i++) {
 		pp = valid_ip(c, roa->ips[i].afi, roa->ips[i].min,
@@ -256,8 +256,8 @@ valid_roa(const char *fn, const struct auth *auths,
 		warnx("%s: RFC 6482: uncovered IP: "
 		    "%s", fn, buf);
 		tracewarn(c, auths, authsz);
-		return 0;
+		return -1;
 	}
 
-	return 1;
+	return c;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.6 2019/06/20 15:26:49 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.7 2019/10/08 10:04:36 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -18,6 +18,7 @@
 #include <netinet/in.h>
 #include <assert.h>
 #include <err.h>
+#include <libgen.h>
 #include <resolv.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -183,12 +184,27 @@ tal_parse(const char *fn)
 {
 	FILE		*f;
 	struct tal	*p;
+	char		*d;
+	size_t		 dlen;
 
 	if ((f = fopen(fn, "r")) == NULL)
 		err(EXIT_FAILURE, "%s: open", fn);
 
 	p = tal_parse_stream(fn, f);
 	fclose(f);
+
+	/* extract the TAL basename (without .tal suffix) */
+	d = basename(fn);
+	if (d == NULL)
+		err(EXIT_FAILURE, "%s: basename", fn);
+	dlen = strlen(d);
+	if (strcasecmp(d + dlen - 4, ".tal") == 0)
+		dlen -= 4;
+	if ((p->descr = malloc(dlen + 1)) == NULL)
+		err(EXIT_FAILURE, NULL);
+	memcpy(p->descr, d, dlen);
+	p->descr[dlen] = 0;
+
 	return p;
 }
 
@@ -210,6 +226,7 @@ tal_free(struct tal *p)
 
 	free(p->pkey);
 	free(p->uri);
+	free(p->descr);
 	free(p);
 }
 
@@ -223,6 +240,7 @@ tal_buffer(char **b, size_t *bsz, size_t *bmax, const struct tal *p)
 	size_t	 i;
 
 	io_buf_buffer(b, bsz, bmax, p->pkey, p->pkeysz);
+	io_str_buffer(b, bsz, bmax, p->descr);
 	io_simple_buffer(b, bsz, bmax, &p->urisz, sizeof(size_t));
 
 	for (i = 0; i < p->urisz; i++)
@@ -245,6 +263,7 @@ tal_read(int fd)
 
 	io_buf_read_alloc(fd, (void **)&p->pkey, &p->pkeysz);
 	assert(p->pkeysz > 0);
+	io_str_read(fd, &p->descr);
 	io_simple_read(fd, &p->urisz, sizeof(size_t));
 	assert(p->urisz > 0);
 
@@ -256,4 +275,3 @@ tal_read(int fd)
 
 	return p;
 }
-

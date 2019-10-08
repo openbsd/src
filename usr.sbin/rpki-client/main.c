@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 2019/09/26 17:07:30 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.18 2019/10/08 10:04:36 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -62,6 +62,8 @@ struct	stats {
 	size_t	 roas_invalid; /* invalid resources */
 	size_t	 repos; /* repositories */
 	size_t	 crls; /* revocation lists */
+	size_t	 vrps; /* total number of vrps */
+	size_t	 uniqs; /* number of unique vrps */
 };
 
 /*
@@ -107,6 +109,8 @@ struct	entity {
 	int		 has_pkey; /* whether pkey/sz is specified */
 	unsigned char	*pkey; /* public key (optional) */
 	size_t		 pkeysz; /* public key length (optional) */
+	int		 has_descr; /* whether descr is specified */
+	char		*descr; /* tal description */
 	TAILQ_ENTRY(entity) entries;
 };
 
@@ -162,6 +166,7 @@ entity_free(struct entity *ent)
 
 	free(ent->pkey);
 	free(ent->uri);
+	free(ent->descr);
 	free(ent);
 }
 
@@ -183,6 +188,9 @@ entity_read_req(int fd, struct entity *ent)
 	io_simple_read(fd, &ent->has_pkey, sizeof(int));
 	if (ent->has_pkey)
 		io_buf_read_alloc(fd, (void **)&ent->pkey, &ent->pkeysz);
+	io_simple_read(fd, &ent->has_descr, sizeof(int));
+	if (ent->has_descr)
+		io_str_read(fd, &ent->descr);
 }
 
 /*
@@ -283,6 +291,9 @@ entity_buffer_req(char **b, size_t *bsz, size_t *bmax,
 	io_simple_buffer(b, bsz, bmax, &ent->has_pkey, sizeof(int));
 	if (ent->has_pkey)
 		io_buf_buffer(b, bsz, bmax, ent->pkey, ent->pkeysz);
+	io_simple_buffer(b, bsz, bmax, &ent->has_descr, sizeof(int));
+	if (ent->has_descr)
+		io_str_buffer(b, bsz, bmax, ent->descr);
 }
 
 /*
@@ -322,7 +333,7 @@ entityq_flush(int fd, struct entityq *q, const struct repo *repo)
 static void
 entityq_add(int fd, struct entityq *q, char *file, enum rtype type,
     const struct repo *rp, const unsigned char *dgst,
-    const unsigned char *pkey, size_t pkeysz, size_t *eid)
+    const unsigned char *pkey, size_t pkeysz, char *descr, size_t *eid)
 {
 	struct entity	*p;
 
@@ -335,6 +346,7 @@ entityq_add(int fd, struct entityq *q, char *file, enum rtype type,
 	p->repo = (rp != NULL) ? (ssize_t)rp->id : -1;
 	p->has_dgst = dgst != NULL;
 	p->has_pkey = pkey != NULL;
+	p->has_descr = descr != NULL;
 	if (p->has_dgst)
 		memcpy(p->dgst, dgst, sizeof(p->dgst));
 	if (p->has_pkey) {
@@ -343,6 +355,10 @@ entityq_add(int fd, struct entityq *q, char *file, enum rtype type,
 			err(EXIT_FAILURE, "malloc");
 		memcpy(p->pkey, pkey, pkeysz);
 	}
+	if (p->has_descr)
+		if ((p->descr = strdup(descr)) == NULL)
+			err(EXIT_FAILURE, "strdup");
+
 	TAILQ_INSERT_TAIL(q, p, entries);
 
 	/*
@@ -387,7 +403,7 @@ queue_add_from_mft(int fd, struct entityq *q, const char *mft,
 	 * that the repository has already been loaded.
 	 */
 
-	entityq_add(fd, q, nfile, type, NULL, file->hash, NULL, 0, eid);
+	entityq_add(fd, q, nfile, type, NULL, file->hash, NULL, 0, NULL, eid);
 }
 
 /*
@@ -446,7 +462,7 @@ queue_add_tal(int fd, struct entityq *q, const char *file, size_t *eid)
 
 	/* Not in a repository, so directly add to queue. */
 
-	entityq_add(fd, q, nfile, RTYPE_TAL, NULL, NULL, NULL, 0, eid);
+	entityq_add(fd, q, nfile, RTYPE_TAL, NULL, NULL, NULL, 0, NULL, eid);
 }
 
 /*
@@ -475,7 +491,7 @@ queue_add_from_tal(int proc, int rsync, struct entityq *q,
 		err(EXIT_FAILURE, "asprintf");
 
 	entityq_add(proc, q, nfile, RTYPE_CER, repo, NULL, tal->pkey,
-	    tal->pkeysz, eid);
+	    tal->pkeysz, tal->descr, eid);
 }
 
 /*
@@ -503,7 +519,7 @@ queue_add_from_cert(int proc, int rsync, struct entityq *q,
 	    BASE_DIR, repo->host, repo->module, uri) == -1)
 		err(EXIT_FAILURE, "asprintf");
 
-	entityq_add(proc, q, nfile, type, repo, NULL, NULL, 0, eid);
+	entityq_add(proc, q, nfile, type, repo, NULL, NULL, 0, NULL, eid);
 }
 
 static void
@@ -749,6 +765,7 @@ proc_parser_roa(struct entity *entp, int norev,
 	int			 c;
 	X509_VERIFY_PARAM	*param;
 	unsigned int		fl, nfl;
+	ssize_t			aidx;
 
 	assert(entp->has_dgst);
 	if ((roa = roa_parse(&x509, entp->uri, entp->dgst)) == NULL)
@@ -785,7 +802,12 @@ proc_parser_roa(struct entity *entp, int norev,
 	 * the code around roa_read() to check the "valid" field itself.
 	 */
 
-	roa->valid = valid_roa(entp->uri, auths, authsz, roa);
+	aidx = valid_roa(entp->uri, auths, authsz, roa);
+	if (aidx != -1) {
+		roa->valid = 1;
+		if ((roa->tal = strdup(auths[aidx].tal)) == NULL)
+			err(EXIT_FAILURE, NULL);
+	}
 	return roa;
 }
 
@@ -856,6 +878,7 @@ proc_parser_cert(const struct entity *entp, int norev,
 	X509_VERIFY_PARAM	*param;
 	unsigned int		 fl, nfl;
 	ssize_t			 id;
+	char			*tal;
 
 	assert(!entp->has_dgst != !entp->has_pkey);
 
@@ -922,10 +945,16 @@ proc_parser_cert(const struct entity *entp, int norev,
 	*auths = reallocarray(*auths, *authsz + 1, sizeof(struct auth));
 	if (*auths == NULL)
 		err(EXIT_FAILURE, NULL);
+	if (entp->has_pkey) {
+		if ((tal = strdup(entp->descr)) == NULL)
+			err(EXIT_FAILURE, NULL);
+	} else
+		tal = (*auths)[id].tal;
 
 	(*auths)[*authsz].id = *authsz;
 	(*auths)[*authsz].parent = id;
 	(*auths)[*authsz].cert = cert;
+	(*auths)[*authsz].tal = tal;
 	(*auths)[*authsz].fn = strdup(entp->uri);
 	if ((*auths)[*authsz].fn == NULL)
 		err(EXIT_FAILURE, NULL);
@@ -1148,6 +1177,8 @@ out:
 
 	for (i = 0; i < authsz; i++) {
 		free(auths[i].fn);
+		if (i == auths[i].parent)
+			free(auths[i].tal);
 		cert_free(auths[i].cert);
 	}
 
@@ -1174,7 +1205,7 @@ out:
 static void
 entity_process(int proc, int rsync, struct stats *st,
     struct entityq *q, const struct entity *ent, struct repotab *rt,
-    size_t *eid, struct roa ***out, size_t *outsz)
+    size_t *eid, struct vrp_tree *tree)
 {
 	struct tal	*tal;
 	struct cert	*cert;
@@ -1245,18 +1276,11 @@ entity_process(int proc, int rsync, struct stats *st,
 			break;
 		}
 		roa = roa_read(proc);
-		if (roa->valid) {
-			*out = reallocarray(*out,
-			    *outsz + 1, sizeof(struct roa *));
-			if (*out == NULL)
-				err(EXIT_FAILURE, "reallocarray");
-			(*out)[*outsz] = roa;
-			(*outsz)++;
-			/* We roa_free() on exit. */
-		} else {
+		if (roa->valid)
+			roa_insert_vrps(tree, roa, &st->vrps, &st->uniqs);
+		else
 			st->roas_invalid++;
-			roa_free(roa);
-		}
+		roa_free(roa);
 		break;
 	default:
 		abort();
@@ -1296,8 +1320,8 @@ main(int argc, char *argv[])
 {
 	int		 rc = 0, c, proc, st, rsync,
 			 fl = SOCK_STREAM | SOCK_CLOEXEC, noop = 0,
-			 force = 0, norev = 0;
-	size_t		 i, j, eid = 1, outsz = 0, talsz = 0, vrps, uniqs;
+			 force = 0, norev = 0, jsonout = 0;
+	size_t		 i, j, eid = 1, outsz = 0, talsz = 0;
 	pid_t		 procpid, rsyncpid;
 	int		 fd[2];
 	struct entityq	 q;
@@ -1310,11 +1334,12 @@ main(int argc, char *argv[])
 	const char	*bind_addr = NULL;
 	const char	*tals[TALSZ_MAX];
 	FILE		*output = NULL;
+	struct vrp_tree	 v = RB_INITIALIZER(&v);
 
 	if (pledge("stdio rpath wpath cpath proc exec unveil", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
-	while ((c = getopt(argc, argv, "b:e:fnrt:v")) != -1)
+	while ((c = getopt(argc, argv, "b:e:fjnrt:v")) != -1)
 		switch (c) {
 		case 'b':
 			bind_addr = optarg;
@@ -1324,6 +1349,9 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			force = 1;
+			break;
+		case 'j':
+			jsonout = 1;
 			break;
 		case 'n':
 			noop = 1;
@@ -1487,7 +1515,7 @@ main(int argc, char *argv[])
 		if ((pfd[1].revents & POLLIN)) {
 			ent = entityq_next(proc, &q);
 			entity_process(proc, rsync, &stats,
-			    &q, ent, &rt, &eid, &out, &outsz);
+			    &q, ent, &rt, &eid, &v);
 			if (verbose > 1)
 				fprintf(stderr, "%s\n", ent->uri);
 			entity_free(ent);
@@ -1520,10 +1548,11 @@ main(int argc, char *argv[])
 		rc = 0;
 	}
 
-	/* Output and statistics. */
+	if (jsonout)
+		output_json(output, &v);
+	else
+		output_bgpd(output, &v);
 
-	output_bgpd(output, (const struct roa **)out,
-	    outsz, &vrps, &uniqs);
 	logx("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)",
 	    stats.roas, stats.roas_fail, stats.roas_invalid);
 	logx("Certificates: %zu (%zu failed parse, %zu invalid)",
@@ -1533,7 +1562,7 @@ main(int argc, char *argv[])
 	    stats.mfts, stats.mfts_fail, stats.mfts_stale);
 	logx("Certificate revocation lists: %zu", stats.crls);
 	logx("Repositories: %zu", stats.repos);
-	logx("VRP Entries: %zu (%zu unique)", vrps, uniqs);
+	logx("VRP Entries: %zu (%zu unique)", stats.vrps, stats.uniqs);
 
 	/* Memory cleanup. */
 
