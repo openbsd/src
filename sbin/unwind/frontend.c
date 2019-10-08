@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.26 2019/10/06 09:25:21 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.27 2019/10/08 15:50:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -700,7 +700,7 @@ udp_receive(int fd, short events, void *arg)
 	queryp += 4;
 	rem_len -= 4;
 
-	if ((pq = malloc(sizeof(*pq))) == NULL) {
+	if ((pq = calloc(1, sizeof(*pq))) == NULL) {
 		log_warn(NULL);
 		return;
 	}
