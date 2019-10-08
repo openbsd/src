@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.33 2016/05/29 11:00:37 mglocker Exp $	*/
+/*	$OpenBSD: smu.c,v 1.34 2019/10/08 13:21:38 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -508,7 +508,7 @@ smu_intr(void *arg)
 }
 
 int
-smu_do_cmd(struct smu_softc *sc, int timo)
+smu_do_cmd(struct smu_softc *sc, int msecs)
 {
 	struct smu_cmd *cmd = (struct smu_cmd *)sc->sc_cmd;
 	u_int8_t gpio, ack = ~cmd->cmd;
@@ -525,7 +525,7 @@ smu_do_cmd(struct smu_softc *sc, int timo)
 	bus_space_write_1(sc->sc_memt, sc->sc_gpioh, 0, GPIO_DDR_OUTPUT);
 
 	do {
-		error = tsleep(sc, PWAIT, "smu", (timo * hz) / 1000);
+		error = tsleep_nsec(sc, PWAIT, "smu", MSEC_TO_NSEC(msecs));
 		if (error)
 			return (error);
 		gpio = bus_space_read_1(sc->sc_memt, sc->sc_gpioh, 0);

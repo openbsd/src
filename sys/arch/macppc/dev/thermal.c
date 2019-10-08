@@ -1,4 +1,4 @@
-/*	$OpenBSD: thermal.c,v 1.5 2016/07/29 04:41:53 jsg Exp $ */
+/*	$OpenBSD: thermal.c,v 1.6 2019/10/08 13:21:38 cheloha Exp $ */
 
 /*-
  * Copyright (c) 2009-2011 Nathan Whitehorn
@@ -91,7 +91,7 @@ thermal_thread_loop(void *arg)
 {
 	while (thermal_enable) {
 		thermal_manage_fans();
-		tsleep(&thermal_enable, 0, "thermal", hz);
+		tsleep_nsec(&thermal_enable, 0, "thermal", SEC_TO_NSEC(1));
 	}
 	kthread_exit(0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mediabay.c,v 1.6 2013/11/18 20:21:51 deraadt Exp $	*/
+/*	$OpenBSD: mediabay.c,v 1.7 2019/10/08 13:21:38 cheloha Exp $	*/
 /*	$NetBSD: mediabay.c,v 1.9 2003/07/15 02:43:29 lukem Exp $	*/
 
 /*-
@@ -235,10 +235,10 @@ mediabay_kthread(v)
 	u_int x, fcr;
 
 sleep:
-	tsleep(&sc->sc_kthread, PRIBIO, "mbayev", 0);
+	tsleep_nsec(&sc->sc_kthread, PRIBIO, "mbayev", INFSLP);
 
 	/* sleep 0.25 sec */
-	tsleep(mediabay_kthread, PRIBIO, "mbayev", hz/4);
+	tsleep_nsec(mediabay_kthread, PRIBIO, "mbayev", MSEC_TO_NSEC(250));
 
 	DPRINTF("%s: ", sc->sc_dev.dv_xname);
 	x = in32rb(sc->sc_addr);
