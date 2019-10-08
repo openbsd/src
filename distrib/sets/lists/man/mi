@@ -1487,6 +1487,7 @@
 ./usr/share/man/man4/imxgpio.4
 ./usr/share/man/man4/imxiic.4
 ./usr/share/man/man4/imxrtc.4
+./usr/share/man/man4/imxspi.4
 ./usr/share/man/man4/imxsrc.4
 ./usr/share/man/man4/imxtmu.4
 ./usr/share/man/man4/imxuart.4
@@ -1644,6 +1645,7 @@
 ./usr/share/man/man4/mvpinctrl.4
 ./usr/share/man/man4/mvrng.4
 ./usr/share/man/man4/mvrtc.4
+./usr/share/man/man4/mvspi.4
 ./usr/share/man/man4/mvtemp.4
 ./usr/share/man/man4/mvuart.4
 ./usr/share/man/man4/myx.4
@@ -1899,6 +1901,7 @@
 ./usr/share/man/man4/speaker.4
 ./usr/share/man/man4/sppp.4
 ./usr/share/man/man4/sqphy.4
+./usr/share/man/man4/ssdfb.4
 ./usr/share/man/man4/st.4
 ./usr/share/man/man4/ste.4
 ./usr/share/man/man4/stge.4
