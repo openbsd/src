@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.S,v 1.19 2019/01/24 00:00:00 deraadt Exp $	*/
+/*	$OpenBSD: mptramp.S,v 1.20 2019/10/08 16:58:09 mlarkin Exp $	*/
 /*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -170,6 +170,9 @@ _TRMP_LABEL(.Lmp_startup)
 
 	movl	$.Lmptramp_gdt64_desc,%eax
 	lgdt	(%eax)
+
+	xorw	%ax, %ax
+	movw	%ax, %fs
 
 	movl	$.Lmptramp_jmp64,%eax
 
