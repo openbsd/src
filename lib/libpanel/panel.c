@@ -1,4 +1,4 @@
-/* $OpenBSD: panel.c,v 1.10 2010/01/12 23:22:08 nicm Exp $ */
+/* $OpenBSD: panel.c,v 1.11 2019/10/08 17:52:37 deraadt Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998-2004,2005 Free Software Foundation, Inc.              *
@@ -36,7 +36,7 @@
 /* panel.c -- implementation of panels library, some core routines */
 #include "panel.priv.h"
 
-MODULE_ID("$Id: panel.c,v 1.10 2010/01/12 23:22:08 nicm Exp $")
+MODULE_ID("$Id: panel.c,v 1.11 2019/10/08 17:52:37 deraadt Exp $")
 
 /*+-------------------------------------------------------------------------
 	_nc_retrace_panel (pan)
@@ -61,9 +61,9 @@ _nc_my_visbuf(const void *ptr)
   char temp[32];
 
   if (ptr != 0)
-    sprintf(temp, "ptr:%p", ptr);
+    snprintf(temp, sizeof temp, "ptr:%p", ptr);
   else
-    strcpy(temp, "<null>");
+    strlcpy(temp, "<null>", sizeof temp);
   return _nc_visbuf(temp);
 }
 #endif
@@ -93,7 +93,7 @@ _nc_dStack(const char *fmt, int num, const PANEL * pan)
 {
   char s80[80];
 
-  sprintf(s80, fmt, num, pan);
+  snprintf(s80, sizeof s80, fmt, num, pan);
   _tracef("%s b=%s t=%s", s80,
 	  (_nc_bottom_panel) ? USER_PTR(_nc_bottom_panel->user) : "--",
 	  (_nc_top_panel) ? USER_PTR(_nc_top_panel->user) : "--");
@@ -141,7 +141,7 @@ _nc_Touchline(const PANEL * pan, int start, int count)
 {
   char s80[80];
 
-  sprintf(s80, "Touchline s=%d c=%d", start, count);
+  snprintf(s80, sizeof s80, "Touchline s=%d c=%d", start, count);
   dPanel(s80, pan);
   touchline(pan->win, start, count);
 }
