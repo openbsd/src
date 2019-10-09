@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_oaep.c,v 1.31 2019/10/04 16:51:31 jsing Exp $ */
+/* $OpenBSD: rsa_oaep.c,v 1.32 2019/10/09 16:17:59 jsing Exp $ */
 /*
  * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -72,10 +72,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <openssl/opensslconf.h>
-
-#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
 
 #include <openssl/bn.h>
 #include <openssl/err.h>
@@ -177,7 +173,7 @@ RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
 	const unsigned char *maskeddb;
 	int lzero;
 	unsigned char *db = NULL;
-	unsigned char seed[SHA_DIGEST_LENGTH], phash[SHA_DIGEST_LENGTH];
+	unsigned char seed[EVP_MAX_MD_SIZE], phash[EVP_MAX_MD_SIZE];
 	unsigned char *padded_from;
 	int bad = 0;
 	int mdlen;
@@ -312,4 +308,3 @@ PKCS1_MGF1(unsigned char *mask, long len, const unsigned char *seed,
 	EVP_MD_CTX_cleanup(&c);
 	return rv;
 }
-#endif
