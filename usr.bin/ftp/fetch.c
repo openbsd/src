@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.171 2019/10/05 20:54:20 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.172 2019/10/09 16:43:22 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -186,6 +186,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 	char *hosttail, *cause = "unknown", *newline, *host, *port, *buf = NULL;
 	char *epath, *redirurl, *loctail, *h, *p;
 	int error, i, isftpurl = 0, isfileurl = 0, isredirect = 0, rval = -1;
+	int isunavail = 0, retryafter = -1;
 	struct addrinfo hints, *res0, *res;
 	const char * volatile savefile;
 	char * volatile proxyurl = NULL;
@@ -823,14 +824,8 @@ noslash:
 		goto cleanup_url_get;
 #endif /* !SMALL */
 	case 503:
-		if (retried++) {
-			warnx("Error retrieving file: %s", cp);
-			goto cleanup_url_get;
-		}
-		if (verbose)
-			fprintf(ttyout, "Retrying %s\n", origline);
-		rval = url_get(origline, proxyenv, savefile, lastfile);
-		goto cleanup_url_get;
+		isunavail = 1;
+		break;
 	default:
 		warnx("Error retrieving file: %s", cp);
 		goto cleanup_url_get;
@@ -935,8 +930,30 @@ noslash:
 			rval = url_get(redirurl, proxyenv, savefile, lastfile);
 			free(redirurl);
 			goto cleanup_url_get;
+#define RETRYAFTER "Retry-After: "
+		} else if (isunavail &&
+		    strncasecmp(cp, RETRYAFTER, sizeof(RETRYAFTER) - 1) == 0) {
+			size_t s;
+			cp += sizeof(RETRYAFTER) - 1;
+			if ((s = strcspn(cp, " \t")))
+				cp[s] = '\0';
+			retryafter = strtonum(cp, 0, 0, &errstr);
+			if (errstr != NULL)
+				retryafter = -1;
 		}
 		free(buf);
+	}
+
+	if (isunavail) {
+		if (retried || retryafter != 0)
+			warnx("Error retrieving file: 503 Service Unavailable");
+		else {
+			if (verbose)
+				fprintf(ttyout, "Retrying %s\n", origline);
+			retried = 1;
+			rval = url_get(origline, proxyenv, savefile, lastfile);
+		}
+		goto cleanup_url_get;
 	}
 
 	/* Open the output file.  */
