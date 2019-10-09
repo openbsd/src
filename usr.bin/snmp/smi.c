@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.3 2019/08/11 15:52:46 deraadt Exp $	*/
+/*	$OpenBSD: smi.c,v 1.4 2019/10/09 05:44:06 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -243,7 +243,7 @@ smi_print_element(struct ber_element *root, int print_hint,
 	size_t		 len, i;
 	long long	 v, ticks;
 	int		 d;
-	int		 is_hex = 0;
+	int		 is_hex = 0, ret;
 	struct ber_oid	 o;
 	char		 strbuf[BUFSIZ];
 	char		*hint;
@@ -381,12 +381,15 @@ smi_print_element(struct ber_element *root, int print_hint,
 			 * hex is 3 * n (2 digits + n - 1 spaces + NUL-byte)
 			 * ascii can be max (2 * n) + 2 quotes + NUL-byte
 			 */
-			if ((p = str = reallocarray(NULL,
-			    output_string == smi_os_hex ? 3 : 2,
-			    root->be_len + 2)) == NULL)
+			len = output_string == smi_os_hex ? 3 : 2;
+			p = str = reallocarray(NULL, root->be_len + 2, len);
+			if (p == NULL)
 				goto fail;
-			if (is_hex)
+			len *= root->be_len + 2;
+			if (is_hex) {
 				*str++ = '"';
+				len--;
+			}
 			for (i = 0; i < root->be_len; i++) {
 				switch (output_string) {
 				case smi_os_default:
@@ -396,20 +399,34 @@ smi_print_element(struct ber_element *root, int print_hint,
 					 * There's probably more edgecases here,
 					 * not fully investigated
 					 */
-					if (is_hex && buf[i] == '\\')
+					if (len < 2)
+						goto fail;
+					if (is_hex && buf[i] == '\\') {
 						*str++ = '\\';
+						len--;
+					}
 					*str++ = isprint(buf[i]) ? buf[i] : '.';
+					len--;
 					break;
 				case smi_os_hex:
-					sprintf(str, "%s%02hhX",
+					ret = snprintf(str, len, "%s%02hhX",
 					    i == 0 ? "" :
 					    i % 16 == 0 ? "\n" : " ", buf[i]);
-					str += i == 0 ? 2 : 3;
+					if (ret == -1 || ret > (int) len)
+						goto fail;
+					len -= ret;
+					str += ret;
 					break;
 				}
 			}
-			if (is_hex)
+			if (is_hex) {
+				if (len < 2)
+					goto fail;
 				*str++ = '"';
+				len--;
+			}
+			if (len == 0)
+				goto fail;
 			*str = '\0';
 			str = NULL;
 			if (asprintf(&str, "%s%s",
