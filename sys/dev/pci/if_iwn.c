@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.218 2019/09/30 01:53:05 dlg Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.219 2019/10/09 09:21:45 tobhe Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2017,6 +2017,7 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
 	struct ieee80211_channel *bss_chan = NULL;
+	uint8_t saved_bssid[IEEE80211_ADDR_LEN] = { 0 };
 	struct mbuf *m, *m1;
 	struct iwn_rx_stat *stat;
 	caddr_t head;
@@ -2183,8 +2184,14 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		chan = IEEE80211_CHAN_MAX;
 
 	/* Fix current channel. */
-	if (ni == ic->ic_bss)
+	if (ni == ic->ic_bss) {
+		/*
+		 * We may switch ic_bss's channel during scans.
+		 * Record the current channel so we can restore it later.
+		 */
 		bss_chan = ni->ni_chan;
+		IEEE80211_ADDR_COPY(&saved_bssid, ni->ni_macaddr);
+	}
 	ni->ni_chan = &ic->ic_channels[chan];
 
 #if NBPFILTER > 0
@@ -2236,8 +2243,11 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	rxi.rxi_tstamp = 0;	/* unused */
 	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 
-	/* Restore BSS channel. */
-	if (ni == ic->ic_bss)
+	/*
+	 * ieee80211_inputm() might have changed our BSS.
+	 * Restore ic_bss's channel if we are still in the same BSS.
+	 */
+	if (ni == ic->ic_bss && IEEE80211_ADDR_EQ(saved_bssid, ni->ni_macaddr))
 		ni->ni_chan = bss_chan;
 
 	/* Node is no longer needed. */
