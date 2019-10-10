@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.246 2019/07/31 15:58:00 jcs Exp $ */
+/* $OpenBSD: dsdt.c,v 1.247 2019/10/10 04:04:33 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -3086,7 +3086,7 @@ aml_disasm(struct aml_scope *scope, int lvl,
 		strlcpy(mch, aml_nodename(rv->node), sizeof(mch));
 		if (rv->type == AML_OBJTYPE_METHOD) {
 			strlcat(mch, "(", sizeof(mch));
-			for (ival=0; 
+			for (ival=0;
 			    ival < AML_METHOD_ARGCOUNT(rv->v_method.flags);
 			    ival++) {
 				strlcat(mch, ival ? ", %z" : "%z",
