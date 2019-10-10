@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.247 2019/10/10 04:04:33 mlarkin Exp $ */
+/* $OpenBSD: dsdt.c,v 1.248 2019/10/10 04:09:04 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -4037,13 +4037,9 @@ aml_parse(struct aml_scope *scope, int ret_type, const char *stype)
 	case AMLOP_INDEX:
 		/* Index: tir => ObjRef */
 		idx = opargs[1]->v_integer;
-		if (idx >= opargs[0]->length || idx < 0) {
-#ifndef SMALL_KERNEL
-			aml_showvalue(opargs[0]);
-#endif
-			aml_die("Index out of bounds %d/%d\n", idx,
-			    opargs[0]->length);
-		}
+		/* Reading past the end of the array? - Ignore */
+		if (idx >= opargs[0]->length || idx < 0)
+			break;
 		switch (opargs[0]->type) {
 		case AML_OBJTYPE_PACKAGE:
 			/* Don't set opargs[0] to NULL */
