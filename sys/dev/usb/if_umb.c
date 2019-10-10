@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.27 2019/10/03 07:32:19 claudio Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.28 2019/10/10 09:56:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -1708,7 +1708,8 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 	 * IPv4 configuation
 	 */
 	avail = letoh32(ic->ipv4_available);
-	if (avail & MBIM_IPCONF_HAS_ADDRINFO) {
+	if ((avail & (MBIM_IPCONF_HAS_ADDRINFO | MBIM_IPCONF_HAS_GWINFO)) ==
+	    (MBIM_IPCONF_HAS_ADDRINFO | MBIM_IPCONF_HAS_GWINFO)) {
 		n = letoh32(ic->ipv4_naddr);
 		off = letoh32(ic->ipv4_addroffs);
 
@@ -1723,10 +1724,8 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 		ipv4elem.prefixlen = letoh32(ipv4elem.prefixlen);
 		addr.s_addr = ipv4elem.addr;
 
-		if (avail & MBIM_IPCONF_HAS_GWINFO) {
-			off = letoh32(ic->ipv4_gwoffs);
-			memcpy(&gw, data + off, sizeof(gw));
-		}
+		off = letoh32(ic->ipv4_gwoffs);
+		memcpy(&gw, data + off, sizeof(gw));
 
 		rv = umb_add_inet_config(sc, addr, ipv4elem.prefixlen, gw);
 		if (rv == 0) 
