@@ -1,4 +1,4 @@
-/*	$OpenBSD: fw_cfg.c,v 1.1 2018/12/10 21:30:33 claudio Exp $	*/
+/*	$OpenBSD: fw_cfg.c,v 1.2 2019/10/11 15:25:40 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
  *
@@ -368,7 +368,7 @@ fw_cfg_add_file(const char *name, const void *data, size_t len)
 	if (fw_cfg_lookup_file(name))
 		fatalx("%s: fw_cfg: file %s exists", __progname, name);
 
-	if ((f = calloc(sizeof(f), 1)) == NULL)
+	if ((f = calloc(sizeof(*f), 1)) == NULL)
 		fatal("%s", __func__);
 
 	if ((f->data = malloc(len)) == NULL)
