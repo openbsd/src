@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_dwctwo.c,v 1.2 2017/02/22 04:39:30 jsg Exp $	*/
+/*	$OpenBSD: bcm2835_dwctwo.c,v 1.3 2019/10/11 15:12:43 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
  *
@@ -102,6 +102,7 @@ bcm_dwctwo_attach(struct device *parent, struct device *self, void *aux)
 	struct bcm_dwctwo_softc *sc = (struct bcm_dwctwo_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	extern int physmem;
+	int idx;
 
 	printf("\n");
 
@@ -121,7 +122,11 @@ bcm_dwctwo_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[0].size, 0, &sc->sc_dwc2.sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
-	sc->sc_ih = arm_intr_establish_fdt_idx(faa->fa_node, 1, IPL_USB,
+	idx = OF_getindex(faa->fa_node, "usb", "interrupt-names");
+	if (idx == -1)
+		idx = 1;
+
+	sc->sc_ih = arm_intr_establish_fdt_idx(faa->fa_node, idx, IPL_USB,
 	    dwc2_intr, (void *)&sc->sc_dwc2, sc->sc_dwc2.sc_bus.bdev.dv_xname);
 	if (sc->sc_ih == NULL)
 		panic("%s: intr_establish failed!", __func__);
