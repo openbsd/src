@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.4 2019/10/09 05:44:06 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.5 2019/10/11 14:48:30 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -240,7 +240,7 @@ smi_print_element(struct ber_element *root, int print_hint,
     enum smi_output_string output_string, enum smi_oid_lookup lookup)
 {
 	char		*str = NULL, *buf, *p;
-	size_t		 len, i;
+	size_t		 len, i, slen;
 	long long	 v, ticks;
 	int		 d;
 	int		 is_hex = 0, ret;
@@ -335,11 +335,12 @@ smi_print_element(struct ber_element *root, int print_hint,
 	case BER_TYPE_BITSTRING:
 		if (ber_get_bitstring(root, (void *)&buf, &len) == -1)
 			goto fail;
-		if ((str = calloc(1, len * 2 + 1 + sizeof("BITS: "))) == NULL)
+		slen = len * 2 + 1 + sizeof("BITS: ");
+		if ((str = calloc(1, slen)) == NULL)
 			goto fail;
 		p = str;
 		if (print_hint) {
-			strlcpy(str, "BITS: ", sizeof(str));
+			strlcpy(str, "BITS: ", slen);
 			p += sizeof("BITS: ");
 		}
 		for (i = 0; i < len; i++) {
