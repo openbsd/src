@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.211 2019/10/06 16:11:17 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.212 2019/10/11 15:20:36 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1750,7 +1750,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		 * measured RSSI. Some 5GHz APs send beacons with much
 		 * less Tx power than they use for probe responses.
 		 */
-		 if (isprobe)
+		if (isprobe || ni->ni_rssi == 0)
 			ni->ni_rssi = rxi->rxi_rssi;
 		else if (ni->ni_rssi < rxi->rxi_rssi)
 			ni->ni_rssi = rxi->rxi_rssi;
