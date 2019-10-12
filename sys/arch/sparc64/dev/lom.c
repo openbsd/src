@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.26 2017/10/05 22:40:08 bluhm Exp $	*/
+/*	$OpenBSD: lom.c,v 1.27 2019/10/12 15:55:31 cheloha Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -431,7 +431,7 @@ lom1_read(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 	lc.lc_data = 0xff;
 	lom1_queue_cmd(sc, &lc);
 
-	error = tsleep(&lc, PZERO, "lomrd", hz);
+	error = tsleep_nsec(&lc, PZERO, "lomrd", SEC_TO_NSEC(1));
 	if (error)
 		lom_dequeue_cmd(sc, &lc);
 
@@ -453,7 +453,7 @@ lom1_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 	lc.lc_data = val;
 	lom1_queue_cmd(sc, &lc);
 
-	error = tsleep(&lc, PZERO, "lomwr", 2 * hz);
+	error = tsleep_nsec(&lc, PZERO, "lomwr", SEC_TO_NSEC(2));
 	if (error)
 		lom_dequeue_cmd(sc, &lc);
 
@@ -619,7 +619,7 @@ lom2_read(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 	lc.lc_data = 0xff;
 	lom2_queue_cmd(sc, &lc);
 
-	error = tsleep(&lc, PZERO, "lom2rd", hz);
+	error = tsleep_nsec(&lc, PZERO, "lom2rd", SEC_TO_NSEC(1));
 	if (error)
 		lom_dequeue_cmd(sc, &lc);
 
@@ -673,7 +673,7 @@ lom2_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 	lc.lc_data = val;
 	lom2_queue_cmd(sc, &lc);
 
-	error = tsleep(&lc, PZERO, "lom2wr", hz);
+	error = tsleep_nsec(&lc, PZERO, "lom2wr", SEC_TO_NSEC(1));
 	if (error)
 		lom_dequeue_cmd(sc, &lc);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.17 2018/03/22 11:24:27 stsp Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.18 2019/10/12 15:55:31 cheloha Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -398,7 +398,7 @@ retry:
 	if (rx_head == rx_tail) {
 		cbus_intr_setenabled(sc->sc_bustag, sc->sc_rx_ino,
 		    INTR_ENABLED);
-		ret = tsleep(lc->lc_rxq, PWAIT | PCATCH, "hvrd", 0);
+		ret = tsleep_nsec(lc->lc_rxq, PWAIT | PCATCH, "hvrd", INFSLP);
 		if (ret) {
 			splx(s);
 			device_unref(&sc->sc_dv);
@@ -464,7 +464,7 @@ retry:
 	if (tx_head == next_tx_tail) {
 		cbus_intr_setenabled(sc->sc_bustag, sc->sc_tx_ino,
 		    INTR_ENABLED);
-		ret = tsleep(lc->lc_txq, PWAIT | PCATCH, "hvwr", 0);
+		ret = tsleep_nsec(lc->lc_txq, PWAIT | PCATCH, "hvwr", INFSLP);
 		if (ret) {
 			splx(s);
 			device_unref(&sc->sc_dv);

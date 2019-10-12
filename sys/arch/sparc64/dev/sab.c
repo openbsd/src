@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.36 2019/07/19 00:17:15 cheloha Exp $	*/
+/*	$OpenBSD: sab.c,v 1.37 2019/10/12 15:55:31 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -750,7 +750,7 @@ sabttyopen(dev, flags, mode, p)
 
 		if (tp->t_cflag & HUPCL) {
 			sabtty_mdmctrl(sc, 0, DMSET);
-			(void)tsleep(sc, TTIPRI, ttclos, hz);
+			tsleep_nsec(sc, TTIPRI, ttclos, SEC_TO_NSEC(1));
 		}
 
 		if ((sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) == 0) {
@@ -782,14 +782,14 @@ sabttyclose(dev, flags, mode, p)
 		sc->sc_imr1 &= ~SAB_IMR1_ALLS;
 		SAB_WRITE(sc, SAB_IMR1, sc->sc_imr1);
 		sc->sc_flags |= SABTTYF_TXDRAIN;
-		(void)tsleep(sc, TTIPRI, ttclos, 5 * hz);
+		tsleep_nsec(sc, TTIPRI, ttclos, SEC_TO_NSEC(5));
 		sc->sc_imr1 |= SAB_IMR1_ALLS;
 		SAB_WRITE(sc, SAB_IMR1, sc->sc_imr1);
 		sc->sc_flags &= ~SABTTYF_TXDRAIN;
 
 		if (tp->t_cflag & HUPCL) {
 			sabtty_mdmctrl(sc, 0, DMSET);
-			(void)tsleep(bc, TTIPRI, ttclos, hz);
+			tsleep_nsec(bc, TTIPRI, ttclos, SEC_TO_NSEC(1));
 		}
 
 		if ((sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) == 0) {
