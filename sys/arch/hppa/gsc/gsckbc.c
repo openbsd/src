@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbc.c,v 1.19 2015/05/24 10:57:47 miod Exp $	*/
+/*	$OpenBSD: gsckbc.c,v 1.20 2019/10/12 15:53:24 cheloha Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -936,7 +936,7 @@ pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
 	if (IS_POLLING(q))
 		res = (sync ? nc->status : 0);
 	else if (sync) {
-		if ((res = tsleep(nc, 0, "kbccmd", 1*hz))) {
+		if ((res = tsleep_nsec(nc, 0, "kbccmd", SEC_TO_NSEC(1)))) {
 			TAILQ_REMOVE(&q->cmdqueue, nc, next);
 			pckbc_cleanup(t);
 		} else

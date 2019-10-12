@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.9 2014/07/13 09:09:16 miod Exp $	*/
+/*	$OpenBSD: power.c,v 1.10 2019/10/12 15:53:24 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -157,7 +157,7 @@ power_thread_dr(void *v)
 		if (sc->sc_dr_cnt == hz / 10)
 			prsignal(initprocess, SIGUSR2);
 
-		tsleep(v, PWAIT, "drpower", 10);
+		tsleep_nsec(v, PWAIT, "drpower", MSEC_TO_NSEC(100));
 	}
 }
 
@@ -174,7 +174,7 @@ power_thread_reg(void *v)
 		if (!(r & 1))
 			prsignal(initprocess, SIGUSR2);
 
-		tsleep(v, PWAIT, "regpower", 10);
+		tsleep_nsec(v, PWAIT, "regpower", MSEC_TO_NSEC(100));
 	}
 }
 
