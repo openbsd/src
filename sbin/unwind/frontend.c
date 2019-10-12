@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.28 2019/10/12 14:55:37 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.29 2019/10/12 14:56:58 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -89,6 +89,7 @@ __dead void		 frontend_shutdown(void);
 void			 frontend_sig_handler(int, short, void *);
 void			 frontend_startup(void);
 void			 udp_receive(int, short, void *);
+int			 check_query(sldns_buffer*);
 void			 send_answer(struct pending_query *, uint8_t *,
 			     ssize_t);
 void			 route_receive(int, short, void *);
@@ -644,10 +645,11 @@ udp_receive(int fd, short events, void *arg)
 {
 	struct udp_ev		*udpev = (struct udp_ev *)arg;
 	struct pending_query	*pq;
-	struct query_imsg	*query_imsg;
+	struct query_imsg	*query_imsg = NULL;
 	struct query_info	 qinfo;
 	struct bl_node		 find;
 	ssize_t			 len, dname_len;
+	int			 ret;
 	char			*str_from, *str;
 	char			 dname[LDNS_MAX_DOMAINLEN + 1];
 
@@ -680,17 +682,6 @@ udp_receive(int fd, short events, void *arg)
 	sldns_buffer_write(pq->qbuf, udpev->query, len);
 	sldns_buffer_flip(pq->qbuf);
 
-	if (!query_info_parse(&qinfo, pq->qbuf)) {
-		log_warnx("%s: FORMERROR", __func__);
-		sldns_buffer_free(pq->qbuf);
-		pq->qbuf = NULL; /* XXX formerr */
-	}
-	dname_len = dname_valid(qinfo.qname, qinfo.qname_len);
-	dname_str(qinfo.qname, dname);
-
-	log_debug("%s: query_info_parse, qname_len: %ld dname[%ld]: %s",
-	    __func__, qinfo.qname_len, dname_len, dname);
-
 	str_from = ip_port((struct sockaddr *)&udpev->from);
 	log_debug("query from %s", str_from);
 	if ((str = sldns_wire2str_pkt(udpev->query, len)) != NULL) {
@@ -698,43 +689,132 @@ udp_receive(int fd, short events, void *arg)
 		free(str);
 	}
 
+	if ((ret = check_query(pq->qbuf)) != LDNS_RCODE_NOERROR) {
+		if (ret == -1)
+			goto drop;
+		else
+			pq->rcode_override = ret;
+			goto send_answer;
+	}
+
+	if (!query_info_parse(&qinfo, pq->qbuf)) {
+		pq->rcode_override = LDNS_RCODE_FORMERR;
+		goto send_answer;
+	}
+
+	if ((dname_len = dname_valid(qinfo.qname, qinfo.qname_len)) == 0) {
+		pq->rcode_override = LDNS_RCODE_FORMERR;
+		goto send_answer;
+	}
+	dname_str(qinfo.qname, dname);
+
+	log_debug("%s: query_info_parse, qname_len: %ld dname[%ld]: %s",
+	    __func__, qinfo.qname_len, dname_len, dname);
+
 	find.domain = dname;
 	if (RB_FIND(bl_tree, &bl_head, &find) != NULL) {
 		pq->rcode_override = LDNS_RCODE_REFUSED;
-		TAILQ_INSERT_TAIL(&pending_queries, pq, entry);
-		send_answer(pq, NULL, 0);
-		return;
+		goto send_answer;
+	}
+
+	if (qinfo.qtype == LDNS_RR_TYPE_AXFR || qinfo.qtype ==
+	    LDNS_RR_TYPE_IXFR) {
+		pq->rcode_override = LDNS_RCODE_REFUSED;
+		goto send_answer;
+	}
+
+	if(qinfo.qtype == LDNS_RR_TYPE_OPT ||
+	    qinfo.qtype == LDNS_RR_TYPE_TSIG ||
+	    qinfo.qtype == LDNS_RR_TYPE_TKEY ||
+	    qinfo.qtype == LDNS_RR_TYPE_MAILA ||
+	    qinfo.qtype == LDNS_RR_TYPE_MAILB ||
+	    (qinfo.qtype >= 128 && qinfo.qtype <= 248)) {
+		pq->rcode_override = LDNS_RCODE_FORMERR;
+		goto send_answer;
+	}
+
+	if (qinfo.qclass == LDNS_RR_CLASS_CH) {
+		/* XXX implement version.server / version.bind */
+		pq->rcode_override = LDNS_RCODE_REFUSED;
+		goto send_answer;
 	}
 
 	if ((query_imsg = calloc(1, sizeof(*query_imsg))) == NULL) {
 		log_warn(NULL);
-		return;
+		pq->rcode_override = LDNS_RCODE_SERVFAIL;
+		goto send_answer;
 	}
 
 	if (strlcpy(query_imsg->qname, dname, sizeof(query_imsg->qname)) >=
 	    sizeof(query_imsg->qname)) {
 		log_warnx("qname too long");
-		free(query_imsg);
-		/* XXX SERVFAIL */
-		sldns_buffer_free(pq->qbuf);
-		pq->qbuf = NULL; /* XXX SERVFAIL */
-		free(pq);
-		return;
+		pq->rcode_override = LDNS_RCODE_FORMERR;
+		goto send_answer;
 	}
 	query_imsg->id = pq->imsg_id;
 	query_imsg->t = qinfo.qtype;
 	query_imsg->c = qinfo.qclass;
 
 	if (frontend_imsg_compose_resolver(IMSG_QUERY, 0, query_imsg,
-	    sizeof(*query_imsg)) != -1) {
+	    sizeof(*query_imsg)) != -1)
 		TAILQ_INSERT_TAIL(&pending_queries, pq, entry);
-	} else {
+	else {
+		pq->rcode_override = LDNS_RCODE_SERVFAIL;
+		goto send_answer;
 		free(query_imsg);
-		/* XXX SERVFAIL */
-		sldns_buffer_free(pq->qbuf);
-		pq->qbuf = NULL; /* XXX SERVFAIL */
-		free(pq);
 	}
+	return;
+
+ send_answer:
+	TAILQ_INSERT_TAIL(&pending_queries, pq, entry);
+	send_answer(pq, NULL, 0);
+	pq = NULL;
+ drop:
+	if (pq != NULL)
+		sldns_buffer_free(pq->qbuf);
+	free(pq);
+	free(query_imsg);
+}
+
+int
+check_query(sldns_buffer* pkt)
+{
+	if(sldns_buffer_limit(pkt) < LDNS_HEADER_SIZE) {
+		log_warnx("bad query: too short, dropped");
+		return -1;
+	}
+	if(LDNS_QR_WIRE(sldns_buffer_begin(pkt))) {
+		log_warnx("bad query: QR set, dropped");
+		return -1;
+	}
+	if(LDNS_TC_WIRE(sldns_buffer_begin(pkt))) {
+		LDNS_TC_CLR(sldns_buffer_begin(pkt));
+		log_warnx("bad query: TC set");
+		return (LDNS_RCODE_FORMERR);
+	}
+	if(!(LDNS_RD_WIRE(sldns_buffer_begin(pkt)))) {
+		log_warnx("bad query: RD not set");
+		return (LDNS_RCODE_REFUSED);
+	}
+	if(LDNS_OPCODE_WIRE(sldns_buffer_begin(pkt)) != LDNS_PACKET_QUERY) {
+		log_warnx("bad query: unknown opcode %d",
+		    LDNS_OPCODE_WIRE(sldns_buffer_begin(pkt)));
+		return (LDNS_RCODE_NOTIMPL);
+	}
+
+	if (LDNS_QDCOUNT(sldns_buffer_begin(pkt)) != 1 &&
+	    LDNS_ANCOUNT(sldns_buffer_begin(pkt))!= 0 &&
+	    LDNS_NSCOUNT(sldns_buffer_begin(pkt))!= 0 &&
+	    LDNS_ARCOUNT(sldns_buffer_begin(pkt)) > 1) {
+		log_warnx("bad query: qdcount: %d, ancount: %d "
+		    "nscount: %d, arcount: %d",
+		    LDNS_QDCOUNT(sldns_buffer_begin(pkt)),
+		    LDNS_ANCOUNT(sldns_buffer_begin(pkt)),
+		    LDNS_NSCOUNT(sldns_buffer_begin(pkt)),
+		    LDNS_ARCOUNT(sldns_buffer_begin(pkt)));
+		return (LDNS_RCODE_FORMERR);
+	}
+	return 0;
 }
 
 void
