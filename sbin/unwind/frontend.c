@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.30 2019/10/12 14:58:23 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.31 2019/10/12 14:59:13 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -59,6 +59,16 @@
 
 #define	ROUTE_SOCKET_BUF_SIZE   16384
 
+/*
+ * size of a resource record with name a two octed pointer to qname
+ * 2 octets pointer to qname
+ * 2 octets TYPE
+ * 2 octets CLASS
+ * 4 octets TTL
+ * 2 octets RDLENGTH
+ */
+#define COMPRESSED_RR_SIZE	12
+
 struct udp_ev {
 	struct event		 ev;
 	uint8_t			 query[65536];
@@ -92,6 +102,7 @@ void			 frontend_sig_handler(int, short, void *);
 void			 frontend_startup(void);
 void			 udp_receive(int, short, void *);
 int			 check_query(sldns_buffer*);
+void			 chaos_answer(struct pending_query *);
 void			 send_answer(struct pending_query *);
 void			 route_receive(int, short, void *);
 void			 handle_route_message(struct rt_msghdr *,
@@ -742,8 +753,11 @@ udp_receive(int fd, short events, void *arg)
 	}
 
 	if (qinfo.qclass == LDNS_RR_CLASS_CH) {
-		/* XXX implement version.server / version.bind */
-		pq->rcode_override = LDNS_RCODE_REFUSED;
+		if (strcasecmp(dname, "version.server.") == 0 ||
+		    strcasecmp(dname, "version.bind.") == 0) {
+			chaos_answer(pq);
+		} else
+			pq->rcode_override = LDNS_RCODE_REFUSED;
 		goto send_answer;
 	}
 
@@ -782,6 +796,56 @@ udp_receive(int fd, short events, void *arg)
 		sldns_buffer_free(pq->qbuf);
 	free(pq);
 	free(query_imsg);
+}
+
+void
+chaos_answer(struct pending_query *pq)
+{
+	struct sldns_buffer	 buf, *pkt = &buf;
+	size_t			 size, len;
+	char			*name = "unwind", *str;
+
+	len = strlen(name);
+	size = sldns_buffer_capacity(pq->qbuf) + COMPRESSED_RR_SIZE + 1 + len;
+
+	if ((pq->answer = calloc(1, size)) == NULL)
+		return;
+	pq->answer_len = size;
+	memcpy(pq->answer, sldns_buffer_begin(pq->qbuf),
+	    sldns_buffer_capacity(pq->qbuf));
+	sldns_buffer_init_frm_data(pkt, pq->answer, size);
+
+	sldns_buffer_clear(pkt);
+
+	sldns_buffer_skip(pkt, sizeof(uint16_t));	/* skip id */
+	sldns_buffer_write_u16(pkt, 0);			/* clear flags */
+	LDNS_QR_SET(sldns_buffer_begin(pkt));
+	LDNS_RA_SET(sldns_buffer_begin(pkt));
+	if (LDNS_RD_WIRE(sldns_buffer_begin(pq->qbuf)))
+		LDNS_RD_SET(sldns_buffer_begin(pkt));
+	if (LDNS_CD_WIRE(sldns_buffer_begin(pq->qbuf)))
+		LDNS_CD_SET(sldns_buffer_begin(pkt));
+	LDNS_RCODE_SET(sldns_buffer_begin(pkt), LDNS_RCODE_NOERROR);
+	sldns_buffer_write_u16(pkt, 1);			/* qdcount */
+	sldns_buffer_write_u16(pkt, 1);			/* ancount */
+	sldns_buffer_write_u16(pkt, 0);			/* nscount */
+	sldns_buffer_write_u16(pkt, 0);			/* arcount */
+	(void)query_dname_len(pkt);			/* skip qname */
+	sldns_buffer_skip(pkt, sizeof(uint16_t));	/* skip qtype */
+	sldns_buffer_skip(pkt, sizeof(uint16_t));	/* skip qclass */
+
+	sldns_buffer_write_u16(pkt, 0xc00c);		/* ptr to query */
+	sldns_buffer_write_u16(pkt, LDNS_RR_TYPE_TXT);
+	sldns_buffer_write_u16(pkt, LDNS_RR_CLASS_CH);
+	sldns_buffer_write_u32(pkt, 0);			/* TTL */
+	sldns_buffer_write_u16(pkt, 1 + len);		/* RDLENGTH */
+	sldns_buffer_write_u8(pkt, len);		/* length octed */
+	sldns_buffer_write(pkt, name, len);
+
+	if ((str = sldns_wire2str_pkt(pq->answer, pq->answer_len)) != NULL) {
+		log_debug("%s: %s", __func__, str);
+		free(str);
+	}
 }
 
 int
