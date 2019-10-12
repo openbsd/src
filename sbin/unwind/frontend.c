@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.29 2019/10/12 14:56:58 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.30 2019/10/12 14:58:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -76,6 +76,8 @@ struct pending_query {
 	int				 fd;
 	int				 bogus;
 	int				 rcode_override;
+	ssize_t				 answer_len;
+	uint8_t				*answer;
 };
 
 TAILQ_HEAD(, pending_query)	 pending_queries;
@@ -90,8 +92,7 @@ void			 frontend_sig_handler(int, short, void *);
 void			 frontend_startup(void);
 void			 udp_receive(int, short, void *);
 int			 check_query(sldns_buffer*);
-void			 send_answer(struct pending_query *, uint8_t *,
-			     ssize_t);
+void			 send_answer(struct pending_query *);
 void			 route_receive(int, short, void *);
 void			 handle_route_message(struct rt_msghdr *,
 			     struct sockaddr **);
@@ -509,7 +510,7 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 				break;
 			}
 			if (query_imsg->err) {
-				send_answer(pq, NULL, 0);
+				send_answer(pq);
 				pq = NULL;
 				break;
 			}
@@ -518,7 +519,14 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 		case IMSG_ANSWER:
 			if (pq == NULL)
 				fatalx("IMSG_ANSWER without HEADER");
-			send_answer(pq, imsg.data, IMSG_DATA_SIZE(imsg));
+
+			if ((pq->answer = malloc(IMSG_DATA_SIZE(imsg))) !=
+			    NULL) {
+				pq->answer_len = IMSG_DATA_SIZE(imsg);
+				memcpy(pq->answer, imsg.data, pq->answer_len);
+			} else
+				pq->rcode_override = LDNS_RCODE_SERVFAIL;
+			send_answer(pq);
 			break;
 		case IMSG_RESOLVER_DOWN:
 			log_debug("%s: IMSG_RESOLVER_DOWN", __func__);
@@ -767,7 +775,7 @@ udp_receive(int fd, short events, void *arg)
 
  send_answer:
 	TAILQ_INSERT_TAIL(&pending_queries, pq, entry);
-	send_answer(pq, NULL, 0);
+	send_answer(pq);
 	pq = NULL;
  drop:
 	if (pq != NULL)
@@ -818,9 +826,15 @@ check_query(sldns_buffer* pkt)
 }
 
 void
-send_answer(struct pending_query *pq, uint8_t *answer, ssize_t len)
+send_answer(struct pending_query *pq)
 {
+	ssize_t	 len;
+	uint8_t	*answer;
+
 	log_debug("result for %s", ip_port((struct sockaddr*)&pq->from));
+
+	answer = pq->answer;
+	len = pq->answer_len;
 
 	if (answer == NULL) {
 		answer = sldns_buffer_begin(pq->qbuf);
@@ -858,6 +872,7 @@ send_answer(struct pending_query *pq, uint8_t *answer, ssize_t len)
 
 	TAILQ_REMOVE(&pending_queries, pq, entry);
 	sldns_buffer_free(pq->qbuf);
+	free(pq->answer);
 	free(pq);
 }
 
