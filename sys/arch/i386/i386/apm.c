@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.119 2019/05/22 16:11:21 cheloha Exp $	*/
+/*	$OpenBSD: apm.c,v 1.120 2019/10/12 15:56:17 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -907,7 +907,7 @@ apm_thread(void *v)
 		rw_enter_write(&sc->sc_lock);
 		(void) apm_periodic_check(sc);
 		rw_exit_write(&sc->sc_lock);
-		tsleep(&lbolt, PWAIT, "apmev", 0);
+		tsleep_nsec(&lbolt, PWAIT, "apmev", INFSLP);
 	}
 }
 
