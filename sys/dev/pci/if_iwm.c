@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.252 2019/09/30 01:53:05 dlg Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.253 2019/10/12 07:03:39 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -391,7 +391,7 @@ int	iwm_send_cmd_status(struct iwm_softc *, struct iwm_host_cmd *,
 int	iwm_send_cmd_pdu_status(struct iwm_softc *, uint32_t, uint16_t,
 	    const void *, uint32_t *);
 void	iwm_free_resp(struct iwm_softc *, struct iwm_host_cmd *);
-void	iwm_cmd_done(struct iwm_softc *, struct iwm_rx_packet *);
+void	iwm_cmd_done(struct iwm_softc *, int, int, int);
 void	iwm_update_sched(struct iwm_softc *, int, int, uint8_t, uint16_t);
 const struct iwm_rate *iwm_tx_fill_cmd(struct iwm_softc *, struct iwm_node *,
 	    struct ieee80211_frame *, struct iwm_tx_cmd *);
@@ -4066,16 +4066,16 @@ iwm_free_resp(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 }
 
 void
-iwm_cmd_done(struct iwm_softc *sc, struct iwm_rx_packet *pkt)
+iwm_cmd_done(struct iwm_softc *sc, int qid, int idx, int code)
 {
 	struct iwm_tx_ring *ring = &sc->txq[IWM_CMD_QUEUE];
 	struct iwm_tx_data *data;
 
-	if (pkt->hdr.qid != IWM_CMD_QUEUE) {
+	if (qid != IWM_CMD_QUEUE) {
 		return;	/* Not a command ack. */
 	}
 
-	data = &ring->data[pkt->hdr.idx];
+	data = &ring->data[idx];
 
 	if (data->m != NULL) {
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
@@ -4084,11 +4084,11 @@ iwm_cmd_done(struct iwm_softc *sc, struct iwm_rx_packet *pkt)
 		m_freem(data->m);
 		data->m = NULL;
 	}
-	wakeup(&ring->desc[pkt->hdr.idx]);
+	wakeup(&ring->desc[idx]);
 
 	if (ring->queued == 0) {
 		DPRINTF(("%s: unexpected firmware response to command 0x%x\n",
-		    DEVNAME(sc), IWM_WIDE_ID(pkt->hdr.flags, pkt->hdr.code)));
+		    DEVNAME(sc), code));
 	} else if (--ring->queued == 0) {
 		/* 
 		 * 7000 family NICs are locked while commands are in progress.
@@ -7010,7 +7010,7 @@ iwm_notif_intr(struct iwm_softc *sc)
 		    BUS_DMASYNC_POSTREAD);
 		pkt = mtod(data->m, struct iwm_rx_packet *);
 
-		qid = pkt->hdr.qid & ~0x80;
+		qid = pkt->hdr.qid;
 		idx = pkt->hdr.idx;
 
 		code = IWM_WIDE_ID(pkt->hdr.flags, pkt->hdr.code);
@@ -7019,8 +7019,8 @@ iwm_notif_intr(struct iwm_softc *sc)
 		 * randomly get these from the firmware, no idea why.
 		 * they at least seem harmless, so just ignore them for now
 		 */
-		if (__predict_false((pkt->hdr.code == 0 && qid == 0 && idx == 0)
-		    || pkt->len_n_flags == htole32(0x55550000))) {
+		if (__predict_false((pkt->hdr.code == 0 && (qid & ~0x80) == 0
+		    && idx == 0) || pkt->len_n_flags == htole32(0x55550000))) {
 			ADVANCE_RXQ(sc);
 			continue;
 		}
@@ -7260,8 +7260,8 @@ iwm_notif_intr(struct iwm_softc *sc)
 			handled = 0;
 			printf("%s: unhandled firmware response 0x%x/0x%x "
 			    "rx ring %d[%d]\n",
-			    DEVNAME(sc), pkt->hdr.code, pkt->len_n_flags, qid,
-			    idx);
+			    DEVNAME(sc), code, pkt->len_n_flags,
+			    (qid & ~0x80), idx);
 			break;
 		}
 
@@ -7272,8 +7272,8 @@ iwm_notif_intr(struct iwm_softc *sc)
 		 * For example, uCode issues IWM_REPLY_RX when it sends a
 		 * received frame to the driver.
 		 */
-		if (handled && !(pkt->hdr.qid & (1 << 7))) {
-			iwm_cmd_done(sc, pkt);
+		if (handled && !(qid & (1 << 7))) {
+			iwm_cmd_done(sc, qid, idx, code);
 		}
 
 		ADVANCE_RXQ(sc);
