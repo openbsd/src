@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.14 2019/09/06 13:10:44 kettenis Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.15 2019/10/12 14:05:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
@@ -216,8 +216,10 @@ tsc_get_timecount(struct timecounter *tc)
 void
 tsc_timecounter_init(struct cpu_info *ci, uint64_t cpufreq)
 {
+#ifdef TSC_DEBUG
 	printf("%s: TSC skew=%lld observed drift=%lld\n", __func__,
 	    (long long)ci->ci_tsc_skew, (long long)tsc_drift_observed);
+#endif
 
 	if (!(ci->ci_flags & CPUF_PRIMARY) ||
 	    !(ci->ci_flags & CPUF_CONST_TSC) ||

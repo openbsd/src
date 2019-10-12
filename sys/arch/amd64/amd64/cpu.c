@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.141 2019/09/06 12:13:41 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.142 2019/10/12 14:05:50 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -890,7 +890,9 @@ cpu_start_secondary(struct cpu_info *ci)
 		wbinvd();
 		tsc_sync_bp(ci);
 		intr_restore(s);
+#ifdef TSC_DEBUG
 		printf("TSC skew=%lld\n", (long long)ci->ci_tsc_skew);
+#endif
 	}
 
 	if ((ci->ci_flags & CPUF_IDENTIFIED) == 0) {
@@ -937,8 +939,10 @@ cpu_boot_secondary(struct cpu_info *ci)
 		tsc_sync_bp(ci);
 		intr_restore(s);
 		drift -= ci->ci_tsc_skew;
+#ifdef TSC_DEBUG
 		printf("TSC skew=%lld drift=%lld\n",
 		    (long long)ci->ci_tsc_skew, (long long)drift);
+#endif
 		tsc_sync_drift(drift);
 	}
 }
