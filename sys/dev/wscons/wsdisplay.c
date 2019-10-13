@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.134 2019/10/13 10:56:31 kettenis Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.135 2019/10/13 19:49:21 fcambus Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1838,7 +1838,8 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 	s = spltty();
 
 	while (sc->sc_resumescreen != WSDISPLAY_NULLSCREEN && res == 0)
-		res = tsleep(&sc->sc_resumescreen, PCATCH, "wsrestore", 0);
+		res = tsleep_nsec(&sc->sc_resumescreen, PCATCH, "wsrestore",
+		    INFSLP);
 	if (res) {
 		splx(s);
 		return (res);
@@ -1988,7 +1989,7 @@ wsscreen_switchwait(struct wsdisplay_softc *sc, int no)
 	if (no == WSDISPLAY_NULLSCREEN) {
 		s = spltty();
 		while (sc->sc_focus && res == 0) {
-			res = tsleep(sc, PCATCH, "wswait", 0);
+			res = tsleep_nsec(sc, PCATCH, "wswait", INFSLP);
 		}
 		splx(s);
 		return (res);
@@ -2003,7 +2004,7 @@ wsscreen_switchwait(struct wsdisplay_softc *sc, int no)
 	s = spltty();
 	if (scr != sc->sc_focus) {
 		scr->scr_flags |= SCR_WAITACTIVE;
-		res = tsleep(scr, PCATCH, "wswait2", 0);
+		res = tsleep_nsec(scr, PCATCH, "wswait2", INFSLP);
 		if (scr != sc->sc_scr[no])
 			res = ENXIO; /* disappeared in the meantime */
 		else
