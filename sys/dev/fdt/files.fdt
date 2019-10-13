@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.98 2019/10/07 19:35:07 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.99 2019/10/13 17:21:25 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -209,7 +209,7 @@ attach	rkgpio at fdt
 file	dev/fdt/rkgpio.c		rkgpio
 
 device	rkiic: i2cbus
-attach	rkiic at fdt			
+attach	rkiic at fdt
 file	dev/fdt/rkiic.c			rkiic
 
 device	rkpmic
