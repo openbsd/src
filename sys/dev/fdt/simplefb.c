@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplefb.c,v 1.5 2018/08/27 09:30:07 kettenis Exp $	*/
+/*	$OpenBSD: simplefb.c,v 1.6 2019/10/13 17:00:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -230,9 +230,18 @@ int
 simplefb_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct rasops_info *ri = v;
+	struct wsdisplay_param *dp = (struct wsdisplay_param *)data;
 	struct wsdisplay_fbinfo	*wdf;
 
 	switch (cmd) {
+	case WSDISPLAYIO_GETPARAM:
+		if (ws_get_param)
+			return ws_get_param(dp);
+		return -1;
+	case WSDISPLAYIO_SETPARAM:
+		if (ws_set_param)
+			return ws_set_param(dp);
+		return -1;
 	case WSDISPLAYIO_GTYPE:
 		*(int *)data = WSDISPLAY_TYPE_EFIFB;
 		return 0;
