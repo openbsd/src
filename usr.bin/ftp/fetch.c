@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.173 2019/10/13 15:07:13 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.174 2019/10/13 15:09:26 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -945,6 +945,7 @@ noslash:
 			if (verbose)
 				fprintf(ttyout, "Retrying %s\n", origline);
 			retried = 1;
+			ftp_close(&fin, &tls, &fd);
 			rval = url_get(origline, proxyenv, savefile, lastfile);
 		}
 		goto cleanup_url_get;
