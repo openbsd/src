@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.65 2019/10/12 16:35:36 kettenis Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.66 2019/10/13 10:56:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -24,6 +24,7 @@
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
 #include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplayvar.h>
 
 #include <machine/apmvar.h>
 
@@ -176,8 +177,6 @@ int	thinkpad_get_brightness(struct acpithinkpad_softc *);
 int	thinkpad_set_brightness(void *, int);
 int	thinkpad_get_param(struct wsdisplay_param *);
 int	thinkpad_set_param(struct wsdisplay_param *);
-extern int (*ws_get_param)(struct wsdisplay_param *);
-extern int (*ws_set_param)(struct wsdisplay_param *);
 
 void    thinkpad_sensor_attach(struct acpithinkpad_softc *sc);
 void    thinkpad_sensor_refresh(void *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.133 2019/07/01 19:38:40 kn Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.134 2019/10/13 10:56:31 kettenis Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -244,6 +244,14 @@ struct consdev wsdisplay_cons = {
 	NULL, NULL, wsdisplay_getc_dummy, wsdisplay_cnputc,
 	    wsdisplay_pollc, NULL, NODEV, CN_LOWPRI
 };
+
+/*
+ * Function pointers for wsconsctl parameter handling.
+ * These are used for firmware-provided display brightness control.
+ */
+int	(*ws_get_param)(struct wsdisplay_param *);
+int	(*ws_set_param)(struct wsdisplay_param *);
+
 
 #ifndef WSDISPLAY_DEFAULTSCREENS
 #define WSDISPLAY_DEFAULTSCREENS	1

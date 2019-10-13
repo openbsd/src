@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitoshiba.c,v 1.11 2018/07/01 19:40:49 mlarkin Exp $ */
+/* $OpenBSD: acpitoshiba.c,v 1.12 2019/10/13 10:56:31 kettenis Exp $ */
 /*-
  * Copyright (c) 2003 Hiroyuki Aizu <aizu@navi.org>
  * All rights reserved.
@@ -35,6 +35,7 @@
 
 #include <machine/apmvar.h>
 #include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplayvar.h>
 
 /*
  * Toshiba HCI interface definitions
@@ -107,8 +108,6 @@ int	toshiba_fn_key_video_output(struct acpitoshiba_softc *);
 /* wconsole hook functions */
 int	acpitoshiba_get_param(struct wsdisplay_param *);
 int	acpitoshiba_set_param(struct wsdisplay_param *);
-extern int (*ws_get_param)(struct wsdisplay_param *);
-extern int (*ws_set_param)(struct wsdisplay_param *);
 int	get_param_brightness(struct wsdisplay_param *);
 int	set_param_brightness(struct wsdisplay_param *);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.33 2019/07/01 19:38:40 kn Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.34 2019/10/13 10:56:31 kettenis Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -239,6 +239,10 @@ void wsdisplay_suspend(void);
 void wsdisplay_resume(void);
 const struct wsscreen_descr *
     wsdisplay_screentype_pick(const struct wsscreen_list *, const char *);
+
+struct wsdisplay_param;
+extern int (*ws_get_param)(struct wsdisplay_param *);
+extern int (*ws_set_param)(struct wsdisplay_param *);
 
 /*
  * for use by wskbd

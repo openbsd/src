@@ -3202,9 +3202,6 @@ struct wsdisplay_accessops inteldrm_accessops = {
 	.burn_screen = inteldrm_burner
 };
 
-extern int (*ws_get_param)(struct wsdisplay_param *);
-extern int (*ws_set_param)(struct wsdisplay_param *);
-
 int
 inteldrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {

@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.87 2015/10/29 07:47:03 kettenis Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.88 2019/10/13 10:56:31 kettenis Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -102,15 +102,6 @@ paddr_t	vga_pci_mmap(void* v, off_t off, int prot);
 void	vga_save_state(struct vga_pci_softc *);
 void	vga_restore_state(struct vga_pci_softc *);
 #endif
-
-/*
- * Function pointers for wsconsctl parameter handling.
- * XXX These should be per-softc, but right now we only attach
- * XXX a single vga@pci instance, so this will do.
- */
-int	(*ws_get_param)(struct wsdisplay_param *);
-int	(*ws_set_param)(struct wsdisplay_param *);
-
 
 struct cfattach vga_pci_ca = {
 	sizeof(struct vga_pci_softc), vga_pci_match, vga_pci_attach,

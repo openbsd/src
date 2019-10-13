@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.12 2016/03/29 17:52:04 kettenis Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.13 2019/10/13 10:56:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
@@ -28,6 +28,7 @@
 #include <dev/acpi/dsdt.h>
 
 #include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplayvar.h>
 
 int	acpivout_match(struct device *, void *, void *);
 void	acpivout_attach(struct device *, struct device *, void *);
@@ -71,9 +72,6 @@ void	acpivout_get_bcl(struct acpivout_softc *);
 /* wconsole hook functions */
 int	acpivout_get_param(struct wsdisplay_param *);
 int	acpivout_set_param(struct wsdisplay_param *);
-
-extern int (*ws_get_param)(struct wsdisplay_param *);
-extern int (*ws_set_param)(struct wsdisplay_param *);
 
 struct cfattach acpivout_ca = {
 	sizeof(struct acpivout_softc), acpivout_match, acpivout_attach

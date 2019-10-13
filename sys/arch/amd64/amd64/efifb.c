@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.24 2019/05/04 11:34:47 kettenis Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.25 2019/10/13 10:56:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -107,9 +107,6 @@ void	 efifb_efiinfo_init(struct efifb *);
 void	 efifb_cnattach_common(void);
 
 struct cb_framebuffer *cb_find_fb(paddr_t);
-
-extern int	(*ws_get_param)(struct wsdisplay_param *);
-extern int	(*ws_set_param)(struct wsdisplay_param *);
 
 const struct cfattach efifb_ca = {
 	sizeof(struct efifb_softc), efifb_match, efifb_attach, NULL
