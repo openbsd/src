@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.177 2019/10/14 01:59:14 jcs Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.178 2019/10/14 02:04:35 jcs Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -127,7 +127,8 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x10ec0285:
 		this->name = "Realtek ALC285";
 		if (this->subid == 0x229217aa)		 /* Thinkpad X1 Carbon 7 */
-			this->qrks |= AZ_QRK_ROUTE_SPKR2_DAC;
+			this->qrks |= AZ_QRK_ROUTE_SPKR2_DAC |
+			    AZ_QRK_WID_CLOSE_PCBEEP;
 		break;
 	case 0x10ec0292:
 		this->name = "Realtek ALC292";
@@ -2601,6 +2602,14 @@ azalia_codec_widget_quirks(codec_t *this, nid_t nid)
 	    ((nid == 0x05) || (nid == 0x06) || (nid == 0x07) ||
 	    (nid == 0x09) || (nid == 0x18))) {
 		azalia_ampcap_ov(w, COP_OUTPUT_AMPCAP, 31, 33, 6, 30, 1);
+	}
+
+	if ((this->qrks & AZ_QRK_WID_CLOSE_PCBEEP) && (nid == 0x20))  {
+		/* Close PC beep passthrough to avoid headphone noise */
+		azalia_comresp(this, nid, CORB_SET_COEFFICIENT_INDEX, 0x36,
+		    NULL);
+		azalia_comresp(this, nid, CORB_SET_PROCESSING_COEFFICIENT,
+		    0x57d7, NULL);
 	}
 
 	return(0);
