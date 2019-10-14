@@ -1,4 +1,4 @@
-/* $OpenBSD: sshkey-xmss.c,v 1.6 2019/10/09 00:02:57 djm Exp $ */
+/* $OpenBSD: sshkey-xmss.c,v 1.7 2019/10/14 06:00:02 djm Exp $ */
 /*
  * Copyright (c) 2017 Markus Friedl.  All rights reserved.
  *
@@ -742,7 +742,7 @@ sshkey_xmss_deserialize_state(struct sshkey *k, struct sshbuf *b)
 	u_int32_t i, lh, node;
 	size_t ls, lsl, la, lk, ln, lr;
 	char *magic;
-	int r;
+	int r = SSH_ERR_INTERNAL_ERROR;
 
 	if (state == NULL)
 		return SSH_ERR_INVALID_ARGUMENT;
@@ -761,9 +761,11 @@ sshkey_xmss_deserialize_state(struct sshkey *k, struct sshbuf *b)
 	    (r = sshbuf_get_string(b, &state->th_nodes, &ln)) != 0 ||
 	    (r = sshbuf_get_string(b, &state->retain, &lr)) != 0 ||
 	    (r = sshbuf_get_u32(b, &lh)) != 0)
-		return r;
-	if (strcmp(magic, SSH_XMSS_K2_MAGIC) != 0)
-		return SSH_ERR_INVALID_ARGUMENT;
+		goto out;
+	if (strcmp(magic, SSH_XMSS_K2_MAGIC) != 0) {
+		r = SSH_ERR_INVALID_ARGUMENT;
+		goto out;
+	}
 	/* XXX check stackoffset */
 	if (ls != num_stack(state) ||
 	    lsl != num_stacklevels(state) ||
@@ -771,8 +773,10 @@ sshkey_xmss_deserialize_state(struct sshkey *k, struct sshbuf *b)
 	    lk != num_keep(state) ||
 	    ln != num_th_nodes(state) ||
 	    lr != num_retain(state) ||
-	    lh != num_treehash(state))
-		return SSH_ERR_INVALID_ARGUMENT;
+	    lh != num_treehash(state)) {
+		r = SSH_ERR_INVALID_ARGUMENT;
+		goto out;
+	}
 	for (i = 0; i < num_treehash(state); i++) {
 		th = &state->treehash[i];
 		if ((r = sshbuf_get_u32(b, &th->h)) != 0 ||
@@ -780,7 +784,7 @@ sshkey_xmss_deserialize_state(struct sshkey *k, struct sshbuf *b)
 		    (r = sshbuf_get_u32(b, &th->stackusage)) != 0 ||
 		    (r = sshbuf_get_u8(b, &th->completed)) != 0 ||
 		    (r = sshbuf_get_u32(b, &node)) != 0)
-			return r;
+			goto out;
 		if (node < num_th_nodes(state))
 			th->node = &state->th_nodes[node];
 	}
@@ -788,7 +792,11 @@ sshkey_xmss_deserialize_state(struct sshkey *k, struct sshbuf *b)
 	xmss_set_bds_state(&state->bds, state->stack, state->stackoffset,
 	    state->stacklevels, state->auth, state->keep, state->treehash,
 	    state->retain, 0);
-	return 0;
+	/* success */
+	r = 0;
+ out:
+	free(magic);
+	return r;
 }
 
 int
