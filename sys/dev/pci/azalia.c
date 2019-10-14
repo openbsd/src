@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.252 2019/09/10 07:49:15 ratchov Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.253 2019/10/14 01:59:14 jcs Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1415,7 +1415,7 @@ azalia_resume_codec(codec_t *this)
 	}
 	DELAY(100);
 
-	if (this->qrks & AZ_QRK_WID_DOLBY_ATMOS)
+	if (this->qrks & AZ_QRK_DOLBY_ATMOS)
 		azalia_codec_init_dolby_atmos(this);
 
 	FOR_EACH_WIDGET(this, i) {
@@ -1559,7 +1559,7 @@ azalia_codec_init(codec_t *this)
 		return ENOMEM;
 	}
 
-	if (this->qrks & AZ_QRK_WID_DOLBY_ATMOS)
+	if (this->qrks & AZ_QRK_DOLBY_ATMOS)
 		azalia_codec_init_dolby_atmos(this);
 
 	/* query the base parameters */
@@ -2228,7 +2228,7 @@ azalia_codec_select_spkrdac(codec_t *this)
 		for (i = 0; i < w->nconnections; i++) {
 			conv = azalia_codec_find_defdac(this,
 			    w->connections[i], 1);
-			if (this->qrks & AZ_QRK_WID_SPKR2_DAC) {
+			if (this->qrks & AZ_QRK_ROUTE_SPKR2_DAC) {
 				if (conv != this->spkr_dac) {
 					conn = i;
 					break;
