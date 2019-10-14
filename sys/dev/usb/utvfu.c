@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.9 2016/09/19 06:46:44 ratchov Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.10 2019/10/14 09:20:48 mpi Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -1746,7 +1746,7 @@ utvfu_dqbuf(void *v, struct v4l2_buffer *dqb)
 
 	if (SIMPLEQ_EMPTY(&sc->sc_mmap_q)) {
 		/* mmap queue is empty, block until first frame is queued */
-		error = tsleep(sc, 0, "vid_mmap", 10 * hz);
+		error = tsleep_nsec(sc, 0, "vid_mmap", SEC_TO_NSEC(10));
 		if (error)
 			return (EINVAL);
 	}
