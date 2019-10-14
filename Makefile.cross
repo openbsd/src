@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.102 2019/10/14 14:32:26 patrick Exp $
+# $OpenBSD: Makefile.cross,v 1.103 2019/10/14 14:36:49 patrick Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -140,6 +140,8 @@ cross-env:
 
 ${CROSSDIRS}:
 .if ${TARGET_ARCH} == "arm" &&  ${MACHINE_IS_LP64} == "yes"
+	# this config is allowed
+.elif ${TARGET_ARCH} == "powerpc" &&  ${MACHINE_IS_LP64} == "yes"
 	# this config is allowed
 .elif ${TARGET_IS_LP64} != ${MACHINE_IS_LP64}
 	@echo "host and target have different size longs"
