@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.48 2019/10/03 10:39:08 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.49 2019/10/14 09:16:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -125,7 +125,7 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 
 			cp = utf8_padcstr(table->name, tablewidth);
 			cplen = strlen(cp) + 1;
-			while (tmpused + cplen + 1>= tmpsize) {
+			while (tmpused + cplen + 1 >= tmpsize) {
 				tmpsize *= 2;
 				tmp = xrealloc(tmp, tmpsize);
 			}
