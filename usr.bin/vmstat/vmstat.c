@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.148 2019/10/14 14:40:00 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.149 2019/10/14 19:22:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -131,6 +131,7 @@ main(int argc, char *argv[])
 {
 	char errbuf[_POSIX2_LINE_MAX];
 	int c, todo = 0, reps = 0;
+	struct winsize winsize;
 	const char *errstr;
 	u_int interval = 0;
 
@@ -207,16 +208,19 @@ main(int argc, char *argv[])
 	}
 
 	if (todo & VMSTAT) {
-		struct winsize winsize;
-
 		dkinit(0);	/* Initialize disk stats, no disks selected. */
 		argv = choosedrives(argv);	/* Select disks. */
-		winsize.ws_row = 0;
-		if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &winsize) == 0) {
-			if (winsize.ws_row > 0)
-				winlines = winsize.ws_row;
-		}
+	}
 
+	if (unveil("/", "") == -1)
+		err(1, "unveil");
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
+
+	winsize.ws_row = 0;
+	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &winsize) == 0) {
+		if (winsize.ws_row > 0)
+			winlines = winsize.ws_row;
 	}
 
 #define	BACKWARD_COMPATIBILITY
