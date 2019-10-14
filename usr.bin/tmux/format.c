@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.211 2019/09/24 14:50:08 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.212 2019/10/14 09:24:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -574,7 +574,7 @@ format_cb_current_command(struct format_tree *ft, struct format_entry *fe)
 	struct window_pane	*wp = ft->wp;
 	char			*cmd;
 
-	if (wp == NULL)
+	if (wp == NULL || wp->shell == NULL)
 		return;
 
 	cmd = get_proc_name(wp->fd, wp->tty);
