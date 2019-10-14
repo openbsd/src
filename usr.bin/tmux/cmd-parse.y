@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.19 2019/10/03 10:24:05 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.20 2019/10/14 08:38:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -696,6 +696,7 @@ cmd_parse_build_commands(struct cmd_parse_commands *cmds,
 			pr.status = CMD_PARSE_ERROR;
 			pr.error = cmd_parse_get_error(pi->file, line, cause);
 			free(cause);
+			cmd_list_free(cmdlist);
 			goto out;
 		}
 		cmd_list_append(cmdlist, add);

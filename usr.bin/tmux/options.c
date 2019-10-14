@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.52 2019/06/23 10:00:29 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.53 2019/10/14 08:38:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -296,6 +296,7 @@ options_remove(struct options_entry *o)
 	else
 		options_value_free(o, &o->value);
 	RB_REMOVE(options_tree, &oo->tree, o);
+	free((void *)o->name);
 	free(o);
 }
 

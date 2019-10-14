@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.189 2019/06/20 11:59:59 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.190 2019/10/14 08:38:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -130,6 +130,7 @@ make_label(const char *label, char **cause)
 		free(base);
 		goto fail;
 	}
+	free(base);
 
 	if (mkdir(resolved, S_IRWXU) != 0 && errno != EEXIST)
 		goto fail;
