@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.147 2019/08/12 11:54:32 claudio Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.148 2019/10/14 14:40:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -185,13 +185,11 @@ main(int argc, char *argv[])
 		todo = VMSTAT;
 
 	if (nlistf != NULL || memf != NULL) {
-
 		kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf);
 		if (kd == 0)
 			errx(1, "kvm_openfiles: %s", errbuf);
 
 		if ((c = kvm_nlist(kd, namelist)) != 0) {
-
 			if (c > 0) {
 				(void)fprintf(stderr,
 				    "%s: undefined symbols:", __progname);
@@ -795,11 +793,11 @@ domem(void)
 		}
 		size = 1 << i;
 		(void)printf("%8d %8llu %6llu %18llu %7llu %10llu\n", size,
-			(unsigned long long)(kp->kb_total - kp->kb_totalfree),
-			(unsigned long long)kp->kb_totalfree,
-			(unsigned long long)kp->kb_calls,
-			(unsigned long long)kp->kb_highwat,
-			(unsigned long long)kp->kb_couldfree);
+		    (unsigned long long)(kp->kb_total - kp->kb_totalfree),
+		    (unsigned long long)kp->kb_totalfree,
+		    (unsigned long long)kp->kb_calls,
+		    (unsigned long long)kp->kb_highwat,
+		    (unsigned long long)kp->kb_couldfree);
 		totfree += size * kp->kb_totalfree;
 	}
 
