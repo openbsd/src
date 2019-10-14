@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.104 2019/10/14 14:38:06 patrick Exp $
+# $OpenBSD: Makefile.cross,v 1.105 2019/10/14 15:23:44 patrick Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -80,19 +80,21 @@ CROSSGCC=	${CROSSDIR}/.gcc_done
 .include <bsd.own.mk>
 
 .for _arch in ${TARGET_ARCH}
-.if !empty(CLANG_ARCH:M${_arch})
+.if !empty(GCC3_ARCH:M${_arch})
+COMPILER_VERSION=gcc3
+BUILD_CLANG=no
+CC=gcc
+CXX=g++
+.elif !empty(GCC4_ARCH:M${_arch})
+COMPILER_VERSION=gcc4
+BUILD_CLANG=no
+CC=gcc
+CXX=g++
+.elif !empty(CLANG_ARCH:M${_arch})
 COMPILER_VERSION=clang
 BUILD_CLANG=yes
 CC=clang
 CXX=clang++
-.elif !empty(GCC3_ARCH:M${_arch})
-COMPILER_VERSION=gcc3
-CC=gcc
-CXX=g++
-.else
-COMPILER_VERSION=gcc4
-CC=gcc
-CXX=g++
 .endif
 
 .if !empty(LLD_ARCH:M${_arch})
@@ -350,8 +352,9 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 cross-lib:	${CROSSGCC}
 	MACHINE=${TARGET} \
 	    MACHINE_ARCH=${TARGET_ARCH} MACHINE_CPU=${TARGET_CPU} \
-	    BSDOBJDIR=${CROSSDIR}/usr/obj; \
-	export MACHINE MACHINE_ARCH MACHINE_CPU BSDOBJDIR; \
+	    BSDOBJDIR=${CROSSDIR}/usr/obj \
+	    BUILD_CLANG=${BUILD_CLANG}; \
+	export MACHINE MACHINE_ARCH MACHINE_CPU BSDOBJDIR BUILD_CLANG; \
 	(cd ${.CURDIR}/lib; \
 	    for lib in csu libcompiler_rt libc; do \
 	    (cd $$lib; \
