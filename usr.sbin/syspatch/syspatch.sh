@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.150 2019/09/28 17:30:07 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.151 2019/10/14 06:56:54 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -22,12 +22,12 @@ export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
 sp_err()
 {
-	echo "${1}" 1>&2 && return ${2:-1}
+	echo "${0##*/}: ${1}" 1>&2 && return ${2:-1}
 }
 
 usage()
 {
-	sp_err "usage: ${0##*/} [-c | -l | -R | -r]"
+	echo "usage: ${0##*/} [-c | -l | -R | -r]"; return 1
 }
 
 apply_patch()
@@ -69,8 +69,8 @@ apply_patch()
 		'(^|[[:blank:]]+)usr/share/relink/kernel/GENERI(C|C.MP)/[[:print:]]+([[:blank:]]+|$)' ||
 		_KARL=true
 
-	(! ${_upself} || sp_err "${0##*/} updated itself, run it again to \
-install missing patches" 2)
+	(! ${_upself} || sp_err "updated itself, run it again to install \
+missing patches" 2)
 }
 
 # quick-and-dirty filesystem status and size checks:
@@ -165,7 +165,8 @@ ls_missing()
 
 	# don't output anything on stdout to prevent corrupting the patch list
 	unpriv -f "${_sha}.sig" ftp -MVo "${_sha}.sig" "${_MIRROR}/SHA256.sig" \
-		>/dev/null
+		>/dev/null 2>&1 ||
+		sp_err "failed to fetch ${_MIRROR}/SHA256.sig"
 	unpriv -f "${_sha}" signify -Veq -x ${_sha}.sig -m ${_sha} -p \
 		/etc/signify/openbsd-${_OSrev}-syspatch.pub >/dev/null
 
@@ -254,7 +255,10 @@ unpriv()
 	fi
 	(($# >= 1))
 
+	# propagate error code to the caller instead of failing hard
+	set +e
 	eval su -s /bin/sh ${_user} -c "'$@'" || _rc=$?
+	set -e
 
 	[[ -n ${_file} ]] && chown root "${_file}"
 
@@ -267,9 +271,9 @@ set -A _KERNV -- $(sysctl -n kern.version |
 ((${#_KERNV[*]} > 1)) && sp_err "Unsupported release: ${_KERNV[0]}${_KERNV[1]}"
 
 [[ $@ == @(|-[[:alpha:]]) ]] || usage; [[ $@ == @(|-(c|R|r)) ]] &&
-	(($(id -u) != 0)) && sp_err "${0##*/}: need root privileges"
+	(($(id -u) != 0)) && sp_err "need root privileges"
 [[ $@ == @(|-(R|r)) ]] && pgrep -qxf '/bin/ksh .*reorder_kernel' &&
-	sp_err "${0##*/}: cannot apply patches while reorder_kernel is running"
+	sp_err "cannot apply patches while reorder_kernel is running"
 
 _OSrev=${_KERNV[0]%.*}${_KERNV[0]#*.}
 [[ -n ${_OSrev} ]]
