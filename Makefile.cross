@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.101 2019/05/22 02:31:44 patrick Exp $
+# $OpenBSD: Makefile.cross,v 1.102 2019/10/14 14:32:26 patrick Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -93,6 +93,12 @@ CXX=g++
 COMPILER_VERSION=gcc4
 CC=gcc
 CXX=g++
+.endif
+
+.if !empty(LLD_ARCH:M${_arch})
+LINKER_VERSION=lld
+.else
+LINKER_VERSION=bfd
 .endif
 
 .if !empty(PIE_ARCH:M${_arch})
@@ -203,6 +209,7 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
 	    ${MAKE} -f Makefile.bsd-wrapper all && \
 	    env CROSSDIR=${CROSSDIR} DESTDIR=${CROSSDIR} \
 	    COMPILER_VERSION=${COMPILER_VERSION} \
+	    LINKER_VERSION=${LINKER_VERSION} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    PIE_DEFAULT=${PIE_DEFAULT} \
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
@@ -239,6 +246,7 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 	(cd ${.CURDIR}/gnu/usr.bin/clang; \
 	    DESTDIR=${CROSSDIR} \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
+	    LINKER_VERSION=${LINKER_VERSION} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    MACHINE_ARCH=${TARGET_ARCH} \
 	    ${MAKE} install)
