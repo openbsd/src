@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.132 2019/07/25 22:45:53 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.133 2019/10/15 05:21:16 jmatthew Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1459,6 +1459,15 @@ device_register(struct device *dev, void *aux)
 			if (bp->val[0] == sl->port_wwn && lun == sl->lun) {
 				nail_bootdev(dev, bp);
 			}
+
+			/*
+			 * sata devices on some controllers don't get
+			 * port_wwn filled in, so look at devid too.
+			 */
+			if (sl->id && sl->id->d_len == 8 &&
+			    sl->id->d_type == DEVID_NAA &&
+			    memcmp(sl->id + 1, &bp->val[0], 8) == 0)
+				nail_bootdev(dev, bp);
 			return;
 		}
 
