@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.41 2019/09/25 19:05:59 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.42 2019/10/15 08:30:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -191,7 +191,7 @@ window_tree_cmp_session(const void *a0, const void *b0)
 	const struct session *const	*b = b0;
 	const struct session		*sa = *a;
 	const struct session		*sb = *b;
-	int				 result;
+	int				 result = 0;
 
 	switch (window_tree_sort->field) {
 	case WINDOW_TREE_BY_INDEX:
@@ -226,7 +226,7 @@ window_tree_cmp_window(const void *a0, const void *b0)
 	const struct winlink		*wlb = *b;
 	struct window			*wa = wla->window;
 	struct window			*wb = wlb->window;
-	int				 result;
+	int				 result = 0;
 
 	switch (window_tree_sort->field) {
 	case WINDOW_TREE_BY_INDEX:
