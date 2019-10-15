@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.105 2019/06/28 13:35:01 deraadt Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.106 2019/10/15 01:24:07 guenther Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <poll.h>
 #include <stdarg.h>
@@ -79,7 +80,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <utime.h>
 
 #include "ftp_var.h"
 
@@ -1211,11 +1211,12 @@ break2:
 		if (preserve && (closefunc == fclose)) {
 			mtime = remotemodtime(remote, 0);
 			if (mtime != -1) {
-				struct utimbuf ut;
+				struct timespec times[2];
 
-				ut.actime = time(NULL);
-				ut.modtime = mtime;
-				if (utime(local, &ut) == -1)
+				times[0].tv_nsec = UTIME_OMIT;
+				times[1].tv_sec = mtime;
+				times[1].tv_nsec = 0;
+				if (utimensat(AT_FDCWD, local, times, 0) == -1)
 					fprintf(ttyout,
 				"Can't change modification time on %s to %s",
 					    local, asctime(localtime(&mtime)));
