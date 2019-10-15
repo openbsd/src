@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcireg.h,v 1.16 2019/05/10 02:05:35 guenther Exp $ */
+/* $OpenBSD: xhcireg.h,v 1.17 2019/10/15 03:31:35 visa Exp $ */
 
 /*-
  * Copyright (c) 2014 Martin Pieuchot. All rights reserved.
@@ -251,7 +251,7 @@ struct xhci_erseg {
 	uint64_t		 er_addr;
 	uint32_t		 er_size;
 	uint32_t		 er_rsvd;
-} __packed;
+};
 
 
 struct xhci_sctx {
@@ -279,7 +279,7 @@ struct xhci_sctx {
 #define XHCI_SCTX_SLOT_STATE(x)		(((x) >> 27) & 0x1f)
 
 	 uint32_t		rsvd[4];
-} __packed;
+};
 
 struct xhci_epctx {
 	 uint32_t		info_lo;
@@ -321,7 +321,7 @@ struct xhci_epctx {
 #define XHCI_EPCTX_MAX_ESIT_PAYLOAD(x)	(((x) & 0xffff) << 16)
 
 	 uint32_t		rsvd[3];
-} __packed;
+};
 
 
 struct xhci_inctx {
@@ -330,7 +330,7 @@ struct xhci_inctx {
 #define XHCI_INCTX_MASK_DCI(n)	(0x1 << (n))
 
 	 uint32_t		rsvd[6];
-} __packed;
+};
 
 
 struct xhci_trb {
@@ -367,7 +367,7 @@ struct xhci_trb {
 #define XHCI_TRB_GET_SLOT(x)	(((x) >> 24) & 0xff)
 #define XHCI_TRB_SET_SLOT(x)	(((x) & 0xff) << 24)
 #define XHCI_TRB_SIA		(1U << 31)
-} __packed;
+};
 
 #define XHCI_TRB_FLAGS_BITMASK						\
     "\20" "\040SIA" "\022TRT_OUT" "\021DIR_IN" "\012BSR" "\007IDT" 	\
