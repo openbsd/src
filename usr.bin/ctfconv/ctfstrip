@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: ctfstrip,v 1.11 2019/05/27 09:31:08 jca Exp $
+# $OpenBSD: ctfstrip,v 1.12 2019/10/15 10:27:25 mpi Exp $
 #
 # Copyright (c) 2017 Martin Pieuchot
 #
@@ -53,12 +53,19 @@ if [ -z "${INFILE##bsd*}" ]; then
 	LABEL=`what "$INFILE" | sed -n '$s/^   //p'`
 fi
 
-# If ctfstrip was passed a file that lacks useful debug sections, ctfconv will fail.
-# So try to run ctfconv and silently fallback to plain strip(1) if that failed.
+# If ctfstrip was passed a file that lacks useful debug sections, ctfconv will
+# fail.  So try to run ctfconv and silently fallback to plain strip(1) if that
+# failed.
 ctfconv -o ${TMPFILE} -l "${LABEL}" "${INFILE}" 2> /dev/null
 
 if [ $? -eq 0 ]; then
-	objcopy --add-section .SUNW_ctf=${TMPFILE} ${STRIPFLAG} "${INFILE}" ${OUTFILE}
+	objcopy  ${STRIPFLAG} \
+		--add-section .SUNW_ctf=${TMPFILE} "${INFILE}" ${OUTFILE}
+
+	# Also add CTF data to the debug kernel
+	if [ -z "${INFILE##bsd.gdb}" ]; then
+		objcopy --add-section .SUNW_ctf=${TMPFILE} "${INFILE}"
+	fi
 else
 	strip ${STRIPFLAG} ${OUTFILE:+"-o${OUTFILE}"} "${INFILE}"
 fi
