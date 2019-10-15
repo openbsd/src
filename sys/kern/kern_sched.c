@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.58 2019/06/01 14:11:17 mpi Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.59 2019/10/15 10:05:43 mpi Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -244,12 +244,21 @@ sched_init_runqueues(void)
 }
 
 void
-setrunqueue(struct proc *p)
+setrunqueue(struct cpu_info *ci, struct proc *p, uint8_t prio)
 {
 	struct schedstate_percpu *spc;
-	int queue = p->p_priority >> 2;
+	int queue = prio >> 2;
 
+	if (ci == NULL)
+		ci = sched_choosecpu(p);
+
+	KASSERT(ci != NULL);
 	SCHED_ASSERT_LOCKED();
+
+	p->p_cpu = ci;
+	p->p_stat = SRUN;
+	p->p_priority = prio;
+
 	spc = &p->p_cpu->ci_schedstate;
 	spc->spc_nrun++;
 
@@ -294,8 +303,7 @@ sched_chooseproc(void)
 			for (queue = 0; queue < SCHED_NQS; queue++) {
 				while ((p = TAILQ_FIRST(&spc->spc_qs[queue]))) {
 					remrunqueue(p);
-					p->p_cpu = sched_choosecpu(p);
-					setrunqueue(p);
+					setrunqueue(NULL, p, p->p_priority);
 					if (p->p_cpu == curcpu()) {
 						KASSERT(p->p_flag & P_CPUPEG);
 						goto again;
@@ -317,7 +325,8 @@ again:
 		p = TAILQ_FIRST(&spc->spc_qs[queue]);
 		remrunqueue(p);
 		sched_noidle++;
-		KASSERT(p->p_stat == SRUN);
+		if (p->p_stat != SRUN)
+			panic("thread %d not in SRUN: %d", p->p_tid, p->p_stat);
 	} else if ((p = sched_steal_proc(curcpu())) == NULL) {
 		p = spc->spc_idleproc;
 		if (p == NULL) {
@@ -610,11 +619,8 @@ sched_peg_curproc(struct cpu_info *ci)
 	int s;
 
 	SCHED_LOCK(s);
-	p->p_priority = p->p_usrpri;
-	p->p_stat = SRUN;
-	p->p_cpu = ci;
 	atomic_setbits_int(&p->p_flag, P_CPUPEG);
-	setrunqueue(p);
+	setrunqueue(ci, p, p->p_usrpri);
 	p->p_ru.ru_nvcsw++;
 	mi_switch();
 	SCHED_UNLOCK(s);

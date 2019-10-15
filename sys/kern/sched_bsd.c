@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.55 2019/07/15 20:44:48 mpi Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.56 2019/10/15 10:05:43 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -261,8 +261,7 @@ schedcpu(void *arg)
 			    (p->p_priority / SCHED_PPQ) !=
 			    (p->p_usrpri / SCHED_PPQ)) {
 				remrunqueue(p);
-				p->p_priority = p->p_usrpri;
-				setrunqueue(p);
+				setrunqueue(p->p_cpu, p, p->p_usrpri);
 			} else
 				p->p_priority = p->p_usrpri;
 		}
@@ -310,9 +309,7 @@ yield(void)
 	NET_ASSERT_UNLOCKED();
 
 	SCHED_LOCK(s);
-	p->p_priority = p->p_usrpri;
-	p->p_stat = SRUN;
-	setrunqueue(p);
+	setrunqueue(p->p_cpu, p, p->p_usrpri);
 	p->p_ru.ru_nvcsw++;
 	mi_switch();
 	SCHED_UNLOCK(s);
@@ -331,9 +328,7 @@ preempt(void)
 	int s;
 
 	SCHED_LOCK(s);
-	p->p_priority = p->p_usrpri;
-	p->p_stat = SRUN;
-	setrunqueue(p);
+	setrunqueue(p->p_cpu, p, p->p_usrpri);
 	p->p_ru.ru_nivcsw++;
 	mi_switch();
 	SCHED_UNLOCK(s);
@@ -495,9 +490,7 @@ setrunnable(struct proc *p)
 		unsleep(p);		/* e.g. when sending signals */
 		break;
 	}
-	p->p_stat = SRUN;
-	p->p_cpu = sched_choosecpu(p);
-	setrunqueue(p);
+	setrunqueue(NULL, p, p->p_priority);
 	if (p->p_slptime > 1) {
 		uint32_t newcpu;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.213 2019/06/21 09:39:48 visa Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.214 2019/10/15 10:05:43 mpi Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -326,12 +326,12 @@ fork_check_maxthread(uid_t uid)
 static inline void
 fork_thread_start(struct proc *p, struct proc *parent, int flags)
 {
+	struct cpu_info *ci;
 	int s;
 
 	SCHED_LOCK(s);
-	p->p_stat = SRUN;
-	p->p_cpu = sched_choosecpu_fork(parent, flags);
-	setrunqueue(p);
+	ci = sched_choosecpu_fork(parent, flags);
+	setrunqueue(ci, p, p->p_priority);
 	SCHED_UNLOCK(s);
 }
 

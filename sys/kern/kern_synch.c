@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.152 2019/10/01 15:08:27 cheloha Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.153 2019/10/15 10:05:43 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -546,6 +546,7 @@ int
 sys_sched_yield(struct proc *p, void *v, register_t *retval)
 {
 	struct proc *q;
+	uint8_t newprio;
 	int s;
 
 	SCHED_LOCK(s);
@@ -554,11 +555,10 @@ sys_sched_yield(struct proc *p, void *v, register_t *retval)
 	 * sched_yield(2), drop its priority to ensure its siblings
 	 * can make some progress.
 	 */
-	p->p_priority = p->p_usrpri;
+	newprio = p->p_usrpri;
 	TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link)
-		p->p_priority = max(p->p_priority, q->p_priority);
-	p->p_stat = SRUN;
-	setrunqueue(p);
+		newprio = max(newprio, q->p_priority);
+	setrunqueue(p->p_cpu, p, newprio);
 	p->p_ru.ru_nvcsw++;
 	mi_switch();
 	SCHED_UNLOCK(s);
