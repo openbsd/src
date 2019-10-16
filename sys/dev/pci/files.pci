@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.339 2019/09/26 12:59:01 brynet Exp $
+#	$OpenBSD: files.pci,v 1.340 2019/10/16 01:39:32 mlarkin Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -346,7 +346,7 @@ file	dev/pci/if_em_soc.c		em
 # Intel Pro/10GbE
 device	ixgb: ether, ifnet, ifmedia
 attach	ixgb at pci
-file	dev/pci/if_ixgb.c		ixgb   
+file	dev/pci/if_ixgb.c		ixgb
 file	dev/pci/ixgb_ee.c		ixgb
 file	dev/pci/ixgb_hw.c		ixgb
 
@@ -366,7 +366,7 @@ device	ixl: ether, ifnet, ifmedia
 attach	ixl at pci
 file	dev/pci/if_ixl.c		ixl
 
-# Neterion Xframe 10 Gigabit ethernet 
+# Neterion Xframe 10 Gigabit ethernet
 device	xge: ether, ifnet, ifmedia
 attach	xge  at pci
 file	dev/pci/if_xge.c		xge
@@ -380,7 +380,7 @@ file	dev/pci/if_nxe.c		nxe
 device	thtc {}
 attach	thtc at pci
 device	tht: ether, ifnet, ifmedia, firmload
-attach	tht at thtc   
+attach	tht at thtc
 file	dev/pci/if_tht.c		thtc | tht
 
 # Myricom Myri-10G Ethernet
@@ -617,7 +617,7 @@ device	stge: ether, ifnet, mii, ifmedia, mii_phy, mii_bitbang
 attach	stge at pci
 file	dev/pci/if_stge.c		stge
 
-# NVIDIA nForce Ethernet 
+# NVIDIA nForce Ethernet
 device	nfe: ether, ifnet, mii, ifmedia, mii_phy
 attach	nfe at pci
 file	dev/pci/if_nfe.c		nfe
@@ -789,7 +789,7 @@ device	auglx: audio, ac97
 attach	auglx at pci
 file	dev/pci/auglx.c			auglx
 
-# Intel 3400 Thermal 
+# Intel 3400 Thermal
 device	itherm
 attach	itherm at pci
 file	dev/pci/itherm.c		itherm
@@ -824,7 +824,7 @@ file	dev/pci/dwiic_pci.c		dwiic_pci
 attach	bwfm at pci with bwfm_pci: firmload
 file	dev/pci/if_bwfm_pci.c		bwfm_pci
 
-# AMD Cryptographic Co-processor 
+# AMD Cryptographic Co-processor
 attach	ccp at pci with ccp_pci
 file	dev/pci/ccp_pci.c		ccp_pci
 
