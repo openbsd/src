@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.1 2019/10/08 10:04:36 claudio Exp $ */
+/*	$OpenBSD: output-json.c,v 1.2 2019/10/16 17:38:46 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -15,12 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <assert.h>
-#include <err.h>
-#include <inttypes.h>
-#include <stdarg.h>
 #include <stdlib.h>
-
 #include <openssl/ssl.h>
 
 #include "extern.h"
