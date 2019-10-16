@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.6 2019/10/16 17:43:29 claudio Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.7 2019/10/16 21:43:41 jmc Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -19,16 +19,14 @@
 .Os
 .Sh NAME
 .Nm rpki-client
-.Nd validates the RPKI tree and produces VRPs to be used in
-.Xr bgpd 8
-for Origin Validation.
+.Nd RPKI validation for bgpd Route Origin Validation
 .Sh SYNOPSIS
 .Nm
-.Op Fl Bcfjnqrv
+.Op Fl Bcfjnrv
 .Op Fl b Ar bind_addr
 .Op Fl e Ar rsync_prog
-.Op Fl t Ar tal
 .Op Fl T Ar table
+.Op Fl t Ar tal
 .Ar output
 .Sh DESCRIPTION
 The
@@ -39,14 +37,15 @@ It uses
 .Xr openrsync 1
 to fetch certificates, manifests, revocation lists, and route
 announcements themselves.
-Its arguments are as follows:
+.Pp
+The options are as follows:
 .Bl -tag -width Ds
+.It Fl B
+Format the output suitable for the BIRD internet routing daemon.
 .It Fl b Ar bind_addr
 Tell the rsync client to use the specified
 .Ar bind_addr
 as the source address for connections.
-.It Fl B
-Format the output suitable for the BIRD internet routing daemon.
 .It Fl c
 Format the output as comma-separated values of the prefix in slash notation,
 the maximum prefix length, the autonomous system number, and an abbreviation
@@ -67,13 +66,18 @@ flags and connect with rsync-protocol locations.
 Accept out-of-date manifests.
 This will still report if a manifest has expired.
 .It Fl j
-Format the output as JSON object. This format is identical to that
+Format the output as JSON object.
+This format is identical to that
 produced by the RIPE NCC RPKI Validator and NLnet Labs routinator.
 .It Fl n
 Assume that all requested repositories exist: don't update.
 .It Fl r
 Don't parse certificate revocation files.
 This additional step can take a long time.
+.It Fl T Ar table
+For BIRD output use
+.Ar table
+as roa table name instead of the default 'roa'.
 .It Fl t Ar tal
 Specify a trust anchor locator (TAL) file to be used.
 This option can be used multiple times to load multiple TALs.
@@ -81,10 +85,6 @@ By default
 .Nm
 will load all TAL files in
 .Pa /etc/rpki .
-.It Fl T Ar name
-For BIRD output use
-.Ar name
-as roa table name instead of the default 'roa'.
 .It Fl v
 Specified once, prints information about status.
 Twice, prints each filename as it's processed.
@@ -110,6 +110,7 @@ statements as specified by
 default TAL files used unless
 .Fl t Ar tal
 is specified.
+.El
 .Sh EXIT STATUS
 .Ex -std
 .\" For sections 1, 6, and 8 only.
