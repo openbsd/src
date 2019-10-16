@@ -1,4 +1,4 @@
-/* $OpenBSD: sxidog.c,v 1.12 2017/01/21 08:26:49 patrick Exp $ */
+/* $OpenBSD: sxidog.c,v 1.1 2019/10/16 22:11:17 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *

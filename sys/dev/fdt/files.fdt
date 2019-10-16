@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.99 2019/10/13 17:21:25 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.100 2019/10/16 22:11:17 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -14,6 +14,10 @@ file	dev/fdt/simplefb.c		simplefb
 device	sxiccmu
 attach	sxiccmu at fdt
 file	dev/fdt/sxiccmu.c		sxiccmu
+
+device	sxidog
+attach	sxidog at fdt
+file	dev/fdt/sxidog.c		sxidog
 
 device	sxipio {}: gpiobus
 attach	sxipio at fdt

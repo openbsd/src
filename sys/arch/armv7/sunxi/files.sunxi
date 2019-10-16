@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sunxi,v 1.20 2018/02/14 23:51:49 jsg Exp $
+#	$OpenBSD: files.sunxi,v 1.21 2019/10/16 22:11:17 kettenis Exp $
 
 device	sxiintc
 attach	sxiintc at fdt
@@ -7,10 +7,6 @@ file	arch/armv7/sunxi/sxiintc.c		sxiintc
 device	sxitimer
 attach	sxitimer at fdt
 file	arch/armv7/sunxi/sxitimer.c		sxitimer
-
-device	sxidog
-attach	sxidog at fdt
-file	arch/armv7/sunxi/sxidog.c		sxidog
 
 device	sxiahci: scsi, atascsi
 attach	sxiahci at fdt
