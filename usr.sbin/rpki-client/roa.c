@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.5 2019/10/08 10:04:36 claudio Exp $ */
+/*	$OpenBSD: roa.c,v 1.6 2019/10/16 17:37:46 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -119,7 +119,8 @@ roa_parse_addr(const ASN1_OCTET_STRING *os, enum afi afi, struct parse *p)
 
 	res->addr = addr;
 	res->afi = afi;
-	res->maxlength = (maxlength == NULL) ? 0: ASN1_INTEGER_get(maxlength);
+	res->maxlength = (maxlength == NULL) ? addr.prefixlen :
+	    ASN1_INTEGER_get(maxlength);
 	ip_roa_compose_ranges(res);
 
 	rc = 1;
