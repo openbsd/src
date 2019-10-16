@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.5 2019/08/20 16:02:57 claudio Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.6 2019/10/16 17:43:29 claudio Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 20 2019 $
+.Dd $Mdocdate: October 16 2019 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -24,10 +24,11 @@
 for Origin Validation.
 .Sh SYNOPSIS
 .Nm
-.Op Fl fnrv
+.Op Fl Bcfjnqrv
 .Op Fl b Ar bind_addr
 .Op Fl e Ar rsync_prog
 .Op Fl t Ar tal
+.Op Fl T Ar table
 .Ar output
 .Sh DESCRIPTION
 The
@@ -44,6 +45,12 @@ Its arguments are as follows:
 Tell the rsync client to use the specified
 .Ar bind_addr
 as the source address for connections.
+.It Fl B
+Format the output suitable for the BIRD internet routing daemon.
+.It Fl c
+Format the output as comma-separated values of the prefix in slash notation,
+the maximum prefix length, the autonomous system number, and an abbreviation
+for the trust anchor the entry is derived from.
 .It Fl e Ar rsync_prog
 Use
 .Ar rsync_prog
@@ -59,6 +66,9 @@ flags and connect with rsync-protocol locations.
 .It Fl f
 Accept out-of-date manifests.
 This will still report if a manifest has expired.
+.It Fl j
+Format the output as JSON object. This format is identical to that
+produced by the RIPE NCC RPKI Validator and NLnet Labs routinator.
 .It Fl n
 Assume that all requested repositories exist: don't update.
 .It Fl r
@@ -71,6 +81,10 @@ By default
 .Nm
 will load all TAL files in
 .Pa /etc/rpki .
+.It Fl T Ar name
+For BIRD output use
+.Ar name
+as roa table name instead of the default 'roa'.
 .It Fl v
 Specified once, prints information about status.
 Twice, prints each filename as it's processed.
@@ -82,6 +96,7 @@ will write the
 to.
 .El
 .Pp
+By default
 .Nm
 produces a list of unique
 .Li roa-set

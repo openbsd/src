@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.8 2019/10/08 10:04:36 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.9 2019/10/16 17:43:29 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -325,6 +325,8 @@ int		 x509_get_ski_aki(X509 *, const char *, char **, char **);
 /* Output! */
 
 void		 output_bgpd(FILE *, struct vrp_tree *);
+void		 output_bird(FILE *, struct vrp_tree *, const char *);
+void		 output_csv(FILE *, struct vrp_tree *);
 void		 output_json(FILE *, struct vrp_tree *);
 
 #endif /* ! EXTERN_H */

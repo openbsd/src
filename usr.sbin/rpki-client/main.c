@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 2019/10/08 10:04:36 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.19 2019/10/16 17:43:29 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -125,6 +125,13 @@ static void	 proc_rsync(const char *, const char *, int, int)
 			__attribute__((noreturn));
 static void	 logx(const char *fmt, ...)
 			__attribute__((format(printf, 1, 2)));
+
+enum output_fmt {
+	BGPD,
+	BIRD,
+	CSV,
+	JSON
+};
 
 int	 verbose;
 
@@ -1320,7 +1327,7 @@ main(int argc, char *argv[])
 {
 	int		 rc = 0, c, proc, st, rsync,
 			 fl = SOCK_STREAM | SOCK_CLOEXEC, noop = 0,
-			 force = 0, norev = 0, jsonout = 0;
+			 force = 0, norev = 0;
 	size_t		 i, j, eid = 1, outsz = 0, talsz = 0;
 	pid_t		 procpid, rsyncpid;
 	int		 fd[2];
@@ -1333,16 +1340,24 @@ main(int argc, char *argv[])
 	const char	*rsync_prog = "openrsync";
 	const char	*bind_addr = NULL;
 	const char	*tals[TALSZ_MAX];
+	const char	*tablename = "roa";
 	FILE		*output = NULL;
 	struct vrp_tree	 v = RB_INITIALIZER(&v);
+	enum output_fmt	 outfmt = BGPD;
 
 	if (pledge("stdio rpath wpath cpath proc exec unveil", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
-	while ((c = getopt(argc, argv, "b:e:fjnrt:v")) != -1)
+	while ((c = getopt(argc, argv, "b:Bce:fjnrt:T:v")) != -1)
 		switch (c) {
 		case 'b':
 			bind_addr = optarg;
+			break;
+		case 'B':
+			outfmt = BIRD;
+			break;
+		case 'c':
+			outfmt = CSV;
 			break;
 		case 'e':
 			rsync_prog = optarg;
@@ -1351,7 +1366,7 @@ main(int argc, char *argv[])
 			force = 1;
 			break;
 		case 'j':
-			jsonout = 1;
+			outfmt = JSON;
 			break;
 		case 'n':
 			noop = 1;
@@ -1364,6 +1379,9 @@ main(int argc, char *argv[])
 				err(EXIT_FAILURE,
 				    "too many tal files specified");
 			tals[talsz++] = optarg;
+			break;
+		case 'T':
+			tablename = optarg;
 			break;
 		case 'v':
 			verbose++;
@@ -1548,10 +1566,20 @@ main(int argc, char *argv[])
 		rc = 0;
 	}
 
-	if (jsonout)
-		output_json(output, &v);
-	else
+	switch (outfmt) {
+	case BGPD:
 		output_bgpd(output, &v);
+		break;
+	case BIRD:
+		output_bird(output, &v, tablename);
+		break;
+	case CSV:
+		output_csv(output, &v);
+		break;
+	case JSON:
+		output_json(output, &v);
+		break;
+	}
 
 	logx("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)",
 	    stats.roas, stats.roas_fail, stats.roas_invalid);
@@ -1580,7 +1608,7 @@ main(int argc, char *argv[])
 
 usage:
 	fprintf(stderr,
-	    "usage: rpki-client [-fnqrv] [-b bind_addr] [-e rsync_prog] "
-	    "[-t tal] output\n");
+	    "usage: rpki-client [-Bfjnqrv] [-b bind_addr] [-e rsync_prog] "
+	    "[-t tal] [-T name] output\n");
 	return EXIT_FAILURE;
 }
