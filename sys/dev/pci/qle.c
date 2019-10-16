@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.46 2019/08/20 22:31:28 krw Exp $ */
+/*	$OpenBSD: qle.c,v 1.47 2019/10/16 00:16:35 daniel Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -2900,13 +2900,13 @@ qle_alloc_ccbs(struct qle_softc *sc)
 	sc->sc_pri_requests = qle_dmamem_alloc(sc, 8 * QLE_QUEUE_ENTRY_SIZE);
 	if (sc->sc_pri_requests == NULL) {
 		printf("%s: unable to allocate pri ccb dmamem\n", DEVNAME(sc));
-		goto free_pri;
+		goto free_res;
 	}
 	sc->sc_segments = qle_dmamem_alloc(sc, sc->sc_maxcmds * QLE_MAX_SEGS *
 	    sizeof(struct qle_iocb_seg));
 	if (sc->sc_segments == NULL) {
 		printf("%s: unable to allocate iocb segments\n", DEVNAME(sc));
-		goto free_res;
+		goto free_pri;
 	}
 
 	sc->sc_fcp_cmnds = qle_dmamem_alloc(sc, sc->sc_maxcmds *
