@@ -1,0 +1,158 @@
+OpenBSD 6.6-beta (GENERIC.MP) #0: Sat Oct 12 19:26:48 PDT 2019
+    root@outer.my.domain:/usr/obj/src/sys/arch/amd64/compile/GENERIC.MP
+real mem = 13614575616 (12983MB)
+avail mem = 13189267456 (12578MB)
+mpath0 at root
+scsibus0 at mpath0: 256 targets
+mainbus0 at root
+bios0 at mainbus0: SMBIOS rev. 2.8 @ 0xbffffc60 (17 entries)
+bios0: vendor SeaBIOS version "1.10.2-1ubuntu1" date 04/01/2014
+bios0: QEMU Standard PC (i440FX + PIIX, 1996)
+acpi0 at bios0: ACPI 1.0
+acpi0: sleep states S5
+acpi0: tables DSDT FACP APIC
+acpi0: wakeup devices
+acpitimer0 at acpi0: 3579545 Hz, 24 bits
+acpimadt0 at acpi0 addr 0xfee00000: PC-AT compat
+cpu0 at mainbus0: apid 0 (boot processor)
+cpu0: Intel Xeon E3-12xx v2 (Ivy Bridge, IBRS), 2394.86 MHz, 06-3a-09
+cpu0: FPU,VME,DE,PSE,TSC,MSR,PAE,MCE,CX8,APIC,SEP,MTRR,PGE,MCA,CMOV,PAT,PSE36,CFLUSH,MMX,FXSR,SSE,SSE2,SS,SSE3,PCLMUL,VMX,SSSE3,CX16,PCID,SSE4.1,SSE4.2,x2APIC,POPCNT,DEADLINE,AES,XSAVE,AVX,F16C,RDRAND,HV,NXE,RDTSCP,LONG,LAHF,FSGSBASE,TSC_ADJUST,SMEP,ERMS,MD_CLEAR,IBRS,IBPB,SSBD,ARAT,XSAVEOPT,MELTDOWN
+cpu0: 64KB 64b/line 2-way I-cache, 64KB 64b/line 2-way D-cache, 512KB 64b/line 16-way L2 cache
+cpu0: ITLB 255 4KB entries direct-mapped, 255 4MB entries direct-mapped
+cpu0: DTLB 255 4KB entries direct-mapped, 255 4MB entries direct-mapped
+cpu0: smt 0, core 0, package 0
+mtrr: Pentium Pro MTRR support, 8 var ranges, 88 fixed ranges
+cpu0: apic clock running at 999MHz
+cpu1 at mainbus0: apid 1 (application processor)
+TSC skew=-24
+cpu1: Intel Xeon E3-12xx v2 (Ivy Bridge, IBRS), 2394.55 MHz, 06-3a-09
+cpu1: FPU,VME,DE,PSE,TSC,MSR,PAE,MCE,CX8,APIC,SEP,MTRR,PGE,MCA,CMOV,PAT,PSE36,CFLUSH,MMX,FXSR,SSE,SSE2,SS,SSE3,PCLMUL,VMX,SSSE3,CX16,PCID,SSE4.1,SSE4.2,x2APIC,POPCNT,DEADLINE,AES,XSAVE,AVX,F16C,RDRAND,HV,NXE,RDTSCP,LONG,LAHF,FSGSBASE,TSC_ADJUST,SMEP,ERMS,MD_CLEAR,IBRS,IBPB,SSBD,ARAT,XSAVEOPT,MELTDOWN
+cpu1: 64KB 64b/line 2-way I-cache, 64KB 64b/line 2-way D-cache, 512KB 64b/line 16-way L2 cache
+cpu1: ITLB 255 4KB entries direct-mapped, 255 4MB entries direct-mapped
+cpu1: DTLB 255 4KB entries direct-mapped, 255 4MB entries direct-mapped
+cpu1: smt 0, core 0, package 1
+cpu2 at mainbus0: apid 2 (application processor)
+TSC skew=-5
+cpu2: Intel Xeon E3-12xx v2 (Ivy Bridge, IBRS), 2394.56 MHz, 06-3a-09
+cpu2: FPU,VME,DE,PSE,TSC,MSR,PAE,MCE,CX8,APIC,SEP,MTRR,PGE,MCA,CMOV,PAT,PSE36,CFLUSH,MMX,FXSR,SSE,SSE2,SS,SSE3,PCLMUL,VMX,SSSE3,CX16,PCID,SSE4.1,SSE4.2,x2APIC,POPCNT,DEADLINE,AES,XSAVE,AVX,F16C,RDRAND,HV,NXE,RDTSCP,LONG,LAHF,FSGSBASE,TSC_ADJUST,SMEP,ERMS,MD_CLEAR,IBRS,IBPB,SSBD,ARAT,XSAVEOPT,MELTDOWN
+cpu2: 64KB 64b/line 2-way I-cache, 64KB 64b/line 2-way D-cache, 512KB 64b/line 16-way L2 cache
+cpu2: ITLB 255 4KB entries direct-mapped, 255 4MB entries direct-mapped
+cpu2: DTLB 255 4KB entries direct-mapped, 255 4MB entries direct-mapped
+cpu2: smt 0, core 0, package 2
+cpu3 at mainbus0: apid 3 (application processor)
+TSC skew=0
+cpu3: Intel Xeon E3-12xx v2 (Ivy Bridge, IBRS), 2394.56 MHz, 06-3a-09
+cpu3: FPU,VME,DE,PSE,TSC,MSR,PAE,MCE,CX8,APIC,SEP,MTRR,PGE,MCA,CMOV,PAT,PSE36,CFLUSH,MMX,FXSR,SSE,SSE2,SS,SSE3,PCLMUL,VMX,SSSE3,CX16,PCID,SSE4.1,SSE4.2,x2APIC,POPCNT,DEADLINE,AES,XSAVE,AVX,F16C,RDRAND,HV,NXE,RDTSCP,LONG,LAHF,FSGSBASE,TSC_ADJUST,SMEP,ERMS,MD_CLEAR,IBRS,IBPB,SSBD,ARAT,XSAVEOPT,MELTDOWN
+cpu3: 64KB 64b/line 2-way I-cache, 64KB 64b/line 2-way D-cache, 512KB 64b/line 16-way L2 cache
+cpu3: ITLB 255 4KB entries direct-mapped, 255 4MB entries direct-mapped
+cpu3: DTLB 255 4KB entries direct-mapped, 255 4MB entries direct-mapped
+cpu3: smt 0, core 0, package 3
+cpu4 at mainbus0: apid 4 (application processor)
+TSC skew=1
+cpu4: Intel Xeon E3-12xx v2 (Ivy Bridge, IBRS), 2394.57 MHz, 06-3a-09
+cpu4: FPU,VME,DE,PSE,TSC,MSR,PAE,MCE,CX8,APIC,SEP,MTRR,PGE,MCA,CMOV,PAT,PSE36,CFLUSH,MMX,FXSR,SSE,SSE2,SS,SSE3,PCLMUL,VMX,SSSE3,CX16,PCID,SSE4.1,SSE4.2,x2APIC,POPCNT,DEADLINE,AES,XSAVE,AVX,F16C,RDRAND,HV,NXE,RDTSCP,LONG,LAHF,FSGSBASE,TSC_ADJUST,SMEP,ERMS,MD_CLEAR,IBRS,IBPB,SSBD,ARAT,XSAVEOPT,MELTDOWN
+cpu4: 64KB 64b/line 2-way I-cache, 64KB 64b/line 2-way D-cache, 512KB 64b/line 16-way L2 cache
+cpu4: ITLB 255 4KB entries direct-mapped, 255 4MB entries direct-mapped
+cpu4: DTLB 255 4KB entries direct-mapped, 255 4MB entries direct-mapped
+cpu4: smt 0, core 0, package 4
+cpu5 at mainbus0: apid 5 (application processor)
+TSC skew=-64
+cpu5: Intel Xeon E3-12xx v2 (Ivy Bridge, IBRS), 2394.60 MHz, 06-3a-09
+cpu5: FPU,VME,DE,PSE,TSC,MSR,PAE,MCE,CX8,APIC,SEP,MTRR,PGE,MCA,CMOV,PAT,PSE36,CFLUSH,MMX,FXSR,SSE,SSE2,SS,SSE3,PCLMUL,VMX,SSSE3,CX16,PCID,SSE4.1,SSE4.2,x2APIC,POPCNT,DEADLINE,AES,XSAVE,AVX,F16C,RDRAND,HV,NXE,RDTSCP,LONG,LAHF,FSGSBASE,TSC_ADJUST,SMEP,ERMS,MD_CLEAR,IBRS,IBPB,SSBD,ARAT,XSAVEOPT,MELTDOWN
+cpu5: 64KB 64b/line 2-way I-cache, 64KB 64b/line 2-way D-cache, 512KB 64b/line 16-way L2 cache
+cpu5: ITLB 255 4KB entries direct-mapped, 255 4MB entries direct-mapped
+cpu5: DTLB 255 4KB entries direct-mapped, 255 4MB entries direct-mapped
+cpu5: smt 0, core 0, package 5
+cpu6 at mainbus0: apid 6 (application processor)
+TSC skew=-55
+cpu6: Intel Xeon E3-12xx v2 (Ivy Bridge, IBRS), 2394.58 MHz, 06-3a-09
+cpu6: FPU,VME,DE,PSE,TSC,MSR,PAE,MCE,CX8,APIC,SEP,MTRR,PGE,MCA,CMOV,PAT,PSE36,CFLUSH,MMX,FXSR,SSE,SSE2,SS,SSE3,PCLMUL,VMX,SSSE3,CX16,PCID,SSE4.1,SSE4.2,x2APIC,POPCNT,DEADLINE,AES,XSAVE,AVX,F16C,RDRAND,HV,NXE,RDTSCP,LONG,LAHF,FSGSBASE,TSC_ADJUST,SMEP,ERMS,MD_CLEAR,IBRS,IBPB,SSBD,ARAT,XSAVEOPT,MELTDOWN
+cpu6: 64KB 64b/line 2-way I-cache, 64KB 64b/line 2-way D-cache, 512KB 64b/line 16-way L2 cache
+cpu6: ITLB 255 4KB entries direct-mapped, 255 4MB entries direct-mapped
+cpu6: DTLB 255 4KB entries direct-mapped, 255 4MB entries direct-mapped
+cpu6: smt 0, core 0, package 6
+cpu7 at mainbus0: apid 7 (application processor)
+TSC skew=27
+cpu7: Intel Xeon E3-12xx v2 (Ivy Bridge, IBRS), 2394.58 MHz, 06-3a-09
+cpu7: FPU,VME,DE,PSE,TSC,MSR,PAE,MCE,CX8,APIC,SEP,MTRR,PGE,MCA,CMOV,PAT,PSE36,CFLUSH,MMX,FXSR,SSE,SSE2,SS,SSE3,PCLMUL,VMX,SSSE3,CX16,PCID,SSE4.1,SSE4.2,x2APIC,POPCNT,DEADLINE,AES,XSAVE,AVX,F16C,RDRAND,HV,NXE,RDTSCP,LONG,LAHF,FSGSBASE,TSC_ADJUST,SMEP,ERMS,MD_CLEAR,IBRS,IBPB,SSBD,ARAT,XSAVEOPT,MELTDOWN
+cpu7: 64KB 64b/line 2-way I-cache, 64KB 64b/line 2-way D-cache, 512KB 64b/line 16-way L2 cache
+cpu7: ITLB 255 4KB entries direct-mapped, 255 4MB entries direct-mapped
+cpu7: DTLB 255 4KB entries direct-mapped, 255 4MB entries direct-mapped
+cpu7: smt 0, core 0, package 7
+ioapic0 at mainbus0: apid 0 pa 0xfec00000, version 11, 24 pins
+acpiprt0 at acpi0: bus 0 (PCI0)
+acpicpu0 at acpi0: C1(@1 halt!)
+acpicpu1 at acpi0: C1(@1 halt!)
+acpicpu2 at acpi0: C1(@1 halt!)
+acpicpu3 at acpi0: C1(@1 halt!)
+acpicpu4 at acpi0: C1(@1 halt!)
+acpicpu5 at acpi0: C1(@1 halt!)
+acpicpu6 at acpi0: C1(@1 halt!)
+acpicpu7 at acpi0: C1(@1 halt!)
+"ACPI0006" at acpi0 not configured
+acpipci0 at acpi0 PCI0
+acpicmos0 at acpi0
+"PNP0A06" at acpi0 not configured
+"PNP0A06" at acpi0 not configured
+"PNP0A06" at acpi0 not configured
+"QEMU0002" at acpi0 not configured
+"ACPI0010" at acpi0 not configured
+pci0 at acpipci0 bus 0
+pchb0 at pci0 dev 0 function 0 "Intel 82441FX" rev 0x02
+pcib0 at pci0 dev 1 function 0 "Intel 82371SB ISA" rev 0x00
+pciide0 at pci0 dev 1 function 1 "Intel 82371SB IDE" rev 0x00: DMA, channel 0 wired to compatibility, channel 1 wired to compatibility
+wd0 at pciide0 channel 0 drive 0: <QEMU HARDDISK>
+wd0: 16-sector PIO, LBA48, 30720MB, 62914560 sectors
+atapiscsi0 at pciide0 channel 0 drive 1
+scsibus1 at atapiscsi0: 2 targets
+cd0 at scsibus1 targ 0 lun 0: <QEMU, QEMU DVD-ROM, 2.5+> removable
+wd0(pciide0:0:0): using PIO mode 4, DMA mode 2
+cd0(pciide0:0:1): using PIO mode 4, DMA mode 2
+pciide0: channel 1 disabled (no drives)
+piixpm0 at pci0 dev 1 function 3 "Intel 82371AB Power" rev 0x03: apic 0 int 9
+iic0 at piixpm0
+vga1 at pci0 dev 2 function 0 "Red Hat QXL Video" rev 0x04
+wsdisplay0 at vga1 mux 1: console (80x25, vt100 emulation)
+wsdisplay0: screen 1-5 added (80x25, vt100 emulation)
+re0 at pci0 dev 3 function 0 "Realtek 8139" rev 0x20: RTL8139C+ (0x7480), apic 0 int 11, address 52:54:00:ad:58:80
+rlphy0 at re0 phy 0: RTL internal PHY
+azalia0 at pci0 dev 4 function 0 "Intel 82801FB HD Audio" rev 0x01: apic 0 int 11
+azalia0: No codecs found
+uhci0 at pci0 dev 5 function 0 "Intel 82801I USB" rev 0x03: apic 0 int 10
+uhci1 at pci0 dev 5 function 1 "Intel 82801I USB" rev 0x03: apic 0 int 10
+uhci2 at pci0 dev 5 function 2 "Intel 82801I USB" rev 0x03: apic 0 int 11
+ehci0 at pci0 dev 5 function 7 "Intel 82801I USB" rev 0x03: apic 0 int 11
+usb0 at ehci0: USB revision 2.0
+uhub0 at usb0 configuration 1 interface 0 "Intel EHCI root hub" rev 2.00/1.00 addr 1
+virtio0 at pci0 dev 6 function 0 "Qumranet Virtio Console" rev 0x00
+virtio0: no matching child driver; not configured
+virtio1 at pci0 dev 7 function 0 "Qumranet Virtio Memory Balloon" rev 0x00
+viomb0 at virtio1
+virtio1: apic 0 int 11
+isa0 at pcib0
+isadma0 at isa0
+fdc0 at isa0 port 0x3f0/6 irq 6 drq 2
+com0 at isa0 port 0x3f8/8 irq 4: ns16550a, 16 byte fifo
+pckbc0 at isa0 port 0x60/5 irq 1 irq 12
+pckbd0 at pckbc0 (kbd slot)
+wskbd0 at pckbd0: console keyboard, using wsdisplay0
+pms0 at pckbc0 (aux slot)
+wsmouse0 at pms0 mux 0
+pcppi0 at isa0 port 0x61
+spkr0 at pcppi0
+usb1 at uhci0: USB revision 1.0
+uhub1 at usb1 configuration 1 interface 0 "Intel UHCI root hub" rev 1.00/1.00 addr 1
+usb2 at uhci1: USB revision 1.0
+uhub2 at usb2 configuration 1 interface 0 "Intel UHCI root hub" rev 1.00/1.00 addr 1
+usb3 at uhci2: USB revision 1.0
+uhub3 at usb3 configuration 1 interface 0 "Intel UHCI root hub" rev 1.00/1.00 addr 1
+cpu0: using VERW MDS workaround
+pvbus0 at mainbus0: KVM
+pvclock0 at pvbus0
+vmm0 at mainbus0: VMX/EPT (using slow L1TF mitigation)
+vscsi0 at root
+scsibus2 at vscsi0: 256 targets
+softraid0 at root
+scsibus3 at softraid0: 256 targets
+root on wd0a (c3f88dcd01f2b58a.a) swap on wd0b dump on wd0b
+fd0 at fdc0 drive 1: density unknown
