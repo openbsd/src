@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.190 2019/09/13 01:31:24 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.191 2019/10/16 10:20:48 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -751,8 +751,8 @@ tun_dev_read(struct tun_softc *tp, struct uio *uio, int ioflag)
 		int destroyed;
 
 		while ((tp->tun_flags & TUN_READY) != TUN_READY) {
-			if ((error = tsleep((caddr_t)tp,
-			    (PZERO + 1)|PCATCH, "tunread", 0)) != 0)
+			if ((error = tsleep_nsec(tp,
+			    (PZERO + 1)|PCATCH, "tunread", INFSLP)) != 0)
 				return (error);
 			/* Make sure the interface still exists. */
 			ifp1 = if_get(ifidx);
@@ -766,8 +766,8 @@ tun_dev_read(struct tun_softc *tp, struct uio *uio, int ioflag)
 			if (tp->tun_flags & TUN_NBIO && ioflag & IO_NDELAY)
 				return (EWOULDBLOCK);
 			tp->tun_flags |= TUN_RWAIT;
-			if ((error = tsleep((caddr_t)tp,
-			    (PZERO + 1)|PCATCH, "tunread", 0)) != 0)
+			if ((error = tsleep_nsec(tp,
+			    (PZERO + 1)|PCATCH, "tunread", INFSLP)) != 0)
 				return (error);
 			/* Make sure the interface still exists. */
 			ifp1 = if_get(ifidx);
