@@ -200,6 +200,8 @@ static inline int constant_time_select_int(unsigned int mask, int a, int b)
     return (int)(constant_time_select(mask, (unsigned)(a), (unsigned)(b)));
 }
 
+void err_clear_last_constant_time(int clear);
+
 __END_HIDDEN_DECLS
 
 #endif                          /* HEADER_CONSTANT_TIME_LOCL_H */

@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.47 2018/04/03 21:59:37 tb Exp $ */
+/* $OpenBSD: err.c,v 1.48 2019/10/17 14:28:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1183,4 +1183,25 @@ ERR_pop_to_mark(void)
 		return 0;
 	es->err_flags[es->top]&=~ERR_FLAG_MARK;
 	return 1;
+}
+
+void
+err_clear_last_constant_time(int clear)
+{
+	ERR_STATE *es;
+	int top;
+
+	es = ERR_get_state();
+	if (es == NULL)
+        return;
+
+	top = es->top;
+
+	es->err_flags[top] &= ~(0 - clear);
+	es->err_buffer[top] &= ~(0UL - clear);
+	es->err_file[top] = (const char *)((uintptr_t)es->err_file[top] &
+	    ~((uintptr_t)0 - clear));
+	es->err_line[top] |= 0 - clear;
+
+	es->top = (top + ERR_NUM_ERRORS - clear) % ERR_NUM_ERRORS;
 }
