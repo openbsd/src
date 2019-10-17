@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.129 2019/10/07 19:35:07 patrick Exp $
+# $OpenBSD: GENERIC,v 1.130 2019/10/17 22:32:06 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -199,6 +199,7 @@ sdmmc*		at dwmmc?
 sxipio*		at fdt? early 1	# GPIO pins for leds & PHYs
 gpio*		at sxipio?
 sxiccmu*	at fdt? early 1	# Clock Control Module/Unit
+sxidog*		at fdt?
 sxirsb*		at fdt? early 1	# Reduced Serial Bus
 axppmic*	at rsb?
 sxirtc*		at fdt? early 1	# Real Time Clock
