@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.25 2019/09/06 12:22:01 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.26 2019/10/17 15:38:56 drahn Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -111,7 +111,8 @@ data_abort(struct trapframe *frame, uint64_t esr, uint64_t far,
 	if (exe)
 		access_type = PROT_EXEC;
 	else
-		access_type = ((esr >> 6) & 1) ? PROT_WRITE : PROT_READ;
+		access_type = (!(esr & ISS_DATA_CM) && (esr & ISS_DATA_WnR)) ?
+		    PROT_WRITE : PROT_READ;
 
 	ftype = VM_FAULT_INVALID; // should check for failed permissions.
 
