@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_oaep.c,v 1.32 2019/10/09 16:17:59 jsing Exp $ */
+/* $OpenBSD: rsa_oaep.c,v 1.33 2019/10/17 14:31:56 jsing Exp $ */
 /*
  * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -79,6 +79,7 @@
 #include <openssl/rsa.h>
 #include <openssl/sha.h>
 
+#include "constant_time_locl.h"
 #include "rsa_locl.h"
 
 int
@@ -169,13 +170,11 @@ RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     const unsigned char *from, int flen, int num, const unsigned char *param,
     int plen, const EVP_MD *md, const EVP_MD *mgf1md)
 {
-	int i, dblen, mlen = -1;
-	const unsigned char *maskeddb;
-	int lzero;
-	unsigned char *db = NULL;
+	int i, dblen = 0, mlen = -1, one_index = 0, msg_index;
+	unsigned int good = 0, found_one_byte, mask;
+	const unsigned char *maskedseed, *maskeddb;
 	unsigned char seed[EVP_MAX_MD_SIZE], phash[EVP_MAX_MD_SIZE];
-	unsigned char *padded_from;
-	int bad = 0;
+	unsigned char *db = NULL, *em = NULL;
 	int mdlen;
 
 	if (md == NULL)
@@ -184,88 +183,136 @@ RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
 		mgf1md = md;
 
 	if ((mdlen = EVP_MD_size(md)) <= 0)
-		goto err;
+		return -1;
 
-	if (--num < 2 * mdlen + 1)
-		/*
-		 * 'num' is the length of the modulus, i.e. does not depend
-		 * on the particular ciphertext.
-		 */
-		goto decoding_err;
+	if (tlen <= 0 || flen <= 0)
+		return -1;
 
-	lzero = num - flen;
-	if (lzero < 0) {
-		/*
-		 * signalling this error immediately after detection might allow
-		 * for side-channel attacks (e.g. timing if 'plen' is huge
-		 * -- cf. James H. Manger, "A Chosen Ciphertext Attack on RSA
-		 * Optimal Asymmetric Encryption Padding (OAEP) [...]",
-		 * CRYPTO 2001), so we use a 'bad' flag
-		 */
-		bad = 1;
-		lzero = 0;
-		flen = num; /* don't overflow the memcpy to padded_from */
-	}
-
-	dblen = num - mdlen;
-	if ((db = malloc(dblen + num)) == NULL) {
-		RSAerror(ERR_R_MALLOC_FAILURE);
+	/*
+	 * |num| is the length of the modulus; |flen| is the length of the
+	 * encoded message. Therefore, for any |from| that was obtained by
+	 * decrypting a ciphertext, we must have |flen| <= |num|. Similarly,
+	 * |num| >= 2 * |mdlen| + 2 must hold for the modulus irrespective
+	 * of the ciphertext, see PKCS #1 v2.2, section 7.1.2.
+	 * This does not leak any side-channel information.
+	 */
+	if (num < flen || num < 2 * mdlen + 2) {
+		RSAerror(RSA_R_OAEP_DECODING_ERROR);
 		return -1;
 	}
 
-	/*
-	 * Always do this zero-padding copy (even when lzero == 0)
-	 * to avoid leaking timing info about the value of lzero.
-	 */
-	padded_from = db + dblen;
-	memset(padded_from, 0, lzero);
-	memcpy(padded_from + lzero, from, flen);
+	dblen = num - mdlen - 1;
+	if ((db = malloc(dblen)) == NULL) {
+		RSAerror(ERR_R_MALLOC_FAILURE);
+		goto cleanup;
+	}
+	if ((em = malloc(num)) == NULL) {
+		RSAerror(ERR_R_MALLOC_FAILURE);
+		goto cleanup;
+	}
 
-	maskeddb = padded_from + mdlen;
+	/*
+	 * Caller is encouraged to pass zero-padded message created with
+	 * BN_bn2binpad. Trouble is that since we can't read out of |from|'s
+	 * bounds, it's impossible to have an invariant memory access pattern
+	 * in case |from| was not zero-padded in advance.
+	 */
+	for (from += flen, em += num, i = 0; i < num; i++) {
+		mask = ~constant_time_is_zero(flen);
+		flen -= 1 & mask;
+		from -= 1 & mask;
+		*--em = *from & mask;
+	}
+	from = em;
+
+	/*
+	 * The first byte must be zero, however we must not leak if this is
+	 * true. See James H. Manger, "A Chosen Ciphertext Attack on RSA
+	 * Optimal Asymmetric Encryption Padding (OAEP) [...]", CRYPTO 2001).
+	 */
+	good = constant_time_is_zero(from[0]);
+
+	maskedseed = from + 1;
+	maskeddb = from + 1 + mdlen;
 
 	if (PKCS1_MGF1(seed, mdlen, maskeddb, dblen, mgf1md))
-		goto err;
+		goto cleanup;
 	for (i = 0; i < mdlen; i++)
-		seed[i] ^= padded_from[i];
+		seed[i] ^= maskedseed[i];
+
 	if (PKCS1_MGF1(db, dblen, seed, mdlen, mgf1md))
-		goto err;
+		goto cleanup;
 	for (i = 0; i < dblen; i++)
 		db[i] ^= maskeddb[i];
 
 	if (!EVP_Digest((void *)param, plen, phash, NULL, md, NULL))
-		goto err;
+		goto cleanup;
 
-	if (timingsafe_memcmp(db, phash, mdlen) != 0 || bad)
-		goto decoding_err;
-	else {
-		for (i = mdlen; i < dblen; i++)
-			if (db[i] != 0x00)
-				break;
-		if (i == dblen || db[i] != 0x01)
-			goto decoding_err;
-		else {
-			/* everything looks OK */
+	good &= constant_time_is_zero(timingsafe_memcmp(db, phash, mdlen));
 
-			mlen = dblen - ++i;
-			if (tlen < mlen) {
-				RSAerror(RSA_R_DATA_TOO_LARGE);
-				mlen = -1;
-			} else
-				memcpy(to, db + i, mlen);
-		}
+	found_one_byte = 0;
+	for (i = mdlen; i < dblen; i++) {
+		/*
+		 * Padding consists of a number of 0-bytes, followed by a 1.
+		 */
+		unsigned int equals1 = constant_time_eq(db[i], 1);
+		unsigned int equals0 = constant_time_is_zero(db[i]);
+
+		one_index = constant_time_select_int(~found_one_byte & equals1,
+		    i, one_index);
+		found_one_byte |= equals1;
+		good &= (found_one_byte | equals0);
 	}
-	free(db);
-	return mlen;
 
- decoding_err:
+	good &= found_one_byte;
+
+	/*
+	 * At this point |good| is zero unless the plaintext was valid,
+	 * so plaintext-awareness ensures timing side-channels are no longer a
+	 * concern.
+	 */
+	msg_index = one_index + 1;
+	mlen = dblen - msg_index;
+
+	/*
+	 * For good measure, do this check in constant time as well.
+	 */
+	good &= constant_time_ge(tlen, mlen);
+
+	/*
+	 * Even though we can't fake result's length, we can pretend copying
+	 * |tlen| bytes where |mlen| bytes would be real. The last |tlen| of
+	 * |dblen| bytes are viewed as a circular buffer starting at |tlen|-|mlen'|,
+	 * where |mlen'| is the "saturated" |mlen| value. Deducing information
+	 * about failure or |mlen| would require an attacker to observe
+	 * memory access patterns with byte granularity *as it occurs*. It
+	 * should be noted that failure is indistinguishable from normal
+	 * operation if |tlen| is fixed by protocol.
+	 */
+	tlen = constant_time_select_int(constant_time_lt(dblen, tlen), dblen, tlen);
+	msg_index = constant_time_select_int(good, msg_index, dblen - tlen);
+	mlen = dblen - msg_index;
+	for (from = db + msg_index, mask = good, i = 0; i < tlen; i++) {
+		unsigned int equals = constant_time_eq(i, mlen);
+
+		from -= dblen & equals; /* if (i == mlen) rewind   */
+		mask &= mask ^ equals;  /* if (i == mlen) mask = 0 */
+		to[i] = constant_time_select_8(mask, from[i], to[i]);
+	}
+
 	/*
 	 * To avoid chosen ciphertext attacks, the error message should not
-	 * reveal which kind of decoding error happened
+	 * reveal which kind of decoding error happened.
 	 */
 	RSAerror(RSA_R_OAEP_DECODING_ERROR);
- err:
-	free(db);
-	return -1;
+	err_clear_last_constant_time(1 & good);
+
+ cleanup:
+	explicit_bzero(seed, sizeof(seed));
+	freezero(db, dblen);
+	freezero(em, num);
+
+	return constant_time_select_int(good, mlen, -1);
 }
 
 int
