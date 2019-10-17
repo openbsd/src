@@ -500,6 +500,7 @@ static const struct resource_caps res_cap = {
 		.num_audio = 4,
 		.num_stream_encoder = 4,
 		.num_pll = 4,
+		.num_ddc = 4,
 };
 
 static const struct dc_debug_options debug_defaults_drv = {
@@ -1292,7 +1293,11 @@ static bool construct(
 			dm_error("DC: failed to create tg!\n");
 			goto fail;
 		}
+		/* check next valid pipe */
+		j++;
+	}
 
+	for (i = 0; i < pool->base.res_cap->num_ddc; i++) {
 		pool->base.engines[i] = dcn10_aux_engine_create(ctx, i);
 		if (pool->base.engines[i] == NULL) {
 			BREAK_TO_DEBUGGER();
@@ -1300,9 +1305,6 @@ static bool construct(
 				"DC:failed to create aux engine!!\n");
 			goto fail;
 		}
-
-		/* check next valid pipe */
-		j++;
 	}
 
 	/* valid pipe num */
