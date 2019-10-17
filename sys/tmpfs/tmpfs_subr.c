@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.22 2018/05/28 16:02:08 visa Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.23 2019/10/17 11:23:49 millert Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -139,7 +139,6 @@ tmpfs_alloc_node(tmpfs_mount_t *tmp, enum vtype type, uid_t uid, gid_t gid,
 	nnode->tn_ctime = nnode->tn_atime;
 	nnode->tn_mtime = nnode->tn_atime;
 
-	/* XXX pedro: we should check for UID_MAX and GID_MAX instead. */
 	KASSERT(uid != VNOVAL && gid != VNOVAL && mode != VNOVAL);
 
 	nnode->tn_uid = uid;

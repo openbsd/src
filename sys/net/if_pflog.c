@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.85 2019/09/30 01:53:05 dlg Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.86 2019/10/17 11:23:49 millert Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -265,7 +265,7 @@ pflog_packet(struct pf_pdesc *pd, u_int8_t reason, struct pf_rule *rm,
 		hdr.uid = pd->lookup.uid;
 		hdr.pid = pd->lookup.pid;
 	} else {
-		hdr.uid = UID_MAX;
+		hdr.uid = -1;
 		hdr.pid = NO_PID;
 	}
 	hdr.rule_uid = rm->cuid;
