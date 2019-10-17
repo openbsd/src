@@ -1,3 +1,4 @@
+
 OpenBSD 6.6-beta (GENERIC.MP) #0: Sat Oct 12 19:26:48 PDT 2019
     root@outer.my.domain:/usr/obj/src/sys/arch/amd64/compile/GENERIC.MP
 real mem = 13614575616 (12983MB)
