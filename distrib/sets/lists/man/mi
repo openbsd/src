@@ -1256,7 +1256,6 @@
 ./usr/share/man/man4/armv7/omwugen.4
 ./usr/share/man/man4/armv7/prcm.4
 ./usr/share/man/man4/armv7/sitaracm.4
-./usr/share/man/man4/armv7/sxidog.4
 ./usr/share/man/man4/armv7/sxie.4
 ./usr/share/man/man4/armv7/sxiintc.4
 ./usr/share/man/man4/armv7/sxitimer.4
@@ -1910,6 +1909,7 @@
 ./usr/share/man/man4/sv.4
 ./usr/share/man/man4/switch.4
 ./usr/share/man/man4/sxiccmu.4
+./usr/share/man/man4/sxidog.4
 ./usr/share/man/man4/sximmc.4
 ./usr/share/man/man4/sxipio.4
 ./usr/share/man/man4/sxirsb.4
