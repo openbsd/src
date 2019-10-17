@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.127 2019/07/03 03:24:03 deraadt Exp $ */
+/* $OpenBSD: user.c,v 1.128 2019/10/17 21:54:29 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1051,7 +1051,7 @@ adduser(char *login_name, user_t *up)
 	}
 	/* if no uid was specified, get next one in [low_uid..high_uid] range */
 	sync_uid_gid = (strcmp(up->u_primgrp, "=uid") == 0);
-	if (up->u_uid == UID_MAX) {
+	if (up->u_uid == -1) {
 		int got_id = 0;
 
 		/*
@@ -1787,7 +1787,7 @@ useradd(int argc, char **argv)
 
 	memset(&u, 0, sizeof(u));
 	read_defaults(&u);
-	u.u_uid = UID_MAX;
+	u.u_uid = -1;
 	defaultfield = bigD = 0;
 	while ((c = getopt(argc, argv, "DG:L:b:c:d:e:f:g:k:mop:r:s:u:v")) != -1) {
 		switch(c) {
@@ -2113,7 +2113,7 @@ groupadd(int argc, char **argv)
 	int	c;
 	const char *errstr;
 
-	gid = GID_MAX;
+	gid = -1;
 	dupgid = 0;
 	while ((c = getopt(argc, argv, "g:ov")) != -1) {
 		switch(c) {
@@ -2210,7 +2210,7 @@ groupmod(int argc, char **argv)
 	int		cc;
 	int		c;
 
-	gid = GID_MAX;
+	gid = -1;
 	dupgid = 0;
 	newname = NULL;
 	while ((c = getopt(argc, argv, "g:n:ov")) != -1) {

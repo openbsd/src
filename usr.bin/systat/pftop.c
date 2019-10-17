@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.44 2019/06/28 13:35:04 deraadt Exp $	 */
+/* $OpenBSD: pftop.c,v 1.45 2019/10/17 21:54:29 millert Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1260,16 +1260,15 @@ tb_print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
 }
 
 void
-tb_print_ugid(u_int8_t op, unsigned u1, unsigned u2,
-	      const char *t, unsigned umax)
+tb_print_ugid(u_int8_t op, id_t i1, id_t i2, const char *t)
 {
 	char	a1[11], a2[11];
 
-	snprintf(a1, sizeof(a1), "%u", u1);
-	snprintf(a2, sizeof(a2), "%u", u2);
+	snprintf(a1, sizeof(a1), "%u", i1);
+	snprintf(a2, sizeof(a2), "%u", i2);
 
 	tbprintf("%s ", t);
-	if (u1 == umax && (op == PF_OP_EQ || op == PF_OP_NE))
+	if (i1 == -1 && (op == PF_OP_EQ || op == PF_OP_NE))
 		tb_print_op(op, "unknown", a2);
 	else
 		tb_print_op(op, a1, a2);
@@ -1386,10 +1385,10 @@ print_rule(struct pf_rule *pr)
 
 	if (pr->uid.op)
 		tb_print_ugid(pr->uid.op, pr->uid.uid[0], pr->uid.uid[1],
-		        "user", UID_MAX);
+		        "user");
 	if (pr->gid.op)
 		tb_print_ugid(pr->gid.op, pr->gid.gid[0], pr->gid.gid[1],
-		        "group", GID_MAX);
+		        "group");
 
 	if (pr->action == PF_PASS &&
 	    (pr->proto == 0 || pr->proto == IPPROTO_TCP) &&

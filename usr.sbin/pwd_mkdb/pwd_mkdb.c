@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.56 2019/06/28 13:32:49 deraadt Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.57 2019/10/17 21:54:29 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -210,7 +210,7 @@ main(int argc, char **argv)
 				;
 			memcpy(&olduid, p, sizeof(olduid));
 		} else
-			olduid = UID_MAX;
+			olduid = -1;
 		(dp->close)(dp);
 	}
 
@@ -227,7 +227,7 @@ main(int argc, char **argv)
 	}
 	if (!edp)
 		fatal("%s", buf);
-	if (fchown(edp->fd(edp), (uid_t)-1, shadow) != 0)
+	if (fchown(edp->fd(edp), -1, shadow) != 0)
 		warn("%s: unable to set group to %s", _PATH_SMP_DB,
 		    SHADOW_GROUP);
 	else if (fchmod(edp->fd(edp), PERM_SECURE|S_IRGRP) != 0)
@@ -502,7 +502,7 @@ write_old_entry(FILE *to, const struct passwd *pw)
 	else
 		snprintf(gidstr, sizeof(gidstr), "%u", (u_int)pw->pw_gid);
 
-	if (pw->pw_uid == (uid_t)-1)
+	if (pw->pw_uid == -1)
 		strlcpy(uidstr, "-1", sizeof(uidstr));
 	else
 		snprintf(uidstr, sizeof(uidstr), "%u", (u_int)pw->pw_uid);
@@ -556,7 +556,7 @@ db_store(FILE *fp, FILE *oldfp, DB *edp, DB *dp, struct passwd *pw,
 				continue;
 			found = 1;
 			/* If the uid changed, remove the old record by uid. */
-			if (olduid != UID_MAX && olduid != pw->pw_uid) {
+			if (olduid != -1 && olduid != pw->pw_uid) {
 				tbuf[0] = _PW_KEYBYUID;
 				memcpy(tbuf + 1, &olduid, sizeof(olduid));
 				key.size = sizeof(olduid) + 1;
@@ -632,7 +632,7 @@ db_store(FILE *fp, FILE *oldfp, DB *edp, DB *dp, struct passwd *pw,
 	}
 	if (firsttime) {
 		firsttime = 0;
-		if (username && !found && olduid != UID_MAX)
+		if (username && !found && olduid != -1)
 			fatalx("can't find user in master.passwd");
 	}
 }
