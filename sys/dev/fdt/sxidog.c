@@ -1,4 +1,4 @@
-/* $OpenBSD: sxidog.c,v 1.1 2019/10/16 22:11:17 kettenis Exp $ */
+/* $OpenBSD: sxidog.c,v 1.2 2019/10/17 22:26:32 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -22,11 +22,12 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
-#include <armv7/armv7/armv7_machdep.h>
 #include <dev/fdt/sunxireg.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
+
+extern void (*cpuresetfn)(void);
 
 /* Allwinner A10 registers */
 #define WDOG_CTRL_REG		0x00
