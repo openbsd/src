@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.108 2018/10/04 17:33:41 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.109 2019/10/17 00:51:28 dlg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -305,7 +305,7 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
  * Get the local address/port, and put it in a sockaddr_in6.
  * This services the getsockname(2) call.
  */
-int
+void
 in6_setsockaddr(struct inpcb *inp, struct mbuf *nam)
 {
 	struct sockaddr_in6 *sin6;
@@ -320,15 +320,13 @@ in6_setsockaddr(struct inpcb *inp, struct mbuf *nam)
 	sin6->sin6_addr = inp->inp_laddr6;
 	/* KAME hack: recover scopeid */
 	in6_recoverscope(sin6, &inp->inp_laddr6);
-
-	return 0;
 }
 
 /*
  * Get the foreign address/port, and put it in a sockaddr_in6.
  * This services the getpeername(2) call.
  */
-int
+void
 in6_setpeeraddr(struct inpcb *inp, struct mbuf *nam)
 {
 	struct sockaddr_in6 *sin6;
@@ -343,8 +341,6 @@ in6_setpeeraddr(struct inpcb *inp, struct mbuf *nam)
 	sin6->sin6_addr = inp->inp_faddr6;
 	/* KAME hack: recover scopeid */
 	in6_recoverscope(sin6, &inp->inp_faddr6);
-
-	return 0;
 }
 
 /*
