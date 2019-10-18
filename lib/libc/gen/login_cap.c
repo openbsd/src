@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.37 2019/06/28 13:32:41 deraadt Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.38 2019/10/18 17:14:08 tedu Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <millert@openbsd.org>
@@ -588,6 +588,24 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 	 */
 	if (pwd == NULL)
 		flags &= ~(LOGIN_SETGROUP|LOGIN_SETLOGIN);
+
+	/*
+	 * Verify that we haven't been given invalid values.
+	 */
+	if (flags & LOGIN_SETGROUP) {
+		if (pwd->pw_gid == -1) {
+			syslog(LOG_ERR, "setusercontext with invalid gid");
+			login_close(flc);
+			return (-1);
+		}
+	}
+	if (flags & LOGIN_SETUSER) {
+		if (uid == -1) {
+			syslog(LOG_ERR, "setusercontext with invalid uid");
+			login_close(flc);
+			return (-1);
+		}
+	}
 
 	if (flags & LOGIN_SETRESOURCES)
 		for (i = 0; r_list[i].name; ++i) 
