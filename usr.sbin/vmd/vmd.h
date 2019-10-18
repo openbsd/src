@@ -345,6 +345,10 @@ struct vmd {
 	int			 vmd_fd;
 	int			 vmd_fd6;
 	int			 vmd_ptmfd;
+ /* Memory balloon settings from vm.conf */
+	int			 vmb_lowat;
+    int          vmb_hiwat;
+    int          vmb_reclaim;
 };
 
 static inline struct sockaddr_in *
