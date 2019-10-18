@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2019/10/18 04:53:22 otto Exp $	*/
+/*	$OpenBSD: parse.y,v 1.9 2019/10/18 06:00:46 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -106,7 +106,7 @@ typedef struct {
 
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
-%type	<v.number>	yesno port dot
+%type	<v.number>	yesno port dot prefopt
 %type	<v.string>	string authname
 
 %%
@@ -253,46 +253,21 @@ prefopts_l		: prefopts_l prefoptsl optnl
 			| prefoptsl optnl
 			;
 
-prefoptsl		: DOT {
-				if (!check_pref_uniq(UW_RES_DOT))
+prefoptsl		: prefopt {
+				if (!check_pref_uniq($1))
 					YYERROR;
 				if (conf->res_pref_len >= UW_RES_NONE) {
 					yyerror("preference list too long");
 					YYERROR;
 				}
-				conf->res_pref[conf->res_pref_len++] =
-				    UW_RES_DOT;
+				conf->res_pref[conf->res_pref_len++] = $1;
 			}
-			| FORWARDER {
-				if (!check_pref_uniq(UW_RES_FORWARDER))
-					YYERROR;
-				if (conf->res_pref_len >= UW_RES_NONE) {
-					yyerror("preference list too long");
-					YYERROR;
-				}
-				conf->res_pref[conf->res_pref_len++] =
-				    UW_RES_FORWARDER;
-			}
-			| RECURSOR {
-				if (!check_pref_uniq(UW_RES_RECURSOR))
-					YYERROR;
-				if (conf->res_pref_len >= UW_RES_NONE) {
-					yyerror("preference list too long");
-					YYERROR;
-				}
-				conf->res_pref[conf->res_pref_len++] =
-				    UW_RES_RECURSOR;
-			}
-			| DHCP {
-				if(!check_pref_uniq(UW_RES_DHCP))
-					YYERROR;
-				if (conf->res_pref_len >= UW_RES_NONE) {
-					yyerror("preference list too long");
-					YYERROR;
-				}
-				conf->res_pref[conf->res_pref_len++] =
-				    UW_RES_DHCP;
-			}
+			;
+
+prefopt			: DOT		{ $$ = UW_RES_DOT; }
+			| FORWARDER	{ $$ = UW_RES_FORWARDER; }
+			| RECURSOR	{ $$ = UW_RES_RECURSOR; }
+			| DHCP		{ $$ = UW_RES_DHCP; }
 			;
 
 uw_forwarder		: FORWARDER forwarder_block
