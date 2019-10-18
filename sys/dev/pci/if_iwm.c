@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.253 2019/10/12 07:03:39 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.254 2019/10/18 07:07:53 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -293,6 +293,7 @@ void	iwm_nic_config(struct iwm_softc *);
 int	iwm_nic_rx_init(struct iwm_softc *);
 int	iwm_nic_tx_init(struct iwm_softc *);
 int	iwm_nic_init(struct iwm_softc *);
+int	iwm_enable_ac_txq(struct iwm_softc *, int, int);
 int	iwm_enable_txq(struct iwm_softc *, int, int, int);
 int	iwm_post_alive(struct iwm_softc *);
 struct iwm_phy_db_entry *iwm_phy_db_get_section(struct iwm_softc *, uint16_t,
@@ -360,6 +361,7 @@ int	iwm_start_fw(struct iwm_softc *, enum iwm_ucode_type);
 int	iwm_send_tx_ant_cfg(struct iwm_softc *, uint8_t);
 int	iwm_send_phy_cfg_cmd(struct iwm_softc *);
 int	iwm_load_ucode_wait_alive(struct iwm_softc *, enum iwm_ucode_type);
+int	iwm_send_dqa_cmd(struct iwm_softc *);
 int	iwm_run_init_mvm_ucode(struct iwm_softc *, int);
 int	iwm_rx_addbuf(struct iwm_softc *, int, int);
 int	iwm_calc_rssi(struct iwm_softc *, struct iwm_rx_phy_info *);
@@ -1186,8 +1188,23 @@ iwm_alloc_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring, int qid)
 	ring->desc = ring->desc_dma.vaddr;
 
 	/*
-	 * We only use rings 0 through 9 (4 EDCA + cmd) so there is no need
-	 * to allocate commands space for other rings.
+	 * There is no need to allocate DMA buffers for unused rings.
+	 * 7k/8k/9k hardware supports up to 31 Tx rings which is more
+	 * than we currently need.
+	 *
+	 * In DQA mode we use 1 command queue + 4 DQA mgmt/data queues.
+	 * The command is queue 0 (sc->txq[0]), and 4 mgmt/data frame queues
+	 * are sc->tqx[IWM_DQA_MIN_MGMT_QUEUE + ac], i.e. sc->txq[5:8],
+	 * in order to provide one queue per EDCA category.
+	 *
+	 * In non-DQA mode, we use rings 0 through 9 (0-3 are EDCA, 9 is cmd).
+	 *
+	 * Tx aggregation will require additional queues (one queue per TID
+	 * for which aggregation is enabled) but we do not implement this yet.
+	 *
+	 * Unfortunately, we cannot tell if DQA will be used until the
+	 * firmware gets loaded later, so just allocate sufficient rings
+	 * in order to satisfy both cases.
 	 */
 	if (qid > IWM_CMD_QUEUE)
 		return 0;
@@ -1211,7 +1228,7 @@ iwm_alloc_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring, int qid)
 		paddr += sizeof(struct iwm_device_cmd);
 
 		/* FW commands may require more mapped space than packets. */
-		if (qid == IWM_CMD_QUEUE)
+		if (qid == IWM_CMD_QUEUE || qid == IWM_DQA_CMD_QUEUE)
 			mapsize = (sizeof(struct iwm_cmd_header) +
 			    IWM_MAX_CMD_PAYLOAD_SIZE);
 		else
@@ -1254,7 +1271,7 @@ iwm_reset_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring)
 	    ring->desc_dma.size, BUS_DMASYNC_PREWRITE);
 	sc->qfullmsk &= ~(1 << ring->qid);
 	/* 7000 family NICs are locked while commands are in progress. */
-	if (ring->qid == IWM_CMD_QUEUE && ring->queued > 0) {
+	if (ring->qid == sc->cmdqid && ring->queued > 0) {
 		if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000)
 			iwm_nic_unlock(sc);
 	}
@@ -1800,67 +1817,77 @@ iwm_nic_init(struct iwm_softc *sc)
 	return 0;
 }
 
+/* Map ieee80211_edca_ac categories to firmware Tx FIFO. */
 const uint8_t iwm_ac_to_tx_fifo[] = {
-	IWM_TX_FIFO_VO,
-	IWM_TX_FIFO_VI,
 	IWM_TX_FIFO_BE,
 	IWM_TX_FIFO_BK,
+	IWM_TX_FIFO_VI,
+	IWM_TX_FIFO_VO,
 };
 
 int
-iwm_enable_txq(struct iwm_softc *sc, int sta_id, int qid, int fifo)
+iwm_enable_ac_txq(struct iwm_softc *sc, int qid, int fifo)
 {
 	iwm_nic_assert_locked(sc);
 
 	IWM_WRITE(sc, IWM_HBUS_TARG_WRPTR, qid << 8 | 0);
 
-	if (qid == IWM_CMD_QUEUE) {
-		iwm_write_prph(sc, IWM_SCD_QUEUE_STATUS_BITS(qid),
-		    (0 << IWM_SCD_QUEUE_STTS_REG_POS_ACTIVE)
-		    | (1 << IWM_SCD_QUEUE_STTS_REG_POS_SCD_ACT_EN));
+	iwm_write_prph(sc, IWM_SCD_QUEUE_STATUS_BITS(qid),
+	    (0 << IWM_SCD_QUEUE_STTS_REG_POS_ACTIVE)
+	    | (1 << IWM_SCD_QUEUE_STTS_REG_POS_SCD_ACT_EN));
 
-		iwm_clear_bits_prph(sc, IWM_SCD_AGGR_SEL, (1 << qid));
+	iwm_clear_bits_prph(sc, IWM_SCD_AGGR_SEL, (1 << qid));
 
-		iwm_write_prph(sc, IWM_SCD_QUEUE_RDPTR(qid), 0);
+	iwm_write_prph(sc, IWM_SCD_QUEUE_RDPTR(qid), 0);
 
-		iwm_write_mem32(sc,
-		    sc->sched_base + IWM_SCD_CONTEXT_QUEUE_OFFSET(qid), 0);
+	iwm_write_mem32(sc,
+	    sc->sched_base + IWM_SCD_CONTEXT_QUEUE_OFFSET(qid), 0);
 
-		/* Set scheduler window size and frame limit. */
-		iwm_write_mem32(sc,
-		    sc->sched_base + IWM_SCD_CONTEXT_QUEUE_OFFSET(qid) +
-		    sizeof(uint32_t),
-		    ((IWM_FRAME_LIMIT << IWM_SCD_QUEUE_CTX_REG2_WIN_SIZE_POS) &
-		    IWM_SCD_QUEUE_CTX_REG2_WIN_SIZE_MSK) |
-		    ((IWM_FRAME_LIMIT
-		        << IWM_SCD_QUEUE_CTX_REG2_FRAME_LIMIT_POS) &
-		    IWM_SCD_QUEUE_CTX_REG2_FRAME_LIMIT_MSK));
+	/* Set scheduler window size and frame limit. */
+	iwm_write_mem32(sc,
+	    sc->sched_base + IWM_SCD_CONTEXT_QUEUE_OFFSET(qid) +
+	    sizeof(uint32_t),
+	    ((IWM_FRAME_LIMIT << IWM_SCD_QUEUE_CTX_REG2_WIN_SIZE_POS) &
+	    IWM_SCD_QUEUE_CTX_REG2_WIN_SIZE_MSK) |
+	    ((IWM_FRAME_LIMIT
+		<< IWM_SCD_QUEUE_CTX_REG2_FRAME_LIMIT_POS) &
+	    IWM_SCD_QUEUE_CTX_REG2_FRAME_LIMIT_MSK));
 
-		iwm_write_prph(sc, IWM_SCD_QUEUE_STATUS_BITS(qid),
-		    (1 << IWM_SCD_QUEUE_STTS_REG_POS_ACTIVE) |
-		    (fifo << IWM_SCD_QUEUE_STTS_REG_POS_TXF) |
-		    (1 << IWM_SCD_QUEUE_STTS_REG_POS_WSL) |
-		    IWM_SCD_QUEUE_STTS_REG_MSK);
-	} else {
-		struct iwm_scd_txq_cfg_cmd cmd;
-		int err;
+	iwm_write_prph(sc, IWM_SCD_QUEUE_STATUS_BITS(qid),
+	    (1 << IWM_SCD_QUEUE_STTS_REG_POS_ACTIVE) |
+	    (fifo << IWM_SCD_QUEUE_STTS_REG_POS_TXF) |
+	    (1 << IWM_SCD_QUEUE_STTS_REG_POS_WSL) |
+	    IWM_SCD_QUEUE_STTS_REG_MSK);
 
-		memset(&cmd, 0, sizeof(cmd));
-		cmd.scd_queue = qid;
-		cmd.enable = 1;
-		cmd.sta_id = sta_id;
-		cmd.tx_fifo = fifo;
-		cmd.aggregate = 0;
-		cmd.window = IWM_FRAME_LIMIT;
+	if (qid == sc->cmdqid)
+		iwm_write_prph(sc, IWM_SCD_EN_CTRL,
+		    iwm_read_prph(sc, IWM_SCD_EN_CTRL) | (1 << qid));
 
-		err = iwm_send_cmd_pdu(sc, IWM_SCD_QUEUE_CFG, 0,
-		    sizeof(cmd), &cmd);
-		if (err)
-			return err;
-	}
+	return 0;
+}
 
-	iwm_write_prph(sc, IWM_SCD_EN_CTRL,
-	    iwm_read_prph(sc, IWM_SCD_EN_CTRL) | qid);
+int
+iwm_enable_txq(struct iwm_softc *sc, int sta_id, int qid, int fifo)
+{
+	struct iwm_scd_txq_cfg_cmd cmd;
+	int err;
+
+	iwm_nic_assert_locked(sc);
+
+	IWM_WRITE(sc, IWM_HBUS_TARG_WRPTR, qid << 8 | 0);
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.scd_queue = qid;
+	cmd.enable = 1;
+	cmd.sta_id = sta_id;
+	cmd.tx_fifo = fifo;
+	cmd.aggregate = 0;
+	cmd.window = IWM_FRAME_LIMIT;
+
+	err = iwm_send_cmd_pdu(sc, IWM_SCD_QUEUE_CFG, 0,
+	    sizeof(cmd), &cmd);
+	if (err)
+		return err;
 
 	return 0;
 }
@@ -1895,7 +1922,7 @@ iwm_post_alive(struct iwm_softc *sc)
 	iwm_write_prph(sc, IWM_SCD_CHAINEXT_EN, 0);
 
 	/* enable command channel */
-	err = iwm_enable_txq(sc, 0 /* unused */, IWM_CMD_QUEUE, 7);
+	err = iwm_enable_ac_txq(sc, sc->cmdqid, IWM_TX_FIFO_CMD);
 	if (err)
 		goto out;
 
@@ -3205,6 +3232,18 @@ iwm_send_phy_cfg_cmd(struct iwm_softc *sc)
 }
 
 int
+iwm_send_dqa_cmd(struct iwm_softc *sc)
+{
+	struct iwm_dqa_enable_cmd dqa_cmd = {
+		.cmd_queue = htole32(IWM_DQA_CMD_QUEUE),
+	};
+	uint32_t cmd_id;
+
+	cmd_id = iwm_cmd_id(IWM_DQA_ENABLE_CMD, IWM_DATA_PATH_GROUP, 0);
+	return iwm_send_cmd_pdu(sc, cmd_id, 0, sizeof(dqa_cmd), &dqa_cmd);
+}
+
+int
 iwm_load_ucode_wait_alive(struct iwm_softc *sc,
 	enum iwm_ucode_type ucode_type)
 {
@@ -3214,6 +3253,11 @@ iwm_load_ucode_wait_alive(struct iwm_softc *sc,
 	err = iwm_read_firmware(sc, ucode_type);
 	if (err)
 		return err;
+
+	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_DQA_SUPPORT))
+		sc->cmdqid = IWM_DQA_CMD_QUEUE;
+	else
+		sc->cmdqid = IWM_CMD_QUEUE;
 
 	sc->sc_uc_current = ucode_type;
 	err = iwm_start_fw(sc, ucode_type);
@@ -3261,6 +3305,12 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 	err = iwm_send_bt_init_conf(sc);
 	if (err)
 		return err;
+
+	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_DQA_SUPPORT)) {
+		err = iwm_send_dqa_cmd(sc);
+		if (err)
+			return err;
+	}
 
 	err = iwm_sf_config(sc, IWM_SF_INIT_OFF);
 	if (err)
@@ -3825,7 +3875,7 @@ iwm_phy_ctxt_cmd(struct iwm_softc *sc, struct iwm_phy_ctxt *ctxt,
 int
 iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 {
-	struct iwm_tx_ring *ring = &sc->txq[IWM_CMD_QUEUE];
+	struct iwm_tx_ring *ring = &sc->txq[sc->cmdqid];
 	struct iwm_tfd *desc;
 	struct iwm_tx_data *txdata;
 	struct iwm_device_cmd *cmd;
@@ -4068,10 +4118,10 @@ iwm_free_resp(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 void
 iwm_cmd_done(struct iwm_softc *sc, int qid, int idx, int code)
 {
-	struct iwm_tx_ring *ring = &sc->txq[IWM_CMD_QUEUE];
+	struct iwm_tx_ring *ring = &sc->txq[sc->cmdqid];
 	struct iwm_tx_data *data;
 
-	if (qid != IWM_CMD_QUEUE) {
+	if (qid != sc->cmdqid) {
 		return;	/* Not a command ack. */
 	}
 
@@ -4222,7 +4272,21 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 
 	tid = 0;
 
-	ring = &sc->txq[ac];
+	/*
+	 * Map EDCA categories to Tx data queues.
+	 *
+	 * We use static data queue assignments even in DQA mode. We do not
+	 * need to share Tx queues between stations because we only implement
+	 * client mode; the firmware's station table contains only one entry
+	 * which represents our access point.
+	 *
+	 * Tx aggregation will require additional queues (one queue per TID
+	 * for which aggregation is enabled) but we do not implement this yet.
+	 */
+	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_DQA_SUPPORT))
+		ring = &sc->txq[IWM_DQA_MIN_MGMT_QUEUE + ac];
+	else
+		ring = &sc->txq[ac];
 	desc = &ring->desc[ring->cur];
 	memset(desc, 0, sizeof(*desc));
 	data = &ring->data[ring->cur];
@@ -4409,10 +4473,10 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 }
 
 int
-iwm_flush_tx_path(struct iwm_softc *sc, int tfd_msk)
+iwm_flush_tx_path(struct iwm_softc *sc, int tfd_queue_msk)
 {
 	struct iwm_tx_path_flush_cmd flush_cmd = {
-		.queues_ctl = htole32(tfd_msk),
+		.queues_ctl = htole32(tfd_queue_msk),
 		.flush_ctl = htole16(IWM_DUMP_TX_FIFO_FLUSH),
 	};
 	int err;
@@ -4622,8 +4686,11 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 	if (!update) {
 		int ac;
 		for (ac = 0; ac < EDCA_NUM_AC; ac++) {
-			add_sta_cmd.tfd_queue_msk |=
-			    htole32(1 << iwm_ac_to_tx_fifo[ac]);
+			int qid = ac;
+			if (isset(sc->sc_enabled_capa,
+			    IWM_UCODE_TLV_CAPA_DQA_SUPPORT))
+				qid += IWM_DQA_MIN_MGMT_QUEUE;
+			add_sta_cmd.tfd_queue_msk |= htole32(1 << qid);
 		}
 		IEEE80211_ADDR_COPY(&add_sta_cmd.addr, in->in_ni.ni_bssid);
 	}
@@ -4679,7 +4746,7 @@ iwm_add_aux_sta(struct iwm_softc *sc)
 	int err;
 	uint32_t status;
 
-	err = iwm_enable_txq(sc, 0, IWM_AUX_QUEUE, IWM_TX_FIFO_MCAST);
+	err = iwm_enable_ac_txq(sc, IWM_AUX_QUEUE, IWM_TX_FIFO_MCAST);
 	if (err)
 		return err;
 
@@ -5706,7 +5773,7 @@ iwm_deauth(struct iwm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_node *in = (void *)ic->ic_bss;
-	int ac, tfd_msk, err;
+	int ac, tfd_queue_msk, err;
 
 	splassert(IPL_NET);
 
@@ -5722,10 +5789,15 @@ iwm_deauth(struct iwm_softc *sc)
 		sc->sc_flags &= ~IWM_FLAG_STA_ACTIVE;
 	}
 
-	tfd_msk = 0;
-	for (ac = 0; ac < EDCA_NUM_AC; ac++)
-		tfd_msk |= htole32(1 << iwm_ac_to_tx_fifo[ac]);
-	err = iwm_flush_tx_path(sc, tfd_msk);
+	tfd_queue_msk = 0;
+	for (ac = 0; ac < EDCA_NUM_AC; ac++) {
+		int qid = ac;
+		if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_DQA_SUPPORT))
+			qid += IWM_DQA_MIN_MGMT_QUEUE;
+		tfd_queue_msk |= htole32(1 << qid);
+	}
+
+	err = iwm_flush_tx_path(sc, tfd_queue_msk);
 	if (err) {
 		printf("%s: could not flush Tx path (error %d)\n",
 		    DEVNAME(sc), err);
@@ -6441,7 +6513,12 @@ iwm_init_hw(struct iwm_softc *sc)
 	}
 
 	for (ac = 0; ac < EDCA_NUM_AC; ac++) {
-		err = iwm_enable_txq(sc, IWM_STATION_ID, ac,
+		int qid;
+		if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_DQA_SUPPORT))
+			qid = ac + IWM_DQA_MIN_MGMT_QUEUE;
+		else
+			qid = ac;
+		err = iwm_enable_txq(sc, IWM_STATION_ID, qid,
 		    iwm_ac_to_tx_fifo[ac]);
 		if (err) {
 			printf("%s: could not enable Tx queue %d (error %d)\n",
@@ -7255,6 +7332,9 @@ iwm_notif_intr(struct iwm_softc *sc)
 
 			break;
 		}
+
+		case IWM_WIDE_ID(IWM_DATA_PATH_GROUP, IWM_DQA_ENABLE_CMD):
+			break;
 
 		default:
 			handled = 0;

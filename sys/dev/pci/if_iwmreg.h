@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.29 2019/08/08 13:56:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.30 2019/10/18 07:07:53 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -1655,7 +1655,42 @@ struct iwm_agn_scd_bc_tbl {
 /* Maximum number of Tx queues. */
 #define IWM_MAX_QUEUES	31
 
-/* Tx queue numbers */
+/**
+ * DQA - Dynamic Queue Allocation -introduction
+ *
+ * Dynamic Queue Allocation (AKA "DQA") is a feature implemented in iwlwifi
+ * to allow dynamic allocation of queues on-demand, rather than allocate them
+ * statically ahead of time. Ideally, we would like to allocate one queue
+ * per RA/TID, thus allowing an AP - for example - to send BE traffic to STA2
+ * even if it also needs to send traffic to a sleeping STA1, without being
+ * blocked by the sleeping station.
+ *
+ * Although the queues in DQA mode are dynamically allocated, there are still
+ * some queues that are statically allocated:
+ *	TXQ #0 - command queue
+ *	TXQ #1 - aux frames
+ *	TXQ #2 - P2P device frames
+ *	TXQ #3 - P2P GO/SoftAP GCAST/BCAST frames
+ *	TXQ #4 - BSS DATA frames queue
+ *	TXQ #5-8 - non-QoS data, QoS no-data, and MGMT frames queue pool
+ *	TXQ #9 - P2P GO/SoftAP probe responses
+ *	TXQ #10-31 - QoS DATA frames queue pool (for Tx aggregation)
+ */
+
+/* static DQA Tx queue numbers */
+#define IWM_DQA_CMD_QUEUE		0
+#define IWM_DQA_AUX_QUEUE		1
+#define IWM_DQA_P2P_DEVICE_QUEUE	2
+#define IWM_DQA_INJECT_MONITOR_QUEUE	2
+#define IWM_DQA_GCAST_QUEUE		3
+#define IWM_DQA_BSS_CLIENT_QUEUE	4
+#define IWM_DQA_MIN_MGMT_QUEUE		5
+#define IWM_DQA_MAX_MGMT_QUEUE		8
+#define IWM_DQA_AP_PROBE_RESP_QUEUE	9
+#define IWM_DQA_MIN_DATA_QUEUE		10
+#define IWM_DQA_MAX_DATA_QUEUE		31
+
+/* legacy non-DQA queues; the legacy command queue uses a different number! */
 #define IWM_OFFCHANNEL_QUEUE	8
 #define IWM_CMD_QUEUE		9
 #define IWM_AUX_QUEUE		15
@@ -1817,6 +1852,17 @@ struct iwm_agn_scd_bc_tbl {
 #define IWM_FSEQ_VER_MISMATCH_NOTIFICATION	0xff
 
 #define IWM_REPLY_MAX	0xff
+
+/* DATA_PATH group subcommand IDs */
+#define IWM_DQA_ENABLE_CMD	0x00
+
+/*
+ * struct iwm_dqa_enable_cmd
+ * @cmd_queue: the TXQ number of the command queue
+ */
+struct iwm_dqa_enable_cmd {
+	uint32_t cmd_queue;
+} __packed; /* DQA_CONTROL_CMD_API_S_VER_1 */
 
 /**
  * struct iwm_cmd_response - generic response struct for most commands
@@ -5824,6 +5870,7 @@ iwm_cmd_id(uint8_t opcode, uint8_t groupid, uint8_t version)
 /* due to the conversion, this group is special */
 #define IWM_ALWAYS_LONG_GROUP	1
 #define IWM_SYSTEM_GROUP	4
+#define IWM_DATA_PATH_GROUP	5
 
 struct iwm_cmd_header {
 	uint8_t code;
