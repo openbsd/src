@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.105 2019/10/14 15:23:44 patrick Exp $
+# $OpenBSD: Makefile.cross,v 1.106 2019/10/18 02:57:25 visa Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -28,7 +28,7 @@ TARGET_CPU?=	${TARGET_ARCH}
 
 # List of LP64 archs
 # XXX move to bsd.*.mk?
-LP64_ARCH = aarch64 amd64 alpha mips64 sparc64
+LP64_ARCH = aarch64 amd64 alpha mips64 mips64el sparc64
 
 TARGET_IS_LP64 =
 MACHINE_IS_LP64 =
