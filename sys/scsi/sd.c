@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.287 2019/10/19 14:01:31 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.288 2019/10/19 14:13:18 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -527,7 +527,7 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 			error = ENXIO;
 			goto die;
 		}
-		CLR(link->flag, SDEV_OPEN | SDEV_MEDIA_LOADED);
+		CLR(link->flags, SDEV_OPEN | SDEV_MEDIA_LOADED);
 
 		if (link->flags & SDEV_EJECTING) {
 			scsi_start(link, SSS_STOP|SSS_LOEJ, 0);
