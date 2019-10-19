@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.92 2019/09/27 10:34:54 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.93 2019/10/19 11:40:26 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 27 2019 $
+.Dd $Mdocdate: October 19 2019 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -87,9 +87,6 @@ If a
 is provided, the
 .Ar reason
 is sent as Administrative Shutdown Communication to the neighbor.
-The
-.Ar reason
-cannot exceed 128 octets.
 .Ar peer
 may be the neighbor's address, description or the word
 .Cm group
@@ -108,9 +105,6 @@ If a
 is provided, the
 .Ar reason
 is sent as Administrative Shutdown Communication to the neighbor.
-The
-.Ar reason
-cannot exceed 128 octets.
 .Ar peer
 may be the neighbor's address, description or the word
 .Cm group
