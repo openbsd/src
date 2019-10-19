@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1144 2019/10/01 02:11:41 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1145 2019/10/19 13:14:23 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2831,7 +2831,7 @@ finish_up() {
 	# on the console and in the rc.firsttime output mail.
 	isin "$ARCH" $_syspatch_archs && cat <<__EOT >>/mnt/etc/rc.firsttime
 set -A _KERNV -- \$(sysctl -n kern.version |
-	sed 's/^OpenBSD \([0-9]\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
+	sed 's/^OpenBSD \([1-9][0-9]*\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
 if ((\${#_KERNV[*]} == 1)) && [[ -s /etc/installurl ]] &&
 	_CKPATCH=\$(mktemp /tmp/_ckpatch.XXXXXXXXXX); then
 	echo "Checking for available binary patches..."

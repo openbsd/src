@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.151 2019/10/14 06:56:54 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.152 2019/10/19 13:14:23 tb Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -267,7 +267,7 @@ unpriv()
 
 # only run on release (not -current nor -stable)
 set -A _KERNV -- $(sysctl -n kern.version |
-	sed 's/^OpenBSD \([0-9]\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
+	sed 's/^OpenBSD \([1-9][0-9]*\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
 ((${#_KERNV[*]} > 1)) && sp_err "Unsupported release: ${_KERNV[0]}${_KERNV[1]}"
 
 [[ $@ == @(|-[[:alpha:]]) ]] || usage; [[ $@ == @(|-(c|R|r)) ]] &&

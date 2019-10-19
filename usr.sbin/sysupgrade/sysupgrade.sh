@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.26 2019/10/14 06:58:53 ajacoutot Exp $
+# $OpenBSD: sysupgrade.sh,v 1.27 2019/10/19 13:14:23 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -97,7 +97,7 @@ if $RELEASE && $SNAP; then
 fi
 
 set -A _KERNV -- $(sysctl -n kern.version |
-	sed 's/^OpenBSD \([0-9]\)\.\([0-9]\)\([^ ]*\).*/\1.\2 \3/;q')
+	sed 's/^OpenBSD \([1-9][0-9]*\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
 
 shift $(( OPTIND -1 ))
 
