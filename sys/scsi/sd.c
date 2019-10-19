@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.285 2019/09/29 17:57:36 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.286 2019/10/19 13:49:17 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -174,17 +174,17 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	link->device_softc = sc;
 
 	if ((link->flags & SDEV_ATAPI) && (link->flags & SDEV_REMOVABLE))
-		link->quirks |= SDEV_NOSYNCCACHE;
+		SET(link->quirks, SDEV_NOSYNCCACHE);
 
 	if (!(link->inqdata.flags & SID_RelAdr))
-		link->quirks |= SDEV_ONLYBIG;
+		SET(link->quirks, SDEV_ONLYBIG);
 
 	/*
 	 * Note if this device is ancient.  This is used in sdminphys().
 	 */
 	if (((link->flags & SDEV_ATAPI) == 0) &&
 	    SID_ANSII_REV(sa->sa_inqbuf) == SCSI_REV_0)
-		sc->flags |= SDF_ANCIENT;
+		SET(sc->flags, SDF_ANCIENT);
 
 	/*
 	 * Use the subdriver to request information regarding
@@ -303,7 +303,7 @@ sdactivate(struct device *self, int act)
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_AUTOCONF);
 		break;
 	case DVACT_DEACTIVATE:
-		sc->flags |= SDF_DYING;
+		SET(sc->flags, SDF_DYING);
 		timeout_del(&sc->sc_timeout);
 		scsi_xsh_del(&sc->sc_xsh);
 		break;
@@ -401,7 +401,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			error = ENXIO;
 			goto die;
 		}
-		link->flags |= SDEV_OPEN;
+		SET(link->flags, SDEV_OPEN);
 
 		/*
 		 * Try to prevent the unloading of a removable device while
@@ -435,7 +435,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			error = ENXIO;
 			goto die;
 		}
-		link->flags |= SDEV_MEDIA_LOADED;
+		SET(link->flags, SDEV_MEDIA_LOADED);
 		if (sd_get_parms(sc, &sc->params, (rawopen ? SCSI_SILENT : 0))
 		    == SDGP_RESULT_OFFLINE) {
 			if (sc->flags & SDF_DYING) {
@@ -724,7 +724,7 @@ sdstart(struct scsi_xfer *xs)
 	else
 		sd_cmd_rw16(xs, read, secno, nsecs);
 
-	xs->flags |= (read ? SCSI_DATA_IN : SCSI_DATA_OUT);
+	SET(xs->flags, (read ? SCSI_DATA_IN : SCSI_DATA_OUT));
 	xs->timeout = 60000;
 	xs->data = bp->b_data;
 	xs->datalen = bp->b_bcount;
@@ -738,7 +738,7 @@ sdstart(struct scsi_xfer *xs)
 
 	/* Mark disk as dirty. */
 	if (!read)
-		sc->flags |= SDF_DIRTY;
+		SET(sc->flags, SDF_DIRTY);
 
 	scsi_xs_exec(xs);
 
@@ -970,7 +970,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			error = ENOTTY;
 			goto exit;
 		}
-		link->flags |= SDEV_EJECTING;
+		SET(link->flags, SDEV_EJECTING);
 		goto exit;
 
 	case DIOCINQ:
@@ -1377,7 +1377,7 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 			return (ENOMEM);
 
 		xs->timeout = 10000;
-		xs->flags |= SCSI_DATA_OUT;
+		SET(xs->flags, SCSI_DATA_OUT);
 		xs->data = va;
 		xs->datalen = nwrt * sectorsize;
 
@@ -1926,7 +1926,7 @@ sd_flush(struct sd_softc *sc, int flags)
 
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = 100000;
-	xs->flags |= SCSI_IGNORE_ILLEGAL_REQUEST;
+	SET(xs->flags, SCSI_IGNORE_ILLEGAL_REQUEST);
 
 	error = scsi_xs_sync(xs);
 
