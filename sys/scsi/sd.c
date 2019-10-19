@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.288 2019/10/19 14:13:18 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.289 2019/10/19 16:01:41 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -173,7 +173,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	link->interpret_sense = sd_interpret_sense;
 	link->device_softc = sc;
 
-	if ((link->flags & SDEV_ATAPI) && (link->flags & SDEV_REMOVABLE))
+	if (ISSET(link->flags, SDEV_ATAPI) && ISSET(link->flags, SDEV_REMOVABLE))
 		SET(link->quirks, SDEV_NOSYNCCACHE);
 
 	if (!(link->inqdata.flags & SID_RelAdr))
@@ -205,7 +205,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	 * Some devices (e.g. BlackBerry Pearl) won't admit they have
 	 * media loaded unless its been locked in.
 	 */
-	if ((link->flags & SDEV_REMOVABLE) != 0)
+	if (ISSET(link->flags, SDEV_REMOVABLE))
 		scsi_prevent(link, PR_PREVENT, sd_autoconf);
 
 	/* Check that it is still responding and ok. */
@@ -217,7 +217,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	else
 		result = sd_get_parms(sc, &sc->params, sd_autoconf);
 
-	if ((link->flags & SDEV_REMOVABLE) != 0)
+	if (ISSET(link->flags, SDEV_REMOVABLE))
 		scsi_prevent(link, PR_ALLOW, sd_autoconf);
 
 	switch (result) {
@@ -271,7 +271,7 @@ sdactivate(struct device *self, int act)
 	struct scsi_link *link;
 	struct sd_softc *sc = (struct sd_softc *)self;
 
-	if (sc->flags & SDF_DYING)
+	if (ISSET(sc->flags, SDF_DYING))
 		return (ENXIO);
 	link = sc->sc_link;
 
@@ -281,7 +281,7 @@ sdactivate(struct device *self, int act)
 		 * We flush the cache, since we our next step before
 		 * DVACT_POWERDOWN might be a hibernate operation.
 		 */
-		if ((sc->flags & SDF_DIRTY) != 0)
+		if (ISSET(sc->flags, SDF_DIRTY))
 			sd_flush(sc, SCSI_AUTOCONF);
 		break;
 	case DVACT_POWERDOWN:
@@ -291,9 +291,9 @@ sdactivate(struct device *self, int act)
 		 * first.  We're cold at this point, so we poll for
 		 * completion.
 		 */
-		if ((sc->flags & SDF_DIRTY) != 0)
+		if (ISSET(sc->flags, SDF_DIRTY))
 			sd_flush(sc, SCSI_AUTOCONF);
-		if (boothowto & RB_POWERDOWN)
+		if (ISSET(boothowto, RB_POWERDOWN))
 			scsi_start(link, SSS_STOP,
 			    SCSI_IGNORE_ILLEGAL_REQUEST |
 			    SCSI_IGNORE_NOT_READY | SCSI_AUTOCONF);
@@ -345,7 +345,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	sc = sdlookup(unit);
 	if (sc == NULL)
 		return (ENXIO);
-	if (sc->flags & SDF_DYING) {
+	if (ISSET(sc->flags, SDF_DYING)) {
 		device_unref(&sc->sc_dev);
 		return (ENXIO);
 	}
@@ -370,7 +370,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		 * If any partition is open, but the disk has been invalidated,
 		 * disallow further opens of non-raw partition.
 		 */
-		if (sc->flags & SDF_DYING) {
+		if (ISSET(sc->flags, SDF_DYING)) {
 			error = ENXIO;
 			goto die;
 		}
@@ -382,7 +382,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		}
 	} else {
 		/* Spin up non-UMASS devices ready or not. */
-		if (sc->flags & SDF_DYING) {
+		if (ISSET(sc->flags, SDF_DYING)) {
 			error = ENXIO;
 			goto die;
 		}
@@ -397,7 +397,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		 * device returns "Initialization command required." and causes
 		 * a loop of scsi_start() calls.
 		 */
-		if (sc->flags & SDF_DYING) {
+		if (ISSET(sc->flags, SDF_DYING)) {
 			error = ENXIO;
 			goto die;
 		}
@@ -408,14 +408,14 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		 * it's open. But allow the open to proceed if the device can't
 		 * be locked in.
 		 */
-		if ((link->flags & SDEV_REMOVABLE) != 0) {
+		if (ISSET(link->flags, SDEV_REMOVABLE)) {
 			scsi_prevent(link, PR_PREVENT, SCSI_SILENT |
 			    SCSI_IGNORE_ILLEGAL_REQUEST |
 			    SCSI_IGNORE_MEDIA_CHANGE);
 		}
 
 		/* Check that it is still responding and ok. */
-		if (sc->flags & SDF_DYING) {
+		if (ISSET(sc->flags, SDF_DYING)) {
 			error = ENXIO;
 			goto die;
 		}
@@ -431,14 +431,14 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		}
 
 		/* Load the physical device parameters. */
-		if (sc->flags & SDF_DYING) {
+		if (ISSET(sc->flags, SDF_DYING)) {
 			error = ENXIO;
 			goto die;
 		}
 		SET(link->flags, SDEV_MEDIA_LOADED);
 		if (sd_get_parms(sc, &sc->params, (rawopen ? SCSI_SILENT : 0))
 		    == SDGP_RESULT_OFFLINE) {
-			if (sc->flags & SDF_DYING) {
+			if (ISSET(sc->flags, SDF_DYING)) {
 				error = ENXIO;
 				goto die;
 			}
@@ -464,15 +464,15 @@ out:
 	/* It's OK to fall through because dk_openmask is now non-zero. */
 bad:
 	if (sc->sc_dk.dk_openmask == 0) {
-		if (sc->flags & SDF_DYING) {
+		if (ISSET(sc->flags, SDF_DYING)) {
 			error = ENXIO;
 			goto die;
 		}
-		if ((link->flags & SDEV_REMOVABLE) != 0)
+		if (ISSET(link->flags, SDEV_REMOVABLE))
 			scsi_prevent(link, PR_ALLOW, SCSI_SILENT |
 			    SCSI_IGNORE_ILLEGAL_REQUEST |
 			    SCSI_IGNORE_MEDIA_CHANGE);
-		if (sc->flags & SDF_DYING) {
+		if (ISSET(sc->flags, SDF_DYING)) {
 			error = ENXIO;
 			goto die;
 		}
@@ -500,7 +500,7 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 	sc = sdlookup(DISKUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if (sc->flags & SDF_DYING) {
+	if (ISSET(sc->flags, SDF_DYING)) {
 		device_unref(&sc->sc_dev);
 		return (ENXIO);
 	}
@@ -511,27 +511,27 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 	disk_closepart(&sc->sc_dk, part, fmt);
 
 	if (((flag & FWRITE) != 0 || sc->sc_dk.dk_openmask == 0) &&
-	    (sc->flags & SDF_DIRTY) != 0)
+	    ISSET(sc->flags, SDF_DIRTY))
 		sd_flush(sc, 0);
 
 	if (sc->sc_dk.dk_openmask == 0) {
-		if (sc->flags & SDF_DYING) {
+		if (ISSET(sc->flags, SDF_DYING)) {
 			error = ENXIO;
 			goto die;
 		}
-		if ((link->flags & SDEV_REMOVABLE) != 0)
+		if (ISSET(link->flags, SDEV_REMOVABLE))
 			scsi_prevent(link, PR_ALLOW,
 			    SCSI_IGNORE_ILLEGAL_REQUEST |
 			    SCSI_IGNORE_NOT_READY | SCSI_SILENT);
-		if (sc->flags & SDF_DYING) {
+		if (ISSET(sc->flags, SDF_DYING)) {
 			error = ENXIO;
 			goto die;
 		}
 		CLR(link->flags, SDEV_OPEN | SDEV_MEDIA_LOADED);
 
-		if (link->flags & SDEV_EJECTING) {
+		if (ISSET(link->flags, SDEV_EJECTING)) {
 			scsi_start(link, SSS_STOP|SSS_LOEJ, 0);
-			if (sc->flags & SDF_DYING) {
+			if (ISSET(sc->flags, SDF_DYING)) {
 				error = ENXIO;
 				goto die;
 			}
@@ -565,7 +565,7 @@ sdstrategy(struct buf *bp)
 		bp->b_error = ENXIO;
 		goto bad;
 	}
-	if (sc->flags & SDF_DYING) {
+	if (ISSET(sc->flags, SDF_DYING)) {
 		bp->b_error = ENXIO;
 		goto bad;
 	}
@@ -577,7 +577,7 @@ sdstrategy(struct buf *bp)
 	 * If the device has been made invalid, error out
 	 */
 	if ((link->flags & SDEV_MEDIA_LOADED) == 0) {
-		if (link->flags & SDEV_OPEN)
+		if (ISSET(link->flags, SDEV_OPEN))
 			bp->b_error = EIO;
 		else
 			bp->b_error = ENODEV;
@@ -683,7 +683,7 @@ sdstart(struct scsi_xfer *xs)
 	int read;
 	struct partition *p;
 
-	if (sc->flags & SDF_DYING) {
+	if (ISSET(sc->flags, SDF_DYING)) {
 		scsi_xs_put(xs);
 		return;
 	}
@@ -822,7 +822,7 @@ sdminphys(struct buf *bp)
 	sc = sdlookup(DISKUNIT(bp->b_dev));
 	if (sc == NULL)
 		return;  /* XXX - right way to fail this? */
-	if (sc->flags & SDF_DYING) {
+	if (ISSET(sc->flags, SDF_DYING)) {
 		device_unref(&sc->sc_dev);
 		return;
 	}
@@ -839,7 +839,7 @@ sdminphys(struct buf *bp)
 	 * ancient device gets confused by length == 0.  A length of 0
 	 * in a 10-byte read/write actually means 0 blocks.
 	 */
-	if (sc->flags & SDF_ANCIENT) {
+	if (ISSET(sc->flags, SDF_ANCIENT)) {
 		max = sc->sc_dk.dk_label->d_secsize * 0xff;
 
 		if (bp->b_bcount > max)
@@ -879,7 +879,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	sc = sdlookup(DISKUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if (sc->flags & SDF_DYING) {
+	if (ISSET(sc->flags, SDF_DYING)) {
 		device_unref(&sc->sc_dev);
 		return (ENXIO);
 	}
@@ -995,7 +995,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			error = EBADF;
 			goto exit;
 		}
-		if ((sc->flags & SDF_DIRTY) != 0 || *(int *)addr != 0)
+		if (ISSET(sc->flags, SDF_DIRTY) || *(int *)addr != 0)
 			error = sd_flush(sc, 0);
 		goto exit;
 
@@ -1020,7 +1020,7 @@ sd_ioctl_inquiry(struct sd_softc *sc, struct dk_inquiry *di)
 
 	vpd = dma_alloc(sizeof(*vpd), PR_WAITOK | PR_ZERO);
 
-	if (sc->flags & SDF_DYING) {
+	if (ISSET(sc->flags, SDF_DYING)) {
 		dma_free(vpd, sizeof(*vpd));
 		return (ENXIO);
 	}
@@ -1054,7 +1054,7 @@ sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 	int big;
 	int rv;
 
-	if (sc->flags & SDF_DYING)
+	if (ISSET(sc->flags, SDF_DYING))
 		return (ENXIO);
 	link = sc->sc_link;
 
@@ -1070,7 +1070,7 @@ sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 	if (buf == NULL)
 		return (ENOMEM);
 
-	if (sc->flags & SDF_DYING) {
+	if (ISSET(sc->flags, SDF_DYING)) {
 		rv = ENXIO;
 		goto done;
 	}
@@ -1108,7 +1108,7 @@ sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 		else
 			SET(mode->flags, PG_CACHE_FL_RCD);
 
-		if (sc->flags & SDF_DYING) {
+		if (ISSET(sc->flags, SDF_DYING)) {
 			rv = ENXIO;
 			goto done;
 		}
@@ -1139,7 +1139,7 @@ sdgetdisklabel(dev_t dev, struct sd_softc *sc, struct disklabel *lp,
 	char packname[sizeof(lp->d_packname) + 1];
 	char product[17], vendor[9];
 
-	if (sc->flags & SDF_DYING)
+	if (ISSET(sc->flags, SDF_DYING))
 		return (ENXIO);
 	link = sc->sc_link;
 
@@ -1223,7 +1223,7 @@ sd_interpret_sense(struct scsi_xfer *xs)
 	    (sense->extra_len < 6))
 		return (scsi_interpret_sense(xs));
 
-	if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
+	if (ISSET(xs->flags, SCSI_IGNORE_NOT_READY))
 		return (0);
 
 	switch (ASC_ASCQ(sense)) {
@@ -1265,7 +1265,7 @@ sdsize(dev_t dev)
 	sc = sdlookup(DISKUNIT(dev));
 	if (sc == NULL)
 		return -1;
-	if (sc->flags & SDF_DYING) {
+	if (ISSET(sc->flags, SDF_DYING)) {
 		size = -1;
 		goto exit;
 	}
@@ -1279,7 +1279,7 @@ sdsize(dev_t dev)
 	}
 
 	lp = sc->sc_dk.dk_label;
-	if (sc->flags & SDF_DYING) {
+	if (ISSET(sc->flags, SDF_DYING)) {
 		size = -1;
 		goto exit;
 	}
@@ -1439,7 +1439,7 @@ sd_read_cap_10(struct sd_softc *sc, int flags)
 	if (rdcap == NULL)
 		return (ENOMEM);
 
-	if (sc->flags & SDF_DYING) {
+	if (ISSET(sc->flags, SDF_DYING)) {
 		rv = ENXIO;
 		goto done;
 	}
@@ -1490,7 +1490,7 @@ sd_read_cap_16(struct sd_softc *sc, int flags)
 	if (rdcap == NULL)
 		return (ENOMEM);
 
-	if (sc->flags & SDF_DYING) {
+	if (ISSET(sc->flags, SDF_DYING)) {
 		rv = ENXIO;
 		goto done;
 	}
@@ -1541,7 +1541,7 @@ sd_size(struct sd_softc *sc, int flags)
 {
 	int rv;
 
-	if (sc->flags & SDF_DYING)
+	if (ISSET(sc->flags, SDF_DYING))
 		return (ENXIO);
 
 	/*
@@ -1578,7 +1578,7 @@ sd_thin_pages(struct sd_softc *sc, int flags)
 	if (pg == NULL)
 		return (ENOMEM);
 
-	if (sc->flags & SDF_DYING) {
+	if (ISSET(sc->flags, SDF_DYING)) {
 		rv = ENXIO;
 		goto done;
 	}
@@ -1595,7 +1595,7 @@ sd_thin_pages(struct sd_softc *sc, int flags)
 	if (pg == NULL)
 		return (ENOMEM);
 
-	if (sc->flags & SDF_DYING) {
+	if (ISSET(sc->flags, SDF_DYING)) {
 		rv = ENXIO;
 		goto done;
 	}
@@ -1638,7 +1638,7 @@ sd_vpd_block_limits(struct sd_softc *sc, int flags)
 	if (pg == NULL)
 		return (ENOMEM);
 
-	if (sc->flags & SDF_DYING) {
+	if (ISSET(sc->flags, SDF_DYING)) {
 		rv = ENXIO;
 		goto done;
 	}
@@ -1669,7 +1669,7 @@ sd_vpd_thin(struct sd_softc *sc, int flags)
 	if (pg == NULL)
 		return (ENOMEM);
 
-	if (sc->flags & SDF_DYING) {
+	if (ISSET(sc->flags, SDF_DYING)) {
 		rv = ENXIO;
 		goto done;
 	}
@@ -1743,7 +1743,7 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 	if (buf == NULL)
 		goto validate;
 
-	if (sc->flags & SDF_DYING)
+	if (ISSET(sc->flags, SDF_DYING))
 		goto die;
 	link = sc->sc_link;
 
@@ -1753,7 +1753,7 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 	 */
 	err = scsi_do_mode_sense(link, 0, buf, (void **)&page0,
 	    NULL, NULL, NULL, 1, flags | SCSI_SILENT, &big);
-	if (sc->flags & SDF_DYING)
+	if (ISSET(sc->flags, SDF_DYING))
 		goto die;
 	if (err == 0) {
 		if (big && buf->hdr_big.dev_spec & SMH_DSP_WRITE_PROT)
@@ -1769,7 +1769,7 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 	 * don't have a meaningful geometry anyway, so just fake it if
 	 * sd_size() worked.
 	 */
-	if ((link->flags & SDEV_UMASS) && (dp->disksize > 0))
+	if (ISSET(link->flags, SDEV_UMASS) && (dp->disksize > 0))
 		goto validate;
 
 	switch (link->inqdata.device & SID_TYPE) {
@@ -1811,7 +1811,7 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 			if (heads * cyls > 0)
 				sectors = dp->disksize / (heads * cyls);
 		} else {
-			if (sc->flags & SDF_DYING)
+			if (ISSET(sc->flags, SDF_DYING))
 				goto die;
 			err = scsi_do_mode_sense(link,
 			    PAGE_FLEX_GEOMETRY, buf, (void **)&flex, NULL, NULL,
@@ -1902,11 +1902,11 @@ sd_flush(struct sd_softc *sc, int flags)
 	struct scsi_synchronize_cache *cmd;
 	int error;
 
-	if (sc->flags & SDF_DYING)
+	if (ISSET(sc->flags, SDF_DYING))
 		return (ENXIO);
 	link = sc->sc_link;
 
-	if (link->quirks & SDEV_NOSYNCCACHE)
+	if (ISSET(link->quirks, SDEV_NOSYNCCACHE))
 		return (0);
 
 	/*
