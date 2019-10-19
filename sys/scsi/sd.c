@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.289 2019/10/19 16:01:41 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.290 2019/10/19 17:30:43 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -182,7 +182,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Note if this device is ancient.  This is used in sdminphys().
 	 */
-	if (((link->flags & SDEV_ATAPI) == 0) &&
+	if (!ISSET(link->flags, SDEV_ATAPI) &&
 	    SID_ANSII_REV(sa->sa_inqbuf) == SCSI_REV_0)
 		SET(sc->flags, SDF_ANCIENT);
 
@@ -198,7 +198,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	    &sc->sc_xsh);
 
 	/* Spin up non-UMASS devices ready or not. */
-	if ((link->flags & SDEV_UMASS) == 0)
+	if (!ISSET(link->flags, SDEV_UMASS))
 		scsi_start(link, SSS_START, sd_autoconf);
 
 	/*
@@ -374,7 +374,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			error = ENXIO;
 			goto die;
 		}
-		if ((link->flags & SDEV_MEDIA_LOADED) == 0) {
+		if (!ISSET(link->flags, SDEV_MEDIA_LOADED)) {
 			if (rawopen)
 				goto out;
 			error = EIO;
@@ -386,7 +386,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			error = ENXIO;
 			goto die;
 		}
-		if ((link->flags & SDEV_UMASS) == 0)
+		if (!ISSET(link->flags, SDEV_UMASS))
 			scsi_start(link, SSS_START, (rawopen ? SCSI_SILENT :
 			    0) | SCSI_IGNORE_ILLEGAL_REQUEST |
 			    SCSI_IGNORE_MEDIA_CHANGE);
@@ -576,7 +576,7 @@ sdstrategy(struct buf *bp)
 	/*
 	 * If the device has been made invalid, error out
 	 */
-	if ((link->flags & SDEV_MEDIA_LOADED) == 0) {
+	if (!ISSET(link->flags, SDEV_MEDIA_LOADED)) {
 		if (ISSET(link->flags, SDEV_OPEN))
 			bp->b_error = EIO;
 		else
@@ -687,7 +687,7 @@ sdstart(struct scsi_xfer *xs)
 		scsi_xs_put(xs);
 		return;
 	}
-	if ((link->flags & SDEV_MEDIA_LOADED) == 0) {
+	if (!ISSET(link->flags, SDEV_MEDIA_LOADED)) {
 		bufq_drain(&sc->sc_bufq);
 		scsi_xs_put(xs);
 		return;
@@ -710,8 +710,8 @@ sdstart(struct scsi_xfer *xs)
 	 *  Fill out the scsi command.  If the transfer will
 	 *  fit in a "small" cdb, use it.
 	 */
-	if (!(link->flags & SDEV_ATAPI) &&
-	    !(link->quirks & SDEV_ONLYBIG) &&
+	if (!ISSET(link->flags, SDEV_ATAPI) &&
+	    !ISSET(link->quirks, SDEV_ONLYBIG) &&
 	    ((secno & 0x1fffff) == secno) &&
 	    ((nsecs & 0xff) == nsecs))
 		sd_cmd_rw6(xs, read, secno, nsecs);
@@ -890,7 +890,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	/*
 	 * If the device is not valid.. abandon ship
 	 */
-	if ((link->flags & SDEV_MEDIA_LOADED) == 0) {
+	if (!ISSET(link->flags, SDEV_MEDIA_LOADED)) {
 		switch (cmd) {
 		case DIOCLOCK:
 		case DIOCEJECT:
@@ -901,7 +901,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 				break;
 		/* FALLTHROUGH */
 		default:
-			if ((link->flags & SDEV_OPEN) == 0) {
+			if (!ISSET(link->flags, SDEV_OPEN)) {
 				error = ENODEV;
 				goto exit;
 			} else {
@@ -935,7 +935,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
-		if ((flag & FWRITE) == 0) {
+		if (!ISSET(flag, FWRITE)) {
 			error = EBADF;
 			goto exit;
 		}
@@ -966,7 +966,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		}
 		/* FALLTHROUGH */
 	case DIOCEJECT:
-		if ((link->flags & SDEV_REMOVABLE) == 0) {
+		if (!ISSET(link->flags, SDEV_REMOVABLE)) {
 			error = ENOTTY;
 			goto exit;
 		}
@@ -1217,7 +1217,7 @@ sd_interpret_sense(struct scsi_xfer *xs)
 	 * Let the generic code handle everything except a few categories of
 	 * LUN not ready errors on open devices.
 	 */
-	if (((link->flags & SDEV_OPEN) == 0) ||
+	if ((!ISSET(link->flags, SDEV_OPEN)) ||
 	    (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED) ||
 	    ((sense->flags & SSD_KEY) != SKEY_NOT_READY) ||
 	    (sense->extra_len < 6))
@@ -1283,7 +1283,7 @@ sdsize(dev_t dev)
 		size = -1;
 		goto exit;
 	}
-	if ((sc->sc_link->flags & SDEV_MEDIA_LOADED) == 0)
+	if (!ISSET(sc->sc_link->flags, SDEV_MEDIA_LOADED))
 		size = -1;
 	else if (lp->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
@@ -1799,8 +1799,8 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 		 * so accept the page. The extra bytes will be zero and RPM will
 		 * end up with the default value of 3600.
 		 */
-		if (((link->flags & SDEV_ATAPI) == 0) ||
-		    ((link->flags & SDEV_REMOVABLE) == 0))
+		if (!ISSET(link->flags, SDEV_ATAPI) ||
+		    !ISSET(link->flags, SDEV_REMOVABLE))
 			err = scsi_do_mode_sense(link,
 			    PAGE_RIGID_GEOMETRY, buf, (void **)&rigid, NULL,
 			    NULL, &secsize, sizeof(*rigid) - 4,
