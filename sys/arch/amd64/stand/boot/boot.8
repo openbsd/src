@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.29 2019/01/02 21:20:41 anton Exp $
+.\"	$OpenBSD: boot.8,v 1.30 2019/10/20 16:13:35 kn Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: January 2 2019 $
+.Dd $Mdocdate: October 20 2019 $
 .Dt BOOT 8 amd64
 .Os
 .Sh NAME
@@ -314,9 +314,16 @@ and
 are both specified, sets that variable to the given value.
 Variables include:
 .Pp
-.Bl -tag -compact -width boothow
+.Bl -tag -compact -width db_console
 .It Ic addr
 Address at which to load the kernel.
+.It Ic db_console
+Boolean (e.g.,
+.Li 1 ,
+.Li 0 )
+to permit entry into the kernel debugger before the
+.Em ddb.console
+sysctl gets effective.
 .It Ic debug
 Debug flag if
 .Nm
