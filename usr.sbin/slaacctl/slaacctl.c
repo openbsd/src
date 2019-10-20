@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.15 2018/07/27 06:26:38 bket Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.16 2019/10/20 16:22:22 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -333,7 +333,6 @@ show_interface_msg(struct imsg *imsg)
 
 		break;
 	case IMSG_CTL_END:
-		printf("\n");
 		return (1);
 	default:
 		break;
