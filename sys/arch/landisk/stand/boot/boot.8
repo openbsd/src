@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.10 2019/10/20 16:13:35 kn Exp $
+.\"	$OpenBSD: boot.8,v 1.11 2019/10/20 22:15:08 kn Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -187,10 +187,7 @@ Variables include:
 .It Ic addr
 Address at which to load the kernel.
 .It Ic db_console
-Boolean (e.g.,
-.Li 1 ,
-.Li 0 )
-to permit entry into the kernel debugger before the
+Boolean (0 or 1) to permit entry into the kernel debugger before the
 .Em ddb.console
 sysctl gets effective.
 .It Ic debug
