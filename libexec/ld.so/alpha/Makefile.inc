@@ -1,5 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2011/11/19 14:59:48 naddy Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2019/10/20 03:44:49 guenther Exp $
 
 CFLAGS += -fPIC -mno-fp-regs -mbuild-constants
 LIBCSRCDIR=${.CURDIR}/../../lib/libc
 .include "${LIBCSRCDIR}/arch/alpha/Makefile.inc"
+
+RELATIVE_RELOC=R_ALPHA_RELATIVE

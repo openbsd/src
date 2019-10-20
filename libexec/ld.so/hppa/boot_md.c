@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.18 2019/10/20 03:44:49 guenther Exp $ */
+/*	$OpenBSD: boot_md.c,v 1.1 2019/10/20 03:44:49 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -34,22 +34,42 @@
 
 #define	_DYN_LOADER
 
-#include <sys/exec_elf.h>
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <sys/exec.h>
+#include <sys/sysctl.h>
+#include <nlist.h>
+#include <link.h>
+#include <dlfcn.h>
 
 #include "syscall.h"
 #include "archdep.h"
+#include "stdlib.h"
 
 #include "../../lib/csu/os-note-elf.h"
 
 #if RELOC_TAG == DT_RELA
 typedef	Elf_RelA	RELOC_TYPE;
-# define RELOCATE_RELATIVE(w, r, b)	*(w) = (r)->r_addend + (b)
 #elif RELOC_TAG == DT_REL
 typedef	Elf_Rel		RELOC_TYPE;
-# define RELOCATE_RELATIVE(w, r, b)	*(w) += (b)
 #else
 # error "unknown RELOC_TAG"
 #endif
+
+/* The set of dynamic tags that we're interested in for bootstrapping */
+struct boot_dyn {
+	RELOC_TYPE	*dt_reloc;	/* DT_RELA   or DT_REL */
+	Elf_Addr	dt_relocsz;	/* DT_RELASZ or DT_RELSZ */
+	Elf_Addr	*dt_pltgot;
+	Elf_Addr	dt_pltrelsz;
+	const Elf_Sym	*dt_symtab;
+#ifdef HAVE_JMPREL
+	RELOC_TYPE	*dt_jmprel;
+#endif
+#if DT_PROCNUM > 0
+	u_long		dt_proc[DT_PROCNUM];
+#endif
+};
 
 /*
  * Local decls.
@@ -59,14 +79,14 @@ void _dl_boot_bind(const long, long *, Elf_Dyn *) __boot;
 void
 _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
 {
+	struct boot_dyn	dynld;		/* Resolver data for the loader */
 	AuxInfo		*auxstack;
 	long		*stack;
 	int		n, argc;
 	char		**argv, **envp;
 	long		loff;
-	RELOC_TYPE	*dt_reloc;	/* DT_RELA   or DT_REL */
-	Elf_Word	dt_relocsz;	/* DT_RELASZ or DT_RELSZ */
-	RELOC_TYPE	*rend;
+	Elf_Addr	i;
+	RELOC_TYPE	*rp;
 
 	/*
 	 * Scan argument and environment vectors. Find dynamic
@@ -99,23 +119,69 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
 	loff = dl_data[AUX_base];	/* XXX assumes ld.so is linked at 0x0 */
 
 	/*
-	 * Scan the DYNAMIC section for the loader for the two items we need
+	 * We need to do 'selfreloc' in case the code weren't
+	 * loaded at the address it was linked to.
+	 *
+	 * Scan the DYNAMIC section for the loader.
+	 * Cache the data for easier access.
 	 */
-	dt_reloc = NULL;
-	dt_relocsz = 0;
+	_dl_memset(&dynld, 0, sizeof(dynld));
 	while (dynp->d_tag != DT_NULL) {
-		if (dynp->d_tag == RELOC_TAG)		/* DT_{RELA,REL} */
-			dt_reloc = (void *)(dynp->d_un.d_ptr + loff);
+		/* first the tags that are pointers to be relocated */
+		if (dynp->d_tag == DT_PLTGOT)
+			dynld.dt_pltgot = (void *)(dynp->d_un.d_ptr + loff);
+		else if (dynp->d_tag == DT_SYMTAB)
+			dynld.dt_symtab = (void *)(dynp->d_un.d_ptr + loff);
+		else if (dynp->d_tag == RELOC_TAG)	/* DT_{RELA,REL} */
+			dynld.dt_reloc = (void *)(dynp->d_un.d_ptr + loff);
+#ifdef HAVE_JMPREL
+		else if (dynp->d_tag == DT_JMPREL)
+			dynld.dt_jmprel = (void *)(dynp->d_un.d_ptr + loff);
+#endif
+
+		/* Now for the tags that are just sizes or counts */
+		else if (dynp->d_tag == DT_PLTRELSZ)
+			dynld.dt_pltrelsz = dynp->d_un.d_val;
 		else if (dynp->d_tag == RELOC_TAG+1)	/* DT_{RELA,REL}SZ */
-			dt_relocsz = dynp->d_un.d_val;
+			dynld.dt_relocsz = dynp->d_un.d_val;
+#if DT_PROCNUM > 0
+		else if (dynp->d_tag >= DT_LOPROC &&
+		    dynp->d_tag < DT_LOPROC + DT_PROCNUM)
+			dynld.dt_proc[dynp->d_tag - DT_LOPROC] =
+			    dynp->d_un.d_val;
+#endif /* DT_PROCNUM */
 		dynp++;
 	}
 
-	rend = (RELOC_TYPE *)((char *)dt_reloc + dt_relocsz);
-	for (; dt_reloc < rend; dt_reloc++) {
+#ifdef HAVE_JMPREL
+	rp = dynld.dt_jmprel;
+	for (i = 0; i < dynld.dt_pltrelsz; i += sizeof *rp) {
 		Elf_Addr *ra;
+		const Elf_Sym *sp;
 
-		ra = (Elf_Addr *)(dt_reloc->r_offset + loff);
-		RELOCATE_RELATIVE(ra, dt_reloc, loff);
+		sp = dynld.dt_symtab + ELF_R_SYM(rp->r_info);
+		if (ELF_R_SYM(rp->r_info) && sp->st_value == 0)
+			_dl_exit(5);
+
+		ra = (Elf_Addr *)(rp->r_offset + loff);
+		RELOC_JMPREL(rp, sp, ra, loff, dynld.dt_pltgot);
+		rp++;
 	}
+#endif /* HAVE_JMPREL */
+
+	rp = dynld.dt_reloc;
+	for (i = 0; i < dynld.dt_relocsz; i += sizeof *rp) {
+		Elf_Addr *ra;
+		const Elf_Sym *sp;
+
+		sp = dynld.dt_symtab + ELF_R_SYM(rp->r_info);
+		if (ELF_R_SYM(rp->r_info) && sp->st_value == 0)
+			_dl_exit(6);
+
+		ra = (Elf_Addr *)(rp->r_offset + loff);
+		RELOC_DYN(rp, sp, ra, loff);
+		rp++;
+	}
+
+	RELOC_GOT(&dynld, loff);
 }

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.8 2017/08/27 22:05:01 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 2019/10/20 03:44:49 guenther Exp $
 
 CFLAGS += -fpic
 CFLAGS+=-m4-nofpu
@@ -10,3 +10,5 @@ MDOBJ=	_divdi3.o _clz.o _udiv_qrnnd_16.o _udivsi3_i4.o _udivdi3.o \
 ${MDOBJ}:
 	ar x `$(CC) -print-libgcc-file-name` ${MDOBJ}
 OBJS+=${MDOBJ}
+
+RELATIVE_RELOC=R_SH_RELATIVE

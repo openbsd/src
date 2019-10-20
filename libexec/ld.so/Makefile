@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.76 2019/08/03 19:36:55 guenther Exp $
+#	$OpenBSD: Makefile,v 1.77 2019/10/20 03:44:49 guenther Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -16,7 +16,13 @@ ELF_LDFLAGS+=--version-script=${VERSION_SCRIPT}
 
 VPATH=${.CURDIR}/../../lib/libc/string
 
-SRCS=	ldasm.S boot.c loader.c resolve.c dlfcn.c dl_printf.c rtld_machine.c
+.if exists(${.CURDIR}/${MACHINE_CPU}/boot_md.c)
+BOOT = boot_md.c
+.else
+BOOT = boot.c
+.endif
+
+SRCS=	ldasm.S ${BOOT} loader.c resolve.c dlfcn.c dl_printf.c rtld_machine.c
 SRCS+=	path.c util.c sod.c strsep.c strtol.c dir.c library_subr.c
 SRCS+=	dl_uname.c dl_dirname.c strlcat.c strlen.c trace.c
 SRCS+=	malloc.c reallocarray.c tib.c ffs.c
@@ -59,6 +65,13 @@ INSTALL_STRIP=
 
 ELF_LDFLAGS+=--shared -Bsymbolic --no-undefined
 
+.ifdef	RELATIVE_RELOC
+CHECK_LDSO=c() {					\
+	! readelf -Wr $$1 |				\
+	  egrep -qv '^($$|[ R])| (${RELATIVE_RELOC}) ';	\
+	}; c
+.endif
+
 test_prog=	test-$(PROG)
 CLEANFILES+=	test-$(PROG)
 candidate=	$(PROG).test
@@ -78,6 +91,9 @@ $(PROG): $(test_prog) ${VERSION_SCRIPT} $(OBJS) ${LD_SCRIPT}
 	$(LD) -e _dl_start $(ELF_LDFLAGS) -o $(candidate) \
 	    `echo ${OBJS} | tr " " "\n" | sort -R`
 .endif
+.ifdef	CHECK_LDSO
+	${CHECK_LDSO} $(candidate)
+.endif
 .ifndef CROSSDIR
 	ulimit -c 0; [ "`${.OBJDIR}/$(test_prog) ok`" = "${.OBJDIR}/$(test_prog): ok!" ]
 .endif
@@ -86,7 +102,7 @@ $(PROG): $(test_prog) ${VERSION_SCRIPT} $(OBJS) ${LD_SCRIPT}
 
 .include <bsd.prog.mk>
 
-boot.o: boot.c
+${BOOT:R}.o: ${BOOT}
 	${COMPILE.c} -fno-stack-protector ${.IMPSRC}
 
 CLEANFILES+=	ld.so.a

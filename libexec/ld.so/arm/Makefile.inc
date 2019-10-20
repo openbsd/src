@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.7 2019/08/03 19:36:56 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 2019/10/20 03:44:49 guenther Exp $
 
 CFLAGS += -fpic -msoft-float
 AFLAGS += -D_STANDALONE
@@ -10,3 +10,5 @@ LIBCSRCDIR=${.CURDIR}/../../lib/libc
 
 # Suppress DWARF2 warnings
 DEBUG?= -gdwarf-4
+
+RELATIVE_RELOC=R_ARM_RELATIVE
