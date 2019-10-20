@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.51 2019/07/03 03:24:03 deraadt Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.52 2019/10/20 13:33:30 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <millert@openbsd.org>
@@ -53,21 +53,6 @@
 
 static void run_job(const atjob *, int, const char *);
 
-static int
-strtot(const char *nptr, char **endptr, time_t *tp)
-{
-	long long ll;
-
-	errno = 0;
-	ll = strtoll(nptr, endptr, 10);
-	if (*endptr == nptr)
-		return (-1);
-	if (ll < 0 || (errno == ERANGE && ll == LLONG_MAX) || (time_t)ll != ll)
-		return (-1);
-	*tp = (time_t)ll;
-	return (0);
-}
-
 /*
  * Scan the at jobs dir and build up a list of jobs found.
  */
@@ -75,9 +60,10 @@ int
 scan_atjobs(at_db **db, struct timespec *ts)
 {
 	DIR *atdir = NULL;
-	int dfd, queue, pending;
+	int dfd, pending;
+	const char *errstr;
 	time_t run_time;
-	char *ep;
+	char *queue;
 	at_db *new_db, *old_db = *db;
 	atjob *job;
 	struct dirent *file;
@@ -122,11 +108,14 @@ scan_atjobs(at_db **db, struct timespec *ts)
 		 * RUNTIME is the time to run in seconds since the epoch
 		 * QUEUE is a letter that designates the job's queue
 		 */
-		if (strtot(file->d_name, &ep, &run_time) == -1)
+		if ((queue = strchr(file->d_name, '.')) == NULL)
 			continue;
-		if (ep[0] != '.' || !isalpha((unsigned char)ep[1]))
+		*queue++ = '\0';
+		run_time = strtonum(file->d_name, 0, LLONG_MAX, &errstr);
+		if (errstr != NULL)
 			continue;
-		queue = (unsigned char)ep[1];
+		if (!isalpha((unsigned char)*queue))
+			continue;
 
 		job = malloc(sizeof(*job));
 		if (job == NULL) {
@@ -140,7 +129,7 @@ scan_atjobs(at_db **db, struct timespec *ts)
 		}
 		job->uid = sb.st_uid;
 		job->gid = sb.st_gid;
-		job->queue = queue;
+		job->queue = *queue;
 		job->run_time = run_time;
 		TAILQ_INSERT_TAIL(&new_db->jobs, job, entries);
 		if (ts != NULL && run_time <= ts->tv_sec)
@@ -246,6 +235,86 @@ atrun(at_db *db, double batch_maxload, time_t now)
 }
 
 /*
+ * Check the at job header for sanity and extract the
+ * uid, gid, mailto user and always_mail flag.
+ *
+ * The header should look like this:
+ * #!/bin/sh
+ * # atrun uid=123 gid=123
+ * # mail                         joeuser 0
+ */
+static int
+parse_header(FILE *fp, uid_t *nuid, gid_t *ngid, char *mailto, int *always_mail)
+{
+	char *cp, *ep, *line = NULL;
+	const char *errstr;
+	size_t size = 0;
+	int lineno = 0;
+	ssize_t len;
+	int ret = -1;
+
+	for (lineno = 1; (len = getline(&line, &size, fp)) != -1; lineno++) {
+		if (line[--len] != '\n')
+			break;
+		line[len] = '\0';
+
+		switch (lineno) {
+		case 1:
+			if (strcmp(line, "#!/bin/sh") != 0)
+			    goto done;
+			break;
+		case 2:
+			if (strncmp(line, "# atrun uid=", 12) != 0)
+			    goto done;
+
+			/* Pull out uid */
+			cp = line + 12;
+			if ((ep = strchr(cp, ' ')) == NULL)
+				goto done;
+			*ep++ = '\0';
+			*nuid = strtonum(cp, 0, UID_MAX - 1, &errstr);
+			if (errstr != NULL)
+				goto done;
+
+			/* Pull out gid */
+			if (strncmp(ep, "gid=", 4) != 0)
+				goto done;
+			cp = ep + 4;
+			*ngid = strtonum(cp, 0, GID_MAX - 1, &errstr);
+			if (errstr != NULL)
+				goto done;
+			break;
+		case 3:
+			/* Pull out mailto user (and always_mail flag) */
+			if (strncmp(line, "# mail ", 7) != 0)
+				goto done;
+			for (cp = line + 7; *cp == ' '; cp++)
+				continue;
+			if (*cp == '\0')
+				goto done;
+			for (ep = cp; *ep != ' ' && *ep != '\0'; ep++)
+				continue;
+			if (*ep != ' ')
+				goto done;
+			*ep++ = '\0';
+			if (strlcpy(mailto, cp, MAX_UNAME) >= MAX_UNAME)
+				goto done;
+			*always_mail = *ep == '1';
+
+			/* success */
+			ret = 0;
+			goto done;
+		default:
+			/* can't happen */
+			goto done;
+		}
+	}
+done:
+	free(line);
+	return ret;
+}
+
+/*
  * Run the specified job contained in atfile.
  */
 static void
@@ -256,11 +325,12 @@ run_job(const atjob *job, int dfd, const char *atfile)
 	login_cap_t *lc;
 	auth_session_t *as;
 	pid_t pid;
-	long nuid, ngid;
+	uid_t nuid;
+	gid_t ngid;
 	FILE *fp;
 	int waiter;
 	size_t nread;
-	char *cp, *ep, mailto[MAX_UNAME], buf[BUFSIZ];
+	char mailto[MAX_UNAME], buf[BUFSIZ];
 	int fd, always_mail;
 	int output_pipe[2];
 	char *nargv[2], *nenvp[1];
@@ -341,58 +411,15 @@ run_job(const atjob *job, int dfd, const char *atfile)
 		    atfile);
 		_exit(EXIT_FAILURE);
 	}
-
 	if ((fp = fdopen(dup(fd), "r")) == NULL) {
 		syslog(LOG_ERR, "(CRON) DUP FAILED (%m)");
 		_exit(EXIT_FAILURE);
 	}
-
-	/*
-	 * Check the at job header for sanity and extract the
-	 * uid, gid, mailto user and always_mail flag.
-	 *
-	 * The header should look like this:
-	 * #!/bin/sh
-	 * # atrun uid=123 gid=123
-	 * # mail                         joeuser 0
-	 */
-	if (fgets(buf, sizeof(buf), fp) == NULL ||
-	    strcmp(buf, "#!/bin/sh\n") != 0 ||
-	    fgets(buf, sizeof(buf), fp) == NULL ||
-	    strncmp(buf, "# atrun uid=", 12) != 0)
-		goto bad_file;
-
-	/* Pull out uid */
-	cp = buf + 12;
-	errno = 0;
-	nuid = strtol(cp, &ep, 10);
-	if (errno == ERANGE || (uid_t)nuid > UID_MAX || cp == ep ||
-	    strncmp(ep, " gid=", 5) != 0)
-		goto bad_file;
-
-	/* Pull out gid */
-	cp = ep + 5;
-	errno = 0;
-	ngid = strtol(cp, &ep, 10);
-	if (errno == ERANGE || (gid_t)ngid > GID_MAX || cp == ep || *ep != '\n')
-		goto bad_file;
-
-	/* Pull out mailto user (and always_mail flag) */
-	if (fgets(buf, sizeof(buf), fp) == NULL ||
-	    strncmp(buf, "# mail ", 7) != 0)
-		goto bad_file;
-	cp = buf + 7;
-	while (isspace((unsigned char)*cp))
-		cp++;
-	ep = cp;
-	while (!isspace((unsigned char)*ep) && *ep != '\0')
-		ep++;
-	if (*ep == '\0' || *ep != ' ' || ep - cp >= sizeof(mailto))
-		goto bad_file;
-	memcpy(mailto, cp, ep - cp);
-	mailto[ep - cp] = '\0';
-	always_mail = ep[1] == '1';
-
+	if (parse_header(fp, &nuid, &ngid, mailto, &always_mail) == -1) {
+		syslog(LOG_ERR, "(%s) BAD FILE FORMAT (%s)", pw->pw_name,
+		    atfile);
+		_exit(EXIT_FAILURE);
+	}
 	(void)fclose(fp);
 	if (!safe_p(pw->pw_name, mailto))
 		_exit(EXIT_FAILURE);
@@ -584,8 +611,4 @@ run_job(const atjob *job, int dfd, const char *atfile)
 		}
 	}
 	_exit(EXIT_SUCCESS);
-
-bad_file:
-	syslog(LOG_ERR, "(%s) BAD FILE FORMAT (%s)", pw->pw_name, atfile);
-	_exit(EXIT_FAILURE);
 }
