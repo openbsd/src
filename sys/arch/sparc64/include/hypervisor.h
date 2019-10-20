@@ -1,4 +1,4 @@
-/*	$OpenBSD: hypervisor.h,v 1.19 2019/07/25 22:45:53 kettenis Exp $	*/
+/*	$OpenBSD: hypervisor.h,v 1.20 2019/10/20 16:27:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -32,6 +32,7 @@ int64_t	hv_api_get_version(uint64_t api_group,
  */
 
 int64_t hv_mach_desc(paddr_t buffer, psize_t *length);
+int64_t hv_mach_pri(paddr_t buffer, psize_t *length);
 
 /*
  * CPU services

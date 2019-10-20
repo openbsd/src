@@ -1,4 +1,4 @@
-/*	$OpenBSD: hvcall.S,v 1.11 2019/07/25 18:30:40 kettenis Exp $	*/
+/*	$OpenBSD: hvcall.S,v 1.12 2019/10/20 16:27:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -138,6 +138,8 @@
 #define RNG_DATA_READ_DIAG	0x133
 #define RNG_DATA_READ		0x134
 
+#define MACH_PRI		0x170
+
 #define API_SET_VERSION		0x00
 #define API_PUTCHAR		0x01
 #define API_EXIT		0x02
@@ -163,6 +165,14 @@ ENTRY(hv_mach_desc)
 	mov	%o1, %o2
 	ldx	[%o2], %o1
 	mov	MACH_DESC, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]
+
+ENTRY(hv_mach_pri)
+	mov	%o1, %o2
+	ldx	[%o2], %o1
+	mov	MACH_PRI, %o5
 	ta	FAST_TRAP
 	retl
 	 stx	%o1, [%o2]

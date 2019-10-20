@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.c,v 1.7 2014/11/30 22:26:15 kettenis Exp $	*/
+/*	$OpenBSD: mdesc.c,v 1.8 2019/10/20 16:27:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -25,22 +25,32 @@
 #include <machine/autoconf.h>
 #include <machine/hypervisor.h>
 #include <machine/mdesc.h>
+#include <machine/sparc64.h>
+
+#define HSVC_GROUP_PARALLEL_BOOT	0x105
 
 caddr_t mdesc;
 paddr_t mdesc_pa;
 size_t mdesc_len;
+
+caddr_t pri;
+paddr_t pri_pa;
+size_t pri_len;
+
+void pri_init(void);
 
 void
 mdesc_init(void)
 {
 	struct pglist mlist;
 	struct vm_page *m;
-	psize_t len, size;
+	psize_t len = 0, size;
 	paddr_t pa;
 	vaddr_t va;
 	int err;
 
-	hv_mach_desc((paddr_t)NULL, &len);
+	err = hv_mach_desc((paddr_t)NULL, &len);
+	KASSERT(err == H_EINVAL);
 	KASSERT(len != 0);
 
 again:
@@ -76,6 +86,7 @@ again:
 	}
 	pmap_update(pmap_kernel());
 
+	pri_init();
 	return;
 
 fail:
@@ -83,8 +94,79 @@ fail:
 
 	/*
 	 * If the machine description was updated while we were trying
-	 * to fetch it, the allocated buffer may have been to small.
+	 * to fetch it, the allocated buffer may have been too small.
 	 * Try again in that case.
+	 */
+	if (err == H_EINVAL && len > size)
+		goto again;
+
+	return;
+}
+
+void
+pri_init(void)
+{
+	struct pglist mlist;
+	struct vm_page *m;
+	uint64_t minor;
+	psize_t len = 0, size;
+	paddr_t pa;
+	vaddr_t va;
+	int err;
+
+	/*
+	 * We can only fetch the physical resource inventory this way
+	 * if the firmware supports parellel boot.
+	 */
+	if (prom_set_sun4v_api_version(HSVC_GROUP_PARALLEL_BOOT, 1, 0, &minor))
+		return;
+
+	err = hv_mach_pri((paddr_t)NULL, &len);
+	if (err != H_EINVAL)
+		return;
+
+again:
+	size = round_page(len);
+
+	TAILQ_INIT(&mlist);
+	err = uvm_pglistalloc(len, 0, -1, PAGE_SIZE, 0, &mlist, 1,
+	    UVM_PLA_NOWAIT);
+	if (err)
+		panic("%s: out of memory", __func__);
+ 
+	len = size;
+	pa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist));
+	err = hv_mach_pri(pa, &len);
+	if (err != H_EOK)
+		goto fail;
+
+	va = (vaddr_t)km_alloc(size, &kv_any, &kp_none, &kd_nowait);
+	if (va == 0)
+		panic("%s: out of memory", __func__);
+
+	pri = (caddr_t)va;
+	pri_pa = pa;
+	pri_len = len;
+
+	m = TAILQ_FIRST(&mlist);
+	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
+		pa = VM_PAGE_TO_PHYS(m);
+		pmap_enter(pmap_kernel(), va, pa,
+		    PROT_READ | PROT_WRITE,
+		    PROT_READ | PROT_WRITE | PMAP_WIRED);
+		va += PAGE_SIZE;
+	}
+	pmap_update(pmap_kernel());
+
+	return;
+
+fail:
+	uvm_pglistfree(&mlist);
+
+	/*
+	 * If the physical resource inventory was updated while we
+	 * were trying to fetch it, the allocated buffer may have been
+	 * too small.  Try again in that case.
 	 */
 	if (err == H_EINVAL && len > size)
 		goto again;

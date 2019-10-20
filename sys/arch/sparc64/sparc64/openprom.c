@@ -1,4 +1,4 @@
-/*	$OpenBSD: openprom.c,v 1.21 2015/09/19 21:07:04 semarie Exp $	*/
+/*	$OpenBSD: openprom.c,v 1.22 2019/10/20 16:27:19 kettenis Exp $	*/
 /*	$NetBSD: openprom.c,v 1.4 2002/01/10 06:21:53 briggs Exp $ */
 
 /*
@@ -93,21 +93,36 @@ openpromread(dev_t dev, struct uio *uio, int flags)
 {
 #ifdef SUN4V
 	int error;
-	size_t len;
-	caddr_t v;
+	size_t data_len, len;
+	caddr_t data, v;
 
-	if (minor(dev) != 1)
+	switch (minor(dev)) {
+	case 1:
+		data = mdesc;
+		data_len = mdesc_len;
+		break;
+	case 2:
+		data = pri;
+		data_len = pri_len;
+		break;
+	default:
+		data = NULL;
+		data_len = 0;
+		break;
+	}
+
+	if (data == NULL || data_len == 0)
 		return (ENXIO);
 
 	if (uio->uio_offset < 0)
 		return (EINVAL);
 
 	while (uio->uio_resid > 0) {
-		if (uio->uio_offset >= mdesc_len)
+		if (uio->uio_offset >= data_len)
 			break;
 
-		v = mdesc + uio->uio_offset;
-		len = mdesc_len - uio->uio_offset;
+		v = data + uio->uio_offset;
+		len = data_len - uio->uio_offset;
 		if (len > uio->uio_resid)
 			len = uio->uio_resid;
 
