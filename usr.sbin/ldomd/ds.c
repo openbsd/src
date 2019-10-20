@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds.c,v 1.8 2018/07/13 08:46:07 kettenis Exp $	*/
+/*	$OpenBSD: ds.c,v 1.9 2019/10/20 16:18:36 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -79,7 +79,7 @@ ldc_rx_ctrl_vers(struct ldc_conn *lc, struct ldc_pkt *lp)
 			    lc->lc_state));
 			return;
 		}
-		DPRINTF(("CTRL/INFO/VERS\n"));
+		DPRINTF(("CTRL/INFO/VERS %d.%d\n", lvp->major, lvp->minor));
 		if (lvp->major == LDC_VERSION_MAJOR &&
 		    lvp->minor == LDC_VERSION_MINOR)
 			ldc_send_ack(lc);
