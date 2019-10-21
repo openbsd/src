@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.31 2019/10/12 14:59:13 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.32 2019/10/21 07:16:09 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -732,6 +732,8 @@ udp_receive(int fd, short events, void *arg)
 
 	find.domain = dname;
 	if (RB_FIND(bl_tree, &bl_head, &find) != NULL) {
+		if (frontend_conf->blocklist_log)
+			log_info("blocking %s", dname);
 		pq->rcode_override = LDNS_RCODE_REFUSED;
 		goto send_answer;
 	}

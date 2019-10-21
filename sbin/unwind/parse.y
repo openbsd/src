@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2019/10/18 06:03:25 otto Exp $	*/
+/*	$OpenBSD: parse.y,v 1.11 2019/10/21 07:16:09 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -102,11 +102,11 @@ typedef struct {
 %token	YES NO INCLUDE ERROR
 %token	FORWARDER DOT PORT CAPTIVE PORTAL URL EXPECTED RESPONSE
 %token	STATUS AUTO AUTHENTICATION NAME PREFERENCE RECURSOR DHCP
-%token	BLOCK LIST
+%token	BLOCK LIST LOG
 
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
-%type	<v.number>	yesno port dot prefopt
+%type	<v.number>	yesno port dot prefopt log
 %type	<v.string>	string authname
 
 %%
@@ -179,7 +179,7 @@ optnl		: '\n' optnl		/* zero or more newlines */
 		| /*empty*/
 		;
 
-block_list		: BLOCK LIST STRING {
+block_list		: BLOCK LIST STRING log {
 				if (conf->blocklist_file != NULL) {
 					yyerror("block list already "
 					    "configured");
@@ -190,6 +190,7 @@ block_list		: BLOCK LIST STRING {
 					if (conf->blocklist_file == NULL)
 						err(1, "strdup");
 					free($3);
+					conf->blocklist_log = $4;
 				}
 			}
 			;
@@ -346,6 +347,10 @@ authname:	AUTHENTICATION NAME STRING	{ $$ = $3; }
 dot	:	DOT				{ $$ = DOT; }
 	|	/* empty */			{ $$ = 0; }
 	;
+
+log	:	LOG				{ $$ = 1; }
+	|	/* empty */			{ $$ = 0; }
+	;
 %%
 
 struct keywords {
@@ -391,6 +396,7 @@ lookup(char *s)
 		{"forwarder",		FORWARDER},
 		{"include",		INCLUDE},
 		{"list",		LIST},
+		{"log",			LOG},
 		{"name",		NAME},
 		{"no",			NO},
 		{"port",		PORT},

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.14 2019/05/10 14:10:38 florian Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.15 2019/10/21 07:16:09 florian Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 10 2019 $
+.Dd $Mdocdate: October 21 2019 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -63,12 +63,15 @@ forwarder { $fwd1 $fwd2 }
 .Ed
 .Sh GLOBAL CONFIGURATION
 .Bl -tag -width Ds
-.It Ic block list Ar file
+.It Ic block list Ar file Op Cm log
 A file containing domains to block, one per line.
 If a domain from this list is queried
 .Nm unwind
 answers with a return code of
 .Cm refused .
+With
+.Cm log
+blocked queries are logged.
 .It Ic captive portal Brq ...
 .Nm unwind
 can detect when it is running behind a

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.17 2019/05/14 14:51:31 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.18 2019/10/21 07:16:09 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -141,6 +141,7 @@ struct uw_conf {
 	int				 captive_portal_expected_status;
 	int				 captive_portal_auto;
 	char				*blocklist_file;
+	int				 blocklist_log;
 };
 
 struct query_imsg {

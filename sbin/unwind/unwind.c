@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.30 2019/09/29 13:18:39 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.31 2019/10/21 07:16:09 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -816,6 +816,7 @@ merge_config(struct uw_conf *conf, struct uw_conf *xconf)
 
 	free(conf->blocklist_file);
 	conf->blocklist_file = xconf->blocklist_file;
+	conf->blocklist_log = xconf->blocklist_log;
 
 	/* Add new forwarders. */
 	while ((uw_forwarder = SIMPLEQ_FIRST(&xconf->uw_forwarder_list)) !=
