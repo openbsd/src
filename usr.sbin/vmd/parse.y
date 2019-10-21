@@ -122,7 +122,7 @@ typedef struct {
 %token	INCLUDE ERROR
 %token	ADD ALLOW BOOT CDROM DEVICE DISABLE DISK DOWN ENABLE FORMAT GROUP
 %token	INET6 INSTANCE INTERFACE LLADDR LOCAL LOCKED MEMORY NET NIFS OWNER
-%token	PATH PREFIX RDOMAIN SIZE SOCKET SWITCH UP VM VMID
+%token PATH PREFIX RDOMAIN SIZE SOCKET SWITCH UP VM VMBHIWAT VMBLOWAT VMBRECLAIM VMID
 %token	<v.number>	NUMBER
 %token	<v.string>	STRING
 %type	<v.lladdr>	lladdr
@@ -143,11 +143,23 @@ grammar		: /* empty */
 		| grammar include '\n'
 		| grammar '\n'
 		| grammar varset '\n'
+		| grammar balloon '\n'
 		| grammar main '\n'
 		| grammar switch '\n'
 		| grammar vm '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
+balloon		: VMBLOWAT NUMBER		{
+            	env->vmb_lowat = $2;
+			}
+			| VMBHIWAT NUMBER {
+            	env->vmb_hiwat = $2;
+            }
+            | VMBRECLAIM NUMBER {
+            	env->vmb_reclaim = $2;
+            }
+            ;
+
 
 include		: INCLUDE string		{
 			struct file	*nfile;
@@ -791,7 +803,11 @@ lookup(char *s)
 		{ "socket",		SOCKET },
 		{ "switch",		SWITCH },
 		{ "up",			UP },
-		{ "vm",			VM }
+		{ "vm",			VM },
+		{ "vmbhiwat",           VMBHIWAT },
+		{ "vmblowat",           VMBLOWAT },
+		{ "vmbreclaim",         VMBRECLAIM }
+		
 	};
 	const struct keywords	*p;
 
