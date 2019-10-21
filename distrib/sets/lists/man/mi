@@ -1735,6 +1735,7 @@
 ./usr/share/man/man4/pvbus.4
 ./usr/share/man/man4/pvclock.4
 ./usr/share/man/man4/pwdog.4
+./usr/share/man/man4/pwmbl.4
 ./usr/share/man/man4/pwmreg.4
 ./usr/share/man/man4/qla.4
 ./usr/share/man/man4/qle.4
@@ -1912,6 +1913,7 @@
 ./usr/share/man/man4/sxidog.4
 ./usr/share/man/man4/sximmc.4
 ./usr/share/man/man4/sxipio.4
+./usr/share/man/man4/sxipwm.4
 ./usr/share/man/man4/sxirsb.4
 ./usr/share/man/man4/sxirtc.4
 ./usr/share/man/man4/sxisyscon.4
