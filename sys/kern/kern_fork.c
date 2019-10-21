@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.214 2019/10/15 10:05:43 mpi Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.215 2019/10/21 10:24:01 mpi Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -169,13 +169,6 @@ thread_new(struct proc *parent, vaddr_t uaddr)
 	 * Initialize the timeouts.
 	 */
 	timeout_set(&p->p_sleep_to, endtsleep, p);
-
-	/*
-	 * set priority of child to be that of parent
-	 * XXX should move p_estcpu into the region of struct proc which gets
-	 * copied.
-	 */
-	scheduler_fork_hook(parent, p);
 
 #ifdef WITNESS
 	p->p_sleeplocks = NULL;
