@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.737 2019/10/16 22:24:45 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.738 2019/10/21 20:53:11 kettenis Exp $
 
 MAN=	aac.4 abcrtc.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
@@ -59,8 +59,9 @@ MAN=	aac.4 abcrtc.4 ac97.4 acphy.4 acrtc.4 \
 	pcmcia.4 pcn.4 pcppi.4 pcscp.4 pf.4 pflog.4 pflow.4 pfsync.4 \
 	pgt.4 piixpm.4 pinctrl.4 pipex.4 plgpio.4 plrtc.4 pluart.4 \
 	pms.4 ppb.4 ppp.4 pppoe.4 pppx.4 psci.4  pty.4 puc.4 pvbus.4 \
-	pvclock.4 pwdog.4 pwmreg.4 qla.4 qle.4 qlw.4 qsphy.4 radio.4 \
-	ral.4 random.4 rdomain.4 rd.4 rdac.4 re.4 rdcphy.4 rgephy.4 \
+	pvclock.4 pwdog.4 pwmbl.4 pwmreg.4 \
+	qla.4 qle.4 qlw.4 qsphy.4 \
+	radio.4 ral.4 random.4 rdomain.4 rd.4 rdac.4 re.4 rdcphy.4 rgephy.4 \
 	ricohrtc.4 rkclock.4 rkdwusb.4 rkgpio.4 rkgrf.4 rkiic.4 \
 	rkpcie.4 rkpinctrl.4 rkpmic.4 rktemp.4 \
 	rl.4 rlphy.4 route.4 rsu.4 rtsx.4 rum.4 run.4 \
@@ -70,8 +71,8 @@ MAN=	aac.4 abcrtc.4 ac97.4 acphy.4 acrtc.4 \
 	sf.4 sili.4 simplefb.4 siop.4 sis.4 sk.4 sli.4 \
 	sm.4 smsc.4 softraid.4 spdmem.4 sdtemp.4 speaker.4 sppp.4 sqphy.4 \
 	ssdfb.4 st.4 ste.4 stge.4 sti.4 stp.4 sv.4 switch.4 sxiccmu.4 \
-	sxidog.4 sximmc.4 sxipio.4 sxirsb.4 sxirtc.4 sxisyscon.4 sxitemp.4 \
-	sxitwi.4 sym.4 sypwr.4 syscon.4 \
+	sxidog.4 sximmc.4 sxipio.4 sxipwm.4 sxirsb.4 sxirtc.4 sxisyscon.4 \
+	sxitemp.4 sxitwi.4 sym.4 sypwr.4 syscon.4 \
 	tcic.4 tcp.4 termios.4 tht.4 ti.4 tipmic.4 tl.4 \
 	tlphy.4 thmc.4 tpm.4 tpmr.4 tqphy.4 trm.4 trunk.4 tsl.4 tty.4 \
 	tun.4 tap.4 twe.4 \
