@@ -1,4 +1,4 @@
-/*	$OpenBSD: synch.h,v 1.3 2018/06/04 22:08:56 kettenis Exp $ */
+/*	$OpenBSD: synch.h,v 1.4 2019/10/21 10:04:19 mpi Exp $ */
 /*
  * Copyright (c) 2017 Martin Pieuchot
  *
@@ -23,13 +23,6 @@ static inline int
 _wake(volatile uint32_t *p, int n)
 {
 	return futex(p, FUTEX_WAKE_PRIVATE, n, NULL, NULL);
-}
-
-static inline void
-_wait(volatile uint32_t *p, int val)
-{
-	while (*p != (uint32_t)val)
-		futex(p, FUTEX_WAIT_PRIVATE, val, NULL, NULL);
 }
 
 static inline int
