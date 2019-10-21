@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.181 2019/10/01 11:51:13 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.182 2019/10/21 23:02:05 sashan Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -123,6 +123,13 @@ void	bpf_resetd(struct bpf_d *);
 
 void	bpf_prog_smr(void *);
 void	bpf_d_smr(void *);
+
+/*
+ * Reference count access to descriptor buffers
+ */
+void	bpf_get(struct bpf_d *);
+void	bpf_put(struct bpf_d *);
+
 
 struct rwlock bpf_sysctl_lk = RWLOCK_INITIALIZER("bpfsz");
 
@@ -318,11 +325,13 @@ bpf_detachd(struct bpf_d *d)
 
 		d->bd_promisc = 0;
 
+		bpf_get(d);
 		mtx_leave(&d->bd_mtx);
 		NET_LOCK();
 		error = ifpromisc(bp->bif_ifp, 0);
 		NET_UNLOCK();
 		mtx_enter(&d->bd_mtx);
+		bpf_put(d);
 
 		if (error && !(error == EINVAL || error == ENODEV ||
 		    error == ENXIO))
@@ -371,6 +380,7 @@ bpfopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (flag & FNONBLOCK)
 		bd->bd_rtout = -1;
 
+	bpf_get(bd);
 	LIST_INSERT_HEAD(&bpf_d_list, bd, bd_list);
 
 	return (0);
@@ -391,13 +401,7 @@ bpfclose(dev_t dev, int flag, int mode, struct proc *p)
 	bpf_wakeup(d);
 	LIST_REMOVE(d, bd_list);
 	mtx_leave(&d->bd_mtx);
-
-	/*
-	 * Wait for the task to finish here, before proceeding to garbage
-	 * collection.
-	 */
-	taskq_barrier(systq);
-	smr_call(&d->bd_smr, bpf_d_smr, d);
+	bpf_put(d);
 
 	return (0);
 }
@@ -431,6 +435,7 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 	if (d->bd_bif == NULL)
 		return (ENXIO);
 
+	bpf_get(d);
 	mtx_enter(&d->bd_mtx);
 
 	/*
@@ -536,6 +541,7 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 	d->bd_in_uiomove = 0;
 out:
 	mtx_leave(&d->bd_mtx);
+	bpf_put(d);
 
 	return (error);
 }
@@ -554,7 +560,9 @@ bpf_wakeup(struct bpf_d *d)
 	 * by the KERNEL_LOCK() we have to delay the wakeup to
 	 * another context to keep the hot path KERNEL_LOCK()-free.
 	 */
-	task_add(systq, &d->bd_wake_task);
+	bpf_get(d);
+	if (!task_add(systq, &d->bd_wake_task))
+		bpf_put(d);
 }
 
 void
@@ -569,6 +577,7 @@ bpf_wakeup_cb(void *xd)
 		csignal(d->bd_pgid, d->bd_sig, d->bd_siguid, d->bd_sigeuid);
 
 	selwakeup(&d->bd_sel);
+	bpf_put(d);
 }
 
 int
@@ -586,6 +595,7 @@ bpfwrite(dev_t dev, struct uio *uio, int ioflag)
 	if (d->bd_bif == NULL)
 		return (ENXIO);
 
+	bpf_get(d);
 	ifp = d->bd_bif->bif_ifp;
 
 	if (ifp == NULL || (ifp->if_flags & IFF_UP) == 0) {
@@ -619,6 +629,7 @@ bpfwrite(dev_t dev, struct uio *uio, int ioflag)
 	NET_UNLOCK();
 
 out:
+	bpf_put(d);
 	return (error);
 }
 
@@ -693,6 +704,8 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			return (EPERM);
 		}
 	}
+
+	bpf_get(d);
 
 	switch (cmd) {
 	default:
@@ -991,6 +1004,7 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		break;
 	}
 
+	bpf_put(d);
 	return (error);
 }
 
@@ -1178,6 +1192,7 @@ bpfkqfilter(dev_t dev, struct knote *kn)
 		return (EINVAL);
 	}
 
+	bpf_get(d);
 	kn->kn_hook = d;
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 
@@ -1197,6 +1212,7 @@ filt_bpfrdetach(struct knote *kn)
 	KERNEL_ASSERT_LOCKED();
 
 	SLIST_REMOVE(&d->bd_sel.si_note, kn, knote, kn_selnext);
+	bpf_put(d);
 }
 
 int
@@ -1577,6 +1593,25 @@ bpf_d_smr(void *smr)
 		bpf_prog_smr(bd->bd_wfilter);
 
 	free(bd, M_DEVBUF, sizeof(*bd));
+}
+
+void
+bpf_get(struct bpf_d *bd)
+{
+	atomic_inc_int(&bd->bd_ref);
+}
+
+/*
+ * Free buffers currently in use by a descriptor
+ * when the reference count drops to zero.
+ */
+void
+bpf_put(struct bpf_d *bd)
+{
+	if (atomic_dec_int_nv(&bd->bd_ref) > 0)
+		return;
+
+	smr_call(&bd->bd_smr, bpf_d_smr, bd);
 }
 
 void *
