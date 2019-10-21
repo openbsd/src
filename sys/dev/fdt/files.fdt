@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.100 2019/10/16 22:11:17 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.101 2019/10/21 20:52:33 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -27,6 +27,10 @@ define	rsb {}
 device	sxirsb: rsb
 attach	sxirsb at fdt
 file	dev/fdt/sxirsb.c		sxirsb
+
+device	sxipwm
+attach	sxipwm at fdt
+file	dev/fdt/sxipwm.c		sxipwm
 
 device	sxirtc
 attach	sxirtc at fdt
@@ -131,6 +135,10 @@ file	dev/fdt/xhci_fdt.c		xhci_fdt
 device	syscon: fdt
 attach	syscon at fdt
 file	dev/fdt/syscon.c		syscon
+
+device	pwmbl
+attach	pwmbl at fdt
+file	dev/fdt/pwmbl.c			pwmbl
 
 device	pwmreg
 attach	pwmreg at fdt

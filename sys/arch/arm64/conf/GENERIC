@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.130 2019/10/17 22:32:06 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.131 2019/10/21 20:52:32 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -105,6 +105,7 @@ option	WSDISPLAY_DEFAULTSCREENS=6	# initial number of text consoles
 
 simplefb*	at fdt?
 wsdisplay*	at simplefb?
+pwmbl*			at fdt?		# PWM backlight
 
 radeondrm*	at pci?
 drm*		at radeondrm?
@@ -200,6 +201,7 @@ sxipio*		at fdt? early 1	# GPIO pins for leds & PHYs
 gpio*		at sxipio?
 sxiccmu*	at fdt? early 1	# Clock Control Module/Unit
 sxidog*		at fdt?
+sxipwm*		at fdt?
 sxirsb*		at fdt? early 1	# Reduced Serial Bus
 axppmic*	at rsb?
 sxirtc*		at fdt? early 1	# Real Time Clock
