@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.13 2019/10/13 10:56:31 kettenis Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.14 2019/10/21 16:32:51 jcs Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
@@ -47,6 +47,8 @@ int	acpivout_notify(struct aml_node *, int, void *);
 #define NOTIFY_BRIGHTNESS_ZERO		0x88
 #define NOTIFY_DISPLAY_OFF		0x89
 
+#define BRIGHTNESS_STEP			5
+
 struct acpivout_softc {
 	struct device		sc_dev;
 
@@ -61,8 +63,7 @@ struct acpivout_softc {
 };
 
 void	acpivout_brightness_cycle(struct acpivout_softc *);
-void	acpivout_brightness_up(struct acpivout_softc *);
-void	acpivout_brightness_down(struct acpivout_softc *);
+void	acpivout_brightness_step(struct acpivout_softc *, int);
 void	acpivout_brightness_zero(struct acpivout_softc *);
 int	acpivout_get_brightness(struct acpivout_softc *);
 int	acpivout_find_brightness(struct acpivout_softc *, int);
@@ -128,10 +129,10 @@ acpivout_notify(struct aml_node *node, int notify, void *arg)
 		acpivout_brightness_cycle(sc);
 		break;
 	case NOTIFY_BRIGHTNESS_UP:
-		acpivout_brightness_up(sc);
+		acpivout_brightness_step(sc, 1);
 		break;
 	case NOTIFY_BRIGHTNESS_DOWN:
-		acpivout_brightness_down(sc);
+		acpivout_brightness_step(sc, -1);
 		break;
 	case NOTIFY_BRIGHTNESS_ZERO:
 		acpivout_brightness_zero(sc);
@@ -158,45 +159,31 @@ acpivout_brightness_cycle(struct acpivout_softc *sc)
 	if (cur_level == sc->sc_bcl[sc->sc_bcl_len - 1])
 		acpivout_brightness_zero(sc);
 	else
-		acpivout_brightness_up(sc);
+		acpivout_brightness_step(sc, 1);
 }
 
 void
-acpivout_brightness_up(struct acpivout_softc *sc)
+acpivout_brightness_step(struct acpivout_softc *sc, int dir)
 {
-	int i, cur_level;
+	int level, nlevel;
 
 	if (sc->sc_bcl_len == 0)
 		return;
-	cur_level = acpivout_get_brightness(sc);
-	if (cur_level == -1)
+	level = acpivout_get_brightness(sc);
+	if (level == -1)
 		return;
 
-	/* check for max brightness level */
-	if (cur_level == sc->sc_bcl[sc->sc_bcl_len - 1])
+	nlevel = acpivout_find_brightness(sc, level + (dir * BRIGHTNESS_STEP));
+	if (nlevel == level) {
+		if (dir == 1 && (nlevel + 1 < sc->sc_bcl_len))
+			nlevel++;
+		else if (dir == -1 && (nlevel - 1 >= 0))
+			nlevel--;
+	}
+	if (nlevel == level)
 		return;
 
-	for (i = 0; i < sc->sc_bcl_len && cur_level != sc->sc_bcl[i]; i++);
-	acpivout_set_brightness(sc, sc->sc_bcl[i + 1]);
-}
-
-void
-acpivout_brightness_down(struct acpivout_softc *sc)
-{
-	int i, cur_level;
-
-	if (sc->sc_bcl_len == 0)
-		return;
-	cur_level = acpivout_get_brightness(sc);
-	if (cur_level == -1)
-		return;
-
-	/* check for min brightness level */
-	if (cur_level == sc->sc_bcl[0])
-		return;
-
-	for (i = 0; i < sc->sc_bcl_len && cur_level != sc->sc_bcl[i]; i++);
-	acpivout_set_brightness(sc, sc->sc_bcl[i - 1]);
+	acpivout_set_brightness(sc, nlevel);
 }
 
 void
