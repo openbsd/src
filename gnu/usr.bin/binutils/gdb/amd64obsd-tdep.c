@@ -80,6 +80,14 @@ amd64obsd_regset_from_core_section (struct gdbarch *gdbarch,
 /* Default page size.  */
 static const int amd64obsd_page_size = 4096;
 
+/* Offset for sigreturn(2).  */
+static const int amd64obsd_sigreturn_offset[] = {
+  9,                         /* OpenBSD 6.4+ */
+  6,                         /* OpenBSD 5.1+ */
+  7,                         /* OpenBSD 5.1+ */
+  -1
+};
+
 /* Return whether the frame preceding NEXT_FRAME corresponds to an
    OpenBSD sigtramp routine.  */
 
@@ -94,8 +102,9 @@ amd64obsd_sigtramp_p (struct frame_info *next_frame)
     0x67, 0x00, 0x00, 0x00,	/* movq $SYS_sigreturn, %rax */
     0x0f, 0x05			/* syscall */
   };
-  size_t buflen = (sizeof sigreturn) + 1;
-  char *name, *buf;
+  char buf[sizeof sigreturn];
+  const int *offset;
+  char *name;
 
   /* If the function has a valid symbol name, it isn't a
      trampoline.  */
@@ -108,19 +117,20 @@ amd64obsd_sigtramp_p (struct frame_info *next_frame)
   if (find_pc_section (pc) != NULL)
     return 0;
 
-  /* If we can't read the instructions at START_PC, return zero.  */
-  buf = alloca ((sizeof sigreturn) + 1);
-  if (!safe_frame_unwind_memory (next_frame, start_pc + 6, buf, buflen))
-    return 0;
+  for (offset = amd64obsd_sigreturn_offset; *offset != -1; offset++)
+    {
+      if (!safe_frame_unwind_memory (next_frame, start_pc + *offset,
+				     buf, sizeof buf))
+        continue;
 
-  /* Check for sigreturn(2).  Depending on how the assembler encoded
-     the `movq %rsp, %rdi' instruction, the code starts at offset 6 or
-     7.  */
-  if (memcmp (buf, sigreturn, sizeof sigreturn)
-      && memcpy (buf + 1, sigreturn, sizeof sigreturn))
-    return 0;
+      /* Check for sigreturn(2). */
+      if (memcmp (buf, sigreturn, sizeof sigreturn))
+        continue;
 
-  return 1;
+      return 1;
+    }
+
+  return 0;
 }
 
 /* Assuming NEXT_FRAME is for a frame following a BSD sigtramp
