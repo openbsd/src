@@ -142,7 +142,7 @@
 /etc/ttys
 /etc/unwind.conf
 /etc/usermgmt.conf
-/etc/vm.conf
+/etc/examples/vm.conf
 /etc/weekly
 /etc/weekly.local
 /etc/wsconsctl.conf

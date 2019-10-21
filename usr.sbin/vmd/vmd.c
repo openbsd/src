@@ -846,6 +846,9 @@ main(int argc, char **argv)
 
 	if (vmd_configure() == -1)
 		fatalx("configuration failed");
+	
+	log_info("Memory balloon settings: hiwat = %d lowat = %d reclaim = %d",
+		env->vmb_hiwat, env->vmb_lowat, env->vmb_reclaim);
 
 	event_dispatch();
 
