@@ -85,13 +85,59 @@ struct viombh_softc {
 
 int	viombh_match(struct device *, void *, void *);
 void	viombh_attach(struct device *, struct device *, void *);
-void	viombh_worker(void *);
-void	viombh_inflate(struct viombh_softc *);
-void	viombh_deflate(struct viombh_softc *);
-int	viombh_config_change(struct virtio_softc *);
-void	viombh_read_config(struct viombh_softc *);
-int	viombh_vq_dequeue(struct virtqueue *);
-int	viombh_inflate_intr(struct virtqueue *);
-int	viombh_deflate_intr(struct virtqueue *);
-int	viombh_stat_intr(struct virtqueue *);
+
+int
+viombh_match(struct device *parent, void *match, void *aux)
+{
+	struct virtio_softc *va = aux;
+	if (va->sc_childdevid == PCI_PRODUCT_QUMRANET_VIO_MEM)
+		return (1);
+	return (0);
+}
+
+void
+viombh_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct viombh_softc *sc = (struct viombh_softc *)self;
+	struct virtio_softc *vsc = (struct virtio_softc *)parent;  //virtio is the parent	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
