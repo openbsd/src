@@ -75,7 +75,7 @@ struct cfdriver viornd_cd = {
 int viornd_match(struct device *parent, void *match, void *aux)
 {
 	struct virtio_softc *va = aux;
-	if (va->sc_childdevid == PCI_PRODUCT_VIRTIO_BALLOON)
+	if (va->sc_childdevid == PCI_PRODUCT_VIRTIO_ENTROPY)
 		return 1;
 	return 0;
 }
@@ -93,7 +93,7 @@ viornd_attach(struct device *parent, struct device *self, void *aux)
 	if (vsc->sc_child != NULL)	//if parent already has a child
 		panic("already attached to something else");
 	vsc->sc_child = self;		//otherwise, assign the parent's child to self
-	vsc->sc_ipl = IPL_NET;		
+	vsc->sc_ipl = IPL_NET;
 	sc->sc_virtio = vsc;
 
 	virtio_negotiate_features(vsc, NULL);

@@ -90,7 +90,7 @@ int
 viombh_match(struct device *parent, void *match, void *aux)
 {
 	struct virtio_softc *va = aux;
-	if (va->sc_childdevid == PCI_PRODUCT_QUMRANET_VIO_MEM)
+	if (va->sc_childdevid == PCI_PRODUCT_VIRTIO_BALLOON)
 		return (1);
 	return (0);
 }
