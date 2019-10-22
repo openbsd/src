@@ -1,4 +1,4 @@
-.\"	$OpenBSD: proot.1,v 1.5 2019/06/08 14:48:53 schwarze Exp $
+.\"	$OpenBSD: proot.1,v 1.6 2019/10/22 09:53:25 espie Exp $
 .\"
 .\" Copyright (c) 2016 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2019 $
+.Dd $Mdocdate: October 22 2019 $
 .Dt PROOT 1
 .Os
 .Sh NAME
@@ -119,7 +119,7 @@ any content within to the appropriate users.
 .It Cm stragglers
 Double-check filled up chroot for files we don't know about.
 .It Cm write_mk
-If some directory values are different from the default,
+If some values are different from the default,
 write a skeleton
 .Xr mk.conf 5
 file.
