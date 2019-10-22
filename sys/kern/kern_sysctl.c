@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.366 2019/08/21 20:44:09 cheloha Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.367 2019/10/22 21:19:22 cheloha Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1637,7 +1637,7 @@ fill_kproc(struct process *pr, struct kinfo_proc *ki, struct proc *p,
 	struct session *s = pr->ps_session;
 	struct tty *tp;
 	struct vmspace *vm = pr->ps_vmspace;
-	struct timespec ut, st;
+	struct timespec booted, st, ut, utc;
 	int isthread;
 
 	isthread = p != NULL;
@@ -1673,6 +1673,12 @@ fill_kproc(struct process *pr, struct kinfo_proc *ki, struct proc *p,
 		ki->p_uutime_usec = ut.tv_nsec/1000;
 		ki->p_ustime_sec = st.tv_sec;
 		ki->p_ustime_usec = st.tv_nsec/1000;
+
+		/* Convert starting uptime to a starting UTC time. */
+		nanoboottime(&booted);
+		timespecadd(&booted, &pr->ps_start, &utc);
+		ki->p_ustart_sec = utc.tv_sec;
+		ki->p_ustart_usec = utc.tv_nsec / 1000;
 
 #ifdef MULTIPROCESSOR
 		if (p->p_cpu != NULL)

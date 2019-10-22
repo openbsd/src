@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.195 2019/08/21 20:44:09 cheloha Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.196 2019/10/22 21:19:22 cheloha Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -669,9 +669,6 @@ do {									\
 		struct timeval tv;					\
 									\
 		(kp)->p_uvalid = 1;					\
-									\
-		(kp)->p_ustart_sec = (pr)->ps_start.tv_sec;		\
-		(kp)->p_ustart_usec = (pr)->ps_start.tv_nsec/1000;	\
 									\
 		(kp)->p_uru_maxrss = (p)->p_ru.ru_maxrss;		\
 		(kp)->p_uru_ixrss = (p)->p_ru.ru_ixrss;			\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.215 2019/10/21 10:24:01 mpi Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.216 2019/10/22 21:19:22 cheloha Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -462,7 +462,7 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 	/*
 	 * For new processes, set accounting bits and mark as complete.
 	 */
-	getnanotime(&pr->ps_start);
+	nanouptime(&pr->ps_start);
 	pr->ps_acflag = AFORK;
 	atomic_clearbits_int(&pr->ps_flags, PS_EMBRYO);
 

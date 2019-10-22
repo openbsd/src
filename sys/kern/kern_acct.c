@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.41 2019/10/06 16:24:14 beck Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.42 2019/10/22 21:19:22 cheloha Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -171,7 +171,7 @@ acct_process(struct proc *p)
 	struct acct acct;
 	struct process *pr = p->p_p;
 	struct rusage *r;
-	struct timespec ut, st, tmp;
+	struct timespec booted, elapsed, realstart, st, tmp, uptime, ut;
 	int t;
 	struct vnode *vp;
 	int error = 0;
@@ -203,10 +203,12 @@ acct_process(struct proc *p)
 	acct.ac_stime = encode_comp_t(st.tv_sec, st.tv_nsec);
 
 	/* (3) The elapsed time the command ran (and its starting time) */
-	acct.ac_btime = pr->ps_start.tv_sec;
-	getnanotime(&tmp);
-	timespecsub(&tmp, &pr->ps_start, &tmp);
-	acct.ac_etime = encode_comp_t(tmp.tv_sec, tmp.tv_nsec);
+	nanouptime(&uptime);
+	nanoboottime(&booted);
+	timespecadd(&booted, &pr->ps_start, &realstart);
+	acct.ac_btime = realstart.tv_sec;
+	timespecsub(&uptime, &pr->ps_start, &elapsed);
+	acct.ac_etime = encode_comp_t(elapsed.tv_sec, elapsed.tv_nsec);
 
 	/* (4) The average amount of memory used */
 	r = &p->p_ru;

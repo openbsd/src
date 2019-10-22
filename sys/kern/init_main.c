@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.290 2019/06/21 09:39:48 visa Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.291 2019/10/22 21:19:22 cheloha Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -517,7 +517,7 @@ main(void *framep)
 	 * munched in mi_switch() after the time got set.
 	 */
 	LIST_FOREACH(pr, &allprocess, ps_list) {
-		getnanotime(&pr->ps_start);
+		nanouptime(&pr->ps_start);
 		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
 			nanouptime(&p->p_cpu->ci_schedstate.spc_runtime);
 			timespecclear(&p->p_rtime);

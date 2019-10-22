@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.274 2019/10/21 10:24:01 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.275 2019/10/22 21:19:22 cheloha Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -260,7 +260,7 @@ struct process {
 #define ps_endcopy	ps_refcnt
 	int	ps_refcnt;		/* Number of references. */
 
-	struct	timespec ps_start;	/* starting time. */
+	struct	timespec ps_start;	/* starting uptime. */
 	struct	timeout ps_realit_to;	/* real-time itimer trampoline. */
 };
 

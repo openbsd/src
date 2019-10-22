@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.29 2019/06/23 16:57:02 deraadt Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.30 2019/10/22 21:19:22 cheloha Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -117,15 +117,39 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 	struct process process, process2;
 	struct pgrp pgrp;
 	struct tty tty;
+	struct timeval elapsed, monostart, monostop, realstart, realstop;
+	struct nlist nl[3];
 	struct sigacts sa, *sap;
 	struct vmspace vm, *vmp;
 	struct plimit limits, *limp;
 	pid_t parent_pid, leader_pid;
 	int cnt = 0;
 	int dothreads = 0;
+	int i;
 
 	dothreads = op & KERN_PROC_SHOW_THREADS;
 	op &= ~KERN_PROC_SHOW_THREADS;
+
+	/* Anchor a time to compare process starting times from. */
+	nl[0].n_name = "_time_second";
+	nl[1].n_name = "_time_uptime";
+	nl[2].n_name = NULL;
+	if (kvm_nlist(kd, nl) != 0) {
+		for (i = 0; nl[i].n_type != 0; ++i)
+			continue;
+		_kvm_err(kd, kd->program, "%s: no such symbol", nl[i].n_name);
+		return (-1);
+	}
+	timerclear(&realstop);
+	timerclear(&monostop);
+	if (KREAD(kd, nl[0].n_value, &realstop.tv_sec)) {
+		_kvm_err(kd, kd->program, "cannot read time_second");
+		return (-1);
+	}
+	if (KREAD(kd, nl[1].n_value, &monostop.tv_sec)) {
+		_kvm_err(kd, kd->program, "cannot read time_uptime");
+		return (-1);
+	}
 
 	/*
 	 * Modelled on sysctl_doproc() in sys/kern/kern_sysctl.c
@@ -288,6 +312,18 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 		} else {
 			kp.p_tpgid = -1;
 			kp.p_tdev = NODEV;
+		}
+
+		/* Convert the starting uptime to a starting UTC time. */
+		if ((process.ps_flags & PS_ZOMBIE) == 0) {
+			monostart.tv_sec = kp.p_ustart_sec;
+			monostart.tv_usec = kp.p_ustart_usec;
+			timersub(&monostop, &monostart, &elapsed);
+			if (elapsed.tv_sec < 0)
+				timerclear(&elapsed);
+			timersub(&realstop, &elapsed, &realstart);
+			kp.p_ustart_sec = realstart.tv_sec;
+			kp.p_ustart_usec = realstart.tv_usec;
 		}
 
 		/* update %cpu for all threads */
