@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.46 2019/08/03 22:53:45 cheloha Exp $	*/
+/*	$OpenBSD: time.h,v 1.47 2019/10/22 20:19:41 cheloha Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -293,6 +293,7 @@ void	getmicrouptime(struct timeval *);
 
 void	binboottime(struct bintime *);
 void	microboottime(struct timeval *);
+void	nanoboottime(struct timespec *);
 
 struct proc;
 int	clock_gettime(struct proc *, clockid_t, struct timespec *);

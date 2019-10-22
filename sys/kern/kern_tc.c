@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.48 2019/06/03 01:27:30 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.49 2019/10/22 20:19:41 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -164,6 +164,15 @@ microboottime(struct timeval *tvp)
 	
 	binboottime(&bt);
 	BINTIME_TO_TIMEVAL(&bt, tvp);
+}
+
+void
+nanoboottime(struct timespec *tsp)
+{
+	struct bintime bt;
+	
+	binboottime(&bt);
+	BINTIME_TO_TIMESPEC(&bt, tsp);
 }
 
 void
