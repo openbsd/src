@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.230 2019/02/13 23:47:43 dlg Exp $	*/
+/*	$OpenBSD: in6.c,v 1.231 2019/10/22 21:40:12 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -616,10 +616,9 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		 * the following log might be noisy, but this is a typical
 		 * configuration mistake or a tool's bug.
 		 */
-		nd6log((LOG_INFO,
-		    "in6_update_ifa: valid lifetime is 0 for %s\n",
+		nd6log((LOG_INFO, "%s: valid lifetime is 0 for %s\n", __func__,
 		    inet_ntop(AF_INET6, &ifra->ifra_addr.sin6_addr,
-		        addr, sizeof(addr))));
+		    addr, sizeof(addr))));
 
 		if (ia6 == NULL)
 			return (0); /* there's nothing to do */
@@ -682,10 +681,10 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		if ((ia6->ia_flags & IFA_ROUTE) != 0 &&
 		    rt_ifa_del(ifa, RTF_HOST, ifa->ifa_dstaddr,
 		     ifp->if_rdomain) != 0) {
-			nd6log((LOG_ERR, "in6_update_ifa: failed to remove "
-			    "a route to the old destination: %s\n",
+			nd6log((LOG_ERR, "%s: failed to remove a route "
+			    "to the old destination: %s\n", __func__,
 			    inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
-				addr, sizeof(addr))));
+			    addr, sizeof(addr))));
 			/* proceed anyway... */
 		} else
 			ia6->ia_flags &= ~IFA_ROUTE;
@@ -1322,7 +1321,7 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 	struct in6_ifaddr *ia6_best = NULL;
 
 	if (oifp == NULL) {
-		printf("in6_ifawithscope: output interface is not specified\n");
+		printf("%s: output interface is not specified\n", __func__);
 		return (NULL);
 	}
 
@@ -1366,19 +1365,19 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 
 
 			dscopecmp = IN6_ARE_SCOPE_CMP(src_scope, dst_scope);
-			printf("in6_ifawithscope: dst=%s bestaddr=%s, "
-			       "newaddr=%s, scope=%x, dcmp=%d, bcmp=%d, "
-			       "matchlen=%d, flgs=%x\n",
-			       inet_ntop(AF_INET6, dst, adst, sizeof(adst)),
-			       (ia6_best == NULL) ? "none" :
-			       inet_ntop(AF_INET6, &ia6_best->ia_addr.sin6_addr,
-			           bestaddr, sizeof(bestaddr)),
-			       inet_ntop(AF_INET6, IFA_IN6(ifa),
-			           asrc, sizeof(asrc)),
-			       src_scope, dscopecmp,
-			       ia6_best ? IN6_ARE_SCOPE_CMP(src_scope, best_scope) : -1,
-			       in6_matchlen(IFA_IN6(ifa), dst),
-			       ifatoia6(ifa)->ia6_flags);
+			printf("%s: dst=%s bestaddr=%s, "
+			    "newaddr=%s, scope=%x, dcmp=%d, bcmp=%d, "
+			    "matchlen=%d, flgs=%x\n", __func__,
+			    inet_ntop(AF_INET6, dst, adst, sizeof(adst)),
+			    (ia6_best == NULL) ? "none" :
+			    inet_ntop(AF_INET6, &ia6_best->ia_addr.sin6_addr,
+			    bestaddr, sizeof(bestaddr)),
+			    inet_ntop(AF_INET6, IFA_IN6(ifa),
+			    asrc, sizeof(asrc)),
+			    src_scope, dscopecmp, ia6_best ?
+			    IN6_ARE_SCOPE_CMP(src_scope, best_scope) : -1,
+			    in6_matchlen(IFA_IN6(ifa), dst),
+			    ifatoia6(ifa)->ia6_flags);
 		}
 #endif
 
@@ -1545,14 +1544,14 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 				/* Do not replace temporary autoconf addresses
 				 * with non-temporary addresses. */
 				if ((ia6_best->ia6_flags & IN6_IFF_PRIVACY) &&
-			            !(ifatoia6(ifa)->ia6_flags &
+				    !(ifatoia6(ifa)->ia6_flags &
 				    IN6_IFF_PRIVACY))
 					continue;
 
 				/* Replace non-temporary autoconf addresses
 				 * with temporary addresses. */
 				if (!(ia6_best->ia6_flags & IN6_IFF_PRIVACY) &&
-			            (ifatoia6(ifa)->ia6_flags &
+				    (ifatoia6(ifa)->ia6_flags &
 				    IN6_IFF_PRIVACY))
 					goto replace;
 			}
@@ -1560,7 +1559,7 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 			matchcmp = tlen - blen;
 			if (matchcmp > 0) { /* (8) */
 #if NCARP > 0
-				/* 
+				/*
 				 * Don't let carp interfaces win a tie against
 				 * the output interface based on matchlen.
 				 * We should only use a carp address if no
@@ -1587,8 +1586,9 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 		  replace:
 			ia6_best = ifatoia6(ifa);
 			blen = tlen >= 0 ? tlen :
-				in6_matchlen(IFA_IN6(ifa), dst);
-			best_scope = in6_addrscope(&ia6_best->ia_addr.sin6_addr);
+			    in6_matchlen(IFA_IN6(ifa), dst);
+			best_scope =
+			    in6_addrscope(&ia6_best->ia_addr.sin6_addr);
 		}
 	}
 
