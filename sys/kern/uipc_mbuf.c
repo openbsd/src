@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.272 2019/07/19 09:03:03 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.273 2019/10/22 18:45:02 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -76,6 +76,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
@@ -133,7 +134,6 @@ struct	mutex m_extref_mtx = MUTEX_INITIALIZER(IPL_NET);
 void	m_extfree(struct mbuf *);
 void	m_zero(struct mbuf *);
 
-struct mutex m_pool_mtx = MUTEX_INITIALIZER(IPL_NET);
 unsigned long mbuf_mem_limit;	/* how much memory can be allocated */
 unsigned long mbuf_mem_alloc;	/* how much memory has been allocated */
 
@@ -1473,30 +1473,18 @@ m_microtime(const struct mbuf *m, struct timeval *tv)
 void *
 m_pool_alloc(struct pool *pp, int flags, int *slowdown)
 {
-	void *v = NULL;
-	int avail = 1;
+	void *v;
 
-	if (mbuf_mem_alloc + pp->pr_pgsize > mbuf_mem_limit)
-		return (NULL);
+	if (atomic_add_long_nv(&mbuf_mem_alloc, pp->pr_pgsize) > mbuf_mem_limit)
+		goto fail;
 
-	mtx_enter(&m_pool_mtx);
-	if (mbuf_mem_alloc + pp->pr_pgsize > mbuf_mem_limit)
-		avail = 0;
-	else
-		mbuf_mem_alloc += pp->pr_pgsize;
-	mtx_leave(&m_pool_mtx);
+	v = (*pool_allocator_multi.pa_alloc)(pp, flags, slowdown);
+	if (v != NULL)
+		return (v);
 
-	if (avail) {
-		v = (*pool_allocator_multi.pa_alloc)(pp, flags, slowdown);
-
-		if (v == NULL) {
-			mtx_enter(&m_pool_mtx);
-			mbuf_mem_alloc -= pp->pr_pgsize;
-			mtx_leave(&m_pool_mtx);
-		}
-	}
-
-	return (v);
+ fail:
+	atomic_sub_long(&mbuf_mem_alloc, pp->pr_pgsize);
+	return (NULL);
 }
 
 void
@@ -1504,9 +1492,7 @@ m_pool_free(struct pool *pp, void *v)
 {
 	(*pool_allocator_multi.pa_free)(pp, v);
 
-	mtx_enter(&m_pool_mtx);
-	mbuf_mem_alloc -= pp->pr_pgsize;
-	mtx_leave(&m_pool_mtx);
+	atomic_sub_long(&mbuf_mem_alloc, pp->pr_pgsize);
 }
 
 void
