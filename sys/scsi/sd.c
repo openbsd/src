@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.290 2019/10/19 17:30:43 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.291 2019/10/22 15:46:40 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -94,7 +94,7 @@ int	sd_thin_pages(struct sd_softc *, int);
 int	sd_vpd_block_limits(struct sd_softc *, int);
 int	sd_vpd_thin(struct sd_softc *, int);
 int	sd_thin_params(struct sd_softc *, int);
-int	sd_get_parms(struct sd_softc *, struct disk_parms *, int);
+int	sd_get_parms(struct sd_softc *, int);
 int	sd_flush(struct sd_softc *, int);
 
 void	viscpy(u_char *, u_char *, int);
@@ -215,7 +215,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	if (error)
 		result = SDGP_RESULT_OFFLINE;
 	else
-		result = sd_get_parms(sc, &sc->params, sd_autoconf);
+		result = sd_get_parms(sc, sd_autoconf);
 
 	if (ISSET(link->flags, SDEV_REMOVABLE))
 		scsi_prevent(link, PR_ALLOW, sd_autoconf);
@@ -241,7 +241,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 
 #ifdef DIAGNOSTIC
 	default:
-		panic("sdattach: unknown result (%#x) from get_parms", result);
+		panic("sdattach: unknown result (%#x) from sd_get_parms", result);
 		break;
 #endif /* DIAGNOSTIC */
 	}
@@ -436,7 +436,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			goto die;
 		}
 		SET(link->flags, SDEV_MEDIA_LOADED);
-		if (sd_get_parms(sc, &sc->params, (rawopen ? SCSI_SILENT : 0))
+		if (sd_get_parms(sc, (rawopen ? SCSI_SILENT : 0))
 		    == SDGP_RESULT_OFFLINE) {
 			if (ISSET(sc->flags, SDF_DYING)) {
 				error = ENXIO;
@@ -1720,9 +1720,10 @@ sd_thin_params(struct sd_softc *sc, int flags)
  * cannot be completed.
  */
 int
-sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
+sd_get_parms(struct sd_softc *sc, int flags)
 {
-	struct scsi_link *link;
+	struct disk_parms *dp = &sc->params;
+	struct scsi_link *link = sc->sc_link;
 	union scsi_mode_sense_buf *buf = NULL;
 	struct page_rigid_geometry *rigid = NULL;
 	struct page_flex_geometry *flex = NULL;
@@ -1745,7 +1746,6 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 
 	if (ISSET(sc->flags, SDF_DYING))
 		goto die;
-	link = sc->sc_link;
 
 	/*
 	 * Ask for page 0 (vendor specific) mode sense data to find
