@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.163 2019/07/25 13:56:24 krw Exp $	*/
+/*	$OpenBSD: in.c,v 1.164 2019/10/23 19:58:32 bluhm Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -177,6 +177,18 @@ in_nam2sin(const struct mbuf *nam, struct sockaddr_in **sin)
 		return EAFNOSUPPORT;
 	if (sa->sa_len != nam->m_len)
 		return EINVAL;
+	if (sa->sa_len != sizeof(struct sockaddr_in))
+		return EINVAL;
+	*sin = satosin(sa);
+
+	return 0;
+}
+
+int
+in_sa2sin(struct sockaddr *sa, struct sockaddr_in **sin)
+{
+	if (sa->sa_family != AF_INET)
+		return EAFNOSUPPORT;
 	if (sa->sa_len != sizeof(struct sockaddr_in))
 		return EINVAL;
 	*sin = satosin(sa);
@@ -372,26 +384,27 @@ in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 	struct ifaddr *ifa;
 	struct in_ifaddr *ia = NULL;
 	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
+	struct sockaddr_in *sin = NULL, *dstsin = NULL, *broadsin = NULL;
 	int error = 0;
 	int newifaddr;
+
+	if (ifra->ifra_addr.sin_family == AF_INET) {
+		error = in_sa2sin(sintosa(&ifra->ifra_addr), &sin);
+		if (error)
+			return (error);
+	}
 
 	NET_LOCK();
 
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-		if (ifa->ifa_addr->sa_family == AF_INET) {
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+		/* find first address, if no exact match wanted */
+		if (sin == NULL || sin->sin_addr.s_addr ==
+		    ifatoia(ifa)->ia_addr.sin_addr.s_addr) {
 			ia = ifatoia(ifa);
 			break;
 		}
-	}
-
-	if (ifra->ifra_addr.sin_family == AF_INET) {
-		for (; ifa != NULL; ifa = TAILQ_NEXT(ifa, ifa_list)) {
-			if ((ifa->ifa_addr->sa_family == AF_INET) &&
-			    ifatoia(ifa)->ia_addr.sin_addr.s_addr ==
-			    ifra->ifra_addr.sin_addr.s_addr)
-				break;
-		}
-		ia = ifatoia(ifa);
 	}
 
 	switch (cmd) {
@@ -401,6 +414,27 @@ in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 		if (!privileged) {
 			error = EPERM;
 			break;
+		}
+
+		if (ifra->ifra_mask.sin_len) {
+			if (ifra->ifra_mask.sin_len < 8) {
+				error = EINVAL;
+				break;
+			}
+		}
+		if ((ifp->if_flags & IFF_POINTOPOINT) &&
+		    ifra->ifra_dstaddr.sin_family == AF_INET) {
+			error = in_sa2sin(sintosa(&ifra->ifra_dstaddr),
+			    &dstsin);
+			if (error)
+				break;
+		}
+		if ((ifp->if_flags & IFF_BROADCAST) &&
+		    ifra->ifra_broadaddr.sin_family == AF_INET) {
+			error = in_sa2sin(sintosa(&ifra->ifra_broadaddr),
+			    &broadsin);
+			if (error)
+				break;
 		}
 
 		if (ia == NULL) {
@@ -421,41 +455,38 @@ in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 		} else
 			newifaddr = 0;
 
-		if (ia->ia_addr.sin_family == AF_INET) {
-			if (ifra->ifra_addr.sin_len == 0)
-				ifra->ifra_addr = ia->ia_addr;
-			else if (ifra->ifra_addr.sin_addr.s_addr !=
-			    ia->ia_addr.sin_addr.s_addr || newifaddr)
-				needinit = 1;
+		if (sin == NULL) {
+			sin = &ia->ia_addr;
+		} else if (newifaddr ||
+		    sin->sin_addr.s_addr != ia->ia_addr.sin_addr.s_addr) {
+			needinit = 1;
 		}
 		if (ifra->ifra_mask.sin_len) {
 			in_ifscrub(ifp, ia);
-			ia->ia_sockmask = ifra->ifra_mask;
-			ia->ia_netmask = ia->ia_sockmask.sin_addr.s_addr;
+			ia->ia_netmask = ia->ia_sockmask.sin_addr.s_addr =
+			    ifra->ifra_mask.sin_addr.s_addr;
 			needinit = 1;
 		}
-		if ((ifp->if_flags & IFF_POINTOPOINT) &&
-		    (ifra->ifra_dstaddr.sin_family == AF_INET)) {
+		if (dstsin != NULL) {
 			in_ifscrub(ifp, ia);
-			ia->ia_dstaddr = ifra->ifra_dstaddr;
-			needinit  = 1;
+			ia->ia_dstaddr = *dstsin;
+			needinit = 1;
 		}
-		if ((ifp->if_flags & IFF_BROADCAST) &&
-		    (ifra->ifra_broadaddr.sin_family == AF_INET)) {
+		if (broadsin != NULL) {
 			if (newifaddr)
-				ia->ia_broadaddr = ifra->ifra_broadaddr;
+				ia->ia_broadaddr = *broadsin;
 			else
 				ifa_update_broadaddr(ifp, &ia->ia_ifa,
-				    sintosa(&ifra->ifra_broadaddr));
+				    sintosa(broadsin));
 		}
-		if (ifra->ifra_addr.sin_family == AF_INET && needinit) {
-			error = in_ifinit(ifp, ia, &ifra->ifra_addr, newifaddr);
+		if (needinit) {
+			error = in_ifinit(ifp, ia, sin, newifaddr);
+			if (error)
+				break;
 		}
-		if (error)
-			break;
 		dohooks(ifp->if_addrhooks, 0);
 		break;
-		}
+	    }
 	case SIOCDIFADDR:
 		if (!privileged) {
 			error = EPERM;
