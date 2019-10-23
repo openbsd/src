@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp.1,v 1.116 2019/10/23 16:48:59 deraadt Exp $
+.\"	$OpenBSD: ftp.1,v 1.117 2019/10/23 18:07:55 jmc Exp $
 .\"	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -190,6 +190,10 @@ Causes
 .Nm
 to always display the progress meter in cases where it would not do
 so by default.
+.It Fl N Ar name
+Use this alternative name instead of
+.Nm
+in some error reports.
 .It Fl n
 Restrains
 .Nm
@@ -207,10 +211,6 @@ If no entry exists,
 will prompt for the remote machine login name (default is the user
 identity on the local machine) and, if necessary, prompt for a password
 and an account with which to log in.
-.It Fl N Ar name
-Use this alternative name instead of
-.Nm
-in some error reports.
 .It Fl o Ar output
 When fetching a single file or URL, save the contents in
 .Ar output .
