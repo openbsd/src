@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.105 2019/10/17 22:32:06 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.106 2019/10/23 20:34:04 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -187,6 +187,7 @@ sxirsb*		at fdt? early 1	# Reduced Serial Bus
 sxirtc*		at fdt? early 1	# Real Time Clock
 sximmc*		at fdt?		# SD/MMC card controller
 sdmmc*		at sximmc?	# SD/MMC bus
+sxisid*		at fdt? early 1
 sxisyscon*	at fdt? early 1	# System controller
 sxitwi*		at fdt?		# I2C controller
 iic*		at sxitwi?	# I2C bus
