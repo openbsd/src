@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.43 2019/09/27 23:07:42 krw Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.44 2019/10/23 13:50:50 krw Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -77,9 +77,5 @@ struct sd_softc {
 
 	struct scsi_xshandler sc_xsh;
 };
-
-#define	SDGP_RESULT_OK		0	/* parameters obtained */
-#define	SDGP_RESULT_OFFLINE	1	/* no media, or otherwise losing */
-
 #endif /* _KERNEL */
 #endif /* _SCSI_SDVAR_H */

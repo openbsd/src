@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.291 2019/10/22 15:46:40 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.292 2019/10/23 13:50:49 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -162,7 +162,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	int sd_autoconf = scsi_autoconf | SCSI_SILENT |
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE;
 	struct dk_cache dkc;
-	int error, result, sortby = BUFQ_DEFAULT;
+	int error, sortby = BUFQ_DEFAULT;
 
 	SC_DEBUG(link, SDEV_DB2, ("sdattach:\n"));
 
@@ -211,17 +211,13 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	/* Check that it is still responding and ok. */
 	error = scsi_test_unit_ready(sc->sc_link, TEST_READY_RETRIES * 3,
 	    sd_autoconf);
-
-	if (error)
-		result = SDGP_RESULT_OFFLINE;
-	else
-		result = sd_get_parms(sc, sd_autoconf);
+	if (error == 0)
+		error = sd_get_parms(sc, sd_autoconf);
 
 	if (ISSET(link->flags, SDEV_REMOVABLE))
 		scsi_prevent(link, PR_ALLOW, sd_autoconf);
 
-	switch (result) {
-	case SDGP_RESULT_OK:
+	if (error == 0) {
 		printf("%s: %lluMB, %lu bytes/sector, %llu sectors",
 		    sc->sc_dev.dv_xname,
 		    dp->disksize / (1048576 / dp->secsize), dp->secsize,
@@ -230,20 +226,9 @@ sdattach(struct device *parent, struct device *self, void *aux)
 			sortby = BUFQ_FIFO;
 			printf(", thin");
 		}
-		if (ISSET(link->flags, SDEV_READONLY)) {
+		if (ISSET(link->flags, SDEV_READONLY))
 			printf(", readonly");
-		}
 		printf("\n");
-		break;
-
-	case SDGP_RESULT_OFFLINE:
-		break;
-
-#ifdef DIAGNOSTIC
-	default:
-		panic("sdattach: unknown result (%#x) from sd_get_parms", result);
-		break;
-#endif /* DIAGNOSTIC */
 	}
 
 	/*
@@ -436,8 +421,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			goto die;
 		}
 		SET(link->flags, SDEV_MEDIA_LOADED);
-		if (sd_get_parms(sc, (rawopen ? SCSI_SILENT : 0))
-		    == SDGP_RESULT_OFFLINE) {
+		if (sd_get_parms(sc, (rawopen ? SCSI_SILENT : 0)) == -1) {
 			if (ISSET(sc->flags, SDF_DYING)) {
 				error = ENXIO;
 				goto die;
@@ -1714,10 +1698,11 @@ sd_thin_params(struct sd_softc *sc, int flags)
 }
 
 /*
- * Fill out the disk parameter structure. Return SDGP_RESULT_OK if the
- * structure is correctly filled in, SDGP_RESULT_OFFLINE otherwise. The caller
- * is responsible for clearing the SDEV_MEDIA_LOADED flag if the structure
- * cannot be completed.
+ * Fill out the disk parameter structure. Return 0 if the structure is correctly
+ * filled in, otherwise return -1.
+ *
+ * The caller is responsible for clearing the SDEV_MEDIA_LOADED flag if the
+ * structure cannot be completed.
  */
 int
 sd_get_parms(struct sd_softc *sc, int flags)
@@ -1733,7 +1718,7 @@ sd_get_parms(struct sd_softc *sc, int flags)
 	int err = 0, big;
 
 	if (sd_size(sc, flags) != 0)
-		return (SDGP_RESULT_OFFLINE);
+		return -1;
 
 	if (ISSET(sc->flags, SDF_THIN) && sd_thin_params(sc, flags) != 0) {
 		/* we dont know the unmap limits, so we cant use thin shizz */
@@ -1836,7 +1821,7 @@ validate:
 		dma_free(buf, sizeof(*buf));
 
 	if (dp->disksize == 0)
-		return (SDGP_RESULT_OFFLINE);
+		return -1;
 
 	if (dp->secsize == 0)
 		dp->secsize = (secsize == 0) ? 512 : secsize;
@@ -1857,7 +1842,7 @@ validate:
 	default:
 		SC_DEBUG(sc->sc_link, SDEV_DB1,
 		    ("sd_get_parms: bad secsize: %#lx\n", dp->secsize));
-		return (SDGP_RESULT_OFFLINE);
+		return -1;
 	}
 
 	/*
@@ -1887,11 +1872,11 @@ validate:
 		dp->sectors = dp->disksize;
 	}
 
-	return (SDGP_RESULT_OK);
+	return 0;
 
 die:
 	dma_free(buf, sizeof(*buf));
-	return (SDGP_RESULT_OFFLINE);
+	return -1;
 }
 
 int
