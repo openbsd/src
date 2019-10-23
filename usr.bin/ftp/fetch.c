@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.174 2019/10/13 15:09:26 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.175 2019/10/23 16:47:53 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -49,6 +49,7 @@
 #include <netdb.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <vis.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -185,7 +186,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 {
 	char pbuf[NI_MAXSERV], hbuf[NI_MAXHOST], *cp, *portnum, *path, ststr[4];
 	char *hosttail, *cause = "unknown", *newline, *host, *port, *buf = NULL;
-	char *epath, *redirurl, *loctail, *h, *p;
+	char *epath, *redirurl, *loctail, *h, *p, gerror[200];
 	int error, i, isftpurl = 0, isfileurl = 0, isredirect = 0, rval = -1;
 	int isunavail = 0, retryafter = -1;
 	struct addrinfo hints, *res0, *res;
@@ -787,7 +788,8 @@ noslash:
 	strlcpy(ststr, cp, sizeof(ststr));
 	status = strtonum(ststr, 200, 503, &errstr);
 	if (errstr) {
-		warnx("Error retrieving file: %s", cp);
+		strnvis(gerror, cp, sizeof gerror, VIS_SAFE);
+		warnx("Error retrieving %s: %s", origline, gerror);
 		goto cleanup_url_get;
 	}
 
@@ -828,7 +830,8 @@ noslash:
 		isunavail = 1;
 		break;
 	default:
-		warnx("Error retrieving file: %s", cp);
+		strnvis(gerror, cp, sizeof gerror, VIS_SAFE);
+		warnx("Error retrieving %s: %s", origline, gerror);
 		goto cleanup_url_get;
 	}
 
@@ -940,7 +943,8 @@ noslash:
 
 	if (isunavail) {
 		if (retried || retryafter != 0)
-			warnx("Error retrieving file: 503 Service Unavailable");
+			warnx("Error retrieving %s: 503 Service Unavailable",
+			    origline);
 		else {
 			if (verbose)
 				fprintf(ttyout, "Retrying %s\n", origline);
