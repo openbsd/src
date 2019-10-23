@@ -99,7 +99,20 @@ void
 viombh_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct viombh_softc *sc = (struct viombh_softc *)self;
-	struct virtio_softc *vsc = (struct virtio_softc *)parent;  //virtio is the parent	
+	struct virtio_softc *vsc = (struct virtio_softc *)parent;  //virtio is the parent
+
+	if (vsc->sc_child != NULL) {
+		printf("child already attached for %s; something wrong...\n",
+		    parent->dv_xname);
+		return;
+	}
+
+	/* fail on non-4K page size archs */
+	if (VIRTIO_PAGE_SIZE != PAGE_SIZE){
+		printf("non-4K page size arch found, needs %d, got %d\n",
+		    VIRTIO_PAGE_SIZE, PAGE_SIZE);
+		return;
+	}
 }
 
 

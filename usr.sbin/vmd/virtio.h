@@ -318,3 +318,6 @@ int vioscsi_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
 void vioscsi_update_qs(struct vioscsi_dev *);
 void vioscsi_update_qa(struct vioscsi_dev *);
 int vioscsi_notifyq(struct vioscsi_dev *);
+
+/* CMPE */
+int virtio_mbh_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);

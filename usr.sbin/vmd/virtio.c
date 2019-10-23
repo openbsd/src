@@ -249,6 +249,75 @@ viornd_notifyq(void)
 	return (ret);
 }
 
+/* CMPE */
+int
+virtio_mbh_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
+    void *unused, uint8_t sz)
+{
+	*intr = 0xFF;
+
+	if (dir == 0) {
+		switch (reg) {
+		case VIRTIO_CONFIG_DEVICE_FEATURES:
+		case VIRTIO_CONFIG_QUEUE_SIZE:
+		case VIRTIO_CONFIG_ISR_STATUS:
+			log_warnx("%s: illegal write %x to %s",
+			    __progname, *data, virtio_reg_name(reg));
+			break;
+		case VIRTIO_CONFIG_GUEST_FEATURES:
+			viornd.cfg.guest_feature = *data;
+			break;
+		case VIRTIO_CONFIG_QUEUE_ADDRESS:
+			viornd.cfg.queue_address = *data;
+			viornd_update_qa();
+			break;
+		case VIRTIO_CONFIG_QUEUE_SELECT:
+			viornd.cfg.queue_select = *data;
+			viornd_update_qs();
+			break;
+		case VIRTIO_CONFIG_QUEUE_NOTIFY:
+			viornd.cfg.queue_notify = *data;
+			if (viornd_notifyq())
+				*intr = 1;
+			break;
+		case VIRTIO_CONFIG_DEVICE_STATUS:
+			viornd.cfg.device_status = *data;
+			break;
+		}
+	} else {
+		switch (reg) {
+		case VIRTIO_CONFIG_DEVICE_FEATURES:
+			*data = viornd.cfg.device_feature;
+			break;
+		case VIRTIO_CONFIG_GUEST_FEATURES:
+			*data = viornd.cfg.guest_feature;
+			break;
+		case VIRTIO_CONFIG_QUEUE_ADDRESS:
+			*data = viornd.cfg.queue_address;
+			break;
+		case VIRTIO_CONFIG_QUEUE_SIZE:
+			*data = viornd.cfg.queue_size;
+			break;
+		case VIRTIO_CONFIG_QUEUE_SELECT:
+			*data = viornd.cfg.queue_select;
+			break;
+		case VIRTIO_CONFIG_QUEUE_NOTIFY:
+			*data = viornd.cfg.queue_notify;
+			break;
+		case VIRTIO_CONFIG_DEVICE_STATUS:
+			*data = viornd.cfg.device_status;
+			break;
+		case VIRTIO_CONFIG_ISR_STATUS:
+			*data = viornd.cfg.isr_status;
+			viornd.cfg.isr_status = 0;
+			vcpu_deassert_pic_irq(viornd.vm_id, 0, viornd.irq);
+			break;
+		}
+	}
+	return (0);
+}
+
+
 int
 virtio_rnd_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
     void *unused, uint8_t sz)
@@ -2037,13 +2106,13 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			return;
 	}
 
-	/*
-	if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, vmmci_mem_io, NULL)) {
+	
+	if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_mbh_io, NULL)) {
 		log_warnx("%s: can't add bar for vmm mem device",
 			__progname);
 		return;
 	}
-	*/
+	
 
 	memset(&vmmci, 0, sizeof(vmmci));
 	vmmci.cfg.device_feature = VMMCI_F_TIMESYNC | VMMCI_F_ACK |
