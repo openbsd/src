@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.929 2019/09/23 15:41:11 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.930 2019/10/23 07:42:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1787,6 +1787,8 @@ void		 format_defaults_pane(struct format_tree *,
 void		 format_defaults_paste_buffer(struct format_tree *,
 		     struct paste_buffer *);
 void		 format_lost_client(struct client *);
+char		*format_grid_word(struct grid *, u_int, u_int);
+char		*format_grid_line(struct grid *, u_int);
 
 /* format-draw.c */
 void		 format_draw(struct screen_write_ctx *,
