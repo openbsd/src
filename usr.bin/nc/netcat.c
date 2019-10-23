@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.207 2019/10/17 14:29:24 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.208 2019/10/23 13:49:24 beck Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1258,23 +1258,6 @@ readwrite(int net_fd, struct tls *tls_ctx)
 		/* net in gone and queue empty? */
 		if (pfd[POLL_NETIN].fd == -1 && netinbufpos == 0) {
 			pfd[POLL_STDOUT].fd = -1;
-		}
-
-		if (((usetls || Nflag) && (pfd[POLL_NETIN].fd == -1)) ||
-		    (usetls && pfd[POLL_NETOUT].fd == -1)) {
-			/*
-			 * -N says: shutdown(2) the 'network socket'
-			 * after EOF on the input
-			 *
-			 * for TLS we need to die if either end is
-			 * toast, since both reading and writing to
-			 * the socket may be necessary for any higher
-			 * level tls operation
-			 */
-			shutdown(pfd[POLL_NETOUT].fd, SHUT_WR);
-			shutdown(pfd[POLL_NETIN].fd, SHUT_RD);
-			pfd[POLL_NETOUT].fd = -1;
-			pfd[POLL_NETIN].fd = -1;
 		}
 	}
 }
