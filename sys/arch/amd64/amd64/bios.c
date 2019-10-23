@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.40 2019/08/04 14:28:58 kettenis Exp $	*/
+/*	$OpenBSD: bios.c,v 1.41 2019/10/23 10:14:46 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -68,6 +68,9 @@ const char *smbios_uninfo[] = {
 };
 
 char smbios_bios_date[64];
+char smbios_board_vendor[64];
+char smbios_board_prod[64];
+char smbios_board_serial[64];
 
 int
 bios_match(struct device *parent, void *match , void *aux)
@@ -384,8 +387,33 @@ smbios_info(char *str)
 	havebb = smbios_find_table(SMBIOS_TYPE_BASEBOARD, &btbl);
 
 	sys = (struct smbios_sys *)stbl.tblhdr;
-	if (havebb)
+	if (havebb) {
 		board = (struct smbios_board *)btbl.tblhdr;
+
+		sminfop = NULL;
+		if ((p = smbios_get_string(&btbl, board->vendor,
+		    sminfo, sizeof(sminfo))) != NULL)
+			sminfop = fixstring(p);
+		if (sminfop)
+			strlcpy(smbios_board_vendor, sminfop,
+			    sizeof(smbios_board_vendor));
+
+		sminfop = NULL;
+		if ((p = smbios_get_string(&btbl, board->product,
+		    sminfo, sizeof(sminfo))) != NULL)
+			sminfop = fixstring(p);
+		if (sminfop)
+			strlcpy(smbios_board_prod, sminfop,
+			    sizeof(smbios_board_prod));
+
+		sminfop = NULL;
+		if ((p = smbios_get_string(&btbl, board->serial,
+		    sminfo, sizeof(sminfo))) != NULL)
+			sminfop = fixstring(p);
+		if (sminfop)
+			strlcpy(smbios_board_serial, sminfop,
+			    sizeof(smbios_board_serial));
+	}
 	/*
 	 * Some smbios implementations have no system vendor or
 	 * product strings, some have very uninformative data which is
