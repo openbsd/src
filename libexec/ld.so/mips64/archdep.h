@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.14 2017/10/27 16:47:08 mpi Exp $ */
+/*	$OpenBSD: archdep.h,v 1.15 2019/10/23 19:55:09 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -40,13 +40,13 @@
 
 #define RELOC_DYN(relp, symp, adrp, val)				\
 do {									\
-	if (ELF64_R_TYPE(relp->r_info) == R_MIPS_REL32_64) {		\
-		if (ELF64_R_SYM(relp->r_info) != 0)			\
+	if (ELF_R_TYPE(relp->r_info) == R_MIPS_REL32_64) {		\
+		if (ELF_R_SYM(relp->r_info) != 0)			\
 			*adrp += symp->st_value + val;			\
 		else							\
 			*adrp += val;					\
-	} else if (ELF64_R_TYPE(relp->r_info) != R_MIPS_NONE) {		\
-		_dl_exit(ELF64_R_TYPE(relp->r_info)+100);		\
+	} else if (ELF_R_TYPE(relp->r_info) != R_MIPS_NONE) {		\
+		_dl_exit(ELF_R_TYPE(relp->r_info)+100);			\
 	}								\
 } while (0)
 
@@ -54,7 +54,7 @@ do {									\
 do {									\
 	struct boot_dyn *__dynld = obj;					\
 	long __loff = off;						\
-	Elf64_Addr *gotp;						\
+	Elf_Addr *gotp;							\
 	int i, n;							\
 	const Elf_Sym *sp;						\
 									\
@@ -76,9 +76,9 @@ do {									\
 	while (n--) {							\
 		if (sp->st_shndx == SHN_UNDEF ||			\
 		    sp->st_shndx == SHN_COMMON) {			\
-			if (ELF64_ST_BIND(sp->st_info) != STB_WEAK)	\
+			if (ELF_ST_BIND(sp->st_info) != STB_WEAK)	\
 				_dl_exit(7);				\
-		} else if (ELF64_ST_TYPE(sp->st_info) == STT_FUNC) {	\
+		} else if (ELF_ST_TYPE(sp->st_info) == STT_FUNC) {	\
 			*gotp += __loff;				\
 		} else {						\
 			*gotp = sp->st_value + __loff;			\

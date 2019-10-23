@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.66 2019/10/05 00:08:50 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.67 2019/10/23 19:55:09 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -217,12 +217,12 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	Elf_RelA *relas;
 
 	loff = object->obj_base;
-	numrela = object->Dyn.info[relasz] / sizeof(Elf64_Rela);
+	numrela = object->Dyn.info[relasz] / sizeof(Elf_RelA);
 	relrel = rel == DT_RELA ? object->relacount : 0;
-	relas = (Elf64_Rela *)(object->Dyn.info[rel]);
+	relas = (Elf_RelA *)(object->Dyn.info[rel]);
 
 	if (relas == NULL)
-		return(0);
+		return 0;
 
 	if (relrel > numrela)
 		_dl_die("relacount > numrel: %ld > %ld", relrel, numrela);
@@ -337,7 +337,7 @@ resolve_failed:
 		}
 	}
 
-	return (fails);
+	return fails;
 }
 
 /*
@@ -422,7 +422,7 @@ _dl_reloc_plt(Elf_Word *where1, Elf_Word *where2, Elf_Word *pltaddr,
 		 *
 		 */
 		*where1 = BAA | (((offset-4) >> 2) &0x7ffff);
-		return (0);
+		return 0;
 	} else if (value < (1UL<<32)) {
 		/*
 		 * We're within 32-bits of address zero.
@@ -441,7 +441,7 @@ _dl_reloc_plt(Elf_Word *where1, Elf_Word *where2, Elf_Word *pltaddr,
 		 */
 		*where1 = SETHI | HIVAL(value, 10);
 		where2[0] = JMP   | LOVAL(value);
-		return (1);
+		return 1;
 	} else if (value > -(1UL<<32)) {
 		/*
 		 * We're within 32-bits of address -1.
@@ -461,7 +461,7 @@ _dl_reloc_plt(Elf_Word *where1, Elf_Word *where2, Elf_Word *pltaddr,
 		*where1 = SETHI | HIVAL(~value, 10);
 		where2[0] = XOR | ((~value) & 0x00001fff);
 		where2[1] = JMP;
-		return (2);
+		return 2;
 	} else if ((int64_t)(offset-8) <= (1L<<31) &&
 	    (int64_t)(offset-8) >= -((1L<<31) - 4)) {
 		/*
@@ -482,7 +482,7 @@ _dl_reloc_plt(Elf_Word *where1, Elf_Word *where2, Elf_Word *pltaddr,
 		*where1 = MOV71;
 		where2[0] = CALL | (((offset-8) >> 2) & 0x3fffffff);
 		where2[1] = MOV17;
-		return (2);
+		return 2;
 	} else if (value < (1L<<42)) {
 		/*
 		 * Target 42bits or smaller.
@@ -505,7 +505,7 @@ _dl_reloc_plt(Elf_Word *where1, Elf_Word *where2, Elf_Word *pltaddr,
 		where2[0] = OR    | LOVAL(value >> 10);
 		where2[1] = SLLX  | 10;
 		where2[2] = JMP   | LOVAL(value);
-		return (3);
+		return 3;
 	} else if (value > -(1UL<<41)) {
 		/*
 		 * Large target >= 0xfffffe0000000000UL
@@ -529,7 +529,7 @@ _dl_reloc_plt(Elf_Word *where1, Elf_Word *where2, Elf_Word *pltaddr,
 		where2[1] = SLLX  | 32;
 		where2[2] = SRAX  | 22;
 		where2[3] = JMP   | LOVAL(value);
-		return (4);
+		return 4;
 	} else {
 		/*
 		 * We need to load all 64-bits
@@ -552,7 +552,7 @@ _dl_reloc_plt(Elf_Word *where1, Elf_Word *where2, Elf_Word *pltaddr,
 		where2[2] = SLLXG5 | 32;
 		where2[3] = ORG15;
 		where2[4] = JMP | LOVAL(value);
-		return (5);
+		return 5;
 	}
 }
 
@@ -602,7 +602,7 @@ _dl_bind(elf_object_t *object, int index)
 		rela += index;
 
 	sym = object->dyn.symtab;
-	sym += ELF64_R_SYM(rela->r_info);
+	sym += ELF_R_SYM(rela->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
 	sr = _dl_find_symbol(symn, SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT,
@@ -613,7 +613,7 @@ _dl_bind(elf_object_t *object, int index)
 	newvalue = sr.obj->obj_base + sr.sym->st_value;
 
 	if (__predict_false(sr.obj->traced) && _dl_trace_plt(sr.obj, symn))
-		return (newvalue);
+		return newvalue;
 
 	/*
 	 * While some relocations just need to write one word and
@@ -712,7 +712,7 @@ _dl_bind(elf_object_t *object, int index)
 		    : "cc", "memory");
 	}
 
-	return (newvalue);
+	return newvalue;
 }
 
 /*
@@ -753,11 +753,11 @@ _dl_md_reloc_all_plt(elf_object_t *object)
 	Elf_RelA *relas;
 
 	loff = object->obj_base;
-	numrela = object->Dyn.info[DT_PLTRELSZ] / sizeof(Elf64_Rela);
-	relas = (Elf64_Rela *)(object->Dyn.info[DT_JMPREL]);
+	numrela = object->Dyn.info[DT_PLTRELSZ] / sizeof(Elf_RelA);
+	relas = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
 
 	if (relas == NULL)
-		return(0);
+		return 0;
 
 	for (i = 0; i < numrela; i++, relas++) {
 		Elf_Addr value;
@@ -795,7 +795,7 @@ _dl_md_reloc_all_plt(elf_object_t *object)
 			_dl_reloc_plt(&where[1], &where[2], where, value);
 	}
 
-	return (fails);
+	return fails;
 }
 
 /*
@@ -809,7 +809,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	Elf_Word *entry = (Elf_Word *)pltgot;
 
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
-		return (0);
+		return 0;
 
 	if (object->traced)
 		lazy = 1;
@@ -823,5 +823,5 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		pltgot[8] = (Elf_Addr)object;
 	}
 
-	return (fails);
+	return fails;
 }

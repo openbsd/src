@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.22 2018/11/22 21:37:30 guenther Exp $ */
+/*	$OpenBSD: archdep.h,v 1.23 2019/10/23 19:55:08 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -39,18 +39,18 @@
 #include "util.h"
 
 static inline void
-RELOC_DYN(Elf64_Rela *r, const Elf64_Sym *s, Elf64_Addr *p, unsigned long v)
+RELOC_DYN(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 {
-	if (ELF64_R_TYPE(r->r_info) == RELOC_RELATIVE) {
+	if (ELF_R_TYPE(r->r_info) == RELOC_RELATIVE) {
 		*p += v;
-	} else if (ELF64_R_TYPE(r->r_info) == RELOC_NONE) {
+	} else if (ELF_R_TYPE(r->r_info) == RELOC_NONE) {
 		/* nothing to do */
-	} else if (ELF64_R_TYPE(r->r_info) == RELOC_JMP_SLOT) {
-		Elf64_Addr val = v + s->st_value + r->r_addend -
-			(Elf64_Addr)(p);
+	} else if (ELF_R_TYPE(r->r_info) == RELOC_JMP_SLOT) {
+		Elf_Addr val = v + s->st_value + r->r_addend -
+			(Elf_Addr)(p);
 		*p = val;
 		__asm volatile("imb" : : : "memory");
-	} else if (ELF64_R_TYPE(r->r_info) == RELOC_GLOB_DAT) {
+	} else if (ELF_R_TYPE(r->r_info) == RELOC_GLOB_DAT) {
 		*p = v + s->st_value + r->r_addend;
 	} else {
 		_dl_exit(6);

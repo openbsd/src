@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.40 2019/10/05 20:49:48 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.41 2019/10/23 19:55:09 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -66,15 +66,15 @@ static __inline int
 _dl_md_plcmp(hppa_plabel_t *a, hppa_plabel_t *b)
 {
 	if (a->sl < b->sl)
-		return (-1);
+		return -1;
 	else if (a->sl > b->sl)
-		return (1);
+		return 1;
 	else if (a->pc < b->pc)
-		return (-1);
+		return -1;
 	else if (a->pc > b->pc)
-		return (1);
+		return 1;
 	else
-		return (0);
+		return 0;
 }
 
 SPLAY_PROTOTYPE(_dl_md_plabels, hppa_plabel, node, _dl_md_plcmp);
@@ -119,7 +119,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 #endif
 
 	if (rela == NULL)
-		return (0);
+		return 0;
 
 	/* either it's an ld bug or a wacky hpux abi */
 	if (!object->dyn.pltgot)
@@ -287,7 +287,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		}
 	}
 
-	return (fails);
+	return fails;
 }
 
 extern void _dl_bind_start(void);
@@ -310,7 +310,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	int	i, numrela, fails = 0;
 
 	if (object->dyn.pltrel != DT_RELA)
-		return (0);
+		return 0;
 
 	if (object->traced)
 		lazy = 1;
@@ -341,7 +341,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 			got = NULL;
 		}
 		if (got == NULL)
-			return (1);
+			return 1;
 
 		/*
 		 * Patch up the PLT stub such that it doesn't clobber
@@ -391,7 +391,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 			if (ELF_R_TYPE(rela->r_info) != RELOC_IPLT) {
 				_dl_printf("unexpected reloc 0x%x\n",
 				    ELF_R_TYPE(rela->r_info));
-				return (1);
+				return 1;
 			}
 
 			if (ELF_R_SYM(rela->r_info)) {
@@ -405,7 +405,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		}
 	}
 
-	return (fails);
+	return fails;
 }
 
 /*
@@ -441,7 +441,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	buf.newval = ((uint64_t)value << 32) | (Elf_Addr)sr.obj->dyn.pltgot;
 
 	if (__predict_false(sr.obj->traced) && _dl_trace_plt(sr.obj, symn))
-		return (buf.newval);
+		return buf.newval;
 
 	buf.param.kb_addr = (Elf_Addr *)(object->obj_base + rela->r_offset);
 	buf.param.kb_size = sizeof(uint64_t);
@@ -460,5 +460,5 @@ _dl_bind(elf_object_t *object, int reloff)
 		    : "r22", "r28", "r29", "cc", "memory");
 	}
 
-	return (buf.newval);
+	return buf.newval;
 }

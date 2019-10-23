@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.7 2018/06/16 16:06:03 guenther Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.8 2019/10/23 19:55:09 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -44,14 +44,14 @@
  */
 
 static inline void
-RELOC_DYN(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
+RELOC_DYN(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 {
-	if (ELF32_R_TYPE(r->r_info) == RELOC_BBASED_32) {
+	if (ELF_R_TYPE(r->r_info) == RELOC_BBASED_32) {
 		*p = v + r->r_addend;
-	} else if (ELF32_R_TYPE(r->r_info) == RELOC_32) {
+	} else if (ELF_R_TYPE(r->r_info) == RELOC_32) {
 		*p = v + s->st_value + r->r_addend;
-	} else if (ELF32_R_TYPE(r->r_info) != RELOC_NONE) {
-		_dl_exit(ELF32_R_TYPE(r->r_info) + 100);
+	} else if (ELF_R_TYPE(r->r_info) != RELOC_NONE) {
+		_dl_exit(ELF_R_TYPE(r->r_info) + 100);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.27 2019/10/05 00:08:50 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.28 2019/10/23 19:55:09 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -67,38 +67,38 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	int	numrela;
 	int	relrela;
 	int	fails = 0;
-	Elf32_Addr loff;
-	Elf32_Rela  *relas;
-	Elf32_Addr prev_value = 0, prev_ooff = 0;
-	const Elf32_Sym *prev_sym = NULL;
+	Elf_Addr loff;
+	Elf_RelA  *relas;
+	Elf_Addr prev_value = 0, prev_ooff = 0;
+	const Elf_Sym *prev_sym = NULL;
 
 	loff = object->obj_base;
-	numrela = object->Dyn.info[relasz] / sizeof(Elf32_Rela);
+	numrela = object->Dyn.info[relasz] / sizeof(Elf_RelA);
 	relrela = rel == DT_RELA ? object->relacount : 0;
 
-	relas = (Elf32_Rela *)(object->Dyn.info[rel]);
+	relas = (Elf_RelA *)(object->Dyn.info[rel]);
 
 	if (relas == NULL)
-		return(0);
+		return 0;
 
 	if (relrela > numrela)
 		_dl_die("relacount > numrel: %d > %d", relrela, numrela);
 
 	/* tight loop for leading RELATIVE relocs */
 	for (i = 0; i < relrela; i++, relas++) {
-		Elf32_Addr *r_addr;
+		Elf_Addr *r_addr;
 
-		r_addr = (Elf32_Addr *)(relas->r_offset + loff);
+		r_addr = (Elf_Addr *)(relas->r_offset + loff);
 		*r_addr = relas->r_addend + loff;
 	}
 	for (; i < numrela; i++, relas++) {
-		Elf32_Addr *r_addr = (Elf32_Addr *)(relas->r_offset + loff);
-		Elf32_Addr addend, newval;
-		const Elf32_Sym *sym;
+		Elf_Addr *r_addr = (Elf_Addr *)(relas->r_offset + loff);
+		Elf_Addr addend, newval;
+		const Elf_Sym *sym;
 		const char *symn;
 		int type;
 
-		type = ELF32_R_TYPE(relas->r_info);
+		type = ELF_R_TYPE(relas->r_info);
 
 		if (type == RELOC_GOTP_ENT && rel != DT_JMPREL)
 			continue;
@@ -107,7 +107,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			continue;
 
 		sym = object->dyn.symtab;
-		sym += ELF32_R_SYM(relas->r_info);
+		sym += ELF_R_SYM(relas->r_info);
 		symn = object->dyn.strtab + sym->st_name;
 
 		if (type == RELOC_COPY) {
@@ -131,12 +131,12 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			continue;
 		}
 
-		if (ELF32_R_SYM(relas->r_info) &&
-		    !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
-		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE) &&
+		if (ELF_R_SYM(relas->r_info) &&
+		    !(ELF_ST_BIND(sym->st_info) == STB_LOCAL &&
+		    ELF_ST_TYPE (sym->st_info) == STT_NOTYPE) &&
 		    sym != prev_sym) {
-			if (ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
-			    ELF32_ST_TYPE(sym->st_info) == STT_SECTION) {
+			if (ELF_ST_BIND(sym->st_info) == STB_LOCAL &&
+			    ELF_ST_TYPE(sym->st_info) == STT_SECTION) {
 				prev_sym = sym;
 				prev_value = 0;
 				prev_ooff = object->obj_base;
@@ -167,9 +167,9 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			continue;
 		}
 
-		if (ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
-		    (ELF32_ST_TYPE(sym->st_info) == STT_SECTION ||
-		    ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE))
+		if (ELF_ST_BIND(sym->st_info) == STB_LOCAL &&
+		    (ELF_ST_TYPE(sym->st_info) == STT_SECTION ||
+		    ELF_ST_TYPE(sym->st_info) == STT_NOTYPE))
 			addend = relas->r_addend;
 		else
 			addend = prev_value + relas->r_addend;
@@ -210,7 +210,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		}
 	}
 
-	return(fails);
+	return fails;
 }
 
 /*
@@ -243,13 +243,13 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	Elf_Addr plt_start, plt_end;
 
 	if (pltgot == NULL)
-		return (0);
+		return 0;
 
 	pltgot[1] = (Elf_Addr)object;
 	pltgot[2] = (Elf_Addr)_dl_bind_start;
 
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
-		return (0);
+		return 0;
 
 	if (object->traced)
 		lazy = 1;
@@ -289,7 +289,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 			_dl_cacheflush(plt_start + object->obj_base, plt_size);
 	}
 
-	return (fails);
+	return fails;
 }
 
 Elf_Addr
@@ -319,7 +319,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	buf.newval = sr.obj->obj_base + sr.sym->st_value;
 
 	if (__predict_false(sr.obj->traced) && _dl_trace_plt(sr.obj, symn))
-		return (buf.newval);
+		return buf.newval;
 
 	buf.param.kb_addr = (Elf_Addr *)(object->obj_base + rel->r_offset);
 	buf.param.kb_size = sizeof(Elf_Addr);
@@ -337,5 +337,5 @@ _dl_bind(elf_object_t *object, int reloff)
 		    "r" (arg3), "r" (arg4) : "memory");
 	}
 
-	return (buf.newval);
+	return buf.newval;
 }

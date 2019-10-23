@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.31 2019/08/06 04:01:42 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.32 2019/10/23 19:55:09 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -42,7 +42,7 @@
 int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 
 static inline void
-_dl_reloc_ent(Elf64_Addr r_addr, Elf64_Addr value)
+_dl_reloc_ent(Elf_Addr r_addr, Elf_Addr value)
 {
 	if ((r_addr & 7) == 0)
 		*(u_int64_t *)r_addr += value;
@@ -65,39 +65,39 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	int	i;
 	int	numrel;
 	int	fails = 0;
-	Elf64_Addr loff;
-	Elf64_Rel  *relocs;
-	const Elf64_Sym *sym, *this;
-	Elf64_Addr prev_value = 0;
-	const Elf64_Sym *prev_sym = NULL;
+	Elf_Addr loff;
+	Elf_Rel  *relocs;
+	const Elf_Sym *sym, *this;
+	Elf_Addr prev_value = 0;
+	const Elf_Sym *prev_sym = NULL;
 
 	loff = object->obj_base;
-	numrel = object->Dyn.info[relsz] / sizeof(Elf64_Rel);
-	relocs = (Elf64_Rel *)(object->Dyn.info[rel]);
+	numrel = object->Dyn.info[relsz] / sizeof(Elf_Rel);
+	relocs = (Elf_Rel *)(object->Dyn.info[rel]);
 
 	if (relocs == NULL)
-		return(0);
+		return 0;
 
 	DL_DEB(("relocating %d\n", numrel));
 	for (i = 0; i < numrel; i++, relocs++) {
-		Elf64_Addr r_addr = relocs->r_offset + loff;
+		Elf_Addr r_addr = relocs->r_offset + loff;
 		const char *symn;
 		int type;
 
-		if (ELF64_R_SYM(relocs->r_info) == 0xffffff)
+		if (ELF_R_SYM(relocs->r_info) == 0xffffff)
 			continue;
 
 		sym = object->dyn.symtab;
-		sym += ELF64_R_SYM(relocs->r_info);
+		sym += ELF_R_SYM(relocs->r_info);
 		symn = object->dyn.strtab + sym->st_name;
-		type = ELF64_R_TYPE(relocs->r_info);
+		type = ELF_R_TYPE(relocs->r_info);
 
 		this = NULL;
-		if (ELF64_R_SYM(relocs->r_info)) {
+		if (ELF_R_SYM(relocs->r_info)) {
 			if (sym == prev_sym)
 				this = sym;	/* XXX non-NULL */
-			else if (!(ELF64_ST_BIND(sym->st_info) == STB_LOCAL &&
-			    ELF64_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
+			else if (!(ELF_ST_BIND(sym->st_info) == STB_LOCAL &&
+			    ELF_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
 				struct sym_res sr;
 
 				sr = _dl_find_symbol(symn,
@@ -117,11 +117,11 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 			}
 		}
 
-		switch (ELF64_R_TYPE(relocs->r_info)) {
+		switch (ELF_R_TYPE(relocs->r_info)) {
 		case R_MIPS_REL32_64:
-			if (ELF64_ST_BIND(sym->st_info) == STB_LOCAL &&
-			    (ELF64_ST_TYPE(sym->st_info) == STT_SECTION ||
-			    ELF64_ST_TYPE(sym->st_info) == STT_NOTYPE) )
+			if (ELF_ST_BIND(sym->st_info) == STB_LOCAL &&
+			    (ELF_ST_TYPE(sym->st_info) == STT_SECTION ||
+			    ELF_ST_TYPE(sym->st_info) == STT_NOTYPE) )
 				_dl_reloc_ent(r_addr, loff + sym->st_value);
 			else if (this)
 				_dl_reloc_ent(r_addr, prev_value);
@@ -132,12 +132,12 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 
 		default:
 			_dl_die("unsupported relocation '%llu'",
-			    ELF64_R_TYPE(relocs->r_info));
+			    ELF_R_TYPE(relocs->r_info));
 		}
 	}
 
 	DL_DEB(("done %d fails\n", fails));
-	return(fails);
+	return fails;
 }
 
 extern void _dl_bind_start(void);
@@ -155,13 +155,13 @@ int
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
 	int	i, n;
-	Elf64_Addr loff;
-	Elf64_Addr *gotp;
-	const Elf64_Sym  *symp;
+	Elf_Addr loff;
+	Elf_Addr *gotp;
+	const Elf_Sym  *symp;
 	const char *strt;
 
 	if (object->status & STAT_GOT_DONE)
-		return (0);
+		return 0;
 
 	loff = object->obj_base;
 	strt = object->dyn.strtab;
@@ -199,7 +199,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		struct sym_res sr;
 
 		if (symp->st_shndx == SHN_UNDEF &&
-		    ELF64_ST_TYPE(symp->st_info) == STT_FUNC) {
+		    ELF_ST_TYPE(symp->st_info) == STT_FUNC) {
 			if (symp->st_value == 0 || !lazy) {
 				sr = _dl_find_symbol(symn,
 				    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT,
@@ -216,7 +216,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 			    symp, object);
 			if (sr.sym)
 				*gotp = sr.sym->st_value + sr.obj->obj_base;
-		} else if ((ELF64_ST_TYPE(symp->st_info) == STT_FUNC &&
+		} else if ((ELF_ST_TYPE(symp->st_info) == STT_FUNC &&
 			symp->st_value != *gotp) ||
 			ELF_ST_VISIBILITY(symp->st_other) == STV_PROTECTED) {
 			*gotp += loff;
@@ -234,7 +234,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	}
 	object->status |= STAT_GOT_DONE;
 
-	return (0);
+	return 0;
 }
 
 Elf_Addr
@@ -265,7 +265,7 @@ _dl_bind(elf_object_t *object, int symidx)
 	buf.newval = sr.obj->obj_base + sr.sym->st_value;
 
 	if (__predict_false(sr.obj->traced) && _dl_trace_plt(sr.obj, symn))
-		return (buf.newval);
+		return buf.newval;
 
 	buf.param.kb_addr = &gotp[n + symidx];
 	buf.param.kb_size = sizeof(Elf_Addr);
@@ -282,5 +282,5 @@ _dl_bind(elf_object_t *object, int symidx)
 		    : "v1", "a3", "memory");
 	}
 
-	return (buf.newval);
+	return buf.newval;
 }

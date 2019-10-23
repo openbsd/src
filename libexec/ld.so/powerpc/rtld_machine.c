@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.68 2019/10/05 00:08:50 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.69 2019/10/23 19:55:09 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -58,19 +58,19 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	int	numrela;
 	long	relrel;
 	int	fails = 0;
-	Elf32_Addr loff;
-	Elf32_Rela  *relas;
+	Elf_Addr loff;
+	Elf_RelA  *relas;
 	/* for jmp table relocations */
-	Elf32_Addr prev_value = 0, prev_ooff = 0;
-	const Elf32_Sym *prev_sym = NULL;
+	Elf_Addr prev_value = 0, prev_ooff = 0;
+	const Elf_Sym *prev_sym = NULL;
 
 	loff = object->obj_base;
-	numrela = object->Dyn.info[relasz] / sizeof(Elf32_Rela);
+	numrela = object->Dyn.info[relasz] / sizeof(Elf_RelA);
 	relrel = rel == DT_RELA ? object->relacount : 0;
-	relas = (Elf32_Rela *)(object->Dyn.info[rel]);
+	relas = (Elf_RelA *)(object->Dyn.info[rel]);
 
 	if (relas == NULL)
-		return(0);
+		return 0;
 
 	if (relrel > numrela)
 		_dl_die("relcount > numrel: %ld > %d", relrel, numrela);
@@ -86,26 +86,26 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		*r_addr = loff + relas->r_addend;
 	}
 	for (; i < numrela; i++, relas++) {
-		Elf32_Addr *r_addr = (Elf32_Addr *)(relas->r_offset + loff);
-		const Elf32_Sym *sym;
+		Elf_Addr *r_addr = (Elf_Addr *)(relas->r_offset + loff);
+		const Elf_Sym *sym;
 		const char *symn;
 		int type;
 
-		if (ELF32_R_SYM(relas->r_info) == 0xffffff)
+		if (ELF_R_SYM(relas->r_info) == 0xffffff)
 			continue;
 
-		type = ELF32_R_TYPE(relas->r_info);
+		type = ELF_R_TYPE(relas->r_info);
 
 		if (type == RELOC_JMP_SLOT && rel != DT_JMPREL)
 			continue;
 
 		sym = object->dyn.symtab;
-		sym += ELF32_R_SYM(relas->r_info);
+		sym += ELF_R_SYM(relas->r_info);
 		symn = object->dyn.strtab + sym->st_name;
 
-		if (ELF32_R_SYM(relas->r_info) &&
-		    !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
-		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE) &&
+		if (ELF_R_SYM(relas->r_info) &&
+		    !(ELF_ST_BIND(sym->st_info) == STB_LOCAL &&
+		    ELF_ST_TYPE (sym->st_info) == STT_NOTYPE) &&
 		    sym != prev_sym) {
 			struct sym_res sr;
 
@@ -126,9 +126,9 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 		switch (type) {
 		case RELOC_32:
-			if (ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
-			    (ELF32_ST_TYPE(sym->st_info) == STT_SECTION ||
-			    ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
+			if (ELF_ST_BIND(sym->st_info) == STB_LOCAL &&
+			    (ELF_ST_TYPE(sym->st_info) == STT_SECTION ||
+			    ELF_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
 				*r_addr = prev_ooff + relas->r_addend;
 			} else {
 				*r_addr = prev_ooff + prev_value +
@@ -136,9 +136,9 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			}
 			break;
 		case RELOC_RELATIVE:
-			if (ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
-			    (ELF32_ST_TYPE(sym->st_info) == STT_SECTION ||
-			    ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
+			if (ELF_ST_BIND(sym->st_info) == STB_LOCAL &&
+			    (ELF_ST_TYPE(sym->st_info) == STT_SECTION ||
+			    ELF_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
 				*r_addr = loff + relas->r_addend;
 			} else {
 				*r_addr = loff + prev_value +
@@ -158,8 +158,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		/* should not be supported ??? */
 		case RELOC_REL24:
 		    {
-			Elf32_Addr val = prev_ooff + prev_value +
-			    relas->r_addend - (Elf32_Addr)r_addr;
+			Elf_Addr val = prev_ooff + prev_value +
+			    relas->r_addend - (Elf_Addr)r_addr;
 			if (!B24_VALID_RANGE(val)) {
 				/* invalid offset */
 				_dl_die("%s: invalid %s offset %x at %p",
@@ -177,10 +177,10 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 #if 1
 		case RELOC_16_LO:
 		    {
-			Elf32_Addr val;
+			Elf_Addr val;
 
 			val = loff + relas->r_addend;
-			*(Elf32_Half *)r_addr = val;
+			*(Elf_Half *)r_addr = val;
 
 			_dl_dcbf(r_addr);
 		    }
@@ -189,10 +189,10 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 #if 1
 		case RELOC_16_HI:
 		    {
-			Elf32_Addr val;
+			Elf_Addr val;
 
 			val = loff + relas->r_addend;
-			*(Elf32_Half *)r_addr = (val >> 16);
+			*(Elf_Half *)r_addr = (val >> 16);
 
 			_dl_dcbf(r_addr);
 		    }
@@ -201,10 +201,10 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 #if 1
 		case RELOC_16_HA:
 		    {
-			Elf32_Addr val;
+			Elf_Addr val;
 
 			val = loff + relas->r_addend;
-			*(Elf32_Half *)r_addr = ((val + 0x8000) >> 16);
+			*(Elf_Half *)r_addr = ((val + 0x8000) >> 16);
 
 			_dl_dcbf(r_addr);
 		    }
@@ -215,8 +215,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		case RELOC_REL14:
 		case RELOC_REL14_NTAKEN:
 		    {
-			Elf32_Addr val = prev_ooff + prev_value +
-			    relas->r_addend - (Elf32_Addr)r_addr;
+			Elf_Addr val = prev_ooff + prev_value +
+			    relas->r_addend - (Elf_Addr)r_addr;
 			if (((val & 0xffff8000) != 0) &&
 			    ((val & 0xffff8000) != 0xffff8000)) {
 				/* invalid offset */
@@ -255,11 +255,11 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		default:
 			_dl_die("%s: unsupported relocation '%s' %d at %p\n",
 			    object->load_name, symn,
-			    ELF32_R_TYPE(relas->r_info), (void *)r_addr );
+			    ELF_R_TYPE(relas->r_info), (void *)r_addr );
 		}
 	}
 
-	return(fails);
+	return fails;
 }
 
 /*
@@ -273,7 +273,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	int fails = 0;
 
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
-		return (0);
+		return 0;
 
 	if (object->traced)
 		lazy = 1;
@@ -281,26 +281,26 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (!lazy) {
 		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 	} else {
-		Elf32_Addr *got;
-		Elf32_Addr *plt;
+		Elf_Addr *got;
+		Elf_Addr *plt;
 		int numplt, i;
 
 		/* Relocate processor-specific tags. */
 		object->Dyn.info[DT_PROC(DT_PPC_GOT)] += object->obj_base;
 
-		got = (Elf32_Addr *)
-		    (Elf32_Rela *)(object->Dyn.info[DT_PROC(DT_PPC_GOT)]);
-		got[1] = (Elf32_Addr)_dl_bind_start;
-		got[2] = (Elf32_Addr)object;
+		got = (Elf_Addr *)
+		    (Elf_RelA *)(object->Dyn.info[DT_PROC(DT_PPC_GOT)]);
+		got[1] = (Elf_Addr)_dl_bind_start;
+		got[2] = (Elf_Addr)object;
 
-		plt = (Elf32_Addr *)
-		   (Elf32_Rela *)(object->Dyn.info[DT_PLTGOT]);
-		numplt = object->Dyn.info[DT_PLTRELSZ] / sizeof(Elf32_Rela);
+		plt = (Elf_Addr *)
+		   (Elf_RelA *)(object->Dyn.info[DT_PLTGOT]);
+		numplt = object->Dyn.info[DT_PLTRELSZ] / sizeof(Elf_RelA);
 		for (i = 0; i < numplt; i++)
 			plt[i] += object->obj_base;
 	}
 
-	return (fails);
+	return fails;
 }
 
 Elf_Addr
@@ -310,7 +310,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	struct sym_res sr;
 	const char *symn;
 	Elf_RelA *relas;
-	Elf32_Addr *plttable;
+	Elf_Addr *plttable;
 	int64_t cookie = pcookie;
 	struct {
 		struct __kbind param;
@@ -333,8 +333,8 @@ _dl_bind(elf_object_t *object, int reloff)
 	if (__predict_false(sr.obj->traced) && _dl_trace_plt(sr.obj, symn))
 		return buf.newval;
 
-	plttable = (Elf32_Addr *)(Elf32_Rela *)(object->Dyn.info[DT_PLTGOT]);
-	buf.param.kb_addr = &plttable[ reloff / sizeof(Elf32_Rela) ];
+	plttable = (Elf_Addr *)(Elf_RelA *)(object->Dyn.info[DT_PLTGOT]);
+	buf.param.kb_addr = &plttable[ reloff / sizeof(Elf_RelA) ];
 	buf.param.kb_size = sizeof(Elf_Addr);
 
 	{

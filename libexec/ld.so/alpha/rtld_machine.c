@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.68 2019/10/05 00:08:50 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.69 2019/10/23 19:55:08 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -55,18 +55,18 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	long	numrela;
 	long	relrel;
 	int	fails = 0;
-	Elf64_Addr loff;
-	Elf64_Addr prev_value = 0;
+	Elf_Addr loff;
+	Elf_Addr prev_value = 0;
 	const Elf_Sym *prev_sym = NULL;
-	Elf64_Rela  *relas;
+	Elf_RelA  *relas;
 
 	loff = object->obj_base;
-	numrela = object->Dyn.info[relasz] / sizeof(Elf64_Rela);
+	numrela = object->Dyn.info[relasz] / sizeof(Elf_RelA);
 	relrel = rel == DT_RELA ? object->relacount : 0;
-	relas = (Elf64_Rela *)(object->Dyn.info[rel]);
+	relas = (Elf_RelA *)(object->Dyn.info[rel]);
 
 	if (relas == NULL)
-		return(0);
+		return 0;
 
 	if (relrel > numrela)
 		_dl_die("relacount > numrel: %ld > %ld", relrel, numrela);
@@ -78,7 +78,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	for (i = 0; i < relrel; i++, relas++) {
 		Elf_Addr *r_addr;
 
-		r_addr = (Elf64_Addr *)(relas->r_offset + loff);
+		r_addr = (Elf_Addr *)(relas->r_offset + loff);
 
 		/* Handle unaligned RELATIVE relocs */
 		if ((((Elf_Addr)r_addr) & 0x7) != 0) {
@@ -90,22 +90,22 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			*r_addr += loff;
 	}
 	for (; i < numrela; i++, relas++) {
-		Elf64_Addr *r_addr;
+		Elf_Addr *r_addr;
 		struct sym_res sr;
-		const Elf64_Sym *sym;
+		const Elf_Sym *sym;
 		const char *symn;
 
-		r_addr = (Elf64_Addr *)(relas->r_offset + loff);
+		r_addr = (Elf_Addr *)(relas->r_offset + loff);
 
-		if (ELF64_R_SYM(relas->r_info) == 0xffffffff)
+		if (ELF_R_SYM(relas->r_info) == 0xffffffff)
 			continue;
 
 
 		sym = object->dyn.symtab;
-		sym += ELF64_R_SYM(relas->r_info);
+		sym += ELF_R_SYM(relas->r_info);
 		symn = object->dyn.strtab + sym->st_name;
 
-		switch (ELF64_R_TYPE(relas->r_info)) {
+		switch (ELF_R_TYPE(relas->r_info)) {
 		case R_TYPE(REFQUAD):
 			sr = _dl_find_symbol(symn,
 			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
@@ -160,7 +160,7 @@ _dl_printf("unaligned RELATIVE: %p type: %d %s 0x%lx -> 0x%lx\n", r_addr,
 		default:
 			_dl_die("%s: unsupported relocation '%s' %lld at %p",
 			    object->load_name, symn,
-			    ELF64_R_TYPE(relas->r_info), (void *)r_addr);
+			    ELF_R_TYPE(relas->r_info), (void *)r_addr);
 		}
 		continue;
 resolve_failed:
@@ -169,7 +169,7 @@ resolve_failed:
 	}
 	__asm volatile("imb" : : : "memory");
 
-	return (fails);
+	return fails;
 }
 
 /*
@@ -191,7 +191,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	rela = (Elf_RelA *)(object->Dyn.info[DT_JMPREL] + reloff);
 
 	sym = object->dyn.symtab;
-	sym += ELF64_R_SYM(rela->r_info);
+	sym += ELF_R_SYM(rela->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
 	sr = _dl_find_symbol(symn, SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT,
@@ -202,7 +202,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	buf.newval = sr.obj->obj_base + sr.sym->st_value + rela->r_addend;
 
 	if (__predict_false(sr.obj->traced) && _dl_trace_plt(sr.obj, symn))
-		return (buf.newval);
+		return buf.newval;
 
 	buf.param.kb_addr = (Elf_Addr *)(object->obj_base + rela->r_offset);
 	buf.param.kb_size = sizeof(Elf_Addr);
@@ -219,7 +219,7 @@ _dl_bind(elf_object_t *object, int reloff)
 		    "r" (arg3) : "$19", "$20", "memory");
 	}
 
-	return (buf.newval);
+	return buf.newval;
 }
 
 void _dl_bind_start(void) __dso_hidden;	/* XXX */
@@ -234,7 +234,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	Elf_Addr *pltgot;
 
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
-		return (0);
+		return 0;
 
 	pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
 
@@ -263,5 +263,5 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		pltgot[1] = (Elf_Addr)object;
 	}
 
-	return (fails);
+	return fails;
 }

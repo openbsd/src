@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.22 2017/10/27 16:47:08 mpi Exp $ */
+/*	$OpenBSD: archdep.h,v 1.23 2019/10/23 19:55:09 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -44,7 +44,7 @@
  */
 
 static inline void
-_dl_dcbf(Elf32_Addr *addr)
+_dl_dcbf(Elf_Addr *addr)
 {
 	__asm__ volatile ("dcbst 0, %0\n\t"
 	    "sync\n\t"
@@ -55,13 +55,13 @@ _dl_dcbf(Elf32_Addr *addr)
 }
 
 static inline void
-RELOC_DYN(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
+RELOC_DYN(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 {
-	if (ELF32_R_TYPE(r->r_info) == RELOC_RELATIVE) {
+	if (ELF_R_TYPE(r->r_info) == RELOC_RELATIVE) {
 		*p = v + r->r_addend;
-	} else if (ELF32_R_TYPE(r->r_info) == RELOC_JMP_SLOT) {
-		Elf32_Addr val = v + s->st_value + r->r_addend -
-		    (Elf32_Addr)(p);
+	} else if (ELF_R_TYPE(r->r_info) == RELOC_JMP_SLOT) {
+		Elf_Addr val = v + s->st_value + r->r_addend -
+		    (Elf_Addr)(p);
 		if (((val & 0xfe000000) != 0) &&
 		    ((val & 0xfe000000) != 0xfe000000)) {
 			/* invalid offset */
@@ -71,7 +71,7 @@ RELOC_DYN(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
 		val |=  0x48000000;
 		*p = val;
 		_dl_dcbf(p);
-	} else if (ELF32_R_TYPE((r)->r_info) == RELOC_GLOB_DAT) {
+	} else if (ELF_R_TYPE((r)->r_info) == RELOC_GLOB_DAT) {
 		*p = v + s->st_value + r->r_addend;
 	} else {
 		_dl_exit(6);

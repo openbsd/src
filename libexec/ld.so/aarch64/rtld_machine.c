@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.10 2019/10/05 00:08:50 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.11 2019/10/23 19:55:08 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -117,7 +117,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	rels = (Elf_RelA *)(object->Dyn.info[rel]);
 
 	if (rels == NULL)
-		return(0);
+		return 0;
 
 	if (relrel > numrel)
 		_dl_die("relcount > numrel: %ld > %ld", relrel, numrel);
@@ -243,7 +243,7 @@ resolve_failed:
 		}
 	}
 
-	return (fails);
+	return fails;
 }
 
 /*
@@ -260,7 +260,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	Elf_RelA *rel;
 
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
-		return (0);
+		return 0;
 
 	if (object->traced)
 		lazy = 1;
@@ -281,7 +281,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		pltgot[2] = (Elf_Addr)_dl_bind_start;
 	}
 
-	return (fails);
+	return fails;
 }
 
 Elf_Addr

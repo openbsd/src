@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.30 2019/10/05 00:08:50 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.31 2019/10/23 19:55:09 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -615,7 +615,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	rels = (Elf_RelA *)(object->Dyn.info[rel]);
 
 	if (rels == NULL)
-		return(0);
+		return 0;
 
 	if (relrel > numrela)
 		_dl_die("relacount > numrel: %ld > %ld", relrel, numrela);
@@ -744,7 +744,7 @@ resolve_failed:
 		}
 	}
 
-	return (fails);
+	return fails;
 }
 
 /*
@@ -761,7 +761,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	Elf_RelA *rel;
 
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
-		return (0);
+		return 0;
 
 	if (object->traced)
 		lazy = 1;
@@ -789,7 +789,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		pltgot[2] = (Elf_Addr)_dl_bind_start;
 	}
 
-	return (fails);
+	return fails;
 }
 
 Elf_Addr
@@ -819,7 +819,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	buf.newval = sr.obj->obj_base + sr.sym->st_value;
 
 	if (__predict_false(sr.obj->traced) && _dl_trace_plt(sr.obj, symn))
-		return (buf.newval);
+		return buf.newval;
 
 	buf.param.kb_addr = (Elf_Addr *)(object->obj_base + rel->r_offset);
 	buf.param.kb_size = sizeof(Elf_Addr);
@@ -837,5 +837,5 @@ _dl_bind(elf_object_t *object, int reloff)
 		    : "r1", "cc", "memory");
 	}
 
-	return (buf.newval);
+	return buf.newval;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.34 2019/10/05 00:08:50 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.35 2019/10/23 19:55:09 guenther Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -185,7 +185,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	relrel = rel == DT_RELA ? object->relacount : 0;
 	rels = (Elf_RelA *)(object->Dyn.info[rel]);
 	if (rels == NULL)
-		return(0);
+		return 0;
 
 	if (relrel > numrel)
 		_dl_die("relacount > numrel: %ld > %ld", relrel, numrel);
@@ -296,7 +296,7 @@ resolve_failed:
 		}
 	}
 
-	return (fails);
+	return fails;
 }
 
 void
@@ -335,7 +335,7 @@ _dl_bind(elf_object_t *object, int index)
 	buf.newval = sr.obj->obj_base + sr.sym->st_value;
 
 	if (__predict_false(sr.obj->traced) && _dl_trace_plt(sr.obj, symn))
-		return (buf.newval);
+		return buf.newval;
 
 	buf.param.kb_addr = (Elf_Word *)(object->obj_base + rel->r_offset);
 	buf.param.kb_size = sizeof(Elf_Addr);
@@ -350,7 +350,7 @@ _dl_bind(elf_object_t *object, int index)
 		__asm volatile("syscall" : "+r" (syscall_num), "+r" (arg3) :
 		    "r" (arg1), "r" (arg2) : "cc", "rcx", "r11", "memory");
 	}
-	return (buf.newval);
+	return buf.newval;
 }
 
 int
@@ -363,10 +363,10 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	Elf_RelA *rel;
 
 	if (pltgot == NULL)
-		return (0); /* it is possible to have no PLT/GOT relocations */
+		return 0; /* it is possible to have no PLT/GOT relocations */
 
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
-		return (0);
+		return 0;
 
 	if (object->traced)
 		lazy = 1;
@@ -386,5 +386,5 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		}
 	}
 
-	return (fails);
+	return fails;
 }

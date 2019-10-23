@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.42 2019/10/05 00:08:50 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.43 2019/10/23 19:55:09 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -181,11 +181,11 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	Elf_Rel *rels;
 
 	loff = object->obj_base;
-	numrel = object->Dyn.info[relsz] / sizeof(Elf32_Rel);
+	numrel = object->Dyn.info[relsz] / sizeof(Elf_Rel);
 	relrel = rel == DT_REL ? object->relcount : 0;
-	rels = (Elf32_Rel *)(object->Dyn.info[rel]);
+	rels = (Elf_Rel *)(object->Dyn.info[rel]);
 	if (rels == NULL)
-		return(0);
+		return 0;
 
 	if (relrel > numrel)
 		_dl_die("relcount > numrel: %ld > %ld", relrel, numrel);
@@ -302,14 +302,14 @@ resolve_failed:
 			*where &= ~mask;
 			*where |= value;
 		} else {
-			Elf32_Addr *where32 = (Elf32_Addr *)where;
+			Elf_Addr *where32 = (Elf_Addr *)where;
 
 			*where32 &= ~mask;
 			*where32 |= value;
 		}
 	}
 
-	return (fails);
+	return fails;
 }
 
 #if 0
@@ -360,7 +360,7 @@ _dl_bind(elf_object_t *object, int index)
 	buf.newval = sr.obj->obj_base + sr.sym->st_value;
 
 	if (__predict_false(sr.obj->traced) && _dl_trace_plt(sr.obj, symn))
-		return (buf.newval);
+		return buf.newval;
 
 	buf.param.kb_addr = (Elf_Word *)(object->obj_base + rel->r_offset);
 	buf.param.kb_size = sizeof(Elf_Addr);
@@ -376,7 +376,7 @@ _dl_bind(elf_object_t *object, int index)
 		    "m" (cookie) : "edx", "cc", "memory");
 	}
 
-	return (buf.newval);
+	return buf.newval;
 }
 
 int
@@ -389,10 +389,10 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	Elf_Rel *rel;
 
 	if (pltgot == NULL)
-		return (0); /* it is possible to have no PLT/GOT relocations */
+		return 0; /* it is possible to have no PLT/GOT relocations */
 
 	if (object->Dyn.info[DT_PLTREL] != DT_REL)
-		return (0);
+		return 0;
 
 	if (object->traced)
 		lazy = 1;
@@ -412,5 +412,5 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		}
 	}
 
-	return (fails);
+	return fails;
 }

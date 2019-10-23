@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.3 2019/02/03 02:20:36 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.4 2019/10/23 19:55:09 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -60,6 +60,6 @@
 #define DL_SYSCALL(n)					\
 	__ENTRY(_dl_,n);				\
 	__DO_SYSCALL(n);				\
-	subu	%r2, %r0, %r2;	/* return (-errno); */	\
+	subu	%r2, %r0, %r2;	/* return -errno; */	\
 	jmp	%r1;					\
 	END(_dl_##n)
