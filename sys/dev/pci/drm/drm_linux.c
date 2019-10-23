@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.49 2019/08/27 11:46:07 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.50 2019/10/23 10:17:40 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -352,28 +352,56 @@ timeval_to_us(const struct timeval *tv)
 
 extern char *hw_vendor, *hw_prod, *hw_ver;
 
+#if NBIOS > 0
+extern char smbios_board_vendor[];
+extern char smbios_board_prod[];
+extern char smbios_board_serial[];
+#endif
+
 bool
 dmi_match(int slot, const char *str)
 {
 	switch (slot) {
 	case DMI_SYS_VENDOR:
-	case DMI_BOARD_VENDOR:
 		if (hw_vendor != NULL &&
 		    !strcmp(hw_vendor, str))
 			return true;
 		break;
 	case DMI_PRODUCT_NAME:
-	case DMI_BOARD_NAME:
 		if (hw_prod != NULL &&
 		    !strcmp(hw_prod, str))
 			return true;
 		break;
 	case DMI_PRODUCT_VERSION:
-	case DMI_BOARD_VERSION:
 		if (hw_ver != NULL &&
 		    !strcmp(hw_ver, str))
 			return true;
 		break;
+#if NBIOS > 0
+	case DMI_BOARD_VENDOR:
+		if (strcmp(smbios_board_vendor, str) == 0)
+			return true;
+		break;
+	case DMI_BOARD_NAME:
+		if (strcmp(smbios_board_prod, str) == 0)
+			return true;
+		break;
+	case DMI_BOARD_SERIAL:
+		if (strcmp(smbios_board_serial, str) == 0)
+			return true;
+		break;
+#else
+	case DMI_BOARD_VENDOR:
+		if (hw_vendor != NULL &&
+		    !strcmp(hw_vendor, str))
+			return true;
+		break;
+	case DMI_BOARD_NAME:
+		if (hw_prod != NULL &&
+		    !strcmp(hw_prod, str))
+			return true;
+		break;
+#endif
 	case DMI_NONE:
 	default:
 		return false;
