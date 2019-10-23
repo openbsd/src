@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.20 2019/09/21 15:57:03 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.21 2019/10/23 09:27:43 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -89,6 +89,7 @@ mainbus_match(struct device *parent, void *cfdata, void *aux)
 }
 
 extern char *hw_prod;
+extern char *hw_serial;
 extern struct bus_space armv7_bs_tag;
 void platform_init_mainbus(struct device *);
 
@@ -96,7 +97,7 @@ void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
-	char model[128];
+	char prop[128];
 	int node, len;
 
 	arm_intr_init_fdt();
@@ -107,14 +108,21 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acells = OF_getpropint(OF_peer(0), "#address-cells", 1);
 	sc->sc_scells = OF_getpropint(OF_peer(0), "#size-cells", 1);
 
-	len = OF_getprop(sc->sc_node, "model", model, sizeof(model));
+	len = OF_getprop(sc->sc_node, "model", prop, sizeof(prop));
 	if (len > 0) {
-		printf(": %s\n", model);
+		printf(": %s\n", prop);
 		hw_prod = malloc(len, M_DEVBUF, M_NOWAIT);
 		if (hw_prod)
-			strlcpy(hw_prod, model, len);
+			strlcpy(hw_prod, prop, len);
 	} else
 		printf(": unknown model\n");
+
+	len = OF_getprop(sc->sc_node, "serial-number", prop, sizeof(prop));
+	if (len > 0) {
+		hw_serial = malloc(len, M_DEVBUF, M_NOWAIT);
+		if (hw_serial)
+			strlcpy(hw_serial, prop, len);
+	}
 
 	/* Attach primary CPU first. */
 	mainbus_attach_cpus(self, mainbus_match_primary);
