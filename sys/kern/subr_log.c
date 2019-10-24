@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.58 2019/06/20 04:31:33 visa Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.59 2019/10/24 03:31:49 visa Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
 #include <dev/cons.h>
 
 #define LOG_RDPRI	(PZERO + 1)
-#define LOG_TICK	1		/* log tick interval in ticks */
+#define LOG_TICK	50		/* log tick interval in msec */
 
 #define LOG_ASYNC	0x04
 #define LOG_RDWAIT	0x08
@@ -173,7 +173,7 @@ logopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (EBUSY);
 	log_open = 1;
 	timeout_set(&logsoftc.sc_tick, logtick, NULL);
-	timeout_add(&logsoftc.sc_tick, LOG_TICK);
+	timeout_add_msec(&logsoftc.sc_tick, LOG_TICK);
 	return (0);
 }
 
@@ -353,7 +353,7 @@ logtick(void *arg)
 		logsoftc.sc_state &= ~LOG_RDWAIT;
 	}
 out:
-	timeout_add(&logsoftc.sc_tick, LOG_TICK);
+	timeout_add_msec(&logsoftc.sc_tick, LOG_TICK);
 }
 
 int
