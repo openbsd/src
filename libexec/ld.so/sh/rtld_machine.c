@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.31 2019/10/23 19:55:09 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.32 2019/10/24 22:11:10 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -50,7 +50,6 @@ Elf_Addr _dl_bind(elf_object_t *object, int reloff);
 #define _RF_P		0x20000000		/* Location relative */
 #define _RF_G		0x10000000		/* GOT offset */
 #define _RF_B		0x08000000		/* Load address relative */
-#define _RF_U		0x04000000		/* Unaligned */
 #define _RF_E		0x02000000		/* ERROR */
 #define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
 #define _RF_RS(s)	((s) & 0xff)		/* right shift */
@@ -319,7 +318,6 @@ static const int reloc_target_flags[] = {
 #define RELOC_RESOLVE_SYMBOL(t)		((reloc_target_flags[t] & _RF_S) != 0)
 #define RELOC_PC_RELATIVE(t)		((reloc_target_flags[t] & _RF_P) != 0)
 #define RELOC_BASE_RELATIVE(t)		((reloc_target_flags[t] & _RF_B) != 0)
-#define RELOC_UNALIGNED(t)		((reloc_target_flags[t] & _RF_U) != 0)
 #define RELOC_USE_ADDEND(t)		((reloc_target_flags[t] & _RF_A) != 0)
 #define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
@@ -722,26 +720,8 @@ resolve_failed:
 		value >>= RELOC_VALUE_RIGHTSHIFT(type);
 		value &= mask;
 
-		if (RELOC_UNALIGNED(type)) {
-			/* Handle unaligned relocations. */
-			Elf_Addr tmp = 0;
-			char *ptr = (char *)where;
-			int i, size = RELOC_TARGET_SIZE(type)/8;
-
-			/* Read it in one byte at a time. */
-			for (i=0; i<size; i++)
-				tmp = (tmp << 8) | ptr[i];
-
-			tmp &= ~mask;
-			tmp |= value;
-
-			/* Write it back out. */
-			for (i=0; i<size; i++)
-				ptr[i] = ((tmp >> (8*i)) & 0xff);
-		} else {
-			*where &= ~mask;
-			*where |= value;
-		}
+		*where &= ~mask;
+		*where |= value;
 	}
 
 	return fails;
