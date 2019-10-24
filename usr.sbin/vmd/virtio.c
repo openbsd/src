@@ -59,6 +59,11 @@ struct vmmci_dev vmmci;
 int nr_vionet;
 int nr_vioblk;
 
+/* cmpe */
+#define VIRTIO_BALLOON_F_MUST_TELL_HOST 	(1<<0)
+#define VIRTIO_BALLOON_F_STATS_VQ		(1<<1)
+#define VIRTIO_BALLOON_F_DEFLATE_ON_OOM		(1<<2)
+
 #define MAXPHYS	(64 * 1024)	/* max raw I/O transfer size */
 
 #define VIRTIO_NET_F_MAC	(1<<5)
@@ -260,9 +265,7 @@ virtio_mbh_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 
 	log_info("CMPE_VIRTIO_MBH, reg: %d", reg);
 
-	uint16_t VIRTIO_BALLOON_F_MUST_TELL_HOST = 0;
-	uint16_t VIRTIO_BALLOON_F_STATS_VQ = 1;
-	uint16_t VIRTIO_BALLOON_F_DEFLATE_ON_OOM = 2;
+
 
 	// dir == 0 means writing
 	if (dir == 0) {
