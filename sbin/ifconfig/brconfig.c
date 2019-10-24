@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.23 2019/10/17 18:37:38 bluhm Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.24 2019/10/24 18:54:10 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -56,7 +56,7 @@ void bridge_list(char *);
 void bridge_cfg(const char *);
 void bridge_badrule(int, char **, int);
 void bridge_showrule(struct ifbrlreq *);
-int is_switch(char *);
+int is_switch(void);
 int bridge_arprule(struct ifbrlreq *, int *, char ***);
 
 #define	IFBAFBITS	"\020\1STATIC"
@@ -200,13 +200,13 @@ addlocal(const char *ifsname, int d)
 		errx(1, "only vether can be local interface");
 
 	/* Add local */
-	strlcpy(breq.ifbr_name, name, sizeof(breq.ifbr_name));
+	strlcpy(breq.ifbr_name, ifname, sizeof(breq.ifbr_name));
 	strlcpy(breq.ifbr_ifsname, ifsname, sizeof(breq.ifbr_ifsname));
 	if (ioctl(sock, SIOCBRDGADDL, (caddr_t)&breq) == -1) {
 		if (errno == EEXIST)
 			return;
 		else
-			err(1, "%s: ioctl SIOCBRDGADDL %s", name, ifsname);
+			err(1, "%s: ioctl SIOCBRDGADDL %s", ifname, ifsname);
 	}
 }
 
@@ -215,15 +215,15 @@ bridge_ifsetflag(const char *ifsname, u_int32_t flag)
 {
 	struct ifbreq req;
 
-	strlcpy(req.ifbr_name, name, sizeof(req.ifbr_name));
+	strlcpy(req.ifbr_name, ifname, sizeof(req.ifbr_name));
 	strlcpy(req.ifbr_ifsname, ifsname, sizeof(req.ifbr_ifsname));
 	if (ioctl(sock, SIOCBRDGGIFFLGS, (caddr_t)&req) == -1)
-		err(1, "%s: ioctl SIOCBRDGGIFFLGS %s", name, ifsname);
+		err(1, "%s: ioctl SIOCBRDGGIFFLGS %s", ifname, ifsname);
 
 	req.ifbr_ifsflags |= flag & ~IFBIF_RO_MASK;
 
 	if (ioctl(sock, SIOCBRDGSIFFLGS, (caddr_t)&req) == -1)
-		err(1, "%s: ioctl SIOCBRDGSIFFLGS %s", name, ifsname);
+		err(1, "%s: ioctl SIOCBRDGSIFFLGS %s", ifname, ifsname);
 }
 
 void
@@ -231,16 +231,16 @@ bridge_ifclrflag(const char *ifsname, u_int32_t flag)
 {
 	struct ifbreq req;
 
-	strlcpy(req.ifbr_name, name, sizeof(req.ifbr_name));
+	strlcpy(req.ifbr_name, ifname, sizeof(req.ifbr_name));
 	strlcpy(req.ifbr_ifsname, ifsname, sizeof(req.ifbr_ifsname));
 
 	if (ioctl(sock, SIOCBRDGGIFFLGS, (caddr_t)&req) == -1)
-		err(1, "%s: ioctl SIOCBRDGGIFFLGS %s", name, ifsname);
+		err(1, "%s: ioctl SIOCBRDGGIFFLGS %s", ifname, ifsname);
 
 	req.ifbr_ifsflags &= ~(flag | IFBIF_RO_MASK);
 
 	if (ioctl(sock, SIOCBRDGSIFFLGS, (caddr_t)&req) == -1)
-		err(1, "%s: ioctl SIOCBRDGSIFFLGS %s", name, ifsname);
+		err(1, "%s: ioctl SIOCBRDGSIFFLGS %s", ifname, ifsname);
 }
 
 void
@@ -248,10 +248,10 @@ bridge_flushall(const char *val, int p)
 {
 	struct ifbreq req;
 
-	strlcpy(req.ifbr_name, name, sizeof(req.ifbr_name));
+	strlcpy(req.ifbr_name, ifname, sizeof(req.ifbr_name));
 	req.ifbr_ifsflags = IFBF_FLUSHALL;
 	if (ioctl(sock, SIOCBRDGFLUSH, &req) == -1)
-		err(1, "%s", name);
+		err(1, "%s", ifname);
 }
 
 void
@@ -259,10 +259,10 @@ bridge_flush(const char *val, int p)
 {
 	struct ifbreq req;
 
-	strlcpy(req.ifbr_name, name, sizeof(req.ifbr_name));
+	strlcpy(req.ifbr_name, ifname, sizeof(req.ifbr_name));
 	req.ifbr_ifsflags = IFBF_FLUSHDYN;
 	if (ioctl(sock, SIOCBRDGFLUSH, &req) == -1)
-		err(1, "%s", name);
+		err(1, "%s", ifname);
 }
 
 void
@@ -274,11 +274,11 @@ bridge_cfg(const char *delim)
 	u_int8_t lladdr[ETHER_ADDR_LEN];
 	u_int16_t bprio;
 
-	strlcpy(ifbp.ifbop_name, name, sizeof(ifbp.ifbop_name));
+	strlcpy(ifbp.ifbop_name, ifname, sizeof(ifbp.ifbop_name));
 	if (ioctl(sock, SIOCBRDGGPARAM, (caddr_t)&ifbp) == -1) {
 		if (errno == ENOTTY)
 			return;
-		err(1, "%s SIOCBRDGGPARAM", name);
+		err(1, "%s SIOCBRDGGPARAM", ifname);
 	}
 
 	printf("%s", delim);
@@ -322,11 +322,11 @@ bridge_list(char *delim)
 		if (inb == NULL)
 			err(1, "malloc");
 		bifc.ifbic_buf = inbuf = inb;
-		strlcpy(bifc.ifbic_name, name, sizeof(bifc.ifbic_name));
+		strlcpy(bifc.ifbic_name, ifname, sizeof(bifc.ifbic_name));
 		if (ioctl(sock, SIOCBRDGIFS, &bifc) == -1) {
 			if (errno == ENOTTY)
 				return;
-			err(1, "%s SIOCBRDGIFS", name);
+			err(1, "%s SIOCBRDGIFS", ifname);
 		}
 		if (bifc.ifbic_len + sizeof(*reqp) < len)
 			break;
@@ -369,12 +369,12 @@ bridge_add(const char *ifn, int d)
 {
 	struct ifbreq req;
 
-	strlcpy(req.ifbr_name, name, sizeof(req.ifbr_name));
+	strlcpy(req.ifbr_name, ifname, sizeof(req.ifbr_name));
 	strlcpy(req.ifbr_ifsname, ifn, sizeof(req.ifbr_ifsname));
 	if (ioctl(sock, SIOCBRDGADD, &req) == -1) {
 		if (errno == EEXIST)
 			return;
-		err(1, "%s: %s", name, ifn);
+		err(1, "%s: %s", ifname, ifn);
 	}
 }
 
@@ -383,10 +383,10 @@ bridge_delete(const char *ifn, int d)
 {
 	struct ifbreq req;
 
-	strlcpy(req.ifbr_name, name, sizeof(req.ifbr_name));
+	strlcpy(req.ifbr_name, ifname, sizeof(req.ifbr_name));
 	strlcpy(req.ifbr_ifsname, ifn, sizeof(req.ifbr_ifsname));
 	if (ioctl(sock, SIOCBRDGDEL, &req) == -1)
-		err(1, "%s: %s", name, ifn);
+		err(1, "%s: %s", ifname, ifn);
 }
 
 void
@@ -394,12 +394,12 @@ bridge_addspan(const char *ifn, int d)
 {
 	struct ifbreq req;
 
-	strlcpy(req.ifbr_name, name, sizeof(req.ifbr_name));
+	strlcpy(req.ifbr_name, ifname, sizeof(req.ifbr_name));
 	strlcpy(req.ifbr_ifsname, ifn, sizeof(req.ifbr_ifsname));
 	if (ioctl(sock, SIOCBRDGADDS, &req) == -1) {
 		if (errno == EEXIST)
 			return;
-		err(1, "%s: %s", name, ifn);
+		err(1, "%s: %s", ifname, ifn);
 	}
 }
 
@@ -408,10 +408,10 @@ bridge_delspan(const char *ifn, int d)
 {
 	struct ifbreq req;
 
-	strlcpy(req.ifbr_name, name, sizeof(req.ifbr_name));
+	strlcpy(req.ifbr_name, ifname, sizeof(req.ifbr_name));
 	strlcpy(req.ifbr_ifsname, ifn, sizeof(req.ifbr_ifsname));
 	if (ioctl(sock, SIOCBRDGDELS, &req) == -1)
-		err(1, "%s: %s", name, ifn);
+		err(1, "%s: %s", ifname, ifn);
 }
 
 void
@@ -428,10 +428,10 @@ bridge_timeout(const char *arg, int d)
 	    (errno == ERANGE && newtime == LONG_MAX))
 		errx(1, "invalid arg for timeout: %s", arg);
 
-	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
+	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
 	bp.ifbrp_ctime = newtime;
 	if (ioctl(sock, SIOCBRDGSTO, (caddr_t)&bp) == -1)
-		err(1, "%s", name);
+		err(1, "%s", ifname);
 }
 
 void
@@ -447,10 +447,10 @@ bridge_maxage(const char *arg, int d)
 	    (errno == ERANGE && v == ULONG_MAX))
 		errx(1, "invalid arg for maxage: %s", arg);
 
-	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
+	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
 	bp.ifbrp_maxage = v;
 	if (ioctl(sock, SIOCBRDGSMA, (caddr_t)&bp) == -1)
-		err(1, "%s", name);
+		err(1, "%s", ifname);
 }
 
 void
@@ -466,22 +466,22 @@ bridge_priority(const char *arg, int d)
 	    (errno == ERANGE && v == ULONG_MAX))
 		errx(1, "invalid arg for spanpriority: %s", arg);
 
-	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
+	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
 	bp.ifbrp_prio = v;
 	if (ioctl(sock, SIOCBRDGSPRI, (caddr_t)&bp) == -1)
-		err(1, "%s", name);
+		err(1, "%s", ifname);
 }
 
 void
-bridge_protect(const char *ifname, const char *val)
+bridge_protect(const char *ifsname, const char *val)
 {
 	struct ifbreq breq;
 	unsigned long v;
 	char *optlist, *str;
 	char *endptr;
 
-	strlcpy(breq.ifbr_name, name, sizeof(breq.ifbr_name));
-	strlcpy(breq.ifbr_ifsname, ifname, sizeof(breq.ifbr_ifsname));
+	strlcpy(breq.ifbr_name, ifname, sizeof(breq.ifbr_name));
+	strlcpy(breq.ifbr_ifsname, ifsname, sizeof(breq.ifbr_ifsname));
 	breq.ifbr_protected = 0;
 
 	/* We muck with the string, so copy it. */
@@ -501,23 +501,23 @@ bridge_protect(const char *ifname, const char *val)
 	}
 
 	if (ioctl(sock, SIOCBRDGSIFPROT, (caddr_t)&breq) == -1)
-		err(1, "%s: %s", name, val);
+		err(1, "%s: %s", ifname, val);
 
 	free(optlist);
 }
 
 void
-bridge_unprotect(const char *ifname, int d)
+bridge_unprotect(const char *ifsname, int d)
 {
 	struct ifbreq breq;
 
-	strlcpy(breq.ifbr_name, name, sizeof(breq.ifbr_name));
-	strlcpy(breq.ifbr_ifsname, ifname, sizeof(breq.ifbr_ifsname));
+	strlcpy(breq.ifbr_name, ifname, sizeof(breq.ifbr_name));
+	strlcpy(breq.ifbr_ifsname, ifsname, sizeof(breq.ifbr_ifsname));
 
 	breq.ifbr_protected = 0;
 
 	if (ioctl(sock, SIOCBRDGSIFPROT, (caddr_t)&breq) == -1)
-		err(1, "%s: %d", name, 0);
+		err(1, "%s: %d", ifname, 0);
 }
 
 void
@@ -534,10 +534,10 @@ bridge_proto(const char *arg, int d)
 	if (proto == -1)
 		errx(1, "invalid arg for proto: %s", arg);
 
-	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
+	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
 	bp.ifbrp_prio = proto;
 	if (ioctl(sock, SIOCBRDGSPROTO, (caddr_t)&bp) == -1)
-		err(1, "%s", name);
+		err(1, "%s", ifname);
 }
 
 void
@@ -553,10 +553,10 @@ bridge_fwddelay(const char *arg, int d)
 	    (errno == ERANGE && v == ULONG_MAX))
 		errx(1, "invalid arg for fwddelay: %s", arg);
 
-	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
+	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
 	bp.ifbrp_fwddelay = v;
 	if (ioctl(sock, SIOCBRDGSFD, (caddr_t)&bp) == -1)
-		err(1, "%s", name);
+		err(1, "%s", ifname);
 }
 
 void
@@ -572,10 +572,10 @@ bridge_hellotime(const char *arg, int d)
 	    (errno == ERANGE && v == ULONG_MAX))
 		errx(1, "invalid arg for hellotime: %s", arg);
 
-	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
+	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
 	bp.ifbrp_hellotime = v;
 	if (ioctl(sock, SIOCBRDGSHT, (caddr_t)&bp) == -1)
-		err(1, "%s", name);
+		err(1, "%s", ifname);
 }
 
 void
@@ -591,10 +591,10 @@ bridge_maxaddr(const char *arg, int d)
 	    (errno == ERANGE && newsize == ULONG_MAX))
 		errx(1, "invalid arg for maxaddr: %s", arg);
 
-	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
+	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
 	bp.ifbrp_csize = newsize;
 	if (ioctl(sock, SIOCBRDGSCACHE, (caddr_t)&bp) == -1)
-		err(1, "%s", name);
+		err(1, "%s", ifname);
 }
 
 void
@@ -603,7 +603,7 @@ bridge_deladdr(const char *addr, int d)
 	struct ifbareq ifba;
 	struct ether_addr *ea;
 
-	strlcpy(ifba.ifba_name, name, sizeof(ifba.ifba_name));
+	strlcpy(ifba.ifba_name, ifname, sizeof(ifba.ifba_name));
 	ea = ether_aton(addr);
 	if (ea == NULL)
 		err(1, "Invalid address: %s", addr);
@@ -611,18 +611,18 @@ bridge_deladdr(const char *addr, int d)
 	bcopy(ea, &ifba.ifba_dst, sizeof(struct ether_addr));
 
 	if (ioctl(sock, SIOCBRDGDADDR, &ifba) == -1)
-		err(1, "%s: %s", name, addr);
+		err(1, "%s: %s", ifname, addr);
 }
 
 void
-bridge_ifprio(const char *ifname, const char *val)
+bridge_ifprio(const char *ifsname, const char *val)
 {
 	struct ifbreq breq;
 	unsigned long v;
 	char *endptr;
 
-	strlcpy(breq.ifbr_name, name, sizeof(breq.ifbr_name));
-	strlcpy(breq.ifbr_ifsname, ifname, sizeof(breq.ifbr_ifsname));
+	strlcpy(breq.ifbr_name, ifname, sizeof(breq.ifbr_name));
+	strlcpy(breq.ifbr_ifsname, ifsname, sizeof(breq.ifbr_ifsname));
 
 	errno = 0;
 	v = strtoul(val, &endptr, 0);
@@ -632,18 +632,18 @@ bridge_ifprio(const char *ifname, const char *val)
 	breq.ifbr_priority = v;
 
 	if (ioctl(sock, SIOCBRDGSIFPRIO, (caddr_t)&breq) == -1)
-		err(1, "%s: %s", name, val);
+		err(1, "%s: %s", ifname, val);
 }
 
 void
-bridge_ifcost(const char *ifname, const char *val)
+bridge_ifcost(const char *ifsname, const char *val)
 {
 	struct ifbreq breq;
 	unsigned long v;
 	char *endptr;
 
-	strlcpy(breq.ifbr_name, name, sizeof(breq.ifbr_name));
-	strlcpy(breq.ifbr_ifsname, ifname, sizeof(breq.ifbr_ifsname));
+	strlcpy(breq.ifbr_name, ifname, sizeof(breq.ifbr_name));
+	strlcpy(breq.ifbr_ifsname, ifsname, sizeof(breq.ifbr_ifsname));
 
 	errno = 0;
 	v = strtoul(val, &endptr, 0);
@@ -654,31 +654,31 @@ bridge_ifcost(const char *ifname, const char *val)
 	breq.ifbr_path_cost = v;
 
 	if (ioctl(sock, SIOCBRDGSIFCOST, (caddr_t)&breq) == -1)
-		err(1, "%s: %s", name, val);
+		err(1, "%s: %s", ifname, val);
 }
 
 void
-bridge_noifcost(const char *ifname, int d)
+bridge_noifcost(const char *ifsname, int d)
 {
 	struct ifbreq breq;
 
-	strlcpy(breq.ifbr_name, name, sizeof(breq.ifbr_name));
-	strlcpy(breq.ifbr_ifsname, ifname, sizeof(breq.ifbr_ifsname));
+	strlcpy(breq.ifbr_name, ifname, sizeof(breq.ifbr_name));
+	strlcpy(breq.ifbr_ifsname, ifsname, sizeof(breq.ifbr_ifsname));
 
 	breq.ifbr_path_cost = 0;
 
 	if (ioctl(sock, SIOCBRDGSIFCOST, (caddr_t)&breq) == -1)
-		err(1, "%s", name);
+		err(1, "%s", ifname);
 }
 
 void
-bridge_addaddr(const char *ifname, const char *addr)
+bridge_addaddr(const char *ifsname, const char *addr)
 {
 	struct ifbareq ifba;
 	struct ether_addr *ea;
 
-	strlcpy(ifba.ifba_name, name, sizeof(ifba.ifba_name));
-	strlcpy(ifba.ifba_ifsname, ifname, sizeof(ifba.ifba_ifsname));
+	strlcpy(ifba.ifba_name, ifname, sizeof(ifba.ifba_name));
+	strlcpy(ifba.ifba_ifsname, ifsname, sizeof(ifba.ifba_ifsname));
 
 	ea = ether_aton(addr);
 	if (ea == NULL)
@@ -688,7 +688,7 @@ bridge_addaddr(const char *ifname, const char *addr)
 	ifba.ifba_flags = IFBAF_STATIC;
 
 	if (ioctl(sock, SIOCBRDGSADDR, &ifba) == -1)
-		err(1, "%s: %s", name, addr);
+		err(1, "%s: %s", ifname, addr);
 }
 
 void
@@ -713,11 +713,11 @@ bridge_addrs(const char *delim, int d)
 		if (inb == NULL)
 			err(1, "malloc");
 		ifbac.ifbac_buf = inbuf = inb;
-		strlcpy(ifbac.ifbac_name, name, sizeof(ifbac.ifbac_name));
+		strlcpy(ifbac.ifbac_name, ifname, sizeof(ifbac.ifbac_name));
 		if (ioctl(sock, SIOCBRDGRTS, &ifbac) == -1) {
 			if (errno == ENETDOWN)
 				return;
-			err(1, "%s", name);
+			err(1, "%s", ifname);
 		}
 		if (ifbac.ifbac_len + sizeof(*ifba) < len)
 			break;
@@ -751,27 +751,27 @@ bridge_holdcnt(const char *value, int d)
 	if (errstr)
 		err(1, "holdcnt %s %s", value, errstr);
 
-	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
+	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
 	if (ioctl(sock, SIOCBRDGSTXHC, (caddr_t)&bp) == -1)
-		err(1, "%s", name);
+		err(1, "%s", ifname);
 }
 
 /*
- * Check to make sure 'brdg' is really a bridge interface.
+ * Check to make sure interface is really a bridge interface.
  */
 int
-is_bridge(char *brdg)
+is_bridge()
 {
 	struct ifreq ifr;
 	struct ifbaconf ifbac;
 
-	strlcpy(ifr.ifr_name, brdg, sizeof(ifr.ifr_name));
+	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 
 	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1)
 		return (0);
 
 	ifbac.ifbac_len = 0;
-	strlcpy(ifbac.ifbac_name, brdg, sizeof(ifbac.ifbac_name));
+	strlcpy(ifbac.ifbac_name, ifname, sizeof(ifbac.ifbac_name));
 	if (ioctl(sock, SIOCBRDGRTS, (caddr_t)&ifbac) == -1) {
 		if (errno == ENETDOWN)
 			return (1);
@@ -786,10 +786,10 @@ bridge_status(void)
 	struct ifreq ifr;
 	struct ifbrparam bp1, bp2;
 
-	if (!is_bridge(name) || is_switch(name))
+	if (!is_bridge() || is_switch())
 		return;
 
-	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1)
 		return;
 
@@ -800,11 +800,11 @@ bridge_status(void)
 	if (aflag && !ifaliases)
 		return;
 
-	strlcpy(bp1.ifbrp_name, name, sizeof(bp1.ifbrp_name));
+	strlcpy(bp1.ifbrp_name, ifname, sizeof(bp1.ifbrp_name));
 	if (ioctl(sock, SIOCBRDGGCACHE, (caddr_t)&bp1) == -1)
 		return;
 
-	strlcpy(bp2.ifbrp_name, name, sizeof(bp2.ifbrp_name));
+	strlcpy(bp2.ifbrp_name, ifname, sizeof(bp2.ifbrp_name));
 	if (ioctl(sock, SIOCBRDGGTO, (caddr_t)&bp2) == -1)
 		return;
 
@@ -815,18 +815,18 @@ bridge_status(void)
 }
 
 void
-bridge_flushrule(const char *ifname, int d)
+bridge_flushrule(const char *ifsname, int d)
 {
 	struct ifbrlreq req;
 
-	strlcpy(req.ifbr_name, name, sizeof(req.ifbr_name));
-	strlcpy(req.ifbr_ifsname, ifname, sizeof(req.ifbr_ifsname));
+	strlcpy(req.ifbr_name, ifname, sizeof(req.ifbr_name));
+	strlcpy(req.ifbr_ifsname, ifsname, sizeof(req.ifbr_ifsname));
 	if (ioctl(sock, SIOCBRDGFRL, &req) == -1)
-		err(1, "%s: %s", name, ifname);
+		err(1, "%s: %s", ifname, ifsname);
 }
 
 void
-bridge_rules(const char *ifname, int usetab)
+bridge_rules(const char *ifsname, int usetab)
 {
 	char *inbuf = NULL, *inb;
 	struct ifbrlconf ifc;
@@ -839,8 +839,8 @@ bridge_rules(const char *ifname, int usetab)
 		if (inb == NULL)
 			err(1, "malloc");
 		ifc.ifbrl_buf = inbuf = inb;
-		strlcpy(ifc.ifbrl_name, name, sizeof(ifc.ifbrl_name));
-		strlcpy(ifc.ifbrl_ifsname, ifname, sizeof(ifc.ifbrl_ifsname));
+		strlcpy(ifc.ifbrl_name, ifname, sizeof(ifc.ifbrl_name));
+		strlcpy(ifc.ifbrl_ifsname, ifsname, sizeof(ifc.ifbrl_ifsname));
 		if (ioctl(sock, SIOCBRDGGRL, &ifc) == -1)
 			err(1, "ioctl(SIOCBRDGGRL)");
 		if (ifc.ifbrl_len + sizeof(*ifrp) < len)
@@ -928,7 +928,7 @@ bridge_rule(int targc, char **targv, int ln)
 		return (1);
 	}
 	bzero(&rule, sizeof(rule));
-	strlcpy(rule.ifbr_name, name, sizeof(rule.ifbr_name));
+	strlcpy(rule.ifbr_name, ifname, sizeof(rule.ifbr_name));
 
 	if (strcmp(argv[0], "block") == 0)
 		rule.ifbr_action = BRL_ACTION_BLOCK;
@@ -1021,7 +1021,7 @@ bridge_rule(int targc, char **targv, int ln)
 	}
 
 	if (ioctl(sock, SIOCBRDGARL, &rule) == -1) {
-		warn("%s", name);
+		warn("%s", ifname);
 		return (1);
 	}
 	return (0);
@@ -1146,11 +1146,11 @@ bridge_badrule(int argc, char *argv[], int ln)
 }
 
 int
-is_switch(char *swname)
+is_switch()
 {
 	struct ifbrparam bp;
 
-	strlcpy(bp.ifbrp_name, swname, sizeof(bp.ifbrp_name));
+	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
 	if (ioctl(sock, SIOCSWGDPID, (caddr_t)&bp) == -1)
 		return (0);
 
@@ -1162,21 +1162,21 @@ switch_cfg(char *delim)
 {
 	struct ifbrparam bp;
 
-	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
+	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
 	if (ioctl(sock, SIOCSWGDPID, (caddr_t)&bp) == -1)
-		err(1, "%s", name);
+		err(1, "%s", ifname);
 
 	printf("%sdatapath %#016llx", delim, bp.ifbrp_datapath);
 
-	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
+	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
 	if (ioctl(sock, SIOCSWGMAXFLOW, (caddr_t)&bp) == -1)
-		err(1, "%s", name);
+		err(1, "%s", ifname);
 
 	printf(" maxflow %d", bp.ifbrp_maxflow);
 
-	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
+	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
 	if (ioctl(sock, SIOCSWGMAXGROUP, (caddr_t)&bp) == -1)
-		err(1, "%s", name);
+		err(1, "%s", ifname);
 
 	printf(" maxgroup %d\n", bp.ifbrp_maxgroup);
 }
@@ -1186,10 +1186,10 @@ switch_status(void)
 {
 	struct ifreq ifr;
 
-	if (!is_switch(name))
+	if (!is_switch())
 		return;
 
-	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1)
 		return;
 
@@ -1213,21 +1213,21 @@ switch_datapathid(const char *arg, int d)
 	if (arg[0] == '\0' || endptr[0] != '\0' || errno == ERANGE)
 		errx(1, "invalid arg for datapath-id: %s", arg);
 
-	strlcpy(bp.ifbrp_name, name, sizeof(bp.ifbrp_name));
+	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
 	bp.ifbrp_datapath = newdpid;
 	if (ioctl(sock, SIOCSWSDPID, (caddr_t)&bp) == -1)
-		err(1, "%s", name);
+		err(1, "%s", ifname);
 }
 
 void
-switch_portno(const char *ifname, const char *val)
+switch_portno(const char *ifsname, const char *val)
 {
 	struct ifbreq breq;
 	uint32_t newportidx;
 	char *endptr;
 
-	strlcpy(breq.ifbr_name, name, sizeof(breq.ifbr_name));
-	strlcpy(breq.ifbr_ifsname, ifname, sizeof(breq.ifbr_ifsname));
+	strlcpy(breq.ifbr_name, ifname, sizeof(breq.ifbr_name));
+	strlcpy(breq.ifbr_ifsname, ifsname, sizeof(breq.ifbr_ifsname));
 
 	errno = 0;
 	newportidx = strtol(val, &endptr, 0);
@@ -1239,7 +1239,7 @@ switch_portno(const char *ifname, const char *val)
 		if (errno == EEXIST)
 			return;
 		else
-			err(1, "%s", name);
+			err(1, "%s", ifname);
 	}
 }
 
