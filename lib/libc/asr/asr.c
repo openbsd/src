@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.61 2018/10/22 17:31:24 krw Exp $	*/
+/*	$OpenBSD: asr.c,v 1.62 2019/10/24 05:57:41 otto Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -109,10 +109,14 @@ _asr_resolver(void)
 void
 _asr_resolver_done(void *arg)
 {
-	struct asr *asr = arg;
+	struct asr_ctx *ac = arg;
+	struct asr *asr;
 	struct asr **priv;
 
-	if (asr == NULL) {
+	if (ac) {
+		_asr_ctx_unref(ac);
+		return;
+	} else {
 		priv = _THREAD_PRIVATE(_asr, _asr, &_asr);
 		if (*priv == NULL)
 			return;
@@ -123,6 +127,30 @@ _asr_resolver_done(void *arg)
 	_asr_ctx_unref(asr->a_ctx);
 	free(asr);
 }
+
+void *
+asr_resolver_from_string(const char *str)
+{
+	struct asr_ctx *ac;
+
+	if ((ac = asr_ctx_create()) == NULL)
+		return NULL;
+
+	if (asr_ctx_from_string(ac, str) == -1) {
+		asr_ctx_free(ac);
+		return NULL;
+	}
+
+	return ac;
+}
+DEF_WEAK(asr_resolver_from_string);
+
+void
+asr_resolver_free(void *arg)
+{
+	_asr_ctx_unref(arg);
+}
+DEF_WEAK(asr_resolver_free);
 
 /*
  * Cancel an async query.
@@ -309,10 +337,15 @@ _asr_async_free(struct asr_query *as)
 struct asr_ctx *
 _asr_use_resolver(void *arg)
 {
-	struct asr *asr = arg;
+	struct asr_ctx *ac = arg;
+	struct asr *asr;
 	struct asr **priv;
 
-	if (asr == NULL) {
+	if (ac) {
+		asr_ctx_ref(ac);
+		return ac;
+	}
+	else {
 		DPRINT("using thread-local resolver\n");
 		priv = _THREAD_PRIVATE(_asr, _asr, &_asr);
 		if (*priv == NULL) {

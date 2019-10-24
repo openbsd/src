@@ -1,4 +1,4 @@
-.\"	$OpenBSD: asr_run.3,v 1.3 2017/02/18 19:23:05 jca Exp $
+.\"	$OpenBSD: asr_run.3,v 1.4 2019/10/24 05:57:41 otto Exp $
 .\"
 .\" Copyright (c) 2012-2014, Eric Faurot <eric@openbsd.org>
 .\"
@@ -14,13 +14,15 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 18 2017 $
+.Dd $Mdocdate: October 24 2019 $
 .Dt ASR_RUN 3
 .Os
 .Sh NAME
 .Nm asr_run ,
 .Nm asr_run_sync ,
 .Nm asr_abort ,
+.Nm asr_resolver_from_string ,
+.Nm asr_resolver_free ,
 .Nm res_send_async ,
 .Nm res_query_async ,
 .Nm res_search_async ,
@@ -44,6 +46,10 @@
 .Fn asr_run_sync "struct asr_query *aq" "struct asr_result *ar"
 .Ft void
 .Fn asr_abort "struct asr_query *aq"
+.Ft void *
+.Fn asr_resolver_from_string "const char *str"
+.Ft void
+.Fn asr_resolver_free "void *asr"
 .Ft struct asr_query *
 .Fn res_send_async "const unsigned char *pkt" "int pktlen" "void *asr"
 .Ft struct asr_query *
@@ -187,6 +193,15 @@ returns, so
 .Fn asr_abort
 must not be called in this case.
 .Pp
+The
+.Fn asr_resolver_from_string
+function constructs an asr context from a string that conforms to the
+.Xr resolv.conf 5
+file format.
+.Fn asr_resolver_free
+frees an asr context obtained from
+.Fn asr_resolver_from_string .
+.Pp
 The remaining functions are used to initiate different kinds of query
 on the
 .Fa asr
@@ -200,8 +215,12 @@ They usually have the same interface as an existing resolver function, with
 an additional
 .Ar asr
 argument, which specifies the context to use for this request.
-For now, the argument must always be NULL, which will use the default
-context for the current thread.
+An
+.Ar asr
+argument of NULL will use the default context for the current thread.
+This is constructed from
+.Pa /etc/resolv.conf
+and takes care of reloading the file when it changes.
 .Pp
 The
 .Fn res_send_async ,

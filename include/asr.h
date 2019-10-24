@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.h,v 1.1 2014/03/26 18:13:15 eric Exp $	*/
+/*	$OpenBSD: asr.h,v 1.2 2019/10/24 05:57:41 otto Exp $	*/
 /*
  * Copyright (c) 2012-2014 Eric Faurot <eric@openbsd.org>
  *
@@ -58,6 +58,8 @@ struct asr_result {
 /* Forward declaration. The API uses opaque pointers as query handles. */
 struct asr_query;
 
+void *asr_resolver_from_string(const char *);
+void asr_resolver_free(void *);
 int asr_run(struct asr_query *, struct asr_result *);
 int asr_run_sync(struct asr_query *, struct asr_result *);
 void asr_abort(struct asr_query *);

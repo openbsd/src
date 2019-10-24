@@ -1038,6 +1038,8 @@ wcwidth
 
 /* asr */
 asr_abort
+asr_resolver_from_string
+asr_resolver_free
 asr_run
 asr_run_sync
 freerrset
