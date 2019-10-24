@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.26 2019/10/09 06:37:53 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.27 2019/10/24 12:39:27 tb Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -140,14 +140,14 @@ smi_string2oid(const char *oidstr, struct ber_oid *o)
 
 	/*
 	 * Parse OID strings in the common form n.n.n or n-n-n.
-	 * Based on ber_string2oid with additional support for symbolic names.
+	 * Based on ober_string2oid with additional support for symbolic names.
 	 */
 	for (p = sp = str; p != NULL; sp = p) {
 		if ((p = strpbrk(p, ".-")) != NULL)
 			*p++ = '\0';
 		if ((oid = smi_findkey(sp)) != NULL) {
 			bcopy(&oid->o_id, &ko, sizeof(ko));
-			if (o->bo_n && ber_oid_cmp(o, &ko) != 2)
+			if (o->bo_n && ober_oid_cmp(o, &ko) != 2)
 				return (-1);
 			bcopy(&ko, o, sizeof(*o));
 			errstr = NULL;
@@ -297,7 +297,7 @@ smi_debug_elements(struct ber_element *root)
 	int		 constructed;
 
 	/* calculate lengths */
-	ber_calc_len(root);
+	ober_calc_len(root);
 
 	switch (root->be_encoding) {
 	case BER_TYPE_SEQUENCE:
@@ -479,20 +479,20 @@ smi_print_element(struct ber_element *root)
 
 	switch (root->be_encoding) {
 	case BER_TYPE_BOOLEAN:
-		if (ber_get_boolean(root, &d) == -1)
+		if (ober_get_boolean(root, &d) == -1)
 			goto fail;
 		if (asprintf(&str, "%s(%d)", d ? "true" : "false", d) == -1)
 			goto fail;
 		break;
 	case BER_TYPE_INTEGER:
 	case BER_TYPE_ENUMERATED:
-		if (ber_get_integer(root, &v) == -1)
+		if (ober_get_integer(root, &v) == -1)
 			goto fail;
 		if (asprintf(&str, "%lld", v) == -1)
 			goto fail;
 		break;
 	case BER_TYPE_BITSTRING:
-		if (ber_get_bitstring(root, (void *)&buf, &len) == -1)
+		if (ober_get_bitstring(root, (void *)&buf, &len) == -1)
 			goto fail;
 		if ((str = calloc(1, len * 2 + 1)) == NULL)
 			goto fail;
@@ -502,14 +502,14 @@ smi_print_element(struct ber_element *root)
 		}
 		break;
 	case BER_TYPE_OBJECT:
-		if (ber_get_oid(root, &o) == -1)
+		if (ober_get_oid(root, &o) == -1)
 			goto fail;
 		if (asprintf(&str, "%s",
 		    smi_oid2string(&o, strbuf, sizeof(strbuf), 0)) == -1)
 			goto fail;
 		break;
 	case BER_TYPE_OCTETSTRING:
-		if (ber_get_string(root, &buf) == -1)
+		if (ober_get_string(root, &buf) == -1)
 			goto fail;
 		if (root->be_class == BER_CLASS_APPLICATION &&
 		    root->be_type == SNMP_T_IPADDR) {

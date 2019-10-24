@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapctl.c,v 1.12 2019/06/27 18:03:37 deraadt Exp $	*/
+/*	$OpenBSD: ldapctl.c,v 1.13 2019/10/24 12:39:26 tb Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -196,7 +196,7 @@ index_namespace(struct namespace *ns, const char *datadir)
 			if ((elm = db2ber(&val, ns->compression_level)) == NULL)
 				continue;
 			rc = index_entry(ns, &key, elm);
-			ber_free_elements(elm);
+			ober_free_elements(elm);
 			btval_reset(&key);
 			btval_reset(&val);
 			if (rc != 0)

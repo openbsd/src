@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.8 2019/10/08 10:00:42 martijn Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.9 2019/10/24 12:39:26 tb Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -152,19 +152,19 @@ snmp_get(struct snmp_agent *agent, struct ber_oid *oid, size_t len)
 	struct ber_element *pdu, *varbind;
 	size_t i;
 
-	if ((pdu = ber_add_sequence(NULL)) == NULL)
+	if ((pdu = ober_add_sequence(NULL)) == NULL)
 		return NULL;
-	if ((varbind = ber_printf_elements(pdu, "tddd{", BER_CLASS_CONTEXT,
+	if ((varbind = ober_printf_elements(pdu, "tddd{", BER_CLASS_CONTEXT,
 	    SNMP_C_GETREQ, arc4random() & 0x7fffffff, 0, 0)) == NULL)
 		goto fail;
 	for (i = 0; i < len; i++)
-		varbind = ber_printf_elements(varbind, "{O0}", &oid[i]);
+		varbind = ober_printf_elements(varbind, "{O0}", &oid[i]);
 		if (varbind == NULL)
 			goto fail;
 
 	return snmp_resolve(agent, pdu, 1);
 fail:
-	ber_free_elements(pdu);
+	ober_free_elements(pdu);
 	return NULL;
 }
 
@@ -174,19 +174,19 @@ snmp_getnext(struct snmp_agent *agent, struct ber_oid *oid, size_t len)
 	struct ber_element *pdu, *varbind;
 	size_t i;
 
-	if ((pdu = ber_add_sequence(NULL)) == NULL)
+	if ((pdu = ober_add_sequence(NULL)) == NULL)
 		return NULL;
-	if ((varbind = ber_printf_elements(pdu, "tddd{", BER_CLASS_CONTEXT,
+	if ((varbind = ober_printf_elements(pdu, "tddd{", BER_CLASS_CONTEXT,
 	    SNMP_C_GETNEXTREQ, arc4random() & 0x7fffffff, 0, 0)) == NULL)
 		goto fail;
 	for (i = 0; i < len; i++)
-		varbind = ber_printf_elements(varbind, "{O0}", &oid[i]);
+		varbind = ober_printf_elements(varbind, "{O0}", &oid[i]);
 		if (varbind == NULL)
 			goto fail;
 
 	return snmp_resolve(agent, pdu, 1);
 fail:
-	ber_free_elements(pdu);
+	ober_free_elements(pdu);
 	return NULL;
 }
 
@@ -198,9 +198,9 @@ snmp_trap(struct snmp_agent *agent, struct timespec *uptime,
 	struct ber_oid sysuptime, trap;
 	long long ticks;
 
-	if ((pdu = ber_add_sequence(NULL)) == NULL)
+	if ((pdu = ober_add_sequence(NULL)) == NULL)
 		return -1;
-	if ((varbind = ber_printf_elements(pdu, "tddd{", BER_CLASS_CONTEXT,
+	if ((varbind = ober_printf_elements(pdu, "tddd{", BER_CLASS_CONTEXT,
 	    SNMP_C_TRAPV2, arc4random() & 0x7fffffff, 0, 0)) == NULL)
 		goto fail;
 
@@ -208,20 +208,20 @@ snmp_trap(struct snmp_agent *agent, struct timespec *uptime,
 	ticks += uptime->tv_nsec / 10000000;
 	if (smi_string2oid("sysUpTime.0", &sysuptime) == -1)
 		goto fail;
-	if ((varbind = ber_printf_elements(varbind, "{Oit}", &sysuptime, ticks,
+	if ((varbind = ober_printf_elements(varbind, "{Oit}", &sysuptime, ticks,
 	    BER_CLASS_APPLICATION, SNMP_T_TIMETICKS)) == NULL)
 		goto fail;
 	if (smi_string2oid("snmpTrapOID.0", &trap) == -1)
 		goto fail;
-	if ((varbind = ber_printf_elements(varbind, "{OO}", &trap, oid)) == NULL)
+	if ((varbind = ober_printf_elements(varbind, "{OO}", &trap, oid)) == NULL)
 		goto fail;
 	if (custvarbind != NULL)
-		ber_link_elements(varbind, custvarbind);
+		ober_link_elements(varbind, custvarbind);
 
 	snmp_resolve(agent, pdu, 0);
 	return 0;
 fail:
-	ber_free_elements(pdu);
+	ober_free_elements(pdu);
 	return -1;
 }
 
@@ -232,20 +232,20 @@ snmp_getbulk(struct snmp_agent *agent, struct ber_oid *oid, size_t len,
 	struct ber_element *pdu, *varbind;
 	size_t i;
 
-	if ((pdu = ber_add_sequence(NULL)) == NULL)
+	if ((pdu = ober_add_sequence(NULL)) == NULL)
 		return NULL;
-	if ((varbind = ber_printf_elements(pdu, "tddd{", BER_CLASS_CONTEXT,
+	if ((varbind = ober_printf_elements(pdu, "tddd{", BER_CLASS_CONTEXT,
 	    SNMP_C_GETBULKREQ, arc4random() & 0x7fffffff, non_repeaters,
 	    max_repetitions)) == NULL)
 		goto fail;
 	for (i = 0; i < len; i++)
-		varbind = ber_printf_elements(varbind, "{O0}", &oid[i]);
+		varbind = ober_printf_elements(varbind, "{O0}", &oid[i]);
 		if (varbind == NULL)
 			goto fail;
 
 	return snmp_resolve(agent, pdu, 1);
 fail:
-	ber_free_elements(pdu);
+	ober_free_elements(pdu);
 	return NULL;
 }
 
@@ -254,12 +254,12 @@ snmp_set(struct snmp_agent *agent, struct ber_element *vblist)
 {
 	struct ber_element *pdu;
 
-	if ((pdu = ber_add_sequence(NULL)) == NULL)
+	if ((pdu = ober_add_sequence(NULL)) == NULL)
 		return NULL;
-	if (ber_printf_elements(pdu, "tddd{e", BER_CLASS_CONTEXT,
+	if (ober_printf_elements(pdu, "tddd{e", BER_CLASS_CONTEXT,
 	    SNMP_C_SETREQ, arc4random() & 0x7fffffff, 0, 0, vblist) == NULL) {
-		ber_free_elements(pdu);
-		ber_free_elements(vblist);
+		ober_free_elements(pdu);
+		ober_free_elements(vblist);
 		return NULL;
 	}
 
@@ -281,9 +281,9 @@ snmp_resolve(struct snmp_agent *agent, struct ber_element *pdu, int reply)
 	int tries;
 	char buf[READ_BUF_SIZE];
 
-	if (ber_scanf_elements(pdu, "{i", &reqid) != 0) {
+	if (ober_scanf_elements(pdu, "{i", &reqid) != 0) {
 		errno = EINVAL;
-		ber_free_elements(pdu);
+		ober_free_elements(pdu);
 		return NULL;
 	}
 
@@ -340,7 +340,7 @@ snmp_resolve(struct snmp_agent *agent, struct ber_element *pdu, int reply)
 			continue;
 		}
 		/* Validate pdu format and check request id */
-		if (ber_scanf_elements(pdu, "{iSSe", &rreqid, &varbind) != 0 ||
+		if (ober_scanf_elements(pdu, "{iSSe", &rreqid, &varbind) != 0 ||
 		    varbind->be_encoding != BER_TYPE_SEQUENCE) {
 			errno = EPROTO;
 			direction = POLLOUT;
@@ -355,7 +355,7 @@ snmp_resolve(struct snmp_agent *agent, struct ber_element *pdu, int reply)
 		}
 		for (varbind = varbind->be_sub; varbind != NULL;
 		    varbind = varbind->be_next) {
-			if (ber_scanf_elements(varbind, "{oS}", &oid) != 0) {
+			if (ober_scanf_elements(varbind, "{oS}", &oid) != 0) {
 				errno = EPROTO;
 				direction = POLLOUT;
 				tries--;
@@ -384,68 +384,68 @@ snmp_package(struct snmp_agent *agent, struct ber_element *pdu, size_t *len)
 	void *cookie = NULL;
 
 	bzero(&ber, sizeof(ber));
-	ber_set_application(&ber, smi_application);
+	ober_set_application(&ber, smi_application);
 
-	if ((message = ber_add_sequence(NULL)) == NULL) {
-		ber_free_elements(pdu);
+	if ((message = ober_add_sequence(NULL)) == NULL) {
+		ober_free_elements(pdu);
 		goto fail;
 	}
 
 	switch (agent->version) {
 	case SNMP_V1:
 	case SNMP_V2C:
-		if (ber_printf_elements(message, "dse", agent->version,
+		if (ober_printf_elements(message, "dse", agent->version,
 		    agent->community, pdu) == NULL) {
-			ber_free_elements(pdu);
+			ober_free_elements(pdu);
 			goto fail;
 		}
 		break;
 	case SNMP_V3:
 		msgid = arc4random_uniform(2147483647);
-		if ((scopedpdu = ber_add_sequence(NULL)) == NULL) {
-			ber_free_elements(pdu);
+		if ((scopedpdu = ober_add_sequence(NULL)) == NULL) {
+			ober_free_elements(pdu);
 			goto fail;
 		}
-		if (ber_printf_elements(scopedpdu, "xxe",
+		if (ober_printf_elements(scopedpdu, "xxe",
 		    agent->v3->engineid, agent->v3->engineidlen,
 		    agent->v3->ctxname, agent->v3->ctxnamelen, pdu) == NULL) {
-			ber_free_elements(pdu);
-			ber_free_elements(scopedpdu);
+			ober_free_elements(pdu);
+			ober_free_elements(scopedpdu);
 			goto fail;
 		}
 		pdu = NULL;
 		if ((securityparams = agent->v3->sec->genparams(agent,
 		    &securitysize, &cookie)) == NULL) {
-			ber_free_elements(scopedpdu);
+			ober_free_elements(scopedpdu);
 			goto fail;
 		}
 		if (agent->v3->level & SNMP_MSGFLAG_PRIV) {
 			if ((encpdu = agent->v3->sec->encpdu(agent, scopedpdu,
 			    cookie)) == NULL)
 				goto fail;
-			ber_free_elements(scopedpdu);
+			ober_free_elements(scopedpdu);
 			scopedpdu = encpdu;
 		}
-		if (ber_printf_elements(message, "d{idxd}xe",
+		if (ober_printf_elements(message, "d{idxd}xe",
 		    agent->version, msgid, UDP_MAXPACKET, &(agent->v3->level),
 		    (size_t) 1, agent->v3->sec->model, securityparams,
 		    securitysize, scopedpdu) == NULL) {
-			ber_free_elements(scopedpdu);
+			ober_free_elements(scopedpdu);
 			goto fail;
 		}
-		if (ber_scanf_elements(message, "{SSe", &secparams) == -1)
+		if (ober_scanf_elements(message, "{SSe", &secparams) == -1)
 			goto fail;
-		ber_set_writecallback(secparams, snmp_v3_secparamsoffset,
+		ober_set_writecallback(secparams, snmp_v3_secparamsoffset,
 		    &secparamsoffset);
 		break;
 	}
 
-	if (ber_write_elements(&ber, message) == -1)
+	if (ober_write_elements(&ber, message) == -1)
 		goto fail;
 	ret = ber_copy_writebuf(&ber, (void **)&packet);
 
 	*len = (size_t) ret;
-	ber_free(&ber);
+	ober_free(&ber);
 
 	if (agent->version == SNMP_V3 && packet != NULL) {
 		if (agent->v3->sec->finalparams(agent, packet,
@@ -458,7 +458,7 @@ snmp_package(struct snmp_agent *agent, struct ber_element *pdu, size_t *len)
 fail:
 	if (agent->version == SNMP_V3)
 		agent->v3->sec->freecookie(cookie);
-	ber_free_elements(message);
+	ober_free_elements(message);
 	free(securityparams);
 	return packet;
 }
@@ -481,14 +481,14 @@ snmp_unpackage(struct snmp_agent *agent, char *buf, size_t buflen)
 	void *cookie = NULL;
 
 	bzero(&ber, sizeof(ber));
-	ber_set_application(&ber, smi_application);
+	ober_set_application(&ber, smi_application);
 
-	ber_set_readbuf(&ber, buf, buflen);
-	if ((message = ber_read_elements(&ber, NULL)) == NULL)
+	ober_set_readbuf(&ber, buf, buflen);
+	if ((message = ober_read_elements(&ber, NULL)) == NULL)
 		return NULL;
-	ber_free(&ber);
+	ober_free(&ber);
 
-	if (ber_scanf_elements(message, "{de", &version, &payload) != 0)
+	if (ober_scanf_elements(message, "{de", &version, &payload) != 0)
 		goto fail;
 
 	if (version != agent->version)
@@ -497,15 +497,15 @@ snmp_unpackage(struct snmp_agent *agent, char *buf, size_t buflen)
 	switch (version) {
 	case SNMP_V1:
 	case SNMP_V2C:
-		if (ber_scanf_elements(payload, "se", &community, &pdu) == -1)
+		if (ober_scanf_elements(payload, "se", &community, &pdu) == -1)
 			goto fail;
 		if (strcmp(community, agent->community) != 0)
 			goto fail;
-		ber_unlink_elements(payload);
-		ber_free_elements(message);
+		ober_unlink_elements(payload);
+		ober_free_elements(message);
 		return pdu;
 	case SNMP_V3:
-		if (ber_scanf_elements(payload, "{idxi}pxe", &msgid, &msgsz,
+		if (ober_scanf_elements(payload, "{idxi}pxe", &msgid, &msgsz,
 		    &msgflags, &msgflagslen, &model, &secparamsoffset,
 		    &secparams, &secparamslen, &scopedpdu) == -1)
 			goto fail;
@@ -518,14 +518,14 @@ snmp_unpackage(struct snmp_agent *agent, char *buf, size_t buflen)
 			goto fail;
 		}
 		if (msgflags[0] & SNMP_MSGFLAG_PRIV) {
-			if (ber_scanf_elements(scopedpdu, "x", &encpdu,
+			if (ober_scanf_elements(scopedpdu, "x", &encpdu,
 			    &encpdulen) == -1)
 				goto fail;
 			if ((scopedpdu = agent->v3->sec->decpdu(agent, encpdu,
 			    encpdulen, cookie)) == NULL)
 				goto fail;
 		}
-		if (ber_scanf_elements(scopedpdu, "{xeS{", &engineid,
+		if (ober_scanf_elements(scopedpdu, "{xeS{", &engineid,
 		    &engineidlen, &ctxname) == -1)
 			goto fail;
 		if (!agent->v3->engineidset) {
@@ -533,7 +533,7 @@ snmp_unpackage(struct snmp_agent *agent, char *buf, size_t buflen)
 			    engineidlen) == -1)
 				goto fail;
 		}
-		pdu = ber_unlink_elements(ctxname);
+		pdu = ober_unlink_elements(ctxname);
 		/* Accept reports, so we can continue if possible */
 		if (pdu->be_type != SNMP_C_REPORT) {
 			if ((msgflags[0] & SNMP_MSGFLAG_SECMASK) !=
@@ -541,7 +541,7 @@ snmp_unpackage(struct snmp_agent *agent, char *buf, size_t buflen)
 				goto fail;
 		}
 
-		ber_free_elements(message);
+		ober_free_elements(message);
 		agent->v3->sec->freecookie(cookie);
 		return pdu;
 	}
@@ -550,7 +550,7 @@ snmp_unpackage(struct snmp_agent *agent, char *buf, size_t buflen)
 fail:
 	if (version == SNMP_V3)
 		agent->v3->sec->freecookie(cookie);
-	ber_free_elements(message);
+	ober_free_elements(message);
 	return NULL;
 }
 
@@ -569,7 +569,7 @@ ber_copy_writebuf(struct ber *ber, void **buf)
 	ssize_t ret;
 
 	*buf = NULL;
-	if ((ret = ber_get_writebuf(ber, (void **)&bbuf)) == -1)
+	if ((ret = ober_get_writebuf(ber, (void **)&bbuf)) == -1)
 		return -1;
 	if ((*buf = malloc(ret)) == NULL)
 		return -1;

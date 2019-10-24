@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.h,v 1.1 2019/05/11 17:46:02 rob Exp $ */
+/*	$OpenBSD: ber.h,v 1.2 2019/10/24 12:39:26 tb Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -90,62 +90,62 @@ struct ber_oid {
 };
 
 __BEGIN_DECLS
-struct ber_element	*ber_get_element(unsigned int);
-void			 ber_set_header(struct ber_element *, int,
+struct ber_element	*ober_get_element(unsigned int);
+void			 ober_set_header(struct ber_element *, int,
 			    unsigned int);
-void			 ber_link_elements(struct ber_element *,
+void			 ober_link_elements(struct ber_element *,
 			    struct ber_element *);
-struct ber_element	*ber_unlink_elements(struct ber_element *);
-void			 ber_replace_elements(struct ber_element *,
+struct ber_element	*ober_unlink_elements(struct ber_element *);
+void			 ober_replace_elements(struct ber_element *,
 			    struct ber_element *);
-struct ber_element	*ber_add_sequence(struct ber_element *);
-struct ber_element	*ber_add_set(struct ber_element *);
-struct ber_element	*ber_add_integer(struct ber_element *, long long);
-int			 ber_get_integer(struct ber_element *, long long *);
-struct ber_element	*ber_add_enumerated(struct ber_element *, long long);
-int			 ber_get_enumerated(struct ber_element *, long long *);
-struct ber_element	*ber_add_boolean(struct ber_element *, int);
-int			 ber_get_boolean(struct ber_element *, int *);
-struct ber_element	*ber_add_string(struct ber_element *, const char *);
-struct ber_element	*ber_add_nstring(struct ber_element *, const char *,
+struct ber_element	*ober_add_sequence(struct ber_element *);
+struct ber_element	*ober_add_set(struct ber_element *);
+struct ber_element	*ober_add_integer(struct ber_element *, long long);
+int			 ober_get_integer(struct ber_element *, long long *);
+struct ber_element	*ober_add_enumerated(struct ber_element *, long long);
+int			 ober_get_enumerated(struct ber_element *, long long *);
+struct ber_element	*ober_add_boolean(struct ber_element *, int);
+int			 ober_get_boolean(struct ber_element *, int *);
+struct ber_element	*ober_add_string(struct ber_element *, const char *);
+struct ber_element	*ober_add_nstring(struct ber_element *, const char *,
 			    size_t);
-struct ber_element	*ber_add_ostring(struct ber_element *,
+struct ber_element	*ober_add_ostring(struct ber_element *,
 			    struct ber_octetstring *);
-int			 ber_get_string(struct ber_element *, char **);
-int			 ber_get_nstring(struct ber_element *, void **,
+int			 ober_get_string(struct ber_element *, char **);
+int			 ober_get_nstring(struct ber_element *, void **,
 			    size_t *);
-int			 ber_get_ostring(struct ber_element *,
+int			 ober_get_ostring(struct ber_element *,
 			    struct ber_octetstring *);
-struct ber_element	*ber_add_bitstring(struct ber_element *, const void *,
+struct ber_element	*ober_add_bitstring(struct ber_element *, const void *,
 			    size_t);
-int			 ber_get_bitstring(struct ber_element *, void **,
+int			 ober_get_bitstring(struct ber_element *, void **,
 			    size_t *);
-struct ber_element	*ber_add_null(struct ber_element *);
-int			 ber_get_null(struct ber_element *);
-struct ber_element	*ber_add_eoc(struct ber_element *);
-int			 ber_get_eoc(struct ber_element *);
-struct ber_element	*ber_add_oid(struct ber_element *, struct ber_oid *);
-struct ber_element	*ber_add_noid(struct ber_element *, struct ber_oid *, int);
-struct ber_element	*ber_add_oidstring(struct ber_element *, const char *);
-int			 ber_get_oid(struct ber_element *, struct ber_oid *);
-size_t			 ber_oid2ber(struct ber_oid *, u_int8_t *, size_t);
-int			 ber_string2oid(const char *, struct ber_oid *);
-struct ber_element	*ber_printf_elements(struct ber_element *, char *, ...);
-int			 ber_scanf_elements(struct ber_element *, char *, ...);
-ssize_t			 ber_get_writebuf(struct ber *, void **);
-ssize_t			 ber_write_elements(struct ber *, struct ber_element *);
-void			 ber_set_readbuf(struct ber *, void *, size_t);
-struct ber_element	*ber_read_elements(struct ber *, struct ber_element *);
-off_t			 ber_getpos(struct ber_element *);
-void			 ber_free_element(struct ber_element *);
-void			 ber_free_elements(struct ber_element *);
-size_t			 ber_calc_len(struct ber_element *);
-void			 ber_set_application(struct ber *,
+struct ber_element	*ober_add_null(struct ber_element *);
+int			 ober_get_null(struct ber_element *);
+struct ber_element	*ober_add_eoc(struct ber_element *);
+int			 ober_get_eoc(struct ber_element *);
+struct ber_element	*ober_add_oid(struct ber_element *, struct ber_oid *);
+struct ber_element	*ober_add_noid(struct ber_element *, struct ber_oid *, int);
+struct ber_element	*ober_add_oidstring(struct ber_element *, const char *);
+int			 ober_get_oid(struct ber_element *, struct ber_oid *);
+size_t			 ober_oid2ber(struct ber_oid *, u_int8_t *, size_t);
+int			 ober_string2oid(const char *, struct ber_oid *);
+struct ber_element	*ober_printf_elements(struct ber_element *, char *, ...);
+int			 ober_scanf_elements(struct ber_element *, char *, ...);
+ssize_t			 ober_get_writebuf(struct ber *, void **);
+ssize_t			 ober_write_elements(struct ber *, struct ber_element *);
+void			 ober_set_readbuf(struct ber *, void *, size_t);
+struct ber_element	*ober_read_elements(struct ber *, struct ber_element *);
+off_t			 ober_getpos(struct ber_element *);
+void			 ober_free_element(struct ber_element *);
+void			 ober_free_elements(struct ber_element *);
+size_t			 ober_calc_len(struct ber_element *);
+void			 ober_set_application(struct ber *,
 			    unsigned int (*)(struct ber_element *));
-void			 ber_set_writecallback(struct ber_element *,
+void			 ober_set_writecallback(struct ber_element *,
 			    void (*)(void *, size_t), void *);
-void			 ber_free(struct ber *);
-int			 ber_oid_cmp(struct ber_oid *, struct ber_oid *);
+void			 ober_free(struct ber *);
+int			 ober_oid_cmp(struct ber_oid *, struct ber_oid *);
 
 __END_DECLS
 

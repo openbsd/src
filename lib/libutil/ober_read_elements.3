@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber_read_elements.3,v 1.5 2019/05/21 12:30:07 rob Exp $
+.\" $OpenBSD: ober_read_elements.3,v 1.1 2019/10/24 12:39:26 tb Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,35 +14,35 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 21 2019 $
-.Dt BER_READ_ELEMENTS 3
+.Dd $Mdocdate: October 24 2019 $
+.Dt OBER_READ_ELEMENTS 3
 .Os
 .Sh NAME
-.Nm ber_set_readbuf ,
-.Nm ber_set_application ,
-.Nm ber_read_elements ,
-.Nm ber_get_writebuf ,
-.Nm ber_write_elements ,
-.Nm ber_free
+.Nm ober_set_readbuf ,
+.Nm ober_set_application ,
+.Nm ober_read_elements ,
+.Nm ober_get_writebuf ,
+.Nm ober_write_elements ,
+.Nm ober_free
 .Nd encode and decode ASN.1 with Basic Encoding Rules
 .Sh SYNOPSIS
 .In sys/types.h
 .In ber.h
 .Ft "void"
-.Fn "ber_set_readbuf" "struct ber *ber" "void *buf" "size_t len"
+.Fn "ober_set_readbuf" "struct ber *ber" "void *buf" "size_t len"
 .Ft "void"
-.Fo "ber_set_application"
+.Fo "ober_set_application"
 .Fa "struct ber *ber"
 .Fa "unsigned int (*cb)(struct ber_element *)"
 .Fc
 .Ft "struct ber_element *"
-.Fn "ber_read_elements" "struct ber *ber" "struct ber_element *root"
+.Fn "ober_read_elements" "struct ber *ber" "struct ber_element *root"
 .Ft "ssize_t"
-.Fn "ber_get_writebuf" "struct ber *ber" "void **buf"
+.Fn "ober_get_writebuf" "struct ber *ber" "void **buf"
 .Ft "ssize_t"
-.Fn "ber_write_elements" "struct ber *ber" "struct ber_element *root"
+.Fn "ober_write_elements" "struct ber *ber" "struct ber_element *root"
 .Ft "void"
-.Fn "ber_free" "struct ber *ber"
+.Fn "ober_free" "struct ber *ber"
 .Sh DESCRIPTION
 The BER API provides a mechanism to read and write ASN.1 using the
 Basic Encoding Rules.
@@ -95,7 +95,7 @@ struct ber_element {
 };
 .Ed
 .Pp
-.Fn ber_set_readbuf
+.Fn ober_set_readbuf
 sets
 .Fa br_rbuf
 to point an input buffer of BER encoded bytes in preparation for decoding.
@@ -108,7 +108,7 @@ application, commonly obtained by
 or
 .Xr tls_read 3 .
 .Pp
-.Fn ber_read_elements
+.Fn ober_read_elements
 may then be called to parse, validate, and store the
 .Fa ber
 data stream into its
@@ -118,12 +118,12 @@ parts for subsequent processing.
 The calling application must have explicit knowledge of the expected data
 types in order for correct decoding.
 .Pp
-.Fn ber_get_writebuf
+.Fn ober_get_writebuf
 sets
 .Fa br_wbuf
 to point to an output buffer for writing a BER byte stream.
 .Pp
-.Fn ber_write_elements
+.Fn ober_write_elements
 encodes
 .Fa root
 into a compliant BER byte stream which is written to
@@ -135,23 +135,23 @@ functions such as
 or
 .Xr tls_write 3 .
 .Pp
-.Fn ber_free
+.Fn ober_free
 frees any dynamically allocated storage associated with
 .Fa ber .
 .Sh RETURN VALUES
-.Fn ber_read_elements
+.Fn ober_read_elements
 returns a pointer to a fully populated list of one or more
 .Vt ber_element
 structures or
 .Dv NULL
 on a type mismatch or read error.
 .Pp
-.Fn ber_get_writebuf
+.Fn ober_get_writebuf
 returns the number of bytes contained within the buffer
 .Fa buf
 or \-1 on failure.
 .Pp
-.Fn ber_write_elements
+.Fn ober_write_elements
 returns the number of bytes written.
 Otherwise \-1 is returned and the global variable
 .Va errno
@@ -161,10 +161,10 @@ is set to indicate the error.
 .Xr recv 2 ,
 .Xr send 2 ,
 .Xr write 2 ,
-.Xr ber_add_string 3 ,
-.Xr ber_get_string 3 ,
-.Xr ber_oid_cmp 3 ,
-.Xr ber_set_header 3 ,
+.Xr ober_add_string 3 ,
+.Xr ober_get_string 3 ,
+.Xr ober_oid_cmp 3 ,
+.Xr ober_set_header 3 ,
 .Xr tls_read 3
 .Sh STANDARDS
 ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber_set_header.3,v 1.3 2019/08/14 19:08:03 martijn Exp $
+.\" $OpenBSD: ober_set_header.3,v 1.1 2019/10/24 12:39:26 tb Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,42 +14,42 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2019 $
-.Dt BER_SET_HEADER 3
+.Dd $Mdocdate: October 24 2019 $
+.Dt OBER_SET_HEADER 3
 .Os
 .Sh NAME
-.Nm ber_set_header ,
-.Nm ber_calc_len ,
-.Nm ber_set_writecallback ,
-.Nm ber_link_elements ,
-.Nm ber_replace_elements ,
-.Nm ber_unlink_elements ,
-.Nm ber_free_element ,
-.Nm ber_free_elements
+.Nm ober_set_header ,
+.Nm ober_calc_len ,
+.Nm ober_set_writecallback ,
+.Nm ober_link_elements ,
+.Nm ober_replace_elements ,
+.Nm ober_unlink_elements ,
+.Nm ober_free_element ,
+.Nm ober_free_elements
 .Nd change and destroy ASN.1 objects for BER encoding
 .Sh SYNOPSIS
 .In sys/types.h
 .In ber.h
 .Ft "void"
-.Fn "ber_set_header" "struct ber_element *elm" "int class" "unsigned int type"
+.Fn "ober_set_header" "struct ber_element *elm" "int class" "unsigned int type"
 .Ft "size_t"
-.Fn "ber_calc_len" "struct ber_element *root"
+.Fn "ober_calc_len" "struct ber_element *root"
 .Ft "void"
-.Fo "ber_set_writecallback"
+.Fo "ober_set_writecallback"
 .Fa "struct ber_element *elm"
 .Fa "void (*cb)(void *arg, size_t offs)"
 .Fa "void *arg"
 .Fc
 .Ft "void"
-.Fn "ber_link_elements" "struct ber_element *prev" "struct ber_element *elm"
+.Fn "ober_link_elements" "struct ber_element *prev" "struct ber_element *elm"
 .Ft "void"
-.Fn "ber_replace_elements" "struct ber_element *prev" "struct ber_element *elm"
+.Fn "ober_replace_elements" "struct ber_element *prev" "struct ber_element *elm"
 .Ft "struct ber_element *"
-.Fn "ber_unlink_elements" "struct ber_element *prev"
+.Fn "ober_unlink_elements" "struct ber_element *prev"
 .Ft "void"
-.Fn "ber_free_element" "struct ber_element *root"
+.Fn "ober_free_element" "struct ber_element *root"
 .Ft "void"
-.Fn "ber_free_elements" "struct ber_element *root"
+.Fn "ober_free_elements" "struct ber_element *root"
 .Pp
 .Fd #define BER_TYPE_BOOLEAN			1
 .Fd #define BER_TYPE_INTEGER			2
@@ -70,7 +70,7 @@
 .Fd #define BER_CLASS_CONTEXT		0x2
 .Fd #define BER_CLASS_PRIVATE		0x3
 .Sh DESCRIPTION
-.Fn ber_set_header
+.Fn ober_set_header
 sets the
 .Fa class
 and
@@ -78,22 +78,22 @@ and
 of
 .Fa elm .
 .Pp
-.Fn ber_calc_len
+.Fn ober_calc_len
 determines the total length of
 .Fa root .
 .Pp
-.Fn ber_set_writecallback
+.Fn ober_set_writecallback
 registers the
 .Vt br_cb
 callback function.
 .Pp
-.Fn ber_link_elements
+.Fn ober_link_elements
 links
 .Fa prev
 and
 .Fa elm .
 .Pp
-.Fn ber_replace_elements
+.Fn ober_replace_elements
 replaces
 .Fa prev
 with
@@ -101,30 +101,30 @@ with
 and frees any dynamically allocated storage assocated with
 .Fa prev .
 .Pp
-.Fn ber_unlink_elements
+.Fn ober_unlink_elements
 unlinks
 .Fa prev .
 .Pp
-.Fn ber_free_element
+.Fn ober_free_element
 and
-.Fn ber_free_elements
+.Fn ober_free_elements
 free any dynamically allocated storage associated with
 .Fa root .
 .Sh RETURN VALUES
-.Fn ber_calc_len
+.Fn ober_calc_len
 returns the total length of a fully populated
 .Fa root
 containing one or more
 .Vt ber_element .
 .Pp
-.Fn ber_unlink_elements
+.Fn ober_unlink_elements
 returns a pointer to
 .Vt ber_element .
 .Sh SEE ALSO
-.Xr ber_add_string 3 ,
-.Xr ber_get_string 3 ,
-.Xr ber_oid_cmp 3 ,
-.Xr ber_read_elements 3
+.Xr ober_add_string 3 ,
+.Xr ober_get_string 3 ,
+.Xr ober_oid_cmp 3 ,
+.Xr ober_read_elements 3
 .Sh STANDARDS
 ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:
 Information technology - ASN.1 encoding rules.

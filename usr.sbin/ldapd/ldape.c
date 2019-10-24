@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.31 2019/06/28 13:32:48 deraadt Exp $ */
+/*	$OpenBSD: ldape.c,v 1.32 2019/10/24 12:39:26 tb Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -78,27 +78,27 @@ send_ldap_extended_response(struct conn *conn, int msgid, unsigned int type,
 
 	log_debug("sending response %u with result %lld", type, result_code);
 
-	if ((root = ber_add_sequence(NULL)) == NULL)
+	if ((root = ober_add_sequence(NULL)) == NULL)
 		goto fail;
 
-	elm = ber_printf_elements(root, "d{tEss",
+	elm = ober_printf_elements(root, "d{tEss",
 	    msgid, BER_CLASS_APP, type, result_code, "", "");
 	if (elm == NULL)
 		goto fail;
 
 	if (extended_oid)
-		if (ber_add_string(elm, extended_oid) == NULL)
+		if (ober_add_string(elm, extended_oid) == NULL)
 			goto fail;
 
 	ldap_debug_elements(root, type, "sending response on fd %d", conn->fd);
 
-	rc = ber_write_elements(&conn->ber, root);
-	ber_free_elements(root);
+	rc = ober_write_elements(&conn->ber, root);
+	ober_free_elements(root);
 
 	if (rc < 0)
 		log_warn("failed to create ldap result");
 	else {
-		ber_get_writebuf(&conn->ber, &buf);
+		ober_get_writebuf(&conn->ber, &buf);
 		if (bufferevent_write(conn->bev, buf, rc) != 0)
 			log_warn("failed to send ldap result");
 	}
@@ -106,7 +106,7 @@ send_ldap_extended_response(struct conn *conn, int msgid, unsigned int type,
 	return;
 fail:
 	if (root)
-		ber_free_elements(root);
+		ober_free_elements(root);
 }
 
 int
@@ -136,12 +136,12 @@ ldap_refer(struct request *req, const char *basedn, struct search *search,
 	log_debug("sending referral in response %u on msgid %lld",
 	    type, req->msgid);
 
-	if ((root = ber_add_sequence(NULL)) == NULL)
+	if ((root = ober_add_sequence(NULL)) == NULL)
 		goto fail;
 
-	if ((elm = ref_root = ber_add_sequence(NULL)) == NULL)
+	if ((elm = ref_root = ober_add_sequence(NULL)) == NULL)
 		goto fail;
-	ber_set_header(ref_root, BER_CLASS_CONTEXT, LDAP_REQ_SEARCH);
+	ober_set_header(ref_root, BER_CLASS_CONTEXT, LDAP_REQ_SEARCH);
 	SLIST_FOREACH(ref, refs, next) {
 		if (search != NULL)
 			rc = asprintf(&url, "%s/%s??%s", ref->url, basedn,
@@ -153,25 +153,25 @@ ldap_refer(struct request *req, const char *basedn, struct search *search,
 			goto fail;
 		}
 		log_debug("adding referral '%s'", url);
-		elm = ber_add_string(elm, url);
+		elm = ober_add_string(elm, url);
 		free(url);
 		if (elm == NULL)
 			goto fail;
 	}
 
-	elm = ber_printf_elements(root, "d{tEsse",
+	elm = ober_printf_elements(root, "d{tEsse",
 	    req->msgid, BER_CLASS_APP, type, result_code, "", "", ref_root);
 	if (elm == NULL)
 		goto fail;
 	ref_root = NULL;
 
-	rc = ber_write_elements(&req->conn->ber, root);
-	ber_free_elements(root);
+	rc = ober_write_elements(&req->conn->ber, root);
+	ober_free_elements(root);
 
 	if (rc < 0)
 		log_warn("failed to create ldap result");
 	else {
-		ber_get_writebuf(&req->conn->ber, &buf);
+		ober_get_writebuf(&req->conn->ber, &buf);
 		if (bufferevent_write(req->conn->bev, buf, rc) != 0)
 			log_warn("failed to send ldap result");
 	}
@@ -181,9 +181,9 @@ ldap_refer(struct request *req, const char *basedn, struct search *search,
 
 fail:
 	if (root != NULL)
-		ber_free_elements(root);
+		ober_free_elements(root);
 	if (ref_root != NULL)
-		ber_free_elements(ref_root);
+		ober_free_elements(ref_root);
 	request_free(req);
 	return LDAP_REFERRAL;
 }
@@ -210,7 +210,7 @@ ldap_abandon(struct request *req)
 	long long	 msgid;
 	struct search	*search;
 
-	if (ber_scanf_elements(req->op, "i", &msgid) != 0) {
+	if (ober_scanf_elements(req->op, "i", &msgid) != 0) {
 		request_free(req);
 		return -1;	/* protocol error, but don't respond */
 	}
@@ -245,7 +245,7 @@ ldap_compare(struct request *req)
 	struct attr_type	*at;
 	char			*dn, *aname, *value, *s;
 
-	if (ber_scanf_elements(req->op, "{s{ss", &dn, &aname, &value) != 0) {
+	if (ober_scanf_elements(req->op, "{s{ss", &dn, &aname, &value) != 0) {
 		log_debug("%s: protocol error", __func__);
 		request_free(req);
 		return -1;
@@ -272,7 +272,7 @@ ldap_compare(struct request *req)
 		return ldap_respond(req, LDAP_OTHER);
 
 	for (elm = attr->be_sub; elm != NULL; elm = elm->be_next) {
-		if (ber_get_string(elm, &s) != 0)
+		if (ober_get_string(elm, &s) != 0)
 			return ldap_respond(req, LDAP_OTHER);
 		if (strcasecmp(value, s) == 0)
 			return ldap_respond(req, LDAP_COMPARE_TRUE);
@@ -307,7 +307,7 @@ ldap_extended(struct request *req)
 		{ NULL }
 	};
 
-	if (ber_scanf_elements(req->op, "{se", &oid, &ext_val) != 0)
+	if (ober_scanf_elements(req->op, "{se", &oid, &ext_val) != 0)
 		goto done;
 
 	log_debug("got extended operation %s", oid);

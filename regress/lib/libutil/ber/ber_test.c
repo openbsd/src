@@ -1,4 +1,4 @@
-/* $OpenBSD: ber_test.c,v 1.19 2019/09/18 11:00:46 rob Exp $
+/* $OpenBSD: ber_test.c,v 1.20 2019/10/24 12:39:26 tb Exp $
 */
 /*
  * Copyright (c) Rob Pierce <rob@openbsd.org>
@@ -332,18 +332,18 @@ test(int i)
 	struct ber_octetstring	 ostring;
 
 	bzero(&ber, sizeof(ber));
-	ber_set_readbuf(&ber, test_vectors[i].input, test_vectors[i].length);
-	ber_set_application(&ber, ldap_application);
+	ober_set_readbuf(&ber, test_vectors[i].input, test_vectors[i].length);
+	ober_set_application(&ber, ldap_application);
 
-	elm = ber_read_elements(&ber, elm);
+	elm = ober_read_elements(&ber, elm);
 	if (elm == NULL && test_vectors[i].fail &&
 	    (errno == EINVAL || errno == ERANGE || errno == ECANCELED))
 		return 0;
 	else if (elm != NULL && test_vectors[i].fail) {
-		printf("expected failure of ber_read_elements did not occur\n");
+		printf("expected failure of ober_read_elements did not occur\n");
 		return 1;
 	} else if (elm == NULL) {
-		printf("unexpectedly failed ber_read_elements\n");
+		printf("unexpectedly failed ober_read_elements\n");
 		return 1;
 	}
 
@@ -351,7 +351,7 @@ test(int i)
 	 * short form tagged elements start at the 3rd octet (i.e. position 2).
 	 */
 	if (test_vectors[i].memcheck) {
-		pos = ber_getpos(elm);
+		pos = ober_getpos(elm);
 		if (pos != 2) {
 			printf("unexpected element position within "
 			    "byte stream\n");
@@ -361,82 +361,82 @@ test(int i)
 
 	switch (elm->be_encoding) {
 	case BER_TYPE_EOC:
-		if (ber_get_eoc(elm) == -1) {
+		if (ober_get_eoc(elm) == -1) {
 			printf("failed (eoc) encoding check\n");
 			return 1;
 		}
-		if (ber_scanf_elements(elm, ".", &val) == -1) {
-			printf("failed (eoc) ber_scanf_elements\n");
+		if (ober_scanf_elements(elm, ".", &val) == -1) {
+			printf("failed (eoc) ober_scanf_elements\n");
 			return 1;
 		}
 		break;
 	case BER_TYPE_BOOLEAN:
-		if (ber_get_boolean(elm, &b) == -1) {
+		if (ober_get_boolean(elm, &b) == -1) {
 			printf("failed (boolean) encoding check\n");
 			return 1;
 		}
-		if (ber_scanf_elements(elm, "b", &b) == -1) {
-			printf("failed (boolean) ber_scanf_elements\n");
+		if (ober_scanf_elements(elm, "b", &b) == -1) {
+			printf("failed (boolean) ober_scanf_elements\n");
 			return 1;
 		}
 		break;
 	case BER_TYPE_INTEGER:
-		if (ber_get_integer(elm, &val) == -1) {
+		if (ober_get_integer(elm, &val) == -1) {
 			printf("failed (int) encoding check\n");
 			return 1;
 		}
-		if (ber_scanf_elements(elm, "i", &val) == -1) {
-			printf("failed (int) ber_scanf_elements (i)\n");
+		if (ober_scanf_elements(elm, "i", &val) == -1) {
+			printf("failed (int) ober_scanf_elements (i)\n");
 			return 1;
 		}
-		if (ber_scanf_elements(elm, "d", &val) == -1) {
-			printf("failed (int) ber_scanf_elements (d)\n");
+		if (ober_scanf_elements(elm, "d", &val) == -1) {
+			printf("failed (int) ober_scanf_elements (d)\n");
 			return 1;
 		}
 		break;
 	case BER_TYPE_ENUMERATED:
-		if (ber_get_enumerated(elm, &val) == -1) {
+		if (ober_get_enumerated(elm, &val) == -1) {
 			printf("failed (enum) encoding check\n");
 			return 1;
 		}
-		if (ber_scanf_elements(elm, "E", &val) == -1) {
-			printf("failed (enum) ber_scanf_elements (E)\n");
+		if (ober_scanf_elements(elm, "E", &val) == -1) {
+			printf("failed (enum) ober_scanf_elements (E)\n");
 			return 1;
 		}
 		break;
 	case BER_TYPE_BITSTRING:
-		if (ber_get_bitstring(elm, &bstring, &len) == -1) {
+		if (ober_get_bitstring(elm, &bstring, &len) == -1) {
 			printf("failed (bit string) encoding check\n");
 			return 1;
 		}
 		break;
 	case BER_TYPE_OCTETSTRING:
-		if (ber_get_ostring(elm, &ostring) == -1) {
+		if (ober_get_ostring(elm, &ostring) == -1) {
 			printf("failed (octet string) encoding check\n");
 			return 1;
 		}
-		if (ber_scanf_elements(elm, "s", &string) == -1) {
-			printf("failed (octet string) ber_scanf_elements\n");
+		if (ober_scanf_elements(elm, "s", &string) == -1) {
+			printf("failed (octet string) ober_scanf_elements\n");
 			return 1;
 		}
 		break;
 	case BER_TYPE_NULL:
-		if (ber_get_null(elm) == -1) {
+		if (ober_get_null(elm) == -1) {
 			printf("failed (null) encoding check\n");
 			return 1;
 		}
-		if (ber_scanf_elements(elm, "0", &val) == -1) {
-			printf("failed (null) ber_scanf_elements\n");
+		if (ober_scanf_elements(elm, "0", &val) == -1) {
+			printf("failed (null) ober_scanf_elements\n");
 			return 1;
 		}
 		break;
 	case BER_TYPE_OBJECT:	/* OID */
-		if (ber_get_oid(elm, &oid) == -1) {
+		if (ober_get_oid(elm, &oid) == -1) {
 			printf("failed (oid) encoding check\n");
 			return 1;
 		}
-		if (ber_scanf_elements(elm, "o", &oid) == -1) {
-			printf("failed (oid) ber_scanf_elements\n");
+		if (ober_scanf_elements(elm, "o", &oid) == -1) {
+			printf("failed (oid) ober_scanf_elements\n");
 			return 1;
 		}
 		break;
@@ -444,7 +444,7 @@ test(int i)
 	case BER_TYPE_SEQUENCE:
 		if (elm->be_sub != NULL) {
 			ptr = elm->be_sub;
-			if (ber_getpos(ptr) <= pos) {
+			if (ober_getpos(ptr) <= pos) {
 				printf("unexpected element position within "
 				    "byte stream\n");
 				return 1;
@@ -464,14 +464,14 @@ test(int i)
 	 * additional testing on short form encoding
 	 */
 	if (test_vectors[i].memcheck) {
-		len = ber_calc_len(elm);
+		len = ober_calc_len(elm);
 		if (len != test_vectors[i].length) {
 			printf("failed to calculate length\n");
 			return 1;
 		}
 
 		ber.br_wbuf = NULL;
-		len = ber_write_elements(&ber, elm);
+		len = ober_write_elements(&ber, elm);
 		if (len != test_vectors[i].length) {
 			printf("failed length check (was %zd want "
 			    "%zd)\n", len, test_vectors[i].length);
@@ -487,10 +487,10 @@ test(int i)
 			hexdump(test_vectors[i].input, test_vectors[i].length);
 			return 1;
 		}
-		ber_free(&ber);
+		ober_free(&ber);
 
 	}
-	ber_free_elements(elm);
+	ober_free_elements(elm);
 
 	return 0;
 }
@@ -503,15 +503,15 @@ test_ber_printf_elements_integer(void) {
 
 	unsigned char		 exp[3] = { 0x02, 0x01, 0x01 };
 
-	elm = ber_printf_elements(elm, "d", val);
+	elm = ober_printf_elements(elm, "d", val);
 	if (elm == NULL) {
-		printf("failed ber_printf_elements\n");
+		printf("failed ober_printf_elements\n");
 		return 1;
 	}
 
 	bzero(&ber, sizeof(ber));
 	ber.br_wbuf = NULL;
-	len = ber_write_elements(&ber, elm);
+	len = ober_write_elements(&ber, elm);
 	if (len != sizeof(exp)) {
 		printf("failed length check (was %d want %zd)\n", len,
 		    sizeof(exp));
@@ -523,8 +523,8 @@ test_ber_printf_elements_integer(void) {
 		return 1;
 	}
 
-	ber_free_elements(elm);
-	ber_free(&ber);
+	ober_free_elements(elm);
+	ober_free(&ber);
 	return 0;
 }
 
@@ -550,24 +550,24 @@ test_ber_printf_elements_ldap_bind(void) {
 		0x80, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64
 	};
 
-	if ((root = ber_add_sequence(NULL)) == NULL)
+	if ((root = ober_add_sequence(NULL)) == NULL)
 		return 1;
 
-	elm = ber_printf_elements(root, "d{tdsst", msgid,
+	elm = ober_printf_elements(root, "d{tdsst", msgid,
 	    BER_CLASS_APP, LDAP_REQ_BIND,
 	    VERSION,
 	    binddn, bindcred,
 	    BER_CLASS_CONTEXT, LDAP_AUTH_SIMPLE);
 
 	if (elm == NULL) {
-		printf("failed ber_printf_elements\n");
+		printf("failed ober_printf_elements\n");
 		return 1;
 	}
 
 	bzero(&ber, sizeof(ber));
 	ber.br_wbuf = NULL;
-	ber_set_application(&ber, ldap_application);
-	len = ber_write_elements(&ber, root);
+	ober_set_application(&ber, ldap_application);
+	len = ober_write_elements(&ber, root);
 	if (len != sizeof(exp)) {
 		printf("failed length check (was %d want %zd)\n", len,
 		    sizeof(exp));
@@ -580,8 +580,8 @@ test_ber_printf_elements_ldap_bind(void) {
 		return 1;
 	}
 
-	ber_free_elements(elm);
-	ber_free(&ber);
+	ober_free_elements(elm);
+	ober_free(&ber);
 	return 0;
 }
 
@@ -604,21 +604,21 @@ test_ber_printf_elements_ldap_search(void) {
 		0x00, 0x04, 0x02, 0x63, 0x6e
 	};
 
-	if ((root = ber_add_sequence(NULL)) == NULL)
+	if ((root = ober_add_sequence(NULL)) == NULL)
 		return 1;
 
-	elm = ber_printf_elements(root, "d{tsEEddbs",
+	elm = ober_printf_elements(root, "d{tsEEddbs",
 	    msgid, BER_CLASS_APP, LDAP_REQ_SEARCH,
 	    basedn, scope, deref, sizelimit, timelimit, typesonly, filter);
 	if (elm == NULL) {
-		printf("failed ber_printf_elements\n");
+		printf("failed ober_printf_elements\n");
 		return 1;
 	}
 
 	bzero(&ber, sizeof(ber));
 	ber.br_wbuf = NULL;
-	ber_set_application(&ber, ldap_application);
-	len = ber_write_elements(&ber, root);
+	ober_set_application(&ber, ldap_application);
+	len = ober_write_elements(&ber, root);
 	if (len != sizeof(exp)) {
 		printf("failed length check (was %d want %zd)\n", len,
 		    sizeof(exp));
@@ -631,8 +631,8 @@ test_ber_printf_elements_ldap_search(void) {
 		return 1;
 	}
 
-	ber_free_elements(elm);
-	ber_free(&ber);
+	ober_free_elements(elm);
+	ober_free(&ber);
 	return 0;
 }
 
@@ -650,16 +650,16 @@ test_ber_printf_elements_snmp_v3_encode(void) {
 		0x00, 0x04, 0x01, 0x01, 0x02, 0x01, 0x03
 	};
 
-	elm = ber_printf_elements(elm, "{iixi}", msgid, max_msg_size,
+	elm = ober_printf_elements(elm, "{iixi}", msgid, max_msg_size,
 	    &f, sizeof(f), secmodel);
 	if (elm == NULL) {
-		printf("failed ber_printf_elements\n");
+		printf("failed ober_printf_elements\n");
 		return 1;
 	}
 
 	bzero(&ber, sizeof(ber));
 	ber.br_wbuf = NULL;
-	len = ber_write_elements(&ber, elm);
+	len = ober_write_elements(&ber, elm);
 	if (len != sizeof(exp)) {
 		printf("failed length check (was %d want %zd)\n", len,
 		    sizeof(exp));
@@ -672,8 +672,8 @@ test_ber_printf_elements_snmp_v3_encode(void) {
 		return 1;
 	}
 
-	ber_free_elements(elm);
-	ber_free(&ber);
+	ober_free_elements(elm);
+	ober_free(&ber);
 	return 0;
 }
 
@@ -684,37 +684,37 @@ test_ber_null(void)
 	struct ber_element	*elm = NULL;
 
 	/* scanning into a null ber_element should fail */
-	if (ber_scanf_elements(elm, "0", &val) != -1) {
-		printf("failed (null ber_element) ber_scanf_elements empty\n");
+	if (ober_scanf_elements(elm, "0", &val) != -1) {
+		printf("failed (null ber_element) ober_scanf_elements empty\n");
 		goto fail;
 	}
 
-	if ((elm = ber_printf_elements(elm, "{d}", 1)) == NULL) {
-		printf("failed (null ber_element) ber_printf_elements\n");
+	if ((elm = ober_printf_elements(elm, "{d}", 1)) == NULL) {
+		printf("failed (null ber_element) ober_printf_elements\n");
 	}
 
 	/*
 	 * Scanning after the last valid element should be able to descend back
 	 * into the parent level.
 	 */
-	if (ber_scanf_elements(elm, "{i}", &val) != 0) {
-		printf("failed (null ber_element) ber_scanf_elements valid\n");
+	if (ober_scanf_elements(elm, "{i}", &val) != 0) {
+		printf("failed (null ber_element) ober_scanf_elements valid\n");
 		goto fail;
 	}
 	/*
 	 * Scanning for a non-existent element should fail, even if it's just a
 	 * skip.
 	 */
-	if (ber_scanf_elements(elm, "{lS}", &val) != -1) {
-		printf("failed (null ber_element) ber_scanf_elements invalid\n");
+	if (ober_scanf_elements(elm, "{lS}", &val) != -1) {
+		printf("failed (null ber_element) ober_scanf_elements invalid\n");
 		goto fail;
 	}
 
-	ber_free_elements(elm);
+	ober_free_elements(elm);
 	return 0;
 
 fail:
-	ber_free_elements(elm);
+	ober_free_elements(elm);
 	return 1;
 }
 

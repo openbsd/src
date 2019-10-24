@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.4 2019/09/18 09:59:05 martijn Exp $	*/
+/*	$OpenBSD: usm.c,v 1.5 2019/10/24 12:39:26 tb Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -137,7 +137,7 @@ usm_doinit(struct snmp_agent *agent)
 		usm->userlen = userlen;
 		return -1;
 	}
-	ber_free_element(ber);
+	ober_free_element(ber);
 
 	agent->v3->level = level;
 	usm->userlen = userlen;
@@ -150,7 +150,7 @@ usm_doinit(struct snmp_agent *agent)
 	if (!usm->engineidset || !usm->bootsset || !usm->timeset) {
 		if ((ber = snmp_get(agent, NULL, 0)) == NULL)
 			return -1;
-		ber_free_element(ber);
+		ober_free_element(ber);
 	}
 	return 0;
 }
@@ -191,7 +191,7 @@ usm_genparams(struct snmp_agent *agent, size_t *len, void **cookie)
 	if (agent->v3->level & SNMP_MSGFLAG_PRIV)
 	    saltlen = sizeof(usmcookie->salt);
 
-	if ((params = ber_printf_elements(NULL, "{xddxxx}", usm->engineid,
+	if ((params = ober_printf_elements(NULL, "{xddxxx}", usm->engineid,
 	    usm->engineidlen, usmcookie->boots, usmcookie->time, usm->user,
 	    usm->userlen, digest, digestlen, &(usmcookie->salt),
 	    saltlen)) == NULL) {
@@ -199,22 +199,22 @@ usm_genparams(struct snmp_agent *agent, size_t *len, void **cookie)
 		return NULL;
 	}
 
-	if (ber_scanf_elements(params, "{SSSSe",  &digestelm) == -1) {
-		ber_free_element(params);
+	if (ober_scanf_elements(params, "{SSSSe",  &digestelm) == -1) {
+		ober_free_element(params);
 		free(usmcookie);
 		return NULL;
 	}
 
-	ber_set_writecallback(digestelm, usm_digest_pos, usmcookie);
+	ober_set_writecallback(digestelm, usm_digest_pos, usmcookie);
 
 	bzero(&ber, sizeof(ber));
-	ber_set_application(&ber, smi_application);
-	if (ber_write_elements(&ber, params) != -1)
+	ober_set_application(&ber, smi_application);
+	if (ober_write_elements(&ber, params) != -1)
 	    berlen = ber_copy_writebuf(&ber, (void **)&secparams);
 
 	*len = berlen;
-	ber_free_element(params);
-	ber_free(&ber);
+	ober_free_element(params);
+	ober_free(&ber);
 	return secparams;
 }
 
@@ -230,20 +230,20 @@ usm_encpdu(struct snmp_agent *agent, struct ber_element *pdu, void *cookie)
 	size_t encpdulen;
 
 	bzero(&ber, sizeof(ber));
-	ber_set_application(&ber, smi_application);
-	pdulen = ber_write_elements(&ber, pdu);
+	ober_set_application(&ber, smi_application);
+	pdulen = ober_write_elements(&ber, pdu);
 	if (pdulen == -1)
 		return NULL;
 
-	ber_get_writebuf(&ber, (void **)&serialpdu);
+	ober_get_writebuf(&ber, (void **)&serialpdu);
 
 	encpdu = usm_crypt(usm->cipher, 1, usm->privkey, usmcookie, serialpdu,
 	    pdulen, &encpdulen);
-	ber_free(&ber);
+	ober_free(&ber);
 	if (encpdu == NULL)
 		return NULL;
 
-	retpdu = ber_add_nstring(NULL, encpdu, encpdulen);
+	retpdu = ober_add_nstring(NULL, encpdu, encpdulen);
 	free(encpdu);
 	return retpdu;
 }
@@ -346,17 +346,17 @@ usm_parseparams(struct snmp_agent *agent, char *packet, size_t packetlen,
 	bzero(&ber, sizeof(ber));
 	bzero(exp_digest, sizeof(exp_digest));
 
-	ber_set_application(&ber, smi_application);
-	ber_set_readbuf(&ber, buf, buflen);
-	if ((secparams = ber_read_elements(&ber, NULL)) == NULL)
+	ober_set_application(&ber, smi_application);
+	ober_set_readbuf(&ber, buf, buflen);
+	if ((secparams = ober_read_elements(&ber, NULL)) == NULL)
 		return -1;
-	ber_free(&ber);
+	ober_free(&ber);
 
 	if ((usmcookie = malloc(sizeof(*usmcookie))) == NULL)
 		goto fail;
 	*cookie = usmcookie;
 
-	if (ber_scanf_elements(secparams, "{xddxpxx}", &engineid, &engineidlen,
+	if (ober_scanf_elements(secparams, "{xddxpxx}", &engineid, &engineidlen,
 	    &(usmcookie->boots), &(usmcookie->time), &user, &userlen,
 	    &digestoffset, &digest, &digestlen, &salt, &saltlen) == -1)
 		goto fail;
@@ -437,12 +437,12 @@ usm_parseparams(struct snmp_agent *agent, char *packet, size_t packetlen,
 		if (digestlen != 0)
 			goto fail;
 
-	ber_free_element(secparams);
+	ober_free_element(secparams);
 	return 0;
 
 fail:
 	free(usmcookie);
-	ber_free_element(secparams);
+	ober_free_element(secparams);
 	return -1;
 }
 
@@ -461,10 +461,10 @@ usm_decpdu(struct snmp_agent *agent, char *encpdu, size_t encpdulen, void *cooki
 		return NULL;
 
 	bzero(&ber, sizeof(ber));
-	ber_set_application(&ber, smi_application);
-	ber_set_readbuf(&ber, rawpdu, rawpdulen);
-	scopedpdu = ber_read_elements(&ber, NULL);
-	ber_free(&ber);
+	ober_set_application(&ber, smi_application);
+	ober_set_readbuf(&ber, rawpdu, rawpdulen);
+	scopedpdu = ober_read_elements(&ber, NULL);
+	ober_free(&ber);
 	free(rawpdu);
 
 	return scopedpdu;

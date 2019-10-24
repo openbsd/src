@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber_add_string.3,v 1.3 2019/05/21 12:30:07 rob Exp $
+.\" $OpenBSD: ober_add_string.3,v 1.1 2019/10/24 12:39:26 tb Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,69 +14,69 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 21 2019 $
-.Dt BER_ADD_STRING 3
+.Dd $Mdocdate: October 24 2019 $
+.Dt OBER_ADD_STRING 3
 .Os
 .Sh NAME
-.Nm ber_get_element ,
-.Nm ber_add_sequence ,
-.Nm ber_add_set ,
-.Nm ber_add_null ,
-.Nm ber_add_eoc ,
-.Nm ber_add_integer ,
-.Nm ber_add_enumerated ,
-.Nm ber_add_boolean ,
-.Nm ber_add_string ,
-.Nm ber_add_nstring ,
-.Nm ber_add_ostring ,
-.Nm ber_add_bitstring ,
-.Nm ber_add_oid ,
-.Nm ber_add_noid ,
-.Nm ber_add_oidstring ,
-.Nm ber_printf_elements
+.Nm ober_get_element ,
+.Nm ober_add_sequence ,
+.Nm ober_add_set ,
+.Nm ober_add_null ,
+.Nm ober_add_eoc ,
+.Nm ober_add_integer ,
+.Nm ober_add_enumerated ,
+.Nm ober_add_boolean ,
+.Nm ober_add_string ,
+.Nm ober_add_nstring ,
+.Nm ober_add_ostring ,
+.Nm ober_add_bitstring ,
+.Nm ober_add_oid ,
+.Nm ober_add_noid ,
+.Nm ober_add_oidstring ,
+.Nm ober_printf_elements
 .Nd create ASN.1 objects for BER encoding
 .Sh SYNOPSIS
 .In sys/types.h
 .In ber.h
 .Ft "struct ber_element *"
-.Fn "ber_get_element" "unsigned int encoding"
+.Fn "ober_get_element" "unsigned int encoding"
 .Ft "struct ber_element *"
-.Fn "ber_add_sequence" "struct ber_element *prev"
+.Fn "ober_add_sequence" "struct ber_element *prev"
 .Ft "struct ber_element *"
-.Fn "ber_add_set" "struct ber_element *prev"
+.Fn "ober_add_set" "struct ber_element *prev"
 .Ft "struct ber_element *"
-.Fn "ber_add_null" "struct ber_element *prev"
+.Fn "ober_add_null" "struct ber_element *prev"
 .Ft "struct ber_element *"
-.Fn "ber_add_eoc" "struct ber_element *prev"
+.Fn "ober_add_eoc" "struct ber_element *prev"
 .Ft "struct ber_element *"
-.Fn "ber_add_integer" "struct ber_element *prev" "long long val"
+.Fn "ober_add_integer" "struct ber_element *prev" "long long val"
 .Ft "struct ber_element *"
-.Fn "ber_add_enumerated" "struct ber_element *prev" "long long val"
+.Fn "ober_add_enumerated" "struct ber_element *prev" "long long val"
 .Ft "struct ber_element *"
-.Fn "ber_add_boolean" "struct ber_element *prev" "int bool"
+.Fn "ober_add_boolean" "struct ber_element *prev" "int bool"
 .Ft "struct ber_element *"
-.Fn "ber_add_string" "struct ber_element *prev" "const char *string"
+.Fn "ober_add_string" "struct ber_element *prev" "const char *string"
 .Ft "struct ber_element *"
-.Fn "ber_add_nstring" "struct ber_element *prev" "const char *string" "size_t size"
+.Fn "ober_add_nstring" "struct ber_element *prev" "const char *string" "size_t size"
 .Ft "struct ber_element *"
-.Fo "ber_add_ostring"
+.Fo "ober_add_ostring"
 .Fa "struct ber_element *prev"
 .Fa "struct ber_octetstring *ostring"
 .Fc
 .Ft "struct ber_element *"
-.Fo "ber_add_bitstring"
+.Fo "ober_add_bitstring"
 .Fa "struct ber_element *prev"
 .Fa "const void *buf"
 .Fa "size_t size"
 .Fc
 .Ft "struct ber_element *"
-.Fn "ber_add_oid" "struct ber_element *prev" "struct ber_oid *oid"
+.Fn "ober_add_oid" "struct ber_element *prev" "struct ber_oid *oid"
 .Ft "struct ber_element *"
-.Fn "ber_add_noid" "struct ber_element *prev" "struct ber_oid *oid" "int n"
+.Fn "ober_add_noid" "struct ber_element *prev" "struct ber_oid *oid" "int n"
 .Ft "struct ber_element *"
-.Fn "ber_add_oidstring" "struct ber_element *prev" "const char *string"
+.Fn "ober_add_oidstring" "struct ber_element *prev" "const char *string"
 .Ft "struct ber_element *"
-.Fn "ber_printf_elements" "struct ber_element *prev" "char *format" "..."
+.Fn "ober_printf_elements" "struct ber_element *prev" "char *format" "..."
 .Sh DESCRIPTION
 Intermediary storage of BER elements during encoding and decoding uses the
 following structure:
@@ -102,7 +102,7 @@ struct ber_element {
 };
 .Ed
 .Pp
-.Fn ber_get_element
+.Fn ober_get_element
 creates a new
 .Vt ber_element
 with default values, dynamically allocates required storage, and sets
@@ -111,7 +111,7 @@ to
 .Fa encoding .
 .Pp
 The
-.Fn ber_add_*
+.Fn ober_add_*
 functions allocate a new
 .Vt ber_element
 of the respective type.
@@ -128,7 +128,7 @@ they put it behind
 Those functions taking a second argument initialize the content
 of the new element from the second argument.
 .Pp
-.Fn ber_printf_elements
+.Fn ober_printf_elements
 creates zero or more
 .Vt ber_element
 structures.
@@ -139,25 +139,25 @@ and passed to the listed function, creating one
 .Vt ber_element
 per byte.
 The following bytes are valid:
-.Bl -column -offset indent byte ber_add_enumerated "struct ber_element *"
+.Bl -column -offset indent byte ober_add_enumerated "struct ber_element *"
 .It Sy byte Ta Sy function Ta Sy arguments
-.It B   Ta Fn ber_add_bitstring  Ta 2: Vt void * , size_t
-.It b   Ta Fn ber_add_boolean    Ta 1: Vt int
-.It d   Ta Fn ber_add_integer    Ta 1: Vt int
-.It E   Ta Fn ber_add_enumerated Ta 1: Vt long long
-.It e   Ta see below             Ta 1: Vt struct ber_element *
-.It i   Ta Fn ber_add_integer    Ta 1: Vt long long
-.It O   Ta Fn ber_add_oid        Ta 1: Vt struct ber_oid *
-.It o   Ta Fn ber_add_oidstring  Ta 1: Vt char *
-.It s   Ta Fn ber_add_string     Ta 1: Vt char *
-.It t   Ta Xr ber_set_header 3   Ta 2: Vt int , unsigned int
-.It x   Ta Fn ber_add_nstring    Ta 2: Vt char * , size_t
-.It \&( Ta Fn ber_add_set        Ta 0
-.It \&) Ta see below             Ta 0
-.It \&. Ta Fn ber_add_eoc        Ta 0
-.It 0   Ta Fn ber_add_null       Ta 0
-.It {   Ta Fn ber_add_sequence   Ta 0
-.It }   Ta see below             Ta 0
+.It B   Ta Fn ober_add_bitstring  Ta 2: Vt void * , size_t
+.It b   Ta Fn ober_add_boolean    Ta 1: Vt int
+.It d   Ta Fn ober_add_integer    Ta 1: Vt int
+.It E   Ta Fn ober_add_enumerated Ta 1: Vt long long
+.It e   Ta see below              Ta 1: Vt struct ber_element *
+.It i   Ta Fn ober_add_integer    Ta 1: Vt long long
+.It O   Ta Fn ober_add_oid        Ta 1: Vt struct ber_oid *
+.It o   Ta Fn ober_add_oidstring  Ta 1: Vt char *
+.It s   Ta Fn ober_add_string     Ta 1: Vt char *
+.It t   Ta Xr ober_set_header 3   Ta 2: Vt int , unsigned int
+.It x   Ta Fn ober_add_nstring    Ta 2: Vt char * , size_t
+.It \&( Ta Fn ober_add_set        Ta 0
+.It \&) Ta see below              Ta 0
+.It \&. Ta Fn ober_add_eoc        Ta 0
+.It 0   Ta Fn ober_add_null       Ta 0
+.It {   Ta Fn ober_add_sequence   Ta 0
+.It }   Ta see below              Ta 0
 .El
 .Pp
 The
@@ -175,7 +175,7 @@ if the
 is the first byte in
 .Fa fmt ,
 just like the
-.Fn ber_add_*
+.Fn ober_add_*
 functions would add a new element.
 The
 .Sq t
@@ -202,7 +202,7 @@ is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Pp
-.Fn ber_printf_elements
+.Fn ober_printf_elements
 returns
 .Dv NULL
 without setting
@@ -214,10 +214,10 @@ is an empty string and
 is
 .Dv NULL .
 .Sh SEE ALSO
-.Xr ber_get_string 3 ,
-.Xr ber_oid_cmp 3 ,
-.Xr ber_read_elements 3 ,
-.Xr ber_set_header 3
+.Xr ober_get_string 3 ,
+.Xr ober_oid_cmp 3 ,
+.Xr ober_read_elements 3 ,
+.Xr ober_set_header 3
 .Sh STANDARDS
 ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:
 Information technology - ASN.1 encoding rules.

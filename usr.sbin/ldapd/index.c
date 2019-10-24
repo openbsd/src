@@ -1,4 +1,4 @@
-/*	$OpenBSD: index.c,v 1.12 2018/06/28 02:41:49 gsoares Exp $ */
+/*	$OpenBSD: index.c,v 1.13 2019/10/24 12:39:26 tb Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -103,7 +103,7 @@ index_attribute(struct namespace *ns, char *attr, struct btval *dn,
 	dnsz = dn->size - strlen(ns->suffix);
 
 	for (v = a->be_next->be_sub; v; v = v->be_next) {
-		if (ber_get_string(v, &s) != 0)
+		if (ober_get_string(v, &s) != 0)
 			continue;
 		memset(&key, 0, sizeof(key));
 		key.size = asprintf(&t, "%s=%s,%.*s", attr, s, dnsz,
@@ -202,7 +202,7 @@ unindex_attribute(struct namespace *ns, char *attr, struct btval *dn,
 	dnsz = dn->size - strlen(ns->suffix);
 
 	for (v = a->be_next->be_sub; v; v = v->be_next) {
-		if (ber_get_string(v, &s) != 0)
+		if (ober_get_string(v, &s) != 0)
 			continue;
 		memset(&key, 0, sizeof(key));
 		key.size = asprintf(&t, "%s=%s,%.*s", attr, s, dnsz,

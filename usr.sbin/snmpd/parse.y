@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.55 2019/06/11 05:36:32 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.56 2019/10/24 12:39:27 tb Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -411,7 +411,7 @@ oid		: STRING				{
 				free($1);
 				YYERROR;
 			}
-			if (ber_string2oid($1, sysoid) == -1) {
+			if (ober_string2oid($1, sysoid) == -1) {
 				yyerror("invalid OID: %s", $1);
 				free(sysoid);
 				free($1);
@@ -430,7 +430,7 @@ trapoid		: oid					{ $$ = $1; }
 				yyerror("calloc");
 				YYERROR;
 			}
-			ber_string2oid("1.3", sysoid);
+			ober_string2oid("1.3", sysoid);
 			$$ = sysoid;
 		}
 		;

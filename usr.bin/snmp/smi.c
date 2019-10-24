@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.5 2019/10/11 14:48:30 jsg Exp $	*/
+/*	$OpenBSD: smi.c,v 1.6 2019/10/24 12:39:26 tb Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -65,7 +65,7 @@ smi_debug_elements(struct ber_element *root)
 	int		 constructed;
 
 	/* calculate lengths */
-	ber_calc_len(root);
+	ober_calc_len(root);
 
 	switch (root->be_encoding) {
 	case BER_TYPE_SEQUENCE:
@@ -251,7 +251,7 @@ smi_print_element(struct ber_element *root, int print_hint,
 
 	switch (root->be_encoding) {
 	case BER_TYPE_BOOLEAN:
-		if (ber_get_boolean(root, &d) == -1)
+		if (ober_get_boolean(root, &d) == -1)
 			goto fail;
 		if (print_hint) {
 			if (asprintf(&str, "INTEGER: %s(%d)",
@@ -263,7 +263,7 @@ smi_print_element(struct ber_element *root, int print_hint,
 		break;
 	case BER_TYPE_INTEGER:
 	case BER_TYPE_ENUMERATED:
-		if (ber_get_integer(root, &v) == -1)
+		if (ober_get_integer(root, &v) == -1)
 			goto fail;
 		if (root->be_class == BER_CLASS_APPLICATION &&
 		    root->be_type == SNMP_T_TIMETICKS) {
@@ -333,7 +333,7 @@ smi_print_element(struct ber_element *root, int print_hint,
 			goto fail;
 		break;
 	case BER_TYPE_BITSTRING:
-		if (ber_get_bitstring(root, (void *)&buf, &len) == -1)
+		if (ober_get_bitstring(root, (void *)&buf, &len) == -1)
 			goto fail;
 		slen = len * 2 + 1 + sizeof("BITS: ");
 		if ((str = calloc(1, slen)) == NULL)
@@ -349,7 +349,7 @@ smi_print_element(struct ber_element *root, int print_hint,
 		}
 		break;
 	case BER_TYPE_OBJECT:
-		if (ber_get_oid(root, &o) == -1)
+		if (ober_get_oid(root, &o) == -1)
 			goto fail;
 		if (asprintf(&str, "%s%s",
 		    print_hint ? "OID: " : "",
@@ -357,7 +357,7 @@ smi_print_element(struct ber_element *root, int print_hint,
 			goto fail;
 		break;
 	case BER_TYPE_OCTETSTRING:
-		if (ber_get_string(root, &buf) == -1)
+		if (ober_get_string(root, &buf) == -1)
 			goto fail;
 		if (root->be_class == BER_CLASS_APPLICATION &&
 		    root->be_type == SNMP_T_IPADDR) {
@@ -471,7 +471,7 @@ smi_string2oid(const char *oidstr, struct ber_oid *o)
 
 	/*
 	 * Parse OID strings in the common form n.n.n or n-n-n.
-	 * Based on ber_string2oid with additional support for symbolic names.
+	 * Based on ober_string2oid with additional support for symbolic names.
 	 */
 	p = sp = str[0] == '.' ? str + 1 : str;
 	for (; p != NULL; sp = p) {
@@ -479,7 +479,7 @@ smi_string2oid(const char *oidstr, struct ber_oid *o)
 			*p++ = '\0';
 		if ((oid = smi_findkey(sp)) != NULL) {
 			bcopy(&oid->o_id, &ko, sizeof(ko));
-			if (o->bo_n && ber_oid_cmp(o, &ko) != 2)
+			if (o->bo_n && ober_oid_cmp(o, &ko) != 2)
 				return (-1);
 			bcopy(&ko, o, sizeof(*o));
 			errstr = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.22 2019/05/18 18:45:53 rob Exp $ */
+/*	$OpenBSD: modify.c,v 1.23 2019/10/24 12:39:26 tb Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -41,7 +41,7 @@ ldap_delete(struct request *req)
 
 	++stats.req_mod;
 
-	if (ber_scanf_elements(req->op, "s", &dn) != 0)
+	if (ober_scanf_elements(req->op, "s", &dn) != 0)
 		return ldap_respond(req, LDAP_PROTOCOL_ERROR);
 
 	normalize_dn(dn);
@@ -102,7 +102,7 @@ ldap_delete(struct request *req)
 		goto done;
 	for (elm = entry->be_sub; elm != NULL; elm = elm->be_next) {
 		a = elm->be_sub;
-		if (a && ber_get_string(a, &s) == 0 &&
+		if (a && ober_get_string(a, &s) == 0 &&
 		    !authorized(req->conn, ns, ACI_WRITE, dn, s,
 		    LDAP_SCOPE_BASE)) {
 			rc = LDAP_INSUFFICIENT_ACCESS;
@@ -134,7 +134,7 @@ ldap_add(struct request *req)
 
 	++stats.req_mod;
 
-	if (ber_scanf_elements(req->op, "{se", &dn, &attrs) != 0)
+	if (ober_scanf_elements(req->op, "{se", &dn, &attrs) != 0)
 		return ldap_respond(req, LDAP_PROTOCOL_ERROR);
 
 	normalize_dn(dn);
@@ -158,7 +158,7 @@ ldap_add(struct request *req)
 	 */
 	for (elm = attrs->be_sub; elm != NULL; elm = elm->be_next) {
 		attr = elm->be_sub;
-		if (attr == NULL || ber_get_string(attr, &s) != 0)
+		if (attr == NULL || ober_get_string(attr, &s) != 0)
 			return ldap_respond(req, LDAP_PROTOCOL_ERROR);
 		if (!authorized(req->conn, ns, ACI_WRITE, dn, s,
 		    LDAP_SCOPE_BASE))
@@ -190,25 +190,25 @@ ldap_add(struct request *req)
 
 	/* add operational attributes
 	 */
-	if ((set = ber_add_set(NULL)) == NULL)
+	if ((set = ober_add_set(NULL)) == NULL)
 		goto fail;
-	if (ber_add_string(set, req->conn->binddn ? req->conn->binddn : "") == NULL)
+	if (ober_add_string(set, req->conn->binddn ? req->conn->binddn : "") == NULL)
 		goto fail;
 	if (ldap_add_attribute(attrs, "creatorsName", set) == NULL)
 		goto fail;
 
-	if ((set = ber_add_set(NULL)) == NULL)
+	if ((set = ober_add_set(NULL)) == NULL)
 		goto fail;
-	if (ber_add_string(set, ldap_now()) == NULL)
+	if (ober_add_string(set, ldap_now()) == NULL)
 		goto fail;
 	if (ldap_add_attribute(attrs, "createTimestamp", set) == NULL)
 		goto fail;
 
 	uuid_create(&uuid);
 	uuid_to_string(&uuid, uuid_str, sizeof(uuid_str));
-	if ((set = ber_add_set(NULL)) == NULL)
+	if ((set = ober_add_set(NULL)) == NULL)
 		goto fail;
-	if (ber_add_string(set, uuid_str) == NULL)
+	if (ober_add_string(set, uuid_str) == NULL)
 		goto fail;
 	if (ldap_add_attribute(attrs, "entryUUID", set) == NULL)
 		goto fail;
@@ -227,7 +227,7 @@ ldap_add(struct request *req)
 
 fail:
 	if (set != NULL)
-		ber_free_elements(set);
+		ober_free_elements(set);
 	namespace_abort(ns);
 	return ldap_respond(req, LDAP_OTHER);
 }
@@ -247,7 +247,7 @@ ldap_modify(struct request *req)
 
 	++stats.req_mod;
 
-	if (ber_scanf_elements(req->op, "{se", &dn, &mods) != 0)
+	if (ober_scanf_elements(req->op, "{se", &dn, &mods) != 0)
 		return ldap_respond(req, LDAP_PROTOCOL_ERROR);
 
 	normalize_dn(dn);
@@ -266,7 +266,7 @@ ldap_modify(struct request *req)
 
 	/* Check authorization for each mod to consider attributes */
 	for (mod = mods->be_sub; mod; mod = mod->be_next) {
-		if (ber_scanf_elements(mod, "{E{es", &op, &prev, &attr) != 0)
+		if (ober_scanf_elements(mod, "{E{es", &op, &prev, &attr) != 0)
 			return ldap_respond(req, LDAP_PROTOCOL_ERROR);
 		if (!authorized(req->conn, ns, ACI_WRITE, dn, attr,
 		    LDAP_SCOPE_BASE))
@@ -288,7 +288,7 @@ ldap_modify(struct request *req)
 	}
 
 	for (mod = mods->be_sub; mod; mod = mod->be_next) {
-		if (ber_scanf_elements(mod, "{E{ese(", &op, &prev, &attr, &vals) != 0) {
+		if (ober_scanf_elements(mod, "{E{ese(", &op, &prev, &attr, &vals) != 0) {
 			rc = LDAP_PROTOCOL_ERROR;
 			vals = NULL;
 			goto done;
@@ -355,7 +355,7 @@ ldap_modify(struct request *req)
 		}
 
 		if (vals != NULL) {
-			ber_free_elements(vals);
+			ober_free_elements(vals);
 			vals = NULL;
 		}
 	}
@@ -363,15 +363,15 @@ ldap_modify(struct request *req)
 	if ((rc = validate_entry(dn, entry, ns->relax)) != LDAP_SUCCESS)
 		goto done;
 
-	set = ber_add_set(NULL);
-	ber_add_string(set, req->conn->binddn ? req->conn->binddn : "");
+	set = ober_add_set(NULL);
+	ober_add_string(set, req->conn->binddn ? req->conn->binddn : "");
 	if ((a = ldap_get_attribute(entry, "modifiersName")) != NULL)
 		ldap_set_values(a, set);
 	else
 		ldap_add_attribute(entry, "modifiersName", set);
 
-	set = ber_add_set(NULL);
-	ber_add_string(set, ldap_now());
+	set = ober_add_set(NULL);
+	ober_add_string(set, ldap_now());
 	if ((a = ldap_get_attribute(entry, "modifyTimestamp")) != NULL)
 		ldap_set_values(a, set);
 	else
@@ -384,7 +384,7 @@ ldap_modify(struct request *req)
 
 done:
 	if (vals != NULL)
-		ber_free_elements(vals);
+		ober_free_elements(vals);
 	namespace_abort(ns);
 	return ldap_respond(req, rc);
 }

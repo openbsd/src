@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.13 2018/05/14 07:53:47 reyk Exp $ */
+/*	$OpenBSD: auth.c,v 1.14 2019/10/24 12:39:26 tb Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -259,7 +259,7 @@ ldap_auth_sasl(struct request *req, char *binddn, struct ber_element *params)
 	char			*creds;
 	size_t			 len;
 
-	if (ber_scanf_elements(params, "{sx", &method, &creds, &len) != 0)
+	if (ober_scanf_elements(params, "{sx", &method, &creds, &len) != 0)
 		return LDAP_PROTOCOL_ERROR;
 
 	if (strcmp(method, "PLAIN") != 0)
@@ -315,7 +315,7 @@ ldap_auth_simple(struct request *req, char *binddn, struct ber_element *auth)
 		return LDAP_CONFIDENTIALITY_REQUIRED;
 	}
 
-	if (ber_scanf_elements(auth, "s", &password) != 0)
+	if (ober_scanf_elements(auth, "s", &password) != 0)
 		return LDAP_PROTOCOL_ERROR;
 
 	if (*password == '\0') {
@@ -349,7 +349,7 @@ ldap_auth_simple(struct request *req, char *binddn, struct ber_element *auth)
 		if (pw != NULL) {
 			for (elm = pw->be_next->be_sub; elm;
 			    elm = elm->be_next) {
-				if (ber_get_string(elm, &user_password) != 0)
+				if (ober_get_string(elm, &user_password) != 0)
 					continue;
 				pwret = check_password(req, user_password, password);
 				if (pwret >= 1)
@@ -406,7 +406,7 @@ ldap_bind(struct request *req)
 
 	++stats.req_bind;
 
-	if (ber_scanf_elements(req->op, "{ise", &ver, &binddn, &auth) != 0) {
+	if (ober_scanf_elements(req->op, "{ise", &ver, &binddn, &auth) != 0) {
 		rc = LDAP_PROTOCOL_ERROR;
 		goto done;
 	}

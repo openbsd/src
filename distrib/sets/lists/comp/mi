@@ -2128,11 +2128,6 @@
 ./usr/share/man/man3/bcmp.3
 ./usr/share/man/man3/bcopy.3
 ./usr/share/man/man3/bcrypt_pbkdf.3
-./usr/share/man/man3/ber_add_string.3
-./usr/share/man/man3/ber_get_string.3
-./usr/share/man/man3/ber_oid_cmp.3
-./usr/share/man/man3/ber_read_elements.3
-./usr/share/man/man3/ber_set_header.3
 ./usr/share/man/man3/bindresvport.3
 ./usr/share/man/man3/bit_alloc.3
 ./usr/share/man/man3/blowfish.3
@@ -2578,6 +2573,11 @@
 ./usr/share/man/man3/nice.3
 ./usr/share/man/man3/nl_langinfo.3
 ./usr/share/man/man3/nlist.3
+./usr/share/man/man3/ober_add_string.3
+./usr/share/man/man3/ober_get_string.3
+./usr/share/man/man3/ober_oid_cmp.3
+./usr/share/man/man3/ober_read_elements.3
+./usr/share/man/man3/ober_set_header.3
 ./usr/share/man/man3/octeon/cacheflush.3
 ./usr/share/man/man3/octeon/get_fpc_csr.3
 ./usr/share/man/man3/offsetof.3

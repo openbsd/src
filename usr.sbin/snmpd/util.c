@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.8 2019/05/11 17:46:02 rob Exp $	*/
+/*	$OpenBSD: util.c,v 1.9 2019/10/24 12:39:27 tb Exp $	*/
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -50,18 +50,18 @@ varbind_convert(struct agentx_pdu *pdu, struct agentx_varbind_hdr *vbhdr,
 		goto done;
 	}
 
-	*iter = ber_add_sequence(*iter);
+	*iter = ober_add_sequence(*iter);
 	if (*varbind == NULL)
 		*varbind = *iter;
 
-	a = ber_add_oid(*iter, &oid);
+	a = ober_add_oid(*iter, &oid);
 
 	switch (vbhdr->type) {
 	case AGENTX_NO_SUCH_OBJECT:
 	case AGENTX_NO_SUCH_INSTANCE:
 	case AGENTX_END_OF_MIB_VIEW:
 	case AGENTX_NULL:
-		a = ber_add_null(a);
+		a = ober_add_null(a);
 		break;
 
 	case AGENTX_IP_ADDRESS:
@@ -72,7 +72,7 @@ varbind_convert(struct agentx_pdu *pdu, struct agentx_varbind_hdr *vbhdr,
 			ret = AGENTX_ERR_PARSE_ERROR;
 			goto done;
 		}
-		a = ber_add_nstring(a, str, slen);
+		a = ober_add_nstring(a, str, slen);
 		break;
 
 	case AGENTX_OBJECT_IDENTIFIER:
@@ -81,7 +81,7 @@ varbind_convert(struct agentx_pdu *pdu, struct agentx_varbind_hdr *vbhdr,
 			ret = AGENTX_ERR_PARSE_ERROR;
 			goto done;
 		}
-		a = ber_add_oid(a, &oid);
+		a = ober_add_oid(a, &oid);
 		break;
 
 	case AGENTX_INTEGER:
@@ -92,7 +92,7 @@ varbind_convert(struct agentx_pdu *pdu, struct agentx_varbind_hdr *vbhdr,
 			ret = AGENTX_ERR_PARSE_ERROR;
 			goto done;
 		}
-		a = ber_add_integer(a, d);
+		a = ober_add_integer(a, d);
 		break;
 
 	case AGENTX_COUNTER64:
@@ -100,7 +100,7 @@ varbind_convert(struct agentx_pdu *pdu, struct agentx_varbind_hdr *vbhdr,
 			ret = AGENTX_ERR_PARSE_ERROR;
 			goto done;
 		}
-		a = ber_add_integer(a, l);
+		a = ober_add_integer(a, l);
 		break;
 
 	default:
@@ -121,22 +121,22 @@ varbind_convert(struct agentx_pdu *pdu, struct agentx_varbind_hdr *vbhdr,
 
 	/* Convert AgentX error types to SNMP error types */
 	case AGENTX_NO_SUCH_OBJECT:
-		ber_set_header(a, BER_CLASS_CONTEXT, 0);
+		ober_set_header(a, BER_CLASS_CONTEXT, 0);
 		break;
 	case AGENTX_NO_SUCH_INSTANCE:
-		ber_set_header(a, BER_CLASS_CONTEXT, 1);
+		ober_set_header(a, BER_CLASS_CONTEXT, 1);
 		break;
 
 	case AGENTX_COUNTER32:
-		ber_set_header(a, BER_CLASS_APPLICATION, SNMP_COUNTER32);
+		ober_set_header(a, BER_CLASS_APPLICATION, SNMP_COUNTER32);
 		break;
 
 	case AGENTX_GAUGE32:
-		ber_set_header(a, BER_CLASS_APPLICATION, SNMP_GAUGE32);
+		ober_set_header(a, BER_CLASS_APPLICATION, SNMP_GAUGE32);
 		break;
 
 	case AGENTX_COUNTER64:
-		ber_set_header(a, BER_CLASS_APPLICATION, SNMP_COUNTER64);
+		ober_set_header(a, BER_CLASS_APPLICATION, SNMP_COUNTER64);
 		break;
 
 	case AGENTX_IP_ADDRESS:
@@ -145,7 +145,7 @@ varbind_convert(struct agentx_pdu *pdu, struct agentx_varbind_hdr *vbhdr,
 
 	default:
 		/* application-specific types */
-		ber_set_header(a, BER_CLASS_APPLICATION, vbhdr->type);
+		ober_set_header(a, BER_CLASS_APPLICATION, vbhdr->type);
 		break;
 	}
  done:

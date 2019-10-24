@@ -1,4 +1,4 @@
-/*	$OpenBSD: attributes.c,v 1.5 2017/02/11 20:40:03 guenther Exp $ */
+/*	$OpenBSD: attributes.c,v 1.6 2019/10/24 12:39:26 tb Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -39,7 +39,7 @@ ldap_get_attribute(struct ber_element *entry, const char *attr)
 
 	for (elm = entry->be_sub; elm != NULL; elm = elm->be_next) {
 		a = elm->be_sub;
-		if (a && ber_get_string(a, &s) == 0 && strcasecmp(s, attr) == 0)
+		if (a && ober_get_string(a, &s) == 0 && strcasecmp(s, attr) == 0)
 			return a;
 	}
 
@@ -72,7 +72,7 @@ ldap_find_value(struct ber_element *elm, const char *value)
 		return NULL;
 
 	for (a = elm->be_sub; a != NULL; a = a->be_next) {
-		if (ber_get_string(a, &s) == 0 && strcasecmp(s, value) == 0)
+		if (ober_get_string(a, &s) == 0 && strcasecmp(s, value) == 0)
 			return a;
 	}
 
@@ -105,13 +105,13 @@ ldap_add_attribute(struct ber_element *entry, const char *attr,
 	else while (last != NULL && last->be_next != NULL)
 		last = last->be_next;
 
-	if ((elm = ber_add_sequence(last)) == NULL)
+	if ((elm = ober_add_sequence(last)) == NULL)
 		return NULL;
-	if ((a = ber_add_string(elm, attr)) == NULL) {
-		ber_free_elements(elm);
+	if ((a = ober_add_string(elm, attr)) == NULL) {
+		ober_free_elements(elm);
 		return NULL;
 	}
-	ber_link_elements(a, value_set);
+	ober_link_elements(a, value_set);
 
 	return elm;
 }
@@ -126,17 +126,17 @@ ldap_set_values(struct ber_element *elm, struct ber_element *vals)
 	assert(vals);
 	assert(vals->be_sub);
 
-	if (ber_scanf_elements(elm, "se(", &attr, &old_vals) != 0) {
+	if (ober_scanf_elements(elm, "se(", &attr, &old_vals) != 0) {
 		log_warnx("failed to parse element");
 		return -1;
 	}
 
-	ber_free_elements(old_vals->be_sub);
+	ober_free_elements(old_vals->be_sub);
 	old_vals->be_sub = NULL;
-	ber_link_elements(old_vals, vals->be_sub);
+	ober_link_elements(old_vals, vals->be_sub);
 
 	vals->be_sub = NULL;
-	ber_free_elements(vals);
+	ober_free_elements(vals);
 
 	return 0;
 }
@@ -152,7 +152,7 @@ ldap_merge_values(struct ber_element *elm, struct ber_element *vals)
 	assert(vals->be_type == BER_TYPE_SET);
 	assert(vals->be_sub);
 
-	if (ber_scanf_elements(elm, "se(", &attr, &old_vals) != 0) {
+	if (ober_scanf_elements(elm, "se(", &attr, &old_vals) != 0) {
 		log_warnx("failed to parse element");
 		return -1;
 	}
@@ -161,10 +161,10 @@ ldap_merge_values(struct ber_element *elm, struct ber_element *vals)
 	while (last && last->be_next)
 		last = last->be_next;
 
-	ber_link_elements(last, vals->be_sub);
+	ober_link_elements(last, vals->be_sub);
 
 	vals->be_sub = NULL;
-	ber_free_elements(vals);
+	ober_free_elements(vals);
 
 	return 0;
 }
@@ -181,7 +181,7 @@ ldap_del_attribute(struct ber_element *entry, const char *attrdesc)
 
 	attr = entry->be_sub;
 	while (attr) {
-		if (ber_scanf_elements(attr, "{s(", &s) != 0) {
+		if (ober_scanf_elements(attr, "{s(", &s) != 0) {
 			log_warnx("failed to parse attribute");
 			return -1;
 		}
@@ -192,7 +192,7 @@ ldap_del_attribute(struct ber_element *entry, const char *attrdesc)
 			else
 				prev->be_next = attr->be_next;
 			attr->be_next = NULL;
-			ber_free_elements(attr);
+			ober_free_elements(attr);
 			break;
 		}
 
@@ -214,7 +214,7 @@ ldap_del_values(struct ber_element *elm, struct ber_element *vals)
 	assert(vals);
 	assert(vals->be_sub);
 
-	if (ber_scanf_elements(elm, "se(", &attr, &old_vals) != 0) {
+	if (ober_scanf_elements(elm, "se(", &attr, &old_vals) != 0) {
 		log_warnx("failed to parse element");
 		return -1;
 	}
@@ -227,9 +227,9 @@ ldap_del_values(struct ber_element *elm, struct ber_element *vals)
 		for (x = vals->be_sub; x; x = x->be_next) {
 			if (x && v->be_len == x->be_len &&
 			    memcmp(v->be_val, x->be_val, x->be_len) == 0) {
-				removed = ber_unlink_elements(prev);
-				ber_link_elements(prev, removed->be_next);
-				ber_free_element(removed);
+				removed = ober_unlink_elements(prev);
+				ober_link_elements(prev, removed->be_next);
+				ober_free_element(removed);
 				removed_p = 1;
 				break;
 			}

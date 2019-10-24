@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber_get_string.3,v 1.7 2019/08/14 17:36:04 jmc Exp $
+.\" $OpenBSD: ober_get_string.3,v 1.1 2019/10/24 12:39:26 tb Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,62 +14,62 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2019 $
-.Dt BER_GET_STRING 3
+.Dd $Mdocdate: October 24 2019 $
+.Dt OBER_GET_STRING 3
 .Os
 .Sh NAME
-.Nm ber_get_null ,
-.Nm ber_get_eoc ,
-.Nm ber_get_integer ,
-.Nm ber_get_enumerated ,
-.Nm ber_get_boolean ,
-.Nm ber_get_string ,
-.Nm ber_get_nstring ,
-.Nm ber_get_ostring ,
-.Nm ber_get_bitstring ,
-.Nm ber_get_oid ,
-.Nm ber_getpos ,
-.Nm ber_scanf_elements
+.Nm ober_get_null ,
+.Nm ober_get_eoc ,
+.Nm ober_get_integer ,
+.Nm ober_get_enumerated ,
+.Nm ober_get_boolean ,
+.Nm ober_get_string ,
+.Nm ober_get_nstring ,
+.Nm ober_get_ostring ,
+.Nm ober_get_bitstring ,
+.Nm ober_get_oid ,
+.Nm ober_getpos ,
+.Nm ober_scanf_elements
 .Nd access properties of ASN.1 objects decoded from BER
 .Sh SYNOPSIS
 .In sys/types.h
 .In ber.h
 .Ft "int"
-.Fn "ber_get_null" "struct ber_element *root"
+.Fn "ober_get_null" "struct ber_element *root"
 .Ft "int"
-.Fn "ber_get_eoc" "struct ber_element *root"
+.Fn "ober_get_eoc" "struct ber_element *root"
 .Ft "int"
-.Fn "ber_get_integer" "struct ber_element *root" "long long *val"
+.Fn "ober_get_integer" "struct ber_element *root" "long long *val"
 .Ft "int"
-.Fn "ber_get_enumerated" "struct ber_element *root" "long long *val"
+.Fn "ober_get_enumerated" "struct ber_element *root" "long long *val"
 .Ft "int"
-.Fn "ber_get_boolean" "struct ber_element *root" "int *bool"
+.Fn "ober_get_boolean" "struct ber_element *root" "int *bool"
 .Ft "int"
-.Fn "ber_get_string" "struct ber_element *root" "char **charbuf"
+.Fn "ober_get_string" "struct ber_element *root" "char **charbuf"
 .Ft "int"
-.Fn "ber_get_nstring" "struct ber_element *root" "void **buf" "size_t *size"
+.Fn "ober_get_nstring" "struct ber_element *root" "void **buf" "size_t *size"
 .Ft "int"
-.Fn "ber_get_ostring" "struct ber_element *root" "struct ber_octetstring *ostring"
+.Fn "ober_get_ostring" "struct ber_element *root" "struct ber_octetstring *ostring"
 .Ft "int"
-.Fn "ber_get_bitstring" "struct ber_element *root" "void **buf" "size_t *size"
+.Fn "ober_get_bitstring" "struct ber_element *root" "void **buf" "size_t *size"
 .Ft "int"
-.Fn "ber_get_oid" "struct ber_element *root" "struct ber_oid *oid"
+.Fn "ober_get_oid" "struct ber_element *root" "struct ber_oid *oid"
 .Ft off_t
-.Fn "ber_getpos" "struct ber_element *elm"
+.Fn "ober_getpos" "struct ber_element *elm"
 .Ft "int"
-.Fn "ber_scanf_elements" "struct ber_element *root" "char *format" "..."
+.Fn "ober_scanf_elements" "struct ber_element *root" "char *format" "..."
 .Sh DESCRIPTION
 Functions which take two arguments save the value contained in the
 .Fa root
 element into the storage location pointed to by the second argument.
 Additionally,
-.Fn ber_get_nstring
+.Fn ober_get_nstring
 and
-.Fn ber_get_bitstring
+.Fn ober_get_bitstring
 save the number of bytes contained in the string into
 .Pf * Fa size .
 .Pp
-.Fn ber_scanf_elements
+.Fn ober_scanf_elements
 retrieves the values from zero or more elements starting at
 .Fa root .
 For each byte in
@@ -79,24 +79,24 @@ and passed to the function listed, processing one
 .Vt ber_element
 per byte.
 The following bytes are valid:
-.Bl -column -offset indent bytes ber_get_enumerated() "1: struct ber_element **"
+.Bl -column -offset indent bytes ober_get_enumerated() "1: struct ber_element **"
 .It Sy byte Ta Sy function Ta Sy arguments
-.It B Ta Fn ber_get_bitstring  Ta 2: Vt void ** , size_t *
-.It b Ta Fn ber_get_boolean    Ta 1: Vt int *
-.It d Ta Fn ber_get_integer    Ta 1: Vt int *
-.It E Ta Fn ber_get_enumerated Ta 1: Vt long long *
+.It B Ta Fn ober_get_bitstring  Ta 2: Vt void ** , size_t *
+.It b Ta Fn ober_get_boolean    Ta 1: Vt int *
+.It d Ta Fn ober_get_integer    Ta 1: Vt int *
+.It E Ta Fn ober_get_enumerated Ta 1: Vt long long *
 .It e Ta see below             Ta 1: Vt struct ber_element **
-.It i Ta Fn ber_get_integer    Ta 1: Vt long long *
-.It o Ta Fn ber_get_oid        Ta 1: Vt struct ber_oid *
-.It p Ta Fn ber_getpos         Ta 1: Vt off_t *
+.It i Ta Fn ober_get_integer    Ta 1: Vt long long *
+.It o Ta Fn ober_get_oid        Ta 1: Vt struct ber_oid *
+.It p Ta Fn ober_getpos         Ta 1: Vt off_t *
 .It S Ta see below             Ta 0
-.It s Ta Fn ber_get_string     Ta 1: Vt char **
+.It s Ta Fn ober_get_string     Ta 1: Vt char **
 .It t Ta see below             Ta 2: Vt int * , unsigned int *
-.It x Ta Fn ber_get_nstring    Ta 2: Vt void **, size_t *
+.It x Ta Fn ober_get_nstring    Ta 2: Vt void **, size_t *
 .It \&( or { Ta see below      Ta 0
 .It \&) or } Ta see below      Ta 0
-.It \&. Ta Fn ber_get_eoc      Ta 0
-.It 0 Ta Fn ber_get_null       Ta 0
+.It \&. Ta Fn ober_get_eoc      Ta 0
+.It 0 Ta Fn ober_get_null       Ta 0
 .El
 .Pp
 For
@@ -128,11 +128,11 @@ For a closing parenthesis or brace, parsing of the current sequence
 or set is ended and parsing continues with the element following
 the sequence or set.
 .Sh RETURN VALUES
-.Fn ber_getpos
+.Fn ober_getpos
 returns the value of
 .Vt be_offs .
 .Pp
-.Fn ber_scanf_elements
+.Fn ober_scanf_elements
 returns 0 for success or \-1 when encountering elements that do not
 agree with the expectations of
 .Fa fmt
@@ -140,17 +140,17 @@ or when
 .Fa fmt
 is syntactically invalid.
 Even when
-.Fn ber_scanf_elements
+.Fn ober_scanf_elements
 fails, some of the arguments may already have been filled in.
 .Pp
 The other functions return 0 if
 .Va root
 is of the requested type or \-1 otherwise.
 .Sh SEE ALSO
-.Xr ber_add_string 3 ,
-.Xr ber_oid_cmp 3 ,
-.Xr ber_read_elements 3 ,
-.Xr ber_set_header 3
+.Xr ober_add_string 3 ,
+.Xr ober_oid_cmp 3 ,
+.Xr ober_read_elements 3 ,
+.Xr ober_set_header 3
 .Sh STANDARDS
 ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:
 Information technology - ASN.1 encoding rules.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.18 2019/02/13 22:57:08 deraadt Exp $ */
+/*	$OpenBSD: schema.c,v 1.19 2019/10/24 12:39:26 tb Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -251,7 +251,7 @@ int
 is_oidstr(const char *oidstr)
 {
 	struct ber_oid	 oid;
-	return (ber_string2oid(oidstr, &oid) == 0);
+	return (ober_string2oid(oidstr, &oid) == 0);
 }
 
 static struct name_list *

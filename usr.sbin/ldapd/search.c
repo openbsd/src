@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.24 2018/12/05 06:44:09 claudio Exp $ */
+/*	$OpenBSD: search.c,v 1.25 2019/10/24 12:39:26 tb Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -79,7 +79,7 @@ should_include_attribute(char *adesc, struct search *search, int explicit)
 	}
 
 	for (elm = search->attrlist->be_sub; elm; elm = elm->be_next) {
-		if (ber_get_string(elm, &fdesc) != 0)
+		if (ober_get_string(elm, &fdesc) != 0)
 			continue;
 		if (strcasecmp(fdesc, adesc) == 0)
 			return 1;
@@ -104,10 +104,10 @@ search_result(const char *dn, size_t dnlen, struct ber_element *attrs,
 	char			*adesc;
 	void			*buf, *searchdn = NULL;
 
-	if ((root = ber_add_sequence(NULL)) == NULL)
+	if ((root = ober_add_sequence(NULL)) == NULL)
 		goto fail;
 
-	if ((filtered_attrs = ber_add_sequence(NULL)) == NULL)
+	if ((filtered_attrs = ober_add_sequence(NULL)) == NULL)
 		goto fail;
 	link = filtered_attrs;
 
@@ -115,7 +115,7 @@ search_result(const char *dn, size_t dnlen, struct ber_element *attrs,
 		goto fail;
 
 	for (prev = NULL, a = attrs->be_sub; a; a = next) {
-		if (ber_get_string(a->be_sub, &adesc) != 0)
+		if (ober_get_string(a->be_sub, &adesc) != 0)
 			goto fail;
 		/*
 		 * Check if read access to the attribute is allowed and if it
@@ -131,7 +131,7 @@ search_result(const char *dn, size_t dnlen, struct ber_element *attrs,
 			else
 				attrs->be_sub = a->be_next;
 			a->be_next = NULL;			/* break chain*/
-			ber_link_elements(link, a);
+			ober_link_elements(link, a);
 			link = a;
 		} else {
 			prev = a;
@@ -139,7 +139,7 @@ search_result(const char *dn, size_t dnlen, struct ber_element *attrs,
 		}
 	}
 
-	elm = ber_printf_elements(root, "i{txe", search->req->msgid,
+	elm = ober_printf_elements(root, "i{txe", search->req->msgid,
 		BER_CLASS_APP, LDAP_RES_SEARCH_ENTRY,
 		dn, dnlen, filtered_attrs);
 	if (elm == NULL)
@@ -148,15 +148,15 @@ search_result(const char *dn, size_t dnlen, struct ber_element *attrs,
 	ldap_debug_elements(root, LDAP_RES_SEARCH_ENTRY,
 	    "sending search entry on fd %d", conn->fd);
 
-	rc = ber_write_elements(&conn->ber, root);
-	ber_free_elements(root);
+	rc = ober_write_elements(&conn->ber, root);
+	ober_free_elements(root);
 
 	if (rc < 0) {
 		log_warn("failed to create search-entry response");
 		return -1;
 	}
 
-	ber_get_writebuf(&conn->ber, &buf);
+	ober_get_writebuf(&conn->ber, &buf);
 	if (bufferevent_write(conn->bev, buf, rc) != 0) {
 		log_warn("failed to send ldap result");
 		return -1;
@@ -167,7 +167,7 @@ search_result(const char *dn, size_t dnlen, struct ber_element *attrs,
 fail:
 	log_warn("search result");
 	if (root)
-		ber_free_elements(root);
+		ober_free_elements(root);
 	free(searchdn);
 	return -1;
 }
@@ -248,12 +248,12 @@ check_search_entry(struct btval *key, struct btval *val, struct search *search)
 	}
 
 	if (ldap_matches_filter(elm, search->plan) != 0) {
-		ber_free_elements(elm);
+		ober_free_elements(elm);
 		return 0;
 	}
 
 	rc = search_result(key->data, key->size, elm, search);
-	ber_free_elements(elm);
+	ober_free_elements(elm);
 
 	if (rc == 0)
 		search->nmatched++;
@@ -492,51 +492,51 @@ ldap_search_root_dse(struct search *search)
 	struct namespace	*ns;
 	struct ber_element	*root, *elm, *key, *val;
 
-	if ((root = ber_add_sequence(NULL)) == NULL) {
+	if ((root = ober_add_sequence(NULL)) == NULL) {
 		return;
 	}
 
-	elm = ber_add_sequence(root);
-	key = ber_add_string(elm, "objectClass");
-	val = ber_add_set(key);
-	ber_add_string(val, "top");
+	elm = ober_add_sequence(root);
+	key = ober_add_string(elm, "objectClass");
+	val = ober_add_set(key);
+	ober_add_string(val, "top");
 
-	elm = ber_add_sequence(elm);
-	key = ber_add_string(elm, "supportedLDAPVersion");
-	val = ber_add_set(key);
-	ber_add_string(val, "3");
+	elm = ober_add_sequence(elm);
+	key = ober_add_string(elm, "supportedLDAPVersion");
+	val = ober_add_set(key);
+	ober_add_string(val, "3");
 
-	elm = ber_add_sequence(elm);
-	key = ber_add_string(elm, "namingContexts");
-	val = ber_add_set(key);
+	elm = ober_add_sequence(elm);
+	key = ober_add_string(elm, "namingContexts");
+	val = ober_add_set(key);
 	TAILQ_FOREACH(ns, &conf->namespaces, next)
-		val = ber_add_string(val, ns->suffix);
+		val = ober_add_string(val, ns->suffix);
 
-	elm = ber_add_sequence(elm);
-	key = ber_add_string(elm, "supportedExtension");
-	val = ber_add_set(key);
-	ber_add_string(val, "1.3.6.1.4.1.1466.20037");	/* StartTLS */
+	elm = ober_add_sequence(elm);
+	key = ober_add_string(elm, "supportedExtension");
+	val = ober_add_set(key);
+	ober_add_string(val, "1.3.6.1.4.1.1466.20037");	/* StartTLS */
 
-	elm = ber_add_sequence(elm);
-	key = ber_add_string(elm, "supportedFeatures");
-	val = ber_add_set(key);
+	elm = ober_add_sequence(elm);
+	key = ober_add_string(elm, "supportedFeatures");
+	val = ober_add_set(key);
 	/* All Operational Attributes (RFC 3673) */
-	ber_add_string(val, "1.3.6.1.4.1.4203.1.5.1");
+	ober_add_string(val, "1.3.6.1.4.1.4203.1.5.1");
 
-	elm = ber_add_sequence(elm);
-	key = ber_add_string(elm, "subschemaSubentry");
-	val = ber_add_set(key);
-	ber_add_string(val, "cn=schema");
+	elm = ober_add_sequence(elm);
+	key = ober_add_string(elm, "subschemaSubentry");
+	val = ober_add_set(key);
+	ober_add_string(val, "cn=schema");
 
 	if ((search->conn->s_flags & F_SECURE) == F_SECURE) {
-		elm = ber_add_sequence(elm);
-		key = ber_add_string(elm, "supportedSASLMechanisms");
-		val = ber_add_set(key);
-		ber_add_string(val, "PLAIN");
+		elm = ober_add_sequence(elm);
+		key = ober_add_string(elm, "supportedSASLMechanisms");
+		val = ober_add_set(key);
+		ober_add_string(val, "PLAIN");
 	}
 
 	search_result("", 0, root, search);
-	ber_free_elements(root);
+	ober_free_elements(root);
 	send_ldap_result(search->conn, search->req->msgid,
 	    LDAP_RES_SEARCH_RESULT, LDAP_SUCCESS);
 	search_close(search);
@@ -551,63 +551,63 @@ ldap_search_subschema(struct search *search)
 	struct attr_type	*at;
 	int			 rc, i;
 
-	if ((root = ber_add_sequence(NULL)) == NULL) {
+	if ((root = ober_add_sequence(NULL)) == NULL) {
 		return;
 	}
 
-	elm = ber_add_sequence(root);
-	key = ber_add_string(elm, "objectClass");
-	val = ber_add_set(key);
-	val = ber_add_string(val, "top");
-	ber_add_string(val, "subschema");
+	elm = ober_add_sequence(root);
+	key = ober_add_string(elm, "objectClass");
+	val = ober_add_set(key);
+	val = ober_add_string(val, "top");
+	ober_add_string(val, "subschema");
 
-	elm = ber_add_sequence(elm);
-	key = ber_add_string(elm, "createTimestamp");
-	val = ber_add_set(key);
-	ber_add_string(val, ldap_strftime(stats.started_at));
+	elm = ober_add_sequence(elm);
+	key = ober_add_string(elm, "createTimestamp");
+	val = ober_add_set(key);
+	ober_add_string(val, ldap_strftime(stats.started_at));
 
-	elm = ber_add_sequence(elm);
-	key = ber_add_string(elm, "modifyTimestamp");
-	val = ber_add_set(key);
-	ber_add_string(val, ldap_strftime(stats.started_at));
+	elm = ober_add_sequence(elm);
+	key = ober_add_string(elm, "modifyTimestamp");
+	val = ober_add_set(key);
+	ober_add_string(val, ldap_strftime(stats.started_at));
 
-	elm = ber_add_sequence(elm);
-	key = ber_add_string(elm, "subschemaSubentry");
-	val = ber_add_set(key);
-	ber_add_string(val, "cn=schema");
+	elm = ober_add_sequence(elm);
+	key = ober_add_string(elm, "subschemaSubentry");
+	val = ober_add_set(key);
+	ober_add_string(val, "cn=schema");
 
 	if (should_include_attribute("objectClasses", search, 1)) {
-		elm = ber_add_sequence(elm);
-		key = ber_add_string(elm, "objectClasses");
-		val = ber_add_set(key);
+		elm = ober_add_sequence(elm);
+		key = ober_add_string(elm, "objectClasses");
+		val = ober_add_set(key);
 
 		RB_FOREACH(obj, object_tree, &conf->schema->objects) {
 			if (schema_dump_object(obj, buf, sizeof(buf)) != 0) {
 				rc = LDAP_OTHER;
 				goto done;
 			}
-			val = ber_add_string(val, buf);
+			val = ober_add_string(val, buf);
 		}
 	}
 
 	if (should_include_attribute("attributeTypes", search, 1)) {
-		elm = ber_add_sequence(elm);
-		key = ber_add_string(elm, "attributeTypes");
-		val = ber_add_set(key);
+		elm = ober_add_sequence(elm);
+		key = ober_add_string(elm, "attributeTypes");
+		val = ober_add_set(key);
 
 		RB_FOREACH(at, attr_type_tree, &conf->schema->attr_types) {
 			if (schema_dump_attribute(at, buf, sizeof(buf)) != 0) {
 				rc = LDAP_OTHER;
 				goto done;
 			}
-			val = ber_add_string(val, buf);
+			val = ober_add_string(val, buf);
 		}
 	}
 
 	if (should_include_attribute("matchingRules", search, 1)) {
-		elm = ber_add_sequence(elm);
-		key = ber_add_string(elm, "matchingRules");
-		val = ber_add_set(key);
+		elm = ober_add_sequence(elm);
+		key = ober_add_string(elm, "matchingRules");
+		val = ober_add_set(key);
 
 		for (i = 0; i < num_match_rules; i++) {
 			if (schema_dump_match_rule(&match_rules[i], buf,
@@ -615,7 +615,7 @@ ldap_search_subschema(struct search *search)
 				rc = LDAP_OTHER;
 				goto done;
 			}
-			val = ber_add_string(val, buf);
+			val = ober_add_string(val, buf);
 		}
 	}
 
@@ -623,7 +623,7 @@ ldap_search_subschema(struct search *search)
 	rc = LDAP_SUCCESS;
 
 done:
-	ber_free_elements(root);
+	ober_free_elements(root);
 	send_ldap_result(search->conn, search->req->msgid,
 	    LDAP_RES_SEARCH_RESULT, rc);
 	search_close(search);
@@ -703,7 +703,7 @@ search_planner(struct namespace *ns, struct ber_element *filter)
 	switch (filter->be_type) {
 	case LDAP_FILT_EQ:
 	case LDAP_FILT_APPR:
-		if (ber_scanf_elements(filter, "{ss", &attr, &s) != 0)
+		if (ober_scanf_elements(filter, "{ss", &attr, &s) != 0)
 			goto fail;
 		if (plan_get_attr(plan, ns, attr) == -1)
 			plan->undefined = 1;
@@ -718,7 +718,7 @@ search_planner(struct namespace *ns, struct ber_element *filter)
 		}
 		break;
 	case LDAP_FILT_SUBS:
-		if (ber_scanf_elements(filter, "{s{ets",
+		if (ober_scanf_elements(filter, "{s{ets",
 		    &attr, &plan->assert.substring, &class, &type, &s) != 0)
 			goto fail;
 		if (plan_get_attr(plan, ns, attr) == -1)
@@ -735,7 +735,7 @@ search_planner(struct namespace *ns, struct ber_element *filter)
 		}
 		break;
 	case LDAP_FILT_PRES:
-		if (ber_scanf_elements(filter, "s", &attr) != 0)
+		if (ober_scanf_elements(filter, "s", &attr) != 0)
 			goto fail;
 		if (plan_get_attr(plan, ns, attr) == -1)
 			plan->undefined = 1;
@@ -745,7 +745,7 @@ search_planner(struct namespace *ns, struct ber_element *filter)
 		}
 		break;
 	case LDAP_FILT_AND:
-		if (ber_scanf_elements(filter, "(e", &elm) != 0)
+		if (ober_scanf_elements(filter, "(e", &elm) != 0)
 			goto fail;
 		for (; elm; elm = elm->be_next) {
 			if ((arg = search_planner(ns, elm)) == NULL)
@@ -775,7 +775,7 @@ search_planner(struct namespace *ns, struct ber_element *filter)
 		}
 		break;
 	case LDAP_FILT_OR:
-		if (ber_scanf_elements(filter, "(e", &elm) != 0)
+		if (ober_scanf_elements(filter, "(e", &elm) != 0)
 			goto fail;
 		for (; elm; elm = elm->be_next) {
 			if ((arg = search_planner(ns, elm)) == NULL)
@@ -804,7 +804,7 @@ search_planner(struct namespace *ns, struct ber_element *filter)
 		}
 		break;
 	case LDAP_FILT_NOT:
-		if (ber_scanf_elements(filter, "{e", &elm) != 0)
+		if (ober_scanf_elements(filter, "{e", &elm) != 0)
 			goto fail;
 		if ((arg = search_planner(ns, elm)) == NULL)
 			goto fail;
@@ -875,7 +875,7 @@ ldap_search(struct request *req)
 	TAILQ_INSERT_HEAD(&req->conn->searches, search, next);
 	RB_INIT(&search->uniqdns);
 
-	if (ber_scanf_elements(req->op, "{sEEiibeSeS",
+	if (ober_scanf_elements(req->op, "{sEEiibeSeS",
 	    &search->basedn,
 	    &search->scope,
 	    &search->deref,

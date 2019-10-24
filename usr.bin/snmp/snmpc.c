@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.15 2019/10/08 08:41:31 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.16 2019/10/24 12:39:26 tb Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -520,7 +520,7 @@ snmpc_get(int argc, char *argv[])
 			err(1, "get");
 	}
 
-	(void) ber_scanf_elements(pdu, "t{Sdd{e", &class, &type, &errorstatus,
+	(void) ober_scanf_elements(pdu, "t{Sdd{e", &class, &type, &errorstatus,
 	    &errorindex, &varbind);
 	if (errorstatus != 0) {
 		if (errorindex >= 1 && errorindex <= argc)
@@ -535,7 +535,7 @@ snmpc_get(int argc, char *argv[])
 		if (!snmpc_print(varbind))
 			err(1, "Can't print response");
 	}
-	ber_free_elements(pdu);
+	ober_free_elements(pdu);
 	snmp_free_agent(agent);
 	return 0;
 }
@@ -576,7 +576,7 @@ snmpc_walk(int argc, char *argv[])
 		if ((pdu = snmp_get(agent, &oid, 1)) == NULL)
 			err(1, "%s", snmp_app->name);
 
-		(void) ber_scanf_elements(pdu, "t{Sdd{e", &class, &type,
+		(void) ober_scanf_elements(pdu, "t{Sdd{e", &class, &type,
 		    &errorstatus, &errorindex, &varbind);
 		if (errorstatus != 0)
 			snmpc_printerror((enum snmp_error) errorstatus, varbind,
@@ -586,7 +586,7 @@ snmpc_walk(int argc, char *argv[])
 			printf("Received report:\n");
 		if (!snmpc_print(varbind))
 			err(1, "Can't print response");
-		ber_free_element(pdu);
+		ober_free_element(pdu);
 		if (class == BER_CLASS_CONTEXT && type == SNMP_C_REPORT)
 			return 1;
 		n++;
@@ -602,7 +602,7 @@ snmpc_walk(int argc, char *argv[])
 				err(1, "walk");
 		}
 
-		(void) ber_scanf_elements(pdu, "t{Sdd{e", &class, &type,
+		(void) ober_scanf_elements(pdu, "t{Sdd{e", &class, &type,
 		    &errorstatus, &errorindex, &varbind);
 		if (errorstatus != 0) {
 			snmpc_printerror((enum snmp_error) errorstatus, varbind,
@@ -612,25 +612,25 @@ snmpc_walk(int argc, char *argv[])
 		if (class == BER_CLASS_CONTEXT && type == SNMP_C_REPORT)
 			printf("Received report:\n");
 		for (; varbind != NULL; varbind = varbind->be_next) {
-			(void) ber_scanf_elements(varbind, "{oe}", &noid,
+			(void) ober_scanf_elements(varbind, "{oe}", &noid,
 			    &value);
 			if (value->be_class == BER_CLASS_CONTEXT &&
 			    value->be_type == BER_TYPE_EOC)
 				break;
-			prev_cmp = ber_oid_cmp(&loid, &noid);
+			prev_cmp = ober_oid_cmp(&loid, &noid);
 			if (walk_check_increase && prev_cmp == -1)
 				errx(1, "OID not increasing");
-			if (prev_cmp == 0 || ber_oid_cmp(&oid, &noid) != 2)
+			if (prev_cmp == 0 || ober_oid_cmp(&oid, &noid) != 2)
 				break;
 			if (walk_end.bo_n != 0 &&
-			    ber_oid_cmp(&walk_end, &noid) != -1)
+			    ober_oid_cmp(&walk_end, &noid) != -1)
 				break;
 
 			if (!snmpc_print(varbind))
 				err(1, "Can't print response");
 			n++;
 		}
-		ber_free_elements(pdu);
+		ober_free_elements(pdu);
 		if (class == BER_CLASS_CONTEXT && type == SNMP_C_REPORT)
 			return 1;
 		if (varbind != NULL)
@@ -640,7 +640,7 @@ snmpc_walk(int argc, char *argv[])
 		if ((pdu = snmp_get(agent, &oid, 1)) == NULL)
 			err(1, "%s", snmp_app->name);
 
-		(void) ber_scanf_elements(pdu, "t{Sdd{e", &class, &type,
+		(void) ober_scanf_elements(pdu, "t{Sdd{e", &class, &type,
 		    &errorstatus, &errorindex, &varbind);
 		if (errorstatus != 0)
 			snmpc_printerror((enum snmp_error) errorstatus, varbind,
@@ -650,7 +650,7 @@ snmpc_walk(int argc, char *argv[])
 			printf("Received report:\n");
 		if (!snmpc_print(varbind))
 			err(1, "Can't print response");
-		ber_free_element(pdu);
+		ober_free_element(pdu);
 		if (class == BER_CLASS_CONTEXT && type == SNMP_C_REPORT)
 			return 1;
 		n++;
@@ -695,7 +695,7 @@ snmpc_set(int argc, char *argv[])
 	if ((pdu = snmp_set(agent, snmpc_varbindparse(argc, argv))) == NULL)
 		err(1, "set");
 
-	(void) ber_scanf_elements(pdu, "t{Sdd{e", &class, &type, &errorstatus,
+	(void) ober_scanf_elements(pdu, "t{Sdd{e", &class, &type, &errorstatus,
 	    &errorindex, &varbind);
 	if (errorstatus != 0) {
 		if (errorindex >= 1 && errorindex <= argc / 3)
@@ -710,7 +710,7 @@ snmpc_set(int argc, char *argv[])
 		if (!snmpc_print(varbind))
 			err(1, "Can't print response");
 	}
-	ber_free_elements(pdu);
+	ober_free_elements(pdu);
 	snmp_free_agent(agent);
 	return 0;
 }
@@ -789,7 +789,7 @@ snmpc_print(struct ber_element *elm)
 	char *value;
 
 	elm = elm->be_sub;
-	if (ber_get_oid(elm, &oid) != 0) {
+	if (ober_get_oid(elm, &oid) != 0) {
 		errno = EINVAL;
 		return 0;
 	}
@@ -828,11 +828,11 @@ snmpc_printerror(enum snmp_error error, struct ber_element *varbind,
 		    varbind = varbind->be_next)
 			i++;
 		if (varbind != NULL &&
-		    ber_get_oid(varbind->be_sub, &vboid) == 0) {
+		    ober_get_oid(varbind->be_sub, &vboid) == 0) {
 			/* If user and reply conform print user input */
 			if (hint != NULL &&
 			    smi_string2oid(hint, &hoid) == 0 &&
-			    ber_oid_cmp(&hoid, &vboid) == 0)
+			    ober_oid_cmp(&hoid, &vboid) == 0)
 				oid = hint;
 			else
 				oid = smi_oid2string(&vboid, oids,
@@ -1056,10 +1056,10 @@ snmpc_varbindparse(int argc, char *argv[])
 			if (ret == 0)
 				errx(1, "%s: Bad value notation (%s)", argv[i],
 				    argv[i + 2]);
-			if ((varbind = ber_printf_elements(varbind, "{Oxt}",
+			if ((varbind = ober_printf_elements(varbind, "{Oxt}",
 			    &oid, addr, sizeof(addr4), BER_CLASS_APPLICATION,
 			    SNMP_T_IPADDR)) == NULL)
-				err(1, "ber_printf_elements");
+				err(1, "ober_printf_elements");
 			break;
 		case 'b':
 			tmpstr = argv[i + 2];
@@ -1098,10 +1098,10 @@ snmpc_varbindparse(int argc, char *argv[])
 			if (errstr != NULL)
 				errx(1, "%s: Bad value notation (%s)", argv[i],
 				    argv[i + 2]);
-			if ((varbind = ber_printf_elements(varbind, "{Oit}",
+			if ((varbind = ober_printf_elements(varbind, "{Oit}",
 			    &oid, lval, BER_CLASS_APPLICATION,
 			    SNMP_T_COUNTER32)) == NULL)
-				err(1, "ber_printf_elements");
+				err(1, "ober_printf_elements");
 			break;
 		case 'd':
 			/* String always shrinks */
@@ -1133,32 +1133,32 @@ snmpc_varbindparse(int argc, char *argv[])
 			if (errstr != NULL)
 				errx(1, "%s: Bad value notation (%s)", argv[i],
 				    argv[i + 2]);
-			if ((varbind = ber_printf_elements(varbind, "{Oi}",
+			if ((varbind = ober_printf_elements(varbind, "{Oi}",
 			    &oid, lval)) == NULL)
-				err(1, "ber_printf_elements");
+				err(1, "ober_printf_elements");
 			break;
 		case 'n':
-			if ((varbind = ber_printf_elements(varbind, "{O0}",
+			if ((varbind = ober_printf_elements(varbind, "{O0}",
 			    &oid)) == NULL)
-				err(1, "ber_printf_elements");
+				err(1, "ober_printf_elements");
 			break;
 		case 'o':
 			if (smi_string2oid(argv[i + 2], &oidval) == -1)
 				errx(1, "%s: Unknown Object Identifier (Sub-id "
 				    "not found: (top) -> %s)", argv[i],
 				    argv[i + 2]);
-			if ((varbind = ber_printf_elements(varbind, "{OO}",
+			if ((varbind = ober_printf_elements(varbind, "{OO}",
 			    &oid, &oidval)) == NULL)
-				err(1, "ber_printf_elements");
+				err(1, "ober_printf_elements");
 			break;
 		case 's':
 			if ((str = strdup(argv[i + 2])) == NULL)
 				err(1, NULL);
 			strl = strlen(argv[i + 2]);
 pastestring:
-			if ((varbind = ber_printf_elements(varbind, "{Ox}",
+			if ((varbind = ober_printf_elements(varbind, "{Ox}",
 			    &oid, str, strl)) == NULL)
-				err(1, "ber_printf_elements");
+				err(1, "ober_printf_elements");
 			free(str);
 			break;
 		case 't':
@@ -1167,10 +1167,10 @@ pastestring:
 			if (errstr != NULL)
 				errx(1, "%s: Bad value notation (%s)", argv[i],
 				    argv[i + 2]);
-			if ((varbind = ber_printf_elements(varbind, "{Oit}",
+			if ((varbind = ober_printf_elements(varbind, "{Oit}",
 			    &oid, lval, BER_CLASS_APPLICATION,
 			    SNMP_T_TIMETICKS)) == NULL)
-				err(1, "ber_printf_elements");
+				err(1, "ober_printf_elements");
 			break;
 		case 'x':
 			/* String always shrinks */

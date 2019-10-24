@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.8 2018/08/27 12:15:20 claudio Exp $ */
+/*	$OpenBSD: filter.c,v 1.9 2019/10/24 12:39:26 tb Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -54,7 +54,7 @@ ldap_filt_eq(struct ber_element *root, struct plan *plan)
 		return -1;
 
 	for (v = vals->be_sub; v; v = v->be_next) {
-		if (ber_get_string(v, &vs) != 0)
+		if (ober_get_string(v, &vs) != 0)
 			continue;
 		if (strcasecmp(plan->assert.value, vs) == 0)
 			return 0;
@@ -71,11 +71,11 @@ ldap_filt_subs_value(struct ber_element *v, struct ber_element *sub)
 	const char	*cmpval;
 	char		*vs, *p, *end;
 
-	if (ber_get_string(v, &vs) != 0)
+	if (ober_get_string(v, &vs) != 0)
 		return -1;
 
 	for (; sub; sub = sub->be_next) {
-		if (ber_scanf_elements(sub, "ts", &class, &type, &cmpval) != 0)
+		if (ober_scanf_elements(sub, "ts", &class, &type, &cmpval) != 0)
 			return -1;
 
 		if (class != BER_CLASS_CONTEXT)
@@ -130,7 +130,7 @@ ldap_filt_subs(struct ber_element *root, struct plan *plan)
 		return -1;
 	}
 
-	if (ber_scanf_elements(a, "s(e", &attr, &v) != 0)
+	if (ober_scanf_elements(a, "s(e", &attr, &v) != 0)
 		return -1; /* internal failure, false or undefined? */
 
 	/* Loop through all values, stop if any matches.

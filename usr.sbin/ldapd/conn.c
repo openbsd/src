@@ -1,4 +1,4 @@
-/*	$OpenBSD: conn.c,v 1.17 2018/07/31 11:01:00 claudio Exp $ */
+/*	$OpenBSD: conn.c,v 1.18 2019/10/24 12:39:26 tb Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -42,7 +42,7 @@ void
 request_free(struct request *req)
 {
 	if (req->root != NULL)
-		ber_free_elements(req->root);
+		ober_free_elements(req->root);
 	free(req);
 }
 
@@ -66,7 +66,7 @@ conn_close(struct conn *conn)
 	tls_free(conn->tls);
 
 	TAILQ_REMOVE(&conn_list, conn, next);
-	ber_free(&conn->ber);
+	ober_free(&conn->ber);
 	if (conn->bev != NULL)
 		bufferevent_free(conn->bev);
 	close(conn->fd);
@@ -155,7 +155,7 @@ conn_dispatch(struct conn *conn)
 	req->conn = conn;
 	rptr = conn->ber.br_rptr;	/* save where we start reading */
 
-	if ((req->root = ber_read_elements(&conn->ber, NULL)) == NULL) {
+	if ((req->root = ober_read_elements(&conn->ber, NULL)) == NULL) {
 		if (errno != ECANCELED) {
 			log_warnx("protocol error");
 			hexdump(rptr, conn->ber.br_rend - rptr,
@@ -170,7 +170,7 @@ conn_dispatch(struct conn *conn)
 
 	/* Read message id and request type.
 	 */
-	if (ber_scanf_elements(req->root, "{ite",
+	if (ober_scanf_elements(req->root, "{ite",
 	    &req->msgid, &class, &req->type, &req->op) != 0) {
 		log_warnx("protocol error");
 		ldap_debug_elements(req->root, -1,
@@ -196,7 +196,7 @@ conn_read(struct bufferevent *bev, void *data)
 	struct evbuffer		*input;
 
 	input = EVBUFFER_INPUT(bev);
-	ber_set_readbuf(&conn->ber,
+	ober_set_readbuf(&conn->ber,
 	    EVBUFFER_DATA(input), EVBUFFER_LENGTH(input));
 
 	while (conn->ber.br_rend - conn->ber.br_rptr > 0) {
@@ -296,7 +296,7 @@ conn_accept(int fd, short event, void *data)
 		log_warn("malloc");
 		goto giveup;
 	}
-	ber_set_application(&conn->ber, ldap_application);
+	ober_set_application(&conn->ber, ldap_application);
 	conn->fd = afd;
 	conn->listener = l;
 

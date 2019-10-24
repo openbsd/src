@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.3 2018/07/31 11:01:00 claudio Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.4 2019/10/24 12:39:26 tb Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -108,7 +108,7 @@ ldap_debug_elements(struct ber_element *root, int context, const char *fmt, ...)
 	}
 
 	/* calculate lengths */
-	ber_calc_len(root);
+	ober_calc_len(root);
 
 	switch (root->be_encoding) {
 	case BER_TYPE_SEQUENCE:
@@ -265,28 +265,28 @@ ldap_debug_elements(struct ber_element *root, int context, const char *fmt, ...)
 
 	switch (root->be_encoding) {
 	case BER_TYPE_BOOLEAN:
-		if (ber_get_boolean(root, &d) == -1) {
+		if (ober_get_boolean(root, &d) == -1) {
 			fprintf(stderr, "<INVALID>\n");
 			break;
 		}
 		fprintf(stderr, "%s(%d)\n", d ? "true" : "false", d);
 		break;
 	case BER_TYPE_INTEGER:
-		if (ber_get_integer(root, &v) == -1) {
+		if (ober_get_integer(root, &v) == -1) {
 			fprintf(stderr, "<INVALID>\n");
 			break;
 		}
 		fprintf(stderr, "value %lld\n", v);
 		break;
 	case BER_TYPE_ENUMERATED:
-		if (ber_get_enumerated(root, &v) == -1) {
+		if (ober_get_enumerated(root, &v) == -1) {
 			fprintf(stderr, "<INVALID>\n");
 			break;
 		}
 		fprintf(stderr, "value %lld\n", v);
 		break;
 	case BER_TYPE_BITSTRING:
-		if (ber_get_bitstring(root, (void *)&buf, &len) == -1) {
+		if (ober_get_bitstring(root, (void *)&buf, &len) == -1) {
 			fprintf(stderr, "<INVALID>\n");
 			break;
 		}
@@ -296,14 +296,14 @@ ldap_debug_elements(struct ber_element *root, int context, const char *fmt, ...)
 		fprintf(stderr, "\n");
 		break;
 	case BER_TYPE_OBJECT:
-		if (ber_get_oid(root, &o) == -1) {
+		if (ober_get_oid(root, &o) == -1) {
 			fprintf(stderr, "<INVALID>\n");
 			break;
 		}
 		fprintf(stderr, "\n");
 		break;
 	case BER_TYPE_OCTETSTRING:
-		if (ber_get_nstring(root, (void *)&buf, &len) == -1) {
+		if (ober_get_nstring(root, (void *)&buf, &len) == -1) {
 			fprintf(stderr, "<INVALID>\n");
 			break;
 		}

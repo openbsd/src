@@ -1,4 +1,4 @@
-/* $OpenBSD: ber_test_int_i.c,v 1.5 2019/04/27 23:43:51 rob Exp $
+/* $OpenBSD: ber_test_int_i.c,v 1.6 2019/10/24 12:39:26 tb Exp $
 */
 /*
  * Copyright (c) Rob Pierce <rob@openbsd.org>
@@ -530,20 +530,20 @@ test_read_elements(int i)
 	struct ber_octetstring	 ostring;
 
 	bzero(&ber, sizeof(ber));
-	ber_set_readbuf(&ber, test_vectors[i].input,
+	ober_set_readbuf(&ber, test_vectors[i].input,
 	    test_vectors[i].input_length);
 
-	elm = ber_read_elements(&ber, elm);
+	elm = ober_read_elements(&ber, elm);
 	if (elm != NULL && test_vectors[i].fail == FAIL) {
-		printf("unexpectedly passed ber_read_elements\n");
+		printf("unexpectedly passed ober_read_elements\n");
 		return 1;
 	} else if (elm == NULL && test_vectors[i].fail != FAIL) {
-		printf("unexpectedly failed ber_read_elements\n");
+		printf("unexpectedly failed ober_read_elements\n");
 		return 1;
 	} else if (elm == NULL && test_vectors[i].fail == FAIL)
 		return 0;
 
-	pos = ber_getpos(elm);
+	pos = ober_getpos(elm);
 	if (pos != 2) {
 		printf("unexpected element position within "
 		    "byte stream (%d)\n", pos);
@@ -552,18 +552,18 @@ test_read_elements(int i)
 
 	switch (elm->be_encoding) {
 	case BER_TYPE_INTEGER:
-		if (ber_get_integer(elm, &val) == -1) {
+		if (ober_get_integer(elm, &val) == -1) {
 			printf("failed (int) encoding check\n");
 			return 1;
 		}
 		if (val != test_vectors[i].value) {
-			printf("(ber_get_integer) got %lld, expected %lld\n",
+			printf("(ober_get_integer) got %lld, expected %lld\n",
 			    val, test_vectors[i].value);
 			return 1;
 		}
-		if (ber_scanf_elements(elm, "i", &val) == -1) {
-			printf("(ber_scanf_elements) failed (int)"
-			    " ber_scanf_elements (i)\n");
+		if (ober_scanf_elements(elm, "i", &val) == -1) {
+			printf("(ober_scanf_elements) failed (int)"
+			    " ober_scanf_elements (i)\n");
 			return 1;
 		}
 		if (val != test_vectors[i].value) {
@@ -578,7 +578,7 @@ test_read_elements(int i)
 		return 1;
 	}
 
-	len = ber_calc_len(elm);
+	len = ober_calc_len(elm);
 	if (len != test_vectors[i].expect_length) {
 		printf("failed to calculate length\n");
 		printf("was %zd want %zu\n", len,
@@ -587,7 +587,7 @@ test_read_elements(int i)
 	}
 
 	ber.br_wbuf = NULL;
-	len = ber_write_elements(&ber, elm);
+	len = ober_write_elements(&ber, elm);
 	if (len != test_vectors[i].expect_length) {
 		printf("failed length check (was %zd want "
 		    "%zd)\n", len, test_vectors[i].expect_length);
@@ -603,9 +603,9 @@ test_read_elements(int i)
 		hexdump(test_vectors[i].expect, test_vectors[i].expect_length);
 		return 1;
 	}
-	ber_free(&ber);
+	ober_free(&ber);
 
-	ber_free_elements(elm);
+	ober_free_elements(elm);
 
 	return 0;
 }
@@ -625,29 +625,29 @@ test_printf_elements(int i)
 	struct ber_octetstring	 ostring;
 
 	bzero(&ber, sizeof(ber));
-	ber_set_readbuf(&ber, test_vectors[i].input,
+	ober_set_readbuf(&ber, test_vectors[i].input,
 	    test_vectors[i].input_length);
 
-	elm = ber_printf_elements(elm, "i", test_vectors[i].value);
+	elm = ober_printf_elements(elm, "i", test_vectors[i].value);
 	if (elm == NULL) {
-		printf("unexpectedly failed ber_printf_elements\n");
+		printf("unexpectedly failed ober_printf_elements\n");
 		return 1;
 	}
 
 	switch (elm->be_encoding) {
 	case BER_TYPE_INTEGER:
-		if (ber_get_integer(elm, &val) == -1) {
+		if (ober_get_integer(elm, &val) == -1) {
 			printf("failed (int) encoding check\n");
 			return 1;
 		}
 		if (val != test_vectors[i].value) {
-			printf("(ber_get_integer) got %lld, expected %lld\n",
+			printf("(ober_get_integer) got %lld, expected %lld\n",
 			    val, test_vectors[i].value);
 			return 1;
 		}
-		if (ber_scanf_elements(elm, "i", &val) == -1) {
-			printf("(ber_scanf_elements) failed (int)"
-			    " ber_scanf_elements (i)\n");
+		if (ober_scanf_elements(elm, "i", &val) == -1) {
+			printf("(ober_scanf_elements) failed (int)"
+			    " ober_scanf_elements (i)\n");
 			return 1;
 		}
 		if (val != test_vectors[i].value) {
@@ -662,7 +662,7 @@ test_printf_elements(int i)
 		return 1;
 	}
 
-	len = ber_calc_len(elm);
+	len = ober_calc_len(elm);
 	if (len != test_vectors[i].expect_length) {
 		printf("failed to calculate length\n");
 		printf("was %zd want %zu\n", len,
@@ -671,7 +671,7 @@ test_printf_elements(int i)
 	}
 
 	ber.br_wbuf = NULL;
-	len = ber_write_elements(&ber, elm);
+	len = ober_write_elements(&ber, elm);
 	if (len != test_vectors[i].expect_length) {
 		printf("failed length check (was %zd want "
 		    "%zd)\n", len, test_vectors[i].expect_length);
@@ -687,9 +687,9 @@ test_printf_elements(int i)
 		hexdump(test_vectors[i].expect, test_vectors[i].expect_length);
 		return 1;
 	}
-	ber_free(&ber);
+	ober_free(&ber);
 
-	ber_free_elements(elm);
+	ober_free_elements(elm);
 
 	return 0;
 }
@@ -717,8 +717,8 @@ main(void)
 	printf("= = = = = test_printf_elements\n");
 	for (i = 0; i < sizeof(test_vectors) / sizeof(test_vectors[0]); i++) {
 		/*
-		 * skip test cases known to fail under ber_read_elements as
-		 * they are not applicable to ber_printf_elements
+		 * skip test cases known to fail under ober_read_elements as
+		 * they are not applicable to ober_printf_elements
 		 */
 		if (test_vectors[i].fail)
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.16 2019/06/11 05:36:32 martijn Exp $	*/
+/*	$OpenBSD: usm.c,v 1.17 2019/10/24 12:39:27 tb Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -281,16 +281,16 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 	long long		 engine_boots, engine_time;
 
 	bzero(&ber, sizeof(ber));
-	offs = ber_getpos(elm);
+	offs = ober_getpos(elm);
 
-	if (ber_get_nstring(elm, (void *)&usmparams, &len) < 0) {
+	if (ober_get_nstring(elm, (void *)&usmparams, &len) < 0) {
 		*errp = "cannot decode security params";
 		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 		goto done;
 	}
 
-	ber_set_readbuf(&ber, usmparams, len);
-	usm = ber_read_elements(&ber, NULL);
+	ober_set_readbuf(&ber, usmparams, len);
+	usm = ober_read_elements(&ber, NULL);
 	if (usm == NULL) {
 		*errp = "cannot decode security params";
 		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
@@ -302,7 +302,7 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 	smi_debug_elements(usm);
 #endif
 
-	if (ber_scanf_elements(usm, "{xiixpxx", &engineid, &enginelen,
+	if (ober_scanf_elements(usm, "{xiixpxx", &engineid, &enginelen,
 	    &engine_boots, &engine_time, &user, &userlen, &offs2,
 	    &digest, &digestlen, &salt, &saltlen) != 0) {
 		*errp = "cannot decode USM params";
@@ -374,7 +374,7 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 			msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 			goto done;
 		}
-		ber_replace_elements(elm, decr);
+		ober_replace_elements(elm, decr);
 	}
 
 	now = snmpd_engine_time();
@@ -390,9 +390,9 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 	next = elm->be_next;
 
 done:
-	ber_free(&ber);
+	ober_free(&ber);
 	if (usm != NULL)
-		ber_free_elements(usm);
+		ober_free_elements(usm);
 	return next;
 }
 
@@ -409,7 +409,7 @@ usm_encode(struct snmp_message *msg, struct ber_element *e)
 	msg->sm_digest_offs = 0;
 	bzero(&ber, sizeof(ber));
 
-	usm = ber_add_sequence(NULL);
+	usm = ober_add_sequence(NULL);
 
 	if (MSG_HAS_AUTH(msg)) {
 		/*
@@ -438,34 +438,34 @@ usm_encode(struct snmp_message *msg, struct ber_element *e)
 
 	msg->sm_engine_boots = (u_int32_t)snmpd_env->sc_engine_boots;
 	msg->sm_engine_time = (u_int32_t)snmpd_engine_time();
-	if ((a = ber_printf_elements(usm, "xdds",
+	if ((a = ober_printf_elements(usm, "xdds",
 	    snmpd_env->sc_engineid, snmpd_env->sc_engineid_len,
 	    msg->sm_engine_boots, msg->sm_engine_time,
 	    msg->sm_username)) == NULL)
 		goto done;
 
-	if ((a = ber_add_nstring(a, digest, digestlen)) == NULL)
+	if ((a = ober_add_nstring(a, digest, digestlen)) == NULL)
 		goto done;
 	if (digestlen > 0)
-		ber_set_writecallback(a, usm_cb_digest, msg);
+		ober_set_writecallback(a, usm_cb_digest, msg);
 
-	if ((a = ber_add_nstring(a, msg->sm_salt, saltlen)) == NULL)
+	if ((a = ober_add_nstring(a, msg->sm_salt, saltlen)) == NULL)
 		goto done;
 
 #ifdef DEBUG
 	fprintf(stderr, "encode USM parameters:\n");
 	smi_debug_elements(usm);
 #endif
-	len = ber_write_elements(&ber, usm);
-	if (ber_get_writebuf(&ber, &ptr) > 0) {
-		res = ber_add_nstring(e, (char *)ptr, len);
+	len = ober_write_elements(&ber, usm);
+	if (ober_get_writebuf(&ber, &ptr) > 0) {
+		res = ober_add_nstring(e, (char *)ptr, len);
 		if (digestlen > 0)
-			ber_set_writecallback(res, usm_cb_digest, msg);
+			ober_set_writecallback(res, usm_cb_digest, msg);
 	}
 
 done:
-	ber_free(&ber);
-	ber_free_elements(usm);
+	ober_free(&ber);
+	ober_free_elements(usm);
 	return res;
 }
 
@@ -495,15 +495,15 @@ usm_encrypt(struct snmp_message *msg, struct ber_element *pdu)
 	smi_debug_elements(pdu);
 #endif
 
-	len = ber_write_elements(&ber, pdu);
-	if (ber_get_writebuf(&ber, &ptr) > 0) {
+	len = ober_write_elements(&ber, pdu);
+	if (ober_get_writebuf(&ber, &ptr) > 0) {
 		elen = usm_crypt(msg, ptr, len, encbuf, 1);
 		if (elen > 0)
-			encrpdu = ber_add_nstring(NULL, (char *)encbuf, elen);
+			encrpdu = ober_add_nstring(NULL, (char *)encbuf, elen);
 	}
 
-	ber_free(&ber);
-	ber_free_elements(pdu);
+	ober_free(&ber);
+	ober_free_elements(pdu);
 	return encrpdu;
 }
 
@@ -552,8 +552,8 @@ usm_make_report(struct snmp_message *msg)
 	usmstat.bo_id[OIDIDX_usmStats] = msg->sm_usmerr;
 	usmstat.bo_n = OIDIDX_usmStats + 2;
 	if (msg->sm_varbindresp != NULL)
-		ber_free_elements(msg->sm_varbindresp);
-	msg->sm_varbindresp = ber_add_sequence(NULL);
+		ober_free_elements(msg->sm_varbindresp);
+	msg->sm_varbindresp = ober_add_sequence(NULL);
 	mps_getreq(NULL, msg->sm_varbindresp, &usmstat, msg->sm_version);
 	return;
 }
@@ -601,7 +601,7 @@ usm_decrypt(struct snmp_message *msg, struct ber_element *encr)
 	struct ber_element	*scoped_pdu = NULL;
 	ssize_t			 scoped_pdu_len;
 
-	if (ber_get_nstring(encr, (void *)&privstr, &privlen) < 0)
+	if (ober_get_nstring(encr, (void *)&privstr, &privlen) < 0)
 		return NULL;
 
 	scoped_pdu_len = usm_crypt(msg, privstr, (int)privlen, buf, 0);
@@ -609,8 +609,8 @@ usm_decrypt(struct snmp_message *msg, struct ber_element *encr)
 		return NULL;
 
 	bzero(&ber, sizeof(ber));
-	ber_set_readbuf(&ber, buf, scoped_pdu_len);
-	scoped_pdu = ber_read_elements(&ber, NULL);
+	ober_set_readbuf(&ber, buf, scoped_pdu_len);
+	scoped_pdu = ober_read_elements(&ber, NULL);
 
 #ifdef DEBUG
 	if (scoped_pdu != NULL) {
@@ -619,7 +619,7 @@ usm_decrypt(struct snmp_message *msg, struct ber_element *encr)
 	}
 #endif
 
-	ber_free(&ber);
+	ober_free(&ber);
 	return scoped_pdu;
 }
 

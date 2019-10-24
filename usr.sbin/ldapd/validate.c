@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.11 2018/05/15 11:19:21 reyk Exp $ */
+/*	$OpenBSD: validate.c,v 1.12 2019/10/24 12:39:26 tb Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -65,7 +65,7 @@ validate_attribute(struct attr_type *at, struct ber_element *vals)
 	}
 
 	for (elm = vals->be_sub; elm != NULL; elm = elm->be_next) {
-		if (ber_get_string(elm, &val) == -1) {
+		if (ober_get_string(elm, &val) == -1) {
 			log_debug("attribute value not an octet-string");
 			return LDAP_PROTOCOL_ERROR;
 		}
@@ -312,7 +312,7 @@ validate_entry(const char *dn, struct ber_element *entry, int relax)
 	 */
 	objclass = objclass->be_next;		/* skip attribute description */
 	for (a = objclass->be_sub; a != NULL; a = a->be_next) {
-		if (ber_get_string(a, &s) != 0) {
+		if (ober_get_string(a, &s) != 0) {
 			rc = LDAP_INVALID_SYNTAX;
 			goto done;
 		}
@@ -395,7 +395,7 @@ validate_entry(const char *dn, struct ber_element *entry, int relax)
 	/* Check all attributes against schema.
 	 */
 	for (a = entry->be_sub; a != NULL; a = a->be_next) {
-		if (ber_scanf_elements(a, "{se{", &s, &vals) != 0) {
+		if (ober_scanf_elements(a, "{se{", &s, &vals) != 0) {
 			rc = LDAP_INVALID_SYNTAX;
 			goto done;
 		}
