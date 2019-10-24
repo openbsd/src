@@ -152,6 +152,17 @@ struct viornd_dev {
 	uint32_t vm_id;
 };
 
+/* cmpe */
+struct viormbh_dev {
+	struct virtio_io_cfg cfg;
+
+	struct virtio_vq_info vq[VIRTIO_MAX_QUEUES];
+	
+	uint8_t pci_id;
+	int irq;
+	uint32_t vm_id;
+}
+
 struct vioblk_dev {
 	struct virtio_io_cfg cfg;
 

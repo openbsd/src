@@ -49,6 +49,7 @@
 
 extern char *__progname;
 
+struct viombh_dev viombh;
 struct viornd_dev viornd;
 struct vioblk_dev *vioblk;
 struct vionet_dev *vionet;
@@ -250,70 +251,42 @@ viornd_notifyq(void)
 }
 
 /* CMPE */
+/* used by pci_add_bar function */
 int
 virtio_mbh_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
     void *unused, uint8_t sz)
 {
 	*intr = 0xFF;
 
+	log_info("CMPE_VIRTIO_MBH");
+
+	// dir == 0 means writing
 	if (dir == 0) {
 		switch (reg) {
-		case VIRTIO_CONFIG_DEVICE_FEATURES:
-		case VIRTIO_CONFIG_QUEUE_SIZE:
-		case VIRTIO_CONFIG_ISR_STATUS:
+		case VIRTIO_BALLOON_F_MUST_TELL_HOST:
 			log_warnx("%s: illegal write %x to %s",
 			    __progname, *data, virtio_reg_name(reg));
 			break;
-		case VIRTIO_CONFIG_GUEST_FEATURES:
-			viornd.cfg.guest_feature = *data;
-			break;
-		case VIRTIO_CONFIG_QUEUE_ADDRESS:
-			viornd.cfg.queue_address = *data;
-			viornd_update_qa();
-			break;
-		case VIRTIO_CONFIG_QUEUE_SELECT:
-			viornd.cfg.queue_select = *data;
-			viornd_update_qs();
-			break;
-		case VIRTIO_CONFIG_QUEUE_NOTIFY:
-			viornd.cfg.queue_notify = *data;
-			if (viornd_notifyq())
-				*intr = 1;
-			break;
-		case VIRTIO_CONFIG_DEVICE_STATUS:
-			viornd.cfg.device_status = *data;
+		case VIRTIO_BALLOON_F_STATS_VQ:
+		case VIRTIO_BALLOON_F_DEFLATE_ON_OOM:
+			log_warnx("%s: illegal write %x to %s",
+			    __progname, *data, virtio_reg_name(reg));
 			break;
 		}
 	} else {
 		switch (reg) {
-		case VIRTIO_CONFIG_DEVICE_FEATURES:
-			*data = viornd.cfg.device_feature;
+		case VIRTIO_BALLOON_F_MUST_TELL_HOST:
+			*data = viombh.cfg.device_feature;
 			break;
-		case VIRTIO_CONFIG_GUEST_FEATURES:
-			*data = viornd.cfg.guest_feature;
+		case VIRTIO_BALLOON_F_STATS_VQ:
+			*data = viombh.cfg.guest_feature;
 			break;
-		case VIRTIO_CONFIG_QUEUE_ADDRESS:
-			*data = viornd.cfg.queue_address;
-			break;
-		case VIRTIO_CONFIG_QUEUE_SIZE:
-			*data = viornd.cfg.queue_size;
-			break;
-		case VIRTIO_CONFIG_QUEUE_SELECT:
-			*data = viornd.cfg.queue_select;
-			break;
-		case VIRTIO_CONFIG_QUEUE_NOTIFY:
-			*data = viornd.cfg.queue_notify;
-			break;
-		case VIRTIO_CONFIG_DEVICE_STATUS:
-			*data = viornd.cfg.device_status;
-			break;
-		case VIRTIO_CONFIG_ISR_STATUS:
-			*data = viornd.cfg.isr_status;
-			viornd.cfg.isr_status = 0;
-			vcpu_deassert_pic_irq(viornd.vm_id, 0, viornd.irq);
+		case VIRTIO_BALLOON_F_DEFLATE_ON_OOM:
+			*data = viombh.cfg.queue_address;
 			break;
 		}
 	}
+
 	return (0);
 }
 
