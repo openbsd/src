@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.124 2019/08/11 14:46:18 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.125 2019/10/24 11:13:06 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -114,6 +114,7 @@ ehci*		at fdt?			# EHCI (shim)
 usb*		at ehci?	#flags 0x1
 ohci*		at fdt?
 usb*		at ohci?
+sxisid*		at fdt? early 1
 sxisyscon*	at fdt?	early 1		# System controller
 sxitemp*	at fdt?			# Temperature sensor
 sxits*		at fdt?			# Touchpad controller
