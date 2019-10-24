@@ -153,7 +153,7 @@ struct viornd_dev {
 };
 
 /* cmpe */
-struct viormbh_dev {
+struct viombh_dev {
 	struct virtio_io_cfg cfg;
 
 	struct virtio_vq_info vq[VIRTIO_MAX_QUEUES];
