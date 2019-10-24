@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.41 2019/10/24 15:47:15 jsing Exp $ */
+/* $OpenBSD: rsa.h,v 1.42 2019/10/24 15:51:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -308,6 +308,9 @@ typedef struct rsa_pss_params_st {
 	X509_ALGOR *maskGenAlgorithm;
 	ASN1_INTEGER *saltLength;
 	ASN1_INTEGER *trailerField;
+
+	/* Hash algorithm decoded from maskGenAlgorithm. */
+	X509_ALGOR *maskHash;
 } RSA_PSS_PARAMS;
 
 RSA_PSS_PARAMS *RSA_PSS_PARAMS_new(void);
