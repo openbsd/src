@@ -40,7 +40,10 @@
 #define VMMCI_TIMEOUT		3
 #define VMMCI_SHUTDOWN_TIMEOUT	30
 
-#define VIRTIO_BALLOON_F_STATS_VQ	1 /* Memory Stats virtqueue */
+/* cmpe */
+#define VIRTIO_BALLOON_F_MUST_TELL_HOST (1<<0)
+#define VIRTIO_BALLOON_F_STATS_VQ	(1<<1) /* Memory Stats virtqueue */
+#define VIRTIO_BALLOON_F_DEFLATE_ON_OOM	(1<<2)
 
 #define VIRTIO_BALLOON_S_SWAP_IN  0   /* Amount of memory swapped in */
 	

@@ -59,11 +59,6 @@ struct vmmci_dev vmmci;
 int nr_vionet;
 int nr_vioblk;
 
-/* cmpe */
-#define VIRTIO_BALLOON_F_MUST_TELL_HOST 	(1<<0)
-#define VIRTIO_BALLOON_F_STATS_VQ		(1<<1)
-#define VIRTIO_BALLOON_F_DEFLATE_ON_OOM		(1<<2)
-
 #define MAXPHYS	(64 * 1024)	/* max raw I/O transfer size */
 
 #define VIRTIO_NET_F_MAC	(1<<5)
