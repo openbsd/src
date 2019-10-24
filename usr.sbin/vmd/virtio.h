@@ -287,8 +287,8 @@ struct ioinfo {
 };
 
 struct virtio_balloon_stat {
-	u16 tag;
-	u64 val;
+	uint16_t tag;
+	uint64_t val;
 } __attribute__((packed));
 
 
