@@ -40,6 +40,22 @@
 #define VMMCI_TIMEOUT		3
 #define VMMCI_SHUTDOWN_TIMEOUT	30
 
+#define VIRTIO_BALLOON_F_STATS_VQ	1 /* Memory Stats virtqueue */
+
+#define VIRTIO_BALLOON_S_SWAP_IN  0   /* Amount of memory swapped in */
+	
+#define VIRTIO_BALLOON_S_SWAP_OUT 1   /* Amount of memory swapped out */
+	
+#define VIRTIO_BALLOON_S_MAJFLT   2   /* Number of major faults */
+	
+#define VIRTIO_BALLOON_S_MINFLT   3   /* Number of minor faults */
+	
+#define VIRTIO_BALLOON_S_MEMFREE  4   /* Total amount of free memory */
+	
+#define VIRTIO_BALLOON_S_MEMTOT   5   /* Total amount of memory */
+	
+#define VIRTIO_BALLOON_S_NR       6
+
 /* All the devices we support have either 1, 2 or 3 queues */
 /* viornd - 1 queue
  * vioblk - 1 queue
@@ -258,6 +274,12 @@ struct ioinfo {
 	off_t offset;
 	int error;
 };
+
+struct virtio_balloon_stat {
+	u16 tag;
+	u64 val;
+} __attribute__((packed));
+
 
 /* virtio.c */
 void virtio_init(struct vmd_vm *, int, int[][VM_MAX_BASE_PER_DISK], int *);
