@@ -161,7 +161,7 @@ struct viormbh_dev {
 	uint8_t pci_id;
 	int irq;
 	uint32_t vm_id;
-}
+};
 
 struct vioblk_dev {
 	struct virtio_io_cfg cfg;
