@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_asn1.c,v 1.13 2016/12/30 15:47:07 jsing Exp $ */
+/* $OpenBSD: rsa_asn1.c,v 1.14 2019/10/24 16:26:13 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -62,6 +62,8 @@
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
+
+#include "rsa_locl.h"
 
 /* Override the default free and new methods */
 static int
@@ -267,6 +269,84 @@ RSA_PSS_PARAMS_free(RSA_PSS_PARAMS *a)
 	ASN1_item_free((ASN1_VALUE *)a, &RSA_PSS_PARAMS_it);
 }
 
+static int
+rsa_oaep_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
+{
+	/* Free up maskHash */
+	if (operation == ASN1_OP_FREE_PRE) {
+		RSA_OAEP_PARAMS *oaep = (RSA_OAEP_PARAMS *)*pval;
+		X509_ALGOR_free(oaep->maskHash);
+	}
+	return 1;
+}
+
+static const ASN1_AUX RSA_OAEP_PARAMS_aux = {
+	.app_data = NULL,
+	.flags = 0,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = rsa_oaep_cb,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE RSA_OAEP_PARAMS_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(RSA_OAEP_PARAMS, hashFunc),
+		.field_name = "hashFunc",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(RSA_OAEP_PARAMS, maskGenFunc),
+		.field_name = "maskGenFunc",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 2,
+		.offset = offsetof(RSA_OAEP_PARAMS, pSourceFunc),
+		.field_name = "pSourceFunc",
+		.item = &X509_ALGOR_it,
+	},
+};
+
+const ASN1_ITEM RSA_OAEP_PARAMS_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = RSA_OAEP_PARAMS_seq_tt,
+	.tcount = sizeof(RSA_OAEP_PARAMS_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &RSA_OAEP_PARAMS_aux,
+	.size = sizeof(RSA_OAEP_PARAMS),
+	.sname = "RSA_OAEP_PARAMS",
+};
+
+
+RSA_OAEP_PARAMS *
+d2i_RSA_OAEP_PARAMS(RSA_OAEP_PARAMS **a, const unsigned char **in, long len)
+{
+	return (RSA_OAEP_PARAMS *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &RSA_OAEP_PARAMS_it);
+}
+
+int
+i2d_RSA_OAEP_PARAMS(RSA_OAEP_PARAMS *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &RSA_OAEP_PARAMS_it);
+}
+
+RSA_OAEP_PARAMS *
+RSA_OAEP_PARAMS_new(void)
+{
+	return (RSA_OAEP_PARAMS *)ASN1_item_new(&RSA_OAEP_PARAMS_it);
+}
+
+void
+RSA_OAEP_PARAMS_free(RSA_OAEP_PARAMS *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &RSA_OAEP_PARAMS_it);
+}
 
 RSA *
 d2i_RSAPrivateKey(RSA **a, const unsigned char **in, long len)

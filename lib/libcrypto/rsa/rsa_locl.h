@@ -1,6 +1,21 @@
-/* $OpenBSD: rsa_locl.h,v 1.5 2019/10/04 16:51:31 jsing Exp $ */
+/* $OpenBSD: rsa_locl.h,v 1.6 2019/10/24 16:26:13 jsing Exp $ */
 
 __BEGIN_HIDDEN_DECLS
+
+typedef struct rsa_oaep_params_st {
+	X509_ALGOR *hashFunc;
+	X509_ALGOR *maskGenFunc;
+	X509_ALGOR *pSourceFunc;
+
+	/* Hash algorithm decoded from maskGenFunc. */
+	X509_ALGOR *maskHash;
+} RSA_OAEP_PARAMS;
+
+RSA_OAEP_PARAMS *RSA_OAEP_PARAMS_new(void);
+void RSA_OAEP_PARAMS_free(RSA_OAEP_PARAMS *a);
+RSA_OAEP_PARAMS *d2i_RSA_OAEP_PARAMS(RSA_OAEP_PARAMS **a, const unsigned char **in, long len);
+int i2d_RSA_OAEP_PARAMS(RSA_OAEP_PARAMS *a, unsigned char **out);
+extern const ASN1_ITEM RSA_OAEP_PARAMS_it;
 
 extern int int_rsa_verify(int dtype, const unsigned char *m,
     unsigned int m_len, unsigned char *rm, size_t *prm_len,
