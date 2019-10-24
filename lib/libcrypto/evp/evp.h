@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.77 2019/09/09 18:06:25 jsing Exp $ */
+/* $OpenBSD: evp.h,v 1.78 2019/10/24 15:43:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -99,6 +99,7 @@
 
 #define EVP_PKEY_NONE	NID_undef
 #define EVP_PKEY_RSA	NID_rsaEncryption
+#define EVP_PKEY_RSA_PSS NID_rsassaPss
 #define EVP_PKEY_RSA2	NID_rsa
 #define EVP_PKEY_DSA	NID_dsa
 #define EVP_PKEY_DSA1	NID_dsa_2
