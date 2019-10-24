@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_lib.c,v 1.37 2018/04/14 07:09:21 tb Exp $ */
+/* $OpenBSD: rsa_lib.c,v 1.38 2019/10/24 15:47:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,8 +63,11 @@
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/lhash.h>
 #include <openssl/rsa.h>
+
+#include "evp_locl.h"
 
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
@@ -364,4 +367,16 @@ void
 RSA_set_flags(RSA *r, int flags)
 {
 	r->flags |= flags;
+}
+
+int
+RSA_pkey_ctx_ctrl(EVP_PKEY_CTX *ctx, int optype, int cmd, int p1, void *p2)
+{
+	/* Return an error if the key type is not RSA or RSA-PSS. */
+	if (ctx != NULL && ctx->pmeth != NULL &&
+	    ctx->pmeth->pkey_id != EVP_PKEY_RSA &&
+	    ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+		return -1;
+
+	return EVP_PKEY_CTX_ctrl(ctx, -1, optype, cmd, p1, p2);
 }

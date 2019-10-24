@@ -2356,6 +2356,7 @@ RSA_padding_check_PKCS1_type_1
 RSA_padding_check_PKCS1_type_2
 RSA_padding_check_X931
 RSA_padding_check_none
+RSA_pkey_ctx_ctrl
 RSA_print
 RSA_print_fp
 RSA_private_decrypt
