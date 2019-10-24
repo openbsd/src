@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.42 2019/10/24 15:51:23 jsing Exp $ */
+/* $OpenBSD: rsa.h,v 1.43 2019/10/24 15:54:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,6 +84,8 @@ extern "C" {
 /* typedef struct rsa_st RSA; */
 /* typedef struct rsa_meth_st RSA_METHOD; */
 
+typedef struct rsa_pss_params_st RSA_PSS_PARAMS;
+
 struct rsa_meth_st {
 	const char *name;
 	int (*rsa_pub_enc)(int flen, const unsigned char *from,
@@ -127,6 +129,7 @@ struct rsa_st {
 	int pad;
 	long version;
 	const RSA_METHOD *meth;
+
 	/* functional reference if 'meth' is ENGINE-provided */
 	ENGINE *engine;
 	BIGNUM *n;
@@ -137,6 +140,10 @@ struct rsa_st {
 	BIGNUM *dmp1;
 	BIGNUM *dmq1;
 	BIGNUM *iqmp;
+
+	/* Parameter restrictions for PSS only keys. */
+	RSA_PSS_PARAMS *pss;
+
 	/* be careful using this if the RSA structure is shared */
 	CRYPTO_EX_DATA ex_data;
 	int references;
