@@ -258,7 +258,11 @@ virtio_mbh_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 {
 	*intr = 0xFF;
 
-	log_info("CMPE_VIRTIO_MBH");
+	log_info("CMPE_VIRTIO_MBH, reg: %d", reg);
+
+	uint16_t VIRTIO_BALLOON_F_MUST_TELL_HOST = 0;
+	uint16_t VIRTIO_BALLOON_F_STATS_VQ = 1;
+	uint16_t VIRTIO_BALLOON_F_DEFLATE_ON_OOM = 2;
 
 	// dir == 0 means writing
 	if (dir == 0) {
