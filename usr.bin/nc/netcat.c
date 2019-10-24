@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.208 2019/10/23 13:49:24 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.209 2019/10/24 12:48:54 job Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -125,7 +125,7 @@ void	help(void) __attribute__((noreturn));
 int	local_listen(const char *, const char *, struct addrinfo);
 void	readwrite(int, struct tls *);
 void	fdpass(int nfd) __attribute__((noreturn));
-int	remote_connect(const char *, const char *, struct addrinfo);
+int	remote_connect(const char *, const char *, struct addrinfo, char *);
 int	timeout_tls(int, struct tls *, int (*)(struct tls *));
 int	timeout_connect(int, const struct sockaddr *, socklen_t);
 int	socks_connect(const char *, const char *, struct addrinfo,
@@ -151,6 +151,7 @@ main(int argc, char *argv[])
 {
 	int ch, s = -1, ret, socksv;
 	char *host, *uport;
+	char ipaddr[NI_MAXHOST];
 	struct addrinfo hints;
 	struct servent *sv;
 	socklen_t len;
@@ -677,7 +678,8 @@ main(int argc, char *argv[])
 				    proxy, proxyport, proxyhints, socksv,
 				    Pflag);
 			else
-				s = remote_connect(host, portlist[i], hints);
+				s = remote_connect(host, portlist[i], hints,
+				    ipaddr);
 
 			if (s == -1)
 				continue;
@@ -701,10 +703,14 @@ main(int argc, char *argv[])
 					    uflag ? "udp" : "tcp");
 				}
 
-				fprintf(stderr,
-				    "Connection to %s %s port [%s/%s] "
-				    "succeeded!\n", host, portlist[i],
-				    uflag ? "udp" : "tcp",
+				fprintf(stderr, "Connection to %s", host);
+
+				/* if there is something to report, print IP */
+				if (!nflag && (strcmp(host, ipaddr) != 0))
+					fprintf(stderr, " (%s)", ipaddr);
+
+				fprintf(stderr, " %s port [%s/%s] succeeded!\n",
+				    portlist[i], uflag ? "udp" : "tcp",
 				    sv ? sv->s_name : "*");
 			}
 			if (Fflag)
@@ -916,10 +922,11 @@ unix_listen(char *path)
  * port or source address if needed. Returns -1 on failure.
  */
 int
-remote_connect(const char *host, const char *port, struct addrinfo hints)
+remote_connect(const char *host, const char *port, struct addrinfo hints,
+    char *ipaddr)
 {
 	struct addrinfo *res, *res0;
-	int s = -1, error, on = 1, save_errno;
+	int s = -1, error, herr, on = 1, save_errno;
 
 	if ((error = getaddrinfo(host, port, &hints, &res0)))
 		errx(1, "getaddrinfo for host \"%s\" port %s: %s", host,
@@ -952,11 +959,26 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 
 		set_common_sockopts(s, res->ai_family);
 
+		if ((herr = getnameinfo(res->ai_addr, res->ai_addrlen, ipaddr,
+		    NI_MAXHOST, NULL, 0, NI_NUMERICHOST)) != 0) {
+			if (herr == EAI_SYSTEM)
+				err(1, "getnameinfo");
+			else
+				errx(1, "getnameinfo: %s", gai_strerror(herr));
+		}
+
 		if (timeout_connect(s, res->ai_addr, res->ai_addrlen) == 0)
 			break;
-		if (vflag)
-			warn("connect to %s port %s (%s) failed", host, port,
-			    uflag ? "udp" : "tcp");
+
+		if (vflag) {
+			/* only print IP if there is something to report */
+			if (nflag || (strncmp(host, ipaddr, NI_MAXHOST) == 0))
+				warn("connect to %s port %s (%s) failed", host,
+				    port, uflag ? "udp" : "tcp");
+			else
+				warn("connect to %s (%s) port %s (%s) failed",
+				    host, ipaddr, port, uflag ? "udp" : "tcp");
+		}
 
 		save_errno = errno;
 		close(s);
