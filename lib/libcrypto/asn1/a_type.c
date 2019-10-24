@@ -1,4 +1,4 @@
-/* $OpenBSD: a_type.c,v 1.20 2018/04/25 11:48:21 tb Exp $ */
+/* $OpenBSD: a_type.c,v 1.21 2019/10/24 16:36:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -153,4 +153,35 @@ ASN1_TYPE_cmp(const ASN1_TYPE *a, const ASN1_TYPE *b)
 	}
 
 	return result;
+}
+
+ASN1_TYPE *
+ASN1_TYPE_pack_sequence(const ASN1_ITEM *it, void *s, ASN1_TYPE **t)
+{
+	ASN1_OCTET_STRING *oct;
+	ASN1_TYPE *rt;
+
+	if ((oct = ASN1_item_pack(s, it, NULL)) == NULL)
+		return NULL;
+
+	if (t != NULL && *t != NULL) {
+		rt = *t;
+	} else {
+		if ((rt = ASN1_TYPE_new()) == NULL) {
+			ASN1_OCTET_STRING_free(oct);
+			return NULL;
+		}
+		if (t != NULL)
+			*t = rt;
+	}
+	ASN1_TYPE_set(rt, V_ASN1_SEQUENCE, oct);
+	return rt;
+}
+
+void *
+ASN1_TYPE_unpack_sequence(const ASN1_ITEM *it, const ASN1_TYPE *t)
+{
+	if (t == NULL || t->type != V_ASN1_SEQUENCE || t->value.sequence == NULL)
+		return NULL;
+	return ASN1_item_unpack(t->value.sequence, it);
 }

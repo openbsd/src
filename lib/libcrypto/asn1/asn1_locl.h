@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_locl.h,v 1.11 2018/08/24 20:22:15 tb Exp $ */
+/* $OpenBSD: asn1_locl.h,v 1.12 2019/10/24 16:36:10 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -59,6 +59,9 @@
 __BEGIN_HIDDEN_DECLS
 
 /* Internal ASN1 structures and functions: not for application use */
+
+ASN1_TYPE *ASN1_TYPE_pack_sequence(const ASN1_ITEM *it, void *s, ASN1_TYPE **t);
+void *ASN1_TYPE_unpack_sequence(const ASN1_ITEM *it, const ASN1_TYPE *t);
 
 /* ASN1 print context structure */
 
