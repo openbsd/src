@@ -1,4 +1,4 @@
-.\" $OpenBSD: ober_get_string.3,v 1.1 2019/10/24 12:39:26 tb Exp $
+.\" $OpenBSD: ober_get_string.3,v 1.2 2019/10/25 04:00:10 tb Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 24 2019 $
+.Dd $Mdocdate: October 25 2019 $
 .Dt OBER_GET_STRING 3
 .Os
 .Sh NAME
@@ -85,16 +85,16 @@ The following bytes are valid:
 .It b Ta Fn ober_get_boolean    Ta 1: Vt int *
 .It d Ta Fn ober_get_integer    Ta 1: Vt int *
 .It E Ta Fn ober_get_enumerated Ta 1: Vt long long *
-.It e Ta see below             Ta 1: Vt struct ber_element **
+.It e Ta see below              Ta 1: Vt struct ber_element **
 .It i Ta Fn ober_get_integer    Ta 1: Vt long long *
 .It o Ta Fn ober_get_oid        Ta 1: Vt struct ber_oid *
 .It p Ta Fn ober_getpos         Ta 1: Vt off_t *
-.It S Ta see below             Ta 0
+.It S Ta see below              Ta 0
 .It s Ta Fn ober_get_string     Ta 1: Vt char **
-.It t Ta see below             Ta 2: Vt int * , unsigned int *
+.It t Ta see below              Ta 2: Vt int * , unsigned int *
 .It x Ta Fn ober_get_nstring    Ta 2: Vt void **, size_t *
-.It \&( or { Ta see below      Ta 0
-.It \&) or } Ta see below      Ta 0
+.It \&( or { Ta see below       Ta 0
+.It \&) or } Ta see below       Ta 0
 .It \&. Ta Fn ober_get_eoc      Ta 0
 .It 0 Ta Fn ober_get_null       Ta 0
 .El
