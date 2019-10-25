@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_asn1.c,v 1.14 2019/10/24 16:26:13 jsing Exp $ */
+/* $OpenBSD: rsa_asn1.c,v 1.15 2019/10/25 14:40:18 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -202,6 +202,26 @@ const ASN1_ITEM RSAPublicKey_it = {
 	.sname = "RSA",
 };
 
+static int
+rsa_pss_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
+{
+	/* Free up maskHash */
+	if (operation == ASN1_OP_FREE_PRE) {
+		RSA_PSS_PARAMS *pss = (RSA_PSS_PARAMS *)*pval;
+		X509_ALGOR_free(pss->maskHash);
+	}
+	return 1;
+}
+
+static const ASN1_AUX RSA_PSS_PARAMS_aux = {
+	.app_data = NULL,
+	.flags = 0,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = rsa_pss_cb,
+	.enc_offset = 0,
+};
+
 static const ASN1_TEMPLATE RSA_PSS_PARAMS_seq_tt[] = {
 	{
 		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
@@ -238,11 +258,10 @@ const ASN1_ITEM RSA_PSS_PARAMS_it = {
 	.utype = V_ASN1_SEQUENCE,
 	.templates = RSA_PSS_PARAMS_seq_tt,
 	.tcount = sizeof(RSA_PSS_PARAMS_seq_tt) / sizeof(ASN1_TEMPLATE),
-	.funcs = NULL,
+	.funcs = &RSA_PSS_PARAMS_aux,
 	.size = sizeof(RSA_PSS_PARAMS),
 	.sname = "RSA_PSS_PARAMS",
 };
-
 
 RSA_PSS_PARAMS *
 d2i_RSA_PSS_PARAMS(RSA_PSS_PARAMS **a, const unsigned char **in, long len)
@@ -288,6 +307,7 @@ static const ASN1_AUX RSA_OAEP_PARAMS_aux = {
 	.asn1_cb = rsa_oaep_cb,
 	.enc_offset = 0,
 };
+
 static const ASN1_TEMPLATE RSA_OAEP_PARAMS_seq_tt[] = {
 	{
 		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
