@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.5 2017/05/07 11:25:58 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.6 2019/10/25 10:06:40 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -148,7 +148,8 @@ fdt_add_str(char *name)
 	if (tree.memory > tree.strings)
 		tree.memory += len;
 	tree.end += len;
-	memcpy(end, name, len);
+	memset(end, 0, len);
+	memcpy(end, name, strlen(name));
 
 	return (end - tree.strings);
 }
@@ -293,6 +294,43 @@ fdt_node_add_property(void *node, char *name, void *data, int len)
 	return fdt_node_set_property(node, name, data, len);
 }
 
+int
+fdt_node_add_node(void *node, char *name, void **child)
+{
+	size_t len = roundup(strlen(name) + 1, sizeof(uint32_t)) + 8;
+	uint32_t *ptr = (uint32_t *)node;
+
+	if (!tree_inited)
+		return 0;
+
+	if (betoh32(*ptr) != FDT_NODE_BEGIN)
+		return 0;
+
+	ptr = skip_node_name(ptr + 1);
+	ptr = skip_props(ptr);
+
+	/* skip children */
+	while (betoh32(*ptr) == FDT_NODE_BEGIN)
+		ptr = skip_node(ptr);
+
+	memmove((char *)ptr + len, ptr, tree.end - (char *)ptr);
+	tree.struct_size += len;
+	if (tree.strings > tree.tree)
+		tree.strings += len;
+	if (tree.memory > tree.tree)
+		tree.memory += len;
+	tree.end += len;
+
+	*child = ptr;
+	*ptr++ = htobe32(FDT_NODE_BEGIN);
+	memset(ptr, 0, len - 8);
+	memcpy(ptr, name, strlen(name));
+	ptr += (len - 8) / sizeof(uint32_t);
+	*ptr++ = htobe32(FDT_NODE_END);
+
+	return 1;
+}
+
 /*
  * Retrieves next node, skipping all the children nodes of the pointed node,
  * returns pointer to next node, no matter if it exists or not.
@@ -353,6 +391,35 @@ fdt_next_node(void *node)
 		return NULL;
 
 	return (ptr + 1);
+}
+
+/*
+ * Retrieves node property as integers and puts them in the given
+ * integer array.
+ */
+int
+fdt_node_property_ints(void *node, char *name, int *out, int outlen)
+{
+	int *data;
+	int i, inlen;
+
+	inlen = fdt_node_property(node, name, (char **)&data) / sizeof(int);
+	if (inlen <= 0)
+		return -1;
+
+	for (i = 0; i < inlen && i < outlen; i++)
+		out[i] = betoh32(data[i]);
+
+	return i;
+}
+
+/*
+ * Retrieves node property as an integer.
+ */
+int
+fdt_node_property_int(void *node, char *name, int *out)
+{
+	return fdt_node_property_ints(node, name, out, 1);
 }
 
 /*
