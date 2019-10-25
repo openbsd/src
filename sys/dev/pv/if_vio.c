@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.13 2019/08/06 19:24:45 bluhm Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.14 2019/10/25 07:13:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -113,8 +113,8 @@ static const struct virtio_feature_name virtio_net_feature_names[] = {
 	{ VIRTIO_NET_F_GUEST_UFO,		"GuestUFO" },
 	{ VIRTIO_NET_F_HOST_TSO4,		"HostTSO4" },
 	{ VIRTIO_NET_F_HOST_TSO6,		"HostTSO6" },
-	{ VIRTIO_NET_F_HOST_ECN, 		"HostECN" },
-	{ VIRTIO_NET_F_HOST_UFO, 		"HostUFO" },
+	{ VIRTIO_NET_F_HOST_ECN,		"HostECN" },
+	{ VIRTIO_NET_F_HOST_UFO,		"HostUFO" },
 	{ VIRTIO_NET_F_MRG_RXBUF,		"MrgRXBuf" },
 	{ VIRTIO_NET_F_STATUS,			"Status" },
 	{ VIRTIO_NET_F_CTRL_VQ,			"CtrlVQ" },
@@ -125,7 +125,7 @@ static const struct virtio_feature_name virtio_net_feature_names[] = {
 	{ VIRTIO_NET_F_MQ,			"MQ" },
 	{ VIRTIO_NET_F_CTRL_MAC_ADDR,		"CtrlMAC" },
 #endif
-	{ 0, 				NULL }
+	{ 0,				NULL }
 };
 
 /* Status */
@@ -251,9 +251,9 @@ struct vio_softc {
 #define VIRTIO_NET_CTRL_MAC_MC_ENTRIES	64 /* for more entries, use ALLMULTI */
 #define VIRTIO_NET_CTRL_MAC_UC_ENTRIES	 1 /* one entry for own unicast addr */
 
-#define VIO_CTRL_MAC_INFO_SIZE 					\
-	(2*sizeof(struct virtio_net_ctrl_mac_tbl) + 		\
-	 (VIRTIO_NET_CTRL_MAC_MC_ENTRIES + 			\
+#define VIO_CTRL_MAC_INFO_SIZE					\
+	(2*sizeof(struct virtio_net_ctrl_mac_tbl) +		\
+	 (VIRTIO_NET_CTRL_MAC_MC_ENTRIES +			\
 	  VIRTIO_NET_CTRL_MAC_UC_ENTRIES) * ETHER_ADDR_LEN)
 
 /* cfattach interface functions */
@@ -520,7 +520,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 
 	if (vsc->sc_child != NULL) {
 		printf(": child already attached for %s; something wrong...\n",
-		       parent->dv_xname);
+		    parent->dv_xname);
 		return;
 	}
 
@@ -1018,8 +1018,7 @@ vio_rxeof(struct vio_softc *sc)
 				bufs_left = hdr->num_buffers - 1;
 			else
 				bufs_left = 0;
-		}
-		else {
+		} else {
 			m->m_flags &= ~M_PKTHDR;
 			m0->m_pkthdr.len += m->m_len;
 			mlast->m_next = m;
