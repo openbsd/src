@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.5 2018/08/06 18:39:13 kettenis Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.6 2019/10/25 21:13:50 kettenis Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -36,15 +36,6 @@
 #include <arm/sysreg.h>
 #include <arm/armreg.h>
 #include <arm/pte.h>
-
-#ifdef __clang__
-.arch_extension virt
-#define ELR	msr	ELR_hyp, lr
-#define ERET	eret
-#else
-#define ELR	.long	0xe12ef30e		@ msr	ELR_hyp, lr
-#define ERET	.long	0xe160006e		@ eret
-#endif
 
 /*
  * Kernel start routine for OMAP
@@ -87,19 +78,7 @@ _C_LABEL(bootstrap_start):
 	 * Ensure IRQ, FIQ and Aborts are disabled in HYP mode before
 	 * going to SVC.  If we are there already, just go ahead.
 	 */
-	mrs	r0, cpsr
-	and	r0, r0, #(PSR_MODE)
-	teq	r0, #(PSR_HYP32_MODE)
-	bne	1f			/* If we are not in HYP, we're done */
-	mrs	r0, cpsr
-	bic	r0, r0, #(PSR_MODE)
-	orr	r0, r0, #(PSR_SVC32_MODE)
-	orr	r0, r0, #(PSR_I | PSR_F | PSR_A)
-	msr	spsr_fsxc, r0
-	adr	lr, 1f
-	ELR
-	ERET				/* Use the HYP LR to get into SVC */
-1:
+	bl	drop_to_pl1
 
 	/*
 	 * Now that we are in SVC, build up pagetables and start up.
@@ -144,24 +123,13 @@ _C_LABEL(bootstrap_start):
 	cmp	r1, #0
 	bne	3b
 
-	/* Set ASID to zero */
-	mov	r1, #0
-	mcr	CP15_CONTEXTIDR(r1)
-	isb
+	/*
+	 * At this point:
+	 * r0 = TTBR0 table
+	 */
 
-	mcr	CP15_TTBR0(r0)		/* Set TTB */
-	mcr	CP15_TLBIALL(r0)	/* Flush TLB */
-
-	/* Set the Domain Access register.  Very important! */
-	mov     r0, #DOMAIN_CLIENT	/* We only use domain 0 */
-	mcr	CP15_DACR(r0)
-	isb
-
-	/* Enable MMU */
-	mrc	CP15_SCTLR(r0)
-	orr	r0, r0, #CPU_CONTROL_MMU_ENABLE
-	mcr	CP15_SCTLR(r0)
-	isb
+	/* Enable the mmu */
+	bl	start_mmu
 
 	/* Restore U-Boot arguments */
 	mov	r0, r6
