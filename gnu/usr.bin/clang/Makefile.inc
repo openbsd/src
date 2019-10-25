@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.15 2019/07/11 11:31:09 visa Exp $
+# $OpenBSD: Makefile.inc,v 1.16 2019/10/25 00:40:56 mortimer Exp $
 
 LLVM_SRCS?=	${.CURDIR}/../../../llvm
 
@@ -25,7 +25,8 @@ CPPFLAGS+=	-DNDEBUG
 
 # Disable some protections in the compiler to regain performance.
 .if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "aarch64"
+    ${MACHINE_ARCH} == "mips64" || ${MACHINE_ARCH} == "mips64el" || \
+    ${MACHINE_ARCH} == "aarch64" 
 CXXFLAGS+=	-fno-ret-protector
 .endif
 .if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"

@@ -4561,6 +4561,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
   if (RetProtector &&
       ((getToolChain().getArch() == llvm::Triple::x86_64) ||
+       (getToolChain().getArch() == llvm::Triple::mips64) ||
+       (getToolChain().getArch() == llvm::Triple::mips64el) ||
        (getToolChain().getArch() == llvm::Triple::aarch64)) &&
       !Args.hasArg(options::OPT_fno_stack_protector) &&
       !Args.hasArg(options::OPT_pg)) {

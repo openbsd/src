@@ -47,6 +47,7 @@ add_llvm_target(MipsCodeGen
   MipsPreLegalizerCombiner.cpp
   MipsRegisterBankInfo.cpp
   MipsRegisterInfo.cpp
+  MipsReturnProtectorLowering.cpp
   MipsSEFrameLowering.cpp
   MipsSEInstrInfo.cpp
   MipsSEISelDAGToDAG.cpp
