@@ -1,4 +1,4 @@
-/*	$OpenBSD: platform.c,v 1.23 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: platform.c,v 1.24 2019/10/25 10:17:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -31,10 +31,11 @@ static struct armv7_platform *platform;
 
 void	agtimer_init(void);
 
-void	exuart_init_cons(void);
-void	imxuart_init_cons(void);
-void	com_fdt_init_cons(void);
-void	pluart_init_cons(void);
+extern void	exuart_init_cons(void);
+extern void	imxuart_init_cons(void);
+extern void	com_fdt_init_cons(void);
+extern void	pluart_init_cons(void);
+extern void	simplefb_init_cons(bus_space_tag_t);
 
 struct armv7_platform *omap_platform_match(void);
 
@@ -91,6 +92,7 @@ platform_init_cons(void)
 	imxuart_init_cons();
 	com_fdt_init_cons();
 	pluart_init_cons();
+	simplefb_init_cons(&armv7_bs_tag);
 }
 
 void
