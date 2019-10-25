@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.93 2019/06/28 13:32:51 deraadt Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.94 2019/10/25 09:57:33 kn Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -590,7 +590,7 @@ terminate_vm(struct vm_terminate_params *vtp)
  * Opens the next available tap device, up to MAX_TAP.
  *
  * Parameters
- *  ifname: an optional buffer of at least IF_NAMESIZE bytes.
+ *  ifname: a buffer of at least IF_NAMESIZE bytes.
  *
  * Returns a file descriptor to the tap node opened, or -1 if no tap
  * devices were available.
@@ -601,16 +601,15 @@ opentap(char *ifname)
 	int i, fd;
 	char path[PATH_MAX];
 
-	strlcpy(ifname, "tap", IF_NAMESIZE);
 	for (i = 0; i < MAX_TAP; i++) {
 		snprintf(path, PATH_MAX, "/dev/tap%d", i);
 		fd = open(path, O_RDWR | O_NONBLOCK);
 		if (fd != -1) {
-			if (ifname != NULL)
-				snprintf(ifname, IF_NAMESIZE, "tap%d", i);
+			snprintf(ifname, IF_NAMESIZE, "tap%d", i);
 			return (fd);
 		}
 	}
+	strlcpy(ifname, "tap", IF_NAMESIZE);
 
 	return (-1);
 }
