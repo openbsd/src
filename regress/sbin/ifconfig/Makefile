@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/10/24 22:55:07 bluhm Exp $
+# $OpenBSD: Makefile,v 1.3 2019/10/25 14:57:19 bluhm Exp $
 
 # Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -21,11 +21,16 @@ IFADDR =	${SUDO} ${KTRACE} ./ifaddr
 
 ETHER_IF ?=	vether99
 ETHER_ADDR ?=	10.188.254.74
+ETHER_ADDR6 ?=	fdd7:e83e:66bc:254::74
 ETHER_NET =	${ETHER_ADDR:C/\.[0-9][0-9]*$//}
-PPP_IF ?=	ppp99
+ETHER_NET6 =	${ETHER_ADDR6:C/::[0-9a-f:]*$/::/}
+PPP_IF ?=	tun99
 PPP_ADDR ?=	10.188.253.74
+PPP_ADDR6 ?=	fdd7:e83e:66bc:253::74
 PPP_DEST ?=	10.188.253.75
+PPP_DEST6 ?=	fdd7:e83e:66bc:253::75
 PPP_NET =	${PPP_ADDR:C/\.[0-9][0-9]*$//}
+PPP_NET6 =	${PPP_ADDR6:C/::[0-9a-f:]*$/::/}
 
 PROG =		ifaddr
 
@@ -54,10 +59,17 @@ run-ether-netmask:
 	/sbin/ifconfig ${ETHER_IF} >ifconfig.out
 	grep 'inet ${ETHER_ADDR} netmask 0xffffff00 ' ifconfig.out
 
+REGRESS_TARGETS +=	run-ether-len
+run-ether-len:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${ETHER_IF} ${ETHER_ADDR}/24
+	/sbin/ifconfig ${ETHER_IF} >ifconfig.out
+	grep 'inet ${ETHER_ADDR} netmask 0xffffff00 ' ifconfig.out
+
 REGRESS_TARGETS +=	run-ether-prefixlen
 run-ether-prefixlen:
 	@echo '======== $@ ========'
-	${IFCONFIG} ${ETHER_IF} ${ETHER_ADDR}/24
+	${IFCONFIG} ${ETHER_IF} ${ETHER_ADDR} prefixlen 24
 	/sbin/ifconfig ${ETHER_IF} >ifconfig.out
 	grep 'inet ${ETHER_ADDR} netmask 0xffffff00 ' ifconfig.out
 
@@ -225,10 +237,17 @@ run-ppp-netmask:
 	/sbin/ifconfig ${PPP_IF} >ifconfig.out
 	grep 'inet ${PPP_ADDR} .* netmask 0xffffff00$$' ifconfig.out
 
+REGRESS_TARGETS +=	run-ppp-len
+run-ppp-len:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${PPP_IF} ${PPP_ADDR}/24
+	/sbin/ifconfig ${PPP_IF} >ifconfig.out
+	grep 'inet ${PPP_ADDR} .* netmask 0xffffff00$$' ifconfig.out
+
 REGRESS_TARGETS +=	run-ppp-prefixlen
 run-ppp-prefixlen:
 	@echo '======== $@ ========'
-	${IFCONFIG} ${PPP_IF} ${PPP_ADDR}/24
+	${IFCONFIG} ${PPP_IF} ${PPP_ADDR} prefixlen 24
 	/sbin/ifconfig ${PPP_IF} >ifconfig.out
 	grep 'inet ${PPP_ADDR} .* netmask 0xffffff00$$' ifconfig.out
 
@@ -351,6 +370,164 @@ run-ether-ifaddr-duplicate:
 	! grep 'inet ${ETHER_NET}.1 ' ifconfig.out
 	grep 'inet ${ETHER_NET}.2 netmask 0xffffff00 ' ifconfig.out
 	grep -c 'inet ' ifconfig.out | grep -q 2
+
+### ether-inet6
+
+REGRESS_TARGETS +=	run-ether-inet6-eui64
+run-ether-inet6-eui64:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${ETHER_IF} inet6 eui64
+	/sbin/ifconfig ${ETHER_IF} >ifconfig.out
+	grep 'inet6 fe80::[0-9a-f:]*ff:fe[0-9a-f:]*%${ETHER_IF} ' ifconfig.out
+
+REGRESS_TARGETS +=	run-ether-inet6-addr
+run-ether-inet6-addr:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_ADDR6}
+	/sbin/ifconfig ${ETHER_IF} >ifconfig.out
+	grep 'inet6 ${ETHER_ADDR6} ' ifconfig.out
+	# setting an address creates eui64 automatically
+	grep 'inet6 fe80::[0-9a-f:]*ff:fe[0-9a-f:]*%${ETHER_IF} ' ifconfig.out
+
+REGRESS_TARGETS +=	run-ether-inet6-netmask
+run-ether-inet6-netmask:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_ADDR6}\
+	    netmask ffff:ffff:ffff:ffff:ffff::
+	/sbin/ifconfig ${ETHER_IF} >ifconfig.out
+	grep 'inet6 ${ETHER_ADDR6} prefixlen 80 ' ifconfig.out
+
+# XXX currently inet6 netmask is silently ignored
+REGRESS_EXPECTED_FAILURES +=	run-ether-inet6-netmask
+
+REGRESS_TARGETS +=	run-ether-inet6-len
+run-ether-inet6-len:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_ADDR6}/80
+	/sbin/ifconfig ${ETHER_IF} >ifconfig.out
+	grep 'inet6 ${ETHER_ADDR6} prefixlen 80 ' ifconfig.out
+
+REGRESS_TARGETS +=	run-ether-inet6-prefixlen
+run-ether-inet6-prefixlen:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_ADDR6} prefixlen 80
+	/sbin/ifconfig ${ETHER_IF} >ifconfig.out
+	grep 'inet6 ${ETHER_ADDR6} prefixlen 80 ' ifconfig.out
+
+REGRESS_TARGETS +=	run-ether-inet6-noreplace
+run-ether-inet6-noreplace:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_NET6}1
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_NET6}2
+	/sbin/ifconfig ${ETHER_IF} >ifconfig.out
+	grep 'inet6 ${ETHER_NET6}1 ' ifconfig.out
+	grep 'inet6 ${ETHER_NET6}2 ' ifconfig.out
+
+REGRESS_TARGETS +=	run-ether-inet6-duplicate
+run-ether-inet6-duplicate:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_NET6}1
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_NET6}1
+	/sbin/ifconfig ${ETHER_IF} >ifconfig.out
+	grep 'inet6 ${ETHER_NET6}1 ' ifconfig.out
+	grep -c 'inet6 ${ETHER_NET6}' ifconfig.out | grep -q 1
+
+REGRESS_TARGETS +=	run-ether-inet6-host
+run-ether-inet6-host:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_NET6}1/128
+	# changing netmask of an exisintg address is not allowed
+	! ${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_NET6}1/64
+	/sbin/ifconfig ${ETHER_IF} >ifconfig.out
+	grep 'inet6 ${ETHER_NET6}1 prefixlen 128 ' ifconfig.out
+	grep -c 'inet6 ${ETHER_NET6}' ifconfig.out | grep -q 1
+
+REGRESS_TARGETS +=	run-ether-inet6-alias
+run-ether-inet6-alias:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_NET6}1
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_NET6}2 alias
+	/sbin/ifconfig ${ETHER_IF} >ifconfig.out
+	grep 'inet6 ${ETHER_NET6}1 ' ifconfig.out
+	grep 'inet6 ${ETHER_NET6}2 ' ifconfig.out
+
+REGRESS_TARGETS +=	run-ether-inet6-delete
+run-ether-inet6-delete:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_NET6}1
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_NET6}1 delete
+	/sbin/ifconfig ${ETHER_IF} >ifconfig.out
+	! grep 'inet6 ${ETHER_NET6}' ifconfig.out
+
+REGRESS_TARGETS +=	run-ether-inet6-delete-first
+run-ether-inet6-delete-first:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_NET6}1
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_NET6}2 alias
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_NET6}1 delete
+	/sbin/ifconfig ${ETHER_IF} >ifconfig.out
+	! grep 'inet6 ${ETHER_NET6}1 ' ifconfig.out
+	grep 'inet6 ${ETHER_NET6}2 ' ifconfig.out
+
+REGRESS_TARGETS +=	run-ether-inet6-delete-second
+run-ether-inet6-delete-second:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_NET6}1
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_NET6}2 alias
+	${IFCONFIG} ${ETHER_IF} inet6 ${ETHER_NET6}2 delete
+	/sbin/ifconfig ${ETHER_IF} >ifconfig.out
+	grep 'inet6 ${ETHER_NET6}1 ' ifconfig.out
+	! grep 'inet6 ${ETHER_NET6}2 ' ifconfig.out
+
+### ppp-inet6
+
+REGRESS_TARGETS +=	run-ppp-inet6-eui64
+run-ppp-inet6-eui64:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${PPP_IF} inet6 eui64
+	/sbin/ifconfig ${PPP_IF} >ifconfig.out
+	grep 'inet6 fe80::[0-9a-f:]*ff:fe[0-9a-f:]*%${PPP_IF} ' ifconfig.out
+
+REGRESS_TARGETS +=	run-ppp-inet6-addr
+run-ppp-inet6-addr:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${PPP_IF} inet6 ${PPP_ADDR6}
+	/sbin/ifconfig ${PPP_IF} >ifconfig.out
+	grep 'inet6 ${PPP_ADDR6} ' ifconfig.out
+	# setting an address creates eui64 automatically
+	grep 'inet6 fe80::[0-9a-f:]*ff:fe[0-9a-f:]*%${PPP_IF} ' ifconfig.out
+
+REGRESS_TARGETS +=	run-ppp-inet6-len
+run-ppp-inet6-len:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${PPP_IF} inet6 ${PPP_ADDR6}/80
+	/sbin/ifconfig ${PPP_IF} >ifconfig.out
+	grep 'inet6 ${PPP_ADDR6} .* prefixlen 80 ' ifconfig.out
+
+REGRESS_TARGETS +=	run-ppp-inet6-destination
+run-ppp-inet6-destination:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${PPP_IF} inet6 ${PPP_ADDR6} ${PPP_DEST6}
+	/sbin/ifconfig ${PPP_IF} >ifconfig.out
+	grep 'inet6 ${PPP_ADDR6} -> ${PPP_DEST6} ' ifconfig.out
+
+REGRESS_TARGETS +=	run-ppp-inet6-noreplace
+run-ppp-inet6-noreplace:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${PPP_IF} inet6 ${PPP_NET6}1 ${PPP_DEST6}
+	${IFCONFIG} ${PPP_IF} inet6 ${PPP_NET6}2 ${PPP_DEST6}
+	/sbin/ifconfig ${PPP_IF} >ifconfig.out
+	grep 'inet6 ${PPP_NET6}1 -> ${PPP_DEST6} ' ifconfig.out
+	grep 'inet6 ${PPP_NET6}2 -> ${PPP_DEST6} ' ifconfig.out
+
+REGRESS_TARGETS +=	run-ppp-inet6-alias
+run-ppp-inet6-alias:
+	@echo '======== $@ ========'
+	${IFCONFIG} ${PPP_IF} inet6 ${PPP_NET6}1 ${PPP_DEST6}
+	${IFCONFIG} ${PPP_IF} inet6 ${PPP_NET6}2 ${PPP_DEST6} alias
+	/sbin/ifconfig ${PPP_IF} >ifconfig.out
+	grep 'inet6 ${PPP_NET6}1 -> ${PPP_DEST6} ' ifconfig.out
+	grep 'inet6 ${PPP_NET6}2 -> ${PPP_DEST6} ' ifconfig.out
 
 ### setup cleanup
 
