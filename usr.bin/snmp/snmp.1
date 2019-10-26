@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmp.1,v 1.7 2019/10/03 11:02:26 martijn Exp $
+.\" $OpenBSD: snmp.1,v 1.8 2019/10/26 17:43:52 martijn Exp $
 .\"
 .\" Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 3 2019 $
+.Dd $Mdocdate: October 26 2019 $
 .Dt SNMP 1
 .Os
 .Sh NAME
@@ -22,195 +22,123 @@
 .Nd simple SNMP client
 .Sh SYNOPSIS
 .Nm
-.Cm get | getnext
-.Op Fl A Ar authpass
-.Op Fl a Ar digest
-.Op Fl c Ar community
-.Op Fl E Ar ctxengineid
-.Op Fl e Ar secengineid
-.Op Fl K Ar localpriv
-.Op Fl k Ar localauth
-.Op Fl l Ar seclevel
-.Op Fl n Ar ctxname
-.Op Fl O Cm afnQqSvx
-.Op Fl r Ar retries
-.Op Fl t Ar timeout
-.Op Fl u Ar user
-.Op Fl v Ar version
-.Op Fl X Ar privpass
-.Op Fl x Ar cipher
-.Op Fl Z Ar boots , Ns Ar time
+.Cm get | getnext | bulkget
+.Op Ar options
 .Ar agent
 .Ar oid ...
 .Nm
-.Cm walk
-.Op Fl A Ar authpass
-.Op Fl a Ar digest
-.Op Fl c Ar community
-.Op Fl E Ar ctxengineid
-.Op Fl e Ar secengineid
-.Op Fl K Ar localpriv
-.Op Fl k Ar localauth
-.Op Fl l Ar seclevel
-.Op Fl n Ar ctxname
-.Op Fl O Cm afnQqSvx
-.Op Fl r Ar retries
-.Op Fl t Ar timeout
-.Op Fl u Ar user
-.Op Fl v Ar version
-.Op Fl X Ar privpass
-.Op Fl x Ar cipher
-.Op Fl Z Ar boots , Ns Ar time
-.Op Fl C Cm cIipt
-.Op Fl C Cm E Ar endoid
-.Ar agent
-.Op Ar oid
-.Nm
-.Cm bulkget
-.Op Fl A Ar authpass
-.Op Fl a Ar digest
-.Op Fl c Ar community
-.Op Fl E Ar ctxengineid
-.Op Fl e Ar secengineid
-.Op Fl K Ar localpriv
-.Op Fl k Ar localauth
-.Op Fl l Ar seclevel
-.Op Fl n Ar ctxname
-.Op Fl O Cm afnQqSvx
-.Op Fl r Ar retries
-.Op Fl t Ar timeout
-.Op Fl u Ar user
-.Op Fl v Ar version
-.Op Fl X Ar privpass
-.Op Fl x Ar cipher
-.Op Fl Z Ar boots , Ns Ar time
-.Op Fl C Cm n Ns Ar nonrep Ns Cm r Ns Ar maxrep
-.Ar agent
-.Ar oid ...
-.Nm
-.Cm bulkwalk
-.Op Fl A Ar authpass
-.Op Fl a Ar digest
-.Op Fl c Ar community
-.Op Fl E Ar ctxengineid
-.Op Fl e Ar secengineid
-.Op Fl K Ar localpriv
-.Op Fl k Ar localauth
-.Op Fl l Ar seclevel
-.Op Fl n Ar ctxname
-.Op Fl O Cm afnQqSvx
-.Op Fl r Ar retries
-.Op Fl t Ar timeout
-.Op Fl u Ar user
-.Op Fl v Ar version
-.Op Fl X Ar privpass
-.Op Fl x Ar cipher
-.Op Fl Z Ar boots , Ns Ar time
-.Op Fl C Cm cipn Ns Ar nonrep Ns Cm r Ns Ar maxrep
+.Cm walk | bulkwalk
+.Op Ar options
 .Ar agent
 .Op Ar oid
 .Nm
 .Cm set
-.Op Fl A Ar authpass
-.Op Fl a Ar digest
-.Op Fl c Ar community
-.Op Fl E Ar ctxengineid
-.Op Fl e Ar secengineid
-.Op Fl K Ar localpriv
-.Op Fl k Ar localauth
-.Op Fl l Ar seclevel
-.Op Fl n Ar ctxname
-.Op Fl O Cm afnQqSvx
-.Op Fl r Ar retries
-.Op Fl t Ar timeout
-.Op Fl u Ar user
-.Op Fl v Ar version
-.Op Fl X Ar privpass
-.Op Fl x Ar cipher
-.Op Fl Z Ar boots , Ns Ar time
+.Op Ar options
 .Ar agent
 .Ar varoid type value
 .Oo Ar varoid type value Oc ...
 .Nm
 .Cm trap
-.Op Fl A Ar authpass
-.Op Fl a Ar digest
-.Op Fl c Ar community
-.Op Fl E Ar ctxengineid
-.Op Fl e Ar secengineid
-.Op Fl K Ar localpriv
-.Op Fl k Ar localauth
-.Op Fl l Ar seclevel
-.Op Fl n Ar ctxname
-.Op Fl r Ar retries
-.Op Fl t Ar timeout
-.Op Fl u Ar user
-.Op Fl v Ar version
-.Op Fl X Ar privpass
-.Op Fl x Ar cipher
-.Op Fl Z Ar boots , Ns Ar time
+.Op Ar options
 .Ar agent uptime trapoid
 .Oo Ar varoid type value Oc ...
 .Nm
 .Cm mibtree
-.Op Fl O Cm fnS
+.Op Fl O Ar fns
 .Sh DESCRIPTION
 The
 .Nm
 utility is a simple SNMP client.
 .Pp
 The subcommands are as follows:
-.Bl -tag -width bulkwalk
-.It Cm get
-Retrieve the MIB for
+.Bl -tag -width Ds
+.It Xo
+.Nm snmp
+.Cm get
+.Op Ar options
+.Ar agent oid ...
+.Xc
+Retrieve the varbind for
 .Ar oid
 from the
 .Ar agent .
 If more than one
 .Ar oid
-is specified, retrieve the MIB for each one.
-.It Cm getnext
-Retrieve the MIB that follows
+is specified, retrieve the varbind for each one.
+.It Xo
+.Nm snmp
+.Cm getnext
+.Op Ar options
+.Ar agent oid ...
+.Xc
+Retrieve the varbind that follows
 .Ar oid
 from the
 .Ar agent .
 If more than one
 .Ar oid
-is specified, retrieve the MIB following each one of them.
-.It Cm walk
-Retrieve all the MIBs that are branches of
+is specified, retrieve the varbind following each one of them.
+.It Nm snmp Cm walk Oo Ar options Oc Ar agent Op Ar oid
+Retrieve all the varbinds that are branches of
 .Ar oid
 from the
 .Ar agent .
 This uses the
 .Cm getnext
-subcommand internally and requests a single MIB at a time.
-If no OID is specified it defaults to mib-2
+subcommand internally and requests a single varbind at a time.
+If no
+.Ar oid
+is specified it defaults to mib-2
 .Pq .1.3.6.1.2.1 .
-.It Cm bulkget
-Retrieve the next 10 MIBs following each
+.It Xo
+.Nm snmp
+.Cm bulkget
+.Op Ar options
+.Ar agent Ar oid ...
+.Xc
+Retrieve the next 10 varbinds following each
 .Ar oid
 from the
 .Ar agent .
 This command is not available for
 .Fl v Cm 1 .
-.It Cm bulkwalk
-Retrieve all the MIBs from the
+.It Xo
+.Nm snmp
+.Cm bulkwalk
+.Op Ar options
+.Ar agent
+.Op Ar oid
+.Xc
+Retrieve all the varbinds from the
 .Ar agent
 that are branches of
 .Ar oid .
 This uses the
 .Cm bulkget
-subcommand internally to retrieve multiple MIBs at a time.
+subcommand internally to retrieve multiple varbinds at a time.
 This command is not available for
 .Fl v Cm 1 .
-.It Cm set
-Set one or more OIDs to a new value.
-The triple
-.Ar varoid , type , value
-is described in
-.Sx Data types .
-.It Cm trap
+.It Xo
+.Nm snmp
+.Cm set
+.Op Ar options
+.Ar agent varoid type value ...
+.Xc
+Set one or more
+.Ar varoid to a new
+.Ar value .
+The format of the
+.Ar varoid type value
+triple is described in
+.Sx Data types ,
+below.
+.It Xo
+.Nm snmp
+.Cm trap
+.Op Ar options
+.Ar agent uptime trapoid
+.Op Ar varoid type value ...
+.Xc
 Send a trap message to the
 .Ar agent .
 The
@@ -221,17 +149,15 @@ or defaults to the system uptime if an empty string is given.
 The
 .Ar trapoid
 is the identification OID used by the trap handler to determine its action.
-The triple
-.Op Ar varoid , type , value
-is described in
-.Sx Data types .
 This command is not available for
 .Fl v Cm 1 .
-.It Cm mibtree
+.It Nm Cm mibtree Op Fl O Ar fnS
 Dump the tree of compiled-in MIB objects.
 .El
 .Pp
-The options are as follows:
+The
+.Ar options
+are as follows:
 .Bl -tag -width Ds
 .It Fl A Ar authpass
 The authentication password for the user.
@@ -256,35 +182,42 @@ This option defaults to
 This option is only used by
 .Fl v Cm 3 .
 .It Fl C Ar appopt
-Set the application specific
+For the
+.Cm bulkget ,
+.Cm bulkwalk ,
+and
+.Cm walk
+subcommands, set the application specific
 .Ar appopt
 options by supplying a string of one or more
 of the following modifier letters:
 .Bl -tag -width Ds
 .It Cm c
-During a
+For
 .Cm walk
-or
+and
 .Cm bulkwalk ,
 disable checking the order of MIBs.
 On some devices that return MIBs out of order,
 this may cause an infinite loop.
 .It Cm E Ar endoid
-Walk the tree up to but excluding
+For
+.Cm walk ,
+walk the tree up to but excluding
 .Ar endoid .
 The blank before
 .Ar endoid
 is mandatory.
 .It Cm I
-If no branches are found during a
+For
 .Cm walk ,
 do not fall back to returning the original MIB via a
 .Cm get
 request.
 .It Cm i
-Before starting a
+For
 .Cm walk
-or
+and
 .Cm bulkwalk ,
 always do a
 .Cm get
@@ -292,6 +225,10 @@ request on the specified
 .Ar oid
 first.
 .It Cm n Ns Ar nonrep
+For
+.Cm bulkget
+and
+.Cm bulkwalk ,
 Set the non-repeaters field in the request to the non-negative integer
 .Ar nonrep .
 This causes the first
@@ -303,26 +240,26 @@ This value defaults to 0.
 No blank is allowed before
 .Ar nonrep .
 .It Cm p
-At the end of a
+For
 .Cm walk
 or
 .Cm bulkwalk ,
-show a summary of the total variables received.
+also show a summary of the total variables received.
 .It Cm r Ns Ar maxrep
-Set the max-repetitions field in the request to the positive integer
-.Ar maxrep .
 For
 .Cm bulkget
-or
-.Cm bulkwalk
-this determines the amount of MIBs to return for each specified OID.
+and
+.Cm bulkwalk ,
+set the max-repetitions field in the request to the positive integer
+.Ar maxrep .
+This determines the amount of MIBs to return for each specified OID.
 This value defaults to 10.
 No blank is allowed before
 .Ar maxrep .
 .It Cm t
-Show how long it took to
-.Cm walk
-the entire tree.
+For
+.Cm walk ,
+Show how long it took to walk the entire tree.
 .El
 .It Fl c Ar community
 Set the
@@ -416,6 +353,14 @@ Only display the varbind value, removing the OID.
 .It Cm x
 Display the varbind string values as hexadecimal strings.
 .El
+.Pp
+The
+.Cm mibtree
+subcommand may only use the
+.Op Fl fnS
+output options;
+no output options are available for
+.Cm trap .
 .It Fl r Ar retries
 Set the number of
 .Ar retries
@@ -470,8 +415,8 @@ This option is only used by
 The syntax for the
 .Ar agent
 argument is
-.Oo Ar protocol : Oc Ns Ar address
-with the follwing forms:
+.Oo Ar protocol : Oc Ns Ar address ,
+with the following format:
 .Bl -column udp6XXXtcp6X address -offset indent
 .It Ar protocol Ta Ar address
 .It Cm udp | tcp Ta Ar hostname Ns Oo Pf : Ar port Oc |
@@ -488,9 +433,9 @@ is
 .Cm udp
 and the default
 .Ar port
-is 161; except for the
-.Nm snmp Cm trap
-command which uses 162.
+is 161, except for the
+.Cm trap
+subcommand, which uses 162.
 .Cm udpv6
 and
 .Cm udpipv6
@@ -517,7 +462,7 @@ triples of
 and
 .Ar value .
 Supported types are:
-.Bl -tag -width 1n
+.Bl -tag -width 1n -offset indent
 .It Cm a
 An IPv4 Address.
 .It Cm b
