@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmxreg.h,v 1.4 2019/08/06 10:15:27 dlg Exp $	*/
+/*	$OpenBSD: if_vmxreg.h,v 1.5 2019/10/26 23:40:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -98,7 +98,7 @@ struct vmxnet3_txdesc {
 	u_int32_t		tx_word2;
 #define	VMXNET3_TX_LEN_M	0x00003fff
 #define	VMXNET3_TX_LEN_S	0
-#define VMXNET3_TX_GEN_M	0x00000001	/* generation */
+#define VMXNET3_TX_GEN_M	0x00000001U	/* generation */
 #define VMXNET3_TX_GEN_S	14
 #define VMXNET3_TX_RES0		0x00008000
 #define	VMXNET3_TX_DTYPE_M	0x00000001	/* descriptor type */
@@ -139,7 +139,7 @@ struct vmxnet3_txcompdesc {
 #define VMXNET3_TXC_RES2_M	0x00ffffff
 #define VMXNET3_TXC_TYPE_M	0x0000007f
 #define VMXNET3_TXC_TYPE_S	24
-#define VMXNET3_TXC_GEN_M	0x00000001
+#define VMXNET3_TXC_GEN_M	0x00000001U
 #define VMXNET3_TXC_GEN_S	31
 } __packed;
 

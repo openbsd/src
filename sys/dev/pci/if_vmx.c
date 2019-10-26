@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.51 2019/10/26 23:01:33 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.52 2019/10/26 23:40:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -53,16 +53,18 @@
 
 #define VMXNET3_DRIVER_VERSION 0x00010000
 
+#define VMX_TX_GEN	htole32(VMXNET3_TX_GEN_M << VMXNET3_TX_GEN_S)
+#define VMX_TXC_GEN	htole32(VMXNET3_TXC_GEN_M << VMXNET3_TXC_GEN_S)
+
 struct vmxnet3_softc;
 
 struct vmxnet3_txring {
 	struct mbuf *m[NTXDESC];
 	bus_dmamap_t dmap[NTXDESC];
 	struct vmxnet3_txdesc *txd;
+	u_int32_t gen;
 	u_int prod;
 	u_int cons;
-	u_int free;
-	u_int8_t gen;
 };
 
 struct vmxnet3_rxring {
@@ -84,7 +86,7 @@ struct vmxnet3_comp_ring {
 		struct vmxnet3_rxcompdesc *rxcd;
 	};
 	u_int next;
-	u_int8_t gen;
+	u_int32_t gen;
 };
 
 struct vmxnet3_txqueue {
@@ -172,7 +174,7 @@ void vmxnet3_stop(struct ifnet *);
 void vmxnet3_reset(struct vmxnet3_softc *);
 int vmxnet3_init(struct vmxnet3_softc *);
 int vmxnet3_ioctl(struct ifnet *, u_long, caddr_t);
-void vmxnet3_start(struct ifnet *);
+void vmxnet3_start(struct ifqueue *);
 int vmxnet3_load_mbuf(struct vmxnet3_softc *, struct vmxnet3_txring *,
     struct mbuf **);
 void vmxnet3_watchdog(struct ifnet *);
@@ -289,15 +291,18 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(ifp->if_xname, self->dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST | IFF_SIMPLEX;
+	ifp->if_xflags = IFXF_MPSAFE;
 	ifp->if_ioctl = vmxnet3_ioctl;
-	ifp->if_start = vmxnet3_start;
+	ifp->if_qstart = vmxnet3_start;
 	ifp->if_watchdog = vmxnet3_watchdog;
 	ifp->if_hardmtu = VMXNET3_MAX_MTU;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
+#if 0
 	if (sc->sc_ds->upt_features & UPT1_F_CSUM)
 		ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 	if (sc->sc_ds->upt_features & UPT1_F_VLAN)
 		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
 
 	IFQ_SET_MAXLEN(&ifp->if_snd, NTXDESC);
 
@@ -415,7 +420,7 @@ vmxnet3_alloc_txring(struct vmxnet3_softc *sc, int queue)
 
 	for (idx = 0; idx < NTXDESC; idx++) {
 		if (bus_dmamap_create(sc->sc_dmat, JUMBO_LEN, NTXSEGS,
-		    JUMBO_LEN, 0, BUS_DMA_NOWAIT, &ring->dmap[idx]))
+		    VMXNET3_TX_LEN_M + 1, 0, BUS_DMA_NOWAIT, &ring->dmap[idx]))
 			return -1;
 	}
 
@@ -494,10 +499,9 @@ vmxnet3_txinit(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 	struct vmxnet3_comp_ring *comp_ring = &tq->comp_ring;
 
 	ring->cons = ring->prod = 0;
-	ring->free = NTXDESC;
-	ring->gen = 1;
+	ring->gen = VMX_TX_GEN;
 	comp_ring->next = 0;
-	comp_ring->gen = 1;
+	comp_ring->gen = VMX_TXC_GEN;
 	bzero(ring->txd, NTXDESC * sizeof ring->txd[0]);
 	bzero(comp_ring->txcd, NTXCOMPDESC * sizeof comp_ring->txcd[0]);
 }
@@ -718,28 +722,31 @@ vmxnet3_evintr(struct vmxnet3_softc *sc)
 void
 vmxnet3_txintr(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct vmxnet3_txring *ring = &tq->cmd_ring;
 	struct vmxnet3_comp_ring *comp_ring = &tq->comp_ring;
 	struct vmxnet3_txcompdesc *txcd;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_dmamap_t map;
 	struct mbuf *m;
-	u_int cons;
-	u_int free = 0;
+	u_int cons, next;
+	uint32_t rgen;
 
 	cons = ring->cons;
+	if (cons == ring->prod)
+		return;
 
+	next = comp_ring->next;
+	rgen = comp_ring->gen;
+
+	/* postread */
 	for (;;) {
-		txcd = &comp_ring->txcd[comp_ring->next];
-
-		if (letoh32((txcd->txc_word3 >> VMXNET3_TXC_GEN_S) &
-		    VMXNET3_TXC_GEN_M) != comp_ring->gen)
+		txcd = &comp_ring->txcd[next];
+		if ((txcd->txc_word3 & VMX_TXC_GEN) != rgen)
 			break;
 
-		comp_ring->next++;
-		if (comp_ring->next == NTXCOMPDESC) {
-			comp_ring->next = 0;
-			comp_ring->gen ^= 1;
+		if (++next == NTXCOMPDESC) {
+			next = 0;
+			rgen ^= VMX_TXC_GEN;
 		}
 
 		m = ring->m[cons];
@@ -748,26 +755,22 @@ vmxnet3_txintr(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 		KASSERT(m != NULL);
 
 		map = ring->dmap[cons];
-		free += map->dm_nsegs;
 		bus_dmamap_unload(sc->sc_dmat, map);
 		m_freem(m);
 
-		cons = (letoh32((txcd->txc_word0 >>
-		    VMXNET3_TXC_EOPIDX_S) & VMXNET3_TXC_EOPIDX_M) + 1)
-		    % NTXDESC;
+		cons = (letoh32(txcd->txc_word0) >> VMXNET3_TXC_EOPIDX_S) &
+		    VMXNET3_TXC_EOPIDX_M;
+		cons++;
+		cons %= NTXDESC;
 	}
+	/* preread */
 
+	comp_ring->next = next;
+	comp_ring->gen = rgen;
 	ring->cons = cons;
 
-	if (atomic_add_int_nv(&ring->free, free) == NTXDESC)
-		ifp->if_timer = 0;
-
-	if (ifq_is_oactive(&ifp->if_snd)) {
-		KERNEL_LOCK();
-		ifq_clr_oactive(&ifp->if_snd);
-		vmxnet3_start(ifp);
-		KERNEL_UNLOCK();
-	}
+	if (ifq_is_oactive(&ifp->if_snd))
+		ifq_restart(&ifp->if_snd);
 }
 
 void
@@ -1113,38 +1116,64 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
-void
-vmxnet3_start(struct ifnet *ifp)
+static inline int
+vmx_load_mbuf(bus_dma_tag_t dmat, bus_dmamap_t map, struct mbuf *m)
 {
+	int error;
+
+	error = bus_dmamap_load_mbuf(dmat, map, m,
+	    BUS_DMA_STREAMING | BUS_DMA_NOWAIT);
+	if (error != EFBIG)
+		return (error);
+
+	error = m_defrag(m, M_DONTWAIT);
+	if (error != 0)
+		return (error);
+
+	return (bus_dmamap_load_mbuf(dmat, map, m,
+	    BUS_DMA_STREAMING | BUS_DMA_NOWAIT));
+}
+
+void
+vmxnet3_start(struct ifqueue *ifq)
+{
+	struct ifnet *ifp = ifq->ifq_if;
 	struct vmxnet3_softc *sc = ifp->if_softc;
 	struct vmxnet3_txqueue *tq = sc->sc_txq;
 	struct vmxnet3_txring *ring = &tq->cmd_ring;
-	struct vmxnet3_txdesc *txd;
+	struct vmxnet3_txdesc *txd, *sop;
+	bus_dmamap_t map;
+        unsigned int prod, free, i;
+	unsigned int post = 0;
+	uint32_t rgen, gen;
+
 	struct mbuf *m;
-	u_int free, used;
-	int n;
 
-	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
-		return;
+	free = ring->cons;
+	prod = ring->prod;
+	if (free <= prod)
+		free += NTXDESC;
+	free -= prod;
 
-	free = ring->free;
-	used = 0;
+	sop = &ring->txd[prod];
+	rgen = ring->gen;
+	gen = rgen ^ VMX_TX_GEN;
 
 	for (;;) {
-		if (used + NTXSEGS > free) {
-			ifq_set_oactive(&ifp->if_snd);
+		if (free <= NTXSEGS) {
+			ifq_set_oactive(ifq);
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(ifq);
 		if (m == NULL)
 			break;
 
-		txd = &ring->txd[ring->prod];
+		map = ring->dmap[prod];
 
-		n = vmxnet3_load_mbuf(sc, ring, &m);
-		if (n == -1) {
-			ifp->if_oerrors++;
+		if (vmx_load_mbuf(sc->sc_dmat, map, m) != 0) {
+			ifq->ifq_errors++;
+			m_freem(m);
 			continue;
 		}
 
@@ -1153,115 +1182,41 @@ vmxnet3_start(struct ifnet *ifp)
 			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
-		/* Change the ownership by flipping the "generation" bit */
-		txd->tx_word2 ^= htole32(VMXNET3_TX_GEN_M << VMXNET3_TX_GEN_S);
+		ring->m[prod] = m;
 
-		used += n;
-	}
+		bus_dmamap_sync(sc->sc_dmat, map, 0,
+		    map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
-	if (used > 0) {
-		ifp->if_timer = 5;
-		atomic_sub_int(&ring->free, used);
-		WRITE_BAR0(sc, VMXNET3_BAR0_TXH(0), ring->prod);
-	}
-}
+		for (i = 0; i < map->dm_nsegs; i++) {
+			txd = &ring->txd[prod];
+			txd->tx_addr = htole64(map->dm_segs[i].ds_addr);
+			txd->tx_word2 = htole32(map->dm_segs[i].ds_len <<
+			    VMXNET3_TX_LEN_S) | gen;
+			txd->tx_word3 = 0;
 
-int
-vmxnet3_load_mbuf(struct vmxnet3_softc *sc, struct vmxnet3_txring *ring,
-    struct mbuf **mp)
-{
-	struct vmxnet3_txdesc *txd, *sop;
-	struct mbuf *n, *m = *mp;
-	bus_dmamap_t map;
-	u_int hlen = ETHER_HDR_LEN, csum_off;
-	u_int prod;
-	int gen, i;
+			if (++prod == NTXDESC) {
+				prod = 0;
+				rgen ^= VMX_TX_GEN;
+			}
 
-	prod = ring->prod;
-	map = ring->dmap[prod];
-#if 0
-	if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT) {
-		printf("%s: IP checksum offloading is not supported\n",
-		    sc->sc_dev.dv_xname);
-		return -1;
-	}
-#endif
-	if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT|M_UDP_CSUM_OUT)) {
-		struct ip *ip;
-		int offp;
-
-		if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
-			csum_off = offsetof(struct tcphdr, th_sum);
-		else
-			csum_off = offsetof(struct udphdr, uh_sum);
-
-		n = m_pulldown(m, hlen, sizeof(*ip), &offp);
-		if (n == NULL)
-			return (-1);
-
-		ip = (struct ip *)(n->m_data + offp);
-		hlen += ip->ip_hl << 2;
-
-		*mp = m_pullup(m, hlen + csum_off + 2);
-		if (*mp == NULL)
-			return (-1);
-		m = *mp;
-	}
-
-	switch (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT)) {
-	case 0:
-		break;
-	case EFBIG:
-		if (m_defrag(m, M_DONTWAIT) == 0 &&
-		    bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
-		     BUS_DMA_NOWAIT) == 0)
-			break;
-
-		/* FALLTHROUGH */
-	default:
-		m_freem(m);
-		return -1;
-	}
-
-	ring->m[prod] = m;
-
-	sop = &ring->txd[prod];
-	gen = ring->gen ^ 1;		/* owned by cpu (yet) */
-
-	for (i = 0; i < map->dm_nsegs; i++) {
-		txd = &ring->txd[prod];
-		txd->tx_addr = htole64(map->dm_segs[i].ds_addr);
-		txd->tx_word2 = htole32(((map->dm_segs[i].ds_len &
-		    VMXNET3_TX_LEN_M) << VMXNET3_TX_LEN_S) |
-		    ((gen & VMXNET3_TX_GEN_M) << VMXNET3_TX_GEN_S));
-		txd->tx_word3 = 0;
-
-		if (++prod == NTXDESC) {
-			prod = 0;
-			ring->gen ^= 1;
+			gen = rgen;
 		}
+		txd->tx_word3 = htole32(VMXNET3_TX_EOP | VMXNET3_TX_COMPREQ);
 
-		gen = ring->gen;
-	}
-	txd->tx_word3 |= htole32(VMXNET3_TX_EOP | VMXNET3_TX_COMPREQ);
-
-	if (m->m_flags & M_VLANTAG) {
-		sop->tx_word3 |= htole32(VMXNET3_TX_VTAG_MODE);
-		sop->tx_word3 |= htole32((m->m_pkthdr.ether_vtag &
-		    VMXNET3_TX_VLANTAG_M) << VMXNET3_TX_VLANTAG_S);
-	}
-	if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT|M_UDP_CSUM_OUT)) {
-		sop->tx_word2 |= htole32(((hlen + csum_off) &
-		    VMXNET3_TX_OP_M) << VMXNET3_TX_OP_S);
-		sop->tx_word3 |= htole32(((hlen & VMXNET3_TX_HLEN_M) <<
-		    VMXNET3_TX_HLEN_S) | (VMXNET3_OM_CSUM << VMXNET3_TX_OM_S));
+		free -= i;
+		post = 1;
 	}
 
-	/* dmamap_sync map */
+	if (!post)
+		return;
+
+	/* Change the ownership by flipping the "generation" bit */
+	sop->tx_word2 ^= VMX_TX_GEN;
 
 	ring->prod = prod;
+	ring->gen = rgen;
 
-	return (map->dm_nsegs);
+	WRITE_BAR0(sc, VMXNET3_BAR0_TXH(0), prod);
 }
 
 void
