@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.32 2019/10/24 12:39:26 tb Exp $ */
+/*	$OpenBSD: ldape.c,v 1.33 2019/10/26 17:52:55 martijn Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -298,7 +298,6 @@ ldap_extended(struct request *req)
 {
 	int			 i, rc = LDAP_PROTOCOL_ERROR;
 	char			*oid = NULL;
-	struct ber_element	*ext_val = NULL;
 	struct {
 		const char	*oid;
 		int (*fn)(struct request *);
@@ -307,11 +306,11 @@ ldap_extended(struct request *req)
 		{ NULL }
 	};
 
-	if (ober_scanf_elements(req->op, "{se", &oid, &ext_val) != 0)
+	if (ober_scanf_elements(req->op, "{s", &oid) != 0)
 		goto done;
 
 	log_debug("got extended operation %s", oid);
-	req->op = ext_val;
+	req->op = req->op->be_sub->be_next;
 
 	for (i = 0; extended_ops[i].oid != NULL; i++) {
 		if (strcmp(oid, extended_ops[i].oid) == 0) {
