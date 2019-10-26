@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.16 2019/10/24 12:39:26 tb Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.17 2019/10/26 19:34:15 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -1230,7 +1230,7 @@ usage(void)
 		fprintf(stderr, "snmp %s%s %s\n",
 		    snmp_apps[i].name,
 		    snmp_apps[i].usecommonopt ?
-		    " [common options]" : "",
+		    " [options]" : "",
 		    snmp_apps[i].usage ? snmp_apps[i].usage : "");
 	}
 	exit(1);
