@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.43 2019/02/02 14:32:58 visa Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.44 2019/10/26 05:44:59 guenther Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 
 			offset = 1;
 			if (instr == 0xe5894855 ||
-					/* enter: pushl %rbp, movq %rsp, %rbp */
+					/* enter: pushq %rbp, movq %rsp, %rbp */
 			    (instr & 0x00ffffff) == 0x00e58948
 					/* enter+1: movq %rsp, %rbp */) {
 				offset = 0;
