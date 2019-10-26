@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.52 2019/10/26 23:40:29 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.53 2019/10/26 23:55:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -297,9 +297,9 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = vmxnet3_watchdog;
 	ifp->if_hardmtu = VMXNET3_MAX_MTU;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
-#if 0
 	if (sc->sc_ds->upt_features & UPT1_F_CSUM)
 		ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+#if 0
 	if (sc->sc_ds->upt_features & UPT1_F_VLAN)
 		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
@@ -1155,7 +1155,6 @@ vmxnet3_start(struct ifqueue *ifq)
 		free += NTXDESC;
 	free -= prod;
 
-	sop = &ring->txd[prod];
 	rgen = ring->gen;
 	gen = rgen ^ VMX_TX_GEN;
 
@@ -1187,6 +1186,7 @@ vmxnet3_start(struct ifqueue *ifq)
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
+		sop = &ring->txd[prod];
 		for (i = 0; i < map->dm_nsegs; i++) {
 			txd = &ring->txd[prod];
 			txd->tx_addr = htole64(map->dm_segs[i].ds_addr);
@@ -1203,15 +1203,22 @@ vmxnet3_start(struct ifqueue *ifq)
 		}
 		txd->tx_word3 = htole32(VMXNET3_TX_EOP | VMXNET3_TX_COMPREQ);
 
+		if (ISSET(m->m_flags, M_VLANTAG)) {
+			sop->tx_word3 |= htole32(VMXNET3_TX_VTAG_MODE);
+			sop->tx_word3 |= htole32((m->m_pkthdr.ether_vtag &
+			    VMXNET3_TX_VLANTAG_M) << VMXNET3_TX_VLANTAG_S);
+		}
+
+		/* Change the ownership by flipping the "generation" bit */
+		membar_producer();
+		sop->tx_word2 ^= VMX_TX_GEN;
+
 		free -= i;
 		post = 1;
 	}
 
 	if (!post)
 		return;
-
-	/* Change the ownership by flipping the "generation" bit */
-	sop->tx_word2 ^= VMX_TX_GEN;
 
 	ring->prod = prod;
 	ring->gen = rgen;
