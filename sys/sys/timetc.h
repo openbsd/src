@@ -1,4 +1,4 @@
-/*	$OpenBSD: timetc.h,v 1.9 2019/05/22 19:59:37 cheloha Exp $ */
+/*	$OpenBSD: timetc.h,v 1.10 2019/10/26 21:16:38 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -84,6 +84,8 @@ struct timecounter {
 		/* Pointer to the next timecounter. */
 	int64_t			tc_freq_adj;		/* [tw] */
 		/* Current frequency adjustment. */
+	u_int64_t		tc_precision;		/* [I] */
+		/* Precision of the counter.  Computed in tc_init(). */
 };
 
 struct rwlock;
@@ -92,6 +94,7 @@ extern struct rwlock tc_lock;
 extern struct timecounter *timecounter;
 
 u_int64_t tc_getfrequency(void);
+u_int64_t tc_getprecision(void);
 void	tc_init(struct timecounter *tc);
 void	tc_setclock(const struct timespec *ts);
 void	tc_setrealtimeclock(const struct timespec *ts);

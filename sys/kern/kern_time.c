@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.124 2019/09/04 14:27:55 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.125 2019/10/26 21:16:38 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -214,21 +214,31 @@ sys_clock_getres(struct proc *p, void *v, register_t *retval)
 		syscallarg(struct timespec *) tp;
 	} */ *uap = v;
 	clockid_t clock_id;
+	struct bintime bt;
 	struct timespec ts;
 	struct proc *q;
-	int error = 0;
+	u_int64_t scale;
+	int error = 0, realstathz;
 
 	memset(&ts, 0, sizeof(ts));
+	realstathz = (stathz == 0) ? hz : stathz;
 	clock_id = SCARG(uap, clock_id);
+
 	switch (clock_id) {
 	case CLOCK_REALTIME:
 	case CLOCK_MONOTONIC:
 	case CLOCK_BOOTTIME:
 	case CLOCK_UPTIME:
+		memset(&bt, 0, sizeof(bt));
+		rw_enter_read(&tc_lock);
+		scale = ((1ULL << 63) / tc_getfrequency()) * 2;
+		bt.frac = tc_getprecision() * scale;
+		rw_exit_read(&tc_lock);
+		BINTIME_TO_TIMESPEC(&bt, &ts);
+		break;
 	case CLOCK_PROCESS_CPUTIME_ID:
 	case CLOCK_THREAD_CPUTIME_ID:
-		ts.tv_sec = 0;
-		ts.tv_nsec = 1000000000 / hz;
+		ts.tv_nsec = 1000000000 / realstathz;
 		break;
 	default:
 		/* check for clock from pthread_getcpuclockid() */
@@ -237,10 +247,8 @@ sys_clock_getres(struct proc *p, void *v, register_t *retval)
 			q = tfind(__CLOCK_PTID(clock_id) - THREAD_PID_OFFSET);
 			if (q == NULL || q->p_p != p->p_p)
 				error = ESRCH;
-			else {
-				ts.tv_sec = 0;
-				ts.tv_nsec = 1000000000 / hz;
-			}
+			else
+				ts.tv_nsec = 1000000000 / realstathz;
 			KERNEL_UNLOCK();
 		} else
 			error = EINVAL;
@@ -248,7 +256,8 @@ sys_clock_getres(struct proc *p, void *v, register_t *retval)
 	}
 
 	if (error == 0 && SCARG(uap, tp)) {
-		error = copyout(&ts, SCARG(uap, tp), sizeof (ts));
+		ts.tv_nsec = MAX(ts.tv_nsec, 1);
+		error = copyout(&ts, SCARG(uap, tp), sizeof(ts));
 #ifdef KTRACE
 		if (error == 0 && KTRPOINT(p, KTR_STRUCT))
 			ktrreltimespec(p, &ts);
