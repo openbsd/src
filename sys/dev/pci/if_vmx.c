@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.50 2019/08/06 10:54:40 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.51 2019/10/26 23:01:33 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -69,6 +69,7 @@ struct vmxnet3_rxring {
 	struct vmxnet3_softc *sc;
 	struct mbuf *m[NRXDESC];
 	bus_dmamap_t dmap[NRXDESC];
+	struct mutex mtx;
 	struct if_rxring rxr;
 	struct timeout refill;
 	struct vmxnet3_rxdesc *rxd;
@@ -162,7 +163,8 @@ int vmxnet3_intr_intx(void *);
 void vmxnet3_evintr(struct vmxnet3_softc *);
 void vmxnet3_txintr(struct vmxnet3_softc *, struct vmxnet3_txqueue *);
 void vmxnet3_rxintr(struct vmxnet3_softc *, struct vmxnet3_rxqueue *);
-void vmxnet3_rxfill(void *);
+void vmxnet3_rxfill_tick(void *);
+void vmxnet3_rxfill(struct vmxnet3_rxring *);
 void vmxnet3_iff(struct vmxnet3_softc *);
 void vmxnet3_rx_csum(struct vmxnet3_rxcompdesc *, struct mbuf *);
 int vmxnet3_getbuf(struct vmxnet3_softc *, struct vmxnet3_rxring *);
@@ -460,7 +462,8 @@ vmxnet3_alloc_rxring(struct vmxnet3_softc *sc, int queue)
 		ring = &rq->cmd_ring[i];
 		ring->sc = sc;
 		ring->rid = i;
-		timeout_set(&ring->refill, vmxnet3_rxfill, ring);
+		mtx_init(&ring->mtx, IPL_NET);
+		timeout_set(&ring->refill, vmxnet3_rxfill_tick, ring);
 		for (idx = 0; idx < NRXDESC; idx++) {
 			if (bus_dmamap_create(sc->sc_dmat, JUMBO_LEN, 1,
 			    JUMBO_LEN, 0, BUS_DMA_NOWAIT, &ring->dmap[idx]))
@@ -500,11 +503,24 @@ vmxnet3_txinit(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 }
 
 void
-vmxnet3_rxfill(void *arg)
+vmxnet3_rxfill_tick(void *arg)
 {
 	struct vmxnet3_rxring *ring = arg;
+
+	if (!mtx_enter_try(&ring->mtx))
+		return;
+
+	vmxnet3_rxfill(ring);
+	mtx_leave(&ring->mtx);
+}
+
+void
+vmxnet3_rxfill(struct vmxnet3_rxring *ring)
+{
 	struct vmxnet3_softc *sc = ring->sc;
 	u_int slots;
+
+	MUTEX_ASSERT_LOCKED(&ring->mtx);
 
 	for (slots = if_rxr_get(&ring->rxr, NRXDESC); slots > 0; slots--) {
 		if (vmxnet3_getbuf(sc, ring))
@@ -532,7 +548,10 @@ vmxnet3_rxinit(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 	}
 
 	/* XXX only fill ring 0 */
-	vmxnet3_rxfill(&rq->cmd_ring[0]);
+	ring = &rq->cmd_ring[0];
+	mtx_enter(&ring->mtx);
+	vmxnet3_rxfill(ring);
+	mtx_leave(&ring->mtx);
 
 	comp_ring = &rq->comp_ring;
 	comp_ring->next = 0;
@@ -762,6 +781,7 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	int idx, len;
+	unsigned int done = 0;
 
 	for (;;) {
 		rxcd = &comp_ring->rxcd[comp_ring->next];
@@ -787,7 +807,7 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 		    VMXNET3_RXC_LEN_M);
 		m = ring->m[idx];
 		ring->m[idx] = NULL;
-		if_rxr_put(&ring->rxr, 1);
+		done++;
 		bus_dmamap_unload(sc->sc_dmat, ring->dmap[idx]);
 
 		if (m == NULL)
@@ -836,13 +856,19 @@ skip_buffer:
 		}
 	}
 
+	if (done == 0)
+		return;
+
 	ring = &rq->cmd_ring[0];
 
 	if (ifiq_input(&ifp->if_rcv, &ml))
 		if_rxr_livelocked(&ring->rxr);
 
 	/* XXX Should we (try to) allocate buffers for ring 2 too? */
+	mtx_enter(&ring->mtx);
+	if_rxr_put(&ring->rxr, done);
 	vmxnet3_rxfill(ring);
+	mtx_leave(&ring->mtx);
 }
 
 void
