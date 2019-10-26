@@ -10,5 +10,4 @@ _mcount
 fabsl
 frexpl
 ldexpl
-mcount
 modfl

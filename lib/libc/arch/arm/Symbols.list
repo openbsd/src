@@ -41,7 +41,6 @@ _fpgetsticky
 _fpsetmask
 _fpsetround
 _fpsetsticky
-_mcount
 _softfloat_float32_eq
 _softfloat_float32_le
 _softfloat_float32_lt

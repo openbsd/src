@@ -8,5 +8,4 @@ _fpgetsticky
 _fpsetmask
 _fpsetround
 _fpsetsticky
-_mcount
 fabsl
