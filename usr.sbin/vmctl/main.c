@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.58 2019/08/23 07:55:20 mlarkin Exp $	*/
+/*	$OpenBSD: main.c,v 1.59 2019/10/27 08:59:48 kn Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -373,9 +373,9 @@ parse_ifs(struct parse_result *res, char *word, int val)
 	const char	*error;
 
 	if (word != NULL) {
-		val = strtonum(word, 0, INT_MAX, &error);
+		val = strtonum(word, 1, INT_MAX, &error);
 		if (error != NULL)  {
-			warnx("invalid count \"%s\": %s", word, error);
+			warnx("count is %s: %s", error, word);
 			return (-1);
 		}
 	}
