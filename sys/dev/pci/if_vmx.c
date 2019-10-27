@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.53 2019/10/26 23:55:58 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.54 2019/10/27 01:25:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -297,12 +297,12 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = vmxnet3_watchdog;
 	ifp->if_hardmtu = VMXNET3_MAX_MTU;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
+#if 0
 	if (sc->sc_ds->upt_features & UPT1_F_CSUM)
 		ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
-#if 0
+#endif
 	if (sc->sc_ds->upt_features & UPT1_F_VLAN)
 		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
-#endif
 
 	IFQ_SET_MAXLEN(&ifp->if_snd, NTXDESC);
 
@@ -1156,7 +1156,6 @@ vmxnet3_start(struct ifqueue *ifq)
 	free -= prod;
 
 	rgen = ring->gen;
-	gen = rgen ^ VMX_TX_GEN;
 
 	for (;;) {
 		if (free <= NTXSEGS) {
@@ -1186,6 +1185,7 @@ vmxnet3_start(struct ifqueue *ifq)
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
+		gen = rgen ^ VMX_TX_GEN;
 		sop = &ring->txd[prod];
 		for (i = 0; i < map->dm_nsegs; i++) {
 			txd = &ring->txd[prod];
