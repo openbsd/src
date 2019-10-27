@@ -1,4 +1,4 @@
-.\" $OpenBSD: clang-local.1,v 1.19 2019/02/22 15:28:43 mortimer Exp $
+.\" $OpenBSD: clang-local.1,v 1.20 2019/10/27 00:21:47 mortimer Exp $
 .\"
 .\" Copyright (c) 2016 Pascal Stumpf <pascal@stumpf.co>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 22 2019 $
+.Dd $Mdocdate: October 27 2019 $
 .Dt CLANG-LOCAL 1
 .Os
 .Sh NAME
@@ -113,7 +113,7 @@ This can be disabled with the
 option.
 .It
 .Nm clang
-includes the retguard security feature on amd64 and arm64.
+includes the retguard security feature on amd64, arm64 and octeon.
 This feature can be disabled with the
 .Fl fno-ret-protector
 or
