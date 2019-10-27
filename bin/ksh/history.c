@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.82 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: history.c,v 1.83 2019/10/27 14:58:52 jca Exp $	*/
 
 /*
  * command history
@@ -554,6 +554,7 @@ void
 sethistsize(int n)
 {
 	if (n > 0 && (uint32_t)n != histsize) {
+		char **tmp;
 		int offset = histptr - history;
 
 		/* save most recent history */
@@ -566,10 +567,15 @@ sethistsize(int n)
 			memmove(history, histptr - offset, n * sizeof(char *));
 		}
 
-		histsize = n;
-		histbase = areallocarray(histbase, n + 1, sizeof(char *), APERM);
-		history = histbase + 1;
-		histptr = history + offset;
+		tmp = reallocarray(histbase, n + 1, sizeof(char *));
+		if (tmp != NULL) {
+			histbase = tmp;
+			histsize = n;
+			history = histbase + 1;
+			histptr = history + offset;
+		} else
+			warningf(false, "resizing history storage: %s",
+			    strerror(errno));
 	}
 }
 
@@ -613,8 +619,10 @@ init_histvec(void)
 		 * allocate one extra element so that histptr always
 		 * lies within array bounds
 		 */
-		histbase = areallocarray(NULL, histsize + 1, sizeof(char *),
-		    APERM);
+		histbase = reallocarray(NULL, histsize + 1, sizeof(char *));
+		if (histbase == NULL)
+			internal_errorf("allocating history storage: %s",
+			    strerror(errno));
 		*histbase = NULL;
 		history = histbase + 1;
 		histptr = history - 1;
