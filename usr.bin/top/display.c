@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.60 2019/10/08 07:26:59 kn Exp $	 */
+/* $OpenBSD: display.c,v 1.61 2019/10/27 13:52:26 kn Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -803,7 +803,7 @@ show_help(void)
 	    "\n"
 	    "^L           - redraw screen\n"
 	    "<space>      - update screen\n"
-	    "+            - reset any g, p, or u filters\n"
+	    "+            - reset any P highlight, g, p, or u filters\n"
 	    "1            - display CPU statistics on a single line\n"
 	    "C            - toggle the display of command line arguments\n"
 	    "d count      - show `count' displays, then exit\n"
