@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmxreg.h,v 1.5 2019/10/26 23:40:29 dlg Exp $	*/
+/*	$OpenBSD: if_vmxreg.h,v 1.6 2019/10/27 22:24:40 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -155,7 +155,7 @@ struct vmxnet3_rxdesc {
 #define VMXNET3_RX_DTYPE_S	15
 #define VMXNET3_RX_RES0_M	0x00007fff
 #define VMXNET3_RX_RES0_S	16
-#define VMXNET3_RX_GEN_M	0x00000001
+#define VMXNET3_RX_GEN_M	0x00000001U
 #define VMXNET3_RX_GEN_S	31
 
 	u_int32_t		rx_word3;
@@ -204,7 +204,7 @@ struct vmxnet3_rxcompdesc {
 #define VMXNET3_RXC_FRAGMENT	0x00400000	/* IP fragment */
 #define VMXNET3_RXC_FCS		0x00800000	/* frame CRC correct */
 #define VMXNET3_RXC_TYPE_M	0x7f000000
-#define VMXNET3_RXC_GEN_M	0x00000001
+#define VMXNET3_RXC_GEN_M	0x00000001U
 #define VMXNET3_RXC_GEN_S	31
 } __packed;
 

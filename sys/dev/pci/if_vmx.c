@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.54 2019/10/27 01:25:26 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.55 2019/10/27 22:24:40 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -55,6 +55,8 @@
 
 #define VMX_TX_GEN	htole32(VMXNET3_TX_GEN_M << VMXNET3_TX_GEN_S)
 #define VMX_TXC_GEN	htole32(VMXNET3_TXC_GEN_M << VMXNET3_TXC_GEN_S)
+#define VMX_RX_GEN	htole32(VMXNET3_RX_GEN_M << VMXNET3_RX_GEN_S)
+#define VMX_RXC_GEN	htole32(VMXNET3_RXC_GEN_M << VMXNET3_RXC_GEN_S)
 
 struct vmxnet3_softc;
 
@@ -76,7 +78,7 @@ struct vmxnet3_rxring {
 	struct timeout refill;
 	struct vmxnet3_rxdesc *rxd;
 	u_int fill;
-	u_int8_t gen;
+	u_int32_t gen;
 	u_int8_t rid;
 };
 
@@ -169,7 +171,6 @@ void vmxnet3_rxfill_tick(void *);
 void vmxnet3_rxfill(struct vmxnet3_rxring *);
 void vmxnet3_iff(struct vmxnet3_softc *);
 void vmxnet3_rx_csum(struct vmxnet3_rxcompdesc *, struct mbuf *);
-int vmxnet3_getbuf(struct vmxnet3_softc *, struct vmxnet3_rxring *);
 void vmxnet3_stop(struct ifnet *);
 void vmxnet3_reset(struct vmxnet3_softc *);
 int vmxnet3_init(struct vmxnet3_softc *);
@@ -522,15 +523,53 @@ void
 vmxnet3_rxfill(struct vmxnet3_rxring *ring)
 {
 	struct vmxnet3_softc *sc = ring->sc;
+	struct vmxnet3_rxdesc *rxd;
+	struct mbuf *m;
+	bus_dmamap_t map;
 	u_int slots;
+	unsigned int prod;
+	uint32_t rgen;
+	uint32_t type = htole32(VMXNET3_BTYPE_HEAD << VMXNET3_RX_BTYPE_S);
 
 	MUTEX_ASSERT_LOCKED(&ring->mtx);
 
+	prod = ring->fill;
+	rgen = ring->gen;
+
 	for (slots = if_rxr_get(&ring->rxr, NRXDESC); slots > 0; slots--) {
-		if (vmxnet3_getbuf(sc, ring))
+		KASSERT(ring->m[prod] == NULL);
+
+		m = MCLGETI(NULL, M_DONTWAIT, NULL, JUMBO_LEN);
+		if (m == NULL)
 			break;
+
+		m->m_pkthdr.len = m->m_len = JUMBO_LEN;
+		m_adj(m, ETHER_ALIGN);
+
+		map = ring->dmap[prod];
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT))
+			panic("load mbuf");
+
+		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD);
+
+		ring->m[prod] = m;
+
+		rxd = &ring->rxd[prod];
+		rxd->rx_addr = htole64(DMAADDR(map));
+		membar_producer();
+		rxd->rx_word2 = (htole32(m->m_pkthdr.len & VMXNET3_RX_LEN_M) <<
+		    VMXNET3_RX_LEN_S) | type | rgen;
+
+		if (++prod == NRXDESC) {
+			prod = 0;
+			rgen ^= VMX_RX_GEN;
+		}
 	}
 	if_rxr_put(&ring->rxr, slots);
+
+	ring->fill = prod;
+	ring->gen = rgen;
 
 	if (if_rxr_inuse(&ring->rxr) == 0)
 		timeout_add(&ring->refill, 1);
@@ -546,7 +585,7 @@ vmxnet3_rxinit(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 	for (i = 0; i < 2; i++) {
 		ring = &rq->cmd_ring[i];
 		ring->fill = 0;
-		ring->gen = 1;
+		ring->gen = VMX_RX_GEN;
 		bzero(ring->rxd, NRXDESC * sizeof ring->rxd[0]);
 		if_rxr_init(&ring->rxr, 2, NRXDESC - 1);
 	}
@@ -559,7 +598,7 @@ vmxnet3_rxinit(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 
 	comp_ring = &rq->comp_ring;
 	comp_ring->next = 0;
-	comp_ring->gen = 1;
+	comp_ring->gen = VMX_RXC_GEN;
 	bzero(comp_ring->rxcd, NRXCOMPDESC * sizeof comp_ring->rxcd[0]);
 }
 
@@ -776,26 +815,28 @@ vmxnet3_txintr(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 void
 vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct vmxnet3_comp_ring *comp_ring = &rq->comp_ring;
 	struct vmxnet3_rxring *ring;
-	struct vmxnet3_rxdesc *rxd;
 	struct vmxnet3_rxcompdesc *rxcd;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
-	int idx, len;
+	bus_dmamap_t map;
+	unsigned int idx, len;
+	unsigned int next, rgen;
 	unsigned int done = 0;
 
+	next = comp_ring->next;
+	rgen = comp_ring->gen;
+
 	for (;;) {
-		rxcd = &comp_ring->rxcd[comp_ring->next];
-		if (letoh32((rxcd->rxc_word3 >> VMXNET3_RXC_GEN_S) &
-		    VMXNET3_RXC_GEN_M) != comp_ring->gen)
+		rxcd = &comp_ring->rxcd[next];
+		if ((rxcd->rxc_word3 & VMX_RXC_GEN) != rgen)
 			break;
 
-		comp_ring->next++;
-		if (comp_ring->next == NRXCOMPDESC) {
-			comp_ring->next = 0;
-			comp_ring->gen ^= 1;
+		if (++next == NRXCOMPDESC) {
+			next = 0;
+			rgen ^= VMX_RXC_GEN;
 		}
 
 		idx = letoh32((rxcd->rxc_word0 >> VMXNET3_RXC_IDX_S) &
@@ -805,34 +846,33 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 			ring = &rq->cmd_ring[0];
 		else
 			ring = &rq->cmd_ring[1];
-		rxd = &ring->rxd[idx];
-		len = letoh32((rxcd->rxc_word2 >> VMXNET3_RXC_LEN_S) &
-		    VMXNET3_RXC_LEN_M);
+
 		m = ring->m[idx];
+		KASSERT(m != NULL);
 		ring->m[idx] = NULL;
+
+		map = ring->dmap[idx];
+		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, map);
+
 		done++;
-		bus_dmamap_unload(sc->sc_dmat, ring->dmap[idx]);
 
-		if (m == NULL)
-			panic("%s: NULL ring->m[%u]", __func__, idx);
-
-		if (letoh32((rxd->rx_word2 >> VMXNET3_RX_BTYPE_S) &
-		    VMXNET3_RX_BTYPE_M) != VMXNET3_BTYPE_HEAD) {
-			m_freem(m);
-			goto skip_buffer;
-		}
 		if (letoh32(rxcd->rxc_word2 & VMXNET3_RXC_ERROR)) {
 			ifp->if_ierrors++;
 			m_freem(m);
 			goto skip_buffer;
 		}
+
+		len = letoh32((rxcd->rxc_word2 >> VMXNET3_RXC_LEN_S) &
+		    VMXNET3_RXC_LEN_M);
 		if (len < VMXNET3_MIN_MTU) {
 			m_freem(m);
 			goto skip_buffer;
 		}
+		m->m_pkthdr.len = m->m_len = len;
 
 		vmxnet3_rx_csum(rxcd, m);
-		m->m_pkthdr.len = m->m_len = len;
 		if (letoh32(rxcd->rxc_word2 & VMXNET3_RXC_VLAN)) {
 			m->m_flags |= M_VLANTAG;
 			m->m_pkthdr.ether_vtag = letoh32((rxcd->rxc_word2 >>
@@ -858,6 +898,9 @@ skip_buffer:
 			}
 		}
 	}
+
+	comp_ring->next = next;
+	comp_ring->gen = rgen;
 
 	if (done == 0)
 		return;
@@ -941,57 +984,6 @@ vmxnet3_rx_csum(struct vmxnet3_rxcompdesc *rxcd, struct mbuf *m)
 			m->m_pkthdr.csum_flags |=
 			    M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 	}
-}
-
-int
-vmxnet3_getbuf(struct vmxnet3_softc *sc, struct vmxnet3_rxring *ring)
-{
-	int idx = ring->fill;
-	struct vmxnet3_rxdesc *rxd = &ring->rxd[idx];
-	struct mbuf *m;
-	int btype;
-
-	if (ring->m[idx])
-		panic("vmxnet3_getbuf: buffer has mbuf");
-
-#if 1
-	/* XXX Don't allocate buffers for ring 2 for now. */
-	if (ring->rid != 0)
-		return -1;
-	btype = VMXNET3_BTYPE_HEAD;
-#else
-	if (ring->rid == 0)
-		btype = VMXNET3_BTYPE_HEAD;
-	else
-		btype = VMXNET3_BTYPE_BODY;
-#endif
-
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, JUMBO_LEN);
-	if (m == NULL)
-		return -1;
-
-	m->m_pkthdr.len = m->m_len = JUMBO_LEN;
-	m_adj(m, ETHER_ALIGN);
-	ring->m[idx] = m;
-
-	if (bus_dmamap_load_mbuf(sc->sc_dmat, ring->dmap[idx], m,
-	    BUS_DMA_NOWAIT))
-		panic("load mbuf");
-	rxd->rx_addr = htole64(DMAADDR(ring->dmap[idx]));
-	rxd->rx_word2 = htole32(((m->m_pkthdr.len & VMXNET3_RX_LEN_M) <<
-	    VMXNET3_RX_LEN_S) | ((btype & VMXNET3_RX_BTYPE_M) <<
-	    VMXNET3_RX_BTYPE_S) | ((ring->gen & VMXNET3_RX_GEN_M) <<
-	    VMXNET3_RX_GEN_S));
-	idx++;
-	if (idx == NRXDESC) {
-		idx = 0;
-		ring->gen ^= 1;
-	}
-	ring->fill = idx;
-#ifdef VMXNET3_STAT
-	vmxstat.rxfill = ring->fill;
-#endif
-	return 0;
 }
 
 void
