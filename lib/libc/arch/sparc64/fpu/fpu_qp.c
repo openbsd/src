@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_qp.c,v 1.8 2019/06/21 17:00:58 jca Exp $	*/
+/*	$OpenBSD: fpu_qp.c,v 1.9 2019/10/27 21:07:13 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2002 Jake Burkholder.
@@ -50,7 +50,8 @@ _Qp_ ## op(u_int *c, u_int *a, u_int *b) \
 	r = __fpu_ ## op(&fe); \
 	c[0] = __fpu_ftoq(&fe, r, c); \
 } \
-DEF_STRONG(_Qp_ ## op);
+DEF_STRONG(_Qp_ ## op); \
+asm(".protected _Qp_"#op);
 
 #define	_QP_TTOQ(qname, fname, ntype, signpos, atype, ...) \
 void _Qp_ ## qname ## toq(u_int *c, ntype n); \
