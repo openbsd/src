@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.18 2019/10/25 21:13:50 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.19 2019/10/27 10:26:12 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.14 2003/04/20 16:21:40 thorpej Exp $	*/
 
 /*
@@ -144,6 +144,62 @@ start_mmu:
 	isb
 
 	mov	pc, lr
+
+#ifdef MULTIPROCESSOR
+
+	.globl cpu_hatch
+cpu_hatch:
+	/* Drop to PL1 */
+	bl	drop_to_pl1
+
+	/* Convert virt -> phys */
+	mov r9, pc
+	and r9, r9, #0xf0000000
+
+	/* Set up CPU info */
+	adr	r0, .Lcpu_hatch_ci
+	ldr	r0, [r0]
+	bic	r0, r0, #0xf0000000
+	orr	r0, r0, r9
+	ldr	r0, [r0]
+	ldr	r1, [r0, #CI_SELF]
+	mcr	CP15_TPIDRPRW(r1)
+	ldr	r8, [r0, #CI_TTBR0]
+
+	/* Enable the mmu */
+	orr	r0, r9, #0x00200000
+	bl	start_mmu
+
+	adr	r1, .Lcpu_hatch_virt
+	ldr	pc, [r1]
+
+cpu_hatch_virt:
+	mcr	CP15_TTBR0(r8)		/* Set TTB */
+	mcr	CP15_TLBIALL(r8)	/* Flush TLB */
+	
+	mrc	CP15_TPIDRPRW(r0)
+	ldr	r1, [r0, #CI_PL1_STKEND]
+	mov	sp, r1
+
+	adr	r1, .Lcpu_start_secondary
+	ldr	pc, [r1]
+
+	b	.
+
+.Lcpu_hatch_virt:
+	.word	cpu_hatch_virt
+.Lcpu_start_secondary:
+	.word	cpu_start_secondary
+.Lcpu_hatch_ci:
+	.word	cpu_hatch_ci
+
+	.data
+	.align	2
+	.global cpu_hatch_ci
+cpu_hatch_ci:
+	.word	0
+
+#endif
 
 	.bss
 	.align	3

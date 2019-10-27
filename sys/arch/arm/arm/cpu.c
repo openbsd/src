@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.51 2019/09/30 21:48:32 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.52 2019/10/27 10:26:12 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -449,6 +449,130 @@ cpu_clockspeed(int *freq)
 	*freq = clock_get_frequency(cpu_node, NULL) / 1000000;
 	return 0;
 }
+
+#ifdef MULTIPROCESSOR
+
+void cpu_boot_secondary(struct cpu_info *ci);
+void cpu_hatch(void);
+
+void
+cpu_boot_secondary_processors(void)
+{
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if ((ci->ci_flags & CPUF_AP) == 0)
+			continue;
+		if (ci->ci_flags & CPUF_PRIMARY)
+			continue;
+
+		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
+		cpu_boot_secondary(ci);
+	}
+}
+
+int
+cpu_hatch_secondary(struct cpu_info *ci, int method, uint64_t data)
+{
+	extern paddr_t cpu_hatch_ci;
+	paddr_t startaddr;
+	void *kstack;
+	uint32_t ttbr0;
+	int rc = 0;
+
+	kstack = km_alloc(USPACE, &kv_any, &kp_zero, &kd_waitok);
+	ci->ci_pl1_stkend = (vaddr_t)kstack + USPACE - 16;
+
+	kstack = km_alloc(PAGE_SIZE, &kv_any, &kp_zero, &kd_waitok);
+	ci->ci_irq_stkend = (vaddr_t)kstack + PAGE_SIZE;
+	kstack = km_alloc(PAGE_SIZE, &kv_any, &kp_zero, &kd_waitok);
+	ci->ci_abt_stkend = (vaddr_t)kstack + PAGE_SIZE;
+	kstack = km_alloc(PAGE_SIZE, &kv_any, &kp_zero, &kd_waitok);
+	ci->ci_und_stkend = (vaddr_t)kstack + PAGE_SIZE;
+
+	pmap_extract(pmap_kernel(), (vaddr_t)ci, &cpu_hatch_ci);
+
+	__asm volatile("mrc p15, 0, %0, c2, c0, 0" : "=r"(ttbr0));
+	ci->ci_ttbr0 = ttbr0;
+
+	cpu_dcache_wb_range((vaddr_t)&cpu_hatch_ci, sizeof(paddr_t));
+	cpu_dcache_wb_range((vaddr_t)ci, sizeof(*ci));
+
+	pmap_extract(pmap_kernel(), (vaddr_t)cpu_hatch, &startaddr);
+
+	switch (method) {
+	case 1:
+		/* psci  */
+#if NPSCI > 0
+		rc = (psci_cpu_on(ci->ci_mpidr, startaddr, 0) == PSCI_SUCCESS);
+#endif
+		break;
+#ifdef notyet
+	case 2:
+		/* spin-table */
+		cpu_hatch_spin_table(ci, startaddr, data);
+		rc = 1;
+		break;
+#endif
+	default:
+		/* no method to spin up CPU */
+		ci->ci_flags = 0;	/* mark cpu as not AP */
+	}
+
+	return rc;
+}
+
+void
+cpu_boot_secondary(struct cpu_info *ci)
+{
+	atomic_setbits_int(&ci->ci_flags, CPUF_GO);
+	__asm volatile("dsb sy; sev");
+
+	while ((ci->ci_flags & CPUF_RUNNING) == 0)
+		__asm volatile("wfe");
+}
+
+void
+cpu_start_secondary(struct cpu_info *ci)
+{
+	int s;
+
+	cpu_setup();
+
+	set_stackptr(PSR_IRQ32_MODE, ci->ci_irq_stkend);
+	set_stackptr(PSR_ABT32_MODE, ci->ci_abt_stkend);
+	set_stackptr(PSR_UND32_MODE, ci->ci_und_stkend);
+	
+	ci->ci_flags |= CPUF_PRESENT;
+	__asm volatile("dsb sy");
+
+	while ((ci->ci_flags & CPUF_IDENTIFY) == 0)
+		__asm volatile("wfe");
+
+	cpu_identify(ci);
+	atomic_setbits_int(&ci->ci_flags, CPUF_IDENTIFIED);
+	__asm volatile("dsb sy");
+
+	while ((ci->ci_flags & CPUF_GO) == 0)
+		__asm volatile("wfe");
+
+	s = splhigh();
+	arm_intr_cpu_enable();
+	cpu_startclock();
+
+	nanouptime(&ci->ci_schedstate.spc_runtime);
+
+	atomic_setbits_int(&ci->ci_flags, CPUF_RUNNING);
+	__asm volatile("dsb sy; sev");
+
+	spllower(IPL_NONE);
+
+	SCHED_LOCK(s);
+	cpu_switchto(NULL, sched_chooseproc());
+}
+
+#endif /* MULTIPROCESSOR */
 
 /*
  * Dynamic voltage and frequency scaling implementation.

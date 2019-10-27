@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.55 2019/09/30 21:48:32 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.56 2019/10/27 10:26:12 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -185,6 +185,12 @@ struct cpu_info {
 
 #ifdef MULTIPROCESSOR
 	struct srp_hazard	ci_srp_hazards[SRP_HAZARD_NUM];
+	volatile int		ci_flags;
+	uint32_t		ci_ttbr0;
+	vaddr_t			ci_pl1_stkend;
+	vaddr_t			ci_irq_stkend;
+	vaddr_t			ci_abt_stkend;
+	vaddr_t			ci_und_stkend;
 #endif
 
 #ifdef GPROF
@@ -310,6 +316,8 @@ intr_restore(u_long cpsr)
 {
 	__asm volatile ("msr cpsr_c, %0" :: "r"(cpsr));
 }
+
+void	cpu_startclock(void);
 
 #endif /* _KERNEL */
 
