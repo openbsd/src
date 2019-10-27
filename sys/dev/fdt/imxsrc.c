@@ -1,4 +1,4 @@
-/* $OpenBSD: imxsrc.c,v 1.3 2019/09/09 20:00:51 patrick Exp $ */
+/* $OpenBSD: imxsrc.c,v 1.4 2019/10/27 19:19:10 kettenis Exp $ */
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -20,12 +20,25 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/cpufunc.h>
+#include <machine/bus.h>
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/fdt.h>
+
+#define IMX51_RESET_GPU				0
+#define IMX51_RESET_VPU				1
+#define IMX51_RESET_IPU1			2
+#define IMX51_RESET_OPEN_VG			3
+#define IMX51_RESET_IPU2			4
+
+#define SRC_SCR					0x00
+#define  SRC_SCR_SW_GPU_RST			(1 << 1)
+#define  SRC_SCR_SW_VPU_RST			(1 << 2)
+#define  SRC_SCR_SW_IPU1_RST			(1 << 3)
+#define  SRC_SCR_SW_OPEN_VG_RST			(1 << 4)
+#define  SRC_SCR_SW_IPU2_RST			(1 << 12)
 
 #define IMX8M_RESET_PCIEPHY			26
 #define IMX8M_RESET_PCIEPHY_PERST		27
@@ -49,15 +62,31 @@ struct imxsrc_reset {
 	uint32_t	bit;
 };
 
+struct imxsrc_reset imx51_resets[] = {
+	[IMX51_RESET_GPU] = { SRC_SCR, SRC_SCR_SW_GPU_RST },
+	[IMX51_RESET_VPU] = { SRC_SCR, SRC_SCR_SW_VPU_RST },
+	[IMX51_RESET_IPU1] = { SRC_SCR, SRC_SCR_SW_IPU1_RST },
+	[IMX51_RESET_OPEN_VG] = { SRC_SCR, SRC_SCR_SW_OPEN_VG_RST },
+	[IMX51_RESET_IPU2] = { SRC_SCR, SRC_SCR_SW_IPU2_RST },
+};
+
 struct imxsrc_reset imx8m_resets[] = {
-	[IMX8M_RESET_PCIEPHY] = { SRC_PCIE1_RCR, SRC_PCIE_RCR_PCIEPHY_G_RST | SRC_PCIE_RCR_PCIEPHY_BTN },
-	[IMX8M_RESET_PCIEPHY_PERST] = { SRC_PCIE1_RCR, SRC_PCIE_RCR_PCIEPHY_PERST },
-	[IMX8M_RESET_PCIE_CTRL_APPS_EN] = { SRC_PCIE1_RCR, SRC_PCIE_RCR_PCIE_CTRL_APPS_EN },
-	[IMX8M_RESET_PCIE_CTRL_APPS_TURNOFF] = { SRC_PCIE1_RCR, SRC_PCIE_RCR_PCIE_CTRL_APPS_TURNOFF },
-	[IMX8M_RESET_PCIE2PHY] = { SRC_PCIE2_RCR, SRC_PCIE_RCR_PCIEPHY_G_RST | SRC_PCIE_RCR_PCIEPHY_BTN },
-	[IMX8M_RESET_PCIE2PHY_PERST] = { SRC_PCIE2_RCR, SRC_PCIE_RCR_PCIEPHY_PERST },
-	[IMX8M_RESET_PCIE2_CTRL_APPS_EN] = { SRC_PCIE2_RCR, SRC_PCIE_RCR_PCIE_CTRL_APPS_EN },
-	[IMX8M_RESET_PCIE2_CTRL_APPS_TURNOFF] = { SRC_PCIE2_RCR, SRC_PCIE_RCR_PCIE_CTRL_APPS_TURNOFF },
+	[IMX8M_RESET_PCIEPHY] = { SRC_PCIE1_RCR,
+	    SRC_PCIE_RCR_PCIEPHY_G_RST | SRC_PCIE_RCR_PCIEPHY_BTN },
+	[IMX8M_RESET_PCIEPHY_PERST] = { SRC_PCIE1_RCR,
+	    SRC_PCIE_RCR_PCIEPHY_PERST },
+	[IMX8M_RESET_PCIE_CTRL_APPS_EN] = { SRC_PCIE1_RCR,
+	    SRC_PCIE_RCR_PCIE_CTRL_APPS_EN },
+	[IMX8M_RESET_PCIE_CTRL_APPS_TURNOFF] = { SRC_PCIE1_RCR,
+	    SRC_PCIE_RCR_PCIE_CTRL_APPS_TURNOFF },
+	[IMX8M_RESET_PCIE2PHY] = { SRC_PCIE2_RCR,
+	    SRC_PCIE_RCR_PCIEPHY_G_RST | SRC_PCIE_RCR_PCIEPHY_BTN },
+	[IMX8M_RESET_PCIE2PHY_PERST] = { SRC_PCIE2_RCR,
+	    SRC_PCIE_RCR_PCIEPHY_PERST },
+	[IMX8M_RESET_PCIE2_CTRL_APPS_EN] = { SRC_PCIE2_RCR,
+	    SRC_PCIE_RCR_PCIE_CTRL_APPS_EN },
+	[IMX8M_RESET_PCIE2_CTRL_APPS_TURNOFF] = { SRC_PCIE2_RCR,
+	    SRC_PCIE_RCR_PCIE_CTRL_APPS_TURNOFF },
 };
 
 #define HREAD4(sc, reg)							\
@@ -95,7 +124,8 @@ imxsrc_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	if (OF_is_compatible(faa->fa_node, "fsl,imx8mq-src"))
+	if (OF_is_compatible(faa->fa_node, "fsl,imx51-src") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx8mq-src"))		
 		return 10;	/* Must beat syscon(4). */
 
 	return 0;
@@ -114,8 +144,13 @@ imxsrc_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
-	sc->sc_resets = imx8m_resets;
-	sc->sc_nresets = nitems(imx8m_resets);
+	if (OF_is_compatible(faa->fa_node, "fsl,imx51-src")) {
+		sc->sc_resets = imx51_resets;
+		sc->sc_nresets = nitems(imx51_resets);
+	} else {
+		sc->sc_resets = imx8m_resets;
+		sc->sc_nresets = nitems(imx8m_resets);
+	}
 
 	sc->sc_rd.rd_node = faa->fa_node;
 	sc->sc_rd.rd_cookie = sc;
