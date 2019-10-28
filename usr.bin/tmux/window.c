@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.243 2019/09/10 19:35:34 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.244 2019/10/28 09:07:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -313,7 +313,7 @@ window_create(u_int sx, u_int sy)
 	struct window	*w;
 
 	w = xcalloc(1, sizeof *w);
-	w->name = NULL;
+	w->name = xstrdup("");
 	w->flags = 0;
 
 	TAILQ_INIT(&w->panes);
