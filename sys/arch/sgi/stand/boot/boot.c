@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.25 2019/04/10 04:17:36 deraadt Exp $ */
+/*	$OpenBSD: boot.c,v 1.26 2019/10/28 04:11:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -60,8 +60,6 @@ int	IP;
 
 char   rnddata[BOOTRANDOM_MAX];
 
-#include "version"
-
 /*
  * OpenBSD/sgi Boot Loader.
  */
@@ -74,6 +72,7 @@ boot_main(int argc, char *argv[])
 	u_long entry;
 	int fd;
 	extern int arcbios_init(void);
+	extern char version[];
 
 	IP = arcbios_init();
 	printf("\nOpenBSD/sgi-IP%d ARCBios boot version %s\n", IP, version);
