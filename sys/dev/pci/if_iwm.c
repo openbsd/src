@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.264 2019/10/28 18:06:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.265 2019/10/28 18:08:08 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1632,13 +1632,15 @@ iwm_stop_device(struct iwm_softc *sc)
 	for (qid = 0; qid < nitems(sc->txq); qid++)
 		iwm_reset_tx_ring(sc, &sc->txq[qid]);
 
-	if (iwm_nic_lock(sc)) {
-		/* Power-down device's busmaster DMA clocks */
-		iwm_write_prph(sc, IWM_APMG_CLK_DIS_REG,
-		    IWM_APMG_CLK_VAL_DMA_CLK_RQT);
-		iwm_nic_unlock(sc);
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000) {
+		if (iwm_nic_lock(sc)) {
+			/* Power-down device's busmaster DMA clocks */
+			iwm_write_prph(sc, IWM_APMG_CLK_DIS_REG,
+			    IWM_APMG_CLK_VAL_DMA_CLK_RQT);
+			iwm_nic_unlock(sc);
+		}
+		DELAY(5);
 	}
-	DELAY(5);
 
 	/* Make sure (redundant) we've released our request to stay awake */
 	IWM_CLRBITS(sc, IWM_CSR_GP_CNTRL,
