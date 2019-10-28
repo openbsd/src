@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.255 2019/10/28 17:13:44 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.256 2019/10/28 17:19:22 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1906,6 +1906,8 @@ iwm_post_alive(struct iwm_softc *sc)
 
 	iwm_ict_reset(sc);
 
+	iwm_nic_unlock(sc);
+
 	/* Clear TX scheduler state in SRAM. */
 	nwords = (IWM_SCD_TRANS_TBL_MEM_UPPER_BOUND -
 	    IWM_SCD_CONTEXT_MEM_LOWER_BOUND)
@@ -1914,7 +1916,10 @@ iwm_post_alive(struct iwm_softc *sc)
 	    sc->sched_base + IWM_SCD_CONTEXT_MEM_LOWER_BOUND,
 	    NULL, nwords);
 	if (err)
-		goto out;
+		return err;
+
+	if (!iwm_nic_lock(sc))
+		return EBUSY;
 
 	/* Set physical address of TX scheduler rings (1KB aligned). */
 	iwm_write_prph(sc, IWM_SCD_DRAM_BASE_ADDR, sc->sched_dma.paddr >> 10);
@@ -1923,8 +1928,10 @@ iwm_post_alive(struct iwm_softc *sc)
 
 	/* enable command channel */
 	err = iwm_enable_ac_txq(sc, sc->cmdqid, IWM_TX_FIFO_CMD);
-	if (err)
-		goto out;
+	if (err) {
+		iwm_nic_unlock(sc);
+		return err;
+	}
 
 	/* Activate TX scheduler. */
 	iwm_write_prph(sc, IWM_SCD_TXFACT, 0xff);
@@ -1939,13 +1946,13 @@ iwm_post_alive(struct iwm_softc *sc)
 	IWM_SETBITS(sc, IWM_FH_TX_CHICKEN_BITS_REG,
 	    IWM_FH_TX_CHICKEN_BITS_SCD_AUTO_RETRY_EN);
 
+	iwm_nic_unlock(sc);
+
 	/* Enable L1-Active */
 	if (sc->sc_device_family != IWM_DEVICE_FAMILY_8000)
 		iwm_clear_bits_prph(sc, IWM_APMG_PCIDEV_STT_REG,
 		    IWM_APMG_PCIDEV_STT_VAL_L1_ACT_DIS);
 
- out:
- 	iwm_nic_unlock(sc);
 	return err;
 }
 
