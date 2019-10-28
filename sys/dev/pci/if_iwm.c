@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.259 2019/10/28 17:32:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.260 2019/10/28 17:34:48 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6326,8 +6326,10 @@ iwm_sf_config(struct iwm_softc *sc, int new_state)
 	};
 	int err = 0;
 
+#if 0	/* only used for models with sdio interface, in iwlwifi */
 	if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000)
 		sf_cmd.state |= htole32(IWM_SF_CFG_DUMMY_NOTIF_OFF);
+#endif
 
 	switch (new_state) {
 	case IWM_SF_UNINIT:
