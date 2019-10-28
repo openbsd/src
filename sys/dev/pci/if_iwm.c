@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.262 2019/10/28 18:00:14 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.263 2019/10/28 18:02:58 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -310,10 +310,6 @@ int	iwm_send_phy_db_cmd(struct iwm_softc *, uint16_t, uint16_t, void *);
 int	iwm_phy_db_send_all_channel_groups(struct iwm_softc *, uint16_t,
 	    uint8_t);
 int	iwm_send_phy_db_data(struct iwm_softc *);
-void	iwm_te_v2_to_v1(const struct iwm_time_event_cmd_v2 *,
-	    struct iwm_time_event_cmd_v1 *);
-int	iwm_send_time_event_cmd(struct iwm_softc *,
-	    const struct iwm_time_event_cmd_v2 *);
 void	iwm_protect_session(struct iwm_softc *, struct iwm_node *, uint32_t,
 	    uint32_t);
 void	iwm_unprotect_session(struct iwm_softc *, struct iwm_node *);
@@ -2187,57 +2183,10 @@ iwm_send_phy_db_data(struct iwm_softc *sc)
 #define IWM_ROC_TE_TYPE_NORMAL IWM_TE_P2P_DEVICE_DISCOVERABLE
 #define IWM_ROC_TE_TYPE_MGMT_TX IWM_TE_P2P_CLIENT_ASSOC
 
-/* used to convert from time event API v2 to v1 */
-#define IWM_TE_V2_DEP_POLICY_MSK (IWM_TE_V2_DEP_OTHER | IWM_TE_V2_DEP_TSF |\
-			     IWM_TE_V2_EVENT_SOCIOPATHIC)
-static inline uint16_t
-iwm_te_v2_get_notify(uint16_t policy)
-{
-	return le16toh(policy) & IWM_TE_V2_NOTIF_MSK;
-}
-
-static inline uint16_t
-iwm_te_v2_get_dep_policy(uint16_t policy)
-{
-	return (le16toh(policy) & IWM_TE_V2_DEP_POLICY_MSK) >>
-		IWM_TE_V2_PLACEMENT_POS;
-}
-
-static inline uint16_t
-iwm_te_v2_get_absence(uint16_t policy)
-{
-	return (le16toh(policy) & IWM_TE_V2_ABSENCE) >> IWM_TE_V2_ABSENCE_POS;
-}
-
-void
-iwm_te_v2_to_v1(const struct iwm_time_event_cmd_v2 *cmd_v2,
-    struct iwm_time_event_cmd_v1 *cmd_v1)
-{
-	cmd_v1->id_and_color = cmd_v2->id_and_color;
-	cmd_v1->action = cmd_v2->action;
-	cmd_v1->id = cmd_v2->id;
-	cmd_v1->apply_time = cmd_v2->apply_time;
-	cmd_v1->max_delay = cmd_v2->max_delay;
-	cmd_v1->depends_on = cmd_v2->depends_on;
-	cmd_v1->interval = cmd_v2->interval;
-	cmd_v1->duration = cmd_v2->duration;
-	if (cmd_v2->repeat == IWM_TE_V2_REPEAT_ENDLESS)
-		cmd_v1->repeat = htole32(IWM_TE_V1_REPEAT_ENDLESS);
-	else
-		cmd_v1->repeat = htole32(cmd_v2->repeat);
-	cmd_v1->max_frags = htole32(cmd_v2->max_frags);
-	cmd_v1->interval_reciprocal = 0; /* unused */
-
-	cmd_v1->dep_policy = htole32(iwm_te_v2_get_dep_policy(cmd_v2->policy));
-	cmd_v1->is_present = htole32(!iwm_te_v2_get_absence(cmd_v2->policy));
-	cmd_v1->notify = htole32(iwm_te_v2_get_notify(cmd_v2->policy));
-}
-
 int
 iwm_send_time_event_cmd(struct iwm_softc *sc,
-    const struct iwm_time_event_cmd_v2 *cmd)
+    const struct iwm_time_event_cmd *cmd)
 {
-	struct iwm_time_event_cmd_v1 cmd_v1;
 	struct iwm_rx_packet *pkt;
 	struct iwm_time_event_resp *resp;
 	struct iwm_host_cmd hcmd = {
@@ -2248,14 +2197,8 @@ iwm_send_time_event_cmd(struct iwm_softc *sc,
 	uint32_t resp_len;
 	int err;
 
-	if (sc->sc_capaflags & IWM_UCODE_TLV_FLAGS_TIME_EVENT_API_V2) {
-		hcmd.data[0] = cmd;
-		hcmd.len[0] = sizeof(*cmd);
-	} else {
-		iwm_te_v2_to_v1(cmd, &cmd_v1);
-		hcmd.data[0] = &cmd_v1;
-		hcmd.len[0] = sizeof(cmd_v1);
-	}
+	hcmd.data[0] = cmd;
+	hcmd.len[0] = sizeof(*cmd);
 	err = iwm_send_cmd(sc, &hcmd);
 	if (err)
 		return err;
@@ -2286,7 +2229,7 @@ void
 iwm_protect_session(struct iwm_softc *sc, struct iwm_node *in,
     uint32_t duration, uint32_t max_delay)
 {
-	struct iwm_time_event_cmd_v2 time_cmd;
+	struct iwm_time_event_cmd time_cmd;
 
 	/* Do nothing if a time event is already scheduled. */
 	if (sc->sc_flags & IWM_FLAG_TE_ACTIVE)
@@ -2321,7 +2264,7 @@ iwm_protect_session(struct iwm_softc *sc, struct iwm_node *in,
 void
 iwm_unprotect_session(struct iwm_softc *sc, struct iwm_node *in)
 {
-	struct iwm_time_event_cmd_v2 time_cmd;
+	struct iwm_time_event_cmd time_cmd;
 
 	/* Do nothing if the time event has already ended. */
 	if ((sc->sc_flags & IWM_FLAG_TE_ACTIVE) == 0)

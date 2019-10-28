@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.34 2019/10/28 18:00:14 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.35 2019/10/28 18:02:58 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -565,7 +565,6 @@
  * @IWM_UCODE_TLV_FLAGS_UAPSD: This uCode image supports uAPSD
  * @IWM_UCODE_TLV_FLAGS_SHORT_BL: 16 entries of black list instead of 64 in scan
  *	offload profile config command.
- * @IWM_UCODE_TLV_FLAGS_TIME_EVENT_API_V2: using the new time event API.
  * @IWM_UCODE_TLV_FLAGS_D3_6_IPV6_ADDRS: D3 image supports up to six
  *	(rather than two) IPv6 addresses
  * @IWM_UCODE_TLV_FLAGS_NO_BASIC_SSID: not sending a probe with the SSID element
@@ -587,7 +586,6 @@
 #define IWM_UCODE_TLV_FLAGS_P2P			(1 << 3)
 #define IWM_UCODE_TLV_FLAGS_DW_BC_TABLE		(1 << 4)
 #define IWM_UCODE_TLV_FLAGS_SHORT_BL		(1 << 7)
-#define IWM_UCODE_TLV_FLAGS_TIME_EVENT_API_V2	(1 << 9)
 #define IWM_UCODE_TLV_FLAGS_D3_6_IPV6_ADDRS	(1 << 10)
 #define IWM_UCODE_TLV_FLAGS_NO_BASIC_SSID	(1 << 12)
 #define IWM_UCODE_TLV_FLAGS_NEW_NSOFFL_SMALL	(1 << 15)
@@ -2360,51 +2358,7 @@ struct iwm_error_resp {
 /* IWM_MAC_EVENT_ACTION_API_E_VER_2 */
 
 
-/**
- * struct iwm_time_event_cmd_api_v1 - configuring Time Events
- * with struct IWM_MAC_TIME_EVENT_DATA_API_S_VER_1 (see also
- * with version 2. determined by IWM_UCODE_TLV_FLAGS)
- * ( IWM_TIME_EVENT_CMD = 0x29 )
- * @id_and_color: ID and color of the relevant MAC
- * @action: action to perform, one of IWM_FW_CTXT_ACTION_*
- * @id: this field has two meanings, depending on the action:
- *	If the action is ADD, then it means the type of event to add.
- *	For all other actions it is the unique event ID assigned when the
- *	event was added by the FW.
- * @apply_time: When to start the Time Event (in GP2)
- * @max_delay: maximum delay to event's start (apply time), in TU
- * @depends_on: the unique ID of the event we depend on (if any)
- * @interval: interval between repetitions, in TU
- * @interval_reciprocal: 2^32 / interval
- * @duration: duration of event in TU
- * @repeat: how many repetitions to do, can be IWM_TE_REPEAT_ENDLESS
- * @dep_policy: one of IWM_TE_V1_INDEPENDENT, IWM_TE_V1_DEP_OTHER, IWM_TE_V1_DEP_TSF
- *	and IWM_TE_V1_EVENT_SOCIOPATHIC
- * @is_present: 0 or 1, are we present or absent during the Time Event
- * @max_frags: maximal number of fragments the Time Event can be divided to
- * @notify: notifications using IWM_TE_V1_NOTIF_* (whom to notify when)
- */
-struct iwm_time_event_cmd_v1 {
-	/* COMMON_INDEX_HDR_API_S_VER_1 */
-	uint32_t id_and_color;
-	uint32_t action;
-	uint32_t id;
-	/* IWM_MAC_TIME_EVENT_DATA_API_S_VER_1 */
-	uint32_t apply_time;
-	uint32_t max_delay;
-	uint32_t dep_policy;
-	uint32_t depends_on;
-	uint32_t is_present;
-	uint32_t max_frags;
-	uint32_t interval;
-	uint32_t interval_reciprocal;
-	uint32_t duration;
-	uint32_t repeat;
-	uint32_t notify;
-} __packed; /* IWM_MAC_TIME_EVENT_CMD_API_S_VER_1 */
-
-
-/* Time event - defines for command API v2 */
+/* Time event - defines for command API */
 
 /**
  * DOC: Time Events - what is it?
@@ -2470,7 +2424,7 @@ struct iwm_time_event_cmd_v1 {
 #define IWM_TE_V2_PLACEMENT_POS	12
 #define IWM_TE_V2_ABSENCE_POS	15
 
-/* Time event policy values (for time event cmd api v2)
+/* Time event policy values
  * A notification (both event and fragment) includes a status indicating weather
  * the FW was able to schedule the event or not. For fragment start/end
  * notification the status is always success. There is no start/end fragment
@@ -2515,7 +2469,7 @@ struct iwm_time_event_cmd_v1 {
 #define IWM_TE_V2_ABSENCE		(1 << IWM_TE_V2_ABSENCE_POS)
 
 /**
- * struct iwm_time_event_cmd_api_v2 - configuring Time Events
+ * struct iwm_time_event_cmd_api - configuring Time Events
  * with struct IWM_MAC_TIME_EVENT_DATA_API_S_VER_2 (see also
  * with version 1. determined by IWM_UCODE_TLV_FLAGS)
  * ( IWM_TIME_EVENT_CMD = 0x29 )
@@ -2538,7 +2492,7 @@ struct iwm_time_event_cmd_v1 {
  *	IWM_TE_EVENT_SOCIOPATHIC
  *	using IWM_TE_ABSENCE and using IWM_TE_NOTIF_*
  */
-struct iwm_time_event_cmd_v2 {
+struct iwm_time_event_cmd {
 	/* COMMON_INDEX_HDR_API_S_VER_1 */
 	uint32_t id_and_color;
 	uint32_t action;
