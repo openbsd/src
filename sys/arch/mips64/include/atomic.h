@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.11 2017/05/15 09:17:33 mpi Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.12 2019/10/28 09:41:37 visa Exp $	*/
 
 /* Public Domain */
 
@@ -209,6 +209,6 @@ _atomic_add_long_nv(volatile unsigned long *uip, unsigned long v)
 	return (rv + v);
 }
 #define atomic_add_long_nv(_uip, _v) _atomic_add_long_nv((_uip), (_v))
-#define atomic_sub_long_nv(_uip, _v) _atomic_add_long_nv((_uip), 0 - (_v))
+#define atomic_sub_long_nv(_uip, _v) _atomic_add_long_nv((_uip), 0UL - (_v))
 
 #endif /* _MIPS64_ATOMIC_H_ */
