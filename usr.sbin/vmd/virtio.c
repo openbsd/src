@@ -2086,6 +2086,8 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			__progname);
 		return;
 	}
+
+	log_info("!!!!!!!!!!!!!!!!!!!pci_add_bar");
 	
 
 	memset(&vmmci, 0, sizeof(vmmci));
