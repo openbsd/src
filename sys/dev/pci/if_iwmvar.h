@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.40 2019/10/28 17:13:44 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.41 2019/10/28 17:32:51 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -203,6 +203,8 @@ struct iwm_nvm_data {
 
 	uint16_t nvm_version;
 	uint8_t max_tx_pwr_half_dbm;
+
+	int lar_enabled;
 };
 
 /* max bufs per tfd the driver will use */
