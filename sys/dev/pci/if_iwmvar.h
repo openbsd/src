@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.41 2019/10/28 17:32:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.42 2019/10/28 18:11:10 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -485,6 +485,7 @@ struct iwm_softc {
 	int sc_noise;
 
 	int host_interrupt_operation_mode;
+	int sc_ltr_enabled;
 
 #if NBPFILTER > 0
 	caddr_t			sc_drvbpf;

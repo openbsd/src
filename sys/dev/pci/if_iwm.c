@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.265 2019/10/28 18:08:08 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.266 2019/10/28 18:11:10 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -359,6 +359,7 @@ int	iwm_send_phy_cfg_cmd(struct iwm_softc *);
 int	iwm_load_ucode_wait_alive(struct iwm_softc *, enum iwm_ucode_type);
 int	iwm_send_dqa_cmd(struct iwm_softc *);
 int	iwm_run_init_mvm_ucode(struct iwm_softc *, int);
+int	iwm_config_ltr(struct iwm_softc *);
 int	iwm_rx_addbuf(struct iwm_softc *, int, int);
 int	iwm_get_signal_strength(struct iwm_softc *, struct iwm_rx_phy_info *);
 void	iwm_rx_rx_phy_cmd(struct iwm_softc *, struct iwm_rx_packet *,
@@ -1424,19 +1425,33 @@ iwm_prepare_card_hw(struct iwm_softc *sc)
 void
 iwm_apm_config(struct iwm_softc *sc)
 {
-	pcireg_t reg;
+	pcireg_t lctl, cap;
 
-	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
+	/*
+	 * HW bug W/A for instability in PCIe bus L0S->L1 transition.
+	 * Check if BIOS (or OS) enabled L1-ASPM on this device.
+	 * If so (likely), disable L0S, so device moves directly L0->L1;
+	 *    costs negligible amount of power savings.
+	 * If not (unlikely), enable L0S, so there is at least some
+	 *    power savings, even without L1.
+	 */
+	lctl = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
 	    sc->sc_cap_off + PCI_PCIE_LCSR);
-	if (reg & PCI_PCIE_LCSR_ASPM_L1) {
-		/* Um the Linux driver prints "Disabling L0S for this one ... */
+	if (lctl & PCI_PCIE_LCSR_ASPM_L1) {
 		IWM_SETBITS(sc, IWM_CSR_GIO_REG,
 		    IWM_CSR_GIO_REG_VAL_L0S_ENABLED);
 	} else {
-		/* ... and "Enabling" here */
 		IWM_CLRBITS(sc, IWM_CSR_GIO_REG,
 		    IWM_CSR_GIO_REG_VAL_L0S_ENABLED);
 	}
+
+	cap = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
+	    sc->sc_cap_off + PCI_PCIE_DCSR2);
+	sc->sc_ltr_enabled = (cap & PCI_PCIE_DCSR2_LTREN) ? 1 : 0;
+	DPRINTF(("%s: L1 %sabled - LTR %sabled\n",
+	    DEVNAME(sc),
+	    (lctl & PCI_PCIE_LCSR_ASPM_L1) ? "En" : "Dis",
+	    sc->sc_ltr_enabled ? "En" : "Dis"));
 }
 
 /*
@@ -3297,6 +3312,19 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 	}
 
 	return err;
+}
+
+int
+iwm_config_ltr(struct iwm_softc *sc)
+{
+	struct iwm_ltr_config_cmd cmd = {
+		.flags = htole32(IWM_LTR_CFG_FLAG_FEATURE_ENABLE),
+	};
+
+	if (!sc->sc_ltr_enabled)
+		return 0;
+
+	return iwm_send_cmd_pdu(sc, IWM_LTR_CONFIG, 0, sizeof(cmd), &cmd);
 }
 
 int
@@ -6414,6 +6442,13 @@ iwm_init_hw(struct iwm_softc *sc)
 	if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000)
 		iwm_tt_tx_backoff(sc, 0);
 
+
+	err = iwm_config_ltr(sc);
+	if (err) {
+		printf("%s: PCIe LTR configuration failed (error %d)\n",
+		    DEVNAME(sc), err);
+	}
+
 	err = iwm_power_update_device(sc);
 	if (err) {
 		printf("%s: could not send power command (error %d)\n",
@@ -7139,6 +7174,7 @@ iwm_notif_intr(struct iwm_softc *sc)
 		case IWM_MAC_CONTEXT_CMD:
 		case IWM_REPLY_SF_CFG_CMD:
 		case IWM_POWER_TABLE_CMD:
+		case IWM_LTR_CONFIG:
 		case IWM_PHY_CONTEXT_CMD:
 		case IWM_BINDING_CONTEXT_CMD:
 		case IWM_WIDE_ID(IWM_LONG_GROUP, IWM_SCAN_CFG_CMD):
