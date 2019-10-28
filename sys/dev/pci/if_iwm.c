@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.254 2019/10/18 07:07:53 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.255 2019/10/28 17:13:44 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -2357,7 +2357,6 @@ const int iwm_nvm_to_read[] = {
 };
 
 #define IWM_NVM_DEFAULT_CHUNK_SIZE	(2*1024)
-#define IWM_MAX_NVM_SECTION_SIZE	8192
 
 #define IWM_NVM_WRITE_OPCODE 1
 #define IWM_NVM_READ_OPCODE 0
@@ -2889,7 +2888,7 @@ iwm_nvm_init(struct iwm_softc *sc)
 	int i, section, err;
 	uint16_t len;
 	uint8_t *buf;
-	const size_t bufsz = IWM_MAX_NVM_SECTION_SIZE;
+	const size_t bufsz = sc->sc_nvm_max_section_size;
 
 	memset(nvm_sections, 0, sizeof(nvm_sections));
 
@@ -7675,6 +7674,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		sc->host_interrupt_operation_mode = 1;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
+		sc->sc_nvm_max_section_size = 16384;
 		break;
 	case PCI_PRODUCT_INTEL_WL_3165_1:
 	case PCI_PRODUCT_INTEL_WL_3165_2:
@@ -7682,12 +7682,14 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
+		sc->sc_nvm_max_section_size = 16384;
 		break;
 	case PCI_PRODUCT_INTEL_WL_3168_1:
 		sc->sc_fwname = "iwm-3168-22";
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
+		sc->sc_nvm_max_section_size = 16384;
 		break;
 	case PCI_PRODUCT_INTEL_WL_7260_1:
 	case PCI_PRODUCT_INTEL_WL_7260_2:
@@ -7695,6 +7697,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		sc->host_interrupt_operation_mode = 1;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
+		sc->sc_nvm_max_section_size = 16384;
 		break;
 	case PCI_PRODUCT_INTEL_WL_7265_1:
 	case PCI_PRODUCT_INTEL_WL_7265_2:
@@ -7702,6 +7705,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
+		sc->sc_nvm_max_section_size = 16384;
 		break;
 	case PCI_PRODUCT_INTEL_WL_8260_1:
 	case PCI_PRODUCT_INTEL_WL_8260_2:
@@ -7709,12 +7713,14 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_8000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ_8000;
+		sc->sc_nvm_max_section_size = 32768;
 		break;
 	case PCI_PRODUCT_INTEL_WL_8265_1:
 		sc->sc_fwname = "iwm-8265-22";
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_8000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ_8000;
+		sc->sc_nvm_max_section_size = 32768;
 		break;
 	default:
 		printf("%s: unknown adapter type\n", DEVNAME(sc));
