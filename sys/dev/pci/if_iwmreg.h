@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.35 2019/10/28 18:02:58 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.36 2019/10/28 18:06:04 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -1834,6 +1834,22 @@ struct iwm_agn_scd_bc_tbl {
 #define IWM_FSEQ_VER_MISMATCH_NOTIFICATION	0xff
 
 #define IWM_REPLY_MAX	0xff
+
+/* PHY_OPS subcommand IDs */
+#define IWM_CMD_DTS_MEASUREMENT_TRIGGER_WIDE	0x0
+#define IWM_CTDP_CONFIG_CMD			0x03
+#define IWM_TEMP_REPORTING_THRESHOLDS_CMD	0x04
+#define IWM_CT_KILL_NOTIFICATION		0xFE
+#define IWM_DTS_MEASUREMENT_NOTIF_WIDE		0xFF
+
+/* command groups */
+#define IWM_LEGACY_GROUP	0x0
+#define IWM_LONG_GROUP		0x1
+#define IWM_SYSTEM_GROUP	0x2
+#define IWM_MAC_CONF_GROUP	0x3
+#define IWM_PHY_OPS_GROUP	0x4
+#define IWM_DATA_PATH_GROUP	0x5
+#define IWM_PROT_OFFLOAD_GROUP	0xb
 
 /* DATA_PATH group subcommand IDs */
 #define IWM_DQA_ENABLE_CMD	0x00
@@ -5800,11 +5816,6 @@ iwm_cmd_id(uint8_t opcode, uint8_t groupid, uint8_t version)
 
 /* make uint16_t wide id out of uint8_t group and opcode */
 #define IWM_WIDE_ID(grp, opcode) ((grp << 8) | opcode)
-
-/* due to the conversion, this group is special */
-#define IWM_ALWAYS_LONG_GROUP	1
-#define IWM_SYSTEM_GROUP	4
-#define IWM_DATA_PATH_GROUP	5
 
 struct iwm_cmd_header {
 	uint8_t code;
