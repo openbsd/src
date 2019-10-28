@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.71 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.72 2019/10/28 19:57:50 anton Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -302,6 +302,12 @@ shmctl1(struct proc *p, int shmid, int cmd, caddr_t buf,
 	struct shmid_ds inbuf, *shmseg;
 	int error;
 
+	if (cmd == IPC_SET) {
+		error = ds_copyin(buf, &inbuf, sizeof(inbuf));
+		if (error)
+			return (error);
+	}
+
 	shmseg = shm_find_segment_by_shmid(shmid);
 	if (shmseg == NULL)
 		return (EINVAL);
@@ -315,9 +321,6 @@ shmctl1(struct proc *p, int shmid, int cmd, caddr_t buf,
 		break;
 	case IPC_SET:
 		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_M)) != 0)
-			return (error);
-		error = ds_copyin(buf, &inbuf, sizeof(inbuf));
-		if (error)
 			return (error);
 		shmseg->shm_perm.uid = inbuf.shm_perm.uid;
 		shmseg->shm_perm.gid = inbuf.shm_perm.gid;
