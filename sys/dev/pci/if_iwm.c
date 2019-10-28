@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.256 2019/10/28 17:19:22 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.257 2019/10/28 17:22:10 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7740,17 +7740,17 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	 * "dash" value). To keep hw_rev backwards compatible - we'll store it
 	 * in the old format.
 	 */
-	if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000)
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000) {
+		uint32_t hw_step;
+
 		sc->sc_hw_rev = (sc->sc_hw_rev & 0xfff0) |
 				(IWM_CSR_HW_REV_STEP(sc->sc_hw_rev << 2) << 2);
 		
-	if (iwm_prepare_card_hw(sc) != 0) {
-		printf("%s: could not initialize hardware\n", DEVNAME(sc));
-		return;
-	}
-
-	if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000) {
-		uint32_t hw_step;
+		if (iwm_prepare_card_hw(sc) != 0) {
+			printf("%s: could not initialize hardware\n",
+			    DEVNAME(sc));
+			return;
+		}
 
 		/*
 		 * In order to recognize C step the driver should read the
