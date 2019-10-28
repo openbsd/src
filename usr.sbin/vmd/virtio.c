@@ -258,9 +258,8 @@ virtio_mbh_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 {
 	*intr = 0xFF;
 
-	log_info("CMPE_VIRTIO_MBH, reg: %d", reg);
-
-
+	log_info("!!!!!!!!!!!!!!!!!!!!!!!!");
+	//log_info("CMPE_VIRTIO_MBH, reg: %d", reg);
 
 	// dir == 0 means writing
 	if (dir == 0) {
