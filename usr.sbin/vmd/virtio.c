@@ -1827,6 +1827,8 @@ void
 virtio_init(struct vmd_vm *vm, int child_cdrom,
     int child_disks[][VM_MAX_BASE_PER_DISK], int *child_taps)
 {
+	log_info("!!!!! virtio_init 1");
+
 	struct vmop_create_params *vmc = &vm->vm_params;
 	struct vm_create_params *vcp = &vmc->vmc_params;
 	uint8_t id;
@@ -1862,6 +1864,8 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 	viornd.pci_id = id;
 	viornd.irq = pci_get_dev_irq(id);
 	viornd.vm_id = vcp->vcp_id;
+
+	log_info("!!!!! virtio_init 2");
 
 	if (vcp->vcp_nnics > 0) {
 		vionet = calloc(vcp->vcp_nnics, sizeof(struct vionet_dev));
