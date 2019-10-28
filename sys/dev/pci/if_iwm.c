@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.260 2019/10/28 17:34:48 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.261 2019/10/28 17:38:06 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -364,7 +364,6 @@ int	iwm_load_ucode_wait_alive(struct iwm_softc *, enum iwm_ucode_type);
 int	iwm_send_dqa_cmd(struct iwm_softc *);
 int	iwm_run_init_mvm_ucode(struct iwm_softc *, int);
 int	iwm_rx_addbuf(struct iwm_softc *, int, int);
-int	iwm_calc_rssi(struct iwm_softc *, struct iwm_rx_phy_info *);
 int	iwm_get_signal_strength(struct iwm_softc *, struct iwm_rx_phy_info *);
 void	iwm_rx_rx_phy_cmd(struct iwm_softc *, struct iwm_rx_packet *,
 	    struct iwm_rx_data *);
@@ -3409,33 +3408,6 @@ iwm_rx_addbuf(struct iwm_softc *sc, int size, int idx)
 	return 0;
 }
 
-#define IWM_RSSI_OFFSET 50
-int
-iwm_calc_rssi(struct iwm_softc *sc, struct iwm_rx_phy_info *phy_info)
-{
-	int rssi_a, rssi_b, rssi_a_dbm, rssi_b_dbm, max_rssi_dbm;
-	uint32_t agc_a, agc_b;
-	uint32_t val;
-
-	val = le32toh(phy_info->non_cfg_phy[IWM_RX_INFO_AGC_IDX]);
-	agc_a = (val & IWM_OFDM_AGC_A_MSK) >> IWM_OFDM_AGC_A_POS;
-	agc_b = (val & IWM_OFDM_AGC_B_MSK) >> IWM_OFDM_AGC_B_POS;
-
-	val = le32toh(phy_info->non_cfg_phy[IWM_RX_INFO_RSSI_AB_IDX]);
-	rssi_a = (val & IWM_OFDM_RSSI_INBAND_A_MSK) >> IWM_OFDM_RSSI_A_POS;
-	rssi_b = (val & IWM_OFDM_RSSI_INBAND_B_MSK) >> IWM_OFDM_RSSI_B_POS;
-
-	/*
-	 * dBm = rssi dB - agc dB - constant.
-	 * Higher AGC (higher radio gain) means lower signal.
-	 */
-	rssi_a_dbm = rssi_a - IWM_RSSI_OFFSET - agc_a;
-	rssi_b_dbm = rssi_b - IWM_RSSI_OFFSET - agc_b;
-	max_rssi_dbm = MAX(rssi_a_dbm, rssi_b_dbm);
-
-	return max_rssi_dbm;
-}
-
 /*
  * RSSI values are reported by the FW as positive values - need to negate
  * to obtain their dBM.  Account for missing antennas by replacing 0
@@ -3548,11 +3520,7 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 
 	device_timestamp = le32toh(phy_info->system_timestamp);
 
-	if (sc->sc_capaflags & IWM_UCODE_TLV_FLAGS_RX_ENERGY_API) {
-		rssi = iwm_get_signal_strength(sc, phy_info);
-	} else {
-		rssi = iwm_calc_rssi(sc, phy_info);
-	}
+	rssi = iwm_get_signal_strength(sc, phy_info);
 	rssi = (0 - IWM_MIN_DBM) + rssi;	/* normalize */
 	rssi = MIN(rssi, ic->ic_max_rssi);	/* clip to max. 100% */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.32 2019/10/28 17:28:23 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.33 2019/10/28 17:38:06 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -565,7 +565,6 @@
  * @IWM_UCODE_TLV_FLAGS_UAPSD: This uCode image supports uAPSD
  * @IWM_UCODE_TLV_FLAGS_SHORT_BL: 16 entries of black list instead of 64 in scan
  *	offload profile config command.
- * @IWM_UCODE_TLV_FLAGS_RX_ENERGY_API: supports rx signal strength api
  * @IWM_UCODE_TLV_FLAGS_TIME_EVENT_API_V2: using the new time event API.
  * @IWM_UCODE_TLV_FLAGS_D3_6_IPV6_ADDRS: D3 image supports up to six
  *	(rather than two) IPv6 addresses
@@ -597,7 +596,6 @@
 #define IWM_UCODE_TLV_FLAGS_NEWBT_COEX		(1 << 5)
 #define IWM_UCODE_TLV_FLAGS_PM_CMD_SUPPORT	(1 << 6)
 #define IWM_UCODE_TLV_FLAGS_SHORT_BL		(1 << 7)
-#define IWM_UCODE_TLV_FLAGS_RX_ENERGY_API	(1 << 8)
 #define IWM_UCODE_TLV_FLAGS_TIME_EVENT_API_V2	(1 << 9)
 #define IWM_UCODE_TLV_FLAGS_D3_6_IPV6_ADDRS	(1 << 10)
 #define IWM_UCODE_TLV_FLAGS_BF_UPDATED		(1 << 11)
