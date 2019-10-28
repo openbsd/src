@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.19 2018/01/26 16:22:19 kettenis Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.20 2019/10/28 14:43:03 kettenis Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -190,6 +190,8 @@ child_return(arg)
 
 	frame->tf_r0 = 0;
 	frame->tf_spsr &= ~PSR_C;	/* carry bit */
+
+	KERNEL_UNLOCK();
 
 	mi_child_return(p);
 }
