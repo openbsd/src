@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.31 2019/10/28 17:24:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.32 2019/10/28 17:28:23 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -1768,7 +1768,7 @@ struct iwm_agn_scd_bc_tbl {
 /* Phy */
 #define IWM_PHY_CONFIGURATION_CMD		0x6a
 #define IWM_CALIB_RES_NOTIF_PHY_DB		0x6b
-/* IWM_PHY_DB_CMD	0x6c */
+#define IWM_PHY_DB_CMD				0x6c
 
 /* Power - legacy power table command */
 #define IWM_POWER_TABLE_CMD				0x77
@@ -1958,8 +1958,6 @@ struct iwm_phy_cfg_cmd {
 #define IWM_PHY_DB_CALIB_CHG_PAPD	4
 #define IWM_PHY_DB_CALIB_CHG_TXP	5
 #define IWM_PHY_DB_MAX			6
-
-#define IWM_PHY_DB_CMD 0x6c /* TEMP API - The actual is 0x8c */
 
 /*
  * phy db - configure operational ucode

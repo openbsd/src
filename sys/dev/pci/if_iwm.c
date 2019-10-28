@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.257 2019/10/28 17:22:10 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.258 2019/10/28 17:28:23 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7261,7 +7261,7 @@ iwm_notif_intr(struct iwm_softc *sc)
 		}
 
 		/* ignore */
-		case 0x6c: /* IWM_PHY_DB_CMD */
+		case IWM_PHY_DB_CMD:
 			break;
 
 		case IWM_INIT_COMPLETE_NOTIF:
