@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.30 2019/10/18 07:07:53 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.31 2019/10/28 17:24:56 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -2043,8 +2043,6 @@ struct iwm_calib_res_notif_phy_db {
 #define IWM_NVM_RF_CFG_TYPE_MSK_8000(x)		((x >> 12) & 0xFFF)
 #define IWM_NVM_RF_CFG_TX_ANT_MSK_8000(x)	((x >> 24) & 0xF)
 #define IWM_NVM_RF_CFG_RX_ANT_MSK_8000(x)	((x >> 28) & 0xF)
-
-#define DEFAULT_MAX_TX_POWER 16
 
 /*
  * channel flags in NVM
