@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.33 2019/10/28 17:38:06 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.34 2019/10/28 18:00:14 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -568,17 +568,10 @@
  * @IWM_UCODE_TLV_FLAGS_TIME_EVENT_API_V2: using the new time event API.
  * @IWM_UCODE_TLV_FLAGS_D3_6_IPV6_ADDRS: D3 image supports up to six
  *	(rather than two) IPv6 addresses
- * @IWM_UCODE_TLV_FLAGS_BF_UPDATED: new beacon filtering API
  * @IWM_UCODE_TLV_FLAGS_NO_BASIC_SSID: not sending a probe with the SSID element
  *	from the probe request template.
- * @IWM_UCODE_TLV_FLAGS_D3_CONTINUITY_API: modified D3 API to allow keeping
- *	connection when going back to D0
  * @IWM_UCODE_TLV_FLAGS_NEW_NSOFFL_SMALL: new NS offload (small version)
  * @IWM_UCODE_TLV_FLAGS_NEW_NSOFFL_LARGE: new NS offload (large version)
- * @IWM_UCODE_TLV_FLAGS_SCHED_SCAN: this uCode image supports scheduled scan.
- * @IWM_UCODE_TLV_FLAGS_STA_KEY_CMD: new ADD_STA and ADD_STA_KEY command API
- * @IWM_UCODE_TLV_FLAGS_DEVICE_PS_CMD: support device wide power command
- *	containing CAM (Continuous Active Mode) indication.
  * @IWM_UCODE_TLV_FLAGS_P2P_PS: P2P client power save is supported (only on a
  *	single bound interface).
  * @IWM_UCODE_TLV_FLAGS_UAPSD_SUPPORT: General support for uAPSD
@@ -593,19 +586,12 @@
 #define IWM_UCODE_TLV_FLAGS_MFP			(1 << 2)
 #define IWM_UCODE_TLV_FLAGS_P2P			(1 << 3)
 #define IWM_UCODE_TLV_FLAGS_DW_BC_TABLE		(1 << 4)
-#define IWM_UCODE_TLV_FLAGS_NEWBT_COEX		(1 << 5)
-#define IWM_UCODE_TLV_FLAGS_PM_CMD_SUPPORT	(1 << 6)
 #define IWM_UCODE_TLV_FLAGS_SHORT_BL		(1 << 7)
 #define IWM_UCODE_TLV_FLAGS_TIME_EVENT_API_V2	(1 << 9)
 #define IWM_UCODE_TLV_FLAGS_D3_6_IPV6_ADDRS	(1 << 10)
-#define IWM_UCODE_TLV_FLAGS_BF_UPDATED		(1 << 11)
 #define IWM_UCODE_TLV_FLAGS_NO_BASIC_SSID	(1 << 12)
-#define IWM_UCODE_TLV_FLAGS_D3_CONTINUITY_API	(1 << 14)
 #define IWM_UCODE_TLV_FLAGS_NEW_NSOFFL_SMALL	(1 << 15)
 #define IWM_UCODE_TLV_FLAGS_NEW_NSOFFL_LARGE	(1 << 16)
-#define IWM_UCODE_TLV_FLAGS_SCHED_SCAN		(1 << 17)
-#define IWM_UCODE_TLV_FLAGS_STA_KEY_CMD		(1 << 19)
-#define IWM_UCODE_TLV_FLAGS_DEVICE_PS_CMD	(1 << 20)
 #define IWM_UCODE_TLV_FLAGS_P2P_PS		(1 << 21)
 #define IWM_UCODE_TLV_FLAGS_BSS_P2P_PS_DCM	(1 << 22)
 #define IWM_UCODE_TLV_FLAGS_BSS_P2P_PS_SCM	(1 << 23)

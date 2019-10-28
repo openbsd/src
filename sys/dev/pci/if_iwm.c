@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.261 2019/10/28 17:38:06 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.262 2019/10/28 18:00:14 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -829,11 +829,6 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	if (err) {
 		printf("%s: firmware parse error %d, "
 		    "section type %d\n", DEVNAME(sc), err, tlv_type);
-	}
-
-	if (!(sc->sc_capaflags & IWM_UCODE_TLV_FLAGS_PM_CMD_SUPPORT)) {
-		printf("%s: device uses unsupported power ops\n", DEVNAME(sc));
-		err = ENOTSUP;
 	}
 
  out:
@@ -4610,9 +4605,6 @@ iwm_power_update_device(struct iwm_softc *sc)
 		.flags = htole16(IWM_DEVICE_POWER_FLAGS_POWER_SAVE_ENA_MSK),
 	};
 
-	if (!(sc->sc_capaflags & IWM_UCODE_TLV_FLAGS_DEVICE_PS_CMD))
-		return 0;
-
 	return iwm_send_cmd_pdu(sc,
 	    IWM_POWER_TABLE_CMD, 0, sizeof(cmd), &cmd);
 }
@@ -4642,8 +4634,6 @@ iwm_disable_beacon_filter(struct iwm_softc *sc)
 	int err;
 
 	memset(&cmd, 0, sizeof(cmd));
-	if ((sc->sc_capaflags & IWM_UCODE_TLV_FLAGS_BF_UPDATED) == 0)
-		return 0;
 
 	err = iwm_beacon_filter_send_cmd(sc, &cmd);
 	if (err == 0)
