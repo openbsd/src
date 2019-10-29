@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.207 2019/09/27 14:50:39 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.208 2019/10/29 06:42:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1777,13 +1777,15 @@ nexthop_update(struct kroute_nexthop *msg)
 		if (nexthop_unref(nh))
 			return;		/* nh lost last ref, no work left */
 
-	if (nh->next_prefix)
+	if (nh->next_prefix) {
 		/*
 		 * If nexthop_runner() is not finished with this nexthop
 		 * then ensure that all prefixes are updated by setting
 		 * the oldstate to NEXTHOP_FLAPPED.
 		 */
 		nh->oldstate = NEXTHOP_FLAPPED;
+		TAILQ_REMOVE(&nexthop_runners, nh, runner_l);
+	}
 
 	if (msg->connected) {
 		nh->flags |= NEXTHOP_CONNECTED;
@@ -1855,8 +1857,12 @@ nexthop_unlink(struct prefix *p)
 	if (p->nexthop == NULL || (p->flags & PREFIX_NEXTHOP_LINKED) == 0)
 		return;
 
-	if (p == p->nexthop->next_prefix)
+	if (p == p->nexthop->next_prefix) {
 		p->nexthop->next_prefix = LIST_NEXT(p, entry.list.nexthop);
+		/* remove nexthop from list if no prefixes left to update */
+		if (p->nexthop->next_prefix == NULL)
+			TAILQ_REMOVE(&nexthop_runners, p->nexthop, runner_l);
+	}
 
 	p->flags &= ~PREFIX_NEXTHOP_LINKED;
 	LIST_REMOVE(p, entry.list.nexthop);
