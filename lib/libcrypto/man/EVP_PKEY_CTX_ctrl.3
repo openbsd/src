@@ -1,8 +1,9 @@
-.\" $OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.17 2019/10/29 17:21:07 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.18 2019/10/29 18:22:21 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\" selective merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file was written by Dr. Stephen Henson <steve@openssl.org>
+.\" and Antoine Salon <asalon@vmware.com>.
 .\" Copyright (c) 2006, 2009, 2013, 2014, 2015, 2018 The OpenSSL Project.
 .\" All rights reserved.
 .\"
@@ -66,11 +67,25 @@
 .Nm EVP_PKEY_CTX_set_rsa_keygen_pubexp ,
 .Nm EVP_PKEY_CTX_set_rsa_mgf1_md ,
 .Nm EVP_PKEY_CTX_get_rsa_mgf1_md ,
+.Nm EVP_PKEY_CTX_set_rsa_oaep_md ,
+.Nm EVP_PKEY_CTX_get_rsa_oaep_md ,
+.Nm EVP_PKEY_CTX_set0_rsa_oaep_label ,
+.Nm EVP_PKEY_CTX_get0_rsa_oaep_label ,
 .Nm EVP_PKEY_CTX_set_dsa_paramgen_bits ,
 .Nm EVP_PKEY_CTX_set_dh_paramgen_prime_len ,
 .Nm EVP_PKEY_CTX_set_dh_paramgen_generator ,
 .Nm EVP_PKEY_CTX_set_ec_paramgen_curve_nid ,
 .Nm EVP_PKEY_CTX_set_ec_param_enc ,
+.Nm EVP_PKEY_CTX_set_ecdh_cofactor_mode ,
+.Nm EVP_PKEY_CTX_get_ecdh_cofactor_mode ,
+.Nm EVP_PKEY_CTX_set_ecdh_kdf_type ,
+.Nm EVP_PKEY_CTX_get_ecdh_kdf_type ,
+.Nm EVP_PKEY_CTX_set_ecdh_kdf_md ,
+.Nm EVP_PKEY_CTX_get_ecdh_kdf_md ,
+.Nm EVP_PKEY_CTX_set_ecdh_kdf_outlen ,
+.Nm EVP_PKEY_CTX_get_ecdh_kdf_outlen ,
+.Nm EVP_PKEY_CTX_set0_ecdh_kdf_ukm ,
+.Nm EVP_PKEY_CTX_get0_ecdh_kdf_ukm ,
 .Nm EVP_PKEY_CTX_set1_id ,
 .Nm EVP_PKEY_CTX_get1_id ,
 .Nm EVP_PKEY_CTX_get1_id_len
@@ -143,6 +158,27 @@
 .Fa "EVP_PKEY_CTX *ctx"
 .Fa "const EVP_MD **pmd"
 .Fc
+.Ft int
+.Fo EVP_PKEY_CTX_set_rsa_oaep_md
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "const EVP_MD *md"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_get_rsa_oaep_md
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "const EVP_MD **pmd"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_set0_rsa_oaep_label
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "unsigned char *label"
+.Fa "int len"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_get0_rsa_oaep_label
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "unsigned char **plabel"
+.Fc
 .In openssl/dsa.h
 .Ft int
 .Fo EVP_PKEY_CTX_set_dsa_paramgen_bits
@@ -170,6 +206,55 @@
 .Fo EVP_PKEY_CTX_set_ec_param_enc
 .Fa "EVP_PKEY_CTX *ctx"
 .Fa "int param_enc"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_set_ecdh_cofactor_mode
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "int cofactor_mode"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_get_ecdh_cofactor_mode
+.Fa "EVP_PKEY_CTX *ctx"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_set_ecdh_kdf_type
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "int kdf"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_get_ecdh_kdf_type
+.Fa "EVP_PKEY_CTX *ctx"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_set_ecdh_kdf_md
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "const EVP_MD *md"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_get_ecdh_kdf_md
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "const EVP_MD **pmd"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_set_ecdh_kdf_outlen
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "int len"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_get_ecdh_kdf_outlen
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "int *plen"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_set0_ecdh_kdf_ukm
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "unsigned char *ukm"
+.Fa "int len"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_get0_ecdh_kdf_ukm
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "unsigned char **pukm"
 .Fc
 .Ft int
 .Fo EVP_PKEY_CTX_set1_id
@@ -332,6 +417,49 @@ The padding mode must have been set to
 .Dv RSA_PKCS1_OAEP_PADDING
 or
 .Dv RSA_PKCS1_PSS_PADDING .
+.Pp
+The
+.Fn EVP_PKEY_CTX_set_rsa_oaep_md
+macro sets the message digest type used in RSA OAEP to
+.Fa md .
+The padding mode must have been set to
+.Dv RSA_PKCS1_OAEP_PADDING .
+.Pp
+The
+.Fn EVP_PKEY_CTX_get_rsa_oaep_md
+macro gets the message digest type used in RSA OAEP to
+.Pf * Fa md .
+The padding mode must have been set to
+.Dv RSA_PKCS1_OAEP_PADDING .
+.Pp
+The
+.Fn EVP_PKEY_CTX_set0_rsa_oaep_label
+macro sets the RSA OAEP label to
+.Fa label
+and its length to
+.Fa len .
+If
+.Fa label
+is
+.Dv NULL
+or
+.Fa len
+is 0, the label is cleared.
+The library takes ownership of the label so the caller should not
+free the original memory pointed to by
+.Fa label .
+The padding mode must have been set to
+.Dv RSA_PKCS1_OAEP_PADDING .
+.Pp
+The
+.Fn EVP_PKEY_CTX_get0_rsa_oaep_label
+macro gets the RSA OAEP label to
+.Pf * Fa plabel .
+The return value is the label length.
+The padding mode must have been set to
+.Dv RSA_PKCS1_OAEP_PADDING .
+The resulting pointer is owned by the library and should not be
+freed by the caller.
 .Ss DSA parameters
 The macro
 .Fn EVP_PKEY_CTX_set_dsa_paramgen_bits
@@ -369,6 +497,94 @@ when generating EC parameters or an EC key.
 The encoding can be set to 0 for explicit parameters or to
 .Dv OPENSSL_EC_NAMED_CURVE
 to use named curve form.
+.Ss ECDH parameters
+The
+.Fn EVP_PKEY_CTX_set_ecdh_cofactor_mode
+macro sets the cofactor mode to
+.Fa cofactor_mode
+for ECDH key derivation.
+Possible values are 1 to enable cofactor key derivation, 0 to disable
+it, or -1 to clear the stored cofactor mode and fall back to the
+private key cofactor mode.
+.Pp
+The
+.Fn EVP_PKEY_CTX_get_ecdh_cofactor_mode
+macro returns the cofactor mode for
+.Fa ctx
+used for ECDH key derivation.
+Possible return values are 1 when cofactor key derivation is enabled
+or 0 otherwise.
+.Ss ECDH key derivation function parameters
+The
+.Fn EVP_PKEY_CTX_set_ecdh_kdf_type
+macro sets the key derivation function type to
+.Fa kdf
+for ECDH key derivation.
+Possible values are
+.Dv EVP_PKEY_ECDH_KDF_NONE
+or
+.Dv EVP_PKEY_ECDH_KDF_X9_63
+which uses the key derivation specified in X9.63.
+When using key derivation, the
+.Fa kdf_md
+and
+.Fa kdf_outlen
+parameters must also be specified.
+.Pp
+The
+.Fn EVP_PKEY_CTX_get_ecdh_kdf_type
+macro returns the key derivation function type for
+.Fa ctx
+used for ECDH key derivation.
+Possible return values are
+.Dv EVP_PKEY_ECDH_KDF_NONE
+or
+.Dv EVP_PKEY_ECDH_KDF_X9_63 .
+.Pp
+The
+.Fn EVP_PKEY_CTX_set_ecdh_kdf_md
+macro sets the key derivation function message digest to
+.Fa md
+for ECDH key derivation.
+Note that X9.63 specifies that this digest should be SHA1,
+but OpenSSL tolerates other digests.
+.Pp
+The
+.Fn EVP_PKEY_CTX_get_ecdh_kdf_md
+macro gets the key derivation function message digest for
+.Fa ctx
+used for ECDH key derivation.
+.Pp
+The
+.Fn EVP_PKEY_CTX_set_ecdh_kdf_outlen
+macro sets the key derivation function output length to
+.Fa len
+for ECDH key derivation.
+.Pp
+The
+.Fn EVP_PKEY_CTX_get_ecdh_kdf_outlen
+macro gets the key derivation function output length for
+.Fa ctx
+used for ECDH key derivation.
+.Pp
+The
+.Fn EVP_PKEY_CTX_set0_ecdh_kdf_ukm
+macro sets the user key material to
+.Fa ukm
+for ECDH key derivation.
+This parameter is optional and corresponds to the shared info
+in X9.63 terms.
+The library takes ownership of the user key material, so the caller
+should not free the original memory pointed to by
+.Fa ukm .
+.Pp
+The
+.Fn EVP_PKEY_CTX_get0_ecdh_kdf_ukm
+macro gets the user key material for
+.Fa ctx .
+The return value is the user key material length.
+The resulting pointer is owned by the library and should not be
+freed by the caller.
 .Ss Other parameters
 The
 .Fn EVP_PKEY_CTX_set1_id ,
@@ -443,9 +659,19 @@ first appeared in OpenSSL 1.0.1 and have been available since
 .Ox 5.3 .
 .Pp
 The functions
-.Fn EVP_PKEY_CTX_get_signature_md
+.Fn EVP_PKEY_CTX_get_signature_md ,
+.Fn EVP_PKEY_CTX_set_ec_param_enc ,
+.Fn EVP_PKEY_CTX_set_ecdh_cofactor_mode ,
+.Fn EVP_PKEY_CTX_get_ecdh_cofactor_mode ,
+.Fn EVP_PKEY_CTX_set_ecdh_kdf_type ,
+.Fn EVP_PKEY_CTX_get_ecdh_kdf_type ,
+.Fn EVP_PKEY_CTX_set_ecdh_kdf_md ,
+.Fn EVP_PKEY_CTX_get_ecdh_kdf_md ,
+.Fn EVP_PKEY_CTX_set_ecdh_kdf_outlen ,
+.Fn EVP_PKEY_CTX_get_ecdh_kdf_outlen ,
+.Fn EVP_PKEY_CTX_set0_ecdh_kdf_ukm ,
 and
-.Fn EVP_PKEY_CTX_set_ec_param_enc
+.Fn EVP_PKEY_CTX_get0_ecdh_kdf_ukm
 first appeared in OpenSSL 1.0.2 and have been available since
 .Ox 6.6 .
 .Pp
@@ -456,3 +682,12 @@ and
 .Fn EVP_PKEY_CTX_get1_id_len
 first appeared in OpenSSL 1.1.1 and have been available since
 .Ox 6.6 .
+.Pp
+The functions
+.Fn EVP_PKEY_CTX_set_rsa_oaep_md ,
+.Fn EVP_PKEY_CTX_get_rsa_oaep_md ,
+.Fn EVP_PKEY_CTX_set0_rsa_oaep_label ,
+and
+.Fn EVP_PKEY_CTX_get0_rsa_oaep_label
+first appeared in OpenSSL 1.0.2 and have been available since
+.Ox 6.7 .
