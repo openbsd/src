@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.14 2018/04/14 07:09:21 tb Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.15 2019/10/29 07:52:17 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -438,14 +438,22 @@ EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx, const char *name, const char *value)
 		return -2;
 	}
 	if (!strcmp(name, "digest")) {
-		const EVP_MD *md;
-		if (!value || !(md = EVP_get_digestbyname(value))) {
-			EVPerror(EVP_R_INVALID_DIGEST);
-			return 0;
-		}
-		return EVP_PKEY_CTX_set_signature_md(ctx, md);
+		return EVP_PKEY_CTX_md(ctx, EVP_PKEY_OP_TYPE_SIG,
+		    EVP_PKEY_CTRL_MD, value);
 	}
 	return ctx->pmeth->ctrl_str(ctx, name, value);
+}
+
+int
+EVP_PKEY_CTX_md(EVP_PKEY_CTX *ctx, int optype, int cmd, const char *md_name)
+{
+	const EVP_MD *md;
+
+	if ((md = EVP_get_digestbyname(md_name)) == NULL) {
+		EVPerror(EVP_R_INVALID_DIGEST);
+		return 0;
+	}
+	return EVP_PKEY_CTX_ctrl(ctx, -1, optype, cmd, 0, (void *)md);
 }
 
 int
