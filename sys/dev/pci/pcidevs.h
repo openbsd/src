@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1898 2019/10/29 13:27:51 kurt Exp 
+ *	OpenBSD: pcidevs,v 1.1899 2019/10/29 18:47:51 jcs Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4084,6 +4084,7 @@
 #define	PCI_PRODUCT_INTEL_82820_HB	0x2501		/* 82820 Host */
 #define	PCI_PRODUCT_INTEL_82820_AGP	0x250f		/* 82820 AGP */
 #define	PCI_PRODUCT_INTEL_OPTANE	0x2522		/* Optane */
+#define	PCI_PRODUCT_INTEL_WL_9260_1	0x2526		/* Dual Band Wireless-AC 9260 */
 #define	PCI_PRODUCT_INTEL_82850_HB	0x2530		/* 82850 Host */
 #define	PCI_PRODUCT_INTEL_82860_HB	0x2531		/* 82860 Host */
 #define	PCI_PRODUCT_INTEL_82850_AGP	0x2532		/* 82850/82860 AGP */
