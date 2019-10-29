@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.16 2019/10/29 16:33:27 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.17 2019/10/29 17:21:07 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\" selective merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
@@ -70,7 +70,10 @@
 .Nm EVP_PKEY_CTX_set_dh_paramgen_prime_len ,
 .Nm EVP_PKEY_CTX_set_dh_paramgen_generator ,
 .Nm EVP_PKEY_CTX_set_ec_paramgen_curve_nid ,
-.Nm EVP_PKEY_CTX_set_ec_param_enc
+.Nm EVP_PKEY_CTX_set_ec_param_enc ,
+.Nm EVP_PKEY_CTX_set1_id ,
+.Nm EVP_PKEY_CTX_get1_id ,
+.Nm EVP_PKEY_CTX_get1_id_len
 .Nd algorithm specific control operations
 .Sh SYNOPSIS
 .In openssl/evp.h
@@ -167,6 +170,22 @@
 .Fo EVP_PKEY_CTX_set_ec_param_enc
 .Fa "EVP_PKEY_CTX *ctx"
 .Fa "int param_enc"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_set1_id
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "void *id"
+.Fa "size_t id_len"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_get1_id
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "void *id"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_get1_id_len
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "size_t *pid_len"
 .Fc
 .Sh DESCRIPTION
 The function
@@ -350,6 +369,34 @@ when generating EC parameters or an EC key.
 The encoding can be set to 0 for explicit parameters or to
 .Dv OPENSSL_EC_NAMED_CURVE
 to use named curve form.
+.Ss Other parameters
+The
+.Fn EVP_PKEY_CTX_set1_id ,
+.Fn EVP_PKEY_CTX_get1_id ,
+and
+.Fn EVP_PKEY_CTX_get1_id_len
+macros manipulate a special identifier field used for some specific
+signature algorithms such as SM2.
+The
+.Fn EVP_PKEY_set1_id
+macro sets the ID to a copy of
+.Fa id
+with the length
+.Fa id_len .
+The caller can safely free the original memory pointed to by
+.Fa id .
+The
+.Fn EVP_PKEY_CTX_get1_id_len
+macro returns the length of the ID set via a previous call to
+.Fn EVP_PKEY_set1_id .
+That length is typically used to allocate memory for a subsequent call to
+.Fn EVP_PKEY_CTX_get1_id ,
+which copies the previously set ID into
+.Pf * Fa id .
+The caller is responsible for allocating sufficient memory for
+.Fa id
+before calling
+.Fn EVP_PKEY_CTX_get1_id .
 .Sh RETURN VALUES
 .Fn EVP_PKEY_CTX_ctrl
 and its macros return a positive value for success and 0 or a negative
@@ -400,4 +447,12 @@ The functions
 and
 .Fn EVP_PKEY_CTX_set_ec_param_enc
 first appeared in OpenSSL 1.0.2 and have been available since
+.Ox 6.6 .
+.Pp
+The functions
+.Fn EVP_PKEY_CTX_set1_id ,
+.Fn EVP_PKEY_CTX_get1_id ,
+and
+.Fn EVP_PKEY_CTX_get1_id_len
+first appeared in OpenSSL 1.1.1 and have been available since
 .Ox 6.6 .
