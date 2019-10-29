@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.208 2019/10/29 06:42:05 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.209 2019/10/29 06:47:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1191,7 +1191,7 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 
 		p->pt = pt_get(prefix, prefixlen);
 		if (p->pt == NULL)
-			fatalx("%s: update for non existing prefix", __func__);
+			p->pt = pt_add(prefix, prefixlen);
 		pt_ref(p->pt);
 		p->peer = peer;
 
