@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.247 2019/09/22 01:16:39 krw Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.248 2019/10/29 04:20:36 dlg Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -1485,7 +1485,6 @@ struct ctlname espname[] = ESPCTL_NAMES;
 struct ctlname ahname[] = AHCTL_NAMES;
 struct ctlname etheripname[] = ETHERIPCTL_NAMES;
 struct ctlname grename[] = GRECTL_NAMES;
-struct ctlname mobileipname[] = MOBILEIPCTL_NAMES;
 struct ctlname ipcompname[] = IPCOMPCTL_NAMES;
 struct ctlname carpname[] = CARPCTL_NAMES;
 struct ctlname pfsyncname[] = PFSYNCCTL_NAMES;
@@ -1550,7 +1549,7 @@ struct list inetvars[] = {
 	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
-	{ mobileipname, MOBILEIPCTL_MAXID }, /* mobileip */
+	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
