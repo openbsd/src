@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.22 2019/09/09 18:06:26 jsing Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.23 2019/10/29 08:00:18 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -68,7 +68,7 @@
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
-
+#include <openssl/x509v3.h>
 
 #include "evp_locl.h"
 #include "rsa_locl.h"
@@ -87,10 +87,13 @@ typedef struct {
 	const EVP_MD *md;
 	/* message digest for MGF1 */
 	const EVP_MD *mgf1md;
-	/* PSS/OAEP salt length */
+	/* PSS salt length */
 	int saltlen;
 	/* Temp buffer */
 	unsigned char *tbuf;
+	/* OAEP label */
+	unsigned char *oaep_label;
+	size_t oaep_labellen;
 } RSA_PKEY_CTX;
 
 static int
@@ -98,15 +101,11 @@ pkey_rsa_init(EVP_PKEY_CTX *ctx)
 {
 	RSA_PKEY_CTX *rctx;
 
-	rctx = malloc(sizeof(RSA_PKEY_CTX));
-	if (!rctx)
+	if ((rctx = calloc(1, sizeof(RSA_PKEY_CTX))) == NULL)
 		return 0;
+
 	rctx->nbits = 2048;
-	rctx->pub_exp = NULL;
 	rctx->pad_mode = RSA_PKCS1_PADDING;
-	rctx->md = NULL;
-	rctx->mgf1md = NULL;
-	rctx->tbuf = NULL;
 
 	rctx->saltlen = -2;
 
@@ -124,6 +123,7 @@ pkey_rsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 
 	if (!pkey_rsa_init(dst))
 		return 0;
+
 	sctx = src->data;
 	dctx = dst->data;
 	dctx->nbits = sctx->nbits;
@@ -134,6 +134,15 @@ pkey_rsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 	}
 	dctx->pad_mode = sctx->pad_mode;
 	dctx->md = sctx->md;
+	dctx->mgf1md = sctx->mgf1md;
+	if (sctx->oaep_label != NULL) {
+		free(dctx->oaep_label);
+		if ((dctx->oaep_label = calloc(1, sctx->oaep_labellen)) == NULL)
+			return 0;
+		memcpy(dctx->oaep_label, sctx->oaep_label, sctx->oaep_labellen);
+		dctx->oaep_labellen = sctx->oaep_labellen;
+	}
+
 	return 1;
 }
 
@@ -156,6 +165,7 @@ pkey_rsa_cleanup(EVP_PKEY_CTX *ctx)
 	if (rctx) {
 		BN_free(rctx->pub_exp);
 		free(rctx->tbuf);
+		free(rctx->oaep_label);
 		free(rctx);
 	}
 }
@@ -306,11 +316,23 @@ static int
 pkey_rsa_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
     const unsigned char *in, size_t inlen)
 {
-	int ret;
 	RSA_PKEY_CTX *rctx = ctx->data;
+	int ret;
 
-	ret = RSA_public_encrypt(inlen, in, out, ctx->pkey->pkey.rsa,
-	    rctx->pad_mode);
+	if (rctx->pad_mode == RSA_PKCS1_OAEP_PADDING) {
+		int klen = RSA_size(ctx->pkey->pkey.rsa);
+		if (!setup_tbuf(rctx, ctx))
+			return -1;
+		if (!RSA_padding_add_PKCS1_OAEP_mgf1(rctx->tbuf, klen,
+		    in, inlen, rctx->oaep_label, rctx->oaep_labellen,
+		    rctx->md, rctx->mgf1md))
+			return -1;
+		ret = RSA_public_encrypt(klen, rctx->tbuf, out,
+		    ctx->pkey->pkey.rsa, RSA_NO_PADDING);
+	} else {
+		ret = RSA_public_encrypt(inlen, in, out, ctx->pkey->pkey.rsa,
+		    rctx->pad_mode);
+	}
 	if (ret < 0)
 		return ret;
 	*outlen = ret;
@@ -324,8 +346,20 @@ pkey_rsa_decrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
 	int ret;
 	RSA_PKEY_CTX *rctx = ctx->data;
 
-	ret = RSA_private_decrypt(inlen, in, out, ctx->pkey->pkey.rsa,
-	    rctx->pad_mode);
+	if (rctx->pad_mode == RSA_PKCS1_OAEP_PADDING) {
+		if (!setup_tbuf(rctx, ctx))
+			return -1;
+		ret = RSA_private_decrypt(inlen, in, rctx->tbuf,
+		    ctx->pkey->pkey.rsa, RSA_NO_PADDING);
+		if (ret <= 0)
+			return ret;
+		ret = RSA_padding_check_PKCS1_OAEP_mgf1(out, ret, rctx->tbuf,
+		    ret, ret, rctx->oaep_label, rctx->oaep_labellen, rctx->md,
+		    rctx->mgf1md);
+	} else {
+		ret = RSA_private_decrypt(inlen, in, out, ctx->pkey->pkey.rsa,
+		    rctx->pad_mode);
+	}
 	if (ret < 0)
 		return ret;
 	*outlen = ret;
@@ -429,7 +463,8 @@ bad_pad:
 
 	case EVP_PKEY_CTRL_RSA_MGF1_MD:
 	case EVP_PKEY_CTRL_GET_RSA_MGF1_MD:
-		if (rctx->pad_mode != RSA_PKCS1_PSS_PADDING) {
+		if (rctx->pad_mode != RSA_PKCS1_PSS_PADDING &&
+		    rctx->pad_mode != RSA_PKCS1_OAEP_PADDING) {
 			RSAerror(RSA_R_INVALID_MGF1_MD);
 			return -2;
 		}
@@ -441,6 +476,29 @@ bad_pad:
 		} else
 			rctx->mgf1md = p2;
 		return 1;
+
+	case EVP_PKEY_CTRL_RSA_OAEP_LABEL:
+		if (rctx->pad_mode != RSA_PKCS1_OAEP_PADDING) {
+			RSAerror(RSA_R_INVALID_PADDING_MODE);
+			return -2;
+		}
+		free(rctx->oaep_label);
+		if (p2 != NULL && p1 > 0) {
+			rctx->oaep_label = p2;
+			rctx->oaep_labellen = p1;
+		} else {
+			rctx->oaep_label = NULL;
+			rctx->oaep_labellen = 0;
+		}
+		return 1;
+
+	case EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL:
+		if (rctx->pad_mode != RSA_PKCS1_OAEP_PADDING) {
+			RSAerror(RSA_R_INVALID_PADDING_MODE);
+			return -2;
+		}
+		*(unsigned char **)p2 = rctx->oaep_label;
+		return rctx->oaep_labellen;
 
 	case EVP_PKEY_CTRL_DIGESTINIT:
 	case EVP_PKEY_CTRL_PKCS7_ENCRYPT:
@@ -526,6 +584,29 @@ pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 		ret = EVP_PKEY_CTX_set_rsa_keygen_pubexp(ctx, pubexp);
 		if (ret <= 0)
 			BN_free(pubexp);
+		return ret;
+	}
+
+	if (strcmp(type, "rsa_mgf1_md") == 0)
+		return EVP_PKEY_CTX_md(ctx,
+		    EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT,
+		    EVP_PKEY_CTRL_RSA_MGF1_MD, value);
+
+	if (strcmp(type, "rsa_oaep_md") == 0)
+		return EVP_PKEY_CTX_md(ctx, EVP_PKEY_OP_TYPE_CRYPT,
+		    EVP_PKEY_CTRL_RSA_OAEP_MD, value);
+
+	if (strcmp(type, "rsa_oaep_label") == 0) {
+		unsigned char *lab;
+		long lablen;
+		int ret;
+
+		if ((lab = string_to_hex(value, &lablen)) == NULL)
+			return 0;
+		ret = EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, lab, lablen);
+		if (ret <= 0)
+			free(lab);
+
 		return ret;
 	}
 
