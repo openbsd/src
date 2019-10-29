@@ -1,5 +1,5 @@
-.\" $OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.15 2019/10/29 15:53:57 schwarze Exp $
-.\" full merge up to: OpenSSL e03af178 Dec 11 17:05:57 2014 -0500
+.\" $OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.16 2019/10/29 16:33:27 schwarze Exp $
+.\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\" selective merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -69,7 +69,8 @@
 .Nm EVP_PKEY_CTX_set_dsa_paramgen_bits ,
 .Nm EVP_PKEY_CTX_set_dh_paramgen_prime_len ,
 .Nm EVP_PKEY_CTX_set_dh_paramgen_generator ,
-.Nm EVP_PKEY_CTX_set_ec_paramgen_curve_nid
+.Nm EVP_PKEY_CTX_set_ec_paramgen_curve_nid ,
+.Nm EVP_PKEY_CTX_set_ec_param_enc
 .Nd algorithm specific control operations
 .Sh SYNOPSIS
 .In openssl/evp.h
@@ -161,6 +162,11 @@
 .Fo EVP_PKEY_CTX_set_ec_paramgen_curve_nid
 .Fa "EVP_PKEY_CTX *ctx"
 .Fa "int nid"
+.Fc
+.Fa int
+.Fo EVP_PKEY_CTX_set_ec_param_enc
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "int param_enc"
 .Fc
 .Sh DESCRIPTION
 The function
@@ -331,10 +337,19 @@ If not specified, 2 is used.
 .Ss EC parameters
 The
 .Fn EVP_PKEY_CTX_set_ec_paramgen_curve_nid
-sets the EC curve for EC parameter generation to
+macro sets the EC curve for EC parameter generation to
 .Fa nid .
 For EC parameter generation, this macro must be called or an error occurs
 because there is no default curve.
+.Pp
+The
+.Fn EVP_PKEY_CTX_set_ec_param_enc
+macro sets the EC parameter encoding to
+.Fa param_enc
+when generating EC parameters or an EC key.
+The encoding can be set to 0 for explicit parameters or to
+.Dv OPENSSL_EC_NAMED_CURVE
+to use named curve form.
 .Sh RETURN VALUES
 .Fn EVP_PKEY_CTX_ctrl
 and its macros return a positive value for success and 0 or a negative
@@ -380,7 +395,9 @@ and
 first appeared in OpenSSL 1.0.1 and have been available since
 .Ox 5.3 .
 .Pp
-The function
+The functions
 .Fn EVP_PKEY_CTX_get_signature_md
-first appeared in OpenSSL 1.0.2 and has been available since
+and
+.Fn EVP_PKEY_CTX_set_ec_param_enc
+first appeared in OpenSSL 1.0.2 and have been available since
 .Ox 6.6 .
