@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.49 2019/08/03 15:22:19 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.50 2019/10/29 02:55:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -34,6 +34,7 @@
 #include <libsa.h>
 #include <lib/libsa/loadfile.h>
 #include <lib/libkern/funcs.h>
+#include <lib/libsa/arc4.h>
 
 #include <stand/boot/bootarg.h>
 
@@ -55,6 +56,7 @@ char *kernelfile = KERNEL;		/* can be changed by MD code */
 int boottimeout = 5;			/* can be changed by MD code */
 
 char	rnddata[BOOTRANDOM_MAX];
+struct rc4_ctx randomctx;
 
 void
 boot(dev_t bootdev)
@@ -112,6 +114,8 @@ boot(dev_t bootdev)
 #ifdef FWRANDOM
 		fwrandom(rnddata, sizeof(rnddata));
 #endif
+		rc4_keysetup(&randomctx, rnddata, sizeof rnddata);
+		rc4_skip(&randomctx, 1536);
 
 		st = 0;
 		bootprompt = 1;	/* allow reselect should we fail */

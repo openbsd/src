@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf64_exec.c,v 1.9 2018/12/31 11:44:57 claudio Exp $	*/
+/*	$OpenBSD: elf64_exec.c,v 1.10 2019/10/29 02:55:52 deraadt Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -67,6 +67,8 @@
 #include "softraid_sparc64.h"
 #endif
 
+#include <lib/libsa/arc4.h>
+
 #include "openfirm.h"
 
 void syncicache(void *, int);
@@ -128,14 +130,10 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 		}
 
 		if (phdr.p_type == PT_OPENBSD_RANDOMIZE) {
-			int m, pos;
+			extern struct rc4_ctx randomctx;
 
-			/* Fill segment. */
-			for (pos = 0; pos < phdr.p_filesz; pos += m) {
-				m = MIN(phdr.p_filesz - pos, sizeof(rnddata));
-				bcopy(rnddata, (void *)(long)phdr.p_paddr + pos, m);
-			}
-			continue;
+			rc4_getbytes(&randomctx, (void *)(long)phdr.p_paddr,
+			    phdr.p_filesz);
 		}
 
 		if (phdr.p_type != PT_LOAD ||

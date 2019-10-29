@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.31 2019/05/10 19:38:52 claudio Exp $	*/
+/*	$OpenBSD: boot.c,v 1.32 2019/10/29 02:55:52 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -56,6 +56,7 @@
 #include <machine/boot_flag.h>
 
 #include <machine/cpu.h>
+#include <lib/libsa/arc4.h>
 
 #ifdef SOFTRAID
 #include <sys/param.h>
@@ -95,6 +96,7 @@ int boothowto;
 int debug;
 
 char rnddata[BOOTRANDOM_MAX];
+struct rc4_ctx randomctx;
 
 int	elf64_exec(int, Elf64_Ehdr *, u_int64_t *, void **, void **);
 
@@ -463,6 +465,10 @@ main(void)
 		}
 		if (loadrandom(BOOTRANDOM, rnddata, sizeof(rnddata)))
 			printf("open %s: %s\n", opened_name, strerror(errno));
+
+		rc4_keysetup(&randomctx, rnddata, sizeof rnddata);
+		rc4_skip(&randomctx, 1536);
+
 		if ((fd = open(bootline, 0)) < 0) {
 			printf("open %s: %s\n", opened_name, strerror(errno));
 			continue;

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2017/07/25 13:32:14 robert Exp $
+#	$OpenBSD: Makefile,v 1.24 2019/10/29 02:55:50 deraadt Exp $
 #	$NetBSD: Makefile,v 1.17 1997/04/17 07:27:46 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -22,7 +22,7 @@ SRCS+=	__divlu.S __remqu.S __reml.S strlen.c bzero.c __divl.S __divqu.S \
 	__remlu.S
 
 .PATH:	${S}/lib/libkern/arch/alpha ${S}/lib/libsa
-SRCS+=	loadfile.c
+SRCS+=	loadfile.c arc4.c
 
 DEFNS= -DCOMPAT_UFS
 

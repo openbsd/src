@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2019/02/24 12:57:14 kn Exp $
+#	$OpenBSD: Makefile,v 1.17 2019/10/29 02:55:50 deraadt Exp $
 #	$NetBSD: Makefile,v 1.11 1997/04/17 07:27:50 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -21,10 +21,10 @@ BOOT_RELOC = ${PRIMARY_LOAD_ADDRESS}
 CLEANFILES+= vers.c vers.o ${PROG}.sym ${PROG}.nosym
 
 .PATH:  ${S}/lib/libkern/arch/alpha ${S}/lib/libkern
-SRCS+=  bzero.c __divqu.S strlen.c __remqu.S
+SRCS+=  bzero.c __divqu.S strlen.c __remqu.S __remlu.S
 
 .PATH:	${S}/lib/libkern/arch/alpha ${S}/lib/libsa
-SRCS+=	loadfile.c
+SRCS+=	loadfile.c arc4.c
 
 DEFNS= -DPRIMARY_BOOTBLOCK -DSUN_BOOTPARAMS
 

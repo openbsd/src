@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.24 2019/04/10 04:17:31 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.25 2019/10/29 02:55:50 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.10 1997/01/18 01:58:33 cgd Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
+#include <lib/libsa/arc4.h>
 
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -62,6 +63,7 @@ paddr_t ptbr_save;
 int debug;
 
 char   rnddata[BOOTRANDOM_MAX];
+struct rc4_ctx randomctx;
 
 void
 loadrandom(char *name, char *buf, size_t buflen)
@@ -119,6 +121,8 @@ main()
 #endif
 
 	loadrandom(BOOTRANDOM, rnddata, sizeof(rnddata));
+	rc4_keysetup(&randomctx, rnddata, sizeof rnddata);
+	rc4_skip(&randomctx, 1536);
 
 	prom_getenv(PROM_E_BOOTED_FILE, boot_file, sizeof(boot_file));
 	prom_getenv(PROM_E_BOOTED_OSFLAGS, boot_flags, sizeof(boot_flags));

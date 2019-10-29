@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.14 2019/04/10 04:17:37 deraadt Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.15 2019/10/29 02:55:49 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,6 +65,8 @@
  *	@(#)boot.c	8.1 (Berkeley) 6/10/93
  */
 
+#include <lib/libsa/arc4.h>
+
 int ELFNAME(exec)(int, Elf_Ehdr *, uint64_t *, int);
 
 int
@@ -96,17 +98,14 @@ ELFNAME(exec)(int fd, Elf_Ehdr *elf, uint64_t *marks, int flags)
 
 	for (first = 1, i = 0; i < elf->e_phnum; i++) {
 		if (phdr[i].p_type == PT_OPENBSD_RANDOMIZE) {
-			int m;
 
 			/* Fill segment if asked for. */
 			if (flags & LOAD_RANDOM) {
-				for (pos = 0; pos < phdr[i].p_filesz;
-				    pos += m) {
-					m = MIN(phdr[i].p_filesz - pos,
-					    sizeof(rnddata));
-					BCOPY(rnddata, phdr[i].p_paddr + pos,
-					    m);
-				}
+				extern struct rc4_ctx randomctx;
+
+				rc4_getbytes(&randomctx,
+				    (void *)LOADADDR(phdr[i].p_paddr),
+				    phdr[i].p_filesz);
 			}
 			if (flags & (LOAD_RANDOM | COUNT_RANDOM)) {
 				marks[MARK_RANDOM] = LOADADDR(phdr[i].p_paddr);

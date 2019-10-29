@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdboot.c,v 1.14 2019/04/10 04:17:34 deraadt Exp $	*/
+/*	$OpenBSD: cdboot.c,v 1.15 2019/10/29 02:55:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -32,6 +32,7 @@
 #include <libsa.h>
 #include <lib/libsa/cd9660.h>
 #include <lib/libsa/loadfile.h>
+#include <lib/libsa/arc4.h>
 #include <dev/cons.h>
 #include <machine/pdc.h>
 #include <machine/cpu.h>
@@ -64,6 +65,7 @@ typedef void (*startfuncp)(int, int, int, int, int, int, caddr_t)
     __attribute__ ((noreturn));
 
 char   rnddata[BOOTRANDOM_MAX];		/* XXX dummy */
+struct rc4_ctx randomctx;
 
 void
 boot(dev_t dev)
@@ -77,6 +79,10 @@ boot(dev_t dev)
 	strncpy(path + strlen(path), ":/bsd.rd", 9);
 	printf(">> OpenBSD/" MACHINE " CDBOOT 0.2\n"
 	    "booting %s: ", path);
+
+	/* XXX note that rnddata is not initialized */
+	rc4_keysetup(&randomctx, rnddata, sizeof rnddata);
+	rc4_skip(&randomctx, 1536);
 
 	marks[MARK_START] = (u_long)DEFAULT_KERNEL_ADDRESS;
 	if (!loadfile(path, marks, LOAD_KERNEL)) {

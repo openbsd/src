@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.7 2019/04/10 22:02:03 aoyama Exp $	*/
+/*	$OpenBSD: boot.c,v 1.8 2019/10/29 02:55:51 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -87,6 +87,7 @@
 #include <luna88k/stand/boot/samachdep.h>
 #include <luna88k/stand/boot/status.h>
 #include <lib/libsa/loadfile.h>
+#include <lib/libsa/arc4.h>
 
 int howto;
 
@@ -100,6 +101,7 @@ uint32_t cpu_bootarg1;
 uint32_t cpu_bootarg2;
 
 char rnddata[BOOTRANDOM_MAX];
+struct rc4_ctx randomctx;
 
 #if 0
 int
@@ -196,6 +198,9 @@ bootunix(char *line)
 
 		rnd_loaded = loadrandom(rndpath, rnddata, sizeof(rnddata));
 	}
+
+	rc4_keysetup(&randomctx, rnddata, sizeof rnddata);
+	rc4_skip(&randomctx, 1536);
 
 	/* Note marks[MARK_START] is passed as an load address offset */
 	memset(marks, 0, sizeof(marks));

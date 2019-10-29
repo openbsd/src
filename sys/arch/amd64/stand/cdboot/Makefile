@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.37 2019/08/03 15:22:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.38 2019/10/29 02:55:50 deraadt Exp $
 
 MAN=	cdboot.8
 
@@ -29,8 +29,8 @@ SRCS+=	alloc.c exit.c getchar.c putchar.c strcmp.c strlen.c \
 	strncmp.c memcmp.c memcpy.c memmove.c memset.c printf.c snprintf.c \
 	strerror.c strncpy.c strtol.c strtoll.c ctime.c strlcpy.c
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fchmod.c fstat.c \
-	lseek.c open.c read.c stat.c cread.c readdir.c cons.c loadfile.c \
-	elf32.c elf64.c
+	lseek.c open.c read.c stat.c cread.c readdir.c cons.c \
+	loadfile.c arc4.c elf32.c elf64.c
 SRCS+=	ufs.c cd9660.c
 SRCS+=	aes_xts.c bcrypt_pbkdf.c blowfish.c explicit_bzero.c hmac_sha1.c \
 	pkcs5_pbkdf2.c rijndael.c sha1.c sha2.c softraid.c

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.35 2019/08/03 15:22:20 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.36 2019/10/29 02:55:51 deraadt Exp $
 
 MAN=	pxeboot.8
 
@@ -36,7 +36,7 @@ SRCS+=	aes_xts.c bcrypt_pbkdf.c blowfish.c explicit_bzero.c hmac_sha1.c \
 
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fchmod.c fstat.c \
 	ioctl.c lseek.c read.c stat.c write.c cread.c readdir.c cons.c \
-	loadfile.c elf32.c elf64.c
+	loadfile.c arc4.c elf32.c elf64.c
 SRCS+=	ether.c net.c netif.c rpc.c
 SRCS+=	bootp.c bootparam.c
 SRCS+=	ufs.c nfs.c tftp.c
