@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.18 2019/10/29 18:22:21 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.19 2019/10/29 18:40:47 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\" selective merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
@@ -59,6 +59,7 @@
 .Nm EVP_PKEY_CTX_ctrl_str ,
 .Nm EVP_PKEY_CTX_set_signature_md ,
 .Nm EVP_PKEY_CTX_get_signature_md ,
+.Nm RSA_pkey_ctx_ctrl ,
 .Nm EVP_PKEY_CTX_set_rsa_padding ,
 .Nm EVP_PKEY_CTX_get_rsa_padding ,
 .Nm EVP_PKEY_CTX_set_rsa_pss_saltlen ,
@@ -118,6 +119,14 @@
 .Fa "const EVP_MD **pmd"
 .Fc
 .In openssl/rsa.h
+.Ft int
+.Fo RSA_pkey_ctx_ctrl
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "int optype"
+.Fa "int cmd"
+.Fa "int p1"
+.Fa "void *p2"
+.Fc
 .Ft int
 .Fo EVP_PKEY_CTX_set_rsa_padding
 .Fa "EVP_PKEY_CTX *ctx"
@@ -323,6 +332,17 @@ and
 macros set and get the message digest type used in a signature.
 They can be used with the RSA, DSA, and ECDSA algorithms.
 .Ss RSA parameters
+The
+.Fn RSA_pkey_ctx_ctrl
+function is a shallow wrapper around
+.Fn EVP_PKEY_CTX_ctrl
+which only succeeds if
+.Fa ctx
+matches either
+.Dv EVP_PKEY_RSA
+or
+.Dv EVP_PKEY_RSA_PSS .
+.Pp
 The
 .Fn EVP_PKEY_CTX_set_rsa_padding
 macro sets the RSA padding mode for
@@ -690,4 +710,9 @@ The functions
 and
 .Fn EVP_PKEY_CTX_get0_rsa_oaep_label
 first appeared in OpenSSL 1.0.2 and have been available since
+.Ox 6.7 .
+.Pp
+The function
+.Fn RSA_pkey_ctx_ctrl
+first appeared in OpenSSL 1.1.1 and has been available since
 .Ox 6.7 .
