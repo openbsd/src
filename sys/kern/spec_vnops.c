@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.97 2019/07/25 01:43:21 cheloha Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.98 2019/10/29 16:24:42 visa Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -59,7 +59,6 @@
 #define v_lastr v_specinfo->si_lastr
 
 int	spec_open_clone(struct vop_open_args *);
-int	spec_close_clone(struct vop_close_args *);
 
 struct vnode *speclisth[SPECHSZ];
 
@@ -481,6 +480,7 @@ spec_close(void *v)
 	dev_t dev = vp->v_rdev;
 	int (*devclose)(dev_t, int, int, struct proc *);
 	int mode, relock, error;
+	int clone = 0;
 
 	switch (vp->v_type) {
 
@@ -499,15 +499,17 @@ spec_close(void *v)
 			vrele(vp);
 			p->p_p->ps_pgrp->pg_session->s_ttyvp = NULL;
 		}
-		if (cdevsw[major(dev)].d_flags & D_CLONE)
-			return (spec_close_clone(ap));
-		/*
-		 * If the vnode is locked, then we are in the midst
-		 * of forcably closing the device, otherwise we only
-		 * close on last reference.
-		 */
-		if (vcount(vp) > 1 && (vp->v_flag & VXLOCK) == 0)
-			return (0);
+		if (cdevsw[major(dev)].d_flags & D_CLONE) {
+			clone = 1;
+		} else {
+			/*
+			 * If the vnode is locked, then we are in the midst
+			 * of forcably closing the device, otherwise we only
+			 * close on last reference.
+			 */
+			if (vcount(vp) > 1 && (vp->v_flag & VXLOCK) == 0)
+				return (0);
+		}
 		devclose = cdevsw[major(dev)].d_close;
 		mode = S_IFCHR;
 		break;
@@ -553,6 +555,15 @@ spec_close(void *v)
 	error = (*devclose)(dev, ap->a_fflag, mode, p);
 	if (relock)
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+
+	if (error == 0 && clone) {
+		struct vnode *pvp;
+
+		pvp = vp->v_specparent; /* get parent device */
+		clrbit(pvp->v_specbitmap, minor(dev) >> CLONE_SHIFT);
+		vrele(pvp);
+	}
+
 	return (error);
 }
 
@@ -758,22 +769,4 @@ spec_open_clone(struct vop_open_args *ap)
 	DNPRINTF("clone of vnode %p is vnode %p\n", vp, cvp);
 
 	return (0); /* device cloned */
-}
-
-int
-spec_close_clone(struct vop_close_args *ap)
-{
-	struct vnode *pvp, *vp = ap->a_vp;
-	int error;
-
-	error = cdevsw[major(vp->v_rdev)].d_close(vp->v_rdev, ap->a_fflag,
-	    S_IFCHR, ap->a_p);
-	if (error)
-		return (error); /* device close failed */
-
-	pvp = vp->v_specparent; /* get parent device */
-	clrbit(pvp->v_specbitmap, minor(vp->v_rdev) >> CLONE_SHIFT);
-	vrele(pvp);
-
-	return (0); /* clone closed */
 }
