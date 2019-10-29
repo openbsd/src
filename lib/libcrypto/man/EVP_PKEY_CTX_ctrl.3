@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.14 2019/09/10 19:44:32 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.15 2019/10/29 15:53:57 schwarze Exp $
 .\" full merge up to: OpenSSL e03af178 Dec 11 17:05:57 2014 -0500
 .\" selective merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 10 2019 $
+.Dd $Mdocdate: October 29 2019 $
 .Dt EVP_PKEY_CTX_CTRL 3
 .Os
 .Sh NAME
@@ -355,11 +355,32 @@ supported by the public key algorithm.
 .Xr EVP_PKEY_verify 3 ,
 .Xr EVP_PKEY_verify_recover 3
 .Sh HISTORY
-These functions first appeared in OpenSSL 1.0.0
-and have been available since
+The functions
+.Fn EVP_PKEY_CTX_ctrl ,
+.Fn EVP_PKEY_CTX_ctrl_str ,
+.Fn EVP_PKEY_CTX_set_signature_md ,
+.Fn EVP_PKEY_CTX_set_rsa_padding ,
+.Fn EVP_PKEY_CTX_set_rsa_pss_saltlen ,
+.Fn EVP_PKEY_CTX_set_rsa_keygen_bits ,
+.Fn EVP_PKEY_CTX_set_rsa_keygen_pubexp ,
+.Fn EVP_PKEY_CTX_set_dsa_paramgen_bits ,
+.Fn EVP_PKEY_CTX_set_dh_paramgen_prime_len ,
+.Fn EVP_PKEY_CTX_set_dh_paramgen_generator ,
+and
+.Fn EVP_PKEY_CTX_set_ec_paramgen_curve_nid
+first appeared in OpenSSL 1.0.0 and have been available since
 .Ox 4.9 .
 .Pp
-As an exception,
+The functions
+.Fn EVP_PKEY_CTX_get_rsa_padding ,
+.Fn EVP_PKEY_CTX_get_rsa_pss_saltlen ,
+.Fn EVP_PKEY_CTX_set_rsa_mgf1_md ,
+and
+.Fn EVP_PKEY_CTX_get_rsa_mgf1_md
+first appeared in OpenSSL 1.0.1 and have been available since
+.Ox 5.3 .
+.Pp
+The function
 .Fn EVP_PKEY_CTX_get_signature_md
 first appeared in OpenSSL 1.0.2 and has been available since
 .Ox 6.6 .
