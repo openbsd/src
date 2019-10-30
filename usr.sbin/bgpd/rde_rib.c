@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.209 2019/10/29 06:47:04 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.210 2019/10/30 05:27:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1169,6 +1169,7 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 				/* nothing changed */
 				p->validation_state = vstate;
 				p->lastchange = time(NULL);
+				p->flags &= ~PREFIX_FLAG_STALE;
 				return 0;
 			}
 
@@ -1235,11 +1236,23 @@ int
 prefix_adjout_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
     int prefixlen)
 {
-	struct prefix		*p;
+	struct prefix *p;
 
 	p = prefix_lookup(peer, prefix, prefixlen);
 	if (p == NULL)		/* Got a dummy withdrawn request. */
 		return (0);
+
+	/* already a withdraw, shortcut */
+	if (p->flags & PREFIX_FLAG_WITHDRAW) {
+		p->lastchange = time(NULL);
+		p->flags &= ~PREFIX_FLAG_STALE;
+		return (0);
+	}
+	/* pending update just got withdrawn */
+	if (p->flags & PREFIX_FLAG_UPDATE)
+		RB_REMOVE(prefix_tree, &peer->updates[p->pt->aid], p);
+	/* nothing needs to be done for PREFIX_FLAG_DEAD and STALE */
+	p->flags &= ~PREFIX_FLAG_MASK;
 
 	/* remove nexthop ref ... */
 	nexthop_unref(p->nexthop);
@@ -1260,15 +1273,6 @@ prefix_adjout_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
 
 	p->lastchange = time(NULL);
 
-	if (p->flags & PREFIX_FLAG_MASK) {
-		struct prefix_tree *prefix_head;
-		/* p is a pending update or withdraw, remove first */
-		prefix_head = p->flags & PREFIX_FLAG_UPDATE ?
-		    &peer->updates[prefix->aid] :
-		    &peer->withdraws[prefix->aid];
-		RB_REMOVE(prefix_tree, prefix_head, p);
-		p->flags &= ~PREFIX_FLAG_MASK;
-	}
 	p->flags |= PREFIX_FLAG_WITHDRAW;
 	if (RB_INSERT(prefix_tree, &peer->withdraws[prefix->aid], p) != NULL)
 		fatalx("%s: RB tree invariant violated", __func__);
@@ -1308,7 +1312,7 @@ prefix_adjout_destroy(struct prefix *p)
 		RB_REMOVE(prefix_tree, &peer->withdraws[p->pt->aid], p);
 	else if (p->flags & PREFIX_FLAG_UPDATE)
 		RB_REMOVE(prefix_tree, &peer->updates[p->pt->aid], p);
-	/* nothing needs to be done for PREFIX_FLAG_DEAD */
+	/* nothing needs to be done for PREFIX_FLAG_DEAD and STALE */
 	p->flags &= ~PREFIX_FLAG_MASK;
 
 

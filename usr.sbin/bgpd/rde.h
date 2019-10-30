@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.226 2019/08/14 11:57:21 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.227 2019/10/30 05:27:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -324,10 +324,11 @@ struct prefix {
 	u_int8_t			 nhflags;
 	u_int8_t			 eor;
 	u_int8_t			 flags;
-#define	PREFIX_FLAG_WITHDRAW	0x01	/* queued for withdraw */
-#define	PREFIX_FLAG_UPDATE	0x02	/* queued for update */
+#define	PREFIX_FLAG_WITHDRAW	0x01	/* enqueued on withdraw queue */
+#define	PREFIX_FLAG_UPDATE	0x02	/* enqueued on update queue */
 #define	PREFIX_FLAG_DEAD	0x04	/* locked but removed */
-#define	PREFIX_FLAG_MASK	0x07	/* mask for the three prefix types */
+#define	PREFIX_FLAG_STALE	0x08	/* stale entry (graceful reload) */
+#define	PREFIX_FLAG_MASK	0x0f	/* mask for the prefix types */
 #define	PREFIX_NEXTHOP_LINKED	0x40	/* prefix is linked onto nexthop list */
 #define	PREFIX_FLAG_LOCKED	0x80	/* locked by rib walker */
 };

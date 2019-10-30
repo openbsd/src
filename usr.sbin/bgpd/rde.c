@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.489 2019/09/27 14:50:39 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.490 2019/10/30 05:27:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2828,13 +2828,42 @@ rde_up_flush_upcall(struct prefix *p, void *ptr)
 }
 
 static void
+rde_up_adjout_force_upcall(struct prefix *p, void *ptr)
+{
+	if (p->flags & PREFIX_FLAG_STALE) {
+		/* remove stale entries */
+		prefix_adjout_destroy(p);
+	} else if (p->flags & PREFIX_FLAG_DEAD) {
+		/* ignore dead prefixes, they will go away soon */
+	} else if ((p->flags & PREFIX_FLAG_MASK) == 0) {
+		/* put entries on the update queue if not allready on a queue */
+		p->flags |= PREFIX_FLAG_UPDATE;
+		if (RB_INSERT(prefix_tree, &prefix_peer(p)->updates[p->pt->aid],
+		    p) != NULL)
+			fatalx("%s: RB tree invariant violated", __func__);
+	}
+}
+
+static void
+rde_up_adjout_force_done(void *ptr, u_int8_t aid)
+{
+	struct rde_peer		*peer = ptr;
+
+	/* Adj-RIB-Out ready, unthrottle peer and inject EOR */
+	peer->throttled = 0;
+	if (peer->capa.grestart.restart)
+		prefix_add_eor(peer, aid);
+}
+
+static void
 rde_up_dump_done(void *ptr, u_int8_t aid)
 {
 	struct rde_peer		*peer = ptr;
 
-	peer->throttled = 0;
-	if (peer->capa.grestart.restart)
-		prefix_add_eor(peer, aid);
+	/* force out all updates of Adj-RIB-Out for this peer */
+	if (prefix_dump_new(peer, aid, 0, peer, rde_up_adjout_force_upcall,
+	    rde_up_adjout_force_done, NULL) == -1)
+		fatal("%s: prefix_dump_new", __func__);
 }
 
 u_char	queue_buf[4096];
@@ -3387,16 +3416,17 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 static void
 rde_softreconfig_out(struct rib_entry *re, void *bula)
 {
-	struct prefix		*new = re->active;
+	struct prefix		*p = re->active;
 	struct rde_peer		*peer;
 
-	if (new == NULL)
+	if (p == NULL)
+		/* no valid path for prefix */
 		return;
 
 	LIST_FOREACH(peer, &peerlist, peer_l) {
 		if (peer->loc_rib_id == re->rib_id && peer->reconf_out)
 			/* Regenerate all updates. */
-			up_generate_updates(out_rules, peer, new, new);
+			up_generate_updates(out_rules, peer, p, p);
 	}
 }
 
@@ -3668,6 +3698,22 @@ peer_adjout_clear_upcall(struct prefix *p, void *arg)
 	prefix_adjout_destroy(p);
 }
 
+static void
+peer_adjout_stale_upcall(struct prefix *p, void *arg)
+{
+	if (p->flags & PREFIX_FLAG_DEAD) {
+		return;
+	} else if (p->flags & PREFIX_FLAG_WITHDRAW) {
+		/* no need to keep stale withdraws, they miss all attributes */
+		prefix_adjout_destroy(p);
+		return;
+	} else if (p->flags & PREFIX_FLAG_UPDATE) {
+		RB_REMOVE(prefix_tree, &prefix_peer(p)->updates[p->pt->aid], p);
+		p->flags &= ~PREFIX_FLAG_UPDATE;
+	}
+	p->flags |= PREFIX_FLAG_STALE;
+}
+
 void
 peer_up(u_int32_t id, struct session_up *sup)
 {
@@ -3680,8 +3726,7 @@ peer_up(u_int32_t id, struct session_up *sup)
 		return;
 	}
 
-	if (peer->state != PEER_DOWN && peer->state != PEER_NONE &&
-	    peer->state != PEER_UP) {
+	if (peer->state == PEER_ERR) {
 		/*
 		 * There is a race condition when doing PEER_ERR -> PEER_DOWN.
 		 * So just do a full reset of the peer here.
@@ -3831,12 +3876,18 @@ peer_stale(u_int32_t id, u_int8_t aid)
 	/* flush the now even staler routes out */
 	if (peer->staletime[aid])
 		peer_flush(peer, aid, peer->staletime[aid]);
+
 	peer->staletime[aid] = now = time(NULL);
+	peer->state = PEER_DOWN;
+
+	/* mark Adj-RIB-Out stale for this peer */
+	if (prefix_dump_new(peer, AID_UNSPEC, 0, NULL,
+	    peer_adjout_stale_upcall, NULL, NULL) == -1)
+		fatal("%s: prefix_dump_new", __func__);
 
 	/* make sure new prefixes start on a higher timestamp */
-	do {
+	while (now >= time(NULL))
 		sleep(1);
-	} while (now >= time(NULL));
 }
 
 void
@@ -3856,13 +3907,13 @@ peer_dump(u_int32_t id, u_int8_t aid)
 			prefix_add_eor(peer, aid);
 	} else if (peer->conf.export_type == EXPORT_DEFAULT_ROUTE) {
 		up_generate_default(out_rules, peer, aid);
-		if (peer->capa.grestart.restart)
-			prefix_add_eor(peer, aid);
+		rde_up_dump_done(peer, aid);
 	} else {
 		if (rib_dump_new(peer->loc_rib_id, aid, RDE_RUNNER_ROUNDS, peer,
 		    rde_up_dump_upcall, rde_up_dump_done, NULL) == -1)
 			fatal("%s: rib_dump_new", __func__);
-		peer->throttled = 1; /* XXX throttle peer until dump is done */
+		/* throttle peer until dump is done */
+		peer->throttled = 1;
 	}
 }
 
