@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.71 2019/10/31 21:16:20 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.72 2019/10/31 21:23:19 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -71,6 +71,7 @@ SRCS_KEY+=	ssh-ecdsa-sk.c
 SRCS_KEY+=	ssh-rsa.c
 SRCS_KEY+=	sshbuf-getput-crypto.c
 SRCS_KEY+=	digest-openssl.c
+SRCS_KEY+=	ssh-sk.c
 .else
 SRCS_KEY+=	cipher-aesctr.c
 SRCS_KEY+=	rijndael.c
@@ -111,12 +112,10 @@ SRCS_UTL+=	match.c
 SRCS_PKCS11+=		ssh-pkcs11.c
 SRCS_PKCS11_CLIENT+=	ssh-pkcs11-client.c
 SRCS_MODULI+=		moduli.c
-SRCS_SK+=		ssh-sk.c
 .else
 SRCS_PKCS11+=
 SRCS_PKCS11_CLIENT+=
 SRCS_MODULI+=
-SRCS_SK+=
 .endif
 
 WITH_XMSS?=	no
