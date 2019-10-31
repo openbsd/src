@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.24 2019/10/29 08:52:02 jsing Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.25 2019/10/31 12:32:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -127,9 +127,9 @@ pkey_rsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 	sctx = src->data;
 	dctx = dst->data;
 	dctx->nbits = sctx->nbits;
-	if (sctx->pub_exp) {
-		dctx->pub_exp = BN_dup(sctx->pub_exp);
-		if (!dctx->pub_exp)
+	if (sctx->pub_exp != NULL) {
+		BN_free(dctx->pub_exp);
+		if ((dctx->pub_exp = BN_dup(sctx->pub_exp)) == NULL)
 			return 0;
 	}
 	dctx->pad_mode = sctx->pad_mode;
