@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.29 2019/10/31 13:06:30 jsing Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.30 2019/10/31 13:10:40 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -454,8 +454,8 @@ pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		return 1;
 
 	case EVP_PKEY_CTRL_RSA_KEYGEN_BITS:
-		if (p1 < 256) {
-			RSAerror(RSA_R_INVALID_KEYBITS);
+		if (p1 < RSA_MIN_MODULUS_BITS) {
+			RSAerror(RSA_R_KEY_SIZE_TOO_SMALL);
 			return -2;
 		}
 		rctx->nbits = p1;

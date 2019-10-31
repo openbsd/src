@@ -1,6 +1,8 @@
-/* $OpenBSD: rsa_locl.h,v 1.6 2019/10/24 16:26:13 jsing Exp $ */
+/* $OpenBSD: rsa_locl.h,v 1.7 2019/10/31 13:10:40 jsing Exp $ */
 
 __BEGIN_HIDDEN_DECLS
+
+#define RSA_MIN_MODULUS_BITS	512
 
 typedef struct rsa_oaep_params_st {
 	X509_ALGOR *hashFunc;
