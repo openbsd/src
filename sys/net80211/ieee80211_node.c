@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.173 2019/09/02 12:54:21 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.174 2019/10/31 11:03:43 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1421,8 +1421,12 @@ ieee80211_end_scan(struct ifnet *ifp)
 		 * and make background scans less frequent.
 		 */
 		if (selbs == curbs) {
-			if (ic->ic_bgscan_fail < IEEE80211_BGSCAN_FAIL_MAX)
-				ic->ic_bgscan_fail++;
+			if (ic->ic_bgscan_fail < IEEE80211_BGSCAN_FAIL_MAX) {
+				if (ic->ic_bgscan_fail <= 0)
+					ic->ic_bgscan_fail = 1;
+				else
+					ic->ic_bgscan_fail *= 2;
+			}
 			ic->ic_flags &= ~IEEE80211_F_BGSCAN;
 			return;
 		}

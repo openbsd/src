@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.97 2019/07/29 10:50:09 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.98 2019/10/31 11:03:43 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@
 #define IEEE80211_RSSI_THRES_RATIO_2GHZ		60	/* in percent */
 #define IEEE80211_RSSI_THRES_RATIO_5GHZ		50	/* in percent */
 
-#define IEEE80211_BGSCAN_FAIL_MAX		360	/* units of 500 msec */
+#define IEEE80211_BGSCAN_FAIL_MAX		512	/* units of 500 msec */
 
 enum ieee80211_phytype {
 	IEEE80211_T_DS,			/* direct sequence spread spectrum */
