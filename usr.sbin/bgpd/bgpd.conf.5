@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.196 2019/10/04 19:51:27 procter Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.197 2019/10/31 09:09:04 benno Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 4 2019 $
+.Dd $Mdocdate: October 31 2019 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -870,7 +870,7 @@ was configured at runtime, the
 is sent as Administrative Shutdown Communication.
 The
 .Ar reason
-cannot exceed 128 octets.
+cannot exceed 255 octets.
 .Pp
 .It Xo
 .Ic dump
