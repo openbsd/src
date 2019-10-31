@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.47 2019/10/31 12:51:43 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.48 2019/10/31 12:54:40 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -472,10 +472,7 @@ resolver_dispatch_captiveportal(int fd, short event, void *bula)
 			if (captive_portal_state == NOT_BEHIND) {
 				evtimer_del(&captive_portal_check_ev);
 				schedule_recheck_all_resolvers();
-			} else if (captive_portal_state == BEHIND)
-				resolver_imsg_compose_frontend(
-				    IMSG_RESOLVER_DOWN, 0, NULL, 0);
-
+			}
 			break;
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
@@ -1086,7 +1083,6 @@ check_resolver_done(void *arg, int rcode, void *answer_packet, int answer_len,
     int sec, char *why_bogus, int was_ratelimited)
 {
 	struct check_resolver_data	*data;
-	struct uw_resolver		*best;
 	struct timeval			 tv = {0, 1};
 	enum uw_resolver_state		 prev_state;
 	char				*str;
@@ -1155,20 +1151,6 @@ out:
 	resolver_unref(data->check_res);
 
 	free(data);
-
-	best = best_resolver();
-
-	if (captive_portal_state == BEHIND)
-		global_state = DEAD;
-	else if (best->state != global_state) {
-		if (best->state < RESOLVING && global_state > UNKNOWN)
-			resolver_imsg_compose_frontend(IMSG_RESOLVER_DOWN, 0,
-			    NULL, 0);
-		else if (best->state > UNKNOWN && global_state < RESOLVING)
-			resolver_imsg_compose_frontend(IMSG_RESOLVER_UP, 0,
-			    NULL, 0);
-		global_state = best->state;
-	}
 }
 
 void
@@ -1300,8 +1282,8 @@ best_resolver(void)
 
 	if (captive_portal_state == PORTAL_UNKNOWN || captive_portal_state ==
 	    BEHIND) {
-		if (resolvers[UW_RES_DHCP] != NULL) {
-			res = resolvers[UW_RES_DHCP];
+		if (resolvers[UW_RES_ASR] != NULL) {
+			res = resolvers[UW_RES_ASR];
 			goto out;
 		}
 	}

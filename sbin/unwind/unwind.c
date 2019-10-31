@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.32 2019/10/31 12:51:43 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.33 2019/10/31 12:54:40 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -441,6 +441,7 @@ main_dispatch_frontend(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_STARTUP_DONE:
+			open_ports();
 			break;
 		case IMSG_CTL_RELOAD:
 			if (main_reload() == -1)
@@ -461,9 +462,6 @@ main_dispatch_frontend(int fd, short event, void *bula)
 				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&rtm_index, imsg.data, sizeof(rtm_index));
 			open_dhcp_lease(rtm_index);
-			break;
-		case IMSG_OPEN_PORTS:
-			open_ports();
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,

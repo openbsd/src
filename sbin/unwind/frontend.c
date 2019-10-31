@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.32 2019/10/21 07:16:09 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.33 2019/10/31 12:54:40 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -538,23 +538,6 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 			} else
 				pq->rcode_override = LDNS_RCODE_SERVFAIL;
 			send_answer(pq);
-			break;
-		case IMSG_RESOLVER_DOWN:
-			log_debug("%s: IMSG_RESOLVER_DOWN", __func__);
-			if (udp4sock != -1) {
-				event_del(&udp4ev.ev);
-				close(udp4sock);
-				udp4sock = -1;
-			}
-			if (udp6sock != -1) {
-				event_del(&udp6ev.ev);
-				close(udp6sock);
-				udp6sock = -1;
-			}
-			break;
-		case IMSG_RESOLVER_UP:
-			log_debug("%s: IMSG_RESOLVER_UP", __func__);
-			frontend_imsg_compose_main(IMSG_OPEN_PORTS, 0, NULL, 0);
 			break;
 		case IMSG_CTL_RESOLVER_INFO:
 		case IMSG_CTL_CAPTIVEPORTAL_INFO:
