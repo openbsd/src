@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2019/10/21 07:16:09 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.12 2019/10/31 12:51:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -101,7 +101,7 @@ typedef struct {
 
 %token	YES NO INCLUDE ERROR
 %token	FORWARDER DOT PORT CAPTIVE PORTAL URL EXPECTED RESPONSE
-%token	STATUS AUTO AUTHENTICATION NAME PREFERENCE RECURSOR DHCP
+%token	STATUS AUTO AUTHENTICATION NAME PREFERENCE RECURSOR DHCP ASR
 %token	BLOCK LIST LOG
 
 %token	<v.string>	STRING
@@ -271,6 +271,7 @@ prefopt			: DOT		{ $$ = UW_RES_DOT; }
 			| FORWARDER	{ $$ = UW_RES_FORWARDER; }
 			| RECURSOR	{ $$ = UW_RES_RECURSOR; }
 			| DHCP		{ $$ = UW_RES_DHCP; }
+			| ASR		{ $$ = UW_RES_ASR; }
 			;
 
 uw_forwarder		: FORWARDER forwarder_block
@@ -386,6 +387,7 @@ lookup(char *s)
 	/* This has to be sorted always. */
 	static const struct keywords keywords[] = {
 		{"DoT",			DOT},
+		{"asr",			ASR},
 		{"authentication",	AUTHENTICATION},
 		{"auto",		AUTO},
 		{"block",		BLOCK},

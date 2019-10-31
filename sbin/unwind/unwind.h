@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.18 2019/10/21 07:16:09 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.19 2019/10/31 12:51:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -57,6 +57,7 @@ static const char * const log_procnames[] = {
 enum uw_resolver_type {
 	UW_RES_RECURSOR,
 	UW_RES_DHCP,
+	UW_RES_ASR,
 	UW_RES_FORWARDER,
 	UW_RES_DOT,
 	UW_RES_NONE
@@ -65,6 +66,7 @@ enum uw_resolver_type {
 static const char * const	uw_resolver_type_str[] = {
 	"recursor",
 	"dhcp",
+	"asr",
 	"forwarder",
 	"DoT"
 };

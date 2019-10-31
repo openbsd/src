@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.46 2019/10/19 17:42:21 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.47 2019/10/31 12:51:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -29,6 +29,8 @@
 #include <event.h>
 #include <imsg.h>
 #include <limits.h>
+#include <netdb.h>
+#include <asr.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -77,6 +79,7 @@ struct uw_resolver {
 	struct event		 check_ev;
 	struct event		 free_ev;
 	struct ub_ctx		*ctx;
+	void			*asr_ctx;
 	struct timeval		 check_tv;
 	int			 ref_cnt;
 	int			 stop;
@@ -96,11 +99,16 @@ void			 resolver_sig_handler(int sig, short, void *);
 void			 resolver_dispatch_frontend(int, short, void *);
 void			 resolver_dispatch_captiveportal(int, short, void *);
 void			 resolver_dispatch_main(int, short, void *);
+int			 resolve(struct uw_resolver *, const char*, int, int,
+			     void*, int, int*);
 void			 resolve_done(void *, int, void *, int, int, char *,
 			     int);
+void			 asr_resolve_done(struct asr_result *, void *);
+void			 check_asr_resolver_done(struct asr_result *, void *);
 void			 parse_dhcp_forwarders(char *);
 void			 new_recursor(void);
 void			 new_forwarders(void);
+void			 new_asr_forwarders(void);
 void			 new_static_forwarders(void);
 void			 new_static_dot_forwarders(void);
 struct uw_resolver	*create_resolver(enum uw_resolver_type);
@@ -359,14 +367,10 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 
 			clock_gettime(CLOCK_MONOTONIC, &query_imsg->tp);
 
-			if ((err = ub_resolve_event(res->ctx,
-			    query_imsg->qname, query_imsg->t, query_imsg->c,
-			    query_imsg, resolve_done,
-			    &query_imsg->async_id)) != 0) {
-				log_warn("%s: ub_resolve_async: err: %d, %s",
-				    __func__, err, ub_strerror(err));
+			if ((err = resolve(res, query_imsg->qname,
+			    query_imsg->t, query_imsg->c, query_imsg, 0,
+			    &query_imsg->async_id)) != 0)
 				resolver_unref(res);
-			}
 			break;
 		case IMSG_FORWARDER:
 			/* make sure this is a string */
@@ -398,6 +402,7 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			if (merge_tas(&new_trust_anchors, &trust_anchors)) {
 				new_recursor();
 				new_forwarders();
+				new_asr_forwarders();
 				new_static_forwarders();
 				new_static_dot_forwarders();
 			}
@@ -636,6 +641,46 @@ resolver_dispatch_main(int fd, short event, void *bula)
 	}
 }
 
+int
+resolve(struct uw_resolver *res, const char* name, int rrtype, int rrclass,
+    void *mydata, int check, int *async_id)
+{
+	struct asr_query	*aq;
+	int			 err = 0;
+
+	switch(res->type) {
+	case UW_RES_ASR:
+		if ((aq = res_query_async(name, rrclass, rrtype, res->asr_ctx))
+		    == NULL) {
+			log_warn("%s: res_query_async", __func__);
+			err =1;
+		} else {
+			if (event_asr_run(aq, check ? check_asr_resolver_done :
+			    asr_resolve_done, mydata) == NULL) {
+				free(aq);
+				log_warn("%s: res_query_async", __func__);
+				err =1;
+			}
+		}
+		break;
+	case UW_RES_RECURSOR:
+	case UW_RES_DHCP:
+	case UW_RES_FORWARDER:
+	case UW_RES_DOT:
+		if ((err = ub_resolve_event(res->ctx, name,  rrtype, rrclass,
+		    mydata, check ? check_resolver_done : resolve_done,
+		    async_id)) != 0) {
+			log_warn("%s: ub_resolve_event: err: %d, %s", __func__,
+			    err, ub_strerror(err));
+		}
+		break;
+	default:
+		fatalx("unknown resolver type %d", res->type);
+		break;
+	}
+	return (err);
+}
+
 void
 resolve_done(void *arg, int rcode, void *answer_packet, int answer_len,
     int sec, char *why_bogus, int was_ratelimited)
@@ -742,6 +787,7 @@ parse_dhcp_forwarders(char *forwarders)
 	    &dhcp_forwarder_list)) {
 		replace_forwarders(&new_forwarder_list, &dhcp_forwarder_list);
 		new_forwarders();
+		new_asr_forwarders();
 		if (resolver_conf->captive_portal_auto)
 			check_captive_portal(1);
 	} else {
@@ -786,6 +832,21 @@ new_forwarders(void)
 }
 
 void
+new_asr_forwarders(void)
+{
+	free_resolver(resolvers[UW_RES_ASR]);
+	resolvers[UW_RES_ASR] = NULL;
+
+	if (SIMPLEQ_EMPTY(&dhcp_forwarder_list))
+		return;
+
+	log_debug("%s: create_resolver", __func__);
+	resolvers[UW_RES_ASR] = create_resolver(UW_RES_ASR);
+
+	check_resolver(resolvers[UW_RES_ASR]);
+}
+
+void
 new_static_forwarders(void)
 {
 	free_resolver(resolvers[UW_RES_FORWARDER]);
@@ -826,63 +887,104 @@ create_resolver(enum uw_resolver_type type)
 {
 	struct uw_resolver	*res;
 	struct trust_anchor	*ta;
+	struct uw_forwarder	*uw_forwarder;
 	int			 err;
+	char			*resolv_conf = NULL, *tmp = NULL;
 
 	if ((res = calloc(1, sizeof(*res))) == NULL) {
 		log_warn("%s", __func__);
 		return (NULL);
 	}
 
-	res->type = type;
-
 	log_debug("%s: %p", __func__, res);
 
-	if ((res->ctx = ub_ctx_create_event(ev_base)) == NULL) {
-		free(res);
-		log_warnx("could not create unbound context");
-		return (NULL);
-	}
-
+	res->type = type;
 	res->state = UNKNOWN;
 	res->check_tv.tv_sec = RESOLVER_CHECK_SEC;
 	res->check_tv.tv_usec = arc4random() % 1000000; /* modulo bias is ok */
 
-	ub_ctx_debuglevel(res->ctx, log_getverbose() & OPT_VERBOSE2 ?
-	    UB_LOG_VERBOSE : UB_LOG_BRIEF);
+	switch (type) {
+	case UW_RES_ASR:
+		if (SIMPLEQ_EMPTY(&dhcp_forwarder_list)) {
+			free(res);
+			return (NULL);
+		}
+		SIMPLEQ_FOREACH(uw_forwarder, &dhcp_forwarder_list, entry) {
+			tmp = resolv_conf;
+			if (asprintf(&resolv_conf, "%snameserver %s\n", tmp ==
+			    NULL ? "" : tmp, uw_forwarder->name) == -1) {
+				free(tmp);
+				free(res);
+				log_warnx("could not create asr context");
+				return (NULL);
+			}
+			free(tmp);
+		}
+		log_debug("%s: UW_RES_ASR resolv.conf: %s", __func__,
+		    resolv_conf);
+		if ((res->asr_ctx = asr_resolver_from_string(resolv_conf)) ==
+		    NULL) {
+			free(res);
+			free(resolv_conf);
+			log_warnx("could not create asr context");
+			return (NULL);
+		}
+		free(resolv_conf);
+		break;
+	case UW_RES_RECURSOR:
+	case UW_RES_DHCP:
+	case UW_RES_FORWARDER:
+	case UW_RES_DOT:
+		if ((res->ctx = ub_ctx_create_event(ev_base)) == NULL) {
+			free(res);
+			log_warnx("could not create unbound context");
+			return (NULL);
+		}
 
-	TAILQ_FOREACH(ta, &trust_anchors, entry) {
-		if ((err = ub_ctx_add_ta(res->ctx, ta->ta)) != 0) {
+		ub_ctx_debuglevel(res->ctx, log_getverbose() & OPT_VERBOSE2 ?
+		    UB_LOG_VERBOSE : UB_LOG_BRIEF);
+
+		TAILQ_FOREACH(ta, &trust_anchors, entry) {
+			if ((err = ub_ctx_add_ta(res->ctx, ta->ta)) != 0) {
+				ub_ctx_delete(res->ctx);
+				free(res);
+				log_warnx("error adding trust anchor: %s",
+				    ub_strerror(err));
+				return (NULL);
+			}
+		}
+
+		if((err = ub_ctx_set_option(res->ctx, "aggressive-nsec:",
+		    "yes")) != 0) {
 			ub_ctx_delete(res->ctx);
 			free(res);
-			log_warnx("error adding trust anchor: %s",
+			log_warnx("error setting aggressive-nsec: yes: %s",
 			    ub_strerror(err));
 			return (NULL);
 		}
-	}
 
-	if((err = ub_ctx_set_option(res->ctx, "aggressive-nsec:", "yes"))
-	    != 0) {
-		ub_ctx_delete(res->ctx);
-		free(res);
-		log_warnx("error setting aggressive-nsec: yes: %s",
-		    ub_strerror(err));
-		return (NULL);
-	}
-
-	if (!log_getdebug()) {
-		if((err = ub_ctx_set_option(res->ctx, "use-syslog:", "yes"))
-		    != 0) {
-			ub_ctx_delete(res->ctx);
-			free(res);
-			log_warnx("error setting use-syslog: yes: %s",
-			    ub_strerror(err));
-			return (NULL);
+		if (!log_getdebug()) {
+			if((err = ub_ctx_set_option(res->ctx, "use-syslog:",
+			    "yes")) != 0) {
+				ub_ctx_delete(res->ctx);
+				free(res);
+				log_warnx("error setting use-syslog: yes: %s",
+				    ub_strerror(err));
+				return (NULL);
+			}
 		}
+
+		break;
+	default:
+		fatalx("unknown resolver type %d", type);
+		break;
 	}
 
 	evtimer_set(&res->check_ev, resolver_check_timo, res);
 
 	switch(res->type) {
+	case UW_RES_ASR:
+		break;
 	case UW_RES_RECURSOR:
 		break;
 	case UW_RES_DHCP:
@@ -918,6 +1020,7 @@ free_resolver(struct uw_resolver *res)
 	else {
 		evtimer_del(&res->check_ev);
 		ub_ctx_delete(res->ctx);
+		asr_resolver_free(res->asr_ctx);
 		free(res->why_bogus);
 		free(res);
 	}
@@ -963,11 +1066,8 @@ check_resolver(struct uw_resolver *res)
 	data->check_res = check_res;
 	data->res = res;
 
-	if ((err = ub_resolve_event(check_res->ctx, ".",  LDNS_RR_TYPE_NS,
-	    LDNS_RR_CLASS_IN, data,
-	    check_resolver_done, NULL)) != 0) {
-		log_warn("%s: ub_resolve_event: err: %d, %s", __func__, err,
-		    ub_strerror(err));
+	if ((err = resolve(check_res, ".", LDNS_RR_TYPE_NS, LDNS_RR_CLASS_IN,
+	    data, 1, NULL)) != 0) {
 		res->state = UNKNOWN;
 		resolver_unref(check_res);
 		resolver_unref(res);
@@ -1072,6 +1172,21 @@ out:
 }
 
 void
+check_asr_resolver_done(struct asr_result *ar, void *arg)
+{
+	check_resolver_done(arg, ar->ar_rcode, ar->ar_data, ar->ar_datalen, 0,
+	    "", 0);
+	free(ar->ar_data);
+}
+
+void
+asr_resolve_done(struct asr_result *ar, void *arg)
+{
+	resolve_done(arg, ar->ar_rcode, ar->ar_data, ar->ar_datalen, 0, "", 0);
+	free(ar->ar_data);
+}
+
+void
 schedule_recheck_all_resolvers(void)
 {
 	struct timeval	 tv;
@@ -1164,7 +1279,8 @@ best_resolver(void)
 	struct uw_resolver	*res = NULL;
 	int			 i;
 
-	log_debug("%s: %s: %s, %s: %s, %s: %s, %s: %s, captive_portal: %s",
+	log_debug("%s: %s: %s, %s: %s, %s: %s, %s: %s, %s: %s, "
+	    "captive_portal: %s",
 	    __func__,
 	    uw_resolver_type_str[UW_RES_RECURSOR], resolvers[UW_RES_RECURSOR]
 	    != NULL ? uw_resolver_state_str[resolvers[UW_RES_RECURSOR]->state]
@@ -1176,8 +1292,11 @@ best_resolver(void)
 	    uw_resolver_state_str[resolvers[UW_RES_FORWARDER]->state] : "NA",
 	    uw_resolver_type_str[UW_RES_DOT],
 	    resolvers[UW_RES_DOT] != NULL ?
-	    uw_resolver_state_str[resolvers[UW_RES_DOT]->state] :
-	    "NA", captive_portal_state_str[captive_portal_state]);
+	    uw_resolver_state_str[resolvers[UW_RES_DOT]->state] : "NA",
+	    uw_resolver_type_str[UW_RES_ASR],
+	    resolvers[UW_RES_ASR] != NULL ?
+	    uw_resolver_state_str[resolvers[UW_RES_ASR]->state] : "NA",
+	    captive_portal_state_str[captive_portal_state]);
 
 	if (captive_portal_state == PORTAL_UNKNOWN || captive_portal_state ==
 	    BEHIND) {
@@ -1227,6 +1346,7 @@ restart_resolvers(void)
 	new_static_forwarders();
 	new_static_dot_forwarders();
 	new_forwarders();
+	new_asr_forwarders();
 }
 
 void
@@ -1251,6 +1371,7 @@ show_status(enum uw_resolver_type type, pid_t pid)
 	case UW_RES_DHCP:
 	case UW_RES_FORWARDER:
 	case UW_RES_DOT:
+	case UW_RES_ASR:
 		send_resolver_info(resolvers[type], resolvers[type] == best,
 		    pid);
 		send_detailed_resolver_info(resolvers[type], pid);
@@ -1390,7 +1511,7 @@ trust_anchor_resolve(void)
 
 	res = best_resolver();
 
-	if (res == NULL || res->state < VALIDATING) {
+	if (res == NULL || res->state < VALIDATING || res->type == UW_RES_ASR) {
 		evtimer_add(&trust_anchor_timer, &tv);
 		return;
 	}

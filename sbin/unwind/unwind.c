@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.31 2019/10/21 07:16:09 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.32 2019/10/31 12:51:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -842,7 +842,8 @@ config_new_empty(void)
 	    UW_RES_DOT,
 	    UW_RES_FORWARDER,
 	    UW_RES_RECURSOR,
-	    UW_RES_DHCP};
+	    UW_RES_DHCP,
+	    UW_RES_ASR};
 	struct uw_conf			*xconf;
 
 	xconf = calloc(1, sizeof(*xconf));
@@ -851,7 +852,7 @@ config_new_empty(void)
 
 	memcpy(&xconf->res_pref, &default_res_pref,
 	    sizeof(default_res_pref));
-	xconf->res_pref_len = 4;
+	xconf->res_pref_len = 5;
 
 	SIMPLEQ_INIT(&xconf->uw_forwarder_list);
 	SIMPLEQ_INIT(&xconf->uw_dot_forwarder_list);

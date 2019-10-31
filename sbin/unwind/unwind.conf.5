@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.15 2019/10/21 07:16:09 florian Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.16 2019/10/31 12:51:43 florian Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 21 2019 $
+.Dd $Mdocdate: October 31 2019 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -131,6 +131,12 @@ Validating name servers are always picked over non-validating name servers.
 DNS name server types are:
 .Pp
 .Bl -tag -width "forwarder" -compact
+.It Ic asr
+Name servers learned via DHCP, queried using the asr functions.
+See
+.Xr asr_run 3 .
+Will never validate.
+Useful when running behind broken middle boxes that do not like edns0.
 .It Ic dhcp
 Name servers learned via DHCP.
 .It Ic DoT
@@ -145,7 +151,7 @@ itself recursively resolves names.
 .El
 .Pp
 The default preference is
-.Ic DoT forwarder recursor dhcp .
+.Ic DoT forwarder recursor dhcp asr .
 .El
 .Sh FILES
 .Bl -tag -width "/etc/examples/unwind.conf" -compact
