@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.23 2019/07/17 12:06:53 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.24 2019/10/31 15:53:08 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -451,6 +451,26 @@ function test_key {
 	check_exit_status $?
 
 	diff $pkeyutldat $pkeyutldec
+	check_exit_status $?
+
+	pkeyutl_rsa_oaep_enc=$key_dir/pkeyutl_rsa_oaep.enc
+	pkeyutl_rsa_oaep_dec=$key_dir/pkeyutl_rsa_oaep.dec
+
+	$openssl_bin pkeyutl -encrypt -in $pkeyutldat \
+		-inkey $genpkey_rsa \
+		-pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 \
+		-pkeyopt rsa_oaep_label:0011223344556677 \
+		-out $pkeyutl_rsa_oaep_enc
+	check_exit_status $?
+
+	$openssl_bin pkeyutl -decrypt -in $pkeyutl_rsa_oaep_enc \
+		-inkey $genpkey_rsa \
+		-pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 \
+		-pkeyopt rsa_oaep_label:0011223344556677 \
+		-out $pkeyutl_rsa_oaep_dec
+	check_exit_status $?
+
+	diff $pkeyutldat $pkeyutl_rsa_oaep_dec
 	check_exit_status $?
 
 	pkeyutlsc1=$key_dir/pkeyutl.sc1
