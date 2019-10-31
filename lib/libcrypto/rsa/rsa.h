@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.44 2019/10/29 08:00:18 jsing Exp $ */
+/* $OpenBSD: rsa.h,v 1.45 2019/10/31 13:56:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -201,45 +201,54 @@ struct rsa_st {
  */
 #define RSA_FLAG_NO_BLINDING		0x0080
 
+/* Salt length matches digest */
+#define RSA_PSS_SALTLEN_DIGEST		-1
+/* Verify only: auto detect salt length */
+#define RSA_PSS_SALTLEN_AUTO		-2
+/* Set salt length to maximum possible */
+#define RSA_PSS_SALTLEN_MAX		-3
+
 #define EVP_PKEY_CTX_set_rsa_padding(ctx, pad) \
-	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, -1, EVP_PKEY_CTRL_RSA_PADDING, \
-				pad, NULL)
+	RSA_pkey_ctx_ctrl(ctx, -1, EVP_PKEY_CTRL_RSA_PADDING, pad, NULL)
 
 #define EVP_PKEY_CTX_get_rsa_padding(ctx, ppad) \
-	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, -1, \
-				EVP_PKEY_CTRL_GET_RSA_PADDING, 0, ppad)
+	RSA_pkey_ctx_ctrl(ctx, -1, EVP_PKEY_CTRL_GET_RSA_PADDING, 0, ppad)
 
 #define EVP_PKEY_CTX_set_rsa_pss_saltlen(ctx, len) \
-	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, \
-				(EVP_PKEY_OP_SIGN|EVP_PKEY_OP_VERIFY), \
-				EVP_PKEY_CTRL_RSA_PSS_SALTLEN, \
-				len, NULL)
+	RSA_pkey_ctx_ctrl(ctx, (EVP_PKEY_OP_SIGN|EVP_PKEY_OP_VERIFY), \
+	    EVP_PKEY_CTRL_RSA_PSS_SALTLEN, len, NULL)
+
+#define EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen(ctx, len) \
+	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN, \
+	    EVP_PKEY_CTRL_RSA_PSS_SALTLEN, len, NULL)
 
 #define EVP_PKEY_CTX_get_rsa_pss_saltlen(ctx, plen) \
-	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, \
-				(EVP_PKEY_OP_SIGN|EVP_PKEY_OP_VERIFY), \
-				EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN, \
-				0, plen)
+	RSA_pkey_ctx_ctrl(ctx, (EVP_PKEY_OP_SIGN|EVP_PKEY_OP_VERIFY), \
+	    EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN, 0, plen)
 
 #define EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, bits) \
-	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_KEYGEN, \
-				EVP_PKEY_CTRL_RSA_KEYGEN_BITS, bits, NULL)
+	RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_KEYGEN, \
+	    EVP_PKEY_CTRL_RSA_KEYGEN_BITS, bits, NULL)
 
 #define EVP_PKEY_CTX_set_rsa_keygen_pubexp(ctx, pubexp) \
-	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_KEYGEN, \
-				EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP, 0, pubexp)
+	RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_KEYGEN, \
+	    EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP, 0, pubexp)
 
-#define	 EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, md)	\
-		EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_SIG,  \
-				EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)md)
+#define EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, md) \
+	RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT, \
+	    EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)(md))
 
-#define	 EVP_PKEY_CTX_get_rsa_mgf1_md(ctx, pmd)	\
-		EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_SIG,  \
-				EVP_PKEY_CTRL_GET_RSA_MGF1_MD, 0, (void *)pmd)
+#define EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md(ctx, md) \
+	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN, \
+	    EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)(md))
 
 #define EVP_PKEY_CTX_set_rsa_oaep_md(ctx, md) \
 	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT, \
 	    EVP_PKEY_CTRL_RSA_OAEP_MD, 0, (void *)(md))
+
+#define EVP_PKEY_CTX_get_rsa_mgf1_md(ctx, pmd) \
+	RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT, \
+	    EVP_PKEY_CTRL_GET_RSA_MGF1_MD, 0, (void *)(pmd))
 
 #define EVP_PKEY_CTX_get_rsa_oaep_md(ctx, pmd) \
 	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT, \
@@ -252,6 +261,10 @@ struct rsa_st {
 #define EVP_PKEY_CTX_get0_rsa_oaep_label(ctx, l) \
 	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT, \
 	    EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL, 0, (void *)(l))
+
+#define EVP_PKEY_CTX_set_rsa_pss_keygen_md(ctx, md) \
+	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, \
+	    EVP_PKEY_OP_KEYGEN, EVP_PKEY_CTRL_MD, 0, (void *)(md))
 
 #define EVP_PKEY_CTRL_RSA_PADDING		(EVP_PKEY_ALG_CTRL + 1)
 #define EVP_PKEY_CTRL_RSA_PSS_SALTLEN		(EVP_PKEY_ALG_CTRL + 2)
@@ -602,12 +615,14 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_DATA_TOO_LARGE_FOR_MODULUS		 132
 #define RSA_R_DATA_TOO_SMALL				 111
 #define RSA_R_DATA_TOO_SMALL_FOR_KEY_SIZE		 122
+#define RSA_R_DIGEST_NOT_ALLOWED			 145
 #define RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY		 112
 #define RSA_R_DMP1_NOT_CONGRUENT_TO_D			 124
 #define RSA_R_DMQ1_NOT_CONGRUENT_TO_D			 125
 #define RSA_R_D_E_NOT_CONGRUENT_TO_1			 123
 #define RSA_R_FIRST_OCTET_INVALID			 133
 #define RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE	 144
+#define RSA_R_INVALID_DIGEST				 157
 #define RSA_R_INVALID_DIGEST_LENGTH			 143
 #define RSA_R_INVALID_HEADER				 137
 #define RSA_R_INVALID_KEYBITS				 145
@@ -624,6 +639,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_KEY_SIZE_TOO_SMALL			 120
 #define RSA_R_LAST_OCTET_INVALID			 134
 #define RSA_R_MODULUS_TOO_LARGE				 105
+#define RSA_R_MGF1_DIGEST_NOT_ALLOWED			 152
 #define RSA_R_NON_FIPS_RSA_METHOD			 157
 #define RSA_R_NO_PUBLIC_EXPONENT			 140
 #define RSA_R_NULL_BEFORE_BLOCK_MISSING			 113
@@ -632,6 +648,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_OPERATION_NOT_ALLOWED_IN_FIPS_MODE	 158
 #define RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE	 148
 #define RSA_R_PADDING_CHECK_FAILED			 114
+#define RSA_R_PSS_SALTLEN_TOO_SMALL			 164
 #define RSA_R_P_NOT_PRIME				 128
 #define RSA_R_Q_NOT_PRIME				 129
 #define RSA_R_RSA_OPERATIONS_NOT_SUPPORTED		 130
@@ -640,6 +657,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_SSLV3_ROLLBACK_ATTACK			 115
 #define RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD 116
 #define RSA_R_UNKNOWN_ALGORITHM_TYPE			 117
+#define RSA_R_UNKNOWN_DIGEST				 166
 #define RSA_R_UNKNOWN_MASK_DIGEST			 151
 #define RSA_R_UNKNOWN_PADDING_TYPE			 118
 #define RSA_R_UNKNOWN_PSS_DIGEST			 152

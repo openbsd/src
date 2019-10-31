@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_err.c,v 1.17 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: rsa_err.c,v 1.18 2019/10/31 13:56:29 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -90,12 +90,14 @@ static ERR_STRING_DATA RSA_str_reasons[] = {
 	{ERR_REASON(RSA_R_DATA_TOO_LARGE_FOR_MODULUS), "data too large for modulus"},
 	{ERR_REASON(RSA_R_DATA_TOO_SMALL)        , "data too small"},
 	{ERR_REASON(RSA_R_DATA_TOO_SMALL_FOR_KEY_SIZE), "data too small for key size"},
+	{ERR_REASON(RSA_R_DIGEST_NOT_ALLOWED)    , "digest not allowed"},
 	{ERR_REASON(RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY), "digest too big for rsa key"},
 	{ERR_REASON(RSA_R_DMP1_NOT_CONGRUENT_TO_D), "dmp1 not congruent to d"},
 	{ERR_REASON(RSA_R_DMQ1_NOT_CONGRUENT_TO_D), "dmq1 not congruent to d"},
 	{ERR_REASON(RSA_R_D_E_NOT_CONGRUENT_TO_1), "d e not congruent to 1"},
 	{ERR_REASON(RSA_R_FIRST_OCTET_INVALID)   , "first octet invalid"},
 	{ERR_REASON(RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE), "illegal or unsupported padding mode"},
+	{ERR_REASON(RSA_R_INVALID_DIGEST)        , "invalid digest"},
 	{ERR_REASON(RSA_R_INVALID_DIGEST_LENGTH) , "invalid digest length"},
 	{ERR_REASON(RSA_R_INVALID_HEADER)        , "invalid header"},
 	{ERR_REASON(RSA_R_INVALID_KEYBITS)       , "invalid keybits"},
@@ -111,6 +113,7 @@ static ERR_STRING_DATA RSA_str_reasons[] = {
 	{ERR_REASON(RSA_R_IQMP_NOT_INVERSE_OF_Q) , "iqmp not inverse of q"},
 	{ERR_REASON(RSA_R_KEY_SIZE_TOO_SMALL)    , "key size too small"},
 	{ERR_REASON(RSA_R_LAST_OCTET_INVALID)    , "last octet invalid"},
+	{ERR_REASON(RSA_R_MGF1_DIGEST_NOT_ALLOWED), "mgf1 digest not allowed"},
 	{ERR_REASON(RSA_R_MODULUS_TOO_LARGE)     , "modulus too large"},
 	{ERR_REASON(RSA_R_NON_FIPS_RSA_METHOD)   , "non fips rsa method"},
 	{ERR_REASON(RSA_R_NO_PUBLIC_EXPONENT)    , "no public exponent"},
@@ -120,6 +123,7 @@ static ERR_STRING_DATA RSA_str_reasons[] = {
 	{ERR_REASON(RSA_R_OPERATION_NOT_ALLOWED_IN_FIPS_MODE), "operation not allowed in fips mode"},
 	{ERR_REASON(RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE), "operation not supported for this keytype"},
 	{ERR_REASON(RSA_R_PADDING_CHECK_FAILED)  , "padding check failed"},
+	{ERR_REASON(RSA_R_PSS_SALTLEN_TOO_SMALL) , "pss saltlen too small"},
 	{ERR_REASON(RSA_R_P_NOT_PRIME)           , "p not prime"},
 	{ERR_REASON(RSA_R_Q_NOT_PRIME)           , "q not prime"},
 	{ERR_REASON(RSA_R_RSA_OPERATIONS_NOT_SUPPORTED), "rsa operations not supported"},
@@ -128,6 +132,7 @@ static ERR_STRING_DATA RSA_str_reasons[] = {
 	{ERR_REASON(RSA_R_SSLV3_ROLLBACK_ATTACK) , "sslv3 rollback attack"},
 	{ERR_REASON(RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD), "the asn1 object identifier is not known for this md"},
 	{ERR_REASON(RSA_R_UNKNOWN_ALGORITHM_TYPE), "unknown algorithm type"},
+	{ERR_REASON(RSA_R_UNKNOWN_DIGEST)        , "unknown digest"},
 	{ERR_REASON(RSA_R_UNKNOWN_MASK_DIGEST)   , "unknown mask digest"},
 	{ERR_REASON(RSA_R_UNKNOWN_PADDING_TYPE)  , "unknown padding type"},
 	{ERR_REASON(RSA_R_UNKNOWN_PSS_DIGEST)    , "unknown pss digest"},

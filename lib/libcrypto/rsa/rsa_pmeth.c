@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.30 2019/10/31 13:10:40 jsing Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.31 2019/10/31 13:56:29 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -89,12 +89,17 @@ typedef struct {
 	const EVP_MD *mgf1md;
 	/* PSS salt length */
 	int saltlen;
+	/* Minimum salt length or -1 if no PSS parameter restriction */
+	int min_saltlen;
 	/* Temp buffer */
 	unsigned char *tbuf;
 	/* OAEP label */
 	unsigned char *oaep_label;
 	size_t oaep_labellen;
 } RSA_PKEY_CTX;
+
+/* True if PSS parameters are restricted */
+#define rsa_pss_restricted(rctx) (rctx->min_saltlen != -1)
 
 static int
 pkey_rsa_init(EVP_PKEY_CTX *ctx)
@@ -105,9 +110,15 @@ pkey_rsa_init(EVP_PKEY_CTX *ctx)
 		return 0;
 
 	rctx->nbits = 2048;
-	rctx->pad_mode = RSA_PKCS1_PADDING;
 
-	rctx->saltlen = -2;
+	if (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS)
+		rctx->pad_mode = RSA_PKCS1_PSS_PADDING;
+	else
+		rctx->pad_mode = RSA_PKCS1_PADDING;
+
+	/* Maximum for sign, auto for verify */
+	rctx->saltlen = RSA_PSS_SALTLEN_AUTO;
+	rctx->min_saltlen = -1;
 
 	ctx->data = rctx;
 	ctx->keygen_info = rctx->gentmp;
@@ -385,7 +396,7 @@ pkey_rsa_decrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
 static int
 check_padding_md(const EVP_MD *md, int padding)
 {
-	if (!md)
+	if (md == NULL)
 		return 1;
 
 	if (padding == RSA_NO_PADDING) {
@@ -398,7 +409,24 @@ check_padding_md(const EVP_MD *md, int padding)
 			RSAerror(RSA_R_INVALID_X931_DIGEST);
 			return 0;
 		}
-		return 1;
+	} else {
+		/* List of all supported RSA digests. */
+		switch(EVP_MD_type(md)) {
+		case NID_sha1:
+		case NID_sha224:
+		case NID_sha256:
+		case NID_sha384:
+		case NID_sha512:
+		case NID_md5:
+		case NID_md5_sha1:
+		case NID_md4:
+		case NID_ripemd160:
+			return 1;
+
+		default:
+			RSAerror(RSA_R_INVALID_DIGEST);
+			return 0;
+		}
 	}
 
 	return 1;
@@ -420,6 +448,8 @@ pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 					goto bad_pad;
 				if (!rctx->md)
 					rctx->md = EVP_sha1();
+			} else if (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS) {
+				goto bad_pad;
 			}
 			if (p1 == RSA_PKCS1_OAEP_PADDING) {
 				if (!(ctx->operation & EVP_PKEY_OP_TYPE_CRYPT))
@@ -447,8 +477,21 @@ pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		if (type == EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN) {
 			*(int *)p2 = rctx->saltlen;
 		} else {
-			if (p1 < -2)
+			if (p1 < RSA_PSS_SALTLEN_MAX)
 				return -2;
+			if (rsa_pss_restricted(rctx)) {
+				if (p1 == RSA_PSS_SALTLEN_AUTO &&
+				    ctx->operation == EVP_PKEY_OP_VERIFY) {
+					RSAerror(RSA_R_INVALID_PSS_SALTLEN);
+					return -2;
+				}
+				if ((p1 == RSA_PSS_SALTLEN_DIGEST &&
+				    rctx->min_saltlen > EVP_MD_size(rctx->md)) ||
+				    (p1 >= 0 && p1 < rctx->min_saltlen)) {
+					RSAerror(RSA_R_PSS_SALTLEN_TOO_SMALL);
+					return 0;
+				}
+			}
 			rctx->saltlen = p1;
 		}
 		return 1;
@@ -486,6 +529,12 @@ pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 	case EVP_PKEY_CTRL_MD:
 		if (!check_padding_md(p2, rctx->pad_mode))
 			return 0;
+		if (rsa_pss_restricted(rctx)) {
+			if (EVP_MD_type(rctx->md) == EVP_MD_type(p2))
+				return 1;
+			RSAerror(RSA_R_DIGEST_NOT_ALLOWED);
+			return 0;
+		}
 		rctx->md = p2;
 		return 1;
 
@@ -505,8 +554,15 @@ pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 				*(const EVP_MD **)p2 = rctx->mgf1md;
 			else
 				*(const EVP_MD **)p2 = rctx->md;
-		} else
+		} else {
+			if (rsa_pss_restricted(rctx)) {
+				if (EVP_MD_type(rctx->mgf1md) == EVP_MD_type(p2))
+					return 1;
+				RSAerror(RSA_R_MGF1_DIGEST_NOT_ALLOWED);
+				return 0;
+			}
 			rctx->mgf1md = p2;
+		}
 		return 1;
 
 	case EVP_PKEY_CTRL_RSA_OAEP_LABEL:
@@ -533,25 +589,28 @@ pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		return rctx->oaep_labellen;
 
 	case EVP_PKEY_CTRL_DIGESTINIT:
-	case EVP_PKEY_CTRL_PKCS7_ENCRYPT:
-	case EVP_PKEY_CTRL_PKCS7_DECRYPT:
 	case EVP_PKEY_CTRL_PKCS7_SIGN:
 		return 1;
+
+	case EVP_PKEY_CTRL_PKCS7_ENCRYPT:
+	case EVP_PKEY_CTRL_PKCS7_DECRYPT:
+		if (ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+			return 1;
+
+	/* fall through */
 	case EVP_PKEY_CTRL_PEER_KEY:
 		RSAerror(RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 
 	default:
 		return -2;
+
 	}
 }
 
 static int
 pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 {
-	long lval;
-	char *ep;
-
 	if (!value) {
 		RSAerror(RSA_R_VALUE_MISSING);
 		return 0;
@@ -577,39 +636,29 @@ pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 		return EVP_PKEY_CTX_set_rsa_padding(ctx, pm);
 	}
 
-	if (!strcmp(type, "rsa_pss_saltlen")) {
+	if (strcmp(type, "rsa_pss_saltlen") == 0) {
 		int saltlen;
 
-		errno = 0;
-		lval = strtol(value, &ep, 10);
-		if (value[0] == '\0' || *ep != '\0')
-			goto not_a_number;
-		if ((errno == ERANGE &&
-		    (lval == LONG_MAX || lval == LONG_MIN)) ||
-		    (lval > INT_MAX || lval < INT_MIN))
-			goto out_of_range;
-		saltlen = lval;
+		if (!strcmp(value, "digest"))
+			saltlen = RSA_PSS_SALTLEN_DIGEST;
+		else if (!strcmp(value, "max"))
+			saltlen = RSA_PSS_SALTLEN_MAX;
+		else if (!strcmp(value, "auto"))
+			saltlen = RSA_PSS_SALTLEN_AUTO;
+		else
+			saltlen = atoi(value);
 		return EVP_PKEY_CTX_set_rsa_pss_saltlen(ctx, saltlen);
 	}
 
-	if (!strcmp(type, "rsa_keygen_bits")) {
-		int nbits;
+	if (strcmp(type, "rsa_keygen_bits") == 0) {
+		int nbits = atoi(value);
 
-		errno = 0;
-		lval = strtol(value, &ep, 10);
-		if (value[0] == '\0' || *ep != '\0')
-			goto not_a_number;
-		if ((errno == ERANGE &&
-		    (lval == LONG_MAX || lval == LONG_MIN)) ||
-		    (lval > INT_MAX || lval < INT_MIN))
-			goto out_of_range;
-		nbits = lval;
 		return EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, nbits);
 	}
 
-	if (!strcmp(type, "rsa_keygen_pubexp")) {
-		int ret;
+	if (strcmp(type, "rsa_keygen_pubexp") == 0) {
 		BIGNUM *pubexp = NULL;
+		int ret;
 
 		if (!BN_asc2bn(&pubexp, value))
 			return 0;
@@ -623,6 +672,22 @@ pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 		return EVP_PKEY_CTX_md(ctx,
 		    EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT,
 		    EVP_PKEY_CTRL_RSA_MGF1_MD, value);
+
+	if (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS) {
+		if (strcmp(type, "rsa_pss_keygen_mgf1_md") == 0)
+			return EVP_PKEY_CTX_md(ctx, EVP_PKEY_OP_KEYGEN,
+			    EVP_PKEY_CTRL_RSA_MGF1_MD, value);
+
+		if (strcmp(type, "rsa_pss_keygen_md") == 0)
+			return EVP_PKEY_CTX_md(ctx, EVP_PKEY_OP_KEYGEN,
+			    EVP_PKEY_CTRL_MD, value);
+
+		if (strcmp(type, "rsa_pss_keygen_saltlen") == 0) {
+			int saltlen = atoi(value);
+
+			return EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen(ctx, saltlen);
+		}
+	}
 
 	if (strcmp(type, "rsa_oaep_md") == 0)
 		return EVP_PKEY_CTX_md(ctx, EVP_PKEY_OP_TYPE_CRYPT,
@@ -642,9 +707,29 @@ pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 		return ret;
 	}
 
- not_a_number:
- out_of_range:
 	return -2;
+}
+
+/* Set PSS parameters when generating a key, if necessary. */
+static int
+rsa_set_pss_param(RSA *rsa, EVP_PKEY_CTX *ctx)
+{
+	RSA_PKEY_CTX *rctx = ctx->data;
+
+	if (ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+		return 1;
+
+	/* If all parameters are default values then do not set PSS. */
+	if (rctx->md == NULL && rctx->mgf1md == NULL &&
+	    rctx->saltlen == RSA_PSS_SALTLEN_AUTO)
+		return 1;
+
+	rsa->pss = rsa_pss_params_create(rctx->md, rctx->mgf1md,
+	    rctx->saltlen == RSA_PSS_SALTLEN_AUTO ? 0 : rctx->saltlen);
+	if (rsa->pss == NULL)
+		return 0;
+
+	return 1;
 }
 
 static int
@@ -670,8 +755,12 @@ pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 		pcb = NULL;
 	}
 	ret = RSA_generate_key_ex(rsa, rctx->nbits, rctx->pub_exp, pcb);
+	if (ret > 0 && !rsa_set_pss_param(rsa, ctx)) {
+		RSA_free(rsa);
+		return 0;
+	}
 	if (ret > 0)
-		EVP_PKEY_assign_RSA(pkey, rsa);
+		EVP_PKEY_assign(pkey, ctx->pmeth->pkey_id, rsa);
 	else
 		RSA_free(rsa);
 	return ret;
@@ -700,3 +789,73 @@ const EVP_PKEY_METHOD rsa_pkey_meth = {
 	.ctrl = pkey_rsa_ctrl,
 	.ctrl_str = pkey_rsa_ctrl_str
 };
+
+/*
+ * Called for PSS sign or verify initialisation: checks PSS parameter
+ * sanity and sets any restrictions on key usage.
+ */
+
+static int
+pkey_pss_init(EVP_PKEY_CTX *ctx)
+{
+	RSA *rsa;
+	RSA_PKEY_CTX *rctx = ctx->data;
+	const EVP_MD *md;
+	const EVP_MD *mgf1md;
+	int min_saltlen, max_saltlen;
+
+	/* Should never happen */
+	if (ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+		return 0;
+	rsa = ctx->pkey->pkey.rsa;
+
+	/* If no restrictions just return */
+	if (rsa->pss == NULL)
+		return 1;
+
+	/* Get and check parameters */
+	if (!rsa_pss_get_param(rsa->pss, &md, &mgf1md, &min_saltlen))
+		return 0;
+
+	/* See if minimum salt length exceeds maximum possible */
+	max_saltlen = RSA_size(rsa) - EVP_MD_size(md);
+	if ((RSA_bits(rsa) & 0x7) == 1)
+		max_saltlen--;
+	if (min_saltlen > max_saltlen) {
+		RSAerror(RSA_R_INVALID_SALT_LENGTH);
+		return 0;
+	}
+	rctx->min_saltlen = min_saltlen;
+
+	/*
+	 * Set PSS restrictions as defaults: we can then block any attempt to
+	 * use invalid values in pkey_rsa_ctrl
+	 */
+
+	rctx->md = md;
+	rctx->mgf1md = mgf1md;
+	rctx->saltlen = min_saltlen;
+
+	return 1;
+}
+
+const EVP_PKEY_METHOD rsa_pss_pkey_meth = {
+	.pkey_id = EVP_PKEY_RSA_PSS,
+	.flags = EVP_PKEY_FLAG_AUTOARGLEN,
+
+	.init = pkey_rsa_init,
+	.copy = pkey_rsa_copy,
+	.cleanup = pkey_rsa_cleanup,
+
+	.keygen = pkey_rsa_keygen,
+
+	.sign_init = pkey_pss_init,
+	.sign = pkey_rsa_sign,
+
+	.verify_init = pkey_pss_init,
+	.verify = pkey_rsa_verify,
+
+	.ctrl = pkey_rsa_ctrl,
+	.ctrl_str = pkey_rsa_ctrl_str
+};
+

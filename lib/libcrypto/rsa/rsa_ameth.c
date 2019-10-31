@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.19 2018/08/24 20:22:15 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.20 2019/10/31 13:56:29 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -429,6 +429,124 @@ rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 	if (alg)
 		X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaEncryption),
 		    V_ASN1_NULL, 0);
+
+	return 1;
+}
+
+/* Allocate and set algorithm ID from EVP_MD, defaults to SHA1. */
+static int
+rsa_md_to_algor(X509_ALGOR **palg, const EVP_MD *md)
+{
+	if (md == NULL || EVP_MD_type(md) == NID_sha1)
+		return 1;
+	*palg = X509_ALGOR_new();
+	if (*palg == NULL)
+		return 0;
+	X509_ALGOR_set_md(*palg, md);
+	return 1;
+}
+
+/* Allocate and set MGF1 algorithm ID from EVP_MD. */
+static int
+rsa_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md)
+{
+	X509_ALGOR *algtmp = NULL;
+	ASN1_STRING *stmp = NULL;
+
+	*palg = NULL;
+	if (mgf1md == NULL || EVP_MD_type(mgf1md) == NID_sha1)
+		return 1;
+	/* need to embed algorithm ID inside another */
+	if (!rsa_md_to_algor(&algtmp, mgf1md))
+		goto err;
+	if (ASN1_item_pack(algtmp, &X509_ALGOR_it, &stmp) == NULL)
+		 goto err;
+	*palg = X509_ALGOR_new();
+	if (*palg == NULL)
+		goto err;
+	X509_ALGOR_set0(*palg, OBJ_nid2obj(NID_mgf1), V_ASN1_SEQUENCE, stmp);
+	stmp = NULL;
+ err:
+	ASN1_STRING_free(stmp);
+	X509_ALGOR_free(algtmp);
+	if (*palg)
+		return 1;
+	return 0;
+}
+
+/* Convert algorithm ID to EVP_MD, defaults to SHA1. */
+static const EVP_MD *
+rsa_algor_to_md(X509_ALGOR *alg)
+{
+	const EVP_MD *md;
+
+	if (!alg)
+		return EVP_sha1();
+	md = EVP_get_digestbyobj(alg->algorithm);
+	if (md == NULL)
+		RSAerror(RSA_R_UNKNOWN_DIGEST);
+	return md;
+}
+
+/* convert algorithm ID to EVP_MD, default SHA1 */
+RSA_PSS_PARAMS *
+rsa_pss_params_create(const EVP_MD *sigmd, const EVP_MD *mgf1md, int saltlen)
+{
+	RSA_PSS_PARAMS *pss = RSA_PSS_PARAMS_new();
+
+	if (pss == NULL)
+		goto err;
+	if (saltlen != 20) {
+		pss->saltLength = ASN1_INTEGER_new();
+		if (pss->saltLength == NULL)
+			goto err;
+		if (!ASN1_INTEGER_set(pss->saltLength, saltlen))
+			goto err;
+	}
+	if (!rsa_md_to_algor(&pss->hashAlgorithm, sigmd))
+		goto err;
+	if (mgf1md == NULL)
+		mgf1md = sigmd;
+	if (!rsa_md_to_mgf1(&pss->maskGenAlgorithm, mgf1md))
+		goto err;
+	if (!rsa_md_to_algor(&pss->maskHash, mgf1md))
+		goto err;
+	return pss;
+ err:
+	RSA_PSS_PARAMS_free(pss);
+	return NULL;
+}
+
+int
+rsa_pss_get_param(const RSA_PSS_PARAMS *pss, const EVP_MD **pmd,
+    const EVP_MD **pmgf1md, int *psaltlen)
+{
+	if (pss == NULL)
+		return 0;
+	*pmd = rsa_algor_to_md(pss->hashAlgorithm);
+	if (*pmd == NULL)
+		return 0;
+	*pmgf1md = rsa_algor_to_md(pss->maskHash);
+	if (*pmgf1md == NULL)
+		return 0;
+	if (pss->saltLength) {
+		*psaltlen = ASN1_INTEGER_get(pss->saltLength);
+		if (*psaltlen < 0) {
+			RSAerror(RSA_R_INVALID_SALT_LENGTH);
+			return 0;
+		}
+	} else {
+		*psaltlen = 20;
+	}
+
+	/*
+	 * low-level routines support only trailer field 0xbc (value 1) and
+	 * PKCS#1 says we should reject any other value anyway.
+	 */
+	if (pss->trailerField && ASN1_INTEGER_get(pss->trailerField) != 1) {
+		RSAerror(RSA_R_INVALID_TRAILER);
+		return 0;
+	}
 
 	return 1;
 }

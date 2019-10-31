@@ -1,8 +1,13 @@
-/* $OpenBSD: rsa_locl.h,v 1.7 2019/10/31 13:10:40 jsing Exp $ */
+/* $OpenBSD: rsa_locl.h,v 1.8 2019/10/31 13:56:29 jsing Exp $ */
 
 __BEGIN_HIDDEN_DECLS
 
 #define RSA_MIN_MODULUS_BITS	512
+
+RSA_PSS_PARAMS *rsa_pss_params_create(const EVP_MD *sigmd, const EVP_MD *mgf1md,
+    int saltlen);
+int rsa_pss_get_param(const RSA_PSS_PARAMS *pss, const EVP_MD **pmd,
+    const EVP_MD **pmgf1md, int *psaltlen);
 
 typedef struct rsa_oaep_params_st {
 	X509_ALGOR *hashFunc;
