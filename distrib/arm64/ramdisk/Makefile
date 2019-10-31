@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2019/10/03 10:26:38 jsg Exp $
+#	$OpenBSD: Makefile,v 1.17 2019/10/31 00:37:25 jsg Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		67584
@@ -55,7 +55,7 @@ ${FS}: bsd.rd
 	echo bootaa64.efi > ${MOUNT_POINT}/efi/boot/startup.nsh
 	echo 'arm_64bit=1\nenable_uart=1\nkernel=u-boot.bin' > ${MOUNT_POINT}/config.txt
 	dd if=${PUBOOT}/pine64_plus/u-boot-sunxi-with-spl.bin \
-	    of=/dev/r`cat vnd`c bs=1024 seek=8
+	    of=/dev/r`cat vnd`c bs=1024 seek=8 conv=sync
 	umount ${MOUNT_POINT}
 	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
