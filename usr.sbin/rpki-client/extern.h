@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.9 2019/10/16 17:43:29 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.10 2019/10/31 08:36:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -229,7 +229,7 @@ extern int verbose;
 
 void		 tal_buffer(char **, size_t *, size_t *, const struct tal *);
 void		 tal_free(struct tal *);
-struct tal	*tal_parse(const char *);
+struct tal	*tal_parse(const char *, char *);
 struct tal	*tal_read(int);
 
 void		 cert_buffer(char **, size_t *, size_t *, const struct cert *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.7 2019/10/08 10:04:36 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.8 2019/10/31 08:36:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,18 +29,18 @@
 #include "extern.h"
 
 /*
- * Inner function for parsing RFC 7730 from a file stream.
+ * Inner function for parsing RFC 7730 from a buffer.
  * Returns a valid pointer on success, NULL otherwise.
  * The pointer must be freed with tal_free().
  */
 static struct tal *
-tal_parse_stream(const char *fn, FILE *f)
+tal_parse_buffer(const char *fn, char *buf)
 {
-	char		*line = NULL;
+	char		*nl, *line;
 	unsigned char	*b64 = NULL;
-	size_t		 sz, b64sz = 0, linesize = 0, lineno = 0;
-	ssize_t		 linelen, ssz;
-	int		 rc = 0;
+	size_t		 sz;
+	ssize_t		 linelen;
+	int		 rc = 0, b64sz;
 	struct tal	*tal = NULL;
 	enum rtype	 rp;
 	EVP_PKEY	*pkey = NULL;
@@ -48,27 +48,19 @@ tal_parse_stream(const char *fn, FILE *f)
 	if ((tal = calloc(1, sizeof(struct tal))) == NULL)
 		err(EXIT_FAILURE, NULL);
 
-	/* Begin with the URI section. */
+	/* Begin with the URI section, comment section already removed. */
+	while ((nl = strchr(buf, '\n')) != NULL) {
+		line = buf;
+		*nl = '\0';
 
-	while ((linelen = getline(&line, &linesize, f)) != -1) {
-		lineno++;
-		assert(linelen);
-		if (line[linelen - 1] != '\n') {
-			warnx("%s: RFC 7730 section 2.1: "
-			    "failed to parse URL", fn);
-			goto out;
-		}
-		line[--linelen] = '\0';
-		if (linelen && line[linelen - 1] == '\r')
-			line[--linelen] = '\0';
+		/* advance buffer to next line */
+		buf = nl + 1;
 
 		/* Zero-length line is end of section. */
-
-		if (linelen == 0)
+		if (*line == '\0')
 			break;
 
 		/* Append to list of URIs. */
-
 		tal->uri = reallocarray(tal->uri,
 			tal->urisz + 1, sizeof(char *));
 		if (tal->uri == NULL)
@@ -77,85 +69,48 @@ tal_parse_stream(const char *fn, FILE *f)
 		tal->uri[tal->urisz] = strdup(line);
 		if (tal->uri[tal->urisz] == NULL)
 			err(EXIT_FAILURE, NULL);
-
 		tal->urisz++;
 
 		/* Make sure we're a proper rsync URI. */
-
 		if (!rsync_uri_parse(NULL, NULL,
 		    NULL, NULL, NULL, NULL, &rp, line)) {
 			warnx("%s: RFC 7730 section 2.1: "
 			    "failed to parse URL: %s", fn, line);
 			goto out;
-		} else if (rp != RTYPE_CER) {
+		}
+		if (rp != RTYPE_CER) {
 			warnx("%s: RFC 7730 section 2.1: "
 			    "not a certificate URL: %s", fn, line);
 			goto out;
 		}
-	}
 
-	if (ferror(f))
-		err(EXIT_FAILURE, "%s: getline", fn);
+	}
 
 	if (tal->urisz == 0) {
 		warnx("%s: no URIs in manifest part", fn);
 		goto out;
-	} else if (tal->urisz > 1) {
+	} else if (tal->urisz > 1)
 		warnx("%s: multiple URIs: using the first", fn);
-		goto out;
-	}
 
-	/* Now the BASE64-encoded public key. */
-
-	while ((linelen = getline(&line, &linesize, f)) != -1) {
-		lineno++;
-		assert(linelen);
-		if (line[linelen - 1] != '\n') {
-			warnx("%s: RFC 7730 section 2.1: "
-			    "failed to parse public key", fn);
-			goto out;
-		}
-		line[--linelen] = '\0';
-		if (linelen && line[linelen - 1] == '\r')
-			line[--linelen] = '\0';
-
-		/* Zero-length line can be ignored... ? */
-
-		if (linelen == 0)
-			continue;
-
-		/* Do our base64 decoding in-band. */
-
-		sz = ((linelen + 2) / 3) * 4 + 1;
-		if ((b64 = realloc(b64, b64sz + sz)) == NULL)
-			err(EXIT_FAILURE, NULL);
-		if ((ssz = b64_pton(line, b64 + b64sz, sz)) < 0)
-			errx(EXIT_FAILURE, "b64_pton");
-
-		/*
-		 * This might be different from our allocation size, but
-		 * that doesn't matter: the slop here is minimal.
-		 */
-
-		b64sz += ssz;
-	}
-
-	if (ferror(f))
-		err(EXIT_FAILURE, "%s: getline", fn);
-
-	if (b64sz == 0) {
+	sz = strlen(buf);
+	if (sz == 0) {
 		warnx("%s: RFC 7730 section 2.1: subjectPublicKeyInfo: "
 		    "zero-length public key", fn);
 		goto out;
 	}
 
+	/* Now the BASE64-encoded public key. */
+	sz = ((sz + 2) / 3) * 4 + 1;
+	if ((b64 = malloc(sz)) == NULL)
+		err(EXIT_FAILURE, NULL);
+	if ((b64sz = b64_pton(buf, b64, sz)) < 0)
+		errx(EXIT_FAILURE, "b64_pton");
+
 	tal->pkey = b64;
 	tal->pkeysz = b64sz;
 
 	/* Make sure it's a valid public key. */
-
 	pkey = d2i_PUBKEY(NULL, (const unsigned char **)&b64, b64sz);
-	b64 = NULL;
 	if (pkey == NULL) {
 		cryptowarnx("%s: RFC 7730 section 2.1: subjectPublicKeyInfo: "
 		    "failed public key parse", fn);
@@ -163,8 +118,6 @@ tal_parse_stream(const char *fn, FILE *f)
 	}
 	rc = 1;
 out:
-	free(line);
-	free(b64);
 	if (rc == 0) {
 		tal_free(tal);
 		tal = NULL;
@@ -180,18 +133,13 @@ out:
  * memory, bad syntax, etc.
  */
 struct tal *
-tal_parse(const char *fn)
+tal_parse(const char *fn, char *buf)
 {
-	FILE		*f;
 	struct tal	*p;
 	char		*d;
 	size_t		 dlen;
 
-	if ((f = fopen(fn, "r")) == NULL)
-		err(EXIT_FAILURE, "%s: open", fn);
-
-	p = tal_parse_stream(fn, f);
-	fclose(f);
+	p = tal_parse_buffer(fn, buf);
 
 	/* extract the TAL basename (without .tal suffix) */
 	d = basename(fn);

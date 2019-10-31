@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.6 2019/06/19 16:30:37 deraadt Exp $ */
+/*	$OpenBSD: rsync.c,v 1.7 2019/10/31 08:36:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -129,8 +129,6 @@ rsync_uri_parse(const char **hostp, size_t *hostsz,
 			*rtypep = RTYPE_CER;
 		else if (strcasecmp(path + sz - 4, ".crl") == 0)
 			*rtypep = RTYPE_CRL;
-		else if (strcasecmp(path + sz - 4, ".tal") == 0)
-			*rtypep = RTYPE_TAL;
 	}
 
 	return 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 2019/10/16 21:43:41 jmc Exp $ */
+/*	$OpenBSD: main.c,v 1.21 2019/10/31 08:36:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -22,6 +22,7 @@
 #include <sys/wait.h>
 
 #include <assert.h>
+#include <ctype.h>
 #include <err.h>
 #include <dirent.h>
 #include <fcntl.h>
@@ -462,14 +463,64 @@ queue_add_from_mft_set(int fd, struct entityq *q, const struct mft *mft,
 static void
 queue_add_tal(int fd, struct entityq *q, const char *file, size_t *eid)
 {
-	char		*nfile;
+	char		*nfile, *nbuf, *line = NULL, *buf = NULL;
+	FILE		*in;
+	ssize_t		 n, i;
+	size_t		 sz = 0, bsz = 0;
+	int		 optcomment = 1;
+
+	if ((in = fopen(file, "r")) == NULL)
+		err(EXIT_FAILURE, "fopen: %s", file);
+
+	while ((n = getline(&line, &sz, in)) != -1) {
+		/* replace CRLF with just LF */
+		if (n > 1 && line[n - 1] == '\n' && line[n - 2] == '\r') {
+			line[n - 2] = '\n';
+			line[n - 1] = '\0';
+			n--;
+		}
+		if (optcomment) {
+			/* if this is comment, just eat the line */
+			if (line[0] == '#')
+				continue;
+			optcomment = 0;
+			/*
+			 * Empty line is end of section and needs
+			 * to be eaten as well.
+			 */
+			if (line[0] == '\n')
+				continue;
+		}
+
+		/* make sure every line is valid ascii */
+		for (i = 0; i < n; i++)
+			if (!isprint(line[i]) && !isspace(line[i]))
+				errx(EXIT_FAILURE, "getline: %s: "
+				    "invalid content", file);
+
+		/* concat line to buf */
+		if ((nbuf = realloc(buf, bsz + n + 1)) == NULL)
+			err(EXIT_FAILURE, NULL);
+		buf = nbuf;
+		bsz += n + 1;
+		strlcat(buf, line, bsz);
+		/* limit the buffer size */
+		if (bsz > 4096)
+			errx(EXIT_FAILURE, "%s: file too big", file);
+	}
+
+	free(line);
+	if (ferror(in))
+		err(EXIT_FAILURE, "getline: %s", file);
+	fclose(in);
 
 	if ((nfile = strdup(file)) == NULL)
 		err(EXIT_FAILURE, "strdup");
 
 	/* Not in a repository, so directly add to queue. */
-
-	entityq_add(fd, q, nfile, RTYPE_TAL, NULL, NULL, NULL, 0, NULL, eid);
+	entityq_add(fd, q, nfile, RTYPE_TAL, NULL, NULL, NULL, 0, buf, eid);
+	/* entityq_add makes a copy of buf */
+	free(buf);
 }
 
 /*
@@ -1020,7 +1071,6 @@ proc_parser(int fd, int force, int norev)
 	X509_STORE	*store;
 	X509_STORE_CTX	*ctx;
 	struct auth	*auths = NULL;
-	int		 first_tals = 1;
 
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_ciphers();
@@ -1102,31 +1152,12 @@ proc_parser(int fd, int force, int norev)
 		entp = TAILQ_FIRST(&q);
 		assert(entp != NULL);
 
-		/*
-		 * Extra security.
-		 * Our TAL files may be anywhere, but the repository
-		 * resources may only be in BASE_DIR.
-		 * When we've finished processing TAL files, make sure
-		 * that we can only see what's under that.
-		 */
-
-		if (entp->type != RTYPE_TAL && first_tals) {
-			if (unveil(BASE_DIR, "r") == -1)
-				err(EXIT_FAILURE, "%s: unveil", BASE_DIR);
-			if (unveil(NULL, NULL) == -1)
-				err(EXIT_FAILURE, "unveil");
-			first_tals = 0;
-		} else if (entp->type != RTYPE_TAL) {
-			assert(!first_tals);
-		} else if (entp->type == RTYPE_TAL)
-			assert(first_tals);
-
 		entity_buffer_resp(&b, &bsz, &bmax, entp);
 
 		switch (entp->type) {
 		case RTYPE_TAL:
 			assert(!entp->has_dgst);
-			if ((tal = tal_parse(entp->uri)) == NULL)
+			if ((tal = tal_parse(entp->uri, entp->descr)) == NULL)
 				goto out;
 			tal_buffer(&b, &bsz, &bmax, tal);
 			tal_free(tal);
@@ -1420,7 +1451,12 @@ main(int argc, char *argv[])
 
 	if (procpid == 0) {
 		close(fd[1]);
-		if (pledge("stdio rpath unveil", NULL) == -1)
+		/* Only allow access to BASE_DIR. */
+		if (unveil(BASE_DIR, "r") == -1)
+			err(EXIT_FAILURE, "%s: unveil", BASE_DIR);
+		if (unveil(NULL, NULL) == -1)
+			err(EXIT_FAILURE, "unveil");
+		if (pledge("stdio rpath", NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
 		proc_parser(fd[0], force, norev);
 		/* NOTREACHED */
@@ -1460,13 +1496,7 @@ main(int argc, char *argv[])
 
 	assert(rsync != proc);
 
-	/*
-	 * The main process drives the top-down scan to leaf ROAs using
-	 * data downloaded by the rsync process and parsed by the
-	 * parsing process.
-	 */
-
-	if (pledge("stdio", NULL) == -1)
+	if (pledge("stdio rpath", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
 	/*
@@ -1477,6 +1507,15 @@ main(int argc, char *argv[])
 
 	for (i = 0; i < talsz; i++)
 		queue_add_tal(proc, &q, tals[i], &eid);
+
+	/*
+	 * The main process drives the top-down scan to leaf ROAs using
+	 * data downloaded by the rsync process and parsed by the
+	 * parsing process.
+	 */
+
+	if (pledge("stdio", NULL) == -1)
+		err(EXIT_FAILURE, "pledge");
 
 	pfd[0].fd = rsync;
 	pfd[1].fd = proc;
