@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.69 2019/09/06 05:59:41 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.70 2019/10/31 21:15:14 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -21,8 +21,8 @@ CDIAGFLAGS+=	-Wold-style-definition
 .endif
 
 #CDIAGFLAGS+=	-Werror
-#DEBUG=-g
-#INSTALL_STRIP=
+DEBUG=-g
+INSTALL_STRIP=
 
 WARNINGS=yes
 
@@ -67,6 +67,7 @@ SRCS_KEY+=	poly1305.c
 .if (${OPENSSL:L} == "yes")
 SRCS_KEY+=	ssh-dss.c
 SRCS_KEY+=	ssh-ecdsa.c
+SRCS_KEY+=	ssh-ecdsa-sk.c
 SRCS_KEY+=	ssh-rsa.c
 SRCS_KEY+=	sshbuf-getput-crypto.c
 SRCS_KEY+=	digest-openssl.c
