@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.26 2019/10/31 12:46:02 jsing Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.27 2019/10/31 13:02:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -186,8 +186,14 @@ pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 		}
 
 		if (rctx->pad_mode == RSA_X931_PADDING) {
-			if (!setup_tbuf(rctx, ctx))
+			if ((size_t)EVP_PKEY_size(ctx->pkey) < tbslen + 1) {
+				RSAerror(RSA_R_KEY_SIZE_TOO_SMALL);
 				return -1;
+			}
+			if (!setup_tbuf(rctx, ctx)) {
+				RSAerror(ERR_R_MALLOC_FAILURE);
+				return -1;
+			}
 			memcpy(rctx->tbuf, tbs, tbslen);
 			rctx->tbuf[tbslen] =
 			    RSA_X931_hash_id(EVP_MD_type(rctx->md));
@@ -278,6 +284,10 @@ pkey_rsa_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig, size_t siglen,
 		if (rctx->pad_mode == RSA_PKCS1_PADDING)
 			return RSA_verify(EVP_MD_type(rctx->md), tbs, tbslen,
 			    sig, siglen, rsa);
+		if (tbslen != (size_t)EVP_MD_size(rctx->md)) {
+			RSAerror(RSA_R_INVALID_DIGEST_LENGTH);
+			return -1;
+		}
 		if (rctx->pad_mode == RSA_X931_PADDING) {
 			if (pkey_rsa_verifyrecover(ctx, NULL, &rslen, sig,
 			    siglen) <= 0)
@@ -447,8 +457,12 @@ bad_pad:
 		return 1;
 
 	case EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP:
-		if (!p2)
+		if (p2 == NULL || !BN_is_odd((BIGNUM *)p2) ||
+		    BN_is_one((BIGNUM *)p2)) {
+			RSAerror(RSA_R_BAD_E_VALUE);
 			return -2;
+		}
+		BN_free(rctx->pub_exp);
 		rctx->pub_exp = p2;
 		return 1;
 
