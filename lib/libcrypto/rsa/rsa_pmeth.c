@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.28 2019/10/31 13:05:08 jsing Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.29 2019/10/31 13:06:30 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -245,7 +245,7 @@ pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx, unsigned char *rout, size_t *routlen,
 				return 0;
 			ret--;
 			if (rctx->tbuf[ret] !=
-				RSA_X931_hash_id(EVP_MD_type(rctx->md))) {
+			    RSA_X931_hash_id(EVP_MD_type(rctx->md))) {
 				RSAerror(RSA_R_ALGORITHM_MISMATCH);
 				return 0;
 			}
@@ -430,7 +430,7 @@ pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 			rctx->pad_mode = p1;
 			return 1;
 		}
-bad_pad:
+ bad_pad:
 		RSAerror(RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
 		return -2;
 
@@ -642,8 +642,8 @@ pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 		return ret;
 	}
 
-not_a_number:
-out_of_range:
+ not_a_number:
+ out_of_range:
 	return -2;
 }
 
