@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.27 2019/10/31 13:02:49 jsing Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.28 2019/10/31 13:05:08 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -215,11 +215,13 @@ pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 				return -1;
 			ret = RSA_private_encrypt(RSA_size(rsa), rctx->tbuf,
 			    sig, rsa, RSA_NO_PADDING);
-		} else
+		} else {
 			return -1;
-	} else
+		}
+	} else {
 		ret = RSA_private_encrypt(tbslen, tbs, sig, ctx->pkey->pkey.rsa,
 		    rctx->pad_mode);
+	}
 	if (ret < 0)
 		return ret;
 	*siglen = ret;
@@ -261,11 +263,13 @@ pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx, unsigned char *rout, size_t *routlen,
 			if (ret <= 0)
 				return 0;
 			ret = sltmp;
-		} else
+		} else {
 			return -1;
-	} else
+		}
+	} else {
 		ret = RSA_public_decrypt(siglen, sig, rout, ctx->pkey->pkey.rsa,
 		    rctx->pad_mode);
+	}
 	if (ret < 0)
 		return ret;
 	*routlen = ret;
@@ -306,8 +310,9 @@ pkey_rsa_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig, size_t siglen,
 			if (ret <= 0)
 				return 0;
 			return 1;
-		} else
+		} else {
 			return -1;
+		}
 	} else {
 		if (!setup_tbuf(rctx, ctx))
 			return -1;
@@ -439,9 +444,9 @@ bad_pad:
 			RSAerror(RSA_R_INVALID_PSS_SALTLEN);
 			return -2;
 		}
-		if (type == EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN)
+		if (type == EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN) {
 			*(int *)p2 = rctx->saltlen;
-		else {
+		} else {
 			if (p1 < -2)
 				return -2;
 			rctx->saltlen = p1;
