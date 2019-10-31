@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.25 2019/10/31 12:32:48 jsing Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.26 2019/10/31 12:46:02 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -149,11 +149,12 @@ pkey_rsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 static int
 setup_tbuf(RSA_PKEY_CTX *ctx, EVP_PKEY_CTX *pk)
 {
-	if (ctx->tbuf)
+	if (ctx->tbuf != NULL)
 		return 1;
-	ctx->tbuf = malloc(EVP_PKEY_size(pk->pkey));
-	if (!ctx->tbuf)
+	if ((ctx->tbuf = calloc(1, EVP_PKEY_size(pk->pkey))) == NULL) {
+		RSAerror(ERR_R_MALLOC_FAILURE);
 		return 0;
+	}
 	return 1;
 }
 
@@ -635,19 +636,20 @@ pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	BN_GENCB *pcb, cb;
 	int ret;
 
-	if (!rctx->pub_exp) {
-		rctx->pub_exp = BN_new();
-		if (!rctx->pub_exp || !BN_set_word(rctx->pub_exp, RSA_F4))
+	if (rctx->pub_exp == NULL) {
+		if ((rctx->pub_exp = BN_new()) == NULL)
+			return 0;
+		if (!BN_set_word(rctx->pub_exp, RSA_F4))
 			return 0;
 	}
-	rsa = RSA_new();
-	if (!rsa)
+	if ((rsa = RSA_new()) == NULL)
 		return 0;
-	if (ctx->pkey_gencb) {
+	if (ctx->pkey_gencb != NULL) {
 		pcb = &cb;
 		evp_pkey_set_cb_translate(pcb, ctx);
-	} else
+	} else {
 		pcb = NULL;
+	}
 	ret = RSA_generate_key_ex(rsa, rctx->nbits, rctx->pub_exp, pcb);
 	if (ret > 0)
 		EVP_PKEY_assign_RSA(pkey, rsa);
