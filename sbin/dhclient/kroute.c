@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.167 2019/08/01 15:52:15 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.168 2019/10/31 16:39:09 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -57,8 +57,10 @@ void		 delete_address(char *, int, struct in_addr);
 
 char		*get_routes(int, size_t *);
 void		 get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
-unsigned int	 route_in_rtstatic(struct rt_msghdr *, uint8_t *, unsigned int);
-void		 flush_routes(int, int, int, uint8_t *, unsigned int);
+unsigned int	 route_in_rtstatic(struct rt_msghdr *, uint8_t *, unsigned int,
+    struct in_addr);
+void		 flush_routes(int, int, int, uint8_t *, unsigned int,
+    struct in_addr);
 void		 add_route(char *, int, int, struct in_addr, struct in_addr,
 		    struct in_addr, struct in_addr, int);
 void		 set_routes(char *, int, int, int, struct in_addr,
@@ -197,7 +199,7 @@ get_routes(int rdomain, size_t *len)
 	mib[2] = 0;
 	mib[3] = AF_INET;
 	mib[4] = NET_RT_FLAGS;
-	mib[5] = RTF_STATIC | RTF_GATEWAY | RTF_LLINFO;
+	mib[5] = RTF_STATIC;
 	mib[6] = rdomain;
 
 	buf = NULL;
@@ -262,7 +264,7 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
  */
 unsigned int
 route_in_rtstatic(struct rt_msghdr *rtm, uint8_t *rtstatic,
-    unsigned int rtstatic_len)
+    unsigned int rtstatic_len, struct in_addr ifa)
 {
 	struct sockaddr		*rti_info[RTAX_MAX];
 	struct sockaddr		*dst, *netmask, *gateway;
@@ -299,6 +301,20 @@ route_in_rtstatic(struct rt_msghdr *rtm, uint8_t *rtstatic,
 		if (len == 0)
 			break;
 
+		/* Direct route in rtstatic:
+		 *
+		 * dst=1.2.3.4 netmask=255.255.255.255 gateway=0.0.0.0
+		 *
+		 * direct route in rtm:
+		 *
+		 * dst=1.2.3.4 netmask=255.255.255.255 gateway = ifa
+		 *
+		 * So replace 0.0.0.0 with ifa for comparison.
+		 */
+		if (rtstaticgatewayaddr == INADDR_ANY)
+			rtstaticgatewayaddr = ifa.s_addr;
+		rtstaticdstaddr &= rtstaticnetmaskaddr;
+
 		if (dstaddr == rtstaticdstaddr &&
 		    netmaskaddr == rtstaticnetmaskaddr &&
 		    gatewayaddr == rtstaticgatewayaddr)
@@ -317,8 +333,8 @@ route_in_rtstatic(struct rt_msghdr *rtm, uint8_t *rtstatic,
  *	arp -dan
  */
 void
-flush_routes(int index, int routefd, int rdomain,
-    uint8_t *rtstatic, unsigned int rtstatic_len)
+flush_routes(int index, int routefd, int rdomain, uint8_t *rtstatic,
+    unsigned int rtstatic_len, struct in_addr ifa)
 {
 	static int			 seqno;
 	char				*lim, *buf, *next;
@@ -340,13 +356,13 @@ flush_routes(int index, int routefd, int rdomain,
 			continue;
 		if (rtm->rtm_tableid != rdomain)
 			continue;
-		if ((rtm->rtm_flags & (RTF_GATEWAY|RTF_STATIC|RTF_LLINFO)) == 0)
+		if ((rtm->rtm_flags & RTF_STATIC) == 0)
 			continue;
 		if ((rtm->rtm_flags & (RTF_LOCAL|RTF_BROADCAST)) != 0)
 			continue;
 
 		/* Don't bother deleting a route we're going to add. */
-		pos = route_in_rtstatic(rtm, rtstatic, rtstatic_len);
+		pos = route_in_rtstatic(rtm, rtstatic, rtstatic_len, ifa);
 		if (pos < rtstatic_len)
 			continue;
 
@@ -469,7 +485,7 @@ set_routes(char *name, int index, int rdomain, int routefd, struct in_addr addr,
 	unsigned int		 i, len;
 
 	if (rtstatic_len <= RTLEN)
-		flush_routes(index, routefd, rdomain, rtstatic, rtstatic_len);
+		flush_routes(index, routefd, rdomain, rtstatic, rtstatic_len, addr);
 
 	addrnet = addr.s_addr & addrmask.s_addr;
 
