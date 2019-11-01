@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.56 2019/10/15 10:05:43 mpi Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.57 2019/11/01 20:58:01 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -63,7 +63,6 @@ struct __mp_lock sched_lock;
 
 void			schedcpu(void *);
 uint32_t		decay_aftersleep(uint32_t, uint32_t);
-static inline void	resched_proc(struct proc *, u_char);
 
 void
 scheduler_start(void)
@@ -254,7 +253,6 @@ schedcpu(void *arg)
 		p->p_cpticks = 0;
 		newcpu = (u_int) decay_cpu(loadfac, p->p_estcpu);
 		setpriority(p, newcpu, p->p_p->ps_nice);
-		resched_proc(p, p->p_usrpri);
 
 		if (p->p_priority >= PUSER) {
 			if (p->p_stat == SRUN &&
@@ -438,29 +436,6 @@ mi_switch(void)
 #endif
 }
 
-static inline void
-resched_proc(struct proc *p, u_char pri)
-{
-	struct cpu_info *ci;
-
-	/*
-	 * XXXSMP
-	 * This does not handle the case where its last
-	 * CPU is running a higher-priority process, but every
-	 * other CPU is running a lower-priority process.  There
-	 * are ways to handle this situation, but they're not
-	 * currently very pretty, and we also need to weigh the
-	 * cost of moving a process from one CPU to another.
-	 *
-	 * XXXSMP
-	 * There is also the issue of locking the other CPU's
-	 * sched state, which we currently do not do.
-	 */
-	ci = (p->p_cpu != NULL) ? p->p_cpu : curcpu();
-	if (pri < ci->ci_schedstate.spc_curpriority)
-		need_resched(ci);
-}
-
 /*
  * Change process state to be runnable,
  * placing it on the run queue if it is in memory,
@@ -498,7 +473,6 @@ setrunnable(struct proc *p)
 		setpriority(p, newcpu, p->p_p->ps_nice);
 	}
 	p->p_slptime = 0;
-	resched_proc(p, MIN(p->p_priority, p->p_usrpri));
 }
 
 /*
