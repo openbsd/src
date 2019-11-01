@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.62 2019/06/14 05:52:43 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.63 2019/11/01 19:18:29 mpi Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -414,12 +414,8 @@ void		uvm_unmap_remove(struct vm_map*, vaddr_t, vaddr_t,
 
 struct p_inentry;
 
-int		uvm_map_inentry_recheck(u_long serial, vaddr_t,
-		    struct p_inentry *);
 int		uvm_map_inentry_sp(vm_map_entry_t);
 int		uvm_map_inentry_pc(vm_map_entry_t);
-boolean_t	uvm_map_inentry_fix(struct proc *, struct p_inentry *,
-		    vaddr_t addr, int (*fn)(vm_map_entry_t), u_long serial);
 boolean_t	uvm_map_inentry(struct proc *, struct p_inentry *, vaddr_t addr,
 		    const char *fmt, int (*fn)(vm_map_entry_t), u_long serial);
 
