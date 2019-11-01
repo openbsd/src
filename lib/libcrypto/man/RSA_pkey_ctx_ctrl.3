@@ -1,8 +1,8 @@
-.\" $OpenBSD: RSA_pkey_ctx_ctrl.3,v 1.1 2019/11/01 12:02:58 schwarze Exp $
+.\" $OpenBSD: RSA_pkey_ctx_ctrl.3,v 1.2 2019/11/01 12:45:36 schwarze Exp $
 .\" full merge up to:
-.\" OpenSSL man3/EVP_PKEY_CTX_ctrl 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" OpenSSL man3/EVP_PKEY_CTX_ctrl.pod 99d63d46 Oct 26 13:56:48 2016 -0400
 .\" selective merge up to:
-.\" OpenSSL man3/EVP_PKEY_CTX_ctrl df75c2b f Dec 9 01:02:36 2018 +0100
+.\" OpenSSL man3/EVP_PKEY_CTX_ctrl.pod df75c2b f Dec 9 01:02:36 2018 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>
 .\" and Antoine Salon <asalon@vmware.com>.
@@ -60,8 +60,6 @@
 .Nm RSA_pkey_ctx_ctrl ,
 .Nm EVP_PKEY_CTX_set_rsa_padding ,
 .Nm EVP_PKEY_CTX_get_rsa_padding ,
-.Nm EVP_PKEY_CTX_set_rsa_pss_saltlen ,
-.Nm EVP_PKEY_CTX_get_rsa_pss_saltlen ,
 .Nm EVP_PKEY_CTX_set_rsa_keygen_bits ,
 .Nm EVP_PKEY_CTX_set_rsa_keygen_pubexp ,
 .Nm EVP_PKEY_CTX_set_rsa_mgf1_md ,
@@ -69,7 +67,9 @@
 .Nm EVP_PKEY_CTX_set_rsa_oaep_md ,
 .Nm EVP_PKEY_CTX_get_rsa_oaep_md ,
 .Nm EVP_PKEY_CTX_set0_rsa_oaep_label ,
-.Nm EVP_PKEY_CTX_get0_rsa_oaep_label
+.Nm EVP_PKEY_CTX_get0_rsa_oaep_label ,
+.Nm EVP_PKEY_CTX_set_rsa_pss_saltlen ,
+.Nm EVP_PKEY_CTX_get_rsa_pss_saltlen
 .Nd RSA private key control operations
 .Sh SYNOPSIS
 .In openssl/rsa.h
@@ -90,16 +90,6 @@
 .Fo EVP_PKEY_CTX_get_rsa_padding
 .Fa "EVP_PKEY_CTX *ctx"
 .Fa "int *ppad"
-.Fc
-.Ft int
-.Fo EVP_PKEY_CTX_set_rsa_pss_saltlen
-.Fa "EVP_PKEY_CTX *ctx"
-.Fa "int len"
-.Fc
-.Ft int
-.Fo EVP_PKEY_CTX_get_rsa_pss_saltlen
-.Fa "EVP_PKEY_CTX *ctx"
-.Fa "int *plen"
 .Fc
 .Ft int
 .Fo EVP_PKEY_CTX_set_rsa_keygen_bits
@@ -142,6 +132,16 @@
 .Fa "EVP_PKEY_CTX *ctx"
 .Fa "unsigned char **plabel"
 .Fc
+.Ft int
+.Fo EVP_PKEY_CTX_set_rsa_pss_saltlen
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "int len"
+.Fc
+.Ft int
+.Fo EVP_PKEY_CTX_get_rsa_pss_saltlen
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "int *plen"
+.Fc
 .Sh DESCRIPTION
 The function
 .Fn RSA_pkey_ctx_ctrl
@@ -175,7 +175,7 @@ for X9.31 padding (signature operations only) and
 (sign and verify only).
 .Pp
 Two RSA padding modes behave differently if
-.Fn EVP_PKEY_CTX_set_signature_md
+.Xr EVP_PKEY_CTX_set_signature_md 3
 is used.
 If this macro is called for PKCS#1 padding, the plaintext buffer is an
 actual digest value and is encapsulated in a
@@ -193,26 +193,6 @@ The
 .Fn EVP_PKEY_CTX_get_rsa_padding
 macro retrieves the RSA padding mode for
 .Fa ctx .
-.Pp
-The
-.Fn EVP_PKEY_CTX_set_rsa_pss_saltlen
-macro sets the RSA PSS salt length to
-.Fa len .
-As its name implies, it is only supported for PSS padding.
-Two special values are supported: -1 sets the salt length to the digest
-length.
-When signing -2 sets the salt length to the maximum permissible value.
-When verifying -2 causes the salt length to be automatically determined
-based on the PSS block structure.
-If this macro is not called a salt length value of -2 is used by
-default.
-.Pp
-The
-.Fn EVP_PKEY_CTX_get_rsa_pss_saltlen
-macro retrieves the RSA PSS salt length for
-.Fa ctx .
-The padding mode must have been set to
-.Dv RSA_PKCS1_PSS_PADDING .
 .Pp
 The
 .Fn EVP_PKEY_CTX_set_rsa_keygen_bits
@@ -251,20 +231,19 @@ The padding mode must have been set to
 .Dv RSA_PKCS1_OAEP_PADDING
 or
 .Dv RSA_PKCS1_PSS_PADDING .
+.Ss Optimal asymmetric encryption padding
+The following macros require that the padding mode was set to
+.Dv RSA_PKCS1_OAEP_PADDING .
 .Pp
 The
 .Fn EVP_PKEY_CTX_set_rsa_oaep_md
 macro sets the message digest type used in RSA OAEP to
 .Fa md .
-The padding mode must have been set to
-.Dv RSA_PKCS1_OAEP_PADDING .
 .Pp
 The
 .Fn EVP_PKEY_CTX_get_rsa_oaep_md
 macro gets the message digest type used in RSA OAEP to
-.Pf * Fa md .
-The padding mode must have been set to
-.Dv RSA_PKCS1_OAEP_PADDING .
+.Pf * Fa pmd .
 .Pp
 The
 .Fn EVP_PKEY_CTX_set0_rsa_oaep_label
@@ -282,18 +261,34 @@ is 0, the label is cleared.
 The library takes ownership of the label so the caller should not
 free the original memory pointed to by
 .Fa label .
-The padding mode must have been set to
-.Dv RSA_PKCS1_OAEP_PADDING .
 .Pp
 The
 .Fn EVP_PKEY_CTX_get0_rsa_oaep_label
 macro gets the RSA OAEP label to
 .Pf * Fa plabel .
 The return value is the label length.
-The padding mode must have been set to
-.Dv RSA_PKCS1_OAEP_PADDING .
 The resulting pointer is owned by the library and should not be
 freed by the caller.
+.Ss Probabilistic signature scheme
+The following macros require that the padding mode was set to
+.Dv RSA_PKCS1_PSS_PADDING .
+.Pp
+The
+.Fn EVP_PKEY_CTX_set_rsa_pss_saltlen
+macro sets the RSA PSS salt length to
+.Fa len .
+Two special values are supported: -1 sets the salt length to the digest
+length.
+When signing -2 sets the salt length to the maximum permissible value.
+When verifying -2 causes the salt length to be automatically determined
+based on the PSS block structure.
+If this macro is not called a salt length value of -2 is used by
+default.
+.Pp
+The
+.Fn EVP_PKEY_CTX_get_rsa_pss_saltlen
+macro retrieves the RSA PSS salt length for
+.Fa ctx .
 .Sh RETURN VALUES
 These functions return a positive value for success or 0 or a negative
 value for failure.
@@ -315,19 +310,19 @@ supported by the public key algorithm.
 .Sh HISTORY
 The functions
 .Fn EVP_PKEY_CTX_set_rsa_padding ,
-.Fn EVP_PKEY_CTX_set_rsa_pss_saltlen ,
 .Fn EVP_PKEY_CTX_set_rsa_keygen_bits ,
+.Fn EVP_PKEY_CTX_set_rsa_keygen_pubexp ,
 and
-.Fn EVP_PKEY_CTX_set_rsa_keygen_pubexp
+.Fn EVP_PKEY_CTX_set_rsa_pss_saltlen
 first appeared in OpenSSL 1.0.0 and have been available since
 .Ox 4.9 .
 .Pp
 The functions
 .Fn EVP_PKEY_CTX_get_rsa_padding ,
-.Fn EVP_PKEY_CTX_get_rsa_pss_saltlen ,
 .Fn EVP_PKEY_CTX_set_rsa_mgf1_md ,
+.Fn EVP_PKEY_CTX_get_rsa_mgf1_md ,
 and
-.Fn EVP_PKEY_CTX_get_rsa_mgf1_md
+.Fn EVP_PKEY_CTX_get_rsa_pss_saltlen
 first appeared in OpenSSL 1.0.1 and have been available since
 .Ox 5.3 .
 .Pp
