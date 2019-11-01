@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.15 2019/10/15 10:13:03 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.16 2019/11/01 17:50:53 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
@@ -87,6 +87,8 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			frame = (vaddr_t)u->u_pcb.pcb_sp;
 			(*pr)("at %p\n", frame);
 		} else {
+			write_all_windows();
+
 			frame = (vaddr_t)addr - BIAS;
 		}
 	}
@@ -157,6 +159,8 @@ db_save_stack_trace(struct db_stack_trace *st)
 	struct frame64	*f64;
 	db_addr_t	pc;
 	vaddr_t		frame;
+
+	write_all_windows();
 
 	frame = (vaddr_t)__builtin_frame_address(0) - BIAS;
 	if ((frame & 1) == 0)
