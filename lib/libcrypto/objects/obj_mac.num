@@ -989,3 +989,4 @@ dhSinglePass_cofactorDH_sha384kdf_scheme	988
 dhSinglePass_cofactorDH_sha512kdf_scheme	989
 dh_std_kdf	990
 dh_cofactor_kdf	991
+pSpecified	992
