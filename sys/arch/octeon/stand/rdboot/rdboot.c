@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdboot.c,v 1.2 2019/10/29 02:55:52 deraadt Exp $	*/
+/*	$OpenBSD: rdboot.c,v 1.3 2019/11/01 20:54:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -41,7 +41,7 @@
 
 #define DEVRANDOM	"/dev/random"
 #define BOOTRANDOM	"/etc/random.seed"
-#define BOOTRANDOM_MAX	512
+#define BOOTRANDOM_MAX	256	/* no point being greater than RC4STATE */
 #define KERNEL		"/bsd"
 
 void	loadrandom(void);

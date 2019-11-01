@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.67 2019/08/03 15:22:17 deraadt Exp $	*/
+/*	$OpenBSD: stand.h,v 1.68 2019/11/01 20:54:52 deraadt Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -132,7 +132,7 @@ char	*getdisklabel(const char *, struct disklabel *);
 u_int	dkcksum(const struct disklabel *);
 
 #define BOOTRANDOM	"/etc/random.seed"
-#define BOOTRANDOM_MAX	512
+#define BOOTRANDOM_MAX	256	/* no point being greater than RC4STATE */
 extern char rnddata[BOOTRANDOM_MAX];
 
 void	printf(const char *, ...);
