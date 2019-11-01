@@ -2359,6 +2359,7 @@
 ./usr/libexec/spellprog
 ./usr/libexec/ssh-keysign
 ./usr/libexec/ssh-pkcs11-helper
+./usr/libexec/ssh-sk-helper
 ./usr/libexec/tradcpp
 ./usr/libexec/vi.recover
 ./usr/local
