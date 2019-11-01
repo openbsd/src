@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.46 2019/11/01 03:45:13 jsing Exp $ */
+/* $OpenBSD: rsa.h,v 1.47 2019/11/01 15:13:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -627,8 +627,10 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_INVALID_DIGEST_LENGTH			 143
 #define RSA_R_INVALID_HEADER				 137
 #define RSA_R_INVALID_KEYBITS				 145
+#define RSA_R_INVALID_LABEL				 160
 #define RSA_R_INVALID_MESSAGE_LENGTH			 131
 #define RSA_R_INVALID_MGF1_MD				 156
+#define RSA_R_INVALID_OAEP_PARAMETERS			 161
 #define RSA_R_INVALID_PADDING				 138
 #define RSA_R_INVALID_PADDING_MODE			 141
 #define RSA_R_INVALID_PSS_PARAMETERS			 149
@@ -662,6 +664,8 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_UNKNOWN_MASK_DIGEST			 151
 #define RSA_R_UNKNOWN_PADDING_TYPE			 118
 #define RSA_R_UNKNOWN_PSS_DIGEST			 152
+#define RSA_R_UNSUPPORTED_ENCRYPTION_TYPE		 162
+#define RSA_R_UNSUPPORTED_LABEL_SOURCE			 163
 #define RSA_R_UNSUPPORTED_MASK_ALGORITHM		 153
 #define RSA_R_UNSUPPORTED_MASK_PARAMETER		 154
 #define RSA_R_UNSUPPORTED_SIGNATURE_TYPE		 155

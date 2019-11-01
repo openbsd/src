@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_err.c,v 1.19 2019/11/01 03:45:13 jsing Exp $ */
+/* $OpenBSD: rsa_err.c,v 1.20 2019/11/01 15:13:05 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -101,9 +101,11 @@ static ERR_STRING_DATA RSA_str_reasons[] = {
 	{ERR_REASON(RSA_R_INVALID_DIGEST)        , "invalid digest"},
 	{ERR_REASON(RSA_R_INVALID_DIGEST_LENGTH) , "invalid digest length"},
 	{ERR_REASON(RSA_R_INVALID_HEADER)        , "invalid header"},
+	{ERR_REASON(RSA_R_INVALID_LABEL)         , "invalid label"},
 	{ERR_REASON(RSA_R_INVALID_KEYBITS)       , "invalid keybits"},
 	{ERR_REASON(RSA_R_INVALID_MESSAGE_LENGTH), "invalid message length"},
 	{ERR_REASON(RSA_R_INVALID_MGF1_MD)       , "invalid mgf1 md"},
+	{ERR_REASON(RSA_R_INVALID_OAEP_PARAMETERS), "invalid oaep parameters"},
 	{ERR_REASON(RSA_R_INVALID_PADDING)       , "invalid padding"},
 	{ERR_REASON(RSA_R_INVALID_PADDING_MODE)  , "invalid padding mode"},
 	{ERR_REASON(RSA_R_INVALID_PSS_PARAMETERS), "invalid pss parameters"},
@@ -137,6 +139,8 @@ static ERR_STRING_DATA RSA_str_reasons[] = {
 	{ERR_REASON(RSA_R_UNKNOWN_MASK_DIGEST)   , "unknown mask digest"},
 	{ERR_REASON(RSA_R_UNKNOWN_PADDING_TYPE)  , "unknown padding type"},
 	{ERR_REASON(RSA_R_UNKNOWN_PSS_DIGEST)    , "unknown pss digest"},
+	{ERR_REASON(RSA_R_UNSUPPORTED_ENCRYPTION_TYPE), "unsupported encryption type"},
+	{ERR_REASON(RSA_R_UNSUPPORTED_LABEL_SOURCE), "unsupported label source"},
 	{ERR_REASON(RSA_R_UNSUPPORTED_MASK_ALGORITHM), "unsupported mask algorithm"},
 	{ERR_REASON(RSA_R_UNSUPPORTED_MASK_PARAMETER), "unsupported mask parameter"},
 	{ERR_REASON(RSA_R_UNSUPPORTED_SIGNATURE_TYPE), "unsupported signature type"},
