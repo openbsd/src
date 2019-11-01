@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.158 2019/08/28 10:37:42 schwarze Exp $
+# $OpenBSD: Makefile,v 1.159 2019/11/01 12:02:58 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -220,6 +220,7 @@ MAN=	\
 	RSA_meth_new.3 \
 	RSA_new.3 \
 	RSA_padding_add_PKCS1_type_1.3 \
+	RSA_pkey_ctx_ctrl.3 \
 	RSA_print.3 \
 	RSA_private_encrypt.3 \
 	RSA_public_encrypt.3 \

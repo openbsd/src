@@ -1,4 +1,4 @@
-.\" $OpenBSD: RSA_new.3,v 1.15 2019/08/23 15:18:13 schwarze Exp $
+.\" $OpenBSD: RSA_new.3,v 1.16 2019/11/01 12:02:58 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL doc/man3/RSA_new.pod e9b77246 Jan 20 19:58:49 2017 +0100
 .\" OpenSSL doc/crypto/rsa.pod 35d2e327 Jun 3 16:19:49 2016 -0400 (final)
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 23 2019 $
+.Dd $Mdocdate: November 1 2019 $
 .Dt RSA_NEW 3
 .Os
 .Sh NAME
@@ -225,6 +225,7 @@ returns 1 for success or 0 for failure.
 .Xr RSA_get_ex_new_index 3 ,
 .Xr RSA_meth_new 3 ,
 .Xr RSA_padding_add_PKCS1_type_1 3 ,
+.Xr RSA_pkey_ctx_ctrl 3 ,
 .Xr RSA_print 3 ,
 .Xr RSA_private_encrypt 3 ,
 .Xr RSA_PSS_PARAMS_new 3 ,
