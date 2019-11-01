@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.16 2019/10/20 16:22:22 florian Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.17 2019/11/01 18:15:28 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -99,8 +99,8 @@ main(int argc, char *argv[])
 
 	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-
 	strlcpy(sun.sun_path, sockname, sizeof(sun.sun_path));
+
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "connect: %s", sockname);
 
