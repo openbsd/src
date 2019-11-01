@@ -1923,6 +1923,7 @@
 ./usr/share/man/man3/RSA_meth_new.3
 ./usr/share/man/man3/RSA_new.3
 ./usr/share/man/man3/RSA_padding_add_PKCS1_type_1.3
+./usr/share/man/man3/RSA_pkey_ctx_ctrl.3
 ./usr/share/man/man3/RSA_print.3
 ./usr/share/man/man3/RSA_private_encrypt.3
 ./usr/share/man/man3/RSA_public_encrypt.3
