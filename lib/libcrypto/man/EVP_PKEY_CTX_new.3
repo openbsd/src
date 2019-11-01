@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_CTX_new.3,v 1.9 2019/10/29 14:10:01 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_CTX_new.3,v 1.10 2019/11/01 19:51:09 schwarze Exp $
 .\" full merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 29 2019 $
+.Dd $Mdocdate: November 1 2019 $
 .Dt EVP_PKEY_CTX_NEW 3
 .Os
 .Sh NAME
@@ -133,8 +133,9 @@ constants are supported:
 .Dv EVP_PKEY_GOSTIMIT ,
 .Dv EVP_PKEY_GOSTR01 ,
 .Dv EVP_PKEY_HMAC ,
+.Dv EVP_PKEY_RSA ,
 and
-.Dv EVP_PKEY_RSA .
+.Dv EVP_PKEY_RSA_PSS .
 Application programs can define additional
 .Fa id
 values using
@@ -175,6 +176,7 @@ if an error occurred.
 .Xr EVP_PKEY_sign 3 ,
 .Xr EVP_PKEY_verify 3 ,
 .Xr EVP_PKEY_verify_recover 3 ,
+.Xr RSA_pkey_ctx_ctrl 3 ,
 .Xr X25519 3
 .Sh HISTORY
 These functions first appeared in OpenSSL 1.0.0
