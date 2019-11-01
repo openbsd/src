@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_err.c,v 1.18 2019/10/31 13:56:29 jsing Exp $ */
+/* $OpenBSD: rsa_err.c,v 1.19 2019/11/01 03:45:13 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -90,6 +90,7 @@ static ERR_STRING_DATA RSA_str_reasons[] = {
 	{ERR_REASON(RSA_R_DATA_TOO_LARGE_FOR_MODULUS), "data too large for modulus"},
 	{ERR_REASON(RSA_R_DATA_TOO_SMALL)        , "data too small"},
 	{ERR_REASON(RSA_R_DATA_TOO_SMALL_FOR_KEY_SIZE), "data too small for key size"},
+	{ERR_REASON(RSA_R_DIGEST_DOES_NOT_MATCH) , "digest does not match"},
 	{ERR_REASON(RSA_R_DIGEST_NOT_ALLOWED)    , "digest not allowed"},
 	{ERR_REASON(RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY), "digest too big for rsa key"},
 	{ERR_REASON(RSA_R_DMP1_NOT_CONGRUENT_TO_D), "dmp1 not congruent to d"},

@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.45 2019/10/31 13:56:29 jsing Exp $ */
+/* $OpenBSD: rsa.h,v 1.46 2019/11/01 03:45:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -615,6 +615,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_DATA_TOO_LARGE_FOR_MODULUS		 132
 #define RSA_R_DATA_TOO_SMALL				 111
 #define RSA_R_DATA_TOO_SMALL_FOR_KEY_SIZE		 122
+#define RSA_R_DIGEST_DOES_NOT_MATCH			 158
 #define RSA_R_DIGEST_NOT_ALLOWED			 145
 #define RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY		 112
 #define RSA_R_DMP1_NOT_CONGRUENT_TO_D			 124
