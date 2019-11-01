@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.30 2019/01/29 17:43:23 mpi Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.31 2019/11/01 16:04:19 mpi Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2018 Paul Irofti <pirofti@openbsd.org>
@@ -22,7 +22,6 @@
 #include <sys/stat.h>
 #include <sys/atomic.h>
 #include <sys/time.h>
-#include <sys/futex.h>
 
 #include <errno.h>
 #include <fcntl.h>
