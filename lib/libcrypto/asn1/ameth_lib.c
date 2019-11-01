@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.19 2018/08/24 20:22:15 tb Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.20 2019/11/01 15:08:36 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -71,6 +71,7 @@
 #include "asn1_locl.h"
 
 extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[];
+extern const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[];
 extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
@@ -107,6 +108,9 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_GOST
 	&gostr01_asn1_meths[1],
 	&gostr01_asn1_meths[2],
+#endif
+#ifndef OPENSSL_NO_RSA
+	&rsa_pss_asn1_meth,
 #endif
 };
 
