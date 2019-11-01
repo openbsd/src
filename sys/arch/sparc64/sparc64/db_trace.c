@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.16 2019/11/01 17:50:53 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.17 2019/11/01 18:03:50 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
@@ -171,7 +171,6 @@ db_save_stack_trace(struct db_stack_trace *st)
 		f64 = (struct frame64 *)(frame + BIAS);
 		pc = (db_addr_t)KLOAD(f64->fr_pc);
 
-		st->st_pc[st->st_count++] = pc;
 		frame = KLOAD(f64->fr_fp);
 
 		if (pc < KERNBASE || pc >= KERNEND)
@@ -180,6 +179,8 @@ db_save_stack_trace(struct db_stack_trace *st)
 			break;
 		if ((frame & 1) == 0)
 			break;
+
+		st->st_pc[st->st_count++] = pc;
 	}
 }
 
