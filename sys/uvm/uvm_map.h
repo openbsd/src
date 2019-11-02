@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.63 2019/11/01 19:18:29 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.64 2019/11/02 09:36:08 mpi Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -287,15 +287,19 @@ RBT_PROTOTYPE(uvm_map_addr, vm_map_entry, daddrs.addr_entry,
  *
  *
  * read_locks and write_locks are used in lock debugging code.
+ *
+ *  Locks used to protect struct members in this file:
+ *	I	immutable after creation or exec(2)
+ *	v	`vm_map_lock' (this map `lock' or `mtx')
  */
 struct vm_map {
-	struct pmap *		pmap;		/* Physical map */
+	struct pmap		*pmap;		/* [I] Physical map */
 	struct rwlock		lock;		/* Lock for map data */
 	struct mutex		mtx;
-	u_long			sserial;	/* counts stack changes */
-	u_long			wserial;	/* counts PROT_WRITE increases */
+	u_long			sserial;	/* [v] # stack changes */
+	u_long			wserial;	/* [v] # PROT_WRITE increases */
 
-	struct uvm_map_addr	addr;		/* Entry tree, by addr */
+	struct uvm_map_addr	addr;		/* [v] Entry tree, by addr */
 
 	vsize_t			size;		/* virtual size */
 	int			ref_count;	/* Reference count */
@@ -303,16 +307,16 @@ struct vm_map {
 	struct mutex		flags_lock;	/* flags lock */
 	unsigned int		timestamp;	/* Version number */
 
-	vaddr_t			min_offset;	/* First address in map. */
-	vaddr_t			max_offset;	/* Last address in map. */
+	vaddr_t			min_offset;	/* [I] First address in map. */
+	vaddr_t			max_offset;	/* [I] Last address in map. */
 
 	/*
 	 * Allocation overflow regions.
 	 */
-	vaddr_t			b_start;	/* Start for brk() alloc. */
-	vaddr_t			b_end;		/* End for brk() alloc. */
-	vaddr_t			s_start;	/* Start for stack alloc. */
-	vaddr_t			s_end;		/* End for stack alloc. */
+	vaddr_t			b_start;	/* [v] Start for brk() alloc. */
+	vaddr_t			b_end;		/* [v] End for brk() alloc. */
+	vaddr_t			s_start;	/* [v] Start for stack alloc. */
+	vaddr_t			s_end;		/* [v] End for stack alloc. */
 
 	/*
 	 * Special address selectors.
