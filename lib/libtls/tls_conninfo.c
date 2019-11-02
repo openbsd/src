@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_conninfo.c,v 1.20 2018/02/10 04:48:44 jsing Exp $ */
+/* $OpenBSD: tls_conninfo.c,v 1.21 2019/11/02 13:37:59 jsing Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -246,6 +246,7 @@ tls_conninfo_populate(struct tls *ctx)
 		goto err;
 	if ((ctx->conninfo->cipher = strdup(tmp)) == NULL)
 		goto err;
+	ctx->conninfo->cipher_strength = SSL_get_cipher_bits(ctx->ssl_conn, NULL);
 
 	if (ctx->servername != NULL) {
 		if ((ctx->conninfo->servername =
@@ -310,6 +311,14 @@ tls_conn_cipher(struct tls *ctx)
 	if (ctx->conninfo == NULL)
 		return (NULL);
 	return (ctx->conninfo->cipher);
+}
+
+int
+tls_conn_cipher_strength(struct tls *ctx)
+{
+	if (ctx->conninfo == NULL)
+		return (0);
+	return (ctx->conninfo->cipher_strength);
 }
 
 const char *

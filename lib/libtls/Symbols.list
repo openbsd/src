@@ -51,6 +51,7 @@ tls_config_verify_client_optional
 tls_configure
 tls_conn_alpn_selected
 tls_conn_cipher
+tls_conn_cipher_strength
 tls_conn_servername
 tls_conn_session_resumed
 tls_conn_version

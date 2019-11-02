@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.74 2019/04/01 15:58:02 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.75 2019/11/02 13:37:59 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -112,6 +112,7 @@ struct tls_config {
 struct tls_conninfo {
 	char *alpn;
 	char *cipher;
+	int cipher_strength;
 	char *servername;
 	int session_resumed;
 	char *version;
