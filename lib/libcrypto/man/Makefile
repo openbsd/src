@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.159 2019/11/01 12:02:58 schwarze Exp $
+# $OpenBSD: Makefile,v 1.160 2019/11/02 15:12:31 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -32,6 +32,7 @@ MAN=	\
 	BIO_get_ex_new_index.3 \
 	BIO_meth_new.3 \
 	BIO_new.3 \
+	BIO_new_CMS.3 \
 	BIO_printf.3 \
 	BIO_push.3 \
 	BIO_read.3 \
@@ -67,6 +68,23 @@ MAN=	\
 	BN_swap.3 \
 	BN_zero.3 \
 	BUF_MEM_new.3 \
+	CMS_ContentInfo_new.3 \
+	CMS_add0_cert.3 \
+	CMS_add1_recipient_cert.3 \
+	CMS_add1_signer.3 \
+	CMS_compress.3 \
+	CMS_decrypt.3 \
+	CMS_encrypt.3 \
+	CMS_final.3 \
+	CMS_get0_RecipientInfos.3 \
+	CMS_get0_SignerInfos.3 \
+	CMS_get0_type.3 \
+	CMS_get1_ReceiptRequest.3 \
+	CMS_sign.3 \
+	CMS_sign_receipt.3 \
+	CMS_uncompress.3 \
+	CMS_verify.3 \
+	CMS_verify_receipt.3 \
 	CONF_modules_free.3 \
 	CONF_modules_load_file.3 \
 	CRYPTO_get_mem_functions.3 \
@@ -188,6 +206,7 @@ MAN=	\
 	PEM_bytes_read_bio.3 \
 	PEM_read.3 \
 	PEM_read_bio_PrivateKey.3 \
+	PEM_write_bio_CMS_stream.3 \
 	PEM_write_bio_PKCS7_stream.3 \
 	PKCS12_create.3 \
 	PKCS12_new.3 \
@@ -229,7 +248,9 @@ MAN=	\
 	RSA_sign_ASN1_OCTET_STRING.3 \
 	RSA_size.3 \
 	SHA1.3 \
+	SMIME_read_CMS.3 \
 	SMIME_read_PKCS7.3 \
+	SMIME_write_CMS.3 \
 	SMIME_write_PKCS7.3 \
 	STACK_OF.3 \
 	SXNET_new.3 \
@@ -293,6 +314,7 @@ MAN=	\
 	d2i_ASN1_SEQUENCE_ANY.3 \
 	d2i_AUTHORITY_KEYID.3 \
 	d2i_BASIC_CONSTRAINTS.3 \
+	d2i_CMS_ContentInfo.3 \
 	d2i_DHparams.3 \
 	d2i_DIST_POINT.3 \
 	d2i_DSAPublicKey.3 \
@@ -322,6 +344,7 @@ MAN=	\
 	des_read_pw.3 \
 	evp.3 \
 	get_rfc3526_prime_8192.3 \
+	i2d_CMS_bio_stream.3 \
 	i2d_PKCS7_bio_stream.3 \
 	lh_new.3 \
 	lh_stats.3 \
