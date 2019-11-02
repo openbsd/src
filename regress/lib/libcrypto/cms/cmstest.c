@@ -1,0 +1,190 @@
+/*	$OpenBSD: cmstest.c,v 1.1 2019/11/02 15:35:10 jsing Exp $	*/
+/*
+ * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include <err.h>
+#include <string.h>
+
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
+
+#include <openssl/cms.h>
+
+static int verbose = 0;
+
+static const char cms_msg[] = "Hello CMS!\r\n";
+
+static const char cms_cert_1[] = \
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIICpDCCAYwCAQMwDQYJKoZIhvcNAQEFBQAwFjEUMBIGA1UEAwwLVGVzdCBDTVMg\n"
+    "Q0EwHhcNMTkwNTExMTU1MzU0WhcNMjkwNTA4MTU1MzU0WjAaMRgwFgYDVQQDDA9U\n"
+    "ZXN0IENNUyBDZXJ0IDEwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDD\n"
+    "MLSuy+tc0AwfrlszgHJ3z7UEpJSn5mcKxquFnEC5DtchgQJ+cj5VFvB9A9G98ykQ\n"
+    "0IrHXNUTbS2yvf8ac1PlocuA8ggeDK4gPHCe097j0nUphhT0VzhwwFfP6Uo6VaR8\n"
+    "B7Qb3zFTz64bN66V89etZ5NQJKMdrh4oOh5nfxLKvCcTK+9U4ZrgeGVdVXmL6HJp\n"
+    "3m9CPobCBsC8DgI+zF/tg4GjDoVCJd6Tv5MRAmKiBrzTGglVeknkgiyIZ9C7gXU/\n"
+    "7NMUihmLlt+80zr+nL0P+MA924WV4fZJi1wtf6Eioalq6n/9i93nBRCeu8bEOBrT\n"
+    "pAre2oBEoULIJu7Ubx79AgMBAAEwDQYJKoZIhvcNAQEFBQADggEBADnLc6ZzApHq\n"
+    "Z8l4zrFKAG/O/oULPMRTA8/zXNQ60BMV10hVtTCxVNq59d48wEljuUOGLfM91rhj\n"
+    "gId8AOlsQbfRZE94DxlcaaAXaEjbkVSke56yfdLd4NqkIWrXGrFlbepj4b4ORAHh\n"
+    "85kPwDEDnpMgQ63LqNX3gru3xf2AGIa1Fck2ISkVafqW5TH0Y6dCeGGFTtnH/QUT\n"
+    "ofTm8uQ2vG9ERn+C1ooqJ2dyAckXFdmCcpor26vO/ZssMEKSee38ZNWR/01LEkOG\n"
+    "G0+AL7E1mJdlVOtp3DDFN0hoNY7PbVuuzT+mrAwGLhCp2jnf68iNdrIuDdIE6yvi\n"
+    "6WWvmmz+rC0=\n"
+    "-----END CERTIFICATE-----\n";
+
+static const char cms_key_1[] = \
+    "-----BEGIN PRIVATE KEY-----\n"
+    "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDDMLSuy+tc0Awf\n"
+    "rlszgHJ3z7UEpJSn5mcKxquFnEC5DtchgQJ+cj5VFvB9A9G98ykQ0IrHXNUTbS2y\n"
+    "vf8ac1PlocuA8ggeDK4gPHCe097j0nUphhT0VzhwwFfP6Uo6VaR8B7Qb3zFTz64b\n"
+    "N66V89etZ5NQJKMdrh4oOh5nfxLKvCcTK+9U4ZrgeGVdVXmL6HJp3m9CPobCBsC8\n"
+    "DgI+zF/tg4GjDoVCJd6Tv5MRAmKiBrzTGglVeknkgiyIZ9C7gXU/7NMUihmLlt+8\n"
+    "0zr+nL0P+MA924WV4fZJi1wtf6Eioalq6n/9i93nBRCeu8bEOBrTpAre2oBEoULI\n"
+    "Ju7Ubx79AgMBAAECggEAD4XkGLKm+S6iiDJ5llL0x4qBPulH2UJ9l2HNakbO7ui7\n"
+    "OzLjW+MCCgpU/dw75ftcnLW5E7nSSEU6iSiLDTN2zKBdatfUxW8EuhOUcU0wQLYQ\n"
+    "E0lSiUwWdQEW+rX27US6XBLQxBav+ZZeplN7UvmdgXDnSkxfnJCoXVKh8GEuwWip\n"
+    "sM/Lwg8MSZK0o5qFVXtPp7kreB8CWlVyPYW5rDYy3k02R1t9k6WSdO2foPXe9rdZ\n"
+    "iiThkALcHdBcFF0NHrIkAgMdtcAxkDIwO2kOnGJQKDXu+txbzPYodMU0Z6eVnlIu\n"
+    "jh9ZjnZKBJgX6YVLVPRBwQXHXeGAnvMNm2WXH7SCAQKBgQDmMxvspc3K6HOqMoik\n"
+    "59Rq1gXIuaGH0uSMSiUMTkr4laJbh9WgZ6JTAfIPuhj1xKGfDK7LF9VjPQ104SgL\n"
+    "dCA1pV6nsuGS3j3vBnaMfmO7yr3yON+p/WDpKOgqC51Z3/pT8reJtMnyowQuDeYe\n"
+    "UVRVyeXA11nve0SSc97US4AtXQKBgQDZERtgs6ejiUJQXuflu9HDczEZ/pHfPI1y\n"
+    "+RU0tvI4860OTjerVJA2YBeOBLa9Y3hblvNpOU0SoVeMAGQLblEznJAl1nbaWqVY\n"
+    "kPgvtQcTOL/awEB90JklvSRqR82WJchMOHMG5SeqrpUx3Dg+cPH6nId0e8UCt3/U\n"
+    "W/u/5hP+IQKBgQDfReEmxaZ10MIm6P6p24Wm3dEcYBfxEjbEb0HBzspek1u3JWep\n"
+    "PfsuQavTXy/IaKBOENIUgBhjOZssqxnZChgXkD7frtulRNOTW5RuLkRzp3BWWJ1v\n"
+    "VifB3gBYj41d16UH+VnVQbnCEiUCuk5hR4bh8oJaaUV8xvW6ipItHNHErQKBgGoe\n"
+    "2uuj6UkiSbFRNL4z3JFZN6AlvNsOl3imHZ/v8Ou29dwQkVbJuNdckydzVoOwpZ7h\n"
+    "ZY8D3JJHHq3rYv3TqQ86c56MAv8tYbiy5yMrtZHIJMOlSeI4oSa6GZt8Dx5gylO5\n"
+    "JUMxtPrU70u5BiZAwYxsCi0AdYimfXAsqB9hNFUBAoGBAJPT7Xsr7NIkrbv+aYXj\n"
+    "rVVJ1qokUEKT6H1GmFXO3Fkw3kjPKS8VZloKOB7OiBC+AwMEQIflArCZ+PJdnVNO\n"
+    "48ntHnaeaZk8rKXsYdJsqMKgIxZYZuCIazZz9WHeYxn5vkH76Q3DrfqrneJ3HSU/\n"
+    "pFtLoXoGoVXRjAtpNvX7fh/G\n"
+    "-----END PRIVATE KEY-----\n";
+
+static void
+hexdump(const unsigned char *buf, size_t len)
+{
+	size_t i;
+
+	for (i = 1; i <= len; i++)
+		fprintf(stderr, " 0x%02x,%s", buf[i - 1], i % 8 ? "" : "\n");
+	if (len % 8 != 0)
+		fprintf(stderr, "\n");
+}
+
+static int
+test_cms_encrypt_decrypt()
+{
+	STACK_OF(X509) *certs = NULL;
+	CMS_ContentInfo *ci = NULL;
+	EVP_PKEY *pkey = NULL;
+	BIO *bio_mem = NULL;
+	BIO *bio_out;
+	X509 *cert = NULL;
+	size_t len;
+	char *p;
+	int failed = 1;
+
+	if ((bio_out = BIO_new_fp(stdout, BIO_NOCLOSE)) == NULL)
+		errx(1, "failed to create BIO");
+
+	if ((certs = sk_X509_new_null()) == NULL)
+		errx(1, "failed to create certs");
+	if ((bio_mem = BIO_new_mem_buf(cms_cert_1, -1)) == NULL)
+		errx(1, "failed to create BIO for cert");
+	if ((cert = PEM_read_bio_X509(bio_mem, NULL, NULL, NULL)) == NULL)
+		errx(1, "failed to read cert");
+	if (!sk_X509_push(certs, cert))
+		errx(1, "failed to push cert");
+
+	BIO_free(bio_mem);
+	if ((bio_mem = BIO_new_mem_buf(cms_key_1, -1)) == NULL)
+		errx(1, "failed to create BIO for key");
+	if ((pkey = PEM_read_bio_PrivateKey(bio_mem, NULL, NULL, NULL)) == NULL)
+		errx(1, "failed to read key");
+
+	BIO_free(bio_mem);
+	if ((bio_mem = BIO_new_mem_buf(cms_msg, -1)) == NULL)
+		errx(1, "failed to create BIO for message");
+
+	if ((ci = CMS_encrypt(certs, bio_mem, EVP_aes_256_cbc(), 0)) == NULL) {
+		fprintf(stderr, "FAIL: CMS_encrypt returned NULL\n");
+		ERR_print_errors_fp(stderr);
+		goto failure;
+	}
+
+	if (verbose) {
+		if (!CMS_ContentInfo_print_ctx(bio_out, ci, 0, NULL))
+			errx(1, "failed to print CMS ContentInfo");
+		if (!PEM_write_bio_CMS(bio_out, ci))
+			errx(1, "failed to print CMS PEM");
+	}
+
+	BIO_free(bio_mem);
+	if ((bio_mem = BIO_new(BIO_s_mem())) == NULL)
+		errx(1, "failed to create BIO for message");
+
+	if (!CMS_decrypt(ci, pkey, cert, NULL, bio_mem, 0)) {
+		fprintf(stderr, "FAIL: CMS_decrypt failed\n");
+		ERR_print_errors_fp(stderr);
+		goto failure;
+	}
+
+	if ((len = BIO_get_mem_data(bio_mem, &p)) != strlen(cms_msg)) {
+		fprintf(stderr, "FAIL: CMS decrypt returned %li bytes, "
+		    "want %zi bytes\n", len, strlen(cms_msg));
+		fprintf(stderr, "Got CMS data:\n");
+		hexdump(p, len);
+		fprintf(stderr, "Want CMS data:\n");
+		hexdump(cms_msg, strlen(cms_msg));
+		goto failure;
+	}
+	if (memcmp(p, cms_msg, len) != 0) {
+		fprintf(stderr, "FAIL: CMS decrypt message differs");
+		fprintf(stderr, "Got CMS data:\n");
+		hexdump(p, len);
+		fprintf(stderr, "Want CMS data:\n");
+		hexdump(cms_msg, strlen(cms_msg));
+		goto failure;
+	}
+
+	failed = 0;
+
+ failure:
+	BIO_free(bio_mem);
+	CMS_ContentInfo_free(ci);
+	EVP_PKEY_free(pkey);
+	sk_X509_free(certs);
+	X509_free(cert);
+
+	return failed;
+}
+
+int
+main(int argc, char **argv)
+{
+	int failed = 0;
+
+	ERR_load_crypto_strings();
+
+	failed |= test_cms_encrypt_decrypt();
+
+	return failed;
+}
