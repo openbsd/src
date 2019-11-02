@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.59 2019/09/20 16:44:32 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.60 2019/11/02 16:56:17 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -95,6 +95,8 @@ struct mutex timeout_mutex = MUTEX_INITIALIZER(IPL_HIGH);
 
 struct timeoutstat tostat;
 
+void *softclock_si;
+
 /*
  * Circular queue definitions.
  */
@@ -134,6 +136,7 @@ struct timeoutstat tostat;
 
 #define CIRCQ_EMPTY(elem) (CIRCQ_FIRST(elem) == (elem))
 
+void softclock(void *);
 void softclock_thread(void *);
 void softclock_create_thread(void *);
 
@@ -205,6 +208,10 @@ timeout_startup(void)
 void
 timeout_proc_init(void)
 {
+	softclock_si = softintr_establish(IPL_SOFTCLOCK, softclock, NULL);
+	if (softclock_si == NULL)
+		panic("%s: unable to register softclock interrupt", __func__);
+
 	WITNESS_INIT(&timeout_sleeplock_obj, &timeout_sleeplock_type);
 	WITNESS_INIT(&timeout_spinlock_obj, &timeout_spinlock_type);
 
@@ -427,13 +434,13 @@ timeout_proc_barrier(void *arg)
 }
 
 /*
- * This is called from hardclock() once every tick.
- * We return !0 if we need to schedule a softclock.
+ * This is called from hardclock() on the primary CPU at the start of
+ * every tick.
  */
-int
+void
 timeout_hardclock_update(void)
 {
-	int ret;
+	int need_softclock;
 
 	mtx_enter(&timeout_mutex);
 
@@ -446,10 +453,12 @@ timeout_hardclock_update(void)
 				MOVEBUCKET(3, ticks);
 		}
 	}
-	ret = !CIRCQ_EMPTY(&timeout_todo);
+	need_softclock = !CIRCQ_EMPTY(&timeout_todo);
+
 	mtx_leave(&timeout_mutex);
 
-	return (ret);
+	if (need_softclock)
+		softintr_schedule(softclock_si);
 }
 
 void
@@ -475,6 +484,12 @@ timeout_run(struct timeout *to)
 	mtx_enter(&timeout_mutex);
 }
 
+/*
+ * Timeouts are processed here instead of timeout_hardclock_update()
+ * to avoid doing any more work at IPL_CLOCK than absolutely necessary.
+ * Down here at IPL_SOFTCLOCK other interrupts can be serviced promptly
+ * so the system remains responsive even if there is a surge of timeouts.
+ */
 void
 softclock(void *arg)
 {

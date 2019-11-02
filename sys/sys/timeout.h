@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.29 2019/07/12 00:04:59 cheloha Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.30 2019/11/02 16:56:18 cheloha Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -118,14 +118,10 @@ int timeout_del(struct timeout *);
 int timeout_del_barrier(struct timeout *);
 void timeout_barrier(struct timeout *);
 
-void timeout_startup(void);
 void timeout_adjust_ticks(int);
+void timeout_hardclock_update(void);
+void timeout_startup(void);
 
-/*
- * called once every hardclock. returns non-zero if we need to schedule a
- * softclock.
- */
-int timeout_hardclock_update(void);
 #endif /* _KERNEL */
 
 #endif	/* _SYS_TIMEOUT_H_ */
