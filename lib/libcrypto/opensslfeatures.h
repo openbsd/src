@@ -34,7 +34,7 @@
 /* #define OPENSSL_NO_CAST */
 /* #define OPENSSL_NO_CHACHA */
 /* #define OPENSSL_NO_CMAC */
-#define OPENSSL_NO_CMS
+/* #define OPENSSL_NO_CMS */
 #define OPENSSL_NO_COMP /* XXX */
 /* #define OPENSSL_NO_CRYPTO_MDEBUG */
 /* #define OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE */

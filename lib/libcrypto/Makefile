@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.36 2019/09/09 16:49:03 jsing Exp $
+# $OpenBSD: Makefile,v 1.37 2019/11/02 13:38:04 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -96,6 +96,11 @@ SRCS+= chacha.c
 
 # cmac/
 SRCS+= cmac.c cm_ameth.c cm_pmeth.c
+
+# cms/
+SRCS+= cms_asn1.c cms_att.c cms_cd.c cms_dd.c cms_enc.c cms_env.c cms_err.c
+SRCS+= cms_ess.c cms_io.c cms_kari.c cms_lcl.h cms_lib.c cms_pwri.c cms_sd.c
+SRCS+= cms_smime.c
 
 # comp/
 SRCS+= comp_lib.c comp_err.c c_rle.c c_zlib.c
