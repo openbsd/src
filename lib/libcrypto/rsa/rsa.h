@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.49 2019/11/02 13:47:41 jsing Exp $ */
+/* $OpenBSD: rsa.h,v 1.50 2019/11/02 13:52:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -331,7 +331,7 @@ const RSA_METHOD *RSA_get_default_method(void);
 const RSA_METHOD *RSA_get_method(const RSA *rsa);
 int RSA_set_method(RSA *rsa, const RSA_METHOD *meth);
 
-/* these are the actual SSLeay RSA functions */
+const RSA_METHOD *RSA_PKCS1_OpenSSL(void);
 const RSA_METHOD *RSA_PKCS1_SSLeay(void);
 
 const RSA_METHOD *RSA_null_method(void);

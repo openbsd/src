@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.50 2017/08/28 17:41:59 jsing Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.51 2019/11/02 13:52:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -143,6 +143,12 @@ static RSA_METHOD rsa_pkcs1_eay_meth = {
 	.init = RSA_eay_init,
 	.finish = RSA_eay_finish,
 };
+
+const RSA_METHOD *
+RSA_PKCS1_OpenSSL(void)
+{
+	return &rsa_pkcs1_eay_meth;
+}
 
 const RSA_METHOD *
 RSA_PKCS1_SSLeay(void)
