@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.90 2019/11/02 00:40:10 jca Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.91 2019/11/02 00:41:36 jca Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -92,8 +92,8 @@ logmsg(int prio, const char *msg, ...)
 
 	va_start(ap, msg);
 	if (debug) {
-		vfprintf(stdout, msg, ap);
-		fprintf(stdout, "\n");
+		vfprintf(stderr, msg, ap);
+		fprintf(stderr, "\n");
 	} else {
 		vsyslog(prio, msg, ap);
 	}
