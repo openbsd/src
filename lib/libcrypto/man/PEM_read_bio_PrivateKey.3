@@ -1,4 +1,4 @@
-.\" $OpenBSD: PEM_read_bio_PrivateKey.3,v 1.15 2019/08/12 11:36:12 schwarze Exp $
+.\" $OpenBSD: PEM_read_bio_PrivateKey.3,v 1.16 2019/11/02 15:25:34 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL man3/PEM_read_bio_PrivateKey.pod 18bad535 Apr 9 15:13:55 2019 +0100
 .\" OpenSSL man3/PEM_read_CMS.pod 83cf7abf May 29 13:07:08 2018 +0100
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 12 2019 $
+.Dd $Mdocdate: November 2 2019 $
 .Dt PEM_READ_BIO_PRIVATEKEY 3
 .Os
 .Sh NAME
@@ -141,7 +141,11 @@
 .Nm PEM_read_bio_NETSCAPE_CERT_SEQUENCE ,
 .Nm PEM_read_NETSCAPE_CERT_SEQUENCE ,
 .Nm PEM_write_bio_NETSCAPE_CERT_SEQUENCE ,
-.Nm PEM_write_NETSCAPE_CERT_SEQUENCE
+.Nm PEM_write_NETSCAPE_CERT_SEQUENCE ,
+.Nm PEM_read_CMS ,
+.Nm PEM_read_bio_CMS ,
+.Nm PEM_write_CMS ,
+.Nm PEM_write_bio_CMS
 .Nd PEM routines
 .Sh SYNOPSIS
 .In openssl/pem.h
@@ -722,6 +726,31 @@
 .Fa "FILE *fp"
 .Fa "NETSCAPE_CERT_SEQUENCE *x"
 .Fc
+.In openssl/cms.h
+.Ft CMS_ContentInfo *
+.Fo PEM_read_CMS
+.Fa "FILE *fp"
+.Fa "CMS_ContentInfo **x"
+.Fa "pem_password_cb *cb"
+.Fa "void *u"
+.Fc
+.Ft CMS_ContentInfo *
+.Fo PEM_read_bio_CMS
+.Fa "BIO *bp"
+.Fa "CMS_ContentInfo **x"
+.Fa "pem_password_cb *cb"
+.Fa "void *u"
+.Fc
+.Ft int
+.Fo PEM_write_CMS
+.Fa "FILE *fp"
+.Fa "const CMS_ContentInfo *x"
+.Fc
+.Ft int
+.Fo PEM_write_bio_CMS
+.Fa "BIO *bp"
+.Fa "const CMS_ContentInfo *x"
+.Fc
 .Sh DESCRIPTION
 The PEM functions read or write structures in PEM format.
 In this sense PEM format is simply base64-encoded data surrounded by
@@ -935,6 +964,12 @@ The
 .Sy NETSCAPE_CERT_SEQUENCE
 functions process a Netscape Certificate Sequence using a
 .Vt NETSCAPE_CERT_SEQUENCE
+structure.
+.Pp
+The
+.Sy CMS
+functions process a
+.Vt CMS_ContentInfo
 structure.
 .Pp
 The old
@@ -1351,6 +1386,14 @@ and
 .Fn PEM_write_EC_PUBKEY
 first appeared in OpenSSL 0.9.8 and have been available since
 .Ox 4.5 .
+.Pp
+.Fn PEM_read_CMS ,
+.Fn PEM_read_bio_CMS ,
+.Fn PEM_write_CMS ,
+and
+.Fn PEM_write_bio_CMS
+first appeared in OpenSSL 0.9.8h and have been available since
+.Ox 6.7 .
 .Sh CAVEATS
 A frequent cause of problems is attempting to use the PEM routines like
 this:
