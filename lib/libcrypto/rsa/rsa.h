@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.47 2019/11/01 15:13:05 jsing Exp $ */
+/* $OpenBSD: rsa.h,v 1.48 2019/11/02 13:44:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -360,6 +360,21 @@ void RSA_PSS_PARAMS_free(RSA_PSS_PARAMS *a);
 RSA_PSS_PARAMS *d2i_RSA_PSS_PARAMS(RSA_PSS_PARAMS **a, const unsigned char **in, long len);
 int i2d_RSA_PSS_PARAMS(RSA_PSS_PARAMS *a, unsigned char **out);
 extern const ASN1_ITEM RSA_PSS_PARAMS_it;
+
+typedef struct rsa_oaep_params_st {
+	X509_ALGOR *hashFunc;
+	X509_ALGOR *maskGenFunc;
+	X509_ALGOR *pSourceFunc;
+
+	/* Hash algorithm decoded from maskGenFunc. */
+	X509_ALGOR *maskHash;
+} RSA_OAEP_PARAMS;
+
+RSA_OAEP_PARAMS *RSA_OAEP_PARAMS_new(void);
+void RSA_OAEP_PARAMS_free(RSA_OAEP_PARAMS *a);
+RSA_OAEP_PARAMS *d2i_RSA_OAEP_PARAMS(RSA_OAEP_PARAMS **a, const unsigned char **in, long len);
+int i2d_RSA_OAEP_PARAMS(RSA_OAEP_PARAMS *a, unsigned char **out);
+extern const ASN1_ITEM RSA_OAEP_PARAMS_it;
 
 int RSA_print_fp(FILE *fp, const RSA *r, int offset);
 
