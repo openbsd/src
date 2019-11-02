@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_conn_version.3,v 1.9 2018/12/14 20:18:27 schwarze Exp $
+.\" $OpenBSD: tls_conn_version.3,v 1.10 2019/11/02 13:43:14 jsing Exp $
 .\"
 .\" Copyright (c) 2015 Bob Beck <beck@openbsd.org>
 .\" Copyright (c) 2016, 2018 Joel Sing <jsing@openbsd.org>
@@ -15,12 +15,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 14 2018 $
+.Dd $Mdocdate: November 2 2019 $
 .Dt TLS_CONN_VERSION 3
 .Os
 .Sh NAME
 .Nm tls_conn_version ,
 .Nm tls_conn_cipher ,
+.Nm tls_conn_cipher_strength ,
 .Nm tls_conn_alpn_selected ,
 .Nm tls_conn_servername ,
 .Nm tls_conn_session_resumed ,
@@ -39,6 +40,8 @@
 .Fn tls_conn_version "struct tls *ctx"
 .Ft const char *
 .Fn tls_conn_cipher "struct tls *ctx"
+.Ft int
+.Fn tls_conn_cipher_strength "struct tls *ctx"
 .Ft const char *
 .Fn tls_conn_alpn_selected "struct tls *ctx"
 .Ft const char *
@@ -80,6 +83,11 @@ connected to
 .Fn tls_conn_cipher
 returns a string corresponding to the cipher suite negotiated with the peer
 connected to
+.Ar ctx .
+.Pp
+.Fn tls_conn_cipher_strength
+returns the strength in bits for the symmetric cipher that is being
+used with the peer connected to
 .Ar ctx .
 .Pp
 .Fn tls_conn_alpn_selected
@@ -197,6 +205,10 @@ appeared in
 .Fn tls_conn_session_resumed
 appeared in
 .Ox 6.3 .
+.Pp
+.Fn tls_conn_cipher_strength
+appeared in
+.Ox 6.7 .
 .Sh AUTHORS
 .An Bob Beck Aq Mt beck@openbsd.org
 .An Joel Sing Aq Mt jsing@openbsd.org
