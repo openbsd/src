@@ -1,26 +1,20 @@
-# $OpenBSD: Makefile,v 1.4 2019/08/12 18:03:17 jsing Exp $
+# $OpenBSD: Makefile,v 1.5 2019/11/02 13:54:42 jsing Exp $
 
 .PATH:		${.CURDIR}/../../../usr.sbin/rpki-client
 
-.if ! exists(/usr/local/bin/eopenssl)
-regress:
-	# install openssl-1.0.2 from ports for interop tests
-	@echo SKIPPED
-.else
 PROGS += test-ip
 PROGS += test-cert
 PROGS += test-mft
 PROGS += test-roa
 PROGS += test-tal
-.endif
 
 .for p in ${PROGS}
 REGRESS_TARGETS += run-regress-$p
 .endfor
 
-CFLAGS+=	-I${.CURDIR} -I${.CURDIR}/../../../usr.sbin/rpki-client \
-		-I/usr/local/include/eopenssl
-LDADD+=		/usr/local/lib/eopenssl/libcrypto.a	
+CFLAGS+=	-I${.CURDIR} -I${.CURDIR}/../../../usr.sbin/rpki-client
+LDADD+=		-lcrypto
+DPADD+=		${LIBCRYPTO}
 
 SRCS_test-ip=	test-ip.c ip.c io.c
 run-regress-test-ip: test-ip
