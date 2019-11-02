@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.49 2019/11/02 07:47:01 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.50 2019/11/02 20:05:39 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -162,7 +162,6 @@ static struct trust_anchor_head	 trust_anchors, new_trust_anchors;
 
 struct event_base		*ev_base;
 
-enum uw_resolver_state		 global_state = DEAD;
 enum captive_portal_state	 captive_portal_state = PORTAL_UNCHECKED;
 
 void
