@@ -256,6 +256,16 @@ func (t *TLS) ConnCipher() (string, error) {
 	return C.GoString(cipher), nil
 }
 
+// ConnCipherStrength returns the strength in bits for the symmetric
+// cipher that is used for the connection.
+func (t *TLS) ConnCipherStrength() (int, error) {
+	strength := C.tls_conn_cipher_strength(t.ctx)
+	if strength == 0 {
+		return 0, errors.New("no connection cipher strength")
+	}
+	return int(strength), nil
+}
+
 // Connect attempts to establish an TLS connection to the specified host on
 // the given port. The host may optionally contain a colon separated port
 // value if the port string is specified as an empty string.

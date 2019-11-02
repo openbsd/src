@@ -336,6 +336,9 @@ func TestTLSInfo(t *testing.T) {
 	if _, err := tls.ConnCipher(); err == nil {
 		t.Error("ConnCipher() return nil error, want error")
 	}
+	if _, err := tls.ConnCipherStrength(); err == nil {
+		t.Error("ConnCipherStrength() return nil error, want error")
+	}
 
 	if got, want := tls.PeerCertProvided(), false; got != want {
 		t.Errorf("PeerCertProvided() = %v, want %v", got, want)
@@ -368,14 +371,19 @@ func TestTLSInfo(t *testing.T) {
 	}
 
 	if version, err := tls.ConnVersion(); err != nil {
-		t.Errorf("ConnVersion() return error: %v", err)
+		t.Errorf("ConnVersion() returned error: %v", err)
 	} else {
 		t.Logf("Protocol version: %v", version)
 	}
 	if cipher, err := tls.ConnCipher(); err != nil {
-		t.Errorf("ConnCipher() return error: %v", err)
+		t.Errorf("ConnCipher() returned error: %v", err)
 	} else {
 		t.Logf("Cipher: %v", cipher)
+	}
+	if strength, err := tls.ConnCipherStrength(); err != nil {
+		t.Errorf("ConnCipherStrength() return ederror: %v", err)
+	} else {
+		t.Logf("Cipher Strength: %v bits", strength)
 	}
 
 	if got, want := tls.PeerCertProvided(), true; got != want {
