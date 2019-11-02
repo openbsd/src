@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.48 2019/11/02 13:44:19 jsing Exp $ */
+/* $OpenBSD: rsa.h,v 1.49 2019/11/02 13:47:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -430,6 +430,12 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
 int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
     const unsigned char *f, int fl, int rsa_len,
     const unsigned char *p, int pl);
+int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
+    const unsigned char *from, int flen, const unsigned char *param, int plen,
+    const EVP_MD *md, const EVP_MD *mgf1md);
+int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
+    const unsigned char *from, int flen, int num, const unsigned char *param,
+    int plen, const EVP_MD *md, const EVP_MD *mgf1md);
 int RSA_padding_add_none(unsigned char *to, int tlen,
     const unsigned char *f, int fl);
 int RSA_padding_check_none(unsigned char *to, int tlen,
