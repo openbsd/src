@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.178 2019/06/21 09:39:48 visa Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.179 2019/11/02 05:31:20 visa Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -367,21 +367,27 @@ struct mutex deadproc_mutex =
 struct proclist deadproc = LIST_HEAD_INITIALIZER(deadproc);
 
 /*
- * We are called from cpu_exit() once it is safe to schedule the
- * dead process's resources to be freed.
+ * Move dead procs from the CPU's local list to the reaper list and
+ * wake up the reaper.
  *
- * NOTE: One must be careful with locking in this routine.  It's
- * called from a critical section in machine-dependent code, so
- * we should refrain from changing any interrupt state.
- *
- * We lock the deadproc list, place the proc on that list (using
- * the p_hash member), and wake up the reaper.
+ * This is called once it is safe to free the resources of dead processes.
  */
 void
-exit2(struct proc *p)
+dispatch_deadproc(void)
 {
+	struct proc *dead;
+	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
+
+	if (LIST_EMPTY(&spc->spc_deadproc))
+		return;
+
+	KERNEL_ASSERT_UNLOCKED();
+
 	mtx_enter(&deadproc_mutex);
-	LIST_INSERT_HEAD(&deadproc, p, p_hash);
+	while ((dead = LIST_FIRST(&spc->spc_deadproc)) != NULL) {
+		LIST_REMOVE(dead, p_hash);
+		LIST_INSERT_HEAD(&deadproc, dead, p_hash);
+	}
 	mtx_leave(&deadproc_mutex);
 
 	wakeup(&deadproc);
