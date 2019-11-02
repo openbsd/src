@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.20 2019/11/01 15:08:36 jsing Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.21 2019/11/02 16:06:25 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -105,12 +105,12 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
 #endif
 	&hmac_asn1_meth,
 	&cmac_asn1_meth,
+#ifndef OPENSSL_NO_RSA
+	&rsa_pss_asn1_meth,
+#endif
 #ifndef OPENSSL_NO_GOST
 	&gostr01_asn1_meths[1],
 	&gostr01_asn1_meths[2],
-#endif
-#ifndef OPENSSL_NO_RSA
-	&rsa_pss_asn1_meth,
 #endif
 };
 
