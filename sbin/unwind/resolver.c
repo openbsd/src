@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.48 2019/10/31 12:54:40 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.49 2019/11/02 07:47:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1282,7 +1282,8 @@ best_resolver(void)
 
 	if (captive_portal_state == PORTAL_UNKNOWN || captive_portal_state ==
 	    BEHIND) {
-		if (resolvers[UW_RES_ASR] != NULL) {
+		if (resolvers[UW_RES_ASR] != NULL && resolvers[UW_RES_ASR]->
+                    state != DEAD) {
 			res = resolvers[UW_RES_ASR];
 			goto out;
 		}
