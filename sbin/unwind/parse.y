@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2019/10/31 12:51:43 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.13 2019/11/03 09:46:11 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -84,7 +84,6 @@ int	 check_pref_uniq(enum uw_resolver_type);
 
 static struct uw_conf		*conf;
 static int			 errors;
-static struct uw_forwarder	*uw_forwarder;
 
 void			 clear_config(struct uw_conf *xconf);
 struct sockaddr_storage	*host_ip(const char *);
@@ -287,7 +286,9 @@ forwarderopts_l		: forwarderopts_l forwarderoptsl optnl
 
 forwarderoptsl		: STRING port authname dot {
 				int ret, port;
+				struct uw_forwarder *uw_fwd;
 				struct sockaddr_storage *ss;
+
 				if ((ss = host_ip($1)) == NULL) {
 					yyerror("%s is not an ip-address", $1);
 					free($1);
@@ -305,37 +306,53 @@ forwarderoptsl		: STRING port authname dot {
 				else
 					port = $2;
 
-				if ((uw_forwarder = calloc(1,
-				    sizeof(*uw_forwarder))) == NULL)
+				if ($3 != NULL && $4 == 0) {
+					yyerror("authentication name can only "
+					    "be used with DoT");
+					free($1);
+					YYERROR;
+				}
+
+
+				if ((uw_fwd = calloc(1,
+				    sizeof(*uw_fwd))) == NULL)
 					err(1, NULL);
 
-				if ($3 == NULL)
-					ret = snprintf(uw_forwarder->name,
-					    sizeof(uw_forwarder->name),
-					    "%s@%d", $1, port);
-				else
-					ret = snprintf(uw_forwarder->name,
-					    sizeof(uw_forwarder->name),
-					    "%s@%d#%s", $1, port, $3);
+				if ($4 == DOT) {
+					if ($3 == NULL)
+						ret = snprintf(uw_fwd->name,
+						    sizeof(uw_fwd->name),
+						    "%s@%d", $1, port);
+					else
+						ret = snprintf(uw_fwd->name,
+						    sizeof(uw_fwd->name),
+						    "%s@%d#%s", $1, port, $3);
+				} else {
+					uw_fwd->port = $2;
+					/* complete string will be done later */
+					ret = snprintf(uw_fwd->name,
+					    sizeof(uw_fwd->name), "%s", $1);
+				}
 				if (ret < 0 || (size_t)ret >=
-				    sizeof(uw_forwarder->name)) {
-					free(uw_forwarder);
+				    sizeof(uw_fwd->name)) {
+					free(uw_fwd);
 					yyerror("forwarder %s too long", $1);
 					free($1);
 					YYERROR;
 				}
-				free($1);
 
 				if ($4 == DOT)
 					SIMPLEQ_INSERT_TAIL(
 					    &conf->uw_dot_forwarder_list,
-					    uw_forwarder, entry);
-				else
+					    uw_fwd, entry);
+				else {
 					SIMPLEQ_INSERT_TAIL(
 					    &conf->uw_forwarder_list,
-					    uw_forwarder, entry);
+					    uw_fwd, entry);
+				}
+				free($1);
 			}
-			;
+	;
 
 port	:	PORT NUMBER	{ $$ = $2; }
 	|	/* empty */	{ $$ = 0; }
@@ -874,12 +891,14 @@ symget(const char *nam)
 void
 clear_config(struct uw_conf *xconf)
 {
-	while((uw_forwarder = SIMPLEQ_FIRST(&xconf->uw_forwarder_list)) !=
+	struct uw_forwarder	*uw_forwarder;
+
+	while ((uw_forwarder = SIMPLEQ_FIRST(&xconf->uw_forwarder_list)) !=
 	    NULL) {
 		SIMPLEQ_REMOVE_HEAD(&xconf->uw_forwarder_list, entry);
 		free(uw_forwarder);
 	}
-	while((uw_forwarder = SIMPLEQ_FIRST(&xconf->uw_dot_forwarder_list)) !=
+	while ((uw_forwarder = SIMPLEQ_FIRST(&xconf->uw_dot_forwarder_list)) !=
 	    NULL) {
 		SIMPLEQ_REMOVE_HEAD(&xconf->uw_dot_forwarder_list, entry);
 		free(uw_forwarder);
