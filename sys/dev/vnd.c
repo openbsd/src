@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.169 2019/10/06 16:24:14 beck Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.170 2019/11/03 03:20:15 beck Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -448,6 +448,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		sc->sc_flags &= ~VNF_READONLY;
 		error = vn_open(&nd, FREAD|FWRITE, 0);
 		if (error == EROFS) {
+			NDINIT(&nd, 0, 0, UIO_USERSPACE, vio->vnd_file, p);
 			sc->sc_flags |= VNF_READONLY;
 			error = vn_open(&nd, FREAD, 0);
 		}
