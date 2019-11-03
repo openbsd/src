@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.24 2019/10/31 15:53:08 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.25 2019/11/03 02:09:35 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -369,6 +369,14 @@ function test_key {
 	genpkey_rsa=$key_dir/genpkey_rsa.pem
 	$openssl_bin genpkey -algorithm RSA -out $genpkey_rsa \
 		-pkeyopt rsa_keygen_bits:2048 -pkeyopt rsa_keygen_pubexp:3
+	check_exit_status $?
+	
+	genpkey_rsa_pss=$key_dir/genpkey_rsa_pss.pem
+	$openssl_bin genpkey -algorithm RSA-PSS -out $genpkey_rsa_pss \
+		-pkeyopt rsa_keygen_bits:2048 \
+		-pkeyopt rsa_pss_keygen_mgf1_md:sha256 \
+		-pkeyopt rsa_pss_keygen_md:sha256 \
+		-pkeyopt rsa_pss_keygen_saltlen:32
 	check_exit_status $?
 	
 	# EC by GENPKEY
