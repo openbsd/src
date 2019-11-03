@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.51 2019/11/03 09:46:11 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.52 2019/11/03 18:15:26 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -166,6 +166,104 @@ static struct trust_anchor_head	 trust_anchors, new_trust_anchors;
 struct event_base		*ev_base;
 
 enum captive_portal_state	 captive_portal_state = PORTAL_UNCHECKED;
+
+static const char * const	 as112_zones[] = {
+	/* RFC1918 */
+	"10.in-addr.arpa. transparent",
+	"16.172.in-addr.arpa. transparent",
+	"31.172.in-addr.arpa. transparent",
+	"168.192.in-addr.arpa. transparent",
+
+	/* RFC3330 */
+	"0.in-addr.arpa. transparent",
+	"254.169.in-addr.arpa. transparent",
+	"2.0.192.in-addr.arpa. transparent",
+	"100.51.198.in-addr.arpa. transparent",
+	"113.0.203.in-addr.arpa. transparent",
+	"255.255.255.255.in-addr.arpa. transparent",
+
+	/* RFC6598 */
+	"64.100.in-addr.arpa. transparent",
+	"65.100.in-addr.arpa. transparent",
+	"66.100.in-addr.arpa. transparent",
+	"67.100.in-addr.arpa. transparent",
+	"68.100.in-addr.arpa. transparent",
+	"69.100.in-addr.arpa. transparent",
+	"70.100.in-addr.arpa. transparent",
+	"71.100.in-addr.arpa. transparent",
+	"72.100.in-addr.arpa. transparent",
+	"73.100.in-addr.arpa. transparent",
+	"74.100.in-addr.arpa. transparent",
+	"75.100.in-addr.arpa. transparent",
+	"76.100.in-addr.arpa. transparent",
+	"77.100.in-addr.arpa. transparent",
+	"78.100.in-addr.arpa. transparent",
+	"79.100.in-addr.arpa. transparent",
+	"80.100.in-addr.arpa. transparent",
+	"81.100.in-addr.arpa. transparent",
+	"82.100.in-addr.arpa. transparent",
+	"83.100.in-addr.arpa. transparent",
+	"84.100.in-addr.arpa. transparent",
+	"85.100.in-addr.arpa. transparent",
+	"86.100.in-addr.arpa. transparent",
+	"87.100.in-addr.arpa. transparent",
+	"88.100.in-addr.arpa. transparent",
+	"89.100.in-addr.arpa. transparent",
+	"90.100.in-addr.arpa. transparent",
+	"91.100.in-addr.arpa. transparent",
+	"92.100.in-addr.arpa. transparent",
+	"93.100.in-addr.arpa. transparent",
+	"94.100.in-addr.arpa. transparent",
+	"95.100.in-addr.arpa. transparent",
+	"96.100.in-addr.arpa. transparent",
+	"97.100.in-addr.arpa. transparent",
+	"98.100.in-addr.arpa. transparent",
+	"99.100.in-addr.arpa. transparent",
+	"100.100.in-addr.arpa. transparent",
+	"101.100.in-addr.arpa. transparent",
+	"102.100.in-addr.arpa. transparent",
+	"103.100.in-addr.arpa. transparent",
+	"104.100.in-addr.arpa. transparent",
+	"105.100.in-addr.arpa. transparent",
+	"106.100.in-addr.arpa. transparent",
+	"107.100.in-addr.arpa. transparent",
+	"108.100.in-addr.arpa. transparent",
+	"109.100.in-addr.arpa. transparent",
+	"110.100.in-addr.arpa. transparent",
+	"111.100.in-addr.arpa. transparent",
+	"112.100.in-addr.arpa. transparent",
+	"113.100.in-addr.arpa. transparent",
+	"114.100.in-addr.arpa. transparent",
+	"115.100.in-addr.arpa. transparent",
+	"116.100.in-addr.arpa. transparent",
+	"117.100.in-addr.arpa. transparent",
+	"118.100.in-addr.arpa. transparent",
+	"119.100.in-addr.arpa. transparent",
+	"120.100.in-addr.arpa. transparent",
+	"121.100.in-addr.arpa. transparent",
+	"122.100.in-addr.arpa. transparent",
+	"123.100.in-addr.arpa. transparent",
+	"124.100.in-addr.arpa. transparent",
+	"125.100.in-addr.arpa. transparent",
+	"126.100.in-addr.arpa. transparent",
+	"127.100.in-addr.arpa. transparent",
+
+	/* RFC4291 */
+	"0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0."
+	"ip6.arpa. transparent",
+
+	/* RFC4193 */
+	"D.F.ip6.arpa. transparent",
+
+	/* RFC4291 */
+	"8.E.F.ip6.arpa. transparent",
+	"9.E.F.ip6.arpa. transparent",
+	"A.E.F.ip6.arpa. transparent",
+	"B.E.F.ip6.arpa. transparent",
+
+	/* RFC3849 */
+	"8.B.D.0.1.0.0.2.ip6.arpa. transparent"
+};
 
 void
 resolver_sig_handler(int sig, short event, void *arg)
@@ -887,6 +985,7 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 	struct uw_resolver	*res;
 	struct trust_anchor	*ta;
 	struct uw_forwarder	*uw_forwarder;
+	size_t			 i;
 	int			 err;
 	char			*resolv_conf = NULL, *tmp = NULL;
 
@@ -1016,6 +1115,27 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 		break;
 	default:
 		fatalx("unknown resolver type %d", type);
+		break;
+	}
+
+	/* for the forwarder cases allow AS112 zones */
+	switch(res->type) {
+	case UW_RES_DHCP:
+	case UW_RES_FORWARDER:
+	case UW_RES_DOT:
+		for (i = 0; i < nitems(as112_zones); i++) {
+			log_debug("%s", as112_zones[i]);
+			if((err = ub_ctx_set_option(res->ctx, "local-zone:",
+			    as112_zones[i])) != 0) {
+				ub_ctx_delete(res->ctx);
+				free(res);
+				log_warnx("error setting local-zone: %s: %s",
+				    as112_zones[i], ub_strerror(err));
+				return (NULL);
+			}
+		}
+		break;
+	default:
 		break;
 	}
 
