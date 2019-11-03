@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_kubsan.c,v 1.9 2019/11/03 16:16:06 anton Exp $	*/
+/*	$OpenBSD: subr_kubsan.c,v 1.10 2019/11/03 16:23:36 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -199,7 +199,7 @@ int kubsan_watch = 1;
 struct kubsan_report	*kubsan_reports = NULL;
 struct task		 kubsan_task = TASK_INITIALIZER(kubsan_report, NULL);
 unsigned int		 kubsan_slot = 0;
-int			 kubsan_state = 0;
+int			 kubsan_cold = 1;
 
 /*
  * Compiling the kernel with `-fsanitize=undefined' will cause the following
@@ -386,7 +386,6 @@ kubsan_init(void)
 {
 	kubsan_reports = (void *)uvm_pageboot_alloc(
 	    sizeof(struct kubsan_report) * KUBSAN_NSLOTS);
-	kubsan_state = 1;
 }
 
 /*
@@ -396,7 +395,7 @@ kubsan_init(void)
 void
 kubsan_start(void)
 {
-	kubsan_state = 2;
+	kubsan_cold = 0;
 
 	if (kubsan_slot > 0)
 		task_add(systq, &kubsan_task);
@@ -439,7 +438,7 @@ kubsan_defer_report(struct kubsan_report *kr)
 {
 	unsigned int slot;
 
-	if (__predict_false(kubsan_state == 0) ||
+	if (__predict_false(kubsan_cold == 1) ||
 	    kubsan_is_reported(kr->kr_src))
 		return;
 
@@ -454,8 +453,7 @@ kubsan_defer_report(struct kubsan_report *kr)
 	}
 
 	memcpy(&kubsan_reports[slot], kr, sizeof(*kr));
-	if (__predict_true(kubsan_state > 1))
-		task_add(systq, &kubsan_task);
+	task_add(systq, &kubsan_task);
 }
 
 void
