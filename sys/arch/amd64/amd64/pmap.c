@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.135 2019/09/20 09:38:22 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.136 2019/11/03 09:44:23 mpi Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -180,15 +180,11 @@
  *
  * [A] new process' page directory page (PDP)
  *	- plan 1: done at pmap_create() we use
- *	  uvm_km_alloc(kernel_map, PAGE_SIZE)  [fka kmem_alloc] to do this
- *	  allocation.
+ *	  pool_get(&pmap_pmap_pool, PR_WAITOK) to do this allocation.
  *
  * if we are low in free physical memory then we sleep in
- * uvm_km_alloc -- in this case this is ok since we are creating
+ * pool_get() -- in this case this is ok since we are creating
  * a new pmap and should not be holding any locks.
- *
- * if the kernel is totally out of virtual space
- * (i.e. uvm_km_alloc returns NULL), then we panic.
  *
  * XXX: the fork code currently has no way to return an "out of
  * memory, try again" error code since uvm_fork [fka vm_fork]
