@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.72 2019/10/28 19:57:50 anton Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.73 2019/11/03 20:16:01 guenther Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -288,19 +288,12 @@ sys_shmctl(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) cmd;
 		syscallarg(struct shmid_ds *) buf;
 	} */ *uap = v;
-
-	return (shmctl1(p, SCARG(uap, shmid), SCARG(uap, cmd),
-	    (caddr_t)SCARG(uap, buf), copyin, copyout));
-}
-
-int
-shmctl1(struct proc *p, int shmid, int cmd, caddr_t buf,
-    int (*ds_copyin)(const void *, void *, size_t),
-    int (*ds_copyout)(const void *, void *, size_t))
-{
-	struct ucred *cred = p->p_ucred;
-	struct shmid_ds inbuf, *shmseg;
-	int error;
+	int		shmid = SCARG(uap, shmid);
+	int		cmd = SCARG(uap, cmd);
+	void		*buf = SCARG(uap, buf);
+	struct ucred	*cred = p->p_ucred;
+	struct shmid_ds	inbuf, *shmseg;
+	int		error;
 
 	if (cmd == IPC_SET) {
 		error = ds_copyin(buf, &inbuf, sizeof(inbuf));
@@ -315,7 +308,7 @@ shmctl1(struct proc *p, int shmid, int cmd, caddr_t buf,
 	case IPC_STAT:
 		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_R)) != 0)
 			return (error);
-		error = ds_copyout(shmseg, buf, sizeof(inbuf));
+		error = copyout(shmseg, buf, sizeof(inbuf));
 		if (error)
 			return (error);
 		break;
