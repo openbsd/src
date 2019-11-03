@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_kubsan.c,v 1.8 2019/06/20 14:55:22 anton Exp $	*/
+/*	$OpenBSD: subr_kubsan.c,v 1.9 2019/11/03 16:16:06 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -35,6 +35,7 @@
 
 struct kubsan_report {
 	enum {
+		KUBSAN_FLOAT_CAST_OVERFLOW,
 		KUBSAN_INVALID_VALUE,
 		KUBSAN_NEGATE_OVERFLOW,
 		KUBSAN_NONNULL_ARG,
@@ -49,6 +50,11 @@ struct kubsan_report {
 	struct source_location *kr_src;
 
 	union {
+		struct {
+			const struct float_cast_overflow_data *v_data;
+			unsigned long v_val;
+		} v_float_cast_overflow;
+
 		struct {
 			const struct invalid_value_data *v_data;
 			unsigned long v_val;
@@ -93,6 +99,7 @@ struct kubsan_report {
 		} v_type_mismatch;
 	} kr_u;
 };
+#define kr_float_cast_overflow		kr_u.v_float_cast_overflow
 #define kr_invalid_value		kr_u.v_invalid_value
 #define kr_negate_overflow		kr_u.v_negate_overflow
 #define kr_nonnull_arg			kr_u.v_nonnull_arg
@@ -112,6 +119,12 @@ struct source_location {
 	const char *sl_filename;
 	uint32_t sl_line;
 	uint32_t sl_column;
+};
+
+struct float_cast_overflow_data {
+	struct source_location d_src;
+	struct type_descriptor *d_ftype;	/* from type */
+	struct type_descriptor *d_ttype;	/* to type */
 };
 
 struct invalid_value_data {
@@ -231,6 +244,19 @@ __ubsan_handle_divrem_overflow(struct overflow_data *data,
 		.kr_type		= KUBSAN_OVERFLOW,
 		.kr_src			= &data->d_src,
 		.kr_overflow		= { data, lhs, rhs, '/' },
+	};
+
+	kubsan_defer_report(&kr);
+}
+
+void
+__ubsan_handle_float_cast_overflow(struct float_cast_overflow_data *data,
+    unsigned long val)
+{
+	struct kubsan_report kr = {
+		.kr_type		= KUBSAN_FLOAT_CAST_OVERFLOW,
+		.kr_src			= &data->d_src,
+		.kr_float_cast_overflow	= { data, val },
 	};
 
 	kubsan_defer_report(&kr);
@@ -530,6 +556,20 @@ again:
 
 		kubsan_format_location(kr->kr_src, bloc, sizeof(bloc));
 		switch (kr->kr_type) {
+		case KUBSAN_FLOAT_CAST_OVERFLOW: {
+			const struct float_cast_overflow_data *data =
+			    kr->kr_float_cast_overflow.v_data;
+
+			kubsan_format_int(data->d_ftype,
+			    kr->kr_float_cast_overflow.v_val,
+			    blhs, sizeof(blhs));
+			printf("kubsan: %s: %s of type %s is outside the range "
+			    "of representable values of type %s\n",
+			    bloc, blhs, data->d_ftype->t_name,
+			    data->d_ttype->t_name);
+			break;
+		}
+
 		case KUBSAN_INVALID_VALUE: {
 			const struct invalid_value_data *data =
 			    kr->kr_invalid_value.v_data;
