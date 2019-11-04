@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.9 2019/11/04 14:49:59 jsing Exp $ */
+/* $OpenBSD: cms.c,v 1.10 2019/11/04 15:18:45 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -60,12 +60,13 @@
 
 #ifndef OPENSSL_NO_CMS
 
-#include <openssl/cms.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/x509_vfy.h>
 #include <openssl/x509v3.h>
+
+#include <openssl/cms.h>
 
 static int save_certs(char *signerfile, STACK_OF(X509) * signers);
 static int cms_cb(int ok, X509_STORE_CTX * ctx);
