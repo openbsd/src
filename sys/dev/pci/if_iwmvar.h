@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.43 2019/11/04 11:29:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.44 2019/11/04 11:59:52 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -434,7 +434,7 @@ struct iwm_softc {
 	int sc_capaflags;
 	int sc_capa_max_probe_len;
 	int sc_capa_n_scan_channels;
-	uint32_t sc_ucode_api;
+	uint8_t sc_ucode_api[howmany(IWM_NUM_UCODE_TLV_API, NBBY)];
 	uint8_t sc_enabled_capa[howmany(IWM_NUM_UCODE_TLV_CAPA, NBBY)];
 	char sc_fw_mcc[3];
 

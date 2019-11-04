@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.39 2019/11/04 11:55:46 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.40 2019/11/04 11:59:52 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -610,21 +610,36 @@
  * @IWM_UCODE_TLV_API_WIFI_MCC_UPDATE: ucode supports MCC updates with source.
  * @IWM_UCODE_TLV_API_WIDE_CMD_HDR: ucode supports wide command header
  * @IWM_UCODE_TLV_API_LQ_SS_PARAMS: Configure STBC/BFER via LQ CMD ss_params
- * @IWM_UCODE_TLV_API_EXT_SCAN_PRIORITY: scan APIs use 8-level priority
- *	instead of 3.
+ * @IWM_UCODE_TLV_API_NEW_VERSION: new versioning format
  * @IWM_UCODE_TLV_API_TX_POWER_CHAIN: TX power API has larger command size
  *	(command version 3) that supports per-chain limits
+ * @IWM_UCODE_TLV_API_SCAN_TSF_REPORT: Scan start time reported in scan
+ *	iteration complete notification, and the timestamp reported for RX
+ *	received during scan, are reported in TSF of the mac specified in the
+ *	scan request.
+ * @IWM_UCODE_TLV_API_TKIP_MIC_KEYS: This ucode supports version 2 of
+ *	ADD_MODIFY_STA_KEY_API_S_VER_2.
+ * @IWM_UCODE_TLV_API_STA_TYPE: This ucode supports station type assignement.
+ * @IWM_UCODE_TLV_API_EXT_SCAN_PRIORITY: scan APIs use 8-level priority
+ *	instead of 3.
+ * @IWM_UCODE_TLV_API_NEW_RX_STATS: should new RX STATISTICS API be used
  *
  * @IWM_NUM_UCODE_TLV_API: number of bits used
  */
-#define IWM_UCODE_TLV_API_FRAGMENTED_SCAN	(1 << 8)
-#define IWM_UCODE_TLV_API_WIFI_MCC_UPDATE	(1 << 9)
-#define IWM_UCODE_TLV_API_WIDE_CMD_HDR		(1 << 14)
-#define IWM_UCODE_TLV_API_LQ_SS_PARAMS		(1 << 18)
-#define IWM_UCODE_TLV_API_EXT_SCAN_PRIORITY	(1 << 24)
-#define IWM_UCODE_TLV_API_TX_POWER_CHAIN	(1 << 27)
-#define IWM_UCODE_TLV_API_TKIP_MIC_KEYS         (1 << 29)
-#define IWM_NUM_UCODE_TLV_API = 32
+#define IWM_UCODE_TLV_API_FRAGMENTED_SCAN	8
+#define IWM_UCODE_TLV_API_WIFI_MCC_UPDATE	9
+#define IWM_UCODE_TLV_API_WIDE_CMD_HDR		14
+#define IWM_UCODE_TLV_API_LQ_SS_PARAMS		18
+#define IWM_UCODE_TLV_API_NEW_VERSION		20
+#define IWM_UCODE_TLV_API_EXT_SCAN_PRIORITY	24
+#define IWM_UCODE_TLV_API_TX_POWER_CHAIN	27
+#define IWM_UCODE_TLV_API_SCAN_TSF_REPORT	28
+#define IWM_UCODE_TLV_API_TKIP_MIC_KEYS         29
+#define IWM_UCODE_TLV_API_STA_TYPE		30
+#define IWM_UCODE_TLV_API_NAN2_VER2		31
+#define IWM_UCODE_TLV_API_ADAPTIVE_DWELL	32
+#define IWM_UCODE_TLV_API_NEW_RX_STATS		35
+#define IWM_NUM_UCODE_TLV_API			128
 
 #define IWM_UCODE_TLV_API_BITS \
 	"\020\10FRAGMENTED_SCAN\11WIFI_MCC_UPDATE\16WIDE_CMD_HDR\22LQ_SS_PARAMS\30EXT_SCAN_PRIO\33TX_POWER_CHAIN\35TKIP_MIC_KEYS"

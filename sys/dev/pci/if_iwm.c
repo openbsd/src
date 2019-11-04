@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.269 2019/11/04 11:48:46 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.270 2019/11/04 11:59:52 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -746,16 +746,22 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 
 		case IWM_UCODE_TLV_API_CHANGES_SET: {
 			struct iwm_ucode_api *api;
+			int idx, i;
 			if (tlv_len != sizeof(*api)) {
 				err = EINVAL;
 				goto parse_out;
 			}
 			api = (struct iwm_ucode_api *)tlv_data;
-			/* Flags may exceed 32 bits in future firmware. */
-			if (le32toh(api->api_index) > 0) {
+			idx = le32toh(api->api_index);
+			if (idx >= howmany(IWM_NUM_UCODE_TLV_API, 32)) {
+				err = EINVAL;
 				goto parse_out;
 			}
-			sc->sc_ucode_api = le32toh(api->api_flags);
+			for (i = 0; i < 32; i++) {
+				if ((le32toh(api->api_flags) & (1 << i)) == 0)
+					continue;
+				setbit(sc->sc_ucode_api, i + (32 * idx));
+			}
 			break;
 		}
 
@@ -6389,7 +6395,7 @@ iwm_send_update_mcc_cmd(struct iwm_softc *sc, const char *alpha2)
 
 	memset(&mcc_cmd, 0, sizeof(mcc_cmd));
 	mcc_cmd.mcc = htole16(alpha2[0] << 8 | alpha2[1]);
-	if ((sc->sc_ucode_api & IWM_UCODE_TLV_API_WIFI_MCC_UPDATE) ||
+	if (isset(sc->sc_ucode_api, IWM_UCODE_TLV_API_WIFI_MCC_UPDATE) ||
 	    isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_LAR_MULTI_MCC))
 		mcc_cmd.source_id = IWM_MCC_SOURCE_GET_CURRENT;
 	else
