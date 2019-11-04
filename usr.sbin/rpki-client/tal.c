@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.9 2019/11/04 09:35:43 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.10 2019/11/04 09:39:06 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -191,7 +191,8 @@ tal_read_file(const char *file)
 
 		/* make sure every line is valid ascii */
 		for (i = 0; i < n; i++)
-			if (!isprint(line[i]) && !isspace(line[i]))
+			if (!isprint((unsigned char)line[i]) &&
+			    !isspace((unsigned char)line[i]))
 				errx(EXIT_FAILURE, "getline: %s: "
 				    "invalid content", file);
 
