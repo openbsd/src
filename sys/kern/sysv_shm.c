@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.73 2019/11/03 20:16:01 guenther Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.74 2019/11/04 00:48:22 guenther Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -296,7 +296,7 @@ sys_shmctl(struct proc *p, void *v, register_t *retval)
 	int		error;
 
 	if (cmd == IPC_SET) {
-		error = ds_copyin(buf, &inbuf, sizeof(inbuf));
+		error = copyin(buf, &inbuf, sizeof(inbuf));
 		if (error)
 			return (error);
 	}
