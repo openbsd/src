@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.11 2019/11/04 15:31:08 jsing Exp $ */
+/* $OpenBSD: cms.c,v 1.12 2019/11/04 15:33:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -68,12 +68,12 @@
 
 #include <openssl/cms.h>
 
-static int save_certs(char *signerfile, STACK_OF(X509) * signers);
-static int cms_cb(int ok, X509_STORE_CTX * ctx);
-static void receipt_request_print(BIO * out, CMS_ContentInfo * cms);
-static CMS_ReceiptRequest * make_receipt_request(
-    STACK_OF(OPENSSL_STRING) * rr_to, int rr_allorfirst,
-    STACK_OF(OPENSSL_STRING) * rr_from);
+static int save_certs(char *signerfile, STACK_OF(X509) *signers);
+static int cms_cb(int ok, X509_STORE_CTX *ctx);
+static void receipt_request_print(BIO *out, CMS_ContentInfo *cms);
+static CMS_ReceiptRequest *make_receipt_request(
+    STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
+    STACK_OF(OPENSSL_STRING) *rr_from);
 
 #define SMIME_OP	0x10
 #define SMIME_IP	0x20
@@ -106,7 +106,7 @@ cms_main(int argc, char **argv)
 	const char *inmode = "r", *outmode = "w";
 	char *infile = NULL, *outfile = NULL, *rctfile = NULL;
 	char *signerfile = NULL, *recipfile = NULL;
-	STACK_OF(OPENSSL_STRING) * sksigners = NULL, *skkeys = NULL;
+	STACK_OF(OPENSSL_STRING) *sksigners = NULL, *skkeys = NULL;
 	char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
 	char *certsoutfile = NULL;
 	const EVP_CIPHER *cipher = NULL;
@@ -114,13 +114,13 @@ cms_main(int argc, char **argv)
 	X509_STORE *store = NULL;
 	X509 *cert = NULL, *recip = NULL, *signer = NULL;
 	EVP_PKEY *key = NULL;
-	STACK_OF(X509) * encerts = NULL, *other = NULL;
+	STACK_OF(X509) *encerts = NULL, *other = NULL;
 	BIO *in = NULL, *out = NULL, *indata = NULL, *rctin = NULL;
 	int badarg = 0;
 	int flags = CMS_DETACHED, noout = 0, print = 0;
 	int verify_retcode = 0;
 	int rr_print = 0, rr_allorfirst = -1;
-	STACK_OF(OPENSSL_STRING) * rr_to = NULL, *rr_from = NULL;
+	STACK_OF(OPENSSL_STRING) *rr_to = NULL, *rr_from = NULL;
 	CMS_ReceiptRequest *rr = NULL;
 	char *to = NULL, *from = NULL, *subject = NULL;
 	char *CAfile = NULL, *CApath = NULL;
@@ -660,7 +660,7 @@ argerr:
 			}
 		}
 		if (certsoutfile) {
-			STACK_OF(X509) * allcerts;
+			STACK_OF(X509) *allcerts;
 			allcerts = CMS_get1_certs(cms);
 			if (!save_certs(certsoutfile, allcerts)) {
 				BIO_printf(bio_err,
@@ -754,7 +754,7 @@ argerr:
 
 	} else if (operation == SMIME_SIGN_RECEIPT) {
 		CMS_ContentInfo *srcms = NULL;
-		STACK_OF(CMS_SignerInfo) * sis;
+		STACK_OF(CMS_SignerInfo) *sis;
 		CMS_SignerInfo *si;
 		sis = CMS_get0_SignerInfos(cms);
 		if (!sis)
@@ -885,7 +885,7 @@ argerr:
 			goto end;
 		}
 		if (signerfile) {
-			STACK_OF(X509) * signers;
+			STACK_OF(X509) *signers;
 			signers = CMS_get0_signers(cms);
 			if (!save_certs(signerfile, signers)) {
 				BIO_printf(bio_err,
@@ -969,7 +969,7 @@ end:
 }
 
 static int
-save_certs(char *signerfile, STACK_OF(X509) * signers)
+save_certs(char *signerfile, STACK_OF(X509) *signers)
 {
 	int i;
 	BIO *tmp;
@@ -988,7 +988,7 @@ save_certs(char *signerfile, STACK_OF(X509) * signers)
 /* Minimal callback just to output policy info (if any) */
 
 static int
-cms_cb(int ok, X509_STORE_CTX * ctx)
+cms_cb(int ok, X509_STORE_CTX *ctx)
 {
 	int error;
 
@@ -1006,9 +1006,9 @@ cms_cb(int ok, X509_STORE_CTX * ctx)
 }
 
 static void
-gnames_stack_print(BIO * out, STACK_OF(GENERAL_NAMES) * gns)
+gnames_stack_print(BIO *out, STACK_OF(GENERAL_NAMES) *gns)
 {
-	STACK_OF(GENERAL_NAME) * gens;
+	STACK_OF(GENERAL_NAME) *gens;
 	GENERAL_NAME *gen;
 	int i, j;
 
@@ -1025,13 +1025,13 @@ gnames_stack_print(BIO * out, STACK_OF(GENERAL_NAMES) * gns)
 }
 
 static void
-receipt_request_print(BIO * out, CMS_ContentInfo * cms)
+receipt_request_print(BIO *out, CMS_ContentInfo *cms)
 {
-	STACK_OF(CMS_SignerInfo) * sis;
+	STACK_OF(CMS_SignerInfo) *sis;
 	CMS_SignerInfo *si;
 	CMS_ReceiptRequest *rr;
 	int allorfirst;
-	STACK_OF(GENERAL_NAMES) * rto, *rlist;
+	STACK_OF(GENERAL_NAMES) *rto, *rlist;
 	ASN1_STRING *scid;
 	int i, rv;
 
@@ -1073,10 +1073,10 @@ receipt_request_print(BIO * out, CMS_ContentInfo * cms)
 }
 
 static STACK_OF(GENERAL_NAMES) *
-make_names_stack(STACK_OF(OPENSSL_STRING) * ns)
+make_names_stack(STACK_OF(OPENSSL_STRING) *ns)
 {
 	int i;
-	STACK_OF(GENERAL_NAMES) * ret;
+	STACK_OF(GENERAL_NAMES) *ret;
 	GENERAL_NAMES *gens = NULL;
 	GENERAL_NAME *gen = NULL;
 	ret = sk_GENERAL_NAMES_new_null();
@@ -1110,10 +1110,10 @@ err:
 
 
 static CMS_ReceiptRequest *
-make_receipt_request(STACK_OF(OPENSSL_STRING) * rr_to, int rr_allorfirst,
-    STACK_OF(OPENSSL_STRING) * rr_from)
+make_receipt_request(STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
+    STACK_OF(OPENSSL_STRING) *rr_from)
 {
-	STACK_OF(GENERAL_NAMES) * rct_to, *rct_from;
+	STACK_OF(GENERAL_NAMES) *rct_to, *rct_from;
 	CMS_ReceiptRequest *rr;
 
 	rct_to = make_names_stack(rr_to);
