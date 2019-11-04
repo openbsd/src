@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.176 2019/11/03 19:26:15 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.177 2019/11/04 15:36:36 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -69,18 +69,18 @@ struct tls;
 #include "cmds.h"
 
 static int	url_get(const char *, const char *, const char *, int);
-void		aborthttp(int);
-void		abortfile(int);
-char		hextochar(const char *);
-char		*urldecode(const char *);
-char		*recode_credentials(const char *_userinfo);
-char		*ftp_readline(FILE *, size_t *);
-void		ftp_close(FILE **fin, struct tls **tls, volatile int *fd);
-const char	*sockerror(struct tls *);
+static void	aborthttp(int);
+static void	abortfile(int);
+static char	hextochar(const char *);
+static char	*urldecode(const char *);
+static char	*recode_credentials(const char *_userinfo);
+static char	*ftp_readline(FILE *, size_t *);
+static void	ftp_close(FILE **, struct tls **, volatile int *);
+static const char *sockerror(struct tls *);
 #ifndef NOSSL
-int		proxy_connect(int, char *, char *);
-int		stdio_tls_write_wrapper(void *, const char *, int);
-int		stdio_tls_read_wrapper(void *, char *, int);
+static int	proxy_connect(int, char *, char *);
+static int	stdio_tls_write_wrapper(void *, const char *, int);
+static int	stdio_tls_read_wrapper(void *, char *, int);
 #endif /* !NOSSL */
 
 #define	FTP_URL		"ftp://"	/* ftp URL prefix */
@@ -95,7 +95,7 @@ int		stdio_tls_read_wrapper(void *, char *, int);
 static const char at_encoding_warning[] =
     "Extra `@' characters in usernames and passwords should be encoded as %%40";
 
-jmp_buf	httpabort;
+static jmp_buf	httpabort;
 
 static int	redirect_loop;
 static int	retried;
@@ -1085,7 +1085,7 @@ cleanup_url_get:
  * Abort a http retrieval
  */
 /* ARGSUSED */
-void
+static void
 aborthttp(int signo)
 {
 
@@ -1099,7 +1099,7 @@ aborthttp(int signo)
  * Abort a http retrieval
  */
 /* ARGSUSED */
-void
+static void
 abortfile(int signo)
 {
 
@@ -1461,7 +1461,7 @@ urldecode(const char *str)
 	return ret-reallen;
 }
 
-char *
+static char *
 recode_credentials(const char *userinfo)
 {
 	char *ui, *creds;
@@ -1481,7 +1481,7 @@ recode_credentials(const char *userinfo)
 	return (creds);
 }
 
-char
+static char
 hextochar(const char *str)
 {
 	unsigned char c, ret;
@@ -1518,13 +1518,13 @@ isurl(const char *p)
 	return (0);
 }
 
-char *
+static char *
 ftp_readline(FILE *fp, size_t *lenp)
 {
 	return fparseln(fp, lenp, NULL, "\0\0\0", 0);
 }
 
-void
+static void
 ftp_close(FILE **fin, struct tls **tls, volatile int *fd)
 {
 #ifndef NOSSL
@@ -1551,7 +1551,7 @@ ftp_close(FILE **fin, struct tls **tls, volatile int *fd)
 	}
 }
 
-const char *
+static const char *
 sockerror(struct tls *tls)
 {
 	int	save_errno = errno;
@@ -1566,7 +1566,7 @@ sockerror(struct tls *tls)
 }
 
 #ifndef NOSSL
-int
+static int
 proxy_connect(int socket, char *host, char *cookie)
 {
 	int l;
@@ -1608,7 +1608,7 @@ proxy_connect(int socket, char *host, char *cookie)
 	return(200);
 }
 
-int
+static int
 stdio_tls_write_wrapper(void *arg, const char *buf, int len)
 {
 	struct tls *tls = arg;
@@ -1621,7 +1621,7 @@ stdio_tls_write_wrapper(void *arg, const char *buf, int len)
 	return ret;
 }
 
-int
+static int
 stdio_tls_read_wrapper(void *arg, char *buf, int len)
 {
 	struct tls *tls = arg;
