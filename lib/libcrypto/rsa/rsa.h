@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.50 2019/11/02 13:52:31 jsing Exp $ */
+/* $OpenBSD: rsa.h,v 1.51 2019/11/04 12:30:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,7 +84,24 @@ extern "C" {
 /* typedef struct rsa_st RSA; */
 /* typedef struct rsa_meth_st RSA_METHOD; */
 
-typedef struct rsa_pss_params_st RSA_PSS_PARAMS;
+typedef struct rsa_pss_params_st {
+	X509_ALGOR *hashAlgorithm;
+	X509_ALGOR *maskGenAlgorithm;
+	ASN1_INTEGER *saltLength;
+	ASN1_INTEGER *trailerField;
+
+	/* Hash algorithm decoded from maskGenAlgorithm. */
+	X509_ALGOR *maskHash;
+} RSA_PSS_PARAMS;
+
+typedef struct rsa_oaep_params_st {
+	X509_ALGOR *hashFunc;
+	X509_ALGOR *maskGenFunc;
+	X509_ALGOR *pSourceFunc;
+
+	/* Hash algorithm decoded from maskGenFunc. */
+	X509_ALGOR *maskHash;
+} RSA_OAEP_PARAMS;
 
 struct rsa_meth_st {
 	const char *name;
@@ -345,30 +362,11 @@ RSA *d2i_RSAPrivateKey(RSA **a, const unsigned char **in, long len);
 int i2d_RSAPrivateKey(const RSA *a, unsigned char **out);
 extern const ASN1_ITEM RSAPrivateKey_it;
 
-typedef struct rsa_pss_params_st {
-	X509_ALGOR *hashAlgorithm;
-	X509_ALGOR *maskGenAlgorithm;
-	ASN1_INTEGER *saltLength;
-	ASN1_INTEGER *trailerField;
-
-	/* Hash algorithm decoded from maskGenAlgorithm. */
-	X509_ALGOR *maskHash;
-} RSA_PSS_PARAMS;
-
 RSA_PSS_PARAMS *RSA_PSS_PARAMS_new(void);
 void RSA_PSS_PARAMS_free(RSA_PSS_PARAMS *a);
 RSA_PSS_PARAMS *d2i_RSA_PSS_PARAMS(RSA_PSS_PARAMS **a, const unsigned char **in, long len);
 int i2d_RSA_PSS_PARAMS(RSA_PSS_PARAMS *a, unsigned char **out);
 extern const ASN1_ITEM RSA_PSS_PARAMS_it;
-
-typedef struct rsa_oaep_params_st {
-	X509_ALGOR *hashFunc;
-	X509_ALGOR *maskGenFunc;
-	X509_ALGOR *pSourceFunc;
-
-	/* Hash algorithm decoded from maskGenFunc. */
-	X509_ALGOR *maskHash;
-} RSA_OAEP_PARAMS;
 
 RSA_OAEP_PARAMS *RSA_OAEP_PARAMS_new(void);
 void RSA_OAEP_PARAMS_free(RSA_OAEP_PARAMS *a);
