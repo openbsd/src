@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.12 2019/11/04 15:33:48 jsing Exp $ */
+/* $OpenBSD: cms.c,v 1.13 2019/11/04 15:34:27 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -483,7 +483,7 @@ cms_main(int argc, char **argv)
 		badarg = 1;
 
 	if (badarg) {
-argerr:
+ argerr:
 		BIO_printf(bio_err, "Usage cms [options] cert.pem ...\n");
 		BIO_printf(bio_err, "where options are\n");
 		BIO_printf(bio_err, "-encrypt       encrypt message\n");
@@ -936,7 +936,7 @@ argerr:
 	}
 	ret = 0;
 
-end:
+ end:
 	if (ret)
 		ERR_print_errors(bio_err);
 
@@ -1100,7 +1100,7 @@ make_names_stack(STACK_OF(OPENSSL_STRING) *ns)
 
 	return ret;
 
-err:
+ err:
 	sk_GENERAL_NAMES_pop_free(ret, GENERAL_NAMES_free);
 	GENERAL_NAMES_free(gens);
 	GENERAL_NAME_free(gen);
@@ -1129,7 +1129,7 @@ make_receipt_request(STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
 	    rct_to);
 	return rr;
 
-err:
+ err:
 	return NULL;
 }
 
