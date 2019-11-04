@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.134 2019/10/22 09:31:23 florian Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.135 2019/11/04 14:58:37 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
@@ -151,9 +151,6 @@ server_http_authenticate(struct server_config *srv_conf, struct client *clt)
 	clt_user = decoded;
 	*clt_pass++ = '\0';
 	if ((clt->clt_remote_user = strdup(clt_user)) == NULL)
-		goto done;
-
-	if (clt_pass == NULL)
 		goto done;
 
 	if ((fp = fopen(auth->auth_htpasswd, "r")) == NULL)
