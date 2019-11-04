@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.205 2019/05/15 09:13:16 bcook Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.206 2019/11/04 19:17:28 otto Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -139,6 +139,10 @@
  * OTHER ENTITY BASED ON INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS OR
  * OTHERWISE.
  */
+
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 #include <stdio.h>
 
@@ -456,7 +460,15 @@ SSL_set_trust(SSL *s, int trust)
 int
 SSL_set1_host(SSL *s, const char *hostname)
 {
-	return X509_VERIFY_PARAM_set1_host(s->param, hostname, 0);
+	struct in_addr ina;
+	struct in6_addr in6a;
+	
+	if (hostname != NULL && *hostname != '\0' &&
+	    (inet_pton(AF_INET, hostname, &ina) == 1 ||
+	    inet_pton(AF_INET6, hostname, &in6a) == 1))
+		return X509_VERIFY_PARAM_set1_ip_asc(s->param, hostname);
+	else
+		return X509_VERIFY_PARAM_set1_host(s->param, hostname, 0);
 }
 
 X509_VERIFY_PARAM *
