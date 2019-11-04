@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.38 2019/11/04 11:29:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.39 2019/11/04 11:55:46 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -1145,14 +1145,14 @@ static inline unsigned int IWM_SCD_QUEUE_RDPTR(unsigned int chnl)
 {
 	if (chnl < 20)
 		return IWM_SCD_BASE + 0x68 + chnl * 4;
-	return IWM_SCD_BASE + 0x2B4 + (chnl - 20) * 4;
+	return IWM_SCD_BASE + 0x2B4 + chnl * 4;
 }
 
 static inline unsigned int IWM_SCD_QUEUE_STATUS_BITS(unsigned int chnl)
 {
 	if (chnl < 20)
 		return IWM_SCD_BASE + 0x10c + chnl * 4;
-	return IWM_SCD_BASE + 0x384 + (chnl - 20) * 4;
+	return IWM_SCD_BASE + 0x334 + chnl * 4;
 }
 
 /*********************** END TX SCHEDULER *************************************/
