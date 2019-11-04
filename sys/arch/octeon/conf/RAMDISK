@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.45 2019/09/28 22:20:24 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.46 2019/11/04 14:58:40 visa Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -60,6 +60,9 @@ sdmmc*		at octmmc?	# SD/MMC bus
 
 octgmx*		at octpip?
 cnmac*		at octgmx?
+
+ogxnexus*	at fdt?
+ogx*		at ogxnexus?
 
 pciide*		at pci? flags 0x0000
 wd*		at pciide? flags 0x0000

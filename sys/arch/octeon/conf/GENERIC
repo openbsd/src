@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.52 2019/09/28 22:20:24 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.53 2019/11/04 14:58:40 visa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -62,6 +62,9 @@ sdmmc*		at octmmc?	# SD/MMC bus
 
 octgmx*		at octpip?
 cnmac*		at octgmx?
+
+ogxnexus*	at fdt?
+ogx*		at ogxnexus?
 
 rgephy*		at mii?
 ukphy*		at mii?
