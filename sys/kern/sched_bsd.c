@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.58 2019/11/02 05:31:20 visa Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.59 2019/11/04 18:06:03 visa Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -413,7 +413,6 @@ mi_switch(void)
 
 	SCHED_ASSERT_UNLOCKED();
 
-	dispatch_deadproc();
 	smr_idle();
 
 	/*

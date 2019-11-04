@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.61 2019/11/02 05:31:20 visa Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.62 2019/11/04 18:06:03 visa Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -159,10 +159,17 @@ sched_idle(void *v)
 
 	while (1) {
 		while (!cpu_is_idle(curcpu())) {
+			struct proc *dead;
+
 			SCHED_LOCK(s);
 			p->p_stat = SSLEEP;
 			mi_switch();
 			SCHED_UNLOCK(s);
+
+			while ((dead = LIST_FIRST(&spc->spc_deadproc))) {
+				LIST_REMOVE(dead, p_hash);
+				exit2(dead);
+			}
 		}
 
 		splassert(IPL_NONE);
@@ -197,7 +204,7 @@ sched_idle(void *v)
  * and waking up the reaper without risking having our address space and
  * stack torn from under us before we manage to switch to another proc.
  * Therefore we have a per-cpu list of dead processes where we put this
- * proc. We move the list to the reaper list after context switch.
+ * proc and have idle clean up that list and move it to the reaper list.
  * All this will be unnecessary once we can bind the reaper this cpu
  * and not risk having it switch to another in case it sleeps.
  */
@@ -205,7 +212,13 @@ void
 sched_exit(struct proc *p)
 {
 	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
+	struct timespec ts;
+	struct proc *idle;
 	int s;
+
+	nanouptime(&ts);
+	timespecsub(&ts, &spc->spc_runtime, &ts);
+	timespecadd(&p->p_rtime, &ts, &p->p_rtime);
 
 	LIST_INSERT_HEAD(&spc->spc_deadproc, p, p_hash);
 
@@ -216,8 +229,10 @@ sched_exit(struct proc *p)
 #endif
 
 	SCHED_LOCK(s);
-	mi_switch();
-	panic("mi_switch returned");
+	idle = spc->spc_idleproc;
+	idle->p_stat = SRUN;
+	cpu_switchto(NULL, idle);
+	panic("cpu_switchto returned");
 }
 
 /*
