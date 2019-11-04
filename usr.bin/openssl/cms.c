@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.10 2019/11/04 15:18:45 jsing Exp $ */
+/* $OpenBSD: cms.c,v 1.11 2019/11/04 15:31:08 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -939,25 +939,19 @@ argerr:
 end:
 	if (ret)
 		ERR_print_errors(bio_err);
+
 	sk_X509_pop_free(encerts, X509_free);
 	sk_X509_pop_free(other, X509_free);
-	if (vpm)
-		X509_VERIFY_PARAM_free(vpm);
-	if (sksigners)
-		sk_OPENSSL_STRING_free(sksigners);
-	if (skkeys)
-		sk_OPENSSL_STRING_free(skkeys);
+	X509_VERIFY_PARAM_free(vpm);
+	sk_OPENSSL_STRING_free(sksigners);
+	sk_OPENSSL_STRING_free(skkeys);
 	free(secret_key);
 	free(secret_keyid);
 	free(pwri_tmp);
-	if (econtent_type)
-		ASN1_OBJECT_free(econtent_type);
-	if (rr)
-		CMS_ReceiptRequest_free(rr);
-	if (rr_to)
-		sk_OPENSSL_STRING_free(rr_to);
-	if (rr_from)
-		sk_OPENSSL_STRING_free(rr_from);
+	ASN1_OBJECT_free(econtent_type);
+	CMS_ReceiptRequest_free(rr);
+	sk_OPENSSL_STRING_free(rr_to);
+	sk_OPENSSL_STRING_free(rr_from);
 	X509_STORE_free(store);
 	X509_free(cert);
 	X509_free(recip);
@@ -970,6 +964,7 @@ end:
 	BIO_free(indata);
 	BIO_free_all(out);
 	free(passin);
+
 	return (ret);
 }
 
@@ -1106,12 +1101,10 @@ make_names_stack(STACK_OF(OPENSSL_STRING) * ns)
 	return ret;
 
 err:
-	if (ret)
-		sk_GENERAL_NAMES_pop_free(ret, GENERAL_NAMES_free);
-	if (gens)
-		GENERAL_NAMES_free(gens);
-	if (gen)
-		GENERAL_NAME_free(gen);
+	sk_GENERAL_NAMES_pop_free(ret, GENERAL_NAMES_free);
+	GENERAL_NAMES_free(gens);
+	GENERAL_NAME_free(gen);
+
 	return NULL;
 }
 
