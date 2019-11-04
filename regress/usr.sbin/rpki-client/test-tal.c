@@ -1,4 +1,4 @@
-/*	$Id: test-tal.c,v 1.3 2019/08/22 21:31:48 bluhm Exp $ */
+/*	$Id: test-tal.c,v 1.4 2019/11/04 09:40:39 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -46,6 +46,7 @@ int
 main(int argc, char *argv[])
 {
 	int		 c, i, verb = 0;
+	char		*buf;
 	struct tal	*tal;
 
 	ERR_load_crypto_strings();
@@ -68,8 +69,10 @@ main(int argc, char *argv[])
 		errx(1, "argument missing");
 
 	for (i = 0; i < argc; i++) {
-		if ((tal = tal_parse(argv[i])) == NULL)
+		buf = tal_read_file(argv[i]);
+		if ((tal = tal_parse(argv[i], buf)) == NULL)
 			break;
+		free(buf);
 		if (verb)
 			tal_print(tal);
 		tal_free(tal);
