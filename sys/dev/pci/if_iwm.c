@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.268 2019/11/04 11:43:08 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.269 2019/11/04 11:48:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1509,7 +1509,7 @@ iwm_apm_init(struct iwm_softc *sc)
 	int err = 0;
 
 	/* Disable L0S exit timer (platform NMI workaround) */
-	if (sc->sc_device_family != IWM_DEVICE_FAMILY_8000)
+	if (sc->sc_device_family < IWM_DEVICE_FAMILY_8000)
 		IWM_SETBITS(sc, IWM_CSR_GIO_CHICKEN_BITS,
 		    IWM_CSR_GIO_CHICKEN_BITS_REG_BIT_DIS_L0S_EXIT_TIMER);
 
