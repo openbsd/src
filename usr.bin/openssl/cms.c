@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.8 2019/11/04 14:47:43 jsing Exp $ */
+/* $OpenBSD: cms.c,v 1.9 2019/11/04 14:49:59 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -581,7 +581,7 @@ argerr:
 			encerts = sk_X509_new_null();
 		while (*args) {
 			if (!(cert = load_cert(bio_err, *args, FORMAT_PEM,
-			    NULL, e, "recipient certificate file")))
+			    NULL, "recipient certificate file")))
 				goto end;
 			sk_X509_push(encerts, cert);
 			cert = NULL;
@@ -590,21 +590,21 @@ argerr:
 	}
 	if (certfile) {
 		if (!(other = load_certs(bio_err, certfile, FORMAT_PEM, NULL,
-		    e, "certificate file"))) {
+		    "certificate file"))) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 	}
 	if (recipfile && (operation == SMIME_DECRYPT)) {
 		if (!(recip = load_cert(bio_err, recipfile, FORMAT_PEM, NULL,
-		    e, "recipient certificate file"))) {
+		    "recipient certificate file"))) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 	}
 	if (operation == SMIME_SIGN_RECEIPT) {
 		if (!(signer = load_cert(bio_err, signerfile, FORMAT_PEM, NULL,
-		    e, "receipt signer certificate file"))) {
+		    "receipt signer certificate file"))) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
@@ -620,7 +620,7 @@ argerr:
 		keyfile = NULL;
 
 	if (keyfile) {
-		key = load_key(bio_err, keyfile, keyform, 0, passin, e,
+		key = load_key(bio_err, keyfile, keyform, 0, passin,
 		    "signing key file");
 		if (!key)
 			goto end;
@@ -799,10 +799,10 @@ argerr:
 			signerfile = sk_OPENSSL_STRING_value(sksigners, i);
 			keyfile = sk_OPENSSL_STRING_value(skkeys, i);
 			signer = load_cert(bio_err, signerfile, FORMAT_PEM,
-			    NULL, e, "signer certificate");
+			    NULL, "signer certificate");
 			if (!signer)
 				goto end;
-			key = load_key(bio_err, keyfile, keyform, 0, passin, e,
+			key = load_key(bio_err, keyfile, keyform, 0, passin,
 			    "signing key file");
 			if (!key)
 				goto end;
