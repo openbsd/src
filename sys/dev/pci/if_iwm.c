@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.271 2019/11/04 12:01:59 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.272 2019/11/04 12:04:16 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6341,7 +6341,7 @@ iwm_sf_config(struct iwm_softc *sc, int new_state)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_sf_cfg_cmd sf_cmd = {
-		.state = htole32(IWM_SF_FULL_ON),
+		.state = htole32(new_state),
 	};
 	int err = 0;
 
