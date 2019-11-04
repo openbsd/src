@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.267 2019/11/04 11:29:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.268 2019/11/04 11:43:08 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -278,6 +278,7 @@ void	iwm_free_tx_ring(struct iwm_softc *, struct iwm_tx_ring *);
 void	iwm_enable_rfkill_int(struct iwm_softc *);
 int	iwm_check_rfkill(struct iwm_softc *);
 void	iwm_enable_interrupts(struct iwm_softc *);
+void	iwm_enable_fwload_interrupt(struct iwm_softc *);
 void	iwm_restore_interrupts(struct iwm_softc *);
 void	iwm_disable_interrupts(struct iwm_softc *);
 void	iwm_ict_reset(struct iwm_softc *);
@@ -1368,6 +1369,13 @@ void
 iwm_enable_interrupts(struct iwm_softc *sc)
 {
 	sc->sc_intmask = IWM_CSR_INI_SET_MASK;
+	IWM_WRITE(sc, IWM_CSR_INT_MASK, sc->sc_intmask);
+}
+
+void
+iwm_enable_fwload_interrupt(struct iwm_softc *sc)
+{
+	sc->sc_intmask = IWM_CSR_INT_BIT_FH_TX;
 	IWM_WRITE(sc, IWM_CSR_INT_MASK, sc->sc_intmask);
 }
 
@@ -3047,6 +3055,8 @@ iwm_load_firmware_7000(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 		}
 	}
 
+	iwm_enable_interrupts(sc);
+
 	IWM_WRITE(sc, IWM_CSR_RESET, 0);
 
 	return 0;
@@ -3153,7 +3163,12 @@ iwm_load_firmware_8000(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 		return err;
 
 	/* load to FW the binary sections of CPU2 */
-	return iwm_load_cpu_sections_8000(sc, fws, 2, &first_ucode_section);
+	err = iwm_load_cpu_sections_8000(sc, fws, 2, &first_ucode_section);
+	if (err)
+		return err;
+
+	iwm_enable_interrupts(sc);
+	return 0;
 }
 
 int
@@ -3199,9 +3214,9 @@ iwm_start_fw(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	IWM_WRITE(sc, IWM_CSR_UCODE_DRV_GP1_CLR,
 	    IWM_CSR_UCODE_DRV_GP1_BIT_CMD_BLOCKED);
 
-	/* clear (again), then enable host interrupts */
+	/* clear (again), then enable firwmare load interrupt */
 	IWM_WRITE(sc, IWM_CSR_INT, ~0);
-	iwm_enable_interrupts(sc);
+	iwm_enable_fwload_interrupt(sc);
 
 	/* really make sure rfkill handshake bits are cleared */
 	/* maybe we should write a few times more?  just to make sure */
