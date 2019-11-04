@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.273 2019/11/04 12:16:48 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.274 2019/11/04 12:20:40 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3349,6 +3349,15 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 		return err;
 	}
 
+	if (sc->sc_device_family < IWM_DEVICE_FAMILY_8000) {
+		err = iwm_send_bt_init_conf(sc);
+		if (err) {
+			printf("%s: could not init bt coex (error %d)\n",
+			    DEVNAME(sc), err);
+			return err;
+		}
+	}
+
 	if (justnvm) {
 		err = iwm_nvm_init(sc);
 		if (err) {
@@ -3362,10 +3371,6 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 
 		return 0;
 	}
-
-	err = iwm_send_bt_init_conf(sc);
-	if (err)
-		return err;
 
 	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_DQA_SUPPORT)) {
 		err = iwm_send_dqa_cmd(sc);
@@ -6697,13 +6702,6 @@ iwm_init_hw(struct iwm_softc *sc)
 	if (!iwm_nic_lock(sc))
 		return EBUSY;
 
-	err = iwm_send_bt_init_conf(sc);
-	if (err) {
-		printf("%s: could not init bt coex (error %d)\n",
-		    DEVNAME(sc), err);
-		goto err;
-	}
-
 	err = iwm_send_tx_ant_cfg(sc, iwm_fw_valid_tx_ant(sc));
 	if (err) {
 		printf("%s: could not init tx ant config (error %d)\n",
@@ -6723,6 +6721,13 @@ iwm_init_hw(struct iwm_softc *sc)
 		printf("%s: could not send phy config (error %d)\n",
 		    DEVNAME(sc), err);
 		goto err;
+	}
+
+	err = iwm_send_bt_init_conf(sc);
+	if (err) {
+		printf("%s: could not init bt coex (error %d)\n",
+		    DEVNAME(sc), err);
+		return err;
 	}
 
 	/* Add auxiliary station for scanning */
