@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.29 2019/03/17 17:46:00 tb Exp $ */
+/* $OpenBSD: openssl.c,v 1.30 2019/11/04 15:25:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -154,6 +154,9 @@ FUNCTION functions[] = {
 	{ FUNC_TYPE_GENERAL, "ca", ca_main },
 	{ FUNC_TYPE_GENERAL, "certhash", certhash_main },
 	{ FUNC_TYPE_GENERAL, "ciphers", ciphers_main },
+#ifndef OPENSSL_NO_CMS
+	{ FUNC_TYPE_GENERAL, "cms", cms_main },
+#endif
 	{ FUNC_TYPE_GENERAL, "crl2pkcs7", crl2pkcs7_main },
 	{ FUNC_TYPE_GENERAL, "crl", crl_main },
 	{ FUNC_TYPE_GENERAL, "dgst", dgst_main },

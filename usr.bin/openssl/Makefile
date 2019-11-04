@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2017/08/13 19:42:33 doug Exp $
+#	$OpenBSD: Makefile,v 1.11 2019/11/04 15:25:54 jsing Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,7 @@ CFLAGS+= -Werror
 .endif
 CFLAGS+= -DLIBRESSL_INTERNAL
 
-SRCS=	apps.c apps_posix.c asn1pars.c ca.c certhash.c ciphers.c crl.c \
+SRCS=	apps.c apps_posix.c asn1pars.c ca.c certhash.c ciphers.c cms.c crl.c \
 	crl2p7.c dgst.c dh.c dhparam.c dsa.c dsaparam.c ec.c ecparam.c enc.c \
 	errstr.c gendh.c gendsa.c genpkey.c genrsa.c nseq.c ocsp.c \
 	openssl.c passwd.c pkcs12.c pkcs7.c pkcs8.c pkey.c pkeyparam.c \

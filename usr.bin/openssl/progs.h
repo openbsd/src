@@ -1,10 +1,11 @@
-/* $OpenBSD: progs.h,v 1.8 2016/09/05 10:45:19 deraadt Exp $ */
+/* $OpenBSD: progs.h,v 1.9 2019/11/04 15:25:54 jsing Exp $ */
 /* Public domain */
 
 int asn1parse_main(int argc, char **argv);
 int ca_main(int argc, char **argv);
 int certhash_main(int argc, char **argv);
 int ciphers_main(int argc, char **argv);
+int cms_main(int argc, char **argv);
 int crl2pkcs7_main(int argc, char **argv);
 int crl_main(int argc, char **argv);
 int dgst_main(int argc, char **argv);
