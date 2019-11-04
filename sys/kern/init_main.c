@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.291 2019/10/22 21:19:22 cheloha Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.292 2019/11/04 17:51:22 anton Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -98,7 +98,6 @@
 
 #if defined(KUBSAN)
 extern void kubsan_init(void);
-extern void kubsan_start(void);
 #endif
 
 #if defined(NFSSERVER) || defined(NFSCLIENT)
@@ -352,11 +351,6 @@ main(void *framep)
 
 	/* Initialize task queues */
 	taskq_init();
-
-#ifdef KUBSAN
-	/* Start reporting kubsan findings. */
-	kubsan_start();
-#endif
 
 	/* Initialize the interface/address trees */
 	ifinit();

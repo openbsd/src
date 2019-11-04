@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_kubsan.c,v 1.10 2019/11/03 16:23:36 anton Exp $	*/
+/*	$OpenBSD: subr_kubsan.c,v 1.11 2019/11/04 17:51:22 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -16,14 +16,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/syslimits.h>
 #include <sys/systm.h>
-#include <sys/task.h>
+#include <sys/timeout.h>
 
 #include <uvm/uvm_extern.h>
 
+#define KUBSAN_INTERVAL	100	/* report interval in msec */
 #define KUBSAN_NSLOTS	32
 
 #define NUMBER_BUFSIZ		32
@@ -197,7 +199,7 @@ int kubsan_watch = 1;
 #endif
 
 struct kubsan_report	*kubsan_reports = NULL;
-struct task		 kubsan_task = TASK_INITIALIZER(kubsan_report, NULL);
+struct timeout		 kubsan_timo = TIMEOUT_INITIALIZER(kubsan_report, NULL);
 unsigned int		 kubsan_slot = 0;
 int			 kubsan_cold = 1;
 
@@ -378,27 +380,18 @@ __ubsan_handle_type_mismatch_v1(struct type_mismatch_data *data,
 }
 
 /*
- * Allocate storage for reports. Must be called as early on as possible in order
- * to catch undefined behavior during boot.
+ * Allocate storage for reports and schedule the reporter.
+ * Must be called as early on as possible in order to catch undefined behavior
+ * during boot.
  */
 void
 kubsan_init(void)
 {
 	kubsan_reports = (void *)uvm_pageboot_alloc(
 	    sizeof(struct kubsan_report) * KUBSAN_NSLOTS);
-}
-
-/*
- * Start reporting. Must be called after the system task queue has been
- * initialized.
- */
-void
-kubsan_start(void)
-{
 	kubsan_cold = 0;
 
-	if (kubsan_slot > 0)
-		task_add(systq, &kubsan_task);
+	timeout_add_msec(&kubsan_timo, KUBSAN_INTERVAL);
 }
 
 int64_t
@@ -453,7 +446,6 @@ kubsan_defer_report(struct kubsan_report *kr)
 	}
 
 	memcpy(&kubsan_reports[slot], kr, sizeof(*kr));
-	task_add(systq, &kubsan_task);
 }
 
 void
@@ -546,6 +538,8 @@ kubsan_report(void *arg)
 
 again:
 	nslots = kubsan_slot;
+	if (nslots == 0)
+		goto done;
 	if (nslots > KUBSAN_NSLOTS)
 		nslots = KUBSAN_NSLOTS;
 
@@ -719,6 +713,9 @@ again:
 
 	kubsan_slot = 0;
 	membar_producer();
+
+done:
+	timeout_add_msec(&kubsan_timo, KUBSAN_INTERVAL);
 }
 
 void
