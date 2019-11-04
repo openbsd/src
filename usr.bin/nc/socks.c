@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.29 2019/07/29 15:19:03 benno Exp $	*/
+/*	$OpenBSD: socks.c,v 1.30 2019/11/04 17:33:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -53,7 +53,7 @@
 #define SOCKS_DOMAIN	3
 #define SOCKS_IPV6	4
 
-int	remote_connect(const char *, const char *, struct addrinfo);
+int	remote_connect(const char *, const char *, struct addrinfo, char *);
 int	socks_connect(const char *, const char *, struct addrinfo,
 	    const char *, const char *, struct addrinfo, int,
 	    const char *);
@@ -201,7 +201,7 @@ socks_connect(const char *host, const char *port,
 	if (authretry++ > 3)
 		errx(1, "Too many authentication failures");
 
-	proxyfd = remote_connect(proxyhost, proxyport, proxyhints);
+	proxyfd = remote_connect(proxyhost, proxyport, proxyhints, NULL);
 
 	if (proxyfd < 0)
 		return (-1);

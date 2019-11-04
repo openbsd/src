@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.209 2019/10/24 12:48:54 job Exp $ */
+/* $OpenBSD: netcat.c,v 1.210 2019/11/04 17:33:28 millert Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -705,8 +705,12 @@ main(int argc, char *argv[])
 
 				fprintf(stderr, "Connection to %s", host);
 
-				/* if there is something to report, print IP */
-				if (!nflag && (strcmp(host, ipaddr) != 0))
+				/*
+				 * if we aren't connecting thru a proxy and
+				 * there is something to report, print IP
+				 */
+				if (!nflag && !xflag
+				    && (strcmp(host, ipaddr) != 0))
 					fprintf(stderr, " (%s)", ipaddr);
 
 				fprintf(stderr, " %s port [%s/%s] succeeded!\n",
@@ -959,12 +963,17 @@ remote_connect(const char *host, const char *port, struct addrinfo hints,
 
 		set_common_sockopts(s, res->ai_family);
 
-		if ((herr = getnameinfo(res->ai_addr, res->ai_addrlen, ipaddr,
-		    NI_MAXHOST, NULL, 0, NI_NUMERICHOST)) != 0) {
-			if (herr == EAI_SYSTEM)
+		if (ipaddr != NULL) {
+			herr = getnameinfo(res->ai_addr, res->ai_addrlen,
+			    ipaddr, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+			switch (herr) {
+			case 0:
+				break;
+			case EAI_SYSTEM:
 				err(1, "getnameinfo");
-			else
+			default:
 				errx(1, "getnameinfo: %s", gai_strerror(herr));
+			}
 		}
 
 		if (timeout_connect(s, res->ai_addr, res->ai_addrlen) == 0)
@@ -972,7 +981,8 @@ remote_connect(const char *host, const char *port, struct addrinfo hints,
 
 		if (vflag) {
 			/* only print IP if there is something to report */
-			if (nflag || (strncmp(host, ipaddr, NI_MAXHOST) == 0))
+			if (nflag || ipaddr == NULL ||
+			    (strncmp(host, ipaddr, NI_MAXHOST) == 0))
 				warn("connect to %s port %s (%s) failed", host,
 				    port, uflag ? "udp" : "tcp");
 			else
