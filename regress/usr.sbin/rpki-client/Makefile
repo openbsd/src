@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2019/11/02 13:55:08 jsing Exp $
+# $OpenBSD: Makefile,v 1.7 2019/11/04 09:41:04 claudio Exp $
 
 .PATH:		${.CURDIR}/../../../usr.sbin/rpki-client
 
@@ -6,7 +6,7 @@ PROGS += test-ip
 PROGS += test-cert
 PROGS += test-mft
 PROGS += test-roa
-#PROGS += test-tal
+PROGS += test-tal
 
 .for p in ${PROGS}
 REGRESS_TARGETS += run-regress-$p
