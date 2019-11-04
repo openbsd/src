@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.274 2019/11/04 12:20:40 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.275 2019/11/04 13:05:22 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3372,12 +3372,6 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 		return 0;
 	}
 
-	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_DQA_SUPPORT)) {
-		err = iwm_send_dqa_cmd(sc);
-		if (err)
-			return err;
-	}
-
 	err = iwm_sf_config(sc, IWM_SF_INIT_OFF);
 	if (err)
 		return err;
@@ -4402,11 +4396,7 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	    (ic->ic_flags & IEEE80211_F_USEPROT)))
 		flags |= IWM_TX_CMD_FLG_PROT_REQUIRE;
 
-	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
-	    type != IEEE80211_FC0_TYPE_DATA)
-		tx->sta_id = IWM_AUX_STA_ID;
-	else
-		tx->sta_id = IWM_STATION_ID;
+	tx->sta_id = IWM_STATION_ID;
 
 	if (type == IEEE80211_FC0_TYPE_MGT) {
 		uint8_t subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
@@ -4786,10 +4776,17 @@ int
 iwm_add_aux_sta(struct iwm_softc *sc)
 {
 	struct iwm_add_sta_cmd_v7 cmd;
-	int err;
+	int err, qid;
 	uint32_t status;
 
-	err = iwm_enable_ac_txq(sc, IWM_AUX_QUEUE, IWM_TX_FIFO_MCAST);
+	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_DQA_SUPPORT)) {
+		qid = IWM_DQA_AUX_QUEUE;
+		err = iwm_enable_txq(sc, IWM_AUX_STA_ID, qid,
+		    IWM_TX_FIFO_MCAST);
+	} else {
+		qid = IWM_AUX_QUEUE;
+		err = iwm_enable_ac_txq(sc, qid, IWM_TX_FIFO_MCAST);
+	}
 	if (err)
 		return err;
 
@@ -4797,7 +4794,7 @@ iwm_add_aux_sta(struct iwm_softc *sc)
 	cmd.sta_id = IWM_AUX_STA_ID;
 	cmd.mac_id_n_color =
 	    htole32(IWM_FW_CMD_ID_AND_COLOR(IWM_MAC_INDEX_AUX, 0));
-	cmd.tfd_queue_msk = htole32(1 << IWM_AUX_QUEUE);
+	cmd.tfd_queue_msk = htole32(1 << qid);
 	cmd.tid_disable_tx = htole16(0xffff);
 
 	status = IWM_ADD_STA_SUCCESS;
@@ -6728,6 +6725,12 @@ iwm_init_hw(struct iwm_softc *sc)
 		printf("%s: could not init bt coex (error %d)\n",
 		    DEVNAME(sc), err);
 		return err;
+	}
+
+	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_DQA_SUPPORT)) {
+		err = iwm_send_dqa_cmd(sc);
+		if (err)
+			return err;
 	}
 
 	/* Add auxiliary station for scanning */
