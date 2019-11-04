@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.42 2019/10/28 18:11:10 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.43 2019/11/04 11:29:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -173,6 +173,7 @@ struct iwm_fw_info {
 		} fw_sect[IWM_UCODE_SECT_MAX];
 		size_t fw_totlen;
 		int fw_count;
+		uint32_t paging_mem_size;
 	} fw_sects[IWM_UCODE_TYPE_MAX];
 };
 
@@ -235,6 +236,16 @@ struct iwm_dma_info {
 	bus_addr_t		paddr;
 	void 			*vaddr;
 	bus_size_t		size;
+};
+
+/**
+ * struct iwm_fw_paging
+ * @fw_paging_block: dma memory info
+ * @fw_paging_size: page size
+ */
+struct iwm_fw_paging {
+	struct iwm_dma_info fw_paging_block;
+	uint32_t fw_paging_size;
 };
 
 #define IWM_TX_RING_COUNT	256
@@ -486,6 +497,14 @@ struct iwm_softc {
 
 	int host_interrupt_operation_mode;
 	int sc_ltr_enabled;
+
+	/*
+	 * Paging parameters - All of the parameters should be set by the
+	 * opmode when paging is enabled
+	 */
+	struct iwm_fw_paging fw_paging_db[IWM_NUM_OF_FW_PAGING_BLOCKS];
+	uint16_t num_of_paging_blk;
+	uint16_t num_of_pages_in_last_blk;
 
 #if NBPFILTER > 0
 	caddr_t			sc_drvbpf;

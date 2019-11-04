@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.37 2019/10/28 18:11:10 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.38 2019/11/04 11:29:11 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -1737,6 +1737,9 @@ struct iwm_agn_scd_bc_tbl {
 #define IWM_CALIBRATION_COMPLETE_NOTIFICATION	0x67
 #define IWM_RADIO_VERSION_NOTIFICATION		0x68
 
+/* paging block to FW cpu2 */
+#define IWM_FW_PAGING_BLOCK_CMD	0x4f
+
 /* Scan offload */
 #define IWM_SCAN_OFFLOAD_REQUEST_CMD		0x51
 #define IWM_SCAN_OFFLOAD_ABORT_CMD		0x52
@@ -2099,6 +2102,57 @@ struct iwm_nvm_access_cmd {
 	uint16_t length;
 	uint8_t data[];
 } __packed; /* IWM_NVM_ACCESS_CMD_API_S_VER_2 */
+
+/*
+ * Block paging calculations
+ */
+#define IWM_PAGE_2_EXP_SIZE 12 /* 4K == 2^12 */
+#define IWM_FW_PAGING_SIZE (1 << IWM_PAGE_2_EXP_SIZE) /* page size is 4KB */
+#define IWM_PAGE_PER_GROUP_2_EXP_SIZE 3
+/* 8 pages per group */
+#define IWM_NUM_OF_PAGE_PER_GROUP (1 << IWM_PAGE_PER_GROUP_2_EXP_SIZE)
+/* don't change, support only 32KB size */
+#define IWM_PAGING_BLOCK_SIZE (IWM_NUM_OF_PAGE_PER_GROUP * IWM_FW_PAGING_SIZE)
+/* 32K == 2^15 */
+#define IWM_BLOCK_2_EXP_SIZE (IWM_PAGE_2_EXP_SIZE + IWM_PAGE_PER_GROUP_2_EXP_SIZE)
+
+/*
+ * Image paging calculations
+ */
+#define IWM_BLOCK_PER_IMAGE_2_EXP_SIZE 5
+/* 2^5 == 32 blocks per image */
+#define IWM_NUM_OF_BLOCK_PER_IMAGE (1 << IWM_BLOCK_PER_IMAGE_2_EXP_SIZE)
+/* maximum image size 1024KB */
+#define IWM_MAX_PAGING_IMAGE_SIZE (IWM_NUM_OF_BLOCK_PER_IMAGE * IWM_PAGING_BLOCK_SIZE)
+
+/* Virtual address signature */
+#define IWM_PAGING_ADDR_SIG 0xAA000000
+
+#define IWM_PAGING_CMD_IS_SECURED (1 << 9)
+#define IWM_PAGING_CMD_IS_ENABLED (1 << 8)
+#define IWM_PAGING_CMD_NUM_OF_PAGES_IN_LAST_GRP_POS 0
+#define IWM_PAGING_TLV_SECURE_MASK 1
+
+#define IWM_NUM_OF_FW_PAGING_BLOCKS	33 /* 32 for data and 1 block for CSS */
+
+/*
+ * struct iwm_fw_paging_cmd - paging layout
+ *
+ * (IWM_FW_PAGING_BLOCK_CMD = 0x4f)
+ *
+ * Send to FW the paging layout in the driver.
+ *
+ * @flags: various flags for the command
+ * @block_size: the block size in powers of 2
+ * @block_num: number of blocks specified in the command.
+ * @device_phy_addr: virtual addresses from device side
+*/
+struct iwm_fw_paging_cmd {
+	uint32_t flags;
+	uint32_t block_size;
+	uint32_t block_num;
+	uint32_t device_phy_addr[IWM_NUM_OF_FW_PAGING_BLOCKS];
+} __packed; /* IWM_FW_PAGING_BLOCK_CMD_API_S_VER_1 */
 
 /**
  * struct iwm_nvm_access_resp_ver2 - response to IWM_NVM_ACCESS_CMD

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.266 2019/10/28 18:11:10 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.267 2019/11/04 11:29:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -457,6 +457,9 @@ int	iwm_sf_config(struct iwm_softc *, int);
 int	iwm_send_bt_init_conf(struct iwm_softc *);
 int	iwm_send_update_mcc_cmd(struct iwm_softc *, const char *);
 void	iwm_tt_tx_backoff(struct iwm_softc *, uint32_t);
+void	iwm_free_fw_paging(struct iwm_softc *);
+int	iwm_save_fw_paging(struct iwm_softc *, const struct iwm_fw_sects *);
+int	iwm_send_paging_cmd(struct iwm_softc *, const struct iwm_fw_sects *);
 int	iwm_init_hw(struct iwm_softc *);
 int	iwm_init(struct ifnet *);
 void	iwm_start(struct ifnet *);
@@ -584,6 +587,8 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	struct iwm_ucode_tlv tlv;
 	uint32_t tlv_type;
 	uint8_t *data;
+	uint32_t usniffer_img;
+	uint32_t paging_mem_size;
 	int err;
 	size_t len;
 
@@ -785,6 +790,37 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 			    tlv_len);
 			if (err)
 				goto parse_out;
+			break;
+
+		case IWM_UCODE_TLV_PAGING:
+			if (tlv_len != sizeof(uint32_t)) {
+				err = EINVAL;
+				goto parse_out;
+			}
+			paging_mem_size = le32toh(*(const uint32_t *)tlv_data);
+
+			DPRINTF(("%s: Paging: paging enabled (size = %u bytes)\n",
+			    DEVNAME(sc), paging_mem_size));
+			if (paging_mem_size > IWM_MAX_PAGING_IMAGE_SIZE) {
+				printf("%s: Driver only supports up to %u"
+				    " bytes for paging image (%u requested)\n",
+				    DEVNAME(sc), IWM_MAX_PAGING_IMAGE_SIZE,
+				    paging_mem_size);
+				err = EINVAL;
+				goto out;
+			}
+			if (paging_mem_size & (IWM_FW_PAGING_SIZE - 1)) {
+				printf("%s: Paging: image isn't multiple of %u\n",
+				    DEVNAME(sc), IWM_FW_PAGING_SIZE);
+				err = EINVAL;
+				goto out;
+			}
+
+			fw->fw_sects[IWM_UCODE_TYPE_REGULAR].paging_mem_size =
+			    paging_mem_size;
+			usniffer_img = IWM_UCODE_TYPE_REGULAR_USNIFFER;
+			fw->fw_sects[usniffer_img].paging_mem_size =
+			    paging_mem_size;
 			break;
 
 		case IWM_UCODE_TLV_N_SCAN_CHANNELS:
@@ -3219,6 +3255,7 @@ iwm_load_ucode_wait_alive(struct iwm_softc *sc,
 	enum iwm_ucode_type ucode_type)
 {
 	enum iwm_ucode_type old_type = sc->sc_uc_current;
+	struct iwm_fw_sects *fw = &sc->sc_fw.fw_sects[ucode_type];
 	int err;
 
 	err = iwm_read_firmware(sc, ucode_type);
@@ -3237,7 +3274,33 @@ iwm_load_ucode_wait_alive(struct iwm_softc *sc,
 		return err;
 	}
 
-	return iwm_post_alive(sc);
+	err = iwm_post_alive(sc);
+	if (err)
+		return err;
+
+	/*
+	 * configure and operate fw paging mechanism.
+	 * driver configures the paging flow only once, CPU2 paging image
+	 * included in the IWM_UCODE_INIT image.
+	 */
+	if (fw->paging_mem_size) {
+		err = iwm_save_fw_paging(sc, fw);
+		if (err) {
+			printf("%s: failed to save the FW paging image\n",
+			    DEVNAME(sc));
+			return err;
+		}
+
+		err = iwm_send_paging_cmd(sc, fw);
+		if (err) {
+			printf("%s: failed to send the paging cmd\n",
+			    DEVNAME(sc));
+			iwm_free_fw_paging(sc);
+			return err;
+		}
+	}
+
+	return 0;
 }
 
 int
@@ -6348,6 +6411,227 @@ iwm_tt_tx_backoff(struct iwm_softc *sc, uint32_t backoff)
 	iwm_send_cmd(sc, &cmd);
 }
 
+void
+iwm_free_fw_paging(struct iwm_softc *sc)
+{
+	int i;
+
+	if (sc->fw_paging_db[0].fw_paging_block.vaddr == NULL)
+		return;
+
+	for (i = 0; i < IWM_NUM_OF_FW_PAGING_BLOCKS; i++) {
+		iwm_dma_contig_free(&sc->fw_paging_db[i].fw_paging_block);
+	}
+
+	memset(sc->fw_paging_db, 0, sizeof(sc->fw_paging_db));
+}
+
+int
+iwm_fill_paging_mem(struct iwm_softc *sc, const struct iwm_fw_sects *image)
+{
+	int sec_idx, idx;
+	uint32_t offset = 0;
+
+	/*
+	 * find where is the paging image start point:
+	 * if CPU2 exist and it's in paging format, then the image looks like:
+	 * CPU1 sections (2 or more)
+	 * CPU1_CPU2_SEPARATOR_SECTION delimiter - separate between CPU1 to CPU2
+	 * CPU2 sections (not paged)
+	 * PAGING_SEPARATOR_SECTION delimiter - separate between CPU2
+	 * non paged to CPU2 paging sec
+	 * CPU2 paging CSS
+	 * CPU2 paging image (including instruction and data)
+	 */
+	for (sec_idx = 0; sec_idx < IWM_UCODE_SECT_MAX; sec_idx++) {
+		if (image->fw_sect[sec_idx].fws_devoff ==
+		    IWM_PAGING_SEPARATOR_SECTION) {
+			sec_idx++;
+			break;
+		}
+	}
+
+	/*
+	 * If paging is enabled there should be at least 2 more sections left
+	 * (one for CSS and one for Paging data)
+	 */
+	if (sec_idx >= nitems(image->fw_sect) - 1) {
+		printf("%s: Paging: Missing CSS and/or paging sections\n",
+		    DEVNAME(sc));
+		iwm_free_fw_paging(sc);
+		return EINVAL;
+	}
+
+	/* copy the CSS block to the dram */
+	DPRINTF(("%s: Paging: load paging CSS to FW, sec = %d\n",
+	    DEVNAME(sc), sec_idx));
+
+	memcpy(sc->fw_paging_db[0].fw_paging_block.vaddr,
+	    image->fw_sect[sec_idx].fws_data,
+	    sc->fw_paging_db[0].fw_paging_size);
+
+	DPRINTF(("%s: Paging: copied %d CSS bytes to first block\n",
+	    DEVNAME(sc), sc->fw_paging_db[0].fw_paging_size));
+
+	sec_idx++;
+
+	/*
+	 * copy the paging blocks to the dram
+	 * loop index start from 1 since that CSS block already copied to dram
+	 * and CSS index is 0.
+	 * loop stop at num_of_paging_blk since that last block is not full.
+	 */
+	for (idx = 1; idx < sc->num_of_paging_blk; idx++) {
+		memcpy(sc->fw_paging_db[idx].fw_paging_block.vaddr,
+		    (const char *)image->fw_sect[sec_idx].fws_data + offset,
+		    sc->fw_paging_db[idx].fw_paging_size);
+
+		DPRINTF(("%s: Paging: copied %d paging bytes to block %d\n",
+		    DEVNAME(sc), sc->fw_paging_db[idx].fw_paging_size, idx));
+
+		offset += sc->fw_paging_db[idx].fw_paging_size;
+	}
+
+	/* copy the last paging block */
+	if (sc->num_of_pages_in_last_blk > 0) {
+		memcpy(sc->fw_paging_db[idx].fw_paging_block.vaddr,
+		    (const char *)image->fw_sect[sec_idx].fws_data + offset,
+		    IWM_FW_PAGING_SIZE * sc->num_of_pages_in_last_blk);
+
+		DPRINTF(("%s: Paging: copied %d pages in the last block %d\n",
+		    DEVNAME(sc), sc->num_of_pages_in_last_blk, idx));
+	}
+
+	return 0;
+}
+
+int
+iwm_alloc_fw_paging_mem(struct iwm_softc *sc, const struct iwm_fw_sects *image)
+{
+	int blk_idx = 0;
+	int error, num_of_pages;
+
+	if (sc->fw_paging_db[0].fw_paging_block.vaddr != NULL) {
+		int i;
+		/* Device got reset, and we setup firmware paging again */
+		bus_dmamap_sync(sc->sc_dmat,
+		    sc->fw_paging_db[0].fw_paging_block.map,
+		    0, IWM_FW_PAGING_SIZE,
+		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+		for (i = 1; i < sc->num_of_paging_blk + 1; i++) {
+			bus_dmamap_sync(sc->sc_dmat,
+			    sc->fw_paging_db[i].fw_paging_block.map,
+			    0, IWM_PAGING_BLOCK_SIZE,
+			    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+		}
+		return 0;
+	}
+
+	/* ensure IWM_BLOCK_2_EXP_SIZE is power of 2 of IWM_PAGING_BLOCK_SIZE */
+#if (1 << IWM_BLOCK_2_EXP_SIZE) != IWM_PAGING_BLOCK_SIZE
+#error IWM_BLOCK_2_EXP_SIZE must be power of 2 of IWM_PAGING_BLOCK_SIZE
+#endif
+
+	num_of_pages = image->paging_mem_size / IWM_FW_PAGING_SIZE;
+	sc->num_of_paging_blk =
+	    ((num_of_pages - 1) / IWM_NUM_OF_PAGE_PER_GROUP) + 1;
+
+	sc->num_of_pages_in_last_blk =
+		num_of_pages -
+		IWM_NUM_OF_PAGE_PER_GROUP * (sc->num_of_paging_blk - 1);
+
+	DPRINTF(("%s: Paging: allocating mem for %d paging blocks, each block"
+	    " holds 8 pages, last block holds %d pages\n", DEVNAME(sc),
+	    sc->num_of_paging_blk,
+	    sc->num_of_pages_in_last_blk));
+
+	/* allocate block of 4Kbytes for paging CSS */
+	error = iwm_dma_contig_alloc(sc->sc_dmat,
+	    &sc->fw_paging_db[blk_idx].fw_paging_block, IWM_FW_PAGING_SIZE,
+	    4096);
+	if (error) {
+		/* free all the previous pages since we failed */
+		iwm_free_fw_paging(sc);
+		return ENOMEM;
+	}
+
+	sc->fw_paging_db[blk_idx].fw_paging_size = IWM_FW_PAGING_SIZE;
+
+	DPRINTF(("%s: Paging: allocated 4K(CSS) bytes for firmware paging.\n",
+	    DEVNAME(sc)));
+
+	/*
+	 * allocate blocks in dram.
+	 * since that CSS allocated in fw_paging_db[0] loop start from index 1
+	 */
+	for (blk_idx = 1; blk_idx < sc->num_of_paging_blk + 1; blk_idx++) {
+		/* allocate block of IWM_PAGING_BLOCK_SIZE (32K) */
+		/* XXX Use iwm_dma_contig_alloc for allocating */
+		error = iwm_dma_contig_alloc(sc->sc_dmat,
+		     &sc->fw_paging_db[blk_idx].fw_paging_block,
+		    IWM_PAGING_BLOCK_SIZE, 4096);
+		if (error) {
+			/* free all the previous pages since we failed */
+			iwm_free_fw_paging(sc);
+			return ENOMEM;
+		}
+
+		sc->fw_paging_db[blk_idx].fw_paging_size =
+		    IWM_PAGING_BLOCK_SIZE;
+
+		DPRINTF((
+		    "%s: Paging: allocated 32K bytes for firmware paging.\n",
+		    DEVNAME(sc)));
+	}
+
+	return 0;
+}
+
+int
+iwm_save_fw_paging(struct iwm_softc *sc, const struct iwm_fw_sects *fw)
+{
+	int ret;
+
+	ret = iwm_alloc_fw_paging_mem(sc, fw);
+	if (ret)
+		return ret;
+
+	return iwm_fill_paging_mem(sc, fw);
+}
+
+/* send paging cmd to FW in case CPU2 has paging image */
+int
+iwm_send_paging_cmd(struct iwm_softc *sc, const struct iwm_fw_sects *fw)
+{
+	int blk_idx;
+	uint32_t dev_phy_addr;
+	struct iwm_fw_paging_cmd fw_paging_cmd = {
+		.flags =
+			htole32(IWM_PAGING_CMD_IS_SECURED |
+				IWM_PAGING_CMD_IS_ENABLED |
+				(sc->num_of_pages_in_last_blk <<
+				IWM_PAGING_CMD_NUM_OF_PAGES_IN_LAST_GRP_POS)),
+		.block_size = htole32(IWM_BLOCK_2_EXP_SIZE),
+		.block_num = htole32(sc->num_of_paging_blk),
+	};
+
+	/* loop for for all paging blocks + CSS block */
+	for (blk_idx = 0; blk_idx < sc->num_of_paging_blk + 1; blk_idx++) {
+		dev_phy_addr = htole32(
+		    sc->fw_paging_db[blk_idx].fw_paging_block.paddr >>
+		    IWM_PAGE_2_EXP_SIZE);
+		fw_paging_cmd.device_phy_addr[blk_idx] = dev_phy_addr;
+		bus_dmamap_sync(sc->sc_dmat,
+		    sc->fw_paging_db[blk_idx].fw_paging_block.map, 0,
+		    blk_idx == 0 ? IWM_FW_PAGING_SIZE : IWM_PAGING_BLOCK_SIZE,
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+	}
+
+	return iwm_send_cmd_pdu(sc, iwm_cmd_id(IWM_FW_PAGING_BLOCK_CMD,
+					       IWM_LONG_GROUP, 0),
+	    0, sizeof(fw_paging_cmd), &fw_paging_cmd);
+}
+
 int
 iwm_init_hw(struct iwm_softc *sc)
 {
@@ -7188,6 +7472,8 @@ iwm_notif_intr(struct iwm_softc *sc)
 		case IWM_REMOVE_STA:
 		case IWM_TXPATH_FLUSH:
 		case IWM_LQ_CMD:
+		case IWM_WIDE_ID(IWM_LONG_GROUP,
+				 IWM_FW_PAGING_BLOCK_CMD):
 		case IWM_BT_CONFIG:
 		case IWM_REPLY_THERMAL_MNG_BACKOFF:
 		case IWM_NVM_ACCESS_CMD:
