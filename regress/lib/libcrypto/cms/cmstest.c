@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmstest.c,v 1.1 2019/11/02 15:35:10 jsing Exp $	*/
+/*	$OpenBSD: cmstest.c,v 1.2 2019/11/04 12:31:59 jsing Exp $	*/
 /*
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -28,6 +28,25 @@
 static int verbose = 0;
 
 static const char cms_msg[] = "Hello CMS!\r\n";
+
+static const char cms_ca_1[] = \
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIICqDCCAZACCQD8ebR8e4kdvjANBgkqhkiG9w0BAQsFADAWMRQwEgYDVQQDDAtU\n"
+    "ZXN0IENNUyBDQTAeFw0xOTA1MTExNTUzNTNaFw0yOTA1MDgxNTUzNTNaMBYxFDAS\n"
+    "BgNVBAMMC1Rlc3QgQ01TIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKC\n"
+    "AQEAoIiW3POGYfhY0BEgG8mIwouOI917M72jsuUE57ccjEXLWseItLb7r9vkiwW/\n"
+    "FYbz0UYkJW1JgpZmWaTGOgZGxj+WTzxh1aq7OHyJb6Pxwp9wGrGJu+BEqOZN/bi/\n"
+    "aQ1l8x7DxVJkFeI1+4QKDfmGYfWoVzQLgamO3u0vxz3Vi/XzX01ZomcZUYYx0lIq\n"
+    "hxAO665HoPUmecqYdLPquJNxdfiy37ieLJOmIsKZJtMcCZAxqhcCwE7I0196Ng3P\n"
+    "fK9Sl7BCyTBszb2YC2qOleuI2Wjg/7o1+hugopUkjxz0RGFu5s3K9PhCLwpqylXg\n"
+    "IXe9Vwi38gKawD3yjtDBRDNmIwIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQAvsvtc\n"
+    "cO0Eo0F6MvB0bjBIMHBkKyWcmD2c5gVFhbHyRD+XBVXNdn5CcBba2amm0VgShBpM\n"
+    "4e1rOtIH/Hf6nB3c/EjZvd16ryoTCTvzayac7sD2Y8IxF1JIAKvjFbu+LmzM/F5f\n"
+    "x3/WdY1qs5W7lO46i8xmSUAP88gohWP4cyVUAITNrh/RSOFaWUd5i1/vZ+iEexLI\n"
+    "rQWsweJleOxvA8SrXm2gAkqRWEncsxOrsX/MsPl7iJoebLhWbS3cOHhutWrfhdlC\n"
+    "2uT6K7SA9rn6qqmvI6mLkHJQpqq++Py2UTDo1u8VKa3ieYNUN070kgxpYiVBGs3L\n"
+    "aaACIcEs48gnTRWc\n"
+    "-----END CERTIFICATE-----\n";
 
 static const char cms_cert_1[] = \
     "-----BEGIN CERTIFICATE-----\n"
@@ -96,7 +115,7 @@ test_cms_encrypt_decrypt()
 	CMS_ContentInfo *ci = NULL;
 	EVP_PKEY *pkey = NULL;
 	BIO *bio_mem = NULL;
-	BIO *bio_out;
+	BIO *bio_out = NULL;
 	X509 *cert = NULL;
 	size_t len;
 	char *p;
@@ -169,10 +188,113 @@ test_cms_encrypt_decrypt()
 
  failure:
 	BIO_free(bio_mem);
+	BIO_free(bio_out);
 	CMS_ContentInfo_free(ci);
 	EVP_PKEY_free(pkey);
 	sk_X509_free(certs);
 	X509_free(cert);
+
+	return failed;
+}
+
+static int
+test_cms_sign_verify()
+{
+	STACK_OF(X509) *certs = NULL;
+	CMS_ContentInfo *ci = NULL;
+	X509_STORE *store = NULL;
+	EVP_PKEY *pkey = NULL;
+	BIO *bio_mem = NULL;
+	BIO *bio_out = NULL;
+	X509 *cert = NULL;
+	X509 *ca = NULL;
+	size_t len;
+	char *p;
+	int failed = 1;
+
+	if ((bio_out = BIO_new_fp(stdout, BIO_NOCLOSE)) == NULL)
+		errx(1, "failed to create BIO");
+
+	if ((certs = sk_X509_new_null()) == NULL)
+		errx(1, "failed to create certs");
+	if ((bio_mem = BIO_new_mem_buf(cms_cert_1, -1)) == NULL)
+		errx(1, "failed to create BIO for cert");
+	if ((cert = PEM_read_bio_X509(bio_mem, NULL, NULL, NULL)) == NULL)
+		errx(1, "failed to read cert");
+	if (!sk_X509_push(certs, cert))
+		errx(1, "failed to push cert");
+
+	BIO_free(bio_mem);
+	if ((bio_mem = BIO_new_mem_buf(cms_ca_1, -1)) == NULL)
+		errx(1, "failed to create BIO for cert");
+	if ((ca = PEM_read_bio_X509(bio_mem, NULL, NULL, NULL)) == NULL)
+		errx(1, "failed to read cert");
+	if ((store = X509_STORE_new()) == NULL)
+		errx(1, "failed to create X509 store");
+	if (!X509_STORE_add_cert(store, ca))
+		errx(1, "failed to add cert to store");
+
+	BIO_free(bio_mem);
+	if ((bio_mem = BIO_new_mem_buf(cms_key_1, -1)) == NULL)
+		errx(1, "failed to create BIO for key");
+	if ((pkey = PEM_read_bio_PrivateKey(bio_mem, NULL, NULL, NULL)) == NULL)
+		errx(1, "failed to read key");
+
+	BIO_free(bio_mem);
+	if ((bio_mem = BIO_new_mem_buf(cms_msg, -1)) == NULL)
+		errx(1, "failed to create BIO for message");
+
+	if ((ci = CMS_sign(cert, pkey, NULL, bio_mem, 0)) == NULL) {
+		fprintf(stderr, "FAIL: CMS sign failed\n");
+		ERR_print_errors_fp(stderr);
+		goto failure;
+	}
+
+	if (verbose) {
+		if (!CMS_ContentInfo_print_ctx(bio_out, ci, 0, NULL))
+			errx(1, "failed to print CMS ContentInfo");
+		if (!PEM_write_bio_CMS(bio_out, ci))
+			errx(1, "failed to print CMS PEM");
+	}
+
+	BIO_free(bio_mem);
+	if ((bio_mem = BIO_new(BIO_s_mem())) == NULL)
+		errx(1, "failed to create BIO for message");
+
+	if (!CMS_verify(ci, certs, store, NULL, bio_mem, 0)) {
+		fprintf(stderr, "FAIL: CMS_verify failed\n");
+		ERR_print_errors_fp(stderr);
+		goto failure;
+	}
+
+	if ((len = BIO_get_mem_data(bio_mem, &p)) != strlen(cms_msg)) {
+		fprintf(stderr, "FAIL: CMS verify returned %li bytes, "
+		    "want %zi bytes\n", len, strlen(cms_msg));
+		fprintf(stderr, "Got CMS data:\n");
+		hexdump(p, len);
+		fprintf(stderr, "Want CMS data:\n");
+		hexdump(cms_msg, strlen(cms_msg));
+		goto failure;
+	}
+	if (memcmp(p, cms_msg, len) != 0) {
+		fprintf(stderr, "FAIL: CMS verify message differs");
+		fprintf(stderr, "Got CMS data:\n");
+		hexdump(p, len);
+		fprintf(stderr, "Want CMS data:\n");
+		hexdump(cms_msg, strlen(cms_msg));
+		goto failure;
+	}
+
+	failed = 0;
+
+ failure:
+	BIO_free(bio_mem);
+	BIO_free(bio_out);
+	CMS_ContentInfo_free(ci);
+	EVP_PKEY_free(pkey);
+	sk_X509_free(certs);
+	X509_free(cert);
+	X509_STORE_free(store);
 
 	return failed;
 }
@@ -185,6 +307,7 @@ main(int argc, char **argv)
 	ERR_load_crypto_strings();
 
 	failed |= test_cms_encrypt_decrypt();
+	failed |= test_cms_sign_verify();
 
 	return failed;
 }
