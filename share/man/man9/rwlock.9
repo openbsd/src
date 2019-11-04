@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.24 2019/02/25 22:03:56 dlg Exp $
+.\" $OpenBSD: rwlock.9,v 1.25 2019/11/04 18:16:27 anton Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 25 2019 $
+.Dd $Mdocdate: November 4 2019 $
 .Dt RWLOCK 9
 .Os
 .Sh NAME
@@ -238,6 +238,7 @@ Lock is not locked.
 .Sh SEE ALSO
 .Xr witness 4 ,
 .Xr mutex 9 ,
+.Xr rwsleep 9 ,
 .Xr spl 9
 .Sh HISTORY
 The
