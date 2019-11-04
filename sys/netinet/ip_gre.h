@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.h,v 1.13 2018/02/07 22:30:59 dlg Exp $ */
+/*      $OpenBSD: ip_gre.h,v 1.14 2019/11/04 23:52:28 dlg Exp $ */
 /*	$NetBSD: ip_gre.h,v 1.3 1998/10/07 23:33:02 thorpej Exp $ */
 
 /*
@@ -50,17 +50,6 @@
         { 0, 0 }, \
         { "allow", CTLTYPE_INT }, \
         { "wccp", CTLTYPE_INT }, \
-}
-
-/*
- * Names for MobileIP sysctl objects
- */
-#define MOBILEIPCTL_ALLOW    1		/* accept incoming MobileIP packets */
-#define MOBILEIPCTL_MAXID    2
-
-#define MOBILEIPCTL_NAMES { \
-        { 0, 0 }, \
-        { "allow", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL

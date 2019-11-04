@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.136 2019/10/25 01:46:02 dlg Exp $	*/
+/*	$OpenBSD: in.h,v 1.137 2019/11/04 23:52:28 dlg Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -441,7 +441,7 @@ struct ip_mreq {
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
-	{ "mobileip", CTLTYPE_NODE }, \
+	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \

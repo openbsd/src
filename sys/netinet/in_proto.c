@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.93 2019/07/15 12:40:42 bluhm Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.94 2019/11/04 23:52:28 dlg Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -170,11 +170,6 @@
 #include "etherip.h"
 #if NETHERIP > 0
 #include <net/if_etherip.h>
-#endif
-
-#include "mobileip.h"
-#if NMOBILEIP > 0
-#include <net/if_mobileip.h>
 #endif
 
 u_char ip_protox[IPPROTO_MAX];
@@ -354,20 +349,6 @@ const struct protosw inetsw[] = {
   .pr_sysctl	= gre_sysctl
 },
 #endif /* NGRE > 0 */
-#if NMOBILEIP > 0
-{
-  .pr_type	= SOCK_RAW,
-  .pr_domain	= &inetdomain,
-  .pr_protocol	= IPPROTO_MOBILE,
-  .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= mobileip_input,
-  .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach,
-  .pr_detach	= rip_detach,
-  .pr_sysctl	= mobileip_sysctl
-},
-#endif /* NMOBILEIP > 0 */
 #if NCARP > 0
 {
   .pr_type	= SOCK_RAW,
