@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.272 2019/11/04 12:04:16 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.273 2019/11/04 12:16:48 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1845,7 +1845,9 @@ iwm_nic_tx_init(struct iwm_softc *sc)
 		    txq->desc_dma.paddr >> 8);
 	}
 
-	iwm_write_prph(sc, IWM_SCD_GP_CTRL, IWM_SCD_GP_CTRL_AUTO_ACTIVE_MODE);
+	iwm_set_bits_prph(sc, IWM_SCD_GP_CTRL,
+	    IWM_SCD_GP_CTRL_AUTO_ACTIVE_MODE |
+	    IWM_SCD_GP_CTRL_ENABLE_31_QUEUES);
 
 	iwm_nic_unlock(sc);
 
