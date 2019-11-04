@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.44 2019/08/11 17:23:12 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.45 2019/11/04 00:05:38 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -66,8 +66,14 @@ ruleset_match_from(struct rule *r, const struct envelope *evp)
 	if (!r->flag_from)
 		return 1;
 
-	if (evp->flags & EF_INTERNAL)
+	if (evp->flags & EF_INTERNAL) {
+		/* if expanded from an empty table_from, skip rule
+		 * if no table 
+		 */
+		if (r->table_from == NULL)
+			return 0;
 		key = "local";
+	}
 	else if (r->flag_from_rdns) {
 		has_rdns = strcmp(evp->hostname, "<unknown>") != 0;
 		if (r->table_from == NULL)
