@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.199 2019/11/04 04:07:23 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.200 2019/11/04 04:17:31 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -85,6 +85,7 @@ struct vlan_mc_entry {
 struct vlan_softc {
 	struct arpcom		 sc_ac;
 #define	sc_if			 sc_ac.ac_if
+	unsigned int		 sc_dead;
 	unsigned int		 sc_ifidx0;	/* parent interface */
 	int			 sc_txprio;
 	int			 sc_rxprio;
@@ -189,6 +190,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	struct ifnet *ifp;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
+	sc->sc_dead = 0;
 	LIST_INIT(&sc->sc_mc_listhead);
 	ifp = &sc->sc_if;
 	ifp->if_softc = sc;
@@ -244,8 +246,12 @@ vlan_clone_destroy(struct ifnet *ifp)
 {
 	struct vlan_softc *sc = ifp->if_softc;
 
+	NET_LOCK();
+	sc->sc_dead = 1;
+
 	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		vlan_down(sc);
+	NET_UNLOCK();
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
@@ -655,6 +661,10 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifnet *ifp0;
 	uint16_t tag;
 	int error = 0;
+
+	NET_ASSERT_LOCKED();
+	if (sc->sc_dead)
+		return (ENXIO);
 
 	switch (cmd) {
 	case SIOCSIFADDR:
