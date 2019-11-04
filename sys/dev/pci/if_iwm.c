@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.270 2019/11/04 11:59:52 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.271 2019/11/04 12:01:59 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -849,6 +849,10 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 			    le32toh(((uint32_t *)tlv_data)[0]),
 			    le32toh(((uint32_t *)tlv_data)[1]),
 			    le32toh(((uint32_t *)tlv_data)[2]));
+			break;
+
+		case IWM_UCODE_TLV_FW_DBG_DEST:
+		case IWM_UCODE_TLV_FW_DBG_CONF:
 			break;
 
 		case IWM_UCODE_TLV_FW_MEM_SEG:
