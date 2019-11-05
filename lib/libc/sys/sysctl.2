@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.32 2019/10/29 04:23:35 dlg Exp $
+.\"	$OpenBSD: sysctl.2,v 1.33 2019/11/05 08:27:43 claudio Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 29 2019 $
+.Dd $Mdocdate: November 5 2019 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -1982,12 +1982,11 @@ IPsec flow database (SPD).
 .El
 .It Dv PF_MPLS
 Get or set global information about MPLS (Multiprotocol Label Switching).
-.Bl -column "MPLSCTL_MAXINKLOOP " "integer" "not applicable" -offset indent
+.Bl -column "MPLSCTL_MAPTTL_IP6 " "integer" "not applicable" -offset indent
 .It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
 .It Dv MPLSCTL_DEFTTL Ta integer Ta yes
 .It Dv MPLSCTL_MAPTTL_IP Ta integer Ta yes
 .It Dv MPLSCTL_MAPTTL_IP6 Ta integer Ta yes
-.It Dv MPLSCTL_MAXINKLOOP Ta integer Ta yes
 .El
 .Bl -tag -width "123456"
 .It Dv MPLSCTL_DEFTTL Pq Va net.mpls.ttl
@@ -2007,10 +2006,6 @@ If set to 0 the IPv6 header TTL is not modified while passing through MPLS
 and the MPLS label stack is initialized with the
 .Dv MPLSCTL_DEFTTL .
 The default is 0.
-.It Dv MPLSCTL_MAXINKLOOP Pq Va net.mpls.maxloop_inkernel
-Set or get the maxinum number of label stack operations (push, swap, pop)
-that can be made on a packet.
-The default is 16.
 .El
 .It Dv PF_PIPEX Pq Va net.pipex
 Get or set global information about PIPEX.
