@@ -944,7 +944,6 @@
 ./usr/include/net/if_gre.h
 ./usr/include/net/if_llc.h
 ./usr/include/net/if_media.h
-./usr/include/net/if_mobileip.h
 ./usr/include/net/if_pflog.h
 ./usr/include/net/if_pflow.h
 ./usr/include/net/if_pfsync.h
