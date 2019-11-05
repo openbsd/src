@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.4 2007/11/25 18:25:36 deraadt Exp $	*/
+/*	$OpenBSD: ffs.S,v 1.5 2019/11/05 08:16:43 mpi Exp $	*/
 /*	$NetBSD: ffs.S,v 1.2 1998/11/26 19:32:10 eeh Exp $	*/
 
 /*
@@ -87,6 +87,7 @@ ENTRY(ffs)
 	ldsb	[%o2 + %o0], %o0
 	retl
 	 add	%o0, 24, %o0
+END(ffs)
 	
 	.globl	_C_LABEL(__ffstab)
 _C_LABEL(__ffstab):

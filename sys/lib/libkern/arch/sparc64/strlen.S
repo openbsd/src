@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlen.S,v 1.5 2014/12/19 22:30:47 deraadt Exp $	*/
+/*	$OpenBSD: strlen.S,v 1.6 2019/11/05 08:16:43 mpi Exp $	*/
 /*	$NetBSD: strlen.S,v 1.1.1.1 1998/06/20 05:18:14 eeh Exp $	*/
 
 /*
@@ -46,3 +46,4 @@ ENTRY(strlen)
 	 inc	%o0		! always increment pointer
 	retl
 	 sub	%o0, %o1, %o0	! return length (ptr - (origptr+1))
+END(strlen)

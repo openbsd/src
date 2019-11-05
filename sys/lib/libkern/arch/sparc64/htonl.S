@@ -1,4 +1,4 @@
-/*	$OpenBSD: htonl.S,v 1.4 2007/11/25 18:25:36 deraadt Exp $	*/
+/*	$OpenBSD: htonl.S,v 1.5 2019/11/05 08:16:43 mpi Exp $	*/
 /*	$NetBSD: htonl.S,v 1.1.1.1 1998/06/20 05:18:14 eeh Exp $	*/
 
 /*
@@ -43,3 +43,4 @@
 ENTRY(htonl)
 	retl
 	 sra	%o0, 0, %o0	! sign extend
+END(htonl)
