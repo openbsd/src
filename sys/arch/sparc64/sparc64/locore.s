@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.186 2017/05/16 20:53:42 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.187 2019/11/05 08:17:21 mpi Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4047,6 +4047,7 @@ NENTRY(sun4u_ipi_tlb_page_demap)
 	wrpr	%g1, %pstate
 	ba,a	ret_from_intr_vector
 	 nop
+END(sun4u_ipi_tlb_page_demap)
 
 NENTRY(sun4u_ipi_tlb_context_demap)
 	rdpr	%pstate, %g1
@@ -4077,6 +4078,7 @@ NENTRY(sun4u_ipi_tlb_context_demap)
 	wrpr	%g1, %pstate
 	ba,a	ret_from_intr_vector
 	 nop
+END(sun4u_ipi_tlb_context_demap)
 
 #ifdef SUN4V
 NENTRY(sun4v_ipi_tlb_page_demap)
@@ -4092,9 +4094,11 @@ NENTRY(sun4v_ipi_tlb_page_demap)
 	mov	%g4, %o2
 
 	retry
+END(sun4v_ipi_tlb_page_demap)
 
 NENTRY(sun4v_ipi_tlb_context_demap)
 	NOTREACHED
+END(sun4v_ipi_tlb_context_demap)
 #endif
 
 NENTRY(ipi_save_fpstate)
@@ -4152,6 +4156,7 @@ NENTRY(ipi_save_fpstate)
 3:
 	ba	ret_from_intr_vector
 	 nop
+END(ipi_save_fpstate)
 
 NENTRY(ipi_drop_fpstate)
 	rdpr	%pstate, %g1
@@ -4167,15 +4172,17 @@ NENTRY(ipi_drop_fpstate)
 1:
 	ba	ret_from_intr_vector
 	 nop
+END(ipi_drop_fpstate)
 
 NENTRY(ipi_softint)
 	ba	ret_from_intr_vector
 	 wr	%g3, 0, SET_SOFTINT
+END(ipi_softint)
 
 NENTRY(ipi_db)
 	ba	slowtrap
 	 wrpr	%g0, T_BREAKPOINT, %tt
-
+END(ipi_db)
 #endif
 
 /*
@@ -4921,6 +4928,7 @@ ENTRY(sun4u_set_tsbs)
 
 	retl
 	 nop
+END(sun4u_set_tsbs)
 
 
 #ifdef MULTIPROCESSOR
@@ -4938,6 +4946,7 @@ ENTRY(cpu_mp_startup)
 
 	ba,a,pt	%xcc, cpu_initialize
 	 nop
+END(cpu_mp_startup)
 #endif
 
 /*
@@ -4980,6 +4989,7 @@ _C_LABEL(openfirmware):
 	wrpr	%i2, 0, %pil
 	ret
 	 restore	%o0, %g0, %o0
+END(openfirmware)
 
 /*
  * tlb_flush_pte(vaddr_t va, int ctx)
@@ -5061,6 +5071,7 @@ _C_LABEL(sp_tlb_flush_pte):
 #endif
 	retl
 	 nop
+END(sp_tlb_flush_pte)
 
 /*
  * tlb_flush_ctx(int ctx)
@@ -5129,6 +5140,7 @@ _C_LABEL(sp_tlb_flush_ctx):
 #endif
 	retl
 	 nop
+END(sp_tlb_flush_ctx)
 
 /*
  * dcache_flush_page(paddr_t pa)
@@ -5176,6 +5188,7 @@ dlflush2:
 	flush	%o5
 	retl
 	 membar	#Sync
+END(us_dcache_flush_page)
 
 	.align 8
 	.globl  _C_LABEL(us3_dcache_flush_page)
@@ -5198,11 +5211,13 @@ _C_LABEL(us3_dcache_flush_page):
 1:
 	retl
 	 nop
+END(us3_dcache_flush_page)
 
 	.globl no_dcache_flush_page
 ENTRY(no_dcache_flush_page)
 	retl
 	 nop
+END(no_dcache_flush_page)
 
 /*
  * cache_flush_virt(va, len)
@@ -5238,6 +5253,7 @@ dlflush3:
 	membar	#Sync
 	retl
 	 nop
+END(cache_flush_virt)
 
 /*
  *	cache_flush_phys(paddr_t, psize_t, int);
@@ -5295,6 +5311,7 @@ dlflush4:
 	membar	#Sync
 	retl
 	 nop
+END(cache_flush_phys)
 
 /*
  * XXXXX Still needs lotsa cleanup after sendsig is complete and offsets are known
@@ -5772,6 +5789,7 @@ Lcopyin_done:
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore ASI
 	retl
 	 clr	%o0			! return 0
+END(copyin)
 
 /*
  * copyout(src, dst, len)
@@ -5967,6 +5985,7 @@ Lcopyout_done:
 	membar	#StoreStore|#StoreLoad
 	retl			! New instr
 	 clr	%o0			! return 0
+END(copyout)
 
 ENTRY(copyin32)
 	andcc	%o0, 0x3, %g0
@@ -5982,6 +6001,7 @@ ENTRY(copyin32)
 	stx	%g0, [%o3 + PCB_ONFAULT]
 	retl
 	 clr	%o0
+END(copyin32)
 
 ! Copyin or copyout fault.  Clear cpcb->pcb_onfault and return EFAULT.
 ! Note that although we were in bcopy, there is no state to clean up;
@@ -6112,6 +6132,7 @@ Lsw_havectx:
 	wrpr	%g0, PSTATE_INTR, %pstate
 	ret
 	 restore
+END(cpu_switchto)
 
 /*
  * Snapshot the current process so that stack frames are up to date.
@@ -6131,6 +6152,7 @@ ENTRY(snapshot)
 	flushw
 	ret
 	 restore
+END(snapshot)
 
 /*
  * cpu_set_kpc() and cpu_fork() arrange for proc_trampoline() to run
@@ -6180,6 +6202,7 @@ ENTRY(proc_trampoline)
 	CHKPT %o3,%o4,0x35
 	ba,a,pt	%icc, return_from_trap
 	 nop
+END(proc_trampoline)
 
 #ifdef DDB
 
@@ -6242,6 +6265,7 @@ ENTRY(probeget)
 	stx	%g0, [%o2 + PCB_ONFAULT]
 	retl				! made it, clear onfault and return
 	 membar	#StoreStore|#StoreLoad
+END(probeget)
 
 	/*
 	 * Fault handler for probeget
@@ -6254,7 +6278,7 @@ _C_LABEL(Lfsprobe):
 	membar	#StoreStore|#StoreLoad
 	retl				! and return error indicator
 	 mov	-1, %o0
-
+END(Lfsprobe)
 #endif	/* DDB */
 
 /*
@@ -6289,6 +6313,8 @@ dlflush5:
 	flush	%o3
 	retl
 	 nop
+ END(pmap_zero_phys)
+
 /*
  * pmap_copy_page(src, dst)
  *
@@ -6309,6 +6335,7 @@ ENTRY(pmap_copy_phys)
 	 inc	8, %o1
 	retl
 	 nop
+END(pmap_copy_phys)
 
 /*
  * extern int64_t pseg_get(struct pmap* %o0, vaddr_t addr %o1);
@@ -6357,6 +6384,7 @@ ENTRY(pseg_get)
 1:
 	retl
 	 clr	%o0
+END(pseg_get)
 
 /*
  * extern int pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2,
@@ -6443,6 +6471,7 @@ ENTRY(pseg_set)
 1:
 	retl
 	 mov	1, %o0
+END(pseg_set)
 
 
 /*
@@ -6802,6 +6831,7 @@ Lbcopy_finish:
 Lbcopy_complete:
 	ret
 	 restore %i0, %g0, %o0
+END(memcpy)
 	
 /*
  * bzero(addr, len)
@@ -6879,6 +6909,7 @@ Lbzero_cleanup:
 Lbzero_done:
 	retl
 	 mov	%o4, %o0		! Restore pointer for memset (ugh)
+END(memset)
 
 /*
  * kcopy() is exactly like bcopy except that it set pcb_onfault such that
@@ -7083,6 +7114,7 @@ Lkcerr:
 	retl				! and return error indicator
 	 mov	EFAULT, %o0
 	NOTREACHED
+END(kcopy)
 
 /*
  * bcopy(src, dest, size - overlaps detected and copied in reverse
@@ -7259,6 +7291,7 @@ Lback_mopb:
 	retl			!	dst[-1] = b;
 	 mov	%o5, %o0
 	NOTREACHED
+END(memmove)
 
 /*
  * clearfpstate()
@@ -7271,6 +7304,7 @@ ENTRY(clearfpstate)
 	or	%o1, PSTATE_PEF, %o1
 	retl
 	 wrpr	%o1, 0, %pstate
+END(clearfpstate)
 
 /*
  * savefpstate(struct fpstate *f)
@@ -7317,6 +7351,7 @@ ENTRY(savefpstate)
 	membar	#Sync			! Finish operation so we can
 	retl
 	 wr	%g0, FPRS_FEF, %fprs	! Mark FPU clean
+END(savefpstate)
 
 /*
  * Load FPU state.
@@ -7343,6 +7378,7 @@ ENTRY(loadfpstate)
 	membar	#Sync			! Make sure loads are complete
 	retl
 	 wr	%g0, FPRS_FEF, %fprs	! Clear dirty bits
+END(loadfpstate)
 
 /* XXX belongs elsewhere (ctlreg.h?) */
 #define	AFSR_CECC_ERROR		0x100000	/* AFSR Correctable ECC err */
@@ -7396,6 +7432,7 @@ ENTRY(cecc_catch)
         CLRTT
         retry
         NOTREACHED
+END(cecc_catch)
 
 /*
  * send_softint(cpu, level, intrhand)
@@ -7434,6 +7471,7 @@ ENTRY(send_softint)
 1:
 	retl
 	 wrpr	%g1, 0, %pstate		! restore interrupts
+END(send_softint)
 
 /*
  * Flush user windows to memory.
@@ -7454,6 +7492,7 @@ ENTRY(write_user_windows)
 3:
 	retl
 	 nop
+END(write_user_windows)
 
 /*
  * Clear the Nonpriviliged Trap (NPT( bit of %tick such that it can be
@@ -7482,6 +7521,7 @@ ENTRY(tick_enable)
 
 	retl
 	 wrpr	%o0, 0, %pstate		! restore interrupts
+END(tick_enable)
 
 /*
  * On Blackbird (UltraSPARC-II) CPUs, writes to %tick_cmpr may fail.
@@ -7507,6 +7547,7 @@ ENTRY(tickcmpr_set)
 2:
 	retl
 	 nop
+END(tickcmpr_set)
 
 ENTRY(sys_tickcmpr_set)
 	ba	1f
@@ -7527,6 +7568,7 @@ ENTRY(sys_tickcmpr_set)
 2:
 	retl
 	 nop
+END(sys_tickcmpr_set)
 
 /*
  * Support for the STICK logic found on the integrated PCI host bridge
@@ -7554,6 +7596,7 @@ ENTRY(stick)
 	srlx	%o1, 1, %o1
 	retl
 	 or	%o2, %o1, %o0
+END(stick)
 
 ENTRY(stickcmpr_set)
 	setx	STICK_CMP_HIGH, %o1, %o3
@@ -7579,6 +7622,7 @@ ENTRY(stickcmpr_set)
 2:
 	retl
 	 nop
+END(stickcmpr_set)
 
 #define MICROPERSEC	(1000000)
 	.data
@@ -7630,6 +7674,7 @@ ENTRY(delay)			! %o0 = n
 
 	retl
 	 nop
+END(delay)
 
 ENTRY(setjmp)
 	save	%sp, -CC64FSZ, %sp	! Need a frame to return to.
@@ -7638,6 +7683,7 @@ ENTRY(setjmp)
 	stx	%i7, [%i0+8]	! 64-bit return pc
 	ret
 	 restore	%g0, 0, %o0
+END(setjmp)
 
 ENTRY(longjmp)
 	save	%sp, -CC64FSZ, %sp	! prepare to restore to (old) frame
@@ -7647,6 +7693,7 @@ ENTRY(longjmp)
 	ldx	[%i0+8], %i7	! get rpc
 	ret
 	 restore	%i2, 0, %o0
+END(longjmp)
 
 #ifdef DDB
 	/*
@@ -7679,6 +7726,7 @@ ENTRY(longjmp)
 2:
 	retl
 	 nop
+	END(savetstate)
 
 	/*
 	 * Debug stuff.  Resore trap registers from buffer.
@@ -7732,6 +7780,7 @@ ENTRY(longjmp)
 	flush	%o2
 	retl
 	 nop
+	END(restoretstate)
 
 #endif /* DDB */	/* DDB */
 
