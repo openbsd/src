@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.25 2019/11/03 02:09:35 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.26 2019/11/05 12:05:34 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -946,6 +946,61 @@ __EOF__
 	check_exit_status $?
 }
 
+function test_cms {
+	# --- CMS operations ---
+	section_message "CMS operations"
+	
+	cms_txt=$user1_dir/cms.txt
+	cms_sig=$user1_dir/cms.sig
+	cms_enc=$user1_dir/cms.enc
+	cms_dec=$user1_dir/cms.dec
+	cms_sgr=$user1_dir/cms.sgr
+	cms_ver=$user1_dir/cms.ver
+	
+	cat << __EOF__ > $cms_txt
+Hello Bob,
+Sincerely yours
+Alice
+__EOF__
+	
+	# sign
+	start_message "cms ... sign to message"
+	
+	$openssl_bin cms -sign -in $cms_txt -text \
+		-out $cms_sig -outform smime \
+		-signer $user1_cert -inkey $user1_key -keyform pem \
+		-passin pass:$user1_pass -md sha256 \
+		-from user1@test_dummy.com -to server@test_dummy.com \
+		-subject "test openssl cms"
+	check_exit_status $?
+	
+	# encrypt
+	start_message "cms ... encrypt message"
+
+	$openssl_bin cms -encrypt -aes256 -binary -in $cms_sig -inform smime \
+		-out $cms_enc $server_cert
+	check_exit_status $?
+
+	# decrypt
+	start_message "cms ... decrypt message"
+
+	$openssl_bin cms -decrypt -in $cms_enc -out $cms_dec \
+		-recip $server_cert -inkey $server_key -passin pass:$server_pass
+	check_exit_status $?
+
+	# verify
+	start_message "cms ... verify message"
+	
+	$openssl_bin cms -verify -in $cms_dec \
+		-CAfile $ca_cert -certfile $user1_cert -nointern \
+		-check_ss_sig -issuer_checks -policy_check -x509_strict \
+		-signer $cms_sgr -text -out $cms_ver
+	check_exit_status $?
+
+	diff -b $cms_ver $cms_txt
+	check_exit_status $?
+}
+
 function test_smime {
 	# --- S/MIME operations ---
 	section_message "S/MIME operations"
@@ -1411,6 +1466,7 @@ test_encoding_cipher
 test_key
 test_pki
 test_tsa
+test_cms
 test_smime
 test_ocsp
 test_pkcs
