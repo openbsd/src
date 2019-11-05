@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.26 2019/11/05 12:05:34 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.27 2019/11/05 12:14:14 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -71,7 +71,7 @@ function test_usage_lists_others {
 	$openssl_bin -help 2>> $user1_dir/usages.out
 	for c in $cmds ; do
 		$openssl_bin $c -help 2>> $user1_dir/usages.out
-	done 
+	done
 	
 	start_message "check all list-* commands."
 	
@@ -529,7 +529,7 @@ organizationalUnitName  = optional
 commonName              = supplied
 emailAddress            = optional
 [ req ]
-distinguished_name      = req_distinguished_name 
+distinguished_name      = req_distinguished_name
 [ req_distinguished_name ]
 countryName                     = Country Name
 countryName_default             = JP
@@ -541,7 +541,7 @@ organizationName                = Organization Name
 organizationName_default        = TEST_DUMMY_COMPANY
 commonName                      = Common Name
 [ tsa ]
-default_tsa   = tsa_config1 
+default_tsa   = tsa_config1
 [ tsa_config1 ]
 dir           = ./$tsa_dir
 serial        = \$dir/serial
@@ -575,32 +575,32 @@ __EOF__
 	mkdir -p $ca_dir/newcerts
 	chmod 700 $ca_dir/private
 	echo "01" > $ca_dir/serial
-	touch $ca_dir/index.txt 
+	touch $ca_dir/index.txt
 	touch $ca_dir/crlnumber
 	echo "01" > $ca_dir/crlnumber
 	
-	# 
-	# setup test TSA 
+	#
+	# setup test TSA
 	#
 	mkdir -p $tsa_dir/private
 	chmod 700 $tsa_dir/private
 	echo "01" > $tsa_dir/serial
-	touch $tsa_dir/index.txt 
+	touch $tsa_dir/index.txt
 	
-	# 
-	# setup test OCSP 
+	#
+	# setup test OCSP
 	#
 	mkdir -p $ocsp_dir/private
 	chmod 700 $ocsp_dir/private
 	
 	#---------#---------#---------#---------#---------#---------#---------
 	
-	# --- CA initiate (generate CA key and cert) --- 
+	# --- CA initiate (generate CA key and cert) ---
 	
 	start_message "req ... generate CA key and self signed cert"
 	
-	ca_cert=$ca_dir/ca_cert.pem 
-	ca_key=$ca_dir/private/ca_key.pem ca_pass=test-ca-pass 
+	ca_cert=$ca_dir/ca_cert.pem
+	ca_key=$ca_dir/private/ca_key.pem ca_pass=test-ca-pass
 	
 	if [ $mingw = 0 ] ; then
 		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=testCA.test_dummy.com/'
@@ -657,7 +657,7 @@ __EOF__
 	
 	start_message "req ... generate OCSP key and cert"
 	
-	# generate CSR for OCSP 
+	# generate CSR for OCSP
 	
 	ocsp_csr=$ocsp_dir/ocsp_csr.pem
 	ocsp_key=$ocsp_dir/private/ocsp_key.pem
@@ -679,7 +679,7 @@ __EOF__
 	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -keyform pem \
 		-key $ca_pass -out $ocsp_cert -extensions ocsp_ext \
 		-startdate `date -u '+%y%m%d%H%M%SZ'` -enddate 491223235959Z \
-		-subj $subj -infiles $ocsp_csr 
+		-subj $subj -infiles $ocsp_csr
 	check_exit_status $?
 	
 	#---------#---------#---------#---------#---------#---------#---------
