@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.28 2019/09/03 07:55:07 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.29 2019/11/05 15:43:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -432,12 +432,12 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 			if (IMSG_DATA_SIZE(imsg) != sizeof(if_index))
 				fatalx("%s: IMSG_CTL_SEND_SOLICITATION wrong "
 				    "length: %lu", __func__,
-				    IMSG_DATA_SIZE(imsg));		
+				    IMSG_DATA_SIZE(imsg));
 			if_index = *((uint32_t *)imsg.data);
 			send_solicitation(if_index);
 			break;
 		case IMSG_FAKE_ACK:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(struct 
+			if (IMSG_DATA_SIZE(imsg) != sizeof(struct
 			    imsg_proposal_ack))
 				fatalx("%s: IMSG_FAKE_ACK wrong length: %lu",
 				    __func__, IMSG_DATA_SIZE(imsg));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.39 2019/08/30 17:25:37 pamela Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.40 2019/11/05 15:43:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -527,7 +527,7 @@ main_dispatch_engine(int fd, short event, void *bula)
 				    IMSG_DATA_SIZE(imsg));
 			memcpy(&address, imsg.data, sizeof(address));
 			delete_address(&address);
-			break;	
+			break;
 		case IMSG_CONFIGURE_DFR:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(dfr))
 				fatalx("%s: IMSG_CONFIGURE_DFR wrong "

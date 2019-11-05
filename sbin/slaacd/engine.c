@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.39 2019/08/30 17:25:37 pamela Exp $	*/
+/*	$OpenBSD: engine.c,v 1.40 2019/11/05 15:43:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -2121,7 +2121,7 @@ free_dfr_proposal(struct dfr_proposal *dfr_proposal)
 	switch (dfr_proposal->state) {
 	case PROPOSAL_CONFIGURED:
 	case PROPOSAL_NEARLY_EXPIRED:
-	case PROPOSAL_STALE:	
+	case PROPOSAL_STALE:
 		withdraw_dfr(dfr_proposal);
 		break;
 	default:
