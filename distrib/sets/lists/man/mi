@@ -1683,6 +1683,8 @@
 ./usr/share/man/man4/octeon/octsmi.4
 ./usr/share/man/man4/octeon/octuctl.4
 ./usr/share/man/man4/octeon/octxctl.4
+./usr/share/man/man4/octeon/ogx.4
+./usr/share/man/man4/octeon/ogxnexus.4
 ./usr/share/man/man4/ohci.4
 ./usr/share/man/man4/onewire.4
 ./usr/share/man/man4/oosiop.4
