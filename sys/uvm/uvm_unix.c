@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.66 2019/06/21 09:39:49 visa Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.67 2019/11/05 08:18:47 mpi Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ sys_obreak(struct proc *p, void *v, register_t *retval)
 		}
 		vm->vm_dsize += atop(new - old);
 	} else {
-		uvm_deallocate(&vm->vm_map, new, old - new);
+		uvm_unmap(&vm->vm_map, new, old);
 		vm->vm_dsize -= atop(old - new);
 	}
 

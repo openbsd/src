@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.148 2019/07/01 21:13:03 mpi Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.149 2019/11/05 08:18:47 mpi Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -455,7 +455,6 @@ int			uvm_coredump_walkmap(struct proc *_p,
 			    uvm_coredump_setup_cb *_setup,
 			    uvm_coredump_walk_cb *_walk, void *_cookie);
 void			uvm_grow(struct proc *, vaddr_t);
-void			uvm_deallocate(vm_map_t, vaddr_t, vsize_t);
 struct uvm_object	*uvn_attach(struct vnode *, vm_prot_t);
 void			uvm_pagezero_thread(void *);
 void			kmeminit_nkmempages(void);

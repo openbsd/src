@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.70 2019/06/21 09:39:48 visa Exp $
+.\"	$OpenBSD: uvm.9,v 1.71 2019/11/05 08:18:47 mpi Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: June 21 2019 $
+.Dd $Mdocdate: November 5 2019 $
 .Dt UVM_INIT 9
 .Os
 .Sh NAME
@@ -43,7 +43,6 @@
 .Nm uvm_map_pageable_all ,
 .Nm uvm_map_checkprot ,
 .Nm uvm_map_protect ,
-.Nm uvm_deallocate ,
 .Nm uvmspace_alloc ,
 .Nm uvmspace_exec ,
 .Nm uvmspace_fork ,
@@ -182,8 +181,6 @@ function initialises the swap subsystem.
 .Fn uvm_map_checkprot "vm_map_t map" "vaddr_t start" "vaddr_t end" "vm_prot_t protection"
 .Ft int
 .Fn uvm_map_protect "vm_map_t map" "vaddr_t start" "vaddr_t end" "vm_prot_t new_prot" "boolean_t set_max"
-.Ft void
-.Fn uvm_deallocate "vm_map_t map" "vaddr_t start" "vsize_t size"
 .Ft struct vmspace *
 .Fn uvmspace_alloc "vaddr_t min" "vaddr_t max" "boolean_t pageable" "boolean_t remove_holes"
 .Ft void
@@ -391,15 +388,6 @@ if
 .Fa set_max
 is non-zero.
 This function returns a standard errno.
-.Pp
-The
-.Fn uvm_deallocate
-function deallocates kernel memory in map
-.Fa map
-from address
-.Fa start
-to
-.Fa start + size .
 .Pp
 The
 .Fn uvmspace_alloc

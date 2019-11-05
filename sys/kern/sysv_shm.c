@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.74 2019/11/04 00:48:22 guenther Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.75 2019/11/05 08:18:47 mpi Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -160,14 +160,14 @@ shm_delete_mapping(struct vmspace *vm, struct shmmap_state *shmmap_s)
 {
 	struct shmid_ds *shmseg;
 	int segnum;
-	size_t size;
+	vaddr_t end;
 
 	segnum = IPCID_TO_IX(shmmap_s->shmid);
 	if (segnum < 0 || segnum >= shminfo.shmmni ||
 	    (shmseg = shmsegs[segnum]) == NULL)
 		return (EINVAL);
-	size = round_page(shmseg->shm_segsz);
-	uvm_deallocate(&vm->vm_map, shmmap_s->va, size);
+	end = round_page(shmmap_s->va+shmseg->shm_segsz);
+	uvm_unmap(&vm->vm_map, trunc_page(shmmap_s->va), end);
 	shmmap_s->shmid = -1;
 	shmseg->shm_dtime = time_second;
 	if ((--shmseg->shm_nattch <= 0) &&
