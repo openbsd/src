@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.42 2019/01/30 01:01:01 dlg Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.43 2019/11/05 08:26:38 claudio Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -110,7 +110,6 @@ struct rt_mpls {
  */
 #define MPLSCTL_ENABLE			1
 #define	MPLSCTL_DEFTTL			2
-#define	MPLSCTL_MAXINKLOOP		4
 #define MPLSCTL_MAPTTL_IP		5
 #define MPLSCTL_MAPTTL_IP6		6
 #define MPLSCTL_MAXID			7	
@@ -120,7 +119,7 @@ struct rt_mpls {
 	{ NULL, 0 }, \
 	{ "ttl", CTLTYPE_INT }, \
 	{ "ifq", CTLTYPE_NODE },\
-	{ "maxloop_inkernel", CTLTYPE_INT }, \
+	{ NULL, 0 }, \
 	{ "mapttl_ip", CTLTYPE_INT }, \
 	{ "mapttl_ip6", CTLTYPE_INT } \
 }
@@ -130,7 +129,7 @@ struct rt_mpls {
 	NULL, \
 	&mpls_defttl, \
 	NULL, \
-	&mpls_inkloop, \
+	NULL, \
 	&mpls_mapttl_ip, \
 	&mpls_mapttl_ip6 \
 }
@@ -161,7 +160,6 @@ extern	struct domain mplsdomain;
 extern int		mpls_defttl;
 extern int		mpls_mapttl_ip;
 extern int		mpls_mapttl_ip6;
-extern int		mpls_inkloop;
 
 
 struct mbuf	*mpls_shim_pop(struct mbuf *);
