@@ -61,6 +61,7 @@
 /* pre-auth compression (COMP_ZLIB) is only supported in the client */
 #define COMP_ZLIB	1
 #define COMP_DELAYED	2
+#define COMP_ZSTD_DELAYED	3
 
 #define CURVE25519_SIZE 32
 

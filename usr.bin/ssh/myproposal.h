@@ -137,7 +137,7 @@
 
 #endif /* WITH_OPENSSL */
 
-#define	KEX_DEFAULT_COMP	"none,zlib@openssh.com"
+#define	KEX_DEFAULT_COMP	"none,zstd@openssh.com,zlib@openssh.com"
 #define	KEX_DEFAULT_LANG	""
 
 #define KEX_CLIENT \
