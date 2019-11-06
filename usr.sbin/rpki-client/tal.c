@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.11 2019/11/06 07:04:03 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.12 2019/11/06 08:18:11 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -201,9 +201,12 @@ tal_read_file(const char *file)
 		/* concat line to buf */
 		if ((nbuf = realloc(buf, bsz + n + 1)) == NULL)
 			err(EXIT_FAILURE, NULL);
+		if (buf == NULL)
+			nbuf[0] = '\0';	/* initialize buffer */
 		buf = nbuf;
 		bsz += n + 1;
-		strlcat(buf, line, bsz);
+		if (strlcat(buf, line, bsz) >= bsz)
+			errx(EXIT_FAILURE, "strlcat overflow");
 		/* limit the buffer size */
 		if (bsz > 4096)
 			errx(EXIT_FAILURE, "%s: file too big", file);
