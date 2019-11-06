@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.34 2019/03/23 05:47:22 visa Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.35 2019/11/06 07:34:35 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ extern const int trap_types;
 struct db_mutex ddb_mp_mutex = DB_MUTEX_INITIALIZER;
 volatile int ddb_state = DDB_STATE_NOT_RUNNING;
 volatile cpuid_t ddb_active_cpu;
-boolean_t	 db_switch_cpu;
+int		 db_switch_cpu;
 long		 db_switch_to_cpu;
 #endif
 
@@ -144,9 +144,9 @@ db_ktrap(int type, int code, db_regs_t *regs)
 
 	s = splhigh();
 	db_active++;
-	cnpollc(TRUE);
+	cnpollc(1);
 	db_trap(type, code);
-	cnpollc(FALSE);
+	cnpollc(0);
 	db_active--;
 	splx(s);
 

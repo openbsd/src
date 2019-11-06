@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.18 2017/12/07 20:38:15 deraadt Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.19 2019/11/06 07:34:35 mpi Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -1088,7 +1088,7 @@ db_disasm_esc(db_addr_t loc, int inst, int short_addr, int size, int rex,
  * next instruction.
  */
 db_addr_t
-db_disasm(db_addr_t loc, boolean_t altfmt)
+db_disasm(db_addr_t loc, int altfmt)
 {
 	int	inst;
 	int	size;
@@ -1099,7 +1099,7 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 	int	i_size;
 	int	i_mode;
 	int	regmodrm = 0;
-	boolean_t	first;
+	int	first;
 	int	displ;
 	int	prefix;
 	long	imm;

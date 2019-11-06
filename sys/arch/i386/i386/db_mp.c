@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_mp.c,v 1.11 2019/03/23 05:47:22 visa Exp $	*/
+/*	$OpenBSD: db_mp.c,v 1.12 2019/11/06 07:34:35 mpi Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Andreas Gunnarsson <andreas@openbsd.org>
@@ -28,7 +28,7 @@ struct db_mutex ddb_mp_mutex = DB_MUTEX_INITIALIZER;
 volatile int ddb_state = DDB_STATE_NOT_RUNNING;	/* protected by ddb_mp_mutex */
 volatile cpuid_t ddb_active_cpu;		/* protected by ddb_mp_mutex */
 
-extern volatile boolean_t	db_switch_cpu;
+extern volatile int		db_switch_cpu;
 extern volatile long		db_switch_to_cpu;
 
 /*
