@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trap.c,v 1.29 2019/07/20 23:06:51 mpi Exp $	*/
+/*	$OpenBSD: db_trap.c,v 1.30 2019/11/06 07:30:08 mpi Exp $	*/
 /*	$NetBSD: db_trap.c,v 1.9 1996/02/05 01:57:18 christos Exp $	*/
 
 /*
@@ -49,8 +49,8 @@
 void
 db_trap(int type, int code)
 {
-	boolean_t	bkpt;
-	boolean_t	watchpt;
+	int	bkpt;
+	int	watchpt;
 
 	bkpt = IS_BREAKPOINT_TRAP(type, code);
 	watchpt = IS_WATCHPOINT_TRAP(type, code);

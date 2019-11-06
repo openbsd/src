@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_examine.c,v 1.24 2019/01/09 18:11:22 bluhm Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.25 2019/11/06 07:30:08 mpi Exp $	*/
 /*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
@@ -123,13 +123,13 @@ db_examine(db_addr_t addr, char *fmt, int count)
 				incr = 0;
 				break;
 			case 'r':	/* signed, current radix */
-				value = db_get_value(addr, size, TRUE);
+				value = db_get_value(addr, size, 1);
 				db_format(tmpfmt, sizeof tmpfmt,
 				    (long)value, DB_FORMAT_R, 0, width);
 				db_printf("%-*s", width, tmpfmt);
 				break;
 			case 'x':	/* unsigned hex */
-				value = db_get_value(addr, size, FALSE);
+				value = db_get_value(addr, size, 0);
 				db_printf("%*lx", width, (long)value);
 				break;
 			case 'm':	/* hex dump */
@@ -145,7 +145,7 @@ db_examine(db_addr_t addr, char *fmt, int count)
 					for (i = 0; i < size; i++) {
 						value =
 						    db_get_value(addr+bytes, 1,
-							FALSE);
+							0);
 						db_printf("%02lx",
 						    (long)value);
 						bytes++;
@@ -158,8 +158,7 @@ db_examine(db_addr_t addr, char *fmt, int count)
 			            (16-bytes)*2 + (4 - bytes/4) + 1, " ");
 				/* Print chars, use . for non-printables */
 				while (bytes--) {
-					value = db_get_value(addr + incr, 1,
-					    FALSE);
+					value = db_get_value(addr + incr, 1, 0);
 					incr++;
 					if (value >= ' ' && value <= '~')
 						db_printf("%c", (int)value);
@@ -169,25 +168,25 @@ db_examine(db_addr_t addr, char *fmt, int count)
 				db_printf("\n");
 				break;
 			case 'z':	/* signed hex */
-				value = db_get_value(addr, size, TRUE);
+				value = db_get_value(addr, size, 1);
 				db_format(tmpfmt, sizeof tmpfmt,
 				    (long)value, DB_FORMAT_Z, 0, width);
 				db_printf("%-*s", width, tmpfmt);
 				break;
 			case 'd':	/* signed decimal */
-				value = db_get_value(addr, size, TRUE);
+				value = db_get_value(addr, size, 1);
 				db_printf("%-*ld", width, (long)value);
 				break;
 			case 'u':	/* unsigned decimal */
-				value = db_get_value(addr, size, FALSE);
+				value = db_get_value(addr, size, 0);
 				db_printf("%-*lu", width, (long)value);
 				break;
 			case 'o':	/* unsigned octal */
-				value = db_get_value(addr, size, FALSE);
+				value = db_get_value(addr, size, 0);
 				db_printf("%-*lo", width, value);
 				break;
 			case 'c':	/* character */
-				value = db_get_value(addr, 1, FALSE);
+				value = db_get_value(addr, 1, 0);
 				incr = 1;
 				if (value >= ' ' && value <= '~')
 					db_printf("%c", (int)value);
@@ -198,7 +197,7 @@ db_examine(db_addr_t addr, char *fmt, int count)
 				incr = 0;
 				for (;;) {
 					value = db_get_value(addr + incr, 1,
-					    FALSE);
+					    0);
 					incr++;
 					if (value == 0)
 						break;
@@ -220,10 +219,10 @@ db_examine(db_addr_t addr, char *fmt, int count)
 		/* if we had a disassembly modifier, do it last */
 		switch (dis) {
 		case 'i':	/* instruction */
-			addr = db_disasm(addr, FALSE);
+			addr = db_disasm(addr, 0);
 			break;
 		case 'I':	/* instruction, alternate form */
-			addr = db_disasm(addr, TRUE);
+			addr = db_disasm(addr, 1);
 			break;
 		default:
 			addr += incr;
@@ -290,7 +289,7 @@ db_print_loc_and_inst(db_addr_t loc)
 {
 	db_printsym(loc, DB_STGY_PROC, db_printf);
 	db_printf(":\t");
-	(void) db_disasm(loc, FALSE);
+	(void) db_disasm(loc, 0);
 }
 
 /* local copy is needed here so that we can trace strlcpy() in libkern */
@@ -397,7 +396,7 @@ db_search(db_addr_t addr, int size, db_expr_t value, db_expr_t mask,
 	/* Negative counts means forever.  */
 	while (count < 0 || count-- != 0) {
 		db_prev = addr;
-		if ((db_get_value(addr, size, FALSE) & mask) == value)
+		if ((db_get_value(addr, size, 0) & mask) == value)
 			break;
 		addr += size;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.27 2017/04/30 13:04:49 mpi Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.28 2019/11/06 07:30:08 mpi Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /*
@@ -63,12 +63,12 @@ int	db_run_mode;
 #define STEP_INVISIBLE	5
 #define	STEP_COUNT	6
 
-boolean_t	db_sstep_print;
+int	db_sstep_print;
 int		db_loop_count;
 int		db_call_depth;
 
-boolean_t
-db_stop_at_pc(db_regs_t *regs, boolean_t *is_breakpoint)
+int
+db_stop_at_pc(db_regs_t *regs, int *is_breakpoint)
 {
 	db_addr_t	pc, old_pc;
 	db_breakpoint_t	bkpt;
@@ -96,8 +96,8 @@ db_stop_at_pc(db_regs_t *regs, boolean_t *is_breakpoint)
 		if (--bkpt->count == 0) {
 			db_clear_single_step(regs);
 			bkpt->count = bkpt->init_count;
-			*is_breakpoint = TRUE;
-			return (TRUE);	/* stop here */
+			*is_breakpoint = 1;
+			return 1;	/* stop here */
 		}
 	} else if (*is_breakpoint
 #ifdef SOFTWARE_SSTEP
@@ -117,14 +117,14 @@ db_stop_at_pc(db_regs_t *regs, boolean_t *is_breakpoint)
 	}
 	db_clear_single_step(regs);
 
-	*is_breakpoint = FALSE;
+	*is_breakpoint = 0;
 
 	if (db_run_mode == STEP_INVISIBLE) {
 		db_run_mode = STEP_CONTINUE;
-		return (FALSE);	/* continue */
+		return 0;	/* continue */
 	}
 	if (db_run_mode == STEP_COUNT) {
-		return (FALSE); /* continue */
+		return 0; /* continue */
 	}
 	if (db_run_mode == STEP_ONCE) {
 		if (--db_loop_count > 0) {
@@ -133,11 +133,11 @@ db_stop_at_pc(db_regs_t *regs, boolean_t *is_breakpoint)
 				db_print_loc_and_inst(pc);
 				db_printf("\n");
 			}
-			return (FALSE);	/* continue */
+			return 0;	/* continue */
 		}
 	}
 	if (db_run_mode == STEP_RETURN) {
-	    db_expr_t ins = db_get_value(pc, sizeof(int), FALSE);
+	    db_expr_t ins = db_get_value(pc, sizeof(int), 0);
 
 	    /* continue until matching return */
 
@@ -156,25 +156,25 @@ db_stop_at_pc(db_regs_t *regs, boolean_t *is_breakpoint)
 		}
 		if (inst_call(ins))
 		    db_call_depth++;
-		return (FALSE);	/* continue */
+		return 0;	/* continue */
 	    }
 	}
 	if (db_run_mode == STEP_CALLT) {
-	    db_expr_t ins = db_get_value(pc, sizeof(int), FALSE);
+	    db_expr_t ins = db_get_value(pc, sizeof(int), 0);
 
 	    /* continue until call or return */
 
 	    if (!inst_call(ins) && !inst_return(ins) &&
 		!inst_trap_return(ins)) {
-		return (FALSE);	/* continue */
+		return 0;	/* continue */
 	    }
 	}
 	db_run_mode = STEP_NONE;
-	return (TRUE);
+	return 1;
 }
 
 void
-db_restart_at_pc(db_regs_t *regs, boolean_t watchpt)
+db_restart_at_pc(db_regs_t *regs, int watchpt)
 {
 	db_addr_t pc = PC_REGS(regs);
 
@@ -186,13 +186,13 @@ db_restart_at_pc(db_regs_t *regs, boolean_t watchpt)
 		 * We are about to execute this instruction,
 		 * so count it now.
 		 */
-		ins = db_get_value(pc, sizeof(int), FALSE);
+		ins = db_get_value(pc, sizeof(int), 0);
 		db_inst_count++;
 #ifdef	SOFTWARE_SSTEP
 		/* XXX works on mips, but... */
 		if (inst_branch(ins) || inst_call(ins)) {
 			ins = db_get_value(next_instr_address(pc, 1),
-			    sizeof(int), FALSE);
+			    sizeof(int), 0);
 			db_inst_count++;
 		}
 #endif	/* SOFTWARE_SSTEP */
@@ -228,13 +228,13 @@ db_single_step(db_regs_t *regs)
 void
 db_single_step_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	boolean_t	print = FALSE;
+	int	print = 0;
 
 	if (count == -1)
 	    count = 1;
 
 	if (modif[0] == 'p')
-	    print = TRUE;
+	    print = 1;
 
 	db_run_mode = STEP_ONCE;
 	db_loop_count = count;
@@ -250,10 +250,10 @@ void
 db_trace_until_call_cmd(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif)
 {
-	boolean_t	print = FALSE;
+	int	print = 0;
 
 	if (modif[0] == 'p')
-	    print = TRUE;
+	    print = 1;
 
 	db_run_mode = STEP_CALLT;
 	db_sstep_print = print;
@@ -267,10 +267,10 @@ void
 db_trace_until_matching_cmd(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif)
 {
-	boolean_t	print = FALSE;
+	int	print = 0;
 
 	if (modif[0] == 'p')
-	    print = TRUE;
+	    print = 1;
 
 	db_run_mode = STEP_RETURN;
 	db_call_depth = 1;
@@ -303,7 +303,7 @@ db_continue_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
  *	Just define the above conditional and provide
  *	the functions/macros defined below.
  *
- * extern boolean_t
+ * extern int
  *	inst_branch(ins),	returns true if the instruction might branch
  * extern unsigned
  *	branch_taken(ins, pc, getreg_val, regs),
@@ -338,7 +338,7 @@ db_set_single_step(db_regs_t *regs)
 	 * User was stopped at pc, e.g. the instruction
 	 * at pc was not executed.
 	 */
-	inst = db_get_value(pc, sizeof(int), FALSE);
+	inst = db_get_value(pc, sizeof(int), 0);
 	if (inst_branch(inst) || inst_call(inst) || inst_return(inst)) {
 	    brpc = branch_taken(inst, pc, getreg_val, regs);
 	    if (brpc != pc) {	/* self-branches are hopeless */

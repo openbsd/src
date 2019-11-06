@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_input.c,v 1.17 2019/04/02 10:50:20 yasuoka Exp $	*/
+/*	$OpenBSD: db_input.c,v 1.18 2019/11/06 07:30:08 mpi Exp $	*/
 /*	$NetBSD: db_input.c,v 1.7 1996/02/05 01:57:02 christos Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ db_delete_line(void)
 	} while (0)
 #endif
 
-/* returns TRUE at end-of-line */
+/* returns `1' at end-of-line */
 int
 db_inputchar(int c)
 {
@@ -289,7 +289,7 @@ db_inputchar(int c)
 				 */
 				db_history_curr = db_history_last;
 				*db_le++ = c;
-				return TRUE;
+				return 1;
 			}
 		}
 		if (db_le != db_lbuf_start) {
@@ -308,7 +308,7 @@ db_inputchar(int c)
 		db_history_curr = db_history_last;
 #endif
 		*db_le++ = c;
-		return TRUE;
+		return 1;
 	    default:
 		if (db_le == db_lbuf_end) {
 		    cnputc('\007');
@@ -326,7 +326,7 @@ db_inputchar(int c)
 		}
 		break;
 	}
-	return FALSE;
+	return 0;
 }
 
 int

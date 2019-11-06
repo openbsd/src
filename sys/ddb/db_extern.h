@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_extern.h,v 1.19 2017/05/29 06:14:10 mpi Exp $	*/
+/*	$OpenBSD: db_extern.h,v 1.20 2019/11/06 07:30:08 mpi Exp $	*/
 /*	$NetBSD: db_extern.h,v 1.1 1996/02/05 01:57:00 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@ void ddb_init(void);
 /* db_examine.c */
 void db_examine_cmd(db_expr_t, int, db_expr_t, char *);
 void db_print_cmd(db_expr_t, int, db_expr_t, char *);
-void db_search_cmd(db_expr_t, boolean_t, db_expr_t, char *);
+void db_search_cmd(db_expr_t, int, db_expr_t, char *);
 void db_print_loc_and_inst(db_addr_t);
 size_t db_strlcpy(char *, const char *, size_t);
 

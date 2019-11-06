@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.86 2019/04/01 09:28:24 tedu Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.87 2019/11/06 07:30:08 mpi Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ label_t		*db_recover;
  * and '+' points to next line.
  * Otherwise: 'dot' points to next item, '..' points to last.
  */
-boolean_t	db_ed_style = TRUE;
+int		db_ed_style = 1;
 
 db_addr_t	db_dot;		/* current location */
 db_addr_t	db_last_addr;	/* last explicit address typed */
@@ -112,8 +112,8 @@ void	db_show_panic_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_bcstats_print_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_struct_offset_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_ctf_show_struct(db_expr_t, int, db_expr_t, char *);
-void	db_show_regs(db_expr_t, boolean_t, db_expr_t, char *);
-void	db_write_cmd(db_expr_t, boolean_t, db_expr_t, char *);
+void	db_show_regs(db_expr_t, int, db_expr_t, char *);
+void	db_write_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_witness_display(db_expr_t, int, db_expr_t, char *);
 void	db_witness_list(db_expr_t, int, db_expr_t, char *);
 void	db_witness_list_all(db_expr_t, int, db_expr_t, char *);
@@ -196,18 +196,16 @@ void
 db_command(struct db_command **last_cmdp, struct db_command *cmd_table)
 {
 	struct db_command	*cmd;
-	int		t;
 	char		modif[TOK_STRING_SIZE];
 	db_expr_t	addr, count;
-	boolean_t	have_addr = FALSE;
-	int		result;
+	int		t, result, have_addr = 0;
 
 	t = db_read_token();
 	if (t == tEOL) {
 	    /* empty line repeats last command, at 'next' */
 	    cmd = *last_cmdp;
 	    addr = (db_expr_t)db_next;
-	    have_addr = FALSE;
+	    have_addr = 0;
 	    count = 1;
 	    modif[0] = '\0';
 	}
@@ -273,11 +271,11 @@ db_command(struct db_command **last_cmdp, struct db_command *cmd_table)
 		if (db_expression(&addr)) {
 		    db_dot = (db_addr_t) addr;
 		    db_last_addr = db_dot;
-		    have_addr = TRUE;
+		    have_addr = 1;
 		}
 		else {
 		    addr = (db_expr_t) db_dot;
-		    have_addr = FALSE;
+		    have_addr = 0;
 		}
 		t = db_read_token();
 		if (t == tCOMMA) {
@@ -329,10 +327,10 @@ db_command(struct db_command **last_cmdp, struct db_command *cmd_table)
 void
 db_buf_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	boolean_t full = FALSE;
+	int full = 0;
 
 	if (modif[0] == 'f')
-		full = TRUE;
+		full = 1;
 
 	vfs_buf_print((void *) addr, full, db_printf);
 }
@@ -341,10 +339,10 @@ db_buf_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_map_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-        boolean_t full = FALSE;
+        int full = 0;
 
         if (modif[0] == 'f')
-                full = TRUE;
+                full = 1;
 
         uvm_map_printit((struct vm_map *) addr, full, db_printf);
 }
@@ -374,10 +372,10 @@ db_socket_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_mount_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	boolean_t full = FALSE;
+	int full = 0;
 
 	if (modif[0] == 'f')
-		full = TRUE;
+		full = 1;
 
 	vfs_mount_print((struct mount *) addr, full, db_printf);
 }
@@ -385,11 +383,11 @@ db_mount_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_show_all_mounts(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	boolean_t full = FALSE;
+	int full = 0;
 	struct mount *mp;
 
 	if (modif[0] == 'f')
-		full = TRUE;
+		full = 1;
 
 	TAILQ_FOREACH(mp, &mountlist, mnt_list) {
 		db_printf("mountpoint %p\n", mp);
@@ -401,10 +399,10 @@ extern struct pool vnode_pool;
 void
 db_show_all_vnodes(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	boolean_t full = FALSE;
+	int full = 0;
 
 	if (modif[0] == 'f')
-		full = TRUE;
+		full = 1;
 
 	pool_walk(&vnode_pool, full, db_printf, vfs_vnode_print);
 }
@@ -413,10 +411,10 @@ extern struct pool bufpool;
 void
 db_show_all_bufs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	boolean_t full = FALSE;
+	int full = 0;
 
 	if (modif[0] == 'f')
-		full = TRUE;
+		full = 1;
 
 	pool_walk(&bufpool, full, db_printf, vfs_buf_print);
 }
@@ -425,10 +423,10 @@ db_show_all_bufs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_object_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-        boolean_t full = FALSE;
+        int full = 0;
 
         if (modif[0] == 'f')
-                full = TRUE;
+                full = 1;
 
 	uvm_object_printit((struct uvm_object *) addr, full, db_printf);
 }
@@ -437,10 +435,10 @@ db_object_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_page_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-        boolean_t full = FALSE;
+        int full = 0;
 
         if (modif[0] == 'f')
-                full = TRUE;
+                full = 1;
 
 	uvm_page_printit((struct vm_page *) addr, full, db_printf);
 }
@@ -449,10 +447,10 @@ db_page_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_vnode_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	boolean_t full = FALSE;
+	int full = 0;
 
 	if (modif[0] == 'f')
-		full = TRUE;
+		full = 1;
 
 	vfs_vnode_print((void *)addr, full, db_printf);
 }
@@ -463,10 +461,10 @@ void
 db_nfsreq_print_cmd(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif)
 {
-	boolean_t full = FALSE;
+	int full = 0;
 
 	if (modif[0] == 'f')
-		full = TRUE;
+		full = 1;
 
 	nfs_request_print((void *)addr, full, db_printf);
 }
@@ -476,10 +474,10 @@ void
 db_nfsnode_print_cmd(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif)
 {
-	boolean_t full = FALSE;
+	int full = 0;
 
 	if (modif[0] == 'f')
-		full = TRUE;
+		full = 1;
 
 	nfs_node_print((void *)addr, full, db_printf);
 }
@@ -843,8 +841,7 @@ db_dmesg_cmd(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 }
 
 void
-db_stack_trace_cmd(db_expr_t addr, boolean_t have_addr, db_expr_t count,
-    char *modif)
+db_stack_trace_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	db_stack_trace_print(addr, have_addr, count, modif, db_printf);
 }
@@ -878,14 +875,12 @@ db_show_regs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
  */
 /*ARGSUSED*/
 void
-db_write_cmd(db_expr_t address, boolean_t have_addr, db_expr_t count,
-    char *modif)
+db_write_cmd(db_expr_t address, int have_addr, db_expr_t count, char *modif)
 {
 	db_addr_t	addr;
 	db_expr_t	old_value;
 	db_expr_t	new_value;
-	int		size;
-	boolean_t	wrote_one = FALSE;
+	int		size, wrote_one = 0;
 	char		tmpfmt[28];
 
 	addr = (db_addr_t) address;
@@ -913,7 +908,7 @@ db_write_cmd(db_expr_t address, boolean_t have_addr, db_expr_t count,
 	}
 
 	while (db_expression(&new_value)) {
-		old_value = db_get_value(addr, size, FALSE);
+		old_value = db_get_value(addr, size, 0);
 		db_printsym(addr, DB_STGY_ANY, db_printf);
 		db_printf("\t\t%s\t", db_format(tmpfmt, sizeof tmpfmt,
 		    old_value, DB_FORMAT_N, 0, 8));
@@ -922,7 +917,7 @@ db_write_cmd(db_expr_t address, boolean_t have_addr, db_expr_t count,
 		db_put_value(addr, size, new_value);
 		addr += size;
 
-		wrote_one = TRUE;
+		wrote_one = 1;
 	}
 
 	if (!wrote_one) {
