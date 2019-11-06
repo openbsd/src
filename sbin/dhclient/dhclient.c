@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.651 2019/08/06 11:07:36 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.652 2019/11/06 12:14:19 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -431,10 +431,11 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 	}
 
 	/*
-	 * Something has happened that may have granted/revoked responsibility
-	 * for resolv.conf.
+	 * Responsibility for resolv.conf may have changed hands.
 	 */
-	if (ifi->active != NULL && (ifi->flags & IFI_IN_CHARGE) != 0)
+	if (quit == 0 && ifi->active != NULL &&
+	    (ifi->flags & IFI_AUTOCONF) != 0 &&
+	    (ifi->flags & IFI_IN_CHARGE) != 0)
 		write_resolv_conf();
 }
 
