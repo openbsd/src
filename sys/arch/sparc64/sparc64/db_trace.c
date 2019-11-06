@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.17 2019/11/01 18:03:50 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.18 2019/11/06 07:32:10 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
@@ -60,15 +60,15 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif, int (*pr)(const char *, ...))
 {
 	vaddr_t		frame;
-	boolean_t	kernel_only = TRUE;
-	boolean_t	trace_thread = FALSE;
+	int		kernel_only = 1;
+	int		trace_thread = 0;
 	char		c, *cp = modif;
 
 	while ((c = *cp++) != 0) {
 		if (c == 't')
-			trace_thread = TRUE;
+			trace_thread = 1;
 		if (c == 'u')
-			kernel_only = FALSE;
+			kernel_only = 0;
 	}
 
 	if (!have_addr)
@@ -275,12 +275,12 @@ db_dump_stack(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	int		i;
 	u_int64_t	frame, oldframe;
-	boolean_t	kernel_only = TRUE;
+	int		kernel_only = 1;
 	char		c, *cp = modif;
 
 	while ((c = *cp++) != 0)
 		if (c == 'u')
-			kernel_only = FALSE;
+			kernel_only = 0;
 
 	if (count == -1)
 		count = 65535;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.52 2019/08/02 02:17:35 cheloha Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.53 2019/11/06 07:32:10 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -65,7 +65,7 @@
 struct db_mutex ddb_mp_mutex = DB_MUTEX_INITIALIZER;
 volatile int ddb_state = DDB_STATE_NOT_RUNNING;
 volatile cpuid_t ddb_active_cpu;
-boolean_t	 db_switch_cpu;
+int		 db_switch_cpu;
 struct cpu_info *db_switch_to_cpu;
 #endif
 
@@ -299,13 +299,13 @@ db_ktrap(type, tf)
 
 	s = splhigh();
 	db_active++;
-	cnpollc(TRUE);
+	cnpollc(1);
 	/* Need to do spl stuff till cnpollc works */
 	tl = ddb_regs.ddb_tl = savetstate(ts);
 	db_dump_ts(0, 0, 0, 0);
 	db_trap(type, 0/*code*/);
 	restoretstate(tl,ts);
-	cnpollc(FALSE);
+	cnpollc(0);
 	db_active--;
 	splx(s);
 
@@ -1269,9 +1269,8 @@ db_branch_taken(inst, pc, regs)
     }
 }
 
-boolean_t
-db_inst_branch(inst)
-	int inst;
+int
+db_inst_branch(int inst)
 {
     union instr insn;
 
@@ -1280,13 +1279,13 @@ db_inst_branch(inst)
     /* the fancy union just gets in the way of this: */
     switch(inst & 0xffc00000) {
     case 0x30400000:	/* branch always, annul, with prediction */
-	return TRUE;
+	return 1;
     case 0x30800000:	/* branch always, annul */
-	return TRUE;
+	return 1;
     }
 
     if (insn.i_any.i_op != IOP_OP2)
-	return FALSE;
+	return 0;
 
     switch (insn.i_op2.i_op2) {
       case IOP2_BPcc:
@@ -1295,17 +1294,16 @@ db_inst_branch(inst)
       case IOP2_FBPfcc:
       case IOP2_FBfcc:
       case IOP2_CBccc:
-	return TRUE;
+	return 1;
 
       default:
-	return FALSE;
+	return 0;
     }
 }
 
 
-boolean_t
-db_inst_call(inst)
-	int inst;
+int
+db_inst_call(int inst)
 {
     union instr insn;
 
@@ -1313,30 +1311,29 @@ db_inst_call(inst)
 
     switch (insn.i_any.i_op) {
       case IOP_CALL:
-	return TRUE;
+	return 1;
 
       case IOP_reg:
 	return (insn.i_op3.i_op3 == IOP3_JMPL) && !db_inst_return(inst);
 
       default:
-	return FALSE;
+	return 0;
     }
 }
 
 
-boolean_t
-db_inst_unconditional_flow_transfer(inst)
-	int inst;
+int
+db_inst_unconditional_flow_transfer(int inst)
 {
     union instr insn;
 
     insn.i_int = inst;
 
     if (db_inst_call(inst))
-	return TRUE;
+	return 1;
 
     if (insn.i_any.i_op != IOP_OP2)
-	return FALSE;
+	return 0;
 
     switch (insn.i_op2.i_op2)
     {
@@ -1348,22 +1345,20 @@ db_inst_unconditional_flow_transfer(inst)
 	return insn.i_branch.i_cond == Icc_A;
 
       default:
-	return FALSE;
+	return 0;
     }
 }
 
 
-boolean_t
-db_inst_return(inst)
-	int inst;
+int
+db_inst_return(int inst)
 {
     return (inst == I_JMPLri(I_G0, I_O7, 8) ||		/* ret */
 	    inst == I_JMPLri(I_G0, I_I7, 8));		/* retl */
 }
 
-boolean_t
-db_inst_trap_return(inst)
-	int inst;
+int
+db_inst_trap_return(int inst)
 {
     union instr insn;
 

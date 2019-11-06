@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.19 2019/03/23 05:47:23 visa Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.20 2019/11/06 07:32:10 mpi Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.12 2001/07/07 15:16:13 eeh Exp $ */
 
 /*
@@ -107,11 +107,11 @@ extern	db_regs_t ddb_regs;	/* register state */
  */
 #define SOFTWARE_SSTEP
 
-boolean_t	db_inst_trap_return(int inst);
-boolean_t	db_inst_return(int inst);
-boolean_t	db_inst_call(int inst);
-boolean_t	db_inst_branch(int inst);
-boolean_t	db_inst_unconditional_flow_transfer(int inst);
+int		db_inst_trap_return(int inst);
+int		db_inst_return(int inst);
+int		db_inst_call(int inst);
+int		db_inst_branch(int inst);
+int		db_inst_unconditional_flow_transfer(int inst);
 db_addr_t	db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs);
 
 #define inst_trap_return(ins)	db_inst_trap_return(ins)
