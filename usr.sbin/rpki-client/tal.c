@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.12 2019/11/06 08:18:11 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.13 2019/11/06 08:29:03 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -60,6 +60,12 @@ tal_parse_buffer(const char *fn, char *buf)
 		/* Zero-length line is end of section. */
 		if (*line == '\0')
 			break;
+
+		/* ignore https URI for now. */
+		if (strncasecmp(line, "https://", 8) == 0) {
+			warnx("%s: https schema ignored", line);
+			continue;
+		}
 
 		/* Append to list of URIs. */
 		tal->uri = reallocarray(tal->uri,
