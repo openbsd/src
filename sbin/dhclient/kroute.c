@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.168 2019/10/31 16:39:09 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.169 2019/11/06 11:34:37 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -890,9 +890,20 @@ priv_write_resolv_conf(int index, int routefd, int rdomain, char *contents,
 		newidx = default_route_index(rdomain, routefd);
 		retries++;
 	} while (newidx == 0 && retries < 3);
-	if (newidx != index || newidx == *lastidx)
+
+	if (newidx != index) {
+		*lastidx = newidx;
+		log_debug("%s priv_write_resolv_conf: not my problem "
+		    "(%d != %d)", log_procname, newidx, index);
 		return;
-	*lastidx = newidx;
+	} else if (newidx == *lastidx) {
+		log_debug("%s priv_write_resolv_conf: already written",
+		    log_procname);
+		return;
+	} else {
+		*lastidx = newidx;
+		log_debug("%s priv_write_resolv_conf: writing", log_procname);
+	}
 
 	fd = open(path, O_WRONLY | O_CREAT | O_TRUNC,
 	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
