@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.78 2019/09/02 12:50:12 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.79 2019/11/06 13:55:44 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -181,7 +181,7 @@ ieee80211_ifattach(struct ifnet *ifp)
 
 	if (ic->ic_lintval == 0)
 		ic->ic_lintval = 100;		/* default sleep */
-	ic->ic_bmissthres = 7;	/* default 7 beacons */
+	ic->ic_bmissthres = IEEE80211_BEACON_MISS_THRES;
 	ic->ic_dtim_period = 1;	/* all TIMs are DTIMs */
 
 	ieee80211_node_attach(ifp);

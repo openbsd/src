@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.98 2019/10/31 11:03:43 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.99 2019/11/06 13:55:44 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -63,6 +63,19 @@
 #define IEEE80211_RSSI_THRES_RATIO_5GHZ		50	/* in percent */
 
 #define IEEE80211_BGSCAN_FAIL_MAX		512	/* units of 500 msec */
+
+/*
+ * Missed beacon threshold: An access point has disappeared if this amount
+ * of consecutive beacons have been missed.
+ * This value needs to be high enough to avoid frequent re-connects to APs
+ * which suffer from occasional packet loss, and low enough to avoid a long
+ * delay before we start scanning when an AP has actually disappeared.
+ *
+ * The beacon interval is variable, but generally in the order of 100ms.
+ * So 30 beacons implies a grace period of about 3 seconds before we start
+ * searching for a new AP.
+ */
+#define IEEE80211_BEACON_MISS_THRES		30	/* units of beacons */
 
 enum ieee80211_phytype {
 	IEEE80211_T_DS,			/* direct sequence spread spectrum */

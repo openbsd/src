@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.276 2019/11/04 13:43:09 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.277 2019/11/06 13:55:43 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3810,6 +3810,10 @@ iwm_rx_bmiss(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 
 	missed = le32toh(mbn->consec_missed_beacons_since_last_rx);
 	if (missed > ic->ic_bmissthres && ic->ic_mgt_timer == 0) {
+		if (ic->ic_if.if_flags & IFF_DEBUG)
+			printf("%s: receiving no beacons from %s; checking if "
+			    "this AP is still responding to probe requests\n",
+			    DEVNAME(sc), ether_sprintf(ic->ic_bss->ni_macaddr));
 		/*
 		 * Rather than go directly to scan state, try to send a
 		 * directed probe request first. If that fails then the
