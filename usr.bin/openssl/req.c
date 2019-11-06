@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.17 2019/11/06 10:35:40 inoguchi Exp $ */
+/* $OpenBSD: req.c,v 1.18 2019/11/06 11:16:16 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -416,9 +416,9 @@ req_main(int argc, char **argv)
 
 		if (verbose)
 			BIO_printf(bio_err, "Using configuration from %s\n", template);
-		req_conf = NCONF_new(NULL);
-		i = NCONF_load(req_conf, template, &errline);
-		if (i == 0) {
+		if ((req_conf = NCONF_new(NULL)) == NULL)
+			goto end;
+		if(!NCONF_load(req_conf, template, &errline)) {
 			BIO_printf(bio_err, "error on line %ld of %s\n", errline, template);
 			goto end;
 		}
@@ -439,9 +439,9 @@ req_main(int argc, char **argv)
 		if (verbose)
 			BIO_printf(bio_err,
 			    "Using additional configuration from command line\n");
-		addext_conf = NCONF_new(NULL);
-		i = NCONF_load_bio(addext_conf, addext_bio, &errline);
-		if (i == 0) {
+		if ((addext_conf = NCONF_new(NULL)) == NULL)
+			goto end;
+		if (!NCONF_load_bio(addext_conf, addext_bio, &errline)) {
 			BIO_printf(bio_err,
 			    "req: Error on line %ld of config input\n",
 			    errline);
