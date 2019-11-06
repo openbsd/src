@@ -1,4 +1,4 @@
-/*	$Id: dnsproc.c,v 1.9 2017/01/24 13:32:55 jsing Exp $ */
+/*	$Id: dnsproc.c,v 1.10 2019/11/06 21:05:45 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -61,7 +61,7 @@ host_dns(const char *s, struct addr *vec)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM; /* DUMMY */
-	/* ntpd MUST NOT use AI_ADDRCONFIG here */
+	hints.ai_flags = AI_ADDRCONFIG;
 
 	error = getaddrinfo(s, NULL, &hints, &res0);
 
