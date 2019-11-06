@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.292 2019/09/23 11:00:42 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.293 2019/11/06 14:51:22 florian Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1439,9 +1439,21 @@ rtm_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
 			break;
 #endif
 		case RTAX_DNS:
-			sa->sa_family = AF_UNSPEC;
-			maxlen = RTDNS_LEN;
-			size = sizeof(struct sockaddr_rtdns);
+			/* more validation in rtm_validate_proposal */
+			if (sa->sa_len > sizeof(struct sockaddr_rtdns))
+				return (EINVAL);
+			if (sa->sa_len <= offsetof(struct sockaddr_rtdns,
+			    sr_dns))
+				return (EINVAL);
+			switch (sa->sa_family) {
+			case AF_INET:
+#ifdef INET6
+			case AF_INET6:
+#endif
+				break;
+			default:
+				return (EAFNOSUPPORT);
+			}
 			break;
 		case RTAX_STATIC:
 			sa->sa_family = AF_UNSPEC;
@@ -2133,6 +2145,22 @@ rtm_validate_proposal(struct rt_addrinfo *info)
 		if (rtdns->sr_len <=
 		    offsetof(struct sockaddr_rtdns, sr_dns))
 			return -1;
+		switch (rtdns->sr_family) {
+		case AF_INET:
+			if ((rtdns->sr_len - offsetof(struct sockaddr_rtdns,
+			    sr_dns)) % sizeof(struct in_addr) != 0)
+				return -1;
+			break;
+#ifdef INET6
+		case AF_INET6:
+			if ((rtdns->sr_len - offsetof(struct sockaddr_rtdns,
+			    sr_dns)) % sizeof(struct in6_addr) != 0)
+				return -1;
+#endif
+			break;
+		default:
+			return -1;
+		}
 	}
 
 	if (ISSET(info->rti_addrs, RTA_STATIC)) {
