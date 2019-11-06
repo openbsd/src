@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.539 2019/10/06 16:16:19 sthen Exp $
+#	$OpenBSD: rc,v 1.540 2019/11/06 16:26:24 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -353,6 +353,9 @@ if [[ $1 == shutdown ]]; then
 	exit 0
 fi
 
+# If bootblocks failed to give us random, try to cause some churn
+(dmesg; sysctl hw.{uuid,serialno,sensors} ) >/dev/random 2>&1
+
 # Add swap block-devices.
 swapctl -A -t blk
 
@@ -442,10 +445,6 @@ echo 'starting network'
 ifconfig -g carp carpdemote 128
 
 sh /etc/netstart
-
-# Any write triggers a rekey.
-dmesg >/dev/random
-sysctl hw.{uuid,serialno,sensors} >/dev/random 2>&1
 
 # Load pf rules and bring up pfsync interface.
 if [[ $pf != NO ]]; then
