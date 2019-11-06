@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.293 2019/11/06 14:51:22 florian Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.294 2019/11/06 15:18:53 florian Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -2156,8 +2156,8 @@ rtm_validate_proposal(struct rt_addrinfo *info)
 			if ((rtdns->sr_len - offsetof(struct sockaddr_rtdns,
 			    sr_dns)) % sizeof(struct in6_addr) != 0)
 				return -1;
-#endif
 			break;
+#endif
 		default:
 			return -1;
 		}
