@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.52 2019/11/03 18:15:26 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.53 2019/11/06 16:51:11 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1124,7 +1124,6 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 	case UW_RES_FORWARDER:
 	case UW_RES_DOT:
 		for (i = 0; i < nitems(as112_zones); i++) {
-			log_debug("%s", as112_zones[i]);
 			if((err = ub_ctx_set_option(res->ctx, "local-zone:",
 			    as112_zones[i])) != 0) {
 				ub_ctx_delete(res->ctx);
