@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.108 2019/10/31 18:10:22 jmc Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.109 2019/11/06 12:49:50 sthen Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: October 31 2019 $
+.Dd $Mdocdate: November 6 2019 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -146,6 +146,9 @@ searches the system interface list for the lowest numbered, configured
 interface
 .Pq excluding loopback .
 Ties are broken by choosing the earliest match.
+.Ar interface
+may be either a network interface or a USB interface, for example
+.Ar usb0 .
 .It Fl L
 List the supported data link types for the interface and exit.
 .It Fl l
