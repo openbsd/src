@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.27 2019/04/29 04:26:47 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.28 2019/11/06 03:51:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -166,7 +166,7 @@ struct trunk_port {
 	u_int32_t			tp_prio;	/* port priority */
 	u_int32_t			tp_flags;	/* port flags */
 	void				*lh_cookie;	/* if state hook */
-	void				*dh_cookie;	/* if detach hook */
+	struct task			tp_dtask;	/* if detach hook */
 
 	/* Redirected callbacks */
 	int	(*tp_ioctl)(struct ifnet *, u_long, caddr_t);

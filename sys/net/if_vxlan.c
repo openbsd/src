@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.73 2019/06/10 16:32:51 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.74 2019/11/06 03:51:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -64,7 +64,7 @@ struct vxlan_softc {
 	struct ip_moptions	 sc_imo;
 	void			*sc_ahcookie;
 	void			*sc_lhcookie;
-	void			*sc_dhcookie;
+	struct task		 sc_dtask;
 
 	struct sockaddr_storage	 sc_src;
 	struct sockaddr_storage	 sc_dst;
@@ -138,6 +138,7 @@ vxlan_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_vnetid = VXLAN_VNI_UNSET;
 	sc->sc_txhprio = IFQ_TOS2PRIO(IPTOS_PREC_ROUTINE); /* 0 */
 	sc->sc_df = htons(0);
+	task_set(&sc->sc_dtask, vxlan_if_change, sc);
 	task_set(&sc->sc_sendtask, vxlan_send_dispatch, sc);
 
 	ifp = &sc->sc_ac.ac_if;
@@ -223,11 +224,7 @@ vxlan_multicast_cleanup(struct ifnet *ifp)
 			    sc->sc_lhcookie);
 			sc->sc_lhcookie = NULL;
 		}
-		if (sc->sc_dhcookie != NULL) {
-			hook_disestablish(mifp->if_detachhooks,
-			    sc->sc_dhcookie);
-			sc->sc_dhcookie = NULL;
-		}
+		if_detachhook_del(mifp, &sc->sc_dtask);
 
 		if_put(mifp);
 	}
@@ -297,12 +294,11 @@ vxlan_multicast_join(struct ifnet *ifp, struct sockaddr *src,
 	 * Use interface hooks to track any changes on the interface
 	 * that is used to send out the tunnel traffic as multicast.
 	 */
+	if_detachhook_add(mifp, &sc->sc_dtask);
 	if ((sc->sc_ahcookie = hook_establish(mifp->if_addrhooks,
 	    0, vxlan_addr_change, sc)) == NULL ||
 	    (sc->sc_lhcookie = hook_establish(mifp->if_linkstatehooks,
-	    0, vxlan_link_change, sc)) == NULL ||
-	    (sc->sc_dhcookie = hook_establish(mifp->if_detachhooks,
-	    0, vxlan_if_change, sc)) == NULL)
+	    0, vxlan_link_change, sc)) == NULL)
 		panic("%s: cannot allocate interface hook",
 		    mifp->if_xname);
 

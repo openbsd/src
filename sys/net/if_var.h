@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.100 2019/06/26 09:36:06 claudio Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.101 2019/11/06 03:51:26 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ struct ifnet {				/* and the entries */
 	TAILQ_HEAD(, ifg_list) if_groups; /* [N] list of groups per if */
 	struct hook_desc_head *if_addrhooks; /* [I] address change callbacks */
 	struct hook_desc_head *if_linkstatehooks; /* [I] link change callbacks*/
-	struct hook_desc_head *if_detachhooks; /* [I] detach callbacks */
+	struct task_list if_detachhooks; /* [I] detach callbacks */
 				/* [I] check or clean routes (+ or -)'d */
 	void	(*if_rtrequest)(struct ifnet *, int, struct rtentry *);
 	char	if_xname[IFNAMSIZ];	/* [I] external name (name + unit) */
@@ -373,6 +373,9 @@ void	if_ih_insert(struct ifnet *, int (*)(struct ifnet *, struct mbuf *,
 	    void *), void *);
 void	if_ih_remove(struct ifnet *, int (*)(struct ifnet *, struct mbuf *,
 	    void *), void *);
+
+void	if_detachhook_add(struct ifnet *, struct task *);
+void	if_detachhook_del(struct ifnet *, struct task *);
 
 void	if_rxr_livelocked(struct if_rxring *);
 void	if_rxr_init(struct if_rxring *, u_int, u_int);

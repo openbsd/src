@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.19 2019/08/05 10:42:51 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.20 2019/11/06 03:51:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -336,7 +336,7 @@ struct aggr_port {
 	    struct rtentry *);
 
 	void			*p_lcookie;
-	void			*p_dcookie;
+	struct task		 p_dhook;
 
 	struct aggr_softc	*p_aggr;
 	TAILQ_ENTRY(aggr_port)	 p_entry;
@@ -583,14 +583,13 @@ aggr_clone_destroy(struct ifnet *ifp)
 
 	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		aggr_down(sc);
+
+	while ((p = TAILQ_FIRST(&sc->sc_ports)) != NULL)
+		aggr_p_dtor(sc, p, "destroy");
 	NET_UNLOCK();
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-
-	/* last ref, no need to lock. aggr_p_dtor locks anyway */
-	while ((p = TAILQ_FIRST(&sc->sc_ports)) != NULL)
-		aggr_p_dtor(sc, p, "destroy");
 
 	free(sc, M_DEVBUF, sizeof(*sc));
 
@@ -1138,8 +1137,9 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 
 	p->p_lcookie = hook_establish(ifp0->if_linkstatehooks, 1,
 	    aggr_p_linkch, p);
-	p->p_dcookie = hook_establish(ifp0->if_detachhooks, 0,
-	    aggr_p_detach, p);
+
+	task_set(&p->p_dhook, aggr_p_detach, p);
+	if_detachhook_add(ifp0, &p->p_dhook);
 
 	task_set(&p->p_rxm_task, aggr_rx, p);
 	mq_init(&p->p_rxm_mq, 3, IPL_NET);
@@ -1427,7 +1427,7 @@ aggr_p_dtor(struct aggr_softc *sc, struct aggr_port *p, const char *op)
 		    ifp->if_xname, op, ifp0->if_xname);
 	}
 
-	hook_disestablish(ifp0->if_detachhooks, p->p_dcookie);
+	if_detachhook_del(ifp0, &p->p_dhook);
 	hook_disestablish(ifp0->if_linkstatehooks, p->p_lcookie);
 
 	if_put(ifp0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.141 2019/07/05 01:24:56 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.142 2019/11/06 03:51:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -376,8 +376,8 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	    trunk_port_state, tp);
 
 	/* Register callback if parent wants to unregister */
-	tp->dh_cookie = hook_establish(ifp->if_detachhooks, 0,
-	    trunk_port_ifdetach, tp);
+	task_set(&tp->tp_dtask, trunk_port_ifdetach, tp);
+	if_detachhook_add(ifp, &tp->tp_dtask);
 
 	if (tr->tr_port_create != NULL)
 		error = (*tr->tr_port_create)(tp);
@@ -437,7 +437,7 @@ trunk_port_destroy(struct trunk_port *tp)
 	ifp->if_output = tp->tp_output;
 
 	hook_disestablish(ifp->if_linkstatehooks, tp->lh_cookie);
-	hook_disestablish(ifp->if_detachhooks, tp->dh_cookie);
+	if_detachhook_del(ifp, &tp->tp_dtask);
 
 	/* Finally, remove the port from the trunk */
 	SLIST_REMOVE(&tr->tr_ports, tp, trunk_port, tp_entries);

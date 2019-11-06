@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.200 2019/11/04 04:17:31 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.201 2019/11/06 03:51:26 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -98,7 +98,7 @@ struct vlan_softc {
 	int			 sc_flags;
 	struct refcnt		 sc_refcnt;
 	void			*sc_lh_cookie;
-	void			*sc_dh_cookie;
+	struct task		 sc_dtask;
 	struct ifih		*sc_ifih;
 };
 
@@ -192,6 +192,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 	sc->sc_dead = 0;
 	LIST_INIT(&sc->sc_mc_listhead);
+	task_set(&sc->sc_dtask, vlan_ifdetach, sc);
 	ifp = &sc->sc_if;
 	ifp->if_softc = sc;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "%s%d", ifc->ifc_name,
@@ -537,8 +538,7 @@ vlan_up(struct vlan_softc *sc)
 	    vlan_link_hook, sc);
 
 	/* Register callback if parent wants to unregister */
-	sc->sc_dh_cookie = hook_establish(ifp0->if_detachhooks, 0,
-	    vlan_ifdetach, sc);
+	if_detachhook_add(ifp0, &sc->sc_dtask);
 
 	/* configure the parent to handle packets for this vlan */
 	vlan_multi_apply(sc, ifp0, SIOCADDMULTI);
@@ -591,7 +591,7 @@ vlan_down(struct vlan_softc *sc)
 		if (ISSET(sc->sc_flags, IFVF_PROMISC))
 			ifpromisc(ifp0, 0);
 		vlan_multi_apply(sc, ifp0, SIOCDELMULTI);
-		hook_disestablish(ifp0->if_detachhooks, sc->sc_dh_cookie);
+		if_detachhook_del(ifp0, &sc->sc_dtask);
 		hook_disestablish(ifp0->if_linkstatehooks, sc->sc_lh_cookie);
 	}
 	if_put(ifp0);

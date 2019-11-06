@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.152 2019/07/29 16:28:25 bluhm Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.153 2019/11/06 03:51:26 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -430,7 +430,7 @@ struct nvgre_softc {
 
 	void			*sc_inm;
 	void			*sc_lhcookie;
-	void			*sc_dhcookie;
+	struct task		 sc_dtask;
 
 	struct rwlock		 sc_ether_lock;
 	struct nvgre_map	 sc_ether_map;
@@ -792,6 +792,7 @@ nvgre_clone_create(struct if_clone *ifc, int unit)
 
 	mq_init(&sc->sc_send_list, IFQ_MAXLEN * 2, IPL_SOFTNET);
 	task_set(&sc->sc_send_task, nvgre_send, sc);
+	task_set(&sc->sc_dtask, nvgre_detach, sc);
 
 	rw_init(&sc->sc_ether_lock, "nvgrelk");
 	RBT_INIT(nvgre_map, &sc->sc_ether_map);
@@ -3663,12 +3664,7 @@ nvgre_up(struct nvgre_softc *sc)
 		goto delmulti;
 	}
 
-	sc->sc_dhcookie = hook_establish(ifp0->if_detachhooks, 0,
-	    nvgre_detach, sc);
-	if (sc->sc_dhcookie == NULL) {
-		error = ENOMEM;
-		goto dislh;
-	}
+	if_detachhook_add(ifp0, &sc->sc_dtask);
 
 	if_put(ifp0);
 
@@ -3679,8 +3675,6 @@ nvgre_up(struct nvgre_softc *sc)
 
 	return (0);
 
-dislh:
-	hook_disestablish(ifp0->if_linkstatehooks, sc->sc_lhcookie);
 delmulti:
 	switch (tunnel->t_af) {
 	case AF_INET:
@@ -3726,7 +3720,7 @@ nvgre_down(struct nvgre_softc *sc)
 
 	ifp0 = if_get(sc->sc_ifp0);
 	if (ifp0 != NULL) {
-		hook_disestablish(ifp0->if_detachhooks, sc->sc_dhcookie);
+		if_detachhook_del(ifp0, &sc->sc_dtask);
 		hook_disestablish(ifp0->if_linkstatehooks, sc->sc_lhcookie);
 	}
 	if_put(ifp0);

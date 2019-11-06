@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.65 2019/05/12 19:53:22 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.66 2019/11/06 03:51:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -425,7 +425,7 @@ struct bridge_iflist {
 	struct ifnet			*ifp;		/* [I] net interface */
 	u_int32_t			bif_flags;	/* member flags */
 	u_int32_t			bif_protected;	/* protected domains */
-	void				*bif_dhcookie;
+	struct task			bif_dtask;
 };
 #define bif_state			bif_stp->bp_state
 

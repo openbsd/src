@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.588 2019/08/21 15:32:18 florian Exp $	*/
+/*	$OpenBSD: if.c,v 1.589 2019/11/06 03:51:26 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -632,9 +632,7 @@ if_attach_common(struct ifnet *ifp)
 	ifp->if_linkstatehooks = malloc(sizeof(*ifp->if_linkstatehooks),
 	    M_TEMP, M_WAITOK);
 	TAILQ_INIT(ifp->if_linkstatehooks);
-	ifp->if_detachhooks = malloc(sizeof(*ifp->if_detachhooks),
-	    M_TEMP, M_WAITOK);
-	TAILQ_INIT(ifp->if_detachhooks);
+	TAILQ_INIT(&ifp->if_detachhooks);
 
 	if (ifp->if_rtrequest == NULL)
 		ifp->if_rtrequest = if_rtrequest_dummy;
@@ -1046,15 +1044,34 @@ if_netisr(void *unused)
 void
 if_deactivate(struct ifnet *ifp)
 {
-	NET_LOCK();
+	struct task *t, *nt;
+
 	/*
 	 * Call detach hooks from head to tail.  To make sure detach
 	 * hooks are executed in the reverse order they were added, all
 	 * the hooks have to be added to the head!
 	 */
-	dohooks(ifp->if_detachhooks, HOOK_REMOVE | HOOK_FREE);
 
+	NET_LOCK();
+	TAILQ_FOREACH_SAFE(t, &ifp->if_detachhooks, t_entry, nt)
+		(*t->t_func)(t->t_arg);
+
+	KASSERT(TAILQ_EMPTY(&ifp->if_detachhooks));
 	NET_UNLOCK();
+}
+
+void
+if_detachhook_add(struct ifnet *ifp, struct task *t)
+{
+	NET_ASSERT_LOCKED();
+	TAILQ_INSERT_HEAD(&ifp->if_detachhooks, t, t_entry);
+}
+
+void
+if_detachhook_del(struct ifnet *ifp, struct task *t)
+{
+	NET_ASSERT_LOCKED();
+	TAILQ_REMOVE(&ifp->if_detachhooks, t, t_entry);
 }
 
 /*
@@ -1132,7 +1149,6 @@ if_detach(struct ifnet *ifp)
 
 	free(ifp->if_addrhooks, M_TEMP, sizeof(*ifp->if_addrhooks));
 	free(ifp->if_linkstatehooks, M_TEMP, sizeof(*ifp->if_linkstatehooks));
-	free(ifp->if_detachhooks, M_TEMP, sizeof(*ifp->if_detachhooks));
 
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])

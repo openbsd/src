@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.29 2019/09/30 01:53:05 dlg Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.30 2019/11/06 03:51:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -533,8 +533,8 @@ switch_port_add(struct switch_softc *sc, struct ifbreq *req)
 	ifs->if_switchport = (caddr_t)swpo;
 	if_ih_insert(ifs, switch_input, NULL);
 	swpo->swpo_port_no = swofp_assign_portno(sc, ifs->if_index);
-	swpo->swpo_dhcookie = hook_establish(ifs->if_detachhooks, 0,
-	    switch_port_detach, ifs);
+	task_set(&swpo->swpo_dtask, switch_port_detach, ifs);
+	if_detachhook_add(ifs, &swpo->swpo_dtask);
 
 	nanouptime(&swpo->swpo_appended);
 
@@ -601,7 +601,7 @@ switch_port_detach(void *arg)
 		switch_port_unset_local(sc, swpo);
 
 	ifp->if_switchport = NULL;
-	hook_disestablish(ifp->if_detachhooks, swpo->swpo_dhcookie);
+	if_detachhook_del(ifp, &swpo->swpo_dtask);
 	ifpromisc(ifp, 0);
 	if_ih_remove(ifp, switch_input, NULL);
 	TAILQ_REMOVE(&sc->sc_swpo_list, swpo, swpo_list_next);

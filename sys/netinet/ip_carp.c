@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.338 2019/06/10 16:32:51 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.339 2019/11/06 03:51:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -133,7 +133,7 @@ struct carp_softc {
 #define	sc_carpdev	sc_ac.ac_if.if_carpdev
 	void *ah_cookie;
 	void *lh_cookie;
-	void *dh_cookie;
+	struct task sc_dtask;
 	struct ip_moptions sc_imo;
 #ifdef INET6
 	struct ip6_moptions sc_im6o;
@@ -808,6 +808,8 @@ carp_clone_create(struct if_clone *ifc, int unit)
 		return (ENOMEM);
 	}
 
+	task_set(&sc->sc_dtask, carpdetach, sc);
+
 	sc->sc_suppress = 0;
 	sc->sc_advbase = CARP_DFLTINTV;
 	sc->sc_naddrs = sc->sc_naddrs6 = 0;
@@ -955,7 +957,7 @@ carpdetach(void *arg)
 	sc->sc_carpdev = NULL;
 
 	hook_disestablish(ifp0->if_linkstatehooks, sc->lh_cookie);
-	hook_disestablish(ifp0->if_detachhooks, sc->dh_cookie);
+	if_detachhook_del(ifp0, &sc->sc_dtask);
 }
 
 void
@@ -1685,17 +1687,10 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp0)
 	if (ifp0->if_type != IFT_ETHER)
 		return (EINVAL);
 
-	sc->dh_cookie = hook_establish(ifp0->if_detachhooks, 0,
-            carpdetach, sc);
-	if (sc->dh_cookie == NULL)
-		return (ENOMEM);
-
 	sc->lh_cookie = hook_establish(ifp0->if_linkstatehooks, 1,
 	    carp_carpdev_state, ifp0);
-	if (sc->lh_cookie == NULL) {
-		error = ENOMEM;
-		goto rm_dh;
-	}
+	if (sc->lh_cookie == NULL)
+		return (ENOMEM);
 
 	cif = &ifp0->if_carp;
 	if (SRPL_EMPTY_LOCKED(cif)) {
@@ -1712,6 +1707,7 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp0)
 		carpdetach(sc);
 
 	/* attach carp interface to physical interface */
+	if_detachhook_add(ifp0, &sc->sc_dtask);
 	sc->sc_carpdev = ifp0;
 	sc->sc_if.if_capabilities = ifp0->if_capabilities &
 	    IFCAP_CSUM_MASK;
@@ -1755,8 +1751,6 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp0)
 
 rm_lh:
 	hook_disestablish(ifp0->if_linkstatehooks, sc->lh_cookie);
-rm_dh:
-	hook_disestablish(ifp0->if_detachhooks, sc->dh_cookie);
 
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.8 2019/07/17 16:46:17 mpi Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.9 2019/11/06 03:51:26 dlg Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -103,7 +103,7 @@ struct bpe_softc {
 	uint8_t			sc_group[ETHER_ADDR_LEN];
 
 	void *			sc_lh_cookie;
-	void *			sc_dh_cookie;
+	struct task		sc_dtask;
 
 	struct bpe_map		sc_bridge_map;
 	struct rwlock		sc_bridge_lock;
@@ -173,6 +173,8 @@ bpe_clone_create(struct if_clone *ifc, int unit)
 
 	sc->sc_txhprio = IF_HDRPRIO_PACKET;
 	sc->sc_rxhprio = IF_HDRPRIO_OUTER;
+
+	task_set(&sc->sc_dtask, bpe_detach_hook, sc);
 
 	rw_init(&sc->sc_bridge_lock, "bpebr");
 	RBT_INIT(bpe_map, &sc->sc_bridge_map);
@@ -636,8 +638,7 @@ bpe_up(struct bpe_softc *sc)
 	    bpe_link_hook, sc);
 
 	/* Register callback if parent wants to unregister */
-	sc->sc_dh_cookie = hook_establish(ifp0->if_detachhooks, 0,
-	    bpe_detach_hook, sc);
+	if_detachhook_add(ifp0, &sc->sc_dtask);
 
 	/* we're running now */
 	SET(ifp->if_flags, IFF_RUNNING);
@@ -674,7 +675,7 @@ bpe_down(struct bpe_softc *sc)
 
 	ifp0 = if_get(sc->sc_key.k_if);
 	if (ifp0 != NULL) {
-		hook_disestablish(ifp0->if_detachhooks, sc->sc_dh_cookie);
+		if_detachhook_del(ifp0, &sc->sc_dtask);
 		hook_disestablish(ifp0->if_linkstatehooks, sc->sc_lh_cookie);
 		bpe_multi(sc, ifp0, SIOCDELMULTI);
 	}

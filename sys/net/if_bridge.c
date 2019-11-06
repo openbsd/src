@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.337 2019/07/20 23:01:51 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.338 2019/11/06 03:51:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -325,8 +325,8 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		SIMPLEQ_INIT(&bif->bif_brlin);
 		SIMPLEQ_INIT(&bif->bif_brlout);
 		ifs->if_bridgeidx = ifp->if_index;
-		bif->bif_dhcookie = hook_establish(ifs->if_detachhooks, 0,
-		    bridge_ifdetach, bif);
+		task_set(&bif->bif_dtask, bridge_ifdetach, bif);
+		if_detachhook_add(ifs, &bif->bif_dtask);
 		if_ih_insert(bif->ifp, bridge_input, NULL);
 		SMR_SLIST_INSERT_HEAD_LOCKED(&sc->sc_iflist, bif, bif_next);
 		break;
@@ -385,8 +385,8 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		bif->bif_flags = IFBIF_SPAN;
 		SIMPLEQ_INIT(&bif->bif_brlin);
 		SIMPLEQ_INIT(&bif->bif_brlout);
-		bif->bif_dhcookie = hook_establish(ifs->if_detachhooks, 0,
-		    bridge_spandetach, bif);
+		task_set(&bif->bif_dtask, bridge_spandetach, bif);
+		if_detachhook_add(ifs, &bif->bif_dtask);
 		SMR_SLIST_INSERT_HEAD_LOCKED(&sc->sc_spanlist, bif, bif_next);
 		break;
 	case SIOCBRDGDELS:
@@ -547,7 +547,7 @@ bridge_ifremove(struct bridge_iflist *bif)
 	int error;
 
 	SMR_SLIST_REMOVE_LOCKED(&sc->sc_iflist, bif, bridge_iflist, bif_next);
-	hook_disestablish(bif->ifp->if_detachhooks, bif->bif_dhcookie);
+	if_detachhook_del(bif->ifp, &bif->bif_dtask);
 	if_ih_remove(bif->ifp, bridge_input, NULL);
 
 	smr_barrier();
@@ -575,7 +575,7 @@ bridge_spanremove(struct bridge_iflist *bif)
 	struct bridge_softc *sc = bif->bridge_sc;
 
 	SMR_SLIST_REMOVE_LOCKED(&sc->sc_spanlist, bif, bridge_iflist, bif_next);
-	hook_disestablish(bif->ifp->if_detachhooks, bif->bif_dhcookie);
+	if_detachhook_del(bif->ifp, &bif->bif_dtask);
 
 	smr_barrier();
 
