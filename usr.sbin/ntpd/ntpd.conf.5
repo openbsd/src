@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.37 2017/08/10 22:59:42 job Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.38 2019/11/06 13:35:25 otto Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 10 2017 $
+.Dd $Mdocdate: November 6 2019 $
 .Dt NTPD.CONF 5
 .Os
 .Sh NAME
@@ -193,9 +193,13 @@ Received NTP packets with time information falling outside of a range
 near the constraint will be discarded and such NTP servers
 will be marked as invalid.
 .Bl -tag -width Ds
-.It Ic constraint from Ar url
+.It Ic constraint from Ar url [ip...]
 Specify the URL, IP address or the hostname of an HTTPS server to
 provide a constraint.
+If the url is followed by one or more addresses the url and addresses will be
+tried until a working one is found.
+The url path and expected certificate name is always taken from the
+url specified.
 If
 .Ic constraint from
 is used more than once,
@@ -204,6 +208,7 @@ will calculate a median constraint from all the servers specified.
 .Bd -literal -offset indent
 server ntp.example.org
 constraint from www.example.com
+constraint from "https://9.9.9.9" "2620:fe::9"
 .Ed
 .It Ic constraints from Ar url
 As with

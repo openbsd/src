@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.73 2019/07/16 14:15:40 otto Exp $ */
+/*	$OpenBSD: parse.y,v 1.74 2019/11/06 13:35:25 otto Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -88,7 +88,7 @@ typedef struct {
 %token	ERROR
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
-%type	<v.addr>		address url
+%type	<v.addr>		address url urllist
 %type	<v.opts>		listen_opts listen_opts_l listen_opt
 %type	<v.opts>		server_opts server_opts_l server_opt
 %type	<v.opts>		sensor_opts sensor_opts_l sensor_opt
@@ -272,7 +272,7 @@ main		: LISTEN ON address listen_opts	{
 			free($3->name);
 			free($3);
 		}
-		| CONSTRAINT FROM url		{
+		| CONSTRAINT FROM urllist		{
 			struct constraint	*p;
 			struct ntp_addr		*h, *next;
 
@@ -326,6 +326,36 @@ address		: STRING		{
 				fatal(NULL);
 			host($1, &$$->a);
 			$$->name = $1;
+		}
+		;
+
+urllist		: urllist address {
+			struct ntp_addr *p, *q = NULL;
+			struct in_addr ina;
+			struct in6_addr in6a;
+
+			if (inet_pton(AF_INET, $2->name, &ina) != 1 &&
+			    inet_pton(AF_INET6, $2->name, &in6a) != 1) {
+				yyerror("url can only be followed by IP "
+				    "addresses");
+				free($2->name);
+				free($2);
+				YYERROR;
+			}
+			p = $2->a;
+			while (p != NULL) {
+				q = p;
+				p = p->next;
+			}
+			if (q != NULL) {
+				q->next = $1->a;
+				$1->a = $2->a;
+				free($2);
+			}
+			$$ = $1;
+		}
+		| url {
+			$$ = $1;
 		}
 		;
 
