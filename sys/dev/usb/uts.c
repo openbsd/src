@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.41 2018/03/15 00:42:41 kevlo Exp $ */
+/*	$OpenBSD: uts.c,v 1.42 2019/11/06 20:25:14 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -308,8 +308,8 @@ uts_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *l)
 	struct uts_softc *sc = v;
 	struct wsmouse_calibcoords *wsmc = (struct wsmouse_calibcoords *)data;
 
-	DPRINTF(("uts_ioctl(%d, '%c', %d)\n",
-	    IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd & 0xff));
+	DPRINTF(("uts_ioctl(%zu, '%c', %zu)\n",
+	    IOCPARM_LEN(cmd), (int) IOCGROUP(cmd), cmd & 0xff));
 
 	switch (cmd) {
 	case WSMOUSEIO_SCALIBCOORDS:
