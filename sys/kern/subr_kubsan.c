@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_kubsan.c,v 1.11 2019/11/04 17:51:22 anton Exp $	*/
+/*	$OpenBSD: subr_kubsan.c,v 1.12 2019/11/06 19:16:48 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -708,11 +708,11 @@ again:
 	}
 
 	/* New reports can arrive at any time. */
-	if (nslots != kubsan_slot && nslots < KUBSAN_NSLOTS)
-		goto again;
-
-	kubsan_slot = 0;
-	membar_producer();
+	if (atomic_cas_uint(&kubsan_slot, nslots, 0) != nslots) {
+		if (nslots < KUBSAN_NSLOTS)
+			goto again;
+		atomic_swap_uint(&kubsan_slot, 0);
+	}
 
 done:
 	timeout_add_msec(&kubsan_timo, KUBSAN_INTERVAL);
