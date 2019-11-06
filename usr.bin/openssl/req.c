@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.16 2019/07/03 03:24:02 deraadt Exp $ */
+/* $OpenBSD: req.c,v 1.17 2019/11/06 10:35:40 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,9 +62,10 @@
 #undef OPENSSL_NO_DEPRECATED
 #endif
 
+#include <ctype.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
 #include <string.h>
 #include <time.h>
 
@@ -141,7 +142,12 @@ static int req_check_len(int len, int n_min, int n_max);
 static int check_end(const char *str, const char *end);
 static EVP_PKEY_CTX *set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
     long *pkeylen, char **palgnam);
+static unsigned long ext_name_hash(const OPENSSL_STRING *a);
+static int ext_name_cmp(const OPENSSL_STRING *a, const OPENSSL_STRING *b);
+static void exts_cleanup(OPENSSL_STRING *x);
+static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv);
 static CONF *req_conf = NULL;
+static CONF *addext_conf = NULL;
 static int batch = 0;
 
 int
@@ -155,6 +161,7 @@ req_main(int argc, char **argv)
 	const char *keyalg = NULL;
 	char *keyalgstr = NULL;
 	STACK_OF(OPENSSL_STRING) * pkeyopts = NULL, *sigopts = NULL;
+	LHASH_OF(OPENSSL_STRING) *addexts = NULL;
 	EVP_PKEY *pkey = NULL;
 	int i = 0, badops = 0, newreq = 0, verbose = 0, pkey_type = -1;
 	long newkey = -1;
@@ -163,6 +170,7 @@ req_main(int argc, char **argv)
 	int nodes = 0, kludge = 0, newhdr = 0, subject = 0, pubkey = 0;
 	char *infile, *outfile, *prog, *keyfile = NULL, *template = NULL,
 	*keyout = NULL;
+	BIO *addext_bio = NULL;
 	char *extensions = NULL;
 	char *req_exts = NULL;
 	const EVP_CIPHER *cipher = NULL;
@@ -319,6 +327,23 @@ req_main(int argc, char **argv)
 			serial = s2i_ASN1_INTEGER(NULL, *(++argv));
 			if (!serial)
 				goto bad;
+		} else if (strcmp(*argv, "-addext") == 0) {
+			if (--argc < 1)
+				goto bad;
+			p = *(++argv);
+			if (addexts == NULL) {
+				addexts = (LHASH_OF(OPENSSL_STRING) *)lh_new(
+				    (LHASH_HASH_FN_TYPE)ext_name_hash,
+				    (LHASH_COMP_FN_TYPE)ext_name_cmp);
+				addext_bio = BIO_new(BIO_s_mem());
+				if (addexts == NULL || addext_bio == NULL)
+					goto bad;
+			}
+			i = duplicated(addexts, p);
+			if (i == 1)
+				goto bad;
+			if (i < 0 || BIO_printf(addext_bio, "%s\n", p) < 0)
+				goto bad;
 		} else if (strcmp(*argv, "-extensions") == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -373,6 +398,7 @@ req_main(int argc, char **argv)
 		BIO_printf(bio_err, " -newhdr        output \"NEW\" in the header lines\n");
 		BIO_printf(bio_err, " -asn1-kludge   Output the 'request' in a format that is wrong but some CA's\n");
 		BIO_printf(bio_err, "                have been reported as requiring\n");
+		BIO_printf(bio_err, " -addext ..     additional cert extension key=value pair (may be given more than once)\n");
 		BIO_printf(bio_err, " -extensions .. specify certificate extension section (override value in config file)\n");
 		BIO_printf(bio_err, " -reqexts ..    specify request extension section (override value in config file)\n");
 		BIO_printf(bio_err, " -utf8          input characters are UTF8 (default ASCII)\n");
@@ -406,6 +432,21 @@ req_main(int argc, char **argv)
 		} else if (verbose)
 			BIO_printf(bio_err, "Using configuration from %s\n",
 			    default_config_file);
+	}
+
+	if (addext_bio != NULL) {
+		long errline = -1;
+		if (verbose)
+			BIO_printf(bio_err,
+			    "Using additional configuration from command line\n");
+		addext_conf = NCONF_new(NULL);
+		i = NCONF_load_bio(addext_conf, addext_bio, &errline);
+		if (i == 0) {
+			BIO_printf(bio_err,
+			    "req: Error on line %ld of config input\n",
+			    errline);
+			goto end;
+		}
 	}
 
 	if (req_conf != NULL) {
@@ -454,6 +495,17 @@ req_main(int argc, char **argv)
 		if (!X509V3_EXT_add_nconf(req_conf, &ctx, extensions, NULL)) {
 			BIO_printf(bio_err,
 			    "Error Loading extension section %s\n", extensions);
+			goto end;
+		}
+	}
+	if (addext_conf != NULL) {
+		/* Check syntax of command line extensions */
+		X509V3_CTX ctx;
+		X509V3_set_ctx_test(&ctx);
+		X509V3_set_nconf(&ctx, addext_conf);
+		if (!X509V3_EXT_add_nconf(addext_conf, &ctx, "default", NULL)) {
+			BIO_printf(bio_err,
+			    "Error Loading command line extensions\n");
 			goto end;
 		}
 	}
@@ -660,7 +712,8 @@ req_main(int argc, char **argv)
 				goto end;
 
 			/* Set version to V3 */
-			if (extensions && !X509_set_version(x509ss, 2))
+			if ((extensions != NULL || addext_conf != NULL) &&
+			    !X509_set_version(x509ss, 2))
 				goto end;
 			if (serial) {
 				if (!X509_set_serialNumber(x509ss, serial))
@@ -697,6 +750,13 @@ req_main(int argc, char **argv)
 				    extensions);
 				goto end;
 			}
+			if (addext_conf != NULL &&
+			    !X509V3_EXT_add_nconf(addext_conf, &ext_ctx,
+				    "default", x509ss)) {
+				BIO_printf(bio_err,
+				    "Error Loading command line extensions\n");
+				goto end;
+			}
 			i = do_X509_sign(bio_err, x509ss, pkey, digest, sigopts);
 			if (!i) {
 				ERR_print_errors(bio_err);
@@ -716,6 +776,13 @@ req_main(int argc, char **argv)
 				BIO_printf(bio_err,
 				    "Error Loading extension section %s\n",
 				    req_exts);
+				goto end;
+			}
+			if (addext_conf != NULL &&
+			    !X509V3_EXT_REQ_add_nconf(addext_conf, &ext_ctx,
+				    "default", req)) {
+				BIO_printf(bio_err,
+				    "Error Loading command line extensions\n");
 				goto end;
 			}
 			i = do_X509_REQ_sign(bio_err, req, pkey, digest, sigopts);
@@ -864,6 +931,8 @@ req_main(int argc, char **argv)
 	}
 	if ((req_conf != NULL) && (req_conf != config))
 		NCONF_free(req_conf);
+	NCONF_free(addext_conf);
+	BIO_free(addext_bio);
 	BIO_free(in);
 	BIO_free_all(out);
 	EVP_PKEY_free(pkey);
@@ -873,6 +942,8 @@ req_main(int argc, char **argv)
 		sk_OPENSSL_STRING_free(pkeyopts);
 	if (sigopts)
 		sk_OPENSSL_STRING_free(sigopts);
+	lh_OPENSSL_STRING_doall(addexts, (LHASH_DOALL_FN_TYPE)exts_cleanup);
+	lh_OPENSSL_STRING_free(addexts);
 	free(keyalgstr);
 	X509_REQ_free(req);
 	X509_free(x509ss);
@@ -1557,4 +1628,63 @@ do_X509_CRL_sign(BIO * err, X509_CRL * x, EVP_PKEY * pkey, const EVP_MD * md,
 		rv = X509_CRL_sign_ctx(x, &mctx);
 	EVP_MD_CTX_cleanup(&mctx);
 	return rv > 0 ? 1 : 0;
+}
+
+static unsigned long
+ext_name_hash(const OPENSSL_STRING *a)
+{
+	return lh_strhash((const char *)a);
+}
+
+static int
+ext_name_cmp(const OPENSSL_STRING *a, const OPENSSL_STRING *b)
+{
+	return strcmp((const char *)a, (const char *)b);
+}
+
+static void
+exts_cleanup(OPENSSL_STRING *x)
+{
+	free((char *)x);
+}
+
+/*
+ * Is the |kv| key already duplicated ? This is remarkably tricky to get right.
+ * Return 0 if unique, -1 on runtime error; 1 if found or a syntax error.
+ */
+static int
+duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
+{
+	char *p;
+	size_t off;
+
+	/* Check syntax. */
+	/* Skip leading whitespace, make a copy. */
+	while (*kv && isspace(*kv))
+		if (*++kv == '\0')
+			return 1;
+	if ((p = strchr(kv, '=')) == NULL)
+		return 1;
+	off = p - kv;
+	if ((kv = strdup(kv)) == NULL)
+		return -1;
+
+	/* Skip trailing space before the equal sign. */
+	for (p = kv + off; p > kv; --p)
+		if (!isspace(p[-1]))
+			break;
+	if (p == kv) {
+		free(kv);
+		return 1;
+	}
+	*p = '\0';
+
+	/* See if "key" is there by attempting to add it. */
+	if ((p = (char *)lh_OPENSSL_STRING_insert(addexts, (OPENSSL_STRING*)kv))
+	    != NULL || lh_OPENSSL_STRING_error(addexts)) {
+		free(p != NULL ? p : kv);
+		return -1;
+	}
+
+	return 0;
 }
