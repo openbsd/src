@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.106 2019/10/18 02:57:25 visa Exp $
+# $OpenBSD: Makefile.cross,v 1.107 2019/11/07 11:32:23 mpi Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -200,12 +200,6 @@ ${CROSSINCLUDES}:	${CROSSOBJ}
 ${CROSSBINUTILS}:	${CROSSINCLUDES}
 	(cd ${.CURDIR}/${BINUTILS_DIR}; \
 	    env CROSSDIR=${CROSSDIR} \
-	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    PIE_DEFAULT=${PIE_DEFAULT} \
-	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
-	    PATH=${CROSSPATH} \
-	    ${MAKE} -f Makefile.bsd-wrapper depend && \
-	    env CROSSDIR=${CROSSDIR} \
 	    CC=${CC} CXX=${CXX} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    PIE_DEFAULT=${PIE_DEFAULT} \
@@ -279,10 +273,6 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
 	    CROSSDIR=${CROSSDIR} \
-	    PATH=${CROSSPATH} ${MAKE} -f Makefile.bsd-wrapper depend && \
-	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
-	    CROSSDIR=${CROSSDIR} \
 	    CC=${CC} CXX=${CXX} \
 	    ${MAKE} -f Makefile.bsd-wrapper all && \
 	    env CROSSDIR=${CROSSDIR} DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
@@ -303,13 +293,6 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 	chown ${BINOWN}:${BINGRP} ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cpp
 	ln -sf ${TARGET_CANON}-cpp ${CROSSDIR}/usr/${TARGET_CANON}/bin/cpp
 .else
-	(cd ${.CURDIR}/gnu/usr.bin/cc; \
-	    env CROSSDIR=${CROSSDIR} \
-	    PIE_DEFAULT=${PIE_DEFAULT} \
-	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
-	    MACHINE=${TARGET} \
-	    PATH=${CROSSPATH} ${MAKE} depend)
 	(cd ${.CURDIR}/gnu/usr.bin/cc; \
 	    env CROSSDIR=${CROSSDIR} \
 	    COMPILER_VERSION=${COMPILER_VERSION} \
@@ -359,13 +342,13 @@ cross-lib:	${CROSSGCC}
 	    for lib in csu libcompiler_rt libc; do \
 	    (cd $$lib; \
 	        eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-		    ${MAKE} depend all ;\
+		    ${MAKE} all ;\
 	        eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} DESTDIR=${CROSSDIR} \
 		    ${MAKE} install); \
 	    done; \
 	    eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	        SKIPDIR=\"${NO_CROSS}\" \
-	        ${MAKE} depend all ; \
+	        ${MAKE} all ; \
 	    eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} DESTDIR=${CROSSDIR} \
 	        SKIPDIR=\"${NO_CROSS}\" \
 	        ${MAKE} install)
@@ -378,7 +361,7 @@ cross-bin:	${CROSSOBJ}
 	(cd ${.CURDIR}/$$i; \
 	    eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	        SKIPDIR=\"${BINUTILS} ${NO_CROSS}\" \
-	        ${MAKE} depend all ; \
+	        ${MAKE} all ; \
 	    eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} DESTDIR=${CROSSDIR} \
 	        SKIPDIR=\"${BINUTILS} ${NO_CROSS}\" \
 	        ${MAKE} install); \
@@ -392,7 +375,7 @@ cross-gnu:	${CROSSOBJ}
 	(cd ${.CURDIR}/$$i; \
 	    eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	        SKIPDIR=\"${NO_CROSS}\" \
-	        ${MAKE} depend all ; \
+	        ${MAKE} all ; \
 	    eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} DESTDIR=${CROSSDIR} \
 	        SKIPDIR=\"${NO_CROSS}\" \
 	        ${MAKE} install); \
@@ -407,7 +390,7 @@ cross-share:   ${CROSSOBJ}
 	        eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 		SKIPDIR=\"${NO_CROSS}\" \
 		DESTDIR=${CROSSDIR} \
-		${MAKE} depend all install); \
+		${MAKE} all install); \
 	done
 
 cross-sys:   ${CROSSOBJ}
@@ -418,7 +401,7 @@ cross-sys:   ${CROSSOBJ}
 	    (cd ${.CURDIR}/$$i; \
 	        eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 		SKIPDIR=\"${NO_CROSS}\" \
-		${MAKE} depend all); \
+		${MAKE} all); \
 	    (cd ${.CURDIR}/$$i; \
 	        eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 		SKIPDIR=\"${NO_CROSS}\" \
@@ -432,13 +415,6 @@ cross-etc-root-var:	${CROSSOBJ}
 	    MACHINE_ARCH=${TARGET_ARCH} MACHINE_CPU=${TARGET_CPU} \
 	    DESTDIR=${CROSSDIR} \
 	    ${MAKE} distribution-etc-root-var)
-
-cross-depend:
-	@(cd ${.CURDIR} && \
-	    BSDOBJDIR=${CROSSDIR}/usr/obj \
-	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    SKIPDIR="${NO_CROSS}" \
-	    ${MAKE} depend)
 
 cross-clean:
 	@(cd ${.CURDIR} && \
