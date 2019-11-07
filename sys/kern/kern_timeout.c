@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.61 2019/11/03 17:01:46 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.62 2019/11/07 14:05:12 mpi Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -627,7 +627,7 @@ db_show_callout_bucket(struct circq *bucket)
 
 	for (p = CIRCQ_FIRST(bucket); p != bucket; p = CIRCQ_FIRST(p)) {
 		to = timeout_from_circq(p);
-		db_find_sym_and_offset((db_addr_t)to->to_func, &name, &offset);
+		db_find_sym_and_offset((vaddr_t)to->to_func, &name, &offset);
 		name = name ? name : "?";
 		if (bucket == &timeout_todo)
 			where = "softint";
