@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.9 2019/11/07 15:58:39 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.10 2019/11/07 16:08:08 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.19 2006/01/21 22:10:59 uwe Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@
 #endif
 
 extern char start[], etext[];
-void db_nextframe(db_addr_t, db_addr_t *, db_addr_t *);
+void db_nextframe(vaddr_t, vaddr_t *, vaddr_t *);
 
 struct db_variable db_regs[] = {
 	{ "r0",   (long *)&ddb_regs.tf_r0,   FCN_NULL },
@@ -77,7 +77,7 @@ void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif, int (*print)(const char *, ...))
 {
-	db_addr_t callpc, frame, lastframe;
+	vaddr_t callpc, frame, lastframe;
 	uint32_t vbr;
 
 	if (have_addr) {
@@ -140,7 +140,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 				callpc, frame);
 
 			if (callpc == 0 && lastframe == 0)
-				callpc = (db_addr_t)ddb_regs.tf_pr;
+				callpc = (vaddr_t)ddb_regs.tf_pr;
 			DPRINTF("    (3)newpc 0x%lx, newfp 0x%lx\n",
 				callpc, frame);
 		}
@@ -152,9 +152,9 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 
 void
 db_nextframe(
-	db_addr_t pc,		/* in: entry address of current function */
-	db_addr_t *fp,		/* in: current fp, out: parent fp */
-	db_addr_t *pr)		/* out: parent pr */
+	vaddr_t pc,		/* in: entry address of current function */
+	vaddr_t *fp,		/* in: current fp, out: parent fp */
+	vaddr_t *pr)		/* out: parent pr */
 {
 	int *frame = (void *)*fp;
 	int i, inst;
@@ -163,7 +163,7 @@ db_nextframe(
 	depth = 0;
 	prdepth = fpdepth = -1;
 
-	if (pc < (db_addr_t)start || pc > (db_addr_t)etext)
+	if (pc < (vaddr_t)start || pc > (vaddr_t)etext)
 		goto out;
 
 	for (i = 0; i < 30; i++) {

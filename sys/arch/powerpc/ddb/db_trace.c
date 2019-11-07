@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.13 2017/10/18 16:59:18 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.14 2019/11/07 16:08:08 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -100,8 +100,8 @@ db_save_regs(struct trapframe *frame)
 }
 
 /* from locore.S */
-extern db_addr_t trapexit;
-extern db_addr_t esym;
+extern vaddr_t trapexit;
+extern vaddr_t esym;
 #define	INTSTK		(8*1024)	/* 8K interrupt stack */
 
 #define	INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS &&	\
@@ -117,7 +117,7 @@ void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif, int (*pr)(const char *, ...))
 {
-	db_addr_t	 lr, sp, lastsp, *db_fp_args;
+	vaddr_t		 lr, sp, lastsp, *db_fp_args;
 	db_expr_t	 offset;
 	Elf_Sym		*sym;
 	char		*name;
@@ -142,7 +142,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			addr = p->p_addr->u_pcb.pcb_sp;
 		}
 		sp = addr;
-		db_read_bytes(sp + 4, sizeof(db_addr_t), (char *)&lr);
+		db_read_bytes(sp + 4, sizeof(vaddr_t), (char *)&lr);
 	}
 
 	while (count && sp != 0) {
@@ -163,7 +163,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			(*pr)("%s(", name);
 
 			if (narg > 0) {
-				db_fp_args = (db_addr_t *)(sp + 8);
+				db_fp_args = (vaddr_t *)(sp + 8);
 
 				for (i = 0; i < narg; i++) {
 					(*pr)("%lx", db_fp_args[i]);
@@ -183,7 +183,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		 * Abuse the fact that the return address of the trap()
 		 * function is always 'trapexit'.
 		 */
-		if (lr == (db_addr_t)&trapexit) {
+		if (lr == (vaddr_t)&trapexit) {
 			struct trapframe *tf = (struct trapframe *)(sp + 8);
 			uint32_t code = tf->fixreg[0];
 			uint32_t type = tf->exc;
@@ -197,11 +197,11 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 				(*pr)("--- trap (type 0x%x) ---\n", type);
 		}
 
-		db_read_bytes(sp, sizeof(db_addr_t), (char *)&sp);
+		db_read_bytes(sp, sizeof(vaddr_t), (char *)&sp);
 		if (sp == 0)
 			break;
 
-		db_read_bytes(sp + 4, sizeof(db_addr_t), (char *)&lr);
+		db_read_bytes(sp + 4, sizeof(vaddr_t), (char *)&lr);
 
 		if (INKERNEL(sp)) {
 			if (sp <= lastsp) {

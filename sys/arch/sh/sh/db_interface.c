@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.12 2019/11/07 15:58:39 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.13 2019/11/07 16:08:08 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.37 2006/09/06 00:11:49 uwe Exp $	*/
 
 /*-
@@ -584,7 +584,7 @@ __db_print_symbol(db_expr_t value)
 	char *name;
 	db_expr_t offset;
 
-	db_find_sym_and_offset((db_addr_t)value, &name, &offset);
+	db_find_sym_and_offset((vaddr_t)value, &name, &offset);
 	if (name != NULL && offset <= db_maxoff && offset != value)
 		db_printsym(value, DB_STGY_ANY, db_printf);
 

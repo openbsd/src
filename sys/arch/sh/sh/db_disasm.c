@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.5 2019/11/07 15:58:39 mpi Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.6 2019/11/07 16:08:07 mpi Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.13 2006/01/21 02:09:06 uwe Exp $	*/
 
 /*
@@ -38,63 +38,63 @@
 #include <ddb/db_output.h>
 #include <ddb/db_sym.h>
 
-static void	disasm_branch(char *, size_t, const char *, db_addr_t);
+static void	disasm_branch(char *, size_t, const char *, vaddr_t);
 static void	get_ascii(unsigned char *, char *);
-static void	get_opcode(db_addr_t, char *, size_t);
-static void	f_02(db_addr_t, u_int, char *, size_t);
-static void	f_03(db_addr_t, u_int, char *, size_t);
-static void	f_04(db_addr_t, u_int, char *, size_t);
-static void	f_08(db_addr_t, u_int, char *, size_t);
-static void	f_09(db_addr_t, u_int, char *, size_t);
-static void	f_0a(db_addr_t, u_int, char *, size_t);
-static void	f_0b(db_addr_t, u_int, char *, size_t);
-static void	f_0c(db_addr_t, u_int, char *, size_t);
-static void	f_10(db_addr_t, u_int, char *, size_t);
-static void	f_20(db_addr_t, u_int, char *, size_t);
-static void	f_24(db_addr_t, u_int, char *, size_t);
-static void	f_28(db_addr_t, u_int, char *, size_t);
-static void	f_2c(db_addr_t, u_int, char *, size_t);
-static void	f_30(db_addr_t, u_int, char *, size_t);
-static void	f_34(db_addr_t, u_int, char *, size_t);
-static void	f_38(db_addr_t, u_int, char *, size_t);
-static void	f_3c(db_addr_t, u_int, char *, size_t);
-static void	f_40(db_addr_t, u_int, char *, size_t);
-static void	f_41(db_addr_t, u_int, char *, size_t);
-static void	f_42(db_addr_t, u_int, char *, size_t);
-static void	f_43(db_addr_t, u_int, char *, size_t);
-static void	f_44(db_addr_t, u_int, char *, size_t);
-static void	f_45(db_addr_t, u_int, char *, size_t);
-static void	f_46(db_addr_t, u_int, char *, size_t);
-static void	f_47(db_addr_t, u_int, char *, size_t);
-static void	f_48(db_addr_t, u_int, char *, size_t);
-static void	f_49(db_addr_t, u_int, char *, size_t);
-static void	f_4a(db_addr_t, u_int, char *, size_t);
-static void	f_4b(db_addr_t, u_int, char *, size_t);
-static void	f_4c(db_addr_t, u_int, char *, size_t);
-static void	f_4d(db_addr_t, u_int, char *, size_t);
-static void	f_4e(db_addr_t, u_int, char *, size_t);
-static void	f_4f(db_addr_t, u_int, char *, size_t);
-static void	f_50(db_addr_t, u_int, char *, size_t);
-static void	f_60(db_addr_t, u_int, char *, size_t);
-static void	f_64(db_addr_t, u_int, char *, size_t);
-static void	f_68(db_addr_t, u_int, char *, size_t);
-static void	f_6c(db_addr_t, u_int, char *, size_t);
-static void	f_70(db_addr_t, u_int, char *, size_t);
-static void	f_80(db_addr_t, u_int, char *, size_t);
-static void	f_90(db_addr_t, u_int, char *, size_t);
-static void	f_a0(db_addr_t, u_int, char *, size_t);
-static void	f_b0(db_addr_t, u_int, char *, size_t);
-static void	f_c0(db_addr_t, u_int, char *, size_t);
-static void	f_d0(db_addr_t, u_int, char *, size_t);
-static void	f_e0(db_addr_t, u_int, char *, size_t);
-static void	f_f0(db_addr_t, u_int, char *, size_t);
-static void	f_f4(db_addr_t, u_int, char *, size_t);
-static void	f_f8(db_addr_t, u_int, char *, size_t);
-static void	f_fc(db_addr_t, u_int, char *, size_t);
-static void	f_fd(db_addr_t, u_int, char *, size_t);
-static void	f_fe(db_addr_t, u_int, char *, size_t);
+static void	get_opcode(vaddr_t, char *, size_t);
+static void	f_02(vaddr_t, u_int, char *, size_t);
+static void	f_03(vaddr_t, u_int, char *, size_t);
+static void	f_04(vaddr_t, u_int, char *, size_t);
+static void	f_08(vaddr_t, u_int, char *, size_t);
+static void	f_09(vaddr_t, u_int, char *, size_t);
+static void	f_0a(vaddr_t, u_int, char *, size_t);
+static void	f_0b(vaddr_t, u_int, char *, size_t);
+static void	f_0c(vaddr_t, u_int, char *, size_t);
+static void	f_10(vaddr_t, u_int, char *, size_t);
+static void	f_20(vaddr_t, u_int, char *, size_t);
+static void	f_24(vaddr_t, u_int, char *, size_t);
+static void	f_28(vaddr_t, u_int, char *, size_t);
+static void	f_2c(vaddr_t, u_int, char *, size_t);
+static void	f_30(vaddr_t, u_int, char *, size_t);
+static void	f_34(vaddr_t, u_int, char *, size_t);
+static void	f_38(vaddr_t, u_int, char *, size_t);
+static void	f_3c(vaddr_t, u_int, char *, size_t);
+static void	f_40(vaddr_t, u_int, char *, size_t);
+static void	f_41(vaddr_t, u_int, char *, size_t);
+static void	f_42(vaddr_t, u_int, char *, size_t);
+static void	f_43(vaddr_t, u_int, char *, size_t);
+static void	f_44(vaddr_t, u_int, char *, size_t);
+static void	f_45(vaddr_t, u_int, char *, size_t);
+static void	f_46(vaddr_t, u_int, char *, size_t);
+static void	f_47(vaddr_t, u_int, char *, size_t);
+static void	f_48(vaddr_t, u_int, char *, size_t);
+static void	f_49(vaddr_t, u_int, char *, size_t);
+static void	f_4a(vaddr_t, u_int, char *, size_t);
+static void	f_4b(vaddr_t, u_int, char *, size_t);
+static void	f_4c(vaddr_t, u_int, char *, size_t);
+static void	f_4d(vaddr_t, u_int, char *, size_t);
+static void	f_4e(vaddr_t, u_int, char *, size_t);
+static void	f_4f(vaddr_t, u_int, char *, size_t);
+static void	f_50(vaddr_t, u_int, char *, size_t);
+static void	f_60(vaddr_t, u_int, char *, size_t);
+static void	f_64(vaddr_t, u_int, char *, size_t);
+static void	f_68(vaddr_t, u_int, char *, size_t);
+static void	f_6c(vaddr_t, u_int, char *, size_t);
+static void	f_70(vaddr_t, u_int, char *, size_t);
+static void	f_80(vaddr_t, u_int, char *, size_t);
+static void	f_90(vaddr_t, u_int, char *, size_t);
+static void	f_a0(vaddr_t, u_int, char *, size_t);
+static void	f_b0(vaddr_t, u_int, char *, size_t);
+static void	f_c0(vaddr_t, u_int, char *, size_t);
+static void	f_d0(vaddr_t, u_int, char *, size_t);
+static void	f_e0(vaddr_t, u_int, char *, size_t);
+static void	f_f0(vaddr_t, u_int, char *, size_t);
+static void	f_f4(vaddr_t, u_int, char *, size_t);
+static void	f_f8(vaddr_t, u_int, char *, size_t);
+static void	f_fc(vaddr_t, u_int, char *, size_t);
+static void	f_fd(vaddr_t, u_int, char *, size_t);
+static void	f_fe(vaddr_t, u_int, char *, size_t);
 
-typedef	void (*rasm_t)(db_addr_t, u_int, char *, size_t);
+typedef	void (*rasm_t)(vaddr_t, u_int, char *, size_t);
 static const rasm_t f[16][16] = {
 	{ /* [0][0-7] */	NULL, NULL, f_02, f_03, f_04, f_04, f_04, f_04,
 	  /* [0][8-f] */	f_08, f_09, f_0a, f_0b, f_0c, f_0c, f_0c, f_0c },
@@ -130,8 +130,8 @@ static const rasm_t f[16][16] = {
 	  /* [f][8-f] */	f_f8, f_f8, f_f8, f_f8, f_fc, f_fd, f_fe, NULL }
 };
 
-db_addr_t
-db_disasm(db_addr_t loc, int altfmt)
+vaddr_t
+db_disasm(vaddr_t loc, int altfmt)
 {
 	char line[40], ascii[4];
 	void *pc = (void *)loc;
@@ -147,7 +147,7 @@ db_disasm(db_addr_t loc, int altfmt)
 }
 
 static void
-disasm_branch(char *buf, size_t bufsiz, const char *opstr, db_addr_t addr)
+disasm_branch(char *buf, size_t bufsiz, const char *opstr, vaddr_t addr)
 {
 	size_t len;
 	db_expr_t d, value;
@@ -191,7 +191,7 @@ get_ascii(unsigned char *cp, char *str)
 }
 
 static void
-get_opcode(db_addr_t loc, char *buf, size_t bufsiz)
+get_opcode(vaddr_t loc, char *buf, size_t bufsiz)
 {
 	int n0, n3;
 	u_int insn = *(u_int16_t *)loc;
@@ -206,7 +206,7 @@ get_opcode(db_addr_t loc, char *buf, size_t bufsiz)
 }
 
 static void
-f_02(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_02(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, type, md;
 
@@ -248,7 +248,7 @@ f_02(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_03(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_03(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, type, md;
 
@@ -278,7 +278,7 @@ f_03(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_04(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_04(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
@@ -303,7 +303,7 @@ f_04(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_08(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_08(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	n1, type, md;
 
@@ -345,7 +345,7 @@ f_08(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_09(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_09(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, fx;
 
@@ -370,7 +370,7 @@ f_09(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_0a(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_0a(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, type, md;
 
@@ -406,7 +406,7 @@ f_0a(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_0b(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_0b(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	n1, fx;
 
@@ -429,7 +429,7 @@ f_0b(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_0c(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_0c(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
@@ -454,7 +454,7 @@ f_0c(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_10(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_10(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, disp;
 
@@ -467,7 +467,7 @@ f_10(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_20(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_20(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
@@ -489,7 +489,7 @@ f_20(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_24(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_24(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
@@ -514,7 +514,7 @@ f_24(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_28(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_28(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
@@ -539,7 +539,7 @@ f_28(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_2c(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_2c(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
@@ -564,7 +564,7 @@ f_2c(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_30(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_30(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
@@ -586,7 +586,7 @@ f_30(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_34(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_34(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
@@ -611,7 +611,7 @@ f_34(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_38(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_38(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
@@ -633,7 +633,7 @@ f_38(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_3c(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_3c(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
@@ -658,7 +658,7 @@ f_3c(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_40(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_40(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, fx;
 
@@ -679,7 +679,7 @@ f_40(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_41(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_41(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, fx;
 
@@ -700,7 +700,7 @@ f_41(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_42(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_42(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, type, md;
 
@@ -736,7 +736,7 @@ f_42(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_43(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_43(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, type, md;
 
@@ -778,7 +778,7 @@ f_43(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_44(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_44(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, fx;
 
@@ -796,7 +796,7 @@ f_44(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_45(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_45(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, fx;
 
@@ -817,7 +817,7 @@ f_45(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_46(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_46(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rm, type, md;
 
@@ -853,7 +853,7 @@ f_46(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_47(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_47(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rm, type, md;
 
@@ -895,7 +895,7 @@ f_47(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_48(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_48(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, fx;
 
@@ -916,7 +916,7 @@ f_48(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_49(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_49(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, fx;
 
@@ -937,7 +937,7 @@ f_49(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_4a(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_4a(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rm, type, md;
 
@@ -973,7 +973,7 @@ f_4a(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_4b(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_4b(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rm, fx;
 
@@ -994,7 +994,7 @@ f_4b(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_4c(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_4c(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm;
 
@@ -1004,7 +1004,7 @@ f_4c(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_4d(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_4d(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm;
 
@@ -1014,7 +1014,7 @@ f_4d(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_4e(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_4e(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rm, type, md;
 
@@ -1056,7 +1056,7 @@ f_4e(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_4f(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_4f(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm;
 
@@ -1066,7 +1066,7 @@ f_4f(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_50(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_50(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, disp;
 
@@ -1079,7 +1079,7 @@ f_50(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_60(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_60(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
@@ -1104,7 +1104,7 @@ f_60(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_64(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_64(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
@@ -1129,7 +1129,7 @@ f_64(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_68(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_68(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
@@ -1154,7 +1154,7 @@ f_68(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_6c(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_6c(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
@@ -1179,7 +1179,7 @@ f_6c(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_70(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_70(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, imm;
 
@@ -1190,7 +1190,7 @@ f_70(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_80(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_80(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	type, md, rn, disp;
 
@@ -1266,7 +1266,7 @@ f_80(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_90(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_90(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, disp;
 
@@ -1278,7 +1278,7 @@ f_90(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_a0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_a0(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	disp;
 
@@ -1291,7 +1291,7 @@ f_a0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_b0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_b0(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	disp;
 
@@ -1304,7 +1304,7 @@ f_b0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_c0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_c0(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	type, md, imm;
 
@@ -1386,7 +1386,7 @@ f_c0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_d0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_d0(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, disp;
 
@@ -1398,7 +1398,7 @@ f_d0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_e0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_e0(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, imm;
 
@@ -1409,7 +1409,7 @@ f_e0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_f0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_f0(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
@@ -1434,7 +1434,7 @@ f_f0(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_f4(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_f4(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
@@ -1459,7 +1459,7 @@ f_f4(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_f8(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_f8(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm, md;
 
@@ -1484,7 +1484,7 @@ f_f8(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_fc(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_fc(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm;
 
@@ -1495,7 +1495,7 @@ f_fc(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_fd(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_fd(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, type, md;
 
@@ -1545,7 +1545,7 @@ f_fd(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
 }
 
 static void
-f_fe(db_addr_t loc, u_int insn, char *buf, size_t bufsiz)
+f_fe(vaddr_t loc, u_int insn, char *buf, size_t bufsiz)
 {
 	int	rn, rm;
 
