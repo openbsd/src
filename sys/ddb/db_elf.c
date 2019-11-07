@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.28 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.29 2019/11/07 13:16:25 mpi Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -263,8 +263,7 @@ db_elf_sym_lookup(char *symstr)
  * provided threshold).
  */
 Elf_Sym *
-db_elf_sym_search(db_addr_t off, db_strategy_t strategy,
-    db_expr_t *diffp)
+db_elf_sym_search(vaddr_t off, db_strategy_t strategy, db_expr_t *diffp)
 {
 	db_symtab_t *stab = &db_symtab;
 	Elf_Sym *rsymp, *symp, *symtab_start, *symtab_end;

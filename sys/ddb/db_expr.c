@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_expr.c,v 1.16 2019/11/07 10:51:46 mpi Exp $	*/
+/*	$OpenBSD: db_expr.c,v 1.17 2019/11/07 13:16:25 mpi Exp $	*/
 /*	$NetBSD: db_expr.c,v 1.5 1996/02/05 01:56:58 christos Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ db_unary(db_expr_t *valuep)
 		db_error("Syntax error\n");
 		/*NOTREACHED*/
 	    }
-	    *valuep = db_get_value((db_addr_t)*valuep, sizeof(db_addr_t), 0);
+	    *valuep = db_get_value((vaddr_t)*valuep, sizeof(vaddr_t), 0);
 	    return 1;
 	}
 	db_unread_token(t);

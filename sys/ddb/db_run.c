@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.28 2019/11/06 07:30:08 mpi Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.29 2019/11/07 13:16:25 mpi Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ int		db_call_depth;
 int
 db_stop_at_pc(db_regs_t *regs, int *is_breakpoint)
 {
-	db_addr_t	pc, old_pc;
+	vaddr_t		pc, old_pc;
 	db_breakpoint_t	bkpt;
 
 	db_clear_breakpoints();
@@ -176,7 +176,7 @@ db_stop_at_pc(db_regs_t *regs, int *is_breakpoint)
 void
 db_restart_at_pc(db_regs_t *regs, int watchpt)
 {
-	db_addr_t pc = PC_REGS(regs);
+	vaddr_t pc = PC_REGS(regs);
 
 	if ((db_run_mode == STEP_COUNT) || (db_run_mode == STEP_RETURN) ||
 	    (db_run_mode == STEP_CALLT)) {
@@ -329,9 +329,9 @@ db_continue_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_set_single_step(db_regs_t *regs)
 {
-	db_addr_t pc = PC_REGS(regs);
+	vaddr_t pc = PC_REGS(regs);
 #ifndef SOFTWARE_SSTEP_EMUL
-	db_addr_t brpc;
+	vaddr_t brpc;
 	u_int inst;
 
 	/*

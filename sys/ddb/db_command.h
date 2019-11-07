@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.h,v 1.32 2016/04/19 12:23:25 mpi Exp $	*/
+/*	$OpenBSD: db_command.h,v 1.33 2019/11/07 13:16:25 mpi Exp $	*/
 /*	$NetBSD: db_command.h,v 1.8 1996/02/05 01:56:55 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ void db_command_loop(void);
 void db_command(struct db_command **, struct db_command *);
 void db_machine_commands_install(struct db_command *);
 
-extern	db_addr_t db_dot, db_last_addr, db_prev, db_next;
+extern	vaddr_t db_dot, db_last_addr, db_prev, db_next;
 
 /*
  * Command table

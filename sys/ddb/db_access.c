@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_access.c,v 1.15 2016/04/19 10:24:42 mpi Exp $	*/
+/*	$OpenBSD: db_access.c,v 1.16 2019/11/07 13:16:25 mpi Exp $	*/
 /*	$NetBSD: db_access.c,v 1.8 1994/10/09 08:37:35 mycroft Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  * boundaries.
  */
 db_expr_t
-db_get_value(db_addr_t addr, size_t size, int is_signed)
+db_get_value(vaddr_t addr, size_t size, int is_signed)
 {
 	char data[sizeof(db_expr_t)];
 	db_expr_t value, extend;
@@ -70,7 +70,7 @@ db_get_value(db_addr_t addr, size_t size, int is_signed)
 }
 
 void
-db_put_value(db_addr_t addr, size_t size, db_expr_t value)
+db_put_value(vaddr_t addr, size_t size, db_expr_t value)
 {
 	char data[sizeof(db_expr_t)];
 	int i;

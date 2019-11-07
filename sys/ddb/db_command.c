@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.87 2019/11/06 07:30:08 mpi Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.88 2019/11/07 13:16:25 mpi Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -71,11 +71,11 @@ label_t		*db_recover;
  */
 int		db_ed_style = 1;
 
-db_addr_t	db_dot;		/* current location */
-db_addr_t	db_last_addr;	/* last explicit address typed */
-db_addr_t	db_prev;	/* last address examined
+vaddr_t		db_dot;		/* current location */
+vaddr_t		db_last_addr;	/* last explicit address typed */
+vaddr_t		db_prev;	/* last address examined
 				   or written */
-db_addr_t	db_next;	/* next address to be examined
+vaddr_t		db_next;	/* next address to be examined
 				   or written */
 
 int	db_cmd_search(char *, struct db_command *, struct db_command **);
@@ -269,7 +269,7 @@ db_command(struct db_command **last_cmdp, struct db_command *cmd_table)
 		}
 
 		if (db_expression(&addr)) {
-		    db_dot = (db_addr_t) addr;
+		    db_dot = (vaddr_t) addr;
 		    db_last_addr = db_dot;
 		    have_addr = 1;
 		}
@@ -858,7 +858,7 @@ db_show_regs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	    db_read_variable(regp, &value);
 	    db_printf("%-12s%s", regp->name, db_format(tmpfmt, sizeof tmpfmt,
 	      (long)value, DB_FORMAT_N, 1, sizeof(long) * 3));
-	    db_find_xtrn_sym_and_offset((db_addr_t)value, &name, &offset);
+	    db_find_xtrn_sym_and_offset((vaddr_t)value, &name, &offset);
 	    if (name != 0 && offset <= db_maxoff && offset != value) {
 		db_printf("\t%s", name);
 		if (offset != 0)
@@ -877,13 +877,13 @@ db_show_regs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_write_cmd(db_expr_t address, int have_addr, db_expr_t count, char *modif)
 {
-	db_addr_t	addr;
+	vaddr_t		addr;
 	db_expr_t	old_value;
 	db_expr_t	new_value;
 	int		size, wrote_one = 0;
 	char		tmpfmt[28];
 
-	addr = (db_addr_t) address;
+	addr = (vaddr_t) address;
 
 	switch (modif[0]) {
 	case 'b':

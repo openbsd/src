@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.53 2017/05/30 15:39:05 mpi Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.54 2019/11/07 13:16:25 mpi Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ db_eqname(char *src, char *dst, int c)
  * and the difference between val and the symbol found.
  */
 Elf_Sym *
-db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
+db_search_symbol(vaddr_t val, db_strategy_t strategy, db_expr_t *offp)
 {
 	unsigned int	diff;
 	db_expr_t	newdiff;

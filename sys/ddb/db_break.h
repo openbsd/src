@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_break.h,v 1.11 2016/04/19 12:23:25 mpi Exp $	*/
+/*	$OpenBSD: db_break.h,v 1.12 2019/11/07 13:16:25 mpi Exp $	*/
 /*	$NetBSD: db_break.h,v 1.8 1996/02/05 01:56:52 christos Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  * Breakpoints.
  */
 typedef struct db_breakpoint {
-	db_addr_t address;		/* set here */
+	vaddr_t address;		/* set here */
 	int	init_count;		/* number of times to skip bkpt */
 	int	count;			/* current count */
 	int	flags;			/* flags: */
@@ -49,10 +49,10 @@ typedef struct db_breakpoint {
 	struct db_breakpoint *link;	/* link in in-use or free chain */
 } *db_breakpoint_t;
 
-db_breakpoint_t db_find_breakpoint(db_addr_t);
+db_breakpoint_t db_find_breakpoint(vaddr_t);
 void db_set_breakpoints(void);
 void db_clear_breakpoints(void);
-db_breakpoint_t db_set_temp_breakpoint(db_addr_t);
+db_breakpoint_t db_set_temp_breakpoint(vaddr_t);
 void db_delete_temp_breakpoint(db_breakpoint_t);
 void db_delete_cmd(db_expr_t, int, db_expr_t, char *);
 void db_breakpoint_cmd(db_expr_t, int, db_expr_t, char *);

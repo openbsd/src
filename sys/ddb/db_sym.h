@@ -68,7 +68,7 @@ int db_eqname(char *, char *, int);
 Elf_Sym * db_symbol_by_name(char *, db_expr_t *);
 					/* find symbol value given name */
 
-Elf_Sym * db_search_symbol(db_addr_t, db_strategy_t, db_expr_t *);
+Elf_Sym * db_search_symbol(vaddr_t, db_strategy_t, db_expr_t *);
 					/* find symbol given value */
 
 void db_symbol_values(Elf_Sym *, char **, db_expr_t *);
@@ -86,7 +86,7 @@ void db_printsym(db_expr_t, db_strategy_t, int (*)(const char *, ...));
 					/* print closest symbol to a value */
 
 int db_elf_sym_init(int, void *, void *, const char *);
-Elf_Sym * db_elf_sym_search(db_addr_t, db_strategy_t, db_expr_t *);
+Elf_Sym * db_elf_sym_search(vaddr_t, db_strategy_t, db_expr_t *);
 int db_elf_line_at_pc(Elf_Sym *, char **, int *, db_expr_t);
 void db_elf_sym_forall(db_forall_func_t db_forall_func, void *);
 

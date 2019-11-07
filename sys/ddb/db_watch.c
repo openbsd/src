@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_watch.c,v 1.16 2016/04/19 10:24:42 mpi Exp $ */
+/*	$OpenBSD: db_watch.c,v 1.17 2019/11/07 13:16:25 mpi Exp $ */
 /*	$NetBSD: db_watch.c,v 1.9 1996/03/30 22:30:12 christos Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ db_watchpoint_free(db_watchpoint_t watch)
 }
 
 void
-db_set_watchpoint(db_addr_t addr, vsize_t size)
+db_set_watchpoint(vaddr_t addr, vsize_t size)
 {
 	db_watchpoint_t	watch;
 
@@ -113,7 +113,7 @@ db_set_watchpoint(db_addr_t addr, vsize_t size)
 }
 
 void
-db_delete_watchpoint(db_addr_t addr)
+db_delete_watchpoint(vaddr_t addr)
 {
 	db_watchpoint_t	watch;
 	db_watchpoint_t	*prev;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.27 2018/08/31 11:57:04 bluhm Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.28 2019/11/07 13:16:25 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -343,7 +343,7 @@ db_ctf_type_by_index(uint16_t index)
 void
 db_ctf_pprint(const struct ctf_type *ctt, vaddr_t addr)
 {
-	db_addr_t		 taddr = (db_addr_t)ctt;
+	vaddr_t			 taddr = (vaddr_t)ctt;
 	const struct ctf_type	*ref;
 	uint16_t		 kind;
 	uint32_t		 eob, toff;
@@ -635,7 +635,7 @@ db_ctf_show_struct(db_expr_t addr, int have_addr, db_expr_t count,
 	 * In that case, update `dot' value.
 	 */
 	if (db_expression(&addr)) {
-		db_dot = (db_addr_t)addr;
+		db_dot = (vaddr_t)addr;
 		db_last_addr = db_dot;
 	} else
 		addr = (db_expr_t)db_dot;
