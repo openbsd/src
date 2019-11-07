@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.14 2019/03/13 09:28:21 patrick Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.15 2019/11/07 13:21:31 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /* 
@@ -146,9 +146,9 @@ db_ktrap(int type, db_regs_t *regs)
 
 	s = splhigh();
 	db_active++;
-	cnpollc(TRUE);
+	cnpollc(1);
 	db_trap(type, 0/*code*/);
-	cnpollc(FALSE);
+	cnpollc(0);
 	db_active--;
 	splx(s);
 

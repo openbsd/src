@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.2 2018/06/30 15:23:35 deraadt Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.3 2019/11/07 13:21:31 mpi Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.4 2003/07/15 00:24:38 lukem Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ db_disasm_printaddr(db_expr_t address)
 }
 
 vaddr_t
-db_disasm(vaddr_t loc, boolean_t altfmt)
+db_disasm(vaddr_t loc, int altfmt)
 {
 
 	return disasm(&db_disasm_interface, loc, altfmt);
