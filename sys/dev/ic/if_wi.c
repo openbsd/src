@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.169 2019/05/12 18:12:38 stsp Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.170 2019/11/07 12:56:34 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2906,30 +2906,18 @@ wi_set_nwkey(struct wi_softc *sc, struct ieee80211_nwkey *nwkey)
 STATIC int
 wi_get_nwkey(struct wi_softc *sc, struct ieee80211_nwkey *nwkey)
 {
-	int i, len, error;
-	struct wi_ltv_keys *wk = &sc->wi_keys;
+	int i;
 
 	if (!(sc->wi_flags & WI_FLAGS_HAS_WEP))
 		return ENODEV;
 	nwkey->i_wepon = sc->wi_use_wep;
 	nwkey->i_defkid = sc->wi_tx_key + 1;
 
-	/* do not show any keys to non-root user */
-	error = suser(curproc);
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 		if (nwkey->i_key[i].i_keydat == NULL)
 			continue;
-		/* error holds results of suser() for the first time */
-		if (error)
-			return error;
-		len = letoh16(wk->wi_keys[i].wi_keylen);
-		if (nwkey->i_key[i].i_keylen < len)
-			return ENOSPC;
-		nwkey->i_key[i].i_keylen = len;
-		error = copyout(wk->wi_keys[i].wi_keydat,
-		    nwkey->i_key[i].i_keydat, len);
-		if (error)
-			return error;
+		/* do not show any keys to userland */
+		return EPERM;
 	}
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.74 2019/11/07 11:55:02 bluhm Exp $	*/
+/*	$OpenBSD: an.c,v 1.75 2019/11/07 12:56:34 bluhm Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1517,9 +1517,8 @@ an_set_nwkey_wep(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 int
 an_get_nwkey(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 {
-	int i, error;
+	int i;
 
-	error = 0;
 	if (sc->sc_config.an_authtype & AN_AUTHTYPE_LEAP)
 		nwkey->i_wepon = IEEE80211_NWKEY_EAP;
 	else if (sc->sc_config.an_authtype & AN_AUTHTYPE_PRIVACY_IN_USE)
@@ -1535,21 +1534,10 @@ an_get_nwkey(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 		if (nwkey->i_key[i].i_keydat == NULL)
 			continue;
-		/* do not show any keys to non-root user */
-		if ((error = suser(curproc)) != 0)
-			break;
-		nwkey->i_key[i].i_keylen = sc->sc_wepkeys[i].an_wep_keylen;
-		if (nwkey->i_key[i].i_keylen < 0) {
-			if (sc->sc_perskeylen[i] == 0)
-				nwkey->i_key[i].i_keylen = 0;
-			continue;
-		}
-		if ((error = copyout(sc->sc_wepkeys[i].an_wep_key,
-		    nwkey->i_key[i].i_keydat,
-		    sc->sc_wepkeys[i].an_wep_keylen)) != 0)
-			break;
+		/* do not show any keys to userland */
+		return EPERM;
 	}
-	return error;
+	return 0;
 }
 
 int
