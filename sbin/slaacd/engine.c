@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.40 2019/11/05 15:43:18 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.41 2019/11/07 08:45:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -104,7 +104,6 @@ const char* if_state_name[] = {
 
 enum proposal_state {
 	PROPOSAL_NOT_CONFIGURED,
-	PROPOSAL_SENT,
 	PROPOSAL_CONFIGURED,
 	PROPOSAL_NEARLY_EXPIRED,
 	PROPOSAL_WITHDRAWN,
@@ -114,7 +113,6 @@ enum proposal_state {
 
 const char* proposal_state_name[] = {
 	"NOT_CONFIGURED",
-	"SENT",
 	"CONFIGURED",
 	"NEARLY_EXPIRED",
 	"WITHDRAWN",
@@ -260,7 +258,6 @@ void			 free_dfr_proposal(struct dfr_proposal *);
 void			 withdraw_dfr(struct dfr_proposal *);
 char			*parse_dnssl(char *, int);
 void			 update_iface_ra(struct slaacd_iface *, struct radv *);
-void			 send_proposal(struct imsg_proposal *);
 void			 start_probe(struct slaacd_iface *);
 void			 address_proposal_timeout(int, short, void *);
 void			 dfr_proposal_timeout(int, short, void *);
@@ -399,7 +396,6 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 	struct imsg			 imsg;
 	struct slaacd_iface		*iface;
 	struct imsg_ra			 ra;
-	struct imsg_proposal_ack	 proposal_ack;
 	struct address_proposal		*addr_proposal = NULL;
 	struct dfr_proposal		*dfr_proposal = NULL;
 	struct imsg_del_addr		 del_addr;
@@ -480,43 +476,6 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				engine_imsg_compose_frontend(
 				    IMSG_CTL_SEND_SOLICITATION, imsg.hdr.pid,
 				    &iface->if_index, sizeof(iface->if_index));
-			break;
-		case IMSG_PROPOSAL_ACK:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(proposal_ack))
-				fatalx("%s: IMSG_PROPOSAL_ACK wrong length: "
-				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
-			memcpy(&proposal_ack, imsg.data, sizeof(proposal_ack));
-			log_debug("%s: IMSG_PROPOSAL_ACK: %lld - %d", __func__,
-			    proposal_ack.id, proposal_ack.pid);
-			if (proposal_ack.pid != getpid()) {
-				log_debug("IMSG_PROPOSAL_ACK: wrong pid, "
-				    "ignoring");
-				break;
-			}
-
-			iface = get_slaacd_iface_by_id(proposal_ack.if_index);
-			if (iface == NULL) {
-				log_debug("IMSG_PROPOSAL_ACK: unknown interface"
-				    ", ignoring");
-				break;
-			}
-
-			addr_proposal = find_address_proposal_by_id(iface,
-			    proposal_ack.id);
-			if (addr_proposal == NULL) {
-				dfr_proposal = find_dfr_proposal_by_id(iface,
-				    proposal_ack.id);
-				if (dfr_proposal == NULL) {
-					log_debug("IMSG_PROPOSAL_ACK: cannot "
-					    "find proposal, ignoring");
-					break;
-				}
-			}
-			if (addr_proposal != NULL)
-				configure_address(addr_proposal);
-			else if (dfr_proposal != NULL)
-				configure_dfr(dfr_proposal);
-
 			break;
 		case IMSG_DEL_ADDRESS:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(del_addr))
@@ -1935,7 +1894,6 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
     radv_prefix *prefix, int privacy)
 {
 	struct address_proposal	*addr_proposal;
-	struct timeval		 tv;
 	const char		*hbuf;
 
 	if ((addr_proposal = calloc(1, sizeof(*addr_proposal))) == NULL)
@@ -1982,15 +1940,11 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 
 	gen_addr(iface, prefix, addr_proposal, privacy);
 
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
-	evtimer_add(&addr_proposal->timer, &tv);
-
 	LIST_INSERT_HEAD(&iface->addr_proposals, addr_proposal, entries);
+	configure_address(addr_proposal);
 
 	hbuf = sin6_to_str(&addr_proposal->addr);
-	log_debug("%s: iface %d: %s: %lld s", __func__,
-	    iface->if_index, hbuf, tv.tv_sec);
+	log_debug("%s: iface %d: %s", __func__, iface->if_index, hbuf);
 }
 
 void
@@ -2029,7 +1983,6 @@ void
 gen_dfr_proposal(struct slaacd_iface *iface, struct radv *ra)
 {
 	struct dfr_proposal	*dfr_proposal;
-	struct timeval		 tv;
 	const char		*hbuf;
 
 	if ((dfr_proposal = calloc(1, sizeof(*dfr_proposal))) == NULL)
@@ -2047,15 +2000,11 @@ gen_dfr_proposal(struct slaacd_iface *iface, struct radv *ra)
 	dfr_proposal->router_lifetime = ra->router_lifetime;
 	dfr_proposal->rpref = ra->rpref;
 
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
-	evtimer_add(&dfr_proposal->timer, &tv);
-
 	LIST_INSERT_HEAD(&iface->dfr_proposals, dfr_proposal, entries);
+	configure_dfr(dfr_proposal);
 
 	hbuf = sin6_to_str(&dfr_proposal->addr);
-	log_debug("%s: iface %d: %s: %lld s", __func__,
-	    iface->if_index, hbuf, tv.tv_sec);
+	log_debug("%s: iface %d: %s", __func__, iface->if_index, hbuf);
 }
 
 void
@@ -2131,20 +2080,6 @@ free_dfr_proposal(struct dfr_proposal *dfr_proposal)
 }
 
 void
-send_proposal(struct imsg_proposal *proposal)
-{
-#ifndef SKIP_PROPOSAL
-	engine_imsg_compose_main(IMSG_PROPOSAL, 0, proposal, sizeof(*proposal));
-#else
-	struct imsg_proposal_ack	ack;
-	ack.id = proposal->id;
-	ack.pid = proposal->pid;
-	ack.if_index = proposal->if_index;
-	engine_imsg_compose_frontend(IMSG_FAKE_ACK, 0, &ack, sizeof(ack));
-#endif
-}
-
-void
 start_probe(struct slaacd_iface *iface)
 {
 	struct timeval	tv;
@@ -2165,7 +2100,6 @@ void
 address_proposal_timeout(int fd, short events, void *arg)
 {
 	struct address_proposal	*addr_proposal;
-	struct imsg_proposal	 proposal;
 	struct timeval		 tv;
 	const char		*hbuf;
 
@@ -2178,38 +2112,6 @@ address_proposal_timeout(int fd, short events, void *arg)
 	    addr_proposal->privacy ? "y" : "n");
 
 	switch (addr_proposal->state) {
-	case PROPOSAL_NOT_CONFIGURED:
-	case PROPOSAL_SENT:
-		if (addr_proposal->timeout_count++ < 6) {
-			addr_proposal->id = ++proposal_id;
-
-			memset(&proposal, 0, sizeof(proposal));
-			proposal.if_index = addr_proposal->if_index;
-			proposal.pid = getpid();
-			proposal.id = addr_proposal->id;
-			memcpy(&proposal.addr, &addr_proposal->addr,
-			    sizeof(proposal.addr));
-			memcpy(&proposal.mask, &addr_proposal->mask,
-			    sizeof(proposal.mask));
-
-			proposal.rtm_addrs = RTA_NETMASK | RTA_IFA;
-
-			addr_proposal->state = PROPOSAL_SENT;
-
-			send_proposal(&proposal);
-
-			tv.tv_sec = addr_proposal->next_timeout;
-			tv.tv_usec = arc4random_uniform(1000000);
-			addr_proposal->next_timeout *= 2;
-			evtimer_add(&addr_proposal->timer, &tv);
-			log_debug("%s: scheduling new timeout in %llds.%06ld",
-			    __func__, tv.tv_sec, tv.tv_usec);
-		} else {
-			log_debug("%s: giving up, no response to proposal",
-			    __func__);
-			free_address_proposal(addr_proposal);
-		}
-		break;
 	case PROPOSAL_CONFIGURED:
 		log_debug("PROPOSAL_CONFIGURED timeout: id: %lld, privacy: %s",
 		    addr_proposal->id, addr_proposal->privacy ? "y" : "n");
@@ -2274,7 +2176,6 @@ void
 dfr_proposal_timeout(int fd, short events, void *arg)
 {
 	struct dfr_proposal	*dfr_proposal;
-	struct imsg_proposal	 proposal;
 	struct timeval		 tv;
 	const char		*hbuf;
 
@@ -2285,36 +2186,6 @@ dfr_proposal_timeout(int fd, short events, void *arg)
 	    hbuf, proposal_state_name[dfr_proposal->state]);
 
 	switch (dfr_proposal->state) {
-	case PROPOSAL_NOT_CONFIGURED:
-	case PROPOSAL_SENT:
-		if (dfr_proposal->timeout_count++ < 6) {
-			dfr_proposal->id = ++proposal_id;
-
-			memset(&proposal, 0, sizeof(proposal));
-			proposal.if_index = dfr_proposal->if_index;
-			proposal.pid = getpid();
-			proposal.id = dfr_proposal->id;
-			memcpy(&proposal.addr, &dfr_proposal->addr,
-			    sizeof(proposal.addr));
-
-			proposal.rtm_addrs = RTA_GATEWAY;
-
-			dfr_proposal->state = PROPOSAL_SENT;
-
-			send_proposal(&proposal);
-
-			tv.tv_sec = dfr_proposal->next_timeout;
-			tv.tv_usec = arc4random_uniform(1000000);
-			dfr_proposal->next_timeout *= 2;
-			evtimer_add(&dfr_proposal->timer, &tv);
-			log_debug("%s: scheduling new timeout in %llds.%06ld",
-			    __func__, tv.tv_sec, tv.tv_usec);
-		} else {
-			log_debug("%s: giving up, no response to proposal",
-			    __func__);
-			free_dfr_proposal(dfr_proposal);
-		}
-		break;
 	case PROPOSAL_CONFIGURED:
 		log_debug("PROPOSAL_CONFIGURED timeout: id: %lld",
 		    dfr_proposal->id);

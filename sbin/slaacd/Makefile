@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2017/06/03 10:00:29 florian Exp $
+#	$OpenBSD: Makefile,v 1.2 2019/11/07 08:45:31 florian Exp $
 
 PROG=	slaacd
 SRCS=	control.c engine.c frontend.c log.c slaacd.c
@@ -6,8 +6,6 @@ SRCS=	control.c engine.c frontend.c log.c slaacd.c
 MAN=	slaacd.8
 
 #DEBUG=	-g -DDEBUG=3 -O0
-
-CFLAGS+= -DSKIP_PROPOSAL
 
 CFLAGS+= -Wall -I${.CURDIR}
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes

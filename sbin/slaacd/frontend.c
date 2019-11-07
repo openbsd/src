@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.29 2019/11/05 15:43:18 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.30 2019/11/07 08:45:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -436,14 +436,6 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 			if_index = *((uint32_t *)imsg.data);
 			send_solicitation(if_index);
 			break;
-		case IMSG_FAKE_ACK:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(struct
-			    imsg_proposal_ack))
-				fatalx("%s: IMSG_FAKE_ACK wrong length: %lu",
-				    __func__, IMSG_DATA_SIZE(imsg));
-			frontend_imsg_compose_engine(IMSG_PROPOSAL_ACK,
-			   0, 0, imsg.data, sizeof(struct imsg_proposal_ack));
-			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
 			    imsg.hdr.type);
@@ -727,7 +719,6 @@ void
 handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 {
 	struct if_msghdr		*ifm;
-	struct imsg_proposal_ack	 proposal_ack;
 	struct imsg_del_addr		 del_addr;
 	struct imsg_del_route		 del_route;
 	struct imsg_dup_addr		 dup_addr;
@@ -735,12 +726,9 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 	struct sockaddr_in6		*sin6;
 	struct in6_ifreq		 ifr6;
 	struct in6_addr			*in6;
-	int64_t				 id, pid;
 	int				 xflags, if_index;
 	char				 ifnamebuf[IFNAMSIZ];
 	char				*if_name;
-	char				**ap, *argv[4], *p;
-	const char			*errstr;
 
 	switch (rtm->rtm_type) {
 	case RTM_IFINFO:
@@ -862,57 +850,6 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		    0, 0, &del_route, sizeof(del_route));
 		log_debug("RTM_DELETE: %s[%u]", if_name,
 		    ifm->ifm_index);
-
-		break;
-	case RTM_PROPOSAL:
-		ifm = (struct if_msghdr *)rtm;
-		if_name = if_indextoname(ifm->ifm_index, ifnamebuf);
-
-		if ((rtm->rtm_flags & (RTF_DONE | RTF_PROTO1)) ==
-		    (RTF_DONE | RTF_PROTO1) && rtm->rtm_addrs == RTA_LABEL) {
-			rl = (struct sockaddr_rtlabel *)rti_info[RTAX_LABEL];
-			/* XXX validate rl */
-
-			p = rl->sr_label;
-
-			for (ap = argv; ap < &argv[3] && (*ap =
-			    strsep(&p, " ")) != NULL;) {
-				if (**ap != '\0')
-					ap++;
-			}
-			*ap = NULL;
-
-			if (argv[0] != NULL && strncmp(argv[0],
-			    SLAACD_RTA_LABEL":", strlen(SLAACD_RTA_LABEL":"))
-			    == 0 && argv[1] != NULL && argv[2] != NULL &&
-			    argv[3] == NULL) {
-				id = strtonum(argv[1], 0, INT64_MAX, &errstr);
-				if (errstr != NULL) {
-					log_warnx("%s: proposal seq is %s: %s",
-					    __func__, errstr, argv[1]);
-					break;
-				}
-				pid = strtonum(argv[2], 0, INT32_MAX, &errstr);
-				if (errstr != NULL) {
-					log_warnx("%s: pid is %s: %s",
-					    __func__, errstr, argv[2]);
-					break;
-				}
-				proposal_ack.id = id;
-				proposal_ack.pid = pid;
-				proposal_ack.if_index = ifm->ifm_index;
-
-				frontend_imsg_compose_engine(IMSG_PROPOSAL_ACK,
-				    0, 0, &proposal_ack, sizeof(proposal_ack));
-			} else {
-				log_debug("cannot parse: %s", rl->sr_label);
-			}
-		} else {
-#if 0
-			log_debug("%s: got flags %x, expcted %x", __func__,
-			    rtm->rtm_flags, (RTF_DONE | RTF_PROTO1));
-#endif
-		}
 
 		break;
 	default:

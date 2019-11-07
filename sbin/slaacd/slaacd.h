@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.22 2019/08/30 17:25:37 pamela Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.23 2019/11/07 08:45:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -69,13 +69,10 @@ enum imsg_type {
 	IMSG_UPDATE_IF,
 	IMSG_REMOVE_IF,
 	IMSG_RA,
-	IMSG_PROPOSAL,
-	IMSG_PROPOSAL_ACK,
 	IMSG_CONFIGURE_ADDRESS,
 	IMSG_WITHDRAW_ADDRESS,
 	IMSG_DEL_ADDRESS,
 	IMSG_DEL_ROUTE,
-	IMSG_FAKE_ACK,
 	IMSG_CONFIGURE_DFR,
 	IMSG_WITHDRAW_DFR,
 	IMSG_DUP_ADDRESS,
@@ -198,12 +195,6 @@ struct imsg_del_addr {
 struct imsg_del_route {
 	uint32_t		if_index;
 	struct sockaddr_in6	gw;
-};
-
-struct imsg_proposal_ack {
-	int64_t		 id;
-	pid_t		 pid;
-	uint32_t	 if_index;
 };
 
 struct imsg_ra {
