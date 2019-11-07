@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwindctl.8,v 1.5 2019/11/03 09:49:02 otto Exp $
+.\"	$OpenBSD: unwindctl.8,v 1.6 2019/11/07 08:38:48 otto Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 3 2019 $
+.Dd $Mdocdate: November 7 2019 $
 .Dt UNWINDCTL 8
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@ The following options are available:
 Use
 .Ar socket
 instead of the default
-.Pa /var/run/unwind.sock
+.Pa /dev/unwind.sock
 to communicate with
 .Xr unwind 8 .
 .El
@@ -68,8 +68,8 @@ including reasons why DNSSEC validation might be failing and a query time
 histogram.
 .El
 .Sh FILES
-.Bl -tag -width "/var/run/unwind.sockXX" -compact
-.It Pa /var/run/unwind.sock
+.Bl -tag -width "/dev/unwind.sockXX" -compact
+.It Pa /dev/unwind.sock
 .Ux Ns -domain
 socket used for communication with
 .Xr unwind 8 .

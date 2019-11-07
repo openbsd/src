@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.8,v 1.5 2019/02/11 13:38:53 florian Exp $
+.\"	$OpenBSD: unwind.8,v 1.6 2019/11/07 08:38:48 otto Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 11 2019 $
+.Dd $Mdocdate: November 7 2019 $
 .Dt UNWIND 8
 .Os
 .Sh NAME
@@ -54,9 +54,11 @@ for more information on the boot process
 and enabling daemons.
 .Pp
 Adding
+.Pp
 .Dl prepend domain-name-servers 127.0.0.1;
+.Pp
 to
-.Pa /etc/dhclient.conf
+.Pa /dev/dhclient.conf
 configures a machine using DHCP to use
 .Nm .
 .Pp
@@ -88,14 +90,14 @@ Multiple
 options increase the verbosity.
 .El
 .Sh FILES
-.Bl -tag -width "/var/run/unwind.sockXXX" -compact
+.Bl -tag -width "/var/db/unwind.keyXXX" -compact
 .It Pa /etc/unwind.conf
 Default
 .Nm
 configuration file.
 .It Pa /var/db/unwind.key
 Trust anchor for DNSSEC validation.
-.It Pa /var/run/unwind.sock
+.It Pa /dev/unwind.sock
 .Ux Ns -domain
 socket used for communication with
 .Xr unwindctl 8 .
