@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2019/10/31 21:23:19 djm Exp $
+#	$OpenBSD: Makefile,v 1.3 2019/11/07 08:38:38 naddy Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -9,8 +9,7 @@ SRCS+=	${SRCS_KEY} ${SRCS_UTL} ${SRCS_BASE}
 PROG=	ssh-sk-helper
 
 BINDIR=	/usr/libexec
-#MAN=	ssh-sk-helper.8
-NOMAN=1
+MAN=	ssh-sk-helper.8
 
 .include <bsd.prog.mk>
 
