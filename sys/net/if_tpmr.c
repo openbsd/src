@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.6 2019/11/07 07:36:32 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.7 2019/11/07 08:07:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -197,6 +197,9 @@ tpmr_clone_destroy(struct ifnet *ifp)
 
 	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		tpmr_down(sc);
+	NET_UNLOCK();
+
+	if_detach(ifp);
 
 	for (i = 0; i < nitems(sc->sc_ports); i++) {
 		struct tpmr_port *p = SMR_PTR_GET_LOCKED(&sc->sc_ports[i]);
@@ -204,9 +207,6 @@ tpmr_clone_destroy(struct ifnet *ifp)
 			continue;
 		tpmr_p_dtor(sc, p, "destroy");
 	}
-	NET_UNLOCK();
-
-	if_detach(ifp);
 
 	free(sc, M_DEVBUF, sizeof(*sc));
 
