@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.11 2018/01/31 14:47:13 mpi Exp $ */
+/*	$OpenBSD: parse.c,v 1.12 2019/11/07 13:36:03 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -1263,7 +1263,7 @@ parse_variable(struct dwdie *die, size_t psz)
 	struct dwaval *dav;
 	const char *name = NULL;
 	size_t ref = 0;
-	int forward = 0;
+	int forward = 0, global = 0;
 
 	SIMPLEQ_FOREACH(dav, &die->die_avals, dav_next) {
 		switch (dav->dav_dat->dat_attr) {
@@ -1276,6 +1276,18 @@ parse_variable(struct dwdie *die, size_t psz)
 		case DW_AT_type:
 			ref = dav2val(dav, psz);
 			break;
+		case DW_AT_location:
+			switch (dav->dav_dat->dat_form) {
+			case DW_FORM_block:
+			case DW_FORM_block1:
+			case DW_FORM_block2:
+			case DW_FORM_block4:
+				global = 1;
+				break;
+			default:
+				break;
+			}
+			break;
 		default:
 			DPRINTF("%s\n", dw_at2name(dav->dav_dat->dat_attr));
 			break;
@@ -1283,7 +1295,7 @@ parse_variable(struct dwdie *die, size_t psz)
 	}
 
 
-	if (!forward && name != NULL) {
+	if (global && !forward && name != NULL) {
 		it = it_new(++oidx, die->die_offset, name, 0, 0, ref, 0,
 		    ITF_UNRES|ITF_OBJ);
 	}
