@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.266 2019/11/07 07:36:31 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.267 2019/11/07 11:46:42 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -455,6 +455,9 @@ void
 pfsync_ifdetach(void *arg)
 {
 	struct pfsync_softc *sc = arg;
+
+	if_linkstatehook_del(sc->sc_sync_if, &sc->sc_ltask);
+	if_detachhook_del(sc->sc_sync_if, &sc->sc_dtask);
 
 	sc->sc_sync_if = NULL;
 }
