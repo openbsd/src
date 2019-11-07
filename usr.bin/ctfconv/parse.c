@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.12 2019/11/07 13:36:03 mpi Exp $ */
+/*	$OpenBSD: parse.c,v 1.13 2019/11/07 13:42:54 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -1138,12 +1138,19 @@ subparse_arguments(struct dwdie *die, size_t psz, struct itype *it)
 		 * Nested declaration.
 		 *
 		 * This matches the case where a ``struct'', ``union'',
-		 * ``enum'' or ``typedef'' is first declared "inside" a
-		 * function declaration.
+		 * ``enum'', ``typedef'' or ``static'' variable is first
+		 * declared inside a function declaration.
 		 */
-		if (tag == DW_TAG_structure_type || tag == DW_TAG_union_type ||
-		    tag == DW_TAG_enumeration_type || tag == DW_TAG_typedef)
+		switch (tag) {
+		case DW_TAG_structure_type:
+		case DW_TAG_union_type:
+		case DW_TAG_enumeration_type:
+		case DW_TAG_typedef:
+		case DW_TAG_variable:
 			continue;
+		default:
+			break;
+		}
 
 		if (tag != DW_TAG_formal_parameter)
 			break;
