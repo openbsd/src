@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2019/01/22 05:44:40 tb Exp $
+#	$OpenBSD: Makefile,v 1.14 2019/11/07 16:25:05 sthen Exp $
 #	$NetBSD: Makefile,v 1.14 1995/04/22 12:10:17 cgd Exp $
 
 # Change the line below for your time zone (after finding the zone you want in
@@ -36,7 +36,7 @@ TZDIR=	${DESTDIR}/usr/share/zoneinfo
 #	REDO=		right_posix
 # below.
 
-REDO=		posix_right
+REDO=		posix_only
 
 # Since "." may not be in PATH...
 YEARISTYPE=	${.CURDIR}/datfiles/yearistype.sh
