@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.292 2019/10/23 13:50:49 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.293 2019/11/07 17:45:22 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -89,7 +89,7 @@ void	sdstart(struct scsi_xfer *);
 int	sd_interpret_sense(struct scsi_xfer *);
 int	sd_read_cap_10(struct sd_softc *, int);
 int	sd_read_cap_16(struct sd_softc *, int);
-int	sd_size(struct sd_softc *, int);
+int	sd_read_cap(struct sd_softc *, int);
 int	sd_thin_pages(struct sd_softc *, int);
 int	sd_vpd_block_limits(struct sd_softc *, int);
 int	sd_vpd_thin(struct sd_softc *, int);
@@ -1521,7 +1521,7 @@ done:
 }
 
 int
-sd_size(struct sd_softc *sc, int flags)
+sd_read_cap(struct sd_softc *sc, int flags)
 {
 	int rv;
 
@@ -1717,7 +1717,7 @@ sd_get_parms(struct sd_softc *sc, int flags)
 	u_int32_t heads = 0, sectors = 0, cyls = 0, secsize = 0;
 	int err = 0, big;
 
-	if (sd_size(sc, flags) != 0)
+	if (sd_read_cap(sc, flags) != 0)
 		return -1;
 
 	if (ISSET(sc->flags, SDF_THIN) && sd_thin_params(sc, flags) != 0) {
@@ -1752,7 +1752,7 @@ sd_get_parms(struct sd_softc *sc, int flags)
 	/*
 	 * Many UMASS devices choke when asked about their geometry. Most
 	 * don't have a meaningful geometry anyway, so just fake it if
-	 * sd_size() worked.
+	 * sd_read_cap() worked.
 	 */
 	if (ISSET(link->flags, SDEV_UMASS) && (dp->disksize > 0))
 		goto validate;
