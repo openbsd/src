@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.25 2016/04/27 11:10:48 mpi Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.26 2019/11/07 11:16:55 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -27,8 +27,7 @@
 #ifndef	_MACHINE_DB_MACHDEP_H_
 #define	_MACHINE_DB_MACHDEP_H_
 
-/* XXX - Need to include vm.h for boolean_t */
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm_param.h>
 
 struct opcode {
 	enum opc_fmt { OPC_PAL, OPC_RES, OPC_MEM, OPC_OP, OPC_BR } opc_fmt;
@@ -72,12 +71,12 @@ extern db_regs_t	ddb_regs;
 int	alpha_debug(unsigned long, unsigned long, unsigned long,
     unsigned long, struct trapframe *);
 db_addr_t db_branch_taken(int, db_addr_t, db_regs_t *);
-boolean_t db_inst_branch(int);
-boolean_t db_inst_call(int);
-boolean_t db_inst_load(int);
-boolean_t db_inst_return(int);
-boolean_t db_inst_trap_return(int);
-boolean_t db_inst_unconditional_flow_transfer(int);
+int	db_inst_branch(int);
+int	db_inst_call(int);
+int	db_inst_load(int);
+int	db_inst_return(int);
+int	db_inst_trap_return(int);
+int	db_inst_unconditional_flow_transfer(int);
 u_long	db_register_value(db_regs_t *, int);
 int	db_valid_breakpoint(db_addr_t);
 int	ddb_trap(unsigned long, unsigned long, unsigned long,

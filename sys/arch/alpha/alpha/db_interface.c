@@ -1,4 +1,4 @@
-/* $OpenBSD: db_interface.c,v 1.24 2018/03/20 15:45:32 mpi Exp $ */
+/* $OpenBSD: db_interface.c,v 1.25 2019/11/07 11:16:55 mpi Exp $ */
 /* $NetBSD: db_interface.c,v 1.8 1999/10/12 17:08:57 jdolecek Exp $ */
 
 /* 
@@ -167,11 +167,11 @@ ddb_trap(a0, a1, a2, entry, regs)
 	s = splhigh();
 
 	db_active++;
-	cnpollc(TRUE);		/* Set polling mode, unblank video */
+	cnpollc(1);		/* Set polling mode, unblank video */
 
 	db_trap(entry, a0);	/* Where the work happens */
 
-	cnpollc(FALSE);		/* Resume interrupt mode */
+	cnpollc(0);		/* Resume interrupt mode */
 	db_active--;
 
 	splx(s);
@@ -286,9 +286,8 @@ db_register_value(regs, regno)
  * Support functions for software single-step.
  */
 
-boolean_t
-db_inst_call(ins)
-	int ins;
+int
+db_inst_call(int ins)
 {
 	alpha_instruction insn;
 
@@ -298,9 +297,8 @@ db_inst_call(ins)
 	     (insn.jump_format.action & 1)));
 }
 
-boolean_t
-db_inst_return(ins)
-	int ins;
+int
+db_inst_return(int ins)
 {
 	alpha_instruction insn;
 
@@ -309,9 +307,8 @@ db_inst_return(ins)
 	    (insn.jump_format.action == op_ret));
 }
 
-boolean_t
-db_inst_trap_return(ins)
-	int ins;
+int
+db_inst_trap_return(int ins)
 {
 	alpha_instruction insn;
 
@@ -320,9 +317,8 @@ db_inst_trap_return(ins)
 	    (insn.pal_format.function == PAL_OSF1_rti));
 }
 
-boolean_t
-db_inst_branch(ins)
-	int ins;
+int
+db_inst_branch(int ins)
 {
 	alpha_instruction insn;
 
@@ -344,15 +340,14 @@ db_inst_branch(ins)
 	case op_bne:
 	case op_bge:
 	case op_bgt:
-		return (TRUE);
+		return 1;
 	}
 
-	return (FALSE);
+	return 0;
 }
 
-boolean_t
-db_inst_unconditional_flow_transfer(ins)
-	int ins;
+int
+db_inst_unconditional_flow_transfer(int ins)
 {
 	alpha_instruction insn;
 
@@ -360,62 +355,48 @@ db_inst_unconditional_flow_transfer(ins)
 	switch (insn.branch_format.opcode) {
 	case op_j:
 	case op_br:
-		return (TRUE);
+		return 1;
 
 	case op_pal:
 		switch (insn.pal_format.function) {
 		case PAL_OSF1_retsys:
 		case PAL_OSF1_rti:
 		case PAL_OSF1_callsys:
-			return (TRUE);
+			return 1;
 		}
 	}
 
-	return (FALSE);
+	return 0;
 }
 
-#if 0
-boolean_t
-db_inst_spill(ins, regn)
-	int ins, regn;
+int
+db_inst_load(int ins)
 {
 	alpha_instruction insn;
 
 	insn.bits = ins;
-	return ((insn.mem_format.opcode == op_stq) &&
-	    (insn.mem_format.rd == regn));
-}
-#endif
 
-boolean_t
-db_inst_load(ins)
-	int ins;
-{
-	alpha_instruction insn;
-
-	insn.bits = ins;
-	
 	/* Loads. */
 	if (insn.mem_format.opcode == op_ldbu ||
 	    insn.mem_format.opcode == op_ldq_u ||
 	    insn.mem_format.opcode == op_ldwu)
-		return (TRUE);
+		return 1;
 	if ((insn.mem_format.opcode >= op_ldf) &&
 	    (insn.mem_format.opcode <= op_ldt))
-		return (TRUE);
+		return 1;
 	if ((insn.mem_format.opcode >= op_ldl) &&
 	    (insn.mem_format.opcode <= op_ldq_l))
-		return (TRUE);
+		return 1;
 
 	/* Prefetches. */
 	if (insn.mem_format.opcode == op_special) {
 		/* Note: MB is treated as a store. */
 		if ((insn.mem_format.displacement == (short)op_fetch) ||
 		    (insn.mem_format.displacement == (short)op_fetch_m))
-			return (TRUE);
+			return 1;
 	}
 
-	return (FALSE);
+	return 0;
 }
 
 db_addr_t

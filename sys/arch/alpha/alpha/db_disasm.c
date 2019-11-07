@@ -1,4 +1,4 @@
-/* $OpenBSD: db_disasm.c,v 1.23 2016/04/27 11:03:24 mpi Exp $ */
+/* $OpenBSD: db_disasm.c,v 1.24 2019/11/07 11:16:55 mpi Exp $ */
 /* $NetBSD: db_disasm.c,v 1.8 2000/05/25 19:57:30 jhawk Exp $ */
 
 /* 
@@ -823,12 +823,10 @@ register_name (ireg)
  * (optional) alternate format.  Return address of start of
  * next instruction.
  */
-int	alpha_print_instruction(db_addr_t, alpha_instruction, boolean_t);
+int	alpha_print_instruction(db_addr_t, alpha_instruction, int);
 
 db_addr_t
-db_disasm(loc, altfmt)
-	db_addr_t	loc;
-	boolean_t	altfmt;
+db_disasm(db_addr_t loc, int altfmt)
 {
 	alpha_instruction inst;
 
@@ -839,20 +837,17 @@ db_disasm(loc, altfmt)
 }
 
 int
-alpha_print_instruction(iadr, i, showregs)
-	db_addr_t	iadr;
-	alpha_instruction i;
-	boolean_t	showregs;
+alpha_print_instruction(db_addr_t iadr, alpha_instruction i, int showregs)
 {
 	const char	*opcode;
 	int		ireg;
 	long		signed_immediate;
-	boolean_t	fstore;
+	int		fstore;
 	pal_instruction	p;
 	char		tmpfmt[28];
 
 	regcount = 0;
-	fstore = FALSE;
+	fstore = 0;
 	opcode = op_name[i.mem_format.opcode];
 
 	/*
@@ -1021,7 +1016,7 @@ foperate:
 	case op_stg:
 	case op_sts:
 	case op_stt:
-		fstore = TRUE;
+		fstore = 1;
 		/* FALLTHROUGH */
 	case op_ldl:
 	case op_ldq:
