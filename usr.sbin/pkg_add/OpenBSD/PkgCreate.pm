@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.163 2019/07/21 14:05:30 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.164 2019/11/07 15:36:51 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -981,6 +981,10 @@ sub ask_tree
 	my ($self, $state, $pkgpath, $portsdir, $data, @action) = @_;
 
 	my $make = OpenBSD::Paths->make;
+	my $errors = OpenBSD::Temp->file;
+	if (!defined $errors) {
+		$state->fatal(OpenBSD::Temp->last_error);
+	}
 	my $pid = open(my $fh, "-|");
 	if (!defined $pid) {
 		$state->fatal("cannot fork: $!");
@@ -989,7 +993,7 @@ sub ask_tree
 		# make things debuggable because this child doesn't matter
 		$DB::inhibit_exit = 0;
 		chdir $portsdir or exit 2;
-		open STDERR, '>', '/dev/null';
+		open STDERR, ">>", $errors;
 		$ENV{FULLPATH} = 'Yes';
 		delete $ENV{FLAVOR};
 		delete $ENV{SUBPACKAGE};
@@ -1002,6 +1006,16 @@ sub ask_tree
 	}
 	my $plist = OpenBSD::PackingList->read($fh, $data);
 	close($fh);
+	if ($? != 0) {
+		$state->errsay("child failed: #1", $state->child_error);
+		if (open my $fh, '<', $errors) {
+			while(<$fh>) {
+				$state->errprint("#1", $_);
+			}
+			close($fh);
+		}
+	}
+	unlink($errors);
 	return $plist;
 }
 
