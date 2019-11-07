@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.11 2018/03/20 15:45:32 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.12 2019/11/07 15:58:39 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.37 2006/09/06 00:11:49 uwe Exp $	*/
 
 /*-
@@ -133,9 +133,9 @@ db_ktrap(int type, int code, db_regs_t *regs)
 
 	s = splhigh();
 	db_active++;
-	cnpollc(TRUE);
+	cnpollc(1);
 	db_trap(type, code);
-	cnpollc(FALSE);
+	cnpollc(0);
 	db_active--;
 	splx(s);
 
@@ -161,7 +161,7 @@ db_enter(void)
 #define	M_RTE	0xffff
 #define	I_RTE	0x002b
 
-boolean_t
+int
 inst_call(int inst)
 {
 #if _BYTE_ORDER == BIG_ENDIAN
@@ -171,7 +171,7 @@ inst_call(int inst)
 	       (inst & M_JSR) == I_JSR;
 }
 
-boolean_t
+int
 inst_return(int inst)
 {
 #if _BYTE_ORDER == BIG_ENDIAN
@@ -180,7 +180,7 @@ inst_return(int inst)
 	return (inst & M_RTS) == I_RTS;
 }
 
-boolean_t
+int
 inst_trap_return(int inst)
 {
 #if _BYTE_ORDER == BIG_ENDIAN

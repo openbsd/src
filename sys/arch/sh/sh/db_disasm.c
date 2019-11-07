@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.4 2017/05/30 15:39:05 mpi Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.5 2019/11/07 15:58:39 mpi Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.13 2006/01/21 02:09:06 uwe Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ static const rasm_t f[16][16] = {
 };
 
 db_addr_t
-db_disasm(db_addr_t loc, boolean_t altfmt)
+db_disasm(db_addr_t loc, int altfmt)
 {
 	char line[40], ascii[4];
 	void *pc = (void *)loc;

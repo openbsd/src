@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.8 2017/11/03 11:29:46 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.9 2019/11/07 15:58:39 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.19 2006/01/21 22:10:59 uwe Exp $	*/
 
 /*-
@@ -167,7 +167,7 @@ db_nextframe(
 		goto out;
 
 	for (i = 0; i < 30; i++) {
-		inst = db_get_value(pc, 2, FALSE);
+		inst = db_get_value(pc, 2, 0);
 		pc += 2;
 
 		if (inst == 0x6ef3)	/* mov r15,r14 -- end of prologue */
@@ -199,13 +199,13 @@ db_nextframe(
 			continue;
 		}
 		if ((inst & 0xf000) == 0x9000) {
-			if (db_get_value(pc, 2, FALSE) == 0x3f38) {
+			if (db_get_value(pc, 2, 0) == 0x3f38) {
 				/* "mov #n,r3; sub r3,r15" */
 				unsigned int disp = (int)(inst & 0xff);
 				int r3;
 
 				r3 = db_get_value(pc + 4 - 2 + (disp << 1),
-				    2, FALSE);
+				    2, 0);
 				if ((r3 & 0x00008000) == 0)
 					r3 &= 0x0000ffff;
 				else

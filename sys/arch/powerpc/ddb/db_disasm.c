@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.16 2014/04/26 06:17:26 jsg Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.17 2019/11/07 15:58:39 mpi Exp $	*/
 /*
  * Copyright (c) 1996, 2001, 2003 Dale Rahn. All rights reserved.
  *
@@ -1162,7 +1162,7 @@ dis_ppc(u_int32_t addr, const struct opcode *opcodeset, instr_t instr)
 }
 
 db_addr_t
-db_disasm(db_addr_t loc, boolean_t extended)
+db_disasm(db_addr_t loc, int extended)
 {
 	int class;
 	instr_t opcode;

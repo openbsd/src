@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.8 2016/04/27 11:10:48 mpi Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.9 2019/11/07 15:58:39 mpi Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.12 2006/05/10 06:24:03 skrll Exp $	*/
 
 /*
@@ -58,9 +58,9 @@ extern db_regs_t	ddb_regs;	/* register state */
 
 int db_ktrap(int, int, db_regs_t *);
 void db_machine_init (void);
-boolean_t inst_call(int);
-boolean_t inst_return(int);
-boolean_t inst_trap_return(int);
+int inst_call(int);
+int inst_return(int);
+int inst_trap_return(int);
 
 /*
  * We have machine-dependent commands.
