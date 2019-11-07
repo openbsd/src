@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfconv.c,v 1.17 2018/08/08 20:15:17 mestre Exp $ */
+/*	$OpenBSD: ctfconv.c,v 1.18 2019/11/07 13:39:08 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -27,6 +27,7 @@
 #include <elf.h>
 #include <err.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -51,6 +52,7 @@ int		 convert(const char *);
 int		 generate(const char *, const char *, int);
 int		 elf_convert(char *, size_t);
 void		 elf_sort(void);
+char		*guess_static_local_name(char *);
 struct itype	*find_symb(struct itype *, size_t);
 void		 dump_type(struct itype *);
 void		 dump_func(struct itype *, int *);
@@ -261,6 +263,50 @@ elf_convert(char *p, size_t filesize)
 	return 0;
 }
 
+/*
+ * Guess which part of a local symbol name correspond to the variable
+ * name.
+ *
+ * gcc 4.2.1 emits:
+ *
+ *	varname.id
+ *
+ * clang 8 emits:
+ *
+ *	funcname.varname
+ *
+ */
+char *
+guess_static_local_name(char *sname)
+{
+	const char *errstr;
+	char *first, *second;
+
+	first = strtok(sname, ".");
+	if (first == NULL)
+		return NULL;
+
+	/* Skip meta symbols - gcc style. */
+	if (strncmp(first, "__func__", sizeof("__func__") - 1) == 0 ||
+	    strncmp(first, "__FUNCTION__", sizeof("__FUNCTION__") - 1) == 0 ||
+	    strncmp(first, "__warned", sizeof("__warned") - 1) == 0)
+	    	return NULL;
+
+	second = strtok(NULL, "\0");
+	if (second == NULL)
+		return first;
+
+	/* Skip meta symbols - clang style. */
+	if (strncmp(second, "__warned", sizeof("__warned") - 1) == 0)
+	    	return NULL;
+
+	/* If `second' isn't a number, assume clang-style name. */
+	if (strtonum(second, 1, INT_MAX, &errstr) == 0)
+		return second;
+
+	return first;
+}
+
 struct itype *
 find_symb(struct itype *tmp, size_t stroff)
 {
@@ -270,13 +316,8 @@ find_symb(struct itype *tmp, size_t stroff)
 	if (strtab == NULL || stroff >= strtabsz)
 		return NULL;
 
-	/*
-	 * Skip local suffix
-	 *
-	 * FIXME: only skip local copies.
-	 */
 	sname = xstrdup(strtab + stroff);
-	if ((p = strtok(sname, ".")) == NULL) {
+	if ((p = guess_static_local_name(sname)) == NULL) {
 		free(sname);
 		return NULL;
 	}
