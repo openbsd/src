@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.53 2019/09/02 02:35:33 deraadt Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.54 2019/11/07 11:04:21 mpi Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -72,7 +72,7 @@ void db_dump_tlb_cmd(db_expr_t, int, db_expr_t, char *);
 struct db_mutex ddb_mp_mutex = DB_MUTEX_INITIALIZER;
 volatile int ddb_state = DDB_STATE_NOT_RUNNING;
 volatile cpuid_t ddb_active_cpu;
-boolean_t        db_switch_cpu;
+int		 db_switch_cpu;
 long             db_switch_to_cpu;
 #endif
 
@@ -133,7 +133,7 @@ db_ktrap(int type, struct trapframe *fp)
 {
 	switch(type) {
 	case T_BREAK:		/* breakpoint */
-		if (db_get_value((fp)->pc, sizeof(int), FALSE) == BREAK_SOVER) {
+		if (db_get_value((fp)->pc, sizeof(int), 0) == BREAK_SOVER) {
 			(fp)->pc += BKPT_SIZE;
 		}
 		break;
@@ -162,9 +162,9 @@ db_ktrap(int type, struct trapframe *fp)
 		bcopy((void *)fp, (void *)&ddb_regs, NUMSAVEREGS * sizeof(register_t));
 
 		db_active++;
-		cnpollc(TRUE);
+		cnpollc(1);
 		db_trap(type, 0);
-		cnpollc(FALSE);
+		cnpollc(0);
 		db_active--;
 
 		bcopy((void *)&ddb_regs, (void *)fp, NUMSAVEREGS * sizeof(register_t));
@@ -173,7 +173,7 @@ db_ktrap(int type, struct trapframe *fp)
 			ddb_state = DDB_STATE_EXITING;
 	}
 #endif
-	return(TRUE);
+	return 1;
 }
 
 #ifdef MULTIPROCESSOR
@@ -332,7 +332,7 @@ db_write_bytes(vaddr_t addr, size_t size, char *data)
 }
 
 void
-db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
+db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif, int (*pr)(const char *, ...))
 {
 	struct trapframe *regs = &ddb_regs;
@@ -354,7 +354,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
  *	required.
  */
 db_addr_t
-next_instr_address(db_addr_t pc, boolean_t bd)
+next_instr_address(db_addr_t pc, int bd)
 {
 	db_addr_t next;
 	uint32_t instr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.6 2018/05/04 15:43:34 visa Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.7 2019/11/07 11:04:21 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*
@@ -68,15 +68,15 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	db_expr_t	offset;
 	Elf_Sym *	sym;
 	char		*name;
-	boolean_t	kernel_only = TRUE;
-	boolean_t	trace_thread = FALSE;
+	int		kernel_only = 1;
+	int		trace_thread = 0;
 	//db_addr_t	scp = 0;
 
 	while ((c = *cp++) != 0) {
 		if (c == 'u')
-			kernel_only = FALSE;
+			kernel_only = 0;
 		if (c == 't')
-			trace_thread = TRUE;
+			trace_thread = 1;
 	}
 
 	if (!have_addr) {
