@@ -2526,6 +2526,7 @@
 ./usr/share/man/man8/sparc64/ldomd.8
 ./usr/share/man/man8/ssh-keysign.8
 ./usr/share/man/man8/ssh-pkcs11-helper.8
+./usr/share/man/man8/ssh-sk-helper.8
 ./usr/share/man/man8/sshd.8
 ./usr/share/man/man8/ssl.8
 ./usr/share/man/man8/starttls.8
