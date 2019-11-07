@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.339 2019/11/06 03:51:26 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.340 2019/11/07 07:36:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -132,7 +132,7 @@ struct carp_softc {
 #define	sc_if		sc_ac.ac_if
 #define	sc_carpdev	sc_ac.ac_if.if_carpdev
 	void *ah_cookie;
-	void *lh_cookie;
+	struct task sc_ltask;
 	struct task sc_dtask;
 	struct ip_moptions sc_imo;
 #ifdef INET6
@@ -808,6 +808,7 @@ carp_clone_create(struct if_clone *ifc, int unit)
 		return (ENOMEM);
 	}
 
+	task_set(&sc->sc_ltask, carp_carpdev_state, sc);
 	task_set(&sc->sc_dtask, carpdetach, sc);
 
 	sc->sc_suppress = 0;
@@ -956,7 +957,7 @@ carpdetach(void *arg)
 		ifpromisc(ifp0, 0);
 	sc->sc_carpdev = NULL;
 
-	hook_disestablish(ifp0->if_linkstatehooks, sc->lh_cookie);
+	if_linkstatehook_del(ifp0, &sc->sc_ltask);
 	if_detachhook_del(ifp0, &sc->sc_dtask);
 }
 
@@ -1687,20 +1688,13 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp0)
 	if (ifp0->if_type != IFT_ETHER)
 		return (EINVAL);
 
-	sc->lh_cookie = hook_establish(ifp0->if_linkstatehooks, 1,
-	    carp_carpdev_state, ifp0);
-	if (sc->lh_cookie == NULL)
-		return (ENOMEM);
-
 	cif = &ifp0->if_carp;
 	if (SRPL_EMPTY_LOCKED(cif)) {
 		if ((error = ifpromisc(ifp0, 1)))
-			goto rm_lh;
+			return (error);
 
-	} else if (carp_check_dup_vhids(sc, cif, NULL)) {
-		error = EINVAL;
-		goto rm_lh;
-	}
+	} else if (carp_check_dup_vhids(sc, cif, NULL))
+		return (EINVAL);
 
 	/* detach from old interface */
 	if (sc->sc_carpdev != NULL)
@@ -1708,6 +1702,8 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp0)
 
 	/* attach carp interface to physical interface */
 	if_detachhook_add(ifp0, &sc->sc_dtask);
+	if_linkstatehook_add(ifp0, &sc->sc_ltask);
+
 	sc->sc_carpdev = ifp0;
 	sc->sc_if.if_capabilities = ifp0->if_capabilities &
 	    IFCAP_CSUM_MASK;
@@ -1745,14 +1741,9 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp0)
 	/* Change input handler of the physical interface. */
 	if_ih_insert(ifp0, carp_input, NULL);
 
-	carp_carpdev_state(ifp0);
+	carp_carpdev_state(sc);
 
 	return (0);
-
-rm_lh:
-	hook_disestablish(ifp0->if_linkstatehooks, sc->lh_cookie);
-
-	return (error);
 }
 
 void
@@ -2465,35 +2456,24 @@ carp_group_demote_count(struct carp_softc *sc)
 void
 carp_carpdev_state(void *v)
 {
-	struct srpl *cif;
-	struct carp_softc *sc;
-	struct ifnet *ifp0 = v;
+	struct carp_softc *sc = v;
+	struct ifnet *ifp0 = sc->sc_carpdev;
+	int suppressed = sc->sc_suppress;
 
-	if (ifp0->if_type != IFT_ETHER)
-		return;
-
-	cif = &ifp0->if_carp;
-
-	KERNEL_ASSERT_LOCKED(); /* touching if_carp */
-
-	SRPL_FOREACH_LOCKED(sc, cif, sc_list) {
-		int suppressed = sc->sc_suppress;
-
-		if (sc->sc_carpdev->if_link_state == LINK_STATE_DOWN ||
-		    !(sc->sc_carpdev->if_flags & IFF_UP)) {
-			sc->sc_if.if_flags &= ~IFF_RUNNING;
-			carp_del_all_timeouts(sc);
-			carp_set_state_all(sc, INIT);
-			sc->sc_suppress = 1;
-			carp_setrun_all(sc, 0);
-			if (!suppressed)
-				carp_group_demote_adj(&sc->sc_if, 1, "carpdev");
-		} else if (suppressed) {
-			carp_set_state_all(sc, INIT);
-			sc->sc_suppress = 0;
-			carp_setrun_all(sc, 0);
-			carp_group_demote_adj(&sc->sc_if, -1, "carpdev");
-		}
+	if (ifp0->if_link_state == LINK_STATE_DOWN ||
+	    !(ifp0->if_flags & IFF_UP)) {
+		sc->sc_if.if_flags &= ~IFF_RUNNING;
+		carp_del_all_timeouts(sc);
+		carp_set_state_all(sc, INIT);
+		sc->sc_suppress = 1;
+		carp_setrun_all(sc, 0);
+		if (!suppressed)
+			carp_group_demote_adj(&sc->sc_if, 1, "carpdev");
+	} else if (suppressed) {
+		carp_set_state_all(sc, INIT);
+		sc->sc_suppress = 0;
+		carp_setrun_all(sc, 0);
+		carp_group_demote_adj(&sc->sc_if, -1, "carpdev");
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.20 2019/11/06 03:51:26 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.21 2019/11/07 07:36:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -335,7 +335,7 @@ struct aggr_port {
 	int (*p_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
 
-	void			*p_lcookie;
+	struct task		 p_lhook;
 	struct task		 p_dhook;
 
 	struct aggr_softc	*p_aggr;
@@ -1135,8 +1135,8 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 		}
 	}
 
-	p->p_lcookie = hook_establish(ifp0->if_linkstatehooks, 1,
-	    aggr_p_linkch, p);
+	task_set(&p->p_lhook, aggr_p_linkch, p);
+	if_linkstatehook_add(ifp0, &p->p_lhook);
 
 	task_set(&p->p_dhook, aggr_p_detach, p);
 	if_detachhook_add(ifp0, &p->p_dhook);
@@ -1428,7 +1428,7 @@ aggr_p_dtor(struct aggr_softc *sc, struct aggr_port *p, const char *op)
 	}
 
 	if_detachhook_del(ifp0, &p->p_dhook);
-	hook_disestablish(ifp0->if_linkstatehooks, p->p_lcookie);
+	if_linkstatehook_del(ifp0, &p->p_lhook);
 
 	if_put(ifp0);
 	free(p, M_DEVBUF, sizeof(*p));

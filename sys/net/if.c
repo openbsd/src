@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.589 2019/11/06 03:51:26 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.590 2019/11/07 07:36:31 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -629,9 +629,7 @@ if_attach_common(struct ifnet *ifp)
 	ifp->if_addrhooks = malloc(sizeof(*ifp->if_addrhooks),
 	    M_TEMP, M_WAITOK);
 	TAILQ_INIT(ifp->if_addrhooks);
-	ifp->if_linkstatehooks = malloc(sizeof(*ifp->if_linkstatehooks),
-	    M_TEMP, M_WAITOK);
-	TAILQ_INIT(ifp->if_linkstatehooks);
+	TAILQ_INIT(&ifp->if_linkstatehooks);
 	TAILQ_INIT(&ifp->if_detachhooks);
 
 	if (ifp->if_rtrequest == NULL)
@@ -1055,8 +1053,6 @@ if_deactivate(struct ifnet *ifp)
 	NET_LOCK();
 	TAILQ_FOREACH_SAFE(t, &ifp->if_detachhooks, t_entry, nt)
 		(*t->t_func)(t->t_arg);
-
-	KASSERT(TAILQ_EMPTY(&ifp->if_detachhooks));
 	NET_UNLOCK();
 }
 
@@ -1148,7 +1144,8 @@ if_detach(struct ifnet *ifp)
 	}
 
 	free(ifp->if_addrhooks, M_TEMP, sizeof(*ifp->if_addrhooks));
-	free(ifp->if_linkstatehooks, M_TEMP, sizeof(*ifp->if_linkstatehooks));
+	KASSERT(TAILQ_EMPTY(&ifp->if_linkstatehooks));
+	KASSERT(TAILQ_EMPTY(&ifp->if_detachhooks));
 
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])
@@ -1646,11 +1643,29 @@ if_linkstate_task(void *xifidx)
 void
 if_linkstate(struct ifnet *ifp)
 {
+	struct task *t, *nt;
+
 	NET_ASSERT_LOCKED();
 
 	rtm_ifchg(ifp);
 	rt_if_track(ifp);
-	dohooks(ifp->if_linkstatehooks, 0);
+
+	TAILQ_FOREACH_SAFE(t, &ifp->if_linkstatehooks, t_entry, nt)
+		(*t->t_func)(t->t_arg);
+}
+
+void
+if_linkstatehook_add(struct ifnet *ifp, struct task *t)
+{
+	NET_ASSERT_LOCKED();
+	TAILQ_INSERT_TAIL(&ifp->if_linkstatehooks, t, t_entry);
+}
+
+void
+if_linkstatehook_del(struct ifnet *ifp, struct task *t)
+{
+	NET_ASSERT_LOCKED();
+	TAILQ_REMOVE(&ifp->if_linkstatehooks, t, t_entry);
 }
 
 /*

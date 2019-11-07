@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.201 2019/11/06 03:51:26 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.202 2019/11/07 07:36:32 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -97,7 +97,7 @@ struct vlan_softc {
 	SRPL_ENTRY(vlan_softc)	 sc_list;
 	int			 sc_flags;
 	struct refcnt		 sc_refcnt;
-	void			*sc_lh_cookie;
+	struct task		 sc_ltask;
 	struct task		 sc_dtask;
 	struct ifih		*sc_ifih;
 };
@@ -192,6 +192,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 	sc->sc_dead = 0;
 	LIST_INIT(&sc->sc_mc_listhead);
+	task_set(&sc->sc_ltask, vlan_link_hook, sc);
 	task_set(&sc->sc_dtask, vlan_ifdetach, sc);
 	ifp = &sc->sc_if;
 	ifp->if_softc = sc;
@@ -534,8 +535,7 @@ vlan_up(struct vlan_softc *sc)
 	rw_exit(&vlan_tagh_lk);
 
 	/* Register callback for physical link state changes */
-	sc->sc_lh_cookie = hook_establish(ifp0->if_linkstatehooks, 1,
-	    vlan_link_hook, sc);
+	if_linkstatehook_add(ifp0, &sc->sc_ltask);
 
 	/* Register callback if parent wants to unregister */
 	if_detachhook_add(ifp0, &sc->sc_dtask);
@@ -592,7 +592,7 @@ vlan_down(struct vlan_softc *sc)
 			ifpromisc(ifp0, 0);
 		vlan_multi_apply(sc, ifp0, SIOCDELMULTI);
 		if_detachhook_del(ifp0, &sc->sc_dtask);
-		hook_disestablish(ifp0->if_linkstatehooks, sc->sc_lh_cookie);
+		if_linkstatehook_del(ifp0, &sc->sc_ltask);
 	}
 	if_put(ifp0);
 
