@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.31 2018/06/30 15:23:36 deraadt Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.32 2019/11/07 21:54:49 patrick Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -309,12 +309,6 @@ __get_cpsr()
 
 void set_stackptr	(u_int mode, u_int address);
 u_int get_stackptr	(u_int mode);
-
-/*
- * Miscellany
- */
-
-int get_pc_str_offset	(void);
 
 /*
  * CPU functions from locore.S

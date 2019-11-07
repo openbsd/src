@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm.S,v 1.6 2018/08/06 18:39:13 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc_asm.S,v 1.7 2019/11/07 21:54:49 patrick Exp $	*/
 /*	$NetBSD: cpufunc_asm.S,v 1.12 2003/09/06 09:14:52 rearnsha Exp $	*/
 
 /*
@@ -140,30 +140,3 @@ ENTRY(cpufunc_auxcontrol)
 	mcrne	CP15_ACTLR(r2)		/* Write new aux control register */
 	mov	r0, r3			/* Return old value */
 	mov	pc, lr
-
-/*
- * other potentially useful software functions are:
- *  clean D cache entry and flush I cache entry
- *   for the moment use cache_purgeID_E
- */
-
-/* Random odd functions */
-
-/*
- * Function to get the offset of a stored program counter from the
- * instruction doing the store.  This offset is defined to be the same
- * for all STRs and STMs on a given implementation.  Code based on
- * section 2.4.3 of the ARM ARM (2nd Ed.), with modifications to work
- * in 26-bit modes as well.
- */
-ENTRY(get_pc_str_offset)
-	mov	ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
-	sub	fp, ip, #4
-	sub	sp, sp, #4
-	mov	r1, pc		/* R1 = addr of following STR */
-	mov	r0, r0
-	str	pc, [sp]	/* [SP] = . + offset */
-	ldr	r0, [sp]
-	sub	r0, r0, r1
-	ldmdb	fp, {fp, sp, pc}
