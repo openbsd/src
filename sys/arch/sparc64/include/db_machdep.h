@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.20 2019/11/06 07:32:10 mpi Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.21 2019/11/07 14:44:53 mpi Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.12 2001/07/07 15:16:13 eeh Exp $ */
 
 /*
@@ -85,7 +85,7 @@ extern	db_regs_t ddb_regs;	/* register state */
 #define	DDB_FR		(&ddb_regs.ddb_fr)
 #define	DDB_FP		(&ddb_regs.ddb_fpstate)
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->ddb_tf.tf_pc)
+#define	PC_REGS(regs)	((vaddr_t)(regs)->ddb_tf.tf_pc)
 #define	SET_PC_REGS(regs, value)	(regs)->ddb_tf.tf_pc = (int32_t)(value)
 #define	PC_ADVANCE(regs) do {				\
 	vaddr_t n = (regs)->ddb_tf.tf_npc;		\
@@ -112,7 +112,7 @@ int		db_inst_return(int inst);
 int		db_inst_call(int inst);
 int		db_inst_branch(int inst);
 int		db_inst_unconditional_flow_transfer(int inst);
-db_addr_t	db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs);
+vaddr_t		db_branch_taken(int inst, vaddr_t pc, db_regs_t *regs);
 
 #define inst_trap_return(ins)	db_inst_trap_return(ins)
 #define inst_return(ins)	db_inst_return(ins)

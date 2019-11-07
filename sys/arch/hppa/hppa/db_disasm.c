@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.21 2019/11/06 07:32:10 mpi Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.22 2019/11/07 14:44:52 mpi Exp $	*/
 
 /* TODO parse 64bit insns or rewrite */
 
@@ -1704,7 +1704,7 @@ blDasm(i, ofs, w)
 		db_printf(",n");
 	db_printf("\t");
 
-	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY, db_printf);
+	db_printsym((vaddr_t)tgtofs, DB_STGY_ANY, db_printf);
 
 	if (link || Match("gate"))
 		db_printf(",%%r%d",link);
@@ -1774,7 +1774,7 @@ cbDasm(i, ofs, w)
 	else
 		db_printf(subDCond(Cond(w) << 1));
 	db_printf("%s\t%%r%d,%%r%d,", Nu(w)?",n":"", Rsa(w), Rsb(w));
-	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY, db_printf);
+	db_printsym((vaddr_t)tgtofs, DB_STGY_ANY, db_printf);
 	return (1);
 }
 
@@ -1794,7 +1794,7 @@ cbiDasm(i, ofs, w)
 	else
 		db_printf(subDCond(Cond(w) << 1));
 	db_printf("%s\t%d,%%r%d,", Nu(w)? ",n":"", Ima5(w), Rsb(w));
-	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY, db_printf);
+	db_printsym((vaddr_t)tgtofs, DB_STGY_ANY, db_printf);
 	return (1);
 }
 
@@ -1814,7 +1814,7 @@ bbDasm(i, ofs, w)
 		db_printf("%s\t%%r%d,", p, Rta(w));
 	else
 		db_printf("%s\t%%r%d,%d,", p, Rsa(w), Imb5(w));
-	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY, db_printf);
+	db_printsym((vaddr_t)tgtofs, DB_STGY_ANY, db_printf);
 	return (1);
 }
 

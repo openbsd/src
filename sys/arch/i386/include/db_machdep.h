@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.28 2019/03/23 05:47:22 visa Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.29 2019/11/07 14:44:53 mpi Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.9 1996/05/03 19:23:59 christos Exp $	*/
 
 /* 
@@ -44,7 +44,7 @@ typedef	long		db_expr_t;	/* expression - signed */
 typedef struct trapframe db_regs_t;
 extern db_regs_t	ddb_regs;	/* register state */
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->tf_eip)
+#define	PC_REGS(regs)	((vaddr_t)(regs)->tf_eip)
 #define	SET_PC_REGS(regs, value) (regs)->tf_eip = (int)(value)
 
 #define	BKPT_INST	0xcc		/* breakpoint instruction */

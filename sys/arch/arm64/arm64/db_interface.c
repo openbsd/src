@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.7 2019/11/07 11:04:21 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.8 2019/11/07 14:44:52 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /*
@@ -509,8 +509,8 @@ db_machine_init(void)
 #endif
 }
 
-db_addr_t
-db_branch_taken(u_int insn, db_addr_t pc, db_regs_t *db_regs)
+vaddr_t
+db_branch_taken(u_int insn, vaddr_t pc, db_regs_t *db_regs)
 {
 	// implment
 	return pc + 4;

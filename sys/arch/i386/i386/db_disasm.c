@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.22 2019/11/06 07:34:35 mpi Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.23 2019/11/07 14:44:53 mpi Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /*
@@ -882,15 +882,15 @@ int db_lengths[] = {
 	} while (0)
 
 
-db_addr_t db_read_address(db_addr_t, int, int, struct i_addr *);
+vaddr_t db_read_address(vaddr_t, int, int, struct i_addr *);
 void db_print_address(char *, int, struct i_addr *);
-db_addr_t db_disasm_esc(db_addr_t, int, int, int, char *);
+vaddr_t db_disasm_esc(vaddr_t, int, int, int, char *);
 
 /*
  * Read address at location and return updated location.
  */
-db_addr_t
-db_read_address(db_addr_t loc, int short_addr, int regmodrm,
+vaddr_t
+db_read_address(vaddr_t loc, int short_addr, int regmodrm,
     struct i_addr *addrp)
 {
 	int		mod, rm, sib, index, disp;
@@ -978,7 +978,7 @@ db_print_address(char *seg, int size, struct i_addr *addrp)
 	if (seg)
 		db_printf("%s:", seg);
 
-	db_printsym((db_addr_t)addrp->disp, DB_STGY_ANY, db_printf);
+	db_printsym((vaddr_t)addrp->disp, DB_STGY_ANY, db_printf);
 	if (addrp->base != 0 || addrp->index != 0) {
 		db_printf("(");
 		if (addrp->base)
@@ -993,8 +993,8 @@ db_print_address(char *seg, int size, struct i_addr *addrp)
  * Disassemble floating-point ("escape") instruction
  * and return updated location.
  */
-db_addr_t
-db_disasm_esc(db_addr_t loc, int inst, int short_addr, int size, char *seg)
+vaddr_t
+db_disasm_esc(vaddr_t loc, int inst, int short_addr, int size, char *seg)
 {
 	int		regmodrm;
 	struct finst	*fp;
@@ -1084,8 +1084,8 @@ db_disasm_esc(db_addr_t loc, int inst, int short_addr, int size, char *seg)
  * (optional) alternate format.  Return address of start of
  * next instruction.
  */
-db_addr_t
-db_disasm(db_addr_t loc, int altfmt)
+vaddr_t
+db_disasm(vaddr_t loc, int altfmt)
 {
 	int	inst;
 	int	size;
@@ -1357,7 +1357,7 @@ db_disasm(db_addr_t loc, int altfmt)
 				db_printf("%s:%s", seg, db_format(tmpfmt,
 				    sizeof tmpfmt, displ, DB_FORMAT_R, 1, 0));
 			else
-				db_printsym((db_addr_t)displ, DB_STGY_ANY,
+				db_printsym((vaddr_t)displ, DB_STGY_ANY,
 				    db_printf);
 			break;
 		    case Db:
@@ -1365,7 +1365,7 @@ db_disasm(db_addr_t loc, int altfmt)
 			displ += loc;
 			if (size == WORD)
 				displ &= 0xFFFF;
-			db_printsym((db_addr_t)displ, DB_STGY_XTRN, db_printf);
+			db_printsym((vaddr_t)displ, DB_STGY_XTRN, db_printf);
 			break;
 		    case Dl:
 			len = db_lengths[size];
@@ -1373,7 +1373,7 @@ db_disasm(db_addr_t loc, int altfmt)
 			displ += loc;
 			if (size == WORD)
 				displ &= 0xFFFF;
-			db_printsym((db_addr_t)displ, DB_STGY_XTRN, db_printf);
+			db_printsym((vaddr_t)displ, DB_STGY_XTRN, db_printf);
 			break;
 		    case o1:
 			db_printf("$1");

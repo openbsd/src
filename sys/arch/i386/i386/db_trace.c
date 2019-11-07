@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.36 2019/11/06 07:34:35 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.37 2019/11/07 14:44:53 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 {
 	struct callframe *frame, *lastframe;
 	int		*argp, *arg0;
-	db_addr_t	callpc;
+	vaddr_t		callpc;
 	unsigned int	cr4save = CR4_SMEP|CR4_SMAP;
 	int		kernel_only = 1;
 	int		trace_proc = 0;
@@ -147,14 +147,14 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 
 	if (!have_addr) {
 		frame = (struct callframe *)ddb_regs.tf_ebp;
-		callpc = (db_addr_t)ddb_regs.tf_eip;
+		callpc = (vaddr_t)ddb_regs.tf_eip;
 	} else if (trace_proc) {
 		frame = (struct callframe *)p->p_addr->u_pcb.pcb_ebp;
-		callpc = (db_addr_t)
+		callpc = (vaddr_t)
 		    db_get_value((int)&frame->f_retaddr, 4, 0);
 	} else {
 		frame = (struct callframe *)addr;
-		callpc = (db_addr_t)
+		callpc = (vaddr_t)
 		    db_get_value((int)&frame->f_retaddr, 4, 0);
 	}
 
@@ -219,7 +219,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		if (lastframe == 0 && offset == 0 && !have_addr) {
 			/* Frame really belongs to next callpc */
 			lastframe = (struct callframe *)(ddb_regs.tf_esp-4);
-			callpc = (db_addr_t)
+			callpc = (vaddr_t)
 				 db_get_value((int)&lastframe->f_retaddr, 4, 0);
 			continue;
 		}
@@ -291,7 +291,7 @@ db_get_pc(struct trapframe *tf)
 	else
 		cf = (struct callframe *)(tf->tf_esp - sizeof(long));
 
-	return db_get_value((db_addr_t)&cf->f_retaddr, sizeof(long), 0);
+	return db_get_value((vaddr_t)&cf->f_retaddr, sizeof(long), 0);
 }
 
 vaddr_t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.54 2019/11/07 11:04:21 mpi Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.55 2019/11/07 14:44:53 mpi Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -353,10 +353,10 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
  *	address we will end up at so the 'dual bp' method is not
  *	required.
  */
-db_addr_t
-next_instr_address(db_addr_t pc, int bd)
+vaddr_t
+next_instr_address(vaddr_t pc, int bd)
 {
-	db_addr_t next;
+	vaddr_t next;
 	uint32_t instr;
 
 	instr = kdbpeek(pc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.19 2019/11/07 11:04:21 mpi Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.20 2019/11/07 14:44:53 mpi Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -43,7 +43,7 @@ typedef vaddr_t		db_addr_t;
 
 #define	SOFTWARE_SSTEP		/* Need software single step */
 #define	SOFTWARE_SSTEP_EMUL	/* next_instr_address() emulates 100% */
-db_addr_t	next_instr_address(db_addr_t, int);
+vaddr_t	next_instr_address(vaddr_t, int);
 #define	BKPT_SIZE   (4)
 #define	BKPT_SET(ins)	(BREAK_DDB)
 #define	DB_VALID_BREAKPOINT(addr)	(((addr) & 3) == 0)
@@ -51,7 +51,7 @@ db_addr_t	next_instr_address(db_addr_t, int);
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAK)
 #define IS_WATCHPOINT_TRAP(type, code)	(0)	/* XXX mips3 watchpoint */
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->pc)
+#define	PC_REGS(regs)	((vaddr_t)(regs)->pc)
 #define	SET_PC_REGS(regs, value)	(regs)->pc = (register_t)(value)
 
 /*
@@ -68,7 +68,7 @@ int db_enter_ddb(void);
 void db_startcpu(int);
 void db_stopcpu(int);
 
-int	dbmd_print_insn(uint32_t, db_addr_t, int (*)(const char *, ...));
+int	dbmd_print_insn(uint32_t, vaddr_t, int (*)(const char *, ...));
 
 #define DDB_STATE_NOT_RUNNING	0
 #define DDB_STATE_RUNNING	1

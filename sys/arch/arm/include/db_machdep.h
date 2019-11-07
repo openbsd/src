@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.11 2016/04/27 11:10:48 mpi Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.12 2019/11/07 14:44:52 mpi Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.5 2001/11/22 18:00:00 thorpej Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ typedef trapframe_t db_regs_t;
 
 extern db_regs_t		ddb_regs;	/* register state */
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->tf_pc)
+#define	PC_REGS(regs)	((vaddr_t)(regs)->tf_pc)
 #define	SET_PC_REGS(regs, value)	(regs)->tf_pc = (register_t)(value)
 
 #define	BKPT_INST	(KERNEL_BREAKPOINT)	/* breakpoint instruction */
@@ -93,7 +93,7 @@ extern db_regs_t		ddb_regs;	/* register state */
 
 #define SOFTWARE_SSTEP
 
-db_addr_t	db_branch_taken(u_int inst, db_addr_t pc, db_regs_t *regs);
+vaddr_t	db_branch_taken(u_int inst, vaddr_t pc, db_regs_t *regs);
 int db_ktrap (int, db_regs_t *);
 void db_machine_init (void);
 

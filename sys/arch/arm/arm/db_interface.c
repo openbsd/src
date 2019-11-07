@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.15 2019/11/07 13:21:31 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.16 2019/11/07 14:44:52 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /* 
@@ -427,8 +427,8 @@ db_fetch_reg(int reg, db_regs_t *db_regs)
 	}
 }
 
-db_addr_t
-db_branch_taken(u_int insn, db_addr_t pc, db_regs_t *db_regs)
+vaddr_t
+db_branch_taken(u_int insn, vaddr_t pc, db_regs_t *db_regs)
 {
 	u_int addr, nregs;
 

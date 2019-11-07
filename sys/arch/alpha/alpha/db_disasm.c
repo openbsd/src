@@ -1,4 +1,4 @@
-/* $OpenBSD: db_disasm.c,v 1.24 2019/11/07 11:16:55 mpi Exp $ */
+/* $OpenBSD: db_disasm.c,v 1.25 2019/11/07 14:44:52 mpi Exp $ */
 /* $NetBSD: db_disasm.c,v 1.8 2000/05/25 19:57:30 jhawk Exp $ */
 
 /* 
@@ -823,10 +823,10 @@ register_name (ireg)
  * (optional) alternate format.  Return address of start of
  * next instruction.
  */
-int	alpha_print_instruction(db_addr_t, alpha_instruction, int);
+int	alpha_print_instruction(vaddr_t, alpha_instruction, int);
 
-db_addr_t
-db_disasm(db_addr_t loc, int altfmt)
+vaddr_t
+db_disasm(vaddr_t loc, int altfmt)
 {
 	alpha_instruction inst;
 
@@ -837,7 +837,7 @@ db_disasm(db_addr_t loc, int altfmt)
 }
 
 int
-alpha_print_instruction(db_addr_t iadr, alpha_instruction i, int showregs)
+alpha_print_instruction(vaddr_t iadr, alpha_instruction i, int showregs)
 {
 	const char	*opcode;
 	int		ireg;

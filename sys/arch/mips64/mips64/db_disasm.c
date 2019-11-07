@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.18 2019/11/07 11:04:21 mpi Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.19 2019/11/07 14:44:53 mpi Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -51,7 +51,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: db_disasm.c,v 1.18 2019/11/07 11:04:21 mpi Exp $
+ *      $Id: db_disasm.c,v 1.19 2019/11/07 14:44:53 mpi Exp $
  */
 
 #ifdef _KERNEL
@@ -73,7 +73,6 @@
 #include <ddb/db_output.h>
 #include <ddb/db_sym.h>
 #else
-#define db_addr_t uint64_t
 #define	db_printsym(addr,flags,fn)	(fn)("%p",addr)
 #endif
 
@@ -555,7 +554,7 @@ static const char *cop0_reg1[32] = {
 };
 
 int
-dbmd_print_insn(uint32_t ins, db_addr_t mdbdot, int (*pr)(const char *, ...))
+dbmd_print_insn(uint32_t ins, vaddr_t mdbdot, int (*pr)(const char *, ...))
 {
 	InstFmt i;
 	int delay = 0;
@@ -720,7 +719,7 @@ dbmd_print_insn(uint32_t ins, db_addr_t mdbdot, int (*pr)(const char *, ...))
 		delay = 1;
 		(*pr)("%s\t", insn);
 		db_printsym((mdbdot & ~0x0fffffffUL) |
-		    (db_addr_t)(i.JType.target << 2), DB_STGY_PROC, pr);
+		    (vaddr_t)(i.JType.target << 2), DB_STGY_PROC, pr);
 		break;
 
 	case OP_BEQ:
@@ -1015,8 +1014,8 @@ loadstore:
 }
 
 #ifdef _KERNEL
-db_addr_t
-db_disasm(db_addr_t loc, int altfmt)
+vaddr_t
+db_disasm(vaddr_t loc, int altfmt)
 {
 	extern uint32_t kdbpeek(vaddr_t);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.22 2017/11/03 11:29:46 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.23 2019/11/07 14:44:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -170,7 +170,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 {
 	u_long		*frame;
 	int		i, framesize;
-	db_addr_t	pc, ra;
+	vaddr_t		pc, ra;
 	u_int		inst;
 	char		*name;
 	db_expr_t	offset;
@@ -192,10 +192,10 @@ trapframe:
 		slot[i] = &regs->tf_regs[0] +
 		    ((u_long *)db_regs[i].valuep - &ddb_regs.tf_regs[0]);
 	frame = (u_long *)regs->tf_regs[FRAME_SP];
-	pc = (db_addr_t)regs->tf_regs[FRAME_PC];
-	ra = (db_addr_t)regs->tf_regs[FRAME_RA];
+	pc = (vaddr_t)regs->tf_regs[FRAME_PC];
+	ra = (vaddr_t)regs->tf_regs[FRAME_RA];
 
-	while (count-- && pc >= (db_addr_t)KERNBASE && pc < (db_addr_t)&etext) {
+	while (count-- && pc >= (vaddr_t)KERNBASE && pc < (vaddr_t)&etext) {
 		db_find_sym_and_offset(pc, &name, &offset);
 
 		if (name == NULL) {
@@ -298,7 +298,7 @@ trapframe:
 
 		/* Look for the return address if recorded.  */
 		if (slot[26])
-			ra = *(db_addr_t *)slot[26];
+			ra = *(vaddr_t *)slot[26];
 		else
 			break;
 

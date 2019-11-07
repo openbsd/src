@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.20 2016/04/27 11:10:48 mpi Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.21 2019/11/07 14:44:53 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 Michael Shalayeff
@@ -29,7 +29,7 @@ typedef	long db_expr_t;
 typedef struct trapframe db_regs_t;
 extern db_regs_t	ddb_regs;
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->tf_iioq_head)
+#define	PC_REGS(regs)	((vaddr_t)(regs)->tf_iioq_head)
 #define	SET_PC_REGS(regs, value)					\
 do {									\
 	(regs)->tf_iioq_tail = 4 +					\
@@ -74,20 +74,20 @@ static __inline int inst_trap_return(u_int ins)	{
 #define	SOFTWARE_SSTEP		1
 #define	SOFTWARE_SSTEP_EMUL	1
 
-static __inline db_addr_t
-next_instr_address(db_addr_t addr, int b) {
+static __inline vaddr_t
+next_instr_address(vaddr_t addr, int b) {
 	return (addr + 4);
 }
 
 #define	branch_taken(ins,pc,f,regs)	branch_taken1(ins, pc, regs)
-static __inline db_addr_t
-branch_taken1(int ins, db_addr_t pc, db_regs_t *regs) {
+static __inline vaddr_t
+branch_taken1(int ins, vaddr_t pc, db_regs_t *regs) {
 	return (pc);
 }
 
 #endif
 
-int db_valid_breakpoint(db_addr_t);
+int db_valid_breakpoint(vaddr_t);
 int db_ktrap(int, int, db_regs_t *);
 
 #endif /* _MACHINE_DB_MACHDEP_H_ */

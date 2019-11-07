@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.53 2019/11/06 07:32:10 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.54 2019/11/07 14:44:53 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -525,10 +525,7 @@ db_stopcpu(struct cpu_info *ci)
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	vaddr_t	addr;
-	register size_t	size;
-	register char	*data;
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
 	register char	*src;
 
@@ -546,10 +543,7 @@ db_read_bytes(addr, size, data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(addr, size, data)
-	vaddr_t	addr;
-	register size_t	size;
-	register char	*data;
+db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
 	register char	*dst;
 	extern vaddr_t ktext;
@@ -1217,14 +1211,11 @@ struct db_command db_machine_command_table[] = {
  * are backwards, everything will still work, and the logic is
  * much simpler this way.
  */
-db_addr_t
-db_branch_taken(inst, pc, regs)
-	int inst;
-	db_addr_t pc;
-	db_regs_t *regs;
+vaddr_t
+db_branch_taken(int inst, vaddr_t pc, db_regs_t *regs)
 {
     union instr insn;
-    db_addr_t npc = ddb_regs.ddb_tf.tf_npc;
+    vaddr_t npc = ddb_regs.ddb_tf.tf_npc;
 
     insn.i_int = inst;
 

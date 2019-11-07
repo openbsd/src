@@ -1,4 +1,4 @@
-/* $OpenBSD: db_interface.c,v 1.25 2019/11/07 11:16:55 mpi Exp $ */
+/* $OpenBSD: db_interface.c,v 1.26 2019/11/07 14:44:52 mpi Exp $ */
 /* $NetBSD: db_interface.c,v 1.8 1999/10/12 17:08:57 jdolecek Exp $ */
 
 /* 
@@ -399,15 +399,15 @@ db_inst_load(int ins)
 	return 0;
 }
 
-db_addr_t
+vaddr_t
 db_branch_taken(ins, pc, regs)
 	int ins;
-	db_addr_t pc;
+	vaddr_t pc;
 	db_regs_t *regs;
 {
 	long signed_immediate;
 	alpha_instruction insn;
-	db_addr_t newpc;
+	vaddr_t newpc;
 
 	insn.bits = ins;
 	switch (insn.branch_format.opcode) {
@@ -457,7 +457,7 @@ db_branch_taken(ins, pc, regs)
  */
 int
 db_valid_breakpoint(addr)
-	db_addr_t addr;
+	vaddr_t addr;
 {
 	char *name;
 	db_expr_t offset;
@@ -468,9 +468,9 @@ db_valid_breakpoint(addr)
 	return (1);
 }
 
-db_addr_t
+vaddr_t
 next_instr_address(pc, branch)
-	db_addr_t pc;
+	vaddr_t pc;
 	int branch;
 {
 	if (!branch)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.19 2019/11/06 07:34:35 mpi Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.20 2019/11/07 14:44:52 mpi Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -891,16 +891,16 @@ int db_lengths[] = {
 	} while (0)
 
 
-db_addr_t db_read_address(db_addr_t, int, int, int, struct i_addr *);
+vaddr_t db_read_address(vaddr_t, int, int, int, struct i_addr *);
 void db_print_address(char *, int, struct i_addr *);
-db_addr_t db_disasm_esc(db_addr_t, int, int, int, int, char *);
-db_addr_t db_disasm_3dnow(db_addr_t, int, int, int, char *);
+vaddr_t db_disasm_esc(vaddr_t, int, int, int, int, char *);
+vaddr_t db_disasm_3dnow(vaddr_t, int, int, int, char *);
 
 /*
  * Read address at location and return updated location.
  */
-db_addr_t
-db_read_address(db_addr_t loc, int short_addr, int regmodrm, int rex,
+vaddr_t
+db_read_address(vaddr_t loc, int short_addr, int regmodrm, int rex,
     struct i_addr *addrp)
 {
 	int		mod, rm, sib, index, disp, size;
@@ -961,7 +961,7 @@ db_print_address(char *seg, int size, struct i_addr *addrp)
 	if (seg)
 		db_printf("%s:", seg);
 
-	db_printsym((db_addr_t)addrp->disp, DB_STGY_ANY, db_printf);
+	db_printsym((vaddr_t)addrp->disp, DB_STGY_ANY, db_printf);
 	if (addrp->base != 0 || addrp->index != 0) {
 		db_printf("(");
 		if (addrp->base)
@@ -975,8 +975,8 @@ db_print_address(char *seg, int size, struct i_addr *addrp)
 /*
  * Disassemble 3DNow! instruction and return updated location.
  */
-db_addr_t
-db_disasm_3dnow(db_addr_t loc, int short_addr, int size, int rex, char *seg)
+vaddr_t
+db_disasm_3dnow(vaddr_t loc, int short_addr, int size, int rex, char *seg)
 {
 	int regmodrm, sib, displacement, opcode;
 
@@ -995,8 +995,8 @@ db_disasm_3dnow(db_addr_t loc, int short_addr, int size, int rex, char *seg)
  * Disassemble floating-point ("escape") instruction
  * and return updated location.
  */
-db_addr_t
-db_disasm_esc(db_addr_t loc, int inst, int short_addr, int size, int rex,
+vaddr_t
+db_disasm_esc(vaddr_t loc, int inst, int short_addr, int size, int rex,
     char *seg)
 {
 	int		regmodrm;
@@ -1087,8 +1087,8 @@ db_disasm_esc(db_addr_t loc, int inst, int short_addr, int size, int rex,
  * (optional) alternate format.  Return address of start of
  * next instruction.
  */
-db_addr_t
-db_disasm(db_addr_t loc, int altfmt)
+vaddr_t
+db_disasm(vaddr_t loc, int altfmt)
 {
 	int	inst;
 	int	size;
@@ -1109,7 +1109,7 @@ db_disasm(db_addr_t loc, int altfmt)
 	int	segovr_grp;
 	int	repe, repne;
 	struct i_addr	address;
-	db_addr_t	loc_orig = loc;
+	vaddr_t	loc_orig = loc;
 	char	tmpfmt[28];
 
 	get_value_inc(inst, loc, 1, FALSE);
@@ -1407,7 +1407,7 @@ db_disasm(db_addr_t loc, int altfmt)
 				db_printf("%s:%s", seg, db_format(tmpfmt,
 				    sizeof tmpfmt, displ, DB_FORMAT_R, 1, 0));
 			else
-				db_printsym((db_addr_t)displ, DB_STGY_ANY,
+				db_printsym((vaddr_t)displ, DB_STGY_ANY,
 				    db_printf);
 			break;
 		case Db: //XXX
@@ -1415,7 +1415,7 @@ db_disasm(db_addr_t loc, int altfmt)
 			displ += loc;
 			if (size == WORD)
 				displ &= 0xFFFF;
-			db_printsym((db_addr_t)displ, DB_STGY_XTRN, db_printf);
+			db_printsym((vaddr_t)displ, DB_STGY_XTRN, db_printf);
 			break;
 		case Dl: //XXX
 			len = db_lengths[size];
@@ -1423,7 +1423,7 @@ db_disasm(db_addr_t loc, int altfmt)
 			displ += loc;
 			if (size == WORD)
 				displ &= 0xFFFF;
-			db_printsym((db_addr_t)displ, DB_STGY_XTRN, db_printf);
+			db_printsym((vaddr_t)displ, DB_STGY_XTRN, db_printf);
 			break;
 		case o1: //XXX
 			db_printf("$1");

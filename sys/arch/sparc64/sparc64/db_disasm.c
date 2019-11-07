@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.7 2019/11/06 07:32:10 mpi Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.8 2019/11/07 14:44:53 mpi Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.9 2000/08/16 11:29:42 pk Exp $ */
 
 /*
@@ -873,7 +873,7 @@ struct sparc_insn sparc_i[] = {
 
 };
 
-db_addr_t
+vaddr_t
 db_disasm(vaddr_t loc, int altfmt)
 {
 	struct sparc_insn*	i_ptr = (struct sparc_insn *)&sparc_i;
@@ -1009,19 +1009,19 @@ db_disasm(vaddr_t loc, int altfmt)
 		case 'l':
 			val = (((insn>>20)&0x3)<<13)|(insn & 0x1fff);
 			val = SIGNEX(val, 16);
-			db_printsym((db_addr_t)(loc + (4 * val)),
+			db_printsym((vaddr_t)(loc + (4 * val)),
 			    DB_STGY_ANY, db_printf);
 			break;
 		case 'm':
-			db_printsym((db_addr_t)(loc + (4 * SIGNEX(insn, 22))),
+			db_printsym((vaddr_t)(loc + (4 * SIGNEX(insn, 22))),
 				DB_STGY_ANY, db_printf);
 			break;
 		case 'u':
-			db_printsym((db_addr_t)(loc + (4 * SIGNEX(insn, 19))),
+			db_printsym((vaddr_t)(loc + (4 * SIGNEX(insn, 19))),
 			    DB_STGY_ANY, db_printf);
 			break;
 		case 'n':
-			db_printsym((db_addr_t)(loc + (4 * SIGNEX(insn, 30))),
+			db_printsym((vaddr_t)(loc + (4 * SIGNEX(insn, 30))),
 			    DB_STGY_PROC, db_printf);
 			break;
 		case 's':
