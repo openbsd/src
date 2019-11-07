@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.227 2019/06/13 08:15:26 claudio Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.228 2019/11/07 11:23:24 krw Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1004,6 +1004,8 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		break;
 
 	case RTM_INVALIDATE:
+		if (ln == NULL)
+			break;
 		if (!ISSET(rt->rt_flags, RTF_LOCAL))
 			nd6_invalidate(rt);
 		break;
