@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.125 2019/10/26 21:16:38 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.126 2019/11/07 14:49:07 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -399,7 +399,7 @@ sys_adjfreq(struct proc *p, void *v, register_t *retval)
 		syscallarg(int64_t *) oldfreq;
 	} */ *uap = v;
 	int error = 0;
-	int64_t f;
+	int64_t f, oldf;
 	const int64_t *freq = SCARG(uap, freq);
 	int64_t *oldfreq = SCARG(uap, oldfreq);
 
@@ -412,8 +412,8 @@ sys_adjfreq(struct proc *p, void *v, register_t *retval)
 
 	rw_enter(&tc_lock, (freq == NULL) ? RW_READ : RW_WRITE);
 	if (oldfreq) {
-		tc_adjfreq(&f, NULL);
-		if ((error = copyout(&f, oldfreq, sizeof(f))))
+		tc_adjfreq(&oldf, NULL);
+		if ((error = copyout(&oldf, oldfreq, sizeof(oldf))))
 			goto out;
 	}
 	if (freq)
