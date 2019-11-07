@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.17 2019/07/01 12:05:22 espie Exp $
+.\"	$OpenBSD: dpb.1,v 1.18 2019/11/07 16:17:45 espie Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 1 2019 $
+.Dd $Mdocdate: November 7 2019 $
 .Dt DPB 1
 .Os
 .Sh NAME
@@ -206,8 +206,6 @@ if you want to specify it on the command line, and want to ensure even
 the small "discover PORTSDIR" activity at the beginning of
 .Nm
 is not run as root.
-.It Ar CDROM_ONLY
-Don't fetch distfiles that are not allowed for cdrom.
 .It Ar COLOR
 Set to 1 to have the normal display in color.
 .It Ar CONNECTION_TIMEOUT
@@ -1294,6 +1292,8 @@ Note that the actual build time starts at
 .Sq extract
 and finishes at
 .Sq package .
+.It Pa built-packages.log
+The actual list of fullpkgname.tgz as they get built.
 .It Pa concurrent.log
 Shows the actual concurrency achieved as a result of job starvation /
 parallel handling.
