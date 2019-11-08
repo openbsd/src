@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.277 2019/11/06 13:55:43 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.278 2019/11/08 16:41:14 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -328,7 +328,7 @@ int	iwm_ampdu_rx_start(struct ieee80211com *, struct ieee80211_node *,
 void	iwm_ampdu_rx_stop(struct ieee80211com *, struct ieee80211_node *,
 	    uint8_t);
 void	iwm_sta_rx_agg(struct iwm_softc *, struct ieee80211_node *, uint8_t,
-	    uint16_t, int);
+	    uint16_t, uint16_t, int);
 #ifdef notyet
 int	iwm_ampdu_tx_start(struct ieee80211com *, struct ieee80211_node *,
 	    uint8_t);
@@ -2575,13 +2575,14 @@ iwm_setup_ht_rates(struct iwm_softc *sc)
 
 void
 iwm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
-    uint16_t ssn, int start)
+    uint16_t ssn, uint16_t winsize, int start)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct iwm_add_sta_cmd_v7 cmd;
+	struct iwm_add_sta_cmd cmd;
 	struct iwm_node *in = (void *)ni;
 	int err, s;
 	uint32_t status;
+	size_t cmdsize;
 
 	if (start && sc->sc_rx_ba_sessions >= IWM_MAX_RX_BA_SESSIONS) {
 		ieee80211_addba_req_refuse(ic, ni, tid);
@@ -2598,6 +2599,7 @@ iwm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 	if (start) {
 		cmd.add_immediate_ba_tid = (uint8_t)tid;
 		cmd.add_immediate_ba_ssn = ssn;
+		cmd.rx_ba_window = winsize;
 	} else {
 		cmd.remove_immediate_ba_tid = (uint8_t)tid;
 	}
@@ -2605,7 +2607,11 @@ iwm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 	    IWM_STA_MODIFY_REMOVE_BA_TID;
 
 	status = IWM_ADD_STA_SUCCESS;
-	err = iwm_send_cmd_pdu_status(sc, IWM_ADD_STA, sizeof(cmd), &cmd,
+	if (isset(sc->sc_ucode_api, IWM_UCODE_TLV_API_STA_TYPE))
+		cmdsize = sizeof(cmd);
+	else
+		cmdsize = sizeof(struct iwm_add_sta_cmd_v7);
+	err = iwm_send_cmd_pdu_status(sc, IWM_ADD_STA, cmdsize, &cmd,
 	    &status);
 
 	s = splnet();
@@ -2673,9 +2679,10 @@ iwm_ba_task(void *arg)
 	}
 	
 	if (sc->ba_start)
-		iwm_sta_rx_agg(sc, ni, sc->ba_tid, sc->ba_ssn, 1);
+		iwm_sta_rx_agg(sc, ni, sc->ba_tid, sc->ba_ssn,
+		    sc->ba_winsize, 1);
 	else
-		iwm_sta_rx_agg(sc, ni, sc->ba_tid, 0, 0);
+		iwm_sta_rx_agg(sc, ni, sc->ba_tid, 0, 0, 0);
 
 	refcnt_rele_wake(&sc->task_refs);
 	splx(s);
@@ -2698,6 +2705,7 @@ iwm_ampdu_rx_start(struct ieee80211com *ic, struct ieee80211_node *ni,
 	sc->ba_start = 1;
 	sc->ba_tid = tid;
 	sc->ba_ssn = htole16(ba->ba_winstart);
+	sc->ba_winsize = htole16(ba->ba_winsize);
 	iwm_add_task(sc, systq, &sc->ba_task);
 
 	return EBUSY;
@@ -4707,9 +4715,10 @@ iwm_disable_beacon_filter(struct iwm_softc *sc)
 int
 iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 {
-	struct iwm_add_sta_cmd_v7 add_sta_cmd;
+	struct iwm_add_sta_cmd add_sta_cmd;
 	int err;
 	uint32_t status;
+	size_t cmdsize;
 	struct ieee80211com *ic = &sc->sc_ic;
 
 	if (!update && (sc->sc_flags & IWM_FLAG_STA_ACTIVE))
@@ -4718,6 +4727,8 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 	memset(&add_sta_cmd, 0, sizeof(add_sta_cmd));
 
 	add_sta_cmd.sta_id = IWM_STATION_ID;
+	if (isset(sc->sc_ucode_api, IWM_UCODE_TLV_API_STA_TYPE))
+		add_sta_cmd.station_type = IWM_STA_LINK;
 	add_sta_cmd.mac_id_n_color
 	    = htole32(IWM_FW_CMD_ID_AND_COLOR(in->in_id, in->in_color));
 	if (!update) {
@@ -4768,7 +4779,11 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 	}
 
 	status = IWM_ADD_STA_SUCCESS;
-	err = iwm_send_cmd_pdu_status(sc, IWM_ADD_STA, sizeof(add_sta_cmd),
+	if (isset(sc->sc_ucode_api, IWM_UCODE_TLV_API_STA_TYPE))
+		cmdsize = sizeof(add_sta_cmd);
+	else
+		cmdsize = sizeof(struct iwm_add_sta_cmd_v7);
+	err = iwm_send_cmd_pdu_status(sc, IWM_ADD_STA, cmdsize,
 	    &add_sta_cmd, &status);
 	if (!err && (status & IWM_ADD_STA_STATUS_MASK) != IWM_ADD_STA_SUCCESS)
 		err = EIO;
@@ -4779,9 +4794,10 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 int
 iwm_add_aux_sta(struct iwm_softc *sc)
 {
-	struct iwm_add_sta_cmd_v7 cmd;
+	struct iwm_add_sta_cmd cmd;
 	int err, qid;
 	uint32_t status;
+	size_t cmdsize;
 
 	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_DQA_SUPPORT)) {
 		qid = IWM_DQA_AUX_QUEUE;
@@ -4796,13 +4812,19 @@ iwm_add_aux_sta(struct iwm_softc *sc)
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.sta_id = IWM_AUX_STA_ID;
+	if (isset(sc->sc_ucode_api, IWM_UCODE_TLV_API_STA_TYPE))
+		cmd.station_type = IWM_STA_AUX_ACTIVITY;
 	cmd.mac_id_n_color =
 	    htole32(IWM_FW_CMD_ID_AND_COLOR(IWM_MAC_INDEX_AUX, 0));
 	cmd.tfd_queue_msk = htole32(1 << qid);
 	cmd.tid_disable_tx = htole16(0xffff);
 
 	status = IWM_ADD_STA_SUCCESS;
-	err = iwm_send_cmd_pdu_status(sc, IWM_ADD_STA, sizeof(cmd), &cmd,
+	if (isset(sc->sc_ucode_api, IWM_UCODE_TLV_API_STA_TYPE))
+		cmdsize = sizeof(cmd);
+	else
+		cmdsize = sizeof(struct iwm_add_sta_cmd_v7);
+	err = iwm_send_cmd_pdu_status(sc, IWM_ADD_STA, cmdsize, &cmd,
 	    &status);
 	if (!err && (status & IWM_ADD_STA_STATUS_MASK) != IWM_ADD_STA_SUCCESS)
 		err = EIO;
