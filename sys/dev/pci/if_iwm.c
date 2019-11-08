@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.279 2019/11/08 16:42:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.280 2019/11/08 16:42:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8172,14 +8172,14 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_PRODUCT_INTEL_WL_8260_1:
 	case PCI_PRODUCT_INTEL_WL_8260_2:
-		sc->sc_fwname = "iwm-8000C-16";
+		sc->sc_fwname = "iwm-8000C-34";
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_8000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ_8000;
 		sc->sc_nvm_max_section_size = 32768;
 		break;
 	case PCI_PRODUCT_INTEL_WL_8265_1:
-		sc->sc_fwname = "iwm-8265-22";
+		sc->sc_fwname = "iwm-8265-34";
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_8000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ_8000;
