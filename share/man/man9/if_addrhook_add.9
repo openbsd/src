@@ -1,4 +1,4 @@
-.\"     $OpenBSD: if_addrhook_add.9,v 1.1 2019/11/08 07:36:52 dlg Exp $
+.\"     $OpenBSD: if_addrhook_add.9,v 1.2 2019/11/08 08:14:11 jmc Exp $
 .\"
 .\"  Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
 .\"
@@ -43,7 +43,7 @@
 .Ft void
 .Fn if_inkstatehook_del "struct ifnet *ifp" "struct task *t"
 .Sh DESCRIPTION
-The inteface hook API allows for the registration of a task that
+The interface hook API allows for the registration of a task that
 will be called when an IP address change, link state, or detach event
 occurs on the specified interface.
 Tasks should be initialised with
