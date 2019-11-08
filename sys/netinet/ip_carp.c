@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.341 2019/11/08 07:16:29 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.342 2019/11/08 07:51:41 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -953,12 +953,11 @@ carpdetach(void *arg)
 	if_ih_remove(ifp0, carp_input, NULL);
 
 	SRPL_REMOVE_LOCKED(&carp_sc_rc, cif, sc, carp_softc, sc_list);
-	if (SRPL_EMPTY_LOCKED(cif))
-		ifpromisc(ifp0, 0);
 	sc->sc_carpdev = NULL;
 
 	if_linkstatehook_del(ifp0, &sc->sc_ltask);
 	if_detachhook_del(ifp0, &sc->sc_dtask);
+	ifpromisc(ifp0, 0);
 }
 
 void
@@ -1689,12 +1688,11 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp0)
 		return (EINVAL);
 
 	cif = &ifp0->if_carp;
-	if (SRPL_EMPTY_LOCKED(cif)) {
-		if ((error = ifpromisc(ifp0, 1)))
-			return (error);
-
-	} else if (carp_check_dup_vhids(sc, cif, NULL))
+	if (carp_check_dup_vhids(sc, cif, NULL))
 		return (EINVAL);
+
+	if ((error = ifpromisc(ifp0, 1)))
+		return (error);
 
 	/* detach from old interface */
 	if (sc->sc_carpdev != NULL)
