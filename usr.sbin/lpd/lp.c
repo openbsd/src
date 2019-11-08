@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.c,v 1.1.1.1 2018/04/27 16:14:36 eric Exp $	*/
+/*	$OpenBSD: lp.c,v 1.2 2019/11/08 07:26:38 mestre Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -116,15 +116,15 @@ lp_scanprinters(struct lp_printer *lp)
 		cgetclose();
 		scanning = 0;
 		return 0;
-	}
-	else if (r == 1) {
+	} else if (r == 1) {
 		memset(lp, 0, sizeof(*lp));
 		r = readent(lp, buf);
 		free(buf);
 		if (r == -2)
 			goto fail;
 		return 1;
-	}
+	} else if (r == -1) 
+		fatal("cannot open %s", _PATH_PRINTCAP);
 	else if (r == -2)
 		errno = ELOOP; /* potential reference loop */
 
