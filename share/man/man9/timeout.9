@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.46 2019/04/14 08:51:31 visa Exp $
+.\"	$OpenBSD: timeout.9,v 1.47 2019/11/08 00:28:11 cheloha Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 14 2019 $
+.Dd $Mdocdate: November 8 2019 $
 .Dt TIMEOUT_SET 9
 .Os
 .Sh NAME
@@ -282,3 +282,16 @@ These functions are implemented in the file
 .Xr splclock 9 ,
 .Xr tsleep 9 ,
 .Xr tvtohz 9
+.Rs
+.%A George Varghese
+.%A Anthony Lauck
+.%B Hashed and hierarchical timing wheels: efficient data structures for \
+implementing a timer facility
+.%O especially Schemes 6 and 7
+.%I IEEE/ACM
+.%J Transactions on Networking
+.%V vol. 5
+.%N no. 6
+.%P pp. 824\(en834
+.%D December 1997
+.Re
