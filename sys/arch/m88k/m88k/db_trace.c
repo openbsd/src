@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.17 2017/05/30 15:39:04 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.18 2019/11/08 15:01:15 mpi Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -456,13 +456,13 @@ static int next_address_likely_wrong = 0;
  *	stack pointer can be adjusted.
  */
 static vaddr_t
-stack_decode(db_addr_t addr, vaddr_t *stack, int (*pr)(const char *, ...))
+stack_decode(vaddr_t addr, vaddr_t *stack, int (*pr)(const char *, ...))
 {
 	Elf_Sym *proc;
 	db_expr_t offset_from_proc;
 	uint instructions_to_search;
-	db_addr_t check_addr;
-	db_addr_t function_addr;    /* start of function */
+	vaddr_t check_addr;
+	vaddr_t function_addr;    /* start of function */
 	uint32_t r31;
 	uint32_t inst;
 	vaddr_t ret_addr;	    /* address to which we return */

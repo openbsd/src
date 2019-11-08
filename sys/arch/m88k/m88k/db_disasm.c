@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.9 2007/10/27 20:31:19 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.10 2019/11/08 15:01:15 mpi Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -1068,8 +1068,8 @@ m88k_print_instruction(int cpu, u_int iadr, u_int32_t inst)
 	}
 }
 
-db_addr_t
-db_disasm(db_addr_t loc, boolean_t altfmt)
+vaddr_t
+db_disasm(vaddr_t loc, int altfmt)
 {
 	int cpu;
 

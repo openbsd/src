@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.23 2019/07/20 23:03:55 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.24 2019/11/08 15:01:15 mpi Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -235,7 +235,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 
 	db_printf("%cxip: 0x%08lx ",
 	    CPU_IS88110 ? 'e' : 's', s->tf_sxip & XIP_ADDR);
-	db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->tf_sxip),
+	db_find_xtrn_sym_and_offset((vaddr_t)IPMASK(s->tf_sxip),
 	    &name, &offset);
 	if (name != NULL && (u_int)offset <= db_maxoff)
 		db_printf("%s+0x%08x", name, (u_int)offset);
@@ -244,7 +244,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	if (s->tf_snip != s->tf_sxip + 4) {
 		db_printf("%cnip: 0x%08lx ",
 		    CPU_IS88110 ? 'e' : 's', s->tf_snip);
-		db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->tf_snip),
+		db_find_xtrn_sym_and_offset((vaddr_t)IPMASK(s->tf_snip),
 		    &name, &offset);
 		if (name != NULL && (u_int)offset <= db_maxoff)
 			db_printf("%s+0x%08x", name, (u_int)offset);
@@ -255,7 +255,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	if (CPU_IS88100) {
 		if (s->tf_sfip != s->tf_snip + 4) {
 			db_printf("sfip: 0x%08lx ", s->tf_sfip);
-			db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->tf_sfip),
+			db_find_xtrn_sym_and_offset((vaddr_t)IPMASK(s->tf_sfip),
 			    &name, &offset);
 			if (name != NULL && (u_int)offset <= db_maxoff)
 				db_printf("%s+0x%08x", name, (u_int)offset);
@@ -296,7 +296,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 		if (s->tf_vector == /*data*/3 || s->tf_dmt0 & DMT_VALID) {
 			db_printf("dmt,d,a0: 0x%08lx  0x%08lx  0x%08lx ",
 			    s->tf_dmt0, s->tf_dmd0, s->tf_dma0);
-			db_find_xtrn_sym_and_offset((db_addr_t)s->tf_dma0,
+			db_find_xtrn_sym_and_offset((vaddr_t)s->tf_dma0,
 			    &name, &offset);
 			if (name != NULL && (u_int)offset <= db_maxoff)
 				db_printf("%s+0x%08x", name, (u_int)offset);
@@ -309,7 +309,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 			if ((s->tf_dmt1 & DMT_VALID) && (!suppress1)) {
 				db_printf("dmt,d,a1: 0x%08lx  0x%08lx  0x%08lx ",
 				    s->tf_dmt1, s->tf_dmd1, s->tf_dma1);
-				db_find_xtrn_sym_and_offset((db_addr_t)s->tf_dma1,
+				db_find_xtrn_sym_and_offset((vaddr_t)s->tf_dma1,
 				    &name, &offset);
 				if (name != NULL && (u_int)offset <= db_maxoff)
 					db_printf("%s+0x%08x", name,
@@ -322,7 +322,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 				if ((s->tf_dmt2 & DMT_VALID) && (!suppress2)) {
 					db_printf("dmt,d,a2: 0x%08lx  0x%08lx  0x%08lx ",
 						  s->tf_dmt2, s->tf_dmd2, s->tf_dma2);
-					db_find_xtrn_sym_and_offset((db_addr_t)s->tf_dma2,
+					db_find_xtrn_sym_and_offset((vaddr_t)s->tf_dma2,
 					    &name, &offset);
 					if (name != 0 &&
 					    (u_int)offset <= db_maxoff)
@@ -487,7 +487,7 @@ ddb_entry_trap(level, eframe)
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(db_addr_t addr, size_t size, char *data)
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
 	char *src;
 
@@ -502,7 +502,7 @@ db_read_bytes(db_addr_t addr, size_t size, char *data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(db_addr_t addr, size_t size, char *data)
+db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
 	extern pt_entry_t *pmap_pte(pmap_t, vaddr_t);
 	char *dst = (char *)addr;
@@ -557,7 +557,7 @@ m88k_db_where(addr, have_addr, count, modif)
 {
 	char *name;
 	db_expr_t offset;
-	db_addr_t l;
+	vaddr_t l;
 
 	l = PC_REGS(&ddb_regs); /* clear low bits */
 

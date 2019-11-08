@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sstep.c,v 1.7 2010/11/27 19:57:23 miod Exp $	*/
+/*	$OpenBSD: db_sstep.c,v 1.8 2019/11/08 15:01:15 mpi Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -51,17 +51,17 @@
 
 #ifdef M88100
 
-boolean_t	inst_branch_or_call(u_int);
-db_addr_t	branch_taken(u_int, db_addr_t, db_regs_t *);
+int		inst_branch_or_call(u_int);
+vaddr_t		branch_taken(u_int, vaddr_t, db_regs_t *);
 
 db_breakpoint_t db_not_taken_bkpt = 0;
 db_breakpoint_t db_taken_bkpt = 0;
 
 /*
- * Returns TRUE is the instruction a branch, jump or call instruction
+ * Returns `1' is the instruction a branch, jump or call instruction
  * (br, bb0, bb1, bcnd, jmp, bsr, jsr)
  */
-boolean_t
+int
 inst_branch_or_call(u_int ins)
 {
 	/* check high five bits */
@@ -71,13 +71,13 @@ inst_branch_or_call(u_int ins)
 	case 0x1a: /* bb0 */
 	case 0x1b: /* bb1 */
 	case 0x1d: /* bcnd */
-		return (TRUE);
+		return 1;
 	case 0x1e: /* could be jmp or jsr */
 		if ((ins & 0xfffff3e0) == 0xf400c000)
-			return (TRUE);
+			return 1;
 	}
 
-	return (FALSE);
+	return 0;
 }
 
 /*
@@ -87,14 +87,14 @@ inst_branch_or_call(u_int ins)
  * Branch taken is supposed to return the address to which the instruction
  * would jump if the branch is taken.
  */
-db_addr_t
-branch_taken(u_int inst, db_addr_t pc, db_regs_t *regs)
+vaddr_t
+branch_taken(u_int inst, vaddr_t pc, db_regs_t *regs)
 {
 	u_int regno;
 
 	/*
 	 * Quick check of the instruction. Note that we know we are only
-	 * invoked if inst_branch_or_call() returns TRUE, so we do not
+	 * invoked if inst_branch_or_call() returns `1', so we do not
 	 * need to repeat the jmp and jsr stricter checks here.
 	 */
 	switch (inst >> (32 - 5)) {
@@ -141,8 +141,8 @@ db_set_single_step(db_regs_t *regs)
 		/*
 		 * ... while the 88100 will use two breakpoints.
 		 */
-		db_addr_t pc = PC_REGS(regs);
-		db_addr_t brpc;
+		vaddr_t pc = PC_REGS(regs);
+		vaddr_t brpc;
 		u_int inst;
 
 		/*
