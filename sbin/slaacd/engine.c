@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.41 2019/11/07 08:45:31 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.42 2019/11/08 13:01:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1898,6 +1898,7 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 
 	if ((addr_proposal = calloc(1, sizeof(*addr_proposal))) == NULL)
 		fatal("calloc");
+	addr_proposal->id = ++proposal_id;
 	evtimer_set(&addr_proposal->timer, address_proposal_timeout,
 	    addr_proposal);
 	addr_proposal->next_timeout = 1;
@@ -1987,6 +1988,7 @@ gen_dfr_proposal(struct slaacd_iface *iface, struct radv *ra)
 
 	if ((dfr_proposal = calloc(1, sizeof(*dfr_proposal))) == NULL)
 		fatal("calloc");
+	dfr_proposal->id = ++proposal_id;
 	evtimer_set(&dfr_proposal->timer, dfr_proposal_timeout,
 	    dfr_proposal);
 	dfr_proposal->next_timeout = 1;
