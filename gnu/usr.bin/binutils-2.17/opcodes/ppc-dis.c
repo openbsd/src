@@ -85,7 +85,7 @@ powerpc_dialect (struct disassemble_info *info)
 	dialect |= PPC_OPCODE_64;
     }
 
-  info->private_data = (void *) dialect;
+  info->private_data = (void *)(long) dialect;
   return dialect;
 }
 
