@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.44 2019/10/23 13:50:50 krw Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.45 2019/11/08 16:13:28 krw Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -64,10 +64,10 @@ struct sd_softc {
 #define	SDF_THIN	0x01		/* disk is thin provisioned */
 	struct scsi_link	*sc_link; /* contains our targ, lun, etc. */
 	struct disk_parms {
-		u_long	heads;		/* number of heads */
-		u_long	cyls;		/* number of cylinders */
-		u_long	sectors;	/* number of sectors/track */
-		u_long	secsize;	/* number of bytes/sector */
+		u_int32_t	heads;		/* number of heads */
+		u_int32_t	cyls;		/* number of cylinders */
+		u_int32_t	sectors;	/* number of sectors/track */
+		u_int32_t	secsize;	/* number of bytes/sector */
 		u_int64_t	disksize;	/* total number sectors */
 		u_int32_t	unmap_sectors;	/* maximum sectors/unmap */
 		u_int32_t	unmap_descs;	/* maximum descriptors/unmap */

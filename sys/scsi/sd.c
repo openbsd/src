@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.293 2019/11/07 17:45:22 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.294 2019/11/08 16:13:28 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -218,7 +218,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 		scsi_prevent(link, PR_ALLOW, sd_autoconf);
 
 	if (error == 0) {
-		printf("%s: %lluMB, %lu bytes/sector, %llu sectors",
+		printf("%s: %lluMB, %u bytes/sector, %llu sectors",
 		    sc->sc_dev.dv_xname,
 		    dp->disksize / (1048576 / dp->secsize), dp->secsize,
 		    dp->disksize);
