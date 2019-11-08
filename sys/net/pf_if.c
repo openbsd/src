@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.97 2019/07/09 11:30:19 yasuoka Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.98 2019/11/08 07:16:29 dlg Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -235,6 +235,7 @@ void
 pfi_attach_ifnet(struct ifnet *ifp)
 {
 	struct pfi_kif		*kif;
+	struct task		*t;
 
 	pfi_initialize();
 	pfi_update++;
@@ -244,10 +245,10 @@ pfi_attach_ifnet(struct ifnet *ifp)
 	kif->pfik_ifp = ifp;
 	ifp->if_pf_kif = (caddr_t)kif;
 
-	if ((kif->pfik_ah_cookie = hook_establish(ifp->if_addrhooks, 1,
-	    pfi_kifaddr_update, kif)) == NULL)
-		panic("pfi_attach_ifnet: cannot allocate '%s' address hook",
-		    ifp->if_xname);
+	t = malloc(sizeof(*t), PFI_MTYPE, M_WAITOK);
+	task_set(t, pfi_kifaddr_update, kif);
+	if_addrhook_add(ifp, t);
+	kif->pfik_ah_cookie = t;
 
 	pfi_kif_update(kif);
 }
@@ -256,12 +257,14 @@ void
 pfi_detach_ifnet(struct ifnet *ifp)
 {
 	struct pfi_kif		*kif;
+	struct task		*t;
 
 	if ((kif = (struct pfi_kif *)ifp->if_pf_kif) == NULL)
 		return;
 
 	pfi_update++;
-	hook_disestablish(ifp->if_addrhooks, kif->pfik_ah_cookie);
+	t = kif->pfik_ah_cookie;
+	if_addrhook_del(ifp, t);
 	pfi_kif_update(kif);
 
 	kif->pfik_ifp = NULL;

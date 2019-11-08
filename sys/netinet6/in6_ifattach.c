@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.114 2019/08/21 15:32:18 florian Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.115 2019/11/08 07:16:29 dlg Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -289,7 +289,7 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 		nd6_dad_start(&ia6->ia_ifa);
 
 	if (ifp->if_flags & IFF_LOOPBACK) {
-		dohooks(ifp->if_addrhooks, 0);
+		if_addrhooks_run(ifp);
 		return (0); /* No need to install a connected route. */
 	}
 
@@ -303,7 +303,7 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 		in6_purgeaddr(&ia6->ia_ifa);
 		return (error);
 	}
-	dohooks(ifp->if_addrhooks, 0);
+	if_addrhooks_run(ifp);
 
 	return (0);
 }
@@ -419,7 +419,7 @@ in6_ifdetach(struct ifnet *ifp)
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		in6_purgeaddr(ifa);
-		dohooks(ifp->if_addrhooks, 0);
+		if_addrhooks_run(ifp);
 	}
 
 	/*

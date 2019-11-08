@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.591 2019/11/07 08:03:18 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.592 2019/11/08 07:16:29 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -630,9 +630,7 @@ if_attach_common(struct ifnet *ifp)
 	ifp->if_iqs = ifp->if_rcv.ifiq_ifiqs;
 	ifp->if_niqs = 1;
 
-	ifp->if_addrhooks = malloc(sizeof(*ifp->if_addrhooks),
-	    M_TEMP, M_WAITOK);
-	TAILQ_INIT(ifp->if_addrhooks);
+	TAILQ_INIT(&ifp->if_addrhooks);
 	TAILQ_INIT(&ifp->if_linkstatehooks);
 	TAILQ_INIT(&ifp->if_detachhooks);
 
@@ -1046,19 +1044,18 @@ if_netisr(void *unused)
 void
 if_hooks_run(struct task_list *hooks)
 {
-	struct task *t, *nt, cursor;
+	struct task *t, *nt;
+	struct task cursor = { .t_func = NULL };
 	void (*func)(void *);
 	void *arg;
 
-	/*
-	 * holding the NET_LOCK guarantees that concurrent if_hooks_run
-	 * calls can't happen, and they therefore can't try and call
-	 * each others cursors as actual hooks.
-	 */
-	NET_ASSERT_LOCKED();
-
 	mtx_enter(&if_hooks_mtx);
 	for (t = TAILQ_FIRST(hooks); t != NULL; t = nt) {
+		while (t->t_func == NULL) { /* skip cursors */
+			t = TAILQ_NEXT(t, t_entry);
+			if (t == NULL)
+				break;
+		}
 		func = t->t_func;
 		arg = t->t_arg;
 
@@ -1177,7 +1174,7 @@ if_detach(struct ifnet *ifp)
 		}
 	}
 
-	free(ifp->if_addrhooks, M_TEMP, sizeof(*ifp->if_addrhooks));
+	KASSERT(TAILQ_EMPTY(&ifp->if_addrhooks));
 	KASSERT(TAILQ_EMPTY(&ifp->if_linkstatehooks));
 	KASSERT(TAILQ_EMPTY(&ifp->if_detachhooks));
 
@@ -3100,7 +3097,7 @@ ifnewlladdr(struct ifnet *ifp)
 		ifa = &in6ifa_ifpforlinklocal(ifp, 0)->ia_ifa;
 		if (ifa) {
 			in6_purgeaddr(ifa);
-			dohooks(ifp->if_addrhooks, 0);
+			if_hooks_run(&ifp->if_addrhooks);
 			in6_ifattach(ifp);
 		}
 	}
@@ -3112,6 +3109,28 @@ ifnewlladdr(struct ifnet *ifp)
 		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifrq);
 	}
 	splx(s);
+}
+
+void
+if_addrhook_add(struct ifnet *ifp, struct task *t)
+{
+	mtx_enter(&if_hooks_mtx);
+	TAILQ_INSERT_TAIL(&ifp->if_addrhooks, t, t_entry);
+	mtx_leave(&if_hooks_mtx);
+}
+
+void
+if_addrhook_del(struct ifnet *ifp, struct task *t)
+{
+	mtx_enter(&if_hooks_mtx);
+	TAILQ_REMOVE(&ifp->if_addrhooks, t, t_entry);
+	mtx_leave(&if_hooks_mtx);
+}
+
+void
+if_addrhooks_run(struct ifnet *ifp)
+{
+	if_hooks_run(&ifp->if_addrhooks);
 }
 
 int net_ticks;

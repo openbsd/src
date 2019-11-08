@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.68 2019/06/24 13:43:19 mpi Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.69 2019/11/08 07:16:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -919,7 +919,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 		printf("pppx: unable to set addresses for %s, error=%d\n",
 		    ifp->if_xname, error);
 	} else {
-		dohooks(ifp->if_addrhooks, 0);
+		if_addrhooks_run(ifp);
 	}
 	rw_enter_write(&pppx_ifs_lk);
 	pxi->pxi_ready = 1;

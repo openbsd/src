@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.165 2019/11/07 13:25:44 bluhm Exp $	*/
+/*	$OpenBSD: in.c,v 1.166 2019/11/08 07:16:29 dlg Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -390,7 +390,7 @@ in_ioctl_set_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 	in_ifscrub(ifp, ia);
 	error = in_ifinit(ifp, ia, sin, newifaddr);
 	if (!error)
-		dohooks(ifp->if_addrhooks, 0);
+		if_addrhooks_run(ifp);
 
 	NET_UNLOCK();
 	return error;
@@ -503,7 +503,7 @@ in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 			if (error)
 				break;
 		}
-		dohooks(ifp->if_addrhooks, 0);
+		if_addrhooks_run(ifp);
 		break;
 	    }
 	case SIOCDIFADDR:
@@ -523,7 +523,7 @@ in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 		 * the scrub but before the other steps?
 		 */
 		in_purgeaddr(&ia->ia_ifa);
-		dohooks(ifp->if_addrhooks, 0);
+		if_addrhooks_run(ifp);
 		break;
 
 	default:
@@ -946,7 +946,7 @@ in_ifdetach(struct ifnet *ifp)
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 		in_purgeaddr(ifa);
-		dohooks(ifp->if_addrhooks, 0);
+		if_addrhooks_run(ifp);
 	}
 
 	if (ifp->if_xflags & IFXF_AUTOCONF4)

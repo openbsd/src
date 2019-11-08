@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.231 2019/10/22 21:40:12 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.232 2019/11/08 07:16:29 dlg Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -307,7 +307,7 @@ in6_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 			break;
 		}
 		in6_purgeaddr(&ia6->ia_ifa);
-		dohooks(ifp->if_addrhooks, 0);
+		if_addrhooks_run(ifp);
 		break;
 
 	case SIOCAIFADDR_IN6:
@@ -366,13 +366,13 @@ in6_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 			nd6_dad_start(&ia6->ia_ifa);
 
 		if (!newifaddr) {
-			dohooks(ifp->if_addrhooks, 0);
+			if_addrhooks_run(ifp);
 			break;
 		}
 
 		plen = in6_mask2len(&ia6->ia_prefixmask.sin6_addr, NULL);
 		if ((ifp->if_flags & IFF_LOOPBACK) || plen == 128) {
-			dohooks(ifp->if_addrhooks, 0);
+			if_addrhooks_run(ifp);
 			break;	/* No need to install a connected route. */
 		}
 
@@ -383,7 +383,7 @@ in6_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 			in6_purgeaddr(&ia6->ia_ifa);
 			break;
 		}
-		dohooks(ifp->if_addrhooks, 0);
+		if_addrhooks_run(ifp);
 		break;
 	}
 

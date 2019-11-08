@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.340 2019/11/07 07:36:32 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.341 2019/11/08 07:16:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -131,7 +131,7 @@ struct carp_softc {
 	struct arpcom sc_ac;
 #define	sc_if		sc_ac.ac_if
 #define	sc_carpdev	sc_ac.ac_if.if_carpdev
-	void *ah_cookie;
+	struct task sc_atask;
 	struct task sc_ltask;
 	struct task sc_dtask;
 	struct ip_moptions sc_imo;
@@ -808,6 +808,7 @@ carp_clone_create(struct if_clone *ifc, int unit)
 		return (ENOMEM);
 	}
 
+	task_set(&sc->sc_atask, carp_addr_updated, sc);
 	task_set(&sc->sc_ltask, carp_carpdev_state, sc);
 	task_set(&sc->sc_dtask, carpdetach, sc);
 
@@ -841,8 +842,7 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_link_state = LINK_STATE_INVALID;
 
 	/* Hook carp_addr_updated to cope with address and route changes. */
-	sc->ah_cookie = hook_establish(sc->sc_if.if_addrhooks, 0,
-	    carp_addr_updated, sc);
+	if_addrhook_add(&sc->sc_if, &sc->sc_atask);
 
 	return (0);
 }
@@ -893,10 +893,10 @@ carp_clone_destroy(struct ifnet *ifp)
 {
 	struct carp_softc *sc = ifp->if_softc;
 
+	if_addrhook_del(&sc->sc_if, &sc->sc_atask);
+
 	NET_LOCK();
 	carpdetach(sc);
-	if (sc->ah_cookie != NULL)
-		hook_disestablish(sc->sc_if.if_addrhooks, sc->ah_cookie);
 	NET_UNLOCK();
 
 	ether_ifdetach(ifp);
