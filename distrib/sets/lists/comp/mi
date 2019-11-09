@@ -2945,6 +2945,7 @@
 ./usr/share/man/man9/ieee80211_output.9
 ./usr/share/man/man9/ieee80211_proto.9
 ./usr/share/man/man9/ieee80211_radiotap.9
+./usr/share/man/man9/if_addrhook_add.9
 ./usr/share/man/man9/if_get.9
 ./usr/share/man/man9/if_rxr_init.9
 ./usr/share/man/man9/ifq_deq_begin.9
