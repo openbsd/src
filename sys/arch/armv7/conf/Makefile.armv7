@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armv7,v 1.47 2019/11/07 20:42:28 guenther Exp $
+#	$OpenBSD: Makefile.armv7,v 1.48 2019/11/09 19:59:53 guenther Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -107,7 +107,7 @@ param.o: param.c Makefile
 	${NORMAL_C}
 
 mcount.o: $S/lib/libkern/mcount.c Makefile
-	${NORMAL_C_NOP}
+	${NORMAL_C_NOP} -Wno-inline-asm
 
 ioconf.o: ioconf.c
 	${NORMAL_C}
