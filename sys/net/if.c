@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.592 2019/11/08 07:16:29 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.593 2019/11/09 09:45:25 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ int if_cloners_count;
 
 /* hooks should only be added, deleted, and run from a process context */
 struct mutex if_hooks_mtx = MUTEX_INITIALIZER(IPL_NONE);
-void 	if_hooks_run(struct task_list *);
+void	if_hooks_run(struct task_list *);
 
 struct timeout net_tick_to;
 void	net_tick(void *);
@@ -677,7 +677,7 @@ if_qstart_compat(struct ifqueue *ifq)
 	 * this provides compatability between the stack and the older
 	 * drivers by translating from the only queue they have
 	 * (ifp->if_snd) back to the interface and calling if_start.
- 	 */
+	 */
 
 	KERNEL_LOCK();
 	s = splnet();
@@ -1366,7 +1366,7 @@ if_clone_attach(struct if_clone *ifc)
 	 * we are called at kernel boot by main(), when pseudo devices are
 	 * being attached. The main() is the only guy which may alter the
 	 * if_cloners. While system is running and main() is done with
-	 * initialization, the if_cloners becomes immutable. 
+	 * initialization, the if_cloners becomes immutable.
 	 */
 	KASSERT(pdevinit_done == 0);
 	LIST_INSERT_HEAD(&if_cloners, ifc, ifc_list);
@@ -2890,9 +2890,9 @@ if_getgrouplist(caddr_t data)
 			return (EINVAL);
 		bzero(&ifgrq, sizeof ifgrq);
 		strlcpy(ifgrq.ifgrq_group, ifg->ifg_group,
-                    sizeof(ifgrq.ifgrq_group));
+		    sizeof(ifgrq.ifgrq_group));
 		if ((error = copyout((caddr_t)&ifgrq, (caddr_t)ifgp,
-                    sizeof(struct ifg_req))))
+		    sizeof(struct ifg_req))))
 			return (error);
 		len -= sizeof(ifgrq);
 		ifgp++;
