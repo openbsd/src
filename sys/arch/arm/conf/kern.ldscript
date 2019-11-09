@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern.ldscript,v 1.4 2018/03/08 20:44:23 patrick Exp $	*/
+/*	$OpenBSD: kern.ldscript,v 1.5 2019/11/09 20:07:00 guenther Exp $	*/
 /*	$NetBSD: ldscript.evbarm,v 1.2 2003/03/05 23:54:22 thorpej Exp $	*/
 
 OUTPUT_ARCH(arm)
@@ -38,7 +38,11 @@ SECTIONS
 	} :rodata
 	.openbsd.randomdata :
 	{
-		*(.openbsd.randomdata)
+		__retguard_start = ABSOLUTE(.);
+		*(.openbsd.randomdata.retguard .openbsd.randomdata.retguard.*)
+		/* XXX . = ALIGN(__ALIGN_SIZE); */
+		__retguard_end = ABSOLUTE(.);
+		*(.openbsd.randomdata .openbsd.randomdata.*)
 	} :openbsd_randomize :rodata
 	PROVIDE (_erodata = .);
 

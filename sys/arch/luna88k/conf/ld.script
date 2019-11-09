@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.5 2017/03/16 18:08:58 miod Exp $	*/
+/*	$OpenBSD: ld.script,v 1.6 2019/11/09 20:07:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -47,7 +47,12 @@ SECTIONS
 	} :data
 	.openbsd.randomdata :
 	{
-		*(.openbsd.randomdata)
+		/* XXX shouldn't this be placed next to rodata? */
+		__retguard_start = ABSOLUTE(.);
+		*(.openbsd.randomdata.retguard .openbsd.randomdata.retguard.*)
+		/* XXX . = ALIGN(0x80000); */
+		__retguard_end = ABSOLUTE(.);
+		*(.openbsd.randomdata .openbsd.randomdata.*)
 	} :data :openbsd_randomize
 	PROVIDE(edata = ABSOLUTE(.));
 	.bss :

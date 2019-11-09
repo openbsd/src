@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.4 2017/05/09 15:11:33 visa Exp $	*/
+/*	$OpenBSD: ld.script,v 1.5 2019/11/09 20:07:00 guenther Exp $	*/
 
 OUTPUT_FORMAT("elf64-tradbigmips")
 OUTPUT_ARCH(mips)
@@ -13,7 +13,14 @@ SECTIONS
 	.data :		{ *(.data .data.* .gnu.linkonce.d.*) }
 	__kernel_randomdata = .;
 	.openbsd.randomdata :
-			{ *(.openbsd.randomdata) }
+	{
+		/* XXX shouldn't this be placed next to rodata? */
+		__retguard_start = ABSOLUTE(.);
+		*(.openbsd.randomdata.retguard .openbsd.randomdata.retguard.*)
+		/* XXX . = ALIGN(0x1000); */
+		__retguard_end = ABSOLUTE(.);
+		*(.openbsd.randomdata .openbsd.randomdata.*)
+	}
 	__kernel_randomdata_end = .;
 	PROVIDE (edata = .);
 	.sbss :		{ *(.sbss .sbss.* .gnu.linkonce.sb.* .scommon) }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.10 2018/10/26 15:00:54 naddy Exp $	*/
+/*	$OpenBSD: ld.script,v 1.11 2019/11/09 20:07:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -85,7 +85,11 @@ SECTIONS
 	__kernel_randomdata_phys = . & 0xfffffff;
 	.openbsd.randomdata : AT (__kernel_randomdata_phys)
 	{
-		*(.openbsd.randomdata)
+		__retguard_start = ABSOLUTE(.);
+		*(.openbsd.randomdata.retguard .openbsd.randomdata.retguard.*)
+		/* XXX . = ALIGN(__ALIGN_SIZE); */
+		__retguard_end = ABSOLUTE(.);
+		*(.openbsd.randomdata .openbsd.randomdata.*)
 	} :rodata :openbsd_randomize =0xcccccccc
 	. = ALIGN(0x1000);
 	PROVIDE (erodata = .);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.14 2018/07/13 08:30:34 sf Exp $	*/
+/*	$OpenBSD: ld.script,v 1.15 2019/11/09 20:07:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Tobias Weingartner <weingart@tepid.org>
@@ -102,8 +102,8 @@ SECTIONS
 	{
 		__retguard_start = ABSOLUTE(.);
 		__retguard_start_phys = . + __kernel_virt_to_phys;
-		*(.openbsd.randomdata.retguard)
-		. = ALIGN(0x1000);
+		*(.openbsd.randomdata.retguard .openbsd.randomdata.retguard.*)
+		. = ALIGN(__ALIGN_SIZE);
 		__retguard_end = ABSOLUTE(.);
 		__retguard_end_phys = . + __kernel_virt_to_phys;
 		*(.openbsd.randomdata .openbsd.randomdata.*)
