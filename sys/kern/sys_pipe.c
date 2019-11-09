@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.95 2019/07/16 12:16:58 semarie Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.96 2019/11/09 19:02:31 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -217,7 +217,7 @@ pipe_buffer_realloc(struct pipe *cpipe, u_int size)
 
 	/* buffer uninitialized or pipe locked */
 	KASSERT((cpipe->pipe_buffer.buffer == NULL) ||
-	    (cpipe->pipe_state & PIPE_LOCK));
+	    (rw_status(&cpipe->pipe_lock) == RW_WRITE));
 
 	/* buffer should be empty */
 	KASSERT(cpipe->pipe_buffer.cnt == 0);
@@ -258,6 +258,7 @@ pipe_create(void)
 		return (NULL);
 	}
 
+	rw_init(&cpipe->pipe_lock, "pipelk");
 	sigio_init(&cpipe->pipe_sigio);
 
 	getnanotime(&cpipe->pipe_ctime);
@@ -274,14 +275,7 @@ pipe_create(void)
 int
 pipelock(struct pipe *cpipe)
 {
-	int error;
-	while (cpipe->pipe_state & PIPE_LOCK) {
-		cpipe->pipe_state |= PIPE_LWANT;
-		if ((error = tsleep(cpipe, PRIBIO|PCATCH, "pipelk", 0)))
-			return error;
-	}
-	cpipe->pipe_state |= PIPE_LOCK;
-	return 0;
+	return rw_enter(&cpipe->pipe_lock, RW_WRITE | RW_INTR);
 }
 
 /*
@@ -290,11 +284,7 @@ pipelock(struct pipe *cpipe)
 void
 pipeunlock(struct pipe *cpipe)
 {
-	cpipe->pipe_state &= ~PIPE_LOCK;
-	if (cpipe->pipe_state & PIPE_LWANT) {
-		cpipe->pipe_state &= ~PIPE_LWANT;
-		wakeup(cpipe);
-	}
+	rw_exit(&cpipe->pipe_lock);
 }
 
 void
