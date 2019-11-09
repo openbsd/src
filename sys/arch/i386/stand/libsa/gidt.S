@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.36 2012/10/31 13:55:58 jsing Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.37 2019/11/09 17:58:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -426,14 +426,6 @@ intno	= . - 1
 	movl	%edx, 0x9*4(%esp)
 	movb	%bh , 0xe*4(%esp)
 
-	/* clear NT flag in eflags */
-	/* Martin Fredriksson <martin@gbg.netman.se> */
-	pushf
-	pop	%eax
-	and	$0xffffbfff, %eax
-	push	%eax
-	popf
-
 	/* save registers into save area */
 	movl	%eax, _C_LABEL(BIOS_regs)+BIOSR_AX
 	movl	%ecx, _C_LABEL(BIOS_regs)+BIOSR_CX
@@ -441,6 +433,13 @@ intno	= . - 1
 	movl	%ebp, _C_LABEL(BIOS_regs)+BIOSR_BP
 	movl	%esi, _C_LABEL(BIOS_regs)+BIOSR_SI
 	movl	%edi, _C_LABEL(BIOS_regs)+BIOSR_DI
+
+	/* clear NT flag in eflags */
+	pushf
+	pop	%eax
+	and	$0xffffbfff, %eax
+	push	%eax
+	popf
 
 	pop	%gs
 	pop	%fs
