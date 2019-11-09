@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.33 2019/10/31 12:54:40 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.34 2019/11/09 16:28:10 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -742,14 +742,14 @@ main_imsg_send_config(struct uw_conf *xconf)
 	}
 
 	/* send static forwarders to children */
-	SIMPLEQ_FOREACH(uw_forwarder, &xconf->uw_forwarder_list, entry) {
+	TAILQ_FOREACH(uw_forwarder, &xconf->uw_forwarder_list, entry) {
 		if (main_sendall(IMSG_RECONF_FORWARDER, uw_forwarder,
 		    sizeof(*uw_forwarder)) == -1)
 			return (-1);
 	}
 
 	/* send static DoT forwarders to children */
-	SIMPLEQ_FOREACH(uw_forwarder, &xconf->uw_dot_forwarder_list,
+	TAILQ_FOREACH(uw_forwarder, &xconf->uw_dot_forwarder_list,
 	    entry) {
 		if (main_sendall(IMSG_RECONF_DOT_FORWARDER, uw_forwarder,
 		    sizeof(*uw_forwarder)) == -1)
@@ -782,14 +782,14 @@ merge_config(struct uw_conf *conf, struct uw_conf *xconf)
 	struct uw_forwarder	*uw_forwarder;
 
 	/* Remove & discard existing forwarders. */
-	while ((uw_forwarder = SIMPLEQ_FIRST(&conf->uw_forwarder_list)) !=
+	while ((uw_forwarder = TAILQ_FIRST(&conf->uw_forwarder_list)) !=
 	    NULL) {
-		SIMPLEQ_REMOVE_HEAD(&conf->uw_forwarder_list, entry);
+		TAILQ_REMOVE(&conf->uw_forwarder_list, uw_forwarder, entry);
 		free(uw_forwarder);
 	}
-	while ((uw_forwarder = SIMPLEQ_FIRST(&conf->uw_dot_forwarder_list)) !=
+	while ((uw_forwarder = TAILQ_FIRST(&conf->uw_dot_forwarder_list)) !=
 	    NULL) {
-		SIMPLEQ_REMOVE_HEAD(&conf->uw_dot_forwarder_list, entry);
+		TAILQ_REMOVE(&conf->uw_dot_forwarder_list, uw_forwarder, entry);
 		free(uw_forwarder);
 	}
 
@@ -817,16 +817,17 @@ merge_config(struct uw_conf *conf, struct uw_conf *xconf)
 	conf->blocklist_log = xconf->blocklist_log;
 
 	/* Add new forwarders. */
-	while ((uw_forwarder = SIMPLEQ_FIRST(&xconf->uw_forwarder_list)) !=
+	while ((uw_forwarder = TAILQ_FIRST(&xconf->uw_forwarder_list)) !=
 	    NULL) {
-		SIMPLEQ_REMOVE_HEAD(&xconf->uw_forwarder_list, entry);
-		SIMPLEQ_INSERT_TAIL(&conf->uw_forwarder_list,
+		TAILQ_REMOVE(&xconf->uw_forwarder_list, uw_forwarder, entry);
+		TAILQ_INSERT_TAIL(&conf->uw_forwarder_list,
 		    uw_forwarder, entry);
 	}
-	while ((uw_forwarder = SIMPLEQ_FIRST(&xconf->uw_dot_forwarder_list)) !=
+	while ((uw_forwarder = TAILQ_FIRST(&xconf->uw_dot_forwarder_list)) !=
 	    NULL) {
-		SIMPLEQ_REMOVE_HEAD(&xconf->uw_dot_forwarder_list, entry);
-		SIMPLEQ_INSERT_TAIL(&conf->uw_dot_forwarder_list,
+		TAILQ_REMOVE(&xconf->uw_dot_forwarder_list, uw_forwarder,
+		    entry);
+		TAILQ_INSERT_TAIL(&conf->uw_dot_forwarder_list,
 		    uw_forwarder, entry);
 	}
 
@@ -852,8 +853,8 @@ config_new_empty(void)
 	    sizeof(default_res_pref));
 	xconf->res_pref_len = 5;
 
-	SIMPLEQ_INIT(&xconf->uw_forwarder_list);
-	SIMPLEQ_INIT(&xconf->uw_dot_forwarder_list);
+	TAILQ_INIT(&xconf->uw_forwarder_list);
+	TAILQ_INIT(&xconf->uw_dot_forwarder_list);
 
 	if ((xconf->captive_portal_expected_response = strdup("")) == NULL)
 		fatal(NULL);
@@ -1046,8 +1047,8 @@ imsg_receive_config(struct imsg *imsg, struct uw_conf **xconf)
 		nconf->captive_portal_host = NULL;
 		nconf->captive_portal_path = NULL;
 		nconf->captive_portal_expected_response = NULL;
-		SIMPLEQ_INIT(&nconf->uw_forwarder_list);
-		SIMPLEQ_INIT(&nconf->uw_dot_forwarder_list);
+		TAILQ_INIT(&nconf->uw_forwarder_list);
+		TAILQ_INIT(&nconf->uw_dot_forwarder_list);
 		break;
 	case IMSG_RECONF_CAPTIVE_PORTAL_HOST:
 		/* make sure this is a string */
@@ -1086,7 +1087,7 @@ imsg_receive_config(struct imsg *imsg, struct uw_conf **xconf)
 			fatal(NULL);
 		memcpy(uw_forwarder, imsg->data, sizeof(struct
 		    uw_forwarder));
-		SIMPLEQ_INSERT_TAIL(&nconf->uw_forwarder_list,
+		TAILQ_INSERT_TAIL(&nconf->uw_forwarder_list,
 		    uw_forwarder, entry);
 		break;
 	case IMSG_RECONF_DOT_FORWARDER:
@@ -1099,7 +1100,7 @@ imsg_receive_config(struct imsg *imsg, struct uw_conf **xconf)
 			fatal(NULL);
 		memcpy(uw_forwarder, imsg->data, sizeof(struct
 		    uw_forwarder));
-		SIMPLEQ_INSERT_TAIL(&nconf->uw_dot_forwarder_list,
+		TAILQ_INSERT_TAIL(&nconf->uw_dot_forwarder_list,
 		    uw_forwarder, entry);
 		break;
 	default:

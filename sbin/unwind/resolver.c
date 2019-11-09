@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.54 2019/11/09 08:06:38 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.55 2019/11/09 16:28:10 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -339,7 +339,7 @@ resolver(int debug, int verbose)
 
 	new_recursor();
 
-	SIMPLEQ_INIT(&dhcp_forwarder_list);
+	TAILQ_INIT(&dhcp_forwarder_list);
 	TAILQ_INIT(&trust_anchors);
 	TAILQ_INIT(&new_trust_anchors);
 
@@ -867,7 +867,7 @@ parse_dhcp_forwarders(char *forwarders)
 	struct uw_forwarder		*uw_forwarder;
 	char				*ns;
 
-	SIMPLEQ_INIT(&new_forwarder_list);
+	TAILQ_INIT(&new_forwarder_list);
 
 	if (forwarders != NULL) {
 		while((ns = strsep(&forwarders, ",")) != NULL) {
@@ -879,7 +879,7 @@ parse_dhcp_forwarders(char *forwarders)
 			    sizeof(uw_forwarder->name)) >=
 			    sizeof(uw_forwarder->name))
 				fatalx("strlcpy");
-			SIMPLEQ_INSERT_TAIL(&new_forwarder_list, uw_forwarder,
+			TAILQ_INSERT_TAIL(&new_forwarder_list, uw_forwarder,
 			    entry);
 		}
 	}
@@ -893,8 +893,8 @@ parse_dhcp_forwarders(char *forwarders)
 			check_captive_portal(1);
 	} else {
 		while ((uw_forwarder =
-		    SIMPLEQ_FIRST(&new_forwarder_list)) != NULL) {
-			SIMPLEQ_REMOVE_HEAD(&new_forwarder_list, entry);
+		    TAILQ_FIRST(&new_forwarder_list)) != NULL) {
+			TAILQ_REMOVE(&new_forwarder_list, uw_forwarder, entry);
 			free(uw_forwarder);
 		}
 		log_debug("%s: forwarders didn't change", __func__);
@@ -920,7 +920,7 @@ new_forwarders(int oppdot)
 	free_resolver(resolvers[UW_RES_DHCP]);
 	resolvers[UW_RES_DHCP] = NULL;
 
-	if (SIMPLEQ_EMPTY(&dhcp_forwarder_list))
+	if (TAILQ_EMPTY(&dhcp_forwarder_list))
 		return;
 
 	if (TAILQ_EMPTY(&trust_anchors))
@@ -938,7 +938,7 @@ new_asr_forwarders(void)
 	free_resolver(resolvers[UW_RES_ASR]);
 	resolvers[UW_RES_ASR] = NULL;
 
-	if (SIMPLEQ_EMPTY(&dhcp_forwarder_list))
+	if (TAILQ_EMPTY(&dhcp_forwarder_list))
 		return;
 
 	log_debug("%s: create_resolver", __func__);
@@ -953,7 +953,7 @@ new_static_forwarders(int oppdot)
 	free_resolver(resolvers[UW_RES_FORWARDER]);
 	resolvers[UW_RES_FORWARDER] = NULL;
 
-	if (SIMPLEQ_EMPTY(&resolver_conf->uw_forwarder_list))
+	if (TAILQ_EMPTY(&resolver_conf->uw_forwarder_list))
 		return;
 
 	if (TAILQ_EMPTY(&trust_anchors))
@@ -971,7 +971,7 @@ new_static_dot_forwarders(void)
 	free_resolver(resolvers[UW_RES_DOT]);
 	resolvers[UW_RES_DOT] = NULL;
 
-	if (SIMPLEQ_EMPTY(&resolver_conf->uw_dot_forwarder_list))
+	if (TAILQ_EMPTY(&resolver_conf->uw_dot_forwarder_list))
 		return;
 
 	if (TAILQ_EMPTY(&trust_anchors))
@@ -1007,11 +1007,11 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 
 	switch (type) {
 	case UW_RES_ASR:
-		if (SIMPLEQ_EMPTY(&dhcp_forwarder_list)) {
+		if (TAILQ_EMPTY(&dhcp_forwarder_list)) {
 			free(res);
 			return (NULL);
 		}
-		SIMPLEQ_FOREACH(uw_forwarder, &dhcp_forwarder_list, entry) {
+		TAILQ_FOREACH(uw_forwarder, &dhcp_forwarder_list, entry) {
 			tmp = resolv_conf;
 			if (asprintf(&resolv_conf, "%snameserver %s\n", tmp ==
 			    NULL ? "" : tmp, uw_forwarder->name) == -1) {
@@ -1170,7 +1170,7 @@ set_forwarders(struct uw_resolver *res, struct uw_forwarder_head
 {
 	struct uw_forwarder	*uw_forwarder;
 
-	SIMPLEQ_FOREACH(uw_forwarder, uw_forwarder_list, entry)
+	TAILQ_FOREACH(uw_forwarder, uw_forwarder_list, entry)
 		ub_ctx_set_fwd(res->ctx, uw_forwarder->name);
 }
 
@@ -1180,7 +1180,7 @@ set_forwarders_oppdot(struct uw_resolver *res, struct uw_forwarder_head
 {
 	struct uw_forwarder	*uw_forwarder;
 
-	SIMPLEQ_FOREACH(uw_forwarder, uw_forwarder_list, entry) {
+	TAILQ_FOREACH(uw_forwarder, uw_forwarder_list, entry) {
 		char name[1024];
 		int port = uw_forwarder->port;
 		if (port == 0)
@@ -1409,14 +1409,14 @@ check_forwarders_changed(struct uw_forwarder_head *list_a,
 {
 	struct uw_forwarder	*a, *b;
 
-	a = SIMPLEQ_FIRST(list_a);
-	b = SIMPLEQ_FIRST(list_b);
+	a = TAILQ_FIRST(list_a);
+	b = TAILQ_FIRST(list_b);
 
 	while(a != NULL && b != NULL) {
 		if (strcmp(a->name, b->name) != 0)
 			return 1;
-		a = SIMPLEQ_NEXT(a, entry);
-		b = SIMPLEQ_NEXT(b, entry);
+		a = TAILQ_NEXT(a, entry);
+		b = TAILQ_NEXT(b, entry);
 	}
 
 	if (a != NULL || b != NULL)
@@ -1461,14 +1461,14 @@ replace_forwarders(struct uw_forwarder_head *new_list, struct
 	struct uw_forwarder	*uw_forwarder;
 
 	while ((uw_forwarder =
-	    SIMPLEQ_FIRST(old_list)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(old_list, entry);
+	    TAILQ_FIRST(old_list)) != NULL) {
+		TAILQ_REMOVE(old_list, uw_forwarder, entry);
 		free(uw_forwarder);
 	}
 
-	while ((uw_forwarder = SIMPLEQ_FIRST(new_list)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(new_list, entry);
-		SIMPLEQ_INSERT_TAIL(old_list, uw_forwarder, entry);
+	while ((uw_forwarder = TAILQ_FIRST(new_list)) != NULL) {
+		TAILQ_REMOVE(new_list, uw_forwarder, entry);
+		TAILQ_INSERT_TAIL(old_list, uw_forwarder, entry);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.11 2019/10/21 07:16:09 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.12 2019/11/09 16:28:10 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -76,15 +76,15 @@ print_config(struct uw_conf *conf)
 		printf(" }\n");
 	}
 
-	if (!SIMPLEQ_EMPTY(&conf->uw_forwarder_list) ||
-	    !SIMPLEQ_EMPTY(&conf->uw_dot_forwarder_list)) {
+	if (!TAILQ_EMPTY(&conf->uw_forwarder_list) ||
+	    !TAILQ_EMPTY(&conf->uw_dot_forwarder_list)) {
 		printf("forwarder {\n");
-		SIMPLEQ_FOREACH(uw_forwarder, &conf->uw_forwarder_list, entry) {
+		TAILQ_FOREACH(uw_forwarder, &conf->uw_forwarder_list, entry) {
 			printf("\t");
 			print_forwarder(uw_forwarder->name);
 			printf("\n");
 		}
-		SIMPLEQ_FOREACH(uw_forwarder, &conf->uw_dot_forwarder_list,
+		TAILQ_FOREACH(uw_forwarder, &conf->uw_dot_forwarder_list,
 		    entry) {
 			printf("\t");
 			print_forwarder(uw_forwarder->name);

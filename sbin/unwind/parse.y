@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2019/11/06 14:19:59 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.15 2019/11/09 16:28:10 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -342,11 +342,11 @@ forwarderoptsl		: STRING port authname dot {
 				}
 
 				if ($4 == DOT)
-					SIMPLEQ_INSERT_TAIL(
+					TAILQ_INSERT_TAIL(
 					    &conf->uw_dot_forwarder_list,
 					    uw_fwd, entry);
 				else {
-					SIMPLEQ_INSERT_TAIL(
+					TAILQ_INSERT_TAIL(
 					    &conf->uw_forwarder_list,
 					    uw_fwd, entry);
 				}
@@ -893,14 +893,15 @@ clear_config(struct uw_conf *xconf)
 {
 	struct uw_forwarder	*uw_forwarder;
 
-	while ((uw_forwarder = SIMPLEQ_FIRST(&xconf->uw_forwarder_list)) !=
+	while ((uw_forwarder = TAILQ_FIRST(&xconf->uw_forwarder_list)) !=
 	    NULL) {
-		SIMPLEQ_REMOVE_HEAD(&xconf->uw_forwarder_list, entry);
+		TAILQ_REMOVE(&xconf->uw_forwarder_list, uw_forwarder, entry);
 		free(uw_forwarder);
 	}
-	while ((uw_forwarder = SIMPLEQ_FIRST(&xconf->uw_dot_forwarder_list)) !=
+	while ((uw_forwarder = TAILQ_FIRST(&xconf->uw_dot_forwarder_list)) !=
 	    NULL) {
-		SIMPLEQ_REMOVE_HEAD(&xconf->uw_dot_forwarder_list, entry);
+		TAILQ_REMOVE(&xconf->uw_dot_forwarder_list, uw_forwarder,
+		    entry);
 		free(uw_forwarder);
 	}
 
