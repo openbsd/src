@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.22 2019/11/07 08:07:17 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.23 2019/11/09 11:34:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -29,7 +29,7 @@
  * of the Link Aggregation Control Protocol (LACP) for use on the wire,
  * and how to process it and select ports and aggregations based on
  * it.
- * 
+ *
  * This driver implements a simplified or constrained model where each
  * aggr(4) interface is effectively an independent system, and will
  * only support one aggregation. This supports the use of the kernel
@@ -351,7 +351,7 @@ struct aggr_port {
 	enum aggr_port_selected	 p_selected;		/* Selected */
 	struct lacp_port_info	 p_partner;
 #define p_partner_state		 p_partner.lacp_state
-	
+
 	uint8_t			 p_actor_state;
 	uint8_t			 p_lacp_timeout;
 
@@ -624,7 +624,7 @@ aggr_port_enabled(struct aggr_port *p)
 	return (1);
 }
 
-/* 
+/*
  * port_moved
  *
  * This variable is set to TRUE if the Receive machine for an Aggregation
@@ -634,7 +634,7 @@ aggr_port_enabled(struct aggr_port *p)
  * different Aggregation Port. This variable is set to FALSE once the
  * INITIALIZE state of the Receive machine has set the Partner information
  * for the Aggregation Port to administrative default values.
- * 
+ *
  * Value: Boolean
 */
 static int
@@ -811,7 +811,7 @@ aggr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = suser(curproc);
 		if (error != 0)
 			break;
- 
+
 		if (((struct trunk_reqall *)data)->ra_proto !=
 		    TRUNK_PROTO_LACP) {
 			error = EPROTONOSUPPORT;
@@ -859,10 +859,10 @@ aggr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCADDMULTI:
-		error = aggr_multi_add(sc, ifr); 
+		error = aggr_multi_add(sc, ifr);
 		break;
 	case SIOCDELMULTI:
-		error = aggr_multi_del(sc, ifr); 
+		error = aggr_multi_del(sc, ifr);
 		break;
 
 	case SIOCSIFMEDIA:
@@ -899,16 +899,16 @@ aggr_get_trunk(struct aggr_softc *sc, struct trunk_reqall *ra)
 		SET(state, LACP_STATE_ACTIVITY);
 	if (sc->sc_lacp_timeout == AGGR_LACP_TIMEOUT_FAST)
 		SET(state, LACP_STATE_TIMEOUT);
-	
+
 	ra->ra_proto = TRUNK_PROTO_LACP;
 	memset(&ra->ra_psc, 0, sizeof(ra->ra_psc));
 
 	/*
-         * aggr(4) does not support Individual links so don't bother
-         * with portprio, portno, and state, as per the spec.
+	 * aggr(4) does not support Individual links so don't bother
+	 * with portprio, portno, and state, as per the spec.
 	 */
 
-	req = &ra->ra_lacpreq; 
+	req = &ra->ra_lacpreq;
 	req->actor_prio = sc->sc_lacp_prio;
 	CTASSERT(sizeof(req->actor_mac) == sizeof(sc->sc_ac.ac_enaddr));
 	memcpy(req->actor_mac, &sc->sc_ac.ac_enaddr, sizeof(req->actor_mac));
@@ -1643,17 +1643,17 @@ aggr_update_ntt(struct aggr_port *p, const struct lacp_du *lacpdu)
 	if (pi->lacp_portid.lacp_portid_number != htons(ifp0->if_index))
 		goto ntt;
 	if (pi->lacp_portid.lacp_portid_priority !=
-	     htons(sc->sc_lacp_port_prio))
+	    htons(sc->sc_lacp_port_prio))
 		goto ntt;
 	if (!ETHER_IS_EQ(pi->lacp_sysid.lacp_sysid_mac, ac->ac_enaddr))
 		goto ntt;
 	if (pi->lacp_sysid.lacp_sysid_priority !=
-	     htons(sc->sc_lacp_prio))
+	    htons(sc->sc_lacp_prio))
 		goto ntt;
 	if (pi->lacp_key != htons(ifp->if_index))
 		goto ntt;
 	if (ISSET(pi->lacp_state, LACP_STATE_SYNC) !=
-	     ISSET(state, LACP_STATE_SYNC))
+	    ISSET(state, LACP_STATE_SYNC))
 		goto ntt;
 	sync = 1;
 
@@ -1890,9 +1890,9 @@ aggr_mux(struct aggr_softc *sc, struct aggr_port *p, enum lacp_mux_event ev)
 	int ntt = 0;
 
 	/*
-         * the mux can move through multiple states based on a
-         * single event, so loop until the event is completely consumed.
-         * debounce NTT = TRUE through the multiple state transitions.
+	 * the mux can move through multiple states based on a
+	 * single event, so loop until the event is completely consumed.
+	 * debounce NTT = TRUE through the multiple state transitions.
 	 */
 
 	while (aggr_mux_ev(sc, p, ev, &ntt) != 0)
@@ -2191,7 +2191,7 @@ aggr_rxm_ev(struct aggr_softc *sc, struct aggr_port *p,
     enum lacp_rxm_event ev, const struct lacp_du *lacpdu)
 {
 	unsigned int port_disabled = 0;
-	enum lacp_rxm_state nstate = LACP_RXM_S_BEGIN; 
+	enum lacp_rxm_state nstate = LACP_RXM_S_BEGIN;
 
 	KASSERT((ev == LACP_RXM_E_LACPDU) == (lacpdu != NULL));
 
@@ -2614,7 +2614,7 @@ aggr_ptm_tx(void *arg)
 static inline void
 aggr_lacp_tlv_set(struct lacp_tlv_hdr *tlv, uint8_t type, uint8_t len)
 {
-	tlv->lacp_tlv_type = type; 
+	tlv->lacp_tlv_type = type;
 	tlv->lacp_tlv_length = sizeof(*tlv) + len;
 }
 
@@ -2805,9 +2805,9 @@ aggr_multi_add(struct aggr_softc *sc, struct ifreq *ifr)
 	uint8_t addrlo[ETHER_ADDR_LEN];
 	uint8_t addrhi[ETHER_ADDR_LEN];
 	int error;
- 
+
 	error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
-        if (error != 0)
+	if (error != 0)
 		return (error);
 
 	TAILQ_FOREACH(ma, &sc->sc_multiaddrs, m_entry) {
@@ -2851,7 +2851,7 @@ aggr_multi_del(struct aggr_softc *sc, struct ifreq *ifr)
 	int error;
 
 	error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
-        if (error != 0)
+	if (error != 0)
 		return (error);
 
 	TAILQ_FOREACH(ma, &sc->sc_multiaddrs, m_entry) {
