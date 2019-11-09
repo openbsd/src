@@ -22,7 +22,7 @@
 #include "lldb/Utility/Reproducer.h"
 #include "lldb/Utility/Timer.h"
 
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
 #endif
 
@@ -95,7 +95,7 @@ SystemInitializerCommon::Initialize(const InitializerOptions &options) {
   //----------------------------------------------------------------------
   ObjectContainerUniversalMachO::Initialize();
 
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
   ProcessPOSIXLog::Initialize();
 #endif
 #if defined(_MSC_VER)

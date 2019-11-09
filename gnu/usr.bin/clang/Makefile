@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2019/03/05 09:44:38 jsg Exp $
+# $OpenBSD: Makefile,v 1.12 2019/11/09 16:45:48 mortimer Exp $
 
 .include <bsd.own.mk>
 
@@ -87,6 +87,7 @@ SUBDIR+=liblldbTarget
 SUBDIR+=liblldbUtility
 
 SUBDIR+=lldb
+SUBDIR+=lldb-server
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

@@ -51,6 +51,9 @@ public:
 
   bool CanDebugProcess() override;
 
+  lldb::ProcessSP DebugProcess(ProcessLaunchInfo &launch_info, Debugger &debugger,
+                               Target *target, Status &error) override;
+
   void CalculateTrapHandlerSymbolNames() override;
 
   MmapArgList GetMmapArgumentList(const ArchSpec &arch, lldb::addr_t addr,

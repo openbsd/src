@@ -124,7 +124,7 @@ static socklen_t GetFamilyLength(sa_family_t family) {
 }
 
 socklen_t SocketAddress::GetLength() const {
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
   return m_socket_addr.sa.sa_len;
 #else
   return GetFamilyLength(GetFamily());
@@ -139,7 +139,7 @@ sa_family_t SocketAddress::GetFamily() const {
 
 void SocketAddress::SetFamily(sa_family_t family) {
   m_socket_addr.sa.sa_family = family;
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
   m_socket_addr.sa.sa_len = GetFamilyLength(family);
 #endif
 }

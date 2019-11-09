@@ -1,11 +1,12 @@
-# $OpenBSD: Makefile,v 1.3 2019/06/23 22:07:44 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2019/11/09 16:45:48 mortimer Exp $
 
 LIB=	lldbPluginProcess
 NOPIC=
 NOPROFILE=
 
 .include <bsd.own.mk>
-SRCS=	DynamicRegisterInfo.cpp \
+SRCS=	CrashReason.cpp \
+	DynamicRegisterInfo.cpp \
 	FreeBSDSignals.cpp \
 	GDBRemoteClientBase.cpp \
 	GDBRemoteCommunication.cpp \
@@ -13,6 +14,7 @@ SRCS=	DynamicRegisterInfo.cpp \
 	GDBRemoteCommunicationHistory.cpp \
 	GDBRemoteCommunicationReplayServer.cpp \
 	GDBRemoteCommunicationServer.cpp \
+	GDBRemoteCommunicationServerCommon.cpp \
 	GDBRemoteCommunicationServerLLGS.cpp \
 	GDBRemoteCommunicationServerPlatform.cpp \
 	GDBRemoteRegisterContext.cpp \
@@ -25,13 +27,19 @@ SRCS=	DynamicRegisterInfo.cpp \
 	MinidumpParser.cpp \
 	MinidumpTypes.cpp \
 	MipsLinuxSignals.cpp \
+	NativeProcessOpenBSD.cpp \
+	NativeRegisterContextOpenBSD.cpp \
+	NativeRegisterContextOpenBSD_x86_64.cpp \
 	NativeRegisterContextRegisterInfo.cpp \
+	NativeThreadOpenBSD.cpp \
 	NetBSDSignals.cpp \
 	ProcessElfCore.cpp \
 	ProcessGDBRemote.cpp \
 	ProcessGDBRemoteLog.cpp \
 	ProcessMachCore.cpp \
+	ProcessMessage.cpp \
 	ProcessMinidump.cpp \
+	ProcessPOSIXLog.cpp \
 	RegisterContextDarwin_arm.cpp \
 	RegisterContextDarwin_arm64.cpp \
 	RegisterContextDarwin_i386.cpp \
@@ -93,6 +101,8 @@ SRCS=	DynamicRegisterInfo.cpp \
 .PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Process/gdb-remote
 .PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Process/mach-core
 .PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Process/minidump
+.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Process/POSIX
+.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Process/OpenBSD
 
 install:
 	@# Nothing here so far ...
