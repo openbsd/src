@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.75 2019/09/02 12:54:21 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.76 2019/11/09 11:39:15 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -906,6 +906,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			na->na_nodes++;
 			ni = RBT_NEXT(ieee80211_tree, ni);
 		}
+		if (suser(curproc) == 0)
+			ieee80211_begin_bgscan(ifp);
 		break;
 	case SIOCG80211FLAGS:
 		flags = ic->ic_userflags;
