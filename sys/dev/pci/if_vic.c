@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.98 2017/07/12 14:25:36 mikeb Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.99 2019/11/09 03:53:44 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -796,11 +796,11 @@ vic_intr(void *arg)
 	struct vic_softc *sc = (struct vic_softc *)arg;
 	int q;
 
+	vic_write(sc, VIC_CMD, VIC_CMD_INTR_ACK);
+
 	for (q = 0; q < VIC_NRXRINGS; q++)
 		vic_rx_proc(sc, q);
 	vic_tx_proc(sc);
-
-	vic_write(sc, VIC_CMD, VIC_CMD_INTR_ACK);
 
 	return (-1);
 }
