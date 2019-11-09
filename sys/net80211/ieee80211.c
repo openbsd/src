@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.79 2019/11/06 13:55:44 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.80 2019/11/09 13:21:04 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -772,8 +772,25 @@ ieee80211_watchdog(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
 
-	if (ic->ic_mgt_timer && --ic->ic_mgt_timer == 0)
+	if (ic->ic_mgt_timer && --ic->ic_mgt_timer == 0) {
+		if (ic->ic_opmode == IEEE80211_M_STA &&
+		    (ic->ic_state == IEEE80211_S_AUTH ||
+		    ic->ic_state == IEEE80211_S_ASSOC)) {
+			struct ieee80211_node *ni;
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: %s timed out for %s\n",
+				    ifp->if_xname,
+				    ic->ic_state == IEEE80211_S_ASSOC ?
+				    "association" : "authentication",
+				    ether_sprintf(ic->ic_bss->ni_macaddr));
+			ni = ieee80211_find_node(ic, ic->ic_bss->ni_macaddr);
+			if (ni)
+				ni->ni_fails++;
+			if (ISSET(ic->ic_flags, IEEE80211_F_AUTO_JOIN))
+				ieee80211_deselect_ess(ic);
+		}
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+	}
 
 	if (ic->ic_mgt_timer != 0)
 		ifp->if_timer = 1;
