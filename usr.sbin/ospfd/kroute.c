@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.112 2018/12/28 19:25:10 remi Exp $ */
+/*	$OpenBSD: kroute.c,v 1.113 2019/11/09 15:54:19 denis Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1393,7 +1393,7 @@ rtmsg_process(char *buf, size_t len)
 		rtm = (struct rt_msghdr *)next;
 		if (len < offset + sizeof(u_short) ||
 		    len < offset + rtm->rtm_msglen)
-			fatalx("rtmsg_process: partial rtm in buffer");
+			fatalx("%s: partial rtm in buffer", __func__);
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
 
@@ -1501,8 +1501,8 @@ rtmsg_process(char *buf, size_t len)
 				if ((mpath || prio == kr_state.fib_prio) &&
 				    (kr = kroute_matchgw(okr, nexthop)) ==
 				    NULL) {
-					log_warnx("dispatch_rtmsg "
-					    "mpath route not found");
+					log_warnx("%s: mpath route not found",
+					    __func__);
 					/* add routes we missed out earlier */
 					goto add;
 				}
@@ -1536,7 +1536,7 @@ rtmsg_process(char *buf, size_t len)
 add:
 				if ((kr = calloc(1,
 				    sizeof(struct kroute_node))) == NULL) {
-					log_warn("dispatch calloc");
+					log_warn("%s: calloc", __func__);
 					return (-1);
 				}
 
@@ -1580,8 +1580,8 @@ add:
 			okr = kr;
 			if (mpath &&
 			    (kr = kroute_matchgw(kr, nexthop)) == NULL) {
-				log_warnx("dispatch_rtmsg "
-				    "mpath route not found");
+				log_warnx("%s: mpath route not found",
+				    __func__);
 				return (-1);
 			}
 			if (kroute_remove(kr) == -1)
