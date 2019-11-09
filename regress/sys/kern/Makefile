@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.84 2019/08/05 15:18:34 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.85 2019/11/09 21:12:03 anton Exp $
 
 SUBDIR+= __syscall access accept cmsgsize clock_gettime
 SUBDIR+= dup2 dup2_accept dup2_self descrip
@@ -16,6 +16,7 @@ SUBDIR+= mmap mmap2 mmap3 mmap-fail
 SUBDIR+= mount
 SUBDIR+= nanosleep noexec
 SUBDIR+= open
+SUBDIR+= pipe
 SUBDIR+= pledge
 SUBDIR+= pread preadv ptmget pty pwrite pwritev rcvtimeo
 SUBDIR+= realpath
