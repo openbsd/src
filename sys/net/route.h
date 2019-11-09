@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.177 2019/11/09 17:14:01 florian Exp $	*/
+/*	$OpenBSD: route.h,v 1.178 2019/11/09 17:16:39 florian Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ struct rtentry {
 #define RTP_PROPOSAL_STATIC	57
 #define RTP_PROPOSAL_DHCLIENT	58
 #define RTP_PROPOSAL_SLAAC	59
-#define RTP_PROPOSAL_SOLICIT	60
+#define RTP_PROPOSAL_SOLICIT	60	/* request reply of all RTM_PROPOSAL */
 #define RTP_MAX		63	/* maximum priority */
 #define RTP_ANY		64	/* any of the above */
 #define RTP_MASK	0x7f
