@@ -33,14 +33,16 @@ namespace {
         // Create a symbol for the cookie
         Module *M = F.getParent();
         std::hash<std::string> hasher;
-        std::string cookiename = "__retguard_" + std::to_string(hasher((M->getName() + F.getName()).str()) % 4000);
+        std::string hash = std::to_string(hasher((M->getName() + F.getName()).str()) % 4000);
+        std::string cookiename = "__retguard_" + hash;
         Type *cookietype = Type::getInt8PtrTy(M->getContext());
         GlobalVariable *cookie = dyn_cast_or_null<GlobalVariable>(
             M->getOrInsertGlobal(cookiename, cookietype));
         cookie->setInitializer(Constant::getNullValue(cookietype));
-        cookie->setLinkage(GlobalVariable::WeakAnyLinkage);
+        cookie->setLinkage(GlobalVariable::LinkOnceAnyLinkage);
         cookie->setVisibility(GlobalValue::HiddenVisibility);
-        cookie->setSection(".openbsd.randomdata.retguard");
+        cookie->setComdat(M->getOrInsertComdat(cookiename));
+        cookie->setSection(".openbsd.randomdata.retguard." + hash);
         cookie->setExternallyInitialized(true);
         F.addFnAttr("ret-protector-cookie", cookiename);
         NumSymbols++;
