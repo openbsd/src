@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwm.4,v 1.27 2019/08/08 13:59:16 stsp Exp $
+.\" $OpenBSD: iwm.4,v 1.28 2019/11/09 11:06:24 stsp Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 8 2019 $
+.Dd $Mdocdate: November 9 2019 $
 .Dt IWM 4
 .Os
 .Sh NAME
@@ -74,13 +74,12 @@ The driver needs one of the following firmware files,
 which are loaded when an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Pa /etc/firmware/iwm-3160-16
-.It Pa /etc/firmware/iwm-3168-22
-.It Pa /etc/firmware/iwm-7260-16
-.It Pa /etc/firmware/iwm-7265-16
-.It Pa /etc/firmware/iwm-7265D-16
-.It Pa /etc/firmware/iwm-8000C-16
-.It Pa /etc/firmware/iwm-8265-22
+.It Pa /etc/firmware/iwm-3160-17
+.It Pa /etc/firmware/iwm-3168-29
+.It Pa /etc/firmware/iwm-7260-17
+.It Pa /etc/firmware/iwm-7265-17
+.It Pa /etc/firmware/iwm-8000C-34
+.It Pa /etc/firmware/iwm-8265-34
 .El
 .Pp
 These firmware files are not free because Intel refuses to grant
