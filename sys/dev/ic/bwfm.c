@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.66 2019/10/28 12:26:46 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.67 2019/11/09 20:53:55 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1957,15 +1957,24 @@ bwfm_hostap(struct bwfm_softc *sc)
 void
 bwfm_scan(struct bwfm_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct bwfm_escan_params *params;
-	uint32_t nssid = 0, nchannel = 0;
-	size_t params_size;
+	uint32_t nssid = 0, nchan = 0;
+	size_t params_size, chan_size, ssid_size;
+	struct bwfm_ssid *ssid;
 
-	params_size = sizeof(*params);
-	params_size += sizeof(uint32_t) * ((nchannel + 1) / 2);
-	params_size += sizeof(struct bwfm_ssid) * nssid;
+	if (ic->ic_flags & IEEE80211_F_ASCAN &&
+	    ic->ic_des_esslen && ic->ic_des_esslen < BWFM_MAX_SSID_LEN)
+		nssid = 1;
+
+	chan_size = roundup(nchan * sizeof(uint16_t), sizeof(uint32_t));
+	ssid_size = sizeof(struct bwfm_ssid) * nssid;
+	params_size = sizeof(*params) + chan_size + ssid_size;
 
 	params = malloc(params_size, M_TEMP, M_WAITOK | M_ZERO);
+	ssid = (struct bwfm_ssid *)
+	    (((uint8_t *)params) + sizeof(*params) + chan_size);
+
 	memset(params->scan_params.bssid, 0xff,
 	    sizeof(params->scan_params.bssid));
 	params->scan_params.bss_type = 2;
@@ -1978,6 +1987,17 @@ bwfm_scan(struct bwfm_softc *sc)
 	params->action = htole16(WL_ESCAN_ACTION_START);
 	params->sync_id = htole16(0x1234);
 
+	if (ic->ic_flags & IEEE80211_F_ASCAN &&
+	    ic->ic_des_esslen && ic->ic_des_esslen < BWFM_MAX_SSID_LEN) {
+		params->scan_params.scan_type = BWFM_SCANTYPE_ACTIVE;
+		ssid->len = htole32(ic->ic_des_esslen);
+		memcpy(ssid->ssid, ic->ic_des_essid, ic->ic_des_esslen);
+	}
+
+	params->scan_params.channel_num = htole32(
+	    nssid << BWFM_CHANNUM_NSSID_SHIFT |
+	    nchan << BWFM_CHANNUM_NCHAN_SHIFT);
+
 #if 0
 	/* Scan a specific channel */
 	params->scan_params.channel_list[0] = htole16(
@@ -1985,9 +2005,6 @@ bwfm_scan(struct bwfm_softc *sc)
 	    (3 & 0x3) << 8 |
 	    (2 & 0x3) << 10 |
 	    (2 & 0x3) << 12
-	    );
-	params->scan_params.channel_num = htole32(
-	    (1 & 0xffff) << 0
 	    );
 #endif
 

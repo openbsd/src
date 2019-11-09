@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmreg.h,v 1.17 2019/01/30 09:20:56 stsp Exp $ */
+/* $OpenBSD: bwfmreg.h,v 1.18 2019/11/09 20:53:55 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -520,6 +520,10 @@ struct bwfm_scan_params {
 	uint32_t passive_time;
 	uint32_t home_time;
 	uint32_t channel_num;
+#define BWFM_CHANNUM_NSSID_SHIFT	16
+#define BWFM_CHANNUM_NSSID_MASK		0xffff
+#define BWFM_CHANNUM_NCHAN_SHIFT	0
+#define BWFM_CHANNUM_NCHAN_MASK		0xffff
 	uint16_t channel_list[];
 };
 
