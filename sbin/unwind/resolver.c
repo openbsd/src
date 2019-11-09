@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.53 2019/11/06 16:51:11 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.54 2019/11/09 08:06:38 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -445,7 +445,11 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			if (IMSG_DATA_SIZE(imsg) != sizeof(*query_imsg))
 				fatalx("%s: IMSG_QUERY wrong length: %lu",
 				    __func__, IMSG_DATA_SIZE(imsg));
-			query_imsg = malloc(sizeof(*query_imsg)); /* XXX */
+			if ((query_imsg = malloc(sizeof(*query_imsg))) ==
+			    NULL) {
+				log_warn("cannot allocate query");
+				break;
+			}
 			memcpy(query_imsg, imsg.data, sizeof(*query_imsg));
 
 			log_debug("%s: IMSG_QUERY[%llu], qname: %s, t: %d, "
