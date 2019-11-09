@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.27 2019/11/05 12:14:14 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.28 2019/11/09 14:49:31 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -706,6 +706,7 @@ __EOF__
 
 	$openssl_bin req -new -subj $subj -sha256 \
 		-key $server_key -keyform pem -passin pass:$server_pass \
+		-addext 'subjectAltName = DNS:localhost.test_dummy.com' \
 		-out $server_csr -outform pem
 	check_exit_status $?
 	
