@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.237 2019/09/29 17:57:36 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.238 2019/11/09 12:15:50 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -905,11 +905,15 @@ scsi_inquire_vpd(struct scsi_link *link, void *buf, u_int buflen,
 
 	scsi_xs_put(xs);
 #ifdef SCSIDEBUG
-	bytes = _2btol(((struct scsi_vpd_hdr *)buf)->page_length);
 	sc_print_addr(link);
-	printf("got %u bytes of VPD inquiry page %u data:\n", bytes,
-	    page);
-	scsi_show_mem(buf, bytes);
+	if (error == 0) {
+		bytes = _2btol(((struct scsi_vpd_hdr *)buf)->page_length);
+		printf("got %u of %u bytes of VPD inquiry page %u data:\n", buflen,
+		    bytes, page);
+		scsi_show_mem(buf, buflen);
+	} else {
+		printf("VPD inquiry page %u not available\n", page);
+	}
 #endif /* SCSIDEBUG */
 	return (error);
 }
