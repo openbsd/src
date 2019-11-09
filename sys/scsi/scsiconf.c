@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.217 2019/09/27 17:22:31 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.218 2019/11/09 23:41:22 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -820,6 +820,7 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	struct scsi_link *link, *link0;
 	struct cfdata *cf;
 	int priority, rslt = 0;
+	u_int16_t devquirks;
 
 	/* Skip this slot if it is already attached and try the next LUN. */
 	if (scsi_get_link(sb, target, lun) != NULL)
@@ -877,6 +878,7 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	 * complete. Some drivers set bits in quirks before we get here, so
 	 * just add NOTAGS, NOWIDE and NOSYNC.
 	 */
+	devquirks = link->quirks;
 	link->quirks |= SDEV_NOSYNC | SDEV_NOWIDE | SDEV_NOTAGS;
 
 	/*
@@ -959,31 +961,41 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 		goto free_devid;
 	}
 
+	link->quirks = devquirks;	/* Restore what the device wanted. */
+
 	finger = (const struct scsi_quirk_inquiry_pattern *)scsi_inqmatch(
 	    inqbuf, scsi_quirk_patterns,
 	    nitems(scsi_quirk_patterns),
 	    sizeof(scsi_quirk_patterns[0]), &priority);
-
-	/*
-	 * Based upon the inquiry flags we got back, and if we're
-	 * at SCSI-2 or better, remove some limiting quirks.
-	 */
-	if (SID_ANSII_REV(inqbuf) >= SCSI_REV_2) {
-		if ((inqbuf->flags & SID_CmdQue) != 0)
-			link->quirks &= ~SDEV_NOTAGS;
-		if ((inqbuf->flags & SID_Sync) != 0)
-			link->quirks &= ~SDEV_NOSYNC;
-		if ((inqbuf->flags & SID_WBus16) != 0)
-			link->quirks &= ~SDEV_NOWIDE;
-	} else
-		/* Older devices do not have SYNCHRONIZE CACHE capability. */
-		link->quirks |= SDEV_NOSYNCCACHE;
-
-	/*
-	 * Now apply any quirks from the table.
-	 */
 	if (priority != 0)
 		link->quirks |= finger->quirks;
+
+	switch (SID_ANSII_REV(inqbuf)) {
+	case SCSI_REV_0:
+	case SCSI_REV_1:
+		SET(link->quirks, SDEV_NOTAGS | SDEV_NOSYNC | SDEV_NOWIDE |
+		    SDEV_NOSYNCCACHE);
+		break;
+	case SCSI_REV_2:
+	case SCSI_REV_SPC:
+	case SCSI_REV_SPC2:
+		if (!ISSET(inqbuf->flags, SID_CmdQue))
+			SET(link->quirks, SDEV_NOTAGS);
+		if (!ISSET(inqbuf->flags, SID_Sync))
+			SET(link->quirks, SDEV_NOSYNC);
+		if (!ISSET(inqbuf->flags, SID_WBus16))
+			SET(link->quirks, SDEV_NOWIDE);
+		break;
+	case SCSI_REV_SPC3:
+	case SCSI_REV_SPC4:
+	case SCSI_REV_SPC5:
+		/* By this time SID_Sync and SID_WBus16 were obsolete. */
+		if (!ISSET(inqbuf->flags, SID_CmdQue))
+			SET(link->quirks, SDEV_NOTAGS);
+		break;
+	default:
+		break;
+	}
 
 	/*
 	 * If the device can't use tags, >1 opening may confuse it.
