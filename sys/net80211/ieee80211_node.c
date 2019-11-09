@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.174 2019/10/31 11:03:43 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.175 2019/11/09 09:03:24 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1563,6 +1563,7 @@ ieee80211_node_cleanup(struct ieee80211com *ic, struct ieee80211_node *ni)
 		ni->ni_rsnie = NULL;
 	}
 	ieee80211_ba_del(ni);
+	ni->ni_unref_cb = NULL;
 	free(ni->ni_unref_arg, M_DEVBUF, ni->ni_unref_arg_size);
 	ni->ni_unref_arg = NULL;
 	ni->ni_unref_arg_size = 0;
