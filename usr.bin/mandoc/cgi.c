@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.106 2019/10/01 17:54:04 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.107 2019/11/10 22:18:01 bentley Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014-2019 Ingo Schwarze <schwarze@usta.de>
@@ -336,6 +336,8 @@ resp_begin_http(int code, const char *msg)
 
 	printf("Content-Type: text/html; charset=utf-8\r\n"
 	     "Cache-Control: no-cache\r\n"
+	     "Content-Security-Policy: default-src 'none'; "
+	     "style-src 'self' 'unsafe-inline'\r\n"
 	     "Pragma: no-cache\r\n"
 	     "\r\n");
 
