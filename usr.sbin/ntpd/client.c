@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.110 2019/07/07 07:14:57 otto Exp $ */
+/*	$OpenBSD: client.c,v 1.111 2019/11/10 16:56:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -240,7 +240,7 @@ handle_auto(double offset)
 
 	/*
 	 * It happens the (constraint) resolves initially fail, don't give up
-	 * but see if we get validatd replies later.
+	 * but see if we get validated replies later.
 	 */
 	if (conf->constraint_median == 0)
 		return;
