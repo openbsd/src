@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: quad.h,v 1.8 2014/06/10 04:17:37 deraadt Exp $
+ *	$OpenBSD: quad.h,v 1.9 2019/11/10 22:23:28 guenther Exp $
  */
 
 /*
@@ -93,29 +93,29 @@ union uu {
 
 typedef unsigned int	qshift_t;
 
-quad_t __adddi3(quad_t, quad_t);
-quad_t __anddi3(quad_t, quad_t);
-quad_t __ashldi3(quad_t, qshift_t);
-quad_t __ashrdi3(quad_t, qshift_t);
-int __cmpdi2(quad_t, quad_t);
-quad_t __divdi3(quad_t, quad_t);
-quad_t __fixdfdi(double);
-quad_t __fixsfdi(float);
-u_quad_t __fixunsdfdi(double);
-u_quad_t __fixunssfdi(float);
-double __floatdidf(quad_t);
-float __floatdisf(quad_t);
-double __floatunsdidf(u_quad_t);
-quad_t __iordi3(quad_t, quad_t);
-quad_t __lshldi3(quad_t, qshift_t);
-quad_t __lshrdi3(quad_t, qshift_t);
-quad_t __moddi3(quad_t, quad_t);
-quad_t __muldi3(quad_t, quad_t);
-quad_t __negdi2(quad_t);
-quad_t __one_cmpldi2(quad_t);
-u_quad_t __qdivrem(u_quad_t, u_quad_t, u_quad_t *);
-quad_t __subdi3(quad_t, quad_t);
-int __ucmpdi2(u_quad_t, u_quad_t);
-u_quad_t __udivdi3(u_quad_t, u_quad_t );
-u_quad_t __umoddi3(u_quad_t, u_quad_t );
-quad_t __xordi3(quad_t, quad_t);
+quad_t		__adddi3(quad_t, quad_t) __dso_protected;
+quad_t		__anddi3(quad_t, quad_t) __dso_protected;
+quad_t		__ashldi3(quad_t, qshift_t) __dso_protected;
+quad_t		__ashrdi3(quad_t, qshift_t) __dso_protected;
+int		__cmpdi2(quad_t, quad_t) __dso_protected;
+quad_t		__divdi3(quad_t, quad_t) __dso_protected;
+quad_t		__fixdfdi(double) __dso_protected;
+quad_t		__fixsfdi(float) __dso_protected;
+u_quad_t	__fixunsdfdi(double) __dso_protected;
+u_quad_t	__fixunssfdi(float) __dso_protected;
+double		__floatdidf(quad_t) __dso_protected;
+float		__floatdisf(quad_t) __dso_protected;
+double		__floatunsdidf(u_quad_t) __dso_protected;
+quad_t		__iordi3(quad_t, quad_t) __dso_protected;
+quad_t		__lshldi3(quad_t, qshift_t) __dso_protected;
+quad_t		__lshrdi3(quad_t, qshift_t) __dso_protected;
+quad_t		__moddi3(quad_t, quad_t) __dso_protected;
+quad_t		__muldi3(quad_t, quad_t) __dso_protected;
+quad_t		__negdi2(quad_t) __dso_protected;
+quad_t		__one_cmpldi2(quad_t) __dso_protected;
+u_quad_t	__qdivrem(u_quad_t, u_quad_t, u_quad_t *) __dso_protected;
+quad_t		__subdi3(quad_t, quad_t) __dso_protected;
+int		__ucmpdi2(u_quad_t, u_quad_t) __dso_protected;
+u_quad_t	__udivdi3(u_quad_t, u_quad_t ) __dso_protected;
+u_quad_t	__umoddi3(u_quad_t, u_quad_t ) __dso_protected;
+quad_t		__xordi3(quad_t, quad_t) __dso_protected;

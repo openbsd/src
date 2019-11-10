@@ -1,4 +1,4 @@
-/*	$OpenBSD: divsi3.S,v 1.4 2017/12/26 15:11:17 kettenis Exp $	*/
+/*	$OpenBSD: divsi3.S,v 1.5 2019/11/10 22:23:28 guenther Exp $	*/
 /*	$NetBSD: divsi3.S,v 1.5 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*
@@ -390,3 +390,6 @@ STRONG_ALIAS(__aeabi_idiv, __divsi3)
 STRONG_ALIAS(__aeabi_idivmod, __divsi3)
 STRONG_ALIAS(__aeabi_uidiv, __udivsi3)
 STRONG_ALIAS(__aeabi_uidivmod, __udivsi3)
+
+	.protected __aeabi_idiv,  __aeabi_idivmod
+	.protected __aeabi_uidiv, __aeabi_uidivmod

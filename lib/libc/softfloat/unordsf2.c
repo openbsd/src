@@ -1,4 +1,4 @@
-/*	$OpenBSD: unordsf2.c,v 1.3 2015/09/13 14:21:46 miod Exp $	*/
+/*	$OpenBSD: unordsf2.c,v 1.4 2019/11/10 22:23:29 guenther Exp $	*/
 /* $NetBSD: unordsf2.c,v 1.1 2003/05/06 08:58:20 rearnsha Exp $ */
 
 /*
@@ -9,7 +9,7 @@
 #include "milieu.h"
 #include <softfloat.h>
 
-flag __unordsf2(float32, float32);
+flag __unordsf2(float32, float32) __dso_protected;
 
 flag
 __unordsf2(float32 a, float32 b)

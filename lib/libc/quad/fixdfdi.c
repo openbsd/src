@@ -1,4 +1,4 @@
-/*	$OpenBSD: fixdfdi.c,v 1.6 2017/12/26 15:11:17 kettenis Exp $ */
+/*	$OpenBSD: fixdfdi.c,v 1.7 2019/11/10 22:23:28 guenther Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -55,4 +55,5 @@ __fixdfdi(double x)
 
 #ifdef __ARM_EABI__
 __strong_alias(__aeabi_d2lz, __fixdfdi);
+__asm(".protected __aeabi_d2lz");
 #endif

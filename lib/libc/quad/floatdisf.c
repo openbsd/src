@@ -1,4 +1,4 @@
-/*	$OpenBSD: floatdisf.c,v 1.7 2017/12/26 15:11:17 kettenis Exp $ */
+/*	$OpenBSD: floatdisf.c,v 1.8 2019/11/10 22:23:28 guenther Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -69,4 +69,5 @@ __floatdisf(quad_t x)
 
 #ifdef __ARM_EABI__
 __strong_alias(__aeabi_l2f, __floatdisf);
+__asm(".protected __aeabi_l2f");
 #endif
