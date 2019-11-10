@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot_md.c,v 1.2 2019/11/10 22:20:10 guenther Exp $ */
+/*	$OpenBSD: boot_md.c,v 1.3 2019/11/10 22:21:54 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -75,8 +75,7 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
 	int		n, argc;
 	char		**argv, **envp;
 	long		loff;
-	Elf_Addr	i;
-	RELOC_TYPE	*rp;
+	RELOC_TYPE	*rp, *rend;
 
 	/*
 	 * Scan argument and environment vectors. Find dynamic
@@ -138,17 +137,13 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
 	}
 
 	rp = dynld.dt_reloc;
-	for (i = 0; i < dynld.dt_relocsz; i += sizeof *rp) {
-		Elf_Addr *ra;
-		const Elf_Sym *sp;
+	rend = (RELOC_TYPE *)((char *)rp + dynld.dt_relocsz);
+	for (; rp < rend; rp++) {
+		if (ELF_R_TYPE(rp->r_info) != R_MIPS_NONE) {
+			Elf_Addr *ra = (Elf_Addr *)(rp->r_offset + loff);
 
-		sp = dynld.dt_symtab + ELF_R_SYM(rp->r_info);
-		if (ELF_R_SYM(rp->r_info) && sp->st_value == 0)
-			_dl_exit(6);
-
-		ra = (Elf_Addr *)(rp->r_offset + loff);
-		RELOC_DYN(rp, sp, ra, loff);
-		rp++;
+			*ra += loff;
+		}
 	}
 
 	RELOC_GOT(&dynld, loff);
