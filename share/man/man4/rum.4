@@ -1,4 +1,4 @@
-.\" $OpenBSD: rum.4,v 1.60 2019/03/29 17:16:35 jmc Exp $
+.\" $OpenBSD: rum.4,v 1.61 2019/11/10 14:10:41 sthen Exp $
 .\"
 .\" Copyright (c) 2005-2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 29 2019 $
+.Dd $Mdocdate: November 10 2019 $
 .Dt RUM 4
 .Os
 .Sh NAME
@@ -79,12 +79,18 @@ The
 .Nm
 driver can be configured to use
 Wired Equivalent Privacy (WEP) or
-Wi-Fi Protected Access (WPA-PSK and WPA2-PSK).
-WPA is the current encryption standard for wireless networks.
-It is strongly recommended that WEP
-not be used as the sole mechanism
-to secure wireless communication,
-due to serious weaknesses in it.
+Wi-Fi Protected Access (WPA1 and WPA2).
+WPA2 is the current encryption standard for wireless networks.
+It is strongly recommended that neither WEP nor WPA1
+are used as the sole mechanism to secure wireless communication,
+due to serious weaknesses.
+WPA1 is disabled by default and may be enabled using the option
+.Qq Cm wpaprotos Ar wpa1,wpa2 .
+For standard WPA networks which use pre-shared keys (PSK),
+keys are configured using the
+.Qq Cm wpakey
+option.
+WPA-Enterprise networks require use of the wpa_supplicant package.
 The
 .Nm
 driver relies on the software 802.11 stack for both encryption and decryption
