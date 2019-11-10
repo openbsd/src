@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.157 2019/10/26 08:37:24 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.158 2019/11/10 14:12:22 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -161,7 +161,7 @@ ls_installed()
 
 ls_missing()
 {
-	local _c _d _f _cmd _l="$(ls_installed)" _p _r _sha=${_TMP}/SHA256
+	local _c _f _cmd _l="$(ls_installed)" _p _sha=${_TMP}/SHA256
 
 	# don't output anything on stdout to prevent corrupting the patch list
 	unpriv -f "${_sha}.sig" ftp -N syspatch -MVo "${_sha}.sig" \
