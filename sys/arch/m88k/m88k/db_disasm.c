@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.10 2019/11/08 15:01:15 mpi Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.11 2019/11/10 10:03:33 mpi Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -1078,6 +1078,6 @@ db_disasm(vaddr_t loc, int altfmt)
 	else
 		cpu = cputyp;
 
-	m88k_print_instruction(cpu, loc, db_get_value(loc, 4, FALSE));
+	m88k_print_instruction(cpu, loc, db_get_value(loc, 4, 0));
 	return (loc + 4);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.45 2019/11/07 14:44:52 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.46 2019/11/10 10:03:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -200,9 +200,9 @@ db_ktrap(int type, int code, db_regs_t *regs)
 	s = splhigh();
 	ddb_regs = *regs;
 	db_active++;
-	cnpollc(TRUE);
+	cnpollc(1);
 	db_trap(type, code);
-	cnpollc(FALSE);
+	cnpollc(0);
 	db_active--;
 	splx(s);
 
@@ -267,7 +267,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		 * be stored on stack, dunno how to recover their values yet
 		 */
 		for (argp = &fp[-9]; nargs--; argp--) {
-			(*pr)("%x%s", db_get_value((int)argp, 4, FALSE),
+			(*pr)("%x%s", db_get_value((int)argp, 4, 0),
 				  nargs? ",":"");
 		}
 		(*pr)(") at ");

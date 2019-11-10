@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.46 2019/11/07 14:44:52 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.47 2019/11/10 10:03:33 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -125,12 +125,12 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	} else if (trace_proc) {
 		frame = (struct callframe *)p->p_addr->u_pcb.pcb_rbp;
 		callpc = (vaddr_t)
-		    db_get_value((vaddr_t)&frame->f_retaddr, 8, FALSE);
+		    db_get_value((vaddr_t)&frame->f_retaddr, 8, 0);
 		frame = (struct callframe *)frame->f_frame;
 	} else {
 		frame = (struct callframe *)addr;
 		callpc = (vaddr_t)
-		    db_get_value((vaddr_t)&frame->f_retaddr, 8, FALSE);
+		    db_get_value((vaddr_t)&frame->f_retaddr, 8, 0);
 		frame = (struct callframe *)frame->f_frame;
 	}
 
@@ -152,7 +152,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 
 		if (lastframe == 0 && sym == NULL) {
 			/* Symbol not found, peek at code */
-			unsigned long instr = db_get_value(callpc, 8, FALSE);
+			unsigned long instr = db_get_value(callpc, 8, 0);
 
 			offset = 1;
 			if (instr == 0xe5894855 ||
@@ -188,7 +188,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			for (i = narg; i > 0; i--) {
 				argp--;
 				(*pr)("%lx", db_get_value((vaddr_t)argp,
-				    sizeof(*argp), FALSE));
+				    sizeof(*argp), 0));
 				if (--narg != 0)
 					(*pr)(",");
 			}
@@ -198,7 +198,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 
 		for (argp = arg0; narg > 0; ) {
 			(*pr)("%lx", db_get_value((vaddr_t)argp,
-			    sizeof(*argp), FALSE));
+			    sizeof(*argp), 0));
 			argp++;
 			if (--narg != 0)
 				(*pr)(",");
@@ -212,15 +212,15 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			lastframe = (struct callframe *)(ddb_regs.tf_rsp-8);
 			callpc = (vaddr_t)
 				 db_get_value((vaddr_t)&lastframe->f_retaddr,
-				    8, FALSE);
+				    8, 0);
 			continue;
 		}
 
 		lastframe = frame;
 		callpc = (vaddr_t)db_get_value(
-		    (vaddr_t)&frame->f_retaddr, 8, FALSE);
+		    (vaddr_t)&frame->f_retaddr, 8, 0);
 		frame = (struct callframe *)db_get_value(
-		    (vaddr_t)&frame->f_frame, 8, FALSE);
+		    (vaddr_t)&frame->f_frame, 8, 0);
 
 		if (frame == 0) {
 			/* end of chain */

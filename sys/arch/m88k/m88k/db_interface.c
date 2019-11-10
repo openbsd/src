@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.24 2019/11/08 15:01:15 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.25 2019/11/10 10:03:33 mpi Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -406,9 +406,9 @@ m88k_db_trap(type, frame)
 	ddb_regs = frame->tf_regs;
 
 	db_active++;
-	cnpollc(TRUE);
+	cnpollc(1);
 	db_trap(type, 0);
-	cnpollc(FALSE);
+	cnpollc(0);
 	db_active--;
 
 	frame->tf_regs = ddb_regs;
