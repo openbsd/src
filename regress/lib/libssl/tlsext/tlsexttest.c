@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.29 2019/03/25 18:12:05 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.30 2019/11/10 17:32:47 beck Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3302,22 +3302,12 @@ done:
 
 /* One day I hope to be the only Muppet in this codebase */
 const uint8_t cookie[] = "\n"
-    "                .---. .---.                           \n"
-    "               :     : o   :    me want cookie!       \n"
-    "           _..-:   o :     :-.._    /                 \n"
-    "       .-''  '  `---' `---' '   ``-.                  \n"
-    "     .'   '   '  '  .    '  . '  '  `.                \n"
-    "    :   '.---.,,.,...,.,.,.,..---.  ' ;               \n"
-    "    `. ' `.                     .' ' .'               \n"
-    "     `.  '`.                   .' ' .'                \n"
-    "      `.    `-._           _.-' '  .'  .----.         \n"
-    "        `. '    ''--...--''  . ' .'  .'  o   `.       \n"
-    "        .'`-._'    ' .     ' _.-'`. :       o  :      \n"
-    "  jgs .'      ```--.....--'''    ' `:_ o       :      \n"
-    "    .'    '     '         '     '   ; `.;';';';'      \n"
-    "   ;         '       '       '     . ; .' ; ; ;       \n"
-    "  ;     '         '       '   '    .'      .-'        \n"
-    "  '  '     '   '      '           '    _.-'           \n";
+    "        (o)(o)        \n"
+    "      m'      'm      \n"
+    "     M  -****-  M     \n"
+    "      'm      m'      \n"
+    "     m''''''''''m     \n"
+    "    M            M BB \n";
 
 static int
 test_tlsext_cookie_client(void)
