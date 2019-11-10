@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.8,v 1.8 2017/10/17 22:47:58 schwarze Exp $
+.\"	$OpenBSD: radiusd.8,v 1.9 2019/11/10 20:51:53 landry Exp $
 .\"
 .\" Copyright (c) 2013 Internet Initiative Japan Inc.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 17 2017 $
+.Dd $Mdocdate: November 10 2019 $
 .Dt RADIUSD 8
 .Os
 .Sh NAME
@@ -29,11 +29,16 @@ The
 .Nm
 daemon implements the RADIUS protocol.
 .Pp
+To have
 .Nm
-can be enabled during system boot by setting the following in
-.Pa /etc/rc.conf.local :
+enabled at boot time, use
+.Dq rcctl enable radiusd ,
+which sets
 .Pp
-.Dl radiusd_flags=\&"\&"
+.Dl radiusd_flags=\(dq\(dq
+.Pp
+in
+.Xr rc.conf.local 8 .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds

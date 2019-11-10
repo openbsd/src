@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.8,v 1.31 2015/07/27 17:28:39 sobrado Exp $
+.\"	$OpenBSD: ospfd.8,v 1.32 2019/11/10 20:51:53 landry Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: November 10 2019 $
 .Dt OSPFD 8
 .Os
 .Sh NAME
@@ -104,19 +104,16 @@ AS Border Routers
 are connected to an OSPF network and other external networks via BGP, RIP,
 or static routing, and provide connectivity to networks outside the AS.
 .Pp
+To have
 .Nm
-is usually started at boot time, and can be enabled by
-setting the following in
-.Pa /etc/rc.conf.local :
+enabled at boot time, use
+.Dq rcctl enable ospfd ,
+which sets
 .Pp
-.Dl ospfd_flags=\&"\&"
+.Dl ospfd_flags=\(dq\(dq
 .Pp
-See
-.Xr rc 8
-and
-.Xr rc.conf 8
-for more information on the boot process
-and enabling daemons.
+in
+.Xr rc.conf.local 8 .
 .Pp
 A running
 .Nm

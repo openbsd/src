@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmd.8,v 1.8 2017/07/19 01:26:20 mlarkin Exp $
+.\"	$OpenBSD: vmd.8,v 1.9 2019/11/10 20:51:53 landry Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 19 2017 $
+.Dd $Mdocdate: November 10 2019 $
 .Dt VMD 8
 .Os
 .Sh NAME
@@ -33,11 +33,16 @@ host.
 is typically started at boot time and is controlled via
 .Xr vmctl 8 .
 .Pp
+To have
 .Nm
-can be enabled during system boot by setting the following in
-.Pa /etc/rc.conf.local :
+enabled at boot time, use
+.Dq rcctl enable vmd ,
+which sets
 .Pp
-.Dl vmd_flags=\&"\&"
+.Dl vmd_flags=\(dq\(dq
+.Pp
+in
+.Xr rc.conf.local 8 .
 .Pp
 .Nm
 interfaces with the virtual machine monitor (VMM) built into the kernel.

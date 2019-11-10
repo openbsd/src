@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.155 2018/04/17 12:13:29 stsp Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.156 2019/11/10 20:51:52 landry Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 17 2018 $
+.Dd $Mdocdate: November 10 2019 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -71,22 +71,29 @@ and the procedures for setting them up.
 .Pp
 The keying daemon,
 .Xr isakmpd 8 ,
-can be enabled to run at boot time via the
-.Va isakmpd_flags
-variable in
-.Xr rc.conf.local 8 .
-Note that it will probably need to be run with at least the
-.Fl K
-option, to avoid
+can be enabled to run at boot time via
+.Dq rcctl enable isakmpd .
+Note that to avoid
 .Xr keynote 4
-policy checking.
+policy checking, it will probably need to be run with at least the
+.Fl K
+option via the
+.Dq rcctl set isakmpd flags -K
+command which sets
+.Pp
+.Dl isakmpd_flags=\(dq-K\(dq
+.Pp
+in
+.Xr rc.conf.local 8 .
 The
 .Nm
 configuration itself is loaded at boot time
-if the variable
-.Va ipsec
-is set to
-.Dv YES
+if IPsec is enabled by using
+.Dq rcctl enable ipsec ,
+which sets
+.Pp
+.Dl ipsec=YES
+.Pp
 in
 .Xr rc.conf.local 8 .
 A utility called

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.8,v 1.5 2019/09/06 09:40:59 benno Exp $
+.\"	$OpenBSD: rad.8,v 1.6 2019/11/10 20:51:53 landry Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 6 2019 $
+.Dd $Mdocdate: November 10 2019 $
 .Dt RAD 8
 .Os
 .Sh NAME
@@ -38,19 +38,16 @@ routes.
 Additionally it listens for IPv6 router solicitation messages and responds
 with router advertisements.
 .Pp
+To have
 .Nm
-is usually started at boot time, and can be enabled by
-setting the following in
-.Pa /etc/rc.conf.local :
+enabled at boot time, use
+.Dq rcctl enable rad ,
+which sets
 .Pp
-.Dl rad_flags=\&"\&"
+.Dl rad_flags=\(dq\(dq
 .Pp
-See
-.Xr rc 8
-and
-.Xr rc.conf 8
-for more information on the boot process
-and enabling daemons.
+in
+.Xr rc.conf.local 8 .
 .Pp
 A running
 .Nm

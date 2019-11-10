@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.8,v 1.6 2019/11/07 08:38:48 otto Exp $
+.\"	$OpenBSD: unwind.8,v 1.7 2019/11/10 20:51:52 landry Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 7 2019 $
+.Dd $Mdocdate: November 10 2019 $
 .Dt UNWIND 8
 .Os
 .Sh NAME
@@ -39,26 +39,23 @@ if it detects that DNS queries are blocked by the local network.
 It periodically probes if DNS is no longer blocked and switches back to
 querying nameservers itself.
 .Pp
+To have
 .Nm
-is usually started at boot time, and can be enabled by
-setting the following in
-.Pa /etc/rc.conf.local :
+enabled at boot time, use
+.Dq rcctl enable unwind ,
+which sets
 .Pp
-.Dl unwind_flags=\&"\&"
+.Dl unwind_flags=\(dq\(dq
 .Pp
-See
-.Xr rc 8
-and
-.Xr rc.conf 8
-for more information on the boot process
-and enabling daemons.
+in
+.Xr rc.conf.local 8 .
 .Pp
 Adding
 .Pp
 .Dl prepend domain-name-servers 127.0.0.1;
 .Pp
 to
-.Pa /dev/dhclient.conf
+.Pa /etc/dhclient.conf
 configures a machine using DHCP to use
 .Nm .
 .Pp

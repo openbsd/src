@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.61 2019/08/07 06:51:54 claudio Exp $
+.\" $OpenBSD: bgpd.8,v 1.62 2019/11/10 20:51:53 landry Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 7 2019 $
+.Dd $Mdocdate: November 10 2019 $
 .Dt BGPD 8
 .Os
 .Sh NAME
@@ -128,19 +128,16 @@ or
 .Em origin
 attribute can be used to influence the routing behaviour on remote systems.
 .Pp
+To have
 .Nm
-is usually started at boot time, and can be enabled by
-setting the following in
-.Pa /etc/rc.conf.local :
+enabled at boot time, use
+.Dq rcctl enable bgpd ,
+which sets
 .Pp
-.Dl bgpd_flags=\&"\&"
+.Dl bgpd_flags=\(dq\(dq
 .Pp
-See
-.Xr rc 8
-and
-.Xr rc.conf 8
-for more information on the boot process
-and enabling daemons.
+in
+.Xr rc.conf.local 8 .
 .Pp
 When
 .Nm
