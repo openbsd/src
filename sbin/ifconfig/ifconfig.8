@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.342 2019/09/20 12:37:04 stsp Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.343 2019/11/10 09:10:44 stsp Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: September 20 2019 $
+.Dd $Mdocdate: November 10 2019 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -962,43 +962,78 @@ show the list of channels supported by the device.
 Unset the desired channel.
 It doesn't affect the channel to be created for IBSS or Host AP mode.
 .It Cm join Ar id
-Add the network with NWID/ESSID
+Add the network with ESSID
 .Ar id
-to the list of auto-join networks.
-Information about such networks is retained,
-such that configured interfaces can automatically switch to such networks
-as necessary.
-Note that
+to the
 .Cm join
-does not represent a complete "wireless profile" as only the
-.Cm wpakey , nwkey ,
-and
-.Cm nwid
-parameters are retained.
-IEEE802.11 mode (11a/11b/11g/11n) and channel parameters are not retained,
-so should not be included.
+list.
+The interface will automatically attempt to connect to networks on this
+list if they are found during a scan.
 .Pp
 The
 .Ar id
 can either be any text string up to 32 characters in length,
 or a series of hexadecimal digits up to 64 digits.
-Any necessary
-.Cm wpakey
+If
+.Ar id
+is the empty string
+.Pq Qq
+and none of the networks on the
+.Cm join
+list are found during a scan, the interface will automatically
+connect to any available networks, provided they do not require
+WEP or WPA authentication.
+.Pp
+Apart from the
+.Ar id ,
+the
+.Cm join
+list will record
+.Cm wpakey ,
+.Cm wpaprotos ,
 or
 .Cm nwkey
-arguments should be specified on the same line.
-The empty string allows the interface to automatically connect to any
-available access points if no known access points are found.
-May not be used with
-.Cm nwid .
+parameters for the network, provided they are passed in the same invocation of
+.Nm .
+Because multiple access points may exist in a given network, the
+.Cm mode
+(11a/11b/11g/11n),
+.Cm chan ,
+and
+.Cm bssid
+parameters cannot be stored with
+.Cm join .
+However, they may be used separately to force the selection of a
+particular access point when the automatic access point selection
+turns out to be suboptimal.
+.Pp
+.Cm join
+and
+.Cm nwid
+cannot be used together in the same invocation of
+.Nm .
 .It Cm -join Ar id
-Remove the network with NWID
-.Ar id ,
-from the list of auto-join networks.
+Remove the network with ESSID
+.Ar id
+from the
+.Cm join
+list and disconnect the interface from the access point if it is currently
+connected to this network.
+The interface will keep scanning for access points as long as it remains
+marked as
+.Dq up .
+A new connection will be established either if a network on the
+.Cm join
+list is found during the scan or if a network ID is configured with
+.Cm nwid .
 .It Cm joinlist
-Show the list of currently configured auto-join networks.
+Show the list of networks stored on the
+.Cm join
+list.
 .It Cm -joinlist
-Remove all networks in the list of auto-join networks.
+Remove all networks from the
+.Cm join
+list.
 .It Cm nwflag Ar flag
 Set specified flag.
 The flag name can be:
@@ -1040,17 +1075,35 @@ and
 .It Cm -nwflag Ar flag
 Remove specified flag.
 .It Cm nwid Ar id
-Connect to the network with NWID
+Connect to the network with NWID/ESSID
 .Ar id .
-Unlike auto-join networks,
-information about the network is not retained.
-The empty string allows the interface to connect to any available
-access points.
-May not be used with
-.Cm join .
+Unlike
+.Cm join ,
+the
+.Cm nwid
+option only allows one network to be configured at a time.
+The
+.Cm nwid
+option may not be used together with
+.Cm join
+in the same invocation of
+.Nm
+but may be used to momentarily override the automatic selection of
+networks stored in the
+.Cm join
+list.
 .It Cm -nwid
-Set the NWID to the empty string to allow the interface to connect
-to any available access point.
+Clear the network ID configured with
+.Cm nwid
+and disconnect the interface from the access point if it is currently
+connected to this network.
+The interface will keep scanning for access points as long as it remains
+marked as
+.Dq up .
+A new connection will be established either if a network on the
+.Cm join
+list is found during the scan or if a network ID is configured with
+.Cm nwid .
 .It Cm nwkey Ar key
 Enable WEP encryption using the specified
 .Ar key .
@@ -1117,6 +1170,18 @@ If an access point cannot be selected due to incompatibilities with the
 interface configuration,
 .Nm
 indicates mismatching configuration items with an exclamation mark.
+.Pp
+Because the list of access points is continuously updated while a scan
+is in progress,
+.Cm scan
+may sometimes show incomplete scan results.
+.Pp
+Some interfaces support scanning in the background while remaining
+associated to the current access point.
+The superuser may use
+.Cm scan
+to trigger a background scan while associated, which will update the scan
+result list and also trigger a search for a better access point to roam to.
 .It Cm wpa
 Enable Wi-Fi Protected Access.
 WPA is a Wi-Fi Alliance protocol based on the IEEE 802.11i standard.
