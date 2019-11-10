@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.96 2019/11/09 19:02:31 anton Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.97 2019/11/10 08:36:44 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -493,82 +493,84 @@ retrywrite:
 			space = 0;
 
 		if (space > 0) {
-			if ((error = pipelock(wpipe)) == 0) {
-				size_t size;	/* Transfer size */
-				size_t segsize;	/* first segment to transfer */
+			size_t size;	/* Transfer size */
+			size_t segsize;	/* first segment to transfer */
 
-				/*
-				 * If a process blocked in uiomove, our
-				 * value for space might be bad.
-				 *
-				 * XXX will we be ok if the reader has gone
-				 * away here?
-				 */
-				if (space > wpipe->pipe_buffer.size -
-				    wpipe->pipe_buffer.cnt) {
-					pipeunlock(wpipe);
-					goto retrywrite;
-				}
+			error = pipelock(wpipe);
+			if (error)
+				break;
 
-				/*
-				 * Transfer size is minimum of uio transfer
-				 * and free space in pipe buffer.
-				 */
-				if (space > uio->uio_resid)
-					size = uio->uio_resid;
-				else
-					size = space;
-				/*
-				 * First segment to transfer is minimum of
-				 * transfer size and contiguous space in
-				 * pipe buffer.  If first segment to transfer
-				 * is less than the transfer size, we've got
-				 * a wraparound in the buffer.
-				 */
-				segsize = wpipe->pipe_buffer.size -
-					wpipe->pipe_buffer.in;
-				if (segsize > size)
-					segsize = size;
-
-				/* Transfer first segment */
-
-				error = uiomove(&wpipe->pipe_buffer.buffer[wpipe->pipe_buffer.in],
-						segsize, uio);
-
-				if (error == 0 && segsize < size) {
-					/*
-					 * Transfer remaining part now, to
-					 * support atomic writes.  Wraparound
-					 * happened.
-					 */
-#ifdef DIAGNOSTIC
-					if (wpipe->pipe_buffer.in + segsize !=
-					    wpipe->pipe_buffer.size)
-						panic("Expected pipe buffer wraparound disappeared");
-#endif
-
-					error = uiomove(&wpipe->pipe_buffer.buffer[0],
-							size - segsize, uio);
-				}
-				if (error == 0) {
-					wpipe->pipe_buffer.in += size;
-					if (wpipe->pipe_buffer.in >=
-					    wpipe->pipe_buffer.size) {
-#ifdef DIAGNOSTIC
-						if (wpipe->pipe_buffer.in != size - segsize + wpipe->pipe_buffer.size)
-							panic("Expected wraparound bad");
-#endif
-						wpipe->pipe_buffer.in = size - segsize;
-					}
-
-					wpipe->pipe_buffer.cnt += size;
-#ifdef DIAGNOSTIC
-					if (wpipe->pipe_buffer.cnt > wpipe->pipe_buffer.size)
-						panic("Pipe buffer overflow");
-#endif
-				}
+			/*
+			 * If a process blocked in uiomove, our
+			 * value for space might be bad.
+			 *
+			 * XXX will we be ok if the reader has gone
+			 * away here?
+			 */
+			if (space > wpipe->pipe_buffer.size -
+			    wpipe->pipe_buffer.cnt) {
 				pipeunlock(wpipe);
+				goto retrywrite;
 			}
+
+			/*
+			 * Transfer size is minimum of uio transfer
+			 * and free space in pipe buffer.
+			 */
+			if (space > uio->uio_resid)
+				size = uio->uio_resid;
+			else
+				size = space;
+			/*
+			 * First segment to transfer is minimum of
+			 * transfer size and contiguous space in
+			 * pipe buffer.  If first segment to transfer
+			 * is less than the transfer size, we've got
+			 * a wraparound in the buffer.
+			 */
+			segsize = wpipe->pipe_buffer.size -
+				wpipe->pipe_buffer.in;
+			if (segsize > size)
+				segsize = size;
+
+			/* Transfer first segment */
+
+			error = uiomove(&wpipe->pipe_buffer.buffer[wpipe->pipe_buffer.in],
+					segsize, uio);
+
+			if (error == 0 && segsize < size) {
+				/*
+				 * Transfer remaining part now, to
+				 * support atomic writes.  Wraparound
+				 * happened.
+				 */
+#ifdef DIAGNOSTIC
+				if (wpipe->pipe_buffer.in + segsize !=
+				    wpipe->pipe_buffer.size)
+					panic("Expected pipe buffer wraparound disappeared");
+#endif
+
+				error = uiomove(&wpipe->pipe_buffer.buffer[0],
+						size - segsize, uio);
+			}
+			if (error == 0) {
+				wpipe->pipe_buffer.in += size;
+				if (wpipe->pipe_buffer.in >=
+				    wpipe->pipe_buffer.size) {
+#ifdef DIAGNOSTIC
+					if (wpipe->pipe_buffer.in != size - segsize + wpipe->pipe_buffer.size)
+						panic("Expected wraparound bad");
+#endif
+					wpipe->pipe_buffer.in = size - segsize;
+				}
+
+				wpipe->pipe_buffer.cnt += size;
+#ifdef DIAGNOSTIC
+				if (wpipe->pipe_buffer.cnt > wpipe->pipe_buffer.size)
+					panic("Pipe buffer overflow");
+#endif
+			}
+			pipeunlock(wpipe);
 			if (error)
 				break;
 		} else {
