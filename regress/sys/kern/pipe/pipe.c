@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.c,v 1.1 2019/11/09 21:10:15 anton Exp $	*/
+/*	$OpenBSD: pipe.c,v 1.2 2019/11/10 09:34:40 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -47,7 +47,7 @@ main(int argc, char *argv[])
 		{ "thundering-herd-write-signal",	test_thundering_herd_write_signal },
 		{ "thundering-herd-write-wakeup",	test_thundering_herd_write_wakeup },
 
-		{ NULL,				NULL },
+		{ NULL, NULL },
 	};
 	int ch, i;
 
