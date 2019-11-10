@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.273 2019/11/10 14:22:53 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.274 2019/11/10 16:43:11 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -660,8 +660,11 @@ sub format
 	return 1;
 }
 
-package OpenBSD::PackingElement::Lib;
+package OpenBSD::PackingElement::FileWithDebugInfo;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
+
+package OpenBSD::PackingElement::Lib;
+our @ISA=qw(OpenBSD::PackingElement::FileWithDebugInfo);
 
 our $todo = 0;
 
@@ -686,6 +689,24 @@ sub parse
 
 sub is_a_library() { 1 }
 
+package OpenBSD::PackingElement::Binary;
+our @ISA=qw(OpenBSD::PackingElement::FileWithDebugInfo);
+
+sub keyword() { "bin" }
+__PACKAGE__->register_with_factory;
+
+package OpenBSD::PackingElement::StaticLib;
+our @ISA=qw(OpenBSD::PackingElement::FileWithDebugInfo);
+
+sub keyword() { "static-lib" }
+__PACKAGE__->register_with_factory;
+
+package OpenBSD::PackingElement::SharedObject;
+our @ISA=qw(OpenBSD::PackingElement::FileWithDebugInfo);
+
+sub keyword() { "so" }
+__PACKAGE__->register_with_factory;
+
 package OpenBSD::PackingElement::PkgConfig;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
 
@@ -696,12 +717,6 @@ package OpenBSD::PackingElement::LibtoolLib;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
 
 sub keyword() { "ltlib" }
-__PACKAGE__->register_with_factory;
-
-package OpenBSD::PackingElement::Binary;
-our @ISA=qw(OpenBSD::PackingElement::FileBase);
-
-sub keyword() { "bin" }
 __PACKAGE__->register_with_factory;
 
 # Comment is very special
