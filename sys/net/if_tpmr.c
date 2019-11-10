@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.7 2019/11/07 08:07:17 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.8 2019/11/10 10:03:28 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -68,7 +68,7 @@ static const uint8_t	ether_8021_prefix[ETHER_ADDR_LEN - 1] =
     { 0x01, 0x80, 0xc2, 0x00, 0x00 };
 
 #define ETHER_IS_8021_PREFIX(_m) \
-     (memcmp((_m), ether_8021_prefix, sizeof(ether_8021_prefix)) == 0)
+    (memcmp((_m), ether_8021_prefix, sizeof(ether_8021_prefix)) == 0)
 
 /*
  * tpmr interface
@@ -175,7 +175,7 @@ tpmr_clone_create(struct if_clone *ifc, int unit)
 
 	if_counters_alloc(ifp);
 	if_attach(ifp);
-        if_alloc_sadl(ifp);
+	if_alloc_sadl(ifp);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, ETHER_HDR_LEN);
@@ -322,9 +322,9 @@ tpmr_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 	counters_pkt(ifp->if_counters, ifc_ipackets, ifc_ibytes, len);
 
 #if NBPFILTER > 0
-        if_bpf = ifp->if_bpf;
-        if (if_bpf) {
-                if (bpf_mtap(if_bpf, m, 0))
+	if_bpf = ifp->if_bpf;
+	if (if_bpf) {
+		if (bpf_mtap(if_bpf, m, 0))
 			goto drop;
 	}
 #endif
@@ -407,7 +407,7 @@ tpmr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = suser(curproc);
 		if (error != 0)
 			break;
- 
+
 		if (((struct trunk_reqall *)data)->ra_proto !=
 		    TRUNK_PROTO_LACP) {
 			error = EPROTONOSUPPORT;
@@ -468,7 +468,7 @@ tpmr_get_trunk(struct tpmr_softc *sc, struct trunk_reqall *ra)
 	caddr_t ubuf = (caddr_t)ra->ra_port;
 	int error = 0;
 	int i;
-	
+
 	ra->ra_proto = TPMR_TRUNK_PROTO;
 	memset(&ra->ra_psc, 0, sizeof(ra->ra_psc));
 
