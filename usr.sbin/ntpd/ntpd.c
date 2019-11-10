@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.124 2019/06/28 13:32:49 deraadt Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.125 2019/11/10 07:32:58 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -138,6 +138,7 @@ main(int argc, char *argv[])
 	int			argc0 = argc, logdest;
 	char			**argv0 = argv;
 	char			*pname = NULL;
+	time_t			 settime_deadline;
 
 	if (strcmp(__progname, "ntpctl") == 0) {
 		ctl_main(argc, argv);
@@ -240,8 +241,10 @@ main(int argc, char *argv[])
 		if (!lconf.debug)
 			if (daemon(1, 0))
 				fatal("daemon");
-	} else
-		timeout = SETTIME_TIMEOUT * 1000;
+	} else {
+		settime_deadline = getmonotime();
+		timeout = 100;
+	}
 
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, PF_UNSPEC,
 	    pipe_chld) == -1)
@@ -314,7 +317,8 @@ main(int argc, char *argv[])
 				quit = 1;
 			}
 
-		if (nfds == 0 && lconf.settime) {
+		if (nfds == 0 && lconf.settime &&
+		    getmonotime() > settime_deadline + SETTIME_TIMEOUT) {
 			lconf.settime = 0;
 			timeout = INFTIM;
 			log_init(logdest, lconf.verbose, LOG_DAEMON);
