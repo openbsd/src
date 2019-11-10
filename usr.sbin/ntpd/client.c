@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.111 2019/11/10 16:56:30 deraadt Exp $ */
+/*	$OpenBSD: client.c,v 1.112 2019/11/10 19:24:47 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,7 +30,7 @@
 
 int	client_update(struct ntp_peer *);
 int	auto_cmp(const void *, const void *);
-void	handle_auto(double);
+void	handle_auto(u_int8_t, double);
 void	set_deadline(struct ntp_peer *, time_t);
 
 void
@@ -233,7 +233,7 @@ auto_cmp(const void *a, const void *b)
 }
 
 void
-handle_auto(double offset)
+handle_auto(uint8_t trusted, double offset)
 {
 	static int count;
 	static double v[AUTO_REPLIES];
@@ -242,7 +242,7 @@ handle_auto(double offset)
 	 * It happens the (constraint) resolves initially fail, don't give up
 	 * but see if we get validated replies later.
 	 */
-	if (conf->constraint_median == 0)
+	if (!trusted && conf->constraint_median == 0)
 		return;
 
 	if (offset < AUTO_THRESHOLD) {
@@ -386,7 +386,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 	}
 
 	/* Detect liars */
-	if (conf->constraint_median != 0 &&
+	if (!p->trusted && conf->constraint_median != 0 &&
 	    (constraint_check(T2) != 0 || constraint_check(T3) != 0)) {
 		log_info("reply from %s: constraint check failed",
 		    log_sockaddr((struct sockaddr *)&p->addr->ss));
@@ -464,7 +464,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 	client_update(p);
 	if (settime) {
 		if (automatic)
-			handle_auto(p->reply[p->shift].offset);
+			handle_auto(p->trusted, p->reply[p->shift].offset);
 		else
 			priv_settime(p->reply[p->shift].offset, "");
 	}

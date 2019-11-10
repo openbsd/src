@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.74 2019/11/06 13:35:25 otto Exp $ */
+/*	$OpenBSD: parse.y,v 1.75 2019/11/10 19:24:47 otto Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -67,6 +67,7 @@ struct opts {
 	int		correction;
 	int		stratum;
 	int		rtable;
+	int		trusted;
 	char		*refstr;
 } opts;
 void		opts_default(void);
@@ -83,7 +84,7 @@ typedef struct {
 
 %}
 
-%token	LISTEN ON CONSTRAINT CONSTRAINTS FROM QUERY
+%token	LISTEN ON CONSTRAINT CONSTRAINTS FROM QUERY TRUSTED
 %token	SERVER SERVERS SENSOR CORRECTION RTABLE REFID STRATUM WEIGHT
 %token	ERROR
 %token	<v.string>		STRING
@@ -97,6 +98,7 @@ typedef struct {
 %type	<v.opts>		refid
 %type	<v.opts>		stratum
 %type	<v.opts>		weight
+%type	<v.opts>		trusted
 %%
 
 grammar		: /* empty */
@@ -180,6 +182,7 @@ main		: LISTEN ON address listen_opts	{
 
 				p = new_peer();
 				p->weight = $3.weight;
+				p->trusted = $3.trusted;
 				p->query_addr4 = query_addr4;
 				p->query_addr6 = query_addr6;
 				p->addr = h;
@@ -219,6 +222,7 @@ main		: LISTEN ON address listen_opts	{
 			}
 
 			p->weight = $3.weight;
+			p->trusted = $3.trusted;
 			p->query_addr4 = query_addr4;
 			p->query_addr6 = query_addr6;
 			p->addr_head.a = p->addr;
@@ -409,6 +413,7 @@ server_opts_l	: server_opts_l server_opt
 		| server_opt
 		;
 server_opt	: weight
+		| trusted
 		;
 
 sensor_opts	:	{ opts_default(); }
@@ -474,6 +479,11 @@ rtable		: RTABLE NUMBER {
 		}
 		;
 
+trusted		: TRUSTED	{
+			opts.trusted = 1;
+			conf->trusted_peers = 1;
+		}
+
 %%
 
 void
@@ -529,6 +539,7 @@ lookup(char *s)
 		{ "server",		SERVER},
 		{ "servers",		SERVERS},
 		{ "stratum",		STRATUM},
+		{ "trusted",		TRUSTED},
 		{ "weight",		WEIGHT}
 	};
 	const struct keywords	*p;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.160 2019/11/10 07:32:58 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.161 2019/11/10 19:24:47 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -246,7 +246,8 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		idx_peers = i;
 		sent_cnt = trial_cnt = 0;
 		TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
-			if (constraint_cnt && conf->constraint_median == 0)
+			if (!p->trusted && constraint_cnt &&
+			    conf->constraint_median == 0)
 				continue;
 
 			if (p->next > 0 && p->next <= getmonotime()) {
