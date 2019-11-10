@@ -58,23 +58,39 @@ Status NativeRegisterContextOpenBSD::WriteFPR() {
 }
 
 Status NativeRegisterContextOpenBSD::DoReadGPR(void *buf) {
+#ifdef PT_GETREGS
   return NativeProcessOpenBSD::PtraceWrapper(PT_GETREGS, GetProcessPid(), buf,
                                             m_thread.GetID());
+#else
+  return Status("PT_GETREGS not supported on this platform");
+#endif
 }
 
 Status NativeRegisterContextOpenBSD::DoWriteGPR(void *buf) {
+#ifdef PT_SETREGS
   return NativeProcessOpenBSD::PtraceWrapper(PT_SETREGS, GetProcessPid(), buf,
                                             m_thread.GetID());
+#else
+  return Status("PT_SETREGS not supported on this platform");
+#endif
 }
 
 Status NativeRegisterContextOpenBSD::DoReadFPR(void *buf) {
+#ifdef PT_GETFPREGS
   return NativeProcessOpenBSD::PtraceWrapper(PT_GETFPREGS, GetProcessPid(), buf,
                                             m_thread.GetID());
+#else
+  return Status("PT_GETFPREGS not supported on this platform");
+#endif
 }
 
 Status NativeRegisterContextOpenBSD::DoWriteFPR(void *buf) {
+#ifdef PT_SETFPREGS
   return NativeProcessOpenBSD::PtraceWrapper(PT_SETFPREGS, GetProcessPid(), buf,
                                             m_thread.GetID());
+#else
+  return Status("PT_SETFPREGS not supported on this platform");
+#endif
 }
 
 NativeProcessOpenBSD &NativeRegisterContextOpenBSD::GetProcess() {

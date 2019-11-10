@@ -253,6 +253,7 @@ Status NativeProcessOpenBSD::Resume(const ResumeActionList &resume_actions) {
     break;
   }
   case eStateStepping:
+#ifdef PT_STEP
     // Run the thread, possibly feeding it the signal.
     error = NativeProcessOpenBSD::PtraceWrapper(PT_STEP, GetID(), (void *)1,
                                                action->signal);
@@ -262,6 +263,9 @@ Status NativeProcessOpenBSD::Resume(const ResumeActionList &resume_actions) {
       static_cast<NativeThreadOpenBSD &>(*thread).SetStepping();
     SetState(eStateStepping, true);
     break;
+#else
+    return Status("NativeProcessOpenBSD stepping not supported on this platform");
+#endif
 
   case eStateSuspended:
   case eStateStopped:
