@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.176 2019/11/09 13:21:04 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.177 2019/11/10 09:09:02 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1051,8 +1051,7 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni,
 	rate = ieee80211_fix_rate(ic, ni, IEEE80211_F_DONEGO);
 	if (rate & IEEE80211_RATE_BASIC)
 		fail |= IEEE80211_NODE_ASSOCFAIL_BASIC_RATE;
-	if (ISSET(ic->ic_flags, IEEE80211_F_AUTO_JOIN) &&
-	    ic->ic_des_esslen == 0)
+	if (ic->ic_des_esslen == 0)
 		fail |= IEEE80211_NODE_ASSOCFAIL_ESSID;
 	if (ic->ic_des_esslen != 0 &&
 	    (ni->ni_esslen != ic->ic_des_esslen ||
