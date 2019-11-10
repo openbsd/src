@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.38 2019/11/06 13:35:25 otto Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.39 2019/11/10 18:46:53 deraadt Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 6 2019 $
+.Dd $Mdocdate: November 10 2019 $
 .Dt NTPD.CONF 5
 .Os
 .Sh NAME
@@ -79,9 +79,9 @@ query from 2001:db8::1
 .Ed
 .It Xo Ic sensor Ar device
 .Op Ic correction Ar microseconds
-.Op Ic weight Ar weight-value
-.Op Ic refid Ar string
+.Op Ic refid Ar ID-string
 .Op Ic stratum Ar stratum-value
+.Op Ic weight Ar weight-value
 .Xc
 Specify a timedelta sensor device
 .Xr ntpd 8
@@ -103,7 +103,9 @@ sensor *
 sensor nmea0
 .Ed
 .Pp
-An optional correction in microseconds can be given to compensate
+A
+.Ic correction
+in microseconds can be given to compensate
 for the sensor's offset.
 The maximum correction is 127 seconds.
 For example, if a DCF77 receiver is lagging 70ms behind
@@ -112,7 +114,28 @@ actual time:
 sensor udcf0 correction 70000
 .Ed
 .Pp
-The optional
+A
+.Ic refid
+.Ar ID-string
+of up up to 4 ASCII characters can be
+given to publish the sensor type to clients.
+RFC 2030 suggests some common reference identifiers, but new identifiers
+"can be contrived as appropriate."
+If an
+.Ar ID-string
+is not given,
+.Xr ntpd 8
+will use a generic reference ID.
+For example:
+.Bd -literal -offset indent
+sensor nmea0 refid GPS
+.Ed
+.Pp
+The
+.Ic stratum
+keyword can be used to change the stratum value from the default of 1.
+.Pp
+The
 .Ic weight
 keyword permits finer control over the relative importance
 of time sources (servers or sensor devices).
@@ -122,22 +145,6 @@ the default is 1.
 A server with a weight of 5, for example,
 will have five times more influence on time offset calculation
 than a server with a weight of 1.
-.Pp
-An optional reference ID string - up to 4 ASCII characters - can be
-given to publish the sensor type to clients.
-RFC 2030 suggests some common reference identifiers, but new identifiers
-"can be contrived as appropriate."
-If an ID string is not given,
-.Xr ntpd 8
-will use a generic reference ID.
-For example:
-.Bd -literal -offset indent
-sensor nmea0 refid GPS
-.Ed
-.Pp
-A stratum value other than the default of 1 can be assigned using the
-.Ic stratum
-keyword.
 .It Xo Ic server Ar address
 .Op Ic weight Ar weight-value
 .Xc
