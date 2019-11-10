@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.108 2019/10/06 16:24:14 beck Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.109 2019/11/10 05:00:36 beck Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -98,11 +98,8 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	 * has not set other flags or operations in the nameidata
 	 * structure.
 	 */
-	/* XXX consider changing to KASSERT after release */
-	if (!(ndp->ni_cnd.cn_flags == 0 || ndp->ni_cnd.cn_flags == KERNELPATH))
-		return EINVAL;
-	if (!(ndp->ni_cnd.cn_nameiop == 0))
-		return EINVAL;
+	KASSERT(ndp->ni_cnd.cn_flags == 0 || ndp->ni_cnd.cn_flags == KERNELPATH);
+	KASSERT(ndp->ni_cnd.cn_nameiop == 0);
 
         if ((fmode & (FREAD|FWRITE)) == 0)
 		return (EINVAL);
