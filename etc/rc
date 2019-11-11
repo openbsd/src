@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.541 2019/11/10 15:02:36 naddy Exp $
+#	$OpenBSD: rc,v 1.542 2019/11/11 04:55:37 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -446,6 +446,11 @@ ifconfig -g carp carpdemote 128
 
 sh /etc/netstart
 
+mount -s /usr >/dev/null 2>&1
+mount -s /var >/dev/null 2>&1
+
+start_daemon unwind >/dev/null 2>&1
+
 # Load pf rules and bring up pfsync interface.
 if [[ $pf != NO ]]; then
 	if [[ -f /etc/pf.conf ]]; then
@@ -455,9 +460,6 @@ if [[ $pf != NO ]]; then
 		sh /etc/netstart pfsync0
 	fi
 fi
-
-mount -s /usr >/dev/null 2>&1
-mount -s /var >/dev/null 2>&1
 
 random_seed
 
@@ -474,7 +476,7 @@ dmesg >/var/run/dmesg.boot
 make_keys
 
 echo -n 'starting early daemons:'
-start_daemon syslogd ldattach pflogd nsd rebound unwind unbound ntpd
+start_daemon syslogd ldattach pflogd nsd rebound unbound ntpd
 start_daemon iscsid isakmpd iked sasyncd ldapd npppd
 echo '.'
 
