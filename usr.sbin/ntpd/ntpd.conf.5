@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.41 2019/11/11 16:41:29 deraadt Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.42 2019/11/11 16:55:34 schwarze Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -181,7 +181,6 @@ server ntp.example.org weight 1
 To provide redundancy, it is good practice to configure multiple servers.
 In general, best accuracy is obtained by using servers that have a low
 network latency.
-.Pp
 .It Xo Ic servers Ar address
 .Op Ic trusted
 .Op Ic weight Ar weight-value
