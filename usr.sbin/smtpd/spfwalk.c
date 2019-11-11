@@ -217,8 +217,8 @@ dispatch_txt(struct dns_rr *rr)
 			lookup_record(T_MX, buf2, dispatch_mx);
 			continue;
 		}
-		if (strncasecmp("mx:", *ap, 2) == 0) {
-			lookup_record(T_MX, *(ap) + 2, dispatch_mx);
+		if (strncasecmp("mx:", *ap, 3) == 0) {
+			lookup_record(T_MX, *(ap) + 3, dispatch_mx);
 			continue;
 		}
 	}
