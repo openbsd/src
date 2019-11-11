@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.97 2019/11/10 08:36:44 anton Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.98 2019/11/11 16:45:46 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -435,11 +435,26 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 	/*
 	 * detect loss of pipe read side, issue SIGPIPE if lost.
 	 */
-	if ((wpipe == NULL) || (wpipe->pipe_state & PIPE_EOF)) {
-		error = EPIPE;
-		goto done;
+	if (wpipe == NULL || (wpipe->pipe_state & PIPE_EOF)) {
+		KERNEL_UNLOCK();
+		return (EPIPE);
 	}
+
 	++wpipe->pipe_busy;
+
+	error = pipelock(wpipe);
+	if (error) {
+		/* Failed to acquire lock, wakeup if run-down can proceed. */
+		--wpipe->pipe_busy;
+		if ((wpipe->pipe_busy == 0) &&
+		    (wpipe->pipe_state & PIPE_WANTD)) {
+			wpipe->pipe_state &= ~(PIPE_WANTD | PIPE_WANTR);
+			wakeup(wpipe);
+		}
+		KERNEL_UNLOCK();
+		return (error);
+	}
+
 
 	/*
 	 * If it is advantageous to resize the pipe buffer, do
@@ -451,28 +466,9 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 	    	unsigned int npipe;
 
 		npipe = atomic_inc_int_nv(&nbigpipe);
-		if ((npipe <= LIMITBIGPIPES) &&
-		    (error = pipelock(wpipe)) == 0) {
-			if ((wpipe->pipe_buffer.cnt != 0) ||
-			    (pipe_buffer_realloc(wpipe, BIG_PIPE_SIZE) != 0))
-				atomic_dec_int(&nbigpipe);
-			pipeunlock(wpipe);
-		} else
+		if (npipe > LIMITBIGPIPES ||
+		    pipe_buffer_realloc(wpipe, BIG_PIPE_SIZE) != 0)
 			atomic_dec_int(&nbigpipe);
-	}
-
-	/*
-	 * If an early error occurred unbusy and return, waking up any pending
-	 * readers.
-	 */
-	if (error) {
-		--wpipe->pipe_busy;
-		if ((wpipe->pipe_busy == 0) &&
-		    (wpipe->pipe_state & PIPE_WANTD)) {
-			wpipe->pipe_state &= ~(PIPE_WANTD | PIPE_WANTR);
-			wakeup(wpipe);
-		}
-		goto done;
 	}
 
 	orig_resid = uio->uio_resid;
@@ -480,7 +476,6 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 	while (uio->uio_resid) {
 		size_t space;
 
-retrywrite:
 		if (wpipe->pipe_state & PIPE_EOF) {
 			error = EPIPE;
 			break;
@@ -495,23 +490,6 @@ retrywrite:
 		if (space > 0) {
 			size_t size;	/* Transfer size */
 			size_t segsize;	/* first segment to transfer */
-
-			error = pipelock(wpipe);
-			if (error)
-				break;
-
-			/*
-			 * If a process blocked in uiomove, our
-			 * value for space might be bad.
-			 *
-			 * XXX will we be ok if the reader has gone
-			 * away here?
-			 */
-			if (space > wpipe->pipe_buffer.size -
-			    wpipe->pipe_buffer.cnt) {
-				pipeunlock(wpipe);
-				goto retrywrite;
-			}
 
 			/*
 			 * Transfer size is minimum of uio transfer
@@ -570,7 +548,6 @@ retrywrite:
 					panic("Pipe buffer overflow");
 #endif
 			}
-			pipeunlock(wpipe);
 			if (error)
 				break;
 		} else {
@@ -596,11 +573,16 @@ retrywrite:
 			 */
 			pipeselwakeup(wpipe);
 
+			pipeunlock(wpipe);
 			wpipe->pipe_state |= PIPE_WANTW;
 			error = tsleep(wpipe, (PRIBIO + 1)|PCATCH,
 			    "pipewr", 0);
 			if (error)
-				break;
+				goto unlocked_error;
+			error = pipelock(wpipe);
+			if (error)
+				goto unlocked_error;
+
 			/*
 			 * If read side wants to go away, we just issue a
 			 * signal to ourselves.
@@ -611,7 +593,9 @@ retrywrite:
 			}	
 		}
 	}
+	pipeunlock(wpipe);
 
+unlocked_error:
 	--wpipe->pipe_busy;
 
 	if ((wpipe->pipe_busy == 0) && (wpipe->pipe_state & PIPE_WANTD)) {
@@ -645,7 +629,6 @@ retrywrite:
 	if (wpipe->pipe_buffer.cnt)
 		pipeselwakeup(wpipe);
 
-done:
 	KERNEL_UNLOCK();
 	return (error);
 }
