@@ -1,4 +1,4 @@
-/*	$OpenBSD: itype.h,v 1.4 2017/10/31 10:08:51 mpi Exp $ */
+/*	$OpenBSD: itype.h,v 1.5 2019/11/11 19:10:35 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -36,7 +36,7 @@ struct itype {
 	TAILQ_ENTRY(itype)	 it_symb;   /* itype: global queue of symbol */
 	RB_ENTRY(itype)		 it_node;   /* itype: per-type tree of types */
 
-	SIMPLEQ_HEAD(, itref)	 it_refs;   /* itpye: backpointing refs */
+	SIMPLEQ_HEAD(, itref)	 it_refs;   /* itype: backpointing refs */
 
 	TAILQ_HEAD(, imember)	 it_members;/* itype: members of struct/union */
 
