@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.23 2019/11/09 11:34:34 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.24 2019/11/11 03:37:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -1131,7 +1131,7 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 	TAILQ_FOREACH(ma, &sc->sc_multiaddrs, m_entry) {
 		if (aggr_multi(sc, p, ma, SIOCADDMULTI) != 0) {
 			log(LOG_WARNING, "%s %s: "
-			    "unable to add multicast address",
+			    "unable to add multicast address\n",
 			    ifp->if_xname, ifp0->if_xname);
 		}
 	}
@@ -1181,18 +1181,18 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 
 unmtu:
 	if (aggr_p_set_mtu(p, p->p_mtu) != 0) {
-		log(LOG_WARNING, "%s add %s: unable to reset mtu %u",
+		log(LOG_WARNING, "%s add %s: unable to reset mtu %u\n",
 		    ifp->if_xname, ifp0->if_xname, p->p_mtu);
 	}
 resetlladdr:
 	if (aggr_p_setlladdr(p, p->p_lladdr) != 0) {
-		log(LOG_WARNING, "%s add %s: unable to reset lladdr",
+		log(LOG_WARNING, "%s add %s: unable to reset lladdr\n",
 		    ifp->if_xname, ifp0->if_xname);
 	}
 ungroup:
 	if (aggr_group(sc, p, SIOCDELMULTI) != 0) {
 		log(LOG_WARNING, "%s add %s: "
-		    "unable to remove LACP group address",
+		    "unable to remove LACP group address\n",
 		    ifp->if_xname, ifp0->if_xname);
 	}
 free:
@@ -1374,6 +1374,7 @@ aggr_p_dtor(struct aggr_softc *sc, struct aggr_port *p, const char *op)
 	struct arpcom *ac0 = (struct arpcom *)ifp0;
 	struct aggr_multiaddr *ma;
 	enum aggr_port_selected selected;
+	int error;
 
 	DPRINTF(sc, "%s %s %s: destroying port\n",
 	    ifp->if_xname, ifp0->if_xname, op);
@@ -1400,32 +1401,40 @@ aggr_p_dtor(struct aggr_softc *sc, struct aggr_port *p, const char *op)
 	sc->sc_nports--;
 
 	TAILQ_FOREACH(ma, &sc->sc_multiaddrs, m_entry) {
-		if (aggr_multi(sc, p, ma, SIOCDELMULTI) != 0) {
+		error = aggr_multi(sc, p, ma, SIOCDELMULTI);
+		if (error != 0) {
 			log(LOG_WARNING, "%s %s %s: "
-			    "unable to remove multicast address",
-			    ifp->if_xname, op, ifp0->if_xname);
+			    "unable to remove multicast address (%d)\n",
+			    ifp->if_xname, op, ifp0->if_xname, error);
 		}
 	}
 
-	if (sc->sc_promisc && ifpromisc(ifp0, 0) != 0) {
-		log(LOG_WARNING, "%s %s %s: unable to disable promisc",
-		    ifp->if_xname, op, ifp0->if_xname);
+	if (sc->sc_promisc) {
+		error = ifpromisc(ifp0, 0);
+		if (error != 0) {
+			log(LOG_WARNING, "%s %s %s: "
+			    "unable to disable promisc (%d)\n",
+			    ifp->if_xname, op, ifp0->if_xname, error);
+		}
 	}
 
-	if (aggr_p_set_mtu(p, p->p_mtu) != 0) {
-		log(LOG_WARNING, "%s %s %s: unable to restore mtu %u",
-		    ifp->if_xname, op, ifp0->if_xname, p->p_mtu);
+	error = aggr_p_set_mtu(p, p->p_mtu);
+	if (error != 0) {
+		log(LOG_WARNING, "%s %s %s: unable to restore mtu %u (%d)\n",
+		    ifp->if_xname, op, ifp0->if_xname, p->p_mtu, error);
 	}
 
-	if (aggr_p_setlladdr(p, p->p_lladdr) != 0) {
-		log(LOG_WARNING, "%s %s %s: unable to restore lladdr",
-		    ifp->if_xname, op, ifp0->if_xname);
+	error = aggr_p_setlladdr(p, p->p_lladdr);
+	if (error != 0) {
+		log(LOG_WARNING, "%s %s %s: unable to restore lladdr (%d)\n",
+		    ifp->if_xname, op, ifp0->if_xname, error);
 	}
 
-	if (aggr_group(sc, p, SIOCDELMULTI) != 0) {
+	error = aggr_group(sc, p, SIOCDELMULTI);
+	if (error != 0) {
 		log(LOG_WARNING, "%s %s %s: "
-		    "unable to remove LACP group address",
-		    ifp->if_xname, op, ifp0->if_xname);
+		    "unable to remove LACP group address (%d)\n",
+		    ifp->if_xname, op, ifp0->if_xname, error);
 	}
 
 	if_detachhook_del(ifp0, &p->p_dhook);
@@ -2436,7 +2445,7 @@ aggr_iff(struct aggr_softc *sc)
 			struct ifnet *ifp0 = p->p_ifp0;
 			if (ifpromisc(ifp0, promisc) != 0) {
 				log(LOG_WARNING, "%s iff %s: "
-				    "unable to turn promisc %s",
+				    "unable to turn promisc %s\n",
 				    ifp->if_xname, ifp0->if_xname,
 				    promisc ? "on" : "off");
 			}
@@ -2489,7 +2498,7 @@ aggr_set_lladdr(struct aggr_softc *sc, const struct ifreq *ifr)
 		if (aggr_p_setlladdr(p, lladdr) != 0) {
 			struct ifnet *ifp0 = p->p_ifp0;
 			log(LOG_WARNING, "%s setlladdr %s: "
-			    "unable to set lladdr",
+			    "unable to set lladdr\n",
 			    ifp->if_xname, ifp0->if_xname);
 		}
 	}
@@ -2512,7 +2521,7 @@ aggr_set_mtu(struct aggr_softc *sc, uint32_t mtu)
 	TAILQ_FOREACH(p, &sc->sc_ports, p_entry) {
 		if (aggr_p_set_mtu(p, mtu) != 0) {
 			struct ifnet *ifp0 = p->p_ifp0;
-			log(LOG_WARNING, "%s %s: unable to set mtu %u",
+			log(LOG_WARNING, "%s %s: unable to set mtu %u\n",
 			    ifp->if_xname, ifp0->if_xname, mtu);
 		}
 	}
@@ -2832,7 +2841,7 @@ aggr_multi_add(struct aggr_softc *sc, struct ifreq *ifr)
 
 		if (aggr_multi(sc, p, ma, SIOCADDMULTI) != 0) {
 			log(LOG_WARNING, "%s %s: "
-			    "unable to add multicast address",
+			    "unable to add multicast address\n",
 			    ifp->if_xname, ifp0->if_xname);
 		}
 	}
@@ -2872,7 +2881,7 @@ aggr_multi_del(struct aggr_softc *sc, struct ifreq *ifr)
 
 		if (aggr_multi(sc, p, ma, SIOCDELMULTI) != 0) {
 			log(LOG_WARNING, "%s %s: "
-			    "unable to delete multicast address",
+			    "unable to delete multicast address\n",
 			    ifp->if_xname, ifp0->if_xname);
 		}
 	}
