@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.43 2019/06/20 12:20:20 otto Exp $
+.\" $OpenBSD: ntpd.8,v 1.44 2019/11/11 01:05:30 deraadt Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 20 2019 $
+.Dd $Mdocdate: November 11 2019 $
 .Dt NTPD 8
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm ntpd
 .Bk -words
-.Op Fl dnSsv
+.Op Fl dnv
 .Op Fl f Ar file
 .Ek
 .Sh DESCRIPTION
@@ -59,16 +59,6 @@ instead of the default
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
-.It Fl S
-Cancel the effect of the
-.Fl s
-flag.
-.It Fl s
-Always try to set the time at startup.
-By default
-.Nm
-attempts to set the time at boot only if constraints are configured and
-satisfied, and the clock should be moved forward.
 .Pp
 .Nm
 will stay in the foreground for up to 15 seconds waiting for one of the
@@ -96,6 +86,11 @@ or
 option, all calls to
 .Xr adjtime 2
 will be logged.
+.Pp
+.Nm
+makes efforts to verify and correct the time at boot if constraints are
+configured and satisfied, if trusted servers return results, and if the
+clock is not being moved backwards.
 .Pp
 After the local clock is synchronized,
 .Nm
