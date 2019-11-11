@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.55 2019/11/09 16:28:10 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.56 2019/11/11 05:51:06 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -24,6 +24,8 @@
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/time.h>
+
+#include <net/route.h>
 
 #include <errno.h>
 #include <event.h>
@@ -148,12 +150,17 @@ void			 trust_anchor_resolve(void);
 void			 trust_anchor_timo(int, short, void *);
 void			 trust_anchor_resolve_done(void *, int, void *, int,
 			     int, char *, int);
+void			 add_autoconf_forwarders(struct imsg_rdns_proposal *);
+void			 rem_autoconf_forwarders(struct imsg_rdns_proposal *);
+struct uw_forwarder	*find_forwarder(struct uw_forwarder_head *,
+    			     const char *);
 
 struct uw_conf			*resolver_conf;
 struct imsgev			*iev_frontend;
 struct imsgev			*iev_captiveportal;
 struct imsgev			*iev_main;
 struct uw_forwarder_head	 dhcp_forwarder_list;
+struct uw_forwarder_head	 autoconf_forwarder_list;
 struct uw_resolver		*resolvers[UW_RES_NONE];
 struct timeval			 captive_portal_check_tv =
 				     {PORTAL_CHECK_SEC, 0};
@@ -340,6 +347,7 @@ resolver(int debug, int verbose)
 	new_recursor();
 
 	TAILQ_INIT(&dhcp_forwarder_list);
+	TAILQ_INIT(&autoconf_forwarder_list);
 	TAILQ_INIT(&trust_anchors);
 	TAILQ_INIT(&new_trust_anchors);
 
@@ -396,16 +404,16 @@ resolver_imsg_compose_captiveportal(int type, pid_t pid, void *data,
 void
 resolver_dispatch_frontend(int fd, short event, void *bula)
 {
-	struct imsgev		*iev = bula;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	struct query_imsg	*query_imsg;
-	struct uw_resolver	*res;
-	enum uw_resolver_type	 type;
-	ssize_t			 n;
-	int			 shut = 0, verbose, err;
-	int			 update_resolvers;
-	char			*ta;
+	struct imsgev			*iev = bula;
+	struct imsgbuf			*ibuf;
+	struct imsg			 imsg;
+	struct query_imsg		*query_imsg;
+	struct uw_resolver		*res;
+	enum uw_resolver_type		 type;
+	ssize_t				 n;
+	int				 shut = 0, verbose, err;
+	int				 update_resolvers;
+	char				*ta;
 
 	ibuf = &iev->ibuf;
 
@@ -513,6 +521,22 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			break;
 		case IMSG_RECHECK_RESOLVERS:
 			schedule_recheck_all_resolvers();
+			break;
+		case IMSG_ADD_DNS:
+			if (IMSG_DATA_SIZE(imsg) !=
+			    sizeof(struct imsg_rdns_proposal))
+				fatalx("%s: IMSG_ADD_DNS wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
+			add_autoconf_forwarders((struct imsg_rdns_proposal *)
+			    imsg.data);
+			break;
+		case IMSG_REMOVE_DNS:
+			if (IMSG_DATA_SIZE(imsg) !=
+			    sizeof(struct imsg_rdns_proposal))
+				fatalx("%s: IMSG_ADD_DNS wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
+			rem_autoconf_forwarders((struct imsg_rdns_proposal *)
+			    imsg.data);
 			break;
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
@@ -920,7 +944,8 @@ new_forwarders(int oppdot)
 	free_resolver(resolvers[UW_RES_DHCP]);
 	resolvers[UW_RES_DHCP] = NULL;
 
-	if (TAILQ_EMPTY(&dhcp_forwarder_list))
+	if (TAILQ_EMPTY(&dhcp_forwarder_list) &&
+	    TAILQ_EMPTY(&autoconf_forwarder_list))
 		return;
 
 	if (TAILQ_EMPTY(&trust_anchors))
@@ -938,7 +963,8 @@ new_asr_forwarders(void)
 	free_resolver(resolvers[UW_RES_ASR]);
 	resolvers[UW_RES_ASR] = NULL;
 
-	if (TAILQ_EMPTY(&dhcp_forwarder_list))
+	if (TAILQ_EMPTY(&dhcp_forwarder_list) &&
+	    TAILQ_EMPTY(&autoconf_forwarder_list))
 		return;
 
 	log_debug("%s: create_resolver", __func__);
@@ -1007,7 +1033,8 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 
 	switch (type) {
 	case UW_RES_ASR:
-		if (TAILQ_EMPTY(&dhcp_forwarder_list)) {
+		if (TAILQ_EMPTY(&dhcp_forwarder_list) &&
+		    TAILQ_EMPTY(&autoconf_forwarder_list)) {
 			free(res);
 			return (NULL);
 		}
@@ -1022,6 +1049,18 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 			}
 			free(tmp);
 		}
+		TAILQ_FOREACH(uw_forwarder, &autoconf_forwarder_list, entry) {
+			tmp = resolv_conf;
+			if (asprintf(&resolv_conf, "%snameserver %s\n", tmp ==
+			    NULL ? "" : tmp, uw_forwarder->name) == -1) {
+				free(tmp);
+				free(res);
+				log_warnx("could not create asr context");
+				return (NULL);
+			}
+			free(tmp);
+		}
+
 		log_debug("%s: UW_RES_ASR resolv.conf: %s", __func__,
 		    resolv_conf);
 		if ((res->asr_ctx = asr_resolver_from_string(resolv_conf)) ==
@@ -1093,11 +1132,15 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 		res->oppdot = oppdot;
 		if (oppdot) {
 			set_forwarders_oppdot(res, &dhcp_forwarder_list, 853);
+			set_forwarders_oppdot(res, &autoconf_forwarder_list,
+			    853);
 			ub_ctx_set_option(res->ctx, "tls-cert-bundle:",
 			    tls_default_ca_cert_file());
 			ub_ctx_set_tls(res->ctx, 1);
-		} else
+		} else {
 			set_forwarders_oppdot(res, &dhcp_forwarder_list, 53);
+			set_forwarders_oppdot(res, &autoconf_forwarder_list, 53);
+		}
 		break;
 	case UW_RES_FORWARDER:
 		res->oppdot = oppdot;
@@ -1833,4 +1876,143 @@ out:
 	ub_resolve_free(result);
 	resolver_unref(res);
 	evtimer_add(&trust_anchor_timer, &tv);
+}
+
+void
+add_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
+{
+	struct uw_forwarder	*uw_forwarder;
+	int			 i, rdns_count, af, changed = 0;
+	char			 ntopbuf[INET6_ADDRSTRLEN], *src;
+	const char		*ns;
+
+	af = rdns_proposal->rtdns.sr_family;
+	src = rdns_proposal->rtdns.sr_dns;
+
+	switch (af) {
+	case AF_INET:
+		rdns_count = (rdns_proposal->rtdns.sr_len -
+		    offsetof(struct sockaddr_rtdns, sr_dns)) /
+		    sizeof(struct in_addr);
+		break;
+	case AF_INET6:
+		rdns_count = (rdns_proposal->rtdns.sr_len -
+		    offsetof(struct sockaddr_rtdns, sr_dns)) /
+		    sizeof(struct in6_addr);
+		break;
+	default:
+		log_warnx("%s: unsupported address family: %d", __func__, af);
+		return;
+	}
+
+	for (i = 0; i < rdns_count; i++) {
+		switch (af) {
+		case AF_INET:
+			if (((struct in_addr *)src)->s_addr == INADDR_ANY)
+				continue;
+			ns = inet_ntop(af, (struct in_addr *)src, ntopbuf,
+			    INET6_ADDRSTRLEN);
+			src += sizeof(struct in_addr);
+			break;
+		case AF_INET6:
+			if (IN6_IS_ADDR_LOOPBACK((struct in6_addr *)src))
+				continue;
+			ns = inet_ntop(af, (struct in6_addr *)src, ntopbuf,
+			    INET6_ADDRSTRLEN);
+			src += sizeof(struct in6_addr);
+		}
+
+		log_debug("%s: %s", __func__, ns);
+		if (find_forwarder(&autoconf_forwarder_list, ns) == NULL) {
+			if ((uw_forwarder = calloc(1, sizeof(struct
+			    uw_forwarder))) == NULL)
+				fatal(NULL);
+			if (strlcpy(uw_forwarder->name, ns,
+			    sizeof(uw_forwarder->name)) >=
+			    sizeof(uw_forwarder->name))
+				fatalx("strlcpy");
+			TAILQ_INSERT_TAIL(&autoconf_forwarder_list,
+			    uw_forwarder, entry);
+			changed = 1;
+		}
+	}
+	if (changed) {
+		new_forwarders(0);
+		new_asr_forwarders();
+		if (resolver_conf->captive_portal_auto)
+			check_captive_portal(1);
+		log_debug("%s: forwarders changed", __func__);
+	} else
+		log_debug("%s: forwarders didn't change", __func__);
+}
+
+void
+rem_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
+{
+	struct uw_forwarder		*uw_forwarder;
+	int				 i, rdns_count, af, changed = 0;
+	char				 ntopbuf[INET6_ADDRSTRLEN], *src;
+	const char			*ns;
+
+	af = rdns_proposal->rtdns.sr_family;
+
+	src = rdns_proposal->rtdns.sr_dns;
+
+	switch (af) {
+	case AF_INET:
+		rdns_count = (rdns_proposal->rtdns.sr_len -
+		    offsetof(struct sockaddr_rtdns, sr_dns)) /
+		    sizeof(struct in_addr);
+		break;
+	case AF_INET6:
+		rdns_count = (rdns_proposal->rtdns.sr_len -
+		    offsetof(struct sockaddr_rtdns, sr_dns)) /
+		    sizeof(struct in6_addr);
+		break;
+	default:
+		log_warnx("%s: unsupported address family: %d", __func__, af);
+		return;
+	}
+
+	for (i = 0; i < rdns_count; i++) {
+		switch (af) {
+		case AF_INET:
+			ns = inet_ntop(af, (struct in_addr *)src, ntopbuf,
+			    INET6_ADDRSTRLEN);
+			src += sizeof(struct in_addr);
+			break;
+		case AF_INET6:
+			ns = inet_ntop(af, (struct in6_addr *)src, ntopbuf,
+			    INET6_ADDRSTRLEN);
+			src += sizeof(struct in6_addr);
+		}
+
+		log_debug("%s: %s", __func__, ns);
+		if ((uw_forwarder = find_forwarder(&autoconf_forwarder_list,
+		    ns)) != NULL) {
+			TAILQ_REMOVE(&autoconf_forwarder_list, uw_forwarder,
+			    entry);
+			changed = 1;
+		}
+	}
+
+	if (changed) {
+		new_forwarders(0);
+		new_asr_forwarders();
+		if (resolver_conf->captive_portal_auto)
+			check_captive_portal(1);
+		log_debug("%s: forwarders changed", __func__);
+	} else
+		log_debug("%s: forwarders didn't change", __func__);
+}
+
+struct uw_forwarder *
+find_forwarder(struct uw_forwarder_head *list, const char *name) {
+	struct uw_forwarder	*uw_forwarder;
+
+	TAILQ_FOREACH(uw_forwarder, list, entry) {
+		if (strcmp(uw_forwarder->name, name) == 0)
+			return uw_forwarder;
+	}
+	return NULL;
 }

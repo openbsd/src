@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.10 2019/03/01 08:02:25 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.11 2019/11/11 05:51:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -21,6 +21,8 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/un.h>
+
+#include <net/route.h>
 
 #include <errno.h>
 #include <event.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.34 2019/11/09 16:28:10 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.35 2019/11/11 05:51:06 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -73,6 +73,7 @@ int		main_reload(void);
 int		main_sendall(enum imsg_type, void *, uint16_t);
 void		open_dhcp_lease(int);
 void		open_ports(void);
+void		solicit_dns_proposals(void);
 void		resolve_captive_portal(void);
 void		resolve_captive_portal_done(struct asr_result *, void *);
 void		send_blocklist_fd(void);
@@ -88,6 +89,8 @@ pid_t		 resolver_pid;
 pid_t		 captiveportal_pid;
 
 uint32_t	 cmd_opts;
+
+int		 routesock;
 
 void
 main_sig_handler(int sig, short event, void *arg)
@@ -298,6 +301,11 @@ main(int argc, char *argv[])
 	    &rtfilter, sizeof(rtfilter)) == -1)
 		fatal("setsockopt(ROUTE_MSGFILTER)");
 
+	if ((routesock = socket(AF_ROUTE, SOCK_RAW | SOCK_CLOEXEC |
+	    SOCK_NONBLOCK, AF_INET6)) == -1)
+		fatal("route socket");
+	shutdown(SHUT_RD, routesock);
+
 	if ((ta_fd = open(TRUST_ANCHOR_FILE, O_RDWR | O_CREAT, 0644)) == -1)
 		log_warn("%s", TRUST_ANCHOR_FILE);
 
@@ -441,6 +449,7 @@ main_dispatch_frontend(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_STARTUP_DONE:
+			solicit_dns_proposals();
 			open_ports();
 			break;
 		case IMSG_CTL_RELOAD:
@@ -952,6 +961,30 @@ open_ports(void)
 		main_imsg_compose_frontend_fd(IMSG_UDP4SOCK, 0, udp4sock);
 	if (udp6sock != -1)
 		main_imsg_compose_frontend_fd(IMSG_UDP6SOCK, 0, udp6sock);
+}
+
+void
+solicit_dns_proposals(void)
+{
+	struct rt_msghdr		 rtm;
+	struct iovec			 iov[1];
+	int				 iovcnt = 0;
+
+	memset(&rtm, 0, sizeof(rtm));
+
+	rtm.rtm_version = RTM_VERSION;
+	rtm.rtm_type = RTM_PROPOSAL;
+	rtm.rtm_msglen = sizeof(rtm);
+	rtm.rtm_tableid = 0;
+	rtm.rtm_index = 0;
+	rtm.rtm_seq = arc4random();
+	rtm.rtm_priority = RTP_PROPOSAL_SOLICIT;
+
+	iov[iovcnt].iov_base = &rtm;
+	iov[iovcnt++].iov_len = sizeof(rtm);
+
+	if (writev(routesock, iov, iovcnt) == -1)
+		log_warn("failed to send solicitation");
 }
 
 void

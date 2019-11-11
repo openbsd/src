@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.33 2019/10/31 12:54:40 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.34 2019/11/11 05:51:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1017,7 +1017,9 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 void
 handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 {
-	char	buf[IF_NAMESIZE], *bufp;
+	struct imsg_rdns_proposal	 rdns_proposal;
+	struct sockaddr_rtdns		*rtdns;
+	char				 buf[IF_NAMESIZE], *bufp;
 
 	switch (rtm->rtm_type) {
 	case RTM_GET:
@@ -1051,6 +1053,37 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 	case RTM_IFINFO:
 		frontend_imsg_compose_resolver(IMSG_RECHECK_RESOLVERS, 0, NULL,
 		    0);
+		break;
+	case RTM_PROPOSAL:
+		if (!(rtm->rtm_addrs & RTA_DNS))
+			break;
+
+		rtdns = (struct sockaddr_rtdns*)rti_info[RTAX_DNS];
+		switch (rtdns->sr_family) {
+		case AF_INET:
+			if ((rtdns->sr_len - 2) % sizeof(struct in_addr) != 0) {
+				log_warnx("ignoring invalid RTM_PROPOSAL");
+				return;
+			}
+			break;
+		case AF_INET6:
+			if ((rtdns->sr_len - 2) % sizeof(struct in6_addr) != 0) {
+				log_warnx("ignoring invalid RTM_PROPOSAL");
+				return;
+			}
+			break;
+		default:
+			log_warnx("ignoring invalid RTM_PROPOSAL");
+			return;
+		}
+		rdns_proposal.if_index = rtm->rtm_index;
+		memcpy(&rdns_proposal.rtdns, rtdns, sizeof(rdns_proposal.rtdns));
+		if (rtm->rtm_flags & RTF_UP)
+			frontend_imsg_compose_resolver(IMSG_ADD_DNS, 0,
+			    &rdns_proposal, sizeof(rdns_proposal));
+		else
+			frontend_imsg_compose_resolver(IMSG_REMOVE_DNS, 0,
+			    &rdns_proposal, sizeof(rdns_proposal));
 		break;
 	default:
 		break;
