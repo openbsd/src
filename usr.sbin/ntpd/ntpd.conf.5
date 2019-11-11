@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.40 2019/11/10 19:28:34 deraadt Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.41 2019/11/11 16:41:29 deraadt Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 10 2019 $
+.Dd $Mdocdate: November 11 2019 $
 .Dt NTPD.CONF 5
 .Os
 .Sh NAME
@@ -81,6 +81,7 @@ query from 2001:db8::1
 .Op Ic correction Ar microseconds
 .Op Ic refid Ar ID-string
 .Op Ic stratum Ar stratum-value
+.Op Ic trusted
 .Op Ic weight Ar weight-value
 .Xc
 Specify a timedelta sensor device
@@ -136,6 +137,16 @@ The
 keyword can be used to change the stratum value from the default of 1.
 .Pp
 The
+.Ic trusted
+keyword indicates the time learned is secure and trustworthy, cannot
+be man-in-the-middle attacked, so
+.Ic constraints
+validation is skipped.
+This is useful for boot-time correction in environments where
+.Ic constraints
+cannot be used.
+.Pp
+The
 .Ic weight
 keyword permits finer control over the relative importance
 of time sources (servers or sensor devices).
@@ -171,16 +182,6 @@ To provide redundancy, it is good practice to configure multiple servers.
 In general, best accuracy is obtained by using servers that have a low
 network latency.
 .Pp
-The
-.Ic trusted
-keyword indicates the server is connected closely on a secure network such that
-NTP packets cannot be injected as man-in-the-middle attacks.
-NTP packets from these servers are considered truthful without validation
-by
-.Ic constraints .
-This is useful for boot-time correction in environments where
-.Ic constraints
-cannot be used.
 .It Xo Ic servers Ar address
 .Op Ic trusted
 .Op Ic weight Ar weight-value
