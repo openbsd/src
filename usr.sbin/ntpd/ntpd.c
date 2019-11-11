@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.127 2019/11/11 01:04:55 deraadt Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.128 2019/11/11 06:32:52 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -114,8 +114,8 @@ auto_preconditions(const struct ntpd_conf *cnf)
 	if (sysctl(mib, 2, &securelevel, &sz, NULL, 0) == -1)
 		err(1, "sysctl");
 	constraints = !TAILQ_EMPTY(&cnf->constraints);
-	return !cnf->settime && (constraints || cnf->trusted_peers) &&
-	    securelevel == 0;
+	return !cnf->settime && (constraints || cnf->trusted_peers ||
+	    conf->trusted_sensors) && securelevel == 0;
 }
 
 #define POLL_MAX		8

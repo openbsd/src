@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.53 2019/11/10 07:32:58 otto Exp $ */
+/*	$OpenBSD: sensors.c,v 1.54 2019/11/11 06:32:52 otto Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -134,6 +134,7 @@ sensor_add(int sensordev, char *dxname)
 	s->weight = cs->weight;
 	s->correction = cs->correction;
 	s->stratum = cs->stratum - 1;
+	s->trusted = cs->trusted;
 	if ((s->device = strdup(dxname)) == NULL)
 		fatal("sensor_add strdup");
 	s->sensordevid = sensordev;
@@ -195,7 +196,7 @@ sensor_query(struct ntp_sensor *s)
 
 	s->last = sensor.tv.tv_sec;
 	
-	if (!TAILQ_EMPTY(&conf->constraints)) {
+	if (!s->trusted && !TAILQ_EMPTY(&conf->constraints)) {
 		if (conf->constraint_median == 0) {
 			return;
 		}

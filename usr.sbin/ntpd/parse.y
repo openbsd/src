@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.75 2019/11/10 19:24:47 otto Exp $ */
+/*	$OpenBSD: parse.y,v 1.76 2019/11/11 06:32:52 otto Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -183,6 +183,8 @@ main		: LISTEN ON address listen_opts	{
 				p = new_peer();
 				p->weight = $3.weight;
 				p->trusted = $3.trusted;
+				conf->trusted_peers = conf->trusted_peers ||
+				    $3.trusted;
 				p->query_addr4 = query_addr4;
 				p->query_addr6 = query_addr6;
 				p->addr = h;
@@ -223,6 +225,8 @@ main		: LISTEN ON address listen_opts	{
 
 			p->weight = $3.weight;
 			p->trusted = $3.trusted;
+			conf->trusted_peers = conf->trusted_peers ||
+			    $3.trusted;
 			p->query_addr4 = query_addr4;
 			p->query_addr6 = query_addr6;
 			p->addr_head.a = p->addr;
@@ -319,6 +323,9 @@ main		: LISTEN ON address listen_opts	{
 			s->correction = $3.correction;
 			s->refstr = $3.refstr;
 			s->stratum = $3.stratum;
+			s->trusted = $3.trusted;
+			conf->trusted_sensors = conf->trusted_sensors ||
+			    $3.trusted;
 			free($2);
 			TAILQ_INSERT_TAIL(&conf->ntp_conf_sensors, s, entry);
 		}
@@ -428,6 +435,7 @@ sensor_opt	: correction
 		| refid
 		| stratum
 		| weight
+		| trusted
 		;
 
 correction	: CORRECTION NUMBER {
@@ -481,7 +489,6 @@ rtable		: RTABLE NUMBER {
 
 trusted		: TRUSTED	{
 			opts.trusted = 1;
-			conf->trusted_peers = 1;
 		}
 
 %%
