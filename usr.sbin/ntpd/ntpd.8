@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.44 2019/11/11 01:05:30 deraadt Exp $
+.\" $OpenBSD: ntpd.8,v 1.45 2019/11/11 17:42:28 otto Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Henning Brauer <henning@openbsd.org>
 .\"
@@ -89,8 +89,8 @@ will be logged.
 .Pp
 .Nm
 makes efforts to verify and correct the time at boot if constraints are
-configured and satisfied, if trusted servers return results, and if the
-clock is not being moved backwards.
+configured and satisfied or if trusted servers or sensors return results,
+and if the clock is not being moved backwards.
 .Pp
 After the local clock is synchronized,
 .Nm
