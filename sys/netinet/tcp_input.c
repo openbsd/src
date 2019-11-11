@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.361 2019/07/12 19:43:51 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.362 2019/11/11 21:17:21 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1712,12 +1712,18 @@ trimthenstep6:
 		}
 		ND6_HINT(tp);
 		if (acked > so->so_snd.sb_cc) {
-			tp->snd_wnd -= so->so_snd.sb_cc;
+			if (tp->snd_wnd > so->so_snd.sb_cc)
+				tp->snd_wnd -= so->so_snd.sb_cc;
+			else
+				tp->snd_wnd = 0;
 			sbdrop(so, &so->so_snd, (int)so->so_snd.sb_cc);
 			ourfinisacked = 1;
 		} else {
 			sbdrop(so, &so->so_snd, acked);
-			tp->snd_wnd -= acked;
+			if (tp->snd_wnd > acked)
+				tp->snd_wnd -= acked;
+			else
+				tp->snd_wnd = 0;
 			ourfinisacked = 0;
 		}
 
