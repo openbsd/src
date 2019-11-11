@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.30 2019/11/07 08:45:31 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.31 2019/11/11 05:48:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -425,6 +425,8 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 		case IMSG_CTL_SHOW_INTERFACE_INFO_ADDR_PROPOSAL:
 		case IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSALS:
 		case IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSAL:
+		case IMSG_CTL_SHOW_INTERFACE_INFO_RDNS_PROPOSALS:
+		case IMSG_CTL_SHOW_INTERFACE_INFO_RDNS_PROPOSAL:
 			control_imsg_relay(&imsg);
 			break;
 #endif	/* SMALL */
@@ -852,6 +854,15 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		    ifm->ifm_index);
 
 		break;
+#ifndef	SMALL
+	case RTM_PROPOSAL:
+		if (rtm->rtm_priority == RTP_PROPOSAL_SOLICIT) {
+			log_debug("RTP_PROPOSAL_SOLICIT");
+			frontend_imsg_compose_engine(IMSG_REPROPOSE_RDNS,
+			    0, 0, NULL, 0);
+		}
+		break;
+#endif	/* SMALL */
 	default:
 		log_debug("unexpected RTM: %d", rtm->rtm_type);
 		break;

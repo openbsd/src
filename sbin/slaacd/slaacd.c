@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.41 2019/11/07 08:45:31 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.42 2019/11/11 05:48:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -68,6 +68,9 @@ void	delete_address(struct imsg_configure_address *);
 void	configure_gateway(struct imsg_configure_dfr *, uint8_t);
 void	add_gateway(struct imsg_configure_dfr *);
 void	delete_gateway(struct imsg_configure_dfr *);
+#ifndef	SMALL
+void	send_rdns_proposal(struct imsg_propose_rdns *, uint8_t);
+#endif	/* SMALL */
 int	get_soiikey(uint8_t *);
 
 static int	main_imsg_send_ipc_sockets(struct imsgbuf *, struct imsgbuf *);
@@ -267,7 +270,7 @@ main(int argc, char *argv[])
 
 	rtfilter = ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_NEWADDR) |
 	    ROUTE_FILTER(RTM_DELADDR) | ROUTE_FILTER(RTM_DELETE) |
-	    ROUTE_FILTER(RTM_CHGADDRATTR);
+	    ROUTE_FILTER(RTM_CHGADDRATTR) | ROUTE_FILTER(RTM_PROPOSAL);
 	if (setsockopt(frontend_routesock, AF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)
 		fatal("setsockopt(ROUTE_MSGFILTER)");
@@ -477,6 +480,9 @@ main_dispatch_engine(int fd, short event, void *bula)
 	struct imsg			 imsg;
 	struct imsg_configure_address	 address;
 	struct imsg_configure_dfr	 dfr;
+#ifndef	SMALL
+	struct imsg_propose_rdns	 rdns;
+#endif	/* SMALL */
 	ssize_t				 n;
 	int				 shut = 0;
 
@@ -534,6 +540,24 @@ main_dispatch_engine(int fd, short event, void *bula)
 			memcpy(&dfr, imsg.data, sizeof(dfr));
 			delete_gateway(&dfr);
 			break;
+#ifndef	SMALL
+		case IMSG_PROPOSE_RDNS:
+			if (IMSG_DATA_SIZE(imsg) != sizeof(rdns))
+				fatalx("%s: IMSG_PROPOSE_RDNS wrong "
+				    "length: %lu", __func__,
+				    IMSG_DATA_SIZE(imsg));
+			memcpy(&rdns, imsg.data, sizeof(rdns));
+			send_rdns_proposal(&rdns, RTF_UP);
+			break;
+		case IMSG_WITHDRAW_RDNS:
+			if (IMSG_DATA_SIZE(imsg) != sizeof(rdns))
+				fatalx("%s: IMSG_WITHDRAW_RDNS wrong "
+				    "length: %lu", __func__,
+				    IMSG_DATA_SIZE(imsg));
+			memcpy(&rdns, imsg.data, sizeof(rdns));
+			send_rdns_proposal(&rdns, 0);
+			break;
+#endif	/* SMALL */
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
 			    imsg.hdr.type);
@@ -809,6 +833,49 @@ delete_gateway(struct imsg_configure_dfr *dfr)
 }
 
 #ifndef	SMALL
+void
+send_rdns_proposal(struct imsg_propose_rdns *rdns, uint8_t rtm_flags)
+{
+	struct rt_msghdr		 rtm;
+	struct sockaddr_rtdns		 rtdns;
+	struct iovec			 iov[3];
+	long				 pad = 0;
+	int				 iovcnt = 0, padlen;
+
+	memset(&rtm, 0, sizeof(rtm));
+
+	rtm.rtm_version = RTM_VERSION;
+	rtm.rtm_type = RTM_PROPOSAL;
+	rtm.rtm_msglen = sizeof(rtm);
+	rtm.rtm_tableid = 0; /* XXX imsg->rdomain; */
+	rtm.rtm_index = rdns->if_index;
+	rtm.rtm_seq = ++rtm_seq;
+	rtm.rtm_priority = RTP_PROPOSAL_SLAAC;
+	rtm.rtm_addrs = RTA_DNS;
+	rtm.rtm_flags = rtm_flags;
+
+	iov[iovcnt].iov_base = &rtm;
+	iov[iovcnt++].iov_len = sizeof(rtm);
+
+	memset(&rtdns, 0, sizeof(rtdns));
+	rtdns.sr_family = AF_INET6;
+	rtdns.sr_len = 2 + rdns->rdns_count * sizeof(struct in6_addr);
+	memcpy(rtdns.sr_dns, rdns->rdns, sizeof(rtdns.sr_dns));
+
+	iov[iovcnt].iov_base = &rtdns;
+	iov[iovcnt++].iov_len = sizeof(rtdns);
+	rtm.rtm_msglen += sizeof(rtdns);
+	padlen = ROUNDUP(sizeof(rtdns)) - sizeof(rtdns);
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+		rtm.rtm_msglen += padlen;
+	}
+
+	if (writev(routesock, iov, iovcnt) == -1)
+		log_warn("failed to send route message");
+}
+
 const char*
 sin6_to_str(struct sockaddr_in6 *sin6)
 {
