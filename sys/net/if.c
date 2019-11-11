@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.593 2019/11/09 09:45:25 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.594 2019/11/11 05:20:54 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1686,7 +1686,7 @@ void
 if_linkstatehook_add(struct ifnet *ifp, struct task *t)
 {
 	mtx_enter(&if_hooks_mtx);
-	TAILQ_INSERT_TAIL(&ifp->if_linkstatehooks, t, t_entry);
+	TAILQ_INSERT_HEAD(&ifp->if_linkstatehooks, t, t_entry);
 	mtx_leave(&if_hooks_mtx);
 }
 
