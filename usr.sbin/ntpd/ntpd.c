@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.126 2019/11/10 19:24:47 otto Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.127 2019/11/11 01:04:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -99,7 +99,7 @@ usage(void)
 		fprintf(stderr,
 		    "usage: ntpctl -s all | peers | Sensors | status\n");
 	else
-		fprintf(stderr, "usage: %s [-dnSsv] [-f file]\n",
+		fprintf(stderr, "usage: %s [-dnv] [-f file]\n",
 		    __progname);
 	exit(1);
 }
@@ -140,6 +140,7 @@ main(int argc, char *argv[])
 	char			**argv0 = argv;
 	char			*pname = NULL;
 	time_t			 settime_deadline;
+	int			 sopt = 0;
 
 	if (strcmp(__progname, "ntpctl") == 0) {
 		ctl_main(argc, argv);
@@ -166,10 +167,8 @@ main(int argc, char *argv[])
 			pname = optarg;
 			break;
 		case 's':
-			lconf.settime = 1;
-			break;
 		case 'S':
-			lconf.settime = 0;
+			sopt = ch;
 			break;
 		case 'v':
 			lconf.verbose++;
@@ -186,6 +185,12 @@ main(int argc, char *argv[])
 		logdest |= LOG_TO_SYSLOG;
 
 	log_init(logdest, lconf.verbose, LOG_DAEMON);
+
+	if (sopt) {
+		log_warnx("-%c option no longer works and will be removed soon.",
+		    sopt);
+		log_warnx("Please reconfigure to use constraints or trusted servers.");
+	}
 
 	argc -= optind;
 	argv += optind;
