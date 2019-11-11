@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.123 2019/08/14 08:35:46 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.124 2019/11/11 15:10:39 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -890,6 +890,12 @@ void	 ikev2_msg_flushqueue(struct iked *, struct iked_msgqueue *);
 struct iked_message *
 	 ikev2_msg_lookup(struct iked *, struct iked_msgqueue *,
 	    struct iked_message *, struct ike_header *);
+void	 ikev2_msg_lookup_dispose_all(struct iked *env,
+	    struct iked_msgqueue *queue, struct iked_message *msg,
+	    struct ike_header *hdr);
+int	 ikev2_msg_lookup_retransmit_all(struct iked *env,
+	    struct iked_msgqueue *queue, struct iked_message *msg,
+	    struct ike_header *hdr, struct iked_sa *sa);
 
 /* ikev2_pld.c */
 int	 ikev2_pld_parse(struct iked *, struct ike_header *,

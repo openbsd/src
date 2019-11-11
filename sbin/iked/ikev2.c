@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.176 2019/09/26 12:08:08 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.177 2019/11/11 15:10:39 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -421,8 +421,8 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 {
 	struct ike_header	*hdr;
 	struct iked_sa		*sa;
-	unsigned int		 removed, initiator, flag = 0;
-	struct iked_message	*m, *m_old;
+	unsigned int		 initiator, flag = 0;
+	int			 r;
 
 	hdr = ibuf_seek(msg->msg_data, msg->msg_offset, sizeof(*hdr));
 
@@ -484,15 +484,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		/*
 		 * There's no need to keep the request (fragments) around
 		 */
-		TAILQ_FOREACH_SAFE(m, &sa->sa_requests, msg_entry, m_old) {
-			if (m->msg_msgid == msg->msg_msgid &&
-			    m->msg_exchange == hdr->ike_exchange) {
-				TAILQ_REMOVE(&sa->sa_requests, m, msg_entry);
-				timer_del(env, &m->msg_timer);
-				ikev2_msg_cleanup(env, m);
-				free(m);
-			}
-		}
+		ikev2_msg_lookup_dispose_all(env, &sa->sa_requests, msg, hdr);
 	} else {
 		/*
 		 * IKE_SA_INIT is special since it always uses the message id 0.
@@ -518,22 +510,15 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		/*
 		 * See if we have responded to this request before
 		 */
-		removed = 0;
-		TAILQ_FOREACH_SAFE(m, &sa->sa_responses, msg_entry, m_old) {
-			if (m->msg_msgid == msg->msg_msgid &&
-			    m->msg_exchange == hdr->ike_exchange) {
-				if (ikev2_msg_retransmit_response(env, sa, m)) {
-					log_warn("%s: failed to retransmit a "
-					    "response", __func__);
-					sa_free(env,sa);
-					return;
-				}
-				removed++;
+		if ((r = ikev2_msg_lookup_retransmit_all(env, &sa->sa_responses,
+		    msg, hdr, sa)) != 0) {
+			if (r == -1) {
+				log_warn("%s: failed to retransmit a "
+				    "response", __func__);
+				sa_free(env, sa);
 			}
-		}
-		if (removed > 0)
 			return;
-		else if (sa->sa_msgid_set && msg->msg_msgid == sa->sa_msgid &&
+		} else if (sa->sa_msgid_set && msg->msg_msgid == sa->sa_msgid &&
 		    !(sa->sa_fragments.frag_count)) {
 			/*
 			 * Response is being worked on, most likely we're

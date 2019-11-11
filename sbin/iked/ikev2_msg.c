@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.56 2019/08/12 07:40:45 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.57 2019/11/11 15:10:39 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1139,6 +1139,41 @@ ikev2_msg_lookup(struct iked *env, struct iked_msgqueue *queue,
 	}
 
 	return (m);
+}
+
+void
+ikev2_msg_lookup_dispose_all(struct iked *env, struct iked_msgqueue *queue,
+    struct iked_message *msg, struct ike_header *hdr)
+{
+	struct iked_message	*m = NULL, *tmp = NULL;
+
+	TAILQ_FOREACH_SAFE(m, queue, msg_entry, tmp) {
+		if (m->msg_msgid == msg->msg_msgid &&
+		    m->msg_exchange == hdr->ike_exchange) {
+			TAILQ_REMOVE(queue, m, msg_entry);
+			timer_del(env, &m->msg_timer);
+			ikev2_msg_cleanup(env, m);
+			free(m);
+		}
+	}
+}
+
+int
+ikev2_msg_lookup_retransmit_all(struct iked *env, struct iked_msgqueue *queue,
+    struct iked_message *msg, struct ike_header *hdr, struct iked_sa *sa)
+{
+	struct iked_message	*m = NULL, *tmp = NULL;
+	int count = 0;
+
+	TAILQ_FOREACH_SAFE(m, queue, msg_entry, tmp) {
+		if (m->msg_msgid == msg->msg_msgid &&
+		    m->msg_exchange == hdr->ike_exchange) {
+			if (ikev2_msg_retransmit_response(env, sa, m))
+				return -1;
+			count++;
+		}
+	}
+	return count;
 }
 
 int
