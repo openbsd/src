@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.232 2019/11/08 07:16:29 dlg Exp $	*/
+/*	$OpenBSD: in6.c,v 1.233 2019/11/11 17:42:28 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -182,6 +182,18 @@ in6_nam2sin6(const struct mbuf *nam, struct sockaddr_in6 **sin6)
 }
 
 int
+in6_sa2sin6(struct sockaddr *sa, struct sockaddr_in6 **sin6)
+{
+	if (sa->sa_family != AF_INET6)
+		return EAFNOSUPPORT;
+	if (sa->sa_len != sizeof(struct sockaddr_in6))
+		return EINVAL;
+	*sin6 = satosin6(sa);
+
+	return 0;
+}
+
+int
 in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 {
 	int privileged;
@@ -243,10 +255,10 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 int
 in6_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 {
-	struct	in6_ifreq *ifr = (struct in6_ifreq *)data;
 	struct	in6_ifaddr *ia6 = NULL;
 	struct	in6_aliasreq *ifra = (struct in6_aliasreq *)data;
-	struct sockaddr_in6 *sa6;
+	struct	sockaddr *sa;
+	struct	sockaddr_in6 *sa6 = NULL;
 	int	error = 0, newifaddr = 0, plen;
 
 	/*
@@ -260,21 +272,29 @@ in6_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 	 * on a single interface, we almost always look and check the
 	 * presence of ifra_addr, and reject invalid ones here.
 	 * It also decreases duplicated code among SIOC*_IN6 operations.
+	 *
+	 * We always require users to specify a valid IPv6 address for
+	 * the corresponding operation.
 	 */
 	switch (cmd) {
 	case SIOCAIFADDR_IN6:
-		sa6 = &ifra->ifra_addr;
+		sa = sin6tosa(&ifra->ifra_addr);
 		break;
 	case SIOCDIFADDR_IN6:
-		sa6 = &ifr->ifr_addr;
+		sa = sin6tosa(&((struct in6_ifreq *)data)->ifr_addr);
 		break;
 	default:
-		panic("unknown ioctl %lu", cmd);
+		panic("%s: invalid ioctl %lu", __func__, cmd);
+	}
+	if (sa->sa_family == AF_INET6) {
+		error = in6_sa2sin6(sa, &sa6);
+		if (error)
+			return (error);
 	}
 
 	NET_LOCK();
 
-	if (sa6 && sa6->sin6_family == AF_INET6) {
+	if (sa6 != NULL) {
 		error = in6_check_embed_scope(sa6, ifp->if_index);
 		if (error)
 			goto err;
@@ -297,30 +317,11 @@ in6_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 			error = EADDRNOTAVAIL;
 			break;
 		}
-		/*
-		 * We always require users to specify a valid IPv6 address for
-		 * the corresponding operation.
-		 */
-		if (ifra->ifra_addr.sin6_family != AF_INET6 ||
-		    ifra->ifra_addr.sin6_len != sizeof(struct sockaddr_in6)) {
-			error = EAFNOSUPPORT;
-			break;
-		}
 		in6_purgeaddr(&ia6->ia_ifa);
 		if_addrhooks_run(ifp);
 		break;
 
 	case SIOCAIFADDR_IN6:
-		/*
-		 * We always require users to specify a valid IPv6 address for
-		 * the corresponding operation.
-		 */
-		if (ifra->ifra_addr.sin6_family != AF_INET6 ||
-		    ifra->ifra_addr.sin6_len != sizeof(struct sockaddr_in6)) {
-			error = EAFNOSUPPORT;
-			break;
-		}
-
 		/* reject read-only flags */
 		if ((ifra->ifra_flags & IN6_IFF_DUPLICATED) != 0 ||
 		    (ifra->ifra_flags & IN6_IFF_DETACHED) != 0 ||
@@ -346,13 +347,15 @@ in6_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 		 * is no link-local yet.
 		 */
 		error = in6_ifattach(ifp);
-		if (error != 0)
+		if (error)
 			break;
 		error = in6_update_ifa(ifp, ifra, ia6);
-		if (error != 0)
+		if (error)
 			break;
 
-		ia6 = in6ifa_ifpwithaddr(ifp, &ifra->ifra_addr.sin6_addr);
+		ia6 = NULL;
+		if (sa6 != NULL)
+			ia6 = in6ifa_ifpwithaddr(ifp, &sa6->sin6_addr);
 		if (ia6 == NULL) {
 			/*
 			 * this can happen when the user specify the 0 valid
@@ -397,14 +400,20 @@ in6_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 {
 	struct	in6_ifreq *ifr = (struct in6_ifreq *)data;
 	struct	in6_ifaddr *ia6 = NULL;
-	struct sockaddr_in6 *sa6;
+	struct	sockaddr *sa;
+	struct	sockaddr_in6 *sa6 = NULL;
 	int	error = 0;
 
-	sa6 = &ifr->ifr_addr;
+	sa = sin6tosa(&ifr->ifr_addr);
+	if (sa->sa_family == AF_INET6) {
+		error = in6_sa2sin6(sa, &sa6);
+		if (error)
+			return (error);
+	}
 
 	NET_RLOCK();
 
-	if (sa6 && sa6->sin6_family == AF_INET6) {
+	if (sa6 != NULL) {
 		error = in6_check_embed_scope(sa6, ifp->if_index);
 		if (error)
 			goto err;
@@ -492,7 +501,7 @@ in6_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 		break;
 
 	default:
-		panic("invalid ioctl %lu", cmd);
+		panic("%s: invalid ioctl %lu", __func__, cmd);
 	}
 
 err:
