@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.263 2019/09/22 11:49:53 semarie Exp $	*/
+/*	$OpenBSD: parse.y,v 1.264 2019/11/12 21:02:42 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1875,6 +1875,20 @@ opt_sock_listen : FILTER STRING {
 				YYERROR;
 			}
 		}
+		| TAG STRING			{
+			if (listen_opts.options & LO_TAG) {
+				yyerror("tag already specified");
+				YYERROR;
+			}
+			listen_opts.options |= LO_TAG;
+
+			if (strlen($2) >= SMTPD_TAG_SIZE) {
+       				yyerror("tag name too long");
+				free($2);
+				YYERROR;
+			}
+			listen_opts.tag = $2;
+		}
 		;
 
 opt_if_listen : INET4 {
@@ -2915,7 +2929,6 @@ static void
 create_sock_listener(struct listen_opts *lo)
 {
 	struct listener *l = xcalloc(1, sizeof(*l));
-	lo->tag = "local";
 	lo->hostname = conf->sc_hostname;
 	l->ss.ss_family = AF_LOCAL;
 	l->ss.ss_len = sizeof(struct sockaddr *);

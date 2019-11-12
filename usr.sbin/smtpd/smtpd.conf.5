@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.226 2019/09/20 18:47:23 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.227 2019/11/12 21:02:42 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 20 2019 $
+.Dd $Mdocdate: November 12 2019 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -536,7 +536,7 @@ With the
 option, clients must also provide a valid certificate
 to establish an SMTP session.
 .El
-.It Ic listen on Cm socket Op Cm mask-src
+.It Ic listen on Cm socket Oo Ar mask-src Oc Op Cm tag Ar tag
 Listen for incoming SMTP connections on the Unix domain socket
 .Pa /var/run/smtpd.sock .
 This is done by default, even if the directive is absent.
@@ -544,9 +544,11 @@ If the
 .Cm mask-src
 option is specified, printing of the HELO name, hostname, and IP
 address of the originating host is suppressed in Received: header lines.
-.\" XXX The option
-.\" Cm filter Ar string
-.\" is parsed, but not implemented, see smtpf_session.c.
+If the
+.Cm tag
+option is specified,
+sessions initiated from the socket will be tagged
+.Ar tag .
 .It Ic match Ar options Cm action Ar name
 If at least one mail envelope matches the
 .Ar options
