@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.60 2019/11/12 15:37:31 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.61 2019/11/12 20:24:51 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1803,8 +1803,8 @@ trust_anchor_resolve_done(void *arg, int rcode, void *answer_packet,
 {
 	struct uw_resolver	*res;
 	struct ub_result	*result;
-	sldns_buffer		*buf;
-	struct regional		*region;
+	sldns_buffer		*buf = NULL;
+	struct regional		*region = NULL;
 	struct timeval		 tv = {TRUST_ANCHOR_RETRY_INTERVAL, 0};
 	int			 i, tas, n;
 	uint16_t		 dnskey_flags;
@@ -1827,66 +1827,65 @@ trust_anchor_resolve_done(void *arg, int rcode, void *answer_packet,
 		free(str);
 	}
 
-	buf = sldns_buffer_new(answer_len);
-	region = regional_create();
+	if ((buf = sldns_buffer_new(answer_len)) == NULL)
+		goto out;
+	if ((region = regional_create()) == NULL)
+		goto out;
 	result->rcode = LDNS_RCODE_SERVFAIL;
-	if(region && buf) {
-		sldns_buffer_clear(buf);
-		sldns_buffer_write(buf, answer_packet, answer_len);
-		sldns_buffer_flip(buf);
-		libworker_enter_result(result, buf, region, sec);
-		result->answer_packet = NULL;
-		result->answer_len = 0;
-		sldns_buffer_free(buf);
-		regional_destroy(region);
 
-		if (result->rcode != LDNS_RCODE_NOERROR) {
-			log_debug("%s: result->rcode: %d", __func__,
-			    result->rcode);
+	sldns_buffer_clear(buf);
+	sldns_buffer_write(buf, answer_packet, answer_len);
+	sldns_buffer_flip(buf);
+	libworker_enter_result(result, buf, region, sec);
+	result->answer_packet = NULL;
+	result->answer_len = 0;
+
+	if (result->rcode != LDNS_RCODE_NOERROR) {
+		log_debug("%s: result->rcode: %d", __func__,
+		    result->rcode);
+		goto out;
+	}
+
+	i = 0;
+	tas = 0;
+	while(result->data[i] != NULL) {
+		if (result->len[i] < 2) {
+			if (tas > 0)
+				resolver_imsg_compose_frontend(
+				    IMSG_NEW_TAS_ABORT, 0, NULL, 0);
+			goto out;
+		}
+		n = sldns_wire2str_rdata_buf(result->data[i], result->len[i],
+		    rdata_buf, sizeof(rdata_buf), LDNS_RR_TYPE_DNSKEY);
+
+		if (n < 0 || (size_t)n >= sizeof(rdata_buf)) {
+			log_warnx("trust anchor buffer to small");
+			resolver_imsg_compose_frontend(IMSG_NEW_TAS_ABORT, 0,
+			    NULL, 0);
 			goto out;
 		}
 
-		i = 0;
-		tas = 0;
-		while(result->data[i] != NULL) {
-			if (result->len[i] < 2) {
-				if (tas > 0)
-					resolver_imsg_compose_frontend(
-					    IMSG_NEW_TAS_ABORT, 0, NULL, 0);
-				goto out;
-			}
-			n = sldns_wire2str_rdata_buf(result->data[i],
-			    result->len[i], rdata_buf, sizeof(rdata_buf),
-			    LDNS_RR_TYPE_DNSKEY);
-
-			if (n < 0 || (size_t)n >= sizeof(rdata_buf)) {
-				log_warnx("trust anchor buffer to small");
-				resolver_imsg_compose_frontend(
-				    IMSG_NEW_TAS_ABORT, 0, NULL, 0);
-				goto out;
-			}
-
-			memcpy(&dnskey_flags, result->data[i], 2);
-			dnskey_flags = ntohs(dnskey_flags);
-			if ((dnskey_flags & LDNS_KEY_SEP_KEY) &&
-			    !(dnskey_flags & LDNS_KEY_REVOKE_KEY)) {
-				asprintf(&ta, ".\t%d\tIN\tDNSKEY\t%s",
-				    ROOT_DNSKEY_TTL, rdata_buf);
-				log_debug("%s: ta: %s", __func__, ta);
-				resolver_imsg_compose_frontend(IMSG_NEW_TA, 0,
-				    ta, strlen(ta) + 1);
-				tas++;
-				free(ta);
-			}
-			i++;
+		memcpy(&dnskey_flags, result->data[i], 2);
+		dnskey_flags = ntohs(dnskey_flags);
+		if ((dnskey_flags & LDNS_KEY_SEP_KEY) && !(dnskey_flags &
+		    LDNS_KEY_REVOKE_KEY)) {
+			asprintf(&ta, ".\t%d\tIN\tDNSKEY\t%s", ROOT_DNSKEY_TTL,
+			    rdata_buf);
+			log_debug("%s: ta: %s", __func__, ta);
+			resolver_imsg_compose_frontend(IMSG_NEW_TA, 0, ta,
+			    strlen(ta) + 1);
+			tas++;
+			free(ta);
 		}
-		if (tas > 0) {
-			resolver_imsg_compose_frontend(IMSG_NEW_TAS_DONE, 0,
-			    NULL, 0);
-			tv.tv_sec = TRUST_ANCHOR_QUERY_INTERVAL;
-		}
+		i++;
+	}
+	if (tas > 0) {
+		resolver_imsg_compose_frontend(IMSG_NEW_TAS_DONE, 0, NULL, 0);
+		tv.tv_sec = TRUST_ANCHOR_QUERY_INTERVAL;
 	}
 out:
+	sldns_buffer_free(buf);
+	regional_destroy(region);
 	ub_resolve_free(result);
 	resolver_unref(res);
 	evtimer_add(&trust_anchor_timer, &tv);
