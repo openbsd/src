@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.57 2019/11/12 15:34:37 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.58 2019/11/12 15:35:11 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -411,7 +411,7 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 	struct uw_resolver		*res;
 	enum uw_resolver_type		 type;
 	ssize_t				 n;
-	int				 shut = 0, verbose, err;
+	int				 shut = 0, verbose;
 	int				 update_resolvers;
 	char				*ta;
 
@@ -479,8 +479,8 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 
 			clock_gettime(CLOCK_MONOTONIC, &query_imsg->tp);
 
-			if ((err = resolve(res, query_imsg->qname,
-			    query_imsg->t, query_imsg->c, query_imsg, 0)) != 0)
+			if ((resolve(res, query_imsg->qname, query_imsg->t,
+			    query_imsg->c, query_imsg, 0)) != 0)
 				resolver_unref(res);
 			break;
 		case IMSG_FORWARDER:
@@ -1249,7 +1249,6 @@ check_resolver(struct uw_resolver *res)
 {
 	struct uw_resolver		*check_res;
 	struct check_resolver_data	*data;
-	int				 err;
 
 	log_debug("%s: create_resolver", __func__);
 	if ((check_res = create_resolver(res->type, 0)) == NULL)
@@ -1262,8 +1261,8 @@ check_resolver(struct uw_resolver *res)
 	data->check_res = check_res;
 	data->res = res;
 
-	if ((err = resolve(check_res, ".", LDNS_RR_TYPE_NS, LDNS_RR_CLASS_IN,
-	    data, 1)) != 0) {
+	if (resolve(check_res, ".", LDNS_RR_TYPE_NS, LDNS_RR_CLASS_IN,
+	    data, 1) != 0) {
 		res->state = UNKNOWN;
 		resolver_unref(check_res);
 		resolver_unref(res);
@@ -1290,8 +1289,8 @@ check_resolver(struct uw_resolver *res)
 	data->check_res = check_res;
 	data->res = res;
 
-	if ((err = resolve(check_res, ".", LDNS_RR_TYPE_NS, LDNS_RR_CLASS_IN,
-	    data, 1)) != 0) {
+	if (resolve(check_res, ".", LDNS_RR_TYPE_NS, LDNS_RR_CLASS_IN,
+	    data, 1) != 0) {
 		log_debug("check oppdot failed");
 		/* do not overwrite normal DNS state, it might work */
 		resolver_unref(check_res);
