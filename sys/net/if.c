@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.595 2019/11/12 01:00:58 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.596 2019/11/12 23:27:15 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2257,6 +2257,31 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSPWE3FAT:
 	case SIOCSPWE3NEIGHBOR:
 	case SIOCDPWE3NEIGHBOR:
+	case SIOCBRDGADD:
+	case SIOCBRDGDEL:
+	case SIOCBRDGSIFFLGS:
+	case SIOCBRDGSCACHE:
+	case SIOCBRDGADDS:
+	case SIOCBRDGDELS:
+	case SIOCBRDGSADDR:
+	case SIOCBRDGSTO:
+	case SIOCBRDGDADDR:
+	case SIOCBRDGFLUSH:
+	case SIOCBRDGADDL:
+	case SIOCBRDGSIFPROT:
+	case SIOCBRDGARL:
+	case SIOCBRDGFRL:
+	case SIOCBRDGSPRI:
+	case SIOCBRDGSHT:
+	case SIOCBRDGSFD:
+	case SIOCBRDGSMA:
+	case SIOCBRDGSIFPRIO:
+	case SIOCBRDGSIFCOST:
+	case SIOCBRDGSTXHC:
+	case SIOCBRDGSPROTO:
+	case SIOCSWGDPID:
+	case SIOCSWSPORTNO:
+	case SIOCSWGMAXFLOW:
 		if ((error = suser(p)) != 0)
 			break;
 		/* FALLTHROUGH */
