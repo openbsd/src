@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.40 2019/07/16 01:40:49 jsg Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.41 2019/11/12 07:51:46 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -400,7 +400,7 @@ rw_assert_unlocked(struct rwlock *rwl)
 	if (panicstr || db_active)
 		return;
 
-	if (rwl->rwl_owner != 0L)
+	if (RW_PROC(curproc) == RW_PROC(rwl->rwl_owner))
 		panic("%s: lock held", rwl->rwl_name);
 }
 #endif
