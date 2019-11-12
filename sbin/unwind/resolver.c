@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.56 2019/11/11 05:51:06 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.57 2019/11/12 15:34:37 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -103,7 +103,7 @@ void			 resolver_dispatch_frontend(int, short, void *);
 void			 resolver_dispatch_captiveportal(int, short, void *);
 void			 resolver_dispatch_main(int, short, void *);
 int			 resolve(struct uw_resolver *, const char*, int, int,
-			     void*, int, int*);
+			     void*, int);
 void			 resolve_done(void *, int, void *, int, int, char *,
 			     int);
 void			 asr_resolve_done(struct asr_result *, void *);
@@ -480,8 +480,7 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			clock_gettime(CLOCK_MONOTONIC, &query_imsg->tp);
 
 			if ((err = resolve(res, query_imsg->qname,
-			    query_imsg->t, query_imsg->c, query_imsg, 0,
-			    &query_imsg->async_id)) != 0)
+			    query_imsg->t, query_imsg->c, query_imsg, 0)) != 0)
 				resolver_unref(res);
 			break;
 		case IMSG_FORWARDER:
@@ -768,7 +767,7 @@ resolver_dispatch_main(int fd, short event, void *bula)
 
 int
 resolve(struct uw_resolver *res, const char* name, int rrtype, int rrclass,
-    void *mydata, int check, int *async_id)
+    void *mydata, int check)
 {
 	struct asr_query	*aq;
 	int			 err = 0;
@@ -793,8 +792,8 @@ resolve(struct uw_resolver *res, const char* name, int rrtype, int rrclass,
 	case UW_RES_FORWARDER:
 	case UW_RES_DOT:
 		if ((err = ub_resolve_event(res->ctx, name,  rrtype, rrclass,
-		    mydata, check ? check_resolver_done : resolve_done,
-		    async_id)) != 0) {
+		    mydata, check ? check_resolver_done : resolve_done, NULL))
+		    != 0) {
 			log_warn("%s: ub_resolve_event: err: %d, %s", __func__,
 			    err, ub_strerror(err));
 		}
@@ -837,9 +836,9 @@ resolve_done(void *arg, int rcode, void *answer_packet, int answer_len,
 	else
 		res->histogram[i]++;
 
-	log_debug("%s: async_id: %d, ref_cnt: %d, elapsed: %lldms, "
-	    "histogram: %lld - %lld", __func__, query_imsg->async_id,
-	    res->ref_cnt, ms, histogram_limits[i], res->histogram[i]);
+	log_debug("%s: ref_cnt: %d, elapsed: %lldms, "
+	    "histogram: %lld - %lld", __func__, res->ref_cnt, ms,
+	    histogram_limits[i], res->histogram[i]);
 
 	log_debug("%s: rcode: %d", __func__, rcode);
 
@@ -1264,7 +1263,7 @@ check_resolver(struct uw_resolver *res)
 	data->res = res;
 
 	if ((err = resolve(check_res, ".", LDNS_RR_TYPE_NS, LDNS_RR_CLASS_IN,
-	    data, 1, NULL)) != 0) {
+	    data, 1)) != 0) {
 		res->state = UNKNOWN;
 		resolver_unref(check_res);
 		resolver_unref(res);
@@ -1292,7 +1291,7 @@ check_resolver(struct uw_resolver *res)
 	data->res = res;
 
 	if ((err = resolve(check_res, ".", LDNS_RR_TYPE_NS, LDNS_RR_CLASS_IN,
-	    data, 1, NULL)) != 0) {
+	    data, 1)) != 0) {
 		log_debug("check oppdot failed");
 		/* do not overwrite normal DNS state, it might work */
 		resolver_unref(check_res);
