@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.45 2019/11/08 16:41:15 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.46 2019/11/12 07:24:22 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -498,6 +498,7 @@ struct iwm_softc {
 
 	int host_interrupt_operation_mode;
 	int sc_ltr_enabled;
+	enum iwm_nvm_type nvm_type;
 
 	/*
 	 * Paging parameters - All of the parameters should be set by the

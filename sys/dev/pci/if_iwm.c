@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.280 2019/11/08 16:42:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.281 2019/11/12 07:24:22 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -319,7 +319,7 @@ int	iwm_nvm_read_chunk(struct iwm_softc *, uint16_t, uint16_t, uint16_t,
 int	iwm_nvm_read_section(struct iwm_softc *, uint16_t, uint8_t *,
 	    uint16_t *, size_t);
 void	iwm_init_channel_map(struct iwm_softc *, const uint16_t * const,
-	    const uint8_t *nvm_channels, size_t nchan);
+	    const uint8_t *nvm_channels, int nchan);
 void	iwm_setup_ht_rates(struct iwm_softc *);
 void	iwm_htprot_task(void *);
 void	iwm_update_htprot(struct ieee80211com *, struct ieee80211_node *);
@@ -340,7 +340,7 @@ void	iwm_ba_task(void *);
 int	iwm_parse_nvm_data(struct iwm_softc *, const uint16_t *,
 	    const uint16_t *, const uint16_t *,
 	    const uint16_t *, const uint16_t *,
-	    const uint16_t *);
+	    const uint16_t *, int);
 void	iwm_set_hw_address_8000(struct iwm_softc *, struct iwm_nvm_data *,
 	    const uint16_t *, const uint16_t *);
 int	iwm_parse_nvm_sections(struct iwm_softc *, struct iwm_nvm_section *);
@@ -2374,6 +2374,7 @@ const int iwm_nvm_to_read[] = {
 	IWM_NVM_SECTION_TYPE_REGULATORY,
 	IWM_NVM_SECTION_TYPE_CALIBRATION,
 	IWM_NVM_SECTION_TYPE_PRODUCTION,
+	IWM_NVM_SECTION_TYPE_REGULATORY_SDP,
 	IWM_NVM_SECTION_TYPE_HW_8000,
 	IWM_NVM_SECTION_TYPE_MAC_OVERRIDE,
 	IWM_NVM_SECTION_TYPE_PHY_SKU,
@@ -2511,7 +2512,7 @@ iwm_fw_valid_rx_ant(struct iwm_softc *sc)
 
 void
 iwm_init_channel_map(struct iwm_softc *sc, const uint16_t * const nvm_ch_flags,
-    const uint8_t *nvm_channels, size_t nchan)
+    const uint8_t *nvm_channels, int nchan)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_nvm_data *data = &sc->sc_nvm;
@@ -2796,7 +2797,7 @@ int
 iwm_parse_nvm_data(struct iwm_softc *sc, const uint16_t *nvm_hw,
     const uint16_t *nvm_sw, const uint16_t *nvm_calib,
     const uint16_t *mac_override, const uint16_t *phy_sku,
-    const uint16_t *regulatory)
+    const uint16_t *regulatory, int n_regulatory)
 {
 	struct iwm_nvm_data *data = &sc->sc_nvm;
 	uint8_t hw_addr[ETHER_ADDR_LEN];
@@ -2855,12 +2856,18 @@ iwm_parse_nvm_data(struct iwm_softc *sc, const uint16_t *nvm_hw,
 	} else
 		iwm_set_hw_address_8000(sc, data, mac_override, nvm_hw);
 
-	if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000)
-		iwm_init_channel_map(sc, &nvm_sw[IWM_NVM_CHANNELS],
-		    iwm_nvm_channels, nitems(iwm_nvm_channels));
-	else
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000) {
+		if (sc->nvm_type == IWM_NVM_SDP) {
+			iwm_init_channel_map(sc, regulatory, iwm_nvm_channels,
+			    MIN(n_regulatory, nitems(iwm_nvm_channels)));
+		} else {
+			iwm_init_channel_map(sc, &nvm_sw[IWM_NVM_CHANNELS],
+			    iwm_nvm_channels, nitems(iwm_nvm_channels));
+		}
+	} else
 		iwm_init_channel_map(sc, &regulatory[IWM_NVM_CHANNELS_8000],
-		    iwm_nvm_channels_8000, nitems(iwm_nvm_channels_8000));
+		    iwm_nvm_channels_8000,
+		    MIN(n_regulatory, nitems(iwm_nvm_channels_8000)));
 
 	data->calib_version = 255;   /* TODO:
 					this value will prevent some checks from
@@ -2876,6 +2883,7 @@ iwm_parse_nvm_sections(struct iwm_softc *sc, struct iwm_nvm_section *sections)
 {
 	const uint16_t *hw, *sw, *calib, *mac_override = NULL, *phy_sku = NULL;
 	const uint16_t *regulatory = NULL;
+	int n_regulatory = 0;
 
 	/* Checking for required sections */
 	if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000) {
@@ -2885,6 +2893,15 @@ iwm_parse_nvm_sections(struct iwm_softc *sc, struct iwm_nvm_section *sections)
 		}
 
 		hw = (const uint16_t *) sections[IWM_NVM_SECTION_TYPE_HW].data;
+
+		if (sc->nvm_type == IWM_NVM_SDP) {
+			if (!sections[IWM_NVM_SECTION_TYPE_REGULATORY_SDP].data)
+				return ENOENT;
+			regulatory = (const uint16_t *)
+			    sections[IWM_NVM_SECTION_TYPE_REGULATORY_SDP].data;
+			n_regulatory =
+			    sections[IWM_NVM_SECTION_TYPE_REGULATORY_SDP].length;
+		}
 	} else if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000) {
 		/* SW and REGULATORY sections are mandatory */
 		if (!sections[IWM_NVM_SECTION_TYPE_SW].data ||
@@ -2904,6 +2921,7 @@ iwm_parse_nvm_sections(struct iwm_softc *sc, struct iwm_nvm_section *sections)
 
 		regulatory = (const uint16_t *)
 		    sections[IWM_NVM_SECTION_TYPE_REGULATORY].data;
+		n_regulatory = sections[IWM_NVM_SECTION_TYPE_REGULATORY].length;
 		hw = (const uint16_t *)
 		    sections[IWM_NVM_SECTION_TYPE_HW_8000].data;
 		mac_override =
@@ -2919,8 +2937,9 @@ iwm_parse_nvm_sections(struct iwm_softc *sc, struct iwm_nvm_section *sections)
 	calib = (const uint16_t *)
 	    sections[IWM_NVM_SECTION_TYPE_CALIBRATION].data;
 
+	/* XXX should pass in the length of every section */
 	return iwm_parse_nvm_data(sc, hw, sw, calib, mac_override,
-	    phy_sku, regulatory);
+	    phy_sku, regulatory, n_regulatory);
 }
 
 int
@@ -8138,6 +8157,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
 		sc->sc_nvm_max_section_size = 16384;
+		sc->nvm_type = IWM_NVM;
 		break;
 	case PCI_PRODUCT_INTEL_WL_3165_1:
 	case PCI_PRODUCT_INTEL_WL_3165_2:
@@ -8146,13 +8166,15 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
 		sc->sc_nvm_max_section_size = 16384;
+		sc->nvm_type = IWM_NVM;
 		break;
 	case PCI_PRODUCT_INTEL_WL_3168_1:
-		sc->sc_fwname = "iwm-3168-22";
+		sc->sc_fwname = "iwm-3168-29";
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
 		sc->sc_nvm_max_section_size = 16384;
+		sc->nvm_type = IWM_NVM_SDP;
 		break;
 	case PCI_PRODUCT_INTEL_WL_7260_1:
 	case PCI_PRODUCT_INTEL_WL_7260_2:
@@ -8161,6 +8183,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
 		sc->sc_nvm_max_section_size = 16384;
+		sc->nvm_type = IWM_NVM;
 		break;
 	case PCI_PRODUCT_INTEL_WL_7265_1:
 	case PCI_PRODUCT_INTEL_WL_7265_2:
@@ -8169,6 +8192,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
 		sc->sc_nvm_max_section_size = 16384;
+		sc->nvm_type = IWM_NVM;
 		break;
 	case PCI_PRODUCT_INTEL_WL_8260_1:
 	case PCI_PRODUCT_INTEL_WL_8260_2:
@@ -8177,6 +8201,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_device_family = IWM_DEVICE_FAMILY_8000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ_8000;
 		sc->sc_nvm_max_section_size = 32768;
+		sc->nvm_type = IWM_NVM_EXT;
 		break;
 	case PCI_PRODUCT_INTEL_WL_8265_1:
 		sc->sc_fwname = "iwm-8265-34";
@@ -8184,6 +8209,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_device_family = IWM_DEVICE_FAMILY_8000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ_8000;
 		sc->sc_nvm_max_section_size = 32768;
+		sc->nvm_type = IWM_NVM_EXT;
 		break;
 	default:
 		printf("%s: unknown adapter type\n", DEVNAME(sc));

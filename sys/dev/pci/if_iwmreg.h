@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.42 2019/11/08 16:42:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.43 2019/11/12 07:24:22 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -2096,11 +2096,25 @@ struct iwm_calib_res_notif_phy_db {
 #define IWM_NVM_SECTION_TYPE_CALIBRATION	4
 #define IWM_NVM_SECTION_TYPE_PRODUCTION		5
 #define IWM_NVM_SECTION_TYPE_POST_FCS_CALIB	6
-/* 7, 8, 9 unknown */
+/* 7 unknown */
+#define IWM_NVM_SECTION_TYPE_REGULATORY_SDP	8
+/* 9 unknown */
 #define IWM_NVM_SECTION_TYPE_HW_8000		10
 #define IWM_NVM_SECTION_TYPE_MAC_OVERRIDE	11
 #define IWM_NVM_SECTION_TYPE_PHY_SKU		12
 #define IWM_NVM_NUM_OF_SECTIONS			13
+
+/**
+ * enum iwm_nvm_type - nvm formats
+ * @IWM_NVM: the regular format
+ * @IWM_NVM_EXT: extended NVM format
+ * @IWM_NVM_SDP: NVM format used by 3168 series
+ */
+enum iwm_nvm_type {
+	IWM_NVM,
+	IWM_NVM_EXT,
+	IWM_NVM_SDP,
+};
 
 /**
  * struct iwm_nvm_access_cmd_ver2 - Request the device to send an NVM section
