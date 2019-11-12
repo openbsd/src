@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.59 2019/11/12 15:36:49 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.60 2019/11/12 15:37:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -98,7 +98,7 @@ struct check_resolver_data {
 };
 
 struct resolver_cb_data {
-	void	(*cb)(void *, int, void *, int, int, char *, int);
+	void	(*cb)(void *, int, void *, int, int, char *);
 	void	*data;
 };
 
@@ -109,9 +109,8 @@ void			 resolver_dispatch_captiveportal(int, short, void *);
 void			 resolver_dispatch_main(int, short, void *);
 int			 resolve(struct uw_resolver *, const char*, int, int,
 			     void*, void (*cb)(void *, int, void *, int, int,
-			     char *, int));
-void			 resolve_done(void *, int, void *, int, int, char *,
-			     int);
+			     char *));
+void			 resolve_done(void *, int, void *, int, int, char *);
 void			 ub_resolve_done(void *, int, void *, int, int, char *,
 			     int);
 void			 asr_resolve_done(struct asr_result *, void *);
@@ -131,7 +130,7 @@ void			 resolver_check_timo(int, short, void *);
 void			 resolver_free_timo(int, short, void *);
 void			 check_resolver(struct uw_resolver *);
 void			 check_resolver_done(void *, int, void *, int, int,
-			     char *, int);
+			     char *);
 void			 schedule_recheck_all_resolvers(void);
 int			 check_forwarders_changed(struct uw_forwarder_head *,
 			     struct uw_forwarder_head *);
@@ -156,7 +155,7 @@ int			 check_captive_portal_changed(struct uw_conf *,
 void			 trust_anchor_resolve(void);
 void			 trust_anchor_timo(int, short, void *);
 void			 trust_anchor_resolve_done(void *, int, void *, int,
-			     int, char *, int);
+			     int, char *);
 void			 add_autoconf_forwarders(struct imsg_rdns_proposal *);
 void			 rem_autoconf_forwarders(struct imsg_rdns_proposal *);
 struct uw_forwarder	*find_forwarder(struct uw_forwarder_head *,
@@ -774,7 +773,7 @@ resolver_dispatch_main(int fd, short event, void *bula)
 
 int
 resolve(struct uw_resolver *res, const char* name, int rrtype, int rrclass,
-    void *mydata, void (*cb)(void *, int, void *, int, int, char *, int))
+    void *mydata, void (*cb)(void *, int, void *, int, int, char *))
 {
 	struct resolver_cb_data	*cb_data = NULL;
 	struct asr_query	*aq = NULL;
@@ -822,7 +821,7 @@ resolve(struct uw_resolver *res, const char* name, int rrtype, int rrclass,
 
 void
 resolve_done(void *arg, int rcode, void *answer_packet, int answer_len,
-    int sec, char *why_bogus, int was_ratelimited)
+    int sec, char *why_bogus)
 {
 	struct query_imsg	*query_imsg;
 	struct uw_resolver	*res;
@@ -1323,7 +1322,7 @@ check_resolver(struct uw_resolver *res)
 
 void
 check_resolver_done(void *arg, int rcode, void *answer_packet, int answer_len,
-    int sec, char *why_bogus, int was_ratelimited)
+    int sec, char *why_bogus)
 {
 	struct check_resolver_data	*data;
 	struct timeval			 tv = {0, 1};
@@ -1430,8 +1429,8 @@ void
 asr_resolve_done(struct asr_result *ar, void *arg)
 {
 	struct resolver_cb_data	*cb_data = arg;
-	cb_data->cb(cb_data->data, ar->ar_rcode, ar->ar_data, ar->ar_datalen,
-	    0, "", 0);
+	cb_data->cb(cb_data->data, ar->ar_rcode, ar->ar_data, ar->ar_datalen, 0,
+	    "");
 	free(ar->ar_data);
 	free(cb_data);
 }
@@ -1442,7 +1441,7 @@ ub_resolve_done(void *arg, int rcode, void *answer_packet, int answer_len,
 {
 	struct resolver_cb_data	*cb_data = arg;
 	cb_data->cb(cb_data->data, rcode, answer_packet, answer_len, sec,
-	    why_bogus, was_ratelimited);
+	    why_bogus);
 	free(cb_data);
 }
 
@@ -1800,7 +1799,7 @@ trust_anchor_timo(int fd, short events, void *arg)
 
 void
 trust_anchor_resolve_done(void *arg, int rcode, void *answer_packet,
-    int answer_len, int sec, char *why_bogus, int was_ratelimited)
+    int answer_len, int sec, char *why_bogus)
 {
 	struct uw_resolver	*res;
 	struct ub_result	*result;
