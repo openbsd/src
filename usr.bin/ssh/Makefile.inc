@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.74 2019/11/11 19:53:37 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.75 2019/11/12 19:29:24 markus Exp $
 
 .include <bsd.own.mk>
 
@@ -80,6 +80,7 @@ SRCS_KEY+=	rijndael.c
 SRCS_KEY+=	digest-libc.c
 .endif
 SRCS_KEY+=	ssh-ed25519.c
+SRCS_KEY+=	ssh-ed25519-sk.c
 # ed25519, from supercop
 SRCS_KEY+=	sc25519.c
 SRCS_KEY+=	ge25519.c
