@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.58 2019/11/12 15:35:11 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.59 2019/11/12 15:36:49 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -97,17 +97,24 @@ struct check_resolver_data {
 	struct uw_resolver	*check_res;
 };
 
+struct resolver_cb_data {
+	void	(*cb)(void *, int, void *, int, int, char *, int);
+	void	*data;
+};
+
 __dead void		 resolver_shutdown(void);
 void			 resolver_sig_handler(int sig, short, void *);
 void			 resolver_dispatch_frontend(int, short, void *);
 void			 resolver_dispatch_captiveportal(int, short, void *);
 void			 resolver_dispatch_main(int, short, void *);
 int			 resolve(struct uw_resolver *, const char*, int, int,
-			     void*, int);
+			     void*, void (*cb)(void *, int, void *, int, int,
+			     char *, int));
 void			 resolve_done(void *, int, void *, int, int, char *,
 			     int);
+void			 ub_resolve_done(void *, int, void *, int, int, char *,
+			     int);
 void			 asr_resolve_done(struct asr_result *, void *);
-void			 check_asr_resolver_done(struct asr_result *, void *);
 void			 parse_dhcp_forwarders(char *);
 void			 new_recursor(void);
 void			 new_forwarders(int);
@@ -480,7 +487,7 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			clock_gettime(CLOCK_MONOTONIC, &query_imsg->tp);
 
 			if ((resolve(res, query_imsg->qname, query_imsg->t,
-			    query_imsg->c, query_imsg, 0)) != 0)
+			    query_imsg->c, query_imsg, resolve_done)) != 0)
 				resolver_unref(res);
 			break;
 		case IMSG_FORWARDER:
@@ -767,24 +774,27 @@ resolver_dispatch_main(int fd, short event, void *bula)
 
 int
 resolve(struct uw_resolver *res, const char* name, int rrtype, int rrclass,
-    void *mydata, int check)
+    void *mydata, void (*cb)(void *, int, void *, int, int, char *, int))
 {
-	struct asr_query	*aq;
-	int			 err = 0;
+	struct resolver_cb_data	*cb_data = NULL;
+	struct asr_query	*aq = NULL;
+	int			 err;
+
+	if ((cb_data = malloc(sizeof(*cb_data))) == NULL)
+		goto err;
+	cb_data->cb = cb;
+	cb_data->data = mydata;
 
 	switch(res->type) {
 	case UW_RES_ASR:
 		if ((aq = res_query_async(name, rrclass, rrtype, res->asr_ctx))
 		    == NULL) {
 			log_warn("%s: res_query_async", __func__);
-			err =1;
-		} else {
-			if (event_asr_run(aq, check ? check_asr_resolver_done :
-			    asr_resolve_done, mydata) == NULL) {
-				free(aq);
-				log_warn("%s: res_query_async", __func__);
-				err =1;
-			}
+			goto err;
+		}
+		if (event_asr_run(aq, asr_resolve_done, cb_data) == NULL) {
+			log_warn("%s: res_query_async", __func__);
+			goto err;
 		}
 		break;
 	case UW_RES_RECURSOR:
@@ -792,17 +802,22 @@ resolve(struct uw_resolver *res, const char* name, int rrtype, int rrclass,
 	case UW_RES_FORWARDER:
 	case UW_RES_DOT:
 		if ((err = ub_resolve_event(res->ctx, name,  rrtype, rrclass,
-		    mydata, check ? check_resolver_done : resolve_done, NULL))
-		    != 0) {
+		    cb_data, ub_resolve_done, NULL)) != 0) {
 			log_warn("%s: ub_resolve_event: err: %d, %s", __func__,
 			    err, ub_strerror(err));
+			goto err;
 		}
 		break;
 	default:
 		fatalx("unknown resolver type %d", res->type);
 		break;
 	}
-	return (err);
+
+	return 0;
+ err:
+	free(cb_data);
+	free(aq);
+	return 1;
 }
 
 void
@@ -1262,7 +1277,7 @@ check_resolver(struct uw_resolver *res)
 	data->res = res;
 
 	if (resolve(check_res, ".", LDNS_RR_TYPE_NS, LDNS_RR_CLASS_IN,
-	    data, 1) != 0) {
+	    data, check_resolver_done) != 0) {
 		res->state = UNKNOWN;
 		resolver_unref(check_res);
 		resolver_unref(res);
@@ -1290,7 +1305,7 @@ check_resolver(struct uw_resolver *res)
 	data->res = res;
 
 	if (resolve(check_res, ".", LDNS_RR_TYPE_NS, LDNS_RR_CLASS_IN,
-	    data, 1) != 0) {
+	    data, check_resolver_done) != 0) {
 		log_debug("check oppdot failed");
 		/* do not overwrite normal DNS state, it might work */
 		resolver_unref(check_res);
@@ -1412,18 +1427,23 @@ out:
 }
 
 void
-check_asr_resolver_done(struct asr_result *ar, void *arg)
+asr_resolve_done(struct asr_result *ar, void *arg)
 {
-	check_resolver_done(arg, ar->ar_rcode, ar->ar_data, ar->ar_datalen, 0,
-	    "", 0);
+	struct resolver_cb_data	*cb_data = arg;
+	cb_data->cb(cb_data->data, ar->ar_rcode, ar->ar_data, ar->ar_datalen,
+	    0, "", 0);
 	free(ar->ar_data);
+	free(cb_data);
 }
 
 void
-asr_resolve_done(struct asr_result *ar, void *arg)
+ub_resolve_done(void *arg, int rcode, void *answer_packet, int answer_len,
+    int sec, char *why_bogus, int was_ratelimited)
 {
-	resolve_done(arg, ar->ar_rcode, ar->ar_data, ar->ar_datalen, 0, "", 0);
-	free(ar->ar_data);
+	struct resolver_cb_data	*cb_data = arg;
+	cb_data->cb(cb_data->data, rcode, answer_packet, answer_len, sec,
+	    why_bogus, was_ratelimited);
+	free(cb_data);
 }
 
 void
@@ -1752,27 +1772,24 @@ trust_anchor_resolve(void)
 {
 	struct uw_resolver	*res;
 	struct timeval		 tv = {TRUST_ANCHOR_RETRY_INTERVAL, 0};
-	int			 err;
 
 	log_debug("%s", __func__);
 
 	res = best_resolver();
 
-	if (res == NULL || res->state < VALIDATING || res->type == UW_RES_ASR) {
-		evtimer_add(&trust_anchor_timer, &tv);
-		return;
-	}
+	if (res == NULL || res->state < VALIDATING)
+		goto err;
 
 	resolver_ref(res);
 
-	if ((err = ub_resolve_event(res->ctx, ".",  LDNS_RR_TYPE_DNSKEY,
-	    LDNS_RR_CLASS_IN, res, trust_anchor_resolve_done,
-	    NULL)) != 0) {
-		log_warn("%s: ub_resolve_async: err: %d, %s",
-		    __func__, err, ub_strerror(err));
+	if (resolve(res, ".",  LDNS_RR_TYPE_DNSKEY, LDNS_RR_CLASS_IN, res,
+	    trust_anchor_resolve_done) != 0) {
 		resolver_unref(res);
-		evtimer_add(&trust_anchor_timer, &tv);
+		goto err;
 	}
+	return;
+ err:
+	evtimer_add(&trust_anchor_timer, &tv);
 }
 
 void
