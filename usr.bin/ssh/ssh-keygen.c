@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.361 2019/11/08 03:54:02 djm Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.362 2019/11/12 19:33:08 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -273,6 +273,10 @@ ask_filename(struct passwd *pw, const char *prompt)
 		case KEY_ED25519:
 		case KEY_ED25519_CERT:
 			name = _PATH_SSH_CLIENT_ID_ED25519;
+			break;
+		case KEY_ED25519_SK:
+		case KEY_ED25519_SK_CERT:
+			name = _PATH_SSH_CLIENT_ID_ED25519_SK;
 			break;
 		case KEY_XMSS:
 		case KEY_XMSS_CERT:
@@ -3232,13 +3236,19 @@ main(int argc, char **argv)
 	if (!quiet)
 		printf("Generating public/private %s key pair.\n",
 		    key_type_name);
-	if (type == KEY_ECDSA_SK) {
-		if (sshsk_enroll(sk_provider,
+	switch (type) {
+	case KEY_ECDSA_SK:
+	case KEY_ED25519_SK:
+		if (sshsk_enroll(type, sk_provider,
 		    cert_key_id == NULL ? "ssh:" : cert_key_id,
 		    sk_flags, NULL, &private, NULL) != 0)
 			exit(1); /* error message already printed */
-	} else if ((r = sshkey_generate(type, bits, &private)) != 0)
-		fatal("sshkey_generate failed");
+		break;
+	default:
+		if ((r = sshkey_generate(type, bits, &private)) != 0)
+			fatal("sshkey_generate failed");
+		break;
+	}
 	if ((r = sshkey_from_private(private, &public)) != 0)
 		fatal("sshkey_from_private failed: %s\n", ssh_err(r));
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: sshconnect2.c,v 1.310 2019/10/31 21:23:19 djm Exp $ */
+/* $OpenBSD: sshconnect2.c,v 1.311 2019/11/12 19:33:08 markus Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -603,7 +603,7 @@ format_identity(Identity *id)
 	if (id->key) {
 		if ((id->key->flags & SSHKEY_FLAG_EXT) != 0)
 			note = " token";
-		else if (sshkey_type_plain(id->key->type) == KEY_ECDSA_SK)
+		else if (sshkey_is_sk(id->key))
 			note = " security-key";
 	}
 	xasprintf(&ret, "%s %s%s%s%s%s%s",
@@ -1460,8 +1460,7 @@ load_identity_file(Identity *id)
 			quit = 1;
 			break;
 		}
-		if (private != NULL &&
-		    sshkey_type_plain(private->type) == KEY_ECDSA_SK &&
+		if (private != NULL && sshkey_is_sk(private) &&
 		    options.sk_provider == NULL) {
 			debug("key \"%s\" is a security key, but no "
 			    "provider specified", id->filename);
@@ -1546,8 +1545,7 @@ pubkey_prepare(Authctxt *authctxt)
 			    options.identity_files[i]);
 			continue;
 		}
-		if (key && sshkey_type_plain(key->type) == KEY_ECDSA_SK &&
-		    options.sk_provider == NULL) {
+		if (key && sshkey_is_sk(key) && options.sk_provider == NULL) {
 			debug("%s: ignoring security key %s as no "
 			    "SecurityKeyProvider has been specified",
 			    __func__, options.identity_files[i]);
@@ -1571,8 +1569,7 @@ pubkey_prepare(Authctxt *authctxt)
 			    options.identity_files[i]);
 			continue;
 		}
-		if (key && sshkey_type_plain(key->type) == KEY_ECDSA_SK &&
-		    options.sk_provider == NULL) {
+		if (key && sshkey_is_sk(key) && options.sk_provider == NULL) {
 			debug("%s: ignoring security key certificate %s as no "
 			    "SecurityKeyProvider has been specified",
 			    __func__, options.identity_files[i]);
