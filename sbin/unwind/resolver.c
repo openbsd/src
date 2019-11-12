@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.61 2019/11/12 20:24:51 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.62 2019/11/12 20:26:36 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1577,9 +1577,14 @@ best_resolver(void)
 		    resolvers[resolver_conf->res_pref[i]]) < 0)
 			res = resolvers[resolver_conf->res_pref[i]];
 out:
-	log_debug("%s: %s state: %s%s", __func__,
-	    uw_resolver_type_str[res->type],
-	    uw_resolver_state_str[res->state], res->oppdot ? " (OppDoT)" : "");
+	if (res != NULL)
+		log_debug("%s: %s state: %s%s", __func__,
+		    uw_resolver_type_str[res->type],
+		    uw_resolver_state_str[res->state],
+		    res->oppdot ? " (OppDoT)" : "");
+	else
+		log_debug("%s: non found", __func__);
+
 	return (res);
 }
 
