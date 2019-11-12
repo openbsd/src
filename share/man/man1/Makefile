@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.16 2019/09/08 17:20:51 daniel Exp $
+#	$OpenBSD: Makefile,v 1.17 2019/11/12 16:39:10 espie Exp $
 #	$NetBSD: Makefile,v 1.4 1994/12/22 10:48:04 cgd Exp $
 
 MAN=	clang-local.1 help.1 intro.1 gcc-local.1
 
 # ports tools doc
-MAN+=	check-lib-depends.1 clean-old-distfiles.1 dpb-replay.1 dpb.1 \
+MAN+=	build-debug-info.1 check-lib-depends.1 clean-old-distfiles.1 \
+	dpb-replay.1 dpb.1 \
 	outdated-perl-ports.1 \
 	pkg_check-problems.1 pkg_check-manpages.1 pkg_outdated.1 \
 	pkg_subst.1 \
