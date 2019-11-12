@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.278 2019/11/04 18:06:03 visa Exp $	*/
+/*	$OpenBSD: proc.h,v 1.279 2019/11/12 04:20:21 visa Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -613,6 +613,7 @@ struct sleep_state {
 	int sls_catch;
 	int sls_do_sleep;
 	int sls_sig;
+	int sls_timeout;
 };
 
 struct cond {
