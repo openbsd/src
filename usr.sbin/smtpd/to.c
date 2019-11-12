@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.43 2019/09/19 16:00:59 gilles Exp $	*/
+/*	$OpenBSD: to.c,v 1.44 2019/11/12 20:21:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -474,7 +474,7 @@ rule_to_text(struct rule *r)
 			(void)strlcat(buf, " !", sizeof buf);
 		if (r->flag_from_socket)
 			(void)strlcat(buf, " from socket", sizeof buf);
-		if (r->flag_from_rdns) {
+		else if (r->flag_from_rdns) {
 			(void)strlcat(buf, " from rdns", sizeof buf);
 			if (r->table_from) {
 				(void)strlcat(buf, " ", sizeof buf);
