@@ -2492,6 +2492,7 @@
 ./usr/share/man/man8/rpc.rwalld.8
 ./usr/share/man/man8/rpc.statd.8
 ./usr/share/man/man8/rpcinfo.8
+./usr/share/man/man8/rpki-client.8
 ./usr/share/man/man8/sa.8
 ./usr/share/man/man8/sasyncd.8
 ./usr/share/man/man8/savecore.8
