@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.115 2018/07/30 08:05:06 ajacoutot Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.116 2019/11/12 16:37:48 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: July 30 2018 $
+.Dd $Mdocdate: November 12 2019 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -305,7 +305,9 @@ Directory names are denoted by a trailing slash.
 There are some annotations that can be inserted for better control.
 All these commands start with an
 .Sq @ .
-The following annotations can be inserted manually:
+The following annotations can be inserted manually (but commonly
+.Xr update-plist 1
+is used for creating most packing-list contents):
 .Pp
 .Bl -tag -width Ds -compact
 .It Cm @ask-update Ar pkgspec Ar message
@@ -803,6 +805,15 @@ to handle shells.
 See
 .Xr shells 5 .
 .Pp
+.It Cm @so Ar filename
+Describe the file as an
+.Ox
+shared object.
+.Pp
+.It Cm @static-lib Ar filename
+Describe the file as a
+.Ox
+static library.
 .It Cm @unexec Ar command
 Execute
 .Ar command
@@ -849,6 +860,15 @@ Similar to
 except it only gets executed while removing an old package during updates,
 and not during true deletions.
 .El
+.Pp
+The
+.Cm @bin ,
+.Cm @lib ,
+.Cm @so
+and
+.Cm @static-lib
+annotations are used by the debug packages infrastructure to figure out
+which files may contain debug information.
 .Pp
 See
 .Xr package 5
