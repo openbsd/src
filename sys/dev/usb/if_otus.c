@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.64 2019/09/12 12:55:07 stsp Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.65 2019/11/12 07:47:30 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -849,7 +849,7 @@ otus_cmd(struct otus_softc *sc, uint8_t code, const void *idata, int ilen,
 		return EIO;
 	}
 	if (!cmd->done)
-		error = tsleep(cmd, PCATCH, "otuscmd", hz);
+		error = tsleep_nsec(cmd, PCATCH, "otuscmd", SEC_TO_NSEC(1));
 	cmd->odata = NULL;	/* In case answer is received too late. */
 	splx(s);
 	if (error != 0) {

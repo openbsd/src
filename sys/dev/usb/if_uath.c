@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.83 2019/04/25 01:52:14 kevlo Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.84 2019/11/12 07:47:30 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -981,7 +981,7 @@ uath_cmd(struct uath_softc *sc, uint32_t code, const void *idata, int ilen,
 		return 0;	/* write: don't wait for reply */
 
 	/* wait at most two seconds for command reply */
-	error = tsleep(cmd, PCATCH, "uathcmd", 2 * hz);
+	error = tsleep_nsec(cmd, PCATCH, "uathcmd", SEC_TO_NSEC(2));
 	cmd->odata = NULL;	/* in case answer is received too late */
 	splx(s);
 	if (error != 0) {
@@ -1609,7 +1609,8 @@ uath_reset(struct uath_softc *sc)
 	    UATH_CMD_FLAG_ASYNC);
 	/* ..and wait until firmware notifies us that it is ready */
 	if (error == 0)
-		error = tsleep(UATH_COND_INIT(sc), PCATCH, "uathinit", 5 * hz);
+		error = tsleep_nsec(UATH_COND_INIT(sc), PCATCH, "uathinit",
+		    SEC_TO_NSEC(5));
 	splx(s);
 	if (error != 0)
 		return error;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.69 2018/11/10 15:28:05 mpi Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.70 2019/11/12 07:47:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -1032,7 +1032,7 @@ wi_usb_do_transmit_sync(struct wi_usb_softc *sc, struct wi_usb_chain *c,
 		err = EIO;
 		goto done;
 	}
-	err = tsleep(ident, PRIBIO, "wiTXsync", hz*1);
+	err = tsleep_nsec(ident, PRIBIO, "wiTXsync", SEC_TO_NSEC(1));
 	if (err) {
 		DPRINTFN(1,("%s: %s: err %x\n",
 		    sc->wi_usb_dev.dv_xname, __func__, err));

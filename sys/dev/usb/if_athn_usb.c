@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.53 2019/09/12 12:55:07 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.54 2019/11/12 07:47:30 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -694,7 +694,8 @@ athn_usb_load_firmware(struct athn_usb_softc *usc)
 	error = usbd_do_request(usc->sc_udev, &req, NULL);
 	/* Wait at most 1 second for firmware to boot. */
 	if (error == 0 && usc->wait_msg_id != 0)
-		error = tsleep(&usc->wait_msg_id, 0, "athnfw", hz);
+		error = tsleep_nsec(&usc->wait_msg_id, 0, "athnfw",
+		    SEC_TO_NSEC(1));
 	usc->wait_msg_id = 0;
 	splx(s);
 	return (error);
@@ -779,7 +780,8 @@ athn_usb_htc_setup(struct athn_usb_softc *usc)
 	usc->wait_msg_id = AR_HTC_MSG_CONF_PIPE_RSP;
 	error = athn_usb_htc_msg(usc, AR_HTC_MSG_CONF_PIPE, &cfg, sizeof(cfg));
 	if (error == 0 && usc->wait_msg_id != 0)
-		error = tsleep(&usc->wait_msg_id, 0, "athnhtc", hz);
+		error = tsleep_nsec(&usc->wait_msg_id, 0, "athnhtc",
+		    SEC_TO_NSEC(1));
 	usc->wait_msg_id = 0;
 	splx(s);
 	if (error != 0) {
@@ -815,7 +817,8 @@ athn_usb_htc_connect_svc(struct athn_usb_softc *usc, uint16_t svc_id,
 	error = athn_usb_htc_msg(usc, AR_HTC_MSG_CONN_SVC, &msg, sizeof(msg));
 	/* Wait at most 1 second for response. */
 	if (error == 0 && usc->wait_msg_id != 0)
-		error = tsleep(&usc->wait_msg_id, 0, "athnhtc", hz);
+		error = tsleep_nsec(&usc->wait_msg_id, 0, "athnhtc",
+		    SEC_TO_NSEC(1));
 	usc->wait_msg_id = 0;
 	splx(s);
 	if (error != 0) {
