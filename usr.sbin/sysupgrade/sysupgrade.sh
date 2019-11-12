@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.32 2019/11/11 18:26:52 sthen Exp $
+# $OpenBSD: sysupgrade.sh,v 1.33 2019/11/12 08:19:11 sthen Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -122,10 +122,8 @@ fi
 
 if $SNAP; then
 	URL=${MIRROR}/snapshots/${ARCH}/
-	FWURL=http://firmware.openbsd.org/firmware/snapshots/
 else
 	URL=${MIRROR}/${NEXT_VERSION}/${ARCH}/
-	FWURL=http://firmware.openbsd.org/firmware/${NEXT_VERSION}/
 fi
 
 if [[ -e ${SETSDIR} ]]; then
@@ -208,7 +206,7 @@ __EOT
 fi
 
 echo Fetching updated firmware.
-fw_update -p ${FWURL} || echo "Warning: firmware not updated."
+fw_update || echo "Warning: firmware not updated."
 
 install -F -m 700 bsd.rd /bsd.upgrade
 sync
