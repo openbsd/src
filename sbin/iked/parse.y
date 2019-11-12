@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.84 2019/09/26 07:33:36 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.85 2019/11/12 16:45:04 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -127,6 +127,8 @@ struct ipsec_transforms {
 	unsigned int		  nencxf;
 	const struct ipsec_xf	**groupxf;
 	unsigned int		  ngroupxf;
+	const struct ipsec_xf	**esnxf;
+	unsigned int		  nesnxf;
 };
 
 struct ipsec_mode {
@@ -256,6 +258,12 @@ const struct ipsec_xf groupxfs[] = {
 	{ "brainpool512",	IKEV2_XFORMDH_BRAINPOOL_P512R1 },
 	{ "grp30",		IKEV2_XFORMDH_BRAINPOOL_P512R1 },
 	{ "curve25519",		IKEV2_XFORMDH_CURVE25519 },
+	{ NULL }
+};
+
+const struct ipsec_xf esnxfs[] = {
+	{ "esn",		IKEV2_XFORMESN_ESN },
+	{ "noesn",		IKEV2_XFORMESN_NONE },
 	{ NULL }
 };
 
@@ -395,7 +403,7 @@ typedef struct {
 %}
 
 %token	FROM ESP AH IN PEER ON OUT TO SRCID DSTID PSK PORT
-%token	FILENAME AUTHXF PRFXF ENCXF ERROR IKEV2 IKESA CHILDSA
+%token	FILENAME AUTHXF PRFXF ENCXF ERROR IKEV2 IKESA CHILDSA ESN NOESN
 %token	PASSIVE ACTIVE ANY TAG TAP PROTO LOCAL GROUP NAME CONFIG EAP USER
 %token	IKEV1 FLOW SA TCPMD5 TUNNEL TRANSPORT COUPLE DECOUPLE SET
 %token	INCLUDE LIFETIME BYTES INET INET6 QUICK SKIP DEFAULT
@@ -425,6 +433,7 @@ typedef struct {
 %type	<v.number>		byte_spec time_spec ikelifetime
 %type	<v.string>		name
 %type	<v.cfg>			cfg ikecfg ikecfgvals
+%type	<v.string>		transform_esn
 %%
 
 grammar		: /* empty */
@@ -802,6 +811,24 @@ transform	: AUTHXF STRING			{
 			ipsec_transforms->groupxf = xfs;
 			ipsec_transforms->ngroupxf++;
 		}
+		| transform_esn				{
+			const struct ipsec_xf **xfs = ipsec_transforms->esnxf;
+			size_t nxfs = ipsec_transforms->nesnxf;
+			xfs = recallocarray(xfs, nxfs, nxfs + 1,
+			    sizeof(struct ipsec_xf *));
+			if (xfs == NULL)
+				err(1, "transform: recallocarray");
+			if ((xfs[nxfs] = parse_xf($1, 0, esnxfs)) == NULL) {
+				yyerror("%s not a valid transform", $1);
+				YYERROR;
+			}
+			ipsec_transforms->esnxf = xfs;
+			ipsec_transforms->nesnxf++;
+		}
+		;
+
+transform_esn	: ESN		{ $$ = "esn"; }
+		| NOESN		{ $$ = "noesn"; }
 		;
 
 ike_sas		:					{
@@ -1180,6 +1207,7 @@ lookup(char *s)
 		{ "dstid",		DSTID },
 		{ "eap",		EAP },
 		{ "enc",		ENCXF },
+		{ "esn",		ESN },
 		{ "esp",		ESP },
 		{ "file",		FILENAME },
 		{ "flow",		FLOW },
@@ -1198,6 +1226,7 @@ lookup(char *s)
 		{ "local",		LOCAL },
 		{ "mobike",		MOBIKE },
 		{ "name",		NAME },
+		{ "noesn",		NOESN },
 		{ "nofragmentation",	NOFRAGMENTATION },
 		{ "nomobike",		NOMOBIKE },
 		{ "ocsp",		OCSP },
@@ -2578,6 +2607,10 @@ print_policy(struct iked_policy *pol)
 						print_verbose(" group ");
 						xfs = groupxfs;
 						break;
+					case IKEV2_XFORMTYPE_ESN:
+						print_verbose(" ");
+						xfs = esnxfs;
+						break;
 					default:
 						continue;
 					}
@@ -2830,6 +2863,11 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 		pol.pol_nproposals++;
 	} else {
 		for (i = 0; i < ike_sa->nxfs; i++) {
+			if (ike_sa->xfs[i]->nesnxf) {
+				yyerror("cannot use ESN with ikesa.");
+				goto done;
+			}
+
 			if ((p = calloc(1, sizeof(*p))) == NULL)
 				err(1, "%s", __func__);
 
@@ -2914,7 +2952,8 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 			    ikev2_default_esp_transforms,
 			    ikev2_default_nesp_transforms);
 			copy_transforms(IKEV2_XFORMTYPE_ESN,
-			    NULL, 0, &xf, &xfi,
+			    ipsec_sa->xfs[i]->esnxf,
+			    ipsec_sa->xfs[i]->nesnxf, &xf, &xfi,
 			    ikev2_default_esp_transforms,
 			    ikev2_default_nesp_transforms);
 

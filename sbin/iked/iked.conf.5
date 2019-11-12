@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.57 2019/08/24 13:24:49 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.58 2019/11/12 16:45:04 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 24 2019 $
+.Dd $Mdocdate: November 12 2019 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -409,6 +409,7 @@ multiple crypto transforms.
 .Ic auth Ar algorithm
 .Ic enc Ar algorithm
 .Ic group Ar group
+.Ic esn
 .Xc
 These parameters define the cryptographic transforms to be used for
 the Child SA negotiation, also known as phase 2.
@@ -421,6 +422,7 @@ Possible values for
 .Ic auth ,
 .Ic enc ,
 .Ic group ,
+.Ic esn ,
 and the default proposals are described below in
 .Sx CRYPTO TRANSFORMS .
 If omitted,
@@ -849,6 +851,17 @@ not encryption:
 .It Li aes-192-gmac Ta "224 bits" Ta "[ESP only]"
 .It Li aes-256-gmac Ta "288 bits" Ta "[ESP only]"
 .It Li null Ta "" Ta "[ESP only]"
+.El
+.Pp
+The Extended Sequence Numbers option can be enabled or disabled with the
+.Ic esn
+or
+.Ic noesn
+keywords:
+.Bl -column "noesn" "[ESP only]" -offset indent
+.It Em ESN
+.It Li esn Ta "[ESP only]"
+.It Li noesn Ta "[ESP only]"
 .El
 .Pp
 Transforms followed by
