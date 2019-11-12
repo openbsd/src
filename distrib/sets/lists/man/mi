@@ -26,6 +26,7 @@
 ./usr/share/man/man1/basename.1
 ./usr/share/man/man1/bc.1
 ./usr/share/man/man1/biff.1
+./usr/share/man/man1/build-debug-info.1
 ./usr/share/man/man1/cal.1
 ./usr/share/man/man1/calendar.1
 ./usr/share/man/man1/cap_mkdb.1
