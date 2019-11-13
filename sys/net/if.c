@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.597 2019/11/13 01:36:27 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.598 2019/11/13 21:25:04 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2291,11 +2291,30 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 			(struct mbuf *) cmd, (struct mbuf *) data,
 			(struct mbuf *) ifp, p));
-		if (error == EOPNOTSUPP) {
-			NET_LOCK();
-			error = ((*ifp->if_ioctl)(ifp, cmd, data));
-			NET_UNLOCK();
+		if (error != EOPNOTSUPP)
+			break;
+		switch (cmd) {
+		case SIOCAIFADDR:
+		case SIOCDIFADDR:
+		case SIOCSIFADDR:
+		case SIOCSIFNETMASK:
+		case SIOCSIFDSTADDR:
+		case SIOCSIFBRDADDR:
+#ifdef INET6
+		case SIOCAIFADDR_IN6:
+		case SIOCDIFADDR_IN6:
+#endif
+			error = suser(p);
+			break;
+		default:
+			error = 0;
+			break;
 		}
+		if (error)
+			break;
+		NET_LOCK();
+		error = ((*ifp->if_ioctl)(ifp, cmd, data));
+		NET_UNLOCK();
 		break;
 	}
 
