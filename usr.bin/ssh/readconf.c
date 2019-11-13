@@ -1,4 +1,4 @@
-/* $OpenBSD: readconf.c,v 1.311 2019/11/12 19:33:08 markus Exp $ */
+/* $OpenBSD: readconf.c,v 1.312 2019/11/13 04:47:52 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -31,6 +31,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <limits.h>
 #include <util.h>

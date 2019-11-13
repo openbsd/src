@@ -1,4 +1,4 @@
-/* $OpenBSD: match.c,v 1.40 2019/10/04 04:13:39 djm Exp $ */
+/* $OpenBSD: match.c,v 1.41 2019/11/13 04:47:52 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -40,6 +40,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 
 #include "xmalloc.h"
