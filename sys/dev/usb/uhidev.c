@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.76 2018/08/25 18:32:05 jcs Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.77 2019/11/13 10:40:03 patrick Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -97,6 +97,7 @@ int uhidev_detach(struct device *, int);
 int uhidev_activate(struct device *, int);
 
 void uhidev_get_report_async_cb(struct usbd_xfer *, void *, usbd_status);
+void uhidev_set_report_async_cb(struct usbd_xfer *, void *, usbd_status);
 
 struct cfdriver uhidev_cd = {
 	NULL, "uhidev", DV_DULL
@@ -670,19 +671,38 @@ uhidev_set_report(struct uhidev_softc *sc, int type, int id, void *data,
 		memcpy(buf + 1, data, len - 1);
 	}
 
-	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
-	req.bRequest = UR_SET_REPORT;
-	USETW2(req.wValue, type, id);
-	USETW(req.wIndex, sc->sc_ifaceno);
-	USETW(req.wLength, len);
+	if (sc->sc_opipe != NULL) {
+		usbd_setup_xfer(sc->sc_owxfer, sc->sc_opipe, 0, buf, len,
+		    USBD_SYNCHRONOUS | USBD_CATCH, 0, NULL);
+		if (usbd_transfer(sc->sc_owxfer)) {
+			usbd_clear_endpoint_stall(sc->sc_opipe);
+			actlen = -1;
+		}
+	} else {
+		req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+		req.bRequest = UR_SET_REPORT;
+		USETW2(req.wValue, type, id);
+		USETW(req.wIndex, sc->sc_ifaceno);
+		USETW(req.wLength, len);
 
-	if (usbd_do_request(sc->sc_udev, &req, buf))
-		actlen = -1;
+		if (usbd_do_request(sc->sc_udev, &req, buf))
+			actlen = -1;
+	}
 
 	if (id > 0)
 		free(buf, M_TEMP, len);
 
 	return (actlen);
+}
+
+void
+uhidev_set_report_async_cb(struct usbd_xfer *xfer, void *priv, usbd_status err)
+{
+	struct uhidev_softc *sc = priv;
+
+	if (err == USBD_STALLED)
+		usbd_clear_endpoint_stall_async(sc->sc_opipe);
+	usbd_free_xfer(xfer);
 }
 
 int
@@ -715,14 +735,23 @@ uhidev_set_report_async(struct uhidev_softc *sc, int type, int id, void *data,
 		memcpy(buf, data, len);
 	}
 
-	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
-	req.bRequest = UR_SET_REPORT;
-	USETW2(req.wValue, type, id);
-	USETW(req.wIndex, sc->sc_ifaceno);
-	USETW(req.wLength, len);
-
-	if (usbd_request_async(xfer, &req, NULL, NULL))
-		actlen = -1;
+	if (sc->sc_opipe != NULL) {
+		usbd_setup_xfer(xfer, sc->sc_opipe, sc, buf, len,
+		    USBD_NO_COPY, USBD_DEFAULT_TIMEOUT,
+		    uhidev_set_report_async_cb);
+		if (usbd_transfer(xfer)) {
+			usbd_clear_endpoint_stall_async(sc->sc_opipe);
+			actlen = -1;
+		}
+	} else {
+		req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+		req.bRequest = UR_SET_REPORT;
+		USETW2(req.wValue, type, id);
+		USETW(req.wIndex, sc->sc_ifaceno);
+		USETW(req.wLength, len);
+		if (usbd_request_async(xfer, &req, NULL, NULL))
+			actlen = -1;
+	}
 
 	return (actlen);
 }
