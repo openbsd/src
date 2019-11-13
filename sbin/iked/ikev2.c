@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.177 2019/11/11 15:10:39 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.178 2019/11/13 12:24:40 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -499,6 +499,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		    (ibuf_length(msg->msg_data) != ibuf_length(sa->sa_1stmsg) ||
 		    memcmp(ibuf_data(msg->msg_data), ibuf_data(sa->sa_1stmsg),
 		    ibuf_length(sa->sa_1stmsg)) != 0)) {
+			ikev2_ike_sa_setreason(sa, NULL);
 			sa_free(env, sa);
 			msg->msg_sa = sa = NULL;
 			goto done;
@@ -515,6 +516,8 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 			if (r == -1) {
 				log_warn("%s: failed to retransmit a "
 				    "response", __func__);
+				ikev2_ike_sa_setreason(sa,
+				    "retransmitting response failed");
 				sa_free(env, sa);
 			}
 			return;
@@ -559,6 +562,7 @@ done:
 
 	if (sa != NULL && sa->sa_state == IKEV2_STATE_CLOSED) {
 		log_debug("%s: closing SA", __func__);
+		ikev2_ike_sa_setreason(sa, "closed");
 		sa_free(env, sa);
 	}
 }
@@ -814,8 +818,11 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		    betoh64(hdr->ike_ispi), betoh64(hdr->ike_rspi), 1,
 		    NULL)) == NULL || sa != msg->msg_sa) {
 			log_debug("%s: invalid new SA", __func__);
-			if (sa)
+			if (sa) {
+				ikev2_ike_sa_setreason(sa, "invalid new SA");
 				sa_free(env, sa);
+				sa = NULL;
+			}
 		}
 		break;
 	case IKEV2_EXCHANGE_IKE_AUTH:
@@ -929,6 +936,7 @@ ikev2_init_ike_sa_timeout(struct iked *env, void *arg)
 	    print_spi(sa->sa_hdr.sh_ispi, 8),
 	    print_spi(sa->sa_hdr.sh_rspi, 8));
 
+	ikev2_ike_sa_setreason(sa, "SA_INIT timeout");
 	sa_free(env, sa);
 }
 
@@ -1104,6 +1112,7 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
  closeonly:
 	if (ret == -1) {
 		log_debug("%s: closing SA", __func__);
+		ikev2_ike_sa_setreason(sa, "failed to send SA_INIT");
 		sa_free(env, sa);
 	}
 
@@ -2367,11 +2376,13 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 			if (msg->msg_error == 0)
 				msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
 			ikev2_send_init_error(env, msg);
+			ikev2_ike_sa_setreason(sa, "no proposal chosen");
 			sa_state(env, sa, IKEV2_STATE_CLOSED);
 			return;
 		}
 		if (ikev2_resp_ike_sa_init(env, msg) != 0) {
 			log_debug("%s: failed to send init response", __func__);
+			ikev2_ike_sa_setreason(sa, "SA_INIT reponse failed");
 			sa_state(env, sa, IKEV2_STATE_CLOSED);
 			return;
 		}
@@ -2379,6 +2390,7 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 	case IKEV2_EXCHANGE_IKE_AUTH:
 		if (!sa_stateok(sa, IKEV2_STATE_SA_INIT)) {
 			log_debug("%s: state mismatch", __func__);
+			ikev2_ike_sa_setreason(sa, "state mismatch IKE_AUTH");
 			sa_state(env, sa, IKEV2_STATE_CLOSED);
 			return;
 		}
@@ -2390,6 +2402,7 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 		if (ikev2_ike_auth_recv(env, sa, msg) != 0) {
 			log_debug("%s: failed to send auth response", __func__);
 			ikev2_send_error(env, sa, msg, hdr->ike_exchange);
+			ikev2_ike_sa_setreason(sa, "IKE_AUTH failed");
 			sa_state(env, sa, IKEV2_STATE_CLOSED);
 			return;
 		}
@@ -2570,6 +2583,7 @@ ikev2_send_auth_failed(struct iked *env, struct iked_sa *sa)
 	timer_set(env, &sa->sa_timer, ikev2_ike_sa_timeout, sa);
 	timer_add(env, &sa->sa_timer, IKED_IKE_SA_DELETE_TIMEOUT);
 	config_free_fragments(&sa->sa_fragments);
+	ikev2_ike_sa_setreason(sa, "authentication failed");
 
 	return (ret);
 }
@@ -3271,8 +3285,10 @@ ikev2_ike_sa_rekey(struct iked *env, void *arg)
 		nsa = NULL;
 	}
 done:
-	if (nsa)
+	if (nsa) {
+		ikev2_ike_sa_setreason(nsa, "failed to send CREATE_CHILD_SA");
 		sa_free(env, nsa);
+	}
 	ibuf_release(e);
 
 	if (ret == 0)
@@ -3349,8 +3365,12 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 		if ((nsa = sa_new(env, sa->sa_nexti->sa_hdr.sh_ispi,
 		    spi->spi, 1, NULL)) == NULL || nsa != sa->sa_nexti) {
 			log_debug("%s: invalid rekey SA", __func__);
-			if (nsa)
+			if (nsa) {
+				ikev2_ike_sa_setreason(nsa,
+				    "invalid SA for rekey");
 				sa_free(env, nsa);
+			}
+			ikev2_ike_sa_setreason(sa->sa_nexti, "invalid SA nexti");
 			sa_free(env, sa->sa_nexti);
 			sa->sa_nexti = NULL;
 			return (-1);
@@ -3394,6 +3414,8 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 			dsa->sa_fd = sa->sa_fd;
 			dsa->sa_natt = sa->sa_natt;
 			dsa->sa_udpencap = sa->sa_udpencap;
+			ikev2_ike_sa_setreason(dsa,
+			    "resolving simultaneous rekeying");
 			ikev2_ikesa_delete(env, dsa, dsa->sa_hdr.sh_initiator);
 		}
 		sa->sa_nexti = sa->sa_nextr = NULL;
@@ -3616,6 +3638,7 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 	if (sa->sa_state == IKEV2_STATE_ESTABLISHED)
 		ikev2_disable_timer(env, sa);
 
+	ikev2_ike_sa_setreason(sa, "SA rekeyed");
 	ikev2_ikesa_delete(env, sa, nsa->sa_hdr.sh_initiator);
 	return (0);
 }
@@ -3653,6 +3676,7 @@ done:
 	/* Remove IKE-SA after timeout, e.g. if we don't get a delete */
 	timer_set(env, &sa->sa_timer, ikev2_ike_sa_timeout, sa);
 	timer_add(env, &sa->sa_timer, IKED_IKE_SA_DELETE_TIMEOUT);
+	ikev2_ike_sa_setreason(sa, "deleting SA");
 }
 
 void
@@ -3671,9 +3695,12 @@ ikev2_ikesa_recv_delete(struct iked *env, struct iked_sa *sa)
 			    SPI_SA(sa, __func__));
 			ikev2_ikesa_enable(env, sa, sa->sa_nextr);
 		}
+		ikev2_ike_sa_setreason(sa->sa_nexti,
+		    "received delete (simultaneous rekeying)");
 		sa_free(env, sa->sa_nexti);
 		sa->sa_nextr = sa->sa_nexti = NULL;
 	}
+	ikev2_ike_sa_setreason(sa, "received delete");
 	sa_state(env, sa, IKEV2_STATE_CLOSED);
 }
 
@@ -3953,11 +3980,20 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 }
 
 void
+ikev2_ike_sa_setreason(struct iked_sa *sa, char *reason)
+{
+	/* allow update only if reason is reset to NULL */
+	if (reason == NULL || sa->sa_reason == NULL)
+		sa->sa_reason = reason;
+}
+
+void
 ikev2_ike_sa_timeout(struct iked *env, void *arg)
 {
 	struct iked_sa			*sa = arg;
 
 	log_debug("%s: closing SA", __func__);
+	ikev2_ike_sa_setreason(sa, "timeout");
 	sa_free(env, sa);
 }
 
@@ -3967,6 +4003,7 @@ ikev2_ike_sa_rekey_timeout(struct iked *env, void *arg)
 	struct iked_sa			*sa = arg;
 
 	log_debug("%s: closing SA", __func__);
+	ikev2_ike_sa_setreason(sa, "rekey timeout");
 	sa_free(env, sa);
 }
 

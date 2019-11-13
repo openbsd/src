@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.48 2019/08/12 07:40:45 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.49 2019/11/13 12:24:40 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -377,6 +377,7 @@ sa_new(struct iked *env, uint64_t ispi, uint64_t rspi,
 	if (!ibuf_length(localid->id_buf) && pol != NULL &&
 	    ikev2_policy2id(&pol->pol_localid, localid, 1) != 0) {
 		log_debug("%s: failed to get local id", __func__);
+		ikev2_ike_sa_setreason(sa, "failed to get local id");
 		sa_free(env, sa);
 		return (NULL);
 	}
@@ -387,9 +388,12 @@ sa_new(struct iked *env, uint64_t ispi, uint64_t rspi,
 void
 sa_free(struct iked *env, struct iked_sa *sa)
 {
-	log_debug("%s: ispi %s rspi %s", __func__,
-	    print_spi(sa->sa_hdr.sh_ispi, 8),
-	    print_spi(sa->sa_hdr.sh_rspi, 8));
+	if (sa->sa_reason)
+		log_info("%s: %s", SPI_SA(sa, __func__), sa->sa_reason);
+	else
+		log_debug("%s: ispi %s rspi %s", SPI_SA(sa, __func__),
+		    print_spi(sa->sa_hdr.sh_ispi, 8),
+		    print_spi(sa->sa_hdr.sh_rspi, 8));
 
 	/* IKE rekeying running? */
 	if (sa->sa_nexti) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.57 2019/11/11 15:10:39 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.58 2019/11/13 12:24:40 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1214,6 +1214,7 @@ ikev2_msg_retransmit_timeout(struct iked *env, void *arg)
 		    (struct sockaddr *)&msg->msg_local,
 		    msg->msg_locallen) == -1) {
 			log_warn("%s: sendtofrom", __func__);
+			ikev2_ike_sa_setreason(sa, "retransmit failed");
 			sa_free(env, sa);
 			return;
 		}
@@ -1223,6 +1224,7 @@ ikev2_msg_retransmit_timeout(struct iked *env, void *arg)
 	} else {
 		log_debug("%s: retransmit limit reached for msgid %u",
 		    __func__, msg->msg_msgid);
+		ikev2_ike_sa_setreason(sa, "retransmit limit reached");
 		sa_free(env, sa);
 	}
 }

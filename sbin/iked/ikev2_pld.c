@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.74 2019/08/24 13:09:38 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.75 2019/11/13 12:24:40 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1062,6 +1062,8 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			}
 		}
 		log_debug("%s: AUTHENTICATION_FAILED, closing SA", __func__);
+		ikev2_ike_sa_setreason(msg->msg_sa,
+		    "authentication failed notification from peer");
 		sa_state(env, msg->msg_sa, IKEV2_STATE_CLOSED);
 		msg->msg_sa = NULL;
 		break;
