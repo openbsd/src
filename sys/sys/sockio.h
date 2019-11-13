@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.82 2019/04/19 04:21:33 dlg Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.83 2019/11/13 11:54:01 tobhe Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -111,8 +111,8 @@
 #define SIOCBRDGSPROTO	 _IOW('i', 90, struct ifbrparam)/* set protocol */
 #define SIOCBRDGS
 
-#define	SIOCSWGDPID	_IOWR('i', 91, struct ifbrparam)/* set datapath id */
-#define	SIOCSWSDPID	 _IOW('i', 92, struct ifbrparam)/* get datapath id */
+#define	SIOCSWGDPID	_IOWR('i', 91, struct ifbrparam)/* get datapath id */
+#define	SIOCSWSDPID	 _IOW('i', 92, struct ifbrparam)/* set datapath id */
 #define	SIOCSWGMAXGROUP	_IOWR('i', 93, struct ifbrparam)/* get max groups */
 #define	SIOCSWSPORTNO	_IOWR('i', 95, struct ifbreq)	/* set port number */
 #define	SIOCSWGMAXFLOW	_IOWR('i', 96, struct ifbrparam)/* get max flow per table */
