@@ -1,4 +1,4 @@
-.\"	$OpenBSD: build-debug-info.1,v 1.1 2019/11/12 16:39:10 espie Exp $
+.\"	$OpenBSD: build-debug-info.1,v 1.2 2019/11/13 16:20:07 espie Exp $
 .\"
 .\" Copyright (c) 2019 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,17 +14,17 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 12 2019 $
+.Dd $Mdocdate: November 13 2019 $
 .Dt BUILD-DEBUG-INFO 1
 .Os
 .Sh NAME
 .Nm build-debug-info
 .Nd generate packing-lists and Makefiles for debug packages
 .Sh SYNOPSIS
+.Ev PORTSDIR Ns = Ns Ar path
 .Nm
-.Op Fl Fmnqvx
-.Op Fl P Ar pkgdir
-.Op Fl W Ar wrkinst
+.Op Fl mnqvx
+.Fl P Ar pkgdir
 .Fl -
 .Ar pkg_create_args ...
 .Sh DESCRIPTION
@@ -61,9 +61,6 @@ Note that this is not the opposite of verbose mode.
 Verbose mode.
 Explain about directories stripped from dependencies.
 Note that this is not the opposite of quiet mode.
-.It Fl W Ar wrkinst
-directory with actual files from the fake staging area,
-needed for figuring out what to do with hard links.
 .El
 .Pp
 .Nm
