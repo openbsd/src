@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.596 2019/11/12 23:27:15 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.597 2019/11/13 01:36:27 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2257,6 +2257,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSPWE3FAT:
 	case SIOCSPWE3NEIGHBOR:
 	case SIOCDPWE3NEIGHBOR:
+#if NBRIDGE > 0
 	case SIOCBRDGADD:
 	case SIOCBRDGDEL:
 	case SIOCBRDGSIFFLGS:
@@ -2282,6 +2283,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSWGDPID:
 	case SIOCSWSPORTNO:
 	case SIOCSWGMAXFLOW:
+#endif
 		if ((error = suser(p)) != 0)
 			break;
 		/* FALLTHROUGH */
