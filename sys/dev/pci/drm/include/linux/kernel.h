@@ -87,10 +87,10 @@ kasprintf(int flags, const char *fmt, ...)
 	len = vsnprintf(NULL, 0, fmt, ap);
 	va_end(ap);
 
-	buf = malloc(len, M_DRM, flags);
+	buf = malloc(len + 1, M_DRM, flags);
 	if (buf) {
 		va_start(ap, fmt);
-		vsnprintf(buf, len, fmt, ap);
+		vsnprintf(buf, len + 1, fmt, ap);
 		va_end(ap);
 	}
 
@@ -105,9 +105,9 @@ kvasprintf(int flags, const char *fmt, va_list ap)
 
 	len = vsnprintf(NULL, 0, fmt, ap);
 
-	buf = malloc(len, M_DRM, flags);
+	buf = malloc(len + 1, M_DRM, flags);
 	if (buf) {
-		vsnprintf(buf, len, fmt, ap);
+		vsnprintf(buf, len + 1, fmt, ap);
 	}
 
 	return buf;
