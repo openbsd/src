@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.26 2019/11/12 15:34:37 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.27 2019/11/14 08:30:10 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -153,7 +153,6 @@ struct query_imsg {
 	int		 c;
 	int		 err;
 	int		 bogus;
-	void		*resolver;
 	struct timespec	 tp;
 };
 
