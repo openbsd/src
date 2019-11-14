@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.63 2019/11/14 08:30:10 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.64 2019/11/14 08:32:30 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -88,6 +88,7 @@ struct uw_resolver {
 	enum uw_resolver_state	 state;
 	enum uw_resolver_type	 type;
 	int			 oppdot;
+	int			 check_running;
 	char			*why_bogus;
 	int64_t			 histogram[nitems(histogram_limits)];
 };
@@ -1258,6 +1259,12 @@ check_resolver(struct uw_resolver *resolver_to_check)
 {
 	struct uw_resolver		*res;
 
+	if (resolver_to_check->check_running) {
+		log_debug("%s: already checking: %s", __func__,
+		    uw_resolver_type_str[resolver_to_check->type]);
+		return;
+	}
+
 	log_debug("%s: create_resolver", __func__);
 	if ((res = create_resolver(resolver_to_check->type, 0)) == NULL)
 		fatal("%s", __func__);
@@ -1276,7 +1283,8 @@ check_resolver(struct uw_resolver *resolver_to_check)
 		    resolver_to_check->check_tv.tv_sec,
 		    uw_resolver_type_str[resolver_to_check->type],
 		    uw_resolver_state_str[resolver_to_check->state]);
-	}
+	} else
+		resolver_to_check->check_running++;
 
 	if (!(resolver_to_check->type == UW_RES_DHCP ||
 	    resolver_to_check->type == UW_RES_FORWARDER))
@@ -1302,7 +1310,8 @@ check_resolver(struct uw_resolver *resolver_to_check)
 		    resolver_to_check->check_tv.tv_sec,
 		    uw_resolver_type_str[resolver_to_check->type],
 		    uw_resolver_state_str[resolver_to_check->state]);
-	}
+	} else
+		resolver_to_check->check_running++;
 }
 
 void
@@ -1313,6 +1322,8 @@ check_resolver_done(struct uw_resolver *res, void *arg, int rcode,
 	struct timeval		 tv = {0, 1};
 	enum uw_resolver_state	 prev_state;
 	char			*str;
+
+	checked_resolver->check_running--;
 
 	log_debug("%s: %s rcode: %d", __func__,
 	    uw_resolver_type_str[checked_resolver->type], rcode);
