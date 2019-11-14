@@ -632,6 +632,8 @@
 ./usr/games
 ./usr/include
 ./usr/lib
+./usr/lib/libcbor.so.0.5
+./usr/lib/libfido2.so.1.2
 ./usr/lib/libc.so.96.0
 ./usr/lib/libcrypto.so.46.1
 ./usr/lib/libcurses.so.14.0
