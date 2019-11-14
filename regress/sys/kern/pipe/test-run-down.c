@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-run-down.c,v 1.1 2019/11/09 21:10:15 anton Exp $	*/
+/*	$OpenBSD: test-run-down.c,v 1.2 2019/11/14 21:17:00 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -47,16 +47,17 @@ static void *write_thread(void *);
  * Verify delivery of SIGPIPE while trying to write on a pipe where the read end
  * is gone.
  *
- * The writer thread first of writes PIPE_SIZE number of bytes and then tries to
- * perform the same operation again. The ambition is to cause the writer thread
- * to go to sleep since the pipe capacity is exhausted. The main thread closes
- * the read end at this point causing the writer thread to wake up and punt.
+ * The writer thread first of writes BIG_PIPE_SIZE number of bytes and then
+ * tries to perform the same operation again. The ambition is to cause the
+ * writer thread to go to sleep since the pipe capacity is exhausted. The main
+ * thread closes the read end at this point causing the writer thread to wake up
+ * and punt.
  */
 int
 test_run_down_write_big()
 {
 
-	return test_run_down(PIPE_SIZE);
+	return test_run_down(BIG_PIPE_SIZE);
 }
 
 /*

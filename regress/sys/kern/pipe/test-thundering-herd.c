@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-thundering-herd.c,v 1.1 2019/11/09 21:10:15 anton Exp $	*/
+/*	$OpenBSD: test-thundering-herd.c,v 1.2 2019/11/14 21:17:00 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -97,7 +97,7 @@ test_thundering_herd(int doread, int dosignal)
 	if (pipe(ctx.c_cv) == -1)
 		err(1, "pipe");
 
-	ctx.c_bufsiz = ctx.c_read ? 1 : PIPE_SIZE;
+	ctx.c_bufsiz = ctx.c_read ? 1 : BIG_PIPE_SIZE;
 	ctx.c_buf = malloc(ctx.c_bufsiz);
 	if (ctx.c_buf == NULL)
 		err(1, NULL);
