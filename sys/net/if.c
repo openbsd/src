@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.598 2019/11/13 21:25:04 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.599 2019/11/14 01:02:02 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2774,6 +2774,10 @@ if_delgroup(struct ifnet *ifp, const char *groupname)
 		free(ifgm, M_TEMP, sizeof(*ifgm));
 	}
 
+#if NPF > 0
+	pfi_group_change(groupname);
+#endif
+
 	if (--ifgl->ifgl_group->ifg_refcnt == 0) {
 		TAILQ_REMOVE(&ifg_head, ifgl->ifgl_group, ifg_next);
 #if NPF > 0
@@ -2783,10 +2787,6 @@ if_delgroup(struct ifnet *ifp, const char *groupname)
 	}
 
 	free(ifgl, M_TEMP, sizeof(*ifgl));
-
-#if NPF > 0
-	pfi_group_change(groupname);
-#endif
 
 	return (0);
 }
