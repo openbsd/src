@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.225 2019/04/06 02:56:16 jsg Exp $
+#	$OpenBSD: Makefile,v 1.226 2019/11/14 21:14:53 djm Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -42,8 +42,8 @@ LDIRS=	crypto ddb dev isofs miscfs msdosfs net netinet netinet6 \
 PRDIRS=	../lib/libcrypto ../lib/librpcsvc
 
 # Directories with an includes target
-RDIRS=	../lib/libcurses ../lib/libedit ../lib/libelf \
-	../lib/libevent ../lib/libexpat ../lib/libform \
+RDIRS=	../lib/libcbor ../lib/libcurses ../lib/libedit ../lib/libelf \
+	../lib/libevent ../lib/libexpat ../lib/libfido2 ../lib/libform \
 	../lib/libfuse ../lib/libkeynote ../lib/libmenu \
 	../lib/libossaudio ../lib/libpanel ../lib/libpcap \
 	../lib/libradius \
