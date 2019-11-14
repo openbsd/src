@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.76 2019/11/14 21:27:29 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.77 2019/11/14 21:56:52 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -24,10 +24,10 @@ CDIAGFLAGS+=	-Wstrict-aliasing=2
 CDIAGFLAGS+=	-Wold-style-definition
 .endif
 
-CDIAGFLAGS+=	-Werror
-CDIAGFLAGS+=	-fno-common
-DEBUG=-g
-INSTALL_STRIP=
+#CDIAGFLAGS+=	-Werror
+#CDIAGFLAGS+=	-fno-common
+#DEBUG=-g
+#INSTALL_STRIP=
 
 WARNINGS=yes
 
