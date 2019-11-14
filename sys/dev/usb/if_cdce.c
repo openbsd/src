@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.75 2018/10/02 19:49:10 stsp Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.76 2019/11/14 13:50:55 abieber Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -100,7 +100,6 @@ const struct cdce_type cdce_devs[] = {
     {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN }, CDCE_CRC32 },
     {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN2 }, CDCE_CRC32 },
     {{ USB_VENDOR_GMATE, USB_PRODUCT_GMATE_YP3X00 }, 0 },
-    {{ USB_VENDOR_NETCHIP, USB_PRODUCT_NETCHIP_ETHERNETGADGET }, 0 },
     {{ USB_VENDOR_COMPAQ, USB_PRODUCT_COMPAQ_IPAQLINUX }, 0 },
     {{ USB_VENDOR_AMBIT, USB_PRODUCT_AMBIT_NTL_250 }, CDCE_SWAPUNION },
 };
