@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.77 2019/06/28 13:32:44 deraadt Exp $	 */
+/* $OpenBSD: monitor.c,v 1.78 2019/11/14 20:41:46 bluhm Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -518,9 +518,9 @@ m_priv_getfd(void)
 
 	if ((ret = m_priv_local_sanitize_path(path, sizeof path, flags))
 	    != 0) {
-		if (ret == 1)
+		if (errno != ENOENT)
 			log_print("m_priv_getfd: illegal path \"%s\"", path);
-		err = EACCES;
+		err = errno;
 		v = -1;
 	} else {
 		if ((v = open(path, flags, mode)) == -1)
@@ -695,15 +695,8 @@ m_priv_local_sanitize_path(char *path, size_t pmax, int flags)
 	 */
 
 	if (realpath(path, new_path) == NULL ||
-	    realpath("/var/run", var_run) == NULL) {
-		/*
-                 * We could not decide whether the path is ok or not.
-                 * Indicate this be returning 2.
-		 */
-		if (errno == ENOENT)
-			return 2;
-		goto bad_path;
-	}
+	    realpath("/var/run", var_run) == NULL)
+		return 1;
 	strlcat(var_run, "/", sizeof(var_run));
 
 	if (strncmp(var_run, new_path, strlen(var_run)) == 0)
@@ -713,7 +706,7 @@ m_priv_local_sanitize_path(char *path, size_t pmax, int flags)
 	    (flags & O_ACCMODE) == O_RDONLY)
 		return 0;
 
-bad_path:
+	errno = EACCES;
 	return 1;
 }
 
