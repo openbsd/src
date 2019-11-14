@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.332 2019/09/19 08:56:37 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.333 2019/11/14 07:56:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2106,7 +2106,9 @@ tty_cursor(struct tty *tty, u_int cx, u_int cy)
 		if ((u_int) abs(change) > cx && tty_term_has(term, TTYC_HPA)) {
 			tty_putcode1(tty, TTYC_HPA, cx);
 			goto out;
-		} else if (change > 0 && tty_term_has(term, TTYC_CUB)) {
+		} else if (change > 0 &&
+		    tty_term_has(term, TTYC_CUB) &&
+		    !tty_use_margin(tty)) {
 			if (change == 2 && tty_term_has(term, TTYC_CUB1)) {
 				tty_putcode(tty, TTYC_CUB1);
 				tty_putcode(tty, TTYC_CUB1);
@@ -2114,7 +2116,9 @@ tty_cursor(struct tty *tty, u_int cx, u_int cy)
 			}
 			tty_putcode1(tty, TTYC_CUB, change);
 			goto out;
-		} else if (change < 0 && tty_term_has(term, TTYC_CUF)) {
+		} else if (change < 0 &&
+		    tty_term_has(term, TTYC_CUF) &&
+		    !tty_use_margin(tty)) {
 			tty_putcode1(tty, TTYC_CUF, -change);
 			goto out;
 		}
