@@ -1,0 +1,95 @@
+.\" Copyright (c) 2018 Yubico AB. All rights reserved.
+.\" Use of this source code is governed by a BSD-style
+.\" license that can be found in the LICENSE file.
+.\"
+.Dd $Mdocdate: November 14 2019 $
+.Dt FIDO_DEV_SET_IO_FUNCTIONS 3
+.Os
+.Sh NAME
+.Nm fido_dev_set_io_functions
+.Nd FIDO 2 device I/O interface
+.Sh SYNOPSIS
+.In fido.h
+.Bd -literal
+typedef void *fido_dev_io_open_t(const char *);
+typedef void  fido_dev_io_close_t(void *);
+typedef int   fido_dev_io_read_t(void *, unsigned char *, size_t, int);
+typedef int   fido_dev_io_write_t(void *, const unsigned char *, size_t);
+
+typedef struct fido_dev_io {
+	fido_dev_io_open_t  *open;
+	fido_dev_io_close_t *close;
+	fido_dev_io_read_t  *read;
+	fido_dev_io_write_t *write;
+} fido_dev_io_t;
+.Ed
+.Ft int
+.Fn fido_dev_set_io_functions "fido_dev_t *dev" "const fido_dev_io_t *io"
+.Sh DESCRIPTION
+The
+.Nm
+interface defines the I/O handlers used to talk to
+.Fa dev .
+Its usage is optional.
+By default,
+.Em libfido2
+will use the operating system's native HID interface to talk to
+a FIDO device.
+.Pp
+A
+.Vt fido_dev_io_open_t
+function is expected to return a non-NULL opaque pointer on success,
+and NULL on error.
+The returned opaque pointer is never dereferenced by
+.Em libfido2 .
+.Pp
+A
+.Vt fido_dev_io_close_t
+function receives the opaque handle obtained from
+.Vt fido_dev_io_open_t .
+It is not expected to be idempotent.
+.Pp
+A
+.Vt fido_dev_io_read_t
+function reads from
+.Fa dev .
+The first parameter taken is the opaque handle obtained from
+.Vt fido_dev_io_open_t .
+The read buffer is pointed to by the second parameter, and the
+third parameter holds its size.
+Finally, the last argument passed to
+.Vt fido_dev_io_read_t
+is the number of milliseconds the caller is willing to sleep,
+should the call need to block.
+If this value holds -1,
+.Vt fido_dev_io_read_t
+may block indefinitely.
+The number of bytes read is returned.
+On error, -1 is returned.
+.Pp
+Conversely, a
+.Vt fido_dev_io_write_t
+function writes to
+.Fa dev .
+The first parameter taken is the opaque handle returned by
+.Vt fido_dev_io_open_t .
+The write buffer is pointed to by the second parameter, and the
+third parameter holds its size.
+A
+.Vt fido_dev_io_write_t
+function may block.
+The number of bytes written is returned.
+On error, -1 is returned.
+.Pp
+No references to
+.Fa io
+are held by
+.Fn fido_dev_set_io_functions .
+.Sh RETURN VALUES
+On success,
+.Fn fido_dev_set_io_functions
+returns
+.Dv FIDO_OK .
+On error, a different error code defined in
+.In fido/err.h
+is returned.

@@ -1,0 +1,3 @@
+This is an import of https://github.com/Yubico/libfido2 rev 4f6739e7dc
+
+Only a subset of the upstream files have been imported: src/, man/ and LICENSE.
