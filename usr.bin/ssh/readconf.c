@@ -1,4 +1,4 @@
-/* $OpenBSD: readconf.c,v 1.313 2019/11/13 05:42:26 deraadt Exp $ */
+/* $OpenBSD: readconf.c,v 1.314 2019/11/14 21:27:29 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -2114,7 +2114,7 @@ fill_default_options(Options * options)
 	if (options->update_hostkeys == -1)
 		options->update_hostkeys = 0;
 	if (options->sk_provider == NULL)
-		options->sk_provider = xstrdup("$SSH_SK_PROVIDER");
+		options->sk_provider = xstrdup("internal");
 
 	/* Expand KEX name lists */
 	all_cipher = cipher_alg_list(',', 0);

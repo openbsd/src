@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.77 2019/10/31 21:23:19 djm Exp $
+#	$OpenBSD: Makefile,v 1.78 2019/11/14 21:27:30 djm Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -33,6 +33,9 @@ LDADD+=  -lwind -lroken -lcom_err -lpthread -lheimbase
 LDADD+=	-lcrypto
 DPADD+=	${LIBCRYPTO}
 .endif
+
+LDADD+= -lfido2 -lcbor -lusbhid
+DPADD+=	${LIBFIDO2} ${LIBCBOR} ${LIBUSBHID}
 
 LDADD+=	-lutil -lz
 DPADD+=	${LIBUTIL} ${LIBZ}

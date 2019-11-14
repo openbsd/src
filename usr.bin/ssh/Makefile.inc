@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.75 2019/11/12 19:29:24 markus Exp $
+#	$OpenBSD: Makefile.inc,v 1.76 2019/11/14 21:27:29 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -17,14 +17,17 @@ CDIAGFLAGS+=	-Wshadow
 CDIAGFLAGS+=	-Wstrict-prototypes
 CDIAGFLAGS+=	-Wunused
 CDIAGFLAGS+=	-Wno-unused-parameter # Lots of these in protocol handlers.
+CDIAGFLAGS+=	-Widiomatic-parentheses -Wparentheses
+CDIAGFLAGS+=	-Wimplicit-fallthrough
 .if ${COMPILER_VERSION:L} != "gcc3"
 CDIAGFLAGS+=	-Wstrict-aliasing=2
 CDIAGFLAGS+=	-Wold-style-definition
 .endif
 
-#CDIAGFLAGS+=	-Werror
-#DEBUG=-g
-#INSTALL_STRIP=
+CDIAGFLAGS+=	-Werror
+CDIAGFLAGS+=	-fno-common
+DEBUG=-g
+INSTALL_STRIP=
 
 WARNINGS=yes
 
@@ -74,6 +77,7 @@ SRCS_KEY+=	ssh-rsa.c
 SRCS_KEY+=	sshbuf-getput-crypto.c
 SRCS_KEY+=	digest-openssl.c
 SRCS_KEY+=	ssh-sk.c
+SRCS_KEY+=	sk-usbhid.c
 .else
 SRCS_KEY+=	cipher-aesctr.c
 SRCS_KEY+=	rijndael.c

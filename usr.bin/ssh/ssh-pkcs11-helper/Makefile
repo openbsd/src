@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2019/09/06 05:59:41 djm Exp $
+#	$OpenBSD: Makefile,v 1.10 2019/11/14 21:27:31 djm Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -12,6 +12,9 @@ BINDIR=	/usr/libexec
 MAN=	ssh-pkcs11-helper.8
 
 .include <bsd.prog.mk>
+
+LDADD+= -lfido2 -lcbor -lusbhid
+DPADD+=	${LIBFIDO2} ${LIBCBOR} ${LIBUSBHID}
 
 LDADD+=	-lcrypto -lutil
 DPADD+=	${LIBCRYPTO} ${LIBUTIL}
