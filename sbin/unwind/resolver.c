@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.64 2019/11/14 08:32:30 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.65 2019/11/14 08:34:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -151,6 +151,8 @@ void			 check_captive_portal(int);
 void			 check_captive_portal_timo(int, short, void *);
 int			 check_captive_portal_changed(struct uw_conf *,
 			     struct uw_conf *);
+void			 captive_portal_resolve_done(struct uw_resolver *,
+			     void *, int, void *, int, int, char *);
 void			 trust_anchor_resolve(void);
 void			 trust_anchor_timo(int, short, void *);
 void			 trust_anchor_resolve_done(struct uw_resolver *, void *,
@@ -1704,17 +1706,14 @@ check_captive_portal_timo(int fd, short events, void *arg)
 void
 check_captive_portal(int timer_reset)
 {
+	struct uw_resolver	*res;
+
 	log_debug("%s", __func__);
 
 	if (resolver_conf->captive_portal_host == NULL) {
 		log_debug("%s: no captive portal url configured", __func__);
 		captive_portal_state = PORTAL_UNCHECKED;
 		schedule_recheck_all_resolvers();
-		return;
-	}
-
-	if (resolvers[UW_RES_DHCP] == NULL) {
-		log_debug("%s no DHCP nameservers known", __func__);
 		return;
 	}
 
@@ -1725,7 +1724,69 @@ check_captive_portal(int timer_reset)
 
 	captive_portal_state = PORTAL_UNKNOWN;
 
-	resolver_imsg_compose_main(IMSG_RESOLVE_CAPTIVE_PORTAL, 0, NULL, 0);
+	if ((res = best_resolver()) == NULL)
+		return;
+
+	resolve(res, resolver_conf->captive_portal_host,
+	    LDNS_RR_TYPE_A, LDNS_RR_CLASS_IN, NULL,
+	    captive_portal_resolve_done);
+}
+
+void
+captive_portal_resolve_done(struct uw_resolver *res, void *arg, int rcode,
+    void *answer_packet, int answer_len, int sec, char *why_bogus)
+{
+	struct ub_result	*result;
+	sldns_buffer		*buf = NULL;
+	struct regional		*region = NULL;
+	struct in_addr		*in;
+	int			 i;
+	char			*str, rdata_buf[sizeof("xxx.xxx.xxx.xxx")];
+
+	if ((result = calloc(1, sizeof(*result))) == NULL)
+		goto out;
+
+	log_debug("%s: rcode: %d", __func__, rcode);
+	if ((str = sldns_wire2str_pkt(answer_packet, answer_len)) != NULL) {
+		log_debug("%s", str);
+		free(str);
+	}
+
+	if ((buf = sldns_buffer_new(answer_len)) == NULL)
+		goto out;
+	if ((region = regional_create()) == NULL)
+		goto out;
+	result->rcode = LDNS_RCODE_SERVFAIL;
+
+	sldns_buffer_clear(buf);
+	sldns_buffer_write(buf, answer_packet, answer_len);
+	sldns_buffer_flip(buf);
+	libworker_enter_result(result, buf, region, sec);
+	result->answer_packet = NULL;
+	result->answer_len = 0;
+
+	if (result->rcode != LDNS_RCODE_NOERROR) {
+		log_debug("%s: result->rcode: %d", __func__,
+		    result->rcode);
+		goto out;
+	}
+
+	i = 0;
+	while(result->data[i] != NULL) {
+		if (result->len[i] == 4) {
+			in = (struct in_addr*) result->data[i];
+			log_debug("%s: %s", __func__, inet_ntop(AF_INET,
+			    in, rdata_buf, sizeof(rdata_buf)));
+			resolver_imsg_compose_main(
+			    IMSG_CONNECT_CAPTIVE_PORTAL_HOST, 0, in,
+			    sizeof(*in));
+		}
+		i++;
+	}
+ out:
+	sldns_buffer_free(buf);
+	regional_destroy(region);
+	ub_resolve_free(result);
 }
 
 int
