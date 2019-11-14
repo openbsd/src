@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.163 2019/11/01 09:09:53 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.164 2019/11/14 08:00:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -876,7 +876,7 @@ input_set_state(struct window_pane *wp, const struct input_transition *itr)
 void
 input_parse(struct window_pane *wp)
 {
-	struct evbuffer		*evb = wp->event->input;
+	struct evbuffer	*evb = wp->event->input;
 
 	input_parse_buffer(wp, EVBUFFER_DATA(evb), EVBUFFER_LENGTH(evb));
 	evbuffer_drain(evb, EVBUFFER_LENGTH(evb));
