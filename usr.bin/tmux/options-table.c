@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.112 2019/11/14 07:55:01 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.113 2019/11/14 16:23:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -730,7 +730,7 @@ const struct options_table_entry options_table[] = {
 	  .type = OPTIONS_TABLE_CHOICE,
 	  .scope = OPTIONS_TABLE_WINDOW,
 	  .choices = options_table_window_size_list,
-	  .default_num = WINDOW_SIZE_SMALLEST
+	  .default_num = WINDOW_SIZE_LATEST
 	},
 
 	{ .name = "window-style",
