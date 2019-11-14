@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.177 2019/11/04 15:36:36 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.178 2019/11/14 23:48:37 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -69,6 +69,7 @@ struct tls;
 #include "cmds.h"
 
 static int	url_get(const char *, const char *, const char *, int);
+static int	save_chunked(FILE *, struct tls *, int , char *, size_t);
 static void	aborthttp(int);
 static void	abortfile(int);
 static char	hextochar(const char *);
@@ -213,6 +214,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 	int status;
 	int save_errno;
 	const size_t buflen = 128 * 1024;
+	int chunked = 0;
 
 	direction = "received";
 
@@ -687,13 +689,15 @@ noslash:
 		 * the original URI (path).
 		 */
 		if (credentials)
-			fprintf(fin, "GET %s HTTP/1.0\r\n"
+			fprintf(fin, "GET %s HTTP/1.1\r\n"
+			    "Connection: close\r\n"
 			    "Proxy-Authorization: Basic %s\r\n"
 			    "Host: %s\r\n%s%s\r\n\r\n",
 			    epath, credentials,
 			    proxyhost, buf ? buf : "", httpuseragent);
 		else
-			fprintf(fin, "GET %s HTTP/1.0\r\n"
+			fprintf(fin, "GET %s HTTP/1.1\r\n"
+			    "Connection: close\r\n"
 			    "Host: %s\r\n%s%s\r\n\r\n",
 			    epath, proxyhost, buf ? buf : "", httpuseragent);
 	} else {
@@ -712,19 +716,18 @@ noslash:
 #ifndef NOSSL
 		if (credentials) {
 			fprintf(fin,
-			    "GET /%s %s\r\nAuthorization: Basic %s\r\nHost: ",
-			    epath, restart_point ?
-			    "HTTP/1.1\r\nConnection: close" : "HTTP/1.0",
-			    credentials);
+			    "GET /%s HTTP/1.1\r\n"
+			    "Connection: close\r\n"
+			    "Authorization: Basic %s\r\n"
+			    "Host: ", epath, credentials);
 			free(credentials);
 			credentials = NULL;
 		} else
 #endif	/* NOSSL */
-			fprintf(fin, "GET /%s %s\r\nHost: ", epath,
-#ifndef SMALL
-			    restart_point ? "HTTP/1.1\r\nConnection: close" :
-#endif /* !SMALL */
-			    "HTTP/1.0");
+			fprintf(fin,
+			    "GET /%s HTTP/1.1\r\n"
+			    "Connection: close\r\n"
+			    "Host: ", epath);
 		if (proxyhost) {
 			fprintf(fin, "%s", proxyhost);
 			port = NULL;
@@ -942,9 +945,20 @@ noslash:
 			retryafter = strtonum(cp, 0, 0, &errstr);
 			if (errstr != NULL)
 				retryafter = -1;
+#define TRANSFER_ENCODING "Transfer-Encoding: "
+		} else if (strncasecmp(cp, TRANSFER_ENCODING,
+			    sizeof(TRANSFER_ENCODING) - 1) == 0) {
+			cp += sizeof(TRANSFER_ENCODING) - 1;
+			cp[strcspn(cp, " \t")] = '\0';
+			if (strcasecmp(cp, "chunked") == 0)
+				chunked = 1;
 		}
 		free(buf);
 	}
+
+	/* Content-Length should be ignored for Transfer-Encoding: chunked */
+	if (chunked)
+		filesize = -1;
 
 	if (isunavail) {
 		if (retried || retryafter != 0)
@@ -1005,39 +1019,46 @@ noslash:
 	/* Finally, suck down the file. */
 	if ((buf = malloc(buflen)) == NULL)
 		errx(1, "Can't allocate memory for transfer buffer");
-	i = 0;
-	len = 1;
 	oldinti = signal(SIGINFO, psummary);
-	while (len > 0) {
-		len = fread(buf, 1, buflen, fin);
-		bytes += len;
-		for (cp = buf, wlen = len; wlen > 0; wlen -= i, cp += i) {
-			if ((i = write(out, cp, wlen)) == -1) {
-				warn("Writing %s", savefile);
-				signal(SIGINFO, oldinti);
-				goto cleanup_url_get;
-			}
-			else if (i == 0)
-				break;
+	if (chunked) {
+		if (save_chunked(fin, tls, out, buf, buflen) == -1) {
+			signal(SIGINFO, oldinti);
+			goto cleanup_url_get;
 		}
-		if (hash && !progress) {
-			while (bytes >= hashbytes) {
-				(void)putc('#', ttyout);
-				hashbytes += mark;
+	} else {
+		i = 0;
+		len = 1;
+		while (len > 0) {
+			len = fread(buf, 1, buflen, fin);
+			bytes += len;
+			for (cp = buf, wlen = len; wlen > 0; wlen -= i, cp += i) {
+				if ((i = write(out, cp, wlen)) == -1) {
+					warn("Writing %s", savefile);
+					signal(SIGINFO, oldinti);
+					goto cleanup_url_get;
+				}
+				else if (i == 0)
+					break;
 			}
+			if (hash && !progress) {
+				while (bytes >= hashbytes) {
+					(void)putc('#', ttyout);
+					hashbytes += mark;
+				}
+				(void)fflush(ttyout);
+			}
+		}
+		signal(SIGINFO, oldinti);
+		if (hash && !progress && bytes > 0) {
+			if (bytes < mark)
+				(void)putc('#', ttyout);
+			(void)putc('\n', ttyout);
 			(void)fflush(ttyout);
 		}
-	}
-	signal(SIGINFO, oldinti);
-	if (hash && !progress && bytes > 0) {
-		if (bytes < mark)
-			(void)putc('#', ttyout);
-		(void)putc('\n', ttyout);
-		(void)fflush(ttyout);
-	}
-	if (len != 0) {
-		warnx("Reading from socket: %s", sockerror(tls));
-		goto cleanup_url_get;
+		if (len != 0) {
+			warnx("Reading from socket: %s", sockerror(tls));
+			goto cleanup_url_get;
+		}
 	}
 	progressmeter(1, NULL);
 	if (
@@ -1079,6 +1100,71 @@ cleanup_url_get:
 	free(newline);
 	free(credentials);
 	return (rval);
+}
+
+static int
+save_chunked(FILE *fin, struct tls *tls, int out, char *buf, size_t buflen)
+{
+
+	char			*header, *end, *cp;
+	unsigned long		chunksize;
+	size_t			hlen, rlen, wlen;
+	ssize_t			written;
+	char			cr, lf;
+
+	for (;;) {
+		header = ftp_readline(fin, &hlen);
+		if (header == NULL)
+			break;
+		/* strip CRLF and any optional chunk extension */
+		header[strcspn(header, ";\r\n")] = '\0';
+		errno = 0;
+		chunksize = strtoul(header, &end, 16);
+		if (errno || header[0] == '\0' || *end != '\0' ||
+		    chunksize > INT_MAX) {
+			warnx("Invalid chunk size '%s'", header);
+			free(header);
+			return -1;
+		}
+		free(header);
+
+		if (chunksize == 0) {
+			/* We're done.  Ignore optional trailer. */
+			return 0;
+		}
+
+		for (written = 0; chunksize != 0; chunksize -= rlen) {
+			rlen = (chunksize < buflen) ? chunksize : buflen;
+			rlen = fread(buf, 1, rlen, fin);
+			if (rlen == 0)
+				break;
+			bytes += rlen;
+			for (cp = buf, wlen = rlen; wlen > 0;
+			     wlen -= written, cp += written) {
+				if ((written = write(out, cp, wlen)) == -1) {
+					warn("Writing output file");
+					return -1;
+				}
+			}
+		}
+
+		if (rlen == 0 ||
+		    fread(&cr, 1, 1, fin) != 1 ||
+		    fread(&lf, 1, 1, fin) != 1)
+			break;
+
+		if (cr != '\r' || lf != '\n') {
+			warnx("Invalid chunked encoding");
+			return -1;
+		}
+	}
+
+	if (ferror(fin))
+		warnx("Error while reading from socket: %s", sockerror(tls));
+	else
+		warnx("Invalid chunked encoding: short read");
+
+	return -1;
 }
 
 /*
