@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.79 2019/04/02 12:59:57 jsg Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.80 2019/11/14 23:44:26 jsg Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -29,12 +29,14 @@ CRTEND?=         ${DESTDIR}/usr/lib/crtend.o
 
 LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
 LIBC?=		${DESTDIR}/usr/lib/libc.a
+LIBCBOR?=	${DESTDIR}/usr/lib/libcbor.a
 LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
 LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
 LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 LIBELF?=	${DESTDIR}/usr/lib/libelf.a
 LIBEVENT?=	${DESTDIR}/usr/lib/libevent.a
 LIBEXPAT?=	${DESTDIR}/usr/lib/libexpat.a
+LIBFIDO2?=	${DESTDIR}/usr/lib/libfido2.a
 LIBFORM?=	${DESTDIR}/usr/lib/libform.a
 LIBFORMW?=	${DESTDIR}/usr/lib/libformw.a
 LIBKEYNOTE?=	${DESTDIR}/usr/lib/libkeynote.a

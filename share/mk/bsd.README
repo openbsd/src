@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.82 2019/06/17 17:20:24 espie Exp $
+#	$OpenBSD: bsd.README,v 1.83 2019/11/14 23:44:26 jsg Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -335,12 +335,14 @@ DPADD		Additional dependencies for the program.  Usually used for
 		The following libraries are predefined for DPADD:
 
 			LIBC		/usr/lib/libc.a
+			LIBCBOR		/usr/lib/libcbor.a
 			LIBCRYPTO	/usr/lib/libcrypto.a
 			LIBCURSES	/usr/lib/libcurses.a
 			LIBEDIT		/usr/lib/libedit.a
 			LIBELF		/usr/lib/libelf.a
 			LIBEVENT	/usr/lib/libevent.a
 			LIBEXPAT	/usr/lib/libexpat.a
+			LIBFIDO2	/usr/lib/libfido2.a
 			LIBFORM		/usr/lib/libform.a
 			LIBFORMW	/usr/lib/libformw.a
 			LIBKEYNOTE	/usr/lib/libkeynote.a
