@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.80 2019/11/09 13:21:04 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.81 2019/11/15 09:29:21 mlarkin Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -863,7 +863,7 @@ const struct ieee80211_vht_rateset ieee80211_std_ratesets_11ac[] = {
 	{ 10, { 65, 130, 195, 260, 390, 520, 585, 650, 780, 867 }, 1, 1 },
 
 	/* MCS 0-9, 2 SS, 80MHz channel, no SGI */
-	{ 10, { 117, 234, 351, 468, 702, 936, 1053, 1404, 1560 }, 2, 0 }, 
+	{ 10, { 117, 234, 351, 468, 702, 936, 1053, 1404, 1560 }, 2, 0 },
 
 	/* MCS 0-9, 2 SS, 80MHz channel, SGI */
 	{ 10, { 130, 260, 390, 520, 780, 1040, 1170, 1300, 1560, 1734 }, 2, 1 },
@@ -1073,13 +1073,13 @@ ieee80211_next_mode(struct ifnet *ifp)
 	 * supported channel gets scanned.
 	 */
 	for (mode = ic->ic_curmode + 1; mode <= IEEE80211_MODE_MAX; mode++) {
-		/* 
+		/*
 		 * Skip over 11n mode. Its set of channels is the superset
 		 * of all channels supported by the other modes.
 		 */
 		if (mode == IEEE80211_MODE_11N)
 			continue;
-		/* 
+		/*
 		 * Skip over 11ac mode. Its set of channels is the set
 		 * of all channels supported by 11a.
 		 */
