@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.191 2019/07/19 00:24:31 cheloha Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.192 2019/11/15 09:27:48 mlarkin Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -399,7 +399,7 @@ buf_flip_high(struct buf *bp)
 
 /*
  * Flip a buffer to dma reachable memory, when we need it there for
- * I/O. This can sleep since it will wait for memory alloacation in the
+ * I/O. This can sleep since it will wait for memory allocation in the
  * DMA reachable area since we have to have the buffer there to proceed.
  */
 void
@@ -1365,7 +1365,7 @@ buf_adjcnt(struct buf *bp, long ncount)
  * temporarily hot to the long term cache.
  *
  * The objective is to provide scan resistance by making the long term
- * working set ineligible for immediate recycling, even as the current 
+ * working set ineligible for immediate recycling, even as the current
  * working set is rapidly turned over.
  *
  * Implementation
@@ -1450,7 +1450,7 @@ bufcache_getcleanbuf(int cachenum, int discard)
 
 	splassert(IPL_BIO);
 
-	/* try  cold queue */
+	/* try cold queue */
 	while ((bp = TAILQ_FIRST(&cache->coldqueue)) ||
 	    (bp = TAILQ_FIRST(&cache->warmqueue)) ||
 	    (bp = TAILQ_FIRST(&cache->hotqueue))) {
