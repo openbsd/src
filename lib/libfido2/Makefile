@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.2 2019/11/14 22:23:31 djm Exp $
+# $OpenBSD: Makefile,v 1.3 2019/11/15 03:19:40 deraadt Exp $
 
 .PATH:	${.CURDIR}/man ${.CURDIR}/src
 
-CFLAGS+= -I${.CURDIR}/src -D_FIDO_INTERNAL -DHAVE_UNISTD_H
+CFLAGS+= -I${.CURDIR}/src -D_FIDO_INTERNAL -DHAVE_UNISTD_H -std=c99
 
 WARNINGS=	yes
 CDIAGFLAGS+=	-Wall -Wextra
