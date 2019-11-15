@@ -214,7 +214,7 @@ find_device(const uint8_t *message, size_t message_len, const char *application,
 {
 	fido_dev_info_t *devlist = NULL;
 	fido_dev_t *dev = NULL;
-	size_t devlist_len = 0;
+	size_t devlist_len = 0, i;
 	const char *path;
 	int r;
 
@@ -230,7 +230,7 @@ find_device(const uint8_t *message, size_t message_len, const char *application,
 
 	skdebug(__func__, "found %zu device(s)", devlist_len);
 
-	for (size_t i = 0; i < devlist_len; i++) {
+	for (i = 0; i < devlist_len; i++) {
 		const fido_dev_info_t *di = fido_dev_info_ptr(devlist, i);
 
 		if (di == NULL) {
