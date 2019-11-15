@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.178 2019/11/13 12:24:40 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.179 2019/11/15 14:14:14 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -521,8 +521,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 				sa_free(env, sa);
 			}
 			return;
-		} else if (sa->sa_msgid_set && msg->msg_msgid == sa->sa_msgid &&
-		    !(sa->sa_fragments.frag_count)) {
+		} else if (sa->sa_msgid_set && msg->msg_msgid == sa->sa_msgid) {
 			/*
 			 * Response is being worked on, most likely we're
 			 * waiting for the CA process to get back to us
@@ -2358,10 +2357,10 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 	if ((sa = msg->msg_sa) == NULL)
 		return;
 
-	msg->msg_valid = 1;
-
-	if (sa->sa_fragments.frag_count !=0)
+	if (sa->sa_fragments.frag_count != 0)
 		return;
+
+	msg->msg_valid = 1;
 
 	if (msg->msg_natt && sa->sa_natt == 0) {
 		log_debug("%s: NAT-T message received, updated SA", __func__);
