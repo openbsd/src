@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.65 2019/11/14 08:34:17 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.66 2019/11/15 06:08:21 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -93,9 +93,11 @@ struct uw_resolver {
 	int64_t			 histogram[nitems(histogram_limits)];
 };
 
+typedef void (*resolve_cb_t)(struct uw_resolver *, void *, int, void *, int,
+    int, char *);
+
 struct resolver_cb_data {
-	void			(*cb)(struct uw_resolver *, void *, int, void *,
-	    			    int, int, char *);
+	resolve_cb_t		 cb;
 	void			*data;
 	struct uw_resolver	*res;
 };
@@ -106,8 +108,7 @@ void			 resolver_dispatch_frontend(int, short, void *);
 void			 resolver_dispatch_captiveportal(int, short, void *);
 void			 resolver_dispatch_main(int, short, void *);
 int			 resolve(struct uw_resolver *, const char*, int, int,
-			     void*, void (*cb)(struct uw_resolver *, void *,
-			     int, void *, int, int, char *));
+			     void*, resolve_cb_t);
 void			 resolve_done(struct uw_resolver *, void *, int, void *,
 			     int, int, char *);
 void			 ub_resolve_done(void *, int, void *, int, int, char *,
@@ -770,8 +771,7 @@ resolver_dispatch_main(int fd, short event, void *bula)
 
 int
 resolve(struct uw_resolver *res, const char* name, int rrtype, int rrclass,
-    void *mydata, void (*cb)(struct uw_resolver *, void *, int, void *, int,
-    int, char *))
+    void *mydata, resolve_cb_t cb)
 {
 	struct resolver_cb_data	*cb_data = NULL;
 	struct asr_query	*aq = NULL;
