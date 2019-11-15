@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.3,v 1.91 2019/08/30 17:51:47 jmc Exp $
+.\"	$OpenBSD: intro.3,v 1.92 2019/11/15 04:23:25 jsg Exp $
 .\"	$NetBSD: intro.3,v 1.5 1995/05/10 22:46:24 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.3	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: August 30 2019 $
+.Dd $Mdocdate: November 15 2019 $
 .Dt INTRO 3
 .Os
 .Sh NAME
@@ -87,6 +87,11 @@ Note: users do not normally have to explicitly link with this library.
 .It libc++abi Pq Fl lc++abi
 LLVM C++ runtime library.
 Note: users do not normally have to explicitly link with this library.
+.Pp
+.It libcbor Pq Fl lcbor
+An implementation of the Concise Binary Object Representation
+.Pq CBOR
+encoding format defined in RFC 7049.
 .Pp
 .It libcrypto Pq Fl lcrypto
 The OpenSSL crypto library.
@@ -149,6 +154,9 @@ See
 .Pp
 .It libexpat Pq Fl lexpat
 Library routines for parsing XML documents.
+.Pp
+.It libfido2 Pq Fl lfido2
+Library for communication with U2F/FIDO2 devices over USB.
 .Pp
 .It libform Pq Fl lform
 .It libformw Pq Fl lformw
