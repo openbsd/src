@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.91 2019/08/19 12:09:07 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.92 2019/11/15 18:28:13 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -407,7 +407,19 @@ sub choose_location
 	if ($state->is_interactive) {
 		$h{'<None>'} = undef;
 		$state->progress->clear;
-		my $result = $state->ask_list("Ambiguous: choose package for $name", sort keys %h);
+		my $cmp = sub {
+			return -1 if !defined $h{$a};
+			return 1 if !defined $h{$b};
+			my $r = $h{$a}->pkgname->to_pattern cmp
+				    $h{$b}->pkgname->to_pattern;
+			if ($r == 0) {
+				return $h{$a}->pkgname->{version}->
+				    compare($h{$b}->pkgname->{version});
+			} else {
+				return $r;
+			}
+		};
+		my $result = $state->ask_list("Ambiguous: choose package for $name", sort $cmp keys %h);
 		return $h{$result};
 	} else {
 		$state->errsay("Ambiguous: #1 could be #2",
