@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.58 2019/11/13 12:24:40 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.59 2019/11/15 13:55:13 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -315,7 +315,7 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 	    msg->msg_offset, sizeof(*hdr))) == NULL)
 		return (-1);
 
-	isnatt = (msg->msg_natt || (msg->msg_sa && msg->msg_sa->sa_natt));
+	isnatt = (msg->msg_natt || (sa && sa->sa_natt));
 
 	exchange = hdr->ike_exchange;
 	flags = hdr->ike_flags;
@@ -338,19 +338,20 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 	if (sendtofrom(msg->msg_fd, ibuf_data(buf), ibuf_size(buf), 0,
 	    (struct sockaddr *)&msg->msg_peer, msg->msg_peerlen,
 	    (struct sockaddr *)&msg->msg_local, msg->msg_locallen) == -1) {
-		if (errno == EADDRNOTAVAIL) {
-			sa_state(env, msg->msg_sa, IKEV2_STATE_CLOSING);
-			timer_del(env, &msg->msg_sa->sa_timer);
-			timer_set(env, &msg->msg_sa->sa_timer,
-			    ikev2_ike_sa_timeout, msg->msg_sa);
-			timer_add(env, &msg->msg_sa->sa_timer,
+		log_warn("%s: sendtofrom", __func__);
+		if (sa != NULL && errno == EADDRNOTAVAIL) {
+			sa_state(env, sa, IKEV2_STATE_CLOSING);
+			timer_del(env, &sa->sa_timer);
+			timer_set(env, &sa->sa_timer,
+			    ikev2_ike_sa_timeout, sa);
+			timer_add(env, &sa->sa_timer,
 			    IKED_IKE_SA_DELETE_TIMEOUT);
 		}
-		log_warn("%s: sendtofrom", __func__);
-		return (-1);
+		if (sa != NULL)
+			return (-1);
 	}
 
-	if (!sa)
+	if (sa == NULL)
 		return (0);
 
 	if ((m = ikev2_msg_copy(env, msg)) == NULL) {
