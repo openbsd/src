@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.34 2019/07/20 23:06:51 mpi Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.35 2019/11/15 15:50:14 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -1938,7 +1938,6 @@ witness_display_spinlock(struct lock_object *lock, struct proc *owner,
 void
 witness_assert(const struct lock_object *lock, int flags)
 {
-#ifdef INVARIANT_SUPPORT
 	struct lock_instance *instance;
 	struct lock_class *class;
 
@@ -1999,7 +1998,6 @@ witness_assert(const struct lock_object *lock, int flags)
 		panic("invalid lock assertion");
 
 	}
-#endif	/* INVARIANT_SUPPORT */
 }
 
 static void
