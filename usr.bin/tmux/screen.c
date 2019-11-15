@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.55 2019/04/02 08:45:32 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.56 2019/11/15 11:16:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -157,6 +157,14 @@ screen_set_title(struct screen *s, const char *title)
 {
 	free(s->title);
 	utf8_stravis(&s->title, title, VIS_OCTAL|VIS_CSTYLE|VIS_TAB|VIS_NL);
+}
+
+/* Set screen path. */
+void
+screen_set_path(struct screen *s, const char *path)
+{
+	free(s->path);
+	utf8_stravis(&s->path, path, VIS_OCTAL|VIS_CSTYLE|VIS_TAB|VIS_NL);
 }
 
 /* Push the current title onto the stack. */

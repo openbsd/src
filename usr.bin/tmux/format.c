@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.213 2019/10/23 07:42:05 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.214 2019/11/15 11:16:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2267,6 +2267,7 @@ format_defaults_pane(struct format_tree *ft, struct window_pane *wp)
 	format_add(ft, "pane_width", "%u", wp->sx);
 	format_add(ft, "pane_height", "%u", wp->sy);
 	format_add(ft, "pane_title", "%s", wp->base.title);
+	format_add(ft, "pane_path", "%s", wp->base.path);
 	format_add(ft, "pane_id", "%%%u", wp->id);
 	format_add(ft, "pane_active", "%d", wp == w->active);
 	format_add(ft, "pane_input_off", "%d", !!(wp->flags & PANE_INPUTOFF));

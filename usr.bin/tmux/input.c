@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.164 2019/11/14 08:00:30 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.165 2019/11/15 11:16:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -132,6 +132,7 @@ static void	input_set_state(struct window_pane *,
 static void	input_reset_cell(struct input_ctx *);
 
 static void	input_osc_4(struct input_ctx *, const char *);
+static void	input_osc_7(struct input_ctx *, const char *);
 static void	input_osc_10(struct input_ctx *, const char *);
 static void	input_osc_11(struct input_ctx *, const char *);
 static void	input_osc_52(struct input_ctx *, const char *);
@@ -2210,6 +2211,12 @@ input_exit_osc(struct input_ctx *ictx)
 		break;
 	case 4:
 		input_osc_4(ictx, p);
+		break;
+	case 7:
+		if (utf8_isvalid(p)) {
+			screen_set_path(sctx->s, p);
+			server_status_window(ictx->wp->window);
+		}
 		break;
 	case 10:
 		input_osc_10(ictx, p);
