@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.80 2019/11/14 23:44:26 jsg Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.81 2019/11/15 00:06:46 jsg Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -59,7 +59,7 @@ LIBSSL?=	${DESTDIR}/usr/lib/libssl.a
 LIBTLS?=	${DESTDIR}/usr/lib/libtls.a
 LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
 LIBTERMLIB?=	${DESTDIR}/usr/lib/libtermlib.a
-LIBUSB?=	${DESTDIR}/usr/lib/libusbhid.a
+LIBUSBHID?=	${DESTDIR}/usr/lib/libusbhid.a
 LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
 LIBY?=		${DESTDIR}/usr/lib/liby.a
 LIBZ?=		${DESTDIR}/usr/lib/libz.a
