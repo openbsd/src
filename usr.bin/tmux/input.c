@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.165 2019/11/15 11:16:53 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.166 2019/11/15 11:21:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -132,7 +132,6 @@ static void	input_set_state(struct window_pane *,
 static void	input_reset_cell(struct input_ctx *);
 
 static void	input_osc_4(struct input_ctx *, const char *);
-static void	input_osc_7(struct input_ctx *, const char *);
 static void	input_osc_10(struct input_ctx *, const char *);
 static void	input_osc_11(struct input_ctx *, const char *);
 static void	input_osc_52(struct input_ctx *, const char *);
