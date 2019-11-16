@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.84 2019/09/12 12:55:07 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.85 2019/11/16 14:08:31 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1703,21 +1703,6 @@ urtwn_r92c_power_on(struct urtwn_softc *sc)
 	/* Release RF digital isolation. */
 	urtwn_write_2(sc, R92C_SYS_ISO_CTRL,
 	    urtwn_read_2(sc, R92C_SYS_ISO_CTRL) & ~R92C_SYS_ISO_CTRL_DIOR);
-
-	/* Initialize MAC. */
-	urtwn_write_1(sc, R92C_APSD_CTRL,
-	    urtwn_read_1(sc, R92C_APSD_CTRL) & ~R92C_APSD_CTRL_OFF);
-	for (ntries = 0; ntries < 200; ntries++) {
-		if (!(urtwn_read_1(sc, R92C_APSD_CTRL) &
-		    R92C_APSD_CTRL_OFF_STATUS))
-			break;
-		DELAY(5);
-	}
-	if (ntries == 200) {
-		printf("%s: timeout waiting for MAC initialization\n",
-		    sc->sc_dev.dv_xname);
-		return (ETIMEDOUT);
-	}
 
 	/* Enable MAC DMA/WMAC/SCHEDULE/SEC blocks. */
 	reg = urtwn_read_2(sc, R92C_CR);

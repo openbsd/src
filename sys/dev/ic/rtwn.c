@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.46 2019/04/25 01:52:13 kevlo Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.47 2019/11/16 14:08:31 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -529,7 +529,9 @@ rtwn_efuse_read(struct rtwn_softc *sc, uint8_t *rom, size_t size)
 	uint32_t reg;
 	int i, len;
 
-	rtwn_write_1(sc, R92C_EFUSE_ACCESS, R92C_EFUSE_ACCESS_ON);
+	if (!(sc->chip & (RTWN_CHIP_92C | RTWN_CHIP_88C)))
+		rtwn_write_1(sc, R92C_EFUSE_ACCESS, R92C_EFUSE_ACCESS_ON);
+
 	rtwn_efuse_switch_power(sc);
 
 	memset(rom, 0xff, size);
@@ -571,7 +573,8 @@ rtwn_efuse_read(struct rtwn_softc *sc, uint8_t *rom, size_t size)
 		printf("\n");
 	}
 #endif
-	rtwn_write_1(sc, R92C_EFUSE_ACCESS, R92C_EFUSE_ACCESS_OFF);
+	if (!(sc->chip & (RTWN_CHIP_92C | RTWN_CHIP_88C)))
+		rtwn_write_1(sc, R92C_EFUSE_ACCESS, R92C_EFUSE_ACCESS_OFF);
 }
 
 void
