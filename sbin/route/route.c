@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.236 2019/11/09 17:14:00 florian Exp $	*/
+/*	$OpenBSD: route.c,v 1.237 2019/11/16 00:32:52 krw Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1227,7 +1227,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		break;
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
-		(void) printf(", if# %d, ", ifm->ifm_index);
+		printf(", if# %d, ", ifm->ifm_index);
 		if (if_indextoname(ifm->ifm_index, ifname) != NULL)
 			printf("name %s, ", ifname);
 		printf("link: %s, mtu: %u, flags:",
@@ -1248,7 +1248,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	case RTM_DELADDR:
 	case RTM_CHGADDRATTR:
 		ifam = (struct ifa_msghdr *)rtm;
-		(void) printf(", if# %d, ", ifam->ifam_index);
+		printf(", if# %d, ", ifam->ifam_index);
 		if (if_indextoname(ifam->ifam_index, ifname) != NULL)
 			printf("name %s, ", ifname);
 		printf("metric %d, flags:", ifam->ifam_metric);
