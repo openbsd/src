@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.242 2019/11/16 13:14:52 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.243 2019/11/16 13:19:09 krw Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1296,7 +1296,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 			printf("unknown");
 			break;
 		}
-		printf(" table %u, if# %u, ",
+		printf(", table %u, if# %u, ",
 		    rtm->rtm_tableid, rtm->rtm_index);
 		if (if_indextoname(rtm->rtm_index, ifname) != NULL)
 			printf("name %s, ", ifname);
