@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.164 2019/05/08 13:04:27 espie Exp $
+# $OpenBSD: Update.pm,v 1.165 2019/11/16 11:07:43 espie Exp $
 #
 # Copyright (c) 2004-2014 Marc Espie <espie@openbsd.org>
 #
@@ -66,6 +66,30 @@ sub add_location
 
 	$self->add_handle($set, $handle,
 	    OpenBSD::Handle->from_location($location));
+}
+
+sub look_for_debug
+{
+	my ($self, $set, $oldname, $newname, $state) = @_;
+
+	# hurdles to pass before adding debug packages
+	return unless $state->{debug_packages};
+
+	return if $state->tracker->is_to_update("debug-".$oldname);
+	my $dbg = "debug-".$newname;
+	my $l = $set->match_locations(OpenBSD::Search::Exact->new($dbg));
+	# TODO if @$l == 0, I should look for other packages with similar names
+	# just so I can warn for out-of-date/shearing in the mirrors.
+	return if @$l != 1;
+	$set->add_newer(OpenBSD::Handle->from_location($l->[0]));
+}
+
+sub found_update
+{
+	my ($self, $set, $old, $location, $state) = @_;
+
+	$self->add_location($set, $old, $location);
+	$self->look_for_debug($set, $old->pkgname, $location->name, $state);
 }
 
 sub progress_message
@@ -207,7 +231,7 @@ sub process_handle
 			$set->move_kept($h);
 			$self->progress_message($state,
 			    "No need to update #1", $pkgname);
-
+			$self->look_for_debug($set, $pkgname, $pkgname, $state);
 			return 0;
 		}
 		return undef;
@@ -218,7 +242,7 @@ sub process_handle
 
 	my $r = $state->choose_location($pkgname, $l);
 	if (defined $r) {
-		$self->add_location($set, $h, $r);
+		$self->found_update($set, $h, $r, $state);
 		return 1;
 	} else {
 		$state->{issues} = 1;
@@ -285,13 +309,13 @@ sub process_hint
 	if (@$l > 1) {
 		my $r = find_nearest($hint_name, $l);
 		if (defined $r) {
-			$self->add_location($set, $hint, $r);
+			$self->found_update($set, $hint, $r, $state);
 			return 1;
 		}
 	}
 	my $r = $state->choose_location($hint_name, $l);
 	if (defined $r) {
-		$self->add_location($set, $hint, $r);
+		$self->found_update($set, $hint, $r, $state);
 		OpenBSD::Add::tag_user_packages($set);
 		return 1;
 	} else {
