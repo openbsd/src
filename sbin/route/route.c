@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.237 2019/11/16 00:32:52 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.238 2019/11/16 00:52:24 krw Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1210,7 +1210,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	if (verbose == 0)
 		return;
 	if (rtm->rtm_version != RTM_VERSION) {
-		warnx("routing message version %d not understood",
+		warnx("routing message version %u not understood",
 		    rtm->rtm_version);
 		return;
 	}
@@ -1218,9 +1218,9 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	    rtm->rtm_type < sizeof(msgtypes)/sizeof(msgtypes[0]))
 		printf("%s", msgtypes[rtm->rtm_type]);
 	else
-		printf("[rtm_type %d out of range]", rtm->rtm_type);
+		printf("[rtm_type %u out of range]", rtm->rtm_type);
 
-	printf(": len %d", rtm->rtm_msglen);
+	printf(": len %u", rtm->rtm_msglen);
 	switch (rtm->rtm_type) {
 	case RTM_DESYNC:
 		printf("\n");
@@ -1239,7 +1239,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		pmsg_addrs((char *)ifm + ifm->ifm_hdrlen, ifm->ifm_addrs);
 		break;
 	case RTM_80211INFO:
-		printf(", if# %d, ", rtm->rtm_index);
+		printf(", if# %u, ", rtm->rtm_index);
 		if (if_indextoname(rtm->rtm_index, ifname) != NULL)
 			printf("name %s, ", ifname);
 		print_80211info((struct if_ieee80211_msghdr *)rtm);
@@ -1267,7 +1267,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 			printf("departure");
 			break;
 		default:
-			printf("#%d", ifan->ifan_what);
+			printf("#%u", ifan->ifan_what);
 			break;
 		}
 		printf("\n");
@@ -1362,7 +1362,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		}
 		break;
 	default:
-		printf(", priority %d, table %u, ifidx %u, ",
+		printf(", priority %u, table %u, ifidx %u, ",
 		    rtm->rtm_priority, rtm->rtm_tableid, rtm->rtm_index);
 		printf("pid: %ld, seq %d, errno %d\nflags:",
 		    (long)rtm->rtm_pid, rtm->rtm_seq, rtm->rtm_errno);
@@ -1461,7 +1461,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 
 	printf("   route to: %s\n", routename(&so_dst.sa));
 	if (rtm->rtm_version != RTM_VERSION) {
-		warnx("routing message version %d not understood",
+		warnx("routing message version %u not understood",
 		    rtm->rtm_version);
 		return;
 	}
