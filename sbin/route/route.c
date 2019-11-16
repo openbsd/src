@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.238 2019/11/16 00:52:24 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.239 2019/11/16 12:21:51 krw Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1318,7 +1318,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		printf(" inits: ");
 		bprintf(stdout, rtm->rtm_inits, metricnames);
 		pmsg_addrs(((char *)rtm + rtm->rtm_hdrlen),
-		   rtm->rtm_addrs & ~(RTA_STATIC | RTA_SEARCH | RTA_DNS));
+		    rtm->rtm_addrs & ~(RTA_STATIC | RTA_SEARCH | RTA_DNS));
 		printf("Static Routes:\n");
 		if (rtm->rtm_addrs & RTA_STATIC) {
 			char *next = (char *)rtm + rtm->rtm_hdrlen;
