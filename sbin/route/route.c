@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.241 2019/11/16 12:58:33 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.242 2019/11/16 13:14:52 krw Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1298,6 +1298,8 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		}
 		printf(" table %u, if# %u, ",
 		    rtm->rtm_tableid, rtm->rtm_index);
+		if (if_indextoname(rtm->rtm_index, ifname) != NULL)
+			printf("name %s, ", ifname);
 		printf("pid: %ld, seq %d, errno %d\nflags:",
 		    (long)rtm->rtm_pid, rtm->rtm_seq, rtm->rtm_errno);
 		bprintf(stdout, rtm->rtm_flags, routeflags);
@@ -1364,6 +1366,8 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	default:
 		printf(", priority %u, table %u, if# %u, ",
 		    rtm->rtm_priority, rtm->rtm_tableid, rtm->rtm_index);
+		if (if_indextoname(rtm->rtm_index, ifname) != NULL)
+			printf("name %s, ", ifname);
 		printf("pid: %ld, seq %d, errno %d\nflags:",
 		    (long)rtm->rtm_pid, rtm->rtm_seq, rtm->rtm_errno);
 		bprintf(stdout, rtm->rtm_flags, routeflags);
