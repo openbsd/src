@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.41 2019/11/12 07:51:46 mpi Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.42 2019/11/16 16:21:10 visa Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -363,11 +363,15 @@ rw_assert_wrlock(struct rwlock *rwl)
 	if (panicstr || db_active)
 		return;
 
+#ifdef WITNESS
+	witness_assert(&rwl->rwl_lock_obj, LA_XLOCKED);
+#else
 	if (!(rwl->rwl_owner & RWLOCK_WRLOCK))
 		panic("%s: lock not held", rwl->rwl_name);
 
 	if (RWLOCK_OWNER(rwl) != (struct proc *)RW_PROC(curproc))
 		panic("%s: lock not held by this process", rwl->rwl_name);
+#endif
 }
 
 void
@@ -376,8 +380,12 @@ rw_assert_rdlock(struct rwlock *rwl)
 	if (panicstr || db_active)
 		return;
 
+#ifdef WITNESS
+	witness_assert(&rwl->rwl_lock_obj, LA_SLOCKED);
+#else
 	if (!RWLOCK_OWNER(rwl) || (rwl->rwl_owner & RWLOCK_WRLOCK))
 		panic("%s: lock not shared", rwl->rwl_name);
+#endif
 }
 
 void
@@ -386,12 +394,16 @@ rw_assert_anylock(struct rwlock *rwl)
 	if (panicstr || db_active)
 		return;
 
+#ifdef WITNESS
+	witness_assert(&rwl->rwl_lock_obj, LA_LOCKED);
+#else
 	switch (rw_status(rwl)) {
 	case RW_WRITE_OTHER:
 		panic("%s: lock held by different process", rwl->rwl_name);
 	case 0:
 		panic("%s: lock not held", rwl->rwl_name);
 	}
+#endif
 }
 
 void
@@ -400,8 +412,12 @@ rw_assert_unlocked(struct rwlock *rwl)
 	if (panicstr || db_active)
 		return;
 
+#ifdef WITNESS
+	witness_assert(&rwl->rwl_lock_obj, LA_UNLOCKED);
+#else
 	if (RW_PROC(curproc) == RW_PROC(rwl->rwl_owner))
 		panic("%s: lock held", rwl->rwl_name);
+#endif
 }
 #endif
 
