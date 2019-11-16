@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.239 2019/11/16 12:21:51 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.240 2019/11/16 12:47:53 krw Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -192,7 +192,7 @@ main(int argc, char **argv)
 	kw = keyword(*argv);
 	if (Tflag && Terr != 0 && kw != K_ADD) {
 		errno = Terr;
-		err(1, "routing table %d", tableid);
+		err(1, "routing table %u", tableid);
 	}
 	if (kw == K_EXEC)
 		exit(rdomain(argc - 1, argv + 1));
@@ -1227,7 +1227,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		break;
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
-		printf(", if# %d, ", ifm->ifm_index);
+		printf(", if# %u, ", ifm->ifm_index);
 		if (if_indextoname(ifm->ifm_index, ifname) != NULL)
 			printf("name %s, ", ifname);
 		printf("link: %s, mtu: %u, flags:",
@@ -1248,7 +1248,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	case RTM_DELADDR:
 	case RTM_CHGADDRATTR:
 		ifam = (struct ifa_msghdr *)rtm;
-		printf(", if# %d, ", ifam->ifam_index);
+		printf(", if# %u, ", ifam->ifam_index);
 		if (if_indextoname(ifam->ifam_index, ifname) != NULL)
 			printf("name %s, ", ifname);
 		printf("metric %d, flags:", ifam->ifam_metric);
@@ -1257,7 +1257,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		break;
 	case RTM_IFANNOUNCE:
 		ifan = (struct if_announcemsghdr *)rtm;
-		printf(", if# %d, name %s, what: ",
+		printf(", if# %u, name %s, what: ",
 		    ifan->ifan_index, ifan->ifan_name);
 		switch (ifan->ifan_what) {
 		case IFAN_ARRIVAL:
@@ -1466,7 +1466,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 		return;
 	}
 	if (rtm->rtm_msglen > msglen)
-		warnx("message length mismatch, in packet %d, returned %d",
+		warnx("message length mismatch, in packet %u, returned %d",
 		    rtm->rtm_msglen, msglen);
 	if (rtm->rtm_errno) {
 		warnx("RTM_GET: %s (errno %d)",
@@ -1682,7 +1682,7 @@ print_sabfd(struct sockaddr_bfd *sa_bfd, int fmask)
 	printf(" remote %s", bfd_state(sa_bfd->bs_remotestate));
 	printf(" laststate %s", bfd_state(sa_bfd->bs_laststate));
 
-	printf(" error %d", sa_bfd->bs_error);
+	printf(" error %u", sa_bfd->bs_error);
 	printf("\n            ");
 	printf(" diag %s", bfd_diag(sa_bfd->bs_localdiag));
 	printf(" remote %s", bfd_diag(sa_bfd->bs_remotediag));
@@ -1941,7 +1941,7 @@ print_rtdns(struct sockaddr_rtdns *rtdns)
 
 	offset = offsetof(struct sockaddr_rtdns, sr_dns);
 	if (rtdns->sr_len <= offset) {
-		printf("<invalid sr_len (%d <= %zu)>\n", rtdns->sr_len,
+		printf("<invalid sr_len (%u <= %zu)>\n", rtdns->sr_len,
 		    offset);
 		return;
 	}
@@ -2004,7 +2004,7 @@ print_rtstatic(struct sockaddr_rtstatic *rtstatic)
 
 	offset = offsetof(struct sockaddr_rtstatic, sr_static);
 	if (rtstatic->sr_len <= offset) {
-		printf("<invalid sr_len (%d <= %zu)>\n", rtstatic->sr_len,
+		printf("<invalid sr_len (%u <= %zu)>\n", rtstatic->sr_len,
 		    offset);
 		return;
 	}
@@ -2065,7 +2065,7 @@ print_rtstatic(struct sockaddr_rtstatic *rtstatic)
 		}
 		break;
 	default:
-		printf("<unknown address family %d>", rtstatic->sr_family);
+		printf("<unknown address family %u>", rtstatic->sr_family);
 		break;
 	}
 	printf("\n");
@@ -2082,7 +2082,7 @@ print_rtsearch(struct sockaddr_rtsearch *rtsearch)
 
 	offset = offsetof(struct sockaddr_rtsearch, sr_search);
 	if (rtsearch->sr_len <= offset) {
-		printf("<invalid sr_len (%d <= %zu)>\n", rtsearch->sr_len,
+		printf("<invalid sr_len (%u <= %zu)>\n", rtsearch->sr_len,
 		    offset);
 		return;
 	}
