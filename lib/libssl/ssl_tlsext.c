@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.50 2019/11/15 15:14:02 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.51 2019/11/16 15:36:53 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1223,11 +1223,17 @@ tlsext_keyshare_client_needs(SSL *s)
 	    TLS1_3_VERSION);
 }
 
-static int
-tlsext_keyshare_x25519_internal(SSL *s, CBB *cbb)
+int
+tlsext_keyshare_client_build(SSL *s, CBB *cbb)
 {
 	uint8_t *public_key = NULL, *private_key = NULL;
-	CBB key_exchange;
+	CBB client_shares, key_exchange;
+
+	/* Generate and provide key shares. */
+	if (!CBB_add_u16_length_prefixed(cbb, &client_shares))
+		return 0;
+
+	/* XXX - other groups. */
 
 	/* Generate X25519 key pair. */
 	if ((public_key = malloc(X25519_KEY_LENGTH)) == NULL)
@@ -1237,11 +1243,14 @@ tlsext_keyshare_x25519_internal(SSL *s, CBB *cbb)
 	X25519_keypair(public_key, private_key);
 
 	/* Add the group and serialize the public key. */
-	if (!CBB_add_u16(cbb, tls1_ec_nid2curve_id(NID_X25519)))
+	if (!CBB_add_u16(&client_shares, tls1_ec_nid2curve_id(NID_X25519)))
 		goto err;
-	if (!CBB_add_u16_length_prefixed(cbb, &key_exchange))
+	if (!CBB_add_u16_length_prefixed(&client_shares, &key_exchange))
 		goto err;
 	if (!CBB_add_bytes(&key_exchange, public_key, X25519_KEY_LENGTH))
+		goto err;
+
+	if (!CBB_flush(cbb))
 		goto err;
 
 	S3I(s)->hs_tls13.x25519_public = public_key;
@@ -1252,32 +1261,6 @@ tlsext_keyshare_x25519_internal(SSL *s, CBB *cbb)
  err:
 	freezero(public_key, X25519_KEY_LENGTH);
 	freezero(private_key, X25519_KEY_LENGTH);
-
-	return 0;
-}
-
-int
-tlsext_keyshare_client_build(SSL *s, CBB *cbb)
-{
-	CBB client_shares;
-
-	/* Generate and provide key shares. */
-	if (!CBB_add_u16_length_prefixed(cbb, &client_shares))
-		return 0;
-
-	/* XXX - other groups. */
-
-	if (!tlsext_keyshare_x25519_internal(s, &client_shares))
-		return 0;
-
-	if (!CBB_flush(cbb))
-		goto err;
-
-	return 1;
-
- err:
-	freezero(S3I(s)->hs_tls13.x25519_public, X25519_KEY_LENGTH);
-	freezero(S3I(s)->hs_tls13.x25519_private, X25519_KEY_LENGTH);
 
 	return 0;
 }
@@ -1341,21 +1324,41 @@ tlsext_keyshare_server_needs(SSL *s)
 int
 tlsext_keyshare_server_build(SSL *s, CBB *cbb)
 {
+	uint8_t *public_key = NULL, *private_key = NULL;
+	CBB key_exchange;
+
+	/* XXX deduplicate with client code */
+
 	/* X25519 */
 	if (S3I(s)->hs_tls13.x25519_peer_public == NULL)
 		return 0;
 
-	if (!tlsext_keyshare_x25519_internal(s, cbb))
-		return 0;
+	/* Generate X25519 key pair. */
+	if ((public_key = malloc(X25519_KEY_LENGTH)) == NULL)
+		goto err;
+	if ((private_key = malloc(X25519_KEY_LENGTH)) == NULL)
+		goto err;
+	X25519_keypair(public_key, private_key);
+
+	/* Add the group and serialize the public key. */
+	if (!CBB_add_u16(cbb, tls1_ec_nid2curve_id(NID_X25519)))
+		goto err;
+	if (!CBB_add_u16_length_prefixed(cbb, &key_exchange))
+		goto err;
+	if (!CBB_add_bytes(&key_exchange, public_key, X25519_KEY_LENGTH))
+		goto err;
 
 	if (!CBB_flush(cbb))
 		goto err;
 
+	S3I(s)->hs_tls13.x25519_public = public_key;
+	S3I(s)->hs_tls13.x25519_private = private_key;
+
 	return 1;
 
  err:
-	freezero(S3I(s)->hs_tls13.x25519_public, X25519_KEY_LENGTH);
-	freezero(S3I(s)->hs_tls13.x25519_private, X25519_KEY_LENGTH);
+	freezero(public_key, X25519_KEY_LENGTH);
+	freezero(private_key, X25519_KEY_LENGTH);
 
 	return 0;
 }
@@ -1531,8 +1534,8 @@ tlsext_cookie_client_needs(SSL *s)
 	    S3I(s)->hs_tls13.cookie != NULL);
 }
 
-static int
-tlsext_cookie_build_internal(SSL *s, CBB *cbb)
+int
+tlsext_cookie_client_build(SSL *s, CBB *cbb)
 {
 	CBB cookie;
 
@@ -1547,12 +1550,6 @@ tlsext_cookie_build_internal(SSL *s, CBB *cbb)
 		return 0;
 
 	return 1;
-}
-
-int
-tlsext_cookie_client_build(SSL *s, CBB *cbb)
-{
-	return tlsext_cookie_build_internal(s, cbb);
 }
 
 int
@@ -1602,10 +1599,24 @@ tlsext_cookie_server_needs(SSL *s)
 }
 
 int
-tlsext_cookie_server_build(SSL *s, CBB *cbb) {
-	return tlsext_cookie_build_internal(s, cbb);
-}
+tlsext_cookie_server_build(SSL *s, CBB *cbb)
+{
+	CBB cookie;
 
+	/* XXX deduplicate with client code */
+
+	if (!CBB_add_u16_length_prefixed(cbb, &cookie))
+		return 0;
+
+	if (!CBB_add_bytes(&cookie, S3I(s)->hs_tls13.cookie,
+	    S3I(s)->hs_tls13.cookie_len))
+		return 0;
+
+	if (!CBB_flush(cbb))
+		return 0;
+
+	return 1;
+}
 
 int
 tlsext_cookie_client_parse(SSL *s, CBS *cbs, int *alert)
