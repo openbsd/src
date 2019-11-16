@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.56 2019/04/04 15:09:09 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.57 2019/11/16 06:44:33 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -28,7 +28,7 @@
 
 #include "tls_internal.h"
 
-static const char default_ca_file[] = "/etc/ssl/cert.pem";
+static const char default_ca_file[] = TLS_DEFAULT_CA_FILE;
 
 const char *
 tls_default_ca_cert_file(void)
