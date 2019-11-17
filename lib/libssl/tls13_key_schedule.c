@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_schedule.c,v 1.7 2018/11/13 01:25:13 beck Exp $ */
+/* $OpenBSD: tls13_key_schedule.c,v 1.8 2019/11/17 21:01:08 beck Exp $ */
 /* Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -354,23 +354,27 @@ tls13_derive_application_secrets(struct tls13_secrets *secrets,
 int
 tls13_update_client_traffic_secret(struct tls13_secrets *secrets)
 {
+	struct tls13_secret context = { .data = "", .len = 0 };
+
 	if (!secrets->init_done || !secrets->early_done ||
 	    !secrets->handshake_done || !secrets->schedule_done)
 		return 0;
 
 	return tls13_hkdf_expand_label(&secrets->client_application_traffic,
 	    secrets->digest, &secrets->client_application_traffic,
-	    "traffic upd", &secrets->empty_hash);
+	    "traffic upd", &context);
 }
 
 int
 tls13_update_server_traffic_secret(struct tls13_secrets *secrets)
 {
+	struct tls13_secret context = { .data = "", .len = 0 };
+
 	if (!secrets->init_done || !secrets->early_done ||
 	    !secrets->handshake_done || !secrets->schedule_done)
 		return 0;
 
 	return tls13_hkdf_expand_label(&secrets->server_application_traffic,
 	    secrets->digest, &secrets->server_application_traffic,
-	    "traffic upd", &secrets->empty_hash);
+	    "traffic upd", &context);
 }
