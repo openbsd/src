@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.11 2019/11/17 17:20:16 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.12 2019/11/17 18:27:16 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -530,6 +530,9 @@ tls13_record_layer_open_record_protected(struct tls13_record_layer *rl)
 static int
 tls13_record_layer_open_record(struct tls13_record_layer *rl)
 {
+	if (rl->handshake_completed && rl->aead == NULL)
+		return 0;
+
 	if (rl->aead == NULL)
 		return tls13_record_layer_open_record_plaintext(rl);
 
@@ -686,6 +689,9 @@ static int
 tls13_record_layer_seal_record(struct tls13_record_layer *rl,
     uint8_t content_type, const uint8_t *content, size_t content_len)
 {
+	if (rl->handshake_completed && rl->aead == NULL)
+		return 0;
+
 	tls13_record_layer_wrec_free(rl);
 
 	if ((rl->wrec = tls13_record_new()) == NULL)
