@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.12 2019/11/17 18:27:16 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.13 2019/11/17 18:42:17 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -51,7 +51,7 @@ struct tls13_record_layer {
 	uint8_t *alert_data;
 	size_t alert_len;
 
-	/* Pending post-handshake handshake messages. */
+	/* Pending post-handshake handshake messages (RFC 8446, section 4.6). */
 	CBS phh_cbs;
 	uint8_t *phh_data;
 	size_t phh_len;
