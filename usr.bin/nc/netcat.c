@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.211 2019/11/13 04:10:38 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.212 2019/11/17 17:38:33 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -352,15 +352,11 @@ main(int argc, char *argv[])
 			err(1, "setrtable");
 
 	/* Cruft to make sure options are clean, and used properly. */
-	if (argv[0] && !argv[1] && family == AF_UNIX) {
+	if (argc == 1 && family == AF_UNIX) {
 		host = argv[0];
-		uport = NULL;
-	} else if (argv[0] && !argv[1]) {
-		if (!lflag)
-			usage(1);
+	} else if (argc == 1 && lflag) {
 		uport = argv[0];
-		host = NULL;
-	} else if (argv[0] && argv[1]) {
+	} else if (argc == 2) {
 		host = argv[0];
 		uport = argv[1];
 	} else
