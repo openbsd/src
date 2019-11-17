@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.1 2019/11/17 06:35:30 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.2 2019/11/17 06:43:46 jsing Exp $ */
 /*
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -76,4 +76,127 @@ tls13_legacy_accept(SSL *ssl)
 		S3I(ssl)->hs.state = SSL_ST_OK;
 
 	return tls13_legacy_return_code(ssl, ret);
+}
+
+int
+tls13_client_hello_recv(struct tls13_ctx *ctx)
+{
+	return 0;
+}
+
+int
+tls13_client_hello_retry_send(struct tls13_ctx *ctx)
+{
+	return 0;
+}
+
+int
+tls13_server_hello_retry_recv(struct tls13_ctx *ctx)
+{
+        return 0;
+}
+
+int
+tls13_client_hello_retry_recv(struct tls13_ctx *ctx)
+{
+	return 0;
+}
+
+
+int
+tls13_client_end_of_early_data_send(struct tls13_ctx *ctx)
+{
+	return 0;
+}
+
+int
+tls13_client_end_of_early_data_recv(struct tls13_ctx *ctx)
+{
+	return 0;
+}
+
+int
+tls13_client_certificate_send(struct tls13_ctx *ctx)
+{
+	return 0;
+}
+
+int
+tls13_client_certificate_recv(struct tls13_ctx *ctx)
+{
+	return 0;
+}
+
+int
+tls13_client_certificate_verify_send(struct tls13_ctx *ctx)
+{
+	return 0;
+}
+
+int
+tls13_client_certificate_verify_recv(struct tls13_ctx *ctx)
+{
+	return 0;
+}
+
+int
+tls13_client_finished_recv(struct tls13_ctx *ctx)
+{
+	return 0;
+}
+
+int
+tls13_client_key_update_send(struct tls13_ctx *ctx)
+{
+	return 0;
+}
+
+int
+tls13_client_key_update_recv(struct tls13_ctx *ctx)
+{
+	return 0;
+}
+
+int
+tls13_server_hello_send(struct tls13_ctx *ctx)
+{
+	ctx->handshake_stage.hs_type |= NEGOTIATED;
+
+	return 0;
+}
+
+int
+tls13_server_hello_retry_send(struct tls13_ctx *ctx)
+{
+	return 0;
+}
+
+int
+tls13_server_encrypted_extensions_send(struct tls13_ctx *ctx)
+{
+	return 0;
+}
+
+int
+tls13_server_certificate_send(struct tls13_ctx *ctx)
+{
+	return 0;
+}
+
+int
+tls13_server_certificate_request_send(struct tls13_ctx *ctx)
+{
+	return 0;
+}
+
+int
+tls13_server_certificate_verify_send(struct tls13_ctx *ctx)
+{
+	return 0;
+}
+
+int
+tls13_server_finished_send(struct tls13_ctx *ctx)
+{
+	return 0;
 }
