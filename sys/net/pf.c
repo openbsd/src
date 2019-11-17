@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1090 2019/10/17 11:23:49 millert Exp $ */
+/*	$OpenBSD: pf.c,v 1.1091 2019/11/17 08:25:05 otto Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -7577,8 +7577,8 @@ pf_delay_pkt(struct mbuf *m, u_int ifidx)
 	}
 	pdy->ifidx = ifidx;
 	pdy->m = m;
-	timeout_set(pdy->to, pf_pktenqueue_delayed, pdy);
-	timeout_add_msec(pdy->to, m->m_pkthdr.pf.delay);
+	timeout_set(&pdy->to, pf_pktenqueue_delayed, pdy);
+	timeout_add_msec(&pdy->to, m->m_pkthdr.pf.delay);
 	m->m_pkthdr.pf.delay = 0;
 	return (0);
 }
