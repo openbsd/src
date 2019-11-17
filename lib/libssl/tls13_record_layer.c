@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.9 2019/03/17 15:13:23 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.10 2019/11/17 00:10:47 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -58,7 +58,8 @@ struct tls13_record_layer {
 
 	/* Record callbacks. */
 	tls13_alert_cb alert_cb;
-	tls13_post_handshake_cb post_handshake_cb;
+	tls13_post_handshake_recv_cb post_handshake_recv_cb;
+	tls13_post_handshake_sent_cb post_handshake_sent_cb;
 
 	/* Wire read/write callbacks. */
 	tls13_read_cb wire_read;
@@ -92,7 +93,9 @@ tls13_record_layer_wrec_free(struct tls13_record_layer *rl)
 
 struct tls13_record_layer *
 tls13_record_layer_new(tls13_read_cb wire_read, tls13_write_cb wire_write,
-    tls13_alert_cb alert_cb, tls13_post_handshake_cb post_handshake_cb,
+    tls13_alert_cb alert_cb,
+    tls13_post_handshake_recv_cb post_handshake_recv_cb,
+    tls13_post_handshake_sent_cb post_handshake_sent_cb,
     void *cb_arg)
 {
 	struct tls13_record_layer *rl;
@@ -103,7 +106,8 @@ tls13_record_layer_new(tls13_read_cb wire_read, tls13_write_cb wire_write,
 	rl->wire_read = wire_read;
 	rl->wire_write = wire_write;
 	rl->alert_cb = alert_cb;
-	rl->post_handshake_cb = post_handshake_cb;
+	rl->post_handshake_recv_cb = post_handshake_recv_cb;
+	rl->post_handshake_sent_cb = post_handshake_sent_cb;
 	rl->cb_arg = cb_arg;
 
 	return rl;
@@ -691,8 +695,14 @@ tls13_record_layer_read(struct tls13_record_layer *rl, uint8_t content_type,
 		 */
 		if (rl->rbuf_content_type == SSL3_RT_HANDSHAKE) {
 			if (rl->handshake_completed) {
-				/* XXX - call callback, drop for now... */
+				if (rl->post_handshake_recv_cb != NULL)
+					rl->post_handshake_recv_cb(
+					    rl->cb_arg, &rl->rbuf_cbs);
 				tls13_record_layer_rbuf_free(rl);
+				/*
+				 * XXX if handshake or alert queued
+				 *  return POLLOUT
+				 */
 				return TLS13_IO_WANT_POLLIN;
 			}
 		}

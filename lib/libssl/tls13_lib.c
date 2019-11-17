@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.11 2019/03/17 15:13:23 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.12 2019/11/17 00:10:47 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -101,7 +101,7 @@ tls13_ctx_new(int mode)
 	ctx->mode = mode;
 
 	if ((ctx->rl = tls13_record_layer_new(tls13_legacy_wire_read_cb,
-	    tls13_legacy_wire_write_cb, tls13_alert_received_cb, NULL,
+	    tls13_legacy_wire_write_cb, tls13_alert_received_cb, NULL, NULL,
 	    ctx)) == NULL)
 		goto err;
 
