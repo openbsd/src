@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.29 2019/11/17 00:10:47 beck Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.30 2019/11/17 06:35:30 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -176,6 +176,7 @@ const EVP_MD *tls13_cipher_hash(const SSL_CIPHER *cipher);
 /*
  * Legacy interfaces.
  */
+int tls13_legacy_accept(SSL *ssl);
 int tls13_legacy_connect(SSL *ssl);
 int tls13_legacy_return_code(SSL *ssl, ssize_t ret);
 ssize_t tls13_legacy_wire_read_cb(void *buf, size_t n, void *arg);
