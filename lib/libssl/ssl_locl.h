@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.247 2019/04/22 15:12:20 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.248 2019/11/17 19:07:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -376,6 +376,7 @@ typedef struct ssl_method_internal_st {
 
 	int (*ssl_accept)(SSL *s);
 	int (*ssl_connect)(SSL *s);
+	int (*ssl_shutdown)(SSL *s);
 
 	int (*ssl_renegotiate)(SSL *s);
 	int (*ssl_renegotiate_check)(SSL *s);
