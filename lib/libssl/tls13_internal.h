@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.31 2019/11/17 17:20:16 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.32 2019/11/17 21:47:01 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -122,8 +122,7 @@ int tls13_record_layer_set_write_traffic_key(struct tls13_record_layer *rl,
     struct tls13_secret *write_key);
 ssize_t tls13_record_layer_alert(struct tls13_record_layer *rl,
     uint8_t alert_level, uint8_t alert_desc);
-ssize_t tls13_record_layer_phh(struct tls13_record_layer *rl, uint8_t *data,
-    size_t len);
+ssize_t tls13_record_layer_phh(struct tls13_record_layer *rl, CBS *cbs);
 
 ssize_t tls13_read_handshake_data(struct tls13_record_layer *rl, uint8_t *buf, size_t n);
 ssize_t tls13_write_handshake_data(struct tls13_record_layer *rl, const uint8_t *buf,

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.13 2019/11/17 18:42:17 tb Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.14 2019/11/17 21:47:01 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -356,14 +356,13 @@ tls13_record_layer_alert(struct tls13_record_layer *rl,
 }
 
 ssize_t
-tls13_record_layer_phh(struct tls13_record_layer *rl, uint8_t *data,
-    size_t len)
+tls13_record_layer_phh(struct tls13_record_layer *rl, CBS *cbs)
 {
 	if (rl->phh_data != NULL)
 		return TLS13_IO_FAILURE;
 
-	rl->phh_data = data;
-	rl->phh_len = len;
+	if (!CBS_stow(cbs, &rl->phh_data, &rl->phh_len))
+		return TLS13_IO_FAILURE;
 
 	CBS_init(&rl->phh_cbs, rl->phh_data, rl->phh_len);
 
