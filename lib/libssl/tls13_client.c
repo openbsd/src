@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.17 2019/11/17 00:16:58 beck Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.18 2019/11/17 03:04:18 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -64,7 +64,7 @@ tls13_legacy_connect(SSL *ssl)
 	int ret;
 
 	/* XXX drop back to legacy for client auth for now */
-	if (ssl->cert->key != NULL) {
+	if (ssl->cert->key->privatekey != NULL) {
 		ssl->method = tls_legacy_client_method();
 		return ssl->method->internal->ssl_connect(ssl);
 	}
