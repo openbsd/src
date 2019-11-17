@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.281 2019/11/12 07:24:22 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.282 2019/11/17 01:38:20 jcs Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -851,7 +851,7 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 				goto parse_out;
 			}
 			snprintf(sc->sc_fwver, sizeof(sc->sc_fwver),
-			    "%d.%d.%d",
+			    "%u.%u.%u",
 			    le32toh(((uint32_t *)tlv_data)[0]),
 			    le32toh(((uint32_t *)tlv_data)[1]),
 			    le32toh(((uint32_t *)tlv_data)[2]));
