@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.13 2019/10/03 10:26:38 jsg Exp $
+#	$OpenBSD: install.md,v 1.14 2019/11/17 06:03:39 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,9 +60,12 @@ md_installboot() {
 	rpi)
 		cp $_mdec/{bootcode.bin,start.elf,fixup.dat,*.dtb} /mnt/mnt/
 		cp $_mdec/u-boot.bin /mnt/mnt/
+		mkdir -p /mnt/mnt/overlays
+		cp $_mdec/disable-bt.dtbo /mnt/mnt/overlays
 		cat > /mnt/mnt/config.txt<<-__EOT
 			arm_64bit=1
 			enable_uart=1
+			dtoverlay=disable-bt
 			kernel=u-boot.bin
 		__EOT
 		;;

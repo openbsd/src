@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2019/10/31 00:37:25 jsg Exp $
+#	$OpenBSD: Makefile,v 1.18 2019/11/17 06:03:39 jsg Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		67584
@@ -36,6 +36,9 @@ PIFILES=\
 	bcm2710-rpi-3-b-plus.dtb \
 	bcm2710-rpi-cm3.dtb
 
+PIDTBO=\
+	disable-bt.dtbo
+
 all: ${FS}
 
 ${FS}: bsd.rd
@@ -49,11 +52,15 @@ ${FS}: bsd.rd
 .for FILE in ${PIFILES}
 	cp ${PRPI}/${FILE} ${MOUNT_POINT}/
 .endfor
+	mkdir -p ${MOUNT_POINT}/overlays
+.for FILE in ${PIDTBO}
+	cp ${PRPI}/overlays/${FILE} ${MOUNT_POINT}/overlays/
+.endfor
 	cp ${PUBOOT}/rpi_3/u-boot.bin ${MOUNT_POINT}/
 	mkdir -p ${MOUNT_POINT}/efi/boot
 	cp /usr/mdec/BOOTAA64.EFI ${MOUNT_POINT}/efi/boot/bootaa64.efi
 	echo bootaa64.efi > ${MOUNT_POINT}/efi/boot/startup.nsh
-	echo 'arm_64bit=1\nenable_uart=1\nkernel=u-boot.bin' > ${MOUNT_POINT}/config.txt
+	echo 'arm_64bit=1\nenable_uart=1\ndtoverlay=disable-bt\nkernel=u-boot.bin' > ${MOUNT_POINT}/config.txt
 	dd if=${PUBOOT}/pine64_plus/u-boot-sunxi-with-spl.bin \
 	    of=/dev/r`cat vnd`c bs=1024 seek=8 conv=sync
 	umount ${MOUNT_POINT}

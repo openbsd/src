@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.11 2019/06/07 14:39:56 deraadt Exp $
+#	$OpenBSD: list,v 1.12 2019/11/17 06:03:39 jsg Exp $
 
 SRCDIRS distrib/special
 
@@ -97,6 +97,7 @@ COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-cm3.dtb usr/mdec/rpi
 COPY	/usr/local/share/raspberrypi-firmware/boot/bootcode.bin usr/mdec/rpi/bootcode.bin
 COPY	/usr/local/share/raspberrypi-firmware/boot/start.elf usr/mdec/rpi/start.elf
 COPY	/usr/local/share/raspberrypi-firmware/boot/fixup.dat usr/mdec/rpi/fixup.dat
+COPY	/usr/local/share/raspberrypi-firmware/boot/overlays/disable-bt.dtbo usr/mdec/rpi/disable-bt.dtbo
 COPY	/usr/local/share/u-boot/rpi_3/u-boot.bin usr/mdec/rpi/u-boot.bin
 
 COPY	/usr/local/share/u-boot/pine64_plus/u-boot-sunxi-with-spl.bin usr/mdec/pine64/u-boot-sunxi-with-spl.bin
