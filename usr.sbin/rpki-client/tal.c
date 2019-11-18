@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.13 2019/11/06 08:29:03 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.14 2019/11/18 08:34:55 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -40,7 +40,6 @@ tal_parse_buffer(const char *fn, char *buf)
 	char		*nl, *line;
 	unsigned char	*b64 = NULL;
 	size_t		 sz;
-	ssize_t		 linelen;
 	int		 rc = 0, b64sz;
 	struct tal	*tal = NULL;
 	enum rtype	 rp;
@@ -134,10 +133,9 @@ out:
 }
 
 /*
- * Parse a TAL from a file conformant to RFC 7730.
- * Returns the encoded data or NULL on failure.
- * Failure can be any number of things: failure to open file, allocate
- * memory, bad syntax, etc.
+ * Parse a TAL from "buf" conformant to RFC 7730 originally from a file
+ * named "fn".
+ * Returns the encoded data or NULL on syntax failure.
  */
 struct tal *
 tal_parse(const char *fn, char *buf)
@@ -160,11 +158,19 @@ tal_parse(const char *fn, char *buf)
 	if ((p->descr = malloc(dlen + 1)) == NULL)
 		err(EXIT_FAILURE, NULL);
 	memcpy(p->descr, d, dlen);
-	p->descr[dlen] = 0;
+	p->descr[dlen] = '\0';
 
 	return p;
 }
 
+/*
+ * Read the file named "file" into a returned, NUL-terminated buffer.
+ * This replaces CRLF terminators with plain LF, if found, and also
+ * elides document-leading comment lines starting with "#".
+ * Files may not exceeds 4096 bytes.
+ * This function exits on failure, so it always returns a buffer with
+ * TAL data.
+ */
 char *
 tal_read_file(const char *file)
 {
@@ -222,7 +228,8 @@ tal_read_file(const char *file)
 	if (ferror(in))
 		err(EXIT_FAILURE, "getline: %s", file);
 	fclose(in);
-
+	if (buf == NULL)
+		errx(EXIT_FAILURE, "%s: no data", file);
 	return buf;
 }
 
