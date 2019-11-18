@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.14 2019/11/18 11:34:41 inoguchi Exp $ */
+/* $OpenBSD: cms.c,v 1.15 2019/11/18 12:43:27 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -99,12 +99,10 @@ static int cms_set_pkey_param(EVP_PKEY_CTX *pctx,
 
 int verify_err = 0;
 
-typedef struct cms_key_param_st cms_key_param;
-
-struct cms_key_param_st {
+struct cms_key_param {
 	int idx;
 	STACK_OF(OPENSSL_STRING) *param;
-	cms_key_param *next;
+	struct cms_key_param *next;
 };
 
 int
@@ -142,7 +140,7 @@ cms_main(int argc, char **argv)
 	unsigned char *pwri_pass = NULL, *pwri_tmp = NULL;
 	size_t secret_keylen = 0, secret_keyidlen = 0;
 
-	cms_key_param *key_first = NULL, *key_param = NULL;
+	struct cms_key_param *key_first = NULL, *key_param = NULL;
 
 	ASN1_OBJECT *econtent_type = NULL;
 
@@ -278,14 +276,16 @@ cms_main(int argc, char **argv)
 			args++;
 			if (!rr_from)
 				rr_from = sk_OPENSSL_STRING_new_null();
-			sk_OPENSSL_STRING_push(rr_from, *args);
+			if (!sk_OPENSSL_STRING_push(rr_from, *args))
+				goto end;
 		} else if (!strcmp(*args, "-receipt_request_to")) {
 			if (!args[1])
 				goto argerr;
 			args++;
 			if (!rr_to)
 				rr_to = sk_OPENSSL_STRING_new_null();
-			sk_OPENSSL_STRING_push(rr_to, *args);
+			if (!sk_OPENSSL_STRING_push(rr_to, *args))
+				goto end;
 		} else if (!strcmp(*args, "-print")) {
 			noout = 1;
 			print = 1;
@@ -351,12 +351,14 @@ cms_main(int argc, char **argv)
 				if (!sksigners)
 					sksigners =
 					    sk_OPENSSL_STRING_new_null();
-				sk_OPENSSL_STRING_push(sksigners, signerfile);
+				if (!sk_OPENSSL_STRING_push(sksigners, signerfile))
+					goto end;
 				if (!keyfile)
 					keyfile = signerfile;
 				if (!skkeys)
 					skkeys = sk_OPENSSL_STRING_new_null();
-				sk_OPENSSL_STRING_push(skkeys, keyfile);
+				if (!sk_OPENSSL_STRING_push(skkeys, keyfile))
+					goto end;
 				keyfile = NULL;
 			}
 			signerfile = *++args;
@@ -371,7 +373,8 @@ cms_main(int argc, char **argv)
 				    NULL, "recipient certificate file");
 				if (cert == NULL)
 					goto end;
-				sk_X509_push(encerts, cert);
+				if (!sk_X509_push(encerts, cert))
+					goto end;
 				cert = NULL;
 			} else {
 				recipfile = *++args;
@@ -402,11 +405,13 @@ cms_main(int argc, char **argv)
 				if (!sksigners)
 					sksigners =
 					    sk_OPENSSL_STRING_new_null();
-				sk_OPENSSL_STRING_push(sksigners, signerfile);
+				if (!sk_OPENSSL_STRING_push(sksigners, signerfile))
+					goto end;
 				signerfile = NULL;
 				if (!skkeys)
 					skkeys = sk_OPENSSL_STRING_new_null();
-				sk_OPENSSL_STRING_push(skkeys, keyfile);
+				if (!sk_OPENSSL_STRING_push(skkeys, keyfile))
+					goto end;
 			}
 			keyfile = *++args;
 		} else if (!strcmp(*args, "-keyform")) {
@@ -431,8 +436,8 @@ cms_main(int argc, char **argv)
 				goto argerr;
 			}
 			if (key_param == NULL || key_param->idx != keyidx) {
-				cms_key_param *nparam;
-				if ((nparam = malloc(sizeof(cms_key_param))) == NULL)
+				struct cms_key_param *nparam;
+				if ((nparam = malloc(sizeof(struct cms_key_param))) == NULL)
 					goto end;
 				nparam->idx = keyidx;
 				if ((nparam->param = sk_OPENSSL_STRING_new_null()) == NULL)
@@ -444,7 +449,8 @@ cms_main(int argc, char **argv)
 					key_param->next = nparam;
 				key_param = nparam;
 			}
-			sk_OPENSSL_STRING_push(key_param->param, *++args);
+			if (!sk_OPENSSL_STRING_push(key_param->param, *++args))
+				goto end;
 		} else if (!strcmp(*args, "-rctform")) {
 			if (!args[1])
 				goto argerr;
@@ -509,12 +515,14 @@ cms_main(int argc, char **argv)
 		if (signerfile) {
 			if (!sksigners)
 				sksigners = sk_OPENSSL_STRING_new_null();
-			sk_OPENSSL_STRING_push(sksigners, signerfile);
+			if (!sk_OPENSSL_STRING_push(sksigners, signerfile))
+				goto end;
 			if (!skkeys)
 				skkeys = sk_OPENSSL_STRING_new_null();
 			if (!keyfile)
 				keyfile = signerfile;
-			sk_OPENSSL_STRING_push(skkeys, keyfile);
+			if (!sk_OPENSSL_STRING_push(skkeys, keyfile))
+				goto end;
 		}
 		if (!sksigners) {
 			BIO_printf(bio_err,
@@ -580,7 +588,7 @@ cms_main(int argc, char **argv)
 		BIO_printf(bio_err, "-inform arg    input format SMIME (default), PEM or DER\n");
 		BIO_printf(bio_err, "-inkey file    input private key (if not signer or recipient)\n");
 		BIO_printf(bio_err, "-keyform arg   input private key format (PEM)\n");
-		BIO_printf (bio_err, "-keyopt nm:v  set public key parameters\n");
+		BIO_printf(bio_err, "-keyopt nm:v   set public key parameters\n");
 		BIO_printf(bio_err, "-out file      output file\n");
 		BIO_printf(bio_err, "-outform arg   output format SMIME (default), PEM or DER\n");
 		BIO_printf(bio_err, "-content file  supply or override content for detached signature\n");
@@ -641,7 +649,8 @@ cms_main(int argc, char **argv)
 			if (!(cert = load_cert(bio_err, *args, FORMAT_PEM,
 			    NULL, "recipient certificate file")))
 				goto end;
-			sk_X509_push(encerts, cert);
+			if (!sk_X509_push(encerts, cert))
+				goto end;
 			cert = NULL;
 			args++;
 		}
@@ -786,7 +795,7 @@ cms_main(int argc, char **argv)
 			goto end;
 		for (i = 0; i < sk_X509_num(encerts); i++) {
 			CMS_RecipientInfo *ri;
-			cms_key_param *kparam;
+			struct cms_key_param *kparam;
 			int tflags = flags;
 			X509 *x = sk_X509_value(encerts, i);
 			for (kparam = key_first; kparam; kparam = kparam->next) {
@@ -877,7 +886,7 @@ cms_main(int argc, char **argv)
 			flags |= CMS_REUSE_DIGEST;
 		for (i = 0; i < sk_OPENSSL_STRING_num(sksigners); i++) {
 			CMS_SignerInfo *si;
-			cms_key_param *kparam;
+			struct cms_key_param *kparam;
 			int tflags = flags;
 			signerfile = sk_OPENSSL_STRING_value(sksigners, i);
 			keyfile = sk_OPENSSL_STRING_value(skkeys, i);
@@ -1048,7 +1057,7 @@ cms_main(int argc, char **argv)
 	sk_OPENSSL_STRING_free(rr_to);
 	sk_OPENSSL_STRING_free(rr_from);
 	for (key_param = key_first; key_param;) {
-		cms_key_param *tparam;
+		struct cms_key_param *tparam;
 		sk_OPENSSL_STRING_free(key_param->param);
 		tparam = key_param->next;
 		free(key_param);
@@ -1240,6 +1249,7 @@ cms_set_pkey_param(EVP_PKEY_CTX *pctx, STACK_OF(OPENSSL_STRING) *param)
 {
 	char *keyopt;
 	int i;
+
 	if (sk_OPENSSL_STRING_num(param) <= 0)
 		return 1;
 	for (i = 0; i < sk_OPENSSL_STRING_num(param); i++) {
