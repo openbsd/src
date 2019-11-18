@@ -1,4 +1,4 @@
-/* $OpenBSD: key_schedule.c,v 1.8 2019/11/18 02:04:56 beck Exp $ */
+/* $OpenBSD: key_schedule.c,v 1.9 2019/11/18 02:09:58 beck Exp $ */
 /*
  * Copyright (c) 2018-2019 Bob Beck <beck@openbsd.org>
  *
@@ -306,7 +306,7 @@ main (int argc, char **argv)
 	tls13_update_client_traffic_secret(secrets);
 	fprintf(stderr, "client_application_traffic after update:\n");
 	compare_data(secrets->client_application_traffic.data, 32,
-	    expected_server_application_traffic_updated, 32);
+	    expected_client_application_traffic_updated, 32);
 	if (memcmp(secrets->client_application_traffic.data,
 	    expected_client_application_traffic_updated, 32) != 0)
 		FAIL("client_application_traffic does not match after update\n");
