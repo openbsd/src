@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.340 2019/10/16 01:39:32 mlarkin Exp $
+#	$OpenBSD: files.pci,v 1.341 2019/11/18 03:03:37 kevlo Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -842,6 +842,11 @@ file    dev/pci/if_mcx.c                mcx
 device	iavf: ether, ifnet, ifmedia
 attach	iavf at pci
 file	dev/pci/if_iavf.c		iavf
+
+# Realtek 8125
+device	rge: ether, ifnet, ifmedia
+attach	rge at pci
+file	dev/pci/if_rge.c		rge
 
 include "dev/pci/files.agp"
 include "dev/pci/drm/files.drm"

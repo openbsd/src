@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.844 2019/05/28 08:44:27 sf Exp $
+#	$OpenBSD: GENERIC,v 1.845 2019/11/18 03:03:37 kevlo Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -576,6 +576,7 @@ bge*	at pci?				# Broadcom BCM57xx (aka Tigon3)
 bnx*	at pci?				# Broadcom BCM5706/5708 GigE
 re*	at pci?				# Realtek 8169/8169S/8110S
 re*	at cardbus?			# Realtek 8169/8169S/8110S
+rge*	at pci?				# Realtek 8125
 stge*	at pci?				# Sundance TC9021 GigE
 lge*	at pci?				# Level1 LXT1001 GigE
 hme*	at pci?				# Sun Happy Meal
