@@ -1,6 +1,6 @@
-/* $OpenBSD: key_schedule.c,v 1.7 2019/05/09 05:47:27 claudio Exp $ */
+/* $OpenBSD: key_schedule.c,v 1.8 2019/11/18 02:04:56 beck Exp $ */
 /*
- * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
+ * Copyright (c) 2018-2019 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -154,6 +154,27 @@ uint8_t expected_server_application_traffic[] = {
 	0x4b, 0x4f, 0x1f, 0x3f, 0xcb, 0x63, 0x16, 0x43
 };
 
+uint8_t expected_server_application_traffic_updated[] = {
+	0x51, 0x92, 0x1b, 0x8a, 0xa3, 0x00, 0x19, 0x76,
+	0xeb, 0x40, 0x1d, 0x0a, 0x43, 0x19, 0xa8, 0x51,
+	0x64, 0x16, 0xa6, 0xc5, 0x60, 0x01, 0xa3, 0x57,
+	0xe5, 0xd1, 0x62, 0x03, 0x1e, 0x84, 0xf9, 0x16,
+};
+
+uint8_t expected_client_application_traffic[] = {
+	0x9e, 0x40, 0x64, 0x6c, 0xe7, 0x9a, 0x7f, 0x9d,
+	0xc0, 0x5a, 0xf8, 0x88, 0x9b, 0xce, 0x65, 0x52,
+	0x87, 0x5a, 0xfa, 0x0b, 0x06, 0xdf, 0x00, 0x87,
+	0xf7, 0x92, 0xeb, 0xb7, 0xc1, 0x75, 0x04, 0xa5,
+};
+
+uint8_t expected_client_application_traffic_updated[] = {
+	0xfc, 0xdf, 0xcc, 0x72, 0x72, 0x5a, 0xae, 0xe4,
+	0x8b, 0xf6, 0x4e, 0x4f, 0xd8, 0xb7, 0x49, 0xcd,
+	0xbd, 0xba, 0xb3, 0x9d, 0x90, 0xda, 0x0b, 0x26,
+	0xe2, 0x24, 0x5c, 0xa6, 0xea, 0x16, 0x72, 0x07,
+};
+
 uint8_t expected_exporter_master[] = {
 	0xfe, 0x22, 0xf8, 0x81, 0x17, 0x6e, 0xda, 0x18,
 	0xeb, 0x8f, 0x44, 0x52, 0x9e, 0x67, 0x92, 0xc5,
@@ -259,12 +280,36 @@ main (int argc, char **argv)
 	    expected_server_application_traffic, 32) != 0)
 		FAIL("server_application_traffic does not match\n");
 
+	fprintf(stderr, "client_application_traffic:\n");
+	compare_data(secrets->client_application_traffic.data, 32,
+	    expected_client_application_traffic, 32);
+	if (memcmp(secrets->client_application_traffic.data,
+	    expected_client_application_traffic, 32) != 0)
+		FAIL("server_application_traffic does not match\n");
+
 	fprintf(stderr, "exporter_master:\n");
 	compare_data(secrets->exporter_master.data, 32,
 	    expected_exporter_master, 32);
 	if (memcmp(secrets->exporter_master.data,
 	    expected_exporter_master, 32) != 0)
 		FAIL("exporter_master does not match\n");
+
+	tls13_update_server_traffic_secret(secrets);
+	fprintf(stderr, "server_application_traffic after update:\n");
+	compare_data(secrets->server_application_traffic.data, 32,
+	    expected_server_application_traffic_updated, 32);
+	if (memcmp(secrets->server_application_traffic.data,
+	    expected_server_application_traffic_updated, 32) != 0)
+		FAIL("server_application_traffic does not match after update\n");
+
+
+	tls13_update_client_traffic_secret(secrets);
+	fprintf(stderr, "client_application_traffic after update:\n");
+	compare_data(secrets->client_application_traffic.data, 32,
+	    expected_server_application_traffic_updated, 32);
+	if (memcmp(secrets->client_application_traffic.data,
+	    expected_client_application_traffic_updated, 32) != 0)
+		FAIL("client_application_traffic does not match after update\n");
 
 	tls13_secrets_destroy(secrets);
 
