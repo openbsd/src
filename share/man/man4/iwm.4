@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwm.4,v 1.29 2019/11/10 14:10:41 sthen Exp $
+.\" $OpenBSD: iwm.4,v 1.30 2019/11/18 19:00:38 stsp Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,20 +15,20 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 10 2019 $
+.Dd $Mdocdate: November 18 2019 $
 .Dt IWM 4
 .Os
 .Sh NAME
 .Nm iwm
-.Nd Intel 7000/8000 IEEE 802.11a/ac/b/g/n wireless network devices
+.Nd Intel 7000/8000/9000 IEEE 802.11a/ac/b/g/n wireless network devices
 .Sh SYNOPSIS
 .Cd "iwm* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for Intel Wireless
-7260, 7265, 3160, 3165, 3168, 8260, and 8265
-PCIe Mini Card network adapters.
+7260, 7265, 3160, 3165, 3168, 8260, 8265, 9260, and 9560
+PCIe Mini Card and M.2 network adapters.
 .Pp
 These are the modes the
 .Nm
@@ -64,10 +64,10 @@ keys are configured using the
 .Qq Cm wpakey
 option.
 WPA-Enterprise networks require use of the wpa_supplicant package.
-The
-.Nm
-driver offloads both encryption and decryption of unicast data frames to the
-hardware for the CCMP cipher.
+.\"The
+.\".Nm
+.\"driver offloads both encryption and decryption of unicast data frames to the
+.\"hardware for the CCMP cipher.
 .Pp
 The
 .Nm
@@ -86,6 +86,8 @@ which are loaded when an interface is brought up:
 .It Pa /etc/firmware/iwm-7265-17
 .It Pa /etc/firmware/iwm-8000C-34
 .It Pa /etc/firmware/iwm-8265-34
+.It Pa /etc/firmware/iwm-9000-34
+.It Pa /etc/firmware/iwm-9260-34
 .El
 .Pp
 These firmware files are not free because Intel refuses to grant
