@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.5 2019/10/08 10:04:36 claudio Exp $ */
+/*	$OpenBSD: validate.c,v 1.6 2019/11/18 08:38:27 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -106,7 +106,7 @@ valid_ip(size_t idx, enum afi afi,
 /*
  * Authenticate a trust anchor by making sure its resources are not
  * inheriting and that the SKI is unique.
- * Returns *authsz -1 on failure.
+ * Returns *authsz or -1 on failure.
  */
 ssize_t
 valid_ta(const char *fn, const struct auth *auths,
@@ -167,7 +167,7 @@ valid_ski_aki(const char *fn, const struct auth *auths,
 /*
  * Validate a non-TA certificate: make sure its IP and AS resources are
  * fully covered by those in the authority key (which must exist).
- * Returns the parent certificate or -1 on failure.
+ * Returns the parent index or -1 on failure.
  */
 ssize_t
 valid_cert(const char *fn, const struct auth *auths,
@@ -232,7 +232,7 @@ valid_cert(const char *fn, const struct auth *auths,
 /*
  * Validate our ROA: check that the SKI is unique, the AKI exists, and
  * the IP prefix is also contained.
- * Returns zero if not valid, non-zero if valid.
+ * Returns the parent index or -1 on failure.
  */
 ssize_t
 valid_roa(const char *fn, const struct auth *auths,
