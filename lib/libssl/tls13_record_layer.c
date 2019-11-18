@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.14 2019/11/17 21:47:01 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.15 2019/11/18 02:44:20 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -328,7 +328,7 @@ tls13_record_layer_send_pending(struct tls13_record_layer *rl)
 	return TLS13_IO_SUCCESS;
 }
 
-ssize_t
+static ssize_t
 tls13_record_layer_alert(struct tls13_record_layer *rl,
     uint8_t alert_level, uint8_t alert_desc)
 {
@@ -966,4 +966,16 @@ tls13_write_application_data(struct tls13_record_layer *rl, const uint8_t *buf,
 		return TLS13_IO_FAILURE;
 
 	return tls13_record_layer_write(rl, SSL3_RT_APPLICATION_DATA, buf, n);
+}
+
+ssize_t
+tls13_send_alert(struct tls13_record_layer *rl, uint8_t alert_desc)
+{
+	uint8_t alert_level = SSL3_AL_FATAL;
+
+	if (alert_desc == SSL_AD_CLOSE_NOTIFY ||
+	    alert_desc == SSL_AD_USER_CANCELLED)
+		alert_level = SSL3_AL_WARNING;
+
+	return tls13_record_layer_alert(rl, alert_level, alert_desc);
 }
