@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.43 2019/11/12 07:24:22 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.44 2019/11/18 18:53:11 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -183,7 +183,7 @@
 
 /* interrupt flags in INTA, set by uCode or hardware (e.g. dma),
  * acknowledged (reset) by host writing "1" to flagged bits. */
-#define IWM_CSR_INT_BIT_FH_RX	(1 << 31) /* Rx DMA, cmd responses, FH_INT[17:16] */
+#define IWM_CSR_INT_BIT_FH_RX	(1U << 31) /* Rx DMA, cmd responses, FH_INT[17:16] */
 #define IWM_CSR_INT_BIT_HW_ERR	(1 << 29) /* DMA hardware error FH_INT[31] */
 #define IWM_CSR_INT_BIT_RX_PERIODIC	(1 << 28) /* Rx periodic */
 #define IWM_CSR_INT_BIT_FH_TX	(1 << 27) /* Tx DMA FH_INT[1:0] */
@@ -206,7 +206,7 @@
 				 IWM_CSR_INT_BIT_RX_PERIODIC)
 
 /* interrupt flags in FH (flow handler) (PCI busmaster DMA) */
-#define IWM_CSR_FH_INT_BIT_ERR       (1 << 31) /* Error */
+#define IWM_CSR_FH_INT_BIT_ERR       (1U << 31) /* Error */
 #define IWM_CSR_FH_INT_BIT_HI_PRIOR  (1 << 30) /* High priority Rx, bypass coalescing */
 #define IWM_CSR_FH_INT_BIT_RX_CHNL1  (1 << 17) /* Rx channel 1 */
 #define IWM_CSR_FH_INT_BIT_RX_CHNL0  (1 << 16) /* Rx channel 0 */
@@ -279,7 +279,7 @@
 #define IWM_CSR_GP_CNTRL_REG_VAL_MAC_ACCESS_EN           (0x00000001)
 
 #define IWM_CSR_GP_CNTRL_REG_MSK_POWER_SAVE_TYPE         (0x07000000)
-#define IWM_CSR_GP_CNTRL_REG_FLAG_MAC_POWER_SAVE         (0x04000000)
+#define IWM_CSR_GP_CNTRL_REG_FLAG_RFKILL_WAKE_L1A_EN     (0x04000000)
 #define IWM_CSR_GP_CNTRL_REG_FLAG_HW_RF_KILL_SW          (0x08000000)
 
 
@@ -397,7 +397,7 @@
 #define IWM_CSR_DBG_HPET_MEM_REG_VAL	(0xFFFF0000)
 
 /* DRAM INT TABLE */
-#define IWM_CSR_DRAM_INT_TBL_ENABLE		(1 << 31)
+#define IWM_CSR_DRAM_INT_TBL_ENABLE		(1U << 31)
 #define IWM_CSR_DRAM_INIT_TBL_WRITE_POINTER	(1 << 28)
 #define IWM_CSR_DRAM_INIT_TBL_WRAP_CHECK	(1 << 27)
 
@@ -416,6 +416,111 @@
 #define IWM_FH_UCODE_LOAD_STATUS	0x1af0
 
 #define IWM_FH_MEM_TB_MAX_LENGTH	0x20000
+
+/* 9000 rx series registers */
+
+#define IWM_RFH_Q0_FRBDCB_BA_LSB 0xA08000 /* 64 bit address */
+#define IWM_RFH_Q_FRBDCB_BA_LSB(q) (IWM_RFH_Q0_FRBDCB_BA_LSB + (q) * 8)
+/* Write index table */
+#define IWM_RFH_Q0_FRBDCB_WIDX 0xA08080
+#define IWM_RFH_Q_FRBDCB_WIDX(q) (IWM_RFH_Q0_FRBDCB_WIDX + (q) * 4)
+/* Write index table - shadow registers */
+#define IWM_RFH_Q0_FRBDCB_WIDX_TRG 0x1C80
+#define IWM_RFH_Q_FRBDCB_WIDX_TRG(q) (IWM_RFH_Q0_FRBDCB_WIDX_TRG + (q) * 4)
+/* Read index table */
+#define IWM_RFH_Q0_FRBDCB_RIDX 0xA080C0
+#define IWM_RFH_Q_FRBDCB_RIDX(q) (IWM_RFH_Q0_FRBDCB_RIDX + (q) * 4)
+/* Used list table */
+#define IWM_RFH_Q0_URBDCB_BA_LSB 0xA08100 /* 64 bit address */
+#define IWM_RFH_Q_URBDCB_BA_LSB(q) (IWM_RFH_Q0_URBDCB_BA_LSB + (q) * 8)
+/* Write index table */
+#define IWM_RFH_Q0_URBDCB_WIDX 0xA08180
+#define IWM_RFH_Q_URBDCB_WIDX(q) (IWM_RFH_Q0_URBDCB_WIDX + (q) * 4)
+#define IWM_RFH_Q0_URBDCB_VAID 0xA081C0
+#define IWM_RFH_Q_URBDCB_VAID(q) (IWM_RFH_Q0_URBDCB_VAID + (q) * 4)
+/* stts */
+#define IWM_RFH_Q0_URBD_STTS_WPTR_LSB 0xA08200 /*64 bits address */
+#define IWM_RFH_Q_URBD_STTS_WPTR_LSB(q) (IWM_RFH_Q0_URBD_STTS_WPTR_LSB + (q) * 8)
+
+#define IWM_RFH_Q0_ORB_WPTR_LSB 0xA08280
+#define IWM_RFH_Q_ORB_WPTR_LSB(q) (IWM_RFH_Q0_ORB_WPTR_LSB + (q) * 8)
+#define IWM_RFH_RBDBUF_RBD0_LSB 0xA08300
+#define IWM_RFH_RBDBUF_RBD_LSB(q) (IWM_RFH_RBDBUF_RBD0_LSB + (q) * 8)
+
+/**
+ * RFH Status Register
+ *
+ * Bit fields:
+ *
+ * Bit 29: RBD_FETCH_IDLE
+ * This status flag is set by the RFH when there is no active RBD fetch from
+ * DRAM.
+ * Once the RFH RBD controller starts fetching (or when there is a pending
+ * RBD read response from DRAM), this flag is immediately turned off.
+ *
+ * Bit 30: SRAM_DMA_IDLE
+ * This status flag is set by the RFH when there is no active transaction from
+ * SRAM to DRAM.
+ * Once the SRAM to DRAM DMA is active, this flag is immediately turned off.
+ *
+ * Bit 31: RXF_DMA_IDLE
+ * This status flag is set by the RFH when there is no active transaction from
+ * RXF to DRAM.
+ * Once the RXF-to-DRAM DMA is active, this flag is immediately turned off.
+ */
+#define IWM_RFH_GEN_STATUS          0xA09808
+#define IWM_RFH_GEN_STATUS_GEN3     0xA07824
+#define IWM_RBD_FETCH_IDLE  (1 << 29)
+#define IWM_SRAM_DMA_IDLE   (1 << 30)
+#define IWM_RXF_DMA_IDLE    (1U << 31)
+
+/* DMA configuration */
+#define IWM_RFH_RXF_DMA_CFG         0xA09820
+#define IWM_RFH_RXF_DMA_CFG_GEN3    0xA07880
+/* RB size */
+#define IWM_RFH_RXF_DMA_RB_SIZE_MASK (0x000F0000) /* bits 16-19 */
+#define IWM_RFH_RXF_DMA_RB_SIZE_POS 16
+#define IWM_RFH_RXF_DMA_RB_SIZE_1K  (0x1 << IWM_RFH_RXF_DMA_RB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_RB_SIZE_2K  (0x2 << IWM_RFH_RXF_DMA_RB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_RB_SIZE_4K  (0x4 << IWM_RFH_RXF_DMA_RB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_RB_SIZE_8K  (0x8 << IWM_RFH_RXF_DMA_RB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_RB_SIZE_12K (0x9 << IWM_RFH_RXF_DMA_RB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_RB_SIZE_16K (0xA << IWM_RFH_RXF_DMA_RB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_RB_SIZE_20K (0xB << IWM_RFH_RXF_DMA_RB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_RB_SIZE_24K (0xC << IWM_RFH_RXF_DMA_RB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_RB_SIZE_28K (0xD << IWM_RFH_RXF_DMA_RB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_RB_SIZE_32K (0xE << IWM_RFH_RXF_DMA_RB_SIZE_POS)
+/* RB Circular Buffer size:defines the table sizes in RBD units */
+#define IWM_RFH_RXF_DMA_RBDCB_SIZE_MASK (0x00F00000) /* bits 20-23 */
+#define IWM_RFH_RXF_DMA_RBDCB_SIZE_POS 20
+#define IWM_RFH_RXF_DMA_RBDCB_SIZE_8        (0x3 << IWM_RFH_RXF_DMA_RBDCB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_RBDCB_SIZE_16       (0x4 << IWM_RFH_RXF_DMA_RBDCB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_RBDCB_SIZE_32       (0x5 << IWM_RFH_RXF_DMA_RBDCB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_RBDCB_SIZE_64       (0x7 << IWM_RFH_RXF_DMA_RBDCB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_RBDCB_SIZE_128      (0x7 << IWM_RFH_RXF_DMA_RBDCB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_RBDCB_SIZE_256      (0x8 << IWM_RFH_RXF_DMA_RBDCB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_RBDCB_SIZE_512      (0x9 << IWM_RFH_RXF_DMA_RBDCB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_RBDCB_SIZE_1024     (0xA << IWM_RFH_RXF_DMA_RBDCB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_RBDCB_SIZE_2048     (0xB << IWM_RFH_RXF_DMA_RBDCB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_MIN_RB_SIZE_MASK    (0x03000000) /* bit 24-25 */
+#define IWM_RFH_RXF_DMA_MIN_RB_SIZE_POS     24
+#define IWM_RFH_RXF_DMA_MIN_RB_4_8          (3 << IWM_RFH_RXF_DMA_MIN_RB_SIZE_POS)
+#define IWM_RFH_RXF_DMA_DROP_TOO_LARGE_MASK (0x04000000) /* bit 26 */
+#define IWM_RFH_RXF_DMA_SINGLE_FRAME_MASK   (0x20000000) /* bit 29 */
+#define IWM_RFH_DMA_EN_MASK                 (0xC0000000) /* bits 30-31*/
+#define IWM_RFH_DMA_EN_ENABLE_VAL           (1U << 31)
+
+#define IWM_RFH_RXF_RXQ_ACTIVE 0xA0980C
+
+#define IWM_RFH_GEN_CFG     0xA09800
+#define IWM_RFH_GEN_CFG_SERVICE_DMA_SNOOP   (1 << 0)
+#define IWM_RFH_GEN_CFG_RFH_DMA_SNOOP       (1 << 1)
+#define IWM_RFH_GEN_CFG_RB_CHUNK_SIZE_128   0x00000010
+#define IWM_RFH_GEN_CFG_RB_CHUNK_SIZE_64    0x00000000
+/* the driver assumes everywhere that the default RXQ is 0 */
+#define IWM_RFH_GEN_CFG_DEFAULT_RXQ_NUM     0xF00
+
+/* end of 9000 rx series registers */
 
 #define IWM_LMPM_SECURE_UCODE_LOAD_CPU1_HDR_ADDR	0x1e78
 #define IWM_LMPM_SECURE_UCODE_LOAD_CPU2_HDR_ADDR	0x1e7c
@@ -502,12 +607,22 @@
 #define IWM_AUX_MISC_MASTER1_SMPHR_STATUS	0xa20800
 #define IWM_RSA_ENABLE				0xa24b08
 #define IWM_PREG_AUX_BUS_WPROT_0		0xa04cc0
+#define IWM_PREG_PRPH_WPROT_9000		0xa04ce0
+#define IWM_PREG_PRPH_WPROT_22000		0xa04d00
 #define IWM_SB_CFG_OVERRIDE_ADDR		0xa26c78
 #define IWM_SB_CFG_OVERRIDE_ENABLE		0x8000
 #define IWM_SB_CFG_BASE_OVERRIDE		0xa20000
 #define IWM_SB_MODIFY_CFG_FLAG			0xa03088
 #define IWM_SB_CPU_1_STATUS			0xa01e30
 #define IWM_SB_CPU_2_STATUS			0Xa01e34
+
+#define IWM_UREG_CHICK				0xa05c00
+#define IWM_UREG_CHICK_MSI_ENABLE		(1 << 24)
+#define IWM_UREG_CHICK_MSIX_ENABLE		(1 << 25)
+
+#define IWM_HPM_DEBUG				0xa03440
+#define IWM_HPM_PERSISTENCE_BIT			(1 << 12)
+#define IWM_PREG_WFPM_ACCESS			(1 << 12)
 
 /* Used to enable DBGM */
 #define IWM_HBUS_TARG_TEST_REG	(IWM_HBUS_BASE+0x05c)
@@ -534,7 +649,7 @@
 #define IWM_HOST_INT_TIMEOUT_MAX	(0xFF)
 #define IWM_HOST_INT_TIMEOUT_DEF	(0x40)
 #define IWM_HOST_INT_TIMEOUT_MIN	(0x0)
-#define IWM_HOST_INT_OPER_MODE		(1 << 31)
+#define IWM_HOST_INT_OPER_MODE		(1U << 31)
 
 /*****************************************************************************
  *                        7000/3000 series SHR DTS addresses                 *
@@ -598,7 +713,7 @@
 #define IWM_UCODE_TLV_FLAGS_P2P_PS_UAPSD	(1 << 26)
 #define IWM_UCODE_TLV_FLAGS_BCAST_FILTERING	(1 << 29)
 #define IWM_UCODE_TLV_FLAGS_GO_UAPSD		(1 << 30)
-#define IWM_UCODE_TLV_FLAGS_LTE_COEX		(1 << 31)
+#define IWM_UCODE_TLV_FLAGS_LTE_COEX		(1U << 31)
 
 #define IWM_UCODE_TLV_FLAG_BITS \
 	"\020\1PAN\2NEWSCAN\3MFP\4P2P\5DW_BC_TABLE\6NEWBT_COEX\7PM_CMD\10SHORT_BL\11RX_ENERGY\12TIME_EVENT_V2\13D3_6_IPV6\14BF_UPDATED\15NO_BASIC_SSID\17D3_CONTINUITY\20NEW_NSOFFL_S\21NEW_NSOFFL_L\22SCHED_SCAN\24STA_KEY_CMD\25DEVICE_PS_CMD\26P2P_PS\27P2P_PS_DCM\30P2P_PS_SCM\31UAPSD_SUPPORT\32EBS\33P2P_PS_UAPSD\36BCAST_FILTERING\37GO_UAPSD\40LTE_COEX"
@@ -2943,6 +3058,63 @@ struct iwm_rx_mpdu_res_start {
 #define IWM_RX_MPDU_RES_STATUS_FILTERING_MSK		(0xc00000)
 #define IWM_RX_MPDU_RES_STATUS2_FILTERING_MSK		(0xc0000000)
 
+#define IWM_RX_MPDU_MFLG1_ADDRTYPE_MASK		0x03
+#define IWM_RX_MPDU_MFLG1_MIC_CRC_LEN_MASK	0xf0
+#define IWM_RX_MPDU_MFLG1_MIC_CRC_LEN_SHIFT	3
+
+#define IWM_RX_MPDU_MFLG2_HDR_LEN_MASK		0x1f
+#define	IWM_RX_MPDU_MFLG2_PAD			0x20
+#define IWM_RX_MPDU_MFLG2_AMSDU			0x40
+
+#define IWM_RX_MPDU_PHY_AMPDU			(1 << 5)
+#define IWM_RX_MPDU_PHY_AMPDU_TOGGLE		(1 << 6)
+#define IWM_RX_MPDU_PHY_SHORT_PREAMBLE		(1 << 7)
+#define IWM_RX_MPDU_PHY_NCCK_ADDTL_NTFY		(1 << 7)
+#define IWM_RX_MPDU_PHY_TSF_OVERLOAD		(1 << 8)
+
+struct iwm_rx_mpdu_desc_v1 {
+	union {
+		uint32_t rss_hash;
+		uint32_t phy_data2;
+	};
+	union {
+		uint32_t filter_match;
+		uint32_t phy_data3;
+	};
+	uint32_t rate_n_flags;
+	uint8_t energy_a;
+	uint8_t energy_b;
+	uint8_t channel;
+	uint8_t mac_context;
+	uint32_t gp2_on_air_rise;
+	union {
+		uint64_t tsf_on_air_rise;
+		struct {
+			uint32_t phy_data0;
+			uint32_t phy_data1;
+		};
+	};
+} __packed;
+
+struct iwm_rx_mpdu_desc {
+	uint16_t mpdu_len;
+	uint8_t mac_flags1;
+	uint8_t mac_flags2;
+	uint8_t amsdu_info;
+	uint16_t phy_info;
+	uint8_t mac_phy_idx;
+	uint16_t raw_csum;
+	union {
+		uint16_t l3l4_flags;
+		uint16_t phy_data4;
+	};
+	uint16_t status;
+	uint8_t hash_filter;
+	uint8_t sta_id_flags;
+	uint32_t reorder_data;
+	struct iwm_rx_mpdu_desc_v1 v1;
+} __packed;
+
 /**
  * struct iwm_radio_version_notif - information on the radio version
  * ( IWM_RADIO_VERSION_NOTIFICATION = 0x68 )
@@ -4335,7 +4507,7 @@ struct iwm_lq_cmd {
 #define IWM_TX_CMD_FLG_FW_DROP		(1 << 26)
 #define IWM_TX_CMD_FLG_EXEC_PAPD	(1 << 27)
 #define IWM_TX_CMD_FLG_PAPD_TYPE	(1 << 28)
-#define IWM_TX_CMD_FLG_HCCA_CHUNK	(1 << 31)
+#define IWM_TX_CMD_FLG_HCCA_CHUNK	(1U << 31)
 /* IWM_TX_FLAGS_BITS_API_S_VER_1 */
 
 /*

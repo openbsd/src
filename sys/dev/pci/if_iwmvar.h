@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.46 2019/11/12 07:24:22 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.47 2019/11/18 18:53:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -272,8 +272,8 @@ struct iwm_tx_ring {
 	int			cur;
 };
 
+#define IWM_RX_MQ_RING_COUNT	512
 #define IWM_RX_RING_COUNT	256
-#define IWM_RBUF_COUNT		(IWM_RX_RING_COUNT + 32)
 /* Linux driver optionally uses 8k buffer */
 #define IWM_RBUF_SIZE		4096
 
@@ -283,12 +283,13 @@ struct iwm_rx_data {
 };
 
 struct iwm_rx_ring {
-	struct iwm_dma_info	desc_dma;
+	struct iwm_dma_info	free_desc_dma;
 	struct iwm_dma_info	stat_dma;
+	struct iwm_dma_info	used_desc_dma;
 	struct iwm_dma_info	buf_dma;
-	uint32_t		*desc;
+	void			*desc;
 	struct iwm_rb_status	*stat;
-	struct iwm_rx_data	data[IWM_RX_RING_COUNT];
+	struct iwm_rx_data	data[IWM_RX_MQ_RING_COUNT];
 	int			cur;
 };
 
@@ -419,6 +420,7 @@ struct iwm_softc {
 	int sc_device_family;
 #define IWM_DEVICE_FAMILY_7000	1
 #define IWM_DEVICE_FAMILY_8000	2
+#define IWM_DEVICE_FAMILY_9000	3
 
 	struct iwm_dma_info kw_dma;
 	struct iwm_dma_info fw_dma;
@@ -499,6 +501,9 @@ struct iwm_softc {
 	int host_interrupt_operation_mode;
 	int sc_ltr_enabled;
 	enum iwm_nvm_type nvm_type;
+
+	int sc_mqrx_supported;
+	int sc_integrated;
 
 	/*
 	 * Paging parameters - All of the parameters should be set by the
