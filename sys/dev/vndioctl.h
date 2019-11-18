@@ -1,4 +1,4 @@
-/*	$OpenBSD: vndioctl.h,v 1.10 2016/12/14 18:59:12 jca Exp $	*/
+/*	$OpenBSD: vndioctl.h,v 1.11 2019/11/18 22:32:45 jca Exp $	*/
 /*	$NetBSD: vndioctl.h,v 1.5 1995/01/25 04:46:30 cgd Exp $	*/
 
 /*
@@ -75,8 +75,6 @@ struct vnd_user {
  */
 #define VNDIOCSET	_IOWR('F', 0, struct vnd_ioctl)	/* enable disk */
 #define VNDIOCCLR	_IOW('F', 1, struct vnd_ioctl)	/* disable disk */
-/* XXX kill after 6.1 */
-/* #define VNDIOCGET60	_IOWR('F', 2, struct vnd_user60) */
 #define VNDIOCGET	_IOWR('F', 3, struct vnd_user)	/* get disk info */
 
 #endif /* !_SYS_VNDIOCTL_H_ */
