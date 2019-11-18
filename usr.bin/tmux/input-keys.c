@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.65 2019/11/14 07:55:01 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.66 2019/11/18 09:42:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -157,7 +157,7 @@ input_key(struct window_pane *wp, key_code key, struct mouse_event *m)
 	u_int				 i;
 	size_t				 dlen;
 	char				*out;
-	key_code			 justkey;
+	key_code			 justkey, newkey;
 	struct utf8_data		 ud;
 
 	log_debug("writing key 0x%llx (%s) to %%%u", key,
@@ -179,9 +179,10 @@ input_key(struct window_pane *wp, key_code key, struct mouse_event *m)
 
 	/* Is this backspace? */
 	if ((key & KEYC_MASK_KEY) == KEYC_BSPACE) {
-		key = options_get_number(global_options, "backspace");
-		if (key >= 0x7f)
-			key = '\177';
+		newkey = options_get_number(global_options, "backspace");
+		if (newkey >= 0x7f)
+			newkey = '\177';
+		key = newkey|(key & KEYC_MASK_MOD);
 	}
 
 	/*
