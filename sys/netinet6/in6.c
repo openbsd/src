@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.233 2019/11/11 17:42:28 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.234 2019/11/18 22:08:59 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -406,6 +406,7 @@ in6_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 
 	sa = sin6tosa(&ifr->ifr_addr);
 	if (sa->sa_family == AF_INET6) {
+		sa->sa_len = sizeof(struct sockaddr_in6);
 		error = in6_sa2sin6(sa, &sa6);
 		if (error)
 			return (error);
