@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.179 2019/11/15 14:14:14 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.180 2019/11/18 14:01:44 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1075,7 +1075,7 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 		if (ntohs(port) == IKED_NATT_PORT) {
 			/* Enforce NAT-T on the initiator side */
 			log_debug("%s: enforcing NAT-T", __func__);
-			req.msg_natt = sa->sa_natt = 1;
+			req.msg_natt = sa->sa_natt = sa->sa_udpencap = 1;
 		}
 		if ((len = ikev2_add_nat_detection(env, buf, &pld, &req, len))
 		    == -1)
