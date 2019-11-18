@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bird.c,v 1.1 2019/10/16 17:43:29 claudio Exp $ */
+/*	$OpenBSD: output-bird.c,v 1.2 2019/11/18 08:36:38 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -25,7 +25,6 @@ output_bird(FILE *out, struct vrp_tree *vrps, const char *tablename)
 {
 	char		 buf[64];
 	struct vrp	*v;
-	int		 first = 1;
 
 	fprintf(out, "roa table %s {\n", tablename);
 
