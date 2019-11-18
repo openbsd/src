@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2019/11/04 09:35:43 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.23 2019/11/18 08:40:35 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -40,6 +40,11 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
+
+/*
+ * Maximum number of TAL files we'll load.
+ */
+#define	TALSZ_MAX	8
 
 /*
  * Base directory for where we'll look for all media.
@@ -1276,9 +1281,13 @@ entity_process(int proc, int rsync, struct stats *st,
 	}
 }
 
-#define	TALSZ_MAX	8
-
-size_t
+/*
+ * Assign filenames ending in ".tal" in "/etc/rpki" into "tals",
+ * returning the number of files found and filled-in.
+ * This may be zero.
+ * Don't exceded "max" filenames.
+ */
+static size_t
 tal_load_default(const char *tals[], size_t max)
 {
 	static const char *basedir = "/etc/rpki";
