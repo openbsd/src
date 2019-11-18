@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.36 2019/10/15 08:25:37 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.37 2019/11/18 09:43:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -36,8 +36,8 @@ const struct cmd_entry cmd_join_pane_entry = {
 	.name = "join-pane",
 	.alias = "joinp",
 
-	.args = { "bdhvp:l:s:t:", 0, 0 },
-	.usage = "[-bdhv] [-l size] " CMD_SRCDST_PANE_USAGE,
+	.args = { "bdfhvp:l:s:t:", 0, 0 },
+	.usage = "[-bdfhv] [-l size] " CMD_SRCDST_PANE_USAGE,
 
 	.source = { 's', CMD_FIND_PANE, CMD_FIND_DEFAULT_MARKED },
 	.target = { 't', CMD_FIND_PANE, 0 },
@@ -143,10 +143,13 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 		else
 			size = (dst_wp->sx * percentage) / 100;
 	}
+
+	flags = 0;
 	if (args_has(args, 'b'))
-		flags = SPAWN_BEFORE;
-	else
-		flags = 0;
+		flags |= SPAWN_BEFORE;
+	if (args_has(args, 'f'))
+		flags |= SPAWN_FULLSIZE;
+
 	lc = layout_split_pane(dst_wp, type, size, flags);
 	if (lc == NULL) {
 		cmdq_error(item, "create pane failed: pane too small");

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.696 2019/11/15 11:16:53 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.697 2019/11/18 09:43:31 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 15 2019 $
+.Dd $Mdocdate: November 18 2019 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1890,7 +1890,7 @@ zooms the pane.
 .Pp
 This command works only if at least one client is attached.
 .It Xo Ic join-pane
-.Op Fl bdhv
+.Op Fl bdfhv
 .Op Fl l Ar size
 .Op Fl s Ar src-pane
 .Op Fl t Ar dst-pane
