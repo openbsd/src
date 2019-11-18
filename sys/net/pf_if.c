@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.98 2019/11/08 07:16:29 dlg Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.99 2019/11/18 03:23:41 dlg Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -264,7 +264,10 @@ pfi_detach_ifnet(struct ifnet *ifp)
 
 	pfi_update++;
 	t = kif->pfik_ah_cookie;
+	kif->pfik_ah_cookie = NULL;
 	if_addrhook_del(ifp, t);
+	free(t, PFI_MTYPE, sizeof(*t));
+
 	pfi_kif_update(kif);
 
 	kif->pfik_ifp = NULL;
