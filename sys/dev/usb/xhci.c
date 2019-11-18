@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.106 2019/10/06 17:30:00 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.107 2019/11/18 20:08:49 patrick Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -810,6 +810,29 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 	xhci_xfer_done(xfer);
 }
 
+uint32_t
+xhci_xfer_length_generic(struct xhci_xfer *xx, struct xhci_pipe *xp,
+    int trb_idx)
+{
+	int	 trb0_idx;
+	uint32_t len = 0, type;
+
+	trb0_idx =
+	    ((xx->index + xp->ring.ntrb) - xx->ntrb) % (xp->ring.ntrb - 1);
+
+	while (1) {
+		type = xp->ring.trbs[trb0_idx].trb_flags & XHCI_TRB_TYPE_MASK;
+		if (type == XHCI_TRB_TYPE_NORMAL || type == XHCI_TRB_TYPE_DATA)
+			len += le32toh(XHCI_TRB_LEN(
+			    xp->ring.trbs[trb0_idx].trb_status));
+		if (trb0_idx == trb_idx)
+			break;
+		if (++trb0_idx == xp->ring.ntrb)
+			trb0_idx = 0;
+	}
+	return len;
+}
+
 int
 xhci_event_xfer_generic(struct xhci_softc *sc, struct usbd_xfer *xfer,
     struct xhci_pipe *xp, uint32_t remain, int trb_idx,
@@ -819,16 +842,22 @@ xhci_event_xfer_generic(struct xhci_softc *sc, struct usbd_xfer *xfer,
 
 	switch (code) {
 	case XHCI_CODE_SUCCESS:
-		/*
-		 * This might be the last TRB of a TD that ended up
-		 * with a Short Transfer condition, see below.
-		 */
-		if (xfer->actlen == 0)
-			xfer->actlen = xfer->length - remain;
+		if (xfer->actlen == 0) {
+			if (remain)
+				xfer->actlen =
+				    xhci_xfer_length_generic(xx, xp, trb_idx) -
+				    remain;
+			else
+				xfer->actlen = xfer->length;
+		}
 		xfer->status = USBD_NORMAL_COMPLETION;
 		break;
 	case XHCI_CODE_SHORT_XFER:
-		xfer->actlen = xfer->length - remain;
+		/*
+		 * Use values from the transfer TRB instead of the status TRB.
+		 */
+		xfer->actlen = xhci_xfer_length_generic(xx, xp, trb_idx) -
+		    remain;
 		/*
 		 * If this is not the last TRB of a transfer, we should
 		 * theoretically clear the IOC at the end of the chain
