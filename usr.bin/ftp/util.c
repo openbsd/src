@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.91 2019/06/28 13:35:01 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.92 2019/11/18 04:37:35 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -282,8 +282,7 @@ tryagain:
 			tmp[strcspn(tmp, "\n")] = '\0';
 			if (tmp[0] != '\0')
 				user = tmp;
-		}
-		else
+		} else
 			exit(0);
 	}
 	n = command("USER %s", user);

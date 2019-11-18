@@ -1,4 +1,4 @@
-/*	$OpenBSD: domacro.c,v 1.21 2019/05/16 12:44:17 florian Exp $	*/
+/*	$OpenBSD: domacro.c,v 1.22 2019/11/18 04:37:35 deraadt Exp $	*/
 /*	$NetBSD: domacro.c,v 1.10 1997/07/20 09:45:45 lukem Exp $	*/
 
 /*
@@ -70,42 +70,42 @@ TOP:
 		}
 		cp2 = line;
 		while (*cp1 != '\0') {
-		      switch(*cp1) {
-			    case '\\':
-				 *cp2++ = *++cp1;
-				 break;
-			    case '$':
-				 if (isdigit((unsigned char)*(cp1 + 1))) {
-				    j = 0;
-				    while (isdigit((unsigned char)*++cp1)) {
-					  j = 10*j +  *cp1 - '0';
-				    }
-				    cp1--;
-				    if (argc - 2 >= j) {
-					(void)strlcpy(cp2, argv[j+1],
-					    sizeof(line) - (cp2 - line));
-					cp2 += strlen(argv[j+1]);
-				    }
-				    break;
-				 }
-				 if (*(cp1+1) == 'i') {
+			switch(*cp1) {
+			case '\\':
+				*cp2++ = *++cp1;
+				break;
+			case '$':
+				if (isdigit((unsigned char)*(cp1 + 1))) {
+					j = 0;
+					while (isdigit((unsigned char)*++cp1)) {
+						j = 10*j +  *cp1 - '0';
+					}
+					cp1--;
+					if (argc - 2 >= j) {
+						(void)strlcpy(cp2, argv[j+1],
+						    sizeof(line) - (cp2 - line));
+						cp2 += strlen(argv[j+1]);
+					}
+					break;
+				}
+				if (*(cp1+1) == 'i') {
 					loopflg = 1;
 					cp1++;
 					if (count < argc) {
-					   (void)strlcpy(cp2, argv[count],
-					       sizeof(line) - (cp2 - line));
-					   cp2 += strlen(argv[count]);
+						(void)strlcpy(cp2, argv[count],
+						    sizeof(line) - (cp2 - line));
+						cp2 += strlen(argv[count]);
 					}
 					break;
 				}
 				/* FALLTHROUGH */
-			    default:
+			default:
 				*cp2++ = *cp1;
 				break;
-		      }
-		      if (*cp1 != '\0') {
-			 cp1++;
-		      }
+			}
+			if (*cp1 != '\0') {
+				cp1++;
+			}
 		}
 		*cp2 = '\0';
 		makeargv();
@@ -113,16 +113,13 @@ TOP:
 		if (c == (struct cmd *)-1) {
 			fputs("?Ambiguous command.\n", ttyout);
 			code = -1;
-		}
-		else if (c == 0) {
+		} else if (c == 0) {
 			fputs("?Invalid command.\n", ttyout);
 			code = -1;
-		}
-		else if (c->c_conn && !connected) {
+		} else if (c->c_conn && !connected) {
 			fputs("Not connected.\n", ttyout);
 			code = -1;
-		}
-		else {
+		} else {
 			if (verbose) {
 				fputs(line, ttyout);
 				fputc('\n', ttyout);

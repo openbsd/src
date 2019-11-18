@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.178 2019/11/14 23:48:37 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.179 2019/11/18 04:37:35 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -357,7 +357,7 @@ noslash:
 			 * filling with stars
 			 */
 			for (host = 1 + strchr(proxyurl + 5, ':');  *host != '@';
-			     host++)
+			    host++)
 				*host = '*';
 
 			host = path + 1;
@@ -441,8 +441,7 @@ noslash:
 					warn("Writing %s", savefile);
 					signal(SIGINFO, oldinti);
 					goto cleanup_url_get;
-				}
-				else if (i == 0)
+				} else if (i == 0)
 					break;
 			}
 			if (hash && !progress) {
@@ -1036,8 +1035,7 @@ noslash:
 					warn("Writing %s", savefile);
 					signal(SIGINFO, oldinti);
 					goto cleanup_url_get;
-				}
-				else if (i == 0)
+				} else if (i == 0)
 					break;
 			}
 			if (hash && !progress) {
@@ -1140,7 +1138,7 @@ save_chunked(FILE *fin, struct tls *tls, int out, char *buf, size_t buflen)
 				break;
 			bytes += rlen;
 			for (cp = buf, wlen = rlen; wlen > 0;
-			     wlen -= written, cp += written) {
+			    wlen -= written, cp += written) {
 				if ((written = write(out, cp, wlen)) == -1) {
 					warn("Writing output file");
 					return -1;
@@ -1666,7 +1664,7 @@ proxy_connect(int socket, char *host, char *cookie)
 	} else
 		hosttail = host;
 
-	port = strrchr(hosttail, ':');               /* find portnum */
+	port = strrchr(hosttail, ':');		/* find portnum */
 	if (port != NULL)
 		*port++ = '\0';
 	if (!port)

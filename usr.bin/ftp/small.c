@@ -1,4 +1,4 @@
-/*	$OpenBSD: small.c,v 1.11 2019/05/16 12:44:18 florian Exp $	*/
+/*	$OpenBSD: small.c,v 1.12 2019/11/18 04:37:35 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -626,8 +626,7 @@ LOOP:
 							*cp1++ = *cp3++;
 						}
 						match = 1;
-					}
-					else if (toks[toknum = *cp2 - '1']) {
+					} else if (toks[toknum = *cp2 - '1']) {
 						char *cp3 = tp[toknum];
 
 						while (cp3 != te[toknum]) {
@@ -635,33 +634,29 @@ LOOP:
 						}
 						match = 1;
 					}
-				}
-				else {
+				} else {
 					while (*cp2 && *cp2 != ',' &&
 					    *cp2 != ']') {
 						if (*cp2 == '\\') {
 							cp2++;
-						}
-						else if (*cp2 == '$' &&
-						        isdigit((unsigned char)*(cp2 + 1))) {
+						} else if (*cp2 == '$' &&
+						    isdigit((unsigned char)*(cp2 + 1))) {
 							if (*++cp2 == '0') {
 							   char *cp3 = name;
 
 							   while (*cp3) {
 								*cp1++ = *cp3++;
 							   }
-							}
-							else if (toks[toknum =
+							} else if (toks[toknum =
 							    *cp2 - '1']) {
-							   char *cp3=tp[toknum];
+								char *cp3=tp[toknum];
 
-							   while (cp3 !=
-								  te[toknum]) {
-								*cp1++ = *cp3++;
-							   }
+								while (cp3 !=
+								    te[toknum]) {
+									*cp1++ = *cp3++;
+								}
 							}
-						}
-						else if (*cp2) {
+						} else if (*cp2) {
 							*cp1++ = *cp2++;
 						}
 					}
@@ -675,9 +670,9 @@ LOOP:
 				}
 				if (match) {
 					while (*++cp2 && *cp2 != ']') {
-					      if (*cp2 == '\\' && *(cp2 + 1)) {
+						if (*cp2 == '\\' && *(cp2 + 1)) {
 							cp2++;
-					      }
+						}
 					}
 					if (!*cp2) {
 						fputs(
@@ -704,8 +699,7 @@ LOOP:
 						while (*cp3) {
 							*cp1++ = *cp3++;
 						}
-					}
-					else if (toks[toknum = *cp2 - '1']) {
+					} else if (toks[toknum = *cp2 - '1']) {
 						char *cp3 = tp[toknum];
 
 						while (cp3 != te[toknum]) {

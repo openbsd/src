@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.106 2019/10/15 01:24:07 guenther Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.107 2019/11/18 04:37:35 deraadt Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -84,9 +84,9 @@
 #include "ftp_var.h"
 
 union sockaddr_union {
-	struct sockaddr     sa;
-	struct sockaddr_in  sin;
-	struct sockaddr_in6 sin6;
+	struct sockaddr		sa;
+	struct sockaddr_in	sin;
+	struct sockaddr_in6	sin6;
 };
 
 union sockaddr_union myctladdr, hisctladdr, data_addr;
@@ -452,7 +452,7 @@ getreply(int expecteof)
 		dig = n = code = 0;
 		cp = current_line;
 		while ((c = fgetc(cin)) != '\n') {
-			if (c == IAC) {     /* handle telnet commands */
+			if (c == IAC) {		/* handle telnet commands */
 				switch (c = fgetc(cin)) {
 				case WILL:
 				case WONT:
@@ -489,8 +489,8 @@ getreply(int expecteof)
 			}
 			if (c != '\r' && (verbose > 0 ||
 			    ((verbose > -1 && n == '5' && dig > 4) &&
-			    (((!n && c < '5') || (n && n < '5'))
-			     || !retry_connect)))) {
+			    (((!n && c < '5') || (n && n < '5')) ||
+			    !retry_connect)))) {
 				if (proxflag &&
 				   (dig == 1 || (dig == 5 && verbose == 0)))
 					fprintf(ttyout, "%s:", hostname);
@@ -967,8 +967,7 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 				code = -1;
 				return;
 			}
-		}
-		else if (runique && (local = gunique(local)) == NULL) {
+		} else if (runique && (local = gunique(local)) == NULL) {
 			(void)signal(SIGINT, oldintr);
 			(void)signal(SIGINFO, oldinti);
 			code = -1;
@@ -1315,7 +1314,7 @@ reinit:
 		}
 		if ((options & SO_DEBUG) &&
 		    setsockopt(data, SOL_SOCKET, SO_DEBUG, (char *)&on,
-			       sizeof(on)) == -1)
+		    sizeof(on)) == -1)
 			warn("setsockopt (ignored)");
 #endif /* !SMALL */
 		switch (data_addr.sa.sa_family) {
@@ -1528,7 +1527,7 @@ reinit:
 		if (data_addr.sa.sa_family == AF_INET) {
 			on = IPTOS_THROUGHPUT;
 			if (setsockopt(data, IPPROTO_IP, IP_TOS, (char *)&on,
-				       sizeof(int)) == -1)
+			    sizeof(int)) == -1)
 				warn("setsockopt TOS (ignored)");
 		}
 		return (0);
@@ -1667,7 +1666,7 @@ noport:
 	if (data_addr.sa.sa_family == AF_INET) {
 		on = IPTOS_THROUGHPUT;
 		if (setsockopt(data, IPPROTO_IP, IP_TOS, (char *)&on,
-			       sizeof(int)) == -1)
+		    sizeof(int)) == -1)
 			warn("setsockopt TOS (ignored)");
 	}
 	return (0);
