@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.33 2019/11/18 02:44:20 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.34 2019/11/18 15:25:59 beck Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -100,6 +100,8 @@ int tls13_derive_handshake_secrets(struct tls13_secrets *secrets,
     const uint8_t *ecdhe, size_t ecdhe_len, const struct tls13_secret *context);
 int tls13_derive_application_secrets(struct tls13_secrets *secrets,
     const struct tls13_secret *context);
+int tls13_update_client_traffic_secret(struct tls13_secrets *secrets);
+int tls13_update_server_traffic_secret(struct tls13_secrets *secrets);
 
 /*
  * Record Layer.
