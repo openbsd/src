@@ -21,11 +21,13 @@
 #include <stddef.h>
 #include <stdarg.h>
 
+#ifdef WITH_OPENSSL
 #include <openssl/opensslv.h>
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
+#endif /* WITH_OPENSSL */
 
 #include <fido.h>
 
@@ -267,6 +269,7 @@ find_device(const uint8_t *message, size_t message_len, const char *application,
 	return dev;
 }
 
+#ifdef WITH_OPENSSL
 /*
  * The key returned via fido_cred_pubkey_ptr() is in affine coordinates,
  * but the API expects a SEC1 octet string.
@@ -339,6 +342,7 @@ pack_public_key_ecdsa(fido_cred_t *cred, struct sk_enroll_response *response)
 	BN_clear_free(y);
 	return ret;
 }
+#endif /* WITH_OPENSSL */
 
 static int
 pack_public_key_ed25519(fido_cred_t *cred, struct sk_enroll_response *response)
@@ -375,8 +379,10 @@ static int
 pack_public_key(int alg, fido_cred_t *cred, struct sk_enroll_response *response)
 {
 	switch(alg) {
+#ifdef WITH_OPENSSL
 	case SK_ECDSA:
 		return pack_public_key_ecdsa(cred, response);
+#endif /* WITH_OPENSSL */
 	case SK_ED25519:
 		return pack_public_key_ed25519(cred, response);
 	default:
@@ -410,9 +416,11 @@ sk_enroll(int alg, const uint8_t *challenge, size_t challenge_len,
 	}
 	*enroll_response = NULL;
 	switch(alg) {
+#ifdef WITH_OPENSSL
 	case SK_ECDSA:
 		cose_alg = COSE_ES256;
 		break;
+#endif /* WITH_OPENSSL */
 	case SK_ED25519:
 		cose_alg = COSE_EDDSA;
 		break;
@@ -532,6 +540,7 @@ sk_enroll(int alg, const uint8_t *challenge, size_t challenge_len,
 	return ret;
 }
 
+#ifdef WITH_OPENSSL
 static int
 pack_sig_ecdsa(fido_assert_t *assert, struct sk_sign_response *response)
 {
@@ -568,6 +577,7 @@ pack_sig_ecdsa(fido_assert_t *assert, struct sk_sign_response *response)
 	}
 	return ret;
 }
+#endif /* WITH_OPENSSL */
 
 static int
 pack_sig_ed25519(fido_assert_t *assert, struct sk_sign_response *response)
@@ -601,8 +611,10 @@ static int
 pack_sig(int alg, fido_assert_t *assert, struct sk_sign_response *response)
 {
 	switch(alg) {
+#ifdef WITH_OPENSSL
 	case SK_ECDSA:
 		return pack_sig_ecdsa(assert, response);
+#endif /* WITH_OPENSSL */
 	case SK_ED25519:
 		return pack_sig_ed25519(assert, response);
 	default:
