@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.227 2019/11/12 21:02:42 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.228 2019/11/19 22:04:04 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 12 2019 $
+.Dd $Mdocdate: November 19 2019 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -929,7 +929,7 @@ The following phases are currently supported:
 .El
 .Pp
 At each phase,
-multiple criterias may be checked:
+multiple criteria may be checked:
 .Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
 .It fcrdns                        Ta forward-confirmed reverse DNS is valid
 .It rdns                          Ta session has a reverse DNS
@@ -940,11 +940,11 @@ multiple criterias may be checked:
 .It rcpt-to Pf < Ar table Ns >   Ta recipient address is in table
 .El
 .Pp
-All criterias from previous phases are available to subsequent phases,
+All criteria from previous phases are available to subsequent phases,
 so while the helo criteria is not available before the helo or ehlo phase,
 the fcrdns criteria is available in all phases.
 .Pp
-Criterias may all be negated by prefixing them with an exclamation mark:
+Criteria may all be negated by prefixing them with an exclamation mark:
 .Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
 .It ! fcrdns                     Ta forward-confirmed reverse DNS is invalid
 .El
