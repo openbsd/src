@@ -1,62 +1,62 @@
-.\" Copyright (c) 2019 Yubico AB. All rights reserved.
+.\" Copyright (c) 2018 Yubico AB. All rights reserved.
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: November 14 2019 $
-.Dt EDDSA_PK 3
+.Dd $Mdocdate: November 19 2019 $
+.Dt ES256_PK_NEW 3
 .Os
 .Sh NAME
-.Nm eddsa_pk_new ,
-.Nm eddsa_pk_free ,
-.Nm eddsa_pk_from_EVP_PKEY ,
-.Nm eddsa_pk_from_ptr ,
-.Nm eddsa_pk_to_EVP_PKEY
-.Nd FIDO 2 COSE EDDSA API
+.Nm es256_pk_new ,
+.Nm es256_pk_free ,
+.Nm es256_pk_from_EC_KEY ,
+.Nm es256_pk_from_ptr ,
+.Nm es256_pk_to_EVP_PKEY
+.Nd FIDO 2 COSE ES256 API
 .Sh SYNOPSIS
-.In openssl/evp.h
-.In fido/eddsa.h
-.Ft eddsa_pk_t *
-.Fn eddsa_pk_new "void"
+.In openssl/ec.h
+.In fido/es256.h
+.Ft es256_pk_t *
+.Fn es256_pk_new "void"
 .Ft void
-.Fn eddsa_pk_free "eddsa_pk_t **pkp"
+.Fn es256_pk_free "es256_pk_t **pkp"
 .Ft int
-.Fn eddsa_pk_from_EVP_PKEY "eddsa_pk_t *pk" "const EVP_PKEY *pkey"
+.Fn es256_pk_from_EC_KEY "es256_pk_t *pk" "const EC_KEY *ec"
 .Ft int
-.Fn eddsa_pk_from_ptr "eddsa_pk_t *pk" "const void *ptr" "size_t len"
+.Fn es256_pk_from_ptr "es256_pk_t *pk" "const void *ptr" "size_t len"
 .Ft EVP_PKEY *
-.Fn eddsa_pk_to_EVP_PKEY "const eddsa_pk_t *pk"
+.Fn es256_pk_to_EVP_PKEY "const es256_pk_t *pk"
 .Sh DESCRIPTION
-EDDSA is the name given in the CBOR Object Signing and Encryption
-(COSE) RFC to EDDSA over Curve25519 with SHA-512.
-The COSE EDDSA API of
+ES256 is the name given in the CBOR Object Signing and Encryption
+(COSE) RFC to ECDSA over P-256 with SHA-256.
+The COSE ES256 API of
 .Em libfido2
 is an auxiliary API with routines to convert between the different
-EDDSA public key types used in
+ECDSA public key types used in
 .Em libfido2
 and
 .Em OpenSSL .
 .Pp
 In
 .Em libfido2 ,
-EDDSA public keys are abstracted by the
-.Vt eddsa_pk_t
+ES256 public keys are abstracted by the
+.Vt es256_pk_t
 type.
 .Pp
 The
-.Fn eddsa_pk_new
+.Fn es256_pk_new
 function returns a pointer to a newly allocated, empty
-.Vt eddsa_pk_t
+.Vt es256_pk_t
 type.
 If memory cannot be allocated, NULL is returned.
 .Pp
 The
-.Fn eddsa_pk_free
+.Fn es256_pk_free
 function releases the memory backing
 .Fa *pkp ,
 where
 .Fa *pkp
 must have been previously allocated by
-.Fn eddsa_pk_new .
+.Fn es256_pk_new .
 On return,
 .Fa *pkp
 is set to NULL.
@@ -65,21 +65,21 @@ Either
 or
 .Fa *pkp
 may be NULL, in which case
-.Fn eddsa_pk_free
+.Fn es256_pk_free
 is a NOP.
 .Pp
 The
-.Fn eddsa_pk_from_EVP_PKEY
+.Fn es256_pk_from_EC_KEY
 function fills
 .Fa pk
 with the contents of
-.Fa pkey .
+.Fa ec .
 No references to
-.Fa pkey
+.Fa ec
 are kept.
 .Pp
 The
-.Fn eddsa_pk_from_ptr
+.Fn es256_pk_from_ptr
 function fills
 .Fa pk
 with the contents of
@@ -94,7 +94,7 @@ No references to
 are kept.
 .Pp
 The
-.Fn eddsa_pk_to_EVP_PKEY
+.Fn es256_pk_to_EVP_PKEY
 function converts
 .Fa pk
 to a newly allocated
@@ -102,13 +102,13 @@ to a newly allocated
 type with a reference count of 1.
 No internal references to the returned pointer are kept.
 If an error occurs,
-.Fn eddsa_pk_to_EVP_PKEY
+.Fn es256_pk_to_EVP_PKEY
 returns NULL.
 .Sh RETURN VALUES
 The
-.Fn eddsa_pk_from_EC_KEY
+.Fn es256_pk_from_EC_KEY
 and
-.Fn eddsa_pk_from_ptr
+.Fn es256_pk_from_ptr
 functions return
 .Dv FIDO_OK
 on success.
@@ -116,7 +116,7 @@ On error, a different error code defined in
 .In fido/err.h
 is returned.
 .Sh SEE ALSO
-.Xr es256_pk 3 ,
+.Xr eddsa_pk 3 ,
 .Xr fido_assert_verify 3 ,
 .Xr fido_cred_pubkey_ptr 3 ,
 .Xr rs256_pk 3
