@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.34 2019/11/11 05:51:05 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.35 2019/11/19 14:46:33 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -111,7 +111,6 @@ void			 get_rtaddrs(int, struct sockaddr *,
 			     struct sockaddr **);
 void			 rtmget_default(void);
 struct pending_query	*find_pending_query(uint64_t);
-void			 parse_dhcp_lease(int);
 void			 parse_trust_anchor(struct trust_anchor_head *, int);
 void			 send_trust_anchors(struct trust_anchor_head *);
 void			 write_trust_anchors(struct trust_anchor_head *, int);
@@ -445,12 +444,6 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			TAILQ_INIT(&ctl_conns);
 			control_listen();
 			break;
-		case IMSG_LEASEFD:
-			if ((fd = imsg.fd) == -1)
-				fatalx("%s: expected to receive imsg dhcp "
-				   "lease fd but didn't receive any", __func__);
-			parse_dhcp_lease(fd);
-			break;
 		case IMSG_TAFD:
 			if ((ta_fd = imsg.fd) != -1)
 				parse_trust_anchor(&trust_anchors, ta_fd);
@@ -639,7 +632,6 @@ frontend_startup(void)
 	event_add(&ev_route, NULL);
 
 	frontend_imsg_compose_main(IMSG_STARTUP_DONE, 0, NULL, 0);
-	rtmget_default();
 }
 
 void
@@ -1019,37 +1011,8 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 {
 	struct imsg_rdns_proposal	 rdns_proposal;
 	struct sockaddr_rtdns		*rtdns;
-	char				 buf[IF_NAMESIZE], *bufp;
 
 	switch (rtm->rtm_type) {
-	case RTM_GET:
-		if (rtm->rtm_errno != 0)
-			break;
-		if (!(rtm->rtm_flags & RTF_UP))
-			break;
-		if (!(rtm->rtm_addrs & RTA_DST))
-			break;
-		if (rti_info[RTAX_DST]->sa_family != AF_INET)
-			break;
-		if (((struct sockaddr_in *)rti_info[RTAX_DST])->sin_addr.
-		    s_addr != INADDR_ANY)
-			break;
-		if (!(rtm->rtm_addrs & RTA_NETMASK))
-			break;
-		if (rti_info[RTAX_NETMASK]->sa_family != AF_INET)
-			break;
-		if (((struct sockaddr_in *)rti_info[RTAX_NETMASK])->sin_addr.
-		    s_addr != INADDR_ANY)
-			break;
-
-		frontend_imsg_compose_main(IMSG_OPEN_DHCP_LEASE, 0,
-		    &rtm->rtm_index, sizeof(rtm->rtm_index));
-
-		bufp = if_indextoname(rtm->rtm_index, buf);
-		if (bufp)
-			log_debug("default route is on %s", buf);
-
-		break;
 	case RTM_IFINFO:
 		frontend_imsg_compose_resolver(IMSG_RECHECK_RESOLVERS, 0, NULL,
 		    0);
@@ -1089,138 +1052,6 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		break;
 	}
 }
-
-void
-rtmget_default(void)
-{
-	static int		 rtm_seq;
-	struct rt_msghdr	 rtm;
-	struct sockaddr_in	 sin;
-	struct iovec		 iov[5];
-	long			 pad = 0;
-	int			 iovcnt = 0, padlen;
-
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
-	sin.sin_len = sizeof(sin);
-
-	memset(&rtm, 0, sizeof(rtm));
-
-	rtm.rtm_version = RTM_VERSION;
-	rtm.rtm_type = RTM_GET;
-	rtm.rtm_msglen = sizeof(rtm);
-	rtm.rtm_tableid = 0; /* XXX imsg->rdomain; */
-	rtm.rtm_seq = ++rtm_seq;
-	rtm.rtm_addrs = RTA_DST | RTA_NETMASK;
-
-	iov[iovcnt].iov_base = &rtm;
-	iov[iovcnt++].iov_len = sizeof(rtm);
-
-	/* dst */
-	iov[iovcnt].iov_base = &sin;
-	iov[iovcnt++].iov_len = sizeof(sin);
-	rtm.rtm_msglen += sizeof(sin);
-	padlen = ROUNDUP(sizeof(sin)) - sizeof(sin);
-	if (padlen > 0) {
-		iov[iovcnt].iov_base = &pad;
-		iov[iovcnt++].iov_len = padlen;
-		rtm.rtm_msglen += padlen;
-	}
-
-	/* mask */
-	iov[iovcnt].iov_base = &sin;
-	iov[iovcnt++].iov_len = sizeof(sin);
-	rtm.rtm_msglen += sizeof(sin);
-	padlen = ROUNDUP(sizeof(sin)) - sizeof(sin);
-	if (padlen > 0) {
-		iov[iovcnt].iov_base = &pad;
-		iov[iovcnt++].iov_len = padlen;
-		rtm.rtm_msglen += padlen;
-	}
-
-	if (writev(routesock, iov, iovcnt) == -1)
-		log_warn("failed to send route message");
-}
-
-void
-parse_dhcp_lease(int fd)
-{
-	FILE	 *f;
-	char	 *line = NULL, *cur_ns = NULL, *ns = NULL;
-	size_t	  linesize = 0;
-	ssize_t	  linelen;
-	time_t	  epoch = 0, lease_time = 0, now;
-	char	**tok, *toks[4], *p;
-
-	if((f = fdopen(fd, "r")) == NULL) {
-		log_warn("cannot read dhcp lease");
-		close(fd);
-		return;
-	}
-
-	now = time(NULL);
-
-	while ((linelen = getline(&line, &linesize, f)) != -1) {
-		for (tok = toks; tok < &toks[3] && (*tok = strsep(&line, " \t"))
-		    != NULL;) {
-			if (**tok != '\0')
-				tok++;
-		}
-		if (toks[0] == NULL)
-			continue;
-		*tok = NULL;
-		if (strcmp(toks[0], "option") == 0) {
-			if (toks[1] == NULL || toks[2] == NULL)
-				continue;
-			if (strcmp(toks[1], "domain-name-servers") == 0) {
-				if((p = strchr(toks[2], ';')) != NULL) {
-					*p='\0';
-					free(cur_ns);
-					cur_ns = strdup(toks[2]);
-				}
-			}
-			if (strcmp(toks[1], "dhcp-lease-time") == 0) {
-				if((p = strchr(toks[2], ';')) != NULL) {
-					*p='\0';
-					lease_time = strtonum(toks[2], 0,
-					    INT64_MAX, NULL);
-				}
-			}
-		} else if (strcmp(toks[0], "epoch") == 0) {
-			if (toks[1] == NULL)
-				continue;
-			if((p = strchr(toks[1], ';')) != NULL) {
-				*p='\0';
-				epoch = strtonum(toks[1], 0,
-				    INT64_MAX, NULL);
-			}
-		}
-		else if (*toks[0] == '}') {
-			if (epoch + lease_time > now ) {
-				free(ns);
-				ns = cur_ns;
-				cur_ns = NULL;
-			} else {
-				/* expired lease */
-				free(cur_ns);
-				cur_ns = NULL;
-			}
-		}
-	}
-	free(line);
-	free(cur_ns);
-
-	if (ferror(f))
-		log_warn("getline");
-	fclose(f);
-
-	if (ns != NULL) {
-		log_debug("%s: ns: %s", __func__, ns);
-		frontend_imsg_compose_resolver(IMSG_FORWARDER, 0, ns,
-		    strlen(ns) + 1);
-	}
-}
-
 
 void
 add_new_ta(struct trust_anchor_head *tah, char *val)

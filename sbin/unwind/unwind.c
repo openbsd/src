@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.36 2019/11/14 08:34:17 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.37 2019/11/19 14:46:33 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -49,9 +49,6 @@
 #include "control.h"
 #include "captiveportal.h"
 
-#define	LEASE_DB_DIR		"/var/db/"
-#define	_PATH_LEASE_DB		"/var/db/dhclient.leases."
-
 #define	TRUST_ANCHOR_FILE	"/var/db/unwind.key"
 
 __dead void	usage(void);
@@ -71,7 +68,6 @@ static int	main_imsg_send_config(struct uw_conf *);
 
 int		main_reload(void);
 int		main_sendall(enum imsg_type, void *, uint16_t);
-void		open_dhcp_lease(int);
 void		open_ports(void);
 void		solicit_dns_proposals(void);
 void		connect_captive_portal_host(struct in_addr *);
@@ -294,8 +290,7 @@ main(int argc, char *argv[])
 	    AF_INET)) == -1)
 		fatal("route socket");
 
-	rtfilter = ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_PROPOSAL) |
-	    ROUTE_FILTER(RTM_GET);
+	rtfilter = ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_PROPOSAL);
 	if (setsockopt(frontend_routesock, AF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)
 		fatal("setsockopt(ROUTE_MSGFILTER)");
@@ -423,7 +418,6 @@ main_dispatch_frontend(int fd, short event, void *bula)
 	struct imsg	 imsg;
 	ssize_t		 n;
 	int		 shut = 0, verbose;
-	u_short		 rtm_index;
 
 	ibuf = &iev->ibuf;
 
@@ -463,13 +457,6 @@ main_dispatch_frontend(int fd, short event, void *bula)
 				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
-			break;
-		case IMSG_OPEN_DHCP_LEASE:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(rtm_index))
-				fatalx("%s: IMSG_OPEN_DHCP_LEASE wrong length: "
-				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
-			memcpy(&rtm_index, imsg.data, sizeof(rtm_index));
-			open_dhcp_lease(rtm_index);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
@@ -889,34 +876,6 @@ config_clear(struct uw_conf *conf)
 	merge_config(conf, xconf);
 
 	free(conf);
-}
-
-void
-open_dhcp_lease(int if_idx)
-{
-	static	char	 lease_filename[sizeof(_PATH_LEASE_DB) + IF_NAMESIZE] =
-			     _PATH_LEASE_DB;
-
-	int		 fd;
-	char		*bufp;
-
-	bufp = lease_filename + sizeof(_PATH_LEASE_DB) - 1;
-	bufp = if_indextoname(if_idx, bufp);
-
-	if (bufp == NULL) {
-		log_debug("cannot find interface %d", if_idx);
-		return;
-	}
-
-	log_debug("lease file name: %s", lease_filename);
-
-	if ((fd = open(lease_filename, O_RDONLY)) == -1) {
-		if (errno != ENOENT)
-			log_warn("cannot open lease file %s", lease_filename);
-		return;
-	}
-
-	main_imsg_compose_frontend_fd(IMSG_LEASEFD, 0, fd);
 }
 
 void

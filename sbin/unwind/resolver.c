@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.66 2019/11/15 06:08:21 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.67 2019/11/19 14:46:33 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -114,7 +114,6 @@ void			 resolve_done(struct uw_resolver *, void *, int, void *,
 void			 ub_resolve_done(void *, int, void *, int, int, char *,
 			     int);
 void			 asr_resolve_done(struct asr_result *, void *);
-void			 parse_dhcp_forwarders(char *);
 void			 new_recursor(void);
 void			 new_forwarders(int);
 void			 new_asr_forwarders(void);
@@ -167,7 +166,6 @@ struct uw_conf			*resolver_conf;
 struct imsgev			*iev_frontend;
 struct imsgev			*iev_captiveportal;
 struct imsgev			*iev_main;
-struct uw_forwarder_head	 dhcp_forwarder_list;
 struct uw_forwarder_head	 autoconf_forwarder_list;
 struct uw_resolver		*resolvers[UW_RES_NONE];
 struct timeval			 captive_portal_check_tv =
@@ -354,7 +352,6 @@ resolver(int debug, int verbose)
 
 	new_recursor();
 
-	TAILQ_INIT(&dhcp_forwarder_list);
 	TAILQ_INIT(&autoconf_forwarder_list);
 	TAILQ_INIT(&trust_anchors);
 	TAILQ_INIT(&new_trust_anchors);
@@ -486,11 +483,6 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 
 			resolve(res, query_imsg->qname, query_imsg->t,
 			    query_imsg->c, query_imsg, resolve_done);
-			break;
-		case IMSG_FORWARDER:
-			/* make sure this is a string */
-			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
-			parse_dhcp_forwarders(imsg.data);
 			break;
 		case IMSG_CTL_STATUS:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(type))
@@ -896,47 +888,6 @@ servfail:
 }
 
 void
-parse_dhcp_forwarders(char *forwarders)
-{
-	struct uw_forwarder_head	 new_forwarder_list;
-	struct uw_forwarder		*uw_forwarder;
-	char				*ns;
-
-	TAILQ_INIT(&new_forwarder_list);
-
-	if (forwarders != NULL) {
-		while((ns = strsep(&forwarders, ",")) != NULL) {
-			log_debug("%s: %s", __func__, ns);
-			if ((uw_forwarder = calloc(1, sizeof(struct
-			    uw_forwarder))) == NULL)
-				fatal(NULL);
-			if (strlcpy(uw_forwarder->name, ns,
-			    sizeof(uw_forwarder->name)) >=
-			    sizeof(uw_forwarder->name))
-				fatalx("strlcpy");
-			TAILQ_INSERT_TAIL(&new_forwarder_list, uw_forwarder,
-			    entry);
-		}
-	}
-
-	if (check_forwarders_changed(&new_forwarder_list,
-	    &dhcp_forwarder_list)) {
-		replace_forwarders(&new_forwarder_list, &dhcp_forwarder_list);
-		new_forwarders(0);
-		new_asr_forwarders();
-		if (resolver_conf->captive_portal_auto)
-			check_captive_portal(1);
-	} else {
-		while ((uw_forwarder =
-		    TAILQ_FIRST(&new_forwarder_list)) != NULL) {
-			TAILQ_REMOVE(&new_forwarder_list, uw_forwarder, entry);
-			free(uw_forwarder);
-		}
-		log_debug("%s: forwarders didn't change", __func__);
-	}
-}
-
-void
 new_recursor(void)
 {
 	free_resolver(resolvers[UW_RES_RECURSOR]);
@@ -955,8 +906,7 @@ new_forwarders(int oppdot)
 	free_resolver(resolvers[UW_RES_DHCP]);
 	resolvers[UW_RES_DHCP] = NULL;
 
-	if (TAILQ_EMPTY(&dhcp_forwarder_list) &&
-	    TAILQ_EMPTY(&autoconf_forwarder_list))
+	if (TAILQ_EMPTY(&autoconf_forwarder_list))
 		return;
 
 	if (TAILQ_EMPTY(&trust_anchors))
@@ -974,8 +924,7 @@ new_asr_forwarders(void)
 	free_resolver(resolvers[UW_RES_ASR]);
 	resolvers[UW_RES_ASR] = NULL;
 
-	if (TAILQ_EMPTY(&dhcp_forwarder_list) &&
-	    TAILQ_EMPTY(&autoconf_forwarder_list))
+	if (TAILQ_EMPTY(&autoconf_forwarder_list))
 		return;
 
 	log_debug("%s: create_resolver", __func__);
@@ -1044,21 +993,9 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 
 	switch (type) {
 	case UW_RES_ASR:
-		if (TAILQ_EMPTY(&dhcp_forwarder_list) &&
-		    TAILQ_EMPTY(&autoconf_forwarder_list)) {
+		if (TAILQ_EMPTY(&autoconf_forwarder_list)) {
 			free(res);
 			return (NULL);
-		}
-		TAILQ_FOREACH(uw_forwarder, &dhcp_forwarder_list, entry) {
-			tmp = resolv_conf;
-			if (asprintf(&resolv_conf, "%snameserver %s\n", tmp ==
-			    NULL ? "" : tmp, uw_forwarder->name) == -1) {
-				free(tmp);
-				free(res);
-				log_warnx("could not create asr context");
-				return (NULL);
-			}
-			free(tmp);
 		}
 		TAILQ_FOREACH(uw_forwarder, &autoconf_forwarder_list, entry) {
 			tmp = resolv_conf;
@@ -1142,15 +1079,14 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 	case UW_RES_DHCP:
 		res->oppdot = oppdot;
 		if (oppdot) {
-			set_forwarders_oppdot(res, &dhcp_forwarder_list, 853);
 			set_forwarders_oppdot(res, &autoconf_forwarder_list,
 			    853);
 			ub_ctx_set_option(res->ctx, "tls-cert-bundle:",
 			    tls_default_ca_cert_file());
 			ub_ctx_set_tls(res->ctx, 1);
 		} else {
-			set_forwarders_oppdot(res, &dhcp_forwarder_list, 53);
-			set_forwarders_oppdot(res, &autoconf_forwarder_list, 53);
+			set_forwarders_oppdot(res, &autoconf_forwarder_list,
+			    53);
 		}
 		break;
 	case UW_RES_FORWARDER:
