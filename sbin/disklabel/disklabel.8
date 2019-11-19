@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.136 2019/08/21 11:08:58 otto Exp $
+.\"	$OpenBSD: disklabel.8,v 1.137 2019/11/19 06:20:37 otto Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: August 21 2019 $
+.Dd $Mdocdate: November 19 2019 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -529,12 +529,12 @@ and may vary from architecture to architecture.
 swap		10% of disk.   80M \(en 2x max physical memory
 /tmp		 8% of disk.  120M \(en 4G
 /var		13% of disk.   80M \(en 2x size of crash dump
-/usr		 5% of disk. 1300M \(en 2G
+/usr		10% of disk. 1300M \(en 6G
 /usr/X11R6	 3% of disk.  384M \(en 1G
 /usr/local	15% of disk.    1G \(en 20G
 /usr/src	 2% of disk. 1300M \(en 2G
 /usr/obj	 4% of disk.    5G \(en 6G
-/home		35% of disk.    1G \(en 300G
+/home		30% of disk.    1G \(en 300G
 .Ed
 .Pp
 .Sy Disks > 2.5 Gigabytes
