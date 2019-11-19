@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.169 2019/11/06 11:34:37 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.170 2019/11/19 14:35:08 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -1006,4 +1006,73 @@ priv_revoke_proposal(char *name, int ioctlfd, struct imsg_revoke *imsg,
 	*resolv_conf = NULL;
 
 	delete_address(name, ioctlfd, proposal->ifa);
+}
+
+/*
+ * [priv_]tell_unwind sends out inforation unwind may be intereted in.
+ */
+void
+tell_unwind(struct unwind_info *unwind_info, int rtm_flags, int ifi_flags)
+{
+	struct	imsg_tell_unwind	 imsg;
+	int				 rslt;
+
+	if (unwind_info == NULL ||
+	    (ifi_flags & IFI_AUTOCONF) == 0 ||
+	    (ifi_flags & IFI_IN_CHARGE) == 0)
+		return;
+
+	memset(&imsg, 0, sizeof(imsg));
+
+	imsg.rtm_flags = rtm_flags;
+	memcpy(&imsg.unwind_info, unwind_info, sizeof(imsg.unwind_info));
+
+	rslt = imsg_compose(unpriv_ibuf, IMSG_TELL_UNWIND, 0, 0, -1, &imsg,
+	    sizeof(imsg));
+	if (rslt == -1)
+		log_warn("%s: imsg_compose(IMSG_TELL_UNWIND)", log_procname);
+}
+
+void
+priv_tell_unwind(int index, int routefd, int rdomain, struct imsg_tell_unwind *imsg)
+{
+	struct rt_msghdr		 rtm;
+	struct sockaddr_rtdns		 rtdns;
+	struct iovec			 iov[3];
+	long				 pad = 0;
+	int				 iovcnt = 0, padlen;
+
+	memset(&rtm, 0, sizeof(rtm));
+
+	rtm.rtm_version = RTM_VERSION;
+	rtm.rtm_type = RTM_PROPOSAL;
+	rtm.rtm_msglen = sizeof(rtm);
+	rtm.rtm_tableid = rdomain;
+	rtm.rtm_index = index;
+	rtm.rtm_seq = arc4random();
+	rtm.rtm_priority = RTP_PROPOSAL_DHCLIENT;
+	rtm.rtm_addrs = RTA_DNS;
+	rtm.rtm_flags = imsg->rtm_flags;
+
+	iov[iovcnt].iov_base = &rtm;
+	iov[iovcnt++].iov_len = sizeof(rtm);
+
+	memset(&rtdns, 0, sizeof(rtdns));
+	rtdns.sr_family = AF_INET;
+	rtdns.sr_len = 2 + imsg->unwind_info.count * sizeof(in_addr_t);
+	memcpy(rtdns.sr_dns, imsg->unwind_info.ns, imsg->unwind_info.count *
+	    sizeof(in_addr_t));
+
+	iov[iovcnt].iov_base = &rtdns;
+	iov[iovcnt++].iov_len = sizeof(rtdns);
+	rtm.rtm_msglen += sizeof(rtdns);
+	padlen = ROUNDUP(sizeof(rtdns)) - sizeof(rtdns);
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+		rtm.rtm_msglen += padlen;
+	}
+
+	if (writev(routefd, iov, iovcnt) == -1)
+		log_warn("failed to tell unwind");
 }

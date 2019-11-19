@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.59 2019/02/12 16:50:44 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.60 2019/11/19 14:35:08 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -20,7 +20,8 @@ enum imsg_code {
 	IMSG_NONE,
 	IMSG_REVOKE,
 	IMSG_WRITE_RESOLV_CONF,
-	IMSG_PROPOSE
+	IMSG_PROPOSE,
+	IMSG_TELL_UNWIND
 };
 
 #define	RTLEN	128
@@ -39,6 +40,11 @@ struct proposal {
 	int		inits;
 };
 
+struct unwind_info {
+	in_addr_t	ns[MAXNS];
+	unsigned int	count;
+};
+
 struct imsg_propose {
 	struct proposal		proposal;
 };
@@ -47,9 +53,16 @@ struct imsg_revoke {
 	struct proposal		proposal;
 };
 
+struct imsg_tell_unwind {
+	struct unwind_info	unwind_info;
+	uint8_t			rtm_flags;
+};
+
 void	dispatch_imsg(char *, int, int, int, struct imsgbuf *);
 
 void	priv_write_resolv_conf(int, int, int, char *, int *);
 void	priv_propose(char *, int, struct imsg_propose *, char **, int, int, int);
 
 void	priv_revoke_proposal(char *, int, struct imsg_revoke *, char **);
+
+void	priv_tell_unwind(int, int, int, struct imsg_tell_unwind *);

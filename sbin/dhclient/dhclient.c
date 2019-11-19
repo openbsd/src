@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.652 2019/11/06 12:14:19 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.653 2019/11/19 14:35:07 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -154,6 +154,7 @@ void write_lease_db(struct client_lease_tq *);
 void write_option_db(struct client_lease *, struct client_lease *);
 char *lease_as_string(char *, struct client_lease *);
 struct proposal *lease_as_proposal(struct client_lease *);
+struct unwind_info *lease_as_unwind_info(struct client_lease *);
 void append_statement(char *, size_t, char *, char *);
 time_t lease_expiry(struct client_lease *);
 time_t lease_renewal(struct client_lease *);
@@ -348,6 +349,11 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 
 	switch (rtm->rtm_type) {
 	case RTM_PROPOSAL:
+		if (rtm->rtm_priority == RTP_PROPOSAL_SOLICIT) {
+			if (quit == 0 && ifi->active != NULL)
+				tell_unwind(ifi->unwind_info, RTF_UP, ifi->flags);
+			return;
+		}
 		if (rtm->rtm_index != ifi->index ||
 		    rtm->rtm_priority != RTP_PROPOSAL_DHCLIENT)
 			return;
@@ -379,10 +385,14 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 		if ((rtm->rtm_flags & RTF_UP) == 0)
 			fatalx("down");
 
- 		if ((ifm->ifm_xflags & IFXF_AUTOCONF4) == 0)
- 			ifi->flags &= ~IFI_AUTOCONF;
-		else if ((ifi->flags & IFI_AUTOCONF) == 0) {
-			/* Get new lease when AUTOCONF4 gets set. */
+ 		if ((ifm->ifm_xflags & IFXF_AUTOCONF4) == 0 &&
+		    (ifi->flags & IFI_AUTOCONF) != 0) {
+			/* Tell unwind when IFI_AUTOCONF is cleared. */
+			tell_unwind(ifi->unwind_info, 0, ifi->flags);
+			ifi->flags &= ~IFI_AUTOCONF;
+		} else if ((ifm->ifm_xflags & IFXF_AUTOCONF4) != 0 &&
+		    (ifi->flags & IFI_AUTOCONF) == 0) {
+			/* Get new lease when IFI_AUTOCONF is set. */
 			ifi->flags |= IFI_AUTOCONF;
 			quit = RESTART;
 			break;
@@ -926,6 +936,8 @@ dhcpnak(struct interface_info *ifi, const char *src)
 	ifi->active = NULL;
 	free(ifi->configured);
 	ifi->configured = NULL;
+	free(ifi->unwind_info);
+	ifi->unwind_info = NULL;
 
 	/* Stop sending DHCPREQUEST packets. */
 	cancel_timeout(ifi);
@@ -939,6 +951,7 @@ bind_lease(struct interface_info *ifi)
 {
 	struct client_lease	*lease, *pl, *ll;
 	struct proposal		*effective_proposal = NULL;
+	struct unwind_info	*unwind_info;
 	char			*msg = NULL;
 	time_t			 cur_time, renewal;
 	int			 rslt, seen;
@@ -967,6 +980,27 @@ bind_lease(struct interface_info *ifi)
 	/* Replace the old active lease with the accepted offer. */
 	ifi->active = ifi->offer;
 	ifi->offer = NULL;
+
+	/*
+	 * Supply unwind with updated info.
+	 */
+	unwind_info = lease_as_unwind_info(ifi->active);
+	if (ifi->unwind_info == NULL && unwind_info != NULL) {
+		ifi->unwind_info = unwind_info;
+		tell_unwind(ifi->unwind_info, RTF_UP, ifi->flags);
+	} else if (ifi->unwind_info != NULL && unwind_info == NULL) {
+		tell_unwind(ifi->unwind_info, 0, ifi->flags);
+		free(ifi->unwind_info);
+		ifi->unwind_info = NULL;
+	} else if (ifi->unwind_info != NULL && unwind_info != NULL) {
+		if (memcmp(ifi->unwind_info, unwind_info,
+		    sizeof(*ifi->unwind_info)) != 0) {
+			tell_unwind(ifi->unwind_info, 0, ifi->flags);
+			free(ifi->unwind_info);
+			ifi->unwind_info = unwind_info;
+			tell_unwind(ifi->unwind_info, RTF_UP, ifi->flags);
+		}
+	}
 
 	effective_proposal = lease_as_proposal(lease);
 	if (ifi->configured != NULL) {
@@ -1880,6 +1914,37 @@ append_statement(char *string, size_t sz, char *s1, char *s2)
 	strlcat(string, ";\n", sz);
 }
 
+struct unwind_info *
+lease_as_unwind_info(struct client_lease *lease)
+{
+	struct unwind_info	*unwind_info;
+	struct option_data	*opt;
+	unsigned int		 servers;
+
+	unwind_info = calloc(1, sizeof(*unwind_info));
+	if (unwind_info == NULL)
+		fatal("unwind_info");
+
+	opt = &lease->options[DHO_DOMAIN_NAME_SERVERS];
+	if (opt->len != 0) {
+		servers = opt->len / sizeof(in_addr_t);
+		if (servers > MAXNS)
+			servers = MAXNS;
+		if (servers > 0) {
+			unwind_info->count = servers;
+			memcpy(unwind_info->ns, opt->data, servers *
+			    sizeof(in_addr_t));
+		}
+	}
+
+	if (unwind_info->count == 0) {
+		free(unwind_info);
+		unwind_info = NULL;
+	}
+
+	return unwind_info;
+}
+
 struct proposal *
 lease_as_proposal(struct client_lease *lease)
 {
@@ -2697,6 +2762,8 @@ release_lease(struct interface_info *ifi)
 	make_release(ifi, ifi->active);
 	send_release(ifi);
 
+	tell_unwind(ifi->unwind_info, 0, ifi->flags);
+
 	revoke_proposal(ifi->configured);
 	imsg_flush(unpriv_ibuf);
 
@@ -2713,6 +2780,8 @@ release_lease(struct interface_info *ifi)
 	ifi->active = NULL;
 	free(ifi->configured);
 	ifi->configured = NULL;
+	free(ifi->unwind_info);
+	ifi->unwind_info = NULL;
 
 	log_warnx("%s: %s RELEASED to %s", log_procname, ifabuf, destbuf);
 }
