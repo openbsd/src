@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.h,v 1.4 2019/11/11 05:51:06 florian Exp $	*/
+/*	$OpenBSD: frontend.h,v 1.5 2019/11/19 14:47:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -28,6 +28,7 @@ TAILQ_HEAD(trust_anchor_head, trust_anchor);
 
 struct imsg_rdns_proposal {
 	uint32_t		 if_index;
+	int			 src;
 	struct sockaddr_rtdns	 rtdns;
 };
 

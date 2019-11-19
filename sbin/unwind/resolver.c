@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.67 2019/11/19 14:46:33 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.68 2019/11/19 14:47:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -159,6 +159,7 @@ void			 trust_anchor_resolve_done(struct uw_resolver *, void *,
 			     int, void *, int, int, char *);
 void			 add_autoconf_forwarders(struct imsg_rdns_proposal *);
 void			 rem_autoconf_forwarders(struct imsg_rdns_proposal *);
+int			 replace_dhcp_forwarders(struct imsg_rdns_proposal *);
 struct uw_forwarder	*find_forwarder(struct uw_forwarder_head *,
     			     const char *);
 
@@ -1890,56 +1891,68 @@ add_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 	char			 ntopbuf[INET6_ADDRSTRLEN], *src;
 	const char		*ns;
 
-	af = rdns_proposal->rtdns.sr_family;
-	src = rdns_proposal->rtdns.sr_dns;
+	if (rdns_proposal->src == RTP_PROPOSAL_DHCLIENT)
+		/* dhclient does not do remove / add */
+		changed = replace_dhcp_forwarders(rdns_proposal);
+	else {
+		af = rdns_proposal->rtdns.sr_family;
+		src = rdns_proposal->rtdns.sr_dns;
 
-	switch (af) {
-	case AF_INET:
-		rdns_count = (rdns_proposal->rtdns.sr_len -
-		    offsetof(struct sockaddr_rtdns, sr_dns)) /
-		    sizeof(struct in_addr);
-		break;
-	case AF_INET6:
-		rdns_count = (rdns_proposal->rtdns.sr_len -
-		    offsetof(struct sockaddr_rtdns, sr_dns)) /
-		    sizeof(struct in6_addr);
-		break;
-	default:
-		log_warnx("%s: unsupported address family: %d", __func__, af);
-		return;
-	}
-
-	for (i = 0; i < rdns_count; i++) {
 		switch (af) {
 		case AF_INET:
-			if (((struct in_addr *)src)->s_addr == INADDR_ANY)
-				continue;
-			ns = inet_ntop(af, (struct in_addr *)src, ntopbuf,
-			    INET6_ADDRSTRLEN);
-			src += sizeof(struct in_addr);
+			rdns_count = (rdns_proposal->rtdns.sr_len -
+			    offsetof(struct sockaddr_rtdns, sr_dns)) /
+			    sizeof(struct in_addr);
 			break;
 		case AF_INET6:
-			if (IN6_IS_ADDR_LOOPBACK((struct in6_addr *)src))
-				continue;
-			ns = inet_ntop(af, (struct in6_addr *)src, ntopbuf,
-			    INET6_ADDRSTRLEN);
-			src += sizeof(struct in6_addr);
+			rdns_count = (rdns_proposal->rtdns.sr_len -
+			    offsetof(struct sockaddr_rtdns, sr_dns)) /
+			    sizeof(struct in6_addr);
+			break;
+		default:
+			log_warnx("%s: unsupported address family: %d",
+			    __func__, af);
+			return;
 		}
 
-		log_debug("%s: %s", __func__, ns);
-		if (find_forwarder(&autoconf_forwarder_list, ns) == NULL) {
-			if ((uw_forwarder = calloc(1, sizeof(struct
-			    uw_forwarder))) == NULL)
-				fatal(NULL);
-			if (strlcpy(uw_forwarder->name, ns,
-			    sizeof(uw_forwarder->name)) >=
-			    sizeof(uw_forwarder->name))
-				fatalx("strlcpy");
-			TAILQ_INSERT_TAIL(&autoconf_forwarder_list,
-			    uw_forwarder, entry);
-			changed = 1;
+		for (i = 0; i < rdns_count; i++) {
+			switch (af) {
+			case AF_INET:
+				if (((struct in_addr *)src)->s_addr ==
+				    INADDR_LOOPBACK)
+					continue;
+				ns = inet_ntop(af, (struct in_addr *)src,
+				    ntopbuf,
+				    INET6_ADDRSTRLEN);
+				src += sizeof(struct in_addr);
+				break;
+			case AF_INET6:
+				if (IN6_IS_ADDR_LOOPBACK((struct in6_addr
+				    *)src))
+					continue;
+				ns = inet_ntop(af, (struct in6_addr *)src,
+				    ntopbuf, INET6_ADDRSTRLEN);
+				src += sizeof(struct in6_addr);
+			}
+
+			log_debug("%s: %s", __func__, ns);
+			if (find_forwarder(&autoconf_forwarder_list, ns) ==
+			    NULL) {
+				if ((uw_forwarder = calloc(1, sizeof(struct
+				    uw_forwarder))) == NULL)
+					fatal(NULL);
+				if (strlcpy(uw_forwarder->name, ns,
+				    sizeof(uw_forwarder->name)) >=
+				    sizeof(uw_forwarder->name))
+					fatalx("strlcpy");
+				uw_forwarder->src = rdns_proposal->src;
+				TAILQ_INSERT_TAIL(&autoconf_forwarder_list,
+				    uw_forwarder, entry);
+				changed = 1;
+			}
 		}
 	}
+
 	if (changed) {
 		new_forwarders(0);
 		new_asr_forwarders();
@@ -2008,6 +2021,70 @@ rem_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 		log_debug("%s: forwarders changed", __func__);
 	} else
 		log_debug("%s: forwarders didn't change", __func__);
+}
+
+int
+replace_dhcp_forwarders(struct imsg_rdns_proposal *rdns_proposal)
+{
+	struct uw_forwarder_head	 new_forwarder_list;
+	struct uw_forwarder		*uw_forwarder, *tmp;
+	int				 i, rdns_count, changed = 0;
+	char				 ntopbuf[INET6_ADDRSTRLEN], *src;
+	const char			*ns;
+
+	if (rdns_proposal->rtdns.sr_family != AF_INET)
+		return changed;
+
+	TAILQ_INIT(&new_forwarder_list);
+	rdns_count = (rdns_proposal->rtdns.sr_len - offsetof(struct
+	    sockaddr_rtdns, sr_dns)) / sizeof(struct in_addr);
+	src = rdns_proposal->rtdns.sr_dns;
+
+	for (i = 0; i < rdns_count; i++) {
+		if (((struct in_addr *)src)->s_addr == INADDR_ANY)
+			continue;
+		ns = inet_ntop(AF_INET, (struct in_addr *)src, ntopbuf,
+		    INET6_ADDRSTRLEN);
+		log_debug("%s: %s", __func__, ns);
+		src += sizeof(struct in_addr);
+		if ((uw_forwarder = calloc(1, sizeof(struct uw_forwarder))) ==
+		    NULL)
+			fatal(NULL);
+		if (strlcpy(uw_forwarder->name, ns, sizeof(uw_forwarder->name))
+		    >= sizeof(uw_forwarder->name))
+			fatalx("strlcpy");
+		uw_forwarder->src = rdns_proposal->src;
+		TAILQ_INSERT_TAIL(&new_forwarder_list, uw_forwarder, entry);
+	}
+
+	TAILQ_FOREACH(tmp, &autoconf_forwarder_list, entry)
+	    if (tmp->src != RTP_PROPOSAL_DHCLIENT) {
+		if ((uw_forwarder = calloc(1, sizeof(struct uw_forwarder))) ==
+		    NULL)
+			fatal(NULL);
+		if (strlcpy(uw_forwarder->name, tmp->name,
+		    sizeof(uw_forwarder->name)) >= sizeof(uw_forwarder->name))
+			fatalx("strlcpy");
+		uw_forwarder->src = tmp->src;
+		TAILQ_INSERT_TAIL(&new_forwarder_list, uw_forwarder, entry);
+	    }
+
+	changed = check_forwarders_changed(&new_forwarder_list,
+	    &autoconf_forwarder_list);
+
+	log_debug("%s: changed: %d", __func__, changed);
+	if (changed)
+		replace_forwarders(&new_forwarder_list,
+		    &autoconf_forwarder_list);
+	else {
+		while ((tmp = TAILQ_FIRST(&new_forwarder_list)) != NULL) {
+			TAILQ_REMOVE(&new_forwarder_list, tmp, entry);
+			free(tmp);
+		}
+	}
+
+	return changed;
+
 }
 
 struct uw_forwarder *

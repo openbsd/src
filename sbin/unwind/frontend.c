@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.35 2019/11/19 14:46:33 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.36 2019/11/19 14:47:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1040,6 +1040,7 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 			return;
 		}
 		rdns_proposal.if_index = rtm->rtm_index;
+		rdns_proposal.src = rtm->rtm_priority;
 		memcpy(&rdns_proposal.rtdns, rtdns, sizeof(rdns_proposal.rtdns));
 		if (rtm->rtm_flags & RTF_UP)
 			frontend_imsg_compose_resolver(IMSG_ADD_DNS, 0,
