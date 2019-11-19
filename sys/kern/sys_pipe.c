@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.98 2019/11/11 16:45:46 anton Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.99 2019/11/19 19:19:28 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -105,6 +105,8 @@ struct pipe *pipe_create(void);
 void	pipe_destroy(struct pipe *);
 int	pipe_buffer_realloc(struct pipe *, u_int);
 void	pipe_buffer_free(struct pipe *);
+
+int	pipe_sleep(struct pipe *, const char *);
 
 /*
  * The pipe system call for the DTYPE_PIPE type of pipes
@@ -287,6 +289,30 @@ pipeunlock(struct pipe *cpipe)
 	rw_exit(&cpipe->pipe_lock);
 }
 
+/*
+ * Unlock the given pipe and go to sleep. Returns 0 on success and the
+ * pipe is relocked. Otherwise if a signal was caught, non-zero is returned and
+ * the pipe is not locked.
+ *
+ * Any caller must obtain a reference to the pipe by incrementing `pipe_busy'
+ * before calling this function in order ensure that the same pipe is not
+ * destroyed while sleeping.
+ */
+int
+pipe_sleep(struct pipe *cpipe, const char *wmesg)
+{
+	int error;
+
+	rw_assert_wrlock(&cpipe->pipe_lock);
+
+	error = rwsleep_nsec(cpipe, &cpipe->pipe_lock,
+	    PRIBIO | PCATCH | PNORELOCK, wmesg, INFSLP);
+	if (error)
+		return (error);
+
+	return (pipelock(cpipe));
+}
+
 void
 pipeselwakeup(struct pipe *cpipe)
 {
@@ -368,23 +394,18 @@ pipe_read(struct file *fp, struct uio *uio, int fflags)
 				break;
 
 			/*
-			 * Unlock the pipe buffer for our remaining processing.
-			 * We will either break out with an error or we will
-			 * sleep and relock to loop.
-			 */
-			pipeunlock(rpipe);
-
-			/*
-			 * Handle non-blocking mode operation or
-			 * wait for more data.
+			 * Handle non-blocking mode operation.
 			 */
 			if (fp->f_flag & FNONBLOCK) {
 				error = EAGAIN;
-			} else {
-				rpipe->pipe_state |= PIPE_WANTR;
-				if ((error = tsleep(rpipe, PRIBIO|PCATCH, "piperd", 0)) == 0)
-					error = pipelock(rpipe);
+				break;
 			}
+
+			/*
+			 * Wait for more data.
+			 */
+			rpipe->pipe_state |= PIPE_WANTR;
+			error = pipe_sleep(rpipe, "piperd");
 			if (error)
 				goto unlocked_error;
 		}
@@ -573,13 +594,8 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 			 */
 			pipeselwakeup(wpipe);
 
-			pipeunlock(wpipe);
 			wpipe->pipe_state |= PIPE_WANTW;
-			error = tsleep(wpipe, (PRIBIO + 1)|PCATCH,
-			    "pipewr", 0);
-			if (error)
-				goto unlocked_error;
-			error = pipelock(wpipe);
+			error = pipe_sleep(wpipe, "pipewr");
 			if (error)
 				goto unlocked_error;
 
