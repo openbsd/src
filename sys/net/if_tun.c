@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.191 2019/10/16 10:20:48 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.192 2019/11/19 00:06:26 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -158,8 +158,10 @@ struct filterops tunread_filtops =
 struct filterops tunwrite_filtops =
 	{ 1, NULL, filt_tunwdetach, filt_tunwrite};
 
-LIST_HEAD(, tun_softc) tun_softc_list;
-LIST_HEAD(, tun_softc) tap_softc_list;
+LIST_HEAD(tun_list, tun_softc);
+
+struct tun_list tun_softc_list = LIST_HEAD_INITIALIZER(tun_softc_list);
+struct tun_list tap_softc_list = LIST_HEAD_INITIALIZER(tap_softc_list);
 
 struct if_clone tun_cloner =
     IF_CLONE_INITIALIZER("tun", tun_clone_create, tun_clone_destroy);
@@ -170,8 +172,6 @@ struct if_clone tap_cloner =
 void
 tunattach(int n)
 {
-	LIST_INIT(&tun_softc_list);
-	LIST_INIT(&tap_softc_list);
 	if_clone_attach(&tun_cloner);
 	if_clone_attach(&tap_cloner);
 #ifdef PIPEX
@@ -189,6 +189,35 @@ int
 tap_clone_create(struct if_clone *ifc, int unit)
 {
 	return (tun_create(ifc, unit, TUN_LAYER2));
+}
+
+struct tun_softc *
+tun_list_lookup(struct tun_list *tl, int unit)
+{
+	struct tun_softc *tp;
+
+	KERNEL_ASSERT_LOCKED();
+
+	LIST_FOREACH(tp, tl, entry) {
+		if (tp->tun_unit == unit)
+			return (tp);
+	}
+
+	return (NULL);
+}
+
+int
+tun_list_insert(struct tun_list *tl, struct tun_softc *tp)
+{
+	KERNEL_ASSERT_LOCKED();
+
+	/* check for a race */
+	if (tun_list_lookup(tl, tp->tun_unit) != NULL)
+		return (EEXIST);
+
+	LIST_INSERT_HEAD(tl, tp, entry);
+
+	return (0);
 }
 
 int
@@ -217,6 +246,9 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 
 	if ((flags & TUN_LAYER2) == 0) {
+		if (tun_list_insert(&tun_softc_list, tp) != 0)
+			goto exists;
+
 		tp->tun_flags &= ~TUN_LAYER2;
 		ifp->if_mtu = ETHERMTU;
 		ifp->if_flags = (IFF_POINTOPOINT|IFF_MULTICAST);
@@ -229,8 +261,10 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 #if NBPFILTER > 0
 		bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
-		LIST_INSERT_HEAD(&tun_softc_list, tp, entry);
 	} else {
+		if (tun_list_insert(&tap_softc_list, tp) != 0)
+			goto exists;
+
 		tp->tun_flags |= TUN_LAYER2;
 		ether_fakeaddr(ifp);
 		ifp->if_flags =
@@ -239,8 +273,6 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 
 		if_attach(ifp);
 		ether_ifattach(ifp);
-
-		LIST_INSERT_HEAD(&tap_softc_list, tp, entry);
 	}
 
 #ifdef PIPEX
@@ -249,6 +281,9 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 #endif
 
 	return (0);
+exists:
+	free(tp, M_DEVBUF, sizeof(*tp));
+	return (EEXIST);
 }
 
 int
@@ -268,13 +303,12 @@ tun_clone_destroy(struct ifnet *ifp)
 	klist_invalidate(&tp->tun_wsel.si_note);
 	splx(s);
 
-	LIST_REMOVE(tp, entry);
-
 	if (tp->tun_flags & TUN_LAYER2)
 		ether_ifdetach(ifp);
 
 	if_detach(ifp);
 
+	LIST_REMOVE(tp, entry);
 	free(tp, M_DEVBUF, sizeof *tp);
 	return (0);
 }
@@ -282,23 +316,13 @@ tun_clone_destroy(struct ifnet *ifp)
 static inline struct tun_softc *
 tun_lookup(int unit)
 {
-	struct tun_softc *tp;
-
-	LIST_FOREACH(tp, &tun_softc_list, entry)
-		if (tp->tun_unit == unit)
-			return (tp);
-	return (NULL);
+	return (tun_list_lookup(&tun_softc_list, unit));
 }
 
 static inline struct tun_softc *
 tap_lookup(int unit)
 {
-	struct tun_softc *tp;
-
-	LIST_FOREACH(tp, &tap_softc_list, entry)
-		if (tp->tun_unit == unit)
-			return (tp);
-	return (NULL);
+	return (tun_list_lookup(&tap_softc_list, unit));
 }
 
 /*
@@ -317,12 +341,18 @@ tunopen(dev_t dev, int flag, int mode, struct proc *p)
 
 		snprintf(xname, sizeof(xname), "%s%d", "tun", minor(dev));
 		error = if_clone_create(xname, rdomain);
-		if (error != 0)
+		switch (error) {
+		case EEXIST:
+			/* we lost a race to create */
+			/* FALLTHROUGH */
+		case 0:
+			if ((tp = tun_lookup(minor(dev))) == NULL)
+				return (ENXIO);
+			tp->tun_flags &= ~TUN_STAYUP;
+			break;
+		default:
 			return (error);
-
-		if ((tp = tun_lookup(minor(dev))) == NULL)
-			return (ENXIO);
-		tp->tun_flags &= ~TUN_STAYUP;
+		}
 	}
 
 	return (tun_dev_open(tp, flag, mode, p));
@@ -340,12 +370,18 @@ tapopen(dev_t dev, int flag, int mode, struct proc *p)
 
 		snprintf(xname, sizeof(xname), "%s%d", "tap", minor(dev));
 		error = if_clone_create(xname, rdomain);
-		if (error != 0)
+		switch (error) {
+		case EEXIST:
+			/* we lost a race to create */
+			/* FALLTHROUGH */
+		case 0:
+			if ((tp = tap_lookup(minor(dev))) == NULL)
+				return (ENXIO);
+			tp->tun_flags &= ~TUN_STAYUP;
+			break;
+		default:
 			return (error);
-
-		if ((tp = tap_lookup(minor(dev))) == NULL)
-			return (ENXIO);
-		tp->tun_flags &= ~TUN_STAYUP;
+		}
 	}
 
 	return (tun_dev_open(tp, flag, mode, p));
