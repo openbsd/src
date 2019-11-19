@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.39 2015/03/14 02:22:09 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.40 2019/11/19 09:55:55 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -66,6 +66,7 @@ struct rde_nbr {
 	LIST_ENTRY(rde_nbr)		 entry, hash;
 	struct in_addr			 id;
 	struct in_addr			 area_id;
+	struct in_addr			 addr;
 	TAILQ_HEAD(, rde_req_entry)	 req_list;
 	struct area			*area;
 	struct iface			*iface;

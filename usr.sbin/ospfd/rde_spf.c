@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.77 2019/04/04 19:57:08 remi Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.78 2019/11/19 09:55:55 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -373,6 +373,7 @@ calc_nexthop(struct vertex *dst, struct vertex *parent,
 {
 	struct v_nexthop	*vn;
 	struct iface		*iface;
+	struct rde_nbr		*nbr;
 	int			 i;
 
 	/* case 1 */
@@ -382,10 +383,14 @@ calc_nexthop(struct vertex *dst, struct vertex *parent,
 			if (rtr_link->type != LINK_TYPE_POINTTOPOINT)
 				fatalx("inconsistent SPF tree");
 			LIST_FOREACH(iface, &area->iface_list, entry) {
-				if (rtr_link->data == iface->addr.s_addr) {
-					vertex_nexthop_add(dst, parent,
-					    iface->dst.s_addr);
-					return;
+				if (rtr_link->data != iface->addr.s_addr)
+					continue;
+				LIST_FOREACH(nbr, &area->nbr_list, entry) {
+					if (nbr->ifindex == iface->ifindex) {
+						vertex_nexthop_add(dst, parent,
+						    nbr->addr.s_addr);
+						return;
+					}
 				}
 			}
 			fatalx("no interface found for interface");

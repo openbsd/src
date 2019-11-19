@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.109 2018/02/05 12:11:28 remi Exp $ */
+/*	$OpenBSD: rde.c,v 1.110 2019/11/19 09:55:55 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -257,6 +257,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	struct timespec		 tp;
 	struct lsa		*lsa;
 	struct area		*area;
+	struct in_addr		 addr;
 	struct vertex		*v;
 	char			*buf;
 	ssize_t			 n;
@@ -300,6 +301,17 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			break;
 		case IMSG_NEIGHBOR_DOWN:
 			rde_nbr_del(rde_nbr_find(imsg.hdr.peerid));
+			break;
+		case IMSG_NEIGHBOR_ADDR:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(addr))
+				fatalx("invalid size of OE request");
+			memcpy(&addr, imsg.data, sizeof(addr));
+
+			nbr = rde_nbr_find(imsg.hdr.peerid);
+			if (nbr == NULL)
+				break;
+
+			nbr->addr.s_addr = addr.s_addr;
 			break;
 		case IMSG_NEIGHBOR_CHANGE:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(state))

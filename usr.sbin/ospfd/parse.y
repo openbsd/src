@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.98 2019/06/07 04:57:45 dlg Exp $ */
+/*	$OpenBSD: parse.y,v 1.99 2019/11/19 09:55:55 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -129,7 +129,7 @@ typedef struct {
 %token	AREA INTERFACE ROUTERID FIBPRIORITY FIBUPDATE REDISTRIBUTE RTLABEL
 %token	RDOMAIN RFC1583COMPAT STUB ROUTER SPFDELAY SPFHOLDTIME EXTTAG
 %token	AUTHKEY AUTHTYPE AUTHMD AUTHMDKEYID
-%token	METRIC PASSIVE
+%token	METRIC P2P PASSIVE
 %token	HELLOINTERVAL FASTHELLOINTERVAL TRANSMITDELAY
 %token	RETRANSMITINTERVAL ROUTERDEADTIME ROUTERPRIORITY
 %token	SET TYPE
@@ -743,6 +743,10 @@ interfaceopts_l	: interfaceopts_l interfaceoptsl nl
 		;
 
 interfaceoptsl	: PASSIVE		{ iface->passive = 1; }
+		| TYPE P2P		{
+			iface->p2p = 1;
+			iface->type = IF_TYPE_POINTOPOINT;
+		}
 		| DEMOTE STRING		{
 			if (strlcpy(iface->demote_group, $2,
 			    sizeof(iface->demote_group)) >=
@@ -833,6 +837,7 @@ lookup(char *s)
 		{"msec",		MSEC},
 		{"no",			NO},
 		{"on",			ON},
+		{"p2p",			P2P},
 		{"passive",		PASSIVE},
 		{"rdomain",		RDOMAIN},
 		{"redistribute",	REDISTRIBUTE},

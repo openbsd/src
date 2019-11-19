@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.48 2018/02/09 02:14:03 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.49 2019/11/19 09:55:55 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -312,6 +312,7 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
 	bzero(&rn, sizeof(rn));
 	rn.id.s_addr = nbr->id.s_addr;
 	rn.area_id.s_addr = nbr->iface->area->id.s_addr;
+	rn.addr.s_addr = nbr->addr.s_addr;
 	rn.ifindex = nbr->iface->ifindex;
 	rn.state = nbr->state;
 	rn.self = self;
