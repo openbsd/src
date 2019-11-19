@@ -1,0 +1,68 @@
+Regression tests for system calls ported from NetBSD.
+
+Reimplement ATF with many hacks to adjust the tests as little as possible.
+
+Tests passing without source file adjustments:
+t_access	t_getpid	t_kill		t_msgsnd	t_sigaction
+t_bind		t_link		t_msync		t_socketpair	t_getgroups
+t_getsid	t_listen	t_pipe		t_truncate	t_getitimer
+t_getsockname	t_mkdir		t_sendrecv	t_umask		t_getlogin
+t_gettimeofday	t_msgctl	t_setuid	t_write
+
+Tests passing after adjustments:
+t_chroot	- fchroot is not implemented
+t_clock_gettime	- requires sysctlbyname
+t_dup		- OpenBSD dup3 is similar to Linux dup3
+t_fsync		- replace mkstemp
+t_getrusage	- no expected fail, PR kern/30115 is NetBSD, work more
+t_mknod 	- remove tests for unsupported file types
+t_msgget	- remove msgget_limit test
+t_poll 		- remove pollts_* tests
+t_revoke 	- remove basic tests, revoke only on ttys supported
+t_select 	- remove sigset_t struct as it is int on OpenBSD
+
+Failing tests:
+t_mkfifo	- every test case fails now
+t_mlock		- wrong errno, succeeds where not expected, POSIX imprecise
+t_mmap		- ENOTBLK on test NetBSD is skipping, remove mmap_va0 test
+t_msgrcv	- msgrcv(id, &r, 3 - 1, 0x41, 004000) != -1
+t_pipe2 	- closefrom(4) == -1, remove F_GETNOSIGPIPE and nosigpipe test
+t_ptrace 	- ptrace(0, 0, ((void *)0), 0) != -1
+t_stat 		- invalid GID with doas
+t_syscall	- SIGSEGV
+t_unlink	- wrong errno according to POSIX
+
+Excluded tests:
+t_clock_nanosleep	- not available
+t_clone			- not available
+t_connect		-
+t_fork			-
+t_getcontext		-
+t_issetugid		-
+t_kevent		-
+t_lwp_create		- not available
+t_lwp_ctl		- not available
+t_mincore		- removed
+t_minherit		-
+t_mprotect		-
+t_nanosleep		- not available
+t_posix_fadvise		-
+t_posix_fallocate	-
+t_ptrace_wait		-
+t_ptrace_wait3		-
+t_ptrace_wait4		-
+t_ptrace_wait6		- not implemented
+t_ptrace_waitid		-
+t_ptrace_waitpid	-
+t_recvmmsg		-
+t_sendmmsg		-
+t_setrlimit		-
+t_sigqueue		-
+t_sigtimedwait		-
+t_swapcontext		-
+t_timer_create		-
+t_ucontext		-
+t_vfork			-
+t_wait			-
+t_wait_noproc		-
+t_wait_noproc_wnohang	-
