@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2019/05/03 20:03:57 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.15 2019/11/19 09:46:22 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		5760
@@ -27,7 +27,7 @@ ${FS}: bsd.gz
 	install -c -m 555 -o root -g wheel \
 	    ${DESTDIR}/usr/mdec/boot ${MOUNT_POINT}/boot
 	/usr/mdec/installboot -v \
-	    ${MOUNT_POINT}/boot ${DESTDRIR}/usr/mdec/bootxx `cat vnd`
+	    ${MOUNT_POINT}/boot ${DESTDIR}/usr/mdec/bootxx `cat vnd`
 	install -c -m 555 -o root -g wheel bsd.gz ${MOUNT_POINT}/bsd
 	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
