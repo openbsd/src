@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.240 2019/09/04 14:29:41 cheloha Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.241 2019/11/19 02:01:58 kevlo Exp $
 
 machine		i386
 maxusers	4
@@ -243,6 +243,7 @@ txp*		at pci?				# 3com 3CR990
 nge*		at pci?				# NS DP83820/DP83821 GigE
 re*		at pci?				# Realtek 8169/8169S/8110S
 re*		at cardbus?			# Realtek 8169/8169S/8110S
+rge*		at pci?				# Realtek 8125
 stge*		at pci?				# Sundance TC9021 GigE
 bge*		at pci?				# Broadcom BCM57xx (aka Tigon3)
 bnx*		at pci?				# Broadcom BCM5706/5708 GigE
