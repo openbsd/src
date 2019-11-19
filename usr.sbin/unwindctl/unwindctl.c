@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwindctl.c,v 1.11 2019/11/11 05:51:06 florian Exp $	*/
+/*	$OpenBSD: unwindctl.c,v 1.12 2019/11/19 14:49:36 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -222,8 +222,9 @@ main(int argc, char *argv[])
 int
 show_status_msg(struct imsg *imsg)
 {
-	static int			 header;
+	static int			 header, autoconf_forwarders;
 	struct ctl_resolver_info	*cri;
+	struct ctl_forwarder_info	*cfi;
 	enum captive_portal_state	 captive_portal_state;
 
 	if (imsg->hdr.type != IMSG_CTL_CAPTIVEPORTAL_INFO && !header++)
@@ -252,6 +253,13 @@ show_status_msg(struct imsg *imsg)
 		    uw_resolver_type_str[cri->type],
 		    uw_resolver_state_str[cri->state],
 		    cri->oppdot ? " (opportunistic DoT)" : "");
+		break;
+	case IMSG_CTL_AUTOCONF_RESOLVER_INFO:
+		cfi = imsg->data;
+		if (!autoconf_forwarders++)
+			printf("\nlearned forwarders:\n");
+		printf("[%s] %s\n", cfi->src == RTP_PROPOSAL_DHCLIENT
+		    ? " DHCP" : "SLAAC", cfi->name);
 		break;
 	case IMSG_CTL_RESOLVER_WHY_BOGUS:
 		/* make sure this is a string */

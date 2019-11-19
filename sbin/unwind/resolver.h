@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.h,v 1.7 2019/11/03 09:46:11 otto Exp $	*/
+/*	$OpenBSD: resolver.h,v 1.8 2019/11/19 14:49:36 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -52,6 +52,11 @@ struct ctl_resolver_info {
 	enum uw_resolver_type	 type;
 	int			 selected;
 	int			 oppdot;
+};
+
+struct ctl_forwarder_info {
+	char	 name[1024]; /* XXX, keep in sync with uw_forwarder */
+	int	 src;
 };
 
 void	 resolver(int, int);

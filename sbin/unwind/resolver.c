@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.68 2019/11/19 14:47:46 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.69 2019/11/19 14:49:36 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1557,8 +1557,10 @@ restart_resolvers(void)
 void
 show_status(enum uw_resolver_type type, pid_t pid)
 {
-	struct uw_resolver	*best;
-	int			 i;
+	struct uw_resolver		*best;
+	struct uw_forwarder		*uw_forwarder;
+	struct ctl_forwarder_info	 cfi;
+	int				 i;
 
 	best = best_resolver();
 
@@ -1571,6 +1573,16 @@ show_status(enum uw_resolver_type type, pid_t pid)
 			    resolvers[resolver_conf->res_pref[i]],
 			    resolvers[resolver_conf->res_pref[i]] ==
 			    best, pid);
+		TAILQ_FOREACH(uw_forwarder, &autoconf_forwarder_list, entry) {
+			memset(&cfi, 0, sizeof(cfi));
+			cfi.src = uw_forwarder->src;
+			/* no truncation, structs are in sync */
+			strlcpy(cfi.name, uw_forwarder->name,
+			    sizeof(cfi.name));
+			resolver_imsg_compose_frontend(
+			    IMSG_CTL_AUTOCONF_RESOLVER_INFO,
+			    pid, &cfi, sizeof(cfi));
+		}
 		break;
 	case UW_RES_RECURSOR:
 	case UW_RES_DHCP:
