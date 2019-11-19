@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.203 2019/11/19 06:32:46 kevlo Exp $	*/
+/*	$OpenBSD: re.c,v 1.204 2019/11/19 06:34:10 kevlo Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1953,7 +1953,7 @@ re_init(struct ifnet *ifp)
 	 * Enable interrupts.
 	 */
 	re_setup_intr(sc, 1, sc->rl_imtype);
-	CSR_WRITE_2(sc, RL_ISR, sc->rl_imtype);
+	CSR_WRITE_2(sc, RL_ISR, sc->rl_intrs);
 
 	/* Start RX/TX process. */
 	CSR_WRITE_4(sc, RL_MISSEDPKT, 0);
