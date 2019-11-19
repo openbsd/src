@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.114 2019/10/04 06:22:51 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.115 2019/11/19 10:20:10 inoguchi Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: October 4 2019 $
+.Dd $Mdocdate: November 19 2019 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -3043,6 +3043,7 @@ or standard output if not specified.
 .Bl -hang -width "openssl req"
 .It Nm openssl req
 .Bk -words
+.Op Fl addext Ar ext
 .Op Fl asn1-kludge
 .Op Fl batch
 .Op Fl config Ar file
@@ -3092,6 +3093,13 @@ for use as root CAs, for example.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl addext Ar ext
+Add a specific extension to the certificate (if the
+.Fl x509
+option is present) or certificate request.
+The argument must have the form of a key=value pair as it would appear in a
+config file.
+This option can be given multiple times.
 .It Fl asn1-kludge
 Produce requests in an invalid format for certain picky CAs.
 Very few CAs still require the use of this option.
