@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.15 2019/11/18 12:43:27 inoguchi Exp $ */
+/* $OpenBSD: cms.c,v 1.16 2019/11/19 10:28:18 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -274,16 +274,18 @@ cms_main(int argc, char **argv)
 			if (!args[1])
 				goto argerr;
 			args++;
-			if (!rr_from)
-				rr_from = sk_OPENSSL_STRING_new_null();
+			if (rr_from == NULL &&
+			    (rr_from = sk_OPENSSL_STRING_new_null()) == NULL)
+				goto end;
 			if (!sk_OPENSSL_STRING_push(rr_from, *args))
 				goto end;
 		} else if (!strcmp(*args, "-receipt_request_to")) {
 			if (!args[1])
 				goto argerr;
 			args++;
-			if (!rr_to)
-				rr_to = sk_OPENSSL_STRING_new_null();
+			if (rr_to == NULL &&
+			    (rr_to = sk_OPENSSL_STRING_new_null()) == NULL)
+				goto end;
 			if (!sk_OPENSSL_STRING_push(rr_to, *args))
 				goto end;
 		} else if (!strcmp(*args, "-print")) {
@@ -348,15 +350,16 @@ cms_main(int argc, char **argv)
 			/* If previous -signer argument add signer to list */
 
 			if (signerfile) {
-				if (!sksigners)
-					sksigners =
-					    sk_OPENSSL_STRING_new_null();
+				if (sksigners == NULL &&
+				    (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
+					goto end;
 				if (!sk_OPENSSL_STRING_push(sksigners, signerfile))
 					goto end;
 				if (!keyfile)
 					keyfile = signerfile;
-				if (!skkeys)
-					skkeys = sk_OPENSSL_STRING_new_null();
+				if (skkeys == NULL &&
+				    (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
+					goto end;
 				if (!sk_OPENSSL_STRING_push(skkeys, keyfile))
 					goto end;
 				keyfile = NULL;
@@ -402,14 +405,15 @@ cms_main(int argc, char **argv)
 					    "Illegal -inkey without -signer\n");
 					goto argerr;
 				}
-				if (!sksigners)
-					sksigners =
-					    sk_OPENSSL_STRING_new_null();
+				if (sksigners == NULL &&
+				    (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
+					goto end;
 				if (!sk_OPENSSL_STRING_push(sksigners, signerfile))
 					goto end;
 				signerfile = NULL;
-				if (!skkeys)
-					skkeys = sk_OPENSSL_STRING_new_null();
+				if (skkeys == NULL &&
+				    (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
+					goto end;
 				if (!sk_OPENSSL_STRING_push(skkeys, keyfile))
 					goto end;
 			}
@@ -513,12 +517,14 @@ cms_main(int argc, char **argv)
 		}
 		/* Check to see if any final signer needs to be appended */
 		if (signerfile) {
-			if (!sksigners)
-				sksigners = sk_OPENSSL_STRING_new_null();
+			if (sksigners == NULL &&
+			    (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
+				goto end;
 			if (!sk_OPENSSL_STRING_push(sksigners, signerfile))
 				goto end;
-			if (!skkeys)
-				skkeys = sk_OPENSSL_STRING_new_null();
+			if (skkeys == NULL &&
+			    (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
+				goto end;
 			if (!keyfile)
 				keyfile = signerfile;
 			if (!sk_OPENSSL_STRING_push(skkeys, keyfile))
@@ -643,8 +649,9 @@ cms_main(int argc, char **argv)
 			BIO_printf(bio_err, "No secret key id\n");
 			goto end;
 		}
-		if (*args && !encerts)
-			encerts = sk_X509_new_null();
+		if (*args && encerts == NULL)
+			if ((encerts = sk_X509_new_null()) == NULL)
+				goto end;
 		while (*args) {
 			if (!(cert = load_cert(bio_err, *args, FORMAT_PEM,
 			    NULL, "recipient certificate file")))
@@ -1190,8 +1197,7 @@ make_names_stack(STACK_OF(OPENSSL_STRING) *ns)
 	STACK_OF(GENERAL_NAMES) *ret;
 	GENERAL_NAMES *gens = NULL;
 	GENERAL_NAME *gen = NULL;
-	ret = sk_GENERAL_NAMES_new_null();
-	if (!ret)
+	if ((ret = sk_GENERAL_NAMES_new_null()) == NULL)
 		goto err;
 	for (i = 0; i < sk_OPENSSL_STRING_num(ns); i++) {
 		char *str = sk_OPENSSL_STRING_value(ns, i);
