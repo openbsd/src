@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.28 2019/11/09 14:49:31 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.29 2019/11/20 12:12:55 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -970,6 +970,7 @@ __EOF__
 	$openssl_bin cms -sign -in $cms_txt -text \
 		-out $cms_sig -outform smime \
 		-signer $user1_cert -inkey $user1_key -keyform pem \
+		-keyopt rsa_padding_mode:pss \
 		-passin pass:$user1_pass -md sha256 \
 		-from user1@test_dummy.com -to server@test_dummy.com \
 		-subject "test openssl cms"
@@ -979,7 +980,8 @@ __EOF__
 	start_message "cms ... encrypt message"
 
 	$openssl_bin cms -encrypt -aes256 -binary -in $cms_sig -inform smime \
-		-out $cms_enc $server_cert
+		-recip $server_cert -keyopt rsa_padding_mode:oaep \
+		-out $cms_enc
 	check_exit_status $?
 
 	# decrypt
