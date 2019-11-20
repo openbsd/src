@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.69 2019/11/19 14:49:36 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.70 2019/11/20 15:50:41 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1685,12 +1685,17 @@ void
 captive_portal_resolve_done(struct uw_resolver *res, void *arg, int rcode,
     void *answer_packet, int answer_len, int sec, char *why_bogus)
 {
-	struct ub_result	*result;
+	struct ub_result	*result = NULL;
 	sldns_buffer		*buf = NULL;
 	struct regional		*region = NULL;
 	struct in_addr		*in;
 	int			 i;
 	char			*str, rdata_buf[sizeof("xxx.xxx.xxx.xxx")];
+
+	if (answer_len < LDNS_HEADER_SIZE) {
+		log_warnx("bad packet: too short");
+		goto out;
+	}
 
 	if ((result = calloc(1, sizeof(*result))) == NULL)
 		goto out;
@@ -1809,13 +1814,18 @@ void
 trust_anchor_resolve_done(struct uw_resolver *res, void *arg, int rcode,
     void *answer_packet, int answer_len, int sec, char *why_bogus)
 {
-	struct ub_result	*result;
+	struct ub_result	*result = NULL;
 	sldns_buffer		*buf = NULL;
 	struct regional		*region = NULL;
 	struct timeval		 tv = {TRUST_ANCHOR_RETRY_INTERVAL, 0};
 	int			 i, tas, n;
 	uint16_t		 dnskey_flags;
 	char			*str, rdata_buf[1024], *ta;
+
+	if (answer_len < LDNS_HEADER_SIZE) {
+		log_warnx("bad packet: too short");
+		goto out;
+	}
 
 	if ((result = calloc(1, sizeof(*result))) == NULL)
 		goto out;
