@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.23 2019/11/02 14:35:48 jsing Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.24 2019/11/20 10:46:17 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -449,10 +449,17 @@ pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
 	if (BIO_printf(bp, "%s ", pkey_is_pss(pkey) ?  "RSA-PSS" : "RSA") <= 0)
 		goto err;
 
-	if (BIO_printf(bp, "Public-Key: (%d bit)\n", mod_len) <= 0)
-		goto err;
-	str = "Modulus:";
-	s = "Exponent:";
+	if (priv && x->d != NULL) {
+		if (BIO_printf(bp, "Private-Key: (%d bit)\n", mod_len) <= 0)
+			goto err;
+		str = "modulus:";
+		s = "publicExponent:";
+	} else {
+		if (BIO_printf(bp, "Public-Key: (%d bit)\n", mod_len) <= 0)
+			goto err;
+		str = "Modulus:";
+		s = "Exponent:";
+	}
 	if (!ASN1_bn_print(bp, str, x->n, m, off))
 		goto err;
 	if (!ASN1_bn_print(bp, s, x->e, m, off))
