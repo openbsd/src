@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.44 2019/11/11 05:48:46 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.45 2019/11/20 18:10:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1918,46 +1918,42 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 					    1);
 			}
 		}
-#ifndef	SMALL
-		rdns_proposal = find_rdns_proposal_by_gw(iface, &ra->from);
-		if (rdns_proposal) {
-			if (real_lifetime(&rdns_proposal->uptime,
-			    rdns_proposal->rdns_lifetime) >
-			    ra->rdns_lifetime)
-				log_warnx("ignoring router advertisement "
-				    "lowering router lifetime");
-			else {
-				rdns_proposal->when = ra->when;
-				rdns_proposal->uptime = ra->uptime;
-				rdns_proposal->rdns_lifetime =
-				    ra->rdns_lifetime;
-
-				log_debug("%s, rdns state: %s, rl: %d",
-				    __func__, proposal_state_name[
-				    rdns_proposal->state],
-				    real_lifetime(&rdns_proposal->uptime,
-				    rdns_proposal->rdns_lifetime));
-
-				switch (rdns_proposal->state) {
-				case PROPOSAL_SENT:
-				case PROPOSAL_NEARLY_EXPIRED:
-					log_debug("updating rdns");
-					propose_rdns(rdns_proposal);
-					break;
-				default:
-					hbuf = sin6_to_str(
-					    &rdns_proposal->from);
-					log_debug("%s: iface %d: %s",
-					    __func__, iface->if_index,
-					    hbuf);
-					break;
-				}
-			}
-		} else
-			/* new proposal */
-			gen_rdns_proposal(iface, ra);
-#endif	/* SMALL */
 	}
+#ifndef	SMALL
+	rdns_proposal = find_rdns_proposal_by_gw(iface, &ra->from);
+	if (rdns_proposal) {
+		if (real_lifetime(&rdns_proposal->uptime,
+		    rdns_proposal->rdns_lifetime) > ra->rdns_lifetime)
+			/* XXX check RFC */
+			log_warnx("ignoring router advertisement lowering rdns "
+			    "lifetime");
+		else {
+			rdns_proposal->when = ra->when;
+			rdns_proposal->uptime = ra->uptime;
+			rdns_proposal->rdns_lifetime = ra->rdns_lifetime;
+
+			log_debug("%s, rdns state: %s, rl: %d", __func__,
+			    proposal_state_name[rdns_proposal->state],
+			    real_lifetime(&rdns_proposal->uptime,
+			    rdns_proposal->rdns_lifetime));
+
+			switch (rdns_proposal->state) {
+			case PROPOSAL_SENT:
+			case PROPOSAL_NEARLY_EXPIRED:
+				log_debug("updating rdns");
+				propose_rdns(rdns_proposal);
+				break;
+			default:
+				hbuf = sin6_to_str(&rdns_proposal->from);
+				log_debug("%s: iface %d: %s", __func__,
+				    iface->if_index, hbuf);
+				break;
+			}
+		}
+	} else
+		/* new proposal */
+		gen_rdns_proposal(iface, ra);
+#endif	/* SMALL */
 }
 
 void
