@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_handshake_msg.c,v 1.1 2019/01/20 12:27:34 jsing Exp $ */
+/* $OpenBSD: tls13_handshake_msg.c,v 1.2 2019/11/20 16:21:20 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -70,6 +70,12 @@ void
 tls13_handshake_msg_data(struct tls13_handshake_msg *msg, CBS *cbs)
 {
 	CBS_init(cbs, msg->data, msg->data_len);
+}
+
+int
+tls13_handshake_msg_set_buffer(struct tls13_handshake_msg *msg, CBS *cbs)
+{
+	return tls13_buffer_set_data(msg->buf, cbs);
 }
 
 uint8_t

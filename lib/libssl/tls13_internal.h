@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.34 2019/11/18 15:25:59 beck Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.35 2019/11/20 16:21:20 beck Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -47,6 +47,7 @@ typedef ssize_t (*tls13_write_cb)(const void *_buf, size_t _buflen,
 struct tls13_buffer;
 
 struct tls13_buffer *tls13_buffer_new(size_t init_size);
+int tls13_buffer_set_data(struct tls13_buffer *buf, CBS *data);
 void tls13_buffer_free(struct tls13_buffer *buf);
 ssize_t tls13_buffer_extend(struct tls13_buffer *buf, size_t len,
     tls13_read_cb read_cb, void *cb_arg);
@@ -141,6 +142,7 @@ struct tls13_handshake_msg;
 struct tls13_handshake_msg *tls13_handshake_msg_new(void);
 void tls13_handshake_msg_free(struct tls13_handshake_msg *msg);
 void tls13_handshake_msg_data(struct tls13_handshake_msg *msg, CBS *cbs);
+int tls13_handshake_msg_set_buffer(struct tls13_handshake_msg *msg, CBS *cbs);
 uint8_t tls13_handshake_msg_type(struct tls13_handshake_msg *msg);
 int tls13_handshake_msg_content(struct tls13_handshake_msg *msg, CBS *cbs);
 int tls13_handshake_msg_start(struct tls13_handshake_msg *msg, CBB *body,
