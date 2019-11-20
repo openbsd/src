@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.283 2019/11/18 18:53:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.284 2019/11/20 16:14:51 patrick Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8559,6 +8559,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_mqrx_supported = 1;
 		break;
 	case PCI_PRODUCT_INTEL_WL_9560_1:
+	case PCI_PRODUCT_INTEL_WL_9560_2:
 		sc->sc_fwname = "iwm-9000-34";
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_9000;
