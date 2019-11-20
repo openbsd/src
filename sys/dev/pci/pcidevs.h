@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1901 2019/11/19 13:47:06 stsp Exp 
+ *	OpenBSD: pcidevs,v 1.1902 2019/11/20 16:33:00 patrick Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4579,6 +4579,9 @@
 #define	PCI_PRODUCT_INTEL_WL_3165_2	0x3166		/* Dual Band Wireless AC 3165 */
 #define	PCI_PRODUCT_INTEL_GLK_UHD_605	0x3184		/* UHD Graphics 605 */
 #define	PCI_PRODUCT_INTEL_GLK_UHD_600	0x3185		/* UHD Graphics 600 */
+#define	PCI_PRODUCT_INTEL_GLK_SDMMC	0x31ca		/* Gemini Lake SD/MMC */
+#define	PCI_PRODUCT_INTEL_GLK_EMMC	0x31cc		/* Gemini Lake eMMC */
+#define	PCI_PRODUCT_INTEL_GLK_SDIO	0x31d0		/* Gemini Lake SDIO */
 #define	PCI_PRODUCT_INTEL_31244	0x3200		/* 31244 SATA */
 #define	PCI_PRODUCT_INTEL_82855PM_HB	0x3340		/* 82855PM Host */
 #define	PCI_PRODUCT_INTEL_82855PM_AGP	0x3341		/* 82855PM AGP */
