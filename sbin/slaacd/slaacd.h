@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.24 2019/11/11 05:48:46 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.25 2019/11/21 19:27:33 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -198,8 +198,6 @@ struct imsg_link_state {
 
 struct imsg_propose_rdns {
 	uint32_t		 if_index;
-	struct sockaddr_in6	 from;
-	uint32_t		 rdns_lifetime;
 	int			 rdns_count;
 	struct sockaddr_in6	 rdns[MAX_RDNS_COUNT];
 };

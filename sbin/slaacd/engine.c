@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.45 2019/11/20 18:10:12 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.46 2019/11/21 19:27:33 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -2276,8 +2276,6 @@ compose_rdns_proposal(enum imsg_type type, struct rdns_proposal *rdns_proposal)
 	struct imsg_propose_rdns	 rdns;
 
 	rdns.if_index = rdns_proposal->if_index;
-	memcpy(&rdns.from, &rdns_proposal->from, sizeof(rdns.from));
-	rdns.rdns_lifetime = rdns_proposal->rdns_lifetime;
 	rdns.rdns_count = rdns_proposal->rdns_count;
 	memcpy(&rdns.rdns, &rdns_proposal->rdns, sizeof(rdns.rdns));
 
