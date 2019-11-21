@@ -1,4 +1,4 @@
-/* $OpenBSD: hkdf.c,v 1.2 2018/04/03 13:33:53 tb Exp $ */
+/* $OpenBSD: hkdf.c,v 1.3 2019/11/21 20:01:06 tim Exp $ */
 /* Copyright (c) 2014, Google Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -111,6 +111,7 @@ HKDF_expand(uint8_t *out_key, size_t out_len,
 
  out:
 	HMAC_CTX_cleanup(&hmac);
+	explicit_bzero(previous, sizeof(previous));
 	if (ret != 1)
 		CRYPTOerror(ERR_R_CRYPTO_LIB);
 	return ret;
