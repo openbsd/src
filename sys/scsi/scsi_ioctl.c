@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.57 2019/09/29 17:57:36 krw Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.58 2019/11/21 22:31:27 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 	}
 
 	if (screq->flags & SCCMD_READ)
-		xs->flags |= SCSI_DATA_IN;
+		SET(xs->flags, SCSI_DATA_IN);
 	if (screq->flags & SCCMD_WRITE) {
 		if (screq->datalen > 0) {
 			err = copyin(screq->databuf, xs->data, screq->datalen);
@@ -130,10 +130,10 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 				goto err;
 		}
 
-		xs->flags |= SCSI_DATA_OUT;
+		SET(xs->flags, SCSI_DATA_OUT);
 	}
 
-	xs->flags |= SCSI_SILENT;	/* User is responsible for errors. */
+	SET(xs->flags, SCSI_SILENT);	/* User is responsible for errors. */
 	xs->timeout = screq->timeout;
 	xs->retries = 0; /* user must do the retries *//* ignored */
 
@@ -240,7 +240,7 @@ scsi_ioc_ata_cmd(struct scsi_link *link, atareq_t *atareq)
 	}
 
 	if (atareq->flags & ATACMD_READ)
-		xs->flags |= SCSI_DATA_IN;
+		SET(xs->flags, SCSI_DATA_IN);
 	if (atareq->flags & ATACMD_WRITE) {
 		if (atareq->datalen > 0) {
 			err = copyin(atareq->databuf, xs->data,
@@ -249,10 +249,10 @@ scsi_ioc_ata_cmd(struct scsi_link *link, atareq_t *atareq)
 				goto err;
 		}
 
-		xs->flags |= SCSI_DATA_OUT;
+		SET(xs->flags, SCSI_DATA_OUT);
 	}
 
-	xs->flags |= SCSI_SILENT;	/* User is responsible for errors. */
+	SET(xs->flags, SCSI_SILENT);	/* User is responsible for errors. */
 	xs->retries = 0; /* user must do the retries *//* ignored */
 
 	scsi_xs_sync(xs);

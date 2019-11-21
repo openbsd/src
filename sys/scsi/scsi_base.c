@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.238 2019/11/09 12:15:50 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.239 2019/11/21 22:31:27 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -816,7 +816,7 @@ scsi_init_inquiry(struct scsi_xfer *xs, u_int8_t flags, u_int8_t pagecode,
 
 	xs->cmdlen = sizeof(*cmd);
 
-	xs->flags |= SCSI_DATA_IN;
+	SET(xs->flags, SCSI_DATA_IN);
 	xs->data = data;
 	xs->datalen = len;
 }
