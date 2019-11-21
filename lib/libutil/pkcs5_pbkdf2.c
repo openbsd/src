@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkcs5_pbkdf2.c,v 1.10 2017/04/18 04:06:21 deraadt Exp $	*/
+/*	$OpenBSD: pkcs5_pbkdf2.c,v 1.11 2019/11/21 16:07:24 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -84,11 +84,11 @@ pkcs5_pbkdf2(const char *pass, size_t pass_len, const uint8_t *salt,
 	size_t r;
 
 	if (rounds < 1 || key_len == 0)
-		return -1;
+		goto bad;
 	if (salt_len == 0 || salt_len > SIZE_MAX - 4)
-		return -1;
+		goto bad;
 	if ((asalt = malloc(salt_len + 4)) == NULL)
-		return -1;
+		goto bad;
 
 	memcpy(asalt, salt, salt_len);
 
@@ -118,4 +118,9 @@ pkcs5_pbkdf2(const char *pass, size_t pass_len, const uint8_t *salt,
 	explicit_bzero(obuf, sizeof(obuf));
 
 	return 0;
+
+bad:
+	/* overwrite with random in case caller doesn't check return code */
+	arc4random_buf(key, key_len);
+	return -1;
 }
