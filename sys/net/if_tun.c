@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.192 2019/11/19 00:06:26 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.193 2019/11/21 07:30:28 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -81,18 +81,19 @@
 #include <net/if_tun.h>
 
 struct tun_softc {
-	struct arpcom	arpcom;		/* ethernet common data */
-	struct selinfo	tun_rsel;	/* read select */
-	struct selinfo	tun_wsel;	/* write select (not used) */
-	LIST_ENTRY(tun_softc) entry;	/* all tunnel interfaces */
-	int		tun_unit;
-	uid_t		tun_siguid;	/* uid for process that set tun_pgid */
-	uid_t		tun_sigeuid;	/* euid for process that set tun_pgid */
-	pid_t		tun_pgid;	/* the process group - if any */
-	u_short		tun_flags;	/* misc flags */
-#define tun_if	arpcom.ac_if
+	struct arpcom	sc_arpcom;		/* ethernet common data */
+#define sc_if		sc_arpcom.ac_if
+	struct selinfo	sc_rsel;	/* read select */
+	struct selinfo	sc_wsel;	/* write select (not used) */
+	LIST_ENTRY(tun_softc)
+			sc_entry;	/* all tunnel interfaces */
+	int		sc_unit;
+	uid_t		sc_siguid;	/* uid for process that set sc_pgid */
+	uid_t		sc_sigeuid;	/* euid for process that set sc_pgid */
+	pid_t		sc_pgid;	/* the process group - if any */
+	u_short		sc_flags;	/* misc flags */
 #ifdef PIPEX
-	struct pipex_iface_context pipex_iface; /* pipex context */
+	struct pipex_iface_context sc_pipex_iface; /* pipex context */
 #endif
 };
 
@@ -198,8 +199,8 @@ tun_list_lookup(struct tun_list *tl, int unit)
 
 	KERNEL_ASSERT_LOCKED();
 
-	LIST_FOREACH(tp, tl, entry) {
-		if (tp->tun_unit == unit)
+	LIST_FOREACH(tp, tl, sc_entry) {
+		if (tp->sc_unit == unit)
 			return (tp);
 	}
 
@@ -212,10 +213,10 @@ tun_list_insert(struct tun_list *tl, struct tun_softc *tp)
 	KERNEL_ASSERT_LOCKED();
 
 	/* check for a race */
-	if (tun_list_lookup(tl, tp->tun_unit) != NULL)
+	if (tun_list_lookup(tl, tp->sc_unit) != NULL)
 		return (EEXIST);
 
-	LIST_INSERT_HEAD(tl, tp, entry);
+	LIST_INSERT_HEAD(tl, tp, sc_entry);
 
 	return (0);
 }
@@ -230,10 +231,10 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 		return (ENXIO);
 
 	tp = malloc(sizeof(*tp), M_DEVBUF, M_WAITOK|M_ZERO);
-	tp->tun_unit = unit;
-	tp->tun_flags = TUN_INITED|TUN_STAYUP;
+	tp->sc_unit = unit;
+	tp->sc_flags = TUN_INITED|TUN_STAYUP;
 
-	ifp = &tp->tun_if;
+	ifp = &tp->sc_if;
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", ifc->ifc_name,
 	    unit);
 	ifp->if_softc = tp;
@@ -249,7 +250,7 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 		if (tun_list_insert(&tun_softc_list, tp) != 0)
 			goto exists;
 
-		tp->tun_flags &= ~TUN_LAYER2;
+		tp->sc_flags &= ~TUN_LAYER2;
 		ifp->if_mtu = ETHERMTU;
 		ifp->if_flags = (IFF_POINTOPOINT|IFF_MULTICAST);
 		ifp->if_type = IFT_TUNNEL;
@@ -265,7 +266,7 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 		if (tun_list_insert(&tap_softc_list, tp) != 0)
 			goto exists;
 
-		tp->tun_flags |= TUN_LAYER2;
+		tp->sc_flags |= TUN_LAYER2;
 		ether_fakeaddr(ifp);
 		ifp->if_flags =
 		    (IFF_BROADCAST|IFF_SIMPLEX|IFF_MULTICAST);
@@ -276,8 +277,8 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	}
 
 #ifdef PIPEX
-	if ((tp->tun_flags & TUN_LAYER2) == 0)
-		pipex_iface_init(&tp->pipex_iface, ifp);
+	if ((tp->sc_flags & TUN_LAYER2) == 0)
+		pipex_iface_init(&tp->sc_pipex_iface, ifp);
 #endif
 
 	return (0);
@@ -293,22 +294,22 @@ tun_clone_destroy(struct ifnet *ifp)
 	int			 s;
 
 #ifdef PIPEX
-	if ((tp->tun_flags & TUN_LAYER2) == 0)
-		pipex_iface_fini(&tp->pipex_iface);
+	if ((tp->sc_flags & TUN_LAYER2) == 0)
+		pipex_iface_fini(&tp->sc_pipex_iface);
 #endif
 	tun_wakeup(tp);
 
 	s = splhigh();
-	klist_invalidate(&tp->tun_rsel.si_note);
-	klist_invalidate(&tp->tun_wsel.si_note);
+	klist_invalidate(&tp->sc_rsel.si_note);
+	klist_invalidate(&tp->sc_wsel.si_note);
 	splx(s);
 
-	if (tp->tun_flags & TUN_LAYER2)
+	if (tp->sc_flags & TUN_LAYER2)
 		ether_ifdetach(ifp);
 
 	if_detach(ifp);
 
-	LIST_REMOVE(tp, entry);
+	LIST_REMOVE(tp, sc_entry);
 	free(tp, M_DEVBUF, sizeof *tp);
 	return (0);
 }
@@ -348,7 +349,7 @@ tunopen(dev_t dev, int flag, int mode, struct proc *p)
 		case 0:
 			if ((tp = tun_lookup(minor(dev))) == NULL)
 				return (ENXIO);
-			tp->tun_flags &= ~TUN_STAYUP;
+			tp->sc_flags &= ~TUN_STAYUP;
 			break;
 		default:
 			return (error);
@@ -377,7 +378,7 @@ tapopen(dev_t dev, int flag, int mode, struct proc *p)
 		case 0:
 			if ((tp = tap_lookup(minor(dev))) == NULL)
 				return (ENXIO);
-			tp->tun_flags &= ~TUN_STAYUP;
+			tp->sc_flags &= ~TUN_STAYUP;
 			break;
 		default:
 			return (error);
@@ -392,13 +393,13 @@ tun_dev_open(struct tun_softc *tp, int flag, int mode, struct proc *p)
 {
 	struct ifnet *ifp;
 
-	if (tp->tun_flags & TUN_OPEN)
+	if (tp->sc_flags & TUN_OPEN)
 		return (EBUSY);
 
-	ifp = &tp->tun_if;
-	tp->tun_flags |= TUN_OPEN;
+	ifp = &tp->sc_if;
+	tp->sc_flags |= TUN_OPEN;
 	if (flag & FNONBLOCK)
-		tp->tun_flags |= TUN_NBIO;
+		tp->sc_flags |= TUN_NBIO;
 
 	/* automatically mark the interface running on open */
 	ifp->if_flags |= IFF_RUNNING;
@@ -438,8 +439,8 @@ tun_dev_close(struct tun_softc *tp, int flag, int mode, struct proc *p)
 	int			 error = 0;
 	struct ifnet		*ifp;
 
-	ifp = &tp->tun_if;
-	tp->tun_flags &= ~(TUN_OPEN|TUN_NBIO|TUN_ASYNC);
+	ifp = &tp->sc_if;
+	tp->sc_flags &= ~(TUN_OPEN|TUN_NBIO|TUN_ASYNC);
 
 	/*
 	 * junk all pending output
@@ -450,11 +451,11 @@ tun_dev_close(struct tun_softc *tp, int flag, int mode, struct proc *p)
 
 	TUNDEBUG(("%s: closed\n", ifp->if_xname));
 
-	if (!(tp->tun_flags & TUN_STAYUP))
+	if (!(tp->sc_flags & TUN_STAYUP))
 		error = if_clone_destroy(ifp->if_xname);
 	else {
-		tp->tun_pgid = 0;
-		selwakeup(&tp->tun_rsel);
+		tp->sc_pgid = 0;
+		selwakeup(&tp->sc_rsel);
 	}
 
 	return (error);
@@ -463,35 +464,35 @@ tun_dev_close(struct tun_softc *tp, int flag, int mode, struct proc *p)
 int
 tun_init(struct tun_softc *tp)
 {
-	struct ifnet	*ifp = &tp->tun_if;
+	struct ifnet	*ifp = &tp->sc_if;
 	struct ifaddr	*ifa;
 
 	TUNDEBUG(("%s: tun_init\n", ifp->if_xname));
 
 	ifp->if_flags |= IFF_UP | IFF_RUNNING;
 
-	tp->tun_flags &= ~(TUN_IASET|TUN_DSTADDR|TUN_BRDADDR);
+	tp->sc_flags &= ~(TUN_IASET|TUN_DSTADDR|TUN_BRDADDR);
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			struct sockaddr_in *sin;
 
 			sin = satosin(ifa->ifa_addr);
 			if (sin && sin->sin_addr.s_addr)
-				tp->tun_flags |= TUN_IASET;
+				tp->sc_flags |= TUN_IASET;
 
 			if (ifp->if_flags & IFF_POINTOPOINT) {
 				sin = satosin(ifa->ifa_dstaddr);
 				if (sin && sin->sin_addr.s_addr)
-					tp->tun_flags |= TUN_DSTADDR;
+					tp->sc_flags |= TUN_DSTADDR;
 			} else
-				tp->tun_flags &= ~TUN_DSTADDR;
+				tp->sc_flags &= ~TUN_DSTADDR;
 
 			if (ifp->if_flags & IFF_BROADCAST) {
 				sin = satosin(ifa->ifa_broadaddr);
 				if (sin && sin->sin_addr.s_addr)
-					tp->tun_flags |= TUN_BRDADDR;
+					tp->sc_flags |= TUN_BRDADDR;
 			} else
-				tp->tun_flags &= ~TUN_BRDADDR;
+				tp->sc_flags &= ~TUN_BRDADDR;
 		}
 #ifdef INET6
 		if (ifa->ifa_addr->sa_family == AF_INET6) {
@@ -499,15 +500,15 @@ tun_init(struct tun_softc *tp)
 
 			sin6 = satosin6(ifa->ifa_addr);
 			if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr))
-				tp->tun_flags |= TUN_IASET;
+				tp->sc_flags |= TUN_IASET;
 
 			if (ifp->if_flags & IFF_POINTOPOINT) {
 				sin6 = satosin6(ifa->ifa_dstaddr);
 				if (sin6 &&
 				    !IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr))
-					tp->tun_flags |= TUN_DSTADDR;
+					tp->sc_flags |= TUN_DSTADDR;
 			} else
-				tp->tun_flags &= ~TUN_DSTADDR;
+				tp->sc_flags &= ~TUN_DSTADDR;
 		}
 #endif /* INET6 */
 	}
@@ -545,8 +546,8 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFFLAGS:
 		break;
 	default:
-		if (tp->tun_flags & TUN_LAYER2)
-			error = ether_ioctl(ifp, &tp->arpcom, cmd, data);
+		if (tp->sc_flags & TUN_LAYER2)
+			error = ether_ioctl(ifp, &tp->sc_arpcom, cmd, data);
 		else
 			error = ENOTTY;
 	}
@@ -572,14 +573,14 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 
 	TUNDEBUG(("%s: tun_output\n", ifp->if_xname));
 
-	if ((tp->tun_flags & TUN_READY) != TUN_READY) {
+	if ((tp->sc_flags & TUN_READY) != TUN_READY) {
 		TUNDEBUG(("%s: not ready %#x\n", ifp->if_xname,
-		     tp->tun_flags));
+		     tp->sc_flags));
 		m_freem(m0);
 		return (EHOSTDOWN);
 	}
 
-	if (tp->tun_flags & TUN_LAYER2)
+	if (tp->sc_flags & TUN_LAYER2)
 		return (ether_output(ifp, m0, dst, rt));
 
 	M_PREPEND(m0, sizeof(*af), M_DONTWAIT);
@@ -594,7 +595,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #endif
 #ifdef PIPEX
 	if (pipex_enable && (m0 = pipex_output(m0, dst->sa_family,
-	    sizeof(u_int32_t), &tp->pipex_iface)) == NULL) {
+	    sizeof(u_int32_t), &tp->sc_pipex_iface)) == NULL) {
 		return (0);
 	}
 #endif
@@ -614,14 +615,14 @@ void
 tun_wakeup(struct tun_softc *tp)
 {
 	KERNEL_LOCK();
-	if (tp->tun_flags & TUN_RWAIT) {
-		tp->tun_flags &= ~TUN_RWAIT;
+	if (tp->sc_flags & TUN_RWAIT) {
+		tp->sc_flags &= ~TUN_RWAIT;
 		wakeup((caddr_t)tp);
 	}
-	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
-		csignal(tp->tun_pgid, SIGIO,
-		    tp->tun_siguid, tp->tun_sigeuid);
-	selwakeup(&tp->tun_rsel);
+	if (tp->sc_flags & TUN_ASYNC && tp->sc_pgid)
+		csignal(tp->sc_pgid, SIGIO,
+		    tp->sc_siguid, tp->sc_sigeuid);
+	selwakeup(&tp->sc_rsel);
 	KERNEL_UNLOCK();
 }
 
@@ -659,20 +660,20 @@ tun_dev_ioctl(struct tun_softc *tp, u_long cmd, caddr_t data, int flag,
 		tunp = (struct tuninfo *)data;
 		if (tunp->mtu < ETHERMIN || tunp->mtu > TUNMRU)
 			return (EINVAL);
-		if (tunp->type != tp->tun_if.if_type)
+		if (tunp->type != tp->sc_if.if_type)
 			return (EINVAL);
-		tp->tun_if.if_mtu = tunp->mtu;
-		tp->tun_if.if_flags =
+		tp->sc_if.if_mtu = tunp->mtu;
+		tp->sc_if.if_flags =
 		    (tunp->flags & TUN_IFF_FLAGS) |
-		    (tp->tun_if.if_flags & ~TUN_IFF_FLAGS);
-		tp->tun_if.if_baudrate = tunp->baudrate;
+		    (tp->sc_if.if_flags & ~TUN_IFF_FLAGS);
+		tp->sc_if.if_baudrate = tunp->baudrate;
 		break;
 	case TUNGIFINFO:
 		tunp = (struct tuninfo *)data;
-		tunp->mtu = tp->tun_if.if_mtu;
-		tunp->type = tp->tun_if.if_type;
-		tunp->flags = tp->tun_if.if_flags;
-		tunp->baudrate = tp->tun_if.if_baudrate;
+		tunp->mtu = tp->sc_if.if_mtu;
+		tunp->type = tp->sc_if.if_type;
+		tunp->flags = tp->sc_if.if_flags;
+		tunp->baudrate = tp->sc_if.if_baudrate;
 		break;
 #ifdef TUN_DEBUG
 	case TUNSDEBUG:
@@ -686,8 +687,8 @@ tun_dev_ioctl(struct tun_softc *tp, u_long cmd, caddr_t data, int flag,
 		switch (*(int *)data & (IFF_POINTOPOINT|IFF_BROADCAST)) {
 		case IFF_POINTOPOINT:
 		case IFF_BROADCAST:
-			tp->tun_if.if_flags &= ~TUN_IFF_FLAGS;
-			tp->tun_if.if_flags |= *(int *)data & TUN_IFF_FLAGS;
+			tp->sc_if.if_flags &= ~TUN_IFF_FLAGS;
+			tp->sc_if.if_flags |= *(int *)data & TUN_IFF_FLAGS;
 			break;
 		default:
 			return (EINVAL);
@@ -696,45 +697,45 @@ tun_dev_ioctl(struct tun_softc *tp, u_long cmd, caddr_t data, int flag,
 
 	case FIONBIO:
 		if (*(int *)data)
-			tp->tun_flags |= TUN_NBIO;
+			tp->sc_flags |= TUN_NBIO;
 		else
-			tp->tun_flags &= ~TUN_NBIO;
+			tp->sc_flags &= ~TUN_NBIO;
 		break;
 	case FIOASYNC:
 		if (*(int *)data)
-			tp->tun_flags |= TUN_ASYNC;
+			tp->sc_flags |= TUN_ASYNC;
 		else
-			tp->tun_flags &= ~TUN_ASYNC;
+			tp->sc_flags &= ~TUN_ASYNC;
 		break;
 	case FIONREAD:
-		*(int *)data = ifq_hdatalen(&tp->tun_if.if_snd);
+		*(int *)data = ifq_hdatalen(&tp->sc_if.if_snd);
 		break;
 	case TIOCSPGRP:
-		tp->tun_pgid = *(int *)data;
-		tp->tun_siguid = p->p_ucred->cr_ruid;
-		tp->tun_sigeuid = p->p_ucred->cr_uid;
+		tp->sc_pgid = *(int *)data;
+		tp->sc_siguid = p->p_ucred->cr_ruid;
+		tp->sc_sigeuid = p->p_ucred->cr_uid;
 		break;
 	case TIOCGPGRP:
-		*(int *)data = tp->tun_pgid;
+		*(int *)data = tp->sc_pgid;
 		break;
 	case SIOCGIFADDR:
-		if (!(tp->tun_flags & TUN_LAYER2))
+		if (!(tp->sc_flags & TUN_LAYER2))
 			return (EINVAL);
-		bcopy(tp->arpcom.ac_enaddr, data,
-		    sizeof(tp->arpcom.ac_enaddr));
+		bcopy(tp->sc_arpcom.ac_enaddr, data,
+		    sizeof(tp->sc_arpcom.ac_enaddr));
 		break;
 
 	case SIOCSIFADDR:
-		if (!(tp->tun_flags & TUN_LAYER2))
+		if (!(tp->sc_flags & TUN_LAYER2))
 			return (EINVAL);
-		bcopy(data, tp->arpcom.ac_enaddr,
-		    sizeof(tp->arpcom.ac_enaddr));
+		bcopy(data, tp->sc_arpcom.ac_enaddr,
+		    sizeof(tp->sc_arpcom.ac_enaddr));
 		break;
 	default:
 #ifdef PIPEX
-		if (!(tp->tun_flags & TUN_LAYER2)) {
+		if (!(tp->sc_flags & TUN_LAYER2)) {
 			int ret;
-			ret = pipex_ioctl(&tp->pipex_iface, cmd, data);
+			ret = pipex_ioctl(&tp->sc_pipex_iface, cmd, data);
 			return (ret);
 		}
 #endif
@@ -770,23 +771,23 @@ tapread(dev_t dev, struct uio *uio, int ioflag)
 int
 tun_dev_read(struct tun_softc *tp, struct uio *uio, int ioflag)
 {
-	struct ifnet		*ifp = &tp->tun_if;
+	struct ifnet		*ifp = &tp->sc_if;
 	struct mbuf		*m, *m0;
 	unsigned int		 ifidx;
 	int			 error = 0;
 	size_t			 len;
 
-	if ((tp->tun_flags & TUN_READY) != TUN_READY)
+	if ((tp->sc_flags & TUN_READY) != TUN_READY)
 		return (EHOSTDOWN);
 
 	ifidx = ifp->if_index;
-	tp->tun_flags &= ~TUN_RWAIT;
+	tp->sc_flags &= ~TUN_RWAIT;
 
 	do {
 		struct ifnet *ifp1;
 		int destroyed;
 
-		while ((tp->tun_flags & TUN_READY) != TUN_READY) {
+		while ((tp->sc_flags & TUN_READY) != TUN_READY) {
 			if ((error = tsleep_nsec(tp,
 			    (PZERO + 1)|PCATCH, "tunread", INFSLP)) != 0)
 				return (error);
@@ -799,9 +800,9 @@ tun_dev_read(struct tun_softc *tp, struct uio *uio, int ioflag)
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == NULL) {
-			if (tp->tun_flags & TUN_NBIO && ioflag & IO_NDELAY)
+			if (tp->sc_flags & TUN_NBIO && ioflag & IO_NDELAY)
 				return (EWOULDBLOCK);
-			tp->tun_flags |= TUN_RWAIT;
+			tp->sc_flags |= TUN_RWAIT;
 			if ((error = tsleep_nsec(tp,
 			    (PZERO + 1)|PCATCH, "tunread", INFSLP)) != 0)
 				return (error);
@@ -814,7 +815,7 @@ tun_dev_read(struct tun_softc *tp, struct uio *uio, int ioflag)
 		}
 	} while (m0 == NULL);
 
-	if (tp->tun_flags & TUN_LAYER2) {
+	if (tp->sc_flags & TUN_LAYER2) {
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
@@ -871,7 +872,7 @@ tun_dev_write(struct tun_softc *tp, struct uio *uio, int ioflag)
 	int			error = 0, tlen;
 	size_t			mlen;
 
-	ifp = &tp->tun_if;
+	ifp = &tp->sc_if;
 	TUNDEBUG(("%s: tunwrite\n", ifp->if_xname));
 
 	if (uio->uio_resid < ifp->if_hdrlen ||
@@ -897,7 +898,7 @@ tun_dev_write(struct tun_softc *tp, struct uio *uio, int ioflag)
 
 	top = NULL;
 	mp = &top;
-	if (tp->tun_flags & TUN_LAYER2) {
+	if (tp->sc_flags & TUN_LAYER2) {
 		/*
 		 * Pad so that IP header is correctly aligned
 		 * this is necessary for all strict aligned architectures.
@@ -936,7 +937,7 @@ tun_dev_write(struct tun_softc *tp, struct uio *uio, int ioflag)
 
 	top->m_pkthdr.len = tlen;
 
-	if (tp->tun_flags & TUN_LAYER2) {
+	if (tp->sc_flags & TUN_LAYER2) {
 		struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 
 		ml_enqueue(&ml, top);
@@ -1020,7 +1021,7 @@ tun_dev_poll(struct tun_softc *tp, int events, struct proc *p)
 	struct ifnet		*ifp;
 	unsigned int		 len;
 
-	ifp = &tp->tun_if;
+	ifp = &tp->sc_if;
 	revents = 0;
 	TUNDEBUG(("%s: tunpoll\n", ifp->if_xname));
 
@@ -1031,7 +1032,7 @@ tun_dev_poll(struct tun_softc *tp, int events, struct proc *p)
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
 			TUNDEBUG(("%s: tunpoll waiting\n", ifp->if_xname));
-			selrecord(p, &tp->tun_rsel);
+			selrecord(p, &tp->sc_rsel);
 		}
 	}
 	if (events & (POLLOUT | POLLWRNORM))
@@ -1072,16 +1073,16 @@ tun_dev_kqfilter(struct tun_softc *tp, struct knote *kn)
 	struct klist		*klist;
 	struct ifnet		*ifp;
 
-	ifp = &tp->tun_if;
+	ifp = &tp->sc_if;
 	TUNDEBUG(("%s: tunkqfilter\n", ifp->if_xname));
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &tp->tun_rsel.si_note;
+		klist = &tp->sc_rsel.si_note;
 		kn->kn_fop = &tunread_filtops;
 		break;
 	case EVFILT_WRITE:
-		klist = &tp->tun_wsel.si_note;
+		klist = &tp->sc_wsel.si_note;
 		kn->kn_fop = &tunwrite_filtops;
 		break;
 	default:
@@ -1106,7 +1107,7 @@ filt_tunrdetach(struct knote *kn)
 	tp = (struct tun_softc *)kn->kn_hook;
 	s = splhigh();
 	if (!(kn->kn_status & KN_DETACHED))
-		SLIST_REMOVE(&tp->tun_rsel.si_note, kn, knote, kn_selnext);
+		SLIST_REMOVE(&tp->sc_rsel.si_note, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -1122,7 +1123,7 @@ filt_tunread(struct knote *kn, long hint)
 	}
 
 	tp = (struct tun_softc *)kn->kn_hook;
-	ifp = &tp->tun_if;
+	ifp = &tp->sc_if;
 
 	kn->kn_data = ifq_hdatalen(&ifp->if_snd);
 
@@ -1138,7 +1139,7 @@ filt_tunwdetach(struct knote *kn)
 	tp = (struct tun_softc *)kn->kn_hook;
 	s = splhigh();
 	if (!(kn->kn_status & KN_DETACHED))
-		SLIST_REMOVE(&tp->tun_wsel.si_note, kn, knote, kn_selnext);
+		SLIST_REMOVE(&tp->sc_wsel.si_note, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -1154,7 +1155,7 @@ filt_tunwrite(struct knote *kn, long hint)
 	}
 
 	tp = (struct tun_softc *)kn->kn_hook;
-	ifp = &tp->tun_if;
+	ifp = &tp->sc_if;
 
 	kn->kn_data = ifp->if_hdrlen + ifp->if_hardmtu;
 
@@ -1175,11 +1176,11 @@ tun_start(struct ifnet *ifp)
 void
 tun_link_state(struct tun_softc *tp)
 {
-	struct ifnet *ifp = &tp->tun_if;
+	struct ifnet *ifp = &tp->sc_if;
 	int link_state = LINK_STATE_DOWN;
 
-	if (tp->tun_flags & TUN_OPEN) {
-		if (tp->tun_flags & TUN_LAYER2)
+	if (tp->sc_flags & TUN_OPEN) {
+		if (tp->sc_flags & TUN_LAYER2)
 			link_state = LINK_STATE_FULL_DUPLEX;
 		else
 			link_state = LINK_STATE_UP;
