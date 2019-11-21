@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.42 2019/11/11 05:48:46 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.43 2019/11/21 03:55:22 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -753,7 +753,7 @@ configure_gateway(struct imsg_configure_dfr *dfr, uint8_t rtm_type)
 	rtm.rtm_tableid = 0; /* XXX imsg->rdomain; */
 	rtm.rtm_index = dfr->if_index;
 	rtm.rtm_seq = ++rtm_seq;
-	rtm.rtm_priority = RTP_DEFAULT;
+	rtm.rtm_priority = RTP_NONE;
 	rtm.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK | RTA_LABEL;
 	rtm.rtm_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC | RTF_MPATH;
 
