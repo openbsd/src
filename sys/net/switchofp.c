@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.74 2019/11/21 06:54:25 akoshibe Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.75 2019/11/21 17:24:15 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -585,7 +585,7 @@ struct ofp_mpmsg_class ofp_mpmsg_table[] = {
 
 struct ofp_oxm_class {
 	uint8_t	 oxm_field;
-	uint8_t	 oxm_len; /* This length defined by speficication */
+	uint8_t	 oxm_len; /* This length defined by specification */
 	uint8_t	 oxm_flags;
 	int	(*oxm_match)(struct switch_flow_classify *,
 		    struct ofp_ox_match *);
