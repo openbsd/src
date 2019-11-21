@@ -1,4 +1,4 @@
-/* $OpenBSD: bcrypt_pbkdf.c,v 1.14 2019/11/21 16:07:24 tedu Exp $ */
+/* $OpenBSD: bcrypt_pbkdf.c,v 1.15 2019/11/21 16:13:39 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -164,6 +164,7 @@ bcrypt_pbkdf(const char *pass, size_t passlen, const uint8_t *salt, size_t saltl
 	/* zap */
 	explicit_bzero(&ctx, sizeof(ctx));
 	explicit_bzero(out, sizeof(out));
+	explicit_bzero(tmpout, sizeof(tmpout));
 
 	return 0;
 
