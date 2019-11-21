@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.h,v 1.29 2019/05/05 21:33:00 akoshibe Exp $	*/
+/*	$OpenBSD: switchd.h,v 1.30 2019/11/21 06:22:57 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -307,7 +307,7 @@ int		 ofp13_featuresrequest(struct switchd *,
 		    struct switch_connection *);
 struct ofp_flow_mod *
 		 ofp13_flowmod(struct switch_connection *, struct ibuf *,
-		    uint8_t, uint8_t, uint16_t, uint16_t, uint16_t);
+		    uint8_t);
 int		 ofp13_setconfig(struct switchd *, struct switch_connection *,
 		    uint16_t, uint16_t);
 int		 ofp13_tablemiss_sendctrl(struct switchd *,

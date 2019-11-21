@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.45 2019/05/05 21:33:00 akoshibe Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.46 2019/11/21 06:22:57 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -2149,8 +2149,7 @@ ofp13_setconfig(struct switchd *sc, struct switch_connection *con,
  */
 struct ofp_flow_mod *
 ofp13_flowmod(struct switch_connection *con, struct ibuf *ibuf,
-    uint8_t cmd, uint8_t table, uint16_t idleto, uint16_t hardto,
-    uint16_t prio)
+    uint8_t cmd)
 {
 	struct ofp_flow_mod		*fm;
 

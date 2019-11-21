@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp_common.c,v 1.10 2016/12/22 15:31:43 rzalamena Exp $	*/
+/*	$OpenBSD: ofp_common.c,v 1.11 2019/11/21 06:22:57 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -1298,8 +1298,7 @@ oflowmod_open(struct oflowmod_ctx *ctx, struct switch_connection *con,
 	}
 
 	/* uses defaults, can be changed by accessing fm later */
-	if ((fm = ofp13_flowmod(con, ibuf,
-	    OFP_FLOWCMD_ADD, 0, 0, 0, 0)) == NULL)
+	if ((fm = ofp13_flowmod(con, ibuf, OFP_FLOWCMD_ADD)) == NULL)
 		goto err;
 
 	ctx->ctx_fm = fm;
