@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.70 2019/11/20 15:50:41 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.71 2019/11/21 05:01:22 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1575,6 +1575,7 @@ show_status(enum uw_resolver_type type, pid_t pid)
 			    best, pid);
 		TAILQ_FOREACH(uw_forwarder, &autoconf_forwarder_list, entry) {
 			memset(&cfi, 0, sizeof(cfi));
+			cfi.if_index = uw_forwarder->if_index;
 			cfi.src = uw_forwarder->src;
 			/* no truncation, structs are in sync */
 			strlcpy(cfi.name, uw_forwarder->name,
@@ -1967,6 +1968,8 @@ add_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 				    sizeof(uw_forwarder->name)) >=
 				    sizeof(uw_forwarder->name))
 					fatalx("strlcpy");
+				uw_forwarder->if_index =
+				    rdns_proposal->if_index;
 				uw_forwarder->src = rdns_proposal->src;
 				TAILQ_INSERT_TAIL(&autoconf_forwarder_list,
 				    uw_forwarder, entry);
@@ -2075,6 +2078,7 @@ replace_dhcp_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 		if (strlcpy(uw_forwarder->name, ns, sizeof(uw_forwarder->name))
 		    >= sizeof(uw_forwarder->name))
 			fatalx("strlcpy");
+		uw_forwarder->if_index = rdns_proposal->if_index;
 		uw_forwarder->src = rdns_proposal->src;
 		TAILQ_INSERT_TAIL(&new_forwarder_list, uw_forwarder, entry);
 	}
@@ -2088,6 +2092,7 @@ replace_dhcp_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 		    sizeof(uw_forwarder->name)) >= sizeof(uw_forwarder->name))
 			fatalx("strlcpy");
 		uw_forwarder->src = tmp->src;
+		uw_forwarder->if_index = tmp->if_index;
 		TAILQ_INSERT_TAIL(&new_forwarder_list, uw_forwarder, entry);
 	    }
 
