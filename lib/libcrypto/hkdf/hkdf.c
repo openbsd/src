@@ -1,4 +1,4 @@
-/* $OpenBSD: hkdf.c,v 1.3 2019/11/21 20:01:06 tim Exp $ */
+/* $OpenBSD: hkdf.c,v 1.4 2019/11/21 20:02:20 tim Exp $ */
 /* Copyright (c) 2014, Google Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -32,10 +32,10 @@ HKDF(uint8_t *out_key, size_t out_len, const EVP_MD *digest,
 	size_t prk_len;
 
 	if (!HKDF_extract(prk, &prk_len, digest, secret, secret_len, salt,
-		salt_len))
+	    salt_len))
 		return 0;
 	if (!HKDF_expand(out_key, out_len, digest, prk, prk_len, info,
-		info_len))
+	    info_len))
 		return 0;
 
 	return 1;
@@ -50,8 +50,8 @@ HKDF_extract(uint8_t *out_key, size_t *out_len,
 	unsigned int len;
 
 	/*
-	 * If salt is not given, HashLength zeros are used. However, HMAC does that
-	 * internally already so we can ignore it.
+	 * If salt is not given, HashLength zeros are used. However, HMAC does
+	 * that internally already so we can ignore it.
 	 */
 	if (HMAC(digest, salt, salt_len, secret, secret_len, out_key, &len) ==
 	    NULL) {
@@ -91,7 +91,7 @@ HKDF_expand(uint8_t *out_key, size_t out_len,
 		size_t todo;
 
 		if (i != 0 && (!HMAC_Init_ex(&hmac, NULL, 0, NULL, NULL) ||
-			!HMAC_Update(&hmac, previous, digest_len)))
+		    !HMAC_Update(&hmac, previous, digest_len)))
 			goto out;
 
 		if (!HMAC_Update(&hmac, info, info_len) ||
