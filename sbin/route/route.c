@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.243 2019/11/16 13:19:09 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.244 2019/11/21 19:26:02 florian Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1321,7 +1321,15 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		bprintf(stdout, rtm->rtm_inits, metricnames);
 		pmsg_addrs(((char *)rtm + rtm->rtm_hdrlen),
 		    rtm->rtm_addrs & ~(RTA_STATIC | RTA_SEARCH | RTA_DNS));
-		printf("Static Routes:\n");
+
+		if(!(rtm->rtm_addrs & (RTA_STATIC | RTA_SEARCH | RTA_DNS)))
+			break;
+
+		printf("proposals: ");
+		bprintf(stdout, rtm->rtm_addrs & (RTA_STATIC | RTA_SEARCH |
+		    RTA_DNS), addrnames);
+		putchar('\n');
+
 		if (rtm->rtm_addrs & RTA_STATIC) {
 			char *next = (char *)rtm + rtm->rtm_hdrlen;
 			struct sockaddr	*sa, *rti_info[RTAX_MAX];
@@ -1330,12 +1338,10 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 			rtstatic = (struct sockaddr_rtstatic *)
 			    rti_info[RTAX_STATIC];
-			if (rtstatic != NULL) {
-				printf(" ");
+			if (rtstatic != NULL)
 				print_rtstatic(rtstatic);
-			}
 		}
-		printf("Domain search:\n");
+
 		if (rtm->rtm_addrs & RTA_SEARCH) {
 			char *next = (char *)rtm + rtm->rtm_hdrlen;
 			struct sockaddr	*sa, *rti_info[RTAX_MAX];
@@ -1344,12 +1350,10 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 			rtsearch = (struct sockaddr_rtsearch *)
 			    rti_info[RTAX_SEARCH];
-			if (rtsearch != NULL) {
-				printf(" ");
+			if (rtsearch != NULL)
 				print_rtsearch(rtsearch);
-			}
 		}
-		printf("Domain Name Servers:\n");
+
 		if (rtm->rtm_addrs & RTA_DNS) {
 			char *next = (char *)rtm + rtm->rtm_hdrlen;
 			struct sockaddr	*sa, *rti_info[RTAX_MAX];
@@ -1357,11 +1361,10 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 			sa = (struct sockaddr *)next;
 			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 			rtdns = (struct sockaddr_rtdns *)rti_info[RTAX_DNS];
-			if (rtdns != NULL) {
-				printf(" ");
+			if (rtdns != NULL)
 				print_rtdns(rtdns);
-			}
 		}
+		putchar('\n');
 		break;
 	default:
 		printf(", priority %u, table %u, if# %u, ",
@@ -1955,7 +1958,7 @@ print_rtdns(struct sockaddr_rtdns *rtdns)
 		    sizeof(rtdns->sr_dns));
 		return;
 	}
-
+	printf(" [");
 	switch (rtdns->sr_family) {
 	case AF_INET:
 		/* An array of IPv4 addresses. */
@@ -1966,7 +1969,8 @@ print_rtdns(struct sockaddr_rtdns *rtdns)
 		}
 		for (i = 0; i < servercnt; i++) {
 			memcpy(&server.s_addr, src, sizeof(server.s_addr));
-			printf("%s ", inet_ntoa(server));
+			printf("%s%s", inet_ntoa(server), i == servercnt - 1 ?
+			    "": ", ");
 			src += sizeof(struct in_addr);
 		}
 		break;
@@ -1979,14 +1983,14 @@ print_rtdns(struct sockaddr_rtdns *rtdns)
 		for (i = 0; i < servercnt; i++) {
 			memcpy(&in6, src, sizeof(in6));
 			src += sizeof(in6);
-			printf("%s ", inet_ntop(AF_INET6, &in6, ntopbuf,
-			    INET6_ADDRSTRLEN));
+			printf("%s%s", inet_ntop(AF_INET6, &in6, ntopbuf,
+			    INET6_ADDRSTRLEN), i == servercnt - 1 ? "": ", ");
 		}
 		break;
 	default:
 		break;
 	}
-	printf("\n");
+	printf("]");
 }
 
 /*
@@ -1999,7 +2003,7 @@ print_rtstatic(struct sockaddr_rtstatic *rtstatic)
 	struct in6_addr		 prefix;
 	struct in_addr		 dest, gateway;
 	size_t			 srclen, offset;
-	int			 bits, bytes, error;
+	int			 bits, bytes, error, first = 1;
 	uint8_t			 prefixlen;
 	unsigned char		*src = rtstatic->sr_static;
 	char			 ntoabuf[INET_ADDRSTRLEN];
@@ -2018,7 +2022,7 @@ print_rtstatic(struct sockaddr_rtstatic *rtstatic)
 		    sizeof(rtstatic->sr_static));
 		return;
 	}
-
+	printf(" [");
 	switch (rtstatic->sr_family) {
 	case AF_INET:
 		/* AF_INET -> RFC 3442 encoded static routes. */
@@ -2039,7 +2043,9 @@ print_rtstatic(struct sockaddr_rtstatic *rtstatic)
 			memcpy(&gateway.s_addr, src, sizeof(gateway.s_addr));
 			src += sizeof(gateway.s_addr);
 			srclen -= sizeof(gateway.s_addr);
-			printf("%s/%u %s ", ntoabuf, bits, inet_ntoa(gateway));
+			printf("%s%s/%u %s ", first ? "" : ", ", ntoabuf, bits,
+			    inet_ntoa(gateway));
+			first = 0;
 		}
 		break;
 	case AF_INET6:
@@ -2064,15 +2070,17 @@ print_rtstatic(struct sockaddr_rtstatic *rtstatic)
 				    gai_strerror(error));
 				return;
 			}
-			printf("%s/%u %s ", inet_ntop(AF_INET6, &prefix,
-			    ntopbuf, INET6_ADDRSTRLEN), prefixlen, hbuf);
+			printf("%s%s/%u %s ", first ? "" : ", ",
+			    inet_ntop(AF_INET6, &prefix, ntopbuf,
+			    INET6_ADDRSTRLEN), prefixlen, hbuf);
+			first = 0;
 		}
 		break;
 	default:
 		printf("<unknown address family %u>", rtstatic->sr_family);
 		break;
 	}
-	printf("\n");
+	printf("]");
 }
 
 /*
@@ -2097,7 +2105,7 @@ print_rtsearch(struct sockaddr_rtsearch *rtsearch)
 		return;
 	}
 
-	printf("%.*s\n", (int)srclen, src);
+	printf(" [%.*s]", (int)srclen, src);
 }
 
 /*
