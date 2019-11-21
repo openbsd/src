@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.239 2019/11/21 22:31:27 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.240 2019/11/21 23:22:14 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1323,7 +1323,7 @@ scsi_done(struct scsi_xfer *xs)
 {
 #ifdef SCSIDEBUG
 	if (xs->sc_link->flags & SDEV_DB1) {
-		if (xs->datalen && (xs->flags & SCSI_DATA_IN))
+		if (xs->datalen && ISSET(xs->flags, SCSI_DATA_IN))
 			scsi_show_mem(xs->data, min(64, xs->datalen));
 	}
 #endif /* SCSIDEBUG */
@@ -1497,7 +1497,7 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 	case SKEY_EQUAL:
 		break;
 	case SKEY_NOT_READY:
-		if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
+		if (ISSET(xs->flags, SCSI_IGNORE_NOT_READY))
 			return (0);
 		error = EIO;
 		if (xs->retries) {
@@ -1552,7 +1552,7 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 		}
 		break;
 	case SKEY_ILLEGAL_REQUEST:
-		if ((xs->flags & SCSI_IGNORE_ILLEGAL_REQUEST) != 0)
+		if (ISSET(xs->flags, SCSI_IGNORE_ILLEGAL_REQUEST))
 			return (0);
 		if (ASC_ASCQ(sense) == SENSE_MEDIUM_REMOVAL_PREVENTED)
 			return(EBUSY);
@@ -1574,7 +1574,7 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 		}
 		if ((link->flags & SDEV_REMOVABLE) != 0)
 			link->flags &= ~SDEV_MEDIA_LOADED;
-		if ((xs->flags & SCSI_IGNORE_MEDIA_CHANGE) != 0 ||
+		if (ISSET(xs->flags, SCSI_IGNORE_MEDIA_CHANGE) ||
 		    /* XXX Should reupload any transient state. */
 		    (link->flags & SDEV_REMOVABLE) == 0) {
 			return (scsi_delay(xs, 1));
@@ -1602,7 +1602,7 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 
 #ifndef SCSIDEBUG
 	/* SCSIDEBUG would mean it has already been printed. */
-	if (skey && (xs->flags & SCSI_SILENT) == 0)
+	if (skey && !ISSET(xs->flags, SCSI_SILENT))
 		scsi_print_sense(xs);
 #endif /* ~SCSIDEBUG */
 
@@ -2643,7 +2643,7 @@ scsi_show_xs(struct scsi_xfer *xs)
 	sc_print_addr(xs->sc_link);
 	printf("cmd (%p): ", xs->cmd);
 
-	if ((xs->flags & SCSI_RESET) == 0) {
+	if (!ISSET(xs->flags, SCSI_RESET)) {
 		while (i < xs->cmdlen) {
 			if (i)
 				printf(",");
@@ -2653,7 +2653,7 @@ scsi_show_xs(struct scsi_xfer *xs)
 	} else
 		printf("-RESET-\n");
 
-	if (xs->datalen && (xs->flags & SCSI_DATA_OUT))
+	if (xs->datalen && ISSET(xs->flags, SCSI_DATA_OUT))
 		scsi_show_mem(xs->data, min(64, xs->datalen));
 }
 

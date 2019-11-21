@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.231 2019/11/21 22:31:26 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.232 2019/11/21 23:22:14 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -2089,7 +2089,7 @@ cd_interpret_sense(struct scsi_xfer *xs)
 	 */
 	switch(skey) {
 	case SKEY_NOT_READY:
-		if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
+		if (ISSET(xs->flags, SCSI_IGNORE_NOT_READY))
 			return (0);
 		if (ASC_ASCQ(sense) == SENSE_NOT_READY_BECOMING_READY) {
 			SC_DEBUG(link, SDEV_DB1, ("not ready: busy (%#x)\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.54 2019/09/27 17:22:31 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.55 2019/11/21 23:22:14 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -775,7 +775,7 @@ ch_interpret_sense(struct scsi_xfer *xs)
 	 * all other cases are handled as per the default.
 	 */
 	case SKEY_NOT_READY:
-		if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
+		if (ISSET(xs->flags, SCSI_IGNORE_NOT_READY))
 			return (0);
 		switch (ASC_ASCQ(sense)) {
 		case SENSE_NOT_READY_BECOMING_READY:
