@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.73 2019/05/10 15:13:38 akoshibe Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.74 2019/11/21 06:54:25 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -449,7 +449,6 @@ int	swofp_mp_recv_port_stats(struct switch_softc *, struct mbuf *);
 int	swofp_mp_recv_port_desc(struct switch_softc *, struct mbuf *);
 int	swofp_mp_recv_group_desc(struct switch_softc *, struct mbuf *);
 
-#define OFP_ALIGNMENT 8
 /*
  * OXM (OpenFlow Extensible Match) structures appear in ofp_match structure
  * and ofp_instruction_{apply|write}_action structure.
