@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.72 2019/11/22 15:31:25 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.73 2019/11/22 20:09:09 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -961,6 +961,14 @@ new_static_dot_forwarders(void)
 	check_resolver(resolvers[UW_RES_DOT]);
 }
 
+static const struct {
+	const char *name;
+	const char *value;
+} options[] = {
+	{ "aggressive-nsec:", "yes" },
+	{ "fast-server-permil:", "950" }
+};
+
 struct uw_resolver *
 create_resolver(enum uw_resolver_type type, int oppdot)
 {
@@ -1035,13 +1043,16 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 			}
 		}
 
-		if((err = ub_ctx_set_option(res->ctx, "aggressive-nsec:",
-		    "yes")) != 0) {
-			ub_ctx_delete(res->ctx);
-			free(res);
-			log_warnx("error setting aggressive-nsec: yes: %s",
-			    ub_strerror(err));
-			return (NULL);
+		for (i = 0; i < nitems(options); i++) {
+			if ((err = ub_ctx_set_option(res->ctx, options[i].name,
+			    options[i].value)) != 0) {
+				ub_ctx_delete(res->ctx);
+				free(res);
+				log_warnx("error setting %s: %s: %s",
+				    options[i].name, options[i].value,
+				    ub_strerror(err));
+				return (NULL);
+			}
 		}
 
 		if (!log_getdebug()) {
