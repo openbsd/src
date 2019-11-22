@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.178 2019/11/09 17:16:39 florian Exp $	*/
+/*	$OpenBSD: route.h,v 1.179 2019/11/22 06:20:15 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -165,7 +165,8 @@ struct rtentry {
 #define RTP_PROPOSAL_STATIC	57
 #define RTP_PROPOSAL_DHCLIENT	58
 #define RTP_PROPOSAL_SLAAC	59
-#define RTP_PROPOSAL_SOLICIT	60	/* request reply of all RTM_PROPOSAL */
+#define RTP_PROPOSAL_UMB	60
+#define RTP_PROPOSAL_SOLICIT	61	/* request reply of all RTM_PROPOSAL */
 #define RTP_MAX		63	/* maximum priority */
 #define RTP_ANY		64	/* any of the above */
 #define RTP_MASK	0x7f
@@ -316,6 +317,12 @@ struct sockaddr_rtdns {
 	char		sr_dns[RTDNS_LEN];
 };
 
+static inline struct sockaddr *
+srtdnstosa(struct sockaddr_rtdns *sdns)
+{
+	return ((struct sockaddr *)(sdns));
+}
+
 #define	RTSTATIC_LEN	128
 
 struct sockaddr_rtstatic {
@@ -427,6 +434,7 @@ struct sockaddr *rt_plen2mask(struct rtentry *, struct sockaddr_in6 *);
 void	 rtm_send(struct rtentry *, int, int, unsigned int);
 void	 rtm_addr(int, struct ifaddr *);
 void	 rtm_miss(int, struct rt_addrinfo *, int, uint8_t, u_int, int, u_int);
+void	 rtm_proposal(struct ifnet *, struct rt_addrinfo *, int, uint8_t);
 int	 rt_setgate(struct rtentry *, struct sockaddr *, u_int);
 struct rtentry *rt_getll(struct rtentry *);
 

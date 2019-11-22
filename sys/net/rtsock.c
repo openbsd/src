@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.294 2019/11/06 15:18:53 florian Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.295 2019/11/22 06:20:15 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1814,6 +1814,30 @@ rtm_80211info(struct ifnet *ifp, struct if_ieee80211_data *ifie)
 
 	memcpy(&ifim->ifim_ifie, ifie, sizeof(ifim->ifim_ifie));
 	route_input(m, NULL, AF_UNSPEC);
+}
+
+/*
+ * This is used to generate routing socket messages indicating
+ * the address selection proposal from an interface.
+ */
+void
+rtm_proposal(struct ifnet *ifp, struct rt_addrinfo *rtinfo, int flags,
+    uint8_t prio)
+{
+	struct rt_msghdr	*rtm;
+	struct mbuf		*m;
+
+	m = rtm_msg1(RTM_PROPOSAL, rtinfo);
+	if (m == NULL)
+		return;
+	rtm = mtod(m, struct rt_msghdr *);
+	rtm->rtm_flags = RTF_DONE | flags;
+	rtm->rtm_priority = prio;
+	rtm->rtm_tableid = ifp->if_rdomain;
+	rtm->rtm_index = ifp->if_index;
+	rtm->rtm_addrs = rtinfo->rti_addrs;
+	
+	route_input(m, NULL, rtinfo->rti_info[RTAX_DNS]->sa_family);
 }
 
 /*
