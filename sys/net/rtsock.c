@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.295 2019/11/22 06:20:15 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.296 2019/11/22 15:28:05 florian Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1442,7 +1442,7 @@ rtm_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
 			/* more validation in rtm_validate_proposal */
 			if (sa->sa_len > sizeof(struct sockaddr_rtdns))
 				return (EINVAL);
-			if (sa->sa_len <= offsetof(struct sockaddr_rtdns,
+			if (sa->sa_len < offsetof(struct sockaddr_rtdns,
 			    sr_dns))
 				return (EINVAL);
 			switch (sa->sa_family) {
@@ -2166,8 +2166,7 @@ rtm_validate_proposal(struct rt_addrinfo *info)
 			return -1;
 		if (rtdns->sr_len > sizeof(*rtdns))
 			return -1;
-		if (rtdns->sr_len <=
-		    offsetof(struct sockaddr_rtdns, sr_dns))
+		if (rtdns->sr_len < offsetof(struct sockaddr_rtdns, sr_dns))
 			return -1;
 		switch (rtdns->sr_family) {
 		case AF_INET:

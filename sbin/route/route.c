@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.245 2019/11/22 06:24:09 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.246 2019/11/22 15:28:05 florian Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1950,7 +1950,7 @@ print_rtdns(struct sockaddr_rtdns *rtdns)
 	char		 ntopbuf[INET6_ADDRSTRLEN];
 
 	offset = offsetof(struct sockaddr_rtdns, sr_dns);
-	if (rtdns->sr_len <= offset) {
+	if (rtdns->sr_len < offset) {
 		printf("<invalid sr_len (%u <= %zu)>\n", rtdns->sr_len,
 		    offset);
 		return;
