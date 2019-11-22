@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.32 2019/11/21 05:01:22 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.33 2019/11/22 15:31:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -119,8 +119,7 @@ enum imsg_type {
 	IMSG_RECHECK_RESOLVERS,
 	IMSG_CONNECT_CAPTIVE_PORTAL_HOST,
 	IMSG_BLFD,
-	IMSG_ADD_DNS,
-	IMSG_REMOVE_DNS,
+	IMSG_REPLACE_DNS,
 };
 
 struct uw_forwarder {
