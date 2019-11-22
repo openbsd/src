@@ -3,11 +3,11 @@ Regression tests for system calls ported from NetBSD.
 Reimplement ATF with many hacks to adjust the tests as little as possible.
 
 Tests passing without source file adjustments:
-t_access	t_getpid	t_kill		t_msgsnd	t_sigaction
-t_bind		t_link		t_msync		t_socketpair	t_getgroups
-t_getsid	t_listen	t_pipe		t_truncate	t_getitimer
-t_getsockname	t_mkdir		t_sendrecv	t_umask		t_getlogin
-t_gettimeofday	t_msgctl	t_setuid	t_write
+t_access	t_getpid	t_link		t_msgsnd	t_sigaction
+t_bind		t_getsid	t_listen	t_msync		t_socketpair
+t_getgroups	t_getsockname	t_mkdir		t_pipe		t_truncate
+t_getitimer	t_gettimeofday	t_mkfifo	t_sendrecv	t_umask
+t_getlogin	t_kill		t_msgctl	t_setuid	t_write
 
 Tests passing after adjustments:
 t_chroot	- fchroot is not implemented
@@ -22,7 +22,6 @@ t_revoke 	- remove basic tests, revoke only on ttys supported
 t_select 	- remove sigset_t struct as it is int on OpenBSD
 
 Failing tests:
-t_mkfifo	- every test case fails now
 t_mlock		- wrong errno, succeeds where not expected, POSIX imprecise
 t_mmap		- ENOTBLK on test NetBSD is skipping, remove mmap_va0 test
 t_msgrcv	- msgrcv(id, &r, 3 - 1, 0x41, 004000) != -1

@@ -1,5 +1,5 @@
-/*	$OpenBSD: t_write.c,v 1.1.1.1 2019/11/19 19:57:04 bluhm Exp $	*/
-/* $NetBSD: t_write.c,v 1.6 2017/07/09 22:18:43 christos Exp $ */
+/*	$OpenBSD: t_write.c,v 1.2 2019/11/22 15:59:53 bluhm Exp $	*/
+/* $NetBSD: t_write.c,v 1.7 2019/07/16 17:29:18 martin Exp $ */
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_write.c,v 1.6 2017/07/09 22:18:43 christos Exp $");
+__RCSID("$NetBSD: t_write.c,v 1.7 2019/07/16 17:29:18 martin Exp $");
 
 #include <sys/uio.h>
 #include <sys/mman.h>
@@ -176,7 +176,7 @@ ATF_TC_BODY(write_ret, tc)
 	size_t i, j;
 	int fd;
 
-	fd = open(path, O_WRONLY | O_CREAT);
+	fd = open(path, O_WRONLY | O_CREAT, 0600);
 	ATF_REQUIRE(fd >= 0);
 
 	(void)memset(buf, 'x', sizeof(buf));
