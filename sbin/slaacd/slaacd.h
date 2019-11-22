@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.25 2019/11/21 19:27:33 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.26 2019/11/22 15:30:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -63,7 +63,6 @@ enum imsg_type {
 	IMSG_UPDATE_ADDRESS,
 	IMSG_UPDATE_LINK_STATE,
 	IMSG_PROPOSE_RDNS,
-	IMSG_WITHDRAW_RDNS,
 	IMSG_REPROPOSE_RDNS,
 #endif	/* SMALL */
 	IMSG_CTL_SEND_SOLICITATION,
@@ -197,9 +196,9 @@ struct imsg_link_state {
 };
 
 struct imsg_propose_rdns {
-	uint32_t		 if_index;
-	int			 rdns_count;
-	struct sockaddr_in6	 rdns[MAX_RDNS_COUNT];
+	uint32_t		if_index;
+	int			rdns_count;
+	struct in6_addr		rdns[MAX_RDNS_COUNT];
 };
 
 #endif	/* SMALL */

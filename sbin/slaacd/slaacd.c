@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.43 2019/11/21 03:55:22 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.44 2019/11/22 15:30:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -69,7 +69,7 @@ void	configure_gateway(struct imsg_configure_dfr *, uint8_t);
 void	add_gateway(struct imsg_configure_dfr *);
 void	delete_gateway(struct imsg_configure_dfr *);
 #ifndef	SMALL
-void	send_rdns_proposal(struct imsg_propose_rdns *, uint8_t);
+void	send_rdns_proposal(struct imsg_propose_rdns *);
 #endif	/* SMALL */
 int	get_soiikey(uint8_t *);
 
@@ -547,15 +547,11 @@ main_dispatch_engine(int fd, short event, void *bula)
 				    "length: %lu", __func__,
 				    IMSG_DATA_SIZE(imsg));
 			memcpy(&rdns, imsg.data, sizeof(rdns));
-			send_rdns_proposal(&rdns, RTF_UP);
-			break;
-		case IMSG_WITHDRAW_RDNS:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(rdns))
-				fatalx("%s: IMSG_WITHDRAW_RDNS wrong "
-				    "length: %lu", __func__,
-				    IMSG_DATA_SIZE(imsg));
-			memcpy(&rdns, imsg.data, sizeof(rdns));
-			send_rdns_proposal(&rdns, 0);
+			if ((2 + rdns.rdns_count * sizeof(struct in6_addr)) >
+			    sizeof(struct sockaddr_rtdns))
+				fatalx("%s: rdns_count too big: %d", __func__,
+				    rdns.rdns_count);
+			send_rdns_proposal(&rdns);
 			break;
 #endif	/* SMALL */
 		default:
@@ -834,7 +830,7 @@ delete_gateway(struct imsg_configure_dfr *dfr)
 
 #ifndef	SMALL
 void
-send_rdns_proposal(struct imsg_propose_rdns *rdns, uint8_t rtm_flags)
+send_rdns_proposal(struct imsg_propose_rdns *rdns)
 {
 	struct rt_msghdr		 rtm;
 	struct sockaddr_rtdns		 rtdns;
@@ -852,7 +848,7 @@ send_rdns_proposal(struct imsg_propose_rdns *rdns, uint8_t rtm_flags)
 	rtm.rtm_seq = ++rtm_seq;
 	rtm.rtm_priority = RTP_PROPOSAL_SLAAC;
 	rtm.rtm_addrs = RTA_DNS;
-	rtm.rtm_flags = rtm_flags;
+	rtm.rtm_flags = RTF_UP;
 
 	iov[iovcnt].iov_base = &rtm;
 	iov[iovcnt++].iov_len = sizeof(rtm);
