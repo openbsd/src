@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.244 2019/11/21 19:26:02 florian Exp $	*/
+/*	$OpenBSD: route.c,v 1.245 2019/11/22 06:24:09 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1288,6 +1288,9 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 			break;
 		case RTP_PROPOSAL_SLAAC:
 			printf("slaac");
+			break;
+		case RTP_PROPOSAL_UMB:
+			printf("umb");
 			break;
 		case RTP_PROPOSAL_SOLICIT:
 			printf("solicit");
