@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.170 2019/11/19 14:35:08 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.171 2019/11/22 15:32:42 florian Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -1052,16 +1052,20 @@ priv_tell_unwind(int index, int routefd, int rdomain, struct imsg_tell_unwind *i
 	rtm.rtm_seq = arc4random();
 	rtm.rtm_priority = RTP_PROPOSAL_DHCLIENT;
 	rtm.rtm_addrs = RTA_DNS;
-	rtm.rtm_flags = imsg->rtm_flags;
+	rtm.rtm_flags = RTF_UP;
 
 	iov[iovcnt].iov_base = &rtm;
 	iov[iovcnt++].iov_len = sizeof(rtm);
 
 	memset(&rtdns, 0, sizeof(rtdns));
 	rtdns.sr_family = AF_INET;
-	rtdns.sr_len = 2 + imsg->unwind_info.count * sizeof(in_addr_t);
-	memcpy(rtdns.sr_dns, imsg->unwind_info.ns, imsg->unwind_info.count *
-	    sizeof(in_addr_t));
+
+	if (imsg->rtm_flags == RTF_UP) {
+		rtdns.sr_len = 2 + imsg->unwind_info.count * sizeof(in_addr_t);
+		memcpy(rtdns.sr_dns, imsg->unwind_info.ns,
+		    imsg->unwind_info.count * sizeof(in_addr_t));
+	} else
+		rtdns.sr_len = 2;
 
 	iov[iovcnt].iov_base = &rtdns;
 	iov[iovcnt++].iov_len = sizeof(rtdns);
