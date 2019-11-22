@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.28 2019/10/10 09:56:32 claudio Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.29 2019/11/22 06:22:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -157,6 +157,7 @@ int		 umb_decode_connect_info(struct umb_softc *, void *, int);
 void		 umb_clear_addr(struct umb_softc *);
 int		 umb_add_inet_config(struct umb_softc *, struct in_addr, u_int,
 		    struct in_addr);
+void		 umb_send_inet_proposal(struct umb_softc *, int);
 int		 umb_decode_ip_configuration(struct umb_softc *, void *, int);
 void		 umb_rx(struct umb_softc *);
 void		 umb_rxeof(struct usbd_xfer *, void *, usbd_status);
@@ -1601,6 +1602,7 @@ umb_clear_addr(struct umb_softc *sc)
 {
 	struct ifnet *ifp = GET_IFP(sc);
 
+	umb_send_inet_proposal(sc, 0);
 	NET_LOCK();
 	in_ifdetach(ifp);
 	NET_UNLOCK();
@@ -1680,6 +1682,30 @@ umb_add_inet_config(struct umb_softc *sc, struct in_addr ip, u_int prefixlen,
 	return rv;
 }
 
+void
+umb_send_inet_proposal(struct umb_softc *sc, int flag)
+{
+	struct ifnet *ifp = GET_IFP(sc);
+	struct sockaddr_rtdns rtdns;
+	struct rt_addrinfo info;
+	int i;
+
+	memset(&rtdns, 0, sizeof(rtdns));
+	memset(&info, 0, sizeof(info));
+
+	for (i = 0; i < UMB_MAX_DNSSRV; i++) {
+		if (sc->sc_info.ipv4dns[i].s_addr == INADDR_ANY)
+			break;
+		memcpy(rtdns.sr_dns + i * sizeof(struct in_addr),
+		    &sc->sc_info.ipv4dns[i], sizeof(struct in_addr));
+	}
+	rtdns.sr_family = AF_INET;
+	rtdns.sr_len = 2 + i * sizeof(struct in_addr);
+	info.rti_info[RTAX_DNS] = srtdnstosa(&rtdns);
+
+	rtm_proposal(ifp, &info, flag, RTP_PROPOSAL_UMB);
+}
+
 int
 umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 {
@@ -1752,6 +1778,7 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 				    &addr, str, sizeof(str)));
 			}
 		}
+		umb_send_inet_proposal(sc, RTF_UP);
 	}
 
 	if ((avail & MBIM_IPCONF_HAS_MTUINFO)) {
