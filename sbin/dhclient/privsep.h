@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.60 2019/11/19 14:35:08 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.61 2019/11/22 22:45:52 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -55,7 +55,6 @@ struct imsg_revoke {
 
 struct imsg_tell_unwind {
 	struct unwind_info	unwind_info;
-	uint8_t			rtm_flags;
 };
 
 void	dispatch_imsg(char *, int, int, int, struct imsgbuf *);

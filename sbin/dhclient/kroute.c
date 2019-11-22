@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.171 2019/11/22 15:32:42 florian Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.172 2019/11/22 22:45:52 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -1012,20 +1012,18 @@ priv_revoke_proposal(char *name, int ioctlfd, struct imsg_revoke *imsg,
  * [priv_]tell_unwind sends out inforation unwind may be intereted in.
  */
 void
-tell_unwind(struct unwind_info *unwind_info, int rtm_flags, int ifi_flags)
+tell_unwind(struct unwind_info *unwind_info, int ifi_flags)
 {
 	struct	imsg_tell_unwind	 imsg;
 	int				 rslt;
 
-	if (unwind_info == NULL ||
-	    (ifi_flags & IFI_AUTOCONF) == 0 ||
+	if ((ifi_flags & IFI_AUTOCONF) == 0 ||
 	    (ifi_flags & IFI_IN_CHARGE) == 0)
 		return;
 
 	memset(&imsg, 0, sizeof(imsg));
-
-	imsg.rtm_flags = rtm_flags;
-	memcpy(&imsg.unwind_info, unwind_info, sizeof(imsg.unwind_info));
+	if (unwind_info != NULL)
+		memcpy(&imsg.unwind_info, unwind_info, sizeof(imsg.unwind_info));
 
 	rslt = imsg_compose(unpriv_ibuf, IMSG_TELL_UNWIND, 0, 0, -1, &imsg,
 	    sizeof(imsg));
@@ -1060,12 +1058,9 @@ priv_tell_unwind(int index, int routefd, int rdomain, struct imsg_tell_unwind *i
 	memset(&rtdns, 0, sizeof(rtdns));
 	rtdns.sr_family = AF_INET;
 
-	if (imsg->rtm_flags == RTF_UP) {
-		rtdns.sr_len = 2 + imsg->unwind_info.count * sizeof(in_addr_t);
-		memcpy(rtdns.sr_dns, imsg->unwind_info.ns,
-		    imsg->unwind_info.count * sizeof(in_addr_t));
-	} else
-		rtdns.sr_len = 2;
+	rtdns.sr_len = 2 + imsg->unwind_info.count * sizeof(in_addr_t);
+	memcpy(rtdns.sr_dns, imsg->unwind_info.ns,
+	    imsg->unwind_info.count * sizeof(in_addr_t));
 
 	iov[iovcnt].iov_base = &rtdns;
 	iov[iovcnt++].iov_len = sizeof(rtdns);

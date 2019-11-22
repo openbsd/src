@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.653 2019/11/19 14:35:07 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.654 2019/11/22 22:45:52 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -351,7 +351,7 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 	case RTM_PROPOSAL:
 		if (rtm->rtm_priority == RTP_PROPOSAL_SOLICIT) {
 			if (quit == 0 && ifi->active != NULL)
-				tell_unwind(ifi->unwind_info, RTF_UP, ifi->flags);
+				tell_unwind(ifi->unwind_info, ifi->flags);
 			return;
 		}
 		if (rtm->rtm_index != ifi->index ||
@@ -388,7 +388,7 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
  		if ((ifm->ifm_xflags & IFXF_AUTOCONF4) == 0 &&
 		    (ifi->flags & IFI_AUTOCONF) != 0) {
 			/* Tell unwind when IFI_AUTOCONF is cleared. */
-			tell_unwind(ifi->unwind_info, 0, ifi->flags);
+			tell_unwind(NULL, ifi->flags);
 			ifi->flags &= ~IFI_AUTOCONF;
 		} else if ((ifm->ifm_xflags & IFXF_AUTOCONF4) != 0 &&
 		    (ifi->flags & IFI_AUTOCONF) == 0) {
@@ -987,18 +987,18 @@ bind_lease(struct interface_info *ifi)
 	unwind_info = lease_as_unwind_info(ifi->active);
 	if (ifi->unwind_info == NULL && unwind_info != NULL) {
 		ifi->unwind_info = unwind_info;
-		tell_unwind(ifi->unwind_info, RTF_UP, ifi->flags);
+		tell_unwind(ifi->unwind_info, ifi->flags);
 	} else if (ifi->unwind_info != NULL && unwind_info == NULL) {
-		tell_unwind(ifi->unwind_info, 0, ifi->flags);
+		tell_unwind(NULL, ifi->flags);
 		free(ifi->unwind_info);
 		ifi->unwind_info = NULL;
 	} else if (ifi->unwind_info != NULL && unwind_info != NULL) {
 		if (memcmp(ifi->unwind_info, unwind_info,
 		    sizeof(*ifi->unwind_info)) != 0) {
-			tell_unwind(ifi->unwind_info, 0, ifi->flags);
+			tell_unwind(NULL, ifi->flags);
 			free(ifi->unwind_info);
 			ifi->unwind_info = unwind_info;
-			tell_unwind(ifi->unwind_info, RTF_UP, ifi->flags);
+			tell_unwind(ifi->unwind_info, ifi->flags);
 		}
 	}
 
@@ -2762,7 +2762,7 @@ release_lease(struct interface_info *ifi)
 	make_release(ifi, ifi->active);
 	send_release(ifi);
 
-	tell_unwind(ifi->unwind_info, 0, ifi->flags);
+	tell_unwind(NULL, ifi->flags);
 
 	revoke_proposal(ifi->configured);
 	imsg_flush(unpriv_ibuf);
