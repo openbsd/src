@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.232 2019/11/21 23:22:14 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.233 2019/11/22 15:34:29 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -355,7 +355,7 @@ cdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		link->flags |= SDEV_MEDIA_LOADED;
 		if (cd_get_parms(sc, (rawopen ? SCSI_SILENT : 0) |
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE)) {
-			link->flags &= ~SDEV_MEDIA_LOADED;
+			CLR(link->flags, SDEV_MEDIA_LOADED);
 			error = ENXIO;
 			goto bad;
 		}
@@ -379,7 +379,7 @@ bad:
 		scsi_prevent(link, PR_ALLOW,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
 		    SCSI_SILENT);
-		link->flags &= ~(SDEV_OPEN | SDEV_MEDIA_LOADED);
+		CLR(link->flags, SDEV_OPEN | SDEV_MEDIA_LOADED);
 	}
 
 	disk_unlock(&sc->sc_dk);
@@ -415,12 +415,12 @@ cdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		scsi_prevent(sc->sc_link, PR_ALLOW,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY |
 		    SCSI_SILENT);
-		sc->sc_link->flags &= ~(SDEV_OPEN | SDEV_MEDIA_LOADED);
+		CLR(sc->sc_link->flags, SDEV_OPEN | SDEV_MEDIA_LOADED);
 
 		if (sc->sc_link->flags & SDEV_EJECTING) {
 			scsi_start(sc->sc_link, SSS_STOP|SSS_LOEJ, 0);
 
-			sc->sc_link->flags &= ~SDEV_EJECTING;
+			CLR(sc->sc_link->flags, SDEV_EJECTING);
 		}
 
 		timeout_del(&sc->sc_timeout);
@@ -1064,7 +1064,7 @@ close_tray:
 		sc->sc_link->flags |= (SDEV_DB1 | SDEV_DB2);
 		break;
 	case CDIOCCLRDEBUG:
-		sc->sc_link->flags &= ~(SDEV_DB1 | SDEV_DB2);
+		CLR(sc->sc_link->flags, SDEV_DB1 | SDEV_DB2);
 		break;
 	case CDIOCRESET:
 	case SCIOCRESET:
@@ -1319,7 +1319,7 @@ cd_set_pa_immed(struct cd_softc *sc, int flags)
 
 	if (error == 0) {
 		oflags = audio->flags;
-		audio->flags &= ~CD_PA_SOTC;
+		CLR(audio->flags, CD_PA_SOTC);
 		audio->flags |= CD_PA_IMMED;
 		if (audio->flags != oflags) {
 			if (big)
@@ -2234,11 +2234,11 @@ cd_eject(void)
 		scsi_prevent(sc->sc_link, PR_ALLOW,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY |
 		    SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE);
-		sc->sc_link->flags &= ~SDEV_MEDIA_LOADED;
+		CLR(sc->sc_link->flags, SDEV_MEDIA_LOADED);
 
 		scsi_start(sc->sc_link, SSS_STOP|SSS_LOEJ, 0);
 
-		sc->sc_link->flags &= ~SDEV_EJECTING;
+		CLR(sc->sc_link->flags, SDEV_EJECTING);
 	}
 	disk_unlock(&sc->sc_dk);
 

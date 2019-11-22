@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.55 2019/11/21 23:22:14 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.56 2019/11/22 15:34:29 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -241,7 +241,7 @@ chopen(dev_t dev, int flags, int fmt, struct proc *p)
 	return (0);
 
 bad:
-	sc->sc_link->flags &= ~SDEV_OPEN;
+	CLR(sc->sc_link->flags, SDEV_OPEN);
 	return (error);
 }
 
@@ -250,7 +250,7 @@ chclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
 
-	sc->sc_link->flags &= ~SDEV_OPEN;
+	CLR(sc->sc_link->flags, SDEV_OPEN);
 	return (0);
 }
 

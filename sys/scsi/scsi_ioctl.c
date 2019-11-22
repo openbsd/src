@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.58 2019/11/21 22:31:27 krw Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.59 2019/11/22 15:34:29 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -336,7 +336,7 @@ scsi_do_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 		int level = *((int *)addr);
 
 		SC_DEBUG(link, SDEV_DB3, ("debug set to %d\n", level));
-		link->flags &= ~SDEV_DBX; /* clear debug bits */
+		CLR(link->flags, SDEV_DBX); /* clear debug bits */
 		if (level & 1)
 			link->flags |= SDEV_DB1;
 		if (level & 2)

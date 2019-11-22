@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.240 2019/11/21 23:22:14 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.241 2019/11/22 15:34:29 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1519,7 +1519,7 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 			case SENSE_NOMEDIUM_TOPEN:
 			case SENSE_NOMEDIUM_LOADABLE:
 			case SENSE_NOMEDIUM_AUXMEM:
-				link->flags &= ~SDEV_MEDIA_LOADED;
+				CLR(link->flags, SDEV_MEDIA_LOADED);
 				error = ENOMEDIUM;
 				break;
 			default:
@@ -1534,7 +1534,7 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 		case SENSE_NOMEDIUM_TOPEN:
 		case SENSE_NOMEDIUM_LOADABLE:
 		case SENSE_NOMEDIUM_AUXMEM:
-			link->flags &= ~SDEV_MEDIA_LOADED;
+			CLR(link->flags, SDEV_MEDIA_LOADED);
 			error = ENOMEDIUM;
 			break;
 		case SENSE_BAD_MEDIUM:
@@ -1573,7 +1573,7 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 			break;
 		}
 		if ((link->flags & SDEV_REMOVABLE) != 0)
-			link->flags &= ~SDEV_MEDIA_LOADED;
+			CLR(link->flags, SDEV_MEDIA_LOADED);
 		if (ISSET(xs->flags, SCSI_IGNORE_MEDIA_CHANGE) ||
 		    /* XXX Should reupload any transient state. */
 		    (link->flags & SDEV_REMOVABLE) == 0) {

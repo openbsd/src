@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.58 2019/09/27 17:22:31 krw Exp $ */
+/*	$OpenBSD: safte.c,v 1.59 2019/11/22 15:34:29 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -449,7 +449,7 @@ safte_read_encstat(void *arg)
 
 	for (i = 0; i < sc->sc_nsensors; i++) {
 		s = &sc->sc_sensors[i];
-		s->se_sensor.flags &= ~SENSOR_FUNKNOWN;
+		CLR(s->se_sensor.flags, SENSOR_FUNKNOWN);
 
 		DPRINTF(("%s: %d type: %d field: 0x%02x\n", DEVNAME(sc), i,
 		    s->se_type, *s->se_field));
