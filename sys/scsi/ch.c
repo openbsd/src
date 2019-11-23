@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.56 2019/11/22 15:34:29 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.57 2019/11/23 01:16:05 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -185,7 +185,7 @@ chopen(dev_t dev, int flags, int fmt, struct proc *p)
 	if (sc->sc_link->flags & SDEV_OPEN)
 		return (EBUSY);
 
-	sc->sc_link->flags |= SDEV_OPEN;
+	SET(sc->sc_link->flags, SDEV_OPEN);
 
 	/*
 	 * Absorb any unit attention errors. We must notice
@@ -372,7 +372,7 @@ ch_move(struct ch_softc *sc, struct changer_move *cm)
 	_lto2b(fromelem, cmd->src);
 	_lto2b(toelem, cmd->dst);
 	if (cm->cm_flags & CM_INVERT)
-		cmd->flags |= MOVE_MEDIUM_INVERT;
+		SET(cmd->flags, MOVE_MEDIUM_INVERT);
 
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
@@ -432,9 +432,9 @@ ch_exchange(struct ch_softc *sc, struct changer_exchange *ce)
 	_lto2b(dst1, cmd->fdst);
 	_lto2b(dst2, cmd->sdst);
 	if (ce->ce_flags & CE_INVERT1)
-		cmd->flags |= EXCHANGE_MEDIUM_INV1;
+		SET(cmd->flags, EXCHANGE_MEDIUM_INV1);
 	if (ce->ce_flags & CE_INVERT2)
-		cmd->flags |= EXCHANGE_MEDIUM_INV2;
+		SET(cmd->flags, EXCHANGE_MEDIUM_INV2);
 
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
@@ -478,7 +478,7 @@ ch_position(struct ch_softc *sc, struct changer_position *cp)
 	_lto2b(sc->sc_picker, cmd->tea);
 	_lto2b(dst, cmd->dst);
 	if (cp->cp_flags & CP_INVERT)
-		cmd->flags |= POSITION_TO_ELEMENT_INVERT;
+		SET(cmd->flags, POSITION_TO_ELEMENT_INVERT);
 
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
@@ -644,7 +644,7 @@ ch_getelemstatus(struct ch_softc *sc, int first, int count, caddr_t data,
 	_lto2b(count, cmd->count);
 	_lto3b(datalen, cmd->len);
 	if (voltag)
-		cmd->byte2 |= READ_ELEMENT_STATUS_VOLTAG;
+		SET(cmd->byte2, READ_ELEMENT_STATUS_VOLTAG);
 
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
@@ -721,7 +721,7 @@ ch_get_params(struct ch_softc *sc, int flags)
 		sc->sc_exchangemask[from] = exchanges[from];
 	}
 
-	sc->sc_link->flags |= SDEV_MEDIA_LOADED;
+	SET(sc->sc_link->flags, SDEV_MEDIA_LOADED);
 	dma_free(data, sizeof(*data));
 	return (0);
 }

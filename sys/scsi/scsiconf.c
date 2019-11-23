@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.218 2019/11/09 23:41:22 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.219 2019/11/23 01:16:05 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -879,7 +879,7 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	 * just add NOTAGS, NOWIDE and NOSYNC.
 	 */
 	devquirks = link->quirks;
-	link->quirks |= SDEV_NOSYNC | SDEV_NOWIDE | SDEV_NOTAGS;
+	SET(link->quirks, SDEV_NOSYNC | SDEV_NOWIDE | SDEV_NOTAGS);
 
 	/*
 	 * Ask the device what it is
@@ -889,7 +889,7 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	    ((1U << sb->sc_dev.dv_unit) & scsidebug_buses)) &&
 	    ((target < 32) && ((1U << target) & scsidebug_targets)) &&
 	    ((lun < 32) && ((1U << lun) & scsidebug_luns)))
-		link->flags |= scsidebug_level;
+		SET(link->flags, scsidebug_level);
 #endif /* SCSIDEBUG */
 
 	if (lun == 0) {
@@ -968,7 +968,7 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	    nitems(scsi_quirk_patterns),
 	    sizeof(scsi_quirk_patterns[0]), &priority);
 	if (priority != 0)
-		link->quirks |= finger->quirks;
+		SET(link->quirks, finger->quirks);
 
 	switch (SID_ANSII_REV(inqbuf)) {
 	case SCSI_REV_0:
@@ -1007,7 +1007,7 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	 * note what BASIC type of device it is
 	 */
 	if ((inqbuf->dev_qual2 & SID_REMOVABLE) != 0)
-		link->flags |= SDEV_REMOVABLE;
+		SET(link->flags, SDEV_REMOVABLE);
 
 	sa.sa_sc_link = link;
 	sa.sa_inqbuf = &link->inqdata;

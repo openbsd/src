@@ -1,4 +1,4 @@
-/*	$OpenBSD: uk.c,v 1.20 2019/11/22 15:34:29 krw Exp $	*/
+/*	$OpenBSD: uk.c,v 1.21 2019/11/23 01:16:06 krw Exp $	*/
 /*	$NetBSD: uk.c,v 1.15 1996/03/17 00:59:57 thorpej Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ ukopen(dev_t dev, int flag, int fmt, struct proc *p)
 		return (EBUSY);
 	}
 
-	link->flags |= SDEV_OPEN;
+	SET(link->flags, SDEV_OPEN);
 
 	SC_DEBUG(link, SDEV_DB3, ("open complete\n"));
 

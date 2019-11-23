@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.59 2019/11/22 15:34:29 krw Exp $ */
+/*	$OpenBSD: safte.c,v 1.60 2019/11/23 01:16:05 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -141,7 +141,7 @@ safte_match(struct device *parent, void *match, void *aux)
 	memset(inqbuf->extra, ' ', sizeof(inqbuf->extra));
 
 	if (cold)
-		flags |= SCSI_AUTOCONF;
+		SET(flags, SCSI_AUTOCONF);
 	xs = scsi_xs_get(sa->sa_sc_link, flags | SCSI_DATA_IN);
 	if (xs == NULL)
 		goto fail;
@@ -273,7 +273,7 @@ safte_read_config(struct safte_softc *sc)
 		return (1);
 
 	if (cold)
-		flags |= SCSI_AUTOCONF;
+		SET(flags, SCSI_AUTOCONF);
 	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
 	if (xs == NULL) {
 		error = 1;
@@ -287,7 +287,7 @@ safte_read_config(struct safte_softc *sc)
 
 	cmd = (struct safte_readbuf_cmd *)xs->cmd;
 	cmd->opcode = READ_BUFFER;
-	cmd->flags |= SAFTE_RD_MODE;
+	SET(cmd->flags, SAFTE_RD_MODE);
 	cmd->bufferid = SAFTE_RD_CONFIG;
 	cmd->length = htobe16(sizeof(*config));
 
@@ -421,7 +421,7 @@ safte_read_encstat(void *arg)
 	rw_enter_write(&sc->sc_lock);
 
 	if (cold)
-		flags |= SCSI_AUTOCONF;
+		SET(flags, SCSI_AUTOCONF);
 	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
 	if (xs == NULL) {
 		rw_exit_write(&sc->sc_lock);
@@ -435,7 +435,7 @@ safte_read_encstat(void *arg)
 
 	cmd = (struct safte_readbuf_cmd *)xs->cmd;
 	cmd->opcode = READ_BUFFER;
-	cmd->flags |= SAFTE_RD_MODE;
+	SET(cmd->flags, SAFTE_RD_MODE);
 	cmd->bufferid = SAFTE_RD_ENCSTAT;
 	cmd->length = htobe16(sc->sc_encbuflen);
 
@@ -470,7 +470,7 @@ safte_read_encstat(void *arg)
 			default:
 				s->se_sensor.value = 0;
 				s->se_sensor.status = SENSOR_S_UNKNOWN;
-				s->se_sensor.flags |= SENSOR_FUNKNOWN;
+				SET(s->se_sensor.flags, SENSOR_FUNKNOWN);
 				break;
 			}
 			break;
@@ -498,7 +498,7 @@ safte_read_encstat(void *arg)
 			case SAFTE_PWR_UNKNOWN:
 				s->se_sensor.value = 0;
 				s->se_sensor.status = SENSOR_S_UNKNOWN;
-				s->se_sensor.flags |= SENSOR_FUNKNOWN;
+				SET(s->se_sensor.flags, SENSOR_FUNKNOWN);
 				break;
 			}
 			break;
@@ -516,7 +516,7 @@ safte_read_encstat(void *arg)
 			case SAFTE_DOOR_UNKNOWN:
 				s->se_sensor.value = 0;
 				s->se_sensor.status = SENSOR_S_CRIT;
-				s->se_sensor.flags |= SENSOR_FUNKNOWN;
+				SET(s->se_sensor.flags, SENSOR_FUNKNOWN);
 				break;
 			}
 			break;
@@ -605,7 +605,7 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 	op->flags |= wantblink ? SAFTE_SLOTOP_IDENTIFY : 0;
 
 	if (cold)
-		flags |= SCSI_AUTOCONF;
+		SET(flags, SCSI_AUTOCONF);
 	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_OUT | SCSI_SILENT);
 	if (xs == NULL) {
 		dma_free(op, sizeof(*op));
@@ -619,7 +619,7 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 
 	cmd = (struct safte_writebuf_cmd *)xs->cmd;
 	cmd->opcode = WRITE_BUFFER;
-	cmd->flags |= SAFTE_WR_MODE;
+	SET(cmd->flags, SAFTE_WR_MODE);
 	cmd->length = htobe16(sizeof(struct safte_slotop));
 
 	error = scsi_xs_sync(xs);

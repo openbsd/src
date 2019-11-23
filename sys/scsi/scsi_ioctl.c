@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.59 2019/11/22 15:34:29 krw Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.60 2019/11/23 01:16:05 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ scsi_ioc_ata_cmd(struct scsi_link *link, atareq_t *atareq)
 			cdb->count_proto = ATA_PASSTHRU_PROTO_PIO_DATAOUT;
 			cdb->flags = ATA_PASSTHRU_T_DIR_WRITE;
 		}
-		cdb->flags |= ATA_PASSTHRU_T_LEN_SECTOR_COUNT;
+		SET(cdb->flags, ATA_PASSTHRU_T_LEN_SECTOR_COUNT);
 	} else {
 		cdb->count_proto = ATA_PASSTHRU_PROTO_NON_DATA;
 		cdb->flags = ATA_PASSTHRU_T_LEN_NONE;
@@ -338,13 +338,13 @@ scsi_do_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 		SC_DEBUG(link, SDEV_DB3, ("debug set to %d\n", level));
 		CLR(link->flags, SDEV_DBX); /* clear debug bits */
 		if (level & 1)
-			link->flags |= SDEV_DB1;
+			SET(link->flags, SDEV_DB1);
 		if (level & 2)
-			link->flags |= SDEV_DB2;
+			SET(link->flags, SDEV_DB2);
 		if (level & 4)
-			link->flags |= SDEV_DB3;
+			SET(link->flags, SDEV_DB3);
 		if (level & 8)
-			link->flags |= SDEV_DB4;
+			SET(link->flags, SDEV_DB4);
 		return (0);
 	}
 	default:

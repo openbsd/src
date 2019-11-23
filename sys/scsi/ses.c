@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.58 2019/09/27 17:22:31 krw Exp $ */
+/*	$OpenBSD: ses.c,v 1.59 2019/11/23 01:16:05 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -274,7 +274,7 @@ ses_read_config(struct ses_softc *sc)
 		return (1);
 
 	if (cold)
-		flags |= SCSI_AUTOCONF;
+		SET(flags, SCSI_AUTOCONF);
 	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
 	if (xs == NULL) {
 		error = 1;
@@ -288,7 +288,7 @@ ses_read_config(struct ses_softc *sc)
 
 	cmd = (struct ses_scsi_diag *)xs->cmd;
 	cmd->opcode = RECEIVE_DIAGNOSTIC;
-	cmd->flags |= SES_DIAG_PCV;
+	SET(cmd->flags, SES_DIAG_PCV);
 	cmd->pgcode = SES_PAGE_CONFIG;
 	cmd->length = htobe16(SES_BUFLEN);
 
@@ -374,7 +374,7 @@ ses_read_status(struct ses_softc *sc)
 	int error, flags = 0;
 
 	if (cold)
-		flags |= SCSI_AUTOCONF;
+		SET(flags, SCSI_AUTOCONF);
 	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
 	if (xs == NULL)
 		return (1);
@@ -386,7 +386,7 @@ ses_read_status(struct ses_softc *sc)
 
 	cmd = (struct ses_scsi_diag *)xs->cmd;
 	cmd->opcode = RECEIVE_DIAGNOSTIC;
-	cmd->flags |= SES_DIAG_PCV;
+	SET(cmd->flags, SES_DIAG_PCV);
 	cmd->pgcode = SES_PAGE_STATUS;
 	cmd->length = htobe16(sc->sc_buflen);
 
@@ -604,7 +604,7 @@ ses_write_config(struct ses_softc *sc)
 	int error, flags = 0;
 
 	if (cold)
-		flags |= SCSI_AUTOCONF;
+		SET(flags, SCSI_AUTOCONF);
 
 	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_OUT | SCSI_SILENT);
 	if (xs == NULL)
@@ -617,7 +617,7 @@ ses_write_config(struct ses_softc *sc)
 
 	cmd = (struct ses_scsi_diag *)xs->cmd;
 	cmd->opcode = SEND_DIAGNOSTIC;
-	cmd->flags |= SES_DIAG_PF;
+	SET(cmd->flags, SES_DIAG_PF);
 	cmd->length = htobe16(sc->sc_buflen);
 
 	error = scsi_xs_sync(xs);
@@ -665,7 +665,7 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 		break;
 
 	case BIOC_SBBLINK:
-		slot->sl_stat->f2 |= SES_C_DEV_IDENT;
+		SET(slot->sl_stat->f2, SES_C_DEV_IDENT);
 		break;
 
 	default:
