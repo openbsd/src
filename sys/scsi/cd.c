@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.234 2019/11/23 01:16:05 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.235 2019/11/23 12:27:32 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Note if this device is ancient.  This is used in cdminphys().
 	 */
-	if (!(link->flags & SDEV_ATAPI) &&
+	if (!ISSET(link->flags, SDEV_ATAPI) &&
 	    SID_ANSII_REV(sa->sa_inqbuf) == SCSI_REV_0)
 		SET(sc->sc_flags, CDF_ANCIENT);
 
@@ -310,7 +310,7 @@ cdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		 * If any partition is open, but the disk has been invalidated,
 		 * disallow further opens.
 		 */
-		if ((link->flags & SDEV_MEDIA_LOADED) == 0) {
+		if (!ISSET(link->flags, SDEV_MEDIA_LOADED)) {
 			if (rawopen)
 				goto out;
 			error = EIO;
@@ -460,7 +460,7 @@ cdstrategy(struct buf *bp)
 	 * If the device has been made invalid, error out
 	 * maybe the media changed, or no media loaded
 	 */
-	if ((sc->sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+	if (!ISSET(sc->sc_link->flags, SDEV_MEDIA_LOADED)) {
 		bp->b_error = EIO;
 		goto bad;
 	}
@@ -532,7 +532,7 @@ cdstart(struct scsi_xfer *xs)
 	 * reads and writes until all files have been closed and
 	 * re-opened
 	 */
-	if ((link->flags & SDEV_MEDIA_LOADED) == 0) {
+	if (!ISSET(link->flags, SDEV_MEDIA_LOADED)) {
 		bufq_drain(&sc->sc_bufq);
 		scsi_xs_put(xs);
 		return;
@@ -561,8 +561,8 @@ cdstart(struct scsi_xfer *xs)
 	 *  Fill out the scsi command.  If the transfer will
 	 *  fit in a "small" cdb, use it.
 	 */
-	if (!(link->flags & SDEV_ATAPI) &&
-	    !(link->quirks & SDEV_ONLYBIG) &&
+	if (!ISSET(link->flags, SDEV_ATAPI) &&
+	    !ISSET(link->quirks, SDEV_ONLYBIG) &&
 	    ((secno & 0x1fffff) == secno) &&
 	    ((nsecs & 0xff) == nsecs)) {
 		/*
@@ -736,7 +736,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	/*
 	 * If the device is not valid.. abandon ship
 	 */
-	if ((sc->sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+	if (!ISSET(sc->sc_link->flags, SDEV_MEDIA_LOADED)) {
 		switch (cmd) {
 		case DIOCLOCK:
 		case DIOCEJECT:
@@ -766,7 +766,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 				break;
 		/* FALLTHROUGH */
 		default:
-			if ((sc->sc_link->flags & SDEV_OPEN) == 0)
+			if (!ISSET(sc->sc_link->flags, SDEV_OPEN))
 				error = ENODEV;
 			else
 				error = EIO;
@@ -798,7 +798,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
-		if ((flag & FWRITE) == 0) {
+		if (!ISSET(flag, FWRITE)) {
 			error = EBADF;
 			break;
 		}
@@ -2071,7 +2071,7 @@ cd_interpret_sense(struct scsi_xfer *xs)
 	u_int8_t skey = sense->flags & SSD_KEY;
 	u_int8_t serr = sense->error_code & SSD_ERRCODE;
 
-	if (((link->flags & SDEV_OPEN) == 0) ||
+	if (!ISSET(link->flags, SDEV_OPEN) ||
 	    (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED))
 		return (scsi_interpret_sense(xs));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.57 2019/11/23 01:16:05 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.58 2019/11/23 12:27:32 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -271,7 +271,7 @@ chioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		break;
 
 	default:
-		if ((flags & FWRITE) == 0)
+		if (!ISSET(flags, FWRITE))
 			return (EBADF);
 	}
 
@@ -756,7 +756,7 @@ ch_interpret_sense(struct scsi_xfer *xs)
 	u_int8_t serr = sense->error_code & SSD_ERRCODE;
 	u_int8_t skey = sense->flags & SSD_KEY;
 
-	if (((link->flags & SDEV_OPEN) == 0) ||
+	if (!ISSET(link->flags, SDEV_OPEN) ||
 	    (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED))
 		return (scsi_interpret_sense(xs));
 

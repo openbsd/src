@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.60 2019/11/23 01:16:05 krw Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.61 2019/11/23 12:27:32 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -316,7 +316,7 @@ scsi_do_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 		/* FALLTHROUGH */
 	case ATAIOCCOMMAND:
 	case SCIOCDEBUG:
-		if ((flag & FWRITE) == 0)
+		if (!ISSET(flag, FWRITE))
 			return (EPERM);
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.219 2019/11/23 01:16:05 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.220 2019/11/23 12:27:32 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -503,7 +503,7 @@ scsi_detach_link(struct scsibus_softc *sb, struct scsi_link *link, int flags)
 	struct scsi_link *alink = sb->adapter_link;
 	int rv;
 
-	if (((flags & DETACH_FORCE) == 0) && (link->flags & SDEV_OPEN))
+	if (!ISSET(flags, DETACH_FORCE) && (link->flags & SDEV_OPEN))
 		return (EBUSY);
 
 	/* Detaching a device from scsibus is a five step process. */

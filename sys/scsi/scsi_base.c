@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.241 2019/11/22 15:34:29 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.242 2019/11/23 12:27:32 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1106,7 +1106,7 @@ scsi_do_mode_sense(struct scsi_link *link, int page,
 	if (big != NULL)
 		*big = 0;
 
-	if ((link->flags & SDEV_ATAPI) == 0 ||
+	if (!ISSET(link->flags, SDEV_ATAPI) ||
 	    (link->inqdata.device & SID_TYPE) == T_SEQUENTIAL) {
 		/*
 		 * Try 6 byte mode sense request first. Some devices don't
@@ -1576,7 +1576,7 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 			CLR(link->flags, SDEV_MEDIA_LOADED);
 		if (ISSET(xs->flags, SCSI_IGNORE_MEDIA_CHANGE) ||
 		    /* XXX Should reupload any transient state. */
-		    (link->flags & SDEV_REMOVABLE) == 0) {
+		    !ISSET(link->flags, SDEV_REMOVABLE)) {
 			return (scsi_delay(xs, 1));
 		}
 		error = EIO;
@@ -2440,7 +2440,7 @@ scsi_decode_sense(struct scsi_sense_data *sense, int flag)
 		    rqsbuf, sizeof(rqsbuf));
 		break;
 	case DECODE_SKSV:
-		if (sense->extra_len < 9 || ((spec_1 & SSD_SCS_VALID) == 0))
+		if (sense->extra_len < 9 || !ISSET(spec_1, SSD_SCS_VALID))
 			break;
 		switch (skey) {
 		case SKEY_ILLEGAL_REQUEST:

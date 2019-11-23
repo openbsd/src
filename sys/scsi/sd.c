@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.297 2019/11/09 14:36:30 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.298 2019/11/23 12:27:32 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -176,7 +176,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	if (ISSET(link->flags, SDEV_ATAPI) && ISSET(link->flags, SDEV_REMOVABLE))
 		SET(link->quirks, SDEV_NOSYNCCACHE);
 
-	if (!(link->inqdata.flags & SID_RelAdr))
+	if (!ISSET(link->inqdata.flags, SID_RelAdr))
 		SET(link->quirks, SDEV_ONLYBIG);
 
 	/*
@@ -1325,7 +1325,7 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	 */
 #if 0
 	/* Make sure it was initialized. */
-	if ((sc->sc_link->flags & SDEV_MEDIA_LOADED) != SDEV_MEDIA_LOADED)
+	if (!ISSET(sc->sc_link->flags, SDEV_MEDIA_LOADED))
 		return ENXIO;
 #endif /* 0 */
 
