@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.109 2019/11/19 09:55:55 remi Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.110 2019/11/23 15:05:21 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -902,6 +902,10 @@ merge_interfaces(struct area *a, struct area *xa)
 		md_list_clr(&i->auth_md_list);
 		md_list_copy(&i->auth_md_list, &xi->auth_md_list);
 
+		strlcpy(i->dependon, xi->dependon,
+		        sizeof(i->dependon));
+		i->depend_ok = xi->depend_ok;
+
 		if (i->passive != xi->passive) {
 			/* need to restart interface to cope with this change */
 			if (ospfd_process == PROC_OSPF_ENGINE)
@@ -919,10 +923,6 @@ merge_interfaces(struct area *a, struct area *xa)
 			if (ospfd_process == PROC_OSPF_ENGINE)
 				if_fsm(i, IF_EVT_UP);
 		}
-
-		strlcpy(i->dependon, xi->dependon,
-		        sizeof(i->dependon));
-		i->depend_ok = xi->depend_ok;
 	}
 	return (dirty);
 }
