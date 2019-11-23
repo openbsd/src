@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.73 2019/11/22 20:09:09 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.74 2019/11/23 08:17:10 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1967,21 +1967,22 @@ replace_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 	}
 
 	TAILQ_FOREACH(tmp, &autoconf_forwarder_list, entry) {
-	    if (tmp->src != rdns_proposal->src || tmp->if_index !=
-		rdns_proposal->if_index) {
-		    if ((uw_forwarder =
-			calloc(1, sizeof(struct uw_forwarder))) == NULL)
-			    fatal(NULL);
-		    if (strlcpy(uw_forwarder->name, tmp->name,
-			sizeof(uw_forwarder->name)) >=
-			sizeof(uw_forwarder->name))
-			    fatalx("strlcpy");
-		    uw_forwarder->src = tmp->src;
-		    uw_forwarder->if_index = tmp->if_index;
-		    TAILQ_INSERT_TAIL(&new_forwarder_list, uw_forwarder,
-			entry);
-	    }
+		/* if_index of zero signals to clear all proposals */
+		if (rdns_proposal->src == tmp->src &&
+		    (rdns_proposal->if_index == 0 || rdns_proposal->if_index ==
+		    tmp->if_index))
+			continue;
+		if ((uw_forwarder = calloc(1, sizeof(struct uw_forwarder))) ==
+		    NULL)
+			fatal(NULL);
+		if (strlcpy(uw_forwarder->name, tmp->name,
+		    sizeof(uw_forwarder->name)) >= sizeof(uw_forwarder->name))
+			fatalx("strlcpy");
+		uw_forwarder->src = tmp->src;
+		uw_forwarder->if_index = tmp->if_index;
+		TAILQ_INSERT_TAIL(&new_forwarder_list, uw_forwarder, entry);
 	}
+
 	changed = check_forwarders_changed(&new_forwarder_list,
 	    &autoconf_forwarder_list);
 
