@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.242 2019/11/23 12:27:32 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.243 2019/11/23 17:10:13 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -889,7 +889,7 @@ scsi_inquire_vpd(struct scsi_link *link, void *buf, u_int buflen,
 	u_int32_t bytes;
 #endif /* SCSIDEBUG */
 
-	if (link->flags & SDEV_UMASS)
+	if (ISSET(link->flags, SDEV_UMASS))
 		return (EJUSTRETURN);
 
 	xs = scsi_xs_get(link, flags | SCSI_DATA_IN | SCSI_SILENT);
@@ -928,7 +928,7 @@ scsi_prevent(struct scsi_link *link, int type, int flags)
 	struct scsi_xfer *xs;
 	int error;
 
-	if (link->quirks & ADEV_NODOORLOCK)
+	if (ISSET(link->quirks, ADEV_NODOORLOCK))
 		return (0);
 
 	xs = scsi_xs_get(link, flags);
@@ -1322,7 +1322,7 @@ void
 scsi_done(struct scsi_xfer *xs)
 {
 #ifdef SCSIDEBUG
-	if (xs->sc_link->flags & SDEV_DB1) {
+	if (ISSET(xs->sc_link->flags, SDEV_DB1)) {
 		if (xs->datalen && ISSET(xs->flags, SCSI_DATA_IN))
 			scsi_show_mem(xs->data, min(64, xs->datalen));
 	}
@@ -1572,7 +1572,7 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 		default:
 			break;
 		}
-		if ((link->flags & SDEV_REMOVABLE) != 0)
+		if (ISSET(link->flags, SDEV_REMOVABLE))
 			CLR(link->flags, SDEV_MEDIA_LOADED);
 		if (ISSET(xs->flags, SCSI_IGNORE_MEDIA_CHANGE) ||
 		    /* XXX Should reupload any transient state. */
@@ -2363,7 +2363,7 @@ scsi_print_sense(struct scsi_xfer *xs)
 	    xs->cmd->opcode);
 
 	if (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED) {
-		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
+		if (ISSET(sense->error_code, SSD_ERRCODE_VALID)) {
 			struct scsi_sense_data_unextended *usense =
 			    (struct scsi_sense_data_unextended *)sense;
 			printf("   AT BLOCK #: %d (decimal)",
@@ -2379,15 +2379,15 @@ scsi_print_sense(struct scsi_xfer *xs)
 		char pad = ' ';
 
 		printf("             ");
-		if (sense->flags & SSD_FILEMARK) {
+		if (ISSET(sense->flags, SSD_FILEMARK)) {
 			printf("%c Filemark Detected", pad);
 			pad = ',';
 		}
-		if (sense->flags & SSD_EOM) {
+		if (ISSET(sense->flags, SSD_EOM)) {
 			printf("%c EOM Detected", pad);
 			pad = ',';
 		}
-		if (sense->flags & SSD_ILI)
+		if (ISSET(sense->flags, SSD_ILI))
 			printf("%c Incorrect Length Indicator Set", pad);
 		printf("\n");
 	}
@@ -2399,7 +2399,7 @@ scsi_print_sense(struct scsi_xfer *xs)
 	info = _4btol(&sense->info[0]);
 	if (info)
 		printf("         INFO: 0x%x (VALID flag %s)\n", info,
-		    sense->error_code & SSD_ERRCODE_VALID ? "on" : "off");
+		    ISSET(sense->error_code, SSD_ERRCODE_VALID) ? "on" : "off");
 
 	if (sense->extra_len < 4)
 		return;
@@ -2446,10 +2446,10 @@ scsi_decode_sense(struct scsi_sense_data *sense, int flag)
 		case SKEY_ILLEGAL_REQUEST:
 			len = snprintf(rqsbuf, sizeof rqsbuf,
 			    "Error in %s, Offset %d",
-			    (spec_1 & SSD_SCS_CDB_ERROR) ? "CDB" : "Parameters",
-			    count);
+			    ISSET(spec_1, SSD_SCS_CDB_ERROR) ? "CDB" :
+			    "Parameters", count);
 			if ((len != -1 && len < sizeof rqsbuf) &&
-			    (spec_1 & SSD_SCS_VALID_BIT_INDEX))
+			    ISSET(spec_1, SSD_SCS_VALID_BIT_INDEX))
 				snprintf(rqsbuf+len, sizeof rqsbuf - len,
 				    ", bit %d", spec_1 & SSD_SCS_BIT_INDEX);
 			break;
@@ -2610,7 +2610,7 @@ scsi_show_sense(struct scsi_xfer *xs)
 	    sense->flags & SSD_FILEMARK ? 1 : 0,
 	    sense->extra_len));
 
-	if (xs->sc_link->flags & SDEV_DB1)
+	if (ISSET(xs->sc_link->flags, SDEV_DB1))
 		scsi_show_mem((u_char *)&xs->sense, sizeof(xs->sense));
 
 	scsi_print_sense(xs);

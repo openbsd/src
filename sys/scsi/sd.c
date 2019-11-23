@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.298 2019/11/23 12:27:32 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.299 2019/11/23 17:10:13 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -494,7 +494,7 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 
 	disk_closepart(&sc->sc_dk, part, fmt);
 
-	if (((flag & FWRITE) != 0 || sc->sc_dk.dk_openmask == 0) &&
+	if ((ISSET(flag, FWRITE) || sc->sc_dk.dk_openmask == 0) &&
 	    ISSET(sc->flags, SDF_DIRTY))
 		sd_flush(sc, 0);
 

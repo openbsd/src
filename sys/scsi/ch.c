@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.58 2019/11/23 12:27:32 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.59 2019/11/23 17:10:13 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ chopen(dev_t dev, int flags, int fmt, struct proc *p)
 	/*
 	 * Only allow one open at a time.
 	 */
-	if (sc->sc_link->flags & SDEV_OPEN)
+	if (ISSET(sc->sc_link->flags, SDEV_OPEN))
 		return (EBUSY);
 
 	SET(sc->sc_link->flags, SDEV_OPEN);
@@ -371,7 +371,7 @@ ch_move(struct ch_softc *sc, struct changer_move *cm)
 	_lto2b(sc->sc_picker, cmd->tea);
 	_lto2b(fromelem, cmd->src);
 	_lto2b(toelem, cmd->dst);
-	if (cm->cm_flags & CM_INVERT)
+	if (ISSET(cm->cm_flags, CM_INVERT))
 		SET(cmd->flags, MOVE_MEDIUM_INVERT);
 
 	error = scsi_xs_sync(xs);
@@ -431,9 +431,9 @@ ch_exchange(struct ch_softc *sc, struct changer_exchange *ce)
 	_lto2b(src, cmd->src);
 	_lto2b(dst1, cmd->fdst);
 	_lto2b(dst2, cmd->sdst);
-	if (ce->ce_flags & CE_INVERT1)
+	if (ISSET(ce->ce_flags, CE_INVERT1))
 		SET(cmd->flags, EXCHANGE_MEDIUM_INV1);
-	if (ce->ce_flags & CE_INVERT2)
+	if (ISSET(ce->ce_flags, CE_INVERT2))
 		SET(cmd->flags, EXCHANGE_MEDIUM_INV2);
 
 	error = scsi_xs_sync(xs);
@@ -477,7 +477,7 @@ ch_position(struct ch_softc *sc, struct changer_position *cp)
 	cmd->opcode = POSITION_TO_ELEMENT;
 	_lto2b(sc->sc_picker, cmd->tea);
 	_lto2b(dst, cmd->dst);
-	if (cp->cp_flags & CP_INVERT)
+	if (ISSET(cp->cp_flags, CP_INVERT))
 		SET(cmd->flags, POSITION_TO_ELEMENT_INVERT);
 
 	error = scsi_xs_sync(xs);
@@ -519,9 +519,9 @@ copy_element_status(int flags,	struct read_element_status_descriptor *desc,
 {
 	ces->ces_flags = desc->flags1;
 
-	if (flags & READ_ELEMENT_STATUS_PVOLTAG)
+	if (ISSET(flags, READ_ELEMENT_STATUS_PVOLTAG))
 		copy_voltag(&ces->ces_pvoltag, &desc->pvoltag);
-	if (flags & READ_ELEMENT_STATUS_AVOLTAG)
+	if (ISSET(flags, READ_ELEMENT_STATUS_AVOLTAG))
 		copy_voltag(&ces->ces_avoltag, &desc->avoltag);
 }
 

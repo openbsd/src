@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.220 2019/11/23 12:27:32 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.221 2019/11/23 17:10:13 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -503,7 +503,7 @@ scsi_detach_link(struct scsibus_softc *sb, struct scsi_link *link, int flags)
 	struct scsi_link *alink = sb->adapter_link;
 	int rv;
 
-	if (!ISSET(flags, DETACH_FORCE) && (link->flags & SDEV_OPEN))
+	if (!ISSET(flags, DETACH_FORCE) && ISSET(link->flags, SDEV_OPEN))
 		return (EBUSY);
 
 	/* Detaching a device from scsibus is a five step process. */
@@ -712,7 +712,7 @@ scsibus_printlink(struct scsi_link *link)
 	printf("%s>", visbuf);
 
 #ifdef SCSIDEBUG
-	if (link->flags & SDEV_ATAPI)
+	if (ISSET(link->flags, SDEV_ATAPI))
 		printf(" ATAPI");
 	else if (SID_ANSII_REV(inqbuf) < SCSI_REV_SPC)
 		printf(" SCSI/%d", SID_ANSII_REV(inqbuf));
@@ -722,7 +722,7 @@ scsibus_printlink(struct scsi_link *link)
 		printf(" SCSI/SPC-%d", SID_ANSII_REV(inqbuf) - 2);
 #endif /* SCSIDEBUG */
 
-	if ((link->flags & SDEV_REMOVABLE) != 0)
+	if (ISSET(link->flags, SDEV_REMOVABLE))
 		printf(" removable");
 
 	if (link->id != NULL && link->id->d_type != DEVID_NONE) {
@@ -949,7 +949,7 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	link0 = scsi_get_link(sb, target, 0);
 	if (lun == 0 || link0 == NULL)
 		;
-	else if (link->flags & SDEV_UMASS)
+	else if (ISSET(link->flags, SDEV_UMASS))
 		;
 	else if (link->id != NULL && !DEVID_CMP(link0->id, link->id))
 		;
@@ -1006,7 +1006,7 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	/*
 	 * note what BASIC type of device it is
 	 */
-	if ((inqbuf->dev_qual2 & SID_REMOVABLE) != 0)
+	if (ISSET(inqbuf->dev_qual2, SID_REMOVABLE))
 		SET(link->flags, SDEV_REMOVABLE);
 
 	sa.sa_sc_link = link;
@@ -1025,7 +1025,7 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	 * different LUN used in a command. So do an INQUIRY on LUN 1 at this
 	 * point to prevent such helpfulness before it causes confusion.
 	 */
-	if (lun == 0 && (link->flags & SDEV_UMASS) &&
+	if (lun == 0 && ISSET(link->flags, SDEV_UMASS) &&
 	    scsi_get_link(sb, target, 1) == NULL && link->luns > 1 &&
 	    (usbinqbuf = dma_alloc(sizeof(*usbinqbuf), M_NOWAIT)) != NULL) {
 
@@ -1082,7 +1082,7 @@ scsi_inqmatch(struct scsi_inquiry_data *inqbuf, const void *_base,
 	int				 removable;
 
 	/* Include the qualifier to catch vendor-unique types. */
-	removable = inqbuf->dev_qual2 & SID_REMOVABLE ? T_REMOV : T_FIXED;
+	removable = ISSET(inqbuf->dev_qual2, SID_REMOVABLE) ? T_REMOV : T_FIXED;
 
 	for (*bestpriority = 0, bestmatch = 0; nmatches--; base += matchsize) {
 		struct scsi_inquiry_pattern *match = (void *)base;
