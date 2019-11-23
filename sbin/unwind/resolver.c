@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.74 2019/11/23 08:17:10 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.75 2019/11/23 08:57:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -473,6 +473,7 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 
 			if (res == NULL) {
 				log_warnx("can't find working resolver");
+				free(query_imsg);
 				break;
 			}
 
@@ -481,8 +482,9 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 
 			clock_gettime(CLOCK_MONOTONIC, &query_imsg->tp);
 
-			resolve(res, query_imsg->qname, query_imsg->t,
-			    query_imsg->c, query_imsg, resolve_done);
+			if (resolve(res, query_imsg->qname, query_imsg->t,
+			    query_imsg->c, query_imsg, resolve_done) != 0)
+				free(query_imsg);
 			break;
 		case IMSG_CTL_STATUS:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(type))
