@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.179 2019/11/22 06:20:15 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.180 2019/11/23 19:47:04 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -317,11 +317,15 @@ struct sockaddr_rtdns {
 	char		sr_dns[RTDNS_LEN];
 };
 
+#ifdef _KERNEL
+
 static inline struct sockaddr *
 srtdnstosa(struct sockaddr_rtdns *sdns)
 {
 	return ((struct sockaddr *)(sdns));
 }
+
+#endif
 
 #define	RTSTATIC_LEN	128
 
