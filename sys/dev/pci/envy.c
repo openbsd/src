@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.79 2019/05/09 05:17:45 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.80 2019/11/23 17:22:10 cheloha Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2218,7 +2218,8 @@ envy_halt_output(void *self)
 	mtx_enter(&audio_lock);
 	sc->oactive = 0;
 	if (sc->obusy) {
-		err = msleep(&sc->obusy, &audio_lock, PWAIT, "envyobus", 4 * hz);
+		err = msleep_nsec(&sc->obusy, &audio_lock, PWAIT, "envyobus",
+		    SEC_TO_NSEC(4));
 		if (err)
 			printf("%s: output DMA halt timeout\n", DEVNAME(sc));
 	}
@@ -2239,7 +2240,8 @@ envy_halt_input(void *self)
 	mtx_enter(&audio_lock);
 	sc->iactive = 0;
 	if (sc->ibusy) {
-		err = msleep(&sc->ibusy, &audio_lock, PWAIT, "envyibus", 4 * hz); 
+		err = msleep_nsec(&sc->ibusy, &audio_lock, PWAIT, "envyibus",
+		    SEC_TO_NSEC(4));
 		if (err)
 			printf("%s: input DMA halt timeout\n", DEVNAME(sc));
 	}
@@ -2488,7 +2490,7 @@ envy_midi_close(void *self)
 	unsigned int reg;
 
 	/* wait for output fifo to drain */
-	tsleep(sc, PWAIT, "envymid", hz / 10);
+	tsleep_nsec(sc, PWAIT, "envymid", MSEC_TO_NSEC(100));
 
 	/* disable interrupts */
 	reg = envy_ccs_read(sc, ENVY_CCS_INTMASK);
