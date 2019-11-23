@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.44 2019/11/22 15:30:00 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.45 2019/11/23 08:17:39 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -128,6 +128,7 @@ main(int argc, char *argv[])
 	int			 frontend_routesock, rtfilter;
 	char			*csock = SLAACD_SOCKET;
 #ifndef SMALL
+	struct imsg_propose_rdns rdns;
 	int			 control_fd;
 #endif /* SMALL */
 
@@ -292,6 +293,14 @@ main(int argc, char *argv[])
 #endif /* SMALL */
 
 	main_imsg_compose_frontend(IMSG_STARTUP, 0, NULL, 0);
+
+#ifndef SMALL
+	/* we are taking over, clear all previos slaac proposals */
+	memset(&rdns, 0, sizeof(rdns));
+	rdns.if_index = 0;
+	rdns.rdns_count = 0;
+	send_rdns_proposal(&rdns);
+#endif /* SMALL */
 
 	event_dispatch();
 
