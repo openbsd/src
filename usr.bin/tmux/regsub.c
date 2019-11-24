@@ -1,4 +1,4 @@
-/* $OpenBSD: regsub.c,v 1.2 2019/06/20 15:40:14 nicm Exp $ */
+/* $OpenBSD: regsub.c,v 1.3 2019/11/24 18:37:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -106,6 +106,12 @@ regsub(const char *pattern, const char *with, const char *text, int flags)
 			last = m[0].rm_eo;
 			start = m[0].rm_eo + 1;
 			empty = 1;
+		}
+
+		/* Stop now if anchored to start. */
+		if (*pattern == '^') {
+			regsub_copy(&buf, &len, text, start, end);
+			break;
 		}
 	}
 	buf[len] = '\0';
