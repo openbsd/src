@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitops.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: bitops.h,v 1.2 2019/11/24 02:29:43 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -74,11 +74,11 @@ hweight64(uint64_t x)
 	return x;
 }
 
-static inline uint64_t
+static inline int64_t
 sign_extend64(uint64_t value, int index)
 {
 	uint8_t shift = 63 - index;
-	return ((int64_t)(value << shift) >> shift);
+	return (int64_t)(value << shift) >> shift;
 }
 
 static inline int
