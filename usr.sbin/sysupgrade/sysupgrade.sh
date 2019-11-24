@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.34 2019/11/24 11:15:04 florian Exp $
+# $OpenBSD: sysupgrade.sh,v 1.35 2019/11/24 14:05:39 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -141,7 +141,6 @@ fi
 cd ${SETSDIR}
 
 echo "Fetching from ${URL}"
-unpriv ftp -N sysupgrade -VMo - ${URL}BUILDINFO
 unpriv -f SHA256.sig ftp -N sysupgrade -Vmo SHA256.sig ${URL}SHA256.sig
 
 _KEY=openbsd-${_KERNV[0]%.*}${_KERNV[0]#*.}-base.pub
