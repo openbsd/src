@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.29 2019/11/22 06:22:30 claudio Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.30 2019/11/24 07:54:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -131,6 +131,7 @@ int		 umb_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		    struct rtentry *);
 int		 umb_input(struct ifnet *, struct mbuf *, void *);
 void		 umb_start(struct ifnet *);
+void		 umb_rtrequest(struct ifnet *, int, struct rtentry *);
 void		 umb_watchdog(struct ifnet *);
 void		 umb_statechg_timeout(void *);
 
@@ -157,7 +158,7 @@ int		 umb_decode_connect_info(struct umb_softc *, void *, int);
 void		 umb_clear_addr(struct umb_softc *);
 int		 umb_add_inet_config(struct umb_softc *, struct in_addr, u_int,
 		    struct in_addr);
-void		 umb_send_inet_proposal(struct umb_softc *, int);
+void		 umb_send_inet_proposal(struct umb_softc *);
 int		 umb_decode_ip_configuration(struct umb_softc *, void *, int);
 void		 umb_rx(struct umb_softc *);
 void		 umb_rxeof(struct usbd_xfer *, void *, usbd_status);
@@ -498,7 +499,7 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_SIMPLEX | IFF_MULTICAST | IFF_POINTOPOINT;
 	ifp->if_ioctl = umb_ioctl;
 	ifp->if_start = umb_start;
-	ifp->if_rtrequest = p2p_rtrequest;
+	ifp->if_rtrequest = umb_rtrequest;
 
 	ifp->if_watchdog = umb_watchdog;
 	strlcpy(ifp->if_xname, DEVNAM(sc), IFNAMSIZ);
@@ -894,6 +895,20 @@ umb_start(struct ifnet *ifp)
 		ifp->if_timer = (2 * umb_xfer_tout) / 1000;
 	}
 }
+
+void
+umb_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
+{
+	struct umb_softc *sc = ifp->if_softc;
+
+	if (req == RTM_PROPOSAL) {
+		umb_send_inet_proposal(sc);
+		return;
+	}
+
+	p2p_rtrequest(ifp, req, rt);
+}
+
 
 void
 umb_watchdog(struct ifnet *ifp)
@@ -1602,7 +1617,8 @@ umb_clear_addr(struct umb_softc *sc)
 {
 	struct ifnet *ifp = GET_IFP(sc);
 
-	umb_send_inet_proposal(sc, 0);
+	memset(sc->sc_info.ipv4dns, 0, sizeof (sc->sc_info.ipv4dns));
+	umb_send_inet_proposal(sc);
 	NET_LOCK();
 	in_ifdetach(ifp);
 	NET_UNLOCK();
@@ -1683,12 +1699,12 @@ umb_add_inet_config(struct umb_softc *sc, struct in_addr ip, u_int prefixlen,
 }
 
 void
-umb_send_inet_proposal(struct umb_softc *sc, int flag)
+umb_send_inet_proposal(struct umb_softc *sc)
 {
 	struct ifnet *ifp = GET_IFP(sc);
 	struct sockaddr_rtdns rtdns;
 	struct rt_addrinfo info;
-	int i;
+	int i, flag = 0;
 
 	memset(&rtdns, 0, sizeof(rtdns));
 	memset(&info, 0, sizeof(info));
@@ -1698,6 +1714,7 @@ umb_send_inet_proposal(struct umb_softc *sc, int flag)
 			break;
 		memcpy(rtdns.sr_dns + i * sizeof(struct in_addr),
 		    &sc->sc_info.ipv4dns[i], sizeof(struct in_addr));
+		flag = RTF_UP;
 	}
 	rtdns.sr_family = AF_INET;
 	rtdns.sr_len = 2 + i * sizeof(struct in_addr);
@@ -1778,7 +1795,7 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 				    &addr, str, sizeof(str)));
 			}
 		}
-		umb_send_inet_proposal(sc, RTF_UP);
+		umb_send_inet_proposal(sc);
 	}
 
 	if ((avail & MBIM_IPCONF_HAS_MTUINFO)) {
