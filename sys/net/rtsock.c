@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.296 2019/11/22 15:28:05 florian Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.297 2019/11/24 07:56:03 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -814,6 +814,19 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 		if (rtm_validate_proposal(&info) == -1) {
 			error = EINVAL;
 			goto fail;
+		}
+		/*
+		 * If this is a solicitation proposal forward request to
+		 * all interfaces. Most handlers will ignore it but at least
+		 * umb(4) will send a response to this event.
+		 */
+		if (rtm->rtm_priority == RTP_PROPOSAL_SOLICIT) {
+			struct ifnet *ifp;
+			NET_LOCK();
+			TAILQ_FOREACH(ifp, &ifnet, if_list) {
+				ifp->if_rtrequest(ifp, RTM_PROPOSAL, NULL);
+			}
+			NET_UNLOCK();
 		}
 	} else {
 		error = rtm_output(rtm, &rt, &info, prio, tableid);
