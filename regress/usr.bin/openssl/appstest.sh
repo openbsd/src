@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.29 2019/11/20 12:12:55 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.30 2019/11/24 07:58:00 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -957,6 +957,16 @@ function test_cms {
 	cms_dec=$user1_dir/cms.dec
 	cms_sgr=$user1_dir/cms.sgr
 	cms_ver=$user1_dir/cms.ver
+	cms_out=$user1_dir/cms.out
+	cms_dct=$user1_dir/cms.dct
+	cms_dot=$user1_dir/cms.dot
+	cms_dgc=$user1_dir/cms.dgc
+	cms_dgv=$user1_dir/cms.dgv
+	cms_ede=$user1_dir/cms.ede
+	cms_edd=$user1_dir/cms.edd
+	cms_srp=$user1_dir/cms.srp
+	cms_pwe=$user1_dir/cms.pwe
+	cms_pwd=$user1_dir/cms.pwd
 	
 	cat << __EOF__ > $cms_txt
 Hello Bob,
@@ -973,7 +983,9 @@ __EOF__
 		-keyopt rsa_padding_mode:pss \
 		-passin pass:$user1_pass -md sha256 \
 		-from user1@test_dummy.com -to server@test_dummy.com \
-		-subject "test openssl cms"
+		-subject "test openssl cms" \
+		-receipt_request_from server@test_dummy.com \
+		-receipt_request_to user1@test_dummy.com
 	check_exit_status $?
 	
 	# encrypt
@@ -1001,6 +1013,92 @@ __EOF__
 	check_exit_status $?
 
 	diff -b $cms_ver $cms_txt
+	check_exit_status $?
+
+	# cmsout
+	start_message "cms ... cmsout"
+	
+	$openssl_bin cms -cmsout -in $cms_enc -print -out $cms_out
+	check_exit_status $?
+
+	# data_create
+	start_message "cms ... data_create"
+	
+	$openssl_bin cms -data_create -in $cms_enc -out $cms_dct
+	check_exit_status $?
+
+	# data_out
+	start_message "cms ... data_out"
+	
+	$openssl_bin cms -data_out -in $cms_dct -out $cms_dot
+	check_exit_status $?
+
+	# digest_create
+	start_message "cms ... digest_create"
+	
+	$openssl_bin cms -digest_create -in $cms_txt -md sha256 -out $cms_dgc
+	check_exit_status $?
+
+	# digest_verify
+	start_message "cms ... digest_verify"
+	
+	$openssl_bin cms -digest_verify -in $cms_dgc -md sha256 -out $cms_dgv
+	check_exit_status $?
+
+	diff -b $cms_dgv $cms_txt
+	check_exit_status $?
+
+	# compress
+
+	# uncompress
+
+	# EncryptedData_encrypt
+	start_message "cms ... EncryptedData_encrypt"
+	
+	$openssl_bin cms -EncryptedData_encrypt -in $cms_sig -out $cms_ede \
+		-aes128 -secretkey 00112233445566778899aabbccddeeff
+	check_exit_status $?
+
+	# EncryptedData_decrypt
+	start_message "cms ... EncryptedData_decrypt"
+	
+	$openssl_bin cms -EncryptedData_decrypt -in $cms_ede -out $cms_edd \
+		-aes128 -secretkey 00112233445566778899aabbccddeeff
+	check_exit_status $?
+
+	diff -b $cms_edd $cms_sig
+	check_exit_status $?
+
+	# sign_receipt
+	start_message "cms ... sign to receipt"
+	
+	$openssl_bin cms -sign_receipt -in $cms_sig -out $cms_srp \
+		-signer $server_cert -inkey $server_key \
+		-passin pass:$server_pass -md sha256
+	check_exit_status $?
+
+	# verify_receipt
+	start_message "cms ... verify receipt"
+	
+	$openssl_bin cms -verify_receipt $cms_srp -rctform smime -in $cms_sig \
+		-CAfile $ca_cert -certfile $server_cert
+	check_exit_status $?
+	
+	# encrypt with pwri
+	start_message "cms ... encrypt with pwri"
+
+	$openssl_bin cms -encrypt -camellia256 -in $cms_txt -out $cms_pwe \
+		-pwri_password abcdefg
+	check_exit_status $?
+
+	# decrypt with pwri
+	start_message "cms ... decrypt with pwri"
+
+	$openssl_bin cms -decrypt -camellia256 -in $cms_pwe -out $cms_pwd \
+		-pwri_password abcdefg
+	check_exit_status $?
+
+	diff -b $cms_pwd $cms_txt
 	check_exit_status $?
 }
 
