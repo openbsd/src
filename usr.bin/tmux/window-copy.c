@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.239 2019/11/25 20:42:18 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.240 2019/11/25 20:43:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1964,7 +1964,7 @@ static const struct {
 	  window_copy_cmd_start_of_line },
 	{ "stop-selection", 0, 0, 0,
 	  window_copy_cmd_stop_selection },
-	{ "top-line", 0, 0, 1, 1,
+	{ "top-line", 0, 0, 1,
 	  window_copy_cmd_top_line },
 };
 
