@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.144 2019/07/19 00:24:31 cheloha Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.145 2019/11/25 11:33:51 mpi Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -852,7 +852,7 @@ softdep_flushworklist(struct mount *oldmnt, int *countp, struct proc *p)
 	 */
 	while (softdep_worklist_busy) {
 		softdep_worklist_req += 1;
-		tsleep(&softdep_worklist_req, PRIBIO, "softflush", 0);
+		tsleep_nsec(&softdep_worklist_req, PRIBIO, "softflush", INFSLP);
 		softdep_worklist_req -= 1;
 	}
 	softdep_worklist_busy = -1;
@@ -5312,7 +5312,7 @@ request_cleanup(int resource, int islocked)
 		timeout_add(&proc_waiting_timeout, tickdelay > 2 ? tickdelay : 2);
 
 	s = FREE_LOCK_INTERLOCKED(&lk);
-	(void) tsleep((caddr_t)&proc_waiting, PPAUSE, "softupdate", 0);
+	tsleep_nsec(&proc_waiting, PPAUSE, "softupdate", INFSLP);
 	ACQUIRE_LOCK_INTERLOCKED(&lk, s);
 	proc_waiting -= 1;
 	if (islocked == 0)
@@ -5574,7 +5574,7 @@ getdirtybuf(struct buf *bp, int waitfor)
 			return (0);
 		bp->b_flags |= B_WANTED;
 		s = FREE_LOCK_INTERLOCKED(&lk);
-		tsleep((caddr_t)bp, PRIBIO + 1, "sdsdty", 0);
+		tsleep_nsec(bp, PRIBIO+1, "sdsdty", INFSLP);
 		ACQUIRE_LOCK_INTERLOCKED(&lk, s);
 		return (-1);
 	}
@@ -5602,7 +5602,7 @@ drain_output(struct vnode *vp, int islocked)
 	while (vp->v_numoutput) {
 		vp->v_bioflag |= VBIOWAIT;
 		s = FREE_LOCK_INTERLOCKED(&lk);
-		tsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1, "drain_output", 0);
+		tsleep_nsec(&vp->v_numoutput, PRIBIO+1, "drain_output", INFSLP);
 		ACQUIRE_LOCK_INTERLOCKED(&lk, s);
 	}
 	if (!islocked)

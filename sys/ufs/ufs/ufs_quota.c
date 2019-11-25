@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.45 2019/10/06 16:24:14 beck Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.46 2019/11/25 11:33:51 mpi Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -212,7 +212,7 @@ ufs_quota_alloc_blocks2(struct inode *ip, daddr_t change,
 			continue;
 		while (dq->dq_flags & DQ_LOCK) {
 			dq->dq_flags |= DQ_WANT;
-			(void) tsleep(dq, PINOD+1, "chkdq", 0);
+			tsleep_nsec(dq, PINOD+1, "chkdq", INFSLP);
 		}
 		dq->dq_curblocks += change;
 		dq->dq_flags |= DQ_MOD;
@@ -242,7 +242,7 @@ ufs_quota_free_blocks2(struct inode *ip, daddr_t change,
 			continue;
 		while (dq->dq_flags & DQ_LOCK) {
 			dq->dq_flags |= DQ_WANT;
-			(void) tsleep(dq, PINOD+1, "chkdq", 0);
+			tsleep_nsec(dq, PINOD+1, "chkdq", INFSLP);
 		}
 		if (dq->dq_curblocks >= change)
 			dq->dq_curblocks -= change;
@@ -338,7 +338,7 @@ ufs_quota_alloc_inode2(struct inode *ip, struct ucred *cred,
 			continue;
 		while (dq->dq_flags & DQ_LOCK) {
 			dq->dq_flags |= DQ_WANT;
-			(void) tsleep(dq, PINOD+1, "chkiq", 0);
+			tsleep_nsec(dq, PINOD+1, "chkiq", INFSLP);
 		}
 		dq->dq_curinodes++;
 		dq->dq_flags |= DQ_MOD;
@@ -365,7 +365,7 @@ ufs_quota_free_inode2(struct inode *ip, struct ucred *cred,
 			continue;
 		while (dq->dq_flags & DQ_LOCK) {
 			dq->dq_flags |= DQ_WANT;
-			(void) tsleep(dq, PINOD+1, "chkiq", 0);
+			tsleep_nsec(dq, PINOD+1, "chkiq", INFSLP);
 		}
 		if (dq->dq_curinodes > 0)
 			dq->dq_curinodes--;
@@ -667,7 +667,7 @@ setquota(struct mount *mp, u_long id, int type, caddr_t addr)
 	dq = ndq;
 	while (dq->dq_flags & DQ_LOCK) {
 		dq->dq_flags |= DQ_WANT;
-		(void) tsleep(dq, PINOD+1, "setquota", 0);
+		tsleep_nsec(dq, PINOD+1, "setquota", INFSLP);
 	}
 	/*
 	 * Copy all but the current values.
@@ -731,7 +731,7 @@ setuse(struct mount *mp, u_long id, int type, caddr_t addr)
 	dq = ndq;
 	while (dq->dq_flags & DQ_LOCK) {
 		dq->dq_flags |= DQ_WANT;
-		(void) tsleep(dq, PINOD+1, "setuse", 0);
+		tsleep_nsec(dq, PINOD+1, "setuse", INFSLP);
 	}
 	/*
 	 * Reset time limit if have a soft limit and were
@@ -990,7 +990,7 @@ dqsync(struct vnode *vp, struct dquot *dq)
 		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
 	while (dq->dq_flags & DQ_LOCK) {
 		dq->dq_flags |= DQ_WANT;
-		(void) tsleep(dq, PINOD+2, "dqsync", 0);
+		tsleep_nsec(dq, PINOD+2, "dqsync", INFSLP);
 		if ((dq->dq_flags & DQ_MOD) == 0) {
 			if (vp != dqvp)
 				VOP_UNLOCK(dqvp);

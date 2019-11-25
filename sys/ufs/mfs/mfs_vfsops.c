@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.55 2017/12/11 05:27:40 deraadt Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.56 2019/11/25 11:33:51 mpi Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ mfs_start(struct mount *mp, int flags, struct proc *p)
 			sleepreturn = 0;
 			continue;
 		}
-		sleepreturn = tsleep(vp, PWAIT | PCATCH, "mfsidl", 0);
+		sleepreturn = tsleep_nsec(vp, PWAIT | PCATCH, "mfsidl", INFSLP);
 	}
 	return (0);
 }
