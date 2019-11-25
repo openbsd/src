@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.236 2019/11/23 17:10:13 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.237 2019/11/25 17:48:31 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -2112,13 +2112,10 @@ cd_interpret_sense(struct scsi_xfer *xs)
 u_int64_t
 cd_size(struct scsi_link *link, int flags, u_int32_t *blksize)
 {
-	struct scsi_read_cap_data_16 *rdcap16;
-	struct scsi_read_capacity_16 *cmd;
-	struct scsi_read_cap_data *rdcap;
-	struct scsi_read_capacity *cmd10;
-	struct scsi_xfer *xs;
-	u_int64_t max_addr;
-	int error;
+	struct scsi_read_cap_data_16	*rdcap16;
+	struct scsi_read_cap_data	*rdcap;
+	u_int64_t			 max_addr;
+	int				 error;
 
 	if (blksize != NULL)
 		*blksize = 0;
@@ -2131,29 +2128,12 @@ cd_size(struct scsi_link *link, int flags, u_int32_t *blksize)
 	rdcap = dma_alloc(sizeof(*rdcap), ((flags & SCSI_NOSLEEP) ?
 	    PR_NOWAIT : PR_WAITOK) | PR_ZERO);
 	if (rdcap == NULL)
-		return (0);
+		return 0;
 
-	xs = scsi_xs_get(link, flags | SCSI_DATA_IN | SCSI_SILENT);
-	if (xs == NULL) {
-		dma_free(rdcap, sizeof(*rdcap));
-		return (0);
-	}
-	xs->cmdlen = sizeof(*cmd10);
-	xs->data = (void *)rdcap;
-	xs->datalen = sizeof(*rdcap);
-	xs->timeout = 20000;
-
-	cmd10 = (struct scsi_read_capacity *)xs->cmd;
-	cmd10->opcode = READ_CAPACITY;
-
-	error = scsi_xs_sync(xs);
-	scsi_xs_put(xs);
-
+	error = scsi_read_cap_10(link, rdcap, flags);
 	if (error) {
-		SC_DEBUG(link, SDEV_DB1, ("READ CAPACITY error (%#x)\n",
-		    error));
 		dma_free(rdcap, sizeof(*rdcap));
-		return (0);
+		return 0;
 	}
 
 	max_addr = _4btol(rdcap->addr);
@@ -2174,26 +2154,8 @@ cd_size(struct scsi_link *link, int flags, u_int32_t *blksize)
 	if (rdcap16 == NULL)
 		goto exit;
 
-	xs = scsi_xs_get(link, flags | SCSI_DATA_IN | SCSI_SILENT);
-	if (xs == NULL) {
-		dma_free(rdcap16, sizeof(*rdcap16));
-		goto exit;
-	}
-	xs->cmdlen = sizeof(*cmd);
-	xs->data = (void *)rdcap16;
-	xs->datalen = sizeof(*rdcap16);
-	xs->timeout = 20000;
-
-	cmd = (struct scsi_read_capacity_16 *)xs->cmd;
-	cmd->opcode = READ_CAPACITY_16;
-	cmd->byte2 = SRC16_SERVICE_ACTION;
-	_lto4b(sizeof(*rdcap16), cmd->length);
-
-	error = scsi_xs_sync(xs);
-	scsi_xs_put(xs);
+	error = scsi_read_cap_16(link, rdcap16, flags);
 	if (error) {
-		SC_DEBUG(link, SDEV_DB1, ("READ CAPACITY 16 error (%#x)\n",
-		    error));
 		dma_free(rdcap16, sizeof(*rdcap16));
 		goto exit;
 	}
@@ -2212,7 +2174,7 @@ exit:
 		return (max_addr + 1);
 	else if (blksize != NULL)
 		*blksize = 0;
-	return (0);
+	return 0;
 }
 
 #if defined(__macppc__)
