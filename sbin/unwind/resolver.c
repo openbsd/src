@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.76 2019/11/25 17:36:48 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.77 2019/11/25 18:10:42 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -827,8 +827,8 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 
 	ms = elapsed.tv_sec * 1000 + elapsed.tv_nsec / 1000000;
 
-	for (i = 1; i < nitems(histogram_limits); i++) {
-		if (ms > histogram_limits[i - 1] && ms <= histogram_limits[i])
+	for (i = 0; i < nitems(histogram_limits); i++) {
+		if (ms < histogram_limits[i])
 			break;
 	}
 	if (i == nitems(histogram_limits))

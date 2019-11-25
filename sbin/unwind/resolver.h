@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.h,v 1.9 2019/11/21 05:01:22 florian Exp $	*/
+/*	$OpenBSD: resolver.h,v 1.10 2019/11/25 18:10:42 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -32,7 +32,6 @@ static const char * const	uw_resolver_state_str[] = {
 };
 
 static const int64_t		histogram_limits[] = {
-	-1,
 	10,
 	20,
 	40,

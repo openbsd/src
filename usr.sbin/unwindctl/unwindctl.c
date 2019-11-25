@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwindctl.c,v 1.13 2019/11/21 05:01:22 florian Exp $	*/
+/*	$OpenBSD: unwindctl.c,v 1.14 2019/11/25 18:10:42 otto Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -328,12 +328,12 @@ print_histogram(void* data, size_t len)
 
 	memcpy(histogram, data, len);
 
-	for(i = 1; i < nitems(histogram_limits) - 1; i++) {
+	for(i = 0; i < nitems(histogram_limits) - 1; i++) {
 		snprintf(buf, sizeof(buf), "<%lld", histogram_limits[i]);
 		printf("%6s", buf);
 	}
 	printf("%6s\n", ">");
-	for(i = 1; i < nitems(histogram); i++)
+	for(i = 0; i < nitems(histogram); i++)
 		printf("%6lld", histogram[i]);
 	printf("\n");
 }
