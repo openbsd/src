@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.30 2019/11/24 07:58:00 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.31 2019/11/25 12:45:45 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1009,7 +1009,7 @@ __EOF__
 	$openssl_bin cms -verify -in $cms_dec \
 		-CAfile $ca_cert -certfile $user1_cert -nointern \
 		-check_ss_sig -issuer_checks -policy_check -x509_strict \
-		-signer $cms_sgr -text -out $cms_ver
+		-signer $cms_sgr -text -out $cms_ver -receipt_request_print
 	check_exit_status $?
 
 	diff -b $cms_ver $cms_txt
