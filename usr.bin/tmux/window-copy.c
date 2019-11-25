@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.240 2019/11/25 20:43:32 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.241 2019/11/25 22:38:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1978,7 +1978,7 @@ window_copy_command(struct window_mode_entry *wme, struct client *c,
 	enum window_copy_cmd_action	 action;
 	const char			*command;
 	u_int				 i;
-	int				 ismotion, keys;
+	int				 ismotion = 0, keys;
 
 	if (args->argc == 0)
 		return;
