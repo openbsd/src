@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.176 2019/09/27 23:07:42 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.177 2019/11/25 17:02:57 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -475,6 +475,9 @@ const void *scsi_inqmatch(struct scsi_inquiry_data *, const void *, int,
 void	scsi_init(void);
 int	scsi_test_unit_ready(struct scsi_link *, int, int);
 int	scsi_inquire(struct scsi_link *, struct scsi_inquiry_data *, int);
+int	scsi_read_cap_10(struct scsi_link *, struct scsi_read_cap_data *, int);
+int	scsi_read_cap_16(struct scsi_link *, struct scsi_read_cap_data_16 *,
+	    int);
 int	scsi_inquire_vpd(struct scsi_link *, void *, u_int, u_int8_t, int);
 void	scsi_init_inquiry(struct scsi_xfer *, u_int8_t, u_int8_t,
 	    void *, size_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.243 2019/11/23 17:10:13 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.244 2019/11/25 17:02:56 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -916,6 +916,78 @@ scsi_inquire_vpd(struct scsi_link *link, void *buf, u_int buflen,
 	}
 #endif /* SCSIDEBUG */
 	return (error);
+}
+
+int
+scsi_read_cap_10(struct scsi_link *link, struct scsi_read_cap_data *rdcap,
+    int flags)
+{
+	struct scsi_read_capacity	  cdb;
+	struct scsi_xfer		 *xs;
+	int				  rv;
+
+	xs = scsi_xs_get(link, flags | SCSI_DATA_IN | SCSI_SILENT);
+	if (xs == NULL)
+		return ENOMEM;
+
+	memset(&cdb, 0, sizeof(cdb));
+	cdb.opcode = READ_CAPACITY;
+
+	memcpy(xs->cmd, &cdb, sizeof(cdb));
+	xs->cmdlen = sizeof(cdb);
+	xs->data = (void *)rdcap;
+	xs->datalen = sizeof(*rdcap);
+	xs->timeout = 20000;
+
+	rv = scsi_xs_sync(xs);
+	scsi_xs_put(xs);
+
+#ifdef SCSIDEBUG
+	if (rv == 0) {
+		sc_print_addr(link);
+		printf("read capacity 10 data:\n");
+		scsi_show_mem((u_char *)rdcap, sizeof(*rdcap));
+	}
+#endif /* SCSIDEBUG */
+
+	return rv;
+}
+
+int
+scsi_read_cap_16(struct scsi_link *link, struct scsi_read_cap_data_16 *rdcap,
+    int flags)
+{
+	struct scsi_read_capacity_16	 cdb;
+	struct scsi_xfer		*xs;
+	int				 rv;
+
+	xs = scsi_xs_get(link, flags | SCSI_DATA_IN | SCSI_SILENT);
+	if (xs == NULL)
+		return ENOMEM;
+
+	memset(&cdb, 0, sizeof(cdb));
+	cdb.opcode = READ_CAPACITY_16;
+	cdb.byte2 = SRC16_SERVICE_ACTION;
+	_lto4b(sizeof(*rdcap), cdb.length);
+
+	memcpy(xs->cmd, &cdb, sizeof(cdb));
+	xs->cmdlen = sizeof(cdb);
+	xs->data = (void *)rdcap;
+	xs->datalen = sizeof(*rdcap);
+	xs->timeout = 20000;
+
+	rv = scsi_xs_sync(xs);
+	scsi_xs_put(xs);
+
+#ifdef SCSIDEBUG
+	if (rv == 0) {
+		sc_print_addr(link);
+		printf("read capacity 16 data:\n");
+		scsi_show_mem((u_char *)rdcap, sizeof(*rdcap));
+	}
+#endif /* SCSIDEBUG */
+
+	return (rv);
 }
 
 /*
