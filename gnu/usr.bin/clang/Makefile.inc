@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.16 2019/10/25 00:40:56 mortimer Exp $
+# $OpenBSD: Makefile.inc,v 1.17 2019/11/25 23:59:57 kn Exp $
 
 LLVM_SRCS?=	${.CURDIR}/../../../llvm
 
@@ -13,7 +13,6 @@ CC=		egcc
 CXX=		eg++
 .endif
 
-DEBUG=
 NOPIE=
 
 CLANG_INCLUDES=	-I${LLVM_SRCS}/tools/clang/include
