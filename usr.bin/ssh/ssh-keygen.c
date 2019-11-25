@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.372 2019/11/25 00:55:58 djm Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.373 2019/11/25 00:57:27 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -3272,6 +3272,11 @@ main(int argc, char **argv)
 	switch (type) {
 	case KEY_ECDSA_SK:
 	case KEY_ED25519_SK:
+		if (!quiet) {
+			printf("You may need to touch your security key "
+			    "to authorize key generation.\n");
+		}
+		fflush(stdout);
 		if (sshsk_enroll(type, sk_provider,
 		    cert_key_id == NULL ? "ssh:" : cert_key_id,
 		    sk_flags, NULL, &private, NULL) != 0)
