@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.54 2019/11/12 07:47:30 mpi Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.55 2019/11/25 11:32:17 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -853,12 +853,13 @@ athn_usb_wmi_xcmd(struct athn_usb_softc *usc, uint16_t cmd_id, void *ibuf,
 
 	s = splusb();
 	while (usc->wait_cmd_id) {
-		/* 
+		/*
 		 * The previous USB transfer is not done yet. We can't use
 		 * data->xfer until it is done or we'll cause major confusion
 		 * in the USB stack.
 		 */
-		tsleep(&usc->wait_cmd_id, 0, "athnwmx", ATHN_USB_CMD_TIMEOUT);
+		tsleep_nsec(&usc->wait_cmd_id, 0, "athnwmx",
+		    MSEC_TO_NSEC(ATHN_USB_CMD_TIMEOUT));
 		if (usbd_is_dying(usc->sc_udev)) {
 			splx(s);
 			return ENXIO;
@@ -894,7 +895,8 @@ athn_usb_wmi_xcmd(struct athn_usb_softc *usc, uint16_t cmd_id, void *ibuf,
 	 * Wait for WMI command complete interrupt. In case it does not fire
 	 * wait until the USB transfer times out to avoid racing the transfer.
 	 */
-	error = tsleep(&usc->wait_cmd_id, 0, "athnwmi", ATHN_USB_CMD_TIMEOUT);
+	error = tsleep_nsec(&usc->wait_cmd_id, 0, "athnwmi",
+	    MSEC_TO_NSEC(ATHN_USB_CMD_TIMEOUT));
 	if (error) {
 		if (error == EWOULDBLOCK) {
 			printf("%s: firmware command 0x%x timed out\n",
