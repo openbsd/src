@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.38 2019/11/22 15:31:25 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.39 2019/11/25 17:36:48 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1015,7 +1015,7 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 
 	switch (rtm->rtm_type) {
 	case RTM_IFINFO:
-		frontend_imsg_compose_resolver(IMSG_RECHECK_RESOLVERS, 0, NULL,
+		frontend_imsg_compose_resolver(IMSG_NETWORK_CHANGED, 0, NULL,
 		    0);
 		break;
 	case RTM_PROPOSAL:

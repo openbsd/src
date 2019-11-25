@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.33 2019/11/22 15:31:25 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.34 2019/11/25 17:36:48 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -116,7 +116,7 @@ enum imsg_type {
 	IMSG_NEW_TA,
 	IMSG_NEW_TAS_ABORT,
 	IMSG_NEW_TAS_DONE,
-	IMSG_RECHECK_RESOLVERS,
+	IMSG_NETWORK_CHANGED,
 	IMSG_CONNECT_CAPTIVE_PORTAL_HOST,
 	IMSG_BLFD,
 	IMSG_REPLACE_DNS,
