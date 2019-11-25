@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.228 2019/11/19 22:04:04 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.229 2019/11/25 14:22:59 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 19 2019 $
+.Dd $Mdocdate: November 25 2019 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -650,6 +650,20 @@ In addition, the following transaction options:
 .Cm auth
 .Xc
 Matches transactions which have been authenticated.
+.It Xo
+.Op Ic \&!
+.Cm auth
+.Ar username | Pf < Ar username Ns >
+.Xc
+Matches transactions which have been authenticated for user or user list
+.Ar username .
+.It Xo
+.Op Ic \&!
+.Cm auth regex
+.Ar username | Pf < Ar username Ns >
+.Xc
+Matches transactions which have been authenticated for regex or regex list
+.Ar username .
 .It Xo
 .Op Ic \&!
 .Cm helo
