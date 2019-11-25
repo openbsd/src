@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.697 2019/11/18 09:43:31 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.698 2019/11/25 15:04:15 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 18 2019 $
+.Dd $Mdocdate: November 25 2019 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4101,6 +4101,12 @@ appended or prepended to the string if the length has been trimmed, for example
 will append
 .Ql ...
 if the pane title is more than five characters.
+Similarly,
+.Ql p
+pads the string to a given width, for example
+.Ql #{p10:pane_title}
+will result in a width of at least 10 characters.
+A positive width pads on the left, a negative on the right.
 .Pp
 Prefixing a time variable with
 .Ql t:\&

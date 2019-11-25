@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.43 2019/05/26 17:34:45 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.44 2019/11/25 15:04:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -390,7 +390,7 @@ utf8_cstrwidth(const char *s)
 	return (width);
 }
 
-/* Pad UTF-8 string to width. Caller frees. */
+/* Pad UTF-8 string to width on the left. Caller frees. */
 char *
 utf8_padcstr(const char *s, u_int width)
 {
@@ -408,6 +408,27 @@ utf8_padcstr(const char *s, u_int width)
 	for (i = n; i < width; i++)
 		out[slen++] = ' ';
 	out[slen] = '\0';
+	return (out);
+}
+
+/* Pad UTF-8 string to width on the right. Caller frees. */
+char *
+utf8_rpadcstr(const char *s, u_int width)
+{
+	size_t	 slen;
+	char	*out;
+	u_int	  n, i;
+
+	n = utf8_cstrwidth(s);
+	if (n >= width)
+		return (xstrdup(s));
+
+	slen = strlen(s);
+	out = xmalloc(slen + 1 + (width - n));
+	for (i = 0; i < width - n; i++)
+		out[i] = ' ';
+	memcpy(out + i, s, slen);
+	out[i + slen] = '\0';
 	return (out);
 }
 
