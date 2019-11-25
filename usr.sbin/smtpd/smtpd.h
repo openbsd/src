@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.642 2019/11/03 23:58:51 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.643 2019/11/25 14:18:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -489,6 +489,7 @@ struct envelope {
 	char				smtpname[HOST_NAME_MAX+1];
 	char				helo[HOST_NAME_MAX+1];
 	char				hostname[HOST_NAME_MAX+1];
+	char				username[SMTPD_MAXMAILADDRSIZE];
 	char				errorline[LINE_MAX];
 	struct sockaddr_storage		ss;
 

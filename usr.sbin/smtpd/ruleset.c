@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.46 2019/11/12 20:21:46 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.47 2019/11/25 14:18:33 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -152,6 +152,8 @@ static int
 ruleset_match_smtp_auth(struct rule *r, const struct envelope *evp)
 {
 	int	ret;
+	struct table	*table;
+	enum table_service service;
 
 	if (!r->flag_smtp_auth)
 		return 1;
@@ -159,14 +161,14 @@ ruleset_match_smtp_auth(struct rule *r, const struct envelope *evp)
 	if (!(evp->flags & EF_AUTHENTICATED))
 		ret = 0;
 	else if (r->table_smtp_auth) {
-		/* XXX - not until smtp_session->username is added to envelope */
-		/*
-		 * table = table_find(m->from_table);
-		 * key = evp->username;
-		 * return table_match(table, K_CREDENTIALS, key);
-		 */
-		return -1;
 
+		if (r->flag_smtp_auth_regex)
+			service = K_REGEX;
+		else
+			service = strchr(evp->username, '@') ?
+				K_MAILADDR : K_STRING;
+		table = table_find(env, r->table_smtp_auth);
+		ret = table_match(table, service, evp->username);
 	}
 	else
 		ret = 1;

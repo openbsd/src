@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.46 2019/09/19 16:00:59 gilles Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.47 2019/11/25 14:18:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -177,6 +177,7 @@ envelope_dump_buffer(const struct envelope *ep, char *dest, size_t len)
 	envelope_ascii_dump(ep, &dest, &len, "smtpname");
 	envelope_ascii_dump(ep, &dest, &len, "helo");
 	envelope_ascii_dump(ep, &dest, &len, "hostname");
+	envelope_ascii_dump(ep, &dest, &len, "username");
 	envelope_ascii_dump(ep, &dest, &len, "errorline");
 	envelope_ascii_dump(ep, &dest, &len, "sockaddr");
 	envelope_ascii_dump(ep, &dest, &len, "sender");
@@ -399,6 +400,9 @@ ascii_load_field(const char *field, struct envelope *ep, char *buf)
 
 	if (strcasecmp("dest", field) == 0)
 		return ascii_load_mailaddr(&ep->dest, buf);
+
+	if (strcasecmp("username", field) == 0)
+		return ascii_load_string(ep->username, buf, sizeof(ep->username));
 
 	if (strcasecmp("errorline", field) == 0)
 		return ascii_load_string(ep->errorline, buf,
@@ -645,6 +649,12 @@ ascii_dump_field(const char *field, const struct envelope *ep,
 
 	if (strcasecmp(field, "dest") == 0)
 		return ascii_dump_mailaddr(&ep->dest, buf, len);
+
+	if (strcasecmp(field, "username") == 0) {
+		if (ep->username[0])
+			return ascii_dump_string(ep->username, buf, len);
+		return 1;
+	}
 
 	if (strcasecmp(field, "errorline") == 0)
 		return ascii_dump_string(ep->errorline, buf, len);

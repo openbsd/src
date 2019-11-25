@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.415 2019/10/04 08:34:29 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.416 2019/11/25 14:18:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2385,6 +2385,7 @@ smtp_tx(struct smtp_session *s)
 	(void)strlcpy(tx->evp.smtpname, s->smtpname, sizeof(tx->evp.smtpname));
 	(void)strlcpy(tx->evp.hostname, s->rdns, sizeof tx->evp.hostname);
 	(void)strlcpy(tx->evp.helo, s->helo, sizeof(tx->evp.helo));
+	(void)strlcpy(tx->evp.username, s->username, sizeof(tx->evp.username));
 
 	if (s->flags & SF_BOUNCE)
 		tx->evp.flags |= EF_BOUNCE;
