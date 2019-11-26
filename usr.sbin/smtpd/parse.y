@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.266 2019/11/26 07:28:37 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.267 2019/11/26 07:50:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1021,7 +1021,7 @@ negation TAG REGEX tables {
 		YYERROR;
 	}
 
-	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_CREDENTIALS)) {
+       	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_STRING|K_CREDENTIALS)) {
 		yyerror("table \"%s\" may not be used for auth lookups",
 		    t->t_name);
 		YYERROR;
@@ -1227,6 +1227,61 @@ negation TAG REGEX tables {
 	rule->flag_from_rdns = 1;
 	rule->table_from = strdup(t->t_name);
 }
+
+| negation FROM AUTH {
+	struct table	*anyhost = table_find(conf, "<anyhost>");
+
+	if (rule->flag_from) {
+		yyerror("from already specified for this rule");
+		YYERROR;
+	}
+
+	rule->flag_from = 1;
+	rule->table_from = strdup(anyhost->t_name);
+	rule->flag_smtp_auth = $1 ? -1 : 1;
+}
+| negation FROM AUTH tables {
+	struct table	*anyhost = table_find(conf, "<anyhost>");
+	struct table	*t = $4;
+
+	if (rule->flag_from) {
+		yyerror("from already specified for this rule");
+		YYERROR;
+	}
+
+       	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_STRING|K_CREDENTIALS)) {
+		yyerror("table \"%s\" may not be used for from lookups",
+		    t->t_name);
+		YYERROR;
+	}
+
+	rule->flag_from = 1;
+	rule->table_from = strdup(anyhost->t_name);
+	rule->flag_smtp_auth = $1 ? -1 : 1;
+	rule->table_smtp_auth = strdup(t->t_name);
+}
+| negation FROM AUTH REGEX tables {
+	struct table	*anyhost = table_find(conf, "<anyhost>");
+	struct table	*t = $5;
+
+	if (rule->flag_from) {
+		yyerror("from already specified for this rule");
+		YYERROR;
+	}
+
+	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_REGEX)) {
+        	yyerror("table \"%s\" may not be used for from lookups",
+		    t->t_name);
+		YYERROR;
+	}
+
+	rule->flag_from = 1;
+	rule->table_from = strdup(anyhost->t_name);
+	rule->flag_smtp_auth = $1 ? -1 : 1;
+	rule->flag_smtp_auth_regex = 1;
+	rule->table_smtp_auth = strdup(t->t_name);
+}
+
 | negation FROM MAIL_FROM tables {
 	struct table	*anyhost = table_find(conf, "<anyhost>");
 	struct table	*t = $4;
