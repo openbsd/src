@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.254 2019/09/22 08:47:54 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.255 2019/11/26 05:39:11 pd Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -28,7 +28,6 @@
 #include <sys/rwlock.h>
 #include <sys/pledge.h>
 #include <sys/memrange.h>
-#include <sys/timetc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -6879,8 +6878,11 @@ void
 vmm_init_pvclock(struct vcpu *vcpu, paddr_t gpa)
 {
 	vcpu->vc_pvclock_system_gpa = gpa;
-	vcpu->vc_pvclock_system_tsc_mul =
-	    (int) ((1000000000L << 20) / tc_getfrequency());
+	if (tsc_frequency > 0)
+		vcpu->vc_pvclock_system_tsc_mul =
+		    (int) ((1000000000L << 20) / tsc_frequency);
+	else
+		vcpu->vc_pvclock_system_tsc_mul = 0;
 	vmm_update_pvclock(vcpu);
 }
 
@@ -6906,7 +6908,7 @@ vmm_update_pvclock(struct vcpu *vcpu)
 		nanotime(&tv);
 		pvclock_ti->ti_system_time =
 		    tv.tv_sec * 1000000000L + tv.tv_nsec;
-		pvclock_ti->ti_tsc_shift = -20;
+		pvclock_ti->ti_tsc_shift = 12;
 		pvclock_ti->ti_tsc_to_system_mul =
 		    vcpu->vc_pvclock_system_tsc_mul;
 		pvclock_ti->ti_flags = PVCLOCK_FLAG_TSC_STABLE;
