@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.251 2019/11/26 18:19:40 mlarkin Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.252 2019/11/26 18:23:48 mlarkin Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3705,7 +3705,7 @@ uvm_mapent_clone(struct vm_map *dstmap, vaddr_t dstaddr, vsize_t dstlen,
 	/* Create new entry (linked in on creation). Fill in first, last. */
 	first = last = NULL;
 	if (!uvm_map_isavail(dstmap, NULL, &first, &last, dstaddr, dstlen)) {
-		panic("uvmspace_fork: no space in map for "
+		panic("uvm_mapent_clone: no space in map for "
 		    "entry in empty map");
 	}
 	new_entry = uvm_map_mkentry(dstmap, first, last,
@@ -3759,8 +3759,7 @@ uvm_mapent_share(struct vm_map *dstmap, vaddr_t dstaddr, vsize_t dstlen,
 
 	if (UVM_ET_ISNEEDSCOPY(old_entry)) {
 		/* get our own amap, clears needs_copy */
-		amap_copy(old_map, old_entry, M_WAITOK, FALSE,
-		    0, 0);
+		amap_copy(old_map, old_entry, M_WAITOK, FALSE, 0, 0);
 		/* XXXCDC: WAITOK??? */
 	}
 
