@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.345 2019/11/17 08:25:05 otto Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.346 2019/11/26 18:50:29 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1980,7 +1980,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				if (anchor->parent == NULL && nr++ == pr->nr) {
 					strlcpy(pr->name, anchor->name,
 					    sizeof(pr->name));
-					PF_UNLOCK();
 					break;
 				}
 		} else {
@@ -1989,13 +1988,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				if (nr++ == pr->nr) {
 					strlcpy(pr->name, anchor->name,
 					    sizeof(pr->name));
-					PF_UNLOCK();
 					break;
 				}
 		}
+		PF_UNLOCK();
 		if (!pr->name[0])
 			error = EBUSY;
-		PF_UNLOCK();
 		break;
 	}
 
