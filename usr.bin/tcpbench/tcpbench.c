@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.59 2018/09/28 19:01:52 bluhm Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.60 2019/11/26 17:51:33 stsp Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -565,6 +565,8 @@ tcp_process_slice(int fd, short event, void *bula)
 		total_elapsed = t_diff.tv_sec * 1000 + t_diff.tv_usec / 1000;
 		timersub(&t_cur, &sc->t_last, &t_diff);
 		since_last = t_diff.tv_sec * 1000 + t_diff.tv_usec / 1000;
+		if (since_last == 0)
+			continue;
 		bwperc = (sc->bytes * 100.0) / mainstats.slice_bytes;
 		mbps = (sc->bytes * 8) / (since_last * 1000.0);
 		slice_mbps += mbps;
@@ -602,6 +604,8 @@ udp_process_slice(int fd, short event, void *v_sc)
 	total_elapsed = t_diff.tv_sec * 1000 + t_diff.tv_usec / 1000;
 	timersub(&t_cur, &sc->t_last, &t_diff);
 	since_last = t_diff.tv_sec * 1000 + t_diff.tv_usec / 1000;
+	if (since_last == 0)
+		return;
 	slice_mbps = (sc->bytes * 8) / (since_last * 1000.0);
 	pps = (sc->udp_slice_pkts * 1000) / since_last;
 	if (slice_mbps > mainstats.peak_mbps)
