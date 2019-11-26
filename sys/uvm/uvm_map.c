@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.250 2019/11/02 16:41:57 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.251 2019/11/26 18:19:40 mlarkin Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -16,9 +16,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * 
+ *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
- * Copyright (c) 1991, 1993, The Regents of the University of California.  
+ * Copyright (c) 1991, 1993, The Regents of the University of California.
  *
  * All rights reserved.
  *
@@ -55,17 +55,17 @@
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
  * All rights reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -3065,7 +3065,7 @@ uvm_map_printit(struct vm_map *map, boolean_t full,
 	(*pr)("\tsz=%u, ref=%d, version=%u, flags=0x%x\n",
 	    map->size, map->ref_count, map->timestamp,
 	    map->flags);
-	(*pr)("\tpmap=%p(resident=%d)\n", map->pmap, 
+	(*pr)("\tpmap=%p(resident=%d)\n", map->pmap,
 	    pmap_resident_count(map->pmap));
 
 	/* struct vmspace handling. */
@@ -3092,7 +3092,7 @@ uvm_map_printit(struct vm_map *map, boolean_t full,
 		(*pr)("\tsubmap=%c, cow=%c, nc=%c, stack=%c, prot(max)=%d/%d, inh=%d, "
 		    "wc=%d, adv=%d\n",
 		    (entry->etype & UVM_ET_SUBMAP) ? 'T' : 'F',
-		    (entry->etype & UVM_ET_COPYONWRITE) ? 'T' : 'F', 
+		    (entry->etype & UVM_ET_COPYONWRITE) ? 'T' : 'F',
 		    (entry->etype & UVM_ET_NEEDSCOPY) ? 'T' : 'F',
 		    (entry->etype & UVM_ET_STACK) ? 'T' : 'F',
 		    entry->protection, entry->max_protection,
@@ -3158,7 +3158,7 @@ uvm_object_printit(uobj, full, pr)
 	if ((cnt % 3) != 2) {
 		(*pr)("\n");
 	}
-} 
+}
 
 /*
  * uvm_page_printit: actually print the page
@@ -3783,7 +3783,7 @@ uvm_mapent_forkshared(struct vmspace *new_vm, struct vm_map *new_map,
 	    old_entry->end - old_entry->start, 0, old_entry->protection,
 	    old_entry->max_protection, old_map, old_entry, dead);
 
-	/* 
+	/*
 	 * pmap_copy the mappings: this routine is optional
 	 * but if it is there it will reduce the number of
 	 * page faults in the new proc.
@@ -3799,7 +3799,7 @@ uvm_mapent_forkshared(struct vmspace *new_vm, struct vm_map *new_map,
  * copy-on-write the mapping (using mmap's
  * MAP_PRIVATE semantics)
  *
- * allocate new_entry, adjust reference counts.  
+ * allocate new_entry, adjust reference counts.
  * (note that new references are read-only).
  */
 struct vm_map_entry *
@@ -3829,20 +3829,20 @@ uvm_mapent_forkcopy(struct vmspace *new_vm, struct vm_map *new_map,
 	 * conditions hold:
 	 * 1. the old entry has an amap and that amap is
 	 *    being shared.  this means that the old (parent)
-	 *    process is sharing the amap with another 
+	 *    process is sharing the amap with another
 	 *    process.  if we do not clear needs_copy here
 	 *    we will end up in a situation where both the
 	 *    parent and child process are referring to the
-	 *    same amap with "needs_copy" set.  if the 
+	 *    same amap with "needs_copy" set.  if the
 	 *    parent write-faults, the fault routine will
 	 *    clear "needs_copy" in the parent by allocating
-	 *    a new amap.   this is wrong because the 
+	 *    a new amap.   this is wrong because the
 	 *    parent is supposed to be sharing the old amap
 	 *    and the new amap will break that.
 	 *
 	 * 2. if the old entry has an amap and a non-zero
 	 *    wire count then we are going to have to call
-	 *    amap_cow_now to avoid page faults in the 
+	 *    amap_cow_now to avoid page faults in the
 	 *    parent process.   since amap_cow_now requires
 	 *    "needs_copy" to be clear we might as well
 	 *    clear it here as well.
@@ -3868,9 +3868,9 @@ uvm_mapent_forkcopy(struct vmspace *new_vm, struct vm_map *new_map,
 	 * allocated any needed amap (above).
 	 */
 	if (VM_MAPENT_ISWIRED(old_entry)) {
-		/* 
+		/*
 		 * resolve all copy-on-write faults now
-		 * (note that there is nothing to do if 
+		 * (note that there is nothing to do if
 		 * the old mapping does not have an amap).
 		 * XXX: is it worthwhile to bother with
 		 * pmap_copy in this case?
@@ -3911,7 +3911,7 @@ uvm_mapent_forkcopy(struct vmspace *new_vm, struct vm_map *new_map,
 	  		protect_child = FALSE;
 		} else {
 			/*
-			 * we only need to protect the child if the 
+			 * we only need to protect the child if the
 			 * parent has write access.
 			 */
 			if (old_entry->max_protection & PROT_WRITE)
@@ -4047,8 +4047,8 @@ uvmspace_fork(struct process *pr)
 		}
 	}
 
-	vm_map_unlock(old_map); 
-	vm_map_unlock(new_map); 
+	vm_map_unlock(old_map);
+	vm_map_unlock(new_map);
 
 	/*
 	 * This can actually happen, if multiple entries described a
@@ -4061,7 +4061,7 @@ uvmspace_fork(struct process *pr)
 		shmfork(vm1, vm2);
 #endif
 
-	return vm2;    
+	return vm2;
 }
 
 /*
@@ -4118,7 +4118,7 @@ uvm_map_hint(struct vmspace *vm, vm_prot_t prot, vaddr_t minaddr,
  *	call [with uobj==NULL] to create a blank map entry in the main map.
  *	[And it had better still be blank!]
  * => maps which contain submaps should never be copied or forked.
- * => to remove a submap, use uvm_unmap() on the main map 
+ * => to remove a submap, use uvm_unmap() on the main map
  *	and then uvm_map_deallocate() the submap.
  * => main map must be unlocked.
  * => submap must have been init'd and have a zero reference count.
@@ -4143,7 +4143,7 @@ uvm_map_submap(struct vm_map *map, vaddr_t start, vaddr_t end,
 	} else
 		entry = NULL;
 
-	if (entry != NULL && 
+	if (entry != NULL &&
 	    entry->start == start && entry->end == end &&
 	    entry->object.uvm_obj == NULL && entry->aref.ar_amap == NULL &&
 	    !UVM_ET_ISCOPYONWRITE(entry) && !UVM_ET_ISNEEDSCOPY(entry)) {
@@ -4241,7 +4241,7 @@ uvm_map_deallocate(vm_map_t map)
 	uvm_unmap_detach(&dead, 0);
 }
 
-/* 
+/*
  * uvm_map_inherit: set inheritance code for range of addrs in map.
  *
  * => map must be unlocked
@@ -4289,7 +4289,7 @@ uvm_map_inherit(struct vm_map *map, vaddr_t start, vaddr_t end,
 	return (0);
 }
 
-/* 
+/*
  * uvm_map_advice: set advice code for range of addrs in map.
  *
  * => map must be unlocked
@@ -4497,7 +4497,7 @@ fail:
  *   if (flags & PGO_DEACTIVATE): any cached pages are deactivated after clean
  *   if (flags & PGO_FREE): any cached pages are freed after clean
  * => returns an error if any part of the specified range isn't mapped
- * => never a need to flush amap layer since the anonymous memory has 
+ * => never a need to flush amap layer since the anonymous memory has
  *	no permanent home, but may deactivate pages there
  * => called from sys_msync() and sys_madvise()
  * => caller must not write-lock map (read OK).
