@@ -101,7 +101,7 @@ static unsigned char client_hello_tls11[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x2e, 0xc0, 0x14,
 	0xc0, 0x0a, 0x00, 0x39, 0xff, 0x85, 0x00, 0x88,
 	0x00, 0x81, 0x00, 0x35, 0x00, 0x84, 0xc0, 0x13,
-	0xc0, 0x09, 0x00, 0x33, 0x00, 0x45, 0x00, 0x2f,    
+	0xc0, 0x09, 0x00, 0x33, 0x00, 0x45, 0x00, 0x2f,
 	0x00, 0x41, 0xc0, 0x11, 0xc0, 0x07, 0x00, 0x05,
 	0x00, 0x04, 0xc0, 0x12, 0xc0, 0x08, 0x00, 0x16,
 	0x00, 0x0a, 0x00, 0xff, 0x01, 0x00, 0x00, 0x16,
@@ -281,7 +281,7 @@ make_client_hello(int protocol, char **out, size_t *outlen)
 	size_t client_hello_len, cipher_list_len, cipher_list_offset;
 	const char *client_hello, *cipher_list;
 	char *p;
-	
+
 	*out = NULL;
 	*outlen = 0;
 
@@ -293,7 +293,7 @@ make_client_hello(int protocol, char **out, size_t *outlen)
 		cipher_list_len = sizeof(cipher_list_dtls1);
 		cipher_list_offset = DTLS_CIPHER_OFFSET;
 		break;
-	
+
 	case TLS1_VERSION:
 		client_hello = client_hello_tls10;
 		client_hello_len = sizeof(client_hello_tls10);
@@ -320,7 +320,7 @@ make_client_hello(int protocol, char **out, size_t *outlen)
 		cipher_list_len = sizeof(cipher_list_tls12_chacha);
 		cipher_list_offset = SSL3_CIPHER_OFFSET;
 		break;
-	
+
 	default:
 		return (-1);
 	}
@@ -378,7 +378,7 @@ client_hello_test(int testno, struct client_hello_test *cht)
 	wbio->references = 2;
 
 	SSL_set_bio(ssl, rbio, wbio);
-	
+
 	if (SSL_connect(ssl) != 0) {
 		fprintf(stderr, "SSL_connect() returned non-zero\n");
 		goto failure;
@@ -413,7 +413,7 @@ client_hello_test(int testno, struct client_hello_test *cht)
 		fprintf(stderr, "\n");
 		goto failure;
 	}
-	
+
 	ret = 0;
 
 failure:
