@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.300 2019/11/25 17:02:57 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.301 2019/11/26 20:51:20 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1743,6 +1743,7 @@ sd_get_parms(struct sd_softc *sc, int flags)
 		 * so accept the page. The extra bytes will be zero and RPM will
 		 * end up with the default value of 3600.
 		 */
+		err = 0;
 		if (!ISSET(link->flags, SDEV_ATAPI) ||
 		    !ISSET(link->flags, SDEV_REMOVABLE))
 			err = scsi_do_mode_sense(link,
