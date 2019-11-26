@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.284 2019/11/20 16:14:51 patrick Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.285 2019/11/26 00:36:32 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3940,8 +3940,8 @@ iwm_rx_mpdu_mq(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	rate_n_flags = le32toh(desc->v1.rate_n_flags);
 
 	rssi = iwm_rxmq_get_signal_strength(sc, desc);
-	rssi -= sc->sc_noise;
-	rssi *= 2; /* rssi is in 1/2db units */
+	rssi = (0 - IWM_MIN_DBM) + rssi;	/* normalize */
+	rssi = MIN(rssi, ic->ic_max_rssi);	/* clip to max. 100% */
 
 	ni = ieee80211_find_rxnode(ic, wh);
 	if (ni == ic->ic_bss) {
