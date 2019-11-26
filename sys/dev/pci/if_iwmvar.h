@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.47 2019/11/18 18:53:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.48 2019/11/26 07:37:50 patrick Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -394,6 +394,7 @@ struct iwm_softc {
 	pci_chipset_tag_t sc_pct;
 	pcitag_t sc_pcitag;
 	const void *sc_ih;
+	int sc_msix;
 
 	/* TX scheduler rings. */
 	struct iwm_dma_info		sched_dma;
@@ -443,6 +444,11 @@ struct iwm_softc {
 
 	int sc_intmask;
 	int sc_flags;
+
+	uint32_t sc_fh_init_mask;
+	uint32_t sc_hw_init_mask;
+	uint32_t sc_fh_mask;
+	uint32_t sc_hw_mask;
 
 	/*
 	 * So why do we need a separate stopped flag and a generation?

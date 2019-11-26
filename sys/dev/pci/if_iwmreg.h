@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.44 2019/11/18 18:53:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.45 2019/11/26 07:37:50 patrick Exp $	*/
 
 /******************************************************************************
  *
@@ -667,6 +667,77 @@
 #define IWM_DTS_DIODE_REG_FLAGS_VREFS_ID	0x00000003 /* bits [1:0] */
 #define IWM_DTS_DIODE_REG_FLAGS_PASS_ONCE_POS	7
 #define IWM_DTS_DIODE_REG_FLAGS_PASS_ONCE	0x00000080 /* bits [7:7] */
+
+/*****************************************************************************
+ *                        MSIX related registers                             *
+ *****************************************************************************/
+
+#define IWM_CSR_MSIX_BASE			(0x2000)
+#define IWM_CSR_MSIX_FH_INT_CAUSES_AD		(IWM_CSR_MSIX_BASE + 0x800)
+#define IWM_CSR_MSIX_FH_INT_MASK_AD		(IWM_CSR_MSIX_BASE + 0x804)
+#define IWM_CSR_MSIX_HW_INT_CAUSES_AD		(IWM_CSR_MSIX_BASE + 0x808)
+#define IWM_CSR_MSIX_HW_INT_MASK_AD		(IWM_CSR_MSIX_BASE + 0x80C)
+#define IWM_CSR_MSIX_AUTOMASK_ST_AD		(IWM_CSR_MSIX_BASE + 0x810)
+#define IWM_CSR_MSIX_RX_IVAR_AD_REG		(IWM_CSR_MSIX_BASE + 0x880)
+#define IWM_CSR_MSIX_IVAR_AD_REG		(IWM_CSR_MSIX_BASE + 0x890)
+#define IWM_CSR_MSIX_PENDING_PBA_AD		(IWM_CSR_MSIX_BASE + 0x1000)
+#define IWM_CSR_MSIX_RX_IVAR(cause)		(IWM_CSR_MSIX_RX_IVAR_AD_REG + (cause))
+#define IWM_CSR_MSIX_IVAR(cause)		(IWM_CSR_MSIX_IVAR_AD_REG + (cause))
+
+/*
+ * Causes for the FH register interrupts
+ */
+enum msix_fh_int_causes {
+	IWM_MSIX_FH_INT_CAUSES_Q0		= (1 << 0),
+	IWM_MSIX_FH_INT_CAUSES_Q1		= (1 << 1),
+	IWM_MSIX_FH_INT_CAUSES_D2S_CH0_NUM	= (1 << 16),
+	IWM_MSIX_FH_INT_CAUSES_D2S_CH1_NUM	= (1 << 17),
+	IWM_MSIX_FH_INT_CAUSES_S2D		= (1 << 19),
+	IWM_MSIX_FH_INT_CAUSES_FH_ERR		= (1 << 21),
+};
+
+/*
+ * Causes for the HW register interrupts
+ */
+enum msix_hw_int_causes {
+	IWM_MSIX_HW_INT_CAUSES_REG_ALIVE	= (1 << 0),
+	IWM_MSIX_HW_INT_CAUSES_REG_WAKEUP	= (1 << 1),
+	IWM_MSIX_HW_INT_CAUSES_REG_IPC		= (1 << 1),
+	IWM_MSIX_HW_INT_CAUSES_REG_IML		= (1 << 2),
+	IWM_MSIX_HW_INT_CAUSES_REG_SW_ERR_V2	= (1 << 5),
+	IWM_MSIX_HW_INT_CAUSES_REG_CT_KILL	= (1 << 6),
+	IWM_MSIX_HW_INT_CAUSES_REG_RF_KILL	= (1 << 7),
+	IWM_MSIX_HW_INT_CAUSES_REG_PERIODIC	= (1 << 8),
+	IWM_MSIX_HW_INT_CAUSES_REG_SW_ERR	= (1 << 25),
+	IWM_MSIX_HW_INT_CAUSES_REG_SCD		= (1 << 26),
+	IWM_MSIX_HW_INT_CAUSES_REG_FH_TX	= (1 << 27),
+	IWM_MSIX_HW_INT_CAUSES_REG_HW_ERR	= (1 << 29),
+	IWM_MSIX_HW_INT_CAUSES_REG_HAP		= (1 << 30),
+};
+
+/*
+ * Registers to map causes to vectors
+ */
+enum msix_ivar_for_cause {
+	IWM_MSIX_IVAR_CAUSE_D2S_CH0_NUM		= 0x0,
+	IWM_MSIX_IVAR_CAUSE_D2S_CH1_NUM		= 0x1,
+	IWM_MSIX_IVAR_CAUSE_S2D			= 0x3,
+	IWM_MSIX_IVAR_CAUSE_FH_ERR		= 0x5,
+	IWM_MSIX_IVAR_CAUSE_REG_ALIVE		= 0x10,
+	IWM_MSIX_IVAR_CAUSE_REG_WAKEUP		= 0x11,
+	IWM_MSIX_IVAR_CAUSE_REG_IML		= 0x12,
+	IWM_MSIX_IVAR_CAUSE_REG_CT_KILL		= 0x16,
+	IWM_MSIX_IVAR_CAUSE_REG_RF_KILL		= 0x17,
+	IWM_MSIX_IVAR_CAUSE_REG_PERIODIC	= 0x18,
+	IWM_MSIX_IVAR_CAUSE_REG_SW_ERR		= 0x29,
+	IWM_MSIX_IVAR_CAUSE_REG_SCD		= 0x2a,
+	IWM_MSIX_IVAR_CAUSE_REG_FH_TX		= 0x2b,
+	IWM_MSIX_IVAR_CAUSE_REG_HW_ERR		= 0x2d,
+	IWM_MSIX_IVAR_CAUSE_REG_HAP		= 0x2e,
+};
+
+#define IWM_MSIX_AUTO_CLEAR_CAUSE		(0 << 7)
+#define IWM_MSIX_NON_AUTO_CLEAR_CAUSE		(1 << 7)
 
 /**
  * uCode API flags
