@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.12 2019/10/24 22:11:10 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.13 2019/11/26 02:50:11 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -58,8 +58,6 @@ static const int reloc_target_flags[] = {
 	  _RF_V|_RF_S|_RF_A|		_RF_SZ(64) | _RF_RS(0),	/* ABS64 */
 	[ R_AARCH64_GLOB_DAT ] =
 	  _RF_V|_RF_S|_RF_A|		_RF_SZ(64) | _RF_RS(0),	/* GLOB_DAT */
-	[ R_AARCH64_JUMP_SLOT ] =
-	  _RF_V|_RF_S|			_RF_SZ(64) | _RF_RS(0),	/* JUMP_SLOT */
 	[ R_AARCH64_RELATIVE ] =
 	  _RF_V|_RF_B|_RF_A|		_RF_SZ(64) | _RF_RS(0),	/* REL64 */
 	[ R_AARCH64_TLSDESC ] =
@@ -82,7 +80,6 @@ static const Elf_Addr reloc_target_bitmask[] = {
 	[ R_AARCH64_NONE ] = 0,
 	[ R_AARCH64_ABS64 ] = _BM(64),
 	[ R_AARCH64_GLOB_DAT ] = _BM(64),
-	[ R_AARCH64_JUMP_SLOT ] = _BM(64),
 	[ R_AARCH64_RELATIVE ] = _BM(64),
 	[ R_AARCH64_TLSDESC ] = _BM(64),
 	[ R_AARCH64_TLS_TPREL64 ] = _BM(64),
@@ -142,7 +139,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		if (type == R_TYPE(NONE))
 			continue;
 
-		if (type == R_TYPE(JUMP_SLOT) && rel != DT_JMPREL)
+		if (type == R_TYPE(JUMP_SLOT))
 			continue;
 
 		where = (Elf_Addr *)(rels->r_offset + loff);
@@ -168,9 +165,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 				struct sym_res sr;
 
 				sr = _dl_find_symbol(symn,
-				    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
-				    ((type == R_TYPE(JUMP_SLOT)) ?
-					SYM_PLT : SYM_NOTPLT), sym, object);
+				    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
+				    sym, object);
 				if (sr.sym == NULL) {
 resolve_failed:
 					if (ELF_ST_BIND(sym->st_info) !=
@@ -183,14 +179,6 @@ resolve_failed:
 				    sr.sym->st_value);
 				value += prev_value;
 			}
-		}
-
-		if (type == R_TYPE(JUMP_SLOT)) {
-			/*
-			_dl_reloc_plt((Elf_Word *)where, value, rels);
-			*/
-			*where = value;
-			continue;
 		}
 
 		if (type == R_TYPE(COPY)) {
@@ -226,6 +214,35 @@ resolve_failed:
 	return fails;
 }
 
+static int
+_dl_md_reloc_all_plt(elf_object_t *object, const Elf_RelA *reloc,
+    const Elf_RelA *rend)
+{
+	for (; reloc < rend; reloc++) {
+		const Elf_Sym *sym;
+		const char *symn;
+		Elf_Addr *where;
+		struct sym_res sr;
+
+		sym = object->dyn.symtab;
+		sym += ELF_R_SYM(reloc->r_info);
+		symn = object->dyn.strtab + sym->st_name;
+
+		sr = _dl_find_symbol(symn,
+		    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object);
+		if (sr.sym == NULL) {
+			if (ELF_ST_BIND(sym->st_info) != STB_WEAK)
+				return 1;
+			continue;
+		}
+
+		where = (Elf_Addr *)(reloc->r_offset + object->obj_base);
+		*where = sr.obj->obj_base + sr.sym->st_value; 
+	}
+
+	return 0;
+}
+
 /*
  *	Relocate the Global Offset Table (GOT).
  *	This is done by calling _dl_md_reloc on DT_JMPREL for DL_BIND_NOW,
@@ -234,10 +251,11 @@ resolve_failed:
 int
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
-	int	fails = 0;
-	Elf_Addr *pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
-	int i, num;
-	Elf_RelA *rel;
+	Elf_Addr	*pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
+	const Elf_RelA	*reloc, *rend;
+
+	if (pltgot == NULL)
+		return 0; /* it is possible to have no PLT/GOT relocations */
 
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
 		return 0;
@@ -245,23 +263,23 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->traced)
 		lazy = 1;
 
-	if (!lazy) {
-		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
-	} else {
-		rel = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
-		num = (object->Dyn.info[DT_PLTRELSZ]);
+	reloc = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
+	rend = (Elf_RelA *)((char *)reloc + object->Dyn.info[DT_PLTRELSZ]);
 
-		for (i = 0; i < num/sizeof(Elf_RelA); i++, rel++) {
-			Elf_Addr *where;
-			where = (Elf_Addr *)(rel->r_offset + object->obj_base);
-			*where += object->obj_base;
-		}
+	if (!lazy)
+		return _dl_md_reloc_all_plt(object, reloc, rend);
 
-		pltgot[1] = (Elf_Addr)object;
-		pltgot[2] = (Elf_Addr)_dl_bind_start;
+	/* Lazy */
+	pltgot[1] = (Elf_Addr)object;
+	pltgot[2] = (Elf_Addr)_dl_bind_start;
+
+	for (; reloc < rend; reloc++) {
+		Elf_Addr *where;
+		where = (Elf_Addr *)(reloc->r_offset + object->obj_base);
+		*where += object->obj_base;
 	}
 
-	return fails;
+	return 0;
 }
 
 Elf_Addr

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.35 2019/10/23 19:55:09 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.36 2019/11/26 02:50:11 guenther Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -166,8 +166,6 @@ static const Elf_Addr reloc_target_bitmask[] = {
 };
 #define RELOC_VALUE_BITMASK(t)	(reloc_target_bitmask[t])
 
-void _dl_reloc_plt(Elf_Addr *where, Elf_Addr value);
-
 int
 _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 {
@@ -211,7 +209,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		if (type == R_TYPE(NONE))
 			continue;
 
-		if (type == R_TYPE(JUMP_SLOT) && rel != DT_JMPREL)
+		if (type == R_TYPE(JUMP_SLOT))
 			continue;
 
 		where = (Elf_Addr *)(rels->r_offset + loff);
@@ -237,9 +235,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 				struct sym_res sr;
 
 				sr = _dl_find_symbol(symn,
-				    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
-				    ((type == R_TYPE(JUMP_SLOT))?
-					SYM_PLT:SYM_NOTPLT), sym, object);
+				    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
+				    sym, object);
 				if (sr.sym == NULL) {
 resolve_failed:
 					if (ELF_ST_BIND(sym->st_info) !=
@@ -252,11 +249,6 @@ resolve_failed:
 				    sr.sym->st_value);
 				value += prev_value;
 			}
-		}
-
-		if (type == R_TYPE(JUMP_SLOT)) {
-			_dl_reloc_plt(where, value);
-			continue;
 		}
 
 		if (type == R_TYPE(COPY)) {
@@ -297,12 +289,6 @@ resolve_failed:
 	}
 
 	return fails;
-}
-
-void
-_dl_reloc_plt(Elf_Addr *where, Elf_Addr value)
-{
-	*where = value;
 }
 
 /*
@@ -353,14 +339,41 @@ _dl_bind(elf_object_t *object, int index)
 	return buf.newval;
 }
 
+static int
+_dl_md_reloc_all_plt(elf_object_t *object, const Elf_RelA *reloc,
+    const Elf_RelA *rend)
+{
+	for (; reloc < rend; reloc++) {
+		const Elf_Sym *sym;
+		const char *symn;
+		Elf_Addr *where;
+		struct sym_res sr;
+
+		sym = object->dyn.symtab;
+		sym += ELF_R_SYM(reloc->r_info);
+		symn = object->dyn.strtab + sym->st_name;
+
+		sr = _dl_find_symbol(symn,
+		    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object);
+		if (sr.sym == NULL) {
+			if (ELF_ST_BIND(sym->st_info) != STB_WEAK)
+				return 1;
+			continue;
+		}
+
+		where = (Elf_Addr *)(reloc->r_offset + object->obj_base);
+		*where = sr.obj->obj_base + sr.sym->st_value; 
+	}
+
+	return 0;
+}
+
 int
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
 	extern void _dl_bind_start(void);	/* XXX */
-	int	fails = 0;
-	Elf_Addr *pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
-	int i, num;
-	Elf_RelA *rel;
+	Elf_Addr	*pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
+	const Elf_RelA	*reloc, *rend;
 
 	if (pltgot == NULL)
 		return 0; /* it is possible to have no PLT/GOT relocations */
@@ -371,20 +384,21 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->traced)
 		lazy = 1;
 
-	if (__predict_false(!lazy)) {
-		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
-	} else {
-		pltgot[1] = (Elf_Addr)object;
-		pltgot[2] = (Elf_Addr)&_dl_bind_start;
+	reloc = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
+	rend = (Elf_RelA *)((char *)reloc + object->Dyn.info[DT_PLTRELSZ]);
 
-		rel = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
-		num = (object->Dyn.info[DT_PLTRELSZ]);
-		for (i = 0; i < num/sizeof(Elf_RelA); i++, rel++) {
-			Elf_Addr *where;
-			where = (Elf_Addr *)(rel->r_offset + object->obj_base);
-			*where += object->obj_base;
-		}
+	if (!lazy)
+		return _dl_md_reloc_all_plt(object, reloc, rend);
+
+	/* Lazy */
+	pltgot[1] = (Elf_Addr)object;
+	pltgot[2] = (Elf_Addr)&_dl_bind_start;
+
+	for (; reloc < rend; reloc++) {
+		Elf_Addr *where;
+		where = (Elf_Addr *)(reloc->r_offset + object->obj_base);
+		*where += object->obj_base;
 	}
 
-	return fails;
+	return 0;
 }
