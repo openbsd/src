@@ -46,15 +46,15 @@ struct session {
 	int		n_rcpts;
 };
 
-static FILE *lmtp_connect(const char *);
-static void lmtp_engine(FILE *, struct session *);
+static int lmtp_connect(const char *);
+static void lmtp_engine(int, struct session *);
 static void stream_file(FILE *);
 	
 int
 main(int argc, char *argv[])
 {
 	int ch;
-	FILE *conn;
+	int conn;
 	const char *destination = "localhost";
 	struct session	session;
 
@@ -97,7 +97,7 @@ main(int argc, char *argv[])
 	return (0);
 }
 
-static FILE *
+static int
 lmtp_connect_inet(const char *destination)
 {
 	struct addrinfo hints, *res, *res0;
@@ -171,10 +171,10 @@ lmtp_connect_inet(const char *destination)
 		errx(EX_TEMPFAIL, "%s", cause);
 
 	free(destcopy);
-	return fdopen(s, "r+");
+	return s;
 }
 
-static FILE *
+static int
 lmtp_connect_unix(const char *destination)
 {
 	struct sockaddr_un addr;
@@ -195,10 +195,10 @@ lmtp_connect_unix(const char *destination)
 	if (connect(s, (struct sockaddr *)&addr, sizeof addr) == -1)
 		err(EX_TEMPFAIL, "connect");
 
-	return fdopen(s, "r+");
+	return s;
 }
 
-static FILE *
+static int
 lmtp_connect(const char *destination)
 {
 	if (destination[0] == '/')
@@ -207,17 +207,30 @@ lmtp_connect(const char *destination)
 }
 
 static void
-lmtp_engine(FILE *conn, struct session *session)
+lmtp_engine(int fd_read, struct session *session)
 {
+	int fd_write = 0;
+	FILE *file_read = 0;
+	FILE *file_write = 0;
 	char *line = NULL;
 	size_t linesize = 0;
 	ssize_t linelen;
 	enum phase phase = PHASE_BANNER;
 
+	if ((fd_write = dup(fd_read)) == -1)
+		err(EX_TEMPFAIL, "dup");
+
+	if ((file_read = fdopen(fd_read, "r")) == NULL)
+		err(EX_TEMPFAIL, "fdopen");
+
+	if ((file_write = fdopen(fd_write, "w")) == NULL)
+		err(EX_TEMPFAIL, "fdopen");
+
 	do {
-		fflush(conn);
-		if ((linelen = getline(&line, &linesize, conn)) == -1) {
-			if (ferror(conn))
+		fflush(file_write);
+
+		if ((linelen = getline(&line, &linesize, file_read)) == -1) {
+			if (ferror(file_read))
 				err(EX_TEMPFAIL, "getline");
 			else
 				errx(EX_TEMPFAIL, "unexpected EOF from LMTP server");
@@ -241,17 +254,17 @@ lmtp_engine(FILE *conn, struct session *session)
 		switch (phase) {
 
 		case PHASE_BANNER:
-			fprintf(conn, "LHLO %s\r\n", session->lhlo);
+			fprintf(file_write, "LHLO %s\r\n", session->lhlo);
 			phase++;
 			break;
 
 		case PHASE_HELO:
-			fprintf(conn, "MAIL FROM:<%s>\r\n", session->mailfrom);
+			fprintf(file_write, "MAIL FROM:<%s>\r\n", session->mailfrom);
 			phase++;
 			break;
 
 		case PHASE_MAILFROM:
-			fprintf(conn, "RCPT TO:<%s>\r\n", session->rcpts[session->n_rcpts - 1]);
+			fprintf(file_write, "RCPT TO:<%s>\r\n", session->rcpts[session->n_rcpts - 1]);
 			if (session->n_rcpts - 1 == 0) {
 				phase++;
 				break;
@@ -260,18 +273,18 @@ lmtp_engine(FILE *conn, struct session *session)
 			break;
 
 		case PHASE_RCPTTO:
-			fprintf(conn, "DATA\r\n");
+			fprintf(file_write, "DATA\r\n");
 			phase++;
 			break;
 
 		case PHASE_DATA:
-			stream_file(conn);
-			fprintf(conn, ".\r\n");
+			stream_file(file_write);
+			fprintf(file_write, ".\r\n");
 			phase++;
 			break;
 
 		case PHASE_EOM:
-			fprintf(conn, "QUIT\r\n");
+			fprintf(file_write, "QUIT\r\n");
 			phase++;
 			break;						
 
