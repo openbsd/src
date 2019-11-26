@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.264 2019/11/12 21:02:42 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.265 2019/11/26 06:10:20 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1227,7 +1227,47 @@ negation TAG REGEX tables {
 	rule->flag_from_rdns = 1;
 	rule->table_from = strdup(t->t_name);
 }
+| negation FROM MAIL_FROM tables {
+	struct table	*anyhost = table_find(conf, "<anyhost>");
+	struct table	*t = $4;
 
+	if (rule->flag_from) {
+		yyerror("from already specified for this rule");
+		YYERROR;
+	}
+
+	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_MAILADDR)) {
+		yyerror("table \"%s\" may not be used for from lookups",
+		    t->t_name);
+		YYERROR;
+	}
+
+	rule->flag_from = 1;
+	rule->table_from = strdup(anyhost->t_name);
+	rule->flag_smtp_mail_from = $1 ? -1 : 1;
+	rule->table_smtp_mail_from = strdup(t->t_name);
+}
+| negation FROM MAIL_FROM REGEX tables {
+	struct table	*anyhost = table_find(conf, "<anyhost>");
+	struct table	*t = $5;
+
+	if (rule->flag_from) {
+		yyerror("from already specified for this rule");
+		YYERROR;
+	}
+
+	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_REGEX)) {
+		yyerror("table \"%s\" may not be used for from lookups",
+		    t->t_name);
+		YYERROR;
+	}
+
+	rule->flag_from = 1;
+	rule->table_from = strdup(anyhost->t_name);
+	rule->flag_smtp_mail_from = $1 ? -1 : 1;
+	rule->flag_smtp_mail_from_regex = 1;
+	rule->table_smtp_mail_from = strdup(t->t_name);
+}
 
 | negation FOR LOCAL {
 	struct table   *t = table_find(conf, "<localnames>");
@@ -1283,6 +1323,47 @@ negation TAG REGEX tables {
 	rule->flag_for = $1 ? -1 : 1;
 	rule->flag_for_regex = 1;
 	rule->table_for = strdup(t->t_name);
+}
+| negation FOR RCPT_TO tables {
+	struct table	*anyhost = table_find(conf, "<anydestination>");
+	struct table	*t = $4;
+
+	if (rule->flag_for) {
+		yyerror("for already specified for this rule");
+		YYERROR;
+	}
+
+	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_MAILADDR)) {
+		yyerror("table \"%s\" may not be used for for lookups",
+		    t->t_name);
+		YYERROR;
+	}
+
+	rule->flag_for = 1;
+	rule->table_for = strdup(anyhost->t_name);
+	rule->flag_smtp_rcpt_to = $1 ? -1 : 1;
+	rule->table_smtp_rcpt_to = strdup(t->t_name);
+}
+| negation FOR RCPT_TO REGEX tables {
+	struct table	*anyhost = table_find(conf, "<anydestination>");
+	struct table	*t = $5;
+
+	if (rule->flag_for) {
+		yyerror("for already specified for this rule");
+		YYERROR;
+	}
+
+	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_REGEX)) {
+		yyerror("table \"%s\" may not be used for for lookups",
+		    t->t_name);
+		YYERROR;
+	}
+
+	rule->flag_for = 1;
+	rule->table_for = strdup(anyhost->t_name);
+	rule->flag_smtp_rcpt_to = $1 ? -1 : 1;
+	rule->flag_smtp_rcpt_to_regex = 1;
+	rule->table_smtp_rcpt_to = strdup(t->t_name);
 }
 ;
 
