@@ -1,4 +1,4 @@
-/*	$OpenBSD: efipxe.c,v 1.3 2019/08/20 23:38:19 patrick Exp $	*/
+/*	$OpenBSD: efipxe.c,v 1.4 2019/11/26 19:08:02 bluhm Exp $	*/
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -91,6 +91,16 @@ efi_pxeprobe(void)
 		memcpy(boothw, dhcp->BootpHwAddr, sizeof(boothw));
 		bootmac = boothw;
 		PXE = pxe;
+
+		/*
+		 * It is expected that bootdev_dip exists.  Usually
+		 * efiopen() sets the pointer.  Create a fake disk
+		 * for the TFTP case.
+		 */
+		bootdev_dip = alloc(sizeof(struct diskinfo));
+		memset(bootdev_dip, 0, sizeof(struct diskinfo));
+		memset(bootdev_dip->disklabel.d_uid, 0xff,
+		    sizeof(bootdev_dip->disklabel.d_uid));
 		break;
 	}
 }
