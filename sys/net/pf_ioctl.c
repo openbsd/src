@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.346 2019/11/26 18:50:29 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.347 2019/11/26 19:57:52 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1195,7 +1195,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_rule		*rule, *tail;
 
 		PF_LOCK();
-		pr->anchor[sizeof(pr->anchor) - 1] = 0;
+		pr->anchor[sizeof(pr->anchor) - 1] = '\0';
 		ruleset = pf_find_ruleset(pr->anchor);
 		if (ruleset == NULL) {
 			error = EINVAL;
@@ -1292,7 +1292,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_rule		*tail;
 
 		PF_LOCK();
-		pr->anchor[sizeof(pr->anchor) - 1] = 0;
+		pr->anchor[sizeof(pr->anchor) - 1] = '\0';
 		ruleset = pf_find_ruleset(pr->anchor);
 		if (ruleset == NULL) {
 			error = EINVAL;
@@ -1316,7 +1316,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		int			 i;
 
 		PF_LOCK();
-		pr->anchor[sizeof(pr->anchor) - 1] = 0;
+		pr->anchor[sizeof(pr->anchor) - 1] = '\0';
 		ruleset = pf_find_ruleset(pr->anchor);
 		if (ruleset == NULL) {
 			error = EINVAL;
@@ -1939,7 +1939,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_anchor	*anchor;
 
 		PF_LOCK();
-		pr->path[sizeof(pr->path) - 1] = 0;
+		pr->path[sizeof(pr->path) - 1] = '\0';
 		if ((ruleset = pf_find_ruleset(pr->path)) == NULL) {
 			error = EINVAL;
 			PF_UNLOCK();
@@ -1967,13 +1967,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		u_int32_t		 nr = 0;
 
 		PF_LOCK();
-		pr->path[sizeof(pr->path) - 1] = 0;
+		pr->path[sizeof(pr->path) - 1] = '\0';
 		if ((ruleset = pf_find_ruleset(pr->path)) == NULL) {
 			error = EINVAL;
 			PF_UNLOCK();
 			break;
 		}
-		pr->name[0] = 0;
+		pr->name[0] = '\0';
 		if (ruleset == &pf_main_ruleset) {
 			/* XXX kludge for pf_main_ruleset */
 			RB_FOREACH(anchor, pf_anchor_global, &pf_anchors)
