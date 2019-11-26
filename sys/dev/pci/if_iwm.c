@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.286 2019/11/26 07:37:50 patrick Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.287 2019/11/26 16:14:45 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3880,22 +3880,104 @@ iwm_get_noise(const struct iwm_statistics_rx_non_phy *stats)
 }
 
 void
+iwm_rx_frame(struct iwm_softc *sc, struct mbuf *m, int chanidx,
+     int is_shortpre, int rate_n_flags, uint32_t device_timestamp,
+     struct ieee80211_rxinfo *rxi, struct mbuf_list *ml)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_frame *wh;
+	struct ieee80211_node *ni;
+	struct ieee80211_channel *bss_chan;
+	uint8_t saved_bssid[IEEE80211_ADDR_LEN] = { 0 };
+
+	if (chanidx < 0 || chanidx >= nitems(ic->ic_channels))	
+		chanidx = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
+
+	ni = ieee80211_find_rxnode(ic, wh);
+	if (ni == ic->ic_bss) {
+		/* 
+		 * We may switch ic_bss's channel during scans.
+		 * Record the current channel so we can restore it later.
+		 */
+		bss_chan = ni->ni_chan;
+		IEEE80211_ADDR_COPY(&saved_bssid, ni->ni_macaddr);
+	}
+	ni->ni_chan = &ic->ic_channels[chanidx];
+
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct iwm_rx_radiotap_header *tap = &sc->sc_rxtap;
+		uint16_t chan_flags;
+
+		tap->wr_flags = 0;
+		if (is_shortpre)
+			tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
+		tap->wr_chan_freq =
+		    htole16(ic->ic_channels[chanidx].ic_freq);
+		chan_flags = ic->ic_channels[chanidx].ic_flags;
+		if (ic->ic_curmode != IEEE80211_MODE_11N)
+			chan_flags &= ~IEEE80211_CHAN_HT;
+		tap->wr_chan_flags = htole16(chan_flags);
+		tap->wr_dbm_antsignal = (int8_t)rxi->rxi_rssi;
+		tap->wr_dbm_antnoise = (int8_t)sc->sc_noise;
+		tap->wr_tsft = device_timestamp;
+		if (rate_n_flags & IWM_RATE_HT_MCS_RATE_CODE_MSK) {
+			uint8_t mcs = (rate_n_flags &
+			    (IWM_RATE_HT_MCS_RATE_CODE_MSK |
+			    IWM_RATE_HT_MCS_NSS_MSK));
+			tap->wr_rate = (0x80 | mcs);
+		} else {
+			uint8_t rate = (rate_n_flags &
+			    IWM_RATE_LEGACY_RATE_MSK);
+			switch (rate) {
+			/* CCK rates. */
+			case  10: tap->wr_rate =   2; break;
+			case  20: tap->wr_rate =   4; break;
+			case  55: tap->wr_rate =  11; break;
+			case 110: tap->wr_rate =  22; break;
+			/* OFDM rates. */
+			case 0xd: tap->wr_rate =  12; break;
+			case 0xf: tap->wr_rate =  18; break;
+			case 0x5: tap->wr_rate =  24; break;
+			case 0x7: tap->wr_rate =  36; break;
+			case 0x9: tap->wr_rate =  48; break;
+			case 0xb: tap->wr_rate =  72; break;
+			case 0x1: tap->wr_rate =  96; break;
+			case 0x3: tap->wr_rate = 108; break;
+			/* Unknown rate: should not happen. */
+			default:  tap->wr_rate =   0;
+			}
+		}
+
+		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_rxtap_len,
+		    m, BPF_DIRECTION_IN);
+	}
+#endif
+	ieee80211_inputm(IC2IFP(ic), m, ni, rxi, ml);
+	/*
+	 * ieee80211_inputm() might have changed our BSS.
+	 * Restore ic_bss's channel if we are still in the same BSS.
+	 */
+	if (ni == ic->ic_bss && IEEE80211_ADDR_EQ(saved_bssid, ni->ni_macaddr))
+		ni->ni_chan = bss_chan;
+	ieee80211_release_node(ic, ni);
+}
+
+void
 iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
     struct iwm_rx_data *data, struct mbuf_list *ml)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_frame *wh;
-	struct ieee80211_node *ni;
 	struct ieee80211_rxinfo rxi;
-	struct ieee80211_channel *bss_chan;
 	struct mbuf *m;
 	struct iwm_rx_phy_info *phy_info;
 	struct iwm_rx_mpdu_res_start *rx_res;
 	int device_timestamp;
+	uint16_t phy_flags;
 	uint32_t len;
 	uint32_t rx_pkt_status;
-	int rssi, chanidx;
-	uint8_t saved_bssid[IEEE80211_ADDR_LEN] = { 0 };
+	int rssi, chanidx, rate_n_flags;
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, IWM_RBUF_SIZE,
 	    BUS_DMASYNC_POSTREAD);
@@ -3929,89 +4011,21 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	m->m_data = pkt->data + sizeof(*rx_res);
 	m->m_pkthdr.len = m->m_len = len;
 
+	chanidx = letoh32(phy_info->channel);
 	device_timestamp = le32toh(phy_info->system_timestamp);
+	phy_flags = letoh16(phy_info->phy_flags);
+	rate_n_flags = le32toh(phy_info->rate_n_flags);
 
 	rssi = iwm_get_signal_strength(sc, phy_info);
 	rssi = (0 - IWM_MIN_DBM) + rssi;	/* normalize */
 	rssi = MIN(rssi, ic->ic_max_rssi);	/* clip to max. 100% */
 
-	chanidx = letoh32(phy_info->channel);
-	if (chanidx < 0 || chanidx >= nitems(ic->ic_channels))	
-		chanidx = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
-
-	ni = ieee80211_find_rxnode(ic, wh);
-	if (ni == ic->ic_bss) {
-		/* 
-		 * We may switch ic_bss's channel during scans.
-		 * Record the current channel so we can restore it later.
-		 */
-		bss_chan = ni->ni_chan;
-		IEEE80211_ADDR_COPY(&saved_bssid, ni->ni_macaddr);
-	}
-	ni->ni_chan = &ic->ic_channels[chanidx];
-
 	memset(&rxi, 0, sizeof(rxi));
 	rxi.rxi_rssi = rssi;
 	rxi.rxi_tstamp = device_timestamp;
 
-#if NBPFILTER > 0
-	if (sc->sc_drvbpf != NULL) {
-		struct iwm_rx_radiotap_header *tap = &sc->sc_rxtap;
-		uint16_t chan_flags;
-
-		tap->wr_flags = 0;
-		if (phy_info->phy_flags & htole16(IWM_PHY_INFO_FLAG_SHPREAMBLE))
-			tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
-		tap->wr_chan_freq =
-		    htole16(ic->ic_channels[chanidx].ic_freq);
-		chan_flags = ic->ic_channels[chanidx].ic_flags;
-		if (ic->ic_curmode != IEEE80211_MODE_11N)
-			chan_flags &= ~IEEE80211_CHAN_HT;
-		tap->wr_chan_flags = htole16(chan_flags);
-		tap->wr_dbm_antsignal = (int8_t)rssi;
-		tap->wr_dbm_antnoise = (int8_t)sc->sc_noise;
-		tap->wr_tsft = phy_info->system_timestamp;
-		if (phy_info->phy_flags &
-		    htole16(IWM_RX_RES_PHY_FLAGS_OFDM_HT)) {
-			uint8_t mcs = (phy_info->rate_n_flags &
-			    htole32(IWM_RATE_HT_MCS_RATE_CODE_MSK |
-			        IWM_RATE_HT_MCS_NSS_MSK));
-			tap->wr_rate = (0x80 | mcs);
-		} else {
-			uint8_t rate = (phy_info->rate_n_flags &
-			    htole32(IWM_RATE_LEGACY_RATE_MSK));
-			switch (rate) {
-			/* CCK rates. */
-			case  10: tap->wr_rate =   2; break;
-			case  20: tap->wr_rate =   4; break;
-			case  55: tap->wr_rate =  11; break;
-			case 110: tap->wr_rate =  22; break;
-			/* OFDM rates. */
-			case 0xd: tap->wr_rate =  12; break;
-			case 0xf: tap->wr_rate =  18; break;
-			case 0x5: tap->wr_rate =  24; break;
-			case 0x7: tap->wr_rate =  36; break;
-			case 0x9: tap->wr_rate =  48; break;
-			case 0xb: tap->wr_rate =  72; break;
-			case 0x1: tap->wr_rate =  96; break;
-			case 0x3: tap->wr_rate = 108; break;
-			/* Unknown rate: should not happen. */
-			default:  tap->wr_rate =   0;
-			}
-		}
-
-		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_rxtap_len,
-		    m, BPF_DIRECTION_IN);
-	}
-#endif
-	ieee80211_inputm(IC2IFP(ic), m, ni, &rxi, ml);
-	/*
-	 * ieee80211_inputm() might have changed our BSS.
-	 * Restore ic_bss's channel if we are still in the same BSS.
-	 */
-	if (ni == ic->ic_bss && IEEE80211_ADDR_EQ(saved_bssid, ni->ni_macaddr))
-		ni->ni_chan = bss_chan;
-	ieee80211_release_node(ic, ni);
+	iwm_rx_frame(sc, m, chanidx, (phy_flags & IWM_PHY_INFO_FLAG_SHPREAMBLE),
+	    rate_n_flags, device_timestamp, &rxi, ml);
 }
 
 void
@@ -4025,7 +4039,7 @@ iwm_rx_mpdu_mq(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	struct ieee80211_channel *bss_chan;
 	struct mbuf *m;
 	struct iwm_rx_mpdu_desc *desc;
-	uint32_t len, hdrlen, rate_n_flags;
+	uint32_t len, hdrlen, rate_n_flags, device_timestamp;
 	int rssi;
 	uint8_t chanidx;
 	uint16_t phy_info;
@@ -4103,61 +4117,10 @@ iwm_rx_mpdu_mq(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	rxi.rxi_rssi = rssi;
 	rxi.rxi_tstamp = le64toh(desc->v1.tsf_on_air_rise);
 
-#if NBPFILTER > 0
-	if (sc->sc_drvbpf != NULL) {
-		struct iwm_rx_radiotap_header *tap = &sc->sc_rxtap;
-		uint16_t chan_flags;
+	device_timestamp = desc->v1.gp2_on_air_rise;
 
-		tap->wr_flags = 0;
-		if (phy_info & IWM_RX_MPDU_PHY_SHORT_PREAMBLE)
-			tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
-		tap->wr_chan_freq =
-		    htole16(ic->ic_channels[chanidx].ic_freq);
-		chan_flags = ic->ic_channels[chanidx].ic_flags;
-		if (ic->ic_curmode != IEEE80211_MODE_11N)
-			chan_flags &= ~IEEE80211_CHAN_HT;
-		tap->wr_chan_flags = htole16(chan_flags);
-		tap->wr_dbm_antsignal = (int8_t)rssi;
-		tap->wr_dbm_antnoise = (int8_t)sc->sc_noise;
-		tap->wr_tsft = desc->v1.gp2_on_air_rise;
-		if (rate_n_flags & IWM_RATE_HT_MCS_RATE_CODE_MSK) {
-			uint8_t mcs = (rate_n_flags &
-			    (IWM_RATE_HT_MCS_RATE_CODE_MSK |
-			    IWM_RATE_HT_MCS_NSS_MSK));
-			tap->wr_rate = (0x80 | mcs);
-		} else {
-			switch ((rate_n_flags & IWM_RATE_LEGACY_RATE_MSK)) {
-			/* CCK rates. */
-			case  10: tap->wr_rate =   2; break;
-			case  20: tap->wr_rate =   4; break;
-			case  55: tap->wr_rate =  11; break;
-			case 110: tap->wr_rate =  22; break;
-			/* OFDM rates. */
-			case 0xd: tap->wr_rate =  12; break;
-			case 0xf: tap->wr_rate =  18; break;
-			case 0x5: tap->wr_rate =  24; break;
-			case 0x7: tap->wr_rate =  36; break;
-			case 0x9: tap->wr_rate =  48; break;
-			case 0xb: tap->wr_rate =  72; break;
-			case 0x1: tap->wr_rate =  96; break;
-			case 0x3: tap->wr_rate = 108; break;
-			/* Unknown rate: should not happen. */
-			default:  tap->wr_rate =   0;
-			}
-		}
-
-		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_rxtap_len,
-		    m, BPF_DIRECTION_IN);
-	}
-#endif
-	ieee80211_inputm(IC2IFP(ic), m, ni, &rxi, ml);
-	/*
-	 * ieee80211_inputm() might have changed our BSS.
-	 * Restore ic_bss's channel if we are still in the same BSS.
-	 */
-	if (ni == ic->ic_bss && IEEE80211_ADDR_EQ(saved_bssid, ni->ni_macaddr))
-		ni->ni_chan = bss_chan;
-	ieee80211_release_node(ic, ni);
+	iwm_rx_frame(sc, m, chanidx, (phy_info & IWM_RX_MPDU_PHY_SHORT_PREAMBLE),
+	    rate_n_flags, device_timestamp, &rxi, ml);
 }
 
 void
