@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.13 2019/11/26 02:50:11 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.14 2019/11/26 23:38:52 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -42,57 +42,9 @@
 
 int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 
-void _dl_bind_start(void); /* XXX */
-Elf_Addr _dl_bind(elf_object_t *object, int index);
-#define _RF_S		0x80000000		/* Resolve symbol */
-#define _RF_A		0x40000000		/* Use addend */
-#define _RF_P		0x20000000		/* Location relative */
-#define _RF_G		0x10000000		/* GOT offset */
-#define _RF_B		0x08000000		/* Load address relative */
-#define _RF_V		0x02000000		/* ERROR */
-#define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
-#define _RF_RS(s)	((s) & 0xff)		/* right shift */
-static const int reloc_target_flags[] = {
-	[ R_AARCH64_NONE ] = 0,
-	[ R_AARCH64_ABS64 ] =
-	  _RF_V|_RF_S|_RF_A|		_RF_SZ(64) | _RF_RS(0),	/* ABS64 */
-	[ R_AARCH64_GLOB_DAT ] =
-	  _RF_V|_RF_S|_RF_A|		_RF_SZ(64) | _RF_RS(0),	/* GLOB_DAT */
-	[ R_AARCH64_RELATIVE ] =
-	  _RF_V|_RF_B|_RF_A|		_RF_SZ(64) | _RF_RS(0),	/* REL64 */
-	[ R_AARCH64_TLSDESC ] =
-	  _RF_V|_RF_S,
-	[ R_AARCH64_TLS_TPREL64 ] =
-	  _RF_V|_RF_S,
-	[ R_AARCH64_COPY ] =
-	  _RF_V|_RF_S|			_RF_SZ(32) | _RF_RS(0),	/* 20 COPY */
-
-};
-
-#define RELOC_RESOLVE_SYMBOL(t)		((reloc_target_flags[t] & _RF_S) != 0)
-#define RELOC_PC_RELATIVE(t)		((reloc_target_flags[t] & _RF_P) != 0)
-#define RELOC_BASE_RELATIVE(t)		((reloc_target_flags[t] & _RF_B) != 0)
-#define RELOC_USE_ADDEND(t)		((reloc_target_flags[t] & _RF_A) != 0)
-#define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
-#define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
-static const Elf_Addr reloc_target_bitmask[] = {
-#define _BM(x)  (~(Elf_Addr)0 >> ((8*sizeof(reloc_target_bitmask[0])) - (x)))
-	[ R_AARCH64_NONE ] = 0,
-	[ R_AARCH64_ABS64 ] = _BM(64),
-	[ R_AARCH64_GLOB_DAT ] = _BM(64),
-	[ R_AARCH64_RELATIVE ] = _BM(64),
-	[ R_AARCH64_TLSDESC ] = _BM(64),
-	[ R_AARCH64_TLS_TPREL64 ] = _BM(64),
-	[ R_AARCH64_COPY ] = _BM(64),
-#undef _BM
-};
-#define RELOC_VALUE_BITMASK(t)	(reloc_target_bitmask[t])
+void _dl_bind_start(void) __dso_hidden;
 
 #define R_TYPE(x) R_AARCH64_ ## x
-
-void _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rel);
-
-#define nitems(_a)     (sizeof((_a)) / sizeof((_a)[0]))
 
 int
 _dl_md_reloc(elf_object_t *object, int rel, int relsz)
@@ -100,7 +52,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	long	i;
 	long	numrel;
 	long	relrel;
-	int	fails = 0;
 	Elf_Addr loff;
 	Elf_Addr prev_value = 0;
 	const Elf_Sym *prev_sym = NULL;
@@ -108,7 +59,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 
 	loff = object->obj_base;
 	numrel = object->Dyn.info[relsz] / sizeof(Elf_RelA);
-	relrel = rel == DT_RELA ? object->relcount : 0;
+	relrel = object->relcount;
 	rels = (Elf_RelA *)(object->Dyn.info[rel]);
 
 	if (rels == NULL)
@@ -125,93 +76,79 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		*where += loff;
 	}
 	for (; i < numrel; i++, rels++) {
-		Elf_Addr *where, value, mask;
+		Elf_Addr *where, value;
 		Elf_Word type;
 		const Elf_Sym *sym;
 		const char *symn;
 
-		type = ELF_R_TYPE(rels->r_info);
-
-		if (type >= nitems(reloc_target_flags) ||
-		    (reloc_target_flags[type] & _RF_V) == 0)
-			_dl_die("bad relocation %ld %d", i, type);
-
-		if (type == R_TYPE(NONE))
-			continue;
-
-		if (type == R_TYPE(JUMP_SLOT))
-			continue;
-
 		where = (Elf_Addr *)(rels->r_offset + loff);
 
-		if (RELOC_USE_ADDEND(type))
+		sym = object->dyn.symtab;
+		sym += ELF_R_SYM(rels->r_info);
+		symn = object->dyn.strtab + sym->st_name;
+
+		type = ELF_R_TYPE(rels->r_info);
+		switch (type) {
+		case R_TYPE(NONE):
+		case R_TYPE(JUMP_SLOT):		/* shouldn't happen */
+			continue;
+
+		case R_TYPE(RELATIVE):
+			*where = loff + rels->r_addend;
+			continue;
+
+		case R_TYPE(ABS64):
 			value = rels->r_addend;
-		else
+			break;
+
+		case R_TYPE(GLOB_DAT):
 			value = 0;
+			break;
 
-		sym = NULL;
-		symn = NULL;
-		if (RELOC_RESOLVE_SYMBOL(type)) {
-			sym = object->dyn.symtab;
-			sym += ELF_R_SYM(rels->r_info);
-			symn = object->dyn.strtab + sym->st_name;
-
-			if (sym->st_shndx != SHN_UNDEF &&
-			    ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
-				value += loff;
-			} else if (sym == prev_sym) {
-				value += prev_value;
-			} else {
-				struct sym_res sr;
-
-				sr = _dl_find_symbol(symn,
-				    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
-				    sym, object);
-				if (sr.sym == NULL) {
-resolve_failed:
-					if (ELF_ST_BIND(sym->st_info) !=
-					    STB_WEAK)
-						fails++;
-					continue;
-				}
-				prev_sym = sym;
-				prev_value = (Elf_Addr)(sr.obj->obj_base +
-				    sr.sym->st_value);
-				value += prev_value;
-			}
-		}
-
-		if (type == R_TYPE(COPY)) {
-			void *dstaddr = where;
-			const void *srcaddr;
-			const Elf_Sym *dstsym = sym;
+		case R_TYPE(COPY):
+		{
 			struct sym_res sr;
 
 			sr = _dl_find_symbol(symn,
 			    SYM_SEARCH_OTHER|SYM_WARNNOTFOUND|SYM_NOTPLT,
-			    dstsym, object);
+			    sym, object);
 			if (sr.sym == NULL)
-				goto resolve_failed;
+				return 1;
 
-			srcaddr = (void *)(sr.obj->obj_base + sr.sym->st_value);
-			_dl_bcopy(srcaddr, dstaddr, dstsym->st_size);
+			value = sr.obj->obj_base + sr.sym->st_value;
+			_dl_bcopy((void *)value, where, sym->st_size);
 			continue;
 		}
 
-		if (RELOC_PC_RELATIVE(type))
-			value -= (Elf_Addr)where;
-		if (RELOC_BASE_RELATIVE(type))
+		default:
+			_dl_die("bad relocation %d", type);
+		}
+
+		if (sym->st_shndx != SHN_UNDEF &&
+		    ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
 			value += loff;
+		} else if (sym == prev_sym) {
+			value += prev_value;
+		} else {
+			struct sym_res sr;
 
-		mask = RELOC_VALUE_BITMASK(type);
-		value >>= RELOC_VALUE_RIGHTSHIFT(type);
-		value &= mask;
+			sr = _dl_find_symbol(symn,
+			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
+			    sym, object);
+			if (sr.sym == NULL) {
+				if (ELF_ST_BIND(sym->st_info) != STB_WEAK)
+					return 1;
+				continue;
+			}
+			prev_sym = sym;
+			prev_value = sr.obj->obj_base + sr.sym->st_value;
+			value += prev_value;
+		}
 
-		*where &= ~mask;
-		*where |= value;
+		*where = value;
 	}
 
-	return fails;
+	return 0;
 }
 
 static int

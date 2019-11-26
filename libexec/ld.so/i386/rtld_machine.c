@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.45 2019/11/26 02:50:11 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.46 2019/11/26 23:38:52 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -79,98 +79,12 @@
 
 int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 
-/*
- * The following table holds for each relocation type:
- *	- the width in bits of the memory location the relocation
- *	  applies to (not currently used)
- *	- the number of bits the relocation value must be shifted to the
- *	  right (i.e. discard least significant bits) to fit into
- *	  the appropriate field in the instruction word.
- *	- flags indicating whether
- *		* the relocation involves a symbol
- *		* the relocation is relative to the current position
- *		* the relocation is for a GOT entry
- *		* the relocation is relative to the load address
- *
- */
-#define _RF_S		0x80000000		/* Resolve symbol */
-#define _RF_A		0x40000000		/* Use addend */
-#define _RF_P		0x20000000		/* Location relative */
-#define _RF_G		0x10000000		/* GOT offset */
-#define _RF_B		0x08000000		/* Load address relative */
-#define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
-#define _RF_RS(s)	((s) & 0xff)		/* right shift */
-static const int reloc_target_flags[] = {
-	0,							/* NONE */
-	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),		/* RELOC_32*/
-	_RF_S|_RF_A|_RF_P|	_RF_SZ(32) | _RF_RS(0),		/* PC32 */
-	_RF_G|			_RF_SZ(32) | _RF_RS(00),	/* GOT32 */
-	      _RF_A|		_RF_SZ(32) | _RF_RS(0),		/* PLT32 */
-	_RF_S|			_RF_SZ(32) | _RF_RS(0),		/* COPY */
-	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),		/* GLOB_DAT */
-	_RF_S|			_RF_SZ(32) | _RF_RS(0),		/* JUMP_SLOT */
-	      _RF_A|	_RF_B|	_RF_SZ(32) | _RF_RS(0),		/* RELATIVE */
-	0,							/* GOTOFF XXX */
-	0,							/* GOTPC XXX */
-	0,							/* DUMMY 11 */
-	0,							/* DUMMY 12 */
-	0,							/* DUMMY 13 */
-	0,							/* DUMMY 14 */
-	0,							/* DUMMY 15 */
-	0,							/* DUMMY 16 */
-	0,							/* DUMMY 17 */
-	0,							/* DUMMY 18 */
-	0,							/* DUMMY 19 */
-	_RF_S|_RF_A|		_RF_SZ(16) | _RF_RS(0),		/* RELOC_16 */
-	_RF_S|_RF_A|_RF_P|	_RF_SZ(16) | _RF_RS(0),		/* PC_16 */
-	_RF_S|_RF_A|		_RF_SZ(8) | _RF_RS(0),		/* RELOC_8 */
-	_RF_S|_RF_A|_RF_P|	_RF_SZ(8) | _RF_RS(0),		/* RELOC_PC8 */
-};
-
-#define RELOC_RESOLVE_SYMBOL(t)		((reloc_target_flags[t] & _RF_S) != 0)
-#define RELOC_PC_RELATIVE(t)		((reloc_target_flags[t] & _RF_P) != 0)
-#define RELOC_BASE_RELATIVE(t)		((reloc_target_flags[t] & _RF_B) != 0)
-#define RELOC_USE_ADDEND(t)		((reloc_target_flags[t] & _RF_A) != 0)
-#define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
-#define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
-
-static const long reloc_target_bitmask[] = {
-#define _BM(x)	(~(-(1ULL << (x))))
-	0,		/* NONE */
-	_BM(32),	/* RELOC_32*/
-	_BM(32),	/* PC32 */
-	_BM(32),	/* GOT32 */
-	_BM(32),	/* PLT32 */
-	0,		/* COPY */
-	_BM(32),	/* GLOB_DAT */
-	_BM(32),	/* JUMP_SLOT */
-	_BM(32),	/* RELATIVE */
-	0,		/* GOTOFF XXX */
-	0,		/* GOTPC XXX */
-	0,		/* DUMMY 11 */
-	0,		/* DUMMY 12 */
-	0,		/* DUMMY 13 */
-	0,		/* DUMMY 14 */
-	0,		/* DUMMY 15 */
-	0,		/* DUMMY 16 */
-	0,		/* DUMMY 17 */
-	0,		/* DUMMY 18 */
-	0,		/* DUMMY 19 */
-	_BM(16),	/* RELOC_16 */
-	_BM(8),		/* PC_16 */
-	_BM(8),		/* RELOC_8 */
-	_BM(8),		/* RELOC_PC8 */
-#undef _BM
-};
-#define RELOC_VALUE_BITMASK(t)	(reloc_target_bitmask[t])
-
 int
 _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 {
 	long	i;
 	long	numrel;
 	long	relrel;
-	int	fails = 0;
 	Elf_Addr loff;
 	Elf_Addr prev_value = 0;
 	const Elf_Sym *prev_sym = NULL;
@@ -178,8 +92,9 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 
 	loff = object->obj_base;
 	numrel = object->Dyn.info[relsz] / sizeof(Elf_Rel);
-	relrel = rel == DT_REL ? object->relcount : 0;
+	relrel = object->relcount;
 	rels = (Elf_Rel *)(object->Dyn.info[rel]);
+
 	if (rels == NULL)
 		return 0;
 
@@ -194,89 +109,79 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		*where += loff;
 	}
 	for (; i < numrel; i++, rels++) {
-		Elf_Addr *where, value, mask;
+		Elf_Addr *where, value;
 		Elf_Word type;
 		const Elf_Sym *sym;
 		const char *symn;
 
-		type = ELF_R_TYPE(rels->r_info);
-
-		if (type == R_TYPE(NONE))
-			continue;
-
-		if (type == R_TYPE(JUMP_SLOT))
-			continue;
-
 		where = (Elf_Addr *)(rels->r_offset + loff);
 
-		if (RELOC_USE_ADDEND(type))
-			value = *where & RELOC_VALUE_BITMASK(type);
-		else
+		sym = object->dyn.symtab;
+		sym += ELF_R_SYM(rels->r_info);
+		symn = object->dyn.strtab + sym->st_name;
+
+		type = ELF_R_TYPE(rels->r_info);
+		switch (type) {
+		case R_TYPE(NONE):
+		case R_TYPE(JUMP_SLOT):		/* shouldn't happen */
+			continue;
+
+		case R_TYPE(RELATIVE):
+			*where += loff;
+			continue;
+
+		case R_TYPE(32):
+			value = *where;
+			break;
+
+		case R_TYPE(GLOB_DAT):
 			value = 0;
+			break;
 
-		sym = NULL;
-		symn = NULL;
-		if (RELOC_RESOLVE_SYMBOL(type)) {
-			sym = object->dyn.symtab;
-			sym += ELF_R_SYM(rels->r_info);
-			symn = object->dyn.strtab + sym->st_name;
-
-			if (sym->st_shndx != SHN_UNDEF &&
-			    ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
-				value += loff;
-			} else if (sym == prev_sym) {
-				value += prev_value;
-			} else {
-				struct sym_res sr;
-
-				sr = _dl_find_symbol(symn,
-				    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
-				    sym, object);
-				if (sr.sym == NULL) {
-resolve_failed:
-					if (ELF_ST_BIND(sym->st_info) !=
-					    STB_WEAK)
-						fails++;
-					continue;
-				}
-				prev_sym = sym;
-				prev_value = (Elf_Addr)(sr.obj->obj_base +
-				    sr.sym->st_value);
-				value += prev_value;
-			}
-		}
-
-		if (type == R_TYPE(COPY)) {
-			void *dstaddr = where;
-			const void *srcaddr;
-			const Elf_Sym *dstsym = sym;
+		case R_TYPE(COPY):
+		{
 			struct sym_res sr;
 
 			sr = _dl_find_symbol(symn,
 			    SYM_SEARCH_OTHER|SYM_WARNNOTFOUND|SYM_NOTPLT,
-			    dstsym, object);
+			    sym, object);
 			if (sr.sym == NULL)
-				goto resolve_failed;
+				return 1;
 
-			srcaddr = (void *)(sr.obj->obj_base + sr.sym->st_value);
-			_dl_bcopy(srcaddr, dstaddr, dstsym->st_size);
+			value = sr.obj->obj_base + sr.sym->st_value;
+			_dl_bcopy((void *)value, where, sym->st_size);
 			continue;
 		}
 
-		if (RELOC_PC_RELATIVE(type))
-			value -= (Elf_Addr)where;
-		if (RELOC_BASE_RELATIVE(type))
+		default:
+			_dl_die("unknown relocation %d", type);
+		}
+
+		if (sym->st_shndx != SHN_UNDEF &&
+		    ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
 			value += loff;
+		} else if (sym == prev_sym) {
+			value += prev_value;
+		} else {
+			struct sym_res sr;
 
-		mask = RELOC_VALUE_BITMASK(type);
-		value >>= RELOC_VALUE_RIGHTSHIFT(type);
-		value &= mask;
+			sr = _dl_find_symbol(symn,
+			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
+			    sym, object);
+			if (sr.sym == NULL) {
+				if (ELF_ST_BIND(sym->st_info) != STB_WEAK)
+					return 1;
+				continue;
+			}
+			prev_sym = sym;
+			prev_value = sr.obj->obj_base + sr.sym->st_value;
+			value += prev_value;
+		}
 
-		*where &= ~mask;
-		*where |= value;
+		*where = value;
 	}
 
-	return fails;
+	return 0;
 }
 
 #if 0
