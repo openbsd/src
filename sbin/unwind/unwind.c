@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.37 2019/11/19 14:46:33 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.38 2019/11/26 18:09:15 kn Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -77,7 +77,8 @@ struct uw_conf	*main_conf;
 struct imsgev	*iev_frontend;
 struct imsgev	*iev_resolver;
 struct imsgev	*iev_captiveportal;
-char		*conffile;
+char		*conffile = CONF_FILE;
+int		 require_file;
 
 pid_t		 frontend_pid;
 pid_t		 resolver_pid;
@@ -132,7 +133,6 @@ main(int argc, char *argv[])
 	int		 control_fd, ta_fd;
 	char		*csock, *saved_argv0;
 
-	conffile = CONF_FILE;
 	csock = UNWIND_SOCKET;
 
 	log_init(1, LOG_DAEMON);	/* Log to stderr until daemonized. */
@@ -158,6 +158,7 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			conffile = optarg;
+			require_file = 1;
 			break;
 		case 'n':
 			cmd_opts |= OPT_NOACTION;
@@ -187,7 +188,7 @@ main(int argc, char *argv[])
 	else if (captiveportal_flag)
 		captiveportal(debug, cmd_opts & (OPT_VERBOSE | OPT_VERBOSE2));
 
-	if ((main_conf = parse_config(conffile)) == NULL)
+	if ((main_conf = parse_config(conffile, require_file)) == NULL)
 		exit(1);
 
 	if (cmd_opts & OPT_NOACTION) {
@@ -691,7 +692,7 @@ main_reload(void)
 {
 	struct uw_conf	*xconf;
 
-	if ((xconf = parse_config(conffile)) == NULL)
+	if ((xconf = parse_config(conffile, require_file)) == NULL)
 		return (-1);
 
 	if (main_imsg_send_config(xconf) == -1)
