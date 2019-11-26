@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.194 2019/11/26 04:03:48 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.195 2019/11/26 06:23:30 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -81,8 +81,8 @@
 #include <net/if_tun.h>
 
 struct tun_softc {
-	struct arpcom	sc_arpcom;		/* ethernet common data */
-#define sc_if		sc_arpcom.ac_if
+	struct arpcom	sc_ac;		/* ethernet common data */
+#define sc_if		sc_ac.ac_if
 	struct selinfo	sc_rsel;	/* read select */
 	struct selinfo	sc_wsel;	/* write select (not used) */
 	LIST_ENTRY(tun_softc)
@@ -547,7 +547,7 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	default:
 		if (sc->sc_flags & TUN_LAYER2)
-			error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
+			error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
 		else
 			error = ENOTTY;
 	}
@@ -721,15 +721,15 @@ tun_dev_ioctl(struct tun_softc *sc, u_long cmd, caddr_t data, int flag,
 	case SIOCGIFADDR:
 		if (!(sc->sc_flags & TUN_LAYER2))
 			return (EINVAL);
-		bcopy(sc->sc_arpcom.ac_enaddr, data,
-		    sizeof(sc->sc_arpcom.ac_enaddr));
+		bcopy(sc->sc_ac.ac_enaddr, data,
+		    sizeof(sc->sc_ac.ac_enaddr));
 		break;
 
 	case SIOCSIFADDR:
 		if (!(sc->sc_flags & TUN_LAYER2))
 			return (EINVAL);
-		bcopy(data, sc->sc_arpcom.ac_enaddr,
-		    sizeof(sc->sc_arpcom.ac_enaddr));
+		bcopy(data, sc->sc_ac.ac_enaddr,
+		    sizeof(sc->sc_ac.ac_enaddr));
 		break;
 	default:
 #ifdef PIPEX
