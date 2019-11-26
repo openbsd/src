@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.336 2019/10/06 16:24:14 beck Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.337 2019/11/26 00:26:36 beck Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -928,13 +928,8 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 		if (*c != '/')
 			break;
 	}
-	if (*c == '\0')
-		/* root directory */
-		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | SAVENAME | REALPATH,
-		    UIO_SYSSPACE, pathname, p);
-	else
-		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | LOCKPARENT | SAVENAME |
-		    REALPATH, UIO_SYSSPACE, pathname, p);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | SAVENAME | REALPATH,
+	    UIO_SYSSPACE, pathname, p);
 
 	nd.ni_cnd.cn_rpbuf = rpbuf;
 	nd.ni_cnd.cn_rpi = strlen(rpbuf);
@@ -949,11 +944,6 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 		VOP_UNLOCK(nd.ni_vp);
 		vrele(nd.ni_vp);
 	}
-	if (nd.ni_dvp && nd.ni_dvp != nd.ni_vp)
-		VOP_UNLOCK(nd.ni_dvp);
-	if (nd.ni_dvp)
-		vrele(nd.ni_dvp);
-
 	error = copyoutstr(nd.ni_cnd.cn_rpbuf, SCARG(uap, resolved),
 	    MAXPATHLEN, NULL);
 
