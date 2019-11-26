@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.35 2019/11/20 16:21:20 beck Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.36 2019/11/26 23:46:18 beck Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -38,8 +38,8 @@ __BEGIN_HIDDEN_DECLS
 #define TLS13_IO_USE_LEGACY	-4
 
 typedef void (*tls13_alert_cb)(uint8_t _alert_desc, void *_cb_arg);
-typedef int (*tls13_post_handshake_recv_cb)(void *_cb_arg, CBS *cbs);
-typedef int (*tls13_post_handshake_sent_cb)(void *_cb_arg);
+typedef ssize_t (*tls13_phh_recv_cb)(void *_cb_arg, CBS *cbs);
+typedef void (*tls13_phh_sent_cb)(void *_cb_arg);
 typedef ssize_t (*tls13_read_cb)(void *_buf, size_t _buflen, void *_cb_arg);
 typedef ssize_t (*tls13_write_cb)(const void *_buf, size_t _buflen,
     void *_cb_arg);
@@ -111,8 +111,8 @@ struct tls13_record_layer;
 
 struct tls13_record_layer *tls13_record_layer_new(tls13_read_cb wire_read,
     tls13_write_cb wire_write, tls13_alert_cb alert_cb,
-    tls13_post_handshake_recv_cb post_handshake_recv_cb,
-    tls13_post_handshake_sent_cb post_handshake_sent_cb, void *cb_arg);
+    tls13_phh_recv_cb phh_recv_cb,
+    tls13_phh_sent_cb phh_sent_cb, void *cb_arg);
 void tls13_record_layer_free(struct tls13_record_layer *rl);
 void tls13_record_layer_set_aead(struct tls13_record_layer *rl,
     const EVP_AEAD *aead);
@@ -172,7 +172,16 @@ struct tls13_ctx {
 
 	struct tls13_record_layer *rl;
 	struct tls13_handshake_msg *hs_msg;
+	uint8_t key_update_request;
+	int phh_count;
+	time_t phh_last_seen;
 };
+#ifndef TLS13_PHH_LIMIT_TIME
+#define TLS13_PHH_LIMIT_TIME 3600
+#endif
+#ifndef TLS13_PHH_LIMIT
+#define TLS13_PHH_LIMIT 100
+#endif
 
 struct tls13_ctx *tls13_ctx_new(int mode);
 void tls13_ctx_free(struct tls13_ctx *ctx);

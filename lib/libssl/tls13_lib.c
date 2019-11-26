@@ -1,6 +1,7 @@
-/*	$OpenBSD: tls13_lib.c,v 1.12 2019/11/17 00:10:47 beck Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.13 2019/11/26 23:46:18 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -90,6 +91,149 @@ tls13_alert_received_cb(uint8_t alert_desc, void *arg)
 	SSL_CTX_remove_session(s->ctx, s->session);
 }
 
+static int
+tls13_phh_update_local_traffic_secret(struct tls13_ctx *ctx)
+{
+	struct tls13_secrets *secrets = ctx->hs->secrets;
+
+	if (ctx->mode == TLS13_HS_CLIENT)
+		return (tls13_update_client_traffic_secret(secrets) &&
+		    tls13_record_layer_set_write_traffic_key(ctx->rl,
+			&secrets->client_application_traffic));
+	return (tls13_update_server_traffic_secret(secrets) &&
+	    tls13_record_layer_set_read_traffic_key(ctx->rl,
+	    &secrets->server_application_traffic));
+}
+
+static int
+tls13_phh_update_peer_traffic_secret(struct tls13_ctx *ctx)
+{
+	struct tls13_secrets *secrets = ctx->hs->secrets;
+
+	if (ctx->mode == TLS13_HS_CLIENT)
+		return (tls13_update_server_traffic_secret(secrets) &&
+		    tls13_record_layer_set_read_traffic_key(ctx->rl,
+		    &secrets->server_application_traffic));
+	return (tls13_update_client_traffic_secret(secrets) &&
+	    tls13_record_layer_set_write_traffic_key(ctx->rl,
+	    &secrets->client_application_traffic));
+}
+
+/*
+ * XXX arbitrarily chosen limit of 100 post handshake handshake
+ * messages in an hour - to avoid a hostile peer from constantly
+ * requesting certificates or key renegotiaitons, etc.
+ */
+static int
+tls13_phh_limit_check(struct tls13_ctx *ctx)
+{
+	time_t now = time(NULL);
+
+	if (ctx->phh_last_seen > now - TLS13_PHH_LIMIT_TIME) {
+		if (ctx->phh_count > TLS13_PHH_LIMIT)
+			return 0;
+	} else
+		ctx->phh_count = 0;
+	ctx->phh_count++;
+	ctx->phh_last_seen = now;
+	return 1;
+}
+
+static ssize_t
+tls13_key_update_recv(struct tls13_ctx *ctx, CBS *cbs)
+{
+	ssize_t ret = TLS13_IO_FAILURE;
+
+	if (!CBS_get_u8(cbs, &ctx->key_update_request))
+		goto err;
+	if (CBS_len(cbs) != 0)
+		goto err;
+
+	if (!tls13_phh_update_peer_traffic_secret(ctx))
+		goto err;
+
+	if (ctx->key_update_request) {
+		CBB cbb;
+		CBS cbs; /* XXX */
+
+		free(ctx->hs_msg);
+		ctx->hs_msg = tls13_handshake_msg_new();
+		if (!tls13_handshake_msg_start(ctx->hs_msg, &cbb, TLS13_MT_KEY_UPDATE))
+			goto err;
+		if (!CBB_add_u8(&cbb, 0))
+			goto err;
+		if (!tls13_handshake_msg_finish(ctx->hs_msg))
+			goto err;
+		tls13_handshake_msg_data(ctx->hs_msg, &cbs);
+		ret = tls13_record_layer_phh(ctx->rl, &cbs);
+
+		tls13_handshake_msg_free(ctx->hs_msg);
+		ctx->hs_msg = NULL;
+	} else
+		ret = TLS13_IO_SUCCESS;
+
+	return ret;
+ err:
+	ctx->key_update_request = 0;
+	/* XXX alert */
+	return TLS13_IO_FAILURE;
+}
+
+static void
+tls13_phh_done_cb(void *cb_arg)
+{
+	struct tls13_ctx *ctx = cb_arg;
+
+	if (ctx->key_update_request) {
+		tls13_phh_update_local_traffic_secret(ctx);
+		ctx->key_update_request = 0;
+	}
+}
+
+static ssize_t
+tls13_phh_received_cb(void *cb_arg, CBS *cbs)
+{
+	ssize_t ret = TLS13_IO_FAILURE;
+	struct tls13_ctx *ctx = cb_arg;
+	CBS phh_cbs;
+
+	if (!tls13_phh_limit_check(ctx))
+		return tls13_send_alert(ctx->rl, SSL3_AD_UNEXPECTED_MESSAGE);
+
+	if ((ctx->hs_msg == NULL) &&
+	    ((ctx->hs_msg = tls13_handshake_msg_new()) == NULL))
+		return TLS13_IO_FAILURE;
+
+	if (!tls13_handshake_msg_set_buffer(ctx->hs_msg, cbs))
+		return TLS13_IO_FAILURE;
+
+	if ((ret = tls13_handshake_msg_recv(ctx->hs_msg, ctx->rl))
+	    != TLS13_IO_SUCCESS)
+		return ret;
+
+	if (!tls13_handshake_msg_content(ctx->hs_msg, &phh_cbs))
+		return TLS13_IO_FAILURE;
+
+	switch(tls13_handshake_msg_type(ctx->hs_msg)) {
+	case TLS13_MT_KEY_UPDATE:
+		ret = tls13_key_update_recv(ctx, &phh_cbs);
+		break;
+	case TLS13_MT_NEW_SESSION_TICKET:
+		/* XXX do nothing for now and ignore this */
+		break;
+	case TLS13_MT_CERTIFICATE_REQUEST:
+		/* XXX add support if we choose to advertise this */
+		/* FALLTHROUGH */
+	default:
+		ret = TLS13_IO_FAILURE; /* XXX send alert */
+		break;
+	}
+
+	tls13_handshake_msg_free(ctx->hs_msg);
+	ctx->hs_msg = NULL;
+	return ret;
+}
+
 struct tls13_ctx *
 tls13_ctx_new(int mode)
 {
@@ -101,8 +245,8 @@ tls13_ctx_new(int mode)
 	ctx->mode = mode;
 
 	if ((ctx->rl = tls13_record_layer_new(tls13_legacy_wire_read_cb,
-	    tls13_legacy_wire_write_cb, tls13_alert_received_cb, NULL, NULL,
-	    ctx)) == NULL)
+	    tls13_legacy_wire_write_cb, tls13_alert_received_cb,
+	    tls13_phh_received_cb, tls13_phh_done_cb, ctx)) == NULL)
 		goto err;
 
 	return ctx;

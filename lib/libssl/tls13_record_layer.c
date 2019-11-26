@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.15 2019/11/18 02:44:20 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.16 2019/11/26 23:46:18 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -30,6 +30,7 @@ static ssize_t tls13_record_layer_write_record(struct tls13_record_layer *rl,
 struct tls13_record_layer {
 	int change_cipher_spec_seen;
 	int handshake_completed;
+	int phh;
 
 	/*
 	 * Read and/or write channels are closed due to an alert being
@@ -76,8 +77,8 @@ struct tls13_record_layer {
 
 	/* Record callbacks. */
 	tls13_alert_cb alert_cb;
-	tls13_post_handshake_recv_cb post_handshake_recv_cb;
-	tls13_post_handshake_sent_cb post_handshake_sent_cb;
+	tls13_phh_recv_cb phh_recv_cb;
+	tls13_phh_sent_cb phh_sent_cb;
 
 	/* Wire read/write callbacks. */
 	tls13_read_cb wire_read;
@@ -112,8 +113,8 @@ tls13_record_layer_wrec_free(struct tls13_record_layer *rl)
 struct tls13_record_layer *
 tls13_record_layer_new(tls13_read_cb wire_read, tls13_write_cb wire_write,
     tls13_alert_cb alert_cb,
-    tls13_post_handshake_recv_cb post_handshake_recv_cb,
-    tls13_post_handshake_sent_cb post_handshake_sent_cb,
+    tls13_phh_recv_cb phh_recv_cb,
+    tls13_phh_sent_cb phh_sent_cb,
     void *cb_arg)
 {
 	struct tls13_record_layer *rl;
@@ -124,8 +125,8 @@ tls13_record_layer_new(tls13_read_cb wire_read, tls13_write_cb wire_write,
 	rl->wire_read = wire_read;
 	rl->wire_write = wire_write;
 	rl->alert_cb = alert_cb;
-	rl->post_handshake_recv_cb = post_handshake_recv_cb;
-	rl->post_handshake_sent_cb = post_handshake_sent_cb;
+	rl->phh_recv_cb = phh_recv_cb;
+	rl->phh_sent_cb = phh_sent_cb;
 	rl->cb_arg = cb_arg;
 
 	return rl;
@@ -303,6 +304,8 @@ tls13_record_layer_send_phh(struct tls13_record_layer *rl)
 	rl->phh_len = 0;
 
 	CBS_init(&rl->phh_cbs, rl->phh_data, rl->phh_len);
+
+	rl->phh_sent_cb(rl->cb_arg);
 
 	return TLS13_IO_SUCCESS;
 }
@@ -812,6 +815,16 @@ tls13_record_layer_read(struct tls13_record_layer *rl, uint8_t content_type,
 
 		/* XXX - need to check record version. */
 	}
+
+	/*
+	 * If we are in post handshake handshake mode, we may not see
+	 * any record type that isn't a handshake until we are done.
+	 */
+	if (rl->phh && rl->rbuf_content_type != SSL3_RT_HANDSHAKE) {
+		/* XXX send unexpected message alert */
+		return TLS13_IO_FAILURE;
+	}
+
 	if (rl->rbuf_content_type != content_type) {
 		/*
 		 * Handshake content can appear as post-handshake messages (yup,
@@ -821,15 +834,46 @@ tls13_record_layer_read(struct tls13_record_layer *rl, uint8_t content_type,
 		 */
 		if (rl->rbuf_content_type == SSL3_RT_HANDSHAKE) {
 			if (rl->handshake_completed) {
-				if (rl->post_handshake_recv_cb != NULL)
-					rl->post_handshake_recv_cb(
-					    rl->cb_arg, &rl->rbuf_cbs);
-				tls13_record_layer_rbuf_free(rl);
+				rl->phh = 1;
+				ret = TLS13_IO_FAILURE;
+
 				/*
-				 * XXX if handshake or alert queued
-				 *  return POLLOUT
+				 * The post handshake handshake
+				 * receive callback is allowed to
+				 * return:
+				 *
+				 * TLS13_IO_WANT_POLLIN ->
+				 * I need more handshake data.
+				 *
+				 * TLS13_IO_WANT_POLLOUT -> I got the
+				 * whole handshake message, and have
+				 * enqueued a response
+				 *
+				 * TLS13_IO_SUCCESS -> I got the whole handshake,
+				 * nothing more to do
+				 *
+				 * TLS13_IO_FAILURE -> something broke.
 				 */
-				return TLS13_IO_WANT_POLLIN;
+				if (rl->phh_recv_cb != NULL) {
+					ret = rl->phh_recv_cb(
+					    rl->cb_arg, &rl->rbuf_cbs);
+				}
+
+				tls13_record_layer_rbuf_free(rl);
+
+				if (ret == TLS13_IO_WANT_POLLIN)
+					return ret;
+
+				/*
+				 * leave post handshake handshake mode
+				 * if we do not need more handshake data
+				 */
+				rl->phh = 0;
+
+				if (ret == TLS13_IO_SUCCESS)
+					return TLS13_IO_WANT_POLLIN;
+
+				return ret;
 			}
 		}
 
