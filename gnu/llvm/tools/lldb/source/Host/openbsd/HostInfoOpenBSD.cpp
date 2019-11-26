@@ -8,9 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Host/openbsd/HostInfoOpenBSD.h"
+#include "lldb/Host/FileSystem.h"
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
@@ -68,4 +70,13 @@ bool HostInfoOpenBSD::GetOSKernelDescription(std::string &s) {
 FileSpec HostInfoOpenBSD::GetProgramFileSpec() {
   static FileSpec g_program_filespec;
   return g_program_filespec;
+}
+
+bool HostInfoOpenBSD::ComputeSupportExeDirectory(FileSpec &file_spec) {
+  if (HostInfoPosix::ComputeSupportExeDirectory(file_spec) &&
+      file_spec.IsAbsolute() && FileSystem::Instance().Exists(file_spec))
+    return true;
+
+  file_spec.GetDirectory().SetCString("/usr/bin");
+  return true;
 }

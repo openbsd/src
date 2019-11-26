@@ -17,11 +17,16 @@
 namespace lldb_private {
 
 class HostInfoOpenBSD : public HostInfoPosix {
+  friend class HostInfoBase;
+
 public:
   static llvm::VersionTuple GetOSVersion();
   static bool GetOSBuildString(std::string &s);
   static bool GetOSKernelDescription(std::string &s);
   static FileSpec GetProgramFileSpec();
+
+protected:
+  static bool ComputeSupportExeDirectory(FileSpec &file_spec);
 };
 }
 

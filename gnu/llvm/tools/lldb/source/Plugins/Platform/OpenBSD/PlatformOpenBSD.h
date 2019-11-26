@@ -61,6 +61,8 @@ public:
                                   unsigned flags, lldb::addr_t fd,
                                   lldb::addr_t offset) override;
 
+  lldb_private::FileSpec LocateExecutable(const char *basename) override;
+
 private:
   DISALLOW_COPY_AND_ASSIGN(PlatformOpenBSD);
 };

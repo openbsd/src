@@ -336,3 +336,13 @@ MmapArgList PlatformOpenBSD::GetMmapArgumentList(const ArchSpec &arch,
   MmapArgList args({addr, length, prot, flags_platform, fd, offset});
   return args;
 }
+
+FileSpec PlatformOpenBSD::LocateExecutable(const char *basename) {
+
+  std::string check = std::string("/usr/bin/") + basename;
+  if (access(check.c_str(), X_OK) == 0) {
+    return FileSpec(check);
+  }
+
+  return FileSpec();
+}
