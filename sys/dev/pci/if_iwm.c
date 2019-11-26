@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.287 2019/11/26 16:14:45 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.288 2019/11/26 17:16:19 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3893,6 +3893,7 @@ iwm_rx_frame(struct iwm_softc *sc, struct mbuf *m, int chanidx,
 	if (chanidx < 0 || chanidx >= nitems(ic->ic_channels))	
 		chanidx = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
 
+	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, wh);
 	if (ni == ic->ic_bss) {
 		/* 
