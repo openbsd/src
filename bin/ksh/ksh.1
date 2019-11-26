@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.207 2019/06/24 15:05:17 jca Exp $
+.\"	$OpenBSD: ksh.1,v 1.208 2019/11/26 22:49:01 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: June 24 2019 $
+.Dd $Mdocdate: November 26 2019 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -1341,7 +1341,7 @@ Note that if
 .Ev CDPATH
 is set and does not contain
 .Sq \&.
-or contains an empty path, the current directory is not searched.
+or an empty path, the current directory is not searched.
 Also, the
 .Ic cd
 built-in command will display the resulting directory when a match is found
@@ -2866,7 +2866,9 @@ is set, it lists the search path for the directory containing
 .Ar dir .
 A
 .Dv NULL
-path means the current directory.
+path or
+.Ql .\&
+means the current directory.
 If
 .Ar dir
 is found in any component of the
