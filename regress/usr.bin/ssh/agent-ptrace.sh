@@ -1,4 +1,4 @@
-#	$OpenBSD: agent-ptrace.sh,v 1.3 2015/09/11 04:55:01 djm Exp $
+#	$OpenBSD: agent-ptrace.sh,v 1.4 2019/11/26 23:43:10 djm Exp $
 #	Placed in the Public Domain.
 
 tid="disallow agent ptrace attach"
@@ -9,7 +9,7 @@ if [ "x$USER" = "xroot" ]; then
 fi
 
 trace "start agent"
-eval `${SSHAGENT} -s` > /dev/null
+eval `${SSHAGENT} ${EXTRA_AGENT_ARGS} -s` > /dev/null
 r=$?
 if [ $r -ne 0 ]; then
 	fail "could not start ssh-agent: exit code $r"
