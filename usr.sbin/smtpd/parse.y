@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.265 2019/11/26 06:10:20 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.266 2019/11/26 07:28:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1964,7 +1964,7 @@ opt_sock_listen : FILTER STRING {
 			listen_opts.options |= LO_TAG;
 
 			if (strlen($2) >= SMTPD_TAG_SIZE) {
-       				yyerror("tag name too long");
+				yyerror("tag name too long");
 				free($2);
 				YYERROR;
 			}
