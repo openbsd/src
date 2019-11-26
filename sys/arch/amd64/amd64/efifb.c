@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.25 2019/10/13 10:56:31 kettenis Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.26 2019/11/26 02:20:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -520,15 +520,20 @@ efifb_is_primary(struct pci_attach_args *pa)
 		if (pci_mapreg_info(pc, tag, reg, type, &base, &size, NULL))
 			continue;
 
-		if (bios_efiinfo != NULL && bios_efiinfo->fb_addr != 0)
-			return (1);
+		if (bios_efiinfo != NULL &&
+		    bios_efiinfo->fb_addr >= base &&
+		    bios_efiinfo->fb_addr < base + size)
+			return 1;
+
+		if (efifb_console.paddr >= base &&
+		    efifb_console.paddr < base + size)
+			return 1;
 
 		if (type & PCI_MAPREG_MEM_TYPE_64BIT)
 			reg += 4;
 	}
 
-	/* XXX coreboot framebuffer isn't matched above. */
-	return efifb_is_console(pa);;
+	return 0;
 }
 
 void
