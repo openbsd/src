@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2019/11/26 18:09:15 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.17 2019/11/26 19:35:13 kn Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -776,15 +776,16 @@ popfile(void)
 }
 
 struct uw_conf *
-parse_config(char *filename, int require_file)
+parse_config(char *filename)
 {
 	struct sym	*sym, *next;
 
 	conf = config_new_empty();
 
-	file = pushfile(filename, 0);
+	file = pushfile(filename != NULL ? filename : CONF_FILE, 0);
 	if (file == NULL) {
-		if (errno == ENOENT && !require_file)
+		/* no default config file is fine */
+		if (errno == ENOENT && filename == NULL)
 			return (conf);
 		log_warn("%s", filename);
 		free(conf);

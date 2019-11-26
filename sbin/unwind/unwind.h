@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.35 2019/11/26 18:09:15 kn Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.36 2019/11/26 19:35:13 kn Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -176,5 +176,5 @@ void		 config_clear(struct uw_conf *);
 void	print_config(struct uw_conf *);
 
 /* parse.y */
-struct uw_conf	*parse_config(char *, int);
+struct uw_conf	*parse_config(char *);
 int		 cmdline_symset(char *);

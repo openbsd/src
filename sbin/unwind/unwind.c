@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.38 2019/11/26 18:09:15 kn Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.39 2019/11/26 19:35:13 kn Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -77,8 +77,7 @@ struct uw_conf	*main_conf;
 struct imsgev	*iev_frontend;
 struct imsgev	*iev_resolver;
 struct imsgev	*iev_captiveportal;
-char		*conffile = CONF_FILE;
-int		 require_file;
+char		*conffile;
 
 pid_t		 frontend_pid;
 pid_t		 resolver_pid;
@@ -158,7 +157,6 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			conffile = optarg;
-			require_file = 1;
 			break;
 		case 'n':
 			cmd_opts |= OPT_NOACTION;
@@ -188,7 +186,7 @@ main(int argc, char *argv[])
 	else if (captiveportal_flag)
 		captiveportal(debug, cmd_opts & (OPT_VERBOSE | OPT_VERBOSE2));
 
-	if ((main_conf = parse_config(conffile, require_file)) == NULL)
+	if ((main_conf = parse_config(conffile)) == NULL)
 		exit(1);
 
 	if (cmd_opts & OPT_NOACTION) {
@@ -692,7 +690,7 @@ main_reload(void)
 {
 	struct uw_conf	*xconf;
 
-	if ((xconf = parse_config(conffile, require_file)) == NULL)
+	if ((xconf = parse_config(conffile)) == NULL)
 		return (-1);
 
 	if (main_imsg_send_config(xconf) == -1)
