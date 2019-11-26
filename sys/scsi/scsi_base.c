@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.244 2019/11/25 17:02:56 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.245 2019/11/26 20:48:03 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1169,12 +1169,6 @@ scsi_do_mode_sense(struct scsi_link *link, int page,
 
 	*page_data = NULL;
 
-	if (density != NULL)
-		*density = 0;
-	if (block_count != NULL)
-		*block_count = 0;
-	if (block_size != NULL)
-		*block_size = 0;
 	if (big != NULL)
 		*big = 0;
 

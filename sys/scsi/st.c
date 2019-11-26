@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.170 2019/11/23 17:10:13 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.171 2019/11/26 20:48:03 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1345,6 +1345,9 @@ st_mode_sense(struct st_softc *st, int flags)
 	/*
 	 * Ask for page 0 (vendor specific) mode sense data.
 	 */
+	density = 0;
+	block_count = 0;
+	block_size = 0;
 	error = scsi_do_mode_sense(link, 0, data, (void **)&page0,
 	    &density, &block_count, &block_size, 1, flags | SCSI_SILENT, &big);
 	if (error != 0)
