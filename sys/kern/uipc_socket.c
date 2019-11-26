@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.234 2019/07/22 15:34:07 robert Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.235 2019/11/26 15:27:08 cheloha Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -2141,9 +2141,10 @@ so_print(void *v,
 		    (unsigned long long)so->so_sp->ssp_max);
 		(*pr)("\tssp_idletv: %lld %ld\n", so->so_sp->ssp_idletv.tv_sec,
 		    so->so_sp->ssp_idletv.tv_usec);
-		(*pr)("\tssp_idleto: %spending (@%i)\n",
+		(*pr)("\tssp_idleto: %spending (@%lld.%09ld)\n",
 		    timeout_pending(&so->so_sp->ssp_idleto) ? "" : "not ",
-		    so->so_sp->ssp_idleto.to_time);
+		    so->so_sp->ssp_idleto.to_time.tv_sec,
+		    so->so_sp->ssp_idleto.to_time.tv_nsec);
 	}
 
 	(*pr)("so_rcv:\n");

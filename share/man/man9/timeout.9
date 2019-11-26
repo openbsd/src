@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.47 2019/11/08 00:28:11 cheloha Exp $
+.\"	$OpenBSD: timeout.9,v 1.48 2019/11/26 15:27:09 cheloha Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 8 2019 $
+.Dd $Mdocdate: November 26 2019 $
 .Dt TIMEOUT_SET 9
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Nm timeout_add_tv ,
 .Nm timeout_add_ts ,
 .Nm timeout_add_bt ,
+.Nm timeout_at_ts ,
 .Nm timeout_del ,
 .Nm timeout_del_barrier ,
 .Nm timeout_barrier ,
@@ -80,6 +81,8 @@
 .Fn timeout_add_usec "struct timeout *to" "int usec"
 .Ft int
 .Fn timeout_add_nsec "struct timeout *to" "int nsec"
+.Ft int
+.Fn timeout_at_ts "struct timeout *to" "clockid_t clock" "struct timespec *when"
 .Fn TIMEOUT_INITIALIZER "void (*fn)(void *)" "void *arg"
 .Sh DESCRIPTION
 The
@@ -206,6 +209,20 @@ Those functions add a timeout whilst converting the time specified
 by the respective types.
 They also defer the timeout handler for at least one tick if called
 with a positive value.
+.Pp
+.Fn timeout_at_ts
+schedules
+.Fa to
+for execution no earlier than
+.Fa when ,
+an absolute time on the given
+.Fa clock .
+The
+.Fa clock
+may be either
+.Dv CLOCK_BOOTTIME
+or
+.Dv CLOCK_MONOTONIC .
 .Pp
 A timeout declaration can be initialised with the
 .Fn TIMEOUT_INITIALIZER

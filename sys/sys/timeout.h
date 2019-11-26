@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.30 2019/11/02 16:56:18 cheloha Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.31 2019/11/26 15:27:08 cheloha Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -26,6 +26,8 @@
 
 #ifndef _SYS_TIMEOUT_H_
 #define _SYS_TIMEOUT_H_
+
+#include <sys/time.h>
 
 /*
  * Interface for handling time driven events in the kernel.
@@ -58,9 +60,9 @@ struct circq {
 
 struct timeout {
 	struct circq to_list;			/* timeout queue, don't move */
+	struct timespec to_time;		/* uptime on event */
 	void (*to_func)(void *);		/* function to call */
 	void *to_arg;				/* function argument */
-	int to_time;				/* ticks on event */
 	int to_flags;				/* misc flags */
 };
 
@@ -99,8 +101,13 @@ int timeout_sysctl(void *, size_t *, void *, size_t);
 #define timeout_initialized(to) ((to)->to_flags & TIMEOUT_INITIALIZED)
 #define timeout_triggered(to) ((to)->to_flags & TIMEOUT_TRIGGERED)
 
-#define TIMEOUT_INITIALIZER(_f, _a) \
-	{ { NULL, NULL }, (_f), (_a), 0, TIMEOUT_INITIALIZED }
+#define TIMEOUT_INITIALIZER(_f, _a) {	\
+	.to_list = { NULL, NULL },	\
+	.to_time = { 0, 0 },		\
+	.to_func = (_f),		\
+	.to_arg = (_a),			\
+	.to_flags = TIMEOUT_INITIALIZED	\
+}
 
 struct bintime;
 
@@ -114,11 +121,11 @@ int timeout_add_sec(struct timeout *, int);
 int timeout_add_msec(struct timeout *, int);
 int timeout_add_usec(struct timeout *, int);
 int timeout_add_nsec(struct timeout *, int);
+int timeout_at_ts(struct timeout *, clockid_t, const struct timespec *);
 int timeout_del(struct timeout *);
 int timeout_del_barrier(struct timeout *);
 void timeout_barrier(struct timeout *);
 
-void timeout_adjust_ticks(int);
 void timeout_hardclock_update(void);
 void timeout_startup(void);
 
