@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.30 2019/11/24 07:54:30 claudio Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.31 2019/11/26 23:04:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -928,9 +928,12 @@ void
 umb_statechg_timeout(void *arg)
 {
 	struct umb_softc *sc = arg;
+	struct ifnet *ifp = GET_IFP(sc);
 
 	if (sc->sc_info.regstate != MBIM_REGSTATE_ROAMING || sc->sc_roaming)
-		printf("%s: state change timeout\n", DEVNAM(sc));
+		if (ifp->if_flags & IFF_DEBUG)
+			log(LOG_DEBUG, "%s: state change timeout\n",
+			    DEVNAM(sc));
 	usb_add_task(sc->sc_udev, &sc->sc_umb_task);
 }
 
