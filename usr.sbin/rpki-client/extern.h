@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.13 2019/11/27 17:08:12 benno Exp $ */
+/*	$OpenBSD: extern.h,v 1.14 2019/11/27 17:14:20 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -231,7 +231,7 @@ extern int verbose;
 void		 tal_buffer(char **, size_t *, size_t *, const struct tal *);
 void		 tal_free(struct tal *);
 struct tal	*tal_parse(const char *, char *);
-char 		*tal_read_file(const char *);
+char		*tal_read_file(const char *);
 struct tal	*tal_read(int);
 
 void		 cert_buffer(char **, size_t *, size_t *, const struct cert *);
@@ -249,17 +249,21 @@ void		 roa_buffer(char **, size_t *, size_t *, const struct roa *);
 void		 roa_free(struct roa *);
 struct roa	*roa_parse(X509 **, const char *, const unsigned char *);
 struct roa	*roa_read(int);
-void		 roa_insert_vrps(struct vrp_tree *, struct roa *, size_t *, size_t *);
+void		 roa_insert_vrps(struct vrp_tree *, struct roa *, size_t *,
+		    size_t *);
 
 X509_CRL	*crl_parse(const char *, const unsigned char *);
 
 /* Validation of our objects. */
 
 ssize_t		 valid_ski_aki(const char *, const struct auth *, size_t,
-		    const char *, const char *);   
-ssize_t		 valid_cert(const char *, const struct auth *, size_t, const struct cert *);
-ssize_t		 valid_roa(const char *, const struct auth *, size_t, const struct roa *);
-ssize_t		 valid_ta(const char *, const struct auth *, size_t, const struct cert *);
+		    const char *, const char *);
+ssize_t		 valid_cert(const char *, const struct auth *, size_t,
+		    const struct cert *);
+ssize_t		 valid_roa(const char *, const struct auth *, size_t,
+		    const struct roa *);
+ssize_t		 valid_ta(const char *, const struct auth *, size_t,
+		    const struct cert *);
 
 /* Working with CMS files. */
 
@@ -268,12 +272,16 @@ unsigned char	*cms_parse_validate(X509 **, const char *,
 
 /* Work with RFC 3779 IP addresses, prefixes, ranges. */
 
-int		 ip_addr_afi_parse(const char *, const ASN1_OCTET_STRING *, enum afi *);
+int		 ip_addr_afi_parse(const char *, const ASN1_OCTET_STRING *,
+			enum afi *);
 int		 ip_addr_parse(const ASN1_BIT_STRING *,
 			enum afi, const char *, struct ip_addr *);
-void		 ip_addr_print(const struct ip_addr *, enum afi, char *, size_t);
-void		 ip_addr_buffer(char **, size_t *, size_t *, const struct ip_addr *);
-void		 ip_addr_range_buffer(char **, size_t *, size_t *, const struct ip_addr_range *);
+void		 ip_addr_print(const struct ip_addr *, enum afi, char *,
+			size_t);
+void		 ip_addr_buffer(char **, size_t *, size_t *,
+			const struct ip_addr *);
+void		 ip_addr_range_buffer(char **, size_t *, size_t *,
+			const struct ip_addr_range *);
 void		 ip_addr_read(int, struct ip_addr *);
 void		 ip_addr_range_read(int, struct ip_addr_range *);
 int		 ip_addr_cmp(const struct ip_addr *, const struct ip_addr *);
@@ -310,10 +318,12 @@ void		 cryptoerrx(const char *, ...)
 
 void		 io_socket_blocking(int);
 void		 io_socket_nonblocking(int);
-void		 io_simple_buffer(char **, size_t *, size_t *, const void *, size_t);
+void		 io_simple_buffer(char **, size_t *, size_t *, const void *,
+			size_t);
 void		 io_simple_read(int, void *, size_t);
 void		 io_simple_write(int, const void *, size_t);
-void		 io_buf_buffer(char **, size_t *, size_t *, const void *, size_t);
+void		 io_buf_buffer(char **, size_t *, size_t *, const void *,
+			size_t);
 void		 io_buf_read_alloc(int, void **, size_t *);
 void		 io_buf_write(int, const void *, size_t);
 void		 io_str_buffer(char **, size_t *, size_t *, const char *);
