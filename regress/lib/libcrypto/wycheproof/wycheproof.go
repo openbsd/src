@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.90 2019/11/27 12:08:35 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.91 2019/11/27 12:26:40 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -2190,7 +2190,7 @@ func main() {
 
 	success := true
 
-	skip := regexp.MustCompile(`_(p1363|sha3|sha512_256)_`)
+	skip := regexp.MustCompile(`_(p1363|sha3|sha512_(224|256))_`)
 
 	for _, test := range tests {
 		webcrypto := test.name == "ECDSAWebCrypto" || test.name == "ECDHWebCrypto"
