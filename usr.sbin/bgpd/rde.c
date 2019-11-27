@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.490 2019/10/30 05:27:50 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.491 2019/11/27 01:21:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -367,6 +367,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 	struct filter_set	*s;
 	u_int8_t		*asdata;
 	ssize_t			 n;
+	size_t			 aslen;
 	int			 verbose;
 	u_int16_t		 len;
 	u_int8_t		 aid;
@@ -466,20 +467,15 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			break;
 		case IMSG_NETWORK_ASPATH:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE <
-			    sizeof(struct ctl_show_rib)) {
+			    sizeof(csr)) {
 				log_warnx("rde_dispatch: wrong imsg len");
 				bzero(&netconf_s, sizeof(netconf_s));
 				break;
 			}
+			aslen = imsg.hdr.len - IMSG_HEADER_SIZE - sizeof(csr);
 			asdata = imsg.data;
 			asdata += sizeof(struct ctl_show_rib);
 			memcpy(&csr, imsg.data, sizeof(csr));
-			if (csr.aspath_len + sizeof(csr) > imsg.hdr.len -
-			    IMSG_HEADER_SIZE) {
-				log_warnx("rde_dispatch: wrong aspath len");
-				bzero(&netconf_s, sizeof(netconf_s));
-				break;
-			}
 			asp = &netconf_state.aspath;
 			asp->lpref = csr.local_pref;
 			asp->med = csr.med;
@@ -488,7 +484,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			asp->origin = csr.origin;
 			asp->flags |= F_PREFIX_ANNOUNCED | F_ANN_DYNAMIC;
 			aspath_put(asp->aspath);
-			asp->aspath = aspath_get(asdata, csr.aspath_len);
+			asp->aspath = aspath_get(asdata, aslen);
 			break;
 		case IMSG_NETWORK_ATTR:
 			if (imsg.hdr.len <= IMSG_HEADER_SIZE) {
@@ -2199,6 +2195,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	struct nexthop		*nexthop;
 	void			*bp;
 	time_t			 staletime;
+	size_t			 aslen;
 	u_int8_t		 l;
 
 	nexthop = prefix_nexthop(p);
@@ -2243,14 +2240,13 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	staletime = prefix_peer(p)->staletime[p->pt->aid];
 	if (staletime && p->lastchange <= staletime)
 		rib.flags |= F_PREF_STALE;
-	rib.aspath_len = aspath_length(asp->aspath);
+	aslen = aspath_length(asp->aspath);
 
 	if ((wbuf = imsg_create(ibuf_se_ctl, IMSG_CTL_SHOW_RIB, 0, pid,
-	    sizeof(rib) + rib.aspath_len)) == NULL)
+	    sizeof(rib) + aslen)) == NULL)
 		return;
 	if (imsg_add(wbuf, &rib, sizeof(rib)) == -1 ||
-	    imsg_add(wbuf, aspath_dump(asp->aspath),
-	    rib.aspath_len) == -1)
+	    imsg_add(wbuf, aspath_dump(asp->aspath), aslen) == -1)
 		return;
 	imsg_close(ibuf_se_ctl, wbuf);
 
