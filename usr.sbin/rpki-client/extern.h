@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.12 2019/11/27 04:32:09 benno Exp $ */
+/*	$OpenBSD: extern.h,v 1.13 2019/11/27 17:08:12 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -255,6 +255,8 @@ X509_CRL	*crl_parse(const char *, const unsigned char *);
 
 /* Validation of our objects. */
 
+ssize_t		 valid_ski_aki(const char *, const struct auth *, size_t,
+		    const char *, const char *);   
 ssize_t		 valid_cert(const char *, const struct auth *, size_t, const struct cert *);
 ssize_t		 valid_roa(const char *, const struct auth *, size_t, const struct roa *);
 ssize_t		 valid_ta(const char *, const struct auth *, size_t, const struct cert *);

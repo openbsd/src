@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2019/11/27 03:39:16 benno Exp $ */
+/*	$OpenBSD: main.c,v 1.25 2019/11/27 17:08:12 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -130,6 +130,9 @@ static void	 proc_rsync(const char *, const char *, int, int)
 			__attribute__((noreturn));
 static void	 logx(const char *fmt, ...)
 			__attribute__((format(printf, 1, 2)));
+static STACK_OF(X509) *
+		 build_chain(ssize_t idx, const struct auth *auths,
+		     const size_t authsz);
 
 enum output_fmt {
 	BGPD,
@@ -780,13 +783,18 @@ proc_parser_roa(struct entity *entp, int norev,
 	X509_VERIFY_PARAM	*param;
 	unsigned int		fl, nfl;
 	ssize_t			aidx;
+	ssize_t			 idx;
+	STACK_OF(X509)		*chain;
 
 	assert(entp->has_dgst);
 	if ((roa = roa_parse(&x509, entp->uri, entp->dgst)) == NULL)
 		return NULL;
 
+	idx = valid_ski_aki(entp->uri, auths, authsz, roa->ski, roa->aki);
+	chain = build_chain(idx, auths, authsz);
+
 	assert(x509 != NULL);
-	if (!X509_STORE_CTX_init(ctx, store, x509, NULL))
+	if (!X509_STORE_CTX_init(ctx, store, x509, chain))
 		cryptoerrx("X509_STORE_CTX_init");
 
 	if ((param = X509_STORE_CTX_get0_param(ctx)) == NULL)
@@ -809,6 +817,7 @@ proc_parser_roa(struct entity *entp, int norev,
 		return NULL;
 	}
 	X509_STORE_CTX_cleanup(ctx);
+	sk_X509_free(chain);
 	X509_free(x509);
 
 	/*
@@ -844,12 +853,17 @@ proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
 	int			 c;
 	unsigned int		 fl, nfl;
 	X509_VERIFY_PARAM	*param;
+	ssize_t			 idx;
+	STACK_OF(X509)		*chain;
 
 	assert(!entp->has_dgst);
 	if ((mft = mft_parse(&x509, entp->uri, force)) == NULL)
 		return NULL;
 
-	if (!X509_STORE_CTX_init(ctx, store, x509, NULL))
+	idx = valid_ski_aki(entp->uri, auths, authsz, mft->ski, mft->aki);
+	chain = build_chain(idx, auths, authsz);
+
+	if (!X509_STORE_CTX_init(ctx, store, x509, chain))
 		cryptoerrx("X509_STORE_CTX_init");
 
 	if ((param = X509_STORE_CTX_get0_param(ctx)) == NULL)
@@ -869,6 +883,7 @@ proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
 	}
 
 	X509_STORE_CTX_cleanup(ctx);
+	sk_X509_free(chain);
 	X509_free(x509);
 	return mft;
 }
@@ -891,8 +906,9 @@ proc_parser_cert(const struct entity *entp, int norev,
 	int			 c;
 	X509_VERIFY_PARAM	*param;
 	unsigned int		 fl, nfl;
-	ssize_t			 id;
+	ssize_t			 id, idx;
 	char			*tal;
+	STACK_OF(X509)		*chain;
 
 	assert(!entp->has_dgst != !entp->has_pkey);
 
@@ -903,13 +919,20 @@ proc_parser_cert(const struct entity *entp, int norev,
 	if (cert == NULL)
 		return NULL;
 
+	/* Validate the cert to get the parent */
+	id = entp->has_pkey ?
+		valid_ta(entp->uri, *auths, *authsz, cert) :
+		valid_cert(entp->uri, *auths, *authsz, cert);
+
+	chain = build_chain(id, *auths, *authsz);
+
 	/*
 	 * Validate certificate chain w/CRLs.
 	 * Only check the CRLs if specifically asked.
 	 */
 
 	assert(x509 != NULL);
-	if (!X509_STORE_CTX_init(ctx, store, x509, NULL))
+	if (!X509_STORE_CTX_init(ctx, store, x509, chain))
 		cryptoerrx("X509_STORE_CTX_init");
 	if ((param = X509_STORE_CTX_get0_param(ctx)) == NULL)
 		cryptoerrx("X509_STORE_CTX_get0_param");
@@ -934,16 +957,12 @@ proc_parser_cert(const struct entity *entp, int norev,
 			X509_STORE_CTX_cleanup(ctx);
 			X509_free(x509);
 			cert_free(cert);
+			sk_X509_free(chain);
 			return NULL;
 		}
 	}
 	X509_STORE_CTX_cleanup(ctx);
-
-	/* Semantic validation of RPKI content. */
-
-	id = entp->has_pkey ?
-		valid_ta(entp->uri, *auths, *authsz, cert) :
-		valid_cert(entp->uri, *auths, *authsz, cert);
+	sk_X509_free(chain);
 
 	if (id < 0) {
 		X509_free(x509);
@@ -972,10 +991,12 @@ proc_parser_cert(const struct entity *entp, int norev,
 	(*auths)[*authsz].fn = strdup(entp->uri);
 	if ((*auths)[*authsz].fn == NULL)
 		err(EXIT_FAILURE, NULL);
+
+	/* only a ta goes into the store */
+	if (id == *authsz)
+		X509_STORE_add_cert(store, x509);
 	(*authsz)++;
 
-	X509_STORE_add_cert(store, x509);
-	X509_free(x509);
 	return cert;
 }
 
@@ -1610,4 +1631,29 @@ usage:
 	    "usage: rpki-client [-Bcfjnrv] [-b bind_addr] [-e rsync_prog] "
 	    "[-T table] [-t tal] output\n");
 	return EXIT_FAILURE;
+}
+
+/* use the parent (id) to walk the tree to the root and
+   build a certificate chain from cert->x509 */
+STACK_OF(X509) *
+build_chain(ssize_t idx, const struct auth *auths, const size_t authsz)
+{
+	STACK_OF(X509)	*chain = NULL;
+
+	if (idx == -1)
+		return NULL;
+	if (idx == authsz)
+		return NULL;
+
+	if ((chain = sk_X509_new_null()) == NULL)
+		err(EXIT_FAILURE, "sk_X509_new_null");
+	while (auths[idx].parent != (size_t)idx) {
+		if (auths[idx].cert->x509 == NULL)
+			errx(EXIT_FAILURE, "build_chain");
+		if (sk_X509_push(chain, auths[idx].cert->x509) == 0)
+			err(EXIT_FAILURE, "sk_X509_push");
+		idx = auths[idx].parent;
+	}
+
+	return chain;
 }

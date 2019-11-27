@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.7 2019/08/13 13:27:26 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.8 2019/11/27 17:08:12 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1251,6 +1251,7 @@ cert_parse_inner(X509 **xp, const char *fn, const unsigned char *dgst, int ta)
 		    "missing SIA", p.fn);
 		goto out;
 	}
+	p.res->x509 = x;
 
 	rc = 1;
 out:
@@ -1326,6 +1327,7 @@ cert_free(struct cert *p)
 	free(p->as);
 	free(p->aki);
 	free(p->ski);
+	X509_free(p->x509);
 	free(p);
 }
 
