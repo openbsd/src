@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.14 2019/11/10 20:51:53 landry Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.15 2019/11/27 01:25:17 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 10 2019 $
+.Dd $Mdocdate: November 27 2019 $
 .Dt LDOMCTL 8 sparc64
 .Os
 .Sh NAME
@@ -134,10 +134,11 @@ which sets
 in
 .Xr rc.conf.local 8 .
 .Pp
-Halt the primary domain and reset the machine from ALOM:
+Halt the primary domain reset the hardware:
 .Bd -literal -offset indent
 # halt
-sc> reset -c
+sc> reset -c	# ALOM
+-> reset /SYS	# ILOM
 .Ed
 .Pp
 The machine will now reset and boot into the new configuration.
