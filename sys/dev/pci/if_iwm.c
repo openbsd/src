@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.288 2019/11/26 17:16:19 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.289 2019/11/27 16:34:36 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -371,10 +371,8 @@ int	iwm_rxmq_get_signal_strength(struct iwm_softc *, struct iwm_rx_mpdu_desc *);
 void	iwm_rx_rx_phy_cmd(struct iwm_softc *, struct iwm_rx_packet *,
 	    struct iwm_rx_data *);
 int	iwm_get_noise(const struct iwm_statistics_rx_non_phy *);
-void	iwm_rx_rx_mpdu(struct iwm_softc *, struct iwm_rx_packet *,
-	    struct iwm_rx_data *, struct mbuf_list *);
-void	iwm_rx_mpdu_mq(struct iwm_softc *, struct iwm_rx_packet *,
-	    struct iwm_rx_data *, struct mbuf_list *);
+void	iwm_rx_frame(struct iwm_softc *, struct mbuf *, int, int, int, uint32_t,
+	    struct ieee80211_rxinfo *, struct mbuf_list *);
 void	iwm_enable_ht_cck_fallback(struct iwm_softc *, struct iwm_node *);
 void	iwm_rx_tx_cmd_single(struct iwm_softc *, struct iwm_rx_packet *,
 	    struct iwm_node *);
@@ -479,6 +477,11 @@ const char *iwm_desc_lookup(uint32_t);
 void	iwm_nic_error(struct iwm_softc *);
 void	iwm_nic_umac_error(struct iwm_softc *);
 #endif
+void	iwm_rx_mpdu(struct iwm_softc *, struct mbuf *, void *, size_t,
+	    struct mbuf_list *);
+int	iwm_rx_pkt_valid(struct iwm_rx_packet *);
+void	iwm_rx_pkt(struct iwm_softc *, struct iwm_rx_data *,
+	    struct mbuf_list *);
 void	iwm_notif_intr(struct iwm_softc *);
 int	iwm_intr(void *);
 int	iwm_intr_msix(void *);
@@ -2053,7 +2056,6 @@ iwm_nic_rx_mq_init(struct iwm_softc *sc)
 	    IWM_RFH_RXF_DMA_RB_SIZE_4K |
 	    IWM_RFH_RXF_DMA_MIN_RB_4_8 |
 	    IWM_RFH_RXF_DMA_DROP_TOO_LARGE_MASK |
-	    IWM_RFH_RXF_DMA_SINGLE_FRAME_MASK |
 	    IWM_RFH_RXF_DMA_RBDCB_SIZE_512);
 
 	/* Enable RX DMA snooping. */
@@ -2104,7 +2106,6 @@ iwm_nic_rx_legacy_init(struct iwm_softc *sc)
 	    IWM_FH_RCSR_RX_CONFIG_CHNL_EN_ENABLE_VAL		|
 	    IWM_FH_RCSR_CHNL0_RX_IGNORE_RXF_EMPTY		|  /* HW bug */
 	    IWM_FH_RCSR_CHNL0_RX_CONFIG_IRQ_DEST_INT_HOST_VAL	|
-	    IWM_FH_RCSR_CHNL0_RX_CONFIG_SINGLE_FRAME_MSK	|
 	    (IWM_RX_RB_TIMEOUT << IWM_FH_RCSR_RX_CONFIG_REG_IRQ_RBTH_POS) |
 	    IWM_FH_RCSR_RX_CONFIG_REG_VAL_RB_SIZE_4K		|
 	    IWM_RX_QUEUE_SIZE_LOG << IWM_FH_RCSR_RX_CONFIG_RBDCB_SIZE_POS);
@@ -3965,13 +3966,11 @@ iwm_rx_frame(struct iwm_softc *sc, struct mbuf *m, int chanidx,
 }
 
 void
-iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
-    struct iwm_rx_data *data, struct mbuf_list *ml)
+iwm_rx_mpdu(struct iwm_softc *sc, struct mbuf *m, void *pktdata,
+    size_t maxlen, struct mbuf_list *ml)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_frame *wh;
 	struct ieee80211_rxinfo rxi;
-	struct mbuf *m;
 	struct iwm_rx_phy_info *phy_info;
 	struct iwm_rx_mpdu_res_start *rx_res;
 	int device_timestamp;
@@ -3980,36 +3979,28 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	uint32_t rx_pkt_status;
 	int rssi, chanidx, rate_n_flags;
 
-	bus_dmamap_sync(sc->sc_dmat, data->map, 0, IWM_RBUF_SIZE,
-	    BUS_DMASYNC_POSTREAD);
-
 	phy_info = &sc->sc_last_phy_info;
-	rx_res = (struct iwm_rx_mpdu_res_start *)pkt->data;
-	wh = (struct ieee80211_frame *)(pkt->data + sizeof(*rx_res));
+	rx_res = (struct iwm_rx_mpdu_res_start *)pktdata;
 	len = le16toh(rx_res->byte_count);
 	if (len < IEEE80211_MIN_LEN) {
 		ic->ic_stats.is_rx_tooshort++;
 		IC2IFP(ic)->if_ierrors++;
 		return;
 	}
-	if (len > IWM_RBUF_SIZE - sizeof(*rx_res)) {
+	if (len > maxlen - sizeof(*rx_res)) {
 		IC2IFP(ic)->if_ierrors++;
 		return;
 	}
-	rx_pkt_status = le32toh(*(uint32_t *)(pkt->data +
-	    sizeof(*rx_res) + len));
 
 	if (__predict_false(phy_info->cfg_phy_cnt > 20))
 		return;
 
+	rx_pkt_status = le32toh(*(uint32_t *)(pktdata + sizeof(*rx_res) + len));
 	if (!(rx_pkt_status & IWM_RX_MPDU_RES_STATUS_CRC_OK) ||
 	    !(rx_pkt_status & IWM_RX_MPDU_RES_STATUS_OVERRUN_OK))
 		return; /* drop */
 
-	m = data->m;
-	if (iwm_rx_addbuf(sc, IWM_RBUF_SIZE, sc->rxq.cur) != 0)
-		return;
-	m->m_data = pkt->data + sizeof(*rx_res);
+	m->m_data = pktdata + sizeof(*rx_res);
 	m->m_pkthdr.len = m->m_len = len;
 
 	chanidx = letoh32(phy_info->channel);
@@ -4025,56 +4016,46 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	rxi.rxi_rssi = rssi;
 	rxi.rxi_tstamp = device_timestamp;
 
-	iwm_rx_frame(sc, m, chanidx, (phy_flags & IWM_PHY_INFO_FLAG_SHPREAMBLE),
+	iwm_rx_frame(sc, m, chanidx,
+	    (phy_flags & IWM_PHY_INFO_FLAG_SHPREAMBLE),
 	    rate_n_flags, device_timestamp, &rxi, ml);
 }
 
 void
-iwm_rx_mpdu_mq(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
-    struct iwm_rx_data *data, struct mbuf_list *ml)
+iwm_rx_mpdu_mq(struct iwm_softc *sc, struct mbuf *m, void *pktdata,
+    size_t maxlen, struct mbuf_list *ml)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_frame *wh;
-	struct ieee80211_node *ni;
 	struct ieee80211_rxinfo rxi;
-	struct ieee80211_channel *bss_chan;
-	struct mbuf *m;
 	struct iwm_rx_mpdu_desc *desc;
 	uint32_t len, hdrlen, rate_n_flags, device_timestamp;
 	int rssi;
 	uint8_t chanidx;
 	uint16_t phy_info;
-	uint8_t saved_bssid[IEEE80211_ADDR_LEN] = { 0 };
 
-	bus_dmamap_sync(sc->sc_dmat, data->map, 0, IWM_RBUF_SIZE,
-	    BUS_DMASYNC_POSTREAD);
-
-	desc = (struct iwm_rx_mpdu_desc *)pkt->data;
+	desc = (struct iwm_rx_mpdu_desc *)pktdata;
 
 	if (!(desc->status & htole16(IWM_RX_MPDU_RES_STATUS_CRC_OK)) ||
 	    !(desc->status & htole16(IWM_RX_MPDU_RES_STATUS_OVERRUN_OK)))
 		return; /* drop */
 
-	wh = (struct ieee80211_frame *)(pkt->data + sizeof(*desc));
 	len = le16toh(desc->mpdu_len);
 	if (len < IEEE80211_MIN_LEN) {
 		ic->ic_stats.is_rx_tooshort++;
 		IC2IFP(ic)->if_ierrors++;
 		return;
 	}
-	if (len > IWM_RBUF_SIZE - sizeof(*desc)) {
+	if (len > maxlen - sizeof(*desc)) {
 		IC2IFP(ic)->if_ierrors++;
 		return;
 	}
 
-	m = data->m;
-	if (iwm_rx_addbuf(sc, IWM_RBUF_SIZE, sc->rxq.cur) != 0)
-		return;
-	m->m_data = pkt->data + sizeof(*desc);
+	m->m_data = pktdata + sizeof(*desc);
 	m->m_pkthdr.len = m->m_len = len;
 
 	/* Account for padding following the frame header. */
 	if (desc->mac_flags2 & IWM_RX_MPDU_MFLG2_PAD) {
+		struct ieee80211_frame *wh = mtod(m, struct ieee80211_frame *);
 		int type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 		if (type == IEEE80211_FC0_TYPE_CTL) {
 			switch (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) {
@@ -4091,36 +4072,24 @@ iwm_rx_mpdu_mq(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 		} else
 			hdrlen = ieee80211_get_hdrlen(wh);
 		memmove(m->m_data + 2, m->m_data, hdrlen);
-		m->m_data = m->m_data + 2;
-		wh = mtod(m, struct ieee80211_frame *);
+		m_adj(m, 2);
 	}
 
 	phy_info = le16toh(desc->phy_info);
 	rate_n_flags = le32toh(desc->v1.rate_n_flags);
+	chanidx = desc->v1.channel;
+	device_timestamp = desc->v1.gp2_on_air_rise;
 
 	rssi = iwm_rxmq_get_signal_strength(sc, desc);
 	rssi = (0 - IWM_MIN_DBM) + rssi;	/* normalize */
 	rssi = MIN(rssi, ic->ic_max_rssi);	/* clip to max. 100% */
 
-	ni = ieee80211_find_rxnode(ic, wh);
-	if (ni == ic->ic_bss) {
-		/* 
-		 * We may switch ic_bss's channel during scans.
-		 * Record the current channel so we can restore it later.
-		 */
-		bss_chan = ni->ni_chan;
-		IEEE80211_ADDR_COPY(&saved_bssid, ni->ni_macaddr);
-	}
-	chanidx = desc->v1.channel;
-	ni->ni_chan = &ic->ic_channels[chanidx];
-
 	memset(&rxi, 0, sizeof(rxi));
 	rxi.rxi_rssi = rssi;
 	rxi.rxi_tstamp = le64toh(desc->v1.tsf_on_air_rise);
 
-	device_timestamp = desc->v1.gp2_on_air_rise;
-
-	iwm_rx_frame(sc, m, chanidx, (phy_info & IWM_RX_MPDU_PHY_SHORT_PREAMBLE),
+	iwm_rx_frame(sc, m, chanidx,
+	    (phy_info & IWM_RX_MPDU_PHY_SHORT_PREAMBLE),
 	    rate_n_flags, device_timestamp, &rxi, ml);
 }
 
@@ -7974,49 +7943,56 @@ do {									\
 
 #define ADVANCE_RXQ(sc) (sc->rxq.cur = (sc->rxq.cur + 1) % count);
 
-void
-iwm_notif_intr(struct iwm_softc *sc)
+int
+iwm_rx_pkt_valid(struct iwm_rx_packet *pkt)
 {
-	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-	uint32_t wreg;
-	uint16_t hw;
-	int count;
+	int qid, idx, code;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->rxq.stat_dma.map,
-	    0, sc->rxq.stat_dma.size, BUS_DMASYNC_POSTREAD);
+	qid = pkt->hdr.qid & ~0x80;
+	idx = pkt->hdr.idx;
+	code = IWM_WIDE_ID(pkt->hdr.flags, pkt->hdr.code);
 
-	if (sc->sc_mqrx_supported) {
-		count = IWM_RX_MQ_RING_COUNT;
-		wreg = IWM_RFH_Q0_FRBDCB_WIDX_TRG;
-	} else {
-		count = IWM_RX_RING_COUNT;
-		wreg = IWM_FH_RSCSR_CHNL0_WPTR;
-	}
+	return (!(qid == 0 && idx == 0 && code == 0) &&
+	    pkt->len_n_flags != htole32(IWM_FH_RSCSR_FRAME_INVALID));
+}
 
-	hw = le16toh(sc->rxq.stat->closed_rb_num) & 0xfff;
-	hw &= (count - 1);
-	while (sc->rxq.cur != hw) {
-		struct iwm_rx_data *data = &sc->rxq.data[sc->rxq.cur];
-		struct iwm_rx_packet *pkt;
-		int qid, idx, code, handled = 1;
+void
+iwm_rx_pkt(struct iwm_softc *sc, struct iwm_rx_data *data, struct mbuf_list *ml)
+{
+	struct ifnet *ifp = IC2IFP(&sc->sc_ic);
+	struct iwm_rx_packet *pkt, *nextpkt;
+	uint32_t offset = 0, nextoff = 0, nmpdu = 0, len;
+	struct mbuf *m0, *m;
+	const size_t minsz = sizeof(pkt->len_n_flags) + sizeof(pkt->hdr);
+	size_t remain = IWM_RBUF_SIZE;
+	int qid, idx, code, handled = 1;
 
-		bus_dmamap_sync(sc->sc_dmat, data->map, 0, sizeof(*pkt),
-		    BUS_DMASYNC_POSTREAD);
-		pkt = mtod(data->m, struct iwm_rx_packet *);
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0, IWM_RBUF_SIZE,
+	    BUS_DMASYNC_POSTREAD);
 
+	m0 = data->m;
+	while (m0 && offset + minsz < IWM_RBUF_SIZE) {
+		pkt = (struct iwm_rx_packet *)(m0->m_data + offset);
 		qid = pkt->hdr.qid;
 		idx = pkt->hdr.idx;
 
 		code = IWM_WIDE_ID(pkt->hdr.flags, pkt->hdr.code);
 
-		/*
-		 * randomly get these from the firmware, no idea why.
-		 * they at least seem harmless, so just ignore them for now
-		 */
-		if (__predict_false((pkt->hdr.code == 0 && (qid & ~0x80) == 0
-		    && idx == 0) || pkt->len_n_flags == htole32(0x55550000))) {
-			ADVANCE_RXQ(sc);
-			continue;
+		if (!iwm_rx_pkt_valid(pkt))
+			break;
+
+		len = sizeof(pkt->len_n_flags) + iwm_rx_packet_len(pkt);
+		if (len < sizeof(pkt->hdr) ||
+		    len > (IWM_RBUF_SIZE - offset - minsz))
+			break;
+
+		if (code == IWM_REPLY_RX_MPDU_CMD && ++nmpdu == 1) {
+			/* Take mbuf m0 off the RX ring. */
+			if (iwm_rx_addbuf(sc, IWM_RBUF_SIZE, sc->rxq.cur)) {
+				ifp->if_ierrors++;
+				break;
+			}
+			KASSERT(data->m != m0);
 		}
 
 		switch (code) {
@@ -8024,12 +8000,50 @@ iwm_notif_intr(struct iwm_softc *sc)
 			iwm_rx_rx_phy_cmd(sc, pkt, data);
 			break;
 
-		case IWM_REPLY_RX_MPDU_CMD:
-			if (sc->sc_mqrx_supported)
-				iwm_rx_mpdu_mq(sc, pkt, data, &ml);
+		case IWM_REPLY_RX_MPDU_CMD: {
+			size_t maxlen = remain - minsz;
+			nextoff = offset +
+			    roundup(len, IWM_FH_RSCSR_FRAME_ALIGN);
+			nextpkt = (struct iwm_rx_packet *)
+			    (m0->m_data + nextoff);
+			if (nextoff + minsz >= IWM_RBUF_SIZE ||
+			    !iwm_rx_pkt_valid(nextpkt)) {
+				/* No need to copy last frame in buffer. */
+				if (offset > 0)
+					m_adj(m0, offset);
+				if (sc->sc_mqrx_supported)
+					iwm_rx_mpdu_mq(sc, m0, pkt->data,
+					    maxlen, ml);
+				else
+					iwm_rx_mpdu(sc, m0, pkt->data,
+					    maxlen, ml);
+				m0 = NULL; /* stack owns m0 now; abort loop */
+			} else {
+				/*
+				 * Create an mbuf which points to the current
+				 * packet. Always copy from offset zero to
+				 * preserve m_pkthdr.
+				 */
+				m = m_copym(m0, 0, M_COPYALL, M_DONTWAIT);
+				if (m == NULL) {
+					ifp->if_ierrors++;
+					break;
+				}
+				m_adj(m, offset);
+				if (sc->sc_mqrx_supported)
+					iwm_rx_mpdu_mq(sc, m, pkt->data,
+					    maxlen, ml);
+				else
+					iwm_rx_mpdu(sc, m, pkt->data,
+					    maxlen, ml);
+			}
+
+			if (offset + minsz < remain)
+				remain -= offset;
 			else
-				iwm_rx_rx_mpdu(sc, pkt, data, &ml);
-			break;
+				remain = minsz;
+ 			break;
+		}
 
 		case IWM_TX_CMD:
 			iwm_rx_tx_cmd(sc, pkt, data);
@@ -8281,6 +8295,37 @@ iwm_notif_intr(struct iwm_softc *sc)
 			iwm_cmd_done(sc, qid, idx, code);
 		}
 
+		offset += roundup(len, IWM_FH_RSCSR_FRAME_ALIGN);
+	}
+
+	if (m0 && m0 != data->m)
+		m_freem(m0);
+}
+
+void
+iwm_notif_intr(struct iwm_softc *sc)
+{
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+	uint32_t wreg;
+	uint16_t hw;
+	int count;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->rxq.stat_dma.map,
+	    0, sc->rxq.stat_dma.size, BUS_DMASYNC_POSTREAD);
+
+	if (sc->sc_mqrx_supported) {
+		count = IWM_RX_MQ_RING_COUNT;
+		wreg = IWM_RFH_Q0_FRBDCB_WIDX_TRG;
+	} else {
+		count = IWM_RX_RING_COUNT;
+		wreg = IWM_FH_RSCSR_CHNL0_WPTR;
+	}
+
+	hw = le16toh(sc->rxq.stat->closed_rb_num) & 0xfff;
+	hw &= (count - 1);
+	while (sc->rxq.cur != hw) {
+		struct iwm_rx_data *data = &sc->rxq.data[sc->rxq.cur];
+		iwm_rx_pkt(sc, data, &ml);
 		ADVANCE_RXQ(sc);
 	}
 	if_input(&sc->sc_ic.ic_if, &ml);
