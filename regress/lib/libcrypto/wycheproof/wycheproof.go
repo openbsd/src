@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.92 2019/11/27 17:53:31 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.93 2019/11/27 18:05:57 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -1864,7 +1864,7 @@ func runRSAOAEPTest(rsa *C.RSA, sha *C.EVP_MD, mgfSha *C.EVP_MD, wt *wycheproofT
 		success = (wt.Result == "invalid")
 
 		if !success {
-			fmt.Printf("FAIL: TCID: %d, got %d, want %d, expect %v, \"%v\"\n", wt.TCID, ret, rsaSize, wt.Result, wt.Comment)
+			fmt.Printf("FAIL: Test case %d (%q) %v - got %d, want %d. Expected: %v\n", wt.TCID, wt.Comment, wt.Flags, ret, rsaSize, wt.Result)
 		}
 		return success
 	}
@@ -1892,7 +1892,7 @@ func runRSAOAEPTest(rsa *C.RSA, sha *C.EVP_MD, mgfSha *C.EVP_MD, wt *wycheproofT
 		success = (wt.Result == "invalid")
 
 		if !success {
-			fmt.Printf("FAIL: TCID: %d, got %d, want %d, expect %v, \"%v\"\n", wt.TCID, ret, msgLen, wt.Result, wt.Comment)
+			fmt.Printf("FAIL: Test case %d (%q) %v - got %d, want %d. Expected: %v\n", wt.TCID, wt.Comment, wt.Flags, ret, rsaSize, wt.Result)
 		}
 		return success
 	}
@@ -1901,7 +1901,7 @@ func runRSAOAEPTest(rsa *C.RSA, sha *C.EVP_MD, mgfSha *C.EVP_MD, wt *wycheproofT
 	to = to[:msgLen];
 	if !bytes.Equal(msg, to) {
 		success = false
-		fmt.Printf("FAIL: TCID: %d, expected and calculated message differ. expect %v", wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) %v - expected and calculated message differ. Expected: %v", wt.TCID, wt.Comment, wt.Flags, wt.Result)
 	}
 
 	return success
