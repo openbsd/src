@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.93 2019/11/27 18:05:57 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.94 2019/11/27 19:32:07 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -289,7 +289,7 @@ type wycheproofPrivateKeyJwk struct {
 	QI  string `json:"qi"`
 }
 
-type wycheproofTestRSAOAEP struct {
+type wycheproofTestRsaes struct {
         TCID    int      `json:"tcId"`
 	Comment string   `json:"comment"`
 	Msg     string   `json:"msg"`
@@ -299,7 +299,7 @@ type wycheproofTestRSAOAEP struct {
 	Flags   []string `json:"flags"`
 }
 
-type wycheproofTestGroupRSAESOAEP struct {
+type wycheproofTestGroupRsaesOaep struct {
 	D               string                   `json:"d"`
 	E               string                   `json:"e"`
 	KeySize         int                      `json:"keysize"`
@@ -311,7 +311,19 @@ type wycheproofTestGroupRSAESOAEP struct {
 	PrivateKeyPkcs8 string                   `json:"privateKeyPkcs8"`
 	SHA             string                   `json:"sha"`
 	Type            string                   `json:"type"`
-	Tests           []*wycheproofTestRSAOAEP `json:"tests"`
+	Tests           []*wycheproofTestRsaes   `json:"tests"`
+}
+
+type wycheproofTestGroupRsaesPkcs1 struct {
+	D               string                   `json:"d"`
+	E               string                   `json:"e"`
+	KeySize         int                      `json:"keysize"`
+	N               string                   `json:"n"`
+	PrivateKeyJwk   *wycheproofPrivateKeyJwk `json:"privateKeyJwk"`
+	PrivateKeyPem   string                   `json:"privateKeyPem"`
+	PrivateKeyPkcs8 string                   `json:"privateKeyPkcs8"`
+	Type            string                   `json:"type"`
+	Tests           []*wycheproofTestRsaes   `json:"tests"`
 }
 
 type wycheproofTestRSASSA struct {
@@ -1843,7 +1855,7 @@ func runKWTestGroup(algorithm string, wtg *wycheproofTestGroupKW) bool {
 	return success
 }
 
-func runRSAOAEPTest(rsa *C.RSA, sha *C.EVP_MD, mgfSha *C.EVP_MD, wt *wycheproofTestRSAOAEP) bool {
+func runRsaesOaepTest(rsa *C.RSA, sha *C.EVP_MD, mgfSha *C.EVP_MD, wt *wycheproofTestRsaes) bool {
 	ct, err := hex.DecodeString(wt.CT)
 	if err != nil {
 		log.Fatalf("Failed to decode cipher text %q: %v", wt.CT, err)
@@ -1907,7 +1919,7 @@ func runRSAOAEPTest(rsa *C.RSA, sha *C.EVP_MD, mgfSha *C.EVP_MD, wt *wycheproofT
 	return success
 }
 
-func runRSAOAEPTestGroup(algorithm string, wtg *wycheproofTestGroupRSAESOAEP) bool {
+func runRsaesOaepTestGroup(algorithm string, wtg *wycheproofTestGroupRsaesOaep) bool {
 	fmt.Printf("Running %v test group %v with key size %d MGF %v and %v...\n",
 		algorithm, wtg.Type, wtg.KeySize, wtg.MGFSHA, wtg.SHA)
 
@@ -1947,7 +1959,84 @@ func runRSAOAEPTestGroup(algorithm string, wtg *wycheproofTestGroupRSAESOAEP) bo
 
 	success := true
 	for _, wt := range wtg.Tests {
-		if !runRSAOAEPTest(rsa, sha, mgfSha, wt) {
+		if !runRsaesOaepTest(rsa, sha, mgfSha, wt) {
+			success = false
+		}
+	}
+	return success
+}
+
+func runRsaesPkcs1Test(rsa *C.RSA, wt *wycheproofTestRsaes) bool {
+	ct, err := hex.DecodeString(wt.CT)
+	if err != nil {
+		log.Fatalf("Failed to decode cipher text %q: %v", wt.CT, err)
+	}
+	ctLen := len(ct)
+	if ctLen == 0 {
+		ct = append(ct, 0)
+	}
+
+	rsaSize := C.RSA_size(rsa)
+	decrypted := make([]byte, rsaSize)
+
+	success := true
+
+	ret := C.RSA_private_decrypt(C.int(ctLen), (*C.uchar)(unsafe.Pointer(&ct[0])), (*C.uchar)(unsafe.Pointer(&decrypted[0])), rsa, C.RSA_PKCS1_PADDING)
+
+	if ret == -1 {
+		success = (wt.Result == "invalid")
+
+		if !success {
+			fmt.Printf("FAIL: Test case %d (%q) %v - got %d, want %d. Expected: %v\n", wt.TCID, wt.Comment, wt.Flags, ret, len(wt.Msg)/2, wt.Result)
+		}
+		return success
+	}
+
+	msg, err := hex.DecodeString(wt.Msg)
+	if err != nil {
+		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
+	}
+
+	if int(ret) != len(msg) {
+		success = false
+		fmt.Printf("FAIL: Test case %d (%q) %v - got %d, want %d. Expected: %v\n", wt.TCID, wt.Comment, wt.Flags, ret, len(msg), wt.Result)
+	} else if !bytes.Equal(msg, decrypted[:len(msg)]) {
+		success = false
+		fmt.Printf("FAIL: Test case %d (%q) %v - expected and calculated message differ. Expected: %v", wt.TCID, wt.Comment, wt.Flags, wt.Result)
+	}
+
+	return success
+}
+
+func runRsaesPkcs1TestGroup(algorithm string, wtg *wycheproofTestGroupRsaesPkcs1) bool {
+	fmt.Printf("Running %v test group %v with key size %d...\n", algorithm, wtg.Type, wtg.KeySize)
+	rsa := C.RSA_new()
+	if rsa == nil {
+		log.Fatal("RSA_new failed")
+	}
+	defer C.RSA_free(rsa)
+
+	d := C.CString(wtg.D)
+	if C.BN_hex2bn(&rsa.d, d) == 0 {
+		log.Fatal("Failed to set RSA d")
+	}
+	C.free(unsafe.Pointer(d))
+
+	e := C.CString(wtg.E)
+	if C.BN_hex2bn(&rsa.e, e) == 0 {
+		log.Fatal("Failed to set RSA e")
+	}
+	C.free(unsafe.Pointer(e))
+
+	n := C.CString(wtg.N)
+	if C.BN_hex2bn(&rsa.n, n) == 0 {
+		log.Fatal("Failed to set RSA n")
+	}
+	C.free(unsafe.Pointer(n))
+
+	success := true
+	for _, wt := range wtg.Tests {
+		if !runRsaesPkcs1Test(rsa, wt) {
 			success = false
 		}
 	}
@@ -2226,7 +2315,9 @@ func runTestVectors(path string, webcrypto bool) bool {
 	case "KW":
 		wtg = &wycheproofTestGroupKW{}
 	case "RSAES-OAEP":
-		wtg= &wycheproofTestGroupRSAESOAEP{}
+		wtg= &wycheproofTestGroupRsaesOaep{}
+	case "RSAES-PKCS1-v1_5":
+		wtg= &wycheproofTestGroupRsaesPkcs1{}
 	case "RSASSA-PSS":
 		wtg = &wycheproofTestGroupRSASSA{}
 	case "RSASig":
@@ -2293,7 +2384,11 @@ func runTestVectors(path string, webcrypto bool) bool {
 				success = false
 			}
 		case "RSAES-OAEP":
-			if !runRSAOAEPTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRSAESOAEP)) {
+			if !runRsaesOaepTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRsaesOaep)) {
+				success = false
+			}
+		case "RSAES-PKCS1-v1_5":
+			if !runRsaesPkcs1TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRsaesPkcs1)) {
 				success = false
 			}
 		case "RSASSA-PSS":
