@@ -1,5 +1,4 @@
-.\"	$OpenBSD: msyscall.2,v 1.1 2019/11/27 19:45:24 deraadt Exp $
-.\"	$NetBSD: mprotect.2,v 1.6 1995/10/12 15:41:08 jtc Exp $
+.\"	$OpenBSD: msyscall.2,v 1.2 2019/11/27 20:53:05 schwarze Exp $
 .\"
 .\" Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -49,7 +48,6 @@ only, and may be called only once to indicate the location of
 the loaded
 .Pa libc.so
 library.
-.Pp
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
@@ -60,7 +58,7 @@ will fail if:
 The specified address range would wrap around.
 .It Bq Er EPERM
 Attempt to call
-.Fn
+.Fn msyscall
 after
 .Xr ld.so 1
 has called it.
