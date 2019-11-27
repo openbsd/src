@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.376 2019/08/15 18:44:53 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.377 2019/11/27 19:42:56 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1397,7 +1397,7 @@ pfctl_load_ruleset(struct pfctl *pf, char *path, struct pf_ruleset *rs,
 			if ((pf->opts & PF_OPT_NOACTION) == 0 &&
 			    (error = pfctl_ruleset_trans(pf,
 			    path, rs->anchor))) {
-				printf("pfctl_load_rulesets: "
+				printf("pfctl_load_ruleset: "
 				    "pfctl_ruleset_trans %d\n", error);
 				goto error;
 			}
