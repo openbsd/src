@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.75 2019/11/21 17:24:15 akoshibe Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.76 2019/11/27 17:37:32 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -2174,7 +2174,8 @@ swofp_validate_action(struct switch_softc *sc, struct ofp_action_header *ah,
 		}
 		break;
 	case OFP_ACTION_SET_FIELD:
-		if (ahlen < sizeof(struct ofp_action_set_field)) {
+		if (ahlen < sizeof(struct ofp_action_set_field) ||
+		    ahlen != OFP_ALIGN(ahlen)) {
 			*err = OFP_ERRACTION_LEN;
 			return (-1);
 		}
@@ -2189,22 +2190,37 @@ swofp_validate_action(struct switch_softc *sc, struct ofp_action_header *ah,
 		dptr = (uint8_t *)ah;
 		dptr += sizeof(struct ofp_action_set_field) -
 		    offsetof(struct ofp_action_set_field, asf_field);
-		while (oxmlen > 0) {
-			oxm = (struct ofp_ox_match *)dptr;
-			if (swofp_validate_oxm(oxm, err)) {
-				if (*err == OFP_ERRMATCH_BAD_LEN)
-					*err = OFP_ERRACTION_SET_LEN;
-				else
-					*err = OFP_ERRACTION_SET_TYPE;
+		oxm = (struct ofp_ox_match *)dptr;
+		oxmlen -= sizeof(struct ofp_ox_match);
+		if (oxmlen < oxm->oxm_length) {
+			*err = OFP_ERRACTION_SET_LEN;
+			return (-1);
+		}
+		/* Remainder is padding. */
+		oxmlen -= oxm->oxm_length;
+		if (oxmlen >= OFP_ALIGNMENT) {
+			*err = OFP_ERRACTION_SET_LEN;
+			return (-1);
+		}
 
+		if (swofp_validate_oxm(oxm, err)) {
+			if (*err == OFP_ERRMATCH_BAD_LEN)
+				*err = OFP_ERRACTION_SET_LEN;
+			else
+				*err = OFP_ERRACTION_SET_TYPE;
+			return (-1);
+		}
+
+	 	dptr += sizeof(struct ofp_ox_match) + oxm->oxm_length;
+		while (oxmlen > 0) {
+			if (*dptr != 0) {
+				*err = OFP_ERRACTION_SET_ARGUMENT;
 				return (-1);
 			}
-
-			dptr += sizeof(*oxm) + oxm->oxm_length;
-			oxmlen -= sizeof(*oxm) + oxm->oxm_length;
+			oxmlen--;
+			dptr++;
 		}
 		break;
-
 	default:
 		/* Unknown/unsupported action. */
 		*err = OFP_ERRACTION_TYPE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ofp.c,v 1.11 2016/11/28 17:47:15 jca Exp $	*/
+/*	$OpenBSD: print-ofp.c,v 1.12 2019/11/27 17:37:32 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2016 Rafael Zalamena <rzalamena@openbsd.org>
@@ -232,10 +232,39 @@ ofp_print_setconfig(const u_char *bp, u_int length)
 }
 
 void
+ofp_print_oxm_field(const u_char *bp, u_int length, int omlen, int once)
+{
+	struct ofp_ox_match		*oxm;
+
+	do {
+		if (length < sizeof(*oxm)) {
+			printf(" [|OpenFlow]");
+			return;
+		}
+
+		oxm = (struct ofp_ox_match *)bp;
+		bp += sizeof(*oxm);
+		length -= sizeof(*oxm);
+		if (length < oxm->oxm_length) {
+			printf(" [|OpenFlow]");
+			return;
+		}
+
+		ofp_print_oxm(oxm, bp, length);
+		bp += oxm->oxm_length;
+		length -= oxm->oxm_length;
+
+		if (once)
+			return;
+
+		omlen -= min(sizeof(*oxm) + oxm->oxm_length, omlen);
+	} while (omlen > 0);
+}
+
+void
 ofp_print_packetin(const u_char *bp, u_int length)
 {
 	struct ofp_packet_in		*pin;
-	struct ofp_ox_match		*oxm;
 	int				 omtype, omlen;
 	int				 haspacket = 0;
 	const u_char			*pktptr;
@@ -276,27 +305,7 @@ ofp_print_packetin(const u_char *bp, u_int length)
 	if (omlen == 0)
 		goto print_packet;
 
- parse_next_oxm:
-	if (length < sizeof(*oxm)) {
-		printf(" [|OpenFlow]");
-		return;
-	}
-
-	oxm = (struct ofp_ox_match *)bp;
-	bp += sizeof(*oxm);
-	length -= sizeof(*oxm);
-	if (length < oxm->oxm_length) {
-		printf(" [|OpenFlow]");
-		return;
-	}
-
-	ofp_print_oxm(oxm, bp, length);
-
-	bp += oxm->oxm_length;
-	length -= oxm->oxm_length;
-	omlen -= min(sizeof(*oxm) + oxm->oxm_length, omlen);
-	if (omlen)
-		goto parse_next_oxm;
+	ofp_print_oxm_field(bp, length, omlen, 0);
 
  print_packet:
 	if (haspacket == 0)
@@ -322,7 +331,6 @@ void
 ofp_print_flowremoved(const u_char *bp, u_int length)
 {
 	struct ofp_flow_removed			*fr;
-	struct ofp_ox_match			*oxm;
 	int					 omtype, omlen;
 
 	if (length < sizeof(*fr)) {
@@ -355,27 +363,7 @@ ofp_print_flowremoved(const u_char *bp, u_int length)
 	bp += sizeof(*fr);
 	length -= sizeof(*fr);
 
- parse_next_oxm:
-	if (length < sizeof(*oxm)) {
-		printf(" [|OpenFlow]");
-		return;
-	}
-
-	oxm = (struct ofp_ox_match *)bp;
-	bp += sizeof(*oxm);
-	length -= sizeof(*oxm);
-	if (length < oxm->oxm_length) {
-		printf(" [|OpenFlow]");
-		return;
-	}
-
-	ofp_print_oxm(oxm, bp, length);
-
-	bp += oxm->oxm_length;
-	length -= oxm->oxm_length;
-	omlen -= min(sizeof(*oxm) + oxm->oxm_length, omlen);
-	if (omlen)
-		goto parse_next_oxm;
+	ofp_print_oxm_field(bp, length, omlen, 0);
 }
 
 void
@@ -453,7 +441,6 @@ void
 ofp_print_flowmod(const u_char *bp, u_int length)
 {
 	struct ofp_flow_mod			*fm;
-	struct ofp_ox_match			*oxm;
 	struct ofp_instruction			*i;
 	int					 omtype, omlen, ilen;
 	int					 instructionslen, padsize;
@@ -498,27 +485,10 @@ ofp_print_flowmod(const u_char *bp, u_int length)
 		goto parse_next_instruction;
 	}
 
- parse_next_oxm:
-	if (length < sizeof(*oxm)) {
-		printf(" [|OpenFlow]");
-		return;
-	}
+	ofp_print_oxm_field(bp, length, omlen, 0);
 
-	oxm = (struct ofp_ox_match *)bp;
-	bp += sizeof(*oxm);
-	length -= sizeof(*oxm);
-	if (length < oxm->oxm_length) {
-		printf(" [|OpenFlow]");
-		return;
-	}
-
-	ofp_print_oxm(oxm, bp, length);
-
-	bp += oxm->oxm_length;
-	length -= oxm->oxm_length;
-	omlen -= min(sizeof(*oxm) + oxm->oxm_length, omlen);
-	if (omlen)
-		goto parse_next_oxm;
+	bp += omlen;
+	length -= omlen;
 
 	/* Skip padding if any. */
 	if (padsize) {
@@ -1017,7 +987,6 @@ void
 action_print_setfield(const u_char *bp, u_int length)
 {
 	struct ofp_action_set_field	*asf;
-	struct ofp_ox_match		*oxm;
 	int				 omlen;
 
 	if (length < (sizeof(*asf) - AH_UNPADDED)) {
@@ -1030,27 +999,7 @@ action_print_setfield(const u_char *bp, u_int length)
 	if (omlen == 0)
 		return;
 
- parse_next_oxm:
-	if (length < sizeof(*oxm)) {
-		printf(" [|OpenFlow]");
-		return;
-	}
-
-	oxm = (struct ofp_ox_match *)bp;
-	bp += sizeof(*oxm);
-	length -= sizeof(*oxm);
-	if (length < oxm->oxm_length) {
-		printf(" [|OpenFlow]");
-		return;
-	}
-
-	ofp_print_oxm(oxm, bp, length);
-
-	bp += oxm->oxm_length;
-	length -= oxm->oxm_length;
-	omlen -= min(sizeof(*oxm) + oxm->oxm_length, omlen);
-	if (omlen)
-		goto parse_next_oxm;
+	ofp_print_oxm_field(bp, length, omlen, 1);
 }
 
 void
@@ -1094,6 +1043,7 @@ ofp_print_action(struct ofp_action_header *ah, const u_char *bp, u_int length)
 		break;
 
 	case OFP_ACTION_SET_FIELD:
+		action_print_setfield(bp, length);
 		break;
 
 	case OFP_ACTION_COPY_TTL_OUT:
