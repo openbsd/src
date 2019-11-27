@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.94 2019/07/19 00:54:59 cheloha Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.95 2019/11/27 16:12:13 beck Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -370,10 +370,9 @@ ffs_write(void *v)
 		if (error != 0 && !(flags & B_CLRBUF))
 			memset(bp->b_data + blkoffset, 0, xfersize);
 
-#if 0
 		if (ioflag & IO_NOCACHE)
 			bp->b_flags |= B_NOCACHE;
-#endif
+
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
 		else if (xfersize + blkoffset == fs->fs_bsize) {

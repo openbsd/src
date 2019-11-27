@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.44 2018/01/13 15:57:58 millert Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.45 2019/11/27 16:12:13 beck Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -335,10 +335,10 @@ ext2fs_write(void *v)
 		 */
 		if (error != 0 && !(flags & B_CLRBUF))
 			memset(bp->b_data + blkoffset, 0, xfersize);
-#if 0
+
 		if (ioflag & IO_NOCACHE)
 			bp->b_flags |= B_NOCACHE;
-#endif
+
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
 		else if (xfersize + blkoffset == fs->e2fs_bsize)
