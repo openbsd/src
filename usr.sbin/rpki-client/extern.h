@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.11 2019/11/04 09:35:43 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.12 2019/11/27 04:32:09 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -19,7 +19,7 @@
 
 #include <sys/tree.h>
 
-enum	cert_as_type {
+enum cert_as_type {
 	CERT_AS_ID, /* single identifier */
 	CERT_AS_INHERIT, /* inherit from parent */
 	CERT_AS_RANGE, /* range of identifiers */
@@ -29,7 +29,7 @@ enum	cert_as_type {
  * An AS identifier range.
  * The maximum AS identifier is an unsigned 32 bit integer (RFC 6793).
  */
-struct	cert_as_range {
+struct cert_as_range {
 	uint32_t	 min; /* minimum non-zero */
 	uint32_t	 max; /* maximum */
 };
@@ -38,7 +38,7 @@ struct	cert_as_range {
  * An autonomous system (AS) object.
  * AS identifiers are unsigned 32 bit integers (RFC 6793).
  */
-struct	cert_as {
+struct cert_as {
 	enum cert_as_type type; /* type of AS specification */
 	union {
 		uint32_t id; /* singular identifier */
@@ -50,7 +50,7 @@ struct	cert_as {
  * AFI values are assigned by IANA.
  * In rpki-client, we only accept the IPV4 and IPV6 AFI values.
  */
-enum	afi {
+enum afi {
 	AFI_IPV4 = 1,
 	AFI_IPV6 = 2
 };
@@ -60,7 +60,7 @@ enum	afi {
  * This is either in a certificate or an ROA.
  * It may either be IPv4 or IPv6.
  */
-struct	ip_addr {
+struct ip_addr {
 	unsigned char	 addr[16]; /* binary address prefix */
 	unsigned char	 prefixlen; /* number of valid bits in address */
 };
@@ -69,12 +69,12 @@ struct	ip_addr {
  * An IP address (IPv4 or IPv6) range starting at the minimum and making
  * its way to the maximum.
  */
-struct	ip_addr_range {
+struct ip_addr_range {
 	struct ip_addr min; /* minimum ip */
 	struct ip_addr max; /* maximum ip */
 };
 
-enum	cert_ip_type {
+enum cert_ip_type {
 	CERT_IP_ADDR, /* IP address range w/shared prefix */
 	CERT_IP_INHERIT, /* inherited IP address */
 	CERT_IP_RANGE /* range of IP addresses */
@@ -86,7 +86,7 @@ enum	cert_ip_type {
  * The RFC specifies multiple address or ranges per AFI; this structure
  * encodes both the AFI and a single address or range.
  */
-struct	cert_ip {
+struct cert_ip {
 	enum afi		afi; /* AFI value */
 	enum cert_ip_type	type; /* type of IP entry */
 	unsigned char		min[16]; /* full range minimum */
@@ -103,7 +103,7 @@ struct	cert_ip {
  * All AS numbers are guaranteed to be non-overlapping and properly
  * inheriting.
  */
-struct	cert {
+struct cert {
 	struct cert_ip	*ips; /* list of IP address ranges */
 	size_t		 ipsz; /* length of "ips" */
 	struct cert_as	*as; /* list of AS numbers and ranges */
@@ -113,6 +113,7 @@ struct	cert {
 	char		*aki; /* AKI (or NULL, for trust anchor) */
 	char		*ski; /* SKI */
 	int		 valid; /* validated resources */
+	X509		*x509; /* the cert */
 };
 
 /*
@@ -122,7 +123,7 @@ struct	cert {
  * It also includes the public key for verifying those trust anchor
  * certificates.
  */
-struct	tal {
+struct tal {
 	char		**uri; /* well-formed rsync URIs */
 	size_t		 urisz; /* number of URIs */
 	unsigned char	*pkey; /* DER-encoded public key */
@@ -133,7 +134,7 @@ struct	tal {
 /*
  * Files specified in an MFT have their bodies hashed with SHA256.
  */
-struct	mftfile {
+struct mftfile {
 	char		*file; /* filename (CER/ROA/CRL, no path) */
 	unsigned char	 hash[SHA256_DIGEST_LENGTH]; /* sha256 of body */
 };
@@ -143,7 +144,7 @@ struct	mftfile {
  * This consists of a bunch of files found in the same directory as the
  * manifest file.
  */
-struct	mft {
+struct mft {
 	char		*file; /* full path of MFT file */
 	struct mftfile	*files; /* file and hash */
 	size_t		 filesz; /* number of filenames */
@@ -157,7 +158,7 @@ struct	mft {
  * This encodes the maximum length, AFI (v6/v4), and address.
  * FIXME: are the min/max necessary or just used in one place?
  */
-struct	roa_ip {
+struct roa_ip {
 	enum afi	 afi; /* AFI value */
 	size_t		 maxlength; /* max length or zero */
 	unsigned char	 min[16]; /* full range minimum */
@@ -169,7 +170,7 @@ struct	roa_ip {
  * An ROA, RFC 6482.
  * This consists of the concerned ASID and its IP prefixes.
  */
-struct	roa {
+struct roa {
 	uint32_t	 asid; /* asID of ROA (if 0, RFC 6483 sec 4) */
 	struct roa_ip	*ips; /* IP prefixes */
 	size_t		 ipsz; /* number of IP prefixes */
@@ -201,7 +202,7 @@ RB_PROTOTYPE(vrp_tree, vrp, entry, vrpcmp);
  * This specifies a public key and a subject key identifier used to
  * verify children nodes in the tree of entities.
  */
-struct	auth {
+struct auth {
 	struct cert	*cert; /* owner information */
 	size_t		 id; /* self-index */
 	size_t		 parent; /* index of parent pair (or self) */
@@ -213,7 +214,7 @@ struct	auth {
  * Resource types specified by the RPKI profiles.
  * There are others (e.g., gbr) that we don't consider.
  */
-enum	rtype {
+enum rtype {
 	RTYPE_EOF = 0,
 	RTYPE_TAL,
 	RTYPE_MFT,
