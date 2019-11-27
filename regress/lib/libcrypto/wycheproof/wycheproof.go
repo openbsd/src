@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.89 2019/11/27 11:57:33 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.90 2019/11/27 12:08:35 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -2178,7 +2178,7 @@ func main() {
 	}{
 		{"AES", "aes_[cg]*[^xv]_test.json"}, // Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
 		{"ChaCha20-Poly1305", "chacha20_poly1305_test.json"},
-		{"DSA", "dsa_test.json"},
+		{"DSA", "dsa_*test.json"},
 		{"ECDH", "ecdh_[^w]*test.json"},
 		{"ECDHWebCrypto", "ecdh_w*_test.json"},
 		{"ECDSA", "ecdsa_[^w]*test.json"},
