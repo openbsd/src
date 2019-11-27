@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot_md.c,v 1.1 2019/10/20 03:44:49 guenther Exp $ */
+/*	$OpenBSD: boot_md.c,v 1.2 2019/11/27 00:58:59 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -63,12 +63,7 @@ struct boot_dyn {
 	Elf_Addr	*dt_pltgot;
 	Elf_Addr	dt_pltrelsz;
 	const Elf_Sym	*dt_symtab;
-#ifdef HAVE_JMPREL
 	RELOC_TYPE	*dt_jmprel;
-#endif
-#if DT_PROCNUM > 0
-	u_long		dt_proc[DT_PROCNUM];
-#endif
 };
 
 /*
@@ -134,26 +129,17 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
 			dynld.dt_symtab = (void *)(dynp->d_un.d_ptr + loff);
 		else if (dynp->d_tag == RELOC_TAG)	/* DT_{RELA,REL} */
 			dynld.dt_reloc = (void *)(dynp->d_un.d_ptr + loff);
-#ifdef HAVE_JMPREL
 		else if (dynp->d_tag == DT_JMPREL)
 			dynld.dt_jmprel = (void *)(dynp->d_un.d_ptr + loff);
-#endif
 
 		/* Now for the tags that are just sizes or counts */
 		else if (dynp->d_tag == DT_PLTRELSZ)
 			dynld.dt_pltrelsz = dynp->d_un.d_val;
 		else if (dynp->d_tag == RELOC_TAG+1)	/* DT_{RELA,REL}SZ */
 			dynld.dt_relocsz = dynp->d_un.d_val;
-#if DT_PROCNUM > 0
-		else if (dynp->d_tag >= DT_LOPROC &&
-		    dynp->d_tag < DT_LOPROC + DT_PROCNUM)
-			dynld.dt_proc[dynp->d_tag - DT_LOPROC] =
-			    dynp->d_un.d_val;
-#endif /* DT_PROCNUM */
 		dynp++;
 	}
 
-#ifdef HAVE_JMPREL
 	rp = dynld.dt_jmprel;
 	for (i = 0; i < dynld.dt_pltrelsz; i += sizeof *rp) {
 		Elf_Addr *ra;
@@ -167,7 +153,6 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
 		RELOC_JMPREL(rp, sp, ra, loff, dynld.dt_pltgot);
 		rp++;
 	}
-#endif /* HAVE_JMPREL */
 
 	rp = dynld.dt_reloc;
 	for (i = 0; i < dynld.dt_relocsz; i += sizeof *rp) {
