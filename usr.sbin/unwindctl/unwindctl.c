@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwindctl.c,v 1.15 2019/11/27 17:09:12 florian Exp $	*/
+/*	$OpenBSD: unwindctl.c,v 1.16 2019/11/27 17:12:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -222,13 +222,12 @@ show_status_msg(struct imsg *imsg)
 	char				*if_name;
 
 	if (!header++)
-		printf("%8s %16s %s\n", "selected", "type", "status");
+		printf("preference:\n");
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RESOLVER_INFO:
 		cri = imsg->data;
-		printf("%8s %16s %s%s\n", cri->selected ? "*" : " ",
-		    uw_resolver_type_str[cri->type],
+		printf("%-10s %s%s\n", uw_resolver_type_str[cri->type],
 		    uw_resolver_state_str[cri->state],
 		    cri->oppdot ? " (opportunistic DoT)" : "");
 		break;

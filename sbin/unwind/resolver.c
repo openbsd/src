@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.79 2019/11/27 17:11:00 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.80 2019/11/27 17:12:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -63,6 +63,14 @@
 #define	UB_LOG_VERBOSE			4
 #define	UB_LOG_BRIEF			0
 
+/*
+ * The prefered resolver type can be this many ms slower than the next
+ * best and still be picked
+ */
+#define	PREF_RESOLVER_MEDIAN_SKEW	200		/* 200 ms */
+
+#define	DOUBT_NXDOMAIN_SEC		(5 * 60)	/* 5 minutes */
+
 #define	RESOLVER_CHECK_SEC		1
 #define	RESOLVER_CHECK_MAXSEC		1024 /* ~17 minutes */
 
@@ -88,7 +96,20 @@ struct uw_resolver {
 	int			 check_running;
 	char			*why_bogus;
 	int64_t			 histogram[nitems(histogram_limits)];
+	int64_t			 latest_histogram[nitems(histogram_limits)];
 };
+
+struct running_query {
+	TAILQ_ENTRY(running_query)	 entry;
+	struct query_imsg		*query_imsg;
+	struct event			 timer_ev;
+	struct timespec			 tp;
+	struct resolver_preference	 res_pref;
+	int				 next_resolver;
+	int				 running;
+};
+
+TAILQ_HEAD(, running_query)	 running_queries;
 
 typedef void (*resolve_cb_t)(struct uw_resolver *, void *, int, void *, int,
     int, char *);
@@ -103,6 +124,12 @@ __dead void		 resolver_shutdown(void);
 void			 resolver_sig_handler(int sig, short, void *);
 void			 resolver_dispatch_frontend(int, short, void *);
 void			 resolver_dispatch_main(int, short, void *);
+int			 sort_resolver_types(struct resolver_preference *);
+void			 setup_query(struct query_imsg *);
+struct running_query	*find_running_query(uint64_t);
+void			 try_resolver_timo(int, short, void *);
+int			 try_next_resolver(struct running_query *);
+
 int			 resolve(struct uw_resolver *, const char*, int, int,
 			     void*, resolve_cb_t);
 void			 resolve_done(struct uw_resolver *, void *, int, void *,
@@ -133,12 +160,10 @@ void			 replace_forwarders(struct uw_forwarder_head *,
 			     struct uw_forwarder_head *);
 void			 resolver_ref(struct uw_resolver *);
 void			 resolver_unref(struct uw_resolver *);
-struct uw_resolver	*best_resolver(void);
-int			 resolver_cmp(struct uw_resolver *,
-			     struct uw_resolver *);
+int			 resolver_cmp(const void *, const void *);
 void			 restart_resolvers(void);
 void			 show_status(enum uw_resolver_type, pid_t);
-void			 send_resolver_info(struct uw_resolver *, int, pid_t);
+void			 send_resolver_info(struct uw_resolver *, pid_t);
 void			 send_detailed_resolver_info(struct uw_resolver *,
 			     pid_t);
 void			 send_resolver_histogram_info(struct uw_resolver *,
@@ -151,12 +176,14 @@ void			 replace_autoconf_forwarders(struct
 			     imsg_rdns_proposal *);
 struct uw_forwarder	*find_forwarder(struct uw_forwarder_head *,
     			     const char *);
+int64_t			 histogram_median(int64_t *);
 
 struct uw_conf			*resolver_conf;
 struct imsgev			*iev_frontend;
 struct imsgev			*iev_main;
 struct uw_forwarder_head	 autoconf_forwarder_list;
 struct uw_resolver		*resolvers[UW_RES_NONE];
+struct timespec			 last_network_change;
 
 struct event			 trust_anchor_timer;
 
@@ -333,11 +360,14 @@ resolver(int debug, int verbose)
 
 	evtimer_set(&trust_anchor_timer, trust_anchor_timo, NULL);
 
+	clock_gettime(CLOCK_MONOTONIC, &last_network_change);
+
 	new_recursor();
 
 	TAILQ_INIT(&autoconf_forwarder_list);
 	TAILQ_INIT(&trust_anchors);
 	TAILQ_INIT(&new_trust_anchors);
+	TAILQ_INIT(&running_queries);
 
 	event_dispatch();
 
@@ -385,11 +415,10 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 	struct imsgbuf			*ibuf;
 	struct imsg			 imsg;
 	struct query_imsg		*query_imsg;
-	struct uw_resolver		*res;
 	enum uw_resolver_type		 type;
 	ssize_t				 n;
 	int				 shut = 0, verbose;
-	int				 update_resolvers;
+	int				 update_resolvers, i;
 	char				*ta;
 
 	ibuf = &iev->ibuf;
@@ -440,23 +469,7 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			log_debug("%s: IMSG_QUERY[%llu], qname: %s, t: %d, "
 			    "c: %d", __func__, query_imsg->id,
 			    query_imsg->qname, query_imsg->t, query_imsg->c);
-
-			res = best_resolver();
-
-			if (res == NULL) {
-				log_warnx("can't find working resolver");
-				free(query_imsg);
-				break;
-			}
-
-			log_debug("%s: choosing %s", __func__,
-			    uw_resolver_type_str[res->type]);
-
-			clock_gettime(CLOCK_MONOTONIC, &query_imsg->tp);
-
-			if (resolve(res, query_imsg->qname, query_imsg->t,
-			    query_imsg->c, query_imsg, resolve_done) != 0)
-				free(query_imsg);
+			setup_query(query_imsg);
 			break;
 		case IMSG_CTL_STATUS:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(type))
@@ -486,7 +499,15 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			}
 			break;
 		case IMSG_NETWORK_CHANGED:
+			clock_gettime(CLOCK_MONOTONIC, &last_network_change);
 			schedule_recheck_all_resolvers();
+			for (i = 0; i < UW_RES_NONE; i++) {
+				if (resolvers[i] == NULL)
+					continue;
+				memset(resolvers[i]->latest_histogram, 0,
+				    sizeof(resolvers[i]->latest_histogram));
+			}
+
 			break;
 		case IMSG_REPLACE_DNS:
 			if (IMSG_DATA_SIZE(imsg) !=
@@ -620,6 +641,142 @@ resolver_dispatch_main(int fd, short event, void *bula)
 }
 
 int
+sort_resolver_types(struct resolver_preference *dst)
+{
+	memcpy(dst, &resolver_conf->res_pref, sizeof(*dst));
+
+	/*
+	 * Sort by resolver quality, validating > resolving etc.
+	 * mergesort is stable and keeps the configured preference order
+	 */
+	return mergesort(dst->types, dst->len, sizeof(dst->types[0]),
+	    resolver_cmp);
+}
+
+void
+setup_query(struct query_imsg *query_imsg)
+{
+	struct running_query	*rq;
+	int			 i;
+
+	if (find_running_query(query_imsg->id) != NULL) {
+		free(query_imsg);
+		return;
+	}
+
+	if ((rq = calloc(1, sizeof(*rq))) == NULL) {
+		log_warnx(NULL);
+		free(query_imsg);
+		return;
+	}
+
+	clock_gettime(CLOCK_MONOTONIC, &rq->tp);
+	rq->query_imsg = query_imsg;
+	rq->next_resolver = 0;
+
+	if (sort_resolver_types(&rq->res_pref) == -1) {
+		log_warn("mergesort");
+		free(rq->query_imsg);
+		free(rq);
+		return;
+	}
+
+	for (i = 0; i < rq->res_pref.len; i++) {
+		if (resolvers[rq->res_pref.types[i]] == NULL)
+		    continue;
+		log_debug("%s: %s[%s] %lldms", __func__,
+		    uw_resolver_type_str[rq->res_pref.types[i]],
+		    uw_resolver_state_str[resolvers[rq->res_pref.types[i]]
+		    ->state], histogram_median(resolvers[rq->res_pref.types[i]]
+		    ->latest_histogram));
+	}
+
+	evtimer_set(&rq->timer_ev, try_resolver_timo, rq);
+
+	TAILQ_INSERT_TAIL(&running_queries, rq, entry);
+	try_next_resolver(rq);
+}
+
+struct running_query *
+find_running_query(uint64_t id)
+{
+	struct running_query	*rq;
+
+	TAILQ_FOREACH(rq, &running_queries, entry) {
+		if (rq->query_imsg->id == id)
+			return rq;
+	}
+	return NULL;
+}
+
+void
+try_resolver_timo(int fd, short events, void *arg)
+{
+	struct running_query	*rq = arg;
+
+	try_next_resolver(rq);
+}
+
+int
+try_next_resolver(struct running_query *rq)
+{
+	struct uw_resolver	*res = NULL;
+	struct query_imsg	*query_imsg = NULL;
+	struct timespec		 tp, elapsed;
+	struct timeval		 tv = {0, 0};
+	int64_t			 ms;
+
+	while(rq->next_resolver < rq->res_pref.len &&
+	    (res=resolvers[rq->res_pref.types[rq->next_resolver]]) == NULL)
+		rq->next_resolver++;
+
+	if (res == NULL) {
+		evtimer_del(&rq->timer_ev); /* we are not going to find one */
+		log_debug("%s: could not find working resolver", __func__);
+		goto err;
+	}
+
+	rq->next_resolver++;
+	clock_gettime(CLOCK_MONOTONIC, &tp);
+	timespecsub(&tp, &rq->tp, &elapsed);
+	ms = elapsed.tv_sec * 1000 + elapsed.tv_nsec / 1000000;
+
+	log_debug("%s[+%lldms]: %s[%s]", __func__, ms,
+	    uw_resolver_type_str[res->type], uw_resolver_state_str[res->state]);
+	if ((query_imsg = malloc(sizeof(*query_imsg))) == NULL) {
+		log_warnx("%s", __func__);
+		goto err;
+	}
+	memcpy(query_imsg, rq->query_imsg, sizeof(*query_imsg));
+	clock_gettime(CLOCK_MONOTONIC, &query_imsg->tp);
+
+	if (res->type == resolver_conf->res_pref.types[0])
+		tv.tv_usec = 1000 * (PREF_RESOLVER_MEDIAN_SKEW +
+		    histogram_median(res->latest_histogram));
+	else
+		tv.tv_usec = 1000 * histogram_median(res->latest_histogram);
+
+	evtimer_add(&rq->timer_ev, &tv);
+
+	if (resolve(res, query_imsg->qname, query_imsg->t,
+	    query_imsg->c, query_imsg, resolve_done) != 0)
+		goto err;
+	rq->running++;
+
+	return 0;
+
+ err:
+	free(query_imsg);
+	if (rq->running == 0) {
+		TAILQ_REMOVE(&running_queries, rq, entry);
+		evtimer_del(&rq->timer_ev);
+		free(rq->query_imsg);
+		free(rq);
+	}
+	return 1;
+}
+
+int
 resolve(struct uw_resolver *res, const char* name, int rrtype, int rrclass,
     void *mydata, resolve_cb_t cb)
 {
@@ -675,19 +832,24 @@ void
 resolve_done(struct uw_resolver *res, void *arg, int rcode,
     void *answer_packet, int answer_len, int sec, char *why_bogus)
 {
+	struct ub_result	*result = NULL;
+	sldns_buffer		*buf = NULL;
+	struct regional		*region = NULL;
 	struct query_imsg	*query_imsg;
+	struct running_query	*rq;
 	struct timespec		 tp, elapsed;
 	int64_t			 ms;
 	size_t			 i;
+	int			 asr_pref_pos = -1;
 	char			*str;
+	char			 rcode_buf[16];
 
 	clock_gettime(CLOCK_MONOTONIC, &tp);
 
 	query_imsg = (struct query_imsg *)arg;
+	rq = find_running_query(query_imsg->id);
 
 	timespecsub(&tp, &query_imsg->tp, &elapsed);
-
-	log_debug("elapsed: %lld.%ld", elapsed.tv_sec, elapsed.tv_nsec);
 
 	ms = elapsed.tv_sec * 1000 + elapsed.tv_nsec / 1000000;
 
@@ -697,14 +859,10 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	}
 	if (i == nitems(histogram_limits))
 		log_debug("histogram bucket error");
-	else
+	else {
 		res->histogram[i]++;
-
-	log_debug("%s: ref_cnt: %d, elapsed: %lldms, "
-	    "histogram: %lld - %lld", __func__, res->ref_cnt, ms,
-	    histogram_limits[i], res->histogram[i]);
-
-	log_debug("%s: rcode: %d", __func__, rcode);
+		res->latest_histogram[i]++;
+	}
 
 	if (answer_len < LDNS_HEADER_SIZE) {
 		log_warnx("bad packet: too short");
@@ -717,10 +875,71 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 		goto servfail;
 	}
 
+	if ((result = calloc(1, sizeof(*result))) == NULL)
+		goto servfail;
+	if ((buf = sldns_buffer_new(answer_len)) == NULL)
+		goto servfail;
+	if ((region = regional_create()) == NULL)
+		goto servfail;
+
+	result->rcode = LDNS_RCODE_SERVFAIL;
+
+	sldns_buffer_clear(buf);
+	sldns_buffer_write(buf, answer_packet, answer_len);
+	sldns_buffer_flip(buf);
+	libworker_enter_result(result, buf, region, sec);
+	result->answer_packet = NULL;
+	result->answer_len = 0;
+
+	sldns_wire2str_rcode_buf(result->rcode, rcode_buf, sizeof(rcode_buf));
+	log_debug("%s[%s]: rcode: %s[%d], elapsed: %lldms, "
+	    "histogram: %lld - %lld", __func__, uw_resolver_type_str[res->type],
+	    rcode_buf, result->rcode, ms, histogram_limits[i],
+	    res->histogram[i]);
+
+	if (result->rcode == LDNS_RCODE_NXDOMAIN && res->type != UW_RES_ASR) {
+		timespecsub(&tp, &last_network_change, &elapsed);
+		if (elapsed.tv_sec < DOUBT_NXDOMAIN_SEC) {
+			/*
+			 * Doubt NXDOMAIN if we just switched networks,
+			 * we might be behind a captive portal.
+			 */
+			log_debug("%s: doubt NXDOMAIN from %s", __func__,
+			    uw_resolver_type_str[res->type]);
+			if (rq) {
+				/* search for ASR */
+				for (i = 0; i < (size_t)rq->res_pref.len; i++)
+					if (rq->res_pref.types[i] ==
+					    UW_RES_ASR) {
+						asr_pref_pos = i;
+						break;
+					}
+
+				if (asr_pref_pos != -1) {
+					/* go to ASR if not yet scheduled */
+					if (asr_pref_pos >= rq->next_resolver &&
+					    resolvers[UW_RES_ASR] != NULL) {
+						rq->next_resolver =
+						    asr_pref_pos;
+						goto retry;
+					} else
+						goto out;
+				}
+				log_debug("%s: answering NXDOMAIN, couldn't "
+				    "find working ASR", __func__);
+			}
+		} else
+			log_debug("%s: answering NXDOMAIN, network change "
+			    "%llds ago", __func__, elapsed.tv_sec);
+	}
+
 	if ((str = sldns_wire2str_pkt(answer_packet, answer_len)) != NULL) {
 		log_debug("%s", str);
 		free(str);
 	}
+
+	if (result->rcode == LDNS_RCODE_SERVFAIL)
+		goto servfail;
 
 	query_imsg->err = 0;
 
@@ -728,21 +947,50 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 		query_imsg->bogus = sec == BOGUS;
 	else
 		query_imsg->bogus = 0;
-	resolver_imsg_compose_frontend(IMSG_ANSWER_HEADER, 0, query_imsg,
-	    sizeof(*query_imsg));
 
-	/* XXX imsg overflow */
-	resolver_imsg_compose_frontend(IMSG_ANSWER, 0,
-	    answer_packet, answer_len);
+	if (rq) {
+		rq->running--;
+		resolver_imsg_compose_frontend(IMSG_ANSWER_HEADER, 0,
+		    query_imsg, sizeof(*query_imsg));
+
+		/* XXX imsg overflow */
+		resolver_imsg_compose_frontend(IMSG_ANSWER, 0, answer_packet,
+		    answer_len);
+
+		TAILQ_REMOVE(&running_queries, rq, entry);
+		evtimer_del(&rq->timer_ev);
+		free(rq->query_imsg);
+		free(rq);
+	}
 
 	free(query_imsg);
+	sldns_buffer_free(buf);
+	regional_destroy(region);
+	ub_resolve_free(result);
+
 	return;
 
-servfail:
-	query_imsg->err = -4; /* UB_SERVFAIL */
-	resolver_imsg_compose_frontend(IMSG_ANSWER_HEADER, 0, query_imsg,
-	    sizeof(*query_imsg));
+ servfail:
+	if (rq) {
+		rq->running--;
+		if (try_next_resolver(rq) != 0 && rq->running == 0) {
+			/* we are the last one, send SERVFAIL */
+			query_imsg->err = -4; /* UB_SERVFAIL */
+			resolver_imsg_compose_frontend(IMSG_ANSWER_HEADER, 0,
+			    query_imsg, sizeof(*query_imsg));
+		}
+	}
+	goto out;
+ retry:
+	if (rq) {
+		rq->running--;
+		try_next_resolver(rq);
+	}
+ out:
 	free(query_imsg);
+	sldns_buffer_free(buf);
+	regional_destroy(region);
+	ub_resolve_free(result);
 }
 
 void
@@ -1335,64 +1583,40 @@ replace_forwarders(struct uw_forwarder_head *new_list, struct
 	}
 }
 
-struct uw_resolver*
-best_resolver(void)
-{
-	struct uw_resolver	*res = NULL;
-	int			 i;
-
-	log_debug("%s: %s: %s, %s: %s%s, %s: %s%s, %s: %s, %s: %s",
-	    __func__,
-	    uw_resolver_type_str[UW_RES_RECURSOR], resolvers[UW_RES_RECURSOR]
-	    != NULL ? uw_resolver_state_str[resolvers[UW_RES_RECURSOR]->state]
-	    : "NA",
-	    uw_resolver_type_str[UW_RES_DHCP], resolvers[UW_RES_DHCP] != NULL ?
-	    uw_resolver_state_str[resolvers[UW_RES_DHCP]->state] : "NA",
-	    resolvers[UW_RES_DHCP] != NULL &&
-	    resolvers[UW_RES_DHCP]->oppdot ? " (OppDot)" : "",
-	    uw_resolver_type_str[UW_RES_FORWARDER],
-	    resolvers[UW_RES_FORWARDER] != NULL ?
-	    uw_resolver_state_str[resolvers[UW_RES_FORWARDER]->state] : "NA",
-	    resolvers[UW_RES_FORWARDER] != NULL &&
-	    resolvers[UW_RES_FORWARDER]->oppdot ? " (OppDot)" : "",
-	    uw_resolver_type_str[UW_RES_DOT],
-	    resolvers[UW_RES_DOT] != NULL ?
-	    uw_resolver_state_str[resolvers[UW_RES_DOT]->state] : "NA",
-	    uw_resolver_type_str[UW_RES_ASR],
-	    resolvers[UW_RES_ASR] != NULL ?
-	    uw_resolver_state_str[resolvers[UW_RES_ASR]->state] : "NA");
-
-	res = resolvers[resolver_conf->res_pref.types[0]];
-
-	for (i = 1; i < resolver_conf->res_pref.len; i++)
-		if (resolver_cmp(res,
-		    resolvers[resolver_conf->res_pref.types[i]]) < 0)
-			res = resolvers[resolver_conf->res_pref.types[i]];
-
-	if (res != NULL)
-		log_debug("%s: %s state: %s%s", __func__,
-		    uw_resolver_type_str[res->type],
-		    uw_resolver_state_str[res->state],
-		    res->oppdot ? " (OppDoT)" : "");
-	else
-		log_debug("%s: non found", __func__);
-
-	return (res);
-}
-
 int
-resolver_cmp(struct uw_resolver *a, struct uw_resolver *b)
+resolver_cmp(const void *_a, const void *_b)
 {
-	if (a == NULL && b == NULL)
+	const enum uw_resolver_type	 a = *(const enum uw_resolver_type *)_a;
+	const enum uw_resolver_type	 b = *(const enum uw_resolver_type *)_b;
+	int64_t				 a_median, b_median;
+
+	if (resolvers[a] == NULL && resolvers[b] == NULL)
 		return 0;
 
-	if (b == NULL)
-		return 1;
-
-	if (a == NULL)
+	if (resolvers[b] == NULL)
 		return -1;
 
-	return (a->state < b->state ? -1 : a->state > b->state ? 1 : 0);
+	if (resolvers[a] == NULL)
+		return 1;
+
+	if (resolvers[a]->state < resolvers[b]->state)
+		return 1;
+	else if (resolvers[a]->state > resolvers[b]->state)
+		return -1;
+	else {
+		a_median = histogram_median(resolvers[a]->latest_histogram);
+		b_median = histogram_median(resolvers[b]->latest_histogram);
+		if (resolvers[a]->type == resolver_conf->res_pref.types[0])
+			a_median -= PREF_RESOLVER_MEDIAN_SKEW;
+		else if (resolvers[b]->type == resolver_conf->res_pref.types[0])
+			b_median -= PREF_RESOLVER_MEDIAN_SKEW;
+		if (a_median < b_median)
+			return -1;
+		else if (a_median > b_median)
+			return 1;
+		else
+			return 0;
+	}
 }
 
 void
@@ -1414,20 +1638,18 @@ restart_resolvers(void)
 void
 show_status(enum uw_resolver_type type, pid_t pid)
 {
-	struct uw_resolver		*best;
 	struct uw_forwarder		*uw_forwarder;
 	struct ctl_forwarder_info	 cfi;
+	struct resolver_preference	 res_pref;
 	int				 i;
-
-	best = best_resolver();
 
 	switch(type) {
 	case UW_RES_NONE:
+		if (sort_resolver_types(&res_pref) == -1)
+			log_warn("mergesort");
+
 		for (i = 0; i < resolver_conf->res_pref.len; i++)
-			send_resolver_info(
-			    resolvers[resolver_conf->res_pref.types[i]],
-			    resolvers[resolver_conf->res_pref.types[i]] ==
-			    best, pid);
+			send_resolver_info(resolvers[res_pref.types[i]], pid);
 
 		TAILQ_FOREACH(uw_forwarder, &autoconf_forwarder_list, entry) {
 			memset(&cfi, 0, sizeof(cfi));
@@ -1446,8 +1668,7 @@ show_status(enum uw_resolver_type type, pid_t pid)
 	case UW_RES_FORWARDER:
 	case UW_RES_DOT:
 	case UW_RES_ASR:
-		send_resolver_info(resolvers[type], resolvers[type] == best,
-		    pid);
+		send_resolver_info(resolvers[type], pid);
 		send_detailed_resolver_info(resolvers[type], pid);
 		break;
 	default:
@@ -1458,7 +1679,7 @@ show_status(enum uw_resolver_type type, pid_t pid)
 }
 
 void
-send_resolver_info(struct uw_resolver *res, int selected, pid_t pid)
+send_resolver_info(struct uw_resolver *res, pid_t pid)
 {
 	struct ctl_resolver_info	 cri;
 
@@ -1467,7 +1688,6 @@ send_resolver_info(struct uw_resolver *res, int selected, pid_t pid)
 
 	cri.state = res->state;
 	cri.type = res->type;
-	cri.selected = selected;
 	cri.oppdot = res->oppdot;
 	resolver_imsg_compose_frontend(IMSG_CTL_RESOLVER_INFO, pid, &cri,
 	    sizeof(cri));
@@ -1503,12 +1723,15 @@ send_resolver_histogram_info(struct uw_resolver *res, pid_t pid)
 void
 trust_anchor_resolve(void)
 {
-	struct uw_resolver	*res;
-	struct timeval		 tv = {TRUST_ANCHOR_RETRY_INTERVAL, 0};
+	struct resolver_preference	 res_pref;
+	struct uw_resolver		*res;
+	struct timeval			 tv = {TRUST_ANCHOR_RETRY_INTERVAL, 0};
 
 	log_debug("%s", __func__);
+	if (sort_resolver_types(&res_pref) == -1)
+		log_warn("mergesort");
 
-	res = best_resolver();
+	res = resolvers[res_pref.types[0]];
 
 	if (res == NULL || res->state < VALIDATING)
 		goto err;
@@ -1726,4 +1949,23 @@ find_forwarder(struct uw_forwarder_head *list, const char *name) {
 			return uw_forwarder;
 	}
 	return NULL;
+}
+
+int64_t
+histogram_median(int64_t *histogram)
+{
+	size_t	 i;
+	int64_t	 sample_count = 0, running_count = 0;
+
+	/* skip first bucket, it contains cache hits */
+	for (i = 1; i < nitems(histogram_limits); i++)
+		sample_count += histogram[i];
+
+	for (i = 1; i < nitems(histogram_limits); i++) {
+		running_count += histogram[i];
+		if (running_count >= sample_count / 2)
+			break;
+	}
+
+	return histogram_limits[i];
 }
