@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.14 2019/11/26 23:38:52 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.15 2019/11/27 00:11:49 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -98,11 +98,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 			continue;
 
 		case R_TYPE(ABS64):
-			value = rels->r_addend;
-			break;
-
 		case R_TYPE(GLOB_DAT):
-			value = 0;
+			value = rels->r_addend;
 			break;
 
 		case R_TYPE(COPY):
