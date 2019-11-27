@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.39 2019/11/25 17:36:48 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.40 2019/11/27 17:09:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -121,7 +121,6 @@ void			 free_bl(void);
 struct uw_conf		*frontend_conf;
 struct imsgev		*iev_main;
 struct imsgev		*iev_resolver;
-struct imsgev		*iev_captiveportal;
 struct event		 ev_route;
 int			 udp4sock = -1, udp6sock = -1, routesock = -1;
 int			 ta_fd = -1;
@@ -247,9 +246,6 @@ frontend_shutdown(void)
 	msgbuf_write(&iev_resolver->ibuf.w);
 	msgbuf_clear(&iev_resolver->ibuf.w);
 	close(iev_resolver->ibuf.fd);
-	msgbuf_write(&iev_captiveportal->ibuf.w);
-	msgbuf_clear(&iev_captiveportal->ibuf.w);
-	close(iev_captiveportal->ibuf.fd);
 	msgbuf_write(&iev_main->ibuf.w);
 	msgbuf_clear(&iev_main->ibuf.w);
 	close(iev_main->ibuf.fd);
@@ -257,7 +253,6 @@ frontend_shutdown(void)
 	config_clear(frontend_conf);
 
 	free(iev_resolver);
-	free(iev_captiveportal);
 	free(iev_main);
 
 	log_info("frontend exiting");
@@ -275,14 +270,6 @@ frontend_imsg_compose_resolver(int type, pid_t pid, void *data,
     uint16_t datalen)
 {
 	return (imsg_compose_event(iev_resolver, type, 0, pid, -1, data,
-	    datalen));
-}
-
-int
-frontend_imsg_compose_captiveportal(int type, pid_t pid, void *data,
-    uint16_t datalen)
-{
-	return (imsg_compose_event(iev_captiveportal, type, 0, pid, -1, data,
 	    datalen));
 }
 
@@ -345,42 +332,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			    iev_resolver);
 			event_add(&iev_resolver->ev, NULL);
 			break;
-		case IMSG_SOCKET_IPC_CAPTIVEPORTAL:
-			/*
-			 * Setup pipe and event handler to the captiveportal
-			 * process.
-			 */
-			if (iev_captiveportal) {
-				fatalx("%s: received unexpected imsg fd "
-				    "to frontend", __func__);
-				break;
-			}
-			if ((fd = imsg.fd) == -1) {
-				fatalx("%s: expected to receive imsg fd to "
-				   "frontend but didn't receive any",
-				   __func__);
-				break;
-			}
-
-			iev_captiveportal = malloc(sizeof(struct imsgev));
-			if (iev_captiveportal == NULL)
-				fatal(NULL);
-
-			imsg_init(&iev_captiveportal->ibuf, fd);
-			iev_captiveportal->handler =
-			    frontend_dispatch_captiveportal;
-			iev_captiveportal->events = EV_READ;
-
-			event_set(&iev_captiveportal->ev,
-			    iev_captiveportal->ibuf.fd,
-			    iev_captiveportal->events,
-			    iev_captiveportal->handler, iev_captiveportal);
-			event_add(&iev_captiveportal->ev, NULL);
-			break;
 		case IMSG_RECONF_CONF:
-		case IMSG_RECONF_CAPTIVE_PORTAL_HOST:
-		case IMSG_RECONF_CAPTIVE_PORTAL_PATH:
-		case IMSG_RECONF_CAPTIVE_PORTAL_EXPECTED_RESPONSE:
 		case IMSG_RECONF_BLOCKLIST_FILE:
 		case IMSG_RECONF_FORWARDER:
 		case IMSG_RECONF_DOT_FORWARDER:
@@ -533,7 +485,6 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 			send_answer(pq);
 			break;
 		case IMSG_CTL_RESOLVER_INFO:
-		case IMSG_CTL_CAPTIVEPORTAL_INFO:
 		case IMSG_CTL_RESOLVER_WHY_BOGUS:
 		case IMSG_CTL_RESOLVER_HISTOGRAM:
 		case IMSG_CTL_AUTOCONF_RESOLVER_INFO:
@@ -563,50 +514,6 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 			if (ta_fd != -1)
 				write_trust_anchors(&trust_anchors, ta_fd);
 			break;
-		default:
-			log_debug("%s: error handling imsg %d", __func__,
-			    imsg.hdr.type);
-			break;
-		}
-		imsg_free(&imsg);
-	}
-	if (!shut)
-		imsg_event_add(iev);
-	else {
-		/* This pipe is dead. Remove its event handler. */
-		event_del(&iev->ev);
-		event_loopexit(NULL);
-	}
-}
-
-void
-frontend_dispatch_captiveportal(int fd, short event, void *bula)
-{
-	struct imsgev	*iev = bula;
-	struct imsgbuf	*ibuf = &iev->ibuf;
-	struct imsg	 imsg;
-	int		 n, shut = 0;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_read error");
-		if (n == 0)	/* Connection closed. */
-			shut = 1;
-	}
-	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
-		if (n == 0)	/* Connection closed. */
-			shut = 1;
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("%s: imsg_get error", __func__);
-		if (n == 0)	/* No more messages. */
-			break;
-
-		switch (imsg.hdr.type) {
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
 			    imsg.hdr.type);

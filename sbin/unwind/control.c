@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.11 2019/11/11 05:51:05 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.12 2019/11/27 17:09:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -259,10 +259,6 @@ control_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_CTL_RELOAD:
 			frontend_imsg_compose_main(imsg.hdr.type, 0, NULL, 0);
 			break;
-		case IMSG_CTL_RECHECK_CAPTIVEPORTAL:
-			frontend_imsg_compose_resolver(imsg.hdr.type,
-			    imsg.hdr.pid, NULL, 0);
-			break;
 		case IMSG_CTL_LOG_VERBOSE:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(verbose))
 				break;
@@ -272,8 +268,6 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			    imsg.data, IMSG_DATA_SIZE(imsg));
 			frontend_imsg_compose_resolver(imsg.hdr.type,
 			    imsg.hdr.pid, imsg.data, IMSG_DATA_SIZE(imsg));
-			frontend_imsg_compose_captiveportal(imsg.hdr.type,
-			    imsg.hdr.pid, imsg.data,  IMSG_DATA_SIZE(imsg));
 
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);

@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile,v 1.4 2019/03/01 08:02:25 florian Exp $
+#	$OpenBSD: Makefile,v 1.5 2019/11/27 17:09:12 florian Exp $
 
 PROG=	unwind
 SRCS=	control.c resolver.c frontend.c log.c unwind.c parse.y printconf.c
-SRCS+=	captiveportal.c
 MAN=	unwind.8 unwind.conf.5
 
 .include "${.CURDIR}/libunbound/Makefile.inc"
@@ -15,7 +14,7 @@ CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith
 CFLAGS+= -Wsign-compare
 YFLAGS=
-LDADD+=	-levent -lutil -ltls -lssl -lcrypto
-DPADD+= ${LIBEVENT} ${LIBUTIL} ${LIBTLS} ${LIBSSL} ${LIBCRYPTO}
+LDADD+=	-levent -lutil -lssl -lcrypto
+DPADD+= ${LIBEVENT} ${LIBUTIL} ${LIBSSL} ${LIBCRYPTO}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwindctl.8,v 1.6 2019/11/07 08:38:48 otto Exp $
+.\"	$OpenBSD: unwindctl.8,v 1.7 2019/11/27 17:09:12 florian Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 7 2019 $
+.Dd $Mdocdate: November 27 2019 $
 .Dt UNWINDCTL 8
 .Os
 .Sh NAME
@@ -53,8 +53,6 @@ Enable verbose logging.
 Enable very noisy debug logging.
 .It Cm reload
 Reload the configuration file.
-.It Cm recheck portal
-Run the captive portal detection.
 .It Cm status Op Cm recursor | dhcp | DoT | forwarder
 Show a status summary.
 If one of

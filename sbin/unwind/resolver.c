@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.77 2019/11/25 18:10:42 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.78 2019/11/27 17:09:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -54,20 +54,17 @@
 
 #include <openssl/crypto.h>
 
-#include "captiveportal.h"
 #include "log.h"
 #include "frontend.h"
 #include "unwind.h"
 #include "resolver.h"
 
+#define	TLS_DEFAULT_CA_CERT_FILE	"/etc/ssl/cert.pem"
 #define	UB_LOG_VERBOSE			4
 #define	UB_LOG_BRIEF			0
 
 #define	RESOLVER_CHECK_SEC		1
 #define	RESOLVER_CHECK_MAXSEC		1024 /* ~17 minutes */
-
-#define	PORTAL_CHECK_SEC		15
-#define	PORTAL_CHECK_MAXSEC		600
 
 #define	TRUST_ANCHOR_RETRY_INTERVAL	8640
 #define	TRUST_ANCHOR_QUERY_INTERVAL	43200
@@ -105,7 +102,6 @@ struct resolver_cb_data {
 __dead void		 resolver_shutdown(void);
 void			 resolver_sig_handler(int sig, short, void *);
 void			 resolver_dispatch_frontend(int, short, void *);
-void			 resolver_dispatch_captiveportal(int, short, void *);
 void			 resolver_dispatch_main(int, short, void *);
 int			 resolve(struct uw_resolver *, const char*, int, int,
 			     void*, resolve_cb_t);
@@ -147,12 +143,6 @@ void			 send_detailed_resolver_info(struct uw_resolver *,
 			     pid_t);
 void			 send_resolver_histogram_info(struct uw_resolver *,
 			     pid_t);
-void			 check_captive_portal(int);
-void			 check_captive_portal_timo(int, short, void *);
-int			 check_captive_portal_changed(struct uw_conf *,
-			     struct uw_conf *);
-void			 captive_portal_resolve_done(struct uw_resolver *,
-			     void *, int, void *, int, int, char *);
 void			 trust_anchor_resolve(void);
 void			 trust_anchor_timo(int, short, void *);
 void			 trust_anchor_resolve_done(struct uw_resolver *, void *,
@@ -164,21 +154,15 @@ struct uw_forwarder	*find_forwarder(struct uw_forwarder_head *,
 
 struct uw_conf			*resolver_conf;
 struct imsgev			*iev_frontend;
-struct imsgev			*iev_captiveportal;
 struct imsgev			*iev_main;
 struct uw_forwarder_head	 autoconf_forwarder_list;
 struct uw_resolver		*resolvers[UW_RES_NONE];
-struct timeval			 captive_portal_check_tv =
-				     {PORTAL_CHECK_SEC, 0};
-struct event			 captive_portal_check_ev;
 
 struct event			 trust_anchor_timer;
 
 static struct trust_anchor_head	 trust_anchors, new_trust_anchors;
 
 struct event_base		*ev_base;
-
-enum captive_portal_state	 captive_portal_state = PORTAL_UNCHECKED;
 
 static const char * const	 as112_zones[] = {
 	/* RFC1918 */
@@ -318,7 +302,7 @@ resolver(int debug, int verbose)
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
-	if (unveil(tls_default_ca_cert_file(), "r") == -1)
+	if (unveil(TLS_DEFAULT_CA_CERT_FILE, "r") == -1)
 		fatal("unveil");
 
 	if (pledge("stdio inet dns rpath recvfd", NULL) == -1)
@@ -347,7 +331,6 @@ resolver(int debug, int verbose)
 	    iev_main->handler, iev_main);
 	event_add(&iev_main->ev, NULL);
 
-	evtimer_set(&captive_portal_check_ev, check_captive_portal_timo, NULL);
 	evtimer_set(&trust_anchor_timer, trust_anchor_timo, NULL);
 
 	new_recursor();
@@ -369,15 +352,12 @@ resolver_shutdown(void)
 	/* Close pipes. */
 	msgbuf_clear(&iev_frontend->ibuf.w);
 	close(iev_frontend->ibuf.fd);
-	msgbuf_clear(&iev_captiveportal->ibuf.w);
-	close(iev_captiveportal->ibuf.fd);
 	msgbuf_clear(&iev_main->ibuf.w);
 	close(iev_main->ibuf.fd);
 
 	config_clear(resolver_conf);
 
 	free(iev_frontend);
-	free(iev_captiveportal);
 	free(iev_main);
 
 	log_info("resolver exiting");
@@ -395,14 +375,6 @@ resolver_imsg_compose_frontend(int type, pid_t pid, void *data,
     uint16_t datalen)
 {
 	return (imsg_compose_event(iev_frontend, type, 0, pid, -1,
-	    data, datalen));
-}
-
-int
-resolver_imsg_compose_captiveportal(int type, pid_t pid, void *data,
-    uint16_t datalen)
-{
-	return (imsg_compose_event(iev_captiveportal, type, 0, pid, -1,
 	    data, datalen));
 }
 
@@ -493,9 +465,6 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			memcpy(&type, imsg.data, sizeof(type));
 			show_status(type, imsg.hdr.pid);
 			break;
-		case IMSG_CTL_RECHECK_CAPTIVEPORTAL:
-			check_captive_portal(1);
-			break;
 		case IMSG_NEW_TA:
 			/* make sure this is a string */
 			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
@@ -544,70 +513,6 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 }
 
 void
-resolver_dispatch_captiveportal(int fd, short event, void *bula)
-{
-	struct imsgev	*iev = bula;
-	struct imsgbuf	*ibuf;
-	struct imsg	 imsg;
-	ssize_t		 n;
-	int		 shut = 0;
-
-
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			fatal("imsg_read error");
-		if (n == 0)	/* Connection closed. */
-			shut = 1;
-	}
-	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			fatal("msgbuf_write");
-		if (n == 0)	/* Connection closed. */
-			shut = 1;
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("%s: imsg_get error", __func__);
-		if (n == 0)	/* No more messages. */
-			break;
-
-		switch (imsg.hdr.type) {
-		case IMSG_CAPTIVEPORTAL_STATE:
-			if (IMSG_DATA_SIZE(imsg) !=
-			    sizeof(captive_portal_state))
-				fatalx("%s: IMSG_CAPTIVEPORTAL_STATE wrong "
-				    "length: %lu", __func__,
-				    IMSG_DATA_SIZE(imsg));
-			memcpy(&captive_portal_state, imsg.data,
-			    sizeof(captive_portal_state));
-			log_debug("%s: IMSG_CAPTIVEPORTAL_STATE: %s", __func__,
-			    captive_portal_state_str[captive_portal_state]);
-
-			if (captive_portal_state == NOT_BEHIND) {
-				evtimer_del(&captive_portal_check_ev);
-				schedule_recheck_all_resolvers();
-			}
-			break;
-		default:
-			log_debug("%s: unexpected imsg %d", __func__,
-			    imsg.hdr.type);
-			break;
-		}
-		imsg_free(&imsg);
-	}
-	if (!shut)
-		imsg_event_add(iev);
-	else {
-		/* This pipe is dead. Remove its event handler. */
-		event_del(&iev->ev);
-		event_loopexit(NULL);
-	}
-}
-
-void
 resolver_dispatch_main(int fd, short event, void *bula)
 {
 	static struct uw_conf	*nconf;
@@ -617,7 +522,6 @@ resolver_dispatch_main(int fd, short event, void *bula)
 	ssize_t			 n;
 	int			 shut = 0, forwarders_changed;
 	int			 dot_forwarders_changed;
-	int			 captive_portal_changed;
 
 	ibuf = &iev->ibuf;
 
@@ -667,42 +571,12 @@ resolver_dispatch_main(int fd, short event, void *bula)
 			    iev_frontend);
 			event_add(&iev_frontend->ev, NULL);
 			break;
-		case IMSG_SOCKET_IPC_CAPTIVEPORTAL:
-			/*
-			 * Setup pipe and event handler to the captiveportal
-			 * process.
-			 */
-			if (iev_captiveportal)
-				fatalx("%s: received unexpected imsg fd "
-				    "to resolver", __func__);
 
-			if ((fd = imsg.fd) == -1)
-				fatalx("%s: expected to receive imsg fd to "
-				   "resolver but didn't receive any", __func__);
-
-			iev_captiveportal = malloc(sizeof(struct imsgev));
-			if (iev_captiveportal == NULL)
-				fatal(NULL);
-
-			imsg_init(&iev_captiveportal->ibuf, fd);
-			iev_captiveportal->handler =
-			    resolver_dispatch_captiveportal;
-			iev_captiveportal->events = EV_READ;
-
-			event_set(&iev_captiveportal->ev,
-			    iev_captiveportal->ibuf.fd,
-			iev_captiveportal->events, iev_captiveportal->handler,
-			    iev_captiveportal);
-			event_add(&iev_captiveportal->ev, NULL);
-			break;
 		case IMSG_STARTUP:
 			if (pledge("stdio inet dns rpath", NULL) == -1)
 				fatal("pledge");
 			break;
 		case IMSG_RECONF_CONF:
-		case IMSG_RECONF_CAPTIVE_PORTAL_HOST:
-		case IMSG_RECONF_CAPTIVE_PORTAL_PATH:
-		case IMSG_RECONF_CAPTIVE_PORTAL_EXPECTED_RESPONSE:
 		case IMSG_RECONF_BLOCKLIST_FILE:
 		case IMSG_RECONF_FORWARDER:
 		case IMSG_RECONF_DOT_FORWARDER:
@@ -718,8 +592,6 @@ resolver_dispatch_main(int fd, short event, void *bula)
 			dot_forwarders_changed = check_forwarders_changed(
 			    &resolver_conf->uw_dot_forwarder_list,
 			    &nconf->uw_dot_forwarder_list);
-			captive_portal_changed = check_captive_portal_changed(
-			    resolver_conf, nconf);
 			merge_config(resolver_conf, nconf);
 			nconf = NULL;
 			if (forwarders_changed) {
@@ -729,14 +601,6 @@ resolver_dispatch_main(int fd, short event, void *bula)
 			if (dot_forwarders_changed) {
 				log_debug("static DoT forwarders changed");
 				new_static_dot_forwarders();
-			}
-			if (captive_portal_changed) {
-				if (resolver_conf->captive_portal_auto)
-					check_captive_portal(1);
-				else {
-					captive_portal_state = PORTAL_UNCHECKED;
-					schedule_recheck_all_resolvers();
-				}
 			}
 			break;
 		default:
@@ -1087,7 +951,7 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 			set_forwarders_oppdot(res, &autoconf_forwarder_list,
 			    853);
 			ub_ctx_set_option(res->ctx, "tls-cert-bundle:",
-			    tls_default_ca_cert_file());
+			    TLS_DEFAULT_CA_CERT_FILE);
 			ub_ctx_set_tls(res->ctx, 1);
 		} else {
 			set_forwarders_oppdot(res, &autoconf_forwarder_list,
@@ -1100,7 +964,7 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 			set_forwarders_oppdot(res,
 			    &resolver_conf->uw_forwarder_list, 853);
 			ub_ctx_set_option(res->ctx, "tls-cert-bundle:",
-			    tls_default_ca_cert_file());
+			    TLS_DEFAULT_CA_CERT_FILE);
 			ub_ctx_set_tls(res->ctx, 1);
 		} else
 			set_forwarders_oppdot(res,
@@ -1109,7 +973,7 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 	case UW_RES_DOT:
 		set_forwarders(res, &resolver_conf->uw_dot_forwarder_list);
 		ub_ctx_set_option(res->ctx, "tls-cert-bundle:",
-		    tls_default_ca_cert_file());
+		    TLS_DEFAULT_CA_CERT_FILE);
 		ub_ctx_set_tls(res->ctx, 1);
 		break;
 	default:
@@ -1477,8 +1341,7 @@ best_resolver(void)
 	struct uw_resolver	*res = NULL;
 	int			 i;
 
-	log_debug("%s: %s: %s, %s: %s%s, %s: %s%s, %s: %s, %s: %s, "
-	    "captive_portal: %s",
+	log_debug("%s: %s: %s, %s: %s%s, %s: %s%s, %s: %s, %s: %s",
 	    __func__,
 	    uw_resolver_type_str[UW_RES_RECURSOR], resolvers[UW_RES_RECURSOR]
 	    != NULL ? uw_resolver_state_str[resolvers[UW_RES_RECURSOR]->state]
@@ -1497,17 +1360,7 @@ best_resolver(void)
 	    uw_resolver_state_str[resolvers[UW_RES_DOT]->state] : "NA",
 	    uw_resolver_type_str[UW_RES_ASR],
 	    resolvers[UW_RES_ASR] != NULL ?
-	    uw_resolver_state_str[resolvers[UW_RES_ASR]->state] : "NA",
-	    captive_portal_state_str[captive_portal_state]);
-
-	if (captive_portal_state == PORTAL_UNKNOWN || captive_portal_state ==
-	    BEHIND) {
-		if (resolvers[UW_RES_ASR] != NULL && resolvers[UW_RES_ASR]->
-                    state != DEAD) {
-			res = resolvers[UW_RES_ASR];
-			goto out;
-		}
-	}
+	    uw_resolver_state_str[resolvers[UW_RES_ASR]->state] : "NA");
 
 	res = resolvers[resolver_conf->res_pref[0]];
 
@@ -1515,7 +1368,7 @@ best_resolver(void)
 		if (resolver_cmp(res,
 		    resolvers[resolver_conf->res_pref[i]]) < 0)
 			res = resolvers[resolver_conf->res_pref[i]];
-out:
+
 	if (res != NULL)
 		log_debug("%s: %s state: %s%s", __func__,
 		    uw_resolver_type_str[res->type],
@@ -1570,8 +1423,6 @@ show_status(enum uw_resolver_type type, pid_t pid)
 
 	switch(type) {
 	case UW_RES_NONE:
-		resolver_imsg_compose_frontend(IMSG_CTL_CAPTIVEPORTAL_INFO,
-		    pid, &captive_portal_state, sizeof(captive_portal_state));
 		for (i = 0; i < resolver_conf->res_pref_len; i++)
 			send_resolver_info(
 			    resolvers[resolver_conf->res_pref[i]],
@@ -1646,145 +1497,6 @@ send_resolver_histogram_info(struct uw_resolver *res, pid_t pid)
 
 	resolver_imsg_compose_frontend(IMSG_CTL_RESOLVER_HISTOGRAM,
 		    pid, histogram, sizeof(histogram));
-}
-
-void
-check_captive_portal_timo(int fd, short events, void *arg)
-{
-	captive_portal_check_tv.tv_sec *= 2;
-	if (captive_portal_check_tv.tv_sec > PORTAL_CHECK_MAXSEC)
-		captive_portal_check_tv.tv_sec = PORTAL_CHECK_MAXSEC;
-	check_captive_portal(0);
-}
-
-void
-check_captive_portal(int timer_reset)
-{
-	struct uw_resolver	*res;
-
-	log_debug("%s", __func__);
-
-	if (resolver_conf->captive_portal_host == NULL) {
-		log_debug("%s: no captive portal url configured", __func__);
-		captive_portal_state = PORTAL_UNCHECKED;
-		schedule_recheck_all_resolvers();
-		return;
-	}
-
-	if (timer_reset)
-		captive_portal_check_tv.tv_sec = PORTAL_CHECK_SEC;
-
-	evtimer_add(&captive_portal_check_ev, &captive_portal_check_tv);
-
-	captive_portal_state = PORTAL_UNKNOWN;
-
-	if ((res = best_resolver()) == NULL)
-		return;
-
-	resolve(res, resolver_conf->captive_portal_host,
-	    LDNS_RR_TYPE_A, LDNS_RR_CLASS_IN, NULL,
-	    captive_portal_resolve_done);
-}
-
-void
-captive_portal_resolve_done(struct uw_resolver *res, void *arg, int rcode,
-    void *answer_packet, int answer_len, int sec, char *why_bogus)
-{
-	struct ub_result	*result = NULL;
-	sldns_buffer		*buf = NULL;
-	struct regional		*region = NULL;
-	struct in_addr		*in;
-	int			 i;
-	char			*str, rdata_buf[sizeof("xxx.xxx.xxx.xxx")];
-
-	if (answer_len < LDNS_HEADER_SIZE) {
-		log_warnx("bad packet: too short");
-		goto out;
-	}
-
-	if ((result = calloc(1, sizeof(*result))) == NULL)
-		goto out;
-
-	log_debug("%s: rcode: %d", __func__, rcode);
-	if ((str = sldns_wire2str_pkt(answer_packet, answer_len)) != NULL) {
-		log_debug("%s", str);
-		free(str);
-	}
-
-	if ((buf = sldns_buffer_new(answer_len)) == NULL)
-		goto out;
-	if ((region = regional_create()) == NULL)
-		goto out;
-	result->rcode = LDNS_RCODE_SERVFAIL;
-
-	sldns_buffer_clear(buf);
-	sldns_buffer_write(buf, answer_packet, answer_len);
-	sldns_buffer_flip(buf);
-	libworker_enter_result(result, buf, region, sec);
-	result->answer_packet = NULL;
-	result->answer_len = 0;
-
-	if (result->rcode != LDNS_RCODE_NOERROR) {
-		log_debug("%s: result->rcode: %d", __func__,
-		    result->rcode);
-		goto out;
-	}
-
-	i = 0;
-	while(result->data[i] != NULL) {
-		if (result->len[i] == 4) {
-			in = (struct in_addr*) result->data[i];
-			log_debug("%s: %s", __func__, inet_ntop(AF_INET,
-			    in, rdata_buf, sizeof(rdata_buf)));
-			resolver_imsg_compose_main(
-			    IMSG_CONNECT_CAPTIVE_PORTAL_HOST, 0, in,
-			    sizeof(*in));
-		}
-		i++;
-	}
- out:
-	sldns_buffer_free(buf);
-	regional_destroy(region);
-	ub_resolve_free(result);
-}
-
-int
-check_captive_portal_changed(struct uw_conf *a, struct uw_conf *b)
-{
-
-	if (a->captive_portal_expected_status !=
-	    b->captive_portal_expected_status)
-		return (1);
-
-	if (a->captive_portal_host == NULL && b->captive_portal_host != NULL)
-		return (1);
-	if (a->captive_portal_host != NULL && b->captive_portal_host == NULL)
-		return (1);
-	if (a->captive_portal_host != NULL && b->captive_portal_host != NULL &&
-	    strcmp(a->captive_portal_host, b->captive_portal_host) != 0)
-		return (1);
-
-	if (a->captive_portal_path == NULL && b->captive_portal_path != NULL)
-		return (1);
-	if (a->captive_portal_path != NULL && b->captive_portal_path == NULL)
-		return (1);
-	if (a->captive_portal_path != NULL && b->captive_portal_path != NULL &&
-	    strcmp(a->captive_portal_path, b->captive_portal_path) != 0)
-		return (1);
-
-	if (a->captive_portal_expected_response == NULL &&
-	    b->captive_portal_expected_response != NULL)
-		return (1);
-	if (a->captive_portal_expected_response != NULL &&
-	    b->captive_portal_expected_response == NULL)
-		return (1);
-	if (a->captive_portal_expected_response != NULL &&
-	    b->captive_portal_expected_response != NULL &&
-	    strcmp(a->captive_portal_expected_response,
-	    b->captive_portal_expected_response) != 0)
-		return (1);
-
-	return (0);
 }
 
 void
@@ -1994,8 +1706,6 @@ replace_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 		    &autoconf_forwarder_list);
 		new_forwarders(0);
 		new_asr_forwarders();
-		if (resolver_conf->captive_portal_auto)
-			check_captive_portal(1);
 		log_debug("%s: forwarders changed", __func__);
 	} else {
 		log_debug("%s: forwarders didn't change", __func__);

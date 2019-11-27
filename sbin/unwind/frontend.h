@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.h,v 1.5 2019/11/19 14:47:46 florian Exp $	*/
+/*	$OpenBSD: frontend.h,v 1.6 2019/11/27 17:09:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -35,10 +35,8 @@ struct imsg_rdns_proposal {
 void		 frontend(int, int);
 void		 frontend_dispatch_main(int, short, void *);
 void		 frontend_dispatch_resolver(int, short, void *);
-void		 frontend_dispatch_captiveportal(int, short, void *);
 int		 frontend_imsg_compose_main(int, pid_t, void *, uint16_t);
 int		 frontend_imsg_compose_resolver(int, pid_t, void *, uint16_t);
-int		 frontend_imsg_compose_captiveportal(int, pid_t, void *, uint16_t);
 char		*ip_port(struct sockaddr *);
 void		 add_new_ta(struct trust_anchor_head *, char *);
 void		 free_tas(struct trust_anchor_head *);

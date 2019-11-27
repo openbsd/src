@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.17 2019/11/06 14:19:59 florian Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.18 2019/11/27 17:09:12 florian Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 6 2019 $
+.Dd $Mdocdate: November 27 2019 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -72,45 +72,6 @@ answers with a return code of
 With
 .Cm log
 blocked queries are logged.
-.It Ic captive portal Brq ...
-.Nm unwind
-can detect when it is running behind a
-.Dq captive portal
-by sending an HTTP request and checking the response against the
-configured expected response.
-The check is triggered when
-.Xr dhclient 8
-reports new nameservers.
-If the response does not match,
-.Nm unwind
-uses the DHCP provided nameservers and periodically re-checks if the user
-passed the captive portal.
-.Bl -tag -width Ds
-.It Ic auto Op Cm yes | no
-When
-.Ic auto
-is set to
-.Cm yes
-.Nm unwind
-automatically triggers a captive portal check
-when the network is changed.
-When set to
-.Cm no
-a captive portal check can be triggered by
-.Xr unwindctl 8 .
-The default is
-.Cm yes .
-.It Ic expected response Ar response
-The body of the HTTP response is compared to
-.Ar response .
-The default is the empty string.
-.It Ic expected status Ar status
-The expected HTTP status code.
-The default is 200.
-.It Ic url Ar URL
-URL to send HTTP queries to.
-This parameter is required.
-.El
 .It Ic forwarder Brq Ar address Oo Ic port Ar number Oc Oo Oo Ic authentication name Ar name Oc Ic DoT Oc ...
 A list of addresses of DNS name servers to forward queries to.
 .Ic port

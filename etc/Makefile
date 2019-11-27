@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.471 2019/08/12 09:49:21 claudio Exp $
+#	$OpenBSD: Makefile,v 1.472 2019/11/27 17:09:12 florian Exp $
 
 .include <bsd.own.mk>
 
@@ -48,7 +48,7 @@ MUTABLE=changelist daily etc.${MACHINE}/disktab \
 EXAMPLES=acme-client.conf chio.conf dhclient.conf dhcpd.conf exports \
 	httpd.conf ifstated.conf inetd.conf man.conf mixerctl.conf \
 	mrouted.conf ntpd.conf printcap rad.conf rbootd.conf \
-	remote unwind.conf sensorsd.conf wsconsctl.conf
+	remote sensorsd.conf wsconsctl.conf
 
 # -rw-------
 EXAMPLES_600=bgpd.conf doas.conf dvmrpd.conf eigrpd.conf hostapd.conf \

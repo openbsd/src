@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2019/11/26 19:35:13 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.18 2019/11/27 17:09:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -98,9 +98,9 @@ typedef struct {
 
 %}
 
-%token	YES NO INCLUDE ERROR
-%token	FORWARDER DOT PORT CAPTIVE PORTAL URL EXPECTED RESPONSE
-%token	STATUS AUTO AUTHENTICATION NAME PREFERENCE RECURSOR DHCP STUB
+%token	INCLUDE ERROR
+%token	FORWARDER DOT PORT 
+%token	AUTHENTICATION NAME PREFERENCE RECURSOR DHCP STUB
 %token	BLOCK LIST LOG
 
 %token	<v.string>	STRING
@@ -116,7 +116,6 @@ grammar		: /* empty */
 		| grammar varset '\n'
 		| grammar uw_pref '\n'
 		| grammar uw_forwarder '\n'
-		| grammar captive_portal '\n'
 		| grammar block_list '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
@@ -147,10 +146,6 @@ string		: string STRING	{
 			free($2);
 		}
 		| STRING
-		;
-
-yesno		: YES	{ $$ = 1; }
-		| NO	{ $$ = 0; }
 		;
 
 varset		: STRING '=' string		{
@@ -191,56 +186,6 @@ block_list		: BLOCK LIST STRING log {
 					free($3);
 					conf->blocklist_log = $4;
 				}
-			}
-			;
-
-captive_portal		: CAPTIVE PORTAL captive_portal_block
-			;
-captive_portal_block	: '{' optnl captive_portal_opts_l '}'
-			| captive_portal_optsl
-			;
-
-captive_portal_opts_l	: captive_portal_opts_l captive_portal_optsl optnl
-			| captive_portal_optsl optnl
-			;
-
-captive_portal_optsl	: URL STRING {
-				char *ep;
-				if (strncmp($2, "http://", 7) != 0) {
-					yyerror("only http:// urls are "
-					    "supported: %s", $2);
-					free($2);
-					YYERROR;
-				}
-				if ((ep = strchr($2 + 7, '/')) != NULL) {
-					conf->captive_portal_path =
-					    strdup(ep);
-					*ep = '\0';
-				} else
-					conf->captive_portal_path = strdup("/");
-				if (conf->captive_portal_path == NULL)
-					err(1, "strdup");
-				if ((conf->captive_portal_host =
-				    strdup($2 + 7)) == NULL)
-					err(1, "strdup");
-				free($2);
-			}
-			| EXPECTED RESPONSE STRING {
-				if ((conf->captive_portal_expected_response =
-				   strdup($3)) == NULL)
-					err(1, "strdup");
-				free($3);
-			}
-			| EXPECTED STATUS NUMBER {
-				if ($3 < 100 || $3 > 599) {
-					yyerror("%lld is an invalid http "
-					    "status", $3);
-					YYERROR;
-				}
-				conf->captive_portal_expected_status = $3;
-			}
-			| AUTO yesno {
-				conf->captive_portal_auto = $2;
 			}
 			;
 
@@ -405,28 +350,19 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{"DoT",			DOT},
 		{"authentication",	AUTHENTICATION},
-		{"auto",		AUTO},
 		{"block",		BLOCK},
-		{"captive",		CAPTIVE},
 		{"dhcp",		DHCP},
 		{"dot",			DOT},
-		{"expected",		EXPECTED},
 		{"forwarder",		FORWARDER},
 		{"include",		INCLUDE},
 		{"list",		LIST},
 		{"log",			LOG},
 		{"name",		NAME},
-		{"no",			NO},
 		{"port",		PORT},
-		{"portal",		PORTAL},
 		{"preference",		PREFERENCE},
 		{"recursor",		RECURSOR},
-		{"response",		RESPONSE},
-		{"status",		STATUS},
 		{"stub",		STUB},
 		{"tls",			DOT},
-		{"url",			URL},
-		{"yes",			YES},
 	};
 	const struct keywords	*p;
 
