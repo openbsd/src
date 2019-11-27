@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.88 2019/11/27 10:09:29 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.89 2019/11/27 11:57:33 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -620,7 +620,7 @@ func checkAesAead(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int,
 	ret = C.EVP_CIPHER_CTX_ctrl(ctx, ctrlSetIVLen, C.int(ivLen), nil)
 	if ret != 1 {
 		if wt.Comment == "Nonce is too long" || wt.Comment == "Invalid nonce size" ||
-			wt.Comment == "0 size IV is not valid" {
+			wt.Comment == "0 size IV is not valid" || wt.Comment == "Very long nonce" {
 			return true
 		}
 		fmt.Printf("FAIL: Test case %d (%q) [%v] %v - setting IV len to %d failed. got %d, want %v\n",
