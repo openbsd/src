@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.97 2019/11/27 21:20:03 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.98 2019/11/27 21:26:31 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -2324,6 +2324,8 @@ func runTestVectors(path string, webcrypto bool) bool {
 		fallthrough
 	case "RSASig":
 		wtg = &wycheproofTestGroupRSA{}
+	case "XDH":
+		fallthrough
 	case "X25519":
 		wtg = &wycheproofTestGroupX25519{}
 	default:
@@ -2403,6 +2405,8 @@ func runTestVectors(path string, webcrypto bool) bool {
 			if !runRSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRSA)) {
 				success = false
 			}
+		case "XDH":
+			fallthrough
 		case "X25519":
 			if !runX25519TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupX25519)) {
 				success = false
@@ -2440,7 +2444,7 @@ func main() {
 		{"ECDSAWebCrypto", "ecdsa_w*_test.json"},
 		{"KW", "kw_test.json"},
 		{"RSA", "rsa_*test.json"},
-		{"X25519", "x25519_*test.json"},
+		{"X25519", "x25519_test.json"},
 	}
 
 	success := true
