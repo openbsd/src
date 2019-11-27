@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.22 2019/07/15 11:05:10 kn Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.23 2019/11/27 19:54:10 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -50,6 +50,7 @@ void fetch_pri(void);
 void download(int argc, char **argv);
 void dump(int argc, char **argv);
 void list(int argc, char **argv);
+void list_io(int argc, char **argv);
 void xselect(int argc, char **argv);
 void delete(int argc, char **argv);
 void guest_start(int argc, char **argv);
@@ -62,6 +63,7 @@ struct command commands[] = {
 	{ "download",	download },
 	{ "dump",	dump },
 	{ "list",	list },
+	{ "list-io",	list_io },
 	{ "select",	xselect },
 	{ "delete",	delete },
 	{ "start",	guest_start },
@@ -159,7 +161,7 @@ usage(void)
 {
 	fprintf(stderr, "usage:\t%1$s delete|select configuration\n"
 	    "\t%1$s download directory\n"
-	    "\t%1$s dump|list\n"
+	    "\t%1$s dump|list|list-io\n"
 	    "\t%1$s init-system file\n"
 	    "\t%1$s panic|start|status|stop [domain]\n", getprogname());
 	exit(EXIT_FAILURE);
@@ -296,6 +298,15 @@ list(int argc, char **argv)
 			printf(" [next]");
 		printf("\n");
 	}
+}
+
+void
+list_io(int argc, char **argv)
+{
+	if (argc != 1)
+		usage();
+
+	list_components();
 }
 
 void

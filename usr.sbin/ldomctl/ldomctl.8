@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.15 2019/11/27 01:25:17 kn Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.16 2019/11/27 19:54:10 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -60,6 +60,8 @@ List configurations stored in non-volatile storage.
 Indicate the currently running configuration,
 and the configuration which will be used next
 (after rebooting the primary domain) if it differs from the currently running one.
+.It Cm list-io
+List available PCIe devices.
 .It Cm panic Ar domain
 Panic a guest domain.
 The exact behaviour of this command depends on the OS running in the domain.
