@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.24 2019/06/28 13:35:03 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.25 2019/11/27 08:18:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -234,6 +234,7 @@ file_new(struct fileops *ops, void *arg, char *name, unsigned int nfds)
 	}
 	f = xmalloc(sizeof(struct file));
 	f->max_nfds = nfds;
+	f->nfds = 0;
 	f->ops = ops;
 	f->arg = arg;
 	f->name = name;
