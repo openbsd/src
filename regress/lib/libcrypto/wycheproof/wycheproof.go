@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.94 2019/11/27 19:32:07 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.95 2019/11/27 19:34:35 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -290,7 +290,7 @@ type wycheproofPrivateKeyJwk struct {
 }
 
 type wycheproofTestRsaes struct {
-        TCID    int      `json:"tcId"`
+	TCID    int      `json:"tcId"`
 	Comment string   `json:"comment"`
 	Msg     string   `json:"msg"`
 	CT      string   `json:"ct"`
@@ -505,7 +505,7 @@ func checkAesCbcPkcs5(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen i
 		log.Fatalf("EVP_CipherInit_ex failed: %d", ret)
 	}
 
-	cipherOut := make([]byte, inLen + C.EVP_MAX_BLOCK_LENGTH)
+	cipherOut := make([]byte, inLen+C.EVP_MAX_BLOCK_LENGTH)
 	var cipherOutLen C.int
 
 	ret = C.EVP_CipherUpdate(ctx, (*C.uchar)(unsafe.Pointer(&cipherOut[0])), &cipherOutLen,
@@ -1793,7 +1793,7 @@ func runKWTestUnWrap(keySize int, key []byte, keyLen int, msg []byte, msgLen int
 	}
 	ret = C.AES_unwrap_key((*C.AES_KEY)(unsafe.Pointer(&aesKey)), nil, (*C.uchar)(unsafe.Pointer(&out[0])), (*C.uchar)(unsafe.Pointer(&out[0])), (C.uint)(ctLen))
 	success := false
-	if ret == C.int(ctLen - 8) && bytes.Equal(out[0:ret], msg[0:ret]) {
+	if ret == C.int(ctLen-8) && bytes.Equal(out[0:ret], msg[0:ret]) {
 		if acceptableAudit && wt.Result == "acceptable" {
 			gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
 		}
@@ -1898,7 +1898,7 @@ func runRsaesOaepTest(rsa *C.RSA, sha *C.EVP_MD, mgfSha *C.EVP_MD, wt *wycheproo
 
 	to := make([]byte, rsaSize)
 
-	ret = C.RSA_padding_check_PKCS1_OAEP_mgf1((*C.uchar)(unsafe.Pointer(&to[0])), C.int(rsaSize),  (*C.uchar)(unsafe.Pointer(&decrypted[0])), C.int(rsaSize), C.int(rsaSize), (*C.uchar)(unsafe.Pointer(&label[0])), C.int(labelLen), sha, mgfSha)
+	ret = C.RSA_padding_check_PKCS1_OAEP_mgf1((*C.uchar)(unsafe.Pointer(&to[0])), C.int(rsaSize), (*C.uchar)(unsafe.Pointer(&decrypted[0])), C.int(rsaSize), C.int(rsaSize), (*C.uchar)(unsafe.Pointer(&label[0])), C.int(labelLen), sha, mgfSha)
 
 	if int(ret) != msgLen {
 		success = (wt.Result == "invalid")
@@ -1909,8 +1909,7 @@ func runRsaesOaepTest(rsa *C.RSA, sha *C.EVP_MD, mgfSha *C.EVP_MD, wt *wycheproo
 		return success
 	}
 
-
-	to = to[:msgLen];
+	to = to[:msgLen]
 	if !bytes.Equal(msg, to) {
 		success = false
 		fmt.Printf("FAIL: Test case %d (%q) %v - expected and calculated message differ. Expected: %v", wt.TCID, wt.Comment, wt.Flags, wt.Result)
@@ -2066,7 +2065,7 @@ func runRSASSATest(rsa *C.RSA, h hash.Hash, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLe
 		sig = append(sig, 0)
 	}
 
-	sigOut := make([]byte, C.RSA_size(rsa) - 11)
+	sigOut := make([]byte, C.RSA_size(rsa)-11)
 	if sigLen == 0 {
 		sigOut = append(sigOut, 0)
 	}
@@ -2315,9 +2314,9 @@ func runTestVectors(path string, webcrypto bool) bool {
 	case "KW":
 		wtg = &wycheproofTestGroupKW{}
 	case "RSAES-OAEP":
-		wtg= &wycheproofTestGroupRsaesOaep{}
+		wtg = &wycheproofTestGroupRsaesOaep{}
 	case "RSAES-PKCS1-v1_5":
-		wtg= &wycheproofTestGroupRsaesPkcs1{}
+		wtg = &wycheproofTestGroupRsaesPkcs1{}
 	case "RSASSA-PSS":
 		wtg = &wycheproofTestGroupRSASSA{}
 	case "RSASig":
