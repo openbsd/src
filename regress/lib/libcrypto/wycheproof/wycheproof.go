@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.87 2018/11/07 22:51:17 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.88 2019/11/27 10:09:29 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -55,6 +55,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"unsafe"
 )
@@ -2081,7 +2082,8 @@ func runTestVectors(path string, webcrypto bool) bool {
 	case "X25519":
 		wtg = &wycheproofTestGroupX25519{}
 	default:
-		log.Fatalf("Unknown test vector algorithm %q", wtv.Algorithm)
+		log.Printf("INFO: Unknown test vector algorithm %q", wtv.Algorithm)
+		return false
 	}
 
 	success := true
@@ -2188,6 +2190,8 @@ func main() {
 
 	success := true
 
+	skip := regexp.MustCompile(`_(p1363|sha3|sha512_256)_`)
+
 	for _, test := range tests {
 		webcrypto := test.name == "ECDSAWebCrypto" || test.name == "ECDHWebCrypto"
 		tvs, err := filepath.Glob(filepath.Join(testVectorPath, test.pattern))
@@ -2198,6 +2202,10 @@ func main() {
 			log.Fatalf("Failed to find %v test vectors at %q\n", test.name, testVectorPath)
 		}
 		for _, tv := range tvs {
+			if skip.Match([]byte(tv)) {
+				fmt.Printf("INFO: Skipping tests from %s\n", tv)
+				continue
+			}
 			if !runTestVectors(tv, webcrypto) {
 				success = false
 			}
