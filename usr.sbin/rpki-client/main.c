@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2019/11/18 08:40:35 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.24 2019/11/27 03:39:16 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -990,16 +990,16 @@ static void
 proc_parser_crl(struct entity *entp, int norev, X509_STORE *store,
     X509_STORE_CTX *ctx, const struct auth *auths, size_t authsz)
 {
-	X509_CRL	    *x509;
+	X509_CRL	    *x509_crl;
 	const unsigned char *dgst;
 
 	if (norev)
 		return;
 
 	dgst = entp->has_dgst ? entp->dgst : NULL;
-	if ((x509 = crl_parse(entp->uri, dgst)) != NULL) {
-		X509_STORE_add_crl(store, x509);
-		X509_CRL_free(x509);
+	if ((x509_crl = crl_parse(entp->uri, dgst)) != NULL) {
+		X509_STORE_add_crl(store, x509_crl);
+		X509_CRL_free(x509_crl);
 	}
 }
 
