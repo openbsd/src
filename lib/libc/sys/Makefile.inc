@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.157 2019/05/28 13:08:56 beck Exp $
+#	$OpenBSD: Makefile.inc,v 1.158 2019/11/27 19:45:24 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -184,7 +184,7 @@ MAN+=	__get_tcb.2 __thrsigdivert.2 __thrsleep.2 _exit.2 accept.2 \
 	getthrid.2 gettimeofday.2 getuid.2 intro.2 ioctl.2 issetugid.2 \
 	kbind.2 kill.2 kqueue.2 ktrace.2 link.2 listen.2 lseek.2 madvise.2 \
 	minherit.2 mkdir.2 mkfifo.2 mknod.2 mlock.2 \
-	mlockall.2 mmap.2 mount.2 mprotect.2 mquery.2 msgctl.2 \
+	mlockall.2 mmap.2 mount.2 mprotect.2 mquery.2 msyscall.2 msgctl.2 \
 	msgget.2 msgrcv.2 msgsnd.2 msync.2 munmap.2 nanosleep.2 \
 	nfssvc.2 open.2 pathconf.2 pipe.2 pledge.2 poll.2 profil.2 \
 	ptrace.2 quotactl.2 read.2 readlink.2 reboot.2 recv.2 \
