@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.96 2019/11/27 19:54:40 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.97 2019/11/27 21:20:03 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -327,7 +327,7 @@ type wycheproofTestGroupRsaesPkcs1 struct {
 	Tests           []*wycheproofTestRsaes   `json:"tests"`
 }
 
-type wycheproofTestRSASSA struct {
+type wycheproofTestRsassa struct {
 	TCID    int      `json:"tcId"`
 	Comment string   `json:"comment"`
 	Msg     string   `json:"msg"`
@@ -336,7 +336,7 @@ type wycheproofTestRSASSA struct {
 	Flags   []string `json:"flags"`
 }
 
-type wycheproofTestGroupRSASSA struct {
+type wycheproofTestGroupRsassa struct {
 	E       string                  `json:"e"`
 	KeyASN  string                  `json:"keyAsn"`
 	KeyDER  string                  `json:"keyDer"`
@@ -348,7 +348,7 @@ type wycheproofTestGroupRSASSA struct {
 	SLen    int                     `json:"sLen"`
 	SHA     string                  `json:"sha"`
 	Type    string                  `json:"type"`
-	Tests   []*wycheproofTestRSASSA `json:"tests"`
+	Tests   []*wycheproofTestRsassa `json:"tests"`
 }
 
 type wycheproofTestX25519 struct {
@@ -2043,7 +2043,7 @@ func runRsaesPkcs1TestGroup(algorithm string, wtg *wycheproofTestGroupRsaesPkcs1
 	return success
 }
 
-func runRSASSATest(rsa *C.RSA, h hash.Hash, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLen int, wt *wycheproofTestRSASSA) bool {
+func runRsassaTest(rsa *C.RSA, h hash.Hash, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLen int, wt *wycheproofTestRsassa) bool {
 	msg, err := hex.DecodeString(wt.Msg)
 	if err != nil {
 		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
@@ -2102,7 +2102,7 @@ func runRSASSATest(rsa *C.RSA, h hash.Hash, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLe
 	return success
 }
 
-func runRSASSATestGroup(algorithm string, wtg *wycheproofTestGroupRSASSA) bool {
+func runRsassaTestGroup(algorithm string, wtg *wycheproofTestGroupRsassa) bool {
 	fmt.Printf("Running %v test group %v with key size %d and %v...\n",
 		algorithm, wtg.Type, wtg.KeySize, wtg.SHA)
 	rsa := C.RSA_new()
@@ -2140,7 +2140,7 @@ func runRSASSATestGroup(algorithm string, wtg *wycheproofTestGroupRSASSA) bool {
 
 	success := true
 	for _, wt := range wtg.Tests {
-		if !runRSASSATest(rsa, h, sha, mgfSha, wtg.SLen, wt) {
+		if !runRsassaTest(rsa, h, sha, mgfSha, wtg.SLen, wt) {
 			success = false
 		}
 	}
@@ -2319,7 +2319,9 @@ func runTestVectors(path string, webcrypto bool) bool {
 	case "RSAES-PKCS1-v1_5":
 		wtg = &wycheproofTestGroupRsaesPkcs1{}
 	case "RSASSA-PSS":
-		wtg = &wycheproofTestGroupRSASSA{}
+		wtg = &wycheproofTestGroupRsassa{}
+	case "RSASSA-PKCS1-v1_5":
+		fallthrough
 	case "RSASig":
 		wtg = &wycheproofTestGroupRSA{}
 	case "X25519":
@@ -2392,9 +2394,11 @@ func runTestVectors(path string, webcrypto bool) bool {
 				success = false
 			}
 		case "RSASSA-PSS":
-			if !runRSASSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRSASSA)) {
+			if !runRsassaTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRsassa)) {
 				success = false
 			}
+		case "RSASSA-PKCS1-v1_5":
+			fallthrough
 		case "RSASig":
 			if !runRSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRSA)) {
 				success = false
@@ -2454,7 +2458,7 @@ func main() {
 		}
 		for _, tv := range tvs {
 			if skip.Match([]byte(tv)) {
-				fmt.Printf("INFO: Skipping tests from \"%s\"\n", strings.TrimPrefix(tv, testVectorPath + "/"))
+				fmt.Printf("INFO: Skipping tests from \"%s\"\n", strings.TrimPrefix(tv, testVectorPath+"/"))
 				continue
 			}
 			if !runTestVectors(tv, webcrypto) {
