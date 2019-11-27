@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.95 2019/11/27 19:34:35 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.96 2019/11/27 19:54:40 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -57,6 +57,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strings"
 	"unsafe"
 )
 
@@ -2453,7 +2454,7 @@ func main() {
 		}
 		for _, tv := range tvs {
 			if skip.Match([]byte(tv)) {
-				fmt.Printf("INFO: Skipping tests from %s\n", tv)
+				fmt.Printf("INFO: Skipping tests from \"%s\"\n", strings.TrimPrefix(tv, testVectorPath + "/"))
 				continue
 			}
 			if !runTestVectors(tv, webcrypto) {
