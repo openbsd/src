@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.70 2019/11/12 07:47:30 mpi Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.71 2019/11/27 11:16:59 mpi Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -1813,7 +1813,7 @@ wi_usb_thread(void *arg)
 		if (wi_thread_info->status == 0) {
 			s = splnet();
 			wi_thread_info->idle = 1;
-			tsleep(wi_thread_info, PRIBIO, "wiIDL", 0);
+			tsleep_nsec(wi_thread_info, PRIBIO, "wiIDL", INFSLP);
 			wi_thread_info->idle = 0;
 			splx(s);
 		}
@@ -1854,7 +1854,7 @@ wi_usb_tx_lock(struct wi_usb_softc *sc)
 		sc->wi_lockwait++;
 		DPRINTFN(10,("%s: %s: busy %d\n", sc->wi_usb_dev.dv_xname,
 		__func__, sc->wi_lockwait ));
-		tsleep(&sc->wi_lock, PRIBIO, "witxl", 0);
+		tsleep_nsec(&sc->wi_lock, PRIBIO, "witxl", INFSLP);
 	}
 
 	if (sc->wi_lock != 0)
@@ -1908,7 +1908,7 @@ wi_usb_ctl_lock(struct wi_usb_softc *sc)
 		sc->wi_ctllockwait++;
 		DPRINTFN(10,("%s: %s: busy %d\n", sc->wi_usb_dev.dv_xname,
 		__func__, sc->wi_ctllockwait ));
-		tsleep(&sc->wi_ctllock, PRIBIO, "wiusbthr", 0);
+		tsleep_nsec(&sc->wi_ctllock, PRIBIO, "wiusbthr", INFSLP);
 	}
 
 	if (sc->wi_ctllock != 0)

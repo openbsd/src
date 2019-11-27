@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.147 2019/03/12 08:13:50 ratchov Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.148 2019/11/27 11:16:59 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1744,7 +1744,7 @@ uhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	sc->sc_softwake = 1;
 	usb_schedsoftintr(&sc->sc_bus);
 	DPRINTFN(1,("uhci_abort_xfer: tsleep\n"));
-	tsleep(&sc->sc_softwake, PZERO, "uhciab", 0);
+	tsleep_nsec(&sc->sc_softwake, PZERO, "uhciab", INFSLP);
 	splx(s);
 
 	/*

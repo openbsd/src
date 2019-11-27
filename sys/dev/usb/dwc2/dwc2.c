@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.48 2019/03/14 04:28:10 visa Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.49 2019/11/27 11:16:59 mpi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -551,7 +551,7 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 		xfer->status = status;
 		dxfer->flags |= DWC2_XFER_ABORTWAIT;
 		while (dxfer->flags & DWC2_XFER_ABORTING)
-			tsleep(&dxfer->flags, PZERO, "dwc2xfer", 0);
+			tsleep_nsec(&dxfer->flags, PZERO, "dwc2xfer", INFSLP);
 		return;
 	}
 

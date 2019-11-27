@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.71 2018/05/01 18:14:46 landry Exp $ */
+/*	$OpenBSD: uhid.c,v 1.72 2019/11/27 11:16:59 mpi Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -260,7 +260,7 @@ uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 		}
 		sc->sc_state |= UHID_ASLP;
 		DPRINTFN(5, ("uhidread: sleep on %p\n", &sc->sc_q));
-		error = tsleep(&sc->sc_q, PZERO | PCATCH, "uhidrea", 0);
+		error = tsleep_nsec(&sc->sc_q, PZERO|PCATCH, "uhidrea", INFSLP);
 		DPRINTFN(5, ("uhidread: woke, error=%d\n", error));
 		if (usbd_is_dying(sc->sc_hdev.sc_udev))
 			error = EIO;
