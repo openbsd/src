@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.78 2019/11/27 17:09:12 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.79 2019/11/27 17:11:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1362,12 +1362,12 @@ best_resolver(void)
 	    resolvers[UW_RES_ASR] != NULL ?
 	    uw_resolver_state_str[resolvers[UW_RES_ASR]->state] : "NA");
 
-	res = resolvers[resolver_conf->res_pref[0]];
+	res = resolvers[resolver_conf->res_pref.types[0]];
 
-	for (i = 1; i < resolver_conf->res_pref_len; i++)
+	for (i = 1; i < resolver_conf->res_pref.len; i++)
 		if (resolver_cmp(res,
-		    resolvers[resolver_conf->res_pref[i]]) < 0)
-			res = resolvers[resolver_conf->res_pref[i]];
+		    resolvers[resolver_conf->res_pref.types[i]]) < 0)
+			res = resolvers[resolver_conf->res_pref.types[i]];
 
 	if (res != NULL)
 		log_debug("%s: %s state: %s%s", __func__,
@@ -1423,11 +1423,12 @@ show_status(enum uw_resolver_type type, pid_t pid)
 
 	switch(type) {
 	case UW_RES_NONE:
-		for (i = 0; i < resolver_conf->res_pref_len; i++)
+		for (i = 0; i < resolver_conf->res_pref.len; i++)
 			send_resolver_info(
-			    resolvers[resolver_conf->res_pref[i]],
-			    resolvers[resolver_conf->res_pref[i]] ==
+			    resolvers[resolver_conf->res_pref.types[i]],
+			    resolvers[resolver_conf->res_pref.types[i]] ==
 			    best, pid);
+
 		TAILQ_FOREACH(uw_forwarder, &autoconf_forwarder_list, entry) {
 			memset(&cfi, 0, sizeof(cfi));
 			cfi.if_index = uw_forwarder->if_index;

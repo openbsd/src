@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.40 2019/11/27 17:09:12 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.41 2019/11/27 17:11:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -639,7 +639,6 @@ merge_config(struct uw_conf *conf, struct uw_conf *xconf)
 		free(uw_forwarder);
 	}
 
-	conf->res_pref_len = xconf->res_pref_len;
 	memcpy(&conf->res_pref, &xconf->res_pref,
 	    sizeof(conf->res_pref));
 
@@ -680,9 +679,9 @@ config_new_empty(void)
 	if (xconf == NULL)
 		fatal(NULL);
 
-	memcpy(&xconf->res_pref, &default_res_pref,
+	memcpy(&xconf->res_pref.types, &default_res_pref,
 	    sizeof(default_res_pref));
-	xconf->res_pref_len = 5;
+	xconf->res_pref.len = nitems(default_res_pref);
 
 	TAILQ_INIT(&xconf->uw_forwarder_list);
 	TAILQ_INIT(&xconf->uw_dot_forwarder_list);

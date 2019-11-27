@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.18 2019/11/27 17:09:12 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.19 2019/11/27 17:11:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -189,7 +189,7 @@ block_list		: BLOCK LIST STRING log {
 			}
 			;
 
-uw_pref			: PREFERENCE { conf->res_pref_len = 0; } pref_block
+uw_pref			: PREFERENCE { conf->res_pref.len = 0; } pref_block
 			;
 
 pref_block		: '{' optnl prefopts_l '}'
@@ -203,11 +203,11 @@ prefopts_l		: prefopts_l prefoptsl optnl
 prefoptsl		: prefopt {
 				if (!check_pref_uniq($1))
 					YYERROR;
-				if (conf->res_pref_len >= UW_RES_NONE) {
+				if (conf->res_pref.len >= UW_RES_NONE) {
 					yyerror("preference list too long");
 					YYERROR;
 				}
-				conf->res_pref[conf->res_pref_len++] = $1;
+				conf->res_pref.types[conf->res_pref.len++] = $1;
 			}
 			;
 
@@ -873,8 +873,8 @@ check_pref_uniq(enum uw_resolver_type type)
 {
 	int	 i;
 
-	for (i = 0; i < conf->res_pref_len; i++)
-		if (conf->res_pref[i] == type) {
+	for (i = 0; i < conf->res_pref.len; i++)
+		if (conf->res_pref.types[i] == type) {
 			yyerror("%s is already in the preference list",
 			    uw_resolver_type_str[type]);
 			return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.37 2019/11/27 17:09:12 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.38 2019/11/27 17:11:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -120,12 +120,16 @@ struct uw_forwarder {
 	uint16_t				 port;
 };
 
+struct resolver_preference {
+	enum uw_resolver_type			 types[UW_RES_NONE];
+	int					 len;
+};
+
 TAILQ_HEAD(uw_forwarder_head, uw_forwarder);
 struct uw_conf {
 	struct uw_forwarder_head	 uw_forwarder_list;
 	struct uw_forwarder_head	 uw_dot_forwarder_list;
-	enum uw_resolver_type		 res_pref[UW_RES_NONE];
-	int				 res_pref_len;
+	struct resolver_preference	 res_pref;
 	char				*blocklist_file;
 	int				 blocklist_log;
 };
