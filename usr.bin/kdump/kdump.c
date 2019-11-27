@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.139 2019/11/26 09:43:49 otto Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.140 2019/11/27 16:50:21 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -211,7 +211,7 @@ main(int argc, char *argv[])
 	if (strcmp(tracefile, "-") != 0)
 		if (unveil(tracefile, "r") == -1)
 			err(1, "unveil");
-	if (unveil("/etc/protocols", "r") == -1)
+	if (unveil(_PATH_PROTOCOLS, "r") == -1)
 		err(1, "unveil");
 	if (pledge("stdio rpath getpw", NULL) == -1)
 		err(1, "pledge");
