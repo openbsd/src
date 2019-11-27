@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.36 2019/11/27 00:11:49 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.37 2019/11/27 01:24:35 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -182,8 +182,6 @@ _dl_md_reloc_all_plt(elf_object_t *object, const Elf_Rel *reloc,
 
 /*
  *	Relocate the Global Offset Table (GOT).
- *	This is done by calling _dl_md_reloc on DT_JMPREL for DL_BIND_NOW,
- *	otherwise the lazy binding plt initialization is performed.
  */
 int
 _dl_md_reloc_got(elf_object_t *object, int lazy)
