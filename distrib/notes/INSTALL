@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.54 2019/08/01 19:42:51 jmc Exp $
+dnl	$OpenBSD: INSTALL,v 1.55 2019/11/27 23:41:23 nayden Exp $
 include(INCLUDE/../m4.common)dnl
 includeit(features)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
@@ -125,11 +125,10 @@ Getting source code for your OpenBSD System:
 Now that your OpenBSD system is up and running, you probably want to get
 access to source code so that you can recompile pieces of the system.
 
-You can get the pieces over the internet using anonymous CVS, CVSync,
+You can get the pieces over the internet using anonymous CVS, rsync,
 FTP or HTTP(s). For more information, see:
 
 	https://www.OpenBSD.org/anoncvs.html
-	https://www.OpenBSD.org/cvsync.html
 	https://www.OpenBSD.org/ftp.html
 
 
