@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.246 2019/09/27 10:34:54 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.247 2019/11/27 01:23:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -77,8 +77,9 @@ const char *	 print_ovs(u_int8_t, int);
 void		 print_flags(u_int8_t, int);
 int		 show_rib_summary_msg(struct imsg *);
 int		 show_rib_detail_msg(struct imsg *, int, int);
-void		 show_rib_brief(struct ctl_show_rib *, u_char *);
-void		 show_rib_detail(struct ctl_show_rib *, u_char *, int, int);
+void		 show_rib_brief(struct ctl_show_rib *, u_char *, size_t);
+void		 show_rib_detail(struct ctl_show_rib *, u_char *, size_t, int,
+		    int);
 void		 show_attr(void *, u_int16_t, int);
 void		 show_communities(u_char *, size_t, int);
 void		 show_community(u_char *, u_int16_t);
@@ -1230,13 +1231,15 @@ show_rib_summary_msg(struct imsg *imsg)
 {
 	struct ctl_show_rib	 rib;
 	u_char			*asdata;
+	size_t			 aslen;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_RIB:
 		memcpy(&rib, imsg->data, sizeof(rib));
 		asdata = imsg->data;
-		asdata += sizeof(struct ctl_show_rib);
-		show_rib_brief(&rib, asdata);
+		asdata += sizeof(rib);
+		aslen = imsg->hdr.len - IMSG_HEADER_SIZE - sizeof(rib);
+		show_rib_brief(&rib, asdata, aslen);
 		break;
 	case IMSG_CTL_END:
 		return (1);
@@ -1252,14 +1255,16 @@ show_rib_detail_msg(struct imsg *imsg, int nodescr, int flag0)
 {
 	struct ctl_show_rib	 rib;
 	u_char			*asdata;
+	size_t			 aslen;
 	u_int16_t		 ilen;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_RIB:
 		memcpy(&rib, imsg->data, sizeof(rib));
 		asdata = imsg->data;
-		asdata += sizeof(struct ctl_show_rib);
-		show_rib_detail(&rib, asdata, nodescr, flag0);
+		asdata += sizeof(rib);
+		aslen = imsg->hdr.len - IMSG_HEADER_SIZE - sizeof(rib);
+		show_rib_detail(&rib, asdata, aslen, nodescr, flag0);
 		break;
 	case IMSG_CTL_SHOW_RIB_COMMUNITIES:
 		ilen = imsg->hdr.len - IMSG_HEADER_SIZE;
@@ -1284,7 +1289,7 @@ show_rib_detail_msg(struct imsg *imsg, int nodescr, int flag0)
 }
 
 void
-show_rib_brief(struct ctl_show_rib *r, u_char *asdata)
+show_rib_brief(struct ctl_show_rib *r, u_char *asdata, size_t aslen)
 {
 	char			*aspath;
 
@@ -1292,7 +1297,7 @@ show_rib_brief(struct ctl_show_rib *r, u_char *asdata)
 	printf(" %-15s ", log_addr(&r->exit_nexthop));
 	printf(" %5u %5u ", r->local_pref, r->med);
 
-	if (aspath_asprint(&aspath, asdata, r->aspath_len) == -1)
+	if (aspath_asprint(&aspath, asdata, aslen) == -1)
 		err(1, NULL);
 	if (strlen(aspath) > 0)
 		printf("%s ", aspath);
@@ -1302,7 +1307,8 @@ show_rib_brief(struct ctl_show_rib *r, u_char *asdata)
 }
 
 void
-show_rib_detail(struct ctl_show_rib *r, u_char *asdata, int nodescr, int flag0)
+show_rib_detail(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
+    int nodescr, int flag0)
 {
 	struct in_addr		 id;
 	char			*aspath, *s;
@@ -1312,7 +1318,7 @@ show_rib_detail(struct ctl_show_rib *r, u_char *asdata, int nodescr, int flag0)
 	    log_addr(&r->prefix), r->prefixlen,
 	    EOL0(flag0));
 
-	if (aspath_asprint(&aspath, asdata, r->aspath_len) == -1)
+	if (aspath_asprint(&aspath, asdata, aslen) == -1)
 		err(1, NULL);
 	if (strlen(aspath) > 0)
 		printf("    %s%c", aspath, EOL0(flag0));
@@ -2115,7 +2121,6 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		ctl.local_pref = mre->local_pref;
 		ctl.med = mre->med;
 		/* weight is not part of the mrt dump so it can't be set */
-		ctl.aspath_len = mre->aspath_len;
 
 		if (mre->peer_idx < mp->npeers) {
 			ctl.remote_addr = mp->peers[mre->peer_idx].addr;
@@ -2158,13 +2163,14 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 			continue;
 
 		if (req->flags & F_CTL_DETAIL) {
-			show_rib_detail(&ctl, mre->aspath, 1, 0);
+			show_rib_detail(&ctl, mre->aspath, mre->aspath_len, 1,
+			    0);
 			for (j = 0; j < mre->nattrs; j++)
 				show_attr(mre->attrs[j].attr,
 				    mre->attrs[j].attr_len,
 				    req->flags);
 		} else
-			show_rib_brief(&ctl, mre->aspath);
+			show_rib_brief(&ctl, mre->aspath, mre->aspath_len);
 	}
 }
 
@@ -2189,7 +2195,6 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		ctl.origin = mre->origin;
 		ctl.local_pref = mre->local_pref;
 		ctl.med = mre->med;
-		ctl.aspath_len = mre->aspath_len;
 
 		if (mre->peer_idx < mp->npeers) {
 			ctl.remote_addr = mp->peers[mre->peer_idx].addr;
