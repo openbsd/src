@@ -2,7 +2,7 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: November 19 2019 $
+.Dd $Mdocdate: November 27 2019 $
 .Dt FIDO_BIO_DEV_GET_INFO 3
 .Os
 .Sh NAME
@@ -36,8 +36,8 @@ The functions described in this page allow biometric
 templates on a FIDO2 authenticator to be listed, created,
 removed, and customised.
 For a description of the types involved, please refer to
-.Xr fido_bio_info 3 ,
-.Xr fido_bio_enroll 3 ,
+.Xr fido_bio_info_new 3 ,
+.Xr fido_bio_enroll_new 3 ,
 and
 .Xr fido_bio_template 3 .
 .Pp
@@ -115,6 +115,6 @@ On success,
 .Dv FIDO_OK
 is returned.
 .Sh SEE ALSO
-.Xr fido_bio_enroll 3 ,
-.Xr fido_bio_info 3 ,
+.Xr fido_bio_enroll_new 3 ,
+.Xr fido_bio_info_new 3 ,
 .Xr fido_bio_template 3

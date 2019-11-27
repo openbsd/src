@@ -2,7 +2,7 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: November 19 2019 $
+.Dd $Mdocdate: November 27 2019 $
 .Dt FIDO_CREDMAN_METADATA_NEW 3
 .Os
 .Sh NAME
@@ -75,7 +75,7 @@ inspected, and removed.
 Please note that not all authenticators support credential management.
 To obtain information on what an authenticator supports, please
 refer to
-.Xr fido_cbor_info 3 .
+.Xr fido_cbor_info_new 3 .
 .Pp
 The
 .Vt fido_credman_metadata_t
@@ -295,5 +295,5 @@ is returned.
 Functions returning pointers are not guaranteed to succeed, and
 should have their return values checked for NULL.
 .Sh SEE ALSO
-.Xr fido_cbor_info 3 ,
-.Xr fido_cred 3
+.Xr fido_cbor_info_new 3 ,
+.Xr fido_cred_new 3

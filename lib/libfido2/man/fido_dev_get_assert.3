@@ -2,7 +2,7 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: November 19 2019 $
+.Dd $Mdocdate: November 27 2019 $
 .Dt FIDO_DEV_GET_ASSERT 3
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@ for an assertion according to the following parameters defined in
 .El
 .Pp
 See
-.Xr fido_assert_set 3
+.Xr fido_assert_set_authdata 3
 for information on how these values are set.
 .Pp
 If a PIN is not needed to authenticate the request against
@@ -72,5 +72,5 @@ On success,
 .Dv FIDO_OK
 is returned.
 .Sh SEE ALSO
-.Xr fido_assert 3 ,
-.Xr fido_assert_set 3
+.Xr fido_assert_new 3 ,
+.Xr fido_assert_set_authdata 3
