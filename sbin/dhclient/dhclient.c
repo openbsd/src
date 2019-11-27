@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.654 2019/11/22 22:45:52 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.655 2019/11/27 17:49:09 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2310,7 +2310,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 	if ((routefd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
 		fatal("socket(AF_ROUTE, SOCK_RAW)");
 
-	if (unveil("/etc/resolv.conf", "wc") == -1)
+	if (unveil(_PATH_RESCONF, "wc") == -1)
 		fatal("unveil");
 	if (unveil("/etc/resolv.conf.tail", "r") == -1)
 		fatal("unveil");

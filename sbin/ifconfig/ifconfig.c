@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.414 2019/10/24 18:54:10 bluhm Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.415 2019/11/27 17:49:09 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -103,6 +103,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <resolv.h>
 #include <util.h>
 #include <ifaddrs.h>
 
@@ -785,11 +786,11 @@ main(int argc, char *argv[])
 	}
 
 	if (!found_rulefile) {
-		if (unveil("/etc/resolv.conf", "r") == -1)
+		if (unveil(_PATH_RESCONF, "r") == -1)
 			err(1, "unveil");
-		if (unveil("/etc/hosts", "r") == -1)
+		if (unveil(_PATH_HOSTS, "r") == -1)
 			err(1, "unveil");
-		if (unveil("/etc/services", "r") == -1)
+		if (unveil(_PATH_SERVICES, "r") == -1)
 			err(1, "unveil");
 		if (unveil(NULL, NULL) == -1)
 			err(1, "unveil");

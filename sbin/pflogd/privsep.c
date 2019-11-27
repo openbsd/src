@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.33 2019/06/28 13:32:45 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.34 2019/11/27 17:49:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -37,6 +37,8 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <netdb.h>
+#include <resolv.h>
 #include "pflogd.h"
 
 enum cmd_types {
@@ -131,11 +133,11 @@ priv_init(int Pflag, int argc, char *argv[])
 
 	setproctitle("[priv]");
 
-	if (unveil("/etc/resolv.conf", "r") == -1)
+	if (unveil(_PATH_RESCONF, "r") == -1)
 		err(1, "unveil");
-	if (unveil("/etc/hosts", "r") == -1)
+	if (unveil(_PATH_HOSTS, "r") == -1)
 		err(1, "unveil");
-	if (unveil("/etc/services", "r") == -1)
+	if (unveil(_PATH_SERVICES, "r") == -1)
 		err(1, "unveil");
 	if (unveil("/dev/bpf", "r") == -1)
 		err(1, "unveil");
