@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.247 2019/11/28 16:41:07 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.248 2019/11/28 17:25:59 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1157,15 +1157,60 @@ scsi_mode_sense_big_page(struct scsi_mode_header_big *hdr, const int page_len)
 	return ((u_char *)hdr + header_length);
 }
 
+void
+scsi_parse_blkdesc(struct scsi_link *link, union scsi_mode_sense_buf *buf,
+    int big, u_int32_t *density, u_int64_t *block_count, u_int32_t *block_size)
+{
+	struct scsi_direct_blk_desc	*direct;
+	struct scsi_blk_desc		*general;
+	size_t				 offset;
+	unsigned int			 blk_desc_len;
+
+	if (big == 0) {
+		offset = sizeof(struct scsi_mode_header);
+		blk_desc_len = buf->hdr.blk_desc_len;
+	} else {
+		offset = sizeof(struct scsi_mode_header_big);
+		blk_desc_len = _2btol(buf->hdr_big.blk_desc_len);
+	}
+
+	/* Both scsi_blk_desc and scsi_direct_blk_desc are 8 bytes. */
+	if (blk_desc_len == 0 || (blk_desc_len % 8 != 0))
+		return;
+
+	switch (link->inqdata.device & SID_TYPE) {
+	case T_SEQUENTIAL:
+		/*
+		 * XXX What other device types return general block descriptors?
+		 */
+		general = (struct scsi_blk_desc *)&buf->buf[offset];
+		if (density != NULL)
+			*density = general->density;
+		if (block_size != NULL)
+			*block_size = _3btol(general->blklen);
+		if (block_count != NULL)
+			*block_count = (u_int64_t)_3btol(general->nblocks);
+		break;
+
+	default:
+		direct = (struct scsi_direct_blk_desc *)&buf->buf[offset];
+		if (density != NULL)
+			*density = direct->density;
+		if (block_size != NULL)
+			*block_size = _3btol(direct->blklen);
+		if (block_count != NULL)
+			*block_count = (u_int64_t)_4btol(direct->nblocks);
+		break;
+	}
+}
+
 int
 scsi_do_mode_sense(struct scsi_link *link, int page,
     union scsi_mode_sense_buf *buf, void **page_data, u_int32_t *density,
     u_int64_t *block_count, u_int32_t *block_size, int page_len, int flags,
     int *big)
 {
-	struct scsi_direct_blk_desc		*direct;
-	struct scsi_blk_desc			*general;
-	int					error, blk_desc_len, offset;
+	int					 error;
 
 	*page_data = NULL;
 	*big = 0;
@@ -1196,8 +1241,6 @@ scsi_do_mode_sense(struct scsi_link *link, int page,
 				 */
 				return (0);
 			}
-			offset = sizeof(struct scsi_mode_header);
-			blk_desc_len = buf->hdr.blk_desc_len;
 			goto blk_desc;
 		}
 	}
@@ -1220,39 +1263,10 @@ scsi_do_mode_sense(struct scsi_link *link, int page,
 		return (EIO);
 
 	*big = 1;
-	offset = sizeof(struct scsi_mode_header_big);
 	*page_data = scsi_mode_sense_big_page(&buf->hdr_big, page_len);
-	blk_desc_len = _2btol(buf->hdr_big.blk_desc_len);
 
 blk_desc:
-	/* Both scsi_blk_desc and scsi_direct_blk_desc are 8 bytes. */
-	if (blk_desc_len == 0 || (blk_desc_len % 8 != 0))
-		return (0);
-
-	switch (link->inqdata.device & SID_TYPE) {
-	case T_SEQUENTIAL:
-		/*
-		 * XXX What other device types return general block descriptors?
-		 */
-		general = (struct scsi_blk_desc *)&buf->buf[offset];
-		if (density != NULL)
-			*density = general->density;
-		if (block_size != NULL)
-			*block_size = _3btol(general->blklen);
-		if (block_count != NULL)
-			*block_count = (u_int64_t)_3btol(general->nblocks);
-		break;
-
-	default:
-		direct = (struct scsi_direct_blk_desc *)&buf->buf[offset];
-		if (density != NULL)
-			*density = direct->density;
-		if (block_size != NULL)
-			*block_size = _3btol(direct->blklen);
-		if (block_count != NULL)
-			*block_count = (u_int64_t)_4btol(direct->nblocks);
-		break;
-	}
+	scsi_parse_blkdesc(link, buf, *big, density, block_count, block_size);
 
 	return (0);
 }
