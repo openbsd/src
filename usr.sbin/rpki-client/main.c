@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2019/11/28 19:25:52 benno Exp $ */
+/*	$OpenBSD: main.c,v 1.30 2019/11/28 19:32:30 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1657,6 +1657,8 @@ main(int argc, char *argv[])
 		output_json(output, &v);
 		break;
 	}
+
+	fclose(output);
 
 	logx("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)",
 	    stats.roas, stats.roas_fail, stats.roas_invalid);
