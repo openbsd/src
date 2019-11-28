@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.41 2019/05/09 20:36:44 beck Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.42 2019/11/28 02:30:38 beck Exp $ */
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -33,18 +33,6 @@ TAILQ_HEAD(,buf) buf_valist;
 
 extern struct bcachestats bcstats;
 
-/*
- * Pages are allocated from a uvm object (we only use it for page storage,
- * all pages are wired). Since every buffer contains a contiguous range of
- * pages, reusing the pages could be very painful. Fortunately voff_t is
- * 64 bits, so we can just increment buf_page_offset all the time and ignore
- * wraparound. Even if you reuse 4GB worth of buffers every second
- * you'll still run out of time_t faster than buffers.
- *
- */
-voff_t buf_page_offset;
-struct uvm_object *buf_object, buf_object_store;
-
 vaddr_t buf_unmap(struct buf *);
 
 void
@@ -61,10 +49,6 @@ buf_mem_init(vsize_t size)
 
 	/* Contiguous mapping */
 	bcstats.kvaslots = bcstats.kvaslots_avail = size / MAXPHYS;
-
-	buf_object = &buf_object_store;
-
-	uvm_objinit(buf_object, NULL, 1);
 }
 
 /*
@@ -267,7 +251,6 @@ buf_unmap(struct buf *bp)
 void
 buf_alloc_pages(struct buf *bp, vsize_t size)
 {
-	voff_t offs;
 	int i;
 
 	KASSERT(size == round_page(size));
@@ -275,10 +258,8 @@ buf_alloc_pages(struct buf *bp, vsize_t size)
 	KASSERT(bp->b_data == NULL);
 	splassert(IPL_BIO);
 
-	offs = buf_page_offset;
-	buf_page_offset += size;
-
-	KASSERT(buf_page_offset > 0);
+	bp->b_pobj = &bp->b_uobj;
+	uvm_objinit(bp->b_pobj, NULL, 1);
 
 	/*
 	 * Attempt to allocate with NOWAIT. if we can't, then throw
@@ -287,13 +268,13 @@ buf_alloc_pages(struct buf *bp, vsize_t size)
 	 * memory for us.
 	 */
 	do {
-		i = uvm_pagealloc_multi(buf_object, offs, size,
+		i = uvm_pagealloc_multi(bp->b_pobj, 0, size,
 		    UVM_PLA_NOWAIT | UVM_PLA_NOWAKE);
 		if (i == 0)
 			break;
 	} while	(bufbackoff(&dma_constraint, size) == 0);
 	if (i != 0)
-		i = uvm_pagealloc_multi(buf_object, offs, size,
+		i = uvm_pagealloc_multi(bp->b_pobj, 0, size,
 		    UVM_PLA_WAITOK);
 	/* should not happen */
 	if (i != 0)
@@ -303,8 +284,7 @@ buf_alloc_pages(struct buf *bp, vsize_t size)
 	bcstats.numbufpages += atop(size);
 	bcstats.dmapages += atop(size);
 	SET(bp->b_flags, B_DMA);
-	bp->b_pobj = buf_object;
-	bp->b_poffs = offs;
+	bp->b_poffs = 0;
 	bp->b_bufsize = size;
 }
 
