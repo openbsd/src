@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.25 2019/11/28 17:51:55 kn Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.26 2019/11/28 18:03:33 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -57,6 +57,7 @@ void guest_start(int argc, char **argv);
 void guest_stop(int argc, char **argv);
 void guest_panic(int argc, char **argv);
 void guest_status(int argc, char **argv);
+void guest_console(int argc, char **argv);
 void init_system(int argc, char **argv);
 
 struct command commands[] = {
@@ -70,6 +71,7 @@ struct command commands[] = {
 	{ "stop",	guest_stop },
 	{ "panic",	guest_panic },
 	{ "status",	guest_status },
+	{ "console",	guest_console },
 	{ "init-system", init_system },
 	{ NULL,		NULL }
 };
@@ -156,14 +158,14 @@ main(int argc, char **argv)
 	exit(EXIT_SUCCESS);
 }
 
-void
+__dead void
 usage(void)
 {
 	fprintf(stderr, "usage:\t%1$s delete|select configuration\n"
 	    "\t%1$s download directory\n"
 	    "\t%1$s dump|list|list-io\n"
 	    "\t%1$s init-system file\n"
-	    "\t%1$s panic|start|status|stop [domain]\n", getprogname());
+	    "\t%1$s console|panic|start|status|stop [domain]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -569,6 +571,32 @@ guest_status(int argc, char **argv)
 			    console_str, state_str, softstate.soft_state_str,
 			    utilisation);
 		}
+	}
+}
+
+void
+guest_console(int argc, char **argv)
+{
+	struct guest *guest;
+	uint64_t gid = -1;
+	char console_str[8];
+
+	if (argc != 2)
+		usage();
+
+	gid = find_guest(argv[1]);
+	if (gid == 0)
+		errx(1, "no console for primary domain");
+
+	TAILQ_FOREACH(guest, &guest_list, link) {
+		if (gid != -1 && guest->gid != gid)
+			continue;
+		snprintf(console_str, sizeof(console_str),
+		    "ttyV%llu", guest->gid - 1);
+
+		closefrom(STDERR_FILENO + 1);
+		execl(LDOMCTL_CU, LDOMCTL_CU, "-l", console_str, NULL);
+		err(1, "failed to open console");
 	}
 }
 
