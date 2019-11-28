@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.149 2019/11/05 08:18:47 mpi Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.150 2019/11/28 23:42:52 guenther Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -424,8 +424,6 @@ int			uvm_sysctl(int *, u_int, void *, size_t *,
 			    void *, size_t, struct proc *);
 struct vm_page		*uvm_pagealloc(struct uvm_object *,
 			    voff_t, struct vm_anon *, int);
-vaddr_t			uvm_pagealloc_contig(vaddr_t, vaddr_t,
-			    vaddr_t, vaddr_t);
 int			uvm_pagealloc_multi(struct uvm_object *, voff_t,
     			    vsize_t, int);
 void			uvm_pagerealloc(struct vm_page *, 
