@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.101 2019/11/28 16:54:00 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.102 2019/11/28 21:35:47 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -33,6 +33,7 @@ package main
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 #include <openssl/evp.h>
+#include <openssl/hkdf.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
@@ -236,6 +237,24 @@ type wycheproofTestGroupECDSAWebCrypto struct {
 	SHA    string                 `json:"sha"`
 	Type   string                 `json:"type"`
 	Tests  []*wycheproofTestECDSA `json:"tests"`
+}
+
+type wycheproofTestHkdf struct {
+	TCID	int      `json:"tcId"`
+	Comment	string   `json:"comment"`
+	Ikm	string   `json:"ikm"`
+	Salt	string   `json:"salt"`
+	Info	string   `json:"info"`
+	Size	int      `json:"size"`
+	Okm	string   `json:"okm"`
+	Result	string   `json:"result"`
+	Flags	[]string `json:"flags"`
+}
+
+type wycheproofTestGroupHkdf struct {
+	Type    string                `json:"type"`
+	KeySize int                   `json:"keySize"`
+	Tests   []*wycheproofTestHkdf `json:"tests"`
 }
 
 type wycheproofTestKW struct {
@@ -1835,6 +1854,74 @@ func runKWTestUnWrap(keySize int, key []byte, keyLen int, msg []byte, msgLen int
 	return success
 }
 
+func runHkdfTest(md *C.EVP_MD, wt *wycheproofTestHkdf) bool {
+	ikm, err := hex.DecodeString(wt.Ikm)
+	if err != nil {
+		log.Fatalf("Failed to decode ikm %q: %v", wt.Ikm, err)
+	}
+	salt, err := hex.DecodeString(wt.Salt)
+	if err != nil {
+		log.Fatalf("Failed to decode salt %q: %v", wt.Salt, err)
+	}
+	info, err := hex.DecodeString(wt.Info)
+	if err != nil {
+		log.Fatalf("Failed to decode info %q: %v", wt.Info, err)
+	}
+
+	ikmLen, saltLen, infoLen := len(ikm), len(salt), len(info)
+	if ikmLen == 0 {
+		ikm = append(ikm, 0)
+	}
+	if saltLen == 0 {
+		salt = append(salt, 0)
+	}
+	if infoLen == 0 {
+		info = append(info, 0)
+	}
+
+	outLen := wt.Size
+	out := make([]byte, outLen)
+	if outLen == 0 {
+		out = append(out, 0)
+	}
+
+	ret := C.HKDF((*C.uchar)(unsafe.Pointer(&out[0])), C.size_t(outLen), md, (*C.uchar)(unsafe.Pointer(&ikm[0])), C.size_t(ikmLen), (*C.uchar)(&salt[0]), C.size_t(saltLen), (*C.uchar)(unsafe.Pointer(&info[0])), C.size_t(infoLen))
+
+	if ret != 1 {
+		success := wt.Result == "invalid"
+		if !success {
+			fmt.Printf("FAIL: Test case %d (%q) %v - got %d, want %v\n", wt.TCID, wt.Comment, wt.Flags, ret, wt.Result)
+		}
+		return success
+	}
+
+	okm, err := hex.DecodeString(wt.Okm)
+	if err != nil {
+		log.Fatalf("Failed to decode okm %q: %v", wt.Okm, err)
+	}
+	if !bytes.Equal(out[:outLen], okm) {
+		fmt.Printf("FAIL: Test case %d (%q) %v - expected and computed output don't match: %v", wt.TCID, wt.Comment, wt.Flags, wt.Result)
+	}
+
+	return wt.Result == "valid"
+}
+
+func runHkdfTestGroup(algorithm string, wtg *wycheproofTestGroupHkdf) bool {
+	fmt.Printf("Running %v test group %v with key size %d...\n", algorithm, wtg.Type, wtg.KeySize)
+	md, err := hashEvpMdFromString(strings.TrimPrefix(algorithm, "HKDF-"))
+	if err != nil {
+		log.Fatalf("Failed to get hash: %v", err)
+	}
+
+	success := true
+	for _, wt := range wtg.Tests {
+		if !runHkdfTest(md, wt) {
+			success = false
+		}
+	}
+	return success
+}
+
 func runKWTest(keySize int, wt *wycheproofTestKW) bool {
 	key, err := hex.DecodeString(wt.Key)
 	if err != nil {
@@ -2338,6 +2425,8 @@ func runTestVectors(path string, webcrypto bool) bool {
 		} else {
 			wtg = &wycheproofTestGroupECDSA{}
 		}
+	case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
+		wtg = &wycheproofTestGroupHkdf{}
 	case "KW":
 		wtg = &wycheproofTestGroupKW{}
 	case "RSAES-OAEP":
@@ -2411,6 +2500,10 @@ func runTestVectors(path string, webcrypto bool) bool {
 					success = false
 				}
 			}
+		case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
+			if !runHkdfTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupHkdf)) {
+				success = false
+			}
 		case "KW":
 			if !runKWTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupKW)) {
 				success = false
@@ -2475,6 +2568,7 @@ func main() {
 		{"ECDHWebCrypto", "ecdh_w*_test.json"},
 		{"ECDSA", "ecdsa_[^w]*test.json"},
 		{"ECDSAWebCrypto", "ecdsa_w*_test.json"},
+		{"HKDF", "hkdf_sha*_test.json"},
 		{"KW", "kw_test.json"},
 		{"RSA", "rsa_*test.json"},
 		{"X25519", "x25519_test.json"},
