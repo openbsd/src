@@ -1,4 +1,4 @@
-/* $OpenBSD: xmalloc.c,v 1.12 2019/06/28 05:44:09 deraadt Exp $ */
+/* $OpenBSD: xmalloc.c,v 1.13 2019/11/28 09:51:58 nicm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -67,6 +67,20 @@ xreallocarray(void *ptr, size_t nmemb, size_t size)
 	new_ptr = reallocarray(ptr, nmemb, size);
 	if (new_ptr == NULL)
 		fatalx("xreallocarray: allocating %zu * %zu bytes: %s",
+		    nmemb, size, strerror(errno));
+	return new_ptr;
+}
+
+void *
+xrecallocarray(void *ptr, size_t oldnmemb, size_t nmemb, size_t size)
+{
+	void *new_ptr;
+
+	if (nmemb == 0 || size == 0)
+		fatalx("xrecallocarray: zero size");
+	new_ptr = recallocarray(ptr, oldnmemb, nmemb, size);
+	if (new_ptr == NULL)
+		fatalx("xrecallocarray: allocating %zu * %zu bytes: %s",
 		    nmemb, size, strerror(errno));
 	return new_ptr;
 }
