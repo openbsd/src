@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.106 2019/11/28 21:52:55 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.107 2019/11/28 23:13:34 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -406,6 +406,7 @@ var nids = map[string]int{
 	"brainpoolP320t1": C.NID_brainpoolP320t1,
 	"brainpoolP384t1": C.NID_brainpoolP384t1,
 	"brainpoolP512t1": C.NID_brainpoolP512t1,
+	"secp224k1":       C.NID_secp224k1,
 	"secp224r1":       C.NID_secp224r1,
 	"secp256k1":       C.NID_secp256k1,
 	"P-256K":          C.NID_secp256k1,
@@ -1453,6 +1454,12 @@ func runECDHTestGroup(algorithm string, wtg *wycheproofTestGroupECDH) bool {
 	doECpoint := false
 	if wtg.Encoding == "ecpoint" {
 		doECpoint = true
+	}
+
+	// XXX
+	if wtg.Curve == "secp224k1" {
+		fmt.Printf("INFO: skipping %v test group %v with curve %v and %v encoding...\n", algorithm, wtg.Type, wtg.Curve, wtg.Encoding)
+		return true
 	}
 
 	fmt.Printf("Running %v test group %v with curve %v and %v encoding...\n",
@@ -2551,10 +2558,12 @@ func main() {
 		{"AES", "aes_[cg]*[^xv]_test.json"}, // Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
 		{"ChaCha20-Poly1305", "chacha20_poly1305_test.json"},
 		{"DSA", "dsa_*test.json"},
+		{"ECDH", "ecdh_test.json"},
 		{"ECDH", "ecdh_[^w]*test.json"},
-		{"ECDHWebCrypto", "ecdh_w*_test.json"},
+		{"ECDHWebCrypto", "ecdh_webcrypto_test.json"},
 		{"ECDSA", "ecdsa_[^w]*test.json"},
-		{"ECDSAWebCrypto", "ecdsa_w*_test.json"},
+		{"ECDSA", "ecdsa_test.json"},
+		{"ECDSAWebCrypto", "ecdsa_webcrypto_test.json"},
 		{"HKDF", "hkdf_sha*_test.json"},
 		{"KW", "kw_test.json"},
 		{"RSA", "rsa_*test.json"},
