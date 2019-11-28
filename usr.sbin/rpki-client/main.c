@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.33 2019/11/28 20:36:17 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.34 2019/11/28 21:08:25 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1790,10 +1790,11 @@ FILE *
 output_createtmp(char *name)
 {
 	FILE *f;
-	int fd;
+	int fd, r;
 
-	if (snprintf(output_tmpname, sizeof output_tmpname,
-	    "%s.XXXXXXXXXXX", name) >= sizeof output_tmpname)
+	r = snprintf(output_tmpname, sizeof output_tmpname,
+	    "%s.XXXXXXXXXXX", name);
+	if (r < 0 || r > (int)sizeof(output_tmpname))
 		err(EXIT_FAILURE, "path too long");
 	fd = mkostemp(output_tmpname, O_CLOEXEC);
 	if (fd == -1)
