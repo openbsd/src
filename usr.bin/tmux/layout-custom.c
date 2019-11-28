@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-custom.c,v 1.18 2019/10/19 12:40:42 nicm Exp $ */
+/* $OpenBSD: layout-custom.c,v 1.19 2019/11/28 09:45:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -221,7 +221,7 @@ layout_parse(struct window *w, const char *layout)
 		return (-1);
 
 	/* Resize to the layout size. */
-	window_resize(w, lc->sx, lc->sy);
+	window_resize(w, lc->sx, lc->sy, -1, -1);
 
 	/* Destroy the old layout and swap to the new. */
 	layout_free_cell(w->layout_root);

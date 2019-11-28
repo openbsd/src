@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.218 2019/11/28 09:05:34 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.219 2019/11/28 09:45:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2211,6 +2211,8 @@ format_defaults_window(struct format_tree *ft, struct window *w)
 	format_add(ft, "window_name", "%s", w->name);
 	format_add(ft, "window_width", "%u", w->sx);
 	format_add(ft, "window_height", "%u", w->sy);
+	format_add(ft, "window_cell_width", "%u", w->xpixel);
+	format_add(ft, "window_cell_height", "%u", w->ypixel);
 	format_add_cb(ft, "window_layout", format_cb_window_layout);
 	format_add_cb(ft, "window_visible_layout",
 	    format_cb_window_visible_layout);

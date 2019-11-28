@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-set.c,v 1.27 2019/07/15 18:25:07 nicm Exp $ */
+/* $OpenBSD: layout-set.c,v 1.28 2019/11/28 09:45:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -163,7 +163,7 @@ layout_set_even(struct window *w, enum layout_type type)
 
 	layout_print_cell(w->layout_root, __func__, 1);
 
-	window_resize(w, lc->sx, lc->sy);
+	window_resize(w, lc->sx, lc->sy, -1, -1);
 	notify_window("window-layout-changed", w);
 	server_redraw_window(w);
 }
@@ -262,7 +262,7 @@ layout_set_main_h(struct window *w)
 
 	layout_print_cell(w->layout_root, __func__, 1);
 
-	window_resize(w, lc->sx, lc->sy);
+	window_resize(w, lc->sx, lc->sy, -1, -1);
 	notify_window("window-layout-changed", w);
 	server_redraw_window(w);
 }
@@ -349,7 +349,7 @@ layout_set_main_v(struct window *w)
 
 	layout_print_cell(w->layout_root, __func__, 1);
 
-	window_resize(w, lc->sx, lc->sy);
+	window_resize(w, lc->sx, lc->sy, -1, -1);
 	notify_window("window-layout-changed", w);
 	server_redraw_window(w);
 }
@@ -458,7 +458,7 @@ layout_set_tiled(struct window *w)
 
 	layout_print_cell(w->layout_root, __func__, 1);
 
-	window_resize(w, lc->sx, lc->sy);
+	window_resize(w, lc->sx, lc->sy, -1, -1);
 	notify_window("window-layout-changed", w);
 	server_redraw_window(w);
 }
