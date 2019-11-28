@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.30 2019/11/28 19:32:30 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.31 2019/11/28 20:10:45 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -579,7 +579,7 @@ proc_rsync(const char *prog, const char *bind_addr, int fd, int noop)
 	const char		*pp;
 	pid_t			 pid;
 	char			*args[32];
-	int			 st, rc = 0;
+	int			 st, rc = 1;
 	struct stat		 stt;
 	struct pollfd		 pfd;
 	sigset_t		 mask, oldmask;
@@ -761,7 +761,7 @@ proc_rsync(const char *prog, const char *bind_addr, int fd, int noop)
 		free(dst);
 		free(host);
 	}
-	rc = 1;
+	rc = 0;
 out:
 
 	/* No need for these to be hanging around. */
@@ -773,7 +773,7 @@ out:
 		}
 
 	free(ids);
-	exit(rc ? EXIT_SUCCESS : EXIT_FAILURE);
+	exit(rc);
 	/* NOTREACHED */
 }
 
@@ -1103,7 +1103,7 @@ proc_parser(int fd, int force)
 	struct roa	*roa;
 	struct entity	*entp;
 	struct entityq	 q;
-	int		 c, rc = 0;
+	int		 c, rc = 1;
 	struct pollfd	 pfd;
 	char		*b = NULL;
 	size_t		 i, bsz = 0, bmax = 0, bpos = 0, authsz = 0;
@@ -1246,7 +1246,7 @@ proc_parser(int fd, int force)
 		entity_free(entp);
 	}
 
-	rc = 1;
+	rc = 0;
 out:
 	while ((entp = TAILQ_FIRST(&q)) != NULL) {
 		TAILQ_REMOVE(&q, entp, entries);
@@ -1271,7 +1271,7 @@ out:
 	ERR_remove_state(0);
 	ERR_free_strings();
 
-	exit(rc ? EXIT_SUCCESS : EXIT_FAILURE);
+	exit(rc);
 }
 
 /*
@@ -1397,7 +1397,7 @@ tal_load_default(const char *tals[], size_t max)
 int
 main(int argc, char *argv[])
 {
-	int		 rc = 0, c, proc, st, rsync,
+	int		 rc = 1, c, proc, st, rsync,
 			 fl = SOCK_STREAM | SOCK_CLOEXEC, noop = 0,
 			 force = 0;
 	size_t		 i, j, eid = 1, outsz = 0, talsz = 0;
@@ -1619,7 +1619,7 @@ main(int argc, char *argv[])
 
 	assert(TAILQ_EMPTY(&q));
 	logx("all files parsed: exiting");
-	rc = 1;
+	rc = 0;
 
 	/*
 	 * For clean-up, close the input for the parser and rsync
@@ -1634,13 +1634,13 @@ main(int argc, char *argv[])
 		err(EXIT_FAILURE, "waitpid");
 	if (!WIFEXITED(st) || WEXITSTATUS(st) != EXIT_SUCCESS) {
 		warnx("parser process exited abnormally");
-		rc = 0;
+		rc = 1;
 	}
 	if (waitpid(rsyncpid, &st, 0) == -1)
 		err(EXIT_FAILURE, "waitpid");
 	if (!WIFEXITED(st) || WEXITSTATUS(st) != EXIT_SUCCESS) {
 		warnx("rsync process exited abnormally");
-		rc = 0;
+		rc = 1;
 	}
 
 	switch (outfmt) {
@@ -1683,7 +1683,7 @@ main(int argc, char *argv[])
 		roa_free(out[i]);
 	free(out);
 
-	return rc ? EXIT_SUCCESS : EXIT_FAILURE;
+	return rc;
 
 usage:
 	fprintf(stderr,
