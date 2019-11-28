@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.42 2019/11/28 02:30:38 beck Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.43 2019/11/28 16:05:25 beck Exp $ */
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -258,8 +258,7 @@ buf_alloc_pages(struct buf *bp, vsize_t size)
 	KASSERT(bp->b_data == NULL);
 	splassert(IPL_BIO);
 
-	bp->b_pobj = &bp->b_uobj;
-	uvm_objinit(bp->b_pobj, NULL, 1);
+	uvm_objinit(&bp->b_uobj, NULL, 1);
 
 	/*
 	 * Attempt to allocate with NOWAIT. if we can't, then throw
@@ -268,13 +267,13 @@ buf_alloc_pages(struct buf *bp, vsize_t size)
 	 * memory for us.
 	 */
 	do {
-		i = uvm_pagealloc_multi(bp->b_pobj, 0, size,
+		i = uvm_pagealloc_multi(&bp->b_uobj, 0, size,
 		    UVM_PLA_NOWAIT | UVM_PLA_NOWAKE);
 		if (i == 0)
 			break;
 	} while	(bufbackoff(&dma_constraint, size) == 0);
 	if (i != 0)
-		i = uvm_pagealloc_multi(bp->b_pobj, 0, size,
+		i = uvm_pagealloc_multi(&bp->b_uobj, 0, size,
 		    UVM_PLA_WAITOK);
 	/* should not happen */
 	if (i != 0)
@@ -284,6 +283,7 @@ buf_alloc_pages(struct buf *bp, vsize_t size)
 	bcstats.numbufpages += atop(size);
 	bcstats.dmapages += atop(size);
 	SET(bp->b_flags, B_DMA);
+	bp->b_pobj = &bp->b_uobj;
 	bp->b_poffs = 0;
 	bp->b_bufsize = size;
 }
