@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.115 2019/11/19 10:20:10 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.116 2019/11/28 11:21:33 inoguchi Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: November 19 2019 $
+.Dd $Mdocdate: November 28 2019 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -876,6 +876,522 @@ key exchange, authentication, encryption, and mac algorithms.
 Like
 .Fl V ,
 but without cipher suite codes.
+.El
+.Sh CMS
+.Bl -hang -width "openssl cms"
+.It Nm openssl cms
+.Bk -words
+.Oo
+.Fl aes128 | aes192 | aes256 | camellia128 |
+.Fl camellia192 | camellia256 | des | des3 |
+.Fl rc2-40 | rc2-64 | rc2-128
+.Oc
+.Op Fl CAfile Ar file
+.Op Fl CApath Ar directory
+.Op Fl binary
+.Op Fl certfile Ar file
+.Op Fl certsout Ar file
+.Op Fl cmsout
+.Op Fl compress
+.Op Fl content Ar file
+.Op Fl crlfeol
+.Op Fl data_create
+.Op Fl data_out
+.Op Fl debug_decrypt
+.Op Fl decrypt
+.Op Fl digest_create
+.Op Fl digest_verify
+.Op Fl econtent_type Ar type
+.Op Fl encrypt
+.Op Fl EncryptedData_decrypt
+.Op Fl EncryptedData_encrypt
+.Op Fl from Ar addr
+.Op Fl in Ar file
+.Op Fl inform Cm der | pem | smime
+.Op Fl inkey Ar file
+.Op Fl keyform Cm der | pem
+.Op Fl keyid
+.Op Fl keyopt Ar nm:v
+.Op Fl md Ar digest
+.Op Fl no_attr_verify
+.Op Fl no_content_verify
+.Op Fl no_signer_cert_verify
+.Op Fl noattr
+.Op Fl nocerts
+.Op Fl nodetach
+.Op Fl nointern
+.Op Fl nooldmime
+.Op Fl noout
+.Op Fl nosigs
+.Op Fl nosmimecap
+.Op Fl noverify
+.Op Fl out Ar file
+.Op Fl outform Cm der | pem | smime
+.Op Fl passin Ar src
+.Op Fl print
+.Op Fl pwri_password Ar arg
+.Op Fl rctform Cm der | pem | smime
+.Op Fl receipt_request_all | receipt_request_first
+.Op Fl receipt_request_from Ar addr
+.Op Fl receipt_request_print
+.Op Fl receipt_request_to Ar addr
+.Op Fl recip Ar file
+.Op Fl resign
+.Op Fl secretkey Ar key
+.Op Fl secretkeyid Ar id
+.Op Fl sign
+.Op Fl sign_receipt
+.Op Fl signer Ar file
+.Op Fl stream | indef | noindef
+.Op Fl subject Ar s
+.Op Fl text
+.Op Fl to Ar addr
+.Op Fl uncompress
+.Op Fl verify
+.Op Fl verify_receipt Ar file
+.Op Fl verify_retcode
+.Op Ar cert.pem ...
+.Ek
+.El
+.Pp
+The
+.Nm cms
+command handles S/MIME v3.1 mail.
+It can encrypt, decrypt, sign and verify, compress and uncompress S/MIME
+messages.
+.Pp
+The MIME message must be sent without any blank lines between the headers and
+the output.
+Some mail programs will automatically add a blank line.
+Piping the mail directly to sendmail is one way to achieve the correct format.
+.Pp
+The supplied message to be signed or encrypted must include the necessary MIME
+headers or many S/MIME clients won't display it properly (if at all).
+You can use the
+.Fl text
+option to automatically add plain text headers.
+.Pp
+A "signed and encrypted" message is one where a signed message is then
+encrypted.
+This can be produced by encrypting an already signed message.
+.Pp
+There are various operation options that set the type of operation to be
+performed.
+The meaning of the other options varies according to the operation type.
+.Bl -tag -width "XXXX"
+.It Fl encrypt
+Encrypt mail for the given recipient certificates.
+Input file is the message to be encrypted.
+The output file is the encrypted mail in MIME format.
+The actual CMS type is EnvelopedData.
+Note that no revocation check is done for the recipient cert, so if that
+key has been compromised, others may be able to decrypt the text.
+.It Fl decrypt
+Decrypt mail using the supplied certificate and private key.
+Expects an encrypted mail message in MIME format for the input file.
+The decrypted mail is written to the output file.
+.It Fl sign
+Sign mail using the supplied certificate and private key.
+Input file is the message to be signed.
+The signed message in MIME format is written to the output file.
+.It Fl verify
+Verify signed mail.
+Expects a signed mail message on input and outputs the signed data.
+Both clear text and opaque signing are supported.
+.It Fl cmsout
+Take an input message and write out a PEM encoded CMS structure.
+.It Fl resign
+Resign a message.
+Take an existing message and one or more new signers.
+This operation uses an existing message digest when adding a new signer.
+This means that attributes must be present in at least one existing
+signer using the same message digest or this operation will fail.
+.It Fl data_create
+Create a CMS Data type.
+.It Fl data_out
+Output a content from the input CMS Data type.
+.It Fl digest_create
+Create a CMS DigestedData type.
+.It Fl digest_verify
+Verify a CMS DigestedData type and output the content.
+.It Fl compress
+Create a CMS CompressedData type.
+Must be compiled with zlib support for this option to work.
+.It Fl uncompress
+Uncompress a CMS CompressedData type and output the content.
+Must be compiled with zlib support for this option to work.
+.It Fl EncryptedData_encrypt
+Encrypt a content using supplied symmetric key and algorithm using a
+CMS EncryptedData type.
+.It Fl EncryptedData_decrypt
+Decrypt a CMS EncryptedData type using supplied symmetric key.
+.It Fl sign_receipt
+Generate and output a signed receipt for the supplied message.
+The input message must contain a signed receipt request.
+Functionality is otherwise similar to the
+.Fl sign
+operation.
+.It Xo
+.Fl verify_receipt Ar file
+.Xc
+Verify a signed receipt in file.
+The input message must contain the original receipt request.
+Functionality is otherwise similar to the
+.Fl verify
+operation.
+.El
+.Pp
+The remaining options are as follows:
+.Bl -tag -width "XXXX"
+.It Xo
+.Fl aes128 | aes192 | aes256 | camellia128 |
+.Fl camellia192 | camellia256 | des | des3 |
+.Fl rc2-40 | rc2-64 | rc2-128
+.Xc
+The encryption algorithm to use.
+128-, 192-, or 256-bit AES, 128-, 192-, or 256-bit CAMELLIA,
+DES (56 bits), triple DES (168 bits),
+or 40-, 64-, or 128-bit RC2, respectively;
+if not specified, triple DES is
+used.
+Only used with
+.Fl encrypt
+and
+.Fl EncryptedData_encrypt
+commands.
+.It Fl binary
+Normally the input message is converted to "canonical" format which is
+effectively using CR/LF as end of line, as required by the S/MIME specification.
+When this option is present no translation occurs.
+This is useful when handling binary data which may not be in MIME format.
+.It Fl CAfile Ar file
+A file containing trusted CA certificates, used with
+.Fl verify
+and
+.Fl verify_receipt .
+.It Fl CApath Ar directory
+A directory containing trusted CA certificates, used with
+.Fl verify
+and
+.Fl verify_receipt .
+This directory must be a standard certificate directory: that is a hash
+of each subject name (using
+.Nm x509 Fl hash )
+should be linked to each certificate.
+.It Ar cert.pem...
+One or more certificates of message recipients: used when encrypting a message.
+.It Fl certfile Ar file
+Allows additional certificates to be specified.
+When signing these will be included with the message.
+When verifying these will be searched for the signer's certificates.
+The certificates should be in PEM format.
+.It Fl certsout Ar file
+A file that any certificates contained in the message are written to.
+.It Xo
+.Fl check_ss_sig ,
+.Fl crl_check ,
+.Fl crl_check_all ,
+.Fl extended_crl ,
+.Fl ignore_critical ,
+.Fl issuer_checks ,
+.Fl policy ,
+.Fl policy_check ,
+.Fl purpose ,
+.Fl x509_strict
+.Xc
+Set various certificate chain validation options.
+See the
+.Nm verify
+command for details.
+.It Fl content Ar file
+A file containing the detached content.
+This is only useful with the
+.Fl verify
+command.
+This is only usable if the CMS structure is using the detached signature
+form where the content is not included.
+This option will override any content if the input format is S/MIME and
+it uses the multipart/signed MIME content type.
+.It Fl crlfeol
+Output a S/MIME message with CR/LF end of line.
+.It Fl debug_decrypt
+Set the CMS_DEBUG_DECRYPT flag when decrypting.
+This option should be used with caution, since this can be used to disable
+the MMA attack protection and return an error if no recipient can be found.
+See the
+.Xr CMS_decrypt 3
+manual page for details of the flag.
+.It Xo
+.Fl from Ar addr ,
+.Fl subject Ar s ,
+.Fl to Ar addr
+.Xc
+The relevant mail headers.
+These are included outside the signed portion of a message so they may
+be included manually.
+If signing then many S/MIME mail clients check the signer's certificate's
+email address matches that specified in the From: address.
+.It Fl econtent_type Ar type
+Set the encapsulated content type, used with
+.Fl sign .
+If not supplied the Data type is used.
+The type argument can be any valid OID name in either text or numerical format.
+.It Fl in Ar file
+The input message to be encrypted or signed or the message to be decrypted or
+verified.
+.It Fl inform Cm der | pem | smime
+The input format for the CMS structure.
+The default is
+.Cm smime ,
+which reads an S/MIME format message.
+.Cm pem
+and
+.Cm der
+format change this to expect PEM and DER format CMS structures instead.
+This currently only affects the input format of the CMS structure; if no
+CMS structure is being input (for example with
+.Fl encrypt
+or
+.Fl sign )
+this option has no effect.
+.It Fl inkey Ar file
+The private key to use when signing or decrypting.
+This must match the corresponding certificate.
+If this option is not specified then the private key must be included in
+the certificate file specified with the
+.Fl recip
+or
+.Fl signer
+file.
+When signing this option can be used multiple times to specify successive keys.
+.It Fl keyform Cm der | pem
+Input private key format.
+The default is
+.Cm pem .
+.It Fl keyid
+Use subject key identifier to identify certificates instead of issuer
+name and serial number.
+The supplied certificate must include a subject key identifier extension.
+Supported by
+.Fl sign
+and
+.Fl encrypt
+operations.
+.It Fl keyopt Ar nm:v
+Set customised parameters for the preceding key or certificate
+for encryption and signing.
+It can currently be used to set RSA-PSS for signing, RSA-OAEP for
+encryption or to modify default parameters for ECDH.
+This option can be used multiple times.
+.It Fl md Ar digest
+The digest algorithm to use when signing or resigning.
+If not present then the default digest algorithm for the signing key
+will be used (usually SHA1).
+.It Fl no_attr_verify
+Do not verify the signer's attribute of a signature.
+.It Fl no_content_verify
+Do not verify the content of a signed message.
+.It Fl no_signer_cert_verify
+Do not verify the signer's certificate of a signed message.
+.It Fl noattr
+Do not include attributes.
+Normally when a message is signed a set of attributes are included which
+include the signing time and supported symmetric algorithms.
+With this option they are not included.
+.It Fl nocerts
+Do not include the signer's certificate.
+This will reduce the size of the signed message but the verifier must
+have a copy of the signer's certificate available locally (passed using
+the
+.Fl certfile
+option for example).
+.It Fl nodetach
+When signing a message use opaque signing.
+This form is more resistant to translation by mail relays but it cannot be
+read by mail agents that do not support S/MIME.
+Without this option cleartext signing with the MIME type multipart/signed is
+used.
+.It Fl nointern
+Only the certificates specified in the
+.Fl certfile
+option are used.
+When verifying a message normally certificates (if any) included in the
+message are searched for the signing certificate.
+The supplied certificates can still be used as untrusted CAs however.
+.It Fl nooldmime
+Output an old S/MIME content type like "application/x-pkcs7-".
+.It Fl noout
+Do not output the parsed CMS structure for the
+.Fl cmsout
+operation.
+This is useful when combined with the
+.Fl print
+option or if the syntax of the CMS structure is being checked.
+.It Fl nosigs
+Do not try to verify the signatures on the message.
+.It Fl nosmimecap
+Exclude the list of supported algorithms from signed attributes; other
+options such as signing time and content type are still included.
+.It Fl noverify
+Do not verify the signer's certificate of a signed message.
+.It Fl out Ar file
+The message text that has been decrypted or verified or the output MIME
+format message that has been signed or verified.
+.It Fl outform Cm der | pem | smime
+This specifies the output format for the CMS structure.
+The default is
+.Cm smime ,
+which writes an S/MIME format message.
+.Cm pem
+and
+.Cm der
+format change this to write PEM and DER format CMS structures instead.
+This currently only affects the output format of the CMS structure; if
+no CMS structure is being output (for example with
+.Fl verify
+or
+.Fl decrypt )
+this option has no effect.
+.It Fl passin Ar src
+The private key password source.
+.It Fl print
+Print out all fields of the CMS structure for the
+.Fl cmsout
+operation.
+This is mainly useful for testing purposes.
+.It Fl pwri_password Ar arg
+Specify PasswordRecipientInfo (PWRI) password to use.
+Supported by the
+.Fl encrypt
+and
+.Fl decrypt
+operations.
+.It Fl rctform Cm der | pem | smime
+Specify the format for a signed receipt for use with the
+.Fl receipt_verify
+operation.
+The default is
+.Cm smime .
+.It Fl receipt_request_all | receipt_request_first
+Indicate requests should be provided by all recipient or first tier
+recipients (those mailed directly and not from a mailing list), for the
+.Fl sign
+operation to include a signed receipt request.
+Ignored if
+.Fl receipt_request_from
+is included.
+.It Fl receipt_request_from Ar addr
+Add an explicit email address where receipts should be supplied.
+.It Fl receipt_request_print
+Print out the contents of any signed receipt requests for the
+.Fl verify
+operation.
+.It Fl receipt_request_to Ar addr
+Add an explicit email address where signed receipts should be sent to.
+This option must be supplied if a signed receipt is requested.
+.It Fl recip Ar file
+When decrypting a message this specifies the recipient's certificate.
+The certificate must match one of the recipients of the message or an
+error occurs.
+When encrypting a message this option may be used multiple times to
+specify each recipient.
+This form must be used if customised parameters are required (for example to
+specify RSA-OAEP).
+Only certificates carrying RSA, Diffie-Hellman or EC keys are supported
+by this option.
+.It Fl secretkey Ar key
+Specify symmetric key to use.
+The key must be supplied in hex format and be consistent with the
+algorithm used.
+Supported by the
+.Fl EncryptedData_encrypt ,
+.Fl EncryptedData_decrypt ,
+.Fl encrypt
+and
+.Fl decrypt
+operations.
+When used with
+.Fl encrypt
+or
+.Fl decrypt
+the supplied key is used to wrap or unwrap the content encryption key
+using an AES key in the KEKRecipientInfo type.
+.It Fl secretkeyid Ar id
+The key identifier for the supplied symmetric key for KEKRecipientInfo type.
+This option must be present if the
+.Fl secretkey
+option is used with
+.Fl encrypt .
+With
+.Fl decrypt
+operations the id is used to locate the relevant key; if it is not supplied
+then an attempt is used to decrypt any KEKRecipientInfo structures.
+.It Fl signer Ar file
+A signing certificate when signing or resigning a message; this option
+can be used multiple times if more than one signer is required.
+If a message is being verified then the signers certificates will be
+written to this file if the verification was successful.
+.It Xo
+.Fl stream |
+.Fl indef |
+.Fl noindef
+.Xc
+The
+.Fl stream
+and
+.Fl indef
+options are equivalent and enable streaming I/O for encoding operations.
+This permits single pass processing of data without the need to hold the
+entire contents in memory, potentially supporting very large files.
+Streaming is automatically set for S/MIME signing with detached data if
+the output format is
+.Cm smime ;
+it is currently off by default for all other operations.
+.Fl noindef
+disable streaming I/O where it would produce an indefinite length
+constructed encoding.
+This option currently has no effect.
+.It Fl text
+Add plain text (text/plain) MIME headers to the supplied message if
+encrypting or signing.
+If decrypting or verifying it strips off text headers: if the decrypted
+or verified message is not of MIME type text/plain then an error occurs.
+.It Fl verify_retcode
+Set verification error code to exit code to indicate what verification error
+has occurred.
+Supported by
+.Fl verify
+operation only.
+Exit code value minus 32 shows verification error code.
+See
+.Nm verify
+command for the list of verification error code.
+.El
+.Pp
+The exit codes for
+.Nm cms
+are as follows:
+.Pp
+.Bl -tag -width "XXXX" -offset 3n -compact
+.It 0
+The operation was completely successful.
+.It 1
+An error occurred parsing the command options.
+.It 2
+One of the input files could not be read.
+.It 3
+An error occurred creating the CMS file or when reading the MIME message.
+.It 4
+An error occurred decrypting or verifying the message.
+.It 5
+The message was verified correctly but an error occurred writing out the
+signer's certificates.
+.It 6
+An error occurred writing the output file.
+.It 32+
+A verify error occurred while
+.Fl verify_retcode
+is specified.
 .El
 .Sh CRL
 .Bl -hang -width "openssl crl"
