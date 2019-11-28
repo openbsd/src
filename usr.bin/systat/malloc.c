@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.4 2019/06/28 13:35:04 deraadt Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.5 2019/11/28 16:27:25 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -394,7 +394,6 @@ showtype(int k)
 	print_fld_size(FLD_TYPE_LIMIT, t->stats.ks_limit);
 	print_fld_size(FLD_TYPE_REQUESTS, t->stats.ks_calls);
 	print_fld_size(FLD_TYPE_TLIMIT, t->stats.ks_limblocks);
-	print_fld_size(FLD_TYPE_KLIMIT, t->stats.ks_mapblocks);
 	print_fld_str(FLD_TYPE_SIZES, t->buckets);
 
 	end_line();

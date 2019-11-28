@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.149 2019/10/14 19:22:17 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.150 2019/11/28 16:27:26 guenther Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -868,16 +868,16 @@ domem(void)
 	(void)printf(
 	   "\nMemory statistics by type                           Type  Kern\n");
 	(void)printf(
-"          Type InUse MemUse HighUse  Limit Requests Limit Limit Size(s)\n");
+"          Type InUse MemUse HighUse  Limit Requests Limit Size(s)\n");
 	for (i = 0, ks = &kmemstats[0]; i < M_LAST; i++, ks++) {
 		if (ks->ks_calls == 0)
 			continue;
-		(void)printf("%14s%6ld%6ldK%7ldK%6ldK%9ld%5u%6u",
+		(void)printf("%14s%6ld%6ldK%7ldK%6ldK%9ld%5u",
 		    kmemnames[i] ? kmemnames[i] : "undefined",
 		    ks->ks_inuse, (ks->ks_memuse + 1023) / 1024,
 		    (ks->ks_maxused + 1023) / 1024,
 		    (ks->ks_limit + 1023) / 1024, ks->ks_calls,
-		    ks->ks_limblocks, ks->ks_mapblocks);
+		    ks->ks_limblocks);
 		first = 1;
 		for (j =  1 << MINBUCKET; j < 1 << (MINBUCKET + 16); j <<= 1) {
 			if ((ks->ks_size & j) == 0)

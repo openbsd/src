@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.248 2019/10/29 04:20:36 dlg Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.249 2019/11/28 16:27:25 guenther Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -884,11 +884,11 @@ parse(char *string, int flags)
 		if (!nflag)
 			(void)printf("%s%s", string, equ);
 		(void)printf("(inuse = %ld, calls = %ld, memuse = %ldK, "
-		    "limblocks = %d, mapblocks = %d, maxused = %ldK, "
+		    "limblocks = %d, maxused = %ldK, "
 		    "limit = %ldK, spare = %ld, sizes = (",
 		    km->ks_inuse, km->ks_calls,
 		    (km->ks_memuse + 1023) / 1024, km->ks_limblocks,
-		    km->ks_mapblocks, (km->ks_maxused + 1023) / 1024,
+		    (km->ks_maxused + 1023) / 1024,
 		    (km->ks_limit + 1023) / 1024, km->ks_spare);
 		for (j = 1 << MINBUCKET; j < 1 << (MINBUCKET + 16); j <<= 1) {
 			if ((km->ks_size & j ) == 0)
