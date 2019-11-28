@@ -1,16 +1,15 @@
 /*
- * Copyright (c) 2014-2017 Pavel Kalvoda <me@pavelkalvoda.com>
+ * Copyright (c) 2014-2019 Pavel Kalvoda <me@pavelkalvoda.com>
  *
  * libcbor is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See LICENSE for details.
  */
 
-
 #ifndef LIBCBOR_H_
 #define LIBCBOR_H_
 
-#include "cbor/data.h"
 #include "cbor/common.h"
+#include "cbor/data.h"
 
 #include "cbor/arrays.h"
 #include "cbor/bytestrings.h"
@@ -20,9 +19,9 @@
 #include "cbor/strings.h"
 #include "cbor/tags.h"
 
+#include "cbor/callbacks.h"
 #include "cbor/encoding.h"
 #include "cbor/serialization.h"
-#include "cbor/callbacks.h"
 #include "cbor/streaming.h"
 
 #ifdef __cplusplus
@@ -30,21 +29,21 @@ extern "C" {
 #endif
 
 /*
-* ============================================================================
-* High level decoding
-* ============================================================================
-*/
+ * ============================================================================
+ * High level decoding
+ * ============================================================================
+ */
 
 /** Loads data item from a buffer
  *
  * @param source The buffer
  * @param source_size
  * @param result[out] Result indicator. #CBOR_ERR_NONE on success
- * @return **new** CBOR item or `NULL` on failure. In that case, \p result contains location and description of the error.
+ * @return **new** CBOR item or `NULL` on failure. In that case, \p result
+ * contains location and description of the error.
  */
-cbor_item_t * cbor_load(cbor_data source,
-						size_t source_size,
-						struct cbor_load_result * result);
+cbor_item_t* cbor_load(cbor_data source, size_t source_size,
+                       struct cbor_load_result* result);
 
 /** Deep copy of an item
  *
@@ -53,16 +52,16 @@ cbor_item_t * cbor_load(cbor_data source,
  * @param item[borrow] item to copy
  * @return **new** CBOR deep copy
  */
-cbor_item_t * cbor_copy(cbor_item_t * item);
+cbor_item_t* cbor_copy(cbor_item_t* item);
 
 #if CBOR_PRETTY_PRINTER
 #include <stdio.h>
 
-void cbor_describe(cbor_item_t * item, FILE * out);
+void cbor_describe(cbor_item_t* item, FILE* out);
 #endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //LIBCBOR_H_
+#endif  // LIBCBOR_H_

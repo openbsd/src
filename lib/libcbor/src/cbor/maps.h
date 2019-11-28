@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 Pavel Kalvoda <me@pavelkalvoda.com>
+ * Copyright (c) 2014-2019 Pavel Kalvoda <me@pavelkalvoda.com>
  *
  * libcbor is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See LICENSE for details.
@@ -15,10 +15,10 @@ extern "C" {
 #endif
 
 /*
-* ============================================================================
-* Map manipulation
-* ============================================================================
-*/
+ * ============================================================================
+ * Map manipulation
+ * ============================================================================
+ */
 
 /** Get the number of pairs
  *
@@ -50,12 +50,13 @@ cbor_item_t *cbor_new_indefinite_map();
 
 /** Add a pair to the map
  *
- * For definite maps, items can only be added to the preallocated space. For indefinite
- * maps, the storage will be expanded as needed
+ * For definite maps, items can only be added to the preallocated space. For
+ * indefinite maps, the storage will be expanded as needed
  *
  * @param item[borrow] A map
  * @param pair[incref] The key-value pair to add (incref is member-wise)
- * @return `true` on success, `false` if either reallocation failed or the preallcoated storage is full
+ * @return `true` on success, `false` if either reallocation failed or the
+ * preallcoated storage is full
  */
 bool cbor_map_add(cbor_item_t *item, struct cbor_pair pair);
 
@@ -65,7 +66,8 @@ bool cbor_map_add(cbor_item_t *item, struct cbor_pair pair);
  *
  * @param item[borrow] A map
  * @param key[incref] The key
- * @return `true` on success, `false` if either reallocation failed or the preallcoated storage is full
+ * @return `true` on success, `false` if either reallocation failed or the
+ * preallcoated storage is full
  */
 bool _cbor_map_add_key(cbor_item_t *item, cbor_item_t *key);
 
@@ -75,7 +77,8 @@ bool _cbor_map_add_key(cbor_item_t *item, cbor_item_t *key);
  *
  * @param item[borrow] A map
  * @param key[incref] The value
- * @return `true` on success, `false` if either reallocation failed or the preallcoated storage is full
+ * @return `true` on success, `false` if either reallocation failed or the
+ * preallcoated storage is full
  */
 bool _cbor_map_add_value(cbor_item_t *item, cbor_item_t *value);
 
@@ -96,7 +99,8 @@ bool cbor_map_is_indefinite(const cbor_item_t *item);
 /** Get the pairs storage
  *
  * @param item[borrow] A map
- * @return Array of #cbor_map_size pairs. Manipulation is possible as long as references remain valid.
+ * @return Array of #cbor_map_size pairs. Manipulation is possible as long as
+ * references remain valid.
  */
 struct cbor_pair *cbor_map_handle(const cbor_item_t *item);
 
@@ -104,4 +108,4 @@ struct cbor_pair *cbor_map_handle(const cbor_item_t *item);
 }
 #endif
 
-#endif //LIBCBOR_MAPS_H
+#endif  // LIBCBOR_MAPS_H

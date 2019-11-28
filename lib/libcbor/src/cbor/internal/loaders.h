@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 Pavel Kalvoda <me@pavelkalvoda.com>
+ * Copyright (c) 2014-2019 Pavel Kalvoda <me@pavelkalvoda.com>
  *
  * libcbor is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See LICENSE for details.
@@ -33,4 +33,4 @@ double _cbor_load_double(cbor_data source);
 }
 #endif
 
-#endif //LIBCBOR_LOADERS_H
+#endif  // LIBCBOR_LOADERS_H

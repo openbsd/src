@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 Pavel Kalvoda <me@pavelkalvoda.com>
+ * Copyright (c) 2014-2019 Pavel Kalvoda <me@pavelkalvoda.com>
  *
  * libcbor is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See LICENSE for details.
@@ -14,19 +14,23 @@
 extern "C" {
 #endif
 
+size_t _cbor_encode_uint8(uint8_t value, unsigned char *buffer,
+                          size_t buffer_size, uint8_t offset);
 
-size_t _cbor_encode_uint8(uint8_t value, unsigned char *buffer, size_t buffer_size, uint8_t offset);
+size_t _cbor_encode_uint16(uint16_t value, unsigned char *buffer,
+                           size_t buffer_size, uint8_t offset);
 
-size_t _cbor_encode_uint16(uint16_t value, unsigned char *buffer, size_t buffer_size, uint8_t offset);
+size_t _cbor_encode_uint32(uint32_t value, unsigned char *buffer,
+                           size_t buffer_size, uint8_t offset);
 
-size_t _cbor_encode_uint32(uint32_t value, unsigned char *buffer, size_t buffer_size, uint8_t offset);
+size_t _cbor_encode_uint64(uint64_t value, unsigned char *buffer,
+                           size_t buffer_size, uint8_t offset);
 
-size_t _cbor_encode_uint64(uint64_t value, unsigned char *buffer, size_t buffer_size, uint8_t offset);
-
-size_t _cbor_encode_uint(uint64_t value, unsigned char *buffer, size_t buffer_size, uint8_t offset);
+size_t _cbor_encode_uint(uint64_t value, unsigned char *buffer,
+                         size_t buffer_size, uint8_t offset);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //LIBCBOR_ENCODERS_H
+#endif  // LIBCBOR_ENCODERS_H

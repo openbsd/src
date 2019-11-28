@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 Pavel Kalvoda <me@pavelkalvoda.com>
+ * Copyright (c) 2014-2019 Pavel Kalvoda <me@pavelkalvoda.com>
  *
  * libcbor is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See LICENSE for details.
@@ -15,10 +15,10 @@ extern "C" {
 #endif
 
 /*
-* ============================================================================
-* String manipulation
-* ============================================================================
-*/
+ * ============================================================================
+ * String manipulation
+ * ============================================================================
+ */
 
 /** Returns the length of the underlying string
  *
@@ -40,25 +40,26 @@ size_t cbor_string_codepoint_count(const cbor_item_t *item);
 
 /** Is the string definite?
  *
- * @param item[borrow] a string 
+ * @param item[borrow] a string
  * @return Is the string definite?
  */
 bool cbor_string_is_definite(const cbor_item_t *item);
 
 /** Is the string indefinite?
  *
- * @param item[borrow] a string 
+ * @param item[borrow] a string
  * @return Is the string indefinite?
  */
 bool cbor_string_is_indefinite(const cbor_item_t *item);
 
 /** Get the handle to the underlying string
  *
- * Definite items only. Modifying the data is allowed. In that case, the caller takes
- * responsibility for the effect on items this item might be a part of
+ * Definite items only. Modifying the data is allowed. In that case, the caller
+ * takes responsibility for the effect on items this item might be a part of
  *
  * @param item[borrow] A definite string
- * @return The address of the underlying string. `NULL` if no data have been assigned yet.
+ * @return The address of the underlying string. `NULL` if no data have been
+ * assigned yet.
  */
 cbor_mutable_data cbor_string_handle(const cbor_item_t *item);
 
@@ -66,18 +67,23 @@ cbor_mutable_data cbor_string_handle(const cbor_item_t *item);
  *
  *
  * \rst
- * .. warning:: Using a pointer to a stack allocated constant is a common mistake. Lifetime of the string will expire when it goes out of scope and the CBOR item will be left inconsistent.
- * \endrst
+ * .. warning:: Using a pointer to a stack allocated constant is a common
+ * mistake. Lifetime of the string will expire when it goes out of scope and the
+ * CBOR item will be left inconsistent. \endrst
  *
  * @param item[borrow] A definite string
- * @param data The memory block. The caller gives up the ownership of the block. libcbor will deallocate it when appropriate using its free function
+ * @param data The memory block. The caller gives up the ownership of the block.
+ * libcbor will deallocate it when appropriate using its free function
  * @param length Length of the data block
  */
-void cbor_string_set_handle(cbor_item_t *item, cbor_mutable_data CBOR_RESTRICT_POINTER data, size_t length);
+void cbor_string_set_handle(cbor_item_t *item,
+                            cbor_mutable_data CBOR_RESTRICT_POINTER data,
+                            size_t length);
 
 /** Get the handle to the array of chunks
- * 
- * Manipulations with the memory block (e.g. sorting it) are allowed, but the validity and the number of chunks must be retained.
+ *
+ * Manipulations with the memory block (e.g. sorting it) are allowed, but the
+ * validity and the number of chunks must be retained.
  *
  * @param item[borrow] A indefinite string
  * @return array of #cbor_string_chunk_count definite strings
@@ -99,7 +105,8 @@ size_t cbor_string_chunk_count(const cbor_item_t *item);
  *
  * @param item[borrow] An indefinite string
  * @param item[incref] A definite string
- * @return true on success. false on realloc failure. In that case, the refcount of `chunk` is not increased and the `item` is left intact.
+ * @return true on success. false on realloc failure. In that case, the refcount
+ * of `chunk` is not increased and the `item` is left intact.
  */
 bool cbor_string_add_chunk(cbor_item_t *item, cbor_item_t *chunk);
 
@@ -141,4 +148,4 @@ cbor_item_t *cbor_build_stringn(const char *val, size_t length);
 }
 #endif
 
-#endif //LIBCBOR_STRINGS_H
+#endif  // LIBCBOR_STRINGS_H

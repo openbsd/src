@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 Pavel Kalvoda <me@pavelkalvoda.com>
+ * Copyright (c) 2014-2019 Pavel Kalvoda <me@pavelkalvoda.com>
  *
  * libcbor is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See LICENSE for details.
@@ -8,8 +8,8 @@
 #ifndef LIBCBOR_BUILDER_CALLBACKS_H
 #define LIBCBOR_BUILDER_CALLBACKS_H
 
-#include "cbor/common.h"
 #include "../callbacks.h"
+#include "cbor/common.h"
 #include "stack.h"
 
 #ifdef __cplusplus
@@ -18,12 +18,12 @@ extern "C" {
 
 /** High-level decoding context */
 struct _cbor_decoder_context {
-	/** Callback creating the last item has failed */
-	bool creation_failed;
-	/** Stack expectation mismatch */
-	bool syntax_error;
-	cbor_item_t *root;
-	struct _cbor_stack *stack;
+  /** Callback creating the last item has failed */
+  bool creation_failed;
+  /** Stack expectation mismatch */
+  bool syntax_error;
+  cbor_item_t *root;
+  struct _cbor_stack *stack;
 };
 
 void cbor_builder_uint8_callback(void *, uint8_t);
@@ -78,4 +78,4 @@ void cbor_builder_indef_break_callback(void *);
 }
 #endif
 
-#endif //LIBCBOR_BUILDER_CALLBACKS_H
+#endif  // LIBCBOR_BUILDER_CALLBACKS_H

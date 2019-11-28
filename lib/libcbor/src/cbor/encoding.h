@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 Pavel Kalvoda <me@pavelkalvoda.com>
+ * Copyright (c) 2014-2019 Pavel Kalvoda <me@pavelkalvoda.com>
  *
  * libcbor is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See LICENSE for details.
@@ -14,12 +14,11 @@
 extern "C" {
 #endif
 
-
 /*
-* ============================================================================
-* Primitives encoding
-* ============================================================================
-*/
+ * ============================================================================
+ * Primitives encoding
+ * ============================================================================
+ */
 
 size_t cbor_encode_uint8(uint8_t, unsigned char *, size_t);
 
@@ -75,14 +74,16 @@ size_t cbor_encode_undef(unsigned char *, size_t);
  * unambiguously encoded. The behavior is as follows:
  *  - Infinity, NaN are preserved
  *  - Zero is preserved
- *  - Denormalized numbers keep their sign bit and 10 most significant bit of the significand
+ *  - Denormalized numbers keep their sign bit and 10 most significant bit of
+ * the significand
  *  - All other numbers
  *   - If the logical value of the exponent is < -24, the output is zero
  *   - If the logical value of the exponent is between -23 and -14, the output
  *     is cut off to represent the 'magnitude' of the input, by which we
- *     mean (-1)^{signbit} x 1.0e{exponent}. The value in the significand is lost.
- *   - In all other cases, the sign bit, the exponent, and 10 most significant bits
- *     of the significand are kept
+ *     mean (-1)^{signbit} x 1.0e{exponent}. The value in the significand is
+ * lost.
+ *   - In all other cases, the sign bit, the exponent, and 10 most significant
+ * bits of the significand are kept
  *
  * @param value
  * @param buffer Target buffer
@@ -103,5 +104,4 @@ size_t cbor_encode_ctrl(uint8_t, unsigned char *, size_t);
 }
 #endif
 
-
-#endif //LIBCBOR_ENCODING_H
+#endif  // LIBCBOR_ENCODING_H
