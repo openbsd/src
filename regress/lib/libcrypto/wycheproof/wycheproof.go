@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.99 2019/11/27 21:44:27 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.100 2019/11/28 07:54:49 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -2436,7 +2436,7 @@ func main() {
 	//	primality_test.json
 	//	x25519_{asn,jwk,pem}_test.json
 	//	xchacha20_poly1305_test.json
-	// what's up with the *_p1363_tst.json files?
+	// What's up with the *_p1363_test.json files?
 	tests := []struct {
 		name    string
 		pattern string
