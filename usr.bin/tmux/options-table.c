@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.114 2019/11/28 08:38:04 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.115 2019/11/28 10:55:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -811,6 +811,7 @@ const struct options_table_entry options_table[] = {
 	OPTIONS_TABLE_HOOK("after-copy-mode", ""),
 	OPTIONS_TABLE_HOOK("after-display-message", ""),
 	OPTIONS_TABLE_HOOK("after-display-panes", ""),
+	OPTIONS_TABLE_HOOK("after-kill-pane", ""),
 	OPTIONS_TABLE_HOOK("after-list-buffers", ""),
 	OPTIONS_TABLE_HOOK("after-list-clients", ""),
 	OPTIONS_TABLE_HOOK("after-list-keys", ""),
