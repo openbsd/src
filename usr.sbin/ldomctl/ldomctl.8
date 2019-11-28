@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.16 2019/11/27 19:54:10 kn Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.17 2019/11/28 17:51:55 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 27 2019 $
+.Dd $Mdocdate: November 28 2019 $
 .Dt LDOMCTL 8 sparc64
 .Os
 .Sh NAME
@@ -148,9 +148,9 @@ The primary domain should have less CPUs and memory, since they
 are now assigned to the guest domains:
 .Bd -literal -offset indent
 # ldomctl status
-primary      running      OpenBSD running                   1%
-puffy        running      OpenBoot Primary Boot Loader      8%
-salmah       running      OpenBoot Primary Boot Loader     12%
+primary     -         running     OpenBSD running                1%
+puffy       ttyV0     running     OpenBoot Primary Boot Loader   8%
+salmah      ttyV1     running     OpenBoot Primary Boot Loader  12%
 .Ed
 .Pp
 Configure the
