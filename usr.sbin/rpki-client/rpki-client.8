@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.7 2019/10/16 21:43:41 jmc Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.8 2019/11/28 18:46:32 benno Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 16 2019 $
+.Dd $Mdocdate: November 28 2019 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -71,9 +71,6 @@ This format is identical to that
 produced by the RIPE NCC RPKI Validator and NLnet Labs routinator.
 .It Fl n
 Assume that all requested repositories exist: don't update.
-.It Fl r
-Don't parse certificate revocation files.
-This additional step can take a long time.
 .It Fl T Ar table
 For BIRD output use
 .Ar table

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 2019/11/28 18:31:50 benno Exp $ */
+/*	$OpenBSD: main.c,v 1.28 2019/11/28 18:46:32 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -125,7 +125,7 @@ TAILQ_HEAD(entityq, entity);
 /*
  * Mark that our subprocesses will never return.
  */
-static void	 proc_parser(int, int, int)
+static void	 proc_parser(int, int)
 			__attribute__((noreturn));
 static void	 proc_rsync(const char *, const char *, int, int)
 			__attribute__((noreturn));
@@ -791,13 +791,12 @@ normalize_name(const char *name)
 }
 
 /*
- * Parse and validate a ROA, not parsing the CRL bits of "norev" has
- * been set.
+ * Parse and validate a ROA.
  * This is standard stuff.
  * Returns the roa on success, NULL on failure.
  */
 static struct roa *
-proc_parser_roa(struct entity *entp, int norev,
+proc_parser_roa(struct entity *entp,
     X509_STORE *store, X509_STORE_CTX *ctx,
     const struct auth *auths, size_t authsz, struct crl_tree *crlt)
 {
@@ -837,8 +836,6 @@ proc_parser_roa(struct entity *entp, int norev,
 		cryptoerrx("X509_STORE_CTX_get0_param");
 	fl = X509_VERIFY_PARAM_get_flags(param);
 	nfl = X509_V_FLAG_IGNORE_CRITICAL;
-	if (!norev)
-		nfl |= X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL;
 	if (!X509_VERIFY_PARAM_set_flags(param, fl | nfl))
 		cryptoerrx("X509_VERIFY_PARAM_set_flags");
 	X509_STORE_CTX_set0_crls(ctx, crls);
@@ -936,15 +933,14 @@ proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
 }
 
 /*
- * Certificates are from manifests (has a digest and is signed with
- * another certificate) or TALs (has a pkey and is self-signed).
- * Parse the certificate, make sure its signatures are valid (with CRLs
- * unless "norev" has been specified), then validate the RPKI content.
- * This returns a certificate (which must not be freed) or NULL on parse
- * failure.
+ * Certificates are from manifests (has a digest and is signed with another
+ * certificate) or TALs (has a pkey and is self-signed).  Parse the certificate,
+ * make sure its signatures are valid (with CRLs), then validate the RPKI
+ * content.  This returns a certificate (which must not be freed) or NULL on
+ * parse failure.
  */
 static struct cert *
-proc_parser_cert(const struct entity *entp, int norev,
+proc_parser_cert(const struct entity *entp,
     X509_STORE *store, X509_STORE_CTX *ctx,
     struct auth **auths, size_t *authsz, struct crl_tree *crlt)
 {
@@ -995,8 +991,6 @@ proc_parser_cert(const struct entity *entp, int norev,
 		cryptoerrx("X509_STORE_CTX_get0_param");
 	fl = X509_VERIFY_PARAM_get_flags(param);
 	nfl = X509_V_FLAG_IGNORE_CRITICAL;
-	if (!norev)
-		nfl |= X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL;
 	if (!X509_VERIFY_PARAM_set_flags(param, fl | nfl))
 		cryptoerrx("X509_VERIFY_PARAM_set_flags");
 	X509_STORE_CTX_set0_crls(ctx, crls);
@@ -1061,23 +1055,19 @@ proc_parser_cert(const struct entity *entp, int norev,
 }
 
 /*
- * Parse a certificate revocation list (unless "norev", in which case
- * this is a noop that returns success).
+ * Parse a certificate revocation list
  * This simply parses the CRL content itself, optionally validating it
  * within the digest if it comes from a manifest, then adds it to the
  * store of CRLs.
  */
 static void
-proc_parser_crl(struct entity *entp, int norev, X509_STORE *store,
+proc_parser_crl(struct entity *entp, X509_STORE *store,
     X509_STORE_CTX *ctx, struct crl_tree *crlt)
 {
 	X509_CRL		*x509_crl;
 	struct crl		*crl;
 	const unsigned char	*dgst;
 	char			*t;
-
-	if (norev)
-		return;
 
 	dgst = entp->has_dgst ? entp->dgst : NULL;
 	if ((x509_crl = crl_parse(entp->uri, dgst)) != NULL) {
@@ -1104,7 +1094,7 @@ proc_parser_crl(struct entity *entp, int norev, X509_STORE *store,
  * The process will exit cleanly only when fd is closed.
  */
 static void
-proc_parser(int fd, int force, int norev)
+proc_parser(int fd, int force)
 {
 	struct tal	*tal;
 	struct cert	*cert;
@@ -1213,8 +1203,8 @@ proc_parser(int fd, int force, int norev)
 			tal_free(tal);
 			break;
 		case RTYPE_CER:
-			cert = proc_parser_cert(entp, norev,
-			    store, ctx, &auths, &authsz, &crlt);
+			cert = proc_parser_cert(entp, store, ctx, &auths,
+			    &authsz, &crlt);
 			c = (cert != NULL);
 			io_simple_buffer(&b, &bsz, &bmax, &c, sizeof(int));
 			if (cert != NULL)
@@ -1235,12 +1225,12 @@ proc_parser(int fd, int force, int norev)
 			mft_free(mft);
 			break;
 		case RTYPE_CRL:
-			proc_parser_crl(entp, norev, store, ctx, &crlt);
+			proc_parser_crl(entp, store, ctx, &crlt);
 			break;
 		case RTYPE_ROA:
 			assert(entp->has_dgst);
-			roa = proc_parser_roa(entp, norev,
-			    store, ctx, auths, authsz, &crlt);
+			roa = proc_parser_roa(entp, store, ctx, auths, authsz,
+			    &crlt);
 			c = (roa != NULL);
 			io_simple_buffer(&b, &bsz, &bmax, &c, sizeof(int));
 			if (roa != NULL)
@@ -1408,7 +1398,7 @@ main(int argc, char *argv[])
 {
 	int		 rc = 0, c, proc, st, rsync,
 			 fl = SOCK_STREAM | SOCK_CLOEXEC, noop = 0,
-			 force = 0, norev = 0;
+			 force = 0;
 	size_t		 i, j, eid = 1, outsz = 0, talsz = 0;
 	pid_t		 procpid, rsyncpid;
 	int		 fd[2];
@@ -1451,9 +1441,6 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			noop = 1;
-			break;
-		case 'r':
-			norev = 1;
 			break;
 		case 't':
 			if (talsz >= TALSZ_MAX)
@@ -1508,7 +1495,7 @@ main(int argc, char *argv[])
 			err(EXIT_FAILURE, "unveil");
 		if (pledge("stdio rpath", NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
-		proc_parser(fd[0], force, norev);
+		proc_parser(fd[0], force);
 		/* NOTREACHED */
 	}
 
@@ -1697,7 +1684,7 @@ main(int argc, char *argv[])
 
 usage:
 	fprintf(stderr,
-	    "usage: rpki-client [-Bcfjnrv] [-b bind_addr] [-e rsync_prog] "
+	    "usage: rpki-client [-Bcfjnv] [-b bind_addr] [-e rsync_prog] "
 	    "[-T table] [-t tal] output\n");
 	return EXIT_FAILURE;
 }
