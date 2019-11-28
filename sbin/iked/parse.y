@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.85 2019/11/12 16:45:04 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.86 2019/11/28 15:44:52 kn Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -331,6 +331,8 @@ struct ipsec_filters {
 	unsigned int		 tap;
 };
 
+void			 copy_sockaddrtoipa(struct ipsec_addr_wrap *,
+			    struct sockaddr *);
 struct ipsec_addr_wrap	*host(const char *);
 struct ipsec_addr_wrap	*host_v6(const char *, int);
 struct ipsec_addr_wrap	*host_v4(const char *, int);
@@ -341,7 +343,7 @@ void			 ifa_load(void);
 int			 ifa_exists(const char *);
 struct ipsec_addr_wrap	*ifa_lookup(const char *ifa_name);
 struct ipsec_addr_wrap	*ifa_grouplookup(const char *);
-void			 set_ipmask(struct ipsec_addr_wrap *, uint8_t);
+void			 set_ipmask(struct ipsec_addr_wrap *, int);
 const struct ipsec_xf	*parse_xf(const char *, unsigned int,
 			    const struct ipsec_xf *);
 const char		*print_xf(unsigned int, unsigned int,
@@ -1168,6 +1170,17 @@ struct keywords {
 	const char	*k_name;
 	int		 k_val;
 };
+
+void
+copy_sockaddrtoipa(struct ipsec_addr_wrap *ipa, struct sockaddr *sa)
+{
+	if (sa->sa_family == AF_INET6)
+		memcpy(&ipa->address, sa, sizeof(struct sockaddr_in6));
+	else if (sa->sa_family == AF_INET)
+		memcpy(&ipa->address, sa, sizeof(struct sockaddr_in));
+	else
+		warnx("unhandled af %d", sa->sa_family);
+}
 
 int
 yyerror(const char *fmt, ...)
@@ -2149,16 +2162,7 @@ host_dns(const char *s, int mask)
 		ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 		if (ipa == NULL)
 			err(1, "%s", __func__);
-		switch (res->ai_family) {
-		case AF_INET:
-			memcpy(&ipa->address, res->ai_addr,
-			    sizeof(struct sockaddr_in));
-			break;
-		case AF_INET6:
-			memcpy(&ipa->address, res->ai_addr,
-			    sizeof(struct sockaddr_in6));
-			break;
-		}
+		copy_sockaddrtoipa(ipa, res->ai_addr);
 		error = getnameinfo(res->ai_addr, res->ai_addrlen, hbuf,
 		    sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
 		if (error)
@@ -2407,9 +2411,12 @@ ifa_lookup(const char *ifa_name)
 }
 
 void
-set_ipmask(struct ipsec_addr_wrap *address, uint8_t b)
+set_ipmask(struct ipsec_addr_wrap *address, int b)
 {
-	address->mask = b;
+	if (b == -1)
+		address->mask = address->af == AF_INET ? 32 : 128;
+	else
+		address->mask = b;
 }
 
 const struct ipsec_xf *
