@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.5 2019/08/13 13:27:26 claudio Exp $ */
+/*	$OpenBSD: crl.c,v 1.6 2019/11/28 03:22:59 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -98,3 +98,18 @@ out:
 	return x;
 }
 
+static inline int
+crlcmp(struct crl *a, struct crl *b)
+{
+	return strcmp(a->uri, b->uri);
+}
+
+RB_GENERATE(crl_tree, crl, entry, crlcmp);
+
+void
+free_crl(struct crl *crl)
+{
+	free(crl->uri);
+	X509_CRL_free(crl->x509_crl);
+	free(crl);
+}

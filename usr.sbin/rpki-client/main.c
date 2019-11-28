@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2019/11/27 17:08:12 benno Exp $ */
+/*	$OpenBSD: main.c,v 1.26 2019/11/28 03:22:59 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -18,6 +18,7 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/tree.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -130,9 +131,10 @@ static void	 proc_rsync(const char *, const char *, int, int)
 			__attribute__((noreturn));
 static void	 logx(const char *fmt, ...)
 			__attribute__((format(printf, 1, 2)));
-static STACK_OF(X509) *
-		 build_chain(ssize_t idx, const struct auth *auths,
-		     const size_t authsz);
+static void	build_chain(ssize_t idx, const struct auth *auths,
+		    const size_t authsz,
+		    struct crl_tree *crlt, STACK_OF(X509) **chain,
+		    STACK_OF(X509_CRL) **crls);
 
 enum output_fmt {
 	BGPD,
@@ -527,6 +529,10 @@ queue_add_from_cert(int proc, int rsync, struct entityq *q,
 	if (type != RTYPE_MFT && type != RTYPE_CRL)
 		errx(EXIT_FAILURE, "%s: invalid file type", uri);
 
+	/* ignore the CRL since it is already loaded via the MFT */
+	if (type == RTYPE_CRL)
+		return;
+
 	/* Look up the repository. */
 
 	repo = repo_lookup(rsync, rt, uri);
@@ -766,6 +772,20 @@ out:
 	/* NOTREACHED */
 }
 
+char *
+normalize_name(const char *name)
+{
+	char *s;
+
+	if ((s = strrchr(name, '/')) != NULL) {
+		if (s+1 != '\0') {
+			s = s+1;
+			return s;
+		}
+	}
+	return NULL;
+}
+
 /*
  * Parse and validate a ROA, not parsing the CRL bits of "norev" has
  * been set.
@@ -775,7 +795,7 @@ out:
 static struct roa *
 proc_parser_roa(struct entity *entp, int norev,
     X509_STORE *store, X509_STORE_CTX *ctx,
-    const struct auth *auths, size_t authsz)
+    const struct auth *auths, size_t authsz, struct crl_tree *crlt)
 {
 	struct roa		*roa;
 	X509			*x509;
@@ -785,13 +805,24 @@ proc_parser_roa(struct entity *entp, int norev,
 	ssize_t			aidx;
 	ssize_t			 idx;
 	STACK_OF(X509)		*chain;
+	STACK_OF(X509_CRL)	*crls;
+	struct crl		 find, *found;
+	char			*find_str;
 
 	assert(entp->has_dgst);
 	if ((roa = roa_parse(&x509, entp->uri, entp->dgst)) == NULL)
 		return NULL;
 
 	idx = valid_ski_aki(entp->uri, auths, authsz, roa->ski, roa->aki);
-	chain = build_chain(idx, auths, authsz);
+
+	build_chain(idx, auths, authsz, crlt, &chain, &crls);
+	if ((find_str = x509_get_crl(x509, entp->uri)) != NULL) {
+		find.uri = normalize_name(find_str);
+		found = RB_FIND(crl_tree, crlt, &find);
+		if (found && sk_X509_CRL_push(crls, found->x509_crl) == 0)
+			err(EXIT_FAILURE, "sk_X509_CRL_push");
+		free(find_str);
+	}
 
 	assert(x509 != NULL);
 	if (!X509_STORE_CTX_init(ctx, store, x509, chain))
@@ -805,6 +836,7 @@ proc_parser_roa(struct entity *entp, int norev,
 		nfl |= X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL;
 	if (!X509_VERIFY_PARAM_set_flags(param, fl | nfl))
 		cryptoerrx("X509_VERIFY_PARAM_set_flags");
+	X509_STORE_CTX_set0_crls(ctx, crls);
 
 	if (X509_verify_cert(ctx) <= 0) {
 		c = X509_STORE_CTX_get_error(ctx);
@@ -814,10 +846,13 @@ proc_parser_roa(struct entity *entp, int norev,
 			    X509_verify_cert_error_string(c));
 		X509_free(x509);
 		roa_free(roa);
+		sk_X509_free(chain);
+		sk_X509_CRL_free(crls);
 		return NULL;
 	}
 	X509_STORE_CTX_cleanup(ctx);
 	sk_X509_free(chain);
+	sk_X509_CRL_free(crls);
 	X509_free(x509);
 
 	/*
@@ -846,7 +881,8 @@ proc_parser_roa(struct entity *entp, int norev,
  */
 static struct mft *
 proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
-    X509_STORE_CTX *ctx, const struct auth *auths, size_t authsz)
+    X509_STORE_CTX *ctx, const struct auth *auths, size_t authsz,
+    struct crl_tree *crlt)
 {
 	struct mft		*mft;
 	X509			*x509;
@@ -855,13 +891,14 @@ proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
 	X509_VERIFY_PARAM	*param;
 	ssize_t			 idx;
 	STACK_OF(X509)		*chain;
+	STACK_OF(X509_CRL)	*crls;
 
 	assert(!entp->has_dgst);
 	if ((mft = mft_parse(&x509, entp->uri, force)) == NULL)
 		return NULL;
 
 	idx = valid_ski_aki(entp->uri, auths, authsz, mft->ski, mft->aki);
-	chain = build_chain(idx, auths, authsz);
+	build_chain(idx, auths, authsz, crlt, &chain, &crls);
 
 	if (!X509_STORE_CTX_init(ctx, store, x509, chain))
 		cryptoerrx("X509_STORE_CTX_init");
@@ -872,6 +909,7 @@ proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
 	nfl = X509_V_FLAG_IGNORE_CRITICAL;
 	if (!X509_VERIFY_PARAM_set_flags(param, fl | nfl))
 		cryptoerrx("X509_VERIFY_PARAM_set_flags");
+	X509_STORE_CTX_set0_crls(ctx, crls);
 
 	if (X509_verify_cert(ctx) <= 0) {
 		c = X509_STORE_CTX_get_error(ctx);
@@ -879,11 +917,14 @@ proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
 		warnx("%s: %s", entp->uri, X509_verify_cert_error_string(c));
 		mft_free(mft);
 		X509_free(x509);
+		sk_X509_free(chain);
+		sk_X509_CRL_free(crls);
 		return NULL;
 	}
 
 	X509_STORE_CTX_cleanup(ctx);
 	sk_X509_free(chain);
+	sk_X509_CRL_free(crls);
 	X509_free(x509);
 	return mft;
 }
@@ -899,7 +940,7 @@ proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
 static struct cert *
 proc_parser_cert(const struct entity *entp, int norev,
     X509_STORE *store, X509_STORE_CTX *ctx,
-    struct auth **auths, size_t *authsz)
+    struct auth **auths, size_t *authsz, struct crl_tree *crlt)
 {
 	struct cert		*cert;
 	X509			*x509;
@@ -909,6 +950,8 @@ proc_parser_cert(const struct entity *entp, int norev,
 	ssize_t			 id, idx;
 	char			*tal;
 	STACK_OF(X509)		*chain;
+	STACK_OF(X509_CRL)	*crls;
+	struct crl		 find, *found;
 
 	assert(!entp->has_dgst != !entp->has_pkey);
 
@@ -924,8 +967,14 @@ proc_parser_cert(const struct entity *entp, int norev,
 		valid_ta(entp->uri, *auths, *authsz, cert) :
 		valid_cert(entp->uri, *auths, *authsz, cert);
 
-	chain = build_chain(id, *auths, *authsz);
+	build_chain(id, *auths, *authsz, crlt, &chain, &crls);
 
+	if (cert->crl) {
+		find.uri = normalize_name(cert->crl);
+		found = RB_FIND(crl_tree, crlt, &find);
+		if (found && sk_X509_CRL_push(crls, found->x509_crl) == 0)
+			err(EXIT_FAILURE, "sk_X509_CRL_push");
+	}
 	/*
 	 * Validate certificate chain w/CRLs.
 	 * Only check the CRLs if specifically asked.
@@ -942,6 +991,7 @@ proc_parser_cert(const struct entity *entp, int norev,
 		nfl |= X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL;
 	if (!X509_VERIFY_PARAM_set_flags(param, fl | nfl))
 		cryptoerrx("X509_VERIFY_PARAM_set_flags");
+	X509_STORE_CTX_set0_crls(ctx, crls);
 
 	/*
 	 * FIXME: can we pass any options to the verification that make
@@ -955,17 +1005,19 @@ proc_parser_cert(const struct entity *entp, int norev,
 			warnx("%s: %s", entp->uri,
 			    X509_verify_cert_error_string(c));
 			X509_STORE_CTX_cleanup(ctx);
-			X509_free(x509);
 			cert_free(cert);
 			sk_X509_free(chain);
+			sk_X509_CRL_free(crls);
+			X509_free(x509);
 			return NULL;
 		}
 	}
 	X509_STORE_CTX_cleanup(ctx);
 	sk_X509_free(chain);
+	sk_X509_CRL_free(crls);
 
 	if (id < 0) {
-		X509_free(x509);
+		X509_free(x509); // needed? XXX
 		return cert;
 	}
 
@@ -1009,18 +1061,30 @@ proc_parser_cert(const struct entity *entp, int norev,
  */
 static void
 proc_parser_crl(struct entity *entp, int norev, X509_STORE *store,
-    X509_STORE_CTX *ctx, const struct auth *auths, size_t authsz)
+    X509_STORE_CTX *ctx, struct crl_tree *crlt)
 {
-	X509_CRL	    *x509_crl;
-	const unsigned char *dgst;
+	X509_CRL		*x509_crl;
+	struct crl		*crl;
+	const unsigned char	*dgst;
+	char			*t;
 
 	if (norev)
 		return;
 
 	dgst = entp->has_dgst ? entp->dgst : NULL;
 	if ((x509_crl = crl_parse(entp->uri, dgst)) != NULL) {
-		X509_STORE_add_crl(store, x509_crl);
-		X509_CRL_free(x509_crl);
+		if ((crl = malloc(sizeof(*crl))) == NULL)
+			err(EXIT_FAILURE, NULL);
+		if ((t = strdup(entp->uri)) == NULL)
+			err(EXIT_FAILURE, NULL);
+		if ((crl->uri = normalize_name(t)) == NULL)
+			err(EXIT_FAILURE, NULL);
+		crl->x509_crl = x509_crl;
+
+		if (RB_INSERT(crl_tree, crlt, crl) != NULL) {
+			warnx("%s: dup uri %s", __func__, crl->uri);
+			free_crl(crl);
+		}
 	}
 }
 
@@ -1048,6 +1112,7 @@ proc_parser(int fd, int force, int norev)
 	X509_STORE	*store;
 	X509_STORE_CTX	*ctx;
 	struct auth	*auths = NULL;
+	struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
 
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_ciphers();
@@ -1141,7 +1206,7 @@ proc_parser(int fd, int force, int norev)
 			break;
 		case RTYPE_CER:
 			cert = proc_parser_cert(entp, norev,
-				store, ctx, &auths, &authsz);
+			    store, ctx, &auths, &authsz, &crlt);
 			c = (cert != NULL);
 			io_simple_buffer(&b, &bsz, &bmax, &c, sizeof(int));
 			if (cert != NULL)
@@ -1154,7 +1219,7 @@ proc_parser(int fd, int force, int norev)
 			break;
 		case RTYPE_MFT:
 			mft = proc_parser_mft(entp, force,
-			    store, ctx, auths, authsz);
+			    store, ctx, auths, authsz, &crlt);
 			c = (mft != NULL);
 			io_simple_buffer(&b, &bsz, &bmax, &c, sizeof(int));
 			if (mft != NULL)
@@ -1162,13 +1227,12 @@ proc_parser(int fd, int force, int norev)
 			mft_free(mft);
 			break;
 		case RTYPE_CRL:
-			proc_parser_crl(entp, norev,
-			    store, ctx, auths, authsz);
+			proc_parser_crl(entp, norev, store, ctx, &crlt);
 			break;
 		case RTYPE_ROA:
 			assert(entp->has_dgst);
 			roa = proc_parser_roa(entp, norev,
-			    store, ctx, auths, authsz);
+			    store, ctx, auths, authsz, &crlt);
 			c = (roa != NULL);
 			io_simple_buffer(&b, &bsz, &bmax, &c, sizeof(int));
 			if (roa != NULL)
@@ -1257,9 +1321,6 @@ entity_process(int proc, int rsync, struct stats *st,
 			 * we're revoked and then we don't want to
 			 * process the MFT.
 			 */
-			if (cert->crl != NULL)
-				queue_add_from_cert(proc, rsync,
-				    q, cert->crl, rt, eid);
 			if (cert->mft != NULL)
 				queue_add_from_cert(proc, rsync,
 				    q, cert->mft, rt, eid);
@@ -1635,25 +1696,38 @@ usage:
 
 /* use the parent (id) to walk the tree to the root and
    build a certificate chain from cert->x509 */
-STACK_OF(X509) *
-build_chain(ssize_t idx, const struct auth *auths, const size_t authsz)
+static void
+build_chain(ssize_t idx, const struct auth *auths, const size_t authsz,
+    struct crl_tree *crlt, STACK_OF(X509) **chain,
+    STACK_OF(X509_CRL) **crls)
 {
-	STACK_OF(X509)	*chain = NULL;
+	struct crl	find, *found;
+
+	*chain = NULL;
+	*crls = NULL;
 
 	if (idx == -1)
-		return NULL;
+		return;
 	if (idx == authsz)
-		return NULL;
+		return;
 
-	if ((chain = sk_X509_new_null()) == NULL)
+	if ((*chain = sk_X509_new_null()) == NULL)
 		err(EXIT_FAILURE, "sk_X509_new_null");
+	if ((*crls = sk_X509_CRL_new_null()) == NULL)
+		err(EXIT_FAILURE, "sk_X509_CRL_new_null");
 	while (auths[idx].parent != (size_t)idx) {
 		if (auths[idx].cert->x509 == NULL)
 			errx(EXIT_FAILURE, "build_chain");
-		if (sk_X509_push(chain, auths[idx].cert->x509) == 0)
+		if (sk_X509_push(*chain, auths[idx].cert->x509) == 0)
 			err(EXIT_FAILURE, "sk_X509_push");
+
+		find.uri = normalize_name(auths[idx].cert->crl);
+		found = RB_FIND(crl_tree, crlt, &find);
+		if (found && sk_X509_CRL_push(*crls, found->x509_crl) == 0)
+			err(EXIT_FAILURE, "sk_X509_CRL_push");
+
 		idx = auths[idx].parent;
 	}
 
-	return chain;
+	return;
 }

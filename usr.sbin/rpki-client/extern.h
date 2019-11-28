@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.14 2019/11/27 17:14:20 benno Exp $ */
+/*	$OpenBSD: extern.h,v 1.15 2019/11/28 03:22:59 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -198,6 +198,20 @@ RB_HEAD(vrp_tree, vrp);
 RB_PROTOTYPE(vrp_tree, vrp, entry, vrpcmp);
 
 /*
+ * A single CRL
+ */
+struct crl {
+	RB_ENTRY(crl)	 entry;
+	char		*uri;
+	X509_CRL	*x509_crl;
+};
+/*
+ * Tree of CRLs sorted by uri
+ */
+RB_HEAD(crl_tree, crl);
+RB_PROTOTYPE(crl_tree, crl, entry, crlcmp);
+
+/*
  * An authentication tuple.
  * This specifies a public key and a subject key identifier used to
  * verify children nodes in the tree of entities.
@@ -252,7 +266,9 @@ struct roa	*roa_read(int);
 void		 roa_insert_vrps(struct vrp_tree *, struct roa *, size_t *,
 		    size_t *);
 
+/* crl.c */
 X509_CRL	*crl_parse(const char *, const unsigned char *);
+void		 free_crl(struct crl *);
 
 /* Validation of our objects. */
 
@@ -335,6 +351,7 @@ void		 io_str_write(int, const char *);
 char		*x509_get_aki_ext(X509_EXTENSION *, const char *);
 char		*x509_get_ski_ext(X509_EXTENSION *, const char *);
 int		 x509_get_ski_aki(X509 *, const char *, char **, char **);
+char		*x509_get_crl(X509 *, const char *);
 
 /* Output! */
 

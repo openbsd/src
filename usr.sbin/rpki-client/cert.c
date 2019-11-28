@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.8 2019/11/27 17:08:12 benno Exp $ */
+/*	$OpenBSD: cert.c,v 1.9 2019/11/28 03:22:59 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1251,6 +1251,9 @@ cert_parse_inner(X509 **xp, const char *fn, const unsigned char *dgst, int ta)
 		    "missing SIA", p.fn);
 		goto out;
 	}
+	if (X509_up_ref(x) == 0)
+		errx(1, "king bula");
+
 	p.res->x509 = x;
 
 	rc = 1;
