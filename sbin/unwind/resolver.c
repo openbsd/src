@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.81 2019/11/28 10:02:44 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.82 2019/11/28 10:40:29 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1691,6 +1691,7 @@ send_resolver_info(struct uw_resolver *res, pid_t pid)
 	cri.state = res->state;
 	cri.type = res->type;
 	cri.oppdot = res->oppdot;
+	cri.median = histogram_median(res->latest_histogram);
 	resolver_imsg_compose_frontend(IMSG_CTL_RESOLVER_INFO, pid, &cri,
 	    sizeof(cri));
 }
