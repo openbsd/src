@@ -1665,6 +1665,7 @@
 ./usr/share/man/man2/msgrcv.2
 ./usr/share/man/man2/msgsnd.2
 ./usr/share/man/man2/msync.2
+./usr/share/man/man2/msyscall.2
 ./usr/share/man/man2/munmap.2
 ./usr/share/man/man2/nanosleep.2
 ./usr/share/man/man2/nfssvc.2
