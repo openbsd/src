@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.8 2019/11/28 03:22:59 benno Exp $ */
+/*	$OpenBSD: x509.c,v 1.9 2019/11/28 03:25:17 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -232,14 +232,14 @@ x509_get_crl(X509 *x, const char *fn)
 	crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, NULL, NULL);
 
 	if (sk_DIST_POINT_num(crldp) != 1) {
-                warnx("%s: RFC 6487 section 4.8.6: CRL: "
+		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "want 1 element, have %d", fn,
 		    sk_DIST_POINT_num(crldp));
 		return NULL;
 	}
 
 	dp = sk_DIST_POINT_value(crldp, 0);
-        if (dp->distpoint == NULL) {
+	if (dp->distpoint == NULL) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "no distribution point name", fn);
 		return NULL;
