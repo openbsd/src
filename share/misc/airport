@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.73 2019/04/03 19:58:04 benno Exp $
+#	$OpenBSD: airport,v 1.74 2019/11/28 02:28:58 mlarkin Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1402,10 +1402,8 @@ PZE:Penzance, England, United Kingdom
 PZO:Puerto Ordaz, Venezuela
 PZU:Port Sudan, Sudan
 QBF:Vail/Eagle, Colorado, USA
-QDU:Main Train Station, Duesseldorf, Germany
 QDV:All Airports around Denver, Colorado, USA
 QKB:Breckenridge, Colorado, USA
-QKL:Train Main Railroad Station, Cologne, Germany
 QLA:All Airports around Los Angeles, California, USA
 QRO:Queretaro, Mexico
 QSF:All Airports around San Francisco, California, USA
