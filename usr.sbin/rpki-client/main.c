@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 2019/11/28 20:10:45 benno Exp $ */
+/*	$OpenBSD: main.c,v 1.32 2019/11/28 20:23:09 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -13,6 +13,33 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*-
+ * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
+ * Copyright (C) 2012 Oleg Moskalenko <mom040267@gmail.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include <sys/queue.h>
@@ -34,6 +61,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <unistd.h>
 
 #include <openssl/err.h>
@@ -41,6 +69,12 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
+
+FILE		*output = NULL;
+char 		output_tmpname[PATH_MAX];
+
+void		 sig_handler(int);
+void		 set_signal_handler(void);
 
 /*
  * Maximum number of TAL files we'll load.
@@ -1413,7 +1447,6 @@ main(int argc, char *argv[])
 	const char	*bind_addr = NULL;
 	const char	*tals[TALSZ_MAX];
 	const char	*tablename = "roa";
-	FILE		*output = NULL;
 	struct vrp_tree	 v = RB_INITIALIZER(&v);
 	enum output_fmt	 outfmt = BGPD;
 
@@ -1463,9 +1496,6 @@ main(int argc, char *argv[])
 	argc -= optind;
 	if (argc != 1)
 		goto usage;
-	output = fopen(argv[0], "we");
-	if (output == NULL)
-		err(EXIT_FAILURE, "failed to open %s", argv[0]);
 
 	if (talsz == 0)
 		talsz = tal_load_default(tals, TALSZ_MAX);
@@ -1534,7 +1564,7 @@ main(int argc, char *argv[])
 
 	assert(rsync != proc);
 
-	if (pledge("stdio rpath", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
 	/*
@@ -1551,9 +1581,6 @@ main(int argc, char *argv[])
 	 * data downloaded by the rsync process and parsed by the
 	 * parsing process.
 	 */
-
-	if (pledge("stdio", NULL) == -1)
-		err(EXIT_FAILURE, "pledge");
 
 	pfd[0].fd = rsync;
 	pfd[1].fd = proc;
@@ -1643,6 +1670,13 @@ main(int argc, char *argv[])
 		rc = 1;
 	}
 
+	atexit(output_cleantmp);
+	set_signal_handler();
+
+	output = output_createtmp(argv[0]);
+	if (output == NULL)
+		err(EXIT_FAILURE, "failed to open temp file for %s", argv[0]);
+
 	switch (outfmt) {
 	case BGPD:
 		output_bgpd(output, &v);
@@ -1659,6 +1693,11 @@ main(int argc, char *argv[])
 	}
 
 	fclose(output);
+
+	if (rc == 0) {
+		rename(output_tmpname, argv[0]);
+		output_tmpname[0] = '\0';
+	}
 
 	logx("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)",
 	    stats.roas, stats.roas_fail, stats.roas_invalid);
@@ -1775,4 +1814,63 @@ get_parent_crl(ssize_t idx, const struct auth *auths, const size_t authsz,
 	}
 
 	return;
+}
+
+FILE *
+output_createtmp(char *name)
+{
+	FILE *f;
+	int fd;
+
+	if (snprintf(output_tmpname, sizeof output_tmpname,
+	    "%s.XXXXXXXXXXX", name) >= sizeof output_tmpname)
+		err(EXIT_FAILURE, "path too long");
+	fd = mkostemp(output_tmpname, O_CLOEXEC);
+	if (fd == -1)
+		err(EXIT_FAILURE, "mkostemp");
+	f = fdopen(fd, "w");
+	if (f == NULL)
+		err(EXIT_FAILURE, "fdopen");
+	return (f);
+}
+
+void
+output_cleantmp(void)
+{
+	if (*output_tmpname)
+		unlink(output_tmpname);
+	output_tmpname[0] = '\0';
+}
+
+/*
+ * Signal handler that clears the temporary files.
+ */
+void
+sig_handler(int sig __unused)
+{
+	output_cleantmp();
+	_exit(2);
+}
+
+/*
+ * Set signal handler on panic signals.
+ */
+void
+set_signal_handler(void)
+{
+	struct sigaction sa;
+	int i, signals[] = {SIGTERM, SIGHUP, SIGINT, SIGUSR1, SIGUSR2,
+	    SIGPIPE, SIGXCPU, SIGXFSZ, 0};
+
+	memset(&sa, 0, sizeof(sa));
+	sigfillset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = sig_handler;
+
+	for (i = 0; signals[i] != 0; i++) {
+		if (sigaction(signals[i], &sa, NULL) == -1) {
+			warn("sigaction(%s)", strsignal(signals[i]));
+			continue;
+		}
+	}
 }
