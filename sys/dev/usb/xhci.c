@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.108 2019/11/18 20:25:49 mglocker Exp $ */
+/* $OpenBSD: xhci.c,v 1.109 2019/11/28 21:49:41 patrick Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -856,8 +856,9 @@ xhci_event_xfer_generic(struct xhci_softc *sc, struct usbd_xfer *xfer,
 		/*
 		 * Use values from the transfer TRB instead of the status TRB.
 		 */
-		xfer->actlen = xhci_xfer_length_generic(xx, xp, trb_idx) -
-		    remain;
+		if (xfer->actlen == 0)
+			xfer->actlen =
+			    xhci_xfer_length_generic(xx, xp, trb_idx) - remain;
 		/*
 		 * If this is not the last TRB of a transfer, we should
 		 * theoretically clear the IOC at the end of the chain
