@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.65 2019/08/03 15:22:19 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.66 2019/11/28 00:17:13 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -39,6 +39,7 @@
 static int Xboot(void);
 static int Xecho(void);
 static int Xhelp(void);
+static int Xhexdump(void);
 static int Xls(void);
 static int Xnop(void);
 static int Xreboot(void);
@@ -62,6 +63,7 @@ const struct cmd_table cmd_table[] = {
 	{"echo",   CMDT_CMD, Xecho},
 	{"env",    CMDT_CMD, Xenv},
 	{"help",   CMDT_CMD, Xhelp},
+	{"hexdump",CMDT_CMD, Xhexdump},
 	{"ls",     CMDT_CMD, Xls},
 #ifdef MACHINE_CMD
 	{"machine",CMDT_MDC, Xmachine},
@@ -345,6 +347,29 @@ Xhelp(void)
 #else
 	return 0;
 #endif
+}
+
+static int
+Xhexdump(void)
+{
+	long long val[2];
+	char *ep;
+	int i;
+
+	if (cmd.argc != 3) {
+		printf("hexdump addr size\n");
+		return 0;
+	}
+
+	for (i = 1; i < cmd.argc; i++) {
+		val[i-1] = strtoll(cmd.argv[i], &ep, 0);
+		if (cmd.argv[i][0] == '\0' || *ep != '\0') {
+			printf("bad '%c' in \"%s\"\n", *ep, cmd.argv[i]);
+			return 0;
+		}
+	}
+	hexdump((void *)val[0], val[1]);
+	return 0;
 }
 
 #ifdef MACHINE_CMD

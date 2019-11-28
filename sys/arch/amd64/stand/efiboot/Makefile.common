@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.common,v 1.18 2019/10/29 02:55:51 deraadt Exp $
+#	$OpenBSD: Makefile.common,v 1.19 2019/11/28 00:17:11 bluhm Exp $
 
 S=		${.CURDIR}/../../../../..
 SADIR=		${.CURDIR}/../..
@@ -32,7 +32,8 @@ SRCS+=	memprobe.c
 SRCS+=	boot.c bootarg.c cmd.c vars.c
 
 .PATH:	${S}/lib/libsa
-SRCS+=	alloc.c ctime.c exit.c getchar.c memcmp.c memcpy.c memmove.c memset.c printf.c \
+SRCS+=	alloc.c ctime.c exit.c getchar.c hexdump.c \
+	memcmp.c memcpy.c memmove.c memset.c printf.c \
 	putchar.c snprintf.c strcmp.c strerror.c strlen.c strncmp.c strncpy.c \
 	strtol.c strtoll.c
 SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c \

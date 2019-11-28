@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2019/10/29 02:55:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.15 2019/11/28 00:17:11 bluhm Exp $
 
 NOMAN=		#
 
@@ -24,9 +24,10 @@ LDFLAGS+=	-z notext -z norelro
 SRCS+=	boot.c cmd.c vars.c
 
 .PATH:	${S}/lib/libsa
-SRCS+=	alloc.c ctime.c exit.c getchar.c memcmp.c memcpy.c memmove.c memset.c \
+SRCS+=	alloc.c ctime.c exit.c getchar.c hexdump.c \
+	memcmp.c memcpy.c memmove.c memset.c \
 	printf.c putchar.c snprintf.c strchr.c strcmp.c strerror.c strncmp.c \
-	strncpy.c strtol.c
+	strncpy.c strtol.c strtoll.c
 SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fchmod.c \
 	fstat.c lseek.c open.c read.c readdir.c stat.c
 SRCS+=	loadfile.c arc4.c

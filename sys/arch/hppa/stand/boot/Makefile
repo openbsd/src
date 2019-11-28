@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2019/04/20 22:59:03 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.29 2019/11/28 00:17:11 bluhm Exp $
 
 MAN=	boot.8
 MANSUBDIR=hppa
@@ -11,6 +11,9 @@ SRCS=	srt0.S exec.c conf.c
 
 .PATH:	${S}/stand/boot
 SRCS+=	bootarg.c boot.c vars.c cmd.c 
+
+.PATH:	${S}/lib/libsa
+SRCS+=	hexdump.c strtoll.c
 
 .PATH:	${S}/lib/libkern/arch/hppa ${S}/lib/libkern
 SRCS+=	milli.S ashldi3.c ashrdi3.c memcmp.c memcpy.c memmove.c memset.c \

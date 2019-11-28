@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2019/10/29 02:55:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.32 2019/11/28 00:17:12 bluhm Exp $
 
 MAN=	pxeboot.8
 
@@ -28,7 +28,8 @@ SRCS+=	softraid_i386.c
 SRCS+=	boot.c cmd.c vars.c bootarg.c
 
 .PATH:	${S}/lib/libsa
-SRCS+=	alloc.c ctime.c exit.c getchar.c globals.c memcmp.c memmove.c memcpy.c memset.c \
+SRCS+=	alloc.c ctime.c exit.c getchar.c globals.c hexdump.c \
+	memcmp.c memmove.c memcpy.c memset.c \
 	printf.c putchar.c snprintf.c strcmp.c strerror.c strlen.c strncmp.c \
 	strncpy.c strtol.c strtoll.c
 SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fchmod.c \

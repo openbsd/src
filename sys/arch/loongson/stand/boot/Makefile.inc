@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2016/11/06 16:42:00 tb Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2019/11/28 00:17:12 bluhm Exp $
 
 NOMAN=
 S=		${.CURDIR}/../../../..
@@ -23,6 +23,10 @@ SRCS+=		pmon.c pmon32.S
 #### MI boot code
 .PATH:		${S}/stand/boot
 SRCS+=		boot.c cmd.c vars.c
+
+#### libsa
+.PATH:  	${S}/lib/libsa
+SRCS+=  	hexdump.c strtoll.c
 
 #### libkern
 .PATH:		${S}/lib/libkern/arch/mips64 ${S}/lib/libkern

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2019/10/29 02:55:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.16 2019/11/28 00:17:12 bluhm Exp $
 
 MAN=	boot.8
 
@@ -20,6 +20,9 @@ AFLAGS+= -fno-pie
 
 .PATH:  ${S}/stand/boot
 SRCS+=	boot.c cmd.c vars.c bootarg.c
+
+.PATH:	${S}/lib/libsa
+SRCS+=	hexdump.c strtoll.c
 
 .PATH:	${S}/lib/libkern/arch/sh ${S}/lib/libkern
 SRCS+=	getchar.c putchar.c strlen.c strlcpy.c

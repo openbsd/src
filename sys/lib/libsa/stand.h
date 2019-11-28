@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.68 2019/11/01 20:54:52 deraadt Exp $	*/
+/*	$OpenBSD: stand.h,v 1.69 2019/11/28 00:17:13 bluhm Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -146,6 +146,7 @@ __dead void	_rtt(void) __attribute__((noreturn));
 #define bcmp(s1,s2,n)	(memcmp((s2),(s1),(n)))
 #define	bcopy(s1,s2,n)	((void)memmove((s2),(s1),(n)))
 void	explicit_bzero(void *, size_t);
+void	hexdump(const void *, size_t);
 void	*memcpy(void *, const void *, size_t);
 void	*memmove(void *, const void *, size_t);
 int	memcmp(const void *, const void *, size_t);
