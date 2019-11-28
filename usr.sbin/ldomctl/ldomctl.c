@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.23 2019/11/27 19:54:10 kn Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.24 2019/11/28 04:29:39 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -285,6 +285,9 @@ list(int argc, char **argv)
 	struct ds_conn *dc;
 	struct mdstore_set *set;
 
+	if (argc != 1)
+		usage();
+
 	dc = ds_conn_open("/dev/spds", NULL);
 	mdstore_register(dc);
 	while (TAILQ_EMPTY(&mdstore_sets))
@@ -314,7 +317,7 @@ xselect(int argc, char **argv)
 {
 	struct ds_conn *dc;
 
-	if (argc < 2)
+	if (argc != 2)
 		usage();
 
 	dc = ds_conn_open("/dev/spds", NULL);
@@ -330,7 +333,7 @@ delete(int argc, char **argv)
 {
 	struct ds_conn *dc;
 
-	if (argc < 2)
+	if (argc != 2)
 		usage();
 
 	if (strcmp(argv[1], "factory-default") == 0)
@@ -349,7 +352,7 @@ download(int argc, char **argv)
 {
 	struct ds_conn *dc;
 
-	if (argc < 2)
+	if (argc != 2)
 		usage();
 
 	dc = ds_conn_open("/dev/spds", NULL);
@@ -366,7 +369,7 @@ guest_start(int argc, char **argv)
 	struct hvctl_msg msg;
 	ssize_t nbytes;
 
-	if (argc < 2)
+	if (argc != 2)
 		usage();
 
 	/*
@@ -392,7 +395,7 @@ guest_stop(int argc, char **argv)
 	struct hvctl_msg msg;
 	ssize_t nbytes;
 
-	if (argc < 2)
+	if (argc != 2)
 		usage();
 
 	/*
@@ -418,7 +421,7 @@ guest_panic(int argc, char **argv)
 	struct hvctl_msg msg;
 	ssize_t nbytes;
 
-	if (argc < 2)
+	if (argc != 2)
 		usage();
 
 	/*
