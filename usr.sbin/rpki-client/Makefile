@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2019/11/02 13:38:33 jsing Exp $
+#	$OpenBSD: Makefile,v 1.11 2019/11/28 17:39:54 benno Exp $
 
 PROG=	rpki-client
 SRCS=	as.c cert.c cms.c crl.c io.c ip.c log.c main.c mft.c \
@@ -8,5 +8,11 @@ MAN=	rpki-client.8
 
 LDADD+= -lcrypto
 DPADD+= ${LIBCRYPTO}
+
+CFLAGS+= -Wall -I${.CURDIR}
+#CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
+#CFLAGS+= -Wmissing-declarations
+#CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
+#CFLAGS+= -Wsign-compare
 
 .include <bsd.prog.mk>
