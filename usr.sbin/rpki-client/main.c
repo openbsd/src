@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.34 2019/11/28 21:08:25 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.35 2019/11/28 21:12:00 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -161,7 +161,7 @@ TAILQ_HEAD(entityq, entity);
  */
 char		*normalize_name(const char *);
 static void	proc_parser(int, int) __attribute__((noreturn));
-static void	proc_rsync(const char *, const char *, int, int)
+static void	proc_rsync(char *, char *, int, int)
 		    __attribute__((noreturn));
 static void	logx(const char *fmt, ...)
 		    __attribute__((format(printf, 1, 2)));
@@ -600,7 +600,7 @@ proc_child(int signal)
  * repositories and saturate our system.
  */
 static void
-proc_rsync(const char *prog, const char *bind_addr, int fd, int noop)
+proc_rsync(char *prog, char *bind_addr, int fd, int noop)
 {
 	size_t			 id, i, idsz = 0;
 	ssize_t			 ssz;
@@ -1430,8 +1430,8 @@ main(int argc, char *argv[])
 	struct repotab	 rt;
 	struct stats	 stats;
 	struct roa	**out = NULL;
-	const char	*rsync_prog = "openrsync";
-	const char	*bind_addr = NULL;
+	char		*rsync_prog = "openrsync";
+	char		*bind_addr = NULL;
 	const char	*tals[TALSZ_MAX];
 	const char	*tablename = "roa";
 	struct vrp_tree	 v = RB_INITIALIZER(&v);

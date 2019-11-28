@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.5 2019/08/13 13:34:43 florian Exp $ */
+/*	$OpenBSD: io.c,v 1.6 2019/11/28 21:12:00 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -141,7 +141,9 @@ void
 io_simple_read(int fd, void *res, size_t sz)
 {
 	ssize_t	 ssz;
+	char	*tmp;
 
+	tmp = res; /* arithmetic on a pointer to void is a GNU extension */
 again:
 	if (sz == 0)
 		return;
@@ -152,7 +154,7 @@ again:
 	else if ((size_t)ssz == sz)
 		return;
 	sz -= ssz;
-	res += ssz;
+	tmp += ssz;
 	goto again;
 }
 
