@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.102 2019/11/28 21:35:47 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.103 2019/11/28 21:41:14 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -2407,9 +2407,7 @@ func runTestVectors(path string, webcrypto bool) bool {
 		wtg = &wycheproofTestGroupAesCmac{}
 	case "AES-GCM":
 		wtg = &wycheproofTestGroupAead{}
-	case "CHACHA20-POLY1305":
-		fallthrough
-	case "XCHACHA20-POLY1305":
+	case "CHACHA20-POLY1305", "XCHACHA20-POLY1305":
 		wtg = &wycheproofTestGroupAead{}
 	case "DSA":
 		wtg = &wycheproofTestGroupDSA{}
@@ -2435,13 +2433,9 @@ func runTestVectors(path string, webcrypto bool) bool {
 		wtg = &wycheproofTestGroupRsaesPkcs1{}
 	case "RSASSA-PSS":
 		wtg = &wycheproofTestGroupRsassa{}
-	case "RSASSA-PKCS1-v1_5":
-		fallthrough
-	case "RSASig":
+	case "RSASSA-PKCS1-v1_5", "RSASig":
 		wtg = &wycheproofTestGroupRSA{}
-	case "XDH":
-		fallthrough
-	case "X25519":
+	case "XDH", "X25519":
 		wtg = &wycheproofTestGroupX25519{}
 	default:
 		log.Printf("INFO: Unknown test vector algorithm %q", wtv.Algorithm)
@@ -2470,9 +2464,7 @@ func runTestVectors(path string, webcrypto bool) bool {
 			if !runAesAeadTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead)) {
 				success = false
 			}
-		case "CHACHA20-POLY1305":
-			fallthrough
-		case "XCHACHA20-POLY1305":
+		case "CHACHA20-POLY1305", "XCHACHA20-POLY1305":
 			if !runChaCha20Poly1305TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead)) {
 				success = false
 			}
@@ -2520,15 +2512,11 @@ func runTestVectors(path string, webcrypto bool) bool {
 			if !runRsassaTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRsassa)) {
 				success = false
 			}
-		case "RSASSA-PKCS1-v1_5":
-			fallthrough
-		case "RSASig":
+		case "RSASSA-PKCS1-v1_5", "RSASig":
 			if !runRSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRSA)) {
 				success = false
 			}
-		case "XDH":
-			fallthrough
-		case "X25519":
+		case "XDH", "X25519":
 			if !runX25519TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupX25519)) {
 				success = false
 			}
