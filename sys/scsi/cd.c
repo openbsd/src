@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.237 2019/11/25 17:48:31 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.238 2019/11/28 16:27:35 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1199,14 +1199,14 @@ cd_getvol(struct cd_softc *sc, struct ioc_vol *arg, int flags)
 {
 	union scsi_mode_sense_buf *data;
 	struct cd_audio_page *audio = NULL;
-	int error;
+	int big, error;
 
 	data = dma_alloc(sizeof(*data), PR_NOWAIT);
 	if (data == NULL)
 		return (ENOMEM);
 
 	error = scsi_do_mode_sense(sc->sc_link, AUDIO_PAGE, data,
-	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags, NULL);
+	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags, &big);
 	if (error == 0 && audio == NULL)
 		error = EIO;
 
@@ -1235,7 +1235,7 @@ cd_setvol(struct cd_softc *sc, const struct ioc_vol *arg, int flags)
 
 	error = scsi_do_mode_sense(sc->sc_link,
 	    AUDIO_PAGE | SMS_PAGE_CTRL_CHANGEABLE, data, (void **)&audio, NULL,
-	    NULL, NULL, sizeof(*audio), flags, NULL);
+	    NULL, NULL, sizeof(*audio), flags, &big);
 	if (error == 0 && audio == NULL)
 		error = EIO;
 	if (error != 0) {

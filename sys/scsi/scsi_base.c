@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.245 2019/11/26 20:48:03 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.246 2019/11/28 16:27:35 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1168,9 +1168,7 @@ scsi_do_mode_sense(struct scsi_link *link, int page,
 	int					error, blk_desc_len, offset;
 
 	*page_data = NULL;
-
-	if (big != NULL)
-		*big = 0;
+	*big = 0;
 
 	if (!ISSET(link->flags, SDEV_ATAPI) ||
 	    (link->inqdata.device & SID_TYPE) == T_SEQUENTIAL) {
@@ -1221,8 +1219,7 @@ scsi_do_mode_sense(struct scsi_link *link, int page,
 	if (_2btol(buf->hdr_big.data_length) < 6)
 		return (EIO);
 
-	if (big != NULL)
-		*big = 1;
+	*big = 1;
 	offset = sizeof(struct scsi_mode_header_big);
 	*page_data = scsi_mode_sense_big_page(&buf->hdr_big, page_len);
 	blk_desc_len = _2btol(buf->hdr_big.blk_desc_len);

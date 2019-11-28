@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.59 2019/11/23 17:10:13 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.60 2019/11/28 16:27:35 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -662,7 +662,7 @@ ch_get_params(struct ch_softc *sc, int flags)
 	union scsi_mode_sense_buf *data;
 	struct page_element_address_assignment *ea;
 	struct page_device_capabilities *cap;
-	int error, from;
+	int big, error, from;
 	u_int8_t *moves, *exchanges;
 
 	data = dma_alloc(sizeof(*data), PR_NOWAIT);
@@ -673,7 +673,7 @@ ch_get_params(struct ch_softc *sc, int flags)
 	 * Grab info from the element address assignment page (0x1d).
 	 */
 	error = scsi_do_mode_sense(sc->sc_link, 0x1d, data,
-	    (void **)&ea, NULL, NULL, NULL, sizeof(*ea), flags, NULL);
+	    (void **)&ea, NULL, NULL, NULL, sizeof(*ea), flags, &big);
 	if (error == 0 && ea == NULL)
 		error = EIO;
 	if (error != 0) {
@@ -700,7 +700,7 @@ ch_get_params(struct ch_softc *sc, int flags)
 	 * Grab info from the capabilities page (0x1f).
 	 */
 	error = scsi_do_mode_sense(sc->sc_link, 0x1f, data,
-	    (void **)&cap, NULL, NULL, NULL, sizeof(*cap), flags, NULL);
+	    (void **)&cap, NULL, NULL, NULL, sizeof(*cap), flags, &big);
 	if (cap == NULL)
 		error = EIO;
 	if (error != 0) {

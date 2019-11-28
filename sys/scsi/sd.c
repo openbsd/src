@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.301 2019/11/26 20:51:20 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.302 2019/11/28 16:27:35 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1725,7 +1725,7 @@ sd_get_parms(struct sd_softc *sc, int flags)
 		/* T_RDIRECT supports only PAGE_REDUCED_GEOMETRY (6). */
 		err = scsi_do_mode_sense(link, PAGE_REDUCED_GEOMETRY,
 		    buf, (void **)&reduced, NULL, NULL, &dp.secsize,
-		    sizeof(*reduced), flags | SCSI_SILENT, NULL);
+		    sizeof(*reduced), flags | SCSI_SILENT, &big);
 		if (!err && reduced &&
 		    DISK_PGCODE(reduced, PAGE_REDUCED_GEOMETRY)) {
 			if (dp.disksize == 0)
@@ -1749,7 +1749,7 @@ sd_get_parms(struct sd_softc *sc, int flags)
 			err = scsi_do_mode_sense(link,
 			    PAGE_RIGID_GEOMETRY, buf, (void **)&rigid, NULL,
 			    NULL, &dp.secsize, sizeof(*rigid) - 4,
-			    flags | SCSI_SILENT, NULL);
+			    flags | SCSI_SILENT, &big);
 		if (!err && rigid && DISK_PGCODE(rigid, PAGE_RIGID_GEOMETRY)) {
 			dp.heads = rigid->nheads;
 			dp.cyls = _3btol(rigid->ncyl);
@@ -1761,7 +1761,7 @@ sd_get_parms(struct sd_softc *sc, int flags)
 			err = scsi_do_mode_sense(link,
 			    PAGE_FLEX_GEOMETRY, buf, (void **)&flex, NULL, NULL,
 			    &dp.secsize, sizeof(*flex) - 4,
-			    flags | SCSI_SILENT, NULL);
+			    flags | SCSI_SILENT, &big);
 			if (!err && flex &&
 			    DISK_PGCODE(flex, PAGE_FLEX_GEOMETRY)) {
 				dp.sectors = flex->ph_sec_tr;
