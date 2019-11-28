@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.10 2019/11/28 16:31:42 claudio Exp $ */
+/*	$OpenBSD: x509.c,v 1.11 2019/11/28 16:43:24 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -237,6 +237,11 @@ x509_get_crl(X509 *x, const char *fn)
 	char			*crl;
 
 	crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, NULL, NULL);
+	if (crldp == NULL) {
+		warnx("%s: RFC 6487 section 4.8.6: CRL: "
+		    "no CRL distribution point extension", fn);
+		return NULL;
+	}
 
 	if (sk_DIST_POINT_num(crldp) != 1) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
