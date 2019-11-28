@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.9 2019/11/28 03:25:17 benno Exp $ */
+/*	$OpenBSD: x509.c,v 1.10 2019/11/28 16:31:42 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -221,6 +221,13 @@ x509_get_ski_aki(X509 *x, const char *fn, char **ski, char **aki)
 	return 1;
 }
 
+/*
+ * Parse the very specific subset of information in the CRL distribution
+ * point extension.
+ * See RFC 6487, sectoin 4.8.6 for details.
+ * Returns NULL on failure, the crl URI on success which has to be freed
+ * after use.
+ */
 char *
 x509_get_crl(X509 *x, const char *fn)
 {
