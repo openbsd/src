@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdstore.c,v 1.11 2019/07/07 14:45:15 kettenis Exp $	*/
+/*	$OpenBSD: mdstore.c,v 1.12 2019/11/28 18:40:42 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -26,7 +26,7 @@
 #include "ds.h"
 #include "mdesc.h"
 #include "mdstore.h"
-#include "util.h"
+#include "ldom_util.h"
 #include "ldomctl.h"
 
 void	mdstore_start(struct ldc_conn *, uint64_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: var-config.c,v 1.2 2012/10/27 20:51:42 kettenis Exp $	*/
+/*	$OpenBSD: var-config.c,v 1.3 2019/11/28 18:40:42 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -29,7 +29,7 @@
 
 #include "ds.h"
 #include "mdesc.h"
-#include "util.h"
+#include "ldom_util.h"
 #include "ldomd.h"
 
 void	var_config_start(struct ldc_conn *, uint64_t);

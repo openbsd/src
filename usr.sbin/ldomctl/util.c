@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.4 2014/10/15 21:37:27 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.5 2019/11/28 18:40:42 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "util.h"
+#include "ldom_util.h"
 
 int debug;
 

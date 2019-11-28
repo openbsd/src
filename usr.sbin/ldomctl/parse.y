@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2019/08/05 19:27:47 kettenis Exp $	*/
+/*	$OpenBSD: parse.y,v 1.13 2019/11/28 18:40:42 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
@@ -37,9 +37,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
 
 #include "ldomctl.h"
-#include "util.h"
+#include "ldom_util.h"
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {
@@ -236,23 +237,10 @@ memory		: NUMBER {
 			$$ = $1;
 		}
 		| STRING {
-			uint64_t size;
-			char *cp;
-
-			size = strtoll($1, &cp, 10);
-			if (cp != NULL) {
-				if (strcmp(cp, "K") == 0)
-					size *= 1024;
-				else if (strcmp(cp, "M") == 0)
-					size *= 1024 * 1024;
-				else if (strcmp(cp, "G") == 0)
-					size *= 1024 * 1024 * 1024;
-				else {
-                                        yyerror("unknown unit %s", cp);
-                                        YYERROR;
-				}
+			if (scan_scaled($1, &$$) == -1) {
+				yyerror("invalid size: %s", $1);
+				YYERROR;
 			}
-			$$ = size;
 		}
 		;
 

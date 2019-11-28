@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomd.c,v 1.9 2019/09/29 17:10:00 deraadt Exp $	*/
+/*	$OpenBSD: ldomd.c,v 1.10 2019/11/28 18:40:42 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -34,7 +34,7 @@
 #include "ds.h"
 #include "hvctl.h"
 #include "mdesc.h"
-#include "util.h"
+#include "ldom_util.h"
 #include "ldomd.h"
 
 TAILQ_HEAD(guest_head, guest) guests;

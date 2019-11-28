@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.26 2019/11/28 18:03:33 kn Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.27 2019/11/28 18:40:42 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -29,7 +29,7 @@
 #include "hvctl.h"
 #include "mdstore.h"
 #include "mdesc.h"
-#include "util.h"
+#include "ldom_util.h"
 #include "ldomctl.h"
 
 extern struct ds_service pri_service;
