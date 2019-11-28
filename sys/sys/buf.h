@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.110 2019/11/28 02:30:38 beck Exp $	*/
+/*	$OpenBSD: buf.h,v 1.111 2019/11/28 18:29:49 beck Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/mutex.h>
-#include <uvm/uvm_extern.h>
 
 #define NOLIST ((struct buf *)0x87654321)
 
@@ -158,8 +157,7 @@ struct buf {
 	union	bufq_data b_bufq;
 	struct	bufq	  *b_bq;	/* What bufq this buf is on */
 
-	struct uvm_object *b_pobj;
-	struct uvm_object b_uobj;	/* Object containing the pages */
+	struct uvm_object *b_pobj;	/* Object containing the pages */
 	off_t	b_poffs;		/* Offset within object */
 
 	daddr_t	b_lblkno;		/* Logical block number. */
