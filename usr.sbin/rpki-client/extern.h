@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.16 2019/11/28 20:23:09 deraadt Exp $ */
+/*	$OpenBSD: extern.h,v 1.17 2019/11/28 20:36:17 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -217,12 +217,19 @@ RB_PROTOTYPE(crl_tree, crl, entry, crlcmp);
  * verify children nodes in the tree of entities.
  */
 struct auth {
+	RB_ENTRY(auth)	 entry;
 	struct cert	*cert; /* owner information */
-	size_t		 id; /* self-index */
-	size_t		 parent; /* index of parent pair (or self) */
+	struct auth	*parent; /* pointer to parent or NULL for TA cert */
 	char		*tal; /* basename of TAL for this cert */
 	char		*fn; /* FIXME: debugging */
 };
+/*
+ * Tree of auth sorted by ski
+ */
+RB_HEAD(auth_tree, auth);
+RB_PROTOTYPE(auth_tree, auth, entry, authcmp);
+
+struct auth *auth_find(struct auth_tree *, const char *);
 
 /*
  * Resource types specified by the RPKI profiles.
@@ -272,14 +279,13 @@ void		 free_crl(struct crl *);
 
 /* Validation of our objects. */
 
-ssize_t		 valid_ski_aki(const char *, const struct auth *, size_t,
+struct auth	*valid_ski_aki(const char *, struct auth_tree *,
 		    const char *, const char *);
-ssize_t		 valid_cert(const char *, const struct auth *, size_t,
+int		 valid_ta(const char *, struct auth_tree *,
 		    const struct cert *);
-ssize_t		 valid_roa(const char *, const struct auth *, size_t,
-		    const struct roa *);
-ssize_t		 valid_ta(const char *, const struct auth *, size_t,
+int		 valid_cert(const char *, struct auth_tree *,
 		    const struct cert *);
+int		 valid_roa(const char *, struct auth_tree *, struct roa *);
 
 /* Working with CMS files. */
 

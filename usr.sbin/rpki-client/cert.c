@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.11 2019/11/28 20:32:59 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.12 2019/11/28 20:36:17 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1300,3 +1300,23 @@ cert_read(int fd)
 	return p;
 }
 
+struct auth *
+auth_find(struct auth_tree *auths, const char *aki)
+{
+	struct auth a;
+	struct cert c;
+
+	/* we look up the cert where the ski == aki */
+	c.ski = (char *)aki;
+	a.cert = &c;
+
+	return RB_FIND(auth_tree, auths, &a);
+}
+
+static inline int
+authcmp(struct auth *a, struct auth *b)
+{
+        return strcmp(a->cert->ski, b->cert->ski);
+}
+
+RB_GENERATE(auth_tree, auth, entry, authcmp);

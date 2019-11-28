@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.7 2019/11/27 17:08:12 benno Exp $ */
+/*	$OpenBSD: validate.c,v 1.8 2019/11/28 20:36:17 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -31,156 +31,139 @@
 #include "extern.h"
 
 static void
-tracewarn(size_t idx, const struct auth *auths, size_t authsz)
+tracewarn(const struct auth *a)
 {
 
-	for (;; idx = auths[idx].parent) {
-		warnx(" ...inheriting from: %s", auths[idx].fn);
-		if (auths[idx].parent == (size_t)idx)
-			break;
-	}
+	for (; a != NULL; a = a->parent)
+		warnx(" ...inheriting from: %s", a->fn);
 }
 
 /*
  * Walk up the chain of certificates trying to match our AS number to
  * one of the allocations in that chain.
- * Returns the index of the certificate in auths or -1 on error.
+ * Returns 1 if covered or 0 if not.
  */
-static ssize_t
-valid_as(uint32_t min, uint32_t max,
-    size_t idx, const struct auth *as, size_t asz)
+static int
+valid_as(struct auth *a, uint32_t min, uint32_t max)
 {
 	int	 c;
 
-	assert(idx < asz);
+	if (a == NULL)
+		return 0;
 
 	/* Does this certificate cover our AS number? */
-
-	if (as[idx].cert->asz) {
+	if (a->cert->asz) {
 		c = as_check_covered(min, max,
-		    as[idx].cert->as, as[idx].cert->asz);
+		    a->cert->as, a->cert->asz);
 		if (c > 0)
-			return idx;
+			return 1;
+		/* XXX why is this commented */
 		/*else if (c < 0)
-			return -1;*/
+			return 0;*/
 	}
 
 	/* If it doesn't, walk up the chain. */
-
-	if (as[idx].parent == as[idx].id)
-		return -1;
-	return valid_as(min, max, as[idx].parent, as, asz);
+	return valid_as(a->parent, min, max);
 }
 
 /*
  * Walk up the chain of certificates (really just the last one, but in
  * the case of inheritence, the ones before) making sure that our IP
  * prefix is covered in the first non-inheriting specification.
- * Returns the index of the certificate in auths or -1 on error.
+ * Returns 1 if covered or 0 if not.
  */
-static ssize_t
-valid_ip(size_t idx, enum afi afi,
-    const unsigned char *min, const unsigned char *max,
-    const struct auth *as, size_t asz)
+static int
+valid_ip(struct auth *a, enum afi afi,
+    const unsigned char *min, const unsigned char *max)
 {
 	int	 c;
 
-	assert(idx < asz);
+	if (a == NULL)
+		return 0;
 
 	/* Does this certificate cover our IP prefix? */
-
 	c = ip_addr_check_covered(afi, min, max,
-	    as[idx].cert->ips, as[idx].cert->ipsz);
+	    a->cert->ips, a->cert->ipsz);
 	if (c > 0)
-		return idx;
+		return 1;
 	else if (c < 0)
-		return -1;
+		return 0;
 
 	/* If it doesn't, walk up the chain. */
-
-	if (as[idx].parent == as[idx].id)
-		return -1;
-	return valid_ip(as[idx].parent, afi, min, max, as, asz);
-}
-
-/*
- * Authenticate a trust anchor by making sure its resources are not
- * inheriting and that the SKI is unique.
- * Returns *authsz or -1 on failure.
- */
-ssize_t
-valid_ta(const char *fn, const struct auth *auths,
-    size_t authsz, const struct cert *cert)
-{
-	size_t	 i;
-
-	/* AS and IP resources must not inherit. */
-
-	if (cert->asz && cert->as[0].type == CERT_AS_INHERIT) {
-		warnx("%s: RFC 6487 (trust anchor): "
-		    "inheriting AS resources", fn);
-		return -1;
-	}
-	for (i = 0; i < cert->ipsz; i++)
-		if (cert->ips[i].type == CERT_IP_INHERIT) {
-			warnx("%s: RFC 6487 (trust anchor): "
-			    "inheriting IP resources", fn);
-			return -1;
-		}
-
-	/* SKI must not be a dupe. */
-
-	for (i = 0; i < authsz; i++)
-		if (strcmp(auths[i].cert->ski, cert->ski) == 0) {
-			warnx("%s: RFC 6487: duplicate SKI", fn);
-			return -1;
-		}
-
-	return authsz;
+	return valid_ip(a->parent, afi, min, max);
 }
 
 /*
  * Make sure that the SKI doesn't already exist and return the parent by
  * its AKI.
- * Returns the parent index or -1 on failure.
+ * Returns the parent auth or NULL on failure.
  */
-ssize_t
-valid_ski_aki(const char *fn, const struct auth *auths,
-    size_t authsz, const char *ski, const char *aki)
+struct auth *
+valid_ski_aki(const char *fn, struct auth_tree *auths,
+    const char *ski, const char *aki)
 {
-	size_t		 i;
+	struct auth *a;
 
-	for (i = 0; i < authsz; i++)
-		if (strcmp(auths[i].cert->ski, ski) == 0) {
-			warnx("%s: RFC 6487: duplicate SKI", fn);
-			return -1;
+	if (auth_find(auths, ski) != NULL) {
+		warnx("%s: RFC 6487: duplicate SKI", fn);
+		return NULL;
+	}
+
+	a = auth_find(auths, aki);
+	if (a == NULL)
+		warnx("%s: RFC 6487: unknown AKI", fn);
+
+	return a;
+}
+
+/*
+ * Authenticate a trust anchor by making sure its resources are not
+ * inheriting and that the SKI is unique.
+ * Returns 1 if valid, 0 otherwise.
+ */
+int
+valid_ta(const char *fn, struct auth_tree *auths, const struct cert *cert)
+{
+	size_t	 i;
+
+	/* AS and IP resources must not inherit. */
+	if (cert->asz && cert->as[0].type == CERT_AS_INHERIT) {
+		warnx("%s: RFC 6487 (trust anchor): "
+		    "inheriting AS resources", fn);
+		return 0;
+	}
+	for (i = 0; i < cert->ipsz; i++)
+		if (cert->ips[i].type == CERT_IP_INHERIT) {
+			warnx("%s: RFC 6487 (trust anchor): "
+			    "inheriting IP resources", fn);
+			return 0;
 		}
 
-	for (i = 0; i < authsz; i++)
-		if (strcmp(auths[i].cert->ski, aki) == 0)
-			return i;
+	/* SKI must not be a dupe. */
+	if (auth_find(auths, cert->ski) != NULL) {
+		warnx("%s: RFC 6487: duplicate SKI", fn);
+		return 0;
+	}
 
-	warnx("%s: RFC 6487: unknown AKI", fn);
-	return -1;
+	return 1;
 }
 
 /*
  * Validate a non-TA certificate: make sure its IP and AS resources are
  * fully covered by those in the authority key (which must exist).
- * Returns the parent index or -1 on failure.
+ * Returns 1 if valid, 0 otherwise.
  */
-ssize_t
-valid_cert(const char *fn, const struct auth *auths,
-    size_t authsz, const struct cert *cert)
+int
+valid_cert(const char *fn, struct auth_tree *auths, const struct cert *cert)
 {
-	ssize_t		 c, pp;
+	struct auth	*a;
 	size_t		 i;
 	uint32_t	 min, max;
 	char		 buf1[64], buf2[64];
 
-	c = valid_ski_aki(fn, auths, authsz, cert->ski, cert->aki);
-	if (c < 0)
-		return -1;
+	a = valid_ski_aki(fn, auths, cert->ski, cert->aki);
+	if (a == NULL)
+		return 0;
 
 	for (i = 0; i < cert->asz; i++) {
 		if (cert->as[i].type == CERT_AS_INHERIT)
@@ -189,19 +172,17 @@ valid_cert(const char *fn, const struct auth *auths,
 		    cert->as[i].id : cert->as[i].range.min;
 		max = cert->as[i].type == CERT_AS_ID ?
 		    cert->as[i].id : cert->as[i].range.max;
-		pp = valid_as(min, max, c, auths, authsz);
-		if (pp >= 0)
+		if (valid_as(a, min, max))
 			continue;
 		warnx("%s: RFC 6487: uncovered AS: "
 		    "%u--%u", fn, min, max);
-		tracewarn(c, auths, authsz);
-		return -1;
+		tracewarn(a);
+		return 0;
 	}
 
 	for (i = 0; i < cert->ipsz; i++) {
-		pp = valid_ip(c, cert->ips[i].afi, cert->ips[i].min,
-		    cert->ips[i].max, auths, authsz);
-		if (pp >= 0)
+		if (valid_ip(a, cert->ips[i].afi, cert->ips[i].min,
+		    cert->ips[i].max))
 			continue;
 		switch (cert->ips[i].type) {
 		case CERT_IP_RANGE:
@@ -222,42 +203,43 @@ valid_cert(const char *fn, const struct auth *auths,
 			    "(inherit)", fn);
 			break;
 		}
-		tracewarn(c, auths, authsz);
-		return -1;
+		tracewarn(a);
+		return 0;
 	}
 
-	return c;
+	return 1;
 }
 
 /*
  * Validate our ROA: check that the SKI is unique, the AKI exists, and
  * the IP prefix is also contained.
- * Returns the parent index or -1 on failure.
+ * Returns 1 if valid, 0 otherwise.
  */
-ssize_t
-valid_roa(const char *fn, const struct auth *auths,
-    size_t authsz, const struct roa *roa)
+int
+valid_roa(const char *fn, struct auth_tree *auths, struct roa *roa)
 {
-	ssize_t	 c, pp;
+	struct auth	*a;
 	size_t	 i;
 	char	 buf[64];
 
-	c = valid_ski_aki(fn, auths, authsz, roa->ski, roa->aki);
-	if (c < 0)
-		return -1;
+	a = valid_ski_aki(fn, auths, roa->ski, roa->aki);
+	if (a == NULL)
+		return 0;
+
+	if ((roa->tal = strdup(a->tal)) == NULL)
+		err(EXIT_FAILURE, NULL);
 
 	for (i = 0; i < roa->ipsz; i++) {
-		pp = valid_ip(c, roa->ips[i].afi, roa->ips[i].min,
-		    roa->ips[i].max, auths, authsz);
-		if (pp >= 0)
+		if (valid_ip(a, roa->ips[i].afi, roa->ips[i].min,
+		    roa->ips[i].max))
 			continue;
 		ip_addr_print(&roa->ips[i].addr,
 		    roa->ips[i].afi, buf, sizeof(buf));
 		warnx("%s: RFC 6482: uncovered IP: "
 		    "%s", fn, buf);
-		tracewarn(c, auths, authsz);
-		return -1;
+		tracewarn(a);
+		return 0;
 	}
 
-	return c;
+	return 1;
 }
