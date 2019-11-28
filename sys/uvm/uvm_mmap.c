@@ -1,11 +1,11 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.158 2019/11/27 01:04:13 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.159 2019/11/28 17:19:22 mlarkin Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
- * Copyright (c) 1991, 1993 The Regents of the University of California.  
+ * Copyright (c) 1991, 1993 The Regents of the University of California.
  * Copyright (c) 1988 University of Utah.
- * 
+ *
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -23,7 +23,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by the Charles D. Cranor,
- *	Washington University, University of California, Berkeley and 
+ *	Washington University, University of California, Berkeley and
  *	its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -333,7 +333,7 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 				flags |= MAP_PRIVATE;	/* for a file */
 		}
 
-		/* 
+		/*
 		 * MAP_PRIVATE device mappings don't make sense (and aren't
 		 * supported anyway).  However, some programs rely on this,
 		 * so just change it to MAP_SHARED.
@@ -501,7 +501,7 @@ sys_munmap(struct proc *p, void *v, register_t *retval)
 	/* get syscall args... */
 	addr = (vaddr_t) SCARG(uap, addr);
 	size = (vsize_t) SCARG(uap, len);
-	
+
 	/* align address to a page boundary, and adjust size accordingly */
 	ALIGN_ADDR(addr, size, pageoff);
 
@@ -521,7 +521,7 @@ sys_munmap(struct proc *p, void *v, register_t *retval)
 	vm_map_lock(map);	/* lock map so we can checkprot */
 
 	/*
-	 * interesting system call semantic: make sure entire range is 
+	 * interesting system call semantic: make sure entire range is
 	 * allocated before allowing an unmap.
 	 */
 	if (!uvm_map_checkprot(map, addr, addr + size, PROT_NONE)) {
@@ -561,7 +561,7 @@ sys_mprotect(struct proc *p, void *v, register_t *retval)
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
 	prot = SCARG(uap, prot);
-	
+
 	if ((prot & PROT_MASK) != prot)
 		return (EINVAL);
 	if ((prot & (PROT_WRITE | PROT_EXEC)) == (PROT_WRITE | PROT_EXEC) &&
@@ -623,7 +623,7 @@ sys_minherit(struct proc *p, void *v, register_t *retval)
 	vaddr_t addr;
 	vsize_t size, pageoff;
 	vm_inherit_t inherit;
-	
+
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
 	inherit = SCARG(uap, inherit);
@@ -634,7 +634,7 @@ sys_minherit(struct proc *p, void *v, register_t *retval)
 	ALIGN_ADDR(addr, size, pageoff);
 	if (addr > SIZE_MAX - size)
 		return (EINVAL);		/* disallow wrap-around. */
-	
+
 	return (uvm_map_inherit(&p->p_vmspace->vm_map, addr, addr+size,
 	    inherit));
 }
@@ -654,7 +654,7 @@ sys_madvise(struct proc *p, void *v, register_t *retval)
 	vaddr_t addr;
 	vsize_t size, pageoff;
 	int advice, error;
-	
+
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
 	advice = SCARG(uap, behav);
