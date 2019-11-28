@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.933 2019/11/25 15:04:15 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.934 2019/11/28 09:05:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1148,6 +1148,8 @@ struct tty {
 
 	u_int		 sx;
 	u_int		 sy;
+	u_int		 xpixel;
+	u_int		 ypixel;
 
 	u_int		 cx;
 	u_int		 cy;
@@ -1927,7 +1929,7 @@ void	tty_putc(struct tty *, u_char);
 void	tty_putn(struct tty *, const void *, size_t, u_int);
 int	tty_init(struct tty *, struct client *, int, char *);
 void	tty_resize(struct tty *);
-void	tty_set_size(struct tty *, u_int, u_int);
+void	tty_set_size(struct tty *, u_int, u_int, u_int, u_int);
 void	tty_start_tty(struct tty *);
 void	tty_stop_tty(struct tty *);
 void	tty_set_title(struct tty *, const char *);

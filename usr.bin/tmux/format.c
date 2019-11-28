@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.217 2019/11/25 15:04:15 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.218 2019/11/28 09:05:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2158,6 +2158,8 @@ format_defaults_client(struct format_tree *ft, struct client *c)
 	format_add(ft, "client_pid", "%ld", (long) c->pid);
 	format_add(ft, "client_height", "%u", tty->sy);
 	format_add(ft, "client_width", "%u", tty->sx);
+	format_add(ft, "client_cell_width", "%u", tty->xpixel);
+	format_add(ft, "client_cell_height", "%u", tty->ypixel);
 	format_add(ft, "client_tty", "%s", c->ttyname);
 	format_add(ft, "client_control_mode", "%d",
 		!!(c->flags & CLIENT_CONTROL));

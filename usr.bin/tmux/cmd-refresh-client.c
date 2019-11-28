@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-refresh-client.c,v 1.29 2019/07/10 11:20:10 nicm Exp $ */
+/* $OpenBSD: cmd-refresh-client.c,v 1.30 2019/11/28 09:05:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -130,7 +130,7 @@ cmd_refresh_client_exec(struct cmd *self, struct cmdq_item *item)
 				cmdq_error(item, "size too small or too big");
 				return (CMD_RETURN_ERROR);
 			}
-			tty_set_size(&c->tty, x, y);
+			tty_set_size(&c->tty, x, y, 0, 0);
 			c->flags |= CLIENT_SIZECHANGED;
 			recalculate_sizes();
 		}
