@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.82 2019/11/28 10:40:29 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.83 2019/11/28 20:28:13 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -76,6 +76,9 @@
 
 #define	RESOLVER_CHECK_SEC		1
 #define	RESOLVER_CHECK_MAXSEC		1024 /* ~17 minutes */
+#define	DECAY_PERIOD			60
+#define	DECAY_NOMINATOR			9
+#define	DECAY_DENOMINATOR		10
 
 #define	TRUST_ANCHOR_RETRY_INTERVAL	8640
 #define	TRUST_ANCHOR_QUERY_INTERVAL	43200
@@ -176,6 +179,7 @@ void			 trust_anchor_resolve_done(struct uw_resolver *, void *,
 void			 replace_autoconf_forwarders(struct
 			     imsg_rdns_proposal *);
 int64_t			 histogram_median(int64_t *);
+void			 decay_latest_histograms(int, short, void *);
 
 struct uw_conf			*resolver_conf;
 struct imsgev			*iev_frontend;
@@ -185,6 +189,7 @@ struct uw_resolver		*resolvers[UW_RES_NONE];
 struct timespec			 last_network_change;
 
 struct event			 trust_anchor_timer;
+struct event			 decay_timer;
 
 static struct trust_anchor_head	 trust_anchors, new_trust_anchors;
 
@@ -310,6 +315,7 @@ resolver(int debug, int verbose)
 {
 	struct event	 ev_sigint, ev_sigterm;
 	struct passwd	*pw;
+	struct timeval	 tv = {DECAY_PERIOD, 0};
 
 	resolver_conf = config_new_empty();
 
@@ -358,6 +364,8 @@ resolver(int debug, int verbose)
 	event_add(&iev_main->ev, NULL);
 
 	evtimer_set(&trust_anchor_timer, trust_anchor_timo, NULL);
+	evtimer_set(&decay_timer, decay_latest_histograms, NULL);
+	evtimer_add(&decay_timer, &tv);
 
 	clock_gettime(CLOCK_MONOTONIC, &last_network_change);
 
@@ -656,6 +664,7 @@ void
 setup_query(struct query_imsg *query_imsg)
 {
 	struct running_query	*rq;
+	struct uw_resolver	*res;
 	int			 i;
 
 	if (find_running_query(query_imsg->id) != NULL) {
@@ -681,13 +690,13 @@ setup_query(struct query_imsg *query_imsg)
 	}
 
 	for (i = 0; i < rq->res_pref.len; i++) {
-		if (resolvers[rq->res_pref.types[i]] == NULL)
+		res = resolvers[rq->res_pref.types[i]];
+		if (res == NULL)
 		    continue;
 		log_debug("%s: %s[%s] %lldms", __func__,
 		    uw_resolver_type_str[rq->res_pref.types[i]],
-		    uw_resolver_state_str[resolvers[rq->res_pref.types[i]]
-		    ->state], histogram_median(resolvers[rq->res_pref.types[i]]
-		    ->latest_histogram));
+		    uw_resolver_state_str[res->state],
+		    histogram_median(res->latest_histogram));
 	}
 
 	evtimer_set(&rq->timer_ev, try_resolver_timo, rq);
@@ -860,7 +869,9 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 		log_debug("histogram bucket error");
 	else {
 		res->histogram[i]++;
-		res->latest_histogram[i]++;
+		/* latest_histogram is in units of 1000 to avoid rounding
+		   down when decaying */
+		res->latest_histogram[i] += 1000;
 	}
 
 	if (answer_len < LDNS_HEADER_SIZE) {
@@ -1962,4 +1973,24 @@ histogram_median(int64_t *histogram)
 	}
 
 	return histogram_limits[i];
+}
+
+void
+decay_latest_histograms(int fd, short events, void *arg)
+{
+	enum uw_resolver_type	 i;
+	size_t			 j;
+	struct uw_resolver	*res;
+	struct timeval		 tv = {DECAY_PERIOD, 0};
+
+	for (i = 0; i < UW_RES_NONE; i++) {
+		res = resolvers[i];
+		if (res == NULL)
+			continue;
+		for (j = 0; j < nitems(res->latest_histogram); j++)
+			/* multiply then divide, avoiding truncating to 0 */
+			res->latest_histogram[j] = res->latest_histogram[j] *
+			    DECAY_NOMINATOR / DECAY_DENOMINATOR;
+	}
+	evtimer_add(&decay_timer, &tv);
 }
