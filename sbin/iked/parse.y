@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.86 2019/11/28 15:44:52 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.87 2019/11/28 15:52:49 kn Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -334,8 +334,7 @@ struct ipsec_filters {
 void			 copy_sockaddrtoipa(struct ipsec_addr_wrap *,
 			    struct sockaddr *);
 struct ipsec_addr_wrap	*host(const char *);
-struct ipsec_addr_wrap	*host_v6(const char *, int);
-struct ipsec_addr_wrap	*host_v4(const char *, int);
+struct ipsec_addr_wrap	*host_ip(const char *, int);
 struct ipsec_addr_wrap	*host_dns(const char *, int);
 struct ipsec_addr_wrap	*host_if(const char *, int);
 struct ipsec_addr_wrap	*host_any(void);
@@ -2013,82 +2012,65 @@ struct ipsec_addr_wrap *
 host(const char *s)
 {
 	struct ipsec_addr_wrap	*ipa = NULL;
-	int			 mask, cont = 1;
-	char			*p, *q, *ps;
+	int			 mask = -1;
+	char			*p, *ps;
+	const char		*errstr;
 
-	if ((p = strrchr(s, '/')) != NULL) {
-		errno = 0;
-		mask = strtol(p + 1, &q, 0);
-		if (errno == ERANGE || !q || *q || mask > 128 || q == (p + 1))
-			errx(1, "host: invalid netmask '%s'", p);
-		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
-			err(1, "%s", __func__);
-		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
-	} else {
-		if ((ps = strdup(s)) == NULL)
-			err(1, "%s", __func__);
-		mask = -1;
+	if ((ps = strdup(s)) == NULL)
+		err(1, "%s: strdup", __func__);
+
+	if ((p = strchr(ps, '/')) != NULL) {
+		mask = strtonum(p+1, 0, 128, &errstr);
+		if (errstr) {
+			fprintf(stderr, "netmask is %s: %s\n", errstr, p);
+			goto error;
+		}
+		p[0] = '\0';
 	}
 
-	/* Does interface with this name exist? */
-	if (cont && (ipa = host_if(ps, mask)) != NULL)
-		cont = 0;
-
-	/* IPv4 address? */
-	if (cont && (ipa = host_v4(s, mask == -1 ? 32 : mask)) != NULL)
-		cont = 0;
-
-	/* IPv6 address? */
-	if (cont && (ipa = host_v6(ps, mask == -1 ? 128 : mask)) != NULL)
-		cont = 0;
-
-	/* dns lookup */
-	if (cont && mask == -1 && (ipa = host_dns(s, mask)) != NULL)
-		cont = 0;
-	free(ps);
-
-	if (ipa == NULL || cont == 1) {
+	if ((ipa = host_if(ps, mask)) == NULL &&
+	    (ipa = host_ip(ps, mask)) == NULL &&
+	    (ipa = host_dns(ps, mask)) == NULL)
 		fprintf(stderr, "no IP address found for %s\n", s);
-		return (NULL);
-	}
+
+error:
+	free(ps);
 	return (ipa);
 }
 
 struct ipsec_addr_wrap *
-host_v6(const char *s, int prefixlen)
+host_ip(const char *s, int mask)
 {
 	struct ipsec_addr_wrap	*ipa = NULL;
 	struct addrinfo		 hints, *res;
 	char			 hbuf[NI_MAXHOST];
 
 	bzero(&hints, sizeof(struct addrinfo));
-	hints.ai_family = AF_INET6;
-	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
 	if (getaddrinfo(s, NULL, &hints, &res))
 		return (NULL);
 	if (res->ai_next)
-		err(1, "host_v6: numeric hostname expanded to multiple item");
+		err(1, "%s: %s expanded to multiple item", __func__, s);
 
 	ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 	if (ipa == NULL)
 		err(1, "%s", __func__);
 	ipa->af = res->ai_family;
-	memcpy(&ipa->address, res->ai_addr, sizeof(struct sockaddr_in6));
-	if (prefixlen > 128)
-		prefixlen = 128;
+	copy_sockaddrtoipa(ipa, res->ai_addr);
 	ipa->next = NULL;
 	ipa->tail = ipa;
 
-	set_ipmask(ipa, prefixlen);
+	set_ipmask(ipa, mask);
 	if (getnameinfo(res->ai_addr, res->ai_addrlen,
 	    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST)) {
 		errx(1, "could not get a numeric hostname");
 	}
 
-	if (prefixlen != 128) {
+	if (mask > -1) {
 		ipa->netaddress = 1;
-		if (asprintf(&ipa->name, "%s/%d", hbuf, prefixlen) == -1)
+		if (asprintf(&ipa->name, "%s/%d", hbuf, mask) == -1)
 			err(1, "%s", __func__);
 	} else {
 		if ((ipa->name = strdup(hbuf)) == NULL)
@@ -2096,45 +2078,6 @@ host_v6(const char *s, int prefixlen)
 	}
 
 	freeaddrinfo(res);
-
-	return (ipa);
-}
-
-struct ipsec_addr_wrap *
-host_v4(const char *s, int mask)
-{
-	struct ipsec_addr_wrap	*ipa = NULL;
-	struct sockaddr_in	 ina;
-	int			 bits = 32;
-
-	bzero(&ina, sizeof(ina));
-	if (strrchr(s, '/') != NULL) {
-		if ((bits = inet_net_pton(AF_INET, s, &ina.sin_addr,
-		    sizeof(ina.sin_addr))) == -1)
-			return (NULL);
-	} else {
-		if (inet_pton(AF_INET, s, &ina.sin_addr) != 1)
-			return (NULL);
-	}
-
-	ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
-	if (ipa == NULL)
-		err(1, "%s", __func__);
-
-	ina.sin_family = AF_INET;
-	ina.sin_len = sizeof(ina);
-	memcpy(&ipa->address, &ina, sizeof(ina));
-
-	ipa->name = strdup(s);
-	if (ipa->name == NULL)
-		err(1, "%s", __func__);
-	ipa->af = AF_INET;
-	ipa->next = NULL;
-	ipa->tail = ipa;
-
-	set_ipmask(ipa, bits);
-	if (strrchr(s, '/') != NULL)
-		ipa->netaddress = 1;
 
 	return (ipa);
 }
