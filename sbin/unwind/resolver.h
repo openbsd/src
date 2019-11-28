@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.h,v 1.12 2019/11/27 17:12:31 florian Exp $	*/
+/*	$OpenBSD: resolver.h,v 1.13 2019/11/28 10:02:44 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -53,7 +53,7 @@ struct ctl_resolver_info {
 };
 
 struct ctl_forwarder_info {
-	char		 name[1024]; /* XXX, keep in sync with uw_forwarder */
+	char		 ip[INET6_ADDRSTRLEN];
 	uint32_t	 if_index;
 	int		 src;
 };

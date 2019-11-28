@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.19 2019/11/27 17:11:00 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.20 2019/11/28 10:02:44 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -230,7 +230,6 @@ forwarderopts_l		: forwarderopts_l forwarderoptsl optnl
 			;
 
 forwarderoptsl		: STRING port authname dot {
-				int ret, port;
 				struct uw_forwarder *uw_fwd;
 				struct sockaddr_storage *ss;
 
@@ -241,49 +240,47 @@ forwarderoptsl		: STRING port authname dot {
 				}
 				free(ss);
 
+				if ((uw_fwd = calloc(1, sizeof(*uw_fwd))) ==
+				    NULL)
+					err(1, NULL);
+
 				if ($2 < 0 || $2 > (int)USHRT_MAX) {
 					yyerror("invalid port: %lld", $2);
 					free($1);
+					free(uw_fwd);
 					YYERROR;
 				}
 				if ($2 == 0)
-					port = $4 == DOT ? 853 : 53;
+					uw_fwd->port = $4 == DOT ? 853 : 53;
 				else
-					port = $2;
+					uw_fwd->port = $2;
 
 				if ($3 != NULL && $4 == 0) {
 					yyerror("authentication name can only "
 					    "be used with DoT");
 					free($1);
+					free(uw_fwd);
 					YYERROR;
 				}
 
-
-				if ((uw_fwd = calloc(1,
-				    sizeof(*uw_fwd))) == NULL)
-					err(1, NULL);
-
-				if ($4 == DOT) {
-					if ($3 == NULL)
-						ret = snprintf(uw_fwd->name,
-						    sizeof(uw_fwd->name),
-						    "%s@%d", $1, port);
-					else
-						ret = snprintf(uw_fwd->name,
-						    sizeof(uw_fwd->name),
-						    "%s@%d#%s", $1, port, $3);
-				} else {
-					uw_fwd->port = $2;
-					/* complete string will be done later */
-					ret = snprintf(uw_fwd->name,
-					    sizeof(uw_fwd->name), "%s", $1);
-				}
-				if (ret < 0 || (size_t)ret >=
-				    sizeof(uw_fwd->name)) {
+				if (strlcpy(uw_fwd->ip, $1, sizeof(uw_fwd->ip))
+				    >= sizeof(uw_fwd->ip)) {
 					free(uw_fwd);
 					yyerror("forwarder %s too long", $1);
 					free($1);
 					YYERROR;
+				}
+
+				if ($4 == DOT && $3 != NULL) {
+					if (strlcpy(uw_fwd->auth_name, $3,
+					    sizeof(uw_fwd->auth_name))
+					    >= sizeof(uw_fwd->auth_name)) {
+						free(uw_fwd);
+						yyerror("authentication name "
+						    "%s too long", $3);
+						free($1);
+						YYERROR;
+					}
 				}
 
 				if ($4 == DOT)

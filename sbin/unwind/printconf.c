@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.14 2019/11/27 17:11:00 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.15 2019/11/28 10:02:44 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -26,42 +26,6 @@
 
 #include "unwind.h"
 
-const char*	yesno(int);
-void		print_forwarder(char *);
-
-const char*
-yesno(int flag)
-{
-	return flag ? "yes" : "no";
-}
-
-void
-print_forwarder(char *name)
-{
-	char	*port_pos, *name_pos;
-
-	port_pos = strchr(name, '@');
-	name_pos = strchr(name, '#');
-
-	if (port_pos != NULL) {
-		*port_pos = '\0';
-		if (name_pos != NULL) {
-			*name_pos = '\0';
-			printf("%s port %s authentication name %s", name,
-			    port_pos + 1, name_pos + 1);
-			*name_pos = '#';
-		} else {
-			printf("%s port %s", name, port_pos + 1);
-		}
-		*port_pos = '@';
-	} else if (name_pos != NULL) {
-		*name_pos = '\0';
-		printf("%s authentication name %s", name, name_pos + 1);
-		*name_pos = '#';
-	} else
-		printf("%s", name);
-}
-
 void
 print_config(struct uw_conf *conf)
 {
@@ -82,13 +46,20 @@ print_config(struct uw_conf *conf)
 		printf("forwarder {\n");
 		TAILQ_FOREACH(uw_forwarder, &conf->uw_forwarder_list, entry) {
 			printf("\t");
-			print_forwarder(uw_forwarder->name);
+			printf("%s", uw_forwarder->ip);
+			if (uw_forwarder->port != 53)
+				printf(" port %d", uw_forwarder->port);
 			printf("\n");
 		}
 		TAILQ_FOREACH(uw_forwarder, &conf->uw_dot_forwarder_list,
 		    entry) {
 			printf("\t");
-			print_forwarder(uw_forwarder->name);
+			printf("%s", uw_forwarder->ip);
+			if (uw_forwarder->port != 853)
+				printf(" port %d", uw_forwarder->port);
+			if (uw_forwarder->auth_name[0] != '\0')
+				printf(" authentication name %s",
+				    uw_forwarder->auth_name);
 			printf(" DoT\n");
 		}
 		printf("}\n");

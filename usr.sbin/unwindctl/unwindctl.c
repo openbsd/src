@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwindctl.c,v 1.16 2019/11/27 17:12:31 florian Exp $	*/
+/*	$OpenBSD: unwindctl.c,v 1.17 2019/11/28 10:02:44 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -236,7 +236,7 @@ show_status_msg(struct imsg *imsg)
 		if (!autoconf_forwarders++)
 			printf("\nlearned forwarders:\n");
 		if_name = if_indextoname(cfi->if_index, ifnamebuf);
-		printf("%s - %s[%s]\n", cfi->name,
+		printf("%s - %s[%s]\n", cfi->ip,
 		    cfi->src == RTP_PROPOSAL_DHCLIENT ? "DHCP" : "SLAAC",
 		    if_name ? if_name : "unknown");
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.80 2019/11/27 17:12:31 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.81 2019/11/28 10:02:44 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -62,6 +62,9 @@
 #define	TLS_DEFAULT_CA_CERT_FILE	"/etc/ssl/cert.pem"
 #define	UB_LOG_VERBOSE			4
 #define	UB_LOG_BRIEF			0
+
+/* maximum size of a libunbound forwarder definition: IP@PORT#AUTHNAME */
+#define	FWD_MAX				(INET6_ADDRSTRLEN + NI_MAXHOST + 2 + 5)
 
 /*
  * The prefered resolver type can be this many ms slower than the next
@@ -145,8 +148,6 @@ void			 new_static_dot_forwarders(void);
 struct uw_resolver	*create_resolver(enum uw_resolver_type, int);
 void			 free_resolver(struct uw_resolver *);
 void			 set_forwarders(struct uw_resolver *,
-			     struct uw_forwarder_head *);
-void			 set_forwarders_oppdot(struct uw_resolver *,
 			     struct uw_forwarder_head *, int);
 void			 resolver_check_timo(int, short, void *);
 void			 resolver_free_timo(int, short, void *);
@@ -174,8 +175,6 @@ void			 trust_anchor_resolve_done(struct uw_resolver *, void *,
 			     int, void *, int, int, char *);
 void			 replace_autoconf_forwarders(struct
 			     imsg_rdns_proposal *);
-struct uw_forwarder	*find_forwarder(struct uw_forwarder_head *,
-    			     const char *);
 int64_t			 histogram_median(int64_t *);
 
 struct uw_conf			*resolver_conf;
@@ -1114,7 +1113,7 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 		TAILQ_FOREACH(uw_forwarder, &autoconf_forwarder_list, entry) {
 			tmp = resolv_conf;
 			if (asprintf(&resolv_conf, "%snameserver %s\n", tmp ==
-			    NULL ? "" : tmp, uw_forwarder->name) == -1) {
+			    NULL ? "" : tmp, uw_forwarder->ip) == -1) {
 				free(tmp);
 				free(res);
 				log_warnx("could not create asr context");
@@ -1196,30 +1195,27 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 	case UW_RES_DHCP:
 		res->oppdot = oppdot;
 		if (oppdot) {
-			set_forwarders_oppdot(res, &autoconf_forwarder_list,
-			    853);
-			ub_ctx_set_option(res->ctx, "tls-cert-bundle:",
-			    TLS_DEFAULT_CA_CERT_FILE);
-			ub_ctx_set_tls(res->ctx, 1);
-		} else {
-			set_forwarders_oppdot(res, &autoconf_forwarder_list,
-			    53);
-		}
-		break;
-	case UW_RES_FORWARDER:
-		res->oppdot = oppdot;
-		if (oppdot) {
-			set_forwarders_oppdot(res,
-			    &resolver_conf->uw_forwarder_list, 853);
+			set_forwarders(res, &autoconf_forwarder_list, 853);
 			ub_ctx_set_option(res->ctx, "tls-cert-bundle:",
 			    TLS_DEFAULT_CA_CERT_FILE);
 			ub_ctx_set_tls(res->ctx, 1);
 		} else
-			set_forwarders_oppdot(res,
-			    &resolver_conf->uw_forwarder_list, 53);
+			set_forwarders(res, &autoconf_forwarder_list, 0);
+		break;
+	case UW_RES_FORWARDER:
+		res->oppdot = oppdot;
+		if (oppdot) {
+			set_forwarders(res, &resolver_conf->uw_forwarder_list,
+			    853);
+			ub_ctx_set_option(res->ctx, "tls-cert-bundle:",
+			    TLS_DEFAULT_CA_CERT_FILE);
+			ub_ctx_set_tls(res->ctx, 1);
+		} else
+			set_forwarders(res, &resolver_conf->uw_forwarder_list,
+			    0);
 		break;
 	case UW_RES_DOT:
-		set_forwarders(res, &resolver_conf->uw_dot_forwarder_list);
+		set_forwarders(res, &resolver_conf->uw_dot_forwarder_list, 0);
 		ub_ctx_set_option(res->ctx, "tls-cert-bundle:",
 		    TLS_DEFAULT_CA_CERT_FILE);
 		ub_ctx_set_tls(res->ctx, 1);
@@ -1273,27 +1269,30 @@ free_resolver(struct uw_resolver *res)
 
 void
 set_forwarders(struct uw_resolver *res, struct uw_forwarder_head
-    *uw_forwarder_list)
+    *uw_forwarder_list, int port_override)
 {
 	struct uw_forwarder	*uw_forwarder;
-
-	TAILQ_FOREACH(uw_forwarder, uw_forwarder_list, entry)
-		ub_ctx_set_fwd(res->ctx, uw_forwarder->name);
-}
-
-void
-set_forwarders_oppdot(struct uw_resolver *res, struct uw_forwarder_head
-    *uw_forwarder_list, int def_port)
-{
-	struct uw_forwarder	*uw_forwarder;
+	int			 ret;
+	char			 fwd[FWD_MAX];
 
 	TAILQ_FOREACH(uw_forwarder, uw_forwarder_list, entry) {
-		char name[1024];
-		int port = uw_forwarder->port;
-		if (port == 0)
-			port = def_port;
-		snprintf(name, sizeof(name), "%s@%d", uw_forwarder->name, port);
-		ub_ctx_set_fwd(res->ctx, name);
+		if (uw_forwarder->auth_name[0] != '\0')
+			ret = snprintf(fwd, sizeof(fwd), "%s@%d#%s",
+			    uw_forwarder->ip, port_override ? port_override :
+			    uw_forwarder->port, uw_forwarder->auth_name);
+		else
+			ret = snprintf(fwd, sizeof(fwd), "%s@%d",
+			    uw_forwarder->ip, port_override ? port_override :
+			    uw_forwarder->port);
+
+		log_debug("%s: %s", __func__, fwd);
+
+		if (ret < 0 || (size_t)ret >= sizeof(fwd)) {
+			log_warnx("forwarder too long");
+			continue;
+		}
+
+		ub_ctx_set_fwd(res->ctx, fwd);
 	}
 }
 
@@ -1524,7 +1523,11 @@ check_forwarders_changed(struct uw_forwarder_head *list_a,
 	b = TAILQ_FIRST(list_b);
 
 	while(a != NULL && b != NULL) {
-		if (strcmp(a->name, b->name) != 0)
+		if (strcmp(a->ip, b->ip) != 0)
+			return 1;
+		if (a->port != b->port)
+			return 1;
+		if (strcmp(a->auth_name, b->auth_name) != 0)
 			return 1;
 		a = TAILQ_NEXT(a, entry);
 		b = TAILQ_NEXT(b, entry);
@@ -1656,8 +1659,7 @@ show_status(enum uw_resolver_type type, pid_t pid)
 			cfi.if_index = uw_forwarder->if_index;
 			cfi.src = uw_forwarder->src;
 			/* no truncation, structs are in sync */
-			strlcpy(cfi.name, uw_forwarder->name,
-			    sizeof(cfi.name));
+			memcpy(cfi.ip, uw_forwarder->ip, sizeof(cfi.ip));
 			resolver_imsg_compose_frontend(
 			    IMSG_CTL_AUTOCONF_RESOLVER_INFO,
 			    pid, &cfi, sizeof(cfi));
@@ -1896,9 +1898,10 @@ replace_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 		if ((uw_forwarder = calloc(1, sizeof(struct uw_forwarder))) ==
 		    NULL)
 			fatal(NULL);
-		if (strlcpy(uw_forwarder->name, ns, sizeof(uw_forwarder->name))
-		    >= sizeof(uw_forwarder->name))
+		if (strlcpy(uw_forwarder->ip, ns, sizeof(uw_forwarder->ip))
+		    >= sizeof(uw_forwarder->ip))
 			fatalx("strlcpy");
+		uw_forwarder->port = 53;
 		uw_forwarder->if_index = rdns_proposal->if_index;
 		uw_forwarder->src = rdns_proposal->src;
 		TAILQ_INSERT_TAIL(&new_forwarder_list, uw_forwarder, entry);
@@ -1913,9 +1916,10 @@ replace_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 		if ((uw_forwarder = calloc(1, sizeof(struct uw_forwarder))) ==
 		    NULL)
 			fatal(NULL);
-		if (strlcpy(uw_forwarder->name, tmp->name,
-		    sizeof(uw_forwarder->name)) >= sizeof(uw_forwarder->name))
+		if (strlcpy(uw_forwarder->ip, tmp->ip,
+		    sizeof(uw_forwarder->ip)) >= sizeof(uw_forwarder->ip))
 			fatalx("strlcpy");
+		uw_forwarder->port = tmp->port;
 		uw_forwarder->src = tmp->src;
 		uw_forwarder->if_index = tmp->if_index;
 		TAILQ_INSERT_TAIL(&new_forwarder_list, uw_forwarder, entry);
@@ -1938,17 +1942,6 @@ replace_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 			free(tmp);
 		}
 	}
-}
-
-struct uw_forwarder *
-find_forwarder(struct uw_forwarder_head *list, const char *name) {
-	struct uw_forwarder	*uw_forwarder;
-
-	TAILQ_FOREACH(uw_forwarder, list, entry) {
-		if (strcmp(uw_forwarder->name, name) == 0)
-			return uw_forwarder;
-	}
-	return NULL;
 }
 
 int64_t

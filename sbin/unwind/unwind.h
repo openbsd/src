@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.38 2019/11/27 17:11:00 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.39 2019/11/28 10:02:44 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -18,9 +18,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
+#include <sys/types.h>
+#include <netinet/in.h>	/* INET6_ADDRSTRLEN */
 #include <event.h>
 #include <imsg.h>
+#include <netdb.h>	/* NI_MAXHOST */
 #include <stdint.h>
 
 #ifndef nitems
@@ -114,10 +116,11 @@ enum imsg_type {
 
 struct uw_forwarder {
 	TAILQ_ENTRY(uw_forwarder)		 entry;
-	char					 name[1024]; /* XXX */
+	char					 ip[INET6_ADDRSTRLEN];
+	char					 auth_name[NI_MAXHOST];
+	uint16_t				 port;
 	uint32_t				 if_index;
 	int					 src;
-	uint16_t				 port;
 };
 
 struct resolver_preference {
