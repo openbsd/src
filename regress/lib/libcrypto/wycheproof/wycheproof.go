@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.103 2019/11/28 21:41:14 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.104 2019/11/28 21:41:42 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -240,15 +240,15 @@ type wycheproofTestGroupECDSAWebCrypto struct {
 }
 
 type wycheproofTestHkdf struct {
-	TCID	int      `json:"tcId"`
-	Comment	string   `json:"comment"`
-	Ikm	string   `json:"ikm"`
-	Salt	string   `json:"salt"`
-	Info	string   `json:"info"`
-	Size	int      `json:"size"`
-	Okm	string   `json:"okm"`
-	Result	string   `json:"result"`
-	Flags	[]string `json:"flags"`
+	TCID    int      `json:"tcId"`
+	Comment string   `json:"comment"`
+	Ikm     string   `json:"ikm"`
+	Salt    string   `json:"salt"`
+	Info    string   `json:"info"`
+	Size    int      `json:"size"`
+	Okm     string   `json:"okm"`
+	Result  string   `json:"result"`
+	Flags   []string `json:"flags"`
 }
 
 type wycheproofTestGroupHkdf struct {
