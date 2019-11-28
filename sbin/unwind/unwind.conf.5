@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.18 2019/11/27 17:09:12 florian Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.19 2019/11/28 14:05:17 otto Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 27 2019 $
+.Dd $Mdocdate: November 28 2019 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -115,9 +115,7 @@ The default preference is
 .Ic DoT forwarder recursor dhcp stub .
 .El
 .Sh FILES
-.Bl -tag -width "/etc/examples/unwind.conf" -compact
-.It Pa /etc/examples/unwind.conf
-Example configuration file.
+.Bl -tag -width "/etc/unwind.conf" -compact
 .It Pa /etc/unwind.conf
 The default
 .Xr unwind 8
