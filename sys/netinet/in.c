@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.166 2019/11/08 07:16:29 dlg Exp $	*/
+/*	$OpenBSD: in.c,v 1.167 2019/11/28 00:50:41 bluhm Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -330,8 +330,16 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 			error = EINVAL;
 			break;
 		}
+		/* do not check inet family or strict len */
+		sin = satosin(&ifr->ifr_addr);
+		if (ntohl(sin->sin_addr.s_addr) &
+		    (~ntohl(sin->sin_addr.s_addr) >> 1)) {
+			/* non-contiguous netmask */
+			error = EINVAL;
+			break;
+		}
 		ia->ia_netmask = ia->ia_sockmask.sin_addr.s_addr =
-		    satosin(&ifr->ifr_addr)->sin_addr.s_addr;
+		    sin->sin_addr.s_addr;
 		break;
 	}
 err:
@@ -404,6 +412,7 @@ in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 	struct in_ifaddr *ia = NULL;
 	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
 	struct sockaddr_in *sin = NULL, *dstsin = NULL, *broadsin = NULL;
+	struct sockaddr_in *masksin = NULL;
 	int error = 0;
 	int newifaddr;
 
@@ -437,6 +446,14 @@ in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 
 		if (ifra->ifra_mask.sin_len) {
 			if (ifra->ifra_mask.sin_len < 8) {
+				error = EINVAL;
+				break;
+			}
+			/* do not check inet family or strict len */
+			masksin = &ifra->ifra_mask;
+			if (ntohl(masksin->sin_addr.s_addr) &
+			    (~ntohl(masksin->sin_addr.s_addr) >> 1)) {
+				/* non-contiguous netmask */
 				error = EINVAL;
 				break;
 			}
@@ -480,10 +497,10 @@ in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 		    sin->sin_addr.s_addr != ia->ia_addr.sin_addr.s_addr) {
 			needinit = 1;
 		}
-		if (ifra->ifra_mask.sin_len) {
+		if (masksin != NULL) {
 			in_ifscrub(ifp, ia);
 			ia->ia_netmask = ia->ia_sockmask.sin_addr.s_addr =
-			    ifra->ifra_mask.sin_addr.s_addr;
+			    masksin->sin_addr.s_addr;
 			needinit = 1;
 		}
 		if (dstsin != NULL) {
