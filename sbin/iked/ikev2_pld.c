@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.75 2019/11/13 12:24:40 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.76 2019/11/28 12:16:28 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -792,7 +792,8 @@ ikev2_pld_cert(struct iked *env, struct ikev2_payload *pld,
 
 	certid = &msg->msg_parent->msg_cert;
 	if (certid->id_type) {
-		log_debug("%s: duplicate cert payload", __func__);
+		log_info("%s: multiple cert payloads not supported",
+		   SPI_SA(msg->msg_sa, __func__));
 		return (-1);
 	}
 
@@ -826,8 +827,8 @@ int
 ikev2_pld_certreq(struct iked *env, struct ikev2_payload *pld,
     struct iked_message *msg, size_t offset, size_t left)
 {
-	struct iked_sa			*sa = msg->msg_sa;
 	struct ikev2_cert		 cert;
+	struct iked_certreq		*cr;
 	uint8_t				*buf;
 	ssize_t				 len;
 	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
@@ -848,25 +849,27 @@ ikev2_pld_certreq(struct iked *env, struct ikev2_payload *pld,
 		return (0);
 
 	if (cert.cert_type == IKEV2_CERT_X509_CERT) {
-		if (!len)
+		if (len == 0) {
+			log_info("%s: invalid length 0", __func__);
 			return (0);
+		}
 		if ((len % SHA_DIGEST_LENGTH) != 0) {
-			log_debug("%s: invalid certificate request", __func__);
+			log_info("%s: invalid certificate request",
+			    __func__);
 			return (-1);
 		}
 	}
 
-	if (msg->msg_sa == NULL)
+	if ((cr = calloc(1, sizeof(struct iked_certreq))) == NULL) {
+		log_info("%s: failed to allocate certreq.", __func__);
 		return (-1);
-
-	/* Optional certreq for PSK */
-	if (sa->sa_hdr.sh_initiator)
-		sa->sa_stateinit |= IKED_REQ_CERT;
-	else
-		sa->sa_statevalid |= IKED_REQ_CERT;
-
-	ca_setreq(env, sa, &sa->sa_policy->pol_localid,
-	    cert.cert_type, buf, len, PROC_CERT);
+	}
+	if ((cr->cr_data = ibuf_new(buf, len)) == NULL) {
+		log_info("%s: failed to allocate buffer.", __func__);
+		return (-1);
+	}
+	cr->cr_type = cert.cert_type;
+	SLIST_INSERT_HEAD(&msg->msg_parent->msg_certreqs, cr, cr_entry);
 
 	return (0);
 }
@@ -989,10 +992,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 	uint64_t		 spi64;
 	struct iked_spi		*rekey;
 	uint16_t		 type;
-	uint16_t		 group;
-	uint16_t		 cpi;
 	uint16_t		 signature_hash;
-	uint8_t			 transform;
 
 	if (ikev2_validate_notify(msg, offset, left, &n))
 		return (-1);
@@ -1025,11 +1025,12 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		if (memcmp(buf, md, len) != 0) {
 			log_debug("%s: %s detected NAT", __func__,
 			    print_map(type, ikev2_n_map));
-			msg->msg_parent->msg_nat_detected = 1;
-			/* Send keepalive, since we are behind a NAT-gw */
-			if (msg->msg_sa != NULL &&
-			    type == IKEV2_N_NAT_DETECTION_DESTINATION_IP)
-				msg->msg_sa->sa_usekeepalive = 1;
+			if (type == IKEV2_N_NAT_DETECTION_SOURCE_IP)
+				msg->msg_parent->msg_nat_detected
+				    |= IKED_MSG_NAT_SRC_IP;
+			else
+				msg->msg_parent->msg_nat_detected
+				    |= IKED_MSG_NAT_DST_IP;
 		}
 		print_hex(md, 0, sizeof(md));
 		/* remember for MOBIKE */
@@ -1061,11 +1062,8 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 				return (-1);
 			}
 		}
-		log_debug("%s: AUTHENTICATION_FAILED, closing SA", __func__);
-		ikev2_ike_sa_setreason(msg->msg_sa,
-		    "authentication failed notification from peer");
-		sa_state(env, msg->msg_sa, IKEV2_STATE_CLOSED);
-		msg->msg_sa = NULL;
+		msg->msg_parent->msg_flags
+		    |= IKED_MSG_FLAGS_AUTHENTICATION_FAILED;
 		break;
 	case IKEV2_N_INVALID_KE_PAYLOAD:
 		if (sa_stateok(msg->msg_sa, IKEV2_STATE_VALID) &&
@@ -1074,36 +1072,14 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    __func__);
 			return (-1);
 		}
-		if (len != sizeof(group)) {
+		if (len != sizeof(msg->msg_parent->msg_group)) {
 			log_debug("%s: malformed payload: group size mismatch"
-			    " (%zu != %zu)", __func__, len, sizeof(group));
+			    " (%zu != %zu)", __func__, len,
+			    sizeof(msg->msg_parent->msg_group));
 			return (-1);
 		}
-		/* XXX chould also happen for PFS */
-		if (!msg->msg_sa->sa_hdr.sh_initiator) {
-			log_debug("%s: not an initiator", __func__);
-			sa_state(env, msg->msg_sa, IKEV2_STATE_CLOSED);
-			msg->msg_sa = NULL;
-			return (-1);
-		}
-		memcpy(&group, buf, len);
-		group = betoh16(group);
-		if (group_getid(group) == NULL) {
-			log_debug("%s: unable to select DH group %u", __func__,
-			    group);
-			return (-1);
-		}
-		msg->msg_policy->pol_peerdh = group;
-		log_debug("%s: responder selected DH group %u", __func__,
-		    group);
-		sa_state(env, msg->msg_sa, IKEV2_STATE_CLOSED);
-		msg->msg_sa = NULL;
-
-		/*
-		 * XXX should also happen for PFS so we have to check state.
-		 */
-		timer_set(env, &env->sc_inittmr, ikev2_init_ike_sa, NULL);
-		timer_add(env, &env->sc_inittmr, IKED_INITIATOR_INITIAL);
+		memcpy(&msg->msg_parent->msg_group, buf, len);
+		msg->msg_parent->msg_flags |= IKED_MSG_FLAGS_INVALID_KE;
 		break;
 	case IKEV2_N_NO_ADDITIONAL_SAS:
 		if (!msg->msg_e) {
@@ -1111,11 +1087,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    __func__);
 			return (-1);
 		}
-		/* This makes sense for Child SAs only atm */
-		if (msg->msg_sa->sa_stateflags & IKED_REQ_CHILDSA) {
-			ikev2_disable_rekeying(env, msg->msg_sa);
-			msg->msg_sa->sa_stateflags &= ~IKED_REQ_CHILDSA;
-		}
+		msg->msg_parent->msg_flags |= IKED_MSG_FLAGS_NO_ADDITIONAL_SAS;
 		break;
 	case IKEV2_N_REKEY_SA:
 		if (!msg->msg_e) {
@@ -1159,21 +1131,25 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    __func__);
 			return (-1);
 		}
-		if (len < sizeof(cpi) + sizeof(transform)) {
+		if (len < sizeof(msg->msg_parent->msg_cpi) +
+		    sizeof(msg->msg_parent->msg_transform)) {
 			log_debug("%s: ignoring malformed ipcomp notification",
 			    __func__);
 			return (0);
 		}
-		memcpy(&cpi, buf, sizeof(cpi));
-		memcpy(&transform, buf + sizeof(cpi), sizeof(transform));
-		log_debug("%s: cpi 0x%x, transform %s, len %zu", __func__,
-		    betoh16(cpi), print_map(transform, ikev2_ipcomp_map), len);
-		/* we only support deflate */
-		if ((msg->msg_policy->pol_flags & IKED_POLICY_IPCOMP) &&
-		    (transform == IKEV2_IPCOMP_DEFLATE)) {
-			msg->msg_sa->sa_ipcomp = transform;
-			msg->msg_sa->sa_cpi_out = betoh16(cpi);
-		}
+		memcpy(&msg->msg_parent->msg_cpi, buf,
+		    sizeof(msg->msg_parent->msg_cpi));
+		memcpy(&msg->msg_parent->msg_transform,
+		    buf + sizeof(msg->msg_parent->msg_cpi),
+		    sizeof(msg->msg_parent->msg_transform));
+
+		log_debug("%s: %s cpi 0x%x, transform %s, len %zu", __func__,
+		    msg->msg_parent->msg_response ? "res" : "req",
+		    betoh16(msg->msg_parent->msg_cpi),
+		    print_map(msg->msg_parent->msg_transform,
+		    ikev2_ipcomp_map), len);
+
+		msg->msg_parent->msg_flags |= IKED_MSG_FLAGS_IPCOMP_SUPPORTED;
 		break;
 	case IKEV2_N_CHILD_SA_NOT_FOUND:
 		if (!msg->msg_e) {
@@ -1181,8 +1157,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    __func__);
 			return (-1);
 		}
-		/* Stop expecting response */
-		msg->msg_sa->sa_stateflags &= ~IKED_REQ_CHILDSA;
+		msg->msg_parent->msg_flags |= IKED_MSG_FLAGS_CHILD_SA_NOT_FOUND;
 		break;
 	case IKEV2_N_MOBIKE_SUPPORTED:
 		if (!msg->msg_e) {
@@ -1195,13 +1170,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    " notification: %zu", __func__, len);
 			return (0);
 		}
-		if (!env->sc_mobike) {
-			log_debug("%s: mobike disabled", __func__);
-			return (0);
-		}
-		msg->msg_sa->sa_mobike = 1;
-		/* enforce natt */
-		msg->msg_sa->sa_natt = 1;
+		msg->msg_parent->msg_flags |= IKED_MSG_FLAGS_MOBIKE;
 		break;
 	case IKEV2_N_UPDATE_SA_ADDRESSES:
 		if (!msg->msg_e) {
@@ -1276,11 +1245,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    " notification: %zu", __func__, len);
 			return (0);
 		}
-		if (!env->sc_frag) {
-			log_debug("%s: fragmentation disabled", __func__);
-			return (0);
-		}
-		msg->msg_sa->sa_frag = 1;
+		msg->msg_parent->msg_flags |= IKED_MSG_FLAGS_FRAGMENTATION;
 		break;
 	case IKEV2_N_SIGNATURE_HASH_ALGORITHMS:
 		if (msg->msg_e) {
@@ -1309,7 +1274,8 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			len -= sizeof(signature_hash);
 			buf += sizeof(signature_hash);
 			if (signature_hash == IKEV2_SIGHASH_SHA2_256)
-				msg->msg_sa->sa_sigsha2 = 1;
+				msg->msg_parent->msg_flags
+				    |= IKED_MSG_FLAGS_SIGSHA2;
 		}
 		break;
 	}

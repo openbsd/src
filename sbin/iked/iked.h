@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.125 2019/11/13 12:24:40 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.126 2019/11/28 12:16:27 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -497,6 +497,13 @@ RB_HEAD(iked_sas, iked_sa);
 RB_HEAD(iked_addrpool, iked_sa);
 RB_HEAD(iked_addrpool6, iked_sa);
 
+struct iked_certreq {
+	struct ibuf			*cr_data;
+	uint8_t				 cr_type;
+	SLIST_ENTRY(iked_certreq)	 cr_entry;
+};
+SLIST_HEAD(iked_certreqs, iked_certreq);
+
 struct iked_message {
 	struct ibuf		*msg_data;
 	size_t			 msg_offset;
@@ -529,6 +536,7 @@ struct iked_message {
 
 	/* Parsed information */
 	struct iked_proposals	 msg_proposals;
+	struct iked_certreqs	 msg_certreqs;
 	struct iked_spi		 msg_rekey;
 	struct ibuf		*msg_nonce;	/* dh NONCE */
 	uint16_t		 msg_dhgroup;	/* dh group */
@@ -537,6 +545,10 @@ struct iked_message {
 	struct iked_id		 msg_id;
 	struct iked_id		 msg_cert;
 	struct ibuf		*msg_cookie;
+	uint16_t		 msg_group;
+	uint16_t		 msg_cpi;
+	uint8_t			 msg_transform;
+	uint16_t		 msg_flags;
 
 	/* MOBIKE */
 	int			 msg_update_sa_addresses;
@@ -553,6 +565,19 @@ struct iked_message {
 	int			 msg_tries;	/* retransmits sent */
 #define IKED_RETRANSMIT_TRIES	 5		/* try 5 times */
 };
+
+#define IKED_MSG_NAT_SRC_IP				0x01
+#define IKED_MSG_NAT_DST_IP				0x02
+
+#define IKED_MSG_FLAGS_FRAGMENTATION			0x0001
+#define IKED_MSG_FLAGS_MOBIKE				0x0002
+#define IKED_MSG_FLAGS_SIGSHA2				0x0004
+#define IKED_MSG_FLAGS_CHILD_SA_NOT_FOUND		0x0008
+#define IKED_MSG_FLAGS_NO_ADDITIONAL_SAS		0x0010
+#define IKED_MSG_FLAGS_AUTHENTICATION_FAILED		0x0020
+#define IKED_MSG_FLAGS_INVALID_KE			0x0040
+#define IKED_MSG_FLAGS_IPCOMP_SUPPORTED			0x0080
+
 
 struct iked_user {
 	char			 usr_name[LOGIN_NAME_MAX];

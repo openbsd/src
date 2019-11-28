@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.180 2019/11/18 14:01:44 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.181 2019/11/28 12:16:28 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -82,6 +82,8 @@ int	 ikev2_send_error(struct iked *, struct iked_sa *,
 	    struct iked_message *, uint8_t);
 int	 ikev2_send_init_error(struct iked *, struct iked_message *);
 
+int	 ikev2_handle_certreq(struct iked*, struct iked_message *);
+
 int	 ikev2_send_create_child_sa(struct iked *, struct iked_sa *,
 	    struct iked_spi *, uint8_t);
 int	 ikev2_ikesa_enable(struct iked *, struct iked_sa *, struct iked_sa *);
@@ -117,6 +119,8 @@ int	 ikev2_match_proposals(struct iked_proposal *, struct iked_proposal *,
 	    struct iked_transform **, int);
 int	 ikev2_valid_proposal(struct iked_proposal *,
 	    struct iked_transform **, struct iked_transform **, int *);
+
+int	 ikev2_handle_notifies(struct iked *, struct iked_message *);
 
 ssize_t	 ikev2_add_proposals(struct iked *, struct iked_sa *, struct ibuf *,
 	    struct iked_proposals *, uint8_t, int, int, int);
@@ -845,6 +849,9 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 	if (!ikev2_msg_frompeer(msg))
 		return;
 
+	if (ikev2_handle_notifies(env, msg) != 0)
+		return;
+
 	if (sa && msg->msg_nat_detected && sa->sa_natt == 0 &&
 	    (sock = ikev2_msg_getsocket(env,
 	    sa->sa_local.addr_af, 1)) != NULL) {
@@ -881,6 +888,9 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 				    __func__));
 			break;
 		}
+		if (ikev2_handle_certreq(env, msg) != 0)
+			return;
+
 		(void)ikev2_init_auth(env, msg);
 		break;
 	case IKEV2_EXCHANGE_IKE_AUTH:
@@ -2354,6 +2364,9 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 	if (!ikev2_msg_frompeer(msg))
 		return;
 
+	if (ikev2_handle_notifies(env, msg) != 0)
+		return;
+
 	if ((sa = msg->msg_sa) == NULL)
 		return;
 
@@ -2398,6 +2411,9 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 		    sa->sa_policy->pol_auth.auth_eap)
 			sa_state(env, sa, IKEV2_STATE_EAP);
 
+		if (ikev2_handle_certreq(env, msg) != 0)
+			return;
+
 		if (ikev2_ike_auth_recv(env, sa, msg) != 0) {
 			log_debug("%s: failed to send auth response", __func__);
 			ikev2_send_error(env, sa, msg, hdr->ike_exchange);
@@ -2421,6 +2437,102 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 	default:
 		break;
 	}
+}
+
+int
+ikev2_handle_notifies(struct iked *env, struct iked_message *msg)
+{
+	struct iked_sa		*sa;
+	uint16_t		 group;
+
+	if ((sa = msg->msg_sa) == NULL)
+		return (-1);
+
+	if (msg->msg_flags & IKED_MSG_FLAGS_CHILD_SA_NOT_FOUND)
+		sa->sa_stateflags &= ~IKED_REQ_CHILDSA;
+
+	if ((msg->msg_flags & IKED_MSG_FLAGS_FRAGMENTATION) && env->sc_frag) {
+		log_debug("%s: fragmentation enabled", __func__);
+		sa->sa_frag = 1;
+	}
+
+	if ((msg->msg_flags & IKED_MSG_FLAGS_MOBIKE) && env->sc_mobike) {
+		log_debug("%s: mobike enabled", __func__);
+		sa->sa_mobike = 1;
+		/* enforce natt */
+		sa->sa_natt = 1;
+	}
+
+	if ((msg->msg_flags & IKED_MSG_FLAGS_NO_ADDITIONAL_SAS)
+	    && sa->sa_stateflags & IKED_REQ_CHILDSA) {
+		/* This makes sense for Child SAs only atm */
+		ikev2_disable_rekeying(env, sa);
+		sa->sa_stateflags &= ~IKED_REQ_CHILDSA;
+	}
+
+	if (msg->msg_flags & IKED_MSG_FLAGS_AUTHENTICATION_FAILED) {
+		log_debug("%s: AUTHENTICATION_FAILED, closing SA", __func__);
+		ikev2_ike_sa_setreason(sa,
+		    "authentication failed notification from peer");
+		sa_state(env, sa, IKEV2_STATE_CLOSED);
+		msg->msg_sa = NULL;
+		return (-1);
+	}
+
+	if (msg->msg_flags & IKED_MSG_FLAGS_INVALID_KE) {
+		/* XXX chould also happen for PFS */
+		group = betoh16(msg->msg_group);
+		if (!sa->sa_hdr.sh_initiator) {
+			log_debug("%s: not an initiator", __func__);
+			ikev2_ike_sa_setreason(sa,
+			    "received invalid KE as responder");
+			sa_state(env, sa, IKEV2_STATE_CLOSED);
+			msg->msg_sa = NULL;
+			return (-1);
+		}
+		if (group_getid(group) == NULL) {
+			log_debug("%s: unable to select DH group %u", __func__,
+			    group);
+			ikev2_ike_sa_setreason(sa,
+			    "unable to select DH group");
+			sa_state(env, sa, IKEV2_STATE_CLOSED);
+			msg->msg_sa = NULL;
+			return (-1);
+		}
+		msg->msg_policy->pol_peerdh = group;
+		log_debug("%s: responder selected DH group %u", __func__,
+		    group);
+		ikev2_ike_sa_setreason(sa,
+		    "reinitiating with new DH group");
+		sa_state(env, sa, IKEV2_STATE_CLOSED);
+		msg->msg_sa = NULL;
+
+		/*
+		 * XXX should also happen for PFS so we have to check state.
+		 */
+		timer_set(env, &env->sc_inittmr, ikev2_init_ike_sa, NULL);
+		timer_add(env, &env->sc_inittmr, IKED_INITIATOR_INITIAL);
+		return (-1);
+	}
+
+	if (msg->msg_flags & IKED_MSG_FLAGS_IPCOMP_SUPPORTED) {
+		/* we only support deflate */
+		if ((msg->msg_policy->pol_flags & IKED_POLICY_IPCOMP) &&
+		    (msg->msg_transform == IKEV2_IPCOMP_DEFLATE)) {
+			sa->sa_ipcomp = msg->msg_transform;
+			sa->sa_cpi_out = betoh16(msg->msg_cpi);
+		}
+	}
+
+	if (msg->msg_nat_detected & IKED_MSG_NAT_DST_IP) {
+		/* Send keepalive, since we are behind a NAT-gw */
+		sa->sa_usekeepalive = 1;
+	}
+
+	/* Signature hash algorithm */
+	if (msg->msg_flags & IKED_MSG_FLAGS_SIGSHA2)
+		sa->sa_sigsha2 = 1;
+	return (0);
 }
 
 int
@@ -2734,6 +2846,36 @@ ikev2_send_init_error(struct iked *env, struct iked_message *msg)
 
 	return (ret);
 }
+
+int
+ikev2_handle_certreq(struct iked* env, struct iked_message *msg)
+{
+	struct iked_certreq	*cr;
+	struct iked_sa		*sa;
+
+	if ((sa = msg->msg_sa) == NULL)
+		return (-1);
+
+	while ((cr = SLIST_FIRST(&msg->msg_certreqs))) {
+		/* Optional certreq for PSK */
+		if (sa->sa_hdr.sh_initiator)
+			sa->sa_stateinit |= IKED_REQ_CERT;
+		else
+			sa->sa_statevalid |= IKED_REQ_CERT;
+
+		ca_setreq(env, sa, &sa->sa_policy->pol_localid, cr->cr_type,
+		    ibuf_data(cr->cr_data),
+		    ibuf_length(cr->cr_data),
+		    PROC_CERT);
+
+		ibuf_release(cr->cr_data);
+		SLIST_REMOVE_HEAD(&msg->msg_certreqs, cr_entry);
+		free(cr);
+	}
+
+	return (0);
+}
+
 
 int
 ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
