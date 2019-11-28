@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.10 2019/11/28 16:36:50 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.11 2019/11/28 20:32:59 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1037,7 +1037,8 @@ cert_parse_inner(X509 **xp, const char *fn, const unsigned char *dgst, int ta)
 			goto out;
 	}
 
-	p.res->crl = x509_get_crl(x, p.fn);
+	if (!ta)
+		p.res->crl = x509_get_crl(x, p.fn);
 
 	/* Validation on required fields. */
 
