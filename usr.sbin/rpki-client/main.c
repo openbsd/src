@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 2019/11/28 18:46:32 benno Exp $ */
+/*	$OpenBSD: main.c,v 1.29 2019/11/28 19:25:52 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -125,18 +125,19 @@ TAILQ_HEAD(entityq, entity);
 /*
  * Mark that our subprocesses will never return.
  */
+char		*normalize_name(const char *);
 static void	 proc_parser(int, int)
 			__attribute__((noreturn));
 static void	 proc_rsync(const char *, const char *, int, int)
 			__attribute__((noreturn));
 static void	 logx(const char *fmt, ...)
 			__attribute__((format(printf, 1, 2)));
-static void	build_chain(ssize_t, const struct auth *,
+static void	 build_chain(ssize_t, const struct auth *,
 		    const size_t, STACK_OF(X509) **);
-static void	build_crls(ssize_t, const struct auth *,
+static void	 build_crls(ssize_t, const struct auth *,
 		    const size_t,
 		    struct crl_tree *, STACK_OF(X509_CRL) **);
-static void	get_parent_crl(ssize_t, const struct auth *,
+static void	 get_parent_crl(ssize_t, const struct auth *,
 		    const size_t,
 		    struct crl_tree *, STACK_OF(X509_CRL) **);
 
