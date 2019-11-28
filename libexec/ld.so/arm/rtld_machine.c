@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.37 2019/11/27 01:24:35 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.38 2019/11/28 16:54:30 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -44,8 +44,119 @@ int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 
 void _dl_bind_start(void); /* XXX */
 Elf_Addr _dl_bind(elf_object_t *object, int reloff);
+#define _RF_S		0x80000000		/* Resolve symbol */
+#define _RF_A		0x40000000		/* Use addend */
+#define _RF_P		0x20000000		/* Location relative */
+#define _RF_G		0x10000000		/* GOT offset */
+#define _RF_B		0x08000000		/* Load address relative */
+#define _RF_E		0x02000000		/* ERROR */
+#define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
+#define _RF_RS(s)	((s) & 0xff)		/* right shift */
+static const int reloc_target_flags[] = {
+	0,						/*  0 NONE */
+	_RF_S|_RF_P|_RF_A|	_RF_SZ(32) | _RF_RS(0),	/*  1 PC24 */
+	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),	/*  2 ABS32 */
+	_RF_S|_RF_P|_RF_A|	_RF_SZ(32) | _RF_RS(0),	/*  3 REL32 */
+	_RF_S|_RF_P|_RF_A|	_RF_E,			/*  4 REL13 */
+	_RF_S|_RF_A|		_RF_E,			/*  5 ABS16 */
+	_RF_S|_RF_A|		_RF_E,			/*  6 ABS12 */
+	_RF_S|_RF_A|		_RF_E,			/*  7 T_ABS5 */
+	_RF_S|_RF_A|		_RF_E,			/*  8 ABS8 */
+	_RF_S|_RF_B|_RF_A|	_RF_E,			/*  9 SBREL32 */
+	_RF_S|_RF_P|_RF_A|	_RF_E,			/* 10 T_PC22 */
+	_RF_S|_RF_P|_RF_A|	_RF_E,			/* 11 T_PC8 */
+	_RF_E,						/* 12 Reserved */
+	_RF_S|_RF_A|		_RF_E,			/* 13 SWI24 */
+	_RF_S|_RF_A|		_RF_E,			/* 14 T_SWI8 */
+	_RF_E,						/* 15 OBSL */
+	_RF_E,						/* 16 OBSL */
+	_RF_E,						/* 17 UNUSED */
+	_RF_E,						/* 18 UNUSED */
+	_RF_E,						/* 19 UNUSED */
+	_RF_S|			_RF_SZ(32) | _RF_RS(0),	/* 20 COPY */
+	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),	/* 21 GLOB_DAT */
+	_RF_S|			_RF_SZ(32) | _RF_RS(0),	/* 22 JUMP_SLOT */
+	      _RF_A|	_RF_B|	_RF_SZ(32) | _RF_RS(0),	/* 23 RELATIVE */
+	_RF_E,						/* 24 GOTOFF */
+	_RF_E,						/* 25 GOTPC */
+	_RF_E,						/* 26 GOT32 */
+	_RF_E,						/* 27 PLT32 */
+	_RF_E,						/* 28 UNUSED */
+	_RF_E,						/* 29 UNUSED */
+	_RF_E,						/* 30 UNUSED */
+	_RF_E,						/* 31 UNUSED */
+	_RF_E,						/* 32 A_PCR 0 */
+	_RF_E,						/* 33 A_PCR 8 */
+	_RF_E,						/* 34 A_PCR 16 */
+	_RF_E,						/* 35 B_PCR 0 */
+	_RF_E,						/* 36 B_PCR 12 */
+	_RF_E,						/* 37 B_PCR 20 */
+	_RF_E,						/* 38 RELAB32 */
+	_RF_E,						/* 39 ROSGREL32 */
+	_RF_E,						/* 40 V4BX */
+	_RF_E,						/* 41 STKCHK */
+	_RF_E						/* 42 TSTKCHK */
+};
+
+#define RELOC_RESOLVE_SYMBOL(t)		((reloc_target_flags[t] & _RF_S) != 0)
+#define RELOC_PC_RELATIVE(t)		((reloc_target_flags[t] & _RF_P) != 0)
+#define RELOC_BASE_RELATIVE(t)		((reloc_target_flags[t] & _RF_B) != 0)
+#define RELOC_USE_ADDEND(t)		((reloc_target_flags[t] & _RF_A) != 0)
+#define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
+#define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
+
+static const long reloc_target_bitmask[] = {
+#define _BM(x)  (~(-(1ULL << (x))))
+	_BM(0),		/*  0 NONE */
+	_BM(24),	/*  1 PC24 */
+	_BM(32),	/*  2 ABS32 */
+	_BM(32),	/*  3 REL32 */
+	_BM(0),		/*  4 REL13 */
+	_BM(0),		/*  5 ABS16 */
+	_BM(0),		/*  6 ABS12 */
+	_BM(0),		/*  7 T_ABS5 */
+	_BM(0),		/*  8 ABS8 */
+	_BM(32),	/*  9 SBREL32 */
+	_BM(0),		/* 10 T_PC22 */
+	_BM(0),		/* 11 T_PC8 */
+	_BM(0),		/* 12 Reserved */
+	_BM(0),		/* 13 SWI24 */
+	_BM(0),		/* 14 T_SWI8 */
+	_BM(0),		/* 15 OBSL */
+	_BM(0),		/* 16 OBSL */
+	_BM(0),		/* 17 UNUSED */
+	_BM(0),		/* 18 UNUSED */
+	_BM(0),		/* 19 UNUSED */
+	_BM(32),	/* 20 COPY */
+	_BM(32),	/* 21 GLOB_DAT */
+	_BM(32),	/* 22 JUMP_SLOT */
+	_BM(32),	/* 23 RELATIVE */
+	_BM(0),		/* 24 GOTOFF */
+	_BM(0),		/* 25 GOTPC */
+	_BM(0),		/* 26 GOT32 */
+	_BM(0),		/* 27 PLT32 */
+	_BM(0),		/* 28 UNUSED */
+	_BM(0),		/* 29 UNUSED */
+	_BM(0),		/* 30 UNUSED */
+	_BM(0),		/* 31 UNUSED */
+	_BM(0),		/* 32 A_PCR 0 */
+	_BM(0),		/* 33 A_PCR 8 */
+	_BM(0),		/* 34 A_PCR 16 */
+	_BM(0),		/* 35 B_PCR 0 */
+	_BM(0),		/* 36 B_PCR 12 */
+	_BM(0),		/* 37 B_PCR 20 */
+	_BM(0),		/* 38 RELAB32 */
+	_BM(0),		/* 39 ROSGREL32 */
+	_BM(0),		/* 40 V4BX */
+	_BM(0),		/* 41 STKCHK */
+	_BM(0)		/* 42 TSTKCHK */
+#undef _BM
+};
+#define RELOC_VALUE_BITMASK(t)	(reloc_target_bitmask[t])
 
 #define R_TYPE(x) R_ARM_ ## x
+
+void _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_Rel *rel);
 
 int
 _dl_md_reloc(elf_object_t *object, int rel, int relsz)
@@ -53,6 +164,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	long	i;
 	long	numrel;
 	long	relrel;
+	int	fails = 0;
 	Elf_Addr loff;
 	Elf_Addr prev_value = 0;
 	const Elf_Sym *prev_sym = NULL;
@@ -60,7 +172,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 
 	loff = object->obj_base;
 	numrel = object->Dyn.info[relsz] / sizeof(Elf_Rel);
-	relrel = object->relcount;
+	relrel = rel == DT_REL ? object->relcount : 0;
 	rels = (Elf_Rel *)(object->Dyn.info[rel]);
 
 	if (rels == NULL)
@@ -77,120 +189,118 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		*where += loff;
 	}
 	for (; i < numrel; i++, rels++) {
-		Elf_Addr *where, value;
+		Elf_Addr *where, value, mask;
 		Elf_Word type;
 		const Elf_Sym *sym;
 		const char *symn;
 
+		type = ELF_R_TYPE(rels->r_info);
+
+		if (reloc_target_flags[type] & _RF_E)
+			_dl_die("bad relocation %ld %d", i, type);
+		if (type == R_TYPE(NONE))
+			continue;
+
+		if (type == R_TYPE(JUMP_SLOT) && rel != DT_JMPREL)
+			continue;
+
 		where = (Elf_Addr *)(rels->r_offset + loff);
 
-		sym = object->dyn.symtab;
-		sym += ELF_R_SYM(rels->r_info);
-		symn = object->dyn.strtab + sym->st_name;
+		if (RELOC_USE_ADDEND(type))
+#ifdef LDSO_ARCH_IS_RELA_
+			value = rels->r_addend;
+#else
+			value = *where & RELOC_VALUE_BITMASK(type);
+#endif
+		else
+			value = 0;
 
-		type = ELF_R_TYPE(rels->r_info);
-		switch (type) {
-		case R_TYPE(NONE):
-		case R_TYPE(JUMP_SLOT):		/* shouldn't happen */
+		sym = NULL;
+		symn = NULL;
+		if (RELOC_RESOLVE_SYMBOL(type)) {
+			sym = object->dyn.symtab;
+			sym += ELF_R_SYM(rels->r_info);
+			symn = object->dyn.strtab + sym->st_name;
+
+			if (sym->st_shndx != SHN_UNDEF &&
+			    ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
+				value += loff;
+			} else if (sym == prev_sym) {
+				value += prev_value;
+			} else {
+				struct sym_res sr;
+
+				sr = _dl_find_symbol(symn,
+				    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
+				    ((type == R_TYPE(JUMP_SLOT)) ?
+					SYM_PLT : SYM_NOTPLT), sym, object);
+				if (sr.sym == NULL) {
+resolve_failed:
+					if (ELF_ST_BIND(sym->st_info) !=
+					    STB_WEAK)
+						fails++;
+					continue;
+				}
+				prev_sym = sym;
+				prev_value = (Elf_Addr)(sr.obj->obj_base +
+				    sr.sym->st_value);
+				value += prev_value;
+			}
+		}
+
+		if (type == R_TYPE(JUMP_SLOT)) {
+			/*
+			_dl_reloc_plt((Elf_Word *)where, value, rels);
+			*/
+			*where = value;
 			continue;
+		}
 
-		case R_TYPE(RELATIVE):
-			*where += loff;
-			continue;
-
-		case R_TYPE(ABS32):
-		case R_TYPE(GLOB_DAT):
-			value = *where;
-			break;
-
-		case R_TYPE(COPY):
-		{
+		if (type == R_TYPE(COPY)) {
+			void *dstaddr = where;
+			const void *srcaddr;
+			const Elf_Sym *dstsym = sym;
 			struct sym_res sr;
 
 			sr = _dl_find_symbol(symn,
 			    SYM_SEARCH_OTHER|SYM_WARNNOTFOUND|SYM_NOTPLT,
-			    sym, object);
+			    dstsym, object);
 			if (sr.sym == NULL)
-				return 1;
+				goto resolve_failed;
 
-			value = sr.obj->obj_base + sr.sym->st_value;
-			_dl_bcopy((void *)value, where, sym->st_size);
+			srcaddr = (void *)(sr.obj->obj_base + sr.sym->st_value);
+			_dl_bcopy(srcaddr, dstaddr, dstsym->st_size);
 			continue;
 		}
 
-		default:
-			_dl_die("relocation error %d", type);
-		}
-
-
-		/* Finish the ABS32 and GLOB_DAT cases */
-		if (sym->st_shndx != SHN_UNDEF &&
-		    ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
+		if (RELOC_PC_RELATIVE(type))
+			value -= (Elf_Addr)where;
+		if (RELOC_BASE_RELATIVE(type))
 			value += loff;
-		} else if (sym == prev_sym) {
-			value += prev_value;
-		} else {
-			struct sym_res sr;
 
-			sr = _dl_find_symbol(symn,
-			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
-			    sym, object);
-			if (sr.sym == NULL) {
-				if (ELF_ST_BIND(sym->st_info) != STB_WEAK)
-					return 1;
-				continue;
-			}
-			prev_sym = sym;
-			prev_value = sr.obj->obj_base + sr.sym->st_value;
-			value += prev_value;
-		}
+		mask = RELOC_VALUE_BITMASK(type);
+		value >>= RELOC_VALUE_RIGHTSHIFT(type);
+		value &= mask;
 
-		*where = value;
+		*where &= ~mask;
+		*where |= value;
 	}
 
-	return 0;
-}
-
-static int
-_dl_md_reloc_all_plt(elf_object_t *object, const Elf_Rel *reloc,
-    const Elf_Rel *rend)
-{
-	for (; reloc < rend; reloc++) {
-		const Elf_Sym *sym;
-		const char *symn;
-		Elf_Addr *where;
-		struct sym_res sr;
-
-		sym = object->dyn.symtab;
-		sym += ELF_R_SYM(reloc->r_info);
-		symn = object->dyn.strtab + sym->st_name;
-
-		sr = _dl_find_symbol(symn,
-		    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object);
-		if (sr.sym == NULL) {
-			if (ELF_ST_BIND(sym->st_info) != STB_WEAK)
-				return 1;
-			continue;
-		}
-
-		where = (Elf_Addr *)(reloc->r_offset + object->obj_base);
-		*where = sr.obj->obj_base + sr.sym->st_value; 
-	}
-
-	return 0;
+	return fails;
 }
 
 /*
  *	Relocate the Global Offset Table (GOT).
+ *	This is done by calling _dl_md_reloc on DT_JMPREL for DL_BIND_NOW,
+ *	otherwise the lazy binding plt initialization is performed.
  */
 int
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
-	Elf_Addr	*pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
-	const Elf_Rel	*reloc, *rend;
-
-	if (pltgot == NULL)
-		return 0; /* it is possible to have no PLT/GOT relocations */
+	int	fails = 0;
+	Elf_Addr *pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
+	int i, num;
+	Elf_Rel *rel;
 
 	if (object->Dyn.info[DT_PLTREL] != DT_REL)
 		return 0;
@@ -198,23 +308,23 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->traced)
 		lazy = 1;
 
-	reloc = (const Elf_Rel *)(object->Dyn.info[DT_JMPREL]);
-	rend = (const Elf_Rel *)((char *)reloc + object->Dyn.info[DT_PLTRELSZ]);
+	if (!lazy) {
+		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
+	} else {
+		rel = (Elf_Rel *)(object->Dyn.info[DT_JMPREL]);
+		num = (object->Dyn.info[DT_PLTRELSZ]);
 
-	if (!lazy)
-		return _dl_md_reloc_all_plt(object, reloc, rend);
+		for (i = 0; i < num/sizeof(Elf_Rel); i++, rel++) {
+			Elf_Addr *where;
+			where = (Elf_Addr *)(rel->r_offset + object->obj_base);
+			*where += object->obj_base;
+		}
 
-	/* Lazy */
-	pltgot[1] = (Elf_Addr)object;
-	pltgot[2] = (Elf_Addr)_dl_bind_start;
-
-	for (; reloc < rend; reloc++) {
-		Elf_Addr *where;
-		where = (Elf_Addr *)(reloc->r_offset + object->obj_base);
-		*where += object->obj_base;
+		pltgot[1] = (Elf_Addr)object;
+		pltgot[2] = (Elf_Addr)_dl_bind_start;
 	}
 
-	return 0;
+	return fails;
 }
 
 Elf_Addr
