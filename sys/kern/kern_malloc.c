@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.139 2019/05/15 21:25:50 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.140 2019/11/28 16:23:11 guenther Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -711,17 +711,17 @@ malloc_printit(
 	struct kmemstats *km;
 	int i;
 
-	(*pr)("%15s %5s  %6s  %7s  %6s %9s %8s %8s\n",
+	(*pr)("%15s %5s  %6s  %7s  %6s %9s %8s\n",
 	    "Type", "InUse", "MemUse", "HighUse", "Limit", "Requests",
-	    "Type Lim", "Kern Lim");
+	    "Type Lim");
 	for (i = 0, km = kmemstats; i < M_LAST; i++, km++) {
 		if (!km->ks_calls || !memname[i])
 			continue;
 
-		(*pr)("%15s %5ld %6ldK %7ldK %6ldK %9ld %8d %8d\n",
+		(*pr)("%15s %5ld %6ldK %7ldK %6ldK %9ld %8d\n",
 		    memname[i], km->ks_inuse, km->ks_memuse / 1024,
 		    km->ks_maxused / 1024, km->ks_limit / 1024,
-		    km->ks_calls, km->ks_limblocks, km->ks_mapblocks);
+		    km->ks_calls, km->ks_limblocks);
 	}
 #else
 	(*pr)("No KMEMSTATS compiled in\n");

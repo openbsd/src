@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.118 2019/02/07 15:11:38 visa Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.119 2019/11/28 16:23:11 guenther Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -321,7 +321,6 @@ struct kmemstats {
 	long	ks_calls;	/* total packets of this type ever allocated */
 	long 	ks_memuse;	/* total memory held in bytes */
 	u_short	ks_limblocks;	/* number of times blocked for hitting limit */
-	u_short	ks_mapblocks;	/* number of times blocked for kernel map */
 	long	ks_maxused;	/* maximum number ever used */
 	long	ks_limit;	/* most that are allowed to exist */
 	long	ks_size;	/* sizes of this thing that are allocated */
