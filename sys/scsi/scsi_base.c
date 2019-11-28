@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.246 2019/11/28 16:27:35 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.247 2019/11/28 16:41:07 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1211,7 +1211,7 @@ scsi_do_mode_sense(struct scsi_link *link, int page,
 
 	/*
 	 * Try 10 byte mode sense request.
-	*/
+	 */
 	error = scsi_mode_sense_big(link, 0, page, &buf->hdr_big,
 	    sizeof(*buf), flags, 20000);
 	if (error != 0)
