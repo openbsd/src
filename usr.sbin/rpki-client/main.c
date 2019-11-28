@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 2019/11/28 03:22:59 benno Exp $ */
+/*	$OpenBSD: main.c,v 1.27 2019/11/28 18:31:50 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -131,10 +131,14 @@ static void	 proc_rsync(const char *, const char *, int, int)
 			__attribute__((noreturn));
 static void	 logx(const char *fmt, ...)
 			__attribute__((format(printf, 1, 2)));
-static void	build_chain(ssize_t idx, const struct auth *auths,
-		    const size_t authsz,
-		    struct crl_tree *crlt, STACK_OF(X509) **chain,
-		    STACK_OF(X509_CRL) **crls);
+static void	build_chain(ssize_t, const struct auth *,
+		    const size_t, STACK_OF(X509) **);
+static void	build_crls(ssize_t, const struct auth *,
+		    const size_t,
+		    struct crl_tree *, STACK_OF(X509_CRL) **);
+static void	get_parent_crl(ssize_t, const struct auth *,
+		    const size_t,
+		    struct crl_tree *, STACK_OF(X509_CRL) **);
 
 enum output_fmt {
 	BGPD,
@@ -815,12 +819,13 @@ proc_parser_roa(struct entity *entp, int norev,
 
 	idx = valid_ski_aki(entp->uri, auths, authsz, roa->ski, roa->aki);
 
-	build_chain(idx, auths, authsz, crlt, &chain, &crls);
+	build_chain(idx, auths, authsz, &chain);
+	build_crls(idx, auths, authsz, crlt, &crls);
 	if ((find_str = x509_get_crl(x509, entp->uri)) != NULL) {
 		find.uri = normalize_name(find_str);
 		found = RB_FIND(crl_tree, crlt, &find);
-		if (found && sk_X509_CRL_push(crls, found->x509_crl) == 0)
-			err(EXIT_FAILURE, "sk_X509_CRL_push");
+		if (found && !sk_X509_CRL_push(crls, found->x509_crl))
+			errx(EXIT_FAILURE, "sk_X509_CRL_push");
 		free(find_str);
 	}
 
@@ -898,7 +903,8 @@ proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
 		return NULL;
 
 	idx = valid_ski_aki(entp->uri, auths, authsz, mft->ski, mft->aki);
-	build_chain(idx, auths, authsz, crlt, &chain, &crls);
+	build_chain(idx, auths, authsz, &chain);
+	get_parent_crl(idx, auths, authsz, crlt, &crls);
 
 	if (!X509_STORE_CTX_init(ctx, store, x509, chain))
 		cryptoerrx("X509_STORE_CTX_init");
@@ -947,7 +953,7 @@ proc_parser_cert(const struct entity *entp, int norev,
 	int			 c;
 	X509_VERIFY_PARAM	*param;
 	unsigned int		 fl, nfl;
-	ssize_t			 id, idx;
+	ssize_t			 id;
 	char			*tal;
 	STACK_OF(X509)		*chain;
 	STACK_OF(X509_CRL)	*crls;
@@ -967,14 +973,16 @@ proc_parser_cert(const struct entity *entp, int norev,
 		valid_ta(entp->uri, *auths, *authsz, cert) :
 		valid_cert(entp->uri, *auths, *authsz, cert);
 
-	build_chain(id, *auths, *authsz, crlt, &chain, &crls);
+	build_chain(id, *auths, *authsz, &chain);
+	build_crls(id, *auths, *authsz, crlt, &crls);
 
 	if (cert->crl) {
 		find.uri = normalize_name(cert->crl);
 		found = RB_FIND(crl_tree, crlt, &find);
 		if (found && sk_X509_CRL_push(crls, found->x509_crl) == 0)
-			err(EXIT_FAILURE, "sk_X509_CRL_push");
+			errx(EXIT_FAILURE, "sk_X509_CRL_push");
 	}
+
 	/*
 	 * Validate certificate chain w/CRLs.
 	 * Only check the CRLs if specifically asked.
@@ -1698,13 +1706,9 @@ usage:
    build a certificate chain from cert->x509 */
 static void
 build_chain(ssize_t idx, const struct auth *auths, const size_t authsz,
-    struct crl_tree *crlt, STACK_OF(X509) **chain,
-    STACK_OF(X509_CRL) **crls)
+    STACK_OF(X509) **chain)
 {
-	struct crl	find, *found;
-
 	*chain = NULL;
-	*crls = NULL;
 
 	if (idx == -1)
 		return;
@@ -1713,20 +1717,71 @@ build_chain(ssize_t idx, const struct auth *auths, const size_t authsz,
 
 	if ((*chain = sk_X509_new_null()) == NULL)
 		err(EXIT_FAILURE, "sk_X509_new_null");
-	if ((*crls = sk_X509_CRL_new_null()) == NULL)
-		err(EXIT_FAILURE, "sk_X509_CRL_new_null");
 	while (auths[idx].parent != (size_t)idx) {
 		if (auths[idx].cert->x509 == NULL)
 			errx(EXIT_FAILURE, "build_chain");
-		if (sk_X509_push(*chain, auths[idx].cert->x509) == 0)
-			err(EXIT_FAILURE, "sk_X509_push");
+		if (!sk_X509_push(*chain, auths[idx].cert->x509))
+			errx(EXIT_FAILURE, "sk_X509_push");
+		idx = auths[idx].parent;
+	}
 
+	return;
+}
+
+/* use the parent (id) to walk the tree to the root and
+   build a stack of CRLs */
+static void
+build_crls(ssize_t idx, const struct auth *auths, const size_t authsz,
+    struct crl_tree *crlt, STACK_OF(X509_CRL) **crls)
+{
+	struct crl	find, *found;
+	*crls = NULL;
+
+	if ((*crls = sk_X509_CRL_new_null()) == NULL)
+		errx(EXIT_FAILURE, "sk_X509_CRL_new_null");
+
+	if (idx == -1)
+		return;
+	if (idx == authsz)
+		return;
+
+	while (auths[idx].parent != (size_t)idx) {
+		if (auths[idx].cert->x509 == NULL)
+			errx(EXIT_FAILURE, "build_crls");
 		find.uri = normalize_name(auths[idx].cert->crl);
 		found = RB_FIND(crl_tree, crlt, &find);
-		if (found && sk_X509_CRL_push(*crls, found->x509_crl) == 0)
-			err(EXIT_FAILURE, "sk_X509_CRL_push");
+		if (found != NULL && !sk_X509_CRL_push(*crls, found->x509_crl))
+			errx(EXIT_FAILURE, "sk_X509_CRL_push");
 
 		idx = auths[idx].parent;
+	}
+
+	return;
+}
+
+static void
+get_parent_crl(ssize_t idx, const struct auth *auths, const size_t authsz,
+    struct crl_tree *crlt, STACK_OF(X509_CRL) **crls)
+{
+	struct crl	find, *found;
+	*crls = NULL;
+
+	if ((*crls = sk_X509_CRL_new_null()) == NULL)
+		errx(EXIT_FAILURE, "sk_X509_CRL_new_null");
+
+	if (idx == -1)
+		return;
+	if (idx == authsz)
+		return;
+
+	idx = auths[idx].parent;
+	if (auths[idx].parent != (size_t)idx) {
+		if (auths[idx].cert->x509 == NULL)
+			errx(EXIT_FAILURE, "get_crl");
+		find.uri = normalize_name(auths[idx].cert->crl);
+		found = RB_FIND(crl_tree, crlt, &find);
+		if (found != NULL && !sk_X509_CRL_push(*crls, found->x509_crl))
+			errx(EXIT_FAILURE, "sk_X509_CRL_push");
 	}
 
 	return;
