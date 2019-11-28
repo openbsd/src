@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.935 2019/11/28 09:45:16 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.936 2019/11/28 09:56:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1244,8 +1244,8 @@ struct tty_ctx {
 	const struct grid_cell	*cell;
 	int			 wrapped;
 
-	u_int		 num;
-	void		*ptr;
+	u_int			 num;
+	void			*ptr;
 
 	/*
 	 * Cursor and region position before the screen was updated - this is

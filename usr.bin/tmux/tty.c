@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.334 2019/11/28 09:05:34 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.335 2019/11/28 09:56:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2454,7 +2454,8 @@ tty_check_bg(struct tty *tty, struct window_pane *wp, struct grid_cell *gc)
 }
 
 static void
-tty_check_us(__unused struct tty *tty, struct window_pane *wp, struct grid_cell *gc)
+tty_check_us(__unused struct tty *tty, struct window_pane *wp,
+    struct grid_cell *gc)
 {
 	int	c;
 

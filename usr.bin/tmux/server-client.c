@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.297 2019/11/28 09:45:16 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.298 2019/11/28 09:56:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -543,7 +543,8 @@ have_event:
 				where = STATUS_RIGHT;
 				break;
 			case STYLE_RANGE_WINDOW:
-				wl = winlink_find_by_index(&s->windows, sr->argument);
+				wl = winlink_find_by_index(&s->windows,
+				    sr->argument);
 				if (wl == NULL)
 					return (KEYC_UNKNOWN);
 				m->w = wl->window->id;
