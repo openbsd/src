@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.312 2019/07/27 14:10:21 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.313 2019/11/29 03:19:54 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -627,6 +627,8 @@ var
         ldap			mode=0700
         ..
         ns
+        ..
+        rpki-client		uname=_rpki-client mode=0755
         ..
         pkg
         ..
