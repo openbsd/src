@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.41 2019/11/29 04:58:26 benno Exp $ */
+/*	$OpenBSD: main.c,v 1.42 2019/11/29 05:23:55 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -690,7 +690,7 @@ proc_rsync(char *prog, char *bind_addr, int fd, int noop)
 			if (!WIFEXITED(st)) {
 				warnx("rsync %s did not exit", ids[i].uri);
 				goto out;
-			} else if (WEXITSTATUS(st) != EXIT_SUCCESS) {
+			} else if (WEXITSTATUS(st) != 0) {
 				warnx("rsync %s failed", ids[i].uri);
 				goto out;
 			}
@@ -1668,13 +1668,13 @@ main(int argc, char *argv[])
 
 	if (waitpid(procpid, &st, 0) == -1)
 		err(1, "waitpid");
-	if (!WIFEXITED(st) || WEXITSTATUS(st) != EXIT_SUCCESS) {
+	if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
 		warnx("parser process exited abnormally");
 		rc = 1;
 	}
 	if (waitpid(rsyncpid, &st, 0) == -1)
 		err(1, "waitpid");
-	if (!WIFEXITED(st) || WEXITSTATUS(st) != EXIT_SUCCESS) {
+	if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
 		warnx("rsync process exited abnormally");
 		rc = 1;
 	}
