@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.219 2019/08/21 15:32:18 florian Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.220 2019/11/29 16:41:01 nayden Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ ip6_init(void)
 
 	pr = pffindproto(PF_INET6, IPPROTO_RAW, SOCK_RAW);
 	if (pr == NULL)
-		panic("ip6_init");
+		panic("%s", __func__);
 	for (i = 0; i < IPPROTO_MAX; i++)
 		ip6_protox[i] = pr - inet6sw;
 	for (pr = inet6domain.dom_protosw;
@@ -1204,7 +1204,7 @@ ip6_nexthdr(struct mbuf *m, int off, int proto, int *nxtp)
 
 	/* just in case */
 	if (m == NULL)
-		panic("ip6_nexthdr: m == NULL");
+		panic("%s: m == NULL", __func__);
 	if ((m->m_flags & M_PKTHDR) == 0 || m->m_pkthdr.len < off)
 		return -1;
 

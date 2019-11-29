@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.229 2018/12/25 19:28:25 denis Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.230 2019/11/29 16:41:01 nayden Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -225,7 +225,7 @@ icmp6_mtudisc_callback_register(void (*func)(struct sockaddr_in6 *, u_int))
 
 	mc = malloc(sizeof(*mc), M_PCB, M_NOWAIT);
 	if (mc == NULL)
-		panic("icmp6_mtudisc_callback_register");
+		panic("%s", __func__);
 
 	mc->mc_func = func;
 	LIST_INSERT_HEAD(&icmp6_mtudisc_callbacks, mc, mc_list);

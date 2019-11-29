@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.244 2019/06/10 16:32:51 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.245 2019/11/29 16:41:01 nayden Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 
 #ifdef IPSEC
 	if (inp && (inp->inp_flags & INP_IPV6) == 0)
-		panic("ip6_output: IPv4 pcb is passed");
+		panic("%s: IPv4 pcb is passed", __func__);
 #endif /* IPSEC */
 
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -295,7 +295,7 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 		 */
 		if (exthdrs.ip6e_dest2) {
 			if (!hdrsplit)
-				panic("assumption failed: hdr not split");
+				panic("%s: assumption failed: hdr not split", __func__);
 			exthdrs.ip6e_dest2->m_next = m->m_next;
 			m->m_next = exthdrs.ip6e_dest2;
 			*mtod(exthdrs.ip6e_dest2, u_char *) = ip6->ip6_nxt;
@@ -1761,7 +1761,7 @@ ip6_getpcbopt(struct ip6_pktopts *pktopt, int optname, struct mbuf *m)
 		break;
 	default:		/* should not happen */
 #ifdef DIAGNOSTIC
-		panic("ip6_getpcbopt: unexpected option");
+		panic("%s: unexpected option", __func__);
 #endif
 		return (ENOPROTOOPT);
 	}

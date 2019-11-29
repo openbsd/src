@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.136 2019/04/23 11:01:54 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.137 2019/11/29 16:41:02 nayden Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -580,7 +580,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	case PRU_ABORT:
 		soisdisconnected(so);
 		if (in6p == NULL)
-			panic("rip6_detach");
+			panic("%s", __func__);
 #ifdef MROUTING
 		if (so == ip6_mrouter[in6p->inp_rtableid])
 			ip6_mrouter_done(so);
@@ -698,7 +698,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	default:
-		panic("rip6_usrreq");
+		panic("%s", __func__);
 	}
 release:
 	if (req != PRU_RCVD && req != PRU_RCVOOB && req != PRU_SENSE) {
@@ -715,7 +715,7 @@ rip6_attach(struct socket *so, int proto)
 	int error;
 
 	if (so->so_pcb)
-		panic("rip6_attach");
+		panic("%s", __func__);
 	if ((so->so_state & SS_PRIV) == 0)
 		return (EACCES);
 	if (proto < 0 || proto >= IPPROTO_MAX)
@@ -749,7 +749,7 @@ rip6_detach(struct socket *so)
 	soassertlocked(so);
 
 	if (in6p == NULL)
-		panic("rip6_detach");
+		panic("%s", __func__);
 #ifdef MROUTING
 	if (so == ip6_mrouter[in6p->inp_rtableid])
 		ip6_mrouter_done(so);

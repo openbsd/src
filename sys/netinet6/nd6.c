@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.228 2019/11/07 11:23:24 krw Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.229 2019/11/29 16:41:01 nayden Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ nd6_option(union nd_opts *ndopts)
 	int olen;
 
 	if (!ndopts)
-		panic("ndopts == NULL in nd6_option");
+		panic("%s: ndopts == NULL", __func__);
 	if (!ndopts->nd_opts_last)
 		panic("%s: uninitialized ndopts", __func__);
 	if (!ndopts->nd_opts_search)
@@ -228,7 +228,7 @@ nd6_options(union nd_opts *ndopts)
 	int i = 0;
 
 	if (!ndopts)
-		panic("ndopts == NULL in nd6_options");
+		panic("%s: ndopts == NULL", __func__);
 	if (!ndopts->nd_opts_last)
 		panic("%s: uninitialized ndopts", __func__);
 	if (!ndopts->nd_opts_search)
@@ -1091,9 +1091,9 @@ nd6_cache_lladdr(struct ifnet *ifp, struct in6_addr *from, char *lladdr,
 	int newstate = 0;
 
 	if (!ifp)
-		panic("ifp == NULL in nd6_cache_lladdr");
+		panic("%s: ifp == NULL", __func__);
 	if (!from)
-		panic("from == NULL in nd6_cache_lladdr");
+		panic("%s: from == NULL", __func__);
 
 	/* nothing must be updated for unspecified address */
 	if (IN6_IS_ADDR_UNSPECIFIED(from))

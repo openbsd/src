@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.109 2019/10/17 00:51:28 dlg Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.110 2019/11/29 16:41:01 nayden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -376,8 +376,8 @@ in6_pcbnotify(struct inpcbtable *table, struct sockaddr_in6 *dst,
 		return (0);
 	if (IN6_IS_ADDR_V4MAPPED(&dst->sin6_addr)) {
 #ifdef DIAGNOSTIC
-		printf("Huh?  Thought in6_pcbnotify() never got "
-		       "called with mapped!\n");
+		printf("%s: Huh?  Thought we never got "
+		       "called with mapped!\n", __func__);
 #endif
 		return (0);
 	}
