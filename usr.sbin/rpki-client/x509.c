@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.12 2019/11/29 04:40:04 claudio Exp $ */
+/*	$OpenBSD: x509.c,v 1.13 2019/11/29 05:00:24 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -104,7 +104,7 @@ x509_get_aki_ext(X509_EXTENSION *ext, const char *fn)
 	/* Make room for [hex1, hex2, ":"]*, NUL. */
 
 	if ((res = calloc(plen * 3 + 1, 1)) == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 
 	for (i = 0; i < plen; i++) {
 		snprintf(buf, sizeof(buf), "%02X:", d[i]);
@@ -157,7 +157,7 @@ x509_get_ski_ext(X509_EXTENSION *ext, const char *fn)
 	/* Make room for [hex1, hex2, ":"]*, NUL. */
 
 	if ((res = calloc(dsz * 3 + 1, 1)) == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 
 	for (i = 0; i < dsz; i++) {
 		snprintf(buf, sizeof(buf), "%02X:", d[i]);
@@ -279,7 +279,7 @@ x509_get_crl(X509 *x, const char *fn)
 	crl = strndup(ASN1_STRING_get0_data(name->d.uniformResourceIdentifier),
 	    ASN1_STRING_length(name->d.uniformResourceIdentifier));
 	if (crl == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 
 	return crl;
 }
