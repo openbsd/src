@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.103 2019/11/29 21:59:55 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.104 2019/11/29 22:00:54 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -215,6 +215,10 @@ file	dev/fdt/rkclock.c		rkclock
 device	rkdwusb: fdt
 attach	rkdwusb at fdt
 file	dev/fdt/rkdwusb.c		rkdwusb
+
+device	rkemmcphy
+attach	rkemmcphy at fdt
+file	dev/fdt/rkemmcphy.c		rkemmcphy
 
 device	rkgrf: fdt
 attach	rkgrf at fdt

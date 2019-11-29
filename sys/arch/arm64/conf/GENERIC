@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.132 2019/10/23 20:34:04 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.133 2019/11/29 22:00:54 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -186,6 +186,7 @@ sfp*		at fdt?
 rkclock*	at fdt? early 1
 rkgrf*		at fdt? early 1
 rkpinctrl*	at fdt? early 1
+rkemmcphy*	at fdt?
 rkgpio*		at fdt?
 rkiic*		at fdt?
 iic*		at rkiic?
