@@ -1547,7 +1547,14 @@ static bool compRelocations(const DynamicReloc &A, const DynamicReloc &B) {
   bool BIsRel = B.Type == Target->RelativeRel;
   if (AIsRel != BIsRel)
     return AIsRel;
-  return A.getSymIndex() < B.getSymIndex();
+
+  if (!AIsRel) {
+    auto AIndex = A.getSymIndex();
+    auto BIndex = B.getSymIndex();
+    if (AIndex != BIndex)
+      return AIndex < BIndex;
+  }
+  return A.getOffset() < B.getOffset();
 }
 
 template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
