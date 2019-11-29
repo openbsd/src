@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.17 2019/11/28 20:36:17 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.18 2019/11/29 04:04:08 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -367,5 +367,7 @@ void		 output_bgpd(FILE *, struct vrp_tree *);
 void		 output_bird(FILE *, struct vrp_tree *, const char *);
 void		 output_csv(FILE *, struct vrp_tree *);
 void		 output_json(FILE *, struct vrp_tree *);
+
+#define		_PATH_ROA	"/var/db/rpki-client/roa"
 
 #endif /* ! EXTERN_H */

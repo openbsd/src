@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.8 2019/11/28 18:46:32 benno Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.9 2019/11/29 04:04:08 deraadt Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 28 2019 $
+.Dd $Mdocdate: November 29 2019 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -27,7 +27,7 @@
 .Op Fl e Ar rsync_prog
 .Op Fl T Ar table
 .Op Fl t Ar tal
-.Ar output
+.Op Ar output
 .Sh DESCRIPTION
 The
 .Nm
@@ -91,6 +91,8 @@ The file
 will write the
 .Li roa-set
 to.
+Defaults to
+.Pa /var/db/rpki-client/roa .
 .El
 .Pp
 By default

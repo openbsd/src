@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.37 2019/11/29 03:36:44 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.38 2019/11/29 04:04:08 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -57,6 +57,7 @@
 #include <fts.h>
 #include <inttypes.h>
 #include <poll.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,6 +71,7 @@
 
 #include "extern.h"
 
+char		*outputname = _PATH_ROA;
 FILE		*output = NULL;
 char 		output_tmpname[PATH_MAX];
 
@@ -1505,6 +1507,19 @@ main(int argc, char *argv[])
 	struct vrp_tree	 v = RB_INITIALIZER(&v);
 	enum output_fmt	 outfmt = BGPD;
 
+	/* If started as root, priv-drop to _rpki-client */
+	if (getuid() == 0) {
+		struct passwd *pw;
+ 
+		pw = getpwnam("_rpki-client");
+		if (!pw)
+			errx(1, "no _rpki-client user to revoke to");
+		if (setgroups(1, &pw->pw_gid) == -1 ||
+		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1 ||
+		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
+			err(1, "unable to revoke privs");
+	}
+
 	if (pledge("stdio rpath wpath cpath fattr proc exec unveil", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
@@ -1549,7 +1564,9 @@ main(int argc, char *argv[])
 
 	argv += optind;
 	argc -= optind;
-	if (argc != 1)
+	if (argc == 1)
+		outputname = argv[0];
+	else if (argc > 1)
 		goto usage;
 
 	if (talsz == 0)
@@ -1619,7 +1636,7 @@ main(int argc, char *argv[])
 
 	assert(rsync != proc);
 
-	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
 	/*
@@ -1728,9 +1745,9 @@ main(int argc, char *argv[])
 	atexit(output_cleantmp);
 	set_signal_handler();
 
-	output = output_createtmp(argv[0]);
+	output = output_createtmp(outputname);
 	if (output == NULL)
-		err(EXIT_FAILURE, "failed to open temp file for %s", argv[0]);
+		err(EXIT_FAILURE, "failed to open temp file for %s", outputname);
 
 	switch (outfmt) {
 	case BGPD:
@@ -1750,7 +1767,7 @@ main(int argc, char *argv[])
 	fclose(output);
 
 	if (rc == 0) {
-		rename(output_tmpname, argv[0]);
+		rename(output_tmpname, outputname);
 		output_tmpname[0] = '\0';
 	}
 
@@ -1782,7 +1799,7 @@ main(int argc, char *argv[])
 usage:
 	fprintf(stderr,
 	    "usage: rpki-client [-Bcfjnv] [-b bind_addr] [-e rsync_prog] "
-	    "[-T table] [-t tal] output\n");
+	    "[-T table] [-t tal] [output]\n");
 	return EXIT_FAILURE;
 }
 
