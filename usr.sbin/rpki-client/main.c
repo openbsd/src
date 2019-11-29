@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.45 2019/11/29 17:54:19 benno Exp $ */
+/*	$OpenBSD: main.c,v 1.46 2019/11/29 19:18:36 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -841,8 +841,7 @@ proc_parser_roa(struct entity *entp,
 	if ((param = X509_STORE_CTX_get0_param(ctx)) == NULL)
 		cryptoerrx("X509_STORE_CTX_get0_param");
 	fl = X509_VERIFY_PARAM_get_flags(param);
-	nfl = X509_V_FLAG_IGNORE_CRITICAL |  X509_V_FLAG_CRL_CHECK |
-	    X509_V_FLAG_CRL_CHECK_ALL;
+	nfl = X509_V_FLAG_IGNORE_CRITICAL |  X509_V_FLAG_CRL_CHECK;
 	if (!X509_VERIFY_PARAM_set_flags(param, fl | nfl))
 		cryptoerrx("X509_VERIFY_PARAM_set_flags");
 	X509_STORE_CTX_set0_crls(ctx, crls);
@@ -912,8 +911,7 @@ proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
 	if ((param = X509_STORE_CTX_get0_param(ctx)) == NULL)
 		cryptoerrx("X509_STORE_CTX_get0_param");
 	fl = X509_VERIFY_PARAM_get_flags(param);
-	nfl = X509_V_FLAG_IGNORE_CRITICAL | X509_V_FLAG_CRL_CHECK |
-	    X509_V_FLAG_CRL_CHECK_ALL;
+	nfl = X509_V_FLAG_IGNORE_CRITICAL;
 	if (!X509_VERIFY_PARAM_set_flags(param, fl | nfl))
 		cryptoerrx("X509_VERIFY_PARAM_set_flags");
 	X509_STORE_CTX_set0_crls(ctx, crls);
@@ -983,8 +981,7 @@ proc_parser_cert(const struct entity *entp,
 	if ((param = X509_STORE_CTX_get0_param(ctx)) == NULL)
 		cryptoerrx("X509_STORE_CTX_get0_param");
 	fl = X509_VERIFY_PARAM_get_flags(param);
-	nfl = X509_V_FLAG_IGNORE_CRITICAL | X509_V_FLAG_CRL_CHECK |
-	    X509_V_FLAG_CRL_CHECK_ALL;
+	nfl = X509_V_FLAG_IGNORE_CRITICAL | X509_V_FLAG_CRL_CHECK;
 	if (!X509_VERIFY_PARAM_set_flags(param, fl | nfl))
 		cryptoerrx("X509_VERIFY_PARAM_set_flags");
 	X509_STORE_CTX_set0_crls(ctx, crls);
