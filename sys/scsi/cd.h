@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.27 2019/09/27 23:07:42 krw Exp $	*/
+/*	$OpenBSD: cd.h,v 1.28 2019/11/29 14:06:21 krw Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -209,12 +209,12 @@ struct scsi_set_cd_speed {
 
 #define ERR_RECOVERY_PAGE	0x01
 #define WRITE_PARAM_PAGE	0x05
+#define AUDIO_PAGE		0x0e
 #define CDVD_CAPABILITIES_PAGE	0x2a
 
 struct cd_audio_page {
 	u_int8_t page_code;
 #define	CD_PAGE_CODE	0x3F
-#define	AUDIO_PAGE	0x0e
 #define	CD_PAGE_PS	0x80
 	u_int8_t param_len;
 	u_int8_t flags;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_changer.h,v 1.7 2019/09/27 23:07:42 krw Exp $	*/
+/*	$OpenBSD: scsi_changer.h,v 1.8 2019/11/29 14:06:21 krw Exp $	*/
 /*	$NetBSD: scsi_changer.h,v 1.7 1996/04/03 00:25:48 thorpej Exp $	*/
 
 /*
@@ -283,6 +283,7 @@ struct read_element_status_descriptor {
  *		IE	Import/export element (portal)
  *		DT	Data transfer element (tape/disk drive)
  */
+#define	CAP_PAGE	0x1f
 struct page_device_capabilities {
 	u_int8_t	pg_code;	/* page code (0x1f) */
 	u_int8_t	pg_length;	/* page length (0x12) */
@@ -359,6 +360,7 @@ struct page_device_capabilities {
  * tape or disk drive in the changer.  "Number of data transfer elements"
  * tells us how many drives exist in the changer.
  */
+#define	EA_PAGE		0x1d
 struct page_element_address_assignment {
 	u_int8_t	pg_code;	/* page code (0x1d) */
 	u_int8_t	pg_length;	/* page length (0x12) */
@@ -400,6 +402,7 @@ struct page_element_address_assignment {
  * medium transport element (other than the default transport element address
  * of 0).
  */
+#define	TGP_PAGE	0x1e
 struct page_transport_geometry_parameters {
 	u_int8_t	pg_code;	/* page code (0x1e) */
 	u_int8_t	pg_length;	/* page length; variable */
