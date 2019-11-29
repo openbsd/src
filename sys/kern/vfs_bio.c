@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.192 2019/11/15 09:27:48 mlarkin Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.193 2019/11/29 01:04:08 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -551,6 +551,24 @@ bread_cluster_callback(struct buf *bp)
 	for (i = 1; xbpp[i] != NULL; i++) {
 		if (ISSET(bp->b_flags, B_ERROR))
 			SET(xbpp[i]->b_flags, B_INVAL | B_ERROR);
+		/*
+		 * Move the pages from the master buffer's uvm object
+		 * into the individual buffer's uvm objects.
+		 */
+		struct uvm_object *newobj = &xbpp[i]->b_uobj;
+		struct uvm_object *oldobj = &bp->b_uobj;
+		int page;
+
+		uvm_objinit(newobj, NULL, 1);
+		for (page = 0; page < atop(xbpp[i]->b_bufsize); page++) {
+			struct vm_page *pg = uvm_pagelookup(oldobj,
+			    xbpp[i]->b_poffs + ptoa(page));
+			KASSERT(pg != NULL);
+			KASSERT(pg->wire_count = 1);
+			uvm_pagerealloc(pg, newobj, xbpp[i]->b_poffs + ptoa(page));
+		}
+		xbpp[i]->b_pobj = newobj;
+
 		biodone(xbpp[i]);
 	}
 
