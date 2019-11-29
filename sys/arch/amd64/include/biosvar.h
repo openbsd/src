@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.26 2019/08/04 14:28:58 kettenis Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.27 2019/11/29 16:16:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -204,6 +204,13 @@ typedef struct _bios_efiinfo {
 	uint32_t	fb_green_mask;
 	uint32_t	fb_blue_mask;
 	uint32_t	fb_reserved_mask;
+	uint32_t	flags;
+#define BEI_64BIT	0x00000001	/* 64-bit EFI implementation */
+	uint32_t	mmap_desc_ver;
+	uint32_t	mmap_desc_size;
+	uint32_t	mmap_size;
+	uint64_t	mmap_start;
+	uint64_t	system_table;
 } __packed bios_efiinfo_t;
 
 #define	BOOTARG_UCODE 12
