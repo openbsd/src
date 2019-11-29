@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.313 2019/11/29 03:19:54 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.314 2019/11/29 03:28:20 benno Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -610,6 +610,10 @@ var
     yp				mode=755
     ..
     crash			mode=770
+    ..
+    cache			mode=755
+        rpki-client		uname=_rpki-client gname=wheel mode=0755
+        ..
     ..
 
     # ./var/cron
