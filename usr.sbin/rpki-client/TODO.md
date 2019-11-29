@@ -17,17 +17,6 @@ The following are unclear to me.
   period overlap.  I need to see if there's a more programmatic way to
   check before commiting the routes to output.
 
-- (Not a particular helpful security measure, but...)  The validators
-  should all be run in their own process: the syntax parser should not
-  be performing the route validation.  This is a mechanical step, as all
-  the logic to do so is in place.
-
-- (**Important**.) Using `X509_STORE` and validating using
-  `X509_verify_cert` is overkill and costs us the most in performance
-  because it effectively re-validates the entire chain.  Instead, apply
-  the immediate parent as the "trusted" certificate once it has been
-  validated.
-
 - (**Important**.) Stipulating `X509_V_FLAG_IGNORE_CRITICAL` might be
   dangerous.  Which extensions are being ignored should be
   double-checked.
