@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.63 2016/11/07 00:26:33 guenther Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.64 2019/11/29 18:32:40 kettenis Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -227,6 +227,7 @@ void		uvm_pageactivate(struct vm_page *);
 vaddr_t		uvm_pageboot_alloc(vsize_t);
 void		uvm_pagecopy(struct vm_page *, struct vm_page *);
 void		uvm_pagedeactivate(struct vm_page *);
+void		uvm_pageclean(struct vm_page *);
 void		uvm_pagefree(struct vm_page *);
 void		uvm_page_unbusy(struct vm_page **, int);
 struct vm_page	*uvm_pagelookup(struct uvm_object *, voff_t);
