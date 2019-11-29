@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.11 2019/11/28 16:43:24 claudio Exp $ */
+/*	$OpenBSD: x509.c,v 1.12 2019/11/29 04:40:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -282,4 +282,20 @@ x509_get_crl(X509 *x, const char *fn)
 		err(EXIT_FAILURE, NULL);
 
 	return crl;
+}
+
+char *
+x509_crl_get_aki(X509_CRL *crl)
+{
+	X509_EXTENSION *ext;
+	int loc;
+
+	loc = X509_CRL_get_ext_by_NID(crl, NID_authority_key_identifier, -1);
+	if (loc == -1) {
+		warnx("%s: CRL without AKI extension", __func__);
+		return NULL;
+	}
+	ext = X509_CRL_get_ext(crl, loc);
+
+	return x509_get_aki_ext(ext, "x509_crl_get_aki");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.18 2019/11/29 04:04:08 deraadt Exp $ */
+/*	$OpenBSD: extern.h,v 1.19 2019/11/29 04:40:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -202,7 +202,7 @@ RB_PROTOTYPE(vrp_tree, vrp, entry, vrpcmp);
  */
 struct crl {
 	RB_ENTRY(crl)	 entry;
-	char		*uri;
+	char		*aki;
 	X509_CRL	*x509_crl;
 };
 /*
@@ -358,6 +358,7 @@ char		*x509_get_aki_ext(X509_EXTENSION *, const char *);
 char		*x509_get_ski_ext(X509_EXTENSION *, const char *);
 int		 x509_get_ski_aki(X509 *, const char *, char **, char **);
 char		*x509_get_crl(X509 *, const char *);
+char		*x509_crl_get_aki(X509_CRL *);
 
 /* Output! */
 

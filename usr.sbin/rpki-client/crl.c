@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.6 2019/11/28 03:22:59 benno Exp $ */
+/*	$OpenBSD: crl.c,v 1.7 2019/11/29 04:40:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -101,7 +101,7 @@ out:
 static inline int
 crlcmp(struct crl *a, struct crl *b)
 {
-	return strcmp(a->uri, b->uri);
+	return strcmp(a->aki, b->aki);
 }
 
 RB_GENERATE(crl_tree, crl, entry, crlcmp);
@@ -109,7 +109,7 @@ RB_GENERATE(crl_tree, crl, entry, crlcmp);
 void
 free_crl(struct crl *crl)
 {
-	free(crl->uri);
+	free(crl->aki);
 	X509_CRL_free(crl->x509_crl);
 	free(crl);
 }
