@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.66 2019/11/29 06:34:46 deraadt Exp $ */
+/*	$OpenBSD: procmap.c,v 1.67 2019/11/29 19:56:40 deraadt Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -497,7 +497,7 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc, struct sum *sum)
 		    (int)sizeof(int) * 2 - 1,  "Size ");
 #endif
 	if (print_all)
-		printf("%-*s %-*s %*s %-*s rwxpcSe  RWX  I/W/A Dev  %*s - File\n",
+		printf("%-*s %-*s %*s %-*s rwxSepc  RWX  I/W/A Dev  %*s - File\n",
 		    (int)sizeof(long) * 2, "Start",
 		    (int)sizeof(long) * 2, "End",
 		    (int)sizeof(int)  * 2, "Size ",
