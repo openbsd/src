@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.46 2019/11/29 19:18:36 benno Exp $ */
+/*	$OpenBSD: main.c,v 1.47 2019/11/29 23:31:29 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -819,8 +819,6 @@ proc_parser_roa(struct entity *entp,
 	struct roa		*roa;
 	X509			*x509;
 	int			 c;
-	X509_VERIFY_PARAM	*param;
-	unsigned int		fl, nfl;
 	struct auth		*a;
 	STACK_OF(X509)		*chain;
 	STACK_OF(X509_CRL)	*crls;
@@ -837,13 +835,8 @@ proc_parser_roa(struct entity *entp,
 	assert(x509 != NULL);
 	if (!X509_STORE_CTX_init(ctx, store, x509, chain))
 		cryptoerrx("X509_STORE_CTX_init");
-
-	if ((param = X509_STORE_CTX_get0_param(ctx)) == NULL)
-		cryptoerrx("X509_STORE_CTX_get0_param");
-	fl = X509_VERIFY_PARAM_get_flags(param);
-	nfl = X509_V_FLAG_IGNORE_CRITICAL |  X509_V_FLAG_CRL_CHECK;
-	if (!X509_VERIFY_PARAM_set_flags(param, fl | nfl))
-		cryptoerrx("X509_VERIFY_PARAM_set_flags");
+	X509_STORE_CTX_set_flags(ctx,
+	    X509_V_FLAG_IGNORE_CRITICAL | X509_V_FLAG_CRL_CHECK);
 	X509_STORE_CTX_set0_crls(ctx, crls);
 
 	if (X509_verify_cert(ctx) <= 0) {
@@ -891,11 +884,8 @@ proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
 	struct mft		*mft;
 	X509			*x509;
 	int			 c;
-	unsigned int		 fl, nfl;
-	X509_VERIFY_PARAM	*param;
 	struct auth		*a;
 	STACK_OF(X509)		*chain;
-	STACK_OF(X509_CRL)	*crls;
 
 	assert(!entp->has_dgst);
 	if ((mft = mft_parse(&x509, entp->uri, force)) == NULL)
@@ -903,18 +893,12 @@ proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
 
 	a = valid_ski_aki(entp->uri, auths, mft->ski, mft->aki);
 	build_chain(a, &chain);
-	build_crls(a, crlt, &crls);
 
 	if (!X509_STORE_CTX_init(ctx, store, x509, chain))
 		cryptoerrx("X509_STORE_CTX_init");
 
-	if ((param = X509_STORE_CTX_get0_param(ctx)) == NULL)
-		cryptoerrx("X509_STORE_CTX_get0_param");
-	fl = X509_VERIFY_PARAM_get_flags(param);
-	nfl = X509_V_FLAG_IGNORE_CRITICAL;
-	if (!X509_VERIFY_PARAM_set_flags(param, fl | nfl))
-		cryptoerrx("X509_VERIFY_PARAM_set_flags");
-	X509_STORE_CTX_set0_crls(ctx, crls);
+	/* CRL checked disabled here because CRL is referenced from mft */
+	X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_IGNORE_CRITICAL);
 
 	if (X509_verify_cert(ctx) <= 0) {
 		c = X509_STORE_CTX_get_error(ctx);
@@ -923,13 +907,11 @@ proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
 		mft_free(mft);
 		X509_free(x509);
 		sk_X509_free(chain);
-		sk_X509_CRL_free(crls);
 		return NULL;
 	}
 
 	X509_STORE_CTX_cleanup(ctx);
 	sk_X509_free(chain);
-	sk_X509_CRL_free(crls);
 	X509_free(x509);
 	return mft;
 }
@@ -949,8 +931,6 @@ proc_parser_cert(const struct entity *entp,
 	struct cert		*cert;
 	X509			*x509;
 	int			 c;
-	X509_VERIFY_PARAM	*param;
-	unsigned int		 fl, nfl;
 	struct auth		*a = NULL, *na;
 	char			*tal;
 	STACK_OF(X509)		*chain;
@@ -978,12 +958,9 @@ proc_parser_cert(const struct entity *entp,
 	assert(x509 != NULL);
 	if (!X509_STORE_CTX_init(ctx, store, x509, chain))
 		cryptoerrx("X509_STORE_CTX_init");
-	if ((param = X509_STORE_CTX_get0_param(ctx)) == NULL)
-		cryptoerrx("X509_STORE_CTX_get0_param");
-	fl = X509_VERIFY_PARAM_get_flags(param);
-	nfl = X509_V_FLAG_IGNORE_CRITICAL | X509_V_FLAG_CRL_CHECK;
-	if (!X509_VERIFY_PARAM_set_flags(param, fl | nfl))
-		cryptoerrx("X509_VERIFY_PARAM_set_flags");
+
+	X509_STORE_CTX_set_flags(ctx,
+	    X509_V_FLAG_IGNORE_CRITICAL | X509_V_FLAG_CRL_CHECK);
 	X509_STORE_CTX_set0_crls(ctx, crls);
 
 	/*
