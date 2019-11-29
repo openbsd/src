@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.279 2019/11/12 04:20:21 visa Exp $	*/
+/*	$OpenBSD: proc.h,v 1.280 2019/11/29 20:12:19 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -368,6 +368,8 @@ struct proc {
 	struct	tusage p_tu;		/* accumulated times. */
 	struct	timespec p_rtime;	/* Real time. */
 
+	struct	kcov_dev *p_kd;		/* kcov device handle */
+
 	int	 p_siglist;		/* Signals arrived but not delivered. */
 
 /* End area that is zeroed on creation. */
@@ -402,8 +404,6 @@ struct proc {
 	u_short	p_xstat;	/* Exit status for wait; also stop signal. */
 
 	struct	lock_list_entry *p_sleeplocks;
-
-	struct	kcov_dev *p_kd;
 };
 
 /* Status values. */
