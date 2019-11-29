@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.78 2019/06/03 18:28:37 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.79 2019/11/29 16:04:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -127,6 +127,7 @@ cmd_attach_session(struct cmdq_item *item, const char *tflag, int dflag,
 		gettimeofday(&s->last_attached_time, NULL);
 		server_redraw_client(c);
 		s->curw->flags &= ~WINLINK_ALERTFLAGS;
+		s->curw->window->latest = c;
 	} else {
 		if (server_client_open(c, &cause) != 0) {
 			cmdq_error(item, "open terminal failed: %s", cause);
@@ -159,6 +160,7 @@ cmd_attach_session(struct cmdq_item *item, const char *tflag, int dflag,
 		gettimeofday(&s->last_attached_time, NULL);
 		server_redraw_client(c);
 		s->curw->flags &= ~WINLINK_ALERTFLAGS;
+		s->curw->window->latest = c;
 
 		if (~c->flags & CLIENT_CONTROL)
 			proc_send(c->peer, MSG_READY, -1, NULL, 0);
