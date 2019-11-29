@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.14 2019/11/18 08:34:55 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.15 2019/11/29 05:01:41 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -46,7 +46,7 @@ tal_parse_buffer(const char *fn, char *buf)
 	EVP_PKEY	*pkey = NULL;
 
 	if ((tal = calloc(1, sizeof(struct tal))) == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 
 	/* Begin with the URI section, comment section already removed. */
 	while ((nl = strchr(buf, '\n')) != NULL) {
@@ -70,11 +70,11 @@ tal_parse_buffer(const char *fn, char *buf)
 		tal->uri = reallocarray(tal->uri,
 			tal->urisz + 1, sizeof(char *));
 		if (tal->uri == NULL)
-			err(EXIT_FAILURE, NULL);
+			err(1, NULL);
 
 		tal->uri[tal->urisz] = strdup(line);
 		if (tal->uri[tal->urisz] == NULL)
-			err(EXIT_FAILURE, NULL);
+			err(1, NULL);
 		tal->urisz++;
 
 		/* Make sure we're a proper rsync URI. */
@@ -108,9 +108,9 @@ tal_parse_buffer(const char *fn, char *buf)
 	/* Now the BASE64-encoded public key. */
 	sz = ((sz + 2) / 3) * 4 + 1;
 	if ((b64 = malloc(sz)) == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 	if ((b64sz = b64_pton(buf, b64, sz)) < 0)
-		errx(EXIT_FAILURE, "b64_pton");
+		errx(1, "b64_pton");
 
 	tal->pkey = b64;
 	tal->pkeysz = b64sz;
@@ -151,12 +151,12 @@ tal_parse(const char *fn, char *buf)
 	/* extract the TAL basename (without .tal suffix) */
 	d = basename(fn);
 	if (d == NULL)
-		err(EXIT_FAILURE, "%s: basename", fn);
+		err(1, "%s: basename", fn);
 	dlen = strlen(d);
 	if (strcasecmp(d + dlen - 4, ".tal") == 0)
 		dlen -= 4;
 	if ((p->descr = malloc(dlen + 1)) == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 	memcpy(p->descr, d, dlen);
 	p->descr[dlen] = '\0';
 
@@ -181,7 +181,7 @@ tal_read_file(const char *file)
 	int		 optcomment = 1;
 
 	if ((in = fopen(file, "r")) == NULL)
-		err(EXIT_FAILURE, "fopen: %s", file);
+		err(1, "fopen: %s", file);
 
 	while ((n = getline(&line, &sz, in)) != -1) {
 		/* replace CRLF with just LF */
@@ -207,29 +207,29 @@ tal_read_file(const char *file)
 		for (i = 0; i < n; i++)
 			if (!isprint((unsigned char)line[i]) &&
 			    !isspace((unsigned char)line[i]))
-				errx(EXIT_FAILURE, "getline: %s: "
+				errx(1, "getline: %s: "
 				    "invalid content", file);
 
 		/* concat line to buf */
 		if ((nbuf = realloc(buf, bsz + n + 1)) == NULL)
-			err(EXIT_FAILURE, NULL);
+			err(1, NULL);
 		if (buf == NULL)
 			nbuf[0] = '\0';	/* initialize buffer */
 		buf = nbuf;
 		bsz += n + 1;
 		if (strlcat(buf, line, bsz) >= bsz)
-			errx(EXIT_FAILURE, "strlcat overflow");
+			errx(1, "strlcat overflow");
 		/* limit the buffer size */
 		if (bsz > 4096)
-			errx(EXIT_FAILURE, "%s: file too big", file);
+			errx(1, "%s: file too big", file);
 	}
 
 	free(line);
 	if (ferror(in))
-		err(EXIT_FAILURE, "getline: %s", file);
+		err(1, "getline: %s", file);
 	fclose(in);
 	if (buf == NULL)
-		errx(EXIT_FAILURE, "%s: no data", file);
+		errx(1, "%s: no data", file);
 	return buf;
 }
 
@@ -284,7 +284,7 @@ tal_read(int fd)
 	struct tal	*p;
 
 	if ((p = calloc(1, sizeof(struct tal))) == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 
 	io_buf_read_alloc(fd, (void **)&p->pkey, &p->pkeysz);
 	assert(p->pkeysz > 0);
@@ -293,7 +293,7 @@ tal_read(int fd)
 	assert(p->urisz > 0);
 
 	if ((p->uri = calloc(p->urisz, sizeof(char *))) == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 
 	for (i = 0; i < p->urisz; i++)
 		io_str_read(fd, &p->uri[i]);
