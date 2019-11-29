@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.16 2018/10/07 22:43:06 guenther Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.17 2019/11/29 22:34:09 mortimer Exp $	*/
 /*	$NetBSD: fpu.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef	_MACHINE_FPU_H_
@@ -32,7 +32,7 @@ struct fxsave64 {
 struct xstate_hdr {
 	uint64_t	xstate_bv;
 	uint64_t	xstate_xcomp_bv;
-	uint8_t		xstate_rsrv0[0];
+	uint8_t		xstate_rsrv0[8];
 	uint8_t		xstate_rsrv[40];
 } __packed;
 
