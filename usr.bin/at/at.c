@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.82 2019/06/28 13:35:00 deraadt Exp $	*/
+/*	$OpenBSD: at.c,v 1.83 2019/11/29 03:12:35 cheloha Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -378,7 +378,7 @@ byctime(const void *v1, const void *v2)
 	const struct atjob *j1 = *(const struct atjob **)v1;
 	const struct atjob *j2 = *(const struct atjob **)v2;
 
-	return (j1->ctime - j2->ctime);
+	return (j1->ctime < j2->ctime) ? -1 : (j1->ctime > j2->ctime);
 }
 
 /* Sort by job number (and thus execution time). */
