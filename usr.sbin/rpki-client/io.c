@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.6 2019/11/28 21:12:00 benno Exp $ */
+/*	$OpenBSD: io.c,v 1.7 2019/11/29 01:46:46 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -147,7 +147,7 @@ io_simple_read(int fd, void *res, size_t sz)
 again:
 	if (sz == 0)
 		return;
-	if ((ssz = read(fd, res, sz)) == -1)
+	if ((ssz = read(fd, tmp, sz)) == -1)
 		err(EXIT_FAILURE, "read");
 	else if (ssz == 0)
 		errx(EXIT_FAILURE, "read: unexpected end of file");
