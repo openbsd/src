@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.280 2019/11/29 20:12:19 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.281 2019/11/29 21:32:04 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -335,7 +335,6 @@ struct proc {
 	struct	vmspace *p_vmspace;	/* [I] copy of p_p->ps_vmspace */
 	struct	p_inentry p_spinentry;	/* [o] cache for SP check */
 	struct	p_inentry p_pcinentry;	/* [o] cache for PC check */
-	struct	plimit	*p_limit;	/* [l] read ref. of p_p->ps_limit */
 
 	int	p_flag;			/* P_* flags. */
 	u_char	p_spare;		/* unused */
@@ -368,7 +367,9 @@ struct proc {
 	struct	tusage p_tu;		/* accumulated times. */
 	struct	timespec p_rtime;	/* Real time. */
 
+	struct	plimit	*p_limit;	/* [l] read ref. of p_p->ps_limit */
 	struct	kcov_dev *p_kd;		/* kcov device handle */
+	struct	lock_list_entry *p_sleeplocks;	/* WITNESS lock tracking */ 
 
 	int	 p_siglist;		/* Signals arrived but not delivered. */
 
@@ -402,8 +403,6 @@ struct proc {
 	int	p_sicode;	/* For core dump/debugger XXX */
 
 	u_short	p_xstat;	/* Exit status for wait; also stop signal. */
-
-	struct	lock_list_entry *p_sleeplocks;
 };
 
 /* Status values. */

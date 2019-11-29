@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.217 2019/11/29 20:12:19 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.218 2019/11/29 21:32:04 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -149,7 +149,6 @@ thread_new(struct proc *parent, vaddr_t uaddr)
 	p = pool_get(&proc_pool, PR_WAITOK);
 	p->p_stat = SIDL;			/* protect against others */
 	p->p_flag = 0;
-	p->p_limit = NULL;
 
 	/*
 	 * Make a proc table entry for the new process.
@@ -167,10 +166,6 @@ thread_new(struct proc *parent, vaddr_t uaddr)
 	 * Initialize the timeouts.
 	 */
 	timeout_set(&p->p_sleep_to, endtsleep, p);
-
-#ifdef WITNESS
-	p->p_sleeplocks = NULL;
-#endif
 
 	return p;
 }
