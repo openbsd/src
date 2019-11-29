@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.99 2019/11/19 19:19:28 anton Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.100 2019/11/29 15:15:10 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -96,6 +96,11 @@ static unsigned int amountpipekva;
 
 struct pool pipe_pool;
 
+/*
+ * Global lock protecting fields of `struct pipe'.
+ */
+struct rwlock pipe_lock = RWLOCK_INITIALIZER("pipeglk");
+
 int	dopipe(struct proc *, int *, int);
 int	pipelock(struct pipe *);
 void	pipeunlock(struct pipe *);
@@ -103,6 +108,7 @@ void	pipeselwakeup(struct pipe *);
 
 struct pipe *pipe_create(void);
 void	pipe_destroy(struct pipe *);
+int	pipe_rundown(struct pipe *);
 int	pipe_buffer_realloc(struct pipe *, u_int);
 void	pipe_buffer_free(struct pipe *);
 
@@ -335,11 +341,19 @@ pipe_read(struct file *fp, struct uio *uio, int fflags)
 
 	KERNEL_LOCK();
 
-	error = pipelock(rpipe);
-	if (error)
-		goto done;
-
+	rw_enter_write(&pipe_lock);
 	++rpipe->pipe_busy;
+	rw_exit_write(&pipe_lock);
+
+	error = pipelock(rpipe);
+	if (error) {
+		rw_enter_write(&pipe_lock);
+		--rpipe->pipe_busy;
+		pipe_rundown(rpipe);
+		rw_exit_write(&pipe_lock);
+		KERNEL_UNLOCK();
+		return (error);
+	}
 
 	while (uio->uio_resid) {
 		/*
@@ -415,15 +429,11 @@ pipe_read(struct file *fp, struct uio *uio, int fflags)
 	if (error == 0)
 		getnanotime(&rpipe->pipe_atime);
 unlocked_error:
+	rw_enter_write(&pipe_lock);
+
 	--rpipe->pipe_busy;
 
-	/*
-	 * PIPE_WANTD processing only makes sense if pipe_busy is 0.
-	 */
-	if ((rpipe->pipe_busy == 0) && (rpipe->pipe_state & PIPE_WANTD)) {
-		rpipe->pipe_state &= ~(PIPE_WANTD|PIPE_WANTW);
-		wakeup(rpipe);
-	} else if (rpipe->pipe_buffer.cnt < MINPIPESIZE) {
+	if (pipe_rundown(rpipe) == 0 && rpipe->pipe_buffer.cnt < MINPIPESIZE) {
 		/*
 		 * Handle write blocking hysteresis.
 		 */
@@ -433,10 +443,11 @@ unlocked_error:
 		}
 	}
 
+	rw_exit_write(&pipe_lock);
+
 	if ((rpipe->pipe_buffer.size - rpipe->pipe_buffer.cnt) >= PIPE_BUF)
 		pipeselwakeup(rpipe);
 
-done:
 	KERNEL_UNLOCK();
 	return (error);
 }
@@ -461,17 +472,16 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 		return (EPIPE);
 	}
 
+	rw_enter_write(&pipe_lock);
 	++wpipe->pipe_busy;
+	rw_exit_write(&pipe_lock);
 
 	error = pipelock(wpipe);
 	if (error) {
-		/* Failed to acquire lock, wakeup if run-down can proceed. */
+		rw_enter_write(&pipe_lock);
 		--wpipe->pipe_busy;
-		if ((wpipe->pipe_busy == 0) &&
-		    (wpipe->pipe_state & PIPE_WANTD)) {
-			wpipe->pipe_state &= ~(PIPE_WANTD | PIPE_WANTR);
-			wakeup(wpipe);
-		}
+		pipe_rundown(wpipe);
+		rw_exit_write(&pipe_lock);
 		KERNEL_UNLOCK();
 		return (error);
 	}
@@ -612,12 +622,11 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 	pipeunlock(wpipe);
 
 unlocked_error:
+	rw_enter_write(&pipe_lock);
+
 	--wpipe->pipe_busy;
 
-	if ((wpipe->pipe_busy == 0) && (wpipe->pipe_state & PIPE_WANTD)) {
-		wpipe->pipe_state &= ~(PIPE_WANTD | PIPE_WANTR);
-		wakeup(wpipe);
-	} else if (wpipe->pipe_buffer.cnt > 0) {
+	if (pipe_rundown(wpipe) == 0 && wpipe->pipe_buffer.cnt > 0) {
 		/*
 		 * If we have put any characters in the buffer, we wake up
 		 * the reader.
@@ -627,6 +636,8 @@ unlocked_error:
 			wakeup(wpipe);
 		}
 	}
+
+	rw_exit_write(&pipe_lock);
 
 	/*
 	 * Don't return EPIPE if I/O was successful
@@ -810,11 +821,13 @@ pipe_destroy(struct pipe *cpipe)
 	 * we want to close it down.
 	 */
 	cpipe->pipe_state |= PIPE_EOF;
+	rw_enter_write(&pipe_lock);
 	while (cpipe->pipe_busy) {
 		wakeup(cpipe);
 		cpipe->pipe_state |= PIPE_WANTD;
-		tsleep(cpipe, PRIBIO, "pipecl", 0);
+		rwsleep_nsec(cpipe, &pipe_lock, PRIBIO, "pipecl", INFSLP);
 	}
+	rw_exit_write(&pipe_lock);
 
 	/*
 	 * Disconnect from peer
@@ -832,6 +845,23 @@ pipe_destroy(struct pipe *cpipe)
 	 */
 	pipe_buffer_free(cpipe);
 	pool_put(&pipe_pool, cpipe);
+}
+
+/*
+ * Returns non-zero if a rundown is currently ongoing.
+ */
+int
+pipe_rundown(struct pipe *cpipe)
+{
+	rw_assert_wrlock(&pipe_lock);
+
+	if (cpipe->pipe_busy > 0 || (cpipe->pipe_state & PIPE_WANTD) == 0)
+		return (0);
+
+	/* Only wakeup pipe_destroy() once the pipe is no longer busy. */
+	cpipe->pipe_state &= ~(PIPE_WANTD | PIPE_WANTR | PIPE_WANTW);
+	wakeup(cpipe);
+	return (1);
 }
 
 int

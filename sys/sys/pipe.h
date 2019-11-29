@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.h,v 1.18 2019/11/09 19:02:31 anton Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.19 2019/11/29 15:15:10 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -69,18 +69,24 @@ struct pipebuf {
 /*
  * Per-pipe data structure.
  * Two of these are linked together to produce bi-directional pipes.
+ *
+ *  Locks used to protect struct members in this file:
+ *	I	immutable after creation
+ *	K	kernel lock
+ *	P	pipe_lock
+ *	S	sigio_lock
  */
 struct pipe {
 	struct	rwlock	pipe_lock;	/* exclusive lock */
-	struct	pipebuf pipe_buffer;	/* data storage */
-	struct	selinfo pipe_sel;	/* for compat with select */
-	struct	timespec pipe_atime;	/* time of last access */
-	struct	timespec pipe_mtime;	/* time of last modify */
-	struct	timespec pipe_ctime;	/* time of status change */
-	struct	sigio_ref pipe_sigio;	/* async I/O registration */
-	struct	pipe *pipe_peer;	/* link with other direction */
-	u_int	pipe_state;		/* pipe status info */
-	int	pipe_busy;		/* busy flag, mostly to handle rundown sanely */
+	struct	pipebuf pipe_buffer;	/* [K] data storage */
+	struct	selinfo pipe_sel;	/* [K] for compat with select */
+	struct	timespec pipe_atime;	/* [K] time of last access */
+	struct	timespec pipe_mtime;	/* [K] time of last modify */
+	struct	timespec pipe_ctime;	/* [I] time of status change */
+	struct	sigio_ref pipe_sigio;	/* [S] async I/O registration */
+	struct	pipe *pipe_peer;	/* [K] link with other direction */
+	u_int	pipe_state;		/* [K] pipe status info */
+	int	pipe_busy;		/* [P] # readers/writers */
 };
 
 #ifdef _KERNEL
