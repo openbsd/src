@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.337 2019/11/26 00:26:36 beck Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.338 2019/11/29 20:58:17 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -965,6 +965,7 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(const char *) permissions;
 	} */ *uap = v;
+	struct process *pr = p->p_p;
 	char *pathname, *c;
 	struct nameidata nd;
 	size_t pathlen;
@@ -972,11 +973,11 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 	int error, allow;
 
 	if (SCARG(uap, path) == NULL && SCARG(uap, permissions) == NULL) {
-		p->p_p->ps_uvdone = 1;
+		pr->ps_uvdone = 1;
 		return (0);
 	}
 
-	if (p->p_p->ps_uvdone != 0)
+	if (pr->ps_uvdone != 0)
 		return EPERM;
 
 	error = copyinstr(SCARG(uap, permissions), permissions,
@@ -1035,11 +1036,11 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 
 	if (allow) {
 		error = unveil_add(p, &nd, permissions);
-		p->p_p->ps_uvpcwd = unveil_lookup(p->p_fd->fd_cdir, p, NULL);
-		if (p->p_p->ps_uvpcwd == NULL) {
+		pr->ps_uvpcwd = unveil_lookup(p->p_fd->fd_cdir, pr, NULL);
+		if (pr->ps_uvpcwd == NULL) {
 			ssize_t i = unveil_find_cover(p->p_fd->fd_cdir, p);
 			if (i >= 0)
-				p->p_p->ps_uvpcwd = &p->p_p->ps_uvpaths[i];
+				pr->ps_uvpcwd = &pr->ps_uvpaths[i];
 		}
 	}
 	else
