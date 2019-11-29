@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.63 2019/11/26 15:27:08 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.64 2019/11/29 12:50:48 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -77,32 +77,32 @@ struct timespec timeout_late;		/* [t] Late if due prior to this */
  * Circular queue definitions.
  */
 
-#define CIRCQ_INIT(elem) do {                   \
-        (elem)->next = (elem);                  \
-        (elem)->prev = (elem);                  \
+#define CIRCQ_INIT(elem) do {			\
+	(elem)->next = (elem);			\
+	(elem)->prev = (elem);			\
 } while (0)
 
-#define CIRCQ_INSERT(elem, list) do {           \
-        (elem)->prev = (list)->prev;            \
-        (elem)->next = (list);                  \
-        (list)->prev->next = (elem);            \
-        (list)->prev = (elem);                  \
-        tostat.tos_pending++;                   \
+#define CIRCQ_INSERT_TAIL(list, elem) do {	\
+	(elem)->prev = (list)->prev;		\
+	(elem)->next = (list);			\
+	(list)->prev->next = (elem);		\
+	(list)->prev = (elem);			\
+	tostat.tos_pending++;			\
 } while (0)
 
-#define CIRCQ_APPEND(fst, snd) do {             \
-        if (!CIRCQ_EMPTY(snd)) {                \
-                (fst)->prev->next = (snd)->next;\
-                (snd)->next->prev = (fst)->prev;\
-                (snd)->prev->next = (fst);      \
-                (fst)->prev = (snd)->prev;      \
-                CIRCQ_INIT(snd);                \
-        }                                       \
+#define CIRCQ_CONCAT(fst, snd) do {		\
+	if (!CIRCQ_EMPTY(snd)) {		\
+		(fst)->prev->next = (snd)->next;\
+		(snd)->next->prev = (fst)->prev;\
+		(snd)->prev->next = (fst);	\
+		(fst)->prev = (snd)->prev;	\
+		CIRCQ_INIT(snd);		\
+	}					\
 } while (0)
 
-#define CIRCQ_REMOVE(elem) do {                 \
-        (elem)->next->prev = (elem)->prev;      \
-        (elem)->prev->next = (elem)->next;      \
+#define CIRCQ_REMOVE(elem) do {			\
+	(elem)->next->prev = (elem)->prev;	\
+	(elem)->prev->next = (elem)->next;	\
 	_Q_INVALIDATE((elem)->prev);		\
 	_Q_INVALIDATE((elem)->next);		\
 	tostat.tos_pending--;			\
@@ -111,6 +111,11 @@ struct timespec timeout_late;		/* [t] Late if due prior to this */
 #define CIRCQ_FIRST(elem) ((elem)->next)
 
 #define CIRCQ_EMPTY(elem) (CIRCQ_FIRST(elem) == (elem))
+
+#define CIRCQ_FOREACH(elem, head)		\
+	for ((elem) = CIRCQ_FIRST(head);	\
+	    (elem) != (head);			\
+	    (elem) = CIRCQ_FIRST(elem))
 
 #ifdef WITNESS
 struct lock_object timeout_sleeplock_obj = {
@@ -358,13 +363,13 @@ timeout_at_ts_locked(struct timeout *to, clockid_t clock,
 	if (ISSET(to->to_flags, TIMEOUT_ONQUEUE)) {
 		if (timespeccmp(&to->to_time, &old_time, <)) {
 			CIRCQ_REMOVE(&to->to_list);
-			CIRCQ_INSERT(&to->to_list, &timeout_todo);
+			CIRCQ_INSERT_TAIL(&timeout_todo, &to->to_list);
 		}
 		tostat.tos_readded++;
 		ret = 0;
 	} else {
 		SET(to->to_flags, TIMEOUT_ONQUEUE);
-		CIRCQ_INSERT(&to->to_list, &timeout_todo);
+		CIRCQ_INSERT_TAIL(&timeout_todo, &to->to_list);
 	}
 	tostat.tos_added++;
 
@@ -423,7 +428,7 @@ timeout_barrier(struct timeout *to)
 
 		mtx_enter(&timeout_mutex);
 		SET(barrier.to_flags, TIMEOUT_ONQUEUE);
-		CIRCQ_INSERT(&barrier.to_list, &timeout_proc);
+		CIRCQ_INSERT_TAIL(&timeout_proc, &barrier.to_list);
 		mtx_leave(&timeout_mutex);
 
 		wakeup_one(&timeout_proc);
@@ -518,7 +523,7 @@ timeout_hardclock_update(void)
 		}
 		offset = level * WHEELSIZE;
 		for (b = first;; b = (b + 1) % WHEELSIZE) {
-			CIRCQ_APPEND(&timeout_todo, &timeout_wheel[offset + b]);
+			CIRCQ_CONCAT(&timeout_todo, &timeout_wheel[offset + b]);
 			if (b == last)
 				break;
 		}
@@ -582,14 +587,14 @@ softclock(void *arg)
 		 */
 		if (timespeccmp(&timeout_lastscan, &to->to_time, <)) {
 			b = timeout_bucket(&timeout_lastscan, &to->to_time);
-			CIRCQ_INSERT(&to->to_list, &timeout_wheel[b]);
+			CIRCQ_INSERT_TAIL(&timeout_wheel[b], &to->to_list);
 			tostat.tos_rescheduled++;
 			continue;
 		}
 		if (timespeccmp(&to->to_time, &timeout_late, <))
 			tostat.tos_late++;
 		if (ISSET(to->to_flags, TIMEOUT_NEEDPROCCTX)) {
-			CIRCQ_INSERT(&to->to_list, &timeout_proc);
+			CIRCQ_INSERT_TAIL(&timeout_proc, &to->to_list);
 			needsproc = 1;
 			continue;
 		}
@@ -693,7 +698,7 @@ db_show_callout_bucket(struct circq *bucket)
 	char *name, *where;
 	int width = sizeof(long) * 2;
 
-	for (p = CIRCQ_FIRST(bucket); p != bucket; p = CIRCQ_FIRST(p)) {
+	CIRCQ_FOREACH(p, bucket) {
 		to = timeout_from_circq(p);
 		db_find_sym_and_offset((vaddr_t)to->to_func, &name, &offset);
 		name = name ? name : "?";
