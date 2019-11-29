@@ -1,8 +1,8 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.45 2019/11/29 01:04:08 beck Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.46 2019/11/29 22:10:04 beck Exp $ */
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
- * Copyright (c) 2012-2016 Bob Beck <beck@openbsd.org>
+ * Copyright (c) 2012-2016,2019 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -308,12 +308,14 @@ buf_free_pages(struct buf *bp)
 		KASSERT(pg != NULL);
 		KASSERT(pg->wire_count == 1);
 		pg->wire_count = 0;
-		uvm_pagefree(pg);
 		bcstats.numbufpages--;
 		if (ISSET(bp->b_flags, B_DMA))
 			bcstats.dmapages--;
 	}
 	CLR(bp->b_flags, B_DMA);
+
+	/* XXX refactor to do this without splbio later */
+	uvm_objfree(uobj);
 }
 
 /* Reallocate a buf into a particular pmem range specified by "where". */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.h,v 1.22 2016/09/16 02:35:42 dlg Exp $	*/
+/*	$OpenBSD: uvm_object.h,v 1.23 2019/11/29 22:10:04 beck Exp $	*/
 /*	$NetBSD: uvm_object.h,v 1.11 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -92,6 +92,7 @@ RBT_PROTOTYPE(uvm_objtree, vm_page, objt, uvm_pagecmp)
 void	uvm_objinit(struct uvm_object *, struct uvm_pagerops *, int);
 int	uvm_objwire(struct uvm_object *, voff_t, voff_t, struct pglist *);
 void	uvm_objunwire(struct uvm_object *, voff_t, voff_t);
+void	uvm_objfree(struct uvm_object *);
 
 #endif /* _KERNEL */
 

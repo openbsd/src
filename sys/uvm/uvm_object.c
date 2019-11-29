@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.c,v 1.14 2016/09/16 02:35:42 dlg Exp $	*/
+/*	$OpenBSD: uvm_object.c,v 1.15 2019/11/29 22:10:04 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -148,3 +148,32 @@ uvm_objunwire(struct uvm_object *uobj, voff_t start, voff_t end)
 	uvm_unlock_pageq();
 }
 #endif /* !SMALL_KERNEL */
+
+/*
+ * uvm_objfree: free all pages in a uvm object, used by the buffer
+ * cache to free all pages attached to a buffer.
+ */
+void
+uvm_objfree(struct uvm_object *uobj)
+{
+	struct vm_page *pg;
+	struct pglist pgl;
+
+	TAILQ_INIT(&pgl);
+ 	/*
+	 * Extract from rb tree in offset order. The phys addresses
+	 * usually increase in that order, which is better for
+	 * uvm_pmr_freepageq.
+ 	 */
+	RBT_FOREACH(pg, uvm_objtree, &uobj->memt) {
+		/*
+		 * clear PG_TABLED so we don't do work to remove
+		 * this pg from the uobj we are throwing away
+		 */
+		atomic_clearbits_int(&pg->pg_flags, PG_TABLED);
+		uvm_pageclean(pg);
+		TAILQ_INSERT_TAIL(&pgl, pg, pageq);
+ 	}
+	uvm_pmr_freepageq(&pgl);
+}
+
