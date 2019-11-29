@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.9 2019/11/28 21:12:00 benno Exp $ */
+/*	$OpenBSD: mft.c,v 1.10 2019/11/29 05:05:46 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -127,7 +127,7 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 	fn = strndup((const char *)file->value.ia5string->data,
 	    file->value.ia5string->length);
 	if (fn == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 
 	/*
 	 * Make sure we're just a pathname and either an ROA or CER.
@@ -177,7 +177,7 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 	p->res->files = reallocarray(p->res->files, p->res->filesz + 1,
 	    sizeof(struct mftfile));
 	if (p->res->files == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 
 	fent = &p->res->files[p->res->filesz++];
 	memset(fent, 0, sizeof(struct mftfile));
@@ -370,9 +370,9 @@ mft_parse(X509 **x509, const char *fn, int force)
 	assert(*x509 != NULL);
 
 	if ((p.res = calloc(1, sizeof(struct mft))) == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 	if ((p.res->file = strdup(fn)) == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 	if (!x509_get_ski_aki(*x509, fn, &p.res->ski, &p.res->aki))
 		goto out;
 
@@ -468,14 +468,14 @@ mft_read(int fd)
 	size_t		 i;
 
 	if ((p = calloc(1, sizeof(struct mft))) == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 
 	io_simple_read(fd, &p->stale, sizeof(int));
 	io_str_read(fd, &p->file);
 	io_simple_read(fd, &p->filesz, sizeof(size_t));
 
 	if ((p->files = calloc(p->filesz, sizeof(struct mftfile))) == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 
 	for (i = 0; i < p->filesz; i++) {
 		io_str_read(fd, &p->files[i].file);
