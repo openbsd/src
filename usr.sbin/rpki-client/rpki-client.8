@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.10 2019/11/29 05:52:27 benno Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.11 2019/11/29 17:30:05 benno Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -31,12 +31,11 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility produces all route announcements starting with trust anchor
-locators.
+utility verifies Route Origination Authorizations (ROAs) and produces
+a list of all valid prefixes and their source-as.
 It uses
 .Xr openrsync 1
-to fetch certificates, manifests, revocation lists, and route
-announcements themselves.
+to fetch certificates, manifests, revocation lists and ROAs.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
