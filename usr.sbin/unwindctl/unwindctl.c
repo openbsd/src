@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwindctl.c,v 1.18 2019/11/28 10:40:29 florian Exp $	*/
+/*	$OpenBSD: unwindctl.c,v 1.19 2019/11/29 15:22:02 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -252,6 +252,11 @@ show_status_msg(struct imsg *imsg)
 		print_indented_str(imsg->data);
 		break;
 	case IMSG_CTL_RESOLVER_HISTOGRAM:
+		printf("\n%40s\n", "histogram[ms]");
+		print_histogram(imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE);
+		break;
+	case IMSG_CTL_RESOLVER_DECAYING_HISTOGRAM:
+		printf("\n%40s\n", "decaying histogram[ms]");
 		print_histogram(imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE);
 		break;
 	case IMSG_CTL_END:
@@ -302,8 +307,6 @@ print_histogram(void* data, size_t len)
 
 	if (len != sizeof(histogram))
 		errx(1, "invalid histogram size");
-
-	printf("\n%40s\n", "histogram[ms]");
 
 	memcpy(histogram, data, len);
 

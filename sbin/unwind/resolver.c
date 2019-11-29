@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.83 2019/11/28 20:28:13 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.84 2019/11/29 15:22:02 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -169,8 +169,6 @@ void			 restart_resolvers(void);
 void			 show_status(enum uw_resolver_type, pid_t);
 void			 send_resolver_info(struct uw_resolver *, pid_t);
 void			 send_detailed_resolver_info(struct uw_resolver *,
-			     pid_t);
-void			 send_resolver_histogram_info(struct uw_resolver *,
 			     pid_t);
 void			 trust_anchor_resolve(void);
 void			 trust_anchor_timo(int, short, void *);
@@ -1710,6 +1708,8 @@ send_resolver_info(struct uw_resolver *res, pid_t pid)
 void
 send_detailed_resolver_info(struct uw_resolver *res, pid_t pid)
 {
+	int64_t	 histogram[nitems(histogram_limits)];
+	size_t	 i;
 	char	 buf[1024];
 
 	if (res == NULL)
@@ -1720,17 +1720,15 @@ send_detailed_resolver_info(struct uw_resolver *res, pid_t pid)
 		resolver_imsg_compose_frontend(IMSG_CTL_RESOLVER_WHY_BOGUS,
 		    pid, buf, sizeof(buf));
 	}
-	send_resolver_histogram_info(res, pid);
-}
-
-void
-send_resolver_histogram_info(struct uw_resolver *res, pid_t pid)
-{
-	int64_t	 histogram[nitems(histogram_limits)];
 
 	memcpy(histogram, res->histogram, sizeof(histogram));
-
 	resolver_imsg_compose_frontend(IMSG_CTL_RESOLVER_HISTOGRAM,
+		    pid, histogram, sizeof(histogram));
+
+	memcpy(histogram, res->latest_histogram, sizeof(histogram));
+	for (i = 0; i < nitems(histogram_limits); i++)
+		histogram[i] /= 1000;
+	resolver_imsg_compose_frontend(IMSG_CTL_RESOLVER_DECAYING_HISTOGRAM,
 		    pid, histogram, sizeof(histogram));
 }
 

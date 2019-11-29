@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.40 2019/11/27 17:09:12 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.41 2019/11/29 15:22:02 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -487,6 +487,7 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 		case IMSG_CTL_RESOLVER_INFO:
 		case IMSG_CTL_RESOLVER_WHY_BOGUS:
 		case IMSG_CTL_RESOLVER_HISTOGRAM:
+		case IMSG_CTL_RESOLVER_DECAYING_HISTOGRAM:
 		case IMSG_CTL_AUTOCONF_RESOLVER_INFO:
 		case IMSG_CTL_END:
 			control_imsg_relay(&imsg);

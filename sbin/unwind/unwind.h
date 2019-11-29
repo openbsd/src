@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.39 2019/11/28 10:02:44 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.40 2019/11/29 15:22:02 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -102,6 +102,7 @@ enum imsg_type {
 	IMSG_CTL_RESOLVER_INFO,
 	IMSG_CTL_RESOLVER_WHY_BOGUS,
 	IMSG_CTL_RESOLVER_HISTOGRAM,
+	IMSG_CTL_RESOLVER_DECAYING_HISTOGRAM,
 	IMSG_CTL_AUTOCONF_RESOLVER_INFO,
 	IMSG_CTL_END,
 	IMSG_HTTPSOCK,
