@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkgrf.c,v 1.2 2017/07/23 17:07:18 kettenis Exp $	*/
+/*	$OpenBSD: rkgrf.c,v 1.3 2019/11/29 21:59:55 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -27,8 +27,14 @@
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
+#ifdef __armv7__
+#include <arm/simplebus/simplebusvar.h>
+#else
+#include <arm64/dev/simplebusvar.h>
+#endif
+
 struct rkgrf_softc {
-	struct device		sc_dev;
+	struct simplebus_softc	sc_sbus;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 };
@@ -79,4 +85,7 @@ rkgrf_attach(struct device *parent, struct device *self, void *aux)
 
 	regmap_register(faa->fa_node, sc->sc_iot, sc->sc_ioh,
 	    faa->fa_reg[0].size);
+
+	/* Attach PHYs. */
+	simplebus_attach(parent, &sc->sc_sbus.sc_dev, faa);
 }
