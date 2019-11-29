@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.302 2019/11/28 16:27:35 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.303 2019/11/29 15:17:28 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1064,7 +1064,7 @@ sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 	if (rv != 0)
 		goto done;
 
-	if ((mode == NULL) || (!DISK_PGCODE(mode, PAGE_CACHING_MODE))) {
+	if (!DISK_PGCODE(mode, PAGE_CACHING_MODE)) {
 		rv = EIO;
 		goto done;
 	}
@@ -1726,8 +1726,7 @@ sd_get_parms(struct sd_softc *sc, int flags)
 		err = scsi_do_mode_sense(link, PAGE_REDUCED_GEOMETRY,
 		    buf, (void **)&reduced, NULL, NULL, &dp.secsize,
 		    sizeof(*reduced), flags | SCSI_SILENT, &big);
-		if (!err && reduced &&
-		    DISK_PGCODE(reduced, PAGE_REDUCED_GEOMETRY)) {
+		if (!err && DISK_PGCODE(reduced, PAGE_REDUCED_GEOMETRY)) {
 			if (dp.disksize == 0)
 				dp.disksize = _5btol(reduced->sectors);
 			if (dp.secsize == 0)
@@ -1750,7 +1749,7 @@ sd_get_parms(struct sd_softc *sc, int flags)
 			    PAGE_RIGID_GEOMETRY, buf, (void **)&rigid, NULL,
 			    NULL, &dp.secsize, sizeof(*rigid) - 4,
 			    flags | SCSI_SILENT, &big);
-		if (!err && rigid && DISK_PGCODE(rigid, PAGE_RIGID_GEOMETRY)) {
+		if (!err && DISK_PGCODE(rigid, PAGE_RIGID_GEOMETRY)) {
 			dp.heads = rigid->nheads;
 			dp.cyls = _3btol(rigid->ncyl);
 			if (dp.heads * dp.cyls > 0)
@@ -1762,8 +1761,7 @@ sd_get_parms(struct sd_softc *sc, int flags)
 			    PAGE_FLEX_GEOMETRY, buf, (void **)&flex, NULL, NULL,
 			    &dp.secsize, sizeof(*flex) - 4,
 			    flags | SCSI_SILENT, &big);
-			if (!err && flex &&
-			    DISK_PGCODE(flex, PAGE_FLEX_GEOMETRY)) {
+			if (!err && DISK_PGCODE(flex, PAGE_FLEX_GEOMETRY)) {
 				dp.sectors = flex->ph_sec_tr;
 				dp.heads = flex->nheads;
 				dp.cyls = _2btol(flex->ncyl);
