@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.9 2019/11/29 04:04:08 deraadt Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.10 2019/11/29 05:52:27 benno Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -104,11 +104,15 @@ statements as specified by
 .\" .Sh ENVIRONMENT
 .\" For sections 1, 6, 7, and 8 only.
 .Sh FILES
-.Bl -tag -width "/etc/rpki/*.talXXX" -compact
+.Bl -tag -width "/var/db/rpki-client/roaXXX" -compact
 .It Pa /etc/rpki/*.tal
 default TAL files used unless
 .Fl t Ar tal
 is specified.
+.It Pa /var/cache/rpki-client
+cached repository data.
+.It Pa /var/db/rpki-client/roa
+default roa-set output file.
 .El
 .Sh EXIT STATUS
 .Ex -std
