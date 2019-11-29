@@ -89,7 +89,7 @@ struct drm_sched_entity {
 #ifdef __linux__
 	struct task_struct		*last_user;
 #else
-	struct proc			*last_user;
+	struct process			*last_user;
 #endif
 };
 

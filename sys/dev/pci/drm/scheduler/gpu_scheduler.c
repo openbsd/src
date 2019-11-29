@@ -267,7 +267,7 @@ long drm_sched_entity_flush(struct drm_sched_entity *entity, long timeout)
 #ifdef __linux__
 	struct task_struct *last_user;
 #else
-	struct proc *last_user;
+	struct process *last_user;
 #endif
 	long ret = timeout;
 
@@ -296,8 +296,8 @@ long drm_sched_entity_flush(struct drm_sched_entity *entity, long timeout)
 	if ((!last_user || last_user == current->group_leader) &&
 	    (current->flags & PF_EXITING) && (current->exit_code == SIGKILL))
 #else
-	last_user = cmpxchg(&entity->last_user, curproc->p_p->ps_mainproc, NULL);
-	if ((!last_user || last_user == curproc->p_p->ps_mainproc) &&
+	last_user = cmpxchg(&entity->last_user, curproc->p_p, NULL);
+	if ((!last_user || last_user == curproc->p_p) &&
 	    (curproc->p_p->ps_flags & PS_EXITING) &&
 	    (curproc->p_xstat == SIGKILL))
 #endif
@@ -544,7 +544,7 @@ void drm_sched_entity_push_job(struct drm_sched_job *sched_job,
 #ifdef __linux__
 	WRITE_ONCE(entity->last_user, current->group_leader);
 #else
-	WRITE_ONCE(entity->last_user, curproc->p_p->ps_mainproc);
+	WRITE_ONCE(entity->last_user, curproc->p_p);
 #endif
 	first = spsc_queue_push(&entity->job_queue, &sched_job->queue_node);
 
