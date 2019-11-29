@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.23 2019/11/04 18:06:03 visa Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.24 2019/11/29 06:34:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -73,9 +73,9 @@ mi_syscall(struct proc *p, register_t code, const struct sysent *callp,
 	    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
 		return (EPERM);
 
-	/* PC must not be in writeable memory */
+	/* PC must be in un-writeable permitted text (sigtramp, libc, ld.so) */
 	if (!uvm_map_inentry(p, &p->p_pcinentry, PROC_PC(p),
-	    "[%s]%d/%d pc=%lx inside %lx-%lx: writeable syscall\n",
+	    "[%s]%d/%d pc=%lx inside %lx-%lx: bogus syscall\n",
 	    uvm_map_inentry_pc, p->p_vmspace->vm_map.wserial))
 		return (EPERM);
 

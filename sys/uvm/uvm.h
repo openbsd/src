@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.65 2019/07/18 23:47:33 cheloha Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.66 2019/11/29 06:34:45 deraadt Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -91,6 +91,7 @@ struct uvm {
 #define UVM_ET_STACK		0x0040	/* this is a stack */
 #define UVM_ET_WC		0x0080	/* write combining */
 #define UVM_ET_CONCEAL		0x0100	/* omit from dumps */
+#define UVM_ET_SYSCALL		0x0200	/* syscall text segment */
 #define UVM_ET_FREEMAPPED	0x8000	/* map entry is on free list (DEBUG) */
 
 #define UVM_ET_ISOBJ(E)		(((E)->etype & UVM_ET_OBJ) != 0)

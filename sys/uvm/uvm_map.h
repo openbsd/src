@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.64 2019/11/02 09:36:08 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.65 2019/11/29 06:34:46 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -350,6 +350,7 @@ struct vm_map {
 #define	VM_MAP_WANTLOCK		0x10		/* rw: want to write-lock */
 #define VM_MAP_GUARDPAGES	0x20		/* rw: add guard pgs to map */
 #define VM_MAP_ISVMSPACE	0x40		/* ro: map is a vmspace */
+#define VM_MAP_SYSCALL_ONCE	0x80		/* rw: libc syscall registered */
 
 /* XXX: number of kernel maps and entries to statically allocate */
 
@@ -395,6 +396,7 @@ int		uvm_map_extract(struct vm_map*, vaddr_t, vsize_t, vaddr_t*,
 		    int);
 vaddr_t		uvm_map_pie(vaddr_t);
 vaddr_t		uvm_map_hint(struct vmspace *, vm_prot_t, vaddr_t, vaddr_t);
+int		uvm_map_syscall(vm_map_t, vaddr_t, vaddr_t);
 int		uvm_map_inherit(vm_map_t, vaddr_t, vaddr_t, vm_inherit_t);
 int		uvm_map_advice(vm_map_t, vaddr_t, vaddr_t, int);
 void		uvm_map_init(void);

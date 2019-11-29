@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.252 2019/11/26 18:23:48 mlarkin Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.253 2019/11/29 06:34:45 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1080,6 +1080,10 @@ uvm_mapanon(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	entry->advice = advice;
 	if (prot & PROT_WRITE)
 		map->wserial++;
+	if (flags & UVM_FLAG_SYSCALL) {
+		entry->etype |= UVM_ET_SYSCALL;
+		map->wserial++;
+	}
 	if (flags & UVM_FLAG_STACK) {
 		entry->etype |= UVM_ET_STACK;
 		if (flags & (UVM_FLAG_FIXED | UVM_FLAG_UNMAP))
@@ -1345,6 +1349,10 @@ uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	entry->advice = advice;
 	if (prot & PROT_WRITE)
 		map->wserial++;
+	if (flags & UVM_FLAG_SYSCALL) {
+		entry->etype |= UVM_ET_SYSCALL;
+		map->wserial++;
+	}
 	if (flags & UVM_FLAG_STACK) {
 		entry->etype |= UVM_ET_STACK;
 		if (flags & UVM_FLAG_UNMAP)
@@ -1808,11 +1816,14 @@ uvm_map_inentry_sp(vm_map_entry_t entry)
 /*
  * If a syscall comes from a writeable entry, W^X is violated.
  * (Would be nice if we can spot aliasing, which is also kind of bad)
+ * Ensure system call comes from libc or ld.so's text segment.
  */
 int
 uvm_map_inentry_pc(vm_map_entry_t entry)
 {
 	if (entry->protection & PROT_WRITE)
+		return (0);	/* not permitted */
+	if ((entry->etype & UVM_ET_SYSCALL) == 0)
 		return (0);	/* not permitted */
 	return (1);
 }
@@ -3089,12 +3100,14 @@ uvm_map_printit(struct vm_map *map, boolean_t full,
 		    entry, entry->start, entry->end, entry->object.uvm_obj,
 		    (long long)entry->offset, entry->aref.ar_amap,
 		    entry->aref.ar_pageoff);
-		(*pr)("\tsubmap=%c, cow=%c, nc=%c, stack=%c, prot(max)=%d/%d, inh=%d, "
+		(*pr)("\tsubmap=%c, cow=%c, nc=%c, stack=%c, "
+		    "syscall=%c, prot(max)=%d/%d, inh=%d, "
 		    "wc=%d, adv=%d\n",
 		    (entry->etype & UVM_ET_SUBMAP) ? 'T' : 'F',
 		    (entry->etype & UVM_ET_COPYONWRITE) ? 'T' : 'F',
 		    (entry->etype & UVM_ET_NEEDSCOPY) ? 'T' : 'F',
 		    (entry->etype & UVM_ET_STACK) ? 'T' : 'F',
+		    (entry->etype & UVM_ET_SYSCALL) ? 'T' : 'F',
 		    entry->protection, entry->max_protection,
 		    entry->inheritance, entry->wired_count, entry->advice);
 
@@ -3511,7 +3524,7 @@ uvmspace_exec(struct proc *p, vaddr_t start, vaddr_t end)
 		 * when a process execs another program image.
 		 */
 		vm_map_lock(map);
-		vm_map_modflags(map, 0, VM_MAP_WIREFUTURE);
+		vm_map_modflags(map, 0, VM_MAP_WIREFUTURE|VM_MAP_SYSCALL_ONCE);
 
 		/*
 		 * now unmap the old program
@@ -4284,6 +4297,45 @@ uvm_map_inherit(struct vm_map *map, vaddr_t start, vaddr_t end,
 		entry = RBT_NEXT(uvm_map_addr, entry);
 	}
 
+	vm_map_unlock(map);
+	return (0);
+}
+
+/* 
+ * uvm_map_syscall: permit system calls for range of addrs in map.
+ *
+ * => map must be unlocked
+ */
+int
+uvm_map_syscall(struct vm_map *map, vaddr_t start, vaddr_t end)
+{
+	struct vm_map_entry *entry;
+
+	if (start > end)
+		return EINVAL;
+	start = MAX(start, map->min_offset);
+	end = MIN(end, map->max_offset);
+	if (start >= end)
+		return 0;
+	if (map->flags & VM_MAP_SYSCALL_ONCE)	/* only allowed once */
+		return (EPERM);
+
+	vm_map_lock(map);
+
+	entry = uvm_map_entrybyaddr(&map->addr, start);
+	if (entry->end > start)
+		UVM_MAP_CLIP_START(map, entry, start);
+	else
+		entry = RBT_NEXT(uvm_map_addr, entry);
+
+	while (entry != NULL && entry->start < end) {
+		UVM_MAP_CLIP_END(map, entry, end);
+		entry->etype |= UVM_ET_SYSCALL;
+		entry = RBT_NEXT(uvm_map_addr, entry);
+	}
+
+	map->wserial++;
+	map->flags |= VM_MAP_SYSCALL_ONCE;
 	vm_map_unlock(map);
 	return (0);
 }

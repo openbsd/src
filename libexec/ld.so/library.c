@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.83 2019/10/04 17:42:16 guenther Exp $ */
+/*	$OpenBSD: library.c,v 1.84 2019/11/29 06:34:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -102,7 +102,8 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	Elf_Addr libaddr, loff, align = _dl_pagesz - 1;
 	Elf_Addr relro_addr = 0, relro_size = 0;
 	elf_object_t *object;
-	char	hbuf[4096];
+	char	hbuf[4096], *exec_start = 0;
+	size_t exec_size = 0;
 	Elf_Dyn *dynp = NULL;
 	Elf_Ehdr *ehdr;
 	Elf_Phdr *phdp;
@@ -253,6 +254,11 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 				_dl_load_list_free(load_list);
 				return(0);
 			}
+			if ((flags & PROT_EXEC) && exec_start == 0) {
+				exec_start = start;
+				exec_size = ROUND_PG(size);
+			}
+
 			if (phdp->p_flags & PF_W) {
 				/* Zero out everything past the EOF */
 				if ((size & align) != 0)
@@ -301,6 +307,8 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	    (Elf_Phdr *)((char *)libaddr + ehdr->e_phoff), ehdr->e_phnum,type,
 	    libaddr, loff);
 	if (object) {
+		char *soname = (char *)object->Dyn.info[DT_SONAME];
+
 		object->load_size = maxva - minva;	/*XXX*/
 		object->load_list = load_list;
 		/* set inode, dev from stat info */
@@ -312,6 +320,13 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 		_dl_set_sod(object->load_name, &object->sod);
 		if (ptls != NULL && ptls->p_memsz)
 			_dl_set_tls(object, ptls, libaddr, libname);
+
+		/* Request permission for system calls in libc.so's text segment */
+		if (soname != NULL &&
+		    _dl_strncmp(soname, "libc.so.", 8) == 0) {
+			if (_dl_msyscall(exec_start, exec_size) == -1)
+				_dl_printf("msyscall %lx %lx error\n");
+		}
 	} else {
 		_dl_munmap((void *)libaddr, maxva - minva);
 		_dl_load_list_free(load_list);

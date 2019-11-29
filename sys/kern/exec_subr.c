@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.56 2019/06/21 09:39:48 visa Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.57 2019/11/29 06:34:45 deraadt Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -167,6 +167,7 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 	 * call this routine.
 	 */
 	struct uvm_object *uobj;
+	unsigned int syscalls = 0;
 	int error;
 
 	/*
@@ -193,11 +194,13 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 	/*
 	 * do the map
 	 */
+	if ((cmd->ev_flags & VMCMD_SYSCALL) && (cmd->ev_prot & PROT_EXEC))
+		syscalls |= UVM_FLAG_SYSCALL;
 
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len,
 	    uobj, cmd->ev_offset, 0,
 	    UVM_MAPFLAG(cmd->ev_prot, PROT_MASK, MAP_INHERIT_COPY,
-	    MADV_NORMAL, UVM_FLAG_COPYONW|UVM_FLAG_FIXED));
+	    MADV_NORMAL, UVM_FLAG_COPYONW | UVM_FLAG_FIXED | syscalls));
 
 	/*
 	 * check for error

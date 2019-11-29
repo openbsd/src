@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.60 2019/10/04 17:42:16 guenther Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.61 2019/11/29 06:34:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -112,7 +112,8 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	Elf_Phdr *ptls = NULL;
 	Elf_Addr relro_addr = 0, relro_size = 0;
 	struct stat sb;
-	char hbuf[4096];
+	char hbuf[4096], *exec_start = 0;
+	size_t exec_size = 0;
 
 #define ROUND_PG(x) (((x) + align) & ~(align))
 #define TRUNC_PG(x) ((x) & ~(align))
@@ -288,6 +289,11 @@ retry:
 		load_end = (Elf_Addr)ld->start + ROUND_PG(ld->size);
 	}
 
+	if ((flags & PROT_EXEC) && exec_start == 0) {
+		exec_start = ld->start;
+		exec_size = ROUND_PG(ld->size);
+	}
+
 	phdp = (Elf_Phdr *)(hbuf + ehdr->e_phoff);
 	for (i = 0; i < ehdr->e_phnum; i++, phdp++) {
 		if (phdp->p_type == PT_OPENBSD_RANDOMIZE)
@@ -318,6 +324,13 @@ retry:
 		if (ptls != NULL && ptls->p_memsz)
 			_dl_set_tls(object, ptls, (Elf_Addr)lowld->start,
 			    libname);
+
+		/* Request permission for system calls in libc.so's text segment */
+		if (soname != NULL &&
+		    _dl_strncmp(soname, "libc.so.", 8) == 0) {
+			if (_dl_msyscall(exec_start, exec_size) == -1)
+				_dl_printf("msyscall %lx %lx error\n");
+		}
 	} else {
 		_dl_load_list_free(lowld);
 	}

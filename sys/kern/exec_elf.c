@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.151 2019/05/13 19:21:31 bluhm Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.152 2019/11/29 06:34:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -456,7 +456,7 @@ elf_load_file(struct proc *p, char *path, struct exec_package *epp,
 				addr = ph[i].p_vaddr - base_ph->p_vaddr;
 			}
 			elf_load_psection(&epp->ep_vmcmds, nd.ni_vp,
-			    &ph[i], &addr, &size, &prot, flags);
+			    &ph[i], &addr, &size, &prot, flags | VMCMD_SYSCALL);
 			/* If entry is within this section it must be text */
 			if (eh.e_entry >= ph[i].p_vaddr &&
 			    eh.e_entry < (ph[i].p_vaddr + size)) {
@@ -621,6 +621,19 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 				}
 			} else
 				addr = ELF_NO_ADDR;
+			/*
+			 * static binary: main program does system calls
+			 * dynamic binary: regular main program won't do system
+			 * calls, unfortunately go binaries do...
+			 */
+			flags |= VMCMD_SYSCALL;
+			if (interp == NULL) {
+				/*
+				 * static binary: no ld.so, no late request for
+				 * syscalls inside libc,so block msyscall()
+				 */
+				p->p_vmspace->vm_map.flags |= VM_MAP_SYSCALL_ONCE;
+			}
 
 			/*
 			 * Calculates size of text and data segments

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.159 2019/11/28 17:19:22 mlarkin Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.160 2019/11/29 06:34:46 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -606,7 +606,7 @@ sys_msyscall(struct proc *p, void *v, register_t *retval)
 	if (addr > SIZE_MAX - size)
 		return (EINVAL);		/* disallow wrap-around. */
 
-	return (0);
+	return (uvm_map_syscall(&p->p_vmspace->vm_map, addr, addr+size));
 }
 
 /*
