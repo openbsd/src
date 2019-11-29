@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.42 2019/11/29 05:23:55 benno Exp $ */
+/*	$OpenBSD: main.c,v 1.43 2019/11/29 16:25:59 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -73,7 +73,7 @@
 
 char		*outputname = _PATH_ROA;
 FILE		*output = NULL;
-char 		output_tmpname[PATH_MAX];
+char		output_tmpname[PATH_MAX];
 
 void		 sig_handler(int);
 void		 set_signal_handler(void);
@@ -1447,7 +1447,7 @@ main(int argc, char *argv[])
 	/* If started as root, priv-drop to _rpki-client */
 	if (getuid() == 0) {
 		struct passwd *pw;
- 
+
 		pw = getpwnam("_rpki-client");
 		if (!pw)
 			errx(1, "no _rpki-client user to revoke to");
