@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.35 2019/11/28 21:12:00 benno Exp $ */
+/*	$OpenBSD: main.c,v 1.36 2019/11/29 02:52:22 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1115,6 +1115,74 @@ proc_parser_crl(struct entity *entp, X509_STORE *store,
 	}
 }
 
+/* use the parent (id) to walk the tree to the root and
+   build a certificate chain from cert->x509 */
+static void
+build_chain(const struct auth *a, STACK_OF(X509) **chain)
+{
+	*chain = NULL;
+
+	if (a == NULL)
+		return;
+
+	if ((*chain = sk_X509_new_null()) == NULL)
+		err(EXIT_FAILURE, "sk_X509_new_null");
+	for (; a != NULL; a = a->parent) {
+		assert(a->cert->x509 != NULL);
+		if (!sk_X509_push(*chain, a->cert->x509))
+			errx(EXIT_FAILURE, "sk_X509_push");
+	}
+}
+
+/* use the parent (id) to walk the tree to the root and
+   build a stack of CRLs */
+static void
+build_crls(const struct auth *a, struct crl_tree *crlt,
+    STACK_OF(X509_CRL) **crls)
+{
+	struct crl	find, *found;
+
+	if ((*crls = sk_X509_CRL_new_null()) == NULL)
+		errx(EXIT_FAILURE, "sk_X509_CRL_new_null");
+
+	for (; a != NULL; a = a->parent) {
+		assert(a->cert->x509 != NULL);
+
+		if (a->cert->crl) {
+			find.uri = normalize_name(a->cert->crl);
+			found = RB_FIND(crl_tree, crlt, &find);
+			if (found &&
+			    sk_X509_CRL_push(*crls, found->x509_crl) == 0)
+				err(EXIT_FAILURE, "sk_X509_CRL_push");
+		}
+	}
+}
+
+static void
+get_parent_crl(const struct auth *a, struct crl_tree *crlt,
+    STACK_OF(X509_CRL) **crls)
+{
+	struct crl	find, *found;
+
+	if ((*crls = sk_X509_CRL_new_null()) == NULL)
+		errx(EXIT_FAILURE, "sk_X509_CRL_new_null");
+
+	if (a == NULL)
+		return;
+	a = a->parent;
+	if (a != NULL) {
+		assert(a->cert->x509 != NULL);
+
+		if (a->cert->crl) {
+			find.uri = normalize_name(a->cert->crl);
+			found = RB_FIND(crl_tree, crlt, &find);
+			if (found &&
+			    sk_X509_CRL_push(*crls, found->x509_crl) == 0)
+				err(EXIT_FAILURE, "sk_X509_CRL_push");
+		}
+	}
+}
+
 /*
  * Process responsible for parsing and validating content.
  * All this process does is wait to be told about a file to parse, then
@@ -1716,74 +1784,6 @@ usage:
 	    "usage: rpki-client [-Bcfjnv] [-b bind_addr] [-e rsync_prog] "
 	    "[-T table] [-t tal] output\n");
 	return EXIT_FAILURE;
-}
-
-/* use the parent (id) to walk the tree to the root and
-   build a certificate chain from cert->x509 */
-static void
-build_chain(const struct auth *a, STACK_OF(X509) **chain)
-{
-	*chain = NULL;
-
-	if (a == NULL)
-		return;
-
-	if ((*chain = sk_X509_new_null()) == NULL)
-		err(EXIT_FAILURE, "sk_X509_new_null");
-	for (; a != NULL; a = a->parent) {
-		assert(a->cert->x509 != NULL);
-		if (!sk_X509_push(*chain, a->cert->x509))
-			errx(EXIT_FAILURE, "sk_X509_push");
-	}
-}
-
-/* use the parent (id) to walk the tree to the root and
-   build a stack of CRLs */
-static void
-build_crls(const struct auth *a, struct crl_tree *crlt,
-    STACK_OF(X509_CRL) **crls)
-{
-	struct crl	find, *found;
-
-	if ((*crls = sk_X509_CRL_new_null()) == NULL)
-		errx(EXIT_FAILURE, "sk_X509_CRL_new_null");
-
-	for (; a != NULL; a = a->parent) {
-		assert(a->cert->x509 != NULL);
-
-		if (a->cert->crl) {
-			find.uri = normalize_name(a->cert->crl);
-			found = RB_FIND(crl_tree, crlt, &find);
-			if (found &&
-			    sk_X509_CRL_push(*crls, found->x509_crl) == 0)
-				err(EXIT_FAILURE, "sk_X509_CRL_push");
-		}
-	}
-}
-
-static void
-get_parent_crl(const struct auth *a, struct crl_tree *crlt,
-    STACK_OF(X509_CRL) **crls)
-{
-	struct crl	find, *found;
-
-	if ((*crls = sk_X509_CRL_new_null()) == NULL)
-		errx(EXIT_FAILURE, "sk_X509_CRL_new_null");
-
-	if (a == NULL)
-		return;
-	a = a->parent;
-	if (a != NULL) {
-		assert(a->cert->x509 != NULL);
-
-		if (a->cert->crl) {
-			find.uri = normalize_name(a->cert->crl);
-			found = RB_FIND(crl_tree, crlt, &find);
-			if (found &&
-			    sk_X509_CRL_push(*crls, found->x509_crl) == 0)
-				err(EXIT_FAILURE, "sk_X509_CRL_push");
-		}
-	}
 }
 
 FILE *
