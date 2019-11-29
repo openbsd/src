@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.100 2019/11/29 15:15:10 anton Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.101 2019/11/29 15:17:28 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -283,7 +283,7 @@ pipe_create(void)
 int
 pipelock(struct pipe *cpipe)
 {
-	return rw_enter(&cpipe->pipe_lock, RW_WRITE | RW_INTR);
+	return (rw_enter(&cpipe->pipe_lock, RW_WRITE | RW_INTR));
 }
 
 /*
@@ -946,4 +946,3 @@ pipe_init(void)
 	pool_init(&pipe_pool, sizeof(struct pipe), 0, IPL_MPFLOOR, PR_WAITOK,
 	    "pipepl", NULL);
 }
-
