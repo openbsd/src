@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.15 2019/11/29 05:01:41 benno Exp $ */
+/*	$OpenBSD: tal.c,v 1.16 2019/11/29 17:29:28 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -97,6 +97,7 @@ tal_parse_buffer(const char *fn, char *buf)
 		goto out;
 	} else if (tal->urisz > 1)
 		warnx("%s: multiple URIs: using the first", fn);
+		/* XXX no support for TAL files with multiple TALs yet */
 
 	sz = strlen(buf);
 	if (sz == 0) {
