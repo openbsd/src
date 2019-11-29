@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.7 2019/11/18 08:38:27 claudio Exp $ */
+/*	$OpenBSD: roa.c,v 1.8 2019/11/29 05:14:11 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -113,7 +113,7 @@ roa_parse_addr(const ASN1_OCTET_STRING *os, enum afi afi, struct parse *p)
 	p->res->ips = reallocarray(p->res->ips,
 		p->res->ipsz + 1, sizeof(struct roa_ip));
 	if (p->res->ips == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 	res = &p->res->ips[p->res->ipsz++];
 	memset(res, 0, sizeof(struct roa_ip));
 
@@ -349,7 +349,7 @@ roa_parse(X509 **x509, const char *fn, const unsigned char *dgst)
 		return NULL;
 
 	if ((p.res = calloc(1, sizeof(struct roa))) == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 	if (!x509_get_ski_aki(*x509, fn, &p.res->ski, &p.res->aki))
 		goto out;
 	if (!roa_parse_econtent(cms, cmsz, &p))
@@ -427,14 +427,14 @@ roa_read(int fd)
 	size_t		 i;
 
 	if ((p = calloc(1, sizeof(struct roa))) == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 
 	io_simple_read(fd, &p->valid, sizeof(int));
 	io_simple_read(fd, &p->asid, sizeof(uint32_t));
 	io_simple_read(fd, &p->ipsz, sizeof(size_t));
 
 	if ((p->ips = calloc(p->ipsz, sizeof(struct roa_ip))) == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 
 	for (i = 0; i < p->ipsz; i++) {
 		io_simple_read(fd, &p->ips[i].afi, sizeof(enum afi));
@@ -464,13 +464,13 @@ roa_insert_vrps(struct vrp_tree *tree, struct roa *roa, size_t *vrps,
 
 	for (i = 0; i < roa->ipsz; i++) {
 		if ((v = malloc(sizeof(*v))) == NULL)
-			err(EXIT_FAILURE, NULL);
+			err(1, NULL);
 		v->afi = roa->ips[i].afi;
 		v->addr = roa->ips[i].addr;
 		v->maxlength = roa->ips[i].maxlength;
 		v->asid = roa->asid;
 		if ((v->tal = strdup(roa->tal)) == NULL)
-			err(EXIT_FAILURE, NULL);
+			err(1, NULL);
 		if (RB_INSERT(vrp_tree, tree, v) == NULL)
 			(*uniqs)++;
 		else /* already exists */

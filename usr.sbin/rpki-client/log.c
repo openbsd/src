@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.4 2019/06/19 16:30:37 deraadt Exp $ */
+/*	$OpenBSD: log.c,v 1.5 2019/11/29 05:14:11 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -49,7 +49,7 @@ cryptoerrx(const char *fmt, ...)
 		va_end(ap);
 	}
 
-	exit(EXIT_FAILURE);
+	exit(1);
 }
 
 /*
