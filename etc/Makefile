@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.472 2019/11/27 17:09:12 florian Exp $
+#	$OpenBSD: Makefile,v 1.473 2019/11/29 03:22:13 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -182,6 +182,8 @@ distribution-etc-root-var: distrib-dirs
 	    ${DESTDIR}/var/cron/log
 	${INSTALL} -c -o root -g wheel -m 444 /dev/null \
 	    ${DESTDIR}/var/db/locate.database
+	${INSTALL} -c -o _rpki-client -g wheel -m 644 /dev/null \
+	    ${DESTDIR}/var/db/rpki-client/roa
 	${INSTALL} -c -o ${BINOWN} -g wheel -m 640 /dev/null \
 	    ${DESTDIR}/var/log/authlog
 	${INSTALL} -c -o ${BINOWN} -g wheel -m 640 /dev/null \
