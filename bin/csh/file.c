@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.38 2019/06/28 13:34:58 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.39 2019/11/29 05:28:32 nayden Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -726,7 +726,7 @@ is_prefix(Char *check, Char *template)
 
 /*
  *  Return true if the Chars in template appear at the
- *  end of check, I.e., are it's suffix.
+ *  end of check, I.e., are its suffix.
  */
 static int
 is_suffix(Char *check, Char *template)
