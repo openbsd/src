@@ -1,4 +1,4 @@
-/*	$OpenBSD: mds.S,v 1.1 2019/05/17 19:07:15 guenther Exp $	*/
+/*	$OpenBSD: mds.S,v 1.2 2019/11/29 17:47:10 mortimer Exp $	*/
 /*
  * Copyright (c) 2019 Philip Guenther <guenther@openbsd.org>
  *
@@ -189,4 +189,5 @@ ENTRY(mds_handler_knights)
 	rep stosq
 	mfence
 	RETGUARD_CHECK(mds_handler_knights, r11)
+	retq
 END(mds_handler_knights)
