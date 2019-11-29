@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.41 2019/11/27 17:11:00 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.42 2019/11/29 16:39:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -647,19 +647,10 @@ merge_config(struct uw_conf *conf, struct uw_conf *xconf)
 	conf->blocklist_log = xconf->blocklist_log;
 
 	/* Add new forwarders. */
-	while ((uw_forwarder = TAILQ_FIRST(&xconf->uw_forwarder_list)) !=
-	    NULL) {
-		TAILQ_REMOVE(&xconf->uw_forwarder_list, uw_forwarder, entry);
-		TAILQ_INSERT_TAIL(&conf->uw_forwarder_list,
-		    uw_forwarder, entry);
-	}
-	while ((uw_forwarder = TAILQ_FIRST(&xconf->uw_dot_forwarder_list)) !=
-	    NULL) {
-		TAILQ_REMOVE(&xconf->uw_dot_forwarder_list, uw_forwarder,
-		    entry);
-		TAILQ_INSERT_TAIL(&conf->uw_dot_forwarder_list,
-		    uw_forwarder, entry);
-	}
+	TAILQ_CONCAT(&conf->uw_forwarder_list, &xconf->uw_forwarder_list,
+	    entry);
+	TAILQ_CONCAT(&conf->uw_dot_forwarder_list,
+	    &xconf->uw_dot_forwarder_list, entry);
 
 	free(xconf);
 }
