@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.362 2019/11/11 21:17:21 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.363 2019/11/29 22:06:19 tobhe Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -568,11 +568,29 @@ findpcb:
 		 * If the TCB exists but is in CLOSED state, it is embryonic,
 		 * but should either do a listen or a connect soon.
 		 */
-		if (inp == NULL) {
-			tcpstat_inc(tcps_noport);
-			goto dropwithreset_ratelim;
-		}
 	}
+#ifdef IPSEC
+	/* Find most recent IPsec tag */
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
+	if (mtag != NULL) {
+		tdbi = (struct tdb_ident *)(mtag + 1);
+	        tdb = gettdb(tdbi->rdomain, tdbi->spi,
+		    &tdbi->dst, tdbi->proto);
+	} else
+		tdb = NULL;
+	ipsp_spd_lookup(m, af, iphlen, &error, IPSP_DIRECTION_IN,
+	    tdb, inp, 0);
+	if (error) {
+		tcpstat_inc(tcps_rcvnosec);
+		goto drop;
+	}
+#endif /* IPSEC */
+
+	if (inp == NULL) {
+		tcpstat_inc(tcps_noport);
+		goto dropwithreset_ratelim;
+	}
+
 	KASSERT(sotoinpcb(inp->inp_socket) == inp);
 	KASSERT(intotcpcb(inp) == NULL || intotcpcb(inp)->t_inpcb == inp);
 	soassertlocked(inp->inp_socket);
@@ -829,23 +847,6 @@ findpcb:
 #if NPF > 0
 	pf_inp_link(m, inp);
 #endif
-
-#ifdef IPSEC
-	/* Find most recent IPsec tag */
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
-	if (mtag != NULL) {
-		tdbi = (struct tdb_ident *)(mtag + 1);
-	        tdb = gettdb(tdbi->rdomain, tdbi->spi,
-		    &tdbi->dst, tdbi->proto);
-	} else
-		tdb = NULL;
-	ipsp_spd_lookup(m, af, iphlen, &error, IPSP_DIRECTION_IN,
-	    tdb, inp, 0);
-	if (error) {
-		tcpstat_inc(tcps_rcvnosec);
-		goto drop;
-	}
-#endif /* IPSEC */
 
 	/*
 	 * Segment received on connection.

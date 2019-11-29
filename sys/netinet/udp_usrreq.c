@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.255 2019/02/04 21:40:52 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.256 2019/11/29 22:06:19 tobhe Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -496,46 +496,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 #endif /* INET6 */
 		inp = in_pcblookup_listen(&udbtable, ip->ip_dst,
 		    uh->uh_dport, m, m->m_pkthdr.ph_rtableid);
-		if (inp == 0) {
-			udpstat_inc(udps_noport);
-			if (m->m_flags & (M_BCAST | M_MCAST)) {
-				udpstat_inc(udps_noportbcast);
-				goto bad;
-			}
-#ifdef INET6
-			if (ip6) {
-				uh->uh_sum = savesum;
-				icmp6_error(m, ICMP6_DST_UNREACH,
-				    ICMP6_DST_UNREACH_NOPORT,0);
-			} else
-#endif /* INET6 */
-			{
-				*ip = save_ip;
-				uh->uh_sum = savesum;
-				icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT,
-				    0, 0);
-			}
-			return IPPROTO_DONE;
-		}
 	}
-	KASSERT(sotoinpcb(inp->inp_socket) == inp);
-	soassertlocked(inp->inp_socket);
-
-#ifdef INET6
-	if (ip6 && inp->inp_ip6_minhlim &&
-	    inp->inp_ip6_minhlim > ip6->ip6_hlim) {
-		goto bad;
-	} else
-#endif
-	if (ip && inp->inp_ip_minttl &&
-	    inp->inp_ip_minttl > ip->ip_ttl) {
-		goto bad;
-	}
-
-#if NPF > 0
-	if (inp->inp_socket->so_state & SS_ISCONNECTED)
-		pf_inp_link(m, inp);
-#endif
 
 #ifdef IPSEC
 	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
@@ -555,6 +516,47 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 	if (tdb && tdb->tdb_ids)
 		ipsecflowinfo = tdb->tdb_ids->id_flow;
 #endif /*IPSEC */
+
+	if (inp == 0) {
+		udpstat_inc(udps_noport);
+		if (m->m_flags & (M_BCAST | M_MCAST)) {
+			udpstat_inc(udps_noportbcast);
+			goto bad;
+		}
+#ifdef INET6
+		if (ip6) {
+			uh->uh_sum = savesum;
+			icmp6_error(m, ICMP6_DST_UNREACH,
+			    ICMP6_DST_UNREACH_NOPORT,0);
+		} else
+#endif /* INET6 */
+		{
+			*ip = save_ip;
+			uh->uh_sum = savesum;
+			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT,
+			    0, 0);
+		}
+		return IPPROTO_DONE;
+	}
+
+	KASSERT(sotoinpcb(inp->inp_socket) == inp);
+	soassertlocked(inp->inp_socket);
+
+#ifdef INET6
+	if (ip6 && inp->inp_ip6_minhlim &&
+	    inp->inp_ip6_minhlim > ip6->ip6_hlim) {
+		goto bad;
+	} else
+#endif
+	if (ip && inp->inp_ip_minttl &&
+	    inp->inp_ip_minttl > ip->ip_ttl) {
+		goto bad;
+	}
+
+#if NPF > 0
+	if (inp->inp_socket->so_state & SS_ISCONNECTED)
+		pf_inp_link(m, inp);
+#endif
 
 #ifdef PIPEX
 	if (pipex_enable && inp->inp_pipex) {
