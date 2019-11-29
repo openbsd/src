@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.42 2019/11/16 16:21:10 visa Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.43 2019/11/29 12:41:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -369,7 +369,7 @@ rw_assert_wrlock(struct rwlock *rwl)
 	if (!(rwl->rwl_owner & RWLOCK_WRLOCK))
 		panic("%s: lock not held", rwl->rwl_name);
 
-	if (RWLOCK_OWNER(rwl) != (struct proc *)RW_PROC(curproc))
+	if (RW_PROC(curproc) != RW_PROC(rwl->rwl_owner))
 		panic("%s: lock not held by this process", rwl->rwl_name);
 #endif
 }
@@ -383,7 +383,7 @@ rw_assert_rdlock(struct rwlock *rwl)
 #ifdef WITNESS
 	witness_assert(&rwl->rwl_lock_obj, LA_SLOCKED);
 #else
-	if (!RWLOCK_OWNER(rwl) || (rwl->rwl_owner & RWLOCK_WRLOCK))
+	if (!RW_PROC(rwl->rwl_owner) || (rwl->rwl_owner & RWLOCK_WRLOCK))
 		panic("%s: lock not shared", rwl->rwl_name);
 #endif
 }
@@ -436,8 +436,7 @@ rrw_enter(struct rrwlock *rrwl, int flags)
 {
 	int	rv;
 
-	if (RWLOCK_OWNER(&rrwl->rrwl_lock) ==
-	    (struct proc *)RW_PROC(curproc)) {
+	if (RW_PROC(rrwl->rrwl_lock.rwl_owner) == RW_PROC(curproc)) {
 		if (flags & RW_RECURSEFAIL)
 			return (EDEADLK);
 		else {
@@ -459,8 +458,7 @@ void
 rrw_exit(struct rrwlock *rrwl)
 {
 
-	if (RWLOCK_OWNER(&rrwl->rrwl_lock) ==
-	    (struct proc *)RW_PROC(curproc)) {
+	if (RW_PROC(rrwl->rrwl_lock.rwl_owner) == RW_PROC(curproc)) {
 		KASSERT(rrwl->rrwl_wcnt > 0);
 		rrwl->rrwl_wcnt--;
 		if (rrwl->rrwl_wcnt != 0) {
