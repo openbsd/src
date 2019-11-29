@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.36 2019/11/29 02:52:22 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.37 2019/11/29 03:36:44 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1505,7 +1505,7 @@ main(int argc, char *argv[])
 	struct vrp_tree	 v = RB_INITIALIZER(&v);
 	enum output_fmt	 outfmt = BGPD;
 
-	if (pledge("stdio rpath wpath cpath proc exec unveil", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr proc exec unveil", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
 	while ((c = getopt(argc, argv, "b:Bce:fjnrt:T:v")) != -1)
@@ -1797,6 +1797,7 @@ output_createtmp(char *name)
 	if (r < 0 || r > (int)sizeof(output_tmpname))
 		err(EXIT_FAILURE, "path too long");
 	fd = mkostemp(output_tmpname, O_CLOEXEC);
+	(void) fchmod(fd, 0644);
 	if (fd == -1)
 		err(EXIT_FAILURE, "mkostemp");
 	f = fdopen(fd, "w");
