@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.8 2019/11/28 20:36:17 claudio Exp $ */
+/*	$OpenBSD: validate.c,v 1.9 2019/11/29 02:47:57 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -57,9 +57,8 @@ valid_as(struct auth *a, uint32_t min, uint32_t max)
 		    a->cert->as, a->cert->asz);
 		if (c > 0)
 			return 1;
-		/* XXX why is this commented */
-		/*else if (c < 0)
-			return 0;*/
+		else if (c < 0)
+			return 0;
 	}
 
 	/* If it doesn't, walk up the chain. */
