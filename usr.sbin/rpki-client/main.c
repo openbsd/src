@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.40 2019/11/29 04:42:44 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.41 2019/11/29 04:58:26 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -256,7 +256,7 @@ repo_lookup(int fd, struct repotab *rt, const char *uri)
 
 	if (!rsync_uri_parse(&host, &hostsz,
 	    &mod, &modsz, NULL, NULL, NULL, uri))
-		errx(EXIT_FAILURE, "%s: malformed", uri);
+		errx(1, "%s: malformed", uri);
 
 	/* Look up in repository table. */
 
@@ -275,7 +275,7 @@ repo_lookup(int fd, struct repotab *rt, const char *uri)
 	rt->repos = reallocarray(rt->repos,
 		rt->reposz + 1, sizeof(struct repo));
 	if (rt->repos == NULL)
-		err(EXIT_FAILURE, "reallocarray");
+		err(1, "reallocarray");
 
 	rp = &rt->repos[rt->reposz++];
 	memset(rp, 0, sizeof(struct repo));
@@ -283,7 +283,7 @@ repo_lookup(int fd, struct repotab *rt, const char *uri)
 
 	if ((rp->host = strndup(host, hostsz)) == NULL ||
 	    (rp->module = strndup(mod, modsz)) == NULL)
-		err(EXIT_FAILURE, "strndup");
+		err(1, "strndup");
 
 	i = rt->reposz - 1;
 
@@ -389,7 +389,7 @@ entityq_add(int fd, struct entityq *q, char *file, enum rtype type,
 	struct entity	*p;
 
 	if ((p = calloc(1, sizeof(struct entity))) == NULL)
-		err(EXIT_FAILURE, "calloc");
+		err(1, "calloc");
 
 	p->id = (*eid)++;
 	p->type = type;
@@ -403,12 +403,12 @@ entityq_add(int fd, struct entityq *q, char *file, enum rtype type,
 	if (p->has_pkey) {
 		p->pkeysz = pkeysz;
 		if ((p->pkey = malloc(pkeysz)) == NULL)
-			err(EXIT_FAILURE, "malloc");
+			err(1, "malloc");
 		memcpy(p->pkey, pkey, pkeysz);
 	}
 	if (p->has_descr)
 		if ((p->descr = strdup(descr)) == NULL)
-			err(EXIT_FAILURE, "strdup");
+			err(1, "strdup");
 
 	TAILQ_INSERT_TAIL(q, p, entries);
 
@@ -438,7 +438,7 @@ queue_add_from_mft(int fd, struct entityq *q, const char *mft,
 
 	sz = strlen(file->file) + strlen(mft);
 	if ((nfile = calloc(sz + 1, 1)) == NULL)
-		err(EXIT_FAILURE, "calloc");
+		err(1, "calloc");
 
 	/* We know this is BASE_DIR/host/module/... */
 
@@ -509,7 +509,7 @@ queue_add_tal(int fd, struct entityq *q, const char *file, size_t *eid)
 	char	*nfile, *buf;
 
 	if ((nfile = strdup(file)) == NULL)
-		err(EXIT_FAILURE, "strdup");
+		err(1, "strdup");
 	buf = tal_read_file(file);
 
 	/* Not in a repository, so directly add to queue. */
@@ -541,7 +541,7 @@ queue_add_from_tal(int proc, int rsync, struct entityq *q,
 
 	if (asprintf(&nfile, "%s/%s/%s/%s",
 	    BASE_DIR, repo->host, repo->module, uri) == -1)
-		err(EXIT_FAILURE, "asprintf");
+		err(1, "asprintf");
 
 	entityq_add(proc, q, nfile, RTYPE_CER, repo, NULL, tal->pkey,
 	    tal->pkeysz, tal->descr, eid);
@@ -559,9 +559,9 @@ queue_add_from_cert(int proc, int rsync, struct entityq *q,
 	const struct repo	*repo;
 
 	if ((type = rtype_resolve(uri)) == RTYPE_EOF)
-		errx(EXIT_FAILURE, "%s: unknown file type", uri);
+		errx(1, "%s: unknown file type", uri);
 	if (type != RTYPE_MFT && type != RTYPE_CRL)
-		errx(EXIT_FAILURE, "%s: invalid file type", uri);
+		errx(1, "%s: invalid file type", uri);
 
 	/* ignore the CRL since it is already loaded via the MFT */
 	if (type == RTYPE_CRL)
@@ -574,7 +574,7 @@ queue_add_from_cert(int proc, int rsync, struct entityq *q,
 
 	if (asprintf(&nfile, "%s/%s/%s/%s",
 	    BASE_DIR, repo->host, repo->module, uri) == -1)
-		err(EXIT_FAILURE, "asprintf");
+		err(1, "asprintf");
 
 	entityq_add(proc, q, nfile, type, repo, NULL, NULL, 0, NULL, eid);
 }
@@ -627,50 +627,50 @@ proc_rsync(char *prog, char *bind_addr, int fd, int noop)
 	if (!noop) {
 		if (strchr(prog, '/') == NULL) {
 			if (getenv("PATH") == NULL)
-				errx(EXIT_FAILURE, "PATH is unset");
+				errx(1, "PATH is unset");
 			if ((path = strdup(getenv("PATH"))) == NULL)
-				err(EXIT_FAILURE, "strdup");
+				err(1, "strdup");
 			save = path;
 			while ((pp = strsep(&path, ":")) != NULL) {
 				if (*pp == '\0')
 					continue;
 				if (asprintf(&cmd, "%s/%s", pp, prog) == -1)
-					err(EXIT_FAILURE, "asprintf");
+					err(1, "asprintf");
 				if (lstat(cmd, &stt) == -1) {
 					free(cmd);
 					continue;
 				} else if (unveil(cmd, "x") == -1)
-					err(EXIT_FAILURE, "%s: unveil", cmd);
+					err(1, "%s: unveil", cmd);
 				free(cmd);
 				break;
 			}
 			free(save);
 		} else if (unveil(prog, "x") == -1)
-			err(EXIT_FAILURE, "%s: unveil", prog);
+			err(1, "%s: unveil", prog);
 
 		/* Unveil the repository directory and terminate unveiling. */
 
 		if (unveil(BASE_DIR, "c") == -1)
-			err(EXIT_FAILURE, "%s: unveil", BASE_DIR);
+			err(1, "%s: unveil", BASE_DIR);
 		if (unveil(NULL, NULL) == -1)
-			err(EXIT_FAILURE, "unveil");
+			err(1, "unveil");
 	}
 
 	/* Initialise retriever for children exiting. */
 
 	if (sigemptyset(&mask) == -1)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 	if (signal(SIGCHLD, proc_child) == SIG_ERR)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 	if (sigaddset(&mask, SIGCHLD) == -1)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 	if (sigprocmask(SIG_BLOCK, &mask, &oldmask) == -1)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 
 	for (;;) {
 		if (ppoll(&pfd, 1, NULL, &oldmask) == -1) {
 			if (errno != EINTR)
-				err(EXIT_FAILURE, "ppoll");
+				err(1, "ppoll");
 
 			/*
 			 * If we've received an EINTR, it means that one
@@ -680,7 +680,7 @@ proc_rsync(char *prog, char *bind_addr, int fd, int noop)
 			 */
 
 			if ((pid = waitpid(WAIT_ANY, &st, 0)) == -1)
-				err(EXIT_FAILURE, "waitpid");
+				err(1, "waitpid");
 
 			for (i = 0; i < idsz; i++)
 				if (ids[i].pid == pid)
@@ -709,7 +709,7 @@ proc_rsync(char *prog, char *bind_addr, int fd, int noop)
 		 */
 
 		if ((ssz = read(fd, &id, sizeof(size_t))) == -1)
-			err(EXIT_FAILURE, "read");
+			err(1, "read");
 		if (ssz == 0)
 			break;
 
@@ -732,27 +732,27 @@ proc_rsync(char *prog, char *bind_addr, int fd, int noop)
 		 */
 
 		if (asprintf(&dst, "%s/%s", BASE_DIR, host) == -1)
-			err(EXIT_FAILURE, NULL);
+			err(1, NULL);
 		if (mkdir(dst, 0700) == -1 && EEXIST != errno)
-			err(EXIT_FAILURE, "%s", dst);
+			err(1, "%s", dst);
 		free(dst);
 
 		if (asprintf(&dst, "%s/%s/%s", BASE_DIR, host, mod) == -1)
-			err(EXIT_FAILURE, NULL);
+			err(1, NULL);
 		if (mkdir(dst, 0700) == -1 && EEXIST != errno)
-			err(EXIT_FAILURE, "%s", dst);
+			err(1, "%s", dst);
 
 		if (asprintf(&uri, "rsync://%s/%s", host, mod) == -1)
-			err(EXIT_FAILURE, NULL);
+			err(1, NULL);
 
 		/* Run process itself, wait for exit, check error. */
 
 		if ((pid = fork()) == -1)
-			err(EXIT_FAILURE, "fork");
+			err(1, "fork");
 
 		if (pid == 0) {
 			if (pledge("stdio exec", NULL) == -1)
-				err(EXIT_FAILURE, "pledge");
+				err(1, "pledge");
 			i = 0;
 			args[i++] = (char *)prog;
 			args[i++] = "-rlt";
@@ -765,7 +765,7 @@ proc_rsync(char *prog, char *bind_addr, int fd, int noop)
 			args[i++] = dst;
 			args[i] = NULL;
 			execvp(args[0], args);
-			err(EXIT_FAILURE, "%s: execvp", prog);
+			err(1, "%s: execvp", prog);
 		}
 
 		/* Augment the list of running processes. */
@@ -776,7 +776,7 @@ proc_rsync(char *prog, char *bind_addr, int fd, int noop)
 		if (i == idsz) {
 			ids = reallocarray(ids, idsz + 1, sizeof(*ids));
 			if (ids == NULL)
-				err(EXIT_FAILURE, NULL);
+				err(1, NULL);
 			idsz++;
 		}
 
@@ -1026,11 +1026,11 @@ proc_parser_cert(const struct entity *entp,
 
 	na = malloc(sizeof(*na));
 	if (na == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 
 	if (entp->has_pkey) {
 		if ((tal = strdup(entp->descr)) == NULL)
-			err(EXIT_FAILURE, NULL);
+			err(1, NULL);
 	} else
 		tal = a->tal;
 
@@ -1039,10 +1039,10 @@ proc_parser_cert(const struct entity *entp,
 	na->tal = tal;
 	na->fn = strdup(entp->uri);
 	if (na->fn == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(1, NULL);
 
 	if (RB_INSERT(auth_tree, auths, na) != NULL)
-		err(EXIT_FAILURE, "auth tree corrupted");
+		err(1, "auth tree corrupted");
 
 	/* only a ta goes into the store */
 	if (a == NULL)
@@ -1069,11 +1069,11 @@ proc_parser_crl(struct entity *entp, X509_STORE *store,
 	dgst = entp->has_dgst ? entp->dgst : NULL;
 	if ((x509_crl = crl_parse(entp->uri, dgst)) != NULL) {
 		if ((crl = malloc(sizeof(*crl))) == NULL)
-			err(EXIT_FAILURE, NULL);
+			err(1, NULL);
 		if ((t = strdup(entp->uri)) == NULL)
-			err(EXIT_FAILURE, NULL);
+			err(1, NULL);
 		if ((crl->aki = x509_crl_get_aki(x509_crl)) == NULL)
-			errx(EXIT_FAILURE, "x509_crl_get_aki failed");
+			errx(1, "x509_crl_get_aki failed");
 		crl->x509_crl = x509_crl;
 
 		if (RB_INSERT(crl_tree, crlt, crl) != NULL) {
@@ -1094,11 +1094,11 @@ build_chain(const struct auth *a, STACK_OF(X509) **chain)
 		return;
 
 	if ((*chain = sk_X509_new_null()) == NULL)
-		err(EXIT_FAILURE, "sk_X509_new_null");
+		err(1, "sk_X509_new_null");
 	for (; a != NULL; a = a->parent) {
 		assert(a->cert->x509 != NULL);
 		if (!sk_X509_push(*chain, a->cert->x509))
-			errx(EXIT_FAILURE, "sk_X509_push");
+			errx(1, "sk_X509_push");
 	}
 }
 
@@ -1111,7 +1111,7 @@ build_crls(const struct auth *a, struct crl_tree *crlt,
 	struct crl	find, *found;
 
 	if ((*crls = sk_X509_CRL_new_null()) == NULL)
-		errx(EXIT_FAILURE, "sk_X509_CRL_new_null");
+		errx(1, "sk_X509_CRL_new_null");
 
 	if (a == NULL)
 		return;
@@ -1119,7 +1119,7 @@ build_crls(const struct auth *a, struct crl_tree *crlt,
 	find.aki = a->cert->ski;
 	found = RB_FIND(crl_tree, crlt, &find);
 	if (found && !sk_X509_CRL_push(*crls, found->x509_crl))
-		err(EXIT_FAILURE, "sk_X509_CRL_push");
+		err(1, "sk_X509_CRL_push");
 }
 
 /*
@@ -1166,9 +1166,9 @@ proc_parser(int fd, int force)
 
 	for (;;) {
 		if (poll(&pfd, 1, INFTIM) == -1)
-			err(EXIT_FAILURE, "poll");
+			err(1, "poll");
 		if ((pfd.revents & (POLLERR|POLLNVAL)))
-			errx(EXIT_FAILURE, "poll: bad descriptor");
+			errx(1, "poll: bad descriptor");
 
 		/* If the parent closes, return immediately. */
 
@@ -1187,7 +1187,7 @@ proc_parser(int fd, int force)
 			io_socket_blocking(fd);
 			entp = calloc(1, sizeof(struct entity));
 			if (entp == NULL)
-				err(EXIT_FAILURE, NULL);
+				err(1, NULL);
 			entity_read_req(fd, entp);
 			TAILQ_INSERT_TAIL(&q, entp, entries);
 			pfd.events |= POLLOUT;
@@ -1207,7 +1207,7 @@ proc_parser(int fd, int force)
 		if (bsz) {
 			assert(bpos < bmax);
 			if ((ssz = write(fd, b + bpos, bsz)) == -1)
-				err(EXIT_FAILURE, "write");
+				err(1, "write");
 			bpos += ssz;
 			bsz -= ssz;
 			if (bsz)
@@ -1407,15 +1407,15 @@ tal_load_default(const char *tals[], size_t max)
 
 	dirp = opendir(basedir);
 	if (dirp == NULL)
-		err(EXIT_FAILURE, "open %s", basedir);
+		err(1, "open %s", basedir);
 	while ((dp = readdir(dirp)) != NULL) {
 		if (fnmatch("*.tal", dp->d_name, FNM_PERIOD) == FNM_NOMATCH)
 			continue;
 		if (s >= max)
-			err(EXIT_FAILURE, "too many tal files found in %s",
+			err(1, "too many tal files found in %s",
 			    basedir);
 		if (asprintf(&path, "%s/%s", basedir, dp->d_name) == -1)
-			err(EXIT_FAILURE, "asprintf");
+			err(1, "asprintf");
 		tals[s++] = path;
 	}
 	closedir (dirp);
@@ -1458,7 +1458,7 @@ main(int argc, char *argv[])
 	}
 
 	if (pledge("stdio rpath wpath cpath fattr proc exec unveil", NULL) == -1)
-		err(EXIT_FAILURE, "pledge");
+		err(1, "pledge");
 
 	while ((c = getopt(argc, argv, "b:Bce:fjnrt:T:v")) != -1)
 		switch (c) {
@@ -1485,7 +1485,7 @@ main(int argc, char *argv[])
 			break;
 		case 't':
 			if (talsz >= TALSZ_MAX)
-				err(EXIT_FAILURE,
+				err(1,
 				    "too many tal files specified");
 			tals[talsz++] = optarg;
 			break;
@@ -1509,7 +1509,7 @@ main(int argc, char *argv[])
 	if (talsz == 0)
 		talsz = tal_load_default(tals, TALSZ_MAX);
 	if (talsz == 0)
-		err(EXIT_FAILURE, "no TAL files found in %s", "/etc/rpki");
+		err(1, "no TAL files found in %s", "/etc/rpki");
 
 	memset(&rt, 0, sizeof(struct repotab));
 	memset(&stats, 0, sizeof(struct stats));
@@ -1522,19 +1522,19 @@ main(int argc, char *argv[])
 	 */
 
 	if (socketpair(AF_UNIX, fl, 0, fd) == -1)
-		err(EXIT_FAILURE, "socketpair");
+		err(1, "socketpair");
 	if ((procpid = fork()) == -1)
-		err(EXIT_FAILURE, "fork");
+		err(1, "fork");
 
 	if (procpid == 0) {
 		close(fd[1]);
 		/* Only allow access to BASE_DIR. */
 		if (unveil(BASE_DIR, "r") == -1)
-			err(EXIT_FAILURE, "%s: unveil", BASE_DIR);
+			err(1, "%s: unveil", BASE_DIR);
 		if (unveil(NULL, NULL) == -1)
-			err(EXIT_FAILURE, "unveil");
+			err(1, "unveil");
 		if (pledge("stdio rpath", NULL) == -1)
-			err(EXIT_FAILURE, "pledge");
+			err(1, "pledge");
 		proc_parser(fd[0], force);
 		/* NOTREACHED */
 	}
@@ -1550,20 +1550,20 @@ main(int argc, char *argv[])
 	 */
 
 	if (socketpair(AF_UNIX, fl, 0, fd) == -1)
-		err(EXIT_FAILURE, "socketpair");
+		err(1, "socketpair");
 	if ((rsyncpid = fork()) == -1)
-		err(EXIT_FAILURE, "fork");
+		err(1, "fork");
 
 	if (rsyncpid == 0) {
 		close(proc);
 		close(fd[1]);
 		if (pledge("stdio rpath cpath proc exec unveil", NULL) == -1)
-			err(EXIT_FAILURE, "pledge");
+			err(1, "pledge");
 
 		/* If -n, we don't exec or mkdir. */
 
 		if (noop && pledge("stdio", NULL) == -1)
-			err(EXIT_FAILURE, "pledge");
+			err(1, "pledge");
 		proc_rsync(rsync_prog, bind_addr, fd[0], noop);
 		/* NOTREACHED */
 	}
@@ -1574,7 +1574,7 @@ main(int argc, char *argv[])
 	assert(rsync != proc);
 
 	if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
-		err(EXIT_FAILURE, "pledge");
+		err(1, "pledge");
 
 	/*
 	 * Prime the process with our TAL file.
@@ -1597,7 +1597,7 @@ main(int argc, char *argv[])
 
 	while (!TAILQ_EMPTY(&q)) {
 		if ((c = poll(pfd, 2, verbose ? 10000 : INFTIM)) == -1)
-			err(EXIT_FAILURE, "poll");
+			err(1, "poll");
 
 		/* Debugging: print some statistics if we stall. */
 
@@ -1615,10 +1615,10 @@ main(int argc, char *argv[])
 
 		if ((pfd[0].revents & (POLLERR|POLLNVAL)) ||
 		    (pfd[1].revents & (POLLERR|POLLNVAL)))
-			errx(EXIT_FAILURE, "poll: bad fd");
+			errx(1, "poll: bad fd");
 		if ((pfd[0].revents & POLLHUP) ||
 		    (pfd[1].revents & POLLHUP))
-			errx(EXIT_FAILURE, "poll: hangup");
+			errx(1, "poll: hangup");
 
 		/*
 		 * Check the rsync process.
@@ -1667,13 +1667,13 @@ main(int argc, char *argv[])
 	close(rsync);
 
 	if (waitpid(procpid, &st, 0) == -1)
-		err(EXIT_FAILURE, "waitpid");
+		err(1, "waitpid");
 	if (!WIFEXITED(st) || WEXITSTATUS(st) != EXIT_SUCCESS) {
 		warnx("parser process exited abnormally");
 		rc = 1;
 	}
 	if (waitpid(rsyncpid, &st, 0) == -1)
-		err(EXIT_FAILURE, "waitpid");
+		err(1, "waitpid");
 	if (!WIFEXITED(st) || WEXITSTATUS(st) != EXIT_SUCCESS) {
 		warnx("rsync process exited abnormally");
 		rc = 1;
@@ -1684,7 +1684,7 @@ main(int argc, char *argv[])
 
 	output = output_createtmp(outputname);
 	if (output == NULL)
-		err(EXIT_FAILURE, "failed to open temp file for %s", outputname);
+		err(1, "failed to open temp file for %s", outputname);
 
 	switch (outfmt) {
 	case BGPD:
@@ -1737,7 +1737,7 @@ usage:
 	fprintf(stderr,
 	    "usage: rpki-client [-Bcfjnv] [-b bind_addr] [-e rsync_prog] "
 	    "[-T table] [-t tal] [output]\n");
-	return EXIT_FAILURE;
+	return 1;
 }
 
 FILE *
@@ -1749,14 +1749,14 @@ output_createtmp(char *name)
 	r = snprintf(output_tmpname, sizeof output_tmpname,
 	    "%s.XXXXXXXXXXX", name);
 	if (r < 0 || r > (int)sizeof(output_tmpname))
-		err(EXIT_FAILURE, "path too long");
+		err(1, "path too long");
 	fd = mkostemp(output_tmpname, O_CLOEXEC);
 	(void) fchmod(fd, 0644);
 	if (fd == -1)
-		err(EXIT_FAILURE, "mkostemp");
+		err(1, "mkostemp");
 	f = fdopen(fd, "w");
 	if (f == NULL)
-		err(EXIT_FAILURE, "fdopen");
+		err(1, "fdopen");
 	return (f);
 }
 
