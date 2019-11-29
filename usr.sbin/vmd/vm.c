@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.51 2019/07/17 05:51:07 pd Exp $	*/
+/*	$OpenBSD: vm.c,v 1.52 2019/11/29 00:51:28 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -113,6 +113,8 @@ pthread_cond_t vcpu_run_cond[VMM_MAX_VCPUS_PER_VM];
 pthread_mutex_t vcpu_run_mtx[VMM_MAX_VCPUS_PER_VM];
 uint8_t vcpu_hlt[VMM_MAX_VCPUS_PER_VM];
 uint8_t vcpu_done[VMM_MAX_VCPUS_PER_VM];
+
+struct event_base *evbase;
 
 /*
  * Represents a standard register set for an OS to be booted
@@ -360,7 +362,7 @@ start_vm(struct vmd_vm *vm, int fd)
 	for (i = 0; i < VMM_MAX_NICS_PER_VM; i++)
 		nicfds[i] = vm->vm_ifs[i].vif_fd;
 
-	event_init();
+	evbase = event_base_new();
 
 	if (vm->vm_state & VM_STATE_RECEIVED) {
 		restore_emulated_hw(vcp, vm->vm_receive_fd, nicfds,
@@ -1297,7 +1299,7 @@ event_thread(void *arg)
 	uint8_t *donep = arg;
 	intptr_t ret;
 
-	ret = event_dispatch();
+	ret = event_base_dispatch(evbase);
 
 	mutex_lock(&threadmutex);
 	*donep = 1;

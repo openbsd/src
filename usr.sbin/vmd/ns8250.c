@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.21 2019/05/28 07:36:37 mlarkin Exp $ */
+/* $OpenBSD: ns8250.c,v 1.22 2019/11/29 00:51:27 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -35,6 +35,7 @@
 #include "atomicio.h"
 
 extern char *__progname;
+extern struct event_base *evbase;
 struct ns8250_dev com1_dev;
 
 static void com_rcv_event(int, short, void *);
@@ -98,6 +99,7 @@ ns8250_init(int fd, uint32_t vmid)
 
 	event_set(&com1_dev.event, com1_dev.fd, EV_READ | EV_PERSIST,
 	    com_rcv_event, (void *)(intptr_t)vmid);
+	event_base_set(evbase, &com1_dev.event);
 
 	/*
 	 * Whenever fd is writable implies that the pty slave is connected.
@@ -106,12 +108,14 @@ ns8250_init(int fd, uint32_t vmid)
 	 */
 	event_set(&com1_dev.wake, com1_dev.fd, EV_WRITE,
 	    com_rcv_event, (void *)(intptr_t)vmid);
+	event_base_set(evbase, &com1_dev.wake);
 	event_add(&com1_dev.wake, NULL);
 
 	/* Rate limiter for simulating baud rate */
 	timerclear(&com1_dev.rate_tv);
 	com1_dev.rate_tv.tv_usec = 10000;
 	evtimer_set(&com1_dev.rate, ratelimit, NULL);
+	event_base_set(evbase, &com1_dev.rate);
 }
 
 static void
@@ -126,25 +130,32 @@ com_rcv_event(int fd, short kind, void *arg)
 	}
 
 	/*
-	 * We already have other data pending to be received. The data that
-	 * has become available now will be moved to the com port later.
+	 * More than one byte pending to be read by the guest.
 	 */
-	if (com1_dev.rcv_pending) {
-		mutex_unlock(&com1_dev.mutex);
-		return;
+	if (com1_dev.rcv_pending)
+		goto end;
+
+	/*
+	 * One byte pending to be read by the guest.
+	 */
+	if (com1_dev.regs.lsr & LSR_RXRDY) {
+		com1_dev.rcv_pending = 1;
+	} else {
+		/* Nothing pending */
+		com_rcv(&com1_dev, (uintptr_t)arg, 0);
 	}
 
-	if (com1_dev.regs.lsr & LSR_RXRDY)
-		com1_dev.rcv_pending = 1;
-	else {
-		com_rcv(&com1_dev, (uintptr_t)arg, 0);
+end:
+	if (com1_dev.regs.ier & IER_ERXRDY) {
+		com1_dev.regs.iir |= IIR_RXRDY;
+		com1_dev.regs.iir &= ~IIR_NOPEND;
+	}
 
-		/* If pending interrupt, inject */
-		if ((com1_dev.regs.iir & IIR_NOPEND) == 0) {
-			/* XXX: vcpu_id */
-			vcpu_assert_pic_irq((uintptr_t)arg, 0, com1_dev.irq);
-			vcpu_deassert_pic_irq((uintptr_t)arg, 0, com1_dev.irq);
-		}
+	/* If pending interrupt, inject */
+	if ((com1_dev.regs.iir & IIR_NOPEND) == 0) {
+		/* XXX: vcpu_id */
+		vcpu_assert_pic_irq((uintptr_t)arg, 0, com1_dev.irq);
+		vcpu_deassert_pic_irq((uintptr_t)arg, 0, com1_dev.irq);
 	}
 
 	mutex_unlock(&com1_dev.mutex);
@@ -299,6 +310,11 @@ vcpu_process_com_data(struct vm_exit *vei, uint32_t vm_id, uint32_t vcpu_id)
 		if (com1_dev.regs.iir == 0x0)
 			com1_dev.regs.iir = 0x1;
 
+		/*
+		 * Even though we just read a byte, there may be more bytes
+		 * waiting to be read - process them here, this may resassert
+		 * RXRDY.
+		 */
 		if (com1_dev.rcv_pending)
 			com_rcv(&com1_dev, vm_id, vcpu_id);
 	}
@@ -657,12 +673,15 @@ ns8250_restore(int fd, int con_fd, uint32_t vmid)
 	com1_dev.rate_tv.tv_usec = 10000;
 	com1_dev.pause_ct = (com1_dev.baudrate / 8) / 1000 * 10;
 	evtimer_set(&com1_dev.rate, ratelimit, NULL);
+	event_base_set(evbase, &com1_dev.rate);
 
 	event_set(&com1_dev.event, com1_dev.fd, EV_READ | EV_PERSIST,
 	    com_rcv_event, (void *)(intptr_t)vmid);
+	event_base_set(evbase, &com1_dev.event);
 
 	event_set(&com1_dev.wake, com1_dev.fd, EV_WRITE,
 	    com_rcv_event, (void *)(intptr_t)vmid);
+	event_base_set(evbase, &com1_dev.wake);
 	event_add(&com1_dev.wake, NULL);
 
 	return (0);

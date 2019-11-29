@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.19 2019/05/27 19:21:43 jasper Exp $ */
+/* $OpenBSD: mc146818.c,v 1.20 2019/11/29 00:51:27 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -34,6 +34,8 @@
 #include "virtio.h"
 #include "vmm.h"
 #include "atomicio.h"
+
+extern struct event_base *evbase;
 
 #define MC_DIVIDER_MASK 0xe0
 #define MC_RATE_MASK 0xf
@@ -172,9 +174,11 @@ mc146818_init(uint32_t vm_id, uint64_t memlo, uint64_t memhi)
 	timerclear(&rtc.per_tv);
 
 	evtimer_set(&rtc.sec, rtc_fire1, NULL);
+	event_base_set(evbase, &rtc.sec);
 	evtimer_add(&rtc.sec, &rtc.sec_tv);
 
 	evtimer_set(&rtc.per, rtc_fireper, (void *)(intptr_t)rtc.vm_id);
+	event_base_set(evbase, &rtc.per);
 }
 
 /*
@@ -341,7 +345,9 @@ mc146818_restore(int fd, uint32_t vm_id)
 	memset(&rtc.sec, 0, sizeof(struct event));
 	memset(&rtc.per, 0, sizeof(struct event));
 	evtimer_set(&rtc.sec, rtc_fire1, NULL);
+	event_base_set(evbase, &rtc.sec);
 	evtimer_set(&rtc.per, rtc_fireper, (void *)(intptr_t)rtc.vm_id);
+	event_base_set(evbase, &rtc.per);
 	return (0);
 }
 

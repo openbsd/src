@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.79 2019/09/24 12:14:54 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.80 2019/11/29 00:51:27 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -48,6 +48,7 @@
 #include "atomicio.h"
 
 extern char *__progname;
+extern struct event_base *evbase;
 
 struct viornd_dev viornd;
 struct vioblk_dev *vioblk;
@@ -1880,6 +1881,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 
 			event_set(&vionet[i].event, vionet[i].fd,
 			    EV_READ | EV_PERSIST, vionet_rx_event, &vionet[i]);
+			event_base_set(evbase, &vionet[i].event);
 			if (event_add(&vionet[i].event, NULL)) {
 				log_warn("could not initialize vionet event "
 				    "handler");
@@ -2034,6 +2036,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 	vmmci.pci_id = id;
 
 	evtimer_set(&vmmci.timeout, vmmci_timeout, NULL);
+	event_base_set(evbase, &vmmci.timeout);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.29 2018/12/10 21:24:22 claudio Exp $ */
+/* $OpenBSD: i8253.c,v 1.30 2019/11/29 00:51:27 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -34,6 +34,7 @@
 #include "atomicio.h"
 
 extern char *__progname;
+extern struct event_base *evbase;
 
 /*
  * Channel 0 is used to generate the legacy hardclock interrupt (HZ).
@@ -75,8 +76,11 @@ i8253_init(uint32_t vm_id)
 	i8253_channel[2].state = 0;
 
 	evtimer_set(&i8253_channel[0].timer, i8253_fire, &i8253_channel[0]);
+	event_base_set(evbase, &i8253_channel[0].timer);
 	evtimer_set(&i8253_channel[1].timer, i8253_fire, &i8253_channel[1]);
+	event_base_set(evbase, &i8253_channel[1].timer);
 	evtimer_set(&i8253_channel[2].timer, i8253_fire, &i8253_channel[2]);
+	event_base_set(evbase, &i8253_channel[2].timer);
 }
 
 /*
@@ -377,6 +381,7 @@ i8253_restore(int fd, uint32_t vm_id)
 		i8253_channel[i].vm_id = vm_id;
 		evtimer_set(&i8253_channel[i].timer, i8253_fire,
 		    &i8253_channel[i]);
+		event_base_set(evbase, &i8253_channel[i].timer);
 		i8253_reset(i);
 	}
 	return (0);
