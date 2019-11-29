@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.15 2019/10/29 02:55:49 deraadt Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.16 2019/11/29 20:53:13 kettenis Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -284,6 +284,7 @@ ELFNAME(exec)(int fd, Elf_Ehdr *elf, uint64_t *marks, int flags)
 
 	marks[MARK_START] = LOADADDR(minp);
 	marks[MARK_ENTRY] = LOADADDR(elf->e_entry);
+	marks[MARK_VENTRY] = elf->e_entry;
 	marks[MARK_NSYM] = 1;	/* XXX: Kernel needs >= 0 */
 	marks[MARK_SYM] = LOADADDR(elfp);
 	marks[MARK_END] = LOADADDR(maxp);

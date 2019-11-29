@@ -1,5 +1,5 @@
 /*	$NetBSD: loadfile.h,v 1.1 1999/04/28 09:08:50 christos Exp $	 */
-/*	$OpenBSD: loadfile.h,v 1.6 2019/04/10 04:17:37 deraadt Exp $	 */
+/*	$OpenBSD: loadfile.h,v 1.7 2019/11/29 20:53:13 kettenis Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,8 @@
 #define	MARK_END	4
 #define	MARK_RANDOM	5
 #define	MARK_ERANDOM	6
-#define	MARK_MAX	7
+#define	MARK_VENTRY	7 
+#define	MARK_MAX	8
 
 /*
  * Bit flags for sections to load
