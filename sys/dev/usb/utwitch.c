@@ -1,4 +1,4 @@
-/*	$OpenBSD: utwitch.c,v 1.17 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: utwitch.c,v 1.18 2019/11/30 18:12:18 cheloha Exp $ */
 
 /*
  * Copyright (c) 2010 Yojiro UO <yuo@nui.org>
@@ -278,7 +278,7 @@ utwitch_set_mode(struct utwitch_softc *sc, uint8_t val)
 	}
 
 	/* wait ack */
-	tsleep(&sc->sc_sensortask, 0, "utwitch", (1000*hz+999)/1000 + 1);
+	tsleep_nsec(&sc->sc_sensortask, 0, "utwitch", MSEC_TO_NSEC(1000));
 }
 
 void
@@ -296,7 +296,7 @@ utwitch_read_value_request(struct utwitch_softc *sc)
 		return;
 
 	/* wait till sensor data are updated, 500ms will be enough */
-	tsleep(&sc->sc_sensortask, 0, "utwitch", (500*hz+999)/1000 + 1);
+	tsleep_nsec(&sc->sc_sensortask, 0, "utwitch", MSEC_TO_NSEC(500));
 }
 
 void
@@ -319,5 +319,5 @@ utwitch_write_value_request(struct utwitch_softc *sc, uint32_t val)
 		return;
 
 	/* wait till sensor data are updated, 250ms will be enough */
-	tsleep(&sc->sc_sensortask, 0, "utwitch", (250*hz+999)/1000 + 1);
+	tsleep_nsec(&sc->sc_sensortask, 0, "utwitch", MSEC_TO_NSEC(250));
 }
