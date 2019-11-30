@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.85 2019/11/30 11:09:14 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.86 2019/11/30 16:14:03 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -756,12 +756,18 @@ try_next_resolver(struct running_query *rq)
 	memcpy(query_imsg, rq->query_imsg, sizeof(*query_imsg));
 	clock_gettime(CLOCK_MONOTONIC, &query_imsg->tp);
 
+	ms = histogram_median(res->latest_histogram);
+	if (ms == INT64_MAX)
+		ms = 2000;
 	if (res->type == resolver_conf->res_pref.types[0])
-		tv.tv_usec = 1000 * (PREF_RESOLVER_MEDIAN_SKEW +
-		    histogram_median(res->latest_histogram));
+		tv.tv_usec = 1000 * (PREF_RESOLVER_MEDIAN_SKEW + ms);
 	else
-		tv.tv_usec = 1000 * histogram_median(res->latest_histogram);
+		tv.tv_usec = 1000 * ms;
 
+	while (tv.tv_usec >= 1000000) {
+		tv.tv_sec++;
+		tv.tv_usec -= 1000000;
+	}
 	evtimer_add(&rq->timer_ev, &tv);
 
 	if (resolve(res, query_imsg->qname, query_imsg->t,
