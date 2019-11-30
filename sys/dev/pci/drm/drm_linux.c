@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.50 2019/10/23 10:17:40 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.51 2019/11/30 11:19:17 visa Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -91,7 +91,7 @@ schedule_timeout(long timeout)
 	sleep_setup(&sls, sch_ident, sch_priority, "schto");
 	if (timeout != MAX_SCHEDULE_TIMEOUT)
 		sleep_setup_timeout(&sls, timeout);
-	sleep_setup_signal(&sls, sch_priority);
+	sleep_setup_signal(&sls);
 
 	wait = (sch_proc == curproc && timeout > 0);
 

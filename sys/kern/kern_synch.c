@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.154 2019/11/12 04:20:21 visa Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.155 2019/11/30 11:19:17 visa Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
 
 	sleep_setup(&sls, ident, priority, wmesg);
 	sleep_setup_timeout(&sls, timo);
-	sleep_setup_signal(&sls, priority);
+	sleep_setup_signal(&sls);
 
 	return sleep_finish_all(&sls, 1);
 }
@@ -207,6 +207,9 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 	KASSERT((priority & ~(PRIMASK | PCATCH | PNORELOCK)) == 0);
 	KASSERT(mtx != NULL);
 
+	if (priority & PCATCH)
+		KERNEL_ASSERT_LOCKED();
+
 	if (cold || panicstr) {
 		/*
 		 * After a panic, or during autoconfiguration,
@@ -233,7 +236,7 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 
 	sleep_setup(&sls, ident, priority, wmesg);
 	sleep_setup_timeout(&sls, timo);
-	sleep_setup_signal(&sls, priority);
+	sleep_setup_signal(&sls);
 
 	/* XXX - We need to make sure that the mutex doesn't
 	 * unblock splsched. This can be made a bit more
@@ -293,7 +296,7 @@ rwsleep(const volatile void *ident, struct rwlock *rwl, int priority,
 
 	sleep_setup(&sls, ident, priority, wmesg);
 	sleep_setup_timeout(&sls, timo);
-	sleep_setup_signal(&sls, priority);
+	sleep_setup_signal(&sls);
 
 	rw_exit(rwl);
 
@@ -342,10 +345,21 @@ sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
 		panic("tsleep: not SONPROC");
 #endif
 
-	sls->sls_catch = 0;
+	sls->sls_catch = prio & PCATCH;
 	sls->sls_do_sleep = 1;
+	sls->sls_locked = 0;
 	sls->sls_sig = 1;
 	sls->sls_timeout = 0;
+
+	/*
+	 * The kernel has to be locked for signal processing.
+	 * This is done here and not in sleep_setup_signal() because
+	 * KERNEL_LOCK() has to be taken before SCHED_LOCK().
+	 */
+	if (sls->sls_catch != 0) {
+		KERNEL_LOCK();
+		sls->sls_locked = 1;
+	}
 
 	SCHED_LOCK(sls->sls_s);
 
@@ -417,12 +431,15 @@ sleep_finish_timeout(struct sleep_state *sls)
 }
 
 void
-sleep_setup_signal(struct sleep_state *sls, int prio)
+sleep_setup_signal(struct sleep_state *sls)
 {
 	struct proc *p = curproc;
 
-	if ((sls->sls_catch = (prio & PCATCH)) == 0)
+	if (sls->sls_catch == 0)
 		return;
+
+	/* sleep_setup() has locked the kernel. */
+	KERNEL_ASSERT_LOCKED();
 
 	/*
 	 * We put ourselves on the sleep queue and start our timeout
@@ -449,20 +466,26 @@ int
 sleep_finish_signal(struct sleep_state *sls)
 {
 	struct proc *p = curproc;
-	int error;
+	int error = 0;
 
 	if (sls->sls_catch != 0) {
-		if ((error = single_thread_check(p, 1)))
-			return (error);
-		if (sls->sls_sig != 0 || (sls->sls_sig = CURSIG(p)) != 0) {
+		KERNEL_ASSERT_LOCKED();
+
+		error = single_thread_check(p, 1);
+		if (error == 0 &&
+		    (sls->sls_sig != 0 || (sls->sls_sig = CURSIG(p)) != 0)) {
 			if (p->p_p->ps_sigacts->ps_sigintr &
 			    sigmask(sls->sls_sig))
-				return (EINTR);
-			return (ERESTART);
+				error = EINTR;
+			else
+				error = ERESTART;
 		}
 	}
 
-	return (0);
+	if (sls->sls_locked)
+		KERNEL_UNLOCK();
+
+	return (error);
 }
 
 /*
