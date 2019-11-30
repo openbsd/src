@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.61 2019/11/29 06:34:44 deraadt Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.62 2019/11/30 23:06:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -265,6 +265,11 @@ retry:
 		res = _dl_mmap((void *)(LOFF + ld->moff), ROUND_PG(ld->size),
 		    ld->prot, flags | MAP_FIXED | __MAP_NOREPLACE, fd, foff);
 
+		if ((ld->prot & PROT_EXEC) && exec_start == 0) {
+			exec_start = (void *)(LOFF + ld->moff);
+			exec_size = ROUND_PG(ld->size);
+		}
+
 		if (_dl_mmap_error(res)) {
 			struct load_list *ll;
 
@@ -289,11 +294,6 @@ retry:
 		load_end = (Elf_Addr)ld->start + ROUND_PG(ld->size);
 	}
 
-	if ((flags & PROT_EXEC) && exec_start == 0) {
-		exec_start = ld->start;
-		exec_size = ROUND_PG(ld->size);
-	}
-
 	phdp = (Elf_Phdr *)(hbuf + ehdr->e_phoff);
 	for (i = 0; i < ehdr->e_phnum; i++, phdp++) {
 		if (phdp->p_type == PT_OPENBSD_RANDOMIZE)
@@ -312,6 +312,8 @@ retry:
 	    (Elf_Phdr *)((char *)lowld->start + ehdr->e_phoff), ehdr->e_phnum,
 	    type, (Elf_Addr)lowld->start, LOFF);
 	if (object) {
+		char *soname = (char *)object->Dyn.info[DT_SONAME];
+
 		object->load_size = (Elf_Addr)load_end - (Elf_Addr)lowld->start;
 		object->load_list = lowld;
 		/* set inode, dev from stat info */
