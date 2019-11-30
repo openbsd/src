@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.84 2019/11/29 15:22:02 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.85 2019/11/30 11:09:14 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1322,6 +1322,9 @@ check_resolver(struct uw_resolver *resolver_to_check)
 {
 	struct uw_resolver		*res;
 
+	if (resolver_to_check == NULL)
+		return;
+
 	if (resolver_to_check->check_running) {
 		log_debug("%s: already checking: %s", __func__,
 		    uw_resolver_type_str[resolver_to_check->type]);
@@ -1330,7 +1333,7 @@ check_resolver(struct uw_resolver *resolver_to_check)
 
 	log_debug("%s: create_resolver", __func__);
 	if ((res = create_resolver(resolver_to_check->type, 0)) == NULL)
-		fatal("%s", __func__);
+		return;
 
 	resolver_ref(resolver_to_check);
 
@@ -1355,7 +1358,7 @@ check_resolver(struct uw_resolver *resolver_to_check)
 
 	log_debug("%s: create_resolver for oppdot", __func__);
 	if ((res = create_resolver(resolver_to_check->type, 1)) == NULL)
-		fatal("%s", __func__);
+		return;
 
 	resolver_ref(resolver_to_check);
 
