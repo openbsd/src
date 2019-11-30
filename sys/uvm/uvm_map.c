@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.253 2019/11/29 06:34:45 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.254 2019/11/30 23:15:54 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1823,8 +1823,8 @@ uvm_map_inentry_pc(vm_map_entry_t entry)
 {
 	if (entry->protection & PROT_WRITE)
 		return (0);	/* not permitted */
-	if ((entry->etype & UVM_ET_SYSCALL) == 0)
-		return (0);	/* not permitted */
+//	if ((entry->etype & UVM_ET_SYSCALL) == 0)
+//		return (0);	/* not permitted */
 	return (1);
 }
 
