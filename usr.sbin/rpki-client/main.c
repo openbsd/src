@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.47 2019/11/29 23:31:29 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.48 2019/11/30 02:31:12 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -71,9 +71,10 @@
 
 #include "extern.h"
 
-char		*outputname = _PATH_ROA;
+char		*outputdir = _PATH_ROA_DIR;
 FILE		*output = NULL;
 char		output_tmpname[PATH_MAX];
+char		output_name[PATH_MAX];
 
 void		 sig_handler(int);
 void		 set_signal_handler(void);
@@ -170,12 +171,11 @@ static void	build_chain(const struct auth *, STACK_OF(X509) **);
 static void	build_crls(const struct auth *, struct crl_tree *,
 		    STACK_OF(X509_CRL) **);
 
-enum output_fmt {
-	BGPD,
-	BIRD,
-	CSV,
-	JSON
-};
+int outformats;
+#define FORMAT_OPENBGPD	0x01
+#define FORMAT_BIRD	0x02
+#define FORMAT_CSV	0x04
+#define FORMAT_JSON	0x08
 
 int	 verbose;
 
@@ -1419,7 +1419,6 @@ main(int argc, char *argv[])
 	const char	*tals[TALSZ_MAX];
 	const char	*tablename = "roa";
 	struct vrp_tree	 v = RB_INITIALIZER(&v);
-	enum output_fmt	 outfmt = BGPD;
 
 	/* If started as root, priv-drop to _rpki-client */
 	if (getuid() == 0) {
@@ -1437,16 +1436,16 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath cpath fattr proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	while ((c = getopt(argc, argv, "b:Bce:fjnrt:T:v")) != -1)
+	while ((c = getopt(argc, argv, "b:Bce:fjnort:T:v")) != -1)
 		switch (c) {
 		case 'b':
 			bind_addr = optarg;
 			break;
 		case 'B':
-			outfmt = BIRD;
+			outformats |= FORMAT_BIRD;
 			break;
 		case 'c':
-			outfmt = CSV;
+			outformats |= FORMAT_CSV;
 			break;
 		case 'e':
 			rsync_prog = optarg;
@@ -1455,10 +1454,13 @@ main(int argc, char *argv[])
 			force = 1;
 			break;
 		case 'j':
-			outfmt = JSON;
+			outformats = FORMAT_JSON;
 			break;
 		case 'n':
 			noop = 1;
+			break;
+		case 'o':
+			outformats |= FORMAT_OPENBGPD;
 			break;
 		case 't':
 			if (talsz >= TALSZ_MAX)
@@ -1479,9 +1481,12 @@ main(int argc, char *argv[])
 	argv += optind;
 	argc -= optind;
 	if (argc == 1)
-		outputname = argv[0];
+		outputdir = argv[0];
 	else if (argc > 1)
 		goto usage;
+
+	if (outformats == 0)
+		outformats = FORMAT_OPENBGPD;
 
 	if (talsz == 0)
 		talsz = tal_load_default(tals, TALSZ_MAX);
@@ -1659,31 +1664,14 @@ main(int argc, char *argv[])
 	atexit(output_cleantmp);
 	set_signal_handler();
 
-	output = output_createtmp(outputname);
-	if (output == NULL)
-		err(1, "failed to open temp file for %s", outputname);
-
-	switch (outfmt) {
-	case BGPD:
-		output_bgpd(output, &v);
-		break;
-	case BIRD:
-		output_bird(output, &v, tablename);
-		break;
-	case CSV:
-		output_csv(output, &v);
-		break;
-	case JSON:
-		output_json(output, &v);
-		break;
-	}
-
-	fclose(output);
-
-	if (rc == 0) {
-		rename(output_tmpname, outputname);
-		output_tmpname[0] = '\0';
-	}
+	if (outformats & FORMAT_OPENBGPD)
+		output_bgpd(&v);
+	if (outformats & FORMAT_BIRD)
+		output_bird(&v, tablename);
+	if (outformats & FORMAT_CSV)
+		output_csv(&v);
+	if (outformats & FORMAT_JSON)
+		output_json(&v);
 
 	logx("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)",
 	    stats.roas, stats.roas_fail, stats.roas_invalid);
@@ -1712,8 +1700,8 @@ main(int argc, char *argv[])
 
 usage:
 	fprintf(stderr,
-	    "usage: rpki-client [-Bcfjnv] [-b bind_addr] [-e rsync_prog] "
-	    "[-T table] [-t tal] [output]\n");
+	    "usage: rpki-client [-Bcfjnov] [-b bind_addr] [-e rsync_prog] "
+	    "[-T table] [-t tal] [outputdir]\n");
 	return 1;
 }
 
@@ -1723,14 +1711,18 @@ output_createtmp(char *name)
 	FILE *f;
 	int fd, r;
 
+	r = snprintf(output_name, sizeof output_name,
+	    "%s/%s", outputdir, name);
+	if (r < 0 || r > (int)sizeof(output_name))
+		err(1, "path too long");
 	r = snprintf(output_tmpname, sizeof output_tmpname,
-	    "%s.XXXXXXXXXXX", name);
+	    "%s.XXXXXXXXXXX", output_name);
 	if (r < 0 || r > (int)sizeof(output_tmpname))
 		err(1, "path too long");
 	fd = mkostemp(output_tmpname, O_CLOEXEC);
-	(void) fchmod(fd, 0644);
 	if (fd == -1)
 		err(1, "mkostemp");
+	(void) fchmod(fd, 0644);
 	f = fdopen(fd, "w");
 	if (f == NULL)
 		err(1, "fdopen");
@@ -1742,6 +1734,15 @@ output_cleantmp(void)
 {
 	if (*output_tmpname)
 		unlink(output_tmpname);
+	output_tmpname[0] = '\0';
+}
+
+void
+output_finish(FILE *out, char *name)
+{
+	fclose(out);
+
+	rename(output_tmpname, output_name);
 	output_tmpname[0] = '\0';
 }
 
