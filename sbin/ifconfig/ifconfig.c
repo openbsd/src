@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.415 2019/11/27 17:49:09 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.416 2019/11/30 05:42:31 bluhm Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1302,6 +1302,7 @@ void
 setifnetmask(const char *addr, int ignored)
 {
 	afp->af_getaddr(addr, MASK);
+	explicit_prefix = 1;
 }
 
 /* ARGSUSED */
