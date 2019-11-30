@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.52 2019/06/03 16:46:49 anton Exp $ */
+/* $OpenBSD: pckbc.c,v 1.53 2019/11/30 18:18:34 cheloha Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -931,7 +931,7 @@ pckbc_enqueue_cmd(pckbc_tag_t self, pckbc_slot_t slot, u_char *cmd, int len,
 	if (q->polling)
 		res = (sync ? nc->status : 0);
 	else if (sync) {
-		if ((res = tsleep(nc, 0, "kbccmd", 1*hz))) {
+		if ((res = tsleep_nsec(nc, 0, "kbccmd", SEC_TO_NSEC(1)))) {
 			pckbc_cleanup(t);
 		} else {
 			/*
