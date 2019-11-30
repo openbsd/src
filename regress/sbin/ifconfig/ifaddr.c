@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifaddr.c,v 1.1 2019/10/24 22:55:07 bluhm Exp $	*/
+/*	$OpenBSD: ifaddr.c,v 1.2 2019/11/30 05:51:20 bluhm Exp $	*/
 
 /*
  * This file has been copied from ifconfig and adapted to test
@@ -111,6 +111,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <resolv.h>
 #include <util.h>
 #include <ifaddrs.h>
 
@@ -324,11 +325,11 @@ main(int argc, char *argv[])
 		errx(1, "interface name '%s' too long", *argv);
 	argc--, argv++;
 
-	if (unveil("/etc/resolv.conf", "r") == -1)
+	if (unveil(_PATH_RESCONF, "r") == -1)
 		err(1, "unveil");
-	if (unveil("/etc/hosts", "r") == -1)
+	if (unveil(_PATH_HOSTS, "r") == -1)
 		err(1, "unveil");
-	if (unveil("/etc/services", "r") == -1)
+	if (unveil(_PATH_SERVICES, "r") == -1)
 		err(1, "unveil");
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");
@@ -717,6 +718,7 @@ setifnetmask(const char *addr, int ignored)
 {
 	setmask++;
 	afp->af_getaddr(addr, MASK);
+	explicit_prefix = 1;
 }
 
 /* ARGSUSED */
@@ -1638,9 +1640,6 @@ in_getaddr(const char *s, int which)
 		else
 			errx(1, "%s: bad value", s);
 	}
-	if (which == MASK && (ntohl(sin->sin_addr.s_addr) &
-	    (~ntohl(sin->sin_addr.s_addr) >> 1)))
-		errx(1, "%s: non-contiguous mask", s);
 }
 
 /* ARGSUSED */
