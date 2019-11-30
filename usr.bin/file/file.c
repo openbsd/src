@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.68 2019/02/05 02:17:32 deraadt Exp $ */
+/* $OpenBSD: file.c,v 1.69 2019/11/30 14:01:45 mestre Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -206,6 +206,9 @@ main(int argc, char **argv)
 		child(pair[1], parent, argc, argv);
 	}
 	close(pair[1]);
+
+	if (pledge("stdio rpath sendfd", NULL) == -1)
+		err(1, "pledge");
 
 	fclose(magicfp);
 	magicfp = NULL;
