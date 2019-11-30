@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.126 2019/11/28 12:16:27 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.127 2019/11/30 15:44:07 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1058,6 +1058,8 @@ struct ibuf *
 int	 ibuf_prepend(struct ibuf *, void *, size_t);
 void	*ibuf_advance(struct ibuf *, size_t);
 void	 ibuf_zero(struct ibuf *);
+int	 ibuf_strcat(struct ibuf **, const char *);
+int	 ibuf_strlen(struct ibuf *);
 
 /* log.c */
 void	log_init(int, int);

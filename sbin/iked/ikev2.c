@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.181 2019/11/28 12:16:28 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.182 2019/11/30 15:44:07 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -5702,6 +5702,9 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 	struct iked_childsa	*csa, *ocsa;
 	struct iked_flow	*flow, *oflow;
 	int			 peer_changed, reload;
+	struct ibuf		*spibuf = NULL;
+	struct ibuf		*flowbuf = NULL;
+	char			*buf;
 
 	if (sa->sa_ipcomp && sa->sa_cpi_in && sa->sa_cpi_out &&
 	    ikev2_ipcomp_enable(env, sa) == -1)
@@ -5732,6 +5735,12 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 
 		log_debug("%s: loaded CHILD SA spi %s", __func__,
 		    print_spi(csa->csa_spi.spi, csa->csa_spi.spi_size));
+
+		/* append SPI to log buffer */
+		if (ibuf_strlen(spibuf))
+			ibuf_strcat(&spibuf, ", ");
+		ibuf_strcat(&spibuf, print_spi(csa->csa_spi.spi,
+		    csa->csa_spi.spi_size));
 	}
 
 	peer_changed = (memcmp(&sa->sa_peer_loaded, &sa->sa_peer,
@@ -5774,6 +5783,22 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 
 		log_debug("%s: %sloaded flow %p", __func__,
 		    reload ? "re" : "", flow);
+
+		/* append flow to log buffer */
+		if (flow->flow_dir == IPSP_DIRECTION_OUT &&
+		    asprintf(&buf, "%s-%s/%d=%s/%d(%u)%s",
+		    print_map(flow->flow_saproto, ikev2_saproto_map),
+		    print_host((struct sockaddr *)&flow->flow_src.addr, NULL, 0),
+		    flow->flow_src.addr_mask,
+		    print_host((struct sockaddr *)&flow->flow_dst.addr, NULL, 0),
+		    flow->flow_dst.addr_mask,
+		    flow->flow_ipproto,
+		    reload ? "-R" : "") != -1) {
+			if (ibuf_strlen(flowbuf))
+				ibuf_strcat(&flowbuf, ", ");
+			ibuf_strcat(&flowbuf, buf);
+			free(buf);
+		}
 	}
 
 	/* remember the current address for ikev2_update_sa_addresses()  */
@@ -5785,6 +5810,14 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 		    NULL, 0));
 	}
 
+	if (ibuf_strlen(spibuf))
+		log_info("%s: loaded SPIs: %.*s", SPI_SA(sa, __func__),
+		    ibuf_strlen(spibuf), ibuf_data(spibuf));
+	if (ibuf_strlen(flowbuf))
+		log_info("%s: loaded flows: %.*s", SPI_SA(sa, __func__),
+		    ibuf_strlen(flowbuf), ibuf_data(flowbuf));
+	ibuf_release(spibuf);
+	ibuf_release(flowbuf);
 	return (0);
 }
 

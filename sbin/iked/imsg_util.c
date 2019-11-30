@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg_util.c,v 1.11 2017/01/20 14:10:05 mikeb Exp $	*/
+/*	$OpenBSD: imsg_util.c,v 1.12 2019/11/30 15:44:07 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -197,4 +197,28 @@ ibuf_prepend(struct ibuf *buf, void *data, size_t len)
 	free(new);
 
 	return (0);
+}
+
+int
+ibuf_strcat(struct ibuf **buf, const char *s)
+{
+	size_t slen;
+
+	if (buf == NULL)
+		return (-1);
+	slen = strlen(s);
+	if (*buf == NULL) {
+		if ((*buf = ibuf_new(s, slen)) == NULL)
+			return (-1);
+		return (0);
+	}
+	return (ibuf_add(*buf, s, slen));
+}
+
+int
+ibuf_strlen(struct ibuf *buf)
+{
+	if (ibuf_length(buf) > INT_MAX)
+		return (INT_MAX);
+	return ((int)ibuf_length(buf));
 }
