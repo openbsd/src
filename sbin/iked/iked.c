@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.37 2019/05/11 16:30:23 patrick Exp $	*/
+/*	$OpenBSD: iked.c,v 1.38 2019/11/30 16:07:12 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -254,8 +254,9 @@ parent_configure(struct iked *env)
 	config_setmobike(env);
 	config_setfragmentation(env);
 	config_setcoupled(env, env->sc_decoupled ? 0 : 1);
-	config_setmode(env, env->sc_passive ? 1 : 0);
 	config_setocsp(env);
+	/* Must be last */
+	config_setmode(env, env->sc_passive ? 1 : 0);
 
 	return (0);
 }
@@ -286,8 +287,9 @@ parent_reload(struct iked *env, int reset, const char *filename)
 		config_setmobike(env);
 		config_setfragmentation(env);
 		config_setcoupled(env, env->sc_decoupled ? 0 : 1);
-		config_setmode(env, env->sc_passive ? 1 : 0);
 		config_setocsp(env);
+ 		/* Must be last */
+		config_setmode(env, env->sc_passive ? 1 : 0);
 	} else {
 		config_setreset(env, reset, PROC_IKEV2);
 		config_setreset(env, reset, PROC_CERT);
