@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.13 2019/11/30 02:39:22 deraadt Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.14 2019/11/30 22:55:22 jmc Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -22,7 +22,7 @@
 .Nd RPKI validation for bgpd Route Origin Validation
 .Sh SYNOPSIS
 .Nm
-.Op Fl Bcfjnorv
+.Op Fl Bcfjnov
 .Op Fl b Ar bind_addr
 .Op Fl e Ar rsync_prog
 .Op Fl T Ar table
@@ -80,7 +80,7 @@ Assume that all requested repositories exist: don't update.
 Create output in the file
 .Pa openbgpd
 in the output directory as
-.Xr openbgpd 8
+.Xr bgpd 8
 compatible input.
 If the
 .Fl b ,

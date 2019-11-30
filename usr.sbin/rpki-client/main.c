@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.48 2019/11/30 02:31:12 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.49 2019/11/30 22:55:22 jmc Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1436,7 +1436,7 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath cpath fattr proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	while ((c = getopt(argc, argv, "b:Bce:fjnort:T:v")) != -1)
+	while ((c = getopt(argc, argv, "b:Bce:fjnot:T:v")) != -1)
 		switch (c) {
 		case 'b':
 			bind_addr = optarg;
