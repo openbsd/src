@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.51 2015/08/28 00:03:53 deraadt Exp $	*/
+/*	$OpenBSD: cardbus.c,v 1.52 2019/11/30 18:19:51 cheloha Exp $	*/
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -408,8 +408,8 @@ cardbus_attach_card(struct cardbus_softc *sc)
 		if (cold) {	/* before kernel thread invoked */
 			delay(100*1000);
 		} else {	/* thread context */
-			if (tsleep((void *)sc, PCATCH, "cardbus",
-			    hz/10) != EWOULDBLOCK) {
+			if (tsleep_nsec(sc, PCATCH, "cardbus",
+			    MSEC_TO_NSEC(100)) != EWOULDBLOCK) {
 				break;
 			}
 		}
