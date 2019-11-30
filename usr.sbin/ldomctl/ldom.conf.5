@@ -1,4 +1,4 @@
-.\" $OpenBSD: ldom.conf.5,v 1.7 2019/11/28 18:40:42 kn Exp $
+.\" $OpenBSD: ldom.conf.5,v 1.8 2019/11/30 03:30:29 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 28 2019 $
+.Dd $Mdocdate: November 30 2019 $
 .Dt LDOM.CONF 5 sparc64
 .Os
 .Sh NAME
@@ -59,8 +59,9 @@ for a list of OpenPROM variables.
 The specified file is used to back a virtual disk of the guest
 domain.
 .Ar file
-can be a block device node or a disk image file created with
-.Xr dd 1 .
+can be a block device node or a disk image file created with the
+.Cm create-vdisk
+command.
 This keyword can be used multiple times.
 .It Ic vnet Op Brq Ar keyword Ns = Ns Ar value ...
 Assign a

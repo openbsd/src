@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.27 2019/11/28 18:40:42 kn Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.28 2019/11/30 03:30:29 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -18,12 +18,15 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "ds.h"
 #include "hvctl.h"
@@ -53,6 +56,7 @@ void list(int argc, char **argv);
 void list_io(int argc, char **argv);
 void xselect(int argc, char **argv);
 void delete(int argc, char **argv);
+void create_vdisk(int argc, char **argv);
 void guest_start(int argc, char **argv);
 void guest_stop(int argc, char **argv);
 void guest_panic(int argc, char **argv);
@@ -67,6 +71,7 @@ struct command commands[] = {
 	{ "list-io",	list_io },
 	{ "select",	xselect },
 	{ "delete",	delete },
+	{ "create-vdisk", create_vdisk },
 	{ "start",	guest_start },
 	{ "stop",	guest_stop },
 	{ "panic",	guest_panic },
@@ -117,6 +122,9 @@ main(int argc, char **argv)
 	if (cmdp->cmd_name == NULL)
 		usage();
 
+	if (strcmp(argv[0], "create-vdisk") == 0)
+		goto skip_hv;
+
 	hv_open();
 
 	/*
@@ -153,6 +161,7 @@ main(int argc, char **argv)
 			add_guest(prop->d.arc.node);
 	}
 
+skip_hv:
 	(cmdp->cmd_func)(argc, argv);
 
 	exit(EXIT_SUCCESS);
@@ -165,6 +174,7 @@ usage(void)
 	    "\t%1$s download directory\n"
 	    "\t%1$s dump|list|list-io\n"
 	    "\t%1$s init-system file\n"
+	    "\t%1$s create-vdisk -s size file\n"
 	    "\t%1$s console|panic|start|status|stop [domain]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -347,6 +357,48 @@ delete(int argc, char **argv)
 		ds_conn_handle(dc);
 
 	mdstore_delete(dc, argv[1]);
+}
+
+void
+create_vdisk(int argc, char **argv)
+{
+	int ch, fd, save_errno;
+	long long imgsize;
+	const char *imgfile_path;
+
+	while ((ch = getopt(argc, argv, "s:")) != -1) {
+		switch (ch) {
+		case 's':
+			if (scan_scaled(optarg, &imgsize) == -1)
+				err(1, "invalid size: %s", optarg);
+			break;
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1)
+		usage();
+
+	imgfile_path = argv[0];
+
+	/* Refuse to overwrite an existing image */
+	if ((fd = open(imgfile_path, O_RDWR | O_CREAT | O_TRUNC | O_EXCL,
+	    S_IRUSR | S_IWUSR)) == -1)
+		err(1, "open");
+
+	/* Extend to desired size */
+	if (ftruncate(fd, (off_t)imgsize) == -1) {
+		save_errno = errno;
+		close(fd);
+		unlink(imgfile_path);
+		errno = save_errno;
+		err(1, "ftruncate");
+	}
+
+	close(fd);
 }
 
 void

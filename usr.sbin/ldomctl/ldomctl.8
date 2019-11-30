@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.18 2019/11/28 18:03:33 kn Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.19 2019/11/30 03:30:29 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 28 2019 $
+.Dd $Mdocdate: November 30 2019 $
 .Dt LDOMCTL 8 sparc64
 .Os
 .Sh NAME
@@ -34,6 +34,16 @@ information about domains running on the system.
 .Pp
 The following commands are available:
 .Bl -tag -width Ds
+.It Cm create-vdisk Fl s Ar size Ar file
+Create a virtual disk image with the specified
+.Ar file
+path and
+.Ar size ,
+in bytes.
+.Ar size
+can be specified with a human-readable scale, using the format described in
+.Xr scan_scaled 3 ,
+e.g. 512M.
 .It Cm console Ar domain
 Using
 .Xr cu 1
@@ -119,8 +129,8 @@ openbsd [next]
 .Pp
 Create a virtual disk image for each guest domain:
 .Bd -literal -offset indent
-# dd if=/dev/zero of=/home/puffy/vdisk0 bs=1m count=8192
-# dd if=/dev/zero of=/home/salmah/vdisk0 bs=1m count=8192
+# ldomctl create-vdisk -s 8G /home/puffy/vdisk0
+# ldomctl create-vdisk -s 8G /home/salmah/vdisk0
 .Ed
 .Pp
 The minirootfs install media can be used to boot guest domains:
