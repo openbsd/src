@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewire.c,v 1.17 2017/04/03 16:10:00 deraadt Exp $	*/
+/*	$OpenBSD: onewire.c,v 1.18 2019/11/30 18:14:47 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -39,7 +39,7 @@
 #endif
 
 #define ONEWIRE_MAXDEVS		16
-#define ONEWIRE_SCANTIME	3
+#define ONEWIRE_SCANTIME	SEC_TO_NSEC(3)
 
 struct onewire_softc {
 	struct device			sc_dev;
@@ -121,7 +121,7 @@ onewire_detach(struct device *self, int flags)
 	sc->sc_dying = 1;
 	if (sc->sc_thread != NULL) {
 		wakeup(sc->sc_thread);
-		tsleep(&sc->sc_dying, PWAIT, "owdt", 0);
+		tsleep_nsec(&sc->sc_dying, PWAIT, "owdt", INFSLP);
 	}
 
 	return (config_detach_children(self, flags));
@@ -326,7 +326,7 @@ onewire_search(void *arg, u_int64_t *buf, int size, u_int64_t startrom)
 
 	while (search && count < size) {
 		/* XXX: yield processor */
-		tsleep(sc, PWAIT, "owscan", hz / 10);
+		tsleep_nsec(sc, PWAIT, "owscan", MSEC_TO_NSEC(100));
 
 		/*
 		 * Start new search. Go through the previous path to
@@ -400,7 +400,7 @@ onewire_thread(void *arg)
 		onewire_scan(sc);
 		if (sc->sc_flags & ONEWIRE_NO_PERIODIC_SCAN)
 			break;
-		tsleep(sc->sc_thread, PWAIT, "owidle", ONEWIRE_SCANTIME * hz);
+		tsleep_nsec(sc->sc_thread, PWAIT, "owidle", ONEWIRE_SCANTIME);
 	}
 
 	sc->sc_thread = NULL;
