@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2019/11/28 00:17:12 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.5 2019/12/01 04:49:29 deraadt Exp $
 
 NOMAN=
 
@@ -12,7 +12,7 @@ NOPROG=
 .endif
 
 .PATH:  ${S}/lib/libsa
-SRCS+=  hexdump.c strtoll.c
+#SRCS+=  hexdump.c strtoll.c
 
 install:
 
