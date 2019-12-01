@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.36 2019/06/17 08:53:01 kevlo Exp $
+.\"	$OpenBSD: elf.5,v 1.37 2019/12/01 13:10:51 jsg Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\"	$FreeBSD: src/share/man/man5/elf.5,v 1.21 2001/10/01 16:09:23 ru Exp $
 .\"
-.Dd $Mdocdate: June 17 2019 $
+.Dd $Mdocdate: December 1 2019 $
 .Dt ELF 5
 .Os
 .Sh NAME
@@ -79,24 +79,24 @@ symbol tables.
 .Pp
 The following types are used for 32-bit architectures:
 .Bd -literal -offset indent
-Elf32_Addr	Unsigned program address
-Elf32_Off	Unsigned file offset
-Elf32_Sword	Signed large integer
-Elf32_Word	Unsigned large integer
-Elf32_Half	Unsigned medium integer
+Elf32_Addr	Unsigned 32-bit program address
+Elf32_Half	Unsigned 16-bit field
+Elf32_Lword	Unsigned 64-bit field
+Elf32_Off	Unsigned 32-bit file offset
+Elf32_Sword	Signed 32-bit field or integer
+Elf32_Word	Unsigned 32-bit field or integer
 .Ed
 .Pp
 And the following types are used for 64-bit architectures:
 .Bd -literal -offset indent
-Elf64_Addr	Unsigned program address
-Elf64_Off	Unsigned file offset
-Elf64_Shalf	Signed halfword field
-Elf64_Sword	Signed large integer
-Elf64_Word	Field or unsigned large integer
-Elf64_Sxword	Signed object size or alignment
-Elf64_Xword	Unsigned object size or alignment
-Elf64_Half	Unsigned halfword field
-Elf64_Quarter	Unsigned quarterword field
+Elf64_Addr	Unsigned 64-bit program address
+Elf64_Half	Unsigned 16-bit field
+Elf64_Lword	Unsigned 64-bit field
+Elf64_Off	Unsigned 64-bit file offset
+Elf64_Sword	Signed 32-bit field
+Elf64_Sxword	Signed 64-bit field or integer
+Elf64_Word	Unsigned 32-bit field
+Elf64_Xword	Unsigned 64-bit field or integer
 .Ed
 .Pp
 All data structures that the file format defines follow the
@@ -128,19 +128,19 @@ typedef struct {
 .Bd -literal -offset indent
 typedef struct {
 	unsigned char   e_ident[EI_NIDENT];
-	Elf64_Quarter   e_type;
-	Elf64_Quarter   e_machine;
-	Elf64_Half      e_version;
+	Elf64_Half      e_type;
+	Elf64_Half      e_machine;
+	Elf64_Word      e_version;
 	Elf64_Addr      e_entry;
 	Elf64_Off       e_phoff;
 	Elf64_Off       e_shoff;
-	Elf64_Half      e_flags;
-	Elf64_Quarter   e_ehsize;
-	Elf64_Quarter   e_phentsize;
-	Elf64_Quarter   e_phnum;
-	Elf64_Quarter   e_shentsize;
-	Elf64_Quarter   e_shnum;
-	Elf64_Quarter   e_shstrndx;
+	Elf64_Word      e_flags;
+	Elf64_Half      e_ehsize;
+	Elf64_Half      e_phentsize;
+	Elf64_Half      e_phnum;
+	Elf64_Half      e_shentsize;
+	Elf64_Half      e_shnum;
+	Elf64_Half      e_shstrndx;
 } Elf64_Ehdr;
 .Ed
 .Pp
@@ -428,8 +428,8 @@ typedef struct {
 .Ed
 .Bd -literal -offset indent
 typedef struct {
-        Elf64_Half      p_type;
-        Elf64_Half      p_flags;
+        Elf64_Word      p_type;
+        Elf64_Word      p_flags;
         Elf64_Off       p_offset;
         Elf64_Addr      p_vaddr;
         Elf64_Addr      p_paddr;
@@ -693,14 +693,14 @@ typedef struct {
 .Ed
 .Bd -literal -offset indent
 typedef struct {
-	Elf64_Half      sh_name;
-	Elf64_Half      sh_type;
+	Elf64_Word      sh_name;
+	Elf64_Word      sh_type;
 	Elf64_Xword     sh_flags;
 	Elf64_Addr      sh_addr;
 	Elf64_Off       sh_offset;
 	Elf64_Xword     sh_size;
-	Elf64_Half      sh_link;
-	Elf64_Half      sh_info;
+	Elf64_Word      sh_link;
+	Elf64_Word      sh_info;
 	Elf64_Xword     sh_addralign;
 	Elf64_Xword     sh_entsize;
 } Elf64_Shdr;
@@ -1178,11 +1178,11 @@ typedef struct {
 .Ed
 .Bd -literal -offset indent
 typedef struct {
-	Elf64_Half      st_name;
-	Elf_Byte        st_info;
-	Elf_Byte        st_other;
-	Elf64_Quarter   st_shndx;
-	Elf64_Xword     st_value;
+	Elf64_Word      st_name;
+	unsigned char	st_info;
+	unsigned char	st_other;
+	Elf64_Half   	st_shndx;
+	Elf64_Addr	st_value;
 	Elf64_Xword     st_size;
 } Elf64_Sym;
 .Ed
@@ -1310,7 +1310,7 @@ typedef struct {
 .Ed
 .Bd -literal -offset indent
 typedef struct {
-	Elf64_Xword     r_offset;
+	Elf64_Addr      r_offset;
 	Elf64_Xword     r_info;
 } Elf64_Rel;
 .Ed
@@ -1325,7 +1325,7 @@ typedef struct {
 .Ed
 .Bd -literal -offset indent
 typedef struct {
-	Elf64_Xword     r_offset;
+	Elf64_Addr      r_offset;
 	Elf64_Xword     r_info;
 	Elf64_Sxword    r_addend;
 } Elf64_Rela;
@@ -1364,15 +1364,15 @@ followed by the section name and the section description.
 The actual note contents follow thereafter.
 .Bd -literal -offset indent
 typedef struct {
-Elf32_Word namesz;
-Elf32_Word descsz;
-Elf32_Word type;
+	Elf32_Word namesz;
+	Elf32_Word descsz;
+	Elf32_Word type;
 } Elf32_Note;
 
 typedef struct {
-Elf64_Half namesz;
-Elf64_Half descsz;
-Elf64_Half type;
+	Elf64_Word namesz;
+	Elf64_Word descsz;
+	Elf64_Word type;
 } Elf64_Note;
 .Ed
 .Bl -tag -width "r_offset"
