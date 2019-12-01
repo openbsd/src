@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.248 2019/11/28 17:25:59 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.249 2019/12/01 16:26:10 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1130,7 +1130,7 @@ scsi_mode_sense_big(struct scsi_link *link, int byte2, int page,
 }
 
 void *
-scsi_mode_sense_page(struct scsi_mode_header *hdr, const int page_len)
+scsi_mode_sense_page(struct scsi_mode_header *hdr, int page_len)
 {
 	int					total_length, header_length;
 
@@ -1144,7 +1144,7 @@ scsi_mode_sense_page(struct scsi_mode_header *hdr, const int page_len)
 }
 
 void *
-scsi_mode_sense_big_page(struct scsi_mode_header_big *hdr, const int page_len)
+scsi_mode_sense_big_page(struct scsi_mode_header_big *hdr, int page_len)
 {
 	int					total_length, header_length;
 
