@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.35 2019/11/24 14:05:39 florian Exp $
+# $OpenBSD: sysupgrade.sh,v 1.36 2019/12/01 10:30:37 ajacoutot Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -126,18 +126,7 @@ else
 	URL=${MIRROR}/${NEXT_VERSION}/${ARCH}/
 fi
 
-if [[ -e ${SETSDIR} ]]; then
-	eval $(stat -s ${SETSDIR})
-	[[ $st_uid -eq 0 ]] ||
-		 ug_err "${SETSDIR} needs to be owned by root:wheel"
-	[[ $st_gid -eq 0 ]] ||
-		 ug_err "${SETSDIR} needs to be owned by root:wheel"
-	[[ $st_mode -eq 040755 ]] || 
-		ug_err "${SETSDIR} is not a directory with permissions 0755"
-else
-	mkdir -p ${SETSDIR}
-fi
-
+install -d -o 0 -g 0 -m 0755 ${SETSDIR}
 cd ${SETSDIR}
 
 echo "Fetching from ${URL}"
