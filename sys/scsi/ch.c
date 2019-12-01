@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.61 2019/11/29 14:06:21 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.62 2019/12/01 15:41:43 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -701,7 +701,7 @@ ch_get_params(struct ch_softc *sc, int flags)
 	 */
 	error = scsi_do_mode_sense(sc->sc_link, CAP_PAGE, data,
 	    (void **)&cap, NULL, NULL, NULL, sizeof(*cap), flags, &big);
-	if (cap == NULL)
+	if (error == 0 && cap == NULL)
 		error = EIO;
 	if (error != 0) {
 #ifdef CHANGER_DEBUG
