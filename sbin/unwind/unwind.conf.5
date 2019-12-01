@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.19 2019/11/28 14:05:17 otto Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.20 2019/12/01 14:37:34 otto Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 28 2019 $
+.Dd $Mdocdate: December 1 2019 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -113,6 +113,14 @@ itself recursively resolves names.
 .Pp
 The default preference is
 .Ic DoT forwarder recursor dhcp stub .
+.It Ic force Oo Cm accept bogus Oc Ar type Brq Ar name ...
+Force resolving of
+.Ar name
+and its subdomains by the given resolver
+.Ar type .
+If
+.Cm acceptbogus
+is specified validation is not enforced.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/unwind.conf" -compact

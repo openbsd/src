@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.41 2019/11/29 15:22:02 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.42 2019/12/01 14:37:34 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -336,6 +336,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 		case IMSG_RECONF_BLOCKLIST_FILE:
 		case IMSG_RECONF_FORWARDER:
 		case IMSG_RECONF_DOT_FORWARDER:
+		case IMSG_RECONF_FORCE:
 			imsg_receive_config(&imsg, &nconf);
 			break;
 		case IMSG_RECONF_END:

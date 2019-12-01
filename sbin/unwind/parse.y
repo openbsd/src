@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.20 2019/11/28 10:02:44 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.21 2019/12/01 14:37:34 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -90,8 +90,9 @@ struct sockaddr_storage	*host_ip(const char *);
 
 typedef struct {
 	union {
-		int64_t		 number;
-		char		*string;
+		int64_t				 number;
+		char				*string;
+		struct force_tree		 force;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -101,12 +102,13 @@ typedef struct {
 %token	INCLUDE ERROR
 %token	FORWARDER DOT PORT 
 %token	AUTHENTICATION NAME PREFERENCE RECURSOR DHCP STUB
-%token	BLOCK LIST LOG
+%token	BLOCK LIST LOG FORCE ACCEPT BOGUS
 
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
-%type	<v.number>	yesno port dot prefopt log
+%type	<v.number>	port dot prefopt log acceptbogus
 %type	<v.string>	string authname
+%type	<v.force>	force_list
 
 %%
 
@@ -117,6 +119,7 @@ grammar		: /* empty */
 		| grammar uw_pref '\n'
 		| grammar uw_forwarder '\n'
 		| grammar block_list '\n'
+		| grammar force '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
 
@@ -311,6 +314,63 @@ dot	:	DOT				{ $$ = DOT; }
 log	:	LOG				{ $$ = 1; }
 	|	/* empty */			{ $$ = 0; }
 	;
+
+force	:	FORCE acceptbogus prefopt '{' force_list optnl '}' {
+			struct force_tree_entry *n, *nxt;
+			int error = 0;
+
+			for (n = RB_MIN(force_tree, &$5); n != NULL;
+			    n = nxt) {
+				nxt = RB_NEXT(force_tree, &conf->force, n);
+				n->acceptbogus = $2;
+				n->type = $3;
+				RB_REMOVE(force_tree, &$5, n);
+				if (RB_INSERT(force_tree, &conf->force,
+				    n)) {
+					yyerror("%s already in an force "
+					    "list", n->domain);
+					error = 1;
+				}
+			}
+			if (error)
+				YYERROR;
+		}
+	;
+
+acceptbogus:	ACCEPT BOGUS	{ $$ = 1; }
+	|	/* empty */	{ $$ = 0; }
+	;
+
+force_list:	force_list optnl STRING {
+			struct force_tree_entry	*e;
+			size_t				 len;
+
+			len = strlen($3);
+			e = malloc(sizeof(*e));
+			if (e == NULL)
+				err(1, NULL);
+			if (strlcpy(e->domain, $3, sizeof(e->domain)) >=
+			    sizeof(e->domain)) {
+				yyerror("force %s too long", $3);
+				free($3);
+				YYERROR;
+			}
+			free($3);
+			if (len == 0 || e->domain[len-1] != '.') {
+				if (strlcat(e->domain, ".",
+				    sizeof((e->domain))) >=
+				    sizeof((e->domain))) {
+					yyerror("force %s too long", $3);
+					YYERROR;
+				}
+			}
+			RB_INSERT(force_tree, &$$, e);
+		}
+	|	/* empty */ {
+			RB_INIT(&$$);
+		}
+	;
+
 %%
 
 struct keywords {
@@ -346,10 +406,13 @@ lookup(char *s)
 	/* This has to be sorted always. */
 	static const struct keywords keywords[] = {
 		{"DoT",			DOT},
+		{"accept",		ACCEPT},
 		{"authentication",	AUTHENTICATION},
 		{"block",		BLOCK},
+		{"bogus",		BOGUS},
 		{"dhcp",		DHCP},
 		{"dot",			DOT},
+		{"force",		FORCE},
 		{"forwarder",		FORWARDER},
 		{"include",		INCLUDE},
 		{"list",		LIST},

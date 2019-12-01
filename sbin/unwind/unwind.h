@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.40 2019/11/29 15:22:02 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.41 2019/12/01 14:37:34 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -19,6 +19,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/tree.h>
 #include <netinet/in.h>	/* INET6_ADDRSTRLEN */
 #include <event.h>
 #include <imsg.h>
@@ -87,6 +88,7 @@ enum imsg_type {
 	IMSG_RECONF_BLOCKLIST_FILE,
 	IMSG_RECONF_FORWARDER,
 	IMSG_RECONF_DOT_FORWARDER,
+	IMSG_RECONF_FORCE,
 	IMSG_RECONF_END,
 	IMSG_UDP4SOCK,
 	IMSG_UDP6SOCK,
@@ -124,6 +126,15 @@ struct uw_forwarder {
 	int					 src;
 };
 
+struct force_tree_entry {
+	RB_ENTRY(force_tree_entry)	 entry;
+	char				 domain[NI_MAXHOST];
+	enum uw_resolver_type		 type;
+	int				 acceptbogus;
+};
+
+RB_HEAD(force_tree, force_tree_entry);
+
 struct resolver_preference {
 	enum uw_resolver_type			 types[UW_RES_NONE];
 	int					 len;
@@ -133,6 +144,7 @@ TAILQ_HEAD(uw_forwarder_head, uw_forwarder);
 struct uw_conf {
 	struct uw_forwarder_head	 uw_forwarder_list;
 	struct uw_forwarder_head	 uw_dot_forwarder_list;
+	struct force_tree		 force;
 	struct resolver_preference	 res_pref;
 	char				*blocklist_file;
 	int				 blocklist_log;
@@ -169,3 +181,5 @@ void	print_config(struct uw_conf *);
 /* parse.y */
 struct uw_conf	*parse_config(char *);
 int		 cmdline_symset(char *);
+
+RB_PROTOTYPE(force_tree, force_tree_entry, entry, force_tree_cmp);

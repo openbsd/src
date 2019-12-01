@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.86 2019/11/30 16:14:03 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.87 2019/12/01 14:37:34 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -176,6 +176,10 @@ void			 trust_anchor_resolve_done(struct uw_resolver *, void *,
 			     int, void *, int, int, char *);
 void			 replace_autoconf_forwarders(struct
 			     imsg_rdns_proposal *);
+int			 force_tree_cmp(struct force_tree_entry *,
+			     struct force_tree_entry *);
+int			 find_force(struct force_tree *, char *,
+			     struct uw_resolver **);
 int64_t			 histogram_median(int64_t *);
 void			 decay_latest_histograms(int, short, void *);
 
@@ -192,6 +196,8 @@ struct event			 decay_timer;
 static struct trust_anchor_head	 trust_anchors, new_trust_anchors;
 
 struct event_base		*ev_base;
+
+RB_GENERATE(force_tree, force_tree_entry, entry, force_tree_cmp)
 
 static const char * const	 as112_zones[] = {
 	/* RFC1918 */
@@ -606,6 +612,7 @@ resolver_dispatch_main(int fd, short event, void *bula)
 		case IMSG_RECONF_BLOCKLIST_FILE:
 		case IMSG_RECONF_FORWARDER:
 		case IMSG_RECONF_DOT_FORWARDER:
+		case IMSG_RECONF_FORCE:
 			imsg_receive_config(&imsg, &nconf);
 			break;
 		case IMSG_RECONF_END:
@@ -680,7 +687,12 @@ setup_query(struct query_imsg *query_imsg)
 	rq->query_imsg = query_imsg;
 	rq->next_resolver = 0;
 
-	if (sort_resolver_types(&rq->res_pref) == -1) {
+	find_force(&resolver_conf->force, query_imsg->qname, &res);
+
+	if (res != NULL && res->state != DEAD) {
+		rq->res_pref.len = 1;
+		rq->res_pref.types[0] = res->type;
+	} else if (sort_resolver_types(&rq->res_pref) == -1) {
 		log_warn("mergesort");
 		free(rq->query_imsg);
 		free(rq);
@@ -957,9 +969,10 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 
 	query_imsg->err = 0;
 
-	if (res->state == VALIDATING)
-		query_imsg->bogus = sec == BOGUS;
-	else
+	if (res->state == VALIDATING && sec == BOGUS) {
+		query_imsg->bogus = find_force(&resolver_conf->force,
+				    query_imsg->qname, NULL) == 0;
+	} else
 		query_imsg->bogus = 0;
 
 	if (rq) {
@@ -1017,6 +1030,7 @@ new_recursor(void)
 		return;
 
 	resolvers[UW_RES_RECURSOR] = create_resolver(UW_RES_RECURSOR, 0);
+
 	check_resolver(resolvers[UW_RES_RECURSOR]);
 }
 
@@ -1961,6 +1975,45 @@ replace_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 			free(tmp);
 		}
 	}
+}
+
+int
+force_tree_cmp(struct force_tree_entry *a, struct force_tree_entry *b)
+{
+	return strcasecmp(a->domain, b->domain);
+}
+
+int
+find_force(struct force_tree *tree, char *qname, struct uw_resolver **res)
+{
+	struct force_tree_entry	*n, e;
+	char 				*p;
+
+	if (res)
+		*res = NULL;
+	if (RB_EMPTY(tree))
+		return 0;
+
+	p = qname;
+	do {
+		if (strlcpy(e.domain, p, sizeof(e.domain)) >= sizeof(e.domain))
+			fatal("qname too large");
+		n = RB_FIND(force_tree, tree, &e);
+		log_debug("%s: %s -> %p[%s]", __func__, p, n,
+		    n != NULL ?  uw_resolver_type_str[n->type] : "-");
+		if (n != NULL) {
+			if (res)
+				*res = resolvers[n->type];
+			return n->acceptbogus;
+		}
+		if (*p == '.')
+			p++;
+		p = strchr(p, '.');
+		if (p != NULL && p[1] != '\0')
+			p++;
+	} while (p != NULL);
+	return 0;
+
 }
 
 int64_t

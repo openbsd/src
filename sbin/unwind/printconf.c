@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.15 2019/11/28 10:02:44 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.16 2019/12/01 14:37:34 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -31,6 +31,7 @@ print_config(struct uw_conf *conf)
 {
 	struct uw_forwarder	*uw_forwarder;
 	int			 i;
+	enum uw_resolver_type	 j;
 
 	if (conf->res_pref.len > 0) {
 		printf("preference {");
@@ -68,4 +69,44 @@ print_config(struct uw_conf *conf)
 	if (conf->blocklist_file != NULL)
 		printf("block list \"%s\"%s\n", conf->blocklist_file,
 		    conf->blocklist_log ? " log" : "");
+	for (j = 0; j < UW_RES_NONE; j++) {
+		struct force_tree_entry	*e;
+		int			 empty = 1;
+
+		RB_FOREACH(e, force_tree, &conf->force) {
+			if (e->type != j || e->acceptbogus)
+				continue;
+			empty = 0;
+			break;
+		}
+		if (!empty) {
+
+			printf("force %s {", uw_resolver_type_str[j]);
+			RB_FOREACH(e, force_tree, &conf->force) {
+				if (e->type != j || e->acceptbogus)
+					continue;
+				printf("\n\t%s", e->domain);
+			}
+			printf("\n}\n");
+		}
+
+		empty = 1;
+		RB_FOREACH(e, force_tree, &conf->force) {
+			if (e->type != j || !e->acceptbogus)
+				continue;
+			empty = 0;
+			break;
+		}
+		if (!empty) {
+
+			printf("force accept bogus %s {",
+			    uw_resolver_type_str[j]);
+			RB_FOREACH(e, force_tree, &conf->force) {
+				if (e->type != j || !e->acceptbogus)
+					continue;
+				printf("\n\t%s", e->domain);
+			}
+			printf("\n}\n");
+		}
+	}
 }

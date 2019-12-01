@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.42 2019/11/29 16:39:23 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.43 2019/12/01 14:37:34 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -577,7 +577,8 @@ main_reload(void)
 int
 main_imsg_send_config(struct uw_conf *xconf)
 {
-	struct uw_forwarder	*uw_forwarder;
+	struct uw_forwarder		*uw_forwarder;
+	struct force_tree_entry	*force_entry;
 
 	/* Send fixed part of config to children. */
 	if (main_sendall(IMSG_RECONF_CONF, xconf, sizeof(*xconf)) == -1)
@@ -604,6 +605,11 @@ main_imsg_send_config(struct uw_conf *xconf)
 		    sizeof(*uw_forwarder)) == -1)
 			return (-1);
 	}
+	RB_FOREACH(force_entry, force_tree, &xconf->force) {
+		if (main_sendall(IMSG_RECONF_FORCE, force_entry,
+		    sizeof(*force_entry)) == -1)
+			return (-1);
+	}
 
 	/* Tell children the revised config is now complete. */
 	if (main_sendall(IMSG_RECONF_END, NULL, 0) == -1)
@@ -625,7 +631,8 @@ main_sendall(enum imsg_type type, void *buf, uint16_t len)
 void
 merge_config(struct uw_conf *conf, struct uw_conf *xconf)
 {
-	struct uw_forwarder	*uw_forwarder;
+	struct uw_forwarder		*uw_forwarder;
+	struct force_tree_entry	*n, *nxt;
 
 	/* Remove & discard existing forwarders. */
 	while ((uw_forwarder = TAILQ_FIRST(&conf->uw_forwarder_list)) !=
@@ -637,6 +644,13 @@ merge_config(struct uw_conf *conf, struct uw_conf *xconf)
 	    NULL) {
 		TAILQ_REMOVE(&conf->uw_dot_forwarder_list, uw_forwarder, entry);
 		free(uw_forwarder);
+	}
+
+	/* Remove & discard existing force tree. */
+	for (n = RB_MIN(force_tree, &conf->force); n != NULL; n = nxt) {
+		nxt = RB_NEXT(force_tree, &conf->force, n);
+		RB_REMOVE(force_tree, &conf->force, n);
+		free(n);
 	}
 
 	memcpy(&conf->res_pref, &xconf->res_pref,
@@ -651,6 +665,12 @@ merge_config(struct uw_conf *conf, struct uw_conf *xconf)
 	    entry);
 	TAILQ_CONCAT(&conf->uw_dot_forwarder_list,
 	    &xconf->uw_dot_forwarder_list, entry);
+
+	for (n = RB_MIN(force_tree, &xconf->force); n != NULL; n = nxt) {
+		nxt = RB_NEXT(force_tree, &xconf->force, n);
+		RB_REMOVE(force_tree, &xconf->force, n);
+		RB_INSERT(force_tree, &conf->force, n);
+	}
 
 	free(xconf);
 }
@@ -676,6 +696,8 @@ config_new_empty(void)
 
 	TAILQ_INIT(&xconf->uw_forwarder_list);
 	TAILQ_INIT(&xconf->uw_dot_forwarder_list);
+
+	RB_INIT(&xconf->force);
 
 	return (xconf);
 }
@@ -779,8 +801,9 @@ send_blocklist_fd(void)
 void
 imsg_receive_config(struct imsg *imsg, struct uw_conf **xconf)
 {
-	struct uw_conf		*nconf;
-	struct uw_forwarder	*uw_forwarder;
+	struct uw_conf			*nconf;
+	struct uw_forwarder		*uw_forwarder;
+	struct force_tree_entry	*force_entry;
 
 	nconf = *xconf;
 
@@ -798,6 +821,7 @@ imsg_receive_config(struct imsg *imsg, struct uw_conf **xconf)
 		memcpy(nconf, imsg->data, sizeof(struct uw_conf));
 		TAILQ_INIT(&nconf->uw_forwarder_list);
 		TAILQ_INIT(&nconf->uw_dot_forwarder_list);
+		RB_INIT(&nconf->force);
 		break;
 	case IMSG_RECONF_BLOCKLIST_FILE:
 		/* make sure this is a string */
@@ -830,6 +854,18 @@ imsg_receive_config(struct imsg *imsg, struct uw_conf **xconf)
 		    uw_forwarder));
 		TAILQ_INSERT_TAIL(&nconf->uw_dot_forwarder_list,
 		    uw_forwarder, entry);
+		break;
+	case IMSG_RECONF_FORCE:
+		if (IMSG_DATA_SIZE(*imsg) != sizeof(struct force_tree_entry))
+			fatalx("%s: IMSG_RECONF_FORCE wrong "
+			    "length: %lu", __func__,
+			    IMSG_DATA_SIZE(*imsg));
+		if ((force_entry = malloc(sizeof(struct
+		    force_tree_entry))) == NULL)
+			fatal(NULL);
+		memcpy(force_entry, imsg->data, sizeof(struct
+		    force_tree_entry));
+		RB_INSERT(force_tree, &nconf->force, force_entry);
 		break;
 	default:
 		log_debug("%s: error handling imsg %d", __func__,
