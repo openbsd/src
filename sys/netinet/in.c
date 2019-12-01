@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.167 2019/11/28 00:50:41 bluhm Exp $	*/
+/*	$OpenBSD: in.c,v 1.168 2019/12/01 21:12:42 jca Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -557,11 +557,14 @@ in_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa;
 	struct in_ifaddr *ia = NULL;
+	struct sockaddr *sa;
 	struct sockaddr_in *sin = NULL;
 	int error = 0;
 
-	if (ifr->ifr_addr.sa_family == AF_INET) {
-		error = in_sa2sin(&ifr->ifr_addr, &sin);
+	sa = &ifr->ifr_addr;
+	if (sa->sa_family == AF_INET) {
+		sa->sa_len = sizeof(struct sockaddr_in);
+		error = in_sa2sin(sa, &sin);
 		if (error)
 			return (error);
 	}
