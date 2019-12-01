@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.249 2019/12/01 16:26:10 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.250 2019/12/01 16:56:26 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1130,28 +1130,28 @@ scsi_mode_sense_big(struct scsi_link *link, int byte2, int page,
 }
 
 void *
-scsi_mode_sense_page(struct scsi_mode_header *hdr, int page_len)
+scsi_mode_sense_page(struct scsi_mode_header *hdr, int pg_length)
 {
-	int					total_length, header_length;
+	int		total_length, header_length;
 
 	total_length = hdr->data_length + sizeof(hdr->data_length);
 	header_length = sizeof(*hdr) + hdr->blk_desc_len;
 
-	if ((total_length - header_length) < page_len)
+	if ((total_length - header_length) < pg_length)
 		return (NULL);
 
 	return ((u_char *)hdr + header_length);
 }
 
 void *
-scsi_mode_sense_big_page(struct scsi_mode_header_big *hdr, int page_len)
+scsi_mode_sense_big_page(struct scsi_mode_header_big *hdr, int pg_length)
 {
-	int					total_length, header_length;
+	int		total_length, header_length;
 
 	total_length = _2btol(hdr->data_length) + sizeof(hdr->data_length);
 	header_length = sizeof(*hdr) + _2btol(hdr->blk_desc_len);
 
-	if ((total_length - header_length) < page_len)
+	if ((total_length - header_length) < pg_length)
 		return (NULL);
 
 	return ((u_char *)hdr + header_length);
@@ -1205,12 +1205,12 @@ scsi_parse_blkdesc(struct scsi_link *link, union scsi_mode_sense_buf *buf,
 }
 
 int
-scsi_do_mode_sense(struct scsi_link *link, int page,
+scsi_do_mode_sense(struct scsi_link *link, int pg_code,
     union scsi_mode_sense_buf *buf, void **page_data, u_int32_t *density,
-    u_int64_t *block_count, u_int32_t *block_size, int page_len, int flags,
+    u_int64_t *block_count, u_int32_t *block_size, int pg_length, int flags,
     int *big)
 {
-	int					 error;
+	int			error;
 
 	*page_data = NULL;
 	*big = 0;
@@ -1226,10 +1226,10 @@ scsi_do_mode_sense(struct scsi_link *link, int page,
 		 * data length to ensure that at least a header (3 additional
 		 * bytes) is returned.
 		 */
-		error = scsi_mode_sense(link, 0, page, &buf->hdr,
+		error = scsi_mode_sense(link, 0, pg_code, &buf->hdr,
 		    sizeof(*buf), flags, 20000);
 		if (error == 0) {
-			*page_data = scsi_mode_sense_page(&buf->hdr, page_len);
+			*page_data = scsi_mode_sense_page(&buf->hdr, pg_length);
 			if (*page_data == NULL) {
 				/*
 				 * XXX
@@ -1255,7 +1255,7 @@ scsi_do_mode_sense(struct scsi_link *link, int page,
 	/*
 	 * Try 10 byte mode sense request.
 	 */
-	error = scsi_mode_sense_big(link, 0, page, &buf->hdr_big,
+	error = scsi_mode_sense_big(link, 0, pg_code, &buf->hdr_big,
 	    sizeof(*buf), flags, 20000);
 	if (error != 0)
 		return (error);
@@ -1263,7 +1263,7 @@ scsi_do_mode_sense(struct scsi_link *link, int page,
 		return (EIO);
 
 	*big = 1;
-	*page_data = scsi_mode_sense_big_page(&buf->hdr_big, page_len);
+	*page_data = scsi_mode_sense_big_page(&buf->hdr_big, pg_length);
 
 blk_desc:
 	scsi_parse_blkdesc(link, buf, *big, density, block_count, block_size);
