@@ -56,7 +56,7 @@
 ./var/cron/log
 ./var/cron/tabs/root
 ./var/db/locate.database
-./var/db/rpki-client/roa
+./var/db/rpki-client/openbsd
 ./var/log/authlog
 ./var/log/daemon
 ./var/log/failedlogin
