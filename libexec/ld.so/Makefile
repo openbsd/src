@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.79 2019/11/29 19:30:56 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.80 2019/12/02 17:19:25 deraadt Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -91,7 +91,6 @@ $(PROG): $(test_prog) ${VERSION_SCRIPT} $(OBJS) ${LD_SCRIPT}
 	$(LD) -e _dl_start $(ELF_LDFLAGS) -o $(candidate) \
 	    `echo ${OBJS} | tr " " "\n" | sort -R`
 .endif
-	cp /usr/libexec/ld.so ld.so.backup
 .ifdef	CHECK_LDSO
 	${CHECK_LDSO} $(candidate)
 .endif
