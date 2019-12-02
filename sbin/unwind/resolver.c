@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.89 2019/12/02 08:56:03 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.90 2019/12/02 14:40:53 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -43,14 +43,19 @@
 #include <unistd.h>
 
 #include "libunbound/config.h"
+#include "libunbound/libunbound/context.h"
 #include "libunbound/libunbound/libworker.h"
 #include "libunbound/libunbound/unbound.h"
 #include "libunbound/libunbound/unbound-event.h"
+#include "libunbound/services/cache/rrset.h"
 #include "libunbound/sldns/sbuffer.h"
 #include "libunbound/sldns/rrdef.h"
 #include "libunbound/sldns/pkthdr.h"
 #include "libunbound/sldns/wire2str.h"
+#include "libunbound/util/config_file.h"
+#include "libunbound/util/module.h"
 #include "libunbound/util/regional.h"
+#include "libunbound/util/storage/slabhash.h"
 
 #include <openssl/crypto.h>
 
@@ -149,6 +154,7 @@ void			 new_asr_forwarders(void);
 void			 new_static_forwarders(int);
 void			 new_static_dot_forwarders(void);
 struct uw_resolver	*create_resolver(enum uw_resolver_type, int);
+void			 set_unified_cache(struct uw_resolver *);
 void			 free_resolver(struct uw_resolver *);
 void			 set_forwarders(struct uw_resolver *,
 			     struct uw_forwarder_head *, int);
@@ -198,6 +204,10 @@ static struct trust_anchor_head	 trust_anchors, new_trust_anchors;
 struct event_base		*ev_base;
 
 RB_GENERATE(force_tree, force_tree_entry, entry, force_tree_cmp)
+
+struct alloc_cache		 unified_cache_alloc;
+struct slabhash			*unified_msg_cache;
+struct rrset_cache		*unified_rrset_cache;
 
 static const char * const	 as112_zones[] = {
 	/* RFC1918 */
@@ -317,9 +327,10 @@ resolver_sig_handler(int sig, short event, void *arg)
 void
 resolver(int debug, int verbose)
 {
-	struct event	 ev_sigint, ev_sigterm;
-	struct passwd	*pw;
-	struct timeval	 tv = {DECAY_PERIOD, 0};
+	struct config_file	*ub_cfg;
+	struct event		 ev_sigint, ev_sigterm;
+	struct passwd		*pw;
+	struct timeval		 tv = {DECAY_PERIOD, 0};
 
 	resolver_conf = config_new_empty();
 
@@ -372,6 +383,29 @@ resolver(int debug, int verbose)
 	evtimer_add(&decay_timer, &tv);
 
 	clock_gettime(CLOCK_MONOTONIC, &last_network_change);
+
+	if ((ub_cfg = config_create_forlib()) == NULL)
+		fatal(NULL);
+
+	alloc_init(&unified_cache_alloc, NULL, 0);
+
+	/*
+	 * context_finalize() ensures that the cache is sized according to
+	 * the context's config. If we want to change the cache size we
+	 * need to reflect it in the config as well otherwise these cache
+	 * objects get deleted and re-created.
+	 */
+	if ((unified_msg_cache = slabhash_create(ub_cfg->msg_cache_slabs,
+	    HASH_DEFAULT_STARTARRAY, ub_cfg->msg_cache_size, msgreply_sizefunc,
+	    query_info_compare, query_entry_delete, reply_info_delete, NULL))
+	    == NULL)
+		fatal(NULL);
+
+	if ((unified_rrset_cache = rrset_cache_adjust(NULL, ub_cfg,
+	    &unified_cache_alloc)) == NULL)
+		fatal(NULL);
+
+	config_delete(ub_cfg);
 
 	new_recursor();
 
@@ -1030,6 +1064,7 @@ new_recursor(void)
 		return;
 
 	resolvers[UW_RES_RECURSOR] = create_resolver(UW_RES_RECURSOR, 0);
+	set_unified_cache(resolvers[UW_RES_RECURSOR]);
 
 	check_resolver(resolvers[UW_RES_RECURSOR]);
 }
@@ -1048,6 +1083,7 @@ new_forwarders(int oppdot)
 
 	log_debug("%s: create_resolver", __func__);
 	resolvers[UW_RES_DHCP] = create_resolver(UW_RES_DHCP, oppdot);
+	set_unified_cache(resolvers[UW_RES_DHCP]);
 
 	check_resolver(resolvers[UW_RES_DHCP]);
 }
@@ -1081,6 +1117,7 @@ new_static_forwarders(int oppdot)
 
 	log_debug("%s: create_resolver", __func__);
 	resolvers[UW_RES_FORWARDER] = create_resolver(UW_RES_FORWARDER, oppdot);
+	set_unified_cache(resolvers[UW_RES_FORWARDER]);
 
 	check_resolver(resolvers[UW_RES_FORWARDER]);
 }
@@ -1099,8 +1136,21 @@ new_static_dot_forwarders(void)
 
 	log_debug("%s: create_resolver", __func__);
 	resolvers[UW_RES_DOT] = create_resolver(UW_RES_DOT, 0);
+	set_unified_cache(resolvers[UW_RES_DOT]);
 
 	check_resolver(resolvers[UW_RES_DOT]);
+}
+
+void
+set_unified_cache(struct uw_resolver *res)
+{
+	if (res == NULL)
+		return;
+
+	res->ctx->env->msg_cache = unified_msg_cache;
+	res->ctx->env->rrset_cache = unified_rrset_cache;
+
+	context_finalize(res->ctx);
 }
 
 static const struct {
@@ -1289,6 +1339,12 @@ free_resolver(struct uw_resolver *res)
 		res->stop = 1;
 	else {
 		evtimer_del(&res->check_ev);
+		if (res->ctx != NULL) {
+			if (res->ctx->env->msg_cache == unified_msg_cache)
+				res->ctx->env->msg_cache = NULL;
+			if (res->ctx->env->rrset_cache == unified_rrset_cache)
+				res->ctx->env->rrset_cache = NULL;
+		}
 		ub_ctx_delete(res->ctx);
 		asr_resolver_free(res->asr_ctx);
 		free(res->why_bogus);
