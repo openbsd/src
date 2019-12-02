@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.43 2019/05/12 19:43:34 anton Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.44 2019/12/02 15:01:18 visa Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -380,9 +380,7 @@ lf_setlock(struct lockf *lock)
 		LFPRINT(("lf_setlock: blocking on", block), DEBUG_SETLOCK);
 		TAILQ_INSERT_TAIL(&block->lf_blkhd, lock, lf_block);
 		TAILQ_INSERT_TAIL(&lock->lf_state->ls_pending, lock, lf_entry);
-		KERNEL_LOCK();
 		error = rwsleep(lock, &lockf_lock, priority, "lockf", 0);
-		KERNEL_UNLOCK();
 		TAILQ_REMOVE(&lock->lf_state->ls_pending, lock, lf_entry);
 		wakeup_one(lock->lf_state);
 		if (lock->lf_blk != NULL) {
@@ -740,11 +738,8 @@ lf_purgelocks(struct lockf_state **state)
 		LFPRINT(("lf_purgelocks: wakeup", lock), DEBUG_SETLOCK);
 		lf_wakelock(lock, F_INTR);
 	}
-	while (!TAILQ_EMPTY(&ls->ls_pending)) {
-		KERNEL_LOCK();
+	while (!TAILQ_EMPTY(&ls->ls_pending))
 		rwsleep(ls, &lockf_lock, PLOCK, "lockfp", 0);
-		KERNEL_UNLOCK();
-	}
 
 	/*
 	 * Any remaining locks cannot block other locks at this point and can
