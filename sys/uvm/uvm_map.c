@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.254 2019/11/30 23:15:54 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.255 2019/12/02 14:01:26 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -951,9 +951,9 @@ uvm_mapanon(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	KASSERT((map->flags & VM_MAP_ISVMSPACE) == VM_MAP_ISVMSPACE);
 	KASSERT(map != kernel_map);
 	KASSERT((map->flags & UVM_FLAG_HOLE) == 0);
-
 	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
 	splassert(IPL_NONE);
+	KASSERT((flags & UVM_FLAG_TRYLOCK) == 0);
 
 	/*
 	 * We use pmap_align and pmap_offset as alignment and offset variables.
@@ -989,14 +989,7 @@ uvm_mapanon(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	if (new == NULL)
 		return(ENOMEM);
 
-	if (flags & UVM_FLAG_TRYLOCK) {
-		if (vm_map_lock_try(map) == FALSE) {
-			error = EFAULT;
-			goto out;
-		}
-	} else
-		vm_map_lock(map);
-
+	vm_map_lock(map);
 	first = last = NULL;
 	if (flags & UVM_FLAG_FIXED) {
 		/*
@@ -1118,7 +1111,7 @@ unlock:
 	 * destroy free-space entries.
 	 */
 	uvm_unmap_detach(&dead, 0);
-out:
+
 	if (new)
 		uvm_mapent_free(new);
 	return error;
