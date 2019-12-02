@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.20 2019/11/30 02:31:12 deraadt Exp $ */
+/*	$OpenBSD: extern.h,v 1.21 2019/12/02 02:11:13 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -364,7 +364,7 @@ char		*x509_crl_get_aki(X509_CRL *);
 
 FILE		*output_createtmp(char *);
 void		 output_cleantmp(void);
-void		 output_finish(FILE *, char *);
+void		 output_finish(FILE *);
 void		 output_bgpd(struct vrp_tree *);
 void		 output_bird(struct vrp_tree *, const char *);
 void		 output_csv(struct vrp_tree *);

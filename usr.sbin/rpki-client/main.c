@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.51 2019/12/02 02:06:51 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.52 2019/12/02 02:11:13 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1730,19 +1730,19 @@ output_createtmp(char *name)
 }
 
 void
-output_cleantmp(void)
-{
-	if (*output_tmpname)
-		unlink(output_tmpname);
-	output_tmpname[0] = '\0';
-}
-
-void
-output_finish(FILE *out, char *name)
+output_finish(FILE *out)
 {
 	fclose(out);
 
 	rename(output_tmpname, output_name);
+	output_tmpname[0] = '\0';
+}
+
+void
+output_cleantmp(void)
+{
+	if (*output_tmpname)
+		unlink(output_tmpname);
 	output_tmpname[0] = '\0';
 }
 
