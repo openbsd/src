@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.27 2019/05/26 22:42:42 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.28 2019/12/02 22:32:01 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -666,10 +666,30 @@ gre_sre_asn_print(u_int8_t sreoff, u_int8_t srelen, const u_char *bp, u_int len)
 	}
 }
 
+/*
+ * - RFC 7348 Virtual eXtensible Local Area Network (VXLAN)
+ * - draft-ietf-nvo3-vxlan-gpe-08 Generic Protocol Extension for VXLAN
+ */
+
 struct vxlan_header {
 	uint16_t	flags;
-#define VXLAN_I			0x0800
-	uint16_t	proto;
+#define VXLAN_VER		0x3000	/* GPE */
+#define VXLAN_VER_0		0x0000
+#define VXLAN_I			0x0800	/* Instance Bit */
+#define VXLAN_P			0x0400	/* GPE Next Protocol */
+#define VXLAN_B			0x0200	/* GPE BUM Traffic */
+#define VXLAN_O			0x0100	/* GPE OAM Flag */
+	uint8_t		reserved;
+	uint8_t		next_proto; 	/* GPE */
+#define VXLAN_PROTO_RESERVED	0x00
+#define VXLAN_PROTO_IPV4	0x01
+#define VXLAN_PROTO_IPV6	0x02
+#define VXLAN_PROTO_ETHERNET	0x03
+#define VXLAN_PROTO_NSH		0x04
+#define VXLAN_PROTO_MPLS	0x05
+#define VXLAN_PROTO_VBNG	0x07
+#define VXLAN_PROTO_GBP		0x80
+#define VXLAN_PROTO_IOAM	0x82
 	uint32_t	vni;
 #define VXLAN_VNI_SHIFT		8
 #define VXLAN_VNI_MASK		(0xffffffU << VXLAN_VNI_SHIFT)
@@ -680,49 +700,76 @@ void
 vxlan_print(const u_char *p, u_int length)
 {
 	const struct vxlan_header *vh;
-	uint16_t flags, proto;
-	uint32_t vni;
-	size_t l;
+	uint16_t flags, ver;
+	uint8_t proto = VXLAN_PROTO_ETHERNET;
+	int l = snapend - p;
 
-	l = snapend - p;
-	if (l < sizeof(*vh)) {
-		printf("[|vxlan]");
+	printf("VXLAN");
+
+	if (l < sizeof(*vh))
+		goto trunc;
+	if (length < sizeof(*vh)) {
+		printf(" ip truncated");
 		return;
 	}
+
 	vh = (const struct vxlan_header *)p;
-
-	flags = ntohs(vh->flags);
-	if (flags & ~VXLAN_I) {
-		printf("vxlan-invalid-flags %04x", flags);
-		return;
-	}
-
-	proto = ntohs(vh->proto);
-	if (proto != 0) {
-		printf("vxlan-invalid-proto %04x", proto);
-		return;
-	}
-
-	vni = ntohl(vh->vni);
-	if (flags & VXLAN_I) {
-		if (vni & VXLAN_VNI_RESERVED) {
-			printf("vxlan-vni-reserved %02x",
-			    vni & VXLAN_VNI_RESERVED);
-			return;
-		}
-
-		printf("vxlan %u: ", vni >> VXLAN_VNI_SHIFT);
-	} else {
-		if (vh->vni != 0) {
-			printf("vxlan-invalid-vni %08x\n", vni);
-			return;
-		}
-
-		printf("vxlan: ");
-	}
 
 	p += sizeof(*vh);
 	length -= sizeof(*vh);
 
-	ether_tryprint(p, length, 0);
+	flags = ntohs(vh->flags);
+	ver = flags & VXLAN_VER;
+	if (ver != VXLAN_VER_0) {
+		printf(" unknown version %u", ver >> 12);
+		return;
+	}
+
+	if (flags & VXLAN_I) {
+		uint32_t vni = (htonl(vh->vni) & VXLAN_VNI_MASK) >>
+		    VXLAN_VNI_SHIFT;
+		printf(" vni %u", vni >> VXLAN_VNI_SHIFT);
+	}
+
+	if (flags & VXLAN_P)
+		proto = vh->next_proto;
+
+	if (flags & VXLAN_B)
+		printf(" BUM");
+
+	if (flags & VXLAN_O) {
+		printf(" OAM (proto 0x%x, len %u)", proto, length);
+		return;
+	}
+
+	printf(": ");
+
+	switch (proto) {
+	case VXLAN_PROTO_RESERVED:
+		printf("Reserved");
+		break;
+	case VXLAN_PROTO_IPV4:
+		ip_print(p, length);
+		break;
+	case VXLAN_PROTO_IPV6:
+		ip6_print(p, length);
+		break;
+	case VXLAN_PROTO_ETHERNET:
+		ether_tryprint(p, length, 0);
+		break;
+	case VXLAN_PROTO_NSH:
+		printf("NSH");
+		break;
+	case VXLAN_PROTO_MPLS:
+		mpls_print(p, length);
+		break;
+
+	default:
+		printf("Unassigned proto 0x%x", proto);
+		break;
+	}
+
+	return;
+trunc:
+	printf(" [|vxlan]");
 }
