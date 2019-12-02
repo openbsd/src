@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.90 2019/12/02 14:40:53 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.91 2019/12/02 16:00:13 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -106,6 +106,7 @@ struct uw_resolver {
 	int			 oppdot;
 	int			 check_running;
 	char			*why_bogus;
+	int64_t			 median;
 	int64_t			 histogram[nitems(histogram_limits)];
 	int64_t			 latest_histogram[nitems(histogram_limits)];
 };
@@ -551,6 +552,8 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 					continue;
 				memset(resolvers[i]->latest_histogram, 0,
 				    sizeof(resolvers[i]->latest_histogram));
+				resolvers[i]->median = histogram_median(
+				    resolvers[i]->latest_histogram);
 			}
 
 			break;
@@ -740,7 +743,7 @@ setup_query(struct query_imsg *query_imsg)
 		log_debug("%s: %s[%s] %lldms", __func__,
 		    uw_resolver_type_str[rq->res_pref.types[i]],
 		    uw_resolver_state_str[res->state],
-		    histogram_median(res->latest_histogram));
+		    res->median);
 	}
 
 	evtimer_set(&rq->timer_ev, try_resolver_timo, rq);
@@ -802,7 +805,7 @@ try_next_resolver(struct running_query *rq)
 	memcpy(query_imsg, rq->query_imsg, sizeof(*query_imsg));
 	clock_gettime(CLOCK_MONOTONIC, &query_imsg->tp);
 
-	ms = histogram_median(res->latest_histogram);
+	ms = res->median;
 	if (ms == INT64_MAX)
 		ms = 2000;
 	if (res->type == resolver_conf->res_pref.types[0])
@@ -922,6 +925,7 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 		/* latest_histogram is in units of 1000 to avoid rounding
 		   down when decaying */
 		res->latest_histogram[i] += 1000;
+		res->median = histogram_median(res->latest_histogram);
 	}
 
 	if (answer_len < LDNS_HEADER_SIZE) {
@@ -1695,8 +1699,8 @@ resolver_cmp(const void *_a, const void *_b)
 	else if (resolvers[a]->state > resolvers[b]->state)
 		return -1;
 	else {
-		a_median = histogram_median(resolvers[a]->latest_histogram);
-		b_median = histogram_median(resolvers[b]->latest_histogram);
+		a_median = resolvers[a]->median;
+		b_median = resolvers[b]->median;
 		if (resolvers[a]->type == resolver_conf->res_pref.types[0])
 			a_median -= PREF_RESOLVER_MEDIAN_SKEW;
 		else if (resolvers[b]->type == resolver_conf->res_pref.types[0])
@@ -1779,7 +1783,7 @@ send_resolver_info(struct uw_resolver *res, pid_t pid)
 	cri.state = res->state;
 	cri.type = res->type;
 	cri.oppdot = res->oppdot;
-	cri.median = histogram_median(res->latest_histogram);
+	cri.median = res->median;
 
 	memcpy(cri.histogram, res->histogram, sizeof(cri.histogram));
 	memcpy(cri.latest_histogram, res->latest_histogram,
@@ -2091,6 +2095,7 @@ decay_latest_histograms(int fd, short events, void *arg)
 			/* multiply then divide, avoiding truncating to 0 */
 			res->latest_histogram[j] = res->latest_histogram[j] *
 			    DECAY_NOMINATOR / DECAY_DENOMINATOR;
+		res->median = histogram_median(res->latest_histogram);
 	}
 	evtimer_add(&decay_timer, &tv);
 }
