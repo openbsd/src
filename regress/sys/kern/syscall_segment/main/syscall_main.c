@@ -1,9 +1,8 @@
-/*	$OpenBSD: syscall_segment.c,v 1.1 2019/11/27 17:15:36 mortimer Exp $	*/
+/*	$OpenBSD: syscall_main.c,v 1.1 2019/12/02 23:04:49 deraadt Exp $	*/
 
 #include <stdlib.h>
 #include <unistd.h>
-
-pid_t gadget_getpid();
+#include "../gadgetsyscall.h"
 
 int
 main(int argc, char *argv[])
