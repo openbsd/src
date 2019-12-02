@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.66 2019/11/28 00:17:13 bluhm Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.67 2019/12/02 01:38:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -368,7 +368,7 @@ Xhexdump(void)
 			return 0;
 		}
 	}
-	hexdump((void *)val[0], val[1]);
+	hexdump((void *)(unsigned long)val[0], val[1]);
 	return 0;
 }
 
