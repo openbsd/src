@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.51 2018/10/22 16:12:45 kn Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.52 2019/12/02 22:07:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -565,9 +565,8 @@ udp_print(const u_char *bp, u_int length, const void *iph)
 			mpls_print(cp, length);
 		else if (ISPORT(RIPNG_PORT))
 			ripng_print(cp, length);
-		else if (ISPORT(DHCP6_PORT1) || ISPORT(DHCP6_PORT2)) {
-			dhcp6_print(cp, length, sport, dport);
-		}
+		else if (ISPORT(DHCP6_PORT1) || ISPORT(DHCP6_PORT2))
+			dhcp6_print(cp, length);
 		else if (ISPORT(GTP_C_PORT) || ISPORT(GTP_U_PORT) ||
 		    ISPORT(GTP_PRIME_PORT))
 			gtp_print(cp, length, sport, dport);
