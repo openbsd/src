@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.88 2019/12/02 06:26:52 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.89 2019/12/02 08:56:03 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -782,10 +782,10 @@ try_next_resolver(struct running_query *rq)
 	}
 	evtimer_add(&rq->timer_ev, &tv);
 
+	rq->running++;
 	if (resolve(res, query_imsg->qname, query_imsg->t,
 	    query_imsg->c, query_imsg, resolve_done) != 0)
 		goto err;
-	rq->running++;
 
 	return 0;
 
