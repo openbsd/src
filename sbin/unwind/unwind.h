@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.41 2019/12/01 14:37:34 otto Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.42 2019/12/02 06:26:52 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -72,6 +72,14 @@ static const char * const	uw_resolver_type_str[] = {
 	"DoT"
 };
 
+static const char * const	uw_resolver_type_short[] = {
+	"rec",
+	"dhcp",
+	"stub",
+	"forw",
+	"DoT"
+};
+
 struct imsgev {
 	struct imsgbuf	 ibuf;
 	void		(*handler)(int, short, void *);
@@ -102,9 +110,6 @@ enum imsg_type {
 	IMSG_ANSWER_HEADER,
 	IMSG_ANSWER,
 	IMSG_CTL_RESOLVER_INFO,
-	IMSG_CTL_RESOLVER_WHY_BOGUS,
-	IMSG_CTL_RESOLVER_HISTOGRAM,
-	IMSG_CTL_RESOLVER_DECAYING_HISTOGRAM,
 	IMSG_CTL_AUTOCONF_RESOLVER_INFO,
 	IMSG_CTL_END,
 	IMSG_HTTPSOCK,

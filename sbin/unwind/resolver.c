@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.87 2019/12/01 14:37:34 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.88 2019/12/02 06:26:52 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1703,7 +1703,6 @@ show_status(enum uw_resolver_type type, pid_t pid)
 	case UW_RES_DOT:
 	case UW_RES_ASR:
 		send_resolver_info(resolvers[type], pid);
-		send_detailed_resolver_info(resolvers[type], pid);
 		break;
 	default:
 		fatalx("unknown resolver type %d", type);
@@ -1716,6 +1715,7 @@ void
 send_resolver_info(struct uw_resolver *res, pid_t pid)
 {
 	struct ctl_resolver_info	 cri;
+	size_t				 i;
 
 	if (res == NULL)
 		return;
@@ -1724,35 +1724,16 @@ send_resolver_info(struct uw_resolver *res, pid_t pid)
 	cri.type = res->type;
 	cri.oppdot = res->oppdot;
 	cri.median = histogram_median(res->latest_histogram);
+
+	memcpy(cri.histogram, res->histogram, sizeof(cri.histogram));
+	memcpy(cri.latest_histogram, res->latest_histogram,
+	    sizeof(cri.latest_histogram));
+	for (i = 0; i < nitems(histogram_limits); i++)
+		cri.latest_histogram[i] =
+		    (cri.latest_histogram[i] + 500) / 1000;
+
 	resolver_imsg_compose_frontend(IMSG_CTL_RESOLVER_INFO, pid, &cri,
 	    sizeof(cri));
-}
-
-void
-send_detailed_resolver_info(struct uw_resolver *res, pid_t pid)
-{
-	int64_t	 histogram[nitems(histogram_limits)];
-	size_t	 i;
-	char	 buf[1024];
-
-	if (res == NULL)
-		return;
-
-	if (res->state == RESOLVING) {
-		(void)strlcpy(buf, res->why_bogus, sizeof(buf));
-		resolver_imsg_compose_frontend(IMSG_CTL_RESOLVER_WHY_BOGUS,
-		    pid, buf, sizeof(buf));
-	}
-
-	memcpy(histogram, res->histogram, sizeof(histogram));
-	resolver_imsg_compose_frontend(IMSG_CTL_RESOLVER_HISTOGRAM,
-		    pid, histogram, sizeof(histogram));
-
-	memcpy(histogram, res->latest_histogram, sizeof(histogram));
-	for (i = 0; i < nitems(histogram_limits); i++)
-		histogram[i] /= 1000;
-	resolver_imsg_compose_frontend(IMSG_CTL_RESOLVER_DECAYING_HISTOGRAM,
-		    pid, histogram, sizeof(histogram));
 }
 
 void
@@ -2025,6 +2006,9 @@ histogram_median(int64_t *histogram)
 	/* skip first bucket, it contains cache hits */
 	for (i = 1; i < nitems(histogram_limits); i++)
 		sample_count += histogram[i];
+
+	if (sample_count == 0)
+		return 0;
 
 	for (i = 1; i < nitems(histogram_limits); i++) {
 		running_count += histogram[i];

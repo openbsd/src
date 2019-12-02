@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwindctl.c,v 1.19 2019/11/29 15:22:02 florian Exp $	*/
+/*	$OpenBSD: unwindctl.c,v 1.20 2019/12/02 06:26:52 otto Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -45,10 +45,12 @@
 
 __dead void	 usage(void);
 int		 show_status_msg(struct imsg *);
-void		 print_indented_str(char *);
-void		 print_histogram(void*, size_t len);
+void		 histogram_header(void);
+void		 print_histogram(const char *name, int64_t[], size_t);
 
-struct imsgbuf	*ibuf;
+struct imsgbuf		*ibuf;
+int		 	 histogram_cnt;
+struct ctl_resolver_info info[UW_RES_NONE];
 
 __dead void
 usage(void)
@@ -68,7 +70,7 @@ main(int argc, char *argv[])
 	struct imsg		 imsg;
 	int			 ctl_sock;
 	int			 done = 0;
-	int			 n, verbose = 0;
+	int			 i, n, verbose = 0;
 	int			 ch;
 	int			 type;
 	char			*sockname;
@@ -171,6 +173,11 @@ main(int argc, char *argv[])
 		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, &type,
 		    sizeof(type));
 		break;
+	case STATUS_ALL:
+		type = UW_RES_NONE;
+		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, &type,
+		    sizeof(type));
+		break;
 	default:
 		usage();
 	}
@@ -198,6 +205,7 @@ main(int argc, char *argv[])
 			case STATUS_STATIC:
 			case STATUS_DOT:
 			case STATUS_STUB:
+			case STATUS_ALL:
 				done = show_status_msg(&imsg);
 				break;
 			default:
@@ -209,6 +217,16 @@ main(int argc, char *argv[])
 	close(ctl_sock);
 	free(ibuf);
 
+	if (res->action != STATUS) {
+		if (histogram_cnt)
+			histogram_header();
+		for (i = 0; i < histogram_cnt; i++) {
+			print_histogram(uw_resolver_type_short[info[i].type],
+			    info[i].histogram, nitems(info[i].histogram));
+			print_histogram("", info[i].latest_histogram,
+			    nitems(info[i].latest_histogram));
+		}
+	}
 	return (0);
 }
 
@@ -227,13 +245,17 @@ show_status_msg(struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RESOLVER_INFO:
 		cri = imsg->data;
-		printf("%-10s %s%s", uw_resolver_type_str[cri->type],
+		printf("%-10s %s%s, median RTT: ",
+		    uw_resolver_type_str[cri->type],
 		    uw_resolver_state_str[cri->state],
 		    cri->oppdot ? " (opportunistic DoT)" : "");
-		if (cri->median != INT64_MAX)
-			printf(" median RTT: %lldms\n", cri->median);
+		if (cri->median == 0)
+			printf("N/A\n");
+		else if (cri->median == INT64_MAX)
+			printf("Inf\n");
 		else
-			printf(" median RTT: N.A\n");
+			printf("%lldms\n", cri->median);
+		memcpy(&info[histogram_cnt++], cri, sizeof(info[0]));
 		break;
 	case IMSG_CTL_AUTOCONF_RESOLVER_INFO:
 		cfi = imsg->data;
@@ -243,21 +265,6 @@ show_status_msg(struct imsg *imsg)
 		printf("%s - %s[%s]\n", cfi->ip,
 		    cfi->src == RTP_PROPOSAL_DHCLIENT ? "DHCP" : "SLAAC",
 		    if_name ? if_name : "unknown");
-		break;
-	case IMSG_CTL_RESOLVER_WHY_BOGUS:
-		/* make sure this is a string */
-		((char *)imsg->data)[imsg->hdr.len - IMSG_HEADER_SIZE -1] =
-		    '\0';
-		printf("\nReason for not validating:\n");
-		print_indented_str(imsg->data);
-		break;
-	case IMSG_CTL_RESOLVER_HISTOGRAM:
-		printf("\n%40s\n", "histogram[ms]");
-		print_histogram(imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE);
-		break;
-	case IMSG_CTL_RESOLVER_DECAYING_HISTOGRAM:
-		printf("\n%40s\n", "decaying histogram[ms]");
-		print_histogram(imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE);
 		break;
 	case IMSG_CTL_END:
 		return (1);
@@ -269,53 +276,27 @@ show_status_msg(struct imsg *imsg)
 }
 
 void
-print_indented_str(char * str)
+histogram_header(void)
 {
-	int	 i;
-	char	*cur;
+	const char	 head[] = "lifetime[ms], decaying[ms]";
+	char	 	 buf[10];
+	size_t	 	 i;
 
-	if (strlen(str) <= 72) {
-		printf("\t%s\n", str);
-		return;
-	}
-	
-	for (i = 71; i >= 0; i--)
-		if (str[i] == ' ')
-			break;
-
-	if (i < 0)
-		cur = strchr(str, ' ');
-	else
-		cur = &str[i];
-
-
-	if (cur == NULL)
-		printf("\t%s\n", str);
-	else {
-		*cur = '\0';
-		printf("\t%s\n", str);
-		print_indented_str(cur + 1);
-	}
-}
-
-void
-print_histogram(void* data, size_t len)
-{
-	int64_t	 histogram[nitems(histogram_limits)];
-	size_t	 i;
-	char	 buf[10];
-
-	if (len != sizeof(histogram))
-		errx(1, "invalid histogram size");
-
-	memcpy(histogram, data, len);
-
+	printf("     %*s\n     ", (int)(72/2 + (sizeof(head)-1)/2), head);
 	for(i = 0; i < nitems(histogram_limits) - 1; i++) {
 		snprintf(buf, sizeof(buf), "<%lld", histogram_limits[i]);
 		printf("%6s", buf);
 	}
 	printf("%6s\n", ">");
-	for(i = 0; i < nitems(histogram); i++)
+}
+
+void
+print_histogram(const char *name, int64_t histogram[], size_t n)
+{
+	size_t	 i;
+
+	printf("%4s ", name);
+	for(i = 0; i < n; i++)
 		printf("%6lld", histogram[i]);
 	printf("\n");
 }

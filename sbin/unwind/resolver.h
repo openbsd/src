@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.h,v 1.14 2019/11/28 10:40:29 florian Exp $	*/
+/*	$OpenBSD: resolver.h,v 1.15 2019/12/02 06:26:52 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -51,6 +51,8 @@ struct ctl_resolver_info {
 	enum uw_resolver_type	 type;
 	int64_t			 median;
 	int			 oppdot;
+	int64_t			 histogram[nitems(histogram_limits)];
+	int64_t			 latest_histogram[nitems(histogram_limits)];
 };
 
 struct ctl_forwarder_info {

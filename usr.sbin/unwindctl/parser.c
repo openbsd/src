@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.7 2019/11/27 17:09:12 florian Exp $	*/
+/*	$OpenBSD: parser.c,v 1.8 2019/12/02 06:26:52 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -73,6 +73,7 @@ static const struct token t_status[] = {
 	{KEYWORD,	"forwarder",	STATUS_STATIC,		NULL},
 	{KEYWORD,	"DoT",		STATUS_DOT,		NULL},
 	{KEYWORD,	"stub",		STATUS_STUB,		NULL},
+	{KEYWORD,	"all",		STATUS_ALL,		NULL},
 	{ENDTOKEN,	"",		STATUS,			NULL}
 };
 
