@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.49 2019/11/30 22:55:22 jmc Exp $ */
+/*	$OpenBSD: main.c,v 1.50 2019/12/02 02:05:06 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1454,7 +1454,7 @@ main(int argc, char *argv[])
 			force = 1;
 			break;
 		case 'j':
-			outformats = FORMAT_JSON;
+			outformats |= FORMAT_JSON;
 			break;
 		case 'n':
 			noop = 1;
