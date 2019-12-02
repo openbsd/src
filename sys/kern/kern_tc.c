@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.51 2019/11/26 15:27:08 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.52 2019/12/02 02:24:29 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -477,6 +477,7 @@ tc_windup(struct bintime *new_boottime, struct bintime *new_offset,
 	struct bintime bt;
 	struct timecounter *active_tc;
 	struct timehands *th, *tho;
+	int64_t counter_adjustment;
 	u_int64_t scale;
 	u_int delta, ncount, ogen;
 	int i;
@@ -594,7 +595,8 @@ tc_windup(struct bintime *new_boottime, struct bintime *new_offset,
 	 *
 	 */
 	scale = (u_int64_t)1 << 63;
-	scale += (th->th_adjustment / 1024) * 2199;
+	counter_adjustment = th->th_counter->tc_freq_adj;
+	scale += ((th->th_adjustment + counter_adjustment) / 1024) * 2199;
 	scale /= th->th_counter->tc_frequency;
 	th->th_scale = scale * 2;
 
@@ -751,7 +753,7 @@ sysctl_tc(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 }
 
 /*
- * Skew the timehands according to any adjfreq(2)/adjtime(2) adjustments.
+ * Skew the timehands according to any adjtime(2) adjustment.
  */
 void
 ntp_update_second(struct timehands *th)
@@ -766,7 +768,6 @@ ntp_update_second(struct timehands *th)
 		adj = MAX(-5000, th->th_adjtimedelta);
 	th->th_adjtimedelta -= adj;
 	th->th_adjustment = (adj * 1000) << 32;
-	th->th_adjustment += th->th_counter->tc_freq_adj;
 }
 
 void
