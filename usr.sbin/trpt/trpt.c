@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.38 2019/11/26 15:27:09 cheloha Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.39 2019/12/02 21:47:54 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -400,9 +400,8 @@ tcp_trace(short act, short ostate, struct tcpcb *tp,
 		for (i = 0; i < TCPT_NTIMERS; i++) {
 			if (timeout_pending(&tp->t_timer[i]))
 				continue;
-			printf("%s%s=%lld.%09ld", cp, tcptimers[i],
-			    (long long)tp->t_timer[i].to_time.tv_sec,
-			    tp->t_timer[i].to_time.tv_nsec);
+			printf("%s%s=%d", cp, tcptimers[i],
+			    tp->t_timer[i].to_time);
 			if (i == TCPT_REXMT)
 				printf(" (t_rxtshft=%d)", tp->t_rxtshift);
 			cp = ", ";

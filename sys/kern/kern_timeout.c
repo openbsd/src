@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.64 2019/11/29 12:50:48 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.65 2019/12/02 21:47:54 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -55,54 +55,64 @@ struct timeoutstat tostat;		/* [t] statistics and totals */
 
 /*
  * Timeouts are kept in a hierarchical timing wheel. The to_time is the value
- * of the system uptime clock when the timeout should be called. There are
+ * of the global variable "ticks" when the timeout should be called. There are
  * four levels with 256 buckets each.
  */
-#define WHEELCOUNT 4
+#define BUCKETS 1024
 #define WHEELSIZE 256
 #define WHEELMASK 255
 #define WHEELBITS 8
-#define BUCKETS (WHEELCOUNT * WHEELSIZE)
 
 struct circq timeout_wheel[BUCKETS];	/* [t] Queues of timeouts */
 struct circq timeout_todo;		/* [t] Due or needs scheduling */
 struct circq timeout_proc;		/* [t] Due + needs process context */
 
-time_t timeout_level_width[WHEELCOUNT];	/* [I] Wheel level width (seconds) */
-struct timespec tick_ts;		/* [I] Length of a tick (1/hz secs) */
-struct timespec timeout_lastscan;	/* [t] Uptime at last wheel scan */
-struct timespec timeout_late;		/* [t] Late if due prior to this */
+#define MASKWHEEL(wheel, time) (((time) >> ((wheel)*WHEELBITS)) & WHEELMASK)
+
+#define BUCKET(rel, abs)						\
+    (timeout_wheel[							\
+	((rel) <= (1 << (2*WHEELBITS)))					\
+	    ? ((rel) <= (1 << WHEELBITS))				\
+		? MASKWHEEL(0, (abs))					\
+		: MASKWHEEL(1, (abs)) + WHEELSIZE			\
+	    : ((rel) <= (1 << (3*WHEELBITS)))				\
+		? MASKWHEEL(2, (abs)) + 2*WHEELSIZE			\
+		: MASKWHEEL(3, (abs)) + 3*WHEELSIZE])
+
+#define MOVEBUCKET(wheel, time)						\
+    CIRCQ_APPEND(&timeout_todo,						\
+        &timeout_wheel[MASKWHEEL((wheel), (time)) + (wheel)*WHEELSIZE])
 
 /*
  * Circular queue definitions.
  */
 
-#define CIRCQ_INIT(elem) do {			\
-	(elem)->next = (elem);			\
-	(elem)->prev = (elem);			\
+#define CIRCQ_INIT(elem) do {                   \
+        (elem)->next = (elem);                  \
+        (elem)->prev = (elem);                  \
 } while (0)
 
-#define CIRCQ_INSERT_TAIL(list, elem) do {	\
-	(elem)->prev = (list)->prev;		\
-	(elem)->next = (list);			\
-	(list)->prev->next = (elem);		\
-	(list)->prev = (elem);			\
-	tostat.tos_pending++;			\
+#define CIRCQ_INSERT(elem, list) do {           \
+        (elem)->prev = (list)->prev;            \
+        (elem)->next = (list);                  \
+        (list)->prev->next = (elem);            \
+        (list)->prev = (elem);                  \
+        tostat.tos_pending++;                   \
 } while (0)
 
-#define CIRCQ_CONCAT(fst, snd) do {		\
-	if (!CIRCQ_EMPTY(snd)) {		\
-		(fst)->prev->next = (snd)->next;\
-		(snd)->next->prev = (fst)->prev;\
-		(snd)->prev->next = (fst);	\
-		(fst)->prev = (snd)->prev;	\
-		CIRCQ_INIT(snd);		\
-	}					\
+#define CIRCQ_APPEND(fst, snd) do {             \
+        if (!CIRCQ_EMPTY(snd)) {                \
+                (fst)->prev->next = (snd)->next;\
+                (snd)->next->prev = (fst)->prev;\
+                (snd)->prev->next = (fst);      \
+                (fst)->prev = (snd)->prev;      \
+                CIRCQ_INIT(snd);                \
+        }                                       \
 } while (0)
 
-#define CIRCQ_REMOVE(elem) do {			\
-	(elem)->next->prev = (elem)->prev;	\
-	(elem)->prev->next = (elem)->next;	\
+#define CIRCQ_REMOVE(elem) do {                 \
+        (elem)->next->prev = (elem)->prev;      \
+        (elem)->prev->next = (elem)->next;      \
 	_Q_INVALIDATE((elem)->prev);		\
 	_Q_INVALIDATE((elem)->next);		\
 	tostat.tos_pending--;			\
@@ -111,11 +121,6 @@ struct timespec timeout_late;		/* [t] Late if due prior to this */
 #define CIRCQ_FIRST(elem) ((elem)->next)
 
 #define CIRCQ_EMPTY(elem) (CIRCQ_FIRST(elem) == (elem))
-
-#define CIRCQ_FOREACH(elem, head)		\
-	for ((elem) = CIRCQ_FIRST(head);	\
-	    (elem) != (head);			\
-	    (elem) = CIRCQ_FIRST(elem))
 
 #ifdef WITNESS
 struct lock_object timeout_sleeplock_obj = {
@@ -141,10 +146,6 @@ struct lock_type timeout_spinlock_type = {
 void softclock(void *);
 void softclock_create_thread(void *);
 void softclock_thread(void *);
-int timeout_at_ts_locked(struct timeout *, clockid_t, const struct timespec *);
-unsigned int timeout_bucket(const struct timespec *, const struct timespec *);
-int timeout_clock_is_valid(clockid_t);
-unsigned int timeout_maskwheel(unsigned int, const struct timespec *);
 void timeout_proc_barrier(void *);
 
 /*
@@ -177,23 +178,29 @@ timeout_sync_leave(int needsproc)
 	WITNESS_UNLOCK(TIMEOUT_LOCK_OBJ(needsproc), 0);
 }
 
+/*
+ * Some of the "math" in here is a bit tricky.
+ *
+ * We have to beware of wrapping ints.
+ * We use the fact that any element added to the queue must be added with a
+ * positive time. That means that any element `to' on the queue cannot be
+ * scheduled to timeout further in time than INT_MAX, but to->to_time can
+ * be positive or negative so comparing it with anything is dangerous.
+ * The only way we can use the to->to_time value in any predictable way
+ * is when we calculate how far in the future `to' will timeout -
+ * "to->to_time - ticks". The result will always be positive for future
+ * timeouts and 0 or negative for due timeouts.
+ */
+
 void
 timeout_startup(void)
 {
-	unsigned int b, level;
+	int b;
 
 	CIRCQ_INIT(&timeout_todo);
 	CIRCQ_INIT(&timeout_proc);
 	for (b = 0; b < nitems(timeout_wheel); b++)
 		CIRCQ_INIT(&timeout_wheel[b]);
-
-	for (level = 0; level < nitems(timeout_level_width); level++)
-		timeout_level_width[level] = 2 << (level * WHEELBITS);
-
-	tick_ts.tv_sec = 0;
-	tick_ts.tv_nsec = tick_nsec;
-	timespecclear(&timeout_lastscan);
-	timespecclear(&timeout_late);
 }
 
 void
@@ -215,7 +222,6 @@ timeout_set(struct timeout *new, void (*fn)(void *), void *arg)
 	new->to_func = fn;
 	new->to_arg = arg;
 	new->to_flags = TIMEOUT_INITIALIZED;
-	timespecclear(&new->to_time);
 }
 
 void
@@ -228,15 +234,36 @@ timeout_set_proc(struct timeout *new, void (*fn)(void *), void *arg)
 int
 timeout_add(struct timeout *new, int to_ticks)
 {
-	struct timespec ts, when;
-	int ret;
+	int old_time;
+	int ret = 1;
 
+	KASSERT(ISSET(new->to_flags, TIMEOUT_INITIALIZED));
 	KASSERT(to_ticks >= 0);
-	NSEC_TO_TIMESPEC((uint64_t)to_ticks * tick_nsec, &ts);
 
 	mtx_enter(&timeout_mutex);
-	timespecadd(&timeout_lastscan, &ts, &when);
-	ret = timeout_at_ts_locked(new, CLOCK_BOOTTIME, &when);
+
+	/* Initialize the time here, it won't change. */
+	old_time = new->to_time;
+	new->to_time = to_ticks + ticks;
+	CLR(new->to_flags, TIMEOUT_TRIGGERED);
+
+	/*
+	 * If this timeout already is scheduled and now is moved
+	 * earlier, reschedule it now. Otherwise leave it in place
+	 * and let it be rescheduled later.
+	 */
+	if (ISSET(new->to_flags, TIMEOUT_ONQUEUE)) {
+		if (new->to_time - ticks < old_time - ticks) {
+			CIRCQ_REMOVE(&new->to_list);
+			CIRCQ_INSERT(&new->to_list, &timeout_todo);
+		}
+		tostat.tos_readded++;
+		ret = 0;
+	} else {
+		SET(new->to_flags, TIMEOUT_ONQUEUE);
+		CIRCQ_INSERT(&new->to_list, &timeout_todo);
+	}
+	tostat.tos_added++;
 	mtx_leave(&timeout_mutex);
 
 	return ret;
@@ -334,49 +361,6 @@ timeout_add_nsec(struct timeout *to, int nsecs)
 }
 
 int
-timeout_at_ts(struct timeout *to, clockid_t clock, const struct timespec *ts)
-{
-	int ret;
-
-	mtx_enter(&timeout_mutex);
-	ret = timeout_at_ts_locked(to, clock, ts);
-	mtx_leave(&timeout_mutex);
-
-	return ret;
-}
-
-int
-timeout_at_ts_locked(struct timeout *to, clockid_t clock,
-    const struct timespec *when)
-{
-	struct timespec old_time;
-	int ret = 1;
-
-	MUTEX_ASSERT_LOCKED(&timeout_mutex);
-	KASSERT(ISSET(to->to_flags, TIMEOUT_INITIALIZED));
-	KASSERT(timeout_clock_is_valid(clock));
-
-	old_time = to->to_time;
-	to->to_time = *when;
-	CLR(to->to_flags, TIMEOUT_TRIGGERED);
-
-	if (ISSET(to->to_flags, TIMEOUT_ONQUEUE)) {
-		if (timespeccmp(&to->to_time, &old_time, <)) {
-			CIRCQ_REMOVE(&to->to_list);
-			CIRCQ_INSERT_TAIL(&timeout_todo, &to->to_list);
-		}
-		tostat.tos_readded++;
-		ret = 0;
-	} else {
-		SET(to->to_flags, TIMEOUT_ONQUEUE);
-		CIRCQ_INSERT_TAIL(&timeout_todo, &to->to_list);
-	}
-	tostat.tos_added++;
-
-	return ret;
-}
-
-int
 timeout_del(struct timeout *to)
 {
 	int ret = 0;
@@ -428,7 +412,7 @@ timeout_barrier(struct timeout *to)
 
 		mtx_enter(&timeout_mutex);
 		SET(barrier.to_flags, TIMEOUT_ONQUEUE);
-		CIRCQ_INSERT_TAIL(&timeout_proc, &barrier.to_list);
+		CIRCQ_INSERT(&barrier.to_list, &timeout_proc);
 		mtx_leave(&timeout_mutex);
 
 		wakeup_one(&timeout_proc);
@@ -445,46 +429,6 @@ timeout_proc_barrier(void *arg)
 	cond_signal(c);
 }
 
-unsigned int
-timeout_maskwheel(unsigned int level, const struct timespec *abstime)
-{
-	uint32_t hi, lo;
-
-	hi = abstime->tv_sec << 7;
-	lo = abstime->tv_nsec / 7812500;
-
-	return ((hi | lo) >> (level * WHEELBITS)) & WHEELMASK;
-}
-
-unsigned int
-timeout_bucket(const struct timespec *now, const struct timespec *later)
-{
-	struct timespec diff;
-	unsigned int level;
-
-	KASSERT(timespeccmp(now, later, <));
-
-	timespecsub(later, now, &diff);
-	for (level = 0; level < nitems(timeout_level_width) - 1; level++) {
-		if (diff.tv_sec < timeout_level_width[level])
-			break;
-	}
-	return level * WHEELSIZE + timeout_maskwheel(level, later);
-}
-
-int
-timeout_clock_is_valid(clockid_t clock)
-{
-	switch (clock) {
-	case CLOCK_BOOTTIME:
-	case CLOCK_MONOTONIC:
-		return 1;
-	default:
-		break;
-	}
-	return 0;
-}
-
 /*
  * This is called from hardclock() on the primary CPU at the start of
  * every tick.
@@ -492,47 +436,19 @@ timeout_clock_is_valid(clockid_t clock)
 void
 timeout_hardclock_update(void)
 {
-	struct timespec elapsed, now;
-	unsigned int b, done, first, last, level, need_softclock, offset;
-
-	nanouptime(&now);
+	int need_softclock;
 
 	mtx_enter(&timeout_mutex);
 
-	/*
-	 * Dump the buckets that expired while we were away.
-	 *
-	 * If the elapsed time has exceeded a level's width then we need
-	 * to dump every bucket in the level.  We have necessarily completed
-	 * a lap of that level so we need to process buckets in the next.
-	 *
-	 * Otherwise we just need to compare indices.  If the index of the
-	 * first expired bucket is greater than or equal to that of the last
-	 * then we have completed a lap of the level and need to process
-	 * buckets in the next.
-	 */
-	timespecsub(&now, &timeout_lastscan, &elapsed);
-	for (level = 0; level < nitems(timeout_level_width); level++) {
-		first = timeout_maskwheel(level, &timeout_lastscan);
-		if (elapsed.tv_sec >= timeout_level_width[level]) {
-			last = (first == 0) ? WHEELSIZE - 1 : first - 1;
-			done = 0;
-		} else {
-			last = timeout_maskwheel(level, &now);
-			done = first <= last;
+	MOVEBUCKET(0, ticks);
+	if (MASKWHEEL(0, ticks) == 0) {
+		MOVEBUCKET(1, ticks);
+		if (MASKWHEEL(1, ticks) == 0) {
+			MOVEBUCKET(2, ticks);
+			if (MASKWHEEL(2, ticks) == 0)
+				MOVEBUCKET(3, ticks);
 		}
-		offset = level * WHEELSIZE;
-		for (b = first;; b = (b + 1) % WHEELSIZE) {
-			CIRCQ_CONCAT(&timeout_todo, &timeout_wheel[offset + b]);
-			if (b == last)
-				break;
-		}
-		if (done)
-			break;
 	}
-
-	timespecsub(&now, &tick_ts, &timeout_late);
-	timeout_lastscan = now;
 	need_softclock = !CIRCQ_EMPTY(&timeout_todo);
 
 	mtx_leave(&timeout_mutex);
@@ -573,8 +489,10 @@ timeout_run(struct timeout *to)
 void
 softclock(void *arg)
 {
+	int delta;
+	struct circq *bucket;
 	struct timeout *to;
-	unsigned int b, needsproc = 0;
+	int needsproc = 0;
 
 	mtx_enter(&timeout_mutex);
 	while (!CIRCQ_EMPTY(&timeout_todo)) {
@@ -585,16 +503,17 @@ softclock(void *arg)
 		 * If due run it or defer execution to the thread,
 		 * otherwise insert it into the right bucket.
 		 */
-		if (timespeccmp(&timeout_lastscan, &to->to_time, <)) {
-			b = timeout_bucket(&timeout_lastscan, &to->to_time);
-			CIRCQ_INSERT_TAIL(&timeout_wheel[b], &to->to_list);
+		delta = to->to_time - ticks;
+		if (delta > 0) {
+			bucket = &BUCKET(delta, to->to_time);
+			CIRCQ_INSERT(&to->to_list, bucket);
 			tostat.tos_rescheduled++;
 			continue;
 		}
-		if (timespeccmp(&to->to_time, &timeout_late, <))
+		if (delta < 0)
 			tostat.tos_late++;
 		if (ISSET(to->to_flags, TIMEOUT_NEEDPROCCTX)) {
-			CIRCQ_INSERT_TAIL(&timeout_proc, &to->to_list);
+			CIRCQ_INSERT(&to->to_list, &timeout_proc);
 			needsproc = 1;
 			continue;
 		}
@@ -649,6 +568,38 @@ softclock_thread(void *arg)
 	}
 }
 
+#ifndef SMALL_KERNEL
+void
+timeout_adjust_ticks(int adj)
+{
+	struct timeout *to;
+	struct circq *p;
+	int new_ticks, b;
+
+	/* adjusting the monotonic clock backwards would be a Bad Thing */
+	if (adj <= 0)
+		return;
+
+	mtx_enter(&timeout_mutex);
+	new_ticks = ticks + adj;
+	for (b = 0; b < nitems(timeout_wheel); b++) {
+		p = CIRCQ_FIRST(&timeout_wheel[b]);
+		while (p != &timeout_wheel[b]) {
+			to = timeout_from_circq(p);
+			p = CIRCQ_FIRST(p);
+
+			/* when moving a timeout forward need to reinsert it */
+			if (to->to_time - ticks < adj)
+				to->to_time = new_ticks;
+			CIRCQ_REMOVE(&to->to_list);
+			CIRCQ_INSERT(&to->to_list, &timeout_todo);
+		}
+	}
+	ticks = new_ticks;
+	mtx_leave(&timeout_mutex);
+}
+#endif
+
 int
 timeout_sysctl(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
@@ -663,34 +614,10 @@ timeout_sysctl(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 
 #ifdef DDB
 void db_show_callout_bucket(struct circq *);
-char *db_ts_str(const struct timespec *);
-
-char *
-db_ts_str(const struct timespec *ts)
-{
-	static char buf[64];
-	struct timespec tmp = *ts;
-	int neg = 0;
-
-	if (tmp.tv_sec < 0) {
-		tmp.tv_sec = -tmp.tv_sec;
-		if (tmp.tv_nsec > 0) {
-			tmp.tv_sec--;
-			tmp.tv_nsec = 1000000000 - tmp.tv_nsec;
-		}
-		neg = 1;
-	}
-
-	snprintf(buf, sizeof(buf), "%s%lld.%09ld",
-	    neg ? "-" : "", tmp.tv_sec, tmp.tv_nsec);
-
-	return buf;
-}
 
 void
 db_show_callout_bucket(struct circq *bucket)
 {
-	struct timespec left;
 	char buf[8];
 	struct timeout *to;
 	struct circq *p;
@@ -698,7 +625,7 @@ db_show_callout_bucket(struct circq *bucket)
 	char *name, *where;
 	int width = sizeof(long) * 2;
 
-	CIRCQ_FOREACH(p, bucket) {
+	for (p = CIRCQ_FIRST(bucket); p != bucket; p = CIRCQ_FIRST(p)) {
 		to = timeout_from_circq(p);
 		db_find_sym_and_offset((vaddr_t)to->to_func, &name, &offset);
 		name = name ? name : "?";
@@ -712,9 +639,8 @@ db_show_callout_bucket(struct circq *bucket)
 			    (bucket - timeout_wheel) / WHEELSIZE);
 			where = buf;
 		}
-		timespecsub(&to->to_time, &timeout_lastscan, &left);
-		db_printf("%18s  %7s  0x%0*lx  %s\n",
-		    db_ts_str(&left), where, width, (ulong)to->to_arg, name);
+		db_printf("%9d  %7s  0x%0*lx  %s\n",
+		    to->to_time - ticks, where, width, (ulong)to->to_arg, name);
 	}
 }
 
@@ -722,11 +648,10 @@ void
 db_show_callout(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
 	int width = sizeof(long) * 2 + 2;
-	unsigned int b;
+	int b;
 
-	db_printf("%18s seconds up at last scan\n",
-	    db_ts_str(&timeout_lastscan));
-	db_printf("%18s  %7s  %*s  func\n", "remaining", "wheel", width, "arg");
+	db_printf("ticks now: %d\n", ticks);
+	db_printf("%9s  %7s  %*s  func\n", "ticks", "wheel", width, "arg");
 
 	db_show_callout_bucket(&timeout_todo);
 	db_show_callout_bucket(&timeout_proc);
