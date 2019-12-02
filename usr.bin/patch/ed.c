@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.c,v 1.3 2016/09/02 21:39:51 tobias Exp $ */
+/*	$OpenBSD: ed.c,v 1.4 2019/12/02 22:17:32 jca Exp $ */
 
 /*
  * Copyright (c) 2015 Tobias Stoeckmann <tobias@openbsd.org>
@@ -80,7 +80,7 @@ do_ed_script(void)
 
 	for (;;) {
 		linepos = ftello(pfp);
-		if (pgets(buf, sizeof buf, pfp) == NULL)
+		if (pgetline(&buf, &bufsz, pfp) == -1)
 			break;
 		p_input_line++;
 
@@ -247,7 +247,7 @@ write_lines(char *filename)
 			putc('\n', ofp);
 		} else if (line->src == SRC_PCH) {
 			fseeko(pfp, line->pos.seek, SEEK_SET);
-			if (pgets(buf, sizeof buf, pfp) == NULL)
+			if (pgetline(&buf, &bufsz, pfp) == -1)
 				fatal("unexpected end of file");
 			p = buf;
 			if (line->subst != 0)

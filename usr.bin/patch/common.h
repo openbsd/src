@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.29 2015/07/26 14:32:19 millert Exp $	*/
+/*	$OpenBSD: common.h,v 1.30 2019/12/02 22:17:32 jca Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -37,7 +37,7 @@
 
 #define MAXHUNKSIZE 100000	/* is this enough lines? */
 #define INITHUNKMAX 125		/* initial dynamic allocation size */
-#define MAXLINELEN 8192
+#define INITLINELEN 8192
 #define BUFFERSIZE 1024
 #define LINENUM_MAX LONG_MAX
 
@@ -59,7 +59,8 @@ typedef long    LINENUM;	/* must be signed */
 
 extern mode_t	filemode;
 
-extern char	buf[MAXLINELEN];/* general purpose buffer */
+extern char	*buf;		/* general purpose buffer */
+extern size_t	 bufsz;		/* general purpose buffer size */
 
 extern bool	using_plan_a;	/* try to keep everything in memory */
 extern bool	out_of_mem;	/* ran out of memory in plan a */

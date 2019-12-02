@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.44 2019/08/17 14:25:06 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.45 2019/12/02 22:17:32 jca Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -61,7 +61,7 @@ move_file(const char *from, const char *to)
 		fromfd = open(from, O_RDONLY);
 		if (fromfd == -1)
 			pfatal("internal error, can't reopen %s", from);
-		while ((i = read(fromfd, buf, sizeof buf)) > 0)
+		while ((i = read(fromfd, buf, bufsz)) > 0)
 			if (write(STDOUT_FILENO, buf, i) != i)
 				pfatal("write failed");
 		close(fromfd);
@@ -160,7 +160,7 @@ copy_file(const char *from, const char *to)
 	fromfd = open(from, O_RDONLY, 0);
 	if (fromfd == -1)
 		pfatal("internal error, can't reopen %s", from);
-	while ((i = read(fromfd, buf, sizeof buf)) > 0)
+	while ((i = read(fromfd, buf, bufsz)) > 0)
 		if (write(tofd, buf, i) != i)
 			pfatal("write to %s failed", to);
 	close(fromfd);
@@ -267,7 +267,7 @@ ask(const char *fmt, ...)
 	if (ttyfd < 0)
 		ttyfd = open(_PATH_TTY, O_RDONLY);
 	if (ttyfd >= 0) {
-		if ((nr = read(ttyfd, buf, sizeof(buf))) > 0 &&
+		if ((nr = read(ttyfd, buf, bufsz)) > 0 &&
 		    buf[nr - 1] == '\n')
 			buf[nr - 1] = '\0';
 	}

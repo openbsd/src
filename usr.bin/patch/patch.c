@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.68 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: patch.c,v 1.69 2019/12/02 22:17:32 jca Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -47,7 +47,8 @@
 
 mode_t		filemode = 0644;
 
-char		buf[MAXLINELEN];	/* general purpose buffer */
+char		*buf;			/* general purpose buffer */
+size_t		 bufsz;			/* general purpose buffer size */
 
 bool		using_plan_a = true;	/* try to keep everything in memory */
 bool		out_of_mem = false;	/* ran out of memory in plan a */
@@ -152,6 +153,11 @@ main(int argc, char *argv[])
 		perror("pledge");
 		my_exit(2);
 	}
+
+	bufsz = INITLINELEN;
+	if ((buf = malloc(bufsz)) == NULL)
+		pfatal("allocating input buffer");
+	buf[0] = '\0';
 
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	setvbuf(stderr, NULL, _IOLBF, 0);
