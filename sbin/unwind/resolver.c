@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.93 2019/12/03 16:14:31 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.94 2019/12/03 16:15:41 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -105,7 +105,6 @@ struct uw_resolver {
 	enum uw_resolver_type	 type;
 	int			 oppdot;
 	int			 check_running;
-	char			*why_bogus;
 	int64_t			 median;
 	int64_t			 histogram[nitems(histogram_limits)];
 	int64_t			 latest_histogram[nitems(histogram_limits)];
@@ -1316,7 +1315,6 @@ free_resolver(struct uw_resolver *res)
 		}
 		ub_ctx_delete(res->ctx);
 		asr_resolver_free(res->asr_ctx);
-		free(res->why_bogus);
 		free(res);
 	}
 }
@@ -1475,11 +1473,11 @@ check_resolver_done(struct uw_resolver *res, void *arg, int rcode,
 			evtimer_add(&trust_anchor_timer, &tv);
 	 } else if (rcode == LDNS_RCODE_NOERROR &&
 	    LDNS_RCODE_WIRE((uint8_t*)answer_packet) == LDNS_RCODE_NOERROR) {
-		/* XXX move to verbose2 logging */
-		log_debug("%s: why bogus: %s", __func__, why_bogus);
+		if (why_bogus) {
+			log_warnx("%s: %s", uw_resolver_type_str[
+			    checked_resolver->type], why_bogus);
+		}
 		checked_resolver->state = RESOLVING;
-		/* best effort */
-		checked_resolver->why_bogus = strdup(why_bogus);
 	} else
 		checked_resolver->state = DEAD; /* we know the root exists */
 
@@ -1507,7 +1505,7 @@ asr_resolve_done(struct asr_result *ar, void *arg)
 {
 	struct resolver_cb_data	*cb_data = arg;
 	cb_data->cb(cb_data->res, cb_data->data, ar->ar_rcode, ar->ar_data,
-	    ar->ar_datalen, 0, "");
+	    ar->ar_datalen, 0, NULL);
 	free(ar->ar_data);
 	resolver_unref(cb_data->res);
 	free(cb_data);
