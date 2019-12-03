@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.108 2019/12/03 09:08:48 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.109 2019/12/03 09:12:46 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -96,6 +96,7 @@ plrtc*		at fdt?
 pluart*		at fdt?
 psci*		at fdt? early 1
 syscon*		at fdt? early 1
+pwmfan*		at fdt?
 
 virtio*		at fdt?
 virtio*		at pci?
