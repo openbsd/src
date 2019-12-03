@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ether.c,v 1.35 2018/11/18 08:55:51 dlg Exp $	*/
+/*	$OpenBSD: print-ether.c,v 1.36 2019/12/03 01:43:33 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -287,6 +287,13 @@ recurse:
 			if (!xflag && !qflag)
 				default_print(p-18, caplen+4);
 		}
+		return (1);
+
+#ifndef ETHERTYPE_NSH
+#define ETHERTYPE_NSH 0x894f
+#endif
+	case ETHERTYPE_NSH:
+		nsh_print(p, length);
 		return (1);
 
 #ifndef ETHERTYPE_PBB

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.28 2019/12/02 22:32:01 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.29 2019/12/03 01:43:33 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -276,6 +276,12 @@ gre_print_0(const u_char *p, u_int length)
 		break;
 	case ETHERTYPE_TRANSETHER:
 		ether_tryprint(p, length, 0);
+		break;
+#ifndef ETHERTYPE_NSH
+#define ETHERTYPE_NSH 0x894f
+#endif
+	case ETHERTYPE_NSH:
+		nsh_print(p, length);
 		break;
 	case ERSPAN_II:
 		gre_print_erspan(flags, p, length);
@@ -758,7 +764,7 @@ vxlan_print(const u_char *p, u_int length)
 		ether_tryprint(p, length, 0);
 		break;
 	case VXLAN_PROTO_NSH:
-		printf("NSH");
+		nsh_print(p, length);
 		break;
 	case VXLAN_PROTO_MPLS:
 		mpls_print(p, length);
