@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.87 2019/11/28 15:52:49 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.88 2019/12/03 12:38:34 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2675,13 +2675,12 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 	struct iked_transform	*xf;
 	unsigned int		 i, j, xfi, noauth;
 	unsigned int		 ikepropid = 1, ipsecpropid = 1;
-	struct iked_flow	 flows[64];
+	struct iked_flow	*flow, *ftmp;
 	static unsigned int	 policy_id = 0;
 	struct iked_cfg		*cfg;
 	int			 ret = -1;
 
 	bzero(&pol, sizeof(pol));
-	bzero(&flows, sizeof(flows));
 	bzero(idstr, sizeof(idstr));
 
 	pol.pol_id = ++policy_id;
@@ -2919,38 +2918,39 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 	if (hosts == NULL || hosts->src == NULL || hosts->dst == NULL)
 		fatalx("create_ike: no traffic selectors/flows");
 
-	for (j = 0, ipa = hosts->src, ipb = hosts->dst; ipa && ipb;
-	    ipa = ipa->next, ipb = ipb->next, j++) {
-		if (j >= nitems(flows))
-			fatalx("create_ike: too many flows");
-		memcpy(&flows[j].flow_src.addr, &ipa->address,
-		    sizeof(ipa->address));
-		flows[j].flow_src.addr_af = ipa->af;
-		flows[j].flow_src.addr_mask = ipa->mask;
-		flows[j].flow_src.addr_net = ipa->netaddress;
-		flows[j].flow_src.addr_port = hosts->sport;
+	for (ipa = hosts->src, ipb = hosts->dst; ipa && ipb;
+	    ipa = ipa->next, ipb = ipb->next) {
+		if ((flow = calloc(1, sizeof(struct iked_flow))) == NULL)
+			fatalx("%s: falied to alloc flow.", __func__);
 
-		memcpy(&flows[j].flow_dst.addr, &ipb->address,
+		memcpy(&flow->flow_src.addr, &ipa->address,
+		    sizeof(ipa->address));
+		flow->flow_src.addr_af = ipa->af;
+		flow->flow_src.addr_mask = ipa->mask;
+		flow->flow_src.addr_net = ipa->netaddress;
+		flow->flow_src.addr_port = hosts->sport;
+
+		memcpy(&flow->flow_dst.addr, &ipb->address,
 		    sizeof(ipb->address));
-		flows[j].flow_dst.addr_af = ipb->af;
-		flows[j].flow_dst.addr_mask = ipb->mask;
-		flows[j].flow_dst.addr_net = ipb->netaddress;
-		flows[j].flow_dst.addr_port = hosts->dport;
+		flow->flow_dst.addr_af = ipb->af;
+		flow->flow_dst.addr_mask = ipb->mask;
+		flow->flow_dst.addr_net = ipb->netaddress;
+		flow->flow_dst.addr_port = hosts->dport;
 
 		ippn = ipa->srcnat;
 		if (ippn) {
-			memcpy(&flows[j].flow_prenat.addr, &ippn->address,
+			memcpy(&flow->flow_prenat.addr, &ippn->address,
 			    sizeof(ippn->address));
-			flows[j].flow_prenat.addr_af = ippn->af;
-			flows[j].flow_prenat.addr_mask = ippn->mask;
-			flows[j].flow_prenat.addr_net = ippn->netaddress;
+			flow->flow_prenat.addr_af = ippn->af;
+			flow->flow_prenat.addr_mask = ippn->mask;
+			flow->flow_prenat.addr_net = ippn->netaddress;
 		} else {
-			flows[j].flow_prenat.addr_af = 0;
+			flow->flow_prenat.addr_af = 0;
 		}
 
-		flows[j].flow_ipproto = ipproto;
+		flow->flow_ipproto = ipproto;
 
-		if (RB_INSERT(iked_flows, &pol.pol_flows, &flows[j]) == NULL)
+		if (RB_INSERT(iked_flows, &pol.pol_flows, flow) == NULL)
 			pol.pol_nflows++;
 		else
 			warnx("create_ike: duplicate flow");
@@ -3042,6 +3042,10 @@ done:
 		free(hosts);
 	}
 	iaw_free(ikecfg);
+	RB_FOREACH_SAFE(flow, iked_flows, &pol.pol_flows, ftmp) {
+		RB_REMOVE(iked_flows, &pol.pol_flows, flow);
+		free(flow);
+	}
 	return (ret);
 }
 

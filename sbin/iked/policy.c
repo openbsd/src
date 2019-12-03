@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.50 2019/11/30 15:44:07 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.51 2019/12/03 12:38:34 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -41,6 +41,10 @@ static __inline int
 	 childsa_cmp(struct iked_childsa *, struct iked_childsa *);
 static __inline int
 	 flow_cmp(struct iked_flow *, struct iked_flow *);
+static __inline int
+	 addr_cmp(struct iked_addr *, struct iked_addr *, int);
+static __inline int
+	 ts_insert_unique(struct iked_addr *, struct iked_tss *, int);
 
 
 void
@@ -385,6 +389,48 @@ sa_new(struct iked *env, uint64_t ispi, uint64_t rspi,
 	}
 
 	return (sa);
+}
+
+int
+policy_generate_ts(struct iked_policy *pol)
+{
+	struct iked_flow	*flow;
+
+	/* Generate list of traffic selectors from flows */
+	RB_FOREACH(flow, iked_flows, &pol->pol_flows) {
+		if (ts_insert_unique(&flow->flow_src, &pol->pol_tssrc,
+		    flow->flow_ipproto) == 1)
+			pol->pol_tssrc_count++;
+		if (ts_insert_unique(&flow->flow_dst, &pol->pol_tsdst,
+		    flow->flow_ipproto) == 1)
+			pol->pol_tsdst_count++;
+	}
+	if (pol->pol_tssrc_count > IKEV2_MAXNUM_TSS ||
+	    pol->pol_tsdst_count > IKEV2_MAXNUM_TSS)
+		return (-1);
+
+	return (0);
+}
+
+int
+ts_insert_unique(struct iked_addr *addr, struct iked_tss *tss, int ipproto)
+{
+	struct iked_ts		*ts;
+
+	/* Remove duplicates */
+	TAILQ_FOREACH(ts, tss, ts_entry) {
+		if (addr_cmp(addr, &ts->ts_addr, 1) == 0)
+			return (0);
+	}
+
+	if ((ts = calloc(1, sizeof(*ts))) == NULL)
+		return (-1);
+
+	ts->ts_ipproto = ipproto;
+	ts->ts_addr = *addr;
+
+	TAILQ_INSERT_TAIL(tss, ts, ts_entry);
+	return (1);
 }
 
 void

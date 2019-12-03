@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.30 2019/05/11 16:30:23 patrick Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.31 2019/12/03 12:38:34 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -255,6 +255,8 @@ extern struct iked_constmap ikev2_xformdh_map[];
 #define IKEV2_MAXLEN_IPV4_FRAG		(576 - IKEV2_IPV4_OVERHEAD)
 #define IKEV2_IPV6_OVERHEAD		(40 + 8 + 28) /* IPv6 + UDP + IKE_HDR*/
 #define IKEV2_MAXLEN_IPV6_FRAG		(1280 - IKEV2_IPV6_OVERHEAD)
+
+#define IKEV2_MAXNUM_TSS		255	/* 8 bit Number of TSs field */
 
 #define IKEV2_XFORMESN_NONE		0	/* No ESN */
 #define IKEV2_XFORMESN_ESN		1	/* ESN */

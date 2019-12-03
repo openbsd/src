@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.182 2019/11/30 15:44:07 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.183 2019/12/03 12:38:34 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -188,6 +188,7 @@ int
 ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct iked		*env = p->p_env;
+	struct iked_policy	*pol;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RESET:
@@ -200,6 +201,10 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (config_getmode(env, imsg->hdr.type) == -1)
 			return (0);	/* ignore error */
 		timer_del(env, &env->sc_inittmr);
+		TAILQ_FOREACH(pol, &env->sc_policies, pol_entry) {
+			if (policy_generate_ts(pol) == -1)
+				fatalx("%s: too many traffic selectors", __func__);
+		}
 		if (!env->sc_passive) {
 			timer_set(env, &env->sc_inittmr, ikev2_init_ike_sa,
 			    NULL);
@@ -1471,7 +1476,6 @@ ikev2_add_ts_payload(struct ibuf *buf, unsigned int type, struct iked_sa *sa)
 	struct iked_policy	*pol = sa->sa_policy;
 	struct ikev2_tsp	*tsp;
 	struct ikev2_ts		*ts;
-	struct iked_flow	*flow;
 	struct iked_addr	*addr;
 	struct iked_addr	 pooladdr;
 	uint8_t			*ptr;
@@ -1479,28 +1483,38 @@ ikev2_add_ts_payload(struct ibuf *buf, unsigned int type, struct iked_sa *sa)
 	uint32_t		 av[4], bv[4], mv[4];
 	struct sockaddr_in	*in4;
 	struct sockaddr_in6	*in6;
+	struct iked_tss		*tss;
+	struct iked_ts		*tsi;
 
 	if ((tsp = ibuf_advance(buf, sizeof(*tsp))) == NULL)
 		return (-1);
 	tsp->tsp_count = pol->pol_nflows;
 	len = sizeof(*tsp);
 
-	RB_FOREACH(flow, iked_flows, &pol->pol_flows) {
+	if (type == IKEV2_PAYLOAD_TSi) {
+		if (sa->sa_hdr.sh_initiator) {
+			tss = &pol->pol_tssrc;
+			tsp->tsp_count = pol->pol_tssrc_count;
+		} else {
+			tss = &pol->pol_tsdst;
+			tsp->tsp_count = pol->pol_tsdst_count;
+		}
+	} else if (type == IKEV2_PAYLOAD_TSr) {
+		if (sa->sa_hdr.sh_initiator) {
+			tss = &pol->pol_tsdst;
+			tsp->tsp_count = pol->pol_tsdst_count;
+		} else {
+			tss = &pol->pol_tssrc;
+			tsp->tsp_count = pol->pol_tssrc_count;
+		}
+	} else
+		return (-1);
+
+	TAILQ_FOREACH(tsi, tss, ts_entry) {
 		if ((ts = ibuf_advance(buf, sizeof(*ts))) == NULL)
 			return (-1);
 
-		if (type == IKEV2_PAYLOAD_TSi) {
-			if (sa->sa_hdr.sh_initiator)
-				addr = &flow->flow_src;
-			else
-				addr = &flow->flow_dst;
-		} else if (type == IKEV2_PAYLOAD_TSr) {
-			if (sa->sa_hdr.sh_initiator)
-				addr = &flow->flow_dst;
-			else
-				addr = &flow->flow_src;
-		} else
-			return (-1);
+		addr = &tsi->ts_addr;
 
 		/* patch remote address (if configured to 0.0.0.0) */
 		if ((type == IKEV2_PAYLOAD_TSi && !sa->sa_hdr.sh_initiator) ||
@@ -1509,7 +1523,7 @@ ikev2_add_ts_payload(struct ibuf *buf, unsigned int type, struct iked_sa *sa)
 				addr = &pooladdr;
 		}
 
-		ts->ts_protoid = flow->flow_ipproto;
+		ts->ts_protoid = tsi->ts_ipproto;
 
 		if (addr->addr_port) {
 			ts->ts_startport = addr->addr_port;

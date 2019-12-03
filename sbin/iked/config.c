@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.50 2019/05/11 16:30:23 patrick Exp $	*/
+/*	$OpenBSD: config.c,v 1.51 2019/12/03 12:38:34 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -188,6 +188,8 @@ config_new_policy(struct iked *env)
 	/* XXX caller does this again */
 	TAILQ_INIT(&pol->pol_proposals);
 	TAILQ_INIT(&pol->pol_sapeers);
+	TAILQ_INIT(&pol->pol_tssrc);
+	TAILQ_INIT(&pol->pol_tsdst);
 	RB_INIT(&pol->pol_flows);
 
 	return (pol);
@@ -197,6 +199,7 @@ void
 config_free_policy(struct iked *env, struct iked_policy *pol)
 {
 	struct iked_sa		*sa;
+	struct iked_ts	*tsi;
 
 	if (pol->pol_flags & IKED_POLICY_REFCNT)
 		goto remove;
@@ -216,6 +219,14 @@ config_free_policy(struct iked *env, struct iked_policy *pol)
 		return;
 
  remove:
+	while ((tsi = TAILQ_FIRST(&pol->pol_tssrc))) {
+		TAILQ_REMOVE(&pol->pol_tssrc, tsi, ts_entry);
+		free(tsi);
+	}
+	while ((tsi = TAILQ_FIRST(&pol->pol_tsdst))) {
+		TAILQ_REMOVE(&pol->pol_tsdst, tsi, ts_entry);
+		free(tsi);
+	}
 	config_free_proposals(&pol->pol_proposals, 0);
 	config_free_flows(env, &pol->pol_flows);
 	free(pol);
@@ -732,6 +743,8 @@ config_getpolicy(struct iked *env, struct imsg *imsg)
 	memcpy(pol, buf, sizeof(*pol));
 	offset += sizeof(*pol);
 
+	TAILQ_INIT(&pol->pol_tssrc);
+	TAILQ_INIT(&pol->pol_tsdst);
 	TAILQ_INIT(&pol->pol_proposals);
 	TAILQ_INIT(&pol->pol_sapeers);
 	RB_INIT(&pol->pol_flows);
