@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwindctl.c,v 1.20 2019/12/02 06:26:52 otto Exp $	*/
+/*	$OpenBSD: unwindctl.c,v 1.21 2019/12/03 14:35:05 otto Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -72,7 +72,6 @@ main(int argc, char *argv[])
 	int			 done = 0;
 	int			 i, n, verbose = 0;
 	int			 ch;
-	int			 type;
 	char			*sockname;
 
 	sockname = UNWIND_SOCKET;
@@ -143,40 +142,8 @@ main(int argc, char *argv[])
 		printf("reload request sent.\n");
 		done = 1;
 		break;
-	case STATUS_RECURSOR:
-		type = UW_RES_RECURSOR;
-		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, &type,
-		    sizeof(type));
-		break;
-	case STATUS_DHCP:
-		type = UW_RES_DHCP;
-		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, &type,
-		    sizeof(type));
-		break;
-	case STATUS_STATIC:
-		type = UW_RES_FORWARDER;
-		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, &type,
-		    sizeof(type));
-		break;
-	case STATUS_DOT:
-		type = UW_RES_DOT;
-		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, &type,
-		    sizeof(type));
-		break;
-	case STATUS_STUB:
-		type = UW_RES_ASR;
-		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, &type,
-		    sizeof(type));
-		break;
 	case STATUS:
-		type = UW_RES_NONE;
-		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, &type,
-		    sizeof(type));
-		break;
-	case STATUS_ALL:
-		type = UW_RES_NONE;
-		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, &type,
-		    sizeof(type));
+		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, NULL, 0);
 		break;
 	default:
 		usage();
@@ -200,12 +167,6 @@ main(int argc, char *argv[])
 
 			switch (res->action) {
 			case STATUS:
-			case STATUS_RECURSOR:
-			case STATUS_DHCP:
-			case STATUS_STATIC:
-			case STATUS_DOT:
-			case STATUS_STUB:
-			case STATUS_ALL:
 				done = show_status_msg(&imsg);
 				break;
 			default:
@@ -217,15 +178,13 @@ main(int argc, char *argv[])
 	close(ctl_sock);
 	free(ibuf);
 
-	if (res->action != STATUS) {
-		if (histogram_cnt)
-			histogram_header();
-		for (i = 0; i < histogram_cnt; i++) {
-			print_histogram(uw_resolver_type_short[info[i].type],
-			    info[i].histogram, nitems(info[i].histogram));
-			print_histogram("", info[i].latest_histogram,
-			    nitems(info[i].latest_histogram));
-		}
+	if (histogram_cnt)
+		histogram_header();
+	for (i = 0; i < histogram_cnt; i++) {
+		print_histogram(uw_resolver_type_short[info[i].type],
+		    info[i].histogram, nitems(info[i].histogram));
+		print_histogram("", info[i].latest_histogram,
+		    nitems(info[i].latest_histogram));
 	}
 	return (0);
 }

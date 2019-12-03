@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.91 2019/12/02 16:00:13 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.92 2019/12/03 14:35:04 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -173,7 +173,7 @@ void			 resolver_ref(struct uw_resolver *);
 void			 resolver_unref(struct uw_resolver *);
 int			 resolver_cmp(const void *, const void *);
 void			 restart_resolvers(void);
-void			 show_status(enum uw_resolver_type, pid_t);
+void			 show_status(pid_t);
 void			 send_resolver_info(struct uw_resolver *, pid_t);
 void			 send_detailed_resolver_info(struct uw_resolver *,
 			     pid_t);
@@ -461,7 +461,6 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 	struct imsgbuf			*ibuf;
 	struct imsg			 imsg;
 	struct query_imsg		*query_imsg;
-	enum uw_resolver_type		 type;
 	ssize_t				 n;
 	int				 shut = 0, verbose;
 	int				 update_resolvers, i;
@@ -518,11 +517,10 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			setup_query(query_imsg);
 			break;
 		case IMSG_CTL_STATUS:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(type))
+			if (IMSG_DATA_SIZE(imsg) != 0)
 				fatalx("%s: IMSG_CTL_STATUS wrong length: %lu",
 				    __func__, IMSG_DATA_SIZE(imsg));
-			memcpy(&type, imsg.data, sizeof(type));
-			show_status(type, imsg.hdr.pid);
+			show_status(imsg.hdr.pid);
 			break;
 		case IMSG_NEW_TA:
 			/* make sure this is a string */
@@ -1731,43 +1729,30 @@ restart_resolvers(void)
 }
 
 void
-show_status(enum uw_resolver_type type, pid_t pid)
+show_status(pid_t pid)
 {
 	struct uw_forwarder		*uw_forwarder;
 	struct ctl_forwarder_info	 cfi;
 	struct resolver_preference	 res_pref;
 	int				 i;
 
-	switch(type) {
-	case UW_RES_NONE:
-		if (sort_resolver_types(&res_pref) == -1)
-			log_warn("mergesort");
+	if (sort_resolver_types(&res_pref) == -1)
+		log_warn("mergesort");
 
-		for (i = 0; i < resolver_conf->res_pref.len; i++)
-			send_resolver_info(resolvers[res_pref.types[i]], pid);
+	for (i = 0; i < resolver_conf->res_pref.len; i++)
+		send_resolver_info(resolvers[res_pref.types[i]], pid);
 
-		TAILQ_FOREACH(uw_forwarder, &autoconf_forwarder_list, entry) {
-			memset(&cfi, 0, sizeof(cfi));
-			cfi.if_index = uw_forwarder->if_index;
-			cfi.src = uw_forwarder->src;
-			/* no truncation, structs are in sync */
-			memcpy(cfi.ip, uw_forwarder->ip, sizeof(cfi.ip));
-			resolver_imsg_compose_frontend(
-			    IMSG_CTL_AUTOCONF_RESOLVER_INFO,
-			    pid, &cfi, sizeof(cfi));
-		}
-		break;
-	case UW_RES_RECURSOR:
-	case UW_RES_DHCP:
-	case UW_RES_FORWARDER:
-	case UW_RES_DOT:
-	case UW_RES_ASR:
-		send_resolver_info(resolvers[type], pid);
-		break;
-	default:
-		fatalx("unknown resolver type %d", type);
-		break;
+	TAILQ_FOREACH(uw_forwarder, &autoconf_forwarder_list, entry) {
+		memset(&cfi, 0, sizeof(cfi));
+		cfi.if_index = uw_forwarder->if_index;
+		cfi.src = uw_forwarder->src;
+		/* no truncation, structs are in sync */
+		memcpy(cfi.ip, uw_forwarder->ip, sizeof(cfi.ip));
+		resolver_imsg_compose_frontend(
+		    IMSG_CTL_AUTOCONF_RESOLVER_INFO,
+		    pid, &cfi, sizeof(cfi));
 	}
+
 	resolver_imsg_compose_frontend(IMSG_CTL_END, pid, NULL, 0);
 }
 

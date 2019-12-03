@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwindctl.8,v 1.7 2019/11/27 17:09:12 florian Exp $
+.\"	$OpenBSD: unwindctl.8,v 1.8 2019/12/03 14:35:05 otto Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 27 2019 $
+.Dd $Mdocdate: December 3 2019 $
 .Dt UNWINDCTL 8
 .Os
 .Sh NAME
@@ -53,17 +53,8 @@ Enable verbose logging.
 Enable very noisy debug logging.
 .It Cm reload
 Reload the configuration file.
-.It Cm status Op Cm recursor | dhcp | DoT | forwarder
+.It Cm status
 Show a status summary.
-If one of
-.Cm recursor ,
-.Cm dhcp ,
-.Cm DoT ,
-or
-.Cm forwarder
-is specified, more detailed information about that type of resolver is given
-including reasons why DNSSEC validation might be failing and a query time
-histogram.
 .El
 .Sh FILES
 .Bl -tag -width "/dev/unwind.sockXX" -compact

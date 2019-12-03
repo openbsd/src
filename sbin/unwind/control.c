@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.12 2019/11/27 17:09:12 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.13 2019/12/03 14:35:04 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -273,11 +273,10 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			log_setverbose(verbose);
 			break;
 		case IMSG_CTL_STATUS:
-			if (IMSG_DATA_SIZE(imsg) !=
-			    sizeof(enum uw_resolver_type))
+			if (IMSG_DATA_SIZE(imsg) != 0)
 				break;
-			frontend_imsg_compose_resolver(imsg.hdr.type, 0,
-			    imsg.data, IMSG_DATA_SIZE(imsg));
+			frontend_imsg_compose_resolver(imsg.hdr.type, 0, NULL,
+			    0);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
