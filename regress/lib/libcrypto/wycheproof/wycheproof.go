@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.109 2019/12/03 16:02:49 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.110 2019/12/03 16:05:14 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -1616,7 +1616,7 @@ func runECDHWebCryptoTestGroup(algorithm string, wtg *wycheproofTestGroupECDHWeb
 	return success
 }
 
-func runECDSATest(ecKey *C.EC_KEY, nid int, h hash.Hash, webcrypto bool, wt *wycheproofTestECDSA) bool {
+func runECDSATest(ecKey *C.EC_KEY, nid int, h hash.Hash, variant testVariant, wt *wycheproofTestECDSA) bool {
 	msg, err := hex.DecodeString(wt.Msg)
 	if err != nil {
 		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
@@ -1632,7 +1632,7 @@ func runECDSATest(ecKey *C.EC_KEY, nid int, h hash.Hash, webcrypto bool, wt *wyc
 	}
 
 	var ret C.int
-	if webcrypto {
+	if variant == Webcrypto || variant == P1363 {
 		cDer, derLen := encodeECDSAWebCryptoSig(wt.Sig)
 		if cDer == nil {
 			fmt.Print("FAIL: unable to decode signature")
@@ -1669,7 +1669,7 @@ func runECDSATest(ecKey *C.EC_KEY, nid int, h hash.Hash, webcrypto bool, wt *wyc
 	return success
 }
 
-func runECDSATestGroup(algorithm string, wtg *wycheproofTestGroupECDSA) bool {
+func runECDSATestGroup(algorithm string, variant testVariant, wtg *wycheproofTestGroupECDSA) bool {
 	fmt.Printf("Running %v test group %v with curve %v, key size %d and %v...\n",
 		algorithm, wtg.Type, wtg.Key.Curve, wtg.Key.KeySize, wtg.SHA)
 
@@ -1714,7 +1714,7 @@ func runECDSATestGroup(algorithm string, wtg *wycheproofTestGroupECDSA) bool {
 
 	success := true
 	for _, wt := range wtg.Tests {
-		if !runECDSATest(ecKey, nid, h, false, wt) {
+		if !runECDSATest(ecKey, nid, h, variant, wt) {
 			success = false
 		}
 	}
@@ -1809,7 +1809,7 @@ func runECDSAWebCryptoTestGroup(algorithm string, wtg *wycheproofTestGroupECDSAW
 
 	success := true
 	for _, wt := range wtg.Tests {
-		if !runECDSATest(ecKey, nid, h, true, wt) {
+		if !runECDSATest(ecKey, nid, h, Webcrypto, wt) {
 			success = false
 		}
 	}
@@ -2521,7 +2521,7 @@ func runTestVectors(path string, variant testVariant) bool {
 					success = false
 				}
 			default:
-				if !runECDSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDSA)) {
+				if !runECDSATestGroup(wtv.Algorithm, variant, wtg.(*wycheproofTestGroupECDSA)) {
 					success = false
 				}
 			}
@@ -2592,7 +2592,7 @@ func main() {
 		{"ECDH webcrypto", "ecdh_webcrypto_test.json", Webcrypto},
 		{"ECDSA", "ecdsa_test.json", Normal},
 		{"ECDSA", "ecdsa_[^w]*test.json", Normal},
-		{"ECDSA P1363", "ecdsa_*_p1363_test.json", Skip},
+		{"ECDSA P1363", "ecdsa_*_p1363_test.json", P1363},
 		{"ECDSA webcrypto", "ecdsa_webcrypto_test.json", Webcrypto},
 		{"HKDF", "hkdf_sha*_test.json", Normal},
 		{"KW", "kw_test.json", Normal},
