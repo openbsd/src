@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.47 2019/11/29 21:58:31 patrick Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.48 2019/12/03 09:08:04 patrick Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -2007,6 +2007,11 @@ struct rkclock rk3399_pmu_clocks[] = {
 		{ RK3399_PLL_PPLL }
 	},
 	{
+		RK3399_PCLK_RKPWM, RK3399_PMUCRU_CLKSEL_CON(0),
+		0, DIV(6, 0),
+		{ RK3399_PLL_PPLL }
+	},
+	{
 		/* Sentinel */
 	}
 };
@@ -2063,6 +2068,7 @@ rk3399_pmu_enable(void *cookie, uint32_t *cells, int on)
 	case RK3399_PCLK_I2C0:
 	case RK3399_PCLK_I2C4:
 	case RK3399_PCLK_I2C8:
+	case RK3399_PCLK_RKPWM:
 		/* Enabled by default. */
 		break;
 	default:
