@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.96 2019/12/03 16:17:00 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.97 2019/12/03 16:17:48 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -761,7 +761,8 @@ try_next_resolver(struct running_query *rq)
 
 	if (res == NULL) {
 		evtimer_del(&rq->timer_ev); /* we are not going to find one */
-		log_debug("%s: could not find working resolver", __func__);
+		log_debug("%s: could not find (any more) working resolvers",
+		    __func__);
 		goto err;
 	}
 
@@ -770,8 +771,11 @@ try_next_resolver(struct running_query *rq)
 	timespecsub(&tp, &rq->tp, &elapsed);
 	ms = elapsed.tv_sec * 1000 + elapsed.tv_nsec / 1000000;
 
-	log_debug("%s[+%lldms]: %s[%s]", __func__, ms,
-	    uw_resolver_type_str[res->type], uw_resolver_state_str[res->state]);
+	log_debug("%s[+%lldms]: %s[%s] %s %s %s", __func__, ms,
+	    uw_resolver_type_str[res->type], uw_resolver_state_str[res->state],
+	    rq->query_imsg->qname, sldns_wire2str_class(rq->query_imsg->c),
+	    sldns_wire2str_type(rq->query_imsg->t));
+
 	if ((query_imsg = malloc(sizeof(*query_imsg))) == NULL) {
 		log_warnx("%s", __func__);
 		goto err;
@@ -930,10 +934,10 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	result->answer_len = 0;
 
 	sldns_wire2str_rcode_buf(result->rcode, rcode_buf, sizeof(rcode_buf));
-	log_debug("%s[%s]: rcode: %s[%d], elapsed: %lldms, "
-	    "histogram: %lld - %lld", __func__, uw_resolver_type_str[res->type],
-	    rcode_buf, result->rcode, ms, histogram_limits[i],
-	    res->histogram[i]);
+	log_debug("%s[%s]: %s %s %s rcode: %s[%d], elapsed: %lldms", __func__,
+	    uw_resolver_type_str[res->type], query_imsg->qname,
+	    sldns_wire2str_class(query_imsg->c),
+	    sldns_wire2str_type(query_imsg->t), rcode_buf, result->rcode, ms);
 
 	if (result->rcode == LDNS_RCODE_NXDOMAIN && res->type != UW_RES_ASR) {
 		timespecsub(&tp, &last_network_change, &elapsed);
@@ -942,8 +946,9 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 			 * Doubt NXDOMAIN if we just switched networks,
 			 * we might be behind a captive portal.
 			 */
-			log_debug("%s: doubt NXDOMAIN from %s", __func__,
-			    uw_resolver_type_str[res->type]);
+			log_debug("%s: doubt NXDOMAIN from %s, network change "
+			    "%llds ago", __func__,
+			    uw_resolver_type_str[res->type], elapsed.tv_sec);
 			if (rq) {
 				/* search for ASR */
 				for (i = 0; i < (size_t)rq->res_pref.len; i++)
@@ -971,7 +976,8 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 			    "%llds ago", __func__, elapsed.tv_sec);
 	}
 
-	if ((str = sldns_wire2str_pkt(answer_packet, answer_len)) != NULL) {
+	if (log_getverbose() & OPT_VERBOSE2 && (str =
+	    sldns_wire2str_pkt(answer_packet, answer_len)) != NULL) {
 		log_debug("%s", str);
 		free(str);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.44 2019/12/03 16:14:00 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.45 2019/12/03 16:17:48 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -548,7 +548,7 @@ udp_receive(int fd, short events, void *arg)
 	struct bl_node		 find;
 	ssize_t			 len, dname_len;
 	int			 ret;
-	char			*str_from, *str;
+	char			*str;
 	char			 dname[LDNS_MAX_DOMAINLEN + 1];
 
 	memset(&qinfo, 0, sizeof(qinfo));
@@ -580,10 +580,10 @@ udp_receive(int fd, short events, void *arg)
 	sldns_buffer_write(pq->qbuf, udpev->query, len);
 	sldns_buffer_flip(pq->qbuf);
 
-	str_from = ip_port((struct sockaddr *)&udpev->from);
-	log_debug("query from %s", str_from);
-	if ((str = sldns_wire2str_pkt(udpev->query, len)) != NULL) {
-		log_debug("%s", str);
+	if (log_getverbose() & OPT_VERBOSE2 && (str =
+	    sldns_wire2str_pkt(udpev->query, len)) != NULL) {
+		log_debug("from: %s\n%s", ip_port((struct sockaddr *)
+		    &udpev->from), str);
 		free(str);
 	}
 
@@ -606,8 +606,9 @@ udp_receive(int fd, short events, void *arg)
 	}
 	dname_str(qinfo.qname, dname);
 
-	log_debug("%s: query_info_parse, qname_len: %ld dname[%ld]: %s",
-	    __func__, qinfo.qname_len, dname_len, dname);
+	log_debug("%s: %s %s %s ?", ip_port((struct sockaddr *)&udpev->from),
+	    dname, sldns_wire2str_class(qinfo.qclass),
+	    sldns_wire2str_type(qinfo.qtype));
 
 	find.domain = dname;
 	if (RB_FIND(bl_tree, &bl_head, &find) != NULL) {
@@ -684,7 +685,7 @@ chaos_answer(struct pending_query *pq)
 {
 	struct sldns_buffer	 buf, *pkt = &buf;
 	size_t			 size, len;
-	char			*name = "unwind", *str;
+	char			*name = "unwind";
 
 	len = strlen(name);
 	size = sldns_buffer_capacity(pq->qbuf) + COMPRESSED_RR_SIZE + 1 + len;
@@ -722,11 +723,6 @@ chaos_answer(struct pending_query *pq)
 	sldns_buffer_write_u16(pkt, 1 + len);		/* RDLENGTH */
 	sldns_buffer_write_u8(pkt, len);		/* length octed */
 	sldns_buffer_write(pkt, name, len);
-
-	if ((str = sldns_wire2str_pkt(pq->answer, pq->answer_len)) != NULL) {
-		log_debug("%s: %s", __func__, str);
-		free(str);
-	}
 }
 
 int
@@ -774,9 +770,8 @@ void
 send_answer(struct pending_query *pq)
 {
 	ssize_t	 len;
+	char	*str;
 	uint8_t	*answer;
-
-	log_debug("result for %s", ip_port((struct sockaddr*)&pq->from));
 
 	answer = pq->answer;
 	len = pq->answer_len;
@@ -809,6 +804,13 @@ send_answer(struct pending_query *pq)
 			LDNS_ID_SET(answer, LDNS_ID_WIRE(sldns_buffer_begin(
 			    pq->qbuf)));
 		}
+	}
+
+	if (log_getverbose() & OPT_VERBOSE2 && (str =
+	    sldns_wire2str_pkt(answer, len)) != NULL) {
+		log_debug("to: %s\n%s",
+		    ip_port((struct sockaddr *)&pq->from),str);
+		free(str);
 	}
 
 	if(sendto(pq->fd, answer, len, 0, (struct sockaddr *)&pq->from,
