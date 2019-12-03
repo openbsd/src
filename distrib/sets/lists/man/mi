@@ -1738,6 +1738,7 @@
 ./usr/share/man/man4/pvclock.4
 ./usr/share/man/man4/pwdog.4
 ./usr/share/man/man4/pwmbl.4
+./usr/share/man/man4/pwmfan.4
 ./usr/share/man/man4/pwmreg.4
 ./usr/share/man/man4/qla.4
 ./usr/share/man/man4/qle.4
@@ -1756,12 +1757,14 @@
 ./usr/share/man/man4/ricohrtc.4
 ./usr/share/man/man4/rkclock.4
 ./usr/share/man/man4/rkdwusb.4
+./usr/share/man/man4/rkemmcphy.4
 ./usr/share/man/man4/rkgpio.4
 ./usr/share/man/man4/rkgrf.4
 ./usr/share/man/man4/rkiic.4
 ./usr/share/man/man4/rkpcie.4
 ./usr/share/man/man4/rkpinctrl.4
 ./usr/share/man/man4/rkpmic.4
+./usr/share/man/man4/rkpwm.4
 ./usr/share/man/man4/rktemp.4
 ./usr/share/man/man4/rl.4
 ./usr/share/man/man4/rlphy.4
