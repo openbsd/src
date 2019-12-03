@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.253 2019/12/03 13:25:57 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.254 2019/12/03 15:58:28 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1159,31 +1159,42 @@ scsi_mode_sense_big(struct scsi_link *link, int byte2, int pg_code,
 }
 
 void *
-scsi_mode_sense_page(struct scsi_mode_header *hdr, int pg_length)
+scsi_mode_sense_page(struct scsi_mode_header *hdr, int pg_code, int pg_length)
 {
-	int		total_length, header_length;
+	u_int8_t	*page;
+	int		 total_length, header_length;
 
 	total_length = hdr->data_length + sizeof(hdr->data_length);
 	header_length = sizeof(*hdr) + hdr->blk_desc_len;
+	page = (u_int8_t *)hdr + header_length;
 
 	if ((total_length - header_length) < pg_length)
-		return (NULL);
+		return NULL;
 
-	return ((u_char *)hdr + header_length);
+	if ((*page & SMS_PAGE_CODE) != pg_code)
+		return NULL;
+
+	return page;
 }
 
 void *
-scsi_mode_sense_big_page(struct scsi_mode_header_big *hdr, int pg_length)
+scsi_mode_sense_big_page(struct scsi_mode_header_big *hdr, int pg_code,
+    int pg_length)
 {
-	int		total_length, header_length;
+	u_int8_t	*page;
+	int		 total_length, header_length;
 
 	total_length = _2btol(hdr->data_length) + sizeof(hdr->data_length);
 	header_length = sizeof(*hdr) + _2btol(hdr->blk_desc_len);
+	page = (u_int8_t *)hdr + header_length;
 
 	if ((total_length - header_length) < pg_length)
-		return (NULL);
+		return NULL;
 
-	return ((u_char *)hdr + header_length);
+	if ((*page & SMS_PAGE_CODE) != pg_code)
+		return NULL;
+
+	return page;
 }
 
 void
@@ -1258,7 +1269,8 @@ scsi_do_mode_sense(struct scsi_link *link, int pg_code,
 		error = scsi_mode_sense(link, 0, pg_code, &buf->hdr,
 		    sizeof(*buf), flags, 20000);
 		if (error == 0) {
-			*page_data = scsi_mode_sense_page(&buf->hdr, pg_length);
+			*page_data = scsi_mode_sense_page(&buf->hdr, pg_code,
+			    pg_length);
 			if (*page_data == NULL) {
 				/*
 				 * XXX
@@ -1292,7 +1304,8 @@ scsi_do_mode_sense(struct scsi_link *link, int pg_code,
 		return (EIO);
 
 	*big = 1;
-	*page_data = scsi_mode_sense_big_page(&buf->hdr_big, pg_length);
+	*page_data = scsi_mode_sense_big_page(&buf->hdr_big, pg_code,
+	    pg_length);
 
 blk_desc:
 	scsi_parse_blkdesc(link, buf, *big, density, block_count, block_size);
