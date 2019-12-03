@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.63 2019/12/02 21:50:11 jca Exp $	*/
+/*	$OpenBSD: grep.c,v 1.64 2019/12/03 09:14:37 jca Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -473,12 +473,6 @@ main(int argc, char *argv[])
 		++argv;
 	}
 
-	if (Rflag && argc == 0) {
-		/* default to . if no path given */
-		static char *dot_argv[] = { ".", NULL };
-		argv = dot_argv;
-		argc = 1;
-	}
 	if (Eflag)
 		cflags |= REG_EXTENDED;
 	if (Fflag)
@@ -516,7 +510,7 @@ main(int argc, char *argv[])
 	if ((argc == 0 || argc == 1) && !Rflag && !Hflag)
 		hflag = 1;
 
-	if (argc == 0)
+	if (argc == 0 && !Rflag)
 		exit(!procfile(NULL));
 
 	if (Rflag)

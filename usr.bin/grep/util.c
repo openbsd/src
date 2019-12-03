@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.61 2019/10/07 17:47:32 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.62 2019/12/03 09:14:37 jca Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -61,6 +61,12 @@ grep_tree(char **argv)
 	FTS	*fts;
 	FTSENT	*p;
 	int	c, fts_flags;
+	char	*dot_argv[] = { ".", NULL };
+	char	*path;
+
+	/* default to . if no path given */
+	if (argv[0] == NULL)
+		argv = dot_argv;
 
 	c = 0;
 
@@ -81,7 +87,11 @@ grep_tree(char **argv)
 		case FTS_DP:
 			break;
 		default:
-			c += procfile(p->fts_path);
+			path = p->fts_path;
+			/* skip "./" if implied */
+			if (argv == dot_argv && p->fts_pathlen >= 2)
+				path += 2;
+			c += procfile(path);
 			break;
 		}
 	}
