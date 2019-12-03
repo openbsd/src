@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwide.c,v 1.5 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: fwide.c,v 1.6 2019/12/03 05:03:37 asou Exp $	*/
 /* $NetBSD: fwide.c,v 1.2 2003/01/18 11:29:54 thorpej Exp $ */
 
 /*-
@@ -51,8 +51,10 @@ fwide(FILE *fp, int mode)
 
 	FLOCKFILE(fp);
 	wcio = WCIO_GET(fp);
-	if (!wcio)
+	if (!wcio) {
+		FUNLOCKFILE(fp);
 		return 0; /* XXX */
+	}
 
 	if (wcio->wcio_mode == 0 && mode != 0)
 		wcio->wcio_mode = mode;
