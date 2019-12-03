@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.43 2019/12/02 06:26:52 otto Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.44 2019/12/03 16:14:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -496,16 +496,13 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 			add_new_ta(&new_trust_anchors, imsg.data);
 			break;
 		case IMSG_NEW_TAS_ABORT:
-			log_debug("%s: IMSG_NEW_TAS_ABORT", __func__);
 			free_tas(&new_trust_anchors);
 			break;
 		case IMSG_NEW_TAS_DONE:
 			chg = merge_tas(&new_trust_anchors, &trust_anchors);
-			log_debug("%s: IMSG_NEW_TAS_DONE: change: %d",
-			    __func__, chg);
-			if (chg) {
+			if (chg)
 				send_trust_anchors(&trust_anchors);
-			}
+
 			/*
 			 * always write trust anchors, the modify date on
 			 * the file is an indication when we made progress
@@ -1096,8 +1093,6 @@ write_trust_anchors(struct trust_anchor_head *tah, int fd)
 	size_t			 len = 0;
 	ssize_t			 n;
 	char			*str;
-
-	log_debug("%s", __func__);
 
 	if (lseek(fd, 0, SEEK_SET) == -1) {
 		log_warn("%s", __func__);
