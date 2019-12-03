@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.298 2019/11/28 09:56:25 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.299 2019/12/03 10:47:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1581,7 +1581,7 @@ server_client_check_exit(struct client *c)
 /* Redraw timer callback. */
 static void
 server_client_redraw_timer(__unused int fd, __unused short events,
-    __unused void* data)
+    __unused void *data)
 {
 	log_debug("redraw timer fired");
 }

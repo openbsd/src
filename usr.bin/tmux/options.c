@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.54 2019/10/15 08:30:36 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.55 2019/12/03 10:47:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -610,7 +610,7 @@ options_match(const char *s, int *idx, int *ambiguous)
 
 struct options_entry *
 options_match_get(struct options *oo, const char *s, int *idx, int only,
-    int* ambiguous)
+    int *ambiguous)
 {
 	char			*name;
 	struct options_entry	*o;

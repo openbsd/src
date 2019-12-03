@@ -1,4 +1,4 @@
-/* $OpenBSD: attributes.c,v 1.9 2019/05/13 20:10:23 nicm Exp $ */
+/* $OpenBSD: attributes.c,v 1.10 2019/12/03 10:47:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Joshua Elsasser <josh@elsasser.org>
@@ -59,8 +59,8 @@ attributes_fromstring(const char *str)
 	size_t		end;
 	u_int		i;
 	struct {
-		const char*	name;
-		int		attr;
+		const char	*name;
+		int		 attr;
 	} table[] = {
 		{ "bright", GRID_ATTR_BRIGHT },
 		{ "bold", GRID_ATTR_BRIGHT },

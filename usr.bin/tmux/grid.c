@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.100 2019/09/24 20:44:58 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.101 2019/12/03 10:47:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -204,7 +204,7 @@ grid_clear_cell(struct grid *gd, u_int px, u_int py, u_int bg)
 
 /* Check grid y position. */
 static int
-grid_check_y(struct grid *gd, const char* from, u_int py)
+grid_check_y(struct grid *gd, const char *from, u_int py)
 {
 	if (py >= gd->hsize + gd->sy) {
 		log_debug("%s: y out of range: %u", from, py);
