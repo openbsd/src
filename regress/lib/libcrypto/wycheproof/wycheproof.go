@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.107 2019/11/28 23:13:34 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.108 2019/12/03 15:59:24 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -63,6 +63,18 @@ import (
 )
 
 const testVectorPath = "/usr/local/share/wycheproof/testvectors"
+
+type testVariant int
+
+const (
+	Normal    testVariant = 0
+	P1363     testVariant = 1
+	Webcrypto testVariant = 2
+	Asn1      testVariant = 3
+	Pem       testVariant = 4
+	Jwk       testVariant = 5
+	Skip      testVariant = 6
+)
 
 var acceptableAudit = false
 var acceptableComments map[string]int
@@ -2392,7 +2404,7 @@ func runX25519TestGroup(algorithm string, wtg *wycheproofTestGroupX25519) bool {
 	return success
 }
 
-func runTestVectors(path string, webcrypto bool) bool {
+func runTestVectors(path string, variant testVariant) bool {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatalf("Failed to read test vectors: %v", err)
@@ -2419,15 +2431,17 @@ func runTestVectors(path string, webcrypto bool) bool {
 	case "DSA":
 		wtg = &wycheproofTestGroupDSA{}
 	case "ECDH":
-		if webcrypto {
+		switch variant {
+		case Webcrypto:
 			wtg = &wycheproofTestGroupECDHWebCrypto{}
-		} else {
+		default:
 			wtg = &wycheproofTestGroupECDH{}
 		}
 	case "ECDSA":
-		if webcrypto {
+		switch variant {
+		case Webcrypto:
 			wtg = &wycheproofTestGroupECDSAWebCrypto{}
-		} else {
+		default:
 			wtg = &wycheproofTestGroupECDSA{}
 		}
 	case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
@@ -2480,21 +2494,23 @@ func runTestVectors(path string, webcrypto bool) bool {
 				success = false
 			}
 		case "ECDH":
-			if webcrypto {
+			switch variant {
+			case Webcrypto:
 				if !runECDHWebCryptoTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDHWebCrypto)) {
 					success = false
 				}
-			} else {
+			default:
 				if !runECDHTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDH)) {
 					success = false
 				}
 			}
 		case "ECDSA":
-			if webcrypto {
+			switch variant {
+			case Webcrypto:
 				if !runECDSAWebCryptoTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDSAWebCrypto)) {
 					success = false
 				}
-			} else {
+			default:
 				if !runECDSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDSA)) {
 					success = false
 				}
@@ -2554,21 +2570,27 @@ func main() {
 	tests := []struct {
 		name    string
 		pattern string
+		variant testVariant
 	}{
-		{"AES", "aes_[cg]*[^xv]_test.json"}, // Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
-		{"ChaCha20-Poly1305", "chacha20_poly1305_test.json"},
-		{"DSA", "dsa_*test.json"},
-		{"ECDH", "ecdh_test.json"},
-		{"ECDH", "ecdh_[^w]*test.json"},
-		{"ECDHWebCrypto", "ecdh_webcrypto_test.json"},
-		{"ECDSA", "ecdsa_[^w]*test.json"},
-		{"ECDSA", "ecdsa_test.json"},
-		{"ECDSAWebCrypto", "ecdsa_webcrypto_test.json"},
-		{"HKDF", "hkdf_sha*_test.json"},
-		{"KW", "kw_test.json"},
-		{"RSA", "rsa_*test.json"},
-		{"X25519", "x25519_test.json"},
-		{"XCHACHA20-POLY1305", "xchacha20_poly1305_test.json"},
+		{"AES", "aes_[cg]*[^xv]_test.json", Normal}, // Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
+		{"ChaCha20-Poly1305", "chacha20_poly1305_test.json", Normal},
+		{"DSA", "dsa_*test.json", Normal},
+		{"DSA", "dsa_*_p1363_test.json", Skip},
+		{"ECDH", "ecdh_test.json", Normal},
+		{"ECDH", "ecdh_[^w]*test.json", Normal},
+		{"ECDH webcrypto", "ecdh_webcrypto_test.json", Webcrypto},
+		{"ECDSA", "ecdsa_test.json", Normal},
+		{"ECDSA", "ecdsa_[^w]*test.json", Normal},
+		{"ECDSA P1363", "ecdsa_*_p1363_test.json", Skip},
+		{"ECDSA webcrypto", "ecdsa_webcrypto_test.json", Webcrypto},
+		{"HKDF", "hkdf_sha*_test.json", Normal},
+		{"KW", "kw_test.json", Normal},
+		{"RSA", "rsa_*test.json", Normal},
+		{"X25519", "x25519_test.json", Normal},
+		{"X25519 ASN", "x25519_asn_test.json", Skip},
+		{"X25519 JWK", "x25519_jwk_test.json", Skip},
+		{"X25519 PEM", "x25519_pem_test.json", Skip},
+		{"XCHACHA20-POLY1305", "xchacha20_poly1305_test.json", Normal},
 	}
 
 	success := true
@@ -2576,7 +2598,6 @@ func main() {
 	skip := regexp.MustCompile(`_(p1363|sha3|sha512_(224|256))_`)
 
 	for _, test := range tests {
-		webcrypto := test.name == "ECDSAWebCrypto" || test.name == "ECDHWebCrypto"
 		tvs, err := filepath.Glob(filepath.Join(testVectorPath, test.pattern))
 		if err != nil {
 			log.Fatalf("Failed to glob %v test vectors: %v", test.name, err)
@@ -2586,11 +2607,11 @@ func main() {
 		// 	log.Fatalf("Failed to find %v test vectors at %q\n", test.name, testVectorPath)
 		// }
 		for _, tv := range tvs {
-			if skip.Match([]byte(tv)) {
+			if test.variant == Skip || (test.variant == Normal && skip.Match([]byte(tv))) {
 				fmt.Printf("INFO: Skipping tests from \"%s\"\n", strings.TrimPrefix(tv, testVectorPath+"/"))
 				continue
 			}
-			if !runTestVectors(tv, webcrypto) {
+			if !runTestVectors(tv, test.variant) {
 				success = false
 			}
 		}
