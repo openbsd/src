@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.108 2019/12/03 15:59:24 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.109 2019/12/03 16:02:49 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -68,13 +68,28 @@ type testVariant int
 
 const (
 	Normal    testVariant = 0
-	P1363     testVariant = 1
-	Webcrypto testVariant = 2
-	Asn1      testVariant = 3
-	Pem       testVariant = 4
-	Jwk       testVariant = 5
-	Skip      testVariant = 6
+	EcPoint   testVariant = 1
+	P1363     testVariant = 2
+	Webcrypto testVariant = 3
+	Asn1      testVariant = 4
+	Pem       testVariant = 5
+	Jwk       testVariant = 6
+	Skip      testVariant = 7
 )
+
+func (variant testVariant) String() string {
+	variants := [...]string{
+		"Normal",
+		"EcPoint",
+		"P1363",
+		"Webcrypto",
+		"Asn1",
+		"Pem",
+		"Jwk",
+		"Skip",
+	}
+	return variants[variant]
+}
 
 var acceptableAudit = false
 var acceptableComments map[string]int
@@ -1363,7 +1378,7 @@ func runDSATestGroup(algorithm string, wtg *wycheproofTestGroupDSA) bool {
 	return success
 }
 
-func runECDHTest(nid int, doECpoint bool, wt *wycheproofTestECDH) bool {
+func runECDHTest(nid int, variant testVariant, wt *wycheproofTestECDH) bool {
 	privKey := C.EC_KEY_new_by_curve_name(C.int(nid))
 	if privKey == nil {
 		log.Fatalf("EC_KEY_new_by_curve_name failed")
@@ -1403,7 +1418,7 @@ func runECDHTest(nid int, doECpoint bool, wt *wycheproofTestECDH) bool {
 
 	p := (*C.uchar)(Cpub)
 	var pubKey *C.EC_KEY
-	if doECpoint {
+	if variant == EcPoint {
 		pubKey = C.EC_KEY_new_by_curve_name(C.int(nid))
 		if pubKey == nil {
 			log.Fatal("EC_KEY_new_by_curve_name failed")
@@ -1462,12 +1477,7 @@ func runECDHTest(nid int, doECpoint bool, wt *wycheproofTestECDH) bool {
 	return success
 }
 
-func runECDHTestGroup(algorithm string, wtg *wycheproofTestGroupECDH) bool {
-	doECpoint := false
-	if wtg.Encoding == "ecpoint" {
-		doECpoint = true
-	}
-
+func runECDHTestGroup(algorithm string, variant testVariant, wtg *wycheproofTestGroupECDH) bool {
 	// XXX
 	if wtg.Curve == "secp224k1" {
 		fmt.Printf("INFO: skipping %v test group %v with curve %v and %v encoding...\n", algorithm, wtg.Type, wtg.Curve, wtg.Encoding)
@@ -1484,7 +1494,7 @@ func runECDHTestGroup(algorithm string, wtg *wycheproofTestGroupECDH) bool {
 
 	success := true
 	for _, wt := range wtg.Tests {
-		if !runECDHTest(nid, doECpoint, wt) {
+		if !runECDHTest(nid, variant, wt) {
 			success = false
 		}
 	}
@@ -2500,7 +2510,7 @@ func runTestVectors(path string, variant testVariant) bool {
 					success = false
 				}
 			default:
-				if !runECDHTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDH)) {
+				if !runECDHTestGroup(wtv.Algorithm, variant, wtg.(*wycheproofTestGroupECDH)) {
 					success = false
 				}
 			}
@@ -2577,7 +2587,8 @@ func main() {
 		{"DSA", "dsa_*test.json", Normal},
 		{"DSA", "dsa_*_p1363_test.json", Skip},
 		{"ECDH", "ecdh_test.json", Normal},
-		{"ECDH", "ecdh_[^w]*test.json", Normal},
+		{"ECDH", "ecdh_[^w_]*_test.json", Normal},
+		{"ECDH EcPoint", "ecdh_*_ecpoint_test.json", EcPoint},
 		{"ECDH webcrypto", "ecdh_webcrypto_test.json", Webcrypto},
 		{"ECDSA", "ecdsa_test.json", Normal},
 		{"ECDSA", "ecdsa_[^w]*test.json", Normal},
@@ -2595,7 +2606,7 @@ func main() {
 
 	success := true
 
-	skip := regexp.MustCompile(`_(p1363|sha3|sha512_(224|256))_`)
+	skipNormal := regexp.MustCompile(`_(ecpoint|p1363|sha3|sha512_(224|256))_`)
 
 	for _, test := range tests {
 		tvs, err := filepath.Glob(filepath.Join(testVectorPath, test.pattern))
@@ -2607,7 +2618,7 @@ func main() {
 		// 	log.Fatalf("Failed to find %v test vectors at %q\n", test.name, testVectorPath)
 		// }
 		for _, tv := range tvs {
-			if test.variant == Skip || (test.variant == Normal && skip.Match([]byte(tv))) {
+			if test.variant == Skip || (test.variant == Normal && skipNormal.Match([]byte(tv))) {
 				fmt.Printf("INFO: Skipping tests from \"%s\"\n", strings.TrimPrefix(tv, testVectorPath+"/"))
 				continue
 			}
