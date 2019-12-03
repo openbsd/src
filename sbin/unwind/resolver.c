@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.95 2019/12/03 16:16:25 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.96 2019/12/03 16:17:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1416,19 +1416,19 @@ check_resolver_done(struct uw_resolver *res, void *arg, int rcode,
 
 	checked_resolver->check_running--;
 
-	/* XXX move to verbose2 logging */
-	log_debug("%s: %s rcode: %d", __func__,
-	    uw_resolver_type_str[checked_resolver->type], rcode);
-
 	prev_state = checked_resolver->state;
 
 	if (answer_len < LDNS_HEADER_SIZE) {
 		checked_resolver->state = DEAD;
-		log_warnx("bad packet: too short");
+		log_warnx("%s: bad packet: too short", __func__);
 		goto out;
 	}
 
 	if (rcode == LDNS_RCODE_SERVFAIL) {
+		log_debug("%s: %s%s rcode: SERVFAIL", __func__,
+		    uw_resolver_type_str[checked_resolver->type], res->oppdot ?
+		    " (OppDot)" : "");
+
 		if (res->oppdot == checked_resolver->oppdot) {
 			checked_resolver->state = DEAD;
 			if (checked_resolver->oppdot) {
@@ -1462,11 +1462,6 @@ check_resolver_done(struct uw_resolver *res, void *arg, int rcode,
 		}
 	}
 
-	if ((str = sldns_wire2str_pkt(answer_packet, answer_len)) != NULL) {
-		log_debug("%s", str);
-		free(str);
-	}
-
 	if (sec == SECURE) {
 		checked_resolver->state = VALIDATING;
 		if (!(evtimer_pending(&trust_anchor_timer, NULL)))
@@ -1480,6 +1475,16 @@ check_resolver_done(struct uw_resolver *res, void *arg, int rcode,
 		checked_resolver->state = RESOLVING;
 	} else
 		checked_resolver->state = DEAD; /* we know the root exists */
+
+	log_debug("%s: %s%s: %s", __func__,
+	    uw_resolver_type_str[checked_resolver->type], res->oppdot ?
+	    " (OppDot)" : "", uw_resolver_state_str[checked_resolver->state]);
+
+	if (log_getverbose() & OPT_VERBOSE2 && (str =
+	    sldns_wire2str_pkt(answer_packet, answer_len)) != NULL) {
+		log_debug("%s", str);
+		free(str);
+	}
 
 out:
 	if (!checked_resolver->stop && checked_resolver->state == DEAD) {
