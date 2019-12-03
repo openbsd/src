@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.252 2019/12/02 17:53:05 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.253 2019/12/03 13:25:57 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1051,12 +1051,15 @@ scsi_start(struct scsi_link *link, int type, int flags)
 }
 
 int
-scsi_mode_sense(struct scsi_link *link, int byte2, int page,
+scsi_mode_sense(struct scsi_link *link, int byte2, int pg_code,
     struct scsi_mode_header *data, size_t len, int flags, int timeout)
 {
-	struct scsi_mode_sense *cmd;
-	struct scsi_xfer *xs;
-	int error;
+	struct scsi_mode_sense	*cmd;
+	struct scsi_xfer	*xs;
+	int			 error;
+#ifdef SCSIDEBUG
+	size_t			 bytes;
+#endif /* SCSIDEBUG */
 
 	xs = scsi_xs_get(link, flags | SCSI_DATA_IN);
 	if (xs == NULL)
@@ -1071,12 +1074,12 @@ scsi_mode_sense(struct scsi_link *link, int byte2, int page,
 	 * that checks for bogus values of 0 will work in case the mode sense
 	 * fails.
 	 */
-	bzero(data, len);
+	memset(data, 0, len);
 
 	cmd = (struct scsi_mode_sense *)xs->cmd;
 	cmd->opcode = MODE_SENSE;
 	cmd->byte2 = byte2;
-	cmd->page = page;
+	cmd->page = pg_code;
 
 	if (len > 0xff)
 		len = 0xff;
@@ -1085,23 +1088,36 @@ scsi_mode_sense(struct scsi_link *link, int byte2, int page,
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
 
-	SC_DEBUG(link, SDEV_DB2, ("scsi_mode_sense: page %#x, error = %d\n",
-	    page, error));
+#ifdef SCSIDEBUG
+	sc_print_addr(link);
+	if (error == 0) {
+		bytes = sizeof(data->data_length) + data->data_length;
+		if (bytes < len)
+			len = bytes;
+		printf("got %zu of %zu bytes of mode sense (6) page %d data:\n",
+		    len, bytes, pg_code);
+		scsi_show_mem((u_char *)data, len);
+	} else
+		printf("mode sense (6) page %d not available\n", pg_code);
+#endif /* SCSIDEBUG */
 
-	return (error);
+	return error;
 }
 
 int
-scsi_mode_sense_big(struct scsi_link *link, int byte2, int page,
+scsi_mode_sense_big(struct scsi_link *link, int byte2, int pg_code,
     struct scsi_mode_header_big *data, size_t len, int flags, int timeout)
 {
-	struct scsi_mode_sense_big *cmd;
-	struct scsi_xfer *xs;
-	int error;
+	struct scsi_mode_sense_big	*cmd;
+	struct scsi_xfer		*xs;
+	int				 error;
+#ifdef SCSIDEBUG
+	size_t				 bytes;
+#endif /* SCSIDEBUG */
 
 	xs = scsi_xs_get(link, flags | SCSI_DATA_IN);
 	if (xs == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)data;
 	xs->datalen = len;
@@ -1112,12 +1128,12 @@ scsi_mode_sense_big(struct scsi_link *link, int byte2, int page,
 	 * that checks for bogus values of 0 will work in case the mode sense
 	 * fails.
 	 */
-	bzero(data, len);
+	memset(data, 0, len);
 
 	cmd = (struct scsi_mode_sense_big *)xs->cmd;
 	cmd->opcode = MODE_SENSE_BIG;
 	cmd->byte2 = byte2;
-	cmd->page = page;
+	cmd->page = pg_code;
 
 	if (len > 0xffff)
 		len = 0xffff;
@@ -1126,10 +1142,20 @@ scsi_mode_sense_big(struct scsi_link *link, int byte2, int page,
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
 
-	SC_DEBUG(link, SDEV_DB2,
-	    ("scsi_mode_sense_big: page %#x, error = %d\n", page, error));
+#ifdef SCSIDEBUG
+	sc_print_addr(link);
+	if (error == 0) {
+		bytes = sizeof(data->data_length) + _2btol(data->data_length);
+		if (bytes < len)
+			len = bytes;
+		printf("got %zu bytes of %zu bytes of mode sense (10) page %d data:\n",
+		    len, bytes, pg_code);
+		scsi_show_mem((u_char *)data, len);
+	} else
+		printf("mode sense (10) page %d not available\n", pg_code);
+#endif /* SCSIDEBUG */
 
-	return (error);
+	return error;
 }
 
 void *
