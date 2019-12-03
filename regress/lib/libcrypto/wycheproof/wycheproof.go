@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.110 2019/12/03 16:05:14 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.111 2019/12/03 16:07:22 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -2574,9 +2574,9 @@ func main() {
 	acceptableFlags = make(map[string]int)
 
 	// TODO: Investigate the following new test vectors:
+	//	dsa_*_p1363_test.json
 	//	primality_test.json
 	//	x25519_{asn,jwk,pem}_test.json
-	// What's up with the *_p1363_test.json files?
 	tests := []struct {
 		name    string
 		pattern string
