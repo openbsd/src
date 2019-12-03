@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwindctl.c,v 1.21 2019/12/03 14:35:05 otto Exp $	*/
+/*	$OpenBSD: unwindctl.c,v 1.22 2019/12/03 16:18:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -192,7 +192,10 @@ main(int argc, char *argv[])
 int
 show_status_msg(struct imsg *imsg)
 {
-	static int			 header, autoconf_forwarders;
+	static int			 header, autoconf_forwarders, last_src;
+	static int			 label_len, line_len;
+	static uint32_t			 last_if_index;
+	static char			 fwd_line[80];
 	struct ctl_resolver_info	*cri;
 	struct ctl_forwarder_info	*cfi;
 	char				 ifnamebuf[IFNAMSIZ];
@@ -220,12 +223,31 @@ show_status_msg(struct imsg *imsg)
 		cfi = imsg->data;
 		if (!autoconf_forwarders++)
 			printf("\nlearned forwarders:\n");
-		if_name = if_indextoname(cfi->if_index, ifnamebuf);
-		printf("%s - %s[%s]\n", cfi->ip,
-		    cfi->src == RTP_PROPOSAL_DHCLIENT ? "DHCP" : "SLAAC",
-		    if_name ? if_name : "unknown");
+		if (cfi->if_index != last_if_index || cfi->src != last_src) {
+			if_name = if_indextoname(cfi->if_index, ifnamebuf);
+			if (fwd_line[0] != '\0') {
+				printf("%s\n", fwd_line);
+				fwd_line[0] = '\0';
+			}
+			label_len = snprintf(fwd_line, sizeof(fwd_line),
+			    "%s[%s]:", cfi->src == RTP_PROPOSAL_DHCLIENT ?
+			    " DHCP" : "SLAAC", if_name ? if_name : "unknown");
+			line_len = label_len;
+			last_if_index = cfi->if_index;
+			last_src = cfi->src;
+		}
+
+		if (line_len + 1 + strlen(cfi->ip) > sizeof(fwd_line)) {
+			printf("%s\n", fwd_line);
+			snprintf(fwd_line, sizeof(fwd_line), "%*s", label_len,
+			    " ");
+		}
+		strlcat(fwd_line, " ", sizeof(fwd_line));
+		line_len = strlcat(fwd_line, cfi->ip, sizeof(fwd_line));
 		break;
 	case IMSG_CTL_END:
+		if (fwd_line[0] != '\0')
+			printf("%s\n", fwd_line);
 		return (1);
 	default:
 		break;
