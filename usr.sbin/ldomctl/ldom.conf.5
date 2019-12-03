@@ -1,4 +1,4 @@
-.\" $OpenBSD: ldom.conf.5,v 1.8 2019/11/30 03:30:29 kn Exp $
+.\" $OpenBSD: ldom.conf.5,v 1.9 2019/12/03 21:07:03 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 30 2019 $
+.Dd $Mdocdate: December 3 2019 $
 .Dt LDOM.CONF 5 sparc64
 .Os
 .Sh NAME
@@ -55,6 +55,7 @@ Set the specified NVRAM variable for the domain.
 See
 .Xr eeprom 8
 for a list of OpenPROM variables.
+This keyword can be used multiple times.
 .It Ic vdisk Ar file
 The specified file is used to back a virtual disk of the guest
 domain.
