@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.94 2019/12/03 16:15:41 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.95 2019/12/03 16:16:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -491,8 +491,8 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 				    "%lu", __func__,
 				    IMSG_DATA_SIZE(imsg));
 			memcpy(&verbose, imsg.data, sizeof(verbose));
-			update_resolvers = (log_getverbose() & OPT_VERBOSE2)
-			    != (verbose & OPT_VERBOSE2);
+			update_resolvers = (log_getverbose() & OPT_VERBOSE3)
+			    != (verbose & OPT_VERBOSE3);
 			log_setverbose(verbose);
 			if (update_resolvers)
 				restart_resolvers();
@@ -1192,7 +1192,7 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 			return (NULL);
 		}
 
-		ub_ctx_debuglevel(res->ctx, log_getverbose() & OPT_VERBOSE2 ?
+		ub_ctx_debuglevel(res->ctx, log_getverbose() & OPT_VERBOSE3 ?
 		    UB_LOG_VERBOSE : UB_LOG_BRIEF);
 
 		TAILQ_FOREACH(ta, &trust_anchors, entry) {

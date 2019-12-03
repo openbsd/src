@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.43 2019/12/01 14:37:34 otto Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.44 2019/12/03 16:16:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -155,6 +155,8 @@ main(int argc, char *argv[])
 			csock = optarg;
 			break;
 		case 'v':
+			if (cmd_opts & OPT_VERBOSE2)
+				cmd_opts |= OPT_VERBOSE3;
 			if (cmd_opts & OPT_VERBOSE)
 				cmd_opts |= OPT_VERBOSE2;
 			cmd_opts |= OPT_VERBOSE;
@@ -170,9 +172,11 @@ main(int argc, char *argv[])
 		usage();
 
 	if (resolver_flag)
-		resolver(debug, cmd_opts & (OPT_VERBOSE | OPT_VERBOSE2));
+		resolver(debug, cmd_opts & (OPT_VERBOSE | OPT_VERBOSE2 |
+		    OPT_VERBOSE3));
 	else if (frontend_flag)
-		frontend(debug, cmd_opts & (OPT_VERBOSE | OPT_VERBOSE2));
+		frontend(debug, cmd_opts & (OPT_VERBOSE | OPT_VERBOSE2 |
+		    OPT_VERBOSE3));
 
 	if ((main_conf = parse_config(conffile)) == NULL)
 		exit(1);
@@ -194,7 +198,7 @@ main(int argc, char *argv[])
 		errx(1, "unknown user %s", UNWIND_USER);
 
 	log_init(debug, LOG_DAEMON);
-	log_setverbose(cmd_opts & OPT_VERBOSE);
+	log_setverbose(cmd_opts & (OPT_VERBOSE | OPT_VERBOSE2 | OPT_VERBOSE3));
 
 	if (!debug)
 		daemon(1, 0);
@@ -211,10 +215,10 @@ main(int argc, char *argv[])
 	/* Start children. */
 	resolver_pid = start_child(PROC_RESOLVER, saved_argv0,
 	    pipe_main2resolver[1], debug, cmd_opts & (OPT_VERBOSE |
-	    OPT_VERBOSE2));
+	    OPT_VERBOSE2 | OPT_VERBOSE3));
 	frontend_pid = start_child(PROC_FRONTEND, saved_argv0,
 	    pipe_main2frontend[1], debug, cmd_opts & (OPT_VERBOSE |
-	    OPT_VERBOSE2));
+	    OPT_VERBOSE2 | OPT_VERBOSE3));
 
 	uw_process = PROC_MAIN;
 	log_procinit(log_procnames[uw_process]);
@@ -369,6 +373,8 @@ start_child(int p, char *argv0, int fd, int debug, int verbose)
 	if (verbose & OPT_VERBOSE)
 		argv[argc++] = "-v";
 	if (verbose & OPT_VERBOSE2)
+		argv[argc++] = "-v";
+	if (verbose & OPT_VERBOSE3)
 		argv[argc++] = "-v";
 	argv[argc++] = NULL;
 

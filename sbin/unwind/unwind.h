@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.42 2019/12/02 06:26:52 otto Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.43 2019/12/03 16:16:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -36,7 +36,8 @@
 
 #define OPT_VERBOSE	0x00000001
 #define OPT_VERBOSE2	0x00000002
-#define OPT_NOACTION	0x00000004
+#define OPT_VERBOSE3	0x00000004
+#define OPT_NOACTION	0x00000008
 
 #define	ROOT_DNSKEY_TTL	172800	/* TTL from authority */
 #define	KSK2017		".	172800	IN	DNSKEY	257 3 8 AwEAAaz/tAm8yTn4Mfeh5eyI96WSVexTBAvkMgJzkKTOiW1vkIbzxeF3+/4RgWOq7HrxRixHlFlExOLAJr5emLvN7SWXgnLh4+B5xQlNVz8Og8kvArMtNROxVQuCaSnIDdD5LKyWbRd2n9WGe2R8PzgCmr3EgVLrjyBxWezF0jLHwVN8efS3rCj/EWgvIWgb9tarpVUDK/b58Da+sqqls3eNbuv7pr+eoZG+SrDK6nWeL3c6H5Apxz7LjVc1uTIdsIXxuOLYA4/ilBmSVIzuDWfdRUfhHdY6+cn8HFRm+2hM8AnXGXws9555KrUB5qihylGa8subX2Nn6UwNR1AkUTV74bU="
