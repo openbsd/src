@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.255 2019/12/02 14:01:26 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.256 2019/12/04 08:28:29 mlarkin Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3620,7 +3620,7 @@ uvm_share(struct vm_map *dstmap, vaddr_t dstaddr, vm_prot_t prot,
 	int ret = 0;
 	vaddr_t unmap_end;
 	vaddr_t dstva;
-	vsize_t off, len, n = sz;
+	vsize_t s_off, len, n = sz, remain;
 	struct vm_map_entry *first = NULL, *last = NULL;
 	struct vm_map_entry *src_entry, *psrc_entry = NULL;
 	struct uvm_map_deadq dead;
@@ -3641,6 +3641,7 @@ uvm_share(struct vm_map *dstmap, vaddr_t dstaddr, vm_prot_t prot,
 		goto exit_unlock;
 	}
 
+	dstva = dstaddr;
 	unmap_end = dstaddr;
 	for (; src_entry != NULL;
 	    psrc_entry = src_entry,
@@ -3658,23 +3659,32 @@ uvm_share(struct vm_map *dstmap, vaddr_t dstaddr, vm_prot_t prot,
 			panic("uvm_share: non-copy_on_write map entries "
 			    "marked needs_copy (illegal)");
 
-		dstva = dstaddr;
-		if (src_entry->start > srcaddr) {
-			dstva += src_entry->start - srcaddr;
-			off = 0;
-		} else
-			off = srcaddr - src_entry->start;
+		/*
+		 * srcaddr > map entry start? means we are in the middle of a
+		 * map, so we calculate the offset to use in the source map.
+		 */
+		if (srcaddr > src_entry->start)
+			s_off = srcaddr - src_entry->start;
+		else if (srcaddr == src_entry->start)
+			s_off = 0;
+		else
+			panic("uvm_share: map entry start > srcaddr");
 
-		if (n < src_entry->end - src_entry->start)
+		remain = src_entry->end - src_entry->start - s_off;
+
+		/* Determine how many bytes to share in this pass */
+		if (n < remain)
 			len = n;
 		else
-			len = src_entry->end - src_entry->start;
-		n -= len;
+			len = remain;
 
-		if (uvm_mapent_share(dstmap, dstva, len, off, prot, prot,
+		if (uvm_mapent_share(dstmap, dstva, len, s_off, prot, prot,
 		    srcmap, src_entry, &dead) == NULL)
 			break;
 
+		n -= len;
+		dstva += len;
+		srcaddr += len;
 		unmap_end = dstva + len;
 		if (n == 0)
 			goto exit_unlock;
