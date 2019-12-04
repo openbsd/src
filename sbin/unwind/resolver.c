@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.98 2019/12/04 13:56:09 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.99 2019/12/04 21:02:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -306,6 +306,11 @@ static const char * const	 as112_zones[] = {
 	/* RFC3849 */
 	"8.B.D.0.1.0.0.2.ip6.arpa. transparent"
 };
+
+const char	 bogus_past[]	= "validation failure <. NS IN>: signature "
+				  "expired";
+const char	 bogus_future[]	= "validation failure <. NS IN>: signature "
+				  "before inception date";
 
 void
 resolver_sig_handler(int sig, short event, void *arg)
@@ -1421,6 +1426,7 @@ check_resolver_done(struct uw_resolver *res, void *arg, int rcode,
 	struct uw_resolver	*checked_resolver = arg;
 	struct timeval		 tv = {0, 1};
 	enum uw_resolver_state	 prev_state;
+	int			 bogus_time = 0;
 	char			*str;
 
 	checked_resolver->check_running--;
@@ -1478,6 +1484,10 @@ check_resolver_done(struct uw_resolver *res, void *arg, int rcode,
 	 } else if (rcode == LDNS_RCODE_NOERROR &&
 	    LDNS_RCODE_WIRE((uint8_t*)answer_packet) == LDNS_RCODE_NOERROR) {
 		if (why_bogus) {
+			bogus_time = strncmp(why_bogus, bogus_past,
+			    sizeof(bogus_past) - 1) == 0 || strncmp(why_bogus,
+			    bogus_future, sizeof(bogus_future) - 1) == 0;
+
 			log_warnx("%s: %s", uw_resolver_type_str[
 			    checked_resolver->type], why_bogus);
 		}
@@ -1496,8 +1506,9 @@ check_resolver_done(struct uw_resolver *res, void *arg, int rcode,
 	}
 
 out:
-	if (!checked_resolver->stop && checked_resolver->state == DEAD) {
-		if (prev_state == DEAD)
+	if (!checked_resolver->stop && (checked_resolver->state == DEAD ||
+	    bogus_time)) {
+		if (prev_state == DEAD || bogus_time)
 			checked_resolver->check_tv.tv_sec *= 2;
 		else
 			checked_resolver->check_tv.tv_sec = RESOLVER_CHECK_SEC;
