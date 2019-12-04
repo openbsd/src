@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd_auth.h,v 1.1 2015/09/12 15:20:14 guenther Exp $	*/
+/*	$OpenBSD: bsd_auth.h,v 1.2 2019/12/04 09:50:47 deraadt Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -19,6 +19,10 @@
 #define _LIBC_BSD_AUTH_H_
 
 #include_next <bsd_auth.h>
+
+__BEGIN_HIDDEN_DECLS
+int _auth_validuser(const char *name);
+__END_HIDDEN_DECLS
 
 PROTO_NORMAL(auth_approval);
 PROTO_NORMAL(auth_call);
