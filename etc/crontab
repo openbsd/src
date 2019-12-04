@@ -1,4 +1,4 @@
-#	$OpenBSD: crontab,v 1.24 2019/12/04 14:49:19 job Exp $
+#	$OpenBSD: crontab,v 1.25 2019/12/04 15:07:51 job Exp $
 #
 # /var/cron/tabs/root - root's crontab
 #
@@ -19,4 +19,4 @@ HOME=/var/log
 30	5	1	*	*	/bin/sh /etc/monthly
 #0	*	*	*	*	sleep $((RANDOM \% 2048)) && /usr/libexec/spamd-setup
 
-#0	9	*	*	*	-n sleep $((RANDOM \% 4096)) rpki-client -v && bgpctl reload
+#0	9	*	*	*	-n sleep $((RANDOM \% 4096)) && rpki-client -v && bgpctl reload
