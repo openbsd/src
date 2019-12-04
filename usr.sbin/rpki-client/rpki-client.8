@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.14 2019/11/30 22:55:22 jmc Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.15 2019/12/04 16:42:34 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 30 2019 $
+.Dd $Mdocdate: December 4 2019 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
 .Nm rpki-client
-.Nd RPKI validation for bgpd Route Origin Validation
+.Nd RPKI validator to support BGP Origin Validation in bgpd
 .Sh SYNOPSIS
 .Nm
 .Op Fl Bcfjnov
@@ -31,11 +31,19 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility verifies Route Origination Authorizations (ROAs) and produces
-a list of all valid prefixes and their source-as.
-It uses
+utility queries the RPKI repository system with
 .Xr openrsync 1
-to fetch certificates, manifests, revocation lists and ROAs.
+to fetch all X.509 certificates, manifests, and revocation lists under a given
+.Em Trust Anchor .
+.Nm
+subsequently validates each
+.Em Route Origin Authorization Pq ROA
+by constructing and verifying a certification path for the certificate
+associated with the ROA (including checking relevant CRLs).
+.Nm
+produces lists of the
+.Em Validated ROA Payloads Pq VRPs
+in various formats.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -95,7 +103,9 @@ option use
 .Ar table
 as roa table name instead of the default 'roa'.
 .It Fl t Ar tal
-Specify a trust anchor locator (TAL) file to be used.
+Specify a
+.Em Trust Anchor Location Pq TAL
+file to be used.
 This option can be used multiple times to load multiple TALs.
 By default
 .Nm
