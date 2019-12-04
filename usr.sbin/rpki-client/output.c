@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.2 2019/12/04 23:01:54 benno Exp $ */
+/*	$OpenBSD: output.c,v 1.3 2019/12/04 23:03:05 benno Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -77,7 +77,7 @@ outputfiles(struct vrp_tree *v)
 		}
 	}
 
-	return (rc);
+	return rc;
 }
 
 FILE *
@@ -101,7 +101,7 @@ output_createtmp(char *name)
 	f = fdopen(fd, "w");
 	if (f == NULL)
 		err(1, "fdopen");
-	return (f);
+	return f;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bgpd.c,v 1.15 2019/12/04 12:40:17 deraadt Exp $ */
+/*	$OpenBSD: output-bgpd.c,v 1.16 2019/12/04 23:03:05 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -27,7 +27,7 @@ output_bgpd(FILE *out, struct vrp_tree *vrps)
 	struct vrp	*v;
 
 	if (fprintf(out, "roa-set {\n") < 0)
-		return (-1);
+		return -1;
 
 	RB_FOREACH(v, vrp_tree, vrps) {
 		ip_addr_print(&v->addr, v->afi, buf1, sizeof(buf1));
@@ -37,10 +37,10 @@ output_bgpd(FILE *out, struct vrp_tree *vrps)
 		else
 			buf2[0] = '\0';
 		if (fprintf(out, "\t%s %ssource-as %u\n", buf1, buf2, v->asid) < 0)
-			return (-1);
+			return -1;
 	}
 
 	if (fprintf(out, "}\n") < 0)
-		return (-1);
-	return (0);
+		return -1;
+	return 0;
 }

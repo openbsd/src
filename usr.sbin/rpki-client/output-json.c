@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.5 2019/12/04 12:40:17 deraadt Exp $ */
+/*	$OpenBSD: output-json.c,v 1.6 2019/12/04 23:03:05 benno Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -28,14 +28,14 @@ output_json(FILE *out, struct vrp_tree *vrps)
 	int		 first = 1;
 
 	if (fprintf(out, "{\n\t\"roas\": [\n") < 0)
-		return (-1);
+		return -1;
 
 	RB_FOREACH(v, vrp_tree, vrps) {
 		if (first)
 			first = 0;
 		else {
 			if (fprintf(out, ",\n") < 0)
-				return (-1);
+				return -1;
 		}
 
 		ip_addr_print(&v->addr, v->afi, buf, sizeof(buf));
@@ -43,10 +43,10 @@ output_json(FILE *out, struct vrp_tree *vrps)
 		if (fprintf(out, "\t\t{ \"asn\": \"AS%u\", \"prefix\": \"%s\", "
 		    "\"maxLength\": %u, \"ta\": \"%s\" }",
 		    v->asid, buf, v->maxlength, v->tal) < 0)
-			return (-1);
+			return -1;
 	}
 
 	if (fprintf(out, "\n\t]\n}\n") < 0)
-		return (-1);
-	return (0);
+		return -1;
+	return 0;
 }
