@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.116 2019/11/16 11:07:43 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.117 2019/12/04 10:47:38 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -148,6 +148,16 @@ OpenBSD::Auto::cache(cache_directory,
 		my $self = shift;
 		if (defined $ENV{PKG_CACHE}) {
 			return $ENV{PKG_CACHE};
+		} else {
+			return undef;
+		}
+	});
+
+OpenBSD::Auto::cache(debug_cache_directory,
+	sub {
+		my $self = shift;
+		if (defined $ENV{DEBUG_PKG_CACHE}) {
+			return $ENV{DEBUG_PKG_CACHE};
 		} else {
 			return undef;
 		}
@@ -1039,7 +1049,57 @@ sub process_set
 	}
 	$set->cleanup;
 	$state->tracker->done($set);
+	if (defined $state->debug_cache_directory) {
+		$self->grab_debug_packages($set, $state);
+	}
 	return ();
+}
+
+sub grab_debug_package
+{
+	my ($self, $pkg, $state) = @_;
+	my $o = $state->locator->find($pkg);
+	return if !defined $o;
+	my $d = $state->debug_cache_directory;
+	require OpenBSD::Temp;
+	my ($fh, $name) = OpenBSD::Temp::permanent_file($d, "debug-pkg");
+	if (!defined $fh) {
+		$state->errsay(OpenBSD::Temp->last_error);
+		return;
+	}
+	my $r = fork;
+	if (!defined $r) {
+		$state->fatal("Cannot fork: #1", $!);
+	} elsif ($r == 0) {
+		$DB::inhibit_exit = 0;
+		open(STDOUT, '>&', $fh);
+		open(STDERR, '>>', $o->{errors});
+		$o->{repository}->grab_object($o);
+	} else {
+		close($fh);
+		waitpid($r, 0);
+		my $c = $?;
+		$o->{repository}->parse_problems($o->{errors}, 1, $o);
+		if ($c == 0) {
+			rename($name, "$d/$pkg.tgz");
+		} else {
+			unlink($name);
+			$self->errsay("Grabbing debug package failed: #1",
+				$state->child_error($c));
+		}
+	}
+}
+
+sub grab_debug_packages
+{
+	my ($self, $set, $state) = @_;
+	for my $p ($set->newer_names) {
+		next if $p =~ m/^debug\-/;
+		my $dbg = "debug-$p";
+		next if $state->tracker->is_known($dbg);
+		next if OpenBSD::PackageInfo::is_installed($dbg);
+		$self->grab_debug_package($dbg, $state);
+	}
 }
 
 sub inform_user_of_problems
