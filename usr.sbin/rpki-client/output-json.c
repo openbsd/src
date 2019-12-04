@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.4 2019/12/02 02:11:13 deraadt Exp $ */
+/*	$OpenBSD: output-json.c,v 1.5 2019/12/04 12:40:17 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -20,32 +20,33 @@
 
 #include "extern.h"
 
-void
-output_json(struct vrp_tree *vrps)
+int
+output_json(FILE *out, struct vrp_tree *vrps)
 {
 	char		 buf[64];
 	struct vrp	*v;
 	int		 first = 1;
-	FILE		*out;
 
-	out = output_createtmp("json");
-
-	fprintf(out, "{\n\t\"roas\": [\n");
+	if (fprintf(out, "{\n\t\"roas\": [\n") < 0)
+		return (-1);
 
 	RB_FOREACH(v, vrp_tree, vrps) {
 		if (first)
 			first = 0;
-		else
-			fprintf(out, ",\n");
+		else {
+			if (fprintf(out, ",\n") < 0)
+				return (-1);
+		}
 
 		ip_addr_print(&v->addr, v->afi, buf, sizeof(buf));
 
-		fprintf(out, "\t\t{ \"asn\": \"AS%u\", \"prefix\": \"%s\", "
+		if (fprintf(out, "\t\t{ \"asn\": \"AS%u\", \"prefix\": \"%s\", "
 		    "\"maxLength\": %u, \"ta\": \"%s\" }",
-		    v->asid, buf, v->maxlength, v->tal);
+		    v->asid, buf, v->maxlength, v->tal) < 0)
+			return (-1);
 	}
 
-	fprintf(out, "\n\t]\n}\n");
-
-	output_finish(out);
+	if (fprintf(out, "\n\t]\n}\n") < 0)
+		return (-1);
+	return (0);
 }

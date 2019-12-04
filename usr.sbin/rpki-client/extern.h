@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.21 2019/12/02 02:11:13 deraadt Exp $ */
+/*	$OpenBSD: extern.h,v 1.22 2019/12/04 12:40:17 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -362,13 +362,24 @@ char		*x509_crl_get_aki(X509_CRL *);
 
 /* Output! */
 
+extern int	 outformats;
+#define FORMAT_OPENBGPD	0x01
+#define FORMAT_BIRD	0x02
+#define FORMAT_CSV	0x04
+#define FORMAT_JSON	0x08
+extern char*	 outputdir;
+
+int		 outputfiles(struct vrp_tree *v);
 FILE		*output_createtmp(char *);
 void		 output_cleantmp(void);
 void		 output_finish(FILE *);
-void		 output_bgpd(struct vrp_tree *);
-void		 output_bird(struct vrp_tree *, const char *);
-void		 output_csv(struct vrp_tree *);
-void		 output_json(struct vrp_tree *);
+int		 output_bgpd(FILE *, struct vrp_tree *);
+int		 output_bird(FILE *, struct vrp_tree *);
+int		 output_csv(FILE *, struct vrp_tree *);
+int		 output_json(FILE *, struct vrp_tree *);
+
+void	logx(const char *fmt, ...)
+		    __attribute__((format(printf, 1, 2)));
 
 #define		_PATH_ROA_DIR	"/var/db/rpki-client"
 

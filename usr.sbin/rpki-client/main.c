@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.52 2019/12/02 02:11:13 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.53 2019/12/04 12:40:17 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -70,14 +70,6 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
-
-char		*outputdir = _PATH_ROA_DIR;
-FILE		*output = NULL;
-char		output_tmpname[PATH_MAX];
-char		output_name[PATH_MAX];
-
-void		 sig_handler(int);
-void		 set_signal_handler(void);
 
 /*
  * Maximum number of TAL files we'll load.
@@ -165,17 +157,11 @@ TAILQ_HEAD(entityq, entity);
 static void	proc_parser(int, int) __attribute__((noreturn));
 static void	proc_rsync(char *, char *, int, int)
 		    __attribute__((noreturn));
-static void	logx(const char *fmt, ...)
-		    __attribute__((format(printf, 1, 2)));
 static void	build_chain(const struct auth *, STACK_OF(X509) **);
 static void	build_crls(const struct auth *, struct crl_tree *,
 		    STACK_OF(X509_CRL) **);
 
-int outformats;
-#define FORMAT_OPENBGPD	0x01
-#define FORMAT_BIRD	0x02
-#define FORMAT_CSV	0x04
-#define FORMAT_JSON	0x08
+const char	*bird_tablename = "roa";
 
 int	 verbose;
 
@@ -183,7 +169,7 @@ int	 verbose;
  * Log a message to stderr if and only if "verbose" is non-zero.
  * This uses the err(3) functionality.
  */
-static void
+void
 logx(const char *fmt, ...)
 {
 	va_list		 ap;
@@ -1417,7 +1403,6 @@ main(int argc, char *argv[])
 	char		*rsync_prog = "openrsync";
 	char		*bind_addr = NULL;
 	const char	*tals[TALSZ_MAX];
-	const char	*tablename = "roa";
 	struct vrp_tree	 v = RB_INITIALIZER(&v);
 
 	/* If started as root, priv-drop to _rpki-client */
@@ -1469,7 +1454,7 @@ main(int argc, char *argv[])
 			tals[talsz++] = optarg;
 			break;
 		case 'T':
-			tablename = optarg;
+			bird_tablename = optarg;
 			break;
 		case 'v':
 			verbose++;
@@ -1661,17 +1646,8 @@ main(int argc, char *argv[])
 		rc = 1;
 	}
 
-	atexit(output_cleantmp);
-	set_signal_handler();
-
-	if (outformats & FORMAT_OPENBGPD)
-		output_bgpd(&v);
-	if (outformats & FORMAT_BIRD)
-		output_bird(&v, tablename);
-	if (outformats & FORMAT_CSV)
-		output_csv(&v);
-	if (outformats & FORMAT_JSON)
-		output_json(&v);
+	if (outputfiles(&v))
+		rc = 1;
 
 	logx("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)",
 	    stats.roas, stats.roas_fail, stats.roas_invalid);
@@ -1703,78 +1679,4 @@ usage:
 	    "usage: rpki-client [-Bcfjnov] [-b bind_addr] [-e rsync_prog]\n"
 	    "            [-T table] [-t tal] [outputdir]\n");
 	return 1;
-}
-
-FILE *
-output_createtmp(char *name)
-{
-	FILE *f;
-	int fd, r;
-
-	r = snprintf(output_name, sizeof output_name,
-	    "%s/%s", outputdir, name);
-	if (r < 0 || r > (int)sizeof(output_name))
-		err(1, "path too long");
-	r = snprintf(output_tmpname, sizeof output_tmpname,
-	    "%s.XXXXXXXXXXX", output_name);
-	if (r < 0 || r > (int)sizeof(output_tmpname))
-		err(1, "path too long");
-	fd = mkostemp(output_tmpname, O_CLOEXEC);
-	if (fd == -1)
-		err(1, "mkostemp");
-	(void) fchmod(fd, 0644);
-	f = fdopen(fd, "w");
-	if (f == NULL)
-		err(1, "fdopen");
-	return (f);
-}
-
-void
-output_finish(FILE *out)
-{
-	fclose(out);
-
-	rename(output_tmpname, output_name);
-	output_tmpname[0] = '\0';
-}
-
-void
-output_cleantmp(void)
-{
-	if (*output_tmpname)
-		unlink(output_tmpname);
-	output_tmpname[0] = '\0';
-}
-
-/*
- * Signal handler that clears the temporary files.
- */
-void
-sig_handler(int sig __unused)
-{
-	output_cleantmp();
-	_exit(2);
-}
-
-/*
- * Set signal handler on panic signals.
- */
-void
-set_signal_handler(void)
-{
-	struct sigaction sa;
-	int i, signals[] = {SIGTERM, SIGHUP, SIGINT, SIGUSR1, SIGUSR2,
-	    SIGPIPE, SIGXCPU, SIGXFSZ, 0};
-
-	memset(&sa, 0, sizeof(sa));
-	sigfillset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	sa.sa_handler = sig_handler;
-
-	for (i = 0; signals[i] != 0; i++) {
-		if (sigaction(signals[i], &sa, NULL) == -1) {
-			warn("sigaction(%s)", strsignal(signals[i]));
-			continue;
-		}
-	}
 }

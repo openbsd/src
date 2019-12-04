@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bird.c,v 1.4 2019/12/02 02:11:13 deraadt Exp $ */
+/*	$OpenBSD: output-bird.c,v 1.5 2019/12/04 12:40:17 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -20,24 +20,24 @@
 
 #include "extern.h"
 
-void
-output_bird(struct vrp_tree *vrps, const char *tablename)
+int
+output_bird(FILE *out, struct vrp_tree *vrps)
 {
+	extern		const char *bird_tablename;
 	char		 buf[64];
 	struct vrp	*v;
-	FILE		*out;
 
-	out = output_createtmp("bird");
-
-	fprintf(out, "roa table %s {\n", tablename);
+	if (fprintf(out, "roa table %s {\n", bird_tablename) < 0)
+		return (-1);
 
 	RB_FOREACH(v, vrp_tree, vrps) {
 		ip_addr_print(&v->addr, v->afi, buf, sizeof(buf));
-		fprintf(out, "\troa %s max %u as %u;\n", buf, v->maxlength,
-		    v->asid);
+		if (fprintf(out, "\troa %s max %u as %u;\n", buf, v->maxlength,
+		    v->asid) < 0)
+		return (-1);
 	}
 
-	fprintf(out, "}\n");
-
-	output_finish(out);
+	if (fprintf(out, "}\n") < 0)
+		return (-1);
+	return (0);
 }
