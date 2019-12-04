@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.71 2019/06/28 13:35:01 deraadt Exp $	*/
+/*	$OpenBSD: login.c,v 1.72 2019/12/04 09:51:07 deraadt Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -340,8 +340,13 @@ main(int argc, char *argv[])
 		}
 		shell = strrchr(script, '/') + 1;
 		auth_setstate(as, AUTH_OKAY);
-		auth_call(as, script, shell,
-		    fflag ? "-f" : username, fflag ? username : 0, (char *)0);
+		if (fflag) {
+			auth_call(as, script, shell, "-f", "--", username,
+			    (char *)NULL);
+		} else {
+			auth_call(as, script, shell, "--", username,
+			    (char *)NULL);
+		}
 		if (!(auth_getstate(as) & AUTH_ALLOW))
 			quickexit(1);
 		auth_setenv(as);
@@ -367,7 +372,7 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * Request the things like the approval script print things
+	 * Request that things like the approval script print things
 	 * to stdout (in particular, the nologins files)
 	 */
 	auth_setitem(as, AUTHV_INTERACTIVE, "True");
