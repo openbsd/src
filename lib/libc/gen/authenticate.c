@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.27 2019/06/28 13:32:41 deraadt Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.28 2019/12/04 06:25:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -174,6 +174,17 @@ auth_cat(char *file)
 DEF_WEAK(auth_cat);
 
 int
+_auth_validuser(const char *name)
+{
+	/* User name must be specified and may not start with a '-'. */
+	if (*name == '\0' || *name == '-') {
+		syslog(LOG_ERR, "invalid user name %s", name);
+		return 0;
+	}
+	return 1;
+}
+
+int
 auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 {
 	int close_on_exit, close_lc_on_exit, len;
@@ -192,6 +203,10 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 
 	if (pwd == NULL) {
 		if (name != NULL) {
+			if (!_auth_validuser(name)) {
+				warnx("cannot approve who we don't recognize");
+				return (0);
+			}
 			getpwnam_r(name, &pwstore, pwbuf, sizeof(pwbuf), &pwd);
 		} else {
 			getpwuid_r(getuid(), &pwstore, pwbuf, sizeof(pwbuf),
@@ -217,7 +232,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 		}
 		if (pwd == NULL && (approve = strchr(name, '.')) != NULL) {
 			strlcpy(path, name, sizeof path);
-			path[approve-name] = '\0';
+			path[approve - name] = '\0';
 			getpwnam_r(name, &pwstore, pwbuf, sizeof(pwbuf), &pwd);
 		}
 		lc = login_getclass(pwd ? pwd->pw_class : NULL);
@@ -290,7 +305,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 		}
 	}
 	if (approve)
-		auth_call(as, approve, strrchr(approve, '/') + 1, name,
+		auth_call(as, approve, strrchr(approve, '/') + 1, "--", name,
 		    lc->lc_class, type, (char *)NULL);
 
 out:
@@ -314,6 +329,8 @@ auth_usercheck(char *name, char *style, char *type, char *password)
 	struct passwd pwstore, *pwd = NULL;
 	char *slash;
 
+	if (!_auth_validuser(name))
+		return (NULL);
 	if (strlcpy(namebuf, name, sizeof(namebuf)) >= sizeof(namebuf))
 		return (NULL);
 	name = namebuf;
@@ -382,6 +399,8 @@ auth_userchallenge(char *name, char *style, char *type, char **challengep)
 	struct passwd pwstore, *pwd = NULL;
 	char *slash, pwbuf[_PW_BUF_LEN];
 
+	if (!_auth_validuser(name))
+		return (NULL);
 	if (strlen(name) >= sizeof(namebuf))
 		return (NULL);
 	strlcpy(namebuf, name, sizeof namebuf);
@@ -440,7 +459,8 @@ auth_userresponse(auth_session_t *as, char *response, int more)
 	auth_setstate(as, 0);
 
 	if ((style = auth_getitem(as, AUTHV_STYLE)) == NULL ||
-	    (name = auth_getitem(as, AUTHV_NAME)) == NULL) {
+	    (name = auth_getitem(as, AUTHV_NAME)) == NULL ||
+	    !_auth_validuser(name)) {
 		if (more == 0)
 			return (auth_close(as));
 		return(0);
@@ -466,7 +486,8 @@ auth_userresponse(auth_session_t *as, char *response, int more)
 	} else
 		auth_setdata(as, "", 1);
 
-	auth_call(as, path, style, "-s", "response", name, class, (char *)NULL);
+	auth_call(as, path, style, "-s", "response", "--", name,
+	    class, (char *)NULL);
 
 	/*
 	 * If they authenticated then make sure they did not expire
@@ -495,7 +516,7 @@ auth_verify(auth_session_t *as, char *style, char *name, ...)
 	char path[PATH_MAX];
 
 	if ((name == NULL || style == NULL) && as == NULL)
-		return (as);
+		return (NULL);
 
 	if (as == NULL && (as = auth_open()) == NULL)
 		return (NULL);
@@ -509,12 +530,14 @@ auth_verify(auth_session_t *as, char *style, char *name, ...)
 
 	style = auth_getitem(as, AUTHV_STYLE);
 	name = auth_getitem(as, AUTHV_NAME);
+	if (!_auth_validuser(name))
+		return (as);
 
 	snprintf(path, sizeof(path), _PATH_AUTHPROG "%s", style);
 	va_start(ap, name);
 	auth_set_va_list(as, ap);
 	auth_call(as, path, auth_getitem(as, AUTHV_STYLE), "-s",
-	    auth_getitem(as, AUTHV_SERVICE), name, (char *)NULL);
+	    auth_getitem(as, AUTHV_SERVICE), "--", name, (char *)NULL);
 	va_end(ap);
 	return (as);
 }
