@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.27 2019/08/21 19:21:57 danj Exp $
+.\"	$OpenBSD: package.5,v 1.28 2019/12/04 11:01:37 espie Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +12,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: August 21 2019 $
+.Dd $Mdocdate: December 4 2019 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
@@ -104,7 +104,7 @@ changed files come first, in order to allow faster updates.
 User annotations are described in
 .Xr pkg_create 1 .
 The following annotations are automatically inserted during package creation
-and installations:
+and installation:
 .Pp
 .Bl -tag -width Ds -compact
 .It Cm @arch Ar arches
@@ -234,6 +234,10 @@ Record a library requirement declared using the option
 of
 .Xr pkg_create 1 .
 .El
+.Pp
+Note that most of these annotations cannot be added manually, as
+.Xr pkg_create 1
+will error out.
 .Sh PACKAGE SIGNATURES
 All information within a package is checksummed, using SHA256 since
 .Ox 4.4 .
@@ -255,10 +259,6 @@ header signatures are the only supported format.
 This allows for
 .Sq just-in-time
 signature checking, as the binary data is checked in 64K bytes long chunks.
-.Pp
-Fat packages were removed in
-.Ox 5.1 ,
-since no practical application was found.
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
 .Xr pkg_create 1 ,
