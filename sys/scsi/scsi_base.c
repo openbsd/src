@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.254 2019/12/03 15:58:28 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.255 2019/12/04 10:22:05 mpi Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -432,7 +432,7 @@ scsi_move(struct scsi_io_mover *m)
 {
 	mtx_enter(&m->mtx);
 	while (!m->done)
-		msleep(m, &m->mtx, PRIBIO, "scsiiomv", 0);
+		msleep_nsec(m, &m->mtx, PRIBIO, "scsiiomv", INFSLP);
 	mtx_leave(&m->mtx);
 }
 
@@ -706,7 +706,8 @@ scsi_link_shutdown(struct scsi_link *link)
 	}
 
 	while (link->pending > 0)
-		msleep(&link->pending, &iopl->mtx, PRIBIO, "pendxs", 0);
+		msleep_nsec(&link->pending, &iopl->mtx, PRIBIO, "pendxs",
+		    INFSLP);
 	mtx_leave(&iopl->mtx);
 
 	while ((ioh = TAILQ_FIRST(&sleepers)) != NULL) {
@@ -1482,7 +1483,7 @@ scsi_xs_sync(struct scsi_xfer *xs)
 
 		mtx_enter(&cookie);
 		while (xs->cookie != NULL)
-			msleep(xs, &cookie, PRIBIO, "syncxs", 0);
+			msleep_nsec(xs, &cookie, PRIBIO, "syncxs", INFSLP);
 		mtx_leave(&cookie);
 
 		error = scsi_xs_error(xs);
@@ -1572,7 +1573,7 @@ scsi_delay(struct scsi_xfer *xs, int seconds)
 	}
 
 	while (seconds-- > 0) {
-		if (tsleep(&lbolt, PRIBIO|PCATCH, "scbusy", 0)) {
+		if (tsleep_nsec(&lbolt, PRIBIO|PCATCH, "scbusy", INFSLP)) {
 			/* Signal == abort xs. */
 			return (EIO);
 		}
