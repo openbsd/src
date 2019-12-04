@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.255 2019/11/26 05:39:11 pd Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.256 2019/12/04 08:17:30 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -65,6 +65,7 @@ void *l1tf_flush_region;
     (VMX_EXIT_INFO_HAVE_RIP | VMX_EXIT_INFO_HAVE_REASON)
 
 struct vm {
+	struct vmspace		 *vm_vmspace;
 	vm_map_t		 vm_map;
 	uint32_t		 vm_id;
 	pid_t			 vm_creator_pid;
@@ -1231,36 +1232,22 @@ vm_impl_init_vmx(struct vm *vm, struct proc *p)
 {
 	int i, ret;
 	vaddr_t mingpa, maxgpa;
-	struct pmap *pmap;
 	struct vm_mem_range *vmr;
 
 	/* If not EPT, nothing to do here */
 	if (vmm_softc->mode != VMM_MODE_EPT)
 		return (0);
 
-	/* Create a new pmap for this VM */
-	pmap = pmap_create();
-	if (!pmap) {
-		printf("%s: pmap_create failed\n", __func__);
-		return (ENOMEM);
-	}
-
-	/*
-	 * Create a new UVM map for this VM, and assign it the pmap just
-	 * created.
-	 */
 	vmr = &vm->vm_memranges[0];
 	mingpa = vmr->vmr_gpa;
 	vmr = &vm->vm_memranges[vm->vm_nmemranges - 1];
 	maxgpa = vmr->vmr_gpa + vmr->vmr_size;
-	vm->vm_map = uvm_map_create(pmap, mingpa, maxgpa,
-	    VM_MAP_ISVMSPACE | VM_MAP_PAGEABLE);
 
-	if (!vm->vm_map) {
-		printf("%s: uvm_map_create failed\n", __func__);
-		pmap_destroy(pmap);
-		return (ENOMEM);
-	}
+	/*
+	 * uvmspace_alloc (currently) always returns a valid vmspace
+	 */
+	vm->vm_vmspace = uvmspace_alloc(mingpa, maxgpa, TRUE, FALSE);
+	vm->vm_map = &vm->vm_vmspace->vm_map;
 
 	/* Map the new map with an anon */
 	DPRINTF("%s: created vm_map @ %p\n", __func__, vm->vm_map);
@@ -1271,19 +1258,19 @@ vm_impl_init_vmx(struct vm *vm, struct proc *p)
 		    &p->p_vmspace->vm_map, vmr->vmr_va, vmr->vmr_size);
 		if (ret) {
 			printf("%s: uvm_share failed (%d)\n", __func__, ret);
-			/* uvm_map_deallocate calls pmap_destroy for us */
-			uvm_map_deallocate(vm->vm_map);
-			vm->vm_map = NULL;
+			/* uvmspace_free calls pmap_destroy for us */
+			uvmspace_free(vm->vm_vmspace);
+			vm->vm_vmspace = NULL;
 			return (ENOMEM);
 		}
 	}
 
-	ret = pmap_convert(pmap, PMAP_TYPE_EPT);
+	ret = pmap_convert(vm->vm_map->pmap, PMAP_TYPE_EPT);
 	if (ret) {
 		printf("%s: pmap_convert failed\n", __func__);
-		/* uvm_map_deallocate calls pmap_destroy for us */
-		uvm_map_deallocate(vm->vm_map);
-		vm->vm_map = NULL;
+		/* uvmspace_free calls pmap_destroy for us */
+		uvmspace_free(vm->vm_vmspace);
+		vm->vm_vmspace = NULL;
 		return (ENOMEM);
 	}
 
@@ -1308,38 +1295,22 @@ vm_impl_init_svm(struct vm *vm, struct proc *p)
 {
 	int i, ret;
 	vaddr_t mingpa, maxgpa;
-	struct pmap *pmap;
 	struct vm_mem_range *vmr;
 
 	/* If not RVI, nothing to do here */
 	if (vmm_softc->mode != VMM_MODE_RVI)
 		return (0);
 
-	/* Create a new pmap for this VM */
-	pmap = pmap_create();
-	if (!pmap) {
-		printf("%s: pmap_create failed\n", __func__);
-		return (ENOMEM);
-	}
-
-	DPRINTF("%s: RVI pmap allocated @ %p\n", __func__, pmap);
-
-	/*
-	 * Create a new UVM map for this VM, and assign it the pmap just
-	 * created.
-	 */
 	vmr = &vm->vm_memranges[0];
 	mingpa = vmr->vmr_gpa;
 	vmr = &vm->vm_memranges[vm->vm_nmemranges - 1];
 	maxgpa = vmr->vmr_gpa + vmr->vmr_size;
-	vm->vm_map = uvm_map_create(pmap, mingpa, maxgpa,
-	    VM_MAP_ISVMSPACE | VM_MAP_PAGEABLE);
 
-	if (!vm->vm_map) {
-		printf("%s: uvm_map_create failed\n", __func__);
-		pmap_destroy(pmap);
-		return (ENOMEM);
-	}
+	/*
+	 * uvmspace_alloc (currently) always returns a valid vmspace
+	 */
+	vm->vm_vmspace = uvmspace_alloc(mingpa, maxgpa, TRUE, FALSE);
+	vm->vm_map = &vm->vm_vmspace->vm_map;
 
 	/* Map the new map with an anon */
 	DPRINTF("%s: created vm_map @ %p\n", __func__, vm->vm_map);
@@ -1350,15 +1321,15 @@ vm_impl_init_svm(struct vm *vm, struct proc *p)
 		    &p->p_vmspace->vm_map, vmr->vmr_va, vmr->vmr_size);
 		if (ret) {
 			printf("%s: uvm_share failed (%d)\n", __func__, ret);
-			/* uvm_map_deallocate calls pmap_destroy for us */
-			uvm_map_deallocate(vm->vm_map);
-			vm->vm_map = NULL;
+			/* uvmspace_free calls pmap_destroy for us */
+			uvmspace_free(vm->vm_vmspace);
+			vm->vm_vmspace = NULL;
 			return (ENOMEM);
 		}
 	}
 
 	/* Convert pmap to RVI */
-	ret = pmap_convert(pmap, PMAP_TYPE_RVI);
+	ret = pmap_convert(vm->vm_map->pmap, PMAP_TYPE_RVI);
 
 	return (ret);
 }
@@ -3430,9 +3401,9 @@ vm_teardown(struct vm *vm)
 	vm_impl_deinit(vm);
 
 	/* teardown guest vmspace */
-	if (vm->vm_map != NULL) {
-		uvm_map_deallocate(vm->vm_map);
-		vm->vm_map = NULL;
+	if (vm->vm_vmspace != NULL) {
+		uvmspace_free(vm->vm_vmspace);
+		vm->vm_vmspace = NULL;
 	}
 
 	if (vm->vm_id > 0) {
