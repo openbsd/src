@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.1 2019/12/04 12:40:17 deraadt Exp $ */
+/*	$OpenBSD: output.c,v 1.2 2019/12/04 23:01:54 benno Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -15,44 +15,28 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/queue.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/tree.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 
-#include <assert.h>
 #include <err.h>
-#include <dirent.h>
 #include <fcntl.h>
-#include <fnmatch.h>
-#include <fts.h>
-#include <inttypes.h>
-#include <poll.h>
-#include <pwd.h>
 #include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 #include <unistd.h>
 
-#include <openssl/err.h>
-#include <openssl/evp.h>
 #include <openssl/x509v3.h>
 
 #include "extern.h"
 
 char		*outputdir = _PATH_ROA_DIR;
 FILE		*output = NULL;
-char		output_tmpname[PATH_MAX];
-char		output_name[PATH_MAX];
+char		 output_tmpname[PATH_MAX];
+char		 output_name[PATH_MAX];
 
-int		outformats;
+int		 outformats;
 
 struct outputs {
-	int	format;
+	int	 format;
 	char	*name;
 	int	(*fn)(FILE *, struct vrp_tree *);
 } outputs[] = {
