@@ -1,4 +1,4 @@
-/*	$OpenBSD: uk.c,v 1.22 2019/11/23 17:10:13 krw Exp $	*/
+/*	$OpenBSD: uk.c,v 1.23 2019/12/05 21:32:13 krw Exp $	*/
 /*	$NetBSD: uk.c,v 1.15 1996/03/17 00:59:57 thorpej Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ struct cfdriver uk_cd = {
 int
 ukmatch(struct device *parent, void *match, void *aux)
 {
-	return (1);
+	return 1;
 }
 
 /*
@@ -86,7 +86,7 @@ ukattach(struct device *parent, struct device *self, void *aux)
 
 	SC_DEBUG(link, SDEV_DB2, ("ukattach: "));
 
-	/* Store information needed to contact our base driver */
+	/* Store information needed to contact our base driver. */
 	sc->sc_link = link;
 	link->device_softc = sc;
 	link->openings = 1;
@@ -97,7 +97,7 @@ ukattach(struct device *parent, struct device *self, void *aux)
 int
 ukdetach(struct device *self, int flags)
 {
-	int bmaj, cmaj, mn;
+	int				bmaj, cmaj, mn;
 
 	mn = self->dv_unit;
 
@@ -108,33 +108,33 @@ ukdetach(struct device *self, int flags)
 		if (cdevsw[cmaj].d_open == ukopen)
 			vdevgone(cmaj, mn, mn, VCHR);
 
-	return (0);
+	return 0;
 }
 
 /*
- * open the device.
+ * Open the device.
  */
 int
 ukopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
-	int				unit;
 	struct uk_softc			*sc;
 	struct scsi_link		*link;
+	int				 unit;
 
 	unit = UKUNIT(dev);
 	sc = uklookup(unit);
 	if (sc == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	link = sc->sc_link;
 
 	SC_DEBUG(link, SDEV_DB1, ("ukopen: dev=0x%x (unit %d (of %d))\n",
 	    dev, unit, uk_cd.cd_ndevs));
 
-	/* Only allow one at a time */
+	/* Only allow one at a time. */
 	if (ISSET(link->flags, SDEV_OPEN)) {
 		device_unref(&sc->sc_dev);
-		return (EBUSY);
+		return EBUSY;
 	}
 
 	SET(link->flags, SDEV_OPEN);
@@ -142,12 +142,12 @@ ukopen(dev_t dev, int flag, int fmt, struct proc *p)
 	SC_DEBUG(link, SDEV_DB3, ("open complete\n"));
 
 	device_unref(&sc->sc_dev);
-	return (0);
+	return 0;
 }
 
 /*
- * close the device.. only called if we are the LAST
- * occurrence of an open device
+ * Close the device. Called only if we are the LAST
+ * occurrence of an open device.
  */
 int
 ukclose(dev_t dev, int flag, int fmt, struct proc *p)
@@ -162,7 +162,7 @@ ukclose(dev_t dev, int flag, int fmt, struct proc *p)
 	CLR(sc->sc_link->flags, SDEV_OPEN);
 
 	device_unref(&sc->sc_dev);
-	return (0);
+	return 0;
 }
 
 /*
@@ -172,15 +172,15 @@ ukclose(dev_t dev, int flag, int fmt, struct proc *p)
 int
 ukioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
-	int				rv;
 	struct uk_softc			*sc;
+	int				 rv;
 
 	sc = uklookup(UKUNIT(dev));
 	if (sc == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	rv = scsi_do_ioctl(sc->sc_link, cmd, addr, flag);
 
 	device_unref(&sc->sc_dev);
-	return (rv);
+	return rv;
 }
