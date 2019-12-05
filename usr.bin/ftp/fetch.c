@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.180 2019/12/02 22:32:18 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.181 2019/12/05 10:26:25 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -201,14 +201,14 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 	char *proxyhost = NULL;
 #ifndef NOSSL
 	char *sslpath = NULL, *sslhost = NULL;
-	char *full_host = NULL;
-	const char *scheme;
 	int ishttpurl = 0, ishttpsurl = 0;
 #endif /* !NOSSL */
 #ifndef SMALL
+	char *full_host = NULL;
+	const char *scheme;
 	char *locbase;
 	struct addrinfo *ares = NULL;
-#endif
+#endif /* !SMALL */
 	struct tls *tls = NULL;
 	int status;
 	int save_errno;
@@ -222,8 +222,10 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 		errx(1, "Can't allocate memory to parse URL");
 	if (strncasecmp(newline, HTTP_URL, sizeof(HTTP_URL) - 1) == 0) {
 		host = newline + sizeof(HTTP_URL) - 1;
-#ifndef SMALL
+#ifndef NOSSL
 		ishttpurl = 1;
+#endif /* !NOSSL */
+#ifndef SMALL
 		scheme = HTTP_URL;
 #endif /* !SMALL */
 	} else if (strncasecmp(newline, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
@@ -235,12 +237,16 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 	} else if (strncasecmp(newline, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
 		host = newline + sizeof(FILE_URL) - 1;
 		isfileurl = 1;
-#ifndef NOSSL
+#ifndef SMALL
 		scheme = FILE_URL;
+#endif /* !SMALL */
+#ifndef NOSSL
 	} else if (strncasecmp(newline, HTTPS_URL, sizeof(HTTPS_URL) - 1) == 0) {
 		host = newline + sizeof(HTTPS_URL) - 1;
 		ishttpsurl = 1;
+#ifndef SMALL
 		scheme = HTTPS_URL;
+#endif /* !SMALL */
 #endif /* !NOSSL */
 	} else
 		errx(1, "url_get: Invalid URL '%s'", newline);
@@ -1084,8 +1090,10 @@ improper:
 	warnx("Improper response from %s", host);
 
 cleanup_url_get:
-#ifndef NOSSL
+#ifndef SMALL
 	free(full_host);
+#endif /* !SMALL */
+#ifndef NOSSL
 	free(sslhost);
 #endif /* !NOSSL */
 	ftp_close(&fin, &tls, &fd);
