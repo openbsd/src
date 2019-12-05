@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.304 2019/12/03 15:58:28 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.305 2019/12/05 18:42:14 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1058,8 +1058,7 @@ sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 		rv = ENXIO;
 		goto done;
 	}
-	rv = scsi_do_mode_sense(link, PAGE_CACHING_MODE,
-	    buf, (void **)&mode, NULL, NULL, NULL,
+	rv = scsi_do_mode_sense(link, PAGE_CACHING_MODE, buf, (void **)&mode,
 	    sizeof(*mode) - 4, scsi_autoconf | SCSI_SILENT, &big);
 	if (rv == 0 && mode == NULL)
 		rv = EIO;
@@ -1691,9 +1690,11 @@ sd_get_parms(struct sd_softc *sc, int flags)
 	/*
 	 * Ask for page 0 (vendor specific) mode sense data to find
 	 * READONLY info. The only thing USB devices will ask for.
+	 *
+	 * page0 == NULL is a valid situation.
 	 */
-	err = scsi_do_mode_sense(link, 0, buf, (void **)&page0,
-	    NULL, NULL, NULL, 1, flags | SCSI_SILENT, &big);
+	err = scsi_do_mode_sense(link, 0, buf, (void **)&page0, 1,
+	    flags | SCSI_SILENT, &big);
 	if (ISSET(sc->flags, SDF_DYING))
 		goto die;
 	if (err == 0) {
@@ -1720,14 +1721,17 @@ sd_get_parms(struct sd_softc *sc, int flags)
 
 	case T_RDIRECT:
 		/* T_RDIRECT supports only PAGE_REDUCED_GEOMETRY (6). */
-		err = scsi_do_mode_sense(link, PAGE_REDUCED_GEOMETRY,
-		    buf, (void **)&reduced, NULL, NULL, &dp.secsize,
-		    sizeof(*reduced), flags | SCSI_SILENT, &big);
-		if (err == 0 && reduced != NULL) {
-			if (dp.disksize == 0)
-				dp.disksize = _5btol(reduced->sectors);
-			if (dp.secsize == 0)
-				dp.secsize = _2btol(reduced->bytes_s);
+		err = scsi_do_mode_sense(link, PAGE_REDUCED_GEOMETRY, buf,
+		    (void **)&reduced, sizeof(*reduced), flags | SCSI_SILENT,
+		    &big);
+		if (err == 0) {
+			scsi_parse_blkdesc(link, buf, big, NULL, NULL, &dp.secsize);
+			if (reduced != NULL) {
+				if (dp.disksize == 0)
+					dp.disksize = _5btol(reduced->sectors);
+				if (dp.secsize == 0)
+					dp.secsize = _2btol(reduced->bytes_s);
+			}
 		}
 		break;
 
@@ -1742,31 +1746,35 @@ sd_get_parms(struct sd_softc *sc, int flags)
 		err = 0;
 		if (!ISSET(link->flags, SDEV_ATAPI) ||
 		    !ISSET(link->flags, SDEV_REMOVABLE))
-			err = scsi_do_mode_sense(link,
-			    PAGE_RIGID_GEOMETRY, buf, (void **)&rigid, NULL,
-			    NULL, &dp.secsize, sizeof(*rigid) - 4,
+			err = scsi_do_mode_sense(link, PAGE_RIGID_GEOMETRY, buf,
+			    (void **)&rigid, sizeof(*rigid) - 4,
 			    flags | SCSI_SILENT, &big);
-		if (err == 0 && rigid != NULL) {
-			dp.heads = rigid->nheads;
-			dp.cyls = _3btol(rigid->ncyl);
-			if (dp.heads * dp.cyls > 0)
-				dp.sectors = dp.disksize / (dp.heads * dp.cyls);
+		if (err == 0) {
+			scsi_parse_blkdesc(link, buf, big, NULL, NULL, &dp.secsize);
+			if (rigid != NULL) {
+				dp.heads = rigid->nheads;
+				dp.cyls = _3btol(rigid->ncyl);
+				if (dp.heads * dp.cyls > 0)
+					dp.sectors = dp.disksize / (dp.heads * dp.cyls);
+			}
 		} else {
 			if (ISSET(sc->flags, SDF_DYING))
 				goto die;
-			err = scsi_do_mode_sense(link,
-			    PAGE_FLEX_GEOMETRY, buf, (void **)&flex, NULL, NULL,
-			    &dp.secsize, sizeof(*flex) - 4,
+			err = scsi_do_mode_sense(link, PAGE_FLEX_GEOMETRY, buf,
+			    (void **)&flex, sizeof(*flex) - 4,
 			    flags | SCSI_SILENT, &big);
-			if (err == 0 && flex != NULL) {
-				dp.sectors = flex->ph_sec_tr;
-				dp.heads = flex->nheads;
-				dp.cyls = _2btol(flex->ncyl);
-				if (dp.secsize == 0)
-					dp.secsize = _2btol(flex->bytes_s);
-				if (dp.disksize == 0)
-					dp.disksize = (u_int64_t)dp.cyls *
-					    dp.heads * dp.sectors;
+			if (err == 0) {
+				scsi_parse_blkdesc(link, buf, big, NULL, NULL, &dp.secsize);
+				if (flex != NULL) {
+					dp.sectors = flex->ph_sec_tr;
+					dp.heads = flex->nheads;
+					dp.cyls = _2btol(flex->ncyl);
+					if (dp.secsize == 0)
+						dp.secsize = _2btol(flex->bytes_s);
+					if (dp.disksize == 0)
+						dp.disksize = (u_int64_t)dp.cyls *
+						    dp.heads * dp.sectors;
+				}
 			}
 		}
 		break;

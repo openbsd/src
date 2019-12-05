@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.238 2019/11/28 16:27:35 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.239 2019/12/05 18:42:13 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1173,7 +1173,7 @@ cd_setchan(struct cd_softc *sc, int p0, int p1, int p2, int p3, int flags)
 		return (ENOMEM);
 
 	error = scsi_do_mode_sense(sc->sc_link, AUDIO_PAGE, data,
-	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags, &big);
+	    (void **)&audio, sizeof(*audio), flags, &big);
 	if (error == 0 && audio == NULL)
 		error = EIO;
 
@@ -1206,7 +1206,7 @@ cd_getvol(struct cd_softc *sc, struct ioc_vol *arg, int flags)
 		return (ENOMEM);
 
 	error = scsi_do_mode_sense(sc->sc_link, AUDIO_PAGE, data,
-	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags, &big);
+	    (void **)&audio, sizeof(*audio), flags, &big);
 	if (error == 0 && audio == NULL)
 		error = EIO;
 
@@ -1234,8 +1234,8 @@ cd_setvol(struct cd_softc *sc, const struct ioc_vol *arg, int flags)
 		return (ENOMEM);
 
 	error = scsi_do_mode_sense(sc->sc_link,
-	    AUDIO_PAGE | SMS_PAGE_CTRL_CHANGEABLE, data, (void **)&audio, NULL,
-	    NULL, NULL, sizeof(*audio), flags, &big);
+	    AUDIO_PAGE | SMS_PAGE_CTRL_CHANGEABLE, data, (void **)&audio,
+	    sizeof(*audio), flags, &big);
 	if (error == 0 && audio == NULL)
 		error = EIO;
 	if (error != 0) {
@@ -1249,7 +1249,7 @@ cd_setvol(struct cd_softc *sc, const struct ioc_vol *arg, int flags)
 	mask_volume[3] = audio->port[3].volume;
 
 	error = scsi_do_mode_sense(sc->sc_link, AUDIO_PAGE, data,
-	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags, &big);
+	    (void **)&audio, sizeof(*audio), flags, &big);
 	if (error == 0 && audio == NULL)
 		error = EIO;
 	if (error != 0) {
@@ -1313,7 +1313,7 @@ cd_set_pa_immed(struct cd_softc *sc, int flags)
 		return (ENOMEM);
 
 	error = scsi_do_mode_sense(sc->sc_link, AUDIO_PAGE, data,
-	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags, &big);
+	    (void **)&audio, sizeof(*audio), flags, &big);
 	if (error == 0 && audio == NULL)
 		error = EIO;
 

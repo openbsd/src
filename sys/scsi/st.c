@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.171 2019/11/26 20:48:03 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.172 2019/12/05 18:42:14 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1348,10 +1348,12 @@ st_mode_sense(struct st_softc *st, int flags)
 	density = 0;
 	block_count = 0;
 	block_size = 0;
-	error = scsi_do_mode_sense(link, 0, data, (void **)&page0,
-	    &density, &block_count, &block_size, 1, flags | SCSI_SILENT, &big);
+	error = scsi_do_mode_sense(link, 0, data, (void **)&page0, 1,
+	    flags | SCSI_SILENT, &big);
 	if (error != 0)
 		goto done;
+	scsi_parse_blkdesc(link, data, big, &density, &block_count,
+	    &block_size);
 
 	/* It is valid for no page0 to be available. */
 
@@ -1432,9 +1434,11 @@ st_mode_select(struct st_softc *st, int flags)
 
 	/*
 	 * Ask for page 0 (vendor specific) mode sense data.
+	 *
+	 * page0 == NULL is a valid situation.
 	 */
-	error = scsi_do_mode_sense(link, 0, inbuf, (void **)&page0, NULL,
-	    NULL, NULL, 1, flags | SCSI_SILENT, &big);
+	error = scsi_do_mode_sense(link, 0, inbuf, (void **)&page0, 1,
+	    flags | SCSI_SILENT, &big);
 	if (error != 0)
 		goto done;
 

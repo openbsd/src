@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.62 2019/12/01 15:41:43 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.63 2019/12/05 18:42:14 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -673,7 +673,7 @@ ch_get_params(struct ch_softc *sc, int flags)
 	 * Grab info from the element address assignment page (0x1d).
 	 */
 	error = scsi_do_mode_sense(sc->sc_link, EA_PAGE, data,
-	    (void **)&ea, NULL, NULL, NULL, sizeof(*ea), flags, &big);
+	    (void **)&ea, sizeof(*ea), flags, &big);
 	if (error == 0 && ea == NULL)
 		error = EIO;
 	if (error != 0) {
@@ -700,7 +700,7 @@ ch_get_params(struct ch_softc *sc, int flags)
 	 * Grab info from the capabilities page (0x1f).
 	 */
 	error = scsi_do_mode_sense(sc->sc_link, CAP_PAGE, data,
-	    (void **)&cap, NULL, NULL, NULL, sizeof(*cap), flags, &big);
+	    (void **)&cap, sizeof(*cap), flags, &big);
 	if (error == 0 && cap == NULL)
 		error = EIO;
 	if (error != 0) {

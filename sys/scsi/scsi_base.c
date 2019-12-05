@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.257 2019/12/05 16:33:53 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.258 2019/12/05 18:42:14 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1253,9 +1253,8 @@ scsi_parse_blkdesc(struct scsi_link *link, union scsi_mode_sense_buf *buf,
 
 int
 scsi_do_mode_sense(struct scsi_link *link, int pg_code,
-    union scsi_mode_sense_buf *buf, void **page_data, u_int32_t *density,
-    u_int64_t *block_count, u_int32_t *block_size, int pg_length, int flags,
-    int *big)
+    union scsi_mode_sense_buf *buf, void **page_data,
+    int pg_length, int flags, int *big)
 {
 	int			error;
 
@@ -1276,20 +1275,15 @@ scsi_do_mode_sense(struct scsi_link *link, int pg_code,
 		error = scsi_mode_sense(link, pg_code, &buf->hdr,
 		    sizeof(*buf), flags, 20000);
 		if (error == 0) {
+			/*
+			 * Page data may be invalid (e.g. all zeros) but we
+			 * accept the device's word that this is the best it can
+			 * do. Some devices will freak out if their word is not
+			 * accepted and MODE_SENSE_BIG is attempted.
+			 */
 			*page_data = scsi_mode_sense_page(&buf->hdr, pg_code,
 			    pg_length);
-			if (*page_data == NULL) {
-				/*
-				 * XXX
-				 * Page data may be invalid (e.g. all zeros)
-				 * but we accept the device's word that this is
-				 * the best it can do. Some devices will freak
-				 * out if their word is not accepted and
-				 * MODE_SENSE_BIG is attempted.
-				 */
-				return (0);
-			}
-			goto blk_desc;
+			return 0;
 		}
 	}
 
@@ -1313,9 +1307,6 @@ scsi_do_mode_sense(struct scsi_link *link, int pg_code,
 	*big = 1;
 	*page_data = scsi_mode_sense_big_page(&buf->hdr_big, pg_code,
 	    pg_length);
-
-blk_desc:
-	scsi_parse_blkdesc(link, buf, *big, density, block_count, block_size);
 
 	return (0);
 }
