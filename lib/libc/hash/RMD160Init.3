@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RMD160Init.3,v 1.1 2019/08/30 22:20:43 deraadt Exp $
+.\"	$OpenBSD: RMD160Init.3,v 1.2 2019/12/05 21:45:05 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -17,7 +17,7 @@
 .\" See http://www.esat.kuleuven.ac.be/~bosselae/ripemd160.html
 .\"	for detailed information about RIPEMD-160.
 .\"
-.Dd $Mdocdate: August 30 2019 $
+.Dd $Mdocdate: December 5 2019 $
 .Dt RMD160INIT 3
 .Os
 .Sh NAME
@@ -200,8 +200,8 @@ printf("0x%s\en", RMD160Data(buf, strlen(buf), output));
 .Sh SEE ALSO
 .Xr cksum 1 ,
 .Xr MD5Init 3 ,
-.Xr SHA1INIT 3 ,
-.Xr SHA256INIT 3
+.Xr SHA1Init 3 ,
+.Xr SHA256Init 3
 .Rs
 .%A H. Dobbertin, A. Bosselaers, B. Preneel
 .%T RIPEMD-160, a strengthened version of RIPEMD

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SHA1Init.3,v 1.1 2019/08/30 22:20:43 deraadt Exp $
+.\"	$OpenBSD: SHA1Init.3,v 1.2 2019/12/05 21:45:05 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -17,7 +17,7 @@
 .\" See http://csrc.nist.gov/publications/fips/fips180-1/fip180-1.txt
 .\" for the detailed standard
 .\"
-.Dd $Mdocdate: August 30 2019 $
+.Dd $Mdocdate: December 5 2019 $
 .Dt SHA1INIT 3
 .Os
 .Sh NAME
@@ -117,9 +117,8 @@ The
 .Fn SHA1End
 function is a front end for
 .Fn SHA1Final
-which converts the digest into an
-.Tn ASCII
-representation of the 160 bit digest in hexadecimal.
+which converts the digest into an ASCII representation
+of the 160 bit digest in hexadecimal.
 .Pp
 The
 .Fn SHA1File
@@ -207,7 +206,7 @@ printf("0x%s\en", SHA1Data(buf, strlen(buf), output));
 .Xr sha1 1 ,
 .Xr MD5Init 3 ,
 .Xr RMD160Init 3 ,
-.Xr SHA256INIT 3
+.Xr SHA256Init 3
 .Sh STANDARDS
 .Rs
 .%A J. Burrows
