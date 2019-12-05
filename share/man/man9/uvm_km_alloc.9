@@ -1,0 +1,165 @@
+.\"	$OpenBSD: uvm_km_alloc.9,v 1.1 2019/12/05 15:14:28 mpi Exp $
+.\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
+.\"
+.\" Copyright (c) 1998 Matthew R. Green
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: December 5 2019 $
+.Dt UVM_KM_ALLOC 9
+.Os
+.Sh NAME
+.Nm uvm_km_alloc ,
+.Nm uvm_km_zalloc ,
+.Nm uvm_km_alloc1 ,
+.Nm uvm_km_kmemalloc ,
+.Nm uvm_km_valloc ,
+.Nm uvm_km_valloc_wait ,
+.Nm uvm_km_suballoc ,
+.Nm uvm_km_free ,
+.Nm uvm_km_free_wakeup
+.Nd raw kernel memory or address space allocator
+.Sh SYNOPSIS
+.In sys/param.h
+.In uvm/uvm.h
+.Ft vaddr_t
+.Fn uvm_km_alloc "vm_map_t map" "vsize_t size"
+.Ft vaddr_t
+.Fn uvm_km_zalloc "vm_map_t map" "vsize_t size"
+.Ft vaddr_t
+.Fn uvm_km_alloc1 "vm_map_t map" "vsize_t size" "vsize_t align" "boolean_t zeroit"
+.Ft vaddr_t
+.Fn uvm_km_kmemalloc "vm_map_t map" "struct uvm_object *obj" "vsize_t size" "int flags"
+.Ft vaddr_t
+.Fn uvm_km_valloc "vm_map_t map" "vsize_t size"
+.Ft vaddr_t
+.Fn uvm_km_valloc_wait "vm_map_t map" "vsize_t size"
+.Ft struct vm_map *
+.Fn uvm_km_suballoc "vm_map_t map" "vaddr_t *min" "vaddr_t *max " "vsize_t size" "int flags" "boolean_t fixed" "vm_map_t submap"
+.Ft void
+.Fn uvm_km_free "vm_map_t map" "vaddr_t addr" "vsize_t size"
+.Ft void
+.Fn uvm_km_free_wakeup "vm_map_t map" "vaddr_t addr" "vsize_t size"
+.Sh DESCRIPTION
+.Pp
+The
+.Fn uvm_km_alloc
+and
+.Fn uvm_km_zalloc
+functions allocate
+.Fa size
+bytes of wired kernel memory in map
+.Fa map .
+In addition to allocation,
+.Fn uvm_km_zalloc
+zeros the memory.
+Both of these functions are defined as macros in terms of
+.Fn uvm_km_alloc1 ,
+and should almost always be used in preference to
+.Fn uvm_km_alloc1 .
+.Pp
+The
+.Fn uvm_km_alloc1
+function allocates and returns
+.Fa size
+bytes of wired memory in the kernel map aligned to the
+.Fa align
+boundary, zeroing the memory if the
+.Fa zeroit
+argument is non-zero.
+.Pp
+The
+.Fn uvm_km_kmemalloc
+function allocates and returns
+.Fa size
+bytes of wired kernel memory into
+.Fa obj .
+The flags can be any of:
+.Bd -literal
+#define UVM_KMF_NOWAIT  0x1                     /* matches M_NOWAIT */
+#define UVM_KMF_VALLOC  0x2                     /* allocate VA only */
+#define UVM_KMF_TRYLOCK UVM_FLAG_TRYLOCK        /* try locking only */
+.Ed
+.Pp
+The
+.Dv UVM_KMF_NOWAIT
+flag causes
+.Fn uvm_km_kmemalloc
+to return immediately if no memory is available.
+.Dv UVM_KMF_VALLOC
+causes no pages to be allocated, only a virtual address.
+.Dv UVM_KMF_TRYLOCK
+causes
+.Fn uvm_km_kmemalloc
+to only try and not sleep when locking maps.
+.Pp
+The
+.Fn uvm_km_valloc
+and
+.Fn uvm_km_valloc_wait
+functions return a newly allocated zero-filled address in the kernel map of size
+.Fa size .
+.Fn uvm_km_valloc_wait
+will also wait for kernel memory to become available, if there is a
+memory shortage.
+.Pp
+The
+.Fn uvm_km_suballoc
+function allocates submap (with the specified
+.Fa flags ,
+as described above) from
+.Fa map ,
+creating a new map if
+.Fa submap
+is
+.Dv NULL .
+The addresses of the submap can be specified exactly by setting the
+.Fa fixed
+argument to non-zero, which causes the
+.Fa min
+argument to specify the beginning of the address in the submap.
+If
+.Fa fixed
+is zero, any address of size
+.Fa size
+will be allocated from
+.Fa map
+and the start and end addresses returned in
+.Fa min
+and
+.Fa max .
+.Pp
+The
+.Fn uvm_km_free
+and
+.Fn uvm_km_free_wakeup
+functions free
+.Fa size
+bytes of memory in the kernel map, starting at address
+.Fa addr .
+.Fn uvm_km_free_wakeup
+calls
+.Fn wakeup
+on the map before unlocking the map.
+.Sh SEE ALSO
+.Xr km_alloc 9
