@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.233 2019/11/26 22:39:04 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.234 2019/12/05 13:34:39 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 26 2019 $
+.Dd $Mdocdate: December 5 2019 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -991,7 +991,7 @@ then decide if a session is allowed to move forward.
 With filtering,
 a session may be interrupted at any phase before an envelope is complete.
 A message may also be rejected after being submitted,
-disregarding if the envelope was accepted or not.
+regardless of whether the envelope was accepted or not.
 .Pp
 The following phases are currently supported:
 .Bl -column mail-from -offset indent
@@ -1004,8 +1004,9 @@ The following phases are currently supported:
 .It commit     Ta after message is fully is submitted
 .El
 .Pp
-At each phase,
-multiple criteria may be checked:
+At each phase, various criteria may be checked.
+The fcrdns, rdns, and src criteria are available in all phases,
+but other criteria must have been already submitted before they are available.
 .Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
 .It fcrdns                        Ta forward-confirmed reverse DNS is valid
 .It rdns                          Ta session has a reverse DNS
@@ -1015,10 +1016,6 @@ multiple criteria may be checked:
 .It mail-from Pf < Ar table Ns > Ta sender address is in table
 .It rcpt-to Pf < Ar table Ns >   Ta recipient address is in table
 .El
-.Pp
-All criteria from previous phases are available to subsequent phases,
-so while the helo criteria is not available before the helo or ehlo phase,
-the fcrdns criteria is available in all phases.
 .Pp
 Criteria may all be negated by prefixing them with an exclamation mark:
 .Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
@@ -1030,8 +1027,8 @@ prefixing the table name with the keyword regex.
 .Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
 .It helo regex Pf < Ar table Ns >       Ta helo name matches a regex in table
 .El
-Finally,
-four decisions may be taken:
+.Pp
+Finally, a number of decisions may be taken:
 .Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
 .It disconnect Ar message Ta the session is disconnected with message
 .It junk                  Ta the session or transaction is junked
@@ -1042,7 +1039,7 @@ four decisions may be taken:
 Decisions that involve a message require that the message be RFC valid,
 meaning that they should either start with a 4xx or 5xx status code.
 Descisions can be taken at any phase,
-however junking can only happen before a message is committed.
+though junking can only happen before a message is committed.
 .Ss FORMAT SPECIFIERS
 Some configuration directives support expansion of their parameters at runtime.
 Such directives (for example
