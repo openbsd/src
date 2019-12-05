@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.28 2015/08/28 00:03:54 deraadt Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.29 2019/12/05 10:41:57 mpi Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ nfsrv_getcache(struct nfsrv_descript *nd, struct nfssvc_sock *slp,
 		rp = TAILQ_FIRST(&nfsrvlruhead);
 		while ((rp->rc_flag & RC_LOCKED) != 0) {
 			rp->rc_flag |= RC_WANTED;
-			tsleep(rp, PZERO-1, "nfsrc", 0);
+			tsleep_nsec(rp, PZERO-1, "nfsrc", INFSLP);
 			rp = TAILQ_FIRST(&nfsrvlruhead);
 		}
 		rp->rc_flag |= RC_LOCKED;
@@ -285,7 +285,7 @@ loop:
 		    netaddr_match(NETFAMILY(rp), &rp->rc_haddr, nd->nd_nam)) {
 			if ((rp->rc_flag & RC_LOCKED)) {
 				rp->rc_flag |= RC_WANTED;
-				tsleep(rp, PZERO - 1, "nfsrc", 0);
+				tsleep_nsec(rp, PZERO - 1, "nfsrc", INFSLP);
 				goto loop;
 			}
 			rp->rc_flag |= RC_LOCKED;

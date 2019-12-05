@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.114 2018/06/06 06:55:22 mpi Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.115 2019/12/05 10:41:57 mpi Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ sys_nfssvc(struct proc *p, void *v, register_t *retval)
 
 	while (nfssvc_sockhead_flag & SLP_INIT) {
 		nfssvc_sockhead_flag |= SLP_WANTINIT;
-		tsleep(&nfssvc_sockhead, PSOCK, "nfsd init", 0);
+		tsleep_nsec(&nfssvc_sockhead, PSOCK, "nfsd init", INFSLP);
 	}
 
 	switch (flags) {
@@ -604,8 +604,8 @@ nfssvc_iod(void *arg)
 	/* Just loop around doin our stuff until SIGKILL. */
 	for (;;) {
 	    while (TAILQ_FIRST(&nfs_bufq) == NULL && error == 0) {
-		    error = tsleep(&nfs_bufq,
-			PWAIT | PCATCH, "nfsidl", 0);
+		    error = tsleep_nsec(&nfs_bufq,
+			PWAIT | PCATCH, "nfsidl", INFSLP);
 	    }
 	    while ((bp = TAILQ_FIRST(&nfs_bufq)) != NULL) {
 		/* Take one off the front of the list */
@@ -702,7 +702,7 @@ again:
 	    (nfsd_head_flag & NFSD_CHECKSLP) == 0) {
 		nfsd->nfsd_flag |= NFSD_WAITING;
 		nfsd_waiting++;
-		error = tsleep(nfsd, PSOCK | PCATCH, "nfsd", 0);
+		error = tsleep_nsec(nfsd, PSOCK | PCATCH, "nfsd", INFSLP);
 		nfsd_waiting--;
 		if (error)
 			return (error);
