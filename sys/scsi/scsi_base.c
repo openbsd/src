@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.256 2019/12/05 16:16:01 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.257 2019/12/05 16:33:53 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -89,9 +89,9 @@ void *			scsi_iopool_get(struct scsi_iopool *);
 void			scsi_iopool_put(struct scsi_iopool *, void *);
 
 /* Various helper functions for scsi_do_mode_sense() */
-int			scsi_mode_sense(struct scsi_link *, int, int, struct scsi_mode_header *,
+int			scsi_mode_sense(struct scsi_link *, int, struct scsi_mode_header *,
 			    size_t, int, int);
-int			scsi_mode_sense_big(struct scsi_link *, int, int,
+int			scsi_mode_sense_big(struct scsi_link *, int,
 			    struct scsi_mode_header_big *, size_t, int, int);
 void *			scsi_mode_sense_page(struct scsi_mode_header *, int, int);
 void *			scsi_mode_sense_big_page(struct scsi_mode_header_big *, int, int);
@@ -1060,7 +1060,7 @@ scsi_start(struct scsi_link *link, int type, int flags)
 }
 
 int
-scsi_mode_sense(struct scsi_link *link, int byte2, int pg_code,
+scsi_mode_sense(struct scsi_link *link, int pg_code,
     struct scsi_mode_header *data, size_t len, int flags, int timeout)
 {
 	struct scsi_mode_sense	*cmd;
@@ -1087,7 +1087,6 @@ scsi_mode_sense(struct scsi_link *link, int byte2, int pg_code,
 
 	cmd = (struct scsi_mode_sense *)xs->cmd;
 	cmd->opcode = MODE_SENSE;
-	cmd->byte2 = byte2;
 	cmd->page = pg_code;
 
 	if (len > 0xff)
@@ -1114,7 +1113,7 @@ scsi_mode_sense(struct scsi_link *link, int byte2, int pg_code,
 }
 
 int
-scsi_mode_sense_big(struct scsi_link *link, int byte2, int pg_code,
+scsi_mode_sense_big(struct scsi_link *link, int pg_code,
     struct scsi_mode_header_big *data, size_t len, int flags, int timeout)
 {
 	struct scsi_mode_sense_big	*cmd;
@@ -1141,7 +1140,6 @@ scsi_mode_sense_big(struct scsi_link *link, int byte2, int pg_code,
 
 	cmd = (struct scsi_mode_sense_big *)xs->cmd;
 	cmd->opcode = MODE_SENSE_BIG;
-	cmd->byte2 = byte2;
 	cmd->page = pg_code;
 
 	if (len > 0xffff)
@@ -1275,7 +1273,7 @@ scsi_do_mode_sense(struct scsi_link *link, int pg_code,
 		 * data length to ensure that at least a header (3 additional
 		 * bytes) is returned.
 		 */
-		error = scsi_mode_sense(link, 0, pg_code, &buf->hdr,
+		error = scsi_mode_sense(link, pg_code, &buf->hdr,
 		    sizeof(*buf), flags, 20000);
 		if (error == 0) {
 			*page_data = scsi_mode_sense_page(&buf->hdr, pg_code,
@@ -1305,7 +1303,7 @@ scsi_do_mode_sense(struct scsi_link *link, int pg_code,
 	/*
 	 * Try 10 byte mode sense request.
 	 */
-	error = scsi_mode_sense_big(link, 0, pg_code, &buf->hdr_big,
+	error = scsi_mode_sense_big(link, pg_code, &buf->hdr_big,
 	    sizeof(*buf), flags, 20000);
 	if (error != 0)
 		return (error);
