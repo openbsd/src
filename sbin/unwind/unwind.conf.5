@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.21 2019/12/01 18:19:52 kn Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.22 2019/12/05 15:07:37 otto Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 1 2019 $
+.Dd $Mdocdate: December 5 2019 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -86,8 +86,9 @@ is 853.
 .Ar name
 validates the certificate of the DNS over TLS server.
 .It Ic preference Brq Ar type ...
-A list of DNS name server types to specify the preference in which
-name servers are picked.
+A list of DNS name server types to specify the order in which
+name servers are picked when measured round-trip time medians are equal.
+Additionally, the first mentioned type gets a time bonus.
 Validating name servers are always picked over non-validating name servers.
 DNS name server types are:
 .Pp
