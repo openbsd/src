@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.99 2019/12/04 21:02:25 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.100 2019/12/05 15:50:20 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1949,7 +1949,7 @@ int
 find_force(struct force_tree *tree, char *qname, struct uw_resolver **res)
 {
 	struct force_tree_entry	*n, e;
-	char 				*p;
+	char 			*p;
 
 	if (res)
 		*res = NULL;
@@ -1961,9 +1961,9 @@ find_force(struct force_tree *tree, char *qname, struct uw_resolver **res)
 		if (strlcpy(e.domain, p, sizeof(e.domain)) >= sizeof(e.domain))
 			fatal("qname too large");
 		n = RB_FIND(force_tree, tree, &e);
-		log_debug("%s: %s -> %p[%s]", __func__, p, n,
-		    n != NULL ?  uw_resolver_type_str[n->type] : "-");
 		if (n != NULL) {
+			log_debug("%s: %s -> %s[%s]", __func__, qname, p,
+			    uw_resolver_type_str[n->type]);
 			if (res)
 				*res = resolvers[n->type];
 			return n->acceptbogus;
