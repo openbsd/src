@@ -3057,7 +3057,12 @@
 ./usr/share/man/man9/usbd_open_pipe.9
 ./usr/share/man/man9/usbd_ref_wait.9
 ./usr/share/man/man9/usbd_transfer.9
-./usr/share/man/man9/uvm.9
+./usr/share/man/man9/uvm_fault.9
+./usr/share/man/man9/uvm_init.9
+./usr/share/man/man9/uvm_km_alloc.9
+./usr/share/man/man9/uvm_map.9
+./usr/share/man/man9/uvm_pagealloc.9
+./usr/share/man/man9/uvn_attach.9
 ./usr/share/man/man9/vaccess.9
 ./usr/share/man/man9/vclean.9
 ./usr/share/man/man9/vcount.9
