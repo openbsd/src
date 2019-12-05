@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.53 2019/12/04 12:40:17 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.54 2019/12/05 11:21:58 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1498,8 +1498,6 @@ main(int argc, char *argv[])
 		/* Only allow access to BASE_DIR. */
 		if (unveil(BASE_DIR, "r") == -1)
 			err(1, "%s: unveil", BASE_DIR);
-		if (unveil(NULL, NULL) == -1)
-			err(1, "unveil");
 		if (pledge("stdio rpath", NULL) == -1)
 			err(1, "pledge");
 		proc_parser(fd[0], force);
