@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.235 2019/12/05 13:54:28 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.236 2019/12/05 14:49:35 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -161,7 +161,7 @@ Relay the message to another SMTP server.
 .Pp
 The local delivery methods support additional options:
 .Bl -tag -width Ds
-.It Cm alias Aq Ar table
+.It Cm alias Pf < Ar table Ns >
 Use the mapping
 .Ar table
 for
@@ -187,7 +187,7 @@ is in charge of handling delivery for all virtual users.
 This option is not usable with the
 .Cm mbox
 delivery method.
-.It Cm userbase Aq Ar table
+.It Cm userbase Pf < Ar table Ns >
 Use the mapping
 .Ar table
 for user lookups instead of the
@@ -199,7 +199,7 @@ The
 does not apply for the
 .Cm user
 option.
-.It Cm virtual Aq Ar table
+.It Cm virtual Pf < Ar table Ns >
 Use the mapping
 .Ar table
 for virtual expansion.
@@ -223,7 +223,7 @@ with higher priority than mail exchanger identified as
 Advertise
 .Ar heloname
 as the hostname to other mail exchangers during the HELO phase.
-.It Cm helo-src Aq Ar table
+.It Cm helo-src Pf < Ar table Ns >
 Use the mapping
 .Ar table
 to look up a hostname matching the source address,
@@ -280,7 +280,7 @@ When used with a smarthost, the protocol must not be
 If
 .Cm no-verify
 is specified, do not require a valid certificate.
-.It Cm auth Aq Ar table
+.It Cm auth Pf < Ar table Ns >
 Use the mapping
 .Ar table
 for connecting to
@@ -295,7 +295,7 @@ The credential table format is described in
 Use
 .Ar mailaddr
 as the MAIL FROM address within the SMTP transaction.
-.It Cm src Ar address | Aq Ar address
+.It Cm src Ar address | Pf < Ar address Ns >
 Use the string or list table
 .Ar address
 for the source IP address.
@@ -434,7 +434,7 @@ The
 .Ar options
 are as follows:
 .Bl -tag -width Ds
-.It Cm auth Op Aq Ar authtable
+.It Cm auth Op Pf < Ar authtable Ns >
 Support SMTPAUTH: clients may only start SMTP transactions
 after successful authentication.
 Users are authenticated against either their own normal login credentials
@@ -442,7 +442,7 @@ or a credentials table
 .Ar authtable ,
 the format of which is described in
 .Xr table 5 .
-.It Cm auth-optional Op Aq Ar authtable
+.It Cm auth-optional Op Pf < Ar authtable Ns >
 Support SMTPAUTH optionally:
 clients need not authenticate, but may do so.
 This allows a
@@ -470,7 +470,7 @@ on connections handled by this listener.
 Use
 .Ar hostname
 in the greeting banner instead of the default server name.
-.It Cm hostnames Aq Ar names
+.It Cm hostnames Pf < Ar names Ns >
 Override the server name for specific addresses.
 The
 .Ar names
@@ -505,7 +505,7 @@ In
 .Dq Received
 headers, report whether the session was authenticated
 and by which local user.
-.It Cm senders Ao Ar users Ac Op Cm masquerade
+.It Cm senders Pf < Ar users Ns > Op Cm masquerade
 Look up the authenticated user in the
 .Ar users
 mapping table to find the email addresses that user is allowed
@@ -585,28 +585,28 @@ This is the default, and may be omitted.
 .It Xo
 .Op Ic \&!
 .Cm for domain
-.Ar domain | Aq Ar domain
+.Ar domain | Pf < Ar domain Ns >
 .Xc
 Specify that session may address the string or list table
 .Ar domain .
 .It Xo
 .Op Ic \&!
 .Cm for domain regex
-.Ar domain | Aq Ar domain
+.Ar domain | Pf < Ar domain Ns >
 .Xc
 Specify that session may address the regex or regex table
 .Ar domain .
 .It Xo
 .Op Ic \&!
 .Cm for rcpt-to
-.Ar recipient | Aq Ar recipient
+.Ar recipient | Pf < Ar recipient Ns >
 .Xc
 Specify that session may address the string or list table
 .Ar recipient .
 .It Xo
 .Op Ic \&!
 .Cm for rcpt-to regex
-.Ar recipient | Aq Ar recipient
+.Ar recipient | Pf < Ar recipient Ns >
 .Xc
 Specify that session may address the regex or regex table
 .Ar recipient .
@@ -624,7 +624,7 @@ no matter the source IP address.
 .It Xo
 .Op Ic \&!
 .Cm from auth
-.Ar user | Aq Ar user
+.Ar user | Pf < Ar user Ns >
 .Xc
 Specify that session may originate from authenticated user or user list
 .Ar user ,
@@ -632,7 +632,7 @@ no matter the source IP address.
 .It Xo
 .Op Ic \&!
 .Cm from auth
-.Ar user | Aq Ar user
+.Ar user | Pf < Ar user Ns >
 .Xc
 Specify that session may originate from authenticated regex or regex list
 .Ar user ,
@@ -647,7 +647,7 @@ This is the default, and may be omitted.
 .It Xo
 .Op Ic \&!
 .Cm from mail-from
-.Ar sender | Aq Ar sender
+.Ar sender | Pf < Ar sender Ns >
 .Xc
 Specify that session may originate from sender or sender list
 .Ar sender ,
@@ -655,7 +655,7 @@ no matter the source IP address.
 .It Xo
 .Op Ic \&!
 .Cm from mail-from regex
-.Ar sender | Aq Ar sender
+.Ar sender | Pf < Ar sender Ns >
 .Xc
 Specify that session may originate from regex or regex list
 .Ar sender ,
@@ -669,7 +669,7 @@ resolves to a reverse DNS.
 .It Xo
 .Op Ic \&!
 .Cm from rdns
-.Ar hostname | Aq Ar hostname
+.Ar hostname | Pf < Ar hostname Ns >
 .Xc
 Specify that session may only originate from an IP address that
 resolves to a reverse DNS matching string or list string
@@ -677,7 +677,7 @@ resolves to a reverse DNS matching string or list string
 .It Xo
 .Op Ic \&!
 .Cm from rdns regex
-.Ar hostname | Aq Ar hostname
+.Ar hostname | Pf < Ar hostname Ns >
 .Xc
 Specify that session may only originate from an IP address that
 resolves to a reverse DNS matching regex or list regex
@@ -690,7 +690,7 @@ Specify that session may only originate from the local enqueuer.
 .It Xo
 .Op Ic \&!
 .Cm from src
-.Ar address | Aq Ar address
+.Ar address | Pf < Ar address Ns >
 .Xc
 Specify that session may only originate from string or list table
 .Ar address
@@ -698,7 +698,7 @@ which can be a specific address or a subnet expressed in CIDR-notation.
 .It Xo
 .Op Ic \&!
 .Cm from src regex
-.Ar address | Aq Ar address
+.Ar address | Pf < Ar address Ns >
 .Xc
 Specify that session may only originate from regex or regex table
 .Ar address
@@ -715,56 +715,56 @@ Matches transactions which have been authenticated.
 .It Xo
 .Op Ic \&!
 .Cm auth
-.Ar username | Aq Ar username
+.Ar username | Pf < Ar username Ns >
 .Xc
 Matches transactions which have been authenticated for user or user list
 .Ar username .
 .It Xo
 .Op Ic \&!
 .Cm auth regex
-.Ar username | Aq Ar username
+.Ar username | Pf < Ar username Ns >
 .Xc
 Matches transactions which have been authenticated for regex or regex list
 .Ar username .
 .It Xo
 .Op Ic \&!
 .Cm helo
-.Ar helo-name | Aq Ar helo-name
+.Ar helo-name | Pf < Ar helo-name Ns >
 .Xc
 Specify that session's HELO / EHLO should match the string or list table
 .Ar helo-name .
 .It Xo
 .Op Ic \&!
 .Cm helo regex
-.Ar helo-name | Aq Ar helo-name
+.Ar helo-name | Pf < Ar helo-name Ns >
 .Xc
 Specify that session's HELO / EHLO should match the regex or regex table
 .Ar helo-name .
 .It Xo
 .Op Ic \&!
 .Cm mail-from
-.Ar sender | Aq Ar sender
+.Ar sender | Pf < Ar sender Ns >
 .Xc
 Specify that transactions's MAIL FROM should match the string or list table
 .Ar sender .
 .It Xo
 .Op Ic \&!
 .Cm mail-from regex
-.Ar sender | Aq Ar sender
+.Ar sender | Pf < Ar sender Ns >
 .Xc
 Specify that transactions's MAIL FROM should match the regex or regex table
 .Ar sender .
 .It Xo
 .Op Ic \&!
 .Cm rcpt-to
-.Ar recipient | Aq Ar recipient
+.Ar recipient | Pf < Ar recipient Ns >
 .Xc
 Specify that transaction's RCPT TO should match the string or list table
 .Ar recipient .
 .It Xo
 .Op Ic \&!
 .Cm rcpt-to regex
-.Ar recipient | Aq Ar recipient
+.Ar recipient | Pf < Ar recipient Ns >
 .Xc
 Specify that transaction's RCPT TO should match the regex or regex table
 .Ar recipient .
@@ -994,42 +994,42 @@ A message may also be rejected after being submitted,
 regardless of whether the envelope was accepted or not.
 .Pp
 The following phases are currently supported:
-.Bl -column XXXXXXXXXXXXXXXXXX -offset indent
-.It connect   Ta upon connection, before a banner is displayed
-.It helo      Ta after HELO command is submitted
-.It ehlo      Ta after EHLO command is submitted
+.Bl -column mail-from -offset indent
+.It connect    Ta upon connection, before a banner is displayed
+.It helo       Ta after HELO command is submitted
+.It ehlo       Ta after EHLO command is submitted
 .It mail-from Ta after MAIL FROM command is submitted
 .It rcpt-to   Ta after RCPT TO command is submitted
-.It data      Ta after DATA command is submitted
-.It commit    Ta after message is fully is submitted
+.It data       Ta after DATA command is submitted
+.It commit     Ta after message is fully is submitted
 .El
 .Pp
 At each phase, various criteria may be checked.
 The fcrdns, rdns, and src criteria are available in all phases,
 but other criteria must have been already submitted before they are available.
-.Bl -column XXXXXXXXXXXXXXXXXX -offset indent
-.It fcrdns                   Ta forward-confirmed reverse DNS is valid
-.It rdns                     Ta session has a reverse DNS
-.It rdns Ao Ar table Ac      Ta session has a reverse DNS in table
-.It src Ao Ar table Ac       Ta source address is in table
-.It helo Ao Ar table Ac      Ta helo name is in table
-.It mail-from Ao Ar table Ac Ta sender address is in table
-.It rcpt-to Ao Ar table Ac   Ta recipient address is in table
+.Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
+.It fcrdns                        Ta forward-confirmed reverse DNS is valid
+.It rdns                          Ta session has a reverse DNS
+.It rdns Pf < Ar table Ns >       Ta session has a reverse DNS in table
+.It src Pf < Ar table Ns >        Ta source address is in table
+.It helo Pf < Ar table Ns >       Ta helo name is in table
+.It mail-from Pf < Ar table Ns > Ta sender address is in table
+.It rcpt-to Pf < Ar table Ns >   Ta recipient address is in table
 .El
 .Pp
 Criteria may all be negated by prefixing them with an exclamation mark:
-.Bl -column XXXXXXXXXXXXXXXXXX -offset indent
+.Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
 .It ! fcrdns                     Ta forward-confirmed reverse DNS is invalid
 .El
 .Pp
 Any criteria using a table may indicate that tables hold regex by
 prefixing the table name with the keyword regex.
-.Bl -column XXXXXXXXXXXXXXXXXX -offset indent
-.It helo regex Ao Ar table Ac    Ta helo name matches a regex in table
+.Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
+.It helo regex Pf < Ar table Ns >       Ta helo name matches a regex in table
 .El
 .Pp
 Finally, a number of decisions may be taken:
-.Bl -column XXXXXXXXXXXXXXXXXX -offset indent
+.Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
 .It disconnect Ar message Ta the session is disconnected with message
 .It junk                  Ta the session or transaction is junked
 .It reject Ar message     Ta the command is rejected with message
@@ -1048,7 +1048,7 @@ Such directives (for example
 may use format specifiers which are expanded before delivery or
 relaying.
 The following formats are currently supported:
-.Bl -column %{rcpt:lowercase|strip} -offset indent
+.Bl -column %{user.directory} -offset indent
 .It %{sender}         Ta sender email address, may be empty string
 .It %{sender.user}    Ta user part of the sender email address, may be empty
 .It %{sender.domain}  Ta domain part of the sender email address, may be empty
@@ -1068,11 +1068,11 @@ Expansion formats also support partial expansion using the optional
 bracket notations with substring offset.
 For example, with recipient domain
 .Dq example.org :
-.Bl -column %{rcpt:lowercase|strip} -offset indent
+.Bl -column %{rcpt.domain[0:-4]} -offset indent
 .It %{rcpt.domain[0]}    Ta expands to Dq e
 .It %{rcpt.domain[1]}    Ta expands to Dq x
 .It %{rcpt.domain[8:]}   Ta expands to Dq org
-.It %{rcpt.domain[-3:]}  Ta expands to Dq org
+.It %{rcpt.domain[-3:]} Ta expands to Dq org
 .It %{rcpt.domain[0:6]}  Ta expands to Dq example
 .It %{rcpt.domain[0:-4]} Ta expands to Dq example
 .El
@@ -1095,7 +1095,7 @@ In situations where they are desirable, the
 modifier may be applied.
 For example, with recipient
 .Dq user+t?g@example.org :
-.Bl -column %{rcpt:lowercase|strip} -offset indent
+.Bl -column %{rcpt:raw} -offset indent
 .It %{rcpt}     Ta expands to Dq user+t:g@example.org
 .It %{rcpt:raw} Ta expands to Dq user+t?g@example.org
 .El
