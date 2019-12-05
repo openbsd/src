@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.255 2019/12/04 10:22:05 mpi Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.256 2019/12/05 16:16:01 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -87,6 +87,14 @@ void			scsi_link_close(struct scsi_link *);
 
 void *			scsi_iopool_get(struct scsi_iopool *);
 void			scsi_iopool_put(struct scsi_iopool *, void *);
+
+/* Various helper functions for scsi_do_mode_sense() */
+int			scsi_mode_sense(struct scsi_link *, int, int, struct scsi_mode_header *,
+			    size_t, int, int);
+int			scsi_mode_sense_big(struct scsi_link *, int, int,
+			    struct scsi_mode_header_big *, size_t, int, int);
+void *			scsi_mode_sense_page(struct scsi_mode_header *, int, int);
+void *			scsi_mode_sense_big_page(struct scsi_mode_header_big *, int, int);
 
 /* ioh/xsh queue state */
 #define RUNQ_IDLE	0
