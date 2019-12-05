@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.c,v 1.16 2018/06/21 14:53:36 helg Exp $ */
+/* $OpenBSD: fusebuf.c,v 1.17 2019/12/05 10:41:08 mpi Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -82,7 +82,7 @@ int
 fb_queue(dev_t dev, struct fusebuf *fbuf)
 {
 	fuse_device_queue_fbuf(dev, fbuf);
-	tsleep(fbuf, PWAIT, "fuse", 0);
+	tsleep_nsec(fbuf, PWAIT, "fuse", INFSLP);
 
 	return (fbuf->fb_err);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.30 2019/10/19 06:56:18 visa Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.31 2019/12/05 10:41:08 mpi Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -266,7 +266,7 @@ chkvnlock(struct vnode *vp)
 
 	while (vp->v_flag & VXLOCK) {
 		vp->v_flag |= VXWANT;
-		tsleep(vp, PINOD, "chkvnlock", 0);
+		tsleep_nsec(vp, PINOD, "chkvnlock", INFSLP);
 		locked = 1;
 	}
 	return (locked);
