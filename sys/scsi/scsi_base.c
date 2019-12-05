@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.258 2019/12/05 18:42:14 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.259 2019/12/05 19:53:05 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1256,7 +1256,7 @@ scsi_do_mode_sense(struct scsi_link *link, int pg_code,
     union scsi_mode_sense_buf *buf, void **page_data,
     int pg_length, int flags, int *big)
 {
-	int			error;
+	int			error = 0;
 
 	*page_data = NULL;
 	*big = 0;
@@ -1288,11 +1288,12 @@ scsi_do_mode_sense(struct scsi_link *link, int pg_code,
 	}
 
 	/*
-	 * non-ATAPI, non-USB devices that don't support SCSI-2 commands are done.
+	 * non-ATAPI, non-USB devices that don't support SCSI-2 commands
+	 * (i.e. MODE SENSE (10)) are done.
 	 */
 	if ((link->flags & (SDEV_ATAPI | SDEV_UMASS)) == 0 &&
 	    SID_ANSII_REV(&link->inqdata) < SCSI_REV_2)
-		return (0);
+		return error;
 
 	/*
 	 * Try 10 byte mode sense request.
