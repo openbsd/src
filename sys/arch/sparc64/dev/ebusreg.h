@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebusreg.h,v 1.5 2007/04/04 18:38:54 kettenis Exp $	*/
+/*	$OpenBSD: ebusreg.h,v 1.6 2019/12/05 12:46:54 mpi Exp $	*/
 /*	$NetBSD: ebusreg.h,v 1.1 1999/06/04 13:29:13 mrg Exp $	*/
 
 /*
@@ -13,8 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
