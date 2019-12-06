@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.19 2019/11/30 03:30:29 kn Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.20 2019/12/06 23:01:03 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 30 2019 $
+.Dd $Mdocdate: December 6 2019 $
 .Dt LDOMCTL 8 sparc64
 .Os
 .Sh NAME
@@ -150,7 +150,7 @@ which sets
 in
 .Xr rc.conf.local 8 .
 .Pp
-Halt the primary domain reset the hardware:
+Halt the primary domain and reset the hardware:
 .Bd -literal -offset indent
 # halt
 sc> reset -c	# ALOM
