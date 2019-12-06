@@ -1,4 +1,4 @@
-.\"	$OpenBSD: physio.9,v 1.9 2019/12/06 10:33:04 mpi Exp $
+.\"	$OpenBSD: physio.9,v 1.10 2019/12/06 11:09:47 mpi Exp $
 .\"	$NetBSD: physio.9,v 1.5 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -64,9 +64,9 @@ needs to lock the appropriate data area into memory before each transaction
 with
 .Fa strategy
 (see
-.Xr uvm_vslock 9
+.Xr uvm_vslock_device 9
 and
-.Xr uvm_vsunlock 9 ) .
+.Xr uvm_vsunlock_device 9 ) .
 .Fn physio
 always awaits the completion of the entire requested transfer before
 returning, unless an error condition is detected earlier.
