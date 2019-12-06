@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmstat.8,v 1.39 2017/12/08 09:45:05 jasper Exp $
+.\"	$OpenBSD: vmstat.8,v 1.40 2019/12/06 19:15:16 jmc Exp $
 .\"	$NetBSD: vmstat.8,v 1.12 1996/05/10 23:19:30 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)vmstat.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: December 8 2017 $
+.Dd $Mdocdate: December 6 2019 $
 .Dt VMSTAT 8
 .Os
 .Sh NAME
@@ -90,7 +90,7 @@ Extract the name list from the specified system instead of the running kernel.
 Display the contents of the
 .Va uvmexp
 structure (see
-.Xr uvm 9 ) ,
+.Xr uvm_init 9 ) ,
 giving the total number of several kinds of paging related
 events which have occurred since system startup.
 .It Fl t
@@ -210,7 +210,7 @@ apparent which are recomputed every second.
 .Xr top 1 ,
 .Xr iostat 8 ,
 .Xr pstat 8 ,
-.Xr uvm 9
+.Xr uvm_init 9
 .Sh BUGS
 The
 .Fl c

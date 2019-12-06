@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.62 2019/08/11 15:48:08 deraadt Exp $
+.\"	$OpenBSD: mmap.2,v 1.63 2019/12/06 19:15:16 jmc Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mmap.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 11 2019 $
+.Dd $Mdocdate: December 6 2019 $
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -349,7 +349,7 @@ for all other mappings.
 New programs should not rely on this behavior.
 .Sh BUGS
 Due to a limitation of the current vm system (see
-.Xr uvm 9 ) ,
+.Xr uvm_init 9 ) ,
 mapping descriptors
 .Dv PROT_WRITE
 without also specifying
