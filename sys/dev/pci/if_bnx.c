@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.125 2018/03/10 10:51:46 sthen Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.126 2019/12/06 01:58:47 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -875,12 +875,13 @@ bnx_attachhook(struct device *self)
 	ifp->if_ioctl = bnx_ioctl;
 	ifp->if_qstart = bnx_start;
 	ifp->if_watchdog = bnx_watchdog;
+	ifp->if_hardmtu = BNX_MAX_JUMBO_ETHER_MTU_VLAN -
+	    sizeof(struct ether_header);
 	IFQ_SET_MAXLEN(&ifp->if_snd, USABLE_TX_BD - 1);
 	bcopy(sc->eaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	bcopy(sc->bnx_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_TCPv4 |
-	    IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities = IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
@@ -2417,7 +2418,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	 */
 	for (i = 0; i < TOTAL_TX_BD; i++) {
 		if (bus_dmamap_create(sc->bnx_dmatag,
-		    MCLBYTES * BNX_MAX_SEGMENTS, BNX_MAX_SEGMENTS,
+		    BNX_MAX_JUMBO_ETHER_MTU_VLAN, BNX_MAX_SEGMENTS,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT, &sc->tx_mbuf_map[i])) {
 			printf(": Could not create Tx mbuf %d DMA map!\n", 1);
 			rc = ENOMEM;
@@ -2650,8 +2651,8 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	 * Create DMA maps for the Rx buffer mbufs.
 	 */
 	for (i = 0; i < TOTAL_RX_BD; i++) {
-		if (bus_dmamap_create(sc->bnx_dmatag, BNX_MAX_MRU,
-		    BNX_MAX_SEGMENTS, BNX_MAX_MRU, 0, BUS_DMA_NOWAIT,
+		if (bus_dmamap_create(sc->bnx_dmatag, BNX_MAX_JUMBO_MRU,
+		    1, BNX_MAX_JUMBO_MRU, 0, BUS_DMA_NOWAIT,
 		    &sc->rx_mbuf_map[i])) {
 			printf(": Could not create Rx mbuf %d DMA map!\n", i);
 			rc = ENOMEM;
@@ -3670,10 +3671,10 @@ bnx_get_buf(struct bnx_softc *sc, u_int16_t *prod,
 	    *prod_bseq);
 
 	/* This is a new mbuf allocation. */
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, BNX_MAX_JUMBO_MRU);
 	if (!m)
 		return (0);
-	m->m_len = m->m_pkthdr.len = MCLBYTES;
+	m->m_len = m->m_pkthdr.len = BNX_MAX_JUMBO_MRU;
 	/* the chip aligns the ip header for us, no need to m_adj */
 
 	/* Map the mbuf cluster into device memory. */
@@ -4655,7 +4656,7 @@ bnx_init(void *xsc)
 	bnx_set_mac_addr(sc);
 
 	/* Calculate and program the Ethernet MRU size. */
-	ether_mtu = BNX_MAX_STD_ETHER_MTU_VLAN;
+	ether_mtu = BNX_MAX_JUMBO_ETHER_MTU_VLAN;
 
 	DBPRINT(sc, BNX_INFO, "%s(): setting MRU = %d\n",
 	    __FUNCTION__, ether_mtu);
@@ -5005,7 +5006,7 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	case SIOCGIFRXR:
 		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
-		    NULL, MCLBYTES, &sc->rx_ring);
+		    NULL, BNX_MAX_JUMBO_MRU, &sc->rx_ring);
 		break;
 
 	default:
