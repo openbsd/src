@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.143 2019/11/07 07:36:32 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.144 2019/12/06 02:02:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -310,7 +310,7 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 			printf("%s: first port, setting trunk mtu %u\n",
 			    tr->tr_ifname, ifp->if_mtu);
 		tr->tr_ac.ac_if.if_mtu = ifp->if_mtu;
-		tr->tr_ac.ac_if.if_hardmtu = ifp->if_mtu;
+		tr->tr_ac.ac_if.if_hardmtu = ifp->if_hardmtu;
 	} else if (tr->tr_ac.ac_if.if_mtu != ifp->if_mtu) {
 		printf("%s: adding %s failed, MTU %u != %u\n", tr->tr_ifname,
 		    ifp->if_xname, ifp->if_mtu, tr->tr_ac.ac_if.if_mtu);
