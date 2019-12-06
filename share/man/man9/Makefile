@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.298 2019/12/05 15:14:28 mpi Exp $
+#	$OpenBSD: Makefile,v 1.299 2019/12/06 10:42:33 mpi Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -43,7 +43,7 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	usb_add_task.9 usbd_close_pipe.9 usbd_open_pipe.9 \
 	usbd_ref_wait.9 usbd_transfer.9 \
 	uvm_fault.9 uvm_init.9 uvm_km_alloc.9 uvm_map.9 uvm_pagealloc.9 \
-	uvn_attach.9 \
+	uvm_vslock.9 uvn_attach.9 \
 	vfs.9 vfs_busy.9 \
 	vfs_cache.9 vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 \
 	vflushbuf.9 vget.9 vgone.9 vhold.9 vinvalbuf.9 vnode.9 vnsubr.9 \
