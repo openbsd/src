@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.244 2019/01/18 01:34:50 pd Exp $
+#	$OpenBSD: files.i386,v 1.245 2019/12/06 09:48:01 mpi Exp $
 #
 # new style config file for i386 architecture
 #
@@ -148,17 +148,12 @@ file	arch/i386/i386/amdmsr.c		amdmsr	needs-flag
 # PCI-ISA bridge chipsets
 device	pcib: isabus
 attach	pcib at pci
-file	arch/i386/pci/pcib.c		pcib | ichpcib | gscpcib | glxpcib | piixpcib | amdpcib | tcpcib
+file	arch/i386/pci/pcib.c		pcib | ichpcib | gscpcib | glxpcib | amdpcib | tcpcib
 
 # Intel ICHx/ICHx-M LPC bridges
 device	ichpcib: isabus
 attach	ichpcib at pci
 file	arch/i386/pci/ichpcib.c		ichpcib
-
-# Intel PIIX4 PCI-ISA bridge
-device	piixpcib: isabus
-attach	piixpcib at pci
-file	arch/i386/pci/piixpcib.c	piixpcib
 
 # National Semiconductor Geode SC1100 PCI-ISA bridge
 device	gscpcib: isabus, gpiobus
