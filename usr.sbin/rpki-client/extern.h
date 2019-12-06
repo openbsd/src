@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.22 2019/12/04 12:40:17 deraadt Exp $ */
+/*	$OpenBSD: extern.h,v 1.23 2019/12/06 09:27:12 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -381,6 +381,7 @@ int		 output_json(FILE *, struct vrp_tree *);
 void	logx(const char *fmt, ...)
 		    __attribute__((format(printf, 1, 2)));
 
-#define		_PATH_ROA_DIR	"/var/db/rpki-client"
+#define		RPKI_PATH_OUT_DIR	"/var/db/rpki-client"
+#define		RPKI_PATH_BASE_DIR	"/var/cache/rpki-client"
 
 #endif /* ! EXTERN_H */

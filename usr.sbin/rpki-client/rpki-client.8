@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.15 2019/12/04 16:42:34 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.16 2019/12/06 09:27:12 claudio Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 4 2019 $
+.Dd $Mdocdate: December 6 2019 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm
 .Op Fl Bcfjnov
 .Op Fl b Ar bind_addr
+.Op Fl d Ar cachedir
 .Op Fl e Ar rsync_prog
 .Op Fl T Ar table
 .Op Fl t Ar tal
@@ -61,6 +62,12 @@ Create output in the file
 in the output directory as comma-separated values of the prefix in slash notation,
 the maximum prefix length, the autonomous system number, and an abbreviation
 for the trust anchor the entry is derived from.
+.It Fl d Ar cachedir
+The directory where
+.Nm
+will store the cached repository data.
+Defaults to
+.Pa /var/db/rpki-client/ .
 .It Fl e Ar rsync_prog
 Use
 .Ar rsync_prog
