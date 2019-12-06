@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwindctl.c,v 1.22 2019/12/03 16:18:23 florian Exp $	*/
+/*	$OpenBSD: unwindctl.c,v 1.23 2019/12/06 12:59:48 otto Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -259,11 +259,12 @@ show_status_msg(struct imsg *imsg)
 void
 histogram_header(void)
 {
-	const char	 head[] = "lifetime[ms], decaying[ms]";
+	const char	 head[] = "histograms: lifetime[ms], decaying[ms]";
 	char	 	 buf[10];
 	size_t	 	 i;
 
-	printf("     %*s\n     ", (int)(72/2 + (sizeof(head)-1)/2), head);
+	printf("\n%*s%*s\n%*s", 5, "",
+	    (int)(72/2 + (sizeof(head)-1)/2), head, 5, "");
 	for(i = 0; i < nitems(histogram_limits) - 1; i++) {
 		snprintf(buf, sizeof(buf), "<%lld", histogram_limits[i]);
 		printf("%6s", buf);
