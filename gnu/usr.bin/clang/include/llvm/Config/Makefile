@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2019/03/06 08:13:54 jsg Exp $
+# $OpenBSD: Makefile,v 1.7 2019/12/06 09:22:24 jsg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,11 +16,14 @@ clean cleandir:
 	rm -f ${DEFS}
 
 AsmParsers.def:
-	printf "LLVM_ASM_PARSER(${LLVM_ARCH})\n#undef LLVM_ASM_PARSER\n" >$@
+	printf "LLVM_ASM_PARSER(AMDGPU)\n" >$@
+	printf "LLVM_ASM_PARSER(${LLVM_ARCH})\n#undef LLVM_ASM_PARSER\n" >>$@
 AsmPrinters.def:
-	printf "LLVM_ASM_PRINTER(${LLVM_ARCH})\n#undef LLVM_ASM_PRINTER\n" >$@
+	printf "LLVM_ASM_PRINTER(AMDGPU)\n" >$@
+	printf "LLVM_ASM_PRINTER(${LLVM_ARCH})\n#undef LLVM_ASM_PRINTER\n" >>$@
 Disassemblers.def:
-	printf "LLVM_DISASSEMBLER(${LLVM_ARCH})\n#undef LLVM_DISASSEMBLER\n" >$@
+	printf "LLVM_DISASSEMBLER(AMDGPU)\n" >$@
+	printf "LLVM_DISASSEMBLER(${LLVM_ARCH})\n#undef LLVM_DISASSEMBLER\n" >>$@
 Targets.def:
 	printf "LLVM_TARGET(AMDGPU)\n" >$@
 	printf "LLVM_TARGET(${LLVM_ARCH})\n#undef LLVM_TARGET\n" >>$@
