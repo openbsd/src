@@ -108,14 +108,18 @@ log_init(const char* filename, int use_syslog, const char* chrootdir)
 		fclose(cl);
 	}
 #ifdef HAVE_SYSLOG_H
+#if 0	/* unwind handles syslog for us */
 	if(logging_to_syslog) {
 		closelog();
 		logging_to_syslog = 0;
 	}
+#endif
 	if(use_syslog) {
 		/* do not delay opening until first write, because we may
 		 * chroot and no longer be able to access dev/log and so on */
+#if 0	/* unwind handles syslog for us */
 		openlog(ident, LOG_NDELAY, LOG_DAEMON);
+#endif
 		logging_to_syslog = 1;
 		lock_quick_unlock(&log_lock);
 		return;
