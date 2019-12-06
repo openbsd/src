@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.66 2019/11/29 06:34:45 deraadt Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.67 2019/12/06 08:33:25 mpi Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -80,8 +80,9 @@ struct uvm {
 
 /*
  * vm_map_entry etype bits:
+ *
+ * keep in sync with KVM_ET_*
  */
-
 #define UVM_ET_OBJ		0x0001	/* it is a uvm_object */
 #define UVM_ET_SUBMAP		0x0002	/* it is a vm_map submap */
 #define UVM_ET_COPYONWRITE 	0x0004	/* copy_on_write */

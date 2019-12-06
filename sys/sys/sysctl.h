@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.196 2019/10/22 21:19:22 cheloha Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.197 2019/12/06 08:33:25 mpi Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -497,24 +497,33 @@ struct kinfo_vmentry {
 	u_int8_t kve_flags;		/* u_int8_t */
 };
 
+/* keep in sync with UVM_ET_* */
 #define KVE_ET_OBJ		0x00000001
 #define KVE_ET_SUBMAP		0x00000002
 #define KVE_ET_COPYONWRITE 	0x00000004
 #define KVE_ET_NEEDSCOPY	0x00000008
 #define KVE_ET_HOLE		0x00000010
 #define KVE_ET_NOFAULT		0x00000020
-#define KVE_ET_FREEMAPPED	0x00000080
+#define KVE_ET_STACK		0x00000040
+#define KVE_ET_WC		0x00000080
+#define KVE_ET_CONCEAL		0x00000100
+#define KVE_ET_SYSCALL		0x00000200
+#define KVE_ET_FREEMAPPED	0x00000800
+
 #define KVE_PROT_NONE		0x00000000
 #define KVE_PROT_READ		0x00000001
 #define KVE_PROT_WRITE		0x00000002
 #define KVE_PROT_EXEC		0x00000004
+
 #define KVE_ADV_NORMAL		0x00000000
 #define KVE_ADV_RANDOM		0x00000001
 #define KVE_ADV_SEQUENTIAL	0x00000002
+
 #define KVE_INH_SHARE		0x00000000
 #define KVE_INH_COPY		0x00000010
 #define KVE_INH_NONE		0x00000020
 #define KVE_INH_ZERO		0x00000030
+
 #define KVE_F_STATIC		0x01
 #define KVE_F_KMEM		0x02
 
