@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.60 2019/11/23 01:16:05 krw Exp $ */
+/*	$OpenBSD: safte.c,v 1.61 2019/12/07 14:13:49 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -50,37 +50,37 @@ void	safte_attach(struct device *, struct device *, void *);
 int	safte_detach(struct device *, int);
 
 struct safte_sensor {
-	struct ksensor		se_sensor;
+	struct ksensor		 se_sensor;
 	enum {
 		SAFTE_T_FAN,
 		SAFTE_T_PWRSUP,
 		SAFTE_T_DOORLOCK,
 		SAFTE_T_ALARM,
 		SAFTE_T_TEMP
-	}			se_type;
+	}			 se_type;
 	u_int8_t		*se_field;
 };
 
 struct safte_softc {
-	struct device		sc_dev;
-	struct scsi_link	 *sc_link;
-	struct rwlock		sc_lock;
+	struct device		 sc_dev;
+	struct scsi_link	*sc_link;
+	struct rwlock		 sc_lock;
 
-	u_int			sc_encbuflen;
+	u_int			 sc_encbuflen;
 	u_char			*sc_encbuf;
 
-	int			sc_nsensors;
+	int			 sc_nsensors;
 	struct safte_sensor	*sc_sensors;
-	struct ksensordev	sc_sensordev;
+	struct ksensordev	 sc_sensordev;
 	struct sensor_task	*sc_sensortask;
 
-	int			sc_celsius;
-	int			sc_ntemps;
+	int			 sc_celsius;
+	int			 sc_ntemps;
 	struct safte_sensor	*sc_temps;
 	u_int8_t		*sc_temperrs;
 
 #if NBIO > 0
-	int			sc_nslots;
+	int			 sc_nslots;
 	u_int8_t		*sc_slots;
 #endif /* NBIO > 0 */
 };
@@ -108,35 +108,35 @@ int64_t	safte_temp2uK(u_int8_t, int);
 int
 safte_match(struct device *parent, void *match, void *aux)
 {
-	struct scsi_inquiry_data *inqbuf;
-	struct scsi_attach_args	*sa = aux;
-	struct scsi_inquiry_data *inq = sa->sa_inqbuf;
-	struct scsi_xfer *xs;
-	struct safte_inq *si;
-	int error, flags = 0, length;
+	struct scsi_inquiry_data	*inqbuf;
+	struct scsi_attach_args		*sa = aux;
+	struct scsi_inquiry_data	*inq = sa->sa_inqbuf;
+	struct scsi_xfer		*xs;
+	struct safte_inq		*si;
+	int				 error, flags = 0, length;
 
 	if (inq == NULL)
-		return (0);
+		return 0;
 
-	/* match on dell enclosures */
+	/* Match on Dell enclosures. */
 	if ((inq->device & SID_TYPE) == T_PROCESSOR &&
 	    SID_ANSII_REV(inq) == SCSI_REV_SPC)
-		return (2);
+		return 2;
 
 	if ((inq->device & SID_TYPE) != T_PROCESSOR ||
 	    SID_ANSII_REV(inq) != SCSI_REV_2 ||
 	    SID_RESPONSE_FORMAT(inq) != 2)
-		return (0);
+		return 0;
 
 	length = inq->additional_length + SAFTE_EXTRA_OFFSET;
 	if (length < SAFTE_INQ_LEN)
-		return (0);
+		return 0;
 	if (length > sizeof(*inqbuf))
 		length = sizeof(*inqbuf);
 
 	inqbuf = dma_alloc(sizeof(*inqbuf), PR_NOWAIT | PR_ZERO);
 	if (inqbuf == NULL)
-		return (0);
+		return 0;
 
 	memset(inqbuf->extra, ' ', sizeof(inqbuf->extra));
 
@@ -160,12 +160,12 @@ safte_match(struct device *parent, void *match, void *aux)
 	si = (struct safte_inq *)&inqbuf->extra;
 	if (memcmp(si->ident, SAFTE_IDENT, sizeof(si->ident)) == 0) {
 		dma_free(inqbuf, sizeof(*inqbuf));
-		return (2);
+		return 2;
 	}
 
 fail:
 	dma_free(inqbuf, sizeof(*inqbuf));
-	return (0);
+	return 0;
 }
 
 void
@@ -173,7 +173,7 @@ safte_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct safte_softc		*sc = (struct safte_softc *)self;
 	struct scsi_attach_args		*sa = aux;
-	int				i = 0;
+	int				 i = 0;
 
 	sc->sc_link = sa->sa_sc_link;
 	sa->sa_sc_link->device_softc = sc;
@@ -231,7 +231,7 @@ int
 safte_detach(struct device *self, int flags)
 {
 	struct safte_softc		*sc = (struct safte_softc *)self;
-	int				i;
+	int				 i;
 
 	rw_enter_write(&sc->sc_lock);
 
@@ -256,21 +256,21 @@ safte_detach(struct device *self, int flags)
 
 	rw_exit_write(&sc->sc_lock);
 
-	return (0);
+	return 0;
 }
 
 int
 safte_read_config(struct safte_softc *sc)
 {
-	struct safte_config *config = NULL;
-	struct safte_readbuf_cmd *cmd;
-	struct safte_sensor *s;
-	struct scsi_xfer *xs;
-	int error = 0, flags = 0, i, j;
+	struct safte_config		*config = NULL;
+	struct safte_readbuf_cmd	*cmd;
+	struct safte_sensor		*s;
+	struct scsi_xfer		*xs;
+	int				  error = 0, flags = 0, i, j;
 
 	config = dma_alloc(sizeof(*config), PR_NOWAIT);
 	if (config == NULL)
-		return (1);
+		return 1;
 
 	if (cold)
 		SET(flags, SCSI_AUTOCONF);
@@ -322,8 +322,8 @@ safte_read_config(struct safte_softc *sc)
 	sc->sc_nsensors = config->nfans + config->npwrsup + config->ntemps +
 	    (config->doorlock ? 1 : 0) + (config->alarm ? 1 : 0);
 
-	sc->sc_sensors = mallocarray(sc->sc_nsensors, sizeof(struct safte_sensor),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	sc->sc_sensors = mallocarray(sc->sc_nsensors,
+	    sizeof(struct safte_sensor), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_sensors == NULL) {
 		dma_free(sc->sc_encbuf, sc->sc_encbuflen);
 		sc->sc_encbuf = NULL;
@@ -387,8 +387,8 @@ safte_read_config(struct safte_softc *sc)
 	j++;
 
 	/*
-	 * stash the temp info so we can get out of range status. limit the
-	 * number so the out of temp checks cant go into memory it doesnt own
+	 * Stash the temp info so we can get out of range status. Limit the
+	 * number so the out of temp checks can't go into memory it doesnt own.
 	 */
 	sc->sc_ntemps = (config->ntemps > 15) ? 15 : config->ntemps;
 	sc->sc_temps = s;
@@ -405,18 +405,18 @@ safte_read_config(struct safte_softc *sc)
 	sc->sc_temperrs = (u_int8_t *)(sc->sc_encbuf + j);
 done:
 	dma_free(config, sizeof(*config));
-	return (error);
+	return error;
 }
 
 void
 safte_read_encstat(void *arg)
 {
-	struct safte_readbuf_cmd *cmd;
-	struct safte_sensor *s;
-	struct safte_softc *sc = (struct safte_softc *)arg;
-	struct scsi_xfer *xs;
-	int error, i, flags = 0;
-	u_int16_t oot;
+	struct safte_readbuf_cmd	*cmd;
+	struct safte_sensor		*s;
+	struct safte_softc		*sc = (struct safte_softc *)arg;
+	struct scsi_xfer		*xs;
+	int				 error, i, flags = 0;
+	u_int16_t			 oot;
 
 	rw_enter_write(&sc->sc_lock);
 
@@ -554,7 +554,7 @@ int
 safte_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 {
 	struct safte_softc		*sc = (struct safte_softc *)dev;
-	int				error = 0;
+	int				 error = 0;
 
 	switch (cmd) {
 	case BIOCBLINK:
@@ -566,16 +566,16 @@ safte_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 		break;
 	}
 
-	return (error);
+	return error;
 }
 
 int
 safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 {
-	struct safte_writebuf_cmd *cmd;
-	struct safte_slotop *op;
-	struct scsi_xfer *xs;
-	int error, slot, flags = 0, wantblink;
+	struct safte_writebuf_cmd	*cmd;
+	struct safte_slotop		*op;
+	struct scsi_xfer		*xs;
+	int				 error, slot, flags = 0, wantblink;
 
 	switch (blink->bb_status) {
 	case BIOC_SBBLINK:
@@ -585,7 +585,7 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 		wantblink = 0;
 		break;
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	rw_enter_read(&sc->sc_lock);
@@ -596,7 +596,7 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 	rw_exit_read(&sc->sc_lock);
 
 	if (slot >= sc->sc_nslots)
-		return (ENODEV);
+		return ENODEV;
 
 	op = dma_alloc(sizeof(*op), PR_WAITOK | PR_ZERO);
 
@@ -609,7 +609,7 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_OUT | SCSI_SILENT);
 	if (xs == NULL) {
 		dma_free(op, sizeof(*op));
-		return (ENOMEM);
+		return ENOMEM;
 	}
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)op;
@@ -630,7 +630,7 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 	}
 	dma_free(op, sizeof(*op));
 
-	return (error);
+	return error;
 }
 #endif /* NBIO > 0 */
 
@@ -641,11 +641,11 @@ safte_temp2uK(u_int8_t measured, int celsius)
 
 	temp = (int64_t)measured;
 	temp += SAFTE_TEMP_OFFSET;
-	temp *= 1000000; /* convert to micro (mu) degrees */
+	temp *= 1000000; /* Convert to micro (mu) degrees. */
 	if (!celsius)
-		temp = ((temp - 32000000) * 5) / 9; /* convert to Celsius */
+		temp = ((temp - 32000000) * 5) / 9; /* Convert to Celsius. */
 
-	temp += 273150000; /* convert to kelvin */
+	temp += 273150000; /* Convert to kelvin. */
 
-	return (temp);
+	return temp;
 }
