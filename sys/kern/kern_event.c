@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.106 2019/07/03 14:32:02 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.107 2019/12/07 13:11:04 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -110,12 +110,6 @@ struct	pool knote_pool;
 struct	pool kqueue_pool;
 int kq_ntimeouts = 0;
 int kq_timeoutmax = (4 * 1024);
-
-#define KNOTE_ACTIVATE(kn) do {						\
-	kn->kn_status |= KN_ACTIVE;					\
-	if ((kn->kn_status & (KN_QUEUED | KN_DISABLED)) == 0)		\
-		knote_enqueue(kn);					\
-} while(0)
 
 #define KN_HASH(val, mask)	(((val) ^ (val >> 8)) & (mask))
 
@@ -346,7 +340,7 @@ filt_timerexpire(void *knx)
 	struct knote *kn = knx;
 
 	kn->kn_data++;
-	KNOTE_ACTIVATE(kn);
+	knote_activate(kn);
 
 	if ((kn->kn_flags & EV_ONESHOT) == 0)
 		filt_timer_timeout_add(kn);
@@ -662,7 +656,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 
 		s = splhigh();
 		if (kn->kn_fop->f_event(kn, 0))
-			KNOTE_ACTIVATE(kn);
+			knote_activate(kn);
 		splx(s);
 
 	} else if (kev->flags & EV_DELETE) {
@@ -924,7 +918,9 @@ kqueue_wakeup(struct kqueue *kq)
 void
 knote_activate(struct knote *kn)
 {
-	KNOTE_ACTIVATE(kn);
+	kn->kn_status |= KN_ACTIVE;
+	if ((kn->kn_status & (KN_QUEUED | KN_DISABLED)) == 0)
+		knote_enqueue(kn);
 }
 
 /*
@@ -937,7 +933,7 @@ knote(struct klist *list, long hint)
 
 	SLIST_FOREACH_SAFE(kn, list, kn_selnext, kn0)
 		if (kn->kn_fop->f_event(kn, hint))
-			KNOTE_ACTIVATE(kn);
+			knote_activate(kn);
 }
 
 /*
