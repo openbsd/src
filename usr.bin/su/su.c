@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.78 2019/12/04 09:51:09 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.79 2019/12/07 19:23:21 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -172,6 +172,8 @@ main(int argc, char **argv)
 		err(1, "unveil");
 
 	for (;;) {
+		char *pw_class = class;
+
 		/* get target user, default to root unless in -L mode */
 		if (*argv) {
 			user = *argv;
@@ -207,11 +209,11 @@ main(int argc, char **argv)
 		}
 
 		/* If the user specified a login class, use it */
-		if (!class && pwd && pwd->pw_class && pwd->pw_class[0] != '\0')
-			class = strdup(pwd->pw_class);
-		if ((lc = login_getclass(class)) == NULL)
+		if (pw_class == NULL && pwd != NULL)
+			pw_class = pwd->pw_class;
+		if ((lc = login_getclass(pw_class)) == NULL)
 			auth_errx(as, 1, "no such login class: %s",
-			    class ? class : LOGIN_DEFCLASS);
+			    pw_class ? pw_class : LOGIN_DEFCLASS);
 
 		if ((ruid == 0 && !emlogin) ||
 		    verify_user(username, pwd, style, lc, as) == 0)
