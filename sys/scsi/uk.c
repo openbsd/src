@@ -1,4 +1,4 @@
-/*	$OpenBSD: uk.c,v 1.23 2019/12/05 21:32:13 krw Exp $	*/
+/*	$OpenBSD: uk.c,v 1.24 2019/12/07 15:16:24 krw Exp $	*/
 /*	$NetBSD: uk.c,v 1.15 1996/03/17 00:59:57 thorpej Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ ukclose(dev_t dev, int flag, int fmt, struct proc *p)
 
 	sc = uklookup(UKUNIT(dev));
 	if (sc == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	SC_DEBUG(sc->sc_link, SDEV_DB1, ("closing\n"));
 	CLR(sc->sc_link->flags, SDEV_OPEN);
