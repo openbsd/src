@@ -1,4 +1,4 @@
-.\" $OpenBSD: ure.4,v 1.6 2019/08/29 08:55:05 kevlo Exp $
+.\" $OpenBSD: ure.4,v 1.7 2019/12/07 08:45:28 kevlo Exp $
 .\"
 .\" Copyright (c) 2015 Kevin Lo <kevlo@FreeBSD.org>
 .\" All rights reserved.
@@ -26,12 +26,12 @@
 .\"
 .\" $FreeBSD: head/share/man/man4/ure.4 291557 2015-12-01 05:12:13Z kevlo $
 .\"
-.Dd $Mdocdate: August 29 2019 $
+.Dd $Mdocdate: December 7 2019 $
 .Dt URE 4
 .Os
 .Sh NAME
 .Nm ure
-.Nd RealTek RTL8152/RTL8153/RTL8153B 10/100/Gigabit USB Ethernet device
+.Nd RealTek RTL8152/RTL8153/RTL8153B/RTL8156 10/100/Gigabit/2.5Gb USB Ethernet device
 .Sh SYNOPSIS
 .Cd "ure*   at uhub?"
 .Cd "rgephy* at mii?"
@@ -40,12 +40,13 @@
 The
 .Nm
 driver provides support for USB Ethernet adapters based on the RealTek
-RTL8152, RTL8153 and RTL8153B chipsets.
+RTL8152, RTL8153, RTL8153B and RTL8156 chipsets.
 .Pp
 The RTL8152 contains an integrated Fast Ethernet MAC, which supports
 both 10 and 100Mbps speeds in either full or half duplex.
 The RTL8153 and RTL8153B have Gigabit Ethernet MACs and additionally
 support 1000Mbps speeds.
+NICs based on the RTL8156 are capable of 10, 100, 1000 and 2500Mbps operation.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .

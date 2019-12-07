@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urereg.h,v 1.7 2019/08/29 08:55:06 kevlo Exp $	*/
+/*	$OpenBSD: if_urereg.h,v 1.8 2019/12/07 08:45:28 kevlo Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * All rights reserved.
@@ -41,10 +41,10 @@
 #define	URE_BYTE_EN_BYTE	0x11
 #define	URE_BYTE_EN_SIX_BYTES	0x3f
 
-#define	URE_FRAMELEN(mtu)	\
+#define URE_FRAMELEN(mtu)	\
 	(mtu + ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN)
-#define	URE_JUMBO_FRAMELEN	(9 * 1024)
-#define	URE_JUMBO_MTU						\
+#define URE_JUMBO_FRAMELEN	(9 * 1024)
+#define URE_JUMBO_MTU						\
 	(URE_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN -	\
 	 ETHER_VLAN_ENCAP_LEN)
 
@@ -310,6 +310,14 @@
 /* URE_PLA_EXTRA_STATUS */
 #define	URE_LINK_CHANGE_FLAG	0x0100
 
+/* URE_PLA_PHYSTATUS */
+#define URE_PHYSTATUS_FDX	0x0001
+#define URE_PHYSTATUS_LINK	0x0002
+#define URE_PHYSTATUS_10MBPS	0x0004
+#define URE_PHYSTATUS_100MBPS	0x0008
+#define URE_PHYSTATUS_1000MBPS	0x0010
+#define URE_PHYSTATUS_2500MBPS	0x0400
+
 /* URE_USB_USB2PHY */
 #define	URE_USB2PHY_SUSPEND	0x0001
 #define	URE_USB2PHY_L1		0x0002
@@ -432,6 +440,8 @@
 #define	URE_ADC_EN		0x0080
 #define	URE_CKADSEL_L		0x0100
 
+#define URE_ADV_2500TFDX	0x0080
+
 #define	URE_MCU_TYPE_PLA	0x0100
 #define	URE_MCU_TYPE_USB	0x0000
 
@@ -451,8 +461,17 @@ struct ure_intrpkt {
 struct ure_rxpkt {
 	uint32_t ure_pktlen;
 #define	URE_RXPKT_LEN_MASK	0x7fff
-	uint32_t ure_rsvd0;
-	uint32_t ure_rsvd1;
+	uint32_t ure_vlan;
+#define	URE_RXPKT_UDP		(1 << 23)
+#define	URE_RXPKT_TCP		(1 << 22)
+#define	URE_RXPKT_IPV6		(1 << 20)
+#define	URE_RXPKT_IPV4		(1 << 19)
+#define	URE_RXPKT_VLAN_TAG	(1 << 16)
+#define	URE_RXPKT_VLAN_DATA	0xffff
+	uint32_t ure_csum;
+#define	URE_RXPKT_IPSUMBAD	(1 << 23)
+#define	URE_RXPKT_UDPSUMBAD	(1 << 22)
+#define	URE_RXPKT_TCPSUMBAD	(1 << 21)
 	uint32_t ure_rsvd2;
 	uint32_t ure_rsvd3;
 	uint32_t ure_rsvd4;
@@ -463,18 +482,25 @@ struct ure_txpkt {
 #define	URE_TXPKT_TX_FS		(1 << 31)
 #define	URE_TXPKT_TX_LS		(1 << 30)
 #define	URE_TXPKT_LEN_MASK	0xffff
-	uint32_t ure_rsvd0;
+	uint32_t ure_vlan;
+#define	URE_TXPKT_UDP		(1 << 31)
+#define	URE_TXPKT_TCP		(1 << 30)
+#define	URE_TXPKT_IPV4		(1 << 29)
+#define	URE_TXPKT_IPV6		(1 << 28)
+#define	URE_TXPKT_VLAN_TAG	(1 << 16)
 } __packed;
 
 #define URE_ENDPT_RX		0
 #define URE_ENDPT_TX		1
 #define URE_ENDPT_MAX		2
 
-#define	URE_TX_LIST_CNT		1
+#define	URE_TX_LIST_CNT		8
 #define	URE_RX_LIST_CNT		1
 #define	URE_RX_BUF_ALIGN	sizeof(uint64_t)
 
-#define	URE_BUFSZ		16384
+#define	URE_TXBUFSZ		16384
+#define	URE_8152_RXBUFSZ	16384
+#define	URE_8153_RXBUFSZ	32768
 
 struct ure_chain {
 	struct ure_softc	*uc_sc;
@@ -489,9 +515,7 @@ struct ure_cdata {
 	struct ure_chain	tx_chain[URE_TX_LIST_CNT];
 	struct ure_chain	rx_chain[URE_RX_LIST_CNT];
 	int			tx_prod;
-	int			tx_const;
 	int			tx_cnt;
-	int			rx_prod;
 };
 
 struct ure_softc {
@@ -508,6 +532,7 @@ struct ure_softc {
 	/* ethernet */
 	struct arpcom		ure_ac;
 	struct mii_data		ure_mii;
+	struct ifmedia		ure_ifmedia;
 	struct rwlock		ure_mii_lock;
 	int			ure_refcnt;
 
@@ -515,7 +540,8 @@ struct ure_softc {
 	struct timeout		ure_stat_ch;
 
 	struct timeval		ure_rx_notice;
-	int			ure_bufsz;
+	int			ure_rxbufsz;
+	int			ure_tx_list_cnt;
 
 	int			ure_phyno;
 
@@ -523,6 +549,7 @@ struct ure_softc {
 #define	URE_FLAG_LINK		0x0001
 #define	URE_FLAG_8152		0x1000	/* RTL8152 */
 #define	URE_FLAG_8153B		0x2000	/* RTL8153B */
+#define	URE_FLAG_8156		0x4000	/* RTL8156 */
 
 	u_int			ure_chip;
 #define	URE_CHIP_VER_4C00	0x01
