@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.32 2019/10/23 19:55:09 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.33 2019/12/07 22:57:48 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -186,9 +186,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	symp += object->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];
 	n =  object->Dyn.info[DT_MIPS_SYMTABNO - DT_LOPROC + DT_NUM] -
 	    object->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];
-
-	if (object->traced)
-		lazy = 1;
 
 	/*
 	 *  Then do all global references according to the ABI.

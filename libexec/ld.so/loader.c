@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.187 2019/10/04 17:42:16 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.188 2019/12/07 22:57:47 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -718,8 +718,18 @@ _dl_rtld(elf_object_t *object)
 	fails =_dl_md_reloc(object, DT_REL, DT_RELSZ);
 	fails += _dl_md_reloc(object, DT_RELA, DT_RELASZ);
 	reprotect_if_textrel(object);
-	fails += _dl_md_reloc_got(object, !(_dl_bindnow ||
-	    object->obj_flags & DF_1_NOW));
+
+	/*
+	 * We do lazy resolution by default, doing eager resolution if
+	 *  - the object requests it with -znow, OR
+	 *  - LD_BIND_NOW is set and this object isn't being ltraced
+	 *
+	 * Note that -znow disables ltrace for the object: on at least
+	 * amd64 'ld' doesn't generate the trampoline for lazy relocation
+	 * when -znow is used.
+	 */
+	fails += _dl_md_reloc_got(object, !(object->obj_flags & DF_1_NOW) &&
+	    !(_dl_bindnow && !object->traced));
 
 	/*
 	 * Look for W&X segments and make them read-only.
