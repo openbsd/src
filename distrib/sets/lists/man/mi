@@ -1460,7 +1460,6 @@
 ./usr/share/man/man4/i386/pas.4
 ./usr/share/man/man4/i386/pcibios.4
 ./usr/share/man/man4/i386/pctr.4
-./usr/share/man/man4/i386/piixpcib.4
 ./usr/share/man/man4/i386/sb.4
 ./usr/share/man/man4/i386/skgpio.4
 ./usr/share/man/man4/i386/tcpcib.4
