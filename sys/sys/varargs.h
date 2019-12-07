@@ -1,4 +1,4 @@
-/*	$OpenBSD: varargs.h,v 1.2 2004/01/03 14:55:34 espie Exp $ */
+/*	$OpenBSD: varargs.h,v 1.3 2019/12/07 06:55:20 visa Exp $ */
 /*
  * Copyright (c) 2003, 2004  Marc espie <espie@openbsd.org>
  *
@@ -50,7 +50,7 @@ typedef __builtin_va_list __gnuc_va_list;
 typedef __gnuc_va_list va_list;
 
 #else
-#include <machine/varargs.h>
+#error "unsupported compiler"
 #endif
 
 #endif /* _VARARGS_H_ */
