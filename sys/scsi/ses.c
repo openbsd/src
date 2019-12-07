@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.59 2019/11/23 01:16:05 krw Exp $ */
+/*	$OpenBSD: ses.c,v 1.60 2019/12/07 13:03:57 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -51,8 +51,8 @@ void	ses_attach(struct device *, struct device *, void *);
 int	ses_detach(struct device *, int);
 
 struct ses_sensor {
-	struct ksensor		se_sensor;
-	u_int8_t		se_type;
+	struct ksensor		 se_sensor;
+	u_int8_t		 se_type;
 	struct ses_status	*se_stat;
 
 	TAILQ_ENTRY(ses_sensor)	se_entry;
@@ -62,28 +62,28 @@ struct ses_sensor {
 struct ses_slot {
 	struct ses_status	*sl_stat;
 
-	TAILQ_ENTRY(ses_slot)	sl_entry;
+	TAILQ_ENTRY(ses_slot)	 sl_entry;
 };
 #endif /* NBIO > 0 */
 
 struct ses_softc {
-	struct device		sc_dev;
+	struct device		 sc_dev;
 	struct scsi_link	*sc_link;
-	struct rwlock		sc_lock;
+	struct rwlock		 sc_lock;
 
 	enum {
 		SES_ENC_STD,
 		SES_ENC_DELL
-	}			sc_enctype;
+	}			 sc_enctype;
 
 	u_char			*sc_buf;
-	ssize_t			sc_buflen;
+	ssize_t			 sc_buflen;
 
 #if NBIO > 0
-	TAILQ_HEAD(, ses_slot)	sc_slots;
+	TAILQ_HEAD(, ses_slot)	 sc_slots;
 #endif /* NBIO > 0 */
 	TAILQ_HEAD(, ses_sensor) sc_sensors;
-	struct ksensordev	sc_sensordev;
+	struct ksensordev	 sc_sensordev;
 	struct sensor_task	*sc_sensortask;
 };
 
@@ -97,7 +97,7 @@ struct cfdriver ses_cd = {
 
 #define DEVNAME(s)	((s)->sc_dev.dv_xname)
 
-#define SES_BUFLEN	2048 /* XXX is this enough? */
+#define SES_BUFLEN	2048 /* XXX Is this enough? */
 
 int	ses_read_config(struct ses_softc *);
 int	ses_read_status(struct ses_softc *);
@@ -115,7 +115,7 @@ void	ses_cool2sensor(struct ses_softc *, struct ses_sensor *);
 void	ses_temp2sensor(struct ses_softc *, struct ses_sensor *);
 
 #ifdef SES_DEBUG
-void	ses_dump_enc_desc(struct ses_enc_desc *);
+void	 ses_dump_enc_desc(struct ses_enc_desc *);
 char	*ses_dump_enc_string(u_char *, ssize_t);
 #endif /* SES_DEBUG */
 
@@ -126,26 +126,26 @@ ses_match(struct device *parent, void *match, void *aux)
 	struct scsi_inquiry_data	*inq = sa->sa_inqbuf;
 
 	if (inq == NULL)
-		return (0);
+		return 0;
 
 	if ((inq->device & SID_TYPE) == T_ENCLOSURE &&
 	    SID_ANSII_REV(inq) >= SCSI_REV_2)
-		return (2);
+		return 2;
 
-	/* match on dell enclosures */
+	/* Match on Dell enclosures. */
 	if ((inq->device & SID_TYPE) == T_PROCESSOR &&
 	    SID_ANSII_REV(inq) == SCSI_REV_SPC)
-		return (3);
+		return 3;
 
-	return (0);
+	return 0;
 }
 
 void
 ses_attach(struct device *parent, struct device *self, void *aux)
 {
+	char				 vendor[33];
 	struct ses_softc		*sc = (struct ses_softc *)self;
 	struct scsi_attach_args		*sa = aux;
-	char				vendor[33];
 	struct ses_sensor		*sensor;
 #if NBIO > 0
 	struct ses_slot			*slot;
@@ -251,27 +251,27 @@ ses_detach(struct device *self, int flags)
 
 	rw_exit_write(&sc->sc_lock);
 
-	return (0);
+	return 0;
 }
 
 int
 ses_read_config(struct ses_softc *sc)
 {
-	struct ses_scsi_diag *cmd;
-	struct ses_config_hdr *cfg;
-	struct ses_type_desc *tdh, *tdlist;
+	struct ses_scsi_diag		*cmd;
+	struct ses_config_hdr		*cfg;
+	struct ses_type_desc		*tdh, *tdlist;
 #ifdef SES_DEBUG
-	struct ses_enc_desc *desc;
+	struct ses_enc_desc		*desc;
 #endif /* SES_DEBUG */
-	struct ses_enc_hdr *enc;
-	struct scsi_xfer *xs;
-	u_char *buf, *p;
-	int error = 0, i;
-	int flags = 0, ntypes = 0, nelems = 0;
+	struct ses_enc_hdr		*enc;
+	struct scsi_xfer		*xs;
+	u_char				*buf, *p;
+	int				 error = 0, i;
+	int				 flags = 0, ntypes = 0, nelems = 0;
 
 	buf = dma_alloc(SES_BUFLEN, PR_NOWAIT | PR_ZERO);
 	if (buf == NULL)
-		return (1);
+		return 1;
 
 	if (cold)
 		SET(flags, SCSI_AUTOCONF);
@@ -325,7 +325,7 @@ ses_read_config(struct ses_softc *sc)
 		p += SES_ENC_HDRLEN + enc->vendor_len;
 	}
 
-	tdlist = (struct ses_type_desc *)p; /* stash this for later */
+	tdlist = (struct ses_type_desc *)p; /* Stash this for later. */
 
 	for (i = 0; i < ntypes; i++) {
 		tdh = (struct ses_type_desc *)p;
@@ -353,7 +353,7 @@ ses_read_config(struct ses_softc *sc)
 		goto done;
 	}
 
-	/* get the status page and then use it to generate a list of sensors */
+	/* Get the status page and then use it to generate a list of sensors. */
 	if (ses_make_sensors(sc, tdlist, ntypes) != 0) {
 		dma_free(sc->sc_buf, sc->sc_buflen);
 		error = 1;
@@ -363,21 +363,21 @@ ses_read_config(struct ses_softc *sc)
 done:
 	if (buf)
 		dma_free(buf, SES_BUFLEN);
-	return (error);
+	return error;
 }
 
 int
 ses_read_status(struct ses_softc *sc)
 {
-	struct ses_scsi_diag *cmd;
-	struct scsi_xfer *xs;
-	int error, flags = 0;
+	struct ses_scsi_diag		*cmd;
+	struct scsi_xfer		*xs;
+	int				 error, flags = 0;
 
 	if (cold)
 		SET(flags, SCSI_AUTOCONF);
 	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_IN | SCSI_SILENT);
 	if (xs == NULL)
-		return (1);
+		return 1;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = sc->sc_buf;
 	xs->datalen = sc->sc_buflen;
@@ -394,9 +394,9 @@ ses_read_status(struct ses_softc *sc)
 	scsi_xs_put(xs);
 
 	if (error != 0)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -404,15 +404,15 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 {
 	struct ses_status		*status;
 	struct ses_sensor		*sensor;
+	char				*fmt;
 #if NBIO > 0
 	struct ses_slot			*slot;
 #endif /* NBIO > 0 */
-	enum sensor_type		stype;
-	char				*fmt;
-	int				i, j;
+	enum sensor_type		 stype;
+	int				 i, j;
 
 	if (ses_read_status(sc) != 0)
-		return (1);
+		return 1;
 
 	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensordev.xname));
@@ -424,13 +424,13 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 
 	status = (struct ses_status *)(sc->sc_buf + SES_STAT_HDRLEN);
 	for (i = 0; i < ntypes; i++) {
-		/* ignore the overall status element for this type */
+		/* Ignore the overall status element for this type. */
 		DPRINTFN(1, "%s: %3d:-   0x%02x 0x%02x%02x%02x type: 0x%02x\n",
 		     DEVNAME(sc), i, status->com, status->f1, status->f2,
 		    status->f3, types[i].type);
 
 		for (j = 0; j < types[i].n_elem; j++) {
-			/* move to the current status element */
+			/* Move to the current status element. */
 			status++;
 
 			DPRINTFN(1, "%s: %3d:%-3d 0x%02x 0x%02x%02x%02x\n",
@@ -489,11 +489,11 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 			TAILQ_INSERT_TAIL(&sc->sc_sensors, sensor, se_entry);
 		}
 
-		/* move to the overall status element of the next type */
+		/* Move to the overall status element of the next type. */
 		status++;
 	}
 
-	return (0);
+	return 0;
 error:
 #if NBIO > 0
 	while (!TAILQ_EMPTY(&sc->sc_slots)) {
@@ -507,7 +507,7 @@ error:
 		TAILQ_REMOVE(&sc->sc_sensors, sensor, se_entry);
 		free(sensor, M_DEVBUF, sizeof(*sensor));
 	}
-	return (1);
+	return 1;
 }
 
 void
@@ -515,7 +515,7 @@ ses_refresh_sensors(void *arg)
 {
 	struct ses_softc		*sc = (struct ses_softc *)arg;
 	struct ses_sensor		*sensor;
-	int				ret = 0;
+	int				 ret = 0;
 
 	rw_enter_write(&sc->sc_lock);
 
@@ -581,7 +581,7 @@ int
 ses_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 {
 	struct ses_softc		*sc = (struct ses_softc *)dev;
-	int				error = 0;
+	int				 error = 0;
 
 	switch (cmd) {
 	case BIOCBLINK:
@@ -593,22 +593,22 @@ ses_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 		break;
 	}
 
-	return (error);
+	return error;
 }
 
 int
 ses_write_config(struct ses_softc *sc)
 {
-	struct ses_scsi_diag *cmd;
-	struct scsi_xfer *xs;
-	int error, flags = 0;
+	struct ses_scsi_diag		*cmd;
+	struct scsi_xfer		*xs;
+	int				 error, flags = 0;
 
 	if (cold)
 		SET(flags, SCSI_AUTOCONF);
 
 	xs = scsi_xs_get(sc->sc_link, flags | SCSI_DATA_OUT | SCSI_SILENT);
 	if (xs == NULL)
-		return (1);
+		return 1;
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = sc->sc_buf;
 	xs->datalen = sc->sc_buflen;
@@ -624,9 +624,9 @@ ses_write_config(struct ses_softc *sc)
 	scsi_xs_put(xs);
 
 	if (error != 0)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -638,7 +638,7 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 
 	if (ses_read_status(sc) != 0) {
 		rw_exit_write(&sc->sc_lock);
-		return (EIO);
+		return EIO;
 	}
 
 	TAILQ_FOREACH(slot, &sc->sc_slots, sl_entry) {
@@ -648,7 +648,7 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 
 	if (slot == NULL) {
 		rw_exit_write(&sc->sc_lock);
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	DPRINTFN(3, "%s: 0x%02x 0x%02x 0x%02x 0x%02x\n", DEVNAME(sc),
@@ -670,7 +670,7 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 
 	default:
 		rw_exit_write(&sc->sc_lock);
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	DPRINTFN(3, "%s: 0x%02x 0x%02x 0x%02x 0x%02x\n", DEVNAME(sc),
@@ -679,12 +679,12 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 
 	if (ses_write_config(sc) != 0) {
 		rw_exit_write(&sc->sc_lock);
-		return (EIO);
+		return EIO;
 	}
 
 	rw_exit_write(&sc->sc_lock);
 
-	return (0);
+	return 0;
 }
 #endif /* NBIO > 0 */
 
@@ -748,8 +748,8 @@ ses_temp2sensor(struct ses_softc *sc, struct ses_sensor *s)
 {
 	s->se_sensor.value = (int64_t)SES_S_TEMP(s->se_stat);
 	s->se_sensor.value += SES_S_TEMP_OFFSET;
-	s->se_sensor.value *= 1000000; /* convert to micro (mu) degrees */
-	s->se_sensor.value += 273150000; /* convert to kelvin */
+	s->se_sensor.value *= 1000000;		/* Convert to micro degrees. */
+	s->se_sensor.value += 273150000;	/* Convert to kelvin. */
 }
 
 #ifdef SES_DEBUG
@@ -787,6 +787,6 @@ ses_dump_enc_string(u_char *buf, ssize_t len)
 	if (len > 0)
 		memcpy(str, buf, len);
 
-	return (str);
+	return str;
 }
 #endif /* SES_DEBUG */
