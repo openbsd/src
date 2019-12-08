@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.44 2019/12/03 16:16:25 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.45 2019/12/08 09:47:50 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -686,8 +686,10 @@ config_new_empty(void)
 {
 	static enum uw_resolver_type	 default_res_pref[] = {
 	    UW_RES_DOT,
+	    UW_RES_ODOT_FORWARDER,
 	    UW_RES_FORWARDER,
 	    UW_RES_RECURSOR,
+	    UW_RES_ODOT_DHCP,
 	    UW_RES_DHCP,
 	    UW_RES_ASR};
 	struct uw_conf			*xconf;

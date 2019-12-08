@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.21 2019/12/01 14:37:34 otto Exp $	*/
+/*	$OpenBSD: parse.y,v 1.22 2019/12/08 09:47:50 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -100,7 +100,7 @@ typedef struct {
 %}
 
 %token	INCLUDE ERROR
-%token	FORWARDER DOT PORT 
+%token	FORWARDER DOT PORT ODOT_FORWARDER ODOT_DHCP
 %token	AUTHENTICATION NAME PREFERENCE RECURSOR DHCP STUB
 %token	BLOCK LIST LOG FORCE ACCEPT BOGUS
 
@@ -214,11 +214,13 @@ prefoptsl		: prefopt {
 			}
 			;
 
-prefopt			: DOT		{ $$ = UW_RES_DOT; }
-			| FORWARDER	{ $$ = UW_RES_FORWARDER; }
-			| RECURSOR	{ $$ = UW_RES_RECURSOR; }
-			| DHCP		{ $$ = UW_RES_DHCP; }
-			| STUB		{ $$ = UW_RES_ASR; }
+prefopt			: DOT			{ $$ = UW_RES_DOT; }
+			| FORWARDER		{ $$ = UW_RES_FORWARDER; }
+			| ODOT_FORWARDER	{ $$ = UW_RES_ODOT_FORWARDER; }
+			| RECURSOR		{ $$ = UW_RES_RECURSOR; }
+			| DHCP			{ $$ = UW_RES_DHCP; }
+			| ODOT_DHCP		{ $$ = UW_RES_ODOT_DHCP; }
+			| STUB			{ $$ = UW_RES_ASR; }
 			;
 
 uw_forwarder		: FORWARDER forwarder_block
@@ -418,6 +420,8 @@ lookup(char *s)
 		{"list",		LIST},
 		{"log",			LOG},
 		{"name",		NAME},
+		{"oDoT-dhcp",		ODOT_DHCP},
+		{"oDoT-forwarder",	ODOT_FORWARDER},
 		{"port",		PORT},
 		{"preference",		PREFERENCE},
 		{"recursor",		RECURSOR},

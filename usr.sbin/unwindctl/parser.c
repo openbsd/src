@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.9 2019/12/03 14:35:05 otto Exp $	*/
+/*	$OpenBSD: parser.c,v 1.10 2019/12/08 09:47:51 florian Exp $	*/
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -50,10 +50,11 @@ struct token {
 
 static const struct token t_main[];
 static const struct token t_log[];
+static const struct token t_status[];
 
 static const struct token t_main[] = {
 	{KEYWORD,	"reload",	RELOAD,		NULL},
-	{KEYWORD,	"status",	STATUS,		NULL},
+	{KEYWORD,	"status",	STATUS,		t_status},
 	{KEYWORD,	"log",		NONE,		t_log},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
@@ -62,6 +63,12 @@ static const struct token t_log[] = {
 	{KEYWORD,	"debug",	LOG_DEBUG,	NULL},
 	{KEYWORD,	"verbose",	LOG_VERBOSE,	NULL},
 	{KEYWORD,	"brief",	LOG_BRIEF,	NULL},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_status[] = {
+	{NOTOKEN,	"",		NONE,		NULL},
+	{KEYWORD,	"autoconf",	AUTOCONF,	NULL},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 

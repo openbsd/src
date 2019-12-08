@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.102 2019/12/06 19:39:14 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.103 2019/12/08 09:47:50 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -104,7 +104,6 @@ struct uw_resolver {
 	int			 stop;
 	enum uw_resolver_state	 state;
 	enum uw_resolver_type	 type;
-	int			 oppdot;
 	int			 check_running;
 	int64_t			 median;
 	int64_t			 histogram[nitems(histogram_limits)];
@@ -150,11 +149,10 @@ void			 ub_resolve_done(void *, int, void *, int, int, char *,
 			     int);
 void			 asr_resolve_done(struct asr_result *, void *);
 void			 new_recursor(void);
-void			 new_forwarders(int);
-void			 new_asr_forwarders(void);
-void			 new_static_forwarders(int);
+void			 new_forwarders(void);
+void			 new_static_forwarders(void);
 void			 new_static_dot_forwarders(void);
-struct uw_resolver	*create_resolver(enum uw_resolver_type, int);
+struct uw_resolver	*create_resolver(enum uw_resolver_type);
 void			 set_unified_cache(struct uw_resolver *);
 void			 free_resolver(struct uw_resolver *);
 void			 set_forwarders(struct uw_resolver *,
@@ -174,6 +172,7 @@ void			 resolver_unref(struct uw_resolver *);
 int			 resolver_cmp(const void *, const void *);
 void			 restart_resolvers(void);
 void			 show_status(pid_t);
+void			 show_autoconf(pid_t);
 void			 send_resolver_info(struct uw_resolver *, pid_t);
 void			 send_detailed_resolver_info(struct uw_resolver *,
 			     pid_t);
@@ -521,6 +520,12 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 				    __func__, IMSG_DATA_SIZE(imsg));
 			show_status(imsg.hdr.pid);
 			break;
+		case IMSG_CTL_AUTOCONF:
+			if (IMSG_DATA_SIZE(imsg) != 0)
+				fatalx("%s: IMSG_CTL_AUTOCONF wrong length: "
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
+			show_autoconf(imsg.hdr.pid);
+			break;
 		case IMSG_NEW_TA:
 			/* make sure this is a string */
 			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
@@ -533,9 +538,8 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 		case IMSG_NEW_TAS_DONE:
 			if (merge_tas(&new_trust_anchors, &trust_anchors)) {
 				new_recursor();
-				new_forwarders(0);
-				new_asr_forwarders();
-				new_static_forwarders(0);
+				new_forwarders();
+				new_static_forwarders();
 				new_static_dot_forwarders();
 			}
 			break;
@@ -660,7 +664,7 @@ resolver_dispatch_main(int fd, short event, void *bula)
 			merge_config(resolver_conf, nconf);
 			nconf = NULL;
 			if (forwarders_changed)
-				new_static_forwarders(0);
+				new_static_forwarders();
 			if (dot_forwarders_changed)
 				new_static_dot_forwarders();
 			break;
@@ -851,7 +855,9 @@ resolve(struct uw_resolver *res, const char* name, int rrtype, int rrclass,
 		break;
 	case UW_RES_RECURSOR:
 	case UW_RES_DHCP:
+	case UW_RES_ODOT_DHCP:
 	case UW_RES_FORWARDER:
+	case UW_RES_ODOT_FORWARDER:
 	case UW_RES_DOT:
 		if ((err = ub_resolve_event(res->ctx, name,  rrtype, rrclass,
 		    cb_data, ub_resolve_done, NULL)) != 0) {
@@ -1058,49 +1064,50 @@ new_recursor(void)
 	if (TAILQ_EMPTY(&trust_anchors))
 		return;
 
-	resolvers[UW_RES_RECURSOR] = create_resolver(UW_RES_RECURSOR, 0);
+	resolvers[UW_RES_RECURSOR] = create_resolver(UW_RES_RECURSOR);
 	set_unified_cache(resolvers[UW_RES_RECURSOR]);
 
 	check_resolver(resolvers[UW_RES_RECURSOR]);
 }
 
 void
-new_forwarders(int oppdot)
+new_forwarders(void)
 {
 	free_resolver(resolvers[UW_RES_DHCP]);
 	resolvers[UW_RES_DHCP] = NULL;
 
-	if (TAILQ_EMPTY(&autoconf_forwarder_list))
-		return;
+	free_resolver(resolvers[UW_RES_ODOT_DHCP]);
+	resolvers[UW_RES_ODOT_DHCP] = NULL;
 
-	if (TAILQ_EMPTY(&trust_anchors))
-		return;
-
-	resolvers[UW_RES_DHCP] = create_resolver(UW_RES_DHCP, oppdot);
-	set_unified_cache(resolvers[UW_RES_DHCP]);
-
-	check_resolver(resolvers[UW_RES_DHCP]);
-}
-
-void
-new_asr_forwarders(void)
-{
 	free_resolver(resolvers[UW_RES_ASR]);
 	resolvers[UW_RES_ASR] = NULL;
 
 	if (TAILQ_EMPTY(&autoconf_forwarder_list))
 		return;
 
-	resolvers[UW_RES_ASR] = create_resolver(UW_RES_ASR, 0);
-
+	resolvers[UW_RES_ASR] = create_resolver(UW_RES_ASR);
 	check_resolver(resolvers[UW_RES_ASR]);
+
+	if (TAILQ_EMPTY(&trust_anchors))
+		return;
+
+	resolvers[UW_RES_DHCP] = create_resolver(UW_RES_DHCP);
+	set_unified_cache(resolvers[UW_RES_DHCP]);
+	check_resolver(resolvers[UW_RES_DHCP]);
+
+	resolvers[UW_RES_ODOT_DHCP] = create_resolver(UW_RES_ODOT_DHCP);
+	set_unified_cache(resolvers[UW_RES_ODOT_DHCP]);
+	check_resolver(resolvers[UW_RES_ODOT_DHCP]);
 }
 
 void
-new_static_forwarders(int oppdot)
+new_static_forwarders(void)
 {
 	free_resolver(resolvers[UW_RES_FORWARDER]);
 	resolvers[UW_RES_FORWARDER] = NULL;
+
+	free_resolver(resolvers[UW_RES_ODOT_FORWARDER]);
+	resolvers[UW_RES_ODOT_FORWARDER] = NULL;
 
 	if (TAILQ_EMPTY(&resolver_conf->uw_forwarder_list))
 		return;
@@ -1108,10 +1115,14 @@ new_static_forwarders(int oppdot)
 	if (TAILQ_EMPTY(&trust_anchors))
 		return;
 
-	resolvers[UW_RES_FORWARDER] = create_resolver(UW_RES_FORWARDER, oppdot);
+	resolvers[UW_RES_FORWARDER] = create_resolver(UW_RES_FORWARDER);
 	set_unified_cache(resolvers[UW_RES_FORWARDER]);
-
 	check_resolver(resolvers[UW_RES_FORWARDER]);
+
+	resolvers[UW_RES_ODOT_FORWARDER] =
+	    create_resolver(UW_RES_ODOT_FORWARDER);
+	set_unified_cache(resolvers[UW_RES_ODOT_FORWARDER]);
+	check_resolver(resolvers[UW_RES_ODOT_FORWARDER]);
 }
 
 void
@@ -1126,7 +1137,7 @@ new_static_dot_forwarders(void)
 	if (TAILQ_EMPTY(&trust_anchors))
 		return;
 
-	resolvers[UW_RES_DOT] = create_resolver(UW_RES_DOT, 0);
+	resolvers[UW_RES_DOT] = create_resolver(UW_RES_DOT);
 	set_unified_cache(resolvers[UW_RES_DOT]);
 
 	check_resolver(resolvers[UW_RES_DOT]);
@@ -1153,7 +1164,7 @@ static const struct {
 };
 
 struct uw_resolver *
-create_resolver(enum uw_resolver_type type, int oppdot)
+create_resolver(enum uw_resolver_type type)
 {
 	struct uw_resolver	*res;
 	struct trust_anchor	*ta;
@@ -1201,7 +1212,9 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 		break;
 	case UW_RES_RECURSOR:
 	case UW_RES_DHCP:
+	case UW_RES_ODOT_DHCP:
 	case UW_RES_FORWARDER:
+	case UW_RES_ODOT_FORWARDER:
 	case UW_RES_DOT:
 		if ((res->ctx = ub_ctx_create_event(ev_base)) == NULL) {
 			free(res);
@@ -1259,26 +1272,22 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 	case UW_RES_RECURSOR:
 		break;
 	case UW_RES_DHCP:
-		res->oppdot = oppdot;
-		if (oppdot) {
-			set_forwarders(res, &autoconf_forwarder_list, 853);
-			ub_ctx_set_option(res->ctx, "tls-cert-bundle:",
-			    TLS_DEFAULT_CA_CERT_FILE);
-			ub_ctx_set_tls(res->ctx, 1);
-		} else
-			set_forwarders(res, &autoconf_forwarder_list, 0);
+		set_forwarders(res, &autoconf_forwarder_list, 0);
+		break;
+	case UW_RES_ODOT_DHCP:
+		set_forwarders(res, &autoconf_forwarder_list, 853);
+		ub_ctx_set_option(res->ctx, "tls-cert-bundle:",
+		    TLS_DEFAULT_CA_CERT_FILE);
+		ub_ctx_set_tls(res->ctx, 1);
 		break;
 	case UW_RES_FORWARDER:
-		res->oppdot = oppdot;
-		if (oppdot) {
-			set_forwarders(res, &resolver_conf->uw_forwarder_list,
-			    853);
-			ub_ctx_set_option(res->ctx, "tls-cert-bundle:",
-			    TLS_DEFAULT_CA_CERT_FILE);
-			ub_ctx_set_tls(res->ctx, 1);
-		} else
-			set_forwarders(res, &resolver_conf->uw_forwarder_list,
-			    0);
+		set_forwarders(res, &resolver_conf->uw_forwarder_list, 0);
+		break;
+	case UW_RES_ODOT_FORWARDER:
+		set_forwarders(res, &resolver_conf->uw_forwarder_list, 853);
+		ub_ctx_set_option(res->ctx, "tls-cert-bundle:",
+		    TLS_DEFAULT_CA_CERT_FILE);
+		ub_ctx_set_tls(res->ctx, 1);
 		break;
 	case UW_RES_DOT:
 		set_forwarders(res, &resolver_conf->uw_dot_forwarder_list, 0);
@@ -1294,7 +1303,9 @@ create_resolver(enum uw_resolver_type type, int oppdot)
 	/* for the forwarder cases allow AS112 zones */
 	switch(res->type) {
 	case UW_RES_DHCP:
+	case UW_RES_ODOT_DHCP:
 	case UW_RES_FORWARDER:
+	case UW_RES_ODOT_FORWARDER:
 	case UW_RES_DOT:
 		for (i = 0; i < nitems(as112_zones); i++) {
 			if((err = ub_ctx_set_option(res->ctx, "local-zone:",
@@ -1386,40 +1397,23 @@ check_resolver(struct uw_resolver *resolver_to_check)
 	if (resolver_to_check->check_running)
 		return;
 
-	if ((res = create_resolver(resolver_to_check->type, 0)) == NULL)
+	if ((res = create_resolver(resolver_to_check->type)) == NULL)
 		return;
 
 	resolver_ref(resolver_to_check);
 
+	resolver_to_check->check_running++;
 	if (resolve(res, ".", LDNS_RR_TYPE_NS, LDNS_RR_CLASS_IN,
 	    resolver_to_check, check_resolver_done) != 0) {
+		resolver_to_check->check_running--;
 		resolver_to_check->state = UNKNOWN;
 		resolver_unref(resolver_to_check);
 		resolver_to_check->check_tv.tv_sec = RESOLVER_CHECK_SEC;
 		evtimer_add(&resolver_to_check->check_ev,
 		    &resolver_to_check->check_tv);
-	} else
-		resolver_to_check->check_running++;
+	}
 
-	if (!(resolver_to_check->type == UW_RES_DHCP ||
-	    resolver_to_check->type == UW_RES_FORWARDER))
-		return;
 
-	if ((res = create_resolver(resolver_to_check->type, 1)) == NULL)
-		return;
-
-	resolver_ref(resolver_to_check);
-
-	if (resolve(res, ".", LDNS_RR_TYPE_NS, LDNS_RR_CLASS_IN,
-	    resolver_to_check, check_resolver_done) != 0) {
-		/* do not overwrite normal DNS state, it might work */
-		resolver_unref(resolver_to_check);
-
-		resolver_to_check->check_tv.tv_sec = RESOLVER_CHECK_SEC;
-		evtimer_add(&resolver_to_check->check_ev,
-		    &resolver_to_check->check_tv);
-	} else
-		resolver_to_check->check_running++;
 }
 
 void
@@ -1443,41 +1437,11 @@ check_resolver_done(struct uw_resolver *res, void *arg, int rcode,
 	}
 
 	if (rcode == LDNS_RCODE_SERVFAIL) {
-		log_debug("%s: %s%s rcode: SERVFAIL", __func__,
-		    uw_resolver_type_str[checked_resolver->type], res->oppdot ?
-		    " (OppDot)" : "");
+		log_debug("%s: %s rcode: SERVFAIL", __func__,
+		    uw_resolver_type_str[checked_resolver->type]);
 
-		if (res->oppdot == checked_resolver->oppdot) {
-			checked_resolver->state = DEAD;
-			if (checked_resolver->oppdot) {
-				/* downgrade from opportunistic DoT */
-				switch (checked_resolver->type) {
-				case UW_RES_DHCP:
-					new_forwarders(0);
-					break;
-				case UW_RES_FORWARDER:
-					new_static_forwarders(0);
-					break;
-				default:
-					break;
-				}
-			}
-		}
+		checked_resolver->state = DEAD;
 		goto out;
-	}
-
-	if (res->oppdot && !checked_resolver->oppdot) {
-		/* upgrade to opportunistic DoT */
-		switch (checked_resolver->type) {
-		case UW_RES_DHCP:
-			new_forwarders(1);
-			break;
-		case UW_RES_FORWARDER:
-			new_static_forwarders(1);
-			break;
-		default:
-			break;
-		}
 	}
 
 	if (sec == SECURE) {
@@ -1498,9 +1462,9 @@ check_resolver_done(struct uw_resolver *res, void *arg, int rcode,
 	} else
 		checked_resolver->state = DEAD; /* we know the root exists */
 
-	log_debug("%s: %s%s: %s", __func__,
-	    uw_resolver_type_str[checked_resolver->type], res->oppdot ?
-	    " (OppDot)" : "", uw_resolver_state_str[checked_resolver->state]);
+	log_debug("%s: %s: %s", __func__,
+	    uw_resolver_type_str[checked_resolver->type],
+	    uw_resolver_state_str[checked_resolver->state]);
 
 	if (log_getverbose() & OPT_VERBOSE2 && (str =
 	    sldns_wire2str_pkt(answer_packet, answer_len)) != NULL) {
@@ -1679,17 +1643,14 @@ void
 restart_resolvers(void)
 {
 	new_recursor();
-	new_static_forwarders(0);
+	new_static_forwarders();
 	new_static_dot_forwarders();
-	new_forwarders(0);
-	new_asr_forwarders();
+	new_forwarders();
 }
 
 void
 show_status(pid_t pid)
 {
-	struct uw_forwarder		*uw_forwarder;
-	struct ctl_forwarder_info	 cfi;
 	struct resolver_preference	 res_pref;
 	int				 i;
 
@@ -1698,6 +1659,15 @@ show_status(pid_t pid)
 
 	for (i = 0; i < resolver_conf->res_pref.len; i++)
 		send_resolver_info(resolvers[res_pref.types[i]], pid);
+
+	resolver_imsg_compose_frontend(IMSG_CTL_END, pid, NULL, 0);
+}
+
+void
+show_autoconf(pid_t pid)
+{
+	struct uw_forwarder		*uw_forwarder;
+	struct ctl_forwarder_info	 cfi;
 
 	TAILQ_FOREACH(uw_forwarder, &autoconf_forwarder_list, entry) {
 		memset(&cfi, 0, sizeof(cfi));
@@ -1724,7 +1694,6 @@ send_resolver_info(struct uw_resolver *res, pid_t pid)
 
 	cri.state = res->state;
 	cri.type = res->type;
-	cri.oppdot = res->oppdot;
 	cri.median = res->median;
 
 	memcpy(cri.histogram, res->histogram, sizeof(cri.histogram));
@@ -1932,8 +1901,7 @@ replace_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 	if (changed) {
 		replace_forwarders(&new_forwarder_list,
 		    &autoconf_forwarder_list);
-		new_forwarders(0);
-		new_asr_forwarders();
+		new_forwarders();
 	} else {
 		while ((tmp = TAILQ_FIRST(&new_forwarder_list)) != NULL) {
 			TAILQ_REMOVE(&new_forwarder_list, tmp, entry);

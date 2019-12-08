@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwindctl.c,v 1.23 2019/12/06 12:59:48 otto Exp $	*/
+/*	$OpenBSD: unwindctl.c,v 1.24 2019/12/08 09:47:51 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -45,6 +45,7 @@
 
 __dead void	 usage(void);
 int		 show_status_msg(struct imsg *);
+int		 show_autoconf_msg(struct imsg *);
 void		 histogram_header(void);
 void		 print_histogram(const char *name, int64_t[], size_t);
 
@@ -72,7 +73,7 @@ main(int argc, char *argv[])
 	int			 done = 0;
 	int			 i, n, verbose = 0;
 	int			 ch;
-	char			*sockname;
+	char			*sockname, *oDoT;
 
 	sockname = UNWIND_SOCKET;
 	while ((ch = getopt(argc, argv, "s:")) != -1) {
@@ -145,6 +146,9 @@ main(int argc, char *argv[])
 	case STATUS:
 		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, NULL, 0);
 		break;
+	case AUTOCONF:
+		imsg_compose(ibuf, IMSG_CTL_AUTOCONF, 0, 0, -1, NULL, 0);
+		break;
 	default:
 		usage();
 	}
@@ -169,6 +173,9 @@ main(int argc, char *argv[])
 			case STATUS:
 				done = show_status_msg(&imsg);
 				break;
+			case AUTOCONF:
+				done = show_autoconf_msg(&imsg);
+				break;
 			default:
 				break;
 			}
@@ -181,9 +188,20 @@ main(int argc, char *argv[])
 	if (histogram_cnt)
 		histogram_header();
 	for (i = 0; i < histogram_cnt; i++) {
+		switch(info[i].type) {
+		case UW_RES_ODOT_FORWARDER:
+		case UW_RES_ODOT_DHCP:
+			if (info[i].state == DEAD)
+				continue;
+			oDoT = "(oT)";
+			break;
+		default:
+			oDoT = "";
+			break;
+		}
 		print_histogram(uw_resolver_type_short[info[i].type],
 		    info[i].histogram, nitems(info[i].histogram));
-		print_histogram("", info[i].latest_histogram,
+		print_histogram(oDoT, info[i].latest_histogram,
 		    nitems(info[i].latest_histogram));
 	}
 	return (0);
@@ -192,37 +210,58 @@ main(int argc, char *argv[])
 int
 show_status_msg(struct imsg *imsg)
 {
-	static int			 header, autoconf_forwarders, last_src;
-	static int			 label_len, line_len;
-	static uint32_t			 last_if_index;
 	static char			 fwd_line[80];
 	struct ctl_resolver_info	*cri;
-	struct ctl_forwarder_info	*cfi;
-	char				 ifnamebuf[IFNAMSIZ];
-	char				*if_name;
-
-	if (!header++)
-		printf("preference:\n");
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RESOLVER_INFO:
 		cri = imsg->data;
-		printf("%-10s %s%s, median RTT: ",
+		memcpy(&info[histogram_cnt++], cri, sizeof(info[0]));
+		switch(cri->type) {
+		case UW_RES_ODOT_FORWARDER:
+		case UW_RES_ODOT_DHCP:
+			if (cri->state == DEAD)
+				return (0);
+		default:
+			break;
+		}
+		printf("%-15s %s, median RTT: ",
 		    uw_resolver_type_str[cri->type],
-		    uw_resolver_state_str[cri->state],
-		    cri->oppdot ? " (opportunistic DoT)" : "");
+		    uw_resolver_state_str[cri->state]);
 		if (cri->median == 0)
 			printf("N/A\n");
 		else if (cri->median == INT64_MAX)
 			printf("Inf\n");
 		else
 			printf("%lldms\n", cri->median);
-		memcpy(&info[histogram_cnt++], cri, sizeof(info[0]));
 		break;
+	case IMSG_CTL_END:
+		if (fwd_line[0] != '\0')
+			printf("%s\n", fwd_line);
+		return (1);
+	default:
+		break;
+	}
+
+	return (0);
+}
+
+int
+show_autoconf_msg(struct imsg *imsg)
+{
+	static int			 autoconf_forwarders, last_src;
+	static int			 label_len, line_len;
+	static uint32_t			 last_if_index;
+	static char			 fwd_line[80];
+	struct ctl_forwarder_info	*cfi;
+	char				 ifnamebuf[IFNAMSIZ];
+	char				*if_name;
+
+	switch (imsg->hdr.type) {
 	case IMSG_CTL_AUTOCONF_RESOLVER_INFO:
 		cfi = imsg->data;
 		if (!autoconf_forwarders++)
-			printf("\nlearned forwarders:\n");
+			printf("autoconfiguration forwarders:\n");
 		if (cfi->if_index != last_if_index || cfi->src != last_src) {
 			if_name = if_indextoname(cfi->if_index, ifnamebuf);
 			if (fwd_line[0] != '\0') {
