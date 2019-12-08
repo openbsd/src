@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwindctl.c,v 1.24 2019/12/08 09:47:51 florian Exp $	*/
+/*	$OpenBSD: unwindctl.c,v 1.25 2019/12/08 12:31:07 otto Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -50,7 +50,7 @@ void		 histogram_header(void);
 void		 print_histogram(const char *name, int64_t[], size_t);
 
 struct imsgbuf		*ibuf;
-int		 	 histogram_cnt;
+int		 	 info_cnt;
 struct ctl_resolver_info info[UW_RES_NONE];
 
 __dead void
@@ -66,14 +66,15 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	struct sockaddr_un	 sun;
-	struct parse_result	*res;
-	struct imsg		 imsg;
-	int			 ctl_sock;
-	int			 done = 0;
-	int			 i, n, verbose = 0;
-	int			 ch;
-	char			*sockname, *oDoT;
+	struct sockaddr_un		 sun;
+	struct parse_result		*res;
+	struct imsg			 imsg;
+	struct ctl_resolver_info	*cri;
+	int				 ctl_sock;
+	int				 done = 0;
+	int				 i, j, k, n, verbose = 0;
+	int				 ch, column_offset;
+	char				*sockname;
 
 	sockname = UNWIND_SOCKET;
 	while ((ch = getopt(argc, argv, "s:")) != -1) {
@@ -185,24 +186,40 @@ main(int argc, char *argv[])
 	close(ctl_sock);
 	free(ibuf);
 
-	if (histogram_cnt)
-		histogram_header();
-	for (i = 0; i < histogram_cnt; i++) {
-		switch(info[i].type) {
-		case UW_RES_ODOT_FORWARDER:
-		case UW_RES_ODOT_DHCP:
-			if (info[i].state == DEAD)
-				continue;
-			oDoT = "(oT)";
-			break;
-		default:
-			oDoT = "";
-			break;
+	column_offset = info_cnt / 2;
+	if (info_cnt % 2 == 1)
+		column_offset++;
+
+	for (i = 0; i < column_offset; i++) {
+		for (j = 0; j < 2; j++) {
+			k = i + j * column_offset;
+			if (k >= info_cnt)
+				break;
+
+			cri = &info[k];
+			printf("%d. %-15s %10s, ", k + 1,
+			    uw_resolver_type_str[cri->type],
+			    uw_resolver_state_str[cri->state]);
+			if (cri->median == 0)
+				printf("%5s", "N/A");
+			else if (cri->median == INT64_MAX)
+				printf("%5s", "Inf");
+			else
+				printf("%3lldms", cri->median);
+			if (j == 0)
+				printf("   ");
 		}
-		print_histogram(uw_resolver_type_short[info[i].type],
-		    info[i].histogram, nitems(info[i].histogram));
-		print_histogram(oDoT, info[i].latest_histogram,
-		    nitems(info[i].latest_histogram));
+		printf("\n");
+	}
+
+	if (info_cnt)
+		histogram_header();
+	for (i = 0; i < info_cnt; i++) {
+		cri = &info[i];
+		print_histogram(uw_resolver_type_short[cri->type],
+		    cri->histogram, nitems(cri->histogram));
+		print_histogram("", cri->latest_histogram,
+		    nitems(cri->latest_histogram));
 	}
 	return (0);
 }
@@ -211,29 +228,10 @@ int
 show_status_msg(struct imsg *imsg)
 {
 	static char			 fwd_line[80];
-	struct ctl_resolver_info	*cri;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RESOLVER_INFO:
-		cri = imsg->data;
-		memcpy(&info[histogram_cnt++], cri, sizeof(info[0]));
-		switch(cri->type) {
-		case UW_RES_ODOT_FORWARDER:
-		case UW_RES_ODOT_DHCP:
-			if (cri->state == DEAD)
-				return (0);
-		default:
-			break;
-		}
-		printf("%-15s %s, median RTT: ",
-		    uw_resolver_type_str[cri->type],
-		    uw_resolver_state_str[cri->state]);
-		if (cri->median == 0)
-			printf("N/A\n");
-		else if (cri->median == INT64_MAX)
-			printf("Inf\n");
-		else
-			printf("%lldms\n", cri->median);
+		memcpy(&info[info_cnt++], imsg->data, sizeof(info[0]));
 		break;
 	case IMSG_CTL_END:
 		if (fwd_line[0] != '\0')
@@ -303,7 +301,7 @@ histogram_header(void)
 	size_t	 	 i;
 
 	printf("\n%*s%*s\n%*s", 5, "",
-	    (int)(72/2 + (sizeof(head)-1)/2), head, 5, "");
+	    (int)(72/2 + (sizeof(head)-1)/2), head, 6, "");
 	for(i = 0; i < nitems(histogram_limits) - 1; i++) {
 		snprintf(buf, sizeof(buf), "<%lld", histogram_limits[i]);
 		printf("%6s", buf);
@@ -316,7 +314,7 @@ print_histogram(const char *name, int64_t histogram[], size_t n)
 {
 	size_t	 i;
 
-	printf("%4s ", name);
+	printf("%5s ", name);
 	for(i = 0; i < n; i++)
 		printf("%6lld", histogram[i]);
 	printf("\n");

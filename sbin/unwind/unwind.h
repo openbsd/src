@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.45 2019/12/08 09:47:50 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.46 2019/12/08 12:31:07 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -80,10 +80,10 @@ static const char * const	uw_resolver_type_str[] = {
 static const char * const	uw_resolver_type_short[] = {
 	"rec",
 	"dhcp",
-	"dhcp",
+	"dhcp*",
 	"stub",
 	"forw",
-	"forw",
+	"forw*",
 	"DoT"
 };
 
