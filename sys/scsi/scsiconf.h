@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.181 2019/12/05 18:42:14 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.182 2019/12/08 13:05:12 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ _2btol(u_int8_t *bytes)
 	u_int32_t rv;
 
 	rv = (bytes[0] << 8) | bytes[1];
-	return (rv);
+	return rv;
 }
 
 static __inline u_int32_t
@@ -121,7 +121,7 @@ _3btol(u_int8_t *bytes)
 	u_int32_t rv;
 
 	rv = (bytes[0] << 16) | (bytes[1] << 8) | bytes[2];
-	return (rv);
+	return rv;
 }
 
 static __inline u_int32_t
@@ -131,7 +131,7 @@ _4btol(u_int8_t *bytes)
 
 	rv = (bytes[0] << 24) | (bytes[1] << 16) |
 	    (bytes[2] << 8) | bytes[3];
-	return (rv);
+	return rv;
 }
 
 static __inline u_int64_t
@@ -144,7 +144,7 @@ _5btol(u_int8_t *bytes)
 	     ((u_int64_t)bytes[2] << 16) |
 	     ((u_int64_t)bytes[3] << 8) |
 	     (u_int64_t)bytes[4];
-	return (rv);
+	return rv;
 }
 
 static __inline u_int64_t
@@ -160,7 +160,7 @@ _8btol(u_int8_t *bytes)
 	    (((u_int64_t)bytes[5]) << 16) |
 	    (((u_int64_t)bytes[6]) << 8) |
 	    ((u_int64_t)bytes[7]);
-	return (rv);
+	return rv;
 }
 
 #ifdef _KERNEL
