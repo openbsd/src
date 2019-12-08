@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.103 2019/12/08 09:47:50 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.104 2019/12/08 21:31:16 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1160,7 +1160,8 @@ static const struct {
 	const char *value;
 } options[] = {
 	{ "aggressive-nsec:", "yes" },
-	{ "fast-server-permil:", "950" }
+	{ "fast-server-permil:", "950" },
+	{ "edns-buffer-size:", "1232" }
 };
 
 struct uw_resolver *
