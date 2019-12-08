@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.165 2019/11/16 11:07:43 espie Exp $
+# $OpenBSD: Update.pm,v 1.166 2019/12/08 11:42:32 espie Exp $
 #
 # Copyright (c) 2004-2014 Marc Espie <espie@openbsd.org>
 #
@@ -329,16 +329,17 @@ sub process_hint2
 {
 	my ($self, $set, $hint, $state) = @_;
 	my $pkgname = $hint->pkgname;
+	if ($pkgname =~ m/[\/\:]/o) {
+		my $repo;
+		($repo, $pkgname) = $state->repo->path_parse($pkgname);
+		$set->add_repositories($repo);
+	};
 	if (OpenBSD::PackageName::is_stem($pkgname)) {
-		if ($pkgname =~ m/[\/\:]/o) {
-			my $repo;
-			($repo, $pkgname) = $state->repo->path_parse($pkgname);
-			$set->add_repositories($repo);
-		};
 		my $l = $state->updater->stem2location($set, $pkgname, $state,
 		    $set->{quirks});
 		if (defined $l) {
 			$self->add_location($set, $hint, $l);
+			$self->look_for_debug($set, $l->name, $l->name, $state);
 		} else {
 			return undef;
 		}
@@ -346,6 +347,8 @@ sub process_hint2
 		if (!defined $cache->{$pkgname}) {
 			$self->add_handle($set, $hint, OpenBSD::Handle->create_new($pkgname));
 			$cache->{$pkgname} = 1;
+			$pkgname =~ s/\.tgz$//;
+			$self->look_for_debug($set, $pkgname, $pkgname, $state);
 		}
 	}
 	OpenBSD::Add::tag_user_packages($set);
