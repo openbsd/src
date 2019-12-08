@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmap.h,v 1.28 2018/10/31 08:50:25 kettenis Exp $	*/
+/*	$OpenBSD: uvm_pmap.h,v 1.29 2019/12/08 05:22:44 visa Exp $	*/
 /*	$NetBSD: uvm_pmap.h,v 1.1 2000/06/27 09:00:14 mrg Exp $	*/
 
 /* 
@@ -101,7 +101,6 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #define PMAP_WC		0
 #endif
 
-#ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL
 __BEGIN_DECLS
 #ifndef	pmap_activate
@@ -184,6 +183,5 @@ vaddr_t		 pmap_steal_memory(vsize_t, vaddr_t *, vaddr_t *);
 
 __END_DECLS
 #endif	/* kernel*/
-#endif  /* PMAP_EXCLUDE_DECLS */
 
 #endif /* _PMAP_VM_ */
