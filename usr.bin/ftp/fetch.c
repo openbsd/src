@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.181 2019/12/05 10:26:25 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.182 2019/12/08 23:43:53 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1025,10 +1025,10 @@ noslash:
 		errx(1, "Can't allocate memory for transfer buffer");
 	oldinti = signal(SIGINFO, psummary);
 	if (chunked) {
-		if (save_chunked(fin, tls, out, buf, buflen) == -1) {
-			signal(SIGINFO, oldinti);
+		error = save_chunked(fin, tls, out, buf, buflen);
+		signal(SIGINFO, oldinti);
+		if (error == -1)
 			goto cleanup_url_get;
-		}
 	} else {
 		i = 0;
 		len = 1;
