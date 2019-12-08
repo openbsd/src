@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.105 2018/02/07 18:42:38 naddy Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.106 2019/12/08 12:25:30 mpi Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -67,7 +67,6 @@
 #include <machine/cpu.h>
 #include <machine/gdt.h>
 #include <machine/biosvar.h>
-#include <machine/kvm86.h>
 
 #include <dev/cons.h>
 
@@ -137,9 +136,6 @@ cpu_configure(void)
 	/* Set up proc0's TSS */
 	i386_proc0_tss_init();
 
-#ifdef KVM86
-	kvm86_init();
-#endif
 	pmap_bootstrap_pae();
 
 #if defined(MULTIPROCESSOR) || \

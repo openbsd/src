@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.245 2019/12/06 09:48:01 mpi Exp $
+#	$OpenBSD: files.i386,v 1.246 2019/12/08 12:25:30 mpi Exp $
 #
 # new style config file for i386 architecture
 #
@@ -250,10 +250,6 @@ file	arch/i386/isa/joy_isapnp.c	joy_isapnp
 #
 # Compatibility modules
 #
-
-# VM86 in kernel
-file	arch/i386/i386/kvm86.c			kvm86
-file	arch/i386/i386/kvm86call.S		kvm86
 
 device	bios {}
 attach	bios at mainbus
