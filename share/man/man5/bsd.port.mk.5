@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.520 2019/12/08 12:56:05 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.521 2019/12/08 13:05:04 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2058,6 +2058,19 @@ stage, which adds
 Name of the Makefile used for ports building.
 Defaults to Makefile.
 Used after changing directory to ${WRKBUILD}.
+.It Ev MAKE_JOBS
+Number of jobs to use when building the port, normally passed to
+.Ev MAKE_PROGRAM
+through
+.Ev PARALLEL_MAKE_FLAGS .
+Mostly set automatically when
+.Ev DPB_PROPERTIES
+contains
+.Sq parallel.
+.Pp
+Note that
+.Xr make 1
+still has bugs that may prevent parallel build from working correctly!
 .It Ev MAKE_PROGRAM
 The make program that is used for building the port.
 Set to ${MAKE} or ${GMAKE} depending on USE_GMAKE.
@@ -2258,6 +2271,27 @@ Defaults to
 See
 .Cm package
 for details.
+.It Ev PARALLEL_MAKE_FLAGS
+Used when
+.Ev DPB_PROPERTIES
+contains
+.Sq parallel .
+Flags to pass to
+.Ev MAKE_PROGRAM
+to yield a parallel build.
+Defaults to
+.Li -j${MAKE_JOBS} .
+Mostly set to empty by ports that use other mechanisms for setting the number
+of jobs.
+.It Ev PARALLEL_MAKE_JOBS
+User settings.
+Value of
+.Ev MAKE_JOBS
+to use when building manually a port with
+.Ev DPB_PROPERTIES
+containing
+.Sq parallel .
+Defaults to the number of online cpus.
 .It Ev PATCH
 Command to use to apply all patches.
 Defaults to
