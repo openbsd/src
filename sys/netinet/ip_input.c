@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.344 2019/08/06 22:57:54 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.345 2019/12/08 11:08:22 sashan Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -341,7 +341,10 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		goto out;
 	}
 
-	if (in_ouraddr(m, ifp, &rt)) {
+	switch(in_ouraddr(m, ifp, &rt)) {
+	case 2:
+		goto bad;
+	case 1:
 		nxt = ip_ours(mp, offp, nxt, af);
 		goto out;
 	}
@@ -749,6 +752,27 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct rtentry **prt)
 				break;
 			}
 		}
+	} else if (ipforwarding == 0 && rt->rt_ifidx != ifp->if_index &&
+	    !((ifp->if_flags & IFF_LOOPBACK) || (ifp->if_type == IFT_ENC))) {
+		/* received on wrong interface. */
+#if NCARP > 0
+		struct ifnet *out_if;
+
+		/*
+		 * Virtual IPs on carp interfaces need to be checked also
+		 * against the parent interface and other carp interfaces
+		 * sharing the same parent.
+		 */
+		out_if = if_get(rt->rt_ifidx);
+		if (!(out_if && carp_strict_addr_chk(out_if, ifp))) {
+			ipstat_inc(ips_wrongif);
+			match = 2;
+		}
+		if_put(out_if);
+#else
+		ipstat_inc(ips_wrongif);
+		match = 2;
+#endif
 	}
 
 	return (match);

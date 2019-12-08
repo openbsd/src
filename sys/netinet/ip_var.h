@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.85 2017/11/15 11:48:59 mpi Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.86 2019/12/08 11:08:22 sashan Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -87,6 +87,7 @@ struct	ipstat {
 	u_long	ips_inswcsum;		/* software checksummed on input */
 	u_long	ips_outswcsum;		/* software checksummed on output */
 	u_long	ips_notmember;		/* multicasts for unregistered groups */
+	u_long	ips_wrongif;		/* packet received on wrong interface */
 };
 
 struct ipoption {
@@ -131,6 +132,7 @@ enum ipstat_counters {
 	ips_inswcsum,		/* software checksummed on input */
 	ips_outswcsum,		/* software checksummed on output */
 	ips_notmember,		/* multicasts for unregistered groups */
+	ips_wrongif,		/* packet received on wrong interface */
 
 	ips_ncounters
 };

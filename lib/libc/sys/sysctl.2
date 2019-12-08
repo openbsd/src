@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.34 2019/12/05 18:42:31 kn Exp $
+.\"	$OpenBSD: sysctl.2,v 1.35 2019/12/08 11:08:22 sashan Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 5 2019 $
+.Dd $Mdocdate: December 8 2019 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -1459,10 +1459,16 @@ If the kernel has been compiled with the
 option,
 then debugging information will also be reported when this variable is set.
 .It Li ip.forwarding Pq Va net.inet.ip.forwarding
+If set to 0, then IP forwarding is disabled.
+The IP stack also requires destination IP address of incoming packet
+to match IP address of network interface, where packet is bound to.
 If set to 1, then IP forwarding is enabled for the host,
 indicating the host is acting as a router.
 If set to 2, then IP forwarding is restricted to traffic that has been
 IPsec encapsulated or decapsulated by the host.
+Enabling packet forwarding (values either 1 or 2) relaxes requirement
+on incoming packet such its destination address must match just any IP address
+bound to host.
 The default value is 0.
 .It Li ip.ipsec-allocs Pq Va net.inet.ip.ipsec-allocs
 The number of IPsec flows that can use a security association before
@@ -1885,6 +1891,10 @@ and
 cases quite differently, and changing this variable during operation
 may cause serious trouble.
 Hence, this variable should only be set at bootstrap time.
+Similarly to IPv4: if forwarding is disabled, then destination address of
+incoming packet must match IP address bound to interface.
+If forwarding is enabled, then check is relaxed such destination IP address of
+incoming packet must match just any address bound to host.
 .Pp
 .It Li ip6.hdrnestlimit Pq Va net.inet6.ip6.hdrnestlimit
 The number of IPv6 extension headers permitted on incoming IPv6 packets.

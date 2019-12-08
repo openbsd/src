@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.220 2019/11/29 16:41:01 nayden Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.221 2019/12/08 11:08:22 sashan Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -432,6 +432,31 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		struct in6_ifaddr *ia6 = ifatoia6(rt->rt_ifa);
 		if (ia6->ia6_flags & IN6_IFF_ANYCAST)
 			m->m_flags |= M_ACAST;
+
+		if (ip6_forwarding == 0 && rt->rt_ifidx != ifp->if_index &&
+		    !((ifp->if_flags & IFF_LOOPBACK) ||
+			(ifp->if_type == IFT_ENC))) {
+			/* received on wrong interface */
+#if NCARP > 0
+			struct ifnet *out_if;
+
+			/*
+			 * Virtual IPs on carp interfaces need to be checked
+			 * also against the parent interface and other carp
+			 * interfaces sharing the same parent.
+			 */
+			out_if = if_get(rt->rt_ifidx);
+			if (!(out_if && carp_strict_addr_chk(out_if, ifp))) {
+				ip6stat_inc(ip6s_wrongif);
+				if_put(out_if);
+				goto bad;
+			}
+			if_put(out_if);
+#else
+			ip6stat_inc(ip6s_wrongif);
+			goto bad;
+#endif
+		}
 		/*
 		 * packets to a tentative, duplicated, or somehow invalid
 		 * address must not be accepted.

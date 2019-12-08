@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.47 2018/05/21 15:52:22 bluhm Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.48 2019/12/08 11:08:22 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -163,6 +163,7 @@ struct carpreq {
 
 #ifdef _KERNEL
 
+#include <net/if_types.h>
 #include <sys/percpu.h>
 
 enum carpstat_counters {
@@ -191,6 +192,19 @@ static inline void
 carpstat_inc(enum carpstat_counters c)
 {
 	counters_inc(carpcounters, c);
+}
+
+/*
+ * If two carp interfaces share same physical interface, then we pretend all IP
+ * addresses belong to single interface.
+ */
+static inline int
+carp_strict_addr_chk(struct ifnet *ifp_a, struct ifnet *ifp_b)
+{
+	return ((ifp_a->if_type == IFT_CARP && ifp_b == ifp_a->if_carpdev) ||
+	    (ifp_b->if_type == IFT_CARP && ifp_a == ifp_b->if_carpdev) ||
+	    (ifp_a->if_type == IFT_CARP && ifp_b->if_type == IFT_CARP &&
+	    ifp_a->if_carpdev == ifp_b->if_carpdev));
 }
 
 int		 carp_proto_input(struct mbuf **, int *, int, int);

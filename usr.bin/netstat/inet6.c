@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.53 2019/04/20 11:36:19 bluhm Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.54 2019/12/08 11:08:22 sashan Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -373,6 +373,7 @@ ip6_stats(char *name)
 	p(ip6s_cantfrag, "\t%llu datagram%s that can't be fragmented\n");
 	p(ip6s_badscope, "\t%llu packet%s that violated scope rules\n");
 	p(ip6s_notmember, "\t%llu multicast packet%s which we don't join\n");
+	p(ip6s_wrongif, "\t%llu packet%s received on wrong interface\n");
 	for (first = 1, i = 0; i < 256; i++)
 		if (ip6stat.ip6s_nxthist[i] != 0) {
 			if (first) {
