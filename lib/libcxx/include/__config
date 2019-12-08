@@ -341,6 +341,9 @@
 #  if defined(__FreeBSD__)
 #    define _LIBCPP_HAS_QUICK_EXIT
 #    define _LIBCPP_HAS_C11_FEATURES
+#  elif defined(__OpenBSD__)
+#    define _LIBCPP_HAS_TIMESPEC_GET
+#    define _LIBCPP_HAS_C11_FEATURES
 #  elif defined(__Fuchsia__)
 #    define _LIBCPP_HAS_QUICK_EXIT
 #    define _LIBCPP_HAS_TIMESPEC_GET
