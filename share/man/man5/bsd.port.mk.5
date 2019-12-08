@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.521 2019/12/08 13:05:04 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.522 2019/12/08 14:07:08 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1499,7 +1499,7 @@ for enabling the generation of debugging information.
 List of ${SUBPACKAGES} for which debug packages should be built "on the side".
 Usually set as
 .Li DEBUG_PACKAGES=${BUILD_PACKAGES}
-for packages where debug information is desireable.
+for packages where debug information is desirable.
 Note the subpackages with
 .Li PKG_ARCH=*
 will automatically be stripped from that list.
@@ -1895,7 +1895,7 @@ User settings.
 If set to
 .Sq Yes ,
 do not print anything when ignoring a port.
-.it Ev INSTALL_DEBUG_PACKAGES
+.It Ev INSTALL_DEBUG_PACKAGES
 User settings.
 Defaults to
 .Sq \&No .
@@ -2066,7 +2066,7 @@ through
 Mostly set automatically when
 .Ev DPB_PROPERTIES
 contains
-.Sq parallel.
+.Sq parallel .
 .Pp
 Note that
 .Xr make 1
