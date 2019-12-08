@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.55 2019/07/03 22:39:33 cheloha Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.56 2019/12/08 12:37:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1946,7 +1946,7 @@ uvm_wait_pla(paddr_t low, paddr_t high, paddr_t size, int failok)
 
 		wakeup(&uvm.pagedaemon);		/* wake the daemon! */
 		while (pma.pm_flags & (UVM_PMA_LINKED | UVM_PMA_BUSY))
-			msleep(&pma, &uvm.fpageqlock, PVM, wmsg, 0);
+			msleep_nsec(&pma, &uvm.fpageqlock, PVM, wmsg, INFSLP);
 
 		if (!(pma.pm_flags & UVM_PMA_FREED) &&
 		    pma.pm_flags & UVM_PMA_FAIL) {

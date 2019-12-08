@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.132 2019/07/18 23:47:33 cheloha Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.133 2019/12/08 12:37:45 mpi Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -581,7 +581,7 @@ uvm_km_valloc_prefer_wait(struct vm_map *map, vsize_t size, voff_t prefer)
 		}
 
 		/* failed.  sleep for a while (on map) */
-		tsleep(map, PVM, "vallocwait", 0);
+		tsleep_nsec(map, PVM, "vallocwait", INFSLP);
 	}
 	/*NOTREACHED*/
 }
@@ -909,7 +909,7 @@ try_map:
 		    kv->kv_align, UVM_MAPFLAG(prot, prot, MAP_INHERIT_NONE,
 		    MADV_RANDOM, mapflags))) {
 			if (kv->kv_wait && kd->kd_waitok) {
-				tsleep(map, PVM, "km_allocva", 0);
+				tsleep_nsec(map, PVM, "km_allocva", INFSLP);
 				goto try_map;
 			}
 			uvm_pglistfree(&pgl);

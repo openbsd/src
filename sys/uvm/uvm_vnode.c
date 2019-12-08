@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.104 2019/07/18 23:47:33 cheloha Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.105 2019/12/08 12:37:45 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1236,7 +1236,7 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 		return(VM_PAGER_OK);
 	} else {
 		while (rebooting)
-			tsleep(&rebooting, PVM, "uvndead", 0);
+			tsleep_nsec(&rebooting, PVM, "uvndead", INFSLP);
 		return(VM_PAGER_ERROR);
 	}
 }
