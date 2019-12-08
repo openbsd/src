@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.23 2019/11/30 00:51:29 mlarkin Exp $ */
+/* $OpenBSD: ns8250.c,v 1.24 2019/12/08 20:14:59 tb Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -126,32 +126,25 @@ com_rcv_event(int fd, short kind, void *arg)
 	}
 
 	/*
-	 * More than one byte pending to be read by the guest.
+	 * We already have other data pending to be received. The data that
+	 * has become available now will be moved to the com port later.
 	 */
-	if (com1_dev.rcv_pending)
-		goto end;
+	if (com1_dev.rcv_pending) {
+		mutex_unlock(&com1_dev.mutex);
+		return;
+	}
 
-	/*
-	 * One byte pending to be read by the guest.
-	 */
-	if (com1_dev.regs.lsr & LSR_RXRDY) {
+	if (com1_dev.regs.lsr & LSR_RXRDY)
 		com1_dev.rcv_pending = 1;
-	} else {
-		/* Nothing pending */
+	else {
 		com_rcv(&com1_dev, (uintptr_t)arg, 0);
-	}
 
-end:
-	if (com1_dev.regs.ier & IER_ERXRDY) {
-		com1_dev.regs.iir |= IIR_RXRDY;
-		com1_dev.regs.iir &= ~IIR_NOPEND;
-	}
-
-	/* If pending interrupt, inject */
-	if ((com1_dev.regs.iir & IIR_NOPEND) == 0) {
-		/* XXX: vcpu_id */
-		vcpu_assert_pic_irq((uintptr_t)arg, 0, com1_dev.irq);
-		vcpu_deassert_pic_irq((uintptr_t)arg, 0, com1_dev.irq);
+		/* If pending interrupt, inject */
+		if ((com1_dev.regs.iir & IIR_NOPEND) == 0) {
+			/* XXX: vcpu_id */
+			vcpu_assert_pic_irq((uintptr_t)arg, 0, com1_dev.irq);
+			vcpu_deassert_pic_irq((uintptr_t)arg, 0, com1_dev.irq);
+		}
 	}
 
 	mutex_unlock(&com1_dev.mutex);
@@ -306,11 +299,6 @@ vcpu_process_com_data(struct vm_exit *vei, uint32_t vm_id, uint32_t vcpu_id)
 		if (com1_dev.regs.iir == 0x0)
 			com1_dev.regs.iir = 0x1;
 
-		/*
-		 * Even though we just read a byte, there may be more bytes
-		 * waiting to be read - process them here, this may resassert
-		 * RXRDY.
-		 */
 		if (com1_dev.rcv_pending)
 			com_rcv(&com1_dev, vm_id, vcpu_id);
 	}
