@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.117 2019/12/04 10:47:38 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.118 2019/12/08 10:35:17 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -362,6 +362,9 @@ sub find_kept_handle
 	$o->{tweaked} =
 	    OpenBSD::Add::tweak_package_status($pkgname, $state);
 	$state->updater->progress_message($state, "No change in $pkgname");
+	if (defined $state->debug_cache_directory) {
+		OpenBSD::PkgAdd->may_grab_debug_for($pkgname, 1, $state);
+	}
 	delete $set->{newer}{$pkgname};
 	$n->cleanup;
 }
@@ -1050,17 +1053,31 @@ sub process_set
 	$set->cleanup;
 	$state->tracker->done($set);
 	if (defined $state->debug_cache_directory) {
-		$self->grab_debug_packages($set, $state);
+		for my $p ($set->newer_names) {
+			$self->may_grab_debug_for($p, 0, $state);
+		}
 	}
 	return ();
 }
 
+sub may_grab_debug_for
+{
+	my ($class, $orig, $kept, $state) = @_;
+	return if $orig =~ m/^debug\-/;
+	my $dbg = "debug-$orig";
+	return if $state->tracker->is_known($dbg);
+	return if OpenBSD::PackageInfo::is_installed($dbg);
+	my $d = $state->debug_cache_directory;
+	return if $kept && -f "$d/$dbg.tgz";
+	$class->grab_debug_package($d, $dbg, $state);
+}
+
 sub grab_debug_package
 {
-	my ($self, $pkg, $state) = @_;
-	my $o = $state->locator->find($pkg);
+	my ($class, $d, $dbg, $state) = @_;
+
+	my $o = $state->locator->find($dbg);
 	return if !defined $o;
-	my $d = $state->debug_cache_directory;
 	require OpenBSD::Temp;
 	my ($fh, $name) = OpenBSD::Temp::permanent_file($d, "debug-pkg");
 	if (!defined $fh) {
@@ -1081,24 +1098,12 @@ sub grab_debug_package
 		my $c = $?;
 		$o->{repository}->parse_problems($o->{errors}, 1, $o);
 		if ($c == 0) {
-			rename($name, "$d/$pkg.tgz");
+			rename($name, "$d/$dbg.tgz");
 		} else {
 			unlink($name);
-			$self->errsay("Grabbing debug package failed: #1",
+			$state->errsay("Grabbing debug package failed: #1",
 				$state->child_error($c));
 		}
-	}
-}
-
-sub grab_debug_packages
-{
-	my ($self, $set, $state) = @_;
-	for my $p ($set->newer_names) {
-		next if $p =~ m/^debug\-/;
-		my $dbg = "debug-$p";
-		next if $state->tracker->is_known($dbg);
-		next if OpenBSD::PackageInfo::is_installed($dbg);
-		$self->grab_debug_package($dbg, $state);
 	}
 }
 
