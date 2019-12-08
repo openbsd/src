@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.7 2018/05/18 17:01:57 espie Exp $
+# $OpenBSD: PkgConfig.pm,v 1.8 2019/12/08 14:22:14 espie Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -67,11 +67,11 @@ sub new
 sub add_variable
 {
 	my ($self, $name, $value) = @_;
-	if (defined $self->{variables}->{$name}) {
+	if (defined $self->{variables}{$name}) {
 		die "Duplicate variable $name";
 	}
 	push(@{$self->{vlist}}, $name);
-	$self->{variables}->{$name} = ($value =~ s/^\"|\"$//rg);
+	$self->{variables}{$name} = ($value =~ s/^\"|\"$//rg);
 }
 
 sub parse_value
@@ -87,7 +87,7 @@ sub parse_value
 sub add_property
 {
 	my ($self, $name, $value) = @_;
-	if (defined $self->{properties}->{$name}) {
+	if (defined $self->{properties}{$name}) {
 		die "Duplicate property $name";
 	}
 	push(@{$self->{proplist}}, $name);
@@ -97,16 +97,15 @@ sub add_property
 	} else {
 		$v = [];
 	}
-	$self->{properties}->{$name} = $v;
+	$self->{properties}{$name} = $v;
 }
 
 sub read_fh
 {
 	my ($class, $fh, $name) = @_;
 	my $cfg = $class->new;
-	#my $_;
 
-	$name = '' if !defined $name;
+	$name //= '';
 	while (<$fh>) {
 		chomp;
 		# continuation lines
@@ -129,9 +128,9 @@ sub read_fh
 			die "Incorrect cfg file $name";
 		}
 	}
-	if (defined $cfg->{properties}->{Libs}) {
-		$cfg->{properties}->{Libs} =
-		    $cfg->compress_list($cfg->{properties}->{Libs});
+	if (defined $cfg->{properties}{Libs}) {
+		$cfg->{properties}{Libs} =
+		    $cfg->compress_list($cfg->{properties}{Libs});
 	}
 	return $cfg;
 }
@@ -149,11 +148,11 @@ sub write_fh
 	my ($self, $fh) = @_;
 
 	foreach my $variable (@{$self->{vlist}}) {
-		print $fh "$variable=", $self->{variables}->{$variable}, "\n";
+		print $fh "$variable=", $self->{variables}{$variable}, "\n";
 	}
 	print $fh "\n\n";
 	foreach my $property (@{$self->{proplist}}) {
-		my $p = $self->{properties}->{$property};
+		my $p = $self->{properties}{$property};
 		print $fh "$property:";
 		if (defined $write->{$property}) {
 			print $fh $write->{$property}($p);
@@ -212,8 +211,8 @@ sub expanded
 	                    } else {
 	  			return $extra->{$var};
               		    }
-			} elsif (defined $self->{variables}->{$var}) {
-				return $self->{variables}->{$var};
+			} elsif (defined $self->{variables}{$var}) {
+				return $self->{variables}{$var};
 			} else {
 				return '';
 			}
@@ -235,7 +234,7 @@ sub get_property
 {
 	my ($self, $k, $extra) = @_;
 
-	my $l = $self->{properties}->{$k};
+	my $l = $self->{properties}{$k};
 	if (!defined $l) {
 		return undef;
 	}
@@ -257,7 +256,7 @@ sub get_variable
 {
 	my ($self, $k, $extra) = @_;
 
-	my $v = $self->{variables}->{$k};
+	my $v = $self->{variables}{$k};
 	if (defined $v) {
 		return $self->expanded($v, $extra);
 	} else {
@@ -274,14 +273,14 @@ sub add_bases
 
 	while (my ($k, $v) = each %$extra) {
 		for my $name (keys %{$self->{variables}}) {
-			$self->{variables}->{$name} =~ s/\Q$v\E\b/\$\{\Q$k\E\}/g;
+			$self->{variables}{$name} =~ s/\Q$v\E\b/\$\{\Q$k\E\}/g;
 		}
 		for my $name (keys %{$self->{properties}}) {
-			for my $e (@{$self->{properties}->{$name}}) {
+			for my $e (@{$self->{properties}{$name}}) {
 				$e =~ s/\Q$v\E\b/\$\{\Q$k\E\}/g;
 			}
 		}
-		$self->{variables}->{$k} = $v;
+		$self->{variables}{$k} = $v;
 		unshift(@{$self->{vlist}}, $k);
 	}
 }
