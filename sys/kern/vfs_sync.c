@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.60 2018/08/13 15:26:17 visa Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.61 2019/12/08 12:29:42 mpi Exp $  */
 
 /*
  *  Portions of this code are:
@@ -229,7 +229,7 @@ syncer_thread(void *arg)
 		 * filesystem activity.
 		 */
 		if (time_second == starttime)
-			tsleep(&lbolt, PPAUSE, "syncer", 0);
+			tsleep_nsec(&lbolt, PPAUSE, "syncer", INFSLP);
 	}
 }
 

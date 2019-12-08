@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.109 2019/11/10 05:00:36 beck Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.110 2019/12/08 12:29:42 mpi Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -564,7 +564,7 @@ vn_lock(struct vnode *vp, int flags)
 	do {
 		if (vp->v_flag & VXLOCK) {
 			vp->v_flag |= VXWANT;
-			tsleep(vp, PINOD, "vn_lock", 0);
+			tsleep_nsec(vp, PINOD, "vn_lock", INFSLP);
 			error = ENOENT;
 		} else {
 			vp->v_lockcount++;

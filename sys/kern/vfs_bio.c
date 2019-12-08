@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.193 2019/11/29 01:04:08 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.194 2019/12/08 12:29:42 mpi Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -1101,14 +1101,14 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 		    curproc != syncerproc && curproc != cleanerproc) {
 			wakeup(&bd_req);
 			needbuffer++;
-			tsleep(&needbuffer, PRIBIO, "needbuffer", 0);
+			tsleep_nsec(&needbuffer, PRIBIO, "needbuffer", INFSLP);
 			splx(s);
 			return (NULL);
 		}
 		if (bcstats.dmapages + npages > bufpages) {
 			/* cleaner or syncer */
 			nobuffers = 1;
-			tsleep(&nobuffers, PRIBIO, "nobuffers", 0);
+			tsleep_nsec(&nobuffers, PRIBIO, "nobuffers", INFSLP);
 			splx(s);
 			return (NULL);
 		}
@@ -1191,7 +1191,7 @@ buf_daemon(void *arg)
 				needbuffer = 0;
 				wakeup(&needbuffer);
 			}
-			tsleep(&bd_req, PRIBIO - 7, "cleaner", 0);
+			tsleep_nsec(&bd_req, PRIBIO - 7, "cleaner", INFSLP);
 		}
 
 		while ((bp = bufcache_getdirtybuf())) {
@@ -1247,7 +1247,7 @@ biowait(struct buf *bp)
 
 	s = splbio();
 	while (!ISSET(bp->b_flags, B_DONE))
-		tsleep(bp, PRIBIO + 1, "biowait", 0);
+		tsleep_nsec(bp, PRIBIO + 1, "biowait", INFSLP);
 	splx(s);
 
 	/* check for interruption of I/O (e.g. via NFS), then errors. */

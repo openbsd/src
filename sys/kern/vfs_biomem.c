@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.46 2019/11/29 22:10:04 beck Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.47 2019/12/08 12:29:42 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -110,7 +110,8 @@ buf_map(struct buf *bp)
 			   bcstats.kvaslots_avail <= RESERVE_SLOTS) ||
 			   vbp == NULL) {
 				buf_needva++;
-				tsleep(&buf_needva, PRIBIO, "buf_needva", 0);
+				tsleep_nsec(&buf_needva, PRIBIO, "buf_needva",
+				    INFSLP);
 				vbp = TAILQ_FIRST(&buf_valist);
 			}
 			va = buf_unmap(vbp);
