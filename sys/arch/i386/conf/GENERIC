@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.846 2019/12/06 09:48:01 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.847 2019/12/08 12:27:26 mpi Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -15,7 +15,6 @@ maxusers	80			# estimated number of users
 
 option		USER_PCICONF	# user-space PCI configuration
 
-option		KVM86		# Kernel Virtual 8086 emulation
 option		APERTURE	# in-kernel aperture driver for XFree86
 option		MTRR		# CPU memory range attributes control
 
