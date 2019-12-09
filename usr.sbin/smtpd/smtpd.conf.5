@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.237 2019/12/09 15:04:06 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.238 2019/12/09 16:55:30 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -333,64 +333,26 @@ or using the
 .Ic hostname
 directive.
 .It Ic filter Ar chain-name Ic chain Brq Ar filter-name Op , Ar ...
-Register a chain of filters named
-.Ar chain-name
-and consisting of the filters listed from
+Register a chain of filters
+.Ar chain-name ,
+consisting of the filters listed from
 .Ar filter-name .
 Filters part of a filter chain are executed in order of declaration for
 each phase that they are registered for.
 A filter chain may be used in place of a filter for any directive but
 filter chains themselves.
-.It Ic filter Ar filter-name Ic phase Ar phase-name Ic match Ar conditions Ic disconnect Ar message
-Register builtin filter
-.Ar filter-name
-matching
-.Ar conditions
-to disconnect session with
-.Ar message .
-Phase and matching conditions are documented in a specific section,
-see
-.Sx BUILTIN FILTERING .
-.It Ic filter Ar filter-name Ic phase Ar phase-name Ic match Ar conditions Ic junk
-Register builtin filter
-.Ar filter-name
-matching
-.Ar conditions
-to mark a session or a transaction as junk.
-Phase and matching conditions are documented in a specific section,
-see
-.Sx BUILTIN FILTERING .
-.It Ic filter Ar filter-name Ic phase Ar phase-name Ic match Ar conditions Ic reject Ar message
-Register builtin filter
-.Ar filter-name
-matching
-.Ar conditions
-to reject session with
-.Ar message .
-Phase and matching conditions are documented in a specific section,
-see
-.Sx BUILTIN FILTERING .
-.It Ic filter Ar filter-name Ic phase Ar phase-name Ic match Ar conditions Ic report Ar message
-Register builtin filter
-.Ar filter-name
-matching
-.Ar conditions
-to report on session with
-.Ar message
-and proceed with the transaction.
-Phase and matching conditions are documented in a specific section,
-see
-.Sx BUILTIN FILTERING .
-.It Ic filter Ar filter-name Ic phase Ar phase-name Ic match Ar conditions Ic rewrite Ar value
-Register builtin filter
-.Ar filter-name
-matching
-.Ar conditions
-to rewrite phase parameter with new
-.Ar value .
-Phase and matching conditions are documented in a specific section,
-see
-.Sx BUILTIN FILTERING .
+.It Ic filter Ar filter-name Ic phase Ar phase-name Ic match Ar conditions decision
+Register a filter
+.Ar filter-name .
+A
+.Ar decision
+about what to do with the mail is taken at phase
+.Ar phase-name
+when matching
+.Ar conditions .
+Phases, matching conditions, and decisions are described in
+.Sx MAIL FILTERING ,
+below.
 .It Ic filter Ar filter-name Ic proc Ar proc-name
 Register
 .Qq proc
@@ -975,7 +937,7 @@ pairs.
 The table must contain at least one key-value pair and may declare
 multiple pairs as a comma-separated (whitespace optional) list.
 .El
-.Ss BUILTIN FILTERING
+.Ss MAIL FILTERING
 In a regular workflow,
 .Xr smtpd 8
 may accept or reject a message based only on the content of envelopes.
@@ -1004,9 +966,9 @@ The following phases are currently supported:
 .It commit     Ta after message is fully is submitted
 .El
 .Pp
-At each phase, various criteria may be checked.
-The fcrdns, rdns, and src criteria are available in all phases,
-but other criteria must have been already submitted before they are available.
+At each phase, various conditions may be matched.
+The fcrdns, rdns, and src data are available in all phases,
+but other data must have been already submitted before they are available.
 .Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
 .It fcrdns                        Ta forward-confirmed reverse DNS is valid
 .It rdns                          Ta session has a reverse DNS
@@ -1017,12 +979,12 @@ but other criteria must have been already submitted before they are available.
 .It rcpt-to Pf < Ar table Ns >   Ta recipient address is in table
 .El
 .Pp
-Criteria may all be negated by prefixing them with an exclamation mark:
+These conditions may all be negated by prefixing them with an exclamation mark:
 .Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
-.It ! fcrdns                     Ta forward-confirmed reverse DNS is invalid
+.It !fcrdns                     Ta forward-confirmed reverse DNS is invalid
 .El
 .Pp
-Any criteria using a table may indicate that tables hold regex by
+Any conditions using a table may indicate that tables hold regex by
 prefixing the table name with the keyword regex.
 .Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
 .It helo regex Pf < Ar table Ns >       Ta helo name matches a regex in table
