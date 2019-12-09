@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.23 2018/11/04 07:52:55 remi Exp $ */
+/*	$OpenBSD: ripe.c,v 1.24 2019/12/09 20:37:54 remi Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -398,7 +398,6 @@ ripe_dispatch_rde(int fd, short event, void *bula)
 				    imsg.hdr.peerid);
 				break;
 			}
-			iface = nbr->iface;
 			add_entry(&nbr->rp_list, rr);
 
 			break;
