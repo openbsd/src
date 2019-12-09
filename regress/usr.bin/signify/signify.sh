@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: signify.sh,v 1.8 2016/09/03 12:23:02 espie Exp $
+# $OpenBSD: signify.sh,v 1.9 2019/12/09 09:41:54 espie Exp $
 
 srcdir=$1
 
@@ -33,5 +33,5 @@ signify -zS -s $seckey -m archive.tgz -x signed.tgz
 # check it's still valid gzip
 gunzip -t signed.tgz
 # verify it
-signify -zV -p $pubkey <signed.tgz|gunzip -t
+signify -zV -p $pubkey <signed.tgz|signify -zV -p $pubkey|gunzip -t
 true

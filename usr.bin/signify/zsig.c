@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.16 2019/03/23 07:10:06 tedu Exp $ */
+/* $OpenBSD: zsig.c,v 1.17 2019/12/09 09:41:54 espie Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -180,7 +180,7 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
     const char *keytype)
 {
 	struct gzheader h;
-	size_t bufsize;
+	size_t bufsize, len;
 	char *p, *meta;
 	uint8_t *bufend;
 	int fdin, fdout;
@@ -197,13 +197,16 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 	if (!(h.flg & FCOMMENT_FLAG))
 		errx(1, "unsigned gzip archive");
 	fake[8] = h.xflg;
+	len = h.endcomment-h.comment;
 
-	p = verifyzdata(h.comment, h.endcomment-h.comment, sigfile,
+	meta = xmalloc(len+1);
+	memcpy(meta, h.comment, len);
+	meta[len] = 0;
+	p = verifyzdata(h.comment, len, sigfile,
 	    pubkeyfile, keytype);
 
 	bufsize = MYBUFSIZE;
 
-	meta = p;
 #define BEGINS_WITH(x, y) memcmp((x), (y), sizeof(y)-1) == 0
 
 	while (BEGINS_WITH(p, "algorithm=SHA512/256") ||
@@ -219,11 +222,9 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 	*(p++) = 0;
 
 	fdout = xopen(msgfile, O_CREAT|O_TRUNC|O_NOFOLLOW|O_WRONLY, 0666);
-	/* we don't actually copy the header, but put in a fake one with about
-	 * zero useful information.
-	 */
 	writeall(fdout, fake, sizeof fake, msgfile);
-	writeall(fdout, meta, p - meta, msgfile);
+	writeall(fdout, meta, len+1, msgfile);
+	free(meta);
 	copy_blocks(fdout, fdin, p, h.endcomment, bufsize, bufend);
 	free(h.buffer);
 	close(fdout);
