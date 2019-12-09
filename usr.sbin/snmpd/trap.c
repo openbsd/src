@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.33 2019/10/24 12:39:27 tb Exp $	*/
+/*	$OpenBSD: trap.c,v 1.34 2019/12/09 16:51:10 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -83,6 +83,8 @@ trap_agentx(struct agentx_handle *h, struct agentx_pdu *pdu, int *idx,
 		goto done;
 	}
 
+	smi_scalar_oidlen(&uptime);
+	smi_scalar_oidlen(&trapoid);
 	while (pdu->datalen > sizeof(struct agentx_hdr)) {
 		x++;
 
