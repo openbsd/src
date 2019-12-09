@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.345 2019/12/08 11:08:22 sashan Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.346 2019/12/09 06:48:52 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
+#include <net/if_types.h>
 
 #ifdef INET6
 #include <netinet6/ip6protosw.h>
@@ -80,7 +81,6 @@
 #endif /* IPSEC */
 
 #if NCARP > 0
-#include <net/if_types.h>
 #include <netinet/ip_carp.h>
 #endif
 
