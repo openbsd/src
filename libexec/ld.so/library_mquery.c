@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.63 2019/12/09 22:15:15 deraadt Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.64 2019/12/09 23:15:03 bluhm Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -112,8 +112,8 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	Elf_Phdr *ptls = NULL;
 	Elf_Addr relro_addr = 0, relro_size = 0;
 	struct stat sb;
-	char hbuf[4096], *exec_start = 0;
-	size_t exec_size = 0;
+	char hbuf[4096], *exec_start;
+	size_t exec_size;
 
 #define ROUND_PG(x) (((x) + align) & ~(align))
 #define TRUNC_PG(x) ((x) & ~(align))
@@ -232,6 +232,8 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 #define LOFF ((Elf_Addr)lowld->start - lowld->moff)
 
 retry:
+	exec_start = NULL;
+	exec_size = 0;
 	for (ld = lowld; ld != NULL; ld = ld->next) {
 		off_t foff;
 		int fd, flags;
@@ -264,12 +266,6 @@ retry:
 
 		res = _dl_mmap((void *)(LOFF + ld->moff), ROUND_PG(ld->size),
 		    ld->prot, flags | MAP_FIXED | __MAP_NOREPLACE, fd, foff);
-
-		if ((ld->prot & PROT_EXEC) && exec_start == 0) {
-			exec_start = (void *)(LOFF + ld->moff);
-			exec_size = ROUND_PG(ld->size);
-		}
-
 		if (_dl_mmap_error(res)) {
 			struct load_list *ll;
 
@@ -281,6 +277,11 @@ retry:
 
 			lowld->start += ROUND_PG(ld->size);
 			goto retry;
+		}
+
+		if ((ld->prot & PROT_EXEC) && exec_start == NULL) {
+			exec_start = (void *)(LOFF + ld->moff);
+			exec_size = ROUND_PG(ld->size);
 		}
 
 		ld->start = res;
