@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.12 2014/10/25 03:23:49 lteo Exp $ */
+/*	$OpenBSD: message.c,v 1.13 2019/12/09 20:41:24 remi Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -70,7 +70,7 @@ add_entry(struct packet_head *r_list, struct rip_route *rr)
 		fatalx("add_entry: no route report");
 
 	if ((re = calloc(1, sizeof(*re))) == NULL)
-		fatal("add_response");
+		fatal("add_entry");
 
 	TAILQ_INSERT_TAIL(r_list, re, entry);
 	re->rr = rr;
