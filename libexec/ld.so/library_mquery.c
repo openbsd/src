@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.62 2019/11/30 23:06:02 deraadt Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.63 2019/12/09 22:15:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -331,7 +331,8 @@ retry:
 		if (soname != NULL &&
 		    _dl_strncmp(soname, "libc.so.", 8) == 0) {
 			if (_dl_msyscall(exec_start, exec_size) == -1)
-				_dl_printf("msyscall %lx %lx error\n");
+				_dl_printf("msyscall %lx %lx error\n",
+				    exec_start, exec_size);
 		}
 	} else {
 		_dl_load_list_free(lowld);
