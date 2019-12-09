@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.111 2019/12/03 16:07:22 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.112 2019/12/09 19:46:56 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -1240,7 +1240,46 @@ func runChaCha20Poly1305TestGroup(algorithm string, wtg *wycheproofTestGroupAead
 	return success
 }
 
-func runDSATest(dsa *C.DSA, h hash.Hash, wt *wycheproofTestDSA) bool {
+// DER encode the signature (so DSA_verify() can decode and encode it again)
+func encodeDSAP1363Sig(wtSig string) (*C.uchar, C.int) {
+	cSig := C.DSA_SIG_new()
+	if cSig == nil {
+		log.Fatal("DSA_SIG_new() failed")
+	}
+	defer C.DSA_SIG_free(cSig)
+
+	sigLen := len(wtSig)
+	r := C.CString(wtSig[:sigLen/2])
+	s := C.CString(wtSig[sigLen/2:])
+	defer C.free(unsafe.Pointer(r))
+	defer C.free(unsafe.Pointer(s))
+	if C.BN_hex2bn(&cSig.r, r) == 0 {
+		return nil, 0
+	}
+	if C.BN_hex2bn(&cSig.s, s) == 0 {
+		return nil, 0
+	}
+
+	derLen := C.i2d_DSA_SIG(cSig, nil)
+	if derLen == 0 {
+		return nil, 0
+	}
+	cDer := (*C.uchar)(C.malloc(C.ulong(derLen)))
+	if cDer == nil {
+		log.Fatal("malloc failed")
+	}
+
+	p := cDer
+	ret := C.i2d_DSA_SIG(cSig, (**C.uchar)(&p))
+	if ret == 0 || ret != derLen {
+		C.free(unsafe.Pointer(cDer))
+		return nil, 0
+	}
+
+	return cDer, derLen
+}
+
+func runDSATest(dsa *C.DSA, variant testVariant, h hash.Hash, wt *wycheproofTestDSA) bool {
 	msg, err := hex.DecodeString(wt.Msg)
 	if err != nil {
 		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
@@ -1250,21 +1289,34 @@ func runDSATest(dsa *C.DSA, h hash.Hash, wt *wycheproofTestDSA) bool {
 	h.Write(msg)
 	msg = h.Sum(nil)
 
-	sig, err := hex.DecodeString(wt.Sig)
-	if err != nil {
-		log.Fatalf("Failed to decode signature %q: %v", wt.Sig, err)
-	}
-
-	msgLen, sigLen := len(msg), len(sig)
+	msgLen := len(msg)
 	if msgLen == 0 {
 		msg = append(msg, 0)
 	}
-	if sigLen == 0 {
-		sig = append(msg, 0)
-	}
 
-	ret := C.DSA_verify(0, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen),
-		(*C.uchar)(unsafe.Pointer(&sig[0])), C.int(sigLen), dsa)
+	var ret C.int
+	if variant == P1363 {
+		cDer, derLen := encodeDSAP1363Sig(wt.Sig)
+		if cDer == nil {
+			fmt.Print("FAIL: unable to decode signature")
+			return false
+		}
+		defer C.free(unsafe.Pointer(cDer))
+
+		ret = C.DSA_verify(0, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen),
+			(*C.uchar)(unsafe.Pointer(cDer)), C.int(derLen), dsa)
+	} else {
+		sig, err := hex.DecodeString(wt.Sig)
+		if err != nil {
+			log.Fatalf("Failed to decode signature %q: %v", wt.Sig, err)
+		}
+		sigLen := len(sig)
+		if sigLen == 0 {
+			sig = append(msg, 0)
+		}
+		ret = C.DSA_verify(0, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen),
+			(*C.uchar)(unsafe.Pointer(&sig[0])), C.int(sigLen), dsa)
+	}
 
 	success := true
 	if ret == 1 != (wt.Result == "valid") {
@@ -1275,7 +1327,7 @@ func runDSATest(dsa *C.DSA, h hash.Hash, wt *wycheproofTestDSA) bool {
 	return success
 }
 
-func runDSATestGroup(algorithm string, wtg *wycheproofTestGroupDSA) bool {
+func runDSATestGroup(algorithm string, variant testVariant, wtg *wycheproofTestGroupDSA) bool {
 	fmt.Printf("Running %v test group %v, key size %d and %v...\n",
 		algorithm, wtg.Type, wtg.Key.KeySize, wtg.SHA)
 
@@ -1365,13 +1417,13 @@ func runDSATestGroup(algorithm string, wtg *wycheproofTestGroupDSA) bool {
 
 	success := true
 	for _, wt := range wtg.Tests {
-		if !runDSATest(dsa, h, wt) {
+		if !runDSATest(dsa, variant, h, wt) {
 			success = false
 		}
-		if !runDSATest(dsaDER, h, wt) {
+		if !runDSATest(dsaDER, variant, h, wt) {
 			success = false
 		}
-		if !runDSATest(dsaPEM, h, wt) {
+		if !runDSATest(dsaPEM, variant, h, wt) {
 			success = false
 		}
 	}
@@ -2500,7 +2552,7 @@ func runTestVectors(path string, variant testVariant) bool {
 				success = false
 			}
 		case "DSA":
-			if !runDSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupDSA)) {
+			if !runDSATestGroup(wtv.Algorithm, variant, wtg.(*wycheproofTestGroupDSA)) {
 				success = false
 			}
 		case "ECDH":
@@ -2585,7 +2637,7 @@ func main() {
 		{"AES", "aes_[cg]*[^xv]_test.json", Normal}, // Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
 		{"ChaCha20-Poly1305", "chacha20_poly1305_test.json", Normal},
 		{"DSA", "dsa_*test.json", Normal},
-		{"DSA", "dsa_*_p1363_test.json", Skip},
+		{"DSA", "dsa_*_p1363_test.json", P1363},
 		{"ECDH", "ecdh_test.json", Normal},
 		{"ECDH", "ecdh_[^w_]*_test.json", Normal},
 		{"ECDH EcPoint", "ecdh_*_ecpoint_test.json", EcPoint},
