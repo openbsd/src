@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.50 2019/09/11 20:06:26 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.51 2019/12/09 20:36:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -35,7 +35,7 @@
 #include "smtpd.h"
 #include "log.h"
 
-#define	PROTOCOL_VERSION	"0.4"
+#define	PROTOCOL_VERSION	"0.5"
 
 struct filter;
 struct filter_session;
@@ -441,22 +441,22 @@ lka_filter_process_response(const char *name, const char *line)
 		fatalx("Missing reqid: %s", line);
 	ep[0] = '\0';
 
-	token = strtoull(qid, &ep, 16);
+	reqid = strtoull(qid, &ep, 16);
 	if (qid[0] == '\0' || *ep != '\0')
-		fatalx("Invalid token: %s", line);
-	if (errno == ERANGE && token == ULLONG_MAX)
-		fatal("Invalid token: %s", line);
+		fatalx("Invalid reqid: %s", line);
+	if (errno == ERANGE && reqid == ULLONG_MAX)
+		fatal("Invalid reqid: %s", line);
 
 	qid = ep+1;
 	if ((ep = strchr(qid, '|')) == NULL)
 		fatal("Missing directive: %s", line);
 	ep[0] = '\0';
 
-	reqid = strtoull(qid, &ep, 16);
+	token = strtoull(qid, &ep, 16);
 	if (qid[0] == '\0' || *ep != '\0')
-		fatalx("Invalid reqid: %s", line);
-	if (errno == ERANGE && reqid == ULLONG_MAX)
-		fatal("Invalid reqid: %s", line);
+		fatalx("Invalid token: %s", line);
+	if (errno == ERANGE && token == ULLONG_MAX)
+		fatal("Invalid token: %s", line);
 
 	response = ep+1;
 
