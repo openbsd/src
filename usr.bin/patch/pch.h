@@ -1,10 +1,11 @@
+/*	$OpenBSD: pch.h,v 1.12 2019/12/09 12:08:42 jca Exp $	*/
+
 void		next_intuit_at(off_t, LINENUM);
 LINENUM		strtolinenum(char *, char **);
 
 extern FILE	*pfp;
 extern LINENUM	p_input_line;
 int		pgetline(char **, size_t *, FILE *);
-/*	$OpenBSD: pch.h,v 1.11 2019/12/02 22:17:32 jca Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
