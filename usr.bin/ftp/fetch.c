@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.182 2019/12/08 23:43:53 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.183 2019/12/09 00:45:34 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -240,14 +240,16 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 #ifndef SMALL
 		scheme = FILE_URL;
 #endif /* !SMALL */
-#ifndef NOSSL
 	} else if (strncasecmp(newline, HTTPS_URL, sizeof(HTTPS_URL) - 1) == 0) {
+#ifndef NOSSL
 		host = newline + sizeof(HTTPS_URL) - 1;
 		ishttpsurl = 1;
+#else
+		errx(1, "%s: No HTTPS support", newline);
+#endif /* !NOSSL */
 #ifndef SMALL
 		scheme = HTTPS_URL;
 #endif /* !SMALL */
-#endif /* !NOSSL */
 	} else
 		errx(1, "url_get: Invalid URL '%s'", newline);
 
@@ -1266,10 +1268,7 @@ auto_fetch(int argc, char *argv[], char *outfile)
 		 * Try HTTP URL-style arguments first.
 		 */
 		if (strncasecmp(url, HTTP_URL, sizeof(HTTP_URL) - 1) == 0 ||
-#ifndef NOSSL
-		    /* even if we compiled without SSL, url_get will check */
 		    strncasecmp(url, HTTPS_URL, sizeof(HTTPS_URL) -1) == 0 ||
-#endif /* !NOSSL */
 		    strncasecmp(url, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
 			redirect_loop = 0;
 			retried = 0;
