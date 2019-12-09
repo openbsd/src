@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.152 2019/11/29 06:34:45 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.153 2019/12/09 18:19:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -630,7 +630,7 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 			if (interp == NULL) {
 				/*
 				 * static binary: no ld.so, no late request for
-				 * syscalls inside libc,so block msyscall()
+				 * syscalls inside libc.so block msyscall()
 				 */
 				p->p_vmspace->vm_map.flags |= VM_MAP_SYSCALL_ONCE;
 			}
