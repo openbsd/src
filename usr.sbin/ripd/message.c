@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.13 2019/12/09 20:41:24 remi Exp $ */
+/*	$OpenBSD: message.c,v 1.14 2019/12/09 20:49:40 remi Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -203,11 +203,11 @@ send_request(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 			ibuf_add(buf, &netmask, sizeof(netmask));
 			ibuf_add(buf, &nexthop, sizeof(nexthop));
 			ibuf_add(buf, &metric, sizeof(metric));
+			nentries++;
 
 			TAILQ_REMOVE(r_list, entry, entry);
 			delete_entry(entry->rr);
 			free(entry);
-			nentries++;
 		}
 		send_packet(iface, buf->buf, buf->wpos, &dst);
 		ibuf_free(buf);
@@ -292,11 +292,11 @@ send_response(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 			ibuf_add(buf, &netmask, sizeof(netmask));
 			ibuf_add(buf, &nexthop, sizeof(nexthop));
 			ibuf_add(buf, &metric, sizeof(metric));
+			nentries++;
 free:
 			TAILQ_REMOVE(r_list, entry, entry);
 			delete_entry(entry->rr);
 			free(entry);
-			nentries++;
 		}
 
 		if (iface->auth_type == AUTH_CRYPT)
