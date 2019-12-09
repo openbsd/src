@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.236 2019/12/05 14:49:35 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.237 2019/12/09 15:04:06 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 5 2019 $
+.Dd $Mdocdate: December 9 2019 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -1151,8 +1151,8 @@ action "local_mail" mbox alias <aliases>
 action "outbound" relay host smtp+tls://bob@smtp.example.com \e
 	auth <secrets>
 
-match for local action "local_mail"
-match for any action "outbound"
+match from local for local action "local_mail"
+match from local for any action "outbound"
 .Ed
 .Pp
 In this second example,
