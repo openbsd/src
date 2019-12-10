@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.45 2019/12/03 16:17:48 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.46 2019/12/10 09:53:43 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -153,9 +153,6 @@ frontend(int debug, int verbose)
 {
 	struct event	 ev_sigint, ev_sigterm;
 	struct passwd	*pw;
-	size_t		 rcvcmsglen, sndcmsgbuflen;
-	uint8_t		*rcvcmsgbuf;
-	uint8_t		*sndcmsgbuf = NULL;
 
 	frontend_conf = config_new_empty();
 	control_state.fd = -1;
@@ -203,11 +200,6 @@ frontend(int debug, int verbose)
 	    iev_main->handler, iev_main);
 	event_add(&iev_main->ev, NULL);
 
-	rcvcmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
-	    CMSG_SPACE(sizeof(int));
-	if((rcvcmsgbuf = malloc(rcvcmsglen)) == NULL)
-		fatal("malloc");
-
 	udp4ev.rcviov[0].iov_base = (caddr_t)udp4ev.query;
 	udp4ev.rcviov[0].iov_len = sizeof(udp4ev.query);
 	udp4ev.rcvmhdr.msg_name = (caddr_t)&udp4ev.from;
@@ -221,11 +213,6 @@ frontend(int debug, int verbose)
 	udp6ev.rcvmhdr.msg_namelen = sizeof(udp6ev.from);
 	udp6ev.rcvmhdr.msg_iov = udp6ev.rcviov;
 	udp6ev.rcvmhdr.msg_iovlen = 1;
-
-	sndcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
-	    CMSG_SPACE(sizeof(int));
-	if ((sndcmsgbuf = malloc(sndcmsgbuflen)) == NULL)
-		fatal("%s", __func__);
 
 	TAILQ_INIT(&pending_queries);
 
@@ -543,7 +530,7 @@ udp_receive(int fd, short events, void *arg)
 {
 	struct udp_ev		*udpev = (struct udp_ev *)arg;
 	struct pending_query	*pq;
-	struct query_imsg	*query_imsg = NULL;
+	struct query_imsg	 query_imsg;
 	struct query_info	 qinfo;
 	struct bl_node		 find;
 	ssize_t			 len, dname_len;
@@ -574,7 +561,7 @@ udp_receive(int fd, short events, void *arg)
 
 	if ((pq->qbuf = sldns_buffer_new(len)) == NULL) {
 		log_warnx("sldns_buffer_new");
-		return;
+		goto drop;
 	}
 	sldns_buffer_clear(pq->qbuf);
 	sldns_buffer_write(pq->qbuf, udpev->query, len);
@@ -643,29 +630,22 @@ udp_receive(int fd, short events, void *arg)
 		goto send_answer;
 	}
 
-	if ((query_imsg = calloc(1, sizeof(*query_imsg))) == NULL) {
-		log_warn(NULL);
-		pq->rcode_override = LDNS_RCODE_SERVFAIL;
-		goto send_answer;
-	}
-
-	if (strlcpy(query_imsg->qname, dname, sizeof(query_imsg->qname)) >=
-	    sizeof(query_imsg->qname)) {
+	if (strlcpy(query_imsg.qname, dname, sizeof(query_imsg.qname)) >=
+	    sizeof(query_imsg.qname)) {
 		log_warnx("qname too long");
 		pq->rcode_override = LDNS_RCODE_FORMERR;
 		goto send_answer;
 	}
-	query_imsg->id = pq->imsg_id;
-	query_imsg->t = qinfo.qtype;
-	query_imsg->c = qinfo.qclass;
+	query_imsg.id = pq->imsg_id;
+	query_imsg.t = qinfo.qtype;
+	query_imsg.c = qinfo.qclass;
 
-	if (frontend_imsg_compose_resolver(IMSG_QUERY, 0, query_imsg,
-	    sizeof(*query_imsg)) != -1)
+	if (frontend_imsg_compose_resolver(IMSG_QUERY, 0, &query_imsg,
+	    sizeof(query_imsg)) != -1)
 		TAILQ_INSERT_TAIL(&pending_queries, pq, entry);
 	else {
 		pq->rcode_override = LDNS_RCODE_SERVFAIL;
 		goto send_answer;
-		free(query_imsg);
 	}
 	return;
 
@@ -677,7 +657,6 @@ udp_receive(int fd, short events, void *arg)
 	if (pq != NULL)
 		sldns_buffer_free(pq->qbuf);
 	free(pq);
-	free(query_imsg);
 }
 
 void
