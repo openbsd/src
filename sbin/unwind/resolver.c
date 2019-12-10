@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.104 2019/12/08 21:31:16 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.105 2019/12/10 07:49:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -883,6 +883,7 @@ void
 resolve_done(struct uw_resolver *res, void *arg, int rcode,
     void *answer_packet, int answer_len, int sec, char *why_bogus)
 {
+	struct uw_resolver	*tmp_res;
 	struct ub_result	*result = NULL;
 	sldns_buffer		*buf = NULL;
 	struct regional		*region = NULL;
@@ -891,7 +892,7 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	struct timespec		 tp, elapsed;
 	int64_t			 ms;
 	size_t			 i;
-	int			 asr_pref_pos = -1;
+	int			 asr_pref_pos = -1, force_acceptbogus = 0;
 	char			*str;
 	char			 rcode_buf[16];
 
@@ -951,15 +952,21 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	    sldns_wire2str_class(query_imsg->c),
 	    sldns_wire2str_type(query_imsg->t), rcode_buf, result->rcode, ms);
 
-	if (result->rcode == LDNS_RCODE_NXDOMAIN && res->type != UW_RES_ASR) {
+	force_acceptbogus = find_force(&resolver_conf->force, query_imsg->qname,
+	    &tmp_res);
+	if (tmp_res != NULL && tmp_res->type != res->type)
+		force_acceptbogus = 0;
+
+	if ((result->rcode == LDNS_RCODE_NXDOMAIN || sec == BOGUS) &&
+	    !force_acceptbogus && res->type != UW_RES_ASR) {
 		timespecsub(&tp, &last_network_change, &elapsed);
 		if (elapsed.tv_sec < DOUBT_NXDOMAIN_SEC) {
 			/*
-			 * Doubt NXDOMAIN if we just switched networks,
-			 * we might be behind a captive portal.
+			 * Doubt NXDOMAIN or BOGUS if we just switched
+			 * networks, we might be behind a captive portal.
 			 */
-			log_debug("%s: doubt NXDOMAIN from %s, network change "
-			    "%llds ago", __func__,
+			log_debug("%s: doubt NXDOMAIN or BOGUS from %s, "
+			    "network change %llds ago", __func__,
 			    uw_resolver_type_str[res->type], elapsed.tv_sec);
 			if (rq) {
 				/* search for ASR */
@@ -980,12 +987,10 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 					} else
 						goto out;
 				}
-				log_debug("%s: answering NXDOMAIN, couldn't "
-				    "find working ASR", __func__);
+				log_debug("%s: using NXDOMAIN or BOGUS, "
+				    "couldn't find working ASR", __func__);
 			}
-		} else
-			log_debug("%s: answering NXDOMAIN, network change "
-			    "%llds ago", __func__, elapsed.tv_sec);
+		}
 	}
 
 	if (log_getverbose() & OPT_VERBOSE2 && (str =
@@ -1003,8 +1008,7 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 		res->state = VALIDATING;
 
 	if (res->state == VALIDATING && sec == BOGUS) {
-		query_imsg->bogus = find_force(&resolver_conf->force,
-		    query_imsg->qname, NULL) == 0;
+		query_imsg->bogus = !force_acceptbogus;
 		if (query_imsg->bogus && why_bogus != NULL)
 			log_warnx("%s", why_bogus);
 	} else
