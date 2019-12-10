@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.206 2019/09/15 00:08:46 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.207 2019/12/10 10:49:04 bentley Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -1717,9 +1717,11 @@ mdoc_quote_pre(MDOC_ARGS)
 		break;
 	case MDOC_Do:
 	case MDOC_Dq:
+		print_text(h, "\\(lq");
+		break;
 	case MDOC_Qo:
 	case MDOC_Qq:
-		print_text(h, "\\(lq");
+		print_text(h, "\"");
 		break;
 	case MDOC_Po:
 	case MDOC_Pq:
@@ -1775,11 +1777,13 @@ mdoc_quote_post(MDOC_ARGS)
 		else
 			print_text(h, n->norm->Es->child->next->string);
 		break;
-	case MDOC_Qo:
-	case MDOC_Qq:
 	case MDOC_Do:
 	case MDOC_Dq:
 		print_text(h, "\\(rq");
+		break;
+	case MDOC_Qo:
+	case MDOC_Qq:
+		print_text(h, "\"");
 		break;
 	case MDOC_Po:
 	case MDOC_Pq:
