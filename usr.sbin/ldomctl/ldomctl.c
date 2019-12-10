@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.28 2019/11/30 03:30:29 kn Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.29 2019/12/10 11:56:33 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -610,19 +610,15 @@ guest_status(int argc, char **argv)
 			break;
 		}
 
-		if (state.state != GUEST_STATE_NORMAL)
-			printf("%-16s  %-16s\n", guest->name, state_str);
-		else {
-			/* primary has no console */
-			if (guest->gid != 0) {
-				snprintf(console_str, sizeof(console_str),
-				    "ttyV%llu", guest->gid - 1);
-			}
-
-			printf("%-16s %-8s %-16s %-32s %3.0f%%\n", guest->name,
-			    console_str, state_str, softstate.soft_state_str,
-			    utilisation);
+		/* primary has no console */
+		if (guest->gid != 0) {
+			snprintf(console_str, sizeof(console_str),
+			    "ttyV%llu", guest->gid - 1);
 		}
+
+		printf("%-16s %-8s %-16s %-32s %3.0f%%\n", guest->name,
+		    console_str, state_str, state.state == GUEST_STATE_NORMAL ?
+		    softstate.soft_state_str : "-", utilisation);
 	}
 }
 
