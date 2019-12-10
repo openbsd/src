@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msync.2,v 1.26 2019/01/11 18:46:30 deraadt Exp $
+.\"	$OpenBSD: msync.2,v 1.27 2019/12/10 00:49:26 jsg Exp $
 .\"	$NetBSD: msync.2,v 1.8 1995/10/12 15:41:09 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)msync.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: January 11 2019 $
+.Dd $Mdocdate: December 10 2019 $
 .Dt MSYNC 2
 .Os
 .Sh NAME
@@ -103,7 +103,8 @@ An I/O error occurred while writing.
 .Sh HISTORY
 The
 .Fn msync
-function first appeared in
+function first appeared in SunOS 4.0
+and has been available since
 .Bx 4.4 .
 It was modified to conform to
 .St -p1003.1b-93
