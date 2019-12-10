@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.78 2019/11/14 20:41:46 bluhm Exp $	 */
+/* $OpenBSD: monitor.c,v 1.79 2019/12/10 15:51:21 bluhm Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -517,9 +517,8 @@ m_priv_getfd(void)
 	must_read(&mode, sizeof mode);
 
 	if ((ret = m_priv_local_sanitize_path(path, sizeof path, flags))
-	    != 0) {
-		if (errno != ENOENT)
-			log_print("m_priv_getfd: illegal path \"%s\"", path);
+	    != 0 && errno != ENOENT) {
+		log_print("m_priv_getfd: illegal path \"%s\"", path);
 		err = errno;
 		v = -1;
 	} else {
