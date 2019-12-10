@@ -1,4 +1,4 @@
-/* $OpenBSD: myproposal.h,v 1.61 2019/11/12 19:33:08 markus Exp $ */
+/* $OpenBSD: myproposal.h,v 1.62 2019/12/10 22:43:19 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -82,7 +82,9 @@
 	"ecdsa-sha2-nistp256," \
 	"ecdsa-sha2-nistp384," \
 	"ecdsa-sha2-nistp521," \
+	"sk-ecdsa-sha2-nistp256@openssh.com," \
 	"ssh-ed25519," \
+	"sk-ssh-ed25519@openssh.com," \
 	"rsa-sha2-512," \
 	"rsa-sha2-256," \
 	"ssh-rsa"
@@ -135,7 +137,7 @@
 #define	KEX_CLIENT_ENCRYPT KEX_SERVER_ENCRYPT
 #define KEX_CLIENT_MAC KEX_SERVER_MAC
 
-#define	SSH_ALLOWED_CA_SIGALGS	"ssh-ed25519"
+#define	SSH_ALLOWED_CA_SIGALGS	"ssh-ed25519,sk-ssh-ed25519@openssh.com"
 
 #endif /* WITH_OPENSSL */
 
