@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.128 2019/12/03 12:38:34 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.129 2019/12/10 12:20:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -467,7 +467,9 @@ struct iked_sa {
 	struct iked_saflows		 sa_flows;	/* IPsec flows */
 
 	struct iked_sa			*sa_nexti;	/* initiated IKE SA */
+	struct iked_sa			*sa_previ;	/* matching back pointer */
 	struct iked_sa			*sa_nextr;	/* simultaneous rekey */
+	struct iked_sa			*sa_prevr;	/* matching back pointer */
 	uint64_t			 sa_rekeyspi;	/* peerspi CSA rekey*/
 	struct ibuf			*sa_simult;	/* simultaneous rekey */
 

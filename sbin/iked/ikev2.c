@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.183 2019/12/03 12:38:34 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.184 2019/12/10 12:20:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3437,6 +3437,7 @@ ikev2_ike_sa_rekey(struct iked *env, void *arg)
 	if (ret == 0) {
 		sa->sa_stateflags |= IKED_REQ_CHILDSA;
 		sa->sa_nexti = nsa;
+		nsa->sa_previ = sa;
 		nsa = NULL;
 	}
 done:
@@ -3527,7 +3528,7 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 			}
 			ikev2_ike_sa_setreason(sa->sa_nexti, "invalid SA nexti");
 			sa_free(env, sa->sa_nexti);
-			sa->sa_nexti = NULL;
+			sa->sa_nexti = NULL;	/* reset by sa_free */
 			return (-1);
 		}
 		if (ikev2_sa_initiator(env, nsa, sa, msg) == -1) {
@@ -3562,6 +3563,9 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 				dsa = sa->sa_nextr;
 				nsa = sa->sa_nexti;
 			}
+			/* unlink sa_nextr */
+			sa->sa_nextr->sa_prevr = NULL;
+			sa->sa_nextr = NULL;
 			/* Setup address, socket and NAT information */
 			sa_state(env, dsa, IKEV2_STATE_CLOSING);
 			sa_address(dsa, &dsa->sa_peer, &sa->sa_peer.addr);
@@ -3573,7 +3577,9 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 			    "resolving simultaneous rekeying");
 			ikev2_ikesa_delete(env, dsa, dsa->sa_hdr.sh_initiator);
 		}
-		sa->sa_nexti = sa->sa_nextr = NULL;
+		/* unlink sa_nexti */
+		sa->sa_nexti->sa_previ = NULL;
+		sa->sa_nexti = NULL;
 		return (ikev2_ikesa_enable(env, sa, nsa));
 	}
 
@@ -3849,11 +3855,14 @@ ikev2_ikesa_recv_delete(struct iked *env, struct iked_sa *sa)
 			log_debug("%s: resolving simultaneous IKE SA rekeying",
 			    SPI_SA(sa, __func__));
 			ikev2_ikesa_enable(env, sa, sa->sa_nextr);
+			/* unlink sa_nextr */
+			sa->sa_nextr->sa_prevr = NULL;
+			sa->sa_nextr = NULL;
 		}
 		ikev2_ike_sa_setreason(sa->sa_nexti,
 		    "received delete (simultaneous rekeying)");
 		sa_free(env, sa->sa_nexti);
-		sa->sa_nextr = sa->sa_nexti = NULL;
+		sa->sa_nexti = NULL;	/* reset by sa_free */
 	}
 	ikev2_ike_sa_setreason(sa, "received delete");
 	sa_state(env, sa, IKEV2_STATE_CLOSED);
@@ -4114,6 +4123,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 			log_info("%s: simultaneous IKE SA rekeying",
 			    SPI_SA(sa, __func__));
 			sa->sa_nextr = nsa;
+			nsa->sa_prevr = sa;	/* backpointer */
 			ret = 0;
 		} else
 			ret = ikev2_ikesa_enable(env, sa, nsa);

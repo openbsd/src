@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.51 2019/12/03 12:38:34 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.52 2019/12/10 12:20:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -436,6 +436,8 @@ ts_insert_unique(struct iked_addr *addr, struct iked_tss *tss, int ipproto)
 void
 sa_free(struct iked *env, struct iked_sa *sa)
 {
+	struct iked_sa	*osa;
+
 	if (sa->sa_reason)
 		log_info("%s: %s", SPI_SA(sa, __func__), sa->sa_reason);
 	else
@@ -443,7 +445,7 @@ sa_free(struct iked *env, struct iked_sa *sa)
 		    print_spi(sa->sa_hdr.sh_ispi, 8),
 		    print_spi(sa->sa_hdr.sh_rspi, 8));
 
-	/* IKE rekeying running? */
+	/* IKE rekeying running? (old sa freed before new sa) */
 	if (sa->sa_nexti) {
 		RB_REMOVE(iked_sas, &env->sc_sas, sa->sa_nexti);
 		config_free_sa(env, sa->sa_nexti);
@@ -451,6 +453,31 @@ sa_free(struct iked *env, struct iked_sa *sa)
 	if (sa->sa_nextr) {
 		RB_REMOVE(iked_sas, &env->sc_sas, sa->sa_nextr);
 		config_free_sa(env, sa->sa_nextr);
+	}
+	/* reset matching backpointers (new sa freed before old sa) */
+	if ((osa = sa->sa_previ) != NULL) {
+		if (osa->sa_nexti == sa) {
+			log_debug("%s: resetting: sa %p == osa->sa_nexti %p"
+			    " (osa %p)",
+			    SPI_SA(sa, __func__), osa, sa, osa->sa_nexti);
+			osa->sa_nexti = NULL;
+		} else {
+			log_info("%s: inconsistent: sa %p != osa->sa_nexti %p"
+			    " (osa %p)",
+			    SPI_SA(sa, __func__), osa, sa, osa->sa_nexti);
+		}
+	}
+	if ((osa = sa->sa_prevr) != NULL) {
+		if (osa->sa_nextr == sa) {
+			log_debug("%s: resetting: sa %p == osa->sa_nextr %p"
+			    " (osa %p)",
+			    SPI_SA(sa, __func__), osa, sa, osa->sa_nextr);
+			osa->sa_nextr = NULL;
+		} else {
+			log_info("%s: inconsistent: sa %p != osa->sa_nextr %p"
+			    " (osa %p)",
+			    SPI_SA(sa, __func__), osa, sa, osa->sa_nextr);
+		}
 	}
 	RB_REMOVE(iked_sas, &env->sc_sas, sa);
 	config_free_sa(env, sa);
