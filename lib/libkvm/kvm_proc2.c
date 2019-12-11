@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.30 2019/10/22 21:19:22 cheloha Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.31 2019/12/11 12:36:28 sthen Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
 #include <sys/pledge.h>
+#include <sys/wait.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
