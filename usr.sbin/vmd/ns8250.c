@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.24 2019/12/08 20:14:59 tb Exp $ */
+/* $OpenBSD: ns8250.c,v 1.25 2019/12/11 06:45:16 pd Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -663,7 +663,22 @@ ns8250_restore(int fd, int con_fd, uint32_t vmid)
 
 	event_set(&com1_dev.wake, com1_dev.fd, EV_WRITE,
 	    com_rcv_event, (void *)(intptr_t)vmid);
-	event_add(&com1_dev.wake, NULL);
 
 	return (0);
+}
+
+void
+ns8250_stop()
+{
+	if(event_del(&com1_dev.event))
+		log_warn("could not delete ns8250 event handler");
+	evtimer_del(&com1_dev.rate);
+}
+
+void
+ns8250_start()
+{
+	event_add(&com1_dev.event, NULL);
+	event_add(&com1_dev.wake, NULL);
+	evtimer_add(&com1_dev.rate, &com1_dev.rate_tv);
 }
