@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.24 2019/12/09 20:37:54 remi Exp $ */
+/*	$OpenBSD: ripe.c,v 1.25 2019/12/11 21:04:59 remi Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -351,6 +351,7 @@ ripe_dispatch_rde(int fd, short event, void *bula)
 				    NULL) {
 					log_debug("unknown neighbor id %u",
 					    imsg.hdr.peerid);
+					free(rr);
 					break;
 				}
 				add_entry(&nbr->rq_list, rr);
@@ -396,6 +397,7 @@ ripe_dispatch_rde(int fd, short event, void *bula)
 			if ((nbr = nbr_find_peerid(imsg.hdr.peerid)) == NULL) {
 				log_debug("unknown neighbor id %u",
 				    imsg.hdr.peerid);
+				free(rr);
 				break;
 			}
 			add_entry(&nbr->rp_list, rr);

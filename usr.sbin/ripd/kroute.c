@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.33 2018/12/31 20:34:16 remi Exp $ */
+/*	$OpenBSD: kroute.c,v 1.34 2019/12/11 21:04:59 remi Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -183,8 +183,7 @@ kr_change_fib(struct kroute_node *kr, struct kroute *kroute, int action)
 
 		if (kroute_insert(kr) == -1) {
 			log_debug("kr_update_fib: cannot insert %s",
-			    inet_ntoa(kr->r.nexthop));
-			free(kr);
+			    inet_ntoa(kroute->nexthop));
 		}
 	} else
 		kr->r.nexthop.s_addr = kroute->nexthop.s_addr;
