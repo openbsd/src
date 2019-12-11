@@ -28,9 +28,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: realpath.3,v 1.24 2019/07/05 12:55:36 deraadt Exp $
+.\"	$OpenBSD: realpath.3,v 1.25 2019/12/11 20:01:50 bluhm Exp $
 .\"
-.Dd $Mdocdate: July 5 2019 $
+.Dd $Mdocdate: December 11 2019 $
 .Dt REALPATH 3
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ The
 function will resolve both absolute and relative paths
 and return the absolute pathname corresponding to
 .Fa pathname .
-All but the last component of
+All components of
 .Fa pathname
 must exist when
 .Fn realpath
