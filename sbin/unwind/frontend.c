@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.46 2019/12/10 09:53:43 otto Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.47 2019/12/11 15:50:47 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -117,6 +117,7 @@ void			 write_trust_anchors(struct trust_anchor_head *, int);
 void			 parse_blocklist(int);
 int			 bl_cmp(struct bl_node *, struct bl_node *);
 void			 free_bl(void);
+int			 pending_query_cnt(void);
 
 struct uw_conf		*frontend_conf;
 struct imsgev		*iev_main;
@@ -443,6 +444,8 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_ANSWER_HEADER:
+			if (pq != NULL)
+				fatalx("expected IMSG_ANSWER but got HEADER");
 			if (IMSG_DATA_SIZE(imsg) != sizeof(*query_imsg))
 				fatalx("%s: IMSG_ANSWER_HEADER wrong length: "
 				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
@@ -471,6 +474,7 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 			} else
 				pq->rcode_override = LDNS_RCODE_SERVFAIL;
 			send_answer(pq);
+			pq = NULL;
 			break;
 		case IMSG_CTL_RESOLVER_INFO:
 		case IMSG_CTL_AUTOCONF_RESOLVER_INFO:
@@ -790,6 +794,7 @@ send_answer(struct pending_query *pq)
 		log_debug("to: %s\n%s",
 		    ip_port((struct sockaddr *)&pq->from),str);
 		free(str);
+		log_debug("pending query count: %d", pending_query_cnt());
 	}
 
 	if(sendto(pq->fd, answer, len, 0, (struct sockaddr *)&pq->from,
@@ -1153,4 +1158,15 @@ free_bl(void)
 		RB_REMOVE(bl_tree, &bl_head, n);
 		free(n);
 	}
+}
+
+int
+pending_query_cnt(void)
+{
+	struct pending_query	*e;
+	int			 cnt = 0;
+
+	TAILQ_FOREACH(e, &pending_queries, entry)
+		cnt++;
+	return cnt;
 }

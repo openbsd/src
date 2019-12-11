@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.105 2019/12/10 07:49:01 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.106 2019/12/11 15:50:47 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -188,6 +188,7 @@ int			 find_force(struct force_tree *, char *,
 			     struct uw_resolver **);
 int64_t			 histogram_median(int64_t *);
 void			 decay_latest_histograms(int, short, void *);
+int			 running_query_cnt(void);
 
 struct uw_conf			*resolver_conf;
 struct imsgev			*iev_frontend;
@@ -809,8 +810,10 @@ try_next_resolver(struct running_query *rq)
 
 	rq->running++;
 	if (resolve(res, query_imsg->qname, query_imsg->t,
-	    query_imsg->c, query_imsg, resolve_done) != 0)
+	    query_imsg->c, query_imsg, resolve_done) != 0) {
+		rq->running--;
 		goto err;
+	}
 
 	return 0;
 
@@ -892,7 +895,7 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	struct timespec		 tp, elapsed;
 	int64_t			 ms;
 	size_t			 i;
-	int			 asr_pref_pos = -1, force_acceptbogus = 0;
+	int			 r, asr_pref_pos = -1, force_acceptbogus = 0;
 	char			*str;
 	char			 rcode_buf[16];
 
@@ -947,10 +950,11 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	result->answer_len = 0;
 
 	sldns_wire2str_rcode_buf(result->rcode, rcode_buf, sizeof(rcode_buf));
-	log_debug("%s[%s]: %s %s %s rcode: %s[%d], elapsed: %lldms", __func__,
-	    uw_resolver_type_str[res->type], query_imsg->qname,
+	log_debug("%s[%s]: %s %s %s rcode: %s[%d], elapsed: %lldms, running: %d",
+	    __func__, uw_resolver_type_str[res->type], query_imsg->qname,
 	    sldns_wire2str_class(query_imsg->c),
-	    sldns_wire2str_type(query_imsg->t), rcode_buf, result->rcode, ms);
+	    sldns_wire2str_type(query_imsg->t), rcode_buf, result->rcode, ms,
+	    running_query_cnt());
 
 	force_acceptbogus = find_force(&resolver_conf->force, query_imsg->qname,
 	    &tmp_res);
@@ -977,10 +981,10 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 						break;
 					}
 
-				if (asr_pref_pos != -1) {
+				if (asr_pref_pos != -1 &&
+				    resolvers[UW_RES_ASR] != NULL) {
 					/* go to ASR if not yet scheduled */
-					if (asr_pref_pos >= rq->next_resolver &&
-					    resolvers[UW_RES_ASR] != NULL) {
+					if (asr_pref_pos >= rq->next_resolver) {
 						rq->next_resolver =
 						    asr_pref_pos;
 						goto retry;
@@ -1029,17 +1033,13 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 		free(rq);
 	}
 
-	free(query_imsg);
-	sldns_buffer_free(buf);
-	regional_destroy(region);
-	ub_resolve_free(result);
-
-	return;
+	goto out;
 
  servfail:
 	if (rq) {
-		rq->running--;
-		if (try_next_resolver(rq) != 0 && rq->running == 0) {
+		/* try_next_resolver() might free rq */
+		r = --rq->running;
+		if (try_next_resolver(rq) != 0 && r == 0) {
 			/* we are the last one, send SERVFAIL */
 			query_imsg->err = -4; /* UB_SERVFAIL */
 			resolver_imsg_compose_frontend(IMSG_ANSWER_HEADER, 0,
@@ -1997,4 +1997,15 @@ decay_latest_histograms(int fd, short events, void *arg)
 		res->median = histogram_median(res->latest_histogram);
 	}
 	evtimer_add(&decay_timer, &tv);
+}
+
+int
+running_query_cnt(void)
+{
+	struct running_query	*e;
+	int			 cnt = 0;
+
+	TAILQ_FOREACH(e, &running_queries, entry)
+		cnt++;
+	return cnt;
 }
