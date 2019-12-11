@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.235 2019/10/06 16:24:14 beck Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.236 2019/12/11 07:30:09 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -907,9 +907,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	if (type == SPROCESS) {
 		/* Accept SIGKILL to coredumping processes */
 		if (pr->ps_flags & PS_COREDUMP && signum == SIGKILL) {
-			if (pr->ps_single != NULL)
-				p = pr->ps_single;
-			atomic_setbits_int(&p->p_p->ps_siglist, mask);
+			atomic_setbits_int(&pr->ps_siglist, mask);
 			return;
 		}
 
@@ -1067,7 +1065,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			if (pr->ps_flags & PS_PPWAIT)
 				goto out;
 			atomic_clearbits_int(siglist, mask);
-			p->p_xstat = signum;
+			pr->ps_xsig = signum;
 			proc_stop(p, 0);
 			goto out;
 		}
@@ -1196,7 +1194,7 @@ issignal(struct proc *p)
 		signum = ffs((long)mask);
 		mask = sigmask(signum);
 		atomic_clearbits_int(&p->p_siglist, mask);
-		atomic_clearbits_int(&p->p_p->ps_siglist, mask);
+		atomic_clearbits_int(&pr->ps_siglist, mask);
 
 		/*
 		 * We should see pending but ignored signals
@@ -1213,7 +1211,7 @@ issignal(struct proc *p)
 		 */
 		if (((pr->ps_flags & (PS_TRACED | PS_PPWAIT)) == PS_TRACED) &&
 		    signum != SIGKILL) {
-			p->p_xstat = signum;
+			pr->ps_xsig = signum;
 
 			if (dolock)
 				KERNEL_LOCK();
@@ -1237,21 +1235,22 @@ issignal(struct proc *p)
 			 * If we are no longer being traced, or the parent
 			 * didn't give us a signal, look for more signals.
 			 */
-			if ((pr->ps_flags & PS_TRACED) == 0 || p->p_xstat == 0)
+			if ((pr->ps_flags & PS_TRACED) == 0 ||
+			    pr->ps_xsig == 0)
 				continue;
 
 			/*
 			 * If the new signal is being masked, look for other
 			 * signals.
 			 */
-			signum = p->p_xstat;
+			signum = pr->ps_xsig;
 			mask = sigmask(signum);
 			if ((p->p_sigmask & mask) != 0)
 				continue;
 
 			/* take the signal! */
 			atomic_clearbits_int(&p->p_siglist, mask);
-			atomic_clearbits_int(&p->p_p->ps_siglist, mask);
+			atomic_clearbits_int(&pr->ps_siglist, mask);
 		}
 
 		prop = sigprop[signum];
@@ -1289,7 +1288,7 @@ issignal(struct proc *p)
 		    		    (pr->ps_pgrp->pg_jobc == 0 &&
 				    prop & SA_TTYSTOP))
 					break;	/* == ignore */
-				p->p_xstat = signum;
+				pr->ps_xsig = signum;
 				if (dolock)
 					SCHED_LOCK(s);
 				proc_stop(p, 1);
@@ -1496,7 +1495,7 @@ sigexit(struct proc *p, int signum)
 		if (coredump(p) == 0)
 			signum |= WCOREFLAG;
 	}
-	exit1(p, W_EXITCODE(0, signum), EXIT_NORMAL);
+	exit1(p, 0, signum, EXIT_NORMAL);
 	/* NOTREACHED */
 }
 
@@ -1938,7 +1937,7 @@ single_thread_check(struct proc *p, int deep)
 			if (--pr->ps_singlecount == 0)
 				wakeup(&pr->ps_singlecount);
 			if (pr->ps_flags & PS_SINGLEEXIT)
-				exit1(p, 0, EXIT_THREAD_NOCHECK);
+				exit1(p, 0, 0, EXIT_THREAD_NOCHECK);
 
 			/* not exiting and don't need to unwind, so suspend */
 			SCHED_LOCK(s);

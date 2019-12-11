@@ -267,7 +267,7 @@ long drm_sched_entity_flush(struct drm_sched_entity *entity, long timeout)
 #ifdef __linux__
 	struct task_struct *last_user;
 #else
-	struct process *last_user;
+	struct process *last_user, *curpr;
 #endif
 	long ret = timeout;
 
@@ -279,7 +279,8 @@ long drm_sched_entity_flush(struct drm_sched_entity *entity, long timeout)
 #ifdef __linux__
 	if (current->flags & PF_EXITING) {
 #else
-	if (curproc->p_p->ps_flags & PS_EXITING) {
+	curpr = curproc->p_p;
+	if (curpr->ps_flags & PS_EXITING) {
 #endif
 		if (timeout)
 			ret = wait_event_timeout(
@@ -296,10 +297,10 @@ long drm_sched_entity_flush(struct drm_sched_entity *entity, long timeout)
 	if ((!last_user || last_user == current->group_leader) &&
 	    (current->flags & PF_EXITING) && (current->exit_code == SIGKILL))
 #else
-	last_user = cmpxchg(&entity->last_user, curproc->p_p, NULL);
+	last_user = cmpxchg(&entity->last_user, curpr, NULL);
 	if ((!last_user || last_user == curproc->p_p) &&
-	    (curproc->p_p->ps_flags & PS_EXITING) &&
-	    (curproc->p_xstat == SIGKILL))
+	    (curpr->ps_flags & PS_EXITING) &&
+	    (curpr->ps_xsig == SIGKILL))
 #endif
 		drm_sched_rq_remove_entity(entity->rq, entity);
 

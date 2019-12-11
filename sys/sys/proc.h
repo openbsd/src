@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.282 2019/11/30 11:19:17 visa Exp $	*/
+/*	$OpenBSD: proc.h,v 1.283 2019/12/11 07:30:09 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -163,7 +163,7 @@ struct unveil;
 struct process {
 	/*
 	 * ps_mainproc is the original thread in the process.
-	 * It's only still special for the handling of p_xstat and
+	 * It's only still special for the handling of
 	 * some signal and ptrace behaviors that need to be fixed.
 	 */
 	struct	proc *ps_mainproc;
@@ -201,6 +201,9 @@ struct process {
 	int	ps_traceflag;		/* Kernel trace points. */
 	struct	vnode *ps_tracevp;	/* Trace to vnode. */
 	struct	ucred *ps_tracecred;	/* Creds for writing trace */
+
+	u_int	ps_xexit;		/* Exit status for wait */
+	int	ps_xsig;		/* Stopping or killing signal */
 
 	pid_t	ps_oppid;	 	/* Save parent pid during ptrace. */
 	int	ps_ptmask;		/* Ptrace event mask */
@@ -401,8 +404,6 @@ struct proc {
 	union sigval p_sigval;	/* For core dump/debugger XXX */
 	long	p_sitrapno;	/* For core dump/debugger XXX */
 	int	p_sicode;	/* For core dump/debugger XXX */
-
-	u_short	p_xstat;	/* Exit status for wait; also stop signal. */
 };
 
 /* Status values. */
@@ -566,7 +567,7 @@ void	setrunnable(struct proc *);
 void	endtsleep(void *);
 void	unsleep(struct proc *);
 void	reaper(void *);
-void	exit1(struct proc *, int, int);
+void	exit1(struct proc *, int, int, int);
 void	exit2(struct proc *);
 int	dowait4(struct proc *, pid_t, int *, int, struct rusage *,
 	    register_t *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.367 2019/10/22 21:19:22 cheloha Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.368 2019/12/11 07:30:09 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -79,6 +79,7 @@
 #include <sys/sched.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/wait.h>
 #include <sys/witness.h>
 
 #include <uvm/uvm_extern.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.107 2019/12/07 13:11:04 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.108 2019/12/11 07:30:09 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -53,6 +53,7 @@
 #include <sys/poll.h>
 #include <sys/syscallargs.h>
 #include <sys/timeout.h>
+#include <sys/wait.h>
 
 int	kqueue_scan(struct kqueue *kq, int maxevents,
 		    struct kevent *ulistp, struct timespec *timeout,
@@ -286,7 +287,7 @@ filt_proc(struct knote *kn, long hint)
 
 		kn->kn_status |= KN_DETACHED;
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
-		kn->kn_data = pr->ps_mainproc->p_xstat;
+		kn->kn_data = W_EXITCODE(pr->ps_xexit, pr->ps_xsig);
 		SLIST_REMOVE(&pr->ps_klist, kn, knote, kn_selnext);
 		return (1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.81 2019/11/29 12:43:14 mpi Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.82 2019/12/11 07:30:09 guenther Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -493,7 +493,7 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 
 		/* Finally, deliver the requested signal (or none). */
 		if (t->p_stat == SSTOP) {
-			t->p_xstat = data;
+			tr->ps_xsig = data;
 			SCHED_LOCK(s);
 			setrunnable(t);
 			SCHED_UNLOCK(s);

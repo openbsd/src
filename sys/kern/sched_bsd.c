@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.59 2019/11/04 18:06:03 visa Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.60 2019/12/11 07:30:09 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -438,12 +438,13 @@ mi_switch(void)
 
 /*
  * Change process state to be runnable,
- * placing it on the run queue if it is in memory,
- * and awakening the swapper if it isn't in memory.
+ * placing it on the run queue.
  */
 void
 setrunnable(struct proc *p)
 {
+	struct process *pr = p->p_p;
+
 	SCHED_ASSERT_LOCKED();
 
 	switch (p->p_stat) {
@@ -459,8 +460,8 @@ setrunnable(struct proc *p)
 		 * If we're being traced (possibly because someone attached us
 		 * while we were stopped), check for a signal from the debugger.
 		 */
-		if ((p->p_p->ps_flags & PS_TRACED) != 0 && p->p_xstat != 0)
-			atomic_setbits_int(&p->p_siglist, sigmask(p->p_xstat));
+		if ((pr->ps_flags & PS_TRACED) != 0 && pr->ps_xsig != 0)
+			atomic_setbits_int(&p->p_siglist, sigmask(pr->ps_xsig));
 	case SSLEEP:
 		unsleep(p);		/* e.g. when sending signals */
 		break;
@@ -470,7 +471,7 @@ setrunnable(struct proc *p)
 		uint32_t newcpu;
 
 		newcpu = decay_aftersleep(p->p_estcpu, p->p_slptime);
-		setpriority(p, newcpu, p->p_p->ps_nice);
+		setpriority(p, newcpu, pr->ps_nice);
 	}
 	p->p_slptime = 0;
 }
