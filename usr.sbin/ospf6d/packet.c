@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.15 2019/05/10 01:29:31 guenther Exp $ */
+/*	$OpenBSD: packet.c,v 1.16 2019/12/11 21:33:56 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -78,10 +78,12 @@ upd_ospf_hdr(struct ibuf *buf, struct iface *iface)
 
 /* send and receive packets */
 int
-send_packet(struct iface *iface, void *pkt, size_t len,
+send_packet(struct iface *iface, struct ibuf *buf,
     struct in6_addr *dst)
 {
-	struct sockaddr_in6	 sa6;
+	struct sockaddr_in6	sa6;
+	struct msghdr		msg;
+	struct iovec		iov[1];
 
 	/* setup buffer */
 	bzero(&sa6, sizeof(sa6));
@@ -102,8 +104,15 @@ send_packet(struct iface *iface, void *pkt, size_t len,
 			return (-1);
 		}
 
-	if (sendto(iface->fd, pkt, len, 0, (struct sockaddr *)&sa6,
-	    sizeof(sa6)) == -1) {
+	bzero(&msg, sizeof(msg));
+	msg.msg_name = &sa6;
+	msg.msg_namelen = sizeof(sa6);
+	iov[0].iov_base = buf->buf;
+	iov[0].iov_len = ibuf_size(buf);
+	msg.msg_iov = iov;
+	msg.msg_iovlen = 1;
+
+	if (sendmsg(iface->fd, &msg, 0) == -1) {
 		log_warn("send_packet: error sending packet on interface %s",
 		    iface->name);
 		return (-1);

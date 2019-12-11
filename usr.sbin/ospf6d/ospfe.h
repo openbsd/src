@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.19 2014/10/25 03:23:49 lteo Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.20 2019/12/11 21:33:56 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -228,7 +228,7 @@ struct lsa_hdr	*lsa_hdr_new(void);
 /* packet.c */
 int	 gen_ospf_hdr(struct ibuf *, struct iface *, u_int8_t);
 int	 upd_ospf_hdr(struct ibuf *, struct iface *);
-int	 send_packet(struct iface *, void *, size_t, struct in6_addr *);
+int	 send_packet(struct iface *, struct ibuf *, struct in6_addr *);
 void	 recv_packet(int, short, void *);
 
 char	*pkt_ptr;	/* packet buffer */

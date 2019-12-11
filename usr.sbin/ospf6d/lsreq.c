@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.9 2019/05/10 13:50:34 claudio Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.10 2019/12/11 21:33:56 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -77,7 +77,7 @@ send_ls_req(struct nbr *nbr)
 	if (upd_ospf_hdr(buf, nbr->iface))
 		goto fail;
 
-	ret = send_packet(nbr->iface, buf->buf, buf->wpos, &dst);
+	ret = send_packet(nbr->iface, buf, &dst);
 
 	ibuf_free(buf);
 	return (ret);

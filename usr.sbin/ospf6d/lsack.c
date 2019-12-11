@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.6 2014/10/25 03:23:49 lteo Exp $ */
+/*	$OpenBSD: lsack.c,v 1.7 2019/12/11 21:33:56 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -55,7 +55,7 @@ send_ls_ack(struct iface *iface, struct in6_addr addr, void *data, size_t len)
 	if (upd_ospf_hdr(buf, iface))
 		goto fail;
 
-	ret = send_packet(iface, buf->buf, buf->wpos, &addr);
+	ret = send_packet(iface, buf, &addr);
 
 	ibuf_free(buf);
 	return (ret);

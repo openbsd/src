@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.13 2015/01/28 22:03:17 bluhm Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.14 2019/12/11 21:33:56 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -227,7 +227,7 @@ send_ls_update(struct ibuf *buf, struct iface *iface, struct in6_addr addr,
 	if (upd_ospf_hdr(buf, iface))
 		goto fail;
 
-	ret = send_packet(iface, buf->buf, buf->wpos, &addr);
+	ret = send_packet(iface, buf, &addr);
 
 	ibuf_free(buf);
 	return (ret);
