@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.5 2017/02/15 21:18:52 miod Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.6 2019/12/11 07:21:40 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -20,11 +20,9 @@
 #define _MACHINE_TCB_H_
 
 /*
- * In userspace, register %r27 contains the address of the thread's TCB,
- * and register %r26 contains the address of the thread's errno.
+ * In userspace, register %r27 contains the address of the thread's TCB.
  * It is the responsibility of the kernel to set %r27 to the proper value
- * when creating the thread, while initialization of %r26 is done in
- * userland within libc on an as-needed basis.
+ * when creating the thread.
  */
 
 #ifdef _KERNEL
