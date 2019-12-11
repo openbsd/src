@@ -1,11 +1,4 @@
-/*	$OpenBSD: pch.h,v 1.12 2019/12/09 12:08:42 jca Exp $	*/
-
-void		next_intuit_at(off_t, LINENUM);
-LINENUM		strtolinenum(char *, char **);
-
-extern FILE	*pfp;
-extern LINENUM	p_input_line;
-int		pgetline(char **, size_t *, FILE *);
+/*	$OpenBSD: pch.h,v 1.13 2019/12/11 20:10:17 jca Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -43,20 +36,25 @@ struct file_name {
 	bool exists;
 };
 
+extern FILE	*pfp;
+extern LINENUM	p_input_line;
+
 void		re_patch(void);
 void		open_patch_file(const char *);
 void		set_hunkmax(void);
 bool		there_is_another_patch(void);
+void		next_intuit_at(off_t, LINENUM);
 bool		another_hunk(void);
+int		pgetline(char **, size_t *, FILE *);
 bool		pch_swap(void);
-char		*pfetch(LINENUM);
-short		pch_line_len(LINENUM);
 LINENUM		pch_first(void);
 LINENUM		pch_ptrn_lines(void);
 LINENUM		pch_newfirst(void);
 LINENUM		pch_repl_lines(void);
 LINENUM		pch_end(void);
 LINENUM		pch_context(void);
-LINENUM		pch_hunk_beg(void);
+short		pch_line_len(LINENUM);
 char		pch_char(LINENUM);
 char		*pfetch(LINENUM);
+LINENUM		pch_hunk_beg(void);
+LINENUM		strtolinenum(char *, char **);
