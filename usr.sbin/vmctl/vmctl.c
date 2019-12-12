@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.71 2019/09/07 09:11:14 tobhe Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.72 2019/12/12 03:53:38 pd Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -716,6 +716,8 @@ vm_state(unsigned int mask)
 {
 	if (mask & VM_STATE_PAUSED)
 		return "paused";
+	else if (mask & VM_STATE_WAITING)
+		return "waiting";
 	else if (mask & VM_STATE_RUNNING)
 		return "running";
 	else if (mask & VM_STATE_SHUTDOWN)

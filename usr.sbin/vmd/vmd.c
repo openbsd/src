@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.116 2019/09/04 07:02:03 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.117 2019/12/12 03:53:38 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/wait.h>
 #include <sys/cdefs.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 #include <sys/tty.h>
 #include <sys/ttycom.h>
 #include <sys/ioctl.h>
@@ -63,6 +64,7 @@ int	 vm_instance(struct privsep *, struct vmd_vm **,
 	    struct vmop_create_params *, uid_t);
 int	 vm_checkinsflag(struct vmop_create_params *, unsigned int, uid_t);
 int	 vm_claimid(const char *, int, uint32_t *);
+void	 start_vm_batch(int, short, void*);
 
 struct vmd	*env;
 
@@ -72,6 +74,8 @@ static struct privsep_proc procs[] = {
 	{ "control",	PROC_CONTROL,	vmd_dispatch_control, control },
 	{ "vmm",	PROC_VMM,	vmd_dispatch_vmm, vmm, vmm_shutdown },
 };
+
+struct event staggered_start_timer;
 
 /* For the privileged process */
 static struct privsep_proc *proc_priv = &procs[0];
@@ -854,11 +858,40 @@ main(int argc, char **argv)
 	return (0);
 }
 
+void
+start_vm_batch(int fd, short type, void *args)
+{
+	int		i = 0;
+	struct vmd_vm	*vm;
+
+	log_debug("%s: starting batch of %d vms", __func__,
+	    env->vmd_cfg.parallelism);
+	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
+		if (!(vm->vm_state & VM_STATE_WAITING)) {
+			log_debug("%s: not starting vm %s (disabled)",
+			    __func__,
+			    vm->vm_params.vmc_params.vcp_name);
+			continue;
+		}
+		i++;
+		if (i > env->vmd_cfg.parallelism) {
+			evtimer_add(&staggered_start_timer,
+			    &env->vmd_cfg.delay);
+			break;
+		}
+		vm->vm_state &= ~VM_STATE_WAITING;
+		config_setvm(&env->vmd_ps, vm, -1, vm->vm_params.vmc_owner.uid);
+	}
+	log_debug("%s: done starting vms", __func__);
+}
+
 int
 vmd_configure(void)
 {
-	struct vmd_vm		*vm;
+	int			ncpus;
 	struct vmd_switch	*vsw;
+	int ncpu_mib[] = {CTL_HW, HW_NCPUONLINE};
+	size_t ncpus_sz = sizeof(ncpus);
 
 	if ((env->vmd_ptmfd = open(PATH_PTMDEV, O_RDWR|O_CLOEXEC)) == -1)
 		fatal("open %s", PATH_PTMDEV);
@@ -906,17 +939,20 @@ vmd_configure(void)
 		}
 	}
 
-	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
-		if (vm->vm_state & VM_STATE_DISABLED) {
-			log_debug("%s: not creating vm %s (disabled)",
-			    __func__,
-			    vm->vm_params.vmc_params.vcp_name);
-			continue;
-		}
-		if (config_setvm(&env->vmd_ps, vm,
-		    -1, vm->vm_params.vmc_owner.uid) == -1)
-			return (-1);
+	if (!(env->vmd_cfg.cfg_flags & VMD_CFG_STAGGERED_START)) {
+		env->vmd_cfg.delay.tv_sec = VMD_DEFAULT_STAGGERED_START_DELAY;
+		if (sysctl(ncpu_mib, NELEM(ncpu_mib), &ncpus, &ncpus_sz, NULL, 0) == -1)
+			ncpus = 1;
+		env->vmd_cfg.parallelism = ncpus;
+		log_debug("%s: setting staggered start configuration to "
+		    "parallelism: %d and delay: %lld",
+		    __func__, ncpus, (long long) env->vmd_cfg.delay.tv_sec);
 	}
+
+	log_debug("%s: starting vms in staggered fashion", __func__);
+	evtimer_set(&staggered_start_timer, start_vm_batch, NULL);
+	/* start first batch */
+	start_vm_batch(0, 0, NULL);
 
 	return (0);
 }
@@ -983,24 +1019,12 @@ vmd_reload(unsigned int reset, const char *filename)
 			}
 		}
 
-		TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
-			if (!(vm->vm_state & VM_STATE_RUNNING)) {
-				if (vm->vm_state & VM_STATE_DISABLED) {
-					log_debug("%s: not creating vm %s"
-					    " (disabled)", __func__,
-					    vm->vm_params.vmc_params.vcp_name);
-					continue;
-				}
-				if (config_setvm(&env->vmd_ps, vm,
-				    -1, vm->vm_params.vmc_owner.uid) == -1)
-					return (-1);
-			} else {
-				log_debug("%s: not creating vm \"%s\": "
-				    "(running)", __func__,
-				    vm->vm_params.vmc_params.vcp_name);
-			}
+		log_debug("%s: starting vms in staggered fashion", __func__);
+		evtimer_set(&staggered_start_timer, start_vm_batch, NULL);
+		/* start first batch */
+		start_vm_batch(0, 0, NULL);
+
 		}
-	}
 
 	return (0);
 }
