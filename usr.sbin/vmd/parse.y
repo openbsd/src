@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.53 2019/12/12 03:53:38 pd Exp $	*/
+/*	$OpenBSD: parse.y,v 1.54 2019/12/12 19:52:10 kn Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -553,11 +553,7 @@ instance_flags	: BOOT		{ vmc.vmc_insflags |= VMOP_CREATE_KERNEL; }
 		}
 		;
 
-owner_id	: /* none */		{
-			$$.uid = 0;
-			$$.gid = -1;
-		}
-		| NUMBER		{
+owner_id	: NUMBER		{
 			$$.uid = $1;
 			$$.gid = -1;
 		}
