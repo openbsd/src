@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.76 2019/12/10 14:22:15 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.77 2019/12/12 12:49:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -171,6 +171,52 @@ load_cfg(const char *path, struct client *c, struct cmdq_item *item, int flags,
 
 	pr = cmd_parse_from_file(f, &pi);
 	fclose(f);
+	if (pr->status == CMD_PARSE_EMPTY)
+		return (0);
+	if (pr->status == CMD_PARSE_ERROR) {
+		cfg_add_cause("%s", pr->error);
+		free(pr->error);
+		return (-1);
+	}
+	if (flags & CMD_PARSE_PARSEONLY) {
+		cmd_list_free(pr->cmdlist);
+		return (0);
+	}
+
+	new_item0 = cmdq_get_command(pr->cmdlist, NULL, NULL, 0);
+	if (item != NULL)
+		cmdq_insert_after(item, new_item0);
+	else
+		cmdq_append(NULL, new_item0);
+	cmd_list_free(pr->cmdlist);
+
+	if (new_item != NULL)
+		*new_item = new_item0;
+	return (0);
+}
+
+int
+load_cfg_from_buffer(const void *buf, size_t len, const char *path,
+    struct client *c, struct cmdq_item *item, int flags,
+    struct cmdq_item **new_item)
+{
+	struct cmd_parse_input	 pi;
+	struct cmd_parse_result	*pr;
+	struct cmdq_item	*new_item0;
+
+	if (new_item != NULL)
+		*new_item = NULL;
+
+	log_debug("loading %s", path);
+
+	memset(&pi, 0, sizeof pi);
+	pi.flags = flags;
+	pi.file = path;
+	pi.line = 1;
+	pi.item = item;
+	pi.c = c;
+
+	pr = cmd_parse_from_buffer(buf, len, &pi);
 	if (pr->status == CMD_PARSE_EMPTY)
 		return (0);
 	if (pr->status == CMD_PARSE_ERROR) {
