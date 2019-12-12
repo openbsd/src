@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.151 2019/11/29 06:34:45 deraadt Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.152 2019/12/12 11:12:36 mpi Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -64,9 +64,6 @@ typedef int vm_fault_t;
 
 typedef int vm_inherit_t;	/* XXX: inheritance codes */
 typedef off_t voff_t;		/* XXX: offset within a uvm_object */
-
-union vm_map_object;
-typedef union vm_map_object vm_map_object_t;
 
 struct vm_map_entry;
 typedef struct vm_map_entry *vm_map_entry_t;

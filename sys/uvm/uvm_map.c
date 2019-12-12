@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.258 2019/12/09 17:37:59 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.259 2019/12/12 11:12:36 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -230,7 +230,6 @@ void			 vmspace_validate(struct vm_map*);
 #define PMAP_PREFER(addr, off)	(addr)
 #endif
 
-
 /*
  * The kernel map will initially be VM_MAP_KSIZE_INIT bytes.
  * Every time that gets cramped, we grow by at least VM_MAP_KSIZE_DELTA bytes.
@@ -334,6 +333,14 @@ vaddr_t uvm_maxkaddr;
 				MUTEX_ASSERT_LOCKED(&(_map)->mtx);	\
 		}							\
 	} while (0)
+
+#define	vm_map_modflags(map, set, clear)				\
+	do {								\
+		mtx_enter(&(map)->flags_lock);				\
+		(map)->flags = ((map)->flags | (set)) & ~(clear);	\
+		mtx_leave(&(map)->flags_lock);				\
+	} while (0)
+
 
 /*
  * Tree describing entries by address.
