@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.57 2016/07/16 19:20:16 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.58 2019/12/12 00:10:29 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -229,6 +229,7 @@ recv_hello(struct in_addr lsr_id, struct ldp_msg *msg, int af,
 	}
 
 	memset(&source, 0, sizeof(source));
+	source.lsr_id = lsr_id;
 	if (flags & F_HELLO_TARGETED) {
 		/*
 	 	 * RFC 7552 - Section 5.2:

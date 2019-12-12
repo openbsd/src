@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.76 2019/01/23 02:02:04 dlg Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.77 2019/12/12 00:10:29 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -33,6 +33,7 @@
 
 struct hello_source {
 	enum hello_type		 type;
+	struct in_addr		 lsr_id;
 	struct {
 		struct iface_af	*ia;
 		union ldpd_addr	 src_addr;
