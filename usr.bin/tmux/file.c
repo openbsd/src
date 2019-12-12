@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.1 2019/12/12 11:39:56 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.2 2019/12/12 11:51:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -88,7 +88,7 @@ file_fire_done_cb(__unused int fd, __unused short events, void *arg)
 	struct client_file	*cf = arg;
 	struct client		*c = cf->c;
 
-	if (cf->cb != NULL && (~c->flags & CLIENT_DEAD))
+	if (cf->cb != NULL && (c == NULL || (~c->flags & CLIENT_DEAD)))
 		cf->cb(c, cf->path, cf->error, 1, cf->buffer, cf->data);
 	file_free(cf);
 }
