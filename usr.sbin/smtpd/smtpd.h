@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.643 2019/11/25 14:18:33 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.644 2019/12/12 22:10:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1032,22 +1032,28 @@ enum lka_resp_status {
 	LKA_PERMFAIL
 };
 
-struct processor {
-	const char		       *command;
-	const char		       *user;
-	const char		       *group;
-	const char		       *chroot;
-	int				errfd;
-};
-
 enum filter_type {
 	FILTER_TYPE_BUILTIN,
 	FILTER_TYPE_PROC,
 	FILTER_TYPE_CHAIN,
 };
 
+enum filter_subsystem {
+	FILTER_SUBSYSTEM_SMTP_IN	= 1
+};
+
+struct filter_proc {
+	const char		       *command;
+	const char		       *user;
+	const char		       *group;
+	const char		       *chroot;
+	int				errfd;
+	enum filter_subsystem		filter_subsystem;
+};
+
 struct filter_config {
 	char			       *name;
+	enum filter_subsystem		filter_subsystem;
 	enum filter_type		filter_type;
 	enum filter_phase               phase;
 	char                           *reject;
@@ -1334,7 +1340,7 @@ int lka(void);
 
 /* lka_proc.c */
 int lka_proc_ready(void);
-void lka_proc_forked(const char *, int);
+void lka_proc_forked(const char *, uint32_t, int);
 void lka_proc_errfd(const char *, int);
 struct io *lka_proc_get_io(const char *);
 

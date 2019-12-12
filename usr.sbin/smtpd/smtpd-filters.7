@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd-filters.7,v 1.1 2019/12/12 14:36:59 gilles Exp $
+.\"	$OpenBSD: smtpd-filters.7,v 1.2 2019/12/12 22:10:47 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -134,6 +134,7 @@ with general configuration information in the form of key-value lines:
 .Bd -literal -offset indent
 config|smtpd-version|6.6.1
 config|smtp-session-timeout|300
+config|subsystem|smtp-in
 config|ready
 .Ed
 .Pp
@@ -169,10 +170,11 @@ The list is meant to be ignored by
 .Nm
 that do not require it and consumed gracefully by filters that do.
 .Pp
-There are currently two keys:
+There are currently three keys:
 .Bd -literal -offset indent
 config|smtpd-version|6.6.1
 config|smtp-session-timeout|300
+config|subsystem|smtp-in
 .Ed
 .Pp
 When

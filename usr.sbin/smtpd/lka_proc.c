@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_proc.c,v 1.12 2019/09/30 13:27:12 gilles Exp $	*/
+/*	$OpenBSD: lka_proc.c,v 1.13 2019/12/12 22:10:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -43,6 +43,7 @@ struct processor_instance {
 	struct io		*io;
 	struct io		*errfd;
 	int			 ready;
+	uint32_t		 subsystems;
 };
 
 static void	processor_io(struct io *, int, void *);
@@ -67,11 +68,13 @@ lka_proc_config(struct processor_instance *pi)
 {
 	io_printf(pi->io, "config|smtpd-version|%s\n", SMTPD_VERSION);
 	io_printf(pi->io, "config|smtp-session-timeout|%d\n", SMTPD_SESSION_TIMEOUT);
+	if (pi->subsystems & FILTER_SUBSYSTEM_SMTP_IN)
+		io_printf(pi->io, "config|subsystem|smtp-in\n");
 	io_printf(pi->io, "config|ready\n");
 }
 
 void
-lka_proc_forked(const char *name, int fd)
+lka_proc_forked(const char *name, uint32_t subsystems, int fd)
 {
 	struct processor_instance	*processor;
 
@@ -83,6 +86,7 @@ lka_proc_forked(const char *name, int fd)
 	processor = xcalloc(1, sizeof *processor);
 	processor->name = xstrdup(name);
 	processor->io = io_new();
+	processor->subsystems = subsystems;
 
 	io_set_nonblocking(fd);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.267 2019/11/26 07:50:01 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.268 2019/12/12 22:10:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -105,7 +105,7 @@ static struct ca	*sca;
 
 struct dispatcher	*dispatcher;
 struct rule		*rule;
-struct processor	*processor;
+struct filter_proc	*processor;
 struct filter_config	*filter_config;
 static uint32_t		 last_dynchain_id = 1;
 
@@ -1715,6 +1715,7 @@ filter_phase_connect
 filterel:
 STRING	{
 	struct filter_config   *fr;
+	struct filter_proc     *fp;
 	size_t			i;
 
 	if ((fr = dict_get(conf->sc_filters_dict, $1)) == NULL) {
@@ -1737,7 +1738,7 @@ STRING	{
 	}
 
 	if (fr->proc) {
-		if (dict_check(&filter_config->chain_procs, fr->proc)) {
+		if ((fp = dict_get(&filter_config->chain_procs, fr->proc))) {
 			yyerror("no proc allowed twice within a filter chain: %s", fr->proc);
 			free($1);
 			YYERROR;
@@ -1745,6 +1746,7 @@ STRING	{
 		dict_set(&filter_config->chain_procs, fr->proc, NULL);
 	}
 
+	fr->filter_subsystem |= filter_config->filter_subsystem;
 	filter_config->chain_size += 1;
 	filter_config->chain = reallocarray(filter_config->chain, filter_config->chain_size, sizeof(char *));
 	if (filter_config->chain == NULL)
@@ -1760,13 +1762,15 @@ filterel
 
 filter:
 FILTER STRING PROC STRING {
+	struct filter_proc *fp;
+
 	if (dict_get(conf->sc_filters_dict, $2)) {
 		yyerror("filter already exists with that name: %s", $2);
 		free($2);
 		free($4);
 		YYERROR;
 	}
-	if (! dict_get(conf->sc_processors_dict, $4)) {
+	if ((fp = dict_get(conf->sc_processors_dict, $4)) == NULL) {
 		yyerror("no processor exist with that name: %s", $4);
 		free($4);
 		YYERROR;
@@ -1972,16 +1976,19 @@ limits_scheduler: opt_limit_scheduler limits_scheduler
 
 
 opt_sock_listen : FILTER STRING {
+			struct filter_config *fc;
+
 			if (listen_opts.options & LO_FILTER) {
 				yyerror("filter already specified");
 				free($2);
 				YYERROR;
 			}
-			if (dict_get(conf->sc_filters_dict, $2) == NULL) {
+			if ((fc = dict_get(conf->sc_filters_dict, $2)) == NULL) {
 				yyerror("no filter exist with that name: %s", $2);
 				free($2);
 				YYERROR;
 			}
+			fc->filter_subsystem |= FILTER_SUBSYSTEM_SMTP_IN;
 			listen_opts.options |= LO_FILTER;
 			listen_opts.filtername = $2;
 		}
@@ -2001,6 +2008,7 @@ opt_sock_listen : FILTER STRING {
 			listen_opts.filtername = xstrdup(buffer);
 			filter_config = xcalloc(1, sizeof *filter_config);
 			filter_config->filter_type = FILTER_TYPE_CHAIN;
+			filter_config->filter_subsystem |= FILTER_SUBSYSTEM_SMTP_IN;
 			dict_init(&filter_config->chain_procs);
 		} '{' filter_list '}' {
 			dict_set(conf->sc_filters_dict, listen_opts.filtername, filter_config);
@@ -2107,15 +2115,18 @@ opt_if_listen : INET4 {
 			listen_opts.port = $2;
 		}
 		| FILTER STRING			{
+			struct filter_config *fc;
+
 			if (listen_opts.options & LO_FILTER) {
 				yyerror("filter already specified");
 				YYERROR;
 			}
-			if (dict_get(conf->sc_filters_dict, $2) == NULL) {
+			if ((fc = dict_get(conf->sc_filters_dict, $2)) == NULL) {
 				yyerror("no filter exist with that name: %s", $2);
 				free($2);
 				YYERROR;
 			}
+			fc->filter_subsystem |= FILTER_SUBSYSTEM_SMTP_IN;
 			listen_opts.options |= LO_FILTER;
 			listen_opts.filtername = $2;
 		}
@@ -2135,6 +2146,7 @@ opt_if_listen : INET4 {
 			listen_opts.filtername = xstrdup(buffer);
 			filter_config = xcalloc(1, sizeof *filter_config);
 			filter_config->filter_type = FILTER_TYPE_CHAIN;
+			filter_config->filter_subsystem |= FILTER_SUBSYSTEM_SMTP_IN;
 			dict_init(&filter_config->chain_procs);
 		} '{' filter_list '}' {
 			dict_set(conf->sc_filters_dict, listen_opts.filtername, filter_config);

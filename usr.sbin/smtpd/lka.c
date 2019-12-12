@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.240 2019/08/28 15:50:36 martijn Exp $	*/
+/*	$OpenBSD: lka.c,v 1.241 2019/12/12 22:10:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -94,6 +94,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	int                      filter_phase;
 	const char              *filter_param;
 	uint32_t		 msgid;
+	uint32_t		 subsystems;
 	uint64_t		 evpid;
 	size_t			 msgsz;
 	int			 ok;
@@ -362,13 +363,14 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_LKA_PROCESSOR_FORK:
 		m_msg(&m, imsg);
 		m_get_string(&m, &procname);
+		m_get_u32(&m, &subsystems);
 		m_end(&m);
 
 		m_create(p, IMSG_LKA_PROCESSOR_ERRFD, 0, 0, -1);
 		m_add_string(p, procname);
 		m_close(p);
 
-		lka_proc_forked(procname, imsg->fd);
+		lka_proc_forked(procname, subsystems, imsg->fd);
 		return;
 
 	case IMSG_LKA_PROCESSOR_ERRFD:

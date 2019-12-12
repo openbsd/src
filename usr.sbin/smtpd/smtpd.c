@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.325 2019/09/03 04:48:20 martijn Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.326 2019/12/12 22:10:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -91,7 +91,7 @@ static void	load_pki_tree(void);
 static void	load_pki_keys(void);
 
 static void	fork_processors(void);
-static void	fork_processor(const char *, const char *, const char *, const char *, const char *);
+static void	fork_processor(const char *, const char *, const char *, const char *, const char *, uint32_t);
 
 enum child_type {
 	CHILD_DAEMON,
@@ -156,7 +156,7 @@ static void
 parent_imsg(struct mproc *p, struct imsg *imsg)
 {
 	struct forward_req	*fwreq;
-	struct processor	*processor;
+	struct filter_proc	*processor;
 	struct deliver		 deliver;
 	struct child		*c;
 	struct msg		 m;
@@ -1260,19 +1260,43 @@ static void
 fork_processors(void)
 {
 	const char	*name;
-	struct processor	*processor;
 	void		*iter;
+	const char	*fn;
+	struct filter_config *fc;
+	struct filter_config *fcs;
+	struct filter_proc *fp;
+	size_t		 i;
+
+	/* For each filter chain, assign the registered subsystem to subfilters */
+	iter = NULL;
+	while (dict_iter(env->sc_filters_dict, &iter, (const char **)&fn, (void **)&fc)) {
+		if (fc->chain) {
+			for (i = 0; i < fc->chain_size; ++i) {
+				fcs = dict_xget(env->sc_filters_dict, fc->chain[i]);
+				fcs->filter_subsystem |= fc->filter_subsystem;
+			}
+		}
+	}
+
+	/* For each filter, assign the registered subsystem to underlying proc */
+	iter = NULL;
+	while (dict_iter(env->sc_filters_dict, &iter, (const char **)&fn, (void **)&fc)) {
+		if (fc->proc) {
+			fp = dict_xget(env->sc_processors_dict, fc->proc);
+			fp->filter_subsystem |= fc->filter_subsystem;
+		}
+	}
 
 	iter = NULL;
-	while (dict_iter(env->sc_processors_dict, &iter, &name, (void **)&processor))
-		fork_processor(name, processor->command, processor->user, processor->group, processor->chroot);
+	while (dict_iter(env->sc_processors_dict, &iter, &name, (void **)&fp))
+		fork_processor(name, fp->command, fp->user, fp->group, fp->chroot, fp->filter_subsystem);
 }
 
 static void
-fork_processor(const char *name, const char *command, const char *user, const char *group, const char *chroot_path)
+fork_processor(const char *name, const char *command, const char *user, const char *group, const char *chroot_path, uint32_t subsystems)
 {
 	pid_t		 pid;
-	struct processor	*processor;
+	struct filter_proc	*processor;
 	char		 buf;
 	int		 sp[2], errfd[2];
 	struct passwd	*pw;
@@ -1311,6 +1335,7 @@ fork_processor(const char *name, const char *command, const char *user, const ch
 		close(errfd[0]);
 		m_create(p_lka, IMSG_LKA_PROCESSOR_FORK, 0, 0, sp[1]);
 		m_add_string(p_lka, name);
+		m_add_u32(p_lka, (uint32_t)subsystems);
 		m_close(p_lka);
 		return;
 	}
