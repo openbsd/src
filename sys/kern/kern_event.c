@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.108 2019/12/11 07:30:09 guenther Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.109 2019/12/12 16:31:06 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -83,6 +83,8 @@ void	knote_attach(struct knote *kn);
 void	knote_drop(struct knote *kn, struct proc *p);
 void	knote_enqueue(struct knote *kn);
 void	knote_dequeue(struct knote *kn);
+int	knote_acquire(struct knote *kn);
+void	knote_release(struct knote *kn);
 #define knote_alloc() ((struct knote *)pool_get(&knote_pool, PR_WAITOK))
 #define knote_free(kn) pool_put(&knote_pool, (kn))
 
@@ -556,6 +558,48 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	return (error);
 }
 
+#ifdef KQUEUE_DEBUG
+void
+kqueue_do_check(struct kqueue *kq, const char *func, int line)
+{
+	struct knote *kn;
+	int count = 0, nmarker = 0;
+
+	KERNEL_ASSERT_LOCKED();
+	splassert(IPL_HIGH);
+
+	TAILQ_FOREACH(kn, &kq->kq_head, kn_tqe) {
+		if (kn->kn_filter == EVFILT_MARKER) {
+			if ((kn->kn_status & KN_QUEUED) != 0)
+				panic("%s:%d: kq=%p kn=%p marker QUEUED",
+				    func, line, kq, kn);
+			nmarker++;
+		} else {
+			if ((kn->kn_status & KN_ACTIVE) == 0)
+				panic("%s:%d: kq=%p kn=%p knote !ACTIVE",
+				    func, line, kq, kn);
+			if ((kn->kn_status & KN_QUEUED) == 0)
+				panic("%s:%d: kq=%p kn=%p knote !QUEUED",
+				    func, line, kq, kn);
+			if (kn->kn_kq != kq)
+				panic("%s:%d: kq=%p kn=%p kn_kq=%p != kq",
+				    func, line, kq, kn, kn->kn_kq);
+			count++;
+			if (count > kq->kq_count)
+				goto bad;
+		}
+	}
+	if (count != kq->kq_count) {
+bad:
+		panic("%s:%d: kq=%p kq_count=%d count=%d nmarker=%d",
+		    func, line, kq, kq->kq_count, count, nmarker);
+	}
+}
+#define kqueue_check(kq)	kqueue_do_check((kq), __func__, __LINE__)
+#else
+#define kqueue_check(kq)	do {} while (0)
+#endif
+
 int
 kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 {
@@ -696,7 +740,7 @@ kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
 {
 	struct kevent *kevp;
 	struct timespec elapsed, start, stop;
-	struct knote *kn, marker;
+	struct knote mend, mstart, *kn;
 	int s, count, timeout, nkev = 0, error = 0;
 	struct kevent kev[KQ_NEVENTS];
 
@@ -708,6 +752,9 @@ kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
 		error = EINVAL;
 		goto done;
 	}
+
+	memset(&mstart, 0, sizeof(mstart));
+	memset(&mend, 0, sizeof(mend));
 
 retry:
 	if (kq->kq_state & KQ_DYING) {
@@ -744,34 +791,55 @@ retry:
 		goto done;
 	}
 
-	TAILQ_INSERT_TAIL(&kq->kq_head, &marker, kn_tqe);
+	mstart.kn_filter = EVFILT_MARKER;
+	mstart.kn_status = KN_PROCESSING;
+	TAILQ_INSERT_HEAD(&kq->kq_head, &mstart, kn_tqe);
+	mend.kn_filter = EVFILT_MARKER;
+	mend.kn_status = KN_PROCESSING;
+	TAILQ_INSERT_TAIL(&kq->kq_head, &mend, kn_tqe);
 	while (count) {
-		kn = TAILQ_FIRST(&kq->kq_head);
-		if (kn == &marker) {
-			TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
-			splx(s);
-			if (count == maxevents)
-				goto retry;
-			goto done;
+		kn = TAILQ_NEXT(&mstart, kn_tqe);
+		if (kn->kn_filter == EVFILT_MARKER) {
+			if (kn == &mend) {
+				TAILQ_REMOVE(&kq->kq_head, &mend, kn_tqe);
+				TAILQ_REMOVE(&kq->kq_head, &mstart, kn_tqe);
+				splx(s);
+				if (count == maxevents)
+					goto retry;
+				goto done;
+			}
+
+			/* Move start marker past another thread's marker. */
+			TAILQ_REMOVE(&kq->kq_head, &mstart, kn_tqe);
+			TAILQ_INSERT_AFTER(&kq->kq_head, kn, &mstart, kn_tqe);
+			continue;
 		}
 
+		if (!knote_acquire(kn))
+			continue;
+
+		kqueue_check(kq);
 		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
+		kn->kn_status &= ~KN_QUEUED;
 		kq->kq_count--;
+		kqueue_check(kq);
 
 		if (kn->kn_status & KN_DISABLED) {
-			kn->kn_status &= ~KN_QUEUED;
+			knote_release(kn);
 			continue;
 		}
 		if ((kn->kn_flags & EV_ONESHOT) == 0 &&
 		    kn->kn_fop->f_event(kn, 0) == 0) {
-			kn->kn_status &= ~(KN_QUEUED | KN_ACTIVE);
+			if ((kn->kn_status & KN_QUEUED) == 0)
+				kn->kn_status &= ~KN_ACTIVE;
+			knote_release(kn);
+			kqueue_check(kq);
 			continue;
 		}
 		*kevp = kn->kn_kevent;
 		kevp++;
 		nkev++;
 		if (kn->kn_flags & EV_ONESHOT) {
-			kn->kn_status &= ~KN_QUEUED;
 			splx(s);
 			kn->kn_fop->f_detach(kn);
 			knote_drop(kn, p);
@@ -783,11 +851,19 @@ retry:
 			}
 			if (kn->kn_flags & EV_DISPATCH)
 				kn->kn_status |= KN_DISABLED;
-			kn->kn_status &= ~(KN_QUEUED | KN_ACTIVE);
+			if ((kn->kn_status & KN_QUEUED) == 0)
+				kn->kn_status &= ~KN_ACTIVE;
+			knote_release(kn);
 		} else {
-			TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
-			kq->kq_count++;
+			if ((kn->kn_status & KN_QUEUED) == 0) {
+				kqueue_check(kq);
+				kq->kq_count++;
+				kn->kn_status |= KN_QUEUED;
+				TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
+			}
+			knote_release(kn);
 		}
+		kqueue_check(kq);
 		count--;
 		if (nkev == KQ_NEVENTS) {
 			splx(s);
@@ -805,7 +881,8 @@ retry:
 				break;
 		}
 	}
-	TAILQ_REMOVE(&kq->kq_head, &marker, kn_tqe);
+	TAILQ_REMOVE(&kq->kq_head, &mend, kn_tqe);
+	TAILQ_REMOVE(&kq->kq_head, &mstart, kn_tqe);
 	splx(s);
 done:
 	if (nkev != 0) {
@@ -914,6 +991,45 @@ kqueue_wakeup(struct kqueue *kq)
 }
 
 /*
+ * Acquire a knote, return non-zero on success, 0 on failure.
+ *
+ * If we cannot acquire the knote we sleep and return 0.  The knote
+ * may be stale on return in this case and the caller must restart
+ * whatever loop they are in.
+ */
+int
+knote_acquire(struct knote *kn)
+{
+	KASSERT(kn->kn_filter != EVFILT_MARKER);
+
+	if (kn->kn_status & KN_PROCESSING) {
+		kn->kn_status |= KN_WAITING;
+		tsleep_nsec(kn, 0, "kqepts", SEC_TO_NSEC(1));
+		/* knote may be stale now */
+		return (0);
+	}
+	kn->kn_status |= KN_PROCESSING;
+	return (1);
+}
+
+/*
+ * Release an acquired knote, clearing KN_PROCESSING.
+ */
+void
+knote_release(struct knote *kn)
+{
+	KASSERT(kn->kn_filter != EVFILT_MARKER);
+	KASSERT(kn->kn_status & KN_PROCESSING);
+
+	if (kn->kn_status & KN_WAITING) {
+		kn->kn_status &= ~KN_WAITING;
+		wakeup(kn);
+	}
+	kn->kn_status &= ~KN_PROCESSING;
+	/* kn should not be accessed anymore */
+}
+
+/*
  * activate one knote.
  */
 void
@@ -946,6 +1062,8 @@ knote_remove(struct proc *p, struct klist *list)
 	struct knote *kn;
 
 	while ((kn = SLIST_FIRST(list)) != NULL) {
+		if (!knote_acquire(kn))
+			continue;
 		kn->kn_fop->f_detach(kn);
 		knote_drop(kn, p);
 	}
@@ -1032,6 +1150,8 @@ knote_drop(struct knote *kn, struct proc *p)
 	struct kqueue *kq = kn->kn_kq;
 	struct klist *list;
 
+	KASSERT(kn->kn_filter != EVFILT_MARKER);
+
 	if (kn->kn_fop->f_isfd)
 		list = &kq->kq_knlist[kn->kn_id];
 	else
@@ -1052,11 +1172,14 @@ knote_enqueue(struct knote *kn)
 	struct kqueue *kq = kn->kn_kq;
 	int s = splhigh();
 
+	KASSERT(kn->kn_filter != EVFILT_MARKER);
 	KASSERT((kn->kn_status & KN_QUEUED) == 0);
 
+	kqueue_check(kq);
 	TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
 	kn->kn_status |= KN_QUEUED;
 	kq->kq_count++;
+	kqueue_check(kq);
 	splx(s);
 	kqueue_wakeup(kq);
 }
@@ -1067,11 +1190,14 @@ knote_dequeue(struct knote *kn)
 	struct kqueue *kq = kn->kn_kq;
 	int s = splhigh();
 
+	KASSERT(kn->kn_filter != EVFILT_MARKER);
 	KASSERT(kn->kn_status & KN_QUEUED);
 
+	kqueue_check(kq);
 	TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 	kn->kn_status &= ~KN_QUEUED;
 	kq->kq_count--;
+	kqueue_check(kq);
 	splx(s);
 }
 

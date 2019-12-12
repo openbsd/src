@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.30 2018/01/13 12:58:40 robert Exp $	*/
+/*	$OpenBSD: event.h,v 1.31 2019/12/12 16:31:06 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -125,6 +125,8 @@ SLIST_HEAD(klist, knote);
 
 #ifdef _KERNEL
 
+#define EVFILT_MARKER	0xf			/* placemarker for tailq */
+
 /*
  * hint flag for in-kernel use - must not equal any existing note
  */
@@ -170,6 +172,8 @@ struct knote {
 #define KN_QUEUED	0x0002			/* event is on queue */
 #define KN_DISABLED	0x0004			/* event is disabled */
 #define KN_DETACHED	0x0008			/* knote is detached */
+#define KN_PROCESSING	0x0010			/* knote is being processed */
+#define KN_WAITING	0x0020			/* waiting on processing */
 
 #define kn_id		kn_kevent.ident
 #define kn_filter	kn_kevent.filter
