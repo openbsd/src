@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.248 2019/12/13 08:59:07 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.249 2019/12/13 09:01:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -71,7 +71,6 @@ void		 show_nexthop_head(void);
 int		 show_nexthop_msg(struct imsg *);
 void		 show_interface_head(void);
 int		 show_interface_msg(struct imsg *);
-void		 show_rib_summary_head(void);
 void		 print_prefix(struct bgpd_addr *, u_int8_t, u_int8_t, u_int8_t);
 const char *	 print_origin(u_int8_t, int);
 const char *	 print_ovs(u_int8_t, int);
@@ -1149,17 +1148,6 @@ show_interface_msg(struct imsg *imsg)
 	}
 
 	return (0);
-}
-
-void
-show_rib_summary_head(void)
-{
-	printf("flags: * = Valid, > = Selected, I = via IBGP, A = Announced,\n"
-	    "       S = Stale, E = Error\n");
-	printf("origin validation state: N = not-found, V = valid, ! = invalid\n");
-	printf("origin: i = IGP, e = EGP, ? = Incomplete\n\n");
-	printf("%-5s %3s %-20s %-15s  %5s %5s %s\n", "flags", "ovs", "destination",
-	    "gateway", "lpref", "med", "aspath origin");
 }
 
 void
