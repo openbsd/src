@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.238 2019/12/09 16:55:30 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.239 2019/12/13 00:31:20 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 9 2019 $
+.Dd $Mdocdate: December 13 2019 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -1154,25 +1154,45 @@ match for any action "outbound"
 match auth from any for any action "outbound"
 .Ed
 .Pp
-For sites that wish to sign messages using DKIM, the
-.Sy dkimproxy
-package may be used as a filter.
+For sites that wish to sign messages using DKIM, the package
+.Sy opensmtpd-filter-dkimsign
+provides a simple filter for DKIM signing.
 The following example is the same as the default configuration,
-but all outgoing mail is passed to dkimproxy_out on port 10027
+but uses
+.Sy opensmtpd-filter-dkimsign
 for signing.
-The signed messages are received on port 10028 and tagged for relaying.
 .Bd -literal -offset indent
 table aliases file:/etc/mail/aliases
 
-listen on lo0
-listen on lo0 port 10028 tag DKIM
+filter "dkimsign" proc-exec "filter-dkimsign -d <domain> -s <selector> -k /etc/mail/dkim/private.key" user _dkimsign group _dkimsign
+
+listen on socket filter "dkimsign"
+listen on lo0 filter "dkimsign"
 
 action "local_mail" mbox alias <aliases>
 action "outbound" relay
-action "relay_dkim" relay host smtp://127.0.0.1:10027
 
 match for local action "local_mail"
-match tag DKIM for any action "outbound"
+match for any action "relay_dkim"
+.Ed
+.Pp
+Alternatively, the
+.Sy opensmtpd-filter-rspamd
+package may be used to provide integration with
+.Sy rspamd ,
+a third-party daemon also providing DKIM and multiple other antispam features.
+.Bd -literal -offset indent
+table aliases file:/etc/mail/aliases
+
+filter "rspamd" proc-exec "filter-rspamd"
+
+listen on socket filter "rspamd"
+listen on lo0 filter "rspamd"
+
+action "local_mail" mbox alias <aliases>
+action "outbound" relay
+
+match for local action "local_mail"
 match for any action "relay_dkim"
 .Ed
 .Pp
