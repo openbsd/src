@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.491 2019/11/27 01:21:54 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.492 2019/12/13 14:10:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -616,10 +616,6 @@ badnetdel:
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NEIGHBOR, 0,
 			    imsg.hdr.pid, -1, &p, sizeof(struct peer));
 			break;
-		case IMSG_CTL_END:
-			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, imsg.hdr.pid,
-			    -1, NULL, 0);
-			break;
 		case IMSG_CTL_SHOW_RIB_MEM:
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_RIB_MEM, 0,
 			    imsg.hdr.pid, -1, &rdemem, sizeof(rdemem));
@@ -643,6 +639,13 @@ badnetdel:
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
 			break;
+		case IMSG_CTL_END:
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, imsg.hdr.pid,
+			    -1, NULL, 0);
+			break;
+		case IMSG_CTL_TERMINATE:
+			rde_dump_ctx_terminate(imsg.hdr.pid);
+			break;
 		case IMSG_XON:
 			if (imsg.hdr.peerid) {
 				peer = peer_get(imsg.hdr.peerid);
@@ -660,9 +663,6 @@ badnetdel:
 			} else {
 				rde_dump_ctx_throttle(imsg.hdr.pid, 1);
 			}
-			break;
-		case IMSG_CTL_TERMINATE:
-			rde_dump_ctx_terminate(imsg.hdr.pid);
 			break;
 		default:
 			break;
