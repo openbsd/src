@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.108 2019/12/13 14:37:03 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.109 2019/12/13 15:10:04 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -945,7 +945,7 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 
 	sldns_wire2str_rcode_buf(result->rcode, rcode_buf, sizeof(rcode_buf));
 	sldns_wire2str_class_buf(query_imsg->c, qclass_buf, sizeof(qclass_buf));
-	sldns_wire2str_rcode_buf(query_imsg->t, qtype_buf, sizeof(qtype_buf));
+	sldns_wire2str_type_buf(query_imsg->t, qtype_buf, sizeof(qtype_buf));
 	log_debug("%s[%s]: %s %s %s rcode: %s[%d], elapsed: %lldms, running: %d",
 	    __func__, uw_resolver_type_str[res->type], query_imsg->qname,
 	    qclass_buf, qtype_buf, rcode_buf, result->rcode, ms,
