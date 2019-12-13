@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.103 2019/06/11 14:48:56 jcs Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.104 2019/12/13 21:03:57 deraadt Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -159,7 +159,6 @@ twrget(all, wsmouse, wscons)dnl
 target(all, par, 0)dnl
 target(all, apci, 0)dnl
 target(all, local)dnl
-target(all, gpr, 0)dnl
 target(all, ptm)dnl
 target(all, hotplug)dnl
 target(all, pppx)dnl
@@ -511,8 +510,6 @@ __devitem(pci, pci*, PCI bus devices)dnl
 _mkdev(pci, pci*, {-M pci$U	c major_pci_c $U 600
 	MKlist[${#MKlist[*]}]=";[ -h pci ] || ln -sf pci0 pci"-})dnl
 __devitem(pdc, pdc, PDC device)dnl
-__devitem(gpr, gpr*, GPR400 smartcard reader)dnl
-_mcdev(gpr, gpr*, gpr, {-major_gpr_c-})dnl
 __devitem(hotplug, hotplug, devices hot plugging)dnl
 _mkdev(hotplug, hotplug, {-M hotplug c major_hotplug_c $U 400-})dnl
 __devitem(ipmi, ipmi*, IPMI BMC access)dnl
