@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.247 2019/11/27 01:23:30 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.248 2019/12/13 08:59:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -49,10 +49,11 @@ enum neighbor_views {
 #define EOL0(flag)	((flag & F_CTL_SSV) ? ';' : '\n')
 
 int		 main(int, char *[]);
-char		*fmt_peer(const char *, const struct bgpd_addr *, int, int);
+int		 show(struct imsg *, struct parse_result *);
+char		*fmt_peer(const char *, const struct bgpd_addr *, int);
 void		 show_summary_head(void);
-int		 show_summary_msg(struct imsg *, int);
-int		 show_summary_terse_msg(struct imsg *, int);
+int		 show_summary_msg(struct imsg *);
+int		 show_summary_terse_msg(struct imsg *);
 int		 show_neighbor_terse(struct imsg *);
 int		 show_neighbor_msg(struct imsg *, enum neighbor_views);
 void		 print_neighbor_capa_mp(struct peer *);
@@ -76,10 +77,9 @@ const char *	 print_origin(u_int8_t, int);
 const char *	 print_ovs(u_int8_t, int);
 void		 print_flags(u_int8_t, int);
 int		 show_rib_summary_msg(struct imsg *);
-int		 show_rib_detail_msg(struct imsg *, int, int);
+int		 show_rib_detail_msg(struct imsg *, int);
 void		 show_rib_brief(struct ctl_show_rib *, u_char *, size_t);
-void		 show_rib_detail(struct ctl_show_rib *, u_char *, size_t, int,
-		    int);
+void		 show_rib_detail(struct ctl_show_rib *, u_char *, size_t, int);
 void		 show_attr(void *, u_int16_t, int);
 void		 show_communities(u_char *, size_t, int);
 void		 show_community(u_char *, u_int16_t);
@@ -88,7 +88,6 @@ void		 show_ext_community(u_char *, u_int16_t);
 int		 show_rib_memory_msg(struct imsg *);
 void		 send_filterset(struct imsgbuf *, struct filter_set_head *);
 const char	*get_errstr(u_int8_t, u_int8_t);
-int		 show_result(struct imsg *);
 void		 show_mrt_dump_neighbors(struct mrt_rib *, struct mrt_peer *,
 		    void *);
 void		 show_mrt_dump(struct mrt_rib *, struct mrt_peer *, void *);
@@ -99,11 +98,14 @@ const char	*msg_type(u_int8_t);
 void		 network_bulk(struct parse_result *);
 const char	*print_auth_method(enum auth_method);
 int		 match_aspath(void *, u_int16_t, struct filter_as *);
+void		 show_head(struct parse_result *);
+void		 show_result(u_int);
 
 struct imsgbuf	*ibuf;
 struct mrt_parser show_mrt = { show_mrt_dump, show_mrt_state, show_mrt_msg };
 struct mrt_parser net_mrt = { network_mrt_dump, NULL, NULL };
 int tableid;
+int nodescr;
 
 __dead void
 usage(void)
@@ -119,7 +121,7 @@ int
 main(int argc, char *argv[])
 {
 	struct sockaddr_un	 sun;
-	int			 fd, n, done, ch, nodescr = 0, verbose = 0;
+	int			 fd, n, done, ch, verbose = 0;
 	struct imsg		 imsg;
 	struct network_config	 net;
 	struct parse_result	*res;
@@ -180,8 +182,8 @@ main(int argc, char *argv[])
 		show_mrt.arg = &ribreq;
 		if (res->flags & F_CTL_NEIGHBORS)
 			show_mrt.dump = show_mrt_dump_neighbors;
-		else if (!(res->flags & F_CTL_DETAIL))
-			show_rib_summary_head();
+		else
+			show_head(res);
 		mrt_parse(res->mrtfd, &show_mrt, 1);
 		exit(0);
 	default:
@@ -218,7 +220,6 @@ main(int argc, char *argv[])
 	case SHOW:
 	case SHOW_SUMMARY:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1, NULL, 0);
-		show_summary_head();
 		break;
 	case SHOW_SUMMARY_TERSE:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_TERSE, 0, 0, -1, NULL, 0);
@@ -241,20 +242,16 @@ main(int argc, char *argv[])
 		} else
 			imsg_compose(ibuf, IMSG_CTL_KROUTE_ADDR, res->rtableid,
 			    0, -1, &res->addr, sizeof(res->addr));
-		show_fib_head();
 		break;
 	case SHOW_FIB_TABLES:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_FIB_TABLES, 0, 0, -1, NULL, 0);
-		show_fib_tables_head();
 		break;
 	case SHOW_NEXTHOP:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_NEXTHOP, res->rtableid, 0, -1,
 		    NULL, 0);
-		show_nexthop_head();
 		break;
 	case SHOW_INTERFACE:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_INTERFACE, 0, 0, -1, NULL, 0);
-		show_interface_head();
 		break;
 	case SHOW_NEIGHBOR:
 	case SHOW_NEIGHBOR_TIMERS:
@@ -284,8 +281,6 @@ main(int argc, char *argv[])
 		ribreq.aid = res->aid;
 		ribreq.flags = res->flags;
 		imsg_compose(ibuf, type, 0, 0, -1, &ribreq, sizeof(ribreq));
-		if (!(res->flags & F_CTL_DETAIL))
-			show_rib_summary_head();
 		break;
 	case SHOW_RIB_MEM:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB_MEM, 0, 0, -1, NULL, 0);
@@ -368,7 +363,6 @@ main(int argc, char *argv[])
 		strlcpy(ribreq.rib, res->rib, sizeof(ribreq.rib));
 		imsg_compose(ibuf, IMSG_CTL_SHOW_NETWORK, 0, 0, -1,
 		    &ribreq, sizeof(ribreq));
-		show_network_head();
 		break;
 	case NETWORK_MRT:
 		bzero(&ribreq, sizeof(ribreq));
@@ -401,6 +395,8 @@ main(int argc, char *argv[])
 		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
 			err(1, "write error");
 
+	show_head(res);
+
 	while (!done) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			err(1, "imsg_read error");
@@ -413,72 +409,7 @@ main(int argc, char *argv[])
 			if (n == 0)
 				break;
 
-			if (imsg.hdr.type == IMSG_CTL_RESULT) {
-				done = show_result(&imsg);
-				imsg_free(&imsg);
-				continue;
-			}
-
-			switch (res->action) {
-			case SHOW:
-			case SHOW_SUMMARY:
-				done = show_summary_msg(&imsg, nodescr);
-				break;
-			case SHOW_SUMMARY_TERSE:
-				done = show_summary_terse_msg(&imsg, nodescr);
-				break;
-			case SHOW_FIB:
-			case SHOW_FIB_TABLES:
-			case NETWORK_SHOW:
-				done = show_fib_msg(&imsg);
-				break;
-			case SHOW_NEXTHOP:
-				done = show_nexthop_msg(&imsg);
-				break;
-			case SHOW_INTERFACE:
-				done = show_interface_msg(&imsg);
-				break;
-			case SHOW_NEIGHBOR:
-				done = show_neighbor_msg(&imsg, NV_DEFAULT);
-				break;
-			case SHOW_NEIGHBOR_TIMERS:
-				done = show_neighbor_msg(&imsg, NV_TIMERS);
-				break;
-			case SHOW_NEIGHBOR_TERSE:
-				done = show_neighbor_terse(&imsg);
-				break;
-			case SHOW_RIB:
-				if (res->flags & F_CTL_DETAIL)
-					done = show_rib_detail_msg(&imsg,
-					    nodescr, res->flags);
-				else
-					done = show_rib_summary_msg(&imsg);
-				break;
-			case SHOW_RIB_MEM:
-				done = show_rib_memory_msg(&imsg);
-				break;
-			case NEIGHBOR:
-			case NEIGHBOR_UP:
-			case NEIGHBOR_DOWN:
-			case NEIGHBOR_CLEAR:
-			case NEIGHBOR_RREFRESH:
-			case NEIGHBOR_DESTROY:
-			case NONE:
-			case RELOAD:
-			case FIB:
-			case FIB_COUPLE:
-			case FIB_DECOUPLE:
-			case NETWORK_ADD:
-			case NETWORK_REMOVE:
-			case NETWORK_FLUSH:
-			case NETWORK_BULK_ADD:
-			case NETWORK_BULK_REMOVE:
-			case LOG_VERBOSE:
-			case LOG_BRIEF:
-			case SHOW_MRT:
-			case NETWORK_MRT:
-				break;
-			}
+			done = show(&imsg, res);
 			imsg_free(&imsg);
 		}
 	}
@@ -488,9 +419,93 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
+int
+show(struct imsg *imsg, struct parse_result *res)
+{
+	u_int rescode;
+	int done = 0;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_RESULT:
+		if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(rescode)) {
+			warnx("got IMSG_CTL_RESULT with wrong len");
+			break;
+		}
+		memcpy(&rescode, imsg->data, sizeof(rescode));
+		show_result(rescode);
+		return (1);
+	case IMSG_CTL_END:
+		return (1);
+	default:
+		break;
+	}
+
+	switch (res->action) {
+	case SHOW:
+	case SHOW_SUMMARY:
+		done = show_summary_msg(imsg);
+		break;
+	case SHOW_SUMMARY_TERSE:
+		done = show_summary_terse_msg(imsg);
+		break;
+	case SHOW_FIB:
+	case SHOW_FIB_TABLES:
+	case NETWORK_SHOW:
+		done = show_fib_msg(imsg);
+		break;
+	case SHOW_NEXTHOP:
+		done = show_nexthop_msg(imsg);
+		break;
+	case SHOW_INTERFACE:
+		done = show_interface_msg(imsg);
+		break;
+	case SHOW_NEIGHBOR:
+		done = show_neighbor_msg(imsg, NV_DEFAULT);
+		break;
+	case SHOW_NEIGHBOR_TIMERS:
+		done = show_neighbor_msg(imsg, NV_TIMERS);
+		break;
+	case SHOW_NEIGHBOR_TERSE:
+		done = show_neighbor_terse(imsg);
+		break;
+	case SHOW_RIB:
+		if (res->flags & F_CTL_DETAIL)
+			done = show_rib_detail_msg(imsg,
+			    res->flags);
+		else
+			done = show_rib_summary_msg(imsg);
+		break;
+	case SHOW_RIB_MEM:
+		done = show_rib_memory_msg(imsg);
+		break;
+	case NEIGHBOR:
+	case NEIGHBOR_UP:
+	case NEIGHBOR_DOWN:
+	case NEIGHBOR_CLEAR:
+	case NEIGHBOR_RREFRESH:
+	case NEIGHBOR_DESTROY:
+	case NONE:
+	case RELOAD:
+	case FIB:
+	case FIB_COUPLE:
+	case FIB_DECOUPLE:
+	case NETWORK_ADD:
+	case NETWORK_REMOVE:
+	case NETWORK_FLUSH:
+	case NETWORK_BULK_ADD:
+	case NETWORK_BULK_REMOVE:
+	case LOG_VERBOSE:
+	case LOG_BRIEF:
+	case SHOW_MRT:
+	case NETWORK_MRT:
+		break;
+	}
+	return (done);
+}
+
 char *
 fmt_peer(const char *descr, const struct bgpd_addr *remote_addr,
-    int masklen, int nodescr)
+    int masklen)
 {
 	const char	*ip;
 	char		*p;
@@ -522,7 +537,7 @@ show_summary_head(void)
 }
 
 int
-show_summary_msg(struct imsg *imsg, int nodescr)
+show_summary_msg(struct imsg *imsg)
 {
 	struct peer		*p;
 	char			*s;
@@ -533,7 +548,7 @@ show_summary_msg(struct imsg *imsg, int nodescr)
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
 		s = fmt_peer(p->conf.descr, &p->conf.remote_addr,
-		    p->conf.remote_masklen, nodescr);
+		    p->conf.remote_masklen);
 
 		a = log_as(p->conf.remote_as);
 		alen = strlen(a);
@@ -575,7 +590,7 @@ show_summary_msg(struct imsg *imsg, int nodescr)
 }
 
 int
-show_summary_terse_msg(struct imsg *imsg, int nodescr)
+show_summary_terse_msg(struct imsg *imsg)
 {
 	struct peer		*p;
 	char			*s;
@@ -584,7 +599,7 @@ show_summary_terse_msg(struct imsg *imsg, int nodescr)
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
 		s = fmt_peer(p->conf.descr, &p->conf.remote_addr,
-		    p->conf.remote_masklen, nodescr);
+		    p->conf.remote_masklen);
 		printf("%s %s %s\n", s, log_as(p->conf.remote_as),
 		    p->conf.template ? "Template" : statenames[p->state]);
 		free(s);
@@ -1251,7 +1266,7 @@ show_rib_summary_msg(struct imsg *imsg)
 }
 
 int
-show_rib_detail_msg(struct imsg *imsg, int nodescr, int flag0)
+show_rib_detail_msg(struct imsg *imsg, int flag0)
 {
 	struct ctl_show_rib	 rib;
 	u_char			*asdata;
@@ -1264,7 +1279,7 @@ show_rib_detail_msg(struct imsg *imsg, int nodescr, int flag0)
 		asdata = imsg->data;
 		asdata += sizeof(rib);
 		aslen = imsg->hdr.len - IMSG_HEADER_SIZE - sizeof(rib);
-		show_rib_detail(&rib, asdata, aslen, nodescr, flag0);
+		show_rib_detail(&rib, asdata, aslen, flag0);
 		break;
 	case IMSG_CTL_SHOW_RIB_COMMUNITIES:
 		ilen = imsg->hdr.len - IMSG_HEADER_SIZE;
@@ -1308,7 +1323,7 @@ show_rib_brief(struct ctl_show_rib *r, u_char *asdata, size_t aslen)
 
 void
 show_rib_detail(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
-    int nodescr, int flag0)
+    int flag0)
 {
 	struct in_addr		 id;
 	char			*aspath, *s;
@@ -1324,7 +1339,7 @@ show_rib_detail(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 		printf("    %s%c", aspath, EOL0(flag0));
 	free(aspath);
 
-	s = fmt_peer(r->descr, &r->remote_addr, -1, nodescr);
+	s = fmt_peer(r->descr, &r->remote_addr, -1);
 	printf("    Nexthop %s ", log_addr(&r->exit_nexthop));
 	printf("(via %s) Neighbor %s (", log_addr(&r->true_nexthop), s);
 	free(s);
@@ -2003,28 +2018,6 @@ get_errstr(u_int8_t errcode, u_int8_t subcode)
 	return (errstr);
 }
 
-int
-show_result(struct imsg *imsg)
-{
-	u_int	rescode;
-
-	if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(rescode))
-		errx(1, "got IMSG_CTL_RESULT with wrong len");
-	memcpy(&rescode, imsg->data, sizeof(rescode));
-
-	if (rescode == 0)
-		printf("request processed\n");
-	else {
-		if (rescode >
-		    sizeof(ctl_res_strerror)/sizeof(ctl_res_strerror[0]))
-			printf("unknown result error code %u\n", rescode);
-		else
-			printf("%s\n", ctl_res_strerror[rescode]);
-	}
-
-	return (1);
-}
-
 void
 network_bulk(struct parse_result *res)
 {
@@ -2163,8 +2156,7 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 			continue;
 
 		if (req->flags & F_CTL_DETAIL) {
-			show_rib_detail(&ctl, mre->aspath, mre->aspath_len, 1,
-			    0);
+			show_rib_detail(&ctl, mre->aspath, mre->aspath_len, 0);
 			for (j = 0; j < mre->nattrs; j++)
 				show_attr(mre->attrs[j].attr,
 				    mre->attrs[j].attr_len,
@@ -2798,4 +2790,69 @@ match_aspath(void *data, u_int16_t len, struct filter_as *f)
 		}
 	}
 	return (0);
+}
+
+void
+show_head(struct parse_result *res)
+{
+	switch (res->action) {
+	case SHOW:
+	case SHOW_SUMMARY:
+		printf("%-20s %8s %10s %10s %5s %-8s %s\n", "Neighbor", "AS",
+		    "MsgRcvd", "MsgSent", "OutQ", "Up/Down", "State/PrfRcvd");
+		break;
+	case SHOW_FIB:
+		printf("flags: * = valid, B = BGP, C = Connected, "
+		    "S = Static, D = Dynamic\n");
+		printf("       "
+		    "N = BGP Nexthop reachable via this route\n");
+		printf("       r = reject route, b = blackhole route\n\n");
+		printf("flags prio destination          gateway\n");
+		break;
+	case SHOW_FIB_TABLES:
+		printf("%-5s %-20s %-8s\n", "Table", "Description", "State");
+		break;
+	case SHOW_NEXTHOP:
+		printf("Flags: * = nexthop valid\n");
+		printf("\n  %-15s %-19s%-4s %-15s %-20s\n", "Nexthop", "Route",
+		     "Prio", "Gateway", "Iface");
+		break;
+	case SHOW_INTERFACE:
+		printf("%-15s%-9s%-9s%-7s%s\n", "Interface", "rdomain",
+		    "Nexthop", "Flags", "Link state");
+		break;
+	case SHOW_RIB:
+		if (res->flags & F_CTL_DETAIL)
+			break;
+		printf("flags: "
+		    "* = Valid, > = Selected, I = via IBGP, A = Announced,\n"
+		    "       S = Stale, E = Error\n");
+		printf("origin validation state: "
+		    "N = not-found, V = valid, ! = invalid\n");
+		printf("origin: i = IGP, e = EGP, ? = Incomplete\n\n");
+		printf("%-5s %3s %-20s %-15s  %5s %5s %s\n",
+		    "flags", "ovs", "destination", "gateway", "lpref", "med",
+		    "aspath origin");
+		break;
+	case NETWORK_SHOW:
+		printf("flags: S = Static\n");
+		printf("flags prio destination          gateway\n");
+		break;
+	default:
+		break;
+	}
+}
+
+void
+show_result(u_int rescode)
+{
+	if (rescode == 0)
+		printf("request processed\n");
+	else {
+		if (rescode >
+		    sizeof(ctl_res_strerror)/sizeof(ctl_res_strerror[0]))
+			printf("unknown result error code %u\n", rescode);
+		else
+			printf("%s\n", ctl_res_strerror[rescode]);
+	}
 }
