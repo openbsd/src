@@ -28,27 +28,36 @@
 #include <err.h>
 #include <errno.h>
 #include <event.h>
+#include <imsg.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
 
-#define LINE_MAX 1024
 #include "smtpd-defines.h"
 #include "smtpd-api.h"
 #include "unpack_dns.h"
 #include "parser.h"
 
+struct target {
+	void	(*dispatch)(struct dns_rr *, struct target *);
+	int	  cidr4;
+	int	  cidr6;
+};
+
 int spfwalk(int, struct parameter *);
 
-static void	dispatch_txt(struct dns_rr *);
-static void	dispatch_mx(struct dns_rr *);
-static void	dispatch_a(struct dns_rr *);
-static void	dispatch_aaaa(struct dns_rr *);
-static void	lookup_record(int, const char *, void (*)(struct dns_rr *));
+static void	dispatch_txt(struct dns_rr *, struct target *);
+static void	dispatch_mx(struct dns_rr *, struct target *);
+static void	dispatch_a(struct dns_rr *, struct target *);
+static void	dispatch_aaaa(struct dns_rr *, struct target *);
+static void	lookup_record(int, const char *, struct target *);
 static void	dispatch_record(struct asr_result *, void *);
 static ssize_t	parse_txt(const char *, size_t, char *, size_t);
+static int	parse_target(char *, struct target *);
+void *xmalloc(size_t size);
 
 int     ip_v4 = 0;
 int     ip_v6 = 0;
@@ -59,6 +68,7 @@ struct dict seen;
 int
 spfwalk(int argc, struct parameter *argv)
 {
+	struct target	 tgt;
 	const char	*ip_family = NULL;
 	char		*line = NULL;
 	size_t		 linesize = 0;
@@ -81,12 +91,15 @@ spfwalk(int argc, struct parameter *argv)
 	dict_init(&seen);
   	event_init();
 
+	tgt.cidr4 = tgt.cidr6 = -1;
+	tgt.dispatch = dispatch_txt;
+
 	while ((linelen = getline(&line, &linesize, stdin)) != -1) {
 		while (linelen-- > 0 && isspace(line[linelen]))
 			line[linelen] = '\0';
 
 		if (linelen > 0)
-			lookup_record(T_TXT, line, dispatch_txt);
+			lookup_record(T_TXT, line, &tgt);
 	}
 
 	free(line);
@@ -100,20 +113,23 @@ spfwalk(int argc, struct parameter *argv)
 }
 
 void
-lookup_record(int type, const char *record, void (*cb)(struct dns_rr *))
+lookup_record(int type, const char *record, struct target *tgt)
 {
 	struct asr_query *as;
+	struct target *ntgt;
 
 	as = res_query_async(record, C_IN, type, NULL);
 	if (as == NULL)
 		err(1, "res_query_async");
-	event_asr_run(as, dispatch_record, cb);
+	ntgt = xmalloc(sizeof(*ntgt));
+	*ntgt = *tgt;
+	event_asr_run(as, dispatch_record, (void *)ntgt);
 }
 
 void
 dispatch_record(struct asr_result *ar, void *arg)
 {
-	void (*cb)(struct dns_rr *) = arg;
+	struct target *tgt = arg;
 	struct unpack pack;
 	struct dns_header h;
 	struct dns_query q;
@@ -121,7 +137,7 @@ dispatch_record(struct asr_result *ar, void *arg)
 
 	/* best effort */
 	if (ar->ar_h_errno && ar->ar_h_errno != NO_DATA)
-		return;
+		goto end;
 
 	unpack_init(&pack, ar->ar_data, ar->ar_datalen);
 	unpack_header(&pack, &h);
@@ -130,20 +146,23 @@ dispatch_record(struct asr_result *ar, void *arg)
 	for (; h.ancount; h.ancount--) {
 		unpack_rr(&pack, &rr);
 		/**/
-		cb(&rr);
+		tgt->dispatch(&rr, tgt);
 	}
+end:
+	free(tgt);
 }
 
 void
-dispatch_txt(struct dns_rr *rr)
+dispatch_txt(struct dns_rr *rr, struct target *tgt)
 {
+	char buf[4096];
+	char *argv[512];
+	char buf2[512];
+	struct target ltgt;
 	struct in6_addr ina;
-        char buf[4096];
-        char buf2[512];
-        char *in = buf;
-        char *argv[512];
-        char **ap = argv;
-	char *end;
+	char **ap = argv;
+	char *in = buf;
+	char *record, *end;
 	ssize_t n;
 
 	if (rr->rr_type != T_TXT)
@@ -173,6 +192,8 @@ dispatch_txt(struct dns_rr *rr)
 		if (**ap == '+' || **ap == '?')
 			(*ap)++;
 
+		ltgt.cidr4 = ltgt.cidr6 = -1;
+
 		if (strncasecmp("ip4:", *ap, 4) == 0) {
 			if ((ip_v4 == 1 || ip_both == 1) &&
 			    inet_net_pton(AF_INET, *(ap) + 4,
@@ -190,35 +211,50 @@ dispatch_txt(struct dns_rr *rr)
 		if (strcasecmp("a", *ap) == 0) {
 			print_dname(rr->rr_dname, buf2, sizeof(buf2));
 			buf2[strlen(buf2) - 1] = '\0';
-			lookup_record(T_A, buf2, dispatch_a);
-			lookup_record(T_AAAA, buf2, dispatch_aaaa);
+			ltgt.dispatch = dispatch_a;
+			lookup_record(T_A, buf2, &ltgt);
+			ltgt.dispatch = dispatch_aaaa;
+			lookup_record(T_AAAA, buf2, &ltgt);
 			continue;
 		}
 		if (strncasecmp("a:", *ap, 2) == 0) {
-			lookup_record(T_A, *(ap) + 2, dispatch_a);
-			lookup_record(T_AAAA, *(ap) + 2, dispatch_aaaa);
+			record = *(ap) + 2;
+			if (parse_target(record, &ltgt) < 0)
+				continue;
+			ltgt.dispatch = dispatch_a;
+			lookup_record(T_A, record, &ltgt);
+			ltgt.dispatch = dispatch_aaaa;
+			lookup_record(T_AAAA, record, &ltgt);
 			continue;
 		}
 		if (strncasecmp("exists:", *ap, 7) == 0) {
-			lookup_record(T_A, *(ap) + 7, dispatch_a);
+			ltgt.dispatch = dispatch_a;
+			lookup_record(T_A, *(ap) + 7, &ltgt);
 			continue;
 		}
 		if (strncasecmp("include:", *ap, 8) == 0) {
-			lookup_record(T_TXT, *(ap) + 8, dispatch_txt);
+			ltgt.dispatch = dispatch_txt;
+			lookup_record(T_TXT, *(ap) + 8, &ltgt);
 			continue;
 		}
 		if (strncasecmp("redirect=", *ap, 9) == 0) {
-			lookup_record(T_TXT, *(ap) + 9, dispatch_txt);
+			ltgt.dispatch = dispatch_txt;
+			lookup_record(T_TXT, *(ap) + 9, &ltgt);
 			continue;
 		}
 		if (strcasecmp("mx", *ap) == 0) {
 			print_dname(rr->rr_dname, buf2, sizeof(buf2));
 			buf2[strlen(buf2) - 1] = '\0';
-			lookup_record(T_MX, buf2, dispatch_mx);
+			ltgt.dispatch = dispatch_mx;
+			lookup_record(T_MX, buf2, &ltgt);
 			continue;
 		}
 		if (strncasecmp("mx:", *ap, 3) == 0) {
-			lookup_record(T_MX, *(ap) + 3, dispatch_mx);
+			record = *(ap) + 3;
+			if (parse_target(record, &ltgt) < 0)
+				continue;
+			ltgt.dispatch = dispatch_mx;
+			lookup_record(T_MX, record, &ltgt);
 			continue;
 		}
 	}
@@ -226,9 +262,10 @@ dispatch_txt(struct dns_rr *rr)
 }
 
 void
-dispatch_mx(struct dns_rr *rr)
+dispatch_mx(struct dns_rr *rr, struct target *tgt)
 {
 	char buf[512];
+	struct target ltgt;
 
 	if (rr->rr_type != T_MX)
 		return;
@@ -237,12 +274,16 @@ dispatch_mx(struct dns_rr *rr)
 	buf[strlen(buf) - 1] = '\0';
 	if (buf[strlen(buf) - 1] == '.')
 		buf[strlen(buf) - 1] = '\0';
-	lookup_record(T_A, buf, dispatch_a);
-	lookup_record(T_AAAA, buf, dispatch_aaaa);
+
+	ltgt = *tgt;
+	ltgt.dispatch = dispatch_a;
+	lookup_record(T_A, buf, &ltgt);
+	ltgt.dispatch = dispatch_aaaa;
+	lookup_record(T_AAAA, buf, &ltgt);
 }
 
 void
-dispatch_a(struct dns_rr *rr)
+dispatch_a(struct dns_rr *rr, struct target *tgt)
 {
 	char buffer[512];
 	const char *ptr;
@@ -251,12 +292,16 @@ dispatch_a(struct dns_rr *rr)
 		return;
 
 	if ((ptr = inet_ntop(AF_INET, &rr->rr.in_a.addr,
-	    buffer, sizeof buffer)))
-		printf("%s\n", ptr);
+	    buffer, sizeof buffer))) {
+		if (tgt->cidr4 >= 0)
+			printf("%s/%d\n", ptr, tgt->cidr4);
+		else
+			printf("%s\n", ptr);
+	}
 }
 
 void
-dispatch_aaaa(struct dns_rr *rr)
+dispatch_aaaa(struct dns_rr *rr, struct target *tgt)
 {
 	char buffer[512];
 	const char *ptr;
@@ -265,11 +310,15 @@ dispatch_aaaa(struct dns_rr *rr)
 		return;
 
 	if ((ptr = inet_ntop(AF_INET6, &rr->rr.in_aaaa.addr6,
-	    buffer, sizeof buffer)))
-		printf("%s\n", ptr);
+	    buffer, sizeof buffer))) {
+		if (tgt->cidr6 >= 0)
+			printf("%s/%d\n", ptr, tgt->cidr6);
+		else
+			printf("%s\n", ptr);
+	}
 }
 
-static ssize_t
+ssize_t
 parse_txt(const char *rdata, size_t rdatalen, char *dst, size_t dstsz)
 {
 	size_t len;
@@ -302,4 +351,34 @@ parse_txt(const char *rdata, size_t rdatalen, char *dst, size_t dstsz)
 	}
 
 	return r;
+}
+
+int
+parse_target(char *record, struct target *tgt)
+{
+	const char *err;
+	char *m4, *m6;
+
+	m4 = record;
+	strsep(&m4, "/");
+	if (m4 == NULL)
+		return 0;
+
+	m6 = m4;
+	strsep(&m6, "/");
+
+	if (*m4) {
+		tgt->cidr4 = strtonum(m4, 0, 32, &err);
+		if (err)
+			return tgt->cidr4 = -1;
+	}
+
+	if (m6 == NULL)
+		return 0;
+
+	tgt->cidr6 = strtonum(m6, 0, 128, &err);
+	if (err)
+		return tgt->cidr6 = -1;
+
+	return 0;
 }
