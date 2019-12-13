@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.35 2019/11/14 21:27:30 djm Exp $
+#	$OpenBSD: Makefile,v 1.36 2019/12/13 19:09:10 djm Exp $
 
 .PATH:		${.CURDIR}/..
 
 SRCS=	ssh-agent.c ${SRCS_PKCS11_CLIENT}
-SRCS+=	atomicio.c compat.c fatal.c readpass.c msg.c
+SRCS+=	atomicio.c compat.c fatal.c readpass.c
 SRCS+=	${SRCS_BASE} ${SRCS_KEY} ${SRCS_KEYP} ${SRCS_KRL} ${SRCS_UTL}
+SRCS+=	${SRCS_SK_CLIENT}
 
 PROG=	ssh-agent
 BINOWN=	root
@@ -17,6 +18,3 @@ BINDIR=	/usr/bin
 
 LDADD+=	-lcrypto -lutil
 DPADD+=	${LIBCRYPTO} ${LIBUTIL}
-
-LDADD+= -lfido2 -lcbor -lusbhid
-DPADD+=	${LIBFIDO2} ${LIBCBOR} ${LIBUSBHID}

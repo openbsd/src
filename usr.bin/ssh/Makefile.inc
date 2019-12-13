@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.79 2019/11/18 16:08:57 naddy Exp $
+#	$OpenBSD: Makefile.inc,v 1.80 2019/12/13 19:09:10 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -71,8 +71,6 @@ SRCS_KEY+=	cipher.c
 SRCS_KEY+=	cipher-chachapoly.c
 SRCS_KEY+=	chacha.c
 SRCS_KEY+=	poly1305.c
-SRCS_KEY+=	ssh-sk.c
-SRCS_KEY+=	sk-usbhid.c
 .if (${OPENSSL:L} == "yes")
 SRCS_KEY+=	ssh-dss.c
 SRCS_KEY+=	ssh-ecdsa.c
@@ -126,6 +124,11 @@ SRCS_PKCS11+=
 SRCS_PKCS11_CLIENT+=
 SRCS_MODULI+=
 .endif
+
+SRCS_SK=		ssh-sk.c
+SRCS_SK+=		sk-usbhid.c
+SRCS_SK_CLIENT=		ssh-sk-client.c
+SRCS_SK_CLIENT+=	msg.c
 
 WITH_XMSS?=	no
 .if (${WITH_XMSS:L} == "yes")

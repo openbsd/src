@@ -1,12 +1,13 @@
-#	$OpenBSD: Makefile,v 1.78 2019/11/14 21:27:30 djm Exp $
+#	$OpenBSD: Makefile,v 1.79 2019/12/13 19:09:10 djm Exp $
 
 .PATH:		${.CURDIR}/..
 
 SRCS=	ssh.c readconf.c clientloop.c sshtty.c sshconnect.c sshconnect2.c mux.c
 SRCS+=	atomicio.c authfd.c compat.c dns.c fatal.c \
-	hostfile.c msg.c readpass.c utf8.c
+	hostfile.c readpass.c utf8.c
 SRCS+=	${SRCS_BASE} ${SRCS_KEX} ${SRCS_KEXC} ${SRCS_KEY} ${SRCS_KEYP} \
-	${SRCS_KRL} ${SRCS_PROT} ${SRCS_PKT} ${SRCS_UTL} ${SRCS_PKCS11}
+	${SRCS_KRL} ${SRCS_PROT} ${SRCS_PKT} ${SRCS_UTL} ${SRCS_PKCS11} \
+	${SRCS_SK_CLIENT}
 
 PROG=	ssh
 
@@ -33,9 +34,6 @@ LDADD+=  -lwind -lroken -lcom_err -lpthread -lheimbase
 LDADD+=	-lcrypto
 DPADD+=	${LIBCRYPTO}
 .endif
-
-LDADD+= -lfido2 -lcbor -lusbhid
-DPADD+=	${LIBFIDO2} ${LIBCBOR} ${LIBUSBHID}
 
 LDADD+=	-lutil -lz
 DPADD+=	${LIBUTIL} ${LIBZ}

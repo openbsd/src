@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.101 2019/11/14 21:27:31 djm Exp $
+#	$OpenBSD: Makefile,v 1.102 2019/12/13 19:09:10 djm Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -8,9 +8,10 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c sshpty.c sshlogin.c servconf.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c monitor.c monitor_wrap.c \
 	sftp-server.c sftp-common.c sftp-realpath.c sandbox-pledge.c
 SRCS+=	atomicio.c authfd.c compat.c dns.c fatal.c \
-	hostfile.c msg.c readpass.c utf8.c uidswap.c
+	hostfile.c readpass.c utf8.c uidswap.c
 SRCS+=	${SRCS_BASE} ${SRCS_KEX} ${SRCS_KEXS} ${SRCS_KEY} ${SRCS_KEYP} \
-	${SRCS_KRL} ${SRCS_PROT} ${SRCS_PKT} ${SRCS_UTL} ${SRCS_PKCS11}
+	${SRCS_KRL} ${SRCS_PROT} ${SRCS_PKT} ${SRCS_UTL} ${SRCS_PKCS11} \
+	${SRCS_SK_CLIENT}
 
 PROG=	sshd
 BINDIR=	/usr/sbin
@@ -37,9 +38,6 @@ DPADD+= ${LIBGSSAPI} ${LIBKRB5}
 LDADD+=	-lcrypto
 DPADD+=	${LIBCRYPTO}
 .endif
-
-LDADD+= -lfido2 -lcbor -lusbhid
-DPADD+=	${LIBFIDO2} ${LIBCBOR} ${LIBUSBHID}
 
 LDADD+=	-lutil -lz
 DPADD+=	${LIBUTIL} ${LIBZ}
