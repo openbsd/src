@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.93 2018/01/21 18:54:46 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.94 2019/12/13 02:16:53 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016, 2017 Mike Belopuhov
@@ -650,8 +650,10 @@ xen_intr_unmask_release(struct xen_softc *sc, struct xen_intsrc *xi)
 	struct evtchn_unmask eu;
 
 	xi->xi_masked = 0;
-	if (!test_bit(xi->xi_port, &sc->sc_ipg->evtchn_mask[0]))
+	if (!test_bit(xi->xi_port, &sc->sc_ipg->evtchn_mask[0])) {
+		xen_intsrc_release(sc, xi);
 		return (0);
+	}
 	eu.port = xi->xi_port;
 	xen_intsrc_release(sc, xi);
 	return (xen_evtchn_hypercall(sc, EVTCHNOP_unmask, &eu, sizeof(eu)));
