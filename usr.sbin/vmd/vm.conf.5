@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.45 2019/12/12 03:53:38 pd Exp $
+.\" $OpenBSD: vm.conf.5,v 1.46 2019/12/13 07:03:46 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 12 2019 $
+.Dd $Mdocdate: December 13 2019 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -91,16 +91,6 @@ vm "vm1.example.com" {
 .Sh GLOBAL CONFIGURATION
 The following setting can be configured globally:
 .Bl -tag -width Ds
-.It Ic staggered start parallel Ar parallelism Ic delay Ar seconds
-Start all configured vms in staggered fashion with
-.Ar parallelism
-instances in parallel every
-.Ar delay
-seconds.  Defaults to
-.Ar parallelism
-equal to number of cpus and a
-.Ar delay
-of 30 seconds.
 .It Ic local prefix Ar address Ns Li / Ns Ar prefix
 Set the network prefix that is used to allocate subnets for
 local interfaces, see
@@ -129,6 +119,17 @@ The default is
 .Ar root:wheel .
 .It Cm socket owner Pf : Ar group
 Set the control socket owner to the specified group.
+.It Ic staggered start parallel Ar parallelism Ic delay Ar seconds
+Start all configured VMs in a staggered fashion with
+.Ar parallelism
+instances in parallel every
+.Ar delay
+seconds.
+Defaults to
+.Ar parallelism
+equal to number of CPUs and a
+.Ar delay
+of 30 seconds.
 .El
 .Sh VM CONFIGURATION
 Each
