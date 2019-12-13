@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.133 2019/12/13 06:55:12 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.134 2019/12/13 07:00:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -459,6 +459,9 @@ client_write_error_callback(__unused struct bufferevent *bev,
 
 	close(cf->fd);
 	cf->fd = -1;
+
+	if (client_exitflag)
+		client_exit();
 }
 
 /* File write callback. */
