@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2019/12/13 14:37:03 otto Exp $
+#	$OpenBSD: Makefile,v 1.7 2019/12/13 14:38:25 otto Exp $
 
 PROG=	unwind
 SRCS=	control.c resolver.c frontend.c log.c unwind.c parse.y printconf.c
@@ -6,7 +6,7 @@ MAN=	unwind.8 unwind.conf.5
 
 .include "${.CURDIR}/libunbound/Makefile.inc"
 
-DEBUG=	-g -DDEBUG=3 -O0
+#DEBUG=	-g -DDEBUG=3 -O0
 CFLAGS+= -Wall -I${.CURDIR} -I ${.CURDIR}/libunbound/libunbound
 CFLAGS+= -I ${.CURDIR}/libunbound
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
