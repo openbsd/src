@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.239 2019/12/13 00:31:20 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.240 2019/12/13 17:50:45 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -1154,13 +1154,10 @@ match for any action "outbound"
 match auth from any for any action "outbound"
 .Ed
 .Pp
-For sites that wish to sign messages using DKIM, the package
+For sites that wish to sign messages using DKIM,
+the following example uses
 .Sy opensmtpd-filter-dkimsign
-provides a simple filter for DKIM signing.
-The following example is the same as the default configuration,
-but uses
-.Sy opensmtpd-filter-dkimsign
-for signing.
+for DKIM signing:
 .Bd -literal -offset indent
 table aliases file:/etc/mail/aliases
 
