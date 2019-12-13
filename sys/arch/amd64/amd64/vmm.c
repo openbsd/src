@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.256 2019/12/04 08:17:30 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.257 2019/12/13 03:38:15 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2896,6 +2896,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	/* xcr0 power on default sets bit 0 (x87 state) */
 	vcpu->vc_gueststate.vg_xcr0 = XCR0_X87 & xsave_mask;
 
+exit:
 	/* Flush the VMCS */
 	if (vmclear(&vcpu->vc_control_pa)) {
 		DPRINTF("%s: vmclear failed\n", __func__);
@@ -2903,7 +2904,6 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 		goto exit;
 	}
 
-exit:
 	return (ret);
 }
 
@@ -4224,6 +4224,12 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			DPRINTF("%s: vm %d vcpu %d triple fault\n",
 			    __func__, vcpu->vc_parent->vm_id,
 			    vcpu->vc_id);
+			/*
+			 * Ensure we have the proper VMCS loaded before
+			 * dumping register and VMCS state
+			 */
+			if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa))
+				break;
 			vmx_vcpu_dump_regs(vcpu);
 			dump_vcpu(vcpu);
 			vmx_dump_vmcs(vcpu);
@@ -4233,6 +4239,12 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			    "due to invalid guest state\n",
 			    __func__, vcpu->vc_parent->vm_id,
 			    vcpu->vc_id);
+			/*
+			 * Ensure we have the proper VMCS loaded before
+			 * dumping register and VMCS state
+			 */
+			if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa))
+				break;
 			vmx_vcpu_dump_regs(vcpu);
 			dump_vcpu(vcpu);
 			return EINVAL;
@@ -4242,6 +4254,12 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			    vcpu->vc_gueststate.vg_exit_reason,
 			    vmx_exit_reason_decode(
 				vcpu->vc_gueststate.vg_exit_reason));
+			/*
+			 * Ensure we have the proper VMCS loaded before
+			 * dumping register and VMCS state
+			 */
+			if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa))
+				break;
 			vmx_vcpu_dump_regs(vcpu);
 			dump_vcpu(vcpu);
 			break;
