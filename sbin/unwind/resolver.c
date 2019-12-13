@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.109 2019/12/13 15:10:04 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.110 2019/12/13 16:18:54 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -758,7 +758,8 @@ try_next_resolver(struct running_query *rq)
 	char			 qtype_buf[16];
 
 	while(rq->next_resolver < rq->res_pref.len &&
-	    (res=resolvers[rq->res_pref.types[rq->next_resolver]]) == NULL)
+	    ((res = resolvers[rq->res_pref.types[rq->next_resolver]]) == NULL ||
+	    res->state == DEAD))
 		rq->next_resolver++;
 
 	if (res == NULL) {
