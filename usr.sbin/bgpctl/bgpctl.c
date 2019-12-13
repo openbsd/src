@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.249 2019/12/13 09:01:07 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.250 2019/12/13 11:11:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -51,7 +51,6 @@ enum neighbor_views {
 int		 main(int, char *[]);
 int		 show(struct imsg *, struct parse_result *);
 char		*fmt_peer(const char *, const struct bgpd_addr *, int);
-void		 show_summary_head(void);
 int		 show_summary_msg(struct imsg *);
 int		 show_summary_terse_msg(struct imsg *);
 int		 show_neighbor_terse(struct imsg *);
@@ -62,14 +61,9 @@ void		 print_neighbor_msgstats(struct peer *);
 void		 print_timer(const char *, time_t);
 static char	*fmt_timeframe(time_t t);
 static char	*fmt_timeframe_core(time_t t);
-void		 show_fib_head(void);
-void		 show_fib_tables_head(void);
-void		 show_network_head(void);
 void		 show_fib_flags(u_int16_t);
 int		 show_fib_msg(struct imsg *);
-void		 show_nexthop_head(void);
 int		 show_nexthop_msg(struct imsg *);
-void		 show_interface_head(void);
 int		 show_interface_msg(struct imsg *);
 void		 print_prefix(struct bgpd_addr *, u_int8_t, u_int8_t, u_int8_t);
 const char *	 print_origin(u_int8_t, int);
@@ -528,13 +522,6 @@ fmt_peer(const char *descr, const struct bgpd_addr *remote_addr,
 	return (p);
 }
 
-void
-show_summary_head(void)
-{
-	printf("%-20s %8s %10s %10s %5s %-8s %s\n", "Neighbor", "AS",
-	    "MsgRcvd", "MsgSent", "OutQ", "Up/Down", "State/PrfRcvd");
-}
-
 int
 show_summary_msg(struct imsg *imsg)
 {
@@ -934,30 +921,6 @@ fmt_timeframe_core(time_t t)
 }
 
 void
-show_fib_head(void)
-{
-	printf("flags: "
-	    "* = valid, B = BGP, C = Connected, S = Static, D = Dynamic\n");
-	printf("       "
-	    "N = BGP Nexthop reachable via this route\n");
-	printf("       r = reject route, b = blackhole route\n\n");
-	printf("flags prio destination          gateway\n");
-}
-
-void
-show_fib_tables_head(void)
-{
-	printf("%-5s %-20s %-8s\n", "Table", "Description", "State");
-}
-
-void
-show_network_head(void)
-{
-	printf("flags: S = Static\n");
-	printf("flags prio destination          gateway\n");
-}
-
-void
 show_fib_flags(u_int16_t flags)
 {
 	if (flags & F_DOWN)
@@ -1041,14 +1004,6 @@ show_fib_msg(struct imsg *imsg)
 	return (0);
 }
 
-void
-show_nexthop_head(void)
-{
-	printf("Flags: * = nexthop valid\n");
-	printf("\n  %-15s %-19s%-4s %-15s %-20s\n", "Nexthop", "Route",
-	     "Prio", "Gateway", "Iface");
-}
-
 int
 show_nexthop_msg(struct imsg *imsg)
 {
@@ -1109,14 +1064,6 @@ show_nexthop_msg(struct imsg *imsg)
 	}
 
 	return (0);
-}
-
-
-void
-show_interface_head(void)
-{
-	printf("%-15s%-9s%-9s%-7s%s\n", "Interface", "rdomain", "Nexthop", "Flags",
-	    "Link state");
 }
 
 int
