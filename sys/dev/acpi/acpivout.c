@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.14 2019/10/21 16:32:51 jcs Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.15 2019/12/13 12:39:08 patrick Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
@@ -124,6 +124,9 @@ acpivout_notify(struct aml_node *node, int notify, void *arg)
 {
 	struct acpivout_softc *sc = arg;
 
+	if (ws_get_param == NULL || ws_set_param == NULL)
+		return (0);
+
 	switch (notify) {
 	case NOTIFY_BRIGHTNESS_CYCLE:
 		acpivout_brightness_cycle(sc);
@@ -151,12 +154,13 @@ acpivout_notify(struct aml_node *node, int notify, void *arg)
 void
 acpivout_brightness_cycle(struct acpivout_softc *sc)
 {
-	int	cur_level;
+	struct wsdisplay_param dp;
 
-	if (sc->sc_bcl_len == 0)
+	dp.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
+	if (ws_get_param(&dp))
 		return;
-	cur_level = acpivout_get_brightness(sc);
-	if (cur_level == sc->sc_bcl[sc->sc_bcl_len - 1])
+
+	if (dp.curval == dp.max)
 		acpivout_brightness_zero(sc);
 	else
 		acpivout_brightness_step(sc, 1);
@@ -165,33 +169,45 @@ acpivout_brightness_cycle(struct acpivout_softc *sc)
 void
 acpivout_brightness_step(struct acpivout_softc *sc, int dir)
 {
-	int level, nlevel;
+	struct wsdisplay_param dp;
+	int delta, new;
 
-	if (sc->sc_bcl_len == 0)
-		return;
-	level = acpivout_get_brightness(sc);
-	if (level == -1)
+	dp.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
+	if (ws_get_param(&dp))
 		return;
 
-	nlevel = acpivout_find_brightness(sc, level + (dir * BRIGHTNESS_STEP));
-	if (nlevel == level) {
-		if (dir == 1 && (nlevel + 1 < sc->sc_bcl_len))
-			nlevel++;
-		else if (dir == -1 && (nlevel - 1 >= 0))
-			nlevel--;
+	new = dp.curval;
+	delta = ((dp.max - dp.min) * BRIGHTNESS_STEP) / 100;
+	if (dir > 0) {
+		if (delta > dp.max - dp.curval)
+			new = dp.max;
+		else
+			new += delta;
+	} else if (dir < 0) {
+		if (delta > dp.curval - dp.min)
+			new = dp.min;
+		else
+			new -= delta;
 	}
-	if (nlevel == level)
+
+	if (dp.curval == new)
 		return;
 
-	acpivout_set_brightness(sc, nlevel);
+	dp.curval = new;
+	ws_set_param(&dp);
 }
 
 void
 acpivout_brightness_zero(struct acpivout_softc *sc)
 {
-	if (sc->sc_bcl_len == 0)
+	struct wsdisplay_param dp;
+
+	dp.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
+	if (ws_get_param(&dp))
 		return;
-	acpivout_set_brightness(sc, sc->sc_bcl[0]);
+
+	dp.curval = dp.min;
+	ws_set_param(&dp);
 }
 
 int
