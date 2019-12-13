@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.162 2019/01/18 01:34:50 pd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.163 2019/12/13 20:57:54 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -151,7 +151,6 @@ cdev_decl(cy);
 #include "cz.h"
 cdev_decl(cztty);
 #include "radio.h"
-#include "gpr.h"
 #include "nvram.h"
 cdev_decl(nvram);
 #include "drm.h"
@@ -273,7 +272,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 77: was USB scanners */
 	cdev_notdef(),			/* 78: */
  	cdev_bio_init(NBIO,bio),	/* 79: ioctl tunnel */
-	cdev_ch_init(NGPR,gpr),		/* 80: GPR400 SmartCard reader */
+	cdev_notdef(),			/* 80: */
 	cdev_ptm_init(NPTY,ptm),	/* 81: pseudo-tty ptm device */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 82: devices hot plugging */
 	cdev_gpio_init(NGPIO,gpio),	/* 83: GPIO interface */
