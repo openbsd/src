@@ -113,7 +113,7 @@ alloc_init(struct alloc_cache* alloc, struct alloc_cache* super,
 	alloc->last_id -= 1; 			/* for compiler portability. */
 	alloc->last_id |= alloc->next_id;
 	alloc->next_id += 1;			/* because id=0 is special. */
-	alloc->max_reg_blocks = 100;
+	alloc->max_reg_blocks = 10;
 	alloc->num_reg_blocks = 0;
 	alloc->reg_list = NULL;
 	alloc->cleanup = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.47 2019/12/11 15:50:47 otto Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.48 2019/12/13 14:37:03 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -192,6 +192,8 @@ frontend(int debug, int verbose)
 	signal(SIGHUP, SIG_IGN);
 
 	/* Setup pipe and event handler to the parent process. */
+	if (iev_main != NULL)
+		fatal("iev_main");
 	if ((iev_main = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
 	imsg_init(&iev_main->ibuf, 3);
@@ -307,6 +309,8 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				break;
 			}
 
+			if (iev_resolver != NULL)
+				fatal("iev_resolver");
 			iev_resolver = malloc(sizeof(struct imsgev));
 			if (iev_resolver == NULL)
 				fatal(NULL);
@@ -467,6 +471,8 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 			if (pq == NULL)
 				fatalx("IMSG_ANSWER without HEADER");
 
+			if (pq->answer)
+				fatal("pq->answer");
 			if ((pq->answer = malloc(IMSG_DATA_SIZE(imsg))) !=
 			    NULL) {
 				pq->answer_len = IMSG_DATA_SIZE(imsg);
@@ -541,6 +547,8 @@ udp_receive(int fd, short events, void *arg)
 	int			 ret;
 	char			*str;
 	char			 dname[LDNS_MAX_DOMAINLEN + 1];
+	char			 qclass_buf[16];
+	char			 qtype_buf[16];
 
 	memset(&qinfo, 0, sizeof(qinfo));
 
@@ -583,7 +591,7 @@ udp_receive(int fd, short events, void *arg)
 			goto drop;
 		else
 			pq->rcode_override = ret;
-			goto send_answer;
+		goto send_answer;
 	}
 
 	if (!query_info_parse(&qinfo, pq->qbuf)) {
@@ -597,9 +605,10 @@ udp_receive(int fd, short events, void *arg)
 	}
 	dname_str(qinfo.qname, dname);
 
+	sldns_wire2str_class_buf(qinfo.qclass, qclass_buf, sizeof(qclass_buf));
+	sldns_wire2str_type_buf(qinfo.qtype, qtype_buf, sizeof(qtype_buf));
 	log_debug("%s: %s %s %s ?", ip_port((struct sockaddr *)&udpev->from),
-	    dname, sldns_wire2str_class(qinfo.qclass),
-	    sldns_wire2str_type(qinfo.qtype));
+	    dname, qclass_buf, qtype_buf);
 
 	find.domain = dname;
 	if (RB_FIND(bl_tree, &bl_head, &find) != NULL) {
@@ -673,6 +682,8 @@ chaos_answer(struct pending_query *pq)
 	len = strlen(name);
 	size = sldns_buffer_capacity(pq->qbuf) + COMPRESSED_RR_SIZE + 1 + len;
 
+	if (pq->answer != 0)
+		fatal("chaos_answer");
 	if ((pq->answer = calloc(1, size)) == NULL)
 		return;
 	pq->answer_len = size;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.107 2019/12/12 09:28:58 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.108 2019/12/13 14:37:03 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -754,6 +754,8 @@ try_next_resolver(struct running_query *rq)
 	struct timespec		 tp, elapsed;
 	struct timeval		 tv = {0, 0};
 	int64_t			 ms;
+	char			 qclass_buf[16];
+	char			 qtype_buf[16];
 
 	while(rq->next_resolver < rq->res_pref.len &&
 	    (res=resolvers[rq->res_pref.types[rq->next_resolver]]) == NULL)
@@ -771,10 +773,11 @@ try_next_resolver(struct running_query *rq)
 	timespecsub(&tp, &rq->tp, &elapsed);
 	ms = elapsed.tv_sec * 1000 + elapsed.tv_nsec / 1000000;
 
+	sldns_wire2str_class_buf(rq->query_imsg->c, qclass_buf, sizeof(qclass_buf));
+	sldns_wire2str_type_buf(rq->query_imsg->t, qtype_buf, sizeof(qtype_buf));
 	log_debug("%s[+%lldms]: %s[%s] %s %s %s", __func__, ms,
 	    uw_resolver_type_str[res->type], uw_resolver_state_str[res->state],
-	    rq->query_imsg->qname, sldns_wire2str_class(rq->query_imsg->c),
-	    sldns_wire2str_type(rq->query_imsg->t));
+	    rq->query_imsg->qname, qclass_buf, qtype_buf);
 
 	if ((query_imsg = malloc(sizeof(*query_imsg))) == NULL) {
 		log_warnx("%s", __func__);
@@ -887,6 +890,8 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	int			 r, asr_pref_pos = -1, force_acceptbogus = 0;
 	char			*str;
 	char			 rcode_buf[16];
+	char			 qclass_buf[16];
+	char			 qtype_buf[16];
 
 	clock_gettime(CLOCK_MONOTONIC, &tp);
 
@@ -939,10 +944,11 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	result->answer_len = 0;
 
 	sldns_wire2str_rcode_buf(result->rcode, rcode_buf, sizeof(rcode_buf));
+	sldns_wire2str_class_buf(query_imsg->c, qclass_buf, sizeof(qclass_buf));
+	sldns_wire2str_rcode_buf(query_imsg->t, qtype_buf, sizeof(qtype_buf));
 	log_debug("%s[%s]: %s %s %s rcode: %s[%d], elapsed: %lldms, running: %d",
 	    __func__, uw_resolver_type_str[res->type], query_imsg->qname,
-	    sldns_wire2str_class(query_imsg->c),
-	    sldns_wire2str_type(query_imsg->t), rcode_buf, result->rcode, ms,
+	    qclass_buf, qtype_buf, rcode_buf, result->rcode, ms,
 	    running_query_cnt());
 
 	force_acceptbogus = find_force(&resolver_conf->force, query_imsg->qname,
