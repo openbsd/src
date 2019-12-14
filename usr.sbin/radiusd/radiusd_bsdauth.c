@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_bsdauth.c,v 1.13 2019/12/03 17:45:02 deraadt Exp $	*/
+/*	$OpenBSD: radiusd_bsdauth.c,v 1.14 2019/12/14 15:56:20 millert Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -189,6 +189,7 @@ main(int argc, char *argv[])
 				group = user + args->userlen;
 				group[args->grouplen - 1] = '\0';
 
+				user[strcspn(user, ":")] = '\0';
 				pw = getpwnam(user);
 				if (pw == NULL)
 					goto invalid;
