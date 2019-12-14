@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.40 2018/09/03 05:37:32 miko Exp $ */
+/* $OpenBSD: auixp.c,v 1.41 2019/12/14 12:46:47 fcambus Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -382,7 +382,7 @@ auixp_malloc(void *hdl, int direction, size_t size, int pool, int flags)
 	/* get us a dma buffer itself */
 	error = auixp_allocmem(sc, size, 16, dma);
 	if (error) {
-		free(dma, pool, 0);
+		free(dma, pool, sizeof(*dma));
 		printf("%s: auixp_malloc: not enough memory\n",
 		    sc->sc_dev.dv_xname);
 		return NULL;
@@ -415,7 +415,7 @@ auixp_free(void *hdl, void *addr, int pool)
 			SLIST_REMOVE(&sc->sc_dma_list, dma, auixp_dma,
 			    dma_chain);
 			auixp_freemem(sc, dma);
-			free(dma, pool, 0);
+			free(dma, pool, sizeof(*dma));
 			return;
 		}
 	}
@@ -537,7 +537,7 @@ auixp_allocate_dma_chain(struct auixp_softc *sc, struct auixp_dma **dmap)
 	if (error) {
 		printf("%s: can't malloc dma descriptor chain\n",
 		    sc->sc_dev.dv_xname);
-		free(dma, M_DEVBUF, 0);
+		free(dma, M_DEVBUF, sizeof(*dma));
 		return ENOMEM;
 	}
 
