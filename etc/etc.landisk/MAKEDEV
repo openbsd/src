@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.landisk/MAKEDEV.md,v 1.43 2016/09/11 19:59:53 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.103 2019/06/11 14:48:56 jcs Exp 
+#	OpenBSD: MAKEDEV.common,v 1.105 2019/12/14 05:05:46 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -311,22 +311,22 @@ audio*)
 
 usb*)
 	[ "$i" = "usb" ] && u= || u=$U
-	M usb$u c 64 $U 660
+	M usb$u c 64 $U 640
 	;;
 
 ulpt*)
-	M ulpt$U c 66 $U 660
+	M ulpt$U c 66 $U 600
 	;;
 
 uhid*)
-	M uhid$U c 65 $U 660
+	M uhid$U c 65 $U 600
 	;;
 
 ugen*)
 	n=$(($U*16))
 	for j in 0{0,1,2,3,4,5,6,7,8,9} 1{0,1,2,3,4,5}
 	do
-		M ugen$U.$j c 70 $(($n+10#$j)) 660
+		M ugen$U.$j c 70 $(($n+10#$j)) 600
 	done
 	;;
 

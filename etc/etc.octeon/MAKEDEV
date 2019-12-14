@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.octeon/MAKEDEV.md,v 1.14 2019/07/17 14:36:31 visa Exp 
-#	OpenBSD: MAKEDEV.common,v 1.103 2019/06/11 14:48:56 jcs Exp 
+#	OpenBSD: MAKEDEV.common,v 1.105 2019/12/14 05:05:46 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -299,7 +299,7 @@ audio*)
 
 usb*)
 	[ "$i" = "usb" ] && u= || u=$U
-	M usb$u c 61 $U 660
+	M usb$u c 61 $U 640
 	;;
 
 uall)
