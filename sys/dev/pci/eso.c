@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.44 2018/04/11 04:37:19 ratchov Exp $	*/
+/*	$OpenBSD: eso.c,v 1.45 2019/12/14 12:49:50 fcambus Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -1519,7 +1519,7 @@ eso_allocm(void *hdl, int direction, size_t size, int type, int flags)
 
 	error = eso_allocmem(sc, size, 32, boundary, flags, direction, ed);
 	if (error) {
-		free(ed, type, 0);
+		free(ed, type, sizeof(*ed));
 		return (NULL);
 	}
 	ed->ed_next = sc->sc_dmas;
@@ -1538,7 +1538,7 @@ eso_freem(void *hdl, void *addr, int type)
 		if (KVADDR(p) == addr) {
 			eso_freemem(p);
 			*pp = p->ed_next;
-			free(p, type, 0);
+			free(p, type, sizeof(*p));
 			return;
 		}
 	}
