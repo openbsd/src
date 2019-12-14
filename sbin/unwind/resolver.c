@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.111 2019/12/14 11:18:54 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.112 2019/12/14 17:20:40 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -888,7 +888,7 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	struct timespec		 tp, elapsed;
 	int64_t			 ms;
 	size_t			 i;
-	int			 r, asr_pref_pos = -1, force_acceptbogus = 0;
+	int			 running_res, asr_pref_pos, force_acceptbogus;
 	char			*str;
 	char			 rcode_buf[16];
 	char			 qclass_buf[16];
@@ -897,7 +897,6 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	clock_gettime(CLOCK_MONOTONIC, &tp);
 
 	query_imsg = (struct query_imsg *)arg;
-	rq = find_running_query(query_imsg->id);
 
 	timespecsub(&tp, &query_imsg->tp, &elapsed);
 
@@ -916,6 +915,11 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 		res->latest_histogram[i] += 1000;
 		res->median = histogram_median(res->latest_histogram);
 	}
+
+	if ((rq = find_running_query(query_imsg->id)) == NULL)
+		goto out;
+
+	running_res = --rq->running;
 
 	if (answer_len < LDNS_HEADER_SIZE) {
 		log_warnx("bad packet: too short");
@@ -957,40 +961,36 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	if (tmp_res != NULL && tmp_res->type != res->type)
 		force_acceptbogus = 0;
 
+	timespecsub(&tp, &last_network_change, &elapsed);
 	if ((result->rcode == LDNS_RCODE_NXDOMAIN || sec == BOGUS) &&
-	    !force_acceptbogus && res->type != UW_RES_ASR) {
-		timespecsub(&tp, &last_network_change, &elapsed);
-		if (elapsed.tv_sec < DOUBT_NXDOMAIN_SEC) {
-			/*
-			 * Doubt NXDOMAIN or BOGUS if we just switched
-			 * networks, we might be behind a captive portal.
-			 */
-			log_debug("%s: doubt NXDOMAIN or BOGUS from %s, "
-			    "network change %llds ago", __func__,
-			    uw_resolver_type_str[res->type], elapsed.tv_sec);
-			if (rq) {
-				/* search for ASR */
-				for (i = 0; i < (size_t)rq->res_pref.len; i++)
-					if (rq->res_pref.types[i] ==
-					    UW_RES_ASR) {
-						asr_pref_pos = i;
-						break;
-					}
+	    !force_acceptbogus && res->type != UW_RES_ASR && elapsed.tv_sec <
+	    DOUBT_NXDOMAIN_SEC) {
+		/*
+		 * Doubt NXDOMAIN or BOGUS if we just switched networks, we
+		 * might be behind a captive portal.
+		 */
+		log_debug("%s: doubt NXDOMAIN or BOGUS from %s, network change"
+		    " %llds ago", __func__, uw_resolver_type_str[res->type],
+		    elapsed.tv_sec);
 
-				if (asr_pref_pos != -1 &&
-				    resolvers[UW_RES_ASR] != NULL) {
-					/* go to ASR if not yet scheduled */
-					if (asr_pref_pos >= rq->next_resolver) {
-						rq->next_resolver =
-						    asr_pref_pos;
-						goto retry;
-					} else
-						goto out;
-				}
-				log_debug("%s: using NXDOMAIN or BOGUS, "
-				    "couldn't find working ASR", __func__);
+		/* search for ASR */
+		asr_pref_pos = -1;
+		for (i = 0; i < (size_t)rq->res_pref.len; i++)
+			if (rq->res_pref.types[i] == UW_RES_ASR) {
+				asr_pref_pos = i;
+				break;
 			}
+
+		if (asr_pref_pos != -1 && resolvers[UW_RES_ASR] != NULL) {
+			/* go to ASR if not yet scheduled */
+			if (asr_pref_pos >= rq->next_resolver) {
+				rq->next_resolver = asr_pref_pos;
+				try_next_resolver(rq);
+			}
+			goto out;
 		}
+		log_debug("%s: using NXDOMAIN or BOGUS, couldn't find working "
+		    "ASR", __func__);
 	}
 
 	if (log_getverbose() & OPT_VERBOSE2 && (str =
@@ -1014,39 +1014,26 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	} else
 		query_imsg->bogus = 0;
 
-	if (rq) {
-		rq->running--;
-		resolver_imsg_compose_frontend(IMSG_ANSWER_HEADER, 0,
-		    query_imsg, sizeof(*query_imsg));
+	resolver_imsg_compose_frontend(IMSG_ANSWER_HEADER, 0, query_imsg,
+	    sizeof(*query_imsg));
 
-		/* XXX imsg overflow */
-		resolver_imsg_compose_frontend(IMSG_ANSWER, 0, answer_packet,
-		    answer_len);
+	/* XXX imsg overflow */
+	resolver_imsg_compose_frontend(IMSG_ANSWER, 0, answer_packet,
+	    answer_len);
 
-		TAILQ_REMOVE(&running_queries, rq, entry);
-		evtimer_del(&rq->timer_ev);
-		free(rq->query_imsg);
-		free(rq);
-	}
-
+	TAILQ_REMOVE(&running_queries, rq, entry);
+	evtimer_del(&rq->timer_ev);
+	free(rq->query_imsg);
+	free(rq);
 	goto out;
 
  servfail:
-	if (rq) {
-		/* try_next_resolver() might free rq */
-		r = --rq->running;
-		if (try_next_resolver(rq) != 0 && r == 0) {
-			/* we are the last one, send SERVFAIL */
-			query_imsg->err = -4; /* UB_SERVFAIL */
-			resolver_imsg_compose_frontend(IMSG_ANSWER_HEADER, 0,
-			    query_imsg, sizeof(*query_imsg));
-		}
-	}
-	goto out;
- retry:
-	if (rq) {
-		rq->running--;
-		try_next_resolver(rq);
+	/* try_next_resolver() might free rq */
+	if (try_next_resolver(rq) != 0 && running_res == 0) {
+		/* we are the last one, send SERVFAIL */
+		query_imsg->err = -4; /* UB_SERVFAIL */
+		resolver_imsg_compose_frontend(IMSG_ANSWER_HEADER, 0,
+		    query_imsg, sizeof(*query_imsg));
 	}
  out:
 	free(query_imsg);
