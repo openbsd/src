@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.113 2019/12/09 19:55:03 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.114 2019/12/14 09:39:30 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -34,6 +34,7 @@ package main
 #include <openssl/ecdsa.h>
 #include <openssl/evp.h>
 #include <openssl/hkdf.h>
+#include <openssl/hmac.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
@@ -282,6 +283,23 @@ type wycheproofTestGroupHkdf struct {
 	Type    string                `json:"type"`
 	KeySize int                   `json:"keySize"`
 	Tests   []*wycheproofTestHkdf `json:"tests"`
+}
+
+type wycheproofTestHmac struct {
+	TCID    int      `json:"tcId"`
+	Comment string   `json:"comment"`
+	Key     string   `json:"key"`
+	Msg     string   `json:"msg"`
+	Tag     string   `json:"tag"`
+	Result  string   `json:"result"`
+	Flags   []string `json:"flags"`
+}
+
+type wycheproofTestGroupHmac struct {
+	KeySize int                   `json:"keySize"`
+	TagSize int                   `json:"tagSize"`
+	Type    string                `json:"type"`
+	Tests   []*wycheproofTestHmac `json:"tests"`
 }
 
 type wycheproofTestKW struct {
@@ -1936,6 +1954,76 @@ func runHkdfTestGroup(algorithm string, wtg *wycheproofTestGroupHkdf) bool {
 	return success
 }
 
+func runHmacTest(md *C.EVP_MD, tagBytes int, wt *wycheproofTestHmac) bool {
+	key, err := hex.DecodeString(wt.Key)
+	if err != nil {
+		log.Fatalf("failed to decode key %q: %v", wt.Key, err)
+	}
+
+	msg, err := hex.DecodeString(wt.Msg)
+	if err != nil {
+		log.Fatalf("failed to decode msg %q: %v", wt.Msg, err)
+	}
+
+	keyLen, msgLen := len(key), len(msg)
+	
+	if keyLen == 0 {
+		key = append(key, 0)
+	}
+
+	if msgLen == 0 {
+		msg = append(msg, 0)
+	}
+
+	got := make([]byte, C.EVP_MAX_MD_SIZE)
+	var gotLen C.uint
+
+	ret := C.HMAC(md, unsafe.Pointer(&key[0]), C.int(keyLen), (*C.uchar)(unsafe.Pointer(&msg[0])), C.size_t(msgLen), (*C.uchar)(unsafe.Pointer(&got[0])), &gotLen)
+
+	success := true
+	if ret == nil {
+		if wt.Result != "invalid" {
+			success = false
+			fmt.Printf("FAIL: Test case %d (%q) %v - HMAC: got nil, want %v\n", wt.TCID, wt.Comment, wt.Flags, wt.Result)
+		}
+		return success
+	}
+
+	if int(gotLen) < tagBytes {
+		fmt.Printf("FAIL: Test case %d (%q) %v - HMAC length: got %d, want %d, expected %v\n", wt.TCID, wt.Comment, wt.Flags, gotLen, tagBytes, wt.Result)
+		return false
+	}
+
+	tag, err := hex.DecodeString(wt.Tag)
+	if err != nil {
+		log.Fatalf("failed to decode tag %q: %v", wt.Tag, err)
+	}
+
+	success = bytes.Equal(got[:tagBytes], tag) == (wt.Result == "valid")
+
+	if !success {
+		fmt.Printf("FAIL: Test case %d (%q) %v - got %v want %v\n", wt.TCID, wt.Comment, wt.Flags, success, wt.Result)
+	}
+
+	return success
+}
+
+func runHmacTestGroup(algorithm string, wtg *wycheproofTestGroupHmac) bool {
+	fmt.Printf("Running %v test group %v with key size %d and tag size %d...\n", algorithm, wtg.Type, wtg.KeySize, wtg.TagSize)
+	md, err := hashEvpMdFromString("SHA-" + strings.TrimPrefix(algorithm, "HMACSHA"))
+	if err != nil {
+		log.Fatalf("Failed to get hash: %v", err)
+	}
+
+	success := true
+	for _, wt := range wtg.Tests {
+		if !runHmacTest(md, wtg.TagSize / 8, wt) {
+			success = false
+		}
+	}
+	return success
+}
+
 func runKWTestWrap(keySize int, key []byte, keyLen int, msg []byte, msgLen int, ct []byte, ctLen int, wt *wycheproofTestKW) bool {
 	var aesKey C.AES_KEY
 
@@ -2508,6 +2596,8 @@ func runTestVectors(path string, variant testVariant) bool {
 		}
 	case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
 		wtg = &wycheproofTestGroupHkdf{}
+	case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512":
+		wtg = &wycheproofTestGroupHmac{}
 	case "KW":
 		wtg = &wycheproofTestGroupKW{}
 	case "RSAES-OAEP":
@@ -2581,6 +2671,10 @@ func runTestVectors(path string, variant testVariant) bool {
 			if !runHkdfTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupHkdf)) {
 				success = false
 			}
+		case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512":
+			if !runHmacTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupHmac)) {
+				success = false
+			}
 		case "KW":
 			if !runKWTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupKW)) {
 				success = false
@@ -2646,6 +2740,7 @@ func main() {
 		{"ECDSA P1363", "ecdsa_*_p1363_test.json", P1363},
 		{"ECDSA webcrypto", "ecdsa_webcrypto_test.json", Webcrypto},
 		{"HKDF", "hkdf_sha*_test.json", Normal},
+		{"HMAC", "hmac_sha*_test.json", Normal},
 		{"KW", "kw_test.json", Normal},
 		{"RSA", "rsa_*test.json", Normal},
 		{"X25519", "x25519_test.json", Normal},
