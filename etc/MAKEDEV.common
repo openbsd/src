@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.104 2019/12/13 21:03:57 deraadt Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.105 2019/12/14 05:05:46 deraadt Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -354,11 +354,11 @@ __devitem(lpa, lpa*, Polled printer port,lpt)dnl
 __devtitle({-usb-}, USB devices)dnl
 __devitem({-usb-}, usb*, Bus control devices used by usbd for attach/detach)dnl
 _mkdev({-usb-}, usb*, {-[ "$i" = "usb" ] && u= || u=$U
-	M usb$u c major_usb_c $U 660-})dnl
+	M usb$u c major_usb_c $U 640-})dnl
 __devitem(uhid, uhid*, Generic HID devices)dnl
-_mcdev({-uhid-}, uhid*, {-uhid-}, {-major_uhid_c-}, 660)dnl
+_mcdev({-uhid-}, uhid*, {-uhid-}, {-major_uhid_c-}, 600)dnl
 __devitem(ulpt, ulpt*, Printer devices)dnl
-_mcdev({-ulpt-}, ulpt*, {-ulpt-}, {-major_ulpt_c-}, 660)dnl
+_mcdev({-ulpt-}, ulpt*, {-ulpt-}, {-major_ulpt_c-}, 600)dnl
 __devitem(ttyU, ttyU*, USB serial ports,ucom)dnl
 _mkdev({-ttyU-}, {-ttyU[0-9a-zA-Z]-}, {-U=${i#ttyU*}
 	o=$(alph2d $U)
@@ -368,7 +368,7 @@ __devitem(ugen, ugen*, Generic USB devices)dnl
 _mkdev(ugen, ugen*, {-n=Mult($U, 16)
 	for j in 0{0,1,2,3,4,5,6,7,8,9} 1{0,1,2,3,4,5}
 	do
-		M ugen$U.$j c major_ugen_c Add($n, 10#$j) 660
+		M ugen$U.$j c major_ugen_c Add($n, 10#$j) 600
 	done-})dnl
 __devtitle(call, Call units)dnl
 __devtitle(term, Terminal ports)dnl
