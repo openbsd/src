@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.110 2019/12/13 16:18:54 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.111 2019/12/14 11:18:54 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1072,9 +1072,15 @@ new_resolver(enum uw_resolver_type type)
 			return;
 		break;
 	case UW_RES_RECURSOR:
+		break;
 	case UW_RES_FORWARDER:
 	case UW_RES_ODOT_FORWARDER:
+		if (TAILQ_EMPTY(&resolver_conf->uw_forwarder_list))
+			return;
+		break;
 	case UW_RES_DOT:
+		if (TAILQ_EMPTY(&resolver_conf->uw_dot_forwarder_list))
+			return;
 		break;
 	case UW_RES_NONE:
 		fatalx("cannot create UW_RES_NONE resolver");
