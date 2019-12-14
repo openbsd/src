@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.114 2019/12/14 09:39:30 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.115 2019/12/14 18:39:02 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -1966,7 +1966,7 @@ func runHmacTest(md *C.EVP_MD, tagBytes int, wt *wycheproofTestHmac) bool {
 	}
 
 	keyLen, msgLen := len(key), len(msg)
-	
+
 	if keyLen == 0 {
 		key = append(key, 0)
 	}
@@ -2017,7 +2017,7 @@ func runHmacTestGroup(algorithm string, wtg *wycheproofTestGroupHmac) bool {
 
 	success := true
 	for _, wt := range wtg.Tests {
-		if !runHmacTest(md, wtg.TagSize / 8, wt) {
+		if !runHmacTest(md, wtg.TagSize/8, wt) {
 			success = false
 		}
 	}
@@ -2759,7 +2759,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to glob %v test vectors: %v", test.name, err)
 		}
-		// XXX put check back after wycheproof-testvectors update to 20191126
+		// XXX put check back after wycheproof-testvectors update to 20191214
 		// if len(tvs) == 0 {
 		// 	log.Fatalf("Failed to find %v test vectors at %q\n", test.name, testVectorPath)
 		// }
