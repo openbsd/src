@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.21 2016/12/12 06:43:01 ratchov Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.22 2019/12/14 12:35:19 fcambus Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -603,7 +603,7 @@ auacer_allocm(void *v, int direction, size_t size, int pool, int flags)
 
 	error = auacer_allocmem(sc, size, PAGE_SIZE, p);
 	if (error) {
-		free(p, pool, 0);
+		free(p, pool, sizeof(*p));
 		return (NULL);
 	}
 
@@ -623,7 +623,7 @@ auacer_freem(void *v, void *ptr, int pool)
 		if (KERNADDR(p) == ptr) {
 			auacer_freemem(sc, p);
 			*pp = p->next;
-			free(p, pool, 0);
+			free(p, pool, sizeof(*p));
 			return;
 		}
 	}
