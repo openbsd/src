@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.241 2019/12/13 19:58:59 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.242 2019/12/14 16:24:52 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 13 2019 $
+.Dd $Mdocdate: December 14 2019 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -992,6 +992,7 @@ prefixing the table name with the keyword regex.
 .Pp
 Finally, a number of decisions may be taken:
 .Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
+.It bypass                Ta the session or transaction bypasses filters
 .It disconnect Ar message Ta the session is disconnected with message
 .It junk                  Ta the session or transaction is junked
 .It reject Ar message     Ta the command is rejected with message

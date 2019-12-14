@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.268 2019/12/12 22:10:47 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.269 2019/12/14 16:24:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -174,7 +174,7 @@ typedef struct {
 %}
 
 %token	ACTION ALIAS ANY ARROW AUTH AUTH_OPTIONAL
-%token	BACKUP BOUNCE
+%token	BACKUP BOUNCE BYPASS
 %token	CA CERT CHAIN CHROOT CIPHERS COMMIT COMPRESSION CONNECT
 %token	DATA DATA_LINE DHE DISCONNECT DOMAIN
 %token	EHLO ENABLE ENCRYPTION ERROR EXPAND_ONLY 
@@ -1466,6 +1466,9 @@ filter_action_builtin_nojunk
 | JUNK {
 	filter_config->junk = 1;
 }
+| BYPASS {
+	filter_config->bypass = 1;
+}
 ;
 
 filter_action_builtin_nojunk:
@@ -2500,6 +2503,7 @@ lookup(char *s)
 		{ "auth-optional",     	AUTH_OPTIONAL },
 		{ "backup",		BACKUP },
 		{ "bounce",		BOUNCE },
+		{ "bypass",		BYPASS },
 		{ "ca",			CA },
 		{ "cert",		CERT },
 		{ "chain",		CHAIN },

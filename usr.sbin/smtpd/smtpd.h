@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.644 2019/12/12 22:10:47 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.645 2019/12/14 16:24:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1061,6 +1061,7 @@ struct filter_config {
 	char                           *rewrite;
 	char                           *report;
 	uint8_t				junk;
+  	uint8_t				bypass;
 	char                           *proc;
 
 	const char		      **chain;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.53 2019/12/13 12:43:56 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.54 2019/12/14 16:24:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -797,6 +797,14 @@ filter_protocol_internal(struct filter_session *fs, uint64_t *token, uint64_t re
 			gettimeofday(&tv, NULL);
 			lka_report_filter_report(fs->id, filter->name, 1,
 			    "smtp-in", &tv, filter->config->report);
+		} else if (filter->config->bypass) {
+			log_trace(TRACE_FILTERS, "%016"PRIx64" filters protocol phase=%s, "
+			    "resume=%s, action=bypass, filter=%s, query=%s",
+			    fs->id, phase_name, resume ? "y" : "n",
+			    filter->name,
+			    param);
+			filter_result_proceed(reqid);
+			return;
 		} else {
 			log_trace(TRACE_FILTERS, "%016"PRIx64" filters protocol phase=%s, "
 			    "resume=%s, action=reject, filter=%s, query=%s, response=%s",
