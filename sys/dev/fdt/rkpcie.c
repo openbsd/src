@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpcie.c,v 1.8 2019/06/03 00:43:26 kettenis Exp $	*/
+/*	$OpenBSD: rkpcie.c,v 1.9 2019/12/14 17:42:48 kurt Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -41,6 +41,9 @@
 #define  PCIE_CLIENT_MODE_SELECT_RC	(((1 << 6) << 16) | (1 << 6))
 #define  PCIE_CLIENT_LINK_TRAIN_EN	(((1 << 1) << 16) | (1 << 1))
 #define  PCIE_CLIENT_CONF_EN		(((1 << 0) << 16) | (1 << 0))
+#define PCIE_CLIENT_DEBUG_OUT_0		0x003c
+#define  PCIE_CLIENT_DEBUG_LTSSM_MASK	0x0000001f
+#define  PCIE_CLIENT_DEBUG_LTSSM_L0	0x00000010
 #define PCIE_CLIENT_BASIC_STATUS1	0x0048
 #define  PCIE_CLIENT_LINK_ST		(0x3 << 20)
 #define  PCIE_CLIENT_LINK_ST_UP		(0x3 << 20)
@@ -65,6 +68,8 @@
 #define PCIE_RC_BASE			0xa00000
 #define PCIE_RC_PCIE_LCAP		(PCIE_RC_BASE + 0x0cc)
 #define  PCIE_RC_PCIE_LCAP_APMS_L0S	(1 << 10)
+#define PCIE_RC_LCSR			(PCIE_RC_BASE + 0x0d0)
+#define PCIE_RC_LCSR2			(PCIE_RC_BASE + 0x0f0)
 
 #define PCIE_ATR_BASE			0xc00000
 #define PCIE_ATR_OB_ADDR0(i)		(PCIE_ATR_BASE + 0x000 + (i) * 0x20)
@@ -142,6 +147,44 @@ void	*rkpcie_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *, char *);
 void	rkpcie_intr_disestablish(void *, void *);
 
+/*
+ * When link training, the LTSSM configuration state exits to L0 state upon
+ * success. Wait for L0 state before proceeding after link training has been
+ * initiated either by PCIE_CLIENT_LINK_TRAIN_EN or when triggered via
+ * LCSR Retrain Link bit. See PCIE 2.0 Base Specification, 4.2.6.3.6 
+ * Configuration.Idle.
+ *
+ * Checking link up alone is not sufficient for checking for L0 state. LTSSM
+ * state L0 can be detected when link up is set and link training is cleared.
+ * See PCIE 2.0 Base Specification, 4.2.6 Link Training and Status State Rules,
+ * Table 4-8 Link Status Mapped to the LTSSM.
+ *
+ * However, RC doesn't set the link training bit when initially training via
+ * PCIE_CLIENT_LINK_TRAIN_EN. Fortunately, RC has provided a debug register
+ * that has the LTSSM state which can be checked instead.
+ *
+ * It is important to have reached L0 state before beginning Gen 2 training,
+ * as it is documented that setting the Retrain Link bit while currently
+ * in Recovery or Configuration states is a race condition that may result
+ * in missing the retraining. See See PCIE 2.0 Base Specification, 7.8.7
+ * Link Control Register implementation notes on Retrain Link bit.
+ */
+
+static int
+rkpcie_link_training_wait(struct rkpcie_softc *sc)
+{
+	uint32_t status;
+	int timo;
+	for (timo = 500; timo > 0; timo--) {
+		status = HREAD4(sc, PCIE_CLIENT_DEBUG_OUT_0);
+		if ((status & PCIE_CLIENT_DEBUG_LTSSM_MASK) ==
+		    PCIE_CLIENT_DEBUG_LTSSM_L0)
+			break;
+		delay(1000);
+	}
+	return timo == 0;
+}
+
 void
 rkpcie_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -151,7 +194,8 @@ rkpcie_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t *ep_gpio;
 	uint32_t bus_range[2];
 	uint32_t status;
-	int len, timo;
+	uint32_t max_link_speed;
+	int len;
 
 	if (faa->fa_nreg < 2) {
 		printf(": no registers\n");
@@ -185,6 +229,8 @@ rkpcie_attach(struct device *parent, struct device *self, void *aux)
 	ep_gpio = malloc(len, M_TEMP, M_WAITOK);
 	OF_getpropintarray(sc->sc_node, "ep-gpios", ep_gpio, len);
 
+	max_link_speed = OF_getpropint(sc->sc_node, "max-link-speed", 1);
+
 	clock_enable_all(sc->sc_node);
 
 	gpio_controller_config_pin(ep_gpio, GPIO_CONFIG_OUTPUT);
@@ -207,12 +253,14 @@ rkpcie_attach(struct device *parent, struct device *self, void *aux)
 	reset_deassert(sc->sc_node, "aclk");
 	reset_deassert(sc->sc_node, "pclk");
 
-	/* Only advertise Gen 1 support for now. */
-	HWRITE4(sc, PCIE_CLIENT_BASIC_STRAP_CONF, PCIE_CLIENT_PCIE_GEN_SEL_1);
+	if (max_link_speed > 1)
+		status = PCIE_CLIENT_PCIE_GEN_SEL_2;
+	else
+		status = PCIE_CLIENT_PCIE_GEN_SEL_1;
 
 	/* Switch into Root Complex mode. */
-	HWRITE4(sc, PCIE_CLIENT_BASIC_STRAP_CONF,
-	    PCIE_CLIENT_MODE_SELECT_RC | PCIE_CLIENT_CONF_EN);
+	HWRITE4(sc, PCIE_CLIENT_BASIC_STRAP_CONF, PCIE_CLIENT_MODE_SELECT_RC
+	    | PCIE_CLIENT_CONF_EN | status);
 
 	rkpcie_phy_poweron(sc);
 
@@ -220,6 +268,16 @@ rkpcie_attach(struct device *parent, struct device *self, void *aux)
 	reset_deassert(sc->sc_node, "mgmt");
 	reset_deassert(sc->sc_node, "mgmt-sticky");
 	reset_deassert(sc->sc_node, "pipe");
+
+	/*
+	 * Workaround RC bug where Target Link Speed is not set by GEN_SEL_2
+	 */
+	if (max_link_speed > 1) {
+		status = HREAD4(sc, PCIE_RC_LCSR2);
+		status &= ~PCI_PCIE_LCSR2_TLS;
+		status |= PCI_PCIE_LCSR2_TLS_5;
+		HWRITE4(sc, PCIE_RC_LCSR2, status);
+	}
 
 	/* Start link training. */
 	HWRITE4(sc, PCIE_CLIENT_BASIC_STRAP_CONF, PCIE_CLIENT_LINK_TRAIN_EN);
@@ -229,15 +287,24 @@ rkpcie_attach(struct device *parent, struct device *self, void *aux)
 	gpio_controller_set_pin(ep_gpio, 1);
 	free(ep_gpio, M_TEMP, len);
 
-	for (timo = 500; timo > 0; timo--) {
-		status = HREAD4(sc, PCIE_CLIENT_BASIC_STATUS1);
-		if ((status & PCIE_CLIENT_LINK_ST) == PCIE_CLIENT_LINK_ST_UP)
-			break;
-		delay(1000);
-	}
-	if (timo == 0) {
+	if (rkpcie_link_training_wait(sc)) {
 		printf("%s: link training timeout\n", sc->sc_dev.dv_xname);
 		return;
+	}
+
+	if (max_link_speed > 1) {
+		status = HREAD4(sc, PCIE_RC_LCSR);
+		if ((status & PCI_PCIE_LCSR_CLS) == PCI_PCIE_LCSR_CLS_2_5) {
+			HWRITE4(sc, PCIE_RC_LCSR, HREAD4(sc, PCIE_RC_LCSR) | 
+			    PCI_PCIE_LCSR_RL);
+
+			if (rkpcie_link_training_wait(sc)) {
+				/* didn't make it back to L0 state */
+				printf("%s: gen2 link training timeout\n",
+				    sc->sc_dev.dv_xname);
+				return;
+			}
+		}
 	}
 
 	/* Initialize Root Complex registers. */
