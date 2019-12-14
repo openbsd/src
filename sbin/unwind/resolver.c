@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.112 2019/12/14 17:20:40 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.113 2019/12/14 19:56:24 otto Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -394,6 +394,8 @@ resolver(int debug, int verbose)
 		fatal(NULL);
 
 	alloc_init(&unified_cache_alloc, NULL, 0);
+	if (unified_cache_alloc.max_reg_blocks != 10)
+		fatalx("local libunbound/util/alloc.c diff lost");
 
 	/*
 	 * context_finalize() ensures that the cache is sized according to
