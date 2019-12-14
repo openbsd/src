@@ -1388,7 +1388,6 @@
 ./usr/share/man/man4/gpiodcf.4
 ./usr/share/man/man4/gpioiic.4
 ./usr/share/man/man4/gpioow.4
-./usr/share/man/man4/gpr.4
 ./usr/share/man/man4/gre.4
 ./usr/share/man/man4/gscsio.4
 ./usr/share/man/man4/hds.4
