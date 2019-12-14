@@ -1,4 +1,4 @@
-.\" $OpenBSD: HMAC.3,v 1.15 2019/06/07 19:40:35 schwarze Exp $
+.\" $OpenBSD: HMAC.3,v 1.16 2019/12/14 09:04:51 tb Exp $
 .\" full merge up to: OpenSSL crypto/hmac a528d4f0 Oct 27 13:40:11 2015 -0400
 .\" selective merge up to: OpenSSL man3/HMAC b3696a55 Sep 2 09:35:50 2017 -0400
 .\"
@@ -52,7 +52,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 7 2019 $
+.Dd $Mdocdate: December 14 2019 $
 .Dt HMAC 3
 .Os
 .Sh NAME
@@ -80,7 +80,7 @@
 .Fa "const void *key"
 .Fa "int key_len"
 .Fa "const unsigned char *d"
-.Fa "int n"
+.Fa "size_t n"
 .Fa "unsigned char *md"
 .Fa "unsigned int *md_len"
 .Fc
@@ -125,7 +125,7 @@
 .Fo HMAC_Update
 .Fa "HMAC_CTX *ctx"
 .Fa "const unsigned char *data"
-.Fa "int len"
+.Fa "size_t len"
 .Fc
 .Ft int
 .Fo HMAC_Final
