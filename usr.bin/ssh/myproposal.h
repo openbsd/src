@@ -1,4 +1,4 @@
-/* $OpenBSD: myproposal.h,v 1.62 2019/12/10 22:43:19 djm Exp $ */
+/* $OpenBSD: myproposal.h,v 1.63 2019/12/15 18:57:30 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -41,6 +41,8 @@
 #define KEX_CLIENT_KEX KEX_SERVER_KEX
 
 #define	KEX_DEFAULT_PK_ALG	\
+	"sk-ecdsa-sha2-nistp256-cert-v01@openssh.com," \
+	"sk-ssh-ed25519-cert-v01@openssh.com," \
 	"ecdsa-sha2-nistp256-cert-v01@openssh.com," \
 	"ecdsa-sha2-nistp384-cert-v01@openssh.com," \
 	"ecdsa-sha2-nistp521-cert-v01@openssh.com," \
@@ -48,6 +50,8 @@
 	"rsa-sha2-512-cert-v01@openssh.com," \
 	"rsa-sha2-256-cert-v01@openssh.com," \
 	"ssh-rsa-cert-v01@openssh.com," \
+	"sk-ecdsa-sha2-nistp256@openssh.com," \
+	"sk-ssh-ed25519@openssh.com," \
 	"ecdsa-sha2-nistp256," \
 	"ecdsa-sha2-nistp384," \
 	"ecdsa-sha2-nistp521," \
@@ -89,26 +93,6 @@
 	"rsa-sha2-256," \
 	"ssh-rsa"
 
-#define	PUBKEY_DEFAULT_PK_ALG	\
-	"sk-ecdsa-sha2-nistp256-cert-v01@openssh.com," \
-	"ecdsa-sha2-nistp256-cert-v01@openssh.com," \
-	"ecdsa-sha2-nistp384-cert-v01@openssh.com," \
-	"ecdsa-sha2-nistp521-cert-v01@openssh.com," \
-	"sk-ssh-ed25519-cert-v01@openssh.com," \
-	"ssh-ed25519-cert-v01@openssh.com," \
-	"rsa-sha2-512-cert-v01@openssh.com," \
-	"rsa-sha2-256-cert-v01@openssh.com," \
-	"ssh-rsa-cert-v01@openssh.com," \
-	"sk-ecdsa-sha2-nistp256@openssh.com," \
-	"ecdsa-sha2-nistp256," \
-	"ecdsa-sha2-nistp384," \
-	"ecdsa-sha2-nistp521," \
-	"sk-ssh-ed25519@openssh.com," \
-	"ssh-ed25519," \
-	"rsa-sha2-512," \
-	"rsa-sha2-256," \
-	"ssh-rsa"
-
 #else /* WITH_OPENSSL */
 
 #define KEX_SERVER_KEX		\
@@ -117,7 +101,6 @@
 #define	KEX_DEFAULT_PK_ALG	\
 	"ssh-ed25519-cert-v01@openssh.com," \
 	"ssh-ed25519"
-#define PUBKEY_DEFAULT_PK_ALG KEX_DEFAULT_PK_ALG
 #define	KEX_SERVER_ENCRYPT \
 	"chacha20-poly1305@openssh.com," \
 	"aes128-ctr,aes192-ctr,aes256-ctr"
