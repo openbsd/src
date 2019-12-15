@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.45 2019/11/23 08:17:39 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.46 2019/12/15 16:34:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -727,8 +727,8 @@ delete_address(struct imsg_configure_address *address)
 		return;
 	}
 
-	memcpy(&in6_ridreq.ifr_ifru, &address->addr,
-	    sizeof(in6_ridreq.ifr_ifru));
+	memcpy(&in6_ridreq.ifr_addr, &address->addr,
+	    sizeof(in6_ridreq.ifr_addr));
 
 	log_debug("%s: %s", __func__, if_name);
 
