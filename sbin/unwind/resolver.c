@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.114 2019/12/15 13:49:13 otto Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.115 2019/12/15 17:23:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -776,8 +776,10 @@ try_next_resolver(struct running_query *rq)
 	timespecsub(&tp, &rq->tp, &elapsed);
 	ms = elapsed.tv_sec * 1000 + elapsed.tv_nsec / 1000000;
 
-	sldns_wire2str_class_buf(rq->query_imsg->c, qclass_buf, sizeof(qclass_buf));
-	sldns_wire2str_type_buf(rq->query_imsg->t, qtype_buf, sizeof(qtype_buf));
+	sldns_wire2str_class_buf(rq->query_imsg->c, qclass_buf,
+	    sizeof(qclass_buf));
+	sldns_wire2str_type_buf(rq->query_imsg->t, qtype_buf,
+	    sizeof(qtype_buf));
 	log_debug("%s[+%lldms]: %s[%s] %s %s %s", __func__, ms,
 	    uw_resolver_type_str[res->type], uw_resolver_state_str[res->state],
 	    rq->query_imsg->qname, qclass_buf, qtype_buf);
