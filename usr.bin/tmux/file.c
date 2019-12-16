@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.3 2019/12/16 15:48:50 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.4 2019/12/16 16:09:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -376,8 +376,8 @@ file_push(struct client_file *cf)
 	left = EVBUFFER_LENGTH(cf->buffer);
 	while (left != 0) {
 		sent = left;
-		if (sent > MAX_IMSGSIZE - IMSG_HEADER_SIZE)
-			sent = MAX_IMSGSIZE - IMSG_HEADER_SIZE;
+		if (sent > MAX_IMSGSIZE - IMSG_HEADER_SIZE - sizeof *msg)
+			sent = MAX_IMSGSIZE - IMSG_HEADER_SIZE - sizeof *msg;
 
 		msglen = (sizeof *msg) + sent;
 		msg = xrealloc(msg, msglen);

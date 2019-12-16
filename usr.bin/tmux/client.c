@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.135 2019/12/16 15:48:50 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.136 2019/12/16 16:09:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -601,8 +601,8 @@ client_read_callback(__unused struct bufferevent *bev, void *arg)
 
 		if (bsize == 0)
 			break;
-		if (bsize > MAX_IMSGSIZE - IMSG_HEADER_SIZE)
-			bsize = MAX_IMSGSIZE - IMSG_HEADER_SIZE;
+		if (bsize > MAX_IMSGSIZE - IMSG_HEADER_SIZE - sizeof *msg)
+			bsize = MAX_IMSGSIZE - IMSG_HEADER_SIZE - sizeof *msg;
 		log_debug("read %zu from file %d", bsize, cf->stream);
 
 		msglen = (sizeof *msg) + bsize;
