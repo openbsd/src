@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.75 2019/03/24 05:30:35 deraadt Exp $	*/
+/*	$OpenBSD: ps.c,v 1.76 2019/12/16 19:21:16 guenther Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -361,8 +361,6 @@ main(int argc, char *argv[])
 	 * for each proc, call each variable output function.
 	 */
 	for (i = lineno = 0; i < nentries; i++) {
-		if (showthreads == 0 && (kinfo[i]->p_flag & P_THREAD) != 0)
-			continue;
 		if (xflg == 0 && ((int)kinfo[i]->p_tdev == NODEV ||
 		    (kinfo[i]->p_psflags & PS_CONTROLT ) == 0))
 			continue;

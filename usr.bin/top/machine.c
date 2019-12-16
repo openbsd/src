@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.100 2019/10/08 20:51:03 kn Exp $	 */
+/* $OpenBSD: machine.c,v 1.101 2019/12/16 19:21:17 guenther Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -427,9 +427,14 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	int hide_uid;
 	int total_procs, active_procs;
 	struct kinfo_proc **prefp, *pp;
-	int what = KERN_PROC_KTHREAD;
+	int what = KERN_PROC_ALL;
 
-	if (sel->threads)
+	show_system = sel->system;
+	show_threads = sel->threads;
+
+	if (show_system)
+		what = KERN_PROC_KTHREAD;
+	if (show_threads)
 		what |= KERN_PROC_SHOW_THREADS;
 
 	if ((pbase = getprocs(what, 0, &nproc)) == NULL) {
@@ -448,8 +453,6 @@ get_process_info(struct system_info *si, struct process_select *sel,
 
 	/* set up flags which define what we are going to select */
 	show_idle = sel->idle;
-	show_system = sel->system;
-	show_threads = sel->threads;
 	show_uid = sel->uid != (uid_t)-1;
 	hide_uid = sel->huid != (uid_t)-1;
 	show_pid = sel->pid != (pid_t)-1;
@@ -462,16 +465,17 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	prefp = pref;
 	for (pp = pbase; pp < &pbase[nproc]; pp++) {
 		/*
-		 *  Place pointers to each valid proc structure in pref[].
-		 *  Process slots that are actually in use have a non-zero
-		 *  status field.  Processes with P_SYSTEM set are system
-		 *  processes---these get ignored unless show_system is set.
+		 * When showing threads, we want to ignore the structure
+		 * that represents the entire process, which has TID == -1
 		 */
 		if (show_threads && pp->p_tid == -1)
 			continue;
-		if (pp->p_stat != 0 &&
-		    (show_system || (pp->p_flag & P_SYSTEM) == 0) &&
-		    (show_threads || (pp->p_flag & P_THREAD) == 0)) {
+		/*
+		 * Place pointers to each valid proc structure in pref[].
+		 * Process slots that are actually in use have a non-zero
+		 * status field.
+		 */
+		if (pp->p_stat != 0) {
 			total_procs++;
 			process_states[(unsigned char) pp->p_stat]++;
 			if ((pp->p_psflags & PS_ZOMBIE) == 0 &&
