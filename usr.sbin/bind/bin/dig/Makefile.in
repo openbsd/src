@@ -1,7 +1,7 @@
-# Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2005, 2007, 2009, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -13,26 +13,30 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: Makefile.in,v 1.33.18.6 2005/09/09 14:11:04 marka Exp $
+# $Id: Makefile.in,v 1.7 2019/12/16 16:16:23 deraadt Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
 top_srcdir =	@top_srcdir@
 
-@BIND9_VERSION@
+VERSION=@BIND9_VERSION@
 
 @BIND9_MAKE_INCLUDES@
 
-CINCLUDES =	-I${srcdir}/include ${DNS_INCLUDES} ${BIND9_INCLUDES} \
-		${ISC_INCLUDES} ${LWRES_INCLUDES}
+READLINE_LIB = @READLINE_LIB@
 
-CDEFINES =	-DVERSION=\"${VERSION}\"
+CINCLUDES =	-I${srcdir}/include ${DNS_INCLUDES} ${BIND9_INCLUDES} \
+		${ISC_INCLUDES} @DST_OPENSSL_INC@ \
+		${LWRES_INCLUDES} ${ISCCFG_INCLUDES}
+
+CDEFINES =	-DVERSION=\"${VERSION}\" @CRYPTO@
 CWARNINGS =
 
 ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
 DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
 BIND9LIBS =	../../lib/bind9/libbind9.@A@
 ISCLIBS =	../../lib/isc/libisc.@A@
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@
 LWRESLIBS =	../../lib/lwres/liblwres.@A@
 
 ISCCFGDEPLIBS =	../../lib/isccfg/libisccfg.@A@
@@ -41,11 +45,14 @@ BIND9DEPLIBS =	../../lib/bind9/libbind9.@A@
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
 LWRESDEPLIBS =	../../lib/lwres/liblwres.@A@
 
-DEPLIBS =	${DNSDEPLIBS} ${BIND9DEPLIBS} ${ISCDEPLIBS} ${ISCCFGDEPLIBS} \
-		${LWRESDEPLIBS}
+DEPLIBS =	${DNSDEPLIBS} ${BIND9DEPLIBS} ${ISCDEPLIBS} \
+		${ISCCFGDEPLIBS} ${LWRESDEPLIBS}
 
-LIBS =		${LWRESLIBS} ${DNSLIBS} ${BIND9LIBS} ${ISCLIBS} \
-		${ISCCFGLIBS} @IDNLIBS@ @LIBS@
+LIBS =		${LWRESLIBS} ${BIND9LIBS} ${ISCCFGLIBS} \
+		${ISCLIBS} @IDNLIBS@ @LIBS@
+
+NOSYMLIBS =	${LWRESLIBS} ${BIND9LIBS} ${ISCCFGLIBS} \
+		${ISCNOSYMLIBS} @IDNLIBS@ @LIBS@
 
 SUBDIRS =
 
@@ -66,16 +73,19 @@ MANOBJS =	${MANPAGES} ${HTMLPAGES}
 @BIND9_MAKE_RULES@
 
 dig@EXEEXT@: dig.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
-	dig.@O@ dighost.@O@ ${UOBJS} ${LIBS}
+	export BASEOBJS="dig.@O@ dighost.@O@ ${UOBJS}"; \
+	export LIBS0="${DNSLIBS}"; \
+	${FINALBUILDCMD}
 
 host@EXEEXT@: host.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
-	host.@O@ dighost.@O@ ${UOBJS} ${LIBS}
+	export BASEOBJS="host.@O@ dighost.@O@ ${UOBJS}"; \
+	export LIBS0="${DNSLIBS}"; \
+	${FINALBUILDCMD}
 
 nslookup@EXEEXT@: nslookup.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
-	nslookup.@O@ dighost.@O@ ${UOBJS} ${LIBS}
+	export BASEOBJS="nslookup.@O@ dighost.@O@ ${READLINE_LIB} ${UOBJS}"; \
+	export LIBS0="${DNSLIBS}"; \
+	${FINALBUILDCMD}
 
 doc man:: ${MANOBJS}
 
@@ -99,3 +109,11 @@ install:: dig@EXEEXT@ host@EXEEXT@ nslookup@EXEEXT@ installdirs
 	for m in ${MANPAGES}; do \
 		${INSTALL_DATA} ${srcdir}/$$m ${DESTDIR}${mandir}/man1; \
 		done
+
+uninstall::
+	for m in ${MANPAGES}; do \
+		rm -f ${DESTDIR}${mandir}/man1/$$m ; \
+	done
+	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${bindir}/nslookup@EXEEXT@
+	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${bindir}/host@EXEEXT@
+	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${bindir}/dig@EXEEXT@

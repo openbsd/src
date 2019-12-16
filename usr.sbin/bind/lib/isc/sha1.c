@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,8 +15,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: sha1.c,v 1.14.18.2 2005/04/29 00:16:49 marka Exp $ */
-/* $OpenBSD: sha1.c,v 1.4 2007/12/09 13:39:44 jakob Exp $ */
+/* $Id: sha1.c,v 1.5 2019/12/16 16:16:26 deraadt Exp $ */
+
+/*	$NetBSD: sha1.c,v 1.5 2000/01/22 22:19:14 mycroft Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.5 2019/12/16 16:16:26 deraadt Exp $	*/
 
 /*! \file
  * SHA-1 in C
@@ -36,10 +38,108 @@
 #include "config.h"
 
 #include <isc/assertions.h>
+#include <isc/platform.h>
 #include <isc/sha1.h>
 #include <isc/string.h>
 #include <isc/types.h>
 #include <isc/util.h>
+
+#if PKCS11CRYPTO
+#include <pk11/internal.h>
+#include <pk11/pk11.h>
+#endif
+
+#ifdef ISC_PLATFORM_OPENSSLHASH
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#define EVP_MD_CTX_new() &(context->_ctx)
+#define EVP_MD_CTX_free(ptr) EVP_MD_CTX_cleanup(ptr)
+#endif
+
+void
+isc_sha1_init(isc_sha1_t *context)
+{
+	INSIST(context != NULL);
+
+	context->ctx = EVP_MD_CTX_new();
+	RUNTIME_CHECK(context->ctx != NULL);
+	RUNTIME_CHECK(EVP_DigestInit(context->ctx, EVP_sha1()) == 1);
+}
+
+void
+isc_sha1_invalidate(isc_sha1_t *context) {
+	EVP_MD_CTX_free(context->ctx);
+	context->ctx = NULL;
+}
+
+void
+isc_sha1_update(isc_sha1_t *context, const unsigned char *data,
+		unsigned int len)
+{
+	INSIST(context != 0);
+	INSIST(context->ctx != 0);
+	INSIST(data != 0);
+
+	RUNTIME_CHECK(EVP_DigestUpdate(context->ctx,
+				       (const void *) data,
+				       (size_t) len) == 1);
+}
+
+void
+isc_sha1_final(isc_sha1_t *context, unsigned char *digest) {
+	INSIST(digest != 0);
+	INSIST(context != 0);
+	INSIST(context->ctx != 0);
+
+	RUNTIME_CHECK(EVP_DigestFinal(context->ctx, digest, NULL) == 1);
+	EVP_MD_CTX_free(context->ctx);
+	context->ctx = NULL;
+}
+
+#elif PKCS11CRYPTO
+
+void
+isc_sha1_init(isc_sha1_t *ctx) {
+	CK_RV rv;
+	CK_MECHANISM mech = { CKM_SHA_1, NULL, 0 };
+
+	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
+				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
+	PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+}
+
+void
+isc_sha1_invalidate(isc_sha1_t *ctx) {
+	CK_BYTE garbage[ISC_SHA1_DIGESTLENGTH];
+	CK_ULONG len = ISC_SHA1_DIGESTLENGTH;
+
+	if (ctx->handle == NULL)
+		return;
+	(void) pkcs_C_DigestFinal(ctx->session, garbage, &len);
+	memset(garbage, 0, sizeof(garbage));
+	pk11_return_session(ctx);
+}
+
+void
+isc_sha1_update(isc_sha1_t *ctx, const unsigned char *buf, unsigned int len) {
+	CK_RV rv;
+	CK_BYTE_PTR pPart;
+
+	DE_CONST(buf, pPart);
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, pPart, (CK_ULONG) len));
+}
+
+void
+isc_sha1_final(isc_sha1_t *ctx, unsigned char *digest) {
+	CK_RV rv;
+	CK_ULONG len = ISC_SHA1_DIGESTLENGTH;
+
+	PK11_FATALCHECK(pkcs_C_DigestFinal,
+			(ctx->session, (CK_BYTE_PTR) digest, &len));
+	pk11_return_session(ctx);
+}
+
+#else
 
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
 
@@ -171,7 +271,7 @@ transform(isc_uint32_t state[5], const unsigned char buffer[64]) {
 	INSIST(state != NULL);
 
 	block = &workspace;
-	(void)memcpy(block, buffer, 64);
+	(void)memmove(block, buffer, 64);
 
 	/* Copy context->state[] to working vars */
 	a = state[0];
@@ -218,6 +318,8 @@ transform(isc_uint32_t state[5], const unsigned char buffer[64]) {
 
 	/* Wipe variables */
 	a = b = c = d = e = 0;
+	/* Avoid compiler warnings */
+	POST(a); POST(b); POST(c); POST(d); POST(e);
 }
 
 
@@ -261,7 +363,7 @@ isc_sha1_update(isc_sha1_t *context, const unsigned char *data,
 		context->count[1] += (len >> 29) + 1;
 	j = (j >> 3) & 63;
 	if ((j + len) > 63) {
-		(void)memcpy(&context->buffer[j], data, (i = 64 - j));
+		(void)memmove(&context->buffer[j], data, (i = 64 - j));
 		transform(context->state, context->buffer);
 		for (; i + 63 < len; i += 64)
 			transform(context->state, &data[i]);
@@ -270,7 +372,7 @@ isc_sha1_update(isc_sha1_t *context, const unsigned char *data,
 		i = 0;
 	}
 
-	(void)memcpy(&context->buffer[j], &data[i], len - i);
+	(void)memmove(&context->buffer[j], &data[i], len - i);
 }
 
 
@@ -311,3 +413,4 @@ isc_sha1_final(isc_sha1_t *context, unsigned char *digest) {
 
 	memset(context, 0, sizeof(isc_sha1_t));
 }
+#endif

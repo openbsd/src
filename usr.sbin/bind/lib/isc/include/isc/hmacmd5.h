@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,9 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: hmacmd5.h,v 1.5.18.4 2006/01/27 23:57:45 marka Exp $ */
+/* $Id: hmacmd5.h,v 1.2 2019/12/16 16:16:26 deraadt Exp $ */
 
-/*! \file
+/*! \file isc/hmacmd5.h
  * \brief This is the header file for the HMAC-MD5 keyed hash algorithm
  * described in RFC2104.
  */
@@ -25,16 +25,40 @@
 #ifndef ISC_HMACMD5_H
 #define ISC_HMACMD5_H 1
 
+#include <pk11/site.h>
+
+#ifndef PK11_MD5_DISABLE
+
 #include <isc/lang.h>
 #include <isc/md5.h>
+#include <isc/platform.h>
 #include <isc/types.h>
 
 #define ISC_HMACMD5_KEYLENGTH 64
+
+#ifdef ISC_PLATFORM_OPENSSLHASH
+#include <openssl/opensslv.h>
+#include <openssl/hmac.h>
+
+typedef struct {
+	HMAC_CTX *ctx;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	HMAC_CTX _ctx;
+#endif
+} isc_hmacmd5_t;
+
+#elif PKCS11CRYPTO
+#include <pk11/pk11.h>
+
+typedef pk11_context_t isc_hmacmd5_t;
+
+#else
 
 typedef struct {
 	isc_md5_t md5ctx;
 	unsigned char key[ISC_HMACMD5_KEYLENGTH];
 } isc_hmacmd5_t;
+#endif
 
 ISC_LANG_BEGINDECLS
 
@@ -59,5 +83,7 @@ isc_boolean_t
 isc_hmacmd5_verify2(isc_hmacmd5_t *ctx, unsigned char *digest, size_t len);
 
 ISC_LANG_ENDDECLS
+
+#endif /* !PK11_MD5_DISABLE */
 
 #endif /* ISC_HMACMD5_H */

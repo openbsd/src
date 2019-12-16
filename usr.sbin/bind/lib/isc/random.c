@@ -1,9 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
- * Copyright (C) 2008 Damien Miller
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -16,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: random.c,v 1.21.18.2 2005/04/29 00:16:48 marka Exp $ */
+/* $Id: random.c,v 1.10 2019/12/16 16:16:26 deraadt Exp $ */
 
 /*! \file */
 
@@ -44,14 +43,14 @@ initialize_rand(void)
 {
 #ifndef HAVE_ARC4RANDOM
 	unsigned int pid = getpid();
-	
+
 	/*
 	 * The low bits of pid generally change faster.
 	 * Xor them with the high bits of time which change slowly.
 	 */
 	pid = ((pid << 16) & 0xffff0000) | ((pid >> 16) & 0xffff);
 
-	srand(time(NULL) ^ pid);
+	srand((unsigned)time(NULL) ^ pid);
 #endif
 }
 
@@ -68,6 +67,21 @@ isc_random_seed(isc_uint32_t seed)
 
 #ifndef HAVE_ARC4RANDOM
 	srand(seed);
+#elif defined(HAVE_ARC4RANDOM_STIR)
+	/* Formally not necessary... */
+	UNUSED(seed);
+	arc4random_stir();
+#elif defined(HAVE_ARC4RANDOM_ADDRANDOM)
+	arc4random_addrandom((u_char *) &seed, sizeof(isc_uint32_t));
+#else
+       /*
+	* If arc4random() is available and no corresponding seeding
+	* function arc4random_addrandom() is available, no seeding is
+	* done on such platforms (e.g., OpenBSD 5.5).  This is because
+	* the OS itself is supposed to seed the RNG and it is assumed
+	* that no explicit seeding is required.
+	*/
+       UNUSED(seed);
 #endif
 }
 
@@ -83,61 +97,30 @@ isc_random_get(isc_uint32_t *val)
 	 * rand()'s lower bits are not random.
 	 * rand()'s upper bit is zero.
 	 */
+#if RAND_MAX >= 0xfffff
+	/* We have at least 20 bits.  Use lower 16 excluding lower most 4 */
 	*val = ((rand() >> 4) & 0xffff) | ((rand() << 12) & 0xffff0000);
+#elif RAND_MAX >= 0x7fff
+	/* We have at least 15 bits.  Use lower 10/11 excluding lower most 4 */
+	*val = ((rand() >> 4) & 0x000007ff) | ((rand() << 7) & 0x003ff800) |
+		((rand() << 18) & 0xffc00000);
+#else
+#error RAND_MAX is too small
+#endif
 #else
 	*val = arc4random();
 #endif
 }
 
 isc_uint32_t
-isc_random_uniform(isc_uint32_t upper_bound)
-{
-	isc_uint32_t r, min;
-
-	/*
-	 * Uniformity is achieved by generating new random numbers until
-	 * the one returned is outside the range [0, 2**32 % upper_bound).
-	 * This guarantees the selected random number will be inside
-	 * [2**32 % upper_bound, 2**32) which maps back to [0, upper_bound)
-	 * after reduction modulo upper_bound.
-	 */
-
-	if (upper_bound < 2)
-		return 0;
-
-#if (ULONG_MAX > 0xffffffffUL)
-	min = 0x100000000UL % upper_bound;
-#else
-	/* Calculate (2**32 % upper_bound) avoiding 64-bit math */
-	if (upper_bound > 0x80000000)
-		min = 1 + ~upper_bound;		/* 2**32 - upper_bound */
-	else {
-		/* (2**32 - x) % x == 2**32 % x when x <= 2**31 */
-		min = ((0xffffffff - upper_bound) + 1) % upper_bound;
-	}
-#endif
-
-	/*
-	 * This could theoretically loop forever doing this, but each retry
-	 * has p > 0.5 (worst case, usually far better) of selecting a
-	 * number inside the range we need, so it should rarely need to
-	 * re-roll.
-	 */
-	for (;;) {
-		isc_random_get(&r);
-		if (r >= min)
-			break;
-	}
-
-	return r % upper_bound;
-}
-
-isc_uint32_t
 isc_random_jitter(isc_uint32_t max, isc_uint32_t jitter) {
-	REQUIRE(jitter < max);
+	isc_uint32_t rnd;
+
+	REQUIRE(jitter < max || (jitter == 0 && max == 0));
+
 	if (jitter == 0)
 		return (max);
-	else
-		return max - isc_random_uniform(jitter);
-}
 
+	isc_random_get(&rnd);
+	return (max - rnd % jitter);
+}

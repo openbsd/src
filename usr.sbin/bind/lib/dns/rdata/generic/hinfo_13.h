@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -18,7 +18,7 @@
 #ifndef GENERIC_HINFO_13_H
 #define GENERIC_HINFO_13_H 1
 
-/* $ISC: hinfo_13.h,v 1.23 2004/03/05 05:10:12 marka Exp $ */
+/* $Id: hinfo_13.h,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
 
 typedef struct dns_rdata_hinfo {
 	dns_rdatacommon_t	common;

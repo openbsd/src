@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,8 +15,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: print.c,v 1.2.2.7 2005/10/14 01:28:30 marka Exp $ */
-
 #include <config.h>
 
 #include <ctype.h>
@@ -26,6 +24,7 @@
 #define	LWRES__PRINT_SOURCE	/* Used to get the lwres_print_* prototypes. */
 
 #include <lwres/stdlib.h>
+#include <lwres/string.h>
 
 #include "assert_p.h"
 #include "print_p.h"
@@ -67,6 +66,7 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 	int h;
 	int l;
 	int q;
+	int z;
 	int alt;
 	int zero;
 	int left;
@@ -111,10 +111,11 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 		/*
 		 * Reset flags.
 		 */
-		dot = space = plus = left = zero = alt = h = l = q = 0;
+		dot = space = plus = left = zero = alt = h = l = q = z = 0;
 		width = precision = 0;
 		head = "";
 		length = pad = zeropad = 0;
+		POST(length);
 
 		do {
 			if (*format == '#') {
@@ -194,6 +195,10 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 				format++;
 			}
 			goto doint;
+		case 'z':
+			z = 1;
+			format++;
+			goto doint;
 		case 'n':
 		case 'i':
 		case 'd':
@@ -216,6 +221,11 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 					p = va_arg(ap, long *);
 					REQUIRE(p != NULL);
 					*p = str - save;
+				} else if (z) {
+					size_t *p;
+					p = va_arg(ap, size_t *);
+					REQUIRE(p != NULL);
+					*p = str - save;
 				} else {
 					int *p;
 					p = va_arg(ap, int *);
@@ -229,6 +239,8 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 					tmpi = va_arg(ap, long long int);
 				else if (l)
 					tmpi = va_arg(ap, long int);
+				else if (z)
+					tmpi = va_arg(ap, size_t);
 				else
 					tmpi = va_arg(ap, int);
 				if (tmpi < 0) {
@@ -243,8 +255,7 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 						head = "";
 					tmpui = tmpi;
 				}
-				snprintf(buf, sizeof(buf),
-					"%" LWRES_PRINT_QUADFORMAT "u",
+				sprintf(buf, "%" LWRES_PRINT_QUADFORMAT "u",
 					tmpui);
 				goto printint;
 			case 'o':
@@ -253,9 +264,11 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 						       unsigned long long int);
 				else if (l)
 					tmpui = va_arg(ap, long int);
+				else if (z)
+					tmpui = va_arg(ap, size_t);
 				else
 					tmpui = va_arg(ap, int);
-				snprintf(buf, sizeof(buf),
+				sprintf(buf,
 					alt ? "%#" LWRES_PRINT_QUADFORMAT "o"
 					    : "%" LWRES_PRINT_QUADFORMAT "o",
 					tmpui);
@@ -266,10 +279,11 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 						       unsigned long long int);
 				else if (l)
 					tmpui = va_arg(ap, unsigned long int);
+				else if (z)
+					tmpui = va_arg(ap, size_t);
 				else
 					tmpui = va_arg(ap, unsigned int);
-				snprintf(buf, sizeof(buf),
-					"%" LWRES_PRINT_QUADFORMAT "u",
+				sprintf(buf, "%" LWRES_PRINT_QUADFORMAT "u",
 					tmpui);
 				goto printint;
 			case 'x':
@@ -278,6 +292,8 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 						       unsigned long long int);
 				else if (l)
 					tmpui = va_arg(ap, unsigned long int);
+				else if (z)
+					tmpui = va_arg(ap, size_t);
 				else
 					tmpui = va_arg(ap, unsigned int);
 				if (alt) {
@@ -285,8 +301,7 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 					if (precision > 2U)
 						precision -= 2;
 				}
-				snprintf(buf, sizeof(buf),
-					"%" LWRES_PRINT_QUADFORMAT "x",
+				sprintf(buf, "%" LWRES_PRINT_QUADFORMAT "x",
 					tmpui);
 				goto printint;
 			case 'X':
@@ -295,6 +310,8 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 						       unsigned long long int);
 				else if (l)
 					tmpui = va_arg(ap, unsigned long int);
+				else if (z)
+					tmpui = va_arg(ap, size_t);
 				else
 					tmpui = va_arg(ap, unsigned int);
 				if (alt) {
@@ -302,8 +319,7 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 					if (precision > 2U)
 						precision -= 2;
 				}
-				snprintf(buf, sizeof(buf),
-					"%" LWRES_PRINT_QUADFORMAT "X",
+				sprintf(buf, "%" LWRES_PRINT_QUADFORMAT "X",
 					tmpui);
 				goto printint;
 			printint:
@@ -430,7 +446,7 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 			break;
 		case 'p':
 			v = va_arg(ap, void *);
-			snprintf(buf, sizeof(buf), "%p", v);
+			sprintf(buf, "%p", v);
 			length = strlen(buf);
 			if (precision > length)
 				zeropad = precision - length;
@@ -473,12 +489,16 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 				pad--;
 			}
 			break;
+
 		case 'D':	/*deprecated*/
 			INSIST("use %ld instead of %D" == NULL);
+			break;
 		case 'O':	/*deprecated*/
 			INSIST("use %lo instead of %O" == NULL);
+			break;
 		case 'U':	/*deprecated*/
 			INSIST("use %lu instead of %U" == NULL);
+			break;
 
 		case 'L':
 #ifdef HAVE_LONG_DOUBLE
@@ -506,8 +526,7 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 			 */
 			if (precision > 512U)
 				precision = 512;
-			snprintf(fmt, sizeof(fmt),
-				"%%%s%s.%lu%s%c", alt ? "#" : "",
+			sprintf(fmt, "%%%s%s.%lu%s%c", alt ? "#" : "",
 				plus ? "+" : space ? " " : "",
 				precision, l ? "L" : "", *format);
 			switch (*format) {
@@ -519,12 +538,12 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 #ifdef HAVE_LONG_DOUBLE
 				if (l) {
 					ldbl = va_arg(ap, long double);
-					snprintf(buf, sizeof(buf), fmt, ldbl);
+					sprintf(buf, fmt, ldbl);
 				} else
 #endif
 				{
 					dbl = va_arg(ap, double);
-					snprintf(buf, sizeof(buf), fmt, dbl);
+					sprintf(buf, fmt, dbl);
 				}
 				length = strlen(buf);
 				if (width > 0U) {

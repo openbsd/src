@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: dispatch.h,v 1.48.18.5.12.2 2008/07/23 07:28:56 tbox Exp $ */
+/* $Id: dispatch.h,v 1.8 2019/12/16 16:16:24 deraadt Exp $ */
 
 #ifndef DNS_DISPATCH_H
 #define DNS_DISPATCH_H 1
@@ -24,7 +24,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file dns/dispatch.h
  * \brief
  * DNS Dispatch Management
  * 	Shared UDP and single-use TCP dispatches for queries and responses.
@@ -54,8 +54,9 @@
 
 #include <isc/buffer.h>
 #include <isc/lang.h>
+#include <isc/mutex.h>
 #include <isc/socket.h>
-#include <dns/types.h>
+#include <isc/types.h>
 
 #include <dns/types.h>
 
@@ -88,6 +89,18 @@ struct dns_dispatchevent {
 	isc_uint32_t		attributes;	/*%< mirrored from socket.h */
 };
 
+/*%
+ * This is a set of one or more dispatches which can be retrieved
+ * round-robin fashion.
+ */
+struct dns_dispatchset {
+	isc_mem_t		*mctx;
+	dns_dispatch_t		**dispatches;
+	int			ndisp;
+	int			cur;
+	isc_mutex_t		lock;
+};
+
 /*@{*/
 /*%
  * Attributes for added dispatchers.
@@ -105,7 +118,7 @@ struct dns_dispatchevent {
  *	The dispatcher is a TCP or UDP socket.
  *
  * _IPV4, _IPV6
- *	The dispatcher uses an ipv4 or ipv6 socket.
+ *	The dispatcher uses an IPv4 or IPv6 socket.
  *
  * _NOLISTEN
  *	The dispatcher should not listen on the socket.
@@ -115,7 +128,12 @@ struct dns_dispatchevent {
  *	accept replies from them.
  *
  * _RANDOMPORT
- *	Allocate UDP port randomly.
+ *	Previously used to indicate that the port of a dispatch UDP must be
+ *	chosen randomly.  This behavior now always applies and the attribute
+ *	is obsoleted.
+ *
+ * _EXCLUSIVE
+ *	A separate socket will be used on-demand for each transaction.
  */
 #define DNS_DISPATCHATTR_PRIVATE	0x00000001U
 #define DNS_DISPATCHATTR_TCP		0x00000002U
@@ -125,8 +143,13 @@ struct dns_dispatchevent {
 #define DNS_DISPATCHATTR_NOLISTEN	0x00000020U
 #define DNS_DISPATCHATTR_MAKEQUERY	0x00000040U
 #define DNS_DISPATCHATTR_CONNECTED	0x00000080U
-#define DNS_DISPATCHATTR_RANDOMPORT	0x00000100U
+#define DNS_DISPATCHATTR_FIXEDID	0x00000100U
+#define DNS_DISPATCHATTR_EXCLUSIVE	0x00000200U
 /*@}*/
+
+/*
+ */
+#define DNS_DISPATCHOPT_FIXEDID		0x00000001U
 
 isc_result_t
 dns_dispatchmgr_create(isc_mem_t *mctx, isc_entropy_t *entropy,
@@ -187,26 +210,49 @@ dns_dispatchmgr_getblackhole(dns_dispatchmgr_t *mgr);
 
 void
 dns_dispatchmgr_setblackportlist(dns_dispatchmgr_t *mgr,
-                                 dns_portlist_t *portlist);
+				 dns_portlist_t *portlist);
 /*%<
- * Sets a list of UDP ports that won't be used when creating a udp
- * dispatch with a wildcard port.
+ * This function is deprecated.  Use dns_dispatchmgr_setavailports() instead.
  *
  * Requires:
  *\li	mgr is a valid dispatchmgr
- *\li	portlist to be NULL or a valid port list.
  */
 
 dns_portlist_t *
 dns_dispatchmgr_getblackportlist(dns_dispatchmgr_t *mgr);
 /*%<
- * Return the current port list.
+ * This function is deprecated and always returns NULL.
  *
  * Requires:
  *\li	mgr is a valid dispatchmgr
  */
 
+isc_result_t
+dns_dispatchmgr_setavailports(dns_dispatchmgr_t *mgr, isc_portset_t *v4portset,
+			      isc_portset_t *v6portset);
+/*%<
+ * Sets a list of UDP ports that can be used for outgoing UDP messages.
+ *
+ * Requires:
+ *\li	mgr is a valid dispatchmgr
+ *\li	v4portset is NULL or a valid port set
+ *\li	v6portset is NULL or a valid port set
+ */
 
+void
+dns_dispatchmgr_setstats(dns_dispatchmgr_t *mgr, isc_stats_t *stats);
+/*%<
+ * Sets statistics counter for the dispatchmgr.  This function is expected to
+ * be called only on zone creation (when necessary).
+ * Once installed, it cannot be removed or replaced.  Also, there is no
+ * interface to get the installed stats from the zone; the caller must keep the
+ * stats to reference (e.g. dump) it later.
+ *
+ * Requires:
+ *\li	mgr is a valid dispatchmgr with no managed dispatch.
+ *\li	stats is a valid statistics supporting resolver statistics counters
+ *	(see dns/stats.h).
+ */
 
 isc_result_t
 dns_dispatch_getudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
@@ -216,6 +262,15 @@ dns_dispatch_getudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 		    unsigned int buckets, unsigned int increment,
 		    unsigned int attributes, unsigned int mask,
 		    dns_dispatch_t **dispp);
+
+isc_result_t
+dns_dispatch_getudp_dup(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
+		    isc_taskmgr_t *taskmgr, isc_sockaddr_t *localaddr,
+		    unsigned int buffersize,
+		    unsigned int maxbuffers, unsigned int maxrequests,
+		    unsigned int buckets, unsigned int increment,
+		    unsigned int attributes, unsigned int mask,
+		    dns_dispatch_t **dispp, dns_dispatch_t *dup);
 /*%<
  * Attach to existing dns_dispatch_t if one is found with dns_dispatchmgr_find,
  * otherwise create a new UDP dispatch.
@@ -319,6 +374,19 @@ dns_dispatch_starttcp(dns_dispatch_t *disp);
  */
 
 isc_result_t
+dns_dispatch_addresponse3(dns_dispatch_t *disp, unsigned int options,
+			  isc_sockaddr_t *dest, isc_task_t *task,
+			  isc_taskaction_t action, void *arg,
+			  isc_uint16_t *idp, dns_dispentry_t **resp,
+			  isc_socketmgr_t *sockmgr);
+
+isc_result_t
+dns_dispatch_addresponse2(dns_dispatch_t *disp, isc_sockaddr_t *dest,
+			  isc_task_t *task, isc_taskaction_t action, void *arg,
+			  isc_uint16_t *idp, dns_dispentry_t **resp,
+			  isc_socketmgr_t *sockmgr);
+
+isc_result_t
 dns_dispatch_addresponse(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 			 isc_task_t *task, isc_taskaction_t action, void *arg,
 			 isc_uint16_t *idp, dns_dispentry_t **resp);
@@ -340,6 +408,10 @@ dns_dispatch_addresponse(dns_dispatch_t *disp, isc_sockaddr_t *dest,
  *\li	"dest" be non-NULL and valid.
  *
  *\li	"resp" be non-NULL and *resp be NULL
+ *
+ *\li	"sockmgr" be NULL or a valid socket manager.  If 'disp' has
+ *	the DNS_DISPATCHATTR_EXCLUSIVE attribute, this must not be NULL,
+ *	which also means dns_dispatch_addresponse() cannot be used.
  *
  * Ensures:
  *
@@ -367,10 +439,12 @@ dns_dispatch_removeresponse(dns_dispentry_t **resp,
  *\li	"resp" != NULL and "*resp" contain a value previously allocated
  *	by dns_dispatch_addresponse();
  *
- *\li	May only be called from within the task given as the 'task' 
+ *\li	May only be called from within the task given as the 'task'
  * 	argument to dns_dispatch_addresponse() when allocating '*resp'.
  */
 
+isc_socket_t *
+dns_dispatch_getentrysocket(dns_dispentry_t *resp);
 
 isc_socket_t *
 dns_dispatch_getsocket(dns_dispatch_t *disp);
@@ -384,7 +458,7 @@ dns_dispatch_getsocket(dns_dispatch_t *disp);
  *\li	The socket the dispatcher is using.
  */
 
-isc_result_t 
+isc_result_t
 dns_dispatch_getlocaladdress(dns_dispatch_t *disp, isc_sockaddr_t *addrp);
 /*%<
  * Return the local address for this dispatch.
@@ -395,7 +469,7 @@ dns_dispatch_getlocaladdress(dns_dispatch_t *disp, isc_sockaddr_t *addrp);
  *\li	addrp to be non null.
  *
  * Returns:
- *\li	ISC_R_SUCCESS	
+ *\li	ISC_R_SUCCESS
  *\li	ISC_R_NOTIMPLEMENTED
  */
 
@@ -403,6 +477,16 @@ void
 dns_dispatch_cancel(dns_dispatch_t *disp);
 /*%<
  * cancel outstanding clients
+ *
+ * Requires:
+ *\li	disp is valid.
+ */
+
+unsigned int
+dns_dispatch_getattributes(dns_dispatch_t *disp);
+/*%<
+ * Return the attributes (DNS_DISPATCHATTR_xxx) of this dispatch.  Only the
+ * non-changeable attributes are expected to be referenced by the caller.
  *
  * Requires:
  *\li	disp is valid.
@@ -421,7 +505,7 @@ dns_dispatch_changeattributes(dns_dispatch_t *disp,
  *	new = (old & ~mask) | (attributes & mask)
  * \endcode
  *
- * This function has a side effect when #DNS_DISPATCHATTR_NOLISTEN changes. 
+ * This function has a side effect when #DNS_DISPATCHATTR_NOLISTEN changes.
  * When the flag becomes off, the dispatch will start receiving on the
  * corresponding socket.  When the flag becomes on, receive events on the
  * corresponding socket will be canceled.
@@ -443,6 +527,58 @@ dns_dispatch_importrecv(dns_dispatch_t *disp, isc_event_t *event);
  * Requires:
  *\li 	disp is valid, and the attribute DNS_DISPATCHATTR_NOLISTEN is set.
  * 	event != NULL
+ */
+
+dns_dispatch_t *
+dns_dispatchset_get(dns_dispatchset_t *dset);
+/*%<
+ * Retrieve the next dispatch from dispatch set 'dset', and increment
+ * the round-robin counter.
+ *
+ * Requires:
+ *\li 	dset != NULL
+ */
+
+isc_result_t
+dns_dispatchset_create(isc_mem_t *mctx, isc_socketmgr_t *sockmgr,
+		       isc_taskmgr_t *taskmgr, dns_dispatch_t *source,
+		       dns_dispatchset_t **dsetp, int n);
+/*%<
+ * Given a valid dispatch 'source', create a dispatch set containing
+ * 'n' UDP dispatches, with the remainder filled out by clones of the
+ * source.
+ *
+ * Requires:
+ *\li 	source is a valid UDP dispatcher
+ *\li 	dsetp != NULL, *dsetp == NULL
+ */
+
+void
+dns_dispatchset_cancelall(dns_dispatchset_t *dset, isc_task_t *task);
+/*%<
+ * Cancel socket operations for the dispatches in 'dset'.
+ */
+
+void
+dns_dispatchset_destroy(dns_dispatchset_t **dsetp);
+/*%<
+ * Dereference all the dispatches in '*dsetp', free the dispatchset
+ * memory, and set *dsetp to NULL.
+ *
+ * Requires:
+ *\li 	dset is valid
+ */
+
+void
+dns_dispatch_setdscp(dns_dispatch_t *disp, isc_dscp_t dscp);
+isc_dscp_t
+dns_dispatch_getdscp(dns_dispatch_t *disp);
+/*%<
+ * Set/get the DSCP value to be used when sending responses to clients,
+ * as defined in the "listen-on" or "listen-on-v6" statements.
+ *
+ * Requires:
+ *\li	disp is valid.
  */
 
 ISC_LANG_ENDDECLS

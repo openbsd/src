@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2013, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,8 +15,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: rdata.h,v 1.60.18.3 2005/05/19 04:59:56 marka Exp $ */
-
 #ifndef DNS_RDATA_H
 #define DNS_RDATA_H 1
 
@@ -24,7 +22,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file dns/rdata.h
  * \brief
  * Provides facilities for manipulating DNS rdata, including conversions to
  * and from wire format and text format.
@@ -49,7 +47,7 @@
  *	build process from a set of source files, one per rdata type.  For
  *	portability, it's probably best that the building be done by a C
  *	program.  Adding a new rdata type will be a simple matter of adding
- *	a file to a directory and rebuilding the server.  *All* knowlege of
+ *	a file to a directory and rebuilding the server.  *All* knowledge of
  *	the format of a particular rdata type is in this file.
  *
  * MP:
@@ -95,6 +93,7 @@
 
 #include <dns/types.h>
 #include <dns/name.h>
+#include <dns/message.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -124,7 +123,37 @@ struct dns_rdata {
 
 #define DNS_RDATA_INIT { NULL, 0, 0, 0, 0, {(void*)(-1), (void *)(-1)}}
 
-#define DNS_RDATA_UPDATE	0x0001		/*%< update pseudo record */
+#define DNS_RDATA_CHECKINITIALIZED
+#ifdef DNS_RDATA_CHECKINITIALIZED
+#define DNS_RDATA_INITIALIZED(rdata) \
+	((rdata)->data == NULL && (rdata)->length == 0 && \
+	 (rdata)->rdclass == 0 && (rdata)->type == 0 && (rdata)->flags == 0 && \
+	 !ISC_LINK_LINKED((rdata), link))
+#else
+#ifdef ISC_LIST_CHECKINIT
+#define DNS_RDATA_INITIALIZED(rdata) \
+	(!ISC_LINK_LINKED((rdata), link))
+#else
+#define DNS_RDATA_INITIALIZED(rdata) ISC_TRUE
+#endif
+#endif
+
+#define DNS_RDATA_UPDATE	0x0001		/*%< update pseudo record. */
+#define DNS_RDATA_OFFLINE	0x0002		/*%< RRSIG has a offline key. */
+
+#define DNS_RDATA_VALIDFLAGS(rdata) \
+	(((rdata)->flags & ~(DNS_RDATA_UPDATE|DNS_RDATA_OFFLINE)) == 0)
+
+/*
+ * The maximum length of a RDATA that can be sent on the wire.
+ * Max packet size (65535) less header (12), less name (1), type (2),
+ * class (2), ttl(4), length (2).
+ *
+ * None of the defined types that support name compression can exceed
+ * this and all new types are to be sent uncompressed.
+ */
+
+#define DNS_RDATA_MAXLENGTH	65512U
 
 /*
  * Flags affecting rdata formatting style.  Flags 0xFFFF0000
@@ -134,10 +163,17 @@ struct dns_rdata {
 
 /*% Split the rdata into multiple lines to try to keep it
  within the "width". */
-#define DNS_STYLEFLAG_MULTILINE		0x00000001U
+#define DNS_STYLEFLAG_MULTILINE		0x00000001ULL
 
 /*% Output explanatory comments. */
-#define DNS_STYLEFLAG_COMMENT		0x00000002U
+#define DNS_STYLEFLAG_COMMENT		0x00000002ULL
+#define DNS_STYLEFLAG_RRCOMMENT		0x00000004ULL
+
+/*% Output KEYDATA in human readable format. */
+#define DNS_STYLEFLAG_KEYDATA		0x00000008ULL
+
+/*% Output textual RR type and RDATA in RFC 3597 unknown format */
+#define DNS_STYLEFLAG_UNKNOWNFORMAT	0x00000010ULL
 
 #define DNS_RDATA_DOWNCASE		DNS_NAME_DOWNCASE
 #define DNS_RDATA_CHECKNAMES		DNS_NAME_CHECKNAMES
@@ -145,6 +181,7 @@ struct dns_rdata {
 #define DNS_RDATA_CHECKREVERSE		DNS_NAME_CHECKREVERSE
 #define DNS_RDATA_CHECKMX		DNS_NAME_CHECKMX
 #define DNS_RDATA_CHECKMXFAIL		DNS_NAME_CHECKMXFAIL
+#define DNS_RDATA_UNKNOWNESCAPE		0x80000000
 
 /***
  *** Initialization
@@ -187,6 +224,25 @@ dns_rdata_compare(const dns_rdata_t *rdata1, const dns_rdata_t *rdata2);
 /*%<
  * Determine the relative ordering under the DNSSEC order relation of
  * 'rdata1' and 'rdata2'.
+ *
+ * Requires:
+ *
+ *\li	'rdata1' is a valid, non-empty rdata
+ *
+ *\li	'rdata2' is a valid, non-empty rdata
+ *
+ * Returns:
+ *\li	< 0		'rdata1' is less than 'rdata2'
+ *\li	0		'rdata1' is equal to 'rdata2'
+ *\li	> 0		'rdata1' is greater than 'rdata2'
+ */
+
+int
+dns_rdata_casecompare(const dns_rdata_t *rdata1, const dns_rdata_t *rdata2);
+/*%<
+ * dns_rdata_casecompare() is similar to dns_rdata_compare() but also
+ * compares domain names case insensitively in known rdata types that
+ * are treated as opaque data by dns_rdata_compare().
  *
  * Requires:
  *
@@ -327,11 +383,11 @@ dns_rdata_fromtext(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
  *\li	'target' is a valid region.
  *
  *\li	'origin' if non NULL it must be absolute.
- *	
+ *
  *\li	'callbacks' to be NULL or callbacks->warn and callbacks->error be
  *	initialized.
  *
- * Ensures, 
+ * Ensures,
  *	if result is success:
  *\li	 	If 'rdata' is not NULL, it is attached to the target.
 
@@ -384,7 +440,8 @@ dns_rdata_totext(dns_rdata_t *rdata, dns_name_t *origin, isc_buffer_t *target);
 
 isc_result_t
 dns_rdata_tofmttext(dns_rdata_t *rdata, dns_name_t *origin, unsigned int flags,
-		    unsigned int width, char *linebreak, isc_buffer_t *target);
+		    unsigned int width, unsigned int split_width,
+		    const char *linebreak, isc_buffer_t *target);
 /*%<
  * Like dns_rdata_totext, but do formatted output suitable for
  * database dumps.  This is intended for use by dns_db_dump();
@@ -406,6 +463,11 @@ dns_rdata_tofmttext(dns_rdata_t *rdata, dns_name_t *origin, unsigned int flags,
  * comments next to things like the SOA timer fields.  Some
  * comments (e.g., the SOA ones) are only printed when multiline
  * output is selected.
+ *
+ * base64 rdata text (e.g., DNSKEY records) will be split into chunks
+ * of 'split_width' characters.  If split_width == 0, the text will
+ * not be split at all.  If split_width == UINT_MAX (0xffffffff), then
+ * it is undefined and falls back to the default value of 'width'
  */
 
 isc_result_t
@@ -695,6 +757,21 @@ dns_rdata_checknames(dns_rdata_t *rdata, dns_name_t *owner, dns_name_t *bad);
  *	'owner' to be valid.
  *	'bad'	to be NULL or valid.
  */
+
+void
+dns_rdata_exists(dns_rdata_t *rdata, dns_rdatatype_t type);
+
+void
+dns_rdata_notexist(dns_rdata_t *rdata, dns_rdatatype_t type);
+
+void
+dns_rdata_deleterrset(dns_rdata_t *rdata, dns_rdatatype_t type);
+
+void
+dns_rdata_makedelete(dns_rdata_t *rdata);
+
+const char *
+dns_rdata_updateop(dns_rdata_t *rdata, dns_section_t section);
 
 ISC_LANG_ENDDECLS
 

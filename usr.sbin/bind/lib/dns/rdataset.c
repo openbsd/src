@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012, 2014, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,8 +15,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: rdataset.c,v 1.72.18.5 2006/03/02 00:37:21 marka Exp $ */
-
 /*! \file */
 
 #include <config.h>
@@ -26,6 +24,7 @@
 #include <isc/buffer.h>
 #include <isc/mem.h>
 #include <isc/random.h>
+#include <isc/serial.h>
 #include <isc/util.h>
 
 #include <dns/name.h>
@@ -33,6 +32,26 @@
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
 #include <dns/compress.h>
+
+static const char *trustnames[] = {
+	"none",
+	"pending-additional",
+	"pending-answer",
+	"additional",
+	"glue",
+	"answer",
+	"authauthority",
+	"authanswer",
+	"secure",
+	"local" /* aka ultimate */
+};
+
+const char *
+dns_trust_totext(dns_trust_t trust) {
+	if (trust >= sizeof(trustnames)/sizeof(*trustnames))
+		return ("bad");
+	return (trustnames[trust]);
+}
 
 void
 dns_rdataset_init(dns_rdataset_t *rdataset) {
@@ -59,6 +78,8 @@ dns_rdataset_init(dns_rdataset_t *rdataset) {
 	rdataset->privateuint4 = 0;
 	rdataset->private5 = NULL;
 	rdataset->private6 = NULL;
+	rdataset->private7 = NULL;
+	rdataset->resign = 0;
 }
 
 void
@@ -137,7 +158,7 @@ question_disassociate(dns_rdataset_t *rdataset) {
 static isc_result_t
 question_cursor(dns_rdataset_t *rdataset) {
 	UNUSED(rdataset);
-	
+
 	return (ISC_R_NOMORE);
 }
 
@@ -148,7 +169,7 @@ question_current(dns_rdataset_t *rdataset, dns_rdata_t *rdata) {
 	 */
 	UNUSED(rdataset);
 	UNUSED(rdata);
-	
+
 	REQUIRE(0);
 }
 
@@ -175,6 +196,11 @@ static dns_rdatasetmethods_t question_methods = {
 	question_current,
 	question_clone,
 	question_count,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -294,7 +320,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	isc_region_t r;
 	isc_result_t result;
-	unsigned int i, count, added, choice;
+	unsigned int i, count = 0, added, choice;
 	isc_buffer_t savedbuffer, rdlen, rrbuffer;
 	unsigned int headlen;
 	isc_boolean_t question = ISC_FALSE;
@@ -310,17 +336,17 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	 */
 
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
+	REQUIRE(rdataset->methods != NULL);
 	REQUIRE(countp != NULL);
 	REQUIRE((order == NULL) == (order_arg == NULL));
 	REQUIRE(cctx != NULL && cctx->mctx != NULL);
 
-	count = 0;
 	if ((rdataset->attributes & DNS_RDATASETATTR_QUESTION) != 0) {
 		question = ISC_TRUE;
 		count = 1;
 		result = dns_rdataset_first(rdataset);
 		INSIST(result == ISC_R_NOMORE);
-	} else if (rdataset->type == 0) {
+	} else if ((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0) {
 		/*
 		 * This is a negative caching rdataset.
 		 */
@@ -339,7 +365,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	}
 
 	/*
-	 * Do we want to shuffle this anwer?
+	 * Do we want to shuffle this answer?
 	 */
 	if (!question && count > 1 &&
 	    (!WANT_FIXED(rdataset) || order != NULL) &&
@@ -390,7 +416,6 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 			 * 'Random' order.
 			 */
 			for (i = 0; i < count; i++) {
-				dns_rdata_t rdata;
 				isc_uint32_t val;
 
 				isc_random_get(&val);
@@ -418,11 +443,11 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 			j = val % count;
 			for (i = 0; i < count; i++) {
 				if (order != NULL)
-					sorted[j].key = (*order)(&shuffled[i],
+					sorted[i].key = (*order)(&shuffled[j],
 								 order_arg);
 				else
-					sorted[j].key = 0; /* Unused */
-				sorted[j].rdata = &shuffled[i];
+					sorted[i].key = 0; /* Unused */
+				sorted[i].rdata = &shuffled[j];
 				j++;
 				if (j == count)
 					j = 0; /* Wrap around. */
@@ -445,7 +470,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		/*
 		 * Copy out the name, type, class, ttl.
 		 */
-		
+
 		rrbuffer = *target;
 		dns_compress_setmethods(cctx, DNS_COMPRESS_GLOBAL14);
 		result = dns_name_towire(owner_name, cctx, target);
@@ -620,14 +645,36 @@ dns_rdataset_addnoqname(dns_rdataset_t *rdataset, dns_name_t *name) {
 
 isc_result_t
 dns_rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
-		        dns_rdataset_t *nsec, dns_rdataset_t *nsecsig)
+			dns_rdataset_t *neg, dns_rdataset_t *negsig)
 {
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(rdataset->methods != NULL);
 
 	if (rdataset->methods->getnoqname == NULL)
 		return (ISC_R_NOTIMPLEMENTED);
-	return((rdataset->methods->getnoqname)(rdataset, name, nsec, nsecsig));
+	return((rdataset->methods->getnoqname)(rdataset, name, neg, negsig));
+}
+
+isc_result_t
+dns_rdataset_addclosest(dns_rdataset_t *rdataset, dns_name_t *name) {
+
+	REQUIRE(DNS_RDATASET_VALID(rdataset));
+	REQUIRE(rdataset->methods != NULL);
+	if (rdataset->methods->addclosest == NULL)
+		return (ISC_R_NOTIMPLEMENTED);
+	return((rdataset->methods->addclosest)(rdataset, name));
+}
+
+isc_result_t
+dns_rdataset_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
+			dns_rdataset_t *neg, dns_rdataset_t *negsig)
+{
+	REQUIRE(DNS_RDATASET_VALID(rdataset));
+	REQUIRE(rdataset->methods != NULL);
+
+	if (rdataset->methods->getclosest == NULL)
+		return (ISC_R_NOTIMPLEMENTED);
+	return((rdataset->methods->getclosest)(rdataset, name, neg, negsig));
 }
 
 /*
@@ -707,3 +754,58 @@ dns_rdataset_putadditional(dns_acache_t *acache,
 	return (ISC_R_FAILURE);
 }
 
+void
+dns_rdataset_settrust(dns_rdataset_t *rdataset, dns_trust_t trust) {
+	REQUIRE(DNS_RDATASET_VALID(rdataset));
+	REQUIRE(rdataset->methods != NULL);
+
+	if (rdataset->methods->settrust != NULL)
+		(rdataset->methods->settrust)(rdataset, trust);
+	else
+		rdataset->trust = trust;
+}
+
+void
+dns_rdataset_expire(dns_rdataset_t *rdataset) {
+	REQUIRE(DNS_RDATASET_VALID(rdataset));
+	REQUIRE(rdataset->methods != NULL);
+
+	if (rdataset->methods->expire != NULL)
+		(rdataset->methods->expire)(rdataset);
+}
+
+void
+dns_rdataset_clearprefetch(dns_rdataset_t *rdataset) {
+	REQUIRE(DNS_RDATASET_VALID(rdataset));
+	REQUIRE(rdataset->methods != NULL);
+
+	if (rdataset->methods->clearprefetch != NULL)
+		(rdataset->methods->clearprefetch)(rdataset);
+}
+
+void
+dns_rdataset_trimttl(dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
+		     dns_rdata_rrsig_t *rrsig, isc_stdtime_t now,
+		     isc_boolean_t acceptexpired)
+{
+	isc_uint32_t ttl = 0;
+
+	REQUIRE(DNS_RDATASET_VALID(rdataset));
+	REQUIRE(DNS_RDATASET_VALID(sigrdataset));
+	REQUIRE(rrsig != NULL);
+
+	/*
+	 * If we accept expired RRsets keep them for no more than 120 seconds.
+	 */
+	if (acceptexpired &&
+	    (isc_serial_le(rrsig->timeexpire, ((now + 120) & 0xffffffff)) ||
+	     isc_serial_le(rrsig->timeexpire, now)))
+		ttl = 120;
+	else if (isc_serial_ge(rrsig->timeexpire, now))
+		ttl = rrsig->timeexpire - now;
+
+	ttl = ISC_MIN(ISC_MIN(rdataset->ttl, sigrdataset->ttl),
+		      ISC_MIN(rrsig->originalttl, ttl));
+	rdataset->ttl = ttl;
+	sigrdataset->ttl = ttl;
+}

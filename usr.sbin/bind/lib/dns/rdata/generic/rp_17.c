@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: rp_17.c,v 1.38.18.2 2005/04/29 00:16:39 marka Exp $ */
+/* $Id: rp_17.c,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
 
 /* RFC1183 */
 
@@ -32,13 +32,14 @@ fromtext_rp(ARGS_FROMTEXT) {
 	int i;
 	isc_boolean_t ok;
 
-	REQUIRE(type == 17);
+	REQUIRE(type == dns_rdatatype_rp);
 
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(callbacks);
 
-	origin = (origin != NULL) ? origin : dns_rootname;
+	if (origin == NULL)
+		origin = dns_rootname;
 
 	for (i = 0; i < 2; i++) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
@@ -67,7 +68,7 @@ totext_rp(ARGS_TOTEXT) {
 	dns_name_t prefix;
 	isc_boolean_t sub;
 
-	REQUIRE(rdata->type == 17);
+	REQUIRE(rdata->type == dns_rdatatype_rp);
 	REQUIRE(rdata->length != 0);
 
 	dns_name_init(&rmail, NULL);
@@ -93,21 +94,21 @@ totext_rp(ARGS_TOTEXT) {
 
 static inline isc_result_t
 fromwire_rp(ARGS_FROMWIRE) {
-        dns_name_t rmail;
-        dns_name_t email;
+	dns_name_t rmail;
+	dns_name_t email;
 
-	REQUIRE(type == 17);
+	REQUIRE(type == dns_rdatatype_rp);
 
 	UNUSED(type);
 	UNUSED(rdclass);
 
 	dns_decompress_setmethods(dctx, DNS_COMPRESS_NONE);
 
-        dns_name_init(&rmail, NULL);
-        dns_name_init(&email, NULL);
+	dns_name_init(&rmail, NULL);
+	dns_name_init(&email, NULL);
 
-        RETERR(dns_name_fromwire(&rmail, source, dctx, options, target));
-        return (dns_name_fromwire(&email, source, dctx, options, target));
+	RETERR(dns_name_fromwire(&rmail, source, dctx, options, target));
+	return (dns_name_fromwire(&email, source, dctx, options, target));
 }
 
 static inline isc_result_t
@@ -118,7 +119,7 @@ towire_rp(ARGS_TOWIRE) {
 	dns_offsets_t roffsets;
 	dns_offsets_t eoffsets;
 
-	REQUIRE(rdata->type == 17);
+	REQUIRE(rdata->type == dns_rdatatype_rp);
 	REQUIRE(rdata->length != 0);
 
 	dns_compress_setmethods(cctx, DNS_COMPRESS_NONE);
@@ -148,7 +149,7 @@ compare_rp(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 17);
+	REQUIRE(rdata1->type == dns_rdatatype_rp);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -182,7 +183,7 @@ fromstruct_rp(ARGS_FROMSTRUCT) {
 	dns_rdata_rp_t *rp = source;
 	isc_region_t region;
 
-	REQUIRE(type == 17);
+	REQUIRE(type == dns_rdatatype_rp);
 	REQUIRE(source != NULL);
 	REQUIRE(rp->common.rdtype == type);
 	REQUIRE(rp->common.rdclass == rdclass);
@@ -203,7 +204,7 @@ tostruct_rp(ARGS_TOSTRUCT) {
 	dns_rdata_rp_t *rp = target;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 17);
+	REQUIRE(rdata->type == dns_rdatatype_rp);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -237,7 +238,7 @@ freestruct_rp(ARGS_FREESTRUCT) {
 	dns_rdata_rp_t *rp = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(rp->common.rdtype == 17);
+	REQUIRE(rp->common.rdtype == dns_rdatatype_rp);
 
 	if (rp->mctx == NULL)
 		return;
@@ -249,7 +250,7 @@ freestruct_rp(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_rp(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 17);
+	REQUIRE(rdata->type == dns_rdatatype_rp);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -263,7 +264,7 @@ digest_rp(ARGS_DIGEST) {
 	isc_region_t r;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 17);
+	REQUIRE(rdata->type == dns_rdatatype_rp);
 
 	dns_rdata_toregion(rdata, &r);
 	dns_name_init(&name, NULL);
@@ -281,7 +282,7 @@ digest_rp(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_rp(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 17);
+	REQUIRE(type == dns_rdatatype_rp);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -296,7 +297,7 @@ checknames_rp(ARGS_CHECKNAMES) {
 	isc_region_t region;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 17);
+	REQUIRE(rdata->type == dns_rdatatype_rp);
 
 	UNUSED(owner);
 
@@ -311,4 +312,8 @@ checknames_rp(ARGS_CHECKNAMES) {
 	return (ISC_TRUE);
 }
 
+static inline int
+casecompare_rp(ARGS_COMPARE) {
+	return (compare_rp(rdata1, rdata2));
+}
 #endif	/* RDATA_GENERIC_RP_17_C */

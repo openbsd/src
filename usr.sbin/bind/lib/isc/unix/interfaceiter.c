@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: interfaceiter.c,v 1.35.18.5 2005/04/29 00:17:08 marka Exp $ */
+/* $Id: interfaceiter.c,v 1.2 2019/12/16 16:16:27 deraadt Exp $ */
 
 /*! \file */
 
@@ -79,14 +79,14 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
 	dst->family = family;
 	switch (family) {
 	case AF_INET:
-		memcpy(&dst->type.in,
-		       &((struct sockaddr_in *) src)->sin_addr,
-		       sizeof(struct in_addr));
+		memmove(&dst->type.in,
+			&((struct sockaddr_in *) src)->sin_addr,
+			sizeof(struct in_addr));
 		break;
 	case AF_INET6:
 		sa6 = (struct sockaddr_in6 *)src;
-		memcpy(&dst->type.in6, &sa6->sin6_addr,
-		       sizeof(struct in6_addr));
+		memmove(&dst->type.in6, &sa6->sin6_addr,
+			sizeof(struct in6_addr));
 #ifdef ISC_PLATFORM_HAVESCOPEID
 		if (sa6->sin6_scope_id != 0)
 			isc_netaddr_setzone(dst, sa6->sin6_scope_id);
@@ -105,8 +105,8 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
 			if (IN6_IS_ADDR_LINKLOCAL(&sa6->sin6_addr)) {
 				isc_uint16_t zone16;
 
-				memcpy(&zone16, &sa6->sin6_addr.s6_addr[2],
-				       sizeof(zone16));
+				memmove(&zone16, &sa6->sin6_addr.s6_addr[2],
+					sizeof(zone16));
 				zone16 = ntohs(zone16);
 				if (zone16 != 0) {
 					/* the zone ID is embedded */
@@ -145,12 +145,102 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
  * Include system-dependent code.
  */
 
+#ifdef __linux
+#define ISC_IF_INET6_SZ \
+    sizeof("00000000000000000000000000000001 01 80 10 80 XXXXXXloXXXXXXXX\n")
+static isc_result_t linux_if_inet6_next(isc_interfaceiter_t *);
+static isc_result_t linux_if_inet6_current(isc_interfaceiter_t *);
+static void linux_if_inet6_first(isc_interfaceiter_t *iter);
+#endif
+
 #if HAVE_GETIFADDRS
 #include "ifiter_getifaddrs.c"
 #elif HAVE_IFLIST_SYSCTL
 #include "ifiter_sysctl.c"
 #else
 #include "ifiter_ioctl.c"
+#endif
+
+#ifdef __linux
+static void
+linux_if_inet6_first(isc_interfaceiter_t *iter) {
+	if (iter->proc != NULL) {
+		rewind(iter->proc);
+		(void)linux_if_inet6_next(iter);
+	} else
+		iter->valid = ISC_R_NOMORE;
+}
+
+static isc_result_t
+linux_if_inet6_next(isc_interfaceiter_t *iter) {
+	if (iter->proc != NULL &&
+	    fgets(iter->entry, sizeof(iter->entry), iter->proc) != NULL)
+		iter->valid = ISC_R_SUCCESS;
+	else
+		iter->valid = ISC_R_NOMORE;
+	return (iter->valid);
+}
+
+static isc_result_t
+linux_if_inet6_current(isc_interfaceiter_t *iter) {
+	char address[33];
+	char name[IF_NAMESIZE+1];
+	struct in6_addr addr6;
+	int ifindex, prefix, flag3, flag4;
+	int res;
+	unsigned int i;
+
+	if (iter->valid != ISC_R_SUCCESS)
+		return (iter->valid);
+	if (iter->proc == NULL) {
+		isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+			      ISC_LOGMODULE_INTERFACE, ISC_LOG_ERROR,
+			      "/proc/net/if_inet6:iter->proc == NULL");
+		return (ISC_R_FAILURE);
+	}
+
+	res = sscanf(iter->entry, "%32[a-f0-9] %x %x %x %x %16s\n",
+		     address, &ifindex, &prefix, &flag3, &flag4, name);
+	if (res != 6) {
+		isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+			      ISC_LOGMODULE_INTERFACE, ISC_LOG_ERROR,
+			      "/proc/net/if_inet6:sscanf() -> %d (expected 6)",
+			      res);
+		return (ISC_R_FAILURE);
+	}
+	if (strlen(address) != 32) {
+		isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+			      ISC_LOGMODULE_INTERFACE, ISC_LOG_ERROR,
+			      "/proc/net/if_inet6:strlen(%s) != 32", address);
+		return (ISC_R_FAILURE);
+	}
+	for (i = 0; i < 16; i++) {
+		unsigned char byte;
+		static const char hex[] = "0123456789abcdef";
+		byte = ((strchr(hex, address[i * 2]) - hex) << 4) |
+		       (strchr(hex, address[i * 2 + 1]) - hex);
+		addr6.s6_addr[i] = byte;
+	}
+	iter->current.af = AF_INET6;
+	iter->current.flags = INTERFACE_F_UP;
+	isc_netaddr_fromin6(&iter->current.address, &addr6);
+	if (isc_netaddr_islinklocal(&iter->current.address)) {
+		isc_netaddr_setzone(&iter->current.address,
+				    (isc_uint32_t)ifindex);
+	}
+	for (i = 0; i < 16; i++) {
+		if (prefix > 8) {
+			addr6.s6_addr[i] = 0xff;
+			prefix -= 8;
+		} else {
+			addr6.s6_addr[i] = (0xff << (8 - prefix)) & 0xff;
+			prefix = 0;
+		}
+	}
+	isc_netaddr_fromin6(&iter->current.netmask, &addr6);
+	strncpy(iter->current.name, name, sizeof(iter->current.name));
+	return (ISC_R_SUCCESS);
+}
 #endif
 
 /*
@@ -162,7 +252,7 @@ isc_interfaceiter_current(isc_interfaceiter_t *iter,
 			  isc_interface_t *ifdata)
 {
 	REQUIRE(iter->result == ISC_R_SUCCESS);
-	memcpy(ifdata, &iter->current, sizeof(*ifdata));
+	memmove(ifdata, &iter->current, sizeof(*ifdata));
 	return (ISC_R_SUCCESS);
 }
 

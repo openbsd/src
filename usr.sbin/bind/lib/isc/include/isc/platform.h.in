@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,8 +15,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: platform.h.in,v 1.34.18.9 2007/09/13 05:04:01 each Exp $ */
-
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
 
@@ -25,11 +23,6 @@
 /*****
  ***** Platform-dependent defines.
  *****/
-
-/*
- * Define if the platform has <strings.h>.
- */
-@ISC_PLATFORM_HAVESTRINGSH@
 
 /***
  *** Network.
@@ -99,86 +92,9 @@
 @ISC_PLATFORM_NEEDPTON@
 
 /*! \brief
- * If this system needs inet_aton(), ISC_PLATFORM_NEEDATON will be defined.
- */
-@ISC_PLATFORM_NEEDATON@
-
-/*! \brief
  * If this system needs in_port_t, ISC_PLATFORM_NEEDPORTT will be defined.
  */
 @ISC_PLATFORM_NEEDPORTT@
-
-/*! \brief
- * If the system needs strsep(), ISC_PLATFORM_NEEDSTRSEP will be defined.
- */
-@ISC_PLATFORM_NEEDSTRSEP@
-
-/*! \brief
- * If the system needs strlcpy(), ISC_PLATFORM_NEEDSTRLCPY will be defined.
- */
-@ISC_PLATFORM_NEEDSTRLCPY@
-
-/*! \brief
- * If the system needs strlcat(), ISC_PLATFORM_NEEDSTRLCAT will be defined.
- */
-@ISC_PLATFORM_NEEDSTRLCAT@
-
-/*! \brief
- * Define either ISC_PLATFORM_BSD44MSGHDR or ISC_PLATFORM_BSD43MSGHDR.
- */
-@ISC_PLATFORM_MSGHDRFLAVOR@
-
-/*! \brief
- * Define if PTHREAD_ONCE_INIT should be surrounded by braces to
- * prevent compiler warnings (such as with gcc on Solaris 2.8).
- */
-@ISC_PLATFORM_BRACEPTHREADONCEINIT@
-
-/*! \brief
- * Define on some UnixWare systems to fix erroneous definitions of various
- * IN6_IS_ADDR_* macros.
- */
-@ISC_PLATFORM_FIXIN6ISADDR@
-
-/*
- *** Printing.
- ***/
-
-/*! \brief
- * If this system needs vsnprintf() and snprintf(), ISC_PLATFORM_NEEDVSNPRINTF
- * will be defined.
- */
-@ISC_PLATFORM_NEEDVSNPRINTF@
-
-/*! \brief
- * If this system need a modern sprintf() that returns (int) not (char*).
- */
-@ISC_PLATFORM_NEEDSPRINTF@
-
-/*! \brief
- * The printf format string modifier to use with isc_uint64_t values.
- */
-@ISC_PLATFORM_QUADFORMAT@
-
-/*! \brief
- * Defined if we are using threads.
- */
-@ISC_PLATFORM_USETHREADS@
-
-/*! \brief
- * Defined if unistd.h does not cause fd_set to be delared.
- */
-@ISC_PLATFORM_NEEDSYSSELECTH@
-
-/*! \brief
- * Type used for resource limits.
- */
-@ISC_PLATFORM_RLIMITTYPE@
-
-/*! \brief
- * Define if your compiler supports "long long int".
- */
-@ISC_PLATFORM_HAVELONGLONG@
 
 /*! \brief
  * Define if the system has struct lifconf which is a extended struct ifconf
@@ -198,9 +114,9 @@
 @ISC_PLATFORM_HAVEIF_LADDRREQ@
 
 /*! \brief
- * Used to control how extern data is linked; needed for Win32 platforms.
+ * Define either ISC_PLATFORM_BSD44MSGHDR or ISC_PLATFORM_BSD43MSGHDR.
  */
-@ISC_PLATFORM_USEDECLSPEC@
+@ISC_PLATFORM_MSGHDRFLAVOR@
 
 /*! \brief
  * Define if the system supports if_nametoindex.
@@ -208,14 +124,156 @@
 @ISC_PLATFORM_HAVEIFNAMETOINDEX@
 
 /*! \brief
+ * Define on some UnixWare systems to fix erroneous definitions of various
+ * IN6_IS_ADDR_* macros.
+ */
+@ISC_PLATFORM_FIXIN6ISADDR@
+
+/*! \brief
+ * Define if the system has struct sockaddr_storage.
+ */
+@ISC_PLATFORM_HAVESOCKADDRSTORAGE@
+
+/*! \brief
+ * Define if the system supports kqueue multiplexing
+ */
+@ISC_PLATFORM_HAVEKQUEUE@
+
+/*! \brief
+ * Define if the system supports epoll multiplexing
+ */
+@ISC_PLATFORM_HAVEEPOLL@
+
+/*! \brief
+ * Define if the system supports /dev/poll multiplexing
+ */
+@ISC_PLATFORM_HAVEDEVPOLL@
+
+/*! \brief
+ * Define if we want to log backtrace
+ */
+@ISC_PLATFORM_USEBACKTRACE@
+
+/*
+ *** Printing.
+ ***/
+
+/*! \brief
+ * If this system needs vsnprintf() and snprintf(), ISC_PLATFORM_NEEDVSNPRINTF
+ * will be defined.
+ */
+@ISC_PLATFORM_NEEDVSNPRINTF@
+
+/*! \brief
+ * If this system need a modern sprintf() that returns (int) not (char*).
+ */
+@ISC_PLATFORM_NEEDSPRINTF@
+
+/*! \brief
+ * If this system need a modern printf() that format size %z (size_t).
+ */
+@ISC_PLATFORM_NEEDPRINTF@
+
+/*! \brief
+ * If this system need a modern fprintf() that format size %z (size_t).
+ */
+@ISC_PLATFORM_NEEDFPRINTF@
+
+/*! \brief
+ * The printf format string modifier to use with isc_uint64_t values.
+ */
+@ISC_PLATFORM_QUADFORMAT@
+
+/***
+ *** String functions.
+ ***/
+/*
+ * If the system needs strsep(), ISC_PLATFORM_NEEDSTRSEP will be defined.
+ */
+@ISC_PLATFORM_NEEDSTRSEP@
+
+/*
+ * If the system needs strlcpy(), ISC_PLATFORM_NEEDSTRLCPY will be defined.
+ */
+@ISC_PLATFORM_NEEDSTRLCPY@
+
+/*
+ * If the system needs strlcat(), ISC_PLATFORM_NEEDSTRLCAT will be defined.
+ */
+@ISC_PLATFORM_NEEDSTRLCAT@
+
+/*
  * Define if this system needs strtoul.
  */
 @ISC_PLATFORM_NEEDSTRTOUL@
 
-/*! \brief
+/*
  * Define if this system needs memmove.
  */
 @ISC_PLATFORM_NEEDMEMMOVE@
+
+/*
+ * Define if this system needs strcasestr.
+ */
+@ISC_PLATFORM_NEEDSTRCASESTR@
+
+/***
+ *** Miscellaneous.
+ ***/
+
+/*
+ * Defined if we are using threads.
+ */
+@ISC_PLATFORM_USETHREADS@
+
+/*
+ * Defined if unistd.h does not cause fd_set to be delared.
+ */
+@ISC_PLATFORM_NEEDSYSSELECTH@
+
+/*
+ * Defined to <gssapi.h> or <gssapi/gssapi.h> for how to include
+ * the GSSAPI header.
+ */
+@ISC_PLATFORM_GSSAPIHEADER@
+
+/*
+ * Defined to <gssapi_krb5.h> or <gssapi/gssapi_krb5.h> for how to
+ * include the GSSAPI KRB5 header.
+ */
+@ISC_PLATFORM_GSSAPI_KRB5_HEADER@
+
+/*
+ * Defined to <krb5.h> or <krb5/krb5.h> for how to include
+ * the KRB5 header.
+ */
+@ISC_PLATFORM_KRB5HEADER@
+
+/*
+ * Define if the system has nanosecond-level accuracy in file stats.
+ */
+@ISC_PLATFORM_HAVESTATNSEC@
+
+/*
+ * Type used for resource limits.
+ */
+@ISC_PLATFORM_RLIMITTYPE@
+
+/*
+ * Define if your compiler supports "long long int".
+ */
+@ISC_PLATFORM_HAVELONGLONG@
+
+/*
+ * Define if PTHREAD_ONCE_INIT should be surrounded by braces to
+ * prevent compiler warnings (such as with gcc on Solaris 2.8).
+ */
+@ISC_PLATFORM_BRACEPTHREADONCEINIT@
+
+/*
+ * Used to control how extern data is linked; needed for Win32 platforms.
+ */
+@ISC_PLATFORM_USEDECLSPEC@
 
 /*
  * Define if the platform has <sys/un.h>.
@@ -224,19 +282,31 @@
 
 /*
  * If the "xadd" operation is available on this architecture,
- * ISC_PLATFORM_HAVEXADD will be defined. 
+ * ISC_PLATFORM_HAVEXADD will be defined.
  */
 @ISC_PLATFORM_HAVEXADD@
 
 /*
- * If the "atomic swap" operation is available on this architecture,
- * ISC_PLATFORM_HAVEATOMICSTORE" will be defined. 
+ * If the "xaddq" operation (64bit xadd) is available on this architecture,
+ * ISC_PLATFORM_HAVEXADDQ will be defined.
+ */
+@ISC_PLATFORM_HAVEXADDQ@
+
+/*
+ * If the 32-bit "atomic swap" operation is available on this
+ * architecture, ISC_PLATFORM_HAVEATOMICSTORE" will be defined.
  */
 @ISC_PLATFORM_HAVEATOMICSTORE@
 
 /*
+ * If the 64-bit "atomic swap" operation is available on this
+ * architecture, ISC_PLATFORM_HAVEATOMICSTORE" will be defined.
+ */
+@ISC_PLATFORM_HAVEATOMICSTOREQ@
+
+/*
  * If the "compare-and-exchange" operation is available on this architecture,
- * ISC_PLATFORM_HAVECMPXCHG will be defined. 
+ * ISC_PLATFORM_HAVECMPXCHG will be defined.
  */
 @ISC_PLATFORM_HAVECMPXCHG@
 
@@ -256,6 +326,36 @@
 @ISC_PLATFORM_USESTDASM@
 
 /*
+ * Define if the platform has <strings.h>.
+ */
+@ISC_PLATFORM_HAVESTRINGSH@
+
+/*
+ * Define if the hash functions must be provided by OpenSSL.
+ */
+@ISC_PLATFORM_OPENSSLHASH@
+
+/*
+ * Define if AES support is wanted
+ */
+@ISC_PLATFORM_WANTAES@
+
+/*
+ * Defines for the noreturn attribute.
+ */
+@ISC_PLATFORM_NORETURN_PRE@
+@ISC_PLATFORM_NORETURN_POST@
+
+/*
+ * Defined if we are enabling SIT (Source Identity Token).
+ */
+@ISC_PLATFORM_USESIT@
+
+/***
+ ***	Windows dll support.
+ ***/
+
+/*
  * Define if MacOS style of PPC assembly must be used.
  * e.g. "r6", not "6", for register six.
  */
@@ -267,6 +367,7 @@
 #define LIBISCCC_EXTERNAL_DATA
 #define LIBISCCFG_EXTERNAL_DATA
 #define LIBBIND9_EXTERNAL_DATA
+#define LIBTESTS_EXTERNAL_DATA
 #else /*! \brief ISC_PLATFORM_USEDECLSPEC */
 #ifdef LIBISC_EXPORTS
 #define LIBISC_EXTERNAL_DATA __declspec(dllexport)
@@ -292,6 +393,11 @@
 #define LIBBIND9_EXTERNAL_DATA __declspec(dllexport)
 #else
 #define LIBBIND9_EXTERNAL_DATA __declspec(dllimport)
+#endif
+#ifdef LIBTESTS_EXPORTS
+#define LIBTESTS_EXTERNAL_DATA __declspec(dllexport)
+#else
+#define LIBTESTS_EXTERNAL_DATA __declspec(dllimport)
 #endif
 #endif /*! \brief ISC_PLATFORM_USEDECLSPEC */
 

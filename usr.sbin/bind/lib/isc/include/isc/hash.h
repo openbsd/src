@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,16 +15,18 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: hash.h,v 1.4.18.2 2005/04/29 00:16:55 marka Exp $ */
+/* $Id: hash.h,v 1.4 2019/12/16 16:16:26 deraadt Exp $ */
 
 #ifndef ISC_HASH_H
 #define ISC_HASH_H 1
+
+#include <isc/types.h>
 
 /*****
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file isc/hash.h
  *
  * \brief The hash API
  *	provides an unpredictable hash value for variable length data.
@@ -36,7 +38,7 @@
  *	in the random vector are unpredictable, the probability of hash
  *	collision between arbitrary two different values is at most 1/2^16.
  *
- *	Altough the API is generic about the hash keys, it mainly expects
+ *	Although the API is generic about the hash keys, it mainly expects
  *	DNS names (and sometimes IPv4/v6 addresses) as inputs.  It has an
  *	upper limit of the input length, and may run slow to calculate the
  *	hash values for large inputs.
@@ -82,7 +84,7 @@
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-isc_hash_ctxcreate(isc_mem_t *mctx, isc_entropy_t *entropy, unsigned int limit,
+isc_hash_ctxcreate(isc_mem_t *mctx, isc_entropy_t *entropy, size_t limit,
 		   isc_hash_t **hctx);
 isc_result_t
 isc_hash_create(isc_mem_t *mctx, isc_entropy_t *entropy, size_t limit);
@@ -135,7 +137,7 @@ isc_hash_ctxinit(isc_hash_t *hctx);
 void
 isc_hash_init(void);
 /*!<
- * \brief Initialize a hash object.  
+ * \brief Initialize a hash object.
  *
  * It fills in the random vector with a proper
  * source of entropy, which is typically from the entropy object specified
@@ -179,6 +181,61 @@ isc_hash_calc(const unsigned char *key, unsigned int keylen,
  * is a DNS name.
  */
 /*@}*/
+
+void
+isc__hash_setvec(const isc_uint16_t *vec);
+
+/*!<
+ * \brief Set the contents of the random vector used in hashing.
+ *
+ * WARNING: This function is meant to be used only in testing code. It
+ * must not be used anywhere in normally running code.
+ *
+ * The hash context must have been created beforehand, otherwise this
+ * function is a nop.
+ *
+ * 'vec' is not documented here on purpose. You should know what you are
+ * doing before using this function.
+ */
+
+isc_uint32_t
+isc_hash_function(const void *data, size_t length,
+		  isc_boolean_t case_sensitive,
+		  const isc_uint32_t *previous_hashp);
+isc_uint32_t
+isc_hash_function_reverse(const void *data, size_t length,
+			  isc_boolean_t case_sensitive,
+			  const isc_uint32_t *previous_hashp);
+/*!<
+ * \brief Calculate a hash over data.
+ *
+ * This hash function is useful for hashtables. The hash function is
+ * opaque and not important to the caller. The returned hash values are
+ * non-deterministic and will have different mapping every time a
+ * process using this library is run, but will have uniform
+ * distribution.
+ *
+ * isc_hash_function() calculates the hash from start to end over the
+ * input data. isc_hash_function_reverse() calculates the hash from the
+ * end to the start over the input data. The difference in order is
+ * useful in incremental hashing; for example, a previously hashed
+ * value for 'com' can be used as input when hashing 'example.com'.
+ *
+ * This is a new variant of isc_hash_calc() and will supercede
+ * isc_hash_calc() eventually.
+ *
+ * 'data' is the data to be hashed.
+ *
+ * 'length' is the size of the data to be hashed.
+ *
+ * 'case_sensitive' specifies whether the hash key should be treated as
+ * case_sensitive values.  It should typically be ISC_FALSE if the hash key
+ * is a DNS name.
+ *
+ * 'previous_hashp' is a pointer to a previous hash value returned by
+ * this function. It can be used to perform incremental hashing. NULL
+ * must be passed during first calls.
+ */
 
 ISC_LANG_ENDDECLS
 

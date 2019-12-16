@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -19,7 +19,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char rcsid[] =
-	"$ISC: inet_ntop.c,v 1.14.18.3 2005/04/29 00:16:46 marka Exp $";
+	"$Id: inet_ntop.c,v 1.6 2019/12/16 16:16:26 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -52,7 +52,7 @@ static const char *inet_ntop6(const unsigned char *src, char *dst,
  *	convert a network format address to presentation format.
  * \return
  *	pointer to presentation format address (`dst'), or NULL (see errno).
- * \author 
+ * \author
  *	Paul Vixie, 1996.
  */
 const char *
@@ -90,12 +90,12 @@ inet_ntop4(const unsigned char *src, char *dst, size_t size)
 	static const char *fmt = "%u.%u.%u.%u";
 	char tmp[sizeof("255.255.255.255")];
 
-	if ((size_t)snprintf(tmp, sizeof(tmp), fmt, src[0], src[1], src[2], src[3]) >= size)
+	if ((size_t)sprintf(tmp, fmt, src[0], src[1], src[2], src[3]) >= size)
 	{
 		errno = ENOSPC;
 		return (NULL);
 	}
-	strlcpy(dst, tmp, size);
+	strcpy(dst, tmp);
 
 	return (dst);
 }
@@ -169,16 +169,16 @@ inet_ntop6(const unsigned char *src, char *dst, size_t size)
 		if (i != 0)
 			*tp++ = ':';
 		/* Is this address an encapsulated IPv4? */
-		if (i == 6 && best.base == 0 &&
-		    (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) {
+		if (i == 6 && best.base == 0 && (best.len == 6 ||
+		    (best.len == 7 && words[7] != 0x0001) ||
+		    (best.len == 5 && words[5] == 0xffff))) {
 			if (!inet_ntop4(src+12, tp,
 					sizeof(tmp) - (tp - tmp)))
 				return (NULL);
 			tp += strlen(tp);
 			break;
 		}
-		snprintf(tp, tmp + sizeof tmp - tp, "%x", words[i]);
-		tp += strlen(tp);
+		tp += sprintf(tp, "%x", words[i]);
 	}
 	/* Was it a trailing run of 0x00's? */
 	if (best.base != -1 && (best.base + best.len) ==
@@ -193,7 +193,7 @@ inet_ntop6(const unsigned char *src, char *dst, size_t size)
 		errno = ENOSPC;
 		return (NULL);
 	}
-	strlcpy(dst, tmp, size);
+	strcpy(dst, tmp);
 	return (dst);
 }
 #endif /* AF_INET6 */

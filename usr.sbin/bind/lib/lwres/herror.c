@@ -1,8 +1,8 @@
 /*
- * Portions Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -27,11 +27,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -72,12 +68,14 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)herror.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] =
-	"$ISC: herror.c,v 1.13.18.2 2005/04/29 00:17:18 marka Exp $";
+	"$Id: herror.c,v 1.6 2019/12/16 16:16:28 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
 
 #include <stdio.h>
+
+#include <isc/print.h>
 
 #include <lwres/netdb.h>
 #include <lwres/platform.h>
@@ -96,7 +94,7 @@ static const char *h_errlist[] = {
 	"No address associated with name",	/*%< 4 NO_ADDRESS */
 };
 
-static int	h_nerr = { sizeof(h_errlist) / sizeof(h_errlist[0]) };
+static int	h_nerr = sizeof(h_errlist) / sizeof(h_errlist[0]);
 
 
 /*!

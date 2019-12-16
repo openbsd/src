@@ -1,8 +1,8 @@
 /*
- * Portions Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1996-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -27,11 +27,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -72,7 +68,7 @@
  */
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
-static char rcsid[] = "$ISC: lwinetaton.c,v 1.12.18.2 2005/04/29 00:17:19 marka Exp $";
+static char rcsid[] = "$Id: lwinetaton.c,v 1.7 2019/12/16 16:16:28 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -95,8 +91,9 @@ static char rcsid[] = "$ISC: lwinetaton.c,v 1.12.18.2 2005/04/29 00:17:19 marka 
  */
 int
 lwres_net_aton(const char *cp, struct in_addr *addr) {
-	unsigned long val;
-	int base, n;
+	lwres_uint32_t val;
+	int base;
+	ptrdiff_t n;
 	unsigned char c;
 	lwres_uint8_t parts[4];
 	lwres_uint8_t *pp = parts;
@@ -120,7 +117,7 @@ lwres_net_aton(const char *cp, struct in_addr *addr) {
 			c = *++cp;
 			if (c == 'x' || c == 'X') {
 				base = 16;
-			       	c = *++cp;
+				c = *++cp;
 			} else {
 				base = 8;
 				digit = 1;

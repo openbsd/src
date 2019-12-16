@@ -1,8 +1,8 @@
 /*
- * Portions Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2005-2007, 2009-2013  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -50,9 +50,9 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: dlz.h,v 1.2.2.2 2005/09/06 03:47:18 marka Exp $ */
+/* $Id: dlz.h,v 1.2 2019/12/16 16:16:24 deraadt Exp $ */
 
-/*! \file */
+/*! \file dns/dlz.h */
 
 #ifndef DLZ_H
 #define DLZ_H 1
@@ -84,9 +84,11 @@
  ***** Imports
  *****/
 
+#include <dns/clientinfo.h>
 #include <dns/name.h>
 #include <dns/types.h>
 #include <dns/view.h>
+#include <dst/dst.h>
 
 #include <isc/lang.h>
 
@@ -133,16 +135,17 @@ typedef void
 /*%<
  * Method prototype.  Drivers implementing the DLZ interface MUST
  * supply a destroy method.  This method is called when the DNS server
- * is shuting down and no longer needs the driver.
+ * is shutting down and no longer needs the driver.
  */
 
 typedef isc_result_t
 (*dns_dlzfindzone_t)(void *driverarg, void *dbdata, isc_mem_t *mctx,
 		     dns_rdataclass_t rdclass, dns_name_t *name,
+		     dns_clientinfomethods_t *methods,
+		     dns_clientinfo_t *clientinfo,
 		     dns_db_t **dbp);
 
 /*%<
-
  * Method prototype.  Drivers implementing the DLZ interface MUST
  * supply a find zone method.  This method is called when the DNS
  * server is performing a query.  The find zone method will be called
@@ -157,7 +160,7 @@ typedef isc_result_t
  * \li	3) we run out of domain name labels. I.E. we have tried the
  *	   shortest domain name
  * \li	4) the number of labels in the domain name is less than
- *	   min_lables for dns_dlzfindzone
+ *	   min_labels for dns_dlzfindzone
  *
  * The driver's find zone method should return ISC_R_SUCCESS and a
  * database pointer to the name server if the zone is supported by the
@@ -166,12 +169,38 @@ typedef isc_result_t
  * return a result code indicating the type of error.
  */
 
+
+typedef isc_result_t
+(*dns_dlzconfigure_t)(void *driverarg, void *dbdata,
+		      dns_view_t *view, dns_dlzdb_t *dlzdb);
+/*%<
+ * Method prototype.  Drivers implementing the DLZ interface may
+ * optionally supply a configure method. If supplied, this will be
+ * called immediately after the create method is called. The driver
+ * may call configuration functions during the configure call
+ */
+
+
+typedef isc_boolean_t (*dns_dlzssumatch_t)(dns_name_t *signer,
+					   dns_name_t *name,
+					   isc_netaddr_t *tcpaddr,
+					   dns_rdatatype_t type,
+					   const dst_key_t *key,
+					   void *driverarg, void *dbdata);
+/*%<
+ * Method prototype.  Drivers implementing the DLZ interface may
+ * optionally supply a ssumatch method. If supplied, this will be
+ * called to authorize update requests
+ */
+
 /*% the methods supplied by a DLZ driver */
 typedef struct dns_dlzmethods {
 	dns_dlzcreate_t		create;
 	dns_dlzdestroy_t	destroy;
 	dns_dlzfindzone_t	findzone;
 	dns_dlzallowzonexfr_t	allowzonexfr;
+	dns_dlzconfigure_t	configure;
+	dns_dlzssumatch_t	ssumatch;
 } dns_dlzmethods_t;
 
 /*% information about a DLZ driver */
@@ -183,12 +212,20 @@ struct dns_dlzimplementation {
 	ISC_LINK(dns_dlzimplementation_t)	link;
 };
 
-/*% an instance of a DLZ driver */
+typedef isc_result_t (*dlzconfigure_callback_t)(dns_view_t *, dns_dlzdb_t *,
+						dns_zone_t *);
+
+/*% An instance of a DLZ driver */
 struct dns_dlzdb {
 	unsigned int		magic;
 	isc_mem_t		*mctx;
 	dns_dlzimplementation_t	*implementation;
 	void			*dbdata;
+	dlzconfigure_callback_t configure_callback;
+	isc_boolean_t		search;
+	char			*dlzname;
+	ISC_LINK(dns_dlzdb_t)	link;
+	dns_ssutable_t 		*ssutable;
 };
 
 
@@ -202,7 +239,7 @@ dns_dlzallowzonexfr(dns_view_t *view, dns_name_t *name,
 
 /*%<
  * This method is called when the DNS server is performing a zone
- * transfer query.  It will call the DLZ driver's allow zone tranfer
+ * transfer query.  It will call the DLZ driver's allow zone transfer
  * method.
  */
 
@@ -223,18 +260,9 @@ void
 dns_dlzdestroy(dns_dlzdb_t **dbp);
 
 /*%<
- * This method is called when the DNS server is shuting down and no
+ * This method is called when the DNS server is shutting down and no
  * longer needs the driver.  If the DLZ driver supplies a destroy
  * methods, this function will call it.
- */
-
-isc_result_t
-dns_dlzfindzone(dns_view_t *view, dns_name_t *name,
-		unsigned int minlabels, dns_db_t **dbp);
-
-/*%<
- * This method is called when the DNS server is performing a query.
- * It will call the DLZ driver's find zone method.
  */
 
 isc_result_t
@@ -283,6 +311,32 @@ dns_dlzunregister(dns_dlzimplementation_t **dlzimp);
  * Removes the dlz driver from the list of registered dlz drivers.
  * There must be no active dlz drivers of this type when this function
  * is called.
+ */
+
+
+typedef isc_result_t dns_dlz_writeablezone_t(dns_view_t *view,
+					     dns_dlzdb_t *dlzdb,
+					     const char *zone_name);
+dns_dlz_writeablezone_t dns_dlz_writeablezone;
+/*%<
+ * creates a writeable DLZ zone. Must be called from within the
+ * configure() method of a DLZ driver.
+ */
+
+
+isc_result_t
+dns_dlzconfigure(dns_view_t *view, dns_dlzdb_t *dlzdb,
+		 dlzconfigure_callback_t callback);
+/*%<
+ * call a DLZ drivers configure method, if supplied
+ */
+
+isc_boolean_t
+dns_dlz_ssumatch(dns_dlzdb_t *dlzdatabase,
+		  dns_name_t *signer, dns_name_t *name, isc_netaddr_t *tcpaddr,
+		  dns_rdatatype_t type, const dst_key_t *key);
+/*%<
+ * call a DLZ drivers ssumatch method, if supplied. Otherwise return ISC_FALSE
  */
 
 ISC_LANG_ENDDECLS

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -16,7 +16,7 @@
  */
 
 /*
- * $ISC: dbtable.c,v 1.28.18.3 2005/07/12 01:22:19 marka Exp $
+ * $Id: dbtable.c,v 1.2 2019/12/16 16:16:24 deraadt Exp $
  */
 
 /*! \file
@@ -89,7 +89,8 @@ dns_dbtable_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 		goto clean3;
 
 	dbtable->default_db = NULL;
-	dbtable->mctx = mctx;
+	dbtable->mctx = NULL;
+	isc_mem_attach(mctx, &dbtable->mctx);
 	dbtable->rdclass = rdclass;
 	dbtable->magic = DBTABLE_MAGIC;
 	dbtable->references = 1;
@@ -105,7 +106,7 @@ dns_dbtable_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	dns_rbt_destroy(&dbtable->rbt);
 
  clean1:
-	isc_mem_put(mctx, dbtable, sizeof(*dbtable));
+	isc_mem_putanddetach(&mctx, dbtable, sizeof(*dbtable));
 
 	return (result);
 }
@@ -129,7 +130,7 @@ dbtable_free(dns_dbtable_t *dbtable) {
 
 	dbtable->magic = 0;
 
-	isc_mem_put(dbtable->mctx, dbtable, sizeof(*dbtable));
+	isc_mem_putanddetach(&dbtable->mctx, dbtable, sizeof(*dbtable));
 }
 
 void
@@ -175,16 +176,16 @@ dns_dbtable_detach(dns_dbtable_t **dbtablep) {
 isc_result_t
 dns_dbtable_add(dns_dbtable_t *dbtable, dns_db_t *db) {
 	isc_result_t result;
-	dns_db_t *clone;
+	dns_db_t *dbclone;
 
 	REQUIRE(VALID_DBTABLE(dbtable));
 	REQUIRE(dns_db_class(db) == dbtable->rdclass);
 
-	clone = NULL;
-	dns_db_attach(db, &clone);
+	dbclone = NULL;
+	dns_db_attach(db, &dbclone);
 
 	RWLOCK(&dbtable->tree_lock, isc_rwlocktype_write);
-	result = dns_rbt_addname(dbtable->rbt, dns_db_origin(clone), clone);
+	result = dns_rbt_addname(dbtable->rbt, dns_db_origin(dbclone), dbclone);
 	RWUNLOCK(&dbtable->tree_lock, isc_rwlocktype_write);
 
 	return (result);

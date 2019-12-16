@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: timer.h,v 1.31.18.3.52.2 2008/07/24 23:48:09 tbox Exp $ */
+/* $Id: timer.h,v 1.3 2019/12/16 16:16:26 deraadt Exp $ */
 
 #ifndef ISC_TIMER_H
 #define ISC_TIMER_H 1
@@ -24,7 +24,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file isc/timer.h
  * \brief Provides timers which are event sources in the task system.
  *
  * Three types of timers are supported:
@@ -86,6 +86,7 @@ ISC_LANG_BEGINDECLS
 
 /*% Timer Type */
 typedef enum {
+	isc_timertype_undefined = -1,	/*%< Undefined */
 	isc_timertype_ticker = 0, 	/*%< Ticker */
 	isc_timertype_once = 1, 	/*%< Once */
 	isc_timertype_limited = 2, 	/*%< Limited */
@@ -103,6 +104,62 @@ typedef struct isc_timerevent {
 #define ISC_TIMEREVENT_LIFE		(ISC_EVENTCLASS_TIMER + 3)
 #define ISC_TIMEREVENT_LASTEVENT	(ISC_EVENTCLASS_TIMER + 65535)
 
+/*% Timer and timer manager methods */
+typedef struct {
+	void		(*destroy)(isc_timermgr_t **managerp);
+	isc_result_t	(*timercreate)(isc_timermgr_t *manager,
+				       isc_timertype_t type,
+				       const isc_time_t *expires,
+				       const isc_interval_t *interval,
+				       isc_task_t *task,
+				       isc_taskaction_t action,
+				       void *arg,
+				       isc_timer_t **timerp);
+} isc_timermgrmethods_t;
+
+typedef struct {
+	void		(*attach)(isc_timer_t *timer, isc_timer_t **timerp);
+	void		(*detach)(isc_timer_t **timerp);
+	isc_result_t	(*reset)(isc_timer_t *timer, isc_timertype_t type,
+				 const isc_time_t *expires,
+				 const isc_interval_t *interval,
+				 isc_boolean_t purge);
+	isc_result_t	(*touch)(isc_timer_t *timer);
+} isc_timermethods_t;
+
+/*%
+ * This structure is actually just the common prefix of a timer manager
+ * object implementation's version of an isc_timermgr_t.
+ * \brief
+ * Direct use of this structure by clients is forbidden.  timer implementations
+ * may change the structure.  'magic' must be ISCAPI_TIMERMGR_MAGIC for any
+ * of the isc_timer_ routines to work.  timer implementations must maintain
+ * all timer invariants.
+ */
+struct isc_timermgr {
+	unsigned int		impmagic;
+	unsigned int		magic;
+	isc_timermgrmethods_t	*methods;
+};
+
+#define ISCAPI_TIMERMGR_MAGIC		ISC_MAGIC('A','t','m','g')
+#define ISCAPI_TIMERMGR_VALID(m)	((m) != NULL && \
+					 (m)->magic == ISCAPI_TIMERMGR_MAGIC)
+
+/*%
+ * This is the common prefix of a timer object.  The same note as
+ * that for the timermgr structure applies.
+ */
+struct isc_timer {
+	unsigned int		impmagic;
+	unsigned int		magic;
+	isc_timermethods_t	*methods;
+};
+
+#define ISCAPI_TIMER_MAGIC	ISC_MAGIC('A','t','m','r')
+#define ISCAPI_TIMER_VALID(s)	((s) != NULL && \
+				 (s)->magic == ISCAPI_TIMER_MAGIC)
+
 /***
  *** Timer and Timer Manager Functions
  ***
@@ -113,11 +170,11 @@ typedef struct isc_timerevent {
 isc_result_t
 isc_timer_create(isc_timermgr_t *manager,
 		 isc_timertype_t type,
-		 isc_time_t *expires,
-		 isc_interval_t *interval,
+		 const isc_time_t *expires,
+		 const isc_interval_t *interval,
 		 isc_task_t *task,
 		 isc_taskaction_t action,
-		 const void *arg,
+		 void *arg,
 		 isc_timer_t **timerp);
 /*%<
  * Create a new 'type' timer managed by 'manager'.  The timers parameters
@@ -177,8 +234,8 @@ isc_timer_create(isc_timermgr_t *manager,
 isc_result_t
 isc_timer_reset(isc_timer_t *timer,
 		isc_timertype_t type,
-		isc_time_t *expires,
-		isc_interval_t *interval,
+		const isc_time_t *expires,
+		const isc_interval_t *interval,
 		isc_boolean_t purge);
 /*%<
  * Change the timer's type, expires, and interval values to the given
@@ -289,9 +346,14 @@ isc_timer_gettype(isc_timer_t *timer);
  */
 
 isc_result_t
+isc_timermgr_createinctx(isc_mem_t *mctx, isc_appctx_t *actx,
+			 isc_timermgr_t **managerp);
+
+isc_result_t
 isc_timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp);
 /*%<
- * Create a timer manager.
+ * Create a timer manager.  isc_timermgr_createinctx() also associates
+ * the new manager with the specified application context.
  *
  * Notes:
  *
@@ -302,6 +364,8 @@ isc_timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp);
  *\li	'mctx' is a valid memory context.
  *
  *\li	'managerp' points to a NULL isc_timermgr_t.
+ *
+ *\li	'actx' is a valid application context (for createinctx()).
  *
  * Ensures:
  *
@@ -338,6 +402,29 @@ isc_timermgr_destroy(isc_timermgr_t **managerp);
  */
 
 void isc_timermgr_poke(isc_timermgr_t *m);
+
+/*%<
+ * See isc_timermgr_create() above.
+ */
+typedef isc_result_t
+(*isc_timermgrcreatefunc_t)(isc_mem_t *mctx, isc_timermgr_t **managerp);
+
+isc_result_t
+isc__timer_register(void);
+/*%<
+ * Register a new timer management implementation and add it to the list of
+ * supported implementations.  This function must be called when a different
+ * event library is used than the one contained in the ISC library.
+ */
+
+isc_result_t
+isc_timer_register(isc_timermgrcreatefunc_t createfunc);
+/*%<
+ * A short cut function that specifies the timer management module in the ISC
+ * library for isc_timer_register().  An application that uses the ISC library
+ * usually do not have to care about this function: it would call
+ * isc_lib_register(), which internally calls this function.
+ */
 
 ISC_LANG_ENDDECLS
 

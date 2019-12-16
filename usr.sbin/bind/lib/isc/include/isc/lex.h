@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: lex.h,v 1.30.18.3 2005/06/04 00:39:05 marka Exp $ */
+/* $Id: lex.h,v 1.2 2019/12/16 16:16:26 deraadt Exp $ */
 
 #ifndef ISC_LEX_H
 #define ISC_LEX_H 1
@@ -86,7 +86,7 @@ ISC_LANG_BEGINDECLS
 #define ISC_LEXOPT_DNSMULTILINE		0x20	/*%< Handle '(' and ')'. */
 #define ISC_LEXOPT_NOMORE		0x40	/*%< Want "no more" token. */
 
-#define ISC_LEXOPT_CNUMBER		0x80    /*%< Regognize octal and hex. */
+#define ISC_LEXOPT_CNUMBER		0x80    /*%< Recognize octal and hex. */
 #define ISC_LEXOPT_ESCAPE		0x100	/*%< Recognize escapes. */
 #define ISC_LEXOPT_QSTRINGMULTILINE	0x200	/*%< Allow multiline "" strings */
 #define ISC_LEXOPT_OCTAL		0x400	/*%< Expect a octal number. */
@@ -151,8 +151,6 @@ isc_lex_create(isc_mem_t *mctx, size_t max_token, isc_lex_t **lexp);
  *
  * Requires:
  *\li	'*lexp' is a valid lexer.
- *
- *\li	max_token > 0.
  *
  * Ensures:
  *\li	On success, *lexp is attached to the newly created lexer.

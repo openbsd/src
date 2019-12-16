@@ -1,8 +1,9 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2004, 2005, 2007 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004, 2005, 2007, 2014-2016 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000, 2001 Internet Software Consortium.
  - 
- - Permission to use, copy, modify, and distribute this software for any
+ - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
  - 
@@ -14,181 +15,162 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- $ISC: lwres_gabn.html,v 1.7.18.17 2007/01/30 00:23:45 marka Exp $ -->
-<html>
+<html lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>lwres_gabn</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.71.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 </head>
-<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en">
-<a name="id2476275"></a><div class="titlepage"></div>
-<div class="refnamediv">
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry">
+<a name="id-1"></a><div class="titlepage"></div>
+  
+  
+
+  
+
+  
+
+  <div class="refnamediv">
 <h2>Name</h2>
-<p>lwres_gabnrequest_render, lwres_gabnresponse_render, lwres_gabnrequest_parse, lwres_gabnresponse_parse, lwres_gabnresponse_free, lwres_gabnrequest_free &#8212; lightweight resolver getaddrbyname message handling</p>
+<p>
+    lwres_gabnrequest_render, 
+    lwres_gabnresponse_render, 
+    lwres_gabnrequest_parse, 
+    lwres_gabnresponse_parse, 
+    lwres_gabnresponse_free, 
+    lwres_gabnrequest_free
+     &#8212; lightweight resolver getaddrbyname message handling
+  </p>
 </div>
-<div class="refsynopsisdiv">
+  <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
-<div class="funcsynopsis">
+    <div class="funcsynopsis">
 <pre class="funcsynopsisinfo">#include &lt;lwres/lwres.h&gt;</pre>
-<table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em">
+<table border="0" class="funcprototype-table" summary="Function synopsis" style="cellspacing: 0; cellpadding: 0;">
 <tr>
 <td><code class="funcdef">
 lwres_result_t
 <b class="fsfunc">lwres_gabnrequest_render</b>(</code></td>
-<td>lwres_context_t * </td>
-<td>
-<var class="pdparam">ctx</var>, </td>
+<td>lwres_context_t *<var class="pdparam">ctx</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>lwres_gabnrequest_t * </td>
-<td>
-<var class="pdparam">req</var>, </td>
+<td>lwres_gabnrequest_t *<var class="pdparam">req</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>lwres_lwpacket_t * </td>
-<td>
-<var class="pdparam">pkt</var>, </td>
+<td>lwres_lwpacket_t *<var class="pdparam">pkt</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>lwres_buffer_t * </td>
-<td>
-<var class="pdparam">b</var><code>)</code>;</td>
+<td>lwres_buffer_t *<var class="pdparam">b</var><code>)</code>;</td>
 </tr>
 </table>
-<table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em">
+<div class="funcprototype-spacer"> </div>
+<table border="0" class="funcprototype-table" summary="Function synopsis" style="cellspacing: 0; cellpadding: 0;">
 <tr>
 <td><code class="funcdef">
 lwres_result_t
 <b class="fsfunc">lwres_gabnresponse_render</b>(</code></td>
-<td>lwres_context_t * </td>
-<td>
-<var class="pdparam">ctx</var>, </td>
+<td>lwres_context_t *<var class="pdparam">ctx</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>lwres_gabnresponse_t * </td>
-<td>
-<var class="pdparam">req</var>, </td>
+<td>lwres_gabnresponse_t *<var class="pdparam">req</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>lwres_lwpacket_t * </td>
-<td>
-<var class="pdparam">pkt</var>, </td>
+<td>lwres_lwpacket_t *<var class="pdparam">pkt</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>lwres_buffer_t * </td>
-<td>
-<var class="pdparam">b</var><code>)</code>;</td>
+<td>lwres_buffer_t *<var class="pdparam">b</var><code>)</code>;</td>
 </tr>
 </table>
-<table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em">
+<div class="funcprototype-spacer"> </div>
+<table border="0" class="funcprototype-table" summary="Function synopsis" style="cellspacing: 0; cellpadding: 0;">
 <tr>
 <td><code class="funcdef">
 lwres_result_t
 <b class="fsfunc">lwres_gabnrequest_parse</b>(</code></td>
-<td>lwres_context_t * </td>
-<td>
-<var class="pdparam">ctx</var>, </td>
+<td>lwres_context_t *<var class="pdparam">ctx</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>lwres_buffer_t * </td>
-<td>
-<var class="pdparam">b</var>, </td>
+<td>lwres_buffer_t *<var class="pdparam">b</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>lwres_lwpacket_t * </td>
-<td>
-<var class="pdparam">pkt</var>, </td>
+<td>lwres_lwpacket_t *<var class="pdparam">pkt</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>lwres_gabnrequest_t ** </td>
-<td>
-<var class="pdparam">structp</var><code>)</code>;</td>
+<td>lwres_gabnrequest_t **<var class="pdparam">structp</var><code>)</code>;</td>
 </tr>
 </table>
-<table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em">
+<div class="funcprototype-spacer"> </div>
+<table border="0" class="funcprototype-table" summary="Function synopsis" style="cellspacing: 0; cellpadding: 0;">
 <tr>
 <td><code class="funcdef">
 lwres_result_t
 <b class="fsfunc">lwres_gabnresponse_parse</b>(</code></td>
-<td>lwres_context_t * </td>
-<td>
-<var class="pdparam">ctx</var>, </td>
+<td>lwres_context_t *<var class="pdparam">ctx</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>lwres_buffer_t * </td>
-<td>
-<var class="pdparam">b</var>, </td>
+<td>lwres_buffer_t *<var class="pdparam">b</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>lwres_lwpacket_t * </td>
-<td>
-<var class="pdparam">pkt</var>, </td>
+<td>lwres_lwpacket_t *<var class="pdparam">pkt</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>lwres_gabnresponse_t ** </td>
-<td>
-<var class="pdparam">structp</var><code>)</code>;</td>
+<td>lwres_gabnresponse_t **<var class="pdparam">structp</var><code>)</code>;</td>
 </tr>
 </table>
-<table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em">
+<div class="funcprototype-spacer"> </div>
+<table border="0" class="funcprototype-table" summary="Function synopsis" style="cellspacing: 0; cellpadding: 0;">
 <tr>
 <td><code class="funcdef">
 void
 <b class="fsfunc">lwres_gabnresponse_free</b>(</code></td>
-<td>lwres_context_t * </td>
-<td>
-<var class="pdparam">ctx</var>, </td>
+<td>lwres_context_t *<var class="pdparam">ctx</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>lwres_gabnresponse_t ** </td>
-<td>
-<var class="pdparam">structp</var><code>)</code>;</td>
+<td>lwres_gabnresponse_t **<var class="pdparam">structp</var><code>)</code>;</td>
 </tr>
 </table>
-<table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0">
+<div class="funcprototype-spacer"> </div>
+<table border="0" class="funcprototype-table" summary="Function synopsis" style="cellspacing: 0; cellpadding: 0;">
 <tr>
 <td><code class="funcdef">
 void
 <b class="fsfunc">lwres_gabnrequest_free</b>(</code></td>
-<td>lwres_context_t * </td>
-<td>
-<var class="pdparam">ctx</var>, </td>
+<td>lwres_context_t *<var class="pdparam">ctx</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>lwres_gabnrequest_t ** </td>
-<td>
-<var class="pdparam">structp</var><code>)</code>;</td>
+<td>lwres_gabnrequest_t **<var class="pdparam">structp</var><code>)</code>;</td>
 </tr>
 </table>
+<div class="funcprototype-spacer"> </div>
 </div>
-</div>
-<div class="refsect1" lang="en">
-<a name="id2543522"></a><h2>DESCRIPTION</h2>
-<p>
+  </div>
+  <div class="refsection">
+<a name="id-1.7"></a><h2>DESCRIPTION</h2>
+
+    <p>
       These are low-level routines for creating and parsing
       lightweight resolver name-to-address lookup request and
       response messages.
     </p>
-<p>
+    <p>
       There are four main functions for the getaddrbyname opcode.
       One render function converts a getaddrbyname request structure &#8212;
       <span class="type">lwres_gabnrequest_t</span> &#8212;
-      to the lighweight resolver's canonical format.
+      to the lightweight resolver's canonical format.
       It is complemented by a parse function that converts a packet in this
       canonical format to a getaddrbyname request structure.
       Another render function converts the getaddrbyname response structure
@@ -197,23 +179,23 @@ void
       This is complemented by a parse function which converts a packet in
       canonical format to a getaddrbyname response structure.
     </p>
-<p>
+    <p>
       These structures are defined in
       <code class="filename">&lt;lwres/lwres.h&gt;</code>.
       They are shown below.
     </p>
-<pre class="programlisting">
+    <pre class="programlisting">
 #define LWRES_OPCODE_GETADDRSBYNAME     0x00010001U
 </pre>
 <p>
     </p>
-<pre class="programlisting">
+    <pre class="programlisting">
 typedef struct lwres_addr lwres_addr_t;
 typedef LWRES_LIST(lwres_addr_t) lwres_addrlist_t;
 </pre>
 <p>
     </p>
-<pre class="programlisting">
+    <pre class="programlisting">
 typedef struct {
         lwres_uint32_t  flags;
         lwres_uint32_t  addrtypes;
@@ -223,7 +205,7 @@ typedef struct {
 </pre>
 <p>
     </p>
-<pre class="programlisting">
+    <pre class="programlisting">
 typedef struct {
         lwres_uint32_t          flags;
         lwres_uint16_t          naliases;
@@ -239,7 +221,8 @@ typedef struct {
 </pre>
 <p>
     </p>
-<p><code class="function">lwres_gabnrequest_render()</code>
+
+    <p><code class="function">lwres_gabnrequest_render()</code>
       uses resolver context <em class="parameter"><code>ctx</code></em> to convert
       getaddrbyname request structure <em class="parameter"><code>req</code></em> to
       canonical format.  The packet header structure
@@ -253,7 +236,8 @@ typedef struct {
       <span class="type">lwres_gabnresponse_t</span> to the lightweight resolver's
       canonical format.
     </p>
-<p><code class="function">lwres_gabnrequest_parse()</code>
+
+    <p><code class="function">lwres_gabnrequest_parse()</code>
       uses context <em class="parameter"><code>ctx</code></em> to convert the contents
       of packet <em class="parameter"><code>pkt</code></em> to a
       <span class="type">lwres_gabnrequest_t</span> structure.  Buffer
@@ -266,7 +250,8 @@ typedef struct {
       semantics as <code class="function">lwres_gabnrequest_parse()</code>
       except it yields a <span class="type">lwres_gabnresponse_t</span> structure.
     </p>
-<p><code class="function">lwres_gabnresponse_free()</code>
+
+    <p><code class="function">lwres_gabnresponse_free()</code>
       and <code class="function">lwres_gabnrequest_free()</code> release the
       memory in resolver context <em class="parameter"><code>ctx</code></em> that was
       allocated to the <span class="type">lwres_gabnresponse_t</span> or
@@ -276,10 +261,11 @@ typedef struct {
       Any memory associated with ancillary buffers and strings for
       those structures is also discarded.
     </p>
-</div>
-<div class="refsect1" lang="en">
-<a name="id2543667"></a><h2>RETURN VALUES</h2>
-<p>
+  </div>
+  <div class="refsection">
+<a name="id-1.8"></a><h2>RETURN VALUES</h2>
+
+    <p>
       The getaddrbyname opcode functions
       <code class="function">lwres_gabnrequest_render()</code>,
       <code class="function">lwres_gabnresponse_render()</code>
@@ -309,16 +295,19 @@ typedef struct {
       These functions will return
       <span class="errorcode">LWRES_R_FAILURE</span>
       if
-      <em class="structfield"><code>pktflags</code></em>
+      <code class="varname">pktflags</code>
       in the packet header structure
       <span class="type">lwres_lwpacket_t</span>
       indicate that the packet is not a response to an earlier query.
     </p>
-</div>
-<div class="refsect1" lang="en">
-<a name="id2543733"></a><h2>SEE ALSO</h2>
-<p><span class="citerefentry"><span class="refentrytitle">lwres_packet</span>(3)</span>
+  </div>
+  <div class="refsection">
+<a name="id-1.9"></a><h2>SEE ALSO</h2>
+
+    <p><span class="citerefentry">
+        <span class="refentrytitle">lwres_packet</span>(3)
+      </span>
     </p>
-</div>
+  </div>
 </div></body>
 </html>

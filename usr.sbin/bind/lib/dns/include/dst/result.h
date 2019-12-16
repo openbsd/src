@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,12 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: result.h,v 1.1.6.3 2005/04/29 00:16:29 marka Exp $ */
+/* $Id: result.h,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
 
 #ifndef DST_RESULT_H
 #define DST_RESULT_H 1
 
-/*! \file */
+/*! \file dst/result.h */
 
 #include <isc/lang.h>
 #include <isc/resultclass.h>
@@ -34,7 +34,9 @@
 #include <isc/result.h>		/* Contractual promise. */
 
 #define DST_R_UNSUPPORTEDALG		(ISC_RESULTCLASS_DST + 0)
-#define DST_R_OPENSSLFAILURE		(ISC_RESULTCLASS_DST + 1)
+#define DST_R_CRYPTOFAILURE		(ISC_RESULTCLASS_DST + 1)
+/* compat */
+#define DST_R_OPENSSLFAILURE		DST_R_CRYPTOFAILURE
 #define DST_R_NOCRYPTO			(ISC_RESULTCLASS_DST + 2)
 #define DST_R_NULLKEY			(ISC_RESULTCLASS_DST + 3)
 #define DST_R_INVALIDPUBLICKEY		(ISC_RESULTCLASS_DST + 4)
@@ -54,8 +56,10 @@
 #define DST_R_COMPUTESECRETFAILURE	(ISC_RESULTCLASS_DST + 18)
 #define DST_R_NORANDOMNESS		(ISC_RESULTCLASS_DST + 19)
 #define DST_R_BADKEYTYPE		(ISC_RESULTCLASS_DST + 20)
+#define DST_R_NOENGINE			(ISC_RESULTCLASS_DST + 21)
+#define DST_R_EXTERNALKEY		(ISC_RESULTCLASS_DST + 22)
 
-#define DST_R_NRESULTS			21	/* Number of results */
+#define DST_R_NRESULTS			23	/* Number of results */
 
 ISC_LANG_BEGINDECLS
 

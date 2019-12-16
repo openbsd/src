@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: hmacmd5.c,v 1.7.18.5 2006/02/26 22:30:56 marka Exp $ */
+/* $Id: hmacmd5.c,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
 
 /*! \file
  * This code implements the HMAC-MD5 keyed hash algorithm
@@ -24,12 +24,227 @@
 
 #include "config.h"
 
+#include <pk11/site.h>
+
+#ifndef PK11_MD5_DISABLE
+
 #include <isc/assertions.h>
 #include <isc/hmacmd5.h>
 #include <isc/md5.h>
+#include <isc/platform.h>
+#include <isc/safe.h>
 #include <isc/string.h>
 #include <isc/types.h>
 #include <isc/util.h>
+
+#if PKCS11CRYPTO
+#include <pk11/internal.h>
+#include <pk11/pk11.h>
+#endif
+
+#ifdef ISC_PLATFORM_OPENSSLHASH
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#define HMAC_CTX_new() &(ctx->_ctx), HMAC_CTX_init(&(ctx->_ctx))
+#define HMAC_CTX_free(ptr) HMAC_CTX_cleanup(ptr)
+#endif
+
+void
+isc_hmacmd5_init(isc_hmacmd5_t *ctx, const unsigned char *key,
+		 unsigned int len)
+{
+	ctx->ctx = HMAC_CTX_new();
+	RUNTIME_CHECK(ctx->ctx != NULL);
+	RUNTIME_CHECK(HMAC_Init_ex(ctx->ctx, (const void *) key,
+				   (int) len, EVP_md5(), NULL) == 1);
+}
+
+void
+isc_hmacmd5_invalidate(isc_hmacmd5_t *ctx) {
+	if (ctx->ctx == NULL)
+		return;
+	HMAC_CTX_free(ctx->ctx);
+	ctx->ctx = NULL;
+}
+
+void
+isc_hmacmd5_update(isc_hmacmd5_t *ctx, const unsigned char *buf,
+		   unsigned int len)
+{
+	RUNTIME_CHECK(HMAC_Update(ctx->ctx, buf, (int) len) == 1);
+}
+
+void
+isc_hmacmd5_sign(isc_hmacmd5_t *ctx, unsigned char *digest) {
+	RUNTIME_CHECK(HMAC_Final(ctx->ctx, digest, NULL) == 1);
+	HMAC_CTX_free(ctx->ctx);
+	ctx->ctx = NULL;
+}
+
+#elif PKCS11CRYPTO
+
+#ifndef PK11_MD5_HMAC_REPLACE
+
+static CK_BBOOL truevalue = TRUE;
+static CK_BBOOL falsevalue = FALSE;
+
+void
+isc_hmacmd5_init(isc_hmacmd5_t *ctx, const unsigned char *key,
+		 unsigned int len)
+{
+	CK_RV rv;
+	CK_MECHANISM mech = { CKM_MD5_HMAC, NULL, 0 };
+	CK_OBJECT_CLASS keyClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_MD5_HMAC;
+	CK_ATTRIBUTE keyTemplate[] =
+	{
+		{ CKA_CLASS, &keyClass, (CK_ULONG) sizeof(keyClass) },
+		{ CKA_KEY_TYPE, &keyType, (CK_ULONG) sizeof(keyType) },
+		{ CKA_TOKEN, &falsevalue, (CK_ULONG) sizeof(falsevalue) },
+		{ CKA_PRIVATE, &falsevalue, (CK_ULONG) sizeof(falsevalue) },
+		{ CKA_SIGN, &truevalue, (CK_ULONG) sizeof(truevalue) },
+		{ CKA_VALUE, NULL, (CK_ULONG) len }
+	};
+
+	DE_CONST(key, keyTemplate[5].pValue);
+	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
+				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
+	ctx->object = CK_INVALID_HANDLE;
+	PK11_FATALCHECK(pkcs_C_CreateObject,
+			(ctx->session, keyTemplate,
+			 (CK_ULONG) 6, &ctx->object));
+	INSIST(ctx->object != CK_INVALID_HANDLE);
+	PK11_FATALCHECK(pkcs_C_SignInit, (ctx->session, &mech, ctx->object));
+}
+
+void
+isc_hmacmd5_invalidate(isc_hmacmd5_t *ctx) {
+	CK_BYTE garbage[ISC_MD5_DIGESTLENGTH];
+	CK_ULONG len = ISC_MD5_DIGESTLENGTH;
+
+	if (ctx->handle == NULL)
+		return;
+	(void) pkcs_C_SignFinal(ctx->session, garbage, &len);
+	memset(garbage, 0, sizeof(garbage));
+	if (ctx->object != CK_INVALID_HANDLE)
+		(void) pkcs_C_DestroyObject(ctx->session, ctx->object);
+	ctx->object = CK_INVALID_HANDLE;
+	pk11_return_session(ctx);
+}
+
+void
+isc_hmacmd5_update(isc_hmacmd5_t *ctx, const unsigned char *buf,
+		   unsigned int len)
+{
+	CK_RV rv;
+	CK_BYTE_PTR pPart;
+
+	DE_CONST(buf, pPart);
+	PK11_FATALCHECK(pkcs_C_SignUpdate,
+			(ctx->session, pPart, (CK_ULONG) len));
+}
+
+void
+isc_hmacmd5_sign(isc_hmacmd5_t *ctx, unsigned char *digest) {
+	CK_RV rv;
+	CK_ULONG len = ISC_MD5_DIGESTLENGTH;
+
+	PK11_FATALCHECK(pkcs_C_SignFinal,
+			(ctx->session, (CK_BYTE_PTR) digest, &len));
+	if (ctx->object != CK_INVALID_HANDLE)
+		(void) pkcs_C_DestroyObject(ctx->session, ctx->object);
+	ctx->object = CK_INVALID_HANDLE;
+	pk11_return_session(ctx);
+}
+#else
+/* Replace missing CKM_MD5_HMAC PKCS#11 mechanism */
+
+#define PADLEN 64
+#define IPAD 0x36
+#define OPAD 0x5C
+
+void
+isc_hmacmd5_init(isc_hmacmd5_t *ctx, const unsigned char *key,
+		 unsigned int len)
+{
+	CK_RV rv;
+	CK_MECHANISM mech = { CKM_MD5, NULL, 0 };
+	unsigned char ipad[PADLEN];
+	unsigned int i;
+
+	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
+				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
+	RUNTIME_CHECK((ctx->key = pk11_mem_get(PADLEN)) != NULL);
+	if (len > PADLEN) {
+		CK_BYTE_PTR kPart;
+		CK_ULONG kl;
+
+		PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+		DE_CONST(key, kPart);
+		PK11_FATALCHECK(pkcs_C_DigestUpdate,
+				(ctx->session, kPart, (CK_ULONG) len));
+		kl = ISC_MD5_DIGESTLENGTH;
+		PK11_FATALCHECK(pkcs_C_DigestFinal,
+				(ctx->session, (CK_BYTE_PTR) ctx->key, &kl));
+	} else
+		memmove(ctx->key, key, len);
+	PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+	memset(ipad, IPAD, PADLEN);
+	for (i = 0; i < PADLEN; i++)
+		ipad[i] ^= ctx->key[i];
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, ipad, (CK_ULONG) PADLEN));
+}
+
+void
+isc_hmacmd5_invalidate(isc_hmacmd5_t *ctx) {
+	if (ctx->key != NULL)
+		pk11_mem_put(ctx->key, PADLEN);
+	ctx->key = NULL;
+	isc_md5_invalidate(ctx);
+}
+
+void
+isc_hmacmd5_update(isc_hmacmd5_t *ctx, const unsigned char *buf,
+		   unsigned int len)
+{
+	CK_RV rv;
+	CK_BYTE_PTR pPart;
+
+	DE_CONST(buf, pPart);
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, pPart, (CK_ULONG) len));
+}
+
+void
+isc_hmacmd5_sign(isc_hmacmd5_t *ctx, unsigned char *digest) {
+	CK_RV rv;
+	CK_MECHANISM mech = { CKM_MD5, NULL, 0 };
+	CK_ULONG len = ISC_MD5_DIGESTLENGTH;
+	CK_BYTE opad[PADLEN];
+	unsigned int i;
+
+	PK11_FATALCHECK(pkcs_C_DigestFinal,
+			(ctx->session, (CK_BYTE_PTR) digest,
+			 (CK_ULONG_PTR) &len));
+	memset(opad, OPAD, PADLEN);
+	for (i = 0; i < PADLEN; i++)
+		opad[i] ^= ctx->key[i];
+	pk11_mem_put(ctx->key, PADLEN);
+	ctx->key = NULL;
+	PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, opad, (CK_ULONG) PADLEN));
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, (CK_BYTE_PTR) digest, len));
+	PK11_FATALCHECK(pkcs_C_DigestFinal,
+			(ctx->session,
+			 (CK_BYTE_PTR) digest,
+			 (CK_ULONG_PTR) &len));
+	pk11_return_session(ctx);
+}
+#endif
+
+#else
 
 #define PADLEN 64
 #define IPAD 0x36
@@ -52,7 +267,7 @@ isc_hmacmd5_init(isc_hmacmd5_t *ctx, const unsigned char *key,
 		isc_md5_update(&md5ctx, key, len);
 		isc_md5_final(&md5ctx, ctx->key);
 	} else
-		memcpy(ctx->key, key, len);
+		memmove(ctx->key, key, len);
 
 	isc_md5_init(&ctx->md5ctx);
 	memset(ipad, IPAD, sizeof(ipad));
@@ -99,6 +314,8 @@ isc_hmacmd5_sign(isc_hmacmd5_t *ctx, unsigned char *digest) {
 	isc_hmacmd5_invalidate(ctx);
 }
 
+#endif /* !ISC_PLATFORM_OPENSSLHASH */
+
 /*!
  * Verify signature - finalize MD5 operation and reapply MD5, then
  * compare to the supplied digest.
@@ -114,5 +331,19 @@ isc_hmacmd5_verify2(isc_hmacmd5_t *ctx, unsigned char *digest, size_t len) {
 
 	REQUIRE(len <= ISC_MD5_DIGESTLENGTH);
 	isc_hmacmd5_sign(ctx, newdigest);
-	return (ISC_TF(memcmp(digest, newdigest, len) == 0));
+	return (isc_safe_memequal(digest, newdigest, len));
 }
+
+#else /* !PK11_MD5_DISABLE */
+#ifdef WIN32
+/* Make the Visual Studio linker happy */
+#include <isc/util.h>
+
+void isc_hmacmd5_init() { INSIST(0); }
+void isc_hmacmd5_invalidate() { INSIST(0); }
+void isc_hmacmd5_sign() { INSIST(0); }
+void isc_hmacmd5_update() { INSIST(0); }
+void isc_hmacmd5_verify() { INSIST(0); }
+void isc_hmacmd5_verify2() { INSIST(0); }
+#endif
+#endif /* PK11_MD5_DISABLE */

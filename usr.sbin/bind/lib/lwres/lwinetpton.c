@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -19,7 +19,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$ISC: lwinetpton.c,v 1.7.18.3 2005/04/27 05:02:48 sra Exp $";
+static char rcsid[] = "$Id: lwinetpton.c,v 1.2 2019/12/16 16:16:28 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -41,7 +41,7 @@ static char rcsid[] = "$ISC: lwinetpton.c,v 1.7.18.3 2005/04/27 05:02:48 sra Exp
 static int inet_pton4(const char *src, unsigned char *dst);
 static int inet_pton6(const char *src, unsigned char *dst);
 
-/*! 
+/*!
  * int
  * lwres_net_pton(af, src, dst)
  *	convert from presentation format (which usually means ASCII printable)
@@ -90,8 +90,9 @@ inet_pton4(const char *src, unsigned char *dst) {
 		const char *pch;
 
 		if ((pch = strchr(digits, ch)) != NULL) {
-			unsigned int new = *tp * 10 + (pch - digits);
+			unsigned int new = *tp * 10;
 
+			new += (unsigned int)(pch - digits);
 			if (new > 255)
 				return (0);
 			*tp = new;
@@ -103,14 +104,19 @@ inet_pton4(const char *src, unsigned char *dst) {
 		} else if (ch == '.' && saw_digit) {
 			if (octets == 4)
 				return (0);
-			*++tp = 0;
+			/*
+			 * "clang --analyse" generates warnings using:
+			 * 		*++tp = 0;
+			 */
+			tp++;
+			*tp = 0;
 			saw_digit = 0;
 		} else
 			return (0);
 	}
 	if (octets < 4)
 		return (0);
-	memcpy(dst, tmp, NS_INADDRSZ);
+	memmove(dst, tmp, NS_INADDRSZ);
 	return (1);
 }
 
@@ -193,7 +199,7 @@ inet_pton6(const char *src, unsigned char *dst) {
 		 * Since some memmove()'s erroneously fail to handle
 		 * overlapping regions, we'll do the shift by hand.
 		 */
-		const int n = tp - colonp;
+		const int n = (int)(tp - colonp);
 		int i;
 
 		for (i = 1; i <= n; i++) {
@@ -204,6 +210,6 @@ inet_pton6(const char *src, unsigned char *dst) {
 	}
 	if (tp != endp)
 		return (0);
-	memcpy(dst, tmp, NS_IN6ADDRSZ);
+	memmove(dst, tmp, NS_IN6ADDRSZ);
 	return (1);
 }

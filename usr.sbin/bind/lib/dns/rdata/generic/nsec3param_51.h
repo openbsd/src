@@ -18,7 +18,7 @@
 #ifndef GENERIC_NSEC3PARAM_51_H
 #define GENERIC_NSEC3PARAM_51_H 1
 
-/* $Id: nsec3param_51.h,v 1.1 2015/02/07 05:50:00 pelikan Exp $ */
+/* $Id: nsec3param_51.h,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
 
 /*!
  * \brief Per RFC 5155 */

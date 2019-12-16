@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2010, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
 
 /*! \file */
 /*
- * $ISC: ssu.c,v 1.24.18.4 2006/02/16 23:51:32 marka Exp $
+ * $Id: ssu.c,v 1.2 2019/12/16 16:16:24 deraadt Exp $
  * Principal Author: Brian Wellington
  */
 
@@ -25,13 +25,18 @@
 
 #include <isc/magic.h>
 #include <isc/mem.h>
+#include <isc/netaddr.h>
 #include <isc/result.h>
-#include <isc/string.h>		/* Required for HP/UX (and others?) */
+#include <isc/string.h>
 #include <isc/util.h>
 
+#include <dns/dlz.h>
 #include <dns/fixedname.h>
 #include <dns/name.h>
 #include <dns/ssu.h>
+
+#include <dst/gssapi.h>
+#include <dst/dst.h>
 
 #define SSUTABLEMAGIC		ISC_MAGIC('S', 'S', 'U', 'T')
 #define VALID_SSUTABLE(table)	ISC_MAGIC_VALID(table, SSUTABLEMAGIC)
@@ -56,6 +61,7 @@ struct dns_ssutable {
 	isc_mem_t *mctx;
 	unsigned int references;
 	isc_mutex_t lock;
+	dns_dlzdb_t *dlzdatabase;
 	ISC_LIST(dns_ssurule_t) rules;
 };
 
@@ -76,7 +82,8 @@ dns_ssutable_create(isc_mem_t *mctx, dns_ssutable_t **tablep) {
 		return (result);
 	}
 	table->references = 1;
-	table->mctx = mctx;
+	table->mctx = NULL;
+	isc_mem_attach(mctx, &table->mctx);
 	ISC_LIST_INIT(table->rules);
 	table->magic = SSUTABLEMAGIC;
 	*tablep = table;
@@ -109,7 +116,7 @@ destroy(dns_ssutable_t *table) {
 	}
 	DESTROYLOCK(&table->lock);
 	table->magic = 0;
-	isc_mem_put(mctx, table, sizeof(dns_ssutable_t));
+	isc_mem_putanddetach(&table->mctx, table, sizeof(dns_ssutable_t));
 }
 
 void
@@ -210,7 +217,7 @@ dns_ssutable_addrule(dns_ssutable_t *table, isc_boolean_t grant,
 			result = ISC_R_NOMEMORY;
 			goto failure;
 		}
-		memcpy(rule->types, types, ntypes * sizeof(dns_rdatatype_t));
+		memmove(rule->types, types, ntypes * sizeof(dns_rdatatype_t));
 	} else
 		rule->types = NULL;
 
@@ -245,50 +252,179 @@ isusertype(dns_rdatatype_t type) {
 		       type != dns_rdatatype_rrsig));
 }
 
+static void
+reverse_from_address(dns_name_t *tcpself, isc_netaddr_t *tcpaddr) {
+	char buf[16 * 4 + sizeof("IP6.ARPA.")];
+	isc_result_t result;
+	unsigned char *ap;
+	isc_buffer_t b;
+	unsigned long l;
+
+	switch (tcpaddr->family) {
+	case AF_INET:
+		l = ntohl(tcpaddr->type.in.s_addr);
+		result = isc_string_printf(buf, sizeof(buf),
+					   "%lu.%lu.%lu.%lu.IN-ADDR.ARPA.",
+					   (l >> 0) & 0xff, (l >> 8) & 0xff,
+					   (l >> 16) & 0xff, (l >> 24) & 0xff);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		break;
+	case AF_INET6:
+		ap = tcpaddr->type.in6.s6_addr;
+		result = isc_string_printf(buf, sizeof(buf),
+					   "%x.%x.%x.%x.%x.%x.%x.%x."
+					   "%x.%x.%x.%x.%x.%x.%x.%x."
+					   "%x.%x.%x.%x.%x.%x.%x.%x."
+					   "%x.%x.%x.%x.%x.%x.%x.%x."
+					   "IP6.ARPA.",
+					   ap[15] & 0x0f, (ap[15] >> 4) & 0x0f,
+					   ap[14] & 0x0f, (ap[14] >> 4) & 0x0f,
+					   ap[13] & 0x0f, (ap[13] >> 4) & 0x0f,
+					   ap[12] & 0x0f, (ap[12] >> 4) & 0x0f,
+					   ap[11] & 0x0f, (ap[11] >> 4) & 0x0f,
+					   ap[10] & 0x0f, (ap[10] >> 4) & 0x0f,
+					   ap[9] & 0x0f, (ap[9] >> 4) & 0x0f,
+					   ap[8] & 0x0f, (ap[8] >> 4) & 0x0f,
+					   ap[7] & 0x0f, (ap[7] >> 4) & 0x0f,
+					   ap[6] & 0x0f, (ap[6] >> 4) & 0x0f,
+					   ap[5] & 0x0f, (ap[5] >> 4) & 0x0f,
+					   ap[4] & 0x0f, (ap[4] >> 4) & 0x0f,
+					   ap[3] & 0x0f, (ap[3] >> 4) & 0x0f,
+					   ap[2] & 0x0f, (ap[2] >> 4) & 0x0f,
+					   ap[1] & 0x0f, (ap[1] >> 4) & 0x0f,
+					   ap[0] & 0x0f, (ap[0] >> 4) & 0x0f);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		break;
+	default:
+		INSIST(0);
+	}
+	isc_buffer_init(&b, buf, strlen(buf));
+	isc_buffer_add(&b, strlen(buf));
+	result = dns_name_fromtext(tcpself, &b, dns_rootname, 0, NULL);
+	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+}
+
+static void
+stf_from_address(dns_name_t *stfself, isc_netaddr_t *tcpaddr) {
+	char buf[sizeof("X.X.X.X.Y.Y.Y.Y.2.0.0.2.IP6.ARPA.")];
+	isc_result_t result;
+	unsigned char *ap;
+	isc_buffer_t b;
+	unsigned long l;
+
+	switch(tcpaddr->family) {
+	case AF_INET:
+		l = ntohl(tcpaddr->type.in.s_addr);
+		result = isc_string_printf(buf, sizeof(buf),
+					   "%lx.%lx.%lx.%lx.%lx.%lx.%lx.%lx"
+					   "2.0.0.2.IP6.ARPA.",
+					   l & 0xf, (l >> 4) & 0xf,
+					   (l >> 8) & 0xf, (l >> 12) & 0xf,
+					   (l >> 16) & 0xf, (l >> 20) & 0xf,
+					   (l >> 24) & 0xf, (l >> 28) & 0xf);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		break;
+	case AF_INET6:
+		ap = tcpaddr->type.in6.s6_addr;
+		result = isc_string_printf(buf, sizeof(buf),
+					   "%x.%x.%x.%x.%x.%x.%x.%x."
+					   "%x.%x.%x.%x.IP6.ARPA.",
+					   ap[5] & 0x0f, (ap[5] >> 4) & 0x0f,
+					   ap[4] & 0x0f, (ap[4] >> 4) & 0x0f,
+					   ap[3] & 0x0f, (ap[3] >> 4) & 0x0f,
+					   ap[2] & 0x0f, (ap[2] >> 4) & 0x0f,
+					   ap[1] & 0x0f, (ap[1] >> 4) & 0x0f,
+					   ap[0] & 0x0f, (ap[0] >> 4) & 0x0f);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		break;
+	default:
+		INSIST(0);
+	}
+	isc_buffer_init(&b, buf, strlen(buf));
+	isc_buffer_add(&b, strlen(buf));
+	result = dns_name_fromtext(stfself, &b, dns_rootname, 0, NULL);
+	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+}
+
 isc_boolean_t
 dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
-			dns_name_t *name, dns_rdatatype_t type)
+			dns_name_t *name, isc_netaddr_t *tcpaddr,
+			dns_rdatatype_t type,
+			const dst_key_t *key)
 {
 	dns_ssurule_t *rule;
 	unsigned int i;
 	dns_fixedname_t fixed;
 	dns_name_t *wildcard;
+	dns_name_t *tcpself;
+	dns_name_t *stfself;
 	isc_result_t result;
 
 	REQUIRE(VALID_SSUTABLE(table));
 	REQUIRE(signer == NULL || dns_name_isabsolute(signer));
 	REQUIRE(dns_name_isabsolute(name));
 
-	if (signer == NULL)
+	if (signer == NULL && tcpaddr == NULL)
 		return (ISC_FALSE);
-	rule = ISC_LIST_HEAD(table->rules);
-		rule = ISC_LIST_NEXT(rule, link);
+
 	for (rule = ISC_LIST_HEAD(table->rules);
 	     rule != NULL;
 	     rule = ISC_LIST_NEXT(rule, link))
 	{
-		if (dns_name_iswildcard(rule->identity)) {
-			if (!dns_name_matcheswildcard(signer, rule->identity))
+		switch (rule->matchtype) {
+		case DNS_SSUMATCHTYPE_NAME:
+		case DNS_SSUMATCHTYPE_SUBDOMAIN:
+		case DNS_SSUMATCHTYPE_WILDCARD:
+		case DNS_SSUMATCHTYPE_SELF:
+		case DNS_SSUMATCHTYPE_SELFSUB:
+		case DNS_SSUMATCHTYPE_SELFWILD:
+			if (signer == NULL)
 				continue;
-		} else if (!dns_name_equal(signer, rule->identity))
+			if (dns_name_iswildcard(rule->identity)) {
+				if (!dns_name_matcheswildcard(signer,
+							      rule->identity))
+					continue;
+			} else {
+				if (!dns_name_equal(signer, rule->identity))
+					continue;
+			}
+			break;
+		case DNS_SSUMATCHTYPE_SELFKRB5:
+		case DNS_SSUMATCHTYPE_SELFMS:
+		case DNS_SSUMATCHTYPE_SUBDOMAINKRB5:
+		case DNS_SSUMATCHTYPE_SUBDOMAINMS:
+			if (signer == NULL)
 				continue;
+			break;
+		case DNS_SSUMATCHTYPE_TCPSELF:
+		case DNS_SSUMATCHTYPE_6TO4SELF:
+			if (tcpaddr == NULL)
+				continue;
+			break;
+		}
 
-		if (rule->matchtype == DNS_SSUMATCHTYPE_NAME) {
+		switch (rule->matchtype) {
+		case DNS_SSUMATCHTYPE_NAME:
 			if (!dns_name_equal(name, rule->name))
 				continue;
-		} else if (rule->matchtype == DNS_SSUMATCHTYPE_SUBDOMAIN) {
+			break;
+		case DNS_SSUMATCHTYPE_SUBDOMAIN:
 			if (!dns_name_issubdomain(name, rule->name))
 				continue;
-		} else if (rule->matchtype == DNS_SSUMATCHTYPE_WILDCARD) {
+			break;
+		case DNS_SSUMATCHTYPE_WILDCARD:
 			if (!dns_name_matcheswildcard(name, rule->name))
 				continue;
-		} else if (rule->matchtype == DNS_SSUMATCHTYPE_SELF) {
+			break;
+		case DNS_SSUMATCHTYPE_SELF:
 			if (!dns_name_equal(signer, name))
 				continue;
-		} else if (rule->matchtype == DNS_SSUMATCHTYPE_SELFSUB) {
+			break;
+		case DNS_SSUMATCHTYPE_SELFSUB:
 			if (!dns_name_issubdomain(name, signer))
 				continue;
-		} else if (rule->matchtype == DNS_SSUMATCHTYPE_SELFWILD) {
+			break;
+		case DNS_SSUMATCHTYPE_SELFWILD:
 			dns_fixedname_init(&fixed);
 			wildcard = dns_fixedname_name(&fixed);
 			result = dns_name_concatenate(dns_wildcardname, signer,
@@ -297,10 +433,82 @@ dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
 				continue;
 			if (!dns_name_matcheswildcard(name, wildcard))
 				continue;
+			break;
+		case DNS_SSUMATCHTYPE_SELFKRB5:
+			if (!dst_gssapi_identitymatchesrealmkrb5(signer, name,
+							       rule->identity))
+				continue;
+			break;
+		case DNS_SSUMATCHTYPE_SELFMS:
+			if (!dst_gssapi_identitymatchesrealmms(signer, name,
+							       rule->identity))
+				continue;
+			break;
+		case DNS_SSUMATCHTYPE_SUBDOMAINKRB5:
+			if (!dns_name_issubdomain(name, rule->name))
+				continue;
+			if (!dst_gssapi_identitymatchesrealmkrb5(signer, NULL,
+							       rule->identity))
+				continue;
+			break;
+		case DNS_SSUMATCHTYPE_SUBDOMAINMS:
+			if (!dns_name_issubdomain(name, rule->name))
+				continue;
+			if (!dst_gssapi_identitymatchesrealmms(signer, NULL,
+							       rule->identity))
+				continue;
+			break;
+		case DNS_SSUMATCHTYPE_TCPSELF:
+			dns_fixedname_init(&fixed);
+			tcpself = dns_fixedname_name(&fixed);
+			reverse_from_address(tcpself, tcpaddr);
+			if (dns_name_iswildcard(rule->identity)) {
+				if (!dns_name_matcheswildcard(tcpself,
+							      rule->identity))
+					continue;
+			} else {
+				if (!dns_name_equal(tcpself, rule->identity))
+					continue;
+			}
+			if (!dns_name_equal(tcpself, name))
+				continue;
+			break;
+		case DNS_SSUMATCHTYPE_6TO4SELF:
+			dns_fixedname_init(&fixed);
+			stfself = dns_fixedname_name(&fixed);
+			stf_from_address(stfself, tcpaddr);
+			if (dns_name_iswildcard(rule->identity)) {
+				if (!dns_name_matcheswildcard(stfself,
+							      rule->identity))
+					continue;
+			} else {
+				if (!dns_name_equal(stfself, rule->identity))
+					continue;
+			}
+			if (!dns_name_equal(stfself, name))
+				continue;
+			break;
+		case DNS_SSUMATCHTYPE_EXTERNAL:
+			if (!dns_ssu_external_match(rule->identity, signer,
+						    name, tcpaddr, type, key,
+						    table->mctx))
+				continue;
+			break;
+		case DNS_SSUMATCHTYPE_DLZ:
+			if (!dns_dlz_ssumatch(table->dlzdatabase, signer,
+					      name, tcpaddr, type, key))
+				continue;
+			break;
 		}
 
 		if (rule->ntypes == 0) {
-			if (!isusertype(type))
+			/*
+			 * If this is a DLZ rule, then the DLZ ssu
+			 * checks will have already checked
+			 * the type.
+			 */
+			if (rule->matchtype != DNS_SSUMATCHTYPE_DLZ &&
+			    !isusertype(type))
 				continue;
 		} else {
 			for (i = 0; i < rule->ntypes; i++) {
@@ -363,4 +571,43 @@ dns_ssutable_nextrule(dns_ssurule_t *rule, dns_ssurule_t **nextrule) {
 	REQUIRE(nextrule != NULL && *nextrule == NULL);
 	*nextrule = ISC_LIST_NEXT(rule, link);
 	return (*nextrule != NULL ? ISC_R_SUCCESS : ISC_R_NOMORE);
+}
+
+/*
+ * Create a specialised SSU table that points at an external DLZ database
+ */
+isc_result_t
+dns_ssutable_createdlz(isc_mem_t *mctx, dns_ssutable_t **tablep,
+		       dns_dlzdb_t *dlzdatabase)
+{
+	isc_result_t result;
+	dns_ssurule_t *rule;
+	dns_ssutable_t *table = NULL;
+
+	REQUIRE(tablep != NULL && *tablep == NULL);
+
+	result = dns_ssutable_create(mctx, &table);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	table->dlzdatabase = dlzdatabase;
+
+	rule = isc_mem_get(table->mctx, sizeof(dns_ssurule_t));
+	if (rule == NULL) {
+		dns_ssutable_detach(&table);
+		return (ISC_R_NOMEMORY);
+	}
+
+	rule->identity = NULL;
+	rule->name = NULL;
+	rule->types = NULL;
+	rule->grant = ISC_TRUE;
+	rule->matchtype = DNS_SSUMATCHTYPE_DLZ;
+	rule->ntypes = 0;
+	rule->types = NULL;
+	rule->magic = SSURULEMAGIC;
+
+	ISC_LIST_INITANDAPPEND(table->rules, rule, link);
+	*tablep = table;
+	return (ISC_R_SUCCESS);
 }

@@ -1,8 +1,7 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-	       [<!ENTITY mdash "&#8212;">]>
+<!DOCTYPE book [
+<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004, 2005, 2007, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000, 2001  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,11 +17,14 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $ISC: lwres_noop.docbook,v 1.5.18.6 2007/08/28 07:20:06 tbox Exp $ -->
-<refentry>
-
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0">
+  <info>
+    <date>2007-06-18</date>
+  </info>
   <refentryinfo>
-    <date>Jun 30, 2000</date>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
   </refentryinfo>
 
   <refmeta>
@@ -36,6 +38,9 @@
       <year>2004</year>
       <year>2005</year>
       <year>2007</year>
+      <year>2014</year>
+      <year>2015</year>
+      <year>2016</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -110,8 +115,8 @@ void
       </funcprototype>
 </funcsynopsis>
   </refsynopsisdiv>
-  <refsect1>
-    <title>DESCRIPTION</title>
+  <refsection><info><title>DESCRIPTION</title></info>
+
     <para>
       These are low-level routines for creating and parsing
       lightweight resolver no-op request and response messages.
@@ -127,7 +132,7 @@ void
       There are four main functions for the no-op opcode.
       One render function converts a no-op request structure &mdash;
       <type>lwres_nooprequest_t</type> &mdash;
-      to the lighweight resolver's canonical format.
+      to the lightweight resolver's canonical format.
       It is complemented by a parse function that converts a packet in this
       canonical format to a no-op request structure.
       Another render function converts the no-op response structure &mdash;
@@ -201,9 +206,9 @@ typedef struct {
       <parameter>structp</parameter>.
     </para>
 
-  </refsect1>
-  <refsect1>
-    <title>RETURN VALUES</title>
+  </refsection>
+  <refsection><info><title>RETURN VALUES</title></info>
+
     <para>
       The no-op opcode functions
       <function>lwres_nooprequest_render()</function>,
@@ -240,16 +245,12 @@ typedef struct {
       <type>lwres_lwpacket_t</type>
       indicate that the packet is not a response to an earlier query.
     </para>
-  </refsect1>
-  <refsect1>
-    <title>SEE ALSO</title>
+  </refsection>
+  <refsection><info><title>SEE ALSO</title></info>
+
     <para><citerefentry>
         <refentrytitle>lwres_packet</refentrytitle><manvolnum>3</manvolnum>
       </citerefentry>
     </para>
-  </refsect1>
-</refentry><!--
- - Local variables:
- - mode: sgml
- - End:
--->
+  </refsection>
+</refentry>

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
 
 /*%
  * Principal Author: Brian Wellington
- * $ISC: dst_result.c,v 1.1.6.3 2005/04/29 00:15:52 marka Exp $
+ * $Id: dst_result.c,v 1.2 2019/12/16 16:16:24 deraadt Exp $
  */
 
 #include <config.h>
@@ -30,12 +30,12 @@
 
 static const char *text[DST_R_NRESULTS] = {
 	"algorithm is unsupported",		/*%< 0 */
-	"openssl failure",			/*%< 1 */
+	"crypto failure",			/*%< 1 */
 	"built with no crypto support",		/*%< 2 */
 	"illegal operation for a null key",	/*%< 3 */
 	"public key is invalid",		/*%< 4 */
 	"private key is invalid",		/*%< 5 */
-	"UNUSED6",				/*%< 6 */
+	"external key",				/*%< 6 */
 	"error occurred writing key to disk",	/*%< 7 */
 	"invalid algorithm specific parameter",	/*%< 8 */
 	"UNUSED9",				/*%< 9 */
@@ -49,7 +49,9 @@ static const char *text[DST_R_NRESULTS] = {
 	"not a key that can compute a secret",	/*%< 17 */
 	"failure computing a shared secret",	/*%< 18 */
 	"no randomness available",		/*%< 19 */
-	"bad key type"				/*%< 20 */
+	"bad key type",				/*%< 20 */
+	"no engine",				/*%< 21 */
+	"illegal operation for an external key",/*%< 22 */
 };
 
 #define DST_RESULT_RESULTSET			2

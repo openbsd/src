@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: sockaddr.c,v 1.59.18.9 2006/06/21 01:25:40 marka Exp $ */
+/* $Id: sockaddr.c,v 1.8 2019/12/16 16:16:26 deraadt Exp $ */
 
 /*! \file */
 
@@ -182,6 +182,9 @@ isc_sockaddr_format(const isc_sockaddr_t *sa, char *array, unsigned int size) {
 	isc_result_t result;
 	isc_buffer_t buf;
 
+	if (size == 0U)
+		return;
+
 	isc_buffer_init(&buf, array, size);
 	result = isc_sockaddr_totext(sa, &buf);
 	if (result != ISC_R_SUCCESS) {
@@ -202,7 +205,6 @@ isc_sockaddr_hash(const isc_sockaddr_t *sockaddr, isc_boolean_t address_only) {
 	unsigned int length = 0;
 	const unsigned char *s = NULL;
 	unsigned int h = 0;
-	unsigned int g;
 	unsigned int p = 0;
 	const struct in6_addr *in6;
 
@@ -216,13 +218,12 @@ isc_sockaddr_hash(const isc_sockaddr_t *sockaddr, isc_boolean_t address_only) {
 		break;
 	case AF_INET6:
 		in6 = &sockaddr->type.sin6.sin6_addr;
+		s = (const unsigned char *)in6;
 		if (IN6_IS_ADDR_V4MAPPED(in6)) {
-			s = (const unsigned char *)&in6[12];
+			s += 12;
 			length = sizeof(sockaddr->type.sin.sin_addr.s_addr);
-		} else {
-			s = (const unsigned char *)in6;
+		} else
 			length = sizeof(sockaddr->type.sin6.sin6_addr);
-		}
 		p = ntohs(sockaddr->type.sin6.sin6_port);
 		break;
 	default:
@@ -237,12 +238,9 @@ isc_sockaddr_hash(const isc_sockaddr_t *sockaddr, isc_boolean_t address_only) {
 		p = 0;
 	}
 
-	h = isc_hash_calc(s, length, ISC_TRUE);
-	if (!address_only) {
-		g = isc_hash_calc((const unsigned char *)&p, sizeof(p),
-				  ISC_TRUE);
-		h = h ^ g; /* XXX: we should concatenate h and p first */
-	}
+	h = isc_hash_function(s, length, ISC_TRUE, NULL);
+	if (!address_only)
+		h = isc_hash_function(&p, sizeof(p), ISC_TRUE, &h);
 
 	return (h);
 }
@@ -330,7 +328,7 @@ isc_sockaddr_v6fromin(isc_sockaddr_t *sockaddr, const struct in_addr *ina,
 #endif
 	sockaddr->type.sin6.sin6_addr.s6_addr[10] = 0xff;
 	sockaddr->type.sin6.sin6_addr.s6_addr[11] = 0xff;
-	memcpy(&sockaddr->type.sin6.sin6_addr.s6_addr[12], ina, 4);
+	memmove(&sockaddr->type.sin6.sin6_addr.s6_addr[12], ina, 4);
 	sockaddr->type.sin6.sin6_port = htons(port);
 	sockaddr->length = sizeof(sockaddr->type.sin6);
 	ISC_LINK_INIT(sockaddr, link);
@@ -366,7 +364,7 @@ isc_sockaddr_pf(const isc_sockaddr_t *sockaddr) {
 
 void
 isc_sockaddr_fromnetaddr(isc_sockaddr_t *sockaddr, const isc_netaddr_t *na,
-		    in_port_t port)
+			 in_port_t port)
 {
 	memset(sockaddr, 0, sizeof(*sockaddr));
 	sockaddr->type.sin.sin_family = na->family;
@@ -384,14 +382,14 @@ isc_sockaddr_fromnetaddr(isc_sockaddr_t *sockaddr, const isc_netaddr_t *na,
 #ifdef ISC_PLATFORM_HAVESALEN
 		sockaddr->type.sin6.sin6_len = sizeof(sockaddr->type.sin6);
 #endif
-		memcpy(&sockaddr->type.sin6.sin6_addr, &na->type.in6, 16);
+		memmove(&sockaddr->type.sin6.sin6_addr, &na->type.in6, 16);
 #ifdef ISC_PLATFORM_HAVESCOPEID
 		sockaddr->type.sin6.sin6_scope_id = isc_netaddr_getzone(na);
 #endif
 		sockaddr->type.sin6.sin6_port = htons(port);
 		break;
-        default:
-                INSIST(0);
+	default:
+		INSIST(0);
 	}
 	ISC_LINK_INIT(sockaddr, link);
 }
@@ -481,6 +479,17 @@ isc_sockaddr_islinklocal(const isc_sockaddr_t *sockaddr) {
 	return (ISC_FALSE);
 }
 
+isc_boolean_t
+isc_sockaddr_isnetzero(const isc_sockaddr_t *sockaddr) {
+	isc_netaddr_t netaddr;
+
+	if (sockaddr->type.sa.sa_family == AF_INET) {
+		isc_netaddr_fromsockaddr(&netaddr, sockaddr);
+		return (isc_netaddr_isnetzero(&netaddr));
+	}
+	return (ISC_FALSE);
+}
+
 isc_result_t
 isc_sockaddr_frompath(isc_sockaddr_t *sockaddr, const char *path) {
 #ifdef ISC_PLATFORM_HAVESYSUNH
@@ -493,7 +502,7 @@ isc_sockaddr_frompath(isc_sockaddr_t *sockaddr, const char *path) {
 	sockaddr->type.sunix.sun_len =
 			(unsigned char)sizeof(sockaddr->type.sunix);
 #endif
-	strlcpy(sockaddr->type.sunix.sun_path, path, sizeof(sockaddr->type.sunix.sun_path));
+	strcpy(sockaddr->type.sunix.sun_path, path);
 	return (ISC_R_SUCCESS);
 #else
 	UNUSED(sockaddr);

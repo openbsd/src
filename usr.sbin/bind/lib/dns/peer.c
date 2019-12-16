@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: peer.c,v 1.19.18.8 2006/02/28 03:10:48 marka Exp $ */
+/* $Id: peer.c,v 1.2 2019/12/16 16:16:24 deraadt Exp $ */
 
 /*! \file */
 
@@ -34,14 +34,20 @@
 /*%
  * Bit positions in the dns_peer_t structure flags field
  */
-#define BOGUS_BIT			0
-#define SERVER_TRANSFER_FORMAT_BIT	1
-#define TRANSFERS_BIT			2
-#define PROVIDE_IXFR_BIT		3
-#define REQUEST_IXFR_BIT		4
-#define SUPPORT_EDNS_BIT		5
-#define SERVER_UDPSIZE_BIT		6
-#define SERVER_MAXUDP_BIT		7
+#define BOGUS_BIT			 0
+#define SERVER_TRANSFER_FORMAT_BIT	 1
+#define TRANSFERS_BIT			 2
+#define PROVIDE_IXFR_BIT		 3
+#define REQUEST_IXFR_BIT		 4
+#define SUPPORT_EDNS_BIT		 5
+#define SERVER_UDPSIZE_BIT		 6
+#define SERVER_MAXUDP_BIT		 7
+#define REQUEST_NSID_BIT                 8
+#define REQUEST_SIT_BIT                  9
+#define NOTIFY_DSCP_BIT                 10
+#define TRANSFER_DSCP_BIT               11
+#define QUERY_DSCP_BIT                 	12
+#define FORCE_TCP_BIT                   13
 
 static void
 peerlist_delete(dns_peerlist_t **list);
@@ -146,7 +152,7 @@ dns_peerlist_addpeer(dns_peerlist_t *peers, dns_peer_t *peer) {
 		ISC_LIST_INSERTBEFORE(peers->elements, p, peer, next);
 	else
 		ISC_LIST_APPEND(peers->elements, peer, next);
-		
+
 }
 
 isc_result_t
@@ -213,7 +219,7 @@ dns_peer_new(isc_mem_t *mem, isc_netaddr_t *addr, dns_peer_t **peerptr) {
 isc_result_t
 dns_peer_newprefix(isc_mem_t *mem, isc_netaddr_t *addr, unsigned int prefixlen,
 		   dns_peer_t **peerptr)
-{ 
+{
 	dns_peer_t *peer;
 
 	REQUIRE(peerptr != NULL);
@@ -299,10 +305,15 @@ peer_delete(dns_peer_t **peer) {
 		isc_mem_put(mem, p->key, sizeof(dns_name_t));
 	}
 
-	if (p->transfer_source != NULL) {
+	if (p->query_source != NULL)
+		isc_mem_put(mem, p->query_source, sizeof(*p->query_source));
+
+	if (p->notify_source != NULL)
+		isc_mem_put(mem, p->notify_source, sizeof(*p->notify_source));
+
+	if (p->transfer_source != NULL)
 		isc_mem_put(mem, p->transfer_source,
 			    sizeof(*p->transfer_source));
-	}
 
 	isc_mem_put(mem, p, sizeof(*p));
 
@@ -416,6 +427,84 @@ dns_peer_getsupportedns(dns_peer_t *peer, isc_boolean_t *retval) {
 }
 
 isc_result_t
+dns_peer_setrequestnsid(dns_peer_t *peer, isc_boolean_t newval) {
+	isc_boolean_t existed;
+
+	REQUIRE(DNS_PEER_VALID(peer));
+
+	existed = DNS_BIT_CHECK(REQUEST_NSID_BIT, &peer->bitflags);
+
+	peer->request_nsid = newval;
+	DNS_BIT_SET(REQUEST_NSID_BIT, &peer->bitflags);
+
+	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_peer_getrequestnsid(dns_peer_t *peer, isc_boolean_t *retval) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(retval != NULL);
+
+	if (DNS_BIT_CHECK(REQUEST_NSID_BIT, &peer->bitflags)) {
+		*retval = peer->request_nsid;
+		return (ISC_R_SUCCESS);
+	} else
+		return (ISC_R_NOTFOUND);
+}
+
+isc_result_t
+dns_peer_setrequestsit(dns_peer_t *peer, isc_boolean_t newval) {
+	isc_boolean_t existed;
+
+	REQUIRE(DNS_PEER_VALID(peer));
+
+	existed = DNS_BIT_CHECK(REQUEST_SIT_BIT, &peer->bitflags);
+
+	peer->request_sit = newval;
+	DNS_BIT_SET(REQUEST_SIT_BIT, &peer->bitflags);
+
+	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_peer_getrequestsit(dns_peer_t *peer, isc_boolean_t *retval) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(retval != NULL);
+
+	if (DNS_BIT_CHECK(REQUEST_SIT_BIT, &peer->bitflags)) {
+		*retval = peer->request_sit;
+		return (ISC_R_SUCCESS);
+	} else
+		return (ISC_R_NOTFOUND);
+}
+
+isc_result_t
+dns_peer_setforcetcp(dns_peer_t *peer, isc_boolean_t newval) {
+	isc_boolean_t existed;
+
+	REQUIRE(DNS_PEER_VALID(peer));
+
+	existed = DNS_BIT_CHECK(FORCE_TCP_BIT, &peer->bitflags);
+
+	peer->force_tcp = newval;
+	DNS_BIT_SET(FORCE_TCP_BIT, &peer->bitflags);
+
+	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_peer_getforcetcp(dns_peer_t *peer, isc_boolean_t *retval) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(retval != NULL);
+
+	if (DNS_BIT_CHECK(FORCE_TCP_BIT, &peer->bitflags)) {
+		*retval = peer->force_tcp;
+		return (ISC_R_SUCCESS);
+	} else
+		return (ISC_R_NOTFOUND);
+}
+
+isc_result_t
 dns_peer_settransfers(dns_peer_t *peer, isc_uint32_t newval) {
 	isc_boolean_t existed;
 
@@ -506,10 +595,10 @@ dns_peer_setkeybycharp(dns_peer_t *peer, const char *keyval) {
 	isc_result_t result;
 
 	dns_fixedname_init(&fname);
-	isc_buffer_init(&b, keyval, strlen(keyval));
+	isc_buffer_constinit(&b, keyval, strlen(keyval));
 	isc_buffer_add(&b, strlen(keyval));
 	result = dns_name_fromtext(dns_fixedname_name(&fname), &b,
-				   dns_rootname, ISC_FALSE, NULL);
+				   dns_rootname, 0, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
@@ -544,7 +633,7 @@ dns_peer_settransfersource(dns_peer_t *peer,
 	}
 	if (transfer_source != NULL) {
 		peer->transfer_source = isc_mem_get(peer->mem,
-					        sizeof(*peer->transfer_source));
+						sizeof(*peer->transfer_source));
 		if (peer->transfer_source == NULL)
 			return (ISC_R_NOMEMORY);
 
@@ -577,7 +666,7 @@ dns_peer_setnotifysource(dns_peer_t *peer,
 	}
 	if (notify_source != NULL) {
 		peer->notify_source = isc_mem_get(peer->mem,
-					        sizeof(*peer->notify_source));
+						sizeof(*peer->notify_source));
 		if (peer->notify_source == NULL)
 			return (ISC_R_NOMEMORY);
 
@@ -608,7 +697,7 @@ dns_peer_setquerysource(dns_peer_t *peer, const isc_sockaddr_t *query_source) {
 	}
 	if (query_source != NULL) {
 		peer->query_source = isc_mem_get(peer->mem,
-					        sizeof(*peer->query_source));
+						sizeof(*peer->query_source));
 		if (peer->query_source == NULL)
 			return (ISC_R_NOMEMORY);
 
@@ -649,11 +738,11 @@ dns_peer_getudpsize(dns_peer_t *peer, isc_uint16_t *udpsize) {
 	REQUIRE(udpsize != NULL);
 
 	if (DNS_BIT_CHECK(SERVER_UDPSIZE_BIT, &peer->bitflags)) {
-                *udpsize = peer->udpsize;
-                return (ISC_R_SUCCESS);
-        } else {
-                return (ISC_R_NOTFOUND);
-        }
+		*udpsize = peer->udpsize;
+		return (ISC_R_SUCCESS);
+	} else {
+		return (ISC_R_NOTFOUND);
+	}
 }
 
 isc_result_t
@@ -677,9 +766,75 @@ dns_peer_getmaxudp(dns_peer_t *peer, isc_uint16_t *maxudp) {
 	REQUIRE(maxudp != NULL);
 
 	if (DNS_BIT_CHECK(SERVER_MAXUDP_BIT, &peer->bitflags)) {
-                *maxudp = peer->maxudp;
-                return (ISC_R_SUCCESS);
-        } else {
-                return (ISC_R_NOTFOUND);
-        }
+		*maxudp = peer->maxudp;
+		return (ISC_R_SUCCESS);
+	} else {
+		return (ISC_R_NOTFOUND);
+	}
+}
+
+isc_result_t
+dns_peer_setnotifydscp(dns_peer_t *peer, isc_dscp_t dscp) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(dscp < 64);
+
+	peer->notify_dscp = dscp;
+	DNS_BIT_SET(NOTIFY_DSCP_BIT, &peer->bitflags);
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_peer_getnotifydscp(dns_peer_t *peer, isc_dscp_t *dscpp) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(dscpp != NULL);
+
+	if (DNS_BIT_CHECK(NOTIFY_DSCP_BIT, &peer->bitflags)) {
+		*dscpp = peer->notify_dscp;
+		return (ISC_R_SUCCESS);
+	}
+	return (ISC_R_NOTFOUND);
+}
+
+isc_result_t
+dns_peer_settransferdscp(dns_peer_t *peer, isc_dscp_t dscp) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(dscp < 64);
+
+	peer->transfer_dscp = dscp;
+	DNS_BIT_SET(TRANSFER_DSCP_BIT, &peer->bitflags);
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_peer_gettransferdscp(dns_peer_t *peer, isc_dscp_t *dscpp) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(dscpp != NULL);
+
+	if (DNS_BIT_CHECK(TRANSFER_DSCP_BIT, &peer->bitflags)) {
+		*dscpp = peer->transfer_dscp;
+		return (ISC_R_SUCCESS);
+	}
+	return (ISC_R_NOTFOUND);
+}
+
+isc_result_t
+dns_peer_setquerydscp(dns_peer_t *peer, isc_dscp_t dscp) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(dscp < 64);
+
+	peer->query_dscp = dscp;
+	DNS_BIT_SET(QUERY_DSCP_BIT, &peer->bitflags);
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_peer_getquerydscp(dns_peer_t *peer, isc_dscp_t *dscpp) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(dscpp != NULL);
+
+	if (DNS_BIT_CHECK(QUERY_DSCP_BIT, &peer->bitflags)) {
+		*dscpp = peer->query_dscp;
+		return (ISC_R_SUCCESS);
+	}
+	return (ISC_R_NOTFOUND);
 }

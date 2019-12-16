@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.15 2017/06/12 18:49:34 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 2019/12/16 16:16:22 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,9 @@ XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDFLAGS}"
 CONFIGURE_OPTS=	--prefix=/usr \
 		--localstatedir=/var \
 		--sysconfdir=/etc \
+		--disable-backtrace \
+		--without-readline \
+		--disable-idn \
 		--disable-shared \
 		--disable-threads \
 		--disable-openssl-version-check

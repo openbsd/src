@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011-2013, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: errno2result.c,v 1.13.18.2 2005/04/29 00:17:07 marka Exp $ */
+/* $Id: errno2result.c,v 1.2 2019/12/16 16:16:27 deraadt Exp $ */
 
 /*! \file */
 
@@ -34,7 +34,9 @@
  * not already there.
  */
 isc_result_t
-isc__errno2result(int posixerrno) {
+isc___errno2result(int posixerrno, isc_boolean_t dolog,
+		   const char *file, unsigned int line)
+{
 	char strbuf[ISC_STRERRORSIZE];
 
 	switch (posixerrno) {
@@ -55,9 +57,13 @@ isc__errno2result(int posixerrno) {
 		return (ISC_R_IOERROR);
 	case ENOMEM:
 		return (ISC_R_NOMEMORY);
-	case ENFILE:	
+	case ENFILE:
 	case EMFILE:
 		return (ISC_R_TOOMANYOPENFILES);
+#ifdef EOVERFLOW
+	case EOVERFLOW:
+		return (ISC_R_RANGE);
+#endif
 	case EPIPE:
 #ifdef ECONNRESET
 	case ECONNRESET:
@@ -107,11 +113,12 @@ isc__errno2result(int posixerrno) {
 	case ECONNREFUSED:
 		return (ISC_R_CONNREFUSED);
 	default:
-		isc__strerror(posixerrno, strbuf, sizeof(strbuf));
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "unable to convert errno "
-				 "to isc_result: %d: %s",
-				 posixerrno, strbuf);
+		if (dolog) {
+			isc__strerror(posixerrno, strbuf, sizeof(strbuf));
+			UNEXPECTED_ERROR(file, line, "unable to convert errno "
+					 "to isc_result: %d: %s",
+					 posixerrno, strbuf);
+		}
 		/*
 		 * XXXDCL would be nice if perhaps this function could
 		 * return the system's error string, so the caller

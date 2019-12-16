@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: minfo_14.c,v 1.43 2004/03/05 05:10:14 marka Exp $ */
+/* $Id: minfo_14.c,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
 
 /* reviewed: Wed Mar 15 17:45:32 PST 2000 by brister */
 
@@ -32,11 +32,14 @@ fromtext_minfo(ARGS_FROMTEXT) {
 	int i;
 	isc_boolean_t ok;
 
-	REQUIRE(type == 14);
+	REQUIRE(type == dns_rdatatype_minfo);
 
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(callbacks);
+
+	if (origin == NULL)
+		origin = dns_rootname;
 
 	for (i = 0; i < 2; i++) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
@@ -44,7 +47,6 @@ fromtext_minfo(ARGS_FROMTEXT) {
 					      ISC_FALSE));
 		dns_name_init(&name, NULL);
 		buffer_fromregion(&buffer, &token.value.as_region);
-		origin = (origin != NULL) ? origin : dns_rootname;
 		RETTOK(dns_name_fromtext(&name, &buffer, origin,
 					 options, target));
 		ok = ISC_TRUE;
@@ -66,7 +68,7 @@ totext_minfo(ARGS_TOTEXT) {
 	dns_name_t prefix;
 	isc_boolean_t sub;
 
-	REQUIRE(rdata->type == 14);
+	REQUIRE(rdata->type == dns_rdatatype_minfo);
 	REQUIRE(rdata->length != 0);
 
 	dns_name_init(&rmail, NULL);
@@ -93,21 +95,21 @@ totext_minfo(ARGS_TOTEXT) {
 
 static inline isc_result_t
 fromwire_minfo(ARGS_FROMWIRE) {
-        dns_name_t rmail;
-        dns_name_t email;
+	dns_name_t rmail;
+	dns_name_t email;
 
-	REQUIRE(type == 14);
+	REQUIRE(type == dns_rdatatype_minfo);
 
 	UNUSED(type);
 	UNUSED(rdclass);
 
 	dns_decompress_setmethods(dctx, DNS_COMPRESS_GLOBAL14);
 
-        dns_name_init(&rmail, NULL);
-        dns_name_init(&email, NULL);
+	dns_name_init(&rmail, NULL);
+	dns_name_init(&email, NULL);
 
-        RETERR(dns_name_fromwire(&rmail, source, dctx, options, target));
-        return (dns_name_fromwire(&email, source, dctx, options, target));
+	RETERR(dns_name_fromwire(&rmail, source, dctx, options, target));
+	return (dns_name_fromwire(&email, source, dctx, options, target));
 }
 
 static inline isc_result_t
@@ -118,7 +120,7 @@ towire_minfo(ARGS_TOWIRE) {
 	dns_offsets_t roffsets;
 	dns_offsets_t eoffsets;
 
-	REQUIRE(rdata->type == 14);
+	REQUIRE(rdata->type == dns_rdatatype_minfo);
 	REQUIRE(rdata->length != 0);
 
 	dns_compress_setmethods(cctx, DNS_COMPRESS_GLOBAL14);
@@ -149,7 +151,7 @@ compare_minfo(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 14);
+	REQUIRE(rdata1->type == dns_rdatatype_minfo);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -184,7 +186,7 @@ fromstruct_minfo(ARGS_FROMSTRUCT) {
 	dns_rdata_minfo_t *minfo = source;
 	isc_region_t region;
 
-	REQUIRE(type == 14);
+	REQUIRE(type == dns_rdatatype_minfo);
 	REQUIRE(source != NULL);
 	REQUIRE(minfo->common.rdtype == type);
 	REQUIRE(minfo->common.rdclass == rdclass);
@@ -205,7 +207,7 @@ tostruct_minfo(ARGS_TOSTRUCT) {
 	dns_name_t name;
 	isc_result_t result;
 
-	REQUIRE(rdata->type == 14);
+	REQUIRE(rdata->type == dns_rdatatype_minfo);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -239,7 +241,7 @@ freestruct_minfo(ARGS_FREESTRUCT) {
 	dns_rdata_minfo_t *minfo = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(minfo->common.rdtype == 14);
+	REQUIRE(minfo->common.rdtype == dns_rdatatype_minfo);
 
 	if (minfo->mctx == NULL)
 		return;
@@ -251,7 +253,7 @@ freestruct_minfo(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_minfo(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 14);
+	REQUIRE(rdata->type == dns_rdatatype_minfo);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -266,7 +268,7 @@ digest_minfo(ARGS_DIGEST) {
 	dns_name_t name;
 	isc_result_t result;
 
-	REQUIRE(rdata->type == 14);
+	REQUIRE(rdata->type == dns_rdatatype_minfo);
 
 	dns_rdata_toregion(rdata, &r);
 	dns_name_init(&name, NULL);
@@ -284,7 +286,7 @@ digest_minfo(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_minfo(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 14);
+	REQUIRE(type == dns_rdatatype_minfo);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -299,7 +301,7 @@ checknames_minfo(ARGS_CHECKNAMES) {
 	isc_region_t region;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 14);
+	REQUIRE(rdata->type == dns_rdatatype_minfo);
 
 	UNUSED(owner);
 
@@ -319,6 +321,11 @@ checknames_minfo(ARGS_CHECKNAMES) {
 		return (ISC_FALSE);
 	}
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_minfo(ARGS_COMPARE) {
+	return (compare_minfo(rdata1, rdata2));
 }
 
 #endif	/* RDATA_GENERIC_MINFO_14_C */

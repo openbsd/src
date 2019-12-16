@@ -1,8 +1,8 @@
 /*
- * Portions Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007, 2008, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -27,11 +27,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -48,7 +44,7 @@
  * SUCH DAMAGE.
  */
 
-/* $ISC: commandline.c,v 1.16.18.2 2005/04/29 00:16:45 marka Exp $ */
+/* $Id: commandline.c,v 1.6 2019/12/16 16:16:25 deraadt Exp $ */
 
 /*! \file
  * This file was adapted from the NetBSD project's source tree, RCS ID:
@@ -69,6 +65,7 @@
 
 #include <isc/commandline.h>
 #include <isc/msgs.h>
+#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -98,7 +95,7 @@ static char endopt = '\0';
 int
 isc_commandline_parse(int argc, char * const *argv, const char *options) {
 	static char *place = ENDOPT;
-	char *option;			/* Index into *options of option. */
+	const char *option;		/* Index into *options of option. */
 
 	REQUIRE(argc >= 0 && argv != NULL && options != NULL);
 
@@ -107,7 +104,10 @@ isc_commandline_parse(int argc, char * const *argv, const char *options) {
 	 * the previous argv was finished.
 	 */
 	if (isc_commandline_reset || *place == '\0') {
-		isc_commandline_reset = ISC_FALSE;
+		if (isc_commandline_reset) {
+			isc_commandline_index = 1;
+			isc_commandline_reset = ISC_FALSE;
+		}
 
 		if (isc_commandline_progname == NULL)
 			isc_commandline_progname = argv[0];

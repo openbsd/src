@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: list.h,v 1.20.18.2 2006/06/06 00:11:41 marka Exp $ */
+/* $Id: list.h,v 1.2 2019/12/16 16:16:26 deraadt Exp $ */
 
 #ifndef ISC_LIST_H
 #define ISC_LIST_H 1
@@ -102,6 +102,8 @@
 		} \
 		(elt)->link.prev = (type *)(-1); \
 		(elt)->link.next = (type *)(-1); \
+		ISC_INSIST((list).head != (elt)); \
+		ISC_INSIST((list).tail != (elt)); \
 	} while (0)
 
 #define __ISC_LIST_UNLINKUNSAFE(list, elt, link) \
@@ -164,6 +166,19 @@
 			(list1).tail->link.next = (list2).head; \
 			(list2).head->link.prev = (list1).tail; \
 			(list1).tail = (list2).tail; \
+		} \
+		(list2).head = NULL; \
+		(list2).tail = NULL; \
+	} while (0)
+
+#define ISC_LIST_PREPENDLIST(list1, list2, link) \
+	do { \
+		if (ISC_LIST_EMPTY(list1)) \
+			(list1) = (list2); \
+		else if (!ISC_LIST_EMPTY(list2)) { \
+			(list2).tail->link.next = (list1).head; \
+			(list1).head->link.prev = (list2).tail; \
+			(list1).head = (list2).head; \
 		} \
 		(list2).head = NULL; \
 		(list2).tail = NULL; \

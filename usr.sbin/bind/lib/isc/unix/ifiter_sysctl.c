@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: ifiter_sysctl.c,v 1.20.18.3 2005/04/27 05:02:35 sra Exp $ */
+/* $Id: ifiter_sysctl.c,v 1.2 2019/12/16 16:16:27 deraadt Exp $ */
 
 /*! \file
  * \brief
@@ -30,6 +30,8 @@
 #include <net/route.h>
 #include <net/if_dl.h>
 
+#include <isc/print.h>
+
 /* XXX what about Alpha? */
 #ifdef sgi
 #define ROUNDUP(a) ((a) > 0 ? \
@@ -37,7 +39,7 @@
 		sizeof(__uint64_t))
 #else
 #define ROUNDUP(a) ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) \
-                    : sizeof(long))
+		    : sizeof(long))
 #endif
 
 #define IFITER_MAGIC		ISC_MAGIC('I', 'F', 'I', 'S')
@@ -58,9 +60,9 @@ struct isc_interfaceiter {
 static int mib[6] = {
 	CTL_NET,
 	PF_ROUTE,
-        0,
+	0,
 	0, 			/* Any address family. */
-        NET_RT_IFLIST,
+	NET_RT_IFLIST,
 	0 			/* Flags. */
 };
 
@@ -171,7 +173,7 @@ internal_current(isc_interfaceiter_t *iter) {
 			namelen = sizeof(iter->current.name) - 1;
 
 		memset(iter->current.name, 0, sizeof(iter->current.name));
-		memcpy(iter->current.name, sdl->sdl_data, namelen);
+		memmove(iter->current.name, sdl->sdl_data, namelen);
 
 		iter->current.flags = 0;
 

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -14,8 +14,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* $ISC: dir.c,v 1.20.18.3 2005/09/05 00:18:30 marka Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -31,6 +29,7 @@
 
 #include <isc/dir.h>
 #include <isc/magic.h>
+#include <isc/netdb.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -70,7 +69,7 @@ isc_dir_open(isc_dir_t *dir, const char *dirname) {
 	if (strlen(dirname) + 3 > sizeof(dir->dirname))
 		/* XXXDCL ? */
 		return (ISC_R_NOSPACE);
-	strlcpy(dir->dirname, dirname, sizeof(dir->dirname));
+	strcpy(dir->dirname, dirname);
 
 	/*
 	 * Append path separator, if needed, and "*".
@@ -79,7 +78,7 @@ isc_dir_open(isc_dir_t *dir, const char *dirname) {
 	if (dir->dirname < p && *(p - 1) != '/')
 		*p++ = '/';
 	*p++ = '*';
-	*p++ = '\0';
+	*p = '\0';
 
 	/*
 	 * Open stream.
@@ -93,7 +92,7 @@ isc_dir_open(isc_dir_t *dir, const char *dirname) {
 }
 
 /*!
- * \brief Return previously retrieved file or get next one.  
+ * \brief Return previously retrieved file or get next one.
 
  * Unix's dirent has
  * separate open and read functions, but the Win32 and DOS interfaces open
@@ -119,7 +118,7 @@ isc_dir_read(isc_dir_t *dir) {
 	if (sizeof(dir->entry.name) <= strlen(entry->d_name))
 	    return (ISC_R_UNEXPECTED);
 
-	strlcpy(dir->entry.name, entry->d_name, sizeof(dir->entry.name));
+	strcpy(dir->entry.name, entry->d_name);
 
 	/*
 	 * Some dirents have d_namlen, but it is not portable.
@@ -168,13 +167,30 @@ isc_dir_chdir(const char *dirname) {
 
 isc_result_t
 isc_dir_chroot(const char *dirname) {
+#ifdef HAVE_CHROOT
+	void *tmp;
+#endif
 
 	REQUIRE(dirname != NULL);
 
-	if (chroot(dirname) < 0)
+#ifdef HAVE_CHROOT
+	/*
+	 * Try to use getservbyname and getprotobyname before chroot.
+	 * If WKS records are used in a zone under chroot, Name Service Switch
+	 * may fail to load library in chroot.
+	 * Do not report errors if it fails, we do not need any result now.
+	 */
+	tmp = getprotobyname("udp");
+	if (tmp != NULL)
+		(void) getservbyname("domain", "udp");
+
+	if (chroot(dirname) < 0 || chdir("/") < 0)
 		return (isc__errno2result(errno));
 
 	return (ISC_R_SUCCESS);
+#else
+	return (ISC_R_NOTIMPLEMENTED);
+#endif
 }
 
 isc_result_t

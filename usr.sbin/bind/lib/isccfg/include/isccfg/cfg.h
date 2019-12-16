@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: cfg.h,v 1.34.18.5 2006/03/02 00:37:22 marka Exp $ */
+/* $Id: cfg.h,v 1.2 2019/12/16 16:16:28 deraadt Exp $ */
 
 #ifndef ISCCFG_CFG_H
 #define ISCCFG_CFG_H 1
@@ -24,7 +24,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file isccfg/cfg.h
  * \brief
  * This is the new, table-driven, YACC-free configuration file parser.
  */
@@ -35,6 +35,7 @@
 
 #include <isc/formatcheck.h>
 #include <isc/lang.h>
+#include <isc/refcount.h>
 #include <isc/types.h>
 #include <isc/list.h>
 
@@ -70,7 +71,7 @@ typedef struct cfg_obj cfg_obj_t;
 typedef struct cfg_listelt cfg_listelt_t;
 
 /*%
- * A callback function to be called when parsing an option 
+ * A callback function to be called when parsing an option
  * that needs to be interpreted at parsing time, like
  * "directory".
  */
@@ -82,6 +83,12 @@ typedef isc_result_t
  ***/
 
 ISC_LANG_BEGINDECLS
+
+void
+cfg_parser_attach(cfg_parser_t *src, cfg_parser_t **dest);
+/*%<
+ * Reference a parser object.
+ */
 
 isc_result_t
 cfg_parser_create(isc_mem_t *mctx, isc_log_t *lctx, cfg_parser_t **ret);
@@ -123,7 +130,7 @@ cfg_parse_buffer(cfg_parser_t *pctx, isc_buffer_t *buffer,
  * (isc_parse_buffer()).
  *
  * Returns an error if the file does not parse correctly.
- * 
+ *
  * Requires:
  *\li 	"filename" is valid.
  *\li 	"mem" is valid.
@@ -140,13 +147,14 @@ cfg_parse_buffer(cfg_parser_t *pctx, isc_buffer_t *buffer,
 void
 cfg_parser_destroy(cfg_parser_t **pctxp);
 /*%<
- * Destroy a configuration parser.
+ * Remove a reference to a configuration parser; destroy it if there are no
+ * more references.
  */
 
 isc_boolean_t
 cfg_obj_isvoid(const cfg_obj_t *obj);
 /*%<
- * Return true iff 'obj' is of void type (e.g., an optional 
+ * Return true iff 'obj' is of void type (e.g., an optional
  * value not specified).
  */
 
@@ -183,6 +191,18 @@ cfg_map_getname(const cfg_obj_t *mapobj);
  * Returns:
  * \li     A pointer to a configuration object naming the map object,
  *	or NULL if the map object does not have a name.
+ */
+
+unsigned int
+cfg_map_count(const cfg_obj_t *mapobj);
+/*%<
+ * Get the number of elements defined in the symbol table of a map object.
+ *
+ * Requires:
+ *    \li  'mapobj' points to a valid configuration object of a map type.
+ *
+ * Returns:
+ * \li     The number of elements in the map object.
  */
 
 isc_boolean_t
@@ -237,6 +257,18 @@ cfg_obj_asuint64(const cfg_obj_t *obj);
  *
  * Returns:
  * \li     A 64-bit unsigned integer.
+ */
+
+isc_uint32_t
+cfg_obj_asfixedpoint(const cfg_obj_t *obj);
+/*%<
+ * Returns the value of a configuration object of fixed point number.
+ *
+ * Requires:
+ * \li     'obj' points to a valid configuration object of fixed point type.
+ *
+ * Returns:
+ * \li     A 32-bit unsigned integer.
  */
 
 isc_boolean_t
@@ -295,6 +327,20 @@ cfg_obj_assockaddr(const cfg_obj_t *obj);
  *      if necessary.
  */
 
+isc_dscp_t
+cfg_obj_getdscp(const cfg_obj_t *obj);
+/*%<
+ * Returns the DSCP value of a configuration object representing a
+ * socket address.
+ *
+ * Requires:
+ * \li     'obj' points to a valid configuration object of a
+ *         socket address type.
+ *
+ * Returns:
+ * \li     DSCP value associated with a sockaddr, or -1.
+ */
+
 isc_boolean_t
 cfg_obj_isnetprefix(const cfg_obj_t *obj);
 /*%<
@@ -347,7 +393,15 @@ cfg_list_next(const cfg_listelt_t *elt);
  * 	or NULL if there are no more elements.
  */
 
-const cfg_obj_t *
+unsigned int
+cfg_list_length(const cfg_obj_t *obj, isc_boolean_t recurse);
+/*%<
+ * Returns the length of a list of configure objects.  If obj is
+ * not a list, returns 0.  If recurse is true, add in the length of
+ * all contained lists.
+ */
+
+cfg_obj_t *
 cfg_listelt_value(const cfg_listelt_t *elt);
 /*%<
  * Returns the configuration object associated with cfg_listelt_t.
@@ -364,10 +418,20 @@ void
 cfg_print(const cfg_obj_t *obj,
 	  void (*f)(void *closure, const char *text, int textlen),
 	  void *closure);
+void
+cfg_printx(const cfg_obj_t *obj, unsigned int flags,
+	   void (*f)(void *closure, const char *text, int textlen),
+	   void *closure);
+
+#define CFG_PRINTER_XKEY        0x1     /* '?' out shared keys. */
+
 /*%<
  * Print the configuration object 'obj' by repeatedly calling the
  * function 'f', passing 'closure' and a region of text starting
  * at 'text' and comprising 'textlen' characters.
+ *
+ * If CFG_PRINTER_XKEY the contents of shared keys will be obscured
+ * by replacing them with question marks ('?')
  */
 
 void
@@ -381,17 +445,29 @@ cfg_print_grammar(const cfg_type_t *type,
 isc_boolean_t
 cfg_obj_istype(const cfg_obj_t *obj, const cfg_type_t *type);
 /*%<
- * Return true iff 'obj' is of type 'type'. 
+ * Return true iff 'obj' is of type 'type'.
  */
 
-void cfg_obj_destroy(cfg_parser_t *pctx, cfg_obj_t **obj);
+void
+cfg_obj_attach(cfg_obj_t *src, cfg_obj_t **dest);
 /*%<
- * Destroy a configuration object.
+ * Reference a configuration object.
+ */
+
+void
+cfg_obj_destroy(cfg_parser_t *pctx, cfg_obj_t **obj);
+/*%<
+ * Delete a reference to a configuration object; destroy the object if
+ * there are no more references.
+ *
+ * Require:
+ * \li     '*obj' is a valid cfg_obj_t.
+ * \li     'pctx' is a valid cfg_parser_t.
  */
 
 void
 cfg_obj_log(const cfg_obj_t *obj, isc_log_t *lctx, int level,
-            const char *fmt, ...)
+	    const char *fmt, ...)
 	ISC_FORMAT_PRINTF(4, 5);
 /*%<
  * Log a message concerning configuration object 'obj' to the logging

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,12 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: msgs.h,v 1.9.18.2 2005/04/29 00:16:59 marka Exp $ */
+/* $Id: msgs.h,v 1.2 2019/12/16 16:16:26 deraadt Exp $ */
 
 #ifndef ISC_MSGS_H
 #define ISC_MSGS_H 1
 
-/*! \file */
+/*! \file isc/msgs.h */
 
 #include <isc/lib.h>		/* Provide isc_msgcat global variable. */
 #include <isc/msgcat.h>		/* Provide isc_msgcat_*() functions. */
@@ -57,7 +57,7 @@
 
 /*@{*/
 /*!
- * Message numbers  
+ * Message numbers
  * are only required to be unique per message set,
  * but are unique throughout the entire catalog to not be as confusing when
  * debugging.
@@ -153,7 +153,10 @@
 #define ISC_MSG_ACCEPTRETURNED 1418 /*%< accept() returned %d/%s */
 #define ISC_MSG_TOOMANYFDS     1419 /*%< %s: too many open file descriptors */
 #define ISC_MSG_ZEROPORT       1420 /*%< dropping source port zero packet */
-#define ISC_MSG_FILTER	       1420 /*%< setsockopt(SO_ACCEPTFILTER): %s */
+#define ISC_MSG_FILTER	       1421 /*%< setsockopt(SO_ACCEPTFILTER): %s */
+
+#define ISC_MSG_TOOMANYHANDLES 1422 /*%< %s: too many open WSA event handles: %s */
+#define ISC_MSG_POKED          1423 /*%< "poked flags: %d" */
 
 #define ISC_MSG_AWAKE	       1502 /*%< "awake" */
 #define ISC_MSG_WORKING	       1503 /*%< "working" */

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -27,11 +27,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -48,7 +44,7 @@
  * SUCH DAMAGE.
  */
 
-/* $ISC: file.c,v 1.47.18.2 2005/04/29 00:17:07 marka Exp $ */
+/* $Id: file.c,v 1.6 2019/12/16 16:16:27 deraadt Exp $ */
 
 /*! \file */
 
@@ -65,8 +61,14 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
+
 #include <isc/dir.h>
 #include <isc/file.h>
+#include <isc/log.h>
+#include <isc/mem.h>
 #include <isc/random.h>
 #include <isc/string.h>
 #include <isc/time.h>
@@ -95,31 +97,88 @@ file_stats(const char *file, struct stat *stats) {
 	return (result);
 }
 
-isc_result_t
-isc_file_getmodtime(const char *file, isc_time_t *time) {
-	isc_result_t result;
-	struct stat stats;
+static isc_result_t
+fd_stats(int fd, struct stat *stats) {
+	isc_result_t result = ISC_R_SUCCESS;
 
-	REQUIRE(file != NULL);
-	REQUIRE(time != NULL);
+	REQUIRE(stats != NULL);
 
-	result = file_stats(file, &stats);
-
-	if (result == ISC_R_SUCCESS)
-		/*
-		 * XXXDCL some operating systems provide nanoseconds, too,
-		 * such as BSD/OS via st_mtimespec.
-		 */
-		isc_time_set(time, stats.st_mtime, 0);
+	if (fstat(fd, stats) != 0)
+		result = isc__errno2result(errno);
 
 	return (result);
 }
 
 isc_result_t
-isc_file_settime(const char *file, isc_time_t *time) {
+isc_file_getsizefd(int fd, off_t *size) {
+	isc_result_t result;
+	struct stat stats;
+
+	REQUIRE(size != NULL);
+
+	result = fd_stats(fd, &stats);
+
+	if (result == ISC_R_SUCCESS)
+		*size = stats.st_size;
+
+	return (result);
+}
+
+isc_result_t
+isc_file_mode(const char *file, mode_t *modep) {
+	isc_result_t result;
+	struct stat stats;
+
+	REQUIRE(modep != NULL);
+
+	result = file_stats(file, &stats);
+	if (result == ISC_R_SUCCESS)
+		*modep = (stats.st_mode & 07777);
+
+	return (result);
+}
+
+isc_result_t
+isc_file_getmodtime(const char *file, isc_time_t *modtime) {
+	isc_result_t result;
+	struct stat stats;
+
+	REQUIRE(file != NULL);
+	REQUIRE(modtime != NULL);
+
+	result = file_stats(file, &stats);
+
+	if (result == ISC_R_SUCCESS)
+#ifdef ISC_PLATFORM_HAVESTATNSEC
+		isc_time_set(modtime, stats.st_mtime, stats.st_mtim.tv_nsec);
+#else
+		isc_time_set(modtime, stats.st_mtime, 0);
+#endif
+
+	return (result);
+}
+
+isc_result_t
+isc_file_getsize(const char *file, off_t *size) {
+	isc_result_t result;
+	struct stat stats;
+
+	REQUIRE(file != NULL);
+	REQUIRE(size != NULL);
+
+	result = file_stats(file, &stats);
+
+	if (result == ISC_R_SUCCESS)
+		*size = stats.st_size;
+
+	return (result);
+}
+
+isc_result_t
+isc_file_settime(const char *file, isc_time_t *when) {
 	struct timeval times[2];
 
-	REQUIRE(file != NULL && time != NULL);
+	REQUIRE(file != NULL && when != NULL);
 
 	/*
 	 * tv_sec is at least a 32 bit quantity on all platforms we're
@@ -131,7 +190,7 @@ isc_file_settime(const char *file, isc_time_t *time) {
 	 *   * isc_time_seconds is changed to be > 32 bits but long is 32 bits
 	 *      and isc_time_seconds has at least 33 significant bits.
 	 */
-	times[0].tv_sec = times[1].tv_sec = (long)isc_time_seconds(time);
+	times[0].tv_sec = times[1].tv_sec = (long)isc_time_seconds(when);
 
 	/*
 	 * Here is the real check for the high bit being set.
@@ -147,7 +206,7 @@ isc_file_settime(const char *file, isc_time_t *time) {
 	 * we can at least cast to signed so the IRIX compiler shuts up.
 	 */
 	times[0].tv_usec = times[1].tv_usec =
-		(isc_int32_t)(isc_time_nanoseconds(time) / 1000);
+		(isc_int32_t)(isc_time_nanoseconds(when) / 1000);
 
 	if (utimes(file, times) < 0)
 		return (isc__errno2result(errno));
@@ -165,8 +224,9 @@ isc_file_mktemplate(const char *path, char *buf, size_t buflen) {
 
 isc_result_t
 isc_file_template(const char *path, const char *templet, char *buf,
-			size_t buflen) {
-	char *s;
+		  size_t buflen)
+{
+	const char *s;
 
 	REQUIRE(path != NULL);
 	REQUIRE(templet != NULL);
@@ -182,13 +242,14 @@ isc_file_template(const char *path, const char *templet, char *buf,
 		if ((s - path + 1 + strlen(templet) + 1) > buflen)
 			return (ISC_R_NOSPACE);
 
-		strlcpy(buf, path, buflen);
-		strlcat(buf, templet, buflen);
+		strncpy(buf, path, s - path + 1);
+		buf[s - path + 1] = '\0';
+		strcat(buf, templet);
 	} else {
 		if ((strlen(templet) + 1) > buflen)
 			return (ISC_R_NOSPACE);
 
-		strlcpy(buf, templet, buflen);
+		strcpy(buf, templet);
 	}
 
 	return (ISC_R_SUCCESS);
@@ -222,7 +283,7 @@ isc_file_renameunique(const char *file, char *templet) {
 		if (errno != EEXIST)
 			return (isc__errno2result(errno));
 		for (cp = x;;) {
-			char *t;
+			const char *t;
 			if (*cp == '\0')
 				return (ISC_R_FAILURE);
 			t = strchr(alphnum, *cp);
@@ -234,20 +295,32 @@ isc_file_renameunique(const char *file, char *templet) {
 			}
 		}
 	}
-	(void)unlink(file);
+	if (unlink(file) < 0)
+		if (errno != ENOENT)
+			return (isc__errno2result(errno));
 	return (ISC_R_SUCCESS);
 }
 
-
 isc_result_t
 isc_file_openunique(char *templet, FILE **fp) {
+	int mode = S_IWUSR|S_IRUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
+	return (isc_file_openuniquemode(templet, mode, fp));
+}
+
+isc_result_t
+isc_file_openuniqueprivate(char *templet, FILE **fp) {
+	int mode = S_IWUSR|S_IRUSR;
+	return (isc_file_openuniquemode(templet, mode, fp));
+}
+
+isc_result_t
+isc_file_openuniquemode(char *templet, int mode, FILE **fp) {
 	int fd;
 	FILE *f;
 	isc_result_t result = ISC_R_SUCCESS;
 	char *x;
 	char *cp;
 	isc_uint32_t which;
-	int mode;
 
 	REQUIRE(templet != NULL);
 	REQUIRE(fp != NULL && *fp == NULL);
@@ -265,7 +338,6 @@ isc_file_openunique(char *templet, FILE **fp) {
 		x = cp--;
 	}
 
-	mode = S_IWUSR|S_IRUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
 
 	while ((fd = open(templet, O_RDWR|O_CREAT|O_EXCL, mode)) == -1) {
 		if (errno != EEXIST)
@@ -286,12 +358,33 @@ isc_file_openunique(char *templet, FILE **fp) {
 	f = fdopen(fd, "w+");
 	if (f == NULL) {
 		result = isc__errno2result(errno);
-		(void)remove(templet);
+		if (remove(templet) < 0) {
+			isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+				      ISC_LOGMODULE_FILE, ISC_LOG_ERROR,
+				      "remove '%s': failed", templet);
+		}
 		(void)close(fd);
 	} else
 		*fp = f;
 
 	return (result);
+}
+
+isc_result_t
+isc_file_bopenunique(char *templet, FILE **fp) {
+	int mode = S_IWUSR|S_IRUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
+	return (isc_file_openuniquemode(templet, mode, fp));
+}
+
+isc_result_t
+isc_file_bopenuniqueprivate(char *templet, FILE **fp) {
+	int mode = S_IWUSR|S_IRUSR;
+	return (isc_file_openuniquemode(templet, mode, fp));
+}
+
+isc_result_t
+isc_file_bopenuniquemode(char *templet, int mode, FILE **fp) {
+	return (isc_file_openuniquemode(templet, mode, fp));
 }
 
 isc_result_t
@@ -330,6 +423,59 @@ isc_file_exists(const char *pathname) {
 	return (ISC_TF(file_stats(pathname, &stats) == ISC_R_SUCCESS));
 }
 
+isc_result_t
+isc_file_isplainfile(const char *filename) {
+	/*
+	 * This function returns success if filename is a plain file.
+	 */
+	struct stat filestat;
+	memset(&filestat,0,sizeof(struct stat));
+
+	if ((stat(filename, &filestat)) == -1)
+		return(isc__errno2result(errno));
+
+	if(! S_ISREG(filestat.st_mode))
+		return(ISC_R_INVALIDFILE);
+
+	return(ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_file_isplainfilefd(int fd) {
+	/*
+	 * This function returns success if filename is a plain file.
+	 */
+	struct stat filestat;
+	memset(&filestat,0,sizeof(struct stat));
+
+	if ((fstat(fd, &filestat)) == -1)
+		return(isc__errno2result(errno));
+
+	if(! S_ISREG(filestat.st_mode))
+		return(ISC_R_INVALIDFILE);
+
+	return(ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_file_isdirectory(const char *filename) {
+	/*
+	 * This function returns success if filename exists and is a
+	 * directory.
+	 */
+	struct stat filestat;
+	memset(&filestat,0,sizeof(struct stat));
+
+	if ((stat(filename, &filestat)) == -1)
+		return(isc__errno2result(errno));
+
+	if(! S_ISDIR(filestat.st_mode))
+		return(ISC_R_INVALIDFILE);
+
+	return(ISC_R_SUCCESS);
+}
+
+
 isc_boolean_t
 isc_file_isabsolute(const char *filename) {
 	REQUIRE(filename != NULL);
@@ -354,7 +500,7 @@ isc_file_ischdiridempotent(const char *filename) {
 
 const char *
 isc_file_basename(const char *filename) {
-	char *s;
+	const char *s;
 
 	REQUIRE(filename != NULL);
 
@@ -378,14 +524,14 @@ isc_file_progname(const char *filename, char *buf, size_t buflen) {
 
 	if (len > buflen)
 		return (ISC_R_NOSPACE);
-	memcpy(buf, base, len);
+	memmove(buf, base, len);
 
 	return (ISC_R_SUCCESS);
 }
 
 /*
  * Put the absolute name of the current directory into 'dirname', which is
- * a buffer of at least 'length' characters.  End the string with the 
+ * a buffer of at least 'length' characters.  End the string with the
  * appropriate path separator, such that the final product could be
  * concatenated with a relative pathname to make a valid pathname string.
  */
@@ -408,7 +554,7 @@ dir_current(char *dirname, size_t length) {
 		if (strlen(dirname) + 1 == length)
 			result = ISC_R_NOSPACE;
 		else if (dirname[1] != '\0')
-			strlcat(dirname, "/", length);
+			strcat(dirname, "/");
 	}
 
 	return (result);
@@ -422,7 +568,7 @@ isc_file_absolutepath(const char *filename, char *path, size_t pathlen) {
 		return (result);
 	if (strlen(path) + strlen(filename) + 1 > pathlen)
 		return (ISC_R_NOSPACE);
-	strlcat(path, filename, pathlen);
+	strcat(path, filename);
 	return (ISC_R_SUCCESS);
 }
 
@@ -430,7 +576,128 @@ isc_result_t
 isc_file_truncate(const char *filename, isc_offset_t size) {
 	isc_result_t result = ISC_R_SUCCESS;
 
-	if (truncate(filename, size) < 0) 
+	if (truncate(filename, size) < 0)
 		result = isc__errno2result(errno);
 	return (result);
+}
+
+isc_result_t
+isc_file_safecreate(const char *filename, FILE **fp) {
+	isc_result_t result;
+	int flags;
+	struct stat sb;
+	FILE *f;
+	int fd;
+
+	REQUIRE(filename != NULL);
+	REQUIRE(fp != NULL && *fp == NULL);
+
+	result = file_stats(filename, &sb);
+	if (result == ISC_R_SUCCESS) {
+		if ((sb.st_mode & S_IFREG) == 0)
+			return (ISC_R_INVALIDFILE);
+		flags = O_WRONLY | O_TRUNC;
+	} else if (result == ISC_R_FILENOTFOUND) {
+		flags = O_WRONLY | O_CREAT | O_EXCL;
+	} else
+		return (result);
+
+	fd = open(filename, flags, S_IRUSR | S_IWUSR);
+	if (fd == -1)
+		return (isc__errno2result(errno));
+
+	f = fdopen(fd, "w");
+	if (f == NULL) {
+		result = isc__errno2result(errno);
+		close(fd);
+		return (result);
+	}
+
+	*fp = f;
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_file_splitpath(isc_mem_t *mctx, const char *path, char **dirname,
+		   char const **bname)
+{
+	char *dir;
+	const char *file, *slash;
+
+	if (path == NULL)
+		return (ISC_R_INVALIDFILE);
+
+	slash = strrchr(path, '/');
+
+	if (slash == path) {
+		file = ++slash;
+		dir = isc_mem_strdup(mctx, "/");
+	} else if (slash != NULL) {
+		file = ++slash;
+		dir = isc_mem_allocate(mctx, slash - path);
+		if (dir != NULL)
+			strlcpy(dir, path, slash - path);
+	} else {
+		file = path;
+		dir = isc_mem_strdup(mctx, ".");
+	}
+
+	if (dir == NULL)
+		return (ISC_R_NOMEMORY);
+
+	if (*file == '\0') {
+		isc_mem_free(mctx, dir);
+		return (ISC_R_INVALIDFILE);
+	}
+
+	*dirname = dir;
+	*bname = file;
+
+	return (ISC_R_SUCCESS);
+}
+
+void *
+isc_file_mmap(void *addr, size_t len, int prot,
+	      int flags, int fd, off_t offset)
+{
+#ifdef HAVE_MMAP
+	return (mmap(addr, len, prot, flags, fd, offset));
+#else
+	void *buf;
+	ssize_t ret;
+	off_t end;
+
+	UNUSED(addr);
+	UNUSED(prot);
+	UNUSED(flags);
+
+	end = lseek(fd, 0, SEEK_END);
+	lseek(fd, offset, SEEK_SET);
+	if (end - offset < (off_t) len)
+		len = end - offset;
+
+	buf = malloc(len);
+	if (buf == NULL)
+		return (NULL);
+
+	ret = read(fd, buf, len);
+	if (ret != (ssize_t) len) {
+		free(buf);
+		buf = NULL;
+	}
+
+	return (buf);
+#endif
+}
+
+int
+isc_file_munmap(void *addr, size_t len) {
+#ifdef HAVE_MMAP
+	return (munmap(addr, len));
+#else
+	UNUSED(len);
+
+	free(addr);
+	return (0);
+#endif
 }

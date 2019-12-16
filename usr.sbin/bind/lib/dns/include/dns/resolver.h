@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,8 +15,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: resolver.h,v 1.40.18.11 2006/02/01 22:39:17 marka Exp $ */
-
 #ifndef DNS_RESOLVER_H
 #define DNS_RESOLVER_H 1
 
@@ -24,7 +22,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file dns/resolver.h
  *
  * \brief
  * This is the BIND 9 resolver, the module responsible for resolving DNS
@@ -54,6 +52,7 @@
 
 #include <isc/lang.h>
 #include <isc/socket.h>
+#include <isc/stats.h>
 
 #include <dns/types.h>
 #include <dns/fixedname.h>
@@ -81,23 +80,51 @@ typedef struct dns_fetchevent {
 	dns_fixedname_t			foundname;
 	isc_sockaddr_t *		client;
 	dns_messageid_t			id;
+	isc_result_t			vresult;
 } dns_fetchevent_t;
+
+/*%
+ * The two quota types (fetches-per-zone and fetches-per-server)
+ */
+typedef enum {
+	dns_quotatype_zone = 0,
+	dns_quotatype_server
+} dns_quotatype_t;
 
 /*
  * Options that modify how a 'fetch' is done.
  */
-#define DNS_FETCHOPT_TCP		0x01	     /*%< Use TCP. */
-#define DNS_FETCHOPT_UNSHARED		0x02	     /*%< See below. */
-#define DNS_FETCHOPT_RECURSIVE		0x04	     /*%< Set RD? */
-#define DNS_FETCHOPT_NOEDNS0		0x08	     /*%< Do not use EDNS. */
-#define DNS_FETCHOPT_FORWARDONLY	0x10	     /*%< Only use forwarders. */
-#define DNS_FETCHOPT_NOVALIDATE		0x20	     /*%< Disable validation. */
-#define DNS_FETCHOPT_EDNS512		0x40	     /*%< Advertise a 512 byte
-						          UDP buffer. */
+#define DNS_FETCHOPT_TCP		0x001	     /*%< Use TCP. */
+#define DNS_FETCHOPT_UNSHARED		0x002	     /*%< See below. */
+#define DNS_FETCHOPT_RECURSIVE		0x004	     /*%< Set RD? */
+#define DNS_FETCHOPT_NOEDNS0		0x008	     /*%< Do not use EDNS. */
+#define DNS_FETCHOPT_FORWARDONLY	0x010	     /*%< Only use forwarders. */
+#define DNS_FETCHOPT_NOVALIDATE		0x020	     /*%< Disable validation. */
+#define DNS_FETCHOPT_EDNS512		0x040	     /*%< Advertise a 512 byte
+							  UDP buffer. */
+#define DNS_FETCHOPT_WANTNSID		0x080	     /*%< Request NSID */
+#define DNS_FETCHOPT_PREFETCH		0x100	     /*%< Do prefetch */
+#define DNS_FETCHOPT_NOCDFLAG		0x200	     /*%< Don't set CD flag. */
 
+/* Reserved in use by adb.c		0x00400000 */
 #define	DNS_FETCHOPT_EDNSVERSIONSET	0x00800000
 #define	DNS_FETCHOPT_EDNSVERSIONMASK	0xff000000
 #define	DNS_FETCHOPT_EDNSVERSIONSHIFT	24
+
+/*
+ * Upper bounds of class of query RTT (ms).  Corresponds to
+ * dns_resstatscounter_queryrttX statistics counters.
+ */
+#define DNS_RESOLVER_QRYRTTCLASS0	10
+#define DNS_RESOLVER_QRYRTTCLASS0STR	"10"
+#define DNS_RESOLVER_QRYRTTCLASS1	100
+#define DNS_RESOLVER_QRYRTTCLASS1STR	"100"
+#define DNS_RESOLVER_QRYRTTCLASS2	500
+#define DNS_RESOLVER_QRYRTTCLASS2STR	"500"
+#define DNS_RESOLVER_QRYRTTCLASS3	800
+#define DNS_RESOLVER_QRYRTTCLASS3STR	"800"
+#define DNS_RESOLVER_QRYRTTCLASS4	1600
+#define DNS_RESOLVER_QRYRTTCLASS4STR	"1600"
 
 /*
  * XXXRTH  Should this API be made semi-private?  (I.e.
@@ -109,7 +136,8 @@ typedef struct dns_fetchevent {
 
 isc_result_t
 dns_resolver_create(dns_view_t *view,
-		    isc_taskmgr_t *taskmgr, unsigned int ntasks,
+		    isc_taskmgr_t *taskmgr,
+		    unsigned int ntasks, unsigned int ndisp,
 		    isc_socketmgr_t *socketmgr,
 		    isc_timermgr_t *timermgr,
 		    unsigned int options,
@@ -126,8 +154,6 @@ dns_resolver_create(dns_view_t *view,
  *\li	Generally, applications should not create a resolver directly, but
  *	should instead call dns_view_createresolver().
  *
- *\li	No options are currently defined.
- *
  * Requires:
  *
  *\li	'view' is a valid view.
@@ -140,9 +166,11 @@ dns_resolver_create(dns_view_t *view,
  *
  *\li	'timermgr' is a valid timer manager.
  *
- *\li	'dispatchv4' is a valid dispatcher with an IPv4 UDP socket, or is NULL.
+ *\li	'dispatchv4' is a dispatch with an IPv4 UDP socket, or is NULL.
+ *	If not NULL, 'ndisp' clones of it will be created by the resolver.
  *
- *\li	'dispatchv6' is a valid dispatcher with an IPv6 UDP socket, or is NULL.
+ *\li	'dispatchv6' is a dispatch with an IPv6 UDP socket, or is NULL.
+ *	If not NULL, 'ndisp' clones of it will be created by the resolver.
  *
  *\li	resp != NULL && *resp == NULL.
  *
@@ -165,7 +193,7 @@ dns_resolver_freeze(dns_resolver_t *res);
  *
  * Requires:
  *
- *\li	'res' is a valid, unfrozen resolver.
+ *\li	'res' is a valid resolver.
  *
  * Ensures:
  *
@@ -252,6 +280,18 @@ dns_resolver_createfetch2(dns_resolver_t *res, dns_name_t *name,
 			  dns_forwarders_t *forwarders,
 			  isc_sockaddr_t *client, isc_uint16_t id,
 			  unsigned int options, isc_task_t *task,
+			  isc_taskaction_t action, void *arg,
+			  dns_rdataset_t *rdataset,
+			  dns_rdataset_t *sigrdataset,
+			  dns_fetch_t **fetchp);
+isc_result_t
+dns_resolver_createfetch3(dns_resolver_t *res, dns_name_t *name,
+			  dns_rdatatype_t type,
+			  dns_name_t *domain, dns_rdataset_t *nameservers,
+			  dns_forwarders_t *forwarders,
+			  isc_sockaddr_t *client, isc_uint16_t id,
+			  unsigned int options, unsigned int depth,
+			  isc_counter_t *qc, isc_task_t *task,
 			  isc_taskaction_t action, void *arg,
 			  dns_rdataset_t *rdataset,
 			  dns_rdataset_t *sigrdataset,
@@ -348,6 +388,23 @@ dns_resolver_destroyfetch(dns_fetch_t **fetchp);
  *\li	*fetchp == NULL.
  */
 
+void
+dns_resolver_logfetch(dns_fetch_t *fetch, isc_log_t *lctx,
+		      isc_logcategory_t *category, isc_logmodule_t *module,
+		      int level, isc_boolean_t duplicateok);
+/*%<
+ * Dump a log message on internal state at the completion of given 'fetch'.
+ * 'lctx', 'category', 'module', and 'level' are used to write the log message.
+ * By default, only one log message is written even if the corresponding fetch
+ * context serves multiple clients; if 'duplicateok' is true the suppression
+ * is disabled and the message can be written every time this function is
+ * called.
+ *
+ * Requires:
+ *
+ *\li	'fetch' is a valid fetch, and has completed.
+ */
+
 dns_dispatchmgr_t *
 dns_resolver_dispatchmgr(dns_resolver_t *resolver);
 
@@ -421,12 +478,31 @@ dns_resolver_reset_algorithms(dns_resolver_t *resolver);
  * Clear the disabled DNSSEC algorithms.
  */
 
+void
+dns_resolver_reset_ds_digests(dns_resolver_t *resolver);
+/*%<
+ * Clear the disabled DS/DLV digest types.
+ */
+
 isc_result_t
 dns_resolver_disable_algorithm(dns_resolver_t *resolver, dns_name_t *name,
 			       unsigned int alg);
 /*%<
- * Mark the give DNSSEC algorithm as disabled and below 'name'.
+ * Mark the given DNSSEC algorithm as disabled and below 'name'.
  * Valid algorithms are less than 256.
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ *\li	#ISC_R_RANGE
+ *\li	#ISC_R_NOMEMORY
+ */
+
+isc_result_t
+dns_resolver_disable_ds_digest(dns_resolver_t *resolver, dns_name_t *name,
+			       unsigned int digest_type);
+/*%<
+ * Mark the given DS/DLV digest type as disabled and below 'name'.
+ * Valid types are less than 256.
  *
  * Returns:
  *\li	#ISC_R_SUCCESS
@@ -439,15 +515,19 @@ dns_resolver_algorithm_supported(dns_resolver_t *resolver, dns_name_t *name,
 				 unsigned int alg);
 /*%<
  * Check if the given algorithm is supported by this resolver.
- * This checks if the algorithm has been disabled via
- * dns_resolver_disable_algorithm() then the underlying
- * crypto libraries if not specifically disabled.
+ * This checks whether the algorithm has been disabled via
+ * dns_resolver_disable_algorithm(), then checks the underlying
+ * crypto libraries if it was not specifically disabled.
  */
 
 isc_boolean_t
-dns_resolver_digest_supported(dns_resolver_t *resolver, unsigned int digest_type);
+dns_resolver_ds_digest_supported(dns_resolver_t *resolver, dns_name_t *name,
+				 unsigned int digest_type);
 /*%<
- * Is this digest type supported.
+ * Check if the given digest type is supported by this resolver.
+ * This checks whether the digest type has been disabled via
+ * dns_resolver_disable_ds_digest(), then checks the underlying
+ * crypto libraries if it was not specifically disabled.
  */
 
 void
@@ -460,9 +540,32 @@ dns_resolver_setmustbesecure(dns_resolver_t *resolver, dns_name_t *name,
 isc_boolean_t
 dns_resolver_getmustbesecure(dns_resolver_t *resolver, dns_name_t *name);
 
+
+void
+dns_resolver_settimeout(dns_resolver_t *resolver, unsigned int seconds);
+/*%<
+ * Set the length of time the resolver will work on a query, in seconds.
+ *
+ * If timeout is 0, the default timeout will be applied.
+ *
+ * Requires:
+ * \li  resolver to be valid.
+ */
+
+unsigned int
+dns_resolver_gettimeout(dns_resolver_t *resolver);
+/*%<
+ * Get the current length of time the resolver will work on a query, in seconds.
+ *
+ * Requires:
+ * \li  resolver to be valid.
+ */
+
 void
 dns_resolver_setclientsperquery(dns_resolver_t *resolver,
 				isc_uint32_t min, isc_uint32_t max);
+void
+dns_resolver_setfetchesperzone(dns_resolver_t *resolver, isc_uint32_t clients);
 
 void
 dns_resolver_getclientsperquery(dns_resolver_t *resolver, isc_uint32_t *cur,
@@ -470,9 +573,130 @@ dns_resolver_getclientsperquery(dns_resolver_t *resolver, isc_uint32_t *cur,
 
 isc_boolean_t
 dns_resolver_getzeronosoattl(dns_resolver_t *resolver);
- 
+
 void
 dns_resolver_setzeronosoattl(dns_resolver_t *resolver, isc_boolean_t state);
+
+unsigned int
+dns_resolver_getoptions(dns_resolver_t *resolver);
+
+void
+dns_resolver_addbadcache(dns_resolver_t *resolver, dns_name_t *name,
+			 dns_rdatatype_t type, isc_time_t *expire);
+/*%<
+ * Add a entry to the bad cache for <name,type> that will expire at 'expire'.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ * \li	name to be valid.
+ */
+
+isc_boolean_t
+dns_resolver_getbadcache(dns_resolver_t *resolver, dns_name_t *name,
+			 dns_rdatatype_t type, isc_time_t *now);
+/*%<
+ * Check to see if there is a unexpired entry in the bad cache for
+ * <name,type>.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ * \li	name to be valid.
+ */
+
+void
+dns_resolver_flushbadcache(dns_resolver_t *resolver, dns_name_t *name);
+/*%<
+ * Flush the bad cache of all entries at 'name' if 'name' is non NULL.
+ * Flush the entire bad cache if 'name' is NULL.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ */
+
+void
+dns_resolver_flushbadnames(dns_resolver_t *resolver, dns_name_t *name);
+/*%<
+ * Flush the bad cache of all entries at or below 'name'.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ * \li  name != NULL
+ */
+
+void
+dns_resolver_printbadcache(dns_resolver_t *resolver, FILE *fp);
+/*%
+ * Print out the contents of the bad cache to 'fp'.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ */
+
+void
+dns_resolver_setquerydscp4(dns_resolver_t *resolver, isc_dscp_t dscp);
+isc_dscp_t
+dns_resolver_getquerydscp4(dns_resolver_t *resolver);
+
+void
+dns_resolver_setquerydscp6(dns_resolver_t *resolver, isc_dscp_t dscp);
+isc_dscp_t
+dns_resolver_getquerydscp6(dns_resolver_t *resolver);
+/*%
+ * Get and set the DSCP values for the resolver's IPv4 and IPV6 query
+ * sources.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ */
+
+void
+dns_resolver_setmaxdepth(dns_resolver_t *resolver, unsigned int maxdepth);
+unsigned int
+dns_resolver_getmaxdepth(dns_resolver_t *resolver);
+/*%
+ * Get and set how many NS indirections will be followed when looking for
+ * nameserver addresses.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ */
+
+void
+dns_resolver_setmaxqueries(dns_resolver_t *resolver, unsigned int queries);
+unsigned int
+dns_resolver_getmaxqueries(dns_resolver_t *resolver);
+/*%
+ * Get and set how many iterative queries will be allowed before
+ * terminating a recursive query.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ */
+
+void
+dns_resolver_setquotaresponse(dns_resolver_t *resolver,
+			     dns_quotatype_t which, isc_result_t resp);
+isc_result_t
+dns_resolver_getquotaresponse(dns_resolver_t *resolver, dns_quotatype_t which);
+/*%
+ * Get and set the result code that will be used when quotas
+ * are exceeded. If 'which' is set to quotatype "zone", then the
+ * result specified in 'resp' will be used when the fetches-per-zone
+ * quota is exceeded by a fetch.  If 'which' is set to quotatype "server",
+ * then the reuslt specified in 'resp' will be used when the
+ * fetches-per-server quota has been exceeded for all the
+ * authoritative servers for a zone.  Valid choices are
+ * DNS_R_DROP or DNS_R_SERVFAIL.
+ *
+ * Requires:
+ * \li	'resolver' to be valid.
+ * \li	'which' to be dns_quotatype_zone or dns_quotatype_server
+ * \li	'resp' to be DNS_R_DROP or DNS_R_SERVFAIL.
+ */
+
+void
+dns_resolver_dumpfetches(dns_resolver_t *resolver,
+			 isc_statsformat_t format, FILE *fp);
 
 ISC_LANG_ENDDECLS
 

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: md_3.c,v 1.45 2004/03/05 05:10:13 marka Exp $ */
+/* $Id: md_3.c,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
 
 /* Reviewed: Wed Mar 15 17:48:20 PST 2000 by bwelling */
 
@@ -30,7 +30,7 @@ fromtext_md(ARGS_FROMTEXT) {
 	dns_name_t name;
 	isc_buffer_t buffer;
 
-	REQUIRE(type == 3);
+	REQUIRE(type == dns_rdatatype_md);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -41,7 +41,8 @@ fromtext_md(ARGS_FROMTEXT) {
 
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	origin = (origin != NULL) ? origin : dns_rootname;
+	if (origin == NULL)
+		origin = dns_rootname;
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 	return (ISC_R_SUCCESS);
 }
@@ -53,7 +54,7 @@ totext_md(ARGS_TOTEXT) {
 	dns_name_t prefix;
 	isc_boolean_t sub;
 
-	REQUIRE(rdata->type == 3);
+	REQUIRE(rdata->type == dns_rdatatype_md);
 	REQUIRE(rdata->length != 0);
 
 	dns_name_init(&name, NULL);
@@ -69,17 +70,17 @@ totext_md(ARGS_TOTEXT) {
 
 static inline isc_result_t
 fromwire_md(ARGS_FROMWIRE) {
-        dns_name_t name;
+	dns_name_t name;
 
-	REQUIRE(type == 3);
+	REQUIRE(type == dns_rdatatype_md);
 
 	UNUSED(type);
 	UNUSED(rdclass);
 
 	dns_decompress_setmethods(dctx, DNS_COMPRESS_GLOBAL14);
 
-        dns_name_init(&name, NULL);
-        return (dns_name_fromwire(&name, source, dctx, options, target));
+	dns_name_init(&name, NULL);
+	return (dns_name_fromwire(&name, source, dctx, options, target));
 }
 
 static inline isc_result_t
@@ -88,7 +89,7 @@ towire_md(ARGS_TOWIRE) {
 	dns_offsets_t offsets;
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 3);
+	REQUIRE(rdata->type == dns_rdatatype_md);
 	REQUIRE(rdata->length != 0);
 
 	dns_compress_setmethods(cctx, DNS_COMPRESS_GLOBAL14);
@@ -109,7 +110,7 @@ compare_md(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 3);
+	REQUIRE(rdata1->type == dns_rdatatype_md);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -130,7 +131,7 @@ fromstruct_md(ARGS_FROMSTRUCT) {
 	dns_rdata_md_t *md = source;
 	isc_region_t region;
 
-	REQUIRE(type == 3);
+	REQUIRE(type == dns_rdatatype_md);
 	REQUIRE(source != NULL);
 	REQUIRE(md->common.rdtype == type);
 	REQUIRE(md->common.rdclass == rdclass);
@@ -148,7 +149,7 @@ tostruct_md(ARGS_TOSTRUCT) {
 	isc_region_t r;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 3);
+	REQUIRE(rdata->type == dns_rdatatype_md);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -170,7 +171,7 @@ freestruct_md(ARGS_FREESTRUCT) {
 	dns_rdata_md_t *md = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(md->common.rdtype == 3);
+	REQUIRE(md->common.rdtype == dns_rdatatype_md);
 
 	if (md->mctx == NULL)
 		return;
@@ -185,7 +186,7 @@ additionaldata_md(ARGS_ADDLDATA) {
 	dns_offsets_t offsets;
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 3);
+	REQUIRE(rdata->type == dns_rdatatype_md);
 
 	dns_name_init(&name, offsets);
 	dns_rdata_toregion(rdata, &region);
@@ -199,7 +200,7 @@ digest_md(ARGS_DIGEST) {
 	isc_region_t r;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 3);
+	REQUIRE(rdata->type == dns_rdatatype_md);
 
 	dns_rdata_toregion(rdata, &r);
 	dns_name_init(&name, NULL);
@@ -211,7 +212,7 @@ digest_md(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_md(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 3);
+	REQUIRE(type == dns_rdatatype_md);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -224,13 +225,18 @@ checkowner_md(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_md(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 3);
+	REQUIRE(rdata->type == dns_rdatatype_md);
 
 	UNUSED(rdata);
 	UNUSED(owner);
 	UNUSED(bad);
 
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_md(ARGS_COMPARE) {
+	return (compare_md(rdata1, rdata2));
 }
 
 #endif	/* RDATA_GENERIC_MD_3_C */

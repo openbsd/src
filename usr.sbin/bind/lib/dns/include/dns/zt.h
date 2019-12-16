@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2011, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,12 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: zt.h,v 1.30.18.3 2005/04/27 05:01:42 sra Exp $ */
+/* $Id: zt.h,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
 
 #ifndef DNS_ZT_H
 #define DNS_ZT_H 1
 
-/*! \file */
+/*! \file dns/zt.h */
 
 #include <isc/lang.h>
 
@@ -29,6 +29,21 @@
 #define DNS_ZTFIND_NOEXACT		0x01
 
 ISC_LANG_BEGINDECLS
+
+typedef isc_result_t
+(*dns_zt_allloaded_t)(void *arg);
+/*%<
+ * Method prototype: when all pending zone loads are complete,
+ * the zone table can inform the caller via a callback function with
+ * this signature.
+ */
+
+typedef isc_result_t
+(*dns_zt_zoneloaded_t)(dns_zt_t *zt, dns_zone_t *zone, isc_task_t *task);
+/*%<
+ * Method prototype: when a zone finishes loading, the zt object
+ * can be informed via a callback function with this signature.
+ */
 
 isc_result_t
 dns_zt_create(isc_mem_t *mctx, dns_rdataclass_t rdclass, dns_zt_t **zt);
@@ -75,7 +90,7 @@ dns_zt_unmount(dns_zt_t *zt, dns_zone_t *zone);
  */
 
 isc_result_t
-dns_zt_find(dns_zt_t *zt, dns_name_t *name, unsigned int options,
+dns_zt_find(dns_zt_t *zt, const dns_name_t *name, unsigned int options,
 	    dns_name_t *foundname, dns_zone_t **zone);
 /*%<
  * Find the best match for 'name' in 'zt'.  If foundname is non NULL
@@ -134,6 +149,9 @@ dns_zt_load(dns_zt_t *zt, isc_boolean_t stop);
 
 isc_result_t
 dns_zt_loadnew(dns_zt_t *zt, isc_boolean_t stop);
+
+isc_result_t
+dns_zt_asyncload(dns_zt_t *zt, dns_zt_allloaded_t alldone, void *arg);
 /*%<
  * Load all zones in the table.  If 'stop' is ISC_TRUE,
  * stop on the first error and return it.  If 'stop'
@@ -142,6 +160,10 @@ dns_zt_loadnew(dns_zt_t *zt, isc_boolean_t stop);
  * dns_zt_loadnew() only loads zones that are not yet loaded.
  * dns_zt_load() also loads zones that are already loaded and
  * and whose master file has changed since the last load.
+ * dns_zt_asyncload() loads zones asynchronously; when all
+ * zones in the zone table have finished loaded (or failed due
+ * to errors), the caller is informed by calling 'alldone'
+ * with an argument of 'arg'.
  *
  * Requires:
  * \li	'zt' to be valid
@@ -176,6 +198,16 @@ dns_zt_apply2(dns_zt_t *zt, isc_boolean_t stop, isc_result_t *sub,
  *	ISC_FALSE and 'sub' is non NULL then the first error (if any)
  *	reported by 'action' is returned in '*sub';
  *	any error code from 'action'.
+ */
+
+isc_boolean_t
+dns_zt_loadspending(dns_zt_t *zt);
+/*%<
+ * Returns ISC_TRUE if and only if there are zones still waiting to
+ * be loaded in zone table 'zt'.
+ *
+ * Requires:
+ * \li	'zt' to be valid.
  */
 
 ISC_LANG_ENDDECLS

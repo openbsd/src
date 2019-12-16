@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: adb.h,v 1.76.18.3 2005/06/23 04:23:16 marka Exp $ */
+/* $Id: adb.h,v 1.5 2019/12/16 16:16:24 deraadt Exp $ */
 
 #ifndef DNS_ADB_H
 #define DNS_ADB_H 1
@@ -24,7 +24,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file dns/adb.h
  *\brief
  * DNS Address Database
  *
@@ -99,7 +99,7 @@ ISC_LANG_BEGINDECLS
 
 typedef struct dns_adbname		dns_adbname_t;
 
-/*! 
+/*!
  *\brief
  * Represents a lookup for a single name.
  *
@@ -206,6 +206,11 @@ struct dns_adbfind {
  *      Must set _WANTEVENT for this to be meaningful.
  */
 #define DNS_ADBFIND_LAMEPRUNED		0x00000200
+/*%
+ *      The server's fetch quota is exceeded; it will be treated as
+ *      lame for this query.
+ */
+#define DNS_ADBFIND_OVERQUOTA		0x00000400
 
 /*%
  * The answers to queries come back as a list of these.
@@ -214,13 +219,15 @@ struct dns_adbaddrinfo {
 	unsigned int			magic;		/*%< private */
 
 	isc_sockaddr_t			sockaddr;	/*%< [rw] */
-	unsigned int			srtt;		/*%< [rw] microseconds */
+	unsigned int			srtt;		/*%< [rw] microsecs */
+	isc_dscp_t			dscp;
+
 	unsigned int			flags;		/*%< [rw] */
 	dns_adbentry_t		       *entry;		/*%< private */
 	ISC_LINK(dns_adbaddrinfo_t)	publink;
 };
 
-/*!< 
+/*!<
  * The event sent to the caller task is just a plain old isc_event_t.  It
  * contains no data other than a simple status, passed in the "type" field
  * to indicate that another address resolved, or all partially resolved
@@ -334,6 +341,13 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
 		   dns_rdatatype_t qtype, unsigned int options,
 		   isc_stdtime_t now, dns_name_t *target,
 		   in_port_t port, dns_adbfind_t **find);
+isc_result_t
+dns_adb_createfind2(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
+		    void *arg, dns_name_t *name, dns_name_t *qname,
+		    dns_rdatatype_t qtype, unsigned int options,
+		    isc_stdtime_t now, dns_name_t *target, in_port_t port,
+		    unsigned int depth, isc_counter_t *qc,
+		    dns_adbfind_t **find);
 /*%<
  * Main interface for clients. The adb will look up the name given in
  * "name" and will build up a list of found addresses, and perhaps start
@@ -345,7 +359,7 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
  *
  * If no events will be generated, the *find->result_v4 and/or result_v6
  * members may be examined for address lookup status.  The usual #ISC_R_SUCCESS,
- * #ISC_R_FAILURE, and #DNS_R_NX{DOMAIN,RRSET} are returned, along with
+ * #ISC_R_FAILURE, #DNS_R_NXDOMAIN, and #DNS_R_NXRRSET are returned, along with
  * #ISC_R_NOTFOUND meaning the ADB has not _yet_ found the values.  In this
  * latter case, retrying may produce more addresses.
  *
@@ -510,7 +524,12 @@ dns_adb_marklame(dns_adb_t *adb, dns_adbaddrinfo_t *addr, dns_name_t *qname,
  */
 
 /*
- * A reasonable default for RTT adjustments
+ * Reasonable defaults for RTT adjustments
+ *
+ * (Note: these values function both as scaling factors and as
+ * indicators of the type of RTT adjustment operation taking place.
+ * Adjusting the scaling factors is fine, as long as they all remain
+ * unique values.)
  */
 #define DNS_ADB_RTTADJDEFAULT		7	/*%< default scale */
 #define DNS_ADB_RTTADJREPLACE		0	/*%< replace with our rtt */
@@ -520,19 +539,7 @@ void
 dns_adb_adjustsrtt(dns_adb_t *adb, dns_adbaddrinfo_t *addr,
 		   unsigned int rtt, unsigned int factor);
 /*%<
- * Mix the round trip time into the existing smoothed rtt.  
-
- * The formula used
- * (where srtt is the existing rtt value, and rtt and factor are arguments to
- * this function):
- *
- *\code
- *	new_srtt = (old_srtt / 10 * factor) + (rtt / 10 * (10 - factor));
- *\endcode
- *
- * XXXRTH  Do we want to publish the formula?  What if we want to change how
- *         this works later on?  Recommend/require that the units are
- *	   microseconds?
+ * Mix the round trip time into the existing smoothed rtt.
  *
  * Requires:
  *
@@ -541,6 +548,24 @@ dns_adb_adjustsrtt(dns_adb_t *adb, dns_adbaddrinfo_t *addr,
  *\li	addr be valid.
  *
  *\li	0 <= factor <= 10
+ *
+ * Note:
+ *
+ *\li	The srtt in addr will be updated to reflect the new global
+ *	srtt value.  This may include changes made by others.
+ */
+
+void
+dns_adb_agesrtt(dns_adb_t *adb, dns_adbaddrinfo_t *addr, isc_stdtime_t now);
+/*
+ * dns_adb_agesrtt is equivalent to dns_adb_adjustsrtt with factor
+ * equal to DNS_ADB_RTTADJAGE and the current time passed in.
+ *
+ * Requires:
+ *
+ *\li	adb be valid.
+ *
+ *\li	addr be valid.
  *
  * Note:
  *
@@ -564,6 +589,96 @@ dns_adb_changeflags(dns_adb_t *adb, dns_adbaddrinfo_t *addr,
  *
  *\li	addr be valid.
  */
+
+void
+dns_adb_setudpsize(dns_adb_t *adb, dns_adbaddrinfo_t *addr, unsigned int size);
+/*%
+ * Update seen UDP response size.  The largest seen will be returned by
+ * dns_adb_getudpsize().
+ *
+ * Requires:
+ *
+ *\li	adb be valid.
+ *
+ *\li	addr be valid.
+ */
+
+unsigned int
+dns_adb_getudpsize(dns_adb_t *adb, dns_adbaddrinfo_t *addr);
+/*%
+ * Return the largest seen UDP response size.
+ *
+ * Requires:
+ *
+ *\li	adb be valid.
+ *
+ *\li	addr be valid.
+ */
+
+unsigned int
+dns_adb_probesize(dns_adb_t *adb, dns_adbaddrinfo_t *addr);
+unsigned int
+dns_adb_probesize2(dns_adb_t *adb, dns_adbaddrinfo_t *addr, int lookups);
+/*%
+ * Return suggested EDNS UDP size based on observed responses / failures.
+ * 'lookups' is the number of times the current lookup has been attempted.
+ *
+ * Requires:
+ *
+ *\li	adb be valid.
+ *
+ *\li	addr be valid.
+ */
+
+void
+dns_adb_plainresponse(dns_adb_t *adb, dns_adbaddrinfo_t *addr);
+/*%
+ * Record a successful plain DNS response.
+ *
+ * Requires:
+ *
+ *\li	adb be valid.
+ *
+ *\li	addr be valid.
+ */
+
+void
+dns_adb_timeout(dns_adb_t *adb, dns_adbaddrinfo_t *addr);
+/*%
+ * Record a plain DNS UDP query failed.
+ *
+ * Requires:
+ *
+ *\li	adb be valid.
+ *
+ *\li	addr be valid.
+ */
+
+void
+dns_adb_ednsto(dns_adb_t *adb, dns_adbaddrinfo_t *addr, unsigned int size);
+/*%
+ * Record a failed EDNS UDP response and the advertised EDNS UDP buffer size
+ * used.
+ *
+ * Requires:
+ *
+ *\li	adb be valid.
+ *
+ *\li	addr be valid.
+ */
+
+isc_boolean_t
+dns_adb_noedns(dns_adb_t *adb, dns_adbaddrinfo_t *addr);
+/*%
+ * Return whether EDNS should be disabled for this server.
+ *
+ * Requires:
+ *
+ *\li	adb be valid.
+ *
+ *\li	addr be valid.
+ */
+
 
 isc_result_t
 dns_adb_findaddrinfo(dns_adb_t *adb, isc_sockaddr_t *sa,
@@ -607,7 +722,7 @@ dns_adb_flush(dns_adb_t *adb);
  */
 
 void
-dns_adb_setadbsize(dns_adb_t *adb, isc_uint32_t size);
+dns_adb_setadbsize(dns_adb_t *adb, size_t size);
 /*%<
  * Set a target memory size.  If memory usage exceeds the target
  * size entries will be removed before they would have expired on
@@ -623,12 +738,106 @@ void
 dns_adb_flushname(dns_adb_t *adb, dns_name_t *name);
 /*%<
  * Flush 'name' from the adb cache.
- * 
+ *
  * Requires:
  *\li	'adb' is valid.
  *\li	'name' is valid.
  */
 
+void
+dns_adb_flushnames(dns_adb_t *adb, dns_name_t *name);
+/*%<
+ * Flush 'name' and all subdomains from the adb cache.
+ *
+ * Requires:
+ *\li	'adb' is valid.
+ *\li	'name' is valid.
+ */
+
+void
+dns_adb_setsit(dns_adb_t *adb, dns_adbaddrinfo_t *addr,
+	       const unsigned char *sit, size_t len);
+/*%<
+ * Record the Source Identity Token (SIT) associated with this addresss.  If
+ * sit is NULL or len is zero. The recorded SIT is cleared.
+ *
+ * Requires:
+ *\li	'adb' is valid.
+ *\li	'addr' is valid.
+ */
+
+size_t
+dns_adb_getsit(dns_adb_t *adb, dns_adbaddrinfo_t *addr,
+	       unsigned char *sit, size_t len);
+/*
+ * Retieve the saved SIT value and store it in 'sit' which has size 'len'.
+ *
+ * Requires:
+ *\li	'adb' is valid.
+ *\li	'addr' is valid.
+ *
+ * Returns:
+ *	The size of the sit token or zero if it doesn't fit in the buffer
+ *	or it doesn't exist.
+ */
+
+void
+dns_adb_setquota(dns_adb_t *adb, isc_uint32_t quota, isc_uint32_t freq,
+		 double low, double high, double discount);
+/*%<
+ * Set the baseline ADB quota, and configure parameters for the
+ * quota adjustment algorithm.
+ *
+ * If the number of fetches currently waiting for responses from this
+ * address exceeds the current quota, then additional fetches are spilled.
+ *
+ * 'quota' is the highest permissible quota; it will adjust itself
+ * downward in response to detected congestion.
+ *
+ * After every 'freq' fetches have either completed or timed out, an
+ * exponentially weighted moving average of the ratio of timeouts
+ * to responses is calculated.  If the EWMA goes above a 'high'
+ * threshold, then the quota is adjusted down one step; if it drops
+ * below a 'low' threshold, then the quota is adjusted back up one
+ * step.
+ *
+ * The quota adjustment is based on the function (1 / 1 + (n/10)^(3/2)),
+ * for values of n from 0 to 99.  It starts at 100% of the baseline
+ * quota, and descends after 100 steps to 2%.
+ *
+ * 'discount' represents the discount rate of the moving average. Higher
+ * values cause older values to be discounted sooner, providing a faster
+ * response to changes in the timeout ratio.
+ *
+ * Requires:
+ *\li	'adb' is valid.
+ */
+
+isc_boolean_t
+dns_adbentry_overquota(dns_adbentry_t *entry);
+/*%<
+ * Returns true if the specified ADB has too many active fetches.
+ *
+ * Requires:
+ *\li	'entry' is valid.
+ */
+
+void
+dns_adb_beginudpfetch(dns_adb_t *adb, dns_adbaddrinfo_t *addr);
+void
+dns_adb_endudpfetch(dns_adb_t *adb, dns_adbaddrinfo_t *addr);
+/*%
+ * Begin/end a UDP fetch on a particular address.
+ *
+ * These functions increment or decrement the fetch counter for
+ * the ADB entry so that the fetch quota can be enforced.
+ *
+ * Requires:
+ *
+ *\li	adb be valid.
+ *
+ *\li	addr be valid.
+ */
 
 ISC_LANG_ENDDECLS
 

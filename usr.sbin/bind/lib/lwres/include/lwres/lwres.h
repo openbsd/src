@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: lwres.h,v 1.51.18.2 2005/04/29 00:17:22 marka Exp $ */
+/* $Id: lwres.h,v 1.3 2019/12/16 16:16:29 deraadt Exp $ */
 
 #ifndef LWRES_LWRES_H
 #define LWRES_LWRES_H 1
@@ -28,7 +28,7 @@
 #include <lwres/lwpacket.h>
 #include <lwres/platform.h>
 
-/*! \file */
+/*! \file lwres/lwres.h */
 
 /*!
  * Design notes:
@@ -121,6 +121,7 @@ struct lwres_addr {
 	lwres_uint32_t			family;
 	lwres_uint16_t			length;
 	unsigned char			address[LWRES_ADDR_MAXLEN];
+	lwres_uint32_t			zone;
 	LWRES_LINK(lwres_addr_t)	link;
 };
 
@@ -223,7 +224,6 @@ typedef struct {
 typedef struct {
 	lwres_context_t *lwctx;
 	lwres_addr_t    nameservers[LWRES_CONFMAXNAMESERVERS];
-	lwres_uint16_t  nameserverports[LWRES_CONFMAXNAMESERVERS];
 	lwres_uint8_t	nsnext;		/*%< index for next free slot */
 
 	lwres_addr_t	lwservers[LWRES_CONFMAXLWSERVERS];

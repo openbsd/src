@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,13 +15,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: version.c,v 1.11.18.2 2005/04/29 00:16:07 marka Exp $ */
+/* $Id: version.c,v 1.2 2019/12/16 16:16:24 deraadt Exp $ */
 
 /*! \file */
 
 #include <dns/version.h>
 
 const char dns_version[] = VERSION;
+const char dns_major[] = MAJOR;
+const char dns_mapapi[] = MAPAPI;
 
 const unsigned int dns_libinterface = LIBINTERFACE;
 const unsigned int dns_librevision = LIBREVISION;

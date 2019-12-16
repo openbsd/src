@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: getaddresses.c,v 1.15.18.5 2005/10/14 01:28:24 marka Exp $ */
+/* $Id: getaddresses.c,v 1.6 2019/12/16 16:16:23 deraadt Exp $ */
 
 /*! \file */
 
@@ -90,7 +90,7 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 		char tmpbuf[128], *d;
 		isc_uint32_t zone = 0;
 
-		strlcpy(tmpbuf, hostname, sizeof(tmpbuf));
+		strcpy(tmpbuf, hostname);
 		d = strchr(tmpbuf, '%');
 		if (d != NULL)
 			*d = '\0';
@@ -103,18 +103,18 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 
 			if (d != NULL) {
 #ifdef ISC_PLATFORM_HAVESCOPEID
-				isc_result_t result;
+				isc_result_t iresult;
 
-				result = isc_netscope_pton(AF_INET6, d + 1,
-							   &in6, &zone);
-				    
-				if (result != ISC_R_SUCCESS)
-					return (result);
+				iresult = isc_netscope_pton(AF_INET6, d + 1,
+							    &in6, &zone);
+
+				if (iresult != ISC_R_SUCCESS)
+					return (iresult);
 #else
 				/*
 				 * The extended format is specified while the
 				 * system does not provide the ability to use
-				 * it.  Throw an explicit error instead of
+				 * it.	Throw an explicit error instead of
 				 * ignoring the specified value.
 				 */
 				return (ISC_R_BADADDRESSFORM);
@@ -129,7 +129,6 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 
 			*addrcount = 1;
 			return (ISC_R_SUCCESS);
-			
 		}
 	}
 #ifdef USE_GETADDRINFO

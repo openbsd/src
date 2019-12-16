@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: symtab.c,v 1.26.18.2 2005/04/29 00:16:50 marka Exp $ */
+/* $Id: symtab.c,v 1.2 2019/12/16 16:16:26 deraadt Exp $ */
 
 /*! \file */
 
@@ -46,6 +46,8 @@ struct isc_symtab {
 	unsigned int			magic;
 	isc_mem_t *			mctx;
 	unsigned int			size;
+	unsigned int			count;
+	unsigned int			maxload;
 	eltlist_t *			table;
 	isc_symtabaction_t		undefine_action;
 	void *				undefine_arg;
@@ -69,16 +71,20 @@ isc_symtab_create(isc_mem_t *mctx, unsigned int size,
 	symtab = (isc_symtab_t *)isc_mem_get(mctx, sizeof(*symtab));
 	if (symtab == NULL)
 		return (ISC_R_NOMEMORY);
+
+	symtab->mctx = NULL;
+	isc_mem_attach(mctx, &symtab->mctx);
 	symtab->table = (eltlist_t *)isc_mem_get(mctx,
 						 size * sizeof(eltlist_t));
 	if (symtab->table == NULL) {
-		isc_mem_put(mctx, symtab, sizeof(*symtab));
+		isc_mem_putanddetach(&symtab->mctx, symtab, sizeof(*symtab));
 		return (ISC_R_NOMEMORY);
 	}
 	for (i = 0; i < size; i++)
 		INIT_LIST(symtab->table[i]);
-	symtab->mctx = mctx;
 	symtab->size = size;
+	symtab->count = 0;
+	symtab->maxload = size * 3 / 4;
 	symtab->undefine_action = undefine_action;
 	symtab->undefine_arg = undefine_arg;
 	symtab->case_sensitive = case_sensitive;
@@ -113,7 +119,7 @@ isc_symtab_destroy(isc_symtab_t **symtabp) {
 	isc_mem_put(symtab->mctx, symtab->table,
 		    symtab->size * sizeof(eltlist_t));
 	symtab->magic = 0;
-	isc_mem_put(symtab->mctx, symtab, sizeof(*symtab));
+	isc_mem_putanddetach(&symtab->mctx, symtab, sizeof(*symtab));
 
 	*symtabp = NULL;
 }
@@ -181,6 +187,46 @@ isc_symtab_lookup(isc_symtab_t *symtab, const char *key, unsigned int type,
 	return (ISC_R_SUCCESS);
 }
 
+static void
+grow_table(isc_symtab_t *symtab) {
+	eltlist_t *newtable;
+	unsigned int i, newsize, newmax;
+
+	REQUIRE(symtab != NULL);
+
+	newsize = symtab->size * 2;
+	newmax = newsize * 3 / 4;
+	INSIST(newsize > 0U && newmax > 0U);
+
+	newtable = isc_mem_get(symtab->mctx, newsize * sizeof(eltlist_t));
+	if (newtable == NULL)
+		return;
+
+	for (i = 0; i < newsize; i++)
+		INIT_LIST(newtable[i]);
+
+	for (i = 0; i < symtab->size; i++) {
+		elt_t *elt, *nelt;
+
+		for (elt = HEAD(symtab->table[i]); elt != NULL; elt = nelt) {
+			unsigned int hv;
+
+			nelt = NEXT(elt, link);
+
+			UNLINK(symtab->table[i], elt, link);
+			hv = hash(elt->key, symtab->case_sensitive);
+			APPEND(newtable[hv % newsize], elt, link);
+		}
+	}
+
+	isc_mem_put(symtab->mctx, symtab->table,
+		    symtab->size * sizeof(eltlist_t));
+
+	symtab->table = newtable;
+	symtab->size = newsize;
+	symtab->maxload = newmax;
+}
+
 isc_result_t
 isc_symtab_define(isc_symtab_t *symtab, const char *key, unsigned int type,
 		  isc_symvalue_t value, isc_symexists_t exists_policy)
@@ -208,6 +254,7 @@ isc_symtab_define(isc_symtab_t *symtab, const char *key, unsigned int type,
 		if (elt == NULL)
 			return (ISC_R_NOMEMORY);
 		ISC_LINK_INIT(elt, link);
+		symtab->count++;
 	}
 
 	/*
@@ -225,6 +272,9 @@ isc_symtab_define(isc_symtab_t *symtab, const char *key, unsigned int type,
 	 * We prepend so that the most recent definition will be found.
 	 */
 	PREPEND(symtab->table[bucket], elt, link);
+
+	if (symtab->count > symtab->maxload)
+		grow_table(symtab);
 
 	return (ISC_R_SUCCESS);
 }
@@ -247,6 +297,13 @@ isc_symtab_undefine(isc_symtab_t *symtab, const char *key, unsigned int type) {
 					  elt->value, symtab->undefine_arg);
 	UNLINK(symtab->table[bucket], elt, link);
 	isc_mem_put(symtab->mctx, elt, sizeof(*elt));
+	symtab->count--;
 
 	return (ISC_R_SUCCESS);
+}
+
+unsigned int
+isc_symtab_count(isc_symtab_t *symtab) {
+	REQUIRE(VALID_SYMTAB(symtab));
+	return (symtab->count);
 }

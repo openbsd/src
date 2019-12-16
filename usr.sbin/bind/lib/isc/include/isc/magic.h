@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,12 +15,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: magic.h,v 1.12.18.2 2005/04/29 00:16:59 marka Exp $ */
+/* $Id: magic.h,v 1.2 2019/12/16 16:16:26 deraadt Exp $ */
 
 #ifndef ISC_MAGIC_H
 #define ISC_MAGIC_H 1
 
-/*! \file */
+#include <isc/util.h>
+
+/*! \file isc/magic.h */
 
 typedef struct {
 	unsigned int magic;
@@ -33,8 +35,8 @@ typedef struct {
  * The intent of this is to allow magic numbers to be checked even though
  * the object is otherwise opaque.
  */
-#define ISC_MAGIC_VALID(a,b)	(((a) != NULL) && \
-				 (((const isc__magic_t *)(a))->magic == (b)))
+#define ISC_MAGIC_VALID(a,b)	(ISC_LIKELY((a) != NULL) && \
+				 ISC_LIKELY(((const isc__magic_t *)(a))->magic == (b)))
 
 #define ISC_MAGIC(a, b, c, d)	((a) << 24 | (b) << 16 | (c) << 8 | (d))
 

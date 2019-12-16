@@ -1,7 +1,7 @@
-# Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2009, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2001, 2003  Internet Software Consortium.
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -13,31 +13,33 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: Makefile.in,v 1.54.18.4 2006/01/27 23:57:45 marka Exp $
-
 srcdir =	@srcdir@
 VPATH =		@srcdir@
 top_srcdir =	@top_srcdir@
 
-@BIND9_VERSION@
+VERSION=@BIND9_VERSION@
 
 #
 # Only list headers that are to be installed and are not
 # machine generated.  The latter are handled specially in the
 # install target below.
 #
-HEADERS =	app.h assertions.h base32.h base64.h bitstring.h boolean.h buffer.h \
-		bufferlist.h commandline.h entropy.h error.h event.h \
-		eventclass.h file.h formatcheck.h fsaccess.h \
-		hash.h heap.h hex.h hmacmd5.h \
-		interfaceiter.h @ISC_IPV6_H@ lang.h lex.h \
-		lfsr.h lib.h list.h log.h magic.h md5.h mem.h msgcat.h msgs.h \
-		mutexblock.h netaddr.h ondestroy.h os.h parseint.h \
-		print.h quota.h random.h ratelimiter.h \
-		refcount.h region.h resource.h \
-		result.h resultclass.h rwlock.h serial.h sha1.h sha2.h \
-		sockaddr.h socket.h stdio.h stdlib.h string.h symtab.h \
-	        task.h taskpool.h timer.h types.h util.h version.h
+HEADERS =	aes.h app.h assertions.h backtrace.h base32.h base64.h \
+		bind9.h boolean.h buffer.h bufferlist.h \
+		commandline.h counter.h crc64.h entropy.h errno.h error.h \
+		event.h eventclass.h file.h formatcheck.h fsaccess.h \
+		hash.h heap.h hex.h hmacmd5.h hmacsha.h httpd.h \
+		interfaceiter.h @ISC_IPV6_H@ iterated_hash.h json.h \
+		lang.h lex.h lfsr.h lib.h list.h log.h \
+		magic.h md5.h mem.h msgcat.h msgs.h mutexblock.h \
+		netaddr.h netscope.h ondestroy.h os.h parseint.h \
+		pool.h portset.h print.h queue.h quota.h \
+		radix.h random.h ratelimiter.h refcount.h regex.h \
+		region.h resource.h result.h resultclass.h rwlock.h \
+		safe.h serial.h sha1.h sha2.h sockaddr.h socket.h \
+		stats.h stdio.h stdlib.h string.h symtab.h \
+	        task.h taskpool.h timer.h tm.h types.h util.h version.h \
+		xml.h
 
 SUBDIRS =
 TARGETS =
@@ -52,6 +54,12 @@ install:: installdirs
 		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/isc ; \
 	done
 	${INSTALL_DATA} platform.h ${DESTDIR}${includedir}/isc
+
+uninstall::
+	rm -f ${DESTDIR}${includedir}/isc/platform.h
+	for i in ${HEADERS}; do \
+		rm -f ${DESTDIR}${includedir}/isc/$$i ; \
+	done
 
 distclean::
 	rm -f platform.h

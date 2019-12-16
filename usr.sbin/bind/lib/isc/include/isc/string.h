@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,12 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: string.h,v 1.12.18.6 2007/09/13 05:04:01 each Exp $ */
+/* $Id: string.h,v 1.5 2019/12/16 16:16:26 deraadt Exp $ */
 
 #ifndef ISC_STRING_H
 #define ISC_STRING_H 1
 
-/*! \file */
+/*! \file isc/string.h */
 
 #include <isc/formatcheck.h>
 #include <isc/int.h>
@@ -224,6 +224,13 @@ isc_string_strlcat(char *dst, const char *src, size_t size);
 
 #ifdef ISC_PLATFORM_NEEDSTRLCAT
 #define strlcat isc_string_strlcat
+#endif
+
+char *
+isc_string_strcasestr(const char *big, const char *little);
+
+#ifdef ISC_PLATFORM_NEEDSTRCASESTR
+#define strcasestr isc_string_strcasestr
 #endif
 
 ISC_LANG_ENDDECLS

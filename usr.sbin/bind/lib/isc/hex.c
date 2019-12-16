@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: hex.c,v 1.14.18.2 2005/04/29 00:16:46 marka Exp $ */
+/* $Id: hex.c,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
 
 /*! \file */
 
@@ -95,11 +95,11 @@ hex_decode_init(hex_decode_ctx_t *ctx, int length, isc_buffer_t *target)
 
 static inline isc_result_t
 hex_decode_char(hex_decode_ctx_t *ctx, int c) {
-	char *s;
+	const char *s;
 
 	if ((s = strchr(hex, toupper(c))) == NULL)
 		return (ISC_R_BADHEX);
-	ctx->val[ctx->digits++] = s - hex;
+	ctx->val[ctx->digits++] = (int)(s - hex);
 	if (ctx->digits == 2) {
 		unsigned char num;
 
@@ -156,7 +156,7 @@ isc_hex_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
 }
 
 isc_result_t
-isc_hex_decodestring(char *cstr, isc_buffer_t *target) {
+isc_hex_decodestring(const char *cstr, isc_buffer_t *target) {
 	hex_decode_ctx_t ctx;
 
 	hex_decode_init(&ctx, -1, target);
@@ -168,7 +168,7 @@ isc_hex_decodestring(char *cstr, isc_buffer_t *target) {
 			continue;
 		RETERR(hex_decode_char(&ctx, c));
 	}
-	RETERR(hex_decode_finish(&ctx));	
+	RETERR(hex_decode_finish(&ctx));
 	return (ISC_R_SUCCESS);
 }
 
@@ -183,7 +183,7 @@ str_totext(const char *source, isc_buffer_t *target) {
 	if (l > region.length)
 		return (ISC_R_NOSPACE);
 
-	memcpy(region.base, source, l);
+	memmove(region.base, source, l);
 	isc_buffer_add(target, l);
 	return (ISC_R_SUCCESS);
 }
@@ -195,7 +195,7 @@ mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length) {
 	isc_buffer_availableregion(target, &tr);
 	if (length > tr.length)
 		return (ISC_R_NOSPACE);
-	memcpy(tr.base, base, length);
+	memmove(tr.base, base, length);
 	isc_buffer_add(target, length);
 	return (ISC_R_SUCCESS);
 }

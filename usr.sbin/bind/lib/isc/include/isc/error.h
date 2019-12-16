@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,17 +15,18 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: error.h,v 1.14.18.2 2005/04/29 00:16:54 marka Exp $ */
+/* $Id: error.h,v 1.2 2019/12/16 16:16:26 deraadt Exp $ */
 
 #ifndef ISC_ERROR_H
 #define ISC_ERROR_H 1
 
-/*! \file */
+/*! \file isc/error.h */
 
 #include <stdarg.h>
 
 #include <isc/formatcheck.h>
 #include <isc/lang.h>
+#include <isc/platform.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -45,16 +46,16 @@ isc_error_unexpected(const char *, int, const char *, ...)
      ISC_FORMAT_PRINTF(3, 4);
 
 /*% fatal error */
-void
+ISC_PLATFORM_NORETURN_PRE void
 isc_error_fatal(const char *, int, const char *, ...)
-     ISC_FORMAT_PRINTF(3, 4);
+ISC_FORMAT_PRINTF(3, 4) ISC_PLATFORM_NORETURN_POST;
 
 /*% runtimecheck error */
 void
 isc_error_runtimecheck(const char *, int, const char *);
 
 #define ISC_ERROR_RUNTIMECHECK(cond) \
-	((void) ((cond) || \
+	((void) (ISC_LIKELY(cond) || \
 		 ((isc_error_runtimecheck)(__FILE__, __LINE__, #cond), 0)))
 
 ISC_LANG_ENDDECLS

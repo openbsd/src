@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: loc_29.c,v 1.41.18.2 2005/04/29 00:16:34 marka Exp $ */
+/* $Id: loc_29.c,v 1.6 2019/12/16 16:16:25 deraadt Exp $ */
 
 /* Reviewed: Wed Mar 15 18:13:09 PST 2000 by explorer */
 
@@ -50,7 +50,7 @@ fromtext_loc(ARGS_FROMTEXT) {
 	unsigned long longitude;
 	unsigned long altitude;
 
-	REQUIRE(type == 29);
+	REQUIRE(type == dns_rdatatype_loc);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -475,33 +475,34 @@ totext_loc(ARGS_TOTEXT) {
 
 	UNUSED(tctx);
 
-	REQUIRE(rdata->type == 29);
+	REQUIRE(rdata->type == dns_rdatatype_loc);
 	REQUIRE(rdata->length != 0);
 
 	dns_rdata_toregion(rdata, &sr);
 
-	/* version = sr.base[0]; */
+	if (sr.base[0] != 0)
+		return (ISC_R_NOTIMPLEMENTED);
+
+	REQUIRE(rdata->length == 16);
+
 	size = sr.base[1];
+	INSIST((size&0x0f) < 10 && (size>>4) < 10);
 	if ((size&0x0f)> 1)
-		snprintf(sbuf, sizeof(sbuf),
-			 "%lum", (size>>4) * poweroften[(size&0x0f)-2]);
+		sprintf(sbuf, "%lum", (size>>4) * poweroften[(size&0x0f)-2]);
 	else
-		snprintf(sbuf, sizeof(sbuf),
-			 "0.%02lum", (size>>4) * poweroften[(size&0x0f)]);
+		sprintf(sbuf, "0.%02lum", (size>>4) * poweroften[(size&0x0f)]);
 	hp = sr.base[2];
+	INSIST((hp&0x0f) < 10 && (hp>>4) < 10);
 	if ((hp&0x0f)> 1)
-		snprintf(hbuf, sizeof(hbuf),
-			 "%lum", (hp>>4) * poweroften[(hp&0x0f)-2]);
+		sprintf(hbuf, "%lum", (hp>>4) * poweroften[(hp&0x0f)-2]);
 	else
-		snprintf(hbuf, sizeof(hbuf),
-			 "0.%02lum", (hp>>4) * poweroften[(hp&0x0f)]);
+		sprintf(hbuf, "0.%02lum", (hp>>4) * poweroften[(hp&0x0f)]);
 	vp = sr.base[3];
+	INSIST((vp&0x0f) < 10 && (vp>>4) < 10);
 	if ((vp&0x0f)> 1)
-		snprintf(vbuf, sizeof(vbuf),
-			 "%lum", (vp>>4) * poweroften[(vp&0x0f)-2]);
+		sprintf(vbuf, "%lum", (vp>>4) * poweroften[(vp&0x0f)-2]);
 	else
-		snprintf(vbuf, sizeof(vbuf),
-			 "0.%02lum", (vp>>4) * poweroften[(vp&0x0f)]);
+		sprintf(vbuf, "0.%02lum", (vp>>4) * poweroften[(vp&0x0f)]);
 	isc_region_consume(&sr, 4);
 
 	latitude = uint32_fromregion(&sr);
@@ -520,6 +521,7 @@ totext_loc(ARGS_TOTEXT) {
 	m1 = (int)(latitude % 60);
 	latitude /= 60;
 	d1 = (int)latitude;
+	INSIST(latitude <= 90U);
 
 	longitude = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
@@ -537,6 +539,7 @@ totext_loc(ARGS_TOTEXT) {
 	m2 = (int)(longitude % 60);
 	longitude /= 60;
 	d2 = (int)longitude;
+	INSIST(longitude <= 180U);
 
 	altitude = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
@@ -548,8 +551,7 @@ totext_loc(ARGS_TOTEXT) {
 		altitude -= 10000000;
 	}
 
-	snprintf(buf, sizeof(buf),
-		"%d %d %d.%03d %s %d %d %d.%03d %s %s%ld.%02ldm %s %s %s",
+	sprintf(buf, "%d %d %d.%03d %s %d %d %d.%03d %s %s%ld.%02ldm %s %s %s",
 		d1, m1, s1, fs1, north ? "N" : "S",
 		d2, m2, s2, fs2, east ? "E" : "W",
 		below ? "-" : "", altitude/100, altitude % 100,
@@ -565,7 +567,7 @@ fromwire_loc(ARGS_FROMWIRE) {
 	unsigned long latitude;
 	unsigned long longitude;
 
-	REQUIRE(type == 29);
+	REQUIRE(type == dns_rdatatype_loc);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -575,8 +577,11 @@ fromwire_loc(ARGS_FROMWIRE) {
 	isc_buffer_activeregion(source, &sr);
 	if (sr.length < 1)
 		return (ISC_R_UNEXPECTEDEND);
-	if (sr.base[0] != 0)
-		return (ISC_R_NOTIMPLEMENTED);
+	if (sr.base[0] != 0) {
+		/* Treat as unknown. */
+		isc_buffer_forward(source, sr.length);
+		return (mem_tobuffer(target, sr.base, sr.length));
+	}
 	if (sr.length < 16)
 		return (ISC_R_UNEXPECTEDEND);
 
@@ -623,7 +628,7 @@ fromwire_loc(ARGS_FROMWIRE) {
 		return (ISC_R_RANGE);
 
 	/*
-	 * Altitiude.
+	 * Altitude.
 	 * All values possible.
 	 */
 
@@ -636,7 +641,7 @@ static inline isc_result_t
 towire_loc(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
-	REQUIRE(rdata->type == 29);
+	REQUIRE(rdata->type == dns_rdatatype_loc);
 	REQUIRE(rdata->length != 0);
 
 	return (mem_tobuffer(target, rdata->data, rdata->length));
@@ -649,7 +654,7 @@ compare_loc(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 29);
+	REQUIRE(rdata1->type == dns_rdatatype_loc);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -663,7 +668,7 @@ fromstruct_loc(ARGS_FROMSTRUCT) {
 	dns_rdata_loc_t *loc = source;
 	isc_uint8_t c;
 
-	REQUIRE(type == 29);
+	REQUIRE(type == dns_rdatatype_loc);
 	REQUIRE(source != NULL);
 	REQUIRE(loc->common.rdtype == type);
 	REQUIRE(loc->common.rdclass == rdclass);
@@ -708,7 +713,7 @@ tostruct_loc(ARGS_TOSTRUCT) {
 	isc_region_t r;
 	isc_uint8_t version;
 
-	REQUIRE(rdata->type == 29);
+	REQUIRE(rdata->type == dns_rdatatype_loc);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -745,7 +750,7 @@ freestruct_loc(ARGS_FREESTRUCT) {
 	dns_rdata_loc_t *loc = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(loc->common.rdtype == 29);
+	REQUIRE(loc->common.rdtype == dns_rdatatype_loc);
 
 	UNUSED(source);
 	UNUSED(loc);
@@ -753,7 +758,7 @@ freestruct_loc(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_loc(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 29);
+	REQUIRE(rdata->type == dns_rdatatype_loc);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -766,7 +771,7 @@ static inline isc_result_t
 digest_loc(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 29);
+	REQUIRE(rdata->type == dns_rdatatype_loc);
 
 	dns_rdata_toregion(rdata, &r);
 
@@ -776,7 +781,7 @@ digest_loc(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_loc(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 29);
+	REQUIRE(type == dns_rdatatype_loc);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -789,13 +794,18 @@ checkowner_loc(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_loc(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 29);
+	REQUIRE(rdata->type == dns_rdatatype_loc);
 
 	UNUSED(rdata);
 	UNUSED(owner);
 	UNUSED(bad);
 
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_loc(ARGS_COMPARE) {
+	return (compare_loc(rdata1, rdata2));
 }
 
 #endif	/* RDATA_GENERIC_LOC_29_C */

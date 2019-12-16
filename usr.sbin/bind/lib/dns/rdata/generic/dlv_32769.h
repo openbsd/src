@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -14,20 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: dlv_32769.h,v 1.2.2.2 2006/02/19 06:50:47 marka Exp $ */
+/* $Id: dlv_32769.h,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
 
 /* draft-ietf-dnsext-delegation-signer-05.txt */
 #ifndef GENERIC_DLV_32769_H
 #define GENERIC_DLV_32769_H 1
 
-typedef struct dns_rdata_dlv {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	isc_uint16_t		key_tag;
-	isc_uint8_t		algorithm;
-	isc_uint8_t		digest_type;
-	isc_uint16_t		length;
-	unsigned char		*digest;
-} dns_rdata_dlv_t;
+typedef struct dns_rdata_ds dns_rdata_dlv_t;
 
 #endif /* GENERIC_DLV_32769_H */

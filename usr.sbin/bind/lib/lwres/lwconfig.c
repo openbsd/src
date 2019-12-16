@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,8 +15,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: lwconfig.c,v 1.38.18.5 2006/10/03 23:50:51 marka Exp $ */
-
 /*! \file */
 
 /**
@@ -24,42 +22,40 @@
  *
  *    lwres_conf_init() creates an empty lwres_conf_t structure for
  *    lightweight resolver context ctx.
- * 
+ *
  *    lwres_conf_clear() frees up all the internal memory used by that
  *    lwres_conf_t structure in resolver context ctx.
- * 
+ *
  *    lwres_conf_parse() opens the file filename and parses it to initialise
  *    the resolver context ctx's lwres_conf_t structure.
- * 
+ *
  *    lwres_conf_print() prints the lwres_conf_t structure for resolver
  *    context ctx to the FILE fp.
- * 
+ *
  * \section lwconfig_return Return Values
- * 
+ *
  *    lwres_conf_parse() returns #LWRES_R_SUCCESS if it successfully read and
  *    parsed filename. It returns #LWRES_R_FAILURE if filename could not be
  *    opened or contained incorrect resolver statements.
- * 
+ *
  *    lwres_conf_print() returns #LWRES_R_SUCCESS unless an error occurred
  *    when converting the network addresses to a numeric host address
  *    string. If this happens, the function returns #LWRES_R_FAILURE.
- * 
+ *
  * \section lwconfig_see See Also
- * 
+ *
  *    stdio(3), \link resolver resolver \endlink
- * 
+ *
  * \section files Files
- * 
+ *
  *    /etc/resolv.conf
  */
 
 #include <config.h>
 
-#include <arpa/nameser.h>
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
-#include <netdb.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -69,9 +65,12 @@
 #include <lwres/lwres.h>
 #include <lwres/net.h>
 #include <lwres/result.h>
+#include <lwres/stdlib.h>
+#include <lwres/string.h>
 
 #include "assert_p.h"
 #include "context_p.h"
+#include "print_p.h"
 
 
 #if ! defined(NS_INADDRSZ)
@@ -206,20 +205,19 @@ lwres_resetaddr(lwres_addr_t *addr) {
 	memset(addr->address, 0, LWRES_ADDR_MAXLEN);
 	addr->family = 0;
 	addr->length = 0;
+	addr->zone = 0;
 }
 
 static char *
 lwres_strdup(lwres_context_t *ctx, const char *str) {
 	char *p;
-	size_t len;
 
 	REQUIRE(str != NULL);
 	REQUIRE(strlen(str) > 0U);
 
-	len = strlen(str);
-	p = CTXMALLOC(len + 1);
+	p = CTXMALLOC(strlen(str) + 1);
 	if (p != NULL)
-		strlcpy(p, str, len + 1);
+		strcpy(p, str);
 
 	return (p);
 }
@@ -242,10 +240,8 @@ lwres_conf_init(lwres_context_t *ctx) {
 	confdata->ndots = 1;
 	confdata->no_tld_query = 0;
 
-	for (i = 0; i < LWRES_CONFMAXNAMESERVERS; i++) {
+	for (i = 0; i < LWRES_CONFMAXNAMESERVERS; i++)
 		lwres_resetaddr(&confdata->nameservers[i]);
-		confdata->nameserverports[i] = 0;
-	}
 
 	for (i = 0; i < LWRES_CONFMAXSEARCH; i++)
 		confdata->search[i] = NULL;
@@ -265,10 +261,8 @@ lwres_conf_clear(lwres_context_t *ctx) {
 	REQUIRE(ctx != NULL);
 	confdata = &ctx->confdata;
 
-	for (i = 0; i < confdata->nsnext; i++) {
+	for (i = 0; i < confdata->nsnext; i++)
 		lwres_resetaddr(&confdata->nameservers[i]);
-		confdata->nameserverports[i] = 0;
-	}
 
 	if (confdata->domainname != NULL) {
 		CTXFREE(confdata->domainname,
@@ -302,10 +296,6 @@ lwres_conf_clear(lwres_context_t *ctx) {
 static lwres_result_t
 lwres_conf_parsenameserver(lwres_context_t *ctx,  FILE *fp) {
 	char word[LWRES_CONFMAXLINELEN];
-	char pbuf[NI_MAXSERV];
-	char *cp, *q;
-	const char *errstr;
-	lwres_uint16_t port;
 	int res;
 	lwres_conf_t *confdata;
 	lwres_addr_t address;
@@ -324,33 +314,11 @@ lwres_conf_parsenameserver(lwres_context_t *ctx,  FILE *fp) {
 	if (res != EOF && res != '\n')
 		return (LWRES_R_FAILURE); /* Extra junk on line. */
 
-	/* Handle addresses enclosed in [] 
-	 * (adapted from lib/libc/net/res_init.c) */
-	*pbuf = '\0';
-	cp = word;
-	if (*cp == '[') {
-		cp++;
-		if ((q = strchr(cp, ']')) == NULL)
-			return (LWRES_R_FAILURE);
-		*q++ = '\0';
-		/* Extract port, if specified */
-		if (*q++ == ':') {
-			if (strlcpy(pbuf, q, sizeof(pbuf)) >= sizeof(pbuf))
-				return (LWRES_R_FAILURE);
-		}
-	}
-	if (*pbuf != '\0') {
-		port = strtonum(pbuf, 1, 65535, &errstr);
-		if (errstr)
-			return (LWRES_R_FAILURE);
-	} else {
-		port = NAMESERVER_PORT;
-	}
-
-	res = lwres_create_addr(cp, &address, 1);
-	if (res == LWRES_R_SUCCESS) {
-		confdata->nameservers[confdata->nsnext] = address;
-		confdata->nameserverports[confdata->nsnext++] = port;
+	res = lwres_create_addr(word, &address, 1);
+	if (res == LWRES_R_SUCCESS &&
+	    ((address.family == LWRES_ADDRTYPE_V4 && ctx->use_ipv4 == 1) ||
+	     (address.family == LWRES_ADDRTYPE_V6 && ctx->use_ipv6 == 1))) {
+		confdata->nameservers[confdata->nsnext++] = address;
 	}
 
 	return (LWRES_R_SUCCESS);
@@ -483,25 +451,57 @@ static lwres_result_t
 lwres_create_addr(const char *buffer, lwres_addr_t *addr, int convert_zero) {
 	struct in_addr v4;
 	struct in6_addr v6;
+	char buf[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255") +
+		 sizeof("%4294967295")];
+	char *percent;
+	size_t n;
+
+	n = strlcpy(buf, buffer, sizeof(buf));
+	if (n >= sizeof(buf))
+		return (LWRES_R_FAILURE);
+
+	percent = strchr(buf, '%');
+	if (percent != NULL)
+		*percent = 0;
 
 	if (lwres_net_aton(buffer, &v4) == 1) {
 		if (convert_zero) {
 			unsigned char zeroaddress[] = {0, 0, 0, 0};
 			unsigned char loopaddress[] = {127, 0, 0, 1};
 			if (memcmp(&v4, zeroaddress, 4) == 0)
-				memcpy(&v4, loopaddress, 4);
+				memmove(&v4, loopaddress, 4);
 		}
 		addr->family = LWRES_ADDRTYPE_V4;
 		addr->length = NS_INADDRSZ;
-		memcpy((void *)addr->address, &v4, NS_INADDRSZ);
+		addr->zone = 0;
+		memmove((void *)addr->address, &v4, NS_INADDRSZ);
 
-	} else if (lwres_net_pton(AF_INET6, buffer, &v6) == 1) {
+	} else if (lwres_net_pton(AF_INET6, buf, &v6) == 1) {
 		addr->family = LWRES_ADDRTYPE_V6;
 		addr->length = NS_IN6ADDRSZ;
-		memcpy((void *)addr->address, &v6, NS_IN6ADDRSZ);
-	} else {
+		memmove((void *)addr->address, &v6, NS_IN6ADDRSZ);
+		if (percent != NULL) {
+			unsigned long zone;
+			char *ep;
+
+			percent++;
+
+#ifdef HAVE_IF_NAMETOINDEX
+			zone = if_nametoindex(percent);
+			if (zone != 0U) {
+				addr->zone = zone;
+				return (LWRES_R_SUCCESS);
+			}
+#endif
+			zone = strtoul(percent, &ep, 10);
+			if (ep != percent && *ep == 0)
+				addr->zone = zone;
+			else
+				return (LWRES_R_FAILURE);
+		} else
+			addr->zone = 0;
+	} else
 		return (LWRES_R_FAILURE); /* Unrecognised format. */
-	}
 
 	return (LWRES_R_SUCCESS);
 }
@@ -623,6 +623,7 @@ lwres_conf_parse(lwres_context_t *ctx, const char *filename) {
 		stopchar = getword(fp, word, sizeof(word));
 		if (stopchar == EOF) {
 			rval = LWRES_R_SUCCESS;
+			POST(rval);
 			break;
 		}
 
@@ -663,6 +664,7 @@ lwres_conf_print(lwres_context_t *ctx, FILE *fp) {
 	int i;
 	int af;
 	char tmp[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
+	char buf[sizeof("%4000000000")];
 	const char *p;
 	lwres_conf_t *confdata;
 	lwres_addr_t tmpaddr;
@@ -680,7 +682,13 @@ lwres_conf_print(lwres_context_t *ctx, FILE *fp) {
 		if (p != tmp)
 			return (LWRES_R_FAILURE);
 
-		fprintf(fp, "nameserver %s\n", tmp);
+		if (af == AF_INET6 && confdata->lwservers[i].zone != 0) {
+			snprintf(buf, sizeof(buf), "%%%u",
+				confdata->nameservers[i].zone);
+		} else
+			buf[0] = 0;
+
+		fprintf(fp, "nameserver %s%s\n", tmp, buf);
 	}
 
 	for (i = 0; i < confdata->lwnext; i++) {
@@ -691,7 +699,13 @@ lwres_conf_print(lwres_context_t *ctx, FILE *fp) {
 		if (p != tmp)
 			return (LWRES_R_FAILURE);
 
-		fprintf(fp, "lwserver %s\n", tmp);
+		if (af == AF_INET6 && confdata->lwservers[i].zone != 0) {
+			snprintf(buf, sizeof(buf), "%%%u",
+				confdata->nameservers[i].zone);
+		} else
+			buf[0] = 0;
+
+		fprintf(fp, "lwserver %s%s\n", tmp, buf);
 	}
 
 	if (confdata->domainname != NULL) {

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: tkey_249.c,v 1.55 2004/03/05 05:10:18 marka Exp $ */
+/* $Id: tkey_249.c,v 1.6 2019/12/16 16:16:25 deraadt Exp $ */
 
 /*
  * Reviewed: Thu Mar 16 17:35:30 PST 2000 by halley.
@@ -37,7 +37,7 @@ fromtext_tkey(ARGS_FROMTEXT) {
 	long i;
 	char *e;
 
-	REQUIRE(type == 249);
+	REQUIRE(type == dns_rdatatype_tkey);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -50,7 +50,8 @@ fromtext_tkey(ARGS_FROMTEXT) {
 				      ISC_FALSE));
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	origin = (origin != NULL) ? origin : dns_rootname;
+	if (origin == NULL)
+		origin = dns_rootname;
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 
 
@@ -132,7 +133,7 @@ totext_tkey(ARGS_TOTEXT) {
 	dns_name_t prefix;
 	isc_boolean_t sub;
 
-	REQUIRE(rdata->type == 249);
+	REQUIRE(rdata->type == dns_rdatatype_tkey);
 	REQUIRE(rdata->length != 0);
 
 	dns_rdata_toregion(rdata, &sr);
@@ -153,7 +154,7 @@ totext_tkey(ARGS_TOTEXT) {
 	 */
 	n = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
-	snprintf(buf, sizeof(buf), "%lu ", n);
+	sprintf(buf, "%lu ", n);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -161,7 +162,7 @@ totext_tkey(ARGS_TOTEXT) {
 	 */
 	n = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
-	snprintf(buf, sizeof(buf), "%lu ", n);
+	sprintf(buf, "%lu ", n);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -169,7 +170,7 @@ totext_tkey(ARGS_TOTEXT) {
 	 */
 	n = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
-	snprintf(buf, sizeof(buf), "%lu ", n);
+	sprintf(buf, "%lu ", n);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -180,7 +181,7 @@ totext_tkey(ARGS_TOTEXT) {
 	if (dns_tsigrcode_totext((dns_rcode_t)n, target) == ISC_R_SUCCESS)
 		RETERR(str_totext(" ", target));
 	else {
-		snprintf(buf, sizeof(buf), "%lu ", n);
+		sprintf(buf, "%lu ", n);
 		RETERR(str_totext(buf, target));
 	}
 
@@ -189,7 +190,7 @@ totext_tkey(ARGS_TOTEXT) {
 	 */
 	n = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
-	snprintf(buf, sizeof(buf), "%lu", n);
+	sprintf(buf, "%lu", n);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -201,8 +202,11 @@ totext_tkey(ARGS_TOTEXT) {
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(" (", target));
 	RETERR(str_totext(tctx->linebreak, target));
-	RETERR(isc_base64_totext(&dr, tctx->width - 2,
-				 tctx->linebreak, target));
+	if (tctx->width == 0)   /* No splitting */
+		RETERR(isc_base64_totext(&dr, 60, "", target));
+	else
+		RETERR(isc_base64_totext(&dr, tctx->width - 2,
+					 tctx->linebreak, target));
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(" ) ", target));
 	else
@@ -214,7 +218,7 @@ totext_tkey(ARGS_TOTEXT) {
 	 */
 	n = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
-	snprintf(buf, sizeof(buf), "%lu", n);
+	sprintf(buf, "%lu", n);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -227,8 +231,11 @@ totext_tkey(ARGS_TOTEXT) {
 	    if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		    RETERR(str_totext(" (", target));
 	    RETERR(str_totext(tctx->linebreak, target));
-	    RETERR(isc_base64_totext(&dr, tctx->width - 2,
-				     tctx->linebreak, target));
+		if (tctx->width == 0)   /* No splitting */
+			RETERR(isc_base64_totext(&dr, 60, "", target));
+		else
+			RETERR(isc_base64_totext(&dr, tctx->width - 2,
+						 tctx->linebreak, target));
 	    if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		    RETERR(str_totext(" )", target));
 	}
@@ -241,7 +248,7 @@ fromwire_tkey(ARGS_FROMWIRE) {
 	unsigned long n;
 	dns_name_t name;
 
-	REQUIRE(type == 249);
+	REQUIRE(type == dns_rdatatype_tkey);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -297,7 +304,7 @@ towire_tkey(ARGS_TOWIRE) {
 	dns_name_t name;
 	dns_offsets_t offsets;
 
-	REQUIRE(rdata->type == 249);
+	REQUIRE(rdata->type == dns_rdatatype_tkey);
 	REQUIRE(rdata->length != 0);
 
 	dns_compress_setmethods(cctx, DNS_COMPRESS_NONE);
@@ -323,7 +330,7 @@ compare_tkey(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 249);
+	REQUIRE(rdata1->type == dns_rdatatype_tkey);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -347,7 +354,7 @@ static inline isc_result_t
 fromstruct_tkey(ARGS_FROMSTRUCT) {
 	dns_rdata_tkey_t *tkey = source;
 
-	REQUIRE(type == 249);
+	REQUIRE(type == dns_rdatatype_tkey);
 	REQUIRE(source != NULL);
 	REQUIRE(tkey->common.rdtype == type);
 	REQUIRE(tkey->common.rdclass == rdclass);
@@ -407,7 +414,7 @@ tostruct_tkey(ARGS_TOSTRUCT) {
 	dns_name_t alg;
 	isc_region_t sr;
 
-	REQUIRE(rdata->type == 249);
+	REQUIRE(rdata->type == dns_rdatatype_tkey);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -459,6 +466,7 @@ tostruct_tkey(ARGS_TOSTRUCT) {
 	/*
 	 * Key.
 	 */
+	INSIST(tkey->keylen + 2U <= sr.length);
 	tkey->key = mem_maybedup(mctx, sr.base, tkey->keylen);
 	if (tkey->key == NULL)
 		goto cleanup;
@@ -473,6 +481,7 @@ tostruct_tkey(ARGS_TOSTRUCT) {
 	/*
 	 * Other.
 	 */
+	INSIST(tkey->otherlen <= sr.length);
 	tkey->other = mem_maybedup(mctx, sr.base, tkey->otherlen);
 	if (tkey->other == NULL)
 		goto cleanup;
@@ -511,7 +520,7 @@ additionaldata_tkey(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	REQUIRE(rdata->type == 249);
+	REQUIRE(rdata->type == dns_rdatatype_tkey);
 
 	return (ISC_R_SUCCESS);
 }
@@ -522,7 +531,7 @@ digest_tkey(ARGS_DIGEST) {
 	UNUSED(digest);
 	UNUSED(arg);
 
-	REQUIRE(rdata->type == 249);
+	REQUIRE(rdata->type == dns_rdatatype_tkey);
 
 	return (ISC_R_NOTIMPLEMENTED);
 }
@@ -530,7 +539,7 @@ digest_tkey(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_tkey(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 249);
+	REQUIRE(type == dns_rdatatype_tkey);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -543,7 +552,7 @@ checkowner_tkey(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_tkey(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 249);
+	REQUIRE(rdata->type == dns_rdatatype_tkey);
 
 	UNUSED(rdata);
 	UNUSED(owner);
@@ -552,4 +561,8 @@ checknames_tkey(ARGS_CHECKNAMES) {
 	return (ISC_TRUE);
 }
 
+static inline isc_result_t
+casecompare_tkey(ARGS_COMPARE) {
+	return (compare_tkey(rdata1, rdata2));
+}
 #endif	/* RDATA_GENERIC_TKEY_249_C */

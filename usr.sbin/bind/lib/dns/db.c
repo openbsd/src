@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: db.c,v 1.74.18.6 2005/10/13 02:12:24 marka Exp $ */
+/* $Id: db.c,v 1.5 2019/12/16 16:16:24 deraadt Exp $ */
 
 /*! \file */
 
@@ -33,11 +33,14 @@
 #include <isc/util.h>
 
 #include <dns/callbacks.h>
+#include <dns/clientinfo.h>
 #include <dns/db.h>
+#include <dns/dbiterator.h>
 #include <dns/log.h>
 #include <dns/master.h>
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
+#include <dns/rdatasetiter.h>
 #include <dns/result.h>
 
 /***
@@ -95,7 +98,7 @@ static inline dns_dbimplementation_t *
 impfind(const char *name) {
 	dns_dbimplementation_t *imp;
 
-	for (imp = ISC_LIST_HEAD(implementations); 
+	for (imp = ISC_LIST_HEAD(implementations);
 	     imp != NULL;
 	     imp = ISC_LIST_NEXT(imp, link))
 		if (strcasecmp(name, imp->name) == 0)
@@ -229,6 +232,21 @@ dns_db_isstub(dns_db_t *db) {
 }
 
 isc_boolean_t
+dns_db_isdnssec(dns_db_t *db) {
+
+	/*
+	 * Is 'db' secure or partially secure?
+	 */
+
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE((db->attributes & DNS_DBATTR_CACHE) == 0);
+
+	if (db->methods->isdnssec != NULL)
+		return ((db->methods->isdnssec)(db));
+	return ((db->methods->issecure)(db));
+}
+
+isc_boolean_t
 dns_db_issecure(dns_db_t *db) {
 
 	/*
@@ -276,41 +294,45 @@ dns_db_class(dns_db_t *db) {
 }
 
 isc_result_t
-dns_db_beginload(dns_db_t *db, dns_addrdatasetfunc_t *addp,
-		 dns_dbload_t **dbloadp) {
+dns_db_beginload(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
 	/*
 	 * Begin loading 'db'.
 	 */
 
 	REQUIRE(DNS_DB_VALID(db));
-	REQUIRE(addp != NULL && *addp == NULL);
-	REQUIRE(dbloadp != NULL && *dbloadp == NULL);
+	REQUIRE(DNS_CALLBACK_VALID(callbacks));
 
-	return ((db->methods->beginload)(db, addp, dbloadp));
+	return ((db->methods->beginload)(db, callbacks));
 }
 
 isc_result_t
-dns_db_endload(dns_db_t *db, dns_dbload_t **dbloadp) {
+dns_db_endload(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
 	/*
 	 * Finish loading 'db'.
 	 */
 
 	REQUIRE(DNS_DB_VALID(db));
-	REQUIRE(dbloadp != NULL && *dbloadp != NULL);
+	REQUIRE(DNS_CALLBACK_VALID(callbacks));
+	REQUIRE(callbacks->add_private != NULL);
 
-	return ((db->methods->endload)(db, dbloadp));
+	return ((db->methods->endload)(db, callbacks));
 }
 
 isc_result_t
 dns_db_load(dns_db_t *db, const char *filename) {
-	return (dns_db_load2(db, filename, dns_masterformat_text));
+	return (dns_db_load3(db, filename, dns_masterformat_text, 0));
 }
 
 isc_result_t
 dns_db_load2(dns_db_t *db, const char *filename, dns_masterformat_t format) {
+	return (dns_db_load3(db, filename, format, 0));
+}
+
+isc_result_t
+dns_db_load3(dns_db_t *db, const char *filename, dns_masterformat_t format,
+	     unsigned int options) {
 	isc_result_t result, eresult;
 	dns_rdatacallbacks_t callbacks;
-	unsigned int options = 0;
 
 	/*
 	 * Load master file 'filename' into 'db'.
@@ -322,14 +344,13 @@ dns_db_load2(dns_db_t *db, const char *filename, dns_masterformat_t format) {
 		options |= DNS_MASTER_AGETTL;
 
 	dns_rdatacallbacks_init(&callbacks);
-
-	result = dns_db_beginload(db, &callbacks.add, &callbacks.add_private);
+	result = dns_db_beginload(db, &callbacks);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 	result = dns_master_loadfile2(filename, &db->origin, &db->origin,
 				      db->rdclass, options,
 				      &callbacks, db->mctx, format);
-	eresult = dns_db_endload(db, &callbacks.add_private);
+	eresult = dns_db_endload(db, &callbacks);
 	/*
 	 * We always call dns_db_endload(), but we only want to return its
 	 * result if dns_master_loadfile() succeeded.  If dns_master_loadfile()
@@ -340,6 +361,14 @@ dns_db_load2(dns_db_t *db, const char *filename, dns_masterformat_t format) {
 		result = eresult;
 
 	return (result);
+}
+
+isc_result_t
+dns_db_serialize(dns_db_t *db, dns_dbversion_t *version, FILE *file) {
+	REQUIRE(DNS_DB_VALID(db));
+	if (db->methods->serialize == NULL)
+		return (ISC_R_NOTIMPLEMENTED);
+	return ((db->methods->serialize)(db, version, file));
 }
 
 isc_result_t
@@ -446,7 +475,46 @@ dns_db_findnode(dns_db_t *db, dns_name_t *name,
 	REQUIRE(DNS_DB_VALID(db));
 	REQUIRE(nodep != NULL && *nodep == NULL);
 
-	return ((db->methods->findnode)(db, name, create, nodep));
+	if (db->methods->findnode != NULL)
+		return ((db->methods->findnode)(db, name, create, nodep));
+	else
+		return ((db->methods->findnodeext)(db, name, create,
+						   NULL, NULL, nodep));
+}
+
+isc_result_t
+dns_db_findnodeext(dns_db_t *db, dns_name_t *name,
+		   isc_boolean_t create, dns_clientinfomethods_t *methods,
+		   dns_clientinfo_t *clientinfo, dns_dbnode_t **nodep)
+{
+	/*
+	 * Find the node with name 'name', passing 'arg' to the database
+	 * implementation.
+	 */
+
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE(nodep != NULL && *nodep == NULL);
+
+	if (db->methods->findnodeext != NULL)
+		return ((db->methods->findnodeext)(db, name, create,
+						   methods, clientinfo, nodep));
+	else
+		return ((db->methods->findnode)(db, name, create, nodep));
+}
+
+isc_result_t
+dns_db_findnsec3node(dns_db_t *db, dns_name_t *name,
+		     isc_boolean_t create, dns_dbnode_t **nodep)
+{
+
+	/*
+	 * Find the node with name 'name'.
+	 */
+
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE(nodep != NULL && *nodep == NULL);
+
+	return ((db->methods->findnsec3node)(db, name, create, nodep));
 }
 
 isc_result_t
@@ -455,7 +523,6 @@ dns_db_find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 	    dns_dbnode_t **nodep, dns_name_t *foundname,
 	    dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset)
 {
-
 	/*
 	 * Find the best match for 'name' and 'type' in version 'version'
 	 * of 'db'.
@@ -472,8 +539,50 @@ dns_db_find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 		(DNS_RDATASET_VALID(sigrdataset) &&
 		 ! dns_rdataset_isassociated(sigrdataset)));
 
-	return ((db->methods->find)(db, name, version, type, options, now,
-				    nodep, foundname, rdataset, sigrdataset));
+	if (db->methods->find != NULL)
+		return ((db->methods->find)(db, name, version, type,
+					    options, now, nodep, foundname,
+					    rdataset, sigrdataset));
+	else
+		return ((db->methods->findext)(db, name, version, type,
+					       options, now, nodep, foundname,
+					       NULL, NULL,
+					       rdataset, sigrdataset));
+}
+
+isc_result_t
+dns_db_findext(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
+	       dns_rdatatype_t type, unsigned int options, isc_stdtime_t now,
+	       dns_dbnode_t **nodep, dns_name_t *foundname,
+	       dns_clientinfomethods_t *methods, dns_clientinfo_t *clientinfo,
+	       dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset)
+{
+
+	/*
+	 * Find the best match for 'name' and 'type' in version 'version'
+	 * of 'db', passing in 'arg'.
+	 */
+
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE(type != dns_rdatatype_rrsig);
+	REQUIRE(nodep == NULL || (nodep != NULL && *nodep == NULL));
+	REQUIRE(dns_name_hasbuffer(foundname));
+	REQUIRE(rdataset == NULL ||
+		(DNS_RDATASET_VALID(rdataset) &&
+		 ! dns_rdataset_isassociated(rdataset)));
+	REQUIRE(sigrdataset == NULL ||
+		(DNS_RDATASET_VALID(sigrdataset) &&
+		 ! dns_rdataset_isassociated(sigrdataset)));
+
+	if (db->methods->findext != NULL)
+		return ((db->methods->findext)(db, name, version, type,
+					       options, now, nodep, foundname,
+					       methods, clientinfo,
+					       rdataset, sigrdataset));
+	else
+		return ((db->methods->find)(db, name, version, type,
+					    options, now, nodep, foundname,
+					    rdataset, sigrdataset));
 }
 
 isc_result_t
@@ -527,6 +636,30 @@ dns_db_detachnode(dns_db_t *db, dns_dbnode_t **nodep) {
 	ENSURE(*nodep == NULL);
 }
 
+void
+dns_db_transfernode(dns_db_t *db, dns_dbnode_t **sourcep,
+		    dns_dbnode_t **targetp)
+{
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE(targetp != NULL && *targetp == NULL);
+	/*
+	 * This doesn't check the implementation magic.  If we find that
+	 * we need such checks in future then this will be done in the
+	 * method.
+	 */
+	REQUIRE(sourcep != NULL && *sourcep != NULL);
+
+	UNUSED(db);
+
+	if (db->methods->transfernode == NULL) {
+		*targetp = *sourcep;
+		*sourcep = NULL;
+	} else
+		(db->methods->transfernode)(db, sourcep, targetp);
+
+	ENSURE(*sourcep == NULL);
+}
+
 isc_result_t
 dns_db_expirenode(dns_db_t *db, dns_dbnode_t *node, isc_stdtime_t now) {
 
@@ -559,7 +692,7 @@ dns_db_printnode(dns_db_t *db, dns_dbnode_t *node, FILE *out) {
  ***/
 
 isc_result_t
-dns_db_createiterator(dns_db_t *db, isc_boolean_t relative_names,
+dns_db_createiterator(dns_db_t *db, unsigned int flags,
 		      dns_dbiterator_t **iteratorp)
 {
 	/*
@@ -569,7 +702,7 @@ dns_db_createiterator(dns_db_t *db, isc_boolean_t relative_names,
 	REQUIRE(DNS_DB_VALID(db));
 	REQUIRE(iteratorp != NULL && *iteratorp == NULL);
 
-	return (db->methods->createiterator(db, relative_names, iteratorp));
+	return (db->methods->createiterator(db, flags, iteratorp));
 }
 
 /***
@@ -582,11 +715,6 @@ dns_db_findrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 		    isc_stdtime_t now, dns_rdataset_t *rdataset,
 		    dns_rdataset_t *sigrdataset)
 {
-	/*
-	 * Search for an rdataset of type 'type' at 'node' that are in version
-	 * 'version' of 'db'.  If found, make 'rdataset' refer to it.
-	 */
-
 	REQUIRE(DNS_DB_VALID(db));
 	REQUIRE(node != NULL);
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
@@ -597,8 +725,9 @@ dns_db_findrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 		(DNS_RDATASET_VALID(sigrdataset) &&
 		 ! dns_rdataset_isassociated(sigrdataset)));
 
-	return ((db->methods->findrdataset)(db, node, version, type, covers,
-					    now, rdataset, sigrdataset));
+	return ((db->methods->findrdataset)(db, node, version, type,
+					    covers, now, rdataset,
+					    sigrdataset));
 }
 
 isc_result_t
@@ -687,7 +816,7 @@ dns_db_deleterdataset(dns_db_t *db, dns_dbnode_t *node,
 					      type, covers));
 }
 
-void 
+void
 dns_db_overmem(dns_db_t *db, isc_boolean_t overmem) {
 
 	REQUIRE(DNS_DB_VALID(db));
@@ -713,11 +842,11 @@ dns_db_getsoaserial(dns_db_t *db, dns_dbversion_t *ver, isc_uint32_t *serialp)
 	dns_rdataset_init(&rdataset);
 	result = dns_db_findrdataset(db, node, ver, dns_rdatatype_soa, 0,
 				     (isc_stdtime_t)0, &rdataset, NULL);
- 	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS)
 		goto freenode;
 
 	result = dns_rdataset_first(&rdataset);
- 	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS)
 		goto freerdataset;
 	dns_rdataset_current(&rdataset, &rdata);
 	result = dns_rdataset_next(&rdataset);
@@ -746,6 +875,16 @@ dns_db_nodecount(dns_db_t *db) {
 	return ((db->methods->nodecount)(db));
 }
 
+size_t
+dns_db_hashsize(dns_db_t *db) {
+	REQUIRE(DNS_DB_VALID(db));
+
+	if (db->methods->hashsize == NULL)
+		return (0);
+
+	return ((db->methods->hashsize)(db));
+}
+
 void
 dns_db_settask(dns_db_t *db, isc_task_t *task) {
 	REQUIRE(DNS_DB_VALID(db));
@@ -770,7 +909,7 @@ dns_db_register(const char *name, dns_dbcreatefunc_t create, void *driverarg,
 		RWUNLOCK(&implock, isc_rwlocktype_write);
 		return (ISC_R_EXISTS);
 	}
-	
+
 	imp = isc_mem_get(mctx, sizeof(dns_dbimplementation_t));
 	if (imp == NULL) {
 		RWUNLOCK(&implock, isc_rwlocktype_write);
@@ -800,12 +939,14 @@ dns_db_unregister(dns_dbimplementation_t **dbimp) {
 	RUNTIME_CHECK(isc_once_do(&once, initialize) == ISC_R_SUCCESS);
 
 	imp = *dbimp;
+	*dbimp = NULL;
 	RWLOCK(&implock, isc_rwlocktype_write);
 	ISC_LIST_UNLINK(implementations, imp, link);
 	mctx = imp->mctx;
 	isc_mem_put(mctx, imp, sizeof(dns_dbimplementation_t));
 	isc_mem_detach(&mctx);
 	RWUNLOCK(&implock, isc_rwlocktype_write);
+	ENSURE(*dbimp == NULL);
 }
 
 isc_result_t
@@ -818,4 +959,100 @@ dns_db_getoriginnode(dns_db_t *db, dns_dbnode_t **nodep) {
 		return ((db->methods->getoriginnode)(db, nodep));
 
 	return (ISC_R_NOTFOUND);
+}
+
+dns_stats_t *
+dns_db_getrrsetstats(dns_db_t *db) {
+	REQUIRE(DNS_DB_VALID(db));
+
+	if (db->methods->getrrsetstats != NULL)
+		return ((db->methods->getrrsetstats)(db));
+
+	return (NULL);
+}
+
+isc_result_t
+dns_db_setcachestats(dns_db_t *db, isc_stats_t *stats) {
+	REQUIRE(DNS_DB_VALID(db));
+
+	if (db->methods->setcachestats != NULL)
+		return ((db->methods->setcachestats)(db, stats));
+
+	return (ISC_R_NOTIMPLEMENTED);
+}
+
+isc_result_t
+dns_db_getnsec3parameters(dns_db_t *db, dns_dbversion_t *version,
+			  dns_hash_t *hash, isc_uint8_t *flags,
+			  isc_uint16_t *iterations,
+			  unsigned char *salt, size_t *salt_length)
+{
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE(dns_db_iszone(db) == ISC_TRUE);
+
+	if (db->methods->getnsec3parameters != NULL)
+		return ((db->methods->getnsec3parameters)(db, version, hash,
+							  flags, iterations,
+							  salt, salt_length));
+
+	return (ISC_R_NOTFOUND);
+}
+
+isc_result_t
+dns_db_getsize(dns_db_t *db, dns_dbversion_t *version, isc_uint64_t *records,
+	       isc_uint64_t *bytes)
+{
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE(dns_db_iszone(db) == ISC_TRUE);
+
+	if (db->methods->getsize != NULL)
+		return ((db->methods->getsize)(db, version, records, bytes));
+
+	return (ISC_R_NOTFOUND);
+}
+
+isc_result_t
+dns_db_setsigningtime(dns_db_t *db, dns_rdataset_t *rdataset,
+		      isc_stdtime_t resign)
+{
+	if (db->methods->setsigningtime != NULL)
+		return ((db->methods->setsigningtime)(db, rdataset, resign));
+	return (ISC_R_NOTIMPLEMENTED);
+}
+
+isc_result_t
+dns_db_getsigningtime(dns_db_t *db, dns_rdataset_t *rdataset, dns_name_t *name)
+{
+	if (db->methods->getsigningtime != NULL)
+		return ((db->methods->getsigningtime)(db, rdataset, name));
+	return (ISC_R_NOTFOUND);
+}
+
+void
+dns_db_resigned(dns_db_t *db, dns_rdataset_t *rdataset,
+		dns_dbversion_t *version)
+{
+	if (db->methods->resigned != NULL)
+		(db->methods->resigned)(db, rdataset, version);
+}
+
+/*
+ * Attach a database to policy zone databases.
+ * This should only happen when the caller has already ensured that
+ * it is dealing with a database that understands response policy zones.
+ */
+void
+dns_db_rpz_attach(dns_db_t *db, dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num) {
+	REQUIRE(db->methods->rpz_attach != NULL);
+	(db->methods->rpz_attach)(db, rpzs, rpz_num);
+}
+
+/*
+ * Finish loading a response policy zone.
+ */
+isc_result_t
+dns_db_rpz_ready(dns_db_t *db) {
+	if (db->methods->rpz_ready == NULL)
+		return (ISC_R_SUCCESS);
+	return ((db->methods->rpz_ready)(db));
 }

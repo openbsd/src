@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -19,7 +19,7 @@
  */
 #if defined(LIBC_SCCS) && !defined(lint)
 static char rcsid[] =
-	"$ISC: lwinetntop.c,v 1.12.18.4 2005/11/03 23:02:24 marka Exp $";
+	"$Id: lwinetntop.c,v 1.10 2019/12/16 16:16:28 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -86,16 +86,14 @@ static const char *
 inet_ntop4(const unsigned char *src, char *dst, size_t size) {
 	static const char fmt[] = "%u.%u.%u.%u";
 	char tmp[sizeof("255.255.255.255")];
-	int len;
+	size_t len;
 
 	len = snprintf(tmp, sizeof(tmp), fmt, src[0], src[1], src[2], src[3]);
-	if (len == -1)
-		return (NULL);
-	if ((size_t)len >= size) {
+	if (len >= size) {
 		errno = ENOSPC;
 		return (NULL);
 	}
-	strlcpy(dst, tmp, size);
+	strcpy(dst, tmp);
 
 	return (dst);
 }
@@ -178,8 +176,7 @@ inet_ntop6(const unsigned char *src, char *dst, size_t size) {
 			tp += strlen(tp);
 			break;
 		}
-		snprintf(tp, tmp + sizeof tmp - tp, "%x", words[i]);
-		tp += strlen(tp);
+		tp += sprintf(tp, "%x", words[i]); /* XXX */
 	}
 	/* Was it a trailing run of 0x00's? */
 	if (best.base != -1 && (best.base + best.len) ==
@@ -194,7 +191,7 @@ inet_ntop6(const unsigned char *src, char *dst, size_t size) {
 		errno = ENOSPC;
 		return (NULL);
 	}
-	strlcpy(dst, tmp, size);
+	strcpy(dst, tmp);
 	return (dst);
 }
 #endif /* AF_INET6 */

@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005, 2007, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: atomic.h,v 1.1.2.1 2005/07/09 07:14:00 jinmei Exp $ */
+/* $Id: atomic.h,v 1.2 2019/12/16 16:16:26 deraadt Exp $ */
 
 #ifndef ISC_ATOMIC_H
 #define ISC_ATOMIC_H 1
@@ -31,18 +31,20 @@ static inline isc_int32_t
 isc_atomic_xadd(isc_int32_t *p, int val) {
 	isc_int32_t orig;
 
-	/* add is a cheat, since MIPS has no mov instruction */
-	__asm__ volatile (
-	    "1:"
-	    "ll $3, %1\n"
-	    "add %0, $0, $3\n"
-	    "add $3, $3, %2\n"
-	    "sc $3, %1\n"
-	    "beq $3, 0, 1b"
-	    : "=&r"(orig)
-	    : "m"(*p), "r"(val)
-	    : "memory", "$3"
-		);
+	__asm__ __volatile__ (
+	"	.set	push		\n"
+	"	.set	mips2		\n"
+	"	.set	noreorder	\n"
+	"	.set	noat		\n"
+	"1:	ll	$1, %1		\n"
+	"	addu	%0, $1, %2	\n"
+	"	sc	%0, %1		\n"
+	"	beqz	%0, 1b		\n"
+	"	move	%0, $1		\n"
+	"	.set	pop		\n"
+	: "=&r" (orig), "+R" (*p)
+	: "r" (val)
+	: "memory");
 
 	return (orig);
 }
@@ -52,16 +54,7 @@ isc_atomic_xadd(isc_int32_t *p, int val) {
  */
 static inline void
 isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
-	__asm__ volatile (
-	    "1:"
-	    "ll $3, %0\n"
-	    "add $3, $0, %1\n"
-	    "sc $3, %0\n"
-	    "beq $3, 0, 1b"
-	    :
-	    : "m"(*p), "r"(val)
-	    : "memory", "$3"
-		);
+	*p = val;
 }
 
 /*
@@ -72,20 +65,23 @@ isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
 static inline isc_int32_t
 isc_atomic_cmpxchg(isc_int32_t *p, int cmpval, int val) {
 	isc_int32_t orig;
+	isc_int32_t tmp;
 
-	__asm__ volatile(
-	    "1:"
-	    "ll $3, %1\n"
-	    "add %0, $0, $3\n"
-	    "bne $3, %2, 2f\n"
-	    "add $3, $0, %3\n"
-	    "sc $3, %1\n"
-	    "beq $3, 0, 1b\n"
-	    "2:"
-	    : "=&r"(orig)
-	    : "m"(*p), "r"(cmpval), "r"(val)
-	    : "memory", "$3"
-		);
+	__asm__ __volatile__ (
+	"	.set	push		\n"
+	"	.set	mips2		\n"
+	"	.set	noreorder	\n"
+	"	.set	noat		\n"
+	"1:	ll	$1, %1		\n"
+	"	bne	$1, %3, 2f	\n"
+	"	move	%2, %4		\n"
+	"	sc	%2, %1		\n"
+	"	beqz	%2, 1b		\n"
+	"2:	move	%0, $1		\n"
+	"	.set	pop		\n"
+	: "=&r"(orig), "+R" (*p), "=r" (tmp)
+	: "r"(cmpval), "r"(val)
+	: "memory");
 
 	return (orig);
 }

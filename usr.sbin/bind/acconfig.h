@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: acconfig.h,v 1.44.18.5 2005/04/29 00:15:20 marka Exp $ */
+/* $Id: acconfig.h,v 1.8 2019/12/16 16:16:22 deraadt Exp $ */
 
 /*! \file */
 
@@ -24,9 +24,6 @@
  *** it does not get installed.
  ***/
 @TOP@
-
-/** define to `int' if <sys/types.h> doesn't define.  */
-#undef ssize_t
 
 /** define on DEC OSF to enable 4.4BSD style sa_len support */
 #undef _SOCKADDR_LEN
@@ -61,9 +58,6 @@
 /** define if you have the NET_RT_IFLIST sysctl variable and sys/sysctl.h */
 #undef HAVE_IFLIST_SYSCTL
 
-/** define if chroot() is available */
-#undef HAVE_CHROOT
-
 /** define if tzset() is available */
 #undef HAVE_TZSET
 
@@ -75,9 +69,6 @@
 
 /** define if gai_strerror() exists */
 #undef HAVE_GAISTRERROR
-
-/** define if arc4random() exists */
-#undef HAVE_ARC4RANDOM
 
 /**
  * define if pthread_setconcurrency() should be called to tell the
@@ -115,7 +106,7 @@ int sigwait(const unsigned int *set, int *sig);
  * The silly continuation line is to keep configure from
  * commenting out the #undef.
  */
- 
+
 #undef \
 	va_start
 #define	va_start(ap, last) \
@@ -138,14 +129,17 @@ int sigwait(const unsigned int *set, int *sig);
 /** define if you have strerror in the C library. */
 #undef HAVE_STRERROR
 
-/** Define if you are running under Compaq TruCluster. */
-#undef HAVE_TRUCLUSTER
-
 /* Define if OpenSSL includes DSA support */
 #undef HAVE_OPENSSL_DSA
+
+/* Define if you have getpassphrase in the C library. */
+#undef HAVE_GETPASSPHRASE
 
 /* Define to the length type used by the socket API (socklen_t, size_t, int). */
 #undef ISC_SOCKADDR_LEN_T
 
 /* Define if threads need PTHREAD_SCOPE_SYSTEM */
 #undef NEED_PTHREAD_SCOPE_SYSTEM
+
+/* Define to 1 if you have the uname library function. */
+#undef HAVE_UNAME

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,12 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: heap.h,v 1.17.18.3 2006/04/17 18:27:33 explorer Exp $ */
+/* $Id: heap.h,v 1.2 2019/12/16 16:16:26 deraadt Exp $ */
 
 #ifndef ISC_HEAP_H
 #define ISC_HEAP_H 1
 
-/*! \file */
+/*! \file isc/heap.h */
 
 #include <isc/lang.h>
 #include <isc/types.h>
@@ -28,7 +28,7 @@
 ISC_LANG_BEGINDECLS
 
 /*%
- * The comparision function returns ISC_TRUE if the first argument has
+ * The comparison function returns ISC_TRUE if the first argument has
  * higher priority than the second argument, and ISC_FALSE otherwise.
  */
 typedef isc_boolean_t (*isc_heapcompare_t)(void *, void *);
@@ -59,6 +59,8 @@ isc_heap_create(isc_mem_t *mctx, isc_heapcompare_t compare,
  * \brief Create a new heap.  The heap is implemented using a space-efficient
  * storage method.  When the heap elements are deleted space is not freed
  * but will be reused when new elements are inserted.
+ *
+ * Heap elements are indexed from 1.
  *
  * Requires:
  *\li	"mctx" is valid.

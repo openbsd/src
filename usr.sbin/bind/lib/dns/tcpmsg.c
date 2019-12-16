@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,13 +15,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: tcpmsg.c,v 1.25.18.4 2006/08/10 23:59:29 marka Exp $ */
+/* $Id: tcpmsg.c,v 1.2 2019/12/16 16:16:24 deraadt Exp $ */
 
 /*! \file */
 
 #include <config.h>
 
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/task.h>
 #include <isc/util.h>
 

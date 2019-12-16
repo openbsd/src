@@ -1,8 +1,9 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2004, 2005, 2007 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004, 2005, 2007, 2014-2016 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000, 2001 Internet Software Consortium.
  - 
- - Permission to use, copy, modify, and distribute this software for any
+ - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
  - 
@@ -14,70 +15,71 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- $ISC: lwres_getrrsetbyname.html,v 1.6.18.17 2007/01/30 00:23:45 marka Exp $ -->
-<html>
+<html lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>lwres_getrrsetbyname</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.71.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 </head>
-<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en">
-<a name="id2476275"></a><div class="titlepage"></div>
-<div class="refnamediv">
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry">
+<a name="id-1"></a><div class="titlepage"></div>
+  
+  
+
+  
+
+  
+
+  <div class="refnamediv">
 <h2>Name</h2>
-<p>lwres_getrrsetbyname, lwres_freerrset &#8212; retrieve DNS records</p>
+<p>
+    lwres_getrrsetbyname, 
+    lwres_freerrset
+     &#8212; retrieve DNS records
+  </p>
 </div>
-<div class="refsynopsisdiv">
+  <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
-<div class="funcsynopsis">
+    <div class="funcsynopsis">
 <pre class="funcsynopsisinfo">#include &lt;lwres/netdb.h&gt;</pre>
-<table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0" style="padding-bottom: 1em">
+<table border="0" class="funcprototype-table" summary="Function synopsis" style="cellspacing: 0; cellpadding: 0;">
 <tr>
 <td><code class="funcdef">
 int
 <b class="fsfunc">lwres_getrrsetbyname</b>(</code></td>
-<td>const char * </td>
-<td>
-<var class="pdparam">hostname</var>, </td>
+<td>const char *<var class="pdparam">hostname</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>unsigned int  </td>
-<td>
-<var class="pdparam">rdclass</var>, </td>
+<td>unsigned int <var class="pdparam">rdclass</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>unsigned int  </td>
-<td>
-<var class="pdparam">rdtype</var>, </td>
+<td>unsigned int <var class="pdparam">rdtype</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>unsigned int  </td>
-<td>
-<var class="pdparam">flags</var>, </td>
+<td>unsigned int <var class="pdparam">flags</var>, </td>
 </tr>
 <tr>
 <td> </td>
-<td>struct rrsetinfo ** </td>
-<td>
-<var class="pdparam">res</var><code>)</code>;</td>
+<td>struct rrsetinfo **<var class="pdparam">res</var><code>)</code>;</td>
 </tr>
 </table>
-<table border="0" summary="Function synopsis" cellspacing="0" cellpadding="0"><tr>
+<div class="funcprototype-spacer"> </div>
+<table border="0" class="funcprototype-table" summary="Function synopsis" style="cellspacing: 0; cellpadding: 0;"><tr>
 <td><code class="funcdef">
 void
 <b class="fsfunc">lwres_freerrset</b>(</code></td>
-<td>struct rrsetinfo * </td>
-<td>
-<var class="pdparam">rrset</var><code>)</code>;</td>
+<td>struct rrsetinfo *<var class="pdparam">rrset</var><code>)</code>;</td>
 </tr></table>
+<div class="funcprototype-spacer"> </div>
 </div>
-<p>
+
+    <p>
       The following structures are used:
     </p>
-<pre class="programlisting">
+    <pre class="programlisting">
 struct  rdatainfo {
         unsigned int            rdi_length;     /* length of data */
         unsigned char           *rdi_data;      /* record data */
@@ -85,7 +87,7 @@ struct  rdatainfo {
 </pre>
 <p>
     </p>
-<pre class="programlisting">
+    <pre class="programlisting">
 struct  rrsetinfo {
         unsigned int            rri_flags;      /* RRSET_VALIDATED... */
         unsigned int            rri_rdclass;    /* class number */
@@ -100,10 +102,12 @@ struct  rrsetinfo {
 </pre>
 <p>
     </p>
-</div>
-<div class="refsect1" lang="en">
-<a name="id2543414"></a><h2>DESCRIPTION</h2>
-<p><code class="function">lwres_getrrsetbyname()</code>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.7"></a><h2>DESCRIPTION</h2>
+
+    <p><code class="function">lwres_getrrsetbyname()</code>
       gets a set of resource records associated with a
       <em class="parameter"><code>hostname</code></em>, <em class="parameter"><code>class</code></em>,
       and <em class="parameter"><code>type</code></em>.
@@ -111,7 +115,7 @@ struct  rrsetinfo {
       null-terminated string.  The <em class="parameter"><code>flags</code></em> field
       is currently unused and must be zero.
     </p>
-<p>
+    <p>
       After a successful call to
       <code class="function">lwres_getrrsetbyname()</code>,
       <em class="parameter"><code>*res</code></em> is a pointer to an
@@ -130,7 +134,7 @@ struct  rrsetinfo {
       bit is set, the data has been DNSSEC validated and the
       signatures verified.
     </p>
-<p>
+    <p>
       All of the information returned by
       <code class="function">lwres_getrrsetbyname()</code> is dynamically
       allocated: the <code class="constant">rrsetinfo</code> and
@@ -147,46 +151,63 @@ struct  rrsetinfo {
       rrset</span> created by a call to
       <code class="function">lwres_getrrsetbyname()</code>.
     </p>
-<p></p>
-</div>
-<div class="refsect1" lang="en">
-<a name="id2543526"></a><h2>RETURN VALUES</h2>
-<p><code class="function">lwres_getrrsetbyname()</code>
+    <p></p>
+  </div>
+  <div class="refsection">
+<a name="id-1.8"></a><h2>RETURN VALUES</h2>
+
+    <p><code class="function">lwres_getrrsetbyname()</code>
       returns zero on success, and one of the following error codes if
       an error occurred:
       </p>
-<div class="variablelist"><dl>
+<div class="variablelist"><dl class="variablelist">
 <dt><span class="term"><code class="constant">ERRSET_NONAME</code></span></dt>
-<dd><p>
+<dd>
+            <p>
               the name does not exist
-            </p></dd>
+            </p>
+          </dd>
 <dt><span class="term"><code class="constant">ERRSET_NODATA</code></span></dt>
-<dd><p>
+<dd>
+            <p>
               the name exists, but does not have data of the desired type
-            </p></dd>
+            </p>
+          </dd>
 <dt><span class="term"><code class="constant">ERRSET_NOMEMORY</code></span></dt>
-<dd><p>
+<dd>
+            <p>
               memory could not be allocated
-            </p></dd>
+            </p>
+          </dd>
 <dt><span class="term"><code class="constant">ERRSET_INVAL</code></span></dt>
-<dd><p>
+<dd>
+            <p>
               a parameter is invalid
-            </p></dd>
+            </p>
+          </dd>
 <dt><span class="term"><code class="constant">ERRSET_FAIL</code></span></dt>
-<dd><p>
+<dd>
+            <p>
               other failure
-            </p></dd>
+            </p>
+          </dd>
 <dt><span class="term"><code class="constant"></code></span></dt>
-<dd><p></p></dd>
+<dd>
+            <p></p>
+          </dd>
 </dl></div>
 <p>
 
     </p>
-</div>
-<div class="refsect1" lang="en">
-<a name="id2543626"></a><h2>SEE ALSO</h2>
-<p><span class="citerefentry"><span class="refentrytitle">lwres</span>(3)</span>.
+  </div>
+  <div class="refsection">
+<a name="id-1.9"></a><h2>SEE ALSO</h2>
+
+    <p><span class="citerefentry">
+        <span class="refentrytitle">lwres</span>(3)
+      </span>.
     </p>
-</div>
+
+  </div>
 </div></body>
 </html>

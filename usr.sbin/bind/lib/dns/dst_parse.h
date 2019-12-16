@@ -1,9 +1,22 @@
 /*
- * Portions Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2000-2002  Internet Software Consortium.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NETWORK ASSOCIATES DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE
+ * FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -16,7 +29,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: dst_parse.h,v 1.1.6.5 2006/01/27 23:57:44 marka Exp $ */
+/* $Id: dst_parse.h,v 1.2 2019/12/16 16:16:24 deraadt Exp $ */
 
 /*! \file */
 #ifndef DST_DST_PARSE_H
@@ -26,18 +39,20 @@
 
 #include <dst/dst.h>
 
-#define MAJOR_VERSION		1
-#define MINOR_VERSION		2
-
 #define MAXFIELDSIZE		512
-#define MAXFIELDS		12
+
+/*
+ * Maximum number of fields in a private file is 18 (12 algorithm-
+ * specific fields for RSA, plus 6 generic fields).
+ */
+#define MAXFIELDS		12+6
 
 #define TAG_SHIFT		4
 #define TAG_ALG(tag)		((unsigned int)(tag) >> TAG_SHIFT)
 #define TAG(alg, off)		(((alg) << TAG_SHIFT) + (off))
 
 /* These are used by both RSA-MD5 and RSA-SHA1 */
-#define RSA_NTAGS		8
+#define RSA_NTAGS		11
 #define TAG_RSA_MODULUS		((DST_ALG_RSAMD5 << TAG_SHIFT) + 0)
 #define TAG_RSA_PUBLICEXPONENT	((DST_ALG_RSAMD5 << TAG_SHIFT) + 1)
 #define TAG_RSA_PRIVATEEXPONENT	((DST_ALG_RSAMD5 << TAG_SHIFT) + 2)
@@ -46,6 +61,8 @@
 #define TAG_RSA_EXPONENT1	((DST_ALG_RSAMD5 << TAG_SHIFT) + 5)
 #define TAG_RSA_EXPONENT2	((DST_ALG_RSAMD5 << TAG_SHIFT) + 6)
 #define TAG_RSA_COEFFICIENT	((DST_ALG_RSAMD5 << TAG_SHIFT) + 7)
+#define TAG_RSA_ENGINE		((DST_ALG_RSAMD5 << TAG_SHIFT) + 8)
+#define TAG_RSA_LABEL		((DST_ALG_RSAMD5 << TAG_SHIFT) + 9)
 
 #define DH_NTAGS		4
 #define TAG_DH_PRIME		((DST_ALG_DH << TAG_SHIFT) + 0)
@@ -59,6 +76,15 @@
 #define TAG_DSA_BASE		((DST_ALG_DSA << TAG_SHIFT) + 2)
 #define TAG_DSA_PRIVATE		((DST_ALG_DSA << TAG_SHIFT) + 3)
 #define TAG_DSA_PUBLIC		((DST_ALG_DSA << TAG_SHIFT) + 4)
+
+#define GOST_NTAGS		1
+#define TAG_GOST_PRIVASN1	((DST_ALG_ECCGOST << TAG_SHIFT) + 0)
+#define TAG_GOST_PRIVRAW	((DST_ALG_ECCGOST << TAG_SHIFT) + 1)
+
+#define ECDSA_NTAGS		4
+#define TAG_ECDSA_PRIVATEKEY	((DST_ALG_ECDSA256 << TAG_SHIFT) + 0)
+#define TAG_ECDSA_ENGINE	((DST_ALG_ECDSA256 << TAG_SHIFT) + 1)
+#define TAG_ECDSA_LABEL		((DST_ALG_ECDSA256 << TAG_SHIFT) + 2)
 
 #define OLD_HMACMD5_NTAGS	1
 #define HMACMD5_NTAGS		2
@@ -75,7 +101,7 @@
 
 #define HMACSHA256_NTAGS	2
 #define TAG_HMACSHA256_KEY	((DST_ALG_HMACSHA256 << TAG_SHIFT) + 0)
-#define TAG_HMACSHA256_BITS	((DST_ALG_HMACSHA224 << TAG_SHIFT) + 1)
+#define TAG_HMACSHA256_BITS	((DST_ALG_HMACSHA256 << TAG_SHIFT) + 1)
 
 #define HMACSHA384_NTAGS	2
 #define TAG_HMACSHA384_KEY	((DST_ALG_HMACSHA384 << TAG_SHIFT) + 0)
@@ -105,11 +131,11 @@ ISC_LANG_BEGINDECLS
 void
 dst__privstruct_free(dst_private_t *priv, isc_mem_t *mctx);
 
-int
+isc_result_t
 dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 		      isc_mem_t *mctx, dst_private_t *priv);
 
-int
+isc_result_t
 dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 			  const char *directory);
 

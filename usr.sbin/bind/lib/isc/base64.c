@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: base64.c,v 1.28.18.2 2005/04/29 00:16:44 marka Exp $ */
+/* $Id: base64.c,v 1.5 2019/12/16 16:16:25 deraadt Exp $ */
 
 /*! \file */
 
@@ -85,11 +85,13 @@ isc_base64_totext(isc_region_t *source, int wordlength,
 		buf[2] = base64[((source->base[1]<<2)&0x3c)];
 		buf[3] = '=';
 		RETERR(str_totext(buf, target));
+		isc_region_consume(source, 2);
 	} else if (source->length == 1) {
 		buf[0] = base64[(source->base[0]>>2)&0x3f];
 		buf[1] = base64[((source->base[0]<<4)&0x30)];
 		buf[2] = buf[3] = '=';
 		RETERR(str_totext(buf, target));
+		isc_region_consume(source, 1);
 	}
 	return (ISC_R_SUCCESS);
 }
@@ -116,13 +118,13 @@ base64_decode_init(base64_decode_ctx_t *ctx, int length, isc_buffer_t *target)
 
 static inline isc_result_t
 base64_decode_char(base64_decode_ctx_t *ctx, int c) {
-	char *s;
+	const char *s;
 
 	if (ctx->seen_end)
 		return (ISC_R_BADBASE64);
 	if ((s = strchr(base64, c)) == NULL)
 		return (ISC_R_BADBASE64);
-	ctx->val[ctx->digits++] = s - base64;
+	ctx->val[ctx->digits++] = (int)(s - base64);
 	if (ctx->digits == 4) {
 		int n;
 		unsigned char buf[3];
@@ -217,7 +219,7 @@ isc_base64_decodestring(const char *cstr, isc_buffer_t *target) {
 			continue;
 		RETERR(base64_decode_char(&ctx, c));
 	}
-	RETERR(base64_decode_finish(&ctx));	
+	RETERR(base64_decode_finish(&ctx));
 	return (ISC_R_SUCCESS);
 }
 
@@ -232,7 +234,7 @@ str_totext(const char *source, isc_buffer_t *target) {
 	if (l > region.length)
 		return (ISC_R_NOSPACE);
 
-	memcpy(region.base, source, l);
+	memmove(region.base, source, l);
 	isc_buffer_add(target, l);
 	return (ISC_R_SUCCESS);
 }
@@ -244,7 +246,7 @@ mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length) {
 	isc_buffer_availableregion(target, &tr);
 	if (length > tr.length)
 		return (ISC_R_NOSPACE);
-	memcpy(tr.base, base, length);
+	memmove(tr.base, base, length);
 	isc_buffer_add(target, length);
 	return (ISC_R_SUCCESS);
 }

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: entropy.c,v 1.11.18.3 2005/07/12 01:22:28 marka Exp $ */
+/* $Id: entropy.c,v 1.5 2019/12/16 16:16:25 deraadt Exp $ */
 
 /*! \file
  * \brief
@@ -40,12 +40,16 @@
 #include <isc/msgs.h>
 #include <isc/mutex.h>
 #include <isc/platform.h>
+#include <isc/print.h>
 #include <isc/region.h>
 #include <isc/sha1.h>
 #include <isc/string.h>
 #include <isc/time.h>
 #include <isc/util.h>
 
+#ifdef PKCS11CRYPTO
+#include <pk11/pk11.h>
+#endif
 
 #define ENTROPY_MAGIC		ISC_MAGIC('E', 'n', 't', 'e')
 #define SOURCE_MAGIC		ISC_MAGIC('E', 'n', 't', 's')
@@ -283,14 +287,17 @@ entropypool_add_word(isc_entropypool_t *rp, isc_uint32_t val) {
 	val ^= rp->pool[(rp->cursor + TAP3) & (RND_POOLWORDS - 1)];
 	val ^= rp->pool[(rp->cursor + TAP4) & (RND_POOLWORDS - 1)];
 	val ^= rp->pool[(rp->cursor + TAP5) & (RND_POOLWORDS - 1)];
-	rp->pool[rp->cursor++] ^=
-	  ((val << rp->rotate) | (val >> (32 - rp->rotate)));
+	if (rp->rotate == 0)
+		rp->pool[rp->cursor++] ^= val;
+	else
+		rp->pool[rp->cursor++] ^=
+		  ((val << rp->rotate) | (val >> (32 - rp->rotate)));
 
 	/*
 	 * If we have looped around the pool, increment the rotate
 	 * variable so the next value will get xored in rotated to
 	 * a different position.
-	 * Increment by a value that is relativly prime to the word size
+	 * Increment by a value that is relatively prime to the word size
 	 * to try to spread the bits throughout the pool quickly when the
 	 * pool is empty.
 	 */
@@ -313,7 +320,12 @@ entropypool_adddata(isc_entropy_t *ent, void *p, unsigned int len,
 	unsigned long addr;
 	isc_uint8_t *buf;
 
+	/* Silly MSVC in 64 bit mode complains here... */
+#ifdef _WIN64
+	addr = (unsigned long)((unsigned long long)p);
+#else
 	addr = (unsigned long)p;
+#endif
 	buf = p;
 
 	if ((addr & 0x03U) != 0U) {
@@ -1102,6 +1114,17 @@ isc_entropy_stats(isc_entropy_t *ent, FILE *out) {
 	UNLOCK(&ent->lock);
 }
 
+unsigned int
+isc_entropy_status(isc_entropy_t *ent) {
+	unsigned int estimate;
+
+	LOCK(&ent->lock);
+	estimate = ent->pool.entropy;
+	UNLOCK(&ent->lock);
+
+	return estimate;
+}
+
 void
 isc_entropy_attach(isc_entropy_t *ent, isc_entropy_t **entp) {
 	REQUIRE(VALID_ENTROPY(ent));
@@ -1222,6 +1245,11 @@ isc_entropy_usebestsource(isc_entropy_t *ectx, isc_entropysource_t **source,
 		use_keyboard == ISC_ENTROPY_KEYBOARDNO  ||
 		use_keyboard == ISC_ENTROPY_KEYBOARDMAYBE);
 
+#ifdef PKCS11CRYPTO
+	if (randomfile != NULL)
+		pk11_rand_seed_fromfile(randomfile);
+#endif
+
 #ifdef PATH_RANDOMDEV
 	if (randomfile == NULL) {
 		randomfile = PATH_RANDOMDEV;
@@ -1251,7 +1279,7 @@ isc_entropy_usebestsource(isc_entropy_t *ectx, isc_entropysource_t **source,
 
 		if (final_result != ISC_R_SUCCESS)
 			final_result = result;
-	}	
+	}
 
 	/*
 	 * final_result is ISC_R_SUCCESS if at least one source of entropy

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: refcount.h,v 1.6.18.5 2005/07/12 01:22:31 marka Exp $ */
+/* $Id: refcount.h,v 1.5 2019/12/16 16:16:26 deraadt Exp $ */
 
 #ifndef ISC_REFCOUNT_H
 #define ISC_REFCOUNT_H 1
@@ -27,8 +27,8 @@
 #include <isc/types.h>
 #include <isc/util.h>
 
-/*! \file
- * \brief Implements a locked reference counter.  
+/*! \file isc/refcount.h
+ * \brief Implements a locked reference counter.
  *
  * These functions may actually be
  * implemented using macros, and implementations of these macros are below.
@@ -42,7 +42,7 @@ ISC_LANG_BEGINDECLS
  * Function prototypes
  */
 
-/* 
+/*
  * isc_result_t
  * isc_refcount_init(isc_refcount_t *ref, unsigned int n);
  *
@@ -103,7 +103,7 @@ typedef struct isc_refcount {
 	isc_int32_t refs;
 } isc_refcount_t;
 
-#define isc_refcount_destroy(rp) (REQUIRE((rp)->refs == 0))
+#define isc_refcount_destroy(rp) REQUIRE((rp)->refs == 0)
 #define isc_refcount_current(rp) ((unsigned int)((rp)->refs))
 
 #define isc_refcount_increment0(rp, tp)				\
@@ -192,7 +192,7 @@ typedef struct isc_refcount {
 	int refs;
 } isc_refcount_t;
 
-#define isc_refcount_destroy(rp) (REQUIRE((rp)->refs == 0))
+#define isc_refcount_destroy(rp) REQUIRE((rp)->refs == 0)
 #define isc_refcount_current(rp) ((unsigned int)((rp)->refs))
 
 #define isc_refcount_increment0(rp, tp)					\

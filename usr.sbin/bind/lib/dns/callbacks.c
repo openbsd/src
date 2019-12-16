@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,12 +15,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: callbacks.c,v 1.13.18.2 2005/04/29 00:15:49 marka Exp $ */
+/* $Id: callbacks.c,v 1.2 2019/12/16 16:16:24 deraadt Exp $ */
 
 /*! \file */
 
 #include <config.h>
 
+#include <isc/print.h>
 #include <isc/util.h>
 
 #include <dns/callbacks.h>
@@ -87,7 +88,10 @@ static void
 dns_rdatacallbacks_initcommon(dns_rdatacallbacks_t *callbacks) {
 	REQUIRE(callbacks != NULL);
 
+	callbacks->magic = DNS_CALLBACK_MAGIC;
 	callbacks->add = NULL;
+	callbacks->rawdata = NULL;
+	callbacks->zone = NULL;
 	callbacks->add_private = NULL;
 	callbacks->error_private = NULL;
 	callbacks->warn_private = NULL;

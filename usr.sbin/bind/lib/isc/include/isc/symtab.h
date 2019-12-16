@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: symtab.h,v 1.17.18.4 2006/03/02 00:37:22 marka Exp $ */
+/* $Id: symtab.h,v 1.2 2019/12/16 16:16:26 deraadt Exp $ */
 
 #ifndef ISC_SYMTAB_H
 #define ISC_SYMTAB_H 1
@@ -24,10 +24,10 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file isc/symtab.h
  * \brief Provides a simple memory-based symbol table.
  *
- * Keys are C strings, and key comparisons are case-insenstive.  A type may
+ * Keys are C strings, and key comparisons are case-insensitive.  A type may
  * be specified when looking up, defining, or undefining.  A type value of
  * 0 means "match any type"; any other value will only match the given
  * type.
@@ -56,6 +56,14 @@
  * A user-specified action will be called (if provided) when a symbol is
  * undefined.  It can be used to free memory associated with keys and/or
  * values.
+ *
+ * A symbol table is implemented as a hash table of lists; the size of the
+ * hash table is set by the 'size' parameter to isc_symtbl_create().  When
+ * the number of entries in the symbol table reaches three quarters of this
+ * value, the hash table is reallocated with size doubled, in order to
+ * optimize lookup performance.  This has a negative effect on insertion
+ * performance, which can be mitigated by sizing the table appropriately
+ * when creating it.
  *
  * \li MP:
  *	The callers of this module must ensure any required synchronization.
@@ -126,6 +134,9 @@ isc_symtab_define(isc_symtab_t *symtab, const char *key, unsigned int type,
 isc_result_t
 isc_symtab_undefine(isc_symtab_t *symtab, const char *key, unsigned int type);
 
+/*% Return the number of items in a symbol table. */
+unsigned int
+isc_symtab_count(isc_symtab_t *symtab);
 ISC_LANG_ENDDECLS
 
 #endif /* ISC_SYMTAB_H */

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,27 +15,35 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: ssu.h,v 1.13.18.4 2006/02/16 23:51:32 marka Exp $ */
+/* $Id: ssu.h,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
 
 #ifndef DNS_SSU_H
 #define DNS_SSU_H 1
 
-/*! \file */
+/*! \file dns/ssu.h */
 
 #include <isc/lang.h>
 
 #include <dns/types.h>
+#include <dst/dst.h>
 
 ISC_LANG_BEGINDECLS
 
-#define DNS_SSUMATCHTYPE_NAME 0
-#define DNS_SSUMATCHTYPE_SUBDOMAIN 1
-#define DNS_SSUMATCHTYPE_WILDCARD 2
-#define DNS_SSUMATCHTYPE_SELF 3
-#define DNS_SSUMATCHTYPE_SELFSUB 4
-#define DNS_SSUMATCHTYPE_SELFWILD 5
-#define DNS_SSUMATCHTYPE_MAX 5		/* maximum defined value */
-
+#define DNS_SSUMATCHTYPE_NAME		0
+#define DNS_SSUMATCHTYPE_SUBDOMAIN	1
+#define DNS_SSUMATCHTYPE_WILDCARD	2
+#define DNS_SSUMATCHTYPE_SELF		3
+#define DNS_SSUMATCHTYPE_SELFSUB	4
+#define DNS_SSUMATCHTYPE_SELFWILD	5
+#define DNS_SSUMATCHTYPE_SELFKRB5	6
+#define DNS_SSUMATCHTYPE_SELFMS		7
+#define DNS_SSUMATCHTYPE_SUBDOMAINMS	8
+#define DNS_SSUMATCHTYPE_SUBDOMAINKRB5	9
+#define DNS_SSUMATCHTYPE_TCPSELF	10
+#define DNS_SSUMATCHTYPE_6TO4SELF	11
+#define DNS_SSUMATCHTYPE_EXTERNAL	12
+#define DNS_SSUMATCHTYPE_DLZ		13
+#define DNS_SSUMATCHTYPE_MAX 		12  /* max value */
 
 isc_result_t
 dns_ssutable_create(isc_mem_t *mctx, dns_ssutable_t **table);
@@ -50,6 +58,16 @@ dns_ssutable_create(isc_mem_t *mctx, dns_ssutable_t **table);
  *	Returns:
  *\li		ISC_R_SUCCESS
  *\li		ISC_R_NOMEMORY
+ */
+
+isc_result_t
+dns_ssutable_createdlz(isc_mem_t *mctx, dns_ssutable_t **tablep,
+		       dns_dlzdb_t *dlzdatabase);
+/*%<
+ * Create an SSU table that contains a dlzdatabase pointer, and a
+ * single rule with matchtype DNS_SSUMATCHTYPE_DLZ. This type of SSU
+ * table is used by writeable DLZ drivers to offload authorization for
+ * updates to the driver.
  */
 
 void
@@ -91,8 +109,8 @@ dns_ssutable_addrule(dns_ssutable_t *table, isc_boolean_t grant,
  *	at that name.
  *
  *	Notes:
- *\li		If 'matchtype' is SELF, this rule only matches if the name
- *		to be updated matches the signing identity.
+ *\li		If 'matchtype' is of SELF type, this rule only matches if the
+ *              name to be updated matches the signing identity.
  *
  *\li		If 'ntypes' is 0, this rule applies to all types except
  *		NS, SOA, RRSIG, and NSEC.
@@ -114,16 +132,35 @@ dns_ssutable_addrule(dns_ssutable_t *table, isc_boolean_t grant,
 
 isc_boolean_t
 dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
-			dns_name_t *name, dns_rdatatype_t type);
+			dns_name_t *name, isc_netaddr_t *tcpaddr,
+			dns_rdatatype_t type, const dst_key_t *key);
 /*%<
  *	Checks that the attempted update of (name, type) is allowed according
  *	to the rules specified in the simple-secure-update rule table.  If
- *	no rules are matched, access is denied.  If signer is NULL, access
- *	is denied.
+ *	no rules are matched, access is denied.
+ *
+ *	Notes:
+ *		'tcpaddr' should only be set if the request received
+ *		via TCP.  This provides a weak assurance that the
+ *		request was not spoofed.  'tcpaddr' is to to validate
+ *		DNS_SSUMATCHTYPE_TCPSELF and DNS_SSUMATCHTYPE_6TO4SELF
+ *		rules.
+ *
+ *		For DNS_SSUMATCHTYPE_TCPSELF the addresses are mapped to
+ *		the standard reverse names under IN-ADDR.ARPA and IP6.ARPA.
+ *		RFC 1035, Section 3.5, "IN-ADDR.ARPA domain" and RFC 3596,
+ *		Section 2.5, "IP6.ARPA Domain".
+ *
+ *		For DNS_SSUMATCHTYPE_6TO4SELF, IPv4 address are converted
+ *		to a 6to4 prefix (48 bits) per the rules in RFC 3056.  Only
+ *		the top	48 bits of the IPv6 address are mapped to the reverse
+ *		name. This is independent of whether the most significant 16
+ *		bits match 2002::/16, assigned for 6to4 prefixes, or not.
  *
  *	Requires:
  *\li		'table' is a valid SSU table
  *\li		'signer' is NULL or a valid absolute name
+ *\li		'tcpaddr' is NULL or a valid network address.
  *\li		'name' is a valid absolute name
  */
 
@@ -159,6 +196,16 @@ isc_result_t	dns_ssutable_nextrule(dns_ssurule_t *rule,
  *\li	#ISC_R_SUCCESS
  *\li	#ISC_R_NOMORE
  */
+
+
+/*%<
+ * Check a policy rule via an external application
+ */
+isc_boolean_t
+dns_ssu_external_match(dns_name_t *identity, dns_name_t *signer,
+		       dns_name_t *name, isc_netaddr_t *tcpaddr,
+		       dns_rdatatype_t type, const dst_key_t *key,
+		       isc_mem_t *mctx);
 
 ISC_LANG_ENDDECLS
 

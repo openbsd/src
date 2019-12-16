@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,10 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: result.h,v 1.62.18.4 2005/06/22 22:05:49 marka Exp $ */
+/* $Id: result.h,v 1.3 2019/12/16 16:16:26 deraadt Exp $ */
 
 #ifndef ISC_RESULT_H
 #define ISC_RESULT_H 1
+
+/*! \file isc/result.h */
 
 #include <isc/lang.h>
 #include <isc/types.h>
@@ -40,6 +42,7 @@
 #define ISC_R_EOF			14	/*%< end of file */
 #define ISC_R_BOUND			15	/*%< socket already bound */
 #define ISC_R_RELOAD			16	/*%< reload */
+#define ISC_R_SUSPEND	      ISC_R_RELOAD	/*%< alias of 'reload' */
 #define ISC_R_LOCKBUSY			17	/*%< lock busy */
 #define ISC_R_EXISTS			18	/*%< already exists */
 #define ISC_R_NOSPACE			19	/*%< ran out of space */
@@ -84,9 +87,12 @@
 #define ISC_R_MAXSIZE			58	/*%< max size */
 #define ISC_R_BADADDRESSFORM		59	/*%< invalid address format */
 #define ISC_R_BADBASE32			60	/*%< bad base32 encoding */
+#define ISC_R_UNSET			61	/*%< unset */
+#define ISC_R_MULTIPLE			62	/*%< multiple */
+#define ISC_R_WOULDBLOCK		63	/*%< would block */
 
 /*% Not a result code: the number of results. */
-#define ISC_R_NRESULTS 			61
+#define ISC_R_NRESULTS 			64
 
 ISC_LANG_BEGINDECLS
 

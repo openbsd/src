@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,34 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: string.c,v 1.10.18.7 2006/10/03 23:50:51 marka Exp $ */
+/*
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*! \file */
 
@@ -29,14 +56,14 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
-static char digits[] = "0123456789abcdefghijklmnoprstuvwxyz";
+static const char digits[] = "0123456789abcdefghijklmnoprstuvwxyz";
 
 isc_uint64_t
 isc_string_touint64(char *source, char **end, int base) {
 	isc_uint64_t tmp;
 	isc_uint64_t overflow;
 	char *s = source;
-	char *o;
+	const char *o;
 	char c;
 
 	if ((base < 0) || (base == 1) || (base > 36)) {
@@ -44,7 +71,7 @@ isc_string_touint64(char *source, char **end, int base) {
 		return (0);
 	}
 
-	while (isascii(*s&0xff) && isspace(*s&0xff))
+	while (*s != 0 && isascii(*s&0xff) && isspace(*s&0xff))
 		s++;
 	if (*s == '+' /* || *s == '-' */)
 		s++;
@@ -165,14 +192,15 @@ isc_string_printf(char *target, size_t size, const char *format, ...) {
 }
 
 void
-isc_string_printf_truncate(char *target, size_t size, const char *format, ...) {
+isc_string_printf_truncate(char *target, size_t size, const char *format, ...)
+{
 	va_list args;
-	size_t n;
 
 	REQUIRE(size > 0U);
 
 	va_start(args, format);
-	n = vsnprintf(target, size, format, args);
+	/* check return code? */
+	(void)vsnprintf(target, size, format, args);
 	va_end(args);
 
 	ENSURE(strlen(target) < size);
@@ -187,7 +215,7 @@ isc_string_regiondup(isc_mem_t *mctx, const isc_region_t *source) {
 
 	target = (char *) isc_mem_allocate(mctx, source->length + 1);
 	if (target != NULL) {
-		memcpy(source->base, target, source->length);
+		memmove(source->base, target, source->length);
 		target[source->length] = '\0';
 	}
 
@@ -267,4 +295,25 @@ isc_string_strlcat(char *dst, const char *src, size_t size)
 	*d = '\0';
 
 	return(dlen + (s - src));	/* count does not include NUL */
+}
+
+char *
+isc_string_strcasestr(const char *str, const char *search) {
+	char c, sc, *s;
+	size_t len;
+
+	if ((c = *search++) != 0) {
+		c = tolower((unsigned char) c);
+		len = strlen(search);
+		do {
+			do {
+				if ((sc = *str++) == 0)
+					return (NULL);
+			} while ((char) tolower((unsigned char) sc) != c);
+		} while (strncasecmp(str, search, len) != 0);
+		str--;
+	}
+	DE_CONST(str, s);
+	return (s);
+
 }

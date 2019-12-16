@@ -1,8 +1,8 @@
 /*
- * Portions Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007, 2008, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1996-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -27,11 +27,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -71,7 +67,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
-static char rcsid[] = "$ISC: inet_aton.c,v 1.17.18.2 2005/04/29 00:16:46 marka Exp $";
+static char rcsid[] = "$Id: inet_aton.c,v 1.6 2019/12/16 16:16:26 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -91,8 +87,9 @@ static char rcsid[] = "$ISC: inet_aton.c,v 1.17.18.2 2005/04/29 00:16:46 marka E
  */
 int
 isc_net_aton(const char *cp, struct in_addr *addr) {
-	unsigned long val;
-	int base, n;
+	isc_uint32_t val;
+	int base;
+	ptrdiff_t n;
 	unsigned char c;
 	isc_uint8_t parts[4];
 	isc_uint8_t *pp = parts;
@@ -145,7 +142,7 @@ isc_net_aton(const char *cp, struct in_addr *addr) {
 			 *	a.b.c	(with c treated as 16 bits)
 			 *	a.b	(with b treated as 24 bits)
 			 */
-			if (pp >= parts + 3 || val > 0xff)
+			if (pp >= parts + 3 || val > 0xffU)
 				return (0);
 			*pp++ = (isc_uint8_t)val;
 			c = *++cp;
@@ -172,19 +169,19 @@ isc_net_aton(const char *cp, struct in_addr *addr) {
 		break;
 
 	case 2:				/* a.b -- 8.24 bits */
-		if (val > 0xffffff)
+		if (val > 0xffffffU)
 			return (0);
 		val |= parts[0] << 24;
 		break;
 
 	case 3:				/* a.b.c -- 8.8.16 bits */
-		if (val > 0xffff)
+		if (val > 0xffffU)
 			return (0);
 		val |= (parts[0] << 24) | (parts[1] << 16);
 		break;
 
 	case 4:				/* a.b.c.d -- 8.8.8.8 bits */
-		if (val > 0xff)
+		if (val > 0xffU)
 			return (0);
 		val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
 		break;

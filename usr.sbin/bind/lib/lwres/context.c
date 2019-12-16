@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,9 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: context.c,v 1.45.18.7 2007/08/28 07:20:06 tbox Exp $ */
+/* $Id: context.c,v 1.8 2019/12/16 16:16:28 deraadt Exp $ */
 
-/*! \file context.c 
+/*! \file context.c
    lwres_context_create() creates a #lwres_context_t structure for use in
    lightweight resolver operations. It holds a socket and other data
    needed for communicating with a resolver daemon. The new
@@ -120,7 +120,7 @@
 #ifndef MAKE_NONBLOCKING
 #define MAKE_NONBLOCKING(sd, retval) \
 do { \
-	retval = fcntl(sd, F_GETFL); \
+	retval = fcntl(sd, F_GETFL, 0); \
 	if (retval != -1) { \
 		retval |= O_NONBLOCK; \
 		retval = fcntl(sd, F_SETFL, retval); \
@@ -156,7 +156,6 @@ lwres_context_create(lwres_context_t **contextp, void *arg,
 	lwres_context_t *ctx;
 
 	REQUIRE(contextp != NULL && *contextp == NULL);
-	UNUSED(flags);
 
 	/*
 	 * If we were not given anything special to use, use our own
@@ -182,7 +181,22 @@ lwres_context_create(lwres_context_t **contextp, void *arg,
 	ctx->sock = -1;
 
 	ctx->timeout = LWRES_DEFAULT_TIMEOUT;
+#ifndef WIN32
 	ctx->serial = time(NULL); /* XXXMLG or BEW */
+#else
+	ctx->serial = _time32(NULL);
+#endif
+
+	ctx->use_ipv4 = 1;
+	ctx->use_ipv6 = 1;
+	if ((flags & (LWRES_CONTEXT_USEIPV4 | LWRES_CONTEXT_USEIPV6)) ==
+	    LWRES_CONTEXT_USEIPV6) {
+		ctx->use_ipv4 = 0;
+	}
+	if ((flags & (LWRES_CONTEXT_USEIPV4 | LWRES_CONTEXT_USEIPV6)) ==
+	    LWRES_CONTEXT_USEIPV4) {
+		ctx->use_ipv6 = 0;
+	}
 
 	/*
 	 * Init resolv.conf bits.
@@ -194,9 +208,9 @@ lwres_context_create(lwres_context_t **contextp, void *arg,
 }
 
 /*%
-Destroys a #lwres_context_t, closing its socket. 
-contextp is a pointer to a pointer to the context that is 
-to be destroyed. The pointer will be set to NULL 
+Destroys a #lwres_context_t, closing its socket.
+contextp is a pointer to a pointer to the context that is
+to be destroyed. The pointer will be set to NULL
 when the context has been destroyed.
  */
 void
@@ -276,7 +290,11 @@ lwres_free(void *arg, void *mem, size_t len) {
 
 static lwres_result_t
 context_connect(lwres_context_t *ctx) {
+#ifndef WIN32
 	int s;
+#else
+	SOCKET s;
+#endif
 	int ret;
 	struct sockaddr_in sin;
 	struct sockaddr_in6 sin6;
@@ -285,8 +303,8 @@ context_connect(lwres_context_t *ctx) {
 	int domain;
 
 	if (ctx->confdata.lwnext != 0) {
-		memcpy(&ctx->address, &ctx->confdata.lwservers[0],
-		       sizeof(lwres_addr_t));
+		memmove(&ctx->address, &ctx->confdata.lwservers[0],
+			sizeof(lwres_addr_t));
 		LWRES_LINK_INIT(&ctx->address, link);
 	} else {
 		/* The default is the IPv4 loopback address 127.0.0.1. */
@@ -300,16 +318,16 @@ context_connect(lwres_context_t *ctx) {
 	}
 
 	if (ctx->address.family == LWRES_ADDRTYPE_V4) {
-		memcpy(&sin.sin_addr, ctx->address.address,
-		       sizeof(sin.sin_addr));
+		memmove(&sin.sin_addr, ctx->address.address,
+			sizeof(sin.sin_addr));
 		sin.sin_port = htons(lwres_udp_port);
 		sin.sin_family = AF_INET;
 		sa = (struct sockaddr *)&sin;
 		salen = sizeof(sin);
 		domain = PF_INET;
 	} else if (ctx->address.family == LWRES_ADDRTYPE_V6) {
-		memcpy(&sin6.sin6_addr, ctx->address.address,
-		       sizeof(sin6.sin6_addr));
+		memmove(&sin6.sin6_addr, ctx->address.address,
+			sizeof(sin6.sin6_addr));
 		sin6.sin6_port = htons(lwres_udp_port);
 		sin6.sin6_family = AF_INET6;
 		sa = (struct sockaddr *)&sin6;
@@ -322,12 +340,16 @@ context_connect(lwres_context_t *ctx) {
 	InitSockets();
 #endif
 	s = socket(domain, SOCK_DGRAM, IPPROTO_UDP);
+#ifndef WIN32
 	if (s < 0) {
-#ifdef WIN32
-		DestroySockets();
-#endif
 		return (LWRES_R_IOERROR);
 	}
+#else
+	if (s == INVALID_SOCKET) {
+		DestroySockets();
+		return (LWRES_R_IOERROR);
+	}
+#endif
 
 	ret = connect(s, sa, salen);
 	if (ret != 0) {
@@ -347,7 +369,7 @@ context_connect(lwres_context_t *ctx) {
 		return (LWRES_R_IOERROR);
 	}
 
-	ctx->sock = s;
+	ctx->sock = (int)s;
 
 	return (LWRES_R_SUCCESS);
 }
@@ -367,6 +389,7 @@ lwres_context_send(lwres_context_t *ctx,
 		lwresult = context_connect(ctx);
 		if (lwresult != LWRES_R_SUCCESS)
 			return (lwresult);
+		INSIST(ctx->sock >= 0);
 	}
 
 	ret = sendto(ctx->sock, sendbase, sendlen, 0, NULL, 0);
@@ -449,10 +472,10 @@ lwres_context_sendrecv(lwres_context_t *ctx,
 	struct timeval timeout;
 
 	/*
-	 * Type of tv_sec is at least 32 bits long. 
+	 * Type of tv_sec is 32 bits long.
 	 */
 	if (ctx->timeout <= 0x7FFFFFFFU)
-		timeout.tv_sec = ctx->timeout;
+		timeout.tv_sec = (int)ctx->timeout;
 	else
 		timeout.tv_sec = 0x7FFFFFFF;
 
@@ -461,11 +484,22 @@ lwres_context_sendrecv(lwres_context_t *ctx,
 	result = lwres_context_send(ctx, sendbase, sendlen);
 	if (result != LWRES_R_SUCCESS)
 		return (result);
+
+	/*
+	 * If this is not checked, select() can overflow,
+	 * causing corruption elsewhere.
+	 */
+	if (ctx->sock >= (int)FD_SETSIZE) {
+		close(ctx->sock);
+		ctx->sock = -1;
+		return (LWRES_R_IOERROR);
+	}
+
  again:
 	FD_ZERO(&readfds);
 	FD_SET(ctx->sock, &readfds);
 	ret2 = select(ctx->sock + 1, &readfds, NULL, NULL, &timeout);
-	
+
 	/*
 	 * What happened with select?
 	 */
@@ -477,6 +511,6 @@ lwres_context_sendrecv(lwres_context_t *ctx,
 	result = lwres_context_recv(ctx, recvbase, recvlen, recvd_len);
 	if (result == LWRES_R_RETRY)
 		goto again;
-	
+
 	return (result);
 }

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,12 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: time.h,v 1.11.18.2 2005/04/29 00:16:23 marka Exp $ */
+/* $Id: time.h,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
 
 #ifndef DNS_TIME_H
 #define DNS_TIME_H 1
 
-/*! \file */
+/*! \file dns/time.h */
 
 /***
  ***	Imports
@@ -65,6 +65,12 @@ dns_time32_totext(isc_uint32_t value, isc_buffer_t *target);
  * Of those dates whose counts of seconds since Jan 1 1970 0:00 GMT
  * are congruent with 'value' modulo 2^32, the one closest to the
  * current date is chosen.
+ */
+
+isc_int64_t
+dns_time64_from32(isc_uint32_t value);
+/*%<
+ * Covert a 32-bit cyclic time value into a 64 bit time stamp.
  */
 
 ISC_LANG_ENDDECLS

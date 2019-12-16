@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,12 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: master.h,v 1.38.18.6 2005/06/20 01:19:43 marka Exp $ */
+/* $Id: master.h,v 1.5 2019/12/16 16:16:25 deraadt Exp $ */
 
 #ifndef DNS_MASTER_H
 #define DNS_MASTER_H 1
 
-/*! \file */
+/*! \file dns/master.h */
 
 /***
  ***	Imports
@@ -42,7 +42,7 @@
 #define DNS_MASTER_HINT 	0x00000010	/*%< Loading a hint master file. */
 #define DNS_MASTER_SLAVE 	0x00000020	/*%< Loading a slave master file. */
 #define DNS_MASTER_CHECKNS 	0x00000040	/*%<
-						 * Check NS records to see 
+						 * Check NS records to see
 						 * if they are an address
 						 */
 #define DNS_MASTER_FATALNS 	0x00000080	/*%<
@@ -55,6 +55,11 @@
 #define DNS_MASTER_CHECKMX	0x00000800
 #define DNS_MASTER_CHECKMXFAIL	0x00001000
 
+#define DNS_MASTER_RESIGN	0x00002000
+#define DNS_MASTER_KEY	 	0x00004000	/*%< Loading a key zone master file. */
+#define DNS_MASTER_NOTTL	0x00008000	/*%< Don't require ttl. */
+#define DNS_MASTER_CHECKTTL	0x00010000	/*%< Check max-zone-ttl */
+
 ISC_LANG_BEGINDECLS
 
 /*
@@ -63,18 +68,31 @@ ISC_LANG_BEGINDECLS
  * encoding, we directly read/write each field so that the encoded data
  * is always "packed", regardless of the hardware architecture.
  */
-#define DNS_RAWFORMAT_VERSION 0
+#define DNS_RAWFORMAT_VERSION 1
+
+/*
+ * Flags to indicate the status of the data in the raw file header
+ */
+#define DNS_MASTERRAW_COMPAT 		0x01
+#define DNS_MASTERRAW_SOURCESERIALSET	0x02
+#define DNS_MASTERRAW_LASTXFRINSET	0x04
 
 /* Common header */
-typedef struct {
+struct dns_masterrawheader {
 	isc_uint32_t		format;		/* must be
-						 * dns_masterformat_raw */
+						 * dns_masterformat_raw
+						 * or
+						 * dns_masterformat_map */
 	isc_uint32_t		version;	/* compatibility for future
 						 * extensions */
 	isc_uint32_t		dumptime;	/* timestamp on creation
-						 * (currently unused)
-						 */
-} dns_masterrawheader_t;
+						 * (currently unused) */
+	isc_uint32_t		flags;		/* Flags */
+	isc_uint32_t		sourceserial;	/* Source serial number (used
+						 * by inline-signing zones) */
+	isc_uint32_t		lastxfrin;	/* timestamp of last transfer
+						 * (used by slave zones) */
+};
 
 /* The structure for each RRset */
 typedef struct {
@@ -88,6 +106,13 @@ typedef struct {
 	isc_uint32_t		nrdata;		/* number of RRs in this set */
 	/* followed by encoded owner name, and then rdata */
 } dns_masterrawrdataset_t;
+
+/*
+ * Method prototype: a callback to register each include file as
+ * it is encountered.
+ */
+typedef void
+(*dns_masterincludecb_t)(const char *file, void *arg);
 
 /***
  ***	Function
@@ -111,6 +136,42 @@ dns_master_loadfile2(const char *master_file,
 		     dns_rdatacallbacks_t *callbacks,
 		     isc_mem_t *mctx,
 		     dns_masterformat_t format);
+
+isc_result_t
+dns_master_loadfile3(const char *master_file,
+		     dns_name_t *top,
+		     dns_name_t *origin,
+		     dns_rdataclass_t zclass,
+		     unsigned int options,
+		     isc_uint32_t resign,
+		     dns_rdatacallbacks_t *callbacks,
+		     isc_mem_t *mctx,
+		     dns_masterformat_t format);
+
+isc_result_t
+dns_master_loadfile4(const char *master_file,
+		     dns_name_t *top,
+		     dns_name_t *origin,
+		     dns_rdataclass_t zclass,
+		     unsigned int options,
+		     isc_uint32_t resign,
+		     dns_rdatacallbacks_t *callbacks,
+		     dns_masterincludecb_t include_cb,
+		     void *include_arg, isc_mem_t *mctx,
+		     dns_masterformat_t format);
+
+isc_result_t
+dns_master_loadfile5(const char *master_file,
+		     dns_name_t *top,
+		     dns_name_t *origin,
+		     dns_rdataclass_t zclass,
+		     unsigned int options,
+		     isc_uint32_t resign,
+		     dns_rdatacallbacks_t *callbacks,
+		     dns_masterincludecb_t include_cb,
+		     void *include_arg, isc_mem_t *mctx,
+		     dns_masterformat_t format,
+		     dns_ttl_t maxttl);
 
 isc_result_t
 dns_master_loadstream(FILE *stream,
@@ -163,6 +224,48 @@ dns_master_loadfileinc2(const char *master_file,
 			dns_masterformat_t format);
 
 isc_result_t
+dns_master_loadfileinc3(const char *master_file,
+			dns_name_t *top,
+			dns_name_t *origin,
+			dns_rdataclass_t zclass,
+			unsigned int options,
+			isc_uint32_t resign,
+			dns_rdatacallbacks_t *callbacks,
+			isc_task_t *task,
+			dns_loaddonefunc_t done, void *done_arg,
+			dns_loadctx_t **ctxp, isc_mem_t *mctx,
+			dns_masterformat_t format);
+
+isc_result_t
+dns_master_loadfileinc4(const char *master_file,
+			dns_name_t *top,
+			dns_name_t *origin,
+			dns_rdataclass_t zclass,
+			unsigned int options,
+			isc_uint32_t resign,
+			dns_rdatacallbacks_t *callbacks,
+			isc_task_t *task,
+			dns_loaddonefunc_t done, void *done_arg,
+			dns_loadctx_t **ctxp,
+			dns_masterincludecb_t include_cb, void *include_arg,
+			isc_mem_t *mctx, dns_masterformat_t format);
+
+isc_result_t
+dns_master_loadfileinc5(const char *master_file,
+			dns_name_t *top,
+			dns_name_t *origin,
+			dns_rdataclass_t zclass,
+			unsigned int options,
+			isc_uint32_t resign,
+			dns_rdatacallbacks_t *callbacks,
+			isc_task_t *task,
+			dns_loaddonefunc_t done, void *done_arg,
+			dns_loadctx_t **ctxp,
+			dns_masterincludecb_t include_cb, void *include_arg,
+			isc_mem_t *mctx, dns_masterformat_t format,
+			isc_uint32_t maxttl);
+
+isc_result_t
 dns_master_loadstreaminc(FILE *stream,
 			 dns_name_t *top,
 			 dns_name_t *origin,
@@ -211,6 +314,9 @@ dns_master_loadlexerinc(isc_lex_t *lex,
  * 'done' is called with 'done_arg' and a result code when the loading
  * is completed or has failed.  If the initial setup fails 'done' is
  * not called.
+ *
+ * 'resign' the number of seconds before a RRSIG expires that it should
+ * be re-signed.  0 is used if not provided.
  *
  * Requires:
  *\li	'master_file' points to a valid string.
@@ -272,6 +378,12 @@ dns_loadctx_cancel(dns_loadctx_t *ctx);
  *\li	'ctx' to be valid
  */
 
+void
+dns_master_initrawheader(dns_masterrawheader_t *header);
+/*%<
+ * Initializes the header for a raw master file, setting all
+ * values to zero.
+ */
 ISC_LANG_ENDDECLS
 
 #endif /* DNS_MASTER_H */

@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: xfrin.h,v 1.20.18.5 2006/07/20 01:10:30 marka Exp $ */
+/* $Id: xfrin.h,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
 
 #ifndef DNS_XFRIN_H
 #define DNS_XFRIN_H 1
@@ -24,7 +24,7 @@
  ***** Module Info
  *****/
 
-/*! \file 
+/*! \file dns/xfrin.h
  * \brief
  * Incoming zone transfers (AXFR + IXFR).
  */
@@ -67,6 +67,14 @@ dns_xfrin_create2(dns_zone_t *zone, dns_rdatatype_t xfrtype,
 		  isc_timermgr_t *timermgr, isc_socketmgr_t *socketmgr,
 		  isc_task_t *task, dns_xfrindone_t done,
 		  dns_xfrin_ctx_t **xfrp);
+
+isc_result_t
+dns_xfrin_create3(dns_zone_t *zone, dns_rdatatype_t xfrtype,
+		  isc_sockaddr_t *masteraddr, isc_sockaddr_t *sourceaddr,
+		  isc_dscp_t dscp, dns_tsigkey_t *tsigkey, isc_mem_t *mctx,
+		  isc_timermgr_t *timermgr, isc_socketmgr_t *socketmgr,
+		  isc_task_t *task, dns_xfrindone_t done,
+		  dns_xfrin_ctx_t **xfrp);
 /*%<
  * Attempt to start an incoming zone transfer of 'zone'
  * from 'masteraddr', creating a dns_xfrin_ctx_t object to
@@ -90,7 +98,7 @@ dns_xfrin_shutdown(dns_xfrin_ctx_t *xfr);
 /*%<
  * If the zone transfer 'xfr' has already finished,
  * do nothing.  Otherwise, abort it and cause it to call
- * its done callback with a status of ISC_R_CANCELLED.
+ * its done callback with a status of ISC_R_CANCELED.
  */
 
 void

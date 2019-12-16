@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: spf_99.c,v 1.1.2.2 2005/07/16 00:40:54 marka Exp $ */
+/* $Id: spf_99.c,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
 
 /* Reviewed: Thu Mar 16 15:40:00 PST 2000 by bwelling */
 
@@ -26,10 +26,8 @@
 
 static inline isc_result_t
 fromtext_spf(ARGS_FROMTEXT) {
-	isc_token_t token;
-	int strings;
 
-	REQUIRE(type == 99);
+	REQUIRE(type == dns_rdatatype_spf);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -37,75 +35,42 @@ fromtext_spf(ARGS_FROMTEXT) {
 	UNUSED(options);
 	UNUSED(callbacks);
 
-	strings = 0;
-	for (;;) {
-		RETERR(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_qstring,
-					      ISC_TRUE));
-		if (token.type != isc_tokentype_qstring &&
-		    token.type != isc_tokentype_string)
-			break;
-		RETTOK(txt_fromtext(&token.value.as_textregion, target));
-		strings++;
-	}
-	/* Let upper layer handle eol/eof. */
-	isc_lex_ungettoken(lexer, &token);
-	return (strings == 0 ? ISC_R_UNEXPECTEDEND : ISC_R_SUCCESS);
+	return (generic_fromtext_txt(rdclass, type, lexer, origin, options,
+				     target, callbacks));
 }
 
 static inline isc_result_t
 totext_spf(ARGS_TOTEXT) {
-	isc_region_t region;
 
 	UNUSED(tctx);
 
-	REQUIRE(rdata->type == 99);
+	REQUIRE(rdata->type == dns_rdatatype_spf);
 
-	dns_rdata_toregion(rdata, &region);
-
-	while (region.length > 0) {
-		RETERR(txt_totext(&region, target));
-		if (region.length > 0)
-			RETERR(str_totext(" ", target));
-	}
-
-	return (ISC_R_SUCCESS);
+	return (generic_totext_txt(rdata, tctx, target));
 }
 
 static inline isc_result_t
 fromwire_spf(ARGS_FROMWIRE) {
-	isc_result_t result;
 
-	REQUIRE(type == 99);
+	REQUIRE(type == dns_rdatatype_spf);
 
 	UNUSED(type);
 	UNUSED(dctx);
 	UNUSED(rdclass);
 	UNUSED(options);
 
-	do {
-		result = txt_fromwire(source, target);
-		if (result != ISC_R_SUCCESS)
-			return (result);
-	} while (!buffer_empty(source));
-	return (ISC_R_SUCCESS);
+	return (generic_fromwire_txt(rdclass, type, source, dctx, options,
+				     target));
 }
 
 static inline isc_result_t
 towire_spf(ARGS_TOWIRE) {
-	isc_region_t region;
 
-	REQUIRE(rdata->type == 99);
+	REQUIRE(rdata->type == dns_rdatatype_spf);
 
 	UNUSED(cctx);
 
-	isc_buffer_availableregion(target, &region);
-	if (region.length < rdata->length)
-		return (ISC_R_NOSPACE);
-
-	memcpy(region.base, rdata->data, rdata->length);
-	isc_buffer_add(target, rdata->length);
-	return (ISC_R_SUCCESS);
+	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
 static inline int
@@ -115,7 +80,7 @@ compare_spf(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 99);
+	REQUIRE(rdata1->type == dns_rdatatype_spf);
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
@@ -124,53 +89,24 @@ compare_spf(ARGS_COMPARE) {
 
 static inline isc_result_t
 fromstruct_spf(ARGS_FROMSTRUCT) {
-	dns_rdata_spf_t *txt = source;
-	isc_region_t region;
-	isc_uint8_t length;
 
-	REQUIRE(type == 99);
-	REQUIRE(source != NULL);
-	REQUIRE(txt->common.rdtype == type);
-	REQUIRE(txt->common.rdclass == rdclass);
-	REQUIRE(txt->txt != NULL && txt->txt_len != 0);
+	REQUIRE(type == dns_rdatatype_spf);
 
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	region.base = txt->txt;
-	region.length = txt->txt_len;
-	while (region.length > 0) {
-		length = uint8_fromregion(&region);
-		isc_region_consume(&region, 1);
-		if (region.length <= length)
-			return (ISC_R_UNEXPECTEDEND);
-		isc_region_consume(&region, length);
-	}
-
-	return (mem_tobuffer(target, txt->txt, txt->txt_len));
+	return (generic_fromstruct_txt(rdclass, type, source, target));
 }
 
 static inline isc_result_t
 tostruct_spf(ARGS_TOSTRUCT) {
-	dns_rdata_spf_t *txt = target;
-	isc_region_t r;
+	dns_rdata_spf_t *spf = target;
 
-	REQUIRE(rdata->type == 99);
+	REQUIRE(rdata->type == dns_rdatatype_spf);
 	REQUIRE(target != NULL);
 
-	txt->common.rdclass = rdata->rdclass;
-	txt->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&txt->common, link);
+	spf->common.rdclass = rdata->rdclass;
+	spf->common.rdtype = rdata->type;
+	ISC_LINK_INIT(&spf->common, link);
 
-	dns_rdata_toregion(rdata, &r);
-	txt->txt_len = r.length;
-	txt->txt = mem_maybedup(mctx, r.base, r.length);
-	if (txt->txt == NULL)
-		return (ISC_R_NOMEMORY);
-
-	txt->offset = 0;
-	txt->mctx = mctx;
-	return (ISC_R_SUCCESS);
+	return (generic_tostruct_txt(rdata, target, mctx));
 }
 
 static inline void
@@ -178,19 +114,14 @@ freestruct_spf(ARGS_FREESTRUCT) {
 	dns_rdata_spf_t *txt = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(txt->common.rdtype == 99);
+	REQUIRE(txt->common.rdtype == dns_rdatatype_spf);
 
-	if (txt->mctx == NULL)
-		return;
-
-	if (txt->txt != NULL)
-		isc_mem_free(txt->mctx, txt->txt);
-	txt->mctx = NULL;
+	generic_freestruct_txt(source);
 }
 
 static inline isc_result_t
 additionaldata_spf(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 99);
+	REQUIRE(rdata->type == dns_rdatatype_spf);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -203,7 +134,7 @@ static inline isc_result_t
 digest_spf(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 99);
+	REQUIRE(rdata->type == dns_rdatatype_spf);
 
 	dns_rdata_toregion(rdata, &r);
 
@@ -213,7 +144,7 @@ digest_spf(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_spf(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 99);
+	REQUIRE(type == dns_rdatatype_spf);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -226,7 +157,7 @@ checkowner_spf(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_spf(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 99);
+	REQUIRE(rdata->type == dns_rdatatype_spf);
 
 	UNUSED(rdata);
 	UNUSED(owner);
@@ -235,4 +166,8 @@ checknames_spf(ARGS_CHECKNAMES) {
 	return (ISC_TRUE);
 }
 
+static inline int
+casecompare_spf(ARGS_COMPARE) {
+	return (compare_spf(rdata1, rdata2));
+}
 #endif	/* RDATA_GENERIC_SPF_99_C */

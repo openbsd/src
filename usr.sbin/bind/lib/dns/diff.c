@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: diff.c,v 1.9.18.3 2005/04/27 05:01:15 sra Exp $ */
+/* $Id: diff.c,v 1.2 2019/12/16 16:16:24 deraadt Exp $ */
 
 /*! \file */
 
@@ -26,6 +26,7 @@
 #include <isc/buffer.h>
 #include <isc/file.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -35,6 +36,7 @@
 #include <dns/rdataclass.h>
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
+#include <dns/rdatastruct.h>
 #include <dns/rdatatype.h>
 #include <dns/result.h>
 
@@ -72,12 +74,13 @@ dns_difftuple_create(isc_mem_t *mctx,
 	t = isc_mem_allocate(mctx, size);
 	if (t == NULL)
 		return (ISC_R_NOMEMORY);
-	t->mctx = mctx;
+	t->mctx = NULL;
+	isc_mem_attach(mctx, &t->mctx);
 	t->op = op;
 
 	datap = (unsigned char *)(t + 1);
 
-	memcpy(datap, name->ndata, name->length);
+	memmove(datap, name->ndata, name->length);
 	dns_name_init(&t->name, NULL);
 	dns_name_clone(name, &t->name);
 	t->name.ndata = datap;
@@ -85,7 +88,7 @@ dns_difftuple_create(isc_mem_t *mctx,
 
 	t->ttl = ttl;
 
-	memcpy(datap, rdata->data, rdata->length);
+	memmove(datap, rdata->data, rdata->length);
 	dns_rdata_init(&t->rdata);
 	dns_rdata_clone(rdata, &t->rdata);
 	t->rdata.data = datap;
@@ -104,10 +107,15 @@ dns_difftuple_create(isc_mem_t *mctx,
 void
 dns_difftuple_free(dns_difftuple_t **tp) {
 	dns_difftuple_t *t = *tp;
+	isc_mem_t *mctx;
+
 	REQUIRE(DNS_DIFFTUPLE_VALID(t));
+
 	dns_name_invalidate(&t->name);
 	t->magic = 0;
-	isc_mem_free(t->mctx, t);
+	mctx = t->mctx;
+	isc_mem_free(mctx, t);
+	isc_mem_detach(&mctx);
 	*tp = NULL;
 }
 
@@ -192,6 +200,40 @@ dns_diff_appendminimal(dns_diff_t *diff, dns_difftuple_t **tuplep)
 	ENSURE(*tuplep == NULL);
 }
 
+static isc_stdtime_t
+setresign(dns_rdataset_t *modified) {
+	dns_rdata_t rdata = DNS_RDATA_INIT;
+	dns_rdata_rrsig_t sig;
+	isc_stdtime_t when;
+	isc_result_t result;
+
+	result = dns_rdataset_first(modified);
+	INSIST(result == ISC_R_SUCCESS);
+	dns_rdataset_current(modified, &rdata);
+	(void)dns_rdata_tostruct(&rdata, &sig, NULL);
+	if ((rdata.flags & DNS_RDATA_OFFLINE) != 0)
+		when = 0;
+	else
+		when = sig.timeexpire;
+	dns_rdata_reset(&rdata);
+
+	result = dns_rdataset_next(modified);
+	while (result == ISC_R_SUCCESS) {
+		dns_rdataset_current(modified, &rdata);
+		(void)dns_rdata_tostruct(&rdata, &sig, NULL);
+		if ((rdata.flags & DNS_RDATA_OFFLINE) != 0) {
+			goto next_rr;
+		}
+		if (when == 0 || sig.timeexpire < when)
+			when = sig.timeexpire;
+ next_rr:
+		dns_rdata_reset(&rdata);
+		result = dns_rdataset_next(modified);
+	}
+	INSIST(result == ISC_R_NOMORE);
+	return (when);
+}
+
 static isc_result_t
 diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 	   isc_boolean_t warn)
@@ -220,14 +262,14 @@ diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 		 * but such diffs should never be created in the first
 		 * place.
 		 */
-		node = NULL;
-		CHECK(dns_db_findnode(db, name, ISC_TRUE, &node));
 
 		while (t != NULL && dns_name_equal(&t->name, name)) {
 			dns_rdatatype_t type, covers;
 			dns_diffop_t op;
 			dns_rdatalist_t rdl;
 			dns_rdataset_t rds;
+			dns_rdataset_t ardataset;
+			dns_rdataset_t *modified = NULL;
 
 			op = t->op;
 			type = t->rdata.type;
@@ -248,12 +290,20 @@ diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 			 * of the diff itself is not affected.
 			 */
 
+			dns_rdatalist_init(&rdl);
 			rdl.type = type;
 			rdl.covers = covers;
 			rdl.rdclass = t->rdata.rdclass;
 			rdl.ttl = t->ttl;
-			ISC_LIST_INIT(rdl.rdata);
-			ISC_LINK_INIT(&rdl, link);
+
+			node = NULL;
+			if (type != dns_rdatatype_nsec3 &&
+			    covers != dns_rdatatype_nsec3)
+				CHECK(dns_db_findnode(db, name, ISC_TRUE,
+						      &node));
+			else
+				CHECK(dns_db_findnsec3node(db, name, ISC_TRUE,
+							   &node));
 
 			while (t != NULL &&
 			       dns_name_equal(&t->name, name) &&
@@ -269,7 +319,7 @@ diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 						      sizeof(classbuf));
 				if (t->ttl != rdl.ttl && warn)
 					isc_log_write(DIFF_COMMON_LOGARGS,
-					      	ISC_LOG_WARNING,
+						ISC_LOG_WARNING,
 						"'%s/%s/%s': TTL differs in "
 						"rdataset, adjusting "
 						"%lu -> %lu",
@@ -285,28 +335,51 @@ diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 			 */
 			dns_rdataset_init(&rds);
 			CHECK(dns_rdatalist_tordataset(&rdl, &rds));
+			if (rds.type == dns_rdatatype_rrsig)
+				switch (op) {
+				case DNS_DIFFOP_ADDRESIGN:
+				case DNS_DIFFOP_DELRESIGN:
+					modified = &ardataset;
+					dns_rdataset_init(modified);
+					break;
+				default:
+					break;
+				}
 			rds.trust = dns_trust_ultimate;
 
 			/*
 			 * Merge the rdataset into the database.
 			 */
-			if (op == DNS_DIFFOP_ADD) {
+			switch (op) {
+			case DNS_DIFFOP_ADD:
+			case DNS_DIFFOP_ADDRESIGN:
 				result = dns_db_addrdataset(db, node, ver,
 							    0, &rds,
 							    DNS_DBADD_MERGE|
 							    DNS_DBADD_EXACT|
 							    DNS_DBADD_EXACTTTL,
-							    NULL);
-			} else if (op == DNS_DIFFOP_DEL) {
+							    modified);
+				break;
+			case DNS_DIFFOP_DEL:
+			case DNS_DIFFOP_DELRESIGN:
 				result = dns_db_subtractrdataset(db, node, ver,
 							       &rds,
 							       DNS_DBSUB_EXACT,
-							       NULL);
-			} else {
+							       modified);
+				break;
+			default:
 				INSIST(0);
 			}
-			if (result == DNS_R_UNCHANGED) {
-			  	/*
+
+			if (result == ISC_R_SUCCESS) {
+				if (modified != NULL) {
+					isc_stdtime_t resign;
+					resign = setresign(modified);
+					dns_db_setsigningtime(db, modified,
+							      resign);
+				}
+			} else if (result == DNS_R_UNCHANGED) {
+				/*
 				 * This will not happen when executing a
 				 * dynamic update, because that code will
 				 * generate strictly minimal diffs.
@@ -314,20 +387,34 @@ diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 				 * from a server that is not as careful.
 				 * Issue a warning and continue.
 				 */
-				if (warn)
+				if (warn) {
+					dns_name_format(dns_db_origin(db),
+							namebuf,
+							sizeof(namebuf));
+					dns_rdataclass_format(dns_db_class(db),
+							      classbuf,
+							      sizeof(classbuf));
 					isc_log_write(DIFF_COMMON_LOGARGS,
 						      ISC_LOG_WARNING,
-						      "update with no effect");
-			} else if (result == ISC_R_SUCCESS ||
-				   result == DNS_R_NXRRSET) {
+						      "%s/%s: dns_diff_apply: "
+						      "update with no effect",
+						      namebuf, classbuf);
+				}
+			} else if (result == DNS_R_NXRRSET) {
 				/*
 				 * OK.
 				 */
 			} else {
+				if (modified != NULL &&
+				    dns_rdataset_isassociated(modified))
+					dns_rdataset_disassociate(modified);
 				CHECK(result);
 			}
+			dns_db_detachnode(db, &node);
+			if (modified != NULL &&
+			    dns_rdataset_isassociated(modified))
+				dns_rdataset_disassociate(modified);
 		}
-		dns_db_detachnode(db, &node);
 	}
 	return (ISC_R_SUCCESS);
 
@@ -373,12 +460,11 @@ dns_diff_load(dns_diff_t *diff, dns_addrdatasetfunc_t addfunc,
 			type = t->rdata.type;
 			covers = rdata_covers(&t->rdata);
 
+			dns_rdatalist_init(&rdl);
 			rdl.type = type;
 			rdl.covers = covers;
 			rdl.rdclass = t->rdata.rdclass;
 			rdl.ttl = t->ttl;
-			ISC_LIST_INIT(rdl.rdata);
-			ISC_LINK_INIT(&rdl, link);
 
 			while (t != NULL && dns_name_equal(&t->name, name) &&
 			       t->op == op && t->rdata.type == type &&
@@ -400,6 +486,7 @@ dns_diff_load(dns_diff_t *diff, dns_addrdatasetfunc_t addfunc,
 			if (result == DNS_R_UNCHANGED) {
 				isc_log_write(DIFF_COMMON_LOGARGS,
 					      ISC_LOG_WARNING,
+					      "dns_diff_load: "
 					      "update with no effect");
 			} else if (result == ISC_R_SUCCESS ||
 				   result == DNS_R_NXRRSET) {
@@ -437,7 +524,6 @@ dns_diff_sort(dns_diff_t *diff, dns_diff_compare_func *compare) {
 	v = isc_mem_get(diff->mctx, length * sizeof(dns_difftuple_t *));
 	if (v == NULL)
 		return (ISC_R_NOMEMORY);
-	i = 0;
 	for (i = 0; i < length; i++) {
 		p = ISC_LIST_HEAD(diff->tuples);
 		v[i] = p;
@@ -455,7 +541,7 @@ dns_diff_sort(dns_diff_t *diff, dns_diff_compare_func *compare) {
 
 /*
  * Create an rdataset containing the single RR of the given
- * tuple.  The caller must allocate the the rdata, rdataset and
+ * tuple.  The caller must allocate the rdata, rdataset and
  * an rdatalist structure for it to refer to.
  */
 
@@ -467,11 +553,10 @@ diff_tuple_tordataset(dns_difftuple_t *t, dns_rdata_t *rdata,
 	REQUIRE(rdl != NULL);
 	REQUIRE(rds != NULL);
 
+	dns_rdatalist_init(rdl);
 	rdl->type = t->rdata.type;
 	rdl->rdclass = t->rdata.rdclass;
 	rdl->ttl = t->ttl;
-	ISC_LIST_INIT(rdl->rdata);
-	ISC_LINK_INIT(rdl, link);
 	dns_rdataset_init(rds);
 	ISC_LINK_INIT(rdata, link);
 	dns_rdata_clone(&t->rdata, rdata);
@@ -485,6 +570,7 @@ dns_diff_print(dns_diff_t *diff, FILE *file) {
 	dns_difftuple_t *t;
 	char *mem = NULL;
 	unsigned int size = 2048;
+	const char *op = NULL;
 
 	REQUIRE(DNS_DIFF_VALID(diff));
 
@@ -536,15 +622,20 @@ dns_diff_print(dns_diff_t *diff, FILE *file) {
 		buf.used--;
 
 		isc_buffer_usedregion(&buf, &r);
+		switch (t->op) {
+		case DNS_DIFFOP_EXISTS: op = "exists"; break;
+		case DNS_DIFFOP_ADD: op = "add"; break;
+		case DNS_DIFFOP_DEL: op = "del"; break;
+		case DNS_DIFFOP_ADDRESIGN: op = "add re-sign"; break;
+		case DNS_DIFFOP_DELRESIGN: op = "del re-sign"; break;
+		}
 		if (file != NULL)
-			fprintf(file, "%s %.*s\n",
-				t->op == DNS_DIFFOP_ADD ?  "add" : "del",
-				(int) r.length, (char *) r.base);
+			fprintf(file, "%s %.*s\n", op, (int) r.length,
+				(char *) r.base);
 		else
 			isc_log_write(DIFF_COMMON_LOGARGS, ISC_LOG_DEBUG(7),
-				      "%s %.*s",
-				      t->op == DNS_DIFFOP_ADD ?  "add" : "del",
-				      (int) r.length, (char *) r.base);
+				      "%s %.*s", op, (int) r.length,
+				      (char *) r.base);
 	}
 	result = ISC_R_SUCCESS;
  cleanup:

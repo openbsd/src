@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,12 +15,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: types.h,v 1.109.18.12 2006/05/02 12:55:31 shane Exp $ */
-
 #ifndef DNS_TYPES_H
 #define DNS_TYPES_H 1
 
-/*! \file
+/*! \file dns/types.h
  * \brief
  * Including this file gives you type declarations suitable for use in
  * .h files, which lets us avoid circular type reference problems.
@@ -28,6 +26,8 @@
  * To actually use a type or get declarations of its methods, you must
  * include the appropriate .h file too.
  */
+
+#include <stdio.h>
 
 #include <isc/types.h>
 
@@ -44,6 +44,10 @@ typedef struct dns_adbentry			dns_adbentry_t;
 typedef struct dns_adbfind			dns_adbfind_t;
 typedef ISC_LIST(dns_adbfind_t)			dns_adbfindlist_t;
 typedef struct dns_byaddr			dns_byaddr_t;
+typedef struct dns_client			dns_client_t;
+typedef void					dns_clientrestrans_t;
+typedef void					dns_clientreqtrans_t;
+typedef void					dns_clientupdatetrans_t;
 typedef struct dns_cache			dns_cache_t;
 typedef isc_uint16_t				dns_cert_t;
 typedef struct dns_compress			dns_compress_t;
@@ -56,25 +60,38 @@ typedef struct dns_dbtable			dns_dbtable_t;
 typedef void					dns_dbversion_t;
 typedef struct dns_dlzimplementation		dns_dlzimplementation_t;
 typedef struct dns_dlzdb			dns_dlzdb_t;
+typedef ISC_LIST(dns_dlzdb_t)			dns_dlzdblist_t;
 typedef struct dns_sdlzimplementation		dns_sdlzimplementation_t;
 typedef struct dns_decompress			dns_decompress_t;
 typedef struct dns_dispatch			dns_dispatch_t;
 typedef struct dns_dispatchevent		dns_dispatchevent_t;
 typedef struct dns_dispatchlist			dns_dispatchlist_t;
+typedef struct dns_dispatchset			dns_dispatchset_t;
 typedef struct dns_dispatchmgr			dns_dispatchmgr_t;
 typedef struct dns_dispentry			dns_dispentry_t;
+typedef struct dns_dns64			dns_dns64_t;
+typedef ISC_LIST(dns_dns64_t)			dns_dns64list_t;
+typedef struct dns_dnsseckey			dns_dnsseckey_t;
+typedef ISC_LIST(dns_dnsseckey_t)		dns_dnsseckeylist_t;
+typedef isc_uint8_t				dns_dsdigest_t;
 typedef struct dns_dumpctx			dns_dumpctx_t;
+typedef struct dns_ednsopt			dns_ednsopt_t;
 typedef struct dns_fetch			dns_fetch_t;
 typedef struct dns_fixedname			dns_fixedname_t;
 typedef struct dns_forwarders			dns_forwarders_t;
+typedef struct dns_forwarder			dns_forwarder_t;
 typedef struct dns_fwdtable			dns_fwdtable_t;
+typedef struct dns_iptable			dns_iptable_t;
 typedef isc_uint32_t				dns_iterations_t;
 typedef isc_uint16_t				dns_keyflags_t;
 typedef struct dns_keynode			dns_keynode_t;
+typedef ISC_LIST(dns_keynode_t)			dns_keynodelist_t;
 typedef struct dns_keytable			dns_keytable_t;
 typedef isc_uint16_t				dns_keytag_t;
 typedef struct dns_loadctx			dns_loadctx_t;
 typedef struct dns_loadmgr			dns_loadmgr_t;
+typedef struct dns_masterrawheader		dns_masterrawheader_t;
+typedef isc_uint64_t				dns_masterstyle_flags_t;
 typedef struct dns_message			dns_message_t;
 typedef isc_uint16_t				dns_messageid_t;
 typedef isc_region_t				dns_label_t;
@@ -106,11 +123,15 @@ typedef isc_uint8_t				dns_secproto_t;
 typedef struct dns_signature			dns_signature_t;
 typedef struct dns_ssurule			dns_ssurule_t;
 typedef struct dns_ssutable			dns_ssutable_t;
+typedef struct dns_stats			dns_stats_t;
+typedef isc_uint32_t				dns_rdatastatstype_t;
 typedef struct dns_tkeyctx			dns_tkeyctx_t;
 typedef isc_uint16_t				dns_trust_t;
+typedef struct dns_tsec				dns_tsec_t;
 typedef struct dns_tsig_keyring			dns_tsig_keyring_t;
 typedef struct dns_tsigkey			dns_tsigkey_t;
 typedef isc_uint32_t				dns_ttl_t;
+typedef struct dns_update_state			dns_update_state_t;
 typedef struct dns_validator			dns_validator_t;
 typedef struct dns_view				dns_view_t;
 typedef ISC_LIST(dns_view_t)			dns_viewlist_t;
@@ -118,6 +139,15 @@ typedef struct dns_zone				dns_zone_t;
 typedef ISC_LIST(dns_zone_t)			dns_zonelist_t;
 typedef struct dns_zonemgr			dns_zonemgr_t;
 typedef struct dns_zt				dns_zt_t;
+
+/*
+ * If we are not using GSSAPI, define the types we use as opaque types here.
+ */
+#ifndef GSSAPI
+typedef struct not_defined_gss_cred_id *gss_cred_id_t;
+typedef struct not_defined_gss_ctx *gss_ctx_id_t;
+#endif
+typedef struct dst_gssapi_signverifyctx dst_gssapi_signverifyctx_t;
 
 typedef enum {
 	dns_hash_sha1 = 1
@@ -164,8 +194,15 @@ typedef enum {
 typedef enum {
 	dns_masterformat_none = 0,
 	dns_masterformat_text = 1,
-	dns_masterformat_raw = 2
+	dns_masterformat_raw  = 2,
+	dns_masterformat_map = 3
 } dns_masterformat_t;
+
+typedef enum {
+	dns_aaaa_ok = 0,
+	dns_aaaa_filter = 1,
+	dns_aaaa_break_dnssec = 2
+} dns_aaaa_t;
 
 /*
  * These are generated by gen.c.
@@ -205,8 +242,11 @@ enum {
 	/*
 	 * Extended rcodes.
 	 */
-	dns_rcode_badvers = 16
+	dns_rcode_badvers = 16,
 #define dns_rcode_badvers		((dns_rcode_t)dns_rcode_badvers)
+	dns_rcode_badcookie = 23
+#define dns_rcode_badcookie		((dns_rcode_t)dns_rcode_badcookie)
+	/* Private space [3841..4095] */
 };
 
 /*%
@@ -246,48 +286,77 @@ enum {
 	dns_trust_none = 0,
 #define dns_trust_none			((dns_trust_t)dns_trust_none)
 
-	/*% Subject to DNSSEC validation but has not yet been validated */
-	dns_trust_pending = 1,
-#define dns_trust_pending		((dns_trust_t)dns_trust_pending)
+	/*%
+	 * Subject to DNSSEC validation but has not yet been validated
+	 * dns_trust_pending_additional (from the additional section).
+	 */
+	dns_trust_pending_additional = 1,
+#define dns_trust_pending_additional \
+		 ((dns_trust_t)dns_trust_pending_additional)
+
+	dns_trust_pending_answer = 2,
+#define dns_trust_pending_answer	((dns_trust_t)dns_trust_pending_answer)
 
 	/*% Received in the additional section of a response. */
-	dns_trust_additional = 2,
+	dns_trust_additional = 3,
 #define dns_trust_additional		((dns_trust_t)dns_trust_additional)
 
-	/* Received in a referral response. */ 
-	dns_trust_glue = 3,
+	/* Received in a referral response. */
+	dns_trust_glue = 4,
 #define dns_trust_glue			((dns_trust_t)dns_trust_glue)
 
-	/* Answser from a non-authoritative server */
-	dns_trust_answer = 4,
+	/* Answer from a non-authoritative server */
+	dns_trust_answer = 5,
 #define dns_trust_answer		((dns_trust_t)dns_trust_answer)
 
 	/*  Received in the authority section as part of an
 	    authoritative response */
-	dns_trust_authauthority = 5,
+	dns_trust_authauthority = 6,
 #define dns_trust_authauthority		((dns_trust_t)dns_trust_authauthority)
 
-	/* Answser from an authoritative server */
-	dns_trust_authanswer = 6,
+	/* Answer from an authoritative server */
+	dns_trust_authanswer = 7,
 #define dns_trust_authanswer		((dns_trust_t)dns_trust_authanswer)
 
-	/* Successfully DNSSEC validated */	
-	dns_trust_secure = 7,
+	/* Successfully DNSSEC validated */
+	dns_trust_secure = 8,
 #define dns_trust_secure		((dns_trust_t)dns_trust_secure)
 
 	/* This server is authoritative */
-	dns_trust_ultimate = 8
+	dns_trust_ultimate = 9
 #define dns_trust_ultimate		((dns_trust_t)dns_trust_ultimate)
 };
 
+#define DNS_TRUST_PENDING(x)		((x) == dns_trust_pending_answer || \
+					 (x) == dns_trust_pending_additional)
+#define DNS_TRUST_ADDITIONAL(x)		((x) == dns_trust_additional || \
+					 (x) == dns_trust_pending_additional)
+#define DNS_TRUST_GLUE(x)		((x) == dns_trust_glue)
+#define DNS_TRUST_ANSWER(x)		((x) == dns_trust_answer)
+
+
 /*%
- * Name checking severites.
+ * Name checking severities.
  */
 typedef enum {
 	dns_severity_ignore,
 	dns_severity_warn,
 	dns_severity_fail
 } dns_severity_t;
+
+/*%
+ * DNS Serial Number Update Method.
+ *
+ * \li	_increment:	Add one to the current serial, skipping 0.
+ * \li	_unixtime:	Set to the seconds since 00:00 Jan 1, 1970,
+ *			if possible.
+ * \li	_yyyymmvv:	Set to Year, Month, Version, if possible.
+ *			(Not yet implemented)
+ */
+typedef enum {
+	dns_updatemethod_increment = 0,
+	dns_updatemethod_unixtime
+} dns_updatemethod_t;
 
 /*
  * Functions.
@@ -297,6 +366,9 @@ typedef void
 
 typedef void
 (*dns_loaddonefunc_t)(void *, isc_result_t);
+
+typedef void
+(*dns_rawdatafunc_t)(dns_zone_t *, dns_masterrawheader_t *);
 
 typedef isc_result_t
 (*dns_addrdatasetfunc_t)(void *, dns_name_t *, dns_rdataset_t *);
@@ -313,7 +385,7 @@ typedef void
 typedef void
 (*dns_updatecallback_t)(void *, isc_result_t, dns_message_t *);
 
-typedef int 
+typedef int
 (*dns_rdatasetorderfunc_t)(const dns_rdata_t *, const void *);
 
 typedef isc_boolean_t
@@ -329,5 +401,11 @@ typedef isc_boolean_t
 typedef isc_boolean_t
 (*dns_isselffunc_t)(dns_view_t *, dns_tsigkey_t *, isc_sockaddr_t *,
 		    isc_sockaddr_t *, dns_rdataclass_t, void *);
+
+typedef isc_result_t
+(*dns_deserializefunc_t)(void *, FILE *, off_t);
+
+typedef void
+(*dns_nseclog_t)(void *val, int , const char *, ...);
 
 #endif /* DNS_TYPES_H */

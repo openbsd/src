@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: name.h,v 1.107.18.15 2006/03/02 00:37:21 marka Exp $ */
+/* $Id: name.h,v 1.7 2019/12/16 16:16:25 deraadt Exp $ */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -24,7 +24,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file dns/name.h
  * \brief
  * Provides facilities for manipulating DNS names and labels, including
  * conversions to and from wire format and text format.
@@ -99,12 +99,6 @@ ISC_LANG_BEGINDECLS
  *****/
 
 /***
- *** Compression pointer chaining limit
- ***/
-
-#define DNS_POINTER_MAXHOPS		16
-
-/***
  *** Types
  ***/
 
@@ -127,20 +121,27 @@ struct dns_name {
 
 #define DNS_NAME_MAGIC			ISC_MAGIC('D','N','S','n')
 
-#define DNS_NAMEATTR_ABSOLUTE		0x0001
-#define DNS_NAMEATTR_READONLY		0x0002
-#define DNS_NAMEATTR_DYNAMIC		0x0004
-#define DNS_NAMEATTR_DYNOFFSETS		0x0008
+#define DNS_NAMEATTR_ABSOLUTE		0x00000001
+#define DNS_NAMEATTR_READONLY		0x00000002
+#define DNS_NAMEATTR_DYNAMIC		0x00000004
+#define DNS_NAMEATTR_DYNOFFSETS		0x00000008
+#define DNS_NAMEATTR_NOCOMPRESS		0x00000010
 /*
  * Attributes below 0x0100 reserved for name.c usage.
  */
-#define DNS_NAMEATTR_CACHE		0x0100		/*%< Used by resolver. */
-#define DNS_NAMEATTR_ANSWER		0x0200		/*%< Used by resolver. */
-#define DNS_NAMEATTR_NCACHE		0x0400		/*%< Used by resolver. */
-#define DNS_NAMEATTR_CHAINING		0x0800		/*%< Used by resolver. */
-#define DNS_NAMEATTR_CHASE		0x1000		/*%< Used by resolver. */
-#define DNS_NAMEATTR_WILDCARD		0x2000		/*%< Used by server. */
+#define DNS_NAMEATTR_CACHE		0x00000100	/*%< Used by resolver. */
+#define DNS_NAMEATTR_ANSWER		0x00000200	/*%< Used by resolver. */
+#define DNS_NAMEATTR_NCACHE		0x00000400	/*%< Used by resolver. */
+#define DNS_NAMEATTR_CHAINING		0x00000800	/*%< Used by resolver. */
+#define DNS_NAMEATTR_CHASE		0x00001000	/*%< Used by resolver. */
+#define DNS_NAMEATTR_WILDCARD		0x00002000	/*%< Used by server. */
+#define DNS_NAMEATTR_PREREQUISITE	0x00004000	/*%< Used by client. */
+#define DNS_NAMEATTR_UPDATE		0x00008000	/*%< Used by client. */
+#define DNS_NAMEATTR_HASUPDATEREC	0x00010000	/*%< Used by client. */
 
+/*
+ * Various flags.
+ */
 #define DNS_NAME_DOWNCASE		0x0001
 #define DNS_NAME_CHECKNAMES		0x0002		/*%< Used by rdata. */
 #define DNS_NAME_CHECKNAMESFAIL		0x0004		/*%< Used by rdata. */
@@ -230,6 +231,11 @@ dns_name_invalidate(dns_name_t *name);
  * \li	If the name had a dedicated buffer, that association is ended.
  */
 
+isc_boolean_t
+dns_name_isvalid(const dns_name_t *name);
+/*%<
+ * Check whether 'name' points to a valid dns_name
+ */
 
 /***
  *** Dedicated Buffers
@@ -242,7 +248,7 @@ dns_name_setbuffer(dns_name_t *name, isc_buffer_t *buffer);
  *
  * Notes:
  * \li	Specification of a target buffer in dns_name_fromwire(),
- *	dns_name_fromtext(), and dns_name_concatentate() is optional if
+ *	dns_name_fromtext(), and dns_name_concatenate() is optional if
  *	'name' has a dedicated buffer.
  *
  * \li	The caller must not write to buffer until the name has been
@@ -721,7 +727,7 @@ dns_name_fromwire(dns_name_t *name, isc_buffer_t *source,
 
 isc_result_t
 dns_name_towire(const dns_name_t *name, dns_compress_t *cctx,
-	        isc_buffer_t *target);
+		isc_buffer_t *target);
 /*%<
  * Convert 'name' into wire format, compressing it as specified by the
  * compression context 'cctx', and storing the result in 'target'.
@@ -755,7 +761,7 @@ dns_name_towire(const dns_name_t *name, dns_compress_t *cctx,
 
 isc_result_t
 dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
-		  dns_name_t *origin, unsigned int options,
+		  const dns_name_t *origin, unsigned int options,
 		  isc_buffer_t *target);
 /*%<
  * Convert the textual representation of a DNS name at source
@@ -801,15 +807,30 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
  *\li	#ISC_R_UNEXPECTEDEND
  */
 
+#define DNS_NAME_OMITFINALDOT	0x01U
+#define DNS_NAME_MASTERFILE	0x02U	/* escape $ and @ */
+
+isc_result_t
+dns_name_toprincipal(dns_name_t *name, isc_buffer_t *target);
+
 isc_result_t
 dns_name_totext(dns_name_t *name, isc_boolean_t omit_final_dot,
 		isc_buffer_t *target);
+
+isc_result_t
+dns_name_totext2(dns_name_t *name, unsigned int options, isc_buffer_t *target);
 /*%<
  * Convert 'name' into text format, storing the result in 'target'.
  *
  * Notes:
  *\li	If 'omit_final_dot' is true, then the final '.' in absolute
  *	names other than the root name will be omitted.
+ *
+ *\li	If DNS_NAME_OMITFINALDOT is set in options, then the final '.'
+ *	in absolute names other than the root name will be omitted.
+ *
+ *\li	If DNS_NAME_MASTERFILE is set in options, '$' and '@' will also
+ *	be escaped.
  *
  *\li	If dns_name_countlabels == 0, the name will be "@", representing the
  *	current origin as described by RFC1035.
@@ -840,7 +861,7 @@ dns_name_totext(dns_name_t *name, isc_boolean_t omit_final_dot,
  * name as generated by dns_name_totext().  This does not
  * include space for a terminating NULL.
  *
- * This definition is conservative - the actual maximum 
+ * This definition is conservative - the actual maximum
  * is 1004, derived as follows:
  *
  *   A backslash-decimal escaped character takes 4 bytes.
@@ -952,7 +973,7 @@ dns_name_split(dns_name_t *name, unsigned int suffixlabels,
  *
  * Notes:
  * \li     'name' is split such that 'suffix' holds the most significant
- *      'suffixlabels' labels.  All other labels are stored in 'prefix'. 
+ *      'suffixlabels' labels.  All other labels are stored in 'prefix'.
  *
  *\li	Copying name data is avoided as much as possible, so 'prefix'
  *	and 'suffix' will end up pointing at the data for 'name'.
@@ -972,10 +993,6 @@ dns_name_split(dns_name_t *name, unsigned int suffixlabels,
  * \li	'prefix' is a valid name or NULL, and cannot be read-only.
  *
  *\li	'suffix' is a valid name or NULL, and cannot be read-only.
- *
- *\li	If non-NULL, 'prefix' and 'suffix' must have dedicated buffers.
- *
- *\li	'prefix' and 'suffix' cannot point to the same buffer.
  *
  * Ensures:
  *
@@ -1082,7 +1099,7 @@ dns_name_dynamic(dns_name_t *name);
  *
  * Returns:
  *
- *\li	'ISC_TRUE' if the name is dynamic othewise 'ISC_FALSE'.
+ *\li	'ISC_TRUE' if the name is dynamic otherwise 'ISC_FALSE'.
  */
 
 isc_result_t
@@ -1126,6 +1143,57 @@ dns_name_format(dns_name_t *name, char *cp, unsigned int size);
  *
  *\li	'size' > 0.
  *
+ */
+
+isc_result_t
+dns_name_tostring(dns_name_t *source, char **target, isc_mem_t *mctx);
+/*%<
+ * Convert 'name' to string format, allocating sufficient memory to
+ * hold it (free with isc_mem_free()).
+ *
+ * Differs from dns_name_format in that it allocates its own memory.
+ *
+ * Requires:
+ *
+ *\li	'name' is a valid name.
+ *\li	'target' is not NULL.
+ *\li	'*target' is NULL.
+ *
+ * Returns:
+ *
+ *\li	ISC_R_SUCCESS
+ *\li	ISC_R_NOMEMORY
+ *
+ *\li	Any error that dns_name_totext() can return.
+ */
+
+isc_result_t
+dns_name_fromstring(dns_name_t *target, const char *src, unsigned int options,
+		    isc_mem_t *mctx);
+isc_result_t
+dns_name_fromstring2(dns_name_t *target, const char *src,
+		     const dns_name_t *origin, unsigned int options,
+		     isc_mem_t *mctx);
+/*%<
+ * Convert a string to a name and place it in target, allocating memory
+ * as necessary.  'options' has the same semantics as that of
+ * dns_name_fromtext().
+ *
+ * If 'target' has a buffer then the name will be copied into it rather than
+ * memory being allocated.
+ *
+ * Requires:
+ *
+ * \li	'target' is a valid name that is not read-only.
+ * \li	'src' is not NULL.
+ *
+ * Returns:
+ *
+ *\li	#ISC_R_SUCCESS
+ *
+ *\li	Any error that dns_name_fromtext() can return.
+ *
+ *\li	Any error that dns_name_dup() can return.
  */
 
 isc_result_t
@@ -1185,7 +1253,7 @@ dns_name_ishostname(const dns_name_t *name, isc_boolean_t wildcard);
  * Requires:
  *	'name' to be valid.
  */
- 
+
 
 isc_boolean_t
 dns_name_ismailbox(const dns_name_t *name);
@@ -1217,10 +1285,28 @@ dns_name_destroy(void);
  * non-NULL argument prior to calling dns_name_destroy();
  */
 
+isc_boolean_t
+dns_name_isdnssd(const dns_name_t *owner);
+/*%<
+ * Determine if the 'owner' is a DNS-SD prefix.
+ */
+
+isc_boolean_t
+dns_name_isrfc1918(const dns_name_t *owner);
+/*%<
+ * Determine if the 'name' is in the RFC 1918 reverse namespace.
+ */
+
+isc_boolean_t
+dns_name_isula(const dns_name_t *owner);
+/*%<
+ * Determine if the 'name' is in the ULA reverse namespace.
+ */
+
 ISC_LANG_ENDDECLS
 
 /*
- *** High Peformance Macros
+ *** High Performance Macros
  ***/
 
 /*
@@ -1233,15 +1319,17 @@ ISC_LANG_ENDDECLS
 
 #define DNS_NAME_INIT(n, o) \
 do { \
-	(n)->magic = DNS_NAME_MAGIC; \
-	(n)->ndata = NULL; \
-	(n)->length = 0; \
-	(n)->labels = 0; \
-	(n)->attributes = 0; \
-	(n)->offsets = (o); \
-	(n)->buffer = NULL; \
-	ISC_LINK_INIT((n), link); \
-	ISC_LIST_INIT((n)->list); \
+	dns_name_t *_n = (n); \
+	/* memset(_n, 0, sizeof(*_n)); */ \
+	_n->magic = DNS_NAME_MAGIC; \
+	_n->ndata = NULL; \
+	_n->length = 0; \
+	_n->labels = 0; \
+	_n->attributes = 0; \
+	_n->offsets = (o); \
+	_n->buffer = NULL; \
+	ISC_LINK_INIT(_n, link); \
+	ISC_LIST_INIT(_n->list); \
 } while (0)
 
 #define DNS_NAME_RESET(n) \

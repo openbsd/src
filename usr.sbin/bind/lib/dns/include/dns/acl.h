@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: acl.h,v 1.22.18.4 2006/03/02 00:37:21 marka Exp $ */
+/* $Id: acl.h,v 1.2 2019/12/16 16:16:24 deraadt Exp $ */
 
 #ifndef DNS_ACL_H
 #define DNS_ACL_H 1
@@ -24,7 +24,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file dns/acl.h
  * \brief
  * Address match list handling.
  */
@@ -38,8 +38,16 @@
 #include <isc/netaddr.h>
 #include <isc/refcount.h>
 
+#ifdef HAVE_GEOIP
+#include <dns/geoip.h>
+#endif
 #include <dns/name.h>
 #include <dns/types.h>
+#include <dns/iptable.h>
+
+#ifdef HAVE_GEOIP
+#include <GeoIP.h>
+#endif
 
 /***
  *** Types
@@ -51,8 +59,11 @@ typedef enum {
 	dns_aclelementtype_nestedacl,
 	dns_aclelementtype_localhost,
 	dns_aclelementtype_localnets,
+#ifdef HAVE_GEOIP
+	dns_aclelementtype_geoip,
+#endif /* HAVE_GEOIP */
 	dns_aclelementtype_any
-} dns_aclelemettype_t;
+} dns_aclelementtype_t;
 
 typedef struct dns_aclipprefix dns_aclipprefix_t;
 
@@ -62,20 +73,24 @@ struct dns_aclipprefix {
 };
 
 struct dns_aclelement {
-	dns_aclelemettype_t type;
-	isc_boolean_t negative;
-	union {
-		dns_aclipprefix_t ip_prefix;
-		dns_name_t 	  keyname;
-		dns_acl_t 	  *nestedacl;
-	} u;
+	dns_aclelementtype_t	type;
+	isc_boolean_t		negative;
+	dns_name_t		keyname;
+#ifdef HAVE_GEOIP
+	dns_geoip_elem_t	geoip_elem;
+#endif /* HAVE_GEOIP */
+	dns_acl_t		*nestedacl;
+	int			node_num;
 };
 
 struct dns_acl {
 	unsigned int		magic;
 	isc_mem_t		*mctx;
 	isc_refcount_t		refcount;
+	dns_iptable_t		*iptable;
+#define node_count		iptable->radix->num_added_node
 	dns_aclelement_t	*elements;
+	isc_boolean_t 		has_negatives;
 	unsigned int 		alloc;		/*%< Elements allocated */
 	unsigned int 		length;		/*%< Elements initialized */
 	char 			*name;		/*%< Temporary use only */
@@ -86,6 +101,9 @@ struct dns_aclenv {
 	dns_acl_t *localhost;
 	dns_acl_t *localnets;
 	isc_boolean_t match_mapped;
+#ifdef HAVE_GEOIP
+	dns_geoip_databases_t *geoip;
+#endif
 };
 
 #define DNS_ACL_MAGIC		ISC_MAGIC('D','a','c','l')
@@ -100,14 +118,9 @@ ISC_LANG_BEGINDECLS
 isc_result_t
 dns_acl_create(isc_mem_t *mctx, int n, dns_acl_t **target);
 /*%<
- * Create a new ACL with room for 'n' elements.
- * The elements are uninitialized and the length is 0.
- */
-
-isc_result_t
-dns_acl_appendelement(dns_acl_t *acl, const dns_aclelement_t *elt);
-/*%<
- * Append an element to an existing ACL.
+ * Create a new ACL, including an IP table and an array with room
+ * for 'n' ACL elements.  The elements are uninitialized and the
+ * length is 0.
  */
 
 isc_result_t
@@ -122,24 +135,59 @@ dns_acl_none(isc_mem_t *mctx, dns_acl_t **target);
  * Create a new ACL that matches nothing.
  */
 
+isc_boolean_t
+dns_acl_isany(dns_acl_t *acl);
+/*%<
+ * Test whether ACL is set to "{ any; }"
+ */
+
+isc_boolean_t
+dns_acl_isnone(dns_acl_t *acl);
+/*%<
+ * Test whether ACL is set to "{ none; }"
+ */
+
+isc_result_t
+dns_acl_merge(dns_acl_t *dest, dns_acl_t *source, isc_boolean_t pos);
+/*%<
+ * Merge the contents of one ACL into another.  Call dns_iptable_merge()
+ * for the IP tables, then concatenate the element arrays.
+ *
+ * If pos is set to false, then the nested ACL is to be negated.  This
+ * means reverse the sense of each *positive* element or IP table node,
+ * but leave negatives alone, so as to prevent a double-negative causing
+ * an unexpected positive match in the parent ACL.
+ */
+
 void
 dns_acl_attach(dns_acl_t *source, dns_acl_t **target);
+/*%<
+ * Attach to acl 'source'.
+ *
+ * Requires:
+ *\li	'source' to be a valid acl.
+ *\li	'target' to be non NULL and '*target' to be NULL.
+ */
 
 void
 dns_acl_detach(dns_acl_t **aclp);
-
-isc_boolean_t
-dns_aclelement_equal(const dns_aclelement_t *ea, const dns_aclelement_t *eb);
-
-isc_boolean_t
-dns_acl_equal(const dns_acl_t *a, const dns_acl_t *b);
+/*%<
+ * Detach the acl. On final detach the acl must not be linked on any
+ * list.
+ *
+ * Requires:
+ *\li	'*aclp' to be a valid acl.
+ *
+ * Insists:
+ *\li	'*aclp' is not linked on final detach.
+ */
 
 isc_boolean_t
 dns_acl_isinsecure(const dns_acl_t *a);
 /*%<
  * Return #ISC_TRUE iff the acl 'a' is considered insecure, that is,
  * if it contains IP addresses other than those of the local host.
- * This is intended for applications such as printing warning 
+ * This is intended for applications such as printing warning
  * messages for suspect ACLs; it is not intended for making access
  * control decisions.  We make no guarantee that an ACL for which
  * this function returns #ISC_FALSE is safe.
@@ -147,6 +195,9 @@ dns_acl_isinsecure(const dns_acl_t *a);
 
 isc_result_t
 dns_aclenv_init(isc_mem_t *mctx, dns_aclenv_t *env);
+/*%<
+ * Initialize ACL environment, setting up localhost and localnets ACLs
+ */
 
 void
 dns_aclenv_copy(dns_aclenv_t *t, dns_aclenv_t *s);
@@ -168,18 +219,20 @@ dns_acl_match(const isc_netaddr_t *reqaddr,
  * Match the address 'reqaddr', and optionally the key name 'reqsigner',
  * against 'acl'.  'reqsigner' may be NULL.
  *
- * If there is a positive match, '*match' will be set to a positive value
- * indicating the distance from the beginning of the list.
- *
- * If there is a negative match, '*match' will be set to a negative value
- * whose absolute value indicates the distance from the beginning of
- * the list.
- *
- * If there is a match (either positive or negative) and 'matchelt' is
- * non-NULL, *matchelt will be attached to the primitive
- * (non-indirect) address match list element that matched.
+ * If there is a match, '*match' will be set to an integer whose absolute
+ * value corresponds to the order in which the matching value was inserted
+ * into the ACL.  For a positive match, this value will be positive; for a
+ * negative match, it will be negative.
  *
  * If there is no match, *match will be set to zero.
+ *
+ * If there is a match in the element list (either positive or negative)
+ * and 'matchelt' is non-NULL, *matchelt will be pointed to the matching
+ * element.
+ *
+ * 'env' points to the current ACL environment, including the
+ * current values of localhost and localnets and (if applicable)
+ * the GeoIP context.
  *
  * Returns:
  *\li	#ISC_R_SUCCESS		Always succeeds.
@@ -189,32 +242,16 @@ isc_boolean_t
 dns_aclelement_match(const isc_netaddr_t *reqaddr,
 		     const dns_name_t *reqsigner,
 		     const dns_aclelement_t *e,
-		     const dns_aclenv_t *env,		     
+		     const dns_aclenv_t *env,
 		     const dns_aclelement_t **matchelt);
 /*%<
  * Like dns_acl_match, but matches against the single ACL element 'e'
- * rather than a complete list and returns ISC_TRUE iff it matched.
- * To determine whether the match was prositive or negative, the 
+ * rather than a complete ACL, and returns ISC_TRUE iff it matched.
+ *
+ * To determine whether the match was positive or negative, the
  * caller should examine e->negative.  Since the element 'e' may be
- * a reference to a named ACL or a nested ACL, the matching element
+ * a reference to a named ACL or a nested ACL, a matching element
  * returned through 'matchelt' is not necessarily 'e' itself.
- */
-
-isc_result_t
-dns_acl_elementmatch(const dns_acl_t *acl,
-		     const dns_aclelement_t *elt,
-		     const dns_aclelement_t **matchelt);
-/*%<
- * Search for an ACL element in 'acl' which is exactly the same as 'elt'.
- * If there is one, and 'matchelt' is non NULL, then '*matchelt' will point
- * to the entry.
- *
- * This function is intended to be used for avoiding duplicated ACL entries
- * before adding an entry.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS		Match succeeds.
- *\li	#ISC_R_NOTFOUND		Match fails.
  */
 
 ISC_LANG_ENDDECLS

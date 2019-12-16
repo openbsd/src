@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2012, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,12 +15,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: sockaddr.h,v 1.42.18.8 2006/03/02 00:37:22 marka Exp $ */
+/* $Id: sockaddr.h,v 1.2 2019/12/16 16:16:26 deraadt Exp $ */
 
 #ifndef ISC_SOCKADDR_H
 #define ISC_SOCKADDR_H 1
 
-/*! \file */
+/*! \file isc/sockaddr.h */
 
 #include <isc/lang.h>
 #include <isc/net.h>
@@ -34,6 +34,7 @@ struct isc_sockaddr {
 		struct sockaddr		sa;
 		struct sockaddr_in	sin;
 		struct sockaddr_in6	sin6;
+		struct sockaddr_storage ss;
 #ifdef ISC_PLATFORM_HAVESYSUNH
 		struct sockaddr_un	sunix;
 #endif
@@ -41,8 +42,6 @@ struct isc_sockaddr {
 	unsigned int			length;		/* XXXRTH beginning? */
 	ISC_LINK(struct isc_sockaddr)	link;
 };
-
-typedef ISC_LIST(struct isc_sockaddr)	isc_sockaddrlist_t;
 
 #define ISC_SOCKADDR_CMPADDR	  0x0001	/*%< compare the address
 						 *   sin_addr/sin6_addr */
@@ -84,6 +83,7 @@ isc_sockaddr_eqaddrprefix(const isc_sockaddr_t *a, const isc_sockaddr_t *b,
 /*%<
  * Return ISC_TRUE iff the most significant 'prefixlen' bits of the
  * socket addresses 'a' and 'b' are equal, ignoring the ports.
+ * If 'b''s scope is zero then 'a''s scope will be ignored.
  */
 
 unsigned int
@@ -209,13 +209,19 @@ isc_sockaddr_isexperimental(const isc_sockaddr_t *sa);
 isc_boolean_t
 isc_sockaddr_islinklocal(const isc_sockaddr_t *sa);
 /*%<
- * Returns ISC_TRUE if the address is a link local addresss.
+ * Returns ISC_TRUE if the address is a link local address.
  */
 
 isc_boolean_t
 isc_sockaddr_issitelocal(const isc_sockaddr_t *sa);
 /*%<
  * Returns ISC_TRUE if the address is a sitelocal address.
+ */
+
+isc_boolean_t
+isc_sockaddr_isnetzero(const isc_sockaddr_t *sa);
+/*%<
+ * Returns ISC_TRUE if the address is in net zero.
  */
 
 isc_result_t

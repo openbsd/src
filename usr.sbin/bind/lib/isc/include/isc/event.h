@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2014, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,12 +15,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: event.h,v 1.27.18.3 2005/04/29 00:16:54 marka Exp $ */
-
 #ifndef ISC_EVENT_H
 #define ISC_EVENT_H 1
 
-/*! \file */
+/*! \file isc/event.h */
 
 #include <isc/lang.h>
 #include <isc/types.h>
@@ -41,7 +39,8 @@ typedef void (*isc_eventdestructor_t)(isc_event_t *);
 	void *				ev_sender; \
 	isc_eventdestructor_t		ev_destroy; \
 	void *				ev_destroy_arg; \
-	ISC_LINK(ltype)			ev_link
+	ISC_LINK(ltype)			ev_link; \
+	ISC_LINK(ltype)			ev_ratelink
 
 /*%
  * Attributes matching a mask of 0x000000ff are reserved for the task library's
@@ -71,6 +70,7 @@ do { \
 	(event)->ev_destroy = (df); \
 	(event)->ev_destroy_arg = (da); \
 	ISC_LINK_INIT((event), ev_link); \
+	ISC_LINK_INIT((event), ev_ratelink); \
 } while (0)
 
 /*%
@@ -90,9 +90,12 @@ ISC_LANG_BEGINDECLS
 
 isc_event_t *
 isc_event_allocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
-		   isc_taskaction_t action, const void *arg, size_t size);
+		   isc_taskaction_t action, void *arg, size_t size);
+isc_event_t *
+isc_event_constallocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
+			isc_taskaction_t action, const void *arg, size_t size);
 /*%<
- * Allocate an event structure. 
+ * Allocate an event structure.
  *
  * Allocate and initialize in a structure with initial elements
  * defined by:
@@ -103,7 +106,7 @@ isc_event_allocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
  *		...
  *	};
  * \endcode
- *	
+ *
  * Requires:
  *\li	'size' >= sizeof(struct isc_event)
  *\li	'action' to be non NULL
