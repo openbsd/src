@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 2019/12/16 16:16:22 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 2019/12/16 17:16:12 sthen Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,7 @@ CONFIGURE_OPTS=	--prefix=/usr \
 		--disable-backtrace \
 		--without-readline \
 		--disable-idn \
+		--with-libjson=no \
 		--disable-shared \
 		--disable-threads \
 		--disable-openssl-version-check
