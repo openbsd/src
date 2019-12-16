@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixreg.h,v 1.4 2011/05/28 14:56:32 kettenis Exp $	*/
+/*	$OpenBSD: piixreg.h,v 1.5 2019/12/16 21:39:40 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -69,6 +69,7 @@
 #define SB800_PMREG_BASE	0xcd6
 #define SB800_PMREG_SIZE	2	/* index/data pair */
 #define SB800_PMREG_SMB0EN	0x2c	/* 16-bit register */
+#define SB800_PMREG_SMB0SEL	0x2e	/* bus selection */
 #define SB800_SMB0EN_EN		0x0001
 #define SB800_SMB0EN_BASE_MASK	0xffe0
 
@@ -76,5 +77,13 @@
 #define SB800_SMB_HOSTC_SMI	(1 << 0)	/* SMI */
 
 #define SB800_SMB_SIZE	0x14		/* SMBus I/O space size */
+
+/*
+ * Newer FCH registers in the PMIO space.
+ * See BKDG for Family 16h Models 30h-3Fh 3.26.13 PMx00 and PMx04.
+ */
+#define AMDFCH41_PM_DECODE_EN	0x00	/* 16-bit register */
+#define AMDFCH41_PM_PORT_INDEX	0x02
+#define AMDFCH41_SMBUS_EN	0x10
 
 #endif	/* !_DEV_PCI_PIIXREG_H_ */

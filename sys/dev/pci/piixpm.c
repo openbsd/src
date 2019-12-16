@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.40 2019/12/16 21:39:40 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -45,15 +45,24 @@
 #define PIIXPM_DELAY	200
 #define PIIXPM_TIMEOUT	1
 
+struct piixpm_smbus {
+	int			 sb_bus;
+	struct piixpm_softc	*sb_sc;
+};
+
 struct piixpm_softc {
 	struct device		sc_dev;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	bus_space_handle_t	sc_sb800_ioh;
 	void *			sc_ih;
 	int			sc_poll;
+	int			sc_is_sb800;
+	int			sc_is_fch;
 
-	struct i2c_controller	sc_i2c_tag;
+	struct piixpm_smbus	sc_busses[4];
+	struct i2c_controller	sc_i2c_tag[4];
 	struct rwlock		sc_i2c_lock;
 	struct {
 		i2c_op_t     op;
@@ -86,6 +95,7 @@ struct cfdriver piixpm_cd = {
 
 const struct pci_matchid piixpm_ids[] = {
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_SMB },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_KERNCZ_SMB },
 
 	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_SMB },
 	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB300_SMB },
@@ -117,17 +127,21 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	struct piixpm_softc *sc = (struct piixpm_softc *)self;
 	struct pci_attach_args *pa = aux;
 	bus_space_handle_t ioh;
-	u_int16_t smb0en;
+	u_int16_t val, smb0en;
 	bus_addr_t base;
 	pcireg_t conf;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	struct i2cbus_attach_args iba;
+	int numbusses, i;
 
 	sc->sc_iot = pa->pa_iot;
+	numbusses = 1;
 
 	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_HUDSON2_SMB) ||
+	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_KERNCZ_SMB) ||
 	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ATI &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SBX00_SMB &&
 	    PCI_REVISION(pa->pa_class) >= 0x40)) {
@@ -136,10 +150,7 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 		 * hidden.  We need to look at the "SMBus0En" Power
 		 * Management register to find out where they live.
 		 * We use indirect IO access through the index/data
-		 * pair at 0xcd6/0xcd7 to access "SMBus0En".  Since
-		 * the index/data pair may be needed by other drivers,
-		 * we only map them for the duration that we actually
-		 * need them.
+		 * pair at 0xcd6/0xcd7 to access "SMBus0En".
 		 */
 		if (bus_space_map(sc->sc_iot, SB800_PMREG_BASE,
 		    SB800_PMREG_SIZE, 0, &ioh) != 0) {
@@ -147,29 +158,61 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 
-		/* Read "SmBus0En" */
-		bus_space_write_1(sc->sc_iot, ioh, 0, SB800_PMREG_SMB0EN);
-		smb0en = bus_space_read_1(sc->sc_iot, ioh, 1);
-		bus_space_write_1(sc->sc_iot, ioh, 0, SB800_PMREG_SMB0EN + 1);
-		smb0en |= (bus_space_read_1(sc->sc_iot, ioh, 1) << 8);
+		if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
+		    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_HUDSON2_SMB ||
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_KERNCZ_SMB)) {
+			bus_space_write_1(sc->sc_iot, ioh, 0,
+			    AMDFCH41_PM_DECODE_EN);
+			val = bus_space_read_1(sc->sc_iot, ioh, 1);
+			smb0en = val & AMDFCH41_SMBUS_EN;
 
-		bus_space_unmap(sc->sc_iot, ioh, SB800_PMREG_SIZE);
+			bus_space_write_1(sc->sc_iot, ioh, 0,
+			    AMDFCH41_PM_DECODE_EN + 1);
+			val = bus_space_read_1(sc->sc_iot, ioh, 1) << 8;
+			base = val;
+		} else {
+			/* Read "SmBus0En" */
+			bus_space_write_1(sc->sc_iot, ioh, 0,
+			    SB800_PMREG_SMB0EN);
+			val = bus_space_read_1(sc->sc_iot, ioh, 1);
 
-		if ((smb0en & SB800_SMB0EN_EN) == 0) {
+			bus_space_write_1(sc->sc_iot, ioh, 0,
+			    SB800_PMREG_SMB0EN + 1);
+			val |= (bus_space_read_1(sc->sc_iot, ioh, 1) << 8);
+			smb0en = val & SB800_SMB0EN_EN;
+			base = val & SB800_SMB0EN_BASE_MASK;
+		}
+
+		if (smb0en == 0) {
 			printf(": SMBus disabled\n");
+			bus_space_unmap(sc->sc_iot, ioh, SB800_PMREG_SIZE);
 			return;
 		}
 
+		sc->sc_sb800_ioh = ioh;
+		if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_KERNCZ_SMB) ||
+		    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_HUDSON2_SMB &&
+		    PCI_REVISION(pa->pa_class) >= 0x1f)) {
+			sc->sc_is_fch = 1;
+			numbusses = 2;
+		} else {
+			sc->sc_is_sb800 = 1;
+			numbusses = 4;
+		}
+
 		/* Map I/O space */
-		base = smb0en & SB800_SMB0EN_BASE_MASK;
 		if (base == 0 || bus_space_map(sc->sc_iot, base,
 		    SB800_SMB_SIZE, 0, &sc->sc_ioh)) {
 			printf(": can't map i/o space");
+			bus_space_unmap(sc->sc_iot, ioh, SB800_PMREG_SIZE);
 			return;
 		}
 
 		/* Read configuration */
-		conf = bus_space_read_1(sc->sc_iot, sc->sc_ioh, SB800_SMB_HOSTC);
+		conf = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		    SB800_SMB_HOSTC);
 		if (conf & SB800_SMB_HOSTC_SMI)
 			conf = PIIX_SMB_HOSTC_SMI;
 		else
@@ -220,15 +263,19 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach I2C bus */
 	rw_init(&sc->sc_i2c_lock, "iiclk");
-	sc->sc_i2c_tag.ic_cookie = sc;
-	sc->sc_i2c_tag.ic_acquire_bus = piixpm_i2c_acquire_bus;
-	sc->sc_i2c_tag.ic_release_bus = piixpm_i2c_release_bus;
-	sc->sc_i2c_tag.ic_exec = piixpm_i2c_exec;
+	for (i = 0; i < numbusses; i++) {
+		sc->sc_busses[i].sb_bus = i;
+		sc->sc_busses[i].sb_sc = sc;
+		sc->sc_i2c_tag[i].ic_cookie = &sc->sc_busses[i];
+		sc->sc_i2c_tag[i].ic_acquire_bus = piixpm_i2c_acquire_bus;
+		sc->sc_i2c_tag[i].ic_release_bus = piixpm_i2c_release_bus;
+		sc->sc_i2c_tag[i].ic_exec = piixpm_i2c_exec;
 
-	bzero(&iba, sizeof(iba));
-	iba.iba_name = "iic";
-	iba.iba_tag = &sc->sc_i2c_tag;
-	config_found(self, &iba, iicbus_print);
+		bzero(&iba, sizeof(iba));
+		iba.iba_name = "iic";
+		iba.iba_tag = &sc->sc_i2c_tag[i];
+		config_found(self, &iba, iicbus_print);
+	}
 
 	return;
 }
@@ -236,22 +283,49 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 int
 piixpm_i2c_acquire_bus(void *cookie, int flags)
 {
-	struct piixpm_softc *sc = cookie;
+	struct piixpm_smbus *smbus = cookie;
+	struct piixpm_softc *sc = smbus->sb_sc;
+	int rc;
 
-	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
-		return (0);
+	if (!cold && !sc->sc_poll && !(flags & I2C_F_POLL))
+		if ((rc = rw_enter(&sc->sc_i2c_lock, RW_WRITE | RW_INTR)) != 0)
+			return (rc);
 
-	return (rw_enter(&sc->sc_i2c_lock, RW_WRITE | RW_INTR));
+	if (sc->sc_is_fch) {
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh, 0,
+		    AMDFCH41_PM_PORT_INDEX);
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh, 1,
+		    smbus->sb_bus << 3);
+	} else if (sc->sc_is_sb800) {
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh, 0,
+		    SB800_PMREG_SMB0SEL);
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh, 1,
+		    smbus->sb_bus << 1);
+	}
+
+	return (0);
 }
 
 void
 piixpm_i2c_release_bus(void *cookie, int flags)
 {
-	struct piixpm_softc *sc = cookie;
+	struct piixpm_smbus *smbus = cookie;
+	struct piixpm_softc *sc = smbus->sb_sc;
+
+	if (sc->sc_is_fch) {
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh, 0,
+		    AMDFCH41_PM_PORT_INDEX);
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh, 1,
+		    0);
+	} else if (sc->sc_is_sb800) {
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh, 0,
+		    SB800_PMREG_SMB0SEL);
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh, 1,
+		    0);
+	}
 
 	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
 		return;
-
 	rw_exit(&sc->sc_i2c_lock);
 }
 
@@ -259,12 +333,13 @@ int
 piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
     const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
 {
-	struct piixpm_softc *sc = cookie;
+	struct piixpm_smbus *smbus = cookie;
+	struct piixpm_softc *sc = smbus->sb_sc;
 	u_int8_t *b;
 	u_int8_t ctl, st;
 	int retries;
 
-	DPRINTF(("%s: exec: op %d, addr 0x%02x, cmdlen %d, len %d, "
+	DPRINTF(("%s: exec: op %d, addr 0x%02x, cmdlen %zu, len %zu, "
 	    "flags 0x%02x\n", sc->sc_dev.dv_xname, op, addr, cmdlen,
 	    len, flags));
 
