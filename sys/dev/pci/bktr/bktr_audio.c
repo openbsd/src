@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_audio.c,v 1.12 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: bktr_audio.c,v 1.13 2019/12/16 04:50:48 cheloha Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.8 2000/10/31 13:09:56 roger Exp $ */
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -229,7 +229,7 @@ temp_mute( bktr_ptr_t bktr, int flag )
 		set_audio( bktr, AUDIO_MUTE );		/* prevent 'click' */
 	}
 	else {
-		tsleep( BKTR_SLEEP, PZERO, "tuning", hz/8 );
+		tsleep_nsec( BKTR_SLEEP, PZERO, "tuning", MSEC_TO_NSEC(125) );
 		if ( muteState == FALSE )
 			set_audio( bktr, AUDIO_UNMUTE );
 	}

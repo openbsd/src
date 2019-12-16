@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.40 2018/11/22 14:54:36 fcambus Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.41 2019/12/16 04:50:48 cheloha Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -1025,7 +1025,7 @@ video_read(bktr_ptr_t bktr, int unit, dev_t dev, struct uio *uio)
                             BT848_INT_FMTCHG);
 
 
-	status = tsleep(BKTR_SLEEP, BKTRPRI, "captur", 0);
+	status = tsleep_nsec(BKTR_SLEEP, BKTRPRI, "captur", INFSLP);
 	if (!status)		/* successful capture */
 		status = uiomove((caddr_t)bktr->bigbuf, count, uio);
 	else
@@ -1057,7 +1057,7 @@ vbi_read(bktr_ptr_t bktr, struct uio *uio, int ioflag)
 		}
 
 		bktr->vbi_read_blocked = TRUE;
-		if ((status = tsleep(VBI_SLEEP, VBIPRI, "vbi", 0))) {
+		if ((status = tsleep_nsec(VBI_SLEEP, VBIPRI, "vbi", INFSLP))) {
 			return status;
 		}
 	}
@@ -1419,7 +1419,8 @@ video_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 					    BT848_INT_FMTCHG);
 
 			OUTB(bktr, BKTR_CAP_CTL, bktr->bktr_cap_ctl);
-			error = tsleep(BKTR_SLEEP, BKTRPRI, "captur", hz);
+			error = tsleep_nsec(BKTR_SLEEP, BKTRPRI, "captur",
+			    SEC_TO_NSEC(1));
 			if (error && (error != ERESTART)) {
 				/*  Here if we didn't get complete frame  */
 #ifdef DIAGNOSTIC
