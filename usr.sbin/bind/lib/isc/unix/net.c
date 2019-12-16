@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: net.c,v 1.4 2019/12/16 17:33:13 deraadt Exp $ */
+/* $Id: net.c,v 1.5 2019/12/16 17:35:38 deraadt Exp $ */
 
 #include <config.h>
 
@@ -631,7 +631,7 @@ try_dscp_v4(void) {
 	char strbuf[ISC_STRERRORSIZE];
 	struct addrinfo hints, *res0;
 	int s, dscp = 0, n;
-#ifdef IP_RECVTOS
+#if 0 && defined(IP_RECVTOS)
 	int on = 1;
 #endif /* IP_RECVTOS */
 
@@ -696,7 +696,7 @@ try_dscp_v6(void) {
 	char strbuf[ISC_STRERRORSIZE];
 	struct addrinfo hints, *res0;
 	int s, dscp = 0, n;
-#if defined(IPV6_RECVTCLASS)
+#if 0 && defined(IPV6_RECVTCLASS)
 	int on = 1;
 #endif /* IPV6_RECVTCLASS */
 
