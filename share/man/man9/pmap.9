@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pmap.9,v 1.18 2019/12/06 19:15:16 jmc Exp $
+.\"	$OpenBSD: pmap.9,v 1.19 2019/12/16 10:34:04 mpi Exp $
 .\"
 .\" Copyright (c) 2001, 2002, 2003 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2019 $
+.Dd $Mdocdate: December 16 2019 $
 .Dt PMAP_INIT 9
 .Os
 .Sh NAME
@@ -85,15 +85,13 @@ function is called from the machine-independent
 .Xr uvm_init 9
 initialization code, when the MMU is enabled.
 .Sh PAGE MANAGEMENT
-Modified/referenced information is only tracked for pages managed by
-.Xr uvm_init 9
+Modified/referenced information is only tracked for pages managed by UVM
 (pages for which a vm_page structure exists).
 Only managed mappings of those pages have modified/referenced tracking.
 The use of unmanaged mappings should be limited to code which may execute
 in interrupt context (such as
 .Xr malloc 9 )
-or to enter mappings for physical addresses which are not managed by
-.Xr uvm_init 9 .
+or to enter mappings for physical addresses which are not managed by UVM.
 This allows
 .Nm pmap
 modules to avoid blocking interrupts when manipulating data structures or
@@ -103,8 +101,7 @@ The modified/referenced bits must be tracked on a per-page basis, as they
 are not attributes of a mapping, but attributes of a page.
 Therefore, even after all mappings for a given page have been removed, the
 modified/referenced bits for that page must be preserved.
-The only time the modified/referenced bits may be cleared is when
-.Xr uvm_init 9
+The only time the modified/referenced bits may be cleared is when UVM
 explicitly calls the
 .Fn pmap_clear_modify
 and
@@ -429,8 +426,7 @@ The
 .Bx 4.4
 .Nm pmap
 module is based on Mach 3.0.
-The introduction of
-.Xr uvm_init 9
+The introduction of UVM
 left the
 .Nm pmap
 interface unchanged for the most part.
