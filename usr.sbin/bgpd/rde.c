@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.492 2019/12/13 14:10:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.493 2019/12/16 10:35:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -49,7 +49,7 @@
 void		 rde_sighdlr(int);
 void		 rde_dispatch_imsg_session(struct imsgbuf *);
 void		 rde_dispatch_imsg_parent(struct imsgbuf *);
-int		 rde_update_dispatch(struct imsg *);
+void		 rde_update_dispatch(struct rde_peer *, struct imsg *);
 int		 rde_update_update(struct rde_peer *, struct filterstate *,
 		     struct bgpd_addr *, u_int8_t);
 void		 rde_update_withdraw(struct rde_peer *, struct bgpd_addr *,
@@ -98,11 +98,11 @@ void		 peer_shutdown(void);
 int		 peer_localaddrs(struct rde_peer *, struct bgpd_addr *);
 struct rde_peer *peer_match(struct ctl_neighbor *, u_int32_t);
 struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
-void		 peer_up(u_int32_t, struct session_up *);
-void		 peer_down(u_int32_t);
+void		 peer_up(struct rde_peer *, struct session_up *);
+void		 peer_down(struct rde_peer *);
 void		 peer_flush(struct rde_peer *, u_int8_t, time_t);
-void		 peer_stale(u_int32_t, u_int8_t);
-void		 peer_dump(u_int32_t, u_int8_t);
+void		 peer_stale(struct rde_peer *, u_int8_t);
+void		 peer_dump(struct rde_peer *, u_int8_t);
 static void	 peer_recv_eor(struct rde_peer *, u_int8_t);
 static void	 peer_send_eor(struct rde_peer *, u_int8_t);
 
@@ -380,7 +380,12 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 
 		switch (imsg.hdr.type) {
 		case IMSG_UPDATE:
-			rde_update_dispatch(&imsg);
+			if ((peer = peer_get(imsg.hdr.peerid)) == NULL) {
+				log_warnx("rde_dispatch: unknown peer id %d",
+				    imsg.hdr.peerid);
+				break;
+			}
+			rde_update_dispatch(peer, &imsg);
 			break;
 		case IMSG_SESSION_ADD:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(pconf))
@@ -392,10 +397,20 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(sup))
 				fatalx("incorrect size of session request");
 			memcpy(&sup, imsg.data, sizeof(sup));
-			peer_up(imsg.hdr.peerid, &sup);
+			if ((peer = peer_get(imsg.hdr.peerid)) == NULL) {
+				log_warnx("rde_dispatch: unknown peer id %d",
+				    imsg.hdr.peerid);
+				break;
+			}
+			peer_up(peer, &sup);
 			break;
 		case IMSG_SESSION_DOWN:
-			peer_down(imsg.hdr.peerid);
+			if ((peer = peer_get(imsg.hdr.peerid)) == NULL) {
+				log_warnx("rde_dispatch: unknown peer id %d",
+				    imsg.hdr.peerid);
+				break;
+			}
+			peer_down(peer);
 			break;
 		case IMSG_SESSION_STALE:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(aid)) {
@@ -403,9 +418,16 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				break;
 			}
 			memcpy(&aid, imsg.data, sizeof(aid));
-			if (aid >= AID_MAX)
-				fatalx("IMSG_SESSION_STALE: bad AID");
-			peer_stale(imsg.hdr.peerid, aid);
+			if (aid >= AID_MAX) {
+				log_warnx("IMSG_SESSION_STALE: bad AID");
+				break;
+			}
+			if ((peer = peer_get(imsg.hdr.peerid)) == NULL) {
+				log_warnx("rde_dispatch: unknown peer id %d",
+				    imsg.hdr.peerid);
+				break;
+			}
+			peer_stale(peer, aid);
 			break;
 		case IMSG_SESSION_FLUSH:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(aid)) {
@@ -413,8 +435,10 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				break;
 			}
 			memcpy(&aid, imsg.data, sizeof(aid));
-			if (aid >= AID_MAX)
-				fatalx("IMSG_SESSION_FLUSH: bad AID");
+			if (aid >= AID_MAX) {
+				log_warnx("IMSG_SESSION_FLUSH: bad AID");
+				break;
+			}
 			if ((peer = peer_get(imsg.hdr.peerid)) == NULL) {
 				log_warnx("rde_dispatch: unknown peer id %d",
 				    imsg.hdr.peerid);
@@ -428,8 +452,10 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				break;
 			}
 			memcpy(&aid, imsg.data, sizeof(aid));
-			if (aid >= AID_MAX)
-				fatalx("IMSG_SESSION_RESTARTED: bad AID");
+			if (aid >= AID_MAX) {
+				log_warnx("IMSG_SESSION_RESTARTED: bad AID");
+				break;
+			}
 			if ((peer = peer_get(imsg.hdr.peerid)) == NULL) {
 				log_warnx("rde_dispatch: unknown peer id %d",
 				    imsg.hdr.peerid);
@@ -444,9 +470,16 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				break;
 			}
 			memcpy(&aid, imsg.data, sizeof(aid));
-			if (aid >= AID_MAX)
-				fatalx("IMSG_REFRESH: bad AID");
-			peer_dump(imsg.hdr.peerid, aid);
+			if (aid >= AID_MAX) {
+				log_warnx("IMSG_REFRESH: bad AID");
+				break;
+			}
+			if ((peer = peer_get(imsg.hdr.peerid)) == NULL) {
+				log_warnx("rde_dispatch: unknown peer id %d",
+				    imsg.hdr.peerid);
+				break;
+			}
+			peer_dump(peer, aid);
 			break;
 		case IMSG_NETWORK_ADD:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -1022,13 +1055,12 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 }
 
 /* handle routing updates from the session engine. */
-int
-rde_update_dispatch(struct imsg *imsg)
+void
+rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 {
 	struct filterstate	 state;
 	struct bgpd_addr	 prefix;
 	struct mpattr		 mpa;
-	struct rde_peer		*peer;
 	u_char			*p, *mpp = NULL;
 	int			 error = -1, pos = 0;
 	u_int16_t		 afi, len, mplen;
@@ -1038,17 +1070,11 @@ rde_update_dispatch(struct imsg *imsg)
 	u_int8_t		 aid, prefixlen, safi, subtype;
 	u_int32_t		 fas;
 
-	peer = peer_get(imsg->hdr.peerid);
-	if (peer == NULL)	/* unknown peer, cannot happen */
-		return (-1);
-	if (peer->state != PEER_UP)
-		return (-1);	/* peer is not yet up, cannot happen */
-
 	p = imsg->data;
 
 	if (imsg->hdr.len < IMSG_HEADER_SIZE + 2) {
 		rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL, 0);
-		return (-1);
+		return;
 	}
 
 	memcpy(&len, p, 2);
@@ -1056,7 +1082,7 @@ rde_update_dispatch(struct imsg *imsg)
 	p += 2;
 	if (imsg->hdr.len < IMSG_HEADER_SIZE + 2 + withdrawn_len + 2) {
 		rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL, 0);
-		return (-1);
+		return;
 	}
 
 	p += withdrawn_len;
@@ -1066,7 +1092,7 @@ rde_update_dispatch(struct imsg *imsg)
 	if (imsg->hdr.len <
 	    IMSG_HEADER_SIZE + 2 + withdrawn_len + 2 + attrpath_len) {
 		rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL, 0);
-		return (-1);
+		return;
 	}
 
 	nlri_len =
@@ -1078,12 +1104,12 @@ rde_update_dispatch(struct imsg *imsg)
 			/* crap at end of update which should not be there */
 			rde_update_err(peer, ERR_UPDATE,
 			    ERR_UPD_ATTRLIST, NULL, 0);
-			return (-1);
+			return;
 		}
 		if (withdrawn_len == 0) {
 			/* EoR marker */
 			peer_recv_eor(peer, AID_INET);
-			return (0);
+			return;
 		}
 	}
 
@@ -1394,8 +1420,6 @@ rde_update_dispatch(struct imsg *imsg)
 done:
 	rde_filterstate_clean(&state);
 	rde_send_pftable_commit();
-
-	return (error);
 }
 
 int
@@ -3290,7 +3314,7 @@ rde_softreconfig_in_done(void *arg, u_int8_t dummy)
 			/* dump the full table to neighbors that changed rib */
 			for (aid = 0; aid < AID_MAX; aid++) {
 				if (peer->capa.mp[aid])
-					peer_dump(peer->conf.id, aid);
+					peer_dump(peer, aid);
 			}
 		}
 	}
@@ -3711,16 +3735,9 @@ peer_adjout_stale_upcall(struct prefix *p, void *arg)
 }
 
 void
-peer_up(u_int32_t id, struct session_up *sup)
+peer_up(struct rde_peer *peer, struct session_up *sup)
 {
-	struct rde_peer	*peer;
 	u_int8_t	 i;
-
-	peer = peer_get(id);
-	if (peer == NULL) {
-		log_warnx("peer_up: unknown peer id %d", id);
-		return;
-	}
 
 	if (peer->state == PEER_ERR) {
 		/*
@@ -3742,7 +3759,8 @@ peer_up(u_int32_t id, struct session_up *sup)
 
 	if (peer_localaddrs(peer, &sup->local_addr)) {
 		peer->state = PEER_DOWN;
-		imsg_compose(ibuf_se, IMSG_SESSION_DOWN, id, 0, -1, NULL, 0);
+		imsg_compose(ibuf_se, IMSG_SESSION_DOWN, peer->conf.id, 0, -1,
+		    NULL, 0);
 		return;
 	}
 
@@ -3750,20 +3768,13 @@ peer_up(u_int32_t id, struct session_up *sup)
 
 	for (i = 0; i < AID_MAX; i++) {
 		if (peer->capa.mp[i])
-			peer_dump(id, i);
+			peer_dump(peer, i);
 	}
 }
 
 void
-peer_down(u_int32_t id)
+peer_down(struct rde_peer *peer)
 {
-	struct rde_peer		*peer;
-
-	peer = peer_get(id);
-	if (peer == NULL) {
-		log_warnx("peer_down: unknown peer id %d", id);
-		return;
-	}
 	peer->remote_bgpid = 0;
 	peer->state = PEER_DOWN;
 	/* stop all pending dumps which may depend on this peer */
@@ -3858,16 +3869,9 @@ peer_flush(struct rde_peer *peer, u_int8_t aid, time_t staletime)
 }
 
 void
-peer_stale(u_int32_t id, u_int8_t aid)
+peer_stale(struct rde_peer *peer, u_int8_t aid)
 {
-	struct rde_peer		*peer;
 	time_t			 now;
-
-	peer = peer_get(id);
-	if (peer == NULL) {
-		log_warnx("peer_stale: unknown peer id %d", id);
-		return;
-	}
 
 	/* flush the now even staler routes out */
 	if (peer->staletime[aid])
@@ -3887,16 +3891,8 @@ peer_stale(u_int32_t id, u_int8_t aid)
 }
 
 void
-peer_dump(u_int32_t id, u_int8_t aid)
+peer_dump(struct rde_peer *peer, u_int8_t aid)
 {
-	struct rde_peer		*peer;
-
-	peer = peer_get(id);
-	if (peer == NULL) {
-		log_warnx("peer_dump: unknown peer id %d", id);
-		return;
-	}
-
 	if (peer->conf.export_type == EXPORT_NONE) {
 		/* nothing to send apart from the marker */
 		if (peer->capa.grestart.restart)
@@ -4220,7 +4216,7 @@ rde_shutdown(void)
 	/* First all peers go down */
 	for (i = 0; i <= peertable.peer_hashmask; i++)
 		while ((p = LIST_FIRST(&peertable.peer_hashtbl[i])) != NULL)
-			peer_down(p->conf.id);
+			peer_down(p);
 
 	/* free filters */
 	filterlist_free(out_rules);
