@@ -1,4 +1,4 @@
-sinclude(libtool.m4.dir/libtool.m4.dir)dnl
+sinclude(libtool.m4.dir/libtool.m4)dnl
 sinclude(libtool.m4.dir/ltoptions.m4)dnl
 sinclude(libtool.m4.dir/ltsugar.m4)dnl
 sinclude(libtool.m4.dir/ltversion.m4)dnl

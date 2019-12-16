@@ -4887,13 +4887,11 @@ AC_CONFIG_FILES([
 	lib/dns/include/Makefile
 	lib/dns/include/dns/Makefile
 	lib/dns/include/dst/Makefile
-	lib/dns/tests/Makefile
 	lib/irs/Makefile
 	lib/irs/include/Makefile
 	lib/irs/include/irs/Makefile
 	lib/irs/include/irs/netdb.h
 	lib/irs/include/irs/platform.h
-	lib/irs/tests/Makefile
 	lib/isc/$arch/Makefile
 	lib/isc/$arch/include/Makefile
 	lib/isc/$arch/include/isc/Makefile
@@ -4906,7 +4904,6 @@ AC_CONFIG_FILES([
 	lib/isc/include/isc/platform.h
 	lib/isc/include/pk11/Makefile
 	lib/isc/include/pkcs11/Makefile
-	lib/isc/tests/Makefile
 	lib/isc/nls/Makefile
 	lib/isc/unix/Makefile
 	lib/isc/unix/include/Makefile
@@ -4924,13 +4921,9 @@ AC_CONFIG_FILES([
 	lib/lwres/include/lwres/netdb.h
 	lib/lwres/include/lwres/platform.h
 	lib/lwres/man/Makefile
-	lib/lwres/tests/Makefile
 	lib/lwres/unix/Makefile
 	lib/lwres/unix/include/Makefile
 	lib/lwres/unix/include/lwres/Makefile
-	lib/tests/Makefile
-	lib/tests/include/Makefile
-	lib/tests/include/tests/Makefile
 	lib/samples/Makefile
 	lib/samples/Makefile-postinstall
 ])
