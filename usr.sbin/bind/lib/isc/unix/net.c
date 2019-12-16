@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: net.c,v 1.3 2019/12/16 16:16:27 deraadt Exp $ */
+/* $Id: net.c,v 1.4 2019/12/16 17:33:13 deraadt Exp $ */
 
 #include <config.h>
 
@@ -667,7 +667,7 @@ try_dscp_v4(void) {
 	if (setsockopt(s, IPPROTO_IP, IP_TOS, &dscp, sizeof(dscp)) == 0)
 		dscp_result |= ISC_NET_DSCPSETV4;
 
-#ifdef IP_RECVTOS
+#if 0 && defined(IP_RECVTOS)
 	on = 1;
 	if (setsockopt(s, IPPROTO_IP, IP_RECVTOS, &on, sizeof(on)) == 0)
 		dscp_result |= ISC_NET_DSCPRECVV4;
