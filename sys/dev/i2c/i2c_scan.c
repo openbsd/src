@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.145 2015/05/29 00:37:10 uebayasi Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.146 2019/12/16 19:17:04 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -1037,7 +1037,7 @@ iic_probe_eeprom(struct device *self, u_int8_t addr)
 
 	type = iicprobe(0x02);
 	/* limit to SPD types seen in the wild */
-	if (type < 4 || type > 11)
+	if (type < 4 || type > 16)
 		return (name);
 
 	/* more matching in driver(s) */
