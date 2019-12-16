@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.61 2019/12/12 08:21:34 denis Exp $ */
+/*	$OpenBSD: kroute.c,v 1.62 2019/12/16 08:28:33 denis Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -97,10 +97,11 @@ RB_PROTOTYPE(kroute_tree, kroute_node, entry, kroute_compare)
 RB_GENERATE(kroute_tree, kroute_node, entry, kroute_compare)
 
 int
-kr_init(int fs, u_int rdomain, u_int8_t fib_prio)
+kr_init(int fs, u_int rdomain, int redis_label_or_prefix, u_int8_t fib_prio)
 {
 	int		opt = 0, rcvbuf, default_rcvbuf;
 	socklen_t	optlen;
+	int		filter_prio = fib_prio;
 
 	kr_state.fib_sync = fs;
 	kr_state.rdomain = rdomain;
@@ -116,6 +117,18 @@ kr_init(int fs, u_int rdomain, u_int8_t fib_prio)
 	if (setsockopt(kr_state.fd, SOL_SOCKET, SO_USELOOPBACK,
 	    &opt, sizeof(opt)) == -1)
 		log_warn("kr_init: setsockopt");	/* not fatal */
+
+	if (redis_label_or_prefix) {
+		filter_prio = 0;
+		log_info("%s: priority filter disabled", __func__);
+	} else
+		log_debug("%s: priority filter enabled", __func__);
+
+	if (setsockopt(kr_state.fd, AF_ROUTE, ROUTE_PRIOFILTER, &filter_prio,
+	    sizeof(filter_prio)) == -1) {
+		log_warn("%s: setsockopt AF_ROUTE ROUTE_PRIOFILTER", __func__);
+		/* not fatal */
+	}
 
 	/* grow receive buffer, don't wanna miss messages */
 	optlen = sizeof(default_rcvbuf);
@@ -353,6 +366,21 @@ kr_fib_decouple(void)
 	log_info("kernel routing table decoupled");
 }
 
+void
+kr_fib_update_prio(u_int8_t fib_prio)
+{
+	struct kroute_node	*kr;
+
+	RB_FOREACH(kr, kroute_tree, &krt)
+		if ((kr->r.flags & F_OSPFD_INSERTED))
+			kr->r.priority = fib_prio;
+
+	log_info("fib priority changed from %hhu to %hhu", kr_state.fib_prio,
+	    fib_prio);
+
+	kr_state.fib_prio = fib_prio;
+}
+
 /* ARGSUSED */
 void
 kr_dispatch_msg(int fd, short event, void *bula)
@@ -522,11 +550,25 @@ kr_redistribute(struct kroute_node *kh)
 }
 
 void
-kr_reload(void)
+kr_reload(int redis_label_or_prefix)
 {
 	struct kroute_node	*kr, *kn;
 	u_int32_t		 dummy;
 	int			 r;
+	int			 filter_prio = kr_state.fib_prio;
+
+	/* update the priority filter */
+	if (redis_label_or_prefix) {
+		filter_prio = 0;
+		log_info("%s: priority filter disabled", __func__);
+	} else
+		log_debug("%s: priority filter enabled", __func__);
+
+	if (setsockopt(kr_state.fd, AF_ROUTE, ROUTE_PRIOFILTER, &filter_prio,
+	    sizeof(filter_prio)) == -1) {
+		log_warn("%s: setsockopt AF_ROUTE ROUTE_PRIOFILTER", __func__);
+		/* not fatal */
+	}
 
 	RB_FOREACH(kr, kroute_tree, &krt) {
 		for (kn = kr; kn; kn = kn->next) {

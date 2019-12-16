@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.40 2019/06/11 05:00:09 remi Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.41 2019/12/16 08:28:33 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -385,6 +385,7 @@ struct ospfd_conf {
 	int			spf_state;
 	int			ospf_socket;
 	int			flags;
+	int			redist_label_or_prefix;
 	u_int8_t		border;
 	u_int8_t		redistribute;
 	u_int8_t		fib_priority;
@@ -540,15 +541,16 @@ u_int16_t	 in_cksum(void *, size_t);
 u_int16_t	 iso_cksum(void *, u_int16_t, u_int16_t);
 
 /* kroute.c */
-int		 kr_init(int, u_int, u_int8_t);
+int		 kr_init(int, u_int, int, u_int8_t);
 int		 kr_change(struct kroute *, int);
 int		 kr_delete(struct kroute *);
 void		 kr_shutdown(void);
 void		 kr_fib_couple(void);
 void		 kr_fib_decouple(void);
+void		 kr_fib_update_prio(u_int8_t);
 void		 kr_dispatch_msg(int, short, void *);
 void		 kr_show_route(struct imsg *);
-void		 kr_reload(void);
+void		 kr_reload(int);
 
 void		 embedscope(struct sockaddr_in6 *);
 void		 recoverscope(struct sockaddr_in6 *);

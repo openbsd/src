@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.44 2019/03/25 20:53:33 jca Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.45 2019/12/16 08:28:33 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -280,7 +280,8 @@ main(int argc, char *argv[])
 		fatal("unveil");
 
 	if (kr_init(!(ospfd_conf->flags & OSPFD_FLAG_NO_FIB_UPDATE),
-	    ospfd_conf->rdomain, ospfd_conf->fib_priority) == -1)
+	    ospfd_conf->rdomain, ospfd_conf->redist_label_or_prefix,
+	    ospfd_conf->fib_priority) == -1)
 		fatalx("kr_init failed");
 
 	event_dispatch();
@@ -631,7 +632,7 @@ ospf_reload(void)
 
 	merge_config(ospfd_conf, xconf);
 	/* update redistribute lists */
-	kr_reload();
+	kr_reload(ospfd_conf->redist_label_or_prefix);
 	return (0);
 #else
 	return (-1);
@@ -654,12 +655,16 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 	struct area		*a, *xa, *na;
 	struct iface		*iface;
 	struct redistribute	*r;
+	int			 rchange = 0;
 
 	/* change of rtr_id needs a restart */
 	conf->flags = xconf->flags;
 	conf->spf_delay = xconf->spf_delay;
 	conf->spf_hold_time = xconf->spf_hold_time;
-	conf->redistribute = xconf->redistribute;
+	if (SIMPLEQ_EMPTY(&conf->redist_list) !=
+	    SIMPLEQ_EMPTY(&xconf->redist_list))
+		rchange = 1;
+	conf->redist_label_or_prefix = xconf->redist_label_or_prefix;
 
 	if (ospfd_process == PROC_MAIN) {
 		/* main process does neither use areas nor interfaces */
@@ -671,6 +676,15 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 			SIMPLEQ_REMOVE_HEAD(&xconf->redist_list, entry);
 			SIMPLEQ_INSERT_TAIL(&conf->redist_list, r, entry);
 		}
+
+		/* adjust FIB priority if changed */
+		if (conf->fib_priority != xconf->fib_priority) {
+			kr_fib_decouple();
+			kr_fib_update_prio(xconf->fib_priority);
+			conf->fib_priority = xconf->fib_priority;
+			kr_fib_couple();
+		}
+
 		goto done;
 	}
 
@@ -792,6 +806,8 @@ merge_interfaces(struct area *a, struct area *xa)
 			dirty = 1;
 		i->metric = xi->metric;
 		i->priority = xi->priority;
+		if (i->self)
+			i->self->priority = i->priority;
 		i->flags = xi->flags; /* needed? */
 		i->type = xi->type; /* needed? */
 		i->if_type = xi->if_type; /* needed? */
