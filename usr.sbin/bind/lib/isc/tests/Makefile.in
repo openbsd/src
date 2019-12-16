@@ -1,0 +1,141 @@
+# Copyright (C) 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+srcdir =	@srcdir@
+VPATH =		@srcdir@
+top_srcdir =	@top_srcdir@
+
+# Attempt to disable parallel processing.
+.NOTPARALLEL:
+.NO_PARALLEL:
+
+VERSION=@BIND9_VERSION@
+
+@BIND9_MAKE_INCLUDES@
+
+CINCLUDES =	-I. -Iinclude ${ISC_INCLUDES} @ISC_OPENSSL_INC@
+CDEFINES =	@CRYPTO@ -DTESTS="\"${top_builddir}/lib/isc/tests/\""
+
+ISCLIBS =	../libisc.@A@ @ISC_OPENSSL_LIBS@
+ISCDEPLIBS =	../libisc.@A@
+
+LIBS =		@LIBS@ @ATFLIBS@
+
+OBJS =		isctest.@O@
+SRCS =		isctest.c taskpool_test.c socket_test.c hash_test.c \
+		lex_test.c radix_test.c \
+		sockaddr_test.c symtab_test.c task_test.c queue_test.c \
+		parse_test.c pool_test.c print_test.c regex_test.c \
+		socket_test.c safe_test.c time_test.c aes_test.c \
+		counter_test.c mem_test.c errno_test.c netaddr_test.c
+
+SUBDIRS =
+TARGETS =	taskpool_test@EXEEXT@ socket_test@EXEEXT@ hash_test@EXEEXT@ \
+		lex_test@EXEEXT@ radix_test@EXEEXT@ \
+		sockaddr_test@EXEEXT@ symtab_test@EXEEXT@ task_test@EXEEXT@ \
+		queue_test@EXEEXT@ parse_test@EXEEXT@ pool_test@EXEEXT@ \
+		print_test@EXEEXT@ regex_test@EXEEXT@ socket_test@EXEEXT@ \
+		safe_test@EXEEXT@ time_test@EXEEXT@ aes_test@EXEEXT@ \
+		counter_test@EXEEXT@ mem_test@EXEEXT@ errno_test@EXEEXT@ \
+		netaddr_test@EXEEXT@
+
+@BIND9_MAKE_RULES@
+
+taskpool_test@EXEEXT@: taskpool_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			taskpool_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+task_test@EXEEXT@: task_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			task_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+socket_test@EXEEXT@: socket_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			socket_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+hash_test@EXEEXT@: hash_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			hash_test.@O@ ${ISCLIBS} ${LIBS}
+
+lex_test@EXEEXT@: lex_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			lex_test.@O@ ${ISCLIBS} ${LIBS}
+
+queue_test@EXEEXT@: queue_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			queue_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+radix_test@EXEEXT@: radix_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			radix_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+symtab_test@EXEEXT@: symtab_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			symtab_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+parse_test@EXEEXT@: parse_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			parse_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+sockaddr_test@EXEEXT@: sockaddr_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			sockaddr_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+print_test.@O@:	${top_srcdir}/lib/isc/print.c
+print_test@EXEEXT@: print_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			print_test.@O@ ${ISCLIBS} ${LIBS}
+
+pool_test@EXEEXT@: pool_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			pool_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+regex_test@EXEEXT@: regex_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			regex_test.@O@ ${ISCLIBS} ${LIBS}
+
+safe_test@EXEEXT@: safe_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			safe_test.@O@ ${ISCLIBS} ${LIBS}
+
+time_test@EXEEXT@: time_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			time_test.@O@ ${ISCLIBS} ${LIBS}
+
+aes_test@EXEEXT@: aes_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			aes_test.@O@ ${ISCLIBS} ${LIBS}
+
+counter_test@EXEEXT@: counter_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			counter_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+mem_test@EXEEXT@: mem_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			mem_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+errno_test@EXEEXT@: errno_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			errno_test.@O@ ${ISCLIBS} ${LIBS}
+
+netaddr_test@EXEEXT@: netaddr_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			netaddr_test.@O@ ${ISCLIBS} ${LIBS}
+
+unit::
+	sh ${top_srcdir}/unit/unittest.sh
+
+clean distclean::
+	rm -f ${TARGETS}
+	rm -f atf.out

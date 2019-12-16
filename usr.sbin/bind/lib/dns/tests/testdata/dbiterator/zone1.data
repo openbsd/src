@@ -1,0 +1,37 @@
+; Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+;
+; Permission to use, copy, modify, and/or distribute this software for any
+; purpose with or without fee is hereby granted, provided that the above
+; copyright notice and this permission notice appear in all copies.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+; REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+; LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+; PERFORMANCE OF THIS SOFTWARE.
+
+; $Id: zone1.data,v 1.1 2019/12/16 16:31:34 deraadt Exp $
+
+$TTL 600
+@		in	soa	localhost. postmaster.localhost. (
+				2011080901	;serial
+				3600		;refresh
+				1800		;retry
+				604800		;expiration
+				600 )		;minimum
+ 		in	ns	ns
+ 		in	ns	ns2
+ns		in	a	10.0.0.1
+ns2		in	a	10.0.0.2
+
+a		in	txt	"test"
+b		in	txt	"test"
+c		in	txt	"test"
+d.e.f		in	txt	"test"
+e		in	txt	"test"
+f.g.h		in	txt	"test"
+f.g.i		in	txt	"test"
+f.g.j		in	txt	"test"
+k		in	txt	"test"

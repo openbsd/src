@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--
+ - Copyright (C) 2009, 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+ - 
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS. IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>isc-config.sh</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry">
+<a name="man.isc-config.sh"></a><div class="titlepage"></div>
+  
+  
+
+  
+
+  
+
+  <div class="refnamediv">
+<h2>Name</h2>
+<p>
+    <span class="application">isc-config.sh</span>
+     &#8212; Get information about the installed version of ISC BIND
+  </p>
+</div>
+
+  <div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+    <div class="cmdsynopsis"><p>
+      <code class="command">isc-config.sh</code> 
+       [<code class="option">--cflags</code>]
+       [<code class="option">--exec-prefix</code>]
+       [<code class="option">--libs</code>]
+       [<code class="option">--prefix</code>]
+       [<code class="option">--version</code>]
+       [libraries...]
+    </p></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.7"></a><h2>DESCRIPTION</h2>
+
+    <p><span class="command"><strong>isc-config.sh</strong></span>
+	prints information related to the installed version of ISC BIND,
+	such as the compiler and linker flags required to compile
+	and link programs that use ISC BIND libraries.
+    </p>
+    <p>
+	The optional libraries are used to report specific details
+	for compiling and linking for the listed libraries.
+	The allowed choices are:
+        <code class="option">isc</code>,
+        <code class="option">isccc</code>,
+        <code class="option">isccfg</code>,
+        <code class="option">dns</code>,
+        <code class="option">lwres</code>, and
+        <code class="option">bind9</code>.
+	Multiple libraries may be listed on the command line.
+	(Some libraries require other libraries, so are implied.)
+    </p>
+
+  </div>
+
+  <div class="refsection">
+<a name="id-1.8"></a><h2>OPTIONS</h2>
+
+
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term">--cflags</span></dt>
+<dd>
+          <p>
+            Prints the compiler command line options required to
+            compile files that use ISC BIND.
+            Use the <code class="option">libraries</code> command line argument(s)
+            to print additional specific flags to pass to the C compiler.
+          </p>
+        </dd>
+<dt><span class="term">--exec-prefix</span></dt>
+<dd>
+          <p>
+            Prints the directory prefix used in the ISC BIND installation
+            for architecture dependent files to standard output.
+          </p>
+        </dd>
+<dt><span class="term">--libs</span></dt>
+<dd>
+          <p>
+            Prints the linker command line options used to
+            link with the ISC BIND libraries.
+            Use the <code class="option">libraries</code> command line argument(s)
+            to print additional specific flags.
+          </p>
+        </dd>
+<dt><span class="term">--prefix</span></dt>
+<dd>
+          <p>
+            Prints the directory prefix used in the ISC BIND installation
+            for architecture independent files to standard output.
+          </p>
+        </dd>
+<dt><span class="term">--version</span></dt>
+<dd>
+          <p>
+            Prints the version of the installed ISC BIND suite.
+          </p>
+        </dd>
+</dl></div>
+
+  </div>
+
+  <div class="refsection">
+<a name="id-1.9"></a><h2>RETURN VALUES</h2>
+
+    <p><span class="command"><strong>isc-config.sh</strong></span>
+      returns an exit status of 1 if
+      invoked with invalid arguments or no arguments at all.
+      It returns 0 if information was successfully printed.
+    </p>
+  </div>
+
+</div></body>
+</html>

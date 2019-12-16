@@ -1,0 +1,27 @@
+LIBRARY libirs
+
+; Exported Functions
+EXPORTS
+irs_context_create
+irs_context_destroy
+irs_context_get
+irs_context_getappctx
+irs_context_getdnsclient
+irs_context_getdnsconf
+irs_context_getmctx
+irs_context_getresconf
+irs_context_gettask
+irs_context_gettaskmgr
+irs_context_gettimermgr
+irs_dnsconf_destroy
+irs_dnsconf_gettrustedkeys
+irs_dnsconf_load
+irs_freeaddrinfo
+irs_gai_strerror
+irs_getaddrinfo
+irs_getnameinfo
+irs_resconf_destroy
+irs_resconf_getnameservers
+irs_resconf_getndots
+irs_resconf_getsearchlist
+irs_resconf_load

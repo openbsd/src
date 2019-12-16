@@ -1,0 +1,14 @@
+$ORIGIN test.
+$TTL 1000
+@		in	soa	localhost. postmaster.localhost. (
+				1993050801	;serial
+				3600		;refresh
+				1800		;retry
+				604800		;expiration
+				3600 )		;minimum
+		in	ns	ns.test.
+		in	ns	ns2.test.
+		in	ns	ns3.test.
+b		in	a	1.2.3.4
+$ORIGIN sub.test.
+		in	a	4.3.2.1

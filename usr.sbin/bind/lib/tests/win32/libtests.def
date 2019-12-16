@@ -1,0 +1,15 @@
+LIBRARY libtests
+
+; Exported Functions
+EXPORTS
+t_assert
+t_bustline
+t_dc_method_fromtext
+t_dns_result_fromtext
+t_eval
+t_fgetbs
+t_getenv
+t_info
+t_main
+t_result
+t_settests

@@ -1,0 +1,154 @@
+<!--
+ - Copyright (C) 2009, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.isc-config.sh">
+  <info>
+    <date>2009-02-18</date>
+  </info>
+  <refentryinfo>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle><application>isc-config.sh</application></refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+
+  <docinfo>
+    <copyright>
+      <year>2009</year>
+      <year>2014</year>
+      <year>2015</year>
+      <year>2016</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refnamediv>
+    <refname><application>isc-config.sh</application></refname>
+    <refpurpose>Get information about the installed version of ISC BIND</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>isc-config.sh</command>
+      <arg choice="opt" rep="norepeat"><option>--cflags</option></arg>
+      <arg choice="opt" rep="norepeat"><option>--exec-prefix</option></arg>
+      <arg choice="opt" rep="norepeat"><option>--libs</option></arg>
+      <arg choice="opt" rep="norepeat"><option>--prefix</option></arg>
+      <arg choice="opt" rep="norepeat"><option>--version</option></arg>
+      <arg choice="opt" rep="repeat">libraries</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection><info><title>DESCRIPTION</title></info>
+
+    <para><command>isc-config.sh</command>
+	prints information related to the installed version of ISC BIND,
+	such as the compiler and linker flags required to compile
+	and link programs that use ISC BIND libraries.
+    </para>
+    <para>
+	The optional libraries are used to report specific details
+	for compiling and linking for the listed libraries.
+	The allowed choices are:
+        <option>isc</option>,
+        <option>isccc</option>,
+        <option>isccfg</option>,
+        <option>dns</option>,
+        <option>lwres</option>, and
+        <option>bind9</option>.
+	Multiple libraries may be listed on the command line.
+	(Some libraries require other libraries, so are implied.)
+    </para>
+
+  </refsection>
+
+  <refsection><info><title>OPTIONS</title></info>
+
+
+    <variablelist>
+
+      <varlistentry>
+        <term>--cflags</term>
+        <listitem>
+          <para>
+            Prints the compiler command line options required to
+            compile files that use ISC BIND.
+            Use the <option>libraries</option> command line argument(s)
+            to print additional specific flags to pass to the C compiler.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>--exec-prefix</term>
+        <listitem>
+          <para>
+            Prints the directory prefix used in the ISC BIND installation
+            for architecture dependent files to standard output.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>--libs</term>
+        <listitem>
+          <para>
+            Prints the linker command line options used to
+            link with the ISC BIND libraries.
+            Use the <option>libraries</option> command line argument(s)
+            to print additional specific flags.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>--prefix</term>
+        <listitem>
+          <para>
+            Prints the directory prefix used in the ISC BIND installation
+            for architecture independent files to standard output.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>--version</term>
+        <listitem>
+          <para>
+            Prints the version of the installed ISC BIND suite.
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </refsection>
+
+  <refsection><info><title>RETURN VALUES</title></info>
+
+    <para><command>isc-config.sh</command>
+      returns an exit status of 1 if
+      invoked with invalid arguments or no arguments at all.
+      It returns 0 if information was successfully printed.
+    </para>
+  </refsection>
+
+</refentry>

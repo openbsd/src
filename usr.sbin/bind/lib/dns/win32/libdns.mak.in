@@ -1,0 +1,2728 @@
+# Microsoft Developer Studio Generated NMAKE File, Based on libdns.dsp
+!IF "$(CFG)" == ""
+CFG=libdns - @PLATFORM@ Debug
+!MESSAGE No configuration specified. Defaulting to libdns - @PLATFORM@ Debug.
+!ENDIF 
+
+!IF "$(CFG)" != "libdns - @PLATFORM@ Release" && "$(CFG)" != "libdns - @PLATFORM@ Debug"
+!MESSAGE Invalid configuration "$(CFG)" specified.
+!MESSAGE You can specify a configuration when running NMAKE
+!MESSAGE by defining the macro CFG on the command line. For example:
+!MESSAGE 
+!MESSAGE NMAKE /f "libdns.mak" CFG="libdns - @PLATFORM@ Debug"
+!MESSAGE 
+!MESSAGE Possible choices for configuration are:
+!MESSAGE 
+!MESSAGE "libdns - @PLATFORM@ Release" (based on "@PLATFORM@ (x86) Dynamic-Link Library")
+!MESSAGE "libdns - @PLATFORM@ Debug" (based on "@PLATFORM@ (x86) Dynamic-Link Library")
+!MESSAGE 
+!ERROR An invalid configuration is specified.
+!ENDIF 
+
+!IF "$(OS)" == "Windows_NT"
+NULL=
+!ELSE 
+NULL=nul
+!ENDIF 
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+_VC_MANIFEST_INC=0
+_VC_MANIFEST_BASENAME=__VC80
+!ELSE
+_VC_MANIFEST_INC=1
+_VC_MANIFEST_BASENAME=__VC80.Debug
+!ENDIF
+
+####################################################
+# Specifying name of temporary resource file used only in incremental builds:
+
+!if "$(_VC_MANIFEST_INC)" == "1"
+_VC_MANIFEST_AUTO_RES=$(_VC_MANIFEST_BASENAME).auto.res
+!else
+_VC_MANIFEST_AUTO_RES=
+!endif
+
+####################################################
+# _VC_MANIFEST_EMBED_EXE - command to embed manifest in EXE:
+
+!if "$(_VC_MANIFEST_INC)" == "1"
+
+#MT_SPECIAL_RETURN=1090650113
+#MT_SPECIAL_SWITCH=-notify_resource_update
+MT_SPECIAL_RETURN=0
+MT_SPECIAL_SWITCH=
+_VC_MANIFEST_EMBED_EXE= \
+if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).auto.manifest $(MT_SPECIAL_SWITCH) & \
+if "%ERRORLEVEL%" == "$(MT_SPECIAL_RETURN)" \
+rc /r $(_VC_MANIFEST_BASENAME).auto.rc & \
+link $** /out:$@ $(LFLAGS)
+
+!else
+
+_VC_MANIFEST_EMBED_EXE= \
+if exist $@.manifest mt.exe -manifest $@.manifest -outputresource:$@;1
+
+!endif
+
+####################################################
+# _VC_MANIFEST_EMBED_DLL - command to embed manifest in DLL:
+
+!if "$(_VC_MANIFEST_INC)" == "1"
+
+#MT_SPECIAL_RETURN=1090650113
+#MT_SPECIAL_SWITCH=-notify_resource_update
+MT_SPECIAL_RETURN=0
+MT_SPECIAL_SWITCH=
+_VC_MANIFEST_EMBED_EXE= \
+if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).auto.manifest $(MT_SPECIAL_SWITCH) & \
+if "%ERRORLEVEL%" == "$(MT_SPECIAL_RETURN)" \
+rc /r $(_VC_MANIFEST_BASENAME).auto.rc & \
+link $** /out:$@ $(LFLAGS)
+
+!else
+
+_VC_MANIFEST_EMBED_EXE= \
+if exist $@.manifest mt.exe -manifest $@.manifest -outputresource:$@;2
+
+!endif
+####################################################
+# _VC_MANIFEST_CLEAN - command to clean resources files generated temporarily:
+
+!if "$(_VC_MANIFEST_INC)" == "1"
+
+_VC_MANIFEST_CLEAN=-del $(_VC_MANIFEST_BASENAME).auto.res \
+    $(_VC_MANIFEST_BASENAME).auto.rc \
+    $(_VC_MANIFEST_BASENAME).auto.manifest
+
+!else
+
+_VC_MANIFEST_CLEAN=
+
+!endif
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+OUTDIR=.\Release
+INTDIR=.\Release
+
+!IF "$(RECURSE)" == "0" 
+
+ALL : "..\..\..\Build\Release\libdns.dll"
+
+!ELSE 
+
+ALL : "libisc - @PLATFORM@ Release" "..\..\..\Build\Release\libdns.dll"
+
+!ENDIF 
+
+!IF "$(RECURSE)" == "1" 
+CLEAN :"libisc - @PLATFORM@ ReleaseCLEAN" 
+!ELSE 
+CLEAN :
+!ENDIF 
+	-@erase "$(INTDIR)\acache.obj"
+	-@erase "$(INTDIR)\acl.obj"
+	-@erase "$(INTDIR)\adb.obj"
+	-@erase "$(INTDIR)\byaddr.obj"
+	-@erase "$(INTDIR)\cache.obj"
+	-@erase "$(INTDIR)\callbacks.obj"
+	-@erase "$(INTDIR)\client.obj"
+	-@erase "$(INTDIR)\clientinfo.obj"
+	-@erase "$(INTDIR)\compress.obj"
+	-@erase "$(INTDIR)\db.obj"
+	-@erase "$(INTDIR)\dbiterator.obj"
+	-@erase "$(INTDIR)\dbtable.obj"
+	-@erase "$(INTDIR)\diff.obj"
+	-@erase "$(INTDIR)\dispatch.obj"
+	-@erase "$(INTDIR)\dlz.obj"
+	-@erase "$(INTDIR)\DLLMain.obj"
+	-@erase "$(INTDIR)\dns64.obj"
+	-@erase "$(INTDIR)\dnssec.obj"
+	-@erase "$(INTDIR)\ds.obj"
+	-@erase "$(INTDIR)\dst_api.obj"
+	-@erase "$(INTDIR)\dst_lib.obj"
+	-@erase "$(INTDIR)\dst_parse.obj"
+	-@erase "$(INTDIR)\dst_result.obj"
+	-@erase "$(INTDIR)\ecdb.obj"
+	-@erase "$(INTDIR)\forward.obj"
+@IF GEOIP
+	-@erase "$(INTDIR)\geoip.obj"
+@END GEOIP
+	-@erase "$(INTDIR)\gssapi_link.obj"
+	-@erase "$(INTDIR)\gssapictx.obj"
+	-@erase "$(INTDIR)\spnego.obj"
+	-@erase "$(INTDIR)\hmac_link.obj"
+	-@erase "$(INTDIR)\iptable.obj"
+	-@erase "$(INTDIR)\journal.obj"
+	-@erase "$(INTDIR)\key.obj"
+	-@erase "$(INTDIR)\keytable.obj"
+	-@erase "$(INTDIR)\lib.obj"
+	-@erase "$(INTDIR)\log.obj"
+	-@erase "$(INTDIR)\lookup.obj"
+	-@erase "$(INTDIR)\master.obj"
+	-@erase "$(INTDIR)\masterdump.obj"
+	-@erase "$(INTDIR)\message.obj"
+	-@erase "$(INTDIR)\name.obj"
+	-@erase "$(INTDIR)\ncache.obj"
+	-@erase "$(INTDIR)\nsec.obj"
+	-@erase "$(INTDIR)\nsec3.obj"
+@IF OPENSSL
+	-@erase "$(INTDIR)\openssl_link.obj"
+	-@erase "$(INTDIR)\openssldh_link.obj"
+	-@erase "$(INTDIR)\openssldsa_link.obj"
+	-@erase "$(INTDIR)\opensslecdsa_link.obj"
+	-@erase "$(INTDIR)\opensslgost_link.obj"
+	-@erase "$(INTDIR)\opensslrsa_link.obj"
+@END OPENSSL
+	-@erase "$(INTDIR)\order.obj"
+	-@erase "$(INTDIR)\peer.obj"
+@IF PKCS11
+	-@erase "$(INTDIR)\pkcs11.obj"
+	-@erase "$(INTDIR)\pkcs11dh_link.obj"
+	-@erase "$(INTDIR)\pkcs11dsa_link.obj"
+	-@erase "$(INTDIR)\pkcs11ecdsa_link.obj"
+	-@erase "$(INTDIR)\pkcs11gost_link.obj"
+	-@erase "$(INTDIR)\pkcs11rsa_link.obj"
+@END PKCS11
+	-@erase "$(INTDIR)\portlist.obj"
+	-@erase "$(INTDIR)\private.obj"
+	-@erase "$(INTDIR)\rbt.obj"
+	-@erase "$(INTDIR)\rbtdb.obj"
+	-@erase "$(INTDIR)\rbtdb64.obj"
+	-@erase "$(INTDIR)\rcode.obj"
+	-@erase "$(INTDIR)\rdata.obj"
+	-@erase "$(INTDIR)\rdatalist.obj"
+	-@erase "$(INTDIR)\rdataset.obj"
+	-@erase "$(INTDIR)\rdatasetiter.obj"
+	-@erase "$(INTDIR)\rdataslab.obj"
+	-@erase "$(INTDIR)\request.obj"
+	-@erase "$(INTDIR)\resolver.obj"
+	-@erase "$(INTDIR)\result.obj"
+	-@erase "$(INTDIR)\rootns.obj"
+	-@erase "$(INTDIR)\rpz.obj"
+	-@erase "$(INTDIR)\rrl.obj"
+	-@erase "$(INTDIR)\sdb.obj"
+	-@erase "$(INTDIR)\sdlz.obj"
+	-@erase "$(INTDIR)\soa.obj"
+	-@erase "$(INTDIR)\ssu.obj"
+	-@erase "$(INTDIR)\ssu_external.obj"
+	-@erase "$(INTDIR)\stats.obj"
+	-@erase "$(INTDIR)\tcpmsg.obj"
+	-@erase "$(INTDIR)\time.obj"
+	-@erase "$(INTDIR)\timer.obj"
+	-@erase "$(INTDIR)\tkey.obj"
+	-@erase "$(INTDIR)\tsec.obj"
+	-@erase "$(INTDIR)\tsig.obj"
+	-@erase "$(INTDIR)\ttl.obj"
+	-@erase "$(INTDIR)\update.obj"
+	-@erase "$(INTDIR)\validator.obj"
+	-@erase "$(INTDIR)\vc60.idb"
+	-@erase "$(INTDIR)\version.obj"
+	-@erase "$(INTDIR)\view.obj"
+	-@erase "$(INTDIR)\xfrin.obj"
+	-@erase "$(INTDIR)\zone.obj"
+	-@erase "$(INTDIR)\zonekey.obj"
+	-@erase "$(INTDIR)\zt.obj"
+	-@erase "$(OUTDIR)\libdns.exp"
+	-@erase "$(OUTDIR)\libdns.lib"
+	-@erase "..\..\..\Build\Release\libdns.dll"
+	-@$(_VC_MANIFEST_CLEAN)
+
+"$(OUTDIR)" :
+    if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
+
+LIBXML=@LIBXML2_LIB@
+CPP=cl.exe
+CPP_PROJ=/nologo /MD /W3 @COPTX@ @COPTI@ /O2 /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" @OPENSSL_INC@ @LIBXML2_INC@ @GSSAPI_INC@ @GEOIP_INC@ /D "NDEBUG" /D "BIND9" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" @CRYPTO@ @USE_GSSAPI@ @USE_ISC_SPNEGO@ /D "LIBDNS_EXPORTS" /Fp"$(INTDIR)\libdns.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+MTL=midl.exe
+MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
+RSC=rc.exe
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\libdns.bsc" 
+BSC32_SBRS= \
+	
+LINK32=link.exe
+LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib $(LIBXML) ../../isc/win32/Release/libisc.lib @OPENSSL_LIB@ @GSSAPI_LIB@ @KRB5_LIB@ @GEOIP_LIB@ /nologo /dll /incremental:no /pdb:"$(OUTDIR)\libdns.pdb" @MACHINE@ /def:".\libdns.def" /out:"../../../Build/Release/libdns.dll" /implib:"$(OUTDIR)\libdns.lib" 
+DEF_FILE= \
+	".\libdns.def"
+LINK32_OBJS= \
+	"$(INTDIR)\acache.obj" \
+	"$(INTDIR)\acl.obj" \
+	"$(INTDIR)\adb.obj" \
+	"$(INTDIR)\byaddr.obj" \
+	"$(INTDIR)\cache.obj" \
+	"$(INTDIR)\callbacks.obj" \
+	"$(INTDIR)\client.obj" \
+	"$(INTDIR)\clientinfo.obj" \
+	"$(INTDIR)\compress.obj" \
+	"$(INTDIR)\db.obj" \
+	"$(INTDIR)\dbiterator.obj" \
+	"$(INTDIR)\dbtable.obj" \
+	"$(INTDIR)\diff.obj" \
+	"$(INTDIR)\dispatch.obj" \
+	"$(INTDIR)\dlz.obj" \
+	"$(INTDIR)\DLLMain.obj" \
+	"$(INTDIR)\dns64.obj" \
+	"$(INTDIR)\dnssec.obj" \
+	"$(INTDIR)\ds.obj" \
+	"$(INTDIR)\ecdb.obj" \
+	"$(INTDIR)\forward.obj" \
+@IF GEOIP
+	"$(INTDIR)\geoip.obj" \
+@END GEOIP
+	"$(INTDIR)\iptable.obj" \
+	"$(INTDIR)\journal.obj" \
+	"$(INTDIR)\keydata.obj" \
+	"$(INTDIR)\keytable.obj" \
+	"$(INTDIR)\lib.obj" \
+	"$(INTDIR)\log.obj" \
+	"$(INTDIR)\lookup.obj" \
+	"$(INTDIR)\master.obj" \
+	"$(INTDIR)\masterdump.obj" \
+	"$(INTDIR)\message.obj" \
+	"$(INTDIR)\name.obj" \
+	"$(INTDIR)\ncache.obj" \
+	"$(INTDIR)\nsec.obj" \
+	"$(INTDIR)\nsec3.obj" \
+	"$(INTDIR)\order.obj" \
+	"$(INTDIR)\peer.obj" \
+	"$(INTDIR)\portlist.obj" \
+	"$(INTDIR)\private.obj" \
+	"$(INTDIR)\rbt.obj" \
+	"$(INTDIR)\rbtdb.obj" \
+	"$(INTDIR)\rbtdb64.obj" \
+	"$(INTDIR)\rcode.obj" \
+	"$(INTDIR)\rdata.obj" \
+	"$(INTDIR)\rdatalist.obj" \
+	"$(INTDIR)\rdataset.obj" \
+	"$(INTDIR)\rdatasetiter.obj" \
+	"$(INTDIR)\rdataslab.obj" \
+	"$(INTDIR)\request.obj" \
+	"$(INTDIR)\resolver.obj" \
+	"$(INTDIR)\result.obj" \
+	"$(INTDIR)\rootns.obj" \
+	"$(INTDIR)\rpz.obj" \
+	"$(INTDIR)\rrl.obj" \
+	"$(INTDIR)\rriterator.obj" \
+	"$(INTDIR)\sdb.obj" \
+	"$(INTDIR)\sdlz.obj" \
+	"$(INTDIR)\soa.obj" \
+	"$(INTDIR)\ssu.obj" \
+	"$(INTDIR)\ssu_external.obj" \
+	"$(INTDIR)\stats.obj" \
+	"$(INTDIR)\tcpmsg.obj" \
+	"$(INTDIR)\time.obj" \
+	"$(INTDIR)\timer.obj" \
+	"$(INTDIR)\tkey.obj" \
+	"$(INTDIR)\tsec.obj" \
+	"$(INTDIR)\tsig.obj" \
+	"$(INTDIR)\ttl.obj" \
+	"$(INTDIR)\update.obj" \
+	"$(INTDIR)\validator.obj" \
+	"$(INTDIR)\version.obj" \
+	"$(INTDIR)\view.obj" \
+	"$(INTDIR)\xfrin.obj" \
+	"$(INTDIR)\zone.obj" \
+	"$(INTDIR)\zonekey.obj" \
+	"$(INTDIR)\zt.obj" \
+	"$(INTDIR)\dst_api.obj" \
+	"$(INTDIR)\dst_lib.obj" \
+	"$(INTDIR)\dst_parse.obj" \
+	"$(INTDIR)\dst_result.obj" \
+	"$(INTDIR)\gssapi_link.obj" \
+	"$(INTDIR)\gssapictx.obj" \
+	"$(INTDIR)\spnego.obj" \
+	"$(INTDIR)\hmac_link.obj" \
+	"$(INTDIR)\key.obj" \
+@IF OPENSSL
+	"$(INTDIR)\openssl_link.obj" \
+	"$(INTDIR)\openssldh_link.obj" \
+	"$(INTDIR)\openssldsa_link.obj" \
+	"$(INTDIR)\opensslecdsa_link.obj" \
+	"$(INTDIR)\opensslgost_link.obj" \
+	"$(INTDIR)\opensslrsa_link.obj" \
+@END OPENSSL
+@IF PKCS11
+	"$(INTDIR)\pkcs11.obj" \
+	"$(INTDIR)\pkcs11dh_link.obj" \
+	"$(INTDIR)\pkcs11dsa_link.obj" \
+	"$(INTDIR)\pkcs11ecdsa_link.obj" \
+	"$(INTDIR)\pkcs11gost_link.obj" \
+	"$(INTDIR)\pkcs11rsa_link.obj" \
+@END PKCS11
+	"..\..\isc\win32\Release\libisc.lib"
+
+"..\..\..\Build\Release\libdns.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+  $(_VC_MANIFEST_EMBED_DLL)
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+OUTDIR=.\Debug
+INTDIR=.\Debug
+# Begin Custom Macros
+OutDir=.\Debug
+# End Custom Macros
+
+!IF "$(RECURSE)" == "0" 
+
+ALL : "..\..\..\Build\Debug\libdns.dll" "$(OUTDIR)\libdns.bsc"
+
+!ELSE 
+
+ALL : "libisc - @PLATFORM@ Debug" "..\..\..\Build\Debug\libdns.dll" "$(OUTDIR)\libdns.bsc"
+
+!ENDIF 
+
+!IF "$(RECURSE)" == "1" 
+CLEAN :"libisc - @PLATFORM@ DebugCLEAN" 
+!ELSE 
+CLEAN :
+!ENDIF 
+	-@erase "$(INTDIR)\acache.obj"
+	-@erase "$(INTDIR)\acache.sbr"
+	-@erase "$(INTDIR)\acl.obj"
+	-@erase "$(INTDIR)\acl.sbr"
+	-@erase "$(INTDIR)\adb.obj"
+	-@erase "$(INTDIR)\adb.sbr"
+	-@erase "$(INTDIR)\byaddr.obj"
+	-@erase "$(INTDIR)\byaddr.sbr"
+	-@erase "$(INTDIR)\cache.obj"
+	-@erase "$(INTDIR)\cache.sbr"
+	-@erase "$(INTDIR)\callbacks.obj"
+	-@erase "$(INTDIR)\callbacks.sbr"
+	-@erase "$(INTDIR)\client.obj"
+	-@erase "$(INTDIR)\client.sbr"
+	-@erase "$(INTDIR)\clientinfo.obj"
+	-@erase "$(INTDIR)\clientinfo.sbr"
+	-@erase "$(INTDIR)\compress.obj"
+	-@erase "$(INTDIR)\compress.sbr"
+	-@erase "$(INTDIR)\db.obj"
+	-@erase "$(INTDIR)\db.sbr"
+	-@erase "$(INTDIR)\dbiterator.obj"
+	-@erase "$(INTDIR)\dbiterator.sbr"
+	-@erase "$(INTDIR)\dbtable.obj"
+	-@erase "$(INTDIR)\dbtable.sbr"
+	-@erase "$(INTDIR)\diff.obj"
+	-@erase "$(INTDIR)\diff.sbr"
+	-@erase "$(INTDIR)\dispatch.obj"
+	-@erase "$(INTDIR)\dispatch.sbr"
+	-@erase "$(INTDIR)\dlz.obj"
+	-@erase "$(INTDIR)\dlz.sbr"
+	-@erase "$(INTDIR)\DLLMain.obj"
+	-@erase "$(INTDIR)\DLLMain.sbr"
+	-@erase "$(INTDIR)\dns64.obj"
+	-@erase "$(INTDIR)\dns64.sbr"
+	-@erase "$(INTDIR)\dnssec.obj"
+	-@erase "$(INTDIR)\dnssec.sbr"
+	-@erase "$(INTDIR)\ds.obj"
+	-@erase "$(INTDIR)\ds.sbr"
+	-@erase "$(INTDIR)\dst_api.obj"
+	-@erase "$(INTDIR)\dst_api.sbr"
+	-@erase "$(INTDIR)\dst_lib.obj"
+	-@erase "$(INTDIR)\dst_lib.sbr"
+	-@erase "$(INTDIR)\dst_parse.obj"
+	-@erase "$(INTDIR)\dst_parse.sbr"
+	-@erase "$(INTDIR)\dst_result.obj"
+	-@erase "$(INTDIR)\dst_result.sbr"
+	-@erase "$(INTDIR)\ecdb.obj"
+	-@erase "$(INTDIR)\ecdb.sbr"
+	-@erase "$(INTDIR)\forward.obj"
+	-@erase "$(INTDIR)\forward.sbr"
+@IF GEOIP
+	-@erase "$(INTDIR)\geoip.obj"
+	-@erase "$(INTDIR)\geoip.sbr"
+@END GEOIP
+	-@erase "$(INTDIR)\gssapi_link.obj"
+	-@erase "$(INTDIR)\gssapi_link.sbr"
+	-@erase "$(INTDIR)\gssapictx.obj"
+	-@erase "$(INTDIR)\gssapictx.sbr"
+	-@erase "$(INTDIR)\spnego.obj"
+	-@erase "$(INTDIR)\spnego.sbr"
+	-@erase "$(INTDIR)\hmac_link.obj"
+	-@erase "$(INTDIR)\hmac_link.sbr"
+	-@erase "$(INTDIR)\iptable.obj"
+	-@erase "$(INTDIR)\iptable.sbr"
+	-@erase "$(INTDIR)\journal.obj"
+	-@erase "$(INTDIR)\journal.sbr"
+	-@erase "$(INTDIR)\key.obj"
+	-@erase "$(INTDIR)\key.sbr"
+	-@erase "$(INTDIR)\keydata.obj"
+	-@erase "$(INTDIR)\keydata.sbr"
+	-@erase "$(INTDIR)\keytable.obj"
+	-@erase "$(INTDIR)\keytable.sbr"
+	-@erase "$(INTDIR)\lib.obj"
+	-@erase "$(INTDIR)\lib.sbr"
+	-@erase "$(INTDIR)\log.obj"
+	-@erase "$(INTDIR)\log.sbr"
+	-@erase "$(INTDIR)\lookup.obj"
+	-@erase "$(INTDIR)\lookup.sbr"
+	-@erase "$(INTDIR)\master.obj"
+	-@erase "$(INTDIR)\master.sbr"
+	-@erase "$(INTDIR)\masterdump.obj"
+	-@erase "$(INTDIR)\masterdump.sbr"
+	-@erase "$(INTDIR)\message.obj"
+	-@erase "$(INTDIR)\message.sbr"
+	-@erase "$(INTDIR)\name.obj"
+	-@erase "$(INTDIR)\name.sbr"
+	-@erase "$(INTDIR)\ncache.obj"
+	-@erase "$(INTDIR)\ncache.sbr"
+	-@erase "$(INTDIR)\nsec.obj"
+	-@erase "$(INTDIR)\nsec.sbr"
+	-@erase "$(INTDIR)\nsec3.obj"
+	-@erase "$(INTDIR)\nsec3.sbr"
+@IF OPENSSL
+	-@erase "$(INTDIR)\openssl_link.obj"
+	-@erase "$(INTDIR)\openssl_link.sbr"
+	-@erase "$(INTDIR)\openssldh_link.obj"
+	-@erase "$(INTDIR)\openssldh_link.sbr"
+	-@erase "$(INTDIR)\openssldsa_link.obj"
+	-@erase "$(INTDIR)\openssldsa_link.sbr"
+	-@erase "$(INTDIR)\opensslecdsa_link.obj"
+	-@erase "$(INTDIR)\opensslecdsa_link.sbr"
+	-@erase "$(INTDIR)\opensslgost_link.obj"
+	-@erase "$(INTDIR)\opensslgost_link.sbr"
+	-@erase "$(INTDIR)\opensslrsa_link.obj"
+	-@erase "$(INTDIR)\opensslrsa_link.sbr"
+@END OPENSSL
+	-@erase "$(INTDIR)\order.obj"
+	-@erase "$(INTDIR)\order.sbr"
+	-@erase "$(INTDIR)\peer.obj"
+	-@erase "$(INTDIR)\peer.sbr"
+@IF PKCS11
+	-@erase "$(INTDIR)\pkcs11.obj"
+	-@erase "$(INTDIR)\pkcs11.sbr"
+	-@erase "$(INTDIR)\pkcs11dh_link.obj"
+	-@erase "$(INTDIR)\pkcs11dh_link.sbr"
+	-@erase "$(INTDIR)\pkcs11dsa_link.obj"
+	-@erase "$(INTDIR)\pkcs11dsa_link.sbr"
+	-@erase "$(INTDIR)\pkcs11ecdsa_link.obj"
+	-@erase "$(INTDIR)\pkcs11ecdsa_link.sbr"
+	-@erase "$(INTDIR)\pkcs11gost_link.obj"
+	-@erase "$(INTDIR)\pkcs11gost_link.sbr"
+	-@erase "$(INTDIR)\pkcs11rsa_link.obj"
+	-@erase "$(INTDIR)\pkcs11rsa_link.sbr"
+@END PKCS11
+	-@erase "$(INTDIR)\portlist.obj"
+	-@erase "$(INTDIR)\portlist.sbr"
+	-@erase "$(INTDIR)\private.obj"
+	-@erase "$(INTDIR)\private.sbr"
+	-@erase "$(INTDIR)\rbt.obj"
+	-@erase "$(INTDIR)\rbt.sbr"
+	-@erase "$(INTDIR)\rbtdb.obj"
+	-@erase "$(INTDIR)\rbtdb.sbr"
+	-@erase "$(INTDIR)\rbtdb64.obj"
+	-@erase "$(INTDIR)\rbtdb64.sbr"
+	-@erase "$(INTDIR)\rcode.obj"
+	-@erase "$(INTDIR)\rcode.sbr"
+	-@erase "$(INTDIR)\rdata.obj"
+	-@erase "$(INTDIR)\rdata.sbr"
+	-@erase "$(INTDIR)\rdatalist.obj"
+	-@erase "$(INTDIR)\rdatalist.sbr"
+	-@erase "$(INTDIR)\rdataset.obj"
+	-@erase "$(INTDIR)\rdataset.sbr"
+	-@erase "$(INTDIR)\rdatasetiter.obj"
+	-@erase "$(INTDIR)\rdatasetiter.sbr"
+	-@erase "$(INTDIR)\rdataslab.obj"
+	-@erase "$(INTDIR)\rdataslab.sbr"
+	-@erase "$(INTDIR)\request.obj"
+	-@erase "$(INTDIR)\request.sbr"
+	-@erase "$(INTDIR)\resolver.obj"
+	-@erase "$(INTDIR)\resolver.sbr"
+	-@erase "$(INTDIR)\result.obj"
+	-@erase "$(INTDIR)\result.sbr"
+	-@erase "$(INTDIR)\rootns.obj"
+	-@erase "$(INTDIR)\rootns.sbr"
+	-@erase "$(INTDIR)\rpz.obj"
+	-@erase "$(INTDIR)\rpz.sbr"
+	-@erase "$(INTDIR)\rrl.obj"
+	-@erase "$(INTDIR)\rrl.sbr"
+	-@erase "$(INTDIR)\rriterator.obj"
+	-@erase "$(INTDIR)\rriterator.sbr"
+	-@erase "$(INTDIR)\sdb.obj"
+	-@erase "$(INTDIR)\sdb.sbr"
+	-@erase "$(INTDIR)\sdlz.obj"
+	-@erase "$(INTDIR)\sdlz.sbr"
+	-@erase "$(INTDIR)\soa.obj"
+	-@erase "$(INTDIR)\soa.sbr"
+	-@erase "$(INTDIR)\ssu.obj"
+	-@erase "$(INTDIR)\ssu_external.obj"
+	-@erase "$(INTDIR)\ssu.sbr"
+	-@erase "$(INTDIR)\ssu_external.sbr"
+	-@erase "$(INTDIR)\stats.obj"
+	-@erase "$(INTDIR)\stats.sbr"
+	-@erase "$(INTDIR)\tcpmsg.obj"
+	-@erase "$(INTDIR)\tcpmsg.sbr"
+	-@erase "$(INTDIR)\time.obj"
+	-@erase "$(INTDIR)\time.sbr"
+	-@erase "$(INTDIR)\timer.obj"
+	-@erase "$(INTDIR)\timer.sbr"
+	-@erase "$(INTDIR)\tkey.obj"
+	-@erase "$(INTDIR)\tkey.sbr"
+	-@erase "$(INTDIR)\tsec.obj"
+	-@erase "$(INTDIR)\tsec.sbr"
+	-@erase "$(INTDIR)\tsig.obj"
+	-@erase "$(INTDIR)\tsig.sbr"
+	-@erase "$(INTDIR)\ttl.obj"
+	-@erase "$(INTDIR)\ttl.sbr"
+	-@erase "$(INTDIR)\update.obj"
+	-@erase "$(INTDIR)\update.sbr"
+	-@erase "$(INTDIR)\validator.obj"
+	-@erase "$(INTDIR)\validator.sbr"
+	-@erase "$(INTDIR)\vc60.idb"
+	-@erase "$(INTDIR)\vc60.pdb"
+	-@erase "$(INTDIR)\version.obj"
+	-@erase "$(INTDIR)\version.sbr"
+	-@erase "$(INTDIR)\view.obj"
+	-@erase "$(INTDIR)\view.sbr"
+	-@erase "$(INTDIR)\xfrin.obj"
+	-@erase "$(INTDIR)\xfrin.sbr"
+	-@erase "$(INTDIR)\zone.obj"
+	-@erase "$(INTDIR)\zone.sbr"
+	-@erase "$(INTDIR)\zonekey.obj"
+	-@erase "$(INTDIR)\zonekey.sbr"
+	-@erase "$(INTDIR)\zt.obj"
+	-@erase "$(INTDIR)\zt.sbr"
+	-@erase "$(OUTDIR)\libdns.bsc"
+	-@erase "$(OUTDIR)\libdns.exp"
+	-@erase "$(OUTDIR)\libdns.lib"
+	-@erase "$(OUTDIR)\libdns.map"
+	-@erase "$(OUTDIR)\libdns.pdb"
+	-@erase "..\..\..\Build\Debug\libdns.dll"
+	-@erase "..\..\..\Build\Debug\libdns.ilk"
+	-@$(_VC_MANIFEST_CLEAN)
+
+"$(OUTDIR)" :
+    if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
+
+CPP=cl.exe
+CPP_PROJ=/nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" @OPENSSL_INC@ @LIBXML2_INC@ @GSSAPI_INC@ @GEOIP_INC@ /D "_DEBUG" /D "BIND9" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" @CRYPTO@ @USE_GSSAPI@ @USE_ISC_SPNEGO@ /D "LIBDNS_EXPORTS" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\libdns.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+MTL=midl.exe
+MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
+RSC=rc.exe
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\libdns.bsc" 
+BSC32_SBRS= \
+	"$(INTDIR)\acache.sbr" \
+	"$(INTDIR)\acl.sbr" \
+	"$(INTDIR)\adb.sbr" \
+	"$(INTDIR)\byaddr.sbr" \
+	"$(INTDIR)\cache.sbr" \
+	"$(INTDIR)\callbacks.sbr" \
+	"$(INTDIR)\client.sbr" \
+	"$(INTDIR)\clientinfo.sbr" \
+	"$(INTDIR)\compress.sbr" \
+	"$(INTDIR)\db.sbr" \
+	"$(INTDIR)\dbiterator.sbr" \
+	"$(INTDIR)\dbtable.sbr" \
+	"$(INTDIR)\diff.sbr" \
+	"$(INTDIR)\dispatch.sbr" \
+	"$(INTDIR)\dlz.sbr" \
+	"$(INTDIR)\DLLMain.sbr" \
+	"$(INTDIR)\dns64.sbr" \
+	"$(INTDIR)\dnssec.sbr" \
+	"$(INTDIR)\ds.sbr" \
+	"$(INTDIR)\ecdb.sbr" \
+	"$(INTDIR)\forward.sbr" \
+@IF GEOIP
+	"$(INTDIR)\geoip.sbr" \
+@END GEOIP
+	"$(INTDIR)\iptable.sbr" \
+	"$(INTDIR)\journal.sbr" \
+	"$(INTDIR)\keydata.sbr" \
+	"$(INTDIR)\keytable.sbr" \
+	"$(INTDIR)\lib.sbr" \
+	"$(INTDIR)\log.sbr" \
+	"$(INTDIR)\lookup.sbr" \
+	"$(INTDIR)\master.sbr" \
+	"$(INTDIR)\masterdump.sbr" \
+	"$(INTDIR)\message.sbr" \
+	"$(INTDIR)\name.sbr" \
+	"$(INTDIR)\ncache.sbr" \
+	"$(INTDIR)\nsec.sbr" \
+	"$(INTDIR)\nsec3.sbr" \
+	"$(INTDIR)\order.sbr" \
+	"$(INTDIR)\peer.sbr" \
+	"$(INTDIR)\portlist.sbr" \
+	"$(INTDIR)\private.sbr" \
+	"$(INTDIR)\rbt.sbr" \
+	"$(INTDIR)\rbtdb.sbr" \
+	"$(INTDIR)\rbtdb64.sbr" \
+	"$(INTDIR)\rcode.sbr" \
+	"$(INTDIR)\rdata.sbr" \
+	"$(INTDIR)\rdatalist.sbr" \
+	"$(INTDIR)\rdataset.sbr" \
+	"$(INTDIR)\rdatasetiter.sbr" \
+	"$(INTDIR)\rdataslab.sbr" \
+	"$(INTDIR)\request.sbr" \
+	"$(INTDIR)\resolver.sbr" \
+	"$(INTDIR)\result.sbr" \
+	"$(INTDIR)\rootns.sbr" \
+	"$(INTDIR)\rpz.sbr" \
+	"$(INTDIR)\rrl.sbr" \
+	"$(INTDIR)\rriterator.sbr" \
+	"$(INTDIR)\sdb.sbr" \
+	"$(INTDIR)\sdlz.sbr" \
+	"$(INTDIR)\soa.sbr" \
+	"$(INTDIR)\ssu.sbr" \
+	"$(INTDIR)\ssu_external.sbr" \
+	"$(INTDIR)\stats.sbr" \
+	"$(INTDIR)\tcpmsg.sbr" \
+	"$(INTDIR)\time.sbr" \
+	"$(INTDIR)\timer.sbr" \
+	"$(INTDIR)\tkey.sbr" \
+	"$(INTDIR)\tsec.sbr" \
+	"$(INTDIR)\tsig.sbr" \
+	"$(INTDIR)\ttl.sbr" \
+	"$(INTDIR)\update.sbr" \
+	"$(INTDIR)\validator.sbr" \
+	"$(INTDIR)\version.sbr" \
+	"$(INTDIR)\view.sbr" \
+	"$(INTDIR)\xfrin.sbr" \
+	"$(INTDIR)\zone.sbr" \
+	"$(INTDIR)\zonekey.sbr" \
+	"$(INTDIR)\zt.sbr" \
+	"$(INTDIR)\dst_api.sbr" \
+	"$(INTDIR)\dst_lib.sbr" \
+	"$(INTDIR)\dst_parse.sbr" \
+	"$(INTDIR)\dst_result.sbr" \
+	"$(INTDIR)\gssapi_link.sbr" \
+	"$(INTDIR)\gssapictx.sbr" \
+	"$(INTDIR)\spnego.sbr" \
+	"$(INTDIR)\hmac_link.sbr" \
+	"$(INTDIR)\key.sbr" \
+@IF OPENSSL
+	"$(INTDIR)\openssl_link.sbr" \
+	"$(INTDIR)\openssldh_link.sbr" \
+	"$(INTDIR)\openssldsa_link.sbr" \
+	"$(INTDIR)\opensslecdsa_link.sbr" \
+	"$(INTDIR)\opensslgost_link.sbr" \
+	"$(INTDIR)\opensslrsa_link.sbr" \
+@END OPENSSL
+@IF PKCS11
+	"$(INTDIR)\pkcs11.sbr" \
+	"$(INTDIR)\pkcs11dh_link.sbr" \
+	"$(INTDIR)\pkcs11dsa_link.sbr" \
+	"$(INTDIR)\pkcs11ecdsa_link.sbr" \
+	"$(INTDIR)\pkcs11gost_link.sbr" \
+	"$(INTDIR)\pkcs11rsa_link.sbr"
+@END PKCS11
+
+"$(OUTDIR)\libdns.bsc" : "$(OUTDIR)" $(BSC32_SBRS)
+    $(BSC32) @<<
+  $(BSC32_FLAGS) $(BSC32_SBRS)
+<<
+
+LINK32=link.exe
+LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib $(LIBXML) ../../isc/win32/Debug/libisc.lib @OPENSSL_LIB@ @GSSAPI_LIB@ @KRB5_LIB@ @GEOIP_LIB@ @GEOIP_LIB@ /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\libdns.pdb" /map:"$(INTDIR)\libdns.map" /debug @MACHINE@ /def:".\libdns.def" /out:"../../../Build/Debug/libdns.dll" /implib:"$(OUTDIR)\libdns.lib" /pdbtype:sept 
+DEF_FILE= \
+	".\libdns.def"
+LINK32_OBJS= \
+	"$(INTDIR)\acache.obj" \
+	"$(INTDIR)\acl.obj" \
+	"$(INTDIR)\adb.obj" \
+	"$(INTDIR)\byaddr.obj" \
+	"$(INTDIR)\cache.obj" \
+	"$(INTDIR)\callbacks.obj" \
+	"$(INTDIR)\client.obj" \
+	"$(INTDIR)\clientinfo.obj" \
+	"$(INTDIR)\compress.obj" \
+	"$(INTDIR)\db.obj" \
+	"$(INTDIR)\dbiterator.obj" \
+	"$(INTDIR)\dbtable.obj" \
+	"$(INTDIR)\diff.obj" \
+	"$(INTDIR)\dispatch.obj" \
+	"$(INTDIR)\dlz.obj" \
+	"$(INTDIR)\DLLMain.obj" \
+	"$(INTDIR)\dns64.obj" \
+	"$(INTDIR)\dnssec.obj" \
+	"$(INTDIR)\ds.obj" \
+	"$(INTDIR)\ecdb.obj" \
+	"$(INTDIR)\forward.obj" \
+@IF GEOIP
+	"$(INTDIR)\geoip.obj" \
+@END GEOIP
+	"$(INTDIR)\iptable.obj" \
+	"$(INTDIR)\journal.obj" \
+	"$(INTDIR)\key.obj" \
+	"$(INTDIR)\keytable.obj" \
+	"$(INTDIR)\lib.obj" \
+	"$(INTDIR)\log.obj" \
+	"$(INTDIR)\lookup.obj" \
+	"$(INTDIR)\master.obj" \
+	"$(INTDIR)\masterdump.obj" \
+	"$(INTDIR)\message.obj" \
+	"$(INTDIR)\name.obj" \
+	"$(INTDIR)\ncache.obj" \
+	"$(INTDIR)\nsec.obj" \
+	"$(INTDIR)\nsec3.obj" \
+	"$(INTDIR)\order.obj" \
+	"$(INTDIR)\peer.obj" \
+	"$(INTDIR)\portlist.obj" \
+	"$(INTDIR)\private.obj" \
+	"$(INTDIR)\rbt.obj" \
+	"$(INTDIR)\rbtdb.obj" \
+	"$(INTDIR)\rbtdb64.obj" \
+	"$(INTDIR)\rcode.obj" \
+	"$(INTDIR)\rdata.obj" \
+	"$(INTDIR)\rdatalist.obj" \
+	"$(INTDIR)\rdataset.obj" \
+	"$(INTDIR)\rdatasetiter.obj" \
+	"$(INTDIR)\rdataslab.obj" \
+	"$(INTDIR)\request.obj" \
+	"$(INTDIR)\resolver.obj" \
+	"$(INTDIR)\result.obj" \
+	"$(INTDIR)\rootns.obj" \
+	"$(INTDIR)\rpz.obj" \
+	"$(INTDIR)\rrl.obj" \
+	"$(INTDIR)\rriterator.obj" \
+	"$(INTDIR)\sdb.obj" \
+	"$(INTDIR)\sdlz.obj" \
+	"$(INTDIR)\soa.obj" \
+	"$(INTDIR)\ssu.obj" \
+	"$(INTDIR)\ssu_external.obj" \
+	"$(INTDIR)\stats.obj" \
+	"$(INTDIR)\tcpmsg.obj" \
+	"$(INTDIR)\time.obj" \
+	"$(INTDIR)\timer.obj" \
+	"$(INTDIR)\tkey.obj" \
+	"$(INTDIR)\tsec.obj" \
+	"$(INTDIR)\tsig.obj" \
+	"$(INTDIR)\ttl.obj" \
+	"$(INTDIR)\update.obj" \
+	"$(INTDIR)\validator.obj" \
+	"$(INTDIR)\version.obj" \
+	"$(INTDIR)\view.obj" \
+	"$(INTDIR)\xfrin.obj" \
+	"$(INTDIR)\zone.obj" \
+	"$(INTDIR)\zonekey.obj" \
+	"$(INTDIR)\zt.obj" \
+	"$(INTDIR)\dst_api.obj" \
+	"$(INTDIR)\dst_lib.obj" \
+	"$(INTDIR)\dst_parse.obj" \
+	"$(INTDIR)\dst_result.obj" \
+	"$(INTDIR)\gssapi_link.obj" \
+	"$(INTDIR)\gssapictx.obj" \
+	"$(INTDIR)\spnego.obj" \
+	"$(INTDIR)\hmac_link.obj" \
+	"$(INTDIR)\key.obj" \
+@IF OPENSSL
+	"$(INTDIR)\openssl_link.obj" \
+	"$(INTDIR)\openssldh_link.obj" \
+	"$(INTDIR)\openssldsa_link.obj" \
+	"$(INTDIR)\opensslecdsa_link.obj" \
+	"$(INTDIR)\opensslgost_link.obj" \
+	"$(INTDIR)\opensslrsa_link.obj" \
+@END OPENSSL
+@IF PKCS11
+	"$(INTDIR)\pkcs11.obj" \
+	"$(INTDIR)\pkcs11dh_link.obj" \
+	"$(INTDIR)\pkcs11dsa_link.obj" \
+	"$(INTDIR)\pkcs11ecdsa_link.obj" \
+	"$(INTDIR)\pkcs11gost_link.obj" \
+	"$(INTDIR)\pkcs11rsa_link.obj" \
+@END PKCS11
+	"..\..\isc\win32\Debug\libisc.lib"
+
+"..\..\..\Build\Debug\libdns.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+  $(_VC_MANIFEST_EMBED_DLL)
+
+!ENDIF 
+
+
+!IF "$(NO_EXTERNAL_DEPS)" != "1"
+!IF EXISTS("libdns.dep")
+!INCLUDE "libdns.dep"
+!ELSE 
+!MESSAGE Warning: cannot find "libdns.dep"
+!ENDIF 
+!ENDIF 
+
+
+!IF "$(CFG)" == "libdns - @PLATFORM@ Release" || "$(CFG)" == "libdns - @PLATFORM@ Debug"
+SOURCE=..\acache.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\acache.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\acache.obj"	"$(INTDIR)\acache.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\acl.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\acl.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\acl.obj"	"$(INTDIR)\acl.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\adb.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\adb.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\adb.obj"	"$(INTDIR)\adb.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\byaddr.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\byaddr.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\byaddr.obj"	"$(INTDIR)\byaddr.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\cache.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\cache.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\cache.obj"	"$(INTDIR)\cache.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\callbacks.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\callbacks.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\callbacks.obj"	"$(INTDIR)\callbacks.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\client.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\client.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\client.obj"	"$(INTDIR)\client.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\clientinfo.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\clientinfo.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\clientinfo.obj"	"$(INTDIR)\clientinfo.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\compress.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\compress.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\compress.obj"	"$(INTDIR)\compress.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\db.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\db.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\db.obj"	"$(INTDIR)\db.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\dbiterator.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\dbiterator.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\dbiterator.obj"	"$(INTDIR)\dbiterator.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\dbtable.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\dbtable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\dbtable.obj"	"$(INTDIR)\dbtable.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\diff.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\diff.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\diff.obj"	"$(INTDIR)\diff.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\dispatch.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+CPP_SWITCHES=/nologo /MD /W3 @COPTX@ @COPTI@ /O2 /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" @OPENSSL_INC@ @LIBXML2_INC@ @GSSAPI_INC@ @GEOIP_INC@ /D "NDEBUG" /D "BIND9" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" @CRYPTO@ @USE_GSSAPI@ @USE_ISC_SPNEGO@ /D "LIBDNS_EXPORTS" /Fp"$(INTDIR)\libdns.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+
+"$(INTDIR)\dispatch.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+CPP_SWITCHES=/nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" @OPENSSL_INC@ @LIBXML2_INC@ @GSSAPI_INC@ @GEOIP_INC@ /D "_DEBUG" /D "BIND9" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" @CRYPTO@ @USE_GSSAPI@ @USE_ISC_SPNEGO@ /D "LIBDNS_EXPORTS" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\libdns.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+
+"$(INTDIR)\dispatch.obj"	"$(INTDIR)\dispatch.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) @<<
+  $(CPP_SWITCHES) $(SOURCE)
+<<
+
+
+!ENDIF 
+
+SOURCE=..\dlz.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\dlz.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+"$(INTDIR)\dlz.obj"	"$(INTDIR)\dlz.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=.\DLLMain.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\DLLMain.obj" : $(SOURCE) "$(INTDIR)"
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\DLLMain.obj"	"$(INTDIR)\DLLMain.sbr" : $(SOURCE) "$(INTDIR)"
+
+
+!ENDIF 
+
+SOURCE=..\dns64.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\dns64.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\dns64.obj"	"$(INTDIR)\dns64.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\dnssec.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\dnssec.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\dnssec.obj"	"$(INTDIR)\dnssec.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\ds.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\ds.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\ds.obj"	"$(INTDIR)\ds.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\ecdb.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\ecdb.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\ecdb.obj"	"$(INTDIR)\ecdb.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\forward.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\forward.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\forward.obj"	"$(INTDIR)\forward.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+@IF GEOIP
+SOURCE=..\geoip.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\geoip.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\geoip.obj"	"$(INTDIR)\geoip.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+@END GEOIP
+
+SOURCE=..\iptable.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\iptable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\iptable.obj"	"$(INTDIR)\iptable.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\journal.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\journal.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\journal.obj"	"$(INTDIR)\journal.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\keydata.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\keydata.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\keydata.obj"	"$(INTDIR)\keydata.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\keytable.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\keytable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\keytable.obj"	"$(INTDIR)\keytable.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\lib.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\lib.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\lib.obj"	"$(INTDIR)\lib.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\log.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\log.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\log.obj"	"$(INTDIR)\log.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\lookup.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\lookup.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\lookup.obj"	"$(INTDIR)\lookup.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\master.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\master.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\master.obj"	"$(INTDIR)\master.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\masterdump.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\masterdump.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\masterdump.obj"	"$(INTDIR)\masterdump.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\message.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\message.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\message.obj"	"$(INTDIR)\message.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\name.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\name.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\name.obj"	"$(INTDIR)\name.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\ncache.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\ncache.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\ncache.obj"	"$(INTDIR)\ncache.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\nsec.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\nsec.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\nsec.obj"	"$(INTDIR)\nsec.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\nsec3.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\nsec3.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\nsec3.obj"	"$(INTDIR)\nsec3.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\order.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\order.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\order.obj"	"$(INTDIR)\order.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\peer.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\peer.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\peer.obj"	"$(INTDIR)\peer.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+
+SOURCE=..\portlist.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\portlist.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\portlist.obj"	"$(INTDIR)\portlist.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+
+SOURCE=..\private.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\private.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\private.obj"	"$(INTDIR)\portlist.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\rbt.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\rbt.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\rbt.obj"	"$(INTDIR)\rbt.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\rbtdb.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\rbtdb.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\rbtdb.obj"	"$(INTDIR)\rbtdb.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\rbtdb64.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\rbtdb64.obj" : $(SOURCE) "$(INTDIR)" "..\rbtdb.c"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\rbtdb64.obj"	"$(INTDIR)\rbtdb64.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\rcode.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\rcode.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\rcode.obj"	"$(INTDIR)\rcode.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\rdata.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\rdata.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\rdata.obj"	"$(INTDIR)\rdata.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\rdatalist.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\rdatalist.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\rdatalist.obj"	"$(INTDIR)\rdatalist.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\rdataset.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\rdataset.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\rdataset.obj"	"$(INTDIR)\rdataset.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\rdatasetiter.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\rdatasetiter.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\rdatasetiter.obj"	"$(INTDIR)\rdatasetiter.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\rdataslab.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\rdataslab.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\rdataslab.obj"	"$(INTDIR)\rdataslab.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\request.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\request.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\request.obj"	"$(INTDIR)\request.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\resolver.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\resolver.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\resolver.obj"	"$(INTDIR)\resolver.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\result.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\result.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\result.obj"	"$(INTDIR)\result.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\rootns.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\rootns.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\rootns.obj"	"$(INTDIR)\rootns.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\rpz.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\rpz.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\rpz.obj"	"$(INTDIR)\rpz.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\rrl.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\rrl.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\rrl.obj"	"$(INTDIR)\rrl.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\rriterator.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\rriterator.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\rriterator.obj"	"$(INTDIR)\rriterator.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\sdb.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\sdb.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\sdb.obj"	"$(INTDIR)\sdb.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\sdlz.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\sdlz.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\sdlz.obj"	"$(INTDIR)\sdlz.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\soa.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\soa.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\soa.obj"	"$(INTDIR)\soa.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\ssu.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\ssu.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\ssu.obj"	"$(INTDIR)\ssu.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\ssu_external.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\ssu_external.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\ssu_external.obj"	"$(INTDIR)\ssu_external.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\stats.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\stats.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\stats.obj"	"$(INTDIR)\stats.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\tcpmsg.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\tcpmsg.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\tcpmsg.obj"	"$(INTDIR)\tcpmsg.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\time.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\time.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\time.obj"	"$(INTDIR)\time.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\timer.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\timer.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\timer.obj"	"$(INTDIR)\timer.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\tkey.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\tkey.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\tkey.obj"	"$(INTDIR)\tkey.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\tsec.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\tsec.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\tsec.obj"	"$(INTDIR)\tsec.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\tsig.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\tsig.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\tsig.obj"	"$(INTDIR)\tsig.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\ttl.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\ttl.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\ttl.obj"	"$(INTDIR)\ttl.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\update.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\update.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\update.obj"	"$(INTDIR)\update.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\validator.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\validator.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\validator.obj"	"$(INTDIR)\validator.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=.\version.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\version.obj" : $(SOURCE) "$(INTDIR)"
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\version.obj"	"$(INTDIR)\version.sbr" : $(SOURCE) "$(INTDIR)"
+
+
+!ENDIF 
+
+SOURCE=..\view.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\view.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\view.obj"	"$(INTDIR)\view.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\xfrin.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\xfrin.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\xfrin.obj"	"$(INTDIR)\xfrin.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\zone.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\zone.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\zone.obj"	"$(INTDIR)\zone.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\zonekey.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\zonekey.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\zonekey.obj"	"$(INTDIR)\zonekey.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\zt.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\zt.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\zt.obj"	"$(INTDIR)\zt.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\dst_api.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\dst_api.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\dst_api.obj"	"$(INTDIR)\dst_api.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\dst_lib.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\dst_lib.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\dst_lib.obj"	"$(INTDIR)\dst_lib.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\dst_parse.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\dst_parse.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\dst_parse.obj"	"$(INTDIR)\dst_parse.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\dst_result.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\dst_result.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\dst_result.obj"	"$(INTDIR)\dst_result.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\gssapi_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\gssapi_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\gssapi_link.obj"	"$(INTDIR)\gssapi_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\gssapictx.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\gssapictx.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\gssapictx.obj"	"$(INTDIR)\gssapictx.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\spnego.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\spnego.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\spnego.obj"	"$(INTDIR)\spnego.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\hmac_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\hmac_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\hmac_link.obj"	"$(INTDIR)\hmac_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\key.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\key.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\key.obj"	"$(INTDIR)\key.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+@IF OPENSSL
+SOURCE=..\openssl_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\openssl_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\openssl_link.obj"	"$(INTDIR)\openssl_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\openssldh_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\openssldh_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\openssldh_link.obj"	"$(INTDIR)\openssldh_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\openssldsa_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\openssldsa_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\openssldsa_link.obj"	"$(INTDIR)\openssldsa_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\opensslecdsa_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\opensslecdsa_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\opensslecdsa_link.obj"	"$(INTDIR)\opensslecdsa_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\opensslgost_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\opensslgost_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\opensslgost_link.obj"	"$(INTDIR)\opensslgost_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\opensslrsa_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\opensslrsa_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\opensslrsa_link.obj"	"$(INTDIR)\opensslrsa_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+@END OPENSSL
+
+@IF PKCS11
+SOURCE=..\pkcs11.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\pkcs11.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\pkcs11.obj"	"$(INTDIR)\pkcs11.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\pkcs11dh_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\pkcs11dh_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\pkcs11dh_link.obj"	"$(INTDIR)\pkcs11dh_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\pkcs11dsa_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\pkcs11dsa_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\pkcs11dsa_link.obj"	"$(INTDIR)\pkcs11dsa_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\pkcs11ecdsa_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\pkcs11ecdsa_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\pkcs11ecdsa_link.obj"	"$(INTDIR)\pkcs11ecdsa_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\pkcs11gost_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\pkcs11gost_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\pkcs11gost_link.obj"	"$(INTDIR)\pkcs11gost_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\pkcs11rsa_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\pkcs11rsa_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\pkcs11rsa_link.obj"	"$(INTDIR)\pkcs11rsa_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+@END PKCS11
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+"libisc - @PLATFORM@ Release" : 
+   cd "..\..\isc\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libisc.mak" CFG="libisc - @PLATFORM@ Release" 
+   cd "..\..\dns\win32"
+
+"libisc - @PLATFORM@ ReleaseCLEAN" : 
+   cd "..\..\isc\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libisc.mak" CFG="libisc - @PLATFORM@ Release" RECURSE=1 CLEAN 
+   cd "..\..\dns\win32"
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+"libisc - @PLATFORM@ Debug" : 
+   cd "..\..\isc\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libisc.mak" CFG="libisc - @PLATFORM@ Debug" 
+   cd "..\..\dns\win32"
+
+"libisc - @PLATFORM@ DebugCLEAN" : 
+   cd "..\..\isc\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libisc.mak" CFG="libisc - @PLATFORM@ Debug" RECURSE=1 CLEAN 
+   cd "..\..\dns\win32"
+
+!ENDIF 
+
+
+!ENDIF 
+
+####################################################
+# Commands to generate initial empty manifest file and the RC file
+# that references it, and for generating the .res file:
+
+$(_VC_MANIFEST_BASENAME).auto.res : $(_VC_MANIFEST_BASENAME).auto.rc
+
+$(_VC_MANIFEST_BASENAME).auto.rc : $(_VC_MANIFEST_BASENAME).auto.manifest
+    type <<$@
+#include <winuser.h>
+1RT_MANIFEST"$(_VC_MANIFEST_BASENAME).auto.manifest"
+<< KEEP
+
+$(_VC_MANIFEST_BASENAME).auto.manifest :
+    type <<$@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<assembly xmlns='urn:schemas-microsoft-com:asm.v1' manifestVersion='1.0'>
+</assembly>
+<< KEEP

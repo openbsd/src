@@ -1,0 +1,21 @@
+; Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+;
+; Permission to use, copy, modify, and/or distribute this software for any
+; purpose with or without fee is hereby granted, provided that the above
+; copyright notice and this permission notice appear in all copies.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+; REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+; LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+; PERFORMANCE OF THIS SOFTWARE.
+
+; $Id: 1024.db,v 1.1 2019/12/16 16:31:34 deraadt Exp $
+
+$TTL 0
+test. SOA . . 0 0 0 0 0
+test. NS .
+; 1024 bit key.
+test. IN DNSKEY 256 3 5 AwEAAd5oKx06HRE6NRrTDz49lljdRmxgp/4YB/cyMkpwUMkaLhDNCfTq hql84ab2LRbtUWLHFXGWENvxPGQzVHeleXu+3ThNfFOwIaySedxHmLGT lTtBRDhPc8iSb+2IYDemmA+ut8kwHhCVz/tDMbD/dgAswdOtmXCpQyJk Q1HqY3Xj
