@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.18 2019/12/16 16:16:23 deraadt Exp $ */
+/* $Id: dig.c,v 1.19 2019/12/16 17:32:39 deraadt Exp $ */
 
 /*! \file */
 
@@ -2091,7 +2091,7 @@ main(int argc, char **argv) {
 	ISC_LIST_INIT(server_list);
 	ISC_LIST_INIT(search_list);
 
-	if (pledge("stdio rpath dns", NULL) == -1) {
+	if (pledge("stdio rpath inet dns", NULL) == -1) {
 		perror("pledge");
 		exit(1);
 	}
@@ -2104,7 +2104,7 @@ main(int argc, char **argv) {
 	setup_libs();
 	parse_args(ISC_FALSE, ISC_FALSE, argc, argv);
 
-	if (pledge("stdio dns", NULL) == -1) {
+	if (pledge("stdio inet dns", NULL) == -1) {
 		perror("pledge");
 		exit(1);
 	}
