@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.301 2019/12/16 15:48:50 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.302 2019/12/16 16:39:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2110,20 +2110,4 @@ server_client_get_cwd(struct client *c, struct session *s)
 	if ((home = find_home()) != NULL)
 		return (home);
 	return ("/");
-}
-
-/* Resolve an absolute path or relative to client working directory. */
-char *
-server_client_get_path(struct client *c, const char *file)
-{
-	char	*path, resolved[PATH_MAX];
-
-	if (*file == '/')
-		path = xstrdup(file);
-	else
-		xasprintf(&path, "%s/%s", server_client_get_cwd(c, NULL), file);
-	if (realpath(path, resolved) == NULL)
-		return (path);
-	free(path);
-	return (xstrdup(resolved));
 }
