@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.7 2017/06/22 20:44:36 benno Exp $	*/
+/*	$OpenBSD: path.c,v 1.8 2019/12/17 17:16:32 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Kurt Miller <kurt@intricatesoftware.com>
@@ -44,7 +44,7 @@ _dl_split_path(const char *searchpath)
 
 	retval = _dl_reallocarray(NULL, count, sizeof(*retval));
 	if (retval == NULL)
-		return (NULL);
+		_dl_oom();
 
 	pp = searchpath;
 	while (pp) {
@@ -55,7 +55,7 @@ _dl_split_path(const char *searchpath)
 		if (p_begin != pp) {
 			retval[pos] = _dl_malloc(pp - p_begin + 1);
 			if (retval[pos] == NULL)
-				goto badret;
+				_dl_oom();
 
 			_dl_bcopy(p_begin, retval[pos], pp - p_begin);
 			retval[pos++][pp - p_begin] = '\0';
@@ -69,10 +69,6 @@ _dl_split_path(const char *searchpath)
 
 	retval[pos] = NULL;
 	return (retval);
-
-badret:
-	_dl_free_path(retval);
-	return (NULL);
 }
 
 void
