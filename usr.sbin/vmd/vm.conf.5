@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.48 2019/12/17 10:17:05 jmc Exp $
+.\" $OpenBSD: vm.conf.5,v 1.49 2019/12/17 19:57:22 kn Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -153,7 +153,7 @@ Typically this is a hostname.
 .Pp
 Followed by a block of parameters that is enclosed in curly brackets:
 .Bl -tag -width Ds
-.It Cm allow instance Op Brq ...
+.It Cm allow instance Brq ...
 Set the permissions to create VM instances.
 See
 .Sx VM INSTANCES .
@@ -339,7 +339,7 @@ The allowed instance options are configured in the
 .Ar parent
 VM:
 .Bl -tag -width Ds
-.It Cm allow instance Op Brq ...
+.It Cm allow instance Brq ...
 Allow users to use this VM as a template for VM instances.
 By default, the root user can always create instances without
 restrictions and users or non-root owners cannot create instances.
