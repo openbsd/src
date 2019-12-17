@@ -18,6 +18,7 @@
 
 #include <config.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <limits.h>
 
 #ifdef HAVE_LOCALE_H
@@ -898,7 +899,19 @@ main(int argc, char **argv) {
 	pre_parse_args(argc, argv);
 	result = isc_app_start();
 	check_result(result, "isc_app_start");
+
+	if (pledge("stdio rpath inet dns", NULL) == -1) {
+		perror("pledge");
+		exit(1);
+	}
+
 	setup_libs();
+
+	if (pledge("stdio dns", NULL) == -1) {
+		perror("pledge");
+		exit(1);
+	}
+
 	parse_args(ISC_FALSE, argc, argv);
 	setup_system(ipv4only, ipv6only);
 	result = isc_app_onrun(mctx, global_task, onrun_callback, NULL);
