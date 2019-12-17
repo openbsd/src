@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.13 2019/12/17 16:41:26 jsg Exp $
+.\" $OpenBSD: dig.1,v 1.14 2019/12/17 17:07:36 jsg Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -185,9 +185,9 @@ When using TSIG authentication with
 the name server that is queried needs to know the key and algorithm that is
 being used.
 In BIND, this is done by providing appropriate
-.Nm key
+.Ic key
 and
-.Nm server
+.Ic server
 statements in
 .Pa named.conf .
 .It Fl m
@@ -492,7 +492,7 @@ record in the additional section of the query.
 Set the search list to contain the single domain
 .Ar somename ,
 as if specified in a
-.Nm domain
+.Ic domain
 directive in
 .Pa /etc/resolv.conf ,
 and enable search list processing as if the
@@ -858,9 +858,10 @@ server that was used to resolve the lookup.
 If @server is also specified, it affects only the initial query for the root
 zone name servers.
 .Pp
-.Nm +dnssec
-is also set when +trace is set to better emulate the default queries from a
-nameserver.
+.Cm +dnssec
+is also set when
+.Cm +trace
+is set to better emulate the default queries from a nameserver.
 .It Cm +tries= Ns Ar T
 Sets the number of times to try UDP queries to server to
 .Ar T
