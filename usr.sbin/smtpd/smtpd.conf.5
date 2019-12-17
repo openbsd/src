@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.243 2019/12/17 10:28:31 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.244 2019/12/17 10:30:20 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -1162,7 +1162,8 @@ for DKIM signing:
 .Bd -literal -offset indent
 table aliases file:/etc/mail/aliases
 
-filter "dkimsign" proc-exec "filter-dkimsign -d <domain> -s <selector> -k /etc/mail/dkim/private.key" user _dkimsign group _dkimsign
+filter "dkimsign" proc-exec "filter-dkimsign -d <domain> -s <selector> \e
+	-k /etc/mail/dkim/private.key" user _dkimsign group _dkimsign
 
 listen on socket filter "dkimsign"
 listen on lo0 filter "dkimsign"
