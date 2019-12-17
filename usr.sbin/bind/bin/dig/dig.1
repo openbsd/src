@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.14 2019/12/17 17:07:36 jsg Exp $
+.\" $OpenBSD: dig.1,v 1.15 2019/12/17 18:33:31 jmc Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -250,8 +250,8 @@ IPv6 addresses are looked up using nibble format under the IP6.ARPA domain
 .Fl i
 option).
 .It Fl y Xo
-.Op Ar hmac Ns Cm : Ns
-.Ar keyname Ns Cm : Ns
+.Op Ar hmac : Ns
+.Ar keyname : Ns
 .Ar secret
 .Xc
 Sign queries using TSIG with the given authentication key.
@@ -532,7 +532,7 @@ EDNS version negotiation is enabled.
 .Cm + Ns
 .Op Cm no Ns
 .Cm ednsopt Ns
-.Op Cm = Ns Ar code Ns Op Cm : Ns Ar value
+.Op = Ns Ar code Ns Op : Ns Ar value
 .Xc
 Specify EDNS option with code point
 .Ar code
