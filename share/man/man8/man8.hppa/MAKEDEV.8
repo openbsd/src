@@ -1,11 +1,11 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.69 2017/06/06 08:12:01 tb Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.70 2019/12/17 13:18:05 reyk Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.hppa/MAKEDEV.md,v 1.60 2016/09/04 15:38:59 naddy Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.94 2016/09/11 19:59:51 deraadt Exp 
-.\"	OpenBSD: MAKEDEV.man,v 1.8 2016/03/12 17:59:27 espie Exp 
+.\"	OpenBSD: etc.hppa/MAKEDEV.md,v 1.61 2019/12/17 13:08:55 reyk Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.106 2019/12/17 13:08:54 reyk Exp 
+.\"	OpenBSD: MAKEDEV.man,v 1.9 2017/06/06 08:11:23 tb Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
 .\" Copyright (c) 2004, Miodrag Vallat
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2017 $
+.Dd $Mdocdate: December 17 2019 $
 .Dt MAKEDEV 8 hppa
 .Os
 .Sh NAME
@@ -169,6 +169,9 @@ Bus control devices used by usbd for attach/detach, see
 .It Ar uhid*
 Generic HID devices, see
 .Xr uhid 4 .
+.It Ar fido
+fido/* nodes, see
+.Xr fido 4 .
 .It Ar ugen*
 Generic USB devices, see
 .Xr ugen 4 .

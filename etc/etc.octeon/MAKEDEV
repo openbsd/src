@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.octeon/MAKEDEV.md,v 1.14 2019/07/17 14:36:31 visa Exp 
-#	OpenBSD: MAKEDEV.common,v 1.105 2019/12/14 05:05:46 deraadt Exp 
+#	OpenBSD: etc.octeon/MAKEDEV.md,v 1.15 2019/12/17 13:08:56 reyk Exp 
+#	OpenBSD: MAKEDEV.common,v 1.107 2019/12/17 13:15:17 reyk Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -56,6 +56,8 @@
 #	ttyU*	USB serial ports
 #	uall	All USB devices
 #	usb*	Bus control devices used by usbd for attach/detach
+#	uhid*	Generic HID devices
+#	fido	fido/* nodes
 # Special purpose devices:
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
@@ -297,14 +299,24 @@ audio*)
 	MKlist[${#MKlist[*]}]=";[ -e mixer ] || ln -s mixer$U mixer"
 	;;
 
+fido)
+	RMlist[${#RMlist[*]}]=";mkdir -p fido;rm -f" n=0
+	while [ $n -lt 4 ];do M fido/$n c 76 $n 666;n=$(($n+1));done
+	MKlist[${#MKlist[*]}]=";chmod 555 fido"
+	;;
+
+uhid*)
+	M uhid$U c 62 $U 600
+	;;
+
 usb*)
 	[ "$i" = "usb" ] && u= || u=$U
 	M usb$u c 61 $U 640
 	;;
 
 uall)
-	R ttyU0 ttyU1 ttyU2 ttyU3 usb0 usb1 usb2 usb3 usb4 usb5 usb6
-	R usb7
+	R ttyU0 ttyU1 ttyU2 ttyU3 fido uhid0 uhid1 uhid2 uhid3 uhid4
+	R uhid5 uhid6 uhid7 usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
 	;;
 
 ttyU[0-9a-zA-Z])

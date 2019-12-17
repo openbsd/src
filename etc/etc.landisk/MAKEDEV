@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.landisk/MAKEDEV.md,v 1.43 2016/09/11 19:59:53 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.105 2019/12/14 05:05:46 deraadt Exp 
+#	OpenBSD: etc.landisk/MAKEDEV.md,v 1.44 2019/12/17 13:08:55 reyk Exp 
+#	OpenBSD: MAKEDEV.common,v 1.107 2019/12/17 13:15:17 reyk Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -55,6 +55,7 @@
 #	uall	All USB devices
 #	ugen*	Generic USB devices
 #	uhid*	Generic HID devices
+#	fido	fido/* nodes
 #	ulpt*	Printer devices
 #	usb*	Bus control devices used by usbd for attach/detach
 # Special purpose devices:
@@ -318,6 +319,12 @@ ulpt*)
 	M ulpt$U c 66 $U 600
 	;;
 
+fido)
+	RMlist[${#RMlist[*]}]=";mkdir -p fido;rm -f" n=0
+	while [ $n -lt 4 ];do M fido/$n c 106 $n 666;n=$(($n+1));done
+	MKlist[${#MKlist[*]}]=";chmod 555 fido"
+	;;
+
 uhid*)
 	M uhid$U c 65 $U 600
 	;;
@@ -332,8 +339,8 @@ ugen*)
 
 uall)
 	R ttyU0 ttyU1 ttyU2 ttyU3 ugen0 ugen1 ugen2 ugen3 ugen4 ugen5
-	R ugen6 ugen7 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3 uhid4 uhid5
-	R uhid6 uhid7 usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
+	R ugen6 ugen7 ulpt0 ulpt1 fido uhid0 uhid1 uhid2 uhid3 uhid4
+	R uhid5 uhid6 uhid7 usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
 	;;
 
 ttyU[0-9a-zA-Z])

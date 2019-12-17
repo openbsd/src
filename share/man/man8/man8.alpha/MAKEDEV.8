@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.75 2017/11/02 14:06:00 mpi Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.76 2019/12/17 13:18:05 reyk Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.alpha/MAKEDEV.md,v 1.71 2017/11/02 14:04:24 mpi Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.97 2017/11/02 14:04:24 mpi Exp 
+.\"	OpenBSD: etc.alpha/MAKEDEV.md,v 1.72 2019/12/17 13:08:54 reyk Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.106 2019/12/17 13:08:54 reyk Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.9 2017/06/06 08:11:23 tb Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 2 2017 $
+.Dd $Mdocdate: December 17 2019 $
 .Dt MAKEDEV 8 alpha
 .Os
 .Sh NAME
@@ -181,6 +181,9 @@ Generic USB devices, see
 .It Ar uhid*
 Generic HID devices, see
 .Xr uhid 4 .
+.It Ar fido
+fido/* nodes, see
+.Xr fido 4 .
 .It Ar ulpt*
 Printer devices, see
 .Xr ulpt 4 .
