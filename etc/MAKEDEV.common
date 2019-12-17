@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.106 2019/12/17 13:08:54 reyk Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.107 2019/12/17 13:15:17 reyk Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -358,7 +358,7 @@ _mkdev({-usb-}, usb*, {-[ "$i" = "usb" ] && u= || u=$U
 	M usb$u c major_usb_c $U 640-})dnl
 __devitem(uhid, uhid*, Generic HID devices)dnl
 _mcdev({-uhid-}, uhid*, {-uhid-}, {-major_uhid_c-}, 600)dnl
-__devitem(fido, fido, fido/* nodes, fd)dnl
+__devitem(fido, fido, fido/* nodes, fido)dnl
 _mkdev(fido, fido, {-RMlist[${#RMlist[*]}]=";mkdir -p fido;rm -f" n=0
 	while [ $n -lt 4 ];do M fido/$n c major_fido_c $n 666;n=Add($n, 1);done
 	MKlist[${#MKlist[*]}]=";chmod 555 fido"-})dnl
