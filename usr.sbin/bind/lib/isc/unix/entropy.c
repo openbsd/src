@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2008, 2012  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: entropy.c,v 1.7 2019/12/16 16:16:27 deraadt Exp $ */
+/* $Id: entropy.c,v 1.8 2019/12/17 01:46:37 sthen Exp $ */
 
 /* \file unix/entropy.c
  * \brief
@@ -37,7 +36,9 @@
 #include <unistd.h>
 
 #include <isc/platform.h>
+#include <isc/print.h>
 #include <isc/strerror.h>
+#include <isc/string.h>
 
 #ifdef ISC_PLATFORM_NEEDSYSSELECTH
 #include <sys/select.h>
@@ -160,7 +161,7 @@ get_from_usocketsource(isc_entropysource_t *source, isc_uint32_t desired) {
 			INSIST(n == 2);
 			source->sources.usocket.status =
 						isc_usocketsource_wrote;
-			/*FALLTHROUGH*/
+			/* FALLTHROUGH */
 
 		case isc_usocketsource_wrote:
 			if (recvfrom(fd, buf, 1, 0, NULL, NULL) != 1) {
@@ -198,7 +199,7 @@ get_from_usocketsource(isc_entropysource_t *source, isc_uint32_t desired) {
 			source->sources.usocket.sz_to_recv = sz_to_recv;
 			if (sz_to_recv > sizeof(buf))
 				goto err;
-			/*FALLTHROUGH*/
+			/* FALLTHROUGH */
 
 		case isc_usocketsource_reading:
 			if (sz_to_recv != 0U) {
@@ -456,11 +457,14 @@ destroyusocketsource(isc_entropyusocketsource_t *source) {
 static isc_result_t
 make_nonblock(int fd) {
 	int ret;
-	int flags;
 	char strbuf[ISC_STRERRORSIZE];
 #ifdef USE_FIONBIO_IOCTL
 	int on = 1;
+#else
+	int flags;
+#endif
 
+#ifdef USE_FIONBIO_IOCTL
 	ret = ioctl(fd, FIONBIO, (char *)&on);
 #else
 	flags = fcntl(fd, F_GETFL, 0);

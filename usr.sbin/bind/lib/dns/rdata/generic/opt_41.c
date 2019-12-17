@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2002  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -65,7 +64,7 @@ totext_opt(ARGS_TOTEXT) {
 		isc_region_consume(&r, 2);
 		length = uint16_fromregion(&r);
 		isc_region_consume(&r, 2);
-		sprintf(buf, "%u %u", option, length);
+		snprintf(buf, sizeof(buf), "%u %u", option, length);
 		RETERR(str_totext(buf, target));
 		INSIST(r.length >= length);
 		if (length > 0) {
@@ -107,6 +106,8 @@ fromwire_opt(ARGS_FROMWIRE) {
 	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sregion);
+	if (sregion.length == 0)
+		return (ISC_R_SUCCESS);
 	total = 0;
 	while (sregion.length != 0) {
 		if (sregion.length < 4)
@@ -182,6 +183,11 @@ fromwire_opt(ARGS_FROMWIRE) {
 			break;
 		case DNS_OPT_COOKIE:
 			if (length != 8 && (length < 16 || length > 40))
+				return (DNS_R_OPTERR);
+			isc_region_consume(&sregion, length);
+			break;
+		case DNS_OPT_KEY_TAG:
+			if (length == 0 || (length % 2) != 0)
 				return (DNS_R_OPTERR);
 			isc_region_consume(&sregion, length);
 			break;

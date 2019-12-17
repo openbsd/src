@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: getnameinfo.c,v 1.1 2019/12/16 16:31:35 deraadt Exp $ */
+/* $Id: getnameinfo.c,v 1.2 2019/12/17 01:46:34 sthen Exp $ */
 
 /*! \file */
 
@@ -103,6 +103,7 @@
 #include <isc/netaddr.h>
 #include <isc/print.h>
 #include <isc/sockaddr.h>
+#include <isc/string.h>
 #include <isc/util.h>
 
 #include <dns/byaddr.h>
@@ -213,11 +214,11 @@ getnameinfo(const struct sockaddr *sa, IRS_GETNAMEINFO_SOCKLEN_T salen,
 		snprintf(numserv, sizeof(numserv), "%d", ntohs(port));
 		if ((strlen(numserv) + 1) > servlen)
 			ERR(EAI_OVERFLOW);
-		strcpy(serv, numserv);
+		strlcpy(serv, numserv, servlen);
 	} else {
 		if ((strlen(sp->s_name) + 1) > servlen)
 			ERR(EAI_OVERFLOW);
-		strcpy(serv, sp->s_name);
+		strlcpy(serv, sp->s_name, servlen);
 	}
 
 #if 0
@@ -274,7 +275,7 @@ getnameinfo(const struct sockaddr *sa, IRS_GETNAMEINFO_SOCKLEN_T salen,
 #endif
 		if (strlen(numaddr) + 1 > hostlen)
 			ERR(EAI_OVERFLOW);
-		strcpy(host, numaddr);
+		strlcpy(host, numaddr, hostlen);
 	} else {
 		isc_netaddr_t netaddr;
 		dns_fixedname_t ptrfname;
@@ -328,8 +329,13 @@ getnameinfo(const struct sockaddr *sa, IRS_GETNAMEINFO_SOCKLEN_T salen,
 		case DNS_R_NOVALIDKEY:
 		case DNS_R_NOVALIDDS:
 		case DNS_R_NOVALIDSIG:
-			ERR(EAI_INSECUREDATA);
-			break;
+			/*
+			 * Don't use ERR as GCC 7 wants to raise a
+			 * warning with ERR about possible falling
+			 * through which is impossible.
+			 */
+			result = EAI_INSECUREDATA;
+			goto cleanup;
 		default:
 			ERR(EAI_FAIL);
 		}
@@ -400,7 +406,7 @@ getnameinfo(const struct sockaddr *sa, IRS_GETNAMEINFO_SOCKLEN_T salen,
 				ERR(EAI_SYSTEM);
 			if ((strlen(numaddr) + 1) > hostlen)
 				ERR(EAI_OVERFLOW);
-			strcpy(host, numaddr);
+			strlcpy(host, numaddr, hostlen);
 		}
 	}
 	result = SUCCESS;

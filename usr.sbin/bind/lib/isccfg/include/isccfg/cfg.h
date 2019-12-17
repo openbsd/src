@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2007, 2010, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2002  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cfg.h,v 1.2 2019/12/16 16:16:28 deraadt Exp $ */
+/* $Id: cfg.h,v 1.3 2019/12/17 01:46:38 sthen Exp $ */
 
 #ifndef ISCCFG_CFG_H
 #define ISCCFG_CFG_H 1
@@ -121,6 +120,11 @@ cfg_parse_file(cfg_parser_t *pctx, const char *filename,
 isc_result_t
 cfg_parse_buffer(cfg_parser_t *pctx, isc_buffer_t *buffer,
 		 const cfg_type_t *type, cfg_obj_t **ret);
+isc_result_t
+cfg_parse_buffer4(cfg_parser_t *pctx, isc_buffer_t *buffer,
+		  const char *file, unsigned int line,
+		  const cfg_type_t *type, unsigned int flags,
+		  cfg_obj_t **ret);
 /*%<
  * Read a configuration containing data of type 'type'
  * and make '*ret' point to its parse tree.
@@ -136,6 +140,7 @@ cfg_parse_buffer(cfg_parser_t *pctx, isc_buffer_t *buffer,
  *\li 	"mem" is valid.
  *\li	"type" is valid.
  *\li 	"cfg" is non-NULL and "*cfg" is NULL.
+ *\li   "flags" be one or more of CFG_PCTX_NODEPRECATED or zero.
  *
  * Returns:
  *     \li #ISC_R_SUCCESS                 - success

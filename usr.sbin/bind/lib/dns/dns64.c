@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010, 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dns64.c,v 1.1 2019/12/16 16:31:33 deraadt Exp $ */
+/* $Id: dns64.c,v 1.2 2019/12/17 01:46:31 sthen Exp $ */
 
 #include <config.h>
 
@@ -57,9 +57,9 @@ isc_result_t
 dns_dns64_create(isc_mem_t *mctx, isc_netaddr_t *prefix,
 		 unsigned int prefixlen, isc_netaddr_t *suffix,
 		 dns_acl_t *clients, dns_acl_t *mapped, dns_acl_t *excluded,
-		 unsigned int flags, dns_dns64_t **dns64)
+		 unsigned int flags, dns_dns64_t **dns64p)
 {
-	dns_dns64_t *new;
+	dns_dns64_t *dns64;
 	unsigned int nbytes = 16;
 
 	REQUIRE(prefix != NULL && prefix->family == AF_INET6);
@@ -67,7 +67,7 @@ dns_dns64_create(isc_mem_t *mctx, isc_netaddr_t *prefix,
 	REQUIRE(prefixlen == 32 || prefixlen == 40 || prefixlen == 48 ||
 		prefixlen == 56 || prefixlen == 64 || prefixlen == 96);
 	REQUIRE(isc_netaddr_prefixok(prefix, prefixlen) == ISC_R_SUCCESS);
-	REQUIRE(dns64 != NULL && *dns64 == NULL);
+	REQUIRE(dns64p != NULL && *dns64p == NULL);
 
 	if (suffix != NULL) {
 		static const unsigned char zeros[16];
@@ -79,29 +79,29 @@ dns_dns64_create(isc_mem_t *mctx, isc_netaddr_t *prefix,
 		REQUIRE(memcmp(suffix->type.in6.s6_addr, zeros, nbytes) == 0);
 	}
 
-	new = isc_mem_get(mctx, sizeof(dns_dns64_t));
-	if (new == NULL)
+	dns64 = isc_mem_get(mctx, sizeof(dns_dns64_t));
+	if (dns64 == NULL)
 		return (ISC_R_NOMEMORY);
-	memset(new->bits, 0, sizeof(new->bits));
-	memmove(new->bits, prefix->type.in6.s6_addr, prefixlen / 8);
+	memset(dns64->bits, 0, sizeof(dns64->bits));
+	memmove(dns64->bits, prefix->type.in6.s6_addr, prefixlen / 8);
 	if (suffix != NULL)
-		memmove(new->bits + nbytes, suffix->type.in6.s6_addr + nbytes,
+		memmove(dns64->bits + nbytes, suffix->type.in6.s6_addr + nbytes,
 			16 - nbytes);
-	new->clients = NULL;
+	dns64->clients = NULL;
 	if (clients != NULL)
-		dns_acl_attach(clients, &new->clients);
-	new->mapped = NULL;
+		dns_acl_attach(clients, &dns64->clients);
+	dns64->mapped = NULL;
 	if (mapped != NULL)
-		dns_acl_attach(mapped, &new->mapped);
-	new->excluded = NULL;
+		dns_acl_attach(mapped, &dns64->mapped);
+	dns64->excluded = NULL;
 	if (excluded != NULL)
-		dns_acl_attach(excluded, &new->excluded);
-	new->prefixlen = prefixlen;
-	new->flags = flags;
-	ISC_LINK_INIT(new, link);
-	new->mctx = NULL;
-	isc_mem_attach(mctx, &new->mctx);
-	*dns64 = new;
+		dns_acl_attach(excluded, &dns64->excluded);
+	dns64->prefixlen = prefixlen;
+	dns64->flags = flags;
+	ISC_LINK_INIT(dns64, link);
+	dns64->mctx = NULL;
+	isc_mem_attach(mctx, &dns64->mctx);
+	*dns64p = dns64;
 	return (ISC_R_SUCCESS);
 }
 

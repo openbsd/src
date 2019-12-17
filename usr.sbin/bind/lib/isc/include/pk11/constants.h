@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: constants.h,v 1.1 2019/12/16 16:31:35 deraadt Exp $ */
+/* $Id: constants.h,v 1.2 2019/12/17 01:46:35 sthen Exp $ */
 
 #ifndef PK11_CONSTANTS_H
 #define PK11_CONSTANTS_H 1
@@ -30,6 +30,12 @@ static CK_BYTE pk11_ecc_prime256v1[] = {
 };
 static CK_BYTE pk11_ecc_secp384r1[] = {
 	0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x22
+};
+static CK_BYTE pk11_ecc_ed25519[] = {
+	0x06, 0x03, 0x2b, 0x65, 0x70
+};
+static CK_BYTE pk11_ecc_ed448[] = {
+	0x06, 0x03, 0x2b, 0x65, 0x71
 };
 #endif
 

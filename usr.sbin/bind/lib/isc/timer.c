@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2002  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.3 2019/12/16 16:16:26 deraadt Exp $ */
+/* $Id: timer.c,v 1.4 2019/12/17 01:46:34 sthen Exp $ */
 
 /*! \file */
 
@@ -923,6 +922,7 @@ isc__timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp) {
 						ISC_MSG_FAILED, "failed"));
 		return (ISC_R_UNEXPECTED);
 	}
+	isc_thread_setname(manager->thread, "isc-timer");
 #endif
 #ifdef USE_SHARED_MANAGER
 	manager->refs = 1;

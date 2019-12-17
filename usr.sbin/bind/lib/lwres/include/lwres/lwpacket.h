@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lwpacket.h,v 1.2 2019/12/16 16:16:29 deraadt Exp $ */
+/* $Id: lwpacket.h,v 1.3 2019/12/17 01:46:38 sthen Exp $ */
 
 #ifndef LWRES_LWPACKET_H
 #define LWRES_LWPACKET_H 1
@@ -29,83 +28,83 @@ typedef struct lwres_lwpacket lwres_lwpacket_t;
 
 /*% lwres_lwpacket structure */
 struct lwres_lwpacket {
-	/*! The overall packet length, including the 
+	/*! The overall packet length, including the
 	 *  entire packet header.
 	 *  This field is filled in by the
-	 *  \link lwres_gabn.c lwres_gabn_*()\endlink 
+	 *  \link lwres_gabn.c lwres_gabn_*()\endlink
 	 *  and \link lwres_gnba.c lwres_gnba_*()\endlink calls.
 	 */
 	lwres_uint32_t		length;
-	/*! Specifies the header format.  Currently, 
+	/*! Specifies the header format.  Currently,
 	 *  there is only one format, #LWRES_LWPACKETVERSION_0.
 	 *  This field is filled in by the
-	 *  \link lwres_gabn.c lwres_gabn_*()\endlink 
+	 *  \link lwres_gabn.c lwres_gabn_*()\endlink
 	 *  and \link lwres_gnba.c lwres_gnba_*()\endlink calls.
-         */
+	 */
 	lwres_uint16_t		version;
- 	/*! Specifies library-defined flags for this packet, such as
-	 *  whether the packet is a request or a reply.  None of 
-	 *  these are definable by the caller, but library-defined values 
-	 *  can be set by the caller.  For example, one bit in this field 
+	/*! Specifies library-defined flags for this packet, such as
+	 *  whether the packet is a request or a reply.  None of
+	 *  these are definable by the caller, but library-defined values
+	 *  can be set by the caller.  For example, one bit in this field
 	 *  indicates if the packet is a request or a response.
 	 *  This field is filled in by
 	 *  the application wits the exception of the
 	 *  #LWRES_LWPACKETFLAG_RESPONSE bit, which is set by the library
 	 *  in the
-	 *  \link lwres_gabn.c lwres_gabn_*()\endlink 
+	 *  \link lwres_gabn.c lwres_gabn_*()\endlink
 	 *  and \link lwres_gnba.c lwres_gnba_*()\endlink calls.
-         */
+	 */
 	lwres_uint16_t		pktflags;
- 	/*! Set by the requestor and is returned in all replies.  
-	 *  If two packets from the same source have the same serial 
-	 *  number and are from the same source, they are assumed to 
-	 *  be duplicates and the latter ones may be dropped.  
+	/*! Set by the requestor and is returned in all replies.
+	 *  If two packets from the same source have the same serial
+	 *  number and are from the same source, they are assumed to
+	 *  be duplicates and the latter ones may be dropped.
 	 *  (The library does not do this by default on replies, but
- 	 * does so on requests.)
-         */
+	 * does so on requests.)
+	 */
 	lwres_uint32_t		serial;
- 	/*! Opcodes between 0x04000000 and 0xffffffff
- 	 *  are application defined.  Opcodes between 
+	/*! Opcodes between 0x04000000 and 0xffffffff
+	 *  are application defined.  Opcodes between
 	 *  0x00000000 and 0x03ffffff are
- 	 * reserved for library use.
+	 * reserved for library use.
 	 *  This field is filled in by the
-	 *  \link lwres_gabn.c lwres_gabn_*()\endlink 
+	 *  \link lwres_gabn.c lwres_gabn_*()\endlink
 	 *  and \link lwres_gnba.c lwres_gnba_*()\endlink calls.
 	 */
 	lwres_uint32_t		opcode;
- 	/*! Only valid for results.  
-	 *  Results between 0x04000000 and 0xffffffff are application 
+	/*! Only valid for results.
+	 *  Results between 0x04000000 and 0xffffffff are application
 	 *  defined.
- 	 * Results between 0x00000000 and 0x03ffffff are reserved for 
+	 * Results between 0x00000000 and 0x03ffffff are reserved for
 	 * library use.
- 	 * (This is the same reserved range defined in <isc/resultclass.h>, 
+	 * (This is the same reserved range defined in <isc/resultclass.h>,
 	 * so it
- 	 * would be trivial to map ISC_R_* result codes into packet result 
+	 * would be trivial to map ISC_R_* result codes into packet result
 	 * codes when appropriate.)
 	 *  This field is filled in by the
-	 *  \link lwres_gabn.c lwres_gabn_*()\endlink 
+	 *  \link lwres_gabn.c lwres_gabn_*()\endlink
 	 *  and \link lwres_gnba.c lwres_gnba_*()\endlink calls.
 	 */
 	lwres_uint32_t		result;
- 	/*! Set to the maximum buffer size that the receiver can
- 	 *  handle on requests, and the size of the buffer needed to 
+	/*! Set to the maximum buffer size that the receiver can
+	 *  handle on requests, and the size of the buffer needed to
 	 *  satisfy a request
- 	 *  when the buffer is too large for replies.
+	 *  when the buffer is too large for replies.
 	 *  This field is supplied by the application.
 	 */
 	lwres_uint32_t		recvlength;
- 	/*! The packet level auth type used.
- 	 *  Authtypes between 0x1000 and 0xffff are application defined.  
+	/*! The packet level auth type used.
+	 *  Authtypes between 0x1000 and 0xffff are application defined.
 	 *  Authtypes
- 	 *  between 0x0000 and 0x0fff are reserved for library use.  
+	 *  between 0x0000 and 0x0fff are reserved for library use.
 	 *  This is currently
- 	 *  unused and MUST be set to zero.
+	 *  unused and MUST be set to zero.
 	 */
 	lwres_uint16_t		authtype;
- 	/*! The length of the authentication data.  
+	/*! The length of the authentication data.
 	 *  See the specific
- 	 * authtypes for more information on what is contained 
-	 * in this field.  This is currently unused, and 
+	 * authtypes for more information on what is contained
+	 * in this field.  This is currently unused, and
 	 * MUST be set to zero.
 	 */
 	lwres_uint16_t		authlength;

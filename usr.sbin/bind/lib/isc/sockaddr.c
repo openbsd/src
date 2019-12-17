@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2007, 2010-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sockaddr.c,v 1.8 2019/12/16 16:16:26 deraadt Exp $ */
+/* $Id: sockaddr.c,v 1.9 2019/12/17 01:46:34 sthen Exp $ */
 
 /*! \file */
 
@@ -502,7 +501,8 @@ isc_sockaddr_frompath(isc_sockaddr_t *sockaddr, const char *path) {
 	sockaddr->type.sunix.sun_len =
 			(unsigned char)sizeof(sockaddr->type.sunix);
 #endif
-	strcpy(sockaddr->type.sunix.sun_path, path);
+	strlcpy(sockaddr->type.sunix.sun_path, path,
+		sizeof(sockaddr->type.sunix.sun_path));
 	return (ISC_R_SUCCESS);
 #else
 	UNUSED(sockaddr);

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: net.c,v 1.5 2019/12/16 17:35:38 deraadt Exp $ */
+/* $Id: net.c,v 1.6 2019/12/17 01:46:37 sthen Exp $ */
 
 #include <config.h>
 
@@ -146,6 +145,9 @@ try_proto(int domain) {
 		switch (errno) {
 #ifdef EAFNOSUPPORT
 		case EAFNOSUPPORT:
+#endif
+#ifdef EPFNOSUPPORT
+		case EPFNOSUPPORT:
 #endif
 #ifdef EPROTONOSUPPORT
 		case EPROTONOSUPPORT:

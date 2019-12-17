@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sshfp_44.h,v 1.4 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: sshfp_44.h,v 1.5 2019/12/17 01:46:33 sthen Exp $ */
 
 /*!
  *  \brief Per RFC 4255 */

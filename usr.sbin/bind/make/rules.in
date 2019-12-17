@@ -1,5 +1,4 @@
-# Copyright (C) 2004-2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
-# Copyright (C) 1998-2003  Internet Software Consortium.
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -87,7 +86,7 @@ install:: all
 
 install uninstall clean distclean maintainer-clean doc docclean man manclean::
 	@for i in ${ALL_SUBDIRS} ${ALL_TESTDIRS}; do \
-		if [ "$$i" != "nulldir" -a -d $$i ]; then \
+		if [ "$$i" != "nulldir" -a -d $$i -a -f $$i/Makefile ]; then \
 			echo "making $@ in `pwd`/$$i"; \
 			(cd $$i; ${MAKE} ${MAKEDEFS} DESTDIR="${DESTDIR}" $@) || exit 1; \
 		fi; \
@@ -316,6 +315,7 @@ LATEX =			@LATEX@
 PDFLATEX =		@PDFLATEX@
 DBLATEX =		@DBLATEX@
 W3M =			@W3M@
+PANDOC =		@PANDOC@
 
 ###
 ### Script language program used to create internal symbol tables

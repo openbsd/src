@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: stats.c,v 1.1 2019/12/16 16:31:35 deraadt Exp $ */
+/* $Id: stats.c,v 1.2 2019/12/17 01:46:34 sthen Exp $ */
 
 /*! \file */
 
@@ -32,6 +32,10 @@
 #include <isc/stats.h>
 #include <isc/util.h>
 
+#if defined(ISC_PLATFORM_HAVESTDATOMIC)
+#include <stdatomic.h>
+#endif
+
 #define ISC_STATS_MAGIC			ISC_MAGIC('S', 't', 'a', 't')
 #define ISC_STATS_VALID(x)		ISC_MAGIC_VALID(x, ISC_STATS_MAGIC)
 
@@ -40,8 +44,12 @@
  * increment and store operations, just to make
  * the later macros simpler
  */
-#if defined(ISC_PLATFORM_HAVEXADDQ) && defined(ISC_PLATFORM_HAVEATOMICSTOREQ)
+#if (defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_LONG_LOCK_FREE)) || \
+	(defined(ISC_PLATFORM_HAVEXADDQ) && defined(ISC_PLATFORM_HAVEATOMICSTOREQ))
 #define ISC_STATS_HAVEATOMICQ 1
+#if (defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_LONG_LOCK_FREE))
+#define ISC_STATS_HAVESTDATOMICQ 1
+#endif
 #else
 #define ISC_STATS_HAVEATOMICQ 0
 #endif
@@ -69,19 +77,31 @@
  * Otherwise, just rely on standard 64-bit data types
  * and operations
  */
-#if !ISC_STATS_HAVEATOMICQ && defined(ISC_PLATFORM_HAVEXADD)
+#if !ISC_STATS_HAVEATOMICQ && ((defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_INT_LOCK_FREE)) || defined(ISC_PLATFORM_HAVEXADD))
 #define ISC_STATS_USEMULTIFIELDS 1
+#if (defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_INT_LOCK_FREE))
+#define ISC_STATS_HAVESTDATOMIC 1
+#endif
 #else
 #define ISC_STATS_USEMULTIFIELDS 0
 #endif
 
 #if ISC_STATS_USEMULTIFIELDS
 typedef struct {
+#if defined(ISC_STATS_HAVESTDATOMIC)
+	atomic_int_fast32_t hi;
+	atomic_int_fast32_t lo;
+#else
 	isc_uint32_t hi;
 	isc_uint32_t lo;
+#endif
 } isc_stat_t;
 #else
+#if defined(ISC_STATS_HAVESTDATOMICQ)
+typedef atomic_int_fast64_t isc_stat_t;
+#else
 typedef isc_uint64_t isc_stat_t;
+#endif
 #endif
 
 struct isc_stats {
@@ -240,7 +260,12 @@ incrementcounter(isc_stats_t *stats, int counter) {
 #endif
 
 #if ISC_STATS_USEMULTIFIELDS
+#if defined(ISC_STATS_HAVESTDATOMIC)
+	prev = atomic_fetch_add_explicit(&stats->counters[counter].lo, 1,
+					 memory_order_relaxed);
+#else
 	prev = isc_atomic_xadd((isc_int32_t *)&stats->counters[counter].lo, 1);
+#endif
 	/*
 	 * If the lower 32-bit field overflows, increment the higher field.
 	 * Note that it's *theoretically* possible that the lower field
@@ -249,11 +274,22 @@ incrementcounter(isc_stats_t *stats, int counter) {
 	 * isc_stats_copy() is called where the whole process is protected
 	 * by the write (exclusive) lock.
 	 */
-	if (prev == (isc_int32_t)0xffffffff)
+	if (prev == (isc_int32_t)0xffffffff) {
+#if defined(ISC_STATS_HAVESTDATOMIC)
+		atomic_fetch_add_explicit(&stats->counters[counter].hi, 1,
+					  memory_order_relaxed);
+#else
 		isc_atomic_xadd((isc_int32_t *)&stats->counters[counter].hi, 1);
+#endif
+	}
 #elif ISC_STATS_HAVEATOMICQ
 	UNUSED(prev);
+#if defined(ISC_STATS_HAVESTDATOMICQ)
+	atomic_fetch_add_explicit(&stats->counters[counter], 1,
+				  memory_order_relaxed);
+#else
 	isc_atomic_xaddq((isc_int64_t *)&stats->counters[counter], 1);
+#endif
 #else
 	UNUSED(prev);
 	stats->counters[counter]++;
@@ -273,13 +309,29 @@ decrementcounter(isc_stats_t *stats, int counter) {
 #endif
 
 #if ISC_STATS_USEMULTIFIELDS
+#if defined(ISC_STATS_HAVESTDATOMIC)
+	prev = atomic_fetch_sub_explicit(&stats->counters[counter].lo, 1,
+					 memory_order_relaxed);
+#else
 	prev = isc_atomic_xadd((isc_int32_t *)&stats->counters[counter].lo, -1);
-	if (prev == 0)
+#endif
+	if (prev == 0) {
+#if defined(ISC_STATS_HAVESTDATOMIC)
+		atomic_fetch_sub_explicit(&stats->counters[counter].hi, 1,
+					  memory_order_relaxed);
+#else
 		isc_atomic_xadd((isc_int32_t *)&stats->counters[counter].hi,
 				-1);
+#endif
+	}
 #elif ISC_STATS_HAVEATOMICQ
 	UNUSED(prev);
+#if defined(ISC_STATS_HAVESTDATOMICQ)
+	atomic_fetch_sub_explicit(&stats->counters[counter], 1,
+				  memory_order_relaxed);
+#else
 	isc_atomic_xaddq((isc_int64_t *)&stats->counters[counter], -1);
+#endif
 #else
 	UNUSED(prev);
 	stats->counters[counter]--;
@@ -308,9 +360,15 @@ copy_counters(isc_stats_t *stats) {
 			(isc_uint64_t)(stats->counters[i].hi) << 32 |
 			stats->counters[i].lo;
 #elif ISC_STATS_HAVEATOMICQ
+#if defined(ISC_STATS_HAVESTDATOMICQ)
+		stats->copiedcounters[i] =
+			atomic_load_explicit(&stats->counters[i],
+					     memory_order_relaxed);
+#else
 		/* use xaddq(..., 0) as an atomic load */
 		stats->copiedcounters[i] =
 			(isc_uint64_t)isc_atomic_xaddq((isc_int64_t *)&stats->counters[i], 0);
+#endif
 #else
 		stats->copiedcounters[i] = stats->counters[i];
 #endif
@@ -381,7 +439,12 @@ isc_stats_set(isc_stats_t *stats, isc_uint64_t val,
 	stats->counters[counter].hi = (isc_uint32_t)((val >> 32) & 0xffffffff);
 	stats->counters[counter].lo = (isc_uint32_t)(val & 0xffffffff);
 #elif ISC_STATS_HAVEATOMICQ
+#if defined(ISC_STATS_HAVESTDATOMICQ)
+	atomic_store_explicit(&stats->counters[counter], val,
+			      memory_order_relaxed);
+#else
 	isc_atomic_storeq((isc_int64_t *)&stats->counters[counter], val);
+#endif
 #else
 	stats->counters[counter] = val;
 #endif
@@ -390,4 +453,3 @@ isc_stats_set(isc_stats_t *stats, isc_uint64_t val,
 	isc_rwlock_unlock(&stats->counterlock, isc_rwlocktype_write);
 #endif
 }
-

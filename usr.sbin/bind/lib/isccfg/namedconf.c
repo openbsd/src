@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2002, 2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1009,9 +1008,6 @@ options_clauses[] = {
 	{ "blackhole", &cfg_type_bracketed_aml, 0 },
 	{ "coresize", &cfg_type_size, 0 },
 	{ "datasize", &cfg_type_size, 0 },
-	{ "session-keyfile", &cfg_type_qstringornone, 0 },
-	{ "session-keyname", &cfg_type_astring, 0 },
-	{ "session-keyalg", &cfg_type_astring, 0 },
 	{ "deallocate-on-exit", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "directory", &cfg_type_qstring, CFG_CLAUSEFLAG_CALLBACK },
 	{ "dscp", &cfg_type_uint32, 0 },
@@ -1033,42 +1029,45 @@ options_clauses[] = {
 	{ "interface-interval", &cfg_type_uint32, 0 },
 	{ "listen-on", &cfg_type_listenon, CFG_CLAUSEFLAG_MULTI },
 	{ "listen-on-v6", &cfg_type_listenon, CFG_CLAUSEFLAG_MULTI },
-#ifdef ISC_PLATFORM_USESIT
-	{ "sit-secret", &cfg_type_sstring, CFG_CLAUSEFLAG_EXPERIMENTAL },
-#else
-	{ "sit-secret", &cfg_type_sstring,
-	  CFG_CLAUSEFLAG_EXPERIMENTAL | CFG_CLAUSEFLAG_NOTCONFIGURED },
-#endif
 	{ "managed-keys-directory", &cfg_type_qstring, 0 },
 	{ "match-mapped-addresses", &cfg_type_boolean, 0 },
 	{ "max-rsa-exponent-size", &cfg_type_uint32, 0 },
-	{ "memstatistics-file", &cfg_type_qstring, 0 },
 	{ "memstatistics", &cfg_type_boolean, 0 },
+	{ "memstatistics-file", &cfg_type_qstring, 0 },
 	{ "multiple-cnames", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "named-xfer", &cfg_type_qstring, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "pid-file", &cfg_type_qstringornone, 0 },
 	{ "port", &cfg_type_uint32, 0 },
 	{ "querylog", &cfg_type_boolean, 0 },
-	{ "recursing-file", &cfg_type_qstring, 0 },
 	{ "random-device", &cfg_type_qstring, 0 },
+	{ "recursing-file", &cfg_type_qstring, 0 },
 	{ "recursive-clients", &cfg_type_uint32, 0 },
 	{ "reserved-sockets", &cfg_type_uint32, 0 },
 	{ "secroots-file", &cfg_type_qstring, 0 },
 	{ "serial-queries", &cfg_type_uint32, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "serial-query-rate", &cfg_type_uint32, 0 },
 	{ "server-id", &cfg_type_serverid, 0 },
+	{ "session-keyalg", &cfg_type_astring, 0 },
+	{ "session-keyfile", &cfg_type_qstringornone, 0 },
+	{ "session-keyname", &cfg_type_astring, 0 },
+#ifdef ISC_PLATFORM_USESIT
+	{ "sit-secret", &cfg_type_sstring, CFG_CLAUSEFLAG_EXPERIMENTAL },
+#else
+	{ "sit-secret", &cfg_type_sstring,
+	  CFG_CLAUSEFLAG_EXPERIMENTAL | CFG_CLAUSEFLAG_NOTCONFIGURED },
+#endif
 	{ "stacksize", &cfg_type_size, 0 },
 	{ "statistics-file", &cfg_type_qstring, 0 },
 	{ "statistics-interval", &cfg_type_uint32, CFG_CLAUSEFLAG_NYI },
 	{ "tcp-clients", &cfg_type_uint32, 0 },
 	{ "tcp-listen-queue", &cfg_type_uint32, 0 },
 	{ "tkey-dhkey", &cfg_type_tkey_dhkey, 0 },
+	{ "tkey-domain", &cfg_type_qstring, 0 },
 	{ "tkey-gssapi-credential", &cfg_type_qstring, 0 },
 	{ "tkey-gssapi-keytab", &cfg_type_qstring, 0 },
-	{ "tkey-domain", &cfg_type_qstring, 0 },
-	{ "transfers-per-ns", &cfg_type_uint32, 0 },
 	{ "transfers-in", &cfg_type_uint32, 0 },
 	{ "transfers-out", &cfg_type_uint32, 0 },
+	{ "transfers-per-ns", &cfg_type_uint32, 0 },
 	{ "treat-cr-as-space", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "use-id-pool", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "use-ixfr", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
@@ -1172,8 +1171,8 @@ static cfg_type_t cfg_type_masterformat = {
 
 /*%
  *  response-policy {
- *	zone <string> [ policy (given|disabled|passthru|drop|tcp-only|
- *					nxdomain|nodata|cname <domain> ) ]
+ *	zone &lt;string&gt; [ policy (given|disabled|passthru|drop|tcp-only|
+ *					nxdomain|nodata|cname &lt;domain&gt; ) ]
  *		      [ recursive-only yes|no ] [ max-policy-ttl number ] ;
  *  } [ recursive-only yes|no ] [ max-policy-ttl number ]
  *	 [ break-dnssec yes|no ] [ min-ns-dots number ]
@@ -1558,8 +1557,8 @@ view_clauses[] = {
 	  CFG_CLAUSEFLAG_MULTI },
 	{ "disable-empty-zone", &cfg_type_astring, CFG_CLAUSEFLAG_MULTI },
 	{ "dns64", &cfg_type_dns64, CFG_CLAUSEFLAG_MULTI },
-	{ "dns64-server", &cfg_type_astring, 0 },
 	{ "dns64-contact", &cfg_type_astring, 0 },
+	{ "dns64-server", &cfg_type_astring, 0 },
 	{ "dnssec-accept-expired", &cfg_type_boolean, 0 },
 	{ "dnssec-enable", &cfg_type_boolean, 0 },
 	{ "dnssec-lookaside", &cfg_type_lookaside, CFG_CLAUSEFLAG_MULTI },
@@ -1577,18 +1576,27 @@ view_clauses[] = {
 	{ "fetches-per-server", &cfg_type_fetchesper, 0 },
 	{ "fetches-per-zone", &cfg_type_fetchesper, 0 },
 #else
-	{ "fetch-quota-params", &cfg_type_fetchquota, CFG_CLAUSEFLAG_NOTCONFIGURED },
-	{ "fetches-per-server", &cfg_type_fetchesper, CFG_CLAUSEFLAG_NOTCONFIGURED },
-	{ "fetches-per-zone", &cfg_type_fetchesper, CFG_CLAUSEFLAG_NOTCONFIGURED },
+	{ "fetch-quota-params", &cfg_type_fetchquota,
+	  CFG_CLAUSEFLAG_NOTCONFIGURED },
+	{ "fetches-per-server", &cfg_type_fetchesper,
+	  CFG_CLAUSEFLAG_NOTCONFIGURED },
+	{ "fetches-per-zone", &cfg_type_fetchesper,
+	  CFG_CLAUSEFLAG_NOTCONFIGURED },
 #endif /* ENABLE_FETCHLIMIT */
+#ifdef ALLOW_FILTER_AAAA
+	{ "filter-aaaa", &cfg_type_bracketed_aml, 0 },
+	{ "filter-aaaa-on-v4", &cfg_type_filter_aaaa, 0 },
+	{ "filter-aaaa-on-v6", &cfg_type_filter_aaaa, 0 },
+#else
+	{ "filter-aaaa", &cfg_type_bracketed_aml,
+	  CFG_CLAUSEFLAG_NOTCONFIGURED },
+	{ "filter-aaaa-on-v4", &cfg_type_filter_aaaa,
+	  CFG_CLAUSEFLAG_NOTCONFIGURED },
+	{ "filter-aaaa-on-v6", &cfg_type_filter_aaaa,
+	  CFG_CLAUSEFLAG_NOTCONFIGURED },
+#endif
 	{ "ixfr-from-differences", &cfg_type_ixfrdifftype, 0 },
 	{ "lame-ttl", &cfg_type_uint32, 0 },
-#ifdef ISC_PLATFORM_USESIT
-	{ "nosit-udp-size", &cfg_type_uint32, CFG_CLAUSEFLAG_EXPERIMENTAL },
-#else
-	{ "nosit-udp-size", &cfg_type_uint32,
-	  CFG_CLAUSEFLAG_EXPERIMENTAL | CFG_CLAUSEFLAG_NOTCONFIGURED },
-#endif
 	{ "max-acache-size", &cfg_type_sizenodefault, 0 },
 	{ "max-cache-size", &cfg_type_sizenodefault, 0 },
 	{ "max-cache-ttl", &cfg_type_uint32, 0 },
@@ -1599,9 +1607,15 @@ view_clauses[] = {
 	{ "max-udp-size", &cfg_type_uint32, 0 },
 	{ "min-roots", &cfg_type_uint32, CFG_CLAUSEFLAG_NOTIMP },
 	{ "minimal-responses", &cfg_type_boolean, 0 },
-	{ "prefetch", &cfg_type_prefetch, 0 },
-	{ "preferred-glue", &cfg_type_astring, 0 },
 	{ "no-case-compress", &cfg_type_bracketed_aml, 0 },
+#ifdef ISC_PLATFORM_USESIT
+	{ "nosit-udp-size", &cfg_type_uint32, CFG_CLAUSEFLAG_EXPERIMENTAL },
+#else
+	{ "nosit-udp-size", &cfg_type_uint32,
+	  CFG_CLAUSEFLAG_EXPERIMENTAL | CFG_CLAUSEFLAG_NOTCONFIGURED },
+#endif
+	{ "preferred-glue", &cfg_type_astring, 0 },
+	{ "prefetch", &cfg_type_prefetch, 0 },
 	{ "provide-ixfr", &cfg_type_boolean, 0 },
 	/*
 	 * Note that the query-source option syntax is different
@@ -1612,17 +1626,20 @@ view_clauses[] = {
 	{ "queryport-pool-ports", &cfg_type_uint32, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "queryport-pool-updateinterval", &cfg_type_uint32,
 	  CFG_CLAUSEFLAG_OBSOLETE },
+	{ "rate-limit", &cfg_type_rrl, 0 },
 	{ "recursion", &cfg_type_boolean, 0 },
+	{ "request-nsid", &cfg_type_boolean, 0 },
 #ifdef ISC_PLATFORM_USESIT
 	{ "request-sit", &cfg_type_boolean, CFG_CLAUSEFLAG_EXPERIMENTAL },
 #else
 	{ "request-sit", &cfg_type_boolean,
 	  CFG_CLAUSEFLAG_EXPERIMENTAL | CFG_CLAUSEFLAG_NOTCONFIGURED },
 #endif
-	{ "request-nsid", &cfg_type_boolean, 0 },
 	{ "resolver-query-timeout", &cfg_type_uint32, 0 },
+	{ "response-policy", &cfg_type_rpz, 0 },
 	{ "rfc2308-type1", &cfg_type_boolean, CFG_CLAUSEFLAG_NYI },
 	{ "root-delegation-only",  &cfg_type_optional_exclude, 0 },
+	{ "root-key-sentinel", &cfg_type_boolean, 0 },
 	{ "rrset-order", &cfg_type_rrsetorder, 0 },
 	{ "sortlist", &cfg_type_bracketed_aml, 0 },
 	{ "suppress-initial-notify", &cfg_type_boolean, CFG_CLAUSEFLAG_NYI },
@@ -1632,20 +1649,6 @@ view_clauses[] = {
 	  CFG_CLAUSEFLAG_EXPERIMENTAL },
 	{ "use-queryport-pool", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "zero-no-soa-ttl-cache", &cfg_type_boolean, 0 },
-#ifdef ALLOW_FILTER_AAAA
-	{ "filter-aaaa", &cfg_type_bracketed_aml, 0 },
-	{ "filter-aaaa-on-v4", &cfg_type_filter_aaaa, 0 },
-	{ "filter-aaaa-on-v6", &cfg_type_filter_aaaa, 0 },
-#else
-	{ "filter-aaaa", &cfg_type_bracketed_aml,
-	   CFG_CLAUSEFLAG_NOTCONFIGURED },
-	{ "filter-aaaa-on-v4", &cfg_type_filter_aaaa,
-	   CFG_CLAUSEFLAG_NOTCONFIGURED },
-	{ "filter-aaaa-on-v6", &cfg_type_filter_aaaa,
-	   CFG_CLAUSEFLAG_NOTCONFIGURED },
-#endif
-	{ "response-policy", &cfg_type_rpz, 0 },
-	{ "rate-limit", &cfg_type_rrl, 0 },
 	{ NULL, NULL, 0 }
 };
 
@@ -1888,7 +1891,6 @@ server_clauses[] = {
 	{ "edns-udp-size", &cfg_type_uint32, 0 },
 	{ "keys", &cfg_type_server_key_kludge, 0 },
 	{ "max-udp-size", &cfg_type_uint32, 0 },
-	{ "tcp-only", &cfg_type_boolean, 0 },
 	{ "notify-source", &cfg_type_sockaddr4wild, 0 },
 	{ "notify-source-v6", &cfg_type_sockaddr6wild, 0 },
 	{ "provide-ixfr", &cfg_type_boolean, 0 },
@@ -1903,6 +1905,7 @@ server_clauses[] = {
 	  CFG_CLAUSEFLAG_EXPERIMENTAL | CFG_CLAUSEFLAG_NOTCONFIGURED },
 #endif
 	{ "support-ixfr", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
+	{ "tcp-only", &cfg_type_boolean, 0 },
 	{ "transfer-format", &cfg_type_transferformat, 0 },
 	{ "transfer-source", &cfg_type_sockaddr4wild, 0 },
 	{ "transfer-source-v6", &cfg_type_sockaddr6wild, 0 },

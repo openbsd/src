@@ -1,5 +1,4 @@
-# Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
-# Copyright (C) 1998-2003  Internet Software Consortium.
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -48,12 +47,15 @@ LIBS =		@LIBS@
 # Alphabetically
 
 OPENSSLGOSTLINKOBJS = opensslgost_link.@O@
+OPENSSLECDSALINKOBJS = opensslecdsa_link.@O@
+OPENSSLEDDSALINKOBJS = openssleddsa_link.@O@
 OPENSSLLINKOBJS = openssl_link.@O@ openssldh_link.@O@ openssldsa_link.@O@ \
-		  opensslecdsa_link.@O@ @OPENSSLGOSTLINKOBJS@ \
-		  opensslrsa_link.@O@
+		  @OPENSSLECDSALINKOBJS@ @OPENSSLEDDSALINKOBJS@ \
+		  @OPENSSLGOSTLINKOBJS@ opensslrsa_link.@O@
 
 PKCS11LINKOBJS	= pkcs11dh_link.@O@ pkcs11dsa_link.@O@ pkcs11rsa_link.@O@ \
-		pkcs11ecdsa_link.@O@ pkcs11gost_link.@O@ pkcs11.@O@
+		pkcs11ecdsa_link.@O@ pkcs11eddsa_link.@O@ \
+		pkcs11gost_link.@O@ pkcs11.@O@
 
 DSTOBJS =	@DST_EXTRA_OBJS@ @OPENSSLLINKOBJS@ @PKCS11LINKOBJS@ \
 		dst_api.@O@ dst_lib.@O@ dst_parse.@O@ dst_result.@O@ \
@@ -87,11 +89,15 @@ OBJS=		${DNSOBJS} ${OTHEROBJS} ${DSTOBJS} ${PORTDNSOBJS} \
 
 # Alphabetically
 OPENSSLGOSTLINKSRCS = opensslgost_link.c
+OPENSSLECDSALINKSRCS = opensslecdsa_link.c
+OPENSSLEDDSALINKSRCS = openssleddsa_link.c
 OPENSSLLINKSRCS = openssl_link.c openssldh_link.c openssldsa_link.c \
-		  opensslecdsa_link.c @OPENSSLGOSTLINKSRCS@ opensslrsa_link.c
+		  @OPENSSLECDSALINKSRCS@ @OPENSSLEDDSALINKSRCS@ \
+		  @OPENSSLGOSTLINKSRCS@ opensslrsa_link.c
 
 PKCS11LINKSRCS	= pkcs11dh_link.c pkcs11dsa_link.c pkcs11rsa_link.c \
-		pkcs11ecdsa_link.c pkcs11gost_link.c pkcs11.c
+		pkcs11ecdsa_link.c pkcs11eddsa_link.c \
+		pkcs11gost_link.c pkcs11.c
 
 DSTSRCS =	@DST_EXTRA_SRCS@ @OPENSSLLINKSRCS@ @PKCS11LINKSRCS@ \
 		dst_api.c dst_lib.c dst_parse.c \
@@ -119,8 +125,7 @@ PORTDNSSRCS =	client.c ecdb.c
 SRCS = ${DSTSRCS} ${DNSSRCS} ${PORTDNSSRCS} @GEOIPLINKSRCS@
 
 SUBDIRS =	include
-TARGETS =	include/dns/enumtype.h include/dns/enumclass.h \
-		include/dns/rdatastruct.h timestamp
+TARGETS =	timestamp
 TESTDIRS =	@UNITTESTS@
 
 DEPENDEXTRA =	./gen -F include/dns/rdatastruct.h \
@@ -148,31 +153,11 @@ libdns.la: ${OBJS}
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
 		${OBJS} ${ISCLIBS} @DNS_CRYPTO_LIBS@ ${LIBS}
 
-timestamp: libdns.@A@
-	touch timestamp
-
-installdirs:
-	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${libdir}
-
-install:: timestamp installdirs
-	${LIBTOOL_MODE_INSTALL} ${INSTALL_LIBRARY} libdns.@A@ ${DESTDIR}${libdir}
-
-uninstall::
-	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${libdir}/libdns.@A@
-
-clean distclean::
-	rm -f libdns.@A@ timestamp
-	rm -f gen code.h include/dns/enumtype.h include/dns/enumclass.h
-	rm -f include/dns/rdatastruct.h
-
-newrr::
-	rm -f code.h include/dns/enumtype.h include/dns/enumclass.h
-	rm -f include/dns/rdatastruct.h
-
-include: include/dns/enumtype.h include/dns/enumclass.h \
-	include/dns/rdatastruct.h
-
-rdata.@O@: code.h
+include: gen
+	${MAKE} include/dns/enumtype.h
+	${MAKE} include/dns/enumclass.h
+	${MAKE} include/dns/rdatastruct.h
+	${MAKE} code.h
 
 include/dns/enumtype.h: gen
 	./gen -s ${srcdir} -t > $@ || { rm -f $@ ; exit 1; }
@@ -195,13 +180,38 @@ gen: gen.c
 	${BUILD_CC} ${BUILD_CFLAGS} -I${top_srcdir}/lib/isc/include \
 	${BUILD_CPPFLAGS} ${BUILD_LDFLAGS} -o $@ ${srcdir}/gen.c ${BUILD_LIBS}
 
+timestamp: include libdns.@A@
+	touch timestamp
+
+testdirs: libdns.@A@
+
+installdirs:
+	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${libdir}
+
+install:: timestamp installdirs
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_LIBRARY} libdns.@A@ ${DESTDIR}${libdir}
+
+uninstall::
+	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${libdir}/libdns.@A@
+
+clean distclean::
+	rm -f libdns.@A@ timestamp
+	rm -f gen code.h include/dns/enumtype.h include/dns/enumclass.h
+	rm -f include/dns/rdatastruct.h
+
+newrr::
+	rm -f code.h include/dns/enumtype.h include/dns/enumclass.h
+	rm -f include/dns/rdatastruct.h
+
+include: include/dns/enumtype.h include/dns/enumclass.h \
+	include/dns/rdatastruct.h
+
+rdata.@O@: include
+
 rbtdb64.@O@: rbtdb64.c rbtdb.c
 
-depend: include/dns/enumtype.h include/dns/enumclass.h \
-	include/dns/rdatastruct.h code.h
-subdirs: include/dns/enumtype.h include/dns/enumclass.h \
-	include/dns/rdatastruct.h code.h
-${OBJS}: include/dns/enumtype.h include/dns/enumclass.h \
-	include/dns/rdatastruct.h
+depend: include
+subdirs: include
+${OBJS}: include
 
 spnego.@O@: spnego_asn1.c spnego.h

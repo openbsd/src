@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3.h,v 1.1 2019/12/16 16:31:33 deraadt Exp $ */
+/* $Id: nsec3.h,v 1.2 2019/12/17 01:46:32 sthen Exp $ */
 
 #ifndef DNS_NSEC3_H
 #define DNS_NSEC3_H 1
@@ -237,6 +237,19 @@ dns_nsec3param_toprivate(dns_rdata_t *src, dns_rdata_t *target,
  * Convert a nsec3param rdata to a private rdata.
  *
  * 'buf' should be at least src->length + 1 in size.
+ */
+
+isc_result_t
+dns_nsec3param_salttotext(dns_rdata_nsec3param_t *nsec3param, char *dst,
+			  size_t dstlen);
+/*%<
+ * Convert the salt of given NSEC3PARAM RDATA into hex-encoded, NULL-terminated
+ * text stored at "dst".
+ *
+ * Requires:
+ *
+ *\li 	"dst" to have enough space (as indicated by "dstlen") to hold the
+ * 	resulting text and its NULL-terminating byte.
  */
 
 isc_result_t

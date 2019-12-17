@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +15,7 @@
  */
 
 /*
- * $Id: dnssec.c,v 1.6 2019/12/16 16:16:24 deraadt Exp $
+ * $Id: dnssec.c,v 1.7 2019/12/17 01:46:31 sthen Exp $
  */
 
 /*! \file */
@@ -616,7 +615,7 @@ dns_dnssec_verify(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 isc_boolean_t
 dns_dnssec_keyactive(dst_key_t *key, isc_stdtime_t now) {
 	isc_result_t result;
-	isc_stdtime_t publish, active, revoke, inactive, delete;
+	isc_stdtime_t publish, active, revoke, inactive, deltime;
 	isc_boolean_t pubset = ISC_FALSE, actset = ISC_FALSE;
 	isc_boolean_t revset = ISC_FALSE, inactset = ISC_FALSE;
 	isc_boolean_t delset = ISC_FALSE;
@@ -649,11 +648,11 @@ dns_dnssec_keyactive(dst_key_t *key, isc_stdtime_t now) {
 	if (result == ISC_R_SUCCESS)
 		inactset = ISC_TRUE;
 
-	result = dst_key_gettime(key, DST_TIME_DELETE, &delete);
+	result = dst_key_gettime(key, DST_TIME_DELETE, &deltime);
 	if (result == ISC_R_SUCCESS)
 		delset = ISC_TRUE;
 
-	if ((inactset && inactive <= now) || (delset && delete <= now))
+	if ((inactset && inactive <= now) || (delset && deltime <= now))
 		return (ISC_FALSE);
 
 	if (revset && revoke <= now && pubset && publish <= now)
@@ -1219,7 +1218,7 @@ dns_dnsseckey_destroy(isc_mem_t *mctx, dns_dnsseckey_t **dkp) {
 static void
 get_hints(dns_dnsseckey_t *key, isc_stdtime_t now) {
 	isc_result_t result;
-	isc_stdtime_t publish, active, revoke, inactive, delete;
+	isc_stdtime_t publish, active, revoke, inactive, deltime;
 	isc_boolean_t pubset = ISC_FALSE, actset = ISC_FALSE;
 	isc_boolean_t revset = ISC_FALSE, inactset = ISC_FALSE;
 	isc_boolean_t delset = ISC_FALSE;
@@ -1242,7 +1241,7 @@ get_hints(dns_dnsseckey_t *key, isc_stdtime_t now) {
 	if (result == ISC_R_SUCCESS)
 		inactset = ISC_TRUE;
 
-	result = dst_key_gettime(key->key, DST_TIME_DELETE, &delete);
+	result = dst_key_gettime(key->key, DST_TIME_DELETE, &deltime);
 	if (result == ISC_R_SUCCESS)
 		delset = ISC_TRUE;
 
@@ -1302,7 +1301,7 @@ get_hints(dns_dnsseckey_t *key, isc_stdtime_t now) {
 	/*
 	 * Metadata says delete, so don't publish this key or sign with it.
 	 */
-	if (delset && delete <= now) {
+	if (delset && deltime <= now) {
 		key->hint_publish = ISC_FALSE;
 		key->hint_sign = ISC_FALSE;
 		key->hint_remove = ISC_TRUE;

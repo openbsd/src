@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: zone.h,v 1.9 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: zone.h,v 1.10 2019/12/17 01:46:33 sthen Exp $ */
 
 #ifndef DNS_ZONE_H
 #define DNS_ZONE_H 1
@@ -232,6 +231,26 @@ dns_zone_getview(dns_zone_t *zone);
  * Requires:
  *\li	'zone' to be a valid zone.
  */
+
+void
+dns_zone_setviewcommit(dns_zone_t *zone);
+/*%<
+ *	Commit the previous view saved internally via dns_zone_setview().
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ */
+
+void
+dns_zone_setviewrevert(dns_zone_t *zone);
+/*%<
+ *	Revert the most recent dns_zone_setview() on this zone,
+ *	restoring the previous view.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ */
+
 
 isc_result_t
 dns_zone_setorigin(dns_zone_t *zone, const dns_name_t *origin);
@@ -1244,6 +1263,9 @@ dns_zone_getjournalsize(dns_zone_t *zone);
 isc_result_t
 dns_zone_notifyreceive(dns_zone_t *zone, isc_sockaddr_t *from,
 		       dns_message_t *msg);
+isc_result_t
+dns_zone_notifyreceive2(dns_zone_t *zone, isc_sockaddr_t *from,
+			isc_sockaddr_t *to, dns_message_t *msg);
 /*%<
  *	Tell the zone that it has received a NOTIFY message from another
  *	server.  This may cause some zone maintenance activity to occur.

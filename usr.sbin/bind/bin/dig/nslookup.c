@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -164,8 +163,8 @@ rcode_totext(dns_rcode_t rcode)
 	return totext.deconsttext;
 }
 
-void
-dighost_shutdown(void) {
+static void
+query_finished(void) {
 	isc_event_t *event = global_event;
 
 	flush_lookup_list();
@@ -214,7 +213,7 @@ printa(dns_rdata_t *rdata) {
 }
 #ifdef DIG_SIGCHASE
 /* Just for compatibility : not use in host program */
-isc_result_t
+static isc_result_t
 printrdataset(dns_name_t *owner_name, dns_rdataset_t *rdataset,
 	      isc_buffer_t *target)
 {
@@ -404,22 +403,21 @@ detailsection(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers,
 	return (ISC_R_SUCCESS);
 }
 
-void
-received(int bytes, isc_sockaddr_t *from, dig_query_t *query)
+static void
+received(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query)
 {
 	UNUSED(bytes);
 	UNUSED(from);
 	UNUSED(query);
 }
 
-void
+static void
 trying(char *frm, dig_lookup_t *lookup) {
 	UNUSED(frm);
 	UNUSED(lookup);
-
 }
 
-isc_result_t
+static isc_result_t
 printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 	char servtext[ISC_SOCKADDR_FORMATSIZE];
 
@@ -508,7 +506,7 @@ show_settings(isc_boolean_t full, isc_boolean_t serv_only) {
 	printf("  %s\t\t%s\n",
 	       usesearch ? "search" : "nosearch",
 	       recurse ? "recurse" : "norecurse");
-	printf("  timeout = %d\t\tretry = %d\tport = %d\tndots = %d\n",
+	printf("  timeout = %u\t\tretry = %d\tport = %u\tndots = %d\n",
 	       timeout, tries, port, ndots);
 	printf("  querytype = %-8s\tclass = %s\n", deftype, defclass);
 	printf("  srchlist = ");
@@ -595,7 +593,12 @@ version(void) {
 
 static void
 setoption(char *opt) {
-	if (strncasecmp(opt, "all", 3) == 0) {
+	size_t l = strlen(opt);
+
+#define CHECKOPT(A, N) \
+	((l >= N) && (l < sizeof(A)) && (strncasecmp(opt, A, l) == 0))
+
+	if (CHECKOPT("all", 3)) {
 		show_settings(ISC_TRUE, ISC_FALSE);
 	} else if (strncasecmp(opt, "class=", 6) == 0) {
 		if (testclass(&opt[6]))
@@ -637,41 +640,41 @@ setoption(char *opt) {
 		set_timeout(&opt[8]);
 	} else if (strncasecmp(opt, "t=", 2) == 0) {
 		set_timeout(&opt[2]);
-	} else if (strncasecmp(opt, "rec", 3) == 0) {
+	} else if (CHECKOPT("recurse", 3)) {
 		recurse = ISC_TRUE;
-	} else if (strncasecmp(opt, "norec", 5) == 0) {
+	} else if (CHECKOPT("norecurse", 5)) {
 		recurse = ISC_FALSE;
 	} else if (strncasecmp(opt, "retry=", 6) == 0) {
 		set_tries(&opt[6]);
 	} else if (strncasecmp(opt, "ret=", 4) == 0) {
 		set_tries(&opt[4]);
-	} else if (strncasecmp(opt, "def", 3) == 0) {
+	} else if (CHECKOPT("defname", 3)) {
 		usesearch = ISC_TRUE;
-	} else if (strncasecmp(opt, "nodef", 5) == 0) {
+	} else if (CHECKOPT("nodefname", 5)) {
 		usesearch = ISC_FALSE;
-	} else if (strncasecmp(opt, "vc", 3) == 0) {
+	} else if (CHECKOPT("vc", 2) == 0) {
 		tcpmode = ISC_TRUE;
-	} else if (strncasecmp(opt, "novc", 5) == 0) {
+	} else if (CHECKOPT("novc", 4) == 0) {
 		tcpmode = ISC_FALSE;
-	} else if (strncasecmp(opt, "deb", 3) == 0) {
+	} else if (CHECKOPT("debug", 3) == 0) {
 		short_form = ISC_FALSE;
 		showsearch = ISC_TRUE;
-	} else if (strncasecmp(opt, "nodeb", 5) == 0) {
+	} else if (CHECKOPT("nodebug", 5) == 0) {
 		short_form = ISC_TRUE;
 		showsearch = ISC_FALSE;
-	} else if (strncasecmp(opt, "d2", 2) == 0) {
+	} else if (CHECKOPT("d2", 2) == 0) {
 		debugging = ISC_TRUE;
-	} else if (strncasecmp(opt, "nod2", 4) == 0) {
+	} else if (CHECKOPT("nod2", 4) == 0) {
 		debugging = ISC_FALSE;
-	} else if (strncasecmp(opt, "search", 3) == 0) {
+	} else if (CHECKOPT("search", 3) == 0) {
 		usesearch = ISC_TRUE;
-	} else if (strncasecmp(opt, "nosearch", 5) == 0) {
+	} else if (CHECKOPT("nosearch", 5) == 0) {
 		usesearch = ISC_FALSE;
-	} else if (strncasecmp(opt, "sil", 3) == 0) {
+	} else if (CHECKOPT("sil", 3) == 0) {
 		/* deprecation_msg = ISC_FALSE; */
-	} else if (strncasecmp(opt, "fail", 3) == 0) {
+	} else if (CHECKOPT("fail", 3) == 0) {
 		nofail=ISC_FALSE;
-	} else if (strncasecmp(opt, "nofail", 3) == 0) {
+	} else if (CHECKOPT("nofail", 5) == 0) {
 		nofail=ISC_TRUE;
 	} else if (strncasecmp(opt, "ndots=", 6) == 0) {
 		set_ndots(&opt[6]);
@@ -909,6 +912,15 @@ main(int argc, char **argv) {
 	ISC_LIST_INIT(search_list);
 
 	check_ra = ISC_TRUE;
+
+	/* setup dighost callbacks */
+#ifdef DIG_SIGCHASE
+	dighost_printrdataset = printrdataset;
+#endif
+	dighost_printmessage = printmessage;
+	dighost_received = received;
+	dighost_trying = trying;
+	dighost_shutdown = query_finished;
 
 	result = isc_app_start();
 	check_result(result, "isc_app_start");

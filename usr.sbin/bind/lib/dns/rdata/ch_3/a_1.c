@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005, 2007, 2009, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.3 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: a_1.c,v 1.4 2019/12/17 01:46:33 sthen Exp $ */
 
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/soa_6.c and generic/mx_15.c */
@@ -88,7 +88,7 @@ totext_ch_a(ARGS_TOTEXT) {
 	sub = name_prefix(&name, tctx->origin, &prefix);
 	RETERR(dns_name_totext(&prefix, sub, target));
 
-	sprintf(buf, "%o", addr); /* note octal */
+	snprintf(buf, sizeof(buf), "%o", addr); /* note octal */
 	RETERR(str_totext(" ", target));
 	return (str_totext(buf, target));
 }

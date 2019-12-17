@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: version.h,v 1.1 2019/12/16 16:31:35 deraadt Exp $ */
+/* $Id: version.h,v 1.2 2019/12/17 01:46:34 sthen Exp $ */
 
 /*! \file */
 

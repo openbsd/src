@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rcode.h,v 1.3 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: rcode.h,v 1.4 2019/12/17 01:46:32 sthen Exp $ */
 
 #ifndef DNS_RCODE_H
 #define DNS_RCODE_H 1

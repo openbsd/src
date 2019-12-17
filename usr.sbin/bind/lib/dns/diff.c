@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: diff.c,v 1.2 2019/12/16 16:16:24 deraadt Exp $ */
+/* $Id: diff.c,v 1.3 2019/12/17 01:46:31 sthen Exp $ */
 
 /*! \file */
 
@@ -39,6 +38,7 @@
 #include <dns/rdatastruct.h>
 #include <dns/rdatatype.h>
 #include <dns/result.h>
+#include <dns/time.h>
 
 #define CHECK(op) \
 	do { result = (op);					\
@@ -88,11 +88,16 @@ dns_difftuple_create(isc_mem_t *mctx,
 
 	t->ttl = ttl;
 
-	memmove(datap, rdata->data, rdata->length);
 	dns_rdata_init(&t->rdata);
 	dns_rdata_clone(rdata, &t->rdata);
-	t->rdata.data = datap;
-	datap += rdata->length;
+	if (rdata->data != NULL) {
+		memmove(datap, rdata->data, rdata->length);
+		t->rdata.data = datap;
+		datap += rdata->length;
+	} else {
+		t->rdata.data = NULL;
+		INSIST(rdata->length == 0);
+	}
 
 	ISC_LINK_INIT(&t->rdata, link);
 	ISC_LINK_INIT(t, link);
@@ -204,7 +209,7 @@ static isc_stdtime_t
 setresign(dns_rdataset_t *modified) {
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdata_rrsig_t sig;
-	isc_stdtime_t when;
+	isc_int64_t when;
 	isc_result_t result;
 
 	result = dns_rdataset_first(modified);
@@ -214,7 +219,7 @@ setresign(dns_rdataset_t *modified) {
 	if ((rdata.flags & DNS_RDATA_OFFLINE) != 0)
 		when = 0;
 	else
-		when = sig.timeexpire;
+		when = dns_time64_from32(sig.timeexpire);
 	dns_rdata_reset(&rdata);
 
 	result = dns_rdataset_next(modified);
@@ -224,14 +229,14 @@ setresign(dns_rdataset_t *modified) {
 		if ((rdata.flags & DNS_RDATA_OFFLINE) != 0) {
 			goto next_rr;
 		}
-		if (when == 0 || sig.timeexpire < when)
-			when = sig.timeexpire;
+		if (when == 0 || dns_time64_from32(sig.timeexpire) < when)
+			when = dns_time64_from32(sig.timeexpire);
  next_rr:
 		dns_rdata_reset(&rdata);
 		result = dns_rdataset_next(modified);
 	}
 	INSIST(result == ISC_R_NOMORE);
-	return (when);
+	return ((isc_stdtime_t)when);
 }
 
 static isc_result_t

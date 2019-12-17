@@ -1,4 +1,5 @@
-Copyright (C) 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
 How to use site.h for the PKCS#11 provider of your HSM

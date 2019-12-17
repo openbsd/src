@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,12 +14,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rpz.h,v 1.1 2019/12/16 16:31:34 deraadt Exp $ */
+/* $Id: rpz.h,v 1.2 2019/12/17 01:46:32 sthen Exp $ */
 
 
 #ifndef DNS_RPZ_H
 #define DNS_RPZ_H 1
 
+#include <isc/event.h>
 #include <isc/lang.h>
 #include <isc/refcount.h>
 #include <isc/rwlock.h>

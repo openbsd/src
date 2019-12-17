@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: result.c,v 1.5 2019/12/16 16:16:24 deraadt Exp $ */
+/* $Id: result.c,v 1.6 2019/12/17 01:46:32 sthen Exp $ */
 
 /*! \file */
 
@@ -165,7 +164,7 @@ static const char *text[DNS_R_NRESULTS] = {
 	"bad EUI",			       /*%< 109 DNS_R_BADEUI */
 
 	"covered by negative trust anchor",    /*%< 110 DNS_R_NTACOVERED */
-	"bad CDS",			       /*%< 111 DNS_R_BADCSD */
+	"bad CDS",			       /*%< 111 DNS_R_BADCDS */
 	"bad CDNSKEY",			       /*%< 112 DNS_R_BADCDNSKEY */
 	"malformed OPT option",		       /*%< 113 DNS_R_OPTERR */
 	"malformed DNSTAP data",	       /*%< 114 DNS_R_BADDNSTAP */

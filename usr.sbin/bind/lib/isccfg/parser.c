@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -302,7 +301,7 @@ cfg_print_tuple(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 
 void
 cfg_doc_tuple(cfg_printer_t *pctx, const cfg_type_t *type) {
-	const cfg_tuplefielddef_t *fields = type->of;
+	const cfg_tuplefielddef_t *fields;
 	const cfg_tuplefielddef_t *f;
 	isc_boolean_t need_space = ISC_FALSE;
 
@@ -546,7 +545,8 @@ parse2(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 
 	if (result != ISC_R_SUCCESS) {
 		/* Parsing failed but no errors have been logged. */
-		cfg_parser_error(pctx, 0, "parsing failed");
+		cfg_parser_error(pctx, 0, "parsing failed: %s",
+				 isc_result_totext(result));
 		goto cleanup;
 	}
 
@@ -582,13 +582,29 @@ isc_result_t
 cfg_parse_buffer(cfg_parser_t *pctx, isc_buffer_t *buffer,
 	const cfg_type_t *type, cfg_obj_t **ret)
 {
+	return (cfg_parse_buffer4(pctx, buffer, NULL, 0, type, 0, ret));
+}
+
+isc_result_t
+cfg_parse_buffer4(cfg_parser_t *pctx, isc_buffer_t *buffer,
+		  const char *file, unsigned int line,
+		  const cfg_type_t *type, unsigned int flags,
+		  cfg_obj_t **ret)
+{
 	isc_result_t result;
 	REQUIRE(pctx != NULL);
 	REQUIRE(type != NULL);
 	REQUIRE(buffer != NULL);
 	REQUIRE(ret != NULL && *ret == NULL);
+	REQUIRE((flags & ~(CFG_PCTX_NODEPRECATED)) == 0);
+
+	UNUSED(file);
+	UNUSED(line);
 
 	CHECK(isc_lex_openbuffer(pctx->lexer, buffer));
+
+	pctx->flags = flags;
+
 	CHECK(parse2(pctx, type, ret));
  cleanup:
 	return (result);
@@ -1104,7 +1120,7 @@ cfg_parse_boolean(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 	cfg_obj_t *obj = NULL;
 
 	REQUIRE(pctx != NULL);
-	REQUIRE(ret != NULL && ret != NULL);
+	REQUIRE(ret != NULL && *ret == NULL);
 
 	UNUSED(type);
 
@@ -1501,12 +1517,14 @@ cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 		}
 	done:
 		if (clause == NULL || clause->name == NULL) {
-			cfg_parser_error(pctx, CFG_LOG_NOPREP, "unknown option");
+			cfg_parser_error(pctx, CFG_LOG_NOPREP,
+					 "unknown option");
 			/*
 			 * Try to recover by parsing this option as an unknown
 			 * option and discarding it.
 			 */
-			CHECK(cfg_parse_obj(pctx, &cfg_type_unsupported, &eltobj));
+			CHECK(cfg_parse_obj(pctx, &cfg_type_unsupported,
+					    &eltobj));
 			cfg_obj_destroy(pctx, &eltobj);
 			CHECK(parse_semicolon(pctx));
 			continue;
@@ -1515,15 +1533,24 @@ cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 		/* Clause is known. */
 
 		/* Issue warnings if appropriate */
-		if ((clause->flags & CFG_CLAUSEFLAG_OBSOLETE) != 0)
+		if ((pctx->flags & CFG_PCTX_NODEPRECATED) == 0 &&
+		    (clause->flags & CFG_CLAUSEFLAG_DEPRECATED) != 0)
+		{
+			cfg_parser_warning(pctx, 0, "option '%s' is deprecated",
+					   clause->name);
+		}
+		if ((clause->flags & CFG_CLAUSEFLAG_OBSOLETE) != 0) {
 			cfg_parser_warning(pctx, 0, "option '%s' is obsolete",
-				       clause->name);
-		if ((clause->flags & CFG_CLAUSEFLAG_NOTIMP) != 0)
+					   clause->name);
+		}
+		if ((clause->flags & CFG_CLAUSEFLAG_NOTIMP) != 0) {
 			cfg_parser_warning(pctx, 0, "option '%s' is "
-				       "not implemented", clause->name);
-		if ((clause->flags & CFG_CLAUSEFLAG_NYI) != 0)
+					   "not implemented", clause->name);
+		}
+		if ((clause->flags & CFG_CLAUSEFLAG_NYI) != 0) {
 			cfg_parser_warning(pctx, 0, "option '%s' is "
-				       "not implemented", clause->name);
+					   "not implemented", clause->name);
+		}
 
 		if ((clause->flags & CFG_CLAUSEFLAG_NOTCONFIGURED) != 0) {
 			cfg_parser_warning(pctx, 0, "option '%s' was not "
@@ -2032,27 +2059,25 @@ token_addr(cfg_parser_t *pctx, unsigned int flags, isc_netaddr_t *na) {
 				return (ISC_R_SUCCESS);
 			}
 		}
-		if ((flags & CFG_ADDR_V4PREFIXOK) != 0 &&
-		    strlen(s) <= 15U) {
+		if ((flags & CFG_ADDR_V4PREFIXOK) != 0 && strlen(s) <= 15U) {
 			char buf[64];
 			int i;
 
-			strcpy(buf, s);
+			strlcpy(buf, s, sizeof(buf));
 			for (i = 0; i < 3; i++) {
-				strcat(buf, ".0");
+				strlcat(buf, ".0", sizeof(buf));
 				if (inet_pton(AF_INET, buf, &in4a) == 1) {
 					isc_netaddr_fromin(na, &in4a);
 					return (ISC_R_SUCCESS);
 				}
 			}
 		}
-		if ((flags & CFG_ADDR_V6OK) != 0 &&
-		    strlen(s) <= 127U) {
+		if ((flags & CFG_ADDR_V6OK) != 0 && strlen(s) <= 127U) {
 			char buf[128]; /* see lib/bind9/getaddresses.c */
 			char *d; /* zone delimiter */
 			isc_uint32_t zone = 0; /* scope zone ID */
 
-			strcpy(buf, s);
+			strlcpy(buf, s, sizeof(buf));
 			d = strchr(buf, '%');
 			if (d != NULL)
 				*d = '\0';
@@ -2703,9 +2728,10 @@ parser_complain(cfg_parser_t *pctx, isc_boolean_t is_warning,
 
 	len = vsnprintf(message, sizeof(message), format, args);
 #define ELIPSIS " ... "
-	if (len >= sizeof(message))
-		strcpy(message + sizeof(message) - sizeof(ELIPSIS) - 1,
-		       ELIPSIS);
+	if (len >= sizeof(message)) {
+		message[sizeof(message) - sizeof(ELIPSIS)] = 0;
+		strlcat(message, ELIPSIS, sizeof(message));
+	}
 
 	if ((flags & (CFG_LOG_NEAR|CFG_LOG_BEFORE|CFG_LOG_NOPREP)) != 0) {
 		isc_region_t r;

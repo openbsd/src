@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: uri_256.c,v 1.1 2019/12/16 16:31:34 deraadt Exp $ */
+/* $Id: uri_256.c,v 1.2 2019/12/17 01:46:33 sthen Exp $ */
 
 #ifndef GENERIC_URI_256_C
 #define GENERIC_URI_256_C 1
@@ -80,7 +80,7 @@ totext_uri(ARGS_TOTEXT) {
 	 */
 	priority = uint16_fromregion(&region);
 	isc_region_consume(&region, 2);
-	sprintf(buf, "%u ", priority);
+	snprintf(buf, sizeof(buf), "%u ", priority);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -88,7 +88,7 @@ totext_uri(ARGS_TOTEXT) {
 	 */
 	weight = uint16_fromregion(&region);
 	isc_region_consume(&region, 2);
-	sprintf(buf, "%u ", weight);
+	snprintf(buf, sizeof(buf), "%u ", weight);
 	RETERR(str_totext(buf, target));
 
 	/*

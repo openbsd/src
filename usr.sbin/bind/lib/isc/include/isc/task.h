@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: task.h,v 1.2 2019/12/16 16:16:26 deraadt Exp $ */
+/* $Id: task.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
 
 #ifndef ISC_TASK_H
 #define ISC_TASK_H 1
@@ -467,7 +466,7 @@ isc_task_onshutdown(isc_task_t *task, isc_taskaction_t action,
  *
  *\li	#ISC_R_SUCCESS
  *\li	#ISC_R_NOMEMORY
- *\li	#ISC_R_TASKSHUTTINGDOWN			Task is shutting down.
+ *\li	#ISC_R_SHUTTINGDOWN			Task is shutting down.
  */
 
 void

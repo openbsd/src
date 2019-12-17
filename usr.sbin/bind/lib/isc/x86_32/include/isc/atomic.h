@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005, 2007, 2008, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: atomic.h,v 1.2 2019/12/16 16:16:28 deraadt Exp $ */
+/* $Id: atomic.h,v 1.3 2019/12/17 01:46:37 sthen Exp $ */
 
 #ifndef ISC_ATOMIC_H
 #define ISC_ATOMIC_H 1
@@ -130,12 +130,10 @@ isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val) {
  * positions of the stack frame, which would not actually point to the
  * intended address in the embedded mnemonic.
  */
-#include <isc/util.h>		/* for 'UNUSED' macro */
-
 static isc_int32_t
 isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
-	UNUSED(p);
-	UNUSED(val);
+	(void)(p);
+	(void)(val);
 
 	__asm (
 		"movl 8(%ebp), %ecx\n"
@@ -156,8 +154,8 @@ isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
 
 static void
 isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
-	UNUSED(p);
-	UNUSED(val);
+	(void)(p);
+	(void)(val);
 
 	__asm (
 		"movl 8(%ebp), %ecx\n"
@@ -171,9 +169,9 @@ isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
 
 static isc_int32_t
 isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val) {
-	UNUSED(p);
-	UNUSED(cmpval);
-	UNUSED(val);
+	(void)(p);
+	(void)(cmpval);
+	(void)(val);
 
 	__asm (
 		"movl 8(%ebp), %ecx\n"

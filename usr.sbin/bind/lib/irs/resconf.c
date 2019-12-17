@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2011, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: resconf.c,v 1.1 2019/12/16 16:31:35 deraadt Exp $ */
+/* $Id: resconf.c,v 1.2 2019/12/17 01:46:34 sthen Exp $ */
 
 /*! \file resconf.c */
 
@@ -508,6 +508,7 @@ irs_resconf_load(isc_mem_t *mctx, const char *filename, irs_resconf_t **confp)
 
 	conf->mctx = mctx;
 	ISC_LIST_INIT(conf->nameservers);
+	ISC_LIST_INIT(conf->searchlist);
 	conf->numns = 0;
 	conf->domainname = NULL;
 	conf->searchnxt = 0;
@@ -562,6 +563,10 @@ irs_resconf_load(isc_mem_t *mctx, const char *filename, irs_resconf_t **confp)
 		}
 	}
 
+	if (ret != ISC_R_SUCCESS) {
+		goto error;
+	}
+
 	/* If we don't find a nameserver fall back to localhost */
 	if (conf->numns == 0U) {
 		INSIST(ISC_LIST_EMPTY(conf->nameservers));
@@ -575,7 +580,6 @@ irs_resconf_load(isc_mem_t *mctx, const char *filename, irs_resconf_t **confp)
 	 * Construct unified search list from domain or configured
 	 * search list
 	 */
-	ISC_LIST_INIT(conf->searchlist);
 	if (conf->domainname != NULL) {
 		ret = add_search(conf, conf->domainname);
 	} else if (conf->searchnxt > 0) {
@@ -586,6 +590,7 @@ irs_resconf_load(isc_mem_t *mctx, const char *filename, irs_resconf_t **confp)
 		}
 	}
 
+ error:
 	conf->magic = IRS_RESCONF_MAGIC;
 
 	if (ret != ISC_R_SUCCESS)

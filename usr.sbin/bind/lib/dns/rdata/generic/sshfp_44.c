@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2006, 2007, 2009, 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sshfp_44.c,v 1.5 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: sshfp_44.c,v 1.6 2019/12/17 01:46:33 sthen Exp $ */
 
 /* RFC 4255 */
 
@@ -78,7 +77,7 @@ totext_sshfp(ARGS_TOTEXT) {
 	 */
 	n = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
-	sprintf(buf, "%u ", n);
+	snprintf(buf, sizeof(buf), "%u ", n);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -86,7 +85,7 @@ totext_sshfp(ARGS_TOTEXT) {
 	 */
 	n = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
-	sprintf(buf, "%u", n);
+	snprintf(buf, sizeof(buf), "%u", n);
 	RETERR(str_totext(buf, target));
 
 	/*

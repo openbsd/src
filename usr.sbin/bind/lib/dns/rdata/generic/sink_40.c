@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -75,7 +75,7 @@ totext_sink(ARGS_TOTEXT) {
 	isc_region_consume(&sr, 1);
 	subcoding = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
-	sprintf(buf, "%u %u %u", meaning, coding, subcoding);
+	snprintf(buf, sizeof(buf), "%u %u %u", meaning, coding, subcoding);
 	RETERR(str_totext(buf, target));
 
 	if (sr.length == 0U)

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ipv6.h,v 1.2 2019/12/16 16:16:26 deraadt Exp $ */
+/* $Id: ipv6.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
 
 #ifndef ISC_IPV6_H
 #define ISC_IPV6_H 1
@@ -61,11 +60,11 @@
  ***/
 
 struct in6_addr {
-        union {
+	union {
 		isc_uint8_t	_S6_u8[16];
 		isc_uint16_t	_S6_u16[8];
 		isc_uint32_t	_S6_u32[4];
-        } _S6_un;
+	} _S6_un;
 };
 #define s6_addr		_S6_un._S6_u8
 #define s6_addr8	_S6_un._S6_u8
@@ -99,37 +98,37 @@ struct sockaddr_in6 {
  * Unspecified
  */
 #define IN6_IS_ADDR_UNSPECIFIED(a)      \
-        (((a)->s6_addr32[0] == 0) &&    \
-         ((a)->s6_addr32[1] == 0) &&    \
-         ((a)->s6_addr32[2] == 0) &&    \
-         ((a)->s6_addr32[3] == 0))
+	(((a)->s6_addr32[0] == 0) &&    \
+	 ((a)->s6_addr32[1] == 0) &&    \
+	 ((a)->s6_addr32[2] == 0) &&    \
+	 ((a)->s6_addr32[3] == 0))
 
 /*%
  * Loopback
  */
 #define IN6_IS_ADDR_LOOPBACK(a)         \
-        (((a)->s6_addr32[0] == 0) &&    \
-         ((a)->s6_addr32[1] == 0) &&    \
-         ((a)->s6_addr32[2] == 0) &&    \
-         ((a)->s6_addr32[3] == htonl(1)))
+	(((a)->s6_addr32[0] == 0) &&    \
+	 ((a)->s6_addr32[1] == 0) &&    \
+	 ((a)->s6_addr32[2] == 0) &&    \
+	 ((a)->s6_addr32[3] == htonl(1)))
 
 /*%
  * IPv4 compatible
  */
 #define IN6_IS_ADDR_V4COMPAT(a)         \
-        (((a)->s6_addr32[0] == 0) &&    \
-         ((a)->s6_addr32[1] == 0) &&    \
-         ((a)->s6_addr32[2] == 0) &&    \
-         ((a)->s6_addr32[3] != 0) &&    \
-         ((a)->s6_addr32[3] != htonl(1)))
+	(((a)->s6_addr32[0] == 0) &&    \
+	 ((a)->s6_addr32[1] == 0) &&    \
+	 ((a)->s6_addr32[2] == 0) &&    \
+	 ((a)->s6_addr32[3] != 0) &&    \
+	 ((a)->s6_addr32[3] != htonl(1)))
 
 /*%
  * Mapped
  */
 #define IN6_IS_ADDR_V4MAPPED(a)               \
-        (((a)->s6_addr32[0] == 0) &&          \
-         ((a)->s6_addr32[1] == 0) &&          \
-         ((a)->s6_addr32[2] == htonl(0x0000ffff)))
+	(((a)->s6_addr32[0] == 0) &&          \
+	 ((a)->s6_addr32[1] == 0) &&          \
+	 ((a)->s6_addr32[2] == htonl(0x0000ffff)))
 
 /*%
  * Multicast

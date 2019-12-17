@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2007, 2010-2015  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1997-2001  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: heap.c,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: heap.c,v 1.3 2019/12/17 01:46:34 sthen Exp $ */
 
 /*! \file
  * Heap implementation of priority queues adapted from the following:
@@ -71,6 +70,18 @@ struct isc_heap {
 	isc_heapcompare_t		compare;
 	isc_heapindex_t			index;
 };
+
+#ifdef ISC_HEAP_CHECK
+static void
+heap_check(isc_heap_t *heap) {
+	unsigned int i;
+	for (i = 1; i <= heap->last; i++) {
+		INSIST(HEAPCONDITION(i));
+	}
+}
+#else
+#define heap_check(x) (void)0
+#endif
 
 isc_result_t
 isc_heap_create(isc_mem_t *mctx, isc_heapcompare_t compare,
@@ -158,6 +169,7 @@ float_up(isc_heap_t *heap, unsigned int i, void *elt) {
 		(heap->index)(heap->array[i], i);
 
 	INSIST(HEAPCONDITION(i));
+	heap_check(heap);
 }
 
 static void
@@ -183,6 +195,7 @@ sink_down(isc_heap_t *heap, unsigned int i, void *elt) {
 		(heap->index)(heap->array[i], i);
 
 	INSIST(HEAPCONDITION(i));
+	heap_check(heap);
 }
 
 isc_result_t
@@ -191,6 +204,7 @@ isc_heap_insert(isc_heap_t *heap, void *elt) {
 
 	REQUIRE(VALID_HEAP(heap));
 
+	heap_check(heap);
 	new_last = heap->last + 1;
 	RUNTIME_CHECK(new_last > 0); /* overflow check */
 	if (new_last >= heap->size && !resize(heap))
@@ -210,9 +224,13 @@ isc_heap_delete(isc_heap_t *heap, unsigned int idx) {
 	REQUIRE(VALID_HEAP(heap));
 	REQUIRE(idx >= 1 && idx <= heap->last);
 
+	heap_check(heap);
+	if (heap->index != NULL)
+		(heap->index)(heap->array[idx], 0);
 	if (idx == heap->last) {
 		heap->array[heap->last] = NULL;
 		heap->last--;
+		heap_check(heap);
 	} else {
 		elt = heap->array[heap->last];
 		heap->array[heap->last] = NULL;
@@ -248,6 +266,7 @@ isc_heap_element(isc_heap_t *heap, unsigned int idx) {
 	REQUIRE(VALID_HEAP(heap));
 	REQUIRE(idx >= 1);
 
+	heap_check(heap);
 	if (idx <= heap->last)
 		return (heap->array[idx]);
 	return (NULL);

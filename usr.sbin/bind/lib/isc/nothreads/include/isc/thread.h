@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: thread.h,v 1.2 2019/12/16 16:16:27 deraadt Exp $ */
+/* $Id: thread.h,v 1.3 2019/12/17 01:46:36 sthen Exp $ */
 
 #ifndef ISC_THREAD_H
 #define ISC_THREAD_H 1
@@ -25,8 +24,19 @@
 
 ISC_LANG_BEGINDECLS
 
+/* Placeholder types (they are not accessed) */
+
+typedef void * isc_thread_t;
+typedef void * isc_threadresult_t;
+typedef void * isc_threadarg_t;
+typedef void * isc_threadfunc_t;
+typedef void * isc_thread_key_t;
+
 void
 isc_thread_setconcurrency(unsigned int level);
+
+void
+isc_thread_setname(isc_thread_t thread, const char *name);
 
 #define isc_thread_self() ((unsigned long)0)
 #define isc_thread_yield() ((void)0)

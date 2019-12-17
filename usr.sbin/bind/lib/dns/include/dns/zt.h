@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2007, 2011, 2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: zt.h,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: zt.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
 
 #ifndef DNS_ZT_H
 #define DNS_ZT_H 1
@@ -208,6 +207,26 @@ dns_zt_loadspending(dns_zt_t *zt);
  *
  * Requires:
  * \li	'zt' to be valid.
+ */
+
+void
+dns_zt_setviewcommit(dns_zt_t *zt);
+/*%<
+ * Commit dns_zone_setview() calls previously made for all zones in this
+ * zone table.
+ *
+ * Requires:
+ *\li	'view' to be valid.
+ */
+
+void
+dns_zt_setviewrevert(dns_zt_t *zt);
+/*%<
+ * Revert dns_zone_setview() calls previously made for all zones in this
+ * zone table.
+ *
+ * Requires:
+ *\li	'view' to be valid.
  */
 
 ISC_LANG_ENDDECLS

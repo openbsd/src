@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2007, 2009-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.h,v 1.7 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: name.h,v 1.8 2019/12/17 01:46:32 sthen Exp $ */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -346,7 +345,11 @@ unsigned int
 dns_name_hashbylabel(dns_name_t *name, isc_boolean_t case_sensitive);
 /*%<
  * Provide a hash value for 'name', where the hash value is the sum
- * of the hash values of each label.
+ * of the hash values of each label.  This function should only be used
+ * when incremental hashing is necessary, for example, during RBT
+ * traversal. It is not currently used in BIND. Generally,
+ * dns_name_fullhash() is the correct function to use for name
+ * hashing.
  *
  * Note: if 'case_sensitive' is ISC_FALSE, then names which differ only in
  * case will have the same hash value.
@@ -800,8 +803,6 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
  *\li	#DNS_R_EMPTYLABEL
  *\li	#DNS_R_LABELTOOLONG
  *\li	#DNS_R_BADESCAPE
- *\li	(#DNS_R_BADBITSTRING: should not be returned)
- *\li	(#DNS_R_BITSTRINGTOOLONG: should not be returned)
  *\li	#DNS_R_BADDOTTEDQUAD
  *\li	#ISC_R_NOSPACE
  *\li	#ISC_R_UNEXPECTEDEND
@@ -1301,6 +1302,12 @@ isc_boolean_t
 dns_name_isula(const dns_name_t *owner);
 /*%<
  * Determine if the 'name' is in the ULA reverse namespace.
+ */
+
+isc_boolean_t
+dns_name_istat(const dns_name_t *name);
+/*
+ * Determine if 'name' is a potential 'trust-anchor-telementry' name.
  */
 
 ISC_LANG_ENDDECLS

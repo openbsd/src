@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ttl.c,v 1.7 2019/12/16 16:16:24 deraadt Exp $ */
+/* $Id: ttl.c,v 1.8 2019/12/17 01:46:32 sthen Exp $ */
 
 /*! \file */
 
@@ -161,8 +160,8 @@ bind_ttl(isc_textregion_t *source, isc_uint32_t *ttl) {
 	 */
 	if (source->length > sizeof(buf) - 1)
 		return (DNS_R_SYNTAX);
-	strncpy(buf, source->base, source->length);
-	buf[source->length] = '\0';
+	/* Copy source->length bytes and NUL terminate. */
+	snprintf(buf, sizeof(buf), "%.*s", (int)source->length, source->base);
 	s = buf;
 
 	do {

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -207,6 +206,7 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	view->requestnsid = ISC_FALSE;
 	view->requestsit = ISC_TRUE;
 	view->trust_anchor_telemetry = ISC_TRUE;
+	view->root_key_sentinel = ISC_TRUE;
 	view->new_zone_file = NULL;
 	view->new_zone_config = NULL;
 	view->cfg_destroy = NULL;
@@ -281,6 +281,7 @@ static inline void
 destroy(dns_view_t *view) {
 	dns_dns64_t *dns64;
 	dns_dlzdb_t *dlzdb;
+	isc_result_t result;
 
 	REQUIRE(!ISC_LINK_LINKED(view, link));
 	REQUIRE(isc_refcount_current(&view->references) == 0);
@@ -295,7 +296,6 @@ destroy(dns_view_t *view) {
 		dns_peerlist_detach(&view->peers);
 
 	if (view->dynamickeys != NULL) {
-		isc_result_t result;
 		char template[20];
 		char keyfile[20];
 		FILE *fp = NULL;
@@ -453,7 +453,8 @@ destroy(dns_view_t *view) {
 		dns_zone_detach(&view->managed_keys);
 	if (view->redirect != NULL)
 		dns_zone_detach(&view->redirect);
-	dns_view_setnewzones(view, ISC_FALSE, NULL, NULL);
+	result = dns_view_setnewzones(view, ISC_FALSE, NULL, NULL);
+	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	dns_fwdtable_destroy(&view->fwdtable);
 	dns_aclenv_destroy(&view->aclenv);
 	DESTROYLOCK(&view->lock);
@@ -1402,7 +1403,7 @@ dns_viewlist_findzone(dns_viewlist_t *list, dns_name_t *name,
 	dns_view_t *view;
 	isc_result_t result;
 	dns_zone_t *zone1 = NULL, *zone2 = NULL;
-	dns_zone_t **zp = NULL;;
+	dns_zone_t **zp = NULL;
 
 	REQUIRE(list != NULL);
 	REQUIRE(zonep != NULL && *zonep == NULL);
@@ -1600,7 +1601,7 @@ dns_view_flushnode(dns_view_t *view, dns_name_t *name, isc_boolean_t tree) {
 isc_result_t
 dns_view_adddelegationonly(dns_view_t *view, dns_name_t *name) {
 	isc_result_t result;
-	dns_name_t *new;
+	dns_name_t *item;
 	isc_uint32_t hash;
 
 	REQUIRE(DNS_VIEW_VALID(view));
@@ -1615,27 +1616,27 @@ dns_view_adddelegationonly(dns_view_t *view, dns_name_t *name) {
 			ISC_LIST_INIT(view->delonly[hash]);
 	}
 	hash = dns_name_hash(name, ISC_FALSE) % DNS_VIEW_DELONLYHASH;
-	new = ISC_LIST_HEAD(view->delonly[hash]);
-	while (new != NULL && !dns_name_equal(new, name))
-		new = ISC_LIST_NEXT(new, link);
-	if (new != NULL)
+	item = ISC_LIST_HEAD(view->delonly[hash]);
+	while (item != NULL && !dns_name_equal(item, name))
+		item = ISC_LIST_NEXT(item, link);
+	if (item != NULL)
 		return (ISC_R_SUCCESS);
-	new = isc_mem_get(view->mctx, sizeof(*new));
-	if (new == NULL)
+	item = isc_mem_get(view->mctx, sizeof(*item));
+	if (item == NULL)
 		return (ISC_R_NOMEMORY);
-	dns_name_init(new, NULL);
-	result = dns_name_dup(name, view->mctx, new);
+	dns_name_init(item, NULL);
+	result = dns_name_dup(name, view->mctx, item);
 	if (result == ISC_R_SUCCESS)
-		ISC_LIST_APPEND(view->delonly[hash], new, link);
+		ISC_LIST_APPEND(view->delonly[hash], item, link);
 	else
-		isc_mem_put(view->mctx, new, sizeof(*new));
+		isc_mem_put(view->mctx, item, sizeof(*item));
 	return (result);
 }
 
 isc_result_t
 dns_view_excludedelegationonly(dns_view_t *view, dns_name_t *name) {
 	isc_result_t result;
-	dns_name_t *new;
+	dns_name_t *item;
 	isc_uint32_t hash;
 
 	REQUIRE(DNS_VIEW_VALID(view));
@@ -1650,26 +1651,26 @@ dns_view_excludedelegationonly(dns_view_t *view, dns_name_t *name) {
 			ISC_LIST_INIT(view->rootexclude[hash]);
 	}
 	hash = dns_name_hash(name, ISC_FALSE) % DNS_VIEW_DELONLYHASH;
-	new = ISC_LIST_HEAD(view->rootexclude[hash]);
-	while (new != NULL && !dns_name_equal(new, name))
-		new = ISC_LIST_NEXT(new, link);
-	if (new != NULL)
+	item = ISC_LIST_HEAD(view->rootexclude[hash]);
+	while (item != NULL && !dns_name_equal(item, name))
+		item = ISC_LIST_NEXT(item, link);
+	if (item != NULL)
 		return (ISC_R_SUCCESS);
-	new = isc_mem_get(view->mctx, sizeof(*new));
-	if (new == NULL)
+	item = isc_mem_get(view->mctx, sizeof(*item));
+	if (item == NULL)
 		return (ISC_R_NOMEMORY);
-	dns_name_init(new, NULL);
-	result = dns_name_dup(name, view->mctx, new);
+	dns_name_init(item, NULL);
+	result = dns_name_dup(name, view->mctx, item);
 	if (result == ISC_R_SUCCESS)
-		ISC_LIST_APPEND(view->rootexclude[hash], new, link);
+		ISC_LIST_APPEND(view->rootexclude[hash], item, link);
 	else
-		isc_mem_put(view->mctx, new, sizeof(*new));
+		isc_mem_put(view->mctx, item, sizeof(*item));
 	return (result);
 }
 
 isc_boolean_t
 dns_view_isdelegationonly(dns_view_t *view, dns_name_t *name) {
-	dns_name_t *new;
+	dns_name_t *item;
 	isc_uint32_t hash;
 
 	REQUIRE(DNS_VIEW_VALID(view));
@@ -1681,20 +1682,20 @@ dns_view_isdelegationonly(dns_view_t *view, dns_name_t *name) {
 	if (view->rootdelonly && dns_name_countlabels(name) <= 2) {
 		if (view->rootexclude == NULL)
 			return (ISC_TRUE);
-		new = ISC_LIST_HEAD(view->rootexclude[hash]);
-		while (new != NULL && !dns_name_equal(new, name))
-			new = ISC_LIST_NEXT(new, link);
-		if (new == NULL)
+		item = ISC_LIST_HEAD(view->rootexclude[hash]);
+		while (item != NULL && !dns_name_equal(item, name))
+			item = ISC_LIST_NEXT(item, link);
+		if (item == NULL)
 			return (ISC_TRUE);
 	}
 
 	if (view->delonly == NULL)
 		return (ISC_FALSE);
 
-	new = ISC_LIST_HEAD(view->delonly[hash]);
-	while (new != NULL && !dns_name_equal(new, name))
-		new = ISC_LIST_NEXT(new, link);
-	if (new == NULL)
+	item = ISC_LIST_HEAD(view->delonly[hash]);
+	while (item != NULL && !dns_name_equal(item, name))
+		item = ISC_LIST_NEXT(item, link);
+	if (item == NULL)
 		return (ISC_FALSE);
 	return (ISC_TRUE);
 }
@@ -1853,7 +1854,7 @@ dns_view_untrust(dns_view_t *view, dns_name_t *keyname,
 
 #define NZF ".nzf"
 
-void
+isc_result_t
 dns_view_setnewzones(dns_view_t *view, isc_boolean_t allow, void *cfgctx,
 		     void (*cfg_destroy)(void **))
 {
@@ -1876,9 +1877,12 @@ dns_view_setnewzones(dns_view_t *view, isc_boolean_t allow, void *cfgctx,
 		/* Truncate the hash at 16 chars; full length is overkill */
 		isc_string_printf(buffer + 16, sizeof(NZF), "%s", NZF);
 		view->new_zone_file = isc_mem_strdup(view->mctx, buffer);
+		if (view->new_zone_file == NULL)
+			return (ISC_R_NOMEMORY);
 		view->new_zone_config = cfgctx;
 		view->cfg_destroy = cfg_destroy;
 	}
+	return (ISC_R_SUCCESS);
 }
 
 isc_result_t
@@ -1967,4 +1971,48 @@ dns_view_searchdlz(dns_view_t *view, dns_name_t *name, unsigned int minlabels,
 	}
 
 	return (ISC_R_NOTFOUND);
+}
+
+void
+dns_view_setviewcommit(dns_view_t *view) {
+	REQUIRE(DNS_VIEW_VALID(view));
+
+	LOCK(&view->lock);
+
+	if (view->redirect != NULL) {
+		dns_zone_setviewcommit(view->redirect);
+	}
+	if (view->managed_keys != NULL) {
+		dns_zone_setviewcommit(view->managed_keys);
+	}
+	if (view->zonetable != NULL) {
+		dns_zt_setviewcommit(view->zonetable);
+	}
+
+	UNLOCK(&view->lock);
+}
+
+void
+dns_view_setviewrevert(dns_view_t *view) {
+	dns_zt_t *zonetable;
+
+	REQUIRE(DNS_VIEW_VALID(view));
+
+	/*
+	 * dns_zt_setviewrevert() attempts to lock this view, so we must
+	 * release the lock.
+	 */
+	LOCK(&view->lock);
+	if (view->redirect != NULL) {
+		dns_zone_setviewrevert(view->redirect);
+	}
+	if (view->managed_keys != NULL) {
+		dns_zone_setviewrevert(view->managed_keys);
+	}
+	zonetable = view->zonetable;
+	UNLOCK(&view->lock);
+
+	if (zonetable != NULL) {
+		dns_zt_setviewrevert(zonetable);
+	}
 }

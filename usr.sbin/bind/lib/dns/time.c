@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2009-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.c,v 1.6 2019/12/16 16:16:24 deraadt Exp $ */
+/* $Id: time.c,v 1.7 2019/12/17 01:46:32 sthen Exp $ */
 
 /*! \file */
 
@@ -40,7 +39,7 @@ static const int days[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 isc_result_t
 dns_time64_totext(isc_int64_t t, isc_buffer_t *target) {
 	struct tm tm;
-	char buf[sizeof("YYYYMMDDHHMMSS")];
+	char buf[sizeof("!!!!!!YYYY!!!!!!!!MM!!!!!!!!DD!!!!!!!!HH!!!!!!!!MM!!!!!!!!SS")];
 	int secs;
 	unsigned int l;
 	isc_region_t region;

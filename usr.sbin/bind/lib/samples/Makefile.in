@@ -1,4 +1,4 @@
-# Copyright (C) 2009, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -22,8 +22,8 @@ VERSION=@BIND9_VERSION@
 
 CINCLUDES =	-I${srcdir}/include -I../dns/include \
 		${DNS_INCLUDES} ${ISC_INCLUDES} \
-		@ISC_OPENSSL_INC@ -I${top_srcdir}/lib/irs/include \
-		-I../../lib/irs/include
+		-I${top_srcdir}/lib/irs/include \
+		-I../../lib/irs/include @ISC_OPENSSL_INC@
 
 CDEFINES =	@CRYPTO@ -DVERSION=\"${VERSION}\" \
 		-DSYSCONFDIR=\"${sysconfdir}\"

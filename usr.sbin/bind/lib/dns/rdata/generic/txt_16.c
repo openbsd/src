@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2007-2009, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2002  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -281,7 +280,7 @@ checknames_txt(ARGS_CHECKNAMES) {
 	return (ISC_TRUE);
 }
 
-static inline isc_result_t
+static inline int
 casecompare_txt(ARGS_COMPARE) {
 	return (compare_txt(rdata1, rdata2));
 }

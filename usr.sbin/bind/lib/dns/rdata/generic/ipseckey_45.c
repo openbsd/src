@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005, 2007, 2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ipseckey_45.c,v 1.3 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: ipseckey_45.c,v 1.4 2019/12/17 01:46:33 sthen Exp $ */
 
 #ifndef RDATA_GENERIC_IPSECKEY_45_C
 #define RDATA_GENERIC_IPSECKEY_45_C
@@ -142,7 +142,7 @@ totext_ipseckey(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 	num = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
-	sprintf(buf, "%u ", num);
+	snprintf(buf, sizeof(buf), "%u ", num);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -150,7 +150,7 @@ totext_ipseckey(ARGS_TOTEXT) {
 	 */
 	gateway = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
-	sprintf(buf, "%u ", gateway);
+	snprintf(buf, sizeof(buf), "%u ", gateway);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -158,7 +158,7 @@ totext_ipseckey(ARGS_TOTEXT) {
 	 */
 	num = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
-	sprintf(buf, "%u ", num);
+	snprintf(buf, sizeof(buf), "%u ", num);
 	RETERR(str_totext(buf, target));
 
 	/*

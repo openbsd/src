@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2008, 2011-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: xfrin.c,v 1.11 2019/12/16 16:16:24 deraadt Exp $ */
+/* $Id: xfrin.c,v 1.12 2019/12/17 01:46:32 sthen Exp $ */
 
 /*! \file */
 
@@ -621,6 +620,7 @@ xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, isc_uint32_t ttl,
 	case XFRST_IXFR_END:
 		FAIL(DNS_R_EXTRADATA);
 		/* NOTREACHED */
+		/* FALLTHROUGH */
 	default:
 		INSIST(0);
 		break;
@@ -1022,8 +1022,9 @@ xfrin_connect_done(isc_task_t *task, isc_event_t *event) {
 	result = isc_socket_getsockname(xfr->socket, &sockaddr);
 	if (result == ISC_R_SUCCESS) {
 		isc_sockaddr_format(&sockaddr, sourcetext, sizeof(sourcetext));
-	} else
-		strcpy(sourcetext, "<UNKNOWN>");
+	} else {
+		strlcpy(sourcetext, "<UNKNOWN>", sizeof(sourcetext));
+	}
 	xfrin_log(xfr, ISC_LOG_INFO, "connected using %s", sourcetext);
 
 	dns_tcpmsg_init(xfr->mctx, xfr->socket, &xfr->tcpmsg);

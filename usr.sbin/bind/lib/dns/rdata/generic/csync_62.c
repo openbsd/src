@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -64,16 +64,22 @@ totext_csync(ARGS_TOTEXT) {
 
 	num = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
-	sprintf(buf, "%lu", num);
+	snprintf(buf, sizeof(buf), "%lu", num);
 	RETERR(str_totext(buf, target));
 
 	RETERR(str_totext(" ", target));
 
 	num = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
-	sprintf(buf, "%lu", num);
+	snprintf(buf, sizeof(buf), "%lu", num);
 	RETERR(str_totext(buf, target));
 
+	/*
+	 * Don't leave a trailing space when there's no typemap present.
+	 */
+	if (sr.length > 0) {
+		RETERR(str_totext(" ", target));
+	}
 	return (typemap_totext(&sr, NULL, target));
 }
 

@@ -1,46 +1,29 @@
+#ifndef BIND_KEYS_H
+#define BIND_KEYS_H 1
 #define TRUSTED_KEYS "\
 # The bind.keys file is used to override the built-in DNSSEC trust anchors\n\
-# which are included as part of BIND 9.  As of the current release, the only\n\
-# trust anchors it contains are those for the DNS root zone (\".\"), and for\n\
-# the ISC DNSSEC Lookaside Validation zone (\"dlv.isc.org\").  Trust anchors\n\
-# for any other zones MUST be configured elsewhere; if they are configured\n\
-# here, they will not be recognized or used by named.\n\
+# which are included as part of BIND 9.  The only trust anchors it contains\n\
+# are for the DNS root zone (\".\").  Trust anchors for any other zones MUST\n\
+# be configured elsewhere; if they are configured here, they will not be\n\
+# recognized or used by named.\n\
 #\n\
 # The built-in trust anchors are provided for convenience of configuration.\n\
 # They are not activated within named.conf unless specifically switched on.\n\
-# To use the built-in root key, set \"dnssec-validation auto;\" in\n\
-# named.conf options.  To use the built-in DLV key, set\n\
-# \"dnssec-lookaside auto;\".  Without these options being set,\n\
-# the keys in this file are ignored.\n\
+# To use the built-in key, use \"dnssec-validation auto;\" in the\n\
+# named.conf options.  Without this option being set, the keys in this\n\
+# file are ignored.\n\
 #\n\
 # This file is NOT expected to be user-configured.\n\
 #\n\
-# These keys are current as of Feburary 2017.  If any key fails to\n\
+# These keys are current as of October 2017.  If any key fails to\n\
 # initialize correctly, it may have expired.  In that event you should\n\
 # replace this file with a current version.  The latest version of\n\
 # bind.keys can always be obtained from ISC at https://www.isc.org/bind-keys.\n\
+#\n\
+# See https://data.iana.org/root-anchors/root-anchors.xml\n\
+# for current trust anchor information for the root zone.\n\
 \n\
 trusted-keys {\n\
-        # ISC DLV: See https://www.isc.org/solutions/dlv for details.\n\
-        #\n\
-        # NOTE: The ISC DLV zone is being phased out as of February 2017;\n\
-        # the key will remain in place but the zone will be otherwise empty.\n\
-        # Configuring \"dnssec-lookaside auto;\" to activate this key is\n\
-        # harmless, but is no longer useful and is not recommended.\n\
-        dlv.isc.org. 257 3 5 \"BEAAAAPHMu/5onzrEE7z1egmhg/WPO0+juoZrW3euWEn4MxDCE1+lLy2\n\
-                brhQv5rN32RKtMzX6Mj70jdzeND4XknW58dnJNPCxn8+jAGl2FZLK8t+\n\
-                1uq4W+nnA3qO2+DL+k6BD4mewMLbIYFwe0PG73Te9fZ2kJb56dhgMde5\n\
-                ymX4BI/oQ+cAK50/xvJv00Frf8kw6ucMTwFlgPe+jnGxPPEmHAte/URk\n\
-                Y62ZfkLoBAADLHQ9IrS2tryAe7mbBZVcOwIeU/Rw/mRx/vwwMCTgNboM\n\
-                QKtUdvNXDrYJDSHZws3xiRXF1Rf+al9UmZfSav/4NWLKjHzpT59k/VSt\n\
-                TDN0YUuWrBNh\";\n\
-\n\
-        # ROOT KEYS: See https://data.iana.org/root-anchors/root-anchors.xml\n\
-        # for current trust anchor information.\n\
-        #\n\
-        # These keys are activated by setting \"dnssec-validation auto;\"\n\
-        # in named.conf.\n\
-        #\n\
         # This key (19036) is to be phased out starting in 2017. It will\n\
         # remain in the root zone for some time after its successor key\n\
         # has been added. It will remain this file until it is removed from\n\
@@ -53,7 +36,7 @@ trusted-keys {\n\
                 Qageu+ipAdTTJ25AsRTAoub8ONGcLmqrAmRLKBP1dfwhYB4N7knNnulq\n\
                 QxA+Uk1ihz0=\";\n\
 \n\
-        # This key (20326) is to be published in the root zone in 2017.\n\
+        # This key (20326) was published in the root zone in 2017.\n\
         # Servers which were already using the old key (19036) should\n\
         # roll seamlessly to this new one via RFC 5011 rollover. Servers\n\
         # being set up for the first time can use the contents of this\n\
@@ -72,47 +55,28 @@ trusted-keys {\n\
 
 #define MANAGED_KEYS "\
 # The bind.keys file is used to override the built-in DNSSEC trust anchors\n\
-# which are included as part of BIND 9.  As of the current release, the only\n\
-# trust anchors it contains are those for the DNS root zone (\".\"), and for\n\
-# the ISC DNSSEC Lookaside Validation zone (\"dlv.isc.org\").  Trust anchors\n\
-# for any other zones MUST be configured elsewhere; if they are configured\n\
-# here, they will not be recognized or used by named.\n\
+# which are included as part of BIND 9.  The only trust anchors it contains\n\
+# are for the DNS root zone (\".\").  Trust anchors for any other zones MUST\n\
+# be configured elsewhere; if they are configured here, they will not be\n\
+# recognized or used by named.\n\
 #\n\
 # The built-in trust anchors are provided for convenience of configuration.\n\
 # They are not activated within named.conf unless specifically switched on.\n\
-# To use the built-in root key, set \"dnssec-validation auto;\" in\n\
-# named.conf options.  To use the built-in DLV key, set\n\
-# \"dnssec-lookaside auto;\".  Without these options being set,\n\
-# the keys in this file are ignored.\n\
+# To use the built-in key, use \"dnssec-validation auto;\" in the\n\
+# named.conf options.  Without this option being set, the keys in this\n\
+# file are ignored.\n\
 #\n\
 # This file is NOT expected to be user-configured.\n\
 #\n\
-# These keys are current as of Feburary 2017.  If any key fails to\n\
+# These keys are current as of October 2017.  If any key fails to\n\
 # initialize correctly, it may have expired.  In that event you should\n\
 # replace this file with a current version.  The latest version of\n\
 # bind.keys can always be obtained from ISC at https://www.isc.org/bind-keys.\n\
+#\n\
+# See https://data.iana.org/root-anchors/root-anchors.xml\n\
+# for current trust anchor information for the root zone.\n\
 \n\
 managed-keys {\n\
-        # ISC DLV: See https://www.isc.org/solutions/dlv for details.\n\
-        #\n\
-        # NOTE: The ISC DLV zone is being phased out as of February 2017;\n\
-        # the key will remain in place but the zone will be otherwise empty.\n\
-        # Configuring \"dnssec-lookaside auto;\" to activate this key is\n\
-        # harmless, but is no longer useful and is not recommended.\n\
-        dlv.isc.org. initial-key 257 3 5 \"BEAAAAPHMu/5onzrEE7z1egmhg/WPO0+juoZrW3euWEn4MxDCE1+lLy2\n\
-                brhQv5rN32RKtMzX6Mj70jdzeND4XknW58dnJNPCxn8+jAGl2FZLK8t+\n\
-                1uq4W+nnA3qO2+DL+k6BD4mewMLbIYFwe0PG73Te9fZ2kJb56dhgMde5\n\
-                ymX4BI/oQ+cAK50/xvJv00Frf8kw6ucMTwFlgPe+jnGxPPEmHAte/URk\n\
-                Y62ZfkLoBAADLHQ9IrS2tryAe7mbBZVcOwIeU/Rw/mRx/vwwMCTgNboM\n\
-                QKtUdvNXDrYJDSHZws3xiRXF1Rf+al9UmZfSav/4NWLKjHzpT59k/VSt\n\
-                TDN0YUuWrBNh\";\n\
-\n\
-        # ROOT KEYS: See https://data.iana.org/root-anchors/root-anchors.xml\n\
-        # for current trust anchor information.\n\
-        #\n\
-        # These keys are activated by setting \"dnssec-validation auto;\"\n\
-        # in named.conf.\n\
-        #\n\
         # This key (19036) is to be phased out starting in 2017. It will\n\
         # remain in the root zone for some time after its successor key\n\
         # has been added. It will remain this file until it is removed from\n\
@@ -125,7 +89,7 @@ managed-keys {\n\
                 Qageu+ipAdTTJ25AsRTAoub8ONGcLmqrAmRLKBP1dfwhYB4N7knNnulq\n\
                 QxA+Uk1ihz0=\";\n\
 \n\
-        # This key (20326) is to be published in the root zone in 2017.\n\
+        # This key (20326) was published in the root zone in 2017.\n\
         # Servers which were already using the old key (19036) should\n\
         # roll seamlessly to this new one via RFC 5011 rollover. Servers\n\
         # being set up for the first time can use the contents of this\n\
@@ -141,3 +105,4 @@ managed-keys {\n\
                 R1AkUTV74bU=\";\n\
 };\n\
 "
+#endif /* BIND_KEYS_H */

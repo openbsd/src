@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2009, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ifiter_ioctl.c,v 1.9 2019/12/16 16:16:27 deraadt Exp $ */
+/* $Id: ifiter_ioctl.c,v 1.10 2019/12/17 01:46:37 sthen Exp $ */
 
 #include <isc/print.h>
 
@@ -411,7 +410,8 @@ internal_current_clusteralias(isc_interfaceiter_t *iter) {
 	memset(&iter->current, 0, sizeof(iter->current));
 	iter->current.af = iter->clua_sa.sa_family;
 	memset(iter->current.name, 0, sizeof(iter->current.name));
-	sprintf(iter->current.name, "clua%d", ci.aliasid);
+	snprintf(iter->current.name, sizeof(iter->current.name),
+		 "clua%d", ci.aliasid);
 	iter->current.flags = INTERFACE_F_UP;
 	get_inaddr(&iter->current.address, &ci.addr);
 	get_inaddr(&iter->current.netmask, &ci.netmask);
@@ -563,7 +563,8 @@ internal_current4(isc_interfaceiter_t *iter) {
 			bits = 8 - prefixlen;
 			prefixlen = 0;
 		}
-		iter->current.netmask.type.in6.s6_addr[i] = (~0 << bits) & 0xff;
+		iter->current.netmask.type.in6.s6_addr[i] =
+			(~0U << bits) & 0xff;
 	}
 	return (ISC_R_SUCCESS);
 
@@ -757,7 +758,7 @@ internal_current6(isc_interfaceiter_t *iter) {
 			bits = lifreq.lifr_addrlen - i;
 			bits = (bits < 8) ? (8 - bits) : 0;
 			iter->current.netmask.type.in6.s6_addr[i / 8] =
-				(~0 << bits) & 0xff;
+				(~0U << bits) & 0xff;
 		}
 
 		return (ISC_R_SUCCESS);

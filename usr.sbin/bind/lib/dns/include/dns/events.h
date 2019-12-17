@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2007, 2009-2011, 2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: events.h,v 1.5 2019/12/16 16:16:24 deraadt Exp $ */
+/* $Id: events.h,v 1.6 2019/12/17 01:46:32 sthen Exp $ */
 
 #ifndef DNS_EVENTS_H
 #define DNS_EVENTS_H 1
@@ -80,6 +79,7 @@
 #define DNS_EVENT_KEYDONE			(ISC_EVENTCLASS_DNS + 50)
 #define DNS_EVENT_SETNSEC3PARAM			(ISC_EVENTCLASS_DNS + 51)
 #define DNS_EVENT_SETSERIAL			(ISC_EVENTCLASS_DNS + 52)
+#define DNS_EVENT_STARTUPDATE			(ISC_EVENTCLASS_DNS + 58)
 
 #define DNS_EVENT_FIRSTEVENT			(ISC_EVENTCLASS_DNS + 0)
 #define DNS_EVENT_LASTEVENT			(ISC_EVENTCLASS_DNS + 65535)

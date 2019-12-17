@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006, 2007, 2009, 2011, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dhcid_49.c,v 1.1 2019/12/16 16:31:34 deraadt Exp $ */
+/* $Id: dhcid_49.c,v 1.2 2019/12/17 01:46:34 sthen Exp $ */
 
 /* RFC 4701 */
 
@@ -40,7 +40,7 @@ fromtext_in_dhcid(ARGS_FROMTEXT) {
 
 static inline isc_result_t
 totext_in_dhcid(ARGS_TOTEXT) {
-	isc_region_t sr;
+	isc_region_t sr, sr2;
 	char buf[sizeof(" ; 64000 255 64000")];
 	size_t n;
 
@@ -49,6 +49,7 @@ totext_in_dhcid(ARGS_TOTEXT) {
 	REQUIRE(rdata->length != 0);
 
 	dns_rdata_toregion(rdata, &sr);
+	sr2 = sr;
 
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext("( " /*)*/, target));
@@ -61,8 +62,8 @@ totext_in_dhcid(ARGS_TOTEXT) {
 		RETERR(str_totext(/* ( */ " )", target));
 		if (rdata->length > 2) {
 			n = snprintf(buf, sizeof(buf), " ; %u %u %u",
-				     sr.base[0] * 256 + sr.base[1],
-				     sr.base[2], rdata->length - 3);
+				     sr2.base[0] * 256U + sr2.base[1],
+				     sr2.base[2], rdata->length - 3U);
 			INSIST(n < sizeof(buf));
 			RETERR(str_totext(buf, target));
 		}

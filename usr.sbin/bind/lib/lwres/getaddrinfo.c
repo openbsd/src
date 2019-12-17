@@ -1,6 +1,8 @@
 /*
- * Copyright (C) 2004-2008, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  *
  * This code is derived from software contributed to ISC by
  * Berkeley Software Design, Inc.
@@ -18,7 +20,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: getaddrinfo.c,v 1.7 2019/12/16 16:16:28 deraadt Exp $ */
+/* $Id: getaddrinfo.c,v 1.8 2019/12/17 01:46:38 sthen Exp $ */
 
 /*! \file */
 

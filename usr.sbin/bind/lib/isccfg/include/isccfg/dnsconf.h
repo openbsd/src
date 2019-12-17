@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,10 +14,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dnsconf.h,v 1.1 2019/12/16 16:31:36 deraadt Exp $ */
+/* $Id: dnsconf.h,v 1.2 2019/12/17 01:46:38 sthen Exp $ */
 
-#ifndef ISCCFG_NAMEDCONF_H
-#define ISCCFG_NAMEDCONF_H 1
+#ifndef ISCCFG_DNSCONF_H
+#define ISCCFG_DNSCONF_H 1
 
 /*! \file
  * \brief
@@ -32,4 +32,4 @@
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_dnsconf;
 /*%< A complete dns.conf file. */
 
-#endif /* ISCCFG_CFG_H */
+#endif /* ISCCFG_DNSCONF_H */

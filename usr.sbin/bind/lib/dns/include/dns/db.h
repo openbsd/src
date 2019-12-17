@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: db.h,v 1.5 2019/12/16 16:16:24 deraadt Exp $ */
+/* $Id: db.h,v 1.6 2019/12/17 01:46:32 sthen Exp $ */
 
 #ifndef DNS_DB_H
 #define DNS_DB_H 1
@@ -841,14 +840,6 @@ dns_db_findext(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
  *
  *	\li	#ISC_R_SUCCESS			The desired node and type were
  *						found.
- *
- *	\li	#DNS_R_WILDCARD			The desired node and type were
- *						found after performing
- *						wildcard matching.  This is
- *						only returned if the
- *						#DNS_DBFIND_INDICATEWILD
- *						option is set; otherwise
- *						#ISC_R_SUCCESS is returned.
  *
  *	\li	#DNS_R_GLUE			The desired node and type were
  *						found, but are glue.  This

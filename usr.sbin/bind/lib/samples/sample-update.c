@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sample-update.c,v 1.1 2019/12/16 16:31:37 deraadt Exp $ */
+/* $Id: sample-update.c,v 1.2 2019/12/17 01:46:39 sthen Exp $ */
 
 #include <config.h>
 
@@ -81,6 +81,7 @@ usage(void) ISC_PLATFORM_NORETURN_POST;
 static void
 usage(void) {
 	fprintf(stderr, "sample-update "
+		"-s "
 		"[-a auth_server] "
 		"[-k keyfile] "
 		"[-p prerequisite] "
@@ -89,6 +90,31 @@ usage(void) {
 		"(add|delete) \"name TTL RRtype RDATA\"\n");
 	exit(1);
 }
+
+#ifdef _WIN32
+static void
+InitSockets(void) {
+	WORD wVersionRequested;
+	WSADATA wsaData;
+	int err;
+
+	wVersionRequested = MAKEWORD(2, 0);
+
+	err = WSAStartup(wVersionRequested, &wsaData);
+	if (err != 0) {
+		fprintf(stderr, "WSAStartup() failed: %d\n", err);
+		exit(1);
+	}
+}
+
+static void
+DestroySockets(void) {
+	WSACleanup();
+}
+#else
+#define InitSockets() ((void)0)
+#define DestroySockets() ((void)0)
+#endif
 
 static isc_boolean_t
 addserver(const char *server, isc_sockaddrlist_t *list,
@@ -107,10 +133,12 @@ addserver(const char *server, isc_sockaddrlist_t *list,
 #ifdef AI_NUMERICSERV
 	hints.ai_flags |= AI_NUMERICSERV;
 #endif
+	InitSockets();
 	gaierror = getaddrinfo(server, port, &hints, &res);
 	if (gaierror != 0) {
 		fprintf(stderr, "getaddrinfo(%s) failed: %s\n",
 			server, gai_strerror(gaierror));
+		DestroySockets();
 		return (ISC_FALSE);
 	}
 	INSIST(res->ai_addrlen <= sizeof(sockaddr->type));
@@ -119,6 +147,7 @@ addserver(const char *server, isc_sockaddrlist_t *list,
 	ISC_LINK_INIT(sockaddr, link);
 	ISC_LIST_APPEND(*list, sockaddr, link);
 	freeaddrinfo(res);
+	DestroySockets();
 	return (ISC_TRUE);
 }
 
@@ -132,7 +161,7 @@ main(int argc, char *argv[]) {
 	isc_sockaddr_t sa_auth[10], sa_recursive[10];
 	unsigned int nsa_auth = 0, nsa_recursive = 0;
 	isc_sockaddrlist_t rec_servers;
-	isc_sockaddrlist_t auth_servers;
+	isc_sockaddrlist_t auth_servers, *auth_serversp = &auth_servers;
 	isc_result_t result;
 	isc_boolean_t isdelete;
 	isc_buffer_t b, *buf;
@@ -144,11 +173,14 @@ main(int argc, char *argv[]) {
 	dns_rdata_t *rdata;
 	dns_namelist_t updatelist, prereqlist, *prereqlistp = NULL;
 	isc_mem_t *umctx = NULL;
+	isc_boolean_t sendtwice = ISC_FALSE;
 
 	ISC_LIST_INIT(auth_servers);
 	ISC_LIST_INIT(rec_servers);
 
-	while ((ch = isc_commandline_parse(argc, argv, "a:k:p:P:r:z:")) != EOF) {
+	while ((ch = isc_commandline_parse(argc, argv,
+					   "a:k:p:P:r:sz:")) != EOF)
+	{
 		switch (ch) {
 		case 'k':
 			keyfilename = isc_commandline_argument;
@@ -171,6 +203,9 @@ main(int argc, char *argv[]) {
 			    addserver(isc_commandline_argument, &rec_servers,
 				      &sa_recursive[nsa_recursive]))
 				nsa_recursive++;
+			break;
+		case 's':
+			sendtwice = ISC_TRUE;
 			break;
 		case 'z':
 			zonenamestr = isc_commandline_argument;
@@ -209,7 +244,7 @@ main(int argc, char *argv[]) {
 	isc_lib_register();
 	result = dns_lib_init();
 	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "dns_lib_init failed: %d\n", result);
+		fprintf(stderr, "dns_lib_init failed: %u\n", result);
 		exit(1);
 	}
 	result = isc_mem_create(0, 0, &umctx);
@@ -220,7 +255,7 @@ main(int argc, char *argv[]) {
 
 	result = dns_client_create(&client, 0);
 	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "dns_client_create failed: %d\n", result);
+		fprintf(stderr, "dns_client_create failed: %u\n", result);
 		exit(1);
 	}
 
@@ -234,7 +269,7 @@ main(int argc, char *argv[]) {
 		zname = dns_fixedname_name(&zname0);
 		result = dns_name_fromtext(zname, &b, dns_rootname, 0, NULL);
 		if (result != ISC_R_SUCCESS)
-			fprintf(stderr, "failed to convert zone name: %d\n",
+			fprintf(stderr, "failed to convert zone name: %u\n",
 				result);
 	}
 
@@ -258,17 +293,32 @@ main(int argc, char *argv[]) {
 	if (keyfilename != NULL)
 		setup_tsec(keyfilename, umctx);
 
+	if (ISC_LIST_HEAD(auth_servers) == NULL)
+		auth_serversp = NULL;
+
 	/* Perform update */
 	result = dns_client_update(client,
 				   default_rdataclass, /* XXX: fixed */
 				   zname, prereqlistp, &updatelist,
-				   (ISC_LIST_HEAD(auth_servers) == NULL) ?
-				    NULL : &auth_servers, tsec, 0);
+				   auth_serversp, tsec, 0);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr,
 			"update failed: %s\n", dns_result_totext(result));
 	} else
 		fprintf(stderr, "update succeeded\n");
+
+	if (sendtwice) {
+		/* Perform 2nd update */
+		result = dns_client_update(client,
+					   default_rdataclass, /* XXX: fixed */
+					   zname, prereqlistp, &updatelist,
+					   auth_serversp, tsec, 0);
+		if (result != ISC_R_SUCCESS) {
+			fprintf(stderr, "2nd update failed: %s\n",
+				dns_result_totext(result));
+		} else
+			fprintf(stderr, "2nd update succeeded\n");
+	}
 
 	/* Cleanup */
 	while ((pname = ISC_LIST_HEAD(prereqlist)) != NULL) {

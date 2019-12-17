@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsap_22.c,v 1.5 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: nsap_22.c,v 1.6 2019/12/17 01:46:34 sthen Exp $ */
 
 /* Reviewed: Fri Mar 17 10:41:07 PST 2000 by gson */
 
@@ -89,7 +88,7 @@ totext_in_nsap(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 	RETERR(str_totext("0x", target));
 	while (region.length != 0) {
-		sprintf(buf, "%02x", region.base[0]);
+		snprintf(buf, sizeof(buf), "%02x", region.base[0]);
 		isc_region_consume(&region, 1);
 		RETERR(str_totext(buf, target));
 	}

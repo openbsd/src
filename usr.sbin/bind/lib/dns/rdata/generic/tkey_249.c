@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2007, 2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tkey_249.c,v 1.6 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: tkey_249.c,v 1.7 2019/12/17 01:46:33 sthen Exp $ */
 
 /*
  * Reviewed: Thu Mar 16 17:35:30 PST 2000 by halley.
@@ -154,7 +153,7 @@ totext_tkey(ARGS_TOTEXT) {
 	 */
 	n = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
-	sprintf(buf, "%lu ", n);
+	snprintf(buf, sizeof(buf), "%lu ", n);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -162,7 +161,7 @@ totext_tkey(ARGS_TOTEXT) {
 	 */
 	n = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
-	sprintf(buf, "%lu ", n);
+	snprintf(buf, sizeof(buf), "%lu ", n);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -170,7 +169,7 @@ totext_tkey(ARGS_TOTEXT) {
 	 */
 	n = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
-	sprintf(buf, "%lu ", n);
+	snprintf(buf, sizeof(buf), "%lu ", n);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -181,7 +180,7 @@ totext_tkey(ARGS_TOTEXT) {
 	if (dns_tsigrcode_totext((dns_rcode_t)n, target) == ISC_R_SUCCESS)
 		RETERR(str_totext(" ", target));
 	else {
-		sprintf(buf, "%lu ", n);
+		snprintf(buf, sizeof(buf), "%lu ", n);
 		RETERR(str_totext(buf, target));
 	}
 
@@ -190,7 +189,7 @@ totext_tkey(ARGS_TOTEXT) {
 	 */
 	n = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
-	sprintf(buf, "%lu", n);
+	snprintf(buf, sizeof(buf), "%lu", n);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -218,7 +217,7 @@ totext_tkey(ARGS_TOTEXT) {
 	 */
 	n = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
-	sprintf(buf, "%lu", n);
+	snprintf(buf, sizeof(buf), "%lu", n);
 	RETERR(str_totext(buf, target));
 
 	/*
@@ -561,7 +560,7 @@ checknames_tkey(ARGS_CHECKNAMES) {
 	return (ISC_TRUE);
 }
 
-static inline isc_result_t
+static inline int
 casecompare_tkey(ARGS_COMPARE) {
 	return (compare_tkey(rdata1, rdata2));
 }

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2009, 2011-2013, 2017  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -503,7 +502,7 @@ dns_rdata_fromstruct(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
  */
 
 isc_result_t
-dns_rdata_tostruct(dns_rdata_t *rdata, void *target, isc_mem_t *mctx);
+dns_rdata_tostruct(const dns_rdata_t *rdata, void *target, isc_mem_t *mctx);
 /*%<
  * Convert an rdata into its C structure representation.
  *

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: master.c,v 1.7 2019/12/16 16:16:24 deraadt Exp $ */
+/* $Id: master.c,v 1.8 2019/12/17 01:46:32 sthen Exp $ */
 
 /*! \file */
 
@@ -92,6 +91,16 @@
 #define DNS_MASTER_RHS MINTSIZ
 
 #define CHECKNAMESFAIL(x) (((x) & DNS_MASTER_CHECKNAMESFAIL) != 0)
+
+#ifndef DNS_NAME_INITABSOLUTE
+#define DNS_NAME_INITABSOLUTE(A,B) { \
+	DNS_NAME_MAGIC, \
+	A, sizeof(A), sizeof(B), \
+	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE, \
+	B, NULL, { (void *)-1, (void *)-1}, \
+	{NULL, NULL} \
+}
+#endif
 
 typedef ISC_LIST(dns_rdatalist_t) rdatalist_head_t;
 
@@ -331,39 +340,18 @@ loadctx_destroy(dns_loadctx_t *lctx);
 
 static unsigned char in_addr_arpa_data[]  = "\007IN-ADDR\004ARPA";
 static unsigned char in_addr_arpa_offsets[] = { 0, 8, 13 };
-static const dns_name_t in_addr_arpa =
-{
-	DNS_NAME_MAGIC,
-	in_addr_arpa_data, 14, 3,
-	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
-	in_addr_arpa_offsets, NULL,
-	{(void *)-1, (void *)-1},
-	{NULL, NULL}
-};
+static dns_name_t const in_addr_arpa =
+	DNS_NAME_INITABSOLUTE(in_addr_arpa_data, in_addr_arpa_offsets);
 
 static unsigned char ip6_int_data[]  = "\003IP6\003INT";
 static unsigned char ip6_int_offsets[] = { 0, 4, 8 };
-static const dns_name_t ip6_int =
-{
-	DNS_NAME_MAGIC,
-	ip6_int_data, 9, 3,
-	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
-	ip6_int_offsets, NULL,
-	{(void *)-1, (void *)-1},
-	{NULL, NULL}
-};
+static dns_name_t const ip6_int =
+	DNS_NAME_INITABSOLUTE(ip6_int_data, ip6_int_offsets);
 
 static unsigned char ip6_arpa_data[]  = "\003IP6\004ARPA";
 static unsigned char ip6_arpa_offsets[] = { 0, 4, 9 };
-static const dns_name_t ip6_arpa =
-{
-	DNS_NAME_MAGIC,
-	ip6_arpa_data, 10, 3,
-	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
-	ip6_arpa_offsets, NULL,
-	{(void *)-1, (void *)-1},
-	{NULL, NULL}
-};
+static dns_name_t const ip6_arpa =
+	DNS_NAME_INITABSOLUTE(ip6_arpa_data, ip6_arpa_offsets);
 
 static inline isc_result_t
 gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *token,
@@ -733,7 +721,7 @@ genname(char *name, int it, char *buffer, size_t length) {
 				continue;
 			}
 			nibblemode = ISC_FALSE;
-			strcpy(fmt, "%d");
+			strlcpy(fmt, "%d", sizeof(fmt));
 			/* Get format specifier. */
 			if (*name == '{' ) {
 				n = sscanf(name, "{%d,%u,%1[doxXnN]}",
@@ -860,6 +848,22 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 		(*callbacks->error)(callbacks,
 				   "%s: %s:%lu: unknown RR type '%s'",
 				   "$GENERATE", source, line, gtype);
+		goto insist_cleanup;
+	}
+
+	/*
+	 * RFC2930: TKEY and TSIG are not allowed to be loaded
+	 * from master files.
+	 */
+	if ((lctx->options & DNS_MASTER_ZONE) != 0 &&
+	    (lctx->options & DNS_MASTER_SLAVE) == 0 &&
+	    dns_rdatatype_ismeta(type))
+	{
+		(*callbacks->error)(callbacks,
+				   "%s: %s:%lu: meta RR type '%s'",
+				   "$GENERATE",
+				   source, line, gtype);
+		result = DNS_R_METATYPE;
 		goto insist_cleanup;
 	}
 
@@ -1022,6 +1026,19 @@ check_wildcard(dns_incctx_t *ictx, const char *source, unsigned long line,
 static isc_result_t
 openfile_text(dns_loadctx_t *lctx, const char *master_file) {
 	return (isc_lex_openfile(lctx->lex, master_file));
+}
+
+static int
+find_free_name(dns_incctx_t *incctx) {
+	int i;
+
+	for (i = 0; i < (NBUFS - 1); i++) {
+		if (!incctx->in_use[i]) {
+			break;
+		}
+	}
+	INSIST(!incctx->in_use[i]);
+	return (i);
 }
 
 static isc_result_t
@@ -1353,8 +1370,9 @@ load_text(dns_loadctx_t *lctx) {
 					if (MANYERRS(lctx, result)) {
 						SETRESULT(lctx, result);
 						lctx->ttl = 0;
-					} else if (result != ISC_R_SUCCESS)
+					} else {
 						goto insist_and_cleanup;
+					}
 				} else if (!explicit_ttl &&
 					   lctx->default_ttl_known) {
 					lctx->ttl = lctx->default_ttl;
@@ -1385,20 +1403,15 @@ load_text(dns_loadctx_t *lctx) {
 				result = DNS_R_SYNTAX;
 				if (MANYERRS(lctx, result)) {
 					SETRESULT(lctx, result);
-				} else if (result != ISC_R_SUCCESS)
+				} else {
 					goto insist_and_cleanup;
+				}
 			}
 
 			/*
 			 * Normal processing resumes.
-			 *
-			 * Find a free name buffer.
 			 */
-			for (new_in_use = 0; new_in_use < NBUFS; new_in_use++)
-				if (!ictx->in_use[new_in_use])
-					break;
-			INSIST(new_in_use < NBUFS);
-			dns_fixedname_init(&ictx->fixed[new_in_use]);
+			new_in_use = find_free_name(ictx);
 			new_name = dns_fixedname_name(&ictx->fixed[new_in_use]);
 			isc_buffer_init(&buffer, token.value.as_region.base,
 					token.value.as_region.length);
@@ -1557,8 +1570,9 @@ load_text(dns_loadctx_t *lctx) {
 				SETRESULT(lctx, result);
 				LOGIT(result);
 				continue;
-			} else if (result != ISC_R_SUCCESS)
+			} else {
 				goto insist_and_cleanup;
+			}
 		}
 
 		/*
@@ -1597,8 +1611,9 @@ load_text(dns_loadctx_t *lctx) {
 					SETRESULT(lctx, result);
 					read_till_eol = ISC_TRUE;
 					continue;
-				} else if (result != ISC_R_SUCCESS)
+				} else {
 					goto insist_and_cleanup;
+				}
 			}
 
 			if (ictx->origin_changed) {
@@ -1641,8 +1656,9 @@ load_text(dns_loadctx_t *lctx) {
 				SETRESULT(lctx, result);
 				read_till_eol = ISC_TRUE;
 				continue;
-			} else if (result != ISC_R_SUCCESS)
+			} else {
 				goto insist_and_cleanup;
+			}
 		}
 
 		if (rdclass == 0 &&
@@ -1659,8 +1675,9 @@ load_text(dns_loadctx_t *lctx) {
 				SETRESULT(lctx, result);
 				read_till_eol = ISC_TRUE;
 				continue;
-			} else if (result != ISC_R_SUCCESS)
+			} else {
 				goto insist_and_cleanup;
+			}
 		}
 
 		result = dns_rdatatype_fromtext(&type,
@@ -1700,8 +1717,9 @@ load_text(dns_loadctx_t *lctx) {
 				SETRESULT(lctx, result);
 				read_till_eol = ISC_TRUE;
 				continue;
-			} else if (result != ISC_R_SUCCESS)
+			} else {
 				goto insist_and_cleanup;
+			}
 		}
 
 		if (type == dns_rdatatype_ns && ictx->glue == NULL)
@@ -1717,6 +1735,30 @@ load_text(dns_loadctx_t *lctx) {
 			char typename[DNS_RDATATYPE_FORMATSIZE];
 
 			result = DNS_R_OBSOLETE;
+
+			dns_rdatatype_format(type, typename, sizeof(typename));
+			(*callbacks->error)(callbacks,
+					    "%s:%lu: %s '%s': %s",
+					    source, line,
+					    "type", typename,
+					    dns_result_totext(result));
+			if (MANYERRS(lctx, result)) {
+				SETRESULT(lctx, result);
+			} else
+				goto insist_and_cleanup;
+		}
+
+		/*
+		 * RFC2930: TKEY and TSIG are not allowed to be loaded
+		 * from master files.
+		 */
+		if ((lctx->options & DNS_MASTER_ZONE) != 0 &&
+		    (lctx->options & DNS_MASTER_SLAVE) == 0 &&
+		    dns_rdatatype_ismeta(type))
+		{
+			char typename[DNS_RDATATYPE_FORMATSIZE];
+
+			result = DNS_R_METATYPE;
 
 			dns_rdatatype_format(type, typename, sizeof(typename));
 			(*callbacks->error)(callbacks,
@@ -1789,8 +1831,9 @@ load_text(dns_loadctx_t *lctx) {
 							    namebuf, desc);
 					if (MANYERRS(lctx, result)) {
 						SETRESULT(lctx, result);
-					} else if (result != ISC_R_SUCCESS)
+					} else {
 						goto cleanup;
+					}
 				} else {
 					(*callbacks->warn)(callbacks,
 							   "%s:%lu: %s: %s",
@@ -1841,8 +1884,9 @@ load_text(dns_loadctx_t *lctx) {
 				read_till_eol = ISC_TRUE;
 				target = target_ft;
 				continue;
-			} else if (result != ISC_R_SUCCESS)
+			} else {
 				goto insist_and_cleanup;
+			}
 		}
 
 
@@ -2063,9 +2107,8 @@ static isc_result_t
 pushfile(const char *master_file, dns_name_t *origin, dns_loadctx_t *lctx) {
 	isc_result_t result;
 	dns_incctx_t *ictx;
-	dns_incctx_t *new = NULL;
+	dns_incctx_t *newctx = NULL;
 	isc_region_t r;
-	int new_in_use;
 
 	REQUIRE(master_file != NULL);
 	REQUIRE(DNS_LCTX_VALID(lctx));
@@ -2073,43 +2116,39 @@ pushfile(const char *master_file, dns_name_t *origin, dns_loadctx_t *lctx) {
 	ictx = lctx->inc;
 	lctx->seen_include = ISC_TRUE;
 
-	result = incctx_create(lctx->mctx, origin, &new);
+	result = incctx_create(lctx->mctx, origin, &newctx);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
 	/*
 	 * Push origin_changed.
 	 */
-	new->origin_changed = ictx->origin_changed;
+	newctx->origin_changed = ictx->origin_changed;
 
 	/* Set current domain. */
 	if (ictx->glue != NULL || ictx->current != NULL) {
-		for (new_in_use = 0; new_in_use < NBUFS; new_in_use++)
-			if (!new->in_use[new_in_use])
-				break;
-		INSIST(new_in_use < NBUFS);
-		new->current_in_use = new_in_use;
-		new->current =
-			dns_fixedname_name(&new->fixed[new->current_in_use]);
-		new->in_use[new->current_in_use] = ISC_TRUE;
+		newctx->current_in_use = find_free_name(newctx);
+		newctx->current =
+			dns_fixedname_name(&newctx->fixed[newctx->current_in_use]);
+		newctx->in_use[newctx->current_in_use] = ISC_TRUE;
 		dns_name_toregion((ictx->glue != NULL) ?
 				   ictx->glue : ictx->current, &r);
-		dns_name_fromregion(new->current, &r);
-		new->drop = ictx->drop;
+		dns_name_fromregion(newctx->current, &r);
+		newctx->drop = ictx->drop;
 	}
 
 	result = (lctx->openfile)(lctx, master_file);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
-	new->parent = ictx;
-	lctx->inc = new;
+	newctx->parent = ictx;
+	lctx->inc = newctx;
 
 	if (lctx->include_cb != NULL)
 		lctx->include_cb(master_file, lctx->include_arg);
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	incctx_destroy(lctx->mctx, new);
+	incctx_destroy(lctx->mctx, newctx);
 	return (result);
 }
 
@@ -2938,17 +2977,17 @@ dns_master_loadlexerinc(isc_lex_t *lex, dns_name_t *top,
  * Re-link glue and current list.
  */
 static dns_rdatalist_t *
-grow_rdatalist(int new_len, dns_rdatalist_t *old, int old_len,
+grow_rdatalist(int new_len, dns_rdatalist_t *oldlist, int old_len,
 	       rdatalist_head_t *current, rdatalist_head_t *glue,
 	       isc_mem_t *mctx)
 {
-	dns_rdatalist_t *new;
+	dns_rdatalist_t *newlist;
 	int rdlcount = 0;
 	ISC_LIST(dns_rdatalist_t) save;
 	dns_rdatalist_t *this;
 
-	new = isc_mem_get(mctx, new_len * sizeof(*new));
-	if (new == NULL)
+	newlist = isc_mem_get(mctx, new_len * sizeof(*newlist));
+	if (newlist == NULL)
 		return (NULL);
 
 	ISC_LIST_INIT(save);
@@ -2959,8 +2998,8 @@ grow_rdatalist(int new_len, dns_rdatalist_t *old, int old_len,
 	while ((this = ISC_LIST_HEAD(save)) != NULL) {
 		ISC_LIST_UNLINK(save, this, link);
 		INSIST(rdlcount < new_len);
-		new[rdlcount] = *this;
-		ISC_LIST_APPEND(*current, &new[rdlcount], link);
+		newlist[rdlcount] = *this;
+		ISC_LIST_APPEND(*current, &newlist[rdlcount], link);
 		rdlcount++;
 	}
 
@@ -2972,15 +3011,15 @@ grow_rdatalist(int new_len, dns_rdatalist_t *old, int old_len,
 	while ((this = ISC_LIST_HEAD(save)) != NULL) {
 		ISC_LIST_UNLINK(save, this, link);
 		INSIST(rdlcount < new_len);
-		new[rdlcount] = *this;
-		ISC_LIST_APPEND(*glue, &new[rdlcount], link);
+		newlist[rdlcount] = *this;
+		ISC_LIST_APPEND(*glue, &newlist[rdlcount], link);
 		rdlcount++;
 	}
 
 	INSIST(rdlcount == old_len);
-	if (old != NULL)
-		isc_mem_put(mctx, old, old_len * sizeof(*old));
-	return (new);
+	if (oldlist != NULL)
+		isc_mem_put(mctx, oldlist, old_len * sizeof(*oldlist));
+	return (newlist);
 }
 
 /*
@@ -2988,20 +3027,20 @@ grow_rdatalist(int new_len, dns_rdatalist_t *old, int old_len,
  * Re-link the current and glue chains.
  */
 static dns_rdata_t *
-grow_rdata(int new_len, dns_rdata_t *old, int old_len,
+grow_rdata(int new_len, dns_rdata_t *oldlist, int old_len,
 	   rdatalist_head_t *current, rdatalist_head_t *glue,
 	   isc_mem_t *mctx)
 {
-	dns_rdata_t *new;
+	dns_rdata_t *newlist;
 	int rdcount = 0;
 	ISC_LIST(dns_rdata_t) save;
 	dns_rdatalist_t *this;
 	dns_rdata_t *rdata;
 
-	new = isc_mem_get(mctx, new_len * sizeof(*new));
-	if (new == NULL)
+	newlist = isc_mem_get(mctx, new_len * sizeof(*newlist));
+	if (newlist == NULL)
 		return (NULL);
-	memset(new, 0, new_len * sizeof(*new));
+	memset(newlist, 0, new_len * sizeof(*newlist));
 
 	/*
 	 * Copy current relinking.
@@ -3016,8 +3055,8 @@ grow_rdata(int new_len, dns_rdata_t *old, int old_len,
 		while ((rdata = ISC_LIST_HEAD(save)) != NULL) {
 			ISC_LIST_UNLINK(save, rdata, link);
 			INSIST(rdcount < new_len);
-			new[rdcount] = *rdata;
-			ISC_LIST_APPEND(this->rdata, &new[rdcount], link);
+			newlist[rdcount] = *rdata;
+			ISC_LIST_APPEND(this->rdata, &newlist[rdcount], link);
 			rdcount++;
 		}
 		this = ISC_LIST_NEXT(this, link);
@@ -3036,16 +3075,16 @@ grow_rdata(int new_len, dns_rdata_t *old, int old_len,
 		while ((rdata = ISC_LIST_HEAD(save)) != NULL) {
 			ISC_LIST_UNLINK(save, rdata, link);
 			INSIST(rdcount < new_len);
-			new[rdcount] = *rdata;
-			ISC_LIST_APPEND(this->rdata, &new[rdcount], link);
+			newlist[rdcount] = *rdata;
+			ISC_LIST_APPEND(this->rdata, &newlist[rdcount], link);
 			rdcount++;
 		}
 		this = ISC_LIST_NEXT(this, link);
 	}
 	INSIST(rdcount == old_len || rdcount == 0);
-	if (old != NULL)
-		isc_mem_put(mctx, old, old_len * sizeof(*old));
-	return (new);
+	if (oldlist != NULL)
+		isc_mem_put(mctx, oldlist, old_len * sizeof(*oldlist));
+	return (newlist);
 }
 
 static isc_uint32_t

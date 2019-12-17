@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2007, 2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2002  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: soa_6.c,v 1.6 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: soa_6.c,v 1.7 2019/12/17 01:46:33 sthen Exp $ */
 
 /* Reviewed: Thu Mar 16 15:18:32 PST 2000 by explorer */
 
@@ -137,7 +136,7 @@ totext_soa(ARGS_TOTEXT) {
 		unsigned long num;
 		num = uint32_fromregion(&dregion);
 		isc_region_consume(&dregion, 4);
-		sprintf(buf, comm ? "%-10lu ; " : "%lu", num);
+		snprintf(buf, sizeof(buf), comm ? "%-10lu ; " : "%lu", num);
 		RETERR(str_totext(buf, target));
 		if (comm) {
 			RETERR(str_totext(soa_fieldnames[i], target));

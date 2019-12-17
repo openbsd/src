@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2001-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -57,6 +56,7 @@
 #include <dns/rdatatype.h>
 #include <dns/rrl.h>
 #include <dns/secalg.h>
+#include <dns/ssu.h>
 
 #include <dst/dst.h>
 
@@ -64,6 +64,20 @@
 #include <isccfg/cfg.h>
 
 #include <bind9/check.h>
+
+#define INITNAME(A,B) { \
+		DNS_NAME_MAGIC, \
+		A, sizeof(A), sizeof(B), \
+		DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE, \
+		B, NULL, { (void *)-1, (void *)-1}, \
+		{NULL, NULL} \
+}
+
+static unsigned char dlviscorg_ndata[] = "\003dlv\003isc\003org";
+static unsigned char dlviscorg_offsets[] = { 0, 4, 8, 12 };
+
+static const dns_name_t dlviscorg =
+	INITNAME(dlviscorg_ndata, dlviscorg_offsets);
 
 static isc_result_t
 fileexist(const cfg_obj_t *obj, isc_symtab_t *symtab, isc_boolean_t writeable,
@@ -1135,9 +1149,16 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 			 * is missing, skip remaining tests
 			 */
 			if (cfg_obj_isvoid(anchor)) {
-				if (!strcasecmp(dlv, "no") ||
-				    !strcasecmp(dlv, "auto"))
+				if (!strcasecmp(dlv, "no")) {
 					continue;
+				}
+				if (!strcasecmp(dlv, "auto")) {
+					cfg_obj_log(obj, logctx,
+						    ISC_LOG_WARNING,
+						    "dnssec-lookaside 'auto' "
+						    "is no longer supported");
+					continue;
+				}
 			}
 
 			tresult = dns_name_fromstring(name, dlv, 0, NULL);
@@ -1150,7 +1171,7 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 			if (symtab != NULL) {
 				tresult = nameexist(obj, dlv, 1, symtab,
 						    "dnssec-lookaside '%s': "
-						    "already exists previous "
+						    "already exists; previous "
 						    "definition: %s:%u",
 						    logctx, mctx);
 				if (tresult != ISC_R_SUCCESS &&
@@ -1170,23 +1191,30 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 					result = ISC_R_FAILURE;
 			}
 
-			if (!cfg_obj_isvoid(anchor)) {
-				dlv = cfg_obj_asstring(anchor);
-				tresult = check_name(dlv);
-				if (tresult != ISC_R_SUCCESS) {
-					cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
-						    "bad domain name '%s'",
-						    dlv);
-					if (result == ISC_R_SUCCESS)
-						result = tresult;
-				}
-			} else {
+			if (cfg_obj_isvoid(anchor)) {
 				cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
-					"dnssec-lookaside requires "
-					"either 'auto' or 'no', or a "
-					"domain and trust anchor");
+					    "dnssec-lookaside requires "
+					    "either or 'no' or a "
+					    "domain and trust anchor");
 				if (result == ISC_R_SUCCESS)
 					result = ISC_R_FAILURE;
+				continue;
+			}
+
+			dlv = cfg_obj_asstring(anchor);
+			tresult = dns_name_fromstring(name, dlv, 0, NULL);
+			if (tresult != ISC_R_SUCCESS) {
+				cfg_obj_log(anchor, logctx, ISC_LOG_ERROR,
+					    "bad domain name '%s'", dlv);
+				if (result == ISC_R_SUCCESS)
+					result = tresult;
+				continue;
+			}
+			if (dns_name_equal(&dlviscorg, name)) {
+				cfg_obj_log(anchor, logctx, ISC_LOG_WARNING,
+					    "dlv.isc.org has been shut down: "
+					    "dnssec-lookaside ignored");
+				continue;
 			}
 		}
 
@@ -1424,23 +1452,23 @@ validate_masters(const cfg_obj_t *obj, const cfg_obj_t *config,
 		}
 		/* Grow stack? */
 		if (stackcount == pushed) {
-			void * new;
+			void * newstack;
 			isc_uint32_t newlen = stackcount + 16;
 			size_t newsize, oldsize;
 
 			newsize = newlen * sizeof(*stack);
 			oldsize = stackcount * sizeof(*stack);
-			new = isc_mem_get(mctx, newsize);
-			if (new == NULL)
+			newstack = isc_mem_get(mctx, newsize);
+			if (newstack == NULL)
 				goto cleanup;
 			if (stackcount != 0) {
 				void *ptr;
 
 				DE_CONST(stack, ptr);
-				memmove(new, stack, oldsize);
+				memmove(newstack, stack, oldsize);
 				isc_mem_put(mctx, ptr, oldsize);
 			}
-			stack = new;
+			stack = newstack;
 			stackcount = newlen;
 		}
 		stack[pushed++] = cfg_list_next(element);
@@ -1468,9 +1496,9 @@ check_update_policy(const cfg_obj_t *policy, isc_log_t *logctx) {
 	isc_result_t tresult;
 	const cfg_listelt_t *element;
 	const cfg_listelt_t *element2;
-	dns_fixedname_t fixed;
+	dns_fixedname_t fixed_id, fixed_name;
+	dns_name_t *id, *name;
 	const char *str;
-	isc_buffer_t b;
 
 	/* Check for "update-policy local;" */
 	if (cfg_obj_isstring(policy) &&
@@ -1487,27 +1515,36 @@ check_update_policy(const cfg_obj_t *policy, isc_log_t *logctx) {
 		const cfg_obj_t *matchtype = cfg_tuple_get(stmt, "matchtype");
 		const cfg_obj_t *dname = cfg_tuple_get(stmt, "name");
 		const cfg_obj_t *typelist = cfg_tuple_get(stmt, "types");
+		dns_ssumatchtype_t mtype;
 
-		dns_fixedname_init(&fixed);
+		dns_fixedname_init(&fixed_id);
+		dns_fixedname_init(&fixed_name);
+		id = dns_fixedname_name(&fixed_id);
+		name = dns_fixedname_name(&fixed_name);
+
+		tresult = dns_ssu_mtypefromstring(cfg_obj_asstring(matchtype),
+						  &mtype);
+		if (tresult != ISC_R_SUCCESS) {
+			cfg_obj_log(identity, logctx, ISC_LOG_ERROR,
+				    "has a bad match-type");
+		}
+
 		str = cfg_obj_asstring(identity);
-		isc_buffer_constinit(&b, str, strlen(str));
-		isc_buffer_add(&b, strlen(str));
-		tresult = dns_name_fromtext(dns_fixedname_name(&fixed), &b,
-					    dns_rootname, 0, NULL);
+		tresult = dns_name_fromstring(id, str, 1, NULL);
 		if (tresult != ISC_R_SUCCESS) {
 			cfg_obj_log(identity, logctx, ISC_LOG_ERROR,
 				    "'%s' is not a valid name", str);
 			result = tresult;
 		}
 
+		/*
+		 * There is no name field for subzone.
+		 */
 		if (tresult == ISC_R_SUCCESS &&
-		    strcasecmp(cfg_obj_asstring(matchtype), "zonesub") != 0) {
-			dns_fixedname_init(&fixed);
+		    mtype != dns_ssumatchtype_subdomain)
+		{
 			str = cfg_obj_asstring(dname);
-			isc_buffer_constinit(&b, str, strlen(str));
-			isc_buffer_add(&b, strlen(str));
-			tresult = dns_name_fromtext(dns_fixedname_name(&fixed),
-						    &b, dns_rootname, 0, NULL);
+			tresult = dns_name_fromstring(name, str, 0, NULL);
 			if (tresult != ISC_R_SUCCESS) {
 				cfg_obj_log(dname, logctx, ISC_LOG_ERROR,
 					    "'%s' is not a valid name", str);
@@ -1516,11 +1553,53 @@ check_update_policy(const cfg_obj_t *policy, isc_log_t *logctx) {
 		}
 
 		if (tresult == ISC_R_SUCCESS &&
-		    strcasecmp(cfg_obj_asstring(matchtype), "wildcard") == 0 &&
-		    !dns_name_iswildcard(dns_fixedname_name(&fixed))) {
+		    mtype == dns_ssumatchtype_wildcard &&
+		    !dns_name_iswildcard(name))
+		{
 			cfg_obj_log(identity, logctx, ISC_LOG_ERROR,
 				    "'%s' is not a wildcard", str);
 			result = ISC_R_FAILURE;
+		}
+
+		/*
+		 * For some match types, the name should be a placeholder
+		 * value, either "." or the same as identity.
+		 */
+		switch (mtype) {
+		case dns_ssumatchtype_self:
+		case dns_ssumatchtype_selfsub:
+		case dns_ssumatchtype_selfwild:
+			if (tresult == ISC_R_SUCCESS &&
+			    (!dns_name_equal(id, name) &&
+			     !dns_name_equal(dns_rootname, name))) {
+				cfg_obj_log(identity, logctx, ISC_LOG_ERROR,
+					    "identity and name fields are not "
+					    "the same");
+				result = ISC_R_FAILURE;
+			}
+			break;
+		case dns_ssumatchtype_selfkrb5:
+		case dns_ssumatchtype_selfms:
+		case dns_ssumatchtype_subdomainms:
+		case dns_ssumatchtype_subdomainkrb5:
+		case dns_ssumatchtype_tcpself:
+		case dns_ssumatchtype_6to4self:
+			if (tresult == ISC_R_SUCCESS &&
+			    !dns_name_equal(dns_rootname, name)) {
+				cfg_obj_log(identity, logctx, ISC_LOG_ERROR,
+					    "name field not set to "
+					    "placeholder value '.'");
+				result = ISC_R_FAILURE;
+			}
+			break;
+		case dns_ssumatchtype_name:
+		case dns_ssumatchtype_subdomain:
+		case dns_ssumatchtype_wildcard:
+		case dns_ssumatchtype_external:
+		case dns_ssumatchtype_local:
+			break;
+		default:
+			INSIST(0);
 		}
 
 		for (element2 = cfg_list_first(typelist);
@@ -1554,6 +1633,7 @@ check_update_policy(const cfg_obj_t *policy, isc_log_t *logctx) {
 #define DELEGATIONZONE	32
 #define STATICSTUBZONE	64
 #define REDIRECTZONE	128
+#define INVIEWZONE	256
 #define STREDIRECTZONE	0	/* Set to REDIRECTZONE to allow xfr-in. */
 #define CHECKACL	512
 
@@ -1588,14 +1668,17 @@ check_nonzero(const cfg_obj_t *options, isc_log_t *logctx) {
 static isc_result_t
 check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	       const cfg_obj_t *config, isc_symtab_t *symtab,
-	       isc_symtab_t *files, dns_rdataclass_t defclass,
+	       isc_symtab_t *files, isc_symtab_t *inview,
+	       const char *viewname, dns_rdataclass_t defclass,
 	       cfg_aclconfctx_t *actx, isc_log_t *logctx, isc_mem_t *mctx)
 {
 	const char *znamestr;
-	const char *typestr;
+	const char *typestr = NULL;
+	const char *target = NULL;
 	unsigned int ztype;
 	const cfg_obj_t *zoptions, *goptions = NULL;
 	const cfg_obj_t *obj = NULL;
+	const cfg_obj_t *inviewobj = NULL;
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_result_t tresult;
 	unsigned int i;
@@ -1694,65 +1777,51 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	if (config != NULL)
 		cfg_map_get(config, "options", &goptions);
 
-	obj = NULL;
-	(void)cfg_map_get(zoptions, "in-view", &obj);
-	if (obj != NULL) {
-		const cfg_obj_t *fwd = NULL;
-		unsigned int maxopts = 1;
-		(void)cfg_map_get(zoptions, "forward", &fwd);
-		if (fwd != NULL)
-			maxopts++;
-		fwd = NULL;
-		(void)cfg_map_get(zoptions, "forwarders", &fwd);
-		if (fwd != NULL)
-			maxopts++;
-		if (cfg_map_count(zoptions) > maxopts) {
+	inviewobj = NULL;
+	(void)cfg_map_get(zoptions, "in-view", &inviewobj);
+	if (inviewobj != NULL) {
+		target = cfg_obj_asstring(inviewobj);
+		ztype = INVIEWZONE;
+	} else {
+		obj = NULL;
+		(void)cfg_map_get(zoptions, "type", &obj);
+		if (obj == NULL) {
 			cfg_obj_log(zconfig, logctx, ISC_LOG_ERROR,
-				    "zone '%s': 'in-view' used "
-				    "with incompatible zone options",
-				    znamestr);
+				    "zone '%s': type not present", znamestr);
 			return (ISC_R_FAILURE);
 		}
-		return (ISC_R_SUCCESS);
+
+		typestr = cfg_obj_asstring(obj);
+		if (strcasecmp(typestr, "master") == 0) {
+			ztype = MASTERZONE;
+		} else if (strcasecmp(typestr, "slave") == 0) {
+			ztype = SLAVEZONE;
+		} else if (strcasecmp(typestr, "stub") == 0) {
+			ztype = STUBZONE;
+		} else if (strcasecmp(typestr, "static-stub") == 0) {
+			ztype = STATICSTUBZONE;
+		} else if (strcasecmp(typestr, "forward") == 0) {
+			ztype = FORWARDZONE;
+		} else if (strcasecmp(typestr, "hint") == 0) {
+			ztype = HINTZONE;
+		} else if (strcasecmp(typestr, "delegation-only") == 0) {
+			ztype = DELEGATIONZONE;
+		} else if (strcasecmp(typestr, "redirect") == 0) {
+			ztype = REDIRECTZONE;
+		} else {
+			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+				    "zone '%s': invalid type %s",
+				    znamestr, typestr);
+			return (ISC_R_FAILURE);
+		}
+
+		if (ztype == REDIRECTZONE && strcmp(znamestr, ".") != 0) {
+			cfg_obj_log(zconfig, logctx, ISC_LOG_ERROR,
+				    "redirect zones must be called \".\"");
+			return (ISC_R_FAILURE);
+		}
 	}
 
-	obj = NULL;
-	(void)cfg_map_get(zoptions, "type", &obj);
-	if (obj == NULL) {
-		cfg_obj_log(zconfig, logctx, ISC_LOG_ERROR,
-			    "zone '%s': type not present", znamestr);
-		return (ISC_R_FAILURE);
-	}
-
-	typestr = cfg_obj_asstring(obj);
-	if (strcasecmp(typestr, "master") == 0)
-		ztype = MASTERZONE;
-	else if (strcasecmp(typestr, "slave") == 0)
-		ztype = SLAVEZONE;
-	else if (strcasecmp(typestr, "stub") == 0)
-		ztype = STUBZONE;
-	else if (strcasecmp(typestr, "static-stub") == 0)
-		ztype = STATICSTUBZONE;
-	else if (strcasecmp(typestr, "forward") == 0)
-		ztype = FORWARDZONE;
-	else if (strcasecmp(typestr, "hint") == 0)
-		ztype = HINTZONE;
-	else if (strcasecmp(typestr, "delegation-only") == 0)
-		ztype = DELEGATIONZONE;
-	else if (strcasecmp(typestr, "redirect") == 0)
-		ztype = REDIRECTZONE;
-	else {
-		cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
-			    "zone '%s': invalid type %s",
-			    znamestr, typestr);
-		return (ISC_R_FAILURE);
-	}
-
-	if (ztype == REDIRECTZONE && strcmp(znamestr, ".") != 0) {
-		cfg_obj_log(zconfig, logctx, ISC_LOG_ERROR,
-			    "redirect zones must be called \".\"");
-		return (ISC_R_FAILURE);
-	}
 	obj = cfg_tuple_get(zconfig, "class");
 	if (cfg_obj_isstring(obj)) {
 		isc_textregion_t r;
@@ -1773,6 +1842,8 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 				    znamestr, r.base);
 			return (ISC_R_FAILURE);
 		}
+	} else {
+		zclass = defclass;
 	}
 
 	/*
@@ -1790,7 +1861,9 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 			    "zone '%s': is not a valid name", znamestr);
 		result = ISC_R_FAILURE;
 	} else {
-		char namebuf[DNS_NAME_FORMATSIZE];
+		char namebuf[DNS_NAME_FORMATSIZE + 128];
+		char *tmp = namebuf;
+		size_t len = sizeof(namebuf);
 
 		zname = dns_fixedname_name(&fixedname);
 		dns_name_format(zname, namebuf, sizeof(namebuf));
@@ -1806,6 +1879,79 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 			rfc1918 = ISC_TRUE;
 		else if (dns_name_isula(zname))
 			ula = ISC_TRUE;
+		tmp += strlen(tmp);
+		len -= strlen(tmp);
+		(void)snprintf(tmp, len, "%u/%s", zclass,
+			       (ztype == INVIEWZONE) ? target :
+				(viewname != NULL) ? viewname : "_default");
+		switch (ztype) {
+		case INVIEWZONE:
+			tresult = isc_symtab_lookup(inview, namebuf, 0, NULL);
+			if (tresult != ISC_R_SUCCESS) {
+				cfg_obj_log(inviewobj, logctx, ISC_LOG_ERROR,
+					    "'in-view' zone '%s' "
+					    "does not exist in view '%s', "
+					    "or view '%s' is not yet defined",
+					    znamestr, target, target);
+				if (result == ISC_R_SUCCESS) {
+					result = tresult;
+				}
+			}
+			break;
+
+		case FORWARDZONE:
+		case REDIRECTZONE:
+		case DELEGATIONZONE:
+			break;
+
+		case MASTERZONE:
+		case SLAVEZONE:
+		case HINTZONE:
+		case STUBZONE:
+		case STATICSTUBZONE:
+			tmp = isc_mem_strdup(mctx, namebuf);
+			if (tmp != NULL) {
+				isc_symvalue_t symvalue;
+
+				symvalue.as_cpointer = NULL;
+				tresult = isc_symtab_define(inview, tmp, 1,
+					   symvalue, isc_symexists_replace);
+				if (tresult == ISC_R_NOMEMORY) {
+					isc_mem_free(mctx, tmp);
+				}
+				if (result == ISC_R_SUCCESS &&
+				    tresult != ISC_R_SUCCESS)
+					result = tresult;
+			} else if (result != ISC_R_SUCCESS) {
+				result = ISC_R_NOMEMORY;
+			}
+			break;
+
+		default:
+			INSIST(0);
+		}
+	}
+
+	if (ztype == INVIEWZONE) {
+		const cfg_obj_t *fwd = NULL;
+		unsigned int maxopts = 1;
+
+		(void)cfg_map_get(zoptions, "forward", &fwd);
+		if (fwd != NULL)
+			maxopts++;
+		fwd = NULL;
+		(void)cfg_map_get(zoptions, "forwarders", &fwd);
+		if (fwd != NULL)
+			maxopts++;
+		if (cfg_map_count(zoptions) > maxopts) {
+			cfg_obj_log(zconfig, logctx, ISC_LOG_ERROR,
+				    "zone '%s': 'in-view' used "
+				    "with incompatible zone options",
+				    znamestr);
+			if (result == ISC_R_SUCCESS)
+				result = ISC_R_FAILURE;
+		}
+		return (result);
 	}
 
 	/*
@@ -2665,9 +2811,13 @@ check_servers(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	return (result);
 }
 
+#define ROOT_KSK_2010	0x1
+#define ROOT_KSK_2017	0x2
+#define DLV_KSK_KEY	0x4
+
 static isc_result_t
 check_trusted_key(const cfg_obj_t *key, isc_boolean_t managed,
-		  isc_log_t *logctx)
+		  unsigned int *keyflags, isc_log_t *logctx)
 {
 	const char *keystr, *keynamestr;
 	dns_fixedname_t fkeyname;
@@ -2745,6 +2895,128 @@ check_trusted_key(const cfg_obj_t *key, isc_boolean_t managed,
 				    keynamestr);
 	}
 
+	if (result == ISC_R_SUCCESS && dns_name_equal(keyname, dns_rootname)) {
+		static const unsigned char root_ksk_2010[] = {
+			0x03, 0x01, 0x00, 0x01, 0xa8, 0x00, 0x20, 0xa9,
+			0x55, 0x66, 0xba, 0x42, 0xe8, 0x86, 0xbb, 0x80,
+			0x4c, 0xda, 0x84, 0xe4, 0x7e, 0xf5, 0x6d, 0xbd,
+			0x7a, 0xec, 0x61, 0x26, 0x15, 0x55, 0x2c, 0xec,
+			0x90, 0x6d, 0x21, 0x16, 0xd0, 0xef, 0x20, 0x70,
+			0x28, 0xc5, 0x15, 0x54, 0x14, 0x4d, 0xfe, 0xaf,
+			0xe7, 0xc7, 0xcb, 0x8f, 0x00, 0x5d, 0xd1, 0x82,
+			0x34, 0x13, 0x3a, 0xc0, 0x71, 0x0a, 0x81, 0x18,
+			0x2c, 0xe1, 0xfd, 0x14, 0xad, 0x22, 0x83, 0xbc,
+			0x83, 0x43, 0x5f, 0x9d, 0xf2, 0xf6, 0x31, 0x32,
+			0x51, 0x93, 0x1a, 0x17, 0x6d, 0xf0, 0xda, 0x51,
+			0xe5, 0x4f, 0x42, 0xe6, 0x04, 0x86, 0x0d, 0xfb,
+			0x35, 0x95, 0x80, 0x25, 0x0f, 0x55, 0x9c, 0xc5,
+			0x43, 0xc4, 0xff, 0xd5, 0x1c, 0xbe, 0x3d, 0xe8,
+			0xcf, 0xd0, 0x67, 0x19, 0x23, 0x7f, 0x9f, 0xc4,
+			0x7e, 0xe7, 0x29, 0xda, 0x06, 0x83, 0x5f, 0xa4,
+			0x52, 0xe8, 0x25, 0xe9, 0xa1, 0x8e, 0xbc, 0x2e,
+			0xcb, 0xcf, 0x56, 0x34, 0x74, 0x65, 0x2c, 0x33,
+			0xcf, 0x56, 0xa9, 0x03, 0x3b, 0xcd, 0xf5, 0xd9,
+			0x73, 0x12, 0x17, 0x97, 0xec, 0x80, 0x89, 0x04,
+			0x1b, 0x6e, 0x03, 0xa1, 0xb7, 0x2d, 0x0a, 0x73,
+			0x5b, 0x98, 0x4e, 0x03, 0x68, 0x73, 0x09, 0x33,
+			0x23, 0x24, 0xf2, 0x7c, 0x2d, 0xba, 0x85, 0xe9,
+			0xdb, 0x15, 0xe8, 0x3a, 0x01, 0x43, 0x38, 0x2e,
+			0x97, 0x4b, 0x06, 0x21, 0xc1, 0x8e, 0x62, 0x5e,
+			0xce, 0xc9, 0x07, 0x57, 0x7d, 0x9e, 0x7b, 0xad,
+			0xe9, 0x52, 0x41, 0xa8, 0x1e, 0xbb, 0xe8, 0xa9,
+			0x01, 0xd4, 0xd3, 0x27, 0x6e, 0x40, 0xb1, 0x14,
+			0xc0, 0xa2, 0xe6, 0xfc, 0x38, 0xd1, 0x9c, 0x2e,
+			0x6a, 0xab, 0x02, 0x64, 0x4b, 0x28, 0x13, 0xf5,
+			0x75, 0xfc, 0x21, 0x60, 0x1e, 0x0d, 0xee, 0x49,
+			0xcd, 0x9e, 0xe9, 0x6a, 0x43, 0x10, 0x3e, 0x52,
+			0x4d, 0x62, 0x87, 0x3d };
+		static const unsigned char root_ksk_2017[] = {
+			0x03, 0x01, 0x00, 0x01, 0xac, 0xff, 0xb4, 0x09,
+			0xbc, 0xc9, 0x39, 0xf8, 0x31, 0xf7, 0xa1, 0xe5,
+			0xec, 0x88, 0xf7, 0xa5, 0x92, 0x55, 0xec, 0x53,
+			0x04, 0x0b, 0xe4, 0x32, 0x02, 0x73, 0x90, 0xa4,
+			0xce, 0x89, 0x6d, 0x6f, 0x90, 0x86, 0xf3, 0xc5,
+			0xe1, 0x77, 0xfb, 0xfe, 0x11, 0x81, 0x63, 0xaa,
+			0xec, 0x7a, 0xf1, 0x46, 0x2c, 0x47, 0x94, 0x59,
+			0x44, 0xc4, 0xe2, 0xc0, 0x26, 0xbe, 0x5e, 0x98,
+			0xbb, 0xcd, 0xed, 0x25, 0x97, 0x82, 0x72, 0xe1,
+			0xe3, 0xe0, 0x79, 0xc5, 0x09, 0x4d, 0x57, 0x3f,
+			0x0e, 0x83, 0xc9, 0x2f, 0x02, 0xb3, 0x2d, 0x35,
+			0x13, 0xb1, 0x55, 0x0b, 0x82, 0x69, 0x29, 0xc8,
+			0x0d, 0xd0, 0xf9, 0x2c, 0xac, 0x96, 0x6d, 0x17,
+			0x76, 0x9f, 0xd5, 0x86, 0x7b, 0x64, 0x7c, 0x3f,
+			0x38, 0x02, 0x9a, 0xbd, 0xc4, 0x81, 0x52, 0xeb,
+			0x8f, 0x20, 0x71, 0x59, 0xec, 0xc5, 0xd2, 0x32,
+			0xc7, 0xc1, 0x53, 0x7c, 0x79, 0xf4, 0xb7, 0xac,
+			0x28, 0xff, 0x11, 0x68, 0x2f, 0x21, 0x68, 0x1b,
+			0xf6, 0xd6, 0xab, 0xa5, 0x55, 0x03, 0x2b, 0xf6,
+			0xf9, 0xf0, 0x36, 0xbe, 0xb2, 0xaa, 0xa5, 0xb3,
+			0x77, 0x8d, 0x6e, 0xeb, 0xfb, 0xa6, 0xbf, 0x9e,
+			0xa1, 0x91, 0xbe, 0x4a, 0xb0, 0xca, 0xea, 0x75,
+			0x9e, 0x2f, 0x77, 0x3a, 0x1f, 0x90, 0x29, 0xc7,
+			0x3e, 0xcb, 0x8d, 0x57, 0x35, 0xb9, 0x32, 0x1d,
+			0xb0, 0x85, 0xf1, 0xb8, 0xe2, 0xd8, 0x03, 0x8f,
+			0xe2, 0x94, 0x19, 0x92, 0x54, 0x8c, 0xee, 0x0d,
+			0x67, 0xdd, 0x45, 0x47, 0xe1, 0x1d, 0xd6, 0x3a,
+			0xf9, 0xc9, 0xfc, 0x1c, 0x54, 0x66, 0xfb, 0x68,
+			0x4c, 0xf0, 0x09, 0xd7, 0x19, 0x7c, 0x2c, 0xf7,
+			0x9e, 0x79, 0x2a, 0xb5, 0x01, 0xe6, 0xa8, 0xa1,
+			0xca, 0x51, 0x9a, 0xf2, 0xcb, 0x9b, 0x5f, 0x63,
+			0x67, 0xe9, 0x4c, 0x0d, 0x47, 0x50, 0x24, 0x51,
+			0x35, 0x7b, 0xe1, 0xb5 };
+		if (flags == 257 && proto == 3 && alg == 8 &&
+		    isc_buffer_usedlength(&b) == sizeof(root_ksk_2010) &&
+		    !memcmp(keydata, root_ksk_2010, sizeof(root_ksk_2010))) {
+			*keyflags |= ROOT_KSK_2010;
+		}
+		if (flags == 257 && proto == 3 && alg == 8 &&
+		    isc_buffer_usedlength(&b) == sizeof(root_ksk_2017) &&
+		    !memcmp(keydata, root_ksk_2017, sizeof(root_ksk_2017))) {
+			*keyflags |= ROOT_KSK_2017;
+		}
+	}
+	if (result == ISC_R_SUCCESS && dns_name_equal(keyname, &dlviscorg)) {
+		static const unsigned char dlviscorgkey[] = {
+			0x04, 0x40, 0x00, 0x00, 0x03, 0xc7, 0x32, 0xef,
+			0xf9, 0xa2, 0x7c, 0xeb, 0x10, 0x4e, 0xf3, 0xd5,
+			0xe8, 0x26, 0x86, 0x0f, 0xd6, 0x3c, 0xed, 0x3e,
+			0x8e, 0xea, 0x19, 0xad, 0x6d, 0xde, 0xb9, 0x61,
+			0x27, 0xe0, 0xcc, 0x43, 0x08, 0x4d, 0x7e, 0x94,
+			0xbc, 0xb6, 0x6e, 0xb8, 0x50, 0xbf, 0x9a, 0xcd,
+			0xdf, 0x64, 0x4a, 0xb4, 0xcc, 0xd7, 0xe8, 0xc8,
+			0xfb, 0xd2, 0x37, 0x73, 0x78, 0xd0, 0xf8, 0x5e,
+			0x49, 0xd6, 0xe7, 0xc7, 0x67, 0x24, 0xd3, 0xc2,
+			0xc6, 0x7f, 0x3e, 0x8c, 0x01, 0xa5, 0xd8, 0x56,
+			0x4b, 0x2b, 0xcb, 0x7e, 0xd6, 0xea, 0xb8, 0x5b,
+			0xe9, 0xe7, 0x03, 0x7a, 0x8e, 0xdb, 0xe0, 0xcb,
+			0xfa, 0x4e, 0x81, 0x0f, 0x89, 0x9e, 0xc0, 0xc2,
+			0xdb, 0x21, 0x81, 0x70, 0x7b, 0x43, 0xc6, 0xef,
+			0x74, 0xde, 0xf5, 0xf6, 0x76, 0x90, 0x96, 0xf9,
+			0xe9, 0xd8, 0x60, 0x31, 0xd7, 0xb9, 0xca, 0x65,
+			0xf8, 0x04, 0x8f, 0xe8, 0x43, 0xe7, 0x00, 0x2b,
+			0x9d, 0x3f, 0xc6, 0xf2, 0x6f, 0xd3, 0x41, 0x6b,
+			0x7f, 0xc9, 0x30, 0xea, 0xe7, 0x0c, 0x4f, 0x01,
+			0x65, 0x80, 0xf7, 0xbe, 0x8e, 0x71, 0xb1, 0x3c,
+			0xf1, 0x26, 0x1c, 0x0b, 0x5e, 0xfd, 0x44, 0x64,
+			0x63, 0xad, 0x99, 0x7e, 0x42, 0xe8, 0x04, 0x00,
+			0x03, 0x2c, 0x74, 0x3d, 0x22, 0xb4, 0xb6, 0xb6,
+			0xbc, 0x80, 0x7b, 0xb9, 0x9b, 0x05, 0x95, 0x5c,
+			0x3b, 0x02, 0x1e, 0x53, 0xf4, 0x70, 0xfe, 0x64,
+			0x71, 0xfe, 0xfc, 0x30, 0x30, 0x24, 0xe0, 0x35,
+			0xba, 0x0c, 0x40, 0xab, 0x54, 0x76, 0xf3, 0x57,
+			0x0e, 0xb6, 0x09, 0x0d, 0x21, 0xd9, 0xc2, 0xcd,
+			0xf1, 0x89, 0x15, 0xc5, 0xd5, 0x17, 0xfe, 0x6a,
+			0x5f, 0x54, 0x99, 0x97, 0xd2, 0x6a, 0xff, 0xf8,
+			0x35, 0x62, 0xca, 0x8c, 0x7c, 0xe9, 0x4f, 0x9f,
+			0x64, 0xfd, 0x54, 0xad, 0x4c, 0x33, 0x74, 0x61,
+			0x4b, 0x96, 0xac, 0x13, 0x61 };
+		if (flags == 257 && proto == 3 && alg == 5 &&
+		    isc_buffer_usedlength(&b) == sizeof(dlviscorgkey) &&
+		    !memcmp(keydata, dlviscorgkey, sizeof(dlviscorgkey))) {
+			*keyflags |= DLV_KSK_KEY;
+		}
+	}
+
 	return (result);
 }
 
@@ -2758,6 +3030,9 @@ check_rpz(const char *rpz_catz, const cfg_obj_t *rpz_obj,
 	const char *forview = " for view ";
 	isc_symvalue_t value;
 	isc_result_t result, tresult;
+	dns_fixedname_t fixed;
+	dns_name_t *name;
+	char namebuf[DNS_NAME_FORMATSIZE];
 
 	if (viewname == NULL) {
 		viewname = "";
@@ -2765,6 +3040,8 @@ check_rpz(const char *rpz_catz, const cfg_obj_t *rpz_obj,
 	}
 	result = ISC_R_SUCCESS;
 
+	dns_fixedname_init(&fixed);
+	name = dns_fixedname_name(&fixed);
 	obj = cfg_tuple_get(rpz_obj, "zone list");
 	for (element = cfg_list_first(obj);
 	     element != NULL;
@@ -2773,7 +3050,17 @@ check_rpz(const char *rpz_catz, const cfg_obj_t *rpz_obj,
 		nameobj = cfg_tuple_get(obj, "zone name");
 		zonename = cfg_obj_asstring(nameobj);
 		zonetype = "";
-		tresult = isc_symtab_lookup(symtab, zonename, 3, &value);
+
+		tresult = dns_name_fromstring(name, zonename, 0, NULL);
+		if (tresult != ISC_R_SUCCESS) {
+			cfg_obj_log(nameobj, logctx, ISC_LOG_ERROR,
+				   "bad domain name '%s'", zonename);
+			if (result == ISC_R_SUCCESS)
+				result = tresult;
+			continue;
+		}
+		dns_name_format(name, namebuf, sizeof(namebuf));
+		tresult = isc_symtab_lookup(symtab, namebuf, 3, &value);
 		if (tresult == ISC_R_SUCCESS) {
 			obj = NULL;
 			zoneobj = value.as_cpointer;
@@ -2789,7 +3076,8 @@ check_rpz(const char *rpz_catz, const cfg_obj_t *rpz_obj,
 			cfg_obj_log(nameobj, logctx, ISC_LOG_ERROR,
 				    "%s '%s'%s%s is not a master or slave zone",
 				    rpz_catz, zonename, forview, viewname);
-			result = ISC_R_FAILURE;
+			if (result == ISC_R_SUCCESS)
+				result = ISC_R_FAILURE;
 		}
 	}
 	return (result);
@@ -2798,7 +3086,8 @@ check_rpz(const char *rpz_catz, const cfg_obj_t *rpz_obj,
 static isc_result_t
 check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	       const char *viewname, dns_rdataclass_t vclass,
-	       isc_symtab_t *files, isc_log_t *logctx, isc_mem_t *mctx)
+	       isc_symtab_t *files, isc_symtab_t *inview,
+	       isc_log_t *logctx, isc_mem_t *mctx)
 {
 	const cfg_obj_t *zones = NULL;
 	const cfg_obj_t *keys = NULL;
@@ -2812,6 +3101,7 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	const cfg_obj_t *opts = NULL;
 	isc_boolean_t enablednssec, enablevalidation;
 	const char *valstr = "no";
+	unsigned int tflags, mflags;
 
 	/*
 	 * Get global options block
@@ -2849,8 +3139,8 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 		const cfg_obj_t *zone = cfg_listelt_value(element);
 
 		tresult = check_zoneconf(zone, voptions, config, symtab,
-					 files, vclass, actx, logctx,
-					 mctx);
+					 files, inview, viewname, vclass,
+					 actx, logctx, mctx);
 		if (tresult != ISC_R_SUCCESS)
 			result = ISC_R_FAILURE;
 	}
@@ -2975,6 +3265,7 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	if (keys == NULL)
 		(void)cfg_map_get(config, "trusted-keys", &keys);
 
+	tflags = 0;
 	for (element = cfg_list_first(keys);
 	     element != NULL;
 	     element = cfg_list_next(element))
@@ -2984,10 +3275,24 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 		     element2 != NULL;
 		     element2 = cfg_list_next(element2)) {
 			obj = cfg_listelt_value(element2);
-			tresult = check_trusted_key(obj, ISC_FALSE, logctx);
+			tresult = check_trusted_key(obj, ISC_FALSE, &tflags,
+						    logctx);
 			if (tresult != ISC_R_SUCCESS)
 				result = tresult;
 		}
+	}
+
+	if ((tflags & ROOT_KSK_2010) != 0 && (tflags & ROOT_KSK_2017) == 0) {
+		cfg_obj_log(keys, logctx, ISC_LOG_WARNING,
+			    "trusted-key for root from 2010 without updated "
+			    "trusted-key from 2017: THIS WILL FAIL AFTER "
+			    "KEY ROLLOVER");
+	}
+
+	if ((tflags & DLV_KSK_KEY) != 0) {
+		cfg_obj_log(keys, logctx, ISC_LOG_WARNING,
+			    "trusted-key for dlv.isc.org still present; "
+			    "dlv.isc.org has been shut down");
 	}
 
 	keys = NULL;
@@ -2996,6 +3301,7 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	if (keys == NULL)
 		(void)cfg_map_get(config, "managed-keys", &keys);
 
+	mflags = 0;
 	for (element = cfg_list_first(keys);
 	     element != NULL;
 	     element = cfg_list_next(element))
@@ -3005,10 +3311,31 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 		     element2 != NULL;
 		     element2 = cfg_list_next(element2)) {
 			obj = cfg_listelt_value(element2);
-			tresult = check_trusted_key(obj, ISC_TRUE, logctx);
+			tresult = check_trusted_key(obj, ISC_TRUE, &mflags,
+						    logctx);
 			if (tresult != ISC_R_SUCCESS)
 				result = tresult;
 		}
+	}
+
+	if ((mflags & ROOT_KSK_2010) != 0 && (mflags & ROOT_KSK_2017) == 0) {
+		cfg_obj_log(keys, logctx, ISC_LOG_WARNING,
+			    "managed-key for root from 2010 without updated "
+			    "managed-key from 2017");
+	}
+
+	if ((mflags & DLV_KSK_KEY) != 0) {
+		cfg_obj_log(keys, logctx, ISC_LOG_WARNING,
+			    "managed-key for dlv.isc.org still present; "
+			    "dlv.isc.org has been shut down");
+	}
+
+	if ((tflags & (ROOT_KSK_2010|ROOT_KSK_2017)) != 0 &&
+	    (mflags & (ROOT_KSK_2010|ROOT_KSK_2017)) != 0)
+	{
+		cfg_obj_log(keys, logctx, ISC_LOG_WARNING,
+			    "both trusted-keys and managed-keys for the ICANN "
+			    "root are present");
 	}
 
 	/*
@@ -3312,6 +3639,7 @@ bind9_check_namedconf(const cfg_obj_t *config, isc_log_t *logctx,
 	isc_result_t tresult;
 	isc_symtab_t *symtab = NULL;
 	isc_symtab_t *files = NULL;
+	isc_symtab_t *inview = NULL;
 
 	static const char *builtin[] = { "localhost", "localnets",
 					 "any", "none"};
@@ -3342,13 +3670,24 @@ bind9_check_namedconf(const cfg_obj_t *config, isc_log_t *logctx,
 	 */
 	tresult = isc_symtab_create(mctx, 100, NULL, NULL, ISC_FALSE,
 				    &files);
-	if (tresult != ISC_R_SUCCESS)
+	if (tresult != ISC_R_SUCCESS) {
 		result = tresult;
+		goto cleanup;
+	}
+
+	tresult = isc_symtab_create(mctx, 100, freekey, mctx,
+				    ISC_TRUE, &inview);
+	if (tresult != ISC_R_SUCCESS) {
+		result = tresult;
+		goto cleanup;
+	}
 
 	if (views == NULL) {
-		if (check_viewconf(config, NULL, NULL, dns_rdataclass_in,
-				   files, logctx, mctx) != ISC_R_SUCCESS)
+		tresult = check_viewconf(config, NULL, NULL, dns_rdataclass_in,
+					 files, inview, logctx, mctx);
+		if (result == ISC_R_SUCCESS && tresult != ISC_R_SUCCESS) {
 			result = ISC_R_FAILURE;
+		}
 	} else {
 		const cfg_obj_t *zones = NULL;
 
@@ -3362,8 +3701,10 @@ bind9_check_namedconf(const cfg_obj_t *config, isc_log_t *logctx,
 	}
 
 	tresult = isc_symtab_create(mctx, 100, NULL, NULL, ISC_TRUE, &symtab);
-	if (tresult != ISC_R_SUCCESS)
+	if (tresult != ISC_R_SUCCESS) {
 		result = tresult;
+		goto cleanup;
+	}
 	for (velement = cfg_list_first(views);
 	     velement != NULL;
 	     velement = cfg_list_next(velement))
@@ -3421,14 +3762,10 @@ bind9_check_namedconf(const cfg_obj_t *config, isc_log_t *logctx,
 		}
 		if (tresult == ISC_R_SUCCESS)
 			tresult = check_viewconf(config, voptions, key, vclass,
-						 files, logctx, mctx);
+						 files, inview, logctx, mctx);
 		if (tresult != ISC_R_SUCCESS)
 			result = ISC_R_FAILURE;
 	}
-	if (symtab != NULL)
-		isc_symtab_destroy(&symtab);
-	if (files != NULL)
-		isc_symtab_destroy(&files);
 
 	if (views != NULL && options != NULL) {
 		obj = NULL;
@@ -3529,6 +3866,14 @@ bind9_check_namedconf(const cfg_obj_t *config, isc_log_t *logctx,
 			}
 		}
 	}
+
+cleanup:
+	if (symtab != NULL)
+		isc_symtab_destroy(&symtab);
+	if (inview != NULL)
+		isc_symtab_destroy(&inview);
+	if (files != NULL)
+		isc_symtab_destroy(&files);
 
 	return (result);
 }

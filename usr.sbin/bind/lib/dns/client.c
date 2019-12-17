@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -625,7 +625,7 @@ dns_client_destroy(dns_client_t **clientp) {
 
 isc_result_t
 dns_client_setservers(dns_client_t *client, dns_rdataclass_t rdclass,
-		      dns_name_t *namespace, isc_sockaddrlist_t *addrs)
+		      dns_name_t *name_space, isc_sockaddrlist_t *addrs)
 {
 	isc_result_t result;
 	dns_view_t *view = NULL;
@@ -633,8 +633,8 @@ dns_client_setservers(dns_client_t *client, dns_rdataclass_t rdclass,
 	REQUIRE(DNS_CLIENT_VALID(client));
 	REQUIRE(addrs != NULL);
 
-	if (namespace == NULL)
-		namespace = dns_rootname;
+	if (name_space == NULL)
+		name_space = dns_rootname;
 
 	LOCK(&client->lock);
 	result = dns_viewlist_find(&client->viewlist, DNS_CLIENTVIEW_NAME,
@@ -645,7 +645,7 @@ dns_client_setservers(dns_client_t *client, dns_rdataclass_t rdclass,
 	}
 	UNLOCK(&client->lock);
 
-	result = dns_fwdtable_add(view->fwdtable, namespace, addrs,
+	result = dns_fwdtable_add(view->fwdtable, name_space, addrs,
 				  dns_fwdpolicy_only);
 
 	dns_view_detach(&view);
@@ -655,15 +655,15 @@ dns_client_setservers(dns_client_t *client, dns_rdataclass_t rdclass,
 
 isc_result_t
 dns_client_clearservers(dns_client_t *client, dns_rdataclass_t rdclass,
-			dns_name_t *namespace)
+			dns_name_t *name_space)
 {
 	isc_result_t result;
 	dns_view_t *view = NULL;
 
 	REQUIRE(DNS_CLIENT_VALID(client));
 
-	if (namespace == NULL)
-		namespace = dns_rootname;
+	if (name_space == NULL)
+		name_space = dns_rootname;
 
 	LOCK(&client->lock);
 	result = dns_viewlist_find(&client->viewlist, DNS_CLIENTVIEW_NAME,
@@ -674,7 +674,7 @@ dns_client_clearservers(dns_client_t *client, dns_rdataclass_t rdclass,
 	}
 	UNLOCK(&client->lock);
 
-	result = dns_fwdtable_delete(view->fwdtable, namespace);
+	result = dns_fwdtable_delete(view->fwdtable, name_space);
 
 	dns_view_detach(&view);
 
@@ -2940,6 +2940,17 @@ dns_client_startupdate(dns_client_t *client, dns_rdataclass_t rdclass,
 	*transp = (dns_clientupdatetrans_t *)uctx;
 	result = isc_app_ctxonrun(client->actx, client->mctx, client->task,
 				  startupdate, uctx);
+	if (result == ISC_R_ALREADYRUNNING) {
+		isc_event_t *event;
+		event = isc_event_allocate(client->mctx, dns_client_startupdate,
+					   DNS_EVENT_STARTUPDATE, startupdate,
+					   uctx, sizeof(*event));
+		if (event != NULL) {
+			result = ISC_R_SUCCESS;
+			isc_task_send(task, &event);
+		} else
+			result = ISC_R_NOMEMORY;
+	}
 	if (result == ISC_R_SUCCESS)
 		return (result);
 	*transp = NULL;

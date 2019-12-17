@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2008, 2010-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: httpd.c,v 1.1 2019/12/16 16:31:35 deraadt Exp $ */
+/* $Id: httpd.c,v 1.2 2019/12/17 01:46:34 sthen Exp $ */
 
 /*! \file */
 
@@ -916,8 +916,10 @@ isc_httpd_response(isc_httpd_t *httpd) {
 			return (result);
 	}
 
-	sprintf(isc_buffer_used(&httpd->headerbuffer), "%s %03u %s\r\n",
-		httpd->protocol, httpd->retcode, httpd->retmsg);
+	snprintf(isc_buffer_used(&httpd->headerbuffer),
+		 (int)isc_buffer_availablelength(&httpd->headerbuffer),
+		 "%s %03u %s\r\n", httpd->protocol, httpd->retcode,
+		 httpd->retmsg);
 	isc_buffer_add(&httpd->headerbuffer, needlen);
 
 	return (ISC_R_SUCCESS);
@@ -942,11 +944,13 @@ isc_httpd_addheader(isc_httpd_t *httpd, const char *name,
 	}
 
 	if (val != NULL)
-		sprintf(isc_buffer_used(&httpd->headerbuffer),
-			"%s: %s\r\n", name, val);
+		snprintf(isc_buffer_used(&httpd->headerbuffer),
+			 isc_buffer_availablelength(&httpd->headerbuffer),
+			 "%s: %s\r\n", name, val);
 	else
-		sprintf(isc_buffer_used(&httpd->headerbuffer),
-			"%s\r\n", name);
+		snprintf(isc_buffer_used(&httpd->headerbuffer),
+			 isc_buffer_availablelength(&httpd->headerbuffer),
+			 "%s\r\n", name);
 
 	isc_buffer_add(&httpd->headerbuffer, needlen);
 
@@ -963,7 +967,8 @@ isc_httpd_endheaders(isc_httpd_t *httpd) {
 			return (result);
 	}
 
-	sprintf(isc_buffer_used(&httpd->headerbuffer), "\r\n");
+	snprintf(isc_buffer_used(&httpd->headerbuffer),
+		 isc_buffer_availablelength(&httpd->headerbuffer), "\r\n");
 	isc_buffer_add(&httpd->headerbuffer, 2);
 
 	return (ISC_R_SUCCESS);
@@ -975,7 +980,7 @@ isc_httpd_addheaderuint(isc_httpd_t *httpd, const char *name, int val) {
 	unsigned int needlen;
 	char buf[sizeof "18446744073709551616"];
 
-	sprintf(buf, "%d", val);
+	snprintf(buf, sizeof(buf), "%d", val);
 
 	needlen = strlen(name); /* name itself */
 	needlen += 2 + strlen(buf); /* :<space> and val */
@@ -987,8 +992,9 @@ isc_httpd_addheaderuint(isc_httpd_t *httpd, const char *name, int val) {
 			return (result);
 	}
 
-	sprintf(isc_buffer_used(&httpd->headerbuffer),
-		"%s: %s\r\n", name, buf);
+	snprintf(isc_buffer_used(&httpd->headerbuffer),
+		 isc_buffer_availablelength(&httpd->headerbuffer),
+		 "%s: %s\r\n", name, buf);
 
 	isc_buffer_add(&httpd->headerbuffer, needlen);
 

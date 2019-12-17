@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,12 @@
 #include <config.h>
 
 #include <isc/safe.h>
+#include <isc/string.h>
 #include <isc/util.h>
+
+#ifdef WIN32
+#include <windows.h>
+#endif
 
 #ifdef _MSC_VER
 #pragma optimize("", off)
@@ -64,4 +69,18 @@ isc_safe_memcompare(const void *b1, const void *b2, size_t len) {
 	}
 
 	return (res);
+}
+
+void
+isc_safe_memwipe(void *ptr, size_t len) {
+	if (ISC_UNLIKELY(ptr == NULL || len == 0))
+		return;
+
+#ifdef WIN32
+	SecureZeroMemory(ptr, len);
+#elif HAVE_EXPLICIT_BZERO
+	explicit_bzero(ptr, len);
+#else
+	memset(ptr, 0, len);
+#endif
 }

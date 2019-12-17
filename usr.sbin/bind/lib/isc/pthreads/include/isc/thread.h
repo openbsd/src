@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2001  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: thread.h,v 1.2 2019/12/16 16:16:27 deraadt Exp $ */
+/* $Id: thread.h,v 1.3 2019/12/17 01:46:36 sthen Exp $ */
 
 #ifndef ISC_THREAD_H
 #define ISC_THREAD_H 1
@@ -23,6 +22,10 @@
 /*! \file */
 
 #include <pthread.h>
+
+#if defined(HAVE_PTHREAD_NP_H)
+#include <pthread_np.h>
+#endif
 
 #include <isc/lang.h>
 #include <isc/result.h>
@@ -43,6 +46,9 @@ isc_thread_setconcurrency(unsigned int level);
 
 void
 isc_thread_yield(void);
+
+void
+isc_thread_setname(isc_thread_t thread, const char *name);
 
 /* XXX We could do fancier error handling... */
 

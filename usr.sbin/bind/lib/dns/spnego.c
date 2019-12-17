@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -250,16 +250,16 @@ der_get_oid(const unsigned char *p, size_t len,
 	    oid * data, size_t * size);
 static int
 der_get_tag(const unsigned char *p, size_t len,
-	    Der_class * class, Der_type * type,
+	    Der_class * xclass, Der_type * type,
 	    int *tag, size_t * size);
 
 static int
 der_match_tag(const unsigned char *p, size_t len,
-	      Der_class class, Der_type type,
+	      Der_class xclass, Der_type type,
 	      int tag, size_t * size);
 static int
 der_match_tag_and_length(const unsigned char *p, size_t len,
-			 Der_class class, Der_type type, int tag,
+			 Der_class xclass, Der_type type, int tag,
 			 size_t * length_ret, size_t * size);
 
 static int
@@ -285,7 +285,7 @@ static int
 der_put_oid(unsigned char *p, size_t len,
 	    const oid * data, size_t * size);
 static int
-der_put_tag(unsigned char *p, size_t len, Der_class class, Der_type type,
+der_put_tag(unsigned char *p, size_t len, Der_class xclass, Der_type type,
 	    int tag, size_t *);
 static int
 der_put_length_and_tag(unsigned char *, size_t, size_t,
@@ -319,35 +319,39 @@ fix_dce(size_t reallen, size_t * len);
 
 #include "spnego_asn1.c"
 
-static unsigned char gss_krb5_mech_oid_bytes[] = {
-	0x2a, 0x86, 0x48, 0x86, 0xf7, 0x12, 0x01, 0x02, 0x02
+/*
+ * Force the oid arrays to be isc_uint64_t aligned to silence warnings
+ * about the arrays not being properly aligned for (void *).
+ */
+typedef union { unsigned char b[8]; isc_uint64_t _align; } aligned8;
+typedef union { unsigned char b[16]; isc_uint64_t _align[2]; } aligned16;
+
+static aligned16 gss_krb5_mech_oid_bytes = {
+	{ 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x12, 0x01, 0x02, 0x02 }
 };
 
 static gss_OID_desc gss_krb5_mech_oid_desc = {
-	sizeof(gss_krb5_mech_oid_bytes),
-	gss_krb5_mech_oid_bytes
+	9, gss_krb5_mech_oid_bytes.b
 };
 
 static gss_OID GSS_KRB5_MECH = &gss_krb5_mech_oid_desc;
 
-static unsigned char gss_mskrb5_mech_oid_bytes[] = {
-	0x2a, 0x86, 0x48, 0x82, 0xf7, 0x12, 0x01, 0x02, 0x02
+static aligned16 gss_mskrb5_mech_oid_bytes = {
+	{ 0x2a, 0x86, 0x48, 0x82, 0xf7, 0x12, 0x01, 0x02, 0x02 }
 };
 
 static gss_OID_desc gss_mskrb5_mech_oid_desc = {
-	sizeof(gss_mskrb5_mech_oid_bytes),
-	gss_mskrb5_mech_oid_bytes
+	9, gss_mskrb5_mech_oid_bytes.b
 };
 
 static gss_OID GSS_MSKRB5_MECH = &gss_mskrb5_mech_oid_desc;
 
-static unsigned char gss_spnego_mech_oid_bytes[] = {
-	0x2b, 0x06, 0x01, 0x05, 0x05, 0x02
+static aligned8 gss_spnego_mech_oid_bytes = {
+	{ 0x2b, 0x06, 0x01, 0x05, 0x05, 0x02 }
 };
 
 static gss_OID_desc gss_spnego_mech_oid_desc = {
-	sizeof(gss_spnego_mech_oid_bytes),
-	gss_spnego_mech_oid_bytes
+	6, gss_spnego_mech_oid_bytes.b
 };
 
 static gss_OID GSS_SPNEGO_MECH = &gss_spnego_mech_oid_desc;
@@ -866,20 +870,20 @@ der_get_octet_string(const unsigned char *p, size_t len,
 }
 
 static int
-der_get_oid(const unsigned char *p, size_t len,
-	    oid *data, size_t *size)
-{
+der_get_oid(const unsigned char *p, size_t len, oid *data, size_t *size) {
 	int n;
 	size_t oldlen = len;
 
 	data->components = NULL;
 	data->length = 0;
-	if (len < 1U)
+	if (len < 1U) {
 		return (ASN1_OVERRUN);
+	}
 
 	data->components = malloc(len * sizeof(*data->components));
-	if (data->components == NULL && len != 0U)
+	if (data->components == NULL) {
 		return (ENOMEM);
+	}
 	data->components[0] = (*p) / 40;
 	data->components[1] = (*p) % 40;
 	--len;
@@ -898,19 +902,20 @@ der_get_oid(const unsigned char *p, size_t len,
 		return (ASN1_OVERRUN);
 	}
 	data->length = n;
-	if (size)
+	if (size) {
 		*size = oldlen;
+	}
 	return (0);
 }
 
 static int
 der_get_tag(const unsigned char *p, size_t len,
-	    Der_class *class, Der_type *type,
+	    Der_class *xclass, Der_type *type,
 	    int *tag, size_t *size)
 {
 	if (len < 1U)
 		return (ASN1_OVERRUN);
-	*class = (Der_class) (((*p) >> 6) & 0x03);
+	*xclass = (Der_class) (((*p) >> 6) & 0x03);
 	*type = (Der_type) (((*p) >> 5) & 0x01);
 	*tag = (*p) & 0x1F;
 	if (size)
@@ -920,7 +925,7 @@ der_get_tag(const unsigned char *p, size_t len,
 
 static int
 der_match_tag(const unsigned char *p, size_t len,
-	      Der_class class, Der_type type,
+	      Der_class xclass, Der_type type,
 	      int tag, size_t *size)
 {
 	size_t l;
@@ -932,7 +937,7 @@ der_match_tag(const unsigned char *p, size_t len,
 	e = der_get_tag(p, len, &thisclass, &thistype, &thistag, &l);
 	if (e)
 		return (e);
-	if (class != thisclass || type != thistype)
+	if (xclass != thisclass || type != thistype)
 		return (ASN1_BAD_ID);
 	if (tag > thistag)
 		return (ASN1_MISPLACED_FIELD);
@@ -945,13 +950,13 @@ der_match_tag(const unsigned char *p, size_t len,
 
 static int
 der_match_tag_and_length(const unsigned char *p, size_t len,
-			 Der_class class, Der_type type, int tag,
+			 Der_class xclass, Der_type type, int tag,
 			 size_t *length_ret, size_t *size)
 {
 	size_t l, ret = 0;
 	int e;
 
-	e = der_match_tag(p, len, class, type, tag, &l);
+	e = der_match_tag(p, len, xclass, type, tag, &l);
 	if (e)
 		return (e);
 	p += l;
@@ -1165,6 +1170,7 @@ der_put_int(unsigned char *p, size_t len, int val, size_t *size)
 				return (ASN1_OVERFLOW);
 			*p-- = 0;
 			len--;
+			POST(len);
 		}
 	} else {
 		val = ~val;
@@ -1180,6 +1186,7 @@ der_put_int(unsigned char *p, size_t len, int val, size_t *size)
 				return (ASN1_OVERFLOW);
 			*p-- = 0xff;
 			len--;
+			POST(len);
 		}
 	}
 	*size = base - p;
@@ -1254,19 +1261,19 @@ der_put_oid(unsigned char *p, size_t len,
 }
 
 static int
-der_put_tag(unsigned char *p, size_t len, Der_class class, Der_type type,
+der_put_tag(unsigned char *p, size_t len, Der_class xclass, Der_type type,
 	    int tag, size_t *size)
 {
 	if (len < 1U)
 		return (ASN1_OVERFLOW);
-	*p = (class << 6) | (type << 5) | tag;	/* XXX */
+	*p = (xclass << 6) | (type << 5) | tag;	/* XXX */
 	*size = 1;
 	return (0);
 }
 
 static int
 der_put_length_and_tag(unsigned char *p, size_t len, size_t len_val,
-		       Der_class class, Der_type type, int tag, size_t *size)
+		       Der_class xclass, Der_type type, int tag, size_t *size)
 {
 	size_t ret = 0;
 	size_t l;
@@ -1278,7 +1285,7 @@ der_put_length_and_tag(unsigned char *p, size_t len, size_t len_val,
 	p -= l;
 	len -= l;
 	ret += l;
-	e = der_put_tag(p, len, class, type, tag, &l);
+	e = der_put_tag(p, len, xclass, type, tag, &l);
 	if (e)
 		return (e);
 	p -= l;

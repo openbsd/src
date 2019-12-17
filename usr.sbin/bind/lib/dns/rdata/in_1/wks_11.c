@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2007, 2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: wks_11.c,v 1.6 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: wks_11.c,v 1.7 2019/12/17 01:46:34 sthen Exp $ */
 
 /* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 
@@ -28,6 +27,16 @@
 #include <isc/net.h>
 #include <isc/netdb.h>
 #include <isc/once.h>
+
+/*
+ * Redefine CHECK here so cppcheck "sees" the define.
+ */
+#ifndef CHECK
+#define CHECK(op)						\
+	do { result = (op);					\
+		if (result != ISC_R_SUCCESS) goto cleanup;	\
+	} while (0)
+#endif
 
 #define RRTYPE_WKS_ATTRIBUTES (0)
 
@@ -208,7 +217,7 @@ totext_in_wks(ARGS_TOTEXT) {
 	isc_region_consume(&sr, 4);
 
 	proto = uint8_fromregion(&sr);
-	sprintf(buf, "%u", proto);
+	snprintf(buf, sizeof(buf), "%u", proto);
 	RETERR(str_totext(" ", target));
 	RETERR(str_totext(buf, target));
 	isc_region_consume(&sr, 1);
@@ -218,7 +227,8 @@ totext_in_wks(ARGS_TOTEXT) {
 		if (sr.base[i] != 0)
 			for (j = 0; j < 8; j++)
 				if ((sr.base[i] & (0x80 >> j)) != 0) {
-					sprintf(buf, "%u", i * 8 + j);
+					snprintf(buf, sizeof(buf),
+						 "%u", i * 8 + j);
 					RETERR(str_totext(" ", target));
 					RETERR(str_totext(buf, target));
 				}

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2002  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: region.c,v 1.2 2019/12/16 16:16:26 deraadt Exp $ */
+/* $Id: region.c,v 1.3 2019/12/17 01:46:34 sthen Exp $ */
 
 /*! \file */
 
@@ -34,7 +33,7 @@ isc_region_compare(isc_region_t *r1, isc_region_t *r2) {
 
 	REQUIRE(r1 != NULL);
 	REQUIRE(r2 != NULL);
-	       
+
 	l = (r1->length < r2->length) ? r1->length : r2->length;
 
 	if ((result = memcmp(r1->base, r2->base, l)) != 0)

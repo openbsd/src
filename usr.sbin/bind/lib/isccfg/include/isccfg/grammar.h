@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2011, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2002, 2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: grammar.h,v 1.2 2019/12/16 16:16:28 deraadt Exp $ */
+/* $Id: grammar.h,v 1.3 2019/12/17 01:46:38 sthen Exp $ */
 
 #ifndef ISCCFG_GRAMMAR_H
 #define ISCCFG_GRAMMAR_H 1
@@ -57,6 +56,8 @@
 #define CFG_CLAUSEFLAG_NOTCONFIGURED	0x00000080
 /*% A option for a experimental feature. */
 #define CFG_CLAUSEFLAG_EXPERIMENTAL	0x00000100
+/*% Clause is obsolete in a future release */
+#define CFG_CLAUSEFLAG_DEPRECATED	0x00000400
 
 typedef struct cfg_clausedef cfg_clausedef_t;
 typedef struct cfg_tuplefielddef cfg_tuplefielddef_t;
@@ -235,6 +236,7 @@ struct cfg_parser {
 
 /* Parser context flags */
 #define CFG_PCTX_SKIP		0x1
+#define CFG_PCTX_NODEPRECATED	0x2
 
 /*@{*/
 /*%

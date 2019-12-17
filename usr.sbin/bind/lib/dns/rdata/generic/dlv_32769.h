@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2006, 2007, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dlv_32769.h,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: dlv_32769.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
 
 /* draft-ietf-dnsext-delegation-signer-05.txt */
 #ifndef GENERIC_DLV_32769_H

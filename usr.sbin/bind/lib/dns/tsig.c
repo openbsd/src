@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +15,7 @@
  */
 
 /*
- * $Id: tsig.c,v 1.7 2019/12/16 16:16:24 deraadt Exp $
+ * $Id: tsig.c,v 1.8 2019/12/17 01:46:32 sthen Exp $
  */
 /*! \file */
 #include <config.h>
@@ -76,34 +75,31 @@
 	 (algname) != dns_tsig_gssapims_name)
 #endif
 
+#ifndef DNS_NAME_INITABSOLUTE
+#define DNS_NAME_INITABSOLUTE(A,B) { \
+	DNS_NAME_MAGIC, \
+	A, sizeof(A), sizeof(B), \
+	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE, \
+	B, NULL, { (void *)-1, (void *)-1}, \
+	{NULL, NULL} \
+}
+#endif
+
 #define BADTIMELEN 6
 
 #ifndef PK11_MD5_DISABLE
 static unsigned char hmacmd5_ndata[] = "\010hmac-md5\007sig-alg\003reg\003int";
 static unsigned char hmacmd5_offsets[] = { 0, 9, 17, 21, 25 };
 
-static dns_name_t hmacmd5 = {
-	DNS_NAME_MAGIC,
-	hmacmd5_ndata, 26, 5,
-	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
-	hmacmd5_offsets, NULL,
-	{(void *)-1, (void *)-1},
-	{NULL, NULL}
-};
-
+static dns_name_t hmacmd5 =
+	DNS_NAME_INITABSOLUTE(hmacmd5_ndata, hmacmd5_offsets);
 LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_hmacmd5_name = &hmacmd5;
 #endif
 
 static unsigned char gsstsig_ndata[] = "\010gss-tsig";
 static unsigned char gsstsig_offsets[] = { 0, 9 };
-static dns_name_t gsstsig = {
-	DNS_NAME_MAGIC,
-	gsstsig_ndata, 10, 2,
-	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
-	gsstsig_offsets, NULL,
-	{(void *)-1, (void *)-1},
-	{NULL, NULL}
-};
+static dns_name_t gsstsig =
+	DNS_NAME_INITABSOLUTE(gsstsig_ndata, gsstsig_offsets);
 LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_gssapi_name = &gsstsig;
 
 /*
@@ -112,84 +108,38 @@ LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_gssapi_name = &gsstsig;
  */
 static unsigned char gsstsigms_ndata[] = "\003gss\011microsoft\003com";
 static unsigned char gsstsigms_offsets[] = { 0, 4, 14, 18 };
-static dns_name_t gsstsigms = {
-	DNS_NAME_MAGIC,
-	gsstsigms_ndata, 19, 4,
-	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
-	gsstsigms_offsets, NULL,
-	{(void *)-1, (void *)-1},
-	{NULL, NULL}
-};
+static dns_name_t gsstsigms =
+	DNS_NAME_INITABSOLUTE(gsstsigms_ndata, gsstsigms_offsets);
 LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_gssapims_name = &gsstsigms;
 
 static unsigned char hmacsha1_ndata[] = "\011hmac-sha1";
 static unsigned char hmacsha1_offsets[] = { 0, 10 };
-
-static dns_name_t  hmacsha1 = {
-	DNS_NAME_MAGIC,
-	hmacsha1_ndata, 11, 2,
-	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
-	hmacsha1_offsets, NULL,
-	{(void *)-1, (void *)-1},
-	{NULL, NULL}
-};
-
+static dns_name_t hmacsha1 =
+	DNS_NAME_INITABSOLUTE(hmacsha1_ndata, hmacsha1_offsets);
 LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_hmacsha1_name = &hmacsha1;
 
 static unsigned char hmacsha224_ndata[] = "\013hmac-sha224";
 static unsigned char hmacsha224_offsets[] = { 0, 12 };
-
-static dns_name_t hmacsha224 = {
-	DNS_NAME_MAGIC,
-	hmacsha224_ndata, 13, 2,
-	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
-	hmacsha224_offsets, NULL,
-	{(void *)-1, (void *)-1},
-	{NULL, NULL}
-};
-
+static dns_name_t hmacsha224 =
+	DNS_NAME_INITABSOLUTE(hmacsha224_ndata, hmacsha224_offsets);
 LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_hmacsha224_name = &hmacsha224;
 
 static unsigned char hmacsha256_ndata[] = "\013hmac-sha256";
 static unsigned char hmacsha256_offsets[] = { 0, 12 };
-
-static dns_name_t hmacsha256 = {
-	DNS_NAME_MAGIC,
-	hmacsha256_ndata, 13, 2,
-	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
-	hmacsha256_offsets, NULL,
-	{(void *)-1, (void *)-1},
-	{NULL, NULL}
-};
-
+static dns_name_t hmacsha256 =
+	DNS_NAME_INITABSOLUTE(hmacsha256_ndata, hmacsha256_offsets);
 LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_hmacsha256_name = &hmacsha256;
 
 static unsigned char hmacsha384_ndata[] = "\013hmac-sha384";
 static unsigned char hmacsha384_offsets[] = { 0, 12 };
-
-static dns_name_t hmacsha384 = {
-	DNS_NAME_MAGIC,
-	hmacsha384_ndata, 13, 2,
-	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
-	hmacsha384_offsets, NULL,
-	{(void *)-1, (void *)-1},
-	{NULL, NULL}
-};
-
+static dns_name_t hmacsha384 =
+	DNS_NAME_INITABSOLUTE(hmacsha384_ndata, hmacsha384_offsets);
 LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_hmacsha384_name = &hmacsha384;
 
 static unsigned char hmacsha512_ndata[] = "\013hmac-sha512";
 static unsigned char hmacsha512_offsets[] = { 0, 12 };
-
-static dns_name_t hmacsha512 = {
-	DNS_NAME_MAGIC,
-	hmacsha512_ndata, 13, 2,
-	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE,
-	hmacsha512_offsets, NULL,
-	{(void *)-1, (void *)-1},
-	{NULL, NULL}
-};
-
+static dns_name_t hmacsha512 =
+	DNS_NAME_INITABSOLUTE(hmacsha512_ndata, hmacsha512_offsets);
 LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_hmacsha512_name = &hmacsha512;
 
 static isc_result_t
@@ -213,28 +163,31 @@ tsig_log(dns_tsigkey_t *key, int level, const char *fmt, ...) {
 
 	if (isc_log_wouldlog(dns_lctx, level) == ISC_FALSE)
 		return;
-	if (key != NULL)
+	if (key != NULL) {
 		dns_name_format(&key->name, namestr, sizeof(namestr));
-	else
-		strcpy(namestr, "<null>");
+	} else {
+		strlcpy(namestr, "<null>", sizeof(namestr));
+	}
 
-	if (key != NULL && key->generated && key->creator)
+	if (key != NULL && key->generated && key->creator) {
 		dns_name_format(key->creator, creatorstr, sizeof(creatorstr));
-	else
-		strcpy(creatorstr, "<null>");
+	} else {
+		strlcpy(creatorstr, "<null>", sizeof(creatorstr));
+	}
 
 	va_start(ap, fmt);
 	vsnprintf(message, sizeof(message), fmt, ap);
 	va_end(ap);
-	if (key != NULL && key->generated)
+	if (key != NULL && key->generated) {
 		isc_log_write(dns_lctx,
 			      DNS_LOGCATEGORY_DNSSEC, DNS_LOGMODULE_TSIG,
 			      level, "tsig key '%s' (%s): %s",
 			      namestr, creatorstr, message);
-	else
+	} else {
 		isc_log_write(dns_lctx,
 			      DNS_LOGCATEGORY_DNSSEC, DNS_LOGMODULE_TSIG,
 			      level, "tsig key '%s': %s", namestr, message);
+	}
 }
 
 static void
@@ -980,7 +933,6 @@ dns_tsig_sign(dns_message_t *msg) {
 		 * has validated at this point. This is why we include a
 		 * MAC length > 0 in the reply.
 		 */
-
 		ret = dst_context_create3(key->key, mctx,
 					  DNS_LOGCATEGORY_DNSSEC,
 					  ISC_TRUE, &ctx);
@@ -992,6 +944,8 @@ dns_tsig_sign(dns_message_t *msg) {
 		 */
 		if (response) {
 			dns_rdata_t querytsigrdata = DNS_RDATA_INIT;
+
+			INSIST(msg->verified_sig);
 
 			ret = dns_rdataset_first(msg->querytsig);
 			if (ret != ISC_R_SUCCESS)
@@ -1484,6 +1438,7 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 		} else if (ret != ISC_R_SUCCESS) {
 			goto cleanup_context;
 		}
+		msg->verified_sig = 1;
 	} else if (tsig.error != dns_tsigerror_badsig &&
 		   tsig.error != dns_tsigerror_badkey) {
 		tsig_log(msg->tsigkey, 2, "signature was empty");
@@ -1561,7 +1516,6 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 	}
 
 	msg->tsigstatus = dns_rcode_noerror;
-	msg->verified_sig = 1;
 	ret = ISC_R_SUCCESS;
 
  cleanup_context:
@@ -1728,13 +1682,13 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 		addcount_n = ntohs(addcount);
 		addcount = htons((isc_uint16_t)(addcount_n - 1));
 		memmove(&header[DNS_MESSAGE_HEADERLEN - 2], &addcount, 2);
-	}
 
-	/*
-	 * Put in the original id.
-	 */
-	/* XXX Can TCP transfers be forwarded?  How would that work? */
-	if (has_tsig) {
+		/*
+		 * Put in the original id.
+		 *
+		 * XXX Can TCP transfers be forwarded?  How would that
+		 * work?
+		 */
 		id = htons(tsig.originalid);
 		memmove(&header[0], &id, 2);
 	}
@@ -1800,6 +1754,7 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 		} else if (ret != ISC_R_SUCCESS) {
 			goto cleanup_context;
 		}
+		msg->verified_sig = 1;
 
 		/*
 		 * Here at this point, the MAC has been verified. Even
@@ -1887,7 +1842,6 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 	}
 
 	msg->tsigstatus = dns_rcode_noerror;
-	msg->verified_sig = 1;
 	ret = ISC_R_SUCCESS;
 
  cleanup_context:

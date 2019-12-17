@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,40 +14,40 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lwpacket.c,v 1.2 2019/12/16 16:16:28 deraadt Exp $ */
+/* $Id: lwpacket.c,v 1.3 2019/12/17 01:46:38 sthen Exp $ */
 
 /*! \file */
 
 /**
  *    These functions rely on a struct lwres_lwpacket which is defined in
  *    \link lwpacket.h lwres/lwpacket.h.\endlink
- * 
- *    The following opcodes are currently defined:   
- * 
+ *
+ *    The following opcodes are currently defined:
+ *
  * \li   #LWRES_OPCODE_NOOP
  *           Success is always returned and the packet contents are
  *           echoed. The \link lwres_noop.c lwres_noop_*()\endlink functions should be used for this
  *           type.
- * 
+ *
  * \li   #LWRES_OPCODE_GETADDRSBYNAME
  *           returns all known addresses for a given name. The
  *           \link lwres_gabn.c lwres_gabn_*()\endlink functions should be used for this type.
- * 
+ *
  * \li   #LWRES_OPCODE_GETNAMEBYADDR
  *           return the hostname for the given address. The
- *           \link lwres_gnba.c lwres_gnba_*() \endlink functions should be used for this type.     
- * 
+ *           \link lwres_gnba.c lwres_gnba_*() \endlink functions should be used for this type.
+ *
  *    lwres_lwpacket_renderheader() transfers the contents of lightweight
  *    resolver packet structure #lwres_lwpacket_t *pkt in network byte
  *    order to the lightweight resolver buffer, *b.
- * 
+ *
  *    lwres_lwpacket_parseheader() performs the converse operation. It
  *    transfers data in network byte order from buffer *b to resolver
- *    packet *pkt. The contents of the buffer b should correspond to a   
+ *    packet *pkt. The contents of the buffer b should correspond to a
  *    #lwres_lwpacket_t.
- * 
+ *
  * \section lwpacket_return Return Values
- * 
+ *
  *    Successful calls to lwres_lwpacket_renderheader() and
  *    lwres_lwpacket_parseheader() return #LWRES_R_SUCCESS. If there is
  *    insufficient space to copy data between the buffer *b and

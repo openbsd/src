@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2010, 2012-2017  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rootns.c,v 1.9 2019/12/16 16:16:24 deraadt Exp $ */
+/* $Id: rootns.c,v 1.10 2019/12/17 01:46:32 sthen Exp $ */
 
 /*! \file */
 
@@ -61,7 +60,7 @@ static char root_ns[] =
 ".                       518400  IN      NS      M.ROOT-SERVERS.NET.\n"
 "A.ROOT-SERVERS.NET.     3600000 IN      A       198.41.0.4\n"
 "A.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:503:BA3E::2:30\n"
-"B.ROOT-SERVERS.NET.     3600000 IN      A       192.228.79.201\n"
+"B.ROOT-SERVERS.NET.     3600000 IN      A       199.9.14.201\n"
 "B.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:200::b\n"
 "C.ROOT-SERVERS.NET.     3600000 IN      A       192.33.4.12\n"
 "C.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:2::c\n"
@@ -131,7 +130,7 @@ check_node(dns_rdataset_t *rootns, dns_name_t *name,
 		case dns_rdatatype_ns:
 			if (dns_name_compare(name, dns_rootname) == 0)
 				break;
-			/*FALLTHROUGH*/
+			/* FALLTHROUGH */
 		default:
 			result = ISC_R_FAILURE;
 			goto cleanup;

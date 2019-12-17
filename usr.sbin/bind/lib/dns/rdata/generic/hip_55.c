@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2011, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hip_55.c,v 1.1 2019/12/16 16:31:34 deraadt Exp $ */
+/* $Id: hip_55.c,v 1.2 2019/12/17 01:46:33 sthen Exp $ */
 
 /* reviewed: TBC */
 
@@ -148,7 +148,7 @@ totext_hip(ARGS_TOTEXT) {
 	/*
 	 * Algorithm
 	 */
-	sprintf(buf, "%u ", algorithm);
+	snprintf(buf, sizeof(buf), "%u ", algorithm);
 	RETERR(str_totext(buf, target));
 
 	/*

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -3685,12 +3684,14 @@ dns_dispatch_importrecv(dns_dispatch_t *disp, isc_event_t *event) {
 	isc_socketevent_t *sevent, *newsevent;
 
 	REQUIRE(VALID_DISPATCH(disp));
-	REQUIRE((disp->attributes & DNS_DISPATCHATTR_NOLISTEN) != 0);
 	REQUIRE(event != NULL);
 
-	sevent = (isc_socketevent_t *)event;
+	if ((disp->attributes & DNS_DISPATCHATTR_NOLISTEN) == 0)
+		return;
 
+	sevent = (isc_socketevent_t *)event;
 	INSIST(sevent->n <= disp->mgr->buffersize);
+
 	newsevent = (isc_socketevent_t *)
 		    isc_event_allocate(disp->mgr->mctx, NULL,
 				      DNS_EVENT_IMPORTRECVDONE, udp_shrecv,

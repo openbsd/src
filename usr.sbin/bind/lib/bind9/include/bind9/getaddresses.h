@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2001  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: getaddresses.h,v 1.2 2019/12/16 16:16:24 deraadt Exp $ */
+/* $Id: getaddresses.h,v 1.3 2019/12/17 01:46:31 sthen Exp $ */
 
 #ifndef BIND9_GETADDRESSES_H
 #define BIND9_GETADDRESSES_H 1
@@ -52,7 +51,7 @@ bind9_getaddresses(const char *hostname, in_port_t port,
  * Returns:
  *\li	#ISC_R_SUCCESS
  *\li	#ISC_R_NOTFOUND
- *\li	#ISC_R_NOFAMILYSUPPORT - 'hostname' is an IPv6 address, and IPv6 is
+ *\li	#ISC_R_FAMILYNOSUPPORT - 'hostname' is an IPv6 address, and IPv6 is
  *		not supported.
  */
 

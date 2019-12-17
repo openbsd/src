@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: client.h,v 1.1 2019/12/16 16:31:33 deraadt Exp $ */
+/* $Id: client.h,v 1.2 2019/12/17 01:46:32 sthen Exp $ */
 
 #ifndef DNS_CLIENT_H
 #define DNS_CLIENT_H 1
@@ -218,22 +218,22 @@ dns_client_destroy(dns_client_t **clientp);
 
 isc_result_t
 dns_client_setservers(dns_client_t *client, dns_rdataclass_t rdclass,
-		      dns_name_t *namespace, isc_sockaddrlist_t *addrs);
+		      dns_name_t *name_space, isc_sockaddrlist_t *addrs);
 /*%<
  * Specify a list of addresses of recursive name servers that the client will
  * use for name resolution.  A view for the 'rdclass' class must be created
- * beforehand.  If 'namespace' is non NULL, the specified server will be used
- * if and only if the query name is a subdomain of 'namespace'.  When servers
- * for multiple 'namespace's are provided, and a query name is covered by
- * more than one 'namespace', the servers for the best (longest) matching
- * namespace will be used.  If 'namespace' is NULL, it works as if
+ * beforehand.  If 'name_space' is non NULL, the specified server will be used
+ * if and only if the query name is a subdomain of 'name_space'.  When servers
+ * for multiple 'name_space's are provided, and a query name is covered by
+ * more than one 'name_space', the servers for the best (longest) matching
+ * name_space will be used.  If 'name_space' is NULL, it works as if
  * dns_rootname (.) were specified.
  *
  * Requires:
  *
  *\li	'client' is a valid client.
  *
- *\li	'namespace' is NULL or a valid name.
+ *\li	'name_space' is NULL or a valid name.
  *
  *\li	'addrs' != NULL.
  *
@@ -246,17 +246,17 @@ dns_client_setservers(dns_client_t *client, dns_rdataclass_t rdclass,
 
 isc_result_t
 dns_client_clearservers(dns_client_t *client, dns_rdataclass_t rdclass,
-			dns_name_t *namespace);
+			dns_name_t *name_space);
 /*%<
- * Remove configured recursive name servers for the 'rdclass' and 'namespace'
+ * Remove configured recursive name servers for the 'rdclass' and 'name_space'
  * from the client.  See the description of dns_client_setservers() for
- * the requirements about 'rdclass' and 'namespace'.
+ * the requirements about 'rdclass' and 'name_space'.
  *
  * Requires:
  *
  *\li	'client' is a valid client.
  *
- *\li	'namespace' is NULL or a valid name.
+ *\li	'name_space' is NULL or a valid name.
  *
  * Returns:
  *
@@ -269,10 +269,10 @@ isc_result_t
 dns_client_setdlv(dns_client_t *client, dns_rdataclass_t rdclass,
 		  const char *dlvname);
 /*%<
- * Specify a name to use for DNSSEC lookaside validation (e.g.,
- * "dlv.isc.org"). If a trusted key has been added for that name,
- * then DLV will be used during validation.  If 'dlvname' is NULL,
- * then DLV will no longer be used for this client.
+ * Specify a name to use for DNSSEC lookaside validation.
+ * If a trusted key has been added for that name, then DLV will be
+ * used during validation.  If 'dlvname' is NULL, then DLV will no
+ * longer be used for this client.
  *
  * Requires:
  *

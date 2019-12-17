@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: key_25.c,v 1.5 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: key_25.c,v 1.6 2019/12/17 01:46:33 sthen Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -94,7 +93,7 @@ generic_totext_key(ARGS_TOTEXT) {
 	/* flags */
 	flags = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
-	sprintf(buf, "%u", flags);
+	snprintf(buf, sizeof(buf), "%u", flags);
 	RETERR(str_totext(buf, target));
 	RETERR(str_totext(" ", target));
 	if ((flags & DNS_KEYFLAG_KSK) != 0) {
@@ -107,14 +106,14 @@ generic_totext_key(ARGS_TOTEXT) {
 
 
 	/* protocol */
-	sprintf(buf, "%u", sr.base[0]);
+	snprintf(buf, sizeof(buf), "%u", sr.base[0]);
 	isc_region_consume(&sr, 1);
 	RETERR(str_totext(buf, target));
 	RETERR(str_totext(" ", target));
 
 	/* algorithm */
 	algorithm = sr.base[0];
-	sprintf(buf, "%u", algorithm);
+	snprintf(buf, sizeof(buf), "%u", algorithm);
 	isc_region_consume(&sr, 1);
 	RETERR(str_totext(buf, target));
 
@@ -170,7 +169,8 @@ generic_totext_key(ARGS_TOTEXT) {
 		RETERR(str_totext(algbuf, target));
 		RETERR(str_totext(" ; key id = ", target));
 		dns_rdata_toregion(rdata, &tmpr);
-		sprintf(buf, "%u", dst_region_computeid(&tmpr, algorithm));
+		snprintf(buf, sizeof(buf), "%u",
+			 dst_region_computeid(&tmpr, algorithm));
 		RETERR(str_totext(buf, target));
 	}
 	return (ISC_R_SUCCESS);

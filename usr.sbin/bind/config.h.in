@@ -1,7 +1,6 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: config.h.in,v 1.10 2019/12/16 16:16:22 deraadt Exp $ */
+/* $Id: config.h.in,v 1.11 2019/12/17 01:46:30 sthen Exp $ */
 
 /*! \file */
 
@@ -216,9 +215,6 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the `dlclose' function. */
 #undef HAVE_DLCLOSE
 
-/* Define to 1 if you have the <dlfcn.h> header file. */
-#undef HAVE_DLFCN_H
-
 /* Define to 1 if you have the `dlopen' function. */
 #undef HAVE_DLOPEN
 
@@ -243,8 +239,14 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the `EVP_sha512' function. */
 #undef HAVE_EVP_SHA512
 
+/* Define to 1 if you have the `explicit_bzero' function. */
+#undef HAVE_EXPLICIT_BZERO
+
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
+
+/* Define if OpenSSL provides FIPS_mode() */
+#undef HAVE_FIPS_MODE
 
 /* Define to 1 if you have the `fseeko' function. */
 #undef HAVE_FSEEKO
@@ -372,6 +374,12 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if your OpenSSL version supports ECDSA. */
 #undef HAVE_OPENSSL_ECDSA
 
+/* Define if your OpenSSL version supports Ed25519. */
+#undef HAVE_OPENSSL_ED25519
+
+/* Define if your OpenSSL version supports Ed448. */
+#undef HAVE_OPENSSL_ED448
+
 /* Define if your OpenSSL version supports EVP AES */
 #undef HAVE_OPENSSL_EVP_AES
 
@@ -381,11 +389,26 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if your PKCS11 provider supports ECDSA. */
 #undef HAVE_PKCS11_ECDSA
 
+/* Define if your PKCS11 provider supports Ed25519. */
+#undef HAVE_PKCS11_ED25519
+
+/* Define if your PKCS11 provider supports Ed448. */
+#undef HAVE_PKCS11_ED448
+
 /* Define if your PKCS11 provider supports GOST. */
 #undef HAVE_PKCS11_GOST
 
 /* Support for PTHREAD_MUTEX_ADAPTIVE_NP */
 #undef HAVE_PTHREAD_MUTEX_ADAPTIVE_NP
+
+/* Define to 1 if you have the <pthread_np.h> header file. */
+#undef HAVE_PTHREAD_NP_H
+
+/* Define to 1 if you have the `pthread_setname_np' function. */
+#undef HAVE_PTHREAD_SETNAME_NP
+
+/* Define to 1 if you have the `pthread_set_name_np' function. */
+#undef HAVE_PTHREAD_SET_NAME_NP
 
 /* Define to 1 if you have the `pthread_yield' function. */
 #undef HAVE_PTHREAD_YIELD
@@ -509,10 +532,6 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to allow building of objects for dlopen(). */
 #undef ISC_DLZ_DLOPEN
-
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
-#undef LT_OBJDIR
 
 /* Defined if extern char *optarg is not declared. */
 #undef NEED_OPTARG

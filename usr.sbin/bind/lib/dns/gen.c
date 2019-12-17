@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2009, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -548,7 +547,7 @@ main(int argc, char **argv) {
 	for (i = 0; i < TYPENAMES; i++)
 		memset(&typenames[i], 0, sizeof(typenames[i]));
 
-	strcpy(srcdir, "");
+	srcdir[0] = '\0';
 	while ((c = isc_commandline_parse(argc, argv, "cdits:F:P:S:")) != -1)
 		switch (c) {
 		case 'c':
@@ -643,7 +642,8 @@ main(int argc, char **argv) {
 	} else
 		year[0] = 0;
 
-	if (!depend) fprintf(stdout, copyright, year);
+	if (!depend)
+		fprintf(stdout, copyright, year);
 
 	if (code) {
 		fputs("#ifndef DNS_CODE_H\n", stdout);

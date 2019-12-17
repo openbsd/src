@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -103,7 +103,7 @@ totext_caa(ARGS_TOTEXT) {
 	 * Flags
 	 */
 	flags = uint8_consume_fromregion(&region);
-	sprintf(buf, "%u ", flags);
+	snprintf(buf, sizeof(buf), "%u ", flags);
 	RETERR(str_totext(buf, target));
 
 	/*

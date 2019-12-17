@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2007, 2009, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hmacmd5.c,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: hmacmd5.c,v 1.3 2019/12/17 01:46:34 sthen Exp $ */
 
 /*! \file
  * This code implements the HMAC-MD5 keyed hash algorithm
@@ -43,7 +42,7 @@
 #endif
 
 #ifdef ISC_PLATFORM_OPENSSLHASH
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 #define HMAC_CTX_new() &(ctx->_ctx), HMAC_CTX_init(&(ctx->_ctx))
 #define HMAC_CTX_free(ptr) HMAC_CTX_cleanup(ptr)
 #endif
@@ -104,8 +103,19 @@ isc_hmacmd5_init(isc_hmacmd5_t *ctx, const unsigned char *key,
 		{ CKA_SIGN, &truevalue, (CK_ULONG) sizeof(truevalue) },
 		{ CKA_VALUE, NULL, (CK_ULONG) len }
 	};
+#ifdef PK11_PAD_HMAC_KEYS
+	CK_BYTE keypad[ISC_MD5_DIGESTLENGTH];
 
+	if (len < ISC_MD5_DIGESTLENGTH) {
+		memset(keypad, 0, ISC_MD5_DIGESTLENGTH);
+		memmove(keypad, key, len);
+		keyTemplate[5].pValue = keypad;
+		keyTemplate[5].ulValueLen = ISC_MD5_DIGESTLENGTH;
+	} else
+		DE_CONST(key, keyTemplate[5].pValue);
+#else
 	DE_CONST(key, keyTemplate[5].pValue);
+#endif
 	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
 				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
 	ctx->object = CK_INVALID_HANDLE;
@@ -124,7 +134,7 @@ isc_hmacmd5_invalidate(isc_hmacmd5_t *ctx) {
 	if (ctx->handle == NULL)
 		return;
 	(void) pkcs_C_SignFinal(ctx->session, garbage, &len);
-	memset(garbage, 0, sizeof(garbage));
+	isc_safe_memwipe(garbage, sizeof(garbage));
 	if (ctx->object != CK_INVALID_HANDLE)
 		(void) pkcs_C_DestroyObject(ctx->session, ctx->object);
 	ctx->object = CK_INVALID_HANDLE;
@@ -279,7 +289,7 @@ isc_hmacmd5_init(isc_hmacmd5_t *ctx, const unsigned char *key,
 void
 isc_hmacmd5_invalidate(isc_hmacmd5_t *ctx) {
 	isc_md5_invalidate(&ctx->md5ctx);
-	memset(ctx->key, 0, sizeof(ctx->key));
+	isc_safe_memwipe(ctx->key, sizeof(ctx->key));
 }
 
 /*!
@@ -334,6 +344,72 @@ isc_hmacmd5_verify2(isc_hmacmd5_t *ctx, unsigned char *digest, size_t len) {
 	return (isc_safe_memequal(digest, newdigest, len));
 }
 
+/*
+ * Check for MD5 support; if it does not work, raise a fatal error.
+ *
+ * Use the first test vector from RFC 2104, with a second round using
+ * a too-short key.
+ *
+ * Standard use is testing 0 and expecting result true.
+ * Testing use is testing 1..4 and expecting result false.
+ */
+isc_boolean_t
+isc_hmacmd5_check(int testing) {
+	isc_hmacmd5_t ctx;
+	unsigned char key[] = { /* 0x0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b */
+		0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
+		0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b
+	};
+	unsigned char input[] = { /* "Hi There" */
+		0x48, 0x69, 0x20, 0x54, 0x68, 0x65, 0x72, 0x65
+	};
+	unsigned char expected[] = {
+		0x92, 0x94, 0x72, 0x7a, 0x36, 0x38, 0xbb, 0x1c,
+		0x13, 0xf4, 0x8e, 0xf8, 0x15, 0x8b, 0xfc, 0x9d
+	};
+	unsigned char expected2[] = {
+		0xad, 0xb8, 0x48, 0x05, 0xb8, 0x8d, 0x03, 0xe5,
+		0x90, 0x1e, 0x4b, 0x05, 0x69, 0xce, 0x35, 0xea
+	};
+	isc_boolean_t result;
+
+	/*
+	 * Introduce a fault for testing.
+	 */
+	switch (testing) {
+	case 0:
+	default:
+		break;
+	case 1:
+		key[0] ^= 0x01;
+		break;
+	case 2:
+		input[0] ^= 0x01;
+		break;
+	case 3:
+		expected[0] ^= 0x01;
+		break;
+	case 4:
+		expected2[0] ^= 0x01;
+		break;
+	}
+
+	/*
+	 * These functions do not return anything; any failure will be fatal.
+	 */
+	isc_hmacmd5_init(&ctx, key, 16U);
+	isc_hmacmd5_update(&ctx, input, 8U);
+	result = isc_hmacmd5_verify2(&ctx, expected, sizeof(expected));
+	if (!result) {
+		return (result);
+	}
+
+	/* Second round using a byte key */
+	isc_hmacmd5_init(&ctx, key, 1U);
+	isc_hmacmd5_update(&ctx, input, 8U);
+	return (isc_hmacmd5_verify2(&ctx, expected2, sizeof(expected2)));
+}
+
 #else /* !PK11_MD5_DISABLE */
 #ifdef WIN32
 /* Make the Visual Studio linker happy */
@@ -345,5 +421,6 @@ void isc_hmacmd5_sign() { INSIST(0); }
 void isc_hmacmd5_update() { INSIST(0); }
 void isc_hmacmd5_verify() { INSIST(0); }
 void isc_hmacmd5_verify2() { INSIST(0); }
+void isc_hmacmd5_check() { INSIST(0); }
 #endif
 #endif /* PK11_MD5_DISABLE */

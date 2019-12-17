@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2006-2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -331,17 +330,32 @@ typedef __int64 off_t;
 /* Define to 1 if you have the `EVP_sha512' function. */
 @HAVE_EVP_SHA512@
 
+/* Define if OpenSSL provides FIPS_mode() */
+@HAVE_FIPS_MODE@
+
 /* Define if OpenSSL includes DSA support */
 @HAVE_OPENSSL_DSA@
 
 /* Define if OpenSSL includes ECDSA support */
 @HAVE_OPENSSL_ECDSA@
 
+/* Define if OpenSSL includes Ed25519 support */
+@HAVE_OPENSSL_ED25519@
+
+/* Define if OpenSSL includes Ed448 support */
+@HAVE_OPENSSL_ED448@
+
 /* Define if your OpenSSL version supports GOST. */
 @HAVE_OPENSSL_GOST@
 
 /* Define if your PKCS11 provider supports ECDSA. */
 @HAVE_PKCS11_ECDSA@
+
+/* Define if your PKCS11 provider supports Ed25519. */
+@HAVE_PKCS11_ED25519@
+
+/* Define if your PKCS11 provider supports Ed448. */
+@HAVE_PKCS11_ED448@
 
 /* Define if your PKCS11 provider supports GOST. */
 @HAVE_PKCS11_GOST@

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: net.h,v 1.2 2019/12/16 16:16:28 deraadt Exp $ */
+/* $Id: net.h,v 1.3 2019/12/17 01:46:37 sthen Exp $ */
 
 #ifndef ISC_NET_H
 #define ISC_NET_H 1
@@ -182,6 +181,11 @@
 #ifndef PF_INET6
 /*% IPv6 */
 #define PF_INET6 AF_INET6
+#endif
+
+#ifndef INADDR_ANY
+/*% inaddr any */
+#define INADDR_ANY 0x00000000UL
 #endif
 
 #ifndef INADDR_LOOPBACK
@@ -396,6 +400,7 @@ isc_net_getudpportrange(int af, in_port_t *low, in_port_t *high);
 #ifdef ISC_PLATFORM_NEEDNTOP
 const char *
 isc_net_ntop(int af, const void *src, char *dst, size_t size);
+#undef inet_ntop
 #define inet_ntop isc_net_ntop
 #endif
 

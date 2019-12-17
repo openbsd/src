@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2013-2015, 2017  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.7 2019/12/16 16:16:26 deraadt Exp $ */
+/* $Id: lex.c,v 1.8 2019/12/17 01:46:34 sthen Exp $ */
 
 /*! \file */
 
@@ -71,17 +70,17 @@ struct isc_lex {
 
 static inline isc_result_t
 grow_data(isc_lex_t *lex, size_t *remainingp, char **currp, char **prevp) {
-	char *new;
+	char *tmp;
 
-	new = isc_mem_get(lex->mctx, lex->max_token * 2 + 1);
-	if (new == NULL)
+	tmp = isc_mem_get(lex->mctx, lex->max_token * 2 + 1);
+	if (tmp == NULL)
 		return (ISC_R_NOMEMORY);
-	memmove(new, lex->data, lex->max_token + 1);
-	*currp = new + (*currp - lex->data);
+	memmove(tmp, lex->data, lex->max_token + 1);
+	*currp = tmp + (*currp - lex->data);
 	if (*prevp != NULL)
-		*prevp = new + (*prevp - lex->data);
+		*prevp = tmp + (*prevp - lex->data);
 	isc_mem_put(lex->mctx, lex->data, lex->max_token + 1);
-	lex->data = new;
+	lex->data = tmp;
 	*remainingp += lex->max_token;
 	lex->max_token *= 2;
 	return (ISC_R_SUCCESS);

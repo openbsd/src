@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2007, 2009, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sha2.h,v 1.2 2019/12/16 16:16:26 deraadt Exp $ */
+/* $Id: sha2.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
 
 /*	$FreeBSD: src/sys/crypto/sha2/sha2.h,v 1.1.2.1 2001/07/03 11:01:36 ume Exp $	*/
 /*	$KAME: sha2.h,v 1.3 2001/03/12 08:27:48 itojun Exp $	*/
@@ -78,13 +78,17 @@
 
 /*** SHA-256/384/512 Context Structures *******************************/
 
-#ifdef ISC_PLATFORM_OPENSSLHASH
+#if defined(ISC_PLATFORM_OPENSSLHASH)
 #include <openssl/opensslv.h>
 #include <openssl/evp.h>
+#endif
+
+#if defined(ISC_PLATFORM_OPENSSLHASH) && !defined(LIBRESSL_VERSION_NUMBER)
+
 
 typedef struct {
 	EVP_MD_CTX *ctx;
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	EVP_MD_CTX _ctx;
 #endif
 } isc_sha2_t;

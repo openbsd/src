@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: byaddr.c,v 1.7 2019/12/16 16:16:24 deraadt Exp $ */
+/* $Id: byaddr.c,v 1.8 2019/12/17 01:46:31 sthen Exp $ */
 
 /*! \file */
 
@@ -84,11 +83,13 @@ dns_byaddr_createptrname2(isc_netaddr_t *address, unsigned int options,
 	if (address->family == AF_INET) {
 		(void)snprintf(textname, sizeof(textname),
 			       "%u.%u.%u.%u.in-addr.arpa.",
-			       (bytes[3] & 0xff),
-			       (bytes[2] & 0xff),
-			       (bytes[1] & 0xff),
-			       (bytes[0] & 0xff));
+			       (bytes[3] & 0xffU),
+			       (bytes[2] & 0xffU),
+			       (bytes[1] & 0xffU),
+			       (bytes[0] & 0xffU));
 	} else if (address->family == AF_INET6) {
+		size_t remaining;
+
 		cp = textname;
 		for (i = 15; i >= 0; i--) {
 			*cp++ = hex_digits[bytes[i] & 0x0f];
@@ -96,10 +97,12 @@ dns_byaddr_createptrname2(isc_netaddr_t *address, unsigned int options,
 			*cp++ = hex_digits[(bytes[i] >> 4) & 0x0f];
 			*cp++ = '.';
 		}
-		if ((options & DNS_BYADDROPT_IPV6INT) != 0)
-			strcpy(cp, "ip6.int.");
-		else
-			strcpy(cp, "ip6.arpa.");
+		remaining = sizeof(textname) - (cp - textname);
+		if ((options & DNS_BYADDROPT_IPV6INT) != 0) {
+			strlcpy(cp, "ip6.int.", remaining);
+		} else {
+			strlcpy(cp, "ip6.arpa.", remaining);
+		}
 	} else
 		return (ISC_R_NOTIMPLEMENTED);
 

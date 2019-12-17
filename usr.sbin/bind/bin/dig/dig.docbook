@@ -1,8 +1,7 @@
 <!DOCTYPE book [
 <!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2011, 2013-2017  Internet Systems Consortium, Inc. ("ISC")
- - Copyright (C) 2000-2003  Internet Software Consortium.
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -40,6 +39,10 @@
 
   <docinfo>
     <copyright>
+      <year>2000</year>
+      <year>2001</year>
+      <year>2002</year>
+      <year>2003</year>
       <year>2004</year>
       <year>2005</year>
       <year>2006</year>
@@ -53,14 +56,8 @@
       <year>2015</year>
       <year>2016</year>
       <year>2017</year>
+      <year>2018</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
-    </copyright>
-    <copyright>
-      <year>2000</year>
-      <year>2001</year>
-      <year>2002</year>
-      <year>2003</year>
-      <holder>Internet Software Consortium.</holder>
     </copyright>
   </docinfo>
 
@@ -79,8 +76,10 @@
       <arg choice="opt" rep="norepeat"><option>-v</option></arg>
       <arg choice="opt" rep="norepeat"><option>-x <replaceable class="parameter">addr</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-y <replaceable class="parameter"><optional>hmac:</optional>name:key</replaceable></option></arg>
-      <arg choice="opt" rep="norepeat"><option>-4</option></arg>
-      <arg choice="opt" rep="norepeat"><option>-6</option></arg>
+      <group choice="opt" rep="norepeat">
+	<arg choice="opt" rep="norepeat"><option>-4</option></arg>
+	<arg choice="opt" rep="norepeat"><option>-6</option></arg>
+      </group>
       <arg choice="opt" rep="norepeat">name</arg>
       <arg choice="opt" rep="norepeat">type</arg>
       <arg choice="opt" rep="norepeat">class</arg>
@@ -101,8 +100,7 @@
 
   <refsection><info><title>DESCRIPTION</title></info>
 
-    <para><command>dig</command>
-      (domain information groper) is a flexible tool
+    <para><command>dig</command> is a flexible tool
       for interrogating DNS name servers.  It performs DNS lookups and
       displays the answers that are returned from the name server(s) that
       were queried.  Most DNS administrators use <command>dig</command> to
@@ -282,9 +280,9 @@
         <term>-i</term>
         <listitem>
 	  <para>
-	    Do reverse IPv6 lookups using the obsolete RFC1886 IP6.INT
+	    Do reverse IPv6 lookups using the obsolete RFC 1886 IP6.INT
 	    domain, which is no longer in use. Obsolete bit string
-	    label queries (RFC2874) are not attempted.
+	    label queries (RFC 2874) are not attempted.
 	  </para>
         </listitem>
       </varlistentry>
@@ -345,24 +343,39 @@
         <term>-t <replaceable class="parameter">type</replaceable></term>
         <listitem>
 	  <para>
-	    The resource record type to query. It can be any valid query type
-	    which is
-	    supported in BIND 9.  The default query type is "A", unless the
-	    <option>-x</option> option is supplied to indicate a reverse lookup.
-	    A zone transfer can be requested by specifying a type of AXFR.  When
+	    The resource record type to query. It can be any valid query
+	    type.  If it is a resource record type supported in BIND 9, it
+	    can be given by the type mnemonic (such as "NS" or "AAAA").
+	    The default query type is "A", unless the <option>-x</option>
+	    option is supplied to indicate a reverse lookup.  A zone
+	    transfer can be requested by specifying a type of AXFR.  When
 	    an incremental zone transfer (IXFR) is required, set the
 	    <parameter>type</parameter> to <literal>ixfr=N</literal>.
 	    The incremental zone transfer will contain the changes
 	    made to the zone since the serial number in the zone's SOA
-	    record was
-	    <parameter>N</parameter>.
+	    record was <parameter>N</parameter>.
 	  </para>
-        </listitem>
+	  <para>
+	    All resource record types can be expressed as "TYPEnn", where
+	    "nn" is the number of the type. If the resource record type is
+	    not supported in BIND 9, the result will be displayed as
+	    described in RFC 3597.
+	  </para>
+	</listitem>
       </varlistentry>
 
       <varlistentry>
-        <term>-v</term>
-        <listitem>
+	<term>-u</term>
+	<listitem>
+	  <para>
+	    Print query times in microseconds instead of milliseconds.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-v</term>
+	<listitem>
 	  <para>
 	    Print the version number and exit.
 	  </para>
@@ -592,6 +605,36 @@
 	</varlistentry>
 
 	<varlistentry>
+	  <term><option>+[no]cookie<optional>=####</optional></option></term>
+	  <listitem>
+	    <para>
+	      Send an COOKIE EDNS option, containing an optional
+	      <replaceable>value</replaceable>.  Replaying a COOKIE
+	      from a previous response will allow the server to
+	      identify a previous client.  The default is
+	      <option>+nocookie</option>.
+	    </para>
+	    <para>
+	      <command>+cookie</command> is automatically set when +trace
+	      is in use, to better emulate the default queries from a
+	      nameserver.
+	    </para>
+	    <para>
+	      This option was formerly called <option>+[no]sit</option>
+              (Server Identity Token). In BIND 9.10.0 through BIND 9.10.2,
+              it sent the experimental option code 65001.  This was
+              changed to option code 10 in BIND 9.10.3 when the DNS
+              COOKIE option was allocated.
+	    </para>
+	    <para>
+	      The <option>+[no]sit</option> is now deprecated, but has
+              been retained as a synonym for <option>+[no]cookie</option>
+              for backward compatibility within the BIND 9.10 branch.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
 	  <term><option>+[no]crypto</option></term>
 	  <listitem>
 	    <para>
@@ -683,8 +726,11 @@
 	    <para>
 	      Specify EDNS option with code point <option>code</option>
 	      and optionally payload of <option>value</option> as a
-	      hexadecimal string.  <option>+noednsopt</option>
-	      clears the EDNS options to to be sent.
+	      hexadecimal string.  <option>code</option> can be
+	      either an EDNS option name (for example,
+	      <literal>NSID</literal> or <literal>ECS</literal>),
+	      or an arbitrary numeric value.  <option>+noednsopt</option>
+	      clears the EDNS options to be sent.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -953,11 +999,10 @@
 	  <term><option>+[no]sit<optional>=####</optional></option></term>
 	  <listitem>
 	    <para>
-	      Send a Source Identity Token EDNS option, with optional
-	      value.  Replaying a SIT from a previous response will
-	      allow the server to identify a previous client.  The
-	      default is <option>+nosit</option>.  Currently using
-	      experimental value 65001 for the option code.
+	      This option is a synonym for <option>+[no]cookie</option>.
+	    </para>
+	    <para>
+	      The <option>+[no]sit</option> is deprecated.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -1215,7 +1260,7 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
       <citerefentry>
 	<refentrytitle>dnssec-keygen</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
-      <citetitle>RFC1035</citetitle>.
+      <citetitle>RFC 1035</citetitle>.
     </para>
   </refsection>
 

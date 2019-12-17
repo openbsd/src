@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sample-async.c,v 1.1 2019/12/16 16:31:37 deraadt Exp $ */
+/* $Id: sample-async.c,v 1.2 2019/12/17 01:46:39 sthen Exp $ */
 
 #include <config.h>
 
@@ -169,7 +169,7 @@ process_answer(isc_task_t *task, isc_event_t *event) {
 	printf("answer[%2d]\n", trans->id);
 
 	if (rev->result != ISC_R_SUCCESS)
-		printf("  failed: %d(%s)\n", rev->result,
+		printf("  failed: %u(%s)\n", rev->result,
 		       dns_result_totext(rev->result));
 
 	for (name = ISC_LIST_HEAD(rev->answerlist); name != NULL;
@@ -331,14 +331,14 @@ main(int argc, char *argv[]) {
 	isc_lib_register();
 	result = dns_lib_init();
 	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "dns_lib_init failed: %d\n", result);
+		fprintf(stderr, "dns_lib_init failed: %u\n", result);
 		exit(1);
 	}
 
 	result = ctxs_init(&mctx, &query_actx, &taskmgr, &socketmgr,
 			   &timermgr);
 	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "ctx create failed: %d\n", result);
+		fprintf(stderr, "ctx create failed: %u\n", result);
 		exit(1);
 	}
 
@@ -347,7 +347,7 @@ main(int argc, char *argv[]) {
 	result = dns_client_createx(mctx, query_actx, taskmgr, socketmgr,
 				    timermgr, 0, &client);
 	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "dns_client_createx failed: %d\n", result);
+		fprintf(stderr, "dns_client_createx failed: %u\n", result);
 		exit(1);
 	}
 
@@ -365,7 +365,7 @@ main(int argc, char *argv[]) {
 	result = dns_client_setservers(client, dns_rdataclass_in, NULL,
 				       &servers);
 	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "set server failed: %d\n", result);
+		fprintf(stderr, "set server failed: %u\n", result);
 		exit(1);
 	}
 
@@ -373,7 +373,7 @@ main(int argc, char *argv[]) {
 	query_task = NULL;
 	result = isc_task_create(taskmgr, 0, &query_task);
 	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "failed to create task: %d\n", result);
+		fprintf(stderr, "failed to create task: %u\n", result);
 		exit(1);
 	}
 

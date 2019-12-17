@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2010-2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netaddr.c,v 1.3 2019/12/16 16:16:26 deraadt Exp $ */
+/* $Id: netaddr.c,v 1.4 2019/12/17 01:46:34 sthen Exp $ */
 
 /*! \file */
 
@@ -306,7 +305,7 @@ isc_netaddr_frompath(isc_netaddr_t *netaddr, const char *path) {
 
 	memset(netaddr, 0, sizeof(*netaddr));
 	netaddr->family = AF_UNIX;
-	strcpy(netaddr->type.un, path);
+	strlcpy(netaddr->type.un, path, sizeof(netaddr->type.un));
 	netaddr->zone = 0;
 	return (ISC_R_SUCCESS);
 #else
@@ -447,4 +446,17 @@ isc_netaddr_fromv4mapped(isc_netaddr_t *t, const isc_netaddr_t *s) {
 	t->family = AF_INET;
 	memmove(&t->type.in, (char *)&src->type.in6 + 12, 4);
 	return;
+}
+
+isc_boolean_t
+isc_netaddr_isloopback(const isc_netaddr_t *na) {
+	switch (na->family) {
+	case AF_INET:
+		return (ISC_TF((ntohl(na->type.in.s_addr) & 0xff000000U) ==
+			       0x7f000000U));
+	case AF_INET6:
+		return (IN6_IS_ADDR_LOOPBACK(&na->type.in6));
+	default:
+		return (ISC_FALSE);
+	}
 }

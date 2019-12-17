@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2007, 2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: file.h,v 1.2 2019/12/16 16:16:26 deraadt Exp $ */
+/* $Id: file.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
 
 #ifndef ISC_FILE_H
 #define ISC_FILE_H 1
@@ -261,7 +260,6 @@ isc_file_progname(const char *filename, char *buf, size_t buflen);
  * \brief Given an operating system specific file name "filename"
  * referring to a program, return the canonical program name.
  *
- *
  * Any directory prefix or executable file name extension (if
  * used on the OS in case) is stripped.  On systems where program
  * names are case insensitive, the name is canonicalized to all
@@ -363,6 +361,12 @@ isc_file_munmap(void *addr, size_t len);
 /*%<
  * Portable front-end to munmap().  If munmap() is not defined on
  * this platform, then we simply free the memory.
+ */
+
+isc_boolean_t
+isc_file_isdirwritable(const char *path);
+/*%<
+ *	Return true if the path is a directory and is writable
  */
 
 ISC_LANG_ENDDECLS

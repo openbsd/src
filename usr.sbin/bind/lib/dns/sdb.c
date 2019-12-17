@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sdb.c,v 1.5 2019/12/16 16:16:24 deraadt Exp $ */
+/* $Id: sdb.c,v 1.6 2019/12/17 01:46:32 sthen Exp $ */
 
 /*! \file */
 
@@ -113,10 +112,10 @@ typedef struct sdb_rdatasetiter {
 #define VALID_SDBNODE(sdbn)	VALID_SDBLOOKUP(sdbn)
 
 /* These values are taken from RFC1537 */
-#define SDB_DEFAULT_REFRESH	(60 * 60 * 8)
-#define SDB_DEFAULT_RETRY	(60 * 60 * 2)
-#define SDB_DEFAULT_EXPIRE	(60 * 60 * 24 * 7)
-#define SDB_DEFAULT_MINIMUM	(60 * 60 * 24)
+#define SDB_DEFAULT_REFRESH	28800U		/* 8 hours */
+#define SDB_DEFAULT_RETRY	7200U		/* 2 hours */
+#define SDB_DEFAULT_EXPIRE	604800U		/* 7 days */
+#define SDB_DEFAULT_MINIMUM	86400U		/* 1 day */
 
 /* This is a reasonable value */
 #define SDB_DEFAULT_TTL		(60 * 60 * 24)
@@ -1413,7 +1412,7 @@ rdataset_clone(dns_rdataset_t *source, dns_rdataset_t *target) {
 	source->private5 = tempdb;
 }
 
-static dns_rdatasetmethods_t methods = {
+static dns_rdatasetmethods_t sdb_rdataset_methods = {
 	disassociate,
 	isc__rdatalist_first,
 	isc__rdatalist_next,
@@ -1448,7 +1447,7 @@ list_tordataset(dns_rdatalist_t *rdatalist,
 	RUNTIME_CHECK(dns_rdatalist_tordataset(rdatalist, rdataset) ==
 		      ISC_R_SUCCESS);
 
-	rdataset->methods = &methods;
+	rdataset->methods = &sdb_rdataset_methods;
 	dns_db_attachnode(db, node, &rdataset->private5);
 }
 

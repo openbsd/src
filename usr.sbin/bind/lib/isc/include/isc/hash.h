@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2007, 2009, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hash.h,v 1.4 2019/12/16 16:16:26 deraadt Exp $ */
+/* $Id: hash.h,v 1.5 2019/12/17 01:46:35 sthen Exp $ */
 
 #ifndef ISC_HASH_H
 #define ISC_HASH_H 1

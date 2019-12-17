@@ -1,6 +1,5 @@
 /*
- * Portions Copyright (C) 2004, 2005, 2007, 2008, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
- * Portions Copyright (C) 1996-2001  Internet Software Consortium.
+ * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -67,7 +66,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
-static char rcsid[] = "$Id: inet_aton.c,v 1.6 2019/12/16 16:16:26 deraadt Exp $";
+static char rcsid[] = "$Id: inet_aton.c,v 1.7 2019/12/17 01:46:34 sthen Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -91,8 +90,8 @@ isc_net_aton(const char *cp, struct in_addr *addr) {
 	int base;
 	ptrdiff_t n;
 	unsigned char c;
-	isc_uint8_t parts[4];
-	isc_uint8_t *pp = parts;
+	isc_uint32_t parts[4];
+	isc_uint32_t *pp = parts;
 	int digit;
 
 	c = *cp;
@@ -144,7 +143,7 @@ isc_net_aton(const char *cp, struct in_addr *addr) {
 			 */
 			if (pp >= parts + 3 || val > 0xffU)
 				return (0);
-			*pp++ = (isc_uint8_t)val;
+			*pp++ = val;
 			c = *++cp;
 		} else
 			break;

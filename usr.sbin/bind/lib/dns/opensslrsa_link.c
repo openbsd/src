@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -268,6 +267,33 @@ opensslrsa_createctx(dst_key_t *key, dst_context_t *dctx) {
 		dctx->key->key_alg == DST_ALG_RSASHA256 ||
 		dctx->key->key_alg == DST_ALG_RSASHA512);
 #endif
+
+	/*
+	 * Reject incorrect RSA key lengths.
+	 */
+	switch (dctx->key->key_alg) {
+	case DST_ALG_RSAMD5:
+	case DST_ALG_RSASHA1:
+	case DST_ALG_NSEC3RSASHA1:
+		/* From RFC 3110 */
+		if (dctx->key->key_size > 4096)
+			return (ISC_R_FAILURE);
+		break;
+	case DST_ALG_RSASHA256:
+		/* From RFC 5702 */
+		if ((dctx->key->key_size < 512) ||
+		    (dctx->key->key_size > 4096))
+			return (ISC_R_FAILURE);
+		break;
+	case DST_ALG_RSASHA512:
+		/* From RFC 5702 */
+		if ((dctx->key->key_size < 1024) ||
+		    (dctx->key->key_size > 4096))
+			return (ISC_R_FAILURE);
+		break;
+	default:
+		INSIST(0);
+	}
 
 #if USE_EVP
 	evp_md_ctx = EVP_MD_CTX_create();
@@ -966,6 +992,33 @@ opensslrsa_generate(dst_key_t *key, int exp, void (*callback)(int)) {
 	EVP_PKEY *pkey = EVP_PKEY_new();
 #endif
 
+	/*
+	 * Reject incorrect RSA key lengths.
+	 */
+	switch (key->key_alg) {
+	case DST_ALG_RSAMD5:
+	case DST_ALG_RSASHA1:
+	case DST_ALG_NSEC3RSASHA1:
+		/* From RFC 3110 */
+		if (key->key_size > 4096)
+			goto err;
+		break;
+	case DST_ALG_RSASHA256:
+		/* From RFC 5702 */
+		if ((key->key_size < 512) ||
+		    (key->key_size > 4096))
+			goto err;
+		break;
+	case DST_ALG_RSASHA512:
+		/* From RFC 5702 */
+		if ((key->key_size < 1024) ||
+		    (key->key_size > 4096))
+			goto err;
+		break;
+	default:
+		INSIST(0);
+	}
+
 	if (rsa == NULL || e == NULL || cb == NULL)
 		goto err;
 #if USE_EVP
@@ -995,6 +1048,7 @@ opensslrsa_generate(dst_key_t *key, int exp, void (*callback)(int)) {
 	if (RSA_generate_key_ex(rsa, key->key_size, e, cb)) {
 		BN_free(e);
 		BN_GENCB_free(cb);
+		cb = NULL;
 		SET_FLAGS(rsa);
 #if USE_EVP
 		key->keydata.pkey = pkey;
@@ -1005,21 +1059,28 @@ opensslrsa_generate(dst_key_t *key, int exp, void (*callback)(int)) {
 #endif
 		return (ISC_R_SUCCESS);
 	}
-	BN_GENCB_free(cb);
 	ret = dst__openssl_toresult2("RSA_generate_key_ex",
 				     DST_R_OPENSSLFAILURE);
 
  err:
 #if USE_EVP
-	if (pkey != NULL)
+	if (pkey != NULL) {
 		EVP_PKEY_free(pkey);
+		pkey = NULL;
+	}
 #endif
-	if (e != NULL)
+	if (e != NULL) {
 		BN_free(e);
-	if (rsa != NULL)
+		e = NULL;
+	}
+	if (rsa != NULL) {
 		RSA_free(rsa);
-	if (cb != NULL)
+		rsa = NULL;
+	}
+	if (cb != NULL) {
 		BN_GENCB_free(cb);
+		cb = NULL;
+	}
 	return (dst__openssl_toresult(ret));
 #else
 	RSA *rsa;
@@ -1439,7 +1500,7 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		pub->keydata.pkey = NULL;
 		key->key_size = pub->key_size;
 		dst__privstruct_free(&priv, mctx);
-		memset(&priv, 0, sizeof(priv));
+		isc_safe_memwipe(&priv, sizeof(priv));
 		return (ISC_R_SUCCESS);
 	}
 
@@ -1507,7 +1568,7 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		EVP_PKEY_free(pkey);
 #endif
 		dst__privstruct_free(&priv, mctx);
-		memset(&priv, 0, sizeof(priv));
+		isc_safe_memwipe(&priv, sizeof(priv));
 		return (ISC_R_SUCCESS);
 #else
 		DST_RET(DST_R_NOENGINE);
@@ -1571,7 +1632,7 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		}
 	}
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 
 	if (RSA_set0_key(rsa, n, e, d) == 0) {
 		if (n != NULL) BN_free(n);
@@ -1612,7 +1673,7 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		RSA_free(pubrsa);
 	key->keydata.generic = NULL;
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 	return (ret);
 }
 

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -94,17 +93,23 @@ typedef enum {
 /*
  * Options that modify how a 'fetch' is done.
  */
-#define DNS_FETCHOPT_TCP		0x001	     /*%< Use TCP. */
-#define DNS_FETCHOPT_UNSHARED		0x002	     /*%< See below. */
-#define DNS_FETCHOPT_RECURSIVE		0x004	     /*%< Set RD? */
-#define DNS_FETCHOPT_NOEDNS0		0x008	     /*%< Do not use EDNS. */
-#define DNS_FETCHOPT_FORWARDONLY	0x010	     /*%< Only use forwarders. */
-#define DNS_FETCHOPT_NOVALIDATE		0x020	     /*%< Disable validation. */
-#define DNS_FETCHOPT_EDNS512		0x040	     /*%< Advertise a 512 byte
+#define DNS_FETCHOPT_TCP		0x0001	     /*%< Use TCP. */
+#define DNS_FETCHOPT_UNSHARED		0x0002	     /*%< See below. */
+#define DNS_FETCHOPT_RECURSIVE		0x0004	     /*%< Set RD? */
+#define DNS_FETCHOPT_NOEDNS0		0x0008	     /*%< Do not use EDNS. */
+#define DNS_FETCHOPT_FORWARDONLY	0x0010	     /*%< Only use forwarders. */
+#define DNS_FETCHOPT_NOVALIDATE		0x0020	     /*%< Disable validation. */
+#define DNS_FETCHOPT_EDNS512		0x0040	     /*%< Advertise a 512 byte
 							  UDP buffer. */
-#define DNS_FETCHOPT_WANTNSID		0x080	     /*%< Request NSID */
-#define DNS_FETCHOPT_PREFETCH		0x100	     /*%< Do prefetch */
-#define DNS_FETCHOPT_NOCDFLAG		0x200	     /*%< Don't set CD flag. */
+#define DNS_FETCHOPT_WANTNSID		0x0080	     /*%< Request NSID */
+#define DNS_FETCHOPT_PREFETCH		0x0100	     /*%< Do prefetch */
+#define DNS_FETCHOPT_NOCDFLAG		0x0200	     /*%< Don't set CD flag. */
+#define DNS_FETCHOPT_NONTA		0x0400	     /*%< Ignore NTA table. */
+/* RESERVED ECS				0x0000 */
+/* RESERVED ECS				0x1000 */
+/* RESERVED ECS				0x2000 */
+/* RESERVED TCPCLIENT			0x4000 */
+#define DNS_FETCHOPT_NOCACHED		0x8000	     /*%< Force cache update. */
 
 /* Reserved in use by adb.c		0x00400000 */
 #define	DNS_FETCHOPT_EDNSVERSIONSET	0x00800000

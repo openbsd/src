@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: refcount.c,v 1.2 2019/12/16 16:16:26 deraadt Exp $ */
+/* $Id: refcount.c,v 1.3 2019/12/17 01:46:34 sthen Exp $ */
 
 #include <config.h>
 
@@ -23,13 +23,14 @@
 #include <isc/mutex.h>
 #include <isc/refcount.h>
 #include <isc/result.h>
+#include <isc/util.h>
 
 isc_result_t
 isc_refcount_init(isc_refcount_t *ref, unsigned int n) {
 	REQUIRE(ref != NULL);
 
 	ref->refs = n;
-#if defined(ISC_PLATFORM_USETHREADS) && !defined(ISC_PLATFORM_HAVEXADD)
+#if defined(ISC_PLATFORM_USETHREADS) && !defined(ISC_REFCOUNT_HAVEATOMIC)
 	return (isc_mutex_init(&ref->lock));
 #else
 	return (ISC_R_SUCCESS);

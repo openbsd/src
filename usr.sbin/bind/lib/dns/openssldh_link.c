@@ -1,6 +1,5 @@
 /*
- * Portions Copyright (C) 2004-2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
- * Portions Copyright (C) 1999-2002  Internet Software Consortium.
+ * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +13,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * Portions Copyright (C) Network Associates, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: openssldh_link.c,v 1.3 2019/12/16 16:16:24 deraadt Exp $
+ * $Id: openssldh_link.c,v 1.4 2019/12/17 01:46:32 sthen Exp $
  */
 
 #ifdef OPENSSL
@@ -45,6 +47,7 @@
 #include <ctype.h>
 
 #include <isc/mem.h>
+#include <isc/safe.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -313,6 +316,7 @@ openssldh_generate(dst_key_t *key, int generator, void (*callback)(int)) {
 					DST_R_OPENSSLFAILURE));
 		}
 		BN_GENCB_free(cb);
+		cb = NULL;
 #else
 		dh = DH_generate_parameters(key->key_size, generator,
 					    NULL, NULL);
@@ -694,7 +698,7 @@ openssldh_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		BN_free(priv_key);
 	openssldh_destroy(key);
 	dst__privstruct_free(&priv, mctx);
-	memset(&priv, 0, sizeof(priv));
+	isc_safe_memwipe(&priv, sizeof(priv));
 	return (ret);
 }
 

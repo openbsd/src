@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2007, 2009, 2011-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.10 2019/12/16 16:16:26 deraadt Exp $ */
+/* $Id: log.c,v 1.11 2019/12/17 01:46:34 sthen Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -1227,7 +1226,7 @@ static isc_result_t
 roll_log(isc_logchannel_t *channel) {
 	int i, n, greatest;
 	char current[PATH_MAX + 1];
-	char new[PATH_MAX + 1];
+	char newpath[PATH_MAX + 1];
 	const char *path;
 	isc_result_t result;
 
@@ -1247,10 +1246,9 @@ roll_log(isc_logchannel_t *channel) {
 		 */
 		for (greatest = 0; greatest < INT_MAX; greatest++) {
 			n = snprintf(current, sizeof(current),
-				     "%s.%u", path, greatest) ;
-			if (n >= (int)sizeof(current) || n < 0)
-				break;
-			if (!isc_file_exists(current))
+				     "%s.%u", path, (unsigned)greatest) ;
+			if (n >= (int)sizeof(current) || n < 0 ||
+			    !isc_file_exists(current))
 				break;
 		}
 	} else {
@@ -1272,16 +1270,20 @@ roll_log(isc_logchannel_t *channel) {
 
 	for (i = greatest; i > 0; i--) {
 		result = ISC_R_SUCCESS;
-		n = snprintf(current, sizeof(current), "%s.%u", path, i - 1);
-		if (n >= (int)sizeof(current) || n < 0)
+		n = snprintf(current, sizeof(current), "%s.%u", path,
+			     (unsigned)(i - 1));
+		if (n >= (int)sizeof(current) || n < 0) {
 			result = ISC_R_NOSPACE;
+		}
 		if (result == ISC_R_SUCCESS) {
-			n = snprintf(new, sizeof(new), "%s.%u", path, i);
-			if (n >= (int)sizeof(new) || n < 0)
+			n = snprintf(newpath, sizeof(newpath), "%s.%u",
+				     path, (unsigned)i);
+			if (n >= (int)sizeof(newpath) || n < 0) {
 				result = ISC_R_NOSPACE;
+			}
 		}
 		if (result == ISC_R_SUCCESS)
-			result = isc_file_rename(current, new);
+			result = isc_file_rename(current, newpath);
 		if (result != ISC_R_SUCCESS &&
 		    result != ISC_R_FILENOTFOUND)
 			syslog(LOG_ERR,
@@ -1291,11 +1293,11 @@ roll_log(isc_logchannel_t *channel) {
 	}
 
 	if (FILE_VERSIONS(channel) != 0) {
-		n = snprintf(new, sizeof(new), "%s.0", path);
-		if (n >= (int)sizeof(new) || n < 0)
+		n = snprintf(newpath, sizeof(newpath), "%s.0", path);
+		if (n >= (int)sizeof(newpath) || n < 0)
 			result = ISC_R_NOSPACE;
 		else
-			result = isc_file_rename(path, new);
+			result = isc_file_rename(path, newpath);
 		if (result != ISC_R_SUCCESS &&
 		    result != ISC_R_FILENOTFOUND)
 			syslog(LOG_ERR,
@@ -1542,9 +1544,10 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 			 * Check for duplicates.
 			 */
 			if (write_once) {
-				isc_logmessage_t *message, *new;
+				isc_logmessage_t *message, *next;
 				isc_time_t oldest;
 				isc_interval_t interval;
+				size_t size;
 
 				isc_interval_set(&interval,
 						 lcfg->duplicate_interval, 0);
@@ -1555,7 +1558,8 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 				 * range.
 				 */
 				TIME_NOW(&oldest);
-				if (isc_time_subtract(&oldest, &interval, &oldest)
+				if (isc_time_subtract(&oldest, &interval,
+						      &oldest)
 				    != ISC_R_SUCCESS)
 					/*
 					 * Can't effectively do the checking
@@ -1563,7 +1567,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 					 */
 					message = NULL;
 				else
-					message =ISC_LIST_HEAD(lctx->messages);
+					message = ISC_LIST_HEAD(lctx->messages);
 
 				while (message != NULL) {
 					if (isc_time_compare(&message->time,
@@ -1580,8 +1584,8 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 						 * message to spring back into
 						 * existence.
 						 */
-						new = ISC_LIST_NEXT(message,
-								    link);
+						next = ISC_LIST_NEXT(message,
+								     link);
 
 						ISC_LIST_UNLINK(lctx->messages,
 								message, link);
@@ -1591,7 +1595,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 							sizeof(*message) + 1 +
 							strlen(message->text));
 
-						message = new;
+						message = next;
 						continue;
 					}
 
@@ -1617,22 +1621,24 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 				 * It wasn't in the duplicate interval,
 				 * so add it to the message list.
 				 */
-				new = isc_mem_get(lctx->mctx,
-						  sizeof(isc_logmessage_t) +
-						  strlen(lctx->buffer) + 1);
-				if (new != NULL) {
+				size = sizeof(isc_logmessage_t) +
+				       strlen(lctx->buffer) + 1;
+				message = isc_mem_get(lctx->mctx, size);
+				if (message != NULL) {
 					/*
 					 * Put the text immediately after
 					 * the struct.  The strcpy is safe.
 					 */
-					new->text = (char *)(new + 1);
-					strcpy(new->text, lctx->buffer);
+					message->text = (char *)(message + 1);
+					size -= sizeof(isc_logmessage_t);
+					strlcpy(message->text, lctx->buffer,
+						size);
 
-					TIME_NOW(&new->time);
+					TIME_NOW(&message->time);
 
-					ISC_LINK_INIT(new, link);
+					ISC_LINK_INIT(message, link);
 					ISC_LIST_APPEND(lctx->messages,
-							new, link);
+							message, link);
 				}
 			}
 		}

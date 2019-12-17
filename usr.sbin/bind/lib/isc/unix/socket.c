@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -60,6 +59,7 @@
 #include <isc/socket.h>
 #include <isc/stats.h>
 #include <isc/strerror.h>
+#include <isc/string.h>
 #include <isc/task.h>
 #include <isc/thread.h>
 #include <isc/util.h>
@@ -319,6 +319,35 @@ typedef isc_event_t intev_t;
 #endif /* TUNE_LARGE */
 
 /*%
+ * Instead of calculating the cmsgbuf lengths every time we take
+ * a rule of thumb approach - sizes are taken from x86_64 linux,
+ * multiplied by 2, everything should fit. Those sizes are not
+ * large enough to cause any concern.
+ */
+#if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
+#define CMSG_SP_IN6PKT 40
+#else
+#define CMSG_SP_IN6PKT 0
+#endif
+
+#if defined(USE_CMSG) && defined(SO_TIMESTAMP)
+#define CMSG_SP_TIMESTAMP 32
+#else
+#define CMSG_SP_TIMESTAMP 0
+#endif
+
+#if defined(USE_CMSG) && (defined(IPV6_TCLASS) || defined(IP_TOS))
+#define CMSG_SP_TCTOS 24
+#else
+#define CMSG_SP_TCTOS 0
+#endif
+
+#define CMSG_SP_INT 24
+
+#define RECVCMSGBUFLEN (2*(CMSG_SP_IN6PKT + CMSG_SP_TIMESTAMP + CMSG_SP_TCTOS)+1)
+#define SENDCMSGBUFLEN (2*(CMSG_SP_IN6PKT + CMSG_SP_INT + CMSG_SP_TCTOS)+1)
+
+/*%
  * The number of times a send operation is repeated if the result is EINTR.
  */
 #define NRETRIES 10
@@ -370,14 +399,9 @@ struct isc__socket {
 				active : 1,         /* currently active */
 				pktdscp : 1;	    /* per packet dscp */
 
-#ifdef ISC_NET_RECVOVERFLOW
+#ifdef ISC_PLATFORM_RECVOVERFLOW
 	unsigned char		overflow; /* used for MSG_TRUNC fake */
 #endif
-
-	char			*recvcmsgbuf;
-	ISC_SOCKADDR_LEN_T	recvcmsgbuflen;
-	char			*sendcmsgbuf;
-	ISC_SOCKADDR_LEN_T	sendcmsgbuflen;
 
 	void			*fdwatcharg;
 	isc_sockfdwatch_t	fdwatchcb;
@@ -462,7 +486,7 @@ static isc__socketmgr_t *socketmgr = NULL;
  * send() and recv() iovec counts
  */
 #define MAXSCATTERGATHER_SEND	(ISC_SOCKET_MAXSCATTERGATHER)
-#ifdef ISC_NET_RECVOVERFLOW
+#ifdef ISC_PLATFORM_RECVOVERFLOW
 # define MAXSCATTERGATHER_RECV	(ISC_SOCKET_MAXSCATTERGATHER + 1)
 #else
 # define MAXSCATTERGATHER_RECV	(ISC_SOCKET_MAXSCATTERGATHER)
@@ -485,9 +509,9 @@ static void internal_send(isc_task_t *, isc_event_t *);
 static void internal_fdwatch_write(isc_task_t *, isc_event_t *);
 static void internal_fdwatch_read(isc_task_t *, isc_event_t *);
 static void process_cmsg(isc__socket_t *, struct msghdr *, isc_socketevent_t *);
-static void build_msghdr_send(isc__socket_t *, isc_socketevent_t *,
+static void build_msghdr_send(isc__socket_t *, char *, isc_socketevent_t *,
 			      struct msghdr *, struct iovec *, size_t *);
-static void build_msghdr_recv(isc__socket_t *, isc_socketevent_t *,
+static void build_msghdr_recv(isc__socket_t *, char *, isc_socketevent_t *,
 			      struct msghdr *, struct iovec *, size_t *);
 #ifdef USE_WATCHER_THREAD
 static isc_boolean_t process_ctlfd(isc__socketmgr_t *manager);
@@ -1223,11 +1247,14 @@ select_poke(isc__socketmgr_t *manager, int fd, int msg) {
 static isc_result_t
 make_nonblock(int fd) {
 	int ret;
-	int flags;
 	char strbuf[ISC_STRERRORSIZE];
 #ifdef USE_FIONBIO_IOCTL
 	int on = 1;
+#else
+	int flags;
+#endif
 
+#ifdef USE_FIONBIO_IOCTL
 	ret = ioctl(fd, FIONBIO, (char *)&on);
 #else
 	flags = fcntl(fd, F_GETFL, 0);
@@ -1309,6 +1336,7 @@ cmsg_space(ISC_SOCKADDR_LEN_T len) {
  */
 static void
 process_cmsg(isc__socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
+#ifdef ISC_NET_BSD44MSGHDR
 #ifdef USE_CMSG
 	struct cmsghdr *cmsgp;
 #ifdef ISC_PLATFORM_HAVEIN6PKTINFO
@@ -1316,6 +1344,7 @@ process_cmsg(isc__socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 #endif
 #ifdef SO_TIMESTAMP
 	void *timevalp;
+#endif
 #endif
 #endif
 
@@ -1436,7 +1465,7 @@ process_cmsg(isc__socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
  * this transaction can send.
  */
 static void
-build_msghdr_send(isc__socket_t *sock, isc_socketevent_t *dev,
+build_msghdr_send(isc__socket_t *sock, char* cmsgbuf, isc_socketevent_t *dev,
 		  struct msghdr *msg, struct iovec *iov, size_t *write_countp)
 {
 	unsigned int iovcount;
@@ -1526,11 +1555,11 @@ build_msghdr_send(isc__socket_t *sock, isc_socketevent_t *dev,
 			   "sendto pktinfo data, ifindex %u",
 			   dev->pktinfo.ipi6_ifindex);
 
+		msg->msg_control = (void *)cmsgbuf;
 		msg->msg_controllen = cmsg_space(sizeof(struct in6_pktinfo));
-		INSIST(msg->msg_controllen <= sock->sendcmsgbuflen);
-		msg->msg_control = (void *)sock->sendcmsgbuf;
+		INSIST(msg->msg_controllen <= SENDCMSGBUFLEN);
 
-		cmsgp = (struct cmsghdr *)sock->sendcmsgbuf;
+		cmsgp = (struct cmsghdr *)cmsgbuf;
 		cmsgp->cmsg_level = IPPROTO_IPV6;
 		cmsgp->cmsg_type = IPV6_PKTINFO;
 		cmsgp->cmsg_len = cmsg_len(sizeof(struct in6_pktinfo));
@@ -1545,10 +1574,12 @@ build_msghdr_send(isc__socket_t *sock, isc_socketevent_t *dev,
 	{
 		int use_min_mtu = 1;	/* -1, 0, 1 */
 
-		cmsgp = (struct cmsghdr *)(sock->sendcmsgbuf +
+		cmsgp = (struct cmsghdr *)(cmsgbuf +
 					   msg->msg_controllen);
+
+		msg->msg_control = (void *)cmsgbuf;
 		msg->msg_controllen += cmsg_space(sizeof(use_min_mtu));
-		INSIST(msg->msg_controllen <= sock->sendcmsgbuflen);
+		INSIST(msg->msg_controllen <= SENDCMSGBUFLEN);
 
 		cmsgp->cmsg_level = IPPROTO_IPV6;
 		cmsgp->cmsg_type = IPV6_USE_MIN_MTU;
@@ -1564,6 +1595,7 @@ build_msghdr_send(isc__socket_t *sock, isc_socketevent_t *dev,
 			INSIST((int)sock->dscp == isc_dscp_check_value);
 	}
 
+#if defined(IP_TOS) || (defined(IPPROTO_IPV6) && defined(IPV6_TCLASS))
 	if ((sock->type == isc_sockettype_udp) &&
 	    ((dev->attributes & ISC_SOCKEVENTATTR_DSCP) != 0))
 	{
@@ -1573,11 +1605,11 @@ build_msghdr_send(isc__socket_t *sock, isc_socketevent_t *dev,
 
 #ifdef IP_TOS
 		if (sock->pf == AF_INET && sock->pktdscp) {
-			cmsgp = (struct cmsghdr *)(sock->sendcmsgbuf +
+			cmsgp = (struct cmsghdr *)(cmsgbuf +
 						   msg->msg_controllen);
-			msg->msg_control = (void *)sock->sendcmsgbuf;
+			msg->msg_control = (void *)cmsgbuf;
 			msg->msg_controllen += cmsg_space(sizeof(dscp));
-			INSIST(msg->msg_controllen <= sock->sendcmsgbuflen);
+			INSIST(msg->msg_controllen <= SENDCMSGBUFLEN);
 
 			cmsgp->cmsg_level = IPPROTO_IP;
 			cmsgp->cmsg_type = IP_TOS;
@@ -1604,11 +1636,11 @@ build_msghdr_send(isc__socket_t *sock, isc_socketevent_t *dev,
 #endif
 #if defined(IPPROTO_IPV6) && defined(IPV6_TCLASS)
 		if (sock->pf == AF_INET6 && sock->pktdscp) {
-			cmsgp = (struct cmsghdr *)(sock->sendcmsgbuf +
+			cmsgp = (struct cmsghdr *)(cmsgbuf +
 						   msg->msg_controllen);
-			msg->msg_control = (void *)sock->sendcmsgbuf;
+			msg->msg_control = (void *)cmsgbuf;
 			msg->msg_controllen += cmsg_space(sizeof(dscp));
-			INSIST(msg->msg_controllen <= sock->sendcmsgbuflen);
+			INSIST(msg->msg_controllen <= SENDCMSGBUFLEN);
 
 			cmsgp->cmsg_level = IPPROTO_IPV6;
 			cmsgp->cmsg_type = IPV6_TCLASS;
@@ -1632,7 +1664,14 @@ build_msghdr_send(isc__socket_t *sock, isc_socketevent_t *dev,
 				sock->dscp = dscp;
 		}
 #endif
+		if (msg->msg_controllen != 0 &&
+		    msg->msg_controllen < SENDCMSGBUFLEN)
+		{
+			memset(cmsgbuf + msg->msg_controllen, 0,
+			       SENDCMSGBUFLEN - msg->msg_controllen);
+		}
 	}
+#endif
 #endif /* USE_CMSG */
 #else /* ISC_NET_BSD44MSGHDR */
 	msg->msg_accrights = NULL;
@@ -1656,7 +1695,7 @@ build_msghdr_send(isc__socket_t *sock, isc_socketevent_t *dev,
  * this transaction can receive.
  */
 static void
-build_msghdr_recv(isc__socket_t *sock, isc_socketevent_t *dev,
+build_msghdr_recv(isc__socket_t *sock, char *cmsgbuf, isc_socketevent_t *dev,
 		  struct msghdr *msg, struct iovec *iov, size_t *read_countp)
 {
 	unsigned int iovcount;
@@ -1687,10 +1726,6 @@ build_msghdr_recv(isc__socket_t *sock, isc_socketevent_t *dev,
 #else
 		msg->msg_name = (void *)&dev->address.type.sa;
 		msg->msg_namelen = sizeof(dev->address.type);
-#endif
-#ifdef ISC_NET_RECVOVERFLOW
-		/* If needed, steal one iovec for overflow detection. */
-		maxiov--;
 #endif
 	} else { /* TCP */
 		msg->msg_name = NULL;
@@ -1742,12 +1777,11 @@ build_msghdr_recv(isc__socket_t *sock, isc_socketevent_t *dev,
  config:
 
 	/*
-	 * If needed, set up to receive that one extra byte.  Note that
-	 * we know there is at least one iov left, since we stole it
-	 * at the top of this function.
+	 * If needed, set up to receive that one extra byte.
 	 */
-#ifdef ISC_NET_RECVOVERFLOW
+#ifdef ISC_PLATFORM_RECVOVERFLOW
 	if (sock->type == isc_sockettype_udp) {
+		INSIST(iovcount < MAXSCATTERGATHER_RECV);
 		iov[iovcount].iov_base = (void *)(&sock->overflow);
 		iov[iovcount].iov_len = 1;
 		iovcount++;
@@ -1759,8 +1793,8 @@ build_msghdr_recv(isc__socket_t *sock, isc_socketevent_t *dev,
 
 #ifdef ISC_NET_BSD44MSGHDR
 #if defined(USE_CMSG)
-	msg->msg_control = sock->recvcmsgbuf;
-	msg->msg_controllen = sock->recvcmsgbuflen;
+	msg->msg_control = cmsgbuf;
+	msg->msg_controllen = RECVCMSGBUFLEN;
 #else
 	msg->msg_control = NULL;
 	msg->msg_controllen = 0;
@@ -1838,7 +1872,7 @@ dump_msg(struct msghdr *msg) {
 	printf("\tiov %p, iovlen %ld\n", msg->msg_iov,
 	       (long) msg->msg_iovlen);
 	for (i = 0; i < (unsigned int)msg->msg_iovlen; i++)
-		printf("\t\t%d\tbase %p, len %ld\n", i,
+		printf("\t\t%u\tbase %p, len %ld\n", i,
 		       msg->msg_iov[i].iov_base,
 		       (long) msg->msg_iov[i].iov_len);
 #ifdef ISC_NET_BSD44MSGHDR
@@ -1863,8 +1897,9 @@ doio_recv(isc__socket_t *sock, isc_socketevent_t *dev) {
 	isc_buffer_t *buffer;
 	int recv_errno;
 	char strbuf[ISC_STRERRORSIZE];
+	char cmsgbuf[RECVCMSGBUFLEN] = {0};
 
-	build_msghdr_recv(sock, dev, &msghdr, iov, &read_count);
+	build_msghdr_recv(sock, cmsgbuf, dev, &msghdr, iov, &read_count);
 
 #if defined(ISC_SOCKET_DEBUG)
 	dump_msg(&msghdr);
@@ -1984,7 +2019,7 @@ doio_recv(isc__socket_t *sock, isc_socketevent_t *dev) {
 	 * this indicates an overflow situation.  Set the flag in the
 	 * dev entry and adjust how much we read by one.
 	 */
-#ifdef ISC_NET_RECVOVERFLOW
+#ifdef ISC_PLATFORM_RECVOVERFLOW
 	if ((sock->type == isc_sockettype_udp) && ((size_t)cc > read_count)) {
 		dev->attributes |= ISC_SOCKEVENTATTR_TRUNC;
 		cc--;
@@ -2058,8 +2093,9 @@ doio_send(isc__socket_t *sock, isc_socketevent_t *dev) {
 	int attempts = 0;
 	int send_errno;
 	char strbuf[ISC_STRERRORSIZE];
+	char cmsgbuf[SENDCMSGBUFLEN] = {0};
 
-	build_msghdr_send(sock, dev, &msghdr, iov, &write_count);
+	build_msghdr_send(sock, cmsgbuf, dev, &msghdr, iov, &write_count);
 
  resend:
 	if (sock->type == isc_sockettype_udp &&
@@ -2277,7 +2313,6 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 {
 	isc__socket_t *sock;
 	isc_result_t result;
-	ISC_SOCKADDR_LEN_T cmsgbuflen;
 
 	sock = isc_mem_get(manager->mctx, sizeof(*sock));
 
@@ -2298,53 +2333,6 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 
 	ISC_LINK_INIT(sock, link);
 
-	sock->recvcmsgbuf = NULL;
-	sock->sendcmsgbuf = NULL;
-
-	/*
-	 * Set up cmsg buffers.
-	 */
-	cmsgbuflen = 0;
-#if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
-	cmsgbuflen += cmsg_space(sizeof(struct in6_pktinfo));
-#endif
-#if defined(USE_CMSG) && defined(SO_TIMESTAMP)
-	cmsgbuflen += cmsg_space(sizeof(struct timeval));
-#endif
-#if defined(USE_CMSG) && (defined(IPV6_TCLASS) || defined(IP_TOS))
-	cmsgbuflen += cmsg_space(sizeof(int));
-#endif
-	sock->recvcmsgbuflen = cmsgbuflen;
-	if (sock->recvcmsgbuflen != 0U) {
-		sock->recvcmsgbuf = isc_mem_get(manager->mctx, cmsgbuflen);
-		if (sock->recvcmsgbuf == NULL) {
-			result = ISC_R_NOMEMORY;
-			goto error;
-		}
-	}
-
-	cmsgbuflen = 0;
-#if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
-	cmsgbuflen += cmsg_space(sizeof(struct in6_pktinfo));
-#if defined(IPV6_USE_MIN_MTU)
-	/*
-	 * Provide space for working around FreeBSD's broken IPV6_USE_MIN_MTU
-	 * support.
-	 */
-	cmsgbuflen += cmsg_space(sizeof(int));
-#endif
-#endif
-#if defined(USE_CMSG) && (defined(IP_TOS) || defined(IPV6_TCLASS))
-	cmsgbuflen += cmsg_space(sizeof(int));
-#endif
-	sock->sendcmsgbuflen = cmsgbuflen;
-	if (sock->sendcmsgbuflen != 0U) {
-		sock->sendcmsgbuf = isc_mem_get(manager->mctx, cmsgbuflen);
-		if (sock->sendcmsgbuf == NULL) {
-			result = ISC_R_NOMEMORY;
-			goto error;
-		}
-	}
 
 	memset(sock->name, 0, sizeof(sock->name));
 	sock->tag = NULL;
@@ -2392,12 +2380,6 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 	return (ISC_R_SUCCESS);
 
  error:
-	if (sock->recvcmsgbuf != NULL)
-		isc_mem_put(manager->mctx, sock->recvcmsgbuf,
-			    sock->recvcmsgbuflen);
-	if (sock->sendcmsgbuf != NULL)
-		isc_mem_put(manager->mctx, sock->sendcmsgbuf,
-			    sock->sendcmsgbuflen);
 	isc_mem_put(manager->mctx, sock, sizeof(*sock));
 
 	return (result);
@@ -2424,13 +2406,6 @@ free_socket(isc__socket_t **socketp) {
 	INSIST(ISC_LIST_EMPTY(sock->send_list));
 	INSIST(ISC_LIST_EMPTY(sock->accept_list));
 	INSIST(!ISC_LINK_LINKED(sock, link));
-
-	if (sock->recvcmsgbuf != NULL)
-		isc_mem_put(sock->manager->mctx, sock->recvcmsgbuf,
-			    sock->recvcmsgbuflen);
-	if (sock->sendcmsgbuf != NULL)
-		isc_mem_put(sock->manager->mctx, sock->sendcmsgbuf,
-			    sock->sendcmsgbuflen);
 
 	sock->common.magic = 0;
 	sock->common.impmagic = 0;
@@ -2658,20 +2633,20 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 	 */
 	if (manager->reserved != 0 && sock->type == isc_sockettype_udp &&
 	    sock->fd >= 0 && sock->fd < manager->reserved) {
-		int new, tmp;
-		new = fcntl(sock->fd, F_DUPFD, manager->reserved);
+		int newfd, tmp;
+		newfd = fcntl(sock->fd, F_DUPFD, manager->reserved);
 		tmp = errno;
 		(void)close(sock->fd);
 		errno = tmp;
-		sock->fd = new;
+		sock->fd = newfd;
 		err = "isc_socket_create: fcntl/reserved";
 	} else if (sock->fd >= 0 && sock->fd < 20) {
-		int new, tmp;
-		new = fcntl(sock->fd, F_DUPFD, 20);
+		int newfd, tmp;
+		newfd = fcntl(sock->fd, F_DUPFD, 20);
 		tmp = errno;
 		(void)close(sock->fd);
 		errno = tmp;
-		sock->fd = new;
+		sock->fd = newfd;
 		err = "isc_socket_create: fcntl";
 	}
 #endif
@@ -2802,15 +2777,6 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 #endif /* SO_TIMESTAMP */
 
 #if defined(ISC_PLATFORM_HAVEIPV6)
-		if (sock->pf == AF_INET6 && sock->recvcmsgbuflen == 0U) {
-			/*
-			 * Warn explicitly because this anomaly can be hidden
-			 * in usual operation (and unexpectedly appear later).
-			 */
-			UNEXPECTED_ERROR(__FILE__, __LINE__,
-					 "No buffer available to receive "
-					 "IPv6 destination");
-		}
 #ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 #ifdef IPV6_RECVPKTINFO
 		/* RFC 3542 */
@@ -3565,12 +3531,12 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 	 * Leave a space for stdio to work in.
 	 */
 	if (fd >= 0 && fd < 20) {
-		int new, tmp;
-		new = fcntl(fd, F_DUPFD, 20);
+		int newfd, tmp;
+		newfd = fcntl(fd, F_DUPFD, 20);
 		tmp = errno;
 		(void)close(fd);
 		errno = tmp;
-		fd = new;
+		fd = newfd;
 		err = "accept/fcntl";
 	}
 #endif
@@ -3704,6 +3670,12 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 		 */
 		dev->address = NEWCONNSOCK(dev)->peer_address;
 
+		if (NEWCONNSOCK(dev)->active == 0) {
+			inc_stats(manager->stats,
+				  NEWCONNSOCK(dev)->statsindex[STATID_ACTIVE]);
+			NEWCONNSOCK(dev)->active = 1;
+		}
+
 		LOCK(&manager->fdlock[lockid]);
 		manager->fds[fd] = NEWCONNSOCK(dev);
 		manager->fdstate[fd] = MANAGED;
@@ -3729,7 +3701,6 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 		UNLOCK(&manager->lock);
 
 		inc_stats(manager->stats, sock->statsindex[STATID_ACCEPT]);
-		inc_stats(manager->stats, sock->statsindex[STATID_ACTIVE]);
 	} else {
 		inc_stats(manager->stats, sock->statsindex[STATID_ACCEPTFAIL]);
 		NEWCONNSOCK(dev)->references--;
@@ -4755,6 +4726,7 @@ isc__socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
 		result = ISC_R_UNEXPECTED;
 		goto cleanup;
 	}
+	isc_thread_setname(manager->watcher, "isc-socket");
 #endif /* USE_WATCHER_THREAD */
 	isc_mem_attach(mctx, &manager->mctx);
 
@@ -5202,6 +5174,8 @@ socket_send(isc__socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 			break;
 		}
 
+		/* FALLTHROUGH */
+
 	case DOIO_HARD:
 	case DOIO_SUCCESS:
 		if ((flags & ISC_SOCKFLAG_IMMEDIATE) == 0)
@@ -5481,17 +5455,19 @@ isc__socket_permunix(isc_sockaddr_t *sockaddr, isc_uint32_t perm,
 
 	REQUIRE(sockaddr->type.sa.sa_family == AF_UNIX);
 	INSIST(strlen(sockaddr->type.sunix.sun_path) < sizeof(path));
-	strcpy(path, sockaddr->type.sunix.sun_path);
+	strlcpy(path, sockaddr->type.sunix.sun_path, sizeof(path));
 
 #ifdef NEED_SECURE_DIRECTORY
 	slash = strrchr(path, '/');
 	if (slash != NULL) {
-		if (slash != path)
+		if (slash != path) {
 			*slash = '\0';
-		else
-			strcpy(path, "/");
-	} else
-		strcpy(path, ".");
+		} else {
+			strlcpy(path, "/", sizeof(path));
+		}
+	} else {
+		strlcpy(path, ".", sizeof(path));
+	}
 #endif
 
 	if (chmod(path, perm) < 0) {
@@ -5612,7 +5588,7 @@ isc__socket_filter(isc_socket_t *sock0, const char *filter) {
 
 #if defined(SO_ACCEPTFILTER) && defined(ENABLE_ACCEPTFILTER)
 	bzero(&afa, sizeof(afa));
-	strncpy(afa.af_name, filter, sizeof(afa.af_name));
+	strlcpy(afa.af_name, filter, sizeof(afa.af_name));
 	if (setsockopt(sock->fd, SOL_SOCKET, SO_ACCEPTFILTER,
 			 &afa, sizeof(afa)) == -1) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
@@ -6466,8 +6442,7 @@ isc__socket_setname(isc_socket_t *socket0, const char *name, void *tag) {
 	REQUIRE(VALID_SOCKET(sock));
 
 	LOCK(&sock->lock);
-	memset(sock->name, 0, sizeof(sock->name));
-	strncpy(sock->name, name, sizeof(sock->name) - 1);
+	strlcpy(sock->name, name, sizeof(sock->name));
 	sock->tag = tag;
 	UNLOCK(&sock->lock);
 }
@@ -6664,7 +6639,7 @@ isc_socketmgr_renderjson(isc_socketmgr_t *mgr0, json_object *stats) {
 
 		LOCK(&sock->lock);
 
-		sprintf(buf, "%p", sock);
+		snprintf(buf, sizeof(buf), "%p", sock);
 		obj = json_object_new_string(buf);
 		CHECKMEM(obj);
 		json_object_object_add(entry, "id", obj);

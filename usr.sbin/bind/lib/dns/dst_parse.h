@@ -1,6 +1,5 @@
 /*
- * Portions Copyright (C) 2004-2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
- * Portions Copyright (C) 2000-2002  Internet Software Consortium.
+ * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +13,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * Portions Copyright (C) Network Associates, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_parse.h,v 1.2 2019/12/16 16:16:24 deraadt Exp $ */
+/* $Id: dst_parse.h,v 1.3 2019/12/17 01:46:31 sthen Exp $ */
 
 /*! \file */
 #ifndef DST_DST_PARSE_H
@@ -85,6 +87,11 @@
 #define TAG_ECDSA_PRIVATEKEY	((DST_ALG_ECDSA256 << TAG_SHIFT) + 0)
 #define TAG_ECDSA_ENGINE	((DST_ALG_ECDSA256 << TAG_SHIFT) + 1)
 #define TAG_ECDSA_LABEL		((DST_ALG_ECDSA256 << TAG_SHIFT) + 2)
+
+#define EDDSA_NTAGS		4
+#define TAG_EDDSA_PRIVATEKEY	((DST_ALG_ED25519 << TAG_SHIFT) + 0)
+#define TAG_EDDSA_ENGINE	((DST_ALG_ED25519 << TAG_SHIFT) + 1)
+#define TAG_EDDSA_LABEL		((DST_ALG_ED25519 << TAG_SHIFT) + 2)
 
 #define OLD_HMACMD5_NTAGS	1
 #define HMACMD5_NTAGS		2

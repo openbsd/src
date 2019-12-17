@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ssu_external.c,v 1.1 2019/12/16 16:31:33 deraadt Exp $ */
+/* $Id: ssu_external.c,v 1.2 2019/12/17 01:46:32 sthen Exp $ */
 
 /*
  * This implements external update-policy rules.  This allows permission
@@ -34,6 +34,7 @@
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/netaddr.h>
+#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2010, 2012  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: keyvalues.h,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: keyvalues.h,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
 
 #ifndef DNS_KEYVALUES_H
 #define DNS_KEYVALUES_H 1
@@ -73,6 +72,8 @@
 #define DNS_KEYALG_ECCGOST	12
 #define DNS_KEYALG_ECDSA256	13
 #define DNS_KEYALG_ECDSA384	14
+#define DNS_KEYALG_ED25519	15
+#define DNS_KEYALG_ED448	16
 #define DNS_KEYALG_INDIRECT	252
 #define DNS_KEYALG_PRIVATEDNS	253
 #define DNS_KEYALG_PRIVATEOID	254     /*%< Key begins with OID giving alg */
@@ -108,5 +109,11 @@
 
 #define DNS_KEY_ECDSA256SIZE	64
 #define DNS_KEY_ECDSA384SIZE	96
+
+#define DNS_SIG_ED25519SIZE	64
+#define DNS_SIG_ED448SIZE	114
+
+#define DNS_KEY_ED25519SIZE	32
+#define DNS_KEY_ED448SIZE	57
 
 #endif /* DNS_KEYVALUES_H */

@@ -1,6 +1,5 @@
 /*
- * Portions Copyright (C) 2004, 2005, 2007, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
- * Portions Copyright (C) 1996-2001, 2003  Internet Software Consortium.
+ * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -68,7 +67,7 @@
  */
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
-static char rcsid[] = "$Id: lwinetaton.c,v 1.7 2019/12/16 16:16:28 deraadt Exp $";
+static char rcsid[] = "$Id: lwinetaton.c,v 1.8 2019/12/17 01:46:38 sthen Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>

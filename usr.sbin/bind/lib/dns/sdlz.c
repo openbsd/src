@@ -1,6 +1,5 @@
 /*
- * Portions Copyright (C) 2005-2016  Internet Systems Consortium, Inc. ("ISC")
- * Portions Copyright (C) 1999-2001  Internet Software Consortium.
+ * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -50,7 +49,7 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sdlz.c,v 1.2 2019/12/16 16:16:24 deraadt Exp $ */
+/* $Id: sdlz.c,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
 
 /*! \file */
 
@@ -158,10 +157,10 @@ typedef struct sdlz_rdatasetiter {
 #define VALID_SDLZNODE(sdlzn)	VALID_SDLZLOOKUP(sdlzn)
 
 /* These values are taken from RFC 1537 */
-#define SDLZ_DEFAULT_REFRESH	(60 * 60 * 8)
-#define SDLZ_DEFAULT_RETRY	(60 * 60 * 2)
-#define SDLZ_DEFAULT_EXPIRE	(60 * 60 * 24 * 7)
-#define SDLZ_DEFAULT_MINIMUM	(60 * 60 * 24)
+#define SDLZ_DEFAULT_REFRESH	28800U		/* 8 hours */
+#define SDLZ_DEFAULT_RETRY	7200U		/* 2 hours */
+#define SDLZ_DEFAULT_EXPIRE	604800U		/* 7 days */
+#define SDLZ_DEFAULT_MINIMUM	86400U		/* 1 day */
 
 /* This is a reasonable value */
 #define SDLZ_DEFAULT_TTL	(60 * 60 * 24)
@@ -1717,7 +1716,7 @@ dns_sdlzssumatch(dns_name_t *signer, dns_name_t *name, isc_netaddr_t *tcpaddr,
 	char b_type[DNS_RDATATYPE_FORMATSIZE];
 	char b_key[DST_KEY_FORMATSIZE];
 	isc_buffer_t *tkey_token = NULL;
-	isc_region_t token_region;
+	isc_region_t token_region = { NULL, 0 };
 	isc_uint32_t token_len = 0;
 	isc_boolean_t ret;
 

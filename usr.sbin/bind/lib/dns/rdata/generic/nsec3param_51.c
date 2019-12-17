@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3param_51.c,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: nsec3param_51.c,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -117,13 +117,13 @@ totext_nsec3param(ARGS_TOTEXT) {
 	iterations = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
 
-	sprintf(buf, "%u ", hash);
+	snprintf(buf, sizeof(buf), "%u ", hash);
 	RETERR(str_totext(buf, target));
 
-	sprintf(buf, "%u ", flags);
+	snprintf(buf, sizeof(buf), "%u ", flags);
 	RETERR(str_totext(buf, target));
 
-	sprintf(buf, "%u ", iterations);
+	snprintf(buf, sizeof(buf), "%u ", iterations);
 	RETERR(str_totext(buf, target));
 
 	j = uint8_fromregion(&sr);

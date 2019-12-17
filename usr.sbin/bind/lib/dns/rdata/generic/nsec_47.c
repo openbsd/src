@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2007-2009, 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec_47.c,v 1.4 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: nsec_47.c,v 1.5 2019/12/17 01:46:33 sthen Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -71,6 +70,12 @@ totext_nsec(ARGS_TOTEXT) {
 	dns_name_fromregion(&name, &sr);
 	isc_region_consume(&sr, name_length(&name));
 	RETERR(dns_name_totext(&name, ISC_FALSE, target));
+	/*
+	 * Don't leave a trailing space when there's no typemap present.
+	 */
+	if (sr.length > 0) {
+		RETERR(str_totext(" ", target));
+	}
 	return (typemap_totext(&sr, NULL, target));
 }
 

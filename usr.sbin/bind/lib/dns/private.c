@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2011, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: private.c,v 1.1 2019/12/16 16:31:33 deraadt Exp $ */
+/* $Id: private.c,v 1.2 2019/12/17 01:46:32 sthen Exp $ */
 
 #include "config.h"
 
@@ -23,6 +23,7 @@
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/types.h>
+#include <isc/util.h>
 
 #include <dns/nsec3.h>
 #include <dns/private.h>
@@ -307,7 +308,7 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 		unsigned char newbuf[DNS_NSEC3PARAM_BUFFERSIZE];
 		dns_rdata_t rdata = DNS_RDATA_INIT;
 		dns_rdata_nsec3param_t nsec3param;
-		isc_boolean_t delete, init, nonsec;
+		isc_boolean_t del, init, nonsec;
 		isc_buffer_t b;
 
 		if (!dns_nsec3param_fromprivate(private, &rdata, nsec3buf,
@@ -316,7 +317,7 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 
 		CHECK(dns_rdata_tostruct(&rdata, &nsec3param, NULL));
 
-		delete = ISC_TF((nsec3param.flags & DNS_NSEC3FLAG_REMOVE) != 0);
+		del = ISC_TF((nsec3param.flags & DNS_NSEC3FLAG_REMOVE) != 0);
 		init = ISC_TF((nsec3param.flags & DNS_NSEC3FLAG_INITIAL) != 0);
 		nonsec = ISC_TF((nsec3param.flags & DNS_NSEC3FLAG_NONSEC) != 0);
 
@@ -327,7 +328,7 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 
 		if (init)
 			isc_buffer_putstr(buf, "Pending NSEC3 chain ");
-		else if (delete)
+		else if (del)
 			isc_buffer_putstr(buf, "Removing NSEC3 chain ");
 		else
 			isc_buffer_putstr(buf, "Creating NSEC3 chain ");
@@ -340,18 +341,18 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 
 		CHECK(dns_rdata_totext(&rdata, NULL, buf));
 
-		if (delete && !nonsec)
+		if (del && !nonsec)
 			isc_buffer_putstr(buf, " / creating NSEC chain");
 	} else if (private->length == 5) {
 		unsigned char alg = private->data[0];
 		dns_keytag_t keyid = (private->data[2] | private->data[1] << 8);
 		char keybuf[BUFSIZ], algbuf[DNS_SECALG_FORMATSIZE];
-		isc_boolean_t delete = ISC_TF(private->data[3] != 0);
+		isc_boolean_t del = ISC_TF(private->data[3] != 0);
 		isc_boolean_t complete = ISC_TF(private->data[4] != 0);
 
-		if (delete && complete)
+		if (del && complete)
 			isc_buffer_putstr(buf, "Done removing signatures for ");
-		else if (delete)
+		else if (del)
 			isc_buffer_putstr(buf, "Removing signatures for ");
 		else if (complete)
 			isc_buffer_putstr(buf, "Done signing with ");
@@ -359,7 +360,7 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 			isc_buffer_putstr(buf, "Signing with ");
 
 		dns_secalg_format(alg, algbuf, sizeof(algbuf));
-		sprintf(keybuf, "key %d/%s", keyid, algbuf);
+		snprintf(keybuf, sizeof(keybuf), "key %d/%s", keyid, algbuf);
 		isc_buffer_putstr(buf, keybuf);
 	} else
 		return (ISC_R_NOTFOUND);

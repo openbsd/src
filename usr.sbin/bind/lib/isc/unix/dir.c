@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012, 2017  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,6 +29,7 @@
 #include <isc/dir.h>
 #include <isc/magic.h>
 #include <isc/netdb.h>
+#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -66,10 +66,11 @@ isc_dir_open(isc_dir_t *dir, const char *dirname) {
 	 * Copy directory name.  Need to have enough space for the name,
 	 * a possible path separator, the wildcard, and the final NUL.
 	 */
-	if (strlen(dirname) + 3 > sizeof(dir->dirname))
+	if (strlen(dirname) + 3 > sizeof(dir->dirname)) {
 		/* XXXDCL ? */
 		return (ISC_R_NOSPACE);
-	strcpy(dir->dirname, dirname);
+	}
+	strlcpy(dir->dirname, dirname, sizeof(dir->dirname));
 
 	/*
 	 * Append path separator, if needed, and "*".
@@ -85,8 +86,9 @@ isc_dir_open(isc_dir_t *dir, const char *dirname) {
 	 */
 	dir->handle = opendir(dirname);
 
-	if (dir->handle == NULL)
-		return isc__errno2result(errno);
+	if (dir->handle == NULL) {
+		return (isc__errno2result(errno));
+	}
 
 	return (result);
 }
@@ -116,9 +118,9 @@ isc_dir_read(isc_dir_t *dir) {
 	 * Make sure that the space for the name is long enough.
 	 */
 	if (sizeof(dir->entry.name) <= strlen(entry->d_name))
-	    return (ISC_R_UNEXPECTED);
+		return (ISC_R_UNEXPECTED);
 
-	strcpy(dir->entry.name, entry->d_name);
+	strlcpy(dir->entry.name, entry->d_name, sizeof(dir->entry.name));
 
 	/*
 	 * Some dirents have d_namlen, but it is not portable.

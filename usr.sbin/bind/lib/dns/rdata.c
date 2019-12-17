@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.13 2019/12/16 16:16:24 deraadt Exp $ */
+/* $Id: rdata.c,v 1.14 2019/12/17 01:46:32 sthen Exp $ */
 
 /*! \file */
 
@@ -102,7 +101,7 @@
 #define ARGS_FROMSTRUCT	int rdclass, dns_rdatatype_t type, \
 			void *source, isc_buffer_t *target
 
-#define ARGS_TOSTRUCT	dns_rdata_t *rdata, void *target, isc_mem_t *mctx
+#define ARGS_TOSTRUCT	const dns_rdata_t *rdata, void *target, isc_mem_t *mctx
 
 #define ARGS_FREESTRUCT void *source
 
@@ -116,6 +115,24 @@
 
 #define ARGS_CHECKNAMES dns_rdata_t *rdata, dns_name_t *owner, dns_name_t *bad
 
+#ifndef DNS_NAME_INITABSOLUTE
+#define DNS_NAME_INITABSOLUTE(A,B) { \
+	DNS_NAME_MAGIC, \
+	A, sizeof(A), sizeof(B), \
+	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE, \
+	B, NULL, { (void *)-1, (void *)-1}, \
+	{NULL, NULL} \
+}
+#endif
+#ifndef DNS_NAME_INITNONABSOLUTE
+#define DNS_NAME_INITNONABSOLUTE(A,B) { \
+	DNS_NAME_MAGIC, \
+	A, (sizeof(A) - 1), sizeof(B), \
+	DNS_NAMEATTR_READONLY, \
+	B, NULL, { (void *)-1, (void *)-1}, \
+	{NULL, NULL} \
+}
+#endif
 
 /*%
  * Context structure for the totext_ functions.
@@ -321,14 +338,8 @@ generic_freestruct_tlsa(ARGS_FREESTRUCT);
 static unsigned char gc_msdcs_data[]  = "\002gc\006_msdcs";
 static unsigned char gc_msdcs_offset [] = { 0, 3 };
 
-static const dns_name_t gc_msdcs = {
-	DNS_NAME_MAGIC,
-	gc_msdcs_data, 10, 2,
-	DNS_NAMEATTR_READONLY,
-	gc_msdcs_offset, NULL,
-	{(void *)-1, (void *)-1},
-	{NULL, NULL}
-};
+static dns_name_t const gc_msdcs =
+	DNS_NAME_INITNONABSOLUTE(gc_msdcs_data, gc_msdcs_offset);
 
 /*%
  *	convert presentation level address to network order binary form.
@@ -394,7 +405,7 @@ getquad(const void *src, struct in_addr *dst,
 	isc_lex_t *lexer, dns_rdatacallbacks_t *callbacks)
 {
 	int result;
-	struct in_addr *tmp;
+	struct in_addr tmp;
 
 	result = inet_aton(src, dst);
 	if (result == 1 && callbacks != NULL &&
@@ -501,7 +512,7 @@ typemap_totext(isc_region_t *sr, dns_rdata_textctx_t *tctx,
 {
 	unsigned int i, j, k;
 	unsigned int window, len;
-	isc_boolean_t first = ISC_FALSE;
+	isc_boolean_t first = ISC_TRUE;
 
 	for (i = 0; i < sr->length; i += len) {
 		if (tctx != NULL &&
@@ -530,7 +541,7 @@ typemap_totext(isc_region_t *sr, dns_rdata_textctx_t *tctx,
 					RETERR(dns_rdatatype_totext(t, target));
 				} else {
 					char buf[sizeof("TYPE65535")];
-					sprintf(buf, "TYPE%u", t);
+					snprintf(buf, sizeof(buf), "TYPE%u", t);
 					RETERR(str_totext(buf, target));
 				}
 			}
@@ -1212,7 +1223,7 @@ dns_rdata_fromstruct(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 }
 
 isc_result_t
-dns_rdata_tostruct(dns_rdata_t *rdata, void *target, isc_mem_t *mctx) {
+dns_rdata_tostruct(const dns_rdata_t *rdata, void *target, isc_mem_t *mctx) {
 	isc_result_t result = ISC_R_NOTIMPLEMENTED;
 	isc_boolean_t use_default = ISC_FALSE;
 
@@ -1341,8 +1352,12 @@ dns_rdatatype_fromtext(dns_rdatatype_t *typep, isc_textregion_t *source) {
 		char *endp;
 		unsigned int val;
 
-		strncpy(buf, source->base + 4, source->length - 4);
-		buf[source->length - 4] = '\0';
+		/*
+		 * source->base is not required to be NUL terminated.
+		 * Copy up to remaining bytes and NUL terminate.
+		 */
+		snprintf(buf, sizeof(buf), "%.*s",
+			 (int)(source->length - 4), source->base + 4);
 		val = strtoul(buf, &endp, 10);
 		if (*endp == '\0' && val <= 0xffff) {
 			*typep = (dns_rdatatype_t)val;
@@ -1458,6 +1473,7 @@ txt_totext(isc_region_t *source, isc_boolean_t quote, isc_buffer_t *target) {
 			return (ISC_R_NOSPACE);
 		*tp++ = '"';
 		tl--;
+		POST(tl);
 	}
 	isc_buffer_add(target, (unsigned int)(tp - (char *)region.base));
 	isc_region_consume(source, *source->base + 1);
@@ -1590,8 +1606,8 @@ multitxt_totext(isc_region_t *source, isc_buffer_t *target) {
 				tl -= 4;
 				continue;
 			}
-			/* double quote, semi-colon, backslash */
-			if (*sp == 0x22 || *sp == 0x3b || *sp == 0x5c) {
+			/* double quote, backslash */
+			if (*sp == 0x22 || *sp == 0x5c) {
 				if (tl < 2)
 					return (ISC_R_NOSPACE);
 				*tp++ = '\\';
@@ -1608,6 +1624,7 @@ multitxt_totext(isc_region_t *source, isc_buffer_t *target) {
 		return (ISC_R_NOSPACE);
 	*tp++ = '"';
 	tl--;
+	POST(tl);
 	isc_buffer_add(target, (unsigned int)(tp - (char *)region.base));
 	return (ISC_R_SUCCESS);
 }

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2001  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +18,7 @@
 #ifndef GENERIC_MR_9_H
 #define GENERIC_MR_9_H 1
 
-/* $Id: mr_9.h,v 1.2 2019/12/16 16:16:25 deraadt Exp $ */
+/* $Id: mr_9.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
 
 typedef struct dns_rdata_mr {
 	dns_rdatacommon_t	common;

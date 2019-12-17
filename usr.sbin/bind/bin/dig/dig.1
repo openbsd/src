@@ -1,5 +1,4 @@
-.\" Copyright (C) 2004-2011, 2013-2017 Internet Systems Consortium, Inc. ("ISC")
-.\" Copyright (C) 2000-2003 Internet Software Consortium.
+.\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -48,7 +47,7 @@
 dig \- DNS lookup utility
 .SH "SYNOPSIS"
 .HP \w'\fBdig\fR\ 'u
-\fBdig\fR [@server] [\fB\-b\ \fR\fB\fIaddress\fR\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-f\ \fR\fB\fIfilename\fR\fR] [\fB\-k\ \fR\fB\fIfilename\fR\fR] [\fB\-m\fR] [\fB\-p\ \fR\fB\fIport#\fR\fR] [\fB\-q\ \fR\fB\fIname\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-v\fR] [\fB\-x\ \fR\fB\fIaddr\fR\fR] [\fB\-y\ \fR\fB\fI[hmac:]\fR\fIname:key\fR\fR] [\fB\-4\fR] [\fB\-6\fR] [name] [type] [class] [queryopt...]
+\fBdig\fR [@server] [\fB\-b\ \fR\fB\fIaddress\fR\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-f\ \fR\fB\fIfilename\fR\fR] [\fB\-k\ \fR\fB\fIfilename\fR\fR] [\fB\-m\fR] [\fB\-p\ \fR\fB\fIport#\fR\fR] [\fB\-q\ \fR\fB\fIname\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-v\fR] [\fB\-x\ \fR\fB\fIaddr\fR\fR] [\fB\-y\ \fR\fB\fI[hmac:]\fR\fIname:key\fR\fR] [[\fB\-4\fR] | [\fB\-6\fR]] [name] [type] [class] [queryopt...]
 .HP \w'\fBdig\fR\ 'u
 \fBdig\fR [\fB\-h\fR]
 .HP \w'\fBdig\fR\ 'u
@@ -56,7 +55,7 @@ dig \- DNS lookup utility
 .SH "DESCRIPTION"
 .PP
 \fBdig\fR
-(domain information groper) is a flexible tool for interrogating DNS name servers\&. It performs DNS lookups and displays the answers that are returned from the name server(s) that were queried\&. Most DNS administrators use
+is a flexible tool for interrogating DNS name servers\&. It performs DNS lookups and displays the answers that are returned from the name server(s) that were queried\&. Most DNS administrators use
 \fBdig\fR
 to troubleshoot DNS problems because of its flexibility, ease of use and clarity of output\&. Other lookup tools tend to have less functionality than
 \fBdig\fR\&.
@@ -185,7 +184,7 @@ using the command\-line interface\&.
 .PP
 \-i
 .RS 4
-Do reverse IPv6 lookups using the obsolete RFC1886 IP6\&.INT domain, which is no longer in use\&. Obsolete bit string label queries (RFC2874) are not attempted\&.
+Do reverse IPv6 lookups using the obsolete RFC 1886 IP6\&.INT domain, which is no longer in use\&. Obsolete bit string label queries (RFC 2874) are not attempted\&.
 .RE
 .PP
 \-k \fIkeyfile\fR
@@ -219,13 +218,20 @@ from other arguments\&.
 .PP
 \-t \fItype\fR
 .RS 4
-The resource record type to query\&. It can be any valid query type which is supported in BIND 9\&. The default query type is "A", unless the
+The resource record type to query\&. It can be any valid query type\&. If it is a resource record type supported in BIND 9, it can be given by the type mnemonic (such as "NS" or "AAAA")\&. The default query type is "A", unless the
 \fB\-x\fR
 option is supplied to indicate a reverse lookup\&. A zone transfer can be requested by specifying a type of AXFR\&. When an incremental zone transfer (IXFR) is required, set the
 \fItype\fR
 to
 ixfr=N\&. The incremental zone transfer will contain the changes made to the zone since the serial number in the zone\*(Aqs SOA record was
 \fIN\fR\&.
+.sp
+All resource record types can be expressed as "TYPEnn", where "nn" is the number of the type\&. If the resource record type is not supported in BIND 9, the result will be displayed as described in RFC 3597\&.
+.RE
+.PP
+\-u
+.RS 4
+Print query times in microseconds instead of milliseconds\&.
 .RE
 .PP
 \-v
@@ -367,6 +373,26 @@ and the query options that have been applied\&. This comment is printed by defau
 Toggle the display of comment lines in the output\&. The default is to print comments\&.
 .RE
 .PP
+\fB+[no]cookie\fR\fB[=####]\fR
+.RS 4
+Send an COOKIE EDNS option, containing an optional
+\fIvalue\fR\&. Replaying a COOKIE from a previous response will allow the server to identify a previous client\&. The default is
+\fB+nocookie\fR\&.
+.sp
+\fB+cookie\fR
+is automatically set when +trace is in use, to better emulate the default queries from a nameserver\&.
+.sp
+This option was formerly called
+\fB+[no]sit\fR
+(Server Identity Token)\&. In BIND 9\&.10\&.0 through BIND 9\&.10\&.2, it sent the experimental option code 65001\&. This was changed to option code 10 in BIND 9\&.10\&.3 when the DNS COOKIE option was allocated\&.
+.sp
+The
+\fB+[no]sit\fR
+is now deprecated, but has been retained as a synonym for
+\fB+[no]cookie\fR
+for backward compatibility within the BIND 9\&.10 branch\&.
+.RE
+.PP
 \fB+[no]crypto\fR
 .RS 4
 Toggle the display of cryptographic fields in DNSSEC records\&. The contents of these field are unnecessary to debug most DNSSEC validation failures and removing them makes it easier to see the common failures\&. The default is to display the fields\&. When omitted they are replaced by the string "[omitted]" or in the DNSKEY case the key id is displayed as the replacement, e\&.g\&. "[ key id = value ]"\&.
@@ -418,8 +444,13 @@ Specify EDNS option with code point
 and optionally payload of
 \fBvalue\fR
 as a hexadecimal string\&.
+\fBcode\fR
+can be either an EDNS option name (for example,
+NSID
+or
+ECS), or an arbitrary numeric value\&.
 \fB+noednsopt\fR
-clears the EDNS options to to be sent\&.
+clears the EDNS options to be sent\&.
 .RE
 .PP
 \fB+[no]expire\fR
@@ -574,8 +605,12 @@ instead\&.
 .PP
 \fB+[no]sit\fR\fB[=####]\fR
 .RS 4
-Send a Source Identity Token EDNS option, with optional value\&. Replaying a SIT from a previous response will allow the server to identify a previous client\&. The default is
-\fB+nosit\fR\&. Currently using experimental value 65001 for the option code\&.
+This option is a synonym for
+\fB+[no]cookie\fR\&.
+.sp
+The
+\fB+[no]sit\fR
+is deprecated\&.
 .RE
 .PP
 \fB+split=W\fR
@@ -742,7 +777,7 @@ ${HOME}/\&.digrc
 \fBhost\fR(1),
 \fBnamed\fR(8),
 \fBdnssec-keygen\fR(8),
-RFC1035\&.
+RFC 1035\&.
 .SH "BUGS"
 .PP
 There are probably too many query options\&.
@@ -751,7 +786,5 @@ There are probably too many query options\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2004-2011, 2013-2017 Internet Systems Consortium, Inc. ("ISC")
-.br
-Copyright \(co 2000-2003 Internet Software Consortium.
+Copyright \(co 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .br

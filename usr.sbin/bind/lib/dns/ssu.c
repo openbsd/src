@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2008, 2010, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +16,7 @@
 
 /*! \file */
 /*
- * $Id: ssu.c,v 1.2 2019/12/16 16:16:24 deraadt Exp $
+ * $Id: ssu.c,v 1.3 2019/12/17 01:46:32 sthen Exp $
  * Principal Author: Brian Wellington
  */
 
@@ -348,9 +347,20 @@ stf_from_address(dns_name_t *stfself, isc_netaddr_t *tcpaddr) {
 
 isc_boolean_t
 dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
-			dns_name_t *name, isc_netaddr_t *tcpaddr,
-			dns_rdatatype_t type,
-			const dst_key_t *key)
+			dns_name_t *name, isc_netaddr_t *addr,
+			dns_rdatatype_t type, const dst_key_t *key)
+{
+	return (dns_ssutable_checkrules2
+		(table, signer, name, addr,
+		 addr == NULL ? ISC_FALSE : ISC_TRUE,
+		 NULL, type, key));
+}
+
+isc_boolean_t
+dns_ssutable_checkrules2(dns_ssutable_t *table, dns_name_t *signer,
+			 dns_name_t *name, isc_netaddr_t *addr,
+			 isc_boolean_t tcp, const dns_aclenv_t *env,
+			 dns_rdatatype_t type, const dst_key_t *key)
 {
 	dns_ssurule_t *rule;
 	unsigned int i;
@@ -359,12 +369,14 @@ dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
 	dns_name_t *tcpself;
 	dns_name_t *stfself;
 	isc_result_t result;
+	int match;
 
 	REQUIRE(VALID_SSUTABLE(table));
 	REQUIRE(signer == NULL || dns_name_isabsolute(signer));
 	REQUIRE(dns_name_isabsolute(name));
+	REQUIRE(addr == NULL || env != NULL);
 
-	if (signer == NULL && tcpaddr == NULL)
+	if (signer == NULL && addr == NULL)
 		return (ISC_FALSE);
 
 	for (rule = ISC_LIST_HEAD(table->rules);
@@ -373,6 +385,7 @@ dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
 	{
 		switch (rule->matchtype) {
 		case DNS_SSUMATCHTYPE_NAME:
+		case DNS_SSUMATCHTYPE_LOCAL:
 		case DNS_SSUMATCHTYPE_SUBDOMAIN:
 		case DNS_SSUMATCHTYPE_WILDCARD:
 		case DNS_SSUMATCHTYPE_SELF:
@@ -398,7 +411,7 @@ dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
 			break;
 		case DNS_SSUMATCHTYPE_TCPSELF:
 		case DNS_SSUMATCHTYPE_6TO4SELF:
-			if (tcpaddr == NULL)
+			if (!tcp || addr == NULL)
 				continue;
 			break;
 		}
@@ -411,6 +424,29 @@ dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
 		case DNS_SSUMATCHTYPE_SUBDOMAIN:
 			if (!dns_name_issubdomain(name, rule->name))
 				continue;
+			break;
+		case DNS_SSUMATCHTYPE_LOCAL:
+			if (addr == NULL) {
+				continue;
+			}
+			if (!dns_name_issubdomain(name, rule->name)) {
+				continue;
+			}
+			dns_acl_match(addr, NULL, env->localhost,
+				      NULL, &match, NULL);
+			if (match == 0) {
+				if (signer != NULL) {
+					isc_log_write(dns_lctx,
+						      DNS_LOGCATEGORY_GENERAL,
+						      DNS_LOGMODULE_SSU,
+						      ISC_LOG_WARNING,
+						      "update-policy local: "
+						      "match on session "
+						      "key not from "
+						      "localhost");
+				}
+				continue;
+			}
 			break;
 		case DNS_SSUMATCHTYPE_WILDCARD:
 			if (!dns_name_matcheswildcard(name, rule->name))
@@ -461,7 +497,7 @@ dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
 		case DNS_SSUMATCHTYPE_TCPSELF:
 			dns_fixedname_init(&fixed);
 			tcpself = dns_fixedname_name(&fixed);
-			reverse_from_address(tcpself, tcpaddr);
+			reverse_from_address(tcpself, addr);
 			if (dns_name_iswildcard(rule->identity)) {
 				if (!dns_name_matcheswildcard(tcpself,
 							      rule->identity))
@@ -476,7 +512,7 @@ dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
 		case DNS_SSUMATCHTYPE_6TO4SELF:
 			dns_fixedname_init(&fixed);
 			stfself = dns_fixedname_name(&fixed);
-			stf_from_address(stfself, tcpaddr);
+			stf_from_address(stfself, addr);
 			if (dns_name_iswildcard(rule->identity)) {
 				if (!dns_name_matcheswildcard(stfself,
 							      rule->identity))
@@ -490,13 +526,13 @@ dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
 			break;
 		case DNS_SSUMATCHTYPE_EXTERNAL:
 			if (!dns_ssu_external_match(rule->identity, signer,
-						    name, tcpaddr, type, key,
+						    name, addr, type, key,
 						    table->mctx))
 				continue;
 			break;
 		case DNS_SSUMATCHTYPE_DLZ:
 			if (!dns_dlz_ssumatch(table->dlzdatabase, signer,
-					      name, tcpaddr, type, key))
+					      name, addr, type, key))
 				continue;
 			break;
 		}
@@ -609,5 +645,45 @@ dns_ssutable_createdlz(isc_mem_t *mctx, dns_ssutable_t **tablep,
 
 	ISC_LIST_INITANDAPPEND(table->rules, rule, link);
 	*tablep = table;
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_ssu_mtypefromstring(const char *str, dns_ssumatchtype_t *mtype) {
+
+	REQUIRE(str != NULL);
+	REQUIRE(mtype != NULL);
+
+	if (strcasecmp(str, "name") == 0) {
+		*mtype = dns_ssumatchtype_name;
+	} else if (strcasecmp(str, "subdomain") == 0) {
+		*mtype = dns_ssumatchtype_subdomain;
+	} else if (strcasecmp(str, "wildcard") == 0) {
+		*mtype = dns_ssumatchtype_wildcard;
+	} else if (strcasecmp(str, "self") == 0) {
+		*mtype = dns_ssumatchtype_self;
+	} else if (strcasecmp(str, "selfsub") == 0) {
+		*mtype = dns_ssumatchtype_selfsub;
+	} else if (strcasecmp(str, "selfwild") == 0) {
+		*mtype = dns_ssumatchtype_selfwild;
+	} else if (strcasecmp(str, "ms-self") == 0) {
+		*mtype = dns_ssumatchtype_selfms;
+	} else if (strcasecmp(str, "krb5-self") == 0) {
+		*mtype = dns_ssumatchtype_selfkrb5;
+	} else if (strcasecmp(str, "ms-subdomain") == 0) {
+		*mtype = dns_ssumatchtype_subdomainms;
+	} else if (strcasecmp(str, "krb5-subdomain") == 0) {
+		*mtype = dns_ssumatchtype_subdomainkrb5;
+	} else if (strcasecmp(str, "tcp-self") == 0) {
+		*mtype = dns_ssumatchtype_tcpself;
+	} else if (strcasecmp(str, "6to4-self") == 0) {
+		*mtype = dns_ssumatchtype_6to4self;
+	} else if (strcasecmp(str, "zonesub") == 0) {
+		*mtype = dns_ssumatchtype_subdomain;
+	} else if (strcasecmp(str, "external") == 0) {
+		*mtype = dns_ssumatchtype_external;
+	} else {
+		return (ISC_R_NOTFOUND);
+	}
 	return (ISC_R_SUCCESS);
 }

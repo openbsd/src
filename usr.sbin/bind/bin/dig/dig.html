@@ -1,7 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2004-2011, 2013-2017 Internet Systems Consortium, Inc. ("ISC")
- - Copyright (C) 2000-2003 Internet Software Consortium.
+ - Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
  - 
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -54,8 +53,10 @@
        [<code class="option">-v</code>]
        [<code class="option">-x <em class="replaceable"><code>addr</code></em></code>]
        [<code class="option">-y <em class="replaceable"><code>[<span class="optional">hmac:</span>]name:key</code></em></code>]
-       [<code class="option">-4</code>]
-       [<code class="option">-6</code>]
+       [
+	[<code class="option">-4</code>]
+	 |  [<code class="option">-6</code>]
+      ]
        [name]
        [type]
        [class]
@@ -77,8 +78,7 @@
   <div class="refsection">
 <a name="id-1.7"></a><h2>DESCRIPTION</h2>
 
-    <p><span class="command"><strong>dig</strong></span>
-      (domain information groper) is a flexible tool
+    <p><span class="command"><strong>dig</strong></span> is a flexible tool
       for interrogating DNS name servers.  It performs DNS lookups and
       displays the answers that are returned from the name server(s) that
       were queried.  Most DNS administrators use <span class="command"><strong>dig</strong></span> to
@@ -238,9 +238,9 @@
 <dt><span class="term">-i</span></dt>
 <dd>
 	  <p>
-	    Do reverse IPv6 lookups using the obsolete RFC1886 IP6.INT
+	    Do reverse IPv6 lookups using the obsolete RFC 1886 IP6.INT
 	    domain, which is no longer in use. Obsolete bit string
-	    label queries (RFC2874) are not attempted.
+	    label queries (RFC 2874) are not attempted.
 	  </p>
         </dd>
 <dt><span class="term">-k <em class="replaceable"><code>keyfile</code></em></span></dt>
@@ -285,19 +285,31 @@
 <dt><span class="term">-t <em class="replaceable"><code>type</code></em></span></dt>
 <dd>
 	  <p>
-	    The resource record type to query. It can be any valid query type
-	    which is
-	    supported in BIND 9.  The default query type is "A", unless the
-	    <code class="option">-x</code> option is supplied to indicate a reverse lookup.
-	    A zone transfer can be requested by specifying a type of AXFR.  When
+	    The resource record type to query. It can be any valid query
+	    type.  If it is a resource record type supported in BIND 9, it
+	    can be given by the type mnemonic (such as "NS" or "AAAA").
+	    The default query type is "A", unless the <code class="option">-x</code>
+	    option is supplied to indicate a reverse lookup.  A zone
+	    transfer can be requested by specifying a type of AXFR.  When
 	    an incremental zone transfer (IXFR) is required, set the
 	    <em class="parameter"><code>type</code></em> to <code class="literal">ixfr=N</code>.
 	    The incremental zone transfer will contain the changes
 	    made to the zone since the serial number in the zone's SOA
-	    record was
-	    <em class="parameter"><code>N</code></em>.
+	    record was <em class="parameter"><code>N</code></em>.
 	  </p>
-        </dd>
+	  <p>
+	    All resource record types can be expressed as "TYPEnn", where
+	    "nn" is the number of the type. If the resource record type is
+	    not supported in BIND 9, the result will be displayed as
+	    described in RFC 3597.
+	  </p>
+	</dd>
+<dt><span class="term">-u</span></dt>
+<dd>
+	  <p>
+	    Print query times in microseconds instead of milliseconds.
+	  </p>
+	</dd>
 <dt><span class="term">-v</span></dt>
 <dd>
 	  <p>
@@ -482,6 +494,33 @@
 	      The default is to print comments.
 	    </p>
 	  </dd>
+<dt><span class="term"><code class="option">+[no]cookie[<span class="optional">=####</span>]</code></span></dt>
+<dd>
+	    <p>
+	      Send an COOKIE EDNS option, containing an optional
+	      <em class="replaceable"><code>value</code></em>.  Replaying a COOKIE
+	      from a previous response will allow the server to
+	      identify a previous client.  The default is
+	      <code class="option">+nocookie</code>.
+	    </p>
+	    <p>
+	      <span class="command"><strong>+cookie</strong></span> is automatically set when +trace
+	      is in use, to better emulate the default queries from a
+	      nameserver.
+	    </p>
+	    <p>
+	      This option was formerly called <code class="option">+[no]sit</code>
+              (Server Identity Token). In BIND 9.10.0 through BIND 9.10.2,
+              it sent the experimental option code 65001.  This was
+              changed to option code 10 in BIND 9.10.3 when the DNS
+              COOKIE option was allocated.
+	    </p>
+	    <p>
+	      The <code class="option">+[no]sit</code> is now deprecated, but has
+              been retained as a synonym for <code class="option">+[no]cookie</code>
+              for backward compatibility within the BIND 9.10 branch.
+	    </p>
+	  </dd>
 <dt><span class="term"><code class="option">+[no]crypto</code></span></dt>
 <dd>
 	    <p>
@@ -552,8 +591,11 @@
 	    <p>
 	      Specify EDNS option with code point <code class="option">code</code>
 	      and optionally payload of <code class="option">value</code> as a
-	      hexadecimal string.  <code class="option">+noednsopt</code>
-	      clears the EDNS options to to be sent.
+	      hexadecimal string.  <code class="option">code</code> can be
+	      either an EDNS option name (for example,
+	      <code class="literal">NSID</code> or <code class="literal">ECS</code>),
+	      or an arbitrary numeric value.  <code class="option">+noednsopt</code>
+	      clears the EDNS options to be sent.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+[no]expire</code></span></dt>
@@ -753,11 +795,10 @@
 <dt><span class="term"><code class="option">+[no]sit[<span class="optional">=####</span>]</code></span></dt>
 <dd>
 	    <p>
-	      Send a Source Identity Token EDNS option, with optional
-	      value.  Replaying a SIT from a previous response will
-	      allow the server to identify a previous client.  The
-	      default is <code class="option">+nosit</code>.  Currently using
-	      experimental value 65001 for the option code.
+	      This option is a synonym for <code class="option">+[no]cookie</code>.
+	    </p>
+	    <p>
+	      The <code class="option">+[no]sit</code> is deprecated.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+split=W</code></span></dt>
@@ -987,7 +1028,7 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
       <span class="citerefentry">
 	<span class="refentrytitle">dnssec-keygen</span>(8)
       </span>,
-      <em class="citetitle">RFC1035</em>.
+      <em class="citetitle">RFC 1035</em>.
     </p>
   </div>
 

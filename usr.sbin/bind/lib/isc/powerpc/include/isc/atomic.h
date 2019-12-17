@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: atomic.h,v 1.2 2019/12/16 16:16:27 deraadt Exp $ */
+/* $Id: atomic.h,v 1.3 2019/12/17 01:46:36 sthen Exp $ */
 
 #ifndef ISC_ATOMIC_H
 #define ISC_ATOMIC_H 1
@@ -78,7 +78,7 @@ static inline int
 #else
 static int
 #endif
-isc_atomic_cmpxchg(atomic_p p, int old, int new) {
+isc_atomic_cmpxchg(atomic_p p, int old, int replacement) {
 	int orig = old;
 
 #ifdef __GNUC__
@@ -86,7 +86,7 @@ isc_atomic_cmpxchg(atomic_p p, int old, int new) {
 #else
 	 __isync();
 #endif
-	if (compare_and_swap(p, &orig, new))
+	if (compare_and_swap(p, &orig, replacement))
 		orig = old;
 
 #ifdef __GNUC__

@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2004-2007, 2010, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -74,6 +74,7 @@
       <year>2014</year>
       <year>2015</year>
       <year>2016</year>
+      <year>2018</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>

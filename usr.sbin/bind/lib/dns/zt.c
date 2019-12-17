@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2007, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: zt.c,v 1.2 2019/12/16 16:16:24 deraadt Exp $ */
+/* $Id: zt.c,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
 
 /*! \file */
 
@@ -430,6 +429,54 @@ freezezones(dns_zone_t *zone, void *uap) {
 	if (raw != NULL)
 		dns_zone_detach(&raw);
 	return (result);
+}
+
+void
+dns_zt_setviewcommit(dns_zt_t *zt) {
+	dns_rbtnode_t *node;
+	dns_rbtnodechain_t chain;
+	isc_result_t result;
+
+	REQUIRE(VALID_ZT(zt));
+
+	dns_rbtnodechain_init(&chain, zt->mctx);
+
+	result = dns_rbtnodechain_first(&chain, zt->table, NULL, NULL);
+	while (result == DNS_R_NEWORIGIN || result == ISC_R_SUCCESS) {
+		result = dns_rbtnodechain_current(&chain, NULL, NULL,
+						  &node);
+		if (result == ISC_R_SUCCESS && node->data != NULL) {
+			dns_zone_setviewcommit(node->data);
+		}
+
+		result = dns_rbtnodechain_next(&chain, NULL, NULL);
+	}
+
+	dns_rbtnodechain_invalidate(&chain);
+}
+
+void
+dns_zt_setviewrevert(dns_zt_t *zt) {
+	dns_rbtnode_t *node;
+	dns_rbtnodechain_t chain;
+	isc_result_t result;
+
+	REQUIRE(VALID_ZT(zt));
+
+	dns_rbtnodechain_init(&chain, zt->mctx);
+
+	result = dns_rbtnodechain_first(&chain, zt->table, NULL, NULL);
+	while (result == DNS_R_NEWORIGIN || result == ISC_R_SUCCESS) {
+		result = dns_rbtnodechain_current(&chain, NULL, NULL,
+						  &node);
+		if (result == ISC_R_SUCCESS && node->data != NULL) {
+			dns_zone_setviewrevert(node->data);
+		}
+
+		result = dns_rbtnodechain_next(&chain, NULL, NULL);
+	}
+
+	dns_rbtnodechain_invalidate(&chain);
 }
 
 isc_result_t

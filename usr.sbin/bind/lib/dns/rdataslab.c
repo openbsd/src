@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdataslab.c,v 1.6 2019/12/16 16:16:24 deraadt Exp $ */
+/* $Id: rdataslab.c,v 1.7 2019/12/17 01:46:32 sthen Exp $ */
 
 /*! \file */
 
@@ -297,7 +296,9 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 	region->base = rawbuf;
 	region->length = buflen;
 
+	memset(rawbuf, 0, buflen);
 	rawbuf += reservelen;
+
 #if DNS_RDATASET_FIXED
 	offsetbase = rawbuf;
 #endif
@@ -329,7 +330,7 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 		 * Store the per RR meta data.
 		 */
 		if (rdataset->type == dns_rdatatype_rrsig) {
-			*rawbuf++ |= (x[i].rdata.flags & DNS_RDATA_OFFLINE) ?
+			*rawbuf++ = (x[i].rdata.flags & DNS_RDATA_OFFLINE) ?
 					    DNS_RDATASLAB_OFFLINE : 0;
 		}
 		memmove(rawbuf, x[i].rdata.data, x[i].rdata.length);

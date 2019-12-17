@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -196,10 +196,12 @@ set_state(unsigned int family, isc_uint32_t ipnum, const geoipv6_t *ipnum6,
 	clean_state(state);
 #endif
 
-	if (family == AF_INET)
+	if (family == AF_INET) {
 		state->ipnum = ipnum;
-	else
+	} else {
+		INSIST(ipnum6 != NULL);
 		state->ipnum6 = *ipnum6;
+	}
 
 	state->family = family;
 	state->subtype = subtype;

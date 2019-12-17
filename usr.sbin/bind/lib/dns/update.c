@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: update.c,v 1.1 2019/12/16 16:31:33 deraadt Exp $ */
+/* $Id: update.c,v 1.2 2019/12/17 01:46:32 sthen Exp $ */
 
 #include <config.h>
 
@@ -22,6 +22,7 @@
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/netaddr.h>
+#include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/serial.h>
 #include <isc/stats.h>
@@ -1111,6 +1112,8 @@ add_sigs(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 
 		if (!dst_key_isprivate(keys[i]))
 			continue;
+		if (dst_key_inactive(keys[i]))	/* Should be redundant. */
+			continue;
 
 		if (check_ksk && !REVOKE(keys[i])) {
 			isc_boolean_t have_ksk, have_nonksk;
@@ -1123,6 +1126,10 @@ add_sigs(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 			}
 			for (j = 0; j < nkeys; j++) {
 				if (j == i || ALG(keys[i]) != ALG(keys[j]))
+					continue;
+				if (!dst_key_isprivate(keys[j]))
+					continue;
+				if (dst_key_inactive(keys[j]))	/* SBR */
 					continue;
 				if (REVOKE(keys[j]))
 					continue;
@@ -1388,7 +1395,7 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 	unsigned int sigs = 0;
 	unsigned int maxsigs = dns_zone_getsignatures(zone);
 
-	if (statep == NULL || (statep != NULL && *statep == NULL)) {
+	if (statep == NULL || *statep == NULL) {
 		if (statep == NULL) {
 			state = &mystate;
 		} else {
@@ -1545,7 +1552,7 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 
 		update_log(log, zone, ISC_LOG_DEBUG(3),
 			   "updated data signatures");
-		/*FALLTHROUGH*/
+		/* FALLTHROUGH */
 	case remove_orphaned:
 		state->state = remove_orphaned;
 
@@ -1578,7 +1585,7 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 		update_log(log, zone, ISC_LOG_DEBUG(3),
 			   "rebuilding NSEC chain");
 
-		/*FALLTHROUGH*/
+		/* FALLTHROUGH */
 	case build_chain:
 		state->state = build_chain;
 		/*
@@ -1666,7 +1673,7 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 
 		CHECK(uniqify_name_list(&state->affected));
 
-		/*FALLTHROUGH*/
+		/* FALLTHROUGH */
 	case process_nsec:
 		state->state = process_nsec;
 
@@ -1783,7 +1790,7 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 		update_log(log, zone, ISC_LOG_DEBUG(3),
 			   "signing rebuilt NSEC chain");
 
-		/*FALLTHROUGH*/
+		/* FALLTHROUGH */
 	case sign_nsec:
 		state->state = sign_nsec;
 		/* Update RRSIG NSECs. */
@@ -1813,7 +1820,7 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 		}
 		ISC_LIST_APPENDLIST(state->nsec_mindiff.tuples,
 				    state->work.tuples, link);
-		/*FALLTHROUGH*/
+		/* FALLTHROUGH */
 	case update_nsec3:
 		state->state = update_nsec3;
 
@@ -1901,7 +1908,7 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 				t = ISC_LIST_NEXT(t, link);
 		}
 
-		/*FALLTHROUGH*/
+		/* FALLTHROUGH */
 	case process_nsec3:
 		state->state = process_nsec3;
 		while ((t = ISC_LIST_HEAD(state->affected.tuples)) != NULL) {
@@ -1956,7 +1963,7 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 		update_log(log, zone, ISC_LOG_DEBUG(3),
 			   "signing rebuilt NSEC3 chain");
 
-		/*FALLTHROUGH*/
+		/* FALLTHROUGH */
 	case sign_nsec3:
 		state->state = sign_nsec3;
 		/* Update RRSIG NSEC3s. */
@@ -2007,6 +2014,10 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 	}
 
  failure:
+	if (node != NULL) {
+		dns_db_detachnode(db, &node);
+	}
+
 	dns_diff_clear(&state->sig_diff);
 	dns_diff_clear(&state->nsec_diff);
 	dns_diff_clear(&state->nsec_mindiff);
