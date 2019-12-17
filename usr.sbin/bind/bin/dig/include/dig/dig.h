@@ -346,7 +346,7 @@ void
 setup_libs(void);
 
 void
-setup_system(void);
+setup_system(isc_boolean_t ipv4only, isc_boolean_t ipv6only);
 
 isc_result_t
 parse_uint(isc_uint32_t *uip, const char *value, isc_uint32_t max,

@@ -58,6 +58,7 @@ static int seen_error = -1;
 static isc_boolean_t list_addresses = ISC_TRUE;
 static dns_rdatatype_t list_type = dns_rdatatype_a;
 static isc_boolean_t printed_server = ISC_FALSE;
+static isc_boolean_t ipv4only = ISC_FALSE, ipv6only = ISC_FALSE;
 
 static const char *opcodetext[] = {
 	"QUERY",
@@ -625,8 +626,16 @@ pre_parse_args(int argc, char **argv) {
 				isc_mem_debugging |= ISC_MEM_DEBUGUSAGE;
 			break;
 
-		case '4': break;
-		case '6': break;
+		case '4':
+			if (ipv6only)
+				fatal("only one of -4 and -6 allowed");
+			ipv4only = ISC_TRUE;
+			break;
+		case '6':
+			if (ipv4only)
+				fatal("only one of -4 and -6 allowed");
+			ipv6only = ISC_TRUE;
+			break;
 		case 'a': break;
 		case 'c': break;
 		case 'd': break;
@@ -820,18 +829,10 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 			/* Handled by pre_parse_args(). */
 			break;
 		case '4':
-			if (have_ipv4) {
-				isc_net_disableipv6();
-				have_ipv6 = ISC_FALSE;
-			} else
-				fatal("can't find IPv4 networking");
+			/* Handled by pre_parse_args(). */
 			break;
 		case '6':
-			if (have_ipv6) {
-				isc_net_disableipv4();
-				have_ipv4 = ISC_FALSE;
-			} else
-				fatal("can't find IPv6 networking");
+			/* Handled by pre_parse_args(). */
 			break;
 		case 's':
 			lookup->servfail_stops = ISC_TRUE;
@@ -899,7 +900,7 @@ main(int argc, char **argv) {
 	check_result(result, "isc_app_start");
 	setup_libs();
 	parse_args(ISC_FALSE, argc, argv);
-	setup_system();
+	setup_system(ipv4only, ipv6only);
 	result = isc_app_onrun(mctx, global_task, onrun_callback, NULL);
 	check_result(result, "isc_app_onrun");
 	isc_app_run();

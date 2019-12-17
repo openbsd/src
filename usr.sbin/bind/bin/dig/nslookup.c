@@ -940,7 +940,7 @@ main(int argc, char **argv) {
 
 	parse_args(argc, argv);
 
-	setup_system();
+	setup_system(ISC_FALSE, ISC_FALSE);
 	if (domainopt[0] != '\0')
 		set_search_domain(domainopt);
 	if (in_use)

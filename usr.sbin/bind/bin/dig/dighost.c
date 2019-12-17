@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.20 2019/12/17 01:46:31 sthen Exp $ */
+/* $Id: dighost.c,v 1.21 2019/12/17 01:52:25 sthen Exp $ */
 
 /*! \file
  *  \note
@@ -1421,13 +1421,31 @@ create_search_list(lwres_conf_t *confdata) {
  * settings.
  */
 void
-setup_system(void) {
+setup_system(isc_boolean_t ipv4only, isc_boolean_t ipv6only) {
 	dig_searchlist_t *domain = NULL;
 	lwres_result_t lwresult;
 	unsigned int lwresflags;
 	isc_result_t result;
 
 	debug("setup_system()");
+
+	if (ipv4only) {
+		if (have_ipv4) {
+			isc_net_disableipv6();
+			have_ipv6 = ISC_FALSE;
+		} else {
+			fatal("can't find IPv4 networking");
+		}
+	}
+
+	if (ipv6only) {
+		if (have_ipv6) {
+			isc_net_disableipv4();
+			have_ipv4 = ISC_FALSE;
+		} else {
+			fatal("can't find IPv6 networking");
+		}
+	}
 
 	lwresflags = LWRES_CONTEXT_SERVERMODE;
 	if (have_ipv4)
