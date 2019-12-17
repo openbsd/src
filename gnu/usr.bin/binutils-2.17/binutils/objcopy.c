@@ -2627,7 +2627,11 @@ strip_main (int argc, char *argv[])
 	  if (preserve_dates)
 	    set_times (tmpname, &statbuf);
 	  if (output_file == NULL)
-	    smart_rename (tmpname, argv[i], preserve_dates);
+	    {
+		int ret = smart_rename (tmpname, argv[i], preserve_dates);
+		if (ret != 0)
+		    hold_status = ret;
+	    }
 	  status = hold_status;
 	}
       else
