@@ -1,9 +1,11 @@
+.\" $OpenBSD: host.1,v 1.9 2019/12/17 16:41:26 jsg Exp $
+.\"
 .\" Copyright (C) 2000-2002, 2004, 2005, 2007-2009, 2014-2018 Internet Systems Consortium, Inc. ("ISC")
-.\" 
+.\"
 .\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
-.\" 
+.\"
 .\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
 .\" REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
 .\" AND FITNESS. IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
@@ -12,256 +14,244 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.hy 0
-.ad l
-'\" t
-.\"     Title: host
-.\"    Author: 
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 2009-01-20
-.\"    Manual: BIND9
-.\"    Source: ISC
-.\"  Language: English
-.\"
-.TH "HOST" "1" "2009\-01\-20" "ISC" "BIND9"
-.\" -----------------------------------------------------------------
-.\" * Define some portability stuff
-.\" -----------------------------------------------------------------
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" http://bugs.debian.org/507673
-.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.ie \n(.g .ds Aq \(aq
-.el       .ds Aq '
-.\" -----------------------------------------------------------------
-.\" * set default formatting
-.\" -----------------------------------------------------------------
-.\" disable hyphenation
-.nh
-.\" disable justification (adjust text to left margin only)
-.ad l
-.\" -----------------------------------------------------------------
-.\" * MAIN CONTENT STARTS HERE *
-.\" -----------------------------------------------------------------
-.SH "NAME"
-host \- DNS lookup utility
-.SH "SYNOPSIS"
-.HP \w'\fBhost\fR\ 'u
-\fBhost\fR [\fB\-aCdlnrsTwv\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-N\ \fR\fB\fIndots\fR\fR] [\fB\-R\ \fR\fB\fInumber\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-W\ \fR\fB\fIwait\fR\fR] [\fB\-m\ \fR\fB\fIflag\fR\fR] [[\fB\-4\fR] | [\fB\-6\fR]] [\fB\-v\fR] [\fB\-V\fR] {name} [server]
-.SH "DESCRIPTION"
-.PP
-\fBhost\fR
-is a simple utility for performing DNS lookups\&. It is normally used to convert names to IP addresses and vice versa\&. When no arguments or options are given,
-\fBhost\fR
-prints a short summary of its command line arguments and options\&.
-.PP
-\fIname\fR
-is the domain name that is to be looked up\&. It can also be a dotted\-decimal IPv4 address or a colon\-delimited IPv6 address, in which case
-\fBhost\fR
-will by default perform a reverse lookup for that address\&.
-\fIserver\fR
-is an optional argument which is either the name or IP address of the name server that
-\fBhost\fR
+.Dd $Mdocdate: December 17 2019 $
+.Dt HOST 1
+.Os
+.Sh NAME
+.Nm host
+.Nd DNS lookup utility
+.Sh SYNOPSIS
+.Nm
+.Op Fl aCdlnrsTwv
+.Op Fl c Ar class
+.Op Fl N Ar ndots
+.Op Fl R Ar number
+.Op Fl t Ar type
+.Op Fl W Ar wait
+.Op Fl m Ar flag
+.Op Oo Fl 4 Oc | Oo Fl 6 Oc
+.Op Fl v
+.Op Fl V
+.Ar name
+.Op Ar server
+.Sh DESCRIPTION
+The
+.Nm
+command is a simple utility for performing DNS lookups.
+It is normally used to convert names to IP addresses and vice versa.
+When no arguments or options are given,
+.Nm
+prints a short summary of its command line arguments and options.
+.Pp
+.Ar name
+is the domain name that is to be looked up.
+It can also be a dotted-decimal IPv4 address or a colon-delimited IPv6
+address, in which case
+.Nm
+will by default perform a reverse lookup for that address.
+.Ar server
+is an optional argument which is either the name or IP address of the name
+server that
+.Nm
 should query instead of the server or servers listed in
-/etc/resolv\&.conf\&.
-.SH "OPTIONS"
-.PP
-\-4
-.RS 4
-Use IPv4 only for query transport\&. See also the
-\fB\-6\fR
-option\&.
-.RE
-.PP
-\-6
-.RS 4
-Use IPv6 only for query transport\&. See also the
-\fB\-4\fR
-option\&.
-.RE
-.PP
-\-a
-.RS 4
-"All"\&. The
-\fB\-a\fR
-option is normally equivalent to
-\fB\-v \-t \fR\fBANY\fR\&. It also affects the behaviour of the
-\fB\-l\fR
-list zone option\&.
-.RE
-.PP
-\-c \fIclass\fR
-.RS 4
-Query class: This can be used to lookup HS (Hesiod) or CH (Chaosnet) class resource records\&. The default class is IN (Internet)\&.
-.RE
-.PP
-\-C
-.RS 4
-Check consistency:
-\fBhost\fR
-will query the SOA records for zone
-\fIname\fR
-from all the listed authoritative name servers for that zone\&. The list of name servers is defined by the NS records that are found for the zone\&.
-.RE
-.PP
-\-d
-.RS 4
-Print debugging traces\&. Equivalent to the
-\fB\-v\fR
-verbose option\&.
-.RE
-.PP
-\-i
-.RS 4
-Obsolete\&. Use the IP6\&.INT domain for reverse lookups of IPv6 addresses as defined in RFC1886 and deprecated in RFC4159\&. The default is to use IP6\&.ARPA as specified in RFC3596\&.
-.RE
-.PP
-\-l
-.RS 4
-List zone: The
-\fBhost\fR
-command performs a zone transfer of zone
-\fIname\fR
-and prints out the NS, PTR and address records (A/AAAA)\&.
-.sp
-Together, the
-\fB\-l \-a\fR
-options print all records in the zone\&.
-.RE
-.PP
-\-N \fIndots\fR
-.RS 4
-The number of dots that have to be in
-\fIname\fR
-for it to be considered absolute\&. The default value is that defined using the ndots statement in
-/etc/resolv\&.conf, or 1 if no ndots statement is present\&. Names with fewer dots are interpreted as relative names and will be searched for in the domains listed in the
-\fBsearch\fR
-or
-\fBdomain\fR
-directive in
-/etc/resolv\&.conf\&.
-.RE
-.PP
-\-r
-.RS 4
-Non\-recursive query: Setting this option clears the RD (recursion desired) bit in the query\&. This should mean that the name server receiving the query will not attempt to resolve
-\fIname\fR\&. The
-\fB\-r\fR
-option enables
-\fBhost\fR
-to mimic the behavior of a name server by making non\-recursive queries and expecting to receive answers to those queries that can be referrals to other name servers\&.
-.RE
-.PP
-\-R \fInumber\fR
-.RS 4
-Number of retries for UDP queries: If
-\fInumber\fR
-is negative or zero, the number of retries will default to 1\&. The default value is 1\&.
-.RE
-.PP
-\-s
-.RS 4
-Do
-\fInot\fR
-send the query to the next nameserver if any server responds with a SERVFAIL response, which is the reverse of normal stub resolver behavior\&.
-.RE
-.PP
-\-t \fItype\fR
-.RS 4
-Query type: The
-\fItype\fR
-argument can be any recognized query type: CNAME, NS, SOA, TXT, DNSKEY, AXFR, etc\&.
-.sp
-When no query type is specified,
-\fBhost\fR
-automatically selects an appropriate query type\&. By default, it looks for A, AAAA, and MX records\&. If the
-\fB\-C\fR
-option is given, queries will be made for SOA records\&. If
-\fIname\fR
-is a dotted\-decimal IPv4 address or colon\-delimited IPv6 address,
-\fBhost\fR
-will query for PTR records\&.
-.sp
-If a query type of IXFR is chosen the starting serial number can be specified by appending an equal followed by the starting serial number (like
-\fB\-t \fR\fBIXFR=12345678\fR)\&.
-.RE
-.PP
-\-T
-.RS 4
-TCP: By default,
-\fBhost\fR
-uses UDP when making queries\&. The
-\fB\-T\fR
-option makes it use a TCP connection when querying the name server\&. TCP will be automatically selected for queries that require it, such as zone transfer (AXFR) requests\&.
-.RE
-.PP
-\-m \fIflag\fR
-.RS 4
-Memory usage debugging: the flag can be
-\fIrecord\fR,
-\fIusage\fR, or
-\fItrace\fR\&. You can specify the
-\fB\-m\fR
-option more than once to set multiple flags\&.
-.RE
-.PP
-\-v
-.RS 4
-Verbose output\&. Equivalent to the
-\fB\-d\fR
-debug option\&.
-.RE
-.PP
-\-V
-.RS 4
-Print the version number and exit\&.
-.RE
-.PP
-\-w
-.RS 4
-Wait forever: The query timeout is set to the maximum possible\&. See also the
-\fB\-W\fR
-option\&.
-.RE
-.PP
-\-W \fIwait\fR
-.RS 4
-Timeout: Wait for up to
-\fIwait\fR
-seconds for a reply\&. If
-\fIwait\fR
-is less than one, the wait interval is set to one second\&.
-.sp
-By default,
-\fBhost\fR
-will wait for 5 seconds for UDP responses and 10 seconds for TCP connections\&.
-.sp
+.Pa /etc/resolv.conf .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl 4
+Use IPv4 only for query transport.
 See also the
-\fB\-w\fR
-option\&.
-.RE
-.SH "IDN SUPPORT"
-.PP
+.Fl 6
+option.
+.It Fl 6
+Use IPv6 only for query transport.
+See also the
+.Fl 4
+option.
+.It Fl a
+"All". The
+.Fl a
+option is normally equivalent to
+.Fl v
+.Fl t Cm ANY .
+It also affects the behaviour of the
+.Fl l
+list zone option.
+.It Fl c Ar class
+Query class: This can be used to lookup
+.Cm HS
+(Hesiod)
+or
+.Cm CH
+(Chaosnet) class resource records.
+The default class is
+.Cm IN
+(Internet).
+.It Fl C
+Check consistency:
+.Nm
+will query the SOA records for zone
+.Ar name
+from all the listed authoritative name servers for that zone.
+The list of name servers is defined by the NS records that are found for the
+zone.
+.It Fl d
+Print debugging traces.
+Equivalent to the
+.Fl v
+verbose option.
+.It Fl i
+Obsolete.
+Use the IP6.INT domain for reverse lookups of IPv6 addresses as defined in
+RFC1886 and deprecated in RFC4159.
+The default is to use IP6.ARPA as specified in RFC3596.
+.It Fl l
+List zone:
+The
+.Nm
+command performs a zone transfer of
+zone
+.Ar name
+and prints out the NS, PTR and address records (A/AAAA).
+.Pp
+Together, the
+.Fl l
+.Fl a
+options print all records in the zone.
+.It Fl N Ar ndots
+The number of dots that have to be in
+.Ar name
+for it to be considered absolute.
+The default value is that defined using the ndots statement in
+.Pa /etc/resolv.conf ,
+or 1 if no ndots statement is present.
+Names with fewer dots are interpreted as relative names and will be searched for
+in the domains listed in the
+.Vt search
+or
+.Vt domain
+directive in
+.Pa /etc/resolv.conf .
+.It Fl r
+Non-recursive query:
+Setting this option clears the RD (recursion desired) bit in the query.
+This should mean that the name server receiving the query will not attempt to
+resolve
+.Ar name .
+The
+.Fl r
+option enables
+.Nm
+to mimic the behavior of a name server by making non-recursive queries and
+expecting to receive answers to those queries that can be referrals to other
+name servers.
+.It Fl R Ar number
+Number of retries for UDP queries:
 If
-\fBhost\fR
-has been built with IDN (internationalized domain name) support, it can accept and display non\-ASCII domain names\&.
-\fBhost\fR
-appropriately converts character encoding of domain name before sending a request to DNS server or displaying a reply from the server\&. If you\*(Aqd like to turn off the IDN support for some reason, defines the
-\fBIDN_DISABLE\fR
-environment variable\&. The IDN support is disabled if the variable is set when
-\fBhost\fR
-runs\&.
-.SH "FILES"
-.PP
-/etc/resolv\&.conf
-.SH "SEE ALSO"
-.PP
-\fBdig\fR(1),
-\fBnamed\fR(8)\&.
-.SH "AUTHOR"
-.PP
-\fBInternet Systems Consortium, Inc\&.\fR
-.SH "COPYRIGHT"
-.br
-Copyright \(co 2000-2002, 2004, 2005, 2007-2009, 2014-2018 Internet Systems Consortium, Inc. ("ISC")
-.br
+.Ar number
+is negative or zero, the number of retries will default to 1. The default value
+is 1.
+.It Fl s
+Do
+.Em not
+send the query to the next nameserver if any server responds with a SERVFAIL
+response, which is the reverse of normal stub resolver behavior.
+.It Fl t Ar type
+Query type:
+The
+.Ar type
+argument can be any recognized query type:
+.Cm CNAME ,
+.Cm NS ,
+.Cm SOA ,
+.Cm TXT ,
+.Cm DNSKEY ,
+.Cm AXFR ,
+etc.
+.Pp
+When no query type is specified,
+.Nm
+automatically selects an appropriate query type.
+By default, it looks for A, AAAA, and MX records.
+If the
+.Fl C
+option is given, queries will be made for SOA records.
+If
+.Ar name
+is a dotted-decimal IPv4 address or colon-delimited IPv6 address,
+.Nm
+will query for PTR records.
+.Pp
+If a query type of
+.Cm IXFR
+is chosen the starting serial number can be specified by appending an equal
+followed by the starting serial number (like
+.Fl t Cm IXFR= Ns Ar 12345678 ) .
+.It Fl T
+TCP:
+By default,
+.Nm
+uses UDP when making queries.
+The
+.Fl T
+option makes it use a TCP connection when querying the name server.
+TCP will be automatically selected for queries that require it, such as zone
+transfer (AXFR) requests.
+.It Fl m Ar flag
+Memory usage debugging: the flag can be
+.Cm record ,
+.Cm usage ,
+or
+.Cm trace .
+You can specify the
+.Fl m
+option more than once to set multiple flags.
+.It Fl v
+Verbose output.
+Equivalent to the
+.Fl d
+debug option.
+.It Fl V
+Print the version number and exit.
+.It Fl w
+Wait forever: The query timeout is set to the maximum possible.
+See also the
+.Fl W
+option.
+.It Fl W Ar wait
+Timeout: Wait for up to
+.Ar wait
+seconds for a reply.
+If
+.Ar wait
+is less than one, the wait interval is set to one second.
+.Pp
+By default,
+.Nm
+will wait for 5 seconds for UDP responses and 10 seconds for TCP connections.
+.Pp
+See also the
+.Fl w
+option.
+.El
+.Sh IDN SUPPORT
+If
+.Nm
+has been built with IDN (internationalized domain name) support, it can accept
+and display non-ASCII domain names.
+.Nm
+appropriately converts character encoding of domain name before sending a
+request to DNS server or displaying a reply from the server.
+If you'd like to turn off the IDN support for some reason, defines the
+.Ev IDN_DISABLE
+environment variable.
+The IDN support is disabled if the variable is set when
+.Nm
+runs.
+.Sh FILES
+.Pa /etc/resolv.conf
+.Sh SEE ALSO
+.Xr dig 1
+.Sh AUTHORS
+.An -nosplit
+.An Internet Systems Consortium, Inc .
