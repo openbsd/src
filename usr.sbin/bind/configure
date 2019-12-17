@@ -22052,21 +22052,12 @@ DNS_CRYPTO_LIBS="$NEWFLAGS"
 
 
 #
-# Commands to run at the end of config.status.
-# Don't just put these into configure, it won't work right if somebody
-# runs config.status directly (which autoconf allows).
-#
-
-ac_config_commands="$ac_config_commands chmod"
-
-
-#
 # Files to configure.  These are listed here because we used to
 # specify them as arguments to AC_OUTPUT.  It's (now) ok to move these
 # elsewhere if there's a good reason for doing so.
 #
 
-ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/dig/Makefile isc-config.sh lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile lib/samples/Makefile lib/samples/Makefile-postinstall"
+ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/dig/Makefile lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile lib/samples/Makefile lib/samples/Makefile-postinstall"
 
 
 #
@@ -23058,13 +23049,11 @@ do
     "make/includes") CONFIG_FILES="$CONFIG_FILES make/includes" ;;
     "atf-config") CONFIG_COMMANDS="$CONFIG_COMMANDS atf-config" ;;
     "$DLZ_DRIVER_RULES") CONFIG_FILES="$CONFIG_FILES $DLZ_DRIVER_RULES" ;;
-    "chmod") CONFIG_COMMANDS="$CONFIG_COMMANDS chmod" ;;
     "make/Makefile") CONFIG_FILES="$CONFIG_FILES make/Makefile" ;;
     "make/mkdep") CONFIG_FILES="$CONFIG_FILES make/mkdep" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "bin/Makefile") CONFIG_FILES="$CONFIG_FILES bin/Makefile" ;;
     "bin/dig/Makefile") CONFIG_FILES="$CONFIG_FILES bin/dig/Makefile" ;;
-    "isc-config.sh") CONFIG_FILES="$CONFIG_FILES isc-config.sh" ;;
     "lib/Makefile") CONFIG_FILES="$CONFIG_FILES lib/Makefile" ;;
     "lib/bind9/Makefile") CONFIG_FILES="$CONFIG_FILES lib/bind9/Makefile" ;;
     "lib/bind9/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/bind9/include/Makefile" ;;
@@ -24345,7 +24334,6 @@ fi
 		 esac
 		 ${SHELL} "${srcdir}${srcdir:+/unit/atf-src/}./configure" --enable-tools --disable-shared MISSING=: --prefix $atfdir;
 		) || as_fn_error $? "Failed to configure ATF." "$LINENO" 5  ;;
-    "chmod":C) chmod a+x isc-config.sh doc/doxygen/doxygen-input-filter ;;
 
   esac
 done # for ac_tag

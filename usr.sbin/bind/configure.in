@@ -5068,16 +5068,6 @@ AC_SUBST(BUILD_LDFLAGS)
 AC_SUBST(BUILD_LIBS)
 
 #
-# Commands to run at the end of config.status.
-# Don't just put these into configure, it won't work right if somebody
-# runs config.status directly (which autoconf allows).
-#
-
-AC_CONFIG_COMMANDS(
-	[chmod],
-	[chmod a+x isc-config.sh doc/doxygen/doxygen-input-filter])
-
-#
 # Files to configure.  These are listed here because we used to
 # specify them as arguments to AC_OUTPUT.  It's (now) ok to move these
 # elsewhere if there's a good reason for doing so.
@@ -5089,7 +5079,6 @@ AC_CONFIG_FILES([
 	Makefile
 	bin/Makefile
 	bin/dig/Makefile
-	isc-config.sh
 	lib/Makefile
 	lib/bind9/Makefile
 	lib/bind9/include/Makefile
