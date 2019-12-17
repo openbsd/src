@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.193 2019/07/23 14:09:47 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.194 2019/12/17 14:21:54 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -101,6 +101,9 @@ init_config(void)
 	config->retry_interval = 1;	/* secs before asking for OFFER */
 	config->backoff_cutoff = 10;	/* max secs between packet retries */
 	config->initial_interval = 1;	/* secs before 1st retry */
+
+	/* All leases must supply a subnet mask. Classful defaults are dead, Jim. */
+	config->required_options[config->required_option_count++] = DHO_SUBNET_MASK;
 
 	/*
 	 * Set default lease length, which will determine default renewal

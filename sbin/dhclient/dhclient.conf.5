@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.48 2019/03/21 06:31:10 jmc Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.49 2019/12/17 14:21:54 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: March 21 2019 $
+.Dd $Mdocdate: December 17 2019 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -185,7 +185,7 @@ for the listed options.
 statements are cumulative, except that an empty
 list will remove all previously specified options.
 The default is to request the options
-bootfile-name
+bootfile-name,
 broadcast-address,
 classless-static-routes,
 host-name,
@@ -202,6 +202,7 @@ Discard leases that do not contain the listed options.
 .Ic require
 statements are cumulative, except that an empty
 list will remove all previously specified options.
+The default is to require the option subnet-mask.
 .It Ic send Ar option option-value ;
 Include
 .Ar option-value
