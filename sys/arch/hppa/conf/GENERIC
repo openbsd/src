@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.179 2019/05/08 23:54:39 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.180 2019/12/17 13:08:55 reyk Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -110,6 +110,7 @@ wsmouse* at ums? mux 0
 ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd? mux 1
 uhid*	at uhidev?		# USB generic HID support
+fido*	at uhidev?		# FIDO/U2F security key support
 upd*	at uhidev?		# USB Power Devices sensors
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
 url*	at uhub?		# Realtek RTL8150L based adapters

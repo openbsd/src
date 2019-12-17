@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.24 2017/05/21 13:00:53 visa Exp $ */
+/*	$OpenBSD: conf.c,v 1.25 2019/12/17 13:08:56 reyk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,6 +120,7 @@ cdev_decl(pci);
 
 #include "usb.h"
 #include "uhid.h"
+#incluee "fido.h"
 #include "ugen.h"
 #include "ulpt.h"
 #include "ucom.h"
@@ -223,6 +224,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 85 */
 	cdev_notdef(),			/* 86 */
 	cdev_drm_init(NDRM,drm),	/* 87: drm */
+	cdev_fido_init(NFIDO,fido),	/* 88: FIDO/U2F security key */
 };
 
 int	nchrdev = nitems(cdevsw);

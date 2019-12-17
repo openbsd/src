@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.h,v 1.5 2016/09/12 09:10:05 mpi Exp $ */
+/*	$OpenBSD: hid.h,v 1.6 2019/12/17 13:08:54 reyk Exp $ */
 /*	$NetBSD: hid.h,v 1.8 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.h,v 1.7 1999/11/17 22:33:40 n_hibma Exp $ */
 
@@ -124,6 +124,7 @@ int	hid_is_collection(const void *, int, uint8_t, int32_t);
 #define HUP_CAMERA_CONTROL	0x0090
 #define HUP_ARCADE		0x0091
 #define HUP_VENDOR		0x00ff
+#define HUP_FIDO		0xf1d0
 #define HUP_MICROSOFT		0xff00
 /* XXX compat */
 #define HUP_APPLE		0x00ff
@@ -396,6 +397,11 @@ int	hid_is_collection(const void *, int, uint8_t, int32_t);
 
 /* Usages, Consumer */
 #define HUC_AC_PAN		0x0238
+
+/* Usages, FIDO */
+#define HUF_U2FHID		0x0001
+#define HUF_RAW_IN_DATA_REPORT	0x0020
+#define HUF_RAW_OUT_DATA_REPORT	0x0021
 
 #define HID_USAGE2(p, u) (((p) << 16) | u)
 #define HID_GET_USAGE(u) ((u) & 0xffff)

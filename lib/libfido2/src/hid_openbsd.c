@@ -20,7 +20,7 @@
 #include "fido.h"
 
 #define MAX_UHID	64
-#define MAX_REPORT_LEN	(sizeof(((struct usb_ctl_report *)(NULL))->ucr_data))
+#define MAX_U2FHID_LEN	64
 
 struct hid_openbsd {
 	int fd;
@@ -33,11 +33,8 @@ fido_dev_info_manifest(fido_dev_info_t *devlist, size_t ilen, size_t *olen)
 {
 	size_t i;
 	char path[64];
-	int is_fido, fd;
+	int fd;
 	struct usb_device_info udi;
-	report_desc_t rdesc = NULL;
-	hid_data_t hdata = NULL;
-	hid_item_t hitem;
 	fido_dev_info_t *di;
 
 	if (ilen == 0)
@@ -47,7 +44,7 @@ fido_dev_info_manifest(fido_dev_info_t *devlist, size_t ilen, size_t *olen)
 		return (FIDO_ERR_INVALID_ARGUMENT);
 
 	for (i = *olen = 0; i < MAX_UHID && *olen < ilen; i++) {
-		snprintf(path, sizeof(path), "/dev/uhid%zu", i);
+		snprintf(path, sizeof(path), "/dev/fido/%zu", i);
 		if ((fd = open(path, O_RDWR)) == -1) {
 			if (errno != ENOENT && errno != ENXIO) {
 				log_debug("%s: open %s: %s", __func__, path,
@@ -55,49 +52,15 @@ fido_dev_info_manifest(fido_dev_info_t *devlist, size_t ilen, size_t *olen)
 			}
 			continue;
 		}
-		memset(&udi, 0, sizeof(udi));
-		if (ioctl(fd, USB_GET_DEVICEINFO, &udi) != 0) {
-			log_debug("%s: get device info %s: %s", __func__,
-			    path, strerror(errno));
-			close(fd);
-			continue;
-		}
-		if ((rdesc = hid_get_report_desc(fd)) == NULL) {
-			log_debug("%s: failed to get report descriptor: %s",
-			    __func__, path);
-			close(fd);
-			continue;
-		}
-		if ((hdata = hid_start_parse(rdesc,
-		    1<<hid_collection, -1)) == NULL) {
-			log_debug("%s: failed to parse report descriptor: %s",
-			    __func__, path);
-			hid_dispose_report_desc(rdesc);
-			close(fd);
-			continue;
-		}
-		is_fido = 0;
-		for (is_fido = 0; !is_fido;) {
-			memset(&hitem, 0, sizeof(hitem));
-			if (hid_get_item(hdata, &hitem) <= 0)
-				break;
-			if ((hitem._usage_page & 0xFFFF0000) == 0xf1d00000)
-				is_fido = 1;
-		}
-		hid_end_parse(hdata);
-		hid_dispose_report_desc(rdesc);
 		close(fd);
 
-		if (!is_fido)
-			continue;
+		memset(&udi, 0, sizeof(udi));
+		strlcpy(udi.udi_vendor, "OpenBSD", sizeof(udi.udi_vendor));
+		strlcpy(udi.udi_product, "fido(4)", sizeof(udi.udi_product));
+		udi.udi_vendorNo = 0x0b5d; /* stolen from PCI_VENDOR_OPENBSD */
 
-		log_debug("%s: %s: bus = 0x%02x, addr = 0x%02x",
-		    __func__, path, udi.udi_bus, udi.udi_addr);
 		log_debug("%s: %s: vendor = \"%s\", product = \"%s\"",
 		    __func__, path, udi.udi_vendor, udi.udi_product);
-		log_debug("%s: %s: productNo = 0x%04x, vendorNo = 0x%04x, "
-		    "releaseNo = 0x%04x", __func__, path, udi.udi_productNo,
-		    udi.udi_vendorNo, udi.udi_releaseNo);
 
 		di = &devlist[*olen];
 		memset(di, 0, sizeof(*di));
@@ -178,42 +141,15 @@ void *
 hid_open(const char *path)
 {
 	struct hid_openbsd *ret = NULL;
-	report_desc_t rdesc = NULL;
-	int len, usb_report_id = 0;
 
 	if ((ret = calloc(1, sizeof(*ret))) == NULL ||
 	    (ret->fd = open(path, O_RDWR)) < 0) {
 		free(ret);
 		return (NULL);
 	}
-	if (ioctl(ret->fd, USB_GET_REPORT_ID, &usb_report_id) != 0) {
-		log_debug("%s: failed to get report ID: %s", __func__,
-		    strerror(errno));
-		goto fail;
-	}
-	if ((rdesc = hid_get_report_desc(ret->fd)) == NULL) {
-		log_debug("%s: failed to get report descriptor", __func__);
-		goto fail;
-	}
-	if ((len = hid_report_size(rdesc, hid_input, usb_report_id)) <= 0 ||
-	    (size_t)len > MAX_REPORT_LEN) {
-		log_debug("%s: bad input report size %d", __func__, len);
-		goto fail;
-	}
-	ret->report_in_len = (size_t)len;
-	if ((len = hid_report_size(rdesc, hid_output, usb_report_id)) <= 0 ||
-	    (size_t)len > MAX_REPORT_LEN) {
-		log_debug("%s: bad output report size %d", __func__, len);
- fail:
-		hid_dispose_report_desc(rdesc);
-		close(ret->fd);
-		free(ret);
-		return NULL;
-	}	
-	ret->report_out_len = (size_t)len;
-	hid_dispose_report_desc(rdesc);
-	log_debug("%s: USB report ID %d, inlen = %zu outlen = %zu", __func__,
-	    usb_report_id, ret->report_in_len, ret->report_out_len);
+	ret->report_in_len = ret->report_out_len = MAX_U2FHID_LEN;
+	log_debug("%s: inlen = %zu outlen = %zu", __func__,
+	    ret->report_in_len, ret->report_out_len);
 
 	/*
 	 * OpenBSD (as of 201910) has a bug that causes it to lose

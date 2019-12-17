@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP32,v 1.49 2017/08/28 19:35:42 jasper Exp $
+#	$OpenBSD: GENERIC-IP32,v 1.50 2019/12/17 13:08:56 reyk Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 #
@@ -110,6 +110,7 @@ wskbd*		at ukbd? mux 1
 uslhcom*	at uhidev?	# Silicon Labs CP2110 USB HID UART
 ucom*		at uslhcom?
 uhid*		at uhidev?	# USB generic HID support
+fido*		at uhidev?	# FIDO/U2F security key support
 atu*		at uhub?	# Atmel AT76c50x based 802.11b
 aue*		at uhub?	# ADMtek AN986 Pegasus Ethernet  
 axe*		at uhub?	# ASIX Electronics AX88172 USB Ethernet

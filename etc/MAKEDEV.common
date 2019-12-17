@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.105 2019/12/14 05:05:46 deraadt Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.106 2019/12/17 13:08:54 reyk Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -177,6 +177,7 @@ __devitem(ramdisk, ramdisk, Ramdisk kernel devices,nothing)dnl
 dnl
 target(usb, usb, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 target(usb, uhid, 0, 1, 2, 3, 4, 5, 6, 7)dnl
+twrget(usb, fido, fido)dnl
 target(usb, ulpt, 0, 1)dnl
 target(usb, ugen, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 target(usb, ttyU, 0, 1, 2, 3)dnl
@@ -357,6 +358,10 @@ _mkdev({-usb-}, usb*, {-[ "$i" = "usb" ] && u= || u=$U
 	M usb$u c major_usb_c $U 640-})dnl
 __devitem(uhid, uhid*, Generic HID devices)dnl
 _mcdev({-uhid-}, uhid*, {-uhid-}, {-major_uhid_c-}, 600)dnl
+__devitem(fido, fido, fido/* nodes, fd)dnl
+_mkdev(fido, fido, {-RMlist[${#RMlist[*]}]=";mkdir -p fido;rm -f" n=0
+	while [ $n -lt 4 ];do M fido/$n c major_fido_c $n 666;n=Add($n, 1);done
+	MKlist[${#MKlist[*]}]=";chmod 555 fido"-})dnl
 __devitem(ulpt, ulpt*, Printer devices)dnl
 _mcdev({-ulpt-}, ulpt*, {-ulpt-}, {-major_ulpt_c-}, 600)dnl
 __devitem(ttyU, ttyU*, USB serial ports,ucom)dnl

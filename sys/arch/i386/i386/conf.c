@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.163 2019/12/13 20:57:54 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.164 2019/12/17 13:08:55 reyk Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -145,6 +145,7 @@ cdev_decl(cy);
 #include "ksyms.h"
 #include "usb.h"
 #include "uhid.h"
+#include "fido.h"
 #include "ugen.h"
 #include "ulpt.h"
 #include "ucom.h"
@@ -290,6 +291,7 @@ struct cdevsw	cdevsw[] =
 	cdev_pvbus_init(NPVBUS,pvbus),	/* 95: pvbus(4) control interface */
 	cdev_ipmi_init(NIPMI,ipmi),	/* 96: ipmi */
 	cdev_switch_init(NSWITCH,switch), /* 97: switch(4) control interface */
+	cdev_fido_init(NFIDO,fido),	/* 98: FIDO/U2F security key */
 };
 int	nchrdev = nitems(cdevsw);
 

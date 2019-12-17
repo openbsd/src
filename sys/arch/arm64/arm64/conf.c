@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.8 2019/12/13 20:57:54 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.9 2019/12/17 13:08:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -121,6 +121,7 @@ cdev_decl(spkr);
 #include "ksyms.h"
 #include "usb.h"
 #include "uhid.h"
+#include "fido.h"
 #include "ugen.h"
 #include "ulpt.h"
 #include "ucom.h"
@@ -255,6 +256,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 95 */
 	cdev_notdef(),			/* 96 */
 	cdev_switch_init(NSWITCH,switch), /* 97: switch(4) control interface */
+	cdev_fido_init(NFIDO,fido),	/* 98: FIDO/U2F security key */
 };
 int	nchrdev = nitems(cdevsw);
 

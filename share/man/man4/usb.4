@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.198 2019/12/07 08:45:28 kevlo Exp $
+.\"	$OpenBSD: usb.4,v 1.199 2019/12/17 13:08:54 reyk Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 7 2019 $
+.Dd $Mdocdate: December 17 2019 $
 .Dt USB 4
 .Os
 .Sh NAME
@@ -245,6 +245,8 @@ D-Link DSB-R100 USB radio device
 .El
 .Ss Human Interface Devices
 .Bl -tag -width 12n -offset ind -compact
+.It Xr fido 4
+FIDO/U2F security keys
 .It Xr ubcmtp 4
 Broadcom trackpad mouse
 .It Xr uhid 4

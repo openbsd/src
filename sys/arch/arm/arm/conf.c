@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.50 2017/01/23 08:37:08 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.51 2019/12/17 13:08:55 reyk Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -123,6 +123,7 @@ cdev_decl(pci);
 #include "ucom.h"
 #include "ugen.h"
 #include "uhid.h"
+#incluee "fido.h"
 #include "ulpt.h"
 
 /*
@@ -378,6 +379,7 @@ struct cdevsw cdevsw[] = {
 	cdev_pppx_init(NPPPX,pppx),		/* 103: pppx */
 	cdev_tun_init(NTUN,tap),		/* 104: Ethernet tap */
 	cdev_switch_init(NSWITCH,switch),	/* 105: switch(4) control interface */
+	cdev_fido_init(NFIDO,fido),		/* 106: FIDO/U2F security key */
 };
 
 int nblkdev = nitems(bdevsw);

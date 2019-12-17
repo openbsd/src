@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.80 2016/09/04 11:59:50 naddy Exp $	*/
+/*	$OpenBSD: conf.c,v 1.81 2019/12/17 13:08:56 reyk Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -103,6 +103,7 @@ cdev_decl(pci);
 
 #include "usb.h"
 #include "uhid.h"
+#include "fido.h"
 #include "ugen.h"
 #include "ulpt.h"
 #include "ucom.h"
@@ -292,6 +293,7 @@ struct cdevsw	cdevsw[] =
 	cdev_fuse_init(NFUSE,fuse),	/* 134: fuse */
 	cdev_tun_init(NTUN,tap),	/* 135: Ethernet network tunnel */
 	cdev_switch_init(NSWITCH,switch), /* 136: switch(4) control interface */
+	cdev_fido_init(NFIDO,fido),	/* 137: FIDO/U2F security key */
 };
 int	nchrdev = nitems(cdevsw);
 
