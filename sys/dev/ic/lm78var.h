@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78var.h,v 1.18 2016/03/15 20:50:22 krw Exp $	*/
+/*	$OpenBSD: lm78var.h,v 1.19 2019/12/17 01:34:59 mortimer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -123,7 +123,7 @@
 #define WB_VREF			3600
 #define WB_W83627EHF_VREF	2048
 
-#define WB_MAX_SENSORS  19
+#define WB_MAX_SENSORS  36
 
 struct lm_softc;
 

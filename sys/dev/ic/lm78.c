@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.24 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.25 2019/12/17 01:34:59 mortimer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -213,6 +213,43 @@ struct lm_sensor nct6776f_sensors[] = {
 	{ "", SENSOR_FANRPM, 6, 0x5e, wb_nct6776f_refresh_fanrpm },
 
 	{ NULL }
+};
+
+/* NCT6779D */
+struct lm_sensor nct6779d_sensors[] = {
+	/* Voltage */
+	{ "VCore", SENSOR_VOLTS_DC, 4, 0x80, lm_refresh_volt, RFACT_NONE },
+	{ "VIN1", SENSOR_VOLTS_DC, 4, 0x81, lm_refresh_volt, RFACT(56, 10) / 2 },
+	{ "AVCC", SENSOR_VOLTS_DC, 4, 0x82, lm_refresh_volt, RFACT(34, 34) / 2 },
+	{ "+3.3V", SENSOR_VOLTS_DC, 4, 0x83, lm_refresh_volt, RFACT(34, 34) / 2 },
+	{ "VIN0", SENSOR_VOLTS_DC, 4, 0x84, lm_refresh_volt, RFACT(48600, 10000) },
+	{ "VIN8", SENSOR_VOLTS_DC, 4, 0x85, lm_refresh_volt, RFACT_NONE / 2 },
+	{ "VIN4", SENSOR_VOLTS_DC, 4, 0x86, lm_refresh_volt, RFACT_NONE / 2 },
+	{ "+3.3VSB", SENSOR_VOLTS_DC, 4, 0x87, lm_refresh_volt, RFACT(34, 34) / 2 },
+	{ "VBAT", SENSOR_VOLTS_DC, 4, 0x88, lm_refresh_volt, RFACT_NONE },
+	{ "VTT", SENSOR_VOLTS_DC, 4, 0x89, lm_refresh_volt, RFACT_NONE },
+	{ "VIN5", SENSOR_VOLTS_DC, 4, 0x8a, lm_refresh_volt, RFACT_NONE / 2 },
+	{ "VIN6", SENSOR_VOLTS_DC, 4, 0x8b, lm_refresh_volt, RFACT_NONE / 2 },
+	{ "VIN2", SENSOR_VOLTS_DC, 4, 0x8c, lm_refresh_volt, RFACT_NONE },
+	{ "VIN3", SENSOR_VOLTS_DC, 4, 0x8d, lm_refresh_volt, RFACT(14414, 10000) },
+	{ "VIN7", SENSOR_VOLTS_DC, 4, 0x8e, lm_refresh_volt, RFACT_NONE / 2 },
+
+	/* Temperature */
+	{ "MB Temperature", SENSOR_TEMP, 4, 0x90, lm_refresh_temp, 0 },
+	{ "CPU Temperature", SENSOR_TEMP, 4, 0x91, wb_refresh_temp, 0 },
+	{ "Aux Temp0", SENSOR_TEMP, 4, 0x92, wb_refresh_temp, 0 },
+	{ "Aux Temp1", SENSOR_TEMP, 4, 0x93, wb_refresh_temp, 0 },
+	{ "Aux Temp2", SENSOR_TEMP, 4, 0x94, wb_refresh_temp, 0 },
+	{ "Aux Temp3", SENSOR_TEMP, 4, 0x95, wb_refresh_temp, 0 },
+
+	/* Fans */
+	{ "System Fan", SENSOR_FANRPM, 4, 0xc0, wb_nct6776f_refresh_fanrpm, 0 },
+	{ "CPU Fan", SENSOR_FANRPM, 4, 0xc2, wb_nct6776f_refresh_fanrpm, 0 },
+	{ "Aux Fan0", SENSOR_FANRPM, 4, 0xc4, wb_nct6776f_refresh_fanrpm, 0 },
+	{ "Aux Fan1", SENSOR_FANRPM, 4, 0xc6, wb_nct6776f_refresh_fanrpm, 0 },
+	{ "Aux Fan2", SENSOR_FANRPM, 4, 0xc8, wb_nct6776f_refresh_fanrpm, 0 },
+
+	{  NULL }
 };
 
 struct lm_sensor w83637hf_sensors[] = {
@@ -526,10 +563,40 @@ wb_match(struct lm_softc *sc)
 		lm_setup_sensors(sc, w83627ehf_sensors);
 		break;
 	case WB_CHIPID_W83627DHG:
-		if (sc->sioid == WBSIO_ID_NCT6776F) {
+		switch (sc->sioid) {
+		case WBSIO_ID_NCT6775F:
+			printf(": NCT6775F\n");
+			lm_setup_sensors(sc, nct6776f_sensors);
+			break;
+		case WBSIO_ID_NCT6776F:
 			printf(": NCT6776F\n");
 			lm_setup_sensors(sc, nct6776f_sensors);
-		} else {
+			break;
+		case WBSIO_ID_NCT5104D:
+			printf(": NCT5104D\n");
+			lm_setup_sensors(sc, nct6776f_sensors);
+			break;
+		case WBSIO_ID_NCT6779D:
+			printf(": NCT6779D\n");
+			lm_setup_sensors(sc, nct6779d_sensors);
+			break;
+		case WBSIO_ID_NCT6791D:
+			printf(": NCT6791D\n");
+			lm_setup_sensors(sc, nct6779d_sensors);
+			break;
+		case WBSIO_ID_NCT6792D:
+			printf(": NCT6792D\n");
+			lm_setup_sensors(sc, nct6779d_sensors);
+			break;
+		case WBSIO_ID_NCT6793D:
+			printf(": NCT6793D\n");
+			lm_setup_sensors(sc, nct6779d_sensors);
+			break;
+		case WBSIO_ID_NCT6795D:
+			printf(": NCT6795D\n");
+			lm_setup_sensors(sc, nct6779d_sensors);
+			break;
+		default:
 			printf(": W83627DHG\n");
 			lm_setup_sensors(sc, w83627dhg_sensors);
 		}

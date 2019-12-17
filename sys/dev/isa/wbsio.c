@@ -1,4 +1,4 @@
-/*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: wbsio.c,v 1.11 2019/12/17 01:34:59 mortimer Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -110,8 +110,12 @@ wbsio_probe(struct device *parent, void *match, void *aux)
 	case WBSIO_ID_W83627UHG:
 	case WBSIO_ID_W83637HF:
 	case WBSIO_ID_W83697HF:
+	case WBSIO_ID_NCT6775F:
 	case WBSIO_ID_NCT6776F:
 	case WBSIO_ID_NCT5104D:
+	case WBSIO_ID_NCT6779D:
+	case WBSIO_ID_NCT6791D:
+	case WBSIO_ID_NCT6792D:
 		ia->ipa_nio = 1;
 		ia->ipa_io[0].length = WBSIO_IOSIZE;
 		ia->ipa_nmem = 0;
@@ -170,8 +174,26 @@ wbsio_attach(struct device *parent, struct device *self, void *aux)
 	case WBSIO_ID_W83697HF:
 		printf(": W83697HF");
 		break;
+	case WBSIO_ID_NCT6775F:
+		printf(": NCT6775F");
+		break;
 	case WBSIO_ID_NCT6776F:
 		printf(": NCT6776F");
+		break;
+	case WBSIO_ID_NCT6779D:
+		printf(": NCT6779D");
+		break;
+	case WBSIO_ID_NCT6791D:
+		printf(": NCT6791D");
+		break;
+	case WBSIO_ID_NCT6792D:
+		printf(": NCT6792D");
+		break;
+	case WBSIO_ID_NCT6793D:
+		printf(": NCT6793D");
+		break;
+	case WBSIO_ID_NCT6795D:
+		printf(": NCT6795D");
 		break;
 	case WBSIO_ID_NCT5104D:
 		printf(": NCT5104D");
