@@ -1,4 +1,4 @@
-/*	$Id: test-mft.c,v 1.3 2019/08/22 21:31:48 bluhm Exp $ */
+/*	$Id: test-mft.c,v 1.4 2019/12/17 11:52:41 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -15,8 +15,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/nameser.h>
 #include <assert.h>
 #include <err.h>
+#include <resolv.h>	/* b64_ntop */
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -35,13 +39,18 @@ static void
 mft_print(const struct mft *p)
 {
 	size_t	 i;
+	char hash[256];
 
 	assert(p != NULL);
 
 	printf("Subject key identifier: %s\n", p->ski);
 	printf("Authority key identifier: %s\n", p->aki);
-	for (i = 0; i < p->filesz; i++)
+	for (i = 0; i < p->filesz; i++) {
+		b64_ntop(p->files[i].hash, sizeof(p->files[i].hash),
+		    hash, sizeof(hash));
 		printf("%5zu: %s\n", i + 1, p->files[i].file);
+		printf("\thash %s\n", hash);
+	}
 }
 
 
