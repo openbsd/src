@@ -1,4 +1,4 @@
-/*	$OpenBSD: trampoline.S,v 1.1 2018/01/10 23:27:18 kettenis Exp $	*/
+/*	$OpenBSD: trampoline.S,v 1.2 2019/12/17 22:25:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -82,6 +82,8 @@ tramp_return:
 	mrs	x18, tpidrro_el0
 	msr	tpidrro_el0, xzr
 	eret
+	dsb nsh
+	isb
 
 /*
  * The next page contains the start of the EL0 exception handlers.
