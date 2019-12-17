@@ -2427,7 +2427,7 @@ set_rcvbuf(void) {
 	int max = rcvbuf, min;
 	ISC_SOCKADDR_LEN_T len;
 
-	fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	fd = socket(AF_INET, SOCK_DGRAM | SOCK_DNS, IPPROTO_UDP);
 #if defined(ISC_PLATFORM_HAVEIPV6)
 	if (fd == -1) {
 		switch (errno) {
@@ -2565,10 +2565,10 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 	if (dup_socket == NULL) {
 		switch (sock->type) {
 		case isc_sockettype_udp:
-			sock->fd = socket(sock->pf, SOCK_DGRAM, IPPROTO_UDP);
+			sock->fd = socket(sock->pf, SOCK_DGRAM | SOCK_DNS, IPPROTO_UDP);
 			break;
 		case isc_sockettype_tcp:
-			sock->fd = socket(sock->pf, SOCK_STREAM, IPPROTO_TCP);
+			sock->fd = socket(sock->pf, SOCK_STREAM | SOCK_DNS, IPPROTO_TCP);
 			break;
 		case isc_sockettype_unix:
 			sock->fd = socket(sock->pf, SOCK_STREAM, 0);

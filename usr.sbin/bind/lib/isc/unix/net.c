@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: net.c,v 1.6 2019/12/17 01:46:37 sthen Exp $ */
+/* $Id: net.c,v 1.7 2019/12/17 02:05:31 deraadt Exp $ */
 
 #include <config.h>
 
@@ -140,7 +140,7 @@ try_proto(int domain) {
 	isc_result_t result = ISC_R_SUCCESS;
 	char strbuf[ISC_STRERRORSIZE];
 
-	s = socket(domain, SOCK_STREAM, 0);
+	s = socket(domain, SOCK_STREAM | SOCK_DNS, 0);
 	if (s == -1) {
 		switch (errno) {
 #ifdef EAFNOSUPPORT
@@ -274,7 +274,7 @@ try_ipv6only(void) {
 	return;
 #else
 	/* check for TCP sockets */
-	s = socket(PF_INET6, SOCK_STREAM, 0);
+	s = socket(PF_INET6, SOCK_STREAM | SOCK_DNS, 0);
 	if (s == -1) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
@@ -297,7 +297,7 @@ try_ipv6only(void) {
 	close(s);
 
 	/* check for UDP sockets */
-	s = socket(PF_INET6, SOCK_DGRAM, 0);
+	s = socket(PF_INET6, SOCK_DGRAM | SOCK_DNS, 0);
 	if (s == -1) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
@@ -348,7 +348,7 @@ try_ipv6pktinfo(void) {
 	}
 
 	/* we only use this for UDP sockets */
-	s = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	s = socket(PF_INET6, SOCK_DGRAM | SOCK_DNS, IPPROTO_UDP);
 	if (s == -1) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
@@ -655,7 +655,7 @@ try_dscp_v4(void) {
 		return;
 	}
 
-	s = socket(res0->ai_family, res0->ai_socktype, res0->ai_protocol);
+	s = socket(res0->ai_family, res0->ai_socktype | SOCK_DNS, res0->ai_protocol);
 
 	if (s == -1) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
@@ -720,7 +720,7 @@ try_dscp_v6(void) {
 		return;
 	}
 
-	s = socket(res0->ai_family, res0->ai_socktype, res0->ai_protocol);
+	s = socket(res0->ai_family, res0->ai_socktype | SOCK_DNS, res0->ai_protocol);
 	if (s == -1) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
 		isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
