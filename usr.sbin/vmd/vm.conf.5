@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.46 2019/12/13 07:03:46 jmc Exp $
+.\" $OpenBSD: vm.conf.5,v 1.47 2019/12/17 06:59:23 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 13 2019 $
+.Dd $Mdocdate: December 17 2019 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -109,16 +109,22 @@ network range
 .Ar fd00::/8
 will be generated on startup.
 The specified prefix length must be /64 or smaller.
-.It Cm socket owner Ar user Ns Op : Ns Ar group
-Set the control socket owner to the specified user or group.
+.It Cm socket owner Ar user : Ns Ar group
+Set the control socket owner to the specified user and group.
 Users with access to the control socket will be allowed to use
 .Nm vmctl
 for restricted access to
 .Nm vmd .
+If only
+.Ar user
+is given,
+only the user is set.
+If only
+.Pf : Ar group
+is given,
+only the group is set.
 The default is
-.Ar root:wheel .
-.It Cm socket owner Pf : Ar group
-Set the control socket owner to the specified group.
+.Ar root : Ns Ar wheel .
 .It Ic staggered start parallel Ar parallelism Ic delay Ar seconds
 Start all configured VMs in a staggered fashion with
 .Ar parallelism
