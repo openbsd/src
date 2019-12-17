@@ -795,6 +795,7 @@
 ./usr/include/dev/usb/uftdireg.h
 ./usr/include/dev/usb/uhcireg.h
 ./usr/include/dev/usb/uhcivar.h
+./usr/include/dev/usb/uhid.h
 ./usr/include/dev/usb/uhid_rdesc.h
 ./usr/include/dev/usb/uhidev.h
 ./usr/include/dev/usb/ukbdvar.h
