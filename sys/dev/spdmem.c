@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.5 2015/01/25 11:38:49 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.6 2019/12/17 08:01:36 claudio Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -65,10 +65,15 @@
 #define	SPDMEM_SPDLEN_256		0x20
 #define	SPDMEM_SPDLEN_MASK		0x70	/* Bits 4 - 6        */
 
+#define	SPDMEM_DDR4_SPDLEN_128		0x01	/* SPD EEPROM Sizes  */
+#define	SPDMEM_DDR4_SPDLEN_256		0x02
+#define	SPDMEM_DDR4_SPDLEN_384		0x03
+#define	SPDMEM_DDR4_SPDLEN_512		0x04
+#define	SPDMEM_DDR4_SPDLEN_MASK		0x0f	/* Bits 4 - 6        */
+
 #define	SPDMEM_SPDCRC_116		0x80	/* CRC Bytes covered */
 #define	SPDMEM_SPDCRC_125		0x00
 #define	SPDMEM_SPDCRC_MASK		0x80	/* Bit 7             */
-
 
 /* possible values for the memory type */
 #define	SPDMEM_MEMTYPE_FPM		0x01
@@ -82,6 +87,15 @@
 #define	SPDMEM_MEMTYPE_FBDIMM		0x09
 #define	SPDMEM_MEMTYPE_FBDIMM_PROBE	0x0a
 #define	SPDMEM_MEMTYPE_DDR3SDRAM	0x0b
+#define	SPDMEM_MEMTYPE_DDR4SDRAM	0x0c
+					/* 0xd reserved */
+#define	SPDMEM_MEMTYPE_DDR4ESDRAM	0x0e
+#define	SPDMEM_MEMTYPE_LPDDR3SDRAM	0x0f
+#define	SPDMEM_MEMTYPE_LPDDR4SDRAM	0x10
+#define	SPDMEM_MEMTYPE_LPDDR4XSDRAM	0x11
+#define	SPDMEM_MEMTYPE_DDR5SDRAM	0x12
+#define	SPDMEM_MEMTYPE_LPDDR5SDRAM	0x13
+
 #define	SPDMEM_MEMTYPE_NONE		0xff
 
 #define SPDMEM_MEMTYPE_DIRECT_RAMBUS	0x01
@@ -226,6 +240,43 @@
 #define SPDMEM_DDR3_MINI_RDIMM		0x05
 #define SPDMEM_DDR3_MINI_UDIMM		0x06
 
+/* Dual Data Rate 4 SDRAM */
+#define	SPDMEM_DDR4_MODTYPE		0x00
+#define	SPDMEM_DDR4_DENSITY		0x01
+#define	SPDMEM_DDR4_PACK_TYPE		0x03
+#define	SPDMEM_DDR4_MOD_ORG		0x09
+#define	SPDMEM_DDR4_DATAWIDTH		0x0a
+#define	SPDMEM_DDR4_THERMAL		0x0b
+#define	SPDMEM_DDR4_TCKMIN_MTB		0x0f
+#define	SPDMEM_DDR4_TCKMIN_FTB		0x7d	/* not offset by 3 */
+
+#define	SPDMEM_DDR4_DENSITY_CAPMASK		0x0f
+#define	SPDMEM_DDR4_PACK_TYPE_SIG_LOAD_MASK	0x03
+#define	SPDMEM_DDR4_PACK_TYPE_SIG_SINGLE_LOAD	0x02
+#define	SPDMEM_DDR4_PACK_TYPE_DIE_COUNT_SHIFT	4
+#define	SPDMEM_DDR4_PACK_TYPE_DIE_COUNT_MASK	0x07
+#define	SPDMEM_DDR4_MOD_ORG_CHIPWIDTH_MASK	0x07
+#define	SPDMEM_DDR4_MOD_ORG_BANKS_SHIFT		3
+#define	SPDMEM_DDR4_MOD_ORG_BANKS_MASK		0x07
+#define	SPDMEM_DDR4_DATAWIDTH_ECCMASK		(1 << 3)
+#define	SPDMEM_DDR4_DATAWIDTH_PRIMASK		0x07
+#define	SPDMEM_DDR4_THERMAL_PRESENT		(1 << 7)
+
+#define	SPDMEM_DDR4_RDIMM		0x01
+#define	SPDMEM_DDR4_UDIMM		0x02
+#define	SPDMEM_DDR4_SODIMM		0x03
+#define	SPDMEM_DDR4_LRDIMM		0x04
+#define	SPDMEM_DDR4_MINI_RDIMM		0x05
+#define	SPDMEM_DDR4_MINI_UDIMM		0x06
+#define	SPDMEM_DDR4_LP_DIMM		0x07
+#define	SPDMEM_DDR4_72B_SO_RDIMM	0x08
+#define	SPDMEM_DDR4_72B_SO_UDIMM	0x09
+#define	SPDMEM_DDR4_16B_SO_DIMM		0x0c
+#define	SPDMEM_DDR4_32B_SO_DIMM		0x0d
+#define	SPDMEM_DDR4_NON_DIMM		0x0e
+#define	SPDMEM_DDR4_MODTYPE_MASK	0x0f
+#define	SPDMEM_DDR4_MODTYPE_HYBRID	0x80
+
 static const uint8_t ddr2_cycle_tenths[] = {
 	0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 25, 33, 66, 75, 0, 0
 };
@@ -260,7 +311,15 @@ static const char *spdmem_basic_types[] = {
 	"DDR2 SDRAM",
 	"DDR2 SDRAM FB-DIMM",
 	"DDR2 SDRAM FB-DIMM Probe",
-	"DDR3 SDRAM"
+	"DDR3 SDRAM",
+	"DDR4 SDRAM",
+	"unknown",
+	"DDR4E SDRAM",
+	"LPDDR3 SDRAM",
+	"LPDDR4 SDRAM",
+	"LPDDR4X SDRAM",
+	"DDR5 SDRAM",
+	"LPDDR5 SDRAM"
 };
 
 static const char *spdmem_superset_types[] = {
@@ -680,6 +739,115 @@ spdmem_ddr3_decode(struct spdmem_softc *sc, struct spdmem *s)
 		printf(" with thermal sensor");
 }
 
+void
+spdmem_ddr4_decode(struct spdmem_softc *sc, struct spdmem *s)
+{
+	static const int ddr4_chipsize[16] = { 256, 512, 1024, 2048, 4096,
+	    8 * 1024, 16 * 1024, 32 * 1024, 12 * 1024, 24 * 1024,
+	    3 * 1024, 6 * 1024, 18 * 1024 };
+	const char *type;
+	int dimm_size, cycle_time, d_clk, p_clk, bits;
+	uint8_t mtype, chipsize, mtb;
+	int8_t ftb;
+	uint8_t datawidth, chipwidth, physbanks, diecount = 0;
+
+	type = spdmem_basic_types[s->sm_type];
+
+	chipsize = s->sm_data[SPDMEM_DDR4_DENSITY] &
+	    SPDMEM_DDR4_DENSITY_CAPMASK;
+	datawidth = s->sm_data[SPDMEM_DDR4_DATAWIDTH] &
+	    SPDMEM_DDR4_DATAWIDTH_PRIMASK;
+	chipwidth = s->sm_data[SPDMEM_DDR4_MOD_ORG] &
+	    SPDMEM_DDR4_MOD_ORG_CHIPWIDTH_MASK;
+	physbanks = (s->sm_data[SPDMEM_DDR4_MOD_ORG] >> 
+	    SPDMEM_DDR4_MOD_ORG_BANKS_SHIFT) & SPDMEM_DDR4_MOD_ORG_BANKS_MASK;
+
+	if ((s->sm_data[SPDMEM_DDR4_PACK_TYPE] &
+	    SPDMEM_DDR4_PACK_TYPE_SIG_LOAD_MASK) ==
+	    SPDMEM_DDR4_PACK_TYPE_SIG_SINGLE_LOAD) {
+		diecount = (s->sm_data[SPDMEM_DDR4_PACK_TYPE] >>
+		    SPDMEM_DDR4_PACK_TYPE_DIE_COUNT_SHIFT) &
+		    SPDMEM_DDR4_PACK_TYPE_DIE_COUNT_MASK;
+	}
+
+	dimm_size = datawidth - (chipwidth + 2);
+	dimm_size = ddr4_chipsize[chipsize] * (1 << dimm_size) *
+	    (physbanks + 1) * (diecount + 1);
+
+	if (dimm_size < 1024)
+		printf(" %dMB", dimm_size);
+	else
+		printf(" %dGB", dimm_size / 1024);
+
+	printf(" %s", type);
+
+	mtype = s->sm_data[SPDMEM_DDR4_MODTYPE];
+	if (mtype & SPDMEM_DDR4_MODTYPE_HYBRID)
+		printf(" hybrid");
+	mtype &= SPDMEM_DDR4_MODTYPE_MASK;
+	if (mtype == SPDMEM_DDR4_RDIMM || mtype == SPDMEM_DDR4_MINI_RDIMM ||
+	    mtype == SPDMEM_DDR4_72B_SO_RDIMM)
+		printf(" registered");
+	if (mtype == SPDMEM_DDR4_72B_SO_UDIMM ||
+	    mtype == SPDMEM_DDR4_72B_SO_RDIMM)
+		printf(" 72-bit");
+	if (mtype == SPDMEM_DDR4_32B_SO_DIMM)
+		printf(" 32-bit");
+	if (mtype == SPDMEM_DDR4_16B_SO_DIMM)
+		printf(" 16-bit");
+
+	if (s->sm_data[SPDMEM_DDR4_DATAWIDTH] & SPDMEM_DDR4_DATAWIDTH_ECCMASK) 
+		printf(" ECC");
+
+	mtb = s->sm_data[SPDMEM_DDR4_TCKMIN_MTB];
+	/* SPDMEM_DDR4_TCKMIN_FTB (addr 125) is outside of s->sm_data */
+	ftb = spdmem_read(sc, SPDMEM_DDR4_TCKMIN_FTB);
+	cycle_time = mtb * 125 + ftb; /* in ps */
+
+	if (cycle_time != 0) {
+		/*
+		 * cycle time is scaled by a factor of 1000 to avoid using
+		 * floating point.  Calculate memory speed as the number
+		 * of cycles per microsecond.
+		 * DDR4 uses a dual-pumped clock
+		 */
+		d_clk = 1000 * 1000;
+		d_clk *= 2;
+		bits = 1 << ((s->sm_data[SPDMEM_DDR4_DATAWIDTH] &
+		    SPDMEM_DDR4_DATAWIDTH_PRIMASK) + 3);
+
+		p_clk = (d_clk * bits) / 8 / cycle_time;
+		p_clk -= (p_clk % 100);
+		printf(" PC4-%d", p_clk);
+	}
+
+	switch (s->sm_data[SPDMEM_DDR4_MODTYPE] & SPDMEM_DDR4_MODTYPE_MASK) {
+	case SPDMEM_DDR4_SODIMM:
+	case SPDMEM_DDR4_72B_SO_RDIMM:
+	case SPDMEM_DDR4_72B_SO_UDIMM:
+	case SPDMEM_DDR4_16B_SO_DIMM:
+	case SPDMEM_DDR4_32B_SO_DIMM:
+		printf(" SO-DIMM");
+		break;
+	case SPDMEM_DDR4_LRDIMM:
+		printf(" LR-DIMM");
+		break;
+	case SPDMEM_DDR4_MINI_RDIMM:
+	case SPDMEM_DDR4_MINI_UDIMM:
+		printf(" Mini-DIMM");
+		break;
+	case SPDMEM_DDR4_LP_DIMM:
+		printf(" LP-DIMM");
+		break;
+	case SPDMEM_DDR4_NON_DIMM:
+		printf(" non-DIMM solution");
+		break;
+	}
+
+	if (s->sm_data[SPDMEM_DDR4_THERMAL] & SPDMEM_DDR4_THERMAL_PRESENT)
+		printf(" with thermal sensor");
+}
+
 int
 spdmem_probe(struct spdmem_softc *sc)
 {
@@ -722,6 +890,7 @@ spdmem_probe(struct spdmem_softc *sc)
 		default:
 			return 0;
 		}
+calc_crc:
 		if (spd_crc_cover > spd_len)
 			return 0;
 		crc_calc = spdmem_crc16(sc, spd_crc_cover);
@@ -731,6 +900,26 @@ spdmem_probe(struct spdmem_softc *sc)
 			return 0;
 		}
 		return 1;
+	} else if (type <= SPDMEM_MEMTYPE_LPDDR4SDRAM) {
+		spd_len = spdmem_read(sc, 0);
+		spd_crc_cover = 125;
+		switch (spd_len & SPDMEM_DDR4_SPDLEN_MASK) {
+		case SPDMEM_DDR4_SPDLEN_128:
+			spd_len = 128;
+			break;
+		case SPDMEM_DDR4_SPDLEN_256:
+			spd_len = 256;
+			break;
+		case SPDMEM_DDR4_SPDLEN_384:
+			spd_len = 384;
+			break;
+		case SPDMEM_DDR4_SPDLEN_512:
+			spd_len = 512;
+			break;
+		default:
+			return 0;
+		}
+		goto calc_crc;
 	}
 
 	return 0;
@@ -774,11 +963,17 @@ spdmem_attach_common(struct spdmem_softc *sc)
 		case SPDMEM_MEMTYPE_DDR3SDRAM:
 			spdmem_ddr3_decode(sc, s);
 			break;
+		case SPDMEM_MEMTYPE_DDR4SDRAM:
+		case SPDMEM_MEMTYPE_DDR4ESDRAM:
+		case SPDMEM_MEMTYPE_LPDDR3SDRAM:
+		case SPDMEM_MEMTYPE_LPDDR4SDRAM:
+			spdmem_ddr4_decode(sc, s);
+			break;
 		case SPDMEM_MEMTYPE_NONE:
 			printf(" no EEPROM found");
 			break;
 		default:
-			if (s->sm_type <= 10)
+			if (s->sm_type <= SPDMEM_MEMTYPE_LPDDR5SDRAM)
 				printf(" no decode method for %s memory",
 				    spdmem_basic_types[s->sm_type]);
 			else
