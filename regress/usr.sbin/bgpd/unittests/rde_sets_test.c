@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_sets_test.c,v 1.6 2019/06/17 13:14:23 claudio Exp $ */
+/*	$OpenBSD: rde_sets_test.c,v 1.7 2019/12/17 11:57:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -31,14 +31,14 @@ u_int32_t vaa[] = { 125, 14, 76, 32, 19 };
 u_int32_t vb[] = { 256, 1024, 512, 4096, 2048, 512 };
 u_int32_t vc[] = { 42 };
 
-struct as_set_head *as_sets;
+struct as_set_head as_sets;
 
 static struct as_set *
 build_set(const char *name, u_int32_t *mem, size_t nmemb, size_t initial)
 {
 	struct as_set *a;
 
-	a = as_sets_new(as_sets, name, initial, sizeof(*mem));
+	a = as_sets_new(&as_sets, name, initial, sizeof(*mem));
 	if (a == NULL)
 		err(1, "as_set_new %s", name);
 	if (set_add(a->set, mem, nmemb) != 0)
@@ -54,9 +54,7 @@ main(int argc, char **argv)
 	struct as_set *a, *aa, *b, *c, *empty;
 	size_t i;
 
-	if ((as_sets = malloc(sizeof(*as_sets))) == NULL)
-		err(1, NULL);
-	SIMPLEQ_INIT(as_sets);
+	SIMPLEQ_INIT(&as_sets);
 
 	a = build_set("a", va, sizeof(va) / sizeof(va[0]),
 	    sizeof(va) / sizeof(va[0]));
@@ -89,7 +87,7 @@ main(int argc, char **argv)
 	if (as_set_match(empty, 42))
 		errx(1, "as_set_match(empty, %u) matched but should not", 42);
 
-	as_sets_free(as_sets);
+	as_sets_free(&as_sets);
 
 	printf("OK\n");
 	return 0;
