@@ -1371,6 +1371,7 @@
 ./usr/share/man/man4/fd.4
 ./usr/share/man/man4/fdc.4
 ./usr/share/man/man4/fec.4
+./usr/share/man/man4/fido.4
 ./usr/share/man/man4/fins.4
 ./usr/share/man/man4/fintek.4
 ./usr/share/man/man4/fms.4
