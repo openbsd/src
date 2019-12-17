@@ -1,4 +1,4 @@
-.\"     $OpenBSD: pcap-filter.5,v 1.2 2019/09/25 17:04:45 deraadt Exp $
+.\"     $OpenBSD: pcap-filter.5,v 1.3 2019/12/17 15:22:48 jca Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -20,7 +20,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: September 25 2019 $
+.Dd $Mdocdate: December 17 2019 $
 .Dt PCAP-FILTER 5
 .Os
 .Sh NAME
@@ -212,7 +212,7 @@ If
 .Ar host
 is a name with multiple IP addresses,
 each address will be checked for a match.
-.It .Cm ether dst Ar ehost
+.It Cm ether dst Ar ehost
 True if the Ethernet destination address is
 .Ar ehost ,
 which may be either a name from
