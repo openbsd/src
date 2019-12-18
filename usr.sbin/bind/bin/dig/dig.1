@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.15 2019/12/17 18:33:31 jmc Exp $
+.\" $OpenBSD: dig.1,v 1.16 2019/12/18 07:16:35 jmc Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 17 2019 $
+.Dd $Mdocdate: December 18 2019 $
 .Dt DIG 1
 .Os
 .Sh NAME
@@ -178,8 +178,6 @@ longer in use.
 Obsolete bit string label queries (RFC 2874) are not attempted.
 .It Fl k Ar keyfile
 Sign queries using TSIG using a key read from the given file.
-Key files can be generated using
-.Xr tsig-keygen 8 .
 When using TSIG authentication with
 .Nm ,
 the name server that is queried needs to know the key and algorithm that is
