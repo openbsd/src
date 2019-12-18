@@ -1,4 +1,4 @@
-.\" $OpenBSD: nslookup.1,v 1.12 2019/12/17 16:41:26 jsg Exp $
+.\" $OpenBSD: nslookup.1,v 1.13 2019/12/18 15:19:30 jmc Exp $
 .\"
 .\" Copyright (C) 2004-2007, 2010, 2013-2016, 2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 17 2019 $
+.Dd $Mdocdate: December 18 2019 $
 .Dt NSLOOKUP 1
 .Os
 .Sh NAME
@@ -211,7 +211,7 @@ Always use a virtual circuit when sending requests to the server.
 .Op Cm no Ns
 .Cm fail
 .Xc
-Try the next nameserver if a nameserver responds with SERVFAIL or a referral
+Try the next name server if a name server responds with SERVFAIL or a referral
 .Pq Cm nofail
 or terminate query
 .Pq Cm fail
