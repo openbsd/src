@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.17 2019/12/18 15:19:30 jmc Exp $
+.\" $OpenBSD: dig.1,v 1.18 2019/12/18 18:07:46 deraadt Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -61,9 +61,6 @@ Although
 .Nm
 is normally used with command-line arguments, it also has a batch mode of
 operation for reading lookup requests from a file.
-A brief summary of its command-line arguments and options is printed when the
-.Fl h
-option is given.
 Unlike earlier versions, the BIND 9 implementation of
 .Nm
 allows multiple lookups to be issued from the command line.
@@ -172,6 +169,8 @@ Each line in the file should be organized in the same way they would be
 presented as queries to
 .Nm
 using the command-line interface.
+.It Fl h
+A brief summary of its command-line arguments and options is printed.
 .It Fl i
 Do reverse IPv6 lookups using the obsolete RFC 1886 IP6.INT domain, which is no
 longer in use.
