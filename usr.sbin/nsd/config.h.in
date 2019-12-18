@@ -73,6 +73,9 @@
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
+/* Define to 1 if you have the `CRYPTO_memcmp' function. */
+#undef HAVE_CRYPTO_MEMCMP
+
 /* if time.h provides ctime_r prototype */
 #undef HAVE_CTIME_R_PROTO
 
@@ -86,6 +89,9 @@
 
 /* Define to 1 if you have the `dup2' function. */
 #undef HAVE_DUP2
+
+/* Define to 1 if you have the `EC_KEY_new_by_curve_name' function. */
+#undef HAVE_EC_KEY_NEW_BY_CURVE_NAME
 
 /* Define to 1 if you have the <endian.h> header file. */
 #undef HAVE_ENDIAN_H
@@ -207,6 +213,9 @@
 
 /* Define to 1 if you have the `mmap' function. */
 #undef HAVE_MMAP
+
+/* If sys/socket.h has a struct mmsghdr. */
+#undef HAVE_MMSGHDR
 
 /* Define to 1 if you have the `munmap' function. */
 #undef HAVE_MUNMAP

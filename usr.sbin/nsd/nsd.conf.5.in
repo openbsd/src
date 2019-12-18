@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Aug 19, 2019" "NLnet Labs" "nsd 4.2.2"
+.TH "nsd.conf" "5" "Dec 10, 2019" "NLnet Labs" "nsd 4.2.4"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -100,23 +100,13 @@ with a colon ':'. An attribute is followed by its containing
 attributes, or a value. 
 .P
 At the top level only 
-.B server:
+.BR server: ,
+.BR key: ,
+.BR pattern: ,
+.BR zone: ,
 and
-.B key: 
-and 
-.B pattern:
-and
-.B zone: 
-are allowed. These are followed by their attributes or the start of 
-a new 
-.B server:
-or 
-.B key: 
-or
-.B pattern:
-or
-.B zone: 
-clause. The 
+.B remote-control:
+are allowed. These are followed by their attributes or a new top-level keyword. The
 .B zone:
 attribute is followed by zone options. The 
 .B server: 
@@ -290,6 +280,8 @@ Use the pid file instead of the platform specific default, usually
 .IR @pidfile@. 
 Same as commandline option 
 .BR \-P .
+With "" there is no pidfile, for some startup management setups,
+where a pidfile is not useful to have.
 .TP
 .B port:\fR <number>
 Answer queries on the specified port. Default is 53. Same as 
@@ -391,6 +383,11 @@ This is different from the \-\-enable-minimal-responses configure time option,
 that reduces packets, but exactly to the fragmentation length, the nsd.conf
 option reduces packets as small as possible.
 The default is yes.
+.TP
+.B confine\-to\-zone:\fR <yes or no>
+If set to yes, additional information will not be added to the response if the
+apex zone of the additional information does not match the apex zone of the
+initial query (E.G. CNAME resolution). Default is no. 
 .TP
 .B refuse\-any:\fR <yes or no>
 Refuse queries of type ANY.  This is useful to stop query floods trying

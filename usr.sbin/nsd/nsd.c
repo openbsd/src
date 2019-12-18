@@ -119,50 +119,170 @@ version(void)
 	exit(0);
 }
 
-void
-get_ip_port_frm_str(const char* arg, const char** hostname,
-        const char** port)
+static void
+copyaddrinfo(struct nsd_addrinfo *dest, struct addrinfo *src)
 {
-	/* parse src[@port] option */
-	char* delim = NULL;
-	if (arg) {
-		delim = strchr(arg, '@');
-	}
-
-	if (delim) {
-		*delim = '\0';
-		*port = delim+1;
-	}
-	*hostname = arg;
+	dest->ai_flags = src->ai_flags;
+	dest->ai_family = src->ai_family;
+	dest->ai_socktype = src->ai_socktype;
+	dest->ai_addrlen = src->ai_addrlen;
+	memcpy(&dest->ai_addr, src->ai_addr, src->ai_addrlen);
 }
 
-/* append interface to interface array (names, udp, tcp) */
-void
-add_interface(char*** nodes, struct nsd* nsd, char* ip)
+static void
+setup_socket(struct nsd_socket *sock, const char *node, const char *port, struct addrinfo *hints)
 {
-	/* realloc the arrays */
-	if(nsd->ifs == 0) {
-		*nodes = xalloc_zero(sizeof(*nodes));
-		nsd->udp = xalloc_zero(sizeof(*nsd->udp));
-		nsd->tcp = xalloc_zero(sizeof(*nsd->udp));
-	} else {
-		region_remove_cleanup(nsd->region, free, *nodes);
-		region_remove_cleanup(nsd->region, free, nsd->udp);
-		region_remove_cleanup(nsd->region, free, nsd->tcp);
-		*nodes = xrealloc(*nodes, (nsd->ifs+1)*sizeof(*nodes));
-		nsd->udp = xrealloc(nsd->udp, (nsd->ifs+1)*sizeof(*nsd->udp));
-		nsd->tcp = xrealloc(nsd->tcp, (nsd->ifs+1)*sizeof(*nsd->udp));
-		(*nodes)[nsd->ifs] = NULL;
-		memset(&nsd->udp[nsd->ifs], 0, sizeof(*nsd->udp));
-		memset(&nsd->tcp[nsd->ifs], 0, sizeof(*nsd->tcp));
-	}
-	region_add_cleanup(nsd->region, free, *nodes);
-	region_add_cleanup(nsd->region, free, nsd->udp);
-	region_add_cleanup(nsd->region, free, nsd->tcp);
+	int ret;
+	char *sep = NULL;
+	char *host, host_buf[INET6_ADDRSTRLEN + 1 /* '\0' */];
+	const char *service;
+	char service_buf[6 + 1 /* '\0' */]; /* 65535 */
+	struct addrinfo *addr = NULL;
 
-	/* add it */
-	(*nodes)[nsd->ifs] = ip;
-	++nsd->ifs;
+	if(node) {
+		host = host_buf;
+		sep = strchr(node, '@');
+		if(sep) {
+			size_t len = (sep - node) + 1;
+			if (len > sizeof(host_buf)) {
+				len = sizeof(host_buf);
+			}
+			strlcpy(host_buf, node, len);
+			strlcpy(service_buf, sep + 1, sizeof(service_buf));
+			service = service_buf;
+		} else {
+			strlcpy(host_buf, node, sizeof(host_buf));
+			service = port;
+		}
+	} else {
+		host = NULL;
+		service = port;
+	}
+
+	if((ret = getaddrinfo(host, service, hints, &addr)) == 0) {
+		copyaddrinfo(&sock->addr, addr);
+		freeaddrinfo(addr);
+	} else {
+		error("cannot parse address '%s': getaddrinfo: %s %s",
+		      host ? host : "(null)",
+		      gai_strerror(ret),
+		      ret==EAI_SYSTEM ? strerror(errno) : "");
+	}
+}
+
+static void
+figure_default_sockets(
+	struct nsd_socket **udp, struct nsd_socket **tcp, size_t *ifs,
+	const char *udp_port, const char *tcp_port,
+	const struct addrinfo *hints)
+{
+	int r;
+	size_t i = 0, n = 1;
+	struct addrinfo ai[2] = { *hints, *hints };
+
+	assert(udp != NULL);
+	assert(tcp != NULL);
+	assert(ifs != NULL);
+
+	ai[0].ai_socktype = SOCK_DGRAM;
+	ai[1].ai_socktype = SOCK_STREAM;
+
+#ifdef INET6
+#ifdef IPV6_V6ONLY
+	if (hints->ai_family == AF_UNSPEC) {
+		ai[0].ai_family = AF_INET6;
+		ai[1].ai_family = AF_INET6;
+		n++;
+	}
+#endif /* IPV6_V6ONLY */
+#endif /* INET6 */
+
+	*udp = xalloc_zero((n + 1) * sizeof(struct nsd_socket));
+	*tcp = xalloc_zero((n + 1) * sizeof(struct nsd_socket));
+	region_add_cleanup(nsd.region, free, *udp);
+	region_add_cleanup(nsd.region, free, *tcp);
+
+#ifdef INET6
+	if(hints->ai_family == AF_UNSPEC) {
+		/*
+		 * With IPv6 we'd like to open two separate sockets,
+		 * one for IPv4 and one for IPv6, both listening to
+		 * the wildcard address (unless the -4 or -6 flags are
+		 * specified).
+		 *
+		 * However, this is only supported on platforms where
+		 * we can turn the socket option IPV6_V6ONLY _on_.
+		 * Otherwise we just listen to a single IPv6 socket
+		 * and any incoming IPv4 connections will be
+		 * automatically mapped to our IPv6 socket.
+		 */
+#ifdef IPV6_V6ONLY
+		struct addrinfo *addrs[2] = { NULL, NULL };
+
+		if((r = getaddrinfo(NULL, udp_port, &ai[0], &addrs[0])) == 0 &&
+		   (r = getaddrinfo(NULL, tcp_port, &ai[1], &addrs[1])) == 0)
+		{
+			(*udp)[i].flags |= NSD_SOCKET_IS_OPTIONAL;
+			copyaddrinfo(&(*udp)[i].addr, addrs[0]);
+			(*tcp)[i].flags |= NSD_SOCKET_IS_OPTIONAL;
+			copyaddrinfo(&(*tcp)[i].addr, addrs[1]);
+			i++;
+		} else {
+			log_msg(LOG_WARNING, "No IPv6, fallback to IPv4. getaddrinfo: %s",
+			  r == EAI_SYSTEM ? strerror(errno) : gai_strerror(r));
+		}
+
+		if(addrs[0])
+			freeaddrinfo(addrs[0]);
+		if(addrs[1])
+			freeaddrinfo(addrs[1]);
+
+		ai[0].ai_family = AF_INET;
+		ai[1].ai_family = AF_INET;
+#endif /* IPV6_V6ONLY */
+	}
+#endif /* INET6 */
+
+	*ifs = i + 1;
+	setup_socket(&(*udp)[i], NULL, udp_port, &ai[0]);
+	setup_socket(&(*tcp)[i], NULL, tcp_port, &ai[1]);
+}
+
+static void
+figure_sockets(
+	struct nsd_socket **udp, struct nsd_socket **tcp, size_t *ifs,
+	struct ip_address_option *ips,
+	const char *udp_port, const char *tcp_port,
+	const struct addrinfo *hints)
+{
+	size_t i = 0;
+	struct addrinfo ai = *hints;
+	struct ip_address_option *ip;
+
+	if(!ips) {
+		figure_default_sockets(udp, tcp, ifs, udp_port, tcp_port, hints);
+		return;
+	}
+
+	*ifs = 0;
+	for(ip = ips; ip; ip = ip->next) {
+		(*ifs)++;
+	}
+
+	*udp = xalloc_zero((*ifs + 1) * sizeof(struct nsd_socket));
+	*tcp = xalloc_zero((*ifs + 1) * sizeof(struct nsd_socket));
+	region_add_cleanup(nsd.region, free, *udp);
+	region_add_cleanup(nsd.region, free, *tcp);
+
+	ai.ai_flags |= AI_NUMERICHOST;
+	for(ip = ips, i = 0; ip; ip = ip->next, i++) {
+		ai.ai_socktype = SOCK_DGRAM;
+		setup_socket(&(*udp)[i], ip->address, udp_port, &ai);
+		ai.ai_socktype = SOCK_STREAM;
+		setup_socket(&(*tcp)[i], ip->address, tcp_port, &ai);
+	}
+
+	assert(i == *ifs);
 }
 
 /*
@@ -212,6 +332,8 @@ writepid(struct nsd *nsd)
 {
 	FILE * fd;
 	char pidbuf[32];
+	if(!nsd->pidfile || !nsd->pidfile[0])
+		return 0;
 
 	snprintf(pidbuf, sizeof(pidbuf), "%lu\n", (unsigned long) nsd->pid);
 
@@ -244,7 +366,7 @@ unlinkpid(const char* file)
 {
 	int fd = -1;
 
-	if (file) {
+	if (file && file[0]) {
 		/* truncate pidfile */
 		fd = open(file, O_WRONLY | O_TRUNC, 0644);
 		if (fd == -1) {
@@ -401,9 +523,8 @@ main(int argc, char *argv[])
 	struct passwd *pwd = NULL;
 #endif /* HAVE_GETPWNAM */
 
-	struct addrinfo hints[2];
-	int hints_in_use = 1;
-	char** nodes = NULL; /* array of address strings, size nsd.ifs */
+	struct ip_address_option *ip;
+	struct addrinfo hints;
 	const char *udp_port = 0;
 	const char *tcp_port = 0;
 
@@ -419,11 +540,9 @@ main(int argc, char *argv[])
 	nsd.dbfile	= 0;
 	nsd.pidfile	= 0;
 	nsd.server_kind = NSD_SERVER_MAIN;
-	memset(&hints, 0, sizeof(*hints)*2);
-	hints[0].ai_family = DEFAULT_AI_FAMILY;
-	hints[0].ai_flags = AI_PASSIVE;
-	hints[1].ai_family = DEFAULT_AI_FAMILY;
-	hints[1].ai_flags = AI_PASSIVE;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = DEFAULT_AI_FAMILY;
+	hints.ai_flags = AI_PASSIVE;
 	nsd.identity	= 0;
 	nsd.version	= VERSION;
 	nsd.username	= 0;
@@ -434,7 +553,6 @@ main(int argc, char *argv[])
 	nsd.child_count = 0;
 	nsd.maximum_tcp_count = 0;
 	nsd.current_tcp_count = 0;
-	nsd.grab_ip6_optional = 0;
 	nsd.file_rotation_ok = 0;
 
 	/* Set up our default identity to gethostname(2) */
@@ -447,6 +565,11 @@ main(int argc, char *argv[])
 		nsd.identity = IDENTITY;
 	}
 
+	/* Create region where options will be stored and set defaults */
+	nsd.options = nsd_options_create(region_create_custom(xalloc, free,
+		DEFAULT_CHUNK_SIZE, DEFAULT_LARGE_OBJECT_SIZE,
+		DEFAULT_INITIAL_CLEANUP_SIZE, 1));
+
 	/* Parse the command line... */
 	while ((c = getopt(argc, argv, "46a:c:df:hi:I:l:N:n:P:p:s:u:t:X:V:v"
 #ifndef NDEBUG /* <mattthijs> only when configured with --enable-checking */
@@ -455,17 +578,22 @@ main(int argc, char *argv[])
 		)) != -1) {
 		switch (c) {
 		case '4':
-			hints[0].ai_family = AF_INET;
+			hints.ai_family = AF_INET;
 			break;
 		case '6':
 #ifdef INET6
-			hints[0].ai_family = AF_INET6;
+			hints.ai_family = AF_INET6;
 #else /* !INET6 */
 			error("IPv6 support not enabled.");
 #endif /* INET6 */
 			break;
 		case 'a':
-			add_interface(&nodes, &nsd, optarg);
+			ip = region_alloc_zero(
+				nsd.options->region, sizeof(*ip));
+			ip->address = region_strdup(
+				nsd.options->region, optarg);
+			ip->next = nsd.options->ip_addresses;
+			nsd.options->ip_addresses = ip;
 			break;
 		case 'c':
 			configfile = optarg;
@@ -586,9 +714,6 @@ main(int argc, char *argv[])
 		error("init tsig failed");
 
 	/* Read options */
-	nsd.options = nsd_options_create(region_create_custom(xalloc, free,
-		DEFAULT_CHUNK_SIZE, DEFAULT_LARGE_OBJECT_SIZE,
-		DEFAULT_INITIAL_CLEANUP_SIZE, 1));
 	if(!parse_options_file(nsd.options, configfile, NULL, NULL)) {
 		error("could not read config: %s\n", configfile);
 	}
@@ -597,21 +722,13 @@ main(int argc, char *argv[])
 			nsd.options->zonelistfile);
 	}
 	if(nsd.options->do_ip4 && !nsd.options->do_ip6) {
-		hints[0].ai_family = AF_INET;
+		hints.ai_family = AF_INET;
 	}
 #ifdef INET6
 	if(nsd.options->do_ip6 && !nsd.options->do_ip4) {
-		hints[0].ai_family = AF_INET6;
+		hints.ai_family = AF_INET6;
 	}
 #endif /* INET6 */
-	if(nsd.options->ip_addresses)
-	{
-		ip_address_option_type* ip = nsd.options->ip_addresses;
-		while(ip) {
-			add_interface(&nodes, &nsd, ip->address);
-			ip = ip->next;
-		}
-	}
 	if (verbosity == 0)
 		verbosity = nsd.options->verbosity;
 #ifndef NDEBUG
@@ -748,73 +865,8 @@ main(int argc, char *argv[])
 
 	nsd.this_child = NULL;
 
-	/* We need at least one active interface */
-	if (nsd.ifs == 0) {
-		add_interface(&nodes, &nsd, NULL);
-
-		/*
-		 * With IPv6 we'd like to open two separate sockets,
-		 * one for IPv4 and one for IPv6, both listening to
-		 * the wildcard address (unless the -4 or -6 flags are
-		 * specified).
-		 *
-		 * However, this is only supported on platforms where
-		 * we can turn the socket option IPV6_V6ONLY _on_.
-		 * Otherwise we just listen to a single IPv6 socket
-		 * and any incoming IPv4 connections will be
-		 * automatically mapped to our IPv6 socket.
-		 */
-#ifdef INET6
-		if (hints[0].ai_family == AF_UNSPEC) {
-#ifdef IPV6_V6ONLY
-			add_interface(&nodes, &nsd, NULL);
-			hints[0].ai_family = AF_INET6;
-			hints[1].ai_family = AF_INET;
-			hints_in_use = 2;
-			nsd.grab_ip6_optional = 1;
-#else /* !IPV6_V6ONLY */
-			hints[0].ai_family = AF_INET6;
-#endif	/* IPV6_V6ONLY */
-		}
-#endif /* INET6 */
-	}
-
-	/* Set up the address info structures with real interface/port data */
-	assert(nodes);
-	for (i = 0; i < nsd.ifs; ++i) {
-		int r;
-		const char* node = NULL;
-		const char* service = NULL;
-		int h = ((hints_in_use == 1)?0:i%hints_in_use);
-
-		/* We don't perform name-lookups */
-		if (nodes[i] != NULL)
-			hints[h].ai_flags |= AI_NUMERICHOST;
-		get_ip_port_frm_str(nodes[i], &node, &service);
-
-		hints[h].ai_socktype = SOCK_DGRAM;
-		if ((r=getaddrinfo(node, (service?service:udp_port), &hints[h], &nsd.udp[i].addr)) != 0) {
-#ifdef INET6
-			if(nsd.grab_ip6_optional && hints[0].ai_family == AF_INET6) {
-				log_msg(LOG_WARNING, "No IPv6, fallback to IPv4. getaddrinfo: %s",
-				r==EAI_SYSTEM?strerror(errno):gai_strerror(r));
-				continue;
-			}
-#endif
-			error("cannot parse address '%s': getaddrinfo: %s %s",
-				nodes[i]?nodes[i]:"(null)",
-				gai_strerror(r),
-				r==EAI_SYSTEM?strerror(errno):"");
-		}
-
-		hints[h].ai_socktype = SOCK_STREAM;
-		if ((r=getaddrinfo(node, (service?service:tcp_port), &hints[h], &nsd.tcp[i].addr)) != 0) {
-			error("cannot parse address '%s': getaddrinfo: %s %s",
-				nodes[i]?nodes[i]:"(null)",
-				gai_strerror(r),
-				r==EAI_SYSTEM?strerror(errno):"");
-		}
-	}
+	figure_sockets(&nsd.udp, &nsd.tcp, &nsd.ifs,
+		nsd.options->ip_addresses, udp_port, tcp_port, &hints);
 
 	/* Parse the username into uid and gid */
 	nsd.gid = getgid();
@@ -897,20 +949,22 @@ main(int argc, char *argv[])
 	log_msg(LOG_NOTICE, "%s starting (%s)", argv0, PACKAGE_STRING);
 
 	/* Do we have a running nsd? */
-	if ((oldpid = readpid(nsd.pidfile)) == -1) {
-		if (errno != ENOENT) {
-			log_msg(LOG_ERR, "can't read pidfile %s: %s",
-				nsd.pidfile, strerror(errno));
-		}
-	} else {
-		if (kill(oldpid, 0) == 0 || errno == EPERM) {
-			log_msg(LOG_WARNING,
-				"%s is already running as %u, continuing",
-				argv0, (unsigned) oldpid);
+	if(nsd.pidfile && nsd.pidfile[0]) {
+		if ((oldpid = readpid(nsd.pidfile)) == -1) {
+			if (errno != ENOENT) {
+				log_msg(LOG_ERR, "can't read pidfile %s: %s",
+					nsd.pidfile, strerror(errno));
+			}
 		} else {
-			log_msg(LOG_ERR,
-				"...stale pid file from process %u",
-				(unsigned) oldpid);
+			if (kill(oldpid, 0) == 0 || errno == EPERM) {
+				log_msg(LOG_WARNING,
+					"%s is already running as %u, continuing",
+					argv0, (unsigned) oldpid);
+			} else {
+				log_msg(LOG_ERR,
+					"...stale pid file from process %u",
+					(unsigned) oldpid);
+			}
 		}
 	}
 
@@ -1026,7 +1080,7 @@ main(int argc, char *argv[])
 			if (nsd.log_filename[0] == '/')
 				nsd.log_filename += l;
 		}
-		if (nsd.pidfile[0] == '/')
+		if (nsd.pidfile && nsd.pidfile[0] == '/')
 			nsd.pidfile += l;
 		if (nsd.dbfile[0] == '/')
 			nsd.dbfile += l;

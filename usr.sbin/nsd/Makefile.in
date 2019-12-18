@@ -178,11 +178,15 @@ xfr-inspect:	xfr-inspect.o $(COMMON_OBJ) $(LIBOBJS)
 clean:
 	rm -f *.o $(TARGETS) $(MANUALS) cutest udb-inspect xfr-inspect nsd-mem
 
-realclean: clean
-	rm -f Makefile config.h config.log config.status
+distclean: clean
+	rm -f Makefile config.h config.log config.status dnstap/dnstap_config.h
+
+realclean: distclean
 	rm -rf autom4te*
 	rm -f zlexer.c zparser.h zparser.c zparser.stamp
 	rm -f configlexer.c configparser.h configparser.c configparser.stamp
+
+maintainer-clean: realclean
 
 devclean: realclean
 	rm -f config.h.in configure

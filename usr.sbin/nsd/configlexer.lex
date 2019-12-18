@@ -21,7 +21,6 @@
 #include "options.h"
 #include "configyyrename.h"
 #include "configparser.h"
-void c_error(const char *message);
 
 #if 0
 #define LEXOUT(s)  printf s /* used ONLY when debugging */
@@ -54,27 +53,27 @@ static void config_start_include(const char* filename)
 	struct inc_state* s;
 	char* nm;
 	if(inc_depth++ > 10000000) {
-		c_error_msg("too many include files");
+		yyerror("too many include files");
 		return;
 	}
 	if(strlen(filename) == 0) {
-		c_error_msg("empty include file name");
+		yyerror("empty include file name");
 		return;
 	}
 	s = (struct inc_state*)malloc(sizeof(*s));
 	if(!s) {
-		c_error_msg("include %s: malloc failure", filename);
+		yyerror("include %s: malloc failure", filename);
 		return;
 	}
 	nm = strdup(filename);
 	if(!nm) {
-		c_error_msg("include %s: strdup failure", filename);
+		yyerror("include %s: strdup failure", filename);
 		free(s);
 		return;
 	}
 	input = fopen(filename, "r");
 	if(!input) {
-		c_error_msg("cannot open include file '%s': %s",
+		yyerror("cannot open include file '%s': %s",
 			filename, strerror(errno));
 		free(s);
 		free(nm);
@@ -97,13 +96,12 @@ static void config_start_include_glob(const char* filename)
 	/* check for wildcards */
 #ifdef HAVE_GLOB
 	glob_t g;
-	size_t i;
-	int r, flags;
+	int i, r, flags;
 #endif /* HAVE_GLOB */
 	if (cfg_parser->chroot) {
 		int l = strlen(cfg_parser->chroot); /* chroot has trailing slash */
 		if (strncmp(cfg_parser->chroot, filename, l) != 0) {
-			c_error_msg("include file '%s' is not relative to chroot '%s'",
+			yyerror("include file '%s' is not relative to chroot '%s'",
 				filename, cfg_parser->chroot);
 			return;
 		}
@@ -137,7 +135,7 @@ static void config_start_include_glob(const char* filename)
 			return;
 		}
 		/* process files found, if any */
-		for(i=0; i<(size_t)g.gl_pathc; i++) {
+		for(i=(int)g.gl_pathc-1; i>=0; i--) {
 			config_start_include(g.gl_pathv[i]);
 		}
 		globfree(&g);
@@ -253,7 +251,7 @@ key{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_KEY;}
 algorithm{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ALGORITHM;}
 secret{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_SECRET;}
 pattern{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_PATTERN;}
-include-pattern{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_INCLUDEPATTERN;}
+include-pattern{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_INCLUDE_PATTERN;}
 remote-control{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_REMOTE_CONTROL;}
 control-enable{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_CONTROL_ENABLE;}
 control-interface{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_CONTROL_INTERFACE;}
@@ -285,6 +283,7 @@ dnstap-log-auth-response-messages{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VA
 log-time-ascii{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_LOG_TIME_ASCII;}
 round-robin{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ROUND_ROBIN;}
 minimal-responses{COLON} { LEXOUT(("v(%s) ", yytext)); return VAR_MINIMAL_RESPONSES;}
+confine-to-zone{COLON} { LEXOUT(("v(%s) ", yytext)); return VAR_CONFINE_TO_ZONE;}
 refuse-any{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_REFUSE_ANY;}
 max-refresh-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MAX_REFRESH_TIME;}
 min-refresh-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MIN_REFRESH_TIME;}

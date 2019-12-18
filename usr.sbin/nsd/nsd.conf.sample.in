@@ -67,7 +67,7 @@ server:
 
 	# The directory for zonefile: files.  The daemon chdirs here.
 	# zonesdir: "@zonesdir@"
-	
+
 	# the list of dynamically added zones.
 	# zonelistfile: "@zonelistfile@"
 
@@ -151,6 +151,11 @@ server:
 	# minimal-responses only emits extra data for referrals.
 	# minimal-responses: no
 
+	# Do not return additional information if the apex zone of the
+	# additional information is configured but does not match the apex zone
+	# of the initial query.
+	# confine-to-zone: no
+
 	# refuse queries of type ANY.  For stopping floods.
 	# refuse-any: no
 
@@ -193,6 +198,14 @@ server:
 	# rrl-whitelist-ratelimit: 2000
 	# RRLend
 
+	# Service clients over TLS (on the TCP sockets), with plain DNS inside
+	# the TLS stream. Give the certificate to use and private key.
+	# Default is "" (disabled). Requires restart to take effect.
+	# tls-service-key: "path/to/privatekeyfile.key"
+	# tls-service-pem: "path/to/publiccertfile.pem"
+	# tls-service-ocsp: "path/to/ocsp.pem"
+	# tls-port: 853
+
 # DNSTAP config section, if compiled with that
 # dnstap:
 	# set this to yes and set one or more of dnstap-log-..-messages to yes.
@@ -204,14 +217,6 @@ server:
 	# dnstap-version: ""
 	# dnstap-log-auth-query-messages: no
 	# dnstap-log-auth-response-messages: no
-
-	# Service clients over TLS (on the TCP sockets), with plain DNS inside
-	# the TLS stream. Give the certificate to use and private key.
-	# Default is "" (disabled). Requires restart to take effect.
-	# tls-service-key: "path/to/privatekeyfile.key"
-	# tls-service-pem: "path/to/publiccertfile.pem"
-	# tls-service-ocsp: "path/to/ocsp.pem"
-	# tls-port: 853
 
 # Remote control config section. 
 remote-control:

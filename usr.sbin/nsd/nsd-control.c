@@ -235,6 +235,7 @@ contact_server(const char* svr, struct nsd_options* cfg, int statuscmd)
 		addrfamily = AF_LOCAL;
 		port = 0;
 #endif
+#ifdef INET6
 	} else if(strchr(svr, ':')) {
 		struct sockaddr_in6 sa;
 		addrlen = (socklen_t)sizeof(struct sockaddr_in6);
@@ -247,6 +248,7 @@ contact_server(const char* svr, struct nsd_options* cfg, int statuscmd)
 		}
 		memcpy(&addr, &sa, addrlen);
 		addrfamily = AF_INET6;
+#endif
 	} else { /* ip4 */
 		struct sockaddr_in sa;
 		addrlen = (socklen_t)sizeof(struct sockaddr_in);

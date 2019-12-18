@@ -19,7 +19,7 @@
 #include "query.h"
 #include "rbtree.h"
 
-#ifndef HAVE_SSL
+#if !defined(HAVE_SSL) || !defined(HAVE_CRYPTO_MEMCMP)
 /* we need fixed time compare */
 #define CRYPTO_memcmp memcmp_fixedtime
 int memcmp_fixedtime(const void *s1, const void *s2, size_t n)

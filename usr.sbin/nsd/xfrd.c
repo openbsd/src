@@ -430,12 +430,6 @@ xfrd_shutdown()
 			signal_del(xfrd_sig_evs[i]);
 			free(xfrd_sig_evs[i]);
 		}
-		for(i=0; i<(int)nsd.ifs; i++) {
-			if(nsd.udp[i].s != -1 && nsd.udp[i].addr)
-				freeaddrinfo(nsd.udp[i].addr);
-			if(nsd.tcp[i].s != -1 && nsd.tcp[i].addr)
-				freeaddrinfo(nsd.tcp[i].addr);
-		}
 	}
 #ifdef RATELIMIT
 	rrl_mmap_deinit();
@@ -1843,6 +1837,7 @@ xfrd_parse_received_xfr_packet(xfrd_zone_type* zone, buffer_type* packet,
 	size_t nscount = NSCOUNT(packet);
 	int done = 0;
 	region_type* tempregion = NULL;
+	assert(zone->master);
 
 	/* has to be axfr / ixfr reply */
 	if(!buffer_available(packet, QHEADERSZ)) {
@@ -1863,10 +1858,16 @@ xfrd_parse_received_xfr_packet(xfrd_zone_type* zone, buffer_type* packet,
 	}
 	/* check RCODE in all response messages */
 	if(RCODE(packet) != RCODE_OK) {
-		log_msg(LOG_ERR, "xfrd: zone %s received error code %s from "
-				 "%s",
-			zone->apex_str, rcode2str(RCODE(packet)),
-			zone->master->ip_address_spec);
+		/* for IXFR failures, do not log unless higher verbosity */
+		if(!(verbosity < 3 && (RCODE(packet) == RCODE_IMPL ||
+			RCODE(packet) == RCODE_FORMAT) &&
+			!zone->master->ixfr_disabled &&
+			!zone->master->use_axfr_only)) {
+			log_msg(LOG_ERR, "xfrd: zone %s received error code %s from "
+				 	"%s",
+				zone->apex_str, rcode2str(RCODE(packet)),
+				zone->master->ip_address_spec);
+		}
 		if (RCODE(packet) == RCODE_IMPL ||
 			RCODE(packet) == RCODE_FORMAT) {
 			return xfrd_packet_notimpl;

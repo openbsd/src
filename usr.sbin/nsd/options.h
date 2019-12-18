@@ -76,6 +76,7 @@ struct nsd_options {
 	int server_count;
 	int tcp_count;
 	int tcp_reject_overflow;
+	int confine_to_zone;
 	int tcp_query_count;
 	int tcp_timeout;
 	int tcp_mss;
@@ -110,7 +111,7 @@ struct nsd_options {
 	/* TLS dedicated port */
 	const char* tls_port;
 
-        /** remote control section. enable toggle. */
+	/** remote control section. enable toggle. */
 	int control_enable;
 	/** the interfaces the remote control should listen on */
 	struct ip_address_option* control_interface;
@@ -298,17 +299,13 @@ struct config_parser_state {
 	const char* chroot;
 	int line;
 	int errors;
-	int server_settings_seen;
 	struct nsd_options* opt;
-	struct pattern_options* current_pattern;
-	struct zone_options* current_zone;
-	struct key_options* current_key;
-	struct ip_address_option* current_ip_address_option;
-	struct acl_options* current_allow_notify;
-	struct acl_options* current_request_xfr;
-	struct acl_options* current_notify;
-	struct acl_options* current_provide_xfr;
-	struct acl_options* current_outgoing_interface;
+	/* pointer to memory where options for the configuration block that is
+	   currently parsed must be stored. memory is dynamically allocated,
+	   the block is promoted once it is closed. */
+	struct pattern_options *pattern;
+	struct zone_options *zone;
+	struct key_options *key;
 	void (*err)(void*,const char*);
 	void* err_arg;
 };
@@ -411,8 +408,8 @@ const char* config_make_zonefile(struct zone_options* zone, struct nsd* nsd);
 #define ZONEC_PCT_COUNT 100000 /* elements before pct check is done */
 
 /* parsing helpers */
-void c_error(const char* msg);
-void c_error_msg(const char* fmt, ...) ATTR_FORMAT(printf, 1, 2);
+void c_error(const char* msg, ...) ATTR_FORMAT(printf, 1,2);
+int c_wrap(void);
 struct acl_options* parse_acl_info(region_type* region, char* ip,
 	const char* key);
 /* true if ipv6 address, false if ipv4 */
@@ -426,6 +423,6 @@ void nsd_options_destroy(struct nsd_options* opt);
 /* replace occurrences of one with two in buf, pass length of buffer */
 void replace_str(char* buf, size_t len, const char* one, const char* two);
 /* apply pattern to the existing pattern in the parser */
-void config_apply_pattern(const char* name);
+void config_apply_pattern(struct pattern_options *dest, const char* name);
 
 #endif /* OPTIONS_H */
