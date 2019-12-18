@@ -1,7 +1,0 @@
-steps:
-  - label: Build
-    commands:
-    - autoconf && autoheader
-    - ./configure --enable-checking --disable-flto
-    - make
-    - make cutest && ./cutest
