@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.66 2019/12/12 11:12:37 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.67 2019/12/18 13:33:29 visa Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -359,7 +359,7 @@ int		uvm_map_replace(struct vm_map *, vaddr_t, vaddr_t,
 		    vm_map_entry_t, int);
 int		uvm_map_reserve(struct vm_map *, vsize_t, vaddr_t, vsize_t,
 		    vaddr_t *);
-void		uvm_map_setup(struct vm_map *, vaddr_t, vaddr_t, int);
+void		uvm_map_setup(struct vm_map *, pmap_t, vaddr_t, vaddr_t, int);
 int		uvm_map_submap(struct vm_map *, vaddr_t, vaddr_t,
 		    struct vm_map *);
 void		uvm_unmap(struct vm_map *, vaddr_t, vaddr_t);
