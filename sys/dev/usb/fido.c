@@ -1,4 +1,4 @@
-/*	$OpenBSD: fido.c,v 1.1 2019/12/17 13:08:54 reyk Exp $	*/
+/*	$OpenBSD: fido.c,v 1.2 2019/12/18 05:09:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Reyk Floeter <reyk@openbsd.org>
@@ -16,12 +16,25 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "fido.h"
+
 #include <sys/param.h>
-#include <sys/tty.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/signalvar.h>
+#include <sys/device.h>
+#include <sys/ioctl.h>
 #include <sys/conf.h>
+#include <sys/tty.h>
+#include <sys/selinfo.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
+#include <sys/poll.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
+
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
