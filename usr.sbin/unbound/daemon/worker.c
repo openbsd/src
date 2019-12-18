@@ -1562,16 +1562,17 @@ send_reply_rc:
 #endif
 	if(worker->env.cfg->log_replies)
 	{
-		struct timeval tv = {0, 0};
+		struct timeval tv;
+		memset(&tv, 0, sizeof(tv));
 		if(qinfo.local_alias && qinfo.local_alias->rrset &&
 			qinfo.local_alias->rrset->rk.dname) {
 			/* log original qname, before the local alias was
 			 * used to resolve that CNAME to something else */
 			qinfo.qname = qinfo.local_alias->rrset->rk.dname;
-			log_reply_info(0, &qinfo, &repinfo->addr, repinfo->addrlen,
+			log_reply_info(NO_VERBOSE, &qinfo, &repinfo->addr, repinfo->addrlen,
 				tv, 1, c->buffer);
 		} else {
-			log_reply_info(0, &qinfo, &repinfo->addr, repinfo->addrlen,
+			log_reply_info(NO_VERBOSE, &qinfo, &repinfo->addr, repinfo->addrlen,
 				tv, 1, c->buffer);
 		}
 	}
@@ -1680,11 +1681,7 @@ worker_create(struct daemon* daemon, int id, int* ports, int n)
 		return NULL;
 	}
 	/* create random state here to avoid locking trouble in RAND_bytes */
-	seed = (unsigned int)time(NULL) ^ (unsigned int)getpid() ^
-		(((unsigned int)worker->thread_num)<<17);
-		/* shift thread_num so it does not match out pid bits */
-	if(!(worker->rndstate = ub_initstate(seed, daemon->rand))) {
-		explicit_bzero(&seed, sizeof(seed));
+	if(!(worker->rndstate = ub_initstate(daemon->rand))) {
 		log_err("could not init random numbers.");
 		tube_delete(worker->cmd);
 		free(worker->ports);
