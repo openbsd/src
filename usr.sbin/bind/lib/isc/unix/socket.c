@@ -866,39 +866,6 @@ socket_log(isc__socket_t *sock, isc_sockaddr_t *address,
 	}
 }
 
-#if defined(_AIX) && defined(ISC_NET_BSD44MSGHDR) && \
-    defined(USE_CMSG) && defined(IPV6_RECVPKTINFO)
-/*
- * AIX has a kernel bug where IPV6_RECVPKTINFO gets cleared by
- * setting IPV6_V6ONLY.
- */
-static void
-FIX_IPV6_RECVPKTINFO(isc__socket_t *sock)
-{
-	char strbuf[ISC_STRERRORSIZE];
-	int on = 1;
-
-	if (sock->pf != AF_INET6 || sock->type != isc_sockettype_udp)
-		return;
-
-	if (setsockopt(sock->fd, IPPROTO_IPV6, IPV6_RECVPKTINFO,
-		       (void *)&on, sizeof(on)) < 0) {
-
-		isc__strerror(errno, strbuf, sizeof(strbuf));
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "setsockopt(%d, IPV6_RECVPKTINFO) "
-				 "%s: %s", sock->fd,
-				 isc_msgcat_get(isc_msgcat,
-						ISC_MSGSET_GENERAL,
-						ISC_MSG_FAILED,
-						"failed"),
-				 strbuf);
-	}
-}
-#else
-#define FIX_IPV6_RECVPKTINFO(sock) (void)0
-#endif
-
 /*%
  * Increment socket-related statistics counters.
  */
@@ -6218,7 +6185,6 @@ isc__socket_ipv6only(isc_socket_t *sock0, isc_boolean_t yes) {
 					 strbuf);
 		}
 	}
-	FIX_IPV6_RECVPKTINFO(sock);	/* AIX */
 #endif
 }
 
