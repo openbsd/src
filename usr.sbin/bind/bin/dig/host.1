@@ -1,4 +1,4 @@
-.\" $OpenBSD: host.1,v 1.9 2019/12/17 16:41:26 jsg Exp $
+.\" $OpenBSD: host.1,v 1.10 2019/12/18 07:13:54 jmc Exp $
 .\"
 .\" Copyright (C) 2000-2002, 2004, 2005, 2007-2009, 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 17 2019 $
+.Dd $Mdocdate: December 18 2019 $
 .Dt HOST 1
 .Os
 .Sh NAME
@@ -22,16 +22,13 @@
 .Nd DNS lookup utility
 .Sh SYNOPSIS
 .Nm
-.Op Fl aCdlnrsTwv
+.Op Fl 46aCdilrsTVvw
 .Op Fl c Ar class
+.Op Fl m Ar flag
 .Op Fl N Ar ndots
 .Op Fl R Ar number
 .Op Fl t Ar type
 .Op Fl W Ar wait
-.Op Fl m Ar flag
-.Op Oo Fl 4 Oc | Oo Fl 6 Oc
-.Op Fl v
-.Op Fl V
 .Ar name
 .Op Ar server
 .Sh DESCRIPTION
@@ -77,6 +74,14 @@ option is normally equivalent to
 It also affects the behaviour of the
 .Fl l
 list zone option.
+.It Fl C
+Check consistency:
+.Nm
+will query the SOA records for zone
+.Ar name
+from all the listed authoritative name servers for that zone.
+The list of name servers is defined by the NS records that are found for the
+zone.
 .It Fl c Ar class
 Query class: This can be used to lookup
 .Cm HS
@@ -87,14 +92,6 @@ or
 The default class is
 .Cm IN
 (Internet).
-.It Fl C
-Check consistency:
-.Nm
-will query the SOA records for zone
-.Ar name
-from all the listed authoritative name servers for that zone.
-The list of name servers is defined by the NS records that are found for the
-zone.
 .It Fl d
 Print debugging traces.
 Equivalent to the
@@ -118,6 +115,15 @@ Together, the
 .Fl l
 .Fl a
 options print all records in the zone.
+.It Fl m Ar flag
+Memory usage debugging: the flag can be
+.Cm record ,
+.Cm usage ,
+or
+.Cm trace .
+You can specify the
+.Fl m
+option more than once to set multiple flags.
 .It Fl N Ar ndots
 The number of dots that have to be in
 .Ar name
@@ -132,6 +138,12 @@ or
 .Vt domain
 directive in
 .Pa /etc/resolv.conf .
+.It Fl R Ar number
+Number of retries for UDP queries:
+If
+.Ar number
+is negative or zero, the number of retries will default to 1. The default value
+is 1.
 .It Fl r
 Non-recursive query:
 Setting this option clears the RD (recursion desired) bit in the query.
@@ -145,17 +157,21 @@ option enables
 to mimic the behavior of a name server by making non-recursive queries and
 expecting to receive answers to those queries that can be referrals to other
 name servers.
-.It Fl R Ar number
-Number of retries for UDP queries:
-If
-.Ar number
-is negative or zero, the number of retries will default to 1. The default value
-is 1.
 .It Fl s
 Do
 .Em not
 send the query to the next nameserver if any server responds with a SERVFAIL
 response, which is the reverse of normal stub resolver behavior.
+.It Fl T
+TCP:
+By default,
+.Nm
+uses UDP when making queries.
+The
+.Fl T
+option makes it use a TCP connection when querying the name server.
+TCP will be automatically selected for queries that require it, such as zone
+transfer (AXFR) requests.
 .It Fl t Ar type
 Query type:
 The
@@ -187,37 +203,13 @@ If a query type of
 is chosen the starting serial number can be specified by appending an equal
 followed by the starting serial number (like
 .Fl t Cm IXFR= Ns Ar 12345678 ) .
-.It Fl T
-TCP:
-By default,
-.Nm
-uses UDP when making queries.
-The
-.Fl T
-option makes it use a TCP connection when querying the name server.
-TCP will be automatically selected for queries that require it, such as zone
-transfer (AXFR) requests.
-.It Fl m Ar flag
-Memory usage debugging: the flag can be
-.Cm record ,
-.Cm usage ,
-or
-.Cm trace .
-You can specify the
-.Fl m
-option more than once to set multiple flags.
+.It Fl V
+Print the version number and exit.
 .It Fl v
 Verbose output.
 Equivalent to the
 .Fl d
 debug option.
-.It Fl V
-Print the version number and exit.
-.It Fl w
-Wait forever: The query timeout is set to the maximum possible.
-See also the
-.Fl W
-option.
 .It Fl W Ar wait
 Timeout: Wait for up to
 .Ar wait
@@ -232,6 +224,11 @@ will wait for 5 seconds for UDP responses and 10 seconds for TCP connections.
 .Pp
 See also the
 .Fl w
+option.
+.It Fl w
+Wait forever: The query timeout is set to the maximum possible.
+See also the
+.Fl W
 option.
 .El
 .Sh IDN SUPPORT

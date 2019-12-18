@@ -146,27 +146,8 @@ show_usage(void) ISC_PLATFORM_NORETURN_POST;
 static void
 show_usage(void) {
 	fputs(
-"Usage: host [-aCdilrTvVw] [-c class] [-N ndots] [-t type] [-W time]\n"
-"            [-R number] [-m flag] hostname [server]\n"
-"       -a is equivalent to -v -t ANY\n"
-"       -c specifies query class for non-IN data\n"
-"       -C compares SOA records on authoritative nameservers\n"
-"       -d is equivalent to -v\n"
-"       -i IP6.INT reverse lookups\n"
-"       -l lists all hosts in a domain, using AXFR\n"
-"       -m set memory debugging flag (trace|record|usage)\n"
-"       -N changes the number of dots allowed before root lookup is done\n"
-"       -r disables recursive processing\n"
-"       -R specifies number of retries for UDP packets\n"
-"       -s a SERVFAIL response should stop query\n"
-"       -t specifies the query type\n"
-"       -T enables TCP/IP mode\n"
-"       -v enables verbose output\n"
-"       -V print version number and exit\n"
-"       -w specifies to wait forever for a reply\n"
-"       -W specifies how long to wait for a reply\n"
-"       -4 use IPv4 query transport only\n"
-"       -6 use IPv6 query transport only\n", stderr);
+"usage: host [-46aCdilrsTVvw] [-c class] [-m flag] [-N ndots] [-R number]\n"
+"            [-t type] [-W wait] name [server]\n", stderr);
 	exit(1);
 }
 
