@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.183 2019/10/07 10:47:08 mpi Exp $	*/
+/*	$OpenBSD: audio.c,v 1.184 2019/12/18 00:27:47 cheloha Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1492,8 +1492,8 @@ audio_drain(struct audio_softc *sc)
 		 * work, useful only for debugging drivers
 		 */
 		sc->play.blocking = 1;
-		error = msleep(&sc->play.blocking, &audio_lock,
-		    PWAIT | PCATCH, "au_dr", 5 * hz);
+		error = msleep_nsec(&sc->play.blocking, &audio_lock,
+		    PWAIT | PCATCH, "au_dr", SEC_TO_NSEC(5));
 		if (!(sc->dev.dv_flags & DVF_ACTIVE))
 			error = EIO;
 		if (error) {
@@ -1547,8 +1547,8 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 		}
 		DPRINTFN(1, "%s: read sleep\n", DEVNAME(sc));
 		sc->rec.blocking = 1;
-		error = msleep(&sc->rec.blocking,
-		    &audio_lock, PWAIT | PCATCH, "au_rd", 0);
+		error = msleep_nsec(&sc->rec.blocking,
+		    &audio_lock, PWAIT | PCATCH, "au_rd", INFSLP);
 		if (!(sc->dev.dv_flags & DVF_ACTIVE))
 			error = EIO;
 		if (error) {
@@ -1620,8 +1620,8 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 			}
 			DPRINTFN(1, "%s: write sleep\n", DEVNAME(sc));
 			sc->play.blocking = 1;
-			error = msleep(&sc->play.blocking,
-			    &audio_lock, PWAIT | PCATCH, "au_wr", 0);
+			error = msleep_nsec(&sc->play.blocking,
+			    &audio_lock, PWAIT | PCATCH, "au_wr", INFSLP);
 			if (!(sc->dev.dv_flags & DVF_ACTIVE))
 				error = EIO;
 			if (error) {
