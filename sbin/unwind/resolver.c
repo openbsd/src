@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.115 2019/12/15 17:23:27 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.116 2019/12/18 09:17:22 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -56,6 +56,9 @@
 #include "libunbound/util/module.h"
 #include "libunbound/util/regional.h"
 #include "libunbound/util/storage/slabhash.h"
+#include "libunbound/validator/validator.h"
+#include "libunbound/validator/val_kcache.h"
+#include "libunbound/validator/val_neg.h"
 
 #include <openssl/crypto.h>
 
@@ -150,6 +153,7 @@ void			 ub_resolve_done(void *, int, void *, int, int, char *,
 void			 asr_resolve_done(struct asr_result *, void *);
 void			 new_resolver(enum uw_resolver_type);
 struct uw_resolver	*create_resolver(enum uw_resolver_type);
+void			 setup_unified_caches(void);
 void			 set_unified_cache(struct uw_resolver *);
 void			 free_resolver(struct uw_resolver *);
 void			 set_forwarders(struct uw_resolver *,
@@ -206,9 +210,11 @@ struct event_base		*ev_base;
 
 RB_GENERATE(force_tree, force_tree_entry, entry, force_tree_cmp)
 
-struct alloc_cache		 unified_cache_alloc;
+int				 val_id = -1;
 struct slabhash			*unified_msg_cache;
 struct rrset_cache		*unified_rrset_cache;
+struct key_cache		*unified_key_cache;
+struct val_neg_cache		*unified_neg_cache;
 
 static const char * const	 as112_zones[] = {
 	/* RFC1918 */
@@ -333,10 +339,10 @@ resolver_sig_handler(int sig, short event, void *arg)
 void
 resolver(int debug, int verbose)
 {
-	struct config_file	*ub_cfg;
 	struct event		 ev_sigint, ev_sigterm;
 	struct passwd		*pw;
 	struct timeval		 tv = {DECAY_PERIOD, 0};
+	struct alloc_cache	 cache_alloc_test;
 
 	resolver_conf = config_new_empty();
 
@@ -390,30 +396,12 @@ resolver(int debug, int verbose)
 
 	clock_gettime(CLOCK_MONOTONIC, &last_network_change);
 
-	if ((ub_cfg = config_create_forlib()) == NULL)
-		fatal(NULL);
-
-	alloc_init(&unified_cache_alloc, NULL, 0);
-	if (unified_cache_alloc.max_reg_blocks != 10)
+	alloc_init(&cache_alloc_test, NULL, 0);
+	if (cache_alloc_test.max_reg_blocks != 10)
 		fatalx("local libunbound/util/alloc.c diff lost");
+	alloc_clear(&cache_alloc_test);
 
-	/*
-	 * context_finalize() ensures that the cache is sized according to
-	 * the context's config. If we want to change the cache size we
-	 * need to reflect it in the config as well otherwise these cache
-	 * objects get deleted and re-created.
-	 */
-	if ((unified_msg_cache = slabhash_create(ub_cfg->msg_cache_slabs,
-	    HASH_DEFAULT_STARTARRAY, ub_cfg->msg_cache_size, msgreply_sizefunc,
-	    query_info_compare, query_entry_delete, reply_info_delete, NULL))
-	    == NULL)
-		fatal(NULL);
-
-	if ((unified_rrset_cache = rrset_cache_adjust(NULL, ub_cfg,
-	    &unified_cache_alloc)) == NULL)
-		fatal(NULL);
-
-	config_delete(ub_cfg);
+	setup_unified_caches();
 
 	TAILQ_INIT(&autoconf_forwarder_list);
 	TAILQ_INIT(&trust_anchors);
@@ -1106,8 +1094,17 @@ set_unified_cache(struct uw_resolver *res)
 
 	res->ctx->env->msg_cache = unified_msg_cache;
 	res->ctx->env->rrset_cache = unified_rrset_cache;
+	res->ctx->env->key_cache = unified_key_cache;
+	res->ctx->env->neg_cache = unified_neg_cache;
 
 	context_finalize(res->ctx);
+
+	if (res->ctx->env->msg_cache != unified_msg_cache ||
+	    res->ctx->env->rrset_cache != unified_rrset_cache ||
+	    res->ctx->env->key_cache != unified_key_cache ||
+	    res->ctx->env->neg_cache != unified_neg_cache)
+		fatalx("failed to set unified caches, libunbound/validator/"
+		    "validator.c diff lost");
 }
 
 static const struct {
@@ -1286,6 +1283,8 @@ create_resolver(enum uw_resolver_type type)
 void
 free_resolver(struct uw_resolver *res)
 {
+	struct val_env	*val_env;
+
 	if (res == NULL)
 		return;
 
@@ -1294,15 +1293,71 @@ free_resolver(struct uw_resolver *res)
 	else {
 		evtimer_del(&res->check_ev);
 		if (res->ctx != NULL) {
-			if (res->ctx->env->msg_cache == unified_msg_cache)
+			if (res->ctx->env->msg_cache == unified_msg_cache) {
+				val_env = (struct val_env*)
+				    res->ctx->env->modinfo[val_id];
 				res->ctx->env->msg_cache = NULL;
-			if (res->ctx->env->rrset_cache == unified_rrset_cache)
 				res->ctx->env->rrset_cache = NULL;
+				val_env->kcache = NULL;
+				res->ctx->env->key_cache = NULL;
+				val_env->neg_cache = NULL;
+				res->ctx->env->neg_cache = NULL;
+			}
 		}
 		ub_ctx_delete(res->ctx);
 		asr_resolver_free(res->asr_ctx);
 		free(res);
 	}
+}
+
+void
+setup_unified_caches(void)
+{
+	struct ub_ctx	*ctx;
+	struct val_env	*val_env;
+	size_t		 i;
+	int		 err, j;
+
+	if ((ctx = ub_ctx_create_event(ev_base)) == NULL)
+		fatalx("could not create unbound context");
+	for (i = 0; i < nitems(options); i++) {
+		if ((err = ub_ctx_set_option(ctx, options[i].name,
+		    options[i].value)) != 0) {
+			fatalx("error setting %s: %s: %s", options[i].name,
+			    options[i].value, ub_strerror(err));
+		}
+	}
+
+	context_finalize(ctx);
+
+	if (ctx->env->msg_cache == NULL || ctx->env->rrset_cache == NULL ||
+	    ctx->env->key_cache == NULL || ctx->env->neg_cache == NULL)
+		fatalx("could not setup unified caches");
+
+	unified_msg_cache = ctx->env->msg_cache;
+	unified_rrset_cache = ctx->env->rrset_cache;
+	unified_key_cache = ctx->env->key_cache;
+	unified_neg_cache = ctx->env->neg_cache;
+
+	if (val_id == -1) {
+		for (j = 0; j < ctx->mods.num; j++) {
+			if (strcmp(ctx->mods.mod[j]->name, "validator") == 0) {
+				val_id = j;
+				break;
+			}
+		}
+		if (val_id == -1)
+			fatalx("cannot find validator module");
+	}
+
+	val_env = (struct val_env*)ctx->env->modinfo[val_id];
+	ctx->env->msg_cache = NULL;
+	ctx->env->rrset_cache = NULL;
+	ctx->env->key_cache = NULL;
+	val_env->kcache = NULL;
+	ctx->env->neg_cache = NULL;
+	val_env->neg_cache = NULL;
+	ub_ctx_delete(ctx);
 }
 
 void
