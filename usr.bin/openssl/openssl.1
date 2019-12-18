@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.116 2019/11/28 11:21:33 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.117 2019/12/18 07:54:28 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: November 28 2019 $
+.Dd $Mdocdate: December 18 2019 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -2176,11 +2176,8 @@ option.
 Use
 .Ar digest
 to create a key from a pass phrase.
-.Ar digest
-may be one of
-.Cm md5
-or
-.Cm sha1 .
+The default value is
+.Cm sha256 .
 .It Fl none
 Use NULL cipher (no encryption or decryption of input).
 .It Fl nopad
