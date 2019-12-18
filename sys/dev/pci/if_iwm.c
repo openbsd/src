@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.291 2019/12/18 09:52:15 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.292 2019/12/18 10:07:26 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8046,7 +8046,8 @@ iwm_nic_umac_error(struct iwm_softc *sc)
 	    table.nic_isr_pref);
 }
 
-struct {
+#define IWM_FW_SYSASSERT_CPU_MASK 0xf0000000
+static struct {
 	const char *name;
 	uint8_t num;
 } advanced_lookup[] = {
@@ -8054,6 +8055,7 @@ struct {
 	{ "SYSASSERT", 0x35 },
 	{ "UCODE_VERSION_MISMATCH", 0x37 },
 	{ "BAD_COMMAND", 0x38 },
+	{ "BAD_COMMAND", 0x39 },
 	{ "NMI_INTERRUPT_DATA_ACTION_PT", 0x3C },
 	{ "FATAL_ERROR", 0x3D },
 	{ "NMI_TRM_HW_ERR", 0x46 },
@@ -8062,6 +8064,9 @@ struct {
 	{ "NMI_INTERRUPT_WDG_RXF_FULL", 0x5C },
 	{ "NMI_INTERRUPT_WDG_NO_RBD_RXF_FULL", 0x64 },
 	{ "NMI_INTERRUPT_HOST", 0x66 },
+	{ "NMI_INTERRUPT_LMAC_FATAL", 0x70 },
+	{ "NMI_INTERRUPT_UMAC_FATAL", 0x71 },
+	{ "NMI_INTERRUPT_OTHER_LMAC_FATAL", 0x73 },
 	{ "NMI_INTERRUPT_ACTION_PT", 0x7C },
 	{ "NMI_INTERRUPT_UNKNOWN", 0x84 },
 	{ "NMI_INTERRUPT_INST_ACTION_PT", 0x86 },
@@ -8074,7 +8079,8 @@ iwm_desc_lookup(uint32_t num)
 	int i;
 
 	for (i = 0; i < nitems(advanced_lookup) - 1; i++)
-		if (advanced_lookup[i].num == num)
+		if (advanced_lookup[i].num ==
+		    (num & ~IWM_FW_SYSASSERT_CPU_MASK))
 			return advanced_lookup[i].name;
 
 	/* No entry matches 'num', so it is the last: ADVANCED_SYSASSERT */
