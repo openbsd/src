@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.117 2019/12/18 09:18:27 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.118 2019/12/18 13:04:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1183,6 +1183,8 @@ create_resolver(enum uw_resolver_type type)
 			log_warnx("could not create unbound context");
 			return (NULL);
 		}
+		/* until github issue #99 is addressed*/
+		res->ctx->event_base_malloced = 0;
 
 		ub_ctx_debuglevel(res->ctx, log_getverbose() & OPT_VERBOSE3 ?
 		    UB_LOG_VERBOSE : UB_LOG_BRIEF);
@@ -1327,6 +1329,9 @@ setup_unified_caches(void)
 
 	if ((ctx = ub_ctx_create_event(ev_base)) == NULL)
 		fatalx("could not create unbound context");
+	/* until github issue #99 is addressed*/
+	ctx->event_base_malloced = 0;
+
 	for (i = 0; i < nitems(options); i++) {
 		if ((err = ub_ctx_set_option(ctx, options[i].name,
 		    options[i].value)) != 0) {
