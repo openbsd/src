@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.46 2019/12/08 12:31:07 otto Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.47 2019/12/18 09:18:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -100,6 +100,7 @@ enum imsg_type {
 	IMSG_CTL_RELOAD,
 	IMSG_CTL_STATUS,
 	IMSG_CTL_AUTOCONF,
+	IMSG_CTL_MEM,
 	IMSG_RECONF_CONF,
 	IMSG_RECONF_BLOCKLIST_FILE,
 	IMSG_RECONF_FORWARDER,
@@ -119,6 +120,7 @@ enum imsg_type {
 	IMSG_ANSWER,
 	IMSG_CTL_RESOLVER_INFO,
 	IMSG_CTL_AUTOCONF_RESOLVER_INFO,
+	IMSG_CTL_MEM_INFO,
 	IMSG_CTL_END,
 	IMSG_HTTPSOCK,
 	IMSG_TAFD,

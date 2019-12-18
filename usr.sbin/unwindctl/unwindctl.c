@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwindctl.c,v 1.25 2019/12/08 12:31:07 otto Exp $	*/
+/*	$OpenBSD: unwindctl.c,v 1.26 2019/12/18 09:18:28 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -46,6 +46,7 @@
 __dead void	 usage(void);
 int		 show_status_msg(struct imsg *);
 int		 show_autoconf_msg(struct imsg *);
+int		 show_mem_msg(struct imsg *);
 void		 histogram_header(void);
 void		 print_histogram(const char *name, int64_t[], size_t);
 
@@ -150,6 +151,9 @@ main(int argc, char *argv[])
 	case AUTOCONF:
 		imsg_compose(ibuf, IMSG_CTL_AUTOCONF, 0, 0, -1, NULL, 0);
 		break;
+	case MEM:
+		imsg_compose(ibuf, IMSG_CTL_MEM, 0, 0, -1, NULL, 0);
+		break;
 	default:
 		usage();
 	}
@@ -176,6 +180,9 @@ main(int argc, char *argv[])
 				break;
 			case AUTOCONF:
 				done = show_autoconf_msg(&imsg);
+				break;
+			case MEM:
+				done = show_mem_msg(&imsg);
 				break;
 			default:
 				break;
@@ -318,4 +325,32 @@ print_histogram(const char *name, int64_t histogram[], size_t n)
 	for(i = 0; i < n; i++)
 		printf("%6lld", histogram[i]);
 	printf("\n");
+}
+
+int
+show_mem_msg(struct imsg *imsg)
+{
+	struct ctl_mem_info	*cmi;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_MEM_INFO:
+		cmi = imsg->data;
+		printf("msg-cache:   %zu / %zu (%.2f%%)\n", cmi->msg_cache_used,
+		    cmi->msg_cache_max, 100.0 * cmi->msg_cache_used /
+		    cmi->msg_cache_max);
+		printf("rrset-cache: %zu / %zu (%.2f%%)\n",
+		    cmi->rrset_cache_used, cmi->rrset_cache_max, 100.0 *
+		    cmi->rrset_cache_used / cmi->rrset_cache_max);
+		printf("key-cache: %zu / %zu (%.2f%%)\n", cmi->key_cache_used,
+		    cmi->key_cache_max, 100.0 * cmi->key_cache_used /
+		    cmi->key_cache_max);
+		printf("neg-cache: %zu / %zu (%.2f%%)\n", cmi->neg_cache_used,
+		    cmi->neg_cache_max, 100.0 * cmi->neg_cache_used /
+		    cmi->neg_cache_max);
+		break;
+	default:
+		break;
+	}
+
+	return 1;
 }

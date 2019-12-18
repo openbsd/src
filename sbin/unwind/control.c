@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.14 2019/12/08 09:47:50 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.15 2019/12/18 09:18:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -274,6 +274,7 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			break;
 		case IMSG_CTL_STATUS:
 		case IMSG_CTL_AUTOCONF:
+		case IMSG_CTL_MEM:
 			if (IMSG_DATA_SIZE(imsg) != 0)
 				break;
 			frontend_imsg_compose_resolver(imsg.hdr.type, 0, NULL,

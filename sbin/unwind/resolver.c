@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.116 2019/12/18 09:17:22 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.117 2019/12/18 09:18:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -174,6 +174,7 @@ int			 resolver_cmp(const void *, const void *);
 void			 restart_ub_resolvers(void);
 void			 show_status(pid_t);
 void			 show_autoconf(pid_t);
+void			 show_mem(pid_t);
 void			 send_resolver_info(struct uw_resolver *, pid_t);
 void			 send_detailed_resolver_info(struct uw_resolver *,
 			     pid_t);
@@ -512,6 +513,12 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 				fatalx("%s: IMSG_CTL_AUTOCONF wrong length: "
 				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
 			show_autoconf(imsg.hdr.pid);
+			break;
+		case IMSG_CTL_MEM:
+			if (IMSG_DATA_SIZE(imsg) != 0)
+				fatalx("%s: IMSG_CTL_AUTOCONF wrong length: "
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
+			show_mem(imsg.hdr.pid);
 			break;
 		case IMSG_NEW_TA:
 			/* make sure this is a string */
@@ -1695,6 +1702,25 @@ show_autoconf(pid_t pid)
 	}
 
 	resolver_imsg_compose_frontend(IMSG_CTL_END, pid, NULL, 0);
+}
+
+void
+show_mem(pid_t pid)
+{
+	struct ctl_mem_info	 cmi;
+
+	memset(&cmi, 0, sizeof(cmi));
+	cmi.msg_cache_used = slabhash_get_mem(unified_msg_cache);
+	cmi.msg_cache_max = slabhash_get_size(unified_msg_cache);
+	cmi.rrset_cache_used = slabhash_get_mem(&unified_rrset_cache->table);
+	cmi.rrset_cache_max = slabhash_get_size(&unified_rrset_cache->table);
+	cmi.key_cache_used = slabhash_get_mem(unified_key_cache->slab);
+	cmi.key_cache_max = slabhash_get_size(unified_key_cache->slab);
+	cmi.neg_cache_used = unified_neg_cache->use;
+	cmi.neg_cache_max = unified_neg_cache->max;
+	resolver_imsg_compose_frontend(IMSG_CTL_MEM_INFO, pid, &cmi,
+	    sizeof(cmi));
+
 }
 
 void
