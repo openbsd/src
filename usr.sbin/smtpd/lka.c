@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.241 2019/12/12 22:10:47 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.242 2019/12/18 07:57:51 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -275,6 +275,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_MTA_LOOKUP_SMARTHOST:
 		m_msg(&m, imsg);
 		m_get_id(&m, &reqid);
+		m_get_string(&m, &domain);
 		m_get_string(&m, &tablename);
 		m_end(&m);
 
@@ -288,7 +289,11 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			m_add_int(p, LKA_TEMPFAIL);
 		}
 		else {
-			ret = table_fetch(table, K_RELAYHOST, &lk);
+			if (domain == NULL)
+				ret = table_fetch(table, K_RELAYHOST, &lk);
+			else
+				ret = table_lookup(table, K_RELAYHOST, domain, &lk);
+
 			if (ret == -1)
 				m_add_int(p, LKA_TEMPFAIL);
 			else if (ret == 0)

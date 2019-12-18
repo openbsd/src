@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.232 2019/09/20 17:46:05 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.233 2019/12/18 07:57:51 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -926,6 +926,10 @@ mta_query_smarthost(struct envelope *evp0)
 
 	m_create(p_lka, IMSG_MTA_LOOKUP_SMARTHOST, 0, 0, -1);
 	m_add_id(p_lka, evp->id);
+	if (dispatcher->u.remote.smarthost_domain)
+		m_add_string(p_lka, evp->dest.domain);
+	else
+		m_add_string(p_lka, NULL);
 	m_add_string(p_lka, dispatcher->u.remote.smarthost);
 	m_close(p_lka);
 

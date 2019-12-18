@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.269 2019/12/14 16:24:52 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.270 2019/12/18 07:57:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -817,6 +817,27 @@ HELO STRING {
 	}
 
 	dispatcher->u.remote.smarthost = strdup(t->t_name);
+}
+| DOMAIN tables {
+	struct table   *t = $2;
+
+	if (dispatcher->u.remote.smarthost) {
+		yyerror("host mapping already specified for this dispatcher");
+		YYERROR;
+	}
+	if (dispatcher->u.remote.backup) {
+		yyerror("backup and domain are mutually exclusive");
+		YYERROR;
+	}
+
+	if (!table_check_use(t, T_DYNAMIC|T_HASH, K_RELAYHOST)) {
+		yyerror("table \"%s\" may not be used for host lookups",
+		    t->t_name);
+		YYERROR;
+	}
+
+	dispatcher->u.remote.smarthost = strdup(t->t_name);
+	dispatcher->u.remote.smarthost_domain = 1;
 }
 | TLS {
 	if (dispatcher->u.remote.tls_required == 1) {
