@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaccess.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: uaccess.h,v 1.2 2019/12/18 08:56:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -80,15 +80,15 @@ access_ok(int type, const void *addr, unsigned long size)
 static inline void
 pagefault_disable(void)
 {
-	KASSERT(curcpu()->ci_inatomic == 0);
-	curcpu()->ci_inatomic = 1;
+	curcpu()->ci_inatomic++;
+	KASSERT(curcpu()->ci_inatomic > 0);
 }
 
 static inline void
 pagefault_enable(void)
 {
-	KASSERT(curcpu()->ci_inatomic == 1);
-	curcpu()->ci_inatomic = 0;
+	KASSERT(curcpu()->ci_inatomic > 0);
+	curcpu()->ci_inatomic--;
 }
 
 static inline int
