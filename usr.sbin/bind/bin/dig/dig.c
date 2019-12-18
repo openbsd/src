@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.22 2019/12/17 18:10:11 deraadt Exp $ */
+/* $Id: dig.c,v 1.23 2019/12/18 18:07:03 deraadt Exp $ */
 
 /*! \file */
 
@@ -161,8 +161,6 @@ usage(void) ISC_PLATFORM_NORETURN_POST;
 static void
 usage(void) {
 	print_usage(stderr);
-	fputs("\nUse \"dig -h\" (or \"dig -h | more\") "
-	      "for complete list of options\n", stderr);
 	exit(1);
 }
 
