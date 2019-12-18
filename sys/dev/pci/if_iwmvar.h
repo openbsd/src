@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.48 2019/11/26 07:37:50 patrick Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.49 2019/12/18 09:52:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -374,6 +374,7 @@ struct iwm_softc {
 	struct task		init_task; /* NB: not reference-counted */
 	struct refcnt		task_refs;
 	struct task		newstate_task;
+	struct task		setrates_task;
 	enum ieee80211_state	ns_nstate;
 	int			ns_arg;
 
@@ -546,7 +547,9 @@ struct iwm_node {
 	uint16_t in_color;
 
 	struct ieee80211_amrr_node in_amn;
+	int chosen_txrate;
 	struct ieee80211_mira_node in_mn;
+	int chosen_txmcs;
 
 	/* Set in 11n mode if we don't receive ACKs for OFDM frames. */
 	int ht_force_cck;

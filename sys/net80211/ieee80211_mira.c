@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.16 2019/07/29 10:50:09 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.17 2019/12/18 09:52:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -1253,4 +1253,16 @@ ieee80211_mira_cancel_timeouts(struct ieee80211_mira_node *mn)
 
 	for (t = 0; t < nitems(mn->probe_to); t++)
 		timeout_del(&mn->probe_to[t]);
+}
+
+int
+ieee80211_mira_is_probing(struct ieee80211_mira_node *mn)
+{
+	return mn->probing != IEEE80211_MIRA_NOT_PROBING;
+}
+
+int
+ieee80211_mira_get_best_mcs(struct ieee80211_mira_node *mn)
+{
+	return mn->best_mcs;
 }

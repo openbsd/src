@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.h,v 1.5 2019/02/27 04:10:40 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.h,v 1.6 2019/12/18 09:52:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -110,5 +110,11 @@ void	ieee80211_mira_cancel_timeouts(struct ieee80211_mira_node *);
 /* Returns RTS threshold to be used for a frame about to be transmitted. */
 int	ieee80211_mira_get_rts_threshold(struct ieee80211_mira_node *,
     struct ieee80211com *, struct ieee80211_node *, size_t);
+
+/* Indicate whether Tx rates are currently being probed. */
+int	ieee80211_mira_is_probing(struct ieee80211_mira_node *);
+
+/* Return the best MCS determined by the most recent probe. */
+int	ieee80211_mira_get_best_mcs(struct ieee80211_mira_node *);
 
 #endif /* _NET80211_IEEE80211_MIRA_H_ */
