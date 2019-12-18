@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.327 2019/12/13 08:14:51 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.328 2019/12/18 10:00:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -90,8 +90,8 @@ static int	parent_auth_user(const char *, const char *);
 static void	load_pki_tree(void);
 static void	load_pki_keys(void);
 
-static void	fork_processors(void);
-static void	fork_processor(const char *, const char *, const char *, const char *, const char *, uint32_t);
+static void	fork_filter_processes(void);
+static void	fork_filter_process(const char *, const char *, const char *, const char *, const char *, uint32_t);
 
 enum child_type {
 	CHILD_DAEMON,
@@ -260,7 +260,7 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_string(&m, &procname);
 		m_end(&m);
 
-		processor = dict_xget(env->sc_processors_dict, procname);
+		processor = dict_xget(env->sc_filter_processes_dict, procname);
 		m_create(p_lka, IMSG_LKA_PROCESSOR_ERRFD, 0, 0, processor->errfd);
 		m_add_string(p_lka, procname);
 		m_close(p_lka);
@@ -1079,7 +1079,7 @@ smtpd(void) {
 	offline_timeout.tv_usec = 0;
 	evtimer_add(&offline_ev, &offline_timeout);
 
-	fork_processors();
+	fork_filter_processes();
 
 	purge_task();
 
@@ -1257,7 +1257,7 @@ purge_task(void)
 }
 
 static void
-fork_processors(void)
+fork_filter_processes(void)
 {
 	const char	*name;
 	void		*iter;
@@ -1282,18 +1282,18 @@ fork_processors(void)
 	iter = NULL;
 	while (dict_iter(env->sc_filters_dict, &iter, (const char **)&fn, (void **)&fc)) {
 		if (fc->proc) {
-			fp = dict_xget(env->sc_processors_dict, fc->proc);
+			fp = dict_xget(env->sc_filter_processes_dict, fc->proc);
 			fp->filter_subsystem |= fc->filter_subsystem;
 		}
 	}
 
 	iter = NULL;
-	while (dict_iter(env->sc_processors_dict, &iter, &name, (void **)&fp))
-		fork_processor(name, fp->command, fp->user, fp->group, fp->chroot, fp->filter_subsystem);
+	while (dict_iter(env->sc_filter_processes_dict, &iter, &name, (void **)&fp))
+		fork_filter_process(name, fp->command, fp->user, fp->group, fp->chroot, fp->filter_subsystem);
 }
 
 static void
-fork_processor(const char *name, const char *command, const char *user, const char *group, const char *chroot_path, uint32_t subsystems)
+fork_filter_process(const char *name, const char *command, const char *user, const char *group, const char *chroot_path, uint32_t subsystems)
 {
 	pid_t		 pid;
 	struct filter_proc	*processor;
@@ -1328,7 +1328,7 @@ fork_processor(const char *name, const char *command, const char *user, const ch
 
 	/* parent passes the child fd over to lka */
 	if (pid > 0) {
-		processor = dict_xget(env->sc_processors_dict, name);
+		processor = dict_xget(env->sc_filter_processes_dict, name);
 		processor->errfd = errfd[1];
 		child_add(pid, CHILD_PROCESSOR, name);
 		close(sp[0]);
@@ -1354,7 +1354,7 @@ fork_processor(const char *name, const char *command, const char *user, const ch
 	if (setgroups(1, &gr->gr_gid) ||
 	    setresgid(gr->gr_gid, gr->gr_gid, gr->gr_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		err(1, "fork_processor: cannot drop privileges");
+		err(1, "fork_filter_process: cannot drop privileges");
 
 	if (closefrom(STDERR_FILENO + 1) == -1)
 		err(1, "closefrom");

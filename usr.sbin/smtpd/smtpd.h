@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.646 2019/12/18 07:57:52 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.647 2019/12/18 10:00:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -585,7 +585,7 @@ struct smtpd {
 	size_t				sc_scheduler_max_msg_batch_size;
 	size_t				sc_scheduler_max_schedule;
 
-	struct dict		       *sc_processors_dict;
+	struct dict		       *sc_filter_processes_dict;
 
 	int				sc_ttl;
 #define MAX_BOUNCE_WARN			4

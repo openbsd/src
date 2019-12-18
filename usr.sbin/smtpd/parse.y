@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.270 2019/12/18 07:57:52 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.271 2019/12/18 10:00:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -434,7 +434,7 @@ pki_params_opt pki_params
 
 proc:
 PROC STRING STRING {
-	if (dict_get(conf->sc_processors_dict, $2)) {
+	if (dict_get(conf->sc_filter_processes_dict, $2)) {
 		yyerror("processor already exists with that name: %s", $2);
 		free($2);
 		free($3);
@@ -443,7 +443,7 @@ PROC STRING STRING {
 	processor = xcalloc(1, sizeof *processor);
 	processor->command = $3;
 } proc_params {
-	dict_set(conf->sc_processors_dict, $2, processor);
+	dict_set(conf->sc_filter_processes_dict, $2, processor);
 	processor = NULL;
 }
 ;
@@ -1794,7 +1794,7 @@ FILTER STRING PROC STRING {
 		free($4);
 		YYERROR;
 	}
-	if ((fp = dict_get(conf->sc_processors_dict, $4)) == NULL) {
+	if ((fp = dict_get(conf->sc_filter_processes_dict, $4)) == NULL) {
 		yyerror("no processor exist with that name: %s", $4);
 		free($4);
 		YYERROR;
@@ -1825,7 +1825,7 @@ FILTER STRING PROC_EXEC STRING {
 	filter_config->proc = xstrdup($2);
 	dict_set(conf->sc_filters_dict, $2, filter_config);
 } proc_params {
-	dict_set(conf->sc_processors_dict, filter_config->proc, processor);
+	dict_set(conf->sc_filter_processes_dict, filter_config->proc, processor);
 	processor = NULL;
 	filter_config = NULL;
 }
