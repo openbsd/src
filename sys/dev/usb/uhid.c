@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.73 2019/12/17 13:08:54 reyk Exp $ */
+/*	$OpenBSD: uhid.c,v 1.74 2019/12/19 12:04:38 reyk Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -413,10 +413,10 @@ uhidpoll(dev_t dev, int events, struct proc *p)
 	int s;
 
 	if ((sc = uhid_lookup(dev)) == NULL)
-		return (ENXIO);
+		return (POLLERR);
 
 	if (usbd_is_dying(sc->sc_hdev.sc_udev))
-		return (POLLERR);
+		return (POLLHUP);
 
 	s = splusb();
 	if (events & (POLLOUT | POLLWRNORM))

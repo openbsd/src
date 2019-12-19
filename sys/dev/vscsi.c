@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.41 2017/02/12 17:12:37 chl Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.42 2019/12/19 12:04:38 reyk Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -537,7 +537,7 @@ vscsipoll(dev_t dev, int events, struct proc *p)
 	int				revents = 0;
 
 	if (sc == NULL)
-		return (ENXIO);
+		return (POLLERR);
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		mtx_enter(&sc->sc_state_mtx);
