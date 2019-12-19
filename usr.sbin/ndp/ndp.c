@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.98 2019/08/31 13:46:14 bluhm Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.99 2019/12/19 18:36:37 bluhm Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -313,7 +313,7 @@ parse_host(const char *host, struct in6_addr *in6)
 	*in6 = sin6->sin6_addr;
 #ifdef __KAME__
 	if (IN6_IS_ADDR_LINKLOCAL(in6)) {
-		in6->s6_addr[2] = htons(sin6->sin6_scope_id);
+		*(u_int16_t *)&in6->s6_addr[2] = htons(sin6->sin6_scope_id);
 	}
 #endif
 
