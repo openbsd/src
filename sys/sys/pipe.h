@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.h,v 1.19 2019/11/29 15:15:10 anton Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.20 2019/12/19 18:53:37 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -84,7 +84,7 @@ struct pipe {
 	struct	timespec pipe_mtime;	/* [K] time of last modify */
 	struct	timespec pipe_ctime;	/* [I] time of status change */
 	struct	sigio_ref pipe_sigio;	/* [S] async I/O registration */
-	struct	pipe *pipe_peer;	/* [K] link with other direction */
+	struct	pipe *pipe_peer;	/* [P] link with other direction */
 	u_int	pipe_state;		/* [K] pipe status info */
 	int	pipe_busy;		/* [P] # readers/writers */
 };
