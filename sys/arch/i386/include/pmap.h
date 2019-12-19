@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.86 2019/01/18 01:34:50 pd Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.87 2019/12/19 17:46:32 mpi Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -240,13 +240,13 @@ void pmap_zero_page(struct vm_page *);
 void pmap_copy_page(struct vm_page *, struct vm_page *);
 void pmap_enter_pv(struct vm_page *, struct pv_entry *,
     struct pmap *, vaddr_t, struct vm_page *);
-boolean_t pmap_clear_attrs(struct vm_page *, int);
+int pmap_clear_attrs(struct vm_page *, int);
 static void pmap_page_protect(struct vm_page *, vm_prot_t);
 void pmap_page_remove(struct vm_page *);
 static void pmap_protect(struct pmap *, vaddr_t,
     vaddr_t, vm_prot_t);
 void pmap_remove(struct pmap *, vaddr_t, vaddr_t);
-boolean_t pmap_test_attrs(struct vm_page *, int);
+int pmap_test_attrs(struct vm_page *, int);
 void pmap_write_protect(struct pmap *, vaddr_t,
     vaddr_t, vm_prot_t);
 int pmap_exec_fixup(struct vm_map *, struct trapframe *,
@@ -265,38 +265,38 @@ extern u_int32_t (*pmap_pte_set_p)(vaddr_t, paddr_t, u_int32_t);
 extern u_int32_t (*pmap_pte_setbits_p)(vaddr_t, u_int32_t, u_int32_t);
 extern u_int32_t (*pmap_pte_bits_p)(vaddr_t);
 extern paddr_t (*pmap_pte_paddr_p)(vaddr_t);
-extern boolean_t (*pmap_clear_attrs_p)(struct vm_page *, int);
+extern int (*pmap_clear_attrs_p)(struct vm_page *, int);
 extern int (*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
 extern void (*pmap_enter_special_p)(vaddr_t, paddr_t, vm_prot_t, u_int32_t);
-extern boolean_t (*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
+extern int (*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
 extern vaddr_t (*pmap_growkernel_p)(vaddr_t);
 extern void (*pmap_page_remove_p)(struct vm_page *);
 extern void (*pmap_do_remove_p)(struct pmap *, vaddr_t, vaddr_t, int);
-extern boolean_t (*pmap_test_attrs_p)(struct vm_page *, int);
+extern int (*pmap_test_attrs_p)(struct vm_page *, int);
 extern void (*pmap_unwire_p)(struct pmap *, vaddr_t);
 extern void (*pmap_write_protect_p)(struct pmap*, vaddr_t, vaddr_t, vm_prot_t);
 extern void (*pmap_pinit_pd_p)(pmap_t);
 extern void (*pmap_zero_phys_p)(paddr_t);
-extern boolean_t (*pmap_zero_page_uncached_p)(paddr_t);
+extern int (*pmap_zero_page_uncached_p)(paddr_t);
 extern void (*pmap_copy_page_p)(struct vm_page *, struct vm_page *);
 
 u_int32_t pmap_pte_set_pae(vaddr_t, paddr_t, u_int32_t);
 u_int32_t pmap_pte_setbits_pae(vaddr_t, u_int32_t, u_int32_t);
 u_int32_t pmap_pte_bits_pae(vaddr_t);
 paddr_t pmap_pte_paddr_pae(vaddr_t);
-boolean_t pmap_clear_attrs_pae(struct vm_page *, int);
+int pmap_clear_attrs_pae(struct vm_page *, int);
 int pmap_enter_pae(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
 void pmap_enter_special_pae(vaddr_t, paddr_t, vm_prot_t, u_int32_t);
-boolean_t pmap_extract_pae(pmap_t, vaddr_t, paddr_t *);
+int pmap_extract_pae(pmap_t, vaddr_t, paddr_t *);
 vaddr_t pmap_growkernel_pae(vaddr_t);
 void pmap_page_remove_pae(struct vm_page *);
 void pmap_do_remove_pae(struct pmap *, vaddr_t, vaddr_t, int);
-boolean_t pmap_test_attrs_pae(struct vm_page *, int);
+int pmap_test_attrs_pae(struct vm_page *, int);
 void pmap_unwire_pae(struct pmap *, vaddr_t);
 void pmap_write_protect_pae(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void pmap_pinit_pd_pae(pmap_t);
 void pmap_zero_phys_pae(paddr_t);
-boolean_t pmap_zero_page_uncached_pae(paddr_t);
+int pmap_zero_page_uncached_pae(paddr_t);
 void pmap_copy_page_pae(struct vm_page *, struct vm_page *);
 void pae_copy_phys(paddr_t, paddr_t, int, int);
 
@@ -319,19 +319,19 @@ u_int32_t pmap_pte_set_86(vaddr_t, paddr_t, u_int32_t);
 u_int32_t pmap_pte_setbits_86(vaddr_t, u_int32_t, u_int32_t);
 u_int32_t pmap_pte_bits_86(vaddr_t);
 paddr_t pmap_pte_paddr_86(vaddr_t);
-boolean_t pmap_clear_attrs_86(struct vm_page *, int);
+int pmap_clear_attrs_86(struct vm_page *, int);
 int pmap_enter_86(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
 void pmap_enter_special_86(vaddr_t, paddr_t, vm_prot_t, u_int32_t);
-boolean_t pmap_extract_86(pmap_t, vaddr_t, paddr_t *);
+int pmap_extract_86(pmap_t, vaddr_t, paddr_t *);
 vaddr_t pmap_growkernel_86(vaddr_t);
 void pmap_page_remove_86(struct vm_page *);
 void pmap_do_remove_86(struct pmap *, vaddr_t, vaddr_t, int);
-boolean_t pmap_test_attrs_86(struct vm_page *, int);
+int pmap_test_attrs_86(struct vm_page *, int);
 void pmap_unwire_86(struct pmap *, vaddr_t);
 void pmap_write_protect_86(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void pmap_pinit_pd_86(pmap_t);
 void pmap_zero_phys_86(paddr_t);
-boolean_t pmap_zero_page_uncached_86(paddr_t);
+int pmap_zero_page_uncached_86(paddr_t);
 void pmap_copy_page_86(struct vm_page *, struct vm_page *);
 void pmap_tlb_shootpage(struct pmap *, vaddr_t);
 void pmap_tlb_shootrange(struct pmap *, vaddr_t, vaddr_t);
@@ -448,7 +448,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
 	(*pmap_enter_special_p)(va, pa, prot, flags);
 }
 
-__inline static boolean_t
+__inline static int
 pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pa)
 {
 	return (*pmap_extract_p)(pmap, va, pa);
@@ -462,13 +462,13 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pa)
  * pmap_is_active: is this pmap loaded into the specified processor's %cr3?
  */
 
-static __inline boolean_t
+static __inline int
 pmap_is_active(struct pmap *pmap, struct cpu_info *ci)
 {
 	return (pmap == pmap_kernel() || ci->ci_curpmap == pmap);
 }
 
-static __inline boolean_t
+static __inline int
 pmap_is_curpmap(struct pmap *pmap)
 {
 	return (pmap_is_active(pmap, curcpu()));

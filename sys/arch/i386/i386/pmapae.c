@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.57 2019/01/18 01:34:50 pd Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.58 2019/12/19 17:46:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -439,7 +439,7 @@ typedef u_int64_t pt_entry_t;		/* PTE */
  */
 
 extern u_int32_t protection_codes[];	/* maps MI prot to i386 prot code */
-extern boolean_t pmap_initialized;	/* pmap_init done yet? */
+extern int pmap_initialized;	/* pmap_init done yet? */
 
 /* Segment boundaries */
 extern vaddr_t kernel_text, etext, __rodata_start, erodata, __data_start;
@@ -1038,7 +1038,7 @@ pmap_pinit_pd_pae(struct pmap *pmap)
  * pmap_extract: extract a PA for the given VA
  */
 
-boolean_t
+int
 pmap_extract_pae(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t *ptes, pte;
@@ -1048,12 +1048,12 @@ pmap_extract_pae(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 		pte = ptes[atop(va)];
 		pmap_unmap_ptes_pae(pmap);
 		if (!pmap_valid_entry(pte))
-			return (FALSE);
+			return 0;
 		if (pap != NULL)
 			*pap = (pte & PG_FRAME) | (va & ~PG_FRAME);
-		return (TRUE);
+		return 1;
 	}
-	return (FALSE);
+	return 0;
 }
 
 extern void (*pagezero)(void *, size_t);
@@ -1086,7 +1086,7 @@ pmap_zero_phys_pae(paddr_t pa)
  * pmap_zero_page_uncached: the same, except uncached.
  */
 
-boolean_t
+int
 pmap_zero_page_uncached_pae(paddr_t pa)
 {
 #ifdef MULTIPROCESSOR
@@ -1105,7 +1105,7 @@ pmap_zero_page_uncached_pae(paddr_t pa)
 	pagezero(zerova, PAGE_SIZE);		/* zero */
 	*zpte = 0;
 
-	return (TRUE);
+	return 1;
 }
 
 /*
@@ -1448,7 +1448,7 @@ pmap_page_remove_pae(struct vm_page *pg)
  * => we set pv_head => pmap locking
  */
 
-boolean_t
+int
 pmap_test_attrs_pae(struct vm_page *pg, int testbits)
 {
 	struct pv_entry *pve;
@@ -1459,7 +1459,7 @@ pmap_test_attrs_pae(struct vm_page *pg, int testbits)
 	testflags = pmap_pte2flags(testbits);
 
 	if (pg->pg_flags & testflags)
-		return (TRUE);
+		return 1;
 
 	mybits = 0;
 	mtx_enter(&pg->mdpage.pv_mtx);
@@ -1474,19 +1474,19 @@ pmap_test_attrs_pae(struct vm_page *pg, int testbits)
 	mtx_leave(&pg->mdpage.pv_mtx);
 
 	if (mybits == 0)
-		return (FALSE);
+		return 0;
 
 	atomic_setbits_int(&pg->pg_flags, pmap_pte2flags(mybits));
 
-	return (TRUE);
+	return 1;
 }
 
 /*
  * pmap_clear_attrs: change a page's attributes
  *
- * => we return TRUE if we cleared one of the bits we were asked to
+ * => we return 1 if we cleared one of the bits we were asked to
  */
-boolean_t
+int
 pmap_clear_attrs_pae(struct vm_page *pg, int clearbits)
 {
 	struct pv_entry *pve;
@@ -1513,7 +1513,7 @@ pmap_clear_attrs_pae(struct vm_page *pg, int clearbits)
 
 		opte = ptes[ptei(pve->pv_va)];
 		if (opte & clearbits) {
-			result = TRUE;
+			result = 1;
 			npte = opte & ~clearbits;
 			opte = i386_atomic_testset_uq(
 			   &ptes[ptei(pve->pv_va)], npte);
@@ -1697,9 +1697,9 @@ pmap_enter_pae(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	pt_entry_t *ptes, opte, npte;
 	struct vm_page *ptp;
 	struct pv_entry *pve, *opve = NULL;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
-	boolean_t nocache = (pa & PMAP_NOCACHE) != 0;
-	boolean_t wc = (pa & PMAP_WC) != 0;
+	int wired = (flags & PMAP_WIRED) != 0;
+	int nocache = (pa & PMAP_NOCACHE) != 0;
+	int wc = (pa & PMAP_WC) != 0;
 	struct vm_page *pg = NULL;
 	int error, wired_count, resident_count, ptp_count;
 
@@ -1873,7 +1873,7 @@ enter_now:
 		npte |= PG_PVLIST;
 		if (pg->pg_flags & PG_PMAP_WC) {
 			KASSERT(nocache == 0);
-			wc = TRUE;
+			wc = 1;
 		}
 		pmap_sync_flags_pte_pae(pg, npte);
 	}
@@ -2055,7 +2055,7 @@ pmap_growkernel_pae(vaddr_t maxkvaddr)
 
 	for (/*null*/ ; nkpde < needed_kpde ; nkpde++) {
 
-		if (uvm.page_init_done == FALSE) {
+		if (uvm.page_init_done == 0) {
 
 			/*
 			 * we're growing the kernel pmap early (from
@@ -2063,7 +2063,7 @@ pmap_growkernel_pae(vaddr_t maxkvaddr)
 			 * handled a little differently.
 			 */
 
-			if (uvm_page_physget(&ptaddr) == FALSE)
+			if (uvm_page_physget(&ptaddr) == 0)
 				panic("pmap_growkernel: out of memory");
 			pmap_zero_phys_pae(ptaddr);
 
@@ -2077,7 +2077,7 @@ pmap_growkernel_pae(vaddr_t maxkvaddr)
 
 		/*
 		 * THIS *MUST* BE CODED SO AS TO WORK IN THE
-		 * pmap_initialized == FALSE CASE!  WE MAY BE
+		 * pmap_initialized == 0 CASE!  WE MAY BE
 		 * INVOKED WHILE pmap_init() IS RUNNING!
 		 */
 

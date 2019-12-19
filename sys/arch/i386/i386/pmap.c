@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.204 2019/01/18 01:34:50 pd Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.205 2019/12/19 17:46:32 mpi Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -403,7 +403,7 @@ int pmap_pg_wc = PG_UCMINUS;
  */
 
 uint32_t protection_codes[8];		/* maps MI prot to i386 prot code */
-boolean_t pmap_initialized = FALSE;	/* pmap_init done yet? */
+int pmap_initialized = 0;	/* pmap_init done yet? */
 
 /*
  * MULTIPROCESSOR: special VAs/ PTEs are actually allocated inside a
@@ -1120,7 +1120,7 @@ pmap_init(void)
 	 * done: pmap module is up (and ready for business)
 	 */
 
-	pmap_initialized = TRUE;
+	pmap_initialized = 1;
 }
 
 /*
@@ -1525,7 +1525,7 @@ pmap_deactivate(struct proc *p)
  * pmap_extract: extract a PA for the given VA
  */
 
-boolean_t
+int
 pmap_extract_86(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t *ptes, pte;
@@ -1535,12 +1535,12 @@ pmap_extract_86(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 		pte = ptes[atop(va)];
 		pmap_unmap_ptes_86(pmap);
 		if (!pmap_valid_entry(pte))
-			return (FALSE);
+			return 0;
 		if (pap != NULL)
 			*pap = (pte & PG_FRAME) | (va & ~PG_FRAME);
-		return (TRUE);
+		return 1;
 	}
-	return (FALSE);
+	return 0;
 }
 
 /*
@@ -1594,7 +1594,7 @@ pmap_zero_phys_86(paddr_t pa)
  * pmap_zero_page_uncached: the same, except uncached.
  */
 
-boolean_t
+int
 pmap_zero_page_uncached_86(paddr_t pa)
 {
 #ifdef MULTIPROCESSOR
@@ -1613,7 +1613,7 @@ pmap_zero_page_uncached_86(paddr_t pa)
 	pagezero(zerova, PAGE_SIZE);		/* zero */
 	*zpte = 0;
 
-	return (TRUE);
+	return 1;
 }
 
 /*
@@ -2009,7 +2009,7 @@ pmap_page_remove_86(struct vm_page *pg)
  * pmap_test_attrs: test a page's attributes
  */
 
-boolean_t
+int
 pmap_test_attrs_86(struct vm_page *pg, int testbits)
 {
 	struct pv_entry *pve;
@@ -2020,7 +2020,7 @@ pmap_test_attrs_86(struct vm_page *pg, int testbits)
 	testflags = pmap_pte2flags(testbits);
 
 	if (pg->pg_flags & testflags)
-		return (TRUE);
+		return 1;
 
 	mybits = 0;
 	mtx_enter(&pg->mdpage.pv_mtx);
@@ -2035,20 +2035,20 @@ pmap_test_attrs_86(struct vm_page *pg, int testbits)
 	mtx_leave(&pg->mdpage.pv_mtx);
 
 	if (mybits == 0)
-		return (FALSE);
+		return 0;
 
 	atomic_setbits_int(&pg->pg_flags, pmap_pte2flags(mybits));
 
-	return (TRUE);
+	return 1;
 }
 
 /*
  * pmap_clear_attrs: change a page's attributes
  *
- * => we return TRUE if we cleared one of the bits we were asked to
+ * => we return 1 if we cleared one of the bits we were asked to
  */
 
-boolean_t
+int
 pmap_clear_attrs_86(struct vm_page *pg, int clearbits)
 {
 	struct pv_entry *pve;
@@ -2075,7 +2075,7 @@ pmap_clear_attrs_86(struct vm_page *pg, int clearbits)
 
 		opte = ptes[ptei(pve->pv_va)];
 		if (opte & clearbits) {
-			result = TRUE;
+			result = 1;
 			i386_atomic_clearbits_l(&ptes[ptei(pve->pv_va)],
 			    (opte & clearbits));
 			pmap_tlb_shootpage(pve->pv_pmap, pve->pv_va);
@@ -2276,9 +2276,9 @@ pmap_enter_86(struct pmap *pmap, vaddr_t va, paddr_t pa,
 	pt_entry_t *ptes, opte, npte;
 	struct vm_page *ptp;
 	struct pv_entry *pve, *opve = NULL;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
-	boolean_t nocache = (pa & PMAP_NOCACHE) != 0;
-	boolean_t wc = (pa & PMAP_WC) != 0;
+	int wired = (flags & PMAP_WIRED) != 0;
+	int nocache = (pa & PMAP_NOCACHE) != 0;
+	int wc = (pa & PMAP_WC) != 0;
 	struct vm_page *pg = NULL;
 	int error, wired_count, resident_count, ptp_count;
 
@@ -2449,7 +2449,7 @@ enter_now:
 		npte |= PG_PVLIST;
 		if (pg->pg_flags & PG_PMAP_WC) {
 			KASSERT(nocache == 0);
-			wc = TRUE;
+			wc = 1;
 		}
 		pmap_sync_flags_pte_86(pg, npte);
 	}
@@ -2618,7 +2618,7 @@ pmap_growkernel_86(vaddr_t maxkvaddr)
 
 	for (/*null*/ ; nkpde < needed_kpde ; nkpde++) {
 
-		if (uvm.page_init_done == FALSE) {
+		if (uvm.page_init_done == 0) {
 
 			/*
 			 * we're growing the kernel pmap early (from
@@ -2626,7 +2626,7 @@ pmap_growkernel_86(vaddr_t maxkvaddr)
 			 * handled a little differently.
 			 */
 
-			if (uvm_page_physget(&ptaddr) == FALSE)
+			if (uvm_page_physget(&ptaddr) == 0)
 				panic("pmap_growkernel: out of memory");
 			pmap_zero_phys_86(ptaddr);
 
@@ -2640,7 +2640,7 @@ pmap_growkernel_86(vaddr_t maxkvaddr)
 
 		/*
 		 * THIS *MUST* BE CODED SO AS TO WORK IN THE
-		 * pmap_initialized == FALSE CASE!  WE MAY BE
+		 * pmap_initialized == 0 CASE!  WE MAY BE
 		 * INVOKED WHILE pmap_init() IS RUNNING!
 		 */
 
@@ -2878,26 +2878,26 @@ u_int32_t	(*pmap_pte_setbits_p)(vaddr_t, u_int32_t, u_int32_t) =
     pmap_pte_setbits_86;
 u_int32_t	(*pmap_pte_bits_p)(vaddr_t) = pmap_pte_bits_86;
 paddr_t		(*pmap_pte_paddr_p)(vaddr_t) = pmap_pte_paddr_86;
-boolean_t	(*pmap_clear_attrs_p)(struct vm_page *, int) =
+int		(*pmap_clear_attrs_p)(struct vm_page *, int) =
     pmap_clear_attrs_86;
 int		(*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, int) =
     pmap_enter_86;
 void		(*pmap_enter_special_p)(vaddr_t, paddr_t, vm_prot_t,
     u_int32_t) = pmap_enter_special_86;
-boolean_t	(*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *) =
+int		(*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *) =
     pmap_extract_86;
 vaddr_t		(*pmap_growkernel_p)(vaddr_t) = pmap_growkernel_86;
 void		(*pmap_page_remove_p)(struct vm_page *) = pmap_page_remove_86;
 void		(*pmap_do_remove_p)(struct pmap *, vaddr_t, vaddr_t, int) =
     pmap_do_remove_86;
-boolean_t	 (*pmap_test_attrs_p)(struct vm_page *, int) =
+int		 (*pmap_test_attrs_p)(struct vm_page *, int) =
     pmap_test_attrs_86;
 void		(*pmap_unwire_p)(struct pmap *, vaddr_t) = pmap_unwire_86;
 void		(*pmap_write_protect_p)(struct pmap *, vaddr_t, vaddr_t,
     vm_prot_t) = pmap_write_protect_86;
 void		(*pmap_pinit_pd_p)(pmap_t) = pmap_pinit_pd_86;
 void		(*pmap_zero_phys_p)(paddr_t) = pmap_zero_phys_86;
-boolean_t	(*pmap_zero_page_uncached_p)(paddr_t) =
+int		(*pmap_zero_page_uncached_p)(paddr_t) =
     pmap_zero_page_uncached_86;
 void		(*pmap_copy_page_p)(struct vm_page *, struct vm_page *) =
     pmap_copy_page_86;
