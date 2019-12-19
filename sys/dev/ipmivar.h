@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.31 2019/08/19 18:31:02 kettenis Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.32 2019/12/19 09:01:50 kettenis Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -65,7 +65,7 @@ struct ipmi_attach_args {
 	int		iaa_if_type;
 	int		iaa_if_rev;
 	int		iaa_if_iotype;
-	int		iaa_if_iobase;
+	bus_addr_t	iaa_if_iobase;
 	int		iaa_if_iospacing;
 	int		iaa_if_irq;
 	int		iaa_if_irqlvl;
