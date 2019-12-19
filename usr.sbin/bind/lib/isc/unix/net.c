@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: net.c,v 1.8 2019/12/17 18:08:48 deraadt Exp $ */
+/* $Id: net.c,v 1.9 2019/12/19 03:57:28 deraadt Exp $ */
 
 #include <config.h>
 
@@ -419,124 +419,6 @@ isc_net_probe_ipv6pktinfo(void) {
 unsigned int
 isc_net_probedscp(void) {
 	return (dscp_result);
-}
-
-#if defined(USE_SYSCTL_PORTRANGE)
-#if defined(HAVE_SYSCTLBYNAME)
-static isc_result_t
-getudpportrange_sysctl(int af, in_port_t *low, in_port_t *high) {
-	int port_low, port_high;
-	size_t portlen;
-	const char *sysctlname_lowport, *sysctlname_hiport;
-
-	if (af == AF_INET) {
-		sysctlname_lowport = SYSCTL_V4PORTRANGE_LOW;
-		sysctlname_hiport = SYSCTL_V4PORTRANGE_HIGH;
-	} else {
-		sysctlname_lowport = SYSCTL_V6PORTRANGE_LOW;
-		sysctlname_hiport = SYSCTL_V6PORTRANGE_HIGH;
-	}
-	portlen = sizeof(port_low);
-	if (sysctlbyname(sysctlname_lowport, &port_low, &portlen,
-			 NULL, 0) < 0) {
-		return (ISC_R_FAILURE);
-	}
-	portlen = sizeof(port_high);
-	if (sysctlbyname(sysctlname_hiport, &port_high, &portlen,
-			 NULL, 0) < 0) {
-		return (ISC_R_FAILURE);
-	}
-	if ((port_low & ~0xffff) != 0 || (port_high & ~0xffff) != 0)
-		return (ISC_R_RANGE);
-
-	*low = (in_port_t)port_low;
-	*high = (in_port_t)port_high;
-
-	return (ISC_R_SUCCESS);
-}
-#else /* !HAVE_SYSCTLBYNAME */
-static isc_result_t
-getudpportrange_sysctl(int af, in_port_t *low, in_port_t *high) {
-	int mib_lo4[4] = SYSCTL_V4PORTRANGE_LOW;
-	int mib_hi4[4] = SYSCTL_V4PORTRANGE_HIGH;
-	int mib_lo6[4] = SYSCTL_V6PORTRANGE_LOW;
-	int mib_hi6[4] = SYSCTL_V6PORTRANGE_HIGH;
-	int *mib_lo, *mib_hi, miblen;
-	int port_low, port_high;
-	size_t portlen;
-
-	if (af == AF_INET) {
-		mib_lo = mib_lo4;
-		mib_hi = mib_hi4;
-		miblen = sizeof(mib_lo4) / sizeof(mib_lo4[0]);
-	} else {
-		mib_lo = mib_lo6;
-		mib_hi = mib_hi6;
-		miblen = sizeof(mib_lo6) / sizeof(mib_lo6[0]);
-	}
-
-	portlen = sizeof(port_low);
-	if (sysctl(mib_lo, miblen, &port_low, &portlen, NULL, 0) < 0) {
-		return (ISC_R_FAILURE);
-	}
-
-	portlen = sizeof(port_high);
-	if (sysctl(mib_hi, miblen, &port_high, &portlen, NULL, 0) < 0) {
-		return (ISC_R_FAILURE);
-	}
-
-	if ((port_low & ~0xffff) != 0 || (port_high & ~0xffff) != 0)
-		return (ISC_R_RANGE);
-
-	*low = (in_port_t) port_low;
-	*high = (in_port_t) port_high;
-
-	return (ISC_R_SUCCESS);
-}
-#endif /* HAVE_SYSCTLBYNAME */
-#endif /* USE_SYSCTL_PORTRANGE */
-
-isc_result_t
-isc_net_getudpportrange(int af, in_port_t *low, in_port_t *high) {
-	int result = ISC_R_FAILURE;
-#if !defined(USE_SYSCTL_PORTRANGE) && defined(__linux)
-	FILE *fp;
-#endif
-
-	REQUIRE(low != NULL && high != NULL);
-
-#if defined(USE_SYSCTL_PORTRANGE)
-	result = getudpportrange_sysctl(af, low, high);
-#elif defined(__linux)
-
-	UNUSED(af);
-
-	/*
-	 * Linux local ports are address family agnostic.
-	 */
-	fp = fopen("/proc/sys/net/ipv4/ip_local_port_range", "r");
-	if (fp != NULL) {
-		int n;
-		unsigned int l, h;
-
-		n = fscanf(fp, "%u %u", &l, &h);
-		if (n == 2 && (l & ~0xffff) == 0 && (h & ~0xffff) == 0) {
-			*low = l;
-			*high = h;
-			result = ISC_R_SUCCESS;
-		}
-		fclose(fp);
-	}
-#else
-	UNUSED(af);
-#endif
-
-	if (result != ISC_R_SUCCESS) {
-		*low = ISC_NET_PORTRANGELOW;
-		*high = ISC_NET_PORTRANGEHIGH;
-	}
-
-	return (ISC_R_SUCCESS);	/* we currently never fail in this function */
 }
 
 void
