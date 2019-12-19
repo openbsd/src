@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.140 2019/11/28 16:23:11 guenther Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.141 2019/12/19 17:40:11 mpi Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ malloc(size_t size, int type, int flags)
 #endif
 		if (ksp->ks_limblocks < 65535)
 			ksp->ks_limblocks++;
-		msleep(ksp, &malloc_mtx, PSWP+2, memname[type], 0);
+		msleep_nsec(ksp, &malloc_mtx, PSWP+2, memname[type], INFSLP);
 	}
 	ksp->ks_memuse += allocsize; /* account for this early */
 	ksp->ks_size |= 1 << indx;

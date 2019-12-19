@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.236 2019/12/11 07:30:09 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.237 2019/12/19 17:40:11 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -507,7 +507,7 @@ sys_sigsuspend(struct proc *p, void *v, register_t *retval)
 	struct sigacts *ps = pr->ps_sigacts;
 
 	dosigsuspend(p, SCARG(uap, mask) &~ sigcantmask);
-	while (tsleep(ps, PPAUSE|PCATCH, "pause", 0) == 0)
+	while (tsleep_nsec(ps, PPAUSE|PCATCH, "pause", INFSLP) == 0)
 		/* void */;
 	/* always return EINTR rather than ERESTART... */
 	return (EINTR);
@@ -2055,7 +2055,7 @@ single_thread_wait(struct process *pr)
 {
 	/* wait until they're all suspended */
 	while (pr->ps_singlecount > 0)
-		tsleep(&pr->ps_singlecount, PWAIT, "suspend", 0);
+		tsleep_nsec(&pr->ps_singlecount, PWAIT, "suspend", INFSLP);
 }
 
 void

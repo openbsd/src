@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.26 2019/06/23 12:56:10 kettenis Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.27 2019/12/19 17:40:11 mpi Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -167,7 +167,8 @@ taskq_destroy(struct taskq *tq)
 
 	while (tq->tq_running > 0) {
 		wakeup(tq);
-		msleep(&tq->tq_running, &tq->tq_mtx, PWAIT, "tqdestroy", 0);
+		msleep_nsec(&tq->tq_running, &tq->tq_mtx, PWAIT, "tqdestroy",
+		    INFSLP);
 	}
 	mtx_leave(&tq->tq_mtx);
 
@@ -318,7 +319,7 @@ retry:
 		}
 
 		tq->tq_waiting++;
-		msleep(tq, &tq->tq_mtx, PWAIT, "bored", 0);
+		msleep_nsec(tq, &tq->tq_mtx, PWAIT, "bored", INFSLP);
 		tq->tq_waiting--;
 	}
 
@@ -330,7 +331,7 @@ retry:
 		if (++tq->tq_waiting == tq->tq_nthreads) {
 			tq->tq_waiting--;
 		} else {
-			msleep(tq, &tq->tq_mtx, PWAIT, "tqblk", 0);
+			msleep_nsec(tq, &tq->tq_mtx, PWAIT, "tqblk", INFSLP);
 			tq->tq_waiting--;
 			goto retry;
 		}

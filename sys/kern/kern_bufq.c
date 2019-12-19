@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.32 2017/08/16 17:52:17 mikeb Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.33 2019/12/19 17:40:10 mpi Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -109,7 +109,7 @@ bufq_init(struct bufq *bq, int type)
 
 	mtx_enter(&bufqs_mtx);
 	while (bufqs_stop) {
-		msleep(&bufqs_stop, &bufqs_mtx, PRIBIO, "bqinit", 0);
+		msleep_nsec(&bufqs_stop, &bufqs_mtx, PRIBIO, "bqinit", INFSLP);
 	}
 	SLIST_INSERT_HEAD(&bufqs, bq, bufq_entries);
 	mtx_leave(&bufqs_mtx);
@@ -168,7 +168,7 @@ bufq_destroy(struct bufq *bq)
 
 	mtx_enter(&bufqs_mtx);
 	while (bufqs_stop) {
-		msleep(&bufqs_stop, &bufqs_mtx, PRIBIO, "bqdest", 0);
+		msleep_nsec(&bufqs_stop, &bufqs_mtx, PRIBIO, "bqdest", INFSLP);
 	}
 	SLIST_REMOVE(&bufqs, bq, bufq, bufq_entries);
 	mtx_leave(&bufqs_mtx);
@@ -180,7 +180,8 @@ bufq_queue(struct bufq *bq, struct buf *bp)
 {
 	mtx_enter(&bq->bufq_mtx);
 	while (bq->bufq_stop) {
-		msleep(&bq->bufq_stop, &bq->bufq_mtx, PRIBIO, "bqqueue", 0);
+		msleep_nsec(&bq->bufq_stop, &bq->bufq_mtx, PRIBIO, "bqqueue",
+		    INFSLP);
 	}
 
 	bp->b_bq = bq;
@@ -244,8 +245,8 @@ bufq_wait(struct bufq *bq)
 		mtx_enter(&bq->bufq_mtx);
 		while (bq->bufq_outstanding >= bq->bufq_hi) {
 			bq->bufq_waiting++;
-			msleep(&bq->bufq_waiting, &bq->bufq_mtx,
-			    PRIBIO, "bqwait", 0);
+			msleep_nsec(&bq->bufq_waiting, &bq->bufq_mtx,
+			    PRIBIO, "bqwait", INFSLP);
 			bq->bufq_waiting--;
 		}
 		mtx_leave(&bq->bufq_mtx);
@@ -282,8 +283,8 @@ bufq_quiesce(void)
 		mtx_enter(&bq->bufq_mtx);
 		bq->bufq_stop = 1;
 		while (bq->bufq_outstanding) {
-			msleep(&bq->bufq_outstanding, &bq->bufq_mtx,
-			    PRIBIO, "bqquies", 0);
+			msleep_nsec(&bq->bufq_outstanding, &bq->bufq_mtx,
+			    PRIBIO, "bqquies", INFSLP);
 		}
 		mtx_leave(&bq->bufq_mtx);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.181 2019/12/11 07:30:09 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.182 2019/12/19 17:40:10 mpi Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 	if ((p->p_flag & P_THREAD) == 0) {
 		/* main thread gotta wait because it has the pid, et al */
 		while (pr->ps_refcnt > 1)
-			tsleep(&pr->ps_threads, PWAIT, "thrdeath", 0);
+			tsleep_nsec(&pr->ps_threads, PWAIT, "thrdeath", INFSLP);
 		if (pr->ps_flags & PS_PROFIL)
 			stopprofclock(pr);
 	}
@@ -412,7 +412,8 @@ reaper(void *arg)
 	for (;;) {
 		mtx_enter(&deadproc_mutex);
 		while ((p = LIST_FIRST(&deadproc)) == NULL)
-			msleep(&deadproc, &deadproc_mutex, PVM, "reaper", 0);
+			msleep_nsec(&deadproc, &deadproc_mutex, PVM, "reaper",
+			    INFSLP);
 
 		/* Remove us from the deadproc list. */
 		LIST_REMOVE(p, p_hash);
@@ -567,7 +568,7 @@ loop:
 		retval[0] = 0;
 		return (0);
 	}
-	if ((error = tsleep(q->p_p, PWAIT | PCATCH, "wait", 0)) != 0)
+	if ((error = tsleep_nsec(q->p_p, PWAIT | PCATCH, "wait", INFSLP)) != 0)
 		return (error);
 	goto loop;
 }
