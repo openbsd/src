@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.48 2017/01/06 00:06:02 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.49 2019/12/19 17:53:27 mpi Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ struct pmap_devmap {
  */
 struct pmap {
 	u_int8_t		pm_domain;
-	boolean_t		pm_remove_all;
+	int			pm_remove_all;
 	struct l1_ttable	*pm_l1;
 	union pmap_cache_state	pm_cstate;
 	u_int			pm_refs;
@@ -263,8 +263,8 @@ void	pmap_uncache_page(paddr_t, vaddr_t);
 void	pmap_bootstrap(pd_entry_t *, vaddr_t, vaddr_t);
 
 int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t, int);
-boolean_t pmap_get_pde_pte(pmap_t, vaddr_t, pd_entry_t **, pt_entry_t **);
-boolean_t pmap_get_pde(pmap_t, vaddr_t, pd_entry_t **);
+int pmap_get_pde_pte(pmap_t, vaddr_t, pd_entry_t **, pt_entry_t **);
+int pmap_get_pde(pmap_t, vaddr_t, pd_entry_t **);
 void	pmap_set_pcb_pagedir(pmap_t, struct pcb *);
 
 void	pmap_postinit(void);
@@ -602,7 +602,7 @@ L2_S_PROT(int ku, vm_prot_t pr)
 	return pte;
 }
 
-static __inline boolean_t
+static __inline int
 l2pte_is_writeable(pt_entry_t pte, struct pmap *pm)
 {
 	return (pte & L2_V7_AP(0x4)) == 0;

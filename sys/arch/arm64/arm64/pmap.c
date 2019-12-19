@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.66 2019/07/13 21:47:06 drahn Exp $ */
+/* $OpenBSD: pmap.c,v 1.67 2019/12/19 17:53:27 mpi Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1408,7 +1408,7 @@ pmap_deactivate(struct proc *p)
 /*
  * Get the physical page address for the given pmap/virtual address.
  */
-boolean_t
+int
 pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pa)
 {
 	struct pte_desc *pted;
@@ -1416,15 +1416,15 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pa)
 	pted = pmap_vp_lookup(pm, va, NULL);
 
 	if (pted == NULL)
-		return FALSE;
+		return 0;
 
 	if (pted->pted_pte == 0)
-		return FALSE;
+		return 0;
 
 	if (pa != NULL)
 		*pa = (pted->pted_pte & PTE_RPGN) | (va & PAGE_MASK);
 
-	return TRUE;
+	return 1;
 }
 
 void

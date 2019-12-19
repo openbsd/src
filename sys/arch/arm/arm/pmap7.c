@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.58 2019/02/10 22:45:58 tedu Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.59 2019/12/19 17:53:27 mpi Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -276,7 +276,7 @@ extern caddr_t msgbufaddr;
 /*
  * Flag to indicate if pmap_init() has done its thing
  */
-boolean_t pmap_initialized;
+int pmap_initialized;
 
 /*
  * Metadata for L1 translation tables.
@@ -384,7 +384,7 @@ struct pv_entry {
  */
 void		pmap_alloc_specials(vaddr_t *, int, vaddr_t *,
 		    pt_entry_t **);
-static boolean_t	pmap_is_current(pmap_t);
+static int	pmap_is_current(pmap_t);
 void		pmap_enter_pv(struct vm_page *, struct pv_entry *,
 		    pmap_t, vaddr_t, u_int);
 static struct pv_entry *pmap_find_pv(struct vm_page *, pmap_t, vaddr_t);
@@ -422,14 +422,14 @@ vaddr_t pmap_curmaxkvaddr;
 
 extern pv_addr_t systempage;
 
-static __inline boolean_t
+static __inline int
 pmap_is_current(pmap_t pm)
 {
 	if (pm == pmap_kernel() ||
 	    (curproc && curproc->p_vmspace->vm_map.pmap == pm))
-		return (TRUE);
+		return 1;
 
-	return (FALSE);
+	return 0;
 }
 
 /*
@@ -980,7 +980,7 @@ pmap_page_remove(struct vm_page *pg)
 	struct pv_entry *pv, *npv;
 	pmap_t pm, curpm;
 	pt_entry_t *ptep, opte;
-	boolean_t flush;
+	int flush;
 
 	NPDEBUG(PDB_FOLLOW,
 	    printf("pmap_page_remove: pg %p (0x%08lx)\n", pg, pg->phys_addr));
@@ -989,7 +989,7 @@ pmap_page_remove(struct vm_page *pg)
 	if (pv == NULL)
 		return;
 
-	flush = FALSE;
+	flush = 0;
 	if (curproc)
 		curpm = curproc->p_vmspace->vm_map.pmap;
 	else
@@ -1009,7 +1009,7 @@ pmap_page_remove(struct vm_page *pg)
 			    (pm == curpm || pm == pmap_kernel())) {
 				if (PV_BEEN_EXECD(pv->pv_flags))
 					cpu_icache_sync_range(pv->pv_va, PAGE_SIZE);
-				flush = TRUE;
+				flush = 1;
 			}
 
 			/*
@@ -1467,7 +1467,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	}
 }
 
-boolean_t
+int
 pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 {
 	struct l2_dtable *l2;
@@ -1497,14 +1497,14 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 
 		if (l2 == NULL ||
 		    (ptep = l2->l2_bucket[L2_BUCKET(l1idx)].l2b_kva) == NULL) {
-			return (FALSE);
+			return 0;
 		}
 
 		ptep = &ptep[l2pte_index(va)];
 		pte = *ptep;
 
 		if (pte == L2_TYPE_INV)
-			return (FALSE);
+			return 0;
 
 		switch (pte & L2_TYPE_MASK) {
 		case L2_TYPE_L:
@@ -1523,7 +1523,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	if (pap != NULL)
 		*pap = pa;
 
-	return (TRUE);
+	return 1;
 }
 
 void
@@ -1629,16 +1629,16 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  *
  *	Clear the "modified" attribute for a page.
  */
-boolean_t
+int
 pmap_clear_modify(struct vm_page *pg)
 {
-	boolean_t rv;
+	int rv;
 
 	if (pg->mdpage.pvh_attrs & PVF_MOD) {
-		rv = TRUE;
+		rv = 1;
 		pmap_clearbit(pg, PVF_MOD);
 	} else
-		rv = FALSE;
+		rv = 0;
 
 	return (rv);
 }
@@ -1648,16 +1648,16 @@ pmap_clear_modify(struct vm_page *pg)
  *
  *	Clear the "referenced" attribute for a page.
  */
-boolean_t
+int
 pmap_clear_reference(struct vm_page *pg)
 {
-	boolean_t rv;
+	int rv;
 
 	if (pg->mdpage.pvh_attrs & PVF_REF) {
-		rv = TRUE;
+		rv = 1;
 		pmap_clearbit(pg, PVF_REF);
 	} else
-		rv = FALSE;
+		rv = 0;
 
 	return (rv);
 }
@@ -1972,8 +1972,8 @@ pmap_grow_map(vaddr_t va, pt_entry_t cache_mode, paddr_t *pap)
 	pt_entry_t *ptep;
 	paddr_t pa;
 
-	if (uvm.page_init_done == FALSE) {
-		if (uvm_page_physget(&pa) == FALSE)
+	if (uvm.page_init_done == 0) {
+		if (uvm_page_physget(&pa) == 0)
 			return (1);
 	} else {
 		struct vm_page *pg;
@@ -2172,20 +2172,20 @@ pmap_set_pcb_pagedir(pmap_t pm, struct pcb *pcb)
 
 /*
  * Fetch pointers to the PDE/PTE for the given pmap/VA pair.
- * Returns TRUE if the mapping exists, else FALSE.
+ * Returns 1 if the mapping exists, else 0.
  *
  * NOTE: This function is only used by a couple of arm-specific modules.
  * It is not safe to take any pmap locks here, since we could be right
  * in the middle of debugging the pmap anyway...
  *
- * It is possible for this routine to return FALSE even though a valid
+ * It is possible for this routine to return 0 even though a valid
  * mapping does exist. This is because we don't lock, so the metadata
  * state may be inconsistent.
  *
  * NOTE: We can return a NULL *ptp in the case where the L1 pde is
  * a "section" mapping.
  */
-boolean_t
+int
 pmap_get_pde_pte(pmap_t pm, vaddr_t va, pd_entry_t **pdp, pt_entry_t **ptp)
 {
 	struct l2_dtable *l2;
@@ -2194,7 +2194,7 @@ pmap_get_pde_pte(pmap_t pm, vaddr_t va, pd_entry_t **pdp, pt_entry_t **ptp)
 	u_short l1idx;
 
 	if (pm->pm_l1 == NULL)
-		return (FALSE);
+		return 0;
 
 	l1idx = L1_IDX(va);
 	*pdp = pl1pd = &pm->pm_l1->l1_kva[l1idx];
@@ -2202,17 +2202,17 @@ pmap_get_pde_pte(pmap_t pm, vaddr_t va, pd_entry_t **pdp, pt_entry_t **ptp)
 
 	if (l1pte_section_p(l1pd)) {
 		*ptp = NULL;
-		return (TRUE);
+		return 1;
 	}
 
 	l2 = pm->pm_l2[L2_IDX(l1idx)];
 	if (l2 == NULL ||
 	    (ptep = l2->l2_bucket[L2_BUCKET(l1idx)].l2b_kva) == NULL) {
-		return (FALSE);
+		return 0;
 	}
 
 	*ptp = &ptep[l2pte_index(va)];
-	return (TRUE);
+	return 1;
 }
 
 /************************ Bootstrapping routines ****************************/
@@ -2228,8 +2228,7 @@ pmap_init_l1(struct l1_ttable *l1, pd_entry_t *l1pt)
 	if (pmap_initialized)
 		memcpy(l1pt, pmap_kernel()->pm_l1->l1_kva, L1_TABLE_SIZE);
 
-	if (pmap_extract(pmap_kernel(), (vaddr_t)l1pt,
-	    &l1->l1_physaddr) == FALSE)
+	if (pmap_extract(pmap_kernel(), (vaddr_t)l1pt, &l1->l1_physaddr) == 0)
 		panic("pmap_init_l1: can't get PA of L1 at %p", l1pt);
 
 	TAILQ_INSERT_TAIL(&l1_list, l1, l1_link);
@@ -2417,7 +2416,7 @@ pmap_init(void)
 {
 	pool_setlowat(&pmap_pv_pool, (PAGE_SIZE / sizeof(struct pv_entry)) * 2);
 
-	pmap_initialized = TRUE;
+	pmap_initialized = 1;
 }
 
 static vaddr_t last_bootstrap_page = 0;
