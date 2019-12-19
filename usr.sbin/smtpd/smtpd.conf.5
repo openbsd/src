@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.245 2019/12/18 07:57:52 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.246 2019/12/19 13:34:45 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 18 2019 $
+.Dd $Mdocdate: December 19 2019 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -229,7 +229,7 @@ Use the mapping
 to look up a hostname matching the source address,
 to advertise during the HELO phase.
 .It Cm domain Pf < Ar domains Ns >
-Do not perform MX lookups but lookup destination domain in
+Do not perform MX lookups but look up destination domain in
 .Ar domains
 and use matching relay url as relay host.
 .It Cm host Ar relay-url
