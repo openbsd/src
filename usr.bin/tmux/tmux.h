@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.941 2019/12/16 16:39:03 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.942 2019/12/19 09:22:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2134,8 +2134,8 @@ struct cmdq_item *cmdq_get_command(struct cmd_list *, struct cmd_find_state *,
 #define cmdq_get_callback(cb, data) cmdq_get_callback1(#cb, cb, data)
 struct cmdq_item *cmdq_get_callback1(const char *, cmdq_cb, void *);
 struct cmdq_item *cmdq_get_error(const char *);
-void		 cmdq_insert_after(struct cmdq_item *, struct cmdq_item *);
-void		 cmdq_append(struct client *, struct cmdq_item *);
+struct cmdq_item *cmdq_insert_after(struct cmdq_item *, struct cmdq_item *);
+struct cmdq_item *cmdq_append(struct client *, struct cmdq_item *);
 void		 cmdq_insert_hook(struct session *, struct cmdq_item *,
 		     struct cmd_find_state *, const char *, ...);
 void		 cmdq_continue(struct cmdq_item *);

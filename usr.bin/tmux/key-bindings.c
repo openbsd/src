@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.104 2019/12/02 19:25:52 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.105 2019/12/19 09:22:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -520,8 +520,8 @@ key_bindings_dispatch(struct key_binding *bd, struct cmdq_item *item,
 			new_item->shared->flags |= CMDQ_SHARED_REPEAT;
 	}
 	if (item != NULL)
-		cmdq_insert_after(item, new_item);
+		new_item = cmdq_insert_after(item, new_item);
 	else
-		cmdq_append(c, new_item);
+		new_item = cmdq_append(c, new_item);
 	return (new_item);
 }

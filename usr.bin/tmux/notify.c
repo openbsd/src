@@ -1,4 +1,4 @@
-/* $OpenBSD: notify.c,v 1.28 2019/05/07 10:25:15 nicm Exp $ */
+/* $OpenBSD: notify.c,v 1.29 2019/12/19 09:22:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 George Nachman <tmux@georgester.com>
@@ -90,9 +90,7 @@ notify_insert_hook(struct cmdq_item *item, struct notify_entry *ne)
 		new_item = cmdq_get_command(cmdlist, &fs, NULL, CMDQ_NOHOOKS);
 		cmdq_format(new_item, "hook", "%s", ne->name);
 		notify_hook_formats(new_item, s, w, ne->pane);
-
-		cmdq_insert_after(item, new_item);
-		item = new_item;
+		item = cmdq_insert_after(item, new_item);
 
 		a = options_array_next(a);
 	}

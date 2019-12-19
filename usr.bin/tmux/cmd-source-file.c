@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.43 2019/12/18 07:48:56 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.44 2019/12/19 09:22:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -114,6 +114,7 @@ cmd_source_file_done(struct client *c, const char *path, int error,
 static void
 cmd_source_file_add(struct cmd_source_file_data *cdata, const char *path)
 {
+	log_debug("%s: %s", __func__, path);
 	cdata->files = xreallocarray(cdata->files, cdata->nfiles + 1,
 	    sizeof *cdata->files);
 	cdata->files[cdata->nfiles++] = xstrdup(path);
