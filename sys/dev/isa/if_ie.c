@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.54 2017/11/04 10:55:38 florian Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.55 2019/12/19 20:23:25 jmc Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -416,7 +416,7 @@ sl_probe(sc, ia)
 	}
 
 	/*
-	 * Divine memory size on-board the card.  Ususally 16k.
+	 * Divine memory size on-board the card.  Usually 16k.
 	 */
 	sc->sc_maddr = ISA_HOLE_VADDR(ia->ia_maddr);
 	ie_find_mem_size(sc);
