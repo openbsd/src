@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.137 2019/11/19 06:20:37 otto Exp $
+.\"	$OpenBSD: disklabel.8,v 1.138 2019/12/19 09:38:03 bentley Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: November 19 2019 $
+.Dd $Mdocdate: December 19 2019 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -458,7 +458,7 @@ instead of
 .It Cm x
 Exit the editor without saving any changes to the on-disk label.
 .It Cm z
-Zero out the existing partition table and mountpoint information,
+Zero out the existing partition table and mount point information,
 leaving only the 'c' partition.
 The drive parameters are not changed.
 .El
@@ -556,9 +556,9 @@ the
 .Fl T
 option.
 The template consists of one line per partition, with each line giving
-mountpoint, min-max size range, and percentage of disk, space-separated.
+mount point, min-max size range, and percentage of disk, space-separated.
 Max can be unlimited by specifying '*'.
-If only mountpoint and min size are given, the partition is created with that
+If only mount point and min size are given, the partition is created with that
 exact size.
 .Bd -literal -offset indent
 /		250M

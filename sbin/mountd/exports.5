@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exports.5,v 1.24 2018/03/16 16:58:26 schwarze Exp $
+.\"	$OpenBSD: exports.5,v 1.25 2019/12/19 09:38:03 bentley Exp $
 .\"	$NetBSD: exports.5,v 1.9 1996/02/18 11:57:50 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)exports.5	8.3 (Berkeley) 3/29/95
 .\"
-.Dd $Mdocdate: March 16 2018 $
+.Dd $Mdocdate: December 19 2019 $
 .Dt EXPORTS 5
 .Os
 .Sh NAME
@@ -250,7 +250,7 @@ directory within /u2.
 .Sh FILES
 .Bl -tag -width /etc/exports -compact
 .It Pa /etc/exports
-default remote mount-point file
+default remote mount point file
 .El
 .Sh SEE ALSO
 .Xr netgroup 5 ,
@@ -271,7 +271,7 @@ Regarding
 .Fl alldirs ,
 because NFS mount filehandles are filesystem wide the
 .Fl alldirs
-option applies to exports of the entire filesystem \(em even mountpoints
+option applies to exports of the entire filesystem \(em even mount points
 that are higher up elsewhere in the directory hierarchy.
 Hence if the server has a filesystem
 .Pa /export
