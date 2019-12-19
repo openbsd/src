@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.136 2019/11/03 09:44:23 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.137 2019/12/19 17:42:17 mpi Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -254,7 +254,7 @@ paddr_t cr3_pcid_proc_intel;
  */
 
 pt_entry_t protection_codes[8];     /* maps MI prot to i386 prot code */
-boolean_t pmap_initialized = FALSE; /* pmap_init done yet? */
+int pmap_initialized = 0;	    /* pmap_init done yet? */
 
 /*
  * pv management structures.
@@ -312,7 +312,7 @@ void pmap_free_ptp(struct pmap *, struct vm_page *,
     vaddr_t, struct pg_to_free *);
 void pmap_freepage(struct pmap *, struct vm_page *, int, struct pg_to_free *);
 #ifdef MULTIPROCESSOR
-static boolean_t pmap_is_active(struct pmap *, int);
+static int pmap_is_active(struct pmap *, int);
 #endif
 paddr_t pmap_map_ptes(struct pmap *);
 struct pv_entry *pmap_remove_pv(struct vm_page *, struct pmap *, vaddr_t);
@@ -320,7 +320,7 @@ void pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
 void pmap_remove_ept(struct pmap *, vaddr_t, vaddr_t);
 void pmap_do_remove_ept(struct pmap *, vaddr_t);
 int pmap_enter_ept(struct pmap *, vaddr_t, paddr_t, vm_prot_t);
-boolean_t pmap_remove_pte(struct pmap *, struct vm_page *, pt_entry_t *,
+int pmap_remove_pte(struct pmap *, struct vm_page *, pt_entry_t *,
     vaddr_t, int, struct pv_entry **);
 void pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t,
     vaddr_t, vaddr_t, int, struct pv_entry **);
@@ -328,8 +328,8 @@ void pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t,
 #define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
 
 void pmap_unmap_ptes(struct pmap *, paddr_t);
-boolean_t pmap_get_physpage(vaddr_t, int, paddr_t *);
-boolean_t pmap_pdes_valid(vaddr_t, pd_entry_t *);
+int pmap_get_physpage(vaddr_t, int, paddr_t *);
+int pmap_pdes_valid(vaddr_t, pd_entry_t *);
 void pmap_alloc_level(vaddr_t, int, long *);
 
 static inline
@@ -353,7 +353,7 @@ void pmap_tlb_shootwait(void);
  *		of course the kernel is always loaded
  */
 
-static __inline boolean_t
+static __inline int
 pmap_is_curpmap(struct pmap *pmap)
 {
 	return((pmap == pmap_kernel()) ||
@@ -365,7 +365,7 @@ pmap_is_curpmap(struct pmap *pmap)
  */
 
 #ifdef MULTIPROCESSOR
-static __inline boolean_t
+static __inline int
 pmap_is_active(struct pmap *pmap, int cpu_id)
 {
 	return (pmap == pmap_kernel() ||
@@ -927,7 +927,7 @@ pmap_prealloc_lowmem_ptps(paddr_t first_avail)
 void
 pmap_init(void)
 {
-	pmap_initialized = TRUE;
+	pmap_initialized = 1;
 }
 
 /*
@@ -1402,7 +1402,7 @@ pmap_deactivate(struct proc *p)
  * some misc. functions
  */
 
-boolean_t
+int
 pmap_pdes_valid(vaddr_t va, pd_entry_t *lastpde)
 {
 	int i;
@@ -1413,18 +1413,18 @@ pmap_pdes_valid(vaddr_t va, pd_entry_t *lastpde)
 		index = pl_i(va, i);
 		pde = normal_pdes[i - 2][index];
 		if (!pmap_valid_entry(pde))
-			return FALSE;
+			return 0;
 	}
 	if (lastpde != NULL)
 		*lastpde = pde;
-	return TRUE;
+	return 1;
 }
 
 /*
  * pmap_extract: extract a PA for the given VA
  */
 
-boolean_t
+int
 pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t *ptes;
@@ -1433,7 +1433,7 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	if (pmap == pmap_kernel() && va >= PMAP_DIRECT_BASE &&
 	    va < PMAP_DIRECT_END) {
 		*pap = va - PMAP_DIRECT_BASE;
-		return (TRUE);
+		return 1;
 	}
 
 	level = pmap_find_pte_direct(pmap, va, &ptes, &offs);
@@ -1441,15 +1441,15 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	if (__predict_true(level == 0 && pmap_valid_entry(ptes[offs]))) {
 		if (pap != NULL)
 			*pap = (ptes[offs] & PG_FRAME) | (va & PAGE_MASK);
-		return (TRUE);
+		return 1;
 	}
 	if (level == 1 && (ptes[offs] & (PG_PS|PG_V)) == (PG_PS|PG_V)) {
 		if (pap != NULL)
 			*pap = (ptes[offs] & PG_LGFRAME) | (va & PAGE_MASK_L2);
-		return (TRUE);
+		return 1;
 	}
 
-	return FALSE;
+	return 0;
 }
 
 /*
@@ -1588,7 +1588,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
  * => returns true if we removed a mapping
  */
 
-boolean_t
+int
 pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
     vaddr_t va, int flags, struct pv_entry **free_pvs)
 {
@@ -1597,9 +1597,9 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	pt_entry_t opte;
 
 	if (!pmap_valid_entry(*pte))
-		return(FALSE);		/* VA not mapped */
+		return 0;		/* VA not mapped */
 	if ((flags & PMAP_REMOVE_SKIPWIRED) && (*pte & PG_W)) {
-		return(FALSE);
+		return 0;
 	}
 
 	/* atomically save the old PTE and zap! it */
@@ -1623,7 +1623,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 			panic("%s: managed page without PG_PVLIST for 0x%lx",
 			      __func__, va);
 #endif
-		return(TRUE);
+		return 1;
 	}
 
 #ifdef DIAGNOSTIC
@@ -1640,7 +1640,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 		*free_pvs = pve;
 	}
 
-	return(TRUE);
+	return 1;
 }
 
 /*
@@ -1668,7 +1668,7 @@ void
 pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 {
 	pd_entry_t pde;
-	boolean_t result;
+	int result;
 	paddr_t ptppa;
 	vaddr_t blkendva;
 	struct vm_page *ptp;
@@ -1915,7 +1915,7 @@ pmap_page_remove(struct vm_page *pg)
  * pmap_test_attrs: test a page's attributes
  */
 
-boolean_t
+int
 pmap_test_attrs(struct vm_page *pg, unsigned int testbits)
 {
 	struct pv_entry *pve;
@@ -1926,7 +1926,7 @@ pmap_test_attrs(struct vm_page *pg, unsigned int testbits)
 	testflags = pmap_pte2flags(testbits);
 
 	if (pg->pg_flags & testflags)
-		return (TRUE);
+		return 1;
 
 	mybits = 0;
 	mtx_enter(&pg->mdpage.pv_mtx);
@@ -1939,20 +1939,20 @@ pmap_test_attrs(struct vm_page *pg, unsigned int testbits)
 	mtx_leave(&pg->mdpage.pv_mtx);
 
 	if (mybits == 0)
-		return (FALSE);
+		return 0;
 
 	atomic_setbits_int(&pg->pg_flags, pmap_pte2flags(mybits));
 
-	return (TRUE);
+	return 1;
 }
 
 /*
  * pmap_clear_attrs: change a page's attributes
  *
- * => we return TRUE if we cleared one of the bits we were asked to
+ * => we return 1 if we cleared one of the bits we were asked to
  */
 
-boolean_t
+int
 pmap_clear_attrs(struct vm_page *pg, unsigned long clearbits)
 {
 	struct pv_entry *pve;
@@ -2567,9 +2567,9 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	struct vm_page *ptp, *pg = NULL;
 	struct pv_entry *pve, *opve = NULL;
 	int ptpdelta, wireddelta, resdelta;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
-	boolean_t nocache = (pa & PMAP_NOCACHE) != 0;
-	boolean_t wc = (pa & PMAP_WC) != 0;
+	int wired = (flags & PMAP_WIRED) != 0;
+	int nocache = (pa & PMAP_NOCACHE) != 0;
+	int wc = (pa & PMAP_WC) != 0;
 	int error, shootself;
 	paddr_t scr3;
 
@@ -2738,7 +2738,7 @@ enter_now:
 		 */
 		if (pg->pg_flags & PG_PMAP_WC) {
 			KASSERT(nocache == 0);
-			wc = TRUE;
+			wc = 1;
 		}
 	}
 	if (wc)
@@ -2780,13 +2780,13 @@ out:
 	return error;
 }
 
-boolean_t
+int
 pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 {
 	struct vm_page *ptp;
 	struct pmap *kpm = pmap_kernel();
 
-	if (uvm.page_init_done == FALSE) {
+	if (uvm.page_init_done == 0) {
 		vaddr_t va;
 
 		/*
@@ -2808,7 +2808,7 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 		*paddrp = VM_PAGE_TO_PHYS(ptp);
 	}
 	kpm->pm_stats.resident_count++;
-	return TRUE;
+	return 1;
 }
 
 /*
