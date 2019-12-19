@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.184 2019/12/09 19:05:06 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.185 2019/12/19 00:07:20 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -257,6 +257,9 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 #endif /* !SMALL */
 	} else
 		errx(1, "url_get: Invalid URL '%s'", newline);
+
+	if (isfileurl && redirect_loop > 0)
+		errx(1, "Redirection to local file not permitted");
 
 	if (isfileurl) {
 		path = host;
