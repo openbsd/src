@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.11 2010/05/26 13:56:08 nicm Exp $ */
+/*	$OpenBSD: auth.c,v 1.12 2019/12/19 16:47:14 remi Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -141,6 +141,14 @@ auth_validate(u_int8_t **buf, u_int16_t *len, struct iface *iface,
 		if (a->auth_length != MD5_DIGEST_LENGTH + AUTH_TRLR_HDR_LEN) {
 			log_debug("auth_validate: invalid key length, "
 			    "interface %s", iface->name);
+			return (-1);
+		}
+
+		if (ntohs(a->auth_offset) != *len + RIP_HDR_LEN -
+		    AUTH_TRLR_HDR_LEN - MD5_DIGEST_LENGTH) {
+			log_debug("auth_validate: invalid authentication data "
+			    "offset %hu, interface %s", ntohs(a->auth_offset),
+			    iface->name);
 			return (-1);
 		}
 
