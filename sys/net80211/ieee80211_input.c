@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.212 2019/10/11 15:20:36 patrick Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.213 2019/12/20 09:27:00 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -782,7 +782,10 @@ ieee80211_input_ba_seq(struct ieee80211com *ic, struct ieee80211_node *ni,
 		} else
 			ic->ic_stats.is_ht_rx_ba_frame_lost++;
 		ba->ba_head = (ba->ba_head + 1) % IEEE80211_BA_MAX_WINSZ;
+		/* move window forward */
+		ba->ba_winstart = (ba->ba_winstart + 1) & 0xfff;
 	}
+	ba->ba_winend = (ba->ba_winstart + ba->ba_winsize - 1) & 0xfff;
 }
 
 /* Flush a consecutive sequence of frames from the reorder buffer. */
