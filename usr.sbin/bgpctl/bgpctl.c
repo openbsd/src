@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.252 2019/12/20 07:17:02 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.253 2019/12/20 07:18:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -58,8 +58,7 @@ void		 print_neighbor_capa_mp(struct peer *);
 void		 print_neighbor_capa_restart(struct peer *);
 void		 print_neighbor_msgstats(struct peer *);
 void		 print_timer(const char *, time_t);
-static char	*fmt_timeframe(time_t t);
-static char	*fmt_timeframe_core(time_t t);
+const char	*fmt_timeframe(time_t t);
 void		 show_fib_flags(u_int16_t);
 void		 show_fib(struct kroute_full *);
 void		 show_fib_table(struct ktable *);
@@ -821,30 +820,10 @@ print_neighbor_msgstats(struct peer *p)
 	    p->stats.prefix_sent_eor, p->stats.prefix_rcvd_eor);
 }
 
-void
-print_timer(const char *name, time_t d)
-{
-	printf("  %-20s ", name);
-
-	if (d <= 0)
-		printf("%-20s\n", "due");
-	else
-		printf("due in %-13s\n", fmt_timeframe_core(d));
-}
-
 #define TF_BUFS	8
 #define TF_LEN	9
 
-static char *
-fmt_timeframe(time_t t)
-{
-	if (t == 0)
-		return ("Never");
-	else
-		return (fmt_timeframe_core(time(NULL) - t));
-}
-
-static char *
+static const char *
 fmt_timeframe_core(time_t t)
 {
 	char		*buf;
@@ -876,6 +855,31 @@ fmt_timeframe_core(time_t t)
 		snprintf(buf, TF_LEN, "%02u:%02u:%02u", hrs, min, sec);
 
 	return (buf);
+}
+
+const char *
+fmt_timeframe(time_t t)
+{
+	time_t now;
+
+	if (t == 0)
+		return ("Never");
+
+	now = time(NULL);
+	if (t > now)	/* time in the future is not possible */
+		t = now;
+	return (fmt_timeframe_core(now - t));
+}
+
+void
+print_timer(const char *name, time_t d)
+{
+	printf("  %-20s ", name);
+
+	if (d <= 0)
+		printf("%-20s\n", "due");
+	else
+		printf("due in %-13s\n", fmt_timeframe_core(d));
 }
 
 void
