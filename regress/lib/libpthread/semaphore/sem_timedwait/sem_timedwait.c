@@ -1,7 +1,10 @@
-/*	$OpenBSD: sem_timedwait.c,v 1.3 2018/04/27 11:31:17 pirofti Exp $	*/
+/*	$OpenBSD: sem_timedwait.c,v 1.4 2019/12/20 23:39:01 cheloha Exp $	*/
 /*
  * Martin Pieuchot <mpi@openbsd.org>, 2011. Public Domain.
  */
+
+#include <sys/types.h>
+#include <sys/sysctl.h>
 
 #include <err.h>
 #include <errno.h>
@@ -29,8 +32,11 @@ int
 main(int argc, char **argv)
 {
 	pthread_t th;
+	struct clockinfo info;
 	struct sigaction sa;
-	struct timespec ts, ts2;
+	struct timespec delay, ts, ts2;
+	size_t infosize = sizeof(info);
+	int mib[] = { CTL_KERN, KERN_CLOCKRATE };
 
 	CHECKr(clock_gettime(CLOCK_REALTIME, &ts));
 	ts.tv_sec += 3;
@@ -76,13 +82,23 @@ main(int argc, char **argv)
 	CHECKn(sem_timedwait(&sem, &ts));
 	ASSERT(errno == ETIMEDOUT);
 	CHECKr(clock_gettime(CLOCK_REALTIME, &ts2));
-	if (timespeccmp(&ts, &ts2, < ))
-		timespecsub(&ts2, &ts, &ts);
-	else
-		timespecsub(&ts, &ts2, &ts);
-	CHECKr(clock_getres(CLOCK_REALTIME, &ts2));
-	timespecadd(&ts2, &ts2, &ts2);	/* 2 * resolution slop */
-	ASSERT(timespeccmp(&ts, &ts2, < ));
+
+	fprintf(stderr, "timeout: expected %lld.%09ld actual %lld.%09ld\n",
+	    ts.tv_sec, ts.tv_nsec, ts2.tv_sec, ts2.tv_nsec);
+
+	/* Check that we don't return early. */
+	ASSERT(timespeccmp(&ts, &ts2, <=));
+
+	/*
+	 * Check that we don't return unusually late.  Something might be
+	 * off if the wait returns more than two ticks after our timeout.
+	 */
+	CHECKr(sysctl(mib, 2, &info, &infosize, NULL, 0));
+	delay.tv_sec = 0;
+	delay.tv_nsec = info.tick * 1000;	/* usecs -> nsecs */
+	timespecadd(&delay, &delay, &delay);	/* up to two ticks of delay */
+	timespecadd(&ts, &delay, &ts);
+	ASSERT(timespeccmp(&ts2, &ts, <=));
 
 	CHECKe(sem_destroy(&sem));
 
