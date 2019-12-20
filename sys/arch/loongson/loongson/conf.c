@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.25 2019/12/17 13:08:56 reyk Exp $ */
+/*	$OpenBSD: conf.c,v 1.26 2019/12/20 13:25:02 visa Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,7 +120,7 @@ cdev_decl(pci);
 
 #include "usb.h"
 #include "uhid.h"
-#incluee "fido.h"
+#include "fido.h"
 #include "ugen.h"
 #include "ulpt.h"
 #include "ucom.h"
