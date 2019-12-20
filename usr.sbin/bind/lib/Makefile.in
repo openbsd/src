@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: Makefile.in,v 1.5 2019/12/17 01:46:31 sthen Exp $
+# $Id: Makefile.in,v 1.6 2019/12/20 04:07:45 deraadt Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -22,7 +22,7 @@ top_srcdir =	@top_srcdir@
 # Attempt to disable parallel processing.
 .NOTPARALLEL:
 .NO_PARALLEL:
-SUBDIRS =	isc isccc dns isccfg bind9 lwres irs samples
+SUBDIRS =	isc isccc dns isccfg bind9 lwres irs
 TARGETS =
 
 @BIND9_MAKE_RULES@
