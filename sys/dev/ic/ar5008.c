@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.52 2019/09/12 12:55:06 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.53 2019/12/20 10:16:23 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1375,6 +1375,11 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		/* Use same fixed rate for all tries. */
 		ridx[0] = ridx[1] = ridx[2] = ridx[3] =
 		    sc->fixed_ridx;
+	} else if ((ni->ni_flags & IEEE80211_NODE_HT) &&
+	    ieee80211_mira_is_probing(&an->mn)) {
+		/* Use same fixed rate for all tries. */
+		ridx[0] = ridx[1] = ridx[2] = ridx[3] =
+		    ATHN_RIDX_MCS0 + ni->ni_txmcs;
 	} else {
 		/* Use fallback table of the node. */
 		int txrate;
