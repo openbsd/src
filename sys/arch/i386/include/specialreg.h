@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.74 2019/06/14 18:13:55 kettenis Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.75 2019/12/20 07:55:30 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -365,6 +365,10 @@
 #define ARCH_CAPABILITIES_RSBA		(1 << 2)	/* RSB Alternate */
 #define ARCH_CAPABILITIES_SKIP_L1DFL_VMENTRY	(1 << 3)
 #define ARCH_CAPABILITIES_SSB_NO	(1 << 4)	/* Spec St Byp safe */
+#define ARCH_CAPABILITIES_MDS_NO	(1 << 5) /* microarch data-sampling */
+#define ARCH_CAPABILITIES_IF_PSCHANGE_MC_NO	(1 << 6) /* PS MCE safe */
+#define ARCH_CAPABILITIES_TSX_CTRL	(1 << 7)	/* has TSX_CTRL MSR */
+#define ARCH_CAPABILITIES_TAA_NO	(1 << 8)	/* TSX AA safe */
 #define MSR_FLUSH_CMD		0x10b
 #define FLUSH_CMD_L1D_FLUSH	(1ULL << 0)
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
@@ -373,6 +377,9 @@
 #define	MSR_BBL_CR_TRIG		0x11a	/* PII+ only */
 #define	MSR_BBL_CR_BUSY		0x11b	/* PII+ only */
 #define	MSR_BBL_CR_CTR3		0x11e	/* PII+ only */
+#define	MSR_TSX_CTRL		0x122
+#define TSX_CTRL_RTM_DISABLE		(1ULL << 0)
+#define TSX_CTRL_TSX_CPUID_CLEAR	(1ULL << 1)
 #define MSR_SYSENTER_CS		0x174
 #define MSR_SYSENTER_ESP	0x175
 #define MSR_SYSENTER_EIP	0x176

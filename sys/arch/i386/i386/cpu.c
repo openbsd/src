@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.97 2019/01/18 01:34:50 pd Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.98 2019/12/20 07:55:30 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -316,6 +316,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #ifndef SMALL_KERNEL
 		cpu_ucode_apply(ci);
 #endif
+		cpu_tsx_disable(ci);
 		identifycpu(ci);
 #ifdef MTRR
 		mem_range_attach();
@@ -330,6 +331,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #ifndef SMALL_KERNEL
 		cpu_ucode_apply(ci);
 #endif
+		cpu_tsx_disable(ci);
 		identifycpu(ci);
 #ifdef MTRR
 		mem_range_attach();
@@ -361,6 +363,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #ifndef SMALL_KERNEL
 		cpu_ucode_apply(ci);
 #endif
+		cpu_tsx_disable(ci);
 		identifycpu(ci);
 		sched_init_cpu(ci);
 		ci->ci_next = cpu_info_list->ci_next;
@@ -464,6 +467,26 @@ cpu_init(struct cpu_info *ci)
 	} else
 		tlbflush();
 #endif
+}
+
+void
+cpu_tsx_disable(struct cpu_info *ci)
+{
+	uint64_t msr;
+	uint32_t dummy, sefflags_edx;
+
+	/* this runs before identifycpu() populates ci_feature_sefflags_edx */
+	if (cpuid_level >= 0x07)
+		CPUID_LEAF(0x7, 0, dummy, dummy, dummy, sefflags_edx);
+	if (strcmp(cpu_vendor, "GenuineIntel") == 0 &&
+	    (sefflags_edx & SEFF0EDX_ARCH_CAP)) {
+		msr = rdmsr(MSR_ARCH_CAPABILITIES);
+		if (msr & ARCH_CAPABILITIES_TSX_CTRL) {
+			msr = rdmsr(MSR_TSX_CTRL);
+			msr |= TSX_CTRL_RTM_DISABLE | TSX_CTRL_TSX_CPUID_CLEAR;
+			wrmsr(MSR_TSX_CTRL, msr);
+		}
+	}
 }
 
 void
