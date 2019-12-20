@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.10 2017/12/30 20:46:59 guenther Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.11 2019/12/20 13:34:41 visa Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -119,7 +119,7 @@ mips64_cacheflush(struct proc *p, struct mips64_cacheflush_args *cfa)
 		 * Check for a resident mapping first, this is faster than
 		 * uvm_map_lookup_entry().
 		 */
-		if (pmap_extract(pm, va, &pa) != FALSE) {
+		if (pmap_extract(pm, va, &pa) != 0) {
 			if (cfa->which & ICACHE)
 				Mips_InvalidateICache(p->p_cpu, va, chunk);
 			if (cfa->which & DCACHE)

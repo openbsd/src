@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.38 2019/11/20 14:07:25 visa Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.39 2019/12/20 13:34:41 visa Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -187,7 +187,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	bp->b_data = (caddr_t) (kva + off);
 
 	while (sz > 0) {
-		if (pmap_extract(pmap, uva, &pa) == FALSE)
+		if (pmap_extract(pmap, uva, &pa) == 0)
 			panic("vmapbuf: pmap_extract(%p, %lx) failed!",
 			    pmap, uva);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson2_machdep.c,v 1.16 2016/09/28 14:03:19 visa Exp $	*/
+/*	$OpenBSD: loongson2_machdep.c,v 1.17 2019/12/20 13:34:41 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -39,7 +39,7 @@
 extern struct phys_mem_desc mem_layout[MAXMEMSEGS];
 extern paddr_t loongson_memlo_alias;
 
-boolean_t is_memory_range(paddr_t, psize_t, psize_t);
+int	is_memory_range(paddr_t, psize_t, psize_t);
 void	loongson2e_setup(u_long, u_long);
 void	loongson2f_setup(u_long, u_long);
 void	loongson2f_setup_window(uint, uint, uint64_t, uint64_t, uint64_t, uint);
@@ -248,7 +248,7 @@ loongson2f_setup_window(uint master, uint window, uint64_t base, uint64_t mask,
  * (used by /dev/mem)
  */
 
-boolean_t
+int
 is_memory_range(paddr_t pa, psize_t len, psize_t limit)
 {
 	struct phys_mem_desc *seg;
@@ -259,7 +259,7 @@ is_memory_range(paddr_t pa, psize_t len, psize_t limit)
 	lp = atop(round_page(pa + len));
 
 	if (limit != 0 && lp > atop(limit))
-		return FALSE;
+		return 0;
 
 	/*
 	 * Allow access to the low 256MB aliased region on 2F systems,
@@ -272,9 +272,9 @@ is_memory_range(paddr_t pa, psize_t len, psize_t limit)
 
 	for (i = 0, seg = mem_layout; i < MAXMEMSEGS; i++, seg++)
 		if (fp >= seg->mem_first_page && lp <= seg->mem_last_page)
-			return TRUE;
+			return 1;
 
-	return FALSE;
+	return 0;
 }
 
 int

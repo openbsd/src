@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.118 2019/09/28 22:20:25 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.119 2019/12/20 13:34:41 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -131,7 +131,7 @@ struct phys_mem_desc mem_layout[MAXMEMSEGS];
 void		dumpsys(void);
 void		dumpconf(void);
 vaddr_t		mips_init(register_t, register_t, register_t, register_t);
-boolean_t 	is_memory_range(paddr_t, psize_t, psize_t);
+int		is_memory_range(paddr_t, psize_t, psize_t);
 void		octeon_memory_init(struct boot_info *);
 int		octeon_cpuspeed(int *);
 void		octeon_tlb_init(void);
@@ -900,7 +900,7 @@ dumpsys()
 	/* XXX TBD */
 }
 
-boolean_t
+int
 is_memory_range(paddr_t pa, psize_t len, psize_t limit)
 {
 	extern char start[];
@@ -912,18 +912,18 @@ is_memory_range(paddr_t pa, psize_t len, psize_t limit)
 	lp = atop(round_page(pa + len));
 
 	if (limit != 0 && lp > atop(limit))
-		return FALSE;
+		return 0;
 
 	/* The kernel is linked in CKSEG0. */
 	if (fp >= atop(trunc_page(CKSEG0_TO_PHYS((vaddr_t)start))) &&
 	    lp <= atop(round_page(CKSEG0_TO_PHYS((vaddr_t)ekern))))
-		return TRUE;
+		return 1;
 
 	for (i = 0, seg = mem_layout; i < MAXMEMSEGS; i++, seg++)
 		if (fp >= seg->mem_first_page && lp <= seg->mem_last_page)
-			return TRUE;
+			return 1;
 
-	return FALSE;
+	return 0;
 }
 
 u_int
