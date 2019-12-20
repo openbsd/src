@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.45 2019/12/08 09:47:50 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.46 2019/12/20 08:30:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -259,6 +259,8 @@ main(int argc, char *argv[])
 	    &iev_resolver->ibuf))
 		fatal("could not establish imsg links");
 
+	open_ports();
+
 	if ((control_fd = control_init(csock)) == -1)
 		fatalx("control socket setup failed");
 
@@ -289,7 +291,7 @@ main(int argc, char *argv[])
 	if (main_conf->blocklist_file != NULL)
 		send_blocklist_fd();
 
-	if (pledge("stdio inet rpath sendfd", NULL) == -1)
+	if (pledge("stdio rpath sendfd", NULL) == -1)
 		fatal("pledge");
 
 	main_imsg_compose_frontend(IMSG_STARTUP, 0, NULL, 0);
@@ -415,7 +417,6 @@ main_dispatch_frontend(int fd, short event, void *bula)
 		switch (imsg.hdr.type) {
 		case IMSG_STARTUP_DONE:
 			solicit_dns_proposals();
-			open_ports();
 			break;
 		case IMSG_CTL_RELOAD:
 			if (main_reload() == -1)
