@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.251 2019/12/19 06:43:51 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.252 2019/12/20 07:17:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1880,9 +1880,13 @@ void
 show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 {
 	struct ctl_show_rib		 ctl;
+	struct parse_result		 res;
 	struct ctl_show_rib_request	*req = arg;
 	struct mrt_rib_entry		*mre;
 	u_int16_t			 i, j;
+
+	memset(&res, 0, sizeof(res));
+	res.flags = req->flags;
 
 	for (i = 0; i < mr->nentries; i++) {
 		mre = &mr->entries[i];
@@ -1937,14 +1941,13 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		    !match_aspath(mre->aspath, mre->aspath_len, &req->as))
 			continue;
 
+		show_rib(&ctl, mre->aspath, mre->aspath_len, &res);
 		if (req->flags & F_CTL_DETAIL) {
-			show_rib_detail(&ctl, mre->aspath, mre->aspath_len, 0);
 			for (j = 0; j < mre->nattrs; j++)
 				show_attr(mre->attrs[j].attr,
 				    mre->attrs[j].attr_len,
 				    req->flags);
-		} else
-			show_rib_brief(&ctl, mre->aspath, mre->aspath_len);
+		}
 	}
 }
 
