@@ -1,4 +1,4 @@
-.\" $OpenBSD: host.1,v 1.11 2019/12/18 15:19:30 jmc Exp $
+.\" $OpenBSD: host.1,v 1.12 2019/12/20 23:03:30 jca Exp $
 .\"
 .\" Copyright (C) 2000-2002, 2004, 2005, 2007-2009, 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 18 2019 $
+.Dd $Mdocdate: December 20 2019 $
 .Dt HOST 1
 .Os
 .Sh NAME
@@ -231,20 +231,6 @@ See also the
 .Fl W
 option.
 .El
-.Sh IDN SUPPORT
-If
-.Nm
-has been built with IDN (internationalized domain name) support, it can accept
-and display non-ASCII domain names.
-.Nm
-appropriately converts character encoding of domain name before sending a
-request to DNS server or displaying a reply from the server.
-If you'd like to turn off the IDN support for some reason, defines the
-.Ev IDN_DISABLE
-environment variable.
-The IDN support is disabled if the variable is set when
-.Nm
-runs.
 .Sh FILES
 .Pa /etc/resolv.conf
 .Sh SEE ALSO
