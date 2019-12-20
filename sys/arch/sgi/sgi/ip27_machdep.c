@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.79 2018/02/24 11:42:31 visa Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.80 2019/12/20 13:29:23 visa Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -437,7 +437,7 @@ ip27_attach_node(struct device *parent, int16_t nasid)
 #endif
 
 	if (ip35) {
-		l1_display(nasid, TRUE, "OpenBSD/sgi");
+		l1_display(nasid, 1, "OpenBSD/sgi");
 
 		u.maa.maa_name = "spdmem";
 		u.maa.maa_nasid = nasid;
