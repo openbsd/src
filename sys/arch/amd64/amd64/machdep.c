@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.259 2019/09/07 19:05:44 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.260 2019/12/20 07:49:31 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -316,6 +316,7 @@ cpu_startup(void)
 	cpu_ucode_setup();
 	cpu_ucode_apply(&cpu_info_primary);
 #endif
+	cpu_tsx_disable(&cpu_info_primary);
 
 	/* enter the IDT and trampoline code in the u-k maps */
 	enter_shared_special_pages();

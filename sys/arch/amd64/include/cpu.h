@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.132 2019/08/09 15:20:05 pirofti Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.133 2019/12/20 07:49:31 jsg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -402,9 +402,8 @@ void	i8254_inittimecounter_simple(void);
 /* i8259.c */
 void	i8259_default_setup(void);
 
-
 void cpu_init_msrs(struct cpu_info *);
-
+void cpu_tsx_disable(struct cpu_info *);
 
 /* dkcsum.c */
 void	dkcsumattach(void);
