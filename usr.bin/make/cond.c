@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.53 2017/12/19 20:44:53 zhuk Exp $	*/
+/*	$OpenBSD: cond.c,v 1.54 2019/12/21 15:29:25 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -260,7 +260,9 @@ CondDoDefined(struct Name *arg)
  *	Handle the 'make' function for conditionals.
  *
  * Results:
- *	true if the given target is being made.
+ *	true if the given target is currently being built,
+ *	either explicitly on the command line, or implicitly as the
+ *	default target.
  *-----------------------------------------------------------------------
  */
 static bool

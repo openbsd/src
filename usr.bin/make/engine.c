@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.57 2019/12/21 15:28:16 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.58 2019/12/21 15:29:25 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -289,7 +289,6 @@ Make_HandleUse(GNode	*cgn,	/* The .USE node */
 	GNode	*gn;	/* A child of the .USE node */
 	LstNode	ln;	/* An element in the children list */
 
-
 	assert(cgn->type & (OP_USE|OP_TRANSFORM));
 
 	if (pgn == NULL)
@@ -308,7 +307,7 @@ Make_HandleUse(GNode	*cgn,	/* The .USE node */
 
 		if (Lst_AddNew(&pgn->children, gn)) {
 			Lst_AtEnd(&gn->parents, pgn);
-			pgn->unmade++;
+			pgn->children_left++;
 		}
 	}
 
@@ -320,14 +319,14 @@ Make_HandleUse(GNode	*cgn,	/* The .USE node */
 	pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_TRANSFORM|OP_DOUBLE);
 
 	/*
-	 * This child node is now "made", so we decrement the count of
-	 * unmade children in the parent... We also remove the child
+	 * This child node is now built, so we decrement the count of
+	 * not yet built children in the parent... We also remove the child
 	 * from the parent's list to accurately reflect the number of
-	 * decent children the parent has. This is used by Make_Run to
+	 * remaining children the parent has. This is used by Make_Run to
 	 * decide whether to queue the parent or examine its children...
 	 */
 	if (cgn->type & OP_USE)
-		pgn->unmade--;
+		pgn->children_left--;
 }
 
 void
@@ -447,7 +446,7 @@ Make_OODate(GNode *gn)
 	}
 
 	/*
-	 * A target is remade in one of the following circumstances:
+	 * A target is rebuilt in one of the following circumstances:
 	 * - its modification time is smaller than that of its youngest child
 	 *   and it would actually be run (has commands or type OP_NOP)
 	 * - it's the object of a force operator
@@ -470,7 +469,7 @@ Make_OODate(GNode *gn)
 		 */
 		if (DEBUG(MAKE))
 			printf(".JOIN node...");
-		oodate = gn->childMade;
+		oodate = gn->child_rebuilt;
 	} else if (gn->type & (OP_FORCE|OP_EXEC|OP_PHONY)) {
 		/*
 		 * A node which is the object of the force (!) operator or which

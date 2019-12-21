@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.89 2017/07/24 12:07:46 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.90 2019/12/21 15:29:25 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -883,7 +883,7 @@ Arch_MemMTime(GNode *gn)
 
 		if (pgn->type & OP_ARCHV) {
 			/* If the parent is an archive specification and is
-			 * being made and its member's name matches the name of
+			 * being built and its member's name matches the name of
 			 * the node we were given, record the modification time
 			 * of the parent in the child. We keep searching its
 			 * parents in case some other parent requires this

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.121 2018/09/20 11:41:28 jsg Exp $	*/
+/*	$OpenBSD: parse.c,v 1.122 2019/12/21 15:29:25 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -240,7 +240,7 @@ create_special_nodes()
  *
  * Side Effects:
  *	New elements are added to the parents list of cgn and the
- *	children list of cgn. the unmade field of pgn is updated
+ *	children list of cgn. the children_left field of pgn is updated
  *	to reflect the additional child.
  *---------------------------------------------------------------------
  */
@@ -250,7 +250,7 @@ ParseLinkSrc(GNode *pgn, GNode *cgn)
 	if (Lst_AddNew(&pgn->children, cgn)) {
 		if (specType == SPECIAL_NONE)
 			Lst_AtEnd(&cgn->parents, pgn);
-		pgn->unmade++;
+		pgn->children_left++;
 	}
 }
 
@@ -361,11 +361,10 @@ static int
 ParseAddDep(GNode *p, GNode *s)
 {
 	if (p->order < s->order) {
-		/* XXX: This can cause loops, and loops can cause unmade
-		 * targets, but checking is tedious, and the debugging output
-		 * can show the problem.  */
+		/* XXX: This can cause cycles but finding them is hard
+		 * and debugging output will show the problem.  */
+		Lst_AtEnd(&s->predecessors, p);
 		Lst_AtEnd(&p->successors, s);
-		Lst_AtEnd(&s->preds, p);
 		return 1;
 	} else
 		return 0;
@@ -438,7 +437,7 @@ ParseDoSrc(
 		 */
 		if (predecessor != NULL) {
 			Lst_AtEnd(&predecessor->successors, gn);
-			Lst_AtEnd(&gn->preds, predecessor);
+			Lst_AtEnd(&gn->predecessors, predecessor);
 		}
 		predecessor = gn;
 		break;

@@ -1,6 +1,6 @@
 #ifndef GNODE_H
 #define GNODE_H
-/*	$OpenBSD: gnode.h,v 1.30 2019/12/21 15:28:17 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.31 2019/12/21 15:29:25 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -44,11 +44,11 @@
  * pieces of data associated with it.
  *	1) the name of the target it describes
  *	2) the location of the target file in the file system.
- *	3) the type of operator used to define its sources (qv. parse.c)
+ *	3) the type of operator used to define its sources (cf parse.c)
  *	4) whether it is involved in this invocation of make
- *	5) whether the target has been remade
- *	6) whether any of its children has been remade
- *	7) the number of its children that are, as yet, unmade
+ *	5) whether the target has been rebuilt
+ *	6) whether any of its children has been rebuilt
+ *	7) the number of its children that are, as yet, not built
  *	8) its modification time
  *	9) the modification time of its youngest child (qv. make.c)
  *	10) a list of nodes for which this is a source
@@ -56,26 +56,15 @@
  *	12) a list of nodes that depend on this, as gleaned from the
  *	    transformation rules.
  *	13) a list of nodes of the same name created by the :: operator
- *	14) a list of nodes that must be made (if they're made) before
- *	    this node can be, but that do no enter into the datedness of
- *	    this node.
- *	15) a list of nodes that must be made (if they're made) after
- *	    this node is, but that do not depend on this node, in the
- *	    normal sense.
+ *	14) a list of predecessors nodes, result of .ORDER:
+ *	    if considered for building, they should be built before this node.
+ *	15) a list of successors nodes, result of .ORDER:
+ *	    if considered for building, they should be built after this node.
  *	16) a Lst of ``local'' variables that are specific to this target
  *	   and this target only (qv. var.c [$@ $< $?, etc.])
  *	17) a Lst of strings that are commands to be given to a shell
  *	   to create this target.
  */
-
-#define UNKNOWN		0
-#define BUILDING	1
-#define REBUILT		2
-#define UPTODATE	3
-#define ERROR		4
-#define ABORTED		5
-#define NOSUCHNODE	6
-#define HELDBACK	7
 
 #define SPECIAL_NONE	0U
 #define SPECIAL_PATH		21U
@@ -111,37 +100,40 @@
 
 struct GNode_ {
     unsigned int special_op;	/* special op to apply */
-    unsigned char special;/* type of special node */
-    char must_make;	/* true if this target needs to be remade */
-    char childMade;	/* true if one of this target's children was
-			 * made */
-    char built_status;	/* Set to reflect the state of processing
-			 * on this node:
-			 *  UNKNOWN - Not examined yet
-			 *  BUILDING - Target is currently being made.
-			 *  REBUILT - Was out-of-date and has been made
-			 *  UPTODATE - Was already up-to-date
-			 *  ERROR - An error occurred while it was being
-			 *	made (used only in compat mode)
-			 *  ABORTED - The target was aborted due to
-			 *	an error making an inferior.
-			 */
+    unsigned char special;	/* type of special node */
+    char must_make;		/* true if this target needs building */
+    char child_rebuilt;		/* true if at least one child was rebuilt,
+    			 	 * thus triggering timestamps changes */
+
+    char built_status;	
+#define UNKNOWN		0	/* Not examined yet */
+#define BUILDING	1	/* In the process of building */
+#define REBUILT		2	/* Was out of date and got rebuilt */
+#define UPTODATE	3	/* Was already up-to-date */
+#define ERROR		4	/* Error occurred while building
+				 * (used only in compat mode) */
+#define ABORTED		5	/* Was aborted due to an error 
+				 * making an inferior */
+#define NOSUCHNODE	6	/* error from run_gnode */
+#define HELDBACK	7	/* Another target in the same group is
+				 * currently building, avoid race conditions */
+
     char *path;		/* The full pathname of the file */
     unsigned int type;	/* Its type (see the OP flags, below) */
     int order;		/* Its wait weight */
 
-    int unmade;		/* The number of unmade children */
+    int children_left;	/* The number of children left to build */
     int in_cycle;	/* cycle detection */
 
-    struct timespec mtime;	/* Its modification time */
-    GNode *youngest;		/* Its youngest child */
+    struct timespec mtime;	/* Node's modification time */
+    GNode *youngest;		/* Node's youngest child */
 
     GNode *impliedsrc;
     LIST cohorts;	/* Other nodes for the :: operator */
     LIST parents;	/* Nodes that depend on this one */
     LIST children;	/* Nodes on which this one depends */
-    LIST successors; 	/* Nodes that must be made after this one */
-    LIST preds;		/* Nodes that must be made before this one */
+    LIST predecessors;
+    LIST successors; 	
 
     SymTable context;	/* The local variables */
     LIST commands;	/* Creation commands */

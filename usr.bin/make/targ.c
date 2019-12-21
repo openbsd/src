@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.79 2019/12/21 15:28:17 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.80 2019/12/21 15:29:25 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -152,19 +152,19 @@ Targ_NewGNi(const char *name, const char *ename)
 	gn->path = NULL;
 	gn->type = 0;
 	gn->special = SPECIAL_NONE;
-	gn->unmade = 0;
+	gn->children_left = 0;
 	gn->must_make = false;
 	gn->built_status = UNKNOWN;
 	gn->in_cycle = false;
-	gn->childMade =	false;
+	gn->child_rebuilt = false;
 	gn->order = 0;
 	ts_set_out_of_date(gn->mtime);
 	gn->youngest = gn;
 	Lst_Init(&gn->cohorts);
 	Lst_Init(&gn->parents);
 	Lst_Init(&gn->children);
+	Lst_Init(&gn->predecessors);
 	Lst_Init(&gn->successors);
-	Lst_Init(&gn->preds);
 	SymTable_Init(&gn->context);
 	gn->impliedsrc = NULL;
 	Lst_Init(&gn->commands);

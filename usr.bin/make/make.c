@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.74 2019/12/21 15:28:17 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.75 2019/12/21 15:29:25 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
  *				various bookkeeping chores like finding the
  *				youngest child of the parent, filling
  *				the IMPSRC context variable, etc. It will
- *				place the parent on the toBeMade queue if it
+ *				place the parent on the to_build queue if it
  *				should be.
  *
  */
@@ -89,7 +89,7 @@ static struct growableArray examine;
 /* The current fringe of the graph. These are nodes which await examination by
  * MakeOODate. It is added to by Make_Update and subtracted from by
  * MakeStartJobs */
-static struct growableArray toBeMade;	
+static struct growableArray to_build;	
 
 /* Hold back on nodes where equivalent stuff is already building... */
 static struct growableArray heldBack;
@@ -110,7 +110,7 @@ static GNode *find_cycle(Lst, struct growableArray *);
 static bool try_to_make_node(GNode *);
 static void add_targets_to_make(Lst);
 
-static bool has_unmade_predecessor(GNode *);
+static bool has_predecessor_left_to_build(GNode *);
 static void requeue_successors(GNode *);
 static void random_setup(void);
 
@@ -120,7 +120,7 @@ long random_delay = 0;
 bool
 no_jobs_left()
 {
-	return Array_IsEmpty(&toBeMade);
+	return Array_IsEmpty(&to_build);
 }
 
 static void
@@ -157,15 +157,15 @@ randomize_garray(struct growableArray *g)
 }
 
 static bool
-has_unmade_predecessor(GNode *gn)
+has_predecessor_left_to_build(GNode *gn)
 {
 	LstNode ln;
 
-	if (Lst_IsEmpty(&gn->preds))
+	if (Lst_IsEmpty(&gn->predecessors))
 		return false;
 
 
-	for (ln = Lst_First(&gn->preds); ln != NULL; ln = Lst_Adv(ln)) {
+	for (ln = Lst_First(&gn->predecessors); ln != NULL; ln = Lst_Adv(ln)) {
 		GNode	*pgn = Lst_Datum(ln);
 
 		if (pgn->must_make && pgn->built_status == UNKNOWN) {
@@ -183,15 +183,15 @@ requeue_successors(GNode *gn)
 {
 	LstNode ln;
 	/* Deal with successor nodes. If any is marked for making and has an
-	 * unmade count of 0, has not been made and isn't in the examination
-	 * queue, it means we need to place it in the queue as it restrained
-	 * itself before.	*/
+	 * children_left count of 0, has not been made and isn't in the 
+	 * examination queue, it means we need to place it in the queue as 
+	 * it restrained itself before.	*/
 	for (ln = Lst_First(&gn->successors); ln != NULL; ln = Lst_Adv(ln)) {
 		GNode	*succ = Lst_Datum(ln);
 
-		if (succ->must_make && succ->unmade == 0
+		if (succ->must_make && succ->children_left == 0
 		    && succ->built_status == UNKNOWN)
-			Array_PushNew(&toBeMade, succ);
+			Array_PushNew(&to_build, succ);
 	}
 }
 
@@ -208,7 +208,7 @@ requeue(GNode *gn)
 			if (DEBUG(HELDJOBS))
 				printf("%s finished, releasing: %s\n",
 				    gn->name, heldBack.a[i]->name);
-			Array_Push(&toBeMade, heldBack.a[i]);
+			Array_Push(&to_build, heldBack.a[i]);
 			continue;
 		}
 		heldBack.a[j] = heldBack.a[i];
@@ -227,10 +227,10 @@ requeue(GNode *gn)
  *	Always returns 0
  *
  * Side Effects:
- *	The unmade field of pgn is decremented and pgn may be placed on
- *	the toBeMade queue if this field becomes 0.
+ *	The children_left field of pgn is decremented and pgn may be placed on
+ *	the to_build queue if this field becomes 0.
  *
- *	If the child was made, the parent's childMade field will be set to
+ *	If the child got built, the parent's child_rebuilt field will be set to
  *	true
  *-----------------------------------------------------------------------
  */
@@ -272,27 +272,27 @@ Make_Update(GNode *cgn)	/* the child node */
 	for (ln = Lst_First(&cgn->parents); ln != NULL; ln = Lst_Adv(ln)) {
 		pgn = Lst_Datum(ln);
 		/* SIB: there should be a siblings loop there */
-		pgn->unmade--;
+		pgn->children_left--;
 		if (pgn->must_make) {
 			if (DEBUG(MAKE))
 				printf("%s--=%d ",
-				    pgn->name, pgn->unmade);
+				    pgn->name, pgn->children_left);
 
 			if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
 				if (cgn->built_status == REBUILT)
-					pgn->childMade = true;
+					pgn->child_rebuilt = true;
 				(void)Make_TimeStamp(pgn, cgn);
 			}
-			if (pgn->unmade == 0) {
+			if (pgn->children_left == 0) {
 				/*
-				 * Queue the node up -- any unmade
+				 * Queue the node up -- any yet-to-build
 				 * predecessors will be dealt with in
 				 * MakeStartJobs.
 				 */
 				if (DEBUG(MAKE))
 					printf("QUEUING ");
-				Array_Push(&toBeMade, pgn);
-			} else if (pgn->unmade < 0) {
+				Array_Push(&to_build, pgn);
+			} else if (pgn->children_left < 0) {
 				Error("Child %s discovered graph cycles through %s", cgn->name, pgn->name);
 			}
 		}
@@ -314,11 +314,11 @@ try_to_make_node(GNode *gn)
 		return false;
 	}
 
-	if (gn->unmade != 0) {
+	if (gn->children_left != 0) {
 		if (DEBUG(MAKE))
-			printf(" Requeuing (%d)\n", gn->unmade);
+			printf(" Requeuing (%d)\n", gn->children_left);
 		add_targets_to_make(&gn->children);
-		Array_Push(&toBeMade, gn);
+		Array_Push(&to_build, gn);
 		return false;
 	}
 	if (has_been_built(gn)) {
@@ -326,16 +326,17 @@ try_to_make_node(GNode *gn)
 			printf(" already made\n");
 		return false;
 	}
-	if (has_unmade_predecessor(gn)) {
+	if (has_predecessor_left_to_build(gn)) {
 		if (DEBUG(MAKE))
 			printf(" Dropping for now\n");
 		return false;
 	}
 
 	/* SIB: this is where there should be a siblings loop */
-	if (gn->unmade != 0) {
+	if (gn->children_left != 0) {
 		if (DEBUG(MAKE))
-			printf(" Requeuing (after deps: %d)\n", gn->unmade);
+			printf(" Requeuing (after deps: %d)\n", 
+			    gn->children_left);
 		add_targets_to_make(&gn->children);
 		return false;
 	}
@@ -407,7 +408,7 @@ try_to_make_node(GNode *gn)
  *	returns true. At all other times, this function returns false.
  *
  * Side Effects:
- *	Nodes are removed from the toBeMade queue and job table slots
+ *	Nodes are removed from the to_build queue and job table slots
  *	are filled.
  *-----------------------------------------------------------------------
  */
@@ -416,7 +417,7 @@ MakeStartJobs(void)
 {
 	GNode	*gn;
 
-	while (can_start_job() && (gn = Array_Pop(&toBeMade)) != NULL) {
+	while (can_start_job() && (gn = Array_Pop(&to_build)) != NULL) {
 		if (try_to_make_node(gn))
 			return true;
 	}
@@ -429,7 +430,7 @@ MakePrintStatus(void *gnp)
 	GNode	*gn = gnp;
 	if (gn->built_status == UPTODATE) {
 		printf("`%s' is up to date.\n", gn->name);
-	} else if (gn->unmade != 0) {
+	} else if (gn->children_left != 0) {
 		printf("`%s' not remade because of errors.\n", gn->name);
 	}
 }
@@ -454,7 +455,7 @@ MakeHandleUse(void *cgnp, void *pgnp)
 		Make_HandleUse(cgn, pgn);
 }
 
-/* Add stuff to the toBeMade queue. we try to sort things so that stuff
+/* Add stuff to the to_build queue. we try to sort things so that stuff
  * that can be done directly is done right away.  This won't be perfect,
  * since some dependencies are only discovered later (e.g., SuffFindDeps).
  */
@@ -488,20 +489,20 @@ add_targets_to_make(Lst todo)
 		Suff_FindDeps(gn);
 		expand_all_children(gn);
 
-		if (gn->unmade != 0) {
+		if (gn->children_left != 0) {
 			if (DEBUG(MAKE))
-				printf("%s: not queuing (%d unmade children)\n",
-				    gn->name, gn->unmade);
+				printf("%s: not queuing (%d children left to build)\n",
+				    gn->name, gn->children_left);
 			Lst_ForEach(&gn->children, MakeAddChild,
 			    &examine);
 		} else {
 			if (DEBUG(MAKE))
 				printf("%s: queuing\n", gn->name);
-			Array_Push(&toBeMade, gn);
+			Array_Push(&to_build, gn);
 		}
 	}
 	if (randomize_queue)
-		randomize_garray(&toBeMade);
+		randomize_garray(&to_build);
 }
 
 /*-
@@ -510,7 +511,7 @@ add_targets_to_make(Lst todo)
  *	Initialize the nodes to remake and the list of nodes which are
  *	ready to be made by doing a breadth-first traversal of the graph
  *	starting from the nodes in the given list. Once this traversal
- *	is finished, all the 'leaves' of the graph are in the toBeMade
+ *	is finished, all the 'leaves' of the graph are in the to_build
  *	queue.
  *	Using this queue and the Job module, work back up the graph,
  *	calling on MakeStartJobs to keep the job table as full as
@@ -521,7 +522,7 @@ add_targets_to_make(Lst todo)
  *
  * Side Effects:
  *	The must_make field of all nodes involved in the creation of the given
- *	targets is set to 1. The toBeMade list is set to contain all the
+ *	targets is set to 1. The to_build list is set to contain all the
  *	'leaves' of these subgraphs.
  *-----------------------------------------------------------------------
  */
@@ -531,7 +532,7 @@ Make_Run(Lst targs)		/* the initial list of targets */
 	bool problem;	/* errors occurred */
 
 	/* wild guess at initial sizes */
-	Array_Init(&toBeMade, 500);
+	Array_Init(&to_build, 500);
 	Array_Init(&examine, 150);
 	Array_Init(&heldBack, 100);
 	ohash_init(&targets, 10, &gnode_info);
@@ -683,7 +684,7 @@ find_cycle(Lst l, struct growableArray *cycle)
 		
 		if (gn->built_status == UPTODATE)
 			continue;
-		if (gn->unmade != 0) {
+		if (gn->children_left != 0) {
 			GNode *c;
 
 			gn->in_cycle = true;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.96 2019/12/21 15:28:17 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.97 2019/12/21 15:29:25 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -917,10 +917,10 @@ SuffLinkParent(GNode *cgn, GNode *pgn)
 {
 	Lst_AtEnd(&cgn->parents, pgn);
 	if (!has_been_built(cgn))
-		pgn->unmade++;
+		pgn->children_left++;
 	else if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
 		if (cgn->built_status == REBUILT)
-			pgn->childMade = true;
+			pgn->child_rebuilt = true;
 		(void)Make_TimeStamp(pgn, cgn);
 	}
 }
@@ -1050,7 +1050,7 @@ SuffExpandWildChildren(LstNode after, GNode *cgn, GNode *pgn)
 		gn = Targ_FindNode(cp, TARG_CREATE);
 
 		/* If gn isn't already a child of the parent, make it so and
-		 * up the parent's count of unmade children.  */
+		 * up the parent's count of children to build.  */
 		if (Lst_Member(&pgn->children, gn) == NULL) {
 			Lst_Append(&pgn->children, after, gn);
 			after = Lst_Adv(after);
@@ -1070,8 +1070,8 @@ SuffExpandWildChildren(LstNode after, GNode *cgn, GNode *pgn)
  *
  * Side Effects:
  *	The expanded node is removed from the parent's list of children,
- *	and the parent's unmade counter is decremented, but other nodes
- *	may be added.
+ *	and the parent's children to build counter is decremented, 
+ *      but other nodes may be added.
  *-----------------------------------------------------------------------
  */
 static void
@@ -1094,7 +1094,7 @@ SuffExpandChildren(LstNode ln, /* LstNode of child, so we can replace it */
 
 	/* Since the source was expanded, remove it from the list of children to
 	 * keep it from being processed.  */
-	pgn->unmade--;
+	pgn->children_left--;
 	Lst_Remove(&pgn->children, ln);
 }
 
@@ -1559,8 +1559,8 @@ sfnd_abort:
 	 * each target are set from the commands of the transformation rule
 	 * used to get from the src suffix to the targ suffix. Note that this
 	 * causes the commands list of the original node, gn, to be replaced by
-	 * the commands of the final transformation rule. Also, the unmade
-	 * field of gn is incremented.  Etc.  */
+	 * the commands of the final transformation rule. Also, the children
+	 * to build field of gn is incremented.  Etc.  */
 	if (bottom->node == NULL) {
 		bottom->node = Targ_FindNode(bottom->file, TARG_CREATE);
 	}

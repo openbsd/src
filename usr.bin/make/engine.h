@@ -1,6 +1,6 @@
 #ifndef ENGINE_H
 #define ENGINE_H
-/*	$OpenBSD: engine.h,v 1.13 2012/12/07 15:08:03 espie Exp $	*/
+/*	$OpenBSD: engine.h,v 1.14 2019/12/21 15:29:25 espie Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@ extern int run_gnode(GNode *);
  *
  * Each job has several things associated with it:
  *	1) The process id of the child shell
- *	2) The graph node describing the target being made by this job
+ *	2) The graph node describing the target of this job
  *	3) State associated to latest command run
  *	5) A word of flags which determine how the module handles errors,
  *	   echoing, etc. for the job
@@ -96,7 +96,7 @@ extern int run_gnode(GNode *);
  * exceed the value of 'maxJobs', initialized by the Job_Init function.
  *
  * When a job is finished, the Make_Update function is called on each of the
- * parents of the node which was just remade. This takes care of the upward
+ * parents of the node which was just rebuilt. This takes care of the upward
  * traversal of the dependency graph.
  */
 struct Job_ {

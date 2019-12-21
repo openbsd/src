@@ -1,4 +1,4 @@
-/*	$OpenBSD: targequiv.c,v 1.8 2016/10/21 16:12:38 espie Exp $ */
+/*	$OpenBSD: targequiv.c,v 1.9 2019/12/21 15:29:25 espie Exp $ */
 /*
  * Copyright (c) 2007-2008 Marc Espie.
  *
@@ -169,7 +169,7 @@ kludge_look_harder_for_target(GNode *gn)
 
 				if (Lst_AddNew(&gn->children, cgn)) {
 					Lst_AtEnd(&cgn->parents, gn);
-					gn->unmade++;
+					gn->children_left++;
 				}
 			}
 		}
