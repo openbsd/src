@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.416 2019/11/25 14:18:33 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.417 2019/12/21 07:16:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -252,6 +252,28 @@ static void smtp_filter_begin(struct smtp_session *);
 static void smtp_filter_end(struct smtp_session *);
 static void smtp_filter_data_begin(struct smtp_session *);
 static void smtp_filter_data_end(struct smtp_session *);
+
+static void smtp_report_link_connect(struct smtp_session *, const char *, int,
+    const struct sockaddr_storage *,
+    const struct sockaddr_storage *);
+static void smtp_report_link_greeting(struct smtp_session *, const char *);
+static void smtp_report_link_identify(struct smtp_session *, const char *, const char *);
+static void smtp_report_link_tls(struct smtp_session *, const char *);
+static void smtp_report_link_disconnect(struct smtp_session *);
+static void smtp_report_link_auth(struct smtp_session *, const char *, const char *);
+static void smtp_report_tx_reset(struct smtp_session *, uint32_t);
+static void smtp_report_tx_begin(struct smtp_session *, uint32_t);
+static void smtp_report_tx_mail(struct smtp_session *, uint32_t, const char *, int);
+static void smtp_report_tx_rcpt(struct smtp_session *, uint32_t, const char *, int);
+static void smtp_report_tx_envelope(struct smtp_session *, uint32_t, uint64_t);
+static void smtp_report_tx_data(struct smtp_session *, uint32_t, int);
+static void smtp_report_tx_commit(struct smtp_session *, uint32_t, size_t);
+static void smtp_report_tx_rollback(struct smtp_session *, uint32_t);
+static void smtp_report_protocol_client(struct smtp_session *, const char *);
+static void smtp_report_protocol_server(struct smtp_session *, const char *);
+static void smtp_report_filter_response(struct smtp_session *, int, int, const char *);
+static void smtp_report_timeout(struct smtp_session *);
+
 
 static struct {
 	int code;
@@ -778,7 +800,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			s->tx->msgid = msgid;
 			s->tx->evp.id = msgid_to_evpid(msgid);
 			s->tx->rcptcount = 0;
-			report_smtp_tx_begin("smtp-in", s->id, s->tx->msgid);
+			smtp_report_tx_begin(s, s->tx->msgid);
 			smtp_reply(s, "250 %s Ok",
 			    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 		} else {
@@ -847,7 +869,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			m_get_evpid(&m, &evpid);
 			s->tx->evp.id = evpid;
 			s->tx->destcount++;
-			report_smtp_tx_envelope("smtp-in", s->id, s->tx->msgid, evpid);
+			smtp_report_tx_envelope(s, s->tx->msgid, evpid);
 		}
 		else
 			s->tx->error = TX_ERROR_ENVELOPE;
@@ -943,7 +965,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			    "result=ok",
 			    s->id, user);
 			s->flags |= SF_AUTHENTICATED;
-			report_smtp_link_auth("smtp-in", s->id, user, "pass");
+			smtp_report_link_auth(s, user, "pass");
 			smtp_reply(s, "235 %s Authentication succeeded",
 			    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 		}
@@ -952,7 +974,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			    "authentication user=%s "
 			    "result=permfail",
 			    s->id, user);
-			report_smtp_link_auth("smtp-in", s->id, user, "fail");
+			smtp_report_link_auth(s, user, "fail");
 			smtp_auth_failure_pause(s);
 			return;
 		}
@@ -961,7 +983,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			    "authentication user=%s "
 			    "result=tempfail",
 			    s->id, user);
-			report_smtp_link_auth("smtp-in", s->id, user, "error");
+			smtp_report_link_auth(s, user, "error");
 			smtp_reply(s, "421 %s Temporary failure",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 		}
@@ -993,7 +1015,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			if (!strncmp(filter_param, "421", 3))
 				filter_response = FILTER_DISCONNECT;
 
-			report_smtp_filter_response("smtp-in", s->id, s->filter_phase,
+			smtp_report_filter_response(s, s->filter_phase,
 			    filter_response, filter_param);
 
 			smtp_reply(s, "%s", filter_param);
@@ -1017,7 +1039,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			/* fallthrough */
 
 		case FILTER_REWRITE:
-			report_smtp_filter_response("smtp-in", s->id, s->filter_phase,
+			smtp_report_filter_response(s, s->filter_phase,
 			    filter_response,
 			    filter_param == s->filter_param ? NULL : filter_param);
 			if (s->filter_phase == FILTER_CONNECT) {
@@ -1084,7 +1106,7 @@ smtp_io(struct io *io, int evt, void *arg)
 		log_info("%016"PRIx64" smtp tls ciphers=%s",
 		    s->id, ssl_to_text(io_tls(s->io)));
 
-		report_smtp_link_tls("smtp-in", s->id, ssl_to_text(io_tls(s->io)));
+		smtp_report_link_tls(s, ssl_to_text(io_tls(s->io)));
 
 		s->flags |= SF_SECURE;
 		s->helo[0] = '\0';
@@ -1177,7 +1199,7 @@ smtp_io(struct io *io, int evt, void *arg)
 		log_info("%016"PRIx64" smtp disconnected "
 		    "reason=timeout",
 		    s->id);
-		report_smtp_timeout("smtp-in", s->id);
+		smtp_report_timeout(s);
 		smtp_free(s, "timeout");
 		break;
 
@@ -1212,20 +1234,20 @@ smtp_command(struct smtp_session *s, char *line)
 	 * These states are special.
 	 */
 	if (s->state == STATE_AUTH_INIT) {
-		report_smtp_protocol_client("smtp-in", s->id, "********");
+		smtp_report_protocol_client(s, "********");
 		smtp_rfc4954_auth_plain(s, line);
 		return;
 	}
 	if (s->state == STATE_AUTH_USERNAME || s->state == STATE_AUTH_PASSWORD) {
-		report_smtp_protocol_client("smtp-in", s->id, "********");
+		smtp_report_protocol_client(s, "********");
 		smtp_rfc4954_auth_login(s, line);
 		return;
 	}
 
 	if (s->state == STATE_HELO && strncasecmp(line, "AUTH PLAIN ", 11) == 0)
-		report_smtp_protocol_client("smtp-in", s->id, "AUTH PLAIN ********");
+		smtp_report_protocol_client(s, "AUTH PLAIN ********");
 	else
-		report_smtp_protocol_client("smtp-in", s->id, line);
+		smtp_report_protocol_client(s, line);
 
 
 	/*
@@ -1731,7 +1753,7 @@ smtp_proceed_helo(struct smtp_session *s, const char *args)
 	(void)strlcpy(s->helo, args, sizeof(s->helo));
 	s->flags &= SF_SECURE | SF_AUTHENTICATED | SF_VERIFIED;
 
-	report_smtp_link_identify("smtp-in", s->id, "HELO", s->helo);
+	smtp_report_link_identify(s, "HELO", s->helo);
 
 	smtp_enter_state(s, STATE_HELO);
 
@@ -1751,7 +1773,7 @@ smtp_proceed_ehlo(struct smtp_session *s, const char *args)
 	s->flags |= SF_EHLO;
 	s->flags |= SF_8BITMIME;
 
-	report_smtp_link_identify("smtp-in", s->id, "EHLO", s->helo);
+	smtp_report_link_identify(s, "EHLO", s->helo);
 
 	smtp_enter_state(s, STATE_HELO);
 	smtp_reply(s, "250-%s Hello %s %s%s%s, pleased to meet you",
@@ -2038,7 +2060,7 @@ smtp_connected(struct smtp_session *s)
 
 	smtp_filter_begin(s);
 
-	report_smtp_link_connect("smtp-in", s->id, s->rdns, s->fcrdns, &s->ss,
+	smtp_report_link_connect(s, s->rdns, s->fcrdns, &s->ss,
 	    &s->listener->ss);
 
 	smtp_filter_phase(FILTER_CONNECT, s, ss_to_text(&s->ss));
@@ -2058,7 +2080,7 @@ smtp_send_banner(struct smtp_session *s)
 {
 	smtp_reply(s, "220 %s ESMTP %s", s->smtpname, SMTPD_NAME);
 	s->banner_sent = 1;
-	report_smtp_link_greeting("smtp-in", s->id, s->smtpname);
+	smtp_report_link_greeting(s, s->smtpname);
 }
 
 void
@@ -2098,15 +2120,15 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 	case '2':
 		if (s->tx) {
 			if (s->last_cmd == CMD_MAIL_FROM)
-				report_smtp_tx_mail("smtp-in", s->id, s->tx->msgid, s->cmd + 10, 1);
+				smtp_report_tx_mail(s, s->tx->msgid, s->cmd + 10, 1);
 			else if (s->last_cmd == CMD_RCPT_TO)
-				report_smtp_tx_rcpt("smtp-in", s->id, s->tx->msgid, s->cmd + 8, 1);
+				smtp_report_tx_rcpt(s, s->tx->msgid, s->cmd + 8, 1);
 		}
 		break;
 	case '3':
 		if (s->tx) {
 			if (s->last_cmd == CMD_DATA)
-				report_smtp_tx_data("smtp-in", s->id, s->tx->msgid, 1);
+				smtp_report_tx_data(s, s->tx->msgid, 1);
 		}
 		break;
 	case '5':
@@ -2116,13 +2138,13 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 		 */
 		if (s->tx) {
 			if (s->last_cmd == CMD_MAIL_FROM)
-				report_smtp_tx_mail("smtp-in", s->id, s->tx->msgid,
+				smtp_report_tx_mail(s, s->tx->msgid,
 				    s->cmd + 10, buf[0] == '4' ? -1 : 0);
 			else if (s->last_cmd == CMD_RCPT_TO)
-				report_smtp_tx_rcpt("smtp-in", s->id,
+				smtp_report_tx_rcpt(s,
 				    s->tx->msgid, s->cmd + 8, buf[0] == '4' ? -1 : 0);
 			else if (s->last_cmd == CMD_DATA && s->tx->rcptcount)
-				report_smtp_tx_data("smtp-in", s->id, s->tx->msgid,
+				smtp_report_tx_data(s, s->tx->msgid,
 				    buf[0] == '4' ? -1 : 0);
 		}
 
@@ -2160,7 +2182,7 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 	}
 
 	io_xprintf(s->io, "%s\r\n", buf);
-	report_smtp_protocol_server("smtp-in", s->id, buf);
+	smtp_report_protocol_server(s, buf);
 }
 
 static void
@@ -2172,7 +2194,7 @@ smtp_free(struct smtp_session *s, const char * reason)
 		smtp_tx_free(s->tx);
 	}
 
-	report_smtp_link_disconnect("smtp-in", s->id);
+	smtp_report_link_disconnect(s);
 	smtp_filter_end(s);
 
 	if (s->flags & SF_SECURE && s->listener->flags & F_SMTPS)
@@ -2590,8 +2612,8 @@ smtp_tx_commit(struct smtp_tx *tx)
 	m_add_msgid(p_queue, tx->msgid);
 	m_close(p_queue);
 	tree_xset(&wait_queue_commit, tx->session->id, tx->session);
-	report_smtp_tx_commit("smtp-in", tx->session->id, tx->msgid, tx->odatalen);
-	report_smtp_tx_reset("smtp-in", tx->session->id, tx->msgid);
+	smtp_report_tx_commit(tx->session, tx->msgid, tx->odatalen);
+	smtp_report_tx_reset(tx->session, tx->msgid);
 	smtp_filter_data_end(tx->session);
 }
 
@@ -2601,8 +2623,8 @@ smtp_tx_rollback(struct smtp_tx *tx)
 	m_create(p_queue, IMSG_SMTP_MESSAGE_ROLLBACK, 0, 0, -1);
 	m_add_msgid(p_queue, tx->msgid);
 	m_close(p_queue);
-	report_smtp_tx_rollback("smtp-in", tx->session->id, tx->msgid);
-	report_smtp_tx_reset("smtp-in", tx->session->id, tx->msgid);
+	smtp_report_tx_rollback(tx->session, tx->msgid);
+	smtp_report_tx_reset(tx->session, tx->msgid);
 	smtp_filter_data_end(tx->session);
 }
 
@@ -2615,7 +2637,7 @@ smtp_tx_dataline(struct smtp_tx *tx, const char *line)
 	log_trace(TRACE_SMTP, "<<< [MSG] %s", line);
 
 	if (!strcmp(line, ".")) {
-		report_smtp_protocol_client("smtp-in", tx->session->id, ".");
+		smtp_report_protocol_client(tx->session, ".");
 		log_trace(TRACE_SMTP, "<<< [EOM]");
 		if (tx->error)
 			return 1;
@@ -2997,4 +3019,170 @@ smtp_strstate(int state)
 		(void)snprintf(buf, sizeof(buf), "STATE_??? (%d)", state);
 		return (buf);
 	}
+}
+
+
+static void
+smtp_report_link_connect(struct smtp_session *s, const char *rdns, int fcrdns,
+    const struct sockaddr_storage *ss_src,
+    const struct sockaddr_storage *ss_dest)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_link_connect("smtp-in", s->id, rdns, fcrdns, ss_src, ss_dest);
+}
+
+static void
+smtp_report_link_greeting(struct smtp_session *s,
+    const char *domain)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_link_greeting("smtp-in", s->id, domain);
+}
+
+static void
+smtp_report_link_identify(struct smtp_session *s, const char *method, const char *identity)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_link_identify("smtp-in", s->id, method, identity);
+}
+
+static void
+smtp_report_link_tls(struct smtp_session *s, const char *ssl)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_link_tls("smtp-in", s->id, ssl);
+}
+
+static void
+smtp_report_link_disconnect(struct smtp_session *s)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_link_disconnect("smtp-in", s->id);
+}
+
+static void
+smtp_report_link_auth(struct smtp_session *s, const char *user, const char *result)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_link_auth("smtp-in", s->id, user, result);
+}
+
+static void
+smtp_report_tx_reset(struct smtp_session *s, uint32_t msgid)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_tx_reset("smtp-in", s->id, msgid);
+}
+
+static void
+smtp_report_tx_begin(struct smtp_session *s, uint32_t msgid)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_tx_begin("smtp-in", s->id, msgid);
+}
+
+static void
+smtp_report_tx_mail(struct smtp_session *s, uint32_t msgid, const char *address, int ok)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_tx_mail("smtp-in", s->id, msgid, address, ok);
+}
+
+static void
+smtp_report_tx_rcpt(struct smtp_session *s, uint32_t msgid, const char *address, int ok)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_tx_rcpt("smtp-in", s->id, msgid, address, ok);
+}
+
+static void
+smtp_report_tx_envelope(struct smtp_session *s, uint32_t msgid, uint64_t evpid)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_tx_envelope("smtp-in", s->id, msgid, evpid);
+}
+
+static void
+smtp_report_tx_data(struct smtp_session *s, uint32_t msgid, int ok)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_tx_data("smtp-in", s->id, msgid, ok);
+}
+
+static void
+smtp_report_tx_commit(struct smtp_session *s, uint32_t msgid, size_t msgsz)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_tx_commit("smtp-in", s->id, msgid, msgsz);
+}
+
+static void
+smtp_report_tx_rollback(struct smtp_session *s, uint32_t msgid)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_tx_rollback("smtp-in", s->id, msgid);
+}
+
+static void
+smtp_report_protocol_client(struct smtp_session *s, const char *command)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_protocol_client("smtp-in", s->id, command);
+}
+
+static void
+smtp_report_protocol_server(struct smtp_session *s, const char *response)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_protocol_server("smtp-in", s->id, response);
+}
+
+static void
+smtp_report_filter_response(struct smtp_session *s, int phase, int response, const char *param)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_filter_response("smtp-in", s->id, phase, response, param);
+}
+
+static void
+smtp_report_timeout(struct smtp_session *s)
+{
+	if (! SESSION_FILTERED(s))
+		return;
+
+	report_smtp_timeout("smtp-in", s->id);
 }
