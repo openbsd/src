@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.54 2019/12/14 16:24:52 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.55 2019/12/21 10:23:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -485,7 +485,7 @@ lka_filter_proc_in_session(uint64_t reqid, const char *proc)
 		return 0;
 
 	filter = dict_get(&filters, fs->filter_name);
-	if (filter->proc == NULL && filter->chain == NULL)
+	if (filter == NULL || (filter->proc == NULL && filter->chain == NULL))
 		return 0;
 
 	if (filter->proc)
@@ -500,12 +500,7 @@ lka_filter_proc_in_session(uint64_t reqid, const char *proc)
 }
 
 void
-lka_filter_begin(uint64_t reqid,
-    const char *filter_name,
-    const struct sockaddr_storage *ss_src,
-    const struct sockaddr_storage *ss_dest,
-    const char *rdns,
-    int fcrdns)
+lka_filter_begin(uint64_t reqid, const char *filter_name)
 {
 	struct filter_session	*fs;
 
@@ -517,10 +512,6 @@ lka_filter_begin(uint64_t reqid,
 	fs = xcalloc(1, sizeof (struct filter_session));
 	fs->id = reqid;
 	fs->filter_name = xstrdup(filter_name);
-	fs->ss_src = *ss_src;
-	fs->ss_dest = *ss_dest;
-	fs->rdns = xstrdup(rdns);
-	fs->fcrdns = fcrdns;
 	tree_xset(&sessions, fs->id, fs);
 
 	log_trace(TRACE_FILTERS, "%016"PRIx64" filters session-begin", reqid);
@@ -1355,6 +1346,7 @@ lka_report_smtp_link_connect(const char *direction, struct timeval *tv, uint64_t
     const struct sockaddr_storage *ss_src,
     const struct sockaddr_storage *ss_dest)
 {
+	struct filter_session *fs;
 	char	src[NI_MAXHOST + 5];
 	char	dest[NI_MAXHOST + 5];
 	uint16_t	src_port = 0;
@@ -1390,7 +1382,12 @@ lka_report_smtp_link_connect(const char *direction, struct timeval *tv, uint64_t
 		fcrdns_str = "error";
 		break;
 	}
-	
+
+	fs = tree_xget(&sessions, reqid);
+	fs->rdns = xstrdup(rdns);
+	fs->fcrdns = fcrdns;
+	fs->ss_src = *ss_src;
+	fs->ss_dest = *ss_dest;
 	report_smtp_broadcast(reqid, direction, tv, "link-connect",
 	    "%s|%s|%s|%s\n", rdns, fcrdns_str, src, dest);
 }
