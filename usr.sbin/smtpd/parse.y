@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.271 2019/12/18 10:00:39 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.272 2019/12/21 11:07:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -876,6 +876,45 @@ HELO STRING {
 	}
 
 	dispatcher->u.remote.auth = strdup(t->t_name);
+}
+| FILTER STRING {
+	struct filter_config *fc;
+
+	if (dispatcher->u.remote.filtername) {
+		yyerror("filter already specified for this dispatcher");
+		YYERROR;
+	}
+
+	if ((fc = dict_get(conf->sc_filters_dict, $2)) == NULL) {
+		yyerror("no filter exist with that name: %s", $2);
+		free($2);
+		YYERROR;
+	}
+	fc->filter_subsystem |= FILTER_SUBSYSTEM_SMTP_OUT;
+	dispatcher->u.remote.filtername = $2;
+}
+| FILTER {
+	char	buffer[128];
+	char	*filtername;
+
+	if (dispatcher->u.remote.filtername) {
+		yyerror("filter already specified for this dispatcher");
+		YYERROR;
+	}
+
+	do {
+		(void)snprintf(buffer, sizeof buffer, "<dynchain:%08x>", last_dynchain_id++);
+	} while (dict_check(conf->sc_filters_dict, buffer));
+
+	filtername = xstrdup(buffer);
+	filter_config = xcalloc(1, sizeof *filter_config);
+	filter_config->filter_type = FILTER_TYPE_CHAIN;
+	filter_config->filter_subsystem |= FILTER_SUBSYSTEM_SMTP_OUT;
+	dict_init(&filter_config->chain_procs);
+	dispatcher->u.remote.filtername = filtername;
+} '{' filter_list '}' {
+	dict_set(conf->sc_filters_dict, dispatcher->u.remote.filtername, filter_config);
+	filter_config = NULL;
 }
 | SRS {
 	if (conf->sc_srs_key == NULL) {

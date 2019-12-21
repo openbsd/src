@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.55 2019/12/21 10:23:37 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.56 2019/12/21 11:07:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -1274,13 +1274,10 @@ lka_report_register_hook(const char *name, const char *hook)
 		subsystem = &report_smtp_in;
 		hook += 8;
 	}
-#if 0
-	/* No smtp-out event has been implemented yet */
 	else if (strncmp(hook, "smtp-out|", 9) == 0) {
 		subsystem = &report_smtp_out;
 		hook += 9;
 	}
-#endif
 	else
 		fatalx("Invalid message direction: %s", hook);
 
@@ -1388,6 +1385,7 @@ lka_report_smtp_link_connect(const char *direction, struct timeval *tv, uint64_t
 	fs->fcrdns = fcrdns;
 	fs->ss_src = *ss_src;
 	fs->ss_dest = *ss_dest;
+
 	report_smtp_broadcast(reqid, direction, tv, "link-connect",
 	    "%s|%s|%s|%s\n", rdns, fcrdns_str, src, dest);
 }
