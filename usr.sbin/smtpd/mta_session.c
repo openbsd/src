@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.124 2019/12/21 11:07:38 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.125 2019/12/21 17:43:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -173,9 +173,7 @@ static void mta_disconnected(struct mta_session *);
 static void mta_report_link_connect(struct mta_session *, const char *, int,
     const struct sockaddr_storage *,
     const struct sockaddr_storage *);
-#if 0
 static void mta_report_link_greeting(struct mta_session *, const char *);
-#endif
 static void mta_report_link_identify(struct mta_session *, const char *, const char *);
 static void mta_report_link_tls(struct mta_session *, const char *);
 static void mta_report_link_disconnect(struct mta_session *);
@@ -886,6 +884,7 @@ mta_response(struct mta_session *s, char *line)
 	struct sockaddr_storage	 ss;
 	struct sockaddr		*sa;
 	const char		*domain;
+	char			*pbuf;
 	socklen_t		 sa_len;
 	char			 buf[LINE_MAX];
 	int			 delivery;
@@ -898,6 +897,16 @@ mta_response(struct mta_session *s, char *line)
 			s->flags |= MTA_FREE;
 			return;
 		}
+
+		pbuf = "";
+		if (strlen(line) > 4) {
+			(void)strlcpy(buf, line + 4, sizeof buf);
+			if ((pbuf = strchr(buf, ' ')))
+				*pbuf = '\0';
+			pbuf = valid_domainpart(buf) ? buf : "";
+		}
+		mta_report_link_greeting(s, pbuf);
+
 		if (s->flags & MTA_LMTP)
 			mta_enter_state(s, MTA_LHLO);
 		else
@@ -1837,7 +1846,6 @@ mta_report_link_connect(struct mta_session *s, const char *rdns, int fcrdns,
 	report_smtp_link_connect("smtp-out", s->id, rdns, fcrdns, ss_src, ss_dest);
 }
 
-#if 0
 static void
 mta_report_link_greeting(struct mta_session *s,
     const char *domain)
@@ -1847,7 +1855,6 @@ mta_report_link_greeting(struct mta_session *s,
 
 	report_smtp_link_greeting("smtp-out", s->id, domain);
 }
-#endif
 
 static void
 mta_report_link_identify(struct mta_session *s, const char *method, const char *identity)
