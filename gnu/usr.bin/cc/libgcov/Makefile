@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcov/Makefile,v 1.6 2009/06/21 01:54:47 kan Exp $
-# $OpenBSD: Makefile,v 1.3 2017/06/16 10:25:54 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2019/12/21 21:40:00 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -70,7 +70,6 @@ ${COMMONHDRS}: ${.CURDIR}/../cc_tools/Makefile
 CLEANFILES += ${COMMONHDRS}
 CLEANFILES += cs-*.h option*
 
-${OBJS} beforedepend: ${COMMONHDRS}
 BUILDFIRST = ${COMMONHDRS}
 BUILDAFTER += ${OBJS_T} ${OBJS_P} ${OBJS_S}
 

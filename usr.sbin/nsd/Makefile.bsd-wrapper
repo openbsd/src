@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.15 2017/06/12 18:49:34 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 2019/12/21 21:40:01 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -72,9 +72,6 @@ BEFOREMAN= config.status
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} realclean; fi
 	rm -f ${CLEANFILES}
-
-depend:
-	# Nothing here so far...
 
 tags:
 	# Nothing here so far...

@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/include/Makefile,v 1.9.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.13 2016/11/08 17:39:12 tb Exp $
+# $OpenBSD: Makefile,v 1.14 2019/12/21 21:40:00 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -40,9 +40,6 @@ clean: _SUBDIRUSE
 	rm -f ${CLEANFILES}
 
 cleandir: _SUBDIRUSE clean
-
-depend:
-	# Nothing here so far...
 
 .if ${TARGET_ARCH} == "i386" || ${TARGET_ARCH} == "amd64"
 prereq: mm_malloc.h unwind.h

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2017/06/12 18:49:34 espie Exp $
+#	$OpenBSD: Makefile,v 1.6 2019/12/21 21:40:01 espie Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 MSRCS=	doc doc-ditroff doc-common doc-nroff doc-syms
@@ -8,7 +8,7 @@ LINKS=	${BINDIR}/doc ${BINDIR}/../tmac.doc
 STRIP_SED = ${.CURDIR}/../strip.sed
 NOOBJ=	noobj
 
-all clean cleandir depend tags:
+all clean cleandir tags:
 
 beforeinstall:
 	for i in ${MSRCS}; do \

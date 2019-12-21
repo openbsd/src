@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.134 2017/07/05 10:22:32 espie Exp $
+#	$OpenBSD: Makefile,v 1.135 2019/12/21 21:39:59 espie Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -109,6 +109,6 @@ ${CROSS_TARGETS}:
 
 .PHONY: ${CROSS_TARGETS} \
 	build regression-tests includes beforeinstall afterinstall \
-	all depend do-build
+	all do-build
 
 .include <bsd.subdir.mk>

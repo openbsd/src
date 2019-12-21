@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.4 2017/06/12 18:49:34 espie Exp $
+#	$OpenBSD: Makefile,v 1.5 2019/12/21 21:40:01 espie Exp $
 #	from: @(#)Makefile	5.3 (Berkeley) 10/22/90
 
 FILES=	std stdcrt vt100 vt300
 NOOBJ=	noobj
 
-all clean cleandir depend tags:
+all clean cleandir tags:
 
 realinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \

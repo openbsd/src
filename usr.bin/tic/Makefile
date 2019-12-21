@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2017/06/16 10:25:54 espie Exp $
+#	$OpenBSD: Makefile,v 1.10 2019/12/21 21:40:01 espie Exp $
 
 PROG=	tic
 SRCS=	dump_entry.c tic.c
@@ -14,8 +14,6 @@ CLEANFILES+= termsort.c captoinfo.1
 .if (${MACHINE_ARCH} == sh)
 COPTS+=	-O0
 .endif
-
-beforedepend: termsort.c
 
 dump_entry.o: termsort.c
 

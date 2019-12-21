@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.5 2017/06/12 18:49:33 espie Exp $
+#	$OpenBSD: Makefile,v 1.6 2019/12/21 21:40:00 espie Exp $
 
 NOOBJ=	noobj
-all wargames clean cleandir depend tags:
+all wargames clean cleandir tags:
 
 install:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \

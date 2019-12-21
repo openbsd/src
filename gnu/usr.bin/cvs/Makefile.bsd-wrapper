@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.58 2018/09/14 13:37:52 naddy Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.59 2019/12/21 21:40:00 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -65,9 +65,6 @@ install: maninstall
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
 	rm -f ${CLEANFILES}
-
-depend:
-	# Nothing here so far...
 
 tags:
 	# Nothing here so far...

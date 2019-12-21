@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.475 2019/12/02 02:45:18 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.476 2019/12/21 21:40:00 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -68,7 +68,7 @@ RCDAEMONS=amd apmd bgpd bootparamd cron dhcpd dhcrelay dhcrelay6 dvmrpd \
 
 MISETS=	base${OSrev}.tgz comp${OSrev}.tgz man${OSrev}.tgz game${OSrev}.tgz
 
-all clean cleandir depend etc install:
+all clean cleandir etc install:
 
 install-mtree:
 	${INSTALL} -c -o root -g wheel -m 600 mtree/special \

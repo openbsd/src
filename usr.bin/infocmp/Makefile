@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2017/06/16 10:25:54 espie Exp $
+#	$OpenBSD: Makefile,v 1.5 2019/12/21 21:40:01 espie Exp $
 
 PROG=	infocmp
 SRCS=	infocmp.c dump_entry.c
@@ -9,8 +9,6 @@ TIC= ${.CURDIR}/../tic
 CFLAGS+= -I${CURSES} -I${TIC} -I${.CURDIR} -I.
 CLEANFILES+= termsort.c infocmp.1
 .PATH:  ${TIC}
-
-beforedepend: termsort.c
 
 dump_entry.o: termsort.c
 

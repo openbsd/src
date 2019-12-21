@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 2019/03/31 14:24:16 florian Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 2019/12/21 21:40:01 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -88,9 +88,6 @@ CLEANFILES+= ${MAN} dnstap/dnstap_config.h doc/example.conf doc/libunbound.3 \
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} realclean; fi
 	rm -f ${CLEANFILES}
-
-depend:
-	# Nothing here so far...
 
 tags:
 	# Nothing here so far...
