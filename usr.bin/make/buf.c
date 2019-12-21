@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.27 2015/04/29 00:42:12 millert Exp $	*/
+/*	$OpenBSD: buf.c,v 1.28 2019/12/21 15:26:47 espie Exp $	*/
 /*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $ */
 
 /*
@@ -66,6 +66,7 @@
  *	Functions for automatically expanded buffers.
  */
 
+#include <assert.h>
 #include <ctype.h>
 #include <limits.h>
 #include <stddef.h>
@@ -96,45 +97,37 @@ fatal_overflow()
 	exit(2);
 }
 
+#define BUF_DEF_SIZE	256U	/* Default buffer size */
+#define BUF_MARGIN	256U	/* Make sure we are comfortable */
+
 /* BufExpand(bp, nb)
- *	Expand buffer bp to hold upto nb additional
- *	chars.	Makes sure there's room for an extra '\0' char at
- *	the end of the buffer to terminate the string.	*/
-#define BufExpand(bp,nb)				\
-do {							\
-	size_t   occupied = (bp)->inPtr - (bp)->buffer;	\
-	size_t   size = (bp)->endPtr - (bp)->buffer;	\
-	DO_STAT_BUF(bp, nb);				\
-							\
-	do {						\
-		if (size <= SIZE_MAX/2) {		\
-			size *= 2 ;			\
-		} else {				\
-			fatal_overflow();		\
-		}					\
-	} while (size - occupied < (nb)+1+BUF_MARGIN);	\
-	(bp)->buffer = (bp)->inPtr = (bp)->endPtr = 	\
-		erealloc((bp)->buffer, size);		\
-	(bp)->inPtr += occupied;			\
-	(bp)->endPtr += size;				\
-} while (0);
-
-#define BUF_DEF_SIZE	256	/* Default buffer size */
-#define BUF_MARGIN	256	/* Make sure we are comfortable */
-
-/* the hard case for Buf_AddChar: buffer must be expanded to accommodate
- * one more char.  */
+ *	Expand buffer bp to hold up to nb additional
+ *	chars.	Makes sure there's always room for an extra '\0' char 
+ *	at the end of the buffer for Buf_Retrieve. */
 void
-BufOverflow(Buffer bp)
+BufExpand(Buffer bp, size_t nb)
 {
-	BufExpand(bp, 1);
-}
+	size_t   occupied = bp->inPtr - bp->buffer;
+	size_t   size = bp->endPtr - bp->buffer;
+	DO_STAT_BUF(bp, nb);
 
+	do {
+		if (size <= SIZE_MAX/2) {
+			size *= 2 ;
+		} else {
+			fatal_overflow();
+		}
+		assert(size >= occupied);
+	} while (size - occupied < nb+1+BUF_MARGIN);
+	bp->buffer = erealloc(bp->buffer, size);
+	bp->inPtr = bp->buffer +occupied;
+	bp->endPtr = bp->buffer + size;
+}
 
 void
 Buf_AddChars(Buffer bp, size_t numBytes, const char *bytesPtr)
 {
-
+	assert(bp->endPtr >= bp->inPtr);
 	if ((size_t)(bp->endPtr - bp->inPtr) < numBytes+1)
 		BufExpand(bp, numBytes);
 
@@ -150,7 +143,7 @@ Buf_printf(Buffer bp, const char *fmt, ...)
 	va_start(va, fmt);
 	n = vsnprintf(bp->inPtr, bp->endPtr - bp->inPtr, fmt, va);
 	va_end(va);
-	if (n > bp->endPtr - bp->inPtr) {
+	if (n+1 > bp->endPtr - bp->inPtr) {
 		va_list vb;
 		BufExpand(bp, n);
 		va_start(vb, fmt);
