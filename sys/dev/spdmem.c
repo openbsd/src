@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.6 2019/12/17 08:01:36 claudio Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.7 2019/12/21 12:33:03 kettenis Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -770,8 +770,8 @@ spdmem_ddr4_decode(struct spdmem_softc *sc, struct spdmem *s)
 		    SPDMEM_DDR4_PACK_TYPE_DIE_COUNT_MASK;
 	}
 
-	dimm_size = datawidth - (chipwidth + 2);
-	dimm_size = ddr4_chipsize[chipsize] * (1 << dimm_size) *
+	dimm_size = (datawidth + 3) - (chipwidth + 2);
+	dimm_size = (ddr4_chipsize[chipsize] / 8) * (1 << dimm_size) *
 	    (physbanks + 1) * (diecount + 1);
 
 	if (dimm_size < 1024)
