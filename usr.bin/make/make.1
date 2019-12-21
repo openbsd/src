@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.129 2019/08/22 19:37:30 espie Exp $
+.\"	$OpenBSD: make.1,v 1.130 2019/12/21 15:25:12 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: August 22 2019 $
+.Dd $Mdocdate: December 21 2019 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -79,6 +79,17 @@ The handling of
 is a
 .Bx
 extension.
+.Pp
+If a list of
+.Ar target ...
+is specified,
+.Nm
+will build those targets.
+Otherwise a default target will be built:
+either a target explicitly marked with
+.Ic .MAIN
+or the first target encountered in the
+.Em makefile .
 .Pp
 Standard options are as follows:
 .Bl -tag -width Ds
