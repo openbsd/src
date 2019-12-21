@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile,v 1.7 2018/06/13 14:54:42 reyk Exp $
+#	$OpenBSD: Makefile,v 1.8 2019/12/21 18:56:27 millert Exp $
 
 PROG=	login_passwd
 MAN=	login_passwd.8
-SRCS=	login.c login_passwd.c
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
 CFLAGS+=-Wall
