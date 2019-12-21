@@ -1,6 +1,6 @@
 #ifndef GNODE_H
 #define GNODE_H
-/*	$OpenBSD: gnode.h,v 1.31 2019/12/21 15:29:25 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.32 2019/12/21 15:29:59 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -101,8 +101,8 @@
 struct GNode_ {
     unsigned int special_op;	/* special op to apply */
     unsigned char special;	/* type of special node */
-    char must_make;		/* true if this target needs building */
-    char child_rebuilt;		/* true if at least one child was rebuilt,
+    bool must_make;		/* true if this target needs building */
+    bool child_rebuilt;		/* true if at least one child was rebuilt,
     			 	 * thus triggering timestamps changes */
 
     char built_status;	
