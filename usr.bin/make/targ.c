@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.78 2017/06/22 17:08:20 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.79 2019/12/21 15:28:17 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -302,7 +302,7 @@ status_to_string(GNode *gn)
 	switch (gn->built_status) {
 	case UNKNOWN:
 		return "unknown";
-	case MADE:
+	case REBUILT:
 		return "made";
 	case UPTODATE:
 		return "up-to-date";

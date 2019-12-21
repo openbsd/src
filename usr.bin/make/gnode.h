@@ -1,6 +1,6 @@
 #ifndef GNODE_H
 #define GNODE_H
-/*	$OpenBSD: gnode.h,v 1.29 2017/06/22 17:08:20 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.30 2019/12/21 15:28:17 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -69,16 +69,13 @@
  */
 
 #define UNKNOWN		0
-#define BEINGMADE	1
-#define MADE		2
+#define BUILDING	1
+#define REBUILT		2
 #define UPTODATE	3
 #define ERROR		4
 #define ABORTED		5
-#define CYCLE		6
-#define ENDCYCLE	7
-#define NOSUCHNODE	8
-#define BUILDING	9
-#define HELDBACK	10
+#define NOSUCHNODE	6
+#define HELDBACK	7
 
 #define SPECIAL_NONE	0U
 #define SPECIAL_PATH		21U
@@ -121,9 +118,8 @@ struct GNode_ {
     char built_status;	/* Set to reflect the state of processing
 			 * on this node:
 			 *  UNKNOWN - Not examined yet
-			 *  BEINGMADE - Target is currently being made.
-			 *  BUILDING - There is a job running
-			 *  MADE - Was out-of-date and has been made
+			 *  BUILDING - Target is currently being made.
+			 *  REBUILT - Was out-of-date and has been made
 			 *  UPTODATE - Was already up-to-date
 			 *  ERROR - An error occurred while it was being
 			 *	made (used only in compat mode)
@@ -168,7 +164,7 @@ struct command
 };
 
 #define has_been_built(gn) \
-	((gn)->built_status == MADE || (gn)->built_status == UPTODATE)
+	((gn)->built_status == REBUILT || (gn)->built_status == UPTODATE)
 #define should_have_file(gn) \
 	((gn)->special == SPECIAL_NONE && \
 	((gn)->type & (OP_PHONY | OP_DUMMY)) == 0)

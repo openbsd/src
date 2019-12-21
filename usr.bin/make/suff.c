@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.95 2018/11/13 14:51:35 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.96 2019/12/21 15:28:17 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -919,7 +919,7 @@ SuffLinkParent(GNode *cgn, GNode *pgn)
 	if (!has_been_built(cgn))
 		pgn->unmade++;
 	else if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
-		if (cgn->built_status == MADE)
+		if (cgn->built_status == REBUILT)
 			pgn->childMade = true;
 		(void)Make_TimeStamp(pgn, cgn);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.86 2016/10/21 16:12:38 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.87 2019/12/21 15:28:16 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ CompatMake(void *gnp,	/* The node to make */
 		 * signal to not attempt to do anything but abort our
 		 * parent as well.  */
 		gn->must_make = true;
-		gn->built_status = BEINGMADE;
+		gn->built_status = BUILDING;
 		/* note that, in case we have siblings, we only check all
 		 * children for all siblings, but we don't try to apply
 		 * any other rule.
@@ -199,8 +199,8 @@ CompatMake(void *gnp,	/* The node to make */
 			 * its parents.
 			 * This is to keep its state from affecting that of
 			 * its parent.  */
-			gn->built_status = MADE;
-			sib->built_status = MADE;
+			gn->built_status = REBUILT;
+			sib->built_status = REBUILT;
 			/* This is what Make does and it's actually a good
 			 * thing, as it allows rules like
 			 *
@@ -246,12 +246,12 @@ CompatMake(void *gnp,	/* The node to make */
 		 * parent to abort.  */
 		pgn->must_make = false;
 		break;
-	case BEINGMADE:
+	case BUILDING:
 		Error("Graph cycles through %s", gn->name);
 		gn->built_status = ERROR;
 		pgn->must_make = false;
 		break;
-	case MADE:
+	case REBUILT:
 		if ((gn->type & OP_EXEC) == 0) {
 			pgn->childMade = true;
 			Make_TimeStamp(pgn, gn);
@@ -276,7 +276,7 @@ Compat_Run(Lst targs)		/* List of target nodes to re-create */
 	 * it to create the thing. CompatMake will leave the 'built_status'
 	 * field of gn in one of several states:
 	 *	    UPTODATE	    gn was already up-to-date
-	 *	    MADE	    gn was recreated successfully
+	 *	    REBUILT	    gn was recreated successfully
 	 *	    ERROR	    An error occurred while gn was being
 	 *                          created
 	 *	    ABORTED	    gn was not remade because one of its

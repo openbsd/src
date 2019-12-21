@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.140 2017/12/19 13:51:13 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.141 2019/12/21 15:28:17 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -536,7 +536,7 @@ postprocess_job(Job *job, bool okay)
 		/* As long as we aren't aborting and the job didn't return a
 		 * non-zero status that we shouldn't ignore, we call
 		 * Make_Update to update the parents. */
-		job->node->built_status = MADE;
+		job->node->built_status = REBUILT;
 		Make_Update(job->node);
 		free(job);
 	}
