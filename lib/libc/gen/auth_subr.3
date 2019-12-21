@@ -1,4 +1,4 @@
-.\"	$OpenBSD: auth_subr.3,v 1.23 2015/11/24 22:03:33 millert Exp $
+.\"	$OpenBSD: auth_subr.3,v 1.24 2019/12/21 06:01:09 jsg Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	BSDI $From: auth_subr.3,v 2.5 2000/03/30 19:11:27 polk Exp $
-.Dd $Mdocdate: November 24 2015 $
+.Dd $Mdocdate: December 21 2019 $
 .Dt AUTH_OPEN 3
 .Os
 .Sh NAME
@@ -200,6 +200,11 @@ The remaining arguments, which should be of type
 and terminated with a
 .Dv NULL ,
 are passed to the login script at the end of the command line.
+Non-optional arguments such as user should be prefixed by a
+.Qq --
+argument so that
+.Xr getopt 3
+will not attempt to interpret them as optional flags.
 .El
 .Pp
 The
