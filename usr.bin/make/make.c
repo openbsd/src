@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.75 2019/12/21 15:29:25 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.76 2019/12/21 15:31:54 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
  *	Make_Update		Update all parents of a given child. Performs
  *				various bookkeeping chores like finding the
  *				youngest child of the parent, filling
- *				the IMPSRC context variable, etc. It will
+ *				the IMPSRC local variable, etc. It will
  *				place the parent on the to_build queue if it
  *				should be.
  *
@@ -383,11 +383,10 @@ try_to_make_node(GNode *gn)
 		gn->built_status = UPTODATE;
 		if (gn->type & OP_JOIN) {
 			/*
-			 * Even for an up-to-date .JOIN node, we need it
-			 * to have its context variables so references
-			 * to it get the correct value for .TARGET when
-			 * building up the context variables of its
-			 * parent(s)...
+			 * Even for an up-to-date .JOIN node, we need its
+			 * local variables, so that we have the right
+			 * value for .TARGET when computing the
+			 * local variables of its parent(s)...
 			 */
 			Make_DoAllVar(gn);
 		}

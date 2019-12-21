@@ -1,6 +1,6 @@
 #ifndef SYMTABLE_H
 #define SYMTABLE_H
-/*	$OpenBSD: symtable.h,v 1.4 2010/07/19 19:46:44 espie Exp $ */
+/*	$OpenBSD: symtable.h,v 1.5 2019/12/21 15:31:54 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -30,7 +30,7 @@
 #define LOCAL_SIZE	7
 
 /* SymTable is private to var.c, but is declared here to allow for
-   local declaration of context tables
+   local declaration of symbol tables
  */
 struct SymTable_ {
 	char *locals[LOCAL_SIZE];

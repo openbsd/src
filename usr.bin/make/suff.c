@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.97 2019/12/21 15:29:25 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.98 2019/12/21 15:31:54 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -936,7 +936,7 @@ SuffExpandVarChildren(LstNode after, GNode *cgn, GNode *pgn)
 	if (DEBUG(SUFF))
 		printf("Expanding \"%s\"...", cgn->name);
 
-	cp = Var_Subst(cgn->name, &pgn->context, true);
+	cp = Var_Subst(cgn->name, &pgn->localvars, true);
 	if (cp == NULL) {
 		printf("Problem substituting in %s", cgn->name);
 		printf("\n");
@@ -953,7 +953,7 @@ SuffExpandVarChildren(LstNode after, GNode *cgn, GNode *pgn)
 		 */
 		const char *sacrifice = (const char *)cp;
 
-		(void)Arch_ParseArchive(&sacrifice, &members, &pgn->context);
+		(void)Arch_ParseArchive(&sacrifice, &members, &pgn->localvars);
 	} else {
 		/* Break the result into a vector of strings whose nodes
 		 * we can find, then add those nodes to the members list.
@@ -980,7 +980,7 @@ SuffExpandVarChildren(LstNode after, GNode *cgn, GNode *pgn)
 				/* Start of a variable spec -- contact variable
 				 * module to find the end so we can skip over
 				 * it.  */
-				Var_ParseSkip(&cp2, &pgn->context);
+				Var_ParseSkip(&cp2, &pgn->localvars);
 			else if (*cp2 == '\\' && cp2[1] != '\0')
 				/* Escaped something -- skip over it.  */
 				cp2+=2;

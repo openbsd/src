@@ -1,6 +1,6 @@
 #ifndef VAR_H
 #define VAR_H
-/* $OpenBSD: var.h,v 1.19 2016/10/23 14:54:14 espie Exp $ */
+/* $OpenBSD: var.h,v 1.20 2019/12/21 15:31:54 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -48,8 +48,9 @@ extern void Var_Seti_with_ctxt(const char *, const char *, const char *,
 #define Var_Set(n, v)	Var_Seti_with_ctxt(n, NULL, v, VAR_GLOBAL)
 #define Var_Seti(n, e, v) Var_Seti_with_ctxt(n, e, v, VAR_GLOBAL)
 /* Var_Appendi_with_ctxt(name, end, val, cxt);
- *	Appends value val to variable name/end in context ctxt, defining it
- *	if it does not already exist, and inserting one space otherwise. */
+ *	Appends value val to variable name/end in global context ctxt, 
+ *	defining it if it does not already exist, and inserting one 
+ *	space otherwise. */
 extern void Var_Appendi_with_ctxt(const char *, const char *,
 	const char *, int);
 #define Var_Append(n, v)	Var_Appendi_with_ctxt(n, NULL, v, VAR_GLOBAL)
@@ -68,7 +69,7 @@ extern void Var_Deletei(const char *, const char *);
 #define OODATE_INDEX	5
 #define ALLSRC_INDEX	6
 
-#define Var(idx, gn)	((gn)->context.locals[idx])
+#define Var(idx, gn)	((gn)->localvars.locals[idx])
 
 
 /* SymTable_Init(t);

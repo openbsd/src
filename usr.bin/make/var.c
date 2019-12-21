@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.101 2016/10/23 14:54:14 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.102 2019/12/21 15:31:54 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -574,7 +574,7 @@ Var_Mark(const char *name, const char *ename, unsigned int type)
 	}
 }
 
-/* Check if there's any reason not to use the variable in this context.
+/* Check if there's any reason not to use this variable.
  */
 static void
 poison_check(Var *v)
@@ -627,7 +627,7 @@ Var_Deletei(const char *name, const char *ename)
 	delete_var(v);
 }
 
-/* Set or add a global variable, in VAR_CMD or VAR_GLOBAL context.
+/* Set or add a global variable, either to VAR_CMD or VAR_GLOBAL.
  */
 static void
 var_set_append(const char *name, const char *ename, const char *val, int ctxt,
@@ -1029,7 +1029,7 @@ Var_Parse(const char *str,	/* The string to parse */
 	if (val == NULL) {
 		val = err ? var_Error : varNoError;
 		/* If it comes from a dynamic source, and it doesn't have
-		 * a context, copy the spec instead.
+		 * a local context, copy the spec instead.
 		 * Specifically, this make allows constructs like:
 		 * 	target.o: $*.c
 		 * Absence of a context means "parsing". But these can't

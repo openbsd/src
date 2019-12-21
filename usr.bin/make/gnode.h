@@ -1,6 +1,6 @@
 #ifndef GNODE_H
 #define GNODE_H
-/*	$OpenBSD: gnode.h,v 1.32 2019/12/21 15:29:59 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.33 2019/12/21 15:31:54 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -40,33 +40,32 @@
 #include <assert.h>
 
 /*-
- * The structure for an individual graph node. Each node has several
- * pieces of data associated with it.
- *	1) the name of the target it describes
- *	2) the location of the target file in the file system.
- *	3) the type of operator used to define its sources (cf parse.c)
- *	4) whether it is involved in this invocation of make
- *	5) whether the target has been rebuilt
- *	6) whether any of its children has been rebuilt
- *	7) the number of its children that are, as yet, not built
- *	8) its modification time
- *	9) the modification time of its youngest child (qv. make.c)
- *	10) a list of nodes for which this is a source
- *	11) a list of nodes on which this depends
- *	12) a list of nodes that depend on this, as gleaned from the
- *	    transformation rules.
- *	13) a list of nodes of the same name created by the :: operator
- *	14) a list of predecessors nodes, result of .ORDER:
+ * The structure for an individual graph node. Each node has a lot of
+ * of data associated with it.
+ *	1) the *name*of the target it describes (at end because ohash)
+ *	2) the *path* to the target file
+ *	3) the *type* of operator used to define its sources 
+ *		(cf parse.c, mostly : :: !  but...)
+ *	4) *must_make*: whether it is involved in this invocation of make
+ *	5) *built_status*: has the target been rebuilt/is up-to-date...
+ *	6) *child_rebuild*: at least one of its children has been rebuilt
+ *	7) *children_left*: number of children still to consider
+ *	8) *mtime*: node's modification time
+ *	9) *youngest*: youngest child (cf make.c)
+ *	10) *parents*: list of nodes for which this is a dependency
+ *	11) *children*: list of nodes on which this depends
+ *	12) *cohorts*: list of nodes of the same name created by the :: operator
+ *	13) *predecessors*: list of nodes, result of .ORDER:
  *	    if considered for building, they should be built before this node.
- *	15) a list of successors nodes, result of .ORDER:
+ *	14) *successors*: list of nodes, result of .ORDER:
  *	    if considered for building, they should be built after this node.
- *	16) a Lst of ``local'' variables that are specific to this target
- *	   and this target only (qv. var.c [$@ $< $?, etc.])
- *	17) a Lst of strings that are commands to be given to a shell
+ *	15) *localvars*: ``local'' variables specific to this target
+ *	   and this target only (cf var.c [$@ $< $?, etc.])
+ *	16) *commands*: the actual LIST of strings to pass to the shell
  *	   to create this target.
  */
 
-#define SPECIAL_NONE	0U
+#define SPECIAL_NONE		0U
 #define SPECIAL_PATH		21U
 #define SPECIAL_MASK		63U
 #define SPECIAL_TARGET		64U
@@ -99,8 +98,9 @@
 #define SPECIAL_EXPENSIVE	33U
 
 struct GNode_ {
-    unsigned int special_op;	/* special op to apply */
-    unsigned char special;	/* type of special node */
+    unsigned int type;		/* node type (see the OP flags, below) */
+    unsigned int special_op;	/* special op to apply (only used in parse.c) */
+    unsigned char special;	/* type of special node or SPECIAL_NONE */
     bool must_make;		/* true if this target needs building */
     bool child_rebuilt;		/* true if at least one child was rebuilt,
     			 	 * thus triggering timestamps changes */
@@ -116,36 +116,39 @@ struct GNode_ {
 				 * making an inferior */
 #define NOSUCHNODE	6	/* error from run_gnode */
 #define HELDBACK	7	/* Another target in the same group is
-				 * currently building, avoid race conditions */
+				 * currently building, avoid race conditions
+				 * Only used in the parallel engine make.c */
 
-    char *path;		/* The full pathname of the file */
-    unsigned int type;	/* Its type (see the OP flags, below) */
-    int order;		/* Its wait weight */
+    char *path;		/* full pathname of the file */
+    int order;		/* wait weight (see .ORDER/predecessors/successors) */
 
-    int children_left;	/* The number of children left to build */
-    int in_cycle;	/* cycle detection */
+    int children_left;	/* number of children left to build */
 
     struct timespec mtime;	/* Node's modification time */
     GNode *youngest;		/* Node's youngest child */
 
-    GNode *impliedsrc;
+    GNode *impliedsrc;	/* found by suff, to help with localvars */
     LIST cohorts;	/* Other nodes for the :: operator */
     LIST parents;	/* Nodes that depend on this one */
     LIST children;	/* Nodes on which this one depends */
     LIST predecessors;
     LIST successors; 	
 
-    SymTable context;	/* The local variables */
+    SymTable localvars;
     LIST commands;	/* Creation commands */
     Suff *suffix;	/* Suffix for the node (determined by
 			 * Suff_FindDeps and opaque to everyone
 			 * but the Suff module) */
-    GNode *sibling;	/* equivalent targets */
-    GNode *groupling;	/* target lists */
-    GNode *watched;	/* the node currently building */
-    /* stuff for target name equivalence */
+    GNode *groupling;	/* target lists, for HELDBACK: do not build two
+    			 * at the same time */
+    GNode *watched;	/* the node currently building for HELDBACK */
+
+			/* stuff for target name equivalence: */
+    GNode *sibling;	/* equivalent targets (not complete yet) */
     char *basename;	/* pointer to name stripped of path */
     GNode *next;
+
+    bool in_cycle;	/* cycle detection */
     char name[1];	/* The target's name */
 };
 

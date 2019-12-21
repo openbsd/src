@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.58 2019/12/21 15:29:25 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.59 2019/12/21 15:31:54 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -825,7 +825,7 @@ job_run_next(Job *job)
 		handle_all_signals();
 		job->location = &command->location;
 		Parse_SetLocation(job->location);
-		job->cmd = Var_Subst(command->string, &gn->context, false);
+		job->cmd = Var_Subst(command->string, &gn->localvars, false);
 		job->next_cmd = Lst_Adv(job->next_cmd);
 		if (fatal_errors)
 			Punt(NULL);
