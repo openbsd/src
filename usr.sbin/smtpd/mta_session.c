@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.122 2019/09/20 17:46:05 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.123 2019/12/21 10:34:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -128,6 +128,7 @@ struct mta_session {
 	struct mta_task		*task;
 	struct mta_envelope	*currevp;
 	FILE			*datafp;
+	size_t			 datalen;
 
 	size_t			 failures;
 
@@ -362,8 +363,10 @@ mta_free(struct mta_session *s)
 
 	if (s->task)
 		fatalx("current task should have been deleted already");
-	if (s->datafp)
+	if (s->datafp) {
 		fclose(s->datafp);
+		s->datalen = 0;
+	}
 	free(s->helo);
 
 	relay = s->relay;
@@ -814,6 +817,7 @@ again:
 		if (s->datafp) {
 			fclose(s->datafp);
 			s->datafp = NULL;
+			s->datalen = 0;
 		}
 		mta_send(s, "RSET");
 		break;
@@ -1344,7 +1348,7 @@ mta_queue_data(struct mta_session *s)
 			break;
 		if (ln[len - 1] == '\n')
 			ln[len - 1] = '\0';
-		io_xprintf(s->io, "%s%s\r\n", *ln == '.' ? "." : "", ln);
+		s->datalen += io_xprintf(s->io, "%s%s\r\n", *ln == '.' ? "." : "", ln);
 	}
 
 	free(ln);
