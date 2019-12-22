@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.43 2017/07/19 22:23:54 kettenis Exp $	*/
+/*	$OpenBSD: midi.c,v 1.44 2019/12/22 19:11:45 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -126,7 +126,8 @@ midiread(dev_t dev, struct uio *uio, int ioflag)
 			goto done_mtx;
 		}
 		sc->rchan = 1;
-		error = msleep(&sc->rchan, &audio_lock, PWAIT | PCATCH, "mid_rd", 0);
+		error = msleep_nsec(&sc->rchan, &audio_lock, PWAIT | PCATCH,
+		    "mid_rd", INFSLP);
 		if (!(sc->dev.dv_flags & DVF_ACTIVE))
 			error = EIO;
 		if (error)
@@ -270,8 +271,8 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 				goto done_mtx;
 			}
 			sc->wchan = 1;
-			error = msleep(&sc->wchan, &audio_lock,
-			    PWAIT | PCATCH, "mid_wr", 0);
+			error = msleep_nsec(&sc->wchan, &audio_lock,
+			    PWAIT | PCATCH, "mid_wr", INFSLP);
 			if (!(sc->dev.dv_flags & DVF_ACTIVE))
 				error = EIO;
 			if (error)
@@ -476,8 +477,8 @@ midiclose(dev_t dev, int fflag, int devtype, struct proc *p)
 		midi_out_start(sc);
 	while (sc->isbusy) {
 		sc->wchan = 1;
-		error = msleep(&sc->wchan, &audio_lock,
-		    PWAIT, "mid_dr", 5 * hz);
+		error = msleep_nsec(&sc->wchan, &audio_lock,
+		    PWAIT, "mid_dr", SEC_TO_NSEC(5));
 		if (!(sc->dev.dv_flags & DVF_ACTIVE))
 			error = EIO;
 		if (error)
@@ -492,7 +493,7 @@ midiclose(dev_t dev, int fflag, int devtype, struct proc *p)
 	 * sleep 20ms (around 64 bytes) to give the time to the
 	 * uart to drain its internal buffers.
 	 */
-	tsleep(&sc->wchan, PWAIT, "mid_cl", hz * MIDI_MAXWRITE / MIDI_RATE);
+	tsleep_nsec(&sc->wchan, PWAIT, "mid_cl", MSEC_TO_NSEC(20));
 	sc->hw_if->close(sc->hw_hdl);
 	sc->flags = 0;
 	device_unref(&sc->dev);
