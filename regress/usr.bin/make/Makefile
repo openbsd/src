@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.49 2019/06/19 12:53:26 espie Exp $
+# $OpenBSD: Makefile,v 1.50 2019/12/22 09:16:58 espie Exp $
 
 REGRESS_TARGETS=     t1  t2  t3  t4  t5  t6  t7  t8  t9 \
 		t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 \
@@ -6,8 +6,7 @@ REGRESS_TARGETS=     t1  t2  t3  t4  t5  t6  t7  t8  t9 \
 		t30 t31 t32 t33 t34 t35 t36 t37 t38 t38j t39 \
 		t40 t41 t42 t42bis t43 t44 t45 t46 t47 t48
 
-REGRESS_EXPECTED_FAILURES = t14 t17 t18 t20
-# We don't pass t14 t17 t18 t20
+REGRESS_EXPECTED_FAILURES = t14 t17 t18
 
 MALLOC_OPTIONS?=J
 t1: t1.out
@@ -95,11 +94,8 @@ t18:
 t19:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} SHELL=/bin/zsh ${MAKE} -r -f mk19 | diff - t19.out
 
-# a POSIX test we don't pass yet.
-# would require adding a 'magic' status for variable (as SHELL is very, very
-# special according to POSIX)
 t20:
-	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} SHELL=/bin/sh -r -f mk20 | diff - t20.out
+	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} SHELL=/bin/sh ${MAKE} -r -f mk20 | diff - t20.out
 
 t21:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk21 | diff - t21.out
