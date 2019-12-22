@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.81 2019/12/21 15:31:54 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.82 2019/12/22 16:53:40 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -150,8 +150,9 @@ Targ_NewGNi(const char *name, const char *ename)
 
 	gn = ohash_create_entry(&gnode_info, name, &ename);
 	gn->path = NULL;
-	gn->type = 0;
+	gn->type = OP_ZERO;
 	gn->special = SPECIAL_NONE;
+	gn->special_op = 0;
 	gn->children_left = 0;
 	gn->must_make = false;
 	gn->built_status = UNKNOWN;

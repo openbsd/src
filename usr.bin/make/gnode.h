@@ -1,6 +1,6 @@
 #ifndef GNODE_H
 #define GNODE_H
-/*	$OpenBSD: gnode.h,v 1.33 2019/12/21 15:31:54 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.34 2019/12/22 16:53:40 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -172,12 +172,13 @@ struct command
  * the lefthand side of an operator, though it may have been on the
  * righthand side...
  */
+#define OP_ZERO		0x00000000  /* No dependency operator seen so far */
 #define OP_DEPENDS	0x00000001  /* Execution of commands depends on
 				     * kids (:) */
 #define OP_FORCE	0x00000002  /* Always execute commands (!) */
 #define OP_DOUBLEDEP	0x00000004  /* Execution of commands depends on kids
 				     * per line (::) */
-#define OP_ERROR	0x00000000
+#define OP_ERROR	0x00000007
 #define OP_OPMASK	(OP_DEPENDS|OP_FORCE|OP_DOUBLEDEP)
 
 #define OP_OPTIONAL	0x00000008  /* Don't care if the target doesn't
@@ -227,7 +228,7 @@ struct command
  * OP_NOP will return true if the node with the given type was not the
  * object of a dependency operator
  */
-#define OP_NOP(t)	(((t) & OP_OPMASK) == 0x00000000)
+#define OP_NOP(t)	(((t) & OP_OPMASK) == OP_ZERO)
 
 #define OP_NOTARGET (OP_NOTMAIN|OP_USE|OP_EXEC|OP_TRANSFORM)
 
