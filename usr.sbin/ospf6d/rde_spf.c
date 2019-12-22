@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.25 2015/12/05 06:45:19 mmcc Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.26 2019/12/22 11:19:07 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -36,9 +36,6 @@ RB_PROTOTYPE(rt_tree, rt_node, entry, rt_compare)
 RB_GENERATE(rt_tree, rt_node, entry, rt_compare)
 struct vertex			*spf_root = NULL;
 
-void		 calc_nexthop_clear(struct vertex *);
-void		 calc_nexthop_add(struct vertex *, struct vertex *,
-		     const struct in6_addr *, u_int32_t);
 struct in6_addr	*calc_nexthop_lladdr(struct vertex *, struct lsa_rtr_link *,
 		     unsigned int);
 void		 calc_nexthop_transit_nbr(struct vertex *, struct vertex *,
@@ -142,7 +139,7 @@ spf_calc(struct area *area)
 					continue;
 				if (d < w->cost) {
 					w->cost = d;
-					calc_nexthop_clear(w);
+					vertex_nexthop_clear(w);
 					calc_nexthop(w, v, area, rtr_link);
 					/*
 					 * need to readd to candidate list
@@ -156,7 +153,7 @@ spf_calc(struct area *area)
 			} else if (w->cost == LS_INFINITY && d < LS_INFINITY) {
 				w->cost = d;
 
-				calc_nexthop_clear(w);
+				vertex_nexthop_clear(w);
 				calc_nexthop(w, v, area, rtr_link);
 				cand_list_add(w);
 			}
@@ -420,26 +417,25 @@ asext_calc(struct vertex *v)
 		}
 
 		area.s_addr = 0;
-		calc_nexthop_clear(v);
+		vertex_nexthop_clear(v);
 		TAILQ_FOREACH(rn, &r->nexthop, entry) {
 			if (rn->invalid)
 				continue;
 
 			if (rn->connected && r->d_type == DT_NET) {
 				if (metric & LSA_ASEXT_F_FLAG)
-					calc_nexthop_add(v, NULL, &fw_addr,
+					vertex_nexthop_add(v, NULL, &fw_addr,
 					    rn->ifindex);
 				else
 					fatalx("asext_calc: I'm sorry Dave, "
 					    "I'm afraid I can't do that.");
 			} else
-				calc_nexthop_add(v, NULL, &rn->nexthop,
+				vertex_nexthop_add(v, NULL, &rn->nexthop,
 				    rn->ifindex);
 		}
 
-		rt_update(&addr, prefix->prefixlen,
-		    &v->nexthop, v->cost, cost2, area, adv_rtr, type,
-		    DT_NET, 0, ext_tag);
+		rt_update(&addr, prefix->prefixlen, &v->nexthop, v->cost, cost2,
+		    area, adv_rtr, type, DT_NET, 0, ext_tag);
 		break;
 	default:
 		fatalx("asext_calc: invalid LSA type");
@@ -454,36 +450,8 @@ spf_tree_clr(struct area *area)
 
 	RB_FOREACH(v, lsa_tree, tree) {
 		v->cost = LS_INFINITY;
-		calc_nexthop_clear(v);
+		vertex_nexthop_clear(v);
 	}
-}
-
-void
-calc_nexthop_clear(struct vertex *v)
-{
-	struct v_nexthop	*vn;
-
-	while ((vn = TAILQ_FIRST(&v->nexthop))) {
-		TAILQ_REMOVE(&v->nexthop, vn, entry);
-		free(vn);
-	}
-}
-
-void
-calc_nexthop_add(struct vertex *dst, struct vertex *parent,
-	const struct in6_addr *nexthop, u_int32_t ifindex)
-{
-	struct v_nexthop	*vn;
-
-	if ((vn = calloc(1, sizeof(*vn))) == NULL)
-		fatal("calc_nexthop_add");
-
-	vn->prev = parent;
-	if (nexthop)
-		vn->nexthop = *nexthop;
-	vn->ifindex = ifindex;
-
-	TAILQ_INSERT_TAIL(&dst->nexthop, vn, entry);
 }
 
 struct in6_addr *
@@ -541,7 +509,7 @@ calc_nexthop_transit_nbr(struct vertex *dst, struct vertex *parent,
 		    rtr_link->nbr_rtr_id == parent->lsa->hdr.adv_rtr &&
 		    rtr_link->nbr_iface_id == parent->lsa->hdr.ls_id) {
 			lladdr = calc_nexthop_lladdr(dst, rtr_link, ifindex);
-			calc_nexthop_add(dst, parent, lladdr, ifindex);
+			vertex_nexthop_add(dst, parent, lladdr, ifindex);
 		}
 	}
 }
@@ -574,7 +542,7 @@ calc_nexthop(struct vertex *dst, struct vertex *parent,
 			fatalx("calc_nexthop: invalid dst type");
 		}
 
-		calc_nexthop_add(dst, spf_root, nexthop,
+		vertex_nexthop_add(dst, parent, nexthop,
 		    ntohl(rtr_link->iface_id));
 		return;
 	}
@@ -587,7 +555,7 @@ calc_nexthop(struct vertex *dst, struct vertex *parent,
 				    vn->ifindex);
 			else
 				/* dst is more than one transit net away */
-				calc_nexthop_add(dst, parent, &vn->nexthop,
+				vertex_nexthop_add(dst, parent, &vn->nexthop,
 				    vn->ifindex);
 		}
 		return;
@@ -595,7 +563,7 @@ calc_nexthop(struct vertex *dst, struct vertex *parent,
 
 	/* case 3 */
 	TAILQ_FOREACH(vn, &parent->nexthop, entry)
-	    calc_nexthop_add(dst, parent, &vn->nexthop, vn->ifindex);
+	    vertex_nexthop_add(dst, parent, &vn->nexthop, vn->ifindex);
 }
 
 /* candidate list */
