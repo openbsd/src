@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.25 2019/06/28 13:32:49 deraadt Exp $ */
+/*	$OpenBSD: interface.c,v 1.26 2019/12/22 15:34:52 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -708,7 +708,7 @@ if_to_ctl(struct iface *iface)
 
 /* misc */
 void
-if_set_recvbuf(int fd)
+if_set_sockbuf(int fd)
 {
 	int	bsize;
 
@@ -718,7 +718,15 @@ if_set_recvbuf(int fd)
 		bsize /= 2;
 
 	if (bsize != 256 * 1024)
-		log_warnx("if_set_recvbuf: recvbuf size only %d", bsize);
+		log_warnx("if_set_sockbuf: recvbuf size only %d", bsize);
+
+	bsize = 64 * 1024;
+	while (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &bsize,
+	    sizeof(bsize)) == -1)
+		bsize /= 2;
+
+	if (bsize != 64 * 1024)
+		log_warnx("if_set_sockbuf: sendbuf size only %d", bsize);
 }
 
 int

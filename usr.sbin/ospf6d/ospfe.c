@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.56 2019/06/11 05:00:09 remi Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.57 2019/12/22 15:34:52 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -99,7 +99,7 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 		fatal("if_set_ipv6_checksum");
 	if (if_set_ipv6_pktinfo(xconf->ospf_socket, 1) == -1)
 		fatal("if_set_ipv6_pktinfo");
-	if_set_recvbuf(xconf->ospf_socket);
+	if_set_sockbuf(xconf->ospf_socket);
 
 	oeconf = xconf;
 	if (oeconf->flags & OSPFD_FLAG_NO_FIB_UPDATE)
