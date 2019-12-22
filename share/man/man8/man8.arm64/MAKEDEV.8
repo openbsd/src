@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.4 2019/12/17 13:18:05 reyk Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.5 2019/12/22 18:19:55 kettenis Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.arm64/MAKEDEV.md,v 1.4 2019/12/17 13:08:55 reyk Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.106 2019/12/17 13:08:54 reyk Exp 
+.\"	OpenBSD: etc.arm64/MAKEDEV.md,v 1.5 2019/12/22 18:18:02 kettenis Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.107 2019/12/17 13:15:17 reyk Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.9 2017/06/06 08:11:23 tb Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 17 2019 $
+.Dd $Mdocdate: December 22 2019 $
 .Dt MAKEDEV 8 arm64
 .Os
 .Sh NAME
@@ -209,6 +209,9 @@ General Purpose Input/Output, see
 .It Ar hotplug
 devices hot plugging, see
 .Xr hotplug 4 .
+.It Ar ipmi*
+IPMI BMC access, see
+.Xr ipmi 4 .
 .It Ar pci*
 PCI bus devices, see
 .Xr pci 4 .
