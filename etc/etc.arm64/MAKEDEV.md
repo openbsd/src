@@ -1,6 +1,6 @@
 define(MACHINE,arm64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.4 2019/12/17 13:08:55 reyk Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.5 2019/12/22 18:18:02 kettenis Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -66,6 +66,7 @@ _DEV(fdesc, 22)
 _DEV(fuse, 92)
 _DEV(gpio, 88)
 _DEV(hotplug, 82)
+_DEV(ipmi, 96)
 dnl _DEV(joy, 26)
 _DEV(pci, 72)
 _DEV(pf, 73)
@@ -110,5 +111,6 @@ target(all, sd, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
 target(all, bktr, 0)dnl
 target(all, gpio, 0, 1, 2)dnl
+target(all, ipmi, 0)dnl
 target(all, switch, 0, 1, 2, 3)dnl
 twrget(ramd, wsdisp, ttyC, 0)dnl
