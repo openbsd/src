@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.133 2019/09/09 13:50:06 deraadt Exp $ */
+/* $OpenBSD: signify.c,v 1.134 2019/12/22 06:37:25 espie Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -145,6 +145,8 @@ parseb64file(const char *filename, char *b64, void *buf, size_t buflen,
 		errx(1, "unable to parse %s", filename);
 	if (memcmp(buf, PKALG, 2) != 0)
 		errx(1, "unsupported file %s", filename);
+	*commentend = '\n';
+	*b64end = '\n';
 	return b64end - b64 + 1;
 }
 

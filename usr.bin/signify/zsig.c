@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.17 2019/12/09 09:41:54 espie Exp $ */
+/* $OpenBSD: zsig.c,v 1.18 2019/12/22 06:37:25 espie Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -181,7 +181,7 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 {
 	struct gzheader h;
 	size_t bufsize, len;
-	char *p, *meta;
+	char *p;
 	uint8_t *bufend;
 	int fdin, fdout;
 
@@ -199,9 +199,6 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 	fake[8] = h.xflg;
 	len = h.endcomment-h.comment;
 
-	meta = xmalloc(len+1);
-	memcpy(meta, h.comment, len);
-	meta[len] = 0;
 	p = verifyzdata(h.comment, len, sigfile,
 	    pubkeyfile, keytype);
 
@@ -219,12 +216,11 @@ zverify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 
 	if (*p != '\n')
 		errx(1, "invalid signature");
-	*(p++) = 0;
 
 	fdout = xopen(msgfile, O_CREAT|O_TRUNC|O_NOFOLLOW|O_WRONLY, 0666);
 	writeall(fdout, fake, sizeof fake, msgfile);
-	writeall(fdout, meta, len+1, msgfile);
-	free(meta);
+	writeall(fdout, h.comment, len+1, msgfile);
+	*(p++) = 0;
 	copy_blocks(fdout, fdin, p, h.endcomment, bufsize, bufend);
 	free(h.buffer);
 	close(fdout);
