@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.102 2019/12/21 15:31:54 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.103 2019/12/22 09:26:23 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -221,7 +221,7 @@ typedef struct Var_ {
 #define VAR_FROM_CMD	4	/* Special source: command line */
 #define VAR_FROM_ENV	8	/* Special source: environment */
 #define VAR_SEEN_ENV	16	/* No need to go look up environment again */
-#define VAR_SHELL	32	/* Magic behavior */
+#define VAR_IS_SHELL	32	/* Magic behavior */
 
 #define POISONS (POISON_NORMAL | POISON_EMPTY | POISON_NOT_DEFINED)
 				/* Defined in var.h */
@@ -652,7 +652,7 @@ var_set_append(const char *name, const char *ename, const char *val, int ctxt,
 	if (ctxt == VAR_CMD) {	/* always for command line */
 		(append ? var_append_value : var_set_value)(v, val);
 		v->flags |= VAR_FROM_CMD;
-		if ((v->flags & VAR_SHELL) == 0) {
+		if ((v->flags & VAR_IS_SHELL) == 0) {
 			/* Any variables given on the command line are
 			 * automatically exported to the environment,
 			 * except for SHELL (as per POSIX standard).
@@ -1333,7 +1333,7 @@ set_magic_shell_variable()
 	v = find_global_var_without_env(name, ename, k);
 	var_set_value(v, _PATH_BSHELL);
 	/* XXX the environment shall never affect it */
-	v->flags = VAR_SHELL | VAR_SEEN_ENV;
+	v->flags = VAR_IS_SHELL | VAR_SEEN_ENV;
 }
 
 /*
