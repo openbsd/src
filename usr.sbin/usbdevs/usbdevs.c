@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.32 2019/11/30 14:02:47 mestre Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.33 2019/12/22 14:02:38 semarie Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -52,11 +52,11 @@
 #define USBDEV "/dev/usb"
 
 int verbose = 0;
+char done[USB_MAX_DEVICES];
 
 void usage(void);
-void usbdev(int f, uint8_t);
-void usbdump(int f);
-void dumpone(char *name, int f, int addr);
+void dump_device(int, uint8_t);
+void dump_controller(char *, int, uint8_t);
 int main(int, char **);
 
 extern char *__progname;
@@ -68,79 +68,83 @@ usage(void)
 	exit(1);
 }
 
-char done[USB_MAX_DEVICES];
-
 void
-usbdev(int f, uint8_t addr)
+dump_device(int fd, uint8_t addr)
 {
 	struct usb_device_info di;
-	int e, i, port, nports;
-	uint16_t change, status;
+	int i;
 	char vv[sizeof(di.udi_vendor)*4], vp[sizeof(di.udi_product)*4];
 	char vr[sizeof(di.udi_release)*4], vs[sizeof(di.udi_serial)*4];
 
 	di.udi_addr = addr;
-	e = ioctl(f, USB_DEVICEINFO, &di);
-	if (e) {
+	if (ioctl(fd, USB_DEVICEINFO, &di) == -1) {
 		if (errno != ENXIO)
-			printf("addr %d: I/O error\n", addr);
+			warn("addr %u", addr);
 		return;
 	}
 
-	printf("addr %02u: ", addr);
 	done[addr] = 1;
+
 	strvis(vv, di.udi_vendor, VIS_CSTYLE);
 	strvis(vp, di.udi_product, VIS_CSTYLE);
-	printf("%04x:%04x %s, %s", di.udi_vendorNo, di.udi_productNo,
+	printf("addr %02u: %04x:%04x %s, %s", addr,
+	    di.udi_vendorNo, di.udi_productNo,
 	    vv, vp);
 
 	if (verbose) {
 		printf("\n\t ");
 		switch (di.udi_speed) {
 		case USB_SPEED_LOW:
-			printf("low speed, ");
+			printf("low speed");
 			break;
 		case USB_SPEED_FULL:
-			printf("full speed, ");
+			printf("full speed");
 			break;
 		case USB_SPEED_HIGH:
-			printf("high speed, ");
+			printf("high speed");
 			break;
 		case USB_SPEED_SUPER:
-			printf("super speed, ");
+			printf("super speed");
 			break;
 		default:
 			break;
 		}
 
 		if (di.udi_power)
-			printf("power %d mA, ", di.udi_power);
+			printf(", power %d mA", di.udi_power);
 		else
-			printf("self powered, ");
+			printf(", self powered");
+
 		if (di.udi_config)
-			printf("config %d, ", di.udi_config);
+			printf(", config %d", di.udi_config);
 		else
-			printf("unconfigured, ");
+			printf(", unconfigured");
 
 		strvis(vr, di.udi_release, VIS_CSTYLE);
-		strvis(vs, di.udi_serial, VIS_CSTYLE);
-		printf("rev %s", vr);
-		if (strlen(di.udi_serial))
+		printf(", rev %s", vr);
+
+		if (di.udi_serial[0] != '\0') {
+			strvis(vs, di.udi_serial, VIS_CSTYLE);
 			printf(", iSerial %s", vs);
+		}
 	}
 	printf("\n");
 
-	if (verbose) {
+	if (verbose)
 		for (i = 0; i < USB_MAX_DEVNAMES; i++)
-			if (di.udi_devnames[i][0])
+			if (di.udi_devnames[i][0] != '\0')
 				printf("\t driver: %s\n", di.udi_devnames[i]);
-	}
 
 	if (verbose > 1) {
+		int port, nports;
+
 		nports = MINIMUM(di.udi_nports, nitems(di.udi_ports));
 		for (port = 0; port < nports; port++) {
+			uint16_t status, change;
+
 			status = di.udi_ports[port] & 0xffff;
 			change = di.udi_ports[port] >> 16;
+
 			printf("\t port %02u: %04x.%04x", port+1, change,
 			    status);
 
@@ -212,47 +216,38 @@ usbdev(int f, uint8_t addr)
 }
 
 void
-usbdump(int f)
+dump_controller(char *name, int fd, uint8_t addr)
 {
-	uint8_t addr;
+	memset(done, 0, sizeof(done));
 
-	for (addr = 1; addr < USB_MAX_DEVICES; addr++) {
-		if (!done[addr])
-			usbdev(f, addr);
+	if (addr) {
+		dump_device(fd, addr);
+		return;
 	}
-}
 
-void
-dumpone(char *name, int f, int addr)
-{
-	if (!addr)
-		printf("Controller %s:\n", name);
-	memset(done, 0, sizeof done);
-	if (addr)
-		usbdev(f, addr);
-	else
-		usbdump(f);
+	printf("Controller %s:\n", name);
+	for (addr = 1; addr < USB_MAX_DEVICES; addr++)
+		if (!done[addr])
+			dump_device(fd, addr);
 }
 
 int
 main(int argc, char **argv)
 {
-	int ch, i, f;
-	char buf[50];
-	char *dev = NULL;
+	int ch, fd;
+	char *controller = NULL;
+	uint8_t addr = 0;
 	const char *errstr;
-	int addr = 0;
-	int ncont;
 
 	while ((ch = getopt(argc, argv, "a:d:v?")) != -1) {
 		switch (ch) {
 		case 'a':
-			addr = strtonum(optarg, 1, USB_MAX_DEVICES, &errstr);
+			addr = strtonum(optarg, 1, USB_MAX_DEVICES-1, &errstr);
 			if (errstr)
 				errx(1, "addr %s", errstr);
 			break;
 		case 'd':
-			dev = optarg;
+			controller = optarg;
 			break;
 		case 'v':
 			verbose++;
@@ -272,30 +267,33 @@ main(int argc, char **argv)
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");
 
-	if (dev == 0) {
-		for (ncont = 0, i = 0; i < 10; i++) {
-			snprintf(buf, sizeof buf, "%s%d", USBDEV, i);
-			f = open(buf, O_RDONLY);
-			if (f >= 0) {
-				dumpone(buf, f, addr);
-				close(f);
-			} else {
-				if (errno == ENOENT || errno == ENXIO)
-					continue;
-				warn("%s", buf);
+	if (controller == NULL) {
+		int i;
+		int ncont = 0;
+
+		for (i = 0; i < 10; i++) {
+			char path[PATH_MAX];
+
+			snprintf(path, sizeof(path), "%s%d", USBDEV, i);
+			if ((fd = open(path, O_RDONLY)) < 0) {
+				if (errno != ENOENT && errno != ENXIO)
+					warn("%s", path);
+				continue;
 			}
+
+			dump_controller(path, fd, addr);
+			close(fd);
 			ncont++;
 		}
 		if (verbose && ncont == 0)
 			printf("%s: no USB controllers found\n",
 			    __progname);
 	} else {
-		f = open(dev, O_RDONLY);
-		if (f >= 0) {
-			dumpone(dev, f, addr);
-			close(f);
-		} else
-			err(1, "%s", dev);
+		if ((fd = open(controller, O_RDONLY)) < 0)
+			err(1, "%s", controller);
+
+		dump_controller(controller, fd, addr);
+		close(fd);
 	}
 
 	return 0;
