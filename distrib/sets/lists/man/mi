@@ -1208,6 +1208,7 @@
 ./usr/share/man/man4/amd64/skgpio.4
 ./usr/share/man/man4/amd64/tcpcib.4
 ./usr/share/man/man4/amd64/vmm.4
+./usr/share/man/man4/amdgpio.4
 ./usr/share/man/man4/amdiic.4
 ./usr/share/man/man4/amdpm.4
 ./usr/share/man/man4/ami.4
