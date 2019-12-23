@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.20 2019/12/23 07:33:49 denis Exp $ */
+/*	$OpenBSD: hello.c,v 1.21 2019/12/23 11:25:41 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -173,10 +173,16 @@ recv_hello(struct iface *iface, struct in6_addr *src, u_int32_t rtr_id,
 		nbr->dr.s_addr = hello.d_rtr;
 		nbr->bdr.s_addr = hello.bd_rtr;
 		nbr->priority = LSA_24_GETHI(ntohl(hello.opts));
+		/* XXX neighbor address shouldn't be stored on virtual links */
+		nbr->addr = *src;
 	}
 
-	/* actually the neighbor address shouldn't be stored on virtual links */
-	nbr->addr = *src;
+	if (!IN6_ARE_ADDR_EQUAL(&nbr->addr, src)) {
+		log_warnx("%s: neighbor ID %s changed its address to %s",
+		    __func__, inet_ntoa(nbr->id), log_in6addr(src));
+		nbr->addr = *src;
+	}
+
 	nbr->options = opts;
 
 	nbr_fsm(nbr, NBR_EVT_HELLO_RCVD);
