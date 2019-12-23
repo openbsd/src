@@ -463,6 +463,7 @@ amd64obsd_trapframe_sniffer (const struct frame_unwind *self,
 		   || (name[0] == 'X' && strncmp(name, "Xipi_", 5) != 0)
 		   || (strcmp (name, "alltraps") == 0)
 		   || (strcmp (name, "alltraps_kern") == 0)
+		   || (strcmp (name, "alltraps_kern_meltdown") == 0)
 		   || (strcmp (name, "intr_fast_exit") == 0)
 		   || (strcmp (name, "intr_exit_recurse") == 0)));
 }
