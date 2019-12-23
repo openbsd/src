@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.186 2019/11/19 02:01:58 kevlo Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.187 2019/12/23 08:05:42 kettenis Exp $
 
 machine		amd64
 maxusers	4
@@ -40,6 +40,7 @@ acpiec*		at acpi?
 acpiprt*	at acpi?
 acpimadt0	at acpi?
 #acpitz*	at acpi?
+amdgpio*	at acpi?
 aplgpio*	at acpi?
 bytgpio*	at acpi?
 sdhc*		at acpi?
