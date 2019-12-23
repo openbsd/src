@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.41 2019/12/16 08:28:33 denis Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.42 2019/12/23 07:33:49 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -112,6 +112,7 @@ enum imsg_type {
 	IMSG_NEIGHBOR_CHANGE,
 	IMSG_NETWORK_ADD,
 	IMSG_NETWORK_DEL,
+	IMSG_AREA_CHANGE,
 	IMSG_DD,
 	IMSG_DD_END,
 	IMSG_DB_SNAPSHOT,
@@ -304,10 +305,10 @@ struct iface {
 	struct in6_addr		 addr;
 	struct in6_addr		 dst;
 	struct in_addr		 abr_id;
-	struct in_addr		 area_id;
 	struct nbr		*dr;	/* designated router */
 	struct nbr		*bdr;	/* backup designated router */
 	struct nbr		*self;
+	struct area		*area;
 
 	u_int64_t		 baudrate;
 	u_int32_t		 ls_ack_cnt;
@@ -511,7 +512,7 @@ struct demote_msg {
 struct area	*area_new(void);
 int		 area_del(struct area *);
 struct area	*area_find(struct ospfd_conf *, struct in_addr);
-void		 area_track(struct area *, int);
+void		 area_track(struct area *);
 int		 area_border_router(struct ospfd_conf *);
 u_int32_t	 area_ospf_options(struct area *);
 

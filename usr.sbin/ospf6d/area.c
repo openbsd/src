@@ -1,4 +1,4 @@
-/*	$OpenBSD: area.c,v 1.4 2008/12/28 20:08:31 claudio Exp $ */
+/*	$OpenBSD: area.c,v 1.5 2019/12/23 07:33:49 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -88,19 +88,24 @@ area_find(struct ospfd_conf *conf, struct in_addr area_id)
 }
 
 void
-area_track(struct area *area, int state)
+area_track(struct area *area)
 {
-	int	old = area->active;
+	int		 old = area->active;
+	struct iface	*iface;
 
-	if (state & NBR_STA_FULL)
-		area->active++;
-	else if (area->active == 0)
-		fatalx("area_track: area already inactive");
-	else
-		area->active--;
+	area->active = 0;
+	LIST_FOREACH(iface, &area->iface_list, entry) {
+		if (iface->state & IF_STA_DOWN)
+			continue;
+		area->active = 1;
+		break;
+	}
 
-	if (area->active == 0 || old == 0)
+	if (area->active != old) {
+		ospfe_imsg_compose_rde(IMSG_AREA_CHANGE, area->id.s_addr, 0,
+		    &area->active, sizeof(area->active));
 		ospfe_demote_area(area, old == 0);
+	}
 }
 
 int
@@ -110,7 +115,7 @@ area_border_router(struct ospfd_conf *conf)
 	int		 active = 0;
 
 	LIST_FOREACH(area, &conf->area_list, entry)
-		if (area->active > 0)
+		if (area->active)
 			active++;
 
 	return (active > 1);
@@ -124,5 +129,5 @@ area_ospf_options(struct area *area)
 	if (area && !area->stub)
 		opt |= OSPF_OPTION_E;
 
-	return opt;
+	return (opt);
 }

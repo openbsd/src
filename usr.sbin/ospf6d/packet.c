@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.16 2019/12/11 21:33:56 denis Exp $ */
+/*	$OpenBSD: packet.c,v 1.17 2019/12/23 07:33:49 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -52,7 +52,7 @@ gen_ospf_hdr(struct ibuf *buf, struct iface *iface, u_int8_t type)
 	ospf_hdr.type = type;
 	ospf_hdr.rtr_id = ospfe_router_id();
 	if (iface->type != IF_TYPE_VIRTUALLINK)
-		ospf_hdr.area_id = iface->area_id.s_addr;
+		ospf_hdr.area_id = iface->area->id.s_addr;
 	ospf_hdr.instance = DEFAULT_INSTANCE_ID;
 	ospf_hdr.zero = 0;		/* must be zero */
 
@@ -270,7 +270,7 @@ ospf_hdr_sanity_check(struct ospf_hdr *ospf_hdr, u_int16_t len,
 	}
 
 	if (iface->type != IF_TYPE_VIRTUALLINK) {
-		if (ospf_hdr->area_id != iface->area_id.s_addr) {
+		if (ospf_hdr->area_id != iface->area->id.s_addr) {
 			id.s_addr = ospf_hdr->area_id;
 			log_debug("recv_packet: invalid area ID %s, "
 			    "interface %s", inet_ntoa(id), iface->name);

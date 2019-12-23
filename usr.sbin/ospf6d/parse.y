@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.46 2019/12/16 08:28:33 denis Exp $ */
+/*	$OpenBSD: parse.y,v 1.47 2019/12/23 07:33:49 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -537,7 +537,7 @@ interface	: INTERFACE STRING	{
 				YYERROR;
 			}
 			free($2);
-			iface->area_id.s_addr = area->id.s_addr;
+			iface->area = area;
 			LIST_INSERT_HEAD(&area->iface_list, iface, entry);
 
 			memcpy(&ifacedefs, defs, sizeof(ifacedefs));

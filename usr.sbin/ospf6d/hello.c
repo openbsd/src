@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.19 2019/12/11 21:33:56 denis Exp $ */
+/*	$OpenBSD: hello.c,v 1.20 2019/12/23 07:33:49 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -72,7 +72,7 @@ send_hello(struct iface *iface)
 	/* hello header */
 	hello.iface_id = htonl(iface->ifindex);
 	LSA_24_SETHI(hello.opts, iface->priority);
-	opts = area_ospf_options(area_find(oeconf, iface->area_id));
+	opts = area_ospf_options(iface->area);
 	LSA_24_SETLO(hello.opts, opts);
 	hello.opts = htonl(hello.opts);
 
@@ -148,7 +148,7 @@ recv_hello(struct iface *iface, struct in6_addr *src, u_int32_t rtr_id,
 		return;
 	}
 
-	if ((area = area_find(oeconf, iface->area_id)) == NULL)
+	if ((area = iface->area) == NULL)
 		fatalx("interface lost area");
 
 	opts = LSA_24_GETLO(ntohl(hello.opts));

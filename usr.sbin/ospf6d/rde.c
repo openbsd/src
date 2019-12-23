@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.80 2019/06/11 05:00:09 remi Exp $ */
+/*	$OpenBSD: rde.c,v 1.81 2019/12/23 07:33:49 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -319,13 +319,26 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			    (nbr->state & NBR_STA_FULL ||
 			    state & NBR_STA_FULL)) {
 				nbr->state = state;
-				area_track(nbr->area, state);
+				area_track(nbr->area);
 				orig_intra_area_prefix_lsas(nbr->area);
 			}
 
 			nbr->state = state;
 			if (nbr->state & NBR_STA_FULL)
 				rde_req_list_free(nbr);
+			break;
+		case IMSG_AREA_CHANGE:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(state))
+				fatalx("invalid size of OE request");
+
+			LIST_FOREACH(area, &rdeconf->area_list, entry) {
+				if (area->id.s_addr == imsg.hdr.peerid)
+					break;
+			}
+			if (area == NULL)
+				break;
+			memcpy(&state, imsg.data, sizeof(state));
+			area->active = state;
 			break;
 		case IMSG_DB_SNAPSHOT:
 			nbr = rde_nbr_find(imsg.hdr.peerid);
@@ -740,10 +753,9 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			if (prev_link_ok == link_ok)
 				break;
 
-			area = area_find(rdeconf, iface->area_id);
-			if (!area)
+			if (iface->area == NULL)
 				fatalx("interface lost area");
-			orig_intra_area_prefix_lsas(area);
+			orig_intra_area_prefix_lsas(iface->area);
 
 			break;
 		case IMSG_IFADD:
@@ -755,8 +767,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			TAILQ_INIT(&iface->ls_ack_list);
 			RB_INIT(&iface->lsa_tree);
 
-			area = area_find(rdeconf, iface->area_id);
-			LIST_INSERT_HEAD(&area->iface_list, iface, entry);
+			LIST_INSERT_HEAD(&iface->area->iface_list, iface, entry);
 			break;
 		case IMSG_IFDELETE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
@@ -789,9 +800,8 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			ia->prefixlen = ifc->prefixlen;
 
 			TAILQ_INSERT_TAIL(&iface->ifa_list, ia, entry);
-			area = area_find(rdeconf, iface->area_id);
-			if (area)
-				orig_intra_area_prefix_lsas(area);
+			if (iface->area)
+				orig_intra_area_prefix_lsas(iface->area);
 			break;
 		case IMSG_IFADDRDEL:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
@@ -815,9 +825,8 @@ rde_dispatch_parent(int fd, short event, void *bula)
 					break;
 				}
 			}
-			area = area_find(rdeconf, iface->area_id);
-			if (area)
-				orig_intra_area_prefix_lsas(area);
+			if (iface->area)
+				orig_intra_area_prefix_lsas(iface->area);
 			break;
 		case IMSG_RECONF_CONF:
 			if ((nconf = malloc(sizeof(struct ospfd_conf))) ==

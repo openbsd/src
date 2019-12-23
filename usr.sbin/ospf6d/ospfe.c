@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.57 2019/12/22 15:34:52 denis Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.58 2019/12/23 07:33:49 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -341,8 +341,8 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 			TAILQ_INIT(&iface->ls_ack_list);
 			RB_INIT(&iface->lsa_tree);
 
-			area = area_find(oeconf, iface->area_id);
-			LIST_INSERT_HEAD(&area->iface_list, iface, entry);
+			LIST_INSERT_HEAD(&iface->area->iface_list, iface,
+			    entry);
 			break;
 		case IMSG_IFDELETE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
@@ -600,10 +600,10 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				 * flood on all area interfaces on
 				 * area 0.0.0.0 include also virtual links.
 				 */
-				if ((area = area_find(oeconf,
-				    nbr->iface->area_id)) == NULL)
+				if (nbr->iface->area == NULL)
 					fatalx("interface lost area");
-				LIST_FOREACH(iface, &area->iface_list, entry) {
+				LIST_FOREACH(iface,
+				    &nbr->iface->area->iface_list, entry) {
 					noack += lsa_flood(iface, nbr,
 					    &lsa_hdr, imsg.data);
 				}
@@ -777,11 +777,8 @@ find_vlink(struct abr_rtr *ar)
 		LIST_FOREACH(iface, &area->iface_list, entry)
 			if (iface->abr_id.s_addr == ar->abr_id.s_addr &&
 			    iface->type == IF_TYPE_VIRTUALLINK &&
-//XXX			    iface->area->id.s_addr == ar->area.s_addr) {
-			    iface->area_id.s_addr == ar->area.s_addr) {
-//XXX				iface->dst.s_addr = ar->dst_ip.s_addr;
+			    iface->area->id.s_addr == ar->area.s_addr) {
 				iface->dst = ar->dst_ip;
-//XXX				iface->addr.s_addr = ar->addr.s_addr;
 				iface->addr = ar->addr;
 				iface->metric = ar->metric;
 
@@ -808,11 +805,9 @@ orig_rtr_lsa_all(struct area *area)
 void
 orig_rtr_lsa(struct iface *iface)
 {
-	struct area	*area;
-
-	if ((area = area_find(oeconf, iface->area_id)) == NULL)
+	if (iface->area == NULL)
 		fatalx("interface lost area");
-	orig_rtr_lsa_area(area);
+	orig_rtr_lsa_area(iface->area);
 }
 
 void
@@ -1155,7 +1150,7 @@ orig_link_lsa(struct iface *iface)
 
 	/* LSA link header (lladdr has already been filled in above) */
 	LSA_24_SETHI(lsa_link.opts, iface->priority);
-	options = area_ospf_options(area_find(oeconf, iface->area_id));
+	options = area_ospf_options(iface->area);
 	LSA_24_SETLO(lsa_link.opts, options);
 	lsa_link.opts = htonl(lsa_link.opts);
 	lsa_link.numprefix = htonl(num_prefix);
