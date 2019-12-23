@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.26 2019/12/15 09:39:48 visa Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.27 2019/12/23 09:03:24 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -2411,8 +2411,7 @@ aggr_up(struct aggr_softc *sc)
 
 	TAILQ_FOREACH(p, &sc->sc_ports, p_entry) {
 		aggr_rxm(sc, p, LACP_RXM_E_LACP_ENABLED);
-
-		aggr_selection_logic(sc, p);
+		aggr_p_linkch(p);
 	}
 
 	/* start the Periodic Transmission machine */
