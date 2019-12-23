@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.221 2019/12/08 11:08:22 sashan Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.222 2019/12/23 22:33:57 sashan Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -435,7 +435,8 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 
 		if (ip6_forwarding == 0 && rt->rt_ifidx != ifp->if_index &&
 		    !((ifp->if_flags & IFF_LOOPBACK) ||
-			(ifp->if_type == IFT_ENC))) {
+		    (ifp->if_type == IFT_ENC)) ||
+		    (m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST)) {
 			/* received on wrong interface */
 #if NCARP > 0
 			struct ifnet *out_if;

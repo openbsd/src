@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.346 2019/12/09 06:48:52 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.347 2019/12/23 22:33:57 sashan Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -753,7 +753,8 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct rtentry **prt)
 			}
 		}
 	} else if (ipforwarding == 0 && rt->rt_ifidx != ifp->if_index &&
-	    !((ifp->if_flags & IFF_LOOPBACK) || (ifp->if_type == IFT_ENC))) {
+	    !((ifp->if_flags & IFF_LOOPBACK) || (ifp->if_type == IFT_ENC) ||
+	    (m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST))) {
 		/* received on wrong interface. */
 #if NCARP > 0
 		struct ifnet *out_if;
