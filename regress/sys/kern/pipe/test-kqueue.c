@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-kqueue.c,v 1.1 2019/12/24 09:37:53 anton Exp $	*/
+/*	$OpenBSD: test-kqueue.c,v 1.2 2019/12/24 11:42:34 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -268,22 +268,10 @@ kqueue_thread(void *arg)
 	if (nevents != 1)
 		errx(1, "kevent: %d != 1", nevents);
 
-	switch (ctx->c_mode) {
-	case KQUEUE_READ:
-	case KQUEUE_READ_EOF:
-		if ((int)kev.ident != ctx->c_pipe[0])
-			errx(1, "kevent: ident");
-		if (kev.filter != EVFILT_READ)
-			errx(1, "kevent: filter");
-		break;
-	case KQUEUE_WRITE:
-	case KQUEUE_WRITE_EOF:
-		if ((int)kev.ident != ctx->c_pipe[1])
-			errx(1, "kevent: ident");
-		if (kev.filter != EVFILT_WRITE)
-			errx(1, "kevent: filter");
-		break;
-	}
+	if ((int)kev.ident != fd)
+		errx(1, "kevent: ident");
+	if (kev.filter != filter)
+		errx(1, "kevent: filter");
 
 	switch (ctx->c_mode) {
 	case KQUEUE_READ_EOF:
