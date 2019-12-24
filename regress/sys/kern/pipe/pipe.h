@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.h,v 1.1 2019/11/09 21:10:15 anton Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.2 2019/12/24 09:37:53 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -20,6 +20,10 @@
 
 #include <signal.h>	/* sig_atomic_t */
 
+int test_kqueue_read(void);
+int test_kqueue_read_eof(void);
+int test_kqueue_write(void);
+int test_kqueue_write_eof(void);
 int test_ping_pong(void);
 int test_run_down_write_big(void);
 int test_run_down_write_small(void);

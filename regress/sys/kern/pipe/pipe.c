@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.c,v 1.2 2019/11/10 09:34:40 anton Exp $	*/
+/*	$OpenBSD: pipe.c,v 1.3 2019/12/24 09:37:53 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -39,6 +39,10 @@ main(int argc, char *argv[])
 		const char *t_name;
 		int (*t_fn)(void);
 	} tests[] = {
+		{ "kqueue-read",			test_kqueue_read },
+		{ "kqueue-read-eof",			test_kqueue_read_eof },
+		{ "kqueue-write",			test_kqueue_write },
+		{ "kqueue-write-eof",			test_kqueue_write_eof },
 		{ "ping-pong",				test_ping_pong },
 		{ "run-down-write-big",			test_run_down_write_big },
 		{ "run-down-write-small",		test_run_down_write_small },
