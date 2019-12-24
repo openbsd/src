@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_passwd.c,v 1.16 2019/12/21 18:56:27 millert Exp $	*/
+/*	$OpenBSD: login_passwd.c,v 1.17 2019/12/24 13:13:33 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -86,8 +86,8 @@ main(int argc, char *argv[])
 		case 'v':
 			if (strncmp(optarg, "wheel=", 6) == 0)
 				wheel = optarg + 6;
-			else if (strncmp(optarg, "lastchance=", 10) == 0)
-				lastchance = (strcmp(optarg + 10, "yes") == 0);
+			else if (strncmp(optarg, "lastchance=", 11) == 0)
+				lastchance = (strcmp(optarg + 11, "yes") == 0);
 			break;
 		default:
 			syslog(LOG_ERR, "usage error");
@@ -160,7 +160,8 @@ main(int argc, char *argv[])
 	}
 
 	rc = crypt_checkpass(pass, pwd ? pwd->pw_passwd : NULL);
-	explicit_bzero(pass, strlen(pass));
+	if (pass != NULL)
+		explicit_bzero(pass, strlen(pass));
 	if (rc == 0) {
 		if (login_check_expire(back, pwd, class, lastchance) == 0) {
 		    fprintf(back, BI_AUTH "\n");
