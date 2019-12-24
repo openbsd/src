@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.198 2019/12/11 07:30:09 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.199 2019/12/24 13:13:54 bluhm Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -274,8 +274,8 @@ struct ctlname {
 	{ "proc_nobroadcastkill", CTLTYPE_NODE }, \
 	{ "proc_vmmap", CTLTYPE_NODE }, \
 	{ "global_ptrace", CTLTYPE_INT }, \
-	{ "gap", 0 }, \
-	{ "gap", 0 }, \
+	{ "consbufsize", CTLTYPE_INT }, \
+	{ "consbuf", CTLTYPE_STRUCT }, \
 	{ "audio", CTLTYPE_STRUCT }, \
 	{ "cpustats", CTLTYPE_STRUCT }, \
 	{ "pfstatus", CTLTYPE_STRUCT }, \
