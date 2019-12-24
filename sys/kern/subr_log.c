@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.59 2019/10/24 03:31:49 visa Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.60 2019/12/24 12:56:07 bluhm Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -132,15 +132,10 @@ initmsgbuf(caddr_t buf, size_t bufsize)
 void
 initconsbuf(void)
 {
-	long new_bufs;
-
 	/* Set up a buffer to collect /dev/console output */
-	consbufp = malloc(CONSBUFSIZE, M_TEMP, M_NOWAIT|M_ZERO);
-	if (consbufp) {
-		new_bufs = CONSBUFSIZE - offsetof(struct msgbuf, msg_bufc);
-		consbufp->msg_magic = MSG_MAGIC;
-		consbufp->msg_bufs = new_bufs;
-	}
+	consbufp = malloc(CONSBUFSIZE, M_TTYS, M_WAITOK | M_ZERO);
+	consbufp->msg_magic = MSG_MAGIC;
+	consbufp->msg_bufs = CONSBUFSIZE - offsetof(struct msgbuf, msg_bufc);
 }
 
 void
