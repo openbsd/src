@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.30 2018/05/15 15:15:50 cheloha Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.31 2019/12/24 13:20:44 bluhm Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -39,6 +39,7 @@
 #include <kvm.h>
 #include <limits.h>
 #include <nlist.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -99,7 +100,7 @@ main(int argc, char *argv[])
 			err(1, "sysctl: %s", startupmsgs ? "KERN_CONSBUFSIZE" :
 			    "KERN_MSGBUFSIZE");
 
-		msgbufsize += sizeof(struct msgbuf) - 1;
+		msgbufsize += offsetof(struct msgbuf, msg_bufc);
 		allocated = bufdata = calloc(1, msgbufsize);
 		if (bufdata == NULL)
 			errx(1, "couldn't allocate space for buffer data");
