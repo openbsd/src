@@ -1,4 +1,4 @@
-/* $OpenBSD: amdisplay.c,v 1.10 2019/05/06 03:45:58 mlarkin Exp $ */
+/* $OpenBSD: amdisplay.c,v 1.11 2019/12/25 11:42:05 jsg Exp $ */
 /*
  * Copyright (c) 2016 Ian Sutton <ians@openbsd.org>
  *
@@ -590,7 +590,7 @@ amdisplay_ioctl(void *sconf, u_long cmd, caddr_t data, int flat, struct proc *p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(int *)data = WSDISPLAY_TYPE_UNKNOWN;
+		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
 		return 0;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;

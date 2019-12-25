@@ -3216,7 +3216,7 @@ inteldrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(int *)data = WSDISPLAY_TYPE_INTELDRM;
+		*(u_int *)data = WSDISPLAY_TYPE_INTELDRM;
 		return 0;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;

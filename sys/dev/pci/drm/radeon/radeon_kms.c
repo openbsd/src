@@ -222,7 +222,7 @@ radeondrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(int *)data = WSDISPLAY_TYPE_RADEONDRM;
+		*(u_int *)data = WSDISPLAY_TYPE_RADEONDRM;
 		return 0;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
