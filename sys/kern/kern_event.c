@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.109 2019/12/12 16:31:06 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.110 2019/12/25 15:04:44 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -85,8 +85,6 @@ void	knote_enqueue(struct knote *kn);
 void	knote_dequeue(struct knote *kn);
 int	knote_acquire(struct knote *kn);
 void	knote_release(struct knote *kn);
-#define knote_alloc() ((struct knote *)pool_get(&knote_pool, PR_WAITOK))
-#define knote_free(kn) pool_put(&knote_pool, (kn))
 
 void	filt_kqdetach(struct knote *kn);
 int	filt_kqueue(struct knote *kn, long hint);
@@ -660,13 +658,8 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 	 * kn now contains the matching knote, or NULL if no match
 	 */
 	if (kev->flags & EV_ADD) {
-
 		if (kn == NULL) {
-			kn = knote_alloc();
-			if (kn == NULL) {
-				error = ENOMEM;
-				goto done;
-			}
+			kn = pool_get(&knote_pool, PR_WAITOK);
 			kn->kn_fp = fp;
 			kn->kn_kq = kq;
 			kn->kn_fop = fops;
@@ -1142,7 +1135,7 @@ done:
 
 /*
  * should be called at spl == 0, since we don't want to hold spl
- * while calling FRELE and knote_free.
+ * while calling FRELE and pool_put.
  */
 void
 knote_drop(struct knote *kn, struct proc *p)
@@ -1162,7 +1155,7 @@ knote_drop(struct knote *kn, struct proc *p)
 		knote_dequeue(kn);
 	if (kn->kn_fop->f_isfd)
 		FRELE(kn->kn_fp, p);
-	knote_free(kn);
+	pool_put(&knote_pool, kn);
 }
 
 
