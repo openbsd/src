@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 2019/12/21 21:40:01 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.19 2019/12/25 17:00:14 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -7,8 +7,12 @@ CONFIGURE_OPTS=	--prefix=/usr \
 		--localstatedir=/var \
 		--sysconfdir=/etc \
 		--disable-backtrace \
+		--disable-isc-spnego \
 		--without-readline \
+		--with-python=no \
 		--disable-idn \
+		--with-gssapi=no \
+		--with-docbook-xsl=no \
 		--with-libjson=no \
 		--disable-shared \
 		--disable-threads \
