@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.103 2019/12/25 09:32:01 anton Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.104 2019/12/25 09:46:09 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -383,9 +383,7 @@ pipe_read(struct file *fp, struct uio *uio, int fflags)
 	}
 
 	while (uio->uio_resid) {
-		/*
-		 * normal pipe buffer receive
-		 */
+		/* Normal pipe buffer receive. */
 		if (rpipe->pipe_buffer.cnt > 0) {
 			size = rpipe->pipe_buffer.size - rpipe->pipe_buffer.out;
 			if (size > rpipe->pipe_buffer.cnt)
@@ -422,31 +420,23 @@ pipe_read(struct file *fp, struct uio *uio, int fflags)
 			if (rpipe->pipe_state & PIPE_EOF)
 				break;
 
-			/*
-			 * If the "write-side" has been blocked, wake it up now.
-			 */
+			/* If the "write-side" has been blocked, wake it up. */
 			if (rpipe->pipe_state & PIPE_WANTW) {
 				rpipe->pipe_state &= ~PIPE_WANTW;
 				wakeup(rpipe);
 			}
 
-			/*
-			 * Break if some data was read.
-			 */
+			/* Break if some data was read. */
 			if (nread > 0)
 				break;
 
-			/*
-			 * Handle non-blocking mode operation.
-			 */
+			/* Handle non-blocking mode operation. */
 			if (fp->f_flag & FNONBLOCK) {
 				error = EAGAIN;
 				break;
 			}
 
-			/*
-			 * Wait for more data.
-			 */
+			/* Wait for more data. */
 			rpipe->pipe_state |= PIPE_WANTR;
 			error = pipe_sleep(rpipe, "piperd");
 			if (error)
@@ -461,9 +451,7 @@ unlocked_error:
 	--rpipe->pipe_busy;
 
 	if (pipe_rundown(rpipe) == 0 && rpipe->pipe_buffer.cnt < MINPIPESIZE) {
-		/*
-		 * Handle write blocking hysteresis.
-		 */
+		/* Handle write blocking hysteresis. */
 		if (rpipe->pipe_state & PIPE_WANTW) {
 			rpipe->pipe_state &= ~PIPE_WANTW;
 			wakeup(rpipe);
@@ -492,9 +480,7 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 	rw_enter_write(&pipe_lock);
 	wpipe = pipe_peer(rpipe);
 
-	/*
-	 * detect loss of pipe read side, issue SIGPIPE if lost.
-	 */
+	/* Detect loss of pipe read side, issue SIGPIPE if lost. */
 	if (wpipe == NULL) {
 		rw_exit_write(&pipe_lock);
 		KERNEL_UNLOCK();
@@ -611,17 +597,13 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 			if (error)
 				break;
 		} else {
-			/*
-			 * If the "read-side" has been blocked, wake it up now.
-			 */
+			/* If the "read-side" has been blocked, wake it up. */
 			if (wpipe->pipe_state & PIPE_WANTR) {
 				wpipe->pipe_state &= ~PIPE_WANTR;
 				wakeup(wpipe);
 			}
 
-			/*
-			 * don't block on non-blocking I/O
-			 */
+			/* Don't block on non-blocking I/O. */
 			if (fp->f_flag & FNONBLOCK) {
 				error = EAGAIN;
 				break;
@@ -664,9 +646,7 @@ unlocked_error:
 		}
 	}
 
-	/*
-	 * Don't return EPIPE if I/O was successful
-	 */
+	/* Don't return EPIPE if I/O was successful. */
 	if ((wpipe->pipe_buffer.cnt == 0) &&
 	    (uio->uio_resid == 0) &&
 	    (error == EPIPE)) {
@@ -675,9 +655,7 @@ unlocked_error:
 
 	if (error == 0)
 		getnanotime(&wpipe->pipe_mtime);
-	/*
-	 * We have something to offer, wake up select/poll.
-	 */
+	/* We have something to offer, wake up select/poll. */
 	if (wpipe->pipe_buffer.cnt)
 		pipeselwakeup(wpipe);
 
@@ -870,9 +848,7 @@ pipe_destroy(struct pipe *cpipe)
 		rwsleep_nsec(cpipe, &pipe_lock, PRIBIO, "pipecl", INFSLP);
 	}
 
-	/*
-	 * Disconnect from peer
-	 */
+	/* Disconnect from peer. */
 	if ((ppipe = cpipe->pipe_peer) != NULL) {
 		pipeselwakeup(ppipe);
 
@@ -883,9 +859,6 @@ pipe_destroy(struct pipe *cpipe)
 
 	rw_exit_write(&pipe_lock);
 
-	/*
-	 * free resources
-	 */
 	pipe_buffer_free(cpipe);
 	pool_put(&pipe_pool, cpipe);
 }
