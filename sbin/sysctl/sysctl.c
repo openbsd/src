@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.249 2019/11/28 16:27:25 guenther Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.250 2019/12/25 00:15:36 cheloha Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -1038,14 +1038,14 @@ parse(char *string, int flags)
 			printf("%s%s", string, equ);
 		printf("added = %llu, cancelled = %llu, deleted = %llu, "
 		    "late = %llu, pending = %llu, readded = %llu, "
-		    "rescheduled = %llu, run_softclock = %llu, "
-		    "run_thread = %llu, softclocks = %llu, "
-		    "thread_wakeups = %llu\n",
+		    "scheduled = %llu, rescheduled = %llu, "
+		    "run_softclock = %llu, run_thread = %llu, "
+		    "softclocks = %llu, thread_wakeups = %llu\n",
 		    tstat->tos_added, tstat->tos_cancelled, tstat->tos_deleted,
 		    tstat->tos_late, tstat->tos_pending, tstat->tos_readded,
-		    tstat->tos_rescheduled, tstat->tos_run_softclock,
-		    tstat->tos_run_thread, tstat->tos_softclocks,
-		    tstat->tos_thread_wakeups);
+		    tstat->tos_scheduled, tstat->tos_rescheduled,
+		    tstat->tos_run_softclock, tstat->tos_run_thread,
+		    tstat->tos_softclocks, tstat->tos_thread_wakeups);
 		return;
 	}
 	switch (type) {

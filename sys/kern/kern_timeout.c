@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.66 2019/12/12 18:12:43 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.67 2019/12/25 00:15:36 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -250,7 +250,7 @@ timeout_add(struct timeout *new, int to_ticks)
 	/* Initialize the time here, it won't change. */
 	old_time = new->to_time;
 	new->to_time = to_ticks + ticks;
-	CLR(new->to_flags, TIMEOUT_TRIGGERED);
+	CLR(new->to_flags, TIMEOUT_TRIGGERED | TIMEOUT_SCHEDULED);
 
 	/*
 	 * If this timeout already is scheduled and now is moved
@@ -377,7 +377,7 @@ timeout_del(struct timeout *to)
 		tostat.tos_cancelled++;
 		ret = 1;
 	}
-	CLR(to->to_flags, TIMEOUT_TRIGGERED);
+	CLR(to->to_flags, TIMEOUT_TRIGGERED | TIMEOUT_SCHEDULED);
 	tostat.tos_deleted++;
 	mtx_leave(&timeout_mutex);
 
@@ -471,7 +471,7 @@ timeout_run(struct timeout *to)
 
 	MUTEX_ASSERT_LOCKED(&timeout_mutex);
 
-	CLR(to->to_flags, TIMEOUT_ONQUEUE);
+	CLR(to->to_flags, TIMEOUT_ONQUEUE | TIMEOUT_SCHEDULED);
 	SET(to->to_flags, TIMEOUT_TRIGGERED);
 
 	fn = to->to_func;
@@ -512,10 +512,14 @@ softclock(void *arg)
 		if (delta > 0) {
 			bucket = &BUCKET(delta, to->to_time);
 			CIRCQ_INSERT_TAIL(bucket, &to->to_list);
-			tostat.tos_rescheduled++;
+			if (ISSET(to->to_flags, TIMEOUT_SCHEDULED))
+				tostat.tos_rescheduled++;
+			else
+				SET(to->to_flags, TIMEOUT_SCHEDULED);
+			tostat.tos_scheduled++;
 			continue;
 		}
-		if (delta < 0)
+		if (ISSET(to->to_flags, TIMEOUT_SCHEDULED) && delta < 0)
 			tostat.tos_late++;
 		if (ISSET(to->to_flags, TIMEOUT_NEEDPROCCTX)) {
 			CIRCQ_INSERT_TAIL(&timeout_proc, &to->to_list);

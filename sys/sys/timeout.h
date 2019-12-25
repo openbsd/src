@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.32 2019/12/02 21:47:54 cheloha Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.33 2019/12/25 00:15:36 cheloha Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -67,10 +67,11 @@ struct timeout {
 /*
  * flags in the to_flags field.
  */
-#define TIMEOUT_NEEDPROCCTX	1	/* timeout needs a process context */
-#define TIMEOUT_ONQUEUE		2	/* timeout is on the todo queue */
-#define TIMEOUT_INITIALIZED	4	/* timeout is initialized */
-#define TIMEOUT_TRIGGERED	8	/* timeout is running or ran */
+#define TIMEOUT_NEEDPROCCTX	0x01	/* needs a process context */
+#define TIMEOUT_ONQUEUE		0x02	/* on any timeout queue */
+#define TIMEOUT_INITIALIZED	0x04	/* initialized */
+#define TIMEOUT_TRIGGERED	0x08	/* running or ran */
+#define TIMEOUT_SCHEDULED	0x10	/* put on wheel at least once */
 
 struct timeoutstat {
 	uint64_t tos_added;		/* timeout_add*(9) calls */
@@ -79,9 +80,10 @@ struct timeoutstat {
 	uint64_t tos_late;		/* run after deadline */
 	uint64_t tos_pending;		/* number currently ONQUEUE */
 	uint64_t tos_readded;		/* timeout_add*(9) + already ONQUEUE */
-	uint64_t tos_rescheduled;	/* requeued from softclock() */
+	uint64_t tos_rescheduled;	/* bucketed + already SCHEDULED */
 	uint64_t tos_run_softclock;	/* run from softclock() */
 	uint64_t tos_run_thread;	/* run from softclock_thread() */
+	uint64_t tos_scheduled;		/* bucketed during softclock() */
 	uint64_t tos_softclocks;	/* softclock() calls */
 	uint64_t tos_thread_wakeups;	/* wakeups in softclock_thread() */
 };
