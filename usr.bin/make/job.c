@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.141 2019/12/21 15:28:17 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.142 2019/12/25 20:42:04 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -140,10 +140,10 @@ static sigset_t sigset, emptyset;
 
 static void handle_fatal_signal(int);
 static void handle_siginfo(void);
-static void postprocess_job(Job *, bool);
+static void postprocess_job(Job *);
 static Job *prepare_job(GNode *);
 static void determine_job_next_step(Job *);
-static void remove_job(Job *, bool);
+static void remove_job(Job *);
 static void may_continue_job(Job *);
 static void continue_job(Job *);
 static Job *reap_finished_job(pid_t);
@@ -528,9 +528,9 @@ debug_kill_printf(const char *fmt, ...)
 /*ARGSUSED*/
 
 static void
-postprocess_job(Job *job, bool okay)
+postprocess_job(Job *job)
 {
-	if (okay &&
+	if (job->exit_type == JOB_EXIT_OKAY &&
 	    aborting != ABORT_ERROR &&
 	    aborting != ABORT_INTERRUPT) {
 		/* As long as we aren't aborting and the job didn't return a
@@ -690,7 +690,7 @@ continue_job(Job *job)
 {
 	bool finished = job_run_next(job);
 	if (finished)
-		remove_job(job, true);
+		remove_job(job);
 	else
 		determine_expensive_job(job);
 }
@@ -731,18 +731,17 @@ determine_job_next_step(Job *job)
 			    job->node->name);
 	}
 
-	okay = job->exit_type == JOB_EXIT_OKAY;
-	if (!okay || job->next_cmd == NULL)
-		remove_job(job, okay);
+	if (job->exit_type != JOB_EXIT_OKAY || job->next_cmd == NULL)
+		remove_job(job);
 	else
 		may_continue_job(job);
 }
 
 static void
-remove_job(Job *job, bool okay)
+remove_job(Job *job)
 {
 	nJobs--;
-	postprocess_job(job, okay);
+	postprocess_job(job);
 	while (!no_new_jobs) {
 		if (heldJobs != NULL) {
 			job = heldJobs;
