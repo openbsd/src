@@ -36,7 +36,6 @@
 #include "i915_drv.h"
 #include "i915_trace.h"
 
-#ifdef notyet
 static bool shrinker_lock(struct drm_i915_private *i915, bool *unlock)
 {
 	switch (mutex_trylock_recursive(&i915->drm.struct_mutex)) {
@@ -115,7 +114,6 @@ static bool unsafe_drop_pages(struct drm_i915_gem_object *obj)
 		__i915_gem_object_put_pages(obj, I915_MM_SHRINKER);
 	return !i915_gem_object_has_pages(obj);
 }
-#endif
 
 /**
  * i915_gem_shrink - Shrink buffer object caches
@@ -148,9 +146,6 @@ i915_gem_shrink(struct drm_i915_private *i915,
 		unsigned long *nr_scanned,
 		unsigned flags)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	const struct {
 		struct list_head *list;
 		unsigned int bit;
@@ -280,7 +275,6 @@ i915_gem_shrink(struct drm_i915_private *i915,
 	if (nr_scanned)
 		*nr_scanned += scanned;
 	return count;
-#endif
 }
 
 /**
@@ -311,7 +305,6 @@ unsigned long i915_gem_shrink_all(struct drm_i915_private *i915)
 	return freed;
 }
 
-#ifdef notyet
 static unsigned long
 i915_gem_shrinker_count(struct shrinker *shrinker, struct shrink_control *sc)
 {
@@ -393,6 +386,7 @@ i915_gem_shrinker_scan(struct shrinker *shrinker, struct shrink_control *sc)
 	return sc->nr_scanned ? freed : SHRINK_STOP;
 }
 
+#ifdef notyet
 static bool
 shrinker_lock_uninterruptible(struct drm_i915_private *i915, bool *unlock,
 			      int timeout_ms)
@@ -513,13 +507,13 @@ out:
  */
 void i915_gem_shrinker_register(struct drm_i915_private *i915)
 {
-#ifdef notyet
 	i915->mm.shrinker.scan_objects = i915_gem_shrinker_scan;
 	i915->mm.shrinker.count_objects = i915_gem_shrinker_count;
 	i915->mm.shrinker.seeks = DEFAULT_SEEKS;
 	i915->mm.shrinker.batch = 4096;
 	WARN_ON(register_shrinker(&i915->mm.shrinker));
 
+#ifdef notyet
 	i915->mm.oom_notifier.notifier_call = i915_gem_shrinker_oom;
 	WARN_ON(register_oom_notifier(&i915->mm.oom_notifier));
 

@@ -1072,9 +1072,7 @@ struct i915_gem_mm {
 
 	struct notifier_block oom_notifier;
 	struct notifier_block vmap_notifier;
-#ifdef notyet
 	struct shrinker shrinker;
-#endif
 
 	/** LRU list of objects with fence regs on them. */
 	struct list_head fence_list;

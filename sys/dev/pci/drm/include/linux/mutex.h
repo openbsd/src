@@ -16,7 +16,23 @@
 #define mutex_lock_nested(rwl, sub)	rw_enter_write(rwl)
 #define mutex_trylock(rwl)		(rw_enter(rwl, RW_WRITE | RW_NOSLEEP) == 0)
 #define mutex_unlock(rwl)		rw_exit_write(rwl)
-#define mutex_is_locked(rwl)		(rw_status(rwl) == RW_WRITE)
+#define mutex_is_locked(rwl)		(rw_status(rwl) != 0)
 #define mutex_destroy(rwl)
+
+enum mutex_trylock_recursive_result {
+	MUTEX_TRYLOCK_FAILED,
+	MUTEX_TRYLOCK_SUCCESS,
+	MUTEX_TRYLOCK_RECURSIVE
+};
+
+static inline enum mutex_trylock_recursive_result
+mutex_trylock_recursive(struct rwlock *rwl)
+{
+	if (rw_status(rwl) == RW_WRITE)
+		return MUTEX_TRYLOCK_RECURSIVE;
+	if (mutex_trylock(rwl))
+		return MUTEX_TRYLOCK_SUCCESS;
+	return MUTEX_TRYLOCK_FAILED;
+}
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.83 2019/07/03 22:39:33 cheloha Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.84 2019/12/25 11:31:41 kettenis Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -80,6 +80,16 @@
 #endif
 
 #include <uvm/uvm.h>
+
+#if defined(__amd64__) || defined(__arm64__) || \
+    defined(__i386__) || defined(__loongson__) || \
+    defined(__macppc__) || defined(__sparc64__)
+#include "drm.h"
+#endif
+
+#if NDRM > 0
+extern void drmbackoff(long);
+#endif
 
 /*
  * UVMPD_NUMDIRTYREACTS is how many dirty pages the pagedaemon will reactivate
@@ -262,6 +272,9 @@ uvm_pageout(void *arg)
 			size = 16; /* XXX */
 		uvm_unlock_pageq();
 		(void) bufbackoff(&constraint, size * 2);
+#if NDRM > 0
+		drmbackoff(size * 2);
+#endif
 		uvm_lock_pageq();
 
 		/* Scan if needed to meet our targets. */

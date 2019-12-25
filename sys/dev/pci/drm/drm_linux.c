@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.51 2019/11/30 11:19:17 visa Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.52 2019/12/25 11:31:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -1866,4 +1866,29 @@ pci_resize_resource(struct pci_dev *pdev, int bar, int nsize)
 	pci_conf_write(pdev->pc, pdev->tag, offset + RBCTRL0, reg);
 
 	return 0;
+}
+
+TAILQ_HEAD(, shrinker) shrinkers = TAILQ_HEAD_INITIALIZER(shrinkers);
+
+int
+register_shrinker(struct shrinker *shrinker)
+{
+	TAILQ_INSERT_TAIL(&shrinkers, shrinker, next);
+	return 0;
+}
+
+void
+drmbackoff(long npages)
+{
+	struct shrink_control sc;
+	struct shrinker *shrinker;
+	u_long ret;
+
+	shrinker = TAILQ_FIRST(&shrinkers);
+	while (shrinker && npages > 0) {
+		sc.nr_to_scan = npages;
+		ret = shrinker->scan_objects(shrinker, &sc);
+		npages -= ret;
+		shrinker = TAILQ_NEXT(shrinker, next);
+	}
 }
