@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.942 2019/12/19 09:22:33 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.943 2019/12/26 11:04:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2689,6 +2689,7 @@ void		 session_group_add(struct session_group *, struct session *);
 void		 session_group_synchronize_to(struct session *);
 void		 session_group_synchronize_from(struct session *);
 u_int		 session_group_count(struct session_group *);
+u_int		 session_group_attached_count(struct session_group *);
 void		 session_renumber_windows(struct session *);
 
 /* utf8.c */

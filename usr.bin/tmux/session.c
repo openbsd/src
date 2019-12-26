@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.85 2019/04/26 11:38:51 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.86 2019/12/26 11:04:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -569,7 +569,20 @@ session_group_count(struct session_group *sg)
 
 	n = 0;
 	TAILQ_FOREACH(s, &sg->sessions, gentry)
-	    n++;
+		n++;
+	return (n);
+}
+
+/* Count number of clients attached to sessions in session group. */
+u_int
+session_group_attached_count(struct session_group *sg)
+{
+	struct session	*s;
+	u_int		 n;
+
+	n = 0;
+	TAILQ_FOREACH(s, &sg->sessions, gentry)
+		n += s->attached;
 	return (n);
 }
 
