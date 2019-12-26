@@ -107,9 +107,7 @@ struct ttm_pool_opts {
  **/
 struct ttm_pool_manager {
 	struct kobject		kobj;
-#ifdef notyet
 	struct shrinker		mm_shrink;
-#endif
 	struct ttm_pool_opts	options;
 
 	union {
@@ -388,7 +386,6 @@ out:
  *
  * This code is crying out for a shrinker per pool....
  */
-#ifdef notyet
 static unsigned long
 ttm_pool_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
 {
@@ -441,17 +438,13 @@ ttm_pool_shrink_count(struct shrinker *shrink, struct shrink_control *sc)
 
 	return count;
 }
-#endif
 
 static int ttm_pool_mm_shrink_init(struct ttm_pool_manager *manager)
 {
-#ifdef notyet
 	manager->mm_shrink.count_objects = ttm_pool_shrink_count;
 	manager->mm_shrink.scan_objects = ttm_pool_shrink_scan;
 	manager->mm_shrink.seeks = 1;
 	return register_shrinker(&manager->mm_shrink);
-#endif
-	return 0;
 }
 
 static void ttm_pool_mm_shrink_fini(struct ttm_pool_manager *manager)
