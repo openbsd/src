@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6d.conf.5,v 1.19 2019/05/26 09:27:09 remi Exp $
+.\"	$OpenBSD: ospf6d.conf.5,v 1.20 2019/12/26 10:24:18 remi Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 26 2019 $
+.Dd $Mdocdate: December 26 2019 $
 .Dt OSPF6D.CONF 5
 .Os
 .Sh NAME
@@ -328,6 +328,9 @@ Router.
 .It Ic transmit-delay Ar seconds
 Set the transmit delay.
 The default value is 1; valid range is 1\-3600 seconds.
+.It Ic type p2p
+Set the interface type to point to point.
+This disables the election of a DR and BDR for the given interface.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/ospf6d.conf" -compact
