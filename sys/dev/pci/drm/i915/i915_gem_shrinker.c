@@ -530,12 +530,11 @@ void i915_gem_shrinker_register(struct drm_i915_private *i915)
  */
 void i915_gem_shrinker_unregister(struct drm_i915_private *i915)
 {
-	STUB();
 #ifdef notyet
 	WARN_ON(unregister_vmap_purge_notifier(&i915->mm.vmap_notifier));
 	WARN_ON(unregister_oom_notifier(&i915->mm.oom_notifier));
-	unregister_shrinker(&i915->mm.shrinker);
 #endif
+	unregister_shrinker(&i915->mm.shrinker);
 }
 
 void i915_gem_shrinker_taints_mutex(struct rwlock *mutex)

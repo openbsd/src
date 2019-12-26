@@ -21,5 +21,6 @@ struct shrinker {
 #define DEFAULT_SEEKS	2
 
 int register_shrinker(struct shrinker *);
+void unregister_shrinker(struct shrinker *);
 
 #endif

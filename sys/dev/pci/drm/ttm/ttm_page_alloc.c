@@ -449,9 +449,7 @@ static int ttm_pool_mm_shrink_init(struct ttm_pool_manager *manager)
 
 static void ttm_pool_mm_shrink_fini(struct ttm_pool_manager *manager)
 {
-#ifdef notyet
 	unregister_shrinker(&manager->mm_shrink);
-#endif
 }
 
 static int ttm_set_pages_caching(struct vm_page **pages,
