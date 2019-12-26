@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiacpi.c,v 1.5 2018/08/11 16:02:33 kettenis Exp $	*/
+/*	$OpenBSD: efiacpi.c,v 1.6 2019/12/26 13:13:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -413,6 +413,10 @@ efi_acpi_madt_gicc(struct acpi_madt_gicc *gicc)
 	uint64_t reg;
 	char name[32];
 
+	/* Skip disabled CPUs. */
+	if ((gicc->flags & ACPI_PROC_ENABLE) == 0)
+		return;
+
 	/*
 	 * MPIDR field was introduced in ACPI 5.1.  Fall back on the
 	 * ACPI Processor UID on ACPI 5.0.
@@ -430,8 +434,6 @@ efi_acpi_madt_gicc(struct acpi_madt_gicc *gicc)
 	fdt_node_add_property(child, "reg", &reg, sizeof(reg));
 	if (gicc->parking_protocol_version == 0 || psci)
 		fdt_node_add_string_property(child, "enable-method", "psci");
-	if ((gicc->flags & ACPI_PROC_ENABLE) == 0)
-		fdt_node_add_string_property(child, "status", "disabled");
 
 	/* Stash GIC information. */
 	gicc_base = gicc->base_address;
