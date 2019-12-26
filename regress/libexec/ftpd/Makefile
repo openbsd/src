@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2019/12/22 07:43:33 jan Exp $
+#	$OpenBSD: Makefile,v 1.2 2019/12/26 15:41:50 bluhm Exp $
 
 .PHONY: setup-ftpd
 
@@ -12,8 +12,16 @@ CLEANFILES =		ftpd.regress
 TCPSERVER =		/usr/local/bin/tcpserver
 FTPD ?=			/usr/libexec/ftpd
 
-.if ! (make(clean) || make(cleandir) || make(obj))
 FTPDIR != getent passwd ftp | cut -d: -f6
+
+.if empty(FTPDIR)
+regress:
+	@echo user ftp is required in /etc/passwd for this regress
+	@echo SKIPPED
+.elif ! exists(${FTPDIR})
+regress:
+	@echo user ftp needs existing home directory ${FTPDIR} for this regress
+	@echo SKIPPED
 .endif
 
 .if ! exists(${TCPSERVER})
