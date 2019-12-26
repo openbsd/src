@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.234 2018/04/28 15:44:59 jasper Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.235 2019/12/26 22:38:00 kn Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1426,7 +1426,7 @@ setroot(struct device *bootdv, int part, int exitflags)
 		TAILQ_FOREACH(dk, &disklist, dk_link) {
 			if (dk->dk_devno != NODEV &&
 			    (dk->dk_flags & DKF_OPENED) == 0) {
-				tsleep(dk, 0, "dkopen", hz);
+				tsleep_nsec(dk, 0, "dkopen", SEC_TO_NSEC(1));
 				slept++;
 				break;
 			}
