@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: network_statement.sh,v 1.1 2019/12/23 17:32:53 denis Exp $
+#	$OpenBSD: network_statement.sh,v 1.2 2019/12/26 17:13:27 denis Exp $
 set -e
 
 OSPF6D=$1
@@ -30,7 +30,7 @@ error_notify() {
 	route -qn -T ${RDOMAIN2} flush || true
 	ifconfig lo${RDOMAIN1} destroy || true
 	ifconfig lo${RDOMAIN2} destroy || true
-	rm ospf6d.1.conf ospf6d.2.conf
+	rm ${OSPF6DCONFIGDIR}/ospf6d.1.conf ${OSPF6DCONFIGDIR}/ospf6d.2.conf
 	if [ $1 -ne 0 ]; then
 		echo FAILED
 		exit 1
@@ -72,11 +72,13 @@ ifconfig vether${RDOMAIN1} inet6 rdomain ${RDOMAIN1} ${PAIR1PREFIX}/64 up
 ifconfig vether${RDOMAIN2} inet6 rdomain ${RDOMAIN2} ${PAIR2PREFIX}/64 up
 ifconfig vether${RDOMAIN2} inet6 rdomain ${RDOMAIN2} ${PAIR2PREFIX2}/64 up
 sed "s/{RDOMAIN1}/${RDOMAIN1}/g;s/{PAIR1}/${PAIR1}/g" \
-    ospf6d.network_statement.rdomain1.conf > ospf6d.1.conf
-chmod 0600 ospf6d.1.conf
+    ${OSPF6DCONFIGDIR}/ospf6d.network_statement.rdomain1.conf \
+    > ${OSPF6DCONFIGDIR}/ospf6d.1.conf
+chmod 0600 ${OSPF6DCONFIGDIR}/ospf6d.1.conf
 sed "s/{RDOMAIN2}/${RDOMAIN2}/g;s/{PAIR2}/${PAIR2}/g" \
-    ospf6d.network_statement.rdomain2.conf > ospf6d.2.conf
-chmod 0600 ospf6d.2.conf
+    ${OSPF6DCONFIGDIR}/ospf6d.network_statement.rdomain2.conf \
+    > ${OSPF6DCONFIGDIR}/ospf6d.2.conf
+chmod 0600 ${OSPF6DCONFIGDIR}/ospf6d.2.conf
 
 echo add routes
 route -T ${RDOMAIN2} add -inet6 default ${PAIR2PREFIX}1
