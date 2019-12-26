@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.239 2019/11/09 14:39:42 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.240 2019/12/26 19:51:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -2292,12 +2292,24 @@ roff_cond_sub(ROFF_ARGS)
 		}
 	}
 
+	t = roff_parse(r, buf->buf, &pos, ln, ppos);
+
+	/* For now, let high level macros abort .ce mode. */
+
+	if (roffce_node != NULL &&
+	    (t == TOKEN_NONE || t == ROFF_Dd || t == ROFF_EQ ||
+             t == ROFF_TH || t == ROFF_TS)) {
+		r->man->last = roffce_node;
+		r->man->next = ROFF_NEXT_SIBLING;
+		roffce_lines = 0;
+		roffce_node = NULL;
+	}
+
 	/*
 	 * Fully handle known macros when they are structurally
 	 * required or when the conditional evaluated to true.
 	 */
 
-	t = roff_parse(r, buf->buf, &pos, ln, ppos);
 	if (t == ROFF_break) {
 		if (irc & ROFF_LOOPMASK)
 			irc = ROFF_IGN | ROFF_LOOPEXIT;
