@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.113 2019/07/25 01:43:21 cheloha Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.114 2019/12/26 13:28:49 bluhm Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -70,19 +70,19 @@ int ext2fs_sbupdate(struct ufsmount *, int);
 static int	e2fs_sbcheck(struct ext2fs *, int);
 
 const struct vfsops ext2fs_vfsops = {
-	ext2fs_mount,
-	ufs_start,
-	ext2fs_unmount,
-	ufs_root,
-	ufs_quotactl,
-	ext2fs_statfs,
-	ext2fs_sync,
-	ext2fs_vget,
-	ext2fs_fhtovp,
-	ext2fs_vptofh,
-	ext2fs_init,
-	ext2fs_sysctl,
-	ufs_check_export
+	.vfs_mount	= ext2fs_mount,
+	.vfs_start	= ufs_start,
+	.vfs_unmount	= ext2fs_unmount,
+	.vfs_root	= ufs_root,
+	.vfs_quotactl	= ufs_quotactl,
+	.vfs_statfs	= ext2fs_statfs,
+	.vfs_sync	= ext2fs_sync,
+	.vfs_vget	= ext2fs_vget,
+	.vfs_fhtovp	= ext2fs_fhtovp,
+	.vfs_vptofh	= ext2fs_vptofh,
+	.vfs_init	= ext2fs_init,
+	.vfs_sysctl	= ext2fs_sysctl,
+	.vfs_checkexp	= ufs_check_export,
 };
 
 struct pool ext2fs_inode_pool;

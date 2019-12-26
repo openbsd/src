@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.56 2019/11/25 11:33:51 mpi Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.57 2019/12/26 13:28:50 bluhm Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -60,19 +60,19 @@ static	int mfs_minor;	/* used for building internal dev_t */
  * mfs vfs operations.
  */
 const struct vfsops mfs_vfsops = {
-	mfs_mount,
-	mfs_start,
-	ffs_unmount,
-	ufs_root,
-	ufs_quotactl,
-	ffs_statfs,
-	ffs_sync,
-	ffs_vget,
-	ffs_fhtovp,
-	ffs_vptofh,
-	mfs_init,
-	ffs_sysctl,
-	mfs_checkexp
+	.vfs_mount	= mfs_mount,
+	.vfs_start	= mfs_start,
+	.vfs_unmount	= ffs_unmount,
+	.vfs_root	= ufs_root,
+	.vfs_quotactl	= ufs_quotactl,
+	.vfs_statfs	= ffs_statfs,
+	.vfs_sync	= ffs_sync,
+	.vfs_vget	= ffs_vget,
+	.vfs_fhtovp	= ffs_fhtovp,
+	.vfs_vptofh	= ffs_vptofh,
+	.vfs_init	= mfs_init,
+	.vfs_sysctl	= ffs_sysctl,
+	.vfs_checkexp	= mfs_checkexp,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vfsops.c,v 1.16 2018/04/06 15:14:27 patrick Exp $	*/
+/*	$OpenBSD: tmpfs_vfsops.c,v 1.17 2019/12/26 13:28:49 bluhm Exp $	*/
 /*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -358,18 +358,18 @@ tmpfs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred,
  * tmpfs vfs operations.
  */
 
-struct vfsops tmpfs_vfsops = {
-	tmpfs_mount,			/* vfs_mount */
-	tmpfs_start,			/* vfs_start */
-	tmpfs_unmount,			/* vfs_unmount */
-	tmpfs_root,			/* vfs_root */
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	tmpfs_statfs,			/* vfs_statfs */
-	tmpfs_sync,			/* vfs_sync */
-	tmpfs_vget,			/* vfs_vget */
-	tmpfs_fhtovp,			/* vfs_fhtovp */
-	tmpfs_vptofh,			/* vfs_vptofh */
-	tmpfs_init,			/* vfs_init */
-	(void *)eopnotsupp,		/* vfs_sysctl */
-	(void *)eopnotsupp,
+const struct vfsops tmpfs_vfsops = {
+	.vfs_mount	= tmpfs_mount,
+	.vfs_start	= tmpfs_start,
+	.vfs_unmount	= tmpfs_unmount,
+	.vfs_root	= tmpfs_root,
+	.vfs_quotactl	= (void *)eopnotsupp,
+	.vfs_statfs	= tmpfs_statfs,
+	.vfs_sync	= tmpfs_sync,
+	.vfs_vget	= tmpfs_vget,
+	.vfs_fhtovp	= tmpfs_fhtovp,
+	.vfs_vptofh	= tmpfs_vptofh,
+	.vfs_init	= tmpfs_init,
+	.vfs_sysctl	= (void *)eopnotsupp,
+	.vfs_checkexp	= (void *)eopnotsupp,
 };

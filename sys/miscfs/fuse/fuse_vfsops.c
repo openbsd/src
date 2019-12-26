@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.42 2018/07/17 13:12:08 helg Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.43 2019/12/26 13:28:49 bluhm Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -51,19 +51,19 @@ int	fusefs_checkexp(struct mount *, struct mbuf *, int *,
 	    struct ucred **);
 
 const struct vfsops fusefs_vfsops = {
-	fusefs_mount,
-	fusefs_start,
-	fusefs_unmount,
-	fusefs_root,
-	fusefs_quotactl,
-	fusefs_statfs,
-	fusefs_sync,
-	fusefs_vget,
-	fusefs_fhtovp,
-	fusefs_vptofh,
-	fusefs_init,
-	fusefs_sysctl,
-	fusefs_checkexp
+	.vfs_mount	= fusefs_mount,
+	.vfs_start	= fusefs_start,
+	.vfs_unmount	= fusefs_unmount,
+	.vfs_root	= fusefs_root,
+	.vfs_quotactl	= fusefs_quotactl,
+	.vfs_statfs	= fusefs_statfs,
+	.vfs_sync	= fusefs_sync,
+	.vfs_vget	= fusefs_vget,
+	.vfs_fhtovp	= fusefs_fhtovp,
+	.vfs_vptofh	= fusefs_vptofh,
+	.vfs_init	= fusefs_init,
+	.vfs_sysctl	= fusefs_sysctl,
+	.vfs_checkexp	= fusefs_checkexp,
 };
 
 struct pool fusefs_fbuf_pool;

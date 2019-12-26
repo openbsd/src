@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.92 2019/07/25 01:43:20 cheloha Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.93 2019/12/26 13:28:49 bluhm Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -61,19 +61,19 @@
 #include <isofs/cd9660/cd9660_node.h>
 
 const struct vfsops cd9660_vfsops = {
-	cd9660_mount,
-	cd9660_start,
-	cd9660_unmount,
-	cd9660_root,
-	cd9660_quotactl,
-	cd9660_statfs,
-	cd9660_sync,
-	cd9660_vget,
-	cd9660_fhtovp,
-	cd9660_vptofh,
-	cd9660_init,
-	cd9660_sysctl,
-	cd9660_check_export
+	.vfs_mount	= cd9660_mount,
+	.vfs_start	= cd9660_start,
+	.vfs_unmount	= cd9660_unmount,
+	.vfs_root	= cd9660_root,
+	.vfs_quotactl	= cd9660_quotactl,
+	.vfs_statfs	= cd9660_statfs,
+	.vfs_sync	= cd9660_sync,
+	.vfs_vget	= cd9660_vget,
+	.vfs_fhtovp	= cd9660_fhtovp,
+	.vfs_vptofh	= cd9660_vptofh,
+	.vfs_init	= cd9660_init,
+	.vfs_sysctl	= cd9660_sysctl,
+	.vfs_checkexp	= cd9660_check_export,
 };
 
 /*

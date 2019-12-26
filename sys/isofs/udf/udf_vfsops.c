@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.66 2019/07/25 01:43:21 cheloha Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.67 2019/12/26 13:28:49 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -83,19 +83,19 @@ int udf_get_mpartmap(struct umount *, struct part_map_meta *);
 int udf_mountfs(struct vnode *, struct mount *, uint32_t, struct proc *);
 
 const struct vfsops udf_vfsops = {
-	.vfs_fhtovp =		udf_fhtovp,
-	.vfs_init =		udf_init,
-	.vfs_mount =		udf_mount,
-	.vfs_start =		udf_start,
-	.vfs_root =		udf_root,
-	.vfs_quotactl =		udf_quotactl,
-	.vfs_statfs =		udf_statfs,
-	.vfs_sync =		udf_sync,
-	.vfs_unmount =		udf_unmount,
-	.vfs_vget =		udf_vget,
-	.vfs_vptofh =		udf_vptofh,
-	.vfs_sysctl =		udf_sysctl,
-	.vfs_checkexp =		udf_checkexp,
+	.vfs_mount	= udf_mount,
+	.vfs_start	= udf_start,
+	.vfs_unmount	= udf_unmount,
+	.vfs_root	= udf_root,
+	.vfs_quotactl	= udf_quotactl,
+	.vfs_statfs	= udf_statfs,
+	.vfs_sync	= udf_sync,
+	.vfs_vget	= udf_vget,
+	.vfs_fhtovp	= udf_fhtovp,
+	.vfs_vptofh	= udf_vptofh,
+	.vfs_init	= udf_init,
+	.vfs_sysctl	= udf_sysctl,
+	.vfs_checkexp	= udf_checkexp,
 };
 
 int
