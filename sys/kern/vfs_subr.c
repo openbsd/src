@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.294 2019/12/08 12:29:42 mpi Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.295 2019/12/26 18:59:05 bluhm Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -243,7 +243,7 @@ vfs_unbusy(struct mount *mp)
 }
 
 int
-vfs_isbusy(struct mount *mp) 
+vfs_isbusy(struct mount *mp)
 {
 	if (RWLOCK_OWNER(&mp->mnt_lock) > 0)
 		return (1);
@@ -272,7 +272,7 @@ vfs_rootmountalloc(char *fstypename, char *devname, struct mount **mpp)
 	copystr(devname, mp->mnt_stat.f_mntfromname, MNAMELEN, 0);
 	copystr(devname, mp->mnt_stat.f_mntfromspec, MNAMELEN, 0);
 	*mpp = mp;
- 	return (0);
+	return (0);
  }
 
 /*
@@ -667,7 +667,7 @@ vget(struct vnode *vp, int flags)
 		splx(s);
 	}
 
- 	vp->v_usecount++;
+	vp->v_usecount++;
 	if (flags & LK_TYPE_MASK) {
 		if ((error = vn_lock(vp, flags)) != 0) {
 			vp->v_usecount--;
@@ -867,7 +867,7 @@ struct ctldebug debug1 = { "busyprt", &busyprt };
 #endif
 
 int
-vfs_mount_foreach_vnode(struct mount *mp, 
+vfs_mount_foreach_vnode(struct mount *mp,
     int (*func)(struct vnode *, void *), void *arg) {
 	struct vnode *vp, *nvp;
 	int error = 0;
@@ -1316,7 +1316,7 @@ printlockedvnodes(void)
 				vprint(NULL, vp);
 		}
 		vfs_unbusy(mp);
- 	}
+	}
 
 }
 #endif
@@ -1383,7 +1383,7 @@ vfs_mountedon(struct vnode *vp)
 	struct vnode *vq;
 	int error = 0;
 
- 	if (vp->v_specmountpoint != NULL)
+	if (vp->v_specmountpoint != NULL)
 		return (EBUSY);
 	if (vp->v_flag & VALIASED) {
 		for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
@@ -1394,7 +1394,7 @@ vfs_mountedon(struct vnode *vp)
 				error = EBUSY;
 				break;
 			}
- 		}
+		}
 	}
 	return (error);
 }
@@ -1656,7 +1656,8 @@ vfs_stall(struct proc *p, int stall)
 			uvm_vnp_sync(mp);
 			error = VFS_SYNC(mp, MNT_WAIT, stall, p->p_ucred, p);
 			if (error) {
-				printf("%s: failed to sync\n", mp->mnt_stat.f_mntonname);
+				printf("%s: failed to sync\n",
+				    mp->mnt_stat.f_mntonname);
 				vfs_unbusy(mp);
 				allerror = error;
 				continue;
@@ -2270,10 +2271,11 @@ vfs_mount_print(struct mount *mp, int full,
 	    mp->mnt_vnodecovered, mp->mnt_syncer, mp->mnt_data);
 
 	(*pr)("vfsconf: ops %p name \"%s\" num %d ref %u flags 0x%x\n",
-            vfc->vfc_vfsops, vfc->vfc_name, vfc->vfc_typenum,
+	    vfc->vfc_vfsops, vfc->vfc_name, vfc->vfc_typenum,
 	    vfc->vfc_refcount, vfc->vfc_flags);
 
-	(*pr)("statvfs cache: bsize %x iosize %x\nblocks %llu free %llu avail %lld\n",
+	(*pr)("statvfs cache: bsize %x iosize %x\n"
+	    "blocks %llu free %llu avail %lld\n",
 	    mp->mnt_stat.f_bsize, mp->mnt_stat.f_iosize, mp->mnt_stat.f_blocks,
 	    mp->mnt_stat.f_bfree, mp->mnt_stat.f_bavail);
 
@@ -2284,10 +2286,10 @@ vfs_mount_print(struct mount *mp, int full,
 	    mp->mnt_stat.f_fsid.val[0], mp->mnt_stat.f_fsid.val[1],
 	    mp->mnt_stat.f_owner, mp->mnt_stat.f_ctime);
 
- 	(*pr)("  syncwrites %llu asyncwrites = %llu\n",
+	(*pr)("  syncwrites %llu asyncwrites = %llu\n",
 	    mp->mnt_stat.f_syncwrites, mp->mnt_stat.f_asyncwrites);
 
- 	(*pr)("  syncreads %llu asyncreads = %llu\n",
+	(*pr)("  syncreads %llu asyncreads = %llu\n",
 	    mp->mnt_stat.f_syncreads, mp->mnt_stat.f_asyncreads);
 
 	(*pr)("  fstype \"%s\" mnton \"%s\" mntfrom \"%s\" mntspec \"%s\"\n",
