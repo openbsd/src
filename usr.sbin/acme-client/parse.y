@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.38 2019/06/17 12:42:52 florian Exp $ */
+/*	$OpenBSD: parse.y,v 1.39 2019/12/27 16:56:40 benno Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -811,8 +811,12 @@ parse_config(const char *filename, int opts)
 		return NULL;
 	}
 
-	if (opts & ACME_OPT_CHECK)
-		print_config(conf);
+	if (opts & ACME_OPT_CHECK) {
+		if (opts & ACME_OPT_VERBOSE)
+			print_config(conf);
+		exit(0);
+	}
+
 
 	return conf;
 }
