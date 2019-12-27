@@ -38,6 +38,14 @@ class TestRouterAdvertisementParsing(unittest.TestCase):
 		self.assertEqual(len(
 		    slaac_show_interface.def_router_proposals), 1)
 
+	def test_number_rdns_proposals(self):
+		self.assertEqual(len(
+		    slaac_show_interface.rdns_proposals), 1)
+
+	def test_number_rdns_proposals_rnds(self):
+		self.assertEqual(len(
+		    slaac_show_interface.rdns_proposals[0]['rdns']), 2)
+
 if __name__ == '__main__':
 	suite = unittest.TestLoader().loadTestsFromTestCase(
 	    TestRouterAdvertisementParsing)
