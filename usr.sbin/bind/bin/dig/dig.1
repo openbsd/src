@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.19 2019/12/20 23:03:30 jca Exp $
+.\" $OpenBSD: dig.1,v 1.20 2019/12/27 08:23:15 jmc Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 20 2019 $
+.Dd $Mdocdate: December 27 2019 $
 .Dt DIG 1
 .Os
 .Sh NAME
@@ -22,133 +22,81 @@
 .Nd DNS lookup utility
 .Sh SYNOPSIS
 .Nm
-.Op Ar @server
-.Op Fl b Ar address
+.Op Pf @ Ar server
+.Op Fl 46himuv
+.Op Fl b Ar address Ns Op Pf # Ar port
 .Op Fl c Ar class
-.Op Fl f Ar filename
-.Op Fl k Ar filename
-.Op Fl m
-.Op Fl p Ar port#
+.Op Fl f Ar file
+.Op Fl k Ar keyfile
+.Op Fl p Ar port
 .Op Fl q Ar name
 .Op Fl t Ar type
-.Op Fl v
 .Op Fl x Ar addr
-.Op Fl y Ar hmac:name:key
-.Op Oo Fl 4 Oc | Oo Fl 6 Oc
+.Op Fl y Oo Ar hmac : Oc Ns Ar name : Ns Ar key
 .Op Ar name
 .Op Ar type
 .Op Ar class
-.Op Ar queryopt ...
-.Nm
-.Op Fl h
-.Nm
-.Op Ar global-queryopt ...
-.Op Ar query ...
+.Op Pf + Ar queryopt ...
 .Sh DESCRIPTION
 The
 .Nm
 command is a flexible tool for interrogating DNS name servers.
 It performs DNS lookups and displays the answers that are returned from the name
-server(s) that were queried.
-Most DNS administrators use
-.Nm
-to troubleshoot DNS problems because of its flexibility, ease of use and clarity
-of output.
-Other lookup tools tend to have less functionality than
-.Nm .
-.Pp
+servers that were queried.
 Although
 .Nm
-is normally used with command-line arguments, it also has a batch mode of
+is normally used with command line arguments, it also has a batch mode of
 operation for reading lookup requests from a file.
-Unlike earlier versions, the BIND 9 implementation of
-.Nm
-allows multiple lookups to be issued from the command line.
-.Pp
-Unless it is told to query a specific name server,
-.Nm
-will try each of the servers listed in
-.Pa /etc/resolv.conf .
-If no usable server addresses are found,
-.Nm
-will send the query to the local host.
-.Pp
 When no command line arguments or options are given,
 .Nm
-will perform an NS query for "." (the root).
+will perform an NS query for '.' (the root).
 .Pp
-It is possible to set per-user defaults for
-.Nm
-via
-.Pa ${HOME}/.digrc .
-This file is read and any options in it are applied before the command line
-arguments.
-.Pp
-The IN and CH class names overlap with the IN and CH top level domain names.
-Either use the
-.Fl t
-and
-.Fl c
-options to specify the type and class, use the
-.Fl q
-the specify the domain name, or use "IN." and "CH." when looking up these top
-level domains.
-.Sh SIMPLE USAGE
 A typical invocation of
 .Nm
 looks like:
-.Bd -literal -offset indent
-dig @server name type
-.Ed
 .Pp
-where:
-.Bl -tag -width Ds
-.It Ar server
-is the name or IP address of the name server to query.
-This can be an IPv4 address in dotted-decimal notation or an IPv6 address in
-colon-delimited notation.
-When the supplied
-.Ar server
-argument is a hostname,
+.Dl dig @server [options] name type [class] [+queryopt]
+.Bl -tag -width +queryopt
+.It Pf @ Ar server
+The name or IP address of the name server to query.
+When the argument is a hostname,
 .Nm
 resolves that name before querying that name server.
-.Pp
 If no
 .Ar server
 argument is provided,
 .Nm
-consults
-.Pa /etc/resolv.conf ;
-if an address is found there, it queries the name server at that address.
-If either of the
-.Fl 4
-or
-.Fl 6
-options are in use, then only addresses for the corresponding transport will be
-tried.
+will try each of the servers listed in
+.Xr resolv.conf 5 .
 If no usable addresses are found,
 .Nm
 will send the query to the local host.
 The reply from the name server that responds is displayed.
 .It Ar name
-is the name of the resource record that is to be looked up.
+The name of the resource record that is to be looked up.
 .It Ar type
-indicates what type of query is required \(em ANY, A, MX, SIG, etc.
-.Ar type
-can be any valid query type.
-If no
-.Ar type
-argument is supplied,
-.Nm
-will perform a lookup for an A record.
+The type of query, as documented for
+.Fl t .
+The default is to perform a lookup for an A record.
+.It Ar class
+The query class, as documented for
+.Fl c .
+The default is
+.Dq IN .
+.It Pf + Ar queryopt
+One or more query options,
+as documented in
+.Sx QUERY OPTIONS ,
+below.
 .El
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl 4
 Use IPv4 only.
 .It Fl 6
 Use IPv6 only.
-.It Fl b Ar address Ns Op #port
+.It Fl b Ar address Ns Op Pf # Ar port
 Set the source IP address of the query.
 The
 .Ar address
@@ -286,6 +234,16 @@ This may be visible in the output from
 .Xr ps 1
 or in a history file maintained by the user's shell.
 .El
+.Pp
+The IN and CH class names overlap with the IN and CH top level domain names.
+Either use the
+.Fl t
+and
+.Fl c
+options to specify the type and class, use the
+.Fl q
+to specify the domain name, or use "IN." and "CH." when looking up these top
+level domains.
 .Sh QUERY OPTIONS
 .Nm
 provides a number of query options which affect the way in which lookups are
@@ -957,11 +915,18 @@ which means that
 will not print the initial query when it looks up the NS records for
 isc.org.
 .Sh FILES
-.Pa /etc/resolv.conf
-.Pp
-.Pa ${HOME}/.digrc
+.Bl -tag -width Ds
+.It Pa /etc/resolv.conf
+Resolver configuration file.
+.It Pa ${HOME}/.digrc
+User defaults for
+.Nm .
+This file is read and any options in it are applied before the command line
+arguments.
+.El
 .Sh SEE ALSO
-.Xr host 1
+.Xr host 1 ,
+.Xr resolv.conf 5
 .Sh STANDARDS
 .Rs
 .%A P. Mockapetris
