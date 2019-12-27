@@ -1,4 +1,4 @@
-#	$OpenBSD: Slaacctl.py,v 1.1 2017/10/11 17:21:44 florian Exp $
+#	$OpenBSD: Slaacctl.py,v 1.2 2019/12/27 09:17:07 florian Exp $
 # Copyright (c) 2017 Florian Obser <florian@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -30,6 +30,7 @@ class ShowInterface(object):
 		self.RAs = []
 		self.addr_proposals = []
 		self.def_router_proposals = []
+		self.rdns_proposals = []
 		self.out = subprocess.check_output(['slaacctl', '-s', self.sock,
 		    'sh', 'in', self.ifname])
 		self.parse(self.out)
@@ -46,6 +47,7 @@ class ShowInterface(object):
 		iface['RAs'] = self.RAs
 		iface['addr_proposals'] = self.addr_proposals
 		iface['def_router_proposals'] = self.def_router_proposals
+		iface['rdns_proposals'] = self.rdns_proposals
 		return (pprint.pformat(rep, indent=4))
 
 	def parse(self, str):
@@ -54,6 +56,7 @@ class ShowInterface(object):
 		prefix = None
 		addr_proposal = None
 		def_router_proposal = None
+		rdns_proposal = None
 		lines = str.split("\n")
 		for line in lines:
 			if self.debug == 1:
@@ -198,16 +201,20 @@ class ShowInterface(object):
 				addr_proposal['prefix'] = m.group(2)
 				state = 'ADDRESS_PROPOSAL'
 			elif state == 'DEFAULT_ROUTER':
-				m = re.match("^\s+id:\s+(\d+), state:\s+(.+)",
-				    line)
-				if m:
+				is_id = re.match("^\s+id:\s+(\d+), "
+				    + "state:\s+(.+)", line)
+				is_rdns = re.match("\s+rDNS proposals", line)
+				if is_id:
 					def_router_proposal = dict()
 					self.def_router_proposals.append(
 					    def_router_proposal)
-					def_router_proposal['id'] = m.group(1)
+					def_router_proposal['id'] = \
+					    is_id.group(1)
 					def_router_proposal['state'] = \
-					    m.group(2)
+					    is_id.group(2)
 					state = 'DEFAULT_ROUTER_PROPOSAL'
+				elif is_rdns:
+					state = 'RDNS'
 				else:
 					state = 'DONE'
 			elif state == 'DEFAULT_ROUTER_PROPOSAL':
@@ -230,6 +237,48 @@ class ShowInterface(object):
 				def_router_proposal['ago'] = m.group(2)
 				def_router_proposal['timeout'] = m.group(3)
 				state = 'DEFAULT_ROUTER'
+			elif state == 'RDNS':
+				is_id = re.match("^\s+id:\s+(\d+), "
+				    + "state:\s+(.+)", line)
+				if is_id:
+					rdns_proposal = dict();
+					rdns_proposal['rdns'] = []
+					self.rdns_proposals.append(
+					    rdns_proposal)
+					rdns_proposal['id'] = is_id.group(1)
+					rdns_proposal['state'] = is_id.group(2)
+					state = 'RDNS_PROPOSAL'
+				else:
+					state = 'DONE'
+			elif state == 'RDNS_PROPOSAL':
+				m = re.match("^\s+router: (.+)", line)
+				rdns_proposal['router'] = m.group(1)
+				state = 'RDNS_PROPOSAL_ROUTER'
+			elif state == 'RDNS_PROPOSAL_ROUTER':
+				m = re.match("^\s+rdns lifetime:\s+(\d)",
+				    line)
+				rdns_proposal['lifetime'] = m.group(1)
+				state = 'RDNS_LIFETIME'
+			elif state == 'RDNS_LIFETIME':
+				m = re.match("^\s+rdns:", line)
+				if m:
+					state = 'RDNS_RDNS'
+			elif state == 'RDNS_RDNS':
+				is_upd = re.match("^\s+updated: ([^;]+); "
+				    + "(\d+)s ago, timeout:\s+(\d+)", line)
+				is_rdns = re.match("^\s+([0-9a-fA-F]{1,4}.*)",
+				    line)
+				if is_upd:
+					rdns_proposal['updated'] = \
+					    is_upd.group(1)
+					rdns_proposal['ago'] = is_upd.group(2)
+					rdns_proposal['timeout'] = \
+					    is_upd.group(3)
+					state = 'DONE'
+				elif is_rdns:
+					rdns_proposal['rdns'].append(
+					    is_rdns.group(1))
+					state = 'RDNS_RDNS'
 			elif state == 'DONE':
 				raise ValueError("got additional data: "
 				    + "{0}".format(line))
