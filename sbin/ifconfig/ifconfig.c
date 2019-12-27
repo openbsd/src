@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.416 2019/11/30 05:42:31 bluhm Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.417 2019/12/27 14:34:46 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -714,7 +714,9 @@ const struct afswtch {
 const struct afswtch *afp;	/*the address family being set or asked about*/
 
 char joinname[IEEE80211_NWID_LEN];
+size_t joinlen;
 char nwidname[IEEE80211_NWID_LEN];
+size_t nwidlen;
 
 int ifaliases = 0;
 int aflag = 0;
@@ -1735,11 +1737,11 @@ setifnwid(const char *val, int d)
 	struct ieee80211_nwid nwid;
 	int len;
 
-	if (strlen(joinname) != 0) {
+	if (joinlen != 0) {
 		errx(1, "nwid and join may not be used at the same time");
 	}
 
-	if (strlen(nwidname) != 0) {
+	if (nwidlen != 0) {
 		errx(1, "nwid may not be specified twice");
 	}
 
@@ -1752,9 +1754,9 @@ setifnwid(const char *val, int d)
 		if (get_string(val, NULL, nwid.i_nwid, &len) == NULL)
 			return;
 	}
-	nwid.i_len = len;
+	nwidlen = nwid.i_len = len;
 	(void)strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	(void)strlcpy(nwidname, nwid.i_nwid, sizeof(nwidname));
+	memcpy(nwidname, nwid.i_nwid, len);
 	ifr.ifr_data = (caddr_t)&nwid;
 	if (ioctl(sock, SIOCS80211NWID, (caddr_t)&ifr) == -1)
 		warn("SIOCS80211NWID");
@@ -1777,11 +1779,11 @@ setifjoin(const char *val, int d)
 {
 	int len;
 
-	if (strlen(nwidname) != 0) {
+	if (nwidlen != 0) {
 		errx(1, "nwid and join may not be used at the same time");
 	}
 
-	if (strlen(joinname) != 0) {
+	if (joinlen != 0) {
 		errx(1, "join may not be specified twice");
 	}
 
@@ -1796,9 +1798,9 @@ setifjoin(const char *val, int d)
 		if (len == 0)
 			join.i_flags |= IEEE80211_JOIN_ANY;
 	}
-	join.i_len = len;
+	joinlen = join.i_len = len;
 	(void)strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	(void)strlcpy(joinname, join.i_nwid, sizeof(joinname));
+	memcpy(joinname, join.i_nwid, len);
 
 	actions |= A_JOIN;
 }
@@ -2181,12 +2183,12 @@ setifwpakey(const char *val, int d)
 		strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 
 		/* Use the value specified in 'join' or 'nwid' */
-		if (strlen(joinname) != 0) {
-			strlcpy(nwid.i_nwid, joinname, sizeof(nwid.i_nwid));
-			nwid.i_len = strlen(joinname);
-		} else if (strlen(nwidname) != 0) {
-			strlcpy(nwid.i_nwid, nwidname, sizeof(nwid.i_nwid));
-			nwid.i_len = strlen(nwidname);
+		if (joinlen != 0) {
+			memcpy(nwid.i_nwid, joinname, joinlen);
+			nwid.i_len = joinlen;
+		} else if (nwidlen != 0) {
+			memcpy(nwid.i_nwid, nwidname, nwidlen);
+			nwid.i_len = nwidlen;
 		} else {
 			warnx("no nwid or join command, guessing nwid to use");
 
