@@ -1,4 +1,4 @@
-/*	$OpenBSD: specdev.h,v 1.38 2019/01/21 18:09:21 anton Exp $	*/
+/*	$OpenBSD: specdev.h,v 1.39 2019/12/27 22:17:01 bluhm Exp $	*/
 /*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
 
 /*
@@ -32,14 +32,16 @@
  *	@(#)specdev.h	8.3 (Berkeley) 8/10/94
  */
 
+SLIST_HEAD(vnodechain, vnode);
+
 /*
  * This structure defines the information maintained about
  * special devices. It is allocated in checkalias and freed
  * in vgone.
  */
 struct specinfo {
-	struct	vnode **si_hashchain;
-	struct	vnode *si_specnext;
+	struct	vnodechain *si_hashchain;
+	SLIST_ENTRY(vnode) si_specnext;
 	struct  mount *si_mountpoint;
 	dev_t	si_rdev;
 	struct	lockf_state *si_lockf;
@@ -85,7 +87,7 @@ struct cloneinfo {
 
 #ifdef	_KERNEL
 
-extern struct vnode *speclisth[SPECHSZ];
+extern struct vnodechain speclisth[SPECHSZ];
 
 /*
  * Prototypes for special file operations on vnodes.

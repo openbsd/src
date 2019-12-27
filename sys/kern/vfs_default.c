@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.44 2019/12/08 12:29:42 mpi Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.45 2019/12/27 22:17:01 bluhm Exp $  */
 
 /*
  * Portions of this code are:
@@ -98,7 +98,7 @@ vop_generic_revoke(void *v)
 		 */
 		vp->v_flag |= VXLOCK;
 		while (vp->v_flag & VALIASED) {
-			for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
+			SLIST_FOREACH(vq, vp->v_hashchain, v_specnext) {
 				if (vq->v_rdev != vp->v_rdev ||
 				    vq->v_type != vp->v_type || vp == vq)
 					continue;

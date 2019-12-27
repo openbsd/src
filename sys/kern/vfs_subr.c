@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.295 2019/12/26 18:59:05 bluhm Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.296 2019/12/27 22:17:01 bluhm Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -551,14 +551,14 @@ checkalias(struct vnode *nvp, dev_t nvp_rdev, struct mount *mp)
 {
 	struct proc *p = curproc;
 	struct vnode *vp;
-	struct vnode **vpp;
+	struct vnodechain *vchain;
 
 	if (nvp->v_type != VBLK && nvp->v_type != VCHR)
 		return (NULLVP);
 
-	vpp = &speclisth[SPECHASH(nvp_rdev)];
+	vchain = &speclisth[SPECHASH(nvp_rdev)];
 loop:
-	for (vp = *vpp; vp; vp = vp->v_specnext) {
+	SLIST_FOREACH(vp, vchain, v_specnext) {
 		if (nvp_rdev != vp->v_rdev || nvp->v_type != vp->v_type) {
 			continue;
 		}
@@ -582,8 +582,7 @@ loop:
 		nvp->v_specinfo = malloc(sizeof(struct specinfo), M_VNODE,
 			M_WAITOK);
 		nvp->v_rdev = nvp_rdev;
-		nvp->v_hashchain = vpp;
-		nvp->v_specnext = *vpp;
+		nvp->v_hashchain = vchain;
 		nvp->v_specmountpoint = NULL;
 		nvp->v_speclockf = NULL;
 		nvp->v_specbitmap = NULL;
@@ -596,7 +595,7 @@ loop:
 				nvp->v_specbitmap = malloc(CLONE_MAPSZ,
 				    M_VNODE, M_WAITOK | M_ZERO);
 		}
-		*vpp = nvp;
+		SLIST_INSERT_HEAD(vchain, nvp, v_specnext);
 		if (vp != NULLVP) {
 			nvp->v_flag |= VALIASED;
 			vp->v_flag |= VALIASED;
@@ -1127,21 +1126,10 @@ vgonel(struct vnode *vp, struct proc *p)
 		    (minor(vp->v_rdev) >> CLONE_SHIFT == 0)) {
 			free(vp->v_specbitmap, M_VNODE, CLONE_MAPSZ);
 		}
-		if (*vp->v_hashchain == vp) {
-			*vp->v_hashchain = vp->v_specnext;
-		} else {
-			for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
-				if (vq->v_specnext != vp)
-					continue;
-				vq->v_specnext = vp->v_specnext;
-				break;
-			}
-			if (vq == NULL)
-				panic("missing bdev");
-		}
+		SLIST_REMOVE(vp->v_hashchain, vp, vnode, v_specnext);
 		if (vp->v_flag & VALIASED) {
 			vx = NULL;
-			for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
+			SLIST_FOREACH(vq, vp->v_hashchain, v_specnext) {
 				if (vq->v_rdev != vp->v_rdev ||
 				    vq->v_type != vp->v_type)
 					continue;
@@ -1195,7 +1183,7 @@ vfinddev(dev_t dev, enum vtype type, struct vnode **vpp)
 	struct vnode *vp;
 	int rc =0;
 
-	for (vp = speclisth[SPECHASH(dev)]; vp; vp = vp->v_specnext) {
+	SLIST_FOREACH(vp, &speclisth[SPECHASH(dev)], v_specnext) {
 		if (dev != vp->v_rdev || type != vp->v_type)
 			continue;
 		*vpp = vp;
@@ -1232,8 +1220,8 @@ vcount(struct vnode *vp)
 loop:
 	if ((vp->v_flag & VALIASED) == 0)
 		return (vp->v_usecount);
-	for (count = 0, vq = *vp->v_hashchain; vq; vq = vnext) {
-		vnext = vq->v_specnext;
+	count = 0;
+	SLIST_FOREACH_SAFE(vq, vp->v_hashchain, v_specnext, vnext) {
 		if (vq->v_rdev != vp->v_rdev || vq->v_type != vp->v_type)
 			continue;
 		/*
@@ -1386,7 +1374,7 @@ vfs_mountedon(struct vnode *vp)
 	if (vp->v_specmountpoint != NULL)
 		return (EBUSY);
 	if (vp->v_flag & VALIASED) {
-		for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
+		SLIST_FOREACH(vq, vp->v_hashchain, v_specnext) {
 			if (vq->v_rdev != vp->v_rdev ||
 			    vq->v_type != vp->v_type)
 				continue;
