@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.104 2019/12/25 09:46:09 anton Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.105 2019/12/27 09:29:50 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -352,14 +352,20 @@ pipeselwakeup(struct pipe *cpipe)
 {
 	rw_assert_wrlock(&pipe_lock);
 
+	KERNEL_LOCK();
+
+	/* Kernel lock needed in order to prevent race with kevent. */
 	if (cpipe->pipe_state & PIPE_SEL) {
 		cpipe->pipe_state &= ~PIPE_SEL;
 		selwakeup(&cpipe->pipe_sel);
 	} else
 		KNOTE(&cpipe->pipe_sel.si_note, NOTE_SUBMIT);
 
+	/* Kernel lock needed since pgsigio() calls ptsignal(). */
 	if (cpipe->pipe_state & PIPE_ASYNC)
 		pgsigio(&cpipe->pipe_sigio, SIGIO, 0);
+
+	KERNEL_UNLOCK();
 }
 
 int
@@ -369,8 +375,6 @@ pipe_read(struct file *fp, struct uio *uio, int fflags)
 	int error;
 	size_t size, nread = 0;
 
-	KERNEL_LOCK();
-
 	rw_enter_write(&pipe_lock);
 	++rpipe->pipe_busy;
 	error = pipelock(rpipe);
@@ -378,7 +382,6 @@ pipe_read(struct file *fp, struct uio *uio, int fflags)
 		--rpipe->pipe_busy;
 		pipe_rundown(rpipe);
 		rw_exit_write(&pipe_lock);
-		KERNEL_UNLOCK();
 		return (error);
 	}
 
@@ -462,7 +465,6 @@ unlocked_error:
 		pipeselwakeup(rpipe);
 
 	rw_exit_write(&pipe_lock);
-	KERNEL_UNLOCK();
 	return (error);
 }
 
@@ -473,8 +475,6 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 	size_t orig_resid;
 	struct pipe *wpipe, *rpipe;
 
-	KERNEL_LOCK();
-
 	rpipe = fp->f_data;
 
 	rw_enter_write(&pipe_lock);
@@ -483,7 +483,6 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 	/* Detect loss of pipe read side, issue SIGPIPE if lost. */
 	if (wpipe == NULL) {
 		rw_exit_write(&pipe_lock);
-		KERNEL_UNLOCK();
 		return (EPIPE);
 	}
 
@@ -493,7 +492,6 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 		--wpipe->pipe_busy;
 		pipe_rundown(wpipe);
 		rw_exit_write(&pipe_lock);
-		KERNEL_UNLOCK();
 		return (error);
 	}
 
@@ -660,7 +658,6 @@ unlocked_error:
 		pipeselwakeup(wpipe);
 
 	rw_exit_write(&pipe_lock);
-	KERNEL_UNLOCK();
 	return (error);
 }
 
@@ -790,9 +787,7 @@ pipe_close(struct file *fp, struct proc *p)
 
 	fp->f_ops = NULL;
 	fp->f_data = NULL;
-	KERNEL_LOCK();
 	pipe_destroy(cpipe);
-	KERNEL_UNLOCK();
 	return (0);
 }
 
