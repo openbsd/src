@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.30 2019/12/28 06:58:27 tb Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.31 2019/12/28 18:36:02 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -643,7 +643,8 @@ guest_console(int argc, char **argv)
 		    "ttyV%llu", guest->gid - 1);
 
 		closefrom(STDERR_FILENO + 1);
-		execl(LDOMCTL_CU, LDOMCTL_CU, "-l", console_str, (char *)NULL);
+		execl(LDOMCTL_CU, LDOMCTL_CU, "-r", "-l", console_str,
+		    (char *)NULL);
 		err(1, "failed to open console");
 	}
 }
