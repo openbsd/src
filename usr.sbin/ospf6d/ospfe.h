@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.21 2019/12/22 15:34:52 denis Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.22 2019/12/28 09:25:24 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -149,7 +149,7 @@ int	 if_set_ipv6_checksum(int);
 
 /* lsack.c */
 int	 delay_lsa_ack(struct iface *, struct lsa_hdr *);
-int	 send_ls_ack(struct iface *, struct in6_addr, void *, size_t);
+int	 send_direct_ack(struct iface *, struct in6_addr, void *, size_t);
 void	 recv_ls_ack(struct nbr *, char *, u_int16_t);
 int	 lsa_hdr_check(struct nbr *, struct lsa_hdr *);
 void	 ls_ack_list_add(struct iface *, struct lsa_hdr *);

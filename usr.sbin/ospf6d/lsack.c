@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.7 2019/12/11 21:33:56 denis Exp $ */
+/*	$OpenBSD: lsack.c,v 1.8 2019/12/28 09:25:24 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -19,7 +19,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/ip.h>
+#include <netinet/ip6.h>
 #include <arpa/inet.h>
 
 #include <stdlib.h>
@@ -30,39 +30,66 @@
 #include "log.h"
 #include "ospfe.h"
 
-void	 start_ls_ack_tx_timer_now(struct iface *);
+int		 send_ls_ack(struct iface *, struct in6_addr, struct ibuf *);
+struct ibuf	*prepare_ls_ack(struct iface *);
+void		 start_ls_ack_tx_timer_now(struct iface *);
 
 /* link state acknowledgement packet handling */
+struct ibuf *
+prepare_ls_ack(struct iface *iface)
+{
+	struct ibuf	*buf;
+
+	if ((buf = ibuf_open(iface->mtu - sizeof(struct ip6_hdr))) == NULL) {
+		log_warn("prepare_ls_ack");
+		return (NULL);
+	}
+
+	/* OSPF header */
+	if (gen_ospf_hdr(buf, iface, PACKET_TYPE_LS_ACK)) {
+		log_warn("prepare_ls_ack");
+		ibuf_free(buf);
+		return (NULL);
+	}
+
+	return (buf);
+}
+
 int
-send_ls_ack(struct iface *iface, struct in6_addr addr, void *data, size_t len)
+send_ls_ack(struct iface *iface, struct in6_addr addr, struct ibuf *buf)
+{
+	/* calculate checksum */
+	if (upd_ospf_hdr(buf, iface)) {
+		log_warn("send_ls_ack");
+		return (-1);
+	}
+
+	if (send_packet(iface, buf, &addr) == -1) {
+		log_warn("send_ls_ack");
+		return (-1);
+	}
+	return (0);
+}
+
+int
+send_direct_ack(struct iface *iface, struct in6_addr addr, void *d, size_t len)
 {
 	struct ibuf	*buf;
 	int		 ret;
 
-	/* XXX IBUF_READ_SIZE */
-	if ((buf = ibuf_dynamic(PKG_DEF_SIZE, IBUF_READ_SIZE)) == NULL)
-		fatal("send_ls_ack");
-
-	/* OSPF header */
-	if (gen_ospf_hdr(buf, iface, PACKET_TYPE_LS_ACK))
-		goto fail;
+	if ((buf = prepare_ls_ack(iface)) == NULL)
+		return (-1);
 
 	/* LS ack(s) */
-	if (ibuf_add(buf, data, len))
-		goto fail;
+	if (ibuf_add(buf, d, len)) {
+		log_warn("send_direct_ack");
+		ibuf_free(buf);
+		return (-1);
+	}
 
-	/* calculate checksum */
-	if (upd_ospf_hdr(buf, iface))
-		goto fail;
-
-	ret = send_packet(iface, buf, &addr);
-
+	ret = send_ls_ack(iface, addr, buf);
 	ibuf_free(buf);
 	return (ret);
-fail:
-	log_warn("send_ls_ack");
-	ibuf_free(buf);
-	return (-1);
 }
 
 void
@@ -207,41 +234,44 @@ ls_ack_tx_timer(int fd, short event, void *arg)
 {
 	struct in6_addr		 addr;
 	struct iface		*iface = arg;
-	struct lsa_hdr		*lsa_hdr;
 	struct lsa_entry	*le, *nle;
 	struct nbr		*nbr;
-	char			*buf;
-	char			*ptr;
-	int			 cnt = 0;
-
-	if ((buf = calloc(1, READ_BUF_SIZE)) == NULL)
-		fatal("ls_ack_tx_timer");
+	struct ibuf		*buf;
+	int			 cnt;
 
 	while (!ls_ack_list_empty(iface)) {
-		ptr = buf;
+		if ((buf = prepare_ls_ack(iface)) == NULL)
+			fatal("ls_ack_tx_timer");
 		cnt = 0;
-		for (le = TAILQ_FIRST(&iface->ls_ack_list); le != NULL &&
-		    (ptr - buf < iface->mtu - PACKET_HDR); le = nle) {
+
+		for (le = TAILQ_FIRST(&iface->ls_ack_list); le != NULL;
+		    le = nle) {
 			nle = TAILQ_NEXT(le, entry);
-			memcpy(ptr, le->le_lsa, sizeof(struct lsa_hdr));
-			ptr += sizeof(*lsa_hdr);
+			if (ibuf_left(buf) < sizeof(struct lsa_hdr))
+				break;
+			if (ibuf_add(buf, le->le_lsa, sizeof(struct lsa_hdr)))
+				break;
 			ls_ack_list_free(iface, le);
 			cnt++;
+		}
+		if (cnt == 0) {
+			log_warnx("ls_ack_tx_timer: lost in space");
+			ibuf_free(buf);
+			return;
 		}
 
 		/* send LS ack(s) but first set correct destination */
 		switch (iface->type) {
 		case IF_TYPE_POINTOPOINT:
 			inet_pton(AF_INET6, AllSPFRouters, &addr);
-			send_ls_ack(iface, addr, buf, ptr - buf);
+			send_ls_ack(iface, addr, buf);
 			break;
 		case IF_TYPE_BROADCAST:
 			if (iface->state & IF_STA_DRORBDR)
 				inet_pton(AF_INET6, AllSPFRouters, &addr);
 			else
 				inet_pton(AF_INET6, AllDRouters, &addr);
-
-			send_ls_ack(iface, addr, buf, ptr - buf);
+			send_ls_ack(iface, addr, buf);
 			break;
 		case IF_TYPE_NBMA:
 		case IF_TYPE_POINTOMULTIPOINT:
@@ -251,15 +281,14 @@ ls_ack_tx_timer(int fd, short event, void *arg)
 					continue;
 				if (!(nbr->state & NBR_STA_FLOOD))
 					continue;
-				send_ls_ack(iface, nbr->addr, buf, ptr - buf);
+				send_ls_ack(iface, nbr->addr, buf);
 			}
 			break;
 		default:
 			fatalx("lsa_ack_tx_timer: unknown interface type");
 		}
+		ibuf_free(buf);
 	}
-
-	free(buf);
 }
 
 void

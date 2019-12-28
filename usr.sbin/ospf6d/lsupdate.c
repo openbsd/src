@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.14 2019/12/11 21:33:56 denis Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.15 2019/12/28 09:25:24 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -37,12 +37,14 @@
 extern struct ospfd_conf	*oeconf;
 extern struct imsgev		*iev_rde;
 
-struct ibuf *prepare_ls_update(struct iface *, int);
-int	add_ls_update(struct ibuf *, struct iface *, void *, int, u_int16_t);
-int	send_ls_update(struct ibuf *, struct iface *, struct in6_addr, u_int32_t);
+struct ibuf	*prepare_ls_update(struct iface *);
+int		 add_ls_update(struct ibuf *, struct iface *, void *, u_int16_t,
+		    u_int16_t);
+int		 send_ls_update(struct ibuf *, struct iface *, struct in6_addr,
+		    u_int32_t);
 
-void	ls_retrans_list_insert(struct nbr *, struct lsa_entry *);
-void	ls_retrans_list_remove(struct nbr *, struct lsa_entry *);
+void		 ls_retrans_list_insert(struct nbr *, struct lsa_entry *);
+void		 ls_retrans_list_remove(struct nbr *, struct lsa_entry *);
 
 /* link state update packet handling */
 int
@@ -149,27 +151,24 @@ lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
 }
 
 struct ibuf *
-prepare_ls_update(struct iface *iface, int bigpkt)
+prepare_ls_update(struct iface *iface)
 {
 	struct ibuf		*buf;
-	size_t			 size;
+	size_t			 reserved;
 
-	size = bigpkt ? IPV6_MAXPACKET : iface->mtu;
-	if (size < IPV6_MMTU)
-		size = IPV6_MMTU;
-	size -= sizeof(struct ip6_hdr);
 	/*
 	 * Reserve space for optional ah or esp encryption.  The
 	 * algorithm is taken from ah_output and esp_output, the
 	 * values are the maxima of crypto/xform.c.
 	 */
-	size -= max(
+	reserved = max(
 	    /* base-ah-header replay authsize */
 	    AH_FLENGTH + sizeof(u_int32_t) + 32,
 	    /* spi sequence ivlen blocksize pad-length next-header authsize */
 	    2 * sizeof(u_int32_t) + 16 + 16 + 2 * sizeof(u_int8_t) + 32);
 
-	if ((buf = ibuf_open(size)) == NULL)
+	if ((buf = ibuf_dynamic(IPV6_MMTU - sizeof(struct ip6_hdr) - reserved,
+	    IPV6_MAXPACKET - sizeof(struct ip6_hdr) - reserved)) == NULL)
 		fatal("prepare_ls_update");
 
 	/* OSPF header */
@@ -188,16 +187,16 @@ fail:
 }
 
 int
-add_ls_update(struct ibuf *buf, struct iface *iface, void *data, int len,
+add_ls_update(struct ibuf *buf, struct iface *iface, void *data, u_int16_t len,
     u_int16_t older)
 {
-	size_t		pos;
-	u_int16_t	age;
+	void		*lsage;
+	u_int16_t	 age;
 
 	if (buf->wpos + len >= buf->max)
 		return (0);
 
-	pos = buf->wpos;
+	lsage = ibuf_reserve(buf, 0);
 	if (ibuf_add(buf, data, len)) {
 		log_warn("add_ls_update");
 		return (0);
@@ -209,7 +208,7 @@ add_ls_update(struct ibuf *buf, struct iface *iface, void *data, int len,
 	if ((age += older + iface->transmit_delay) >= MAX_AGE)
 		age = MAX_AGE;
 	age = htons(age);
-	memcpy(ibuf_seek(buf, pos, sizeof(age)), &age, sizeof(age));
+	memcpy(lsage, &age, sizeof(age));
 
 	return (1);
 }
@@ -218,8 +217,6 @@ int
 send_ls_update(struct ibuf *buf, struct iface *iface, struct in6_addr addr,
     u_int32_t nlsa)
 {
-	int			 ret;
-
 	nlsa = htonl(nlsa);
 	memcpy(ibuf_seek(buf, sizeof(struct ospf_hdr), sizeof(nlsa)),
 	    &nlsa, sizeof(nlsa));
@@ -227,10 +224,11 @@ send_ls_update(struct ibuf *buf, struct iface *iface, struct in6_addr addr,
 	if (upd_ospf_hdr(buf, iface))
 		goto fail;
 
-	ret = send_packet(iface, buf, &addr);
+	if (send_packet(iface, buf, &addr) == -1)
+		goto fail;
 
 	ibuf_free(buf);
-	return (ret);
+	return (0);
 fail:
 	log_warn("send_ls_update");
 	ibuf_free(buf);
@@ -443,7 +441,7 @@ ls_retrans_timer(int fd, short event, void *bula)
 	struct lsa_entry	*le;
 	struct ibuf		*buf;
 	time_t			 now;
-	int			 bigpkt, d;
+	int			 d;
 	u_int32_t		 nlsa = 0;
 
 	if ((le = TAILQ_FIRST(&nbr->ls_retrans_list)) != NULL)
@@ -479,17 +477,7 @@ ls_retrans_timer(int fd, short event, void *bula)
 	} else
 		memcpy(&addr, &nbr->addr, sizeof(addr));
 
-	/*
-	 * Allow big ipv6 packets that may get fragmented if a
-	 * single lsa might be too big for an unfragmented packet.
-	 * To avoid the exact algorithm duplicated here, just make
-	 * a good guess.  If the first lsa is bigger than 1024
-	 * bytes, reserve a separate big packet for it.  The kernel
-	 * will figure out if fragmentation is necessary.  For
-	 * smaller lsas, we avoid big packets and fragmentation.
-	 */
-	bigpkt = le->le_ref->len > 1024;
-	if ((buf = prepare_ls_update(nbr->iface, bigpkt)) == NULL) {
+	if ((buf = prepare_ls_update(nbr->iface)) == NULL) {
 		le->le_when = 1;
 		goto done;
 	}
@@ -504,18 +492,20 @@ ls_retrans_timer(int fd, short event, void *bula)
 
 		if (add_ls_update(buf, nbr->iface, le->le_ref->data,
 		    le->le_ref->len, d) == 0) {
-			if (nlsa)
-				break;
-			/*
-			 * A single lsa is too big to fit into an update
-			 * packet.  In this case drop the lsa, otherwise
-			 * we send empty update packets in an endless loop.
-			 */
-			log_warnx("ls_retrans_timer: cannot send lsa, dropped");
-			log_debug("ls_retrans_timer: type: %04x len: %u",
-			    ntohs(le->le_ref->hdr.type), le->le_ref->len);
-			ls_retrans_list_free(nbr, le);
-			continue;
+			if (nlsa == 0) {
+				/* something bad happened retry later */
+				log_warnx("ls_retrans_timer: sending LS update "
+				    "to neighbor ID %s failed",
+				    inet_ntoa(nbr->id));
+				log_debug("ls_retrans_timer: type: %04x len: %u",
+				    ntohs(le->le_ref->hdr.type),
+				    le->le_ref->len);
+				TAILQ_REMOVE(&nbr->ls_retrans_list, le, entry);
+				nbr->ls_ret_cnt--;
+				le->le_when = nbr->iface->rxmt_interval;
+				ls_retrans_list_insert(nbr, le);
+			}
+			break;
 		}
 		nlsa++;
 		if (le->le_oneshot)
@@ -526,11 +516,11 @@ ls_retrans_timer(int fd, short event, void *bula)
 			le->le_when = nbr->iface->rxmt_interval;
 			ls_retrans_list_insert(nbr, le);
 		}
-		/* do not put additional lsa into fragmented big packet */
-		if (bigpkt)
-			break;
 	}
-	send_ls_update(buf, nbr->iface, addr, nlsa);
+	if (nlsa)
+		send_ls_update(buf, nbr->iface, addr, nlsa);
+	else
+		ibuf_free(buf);
 
 done:
 	if ((le = TAILQ_FIRST(&nbr->ls_retrans_list)) != NULL) {

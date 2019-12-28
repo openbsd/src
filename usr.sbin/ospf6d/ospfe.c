@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.58 2019/12/23 07:33:49 denis Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.59 2019/12/28 09:25:24 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -699,7 +699,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				break;
 
 			/* send a direct acknowledgement */
-			send_ls_ack(nbr->iface, nbr->addr, imsg.data,
+			send_direct_ack(nbr->iface, nbr->addr, imsg.data,
 			    imsg.hdr.len - IMSG_HEADER_SIZE);
 
 			break;
