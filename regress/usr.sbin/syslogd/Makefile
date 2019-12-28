@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2019/09/20 13:20:12 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.30 2019/12/28 16:03:48 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -40,7 +40,7 @@ CLEANFILES +=		*.log *.log.? *.conf ktrace.out stamp-* *.pid
 CLEANFILES +=		*.out *.sock *.ktrace *.fstat ttylog *.ph */*.ph
 CLEANFILES +=		*.pem *.req *.key *.crt *.srl empty toobig diskimage
 
-run-args-rsyslog-client-tls.pl:
+run-args-rsyslog-client-tls.pl run-args-rsyslog-tls.pl:
 	@echo '\n======== $@ ========'
 	# rsyslogd TLS client side is totally unreliable.  Startup of
 	# GnuTLS may take a long time on slow machines.  Disable test.
