@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.184 2019/12/10 12:20:17 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.185 2019/12/28 16:27:04 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -5293,7 +5293,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 {
 	struct iked_proposal	*prop;
 	struct iked_transform	*xform, *encrxf = NULL, *integrxf = NULL;
-	struct iked_childsa	*csa, *csb;
+	struct iked_childsa	*csa = NULL, *csb = NULL;
 	struct iked_flow	*flow, *saflow, *flowa, *flowb;
 	struct ibuf		*keymat = NULL, *seed = NULL, *dhsecret = NULL;
 	struct group		*group;
@@ -5475,14 +5475,12 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 		    encrxf->xform_keylength / 8)) == NULL) {
 			log_debug("%s: failed to get CHILD SA encryption key",
 			    __func__);
-			childsa_free(csa);
 			goto done;
 		}
 		if (integrxf && (csa->csa_integrkey = ibuf_get(keymat,
 		    integrxf->xform_keylength / 8)) == NULL) {
 			log_debug("%s: failed to get CHILD SA integrity key",
 			    __func__);
-			childsa_free(csa);
 			goto done;
 		}
 		if (encrxf)
@@ -5492,7 +5490,6 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 
 		if ((csb = calloc(1, sizeof(*csb))) == NULL) {
 			log_debug("%s: failed to get CHILD SA", __func__);
-			childsa_free(csa);
 			goto done;
 		}
 
@@ -5511,16 +5508,12 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 		    encrxf->xform_keylength / 8)) == NULL) {
 			log_debug("%s: failed to get CHILD SA encryption key",
 			    __func__);
-			childsa_free(csa);
-			childsa_free(csb);
 			goto done;
 		}
 		if (integrxf && (csb->csa_integrkey = ibuf_get(keymat,
 		    integrxf->xform_keylength / 8)) == NULL) {
 			log_debug("%s: failed to get CHILD SA integrity key",
 			    __func__);
-			childsa_free(csa);
-			childsa_free(csb);
 			goto done;
 		}
 
@@ -5529,6 +5522,8 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 
 		csa->csa_peersa = csb;
 		csb->csa_peersa = csa;
+		csa = NULL;
+		csb = NULL;
 	}
 
 	ret = 0;
@@ -5536,6 +5531,8 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 	ibuf_release(dhsecret);
 	ibuf_release(keymat);
 	ibuf_release(seed);
+	childsa_free(csa);
+	childsa_free(csb);
 
 	return (ret);
 }
