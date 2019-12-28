@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.36 2016/09/19 06:46:44 ratchov Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.37 2019/12/28 07:55:48 fcambus Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -1187,7 +1187,7 @@ cs4281_malloc(void *addr, int direction, size_t size, int pool, int flags)
 	error = cs4281_allocmem(sc, size, pool, flags, p);
 
 	if (error) {
-		free(p, pool, 0);
+		free(p, pool, sizeof(*p));
 		return (0);
 	}
 
@@ -1212,7 +1212,7 @@ cs4281_free(void *addr, void *ptr, int pool)
 			bus_dmamem_unmap(sc->sc_dmatag, p->addr, p->size);
 			bus_dmamem_free(sc->sc_dmatag, p->segs, p->nsegs);
 			*pp = p->next;
-			free(p, pool, 0);
+			free(p, pool, sizeof(*p));
 			return;
 		}
 	}
