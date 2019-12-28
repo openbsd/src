@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.121 2019/09/12 22:22:53 jmatthew Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.122 2019/12/28 04:38:22 kn Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -413,6 +413,7 @@ mpii_dvatosge(struct mpii_sge *sge, u_int64_t dva)
 static const struct pci_matchid mpii_devices[] = {
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2004 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2008 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SSS6200 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2108_3 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2108_4 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2108_5 },
