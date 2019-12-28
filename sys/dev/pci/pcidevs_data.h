@@ -21788,6 +21788,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SAS1078DE",
 	},
 	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SSS6200,
+	    "SSS6200",
+	},
+	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2208_1,
 	    "SAS2208",
 	},
