@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.122 2019/12/28 04:38:22 kn Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.123 2019/12/29 21:30:21 kn Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -910,8 +910,29 @@ mpii_scsi_probe(struct scsi_link *link)
 	if (ISSET(flags, MPII_DF_HIDDEN) || ISSET(flags, MPII_DF_UNUSED))
 		return (1);
 
-	if (ISSET(flags, MPII_DF_VOLUME))
+	if (ISSET(flags, MPII_DF_VOLUME)) {
+		struct mpii_cfg_hdr hdr;
+		struct mpii_cfg_raid_vol_pg1 vpg;
+		size_t pagelen;
+
+		address = MPII_CFG_RAID_VOL_ADDR_HANDLE | dev->dev_handle;
+
+		if (mpii_req_cfg_header(sc, MPII_CONFIG_REQ_PAGE_TYPE_RAID_VOL,
+		    1, address, MPII_PG_POLL, &hdr) != 0)
+			return (EINVAL);
+
+		memset(&vpg, 0, sizeof(vpg));
+		/* avoid stack trash on future page growth */
+		pagelen = min(sizeof(vpg), hdr.page_length * 4);
+
+		if (mpii_req_cfg_page(sc, address, MPII_PG_POLL, &hdr, 1,
+		    &vpg, pagelen) != 0)
+			return (EINVAL);
+
+		link->port_wwn = letoh64(vpg.wwid);
+
 		return (0);
+	}
 
 	memset(&ehdr, 0, sizeof(ehdr));
 	ehdr.page_type = MPII_CONFIG_REQ_PAGE_TYPE_EXTENDED;
