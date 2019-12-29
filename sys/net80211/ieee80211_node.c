@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.177 2019/11/10 09:09:02 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.178 2019/12/29 14:00:36 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1429,10 +1429,12 @@ ieee80211_end_scan(struct ifnet *ifp)
 
 		/* 
 		 * After a background scan we might end up choosing the
-		 * same AP again. Do not change ic->ic_bss in this case,
-		 * and make background scans less frequent.
+		 * same AP again. Or the newly selected AP's RSSI level
+		 * might be low enough to trigger another background scan.
+		 * Do not change ic->ic_bss in these cases and make
+		 * background scans less frequent.
 		 */
-		if (selbs == curbs) {
+		if (selbs == curbs || !(*ic->ic_node_checkrssi)(ic, selbs)) {
 			if (ic->ic_bgscan_fail < IEEE80211_BGSCAN_FAIL_MAX) {
 				if (ic->ic_bgscan_fail <= 0)
 					ic->ic_bgscan_fail = 1;
