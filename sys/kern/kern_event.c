@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.110 2019/12/25 15:04:44 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.111 2019/12/29 07:14:06 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -1153,6 +1153,10 @@ knote_drop(struct knote *kn, struct proc *p)
 	SLIST_REMOVE(list, kn, knote, kn_link);
 	if (kn->kn_status & KN_QUEUED)
 		knote_dequeue(kn);
+	if (kn->kn_status & KN_WAITING) {
+		kn->kn_status &= ~KN_WAITING;
+		wakeup(kn);
+	}
 	if (kn->kn_fop->f_isfd)
 		FRELE(kn->kn_fp, p);
 	pool_put(&knote_pool, kn);
