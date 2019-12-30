@@ -398,6 +398,7 @@ sub constants {
               INST_ARCHLIB INST_SCRIPT INST_BIN INST_LIB
               INST_MAN1DIR INST_MAN3DIR
               MAN1EXT      MAN3EXT
+              MAN1SECTION  MAN3SECTION
               INSTALLDIRS INSTALL_BASE DESTDIR PREFIX
               PERLPREFIX      SITEPREFIX      VENDORPREFIX
                    ),
@@ -1450,6 +1451,24 @@ sub init_MANPODS {
             $self->$init_method();
         }
     }
+
+    # logic similar to picking man${num}ext in perl's Configure script
+    foreach my $num (1,3) {
+        my $installdirs = uc $self->{INSTALLDIRS};
+        $installdirs = '' if $installdirs eq 'PERL';
+        my $mandir = $self->_expand_macros(
+            $self->{ "INSTALL${installdirs}MAN${num}DIR" } );
+        my $section = $num;
+
+        foreach ($num, "${num}p", "${num}pm", qw< l n o C L >, "L$num") {
+            if ( $mandir =~ /\b(?:man|cat)$_$/ ) {
+                $section = $_;
+                last;
+            }
+        }
+
+        $self->{"MAN${num}SECTION"} = $section;
+    }
 }
 
 
@@ -2134,7 +2153,8 @@ Called by init_main.  Initializes PERL_*
 sub init_PERM {
     my($self) = shift;
 
-    $self->{PERM_DIR} = 755  unless defined $self->{PERM_DIR};
+    my $perm_dir = $self->{PERL_CORE} ? 770 : 755;
+    $self->{PERM_DIR} = $perm_dir  unless defined $self->{PERM_DIR};
     $self->{PERM_RW}  = 644  unless defined $self->{PERM_RW};
     $self->{PERM_RWX} = 755  unless defined $self->{PERM_RWX};
 

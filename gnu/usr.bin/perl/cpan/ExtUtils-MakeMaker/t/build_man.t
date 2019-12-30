@@ -7,7 +7,7 @@ BEGIN {
 }
 
 use strict;
-use Test::More tests => 10;
+use Test::More tests => 46;
 
 use File::Spec;
 use File::Temp qw[tempdir];
@@ -81,3 +81,106 @@ ok((my $stdout = tie *STDOUT, 'TieOut'), 'tie stdout');
     );
     is_deeply $mm->{MAN3PODS}, { "Foo.pm" => "Foo.1" }, 'override man3pod';
 }
+
+unlink $README;
+
+# Check that we find the manage section from the directory
+{
+    local $Config{installman1dir}       = '';
+    local $Config{installman3dir}       = '';
+    local $Config{installsiteman1dir}   = '';
+    local $Config{installsiteman3dir}   = '';
+    local $Config{installvendorman1dir} = '';
+    local $Config{installvendorman3dir} = '';
+    local $Config{usevendorprefix}      = '';
+    local $Config{vendorprefixexp}      = '';
+
+    my $INSTALLDIRS = 'site';
+
+    my $sections_ok = sub {
+        my ( $man1section, $man3section, $m ) = @_;
+        local $Test::Builder::Level = $Test::Builder::Level + 1;
+
+        my $stdout = tie *STDOUT, 'TieOut' or die;
+        my $mm     = WriteMakefile(
+            NAME         => 'Big::Dummy',
+            VERSION_FROM => 'lib/Big/Dummy.pm',
+            INSTALLDIRS  => $INSTALLDIRS,
+        );
+
+        is( $mm->{MAN1SECTION}, $man1section,
+            "$m man1section is $man1section" );
+        is( $mm->{MAN3SECTION}, $man3section,
+            "$m man3section is $man3section" );
+    };
+
+    # Correctly detect known man sections
+    foreach my $s ( '{num}', '{num}p', '{num}pm', qw< l n o C L >, "L{num}", )
+    {
+        ( my $man1section = $s ) =~ s/\{num\}/1/;
+        ( my $man3section = $s ) =~ s/\{num\}/3/;
+
+        $Config{installman1dir}
+            = File::Spec->catdir( 'foo', "man$man1section" );
+        $Config{installman3dir}
+            = File::Spec->catdir( 'foo', "man$man3section" );
+
+        $sections_ok->( $man1section, $man3section, "From main [$s]" );
+    }
+
+    # Ignore unknown man sections
+    foreach my $s ( '', qw< 2 2p 33 >, "C{num}" ) {
+        ( my $man1section = $s ) =~ s/\{num\}/1/;
+        ( my $man3section = $s ) =~ s/\{num\}/3/;
+
+        $Config{installman1dir}
+            = File::Spec->catdir( 'foo', "man$man1section" );
+        $Config{installman3dir}
+            = File::Spec->catdir( 'foo', "man$man3section" );
+
+        $sections_ok->( 1, 3, "Ignore unrecognized [$s]" );
+    }
+
+    # Look in the right installman?dir based on INSTALLDIRS
+    {
+        $Config{installman1dir}     = File::Spec->catdir( 'foo', 'cat1p' );
+        $Config{installman3dir}     = File::Spec->catdir( 'foo', 'cat3p' );
+        $Config{installsiteman1dir} = File::Spec->catdir( 'foo', 'catL' );
+        $Config{installsiteman3dir} = File::Spec->catdir( 'foo', 'catL3' );
+
+        $sections_ok->( 'L', 'L3', "From site" );
+
+        my $installwas = $INSTALLDIRS;
+        $INSTALLDIRS = 'perl';
+        $sections_ok->( '1p', '3p', "From main" );
+        $INSTALLDIRS = $installwas;
+
+    }
+
+    # Set MAN?SECTION in Makefile
+    {
+        $Config{installman1dir} = File::Spec->catdir( 'foo', 'man1pm' );
+        $Config{installman3dir} = File::Spec->catdir( 'foo', 'man3pm' );
+        $Config{installsiteman1dir} = '';
+        $Config{installsiteman3dir} = '';
+
+        my $stdout = tie *STDOUT, 'TieOut' or die;
+        my $mm     = WriteMakefile(
+            NAME         => 'Big::Dummy',
+            VERSION_FROM => 'lib/Big/Dummy.pm',
+            MAN1PODS     => { foo => 'foo.1' },
+            INSTALLDIRS  => $INSTALLDIRS,
+        );
+
+        my $makefile = slurp('Makefile');
+
+        like $makefile, qr/^\QMAN1SECTION = 1pm\E$/xms, "Set MAN1SECTION";
+        like $makefile, qr/^\QMAN3SECTION = 3pm\E$/xms, "Set MAN3SECTION";
+
+        like $makefile, qr/\Q$(POD2MAN) --section=$(MAN1SECTION) \E/,
+            "Set POD2MAN section to \$(MAN1SECTION)";
+        like $makefile, qr/\Q$(POD2MAN) --section=$(MAN3SECTION) \E/,
+            "Set POD2MAN section to \$(MAN3SECTION)";
+    }
+}
+

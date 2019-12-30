@@ -144,7 +144,9 @@ sub _get_podman_switches {
     #
     # See RT #77465
     #
-    #push @switches, 'utf8' => 1;
+    # Then again, do *not* comment it out on OpenBSD:
+    # mandoc handles UTF-8 input just fine.
+    push @switches, 'utf8' => 1;
 
 	$self->debug( "Pod::Man switches are [@switches]\n" );
 
@@ -209,12 +211,6 @@ sub _have_groff_with_utf8 {
 	$version ge $minimum_groff_version;
 	}
 
-sub _have_mandoc_with_utf8 {
-	my( $self ) = @_;
-
-       $self->_is_mandoc and not system 'mandoc -Tlocale -V > /dev/null 2>&1';
-	}
-
 sub _collect_nroff_switches {
 	my( $self ) = shift;
 
@@ -225,6 +221,10 @@ sub _collect_nroff_switches {
 		my $c = $cols * 39 / 40;
 		$cols = $c > $cols - 2 ? $c : $cols -2;
 		push @render_switches, '-rLL=' . (int $c) . 'n' if $cols > 80;
+		}
+
+	if( $self->_is_mandoc ) {
+		push @render_switches, '-Owidth=' . $self->_get_columns;
 		}
 
 	# I hear persistent reports that adding a -c switch to $render
@@ -242,7 +242,6 @@ sub _get_device_switches {
 	   if( $self->_is_nroff  )             { qw()              }
 	elsif( $self->_have_groff_with_utf8 )  { qw(-Kutf8 -Tutf8) }
 	elsif( $self->_is_ebcdic )             { qw(-Tcp1047)      }
-	elsif( $self->_have_mandoc_with_utf8 ) { qw(-Tlocale)      }
 	elsif( $self->_is_mandoc )             { qw()              }
 	else                                   { qw(-Tlatin1)      }
 	}
@@ -357,6 +356,9 @@ sub _filter_through_nroff {
 	$self->debug( sprintf "Done reading. Output is %d bytes\n",
 		length $done
 		);
+
+	# wait for it to exit
+	waitpid( $pid, 0 );
 
 	if( $? ) {
 		$self->warn( "Error from pipe to $render!\n" );

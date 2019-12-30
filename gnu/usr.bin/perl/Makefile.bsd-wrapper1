@@ -111,6 +111,7 @@ _quick3p=
     perl5280delta 1			pod/perl5280delta.pod \
     perl5281delta 1			pod/perl5281delta.pod \
     perl5282delta 1			pod/perl5282delta.pod \
+    perl5300delta 1			pod/perl5300delta.pod \
     perl561delta 1			pod/perl561delta.pod \
     perl56delta 1			pod/perl56delta.pod \
     perl581delta 1			pod/perl581delta.pod \
@@ -249,7 +250,6 @@ _quick3p=
     App::Prove::State::Result::Test 3p	lib/App/Prove/State/Result/Test.pm \
     Archive::Tar 3p			lib/Archive/Tar.pm \
     Archive::Tar::File 3p		lib/Archive/Tar/File.pm \
-    arybase 3p				lib/arybase.pm \
     Attribute::Handlers 3p		lib/Attribute/Handlers.pm \
     attributes 3p			lib/attributes.pm \
     autodie 3p				lib/autodie.pm \
@@ -265,7 +265,6 @@ _quick3p=
     autouse 3p				lib/autouse.pm \
     B 3p				lib/B.pm \
     B::Concise 3p			lib/B/Concise.pm \
-    B::Debug 3p				lib/B/Debug.pm \
     B::Deparse 3p			lib/B/Deparse.pm \
     B::Op_private 3p			lib/B/Op_private.pm \
     B::Showlex 3p			lib/B/Showlex.pm \
@@ -509,30 +508,15 @@ _quick3p=
     List::Util 3p			lib/List/Util.pm \
     List::Util::XS 3p			lib/List/Util/XS.pm \
     locale 3p				lib/locale.pm \
-    Locale::Codes 3p			lib/Locale/Codes.pod \
-    Locale::Codes::Changes 3p		lib/Locale/Codes/Changes.pod \
-    Locale::Codes::Country 3p		lib/Locale/Codes/Country.pod \
-    Locale::Codes::Currency 3p		lib/Locale/Codes/Currency.pod \
-    Locale::Codes::LangExt 3p		lib/Locale/Codes/LangExt.pod \
-    Locale::Codes::LangFam 3p		lib/Locale/Codes/LangFam.pod \
-    Locale::Codes::Language 3p		lib/Locale/Codes/Language.pod \
-    Locale::Codes::LangVar 3p		lib/Locale/Codes/LangVar.pod \
-    Locale::Codes::Script 3p		lib/Locale/Codes/Script.pod \
-    Locale::Codes::Types 3p		lib/Locale/Codes/Types.pod \
-    Locale::Country 3p			lib/Locale/Country.pod \
-    Locale::Currency 3p			lib/Locale/Currency.pod \
-    Locale::Language 3p			lib/Locale/Language.pod \
     Locale::Maketext 3p			lib/Locale/Maketext.pod \
     Locale::Maketext::Cookbook 3p	lib/Locale/Maketext/Cookbook.pod \
     Locale::Maketext::Guts 3p		lib/Locale/Maketext/Guts.pm \
     Locale::Maketext::GutsLoader 3p	lib/Locale/Maketext/GutsLoader.pm \
     Locale::Maketext::Simple 3p		lib/Locale/Maketext/Simple.pm \
     Locale::Maketext::TPJ13 3p		lib/Locale/Maketext/TPJ13.pod \
-    Locale::Script 3p			lib/Locale/Script.pod \
     Math::BigFloat 3p			lib/Math/BigFloat.pm \
     Math::BigInt 3p			lib/Math/BigInt.pm \
     Math::BigInt::Calc 3p		lib/Math/BigInt/Calc.pm \
-    Math::BigInt::CalcEmu 3p		lib/Math/BigInt/CalcEmu.pm \
     Math::BigInt::FastCalc 3p		lib/Math/BigInt/FastCalc.pm \
     Math::BigInt::Lib 3p		lib/Math/BigInt/Lib.pm \
     Math::BigRat 3p			lib/Math/BigRat.pm \
@@ -743,7 +727,9 @@ _quick3p=
     Test2::EventFacet::Assert 3p	lib/Test2/EventFacet/Assert.pm \
     Test2::EventFacet::Control 3p	lib/Test2/EventFacet/Control.pm \
     Test2::EventFacet::Error 3p		lib/Test2/EventFacet/Error.pm \
+    Test2::EventFacet::Hub 3p		lib/Test2/EventFacet/Hub.pm \
     Test2::EventFacet::Info 3p		lib/Test2/EventFacet/Info.pm \
+    Test2::EventFacet::Info::Table 3p	lib/Test2/EventFacet/Info/Table.pm \
     Test2::EventFacet::Meta 3p		lib/Test2/EventFacet/Meta.pm \
     Test2::EventFacet::Parent 3p	lib/Test2/EventFacet/Parent.pm \
     Test2::EventFacet::Plan 3p		lib/Test2/EventFacet/Plan.pm \

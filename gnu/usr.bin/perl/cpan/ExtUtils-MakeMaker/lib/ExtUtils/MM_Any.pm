@@ -1088,9 +1088,9 @@ manifypods : pure_all config $dependencies
 END
 
     my @man_cmds;
-    foreach my $section (qw(1 3)) {
-        my $pods = $self->{"MAN${section}PODS"};
-        my $p2m = sprintf <<'CMD', $section, $] > 5.008 ? " -u" : "";
+    foreach my $num (qw(1 3)) {
+        my $pods = $self->{"MAN${num}PODS"};
+        my $p2m = sprintf <<'CMD', "\$(MAN${num}SECTION)", "$]" > 5.008 ? " -u" : "";
 	$(NOECHO) $(POD2MAN) --section=%s --perm_rw=$(PERM_RW)%s
 CMD
         push @man_cmds, $self->split_command($p2m, map {($_,$pods->{$_})} sort keys %$pods);

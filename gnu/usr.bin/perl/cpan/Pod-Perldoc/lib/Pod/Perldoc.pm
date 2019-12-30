@@ -486,6 +486,8 @@ sub init_formatter_class_list {
 
   $self->opt_M_with('Pod::Perldoc::ToPod');   # the always-there fallthru
   $self->opt_o_with('text');
+  $self->opt_o_with('man')
+    if $ENV{TERM} && $ENV{TERM} !~ /dumb|emacs|none|unknown/i;
 
   return;
 }
