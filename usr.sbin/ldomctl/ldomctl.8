@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.20 2019/12/06 23:01:03 kn Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.21 2019/12/30 20:10:48 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 6 2019 $
+.Dd $Mdocdate: December 30 2019 $
 .Dt LDOMCTL 8 sparc64
 .Os
 .Sh NAME
@@ -53,7 +53,7 @@ Delete the specified configuration from non-volatile storage.
 .It Cm download Ar directory
 Save a logical domain configuration to non-volatile storage on the
 service processor.
-The configuration will take effect after the primary domain is rebooted.
+The configuration will take effect after the machine is reset.
 The name of the configuration is taken from the name of the
 .Ar directory
 which must contain files created with the
