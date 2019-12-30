@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.21 2019/12/30 19:39:23 jmc Exp $
+.\" $OpenBSD: dig.1,v 1.22 2019/12/30 21:25:43 jmc Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -279,7 +279,7 @@ A synonym for
 .Xo
 .Cm + Ns
 .Op Cm no Ns
-.Cm aaonly
+.Cm aaonly .
 .Xc
 .It Xo
 .Cm + Ns
@@ -292,20 +292,20 @@ Sets the "aa" flag in the query.
 .Op Cm no Ns
 .Cm additional
 .Xc
-Display [do not display] the additional section of a reply.
+Display the additional section of a reply.
 The default is to display it.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm adflag
 .Xc
-Set [do not set] the AD (authentic data) bit in the query.
+Set the AD (authentic data) bit in the query.
 This requests the server to return whether all of the answer and authority
 sections have all been validated as secure according to the security policy of
 the server.
 AD=1 indicates that all records have been validated as secure and the answer is
-not from a OPT-OUT range.
-AD=0 indicate that some part of the answer was insecure or not validated.
+not from an OPT-OUT range.
+AD=0 indicates that some part of the answer was insecure or not validated.
 This bit is set by default.
 .It Xo
 .Cm + Ns
@@ -318,15 +318,14 @@ Set or clear all display flags.
 .Op Cm no Ns
 .Cm answer
 .Xc
-Display [do not display] the answer section of a reply.
+Display the answer section of a reply.
 The default is to display it.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm authority
 .Xc
-Display [do not display] the authority section of a
-reply.
+Display the authority section of a reply.
 The default is to display it.
 .It Xo
 .Cm + Ns
@@ -335,26 +334,26 @@ The default is to display it.
 .Xc
 Attempt to display the contents of messages which are malformed.
 The default is to not display malformed answers.
-.It Cm +bufsize= Ns Ar B
+.It Cm +bufsize Ns = Ns Ar B
 Set the UDP message buffer size advertised using EDNS0 to
 .Ar B
 bytes.
 The maximum and minimum sizes of this buffer are 65535 and 0 respectively.
 Values outside this range are rounded up or down appropriately.
-Values other than zero will cause a EDNS query to be sent.
+Values other than zero will cause an EDNS query to be sent.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm cdflag
 .Xc
-Set [do not set] the CD (checking disabled) bit in the query.
+Set the CD (checking disabled) bit in the query.
 This requests the server to not perform DNSSEC validation of responses.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
-.Cm class
+.Cm cl
 .Xc
-Display [do not display] the CLASS when printing the record.
+Display the CLASS when printing the record.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -375,10 +374,10 @@ The default is to print comments.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
-.Cm cookie= Ns
+.Cm cookie Ns = Ns
 .Ar value
 .Xc
-Send an COOKIE EDNS option, containing an optional
+Send a COOKIE EDNS option, containing an optional
 .Ar value .
 Replaying a COOKIE from a previous response will allow the server to
 identify a previous client.
@@ -396,7 +395,8 @@ This option was formerly called
 .Op Cm no Ns
 .Cm sit
 .Xc
-(Server Identity Token). In BIND 9.10.0 through BIND 9.10.2,
+(Server Identity Token).
+In BIND 9.10.0 through BIND 9.10.2,
 it sent the experimental option code 65001.
 This was changed to option code 10 in BIND 9.10.3 when the DNS
 COOKIE option was allocated.
@@ -407,7 +407,7 @@ The
 .Op Cm no Ns
 .Cm sit
 .Xc
-is now deprecated, but has been retained as a synonym for
+option is now deprecated, but has been retained as a synonym for
 .Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -443,7 +443,7 @@ Deprecated, treated as a synonym for
 .Xc
 Requests DNSSEC records be sent by setting the DNSSEC OK bit (DO) in the OPT
 record in the additional section of the query.
-.It Cm +domain= Ns Ar somename
+.It Cm +domain Ns = Ns Ar somename
 Set the search list to contain the single domain
 .Ar somename ,
 as if specified in a
@@ -457,11 +457,11 @@ option were given.
 .Cm + Ns
 .Op Cm no Ns
 .Cm edns Ns
-.Op Cm = Ns Ar #
+.Op = Ns Ar ###
 .Xc
 Specify the EDNS version to query with.
 Valid values are 0 to 255.
-Setting the EDNS version will cause a EDNS query to be sent.
+Setting the EDNS version will cause an EDNS query to be sent.
 .Cm +noedns
 clears the remembered EDNS version.
 EDNS is set to 0 by default.
@@ -469,7 +469,7 @@ EDNS is set to 0 by default.
 .Cm + Ns
 .Op Cm no Ns
 .Cm ednsflags Ns
-.Op Cm = Ns Ar #
+.Op = Ns Ar ###
 .Xc
 Set the must-be-zero EDNS flags bits (Z bits) to the specified value.
 Decimal, hex and octal encodings are accepted.
@@ -480,9 +480,8 @@ By default, no Z bits are set.
 .Op Cm no Ns
 .Cm ednsnegotiation
 .Xc
-Enable / disable EDNS version negotiation.
-By default
-EDNS version negotiation is enabled.
+Enable EDNS version negotiation.
+By default EDNS version negotiation is enabled.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -522,7 +521,7 @@ resolver behavior.
 .Op Cm no Ns
 .Cm identify
 .Xc
-Show [or do not show] the IP address and port number that supplied the answer
+Show the IP address and port number that supplied the answer
 when the
 .Cm +short
 option is enabled.
@@ -533,7 +532,7 @@ address and port number of the server that provided the answer.
 .Op Cm no Ns
 .Cm idnout
 .Xc
-Convert [do not convert] puny code on output.
+Convert puny code on output.
 This version of
 .Nm
 does not support IDN.
@@ -564,11 +563,11 @@ The default is to print each record on a single line, to facilitate machine
 parsing of the
 .Nm
 output.
-.It Cm +ndots= Ns Ar D
+.It Cm +ndots Ns = Ns Ar ###
 Set the number of dots that have to appear in
 .Ar name
 to
-.Ar D
+.Ar ###
 for it to be considered absolute.
 The default value is that defined using the ndots statement in
 .Pa /etc/resolv.conf ,
@@ -609,25 +608,24 @@ The default is to print both the starting and ending SOA records.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
-.Cm opcode= Ns
-.Ar value
+.Cm opcode Ns = Ns
+.Ar ###
 .Xc
-Set [restore] the DNS message opcode to the specified value.
+Set or restore the DNS message opcode to the specified value.
 The default value is QUERY (0).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm qr
 .Xc
-Print [do not print] the query as it is sent.
-By
-default, the query is not printed.
+Print the query as it is sent.
+By default, the query is not printed.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm question
 .Xc
-Print [do not print] the question section of a query when an answer is returned.
+Print the question section of a query when an answer is returned.
 The default is to print the question section as a comment.
 .It Xo
 .Cm + Ns
@@ -654,9 +652,9 @@ Recursion is automatically disabled when the
 or
 .Cm +trace
 query options are used.
-.It Cm +retry= Ns Ar T
+.It Cm +retry= Ns Ar ###
 Sets the number of times to retry UDP queries to server to
-.Ar T
+.Ar ###
 instead of the default, 2.
 Unlike
 .Cm +tries ,
@@ -674,16 +672,15 @@ The default is not to print record comments unless multiline mode is active.
 .Op Cm no Ns
 .Cm search
 .Xc
-Use [do not use] the search list defined by the searchlist or domain directive
-in
+Use the search list defined by the searchlist or domain directive in
 .Pa resolv.conf
 (if any).
 The search list is not used by default.
 .Pp
 \&'ndots' from
 .Pa resolv.conf
-(default 1) which may be overridden by
-.Cm +ndots
+(default 1), which may be overridden by
+.Cm +ndots ,
 determines if the name will be treated as relative or not and hence whether a
 search is eventually performed or not.
 .It Xo
@@ -698,23 +695,12 @@ The default is to print the answer in a verbose form.
 .Op Cm no Ns
 .Cm showsearch
 .Xc
-Perform [do not perform] a search showing intermediate results.
-.It Xo
-.Cm + Ns
-.Op Cm no Ns
-.Cm sigchase
-.Xc
-Chase DNSSEC signature chains.
-Requires dig be compiled with -DDIG_SIGCHASE.
-This feature is deprecated.
-Use
-.Nm delv
-instead.
+Perform a search showing intermediate results.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm sit Ns
-.Op = Ns Ar value
+.Op = Ns Ar ###
 .Xc
 This option is a synonym for
 .Xo
@@ -729,12 +715,12 @@ The
 .Op Cm no Ns
 .Cm sit
 .Xc
-is deprecated.
-.It Cm +split= Ns Ar W
+option is deprecated.
+.It Cm +split Ns = Ns Ar ###
 Split long hex- or base64-formatted fields in resource records into chunks of
-.Ar W
+.Ar ###
 characters (where
-.Ar W
+.Ar ###
 is rounded up to the nearest multiple of 4).
 .Cm +nosplit
 or
@@ -752,11 +738,11 @@ The default behavior is to print the query statistics.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
-.Cm subnet= Ns
+.Cm subnet Ns = Ns
 .Ar addr Ns
 .Op / Ns Ar prefix-length
 .Xc
-Send (don't send) an EDNS Client Subnet option with the specified IP address or
+Send an EDNS Client Subnet option with the specified IP address or
 network prefix.
 .Pp
 .Nm
@@ -774,29 +760,18 @@ be used when resolving this query.
 .Op Cm no Ns
 .Cm tcp
 .Xc
-Use [do not use] TCP when querying name servers.
+Use TCP when querying name servers.
 The default behavior is to use UDP unless an ixfr=N query is requested, in which
 case the default is TCP.
 AXFR queries always use TCP.
-.It Cm +time= Ns Ar T
+.It Cm +time= Ns Ar ###
 Sets the timeout for a query to
-.Ar T
+.Ar ###
 seconds.
 The default timeout is 5 seconds.
 An attempt to set
-.Ar T
+.Ar ###
 to less than 1 will result in a query timeout of 1 second being applied.
-.It Xo
-.Cm + Ns
-.Op Cm no Ns
-.Cm topdown
-.Xc
-When chasing DNSSEC signature chains perform a top-down validation.
-Requires dig be compiled with -DDIG_SIGCHASE.
-This feature is deprecated.
-Use
-.Nm delv
-instead.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -818,43 +793,25 @@ zone name servers.
 is also set when
 .Cm +trace
 is set to better emulate the default queries from a name server.
-.It Cm +tries= Ns Ar T
+.It Cm +tries Ns = Ns Ar ###
 Sets the number of times to try UDP queries to server to
-.Ar T
+.Ar ###
 instead of the default, 3.
 If
-.Ar T
+.Ar ###
 is less than or equal to zero, the number of tries is silently rounded up to 1.
-.It Cm +trusted-key= Ns Ar file
-Specifies a file containing trusted keys to be used with
-.Cm +sigchase .
-Each DNSKEY record must be on its own line.
-.Pp
-If not specified,
-.Nm
-will look for
-.Pa /etc/trusted-key.key
-then
-.Pa trusted-key.key
-in the current directory.
-.Pp
-Requires dig be compiled with -DDIG_SIGCHASE.
-This feature is deprecated.
-Use
-.Nm delv
-instead.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm ttlid
 .Xc
-Display [do not display] the TTL when printing the record.
+Display the TTL when printing the record.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm vc
 .Xc
-Use [do not use] TCP when querying name servers.
+Use TCP when querying name servers.
 This alternate syntax to
 .Xo
 .Cm + Ns
