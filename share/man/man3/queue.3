@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.65 2017/01/12 16:28:49 mpi Exp $
+.\"	$OpenBSD: queue.3,v 1.66 2019/12/30 17:25:39 schwarze Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd $Mdocdate: January 12 2017 $
+.Dd $Mdocdate: December 30 2019 $
 .Dt SLIST_INIT 3
 .Os
 .Sh NAME
@@ -97,7 +97,7 @@
 .Nm TAILQ_REMOVE ,
 .Nm TAILQ_REPLACE ,
 .Nm TAILQ_CONCAT
-.Nd implementations of singly-linked lists, doubly-linked lists, simple queues, and tail queues
+.Nd intrusive singly-linked and doubly-linked lists, simple queues, and tail queues
 .Sh SYNOPSIS
 .In sys/queue.h
 .Pp
@@ -298,16 +298,25 @@ language aliasing rules and were miscompiled as a result.
 All code using them should be converted to another structure;
 tail queues are usually the easiest to convert to.
 .Pp
-In the macro definitions,
-.Fa TYPE
-is the name tag of a user defined structure that must contain a field of type
+All these lists and queues are intrusive: they link together user
+defined structures containing a field of type
 .Li SLIST_ENTRY ,
 .Li LIST_ENTRY ,
 .Li SIMPLEQ_ENTRY ,
 or
-.Li TAILQ_ENTRY ,
-named
-.Fa FIELDNAME .
+.Li TAILQ_ENTRY .
+In the macro definitions,
+.Fa TYPE
+is the name tag of the user defined structure and
+.Fa FIELDNAME
+is the name of the
+.Li *_ENTRY
+field.
+If an instance of the user defined structure needs to be a member of
+multiple lists at the same time, the structure requires multiple
+.Li *_ENTRY
+fields, one for each list.
+.Pp
 The argument
 .Fa HEADNAME
 is the name tag of a user defined structure that must be declared
