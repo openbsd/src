@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.35 2019/07/16 21:30:54 bluhm Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.36 2019/12/30 15:48:12 mpi Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -131,7 +131,8 @@ msgctl1(struct proc *p, int msqid, int cmd, caddr_t buf,
 		/* lose interest in the queue and wait for others to too */
 		if (--que->que_references > 0) {
 			wakeup(que);
-			tsleep(&que->que_references, PZERO, "msgqrm", 0);
+			tsleep_nsec(&que->que_references, PZERO, "msgqrm",
+			    INFSLP);
 		}
 
 		que_free(que);
@@ -273,7 +274,7 @@ sys_msgsnd(struct proc *p, void *v, register_t *retval)
 			maxmsgs = 1;
 
 		que->que_flags |= MSGQ_WRITERS;
-		if ((error = tsleep(que, PZERO|PCATCH, "msgwait", 0)))
+		if ((error = tsleep_nsec(que, PZERO|PCATCH, "msgwait", INFSLP)))
 			goto out;
 
 		if (que->que_flags & MSGQ_DYING) {
@@ -344,7 +345,7 @@ sys_msgrcv(struct proc *p, void *v, register_t *retval)
 		}
 
 		que->que_flags |= MSGQ_READERS;
-		if ((error = tsleep(que, PZERO|PCATCH, "msgwait", 0)))
+		if ((error = tsleep_nsec(que, PZERO|PCATCH, "msgwait", INFSLP)))
 			goto out;
 
 		/* make sure the queue still alive */

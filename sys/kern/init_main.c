@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.293 2019/11/29 06:34:45 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.294 2019/12/30 15:48:12 mpi Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -464,7 +464,7 @@ main(void *framep)
 	 * secondary processors, yet.
 	 */
 	while (config_pending)
-		(void) tsleep((void *)&config_pending, PWAIT, "cfpend", 0);
+		tsleep_nsec(&config_pending, PWAIT, "cfpend", INFSLP);
 
 	dostartuphooks();
 
@@ -572,7 +572,7 @@ main(void *framep)
          * proc0: nothing to do, back to sleep
          */
         while (1)
-                tsleep(&proc0, PVM, "scheduler", 0);
+                tsleep_nsec(&proc0, PVM, "scheduler", INFSLP);
 	/* NOTREACHED */
 }
 
@@ -631,7 +631,7 @@ start_init(void *arg)
 	 * Wait for main() to tell us that it's safe to exec.
 	 */
 	while (start_init_exec == 0)
-		(void) tsleep((void *)&start_init_exec, PWAIT, "initexec", 0);
+		tsleep_nsec(&start_init_exec, PWAIT, "initexec", INFSLP);
 
 	check_console(p);
 
