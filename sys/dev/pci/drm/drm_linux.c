@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.53 2019/12/26 13:36:15 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.54 2019/12/30 09:30:31 mpi Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -240,7 +240,7 @@ kthread_parkme(void)
 	while (thread->flags & KTHREAD_SHOULDPARK) {
 		thread->flags |= KTHREAD_PARKED;
 		wakeup(thread);
-		tsleep(thread, PPAUSE | PCATCH, "parkme", 0);
+		tsleep_nsec(thread, PPAUSE | PCATCH, "parkme", INFSLP);
 		thread->flags &= ~KTHREAD_PARKED;
 	}
 }
@@ -253,7 +253,7 @@ kthread_park(struct proc *p)
 	while ((thread->flags & KTHREAD_PARKED) == 0) {
 		thread->flags |= KTHREAD_SHOULDPARK;
 		wake_up_process(thread->proc);
-		tsleep(thread, PPAUSE | PCATCH, "park", 0);
+		tsleep_nsec(thread, PPAUSE | PCATCH, "park", INFSLP);
 	}
 }
 
@@ -281,7 +281,7 @@ kthread_stop(struct proc *p)
 	while ((thread->flags & KTHREAD_STOPPED) == 0) {
 		thread->flags |= KTHREAD_SHOULDSTOP;
 		wake_up_process(thread->proc);
-		tsleep(thread, PPAUSE | PCATCH, "stop", 0);
+		tsleep_nsec(thread, PPAUSE | PCATCH, "stop", INFSLP);
 	}
 	LIST_REMOVE(thread, next);
 	free(thread, M_DRM, sizeof(*thread));
@@ -1752,7 +1752,8 @@ wait_on_bit(unsigned long *word, int bit, unsigned mode)
 
 	mtx_enter(&wait_bit_mtx);
 	while (test_bit(bit, word)) {
-		err = msleep(word, &wait_bit_mtx, PWAIT | mode, "wtb", 0);
+		err = msleep_nsec(word, &wait_bit_mtx, PWAIT | mode, "wtb",
+		    INFSLP);
 		if (err) {
 			mtx_leave(&wait_bit_mtx);
 			return 1;

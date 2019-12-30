@@ -781,7 +781,8 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags, struct proc *p)
 
 	mtx_enter(&dev->quiesce_mtx);
 	while (dev->quiesce)
-		msleep(&dev->quiesce, &dev->quiesce_mtx, PZERO, "drmioc", 0);
+		msleep_nsec(&dev->quiesce, &dev->quiesce_mtx, PZERO, "drmioc",
+		    INFSLP);
 	dev->quiesce_count++;
 	mtx_leave(&dev->quiesce_mtx);
 
