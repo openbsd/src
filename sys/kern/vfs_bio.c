@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.194 2019/12/08 12:29:42 mpi Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.195 2019/12/30 22:17:14 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -873,6 +873,13 @@ brelse(struct buf *bp)
 
 	if (bp->b_data != NULL)
 		KASSERT(bp->b_bufsize > 0);
+
+	/*
+	 * softdep is basically incompatible with not cacheing buffers
+	 * that have dependencies, so this buffer must be cached
+	 */
+	if (LIST_FIRST(&bp->b_dep) != NULL)
+		CLR(bp->b_flags, B_NOCACHE);
 
 	/*
 	 * Determine which queue the buffer should be on, then put it there.
