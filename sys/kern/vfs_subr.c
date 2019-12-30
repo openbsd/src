@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.296 2019/12/27 22:17:01 bluhm Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.297 2019/12/30 13:49:40 bluhm Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1214,14 +1214,14 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 int
 vcount(struct vnode *vp)
 {
-	struct vnode *vq, *vnext;
+	struct vnode *vq;
 	int count;
 
 loop:
 	if ((vp->v_flag & VALIASED) == 0)
 		return (vp->v_usecount);
 	count = 0;
-	SLIST_FOREACH_SAFE(vq, vp->v_hashchain, v_specnext, vnext) {
+	SLIST_FOREACH(vq, vp->v_hashchain, v_specnext) {
 		if (vq->v_rdev != vp->v_rdev || vq->v_type != vp->v_type)
 			continue;
 		/*
